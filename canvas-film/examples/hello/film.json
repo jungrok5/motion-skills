@@ -1,0 +1,16 @@
+{
+ "title": "canvas-film example",
+ "source": "en",
+ "scenes": [ { "id": "dawn", "label": "Dawn", "dur": 12 } ],
+ "fonts": {
+  "base": [ ["Noto Serif", 600, "NotoSerif.ttf"], ["Noto Sans", 400, "NotoSans.ttf"] ],
+  "local": { "Noto Serif KR": "Noto-600.ttf", "Noto Sans KR": "NotoSansKR-400.ttf" }
+ },
+ "player": {
+  "title": "canvas-film example", "desc": "One scene drawn live in your browser.", "home": "./", "homeLabel": "← back",
+  "len": "12 seconds", "h1": "canvas-film <span class=\"em\">example</span>", "sub": "Drawn live in your browser.", "back": "",
+  "legal": "Drawn in code.",
+  "ui": { "play": "Play", "pause": "Pause", "prev": "Previous scene", "next": "Next scene", "full": "Full screen", "loading": "Loading…",
+          "landscape": "Landscape", "portrait": "Portrait", "share": "Share", "copied": "Link copied", "ch": ["Dawn"] }
+ }
+}

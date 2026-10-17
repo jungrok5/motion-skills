@@ -1,0 +1,5 @@
+{ "duration": 12,
+  "music": [ { "id": "m1", "at": 0, "len": 12, "db": -3, "fin": 0.8, "fout": 1.5,
+               "prompt": "Slow ambient piano and warm strings, a single sustained low note opening into a gentle rising major chord, hopeful, unhurried, no drums" } ],
+  "sfx":   [ { "id": "s1", "at": 0.6, "len": 3.4, "db": -12, "prompt": "Soft shimmering swell of light, airy, rising" } ],
+  "ducks": [] }

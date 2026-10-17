@@ -1,0 +1,4 @@
+out/
+site/
+scenes/audio/
+scenes/*.wav
