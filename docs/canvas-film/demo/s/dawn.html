@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Example · Dawn</title>
+<link rel="stylesheet" href="fonts.css">
+</head>
+<body>
+<script>window.FILM_SRC = 'en'; window.FILM_FONTS = { serif: "'Noto Serif'", sans: "'Noto Sans'" };</script>
+<script src="lib.js"></script>
+<script>
+/* 01 Dawn — a minimal canvas-film scene: one gold line draws the horizon, the sun rises behind it, a line of text and
+   its source fade in and out. Shows the pattern every scene follows:
+   - a pure function of time (draw(ctx, t)), seeded randomness only, heavy textures built once in init;
+   - both orientations composed on purpose (Pilot.ori 'h' 1920×1080 / 'v' 1080×1920), not a squashed copy;
+   - chapter label for the first seconds, text ≥ 3.5 s on screen, fade in from and out to black. */
+const { clamp, lerp, ss, eio, win, rng, fbm, canvas, text } = Pilot;
+const W = Pilot.W, H = Pilot.H, V = Pilot.ori === 'v', DUR = 12;
+let grain;
+
+function draw(ctx, t) {
+  const hy = V ? H * .62 : H * .64;                                   // horizon
+  const dawn = ss(1.5, 7, t);
+  const sky = ctx.createLinearGradient(0, 0, 0, hy);
+  sky.addColorStop(0, `rgb(${lerp(8, 40, dawn)},${lerp(10, 52, dawn)},${lerp(24, 110, dawn)})`);
+  sky.addColorStop(1, `rgb(${lerp(20, 240, dawn)},${lerp(18, 160, dawn)},${lerp(30, 110, dawn)})`);
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, hy);
+  // the sun, rising behind the line
+  const sx = W / 2, sy = lerp(hy + 140, hy - (V ? 260 : 200), eio(clamp((t - 2) / 7)));
+  const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, V ? 520 : 600); g.addColorStop(0, 'rgba(255,236,180,.95)'); g.addColorStop(.18, 'rgba(255,200,120,.55)'); g.addColorStop(1, 'rgba(255,170,90,0)');
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, hy); ctx.clip(); ctx.fillStyle = g; ctx.fillRect(0, 0, W, hy); ctx.restore();
+  ctx.fillStyle = '#0b0b10'; ctx.fillRect(0, hy, W, H - hy);
+  // the gold line draws left → right, with a little seeded wander
+  const k = eio(clamp((t - .6) / 3.2)), r = rng(7);
+  ctx.save(); ctx.strokeStyle = '#f3c76b'; ctx.lineWidth = 3; ctx.shadowColor = 'rgba(255,200,100,.9)'; ctx.shadowBlur = 18; ctx.beginPath();
+  for (let x = 0; x <= W * k; x += 12) { const y = hy + 6 * (fbm(x * .004, 3) - .5); x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+  ctx.stroke(); ctx.restore();
+  ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = .18; ctx.drawImage(grain, 0, 0, W, H); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  // words: chapter label, a line, its source (every on-screen string goes through Pilot.text → translatable)
+  text(ctx, '01  ·  Dawn', V ? 64 : 110, V ? 170 : 120, { align: 'left', size: 30, weight: 600, color: '#f6e6c4', alpha: win(t, .6, 5, 1, 1), ls: 4 });
+  const ty = V ? H * .3 : H * .28;
+  text(ctx, V ? 'The darkest night\nends with a single line of light.' : 'The darkest night ends with a single line of light.', W / 2, ty,
+    { size: V ? 50 : 52, weight: 600, color: '#fff4dc', alpha: win(t, 5, 10.6, 1, .8), shadow: 'rgba(0,0,0,.6)' });
+  text(ctx, 'canvas-film example', W / 2, ty + (V ? 160 : 70), { size: 22, font: "'Noto Sans',sans-serif", color: '#e8d8bc', alpha: win(t, 5.6, 10.6, 1, .8) * .9, ls: 2 });
+  // fade in from / out to black, so scenes cut together
+  ctx.fillStyle = `rgba(0,0,0,${1 - ss(0, 1, t) * (1 - ss(DUR - 1.2, DUR, t))})`; ctx.fillRect(0, 0, W, H);
+}
+
+Pilot.run({ W, H, dur: DUR, audio: 'dawn.m4a', fonts: ["600 40px 'Noto Serif'", "400 20px 'Noto Sans'"],
+  init: async () => { grain = Pilot.speckle(W / 2, H / 2, 40, 11); },
+  draw });
+</script>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
+<title>canvas-film example</title>
+<meta name="description" content="One scene drawn live in your browser.">
+<meta property="og:type" content="video.other" />
+<meta property="og:title" content="canvas-film example" />
+<meta property="og:description" content="One scene drawn live in your browser." />
+<meta property="og:image" content="poster-h.jpg" />
+<meta name="twitter:card" content="summary_large_image" />
+<style>
+  :root{--bg:#07080c;--ink:#f4efe6;--muted:#9aa3b2;--line:rgba(255,255,255,.14);--card:rgba(255,255,255,.05);--accent:#e9b949;
+    --serif:'Noto Serif KR','Nanum Myeongjo',serif;--sans:system-ui,-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;color-scheme:dark}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-text-size-adjust:100%}
+  main{max-width:1100px;margin:0 auto;padding:20px 16px 48px}
+  .top{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:.875rem}
+  .top a{color:var(--muted);text-decoration:none}
+  .top a:hover{color:var(--accent)}
+  h1{font-family:var(--serif);font-weight:700;font-size:clamp(1.5rem,5.5vw,2.2rem);line-height:1.3;margin:20px 0 6px}
+  h1 .em{color:var(--accent)}
+  .sub{color:var(--muted);margin:0 0 16px;line-height:1.6;font-size:.9375rem}
+  .stage{position:relative;margin:0 auto;background:#000;border-radius:12px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.5);touch-action:manipulation}
+  .stage iframe{position:absolute;left:0;top:0;border:0;transform-origin:0 0;pointer-events:none;visibility:hidden}
+  .stage iframe.on{visibility:visible}
+  .stage img.poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .big{position:absolute;inset:0;display:grid;place-items:center;border:0;background:rgba(0,0,0,.25);cursor:pointer;padding:0;color:inherit}
+  .big span{display:grid;place-items:center;width:78px;height:78px;border-radius:50%;background:var(--accent);color:#14110b;font-size:1.6rem;padding-left:5px;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+  .big[hidden],.wait[hidden]{display:none}
+  .wait{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#ddd;font-size:.875rem;background:rgba(0,0,0,.55);padding:8px 14px;border-radius:999px}
+  .bar{display:flex;align-items:center;gap:8px;margin:10px auto 0;font-size:.8125rem;color:var(--muted);flex-wrap:wrap}
+  .bar button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:7px 12px;cursor:pointer;min-width:40px}
+  .bar button[aria-pressed="true"]{background:var(--accent);color:#14110b;border-color:var(--accent)}
+  .bar .grow{flex:1;min-width:80px;height:4px;border-radius:2px;background:var(--line);position:relative;overflow:hidden}
+  .bar .grow i{position:absolute;left:0;top:0;bottom:0;background:var(--accent);width:0}
+  .bar .now{color:var(--ink);font-variant-numeric:tabular-nums}
+  .chapters{margin:22px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+  .chapters button{width:100%;text-align:left;font:inherit;font-size:.8125rem;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--card);cursor:pointer}
+  .chapters button b{color:var(--ink);font-weight:600;margin-right:4px}
+  .chapters button[aria-current="true"]{border-color:var(--accent);color:var(--ink)}
+  .back{display:inline-block;margin-top:26px;color:var(--accent);text-decoration:none;border-bottom:1px solid var(--line)}
+  footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:.75rem;line-height:1.7}
+  /* theatre: the stage fills the screen */
+  body.full{overflow:hidden}
+  body.full .stage{position:fixed;inset:0;margin:0;border-radius:0;z-index:10;width:100vw!important;height:100svh!important}
+  body.full .bar{position:fixed;left:0;right:0;bottom:0;z-index:11;margin:0;padding:10px max(12px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));background:linear-gradient(0deg,rgba(0,0,0,.8),rgba(0,0,0,0));transition:opacity .4s}
+  body.full.idle .bar{opacity:0}
+  .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#f4efe6;color:#14110b;padding:10px 16px;border-radius:999px;font-size:.875rem;z-index:20;box-shadow:0 6px 20px rgba(0,0,0,.4);transition:opacity .3s}
+  .toast[hidden]{display:none}
+  /* ?embed=1 — just the stage and the controls, for an <iframe> on another page */
+  body.embed main{padding:0}
+  body.embed .top,body.embed h1,body.embed .sub,body.embed .chapters,body.embed .back,body.embed footer{display:none}
+  body.embed .stage{border-radius:0;box-shadow:none}
+  body.embed .bar{padding:0 10px 8px;gap:6px}
+  body.embed .bar button{padding:6px 10px}
+  body.embed .bar .grow{min-width:50px}
+  body.embed #share{display:none}
+  .fps{position:absolute;right:8px;top:6px;font:12px/1 ui-monospace,monospace;color:#7f7;background:rgba(0,0,0,.6);padding:3px 6px;border-radius:4px;z-index:12}
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><a href="./" id="home" data-ui="home">← back</a><span style="color:var(--muted)" data-ui="len">12 seconds</span></div>
+  <h1 data-ui-html="h1">canvas-film <span class="em">example</span></h1>
+  <p class="sub" data-ui="sub">Drawn live in your browser.</p>
+
+  <div class="stage" id="stage">
+    <iframe id="fa" title="scene" tabindex="-1" aria-hidden="true"></iframe>
+    <iframe id="fb" title="scene" tabindex="-1" aria-hidden="true"></iframe>
+    <img class="poster" id="poster" alt="canvas-film example">
+    <button class="big" id="big" type="button" aria-label="Play" data-ui-aria="play"><span>▶</span></button>
+    <div class="wait" id="wait" hidden data-ui="loading">Loading…</div>
+  </div>
+
+  <div class="bar" id="bar">
+    <button type="button" id="pp" aria-label="Play" data-ui-aria="play">▶</button>
+    <button type="button" id="prev" aria-label="Previous scene" data-ui-aria="prev">⏮</button>
+    <button type="button" id="next" aria-label="Next scene" data-ui-aria="next">⏭</button>
+    <span class="now" id="now"></span>
+    <span class="grow" aria-hidden="true"><i id="prog"></i></span>
+    <span id="tm" style="font-variant-numeric:tabular-nums">0:00 / 13:09</span>
+    <button type="button" data-o="h" aria-pressed="true" data-ui="landscape">Landscape</button>
+    <button type="button" data-o="v" aria-pressed="false" data-ui="portrait">Portrait</button>
+    <button type="button" id="fs" aria-label="Full screen" data-ui-aria="full">⛶</button>
+    <button type="button" id="share" data-ui="share">Share</button>
+  </div>
+
+  <ol class="chapters" id="chapters"></ol>
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <a class="back" href="./" id="back" data-ui="back"></a>
+
+  <footer data-ui-html="legal">Drawn in code.</footer>
+</main>
+<script>
+(function () {
+  var SRC = 'en', LANG = (location.search.match(/[?&]lang=([\w-]+)/) || [])[1] || SRC, UI = {};
+  // [file, label, seconds] — from film.json (filled in by publish.py)
+  var S = [["dawn", "Dawn", 12]];
+  var BASE_UI = {"play": "Play", "pause": "Pause", "prev": "Previous scene", "next": "Next scene", "full": "Full screen", "loading": "Loading…", "landscape": "Landscape", "portrait": "Portrait", "share": "Share", "copied": "Link copied", "ch": ["Dawn"]};   // the source language's player text (play, prev, …)
+  // other languages: page text from film/s/i18n/<lang>.json "_ui" (the scenes read the same file)
+  if (LANG !== SRC) { try { var x = new XMLHttpRequest(); x.open('GET', 's/i18n/' + LANG + '.json', false); x.send();
+    var J = JSON.parse(x.responseText); UI = J._ui || {}; document.documentElement.lang = LANG; document.documentElement.dir = J._dir || 'ltr'; } catch (e) { LANG = SRC; } }
+  UI = Object.assign({}, BASE_UI, UI);
+  if (UI.ch) S.forEach(function (s, i) { if (UI.ch[i]) s[1] = UI.ch[i]; });
+  document.querySelectorAll('[data-ui]').forEach(function (e) { if (UI[e.dataset.ui]) e.textContent = UI[e.dataset.ui]; });
+  document.querySelectorAll('[data-ui-html]').forEach(function (e) { if (UI[e.dataset.uiHtml]) e.innerHTML = UI[e.dataset.uiHtml]; });
+  document.querySelectorAll('[data-ui-aria]').forEach(function (e) { if (UI[e.dataset.uiAria]) e.setAttribute('aria-label', UI[e.dataset.uiAria]); });
+  if (UI.title) document.title = UI.title;
+  if (LANG !== SRC) { /* per-language home links: set _ui.homeHref in the language file */ if (UI.homeHref) { document.getElementById('home').href = UI.homeHref; document.getElementById('back').href = UI.homeHref; } }
+  // a shared link can point at one scene: /film/#cross
+  var START_AT = Math.max(0, S.findIndex(function (s) { return '#' + s[0] === location.hash; }));
+  var TOTAL = S.reduce(function (a, s) { return a + s[2]; }, 0), START = [], acc = 0;
+  S.forEach(function (s) { START.push(acc); acc += s[2]; });
+  var $ = function (id) { return document.getElementById(id); };
+  var stage = $('stage'), frames = [$('fa'), $('fb')], big = $('big'), wait = $('wait'), poster = $('poster');
+  var au = new Audio(); au.preload = 'auto'; au.setAttribute('playsinline', '');
+  var pre = new Audio(); pre.preload = 'auto';
+  var EMBED = /[?&]embed=1/.test(location.search); if (EMBED) document.body.classList.add('embed');
+  var ori = (location.search.match(/[?&]o=([hv])\b/) || [])[1] || (matchMedia('(orientation: portrait)').matches ? 'v' : 'h');   // ?o=h|v picks one
+  var cur = -1, front = 0, playing = false, started = false, loadedIdx = [-1, -1], fpsOn = /[?&]fps=1/.test(location.search), fpsEl = null;
+  var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+  var fmt = function (s) { s = Math.max(0, s | 0); return Math.floor(s / 60) + ':' + pad(s % 60); };
+
+  // chapter buttons
+  var ch = $('chapters');
+  S.forEach(function (s, i) { var li = document.createElement('li'); li.innerHTML = '<button type="button"><b>' + pad(i) + '</b>' + s[1] + '</button>';
+    li.firstChild.onclick = function () { go(i, true); stage.scrollIntoView({ behavior: 'smooth', block: 'center' }); }; ch.appendChild(li); });
+
+  function size() {
+    var W = ori === 'v' ? 1080 : 1920, H = ori === 'v' ? 1920 : 1080, full = document.body.classList.contains('full');
+    var pc = getComputedStyle(stage.parentNode), inner = stage.parentNode.clientWidth - parseFloat(pc.paddingLeft) - parseFloat(pc.paddingRight);
+    var maxW = full ? innerWidth : Math.min(inner, 1100), maxH = full ? innerHeight : Math.max(240, innerHeight - (EMBED ? $('bar').offsetHeight + 18 : 150));
+    var s = Math.min(maxW / W, maxH / H), w = Math.round(W * s), h = Math.round(H * s);
+    if (!full) { stage.style.width = w + 'px'; stage.style.height = h + 'px'; }
+    var ox = full ? (innerWidth - w) / 2 : 0, oy = full ? (innerHeight - h) / 2 : 0;
+    frames.forEach(function (f) { f.width = W; f.height = H; f.style.transform = 'translate(' + ox + 'px,' + oy + 'px) scale(' + s + ')'; });
+    poster.src = 'poster-' + ori + (LANG !== SRC ? '-' + LANG : '') + '.jpg';   // the title card in the page's language
+    document.querySelectorAll('.bar [data-o]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.o === ori)); });
+  }
+  addEventListener('resize', size);
+  if (EMBED && window.ResizeObserver) new ResizeObserver(function () { size(); }).observe($('bar'));   // the bar wraps once its text arrives
+
+  function src(i) { return 's/' + S[i][0] + '.html?render=1' + (ori === 'v' ? '&o=v' : '') + (LANG !== SRC ? '&lang=' + LANG : ''); }
+  function load(slot, i) { if (loadedIdx[slot] === i && frames[slot].dataset.o === ori) return; loadedIdx[slot] = i; frames[slot].dataset.o = ori; frames[slot].src = src(i); }
+  function ready(slot) { try { var w = frames[slot].contentWindow; return !!(w && w.__ready && w.seek) && loadedIdx[slot] === cur; } catch (e) { return false; } }
+
+  function go(i, play) {
+    if (i < 0 || i >= S.length) { if (i >= S.length) { setPlay(false); cur = S.length - 1; } return; }
+    var back = 1 - front;
+    if (loadedIdx[back] === i && frames[back].dataset.o === ori) front = back; else load(front, i);
+    cur = i; frames[front].classList.add('on'); frames[1 - front].classList.remove('on');
+    srcT = performance.now(); au.src = 's/' + S[i][0] + '.m4a'; au.currentTime = 0; clk = 0;
+    if (i + 1 < S.length) { load(1 - front, i + 1); pre.src = 's/' + S[i + 1][0] + '.m4a'; }
+    $('now').textContent = pad(i) + ' ' + S[i][1];
+    ch.querySelectorAll('button').forEach(function (b, k) { b.setAttribute('aria-current', String(k === i)); });
+    if (play !== undefined) setPlay(play); else if (playing) au.play().catch(function () {});
+    if (window.gtag && started) gtag('event', 'film_scene', { scene: S[i][0], orientation: ori });
+  }
+  function setPlay(p) {
+    playing = p; $('pp').textContent = p ? '❚❚' : '▶'; $('pp').setAttribute('aria-label', p ? (UI.pause || 'Pause') : (UI.play || 'Play'));
+    big.hidden = p || started; if (p) { started = true; poster.hidden = true; big.hidden = true; au.play().catch(function () {}); } else au.pause();
+  }
+  big.onclick = function () { if (window.gtag) gtag('event', 'film_play', { orientation: ori }); if (cur < 0) go(START_AT, true); else setPlay(true); };
+  $('pp').onclick = function () { if (cur < 0) go(START_AT, true); else setPlay(!playing); };
+  // share: the film link (with the scene now showing, e.g. /film/#cross) — the phone's share sheet, else copy the link
+  function toast(msg) { var t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(function () { t.hidden = true; }, 2200); }
+  $('share').onclick = function () {
+    var i = cur >= 0 ? cur : START_AT, url = location.origin + location.pathname + (LANG !== SRC ? '?lang=' + LANG : '') + (i > 0 ? '#' + S[i][0] : '');
+    var title = UI.title || document.title, text = (UI.shareText || '') + (i > 0 ? ' — ' + S[i][1] : '');
+    function copy() {   // PC (and any share-sheet failure): copy the link and say so
+      var done = function () { toast(UI.copied || 'Link copied'); if (window.gtag) gtag('event', 'share', { method: 'copy', content_type: 'film', item_id: S[i][0] }); };
+      if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(url).then(done, legacy); else legacy();
+      function legacy() { var ta = document.createElement('textarea'); ta.value = url; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;left:-9999px';
+        document.body.appendChild(ta); ta.select(); var ok = false; try { ok = document.execCommand('copy'); } catch (e) {} ta.remove(); if (ok) done(); else prompt('', url); }
+    }
+    // the system share sheet wherever the browser has one (phones and Windows/macOS PCs alike); if it can't open, copy the link
+    var data = { title: title, text: text, url: url };
+    if (navigator.share && (!navigator.canShare || navigator.canShare(data)))
+      navigator.share(data).then(function () { if (window.gtag) gtag('event', 'share', { method: 'native', content_type: 'film', item_id: S[i][0] }); })
+        .catch(function (e) { if (!e || e.name !== 'AbortError') { console.warn('share failed:', e); copy(); } });
+    else copy();
+  };
+  $('prev').onclick = function () { go(Math.max(0, cur - 1), playing || cur < 0); };
+  $('next').onclick = function () { go(Math.min(S.length - 1, cur + 1), playing || cur < 0); };
+  stage.onclick = function (e) { if (e.target === big || big.contains(e.target)) return; if (started) setPlay(!playing); };
+  document.querySelectorAll('.bar [data-o]').forEach(function (b) { b.onclick = function () {
+    if (ori === b.dataset.o) return; ori = b.dataset.o; var t = au.currentTime; size();
+    if (cur >= 0) { loadedIdx = [-1, -1]; var i = cur; cur = -1; go(i); au.currentTime = t; } }; });
+  $('fs').onclick = function () {
+    var on = !document.body.classList.contains('full'); document.body.classList.toggle('full', on);
+    try { if (on && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function () {}); else if (!on && document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
+    size(); poke();
+  };
+  document.addEventListener('fullscreenchange', function () { if (!document.fullscreenElement && document.body.classList.contains('full')) { document.body.classList.remove('full'); size(); } });
+  var idleT; function poke() { document.body.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(function () { if (playing) document.body.classList.add('idle'); }, 2500); }
+  addEventListener('pointermove', poke); addEventListener('touchstart', poke, { passive: true });
+  au.addEventListener('ended', function () { if (playing) go(cur + 1); });
+  // if the sound is paused/started outside the player (lock screen, notification, headset, system), follow it — never restart it
+  au.addEventListener('pause', function () { if (selfPause) { selfPause = false; return; } if (performance.now() - srcT < 400) return; if (playing && !au.ended) setPlay(false); });
+  au.addEventListener('play', function () { if (!playing && started) { playing = true; $('pp').textContent = '❚❚'; $('pp').setAttribute('aria-label', (UI.pause || 'Pause')); } });
+  // leaving the page (tab/app switch, closing the browser) pauses the sound too — hidden tabs stop drawing, so sound alone must not go on
+  document.addEventListener('visibilitychange', function () { if (document.hidden && playing) setPlay(false); });
+  addEventListener('pagehide', function () { setPlay(false); try { au.removeAttribute('src'); au.load(); } catch (e) {} });
+  // lock-screen / notification media controls drive this player
+  if ('mediaSession' in navigator) { try {
+    navigator.mediaSession.metadata = new MediaMetadata({ title: UI.title || document.title, artist: UI.brand || '', artwork: [{ src: '/icon-512.png', sizes: '512x512', type: 'image/png' }] });
+    navigator.mediaSession.setActionHandler('play', function () { if (cur < 0) go(0, true); else setPlay(true); });
+    navigator.mediaSession.setActionHandler('pause', function () { setPlay(false); });
+    navigator.mediaSession.setActionHandler('stop', function () { setPlay(false); });
+    navigator.mediaSession.setActionHandler('previoustrack', function () { go(Math.max(0, cur - 1)); });
+    navigator.mediaSession.setActionHandler('nexttrack', function () { go(Math.min(S.length - 1, cur + 1)); });
+  } catch (e) {} }
+
+  if (fpsOn) { fpsEl = document.createElement('div'); fpsEl.className = 'fps'; stage.appendChild(fpsEl); }
+  var selfPause = false, srcT = 0, fc = 0, fl = performance.now(), lastSeek = -1, pending = false, clk = 0, lastNow = performance.now();
+  (function loop(now) {
+    if (cur >= 0) {
+      var ok = ready(front), dt = Math.min(.5, (now - lastNow) / 1000);
+      // clock: the audio when it plays; a free clock if this browser can't play the sound file
+      if (!au.error) clk = au.currentTime || 0; else if (playing && ok) clk += dt;
+      var t = clk;
+      if (au.error && playing && clk >= S[cur][2]) { go(cur + 1); requestAnimationFrame(loop); lastNow = now; return; }
+      wait.hidden = ok || !started;
+      if (ok) {
+        if (!playing && au.paused && au.readyState < 1) t = 0;
+        if (t !== lastSeek || !playing) { try { frames[front].contentWindow.seek(t); } catch (e) {} lastSeek = t; fc++; }
+        if (playing && au.paused && !au.ended && !pending) { pending = true; au.play().catch(function () {}).then(function () { pending = false; }); }
+      } else if (playing && !au.paused) { selfPause = true; au.pause(); }   // keep sound in step with the picture while a scene loads
+      $('prog').style.width = (100 * t / S[cur][2]) + '%';
+      $('tm').textContent = fmt(START[cur] + t) + ' / ' + fmt(TOTAL);
+    }
+    if (fpsEl && now - fl > 1000) { fpsEl.textContent = Math.round(fc * 1000 / (now - fl)) + ' fps'; fc = 0; fl = now; }
+    lastNow = now; requestAnimationFrame(loop);
+  })(performance.now());
+
+  $('tm').textContent = '0:00 / ' + fmt(TOTAL);
+  size();
+  load(0, START_AT); loadedIdx[0] = START_AT; frames[0].dataset.o = ori;  // warm up the first scene behind the poster
+  $('now').textContent = pad(START_AT) + ' ' + S[START_AT][1]; if (START_AT > 0) $('tm').textContent = fmt(START[START_AT]) + ' / ' + fmt(TOTAL);
+})();
+</script>
+</body>
+</html>

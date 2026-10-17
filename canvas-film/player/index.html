@@ -51,6 +51,14 @@
   body.full.idle .bar{opacity:0}
   .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#f4efe6;color:#14110b;padding:10px 16px;border-radius:999px;font-size:.875rem;z-index:20;box-shadow:0 6px 20px rgba(0,0,0,.4);transition:opacity .3s}
   .toast[hidden]{display:none}
+  /* ?embed=1 — just the stage and the controls, for an <iframe> on another page */
+  body.embed main{padding:0}
+  body.embed .top,body.embed h1,body.embed .sub,body.embed .chapters,body.embed .back,body.embed footer{display:none}
+  body.embed .stage{border-radius:0;box-shadow:none}
+  body.embed .bar{padding:0 10px 8px;gap:6px}
+  body.embed .bar button{padding:6px 10px}
+  body.embed .bar .grow{min-width:50px}
+  body.embed #share{display:none}
   .fps{position:absolute;right:8px;top:6px;font:12px/1 ui-monospace,monospace;color:#7f7;background:rgba(0,0,0,.6);padding:3px 6px;border-radius:4px;z-index:12}
 </style>
 </head>
@@ -112,7 +120,8 @@
   var stage = $('stage'), frames = [$('fa'), $('fb')], big = $('big'), wait = $('wait'), poster = $('poster');
   var au = new Audio(); au.preload = 'auto'; au.setAttribute('playsinline', '');
   var pre = new Audio(); pre.preload = 'auto';
-  var ori = matchMedia('(orientation: portrait)').matches ? 'v' : 'h';
+  var EMBED = /[?&]embed=1/.test(location.search); if (EMBED) document.body.classList.add('embed');
+  var ori = (location.search.match(/[?&]o=([hv])\b/) || [])[1] || (matchMedia('(orientation: portrait)').matches ? 'v' : 'h');   // ?o=h|v picks one
   var cur = -1, front = 0, playing = false, started = false, loadedIdx = [-1, -1], fpsOn = /[?&]fps=1/.test(location.search), fpsEl = null;
   var pad = function (n) { return (n < 10 ? '0' : '') + n; };
   var fmt = function (s) { s = Math.max(0, s | 0); return Math.floor(s / 60) + ':' + pad(s % 60); };
@@ -125,7 +134,7 @@
   function size() {
     var W = ori === 'v' ? 1080 : 1920, H = ori === 'v' ? 1920 : 1080, full = document.body.classList.contains('full');
     var pc = getComputedStyle(stage.parentNode), inner = stage.parentNode.clientWidth - parseFloat(pc.paddingLeft) - parseFloat(pc.paddingRight);
-    var maxW = full ? innerWidth : Math.min(inner, 1100), maxH = full ? innerHeight : Math.max(240, innerHeight - 150);
+    var maxW = full ? innerWidth : Math.min(inner, 1100), maxH = full ? innerHeight : Math.max(240, innerHeight - (EMBED ? $('bar').offsetHeight + 18 : 150));
     var s = Math.min(maxW / W, maxH / H), w = Math.round(W * s), h = Math.round(H * s);
     if (!full) { stage.style.width = w + 'px'; stage.style.height = h + 'px'; }
     var ox = full ? (innerWidth - w) / 2 : 0, oy = full ? (innerHeight - h) / 2 : 0;
@@ -134,6 +143,7 @@
     document.querySelectorAll('.bar [data-o]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.o === ori)); });
   }
   addEventListener('resize', size);
+  if (EMBED && window.ResizeObserver) new ResizeObserver(function () { size(); }).observe($('bar'));   // the bar wraps once its text arrives
 
   function src(i) { return 's/' + S[i][0] + '.html?render=1' + (ori === 'v' ? '&o=v' : '') + (LANG !== SRC ? '&lang=' + LANG : ''); }
   function load(slot, i) { if (loadedIdx[slot] === i && frames[slot].dataset.o === ori) return; loadedIdx[slot] = i; frames[slot].dataset.o = ori; frames[slot].src = src(i); }

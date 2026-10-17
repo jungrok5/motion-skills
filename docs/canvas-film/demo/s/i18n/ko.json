@@ -1,0 +1,25 @@
+{
+ "_dir": "ltr",
+ "_fonts": {
+  "serif": "'Noto Serif KR',serif",
+  "sans": "'Noto Sans KR',sans-serif"
+ },
+ "_ui": {
+  "title": "canvas-film 예제",
+  "ch": [
+   "새벽"
+  ],
+  "play": "재생",
+  "pause": "일시정지",
+  "share": "공유",
+  "copied": "링크를 복사했어요",
+  "landscape": "가로",
+  "portrait": "세로"
+ },
+ "dawn": {
+  "01  ·  Dawn": "01  ·  새벽",
+  "The darkest night ends with a single line of light.": "가장 어두운 밤도 한 줄기 빛으로 끝납니다.",
+  "The darkest night\nends with a single line of light.": "가장 어두운 밤도\n한 줄기 빛으로 끝납니다.",
+  "canvas-film example": "canvas-film 예제"
+ }
+}

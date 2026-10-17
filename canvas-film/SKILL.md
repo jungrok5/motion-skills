@@ -60,7 +60,8 @@ installed locally (`~/.local/share/fonts`, e.g. Noto Serif/Sans KR) — renders 
    Hours of CPU; run in the background, check with stills before.
 6. **Publish the live player**: `publish.py` → `site/`; add `poster-h.jpg`/`poster-v.jpg` (a still of the title card) per
    language; deploy `site/` anywhere static. Check CSP (`media-src`, `font-src` self), and that a service worker does not
-   intercept the m4a range requests.
+   intercept the m4a range requests. To put the player inside another page, iframe it with `?embed=1` (stage + controls
+   only) and optionally `&o=h|v` (fix the orientation) and `&lang=xx`.
 7. **Languages** (`references/I18N.md`): scan source strings → per-language translation files (Scripture/quotes verbatim
    from each language's own official text, site prose reused from the site's own translation, scene-only labels
    translated) → scan for leaks → stills → **native-review agent per language** → fix → publish. Batch 4–6 languages at a
