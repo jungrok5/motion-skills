@@ -12,7 +12,7 @@ wrapped in a player (play/pause, scrubber, chapter chips, speed 1× / 0.75× / 0
 
 `<skill>` below means this folder (e.g. `.claude/skills/tech-motion-explainer`). All scripts run from the **project root**.
 
-**Worked example repo:** github.com/jungrok5/motion-graphics (live: jungrok5.github.io/motion-graphics) — 12 topics on MMO
+**Worked example repo:** github.com/jungrok5/mmo-server-explained (live: jungrok5.github.io/mmo-server-explained) — 12 topics on MMO
 server and network behaviour, their vertical cuts and 3D approach pages, built with this skill. Pages cited below by folder name
 (`boss-lag-shorts/`, `ue-client-threads/`, `slow-client/`, `one-byte/`, `*-wide/` …) live there. The repo may be renamed; GitHub redirects the github.com URL.
 

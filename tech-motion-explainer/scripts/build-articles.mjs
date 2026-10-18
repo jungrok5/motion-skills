@@ -16,8 +16,8 @@ const between = (s, a, b, from = 0) => { const i = s.indexOf(a, from); if (i < 0
 const gallery = fs.readFileSync('index.html', 'utf8');
 const VIDEOS = Function(`return [${between(gallery, 'const VIDEOS = [', '\n  ];')}]`)();
 
-const FONTS = `@font-face { font-family: Pretendard; src: url(assets/fonts/Pretendard-Variable.woff2) format("woff2"), url(../assets/fonts/Pretendard-Variable.woff2) format("woff2"); font-weight: 100 900; }
-  @font-face { font-family: "JetBrains Mono"; src: url(assets/fonts/JetBrainsMono.woff2) format("woff2"), url(../assets/fonts/JetBrainsMono.woff2) format("woff2"); font-weight: 100 800; }`;
+const FONTS = `@font-face { font-family: Pretendard; src: url(../assets/fonts/Pretendard-Variable.woff2) format("woff2"), url(assets/fonts/Pretendard-Variable.woff2) format("woff2"); font-weight: 100 900; }
+  @font-face { font-family: "JetBrains Mono"; src: url(../assets/fonts/JetBrainsMono.woff2) format("woff2"), url(assets/fonts/JetBrainsMono.woff2) format("woff2"); font-weight: 100 800; }`;
 const CSS = `
   /* Reading page: one 720px column, light and dark. */
   ${FONTS}

@@ -1,6 +1,6 @@
 # 분해해 들어가기 — craft notes (first sample: packet-zoom)
 
-The look of the first sample was copied from a reference and is not the rule; take the look from the topic (see STYLES.md). The samples named here are in the worked example repo, github.com/jungrok5/motion-graphics.
+The look of the first sample was copied from a reference and is not the rule; take the look from the topic (see STYLES.md). The samples named here are in the worked example repo, github.com/jungrok5/mmo-server-explained.
 Techniques below still apply.
 
 What worked (packet-zoom):

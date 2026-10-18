@@ -1,6 +1,6 @@
 # 실물을 공간에 늘어놓기 — craft notes (first samples: skill-journey-glass, boss-lag-glass)
 
-The look of the first sample was copied from a reference and is not the rule; take the look from the topic (see STYLES.md). The samples named here are in the worked example repo, github.com/jungrok5/motion-graphics.
+The look of the first sample was copied from a reference and is not the rule; take the look from the topic (see STYLES.md). The samples named here are in the worked example repo, github.com/jungrok5/mmo-server-explained.
 Techniques below still apply.
 
 What worked (skill-journey-glass, boss-lag-glass):

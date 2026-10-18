@@ -55,7 +55,7 @@ If none fits, keep the 2D explainer. Do not force a topic into an approach; a fo
 
 Reference pages that follow these rules (look from the topic, wide = full explainer) — read the one for your approach before building.
 One is bundled: `<skill>/starter/server-tick-inside-wide/index.html` (분해). The rest are in the worked example repo,
-github.com/jungrok5/motion-graphics (live at jungrok5.github.io/motion-graphics/<folder>/), each retelling the 2D topic of the same name:
+github.com/jungrok5/mmo-server-explained (live at jungrok5.github.io/mmo-server-explained/<folder>/), each retelling the 2D topic of the same name:
 
 | Approach | Wide | Vertical |
 |---|---|---|

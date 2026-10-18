@@ -448,7 +448,7 @@ window.DURATION = DURATION;
 window.ready = (async () => {
   const faces = [['Pretendard', 'Pretendard-Variable.woff2', '100 900'], ['JetBrains Mono', 'JetBrainsMono.woff2', '100 800']];
   for (const [family, file, weight] of faces) {
-    for (const base of ['assets/fonts/', '../assets/fonts/']) {
+    for (const base of ['../assets/fonts/', 'assets/fonts/']) {
       try { document.fonts.add(await new FontFace(family, `url(${base}${file})`, { weight }).load()); break; } catch (e) { /* try next */ }
     }
   }

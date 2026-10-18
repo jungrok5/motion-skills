@@ -1,6 +1,6 @@
 # Lessons — what went wrong and the fixes
 
-From building the worked example (github.com/jungrok5/motion-graphics: 12 topics, vertical cuts, 3D approach pages, MP4s) and the
+From building the worked example (github.com/jungrok5/mmo-server-explained: 12 topics, vertical cuts, 3D approach pages, MP4s) and the
 scroll-embedded résumé pieces (github.com/jungrok5/resume → `public/motion/`).
 
 ## Look and approach

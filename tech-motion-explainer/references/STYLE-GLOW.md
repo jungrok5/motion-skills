@@ -1,6 +1,6 @@
 # 흐름과 관계를 빛으로 — craft notes (first samples: skill-journey-glow, boss-lag-glow)
 
-The look of the first sample was copied from a reference and is not the rule; take the look from the topic (see STYLES.md). The samples named here are in the worked example repo, github.com/jungrok5/motion-graphics.
+The look of the first sample was copied from a reference and is not the rule; take the look from the topic (see STYLES.md). The samples named here are in the worked example repo, github.com/jungrok5/mmo-server-explained.
 Techniques below still apply.
 
 What worked (skill-journey-glow, boss-lag-glow):

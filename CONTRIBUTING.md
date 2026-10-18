@@ -1,7 +1,7 @@
 # 스킬 추가하기 · 다른 레포에서 흡수하기
 
 이 레포는 모션그래픽 스킬 모음입니다. 스킬은 대개 다른 프로젝트 레포에서 실제 작품을 만들며 다듬어진 뒤 여기로 흡수됩니다
-(`canvas-film/` ← one-scroll-bible의 `motion/`, `tech-motion-explainer/` ← motion-graphics의 `.claude/skills/`).
+(`canvas-film/` ← one-scroll-bible의 `motion/`, `tech-motion-explainer/` ← mmo-server-explained(옛 이름 motion-graphics)의 `.claude/skills/`).
 새 스킬도 같은 모양으로 들어오도록 순서를 정리합니다. 에이전트가 이 일을 할 때도 이 문서를 그대로 따릅니다.
 
 순서 요약:

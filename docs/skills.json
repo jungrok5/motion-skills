@@ -27,9 +27,9 @@
       "stats": ["12 주제", "설명 방식 7가지"],
       "page": "tech-motion-explainer/",
       "source": "tech-motion-explainer/",
-      "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-graphics", "path": ".claude/skills/tech-motion-explainer/" },
+      "absorbedFrom": { "repo": "https://github.com/jungrok5/mmo-server-explained", "path": ".claude/skills/tech-motion-explainer/" },
       "workedExample": [
-        { "title": "MMO 서버 · 네트워크 설명 영상 12편", "url": "https://jungrok5.github.io/motion-graphics/" },
+        { "title": "MMO 서버 · 네트워크 설명 영상 12편", "url": "https://jungrok5.github.io/mmo-server-explained/" },
         { "title": "인터랙티브 이력서 · 스크롤 재생 12조각", "url": "https://jungrok5.github.io/resume/interactive.html" }
       ]
     }
