@@ -1,0 +1,634 @@
+<meta charset="utf-8">
+<title>Column Rename Desk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Layout: one 16:9 stage, a slim transport bar under it, chapter chips below. Single dark look. */
+  :root {
+    --bg: #050c0d; --surface: #0e1719; --line: #22343a; --fg: #e8ecf4; --dim: #8b95a7;
+    --accent: #2dd4bf; --live: #c3e86b; --text2: #c3cad8;
+    --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    color-scheme: dark;
+  }
+  html, body { min-height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding-block: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    box-sizing: border-box; overflow-x: hidden; }
+  .player { width: min(100%, calc((100vh - 170px) * 16 / 9)); min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .stage { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--line); background: var(--bg); cursor: pointer; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .big { position: absolute; inset: auto 0 5% 0; margin: 0 auto; width: clamp(44px, 11%, 84px); height: auto; aspect-ratio: 1; border-radius: 50%; border: 1.5px solid var(--accent);
+    background: rgba(14,20,36,.78); color: var(--fg); display: grid; place-items: center; cursor: pointer; transition: transform .15s, opacity .2s; }
+  .big[hidden] { display: none; }
+  .big:hover { transform: scale(1.06); }
+  .big svg { width: 36%; height: 36%; margin-left: 6%; }
+  .big.replay svg { margin-left: 0; }
+  .bar { display: flex; align-items: center; gap: 14px; }
+  .btn { flex: none; width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface);
+    color: var(--fg); display: grid; place-items: center; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn svg { width: 16px; height: 16px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .time { flex: none; font: 500 13px/1 var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
+  .scrub { position: relative; flex: 1; min-width: 0; height: 28px; cursor: pointer; touch-action: none; }
+  .track { position: absolute; left: 0; right: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--line); }
+  .fill { position: absolute; left: 0; top: 12px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--live)); }
+  .tick { position: absolute; top: 8px; width: 2px; height: 12px; background: var(--dim); opacity: .6; }
+  .knob { position: absolute; top: 7px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--fg); box-shadow: 0 0 0 4px rgba(45,212,191,.25); }
+  .chapters { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chapters button { font: 600 13px/1 var(--sans); color: var(--dim); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+  .chapters button span { font-family: var(--mono); color: var(--accent); margin-right: 6px; }
+  .chapters button:hover { color: var(--fg); }
+  .chapters button[aria-current="true"] { color: var(--fg); border-color: var(--accent); background: rgba(45,212,191,.12); }
+  .hint { font-size: 12px; color: var(--dim); margin-left: auto; }
+  @media (max-width: 600px) { .hint { display: none; } .time { font-size: 12px; } }
+  .set { display: flex; flex-wrap: wrap; gap: 8px; }
+  .set a { font: 600 13px/1 var(--sans); color: var(--fg); text-decoration: none; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; background: var(--surface); }
+  .set a:hover { border-color: var(--accent); }
+  body.poster .set { display: none; }
+  .rate { width: auto; min-width: 56px; padding: 0 10px; font: 600 13px/1 var(--mono); }
+  /* Notes under the player: chapter-by-chapter explanation + glossary */
+  .notes { width: min(100%, 860px); margin-top: 56px; padding-bottom: 48px; font-size: 16px; line-height: 1.75; word-break: keep-all; overflow-wrap: anywhere; }
+  .notes h2 { font-size: 22px; line-height: 1.4; margin: 48px 0 16px; text-wrap: balance; }
+  .notes h2:first-child { margin-top: 0; }
+  .notes h2 .more { font: 600 13px/1 var(--sans); color: var(--accent); margin-left: 10px; white-space: nowrap; }
+  .notes .lede { font-size: 18px; color: var(--fg); }
+  .notes p, .notes li { color: var(--text2); }
+  .notes ul { padding-left: 1.2em; }
+  .notes article { border-top: 1px solid var(--line); padding-top: 20px; margin-top: 24px; }
+  .notes h3 { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 18px; line-height: 1.4; margin: 0 0 8px; }
+  .notes h3 .n { font: 600 13px/1 var(--mono); color: var(--accent); }
+  .notes h3 button { margin-left: auto; font: 600 12px/1 var(--sans); color: var(--dim); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 6px 10px; cursor: pointer; }
+  .notes h3 button:hover { color: var(--fg); border-color: var(--accent); }
+  .notes code { font: 500 .88em var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; overflow-wrap: anywhere; }
+  .notes .terms { display: grid; grid-template-columns: minmax(110px, max-content) minmax(0, 1fr); gap: 12px 24px; margin: 0; }
+  .notes dt { font-weight: 700; }
+  .notes dd { margin: 0; color: var(--text2); }
+  @media (max-width: 600px) { .notes .terms { grid-template-columns: minmax(0, 1fr); gap: 2px; } .notes dd { margin-bottom: 14px; } }
+  /* #poster: embed mode for gallery thumbnails — canvas only, loops */
+  body.poster { padding: 0; }
+  body.poster .player { width: 100%; }
+  body.poster .bar, body.poster .chapters, body.poster .big, body.poster .notes { display: none; }
+  body.poster .stage { border: 0; border-radius: 0; }
+</style>
+
+<div class="player">
+  <div class="stage" id="stage">
+    <canvas id="c" width="1920" height="1080" aria-label="컬럼 이름 무중단 변경: 마이그레이션 파일, 터미널, 테이블, 백필 로그, 복제 지연 대시보드를 둥글게 늘어놓은 3D 모션그래픽"></canvas>
+    <button class="big" id="big" aria-label="재생"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg></button>
+  </div>
+  <div class="bar">
+    <button class="btn" id="play" aria-label="재생"></button>
+    <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="34" aria-valuenow="0">
+      <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+    </div>
+    <div class="time" id="time">0:00 / 0:34</div>
+    <button class="btn rate" id="rate" aria-label="재생 속도 1배">1×</button>
+    <button class="btn" id="fs" aria-label="전체 화면"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+  <div class="chapters" id="chapters"></div>
+  <nav class="set" aria-label="같은 주제"><a href="article.html">설명 읽기</a><a href="terms.html">용어집</a></nav>
+</div>
+<!-- Source text for article.html (설명) and terms.html (용어집); scripts/build-articles.mjs builds both. Not shown on this page. -->
+<section class="notes" id="notes" hidden>
+<p class="lede">운영 중인 PostgreSQL 테이블의 컬럼 이름을 <code>users.name</code>에서 <code>users.full_name</code>으로 바꾸는 과정을, 실제로 보게 되는 파일과 화면(마이그레이션 SQL, 터미널, 테이블 조회, 백필 로그, 복제 지연 그래프)으로 보여 준다. <code>RENAME COLUMN</code> 한 번은 아직 옛 이름을 쓰는 앱 서버를 바로 깨뜨리므로, 추가 → 이중 쓰기 → 백필 → 삭제의 네 단계로 나누어 각 단계에서 앱과 스키마가 서로 호환되게 한다.</p>
+
+<article data-ch="01">
+<p>왼쪽 에디터에 <code>0042_add_full_name.sql</code>이 타이핑된다. <code>ALTER TABLE users ADD COLUMN full_name text;</code>로 새 컬럼을 nullable, 기본값 없이 추가한다. 터미널에서 <code>migrate up</code>이 이 파일을 적용하고, 위쪽 <code>users</code> 테이블에 <code>full_name</code> 열이 생긴다. 기존 행의 값은 모두 <code>NULL</code>이다.</p>
+<p>PostgreSQL에서 nullable이고 기본값이 없는 컬럼 추가는 테이블을 다시 쓰지 않고 카탈로그만 바꾸므로 잠금이 짧다. 그래도 <code>ACCESS EXCLUSIVE</code> 잠금을 잠깐 잡기 때문에, 긴 트랜잭션 뒤에서 기다리지 않도록 <code>lock_timeout</code>을 두는 것이 일반적이다.</p>
+</article>
+
+<article data-ch="02">
+<p>앱 코드 <code>UserRepo.ts</code>의 저장 함수에 <code>full_name: u.fullName</code> 한 줄이 추가되고 버전이 <code>v2</code>가 된다. v2는 <code>name</code>과 <code>full_name</code>에 같은 값을 쓰고, 읽기는 아직 <code>name</code>에서 한다.</p>
+<p>v2가 배포된 뒤 새로 가입한 두 행은 처음부터 두 컬럼이 모두 채워진다. 기존 행의 <code>full_name</code>은 여전히 <code>NULL</code>이다. 이 단계에서는 v1과 v2가 함께 떠 있어도 둘 다 정상 동작한다.</p>
+</article>
+
+<article data-ch="03">
+<p>백필 로그에 1만 행 단위 배치가 차례로 찍힌다. 각 배치는 <code>UPDATE users SET full_name = name WHERE id BETWEEN … AND full_name IS NULL</code>처럼 범위를 나눠 짧게 끝나는 트랜잭션이다. 테이블의 기존 행이 배치가 지나갈 때마다 하나씩 채워진다.</p>
+<p>오른쪽 대시보드의 복제 지연 그래프가 중간에 정지 기준(5초)을 넘자, 로그에 <code>pause</code> 줄이 찍히고 백필이 잠시 쉬었다가 이어진다. 한 번에 전체를 갱신하지 않고 배치와 쉬는 시간을 두는 이유는 잠금 시간과 복제 지연을 작게 유지하기 위해서다. 행 수, 시간, 지연 수치는 예시다.</p>
+</article>
+
+<article data-ch="04">
+<p>앱이 <code>full_name</code>만 읽고 쓰는 v3로 바뀐 것을 확인한 뒤(<code>name</code> 참조 0건), 마지막 파일 <code>0043_drop_name.sql</code>의 <code>ALTER TABLE users DROP COLUMN name;</code>을 적용한다. 테이블에서 <code>name</code> 열이 사라진다.</p>
+<p>삭제를 맨 끝에 두는 이유는, 그 전까지는 어느 단계에서 멈춰도 앱과 스키마가 호환되기 때문이다. <code>name</code>을 지운 뒤에는 v1, v2로 되돌릴 수 없다.</p>
+</article>
+
+<h2>용어 정리</h2>
+<dl class="terms">
+<dt>마이그레이션</dt><dd>데이터베이스 스키마를 바꾸는 변경 하나. 번호가 붙은 SQL 파일(<code>0042_…sql</code>)로 관리하고 순서대로 적용한다.</dd>
+<dt>Expand / Contract</dt><dd>스키마를 먼저 넓히고(추가), 앱을 옮기고, 마지막에 좁히는(삭제) 방식. 단계마다 옛 앱과 새 앱이 모두 동작한다.</dd>
+<dt>nullable 컬럼</dt><dd><code>NULL</code>을 허용하는 컬럼. 기존 행에 값을 채울 필요가 없어 바로 추가할 수 있다.</dd>
+<dt>이중 쓰기 (dual write)</dt><dd>옮기는 동안 앱이 옛 컬럼과 새 컬럼에 같은 값을 쓰는 것.</dd>
+<dt>백필 (backfill)</dt><dd>새 컬럼이 생기기 전부터 있던 행을 옛 값으로 채우는 작업. 작은 배치로 나눠 실행한다.</dd>
+<dt>복제 지연 (replication lag)</dt><dd>복제본(replica)이 주 서버의 변경을 따라오지 못하고 뒤처진 시간. 대량 갱신 때 커진다.</dd>
+<dt><code>ACCESS EXCLUSIVE</code> 잠금</dt><dd><code>ALTER TABLE</code>이 잡는 가장 강한 테이블 잠금. 잡혀 있는 동안 그 테이블의 읽기와 쓰기가 기다린다.</dd>
+<dt><code>lock_timeout</code></dt><dd>잠금을 기다리는 최대 시간. 넘으면 문장이 실패하므로, 마이그레이션이 다른 쿼리를 오래 막지 않는다.</dd>
+</dl>
+</section>
+<script type="importmap">
+{ "imports": { "three": "../assets/vendor/three/build/three.module.min.js", "three/addons/": "../assets/vendor/three/examples/jsm/" } }
+</script>
+<script type="module">
+// ─────────────────────────────────────────────────────────────
+//  컬럼 이름 바꾸기, 서비스 멈추지 않고 — 실물을 공간에 늘어놓기 (16:9, template for kits/artifacts-desk)
+//  The things a DBA actually looks at stand on an arc around the viewer, in step order: the expand migration and its
+//  terminal, the app code, the users table (hung high, centre), the backfill log, the replica-lag dashboard, the contract
+//  migration. The camera stands inside the ring and turns from one to the next. Look comes from the subject: a database
+//  console in a dim server room (teal = new column, coral = old column, sky = app, lime = backfill).
+//  Engine: ../assets/kits/artifacts-desk.js. Everything below the imports is this topic.
+// ─────────────────────────────────────────────────────────────
+import * as THREE from 'three';
+import { createDesk, createPaint, camPath, raw, lift, loadFonts, rgba } from '../assets/kits/artifacts-desk.js';
+
+const W = 1920, H = 1080, DURATION = 34;
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+const SANS = 'Pretendard, "WenQuanYi Zen Hei", "DejaVu Sans", sans-serif';
+const MONO = '"JetBrains Mono", Pretendard, "DejaVu Sans Mono", monospace';
+
+// ── math / easing ────────────────────────────────────────────
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const p = (t, s, d) => clamp((t - s) / d);
+const eo = t => 1 - Math.pow(1 - t, 3);
+const eio = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const eback = t => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
+const win = (t, s, e, f = .45) => Math.min(eo(p(t, s, f)), 1 - eio(p(t, e - f, f)));
+const fmt = n => Math.round(n).toLocaleString('en-US');
+
+// ── palette: a database console in a dim server room ─────────
+// Roles: teal = new column full_name (expand) · coral = old column name (contract) · sky = app code / deploys ·
+// lime = backfill (rows being copied) · warn = throttle · red = threshold only.
+const K = {
+  desk: '#050c0d', body: '#11181b', bar: '#182125', border: '#283439', line: '#1f2a2e', text: '#c3cfd3', hi: '#eaf2f4', dim: '#7f9299', faint: '#4d5e65',
+  term: '#0b1113', termBar: '#141c1f', panel: '#141c20', pborder: '#26333a',
+  neu: '#2dd4bf', old: '#ff8a65', app: '#7cc4ff', fill: '#c3e86b', warn: '#f5c46b', red: '#ff5468',
+};
+const SY = { kw: '#b3a1ff', str: '#c3e86b', num: '#f5c46b', com: '#5d7178', fn: '#7cc4ff', prop: '#2dd4bf', txt: '#c3cfd3', punc: '#8ea2a9' };
+
+// ── timeline ─────────────────────────────────────────────────
+const HEAD = [
+  [3.8, 10.6, '01', '컬럼 추가', '새 컬럼을 nullable로 먼저 만든다'],
+  [10.6, 17.4, '02', '이중 쓰기', '앱 v2가 name과 full_name에 같이 쓴다'],
+  [17.4, 25.4, '03', '백필', '기존 행은 작은 배치로 나눠 채운다'],
+  [25.4, 31.0, '04', '삭제', '아무도 name을 안 쓸 때 지운다'],
+];
+const OUT0 = 31.0;
+const STEP = ['추가', '이중 쓰기', '백필', '삭제'], STEP_COL = [K.neu, K.app, K.fill, K.old];
+
+// ── kit: painters + desk, with this topic's look ─────────────
+const paint = createPaint({
+  sans: SANS, mono: MONO, radius: 10,
+  text: K.text, hi: K.hi, dim: K.dim, faint: K.faint, bg: K.body, bar: K.bar, border: K.border, line: K.line, accent: K.neu,
+  panel: K.panel, panelBorder: K.pborder, panelTitle: K.hi, grid: 'rgba(160,220,215,0.08)',
+  syntax: { colors: SY, ci: true, comment: ['--', '//'], quotes: '\'"',
+    kw: ['alter', 'table', 'add', 'drop', 'column', 'text', 'async', 'function', 'await'], prop: ['full_name'] },
+});
+const { TB, gt, mw, gdot, gcheck, gchip, frame, rr } = paint;
+const desk = createDesk({
+  paint, bg: K.desk, fov: 40, bloom: { strength: .55, radius: .5, threshold: .84 },
+  // floor: cool tiles, a soft ring where the steps stand, pools tinted by each screen's role
+  floor: { size: 400, center: [0, -10], base: [.007, .011, .012], grain: null, grid: { cell: 2, color: [.016, .03, .032], k: .7, fade: .03 },
+    pool: [.03, .05, .05], poolGain: .09, poolShape: .6, fadeTo: [.005, .009, .010], fade: .018, fadeGain: 1.5, pools: 8,
+    uniforms: { uRing: { value: 0 } },
+    glsl: `float rr = length(vW.xz); float ang = atan(vW.x, -vW.z);
+      c += vec3(.015,.07,.065) * exp(-abs(rr - 17.) * 1.6) * smoothstep(1.35, 1.15, abs(ang)) * uRing;` },
+  slab: { color: 0x0c1315 }, tint: .96, refl: { tint: .5, opacity: .16, fadeTo: '#555' },
+  rim: { radius: 10, topLo: .75, topRange: .25, sweepK: 1.3, sweepX: 1, sweepY: .35, sweepW: .004, speed: .28, phase: .04, period: 1.8, offset: .4 },
+  pool: { dz: 1.6, w: .6, base: .35, rim: .8 },
+  chip: { bg: '#071214', fg: '#effaf8', radius: 30, dot: 8 },
+  sway: { x: .04, y: .03 },
+});
+const { artPt, curve, seg, addChip, addDot } = desk;
+
+// ═════════════════════════════════════════════════════════════
+//  ARTIFACTS (content, layout and timing are this topic's)
+// ═════════════════════════════════════════════════════════════
+// E1 · the expand migration
+const E1_LINES = ['-- 0042 · expand', 'ALTER TABLE users', '  ADD COLUMN full_name text;', '', '-- nullable, 기본값 없음', '-- 기존 행은 NULL로 남는다'];
+const E1_CH = E1_LINES.reduce((s, l) => s + l.length + 1, 0);
+function drawE1(g, t) {
+  paint.editor(g, 820, 480, {
+    frame: { tabs: [['0042_add_full_name.sql', true, K.neu]], ver: t > 9.2 ? ['applied', K.neu, 1 - p(t, 9.2, 1)] : ['pending', K.dim] },
+    lines: E1_LINES, chars: E1_CH * p(t, 4.6, 2.4), t, size: 30, lh: 48, x: 92, y: TB + 64,
+    marks: [{ line: 2, from: 13, to: 22, col: K.neu, a: win(t, 6.9, 10.6) }], status: ['postgres · prod', 'SQL'],
+  });
+}
+// T · terminal
+const TERM = [[7.4, 'migrate up', 'cmd', .45], [8.2, 'applying 0042_add_full_name', 'out'], [8.6, 'ALTER TABLE   31 ms', 'out'], [9.0, '✓ schema 0042', 'ok']];
+function drawT(g, t) {
+  paint.terminal(g, 900, 300, t, { frame: { bg: K.term, bar: K.termBar, tabs: [['psql · migrate', true, K.neu]] },
+    events: TERM, prompt: ['db', K.neu], rows: 4, size: 30, lh: 48, colors: { out: K.dim, ok: K.neu } });
+}
+// A · application code (v1 → v2 adds the second write → v3 drops the old one)
+const A_LINES = ['async function saveUser(u) {', '  await db.users.update(u.id, {', '    name: u.fullName,', '  });', '}'];
+function drawA(g, t) {
+  const v = t < 12.0 ? 1 : t < 25.9 ? 2 : 3, k3 = eo(p(t, 25.9, .6));
+  const ed = paint.editor(g, 860, 450, {
+    frame: { role: ['app', K.app, 'api-server'], tabs: [['UserRepo.ts', true, K.app]], ver: ['v' + v, v === 1 ? K.dim : K.app, 1 - p(t, v === 2 ? 12.0 : 25.9, 1)] },
+    lines: A_LINES, t, caret: false, size: 29, lh: 48, x: 84, y: TB + 70,
+    insert: { at: 3, s: '    full_name: u.fullName,', k: eo(p(t, 11.4, .5)), chars: Math.floor(30 * p(t, 11.6, .6)), col: K.app },
+    band: [{ line: 2, col: K.old, a: k3 }],
+  });
+  if (k3 > 0) {   // v3: stops writing name
+    const y = ed.rowY(2) - 10, x0 = ed.colX(4), x1 = ed.colX(4 + 'name: u.fullName,'.length);
+    g.fillStyle = rgba(K.old, .9 * k3); g.fillRect(x0, y, (x1 - x0) * k3, 3);
+    gchip(g, 'v3: 쓰기 중단', x1 + 18, y, K.old, { size: 21, mono: false, alpha: k3 });
+  }
+  gt(g, v === 1 ? '읽기 · 쓰기: name' : v === 2 ? '쓰기: name + full_name · 읽기: name' : '읽기 · 쓰기: full_name', 30, 450 - 22, { size: 23, color: v === 3 ? K.neu : K.dim });
+}
+// TBL · the users table (sample rows)
+const ROWS = [[1201, 'Kim Minji'], [18234, 'Lee Jun'], [57002, 'Park Sora'], [93410, 'Choi Hana'], [120318, 'Jung Woo', 14.4], [120355, 'Han Yuri', 15.6]];
+// backfill batches: 12 × 10,000 ids; a pause when replica lag crosses 5 s
+const BATCH_T = Array.from({ length: 12 }, (_, i) => 18.6 + i * .45 + (i >= 6 ? 1.2 : 0));
+const PAUSE_T = 21.3;
+const filledAt = r => r[2] ?? BATCH_T[Math.floor((r[0] - 1) / 10000)] + .35;
+function drawTBL(g, t) {
+  const w = 1180, h = 600;
+  frame(g, w, h, { role: ['users', K.hi, 'table'], right: 'SELECT … LIMIT 6 · 예시 행' });
+  const kNew = eo(p(t, 9.4, .7)), kOld = 1 - eo(p(t, 29.0, .9)), oldHot = eo(p(t, 28.6, .4));
+  const x0 = 40, idW = 210, nameW = 400 * kOld, fx = x0 + idW + nameW, top = TB + 64, lh = 62;
+  gt(g, 'id', x0, top, { size: 26, mono: true, color: K.dim });
+  g.save(); g.beginPath(); g.rect(x0 + idW - 10, 0, nameW, h); g.clip();
+  gt(g, 'name', x0 + idW, top, { size: 26, mono: true, weight: 700, color: oldHot > 0 ? K.old : K.text });
+  g.restore();
+  if (kNew > 0) { gt(g, 'full_name', fx, top, { size: 26, mono: true, weight: 700, color: K.neu, alpha: kNew }); gchip(g, 'text · NULL 허용', fx + mw(g, 'full_name', 26, 700, true) + 16, top - 9, K.neu, { size: 19, mono: false, alpha: kNew }); }
+  g.fillStyle = K.border; g.fillRect(24, top + 18, w - 48, 1.5);
+  let done = 0, shown = 0;
+  ROWS.forEach((r, i) => {
+    const ka = r[2] ? eo(p(t, r[2] - .3, .4)) : 1; if (ka <= 0) return;
+    const y = top + 62 + shown * lh; shown++;
+    const fa = filledAt(r), fresh = 1 - p(t, fa + .2, 1.2), on = t >= fa && kNew > 0;
+    if (on) done++;
+    if (on && fresh > 0) { g.fillStyle = rgba(r[2] ? K.app : K.fill, .16 * fresh); g.fillRect(4, y - 40, w - 8, lh - 6); }
+    if (r[2] && ka < 1) { g.fillStyle = rgba(K.app, .2 * (1 - ka)); g.fillRect(4, y - 40, w - 8, lh - 6); }
+    gt(g, fmt(r[0]), x0, y, { size: 28, mono: true, color: K.dim, alpha: ka });
+    g.save(); g.beginPath(); g.rect(x0 + idW - 10, 0, nameW, h); g.clip();
+    gt(g, r[1], x0 + idW, y, { size: 28, mono: true, color: oldHot > 0 ? K.old : K.hi, alpha: ka });
+    g.restore();
+    if (kNew > 0) gt(g, on ? r[1] : 'NULL', fx, y, { size: 28, mono: true, color: on ? K.hi : K.faint, alpha: kNew * ka });
+  });
+  g.fillStyle = K.line; g.fillRect(0, h - 56, w, 1.5);
+  if (kNew > 0) gt(g, `full_name 채움 ${done} / ${shown}`, 28, h - 20, { size: 23, mono: true, color: done === shown ? K.neu : K.dim, alpha: kNew });
+  if (kOld < 1) gt(g, 'name 삭제됨', w - 28, h - 20, { size: 23, mono: true, weight: 700, color: K.old, align: 'right', alpha: 1 - kOld });
+}
+// LOG · backfill log (stock logTable, scrolling)
+const LOG_ROWS = [];
+BATCH_T.forEach((at, i) => LOG_ROWS.push({ at, color: K.fill, cells: [`batch ${String(i + 1).padStart(2, '0')}`, `id ${fmt(i * 10000 + 1)}–${fmt((i + 1) * 10000)}`, '10,000', `${70 + (i * 37) % 40} ms`] }));
+LOG_ROWS.splice(6, 0, { at: PAUSE_T, color: K.warn, cells: ['pause', 'replica lag > 5 s', '', 'sleep'] });
+function drawLOG(g, t) {
+  paint.logTable(g, 820, 560, t, {
+    frame: { bg: K.term, bar: K.termBar, tabs: [['backfill.log', true, K.fill]], right: '10,000 rows / batch' },
+    comment: ['-- SET full_name = name WHERE … IS NULL', SY.com], lh: 50, rows: LOG_ROWS, maxRows: 8, top: TB + 120,
+    cols: [{ x: 28, size: 29, color: 'row', weight: 700 }, { x: 196, size: 29, color: K.text }, { x: 560, size: 29, color: K.dim }, { x: 792, size: 29, color: K.dim, align: 'right' }],
+  });
+}
+// DASH · replica lag while the backfill runs (stock panel / lineChart / meter / stat)
+const lagAt = x => .7 + .2 * Math.sin(x * 4.3) + 4.9 * Math.exp(-(((x - 2.75) / .6) ** 2));
+function drawDASH(g, t) {
+  const w = 900, h = 560, x = clamp(t - 18.4, 0, 7.2), batches = BATCH_T.filter(b => t >= b).length;
+  frame(g, w, h, { bg: '#0e1517', bar: K.termBar, role: ['replica', K.fill, 'lag · backfill'], right: 'last 5m' });
+  const Y0 = TB + 16;
+  paint.panel(g, 16, Y0, w - 32, 300, '복제 지연 (s)');
+  const lag = lagAt(x);
+  paint.lineChart(g, { x0: 90, x1: w - 44, y0: Y0 + 270, y1: Y0 + 70, xMax: 7.2, yMax: 8, yTicks: [0, 4, 8],
+    threshold: { v: 5, col: K.red, label: '정지 기준 5 s' }, fn: lagAt, upto: x, step: .05, minX: .02, col: K.fill, dotColor: lag > 5 ? K.red : K.fill });
+  paint.panel(g, 16, Y0 + 316, 426, 150, null);
+  paint.meter(g, 40, Y0 + 360, '백필 진행', `${Math.round(batches / 12 * 100)}%`, batches / 12, K.fill, { w: 378, valueSize: 40 });
+  paint.stat(g, 458, Y0 + 316, 426, 150, 'p99 쓰기', `${Math.round(11 + 2 * Math.sin(x * 2))} ms`, K.app, null, { size: 52 });
+}
+// E2 · the contract migration
+const E2_LINES = ['-- 0043 · contract', '-- 전제: 앱 v3 배포 완료,', '--       name 읽기 · 쓰기 0건', 'ALTER TABLE users', '  DROP COLUMN name;'];
+const E2_CH = E2_LINES.reduce((s, l) => s + l.length + 1, 0);
+function drawE2(g, t) {
+  paint.editor(g, 820, 420, {
+    frame: { tabs: [['0043_drop_name.sql', true, K.old]], ver: t > 28.6 ? ['applied', K.old, 1 - p(t, 28.6, 1)] : ['pending', K.dim] },
+    lines: E2_LINES, chars: E2_CH * p(t, 26.3, 1.9), t, size: 30, lh: 48, x: 92, y: TB + 62,
+    marks: [{ line: 4, from: 14, to: 18, col: K.old, a: win(t, 27.9, 31) }],
+  });
+}
+
+// ── layout: an arc around the viewer, in step order (angle from straight ahead, radius, height) ─────
+const RING = (deg, r, y) => { const a = deg * Math.PI / 180; return { pos: [r * Math.sin(a), y, -r * Math.cos(a)], yaw: -a, deg }; };
+const SPEC = {
+  E1: { w: 820, h: 480, ...RING(-62, 22, 5.3), draw: drawE1, live: [[4.4, 10.4]], col: K.neu },
+  T: { w: 900, h: 300, ...RING(-43, 18.2, 1.9), draw: drawT, live: [[6.8, 9.6]], col: K.neu },
+  A: { w: 860, h: 450, ...RING(-24, 22, 5.0), draw: drawA, live: [[11.2, 13.2], [25.8, 27.0]], col: K.app },
+  TBL: { w: 1180, h: 600, ...RING(0, 24, 11.0), draw: drawTBL, live: [[9.2, 10.4], [13.9, 17.2], [18.6, 25.0], [28.4, 30.2]], col: K.neu },
+  LOG: { w: 820, h: 560, ...RING(22, 22, 5.0), draw: drawLOG, live: [[18.4, 25.0]], col: K.fill },
+  DASH: { w: 900, h: 560, ...RING(46, 22, 5.0), draw: drawDASH, live: [[18.3, 25.7]], col: K.fill },
+  E2: { w: 820, h: 420, ...RING(69, 22, 5.0), draw: drawE2, live: [[26.1, 29.8]], col: K.old },
+};
+for (const id in SPEC) desk.add(id, SPEC[id]);
+
+// presence, rim and focus per artifact (pure in t)
+const OVER = t => Math.max(1 - p(t, 3.0, 1.2), eo(p(t, OUT0 + .3, 1.6)));
+const FOCUS = [[3.8, 10.6, ['E1', 'T', 'TBL']], [10.6, 17.4, ['A', 'TBL']], [17.4, 25.4, ['LOG', 'DASH', 'TBL']], [25.4, 31.0, ['E2', 'TBL', 'A']]];
+function place(id, t) {
+  const S = SPEC[id], ov = OVER(t);
+  let any = 0, foc = 0;
+  for (const [a, b, ids] of FOCUS) { const w = win(t, a, b, .6); any = Math.max(any, w); if (ids.includes(id)) foc = Math.max(foc, w); }
+  const bright = 1 - any * (1 - foc) * .72;
+  let k = 1, rimK = .35 * foc, rimCol = S.col;
+  if (id === 'E2') k = Math.max(eo(p(t, 25.5, .8)), ov * .9, .25);
+  if (id === 'TBL') { rimK += .9 * win(t, 9.3, 10.4, .3) + .7 * win(t, 28.9, 30.3, .3); rimCol = t > 28.5 ? K.old : t > 17.4 ? K.fill : t > 10.6 ? K.app : K.neu; }
+  if (id === 'DASH') { const lag = lagAt(clamp(t - 18.4, 0, 7.2)); if (t > 18.4 && t < 25.4 && lag > 5) { rimCol = K.red; rimK += .8; } }
+  if (id === 'T') rimK += .8 * win(t, 7.4, 9.4, .3);
+  return { k, rimK, rimCol, bright, pool: rimCol };
+}
+
+// ── anchors, chips, links (computed from current placement) ──
+const pE1T = () => lift(artPt('E1', 820, 300), artPt('T', 0, 120), .8, 1, .4);
+const pTTB = () => lift(artPt('T', 600, 0), artPt('TBL', 250, 600), 2.2, 1, .8);
+const pATB = () => lift(artPt('A', 860, 200), artPt('TBL', 0, 380), 1.4, 1, .6);
+const pLTB = () => lift(artPt('LOG', 0, 250), artPt('TBL', 1180, 380), 1.4, 1, .6);
+const pE2TB = () => lift(artPt('E2', 0, 300), artPt('TBL', 1050, 600), 2.6, 1.4, 1.0);
+addChip('ADD COLUMN full_name', K.neu, 6.9, .8, pE1T, .6);
+addChip('schema 0042', K.neu, 9.15, .8, pTTB, .6);
+addChip('deploy app v2', K.app, 12.6, .8, pATB, .6);
+ROWS.filter(r => r[2]).forEach(r => addChip(`INSERT ${fmt(r[0])}`, K.app, r[2] - 1.0, .75, pATB, .5));
+BATCH_T.forEach(b => addDot(K.fill, b - .1, .45, pLTB, .45));
+addChip('DROP COLUMN name', K.old, 28.25, .85, pE2TB, .6);
+
+// floor: one label per step in front of its screens, the ring route that lights up step by step
+const STEP_DEG = [-52, -24, 34, 69];
+const signs = STEP.map((s, i) => {
+  const m = desk.floorLabel([`0${i + 1} ${s}`], STEP_COL[i], 6.2, { size: 104 });
+  const a = STEP_DEG[i] * Math.PI / 180, r = 15.2;
+  m.position.set(r * Math.sin(a), .02, -r * Math.cos(a)); m.rotation.set(-Math.PI / 2, 0, -a); return m;
+});
+const ARC = [[-72, 3.8], [-30, 10.6], [8, 17.4], [56, 25.4], [80, 31.0]];   // [deg, time the route reaches it]
+const ringPt = deg => { const a = deg * Math.PI / 180; return new THREE.Vector3(17 * Math.sin(a), .03, -17 * Math.cos(a)); };
+const dust = desk.addDust({ n: 420, x: [-28, 28], y: [0, 15], z: [-30, 6], color: 0x9fe8de, opacity: .28, seed: 5, spin: .003 });
+
+// ── camera: inside the ring, turning from step to step ──────
+const fr = desk.fr, at = id => SPEC[id].pos, yawOf = id => -SPEC[id].deg;
+const mid = (a, b) => at(a).map((v, i) => (v + at(b)[i]) / 2);
+const CAM = [
+  [0.0, raw([0, 30, 16], [0, 3, -13])],
+  [2.8, raw([0, 29, 14.5], [0, 3, -13])],
+  [4.7, fr(at('E1'), .86, 960, 600, yawOf('E1'), 3)],
+  [6.9, fr(at('E1'), .87, 970, 600, yawOf('E1') - 1, 3)],
+  [7.9, fr(at('T'), .9, 960, 690, yawOf('T'), 9)],
+  [8.9, fr(at('T'), .92, 960, 690, yawOf('T') - 1, 9)],
+  [10.0, fr(at('TBL'), .7, 960, 500, 0, -14)],
+  [10.6, fr(at('TBL'), .71, 960, 500, 1, -14)],
+  [11.5, fr(at('A'), .88, 900, 640, yawOf('A'), 3)],
+  [12.9, fr(at('A'), .89, 900, 640, yawOf('A') - 1, 3)],
+  [14.1, fr(at('TBL'), .72, 920, 500, 6, -14)],
+  [17.0, fr(at('TBL'), .73, 920, 500, 5, -14)],
+  [18.6, fr(mid('LOG', 'DASH'), .84, 960, 610, -34, 2)],
+  [22.5, fr(mid('LOG', 'DASH'), .85, 960, 610, -35, 2)],
+  [23.6, fr(at('TBL'), .7, 1000, 480, -8, -16)],
+  [25.0, fr(at('TBL'), .71, 1000, 480, -9, -16)],
+  [26.1, fr(at('E2'), .88, 980, 610, yawOf('E2'), 3)],
+  [28.2, fr(at('E2'), .89, 980, 610, yawOf('E2') + 1, 3)],
+  [29.4, fr(at('TBL'), .7, 1000, 480, -8, -16)],
+  [30.8, fr(at('TBL'), .71, 1000, 480, -9, -16)],
+  [32.6, raw([0, 29, 14.5], [0, 3, -13])],
+  [34.0, raw([0, 30, 16], [0, 3, -13])],
+];
+const camAt = camPath(CAM);
+
+// ── 2D overlay ───────────────────────────────────────────────
+function txt(s, x, y, o = {}) {
+  const { size = 32, weight = 500, color = '#e8f0f2', align = 'left', alpha = 1, mono = false, ls = 0, shadow = 0 } = o;
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha; ctx.font = `${weight} ${size}px ${mono ? MONO : SANS}`;
+  ctx.fillStyle = color; ctx.textAlign = align; if (ls) ctx.letterSpacing = ls + 'px';
+  if (shadow) { ctx.shadowColor = 'rgba(0,0,0,0.85)'; ctx.shadowBlur = shadow; }
+  ctx.fillText(s, x, y); ctx.restore();
+}
+function tw(s, size, weight = 500, mono = false) { ctx.font = `${weight} ${size}px ${mono ? MONO : SANS}`; return ctx.measureText(s).width; }
+// header: the rename as a mono kicker, four step pills, then title + subtitle (top right, the ring's centre stays free)
+function header(t) {
+  HEAD.forEach(([s, e, n, title, sub], ci) => {
+    const a = win(t, s, e, .4); if (a <= 0) return;
+    const k = eo(p(t, s + .05, .7)), k2 = eo(p(t, s + .3, .7)), R = W - 72;
+    ctx.save(); ctx.globalAlpha = a;
+    const bw = Math.max(tw(title, 54, 800), tw(sub, 30), 640) + 120;
+    const hg = ctx.createLinearGradient(W - bw - 240, 0, W, 0); hg.addColorStop(0, 'rgba(4,10,11,0)'); hg.addColorStop(240 / (bw + 240), 'rgba(4,10,11,0.9)'); hg.addColorStop(1, 'rgba(4,10,11,0.95)');
+    ctx.fillStyle = hg; ctx.fillRect(W - bw - 240, 0, bw + 240, 230);
+    const vg = ctx.createLinearGradient(0, 230, 0, 280); vg.addColorStop(0, 'rgba(4,10,11,0.9)'); vg.addColorStop(1, 'rgba(4,10,11,0)'); ctx.fillStyle = vg; ctx.fillRect(W - bw, 230, bw, 50);
+    let x = R;
+    for (let i = STEP.length - 1; i >= 0; i--) {
+      const on = i === ci, done = i < ci, wdt = tw(STEP[i], 21, 700) + 30;
+      x -= wdt;
+      ctx.beginPath(); ctx.roundRect(x, 42, wdt, 34, 17); ctx.fillStyle = on ? rgba(STEP_COL[i], .22) : 'rgba(255,255,255,0.04)'; ctx.fill();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = on ? STEP_COL[i] : done ? rgba(STEP_COL[i], .5) : 'rgba(255,255,255,0.14)'; ctx.stroke();
+      txt(STEP[i], x + wdt / 2, 66, { size: 21, weight: 700, align: 'center', color: on ? STEP_COL[i] : done ? '#a9b8bd' : '#62747a' });
+      x -= 10;
+    }
+    txt('users.name → users.full_name', x - 14, 66, { size: 22, mono: true, color: '#8ea2a9', align: 'right' });
+    txt(title, R + (1 - k) * 24, 146, { size: 54, weight: 800, color: '#f2f8f9', align: 'right', alpha: k });
+    txt(sub, R, 196, { size: 30, color: '#a9b8bd', align: 'right', alpha: k2 });
+    ctx.restore();
+  });
+}
+// caption: one plain line + one detail line, bottom left
+function caption(l1, l2, a, col = '#f2f8f9') {
+  if (a <= 0) return;
+  const x = 72, y = 916;
+  ctx.save(); ctx.globalAlpha = a;
+  const bw = Math.max(tw(l1, 42, 800), tw(l2, 30)) + x + 60;
+  const hg = ctx.createLinearGradient(0, 0, bw + 220, 0); hg.addColorStop(0, 'rgba(4,10,11,0.9)'); hg.addColorStop(bw / (bw + 220), 'rgba(4,10,11,0.84)'); hg.addColorStop(1, 'rgba(4,10,11,0)');
+  ctx.fillStyle = hg; ctx.fillRect(0, y - 66, bw + 220, 140);
+  const vg = ctx.createLinearGradient(0, y - 116, 0, y - 66); vg.addColorStop(0, 'rgba(4,10,11,0)'); vg.addColorStop(1, 'rgba(4,10,11,0.86)'); ctx.fillStyle = vg; ctx.fillRect(0, y - 116, bw, 50);
+  txt(l1, x - (1 - eo(clamp(a))) * 20, y, { size: 42, weight: 800, color: col, shadow: 12 });
+  txt(l2, x, y + 50, { size: 30, color: '#b3c2c7', shadow: 12 });
+  ctx.restore();
+}
+// bottom strip: the four deploys as a timeline + footnote
+function strip(t) {
+  const a = clamp(Math.min(t - 3.6, OUT0 - .2 - t) * 2.5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const bg = ctx.createLinearGradient(0, 990, 0, H); bg.addColorStop(0, 'rgba(4,10,11,0)'); bg.addColorStop(.6, 'rgba(4,10,11,0.85)'); bg.addColorStop(1, 'rgba(4,10,11,0.9)');
+  ctx.fillStyle = bg; ctx.fillRect(0, 990, W, H - 990);
+  const y = 1040, x0 = 72, x1 = 1400, T0 = HEAD[0][0], X = tt => lerp(x0, x1, (tt - T0) / (OUT0 - T0));
+  HEAD.forEach(([s, e], i) => {
+    const xa = X(s) + 4, xb = X(e) - 4;
+    ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(xa, y, xb - xa, 4);
+    ctx.fillStyle = STEP_COL[i]; ctx.fillRect(xa, y, (xb - xa) * clamp((t - s) / (e - s)), 4);
+  });
+  txt('* 행 수 · 시간 · 지연 수치는 예시', W - 72, y + 6, { size: 22, color: '#93a5ab', align: 'right' });
+  ctx.restore();
+}
+function titleCard(t) {
+  const a = 1 - eio(p(t, 3.3, .6)); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const lg = ctx.createLinearGradient(0, 560, 0, H); lg.addColorStop(0, 'rgba(4,10,11,0)'); lg.addColorStop(.35, 'rgba(4,10,11,0.82)'); lg.addColorStop(1, 'rgba(4,10,11,0.95)');
+  ctx.fillStyle = lg; ctx.fillRect(0, 560, W, H - 560);
+  txt('POSTGRESQL · EXPAND / CONTRACT', 120, 742, { size: 24, weight: 600, mono: true, color: '#8ea2a9', ls: 4, alpha: eo(p(t, .2, .7)) });
+  const k1 = eo(p(t, .4, .8)), k2 = eo(p(t, .8, .8));
+  txt('컬럼 이름 바꾸기,', 116, 846 + (1 - k1) * 26, { size: 92, weight: 800, color: '#f2f8f9', alpha: k1 });
+  txt('서비스 멈추지 않고', 116 + tw('컬럼 이름 바꾸기, ', 92, 800), 846 + (1 - k2) * 26, { size: 92, weight: 800, color: K.neu, alpha: k2 });
+  txt('users.name → users.full_name, 배포 네 번으로', 120, 920, { size: 32, color: '#a9b8bd', alpha: eo(p(t, 1.4, .7)) });
+  ctx.restore();
+}
+function outro(t) {
+  const v = t - OUT0, a = eo(p(v, .3, .8)); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const lg = ctx.createLinearGradient(0, 600, 0, H); lg.addColorStop(0, 'rgba(4,10,11,0)'); lg.addColorStop(.4, 'rgba(4,10,11,0.85)'); lg.addColorStop(1, 'rgba(4,10,11,0.95)');
+  ctx.fillStyle = lg; ctx.fillRect(0, 600, W, H - 600);
+  txt('컬럼 이름 변경은', 116, 830, { size: 80, weight: 800, color: '#f2f8f9', alpha: eo(p(v, .5, .7)) });
+  txt('배포 네 번으로 나눈다.', 116 + tw('컬럼 이름 변경은 ', 80, 800), 830, { size: 80, weight: 800, color: K.neu, alpha: eo(p(v, .9, .7)) });
+  let x = 120;
+  ['ADD COLUMN', 'dual write', 'backfill', 'DROP COLUMN'].forEach((s, i) => {
+    const k = eo(p(v, 1.2 + i * .2, .5));
+    txt(s, x, 910, { size: 30, mono: true, weight: 700, color: STEP_COL[i], alpha: k }); x += tw(s, 30, 700, true) + 18;
+    if (i < 3) { txt('→', x, 910, { size: 30, mono: true, color: '#62747a', alpha: k }); x += tw('→', 30, 500, true) + 18; }
+  });
+  ctx.restore();
+}
+function overlay(t) {
+  titleCard(t);
+  header(t);
+  caption('nullable · 기본값 없이 추가', '테이블을 다시 쓰지 않아 잠금이 짧다 (PostgreSQL)', win(t, 5.6, 10.5, .45));
+  caption('앱 v2: 두 컬럼에 같이 쓴다', '읽기는 아직 name. 새 행부터 full_name이 찬다', win(t, 12.2, 17.3, .45));
+  caption('기존 행은 1만 행씩 배치로', '복제 지연이 5초를 넘으면 쉬었다 이어 간다', win(t, 18.8, 25.3, .45));
+  caption('v3가 full_name만 쓴 뒤에 DROP', 'name을 지우면 v1 · v2로 되돌릴 수 없다', win(t, 26.4, 30.9, .45));
+  strip(t);
+  outro(t);
+}
+
+// ── frame ────────────────────────────────────────────────────
+function renderAt(t) {
+  t = clamp(t, 0, DURATION);
+  desk.setCamera(camAt(t), t);
+  desk.place(t, place);
+  const ov = OVER(t);
+  desk.floorUniforms.uRing.value = .35 + .65 * ov;
+  signs.forEach((m, i) => { m.material.opacity = Math.max(ov, .55 * win(t, HEAD[i][0], HEAD[i][1], .6)) * .85; });
+  desk.beginLines();
+  const flow = (P, kk, col, t0, d, base = .26, wd = 3) => { const r = p(t, t0, d); curve(P, kk, col, base * kk, wd, r > 0 && r < 1 ? eio(r) : -1); };
+  const k1 = Math.max(win(t, 6.8, 10.8, .5), ov * .6);
+  if (k1 > 0) { flow(pE1T(), k1, K.neu, 6.9, .8); flow(pTTB(), Math.max(eo(p(t, 9.1, .5)), ov) * k1, K.neu, 9.15, .8); }
+  const k2 = Math.max(win(t, 12.5, 17.6, .5), ov * .6);
+  if (k2 > 0) flow(pATB(), k2, K.app, 12.6, .8);
+  const k3 = Math.max(win(t, 18.4, 25.6, .5), ov * .6);
+  if (k3 > 0) curve(pLTB(), k3, t > PAUSE_T - .1 && t < BATCH_T[6] - .2 ? K.warn : K.fill, .24 * k3, 3, -1, true, 36);
+  const k4 = Math.max(win(t, 28.1, 31.2, .5), ov * .6);
+  if (k4 > 0) flow(pE2TB(), k4, K.old, 28.25, .85, .3);
+  // the ring route on the floor, one colour per step
+  for (let i = 0; i < ARC.length - 1; i++) {
+    const r = Math.max(p(t, ARC[i][1], ARC[i + 1][1] - ARC[i][1]), ov * eo(p(t, .8 + i * .3, .6)), t > OUT0 ? ov : 0); if (r <= 0) continue;
+    const n = 14;
+    for (let s = 0; s < n && s / n < r; s++) {
+      const d0 = lerp(ARC[i][0], ARC[i + 1][0], s / n), d1 = lerp(ARC[i][0], ARC[i + 1][0], Math.min((s + 1) / n, r));
+      const run = ov > 0 ? Math.exp(-Math.pow(((i + s / n) / (ARC.length - 1) - ((t * .3) % 1.3 - .15)) * 12, 2)) : 0;
+      seg(ringPt(d0), ringPt(d1), STEP_COL[i], .2 + .2 * ov + run * 1.3, 2.6 + 1.6 * ov + run * 3);
+    }
+  }
+  desk.updateChips(t);
+  dust.at(t);
+  desk.render(ctx);
+  overlay(t);
+  const fo = p(t, DURATION - .6, .6); if (fo > 0) { ctx.fillStyle = `rgba(0,0,0,${fo})`; ctx.fillRect(0, 0, W, H); }
+}
+window.renderAt = renderAt;
+window.DURATION = DURATION;
+
+window.ready = (async () => {
+  await loadFonts();
+  desk.fontsReady();
+})();
+
+// ── player (skipped when ?render) ────────────────────────────
+if (!location.search.includes('render')) {
+  const $ = id => document.getElementById(id);
+  const ICON = {
+    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>',
+    replay: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"/></svg>',
+  };
+  const CHAPTERS = [[0, '', '인트로'], ...HEAD.map(h => [h[0], h[2], h[3]]), [OUT0, '', '정리']];
+  $('scrub').setAttribute('aria-valuemax', Math.round(DURATION));
+  const POSTER = 21.4;
+  let t = 0, playing = false, started = false, last = 0;
+  const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
+
+  CHAPTERS.forEach(([s, n, label], i) => {
+    const b = document.createElement('button');
+    b.innerHTML = (n ? `<span>${n}</span>` : '') + label;
+    b.addEventListener('click', () => { seek(s + .01); play(); });
+    $('chapters').appendChild(b);
+    if (i) { const tk = document.createElement('div'); tk.className = 'tick'; tk.style.left = (s / DURATION * 100) + '%'; $('ticks').appendChild(tk); }
+  });
+
+  function ui() {
+    const k = t / DURATION, ended = t >= DURATION;
+    $('fill').style.width = k * 100 + '%'; $('knob').style.left = k * 100 + '%';
+    $('time').textContent = `${mmss(t)} / ${mmss(DURATION)}`;
+    $('scrub').setAttribute('aria-valuenow', Math.round(t));
+    $('play').innerHTML = playing ? ICON.pause : ended ? ICON.replay : ICON.play;
+    $('play').setAttribute('aria-label', playing ? '일시정지' : '재생');
+    $('big').hidden = playing;
+    $('big').innerHTML = ended ? ICON.replay : ICON.play;
+    $('big').classList.toggle('replay', ended);
+    let cur = 0; CHAPTERS.forEach(([s], i) => { if (t >= s) cur = i; });
+    [...$('chapters').children].forEach((b, i) => b.setAttribute('aria-current', i === cur && started));
+  }
+  function draw() { renderAt(started ? Math.min(t, DURATION - .001) : POSTER); }
+  function play() { if (t >= DURATION) t = 0; started = true; playing = true; last = performance.now(); ui(); }
+  function pause() { playing = false; ui(); }
+  function toggle() { playing ? pause() : play(); }
+  function seek(x) { started = true; t = clamp(x, 0, DURATION); draw(); ui(); }
+
+  function frame(now) {
+    if (playing) {
+      t += Math.min(.1, (now - last) / 1000) * rate; last = now;
+      if (t >= DURATION) { t = DURATION; playing = false; }
+      draw(); ui();
+    }
+    requestAnimationFrame(frame);
+  }
+
+  const RATES = [1, .75, .5];
+  let rate = 1;
+  try { rate = +localStorage.getItem('mg-rate') || 1; } catch (e) { /* storage unavailable */ }
+  if (!RATES.includes(rate)) rate = 1;
+  function setRate(r) {
+    rate = r; $('rate').textContent = r + '×'; $('rate').setAttribute('aria-label', `재생 속도 ${r}배`);
+    try { localStorage.setItem('mg-rate', String(r)); } catch (e) { /* storage unavailable */ }
+  }
+  setRate(rate);
+  $('rate').addEventListener('click', () => setRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length]));
+  $('stage').addEventListener('click', toggle);
+  $('play').addEventListener('click', toggle);
+  $('fs').addEventListener('click', () => {
+    const el = $('stage');
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    else el.requestFullscreen?.().catch(() => {});
+  });
+  const scrub = $('scrub');
+  const fromEvent = e => { const r = scrub.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width) * DURATION; };
+  let wasPlaying = false;
+  scrub.addEventListener('pointerdown', e => { scrub.setPointerCapture(e.pointerId); wasPlaying = playing; playing = false; seek(fromEvent(e)); });
+  scrub.addEventListener('pointermove', e => { if (scrub.hasPointerCapture(e.pointerId)) seek(fromEvent(e)); });
+  scrub.addEventListener('pointerup', () => { if (wasPlaying && t < DURATION) play(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key === 'k') { e.preventDefault(); toggle(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); seek(t + 5); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); seek(t - 5); }
+    else if (e.key === 'Home') seek(0);
+    else if (e.key === ',' || e.key === '<') setRate(RATES[Math.min(RATES.length - 1, RATES.indexOf(rate) + 1)]);
+    else if (e.key === '.' || e.key === '>') setRate(RATES[Math.max(0, RATES.indexOf(rate) - 1)]);
+  });
+
+  const posterMode = location.hash === '#poster';
+  if (posterMode) document.body.classList.add('poster');
+  ui();
+  // chapter deep link: index.html#ch03 opens paused at that chapter
+  const deep = /^#ch(\d\d)$/.exec(location.hash), deepHead = deep && HEAD.find(r => r[2] === deep[1]);
+  window.ready.then(() => {
+    draw(); requestAnimationFrame(frame);
+    if (deepHead) seek(deepHead[0] + .01);
+    if (posterMode) { play(); setInterval(() => { if (!playing) { t = 0; play(); } }, 500); }
+  });
+  renderAt(POSTER);
+}
+</script>

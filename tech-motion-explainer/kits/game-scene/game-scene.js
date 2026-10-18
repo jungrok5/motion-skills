@@ -132,10 +132,39 @@ export function createStage(o = {}) {
       hemi.intensity = base.hemi - dimAmt.hemi * k; sun.intensity = base.sun - dimAmt.sun * k;
       if (sky) sky.material.uniforms.dim.value = dimAmt.sky * k;
     },
+    /**
+     * grade(g) — set the colour grade for this frame from a plain object (blend two with mixGrade):
+     *   { exposure, fog: { color, near, far }, hemi: { sky, ground, intensity }, sun: { color, intensity }, sky: { top, bottom },
+     *     bloom: { strength, radius, threshold }, background }
+     * Fields left out keep their current value, so a page that grades in one chapter must grade in every chapter (seek-safe).
+     * Intensities set here become the base that dim() subtracts from.
+     */
+    grade(g) {
+      if (g.exposure !== undefined) gl.toneMappingExposure = g.exposure;
+      if (g.fog && scene.fog) { if (g.fog.color) scene.fog.color.set(g.fog.color); if (g.fog.near !== undefined) scene.fog.near = g.fog.near; if (g.fog.far !== undefined) scene.fog.far = g.fog.far; }
+      if (g.hemi) { if (g.hemi.sky) hemi.color.set(g.hemi.sky); if (g.hemi.ground) hemi.groundColor.set(g.hemi.ground); if (g.hemi.intensity !== undefined) hemi.intensity = base.hemi = g.hemi.intensity; }
+      if (g.sun) { if (g.sun.color) sun.color.set(g.sun.color); if (g.sun.intensity !== undefined) sun.intensity = base.sun = g.sun.intensity; }
+      if (g.sky && sky) { if (g.sky.top) sky.material.uniforms.top.value.set(g.sky.top); if (g.sky.bottom) sky.material.uniforms.bot.value.set(g.sky.bottom); }
+      if (g.bloom) { if (g.bloom.strength !== undefined) bloom.strength = g.bloom.strength; if (g.bloom.radius !== undefined) bloom.radius = g.bloom.radius; if (g.bloom.threshold !== undefined) bloom.threshold = g.bloom.threshold; }
+      if (g.background && scene.background) scene.background.set(g.background);
+    },
     /** render the 3D frame and draw it onto a 2D context at (0, 0, W, H) */
     render(ctx) { composer.render(); if (ctx) ctx.drawImage(gl.domElement, 0, 0, W, H); },
   };
   return stage;
+}
+
+const _ca = new THREE.Color(), _cb = new THREE.Color();
+/** mixGrade(a, b, k) — blend two grade objects (colours in linear RGB, numbers linearly); keys missing in b keep a's value */
+export function mixGrade(a, b, k) {
+  const o = {};
+  for (const key in a) {
+    const x = a[key], y = b[key] ?? x;
+    if (typeof x === 'number') o[key] = lerp(x, y, k);
+    else if (typeof x === 'string') o[key] = '#' + _ca.set(x).lerp(_cb.set(y), k).getHexString();
+    else if (x && typeof x === 'object') o[key] = mixGrade(x, y, k);
+  }
+  return o;
 }
 
 // ═════════════════════════════════════════════════════════════
@@ -237,10 +266,24 @@ export function chevronTexture() {
   });
 }
 
-/** groundPlane(stage, mat, { size: [w, d], at: [x, y, z], shadow: true }) — a flat floor (PlaneGeometry laid on xz) */
-export function groundPlane(stage, mat, { size = [400, 400], at = [0, 0, 0], shadow = true } = {}) {
+/** groundPlane(stage, mat, { size: [w, d], at: [x, y, z], shadow: true, parent }) — a flat floor (PlaneGeometry laid on xz) */
+export function groundPlane(stage, mat, { size = [400, 400], at = [0, 0, 0], shadow = true, parent = null } = {}) {
   const m = new THREE.Mesh(new THREE.PlaneGeometry(size[0], size[1]), mat);
-  m.rotation.x = -Math.PI / 2; m.position.set(...at); m.receiveShadow = shadow; stage.scene.add(m); return m;
+  m.rotation.x = -Math.PI / 2; m.position.set(...at); m.receiveShadow = shadow; (parent || stage.scene).add(m); return m;
+}
+
+/**
+ * lightPool(stage, { color, radius 4, at: [x, y, z], strength .5, parent }) — additive radial glow decal on the floor
+ * (lamp light, spawn pad, capture zone). Cheap stand-in for real lights.
+ */
+export function lightPool(stage, o = {}) {
+  const tex = canvasTex(128, 128, (g, w, h) => {
+    const gr = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.45, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.clearRect(0, 0, w, h); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  });
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(2 * (o.radius || 4), 2 * (o.radius || 4)),
+    new THREE.MeshBasicMaterial({ map: tex, color: new THREE.Color(o.color || '#ffffff').multiplyScalar(o.strength ?? .5), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: true }));
+  m.rotation.x = -Math.PI / 2; m.position.set(...(o.at || [0, .02, 0])); (o.parent || stage.scene).add(m); return m;
 }
 
 // ═════════════════════════════════════════════════════════════
@@ -248,10 +291,11 @@ export function groundPlane(stage, mat, { size = [400, 400], at = [0, 0, 0], sha
 // ═════════════════════════════════════════════════════════════
 const _o3 = new THREE.Object3D(), _col = new THREE.Color();
 /**
- * instanced(stage, geo, mat, list, { cast, recv, colors }) → InstancedMesh added to the scene.
+ * instanced(stage, geo, mat, list, { cast, recv, colors, parent }) → InstancedMesh added to parent (default the scene).
  * list entries: [x, y, z, scale = 1, yaw = 0, [sx, sy, sz]?] (m, radians). colors: per-instance colour list (optional).
+ * parent: a Group, so a whole map can be hidden / shown at once (e.g. game view vs. server view).
  */
-export function instanced(stage, geo, mat, list, { cast = true, recv = true, colors = null } = {}) {
+export function instanced(stage, geo, mat, list, { cast = true, recv = true, colors = null, parent = null } = {}) {
   const m = new THREE.InstancedMesh(geo, mat, list.length);
   list.forEach((q, i) => {
     _o3.position.set(q[0], q[1], q[2]); _o3.rotation.set(0, q[4] || 0, 0); _o3.scale.setScalar(q[3] || 1);
@@ -259,7 +303,7 @@ export function instanced(stage, geo, mat, list, { cast = true, recv = true, col
     _o3.updateMatrix(); m.setMatrixAt(i, _o3.matrix);
     if (colors) m.setColorAt(i, _col.set(colors[i % colors.length]));
   });
-  m.castShadow = cast; m.receiveShadow = recv; stage.scene.add(m); return m;
+  m.castShadow = cast; m.receiveShadow = recv; (parent || stage.scene).add(m); return m;
 }
 const _v3 = new THREE.Vector3();
 
@@ -297,17 +341,18 @@ export const PROP = {
 /**
  * addProp(stage, kind, list, mats, opts) → [InstancedMesh…]. list entries as in instanced(). The entry's y is used only by
  * ground-hugging kinds (rock, tuft, box); other kinds stand on y = 0 and their part heights scale with the entry's scale
- * (pillar and bollard keep fixed heights). Part x offsets (dx) are not scaled.
- * mats: { [part key]: Material }. opts.colors: per-instance colours (same for all parts).
+ * (pillar and bollard keep fixed heights). Part x offsets (dx) turn with the entry's yaw but are not scaled.
+ * mats: { [part key]: Material }. opts.colors: per-instance colours (same for all parts); opts.parent: Group.
  */
 export function addProp(stage, kind, list, mats, opts = {}) {
   return PROP[kind]().map(part => {
     const mat = mats[part.key] || mats.default; if (!mat) throw new Error(`addProp(${kind}): no material for "${part.key}"`);
     const L = list.map(q => {
       const s = q[3] || 1, y = part.keepY ? q[1] : part.abs ? part.y : part.y * s;
-      return [q[0] + (part.dx || 0), y, q[2], s, q[4] || 0, q[5]];
+      const yaw = q[4] || 0, dx = part.dx || 0;
+      return [q[0] + dx * Math.cos(yaw), y, q[2] - dx * Math.sin(yaw), s, yaw, q[5]];
     });
-    return instanced(stage, part.geo, mat, L, { cast: part.cast !== false, colors: opts.colors });
+    return instanced(stage, part.geo, mat, L, { cast: part.cast !== false, colors: opts.colors, parent: opts.parent });
   });
 }
 
@@ -690,6 +735,14 @@ export function camPath(keys, t) {
     o[key] = .5 * ((2 * b) + (-a + c) * u + (2 * a - 5 * b + 4 * c - d) * u * u + (-a + 3 * b - 3 * c + d) * u * u * u);
   }
   return o;
+}
+/**
+ * camFrom(eye, target, extra) → a camSet pose (az / el form) that puts the camera at eye looking at target ([x, y, z] m).
+ * extra adds fov / sx / sy. Poses from camFrom interpolate with camPath / mixCam like any other.
+ */
+export function camFrom(eye, target, extra = {}) {
+  const dx = eye[0] - target[0], dy = eye[1] - target[1], dz = eye[2] - target[2], dist = Math.hypot(dx, dy, dz);
+  return { fx: target[0], ty: target[1], fz: target[2], dist, az: Math.atan2(dx, dz), el: Math.asin(dy / dist), ...extra };
 }
 const strip = k => { const o = { ...k }; delete o.t; delete o.hold; return o; };
 const _pv = new THREE.Vector3();

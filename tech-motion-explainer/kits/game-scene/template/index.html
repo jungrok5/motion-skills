@@ -1,0 +1,606 @@
+<meta charset="utf-8">
+<title>Lag Compensation In-Game</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Layout: one 16:9 stage, a slim transport bar under it, chapter chips below. Single dark look. */
+  :root {
+    --bg: #05080f; --surface: #0c1220; --line: #1f2b40; --fg: #e9f0f7; --dim: #8796aa;
+    --accent: #3fe0c5; --live: #ff6fb5; --text2: #c0cad8;
+    --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    color-scheme: dark;
+  }
+  html, body { min-height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding-block: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    box-sizing: border-box; overflow-x: hidden; }
+  .player { width: min(100%, calc((100vh - 170px) * 16 / 9)); min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .stage { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--line); background: var(--bg); cursor: pointer; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .big { position: absolute; inset: auto 0 5% 0; margin: 0 auto; width: clamp(44px, 11%, 84px); height: auto; aspect-ratio: 1; border-radius: 50%; border: 1.5px solid var(--accent);
+    background: rgba(12,18,32,.78); color: var(--fg); display: grid; place-items: center; cursor: pointer; transition: transform .15s, opacity .2s; }
+  .big[hidden] { display: none; }
+  .big:hover { transform: scale(1.06); }
+  .big svg { width: 36%; height: 36%; margin-left: 6%; }
+  .big.replay svg { margin-left: 0; }
+  .bar { display: flex; align-items: center; gap: 14px; }
+  .btn { flex: none; width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface);
+    color: var(--fg); display: grid; place-items: center; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn svg { width: 16px; height: 16px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .time { flex: none; font: 500 13px/1 var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
+  .scrub { position: relative; flex: 1; min-width: 0; height: 28px; cursor: pointer; touch-action: none; }
+  .track { position: absolute; left: 0; right: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--line); }
+  .fill { position: absolute; left: 0; top: 12px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--live)); }
+  .tick { position: absolute; top: 8px; width: 2px; height: 12px; background: var(--dim); opacity: .6; }
+  .knob { position: absolute; top: 7px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--fg); box-shadow: 0 0 0 4px rgba(63,224,197,.25); }
+  .chapters { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chapters button { font: 600 13px/1 var(--sans); color: var(--dim); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+  .chapters button span { font-family: var(--mono); color: var(--accent); margin-right: 6px; }
+  .chapters button:hover { color: var(--fg); }
+  .chapters button[aria-current="true"] { color: var(--fg); border-color: var(--accent); background: rgba(63,224,197,.12); }
+  .set { display: flex; flex-wrap: wrap; gap: 8px; }
+  .set a { font: 600 13px/1 var(--sans); color: var(--fg); text-decoration: none; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; background: var(--surface); }
+  .set a:hover { border-color: var(--accent); }
+  body.poster .set { display: none; }
+  .rate { width: auto; min-width: 56px; padding: 0 10px; font: 600 13px/1 var(--mono); }
+  @media (max-width: 600px) { .time { font-size: 12px; } }
+  /* Notes (hidden): source text for the generated 설명 / 용어집 pages */
+  .notes { width: min(100%, 860px); margin-top: 56px; padding-bottom: 48px; font-size: 16px; line-height: 1.75; word-break: keep-all; overflow-wrap: anywhere; }
+  .notes h2 { font-size: 22px; line-height: 1.4; margin: 48px 0 16px; }
+  .notes .lede { font-size: 18px; color: var(--fg); }
+  .notes p, .notes li { color: var(--text2); }
+  .notes article { border-top: 1px solid var(--line); padding-top: 20px; margin-top: 24px; }
+  .notes code { font: 500 .88em var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+  .notes .terms { display: grid; grid-template-columns: minmax(110px, max-content) minmax(0, 1fr); gap: 12px 24px; margin: 0; }
+  .notes dt { font-weight: 700; }
+  .notes dd { margin: 0; color: var(--text2); }
+  @media (max-width: 600px) { .notes .terms { grid-template-columns: minmax(0, 1fr); gap: 2px; } .notes dd { margin-bottom: 14px; } }
+  /* #poster: embed mode for gallery thumbnails — canvas only, loops */
+  body.poster { padding: 0; }
+  body.poster .player { width: 100%; }
+  body.poster .bar, body.poster .chapters, body.poster .big, body.poster .notes { display: none; }
+  body.poster .stage { border: 0; border-radius: 0; }
+</style>
+
+<div class="player">
+  <div class="stage" id="stage">
+    <canvas id="c" width="1920" height="1080" aria-label="슈팅 게임의 히트 판정과 랙 보상을 게임 화면과 서버 판정 화면으로 보여 주는 모션그래픽"></canvas>
+    <button class="big" id="big" aria-label="재생"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg></button>
+  </div>
+  <div class="bar">
+    <button class="btn" id="play" aria-label="재생"></button>
+    <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="35" aria-valuenow="0">
+      <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+    </div>
+    <div class="time" id="time">0:00 / 0:34</div>
+    <button class="btn rate" id="rate" aria-label="재생 속도 1배">1×</button>
+    <button class="btn" id="fs" aria-label="전체 화면"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+  <div class="chapters" id="chapters"></div>
+  <nav class="set" aria-label="같은 주제"><a href="article.html">설명 읽기</a><a href="terms.html">용어집</a></nav>
+</div>
+<section class="notes" id="notes" hidden>
+<p class="lede">슈팅 게임에서 내 화면의 조준선이 적 위에 있었는데도 서버가 그 한 발을 맞았다고 판정하는 이유를 보여 준다. 내 화면의 적은 지연과 보간만큼 지난 위치이고, 총알 정보가 서버에 닿을 때 적은 더 멀리 가 있다. 그래서 많은 서버는 쏜 사람이 본 시점으로 히트박스를 되감아 판정한다(랙 보상). 수치는 예시다.</p>
+
+<article data-ch="01">
+<p>밤의 컨테이너 야적장, 3인칭 어깨 너머 시점이다. 적이 옆으로 달리고 조준선이 따라가다 겹치는 순간 발사하면 히트 마커가 뜬다. 쏜 사람 화면에서는 분명히 맞았다.</p>
+<p>되감아서 같은 순간을 디버그 화면으로 다시 보면, 쏜 사람이 본 적(실선) 앞에 서버의 현재 위치(노란 와이어프레임)가 있다. 클라이언트는 다른 플레이어를 받은 스냅숏 사이를 보간해서 그리기 때문에 화면 속 적은 늘 과거다. 예시 수치로 서버→클라 지연 40 ms와 보간 지연 80 ms를 더해 120 ms 전 위치이고, 초속 6 m로 달리는 적이면 0.72 m 차이다.</p>
+</article>
+
+<article data-ch="02">
+<p>서버 쪽 판정 공간으로 넘어간다. 서버는 텍스처를 그리지 않고 충돌용 모양만 가지고 있어서, 회색 격자 바닥과 캡슐 히트박스로 그렸다.</p>
+<p>발사 정보는 클라→서버 지연(예시 40 ms) 뒤에 도착한다. 그때 서버의 적 캡슐은 쏜 사람이 본 위치보다 160 ms만큼 더 가 있다(0.96 m). 서버가 현재 위치로 광선을 쏘면 캡슐 옆을 지나가서 빗나간다(MISS). 지연이 있는 한 움직이는 적을 맞히려면 적이 갈 곳을 미리 쏴야 하는 셈이다.</p>
+</article>
+
+<article data-ch="03">
+<p>랙 보상을 켜면 서버는 틱마다 저장해 둔 히트박스 기록에서 쏜 사람이 본 시점을 찾는다. 되감는 양은 대략 왕복 지연과 보간 지연의 합이다(예시: <code>80 ms + 80 ms = 160 ms</code>).</p>
+<p>그 시점의 히트박스(분홍)로 같은 광선을 다시 판정하면 맞는다(HIT). 판정이 끝나면 히트박스는 현재 위치로 복구되고, 게임 상태는 그대로 이어진다. Source 엔진 계열 게임이 쓰는 방식을 단순화한 그림이며, 되감기 한도나 세부 계산은 게임마다 다르다.</p>
+<p>대가도 있다. 판정이 쏜 사람 화면 기준이라, 맞은 사람은 자기 화면에서 이미 엄폐물 뒤로 들어간 뒤에 맞았다고 느낄 수 있다.</p>
+</article>
+
+<h2>용어 정리</h2>
+<dl class="terms">
+<dt>히트 판정 (Hit registration)</dt><dd>총알이나 광선이 대상에 맞았는지를 정하는 일이다. 온라인 게임에서는 보통 서버가 최종 판정한다.</dd>
+<dt>랙 보상 (Lag compensation)</dt><dd>서버가 판정할 때 다른 플레이어의 히트박스를 쏜 사람이 본 시점으로 되돌려 놓고 판정하는 기법이다.</dd>
+<dt>보간 (Interpolation)</dt><dd>받은 스냅숏 두 개 사이를 이어 다른 플레이어를 부드럽게 그리는 방식이다. 그 대가로 화면 속 상대는 보간 지연만큼 과거에 있다.</dd>
+<dt>보간 지연</dt><dd>보간을 위해 일부러 늦게 그리는 시간이다. 영상에서는 예시로 80 ms를 썼다.</dd>
+<dt>RTT</dt><dd>클라에서 서버로 갔다가 돌아오는 왕복 시간이다. 영상의 예시는 80 ms(편도 40 ms)다.</dd>
+<dt>히트박스</dt><dd>판정에 쓰는 단순한 모양이다. 영상에서는 캡슐로 그렸다.</dd>
+<dt>히트박스 기록</dt><dd>서버가 틱마다 저장해 두는 각 플레이어의 과거 히트박스 위치다. 되감기는 이 기록에서 시점을 찾는다.</dd>
+<dt>틱</dt><dd>서버가 게임 상태를 한 번 갱신하는 주기다.</dd>
+<dt>서버 권한</dt><dd>맞았는지 같은 결과의 최종 결정권을 서버가 갖는 구조다.</dd>
+<dt>엄폐 뒤 피격</dt><dd>랙 보상의 부작용으로, 맞은 사람 화면에서는 이미 엄폐한 뒤에 맞은 것처럼 보이는 현상이다.</dd>
+</dl>
+</section>
+<script type="importmap">{"imports": {"three": "../assets/vendor/three/build/three.module.min.js", "three/addons/": "../assets/vendor/three/examples/jsm/"}}</script>
+<script type="module">
+// ─────────────────────────────────────────────────────────────
+//  Lag Compensation In-Game — 내 화면에서 맞힌 한 발, 서버는 어떻게 판정할까 (34.5 s, 1920×1080)
+//  Template for the game-scene kit (../assets/kits/game-scene.js). Approach "게임 화면 재현":
+//    intro   night container yard, crane down to an over-the-shoulder shot
+//    01      live: strafe, aim, fire, hit marker → rewind → replay: seen target (solid) vs server now (wireframe)
+//    02      server view (grey test map, capsule hitboxes): shot arrives 40 ms later → MISS by 0.96 m
+//    03      lag compensation: hitbox history, rewind 160 ms → HIT → restore
+//    outro   the target already behind cover takes the hit; takeaway
+//  Everything topic-specific lives here: palette, arena, characters, HUD layout, camera, sims, copy.
+//  Every frame is a pure function of t.
+// ─────────────────────────────────────────────────────────────
+import * as GS from '../assets/kits/game-scene.js';
+const { THREE, clamp, lerp, p, eo, eio, eback, win, ramp, rng } = GS;
+
+const W = 1920, H = 1080, DURATION = 34.5;
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+const SANS = 'Pretendard, "WenQuanYi Zen Hei", "DejaVu Sans", sans-serif';
+const MONO = '"JetBrains Mono", Pretendard, "DejaVu Sans Mono", monospace';
+
+// [start, end, number, title, subtitle]
+const HEAD = [
+  [4.5, 13.0, '01', '내 화면의 적은 과거', '화면 속 적은 지연과 보간만큼 지난 위치입니다'],
+  [13.0, 21.5, '02', '그대로 판정하면', '발사 정보가 서버에 닿을 때 적은 이미 더 가 있습니다'],
+  [21.5, 30.0, '03', '되감아서 판정', '서버가 히트박스를 쏜 사람이 본 시점으로 되돌립니다'],
+];
+const OUTRO_AT = 30.0;
+
+// ── palette (roles: me = 쏜 사람, seen = 쏜 사람이 본 적 / 되감은 히트박스, now = 서버의 현재 위치, hist = 히트박스 기록, ok = 맞음, red = 빗나감) ──
+const C = {
+  text: '#eef3f8', dim: '#a9b6c6', faint: '#6f7c8c', me: '#3fe0c5', seen: '#ff6fb5', now: '#ffd05a', hist: '#8ea6ff',
+  ok: '#79ee8c', red: '#ff4d5e', panel: 'rgba(6,10,18,.86)', line: 'rgba(140,170,210,.28)',
+};
+
+// ── stage + two colour grades (night yard = player's game, neutral grey = server's judging space) ──
+const GRADE_YARD = { exposure: 1.7, fog: { color: '#0d1828', near: 24, far: 95 }, hemi: { sky: '#6d8fc4', ground: '#2a2119', intensity: 1.05 },
+  sun: { color: '#bcd0ff', intensity: 2.1 }, sky: { top: '#050a14', bottom: '#1c2f47' }, bloom: { strength: .8, radius: .5, threshold: .82 } };
+const GRADE_SERVER = { exposure: 1.0, fog: { color: '#b6bac0', near: 40, far: 150 }, hemi: { sky: '#e6ecf4', ground: '#3a3b3e', intensity: 1.45 },
+  sun: { color: '#fff6ea', intensity: 2.0 }, sky: { top: '#8ea2b7', bottom: '#d5d8dc' }, bloom: { strength: .35, radius: .4, threshold: 1.0 } };
+const stage = GS.createStage({ W, H, tone: 'aces', fov: 40, shadows: { size: 2048, extent: 22 }, sun: { offset: [-9, 24, 10] },
+  fog: GRADE_YARD.fog, sky: GRADE_YARD.sky, hemi: GRADE_YARD.hemi, bloom: GRADE_YARD.bloom, dim: { hemi: .25, sun: .5, sky: .6 } });
+const { scene } = stage;
+const P = GS.painter(ctx, { W, H, sans: SANS, mono: MONO, theme: { text: C.text, dim: C.dim, faint: C.faint, panel: C.panel, line: C.line,
+  chipFill: 'rgba(5,9,16,.88)', chipInk: '#061018', scrim: '3,6,12', ok: C.ok } });
+const { txt, tw, panel, chip, dot, check, cross, line, rr, rgba, scrims, freezeFX } = P;
+const HUD = GS.gameHUD(P);
+const LB = GS.labels(stage, P);
+const M = GS.flatMat;
+
+// ── arena 1: night container yard (the game) ─────────────────
+const TX = 12;                                   // target lane: x = 12 m, running along z
+const CONT = [[18.5, 1.3, -8.4, '#b4562f'], [18.5, 1.3, -1.9, '#2f7a80'], [18.5, 3.9, -1.9, '#8a2e3b'], [18.5, 1.3, 4.6, '#cc9f2e'], [18.5, 1.3, 11.1, '#3f5690'],
+  [21.5, 1.3, 1.4, '#5f7a50'], [5, 1.3, -13, '#8a2e3b', Math.PI / 2], [11.2, 1.3, -13, '#2f7a80', Math.PI / 2], [11.2, 3.9, -13, '#b4562f', Math.PI / 2]];
+const BARRIERS = [[11, 0, 7.1], [8, 0, -5.6], [4.5, 0, 3.4, Math.PI / 2]];
+const yard = new THREE.Group(); scene.add(yard);
+{
+  const R = rng(7);
+  const floor = GS.tileTexture({ tiles: 2, gap: 2, grout: '#1c2129', hue: [212, 6], sat: [6, 5], light: [25, 6], stagger: false, grit: 1400,
+    gritDark: '8,10,14', gritLight: '150,165,185', seed: 7, rep: [40, 40] });
+  GS.groundPlane(stage, new THREE.MeshStandardMaterial({ map: floor, roughness: .9 }), { size: [160, 160], at: [10, 0, 0], parent: yard });
+  const rib = GS.ribTexture({ base: '#d9d9d9', ribs: 20 });
+  GS.instanced(stage, new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ map: rib, roughness: .75, metalness: .15 }),
+    CONT.map(c => [c[0], c[1], c[2], 1, c[4] || 0, [2.44, 2.6, 6.06]]), { colors: CONT.map(c => c[3]), parent: yard });
+  GS.addProp(stage, 'barrier', BARRIERS.map(b => [b[0], 0, b[2], 1, b[3] || 0]), { barrier: M('#8d9298') }, { parent: yard });
+  GS.addProp(stage, 'barrel', [[16, 0, -4.6], [16.8, 0, -5.2], [16.2, 0, 8.4]], { barrel: M('#2f5d8a', { roughness: .6 }) }, { parent: yard });
+  GS.addProp(stage, 'crate', [[3.2, 0, -3.4, 1.1, .3], [3.4, 0, -2.2, .9, -.2], [3.3, 1.05, -2.9, .8, .5]].map(q => [q[0], q[1], q[2], q[3], q[4]]),
+    { crate: M('#6b5236') }, { parent: yard });
+  const lamps = [[3, 0, -10, 1, -Math.PI / 2], [14.5, 0, -10.4, 1, -Math.PI / 2], [15.2, 0, 1.2, 1, Math.PI], [13.5, 0, 13, 1, Math.PI / 2], [-4, 0, 8.5, 1, Math.PI / 2]];
+  GS.addProp(stage, 'lamp', lamps, { pole: M('#2a2e35'), bulb: GS.glowMat('#ffb562', 3.2) }, { parent: yard });
+  for (const l of lamps) GS.lightPool(stage, { color: '#ffae5a', radius: 6.5, strength: .32, at: [l[0] + .9 * Math.cos(l[4]), .02, l[2] - .9 * Math.sin(l[4])], parent: yard });
+  // far fence posts for depth
+  const fp = []; for (let x = -10; x <= 40; x += 2.5) { fp.push([x, 1.2, -19, 1]); fp.push([x, 1.2, 19, 1]); }
+  GS.instanced(stage, new THREE.BoxGeometry(.12, 2.4, .12), M('#3a424e'), fp, { parent: yard });
+  const tu = []; for (let i = 0; i < 40; i++) tu.push([-6 + R() * 34, .1, (R() < .5 ? -1 : 1) * (9 + R() * 8), .3 + R() * .4, R() * 6]);
+  GS.addProp(stage, 'rock', tu, { rock: M('#3b4048') }, { parent: yard });
+}
+
+// ── arena 2: the server's judging space (engine test map: grey grid, collision boxes only) ──
+const MAP = GS.buildTestMap(stage, { at: [9, 0, 0], size: 32, prop: '#a3a7ac', openFloor: { radius: 95, rep: 24 },
+  boxes: [...CONT.filter(c => c[1] < 2).map(c => c[4] ? [c[0], 1.3, c[2], 6.06, 2.6, 2.44] : [c[0], 1.3, c[2], 2.44, 2.6, 6.06]),
+    ...BARRIERS.map(b => b[3] ? [b[0], .41, b[2], 2, .82, .76] : [b[0], .41, b[2], .76, .82, 2])].map(b => [b[0] - 9, b[1], b[2], b[3], b[4], b[5]]) });
+
+// ── characters (kit rig; this topic's proportions and kit) ───
+const SHOOTER = GS.buildChar(stage, { mats: { skin: M('#c9946b'), top: M('#2c3a3a'), bottom: M('#1f2629'), boots: M('#14181a'), belt: M('#3fe0c5', { emissive: '#1a5a50' }),
+  helmet: M('#33413f'), visor: GS.glowMat('#3fe0c5', 1.6), pack: M('#3b4a3c') }, head: 'helmet', collar: false, backpack: true,
+  proportions: { bulk: 1.18, width: 1.12, limb: 1.15, leg: .96 }, ring: C.me });
+const rifle = new THREE.Mesh(new THREE.BoxGeometry(.78, .1, .08), M('#15191e')); rifle.position.set(.46, .36, -.1); rifle.castShadow = true; SHOOTER.chest.add(rifle);
+const TPROP = { proportions: { height: 1.04, leg: 1.08, bulk: .92, head: 1.05 }, head: 'helmet', collar: true };
+const TARGET = GS.buildChar(stage, { ...TPROP, mats: { skin: M('#d8a782'), top: M('#c9ccd2'), bottom: M('#4a4f5a'), boots: M('#22252b'), belt: M('#22252b'),
+  collar: M('#ff6fb5'), helmet: M('#dfe2e7'), visor: GS.glowMat('#ff6fb5', 2.2) }, ring: C.seen });
+const NOWGHOST = GS.buildGhost(stage, C.now, TPROP);
+const muzzle = stage.transient(new THREE.Mesh(new THREE.OctahedronGeometry(.16, 0), GS.glowMat('#ffe9b0', 4, { transparent: true })));
+scene.add(muzzle);
+const SHOT = GS.tracer(stage, '#bff8ee', { k: 2.6, width: .025 });
+const RAY = GS.tracer(stage, C.me, { k: 2.4, width: .04 });
+const PULSES = GS.pulsePool(stage, 3);
+const GAP = GS.groundArrow(stage, C.red, { width: .1, head: .35 });
+// server capsules (thin hitbox capsules): shooter, target now, seen marker, hitbox history (3), rewound hitbox
+const HB = GS.mannequinGeometry({ radius: .26, length: 1.12, head: .2 });
+const CAP_ME = GS.buildMannequin(stage, { geo: HB, mat: M('#5aa89b', { flatShading: false, roughness: .55 }), ring: C.me });
+const CAP_NOW = GS.buildMannequin(stage, { geo: HB, mat: M('#e0b845', { flatShading: false, roughness: .5 }), ring: C.now });
+const CAP_NOWG = GS.buildMannequin(stage, { geo: HB, ghost: C.now });
+const CAP_SEEN = GS.buildMannequin(stage, { geo: HB, ghost: C.seen });
+const CAP_HIST = [0, 1, 2].map(() => GS.buildMannequin(stage, { geo: HB, ghost: C.hist }));
+
+// ═════════════════════════════════════════════════════════════
+//  sim — pure functions of sim time s (seconds); numbers are examples
+// ═════════════════════════════════════════════════════════════
+const ONEWAY = .04, INTERP = .08, RTT = 2 * ONEWAY, SEEN = ONEWAY + INTERP, REWIND = RTT + INTERP;   // 40 / 80 / 80 / 120 / 160 ms
+const V_RUN = 6, S_FIRE = 1.75;
+function travel(s, s0, s1, v, r) {               // distance along a trapezoid speed profile (accelerate r, cruise v, brake r)
+  if (s <= s0) return 0;
+  const T = s1 - s0, q = Math.min(s, s1) - s0;
+  if (q < r) return .5 * v * q * q / r;
+  if (q < T - r) return .5 * v * r + v * (q - r);
+  const w = T - q; return v * (T - r) - .5 * v * w * w / r;
+}
+const zTrue = s => -7 + travel(s, .4, 3.0, V_RUN, .25);          // where the server has the target
+const zSeen = s => zTrue(s - SEEN);                               // what the shooter's screen shows
+const runK = s => clamp((travel(s + .02, .4, 3.0, V_RUN, .25) - travel(s - .02, .4, 3.0, V_RUN, .25)) / .04 / V_RUN);
+const aimZ = s => zSeen(s) - .9 * (1 - eo(p(s, .8, .85)));        // the crosshair catches up with the target, fire at S_FIRE
+const yawTo = z => -Math.atan2(z, TX);
+const hitK = s => { const k = p(s, S_FIRE + .05, .38); return k > 0 && k < 1 ? Math.sin(k * Math.PI) : 0; };
+const MUZ = z => { const f = new THREE.Vector3(TX, 0, z).normalize(); return [f.x * .95, 1.42, f.z * .95]; };
+const tgtState = (z, s) => ({ x: TX, z, yaw: -Math.PI / 2, d: z + 7, k: runK(s), t: s, hit: hitK(s) });
+
+// 01: live → rewind → replay → slow → freeze on the shot → slow
+const TM1 = GS.timeRemap([{ until: 3.1 }, { until: 3.7, rewindTo: .9, label: '◀◀ 되감기' }, { until: 4.3, label: 'REPLAY' },
+  { until: 4.3 + (S_FIRE - 1.5) / .3, rate: .3, label: 'SLOW ×0.3' }, { until: 7.3, freeze: true, label: '❚❚ 발사 순간' }, { rate: .4, label: 'SLOW ×0.4' }]);
+
+// ═════════════════════════════════════════════════════════════
+//  scenes (3D state for time t)
+// ═════════════════════════════════════════════════════════════
+let F = {};
+function camOTS(s) {                              // over the right shoulder, looking down the aim line
+  const z = aimZ(s), f = new THREE.Vector3(TX, 0, z).normalize(), rt = [-f.z, 0, f.x];
+  return GS.camFrom([-2.3 * f.x + .85 * rt[0], 1.85, -2.3 * f.z + .85 * rt[2]], [TX, 1.15, z], { fov: 44 });
+}
+function shooterPose(s, aim = 1) { GS.pose(SHOOTER, { x: 0, z: 0, yaw: yawTo(aimZ(s)), aim, t: s }); }
+
+const INTRO_KEYS = [
+  { t: 0, ...GS.camFrom([30, 14, 22], [12, .5, 0], { fov: 40 }) },
+  { t: 2.6, ...GS.camFrom([4, 6.5, 13], [8, .8, -1], { fov: 40 }) },
+  { t: 4.5, hold: true, ...camOTS(0) },
+];
+function sceneIntro(t) {
+  shooterPose(0, eo(p(t, 2.6, 1.2)));
+  GS.pose(TARGET, { ...tgtState(zSeen(0), 0), k: 0 });
+  stage.grade(GRADE_YARD); yard.visible = true; MAP.group.visible = false;
+  GS.camSet(stage, GS.camPath(INTRO_KEYS, t));
+}
+
+function scene01(t) {
+  const u = t - HEAD[0][0], s = TM1(u);
+  const dk = eo(p(u, 3.65, .5)), pk = 1 - eo(p(u, 3.05, .3));
+  Object.assign(F, { u, s, dk, pk });
+  stage.grade(GRADE_YARD); yard.visible = true; MAP.group.visible = false;
+  shooterPose(s);
+  GS.pose(TARGET, tgtState(zSeen(s), s)); GS.setRing(TARGET, dk);
+  if (dk > 0) { GS.setGhost(NOWGHOST, tgtState(zTrue(s), s), dk, Math.abs(zTrue(s) - zSeen(s))); GS.setRing(SHOOTER, dk); }
+  const fs = s - S_FIRE, mz = MUZ(aimZ(S_FIRE));
+  if (fs >= 0 && fs < .07) { muzzle.visible = true; muzzle.position.set(...mz); muzzle.scale.setScalar(1 + fs * 8); }
+  if (fs >= 0 && fs < .25) SHOT.set(mz, [TX, 1.25, aimZ(S_FIRE)], 1 - fs / .25, clamp((fs - .03) / .05), clamp(fs / .05));
+  if (dk > 0 && fs >= 0) { const gz = zTrue(S_FIRE), sz = zSeen(S_FIRE); if (u > 5) GAP.set(TX + .9, sz, TX + .9, gz, dk * eo(p(u, 5.2, .4))); }
+  PULSES.put(TX, zSeen(S_FIRE), fs / .5, C.seen, .3, 1.2);
+  const zm = (zSeen(s) + zTrue(s)) / 2;
+  const dbg = GS.camFrom([3.2, 5.8, zm - 1.2], [TX - .3, .95, zm], { fov: 30, sx: 230, sy: 30 });
+  GS.camSet(stage, GS.mixCam(camOTS(s), dbg, eio(dk)), { shake: fs > 0 && fs < .2 ? (1 - fs / .2) * .35 * pk : 0, tt: t });
+}
+
+// server view: σ = ms after the shooter fired
+const SERVER_CAM = GS.camFrom([6, 11.5, 9.5], [10, .7, .3], { fov: 34, sx: 240 });
+const SERVER_CAM2 = GS.camFrom([9, 10, 6.5], [11.5, .8, .3], { fov: 32, sx: 260 });
+const SERVER_CAM3 = GS.camFrom([4.5, 6.8, 4.2], [12.2, .9, .2], { fov: 30, sx: 300, sy: 40 });
+function serverWorld() { stage.grade(GRADE_SERVER); yard.visible = false; MAP.group.visible = true; }
+function scene02(t) {
+  const u = t - HEAD[1][0], sig = 40 * eio(p(u, 1.2, 1.6));
+  Object.assign(F, { u, sig });
+  serverWorld();
+  GS.poseMannequin(CAP_ME, { x: 0, z: 0, ring: 1 });
+  const zn = zTrue(S_FIRE + sig / 1000);
+  GS.poseMannequin(CAP_NOW, { x: TX, z: zn, ring: 1 });
+  const ks = eo(p(u, .5, .5)); if (ks > 0) GS.poseMannequin(CAP_SEEN, { x: TX, z: zSeen(S_FIRE), a: .45 * ks, ring: ks });
+  const mz = [.45, 1.42, 0], far = [mz[0] + (TX - mz[0]) * 1.6, mz[1] + (1.3 - mz[1]) * 1.6, zSeen(S_FIRE) * 1.6];
+  const kr = p(u, 2.9, .5);
+  if (kr > 0) RAY.set(mz, far, 1 - .4 * p(u, 6.5, 1), 0, eo(kr));
+  if (u > 3.3) PULSES.put(TX, zSeen(S_FIRE), (u - 3.3) / .7, C.red, .3, 1.4);
+  if (u > 3.8) GAP.set(TX + .9, zSeen(S_FIRE), TX + .9, zn, eo(p(u, 3.8, .4)));
+  GS.camSet(stage, GS.mixCam(SERVER_CAM, SERVER_CAM2, eio(p(u, 0, 8.5))));
+}
+
+const HIST = [1, 2, 3].map(j => ({ j, ms: -40 * j, z: zTrue(S_FIRE + ONEWAY - .04 * j) }));   // −40, −80, −120 ms; −160 = the rewound one
+function scene03(t) {
+  const u = t - HEAD[2][0];
+  Object.assign(F, { u });
+  serverWorld();
+  GS.poseMannequin(CAP_ME, { x: 0, z: 0, ring: 1 });
+  const zn = zTrue(S_FIRE + ONEWAY), zs = zSeen(S_FIRE);
+  const rw = eo(p(u, 2.1, .7)) * (1 - eo(p(u, 5.4, .6)));      // rewound state
+  if (rw < .98) GS.poseMannequin(CAP_NOW, { x: TX, z: zn, ring: 1 }); else GS.poseMannequin(CAP_NOWG, { x: TX, z: zn, a: .55, ring: .5 });
+  HIST.forEach((h, i) => { const k = eo(p(u, .4 + i * .45, .4)) * (1 - .6 * rw); if (k > .01) GS.poseMannequin(CAP_HIST[i], { x: TX, z: h.z, a: .5 * k }); });
+  const ks = eo(p(u, .4 + 3 * .45, .4)); if (ks > .01) GS.poseMannequin(CAP_SEEN, { x: TX, z: zs, a: Math.min(1, lerp(.5, 1, rw)) * ks, ring: Math.max(ks * .4, rw) });
+  const mz = [.45, 1.42, 0], hitPt = [TX, 1.3, zs], kr = p(u, 3.1, .45);
+  if (kr > 0) RAY.set(mz, hitPt, 1 - .5 * p(u, 6, 1), 0, eo(kr));
+  if (u > 3.55) PULSES.put(TX, zs, (u - 3.55) / .7, C.ok, .3, 1.8, 2.4);
+  GS.camSet(stage, GS.mixCam(SERVER_CAM2, SERVER_CAM3, eio(p(u, 0, 4))));
+}
+
+function sceneOutro(t) {
+  const v = t - OUTRO_AT, s = 3.4 + v;
+  stage.grade(GRADE_YARD); yard.visible = true; MAP.group.visible = false;
+  shooterPose(3.0);
+  const hk = p(v, .9, .4);
+  GS.pose(TARGET, { x: TX + .2, z: 7.3, yaw: -Math.PI * .75, crouch: 1, t: s, hit: hk > 0 && hk < 1 ? Math.sin(hk * Math.PI) : 0 });
+  GS.camSet(stage, GS.camPath([{ t: 0, ...GS.camFrom([16, 1.7, 11.2], [10.6, .9, 6.4], { fov: 40 }) }, { t: 4.5, ...GS.camFrom([15.2, 2.4, 12.4], [8.5, .9, 4.6], { fov: 40 }) }], v));
+}
+
+// ═════════════════════════════════════════════════════════════
+//  2D overlay
+// ═════════════════════════════════════════════════════════════
+const at3 = (x, y, z) => GS.proj(stage, x, y, z);
+function headers(t) {
+  for (const [s, e, n, title, sub] of HEAD) {
+    const a = win(t, s, e, .4); if (a <= 0) continue;
+    const k = eo(p(t, s + .05, .7)), k2 = eo(p(t, s + .3, .7));
+    ctx.save(); ctx.globalAlpha = a;
+    ctx.fillStyle = C.me; ctx.fillRect(116, 72, 5, 108 * k);
+    txt(n + ' / 03', 140, 96, { size: 20, weight: 700, mono: true, color: C.me, alpha: k, ls: 2, sh: 8 });
+    txt(title, 138, 146, { size: 50, weight: 800, alpha: k, sh: 14 });
+    txt(sub, 140, 184, { size: 28, color: C.dim, alpha: k2, sh: 10 });
+    ctx.restore();
+  }
+}
+function progress(t) {
+  const x0 = 120, x1 = 1800, y = 1056, a = clamp(Math.min(t - HEAD[0][0] + .4, DURATION - .6 - t) * 2) * .9; if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const segs = [...HEAD.map(h => [h[0], h[1], h[2] + ' ' + h[3]]), [OUTRO_AT, DURATION, '정리']];
+  segs.forEach(([s, e, lab]) => {
+    const xa = x0 + (x1 - x0) * s / DURATION + 3, xb = x0 + (x1 - x0) * e / DURATION - 3, f = clamp((t - s) / (e - s));
+    ctx.fillStyle = 'rgba(190,205,225,.18)'; ctx.fillRect(xa, y, xb - xa, 4);
+    ctx.fillStyle = C.me; ctx.fillRect(xa, y, (xb - xa) * f, 4);
+    txt(lab, xa, y - 10, { size: 17, weight: 600, color: t >= s ? C.dim : C.faint });
+  });
+  ctx.restore();
+}
+function caption(l1, l2, a1, a2, y = 930) {
+  txt(l1, W / 2, y, { size: 38, weight: 800, align: 'center', alpha: a1, sh: 12 });
+  if (l2) txt(l2, W / 2, y + 52, { size: 28, align: 'center', alpha: a2, color: C.dim, sh: 10 });
+}
+// debug panel on the LEFT (the action is right of centre in every debug shot)
+function lagPanel(a, { mode, modeCol, rows, big }) {
+  const y1 = HUD.netPanel(a, { x: 120, y: 250, w: 450, title: 'LAG COMP', statusCol: modeCol, mode, modeCol, rows, r: 6 });
+  if (big && a > 0) {
+    panel(120, y1 + 14, 450, 176, { alpha: a, r: 6, stroke: rgba(big.col, .55) });
+    txt(big.label, 144, y1 + 56, { size: 24, color: C.dim, alpha: a });
+    txt(big.value, 470, y1 + 160, { size: 100, weight: 800, mono: true, align: 'right', color: big.col, alpha: a });
+    txt(big.unit, 546, y1 + 160, { size: 34, weight: 700, mono: true, align: 'right', color: big.col, alpha: a });
+  }
+}
+// what the shooter sees: crosshair, hit marker, score, feed, ping, health, ammo
+function shooterHUD(a, s) {
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha *= a;
+  const fired = s >= S_FIRE;
+  HUD.crosshair({ x: W / 2, y: H / 2, col: '#e9fffa', size: 13, gap: 6, spread: fired ? 9 * (1 - p(s, S_FIRE, .25)) : 0, dot: true });
+  HUD.hitMarker({ x: W / 2, y: H / 2, k: p(s, S_FIRE + .05, .45), col: '#ffffff', size: 22 });
+  const dmg = p(s, S_FIRE + .05, .8); if (dmg > 0 && dmg < 1) txt('−34', W / 2 + 70, H / 2 - 40 - 50 * eo(dmg), { size: 40, weight: 800, mono: true, color: C.seen, alpha: 1 - dmg * dmg, sh: 8 });
+  HUD.scoreBar({ cx: W / 2, y: 62, left: { text: 'TEAL 7', col: C.me }, right: { text: '9 PINK', col: C.seen }, mid: '1:42', size: 28 });
+  HUD.killFeed({ x: 1800, y: 84, rows: [{ a: 'NOVA', b: 'KITE', colA: C.me, colB: C.seen }, { a: 'RUSK', b: 'ODIN', colA: C.seen, colB: C.me, alpha: .7 }] });
+  HUD.ping({ x: 1666, y: 192, ms: 80, lit: 3, col: C.ok, size: 22 });
+  HUD.healthBar({ x: 120, y: 982, w: 340, h: 16, value: .75, segments: 4, col: '#e9fffa', label: 'HP 75' });
+  HUD.ammo({ x: 1800, y: 1004, cur: fired ? 29 : 30, max: 90, col: '#e9fffa', size: 60, label: 'AR · AUTO' });
+  chip('● LIVE · 쏜 사람 화면', 1800, 250, C.red, { align: 'right', size: 20, r: 4 });
+  ctx.restore();
+}
+
+function overIntro(t) {
+  const a = win(t, 0, 4.7, .6); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  scrims(0, 1.1);
+  txt('HIT REGISTRATION · LAG COMPENSATION', W / 2, 760, { size: 22, weight: 600, mono: true, color: C.me, align: 'center', ls: 4, alpha: eo(p(t, .2, .8)), sh: 8 });
+  const k1 = eo(p(t, .5, .8)), k2 = eo(p(t, .9, .8));
+  txt('내 화면에서 맞힌 한 발,', W / 2, 852 + (1 - k1) * 30, { size: 84, weight: 800, align: 'center', alpha: k1, sh: 24 });
+  txt('서버가 맞았다고 판정하는 방법', W / 2, 952 + (1 - k2) * 30, { size: 64, weight: 800, align: 'center', color: C.seen, alpha: k2, sh: 24 });
+  ctx.restore();
+}
+
+function over01(t) {
+  const [S, E] = HEAD[0]; const a = win(t, S, E, .5); if (a <= 0) return;
+  const { u, s, dk, pk } = F; ctx.save(); ctx.globalAlpha = a;
+  scrims(1, .9 * dk + .4 * pk, .55 * dk, { leftW: 900 });
+  if (pk > 0) shooterHUD(pk, s);
+  if (dk > 0) {
+    const [sx, sy] = at3(TX, 2.5, zSeen(s)), [gx, gy] = at3(TX, 2.5, zTrue(s));
+    LB.hchip(gx, gy, '서버의 지금 위치', C.now, dk);
+    LB.hchip(sx, sy, '쏜 사람 화면의 적', C.seen, dk);
+    LB.drawHChips();
+    if (u > 5.2) {
+      const [x0, y0] = at3(TX + .9, .1, zSeen(S_FIRE)), [x1, y1] = at3(TX + .9, .1, zTrue(S_FIRE)), kk = eo(p(u, 5.2, .4));
+      txt('Δ ' + (zTrue(S_FIRE) - zSeen(S_FIRE)).toFixed(2) + ' m', Math.max(x0, x1) + 30, (y0 + y1) / 2 + 92, { size: 34, weight: 800, mono: true, color: C.red, alpha: kk, sh: 8 });
+    }
+    const lab = TM1.label(u);
+    lagPanel(dk, { mode: lab, modeCol: lab && lab.includes('발사') ? C.red : C.me, rows: [
+      ['서버→클라 지연', (ONEWAY * 1000) + ' ms'], ['보간 지연', (INTERP * 1000) + ' ms'],
+      ['화면 속 적', (SEEN * 1000) + ' ms 전', C.seen], ['위치 차이 Δ', (zTrue(s) - zSeen(s)).toFixed(2) + ' m', C.red],
+    ] });
+  }
+  P.rewindFX(ramp(u, 3.1, 3.7, .12), u, { label: '◀◀  되감기', tint: 'rgba(4,10,22,.4)', lines: '190,240,255' });
+  chip('⟲ 같은 순간을 서버 기준으로 · debug ON', W / 2, 948, C.me, { align: 'center', size: 28, alpha: ramp(u, 3.7, 4.9, .25), r: 4 });
+  freezeFX(ramp(u, 5.13, 7.3, .12));
+  caption('조준선이 겹친 적은 120 ms 전의 적', '다른 플레이어는 받은 스냅숏 사이를 보간해 그리므로, 늘 지연 + 보간 지연만큼 과거에 있습니다', eo(p(u, 5.4, .6)), eo(p(u, 6.0, .6)));
+  ctx.restore();
+}
+
+function over02(t) {
+  const [S, E] = HEAD[1]; const a = win(t, S, E, .5); if (a <= 0) return;
+  const { u, sig } = F; ctx.save(); ctx.globalAlpha = a;
+  scrims(1, 1, .7, { leftW: 900 });
+  const zn = zTrue(S_FIRE + sig / 1000), zs = zSeen(S_FIRE);
+  const [nx, ny] = at3(TX, 2.4, zn);
+  LB.hchip(nx, ny, '서버의 적 (지금)', C.now, eo(p(u, .3, .4)));
+  LB.tag(TX - 1.5, zs - .2, '쏜 사람이 본 위치', C.seen, eo(p(u, .6, .4)), .05, 24);
+  if (u > 3.3) LB.wchip(TX - 2.4, 1.36, zs * (TX - 2.4) / TX, '✕ MISS', C.red, eo(p(u, 3.3, .3)), 28);
+  LB.drawTags(); LB.drawHChips();
+  if (u > 3.8) {
+    const [x0, y0] = at3(TX + 1.2, .1, (zs + zn) / 2);
+    txt('Δ ' + (zn - zs).toFixed(2) + ' m', x0, y0 + 12, { size: 34, weight: 800, mono: true, color: C.red, alpha: eo(p(u, 3.8, .4)), sh: 8 });
+  }
+  const k = eo(p(u, .1, .6));
+  lagPanel(k, { mode: 'OFF', modeCol: C.red, rows: [
+    ['RTT', (RTT * 1000) + ' ms', C.ok], ['보간 지연', (INTERP * 1000) + ' ms'],
+    ['발사 정보 도착', '+' + Math.round(sig) + ' ms', C.me], ['판정 기준', '서버의 지금 위치', C.now],
+    ['결과', u > 3.3 ? 'MISS' : '—', u > 3.3 ? C.red : C.text],
+  ] });
+  caption('발사 정보가 서버에 닿을 때, 적은 이미 0.96 m 옆에', '쏜 사람이 본 위치와 서버의 현재 위치는 160 ms 차이 · 현재 위치로 판정하면 빗나갑니다', eo(p(u, 4.4, .6)), eo(p(u, 5.0, .6)));
+  ctx.restore();
+}
+
+function over03(t) {
+  const [S, E] = HEAD[2]; const a = win(t, S, E, .5); if (a <= 0) return;
+  const { u } = F; ctx.save(); ctx.globalAlpha = a;
+  scrims(1, 1, .7, { leftW: 900 });
+  const zn = zTrue(S_FIRE + ONEWAY), zs = zSeen(S_FIRE), rw = eo(p(u, 2.1, .7)) * (1 - eo(p(u, 5.4, .6)));
+  LB.tag(TX - .9, HIST[1].z, '틱마다 저장한 히트박스 기록', C.hist, eo(p(u, .9, .4)) * (1 - eo(p(u, 1.9, .4))), .05, 22);
+  LB.tag(TX - .9, zs - .12, '−160 ms', C.seen, eo(p(u, 1.75, .4)), .05, 22);
+  LB.drawTags();
+  const [nx, ny] = at3(TX, 2.4, zn), [sx, sy] = at3(TX, 2.5, zs);
+  LB.hchip(nx, ny, u < 5.4 ? '지금' : '판정 후 현재 위치로 복구', C.now, 1);
+  if (rw > .02) LB.hchip(sx, sy, '되감은 히트박스 −160 ms', C.seen, rw, 24);
+  if (u > 3.55) LB.hchip(sx, sy, '✓ HIT', C.ok, eo(p(u, 3.55, .3)) * (1 - eo(p(u, 5.6, .4))), 28);
+  LB.drawHChips();
+  const k = eo(p(u, .1, .6));
+  lagPanel(k, { mode: 'ON', modeCol: C.ok, rows: [
+    ['RTT', (RTT * 1000) + ' ms', C.ok], ['보간 지연', (INTERP * 1000) + ' ms'], ['결과', u > 3.55 ? 'HIT' : '—', u > 3.55 ? C.ok : C.text],
+  ], big: { label: '되감기 = RTT + 보간 지연', value: u < 2.1 ? '—' : String(Math.round(REWIND * 1000 * eo(p(u, 2.1, .7)))), unit: 'ms', col: C.seen } });
+  caption('서버가 히트박스를 쏜 사람이 본 시점으로 되감아 판정합니다', '틱마다 저장한 히트박스 기록에서 시점을 찾고, 판정이 끝나면 현재 위치로 복구', eo(p(u, 4.0, .6)), eo(p(u, 4.6, .6)));
+  ctx.restore();
+}
+
+function overOutro(t) {
+  const v = t - OUTRO_AT, a = win(t, OUTRO_AT, DURATION + .2, .6); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const hk = p(v, .9, .5);
+  if (hk > 0 && hk < 1) { ctx.save(); ctx.globalAlpha *= (1 - hk) * .8; const g = ctx.createRadialGradient(W / 2, H / 2, 380, W / 2, H / 2, 1100); g.addColorStop(0, 'rgba(255,40,60,0)'); g.addColorStop(1, 'rgba(255,40,60,.75)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); ctx.restore(); }
+  scrims(.6, 1.2);
+  const [tx, ty] = at3(TX + .2, 1.9, 7.3);
+  chip('맞은 쪽 화면: 이미 엄폐한 뒤', tx, ty - 30, C.seen, { align: 'center', size: 24, alpha: eo(p(v, 1.2, .4)), r: 4 });
+  txt('랙 보상은 쏜 사람 화면을 기준으로 판정한다.', W / 2, 900, { size: 52, weight: 800, align: 'center', alpha: eo(p(v, .4, .7)), sh: 18 });
+  txt('그래서 맞은 쪽은 엄폐물 뒤에서 맞은 것처럼 느끼기도 한다', W / 2, 962, { size: 30, color: C.dim, align: 'center', alpha: eo(p(v, 1.4, .7)), sh: 10 });
+  ctx.restore();
+}
+
+// ── frame ────────────────────────────────────────────────────
+const SCENES = [sceneIntro, scene01, scene02, scene03, sceneOutro];
+const OVERS = [() => {}, over01, over02, over03, () => {}];
+const CUTS = [HEAD[1][0], HEAD[2][0], OUTRO_AT];
+function renderAt(t) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  stage.beginFrame(); F = { dk: 0 };
+  const ch = t < HEAD[0][0] ? 0 : t < HEAD[1][0] ? 1 : t < HEAD[2][0] ? 2 : t < OUTRO_AT ? 3 : 4;
+  SCENES[ch](t);
+  stage.dim(F.dk || 0);
+  stage.render(ctx);
+  let dip = 0; for (const c of CUTS) dip = Math.max(dip, 1 - clamp(Math.abs(t - c) / .3));
+  if (dip > 0) { ctx.fillStyle = `rgba(2,4,8,${dip})`; ctx.fillRect(0, 0, W, H); }
+  overIntro(t);
+  OVERS[ch](t);
+  overOutro(t);
+  headers(t); progress(t);
+  txt('* 수치는 예시 · Source 엔진식 랙 보상을 단순화한 그림', 140, 226, { size: 22, color: C.dim, sh: 6, alpha: win(t, HEAD[0][0] + .3, OUTRO_AT, .5) });
+  const fo = p(t, DURATION - .6, .6); if (fo > 0) { ctx.fillStyle = `rgba(0,0,0,${fo})`; ctx.fillRect(0, 0, W, H); }
+}
+window.renderAt = renderAt;
+window.DURATION = DURATION;
+
+window.ready = (async () => {
+  const faces = [['Pretendard', 'Pretendard-Variable.woff2', '100 900'], ['JetBrains Mono', 'JetBrainsMono.woff2', '100 800']];
+  for (const [family, file, weight] of faces) {
+    for (const base of ['../assets/fonts/', 'assets/fonts/']) {
+      try { document.fonts.add(await new FontFace(family, `url(${base}${file})`, { weight }).load()); break; } catch (e) { /* try next */ }
+    }
+  }
+  await document.fonts.ready;
+})();
+// ── player (skipped when ?render) ────────────────────────────
+if (!location.search.includes('render')) {
+  const $ = id => document.getElementById(id);
+  const ICON = {
+    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>',
+    replay: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"/></svg>',
+  };
+  const CHAPTERS = [[0, '', '인트로'], ...HEAD.map(h => [h[0], h[2], h[3]]), [OUTRO_AT, '', '정리']];
+  $('scrub').setAttribute('aria-valuemax', Math.round(DURATION));
+  const POSTER = 11.0;   // ch01 freeze-frame: seen target vs server now, Δ
+  let t = 0, playing = false, started = false, last = 0;
+  const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
+  CHAPTERS.forEach(([s, n, label], i) => {
+    const b = document.createElement('button');
+    b.innerHTML = (n ? `<span>${n}</span>` : '') + label;
+    b.addEventListener('click', () => { seek(s + .01); play(); });
+    $('chapters').appendChild(b);
+    if (i) { const tk = document.createElement('div'); tk.className = 'tick'; tk.style.left = (s / DURATION * 100) + '%'; $('ticks').appendChild(tk); }
+  });
+  function ui() {
+    const k = t / DURATION, ended = t >= DURATION;
+    $('fill').style.width = k * 100 + '%'; $('knob').style.left = k * 100 + '%';
+    $('time').textContent = `${mmss(t)} / ${mmss(DURATION)}`;
+    $('scrub').setAttribute('aria-valuenow', Math.round(t));
+    $('play').innerHTML = playing ? ICON.pause : ended ? ICON.replay : ICON.play;
+    $('play').setAttribute('aria-label', playing ? '일시정지' : '재생');
+    $('big').hidden = playing;
+    $('big').innerHTML = ended ? ICON.replay : ICON.play;
+    $('big').classList.toggle('replay', ended);
+    let cur = 0; CHAPTERS.forEach(([s], i) => { if (t >= s) cur = i; });
+    [...$('chapters').children].forEach((b, i) => b.setAttribute('aria-current', i === cur && started));
+  }
+  function draw() { renderAt(started ? Math.min(t, DURATION - .001) : POSTER); }
+  function play() { if (t >= DURATION) t = 0; started = true; playing = true; last = performance.now(); ui(); }
+  function pause() { playing = false; ui(); }
+  function toggle() { playing ? pause() : play(); }
+  function seek(x) { started = true; t = clamp(x, 0, DURATION); draw(); ui(); }
+  function frame(now) {
+    if (playing) { t += (now - last) / 1000 * rate; last = now; if (t >= DURATION) { t = DURATION; playing = false; } draw(); ui(); }
+    requestAnimationFrame(frame);
+  }
+  const RATES = [1, .75, .5];
+  let rate = 1;
+  try { rate = +localStorage.getItem('mg-rate') || 1; } catch (e) { /* storage unavailable */ }
+  if (!RATES.includes(rate)) rate = 1;
+  function setRate(r) {
+    rate = r; $('rate').textContent = r + '×'; $('rate').setAttribute('aria-label', `재생 속도 ${r}배`);
+    try { localStorage.setItem('mg-rate', String(r)); } catch (e) { /* storage unavailable */ }
+  }
+  setRate(rate);
+  $('rate').addEventListener('click', () => setRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length]));
+  $('stage').addEventListener('click', toggle);
+  $('play').addEventListener('click', toggle);
+  $('fs').addEventListener('click', () => { const el = $('stage'); if (document.fullscreenElement) document.exitFullscreen?.(); else el.requestFullscreen?.().catch(() => {}); });
+  const scrub = $('scrub');
+  const fromEvent = e => { const r = scrub.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width) * DURATION; };
+  let wasPlaying = false;
+  scrub.addEventListener('pointerdown', e => { scrub.setPointerCapture(e.pointerId); wasPlaying = playing; playing = false; seek(fromEvent(e)); });
+  scrub.addEventListener('pointermove', e => { if (scrub.hasPointerCapture(e.pointerId)) seek(fromEvent(e)); });
+  scrub.addEventListener('pointerup', () => { if (wasPlaying && t < DURATION) play(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key === 'k') { e.preventDefault(); toggle(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); seek(t + 5); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); seek(t - 5); }
+    else if (e.key === 'Home') seek(0);
+    else if (e.key === ',' || e.key === '<') setRate(RATES[Math.min(RATES.length - 1, RATES.indexOf(rate) + 1)]);
+    else if (e.key === '.' || e.key === '>') setRate(RATES[Math.max(0, RATES.indexOf(rate) - 1)]);
+  });
+  const posterMode = location.hash === '#poster';
+  if (posterMode) document.body.classList.add('poster');
+  ui();
+  const deep = /^#ch(\d\d)$/.exec(location.hash), deepHead = deep && HEAD.find(r => r[2] === deep[1]);
+  window.ready.then(() => {
+    draw(); requestAnimationFrame(frame);
+    if (deepHead) seek(deepHead[0] + .01);
+    if (posterMode) { play(); setInterval(() => { if (!playing) { t = 0; play(); } }, 500); }
+  });
+  renderAt(POSTER);
+}
+</script>

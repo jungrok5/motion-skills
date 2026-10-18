@@ -1,0 +1,593 @@
+<meta charset="utf-8">
+<title>SSD Read Stall</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Player chrome: the skill's standard player (dark), the stage itself is light (the topic's look). */
+  :root {
+    --bg: #12151a; --surface: #1b2027; --line: #2e3540; --fg: #eceef2; --dim: #949ca8;
+    --accent: #2f9e8f; --live: #5b8def; --text2: #c6ccd6;
+    --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    color-scheme: dark;
+  }
+  html, body { min-height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding-block: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    box-sizing: border-box; overflow-x: hidden; }
+  .player { width: min(100%, calc((100vh - 170px) * 16 / 9)); min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .stage { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--line); background: #ebe8e1; cursor: pointer; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .big { position: absolute; inset: auto 0 5% 0; margin: 0 auto; width: clamp(44px, 11%, 84px); height: auto; aspect-ratio: 1; border-radius: 50%; border: 1.5px solid var(--accent);
+    background: rgba(18,21,26,.8); color: var(--fg); display: grid; place-items: center; cursor: pointer; transition: transform .15s, opacity .2s; }
+  .big[hidden] { display: none; }
+  .big:hover { transform: scale(1.06); }
+  .big svg { width: 36%; height: 36%; margin-left: 6%; }
+  .big.replay svg { margin-left: 0; }
+  .bar { display: flex; align-items: center; gap: 14px; }
+  .btn { flex: none; width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface);
+    color: var(--fg); display: grid; place-items: center; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn svg { width: 16px; height: 16px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .time { flex: none; font: 500 13px/1 var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
+  .scrub { position: relative; flex: 1; min-width: 0; height: 28px; cursor: pointer; touch-action: none; }
+  .track { position: absolute; left: 0; right: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--line); }
+  .fill { position: absolute; left: 0; top: 12px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--live)); }
+  .tick { position: absolute; top: 8px; width: 2px; height: 12px; background: var(--dim); opacity: .6; }
+  .knob { position: absolute; top: 7px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--fg); box-shadow: 0 0 0 4px rgba(47,158,143,.3); }
+  .chapters { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chapters button { font: 600 13px/1 var(--sans); color: var(--dim); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+  .chapters button span { font-family: var(--mono); color: var(--accent); margin-right: 6px; }
+  .chapters button:hover { color: var(--fg); }
+  .chapters button[aria-current="true"] { color: var(--fg); border-color: var(--accent); background: rgba(47,158,143,.14); }
+  .set { display: flex; flex-wrap: wrap; gap: 8px; }
+  .set a { font: 600 13px/1 var(--sans); color: var(--fg); text-decoration: none; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; background: var(--surface); }
+  .set a:hover { border-color: var(--accent); }
+  body.poster .set { display: none; }
+  .rate { width: auto; min-width: 56px; padding: 0 10px; font: 600 13px/1 var(--mono); }
+  @media (max-width: 600px) { .time { font-size: 12px; } }
+  .notes { width: min(100%, 860px); margin-top: 56px; padding-bottom: 48px; font-size: 16px; line-height: 1.75; word-break: keep-all; overflow-wrap: anywhere; }
+  .notes .lede { font-size: 18px; color: var(--fg); }
+  .notes p, .notes li { color: var(--text2); }
+  .notes article { border-top: 1px solid var(--line); padding-top: 20px; margin-top: 24px; }
+  .notes code { font: 500 .88em var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+  .notes .terms { display: grid; grid-template-columns: minmax(110px, max-content) minmax(0, 1fr); gap: 12px 24px; margin: 0; }
+  .notes dt { font-weight: 700; }
+  .notes dd { margin: 0; color: var(--text2); }
+  @media (max-width: 600px) { .notes .terms { grid-template-columns: minmax(0, 1fr); gap: 2px; } .notes dd { margin-bottom: 14px; } }
+  body.poster { padding: 0; }
+  body.poster .player { width: 100%; }
+  body.poster .bar, body.poster .chapters, body.poster .big, body.poster .notes { display: none; }
+  body.poster .stage { border: 0; border-radius: 0; }
+</style>
+
+<div class="player">
+  <div class="stage" id="stage">
+    <canvas id="c" width="1920" height="1080" aria-label="M.2 SSD를 열어 NAND 다이와 블록 하나까지 들어가, 같은 다이에서 GC 지우기가 도는 동안 읽기가 기다리는 모습을 보여주는 3D 모션그래픽"></canvas>
+    <button class="big" id="big" aria-label="재생"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg></button>
+  </div>
+  <div class="bar">
+    <button class="btn" id="play" aria-label="재생"></button>
+    <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="32" aria-valuenow="0">
+      <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+    </div>
+    <div class="time" id="time">0:00 / 0:32</div>
+    <button class="btn rate" id="rate" aria-label="재생 속도 1배">1×</button>
+    <button class="btn" id="fs" aria-label="전체 화면"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+  <div class="chapters" id="chapters"></div>
+  <nav class="set" aria-label="같은 주제"><a href="article.html">설명 읽기</a><a href="terms.html">용어집</a></nav>
+</div>
+<!-- Source text for article.html (설명) and terms.html (용어집). Not shown on this page. -->
+<section class="notes" id="notes" hidden>
+<p class="lede">M.2 SSD 한 장을 열어 NAND 다이 네 개와 블록 하나까지 들어간다. NAND는 페이지 단위로 쓰고 블록 단위로만 지우기 때문에 SSD 안에서는 GC가 계속 돈다. 같은 다이에서 지우기가 도는 동안 그 다이로 온 읽기는 끝날 때까지 기다리고, 평소 0.08ms인 읽기가 3ms를 넘는다. 화면의 시간 수치는 예시다.</p>
+<article data-ch="01">
+<p>NAND 패키지 안에는 다이가 여러 장 쌓여 있다. 화면은 다이 네 장을 꺼내 옆으로 펼치고, 다이마다 타임라인 한 줄을 붙인다. 컨트롤러는 쓰기와 읽기를 여러 다이에 나눠 보내고, 각 다이는 자기 일을 따로 처리한다.</p>
+<p>다이 한 장이 한 번에 하는 작업의 길이는 종류마다 크게 다르다. 예시 수치로 읽기 <code>0.08ms</code>, 프로그램(쓰기) <code>0.7ms</code>, 지우기 <code>3.5ms</code>다.</p>
+</article>
+<article data-ch="02">
+<p>다이 2의 블록 두 개로 들어간다. NAND는 이미 쓴 페이지를 그 자리에서 고쳐 쓰지 못한다. 데이터가 바뀌면 새 페이지에 쓰고, 옛 페이지는 무효로 표시한다.</p>
+<p>빈 페이지는 블록 전체를 지워야 다시 생긴다. 그래서 GC는 블록 A에 남은 유효 페이지 10개를 블록 B로 옮겨 쓴 뒤(프로그램 10번) 블록 A 전체를 지운다. 쓰기는 페이지 단위, 지우기는 블록 단위다.</p>
+</article>
+<article data-ch="03">
+<p>다시 다이 네 개의 타임라인이다. 다이 2가 GC 지우기(<code>3.5ms</code>)를 시작한 직후, 다이 1과 다이 2에 읽기가 하나씩 온다. 다이 1의 읽기는 <code>0.08ms</code>에 끝난다. 다이 2의 읽기는 지우기가 끝날 때까지 기다린 뒤에야 시작해 약 <code>3.2ms</code>가 걸리고, <code>1ms</code> 목표선을 넘는다.</p>
+<p>이런 읽기가 지연 분포의 꼬리(p99)를 만든다. 대응은 지우기를 잠시 멈추고 읽기를 먼저 처리하는 erase suspend, 여유 공간(OP)을 늘려 GC 횟수 줄이기, TRIM으로 쓸모없는 페이지를 미리 알려 주기다.</p>
+</article>
+<h2>용어 정리</h2>
+<dl class="terms">
+<dt>NAND 다이</dt><dd>NAND 플래시 칩 한 장. 패키지 하나에 여러 장이 쌓여 있고, 다이마다 따로 읽고 쓴다.</dd>
+<dt>페이지</dt><dd>NAND에 쓰고 읽는 단위. 이미 쓴 페이지는 지우기 전까지 다시 쓸 수 없다.</dd>
+<dt>블록</dt><dd>페이지 여러 개를 묶은 단위. 지우기는 블록 단위로만 한다.</dd>
+<dt>프로그램</dt><dd>빈 페이지에 데이터를 쓰는 NAND 작업. 이 영상의 예시 시간은 0.7ms.</dd>
+<dt>지우기 (erase)</dt><dd>블록의 모든 페이지를 빈 상태로 되돌리는 작업. 이 영상의 예시 시간은 3.5ms.</dd>
+<dt>GC (가비지 컬렉션)</dt><dd>무효 페이지가 많은 블록에서 유효 페이지를 다른 블록으로 옮기고, 그 블록을 지워 빈 블록을 만드는 SSD 내부 작업.</dd>
+<dt>erase suspend</dt><dd>진행 중인 지우기를 잠시 멈추고 읽기를 먼저 처리한 뒤 지우기를 이어 가는 NAND 기능.</dd>
+<dt>OP (오버프로비저닝)</dt><dd>사용자에게 보이지 않게 남겨 둔 여유 공간. 클수록 GC가 덜 자주, 덜 많이 옮긴다.</dd>
+<dt>TRIM</dt><dd>운영체제가 지운 파일의 페이지를 SSD에 알려 주는 명령. SSD는 그 페이지를 옮기지 않아도 된다.</dd>
+</dl>
+</section>
+<script type="importmap">
+{ "imports": { "three": "../assets/vendor/three/build/three.module.min.js", "three/addons/": "../assets/vendor/three/examples/jsm/" } }
+</script>
+<script type="module">
+// ─────────────────────────────────────────────────────────────
+//  SSD Read Stall — 분해해 들어가기, built on the zoom-levels and profiler-lanes kits.
+//  L0 = an M.2 SSD on a cutting mat (1 unit = 1 mm) → L1 = the dies of one NAND package, dealt out onto the mat, each with
+//  its own timeline (1 unit = 0.01 mm) → L2 = two blocks on die 2 (1 unit ≈ 0.45 µm) → back out to the timelines.
+//  Look: a light bench / datasheet look (paper mat, ink type), not a dark profiler. Numbers are examples (예시).
+// ─────────────────────────────────────────────────────────────
+import * as THREE from 'three';
+import * as Z from '../assets/kits/zoom-levels.js';
+import { createLanes } from '../assets/kits/profiler-lanes.js';
+
+const W = 1920, H = 1080, DURATION = 32;
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+const SANS = 'Pretendard, "WenQuanYi Zen Hei", "DejaVu Sans", sans-serif';
+const MONO = '"JetBrains Mono", Pretendard, "DejaVu Sans Mono", monospace';
+// Roles: read = NAND read · prog = program (write) · erase = GC erase · copy = GC page move · over = past the target (only)
+const C = {
+  bg: '#ebe8e1', ink: '#1b2128', dim: '#5d6672', faint: '#949aa3', card: 'rgba(255,255,255,.9)', rule: '#d3cec3',
+  read: '#2f6fe0', prog: '#14998a', erase: '#7b55e8', copy: '#d88a12', over: '#e0284f', invalid: '#b4afa5', free: '#f3f1ec',
+  board: '#21404f', bed: '#dcd8cf',
+};
+const { clamp, lerp, prog: p, eo, eio, ss, rng, rgba } = Z;
+const win = (t, s, e, f = .45) => Math.min(eo(p(t, s, f)), 1 - eio(p(t, e - f, f)));
+
+// ── story numbers (예시) ─────────────────────────────────────
+const T_READ = .08, T_PROG = .7, T_ERASE = 3.5, TARGET = 1.0;
+const HEAD = [
+  [4.0, 12.0, '01', '다이 네 장', '다이마다 따로 읽고 쓴다'],
+  [12.0, 21.0, '02', '지우기는 블록 단위', '쓰기는 페이지, 지우기는 블록 전체'],
+  [21.0, 28.5, '03', '지우기 뒤의 읽기', '같은 다이가 지우는 동안 읽기는 기다린다'],
+];
+const END = 28.5;
+
+// ── stage (kit) ──────────────────────────────────────────────
+const ST = Z.createStage({ bg: C.bg, fov: 30, hemi: ['#ffffff', '#c9c2b4', 1.7], sun: ['#fff4e4', 2.3], lightDir: [.45, 1, .55], bloom: [.16, .4, .93] });
+const { scene, camera, sun, composer, bloom, canvasTex } = ST;
+const MT = Z.createMaterials({ groups: 3, std: { roughness: .7, metalness: .05 } });
+const { M, MP, glowMat, basic } = MT;
+const { boxAO, mesh, box, inst, dynInst, setI, done, UNITC } = Z;
+
+// ── levels ───────────────────────────────────────────────────
+const LVS = Z.createLevels(scene), { level } = LVS;
+const PKG = [10, .8, 0];                                    // NAND package 0 on the board (L0, mm)
+const DZ = [1500, 1950, 2400, 2850];                        // where the four dies land on the mat (L1 z)
+const FANRAW = t => eio(p(t, 5.0, 1.6)) * (1 - eio(p(t, 29.0, 1.1)));
+const fanK = (k, t) => eio(clamp((FANRAW(t) - k * .07) / .79));
+function diePos(k, t) {                                      // stacked inside the package → dealt out in front of the board
+  const f = fanK(k, t);
+  return [lerp(0, -100, f), lerp(22 + k * 16, -70, f) + Math.sin(f * Math.PI) * 420, lerp(0, DZ[k], f)];
+}
+const dieScale = (k, t) => lerp(1, .45, fanK(k, t));
+const dieM = (k, t) => Z.compose(diePos(k, t), dieScale(k, t));
+const L0 = level('ssd', .001, -1, () => new THREE.Matrix4());
+const L1 = level('nand', .00001, 0, () => Z.compose(PKG, .01));
+const L2 = level('block', .00001 * .45 * .1, 1, t => dieM(2, t).multiply(Z.compose([-270, 12.1, 0], .1)));
+
+// ═════ L0 · the SSD on a cutting mat (mm) ═════════════════════
+let LID, lidMat;
+{
+  const g = L0.g;
+  const matTex = canvasTex(256, 256, (c, w, h) => { c.fillStyle = '#e4e1d9'; c.fillRect(0, 0, w, h); c.fillStyle = '#d6d2c8'; for (let k = 0; k < 10; k++) { c.fillRect(k * w / 10, 0, 1, h); c.fillRect(0, k * h / 10, w, 1); } c.fillStyle = '#c9c4b8'; c.fillRect(0, 0, w, 2); c.fillRect(0, 0, 2, h); }, { rep: [40, 40] });
+  const mat = mesh(g, new THREE.PlaneGeometry(1000, 1000), MP(0, '#ffffff', { map: matTex, roughness: .95 }), 0, 0, 0); mat.rotation.x = -Math.PI / 2;
+  const pcb = canvasTex(1024, 282, (c, w, h) => {
+    const r = rng(17); c.fillStyle = C.board; c.fillRect(0, 0, w, h); c.strokeStyle = '#2b5163'; c.lineWidth = 2;
+    for (let i = 0; i < 160; i++) { let x = r() * w, y = r() * h; c.beginPath(); c.moveTo(x, y); for (let k = 0; k < 3; k++) { r() < .5 ? x += (r() - .5) * 140 : y += (r() - .5) * 60; c.lineTo(x, y); } c.stroke(); }
+    c.fillStyle = 'rgba(235,240,240,.65)'; c.font = '600 15px monospace'; c.fillText('M.2 2280  NVMe', 560, 268); c.fillText('C12  R4  U3', 120, 22);
+  });
+  box(g, 80, .8, 22, 0, .4, 0, [MP(0, '#2a4a5a'), MP(0, '#2a4a5a'), MP(0, '#ffffff', { map: pcb, roughness: .55 }), MP(0, '#2a4a5a'), MP(0, '#2a4a5a'), MP(0, '#2a4a5a')], 1);
+  const chipTop = (label) => canvasTex(256, 256, (c, w, h) => { c.fillStyle = '#2b2e33'; c.fillRect(0, 0, w, h); c.fillStyle = '#6b7079'; c.font = '600 22px monospace'; c.fillText(label, 26, 60); c.beginPath(); c.arc(30, 222, 9, 0, 7); c.fill(); });
+  const chip = (w, h, d, x, label) => { box(g, w, h, d, x, .8 + h / 2, 0, M(0, '#2b2e33', { roughness: .5 }), .7); const tp = mesh(g, new THREE.PlaneGeometry(w * .96, d * .96), MP(0, '#ffffff', { map: chipTop(label), roughness: .5 }), x, .8 + h + .01, 0); tp.rotation.x = -Math.PI / 2; };
+  chip(12, 1.1, 12, -21, 'CTRL');
+  chip(8, .9, 11, -6, 'DRAM');
+  chip(13, 1.3, 17, 25.5, 'NAND 1');
+  // package 0: the base stays, the moulded lid lifts away while the dies come out
+  box(g, 13, .25, 17, PKG[0], .8 + .125, 0, M(0, '#2d4a3a'), .8);
+  LID = new THREE.Group(); g.add(LID);
+  lidMat = M(0, '#2b2e33', { roughness: .5, transparent: true });
+  box(LID, 13, 1.05, 17, 0, .525, 0, lidMat, .7);
+  const lt = mesh(LID, new THREE.PlaneGeometry(12.5, 16.5), MP(0, '#ffffff', { map: chipTop('NAND 0'), roughness: .5, transparent: true }), 0, 1.06, 0); lt.rotation.x = -Math.PI / 2;
+  LID.top = lt.material;
+  // edge connector fingers, the screw notch, passives
+  const fingers = []; for (let i = 0; i < 30; i++) { const z = -9.6 + i * .66; if (Math.abs(z + 4.4) < .5) continue; fingers.push([-38.4, .81, z, 1, 1, 1]); }
+  inst(g, boxAO(3.2, .04, .42, 1), MP(0, '#d2ad55', { metalness: .8, roughness: .3 }), fingers);
+  const ring = mesh(g, new THREE.RingGeometry(1.1, 1.9, 32), MP(0, '#d2ad55', { metalness: .8, roughness: .3, side: THREE.DoubleSide }), 38.6, .81, 0); ring.rotation.x = -Math.PI / 2;
+  const r = rng(5), pas = [], pcol = [];
+  for (let i = 0; i < 70; i++) { const x = -34 + r() * 70, z = -10 + r() * 20; if ([-21, -6, 10, 25.5].some(cx => Math.abs(x - cx) < 8.5) && Math.abs(z) < 9.5) continue; pas.push([x, .8 + .25, z, r() < .5 ? 1 : .5, 1, r() < .5 ? .5 : 1]); pcol.push(r() < .6 ? '#c9b48a' : '#3a3d42'); }
+  inst(g, boxAO(1, .5, 1, .7), M(0, '#ffffff', { roughness: .5 }), pas, pcol);
+}
+
+// ═════ L1 · the dies, dealt out onto the mat, and their timelines ═════
+const DIES = [];
+const dieTex = k => canvasTex(1100, 800, (c, w, h) => {
+  c.fillStyle = '#bdb8cb'; c.fillRect(0, 0, w, h);
+  for (const x0 of [30, 570]) {
+    c.fillStyle = '#a49eb9'; c.fillRect(x0, 60, 500, 680);
+    c.strokeStyle = '#8c86a5'; c.lineWidth = 2;
+    for (let i = 0; i <= 3; i++) { c.beginPath(); c.moveTo(x0 + i * 500 / 3, 60); c.lineTo(x0 + i * 500 / 3, 740); c.stroke(); }
+    for (let j = 0; j <= 12; j++) { c.beginPath(); c.moveTo(x0, 60 + j * 680 / 12); c.lineTo(x0 + 500, 60 + j * 680 / 12); c.stroke(); }
+  }
+  c.fillStyle = '#d3b45c'; for (let i = 0; i < 36; i++) c.fillRect(40 + i * 29, 772, 14, 14);
+  if (k === 2) { c.strokeStyle = C.ink; c.lineWidth = 6; c.strokeRect(30 + 500 / 3, 60 + 5 * 680 / 12, 500 / 3, 2 * 680 / 12); }
+  c.fillStyle = '#5e5873'; c.font = '700 44px monospace'; c.fillText('DIE ' + k, 40, 44);
+});
+for (let k = 0; k < 4; k++) {
+  const g = new THREE.Group(); L1.g.add(g);
+  const geo = boxAO(1100, 12, 800, .7);
+  mesh(g, geo, M(1, '#9a95ad', { roughness: .45, metalness: .2 }), 0, 6, 0);
+  MT.edges(g, geo, '#4b4660', .5, 1).position.y = 6;
+  const top = mesh(g, new THREE.PlaneGeometry(1100, 800), MP(1, '#ffffff', { map: dieTex(k), roughness: .4, metalness: .15 }), 0, 12.05, 0); top.rotation.x = -Math.PI / 2;
+  DIES.push(g);
+}
+// the timelines: one lane per die, starting at the die's right edge. Profiler space: x = 10 units per ms, 1 unit = 35 L1 units.
+const PG = new THREE.Group(); PG.position.set(200, -72, 0); PG.scale.setScalar(35); L1.g.add(PG);
+const XS = 10, LZ = DZ.map(z => z / 35);
+const pl = (x, y, z) => [200 + x * 35, -72 + y * 35, z * 35];      // profiler space → L1
+const LANES = createLanes(PG, { lanes: LZ.map(z => ({ z })), reg: m => MT.reg(1, m),
+  colors: { bed: C.bed, budget: '#59616c', over: C.over, tickMinor: '#aaa59b', tickMajor: '#4d5560', playhead: C.ink, wait: C.over },
+  bed: { y: -.16, h: .16, depth: 10.3, growLen: true, growDepth: false, roughness: .9, metalness: 0 },
+  block: { h: .8, depth: 8.4, gap: .1, minW: .32, max: 120, glow: .1, growDepth: false },
+  wait: { max: 8, opacity: .75, period: 1.1 },
+  sheet: { max: 4, w: .14, h: 3.4, y: -.16, opacity: .85, additive: false },
+  ruler: { max: 40, step: .5, major: 1, y: -.15, w: .07, h: .07, minorLen: .8, majorLen: 1.8, off: 1.2 },
+  playhead: { w: .12, h: 4, y: -.16, pad: 3 } });
+const REQ = dynInst(PG, new THREE.BoxGeometry(.9, .9, .9), MT.reg(1, Z.glowMaterial(.2)), 4);
+
+// work on the four dies in chapter 01 (seeded): programs and reads, packed with small gaps
+function normalWork(k, t0, t1, seed) {
+  const r = rng(seed + k * 31), out = []; let ms = t0 + r() * .3;
+  while (ms < t1) { const isP = r() < .55, len = isP ? T_PROG : T_READ; out.push([k, ms, Math.min(len, t1 - ms), isP ? C.prog : C.read, '']); ms += len + .06 + r() * (isP ? .25 : .12); }
+  return out;
+}
+const WORK01 = [0, 1, 2, 3].flatMap(k => normalWork(k, 0, 8, 7));
+// chapter 03: die 2 starts a GC erase at 0.8 ms; a read for die 1 and one for die 2 arrive at 1.2 ms
+const ER0 = .8, ARR = 1.2, ER1 = ER0 + T_ERASE, RD2 = ER1 + T_READ;
+const mix = (a, b, k) => '#' + new THREE.Color(a).lerp(new THREE.Color(b), k).getHexString();
+const WORK03 = (() => {
+  const B = [];
+  for (const k of [0, 3]) for (const b of normalWork(k, 0, 7, 19)) B.push([...b.slice(0, 3), mix(b[3], C.bed, .62), '']);
+  for (const b of normalWork(1, 0, 7, 23)) if (b[1] + b[2] < ARR - .05 || b[1] > ARR + .3) B.push([...b.slice(0, 3), mix(b[3], C.bed, .62), '']);
+  B.push([1, ARR, T_READ, C.read, '읽기']);
+  B.push([2, 0, T_PROG, mix(C.prog, C.bed, .62), ''], [2, ER0, T_ERASE, C.erase, 'GC 지우기'], [2, ARR, ER1 - ARR, C.over, '기다림', { wait: true, y: .8, h: .5, depth: 4.2 }],
+    [2, ER1, T_READ, C.read, '읽기'], [2, RD2 + .1, T_PROG, mix(C.prog, C.bed, .62), ''], [2, RD2 + .9, T_PROG, mix(C.prog, C.bed, .62), '']);
+  return B;
+})();
+function laneState(t) {
+  const S = { laneK: [0, 1, 2, 3].map(k => eo(p(t, 6.3 + k * .12, .7)) * (1 - eo(p(t, 28.6, .5)))), laneLen: [8.6, 8.6, 8.6, 8.6], xs: XS, rulerTo: 8 };
+  S.ruler = S.laneK[0] > .5;
+  if (t < 21) {
+    S.blocks = WORK01; S.now = clamp((t - 6.8) * 1.9, -1, 8.5); S.clip = true;
+    const fold = 1 - .85 * win(t, 11.8, 20.9, .8);                 // die 2's lane folds flat while we are inside die 2
+    S.blocks = WORK01.map(b => b[0] === 2 ? [...b.slice(0, 5), { fold }] : b);
+  } else {
+    S.blocks = WORK03; S.now = Math.min(7.6, (t - 21.8) * 1.45); S.clip = true; S.rulerTo = 7.5;
+    S.sheets = [[ARR + TARGET, S.now >= ARR + TARGET]]; S.span = [LZ[2] - 6.2, LZ[2] + 6.2]; S.playSpan = [LZ[0] - 5.6, LZ[3] + 5.6];
+  }
+  return S;
+}
+
+// ═════ L2 · two blocks of die 2 (pages along x; A in front, B behind) ═════
+const NP = 16, PW = 1667 / NP, AZ = 283, BZ = -283;
+const pageX = i => -833.5 + PW * (i + .5);
+let PAGES, CUBES;
+{
+  const g = L2.g;
+  inst(g, boxAO(1650, 3, 550, .8), M(2, '#d6d1c6'), [[0, 1.5, AZ], [0, 1.5, BZ]]);
+  const nb = []; for (let r = 3; r <= 8; r++) for (let c = 0; c < 3; c++) { if (c === 1 && (r === 5 || r === 6)) continue; nb.push([(c - 1) * 1667, 1, (r - 5.5) * 567]); }
+  inst(g, boxAO(1640, 2, 550, .9), M(2, '#cbc6d6'), nb);
+  PAGES = dynInst(g, UNITC, glowMat(2, .12), NP * 2);
+  CUBES = dynInst(g, new THREE.BoxGeometry(70, 70, 70), glowMat(2, .25), 4);
+}
+// page states at time t (pure): 0 free · 1 valid · 2 invalid; flash = programming / erasing glow
+const U0 = 13.2;
+const UPD = [[.6, 3, 12], [1.3, 7, 13], [2.0, 0, 14]];          // [time, page made invalid, page programmed]
+const VALID_A0 = [1, 3, 4, 6, 7, 8, 10, 11, 0], INVALID_A0 = [2, 5, 9];
+const GC0 = 2.9, GCD = .24, ER_A = 5.5;
+function blockState(t) {
+  const u = t - U0, A = Array(NP).fill(0), B = Array(NP).fill(0), fa = Array(NP).fill(0), fb = Array(NP).fill(0), cubes = [];
+  VALID_A0.forEach(i => A[i] = 1); INVALID_A0.forEach(i => A[i] = 2);
+  for (const [tu, inv, pr] of UPD) if (u >= tu) { A[inv] = 2; A[pr] = 1; fa[pr] = Math.max(0, 1 - (u - tu) / .5); }
+  if (u >= 2.5) { A[15] = 1; fa[15] = Math.max(0, 1 - (u - 2.5) / .5); }
+  const order = [1, 4, 6, 8, 10, 11, 12, 13, 14, 15];
+  order.forEach((i, j) => {
+    const s = GC0 + j * GCD, e = u - s;
+    if (e < 0) return;
+    if (e < GCD * 1.6) { const f = ss(clamp(e / (GCD * 1.6))); cubes.push([lerp(pageX(i), pageX(j), f), 40 + Math.sin(f * Math.PI) * 260, lerp(AZ, BZ, f)]); }
+    if (e >= GCD * 1.6) { B[j] = 1; fb[j] = Math.max(0, 1 - (e - GCD * 1.6) / .4); }
+    if (e > .05) A[i] = 2;
+  });
+  let ek = 0;
+  if (u >= ER_A) { ek = 1 - clamp((u - ER_A) / 1.1); for (let i = 0; i < NP; i++) A[i] = ek > .35 ? A[i] : 0; }
+  return { A, B, fa, fb, cubes, ek, u };
+}
+
+// ── camera path (kit): [t, level, target, distance, yaw, pitch, fov, ox, oy] ──
+const PATH = LVS.path([
+  [0.0, 0, [6, .8, 4], 165, -.36, .8, 30, -330, 30],
+  [3.4, 0, [9, .8, 6], 118, -.26, .86, 30, -220, 20],
+  [4.6, 0, [13, .8, 13], 72, -.16, .95, 30, 0, 0],
+  [6.4, 1, [1400, -70, 2300], 5600, -.06, 1.02, 30, 0, 20],
+  [11.0, 1, [1450, -70, 2300], 5400, .05, .98, 30, 0, 20],
+  [11.6, 1, [-221, -64, 2400], 1500, .1, 1.05, 32, 0, 0],
+  [13.0, 2, [0, 0, 0], 3100, .06, .92, 34, 300, 20],
+  [19.8, 2, [0, 0, 0], 2850, -.08, .9, 34, 300, 20],
+  [21.2, 1, [1420, -70, 2300], 5500, 0, 1.0, 30, 0, 30],
+  [28.6, 1, [1440, -70, 2300], 5350, .03, .98, 30, 0, 30],
+  [31.0, 0, [6, .8, 5], 150, -.3, .8, 30, 0, 0],
+  [32.0, 0, [6, .8, 4], 160, -.34, .78, 30, 0, 0],
+], [[4.6, 6.4], [11.0, 13.0], [19.8, 21.2], [28.6, 31.0]]);
+
+// ── animate (pure function of t) ─────────────────────────────
+function animate(t, R) {
+  const lk = eio(p(t, 4.5, .9)) * (1 - eio(p(t, 29.8, .9)));
+  LID.position.set(PKG[0], .8 + .25 + lk * 9, -lk * 6); lidMat.opacity = LID.top.opacity = 1 - .85 * lk; LID.visible = lk < .99;
+  DIES.forEach((g, k) => { const q = diePos(k, t), s = dieScale(k, t); g.position.set(q[0], q[1], q[2]); g.scale.setScalar(s); });
+  L1.g.visible = L1.g.visible && t > 4.6 && t < 31.2;
+  // timelines
+  const S = laneState(t);
+  LANES.draw(S);
+  let n = 0;
+  if (t >= 21) for (const k of [1, 2]) {
+    const now = S.now, served = k === 1 ? ARR + T_READ : RD2;
+    if (now < ARR - .6 || now > served) continue;
+    const y = lerp(5, k === 2 ? 1.75 : 1.25, eio(clamp((now - ARR + .6) / .6)));
+    setI(REQ, n++, (ARR + .05) * XS, y, LZ[k], 1, 1, 1, C.read);
+  }
+  done(REQ, n);
+  // the blocks inside die 2
+  if (L2.g.visible) {
+    const B = blockState(t); n = 0;
+    const col = (st, f, ek) => { const c = new THREE.Color(st === 1 ? C.prog : st === 2 ? C.invalid : C.free); if (f > 0) c.lerp(new THREE.Color('#7ff5e4'), f * .6); if (ek > 0) c.lerp(new THREE.Color(C.erase), Math.sin(ek * Math.PI) * .9 + (ek > .35 ? .1 : 0)); return c; };
+    for (let i = 0; i < NP; i++) {
+      for (const [st, f, z, ek] of [[B.A[i], B.fa[i], AZ, B.ek], [B.B[i], B.fb[i], BZ, 0]]) {
+        const h = st ? 16 + f * 18 : 4 + ek * 12;
+        setI(PAGES, n++, pageX(i), 3 + h / 2, z, PW - 14, h, 470, col(st, f, ek));
+      }
+    }
+    done(PAGES, n);
+    n = 0; for (const q of B.cubes) setI(CUBES, n++, q[0], q[1], q[2], 1, 1, 1, C.copy); done(CUBES, n);
+  }
+}
+
+// ── 2D overlay ───────────────────────────────────────────────
+const LB = Z.createLabels({ ctx, camera, levels: LVS, W, H, sans: SANS, mono: MONO, text: C.ink, dim: C.dim, shadow: 'rgba(255,255,255,.95)', margin: 1.1,
+  tag: { size: 26, subSize: 22, padTitle: 50, padSub: 36, hOne: 24, hSub: 30, titleX: 36, titleDY: 9, subX: 18, subDY: 18, radius: 10,
+    fill: 'rgba(255,255,255,.95)', stroke: 'rgba(27,33,40,.16)', lead: .85, dot: 5,
+    marker: (c, bx, by, w, h, col) => { c.fillStyle = col; c.beginPath(); c.arc(bx + 20, by + 22, 6.5, 0, 7); c.fill(); }, top: 200, bottom: 110 },
+  lab: { size: 22, weight: 700, mono: true } });
+const { tag, lab, txt, tw } = LB;
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+function card(x, y, w, h, a = 1) { if (a <= 0) return; ctx.save(); ctx.globalAlpha *= a; ctx.shadowColor = 'rgba(40,36,28,.14)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 6; rr(x, y, w, h, 14); ctx.fillStyle = C.card; ctx.fill(); ctx.restore(); }
+function pill(s, x, y, col, a = 1, size = 24) {
+  if (a <= 0) return 0; const w = tw(s, size, 700, true) + 30, h = size + 18;
+  ctx.save(); ctx.globalAlpha *= a; rr(x, y - h / 2, w, h, h / 2); ctx.fillStyle = rgba(col, .12); ctx.fill(); ctx.strokeStyle = rgba(col, .6); ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore();
+  txt(s, x + 15, y + size * .36, { size, weight: 700, mono: true, color: col, alpha: a }); return w;
+}
+function headers(t) {
+  for (const [s, e, n, title, sub] of HEAD) {
+    const a = win(t, s, e, .4); if (a <= 0) continue;
+    const k = eo(p(t, s + .05, .7)), k2 = eo(p(t, s + .3, .7));
+    ctx.save(); ctx.globalAlpha = a;
+    const g = ctx.createLinearGradient(0, 0, 0, 250); g.addColorStop(0, 'rgba(235,232,225,.94)'); g.addColorStop(1, 'rgba(235,232,225,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, 250);
+    ctx.globalAlpha = a * k;
+    txt(n, 122, 84, { size: 24, weight: 800, mono: true, color: C.prog });
+    ctx.fillStyle = C.prog; ctx.fillRect(160, 76, 60 * k, 3);
+    txt(title, 120 - (1 - k) * 24, 146, { size: 54, weight: 800, color: C.ink });
+    ctx.globalAlpha = a * k2;
+    txt(sub, 122, 192, { size: 28, color: C.dim });
+    ctx.restore();
+  }
+}
+function crumbs(t) {
+  const path = t < 4.8 ? ['M.2 SSD'] : t < 12 ? ['M.2 SSD', 'NAND 0', '다이 0–3'] : t < 21 ? ['NAND 0', '다이 2', '블록 A · B'] : ['NAND 0', '다이 0–3', '타임라인'];
+  const a = clamp(Math.min(t - 4.4, END - t) * 2); if (a <= 0) return;
+  let x = W - 120;
+  for (let i = path.length - 1; i >= 0; i--) {
+    const s = path[i], last = i === path.length - 1, w = tw(s, 24, 700);
+    txt(s, x, 104, { size: 24, weight: 700, color: last ? C.ink : C.dim, align: 'right', alpha: a }); x -= w;
+    if (i) { txt(' / ', x, 104, { size: 24, weight: 500, color: C.faint, align: 'right', alpha: a }); x -= tw(' / ', 24, 500); }
+  }
+  txt('* 시간 수치는 예시, 구조는 개념도', W - 120, 142, { size: 20, color: C.faint, align: 'right', alpha: a });
+}
+function progress(t) {
+  const a = clamp(Math.min(t - 3.6, DURATION - .6 - t) * 2); if (a <= 0) return;
+  const x0 = 120, x1 = 1800, y = 1040, X = s => x0 + (x1 - x0) * s / DURATION;
+  ctx.save(); ctx.globalAlpha = a;
+  ctx.fillStyle = C.rule; ctx.fillRect(x0, y, x1 - x0, 3); ctx.fillStyle = C.ink; ctx.fillRect(x0, y, (x1 - x0) * clamp(t / DURATION), 3);
+  HEAD.forEach(([s, , n, title]) => { ctx.fillStyle = t >= s ? C.ink : C.faint; ctx.fillRect(X(s), y - 8, 2, 11); txt(n + ' ' + title, X(s) + 8, y - 12, { size: 16, weight: 600, color: t >= s ? C.dim : C.faint }); });
+  ctx.restore();
+}
+function ovIntro(t) {
+  const a = win(t, 0, 4.4, .6); if (a <= 0) return;
+  const k1 = eo(p(t, .3, .8)), k2 = eo(p(t, .8, .8)), k3 = eo(p(t, 1.5, .8));
+  ctx.save(); ctx.globalAlpha = a;
+  const g = ctx.createLinearGradient(0, 0, 1150, 0); g.addColorStop(0, 'rgba(235,232,225,.95)'); g.addColorStop(1, 'rgba(235,232,225,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, 1150, H);
+  txt('M.2 SSD 한 장, NAND 다이 네 장, 블록 하나', 122, 360, { size: 28, color: C.dim, alpha: k1 });
+  txt('읽기 0.08ms가', 116, 480 + (1 - k1) * 30, { size: 100, weight: 800, color: C.ink, alpha: k1 });
+  ctx.save(); ctx.globalAlpha *= k2;
+  txt('3ms', 116, 600 + (1 - k2) * 30, { size: 100, weight: 800, mono: true, color: C.over });
+  txt('가 될 때', 116 + tw('3ms', 100, 800, true) + 16, 600 + (1 - k2) * 30, { size: 100, weight: 800, color: C.ink });
+  ctx.restore();
+  txt('같은 다이에서 GC 지우기가 돌면 읽기는 기다린다', 122, 680, { size: 30, color: C.dim, alpha: k3 });
+  let x = 122;
+  [['읽기 0.08ms', C.read], ['프로그램 0.7ms', C.prog], ['지우기 3.5ms', C.erase]].forEach(([s, c], i) => { const kk = eo(p(t, 2.0 + i * .25, .5)); x += pill(s, x, 770, c, kk) + 14; });
+  ctx.restore();
+}
+function ov01(t) {
+  const [S, E] = HEAD[0]; const a = win(t, S + 2.2, E - .3, .5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  for (let k = 0; k < 4; k++) lab(1, [-100 - 260, -60, DZ[k] + 30], '다이 ' + k, C.ink, eo(p(t, 6.6 + k * .12, .5)), { size: 26, align: 'right', mono: false, weight: 800 });
+  for (let ms = 0; ms <= 8; ms += 2) lab(1, pl(ms * XS, 0, LZ[3] + 5.15 + 1.2), ms + 'ms', C.dim, eo(p(t, 7.2, .5)), { size: 20, align: 'center', dy: 28, weight: 600 });
+  tag(1, pl(4.15 * XS, .8, LZ[0] - 4.2), '다이마다 타임라인 한 줄', '컨트롤러가 일을 나눠 보낸다', C.prog, eo(p(t, 8.2, .5)), { dy: -110 });
+  const kc = eo(p(t, 8.8, .5)); card(120, 900, 1080, 96, kc);
+  let x = 152; txt('한 번에 하는 일의 길이', x, 960, { size: 28, weight: 800, color: C.ink, alpha: kc }); x += tw('한 번에 하는 일의 길이', 28, 800) + 28;
+  [['읽기 0.08ms', C.read], ['프로그램 0.7ms', C.prog], ['지우기 3.5ms', C.erase]].forEach(([s, c], i) => { x += pill(s, x, 950, c, kc * eo(p(t, 9.0 + i * .2, .4))) + 14; });
+  ctx.restore();
+}
+function ov02(t) {
+  const [S, E] = HEAD[1]; const a = win(t, S + 1.2, E - .9, .5); if (a <= 0) return;
+  const B = blockState(t), u = B.u;
+  ctx.save(); ctx.globalAlpha = a;
+  tag(2, [pageX(0) - 60, 10, AZ], '블록 A', null, C.ink, eo(p(u, .1, .4)), { dx: -80, dy: 70, align: 'right', lead: false });
+  tag(2, [pageX(0) - 60, 10, BZ], '블록 B', null, C.ink, eo(p(u, .1, .4)), { dx: -80, dy: -40, align: 'right', lead: false });
+  if (u > .6 && u < 2.8) tag(2, [pageX(3), 22, AZ + 200], '고친 데이터 → 새 페이지', '옛 페이지는 무효', C.prog, eo(p(u, .7, .4)) * (1 - p(u, 2.4, .4)), { dy: 150 });
+  if (u > GC0 && u < ER_A) tag(2, [pageX(12), 300, 0], 'GC: 유효 페이지 10개를 옮긴다', '프로그램 10번', C.copy, eo(p(u, GC0 + .1, .4)) * (1 - p(u, ER_A - .3, .3)), { dy: -120 });
+  if (u > ER_A - .1) tag(2, [pageX(8), 20, AZ + 240], '블록 A 전체를 지운다', '지우기 3.5ms', C.erase, eo(p(u, ER_A, .4)), { dy: 140 });
+  // right column: the two rules
+  const kc = eo(p(u, .3, .5)); card(1290, 300, 510, 300, kc);
+  txt('쓰기', 1326, 368, { size: 28, weight: 800, color: C.prog, alpha: kc }); txt('페이지 단위 · 0.7ms', 1430, 368, { size: 28, color: C.ink, alpha: kc });
+  txt('지우기', 1326, 428, { size: 28, weight: 800, color: C.erase, alpha: kc }); txt('블록 단위 · 3.5ms', 1430, 428, { size: 28, color: C.ink, alpha: kc });
+  ctx.save(); ctx.globalAlpha *= kc; ctx.fillStyle = C.rule; ctx.fillRect(1326, 462, 440, 1.5); ctx.restore();
+  txt('쓴 페이지는 그 자리에서', 1326, 512, { size: 26, color: C.dim, alpha: kc });
+  txt('고쳐 쓸 수 없다', 1326, 552, { size: 26, color: C.dim, alpha: kc });
+  ctx.restore();
+}
+function ov03(t) {
+  const [S, E] = HEAD[2]; const a = win(t, S + .5, END + .2, .5); if (a <= 0) return;
+  const now = Math.min(7.6, (t - 21.8) * 1.45), over = now >= ARR + TARGET, lat = clamp(now - ARR, 0, RD2 - ARR);
+  ctx.save(); ctx.globalAlpha = a;
+  const kl = eo(p(t, 21.6, .5));
+  for (let k = 0; k < 4; k++) lab(1, [-100 - 260, -60, DZ[k] + 30], '다이 ' + k, k === 2 || k === 1 ? C.ink : C.faint, kl, { size: 26, align: 'right', mono: false, weight: 800 });
+  for (let ms = 0; ms <= 7; ms++) lab(1, pl(ms * XS, 0, LZ[3] + 5.6 + 1.2), ms + 'ms', C.dim, kl, { size: 20, align: 'center', dy: 28, weight: 600 });
+  tag(1, pl((ER0 + 1.0) * XS, .8, LZ[2] - 4.2), 'GC 지우기 3.5ms', null, C.erase, eo(p(now, ER0 + 1.1, .4)), { dx: 330, dy: -70, align: 'left' });
+  tag(1, pl((ARR + .05) * XS, .8, LZ[1] - 4.2), '다이 1 읽기 0.08ms', null, C.read, eo(p(now, ARR + .1, .3)), { dx: 40, dy: -70, align: 'left' });
+  lab(1, pl((ARR + TARGET) * XS, 3.4, LZ[2] - 6.2), '목표 1ms', over ? C.over : C.dim, eo(p(now, ARR, .3)), { size: 22, align: 'center', dy: -10 });
+  if (now > RD2) tag(1, pl(RD2 * XS, .8, LZ[2] + 4.2), '다이 2 읽기', '지우기가 끝난 뒤에 시작', C.over, eo(p(now, RD2 + .05, .3)), { dx: 60, dy: 110, align: 'left' });
+  const kc = eo(p(t, 22.4, .5)); card(120, 846, 1680, 150, kc);
+  txt('다이 2 읽기', 156, 906, { size: 28, weight: 800, color: C.dim, alpha: kc });
+  txt(lat.toFixed(2) + 'ms', 156, 972, { size: 60, weight: 800, mono: true, color: over ? C.over : C.ink, alpha: kc });
+  txt('다이 1 읽기', 560, 906, { size: 28, weight: 800, color: C.dim, alpha: kc });
+  txt('0.08ms', 560, 972, { size: 60, weight: 800, mono: true, color: C.read, alpha: kc * eo(p(now, ARR + .1, .3)) });
+  const kr = eo(p(t, 26.0, .5));
+  txt('대응', 960, 906, { size: 28, weight: 800, color: C.dim, alpha: kc * kr });
+  txt('erase suspend · 여유 공간(OP)으로 GC 줄이기 · TRIM', 960, 958, { size: 28, weight: 700, color: C.ink, alpha: kc * kr });
+  ctx.restore();
+}
+function endCard(t) {
+  const a = eo(p(t, END + .5, .9)); if (a <= 0) return;
+  ctx.fillStyle = `rgba(235,232,225,${.86 * a})`; ctx.fillRect(0, 0, W, H);
+  ctx.save(); ctx.globalAlpha = a;
+  const k1 = eo(p(t, END + .7, .8)), k2 = eo(p(t, END + 1.4, .8));
+  txt('같은 다이에서 지우기가 돌면,', W / 2, 470 + (1 - k1) * 24, { size: 70, weight: 800, color: C.ink, align: 'center', alpha: k1 });
+  txt('읽기는 그만큼 기다린다.', W / 2, 570 + (1 - k1) * 24, { size: 70, weight: 800, color: C.over, align: 'center', alpha: k1 });
+  const row = [['읽기', '0.08ms', C.read], ['프로그램', '0.7ms', C.prog], ['지우기', '3.5ms', C.erase]];
+  row.forEach(([l, v, c], i) => { const x = 560 + i * 300; ctx.save(); ctx.globalAlpha *= k2; ctx.fillStyle = c; ctx.fillRect(x, 650, 240, 4); ctx.restore(); txt(l, x, 700, { size: 28, weight: 800, color: C.ink, alpha: k2 }); txt(v, x, 742, { size: 26, mono: true, color: C.dim, alpha: k2 }); });
+  ctx.restore();
+}
+
+// ── frame ────────────────────────────────────────────────────
+function renderAt(t) {
+  t = clamp(t, 0, DURATION);
+  const c = PATH.camAt(t), R = c.R;
+  LVS.reroot(R, t, { keep: [1, 1] });
+  Z.applyCamera(camera, c, { W, H, near: .02, far: 40 });
+  animate(t, R);
+  Z.fogByDistance(scene.fog, c.d, R === 2 ? 1.6 : 2.0, R === 2 ? 5 : 7);
+  Z.aimSun(sun, c, ST.lightDir, 4);
+  bloom.strength = R === 2 ? .2 : .14;
+  composer.render();
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
+  ctx.drawImage(ST.renderer.domElement, 0, 0, W, H);
+  ovIntro(t); ov01(t); ov02(t); ov03(t);
+  headers(t); crumbs(t); progress(t);
+  endCard(t);
+  const fo = p(t, DURATION - .5, .5); if (fo > 0) { ctx.fillStyle = `rgba(0,0,0,${fo})`; ctx.fillRect(0, 0, W, H); }
+}
+window.renderAt = renderAt;
+window.DURATION = DURATION;
+
+window.ready = (async () => {
+  const faces = [['Pretendard', 'Pretendard-Variable.woff2', '100 900'], ['JetBrains Mono', 'JetBrainsMono.woff2', '100 800']];
+  for (const [family, file, weight] of faces) {
+    for (const base of ['../assets/fonts/', 'assets/fonts/']) {
+      try { document.fonts.add(await new FontFace(family, `url(${base}${file})`, { weight }).load()); break; } catch (e) { /* try next */ }
+    }
+  }
+  await document.fonts.ready;
+  renderAt(0);
+})();
+// ── player (skipped when ?render) ────────────────────────────
+if (!location.search.includes('render')) {
+  const $ = id => document.getElementById(id);
+  const ICON = {
+    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>',
+    replay: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"/></svg>',
+  };
+  const CHAPTERS = [[0, '', '인트로'], ...HEAD.map(h => [h[0], h[2], h[3]]), [END, '', '정리']];
+  $('scrub').setAttribute('aria-valuemax', Math.round(DURATION));
+  const POSTER = 2.6;
+  let t = 0, playing = false, started = false, last = 0;
+  const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
+  CHAPTERS.forEach(([s, n, label], i) => {
+    const b = document.createElement('button');
+    b.innerHTML = (n ? `<span>${n}</span>` : '') + label;
+    b.addEventListener('click', () => { seek(s + .01); play(); });
+    $('chapters').appendChild(b);
+    if (i) { const tk = document.createElement('div'); tk.className = 'tick'; tk.style.left = (s / DURATION * 100) + '%'; $('ticks').appendChild(tk); }
+  });
+  function ui() {
+    const k = t / DURATION, ended = t >= DURATION;
+    $('fill').style.width = k * 100 + '%'; $('knob').style.left = k * 100 + '%';
+    $('time').textContent = `${mmss(t)} / ${mmss(DURATION)}`;
+    $('scrub').setAttribute('aria-valuenow', Math.round(t));
+    $('play').innerHTML = playing ? ICON.pause : ended ? ICON.replay : ICON.play;
+    $('play').setAttribute('aria-label', playing ? '일시정지' : '재생');
+    $('big').hidden = playing;
+    $('big').innerHTML = ended ? ICON.replay : ICON.play;
+    $('big').classList.toggle('replay', ended);
+    let cur = 0; CHAPTERS.forEach(([s], i) => { if (t >= s) cur = i; });
+    [...$('chapters').children].forEach((b, i) => b.setAttribute('aria-current', i === cur && started));
+  }
+  function draw() { renderAt(started ? Math.min(t, DURATION - .001) : POSTER); }
+  function play() { if (t >= DURATION) t = 0; started = true; playing = true; last = performance.now(); ui(); }
+  function pause() { playing = false; ui(); }
+  function toggle() { playing ? pause() : play(); }
+  function seek(x) { started = true; t = clamp(x, 0, DURATION); draw(); ui(); }
+  function frame(now) {
+    if (playing) { t += (now - last) / 1000 * rate; last = now; if (t >= DURATION) { t = DURATION; playing = false; } draw(); ui(); }
+    requestAnimationFrame(frame);
+  }
+  const RATES = [1, .75, .5];
+  let rate = 1;
+  try { rate = +localStorage.getItem('mg-rate') || 1; } catch (e) { /* storage unavailable */ }
+  if (!RATES.includes(rate)) rate = 1;
+  function setRate(r) {
+    rate = r; $('rate').textContent = r + '×'; $('rate').setAttribute('aria-label', `재생 속도 ${r}배`);
+    try { localStorage.setItem('mg-rate', String(r)); } catch (e) { /* storage unavailable */ }
+  }
+  setRate(rate);
+  $('rate').addEventListener('click', () => setRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length]));
+  $('stage').addEventListener('click', toggle);
+  $('play').addEventListener('click', toggle);
+  $('fs').addEventListener('click', () => { const el = $('stage'); if (document.fullscreenElement) document.exitFullscreen?.(); else el.requestFullscreen?.().catch(() => {}); });
+  const scrub = $('scrub');
+  const fromEvent = e => { const r = scrub.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width) * DURATION; };
+  let wasPlaying = false;
+  scrub.addEventListener('pointerdown', e => { scrub.setPointerCapture(e.pointerId); wasPlaying = playing; playing = false; seek(fromEvent(e)); });
+  scrub.addEventListener('pointermove', e => { if (scrub.hasPointerCapture(e.pointerId)) seek(fromEvent(e)); });
+  scrub.addEventListener('pointerup', () => { if (wasPlaying && t < DURATION) play(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key === 'k') { e.preventDefault(); toggle(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); seek(t + 5); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); seek(t - 5); }
+    else if (e.key === 'Home') seek(0);
+    else if (e.key === ',' || e.key === '<') setRate(RATES[Math.min(RATES.length - 1, RATES.indexOf(rate) + 1)]);
+    else if (e.key === '.' || e.key === '>') setRate(RATES[Math.max(0, RATES.indexOf(rate) - 1)]);
+  });
+  const posterMode = location.hash === '#poster';
+  if (posterMode) document.body.classList.add('poster');
+  ui();
+  const deep = /^#ch(\d\d)$/.exec(location.hash), deepHead = deep && HEAD.find(r => r[2] === deep[1]);
+  window.ready.then(() => {
+    draw(); requestAnimationFrame(frame);
+    if (deepHead) seek(deepHead[0] + .01);
+    if (posterMode) { play(); setInterval(() => { if (!playing) { t = 0; play(); } }, 500); }
+  });
+}
+</script>

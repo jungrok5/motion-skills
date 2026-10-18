@@ -121,8 +121,9 @@ export function createLanes(parent, { lanes, colors, reg = m => m,
    *   xs, xo   time zoom (profiler x = (ms + xo) × xs) · fade = height multiplier for every block
    *   now      playhead in ms (< 0 = none) · clip: blocks reveal up to `now` · lit / dim: blocks starting after `lit` ms
    *            are drawn at brightness `dim` (the playhead "lights" what has run)
-   *   sheets   [[ms, over, k?]] budget lines (over → colors.over) or markers; k scales the sheet (0..1)
-   *   span     [z0, z1] extent of sheets, playhead and stall band across the lanes · rulerTo: last ruler tick (ms)
+   *   sheets   [[ms, over, k?]] budget lines (over → colors.over) or markers; k scales the sheet (0..1, 0 hides it)
+   *   span     [z0, z1] extent of the sheets across the lanes (default: all lanes) · playSpan: extent of the playhead, and the
+ *            ruler sits at playSpan[1] + ruler.off (default: span) · rulerTo: last ruler tick (ms) · ruler: false hides it
    *   stall    [startMs, lenMs, zCentre, depth] band (shown once now passes its start, grows with now) · stallOpacity
    */
   function draw(S) {
@@ -154,17 +155,17 @@ export function createLanes(parent, { lanes, colors, reg = m => m,
       if (n >= BK.max) break;
     }
     fin(blocks, n); if (waits) fin(waits, nw);
-    const span = S.span ?? [Math.min(...laneZ) - BD.depth / 2, Math.max(...laneZ) + BD.depth / 2];
-    const mid = (span[0] + span[1]) / 2, wid = span[1] - span[0];
+    const span = S.span ?? [Math.min(...laneZ) - BD.depth / 2, Math.max(...laneZ) + BD.depth / 2], ps = S.playSpan ?? span;
+    const mid = (span[0] + span[1]) / 2, wid = span[1] - span[0], pmid = (ps[0] + ps[1]) / 2, pwid = ps[1] - ps[0];
     n = 0;
     for (const [ms, over, k = 1] of S.sheets ?? []) { if (n >= SH.max) break; put(sheets, n++, X(ms) - SH.w / 2, SH.y, mid, SH.w, SH.h * k, wid * k, over ? colors.over : colors.budget); }
     fin(sheets, n);
     n = 0;
     const rl = S.rulerTo ?? Math.max(...L);
-    if (S.ruler !== false) for (let ms = 0; ms <= rl + .1 && n < RU.max; ms += RU.step) { const mj = !(ms % RU.major); put(rulerI, n++, X(ms) - RU.w / 2, RU.y, span[1] + RU.off, RU.w, RU.h, mj ? RU.majorLen : RU.minorLen, mj ? colors.tickMajor : colors.tickMinor); }
+    if (S.ruler !== false) for (let ms = 0; ms <= rl + .1 && n < RU.max; ms += RU.step) { const mj = !(ms % RU.major); put(rulerI, n++, X(ms) - RU.w / 2, RU.y, ps[1] + RU.off, RU.w, RU.h, mj ? RU.majorLen : RU.minorLen, mj ? colors.tickMajor : colors.tickMinor); }
     fin(rulerI, n);
     head.visible = now > 0 && now < rl;
-    if (head.visible) { head.position.set(X(now) - PH.w / 2, PH.y, mid); head.scale.set(PH.w, PH.h, wid + PH.pad); }
+    if (head.visible) { head.position.set(X(now) - PH.w / 2, PH.y, pmid); head.scale.set(PH.w, PH.h, pwid + PH.pad); }
     const s = S.stall;
     band.visible = !!s && now > s[0];
     if (band.visible) { band.position.set(X(s[0]), ST.y, s[2]); band.scale.set(Math.min(s[1], now - s[0]) * xs, ST.h, s[3]); band.material.opacity = (S.stallOpacity ?? ST.opacity) * fade; }

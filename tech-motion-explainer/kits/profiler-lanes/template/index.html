@@ -1,0 +1,319 @@
+<meta charset="utf-8">
+<title>Long Task Frames</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  :root {
+    --bg: #120f16; --surface: #1c1822; --line: #322b3b; --fg: #efeaf4; --dim: #9c93a8;
+    --accent: #f2b134; --live: #4cc9a6; --text2: #cfc7da;
+    --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    color-scheme: dark;
+  }
+  html, body { min-height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding-block: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    box-sizing: border-box; overflow-x: hidden; }
+  .player { width: min(100%, calc((100vh - 170px) * 16 / 9)); min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .stage { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--line); background: var(--bg); cursor: pointer; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .big { position: absolute; inset: auto 0 5% 0; margin: 0 auto; width: clamp(44px, 11%, 84px); height: auto; aspect-ratio: 1; border-radius: 50%; border: 1.5px solid var(--accent);
+    background: rgba(18,15,22,.8); color: var(--fg); display: grid; place-items: center; cursor: pointer; transition: transform .15s, opacity .2s; }
+  .big[hidden] { display: none; }
+  .big:hover { transform: scale(1.06); }
+  .big svg { width: 36%; height: 36%; margin-left: 6%; }
+  .big.replay svg { margin-left: 0; }
+  .bar { display: flex; align-items: center; gap: 14px; }
+  .btn { flex: none; width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface);
+    color: var(--fg); display: grid; place-items: center; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn svg { width: 16px; height: 16px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .time { flex: none; font: 500 13px/1 var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
+  .scrub { position: relative; flex: 1; min-width: 0; height: 28px; cursor: pointer; touch-action: none; }
+  .track { position: absolute; left: 0; right: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--line); }
+  .fill { position: absolute; left: 0; top: 12px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--live)); }
+  .tick { position: absolute; top: 8px; width: 2px; height: 12px; background: var(--dim); opacity: .6; }
+  .knob { position: absolute; top: 7px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--fg); box-shadow: 0 0 0 4px rgba(242,177,52,.25); }
+  .chapters { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chapters button { font: 600 13px/1 var(--sans); color: var(--dim); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+  .chapters button span { font-family: var(--mono); color: var(--accent); margin-right: 6px; }
+  .chapters button:hover { color: var(--fg); }
+  .chapters button[aria-current="true"] { color: var(--fg); border-color: var(--accent); background: rgba(242,177,52,.12); }
+  .set { display: flex; flex-wrap: wrap; gap: 8px; }
+  .set a { font: 600 13px/1 var(--sans); color: var(--fg); text-decoration: none; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; background: var(--surface); }
+  .set a:hover { border-color: var(--accent); }
+  body.poster .set { display: none; }
+  .rate { width: auto; min-width: 56px; padding: 0 10px; font: 600 13px/1 var(--mono); }
+  @media (max-width: 600px) { .time { font-size: 12px; } }
+  .notes { width: min(100%, 860px); margin-top: 56px; padding-bottom: 48px; font-size: 16px; line-height: 1.75; word-break: keep-all; overflow-wrap: anywhere; }
+  .notes .lede { font-size: 18px; color: var(--fg); }
+  .notes p, .notes li { color: var(--text2); }
+  .notes article { border-top: 1px solid var(--line); padding-top: 20px; margin-top: 24px; }
+  .notes code { font: 500 .88em var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+  .notes .terms { display: grid; grid-template-columns: minmax(110px, max-content) minmax(0, 1fr); gap: 12px 24px; margin: 0; }
+  .notes dt { font-weight: 700; }
+  .notes dd { margin: 0; color: var(--text2); }
+  @media (max-width: 600px) { .notes .terms { grid-template-columns: minmax(0, 1fr); gap: 2px; } .notes dd { margin-bottom: 14px; } }
+  body.poster { padding: 0; }
+  body.poster .player { width: 100%; }
+  body.poster .bar, body.poster .chapters, body.poster .big, body.poster .notes { display: none; }
+  body.poster .stage { border: 0; border-radius: 0; }
+</style>
+
+<div class="player">
+  <div class="stage" id="stage">
+    <canvas id="c" width="1920" height="1080" aria-label="브라우저의 메인 스레드, 컴포지터, 래스터, GPU 타임라인에서 55ms짜리 긴 작업이 프레임 세 개를 늦추는 모습을 보여주는 3D 모션그래픽"></canvas>
+    <button class="big" id="big" aria-label="재생"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg></button>
+  </div>
+  <div class="bar">
+    <button class="btn" id="play" aria-label="재생"></button>
+    <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="21" aria-valuenow="0">
+      <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+    </div>
+    <div class="time" id="time">0:00 / 0:21</div>
+    <button class="btn rate" id="rate" aria-label="재생 속도 1배">1×</button>
+    <button class="btn" id="fs" aria-label="전체 화면"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+  <div class="chapters" id="chapters"></div>
+  <nav class="set" aria-label="같은 주제"><a href="article.html">설명 읽기</a><a href="terms.html">용어집</a></nav>
+</div>
+<!-- Source text for article.html (설명) and terms.html (용어집). Not shown on this page. -->
+<section class="notes" id="notes" hidden>
+<p class="lede">60Hz 화면에서 브라우저는 16.7ms마다 새 프레임을 낼 기회가 있다. 메인 스레드에서 55ms짜리 작업 하나가 돌면, 그동안 메인 스레드가 맡아야 하는 프레임은 나오지 못하고 세 번의 기회를 놓친다. 화면의 시간 수치는 예시다.</p>
+<article data-ch="01">
+<p>네 줄의 타임라인은 위에서부터 메인 스레드, 컴포지터, 래스터, GPU다. 세로로 선 판은 16.7ms마다 오는 vsync, 즉 프레임 마감이다.</p>
+<p>평소 프레임에서는 메인 스레드가 스크립트, 스타일, 레이아웃, 페인트를 <code>9.5ms</code> 안에 끝내고, 컴포지터가 커밋을 받아 래스터와 GPU로 넘긴다. 다음 마감 전에 끝나므로 판은 흰색으로 남는다.</p>
+</article>
+<article data-ch="02">
+<p>두 번째 프레임 작업이 끝난 직후 메인 스레드에서 <code>55ms</code>짜리 작업이 시작된다. 그동안 스타일, 레이아웃, 페인트가 돌지 못해 새 커밋이 없고, 래스터는 커밋을 기다린다. 메인 스레드가 그려야 하는 프레임 마감 세 번이 지나가고 그 판이 빨갛게 바뀐다.</p>
+<p>컴포지터만으로 되는 스크롤과 transform 애니메이션은 이 동안에도 프레임을 낸다. 긴 작업을 50ms 아래 조각으로 나누면 메인 스레드도 마감 사이에 프레임을 끼워 넣을 수 있다.</p>
+</article>
+<h2>용어 정리</h2>
+<dl class="terms">
+<dt>vsync</dt><dd>화면이 새 프레임을 받는 주기. 60Hz면 16.7ms마다 온다.</dd>
+<dt>메인 스레드</dt><dd>스크립트 실행, 스타일 계산, 레이아웃, 페인트 기록을 하는 브라우저 스레드.</dd>
+<dt>컴포지터</dt><dd>메인 스레드가 넘긴 레이어를 받아 프레임을 조립하는 스레드. 스크롤과 transform 애니메이션은 혼자서도 처리한다.</dd>
+<dt>커밋</dt><dd>메인 스레드가 만든 결과를 컴포지터로 넘기는 단계.</dd>
+<dt>래스터</dt><dd>페인트 기록을 실제 픽셀 타일로 바꾸는 작업.</dd>
+<dt>긴 작업 (long task)</dt><dd>메인 스레드를 50ms 넘게 붙잡는 작업. 그동안 입력 처리와 프레임이 밀린다.</dd>
+</dl>
+</section>
+<script type="importmap">
+{ "imports": { "three": "../assets/vendor/three/build/three.module.min.js", "three/addons/": "../assets/vendor/three/examples/jsm/" } }
+</script>
+<script type="module">
+// ─────────────────────────────────────────────────────────────
+//  Long Task Frames — the profiler-lanes kit on its own (no zoom-levels): four browser threads as a timeline wall
+//  standing up in front of the camera, vsync sheets every 16.7 ms that turn red when the main thread misses them.
+//  Plain three.js renderer, no post-processing. Every frame is a pure function of t. Numbers are examples (예시).
+// ─────────────────────────────────────────────────────────────
+import * as THREE from 'three';
+import { createLanes } from '../assets/kits/profiler-lanes.js';
+
+const W = 1920, H = 1080, DURATION = 21;
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+const SANS = 'Pretendard, "WenQuanYi Zen Hei", "DejaVu Sans", sans-serif';
+const MONO = '"JetBrains Mono", Pretendard, "DejaVu Sans Mono", monospace';
+// Roles: main = main thread task · script / style / layout / paint = its scopes · comp = compositor · raster · gpu · over = missed frame (only)
+const C = { bg: '#120f16', text: '#efeaf4', dim: '#9c93a8', faint: '#5f566b',
+  main: '#f2b134', script: '#f7d06b', style: '#c78bf0', layout: '#9b7cf2', paint: '#58c27d', comp: '#4cc9a6', raster: '#6aa8ff', gpu: '#e57fd0', over: '#ff5a4f' };
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const p = (t, s, d) => clamp((t - s) / d);
+const eo = t => 1 - Math.pow(1 - t, 3);
+const eio = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const win = (t, s, e, f = .45) => Math.min(eo(p(t, s, f)), 1 - eio(p(t, e - f, f)));
+const HEAD = [[3.0, 10.5, '01', '16.7ms마다 한 번', '마감 전에 끝나면 프레임이 나온다'], [10.5, 18.0, '02', '긴 작업 하나', '55ms 동안 메인 스레드 프레임 세 번을 놓친다']];
+const END = 18.0, VS = 1000 / 60, LONG = [27.5, 55];
+
+// ── plain three.js stage ─────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1); renderer.setSize(W, H, false); renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.NeutralToneMapping;
+const scene = new THREE.Scene(); scene.background = new THREE.Color(C.bg); scene.fog = new THREE.Fog(C.bg, 120, 320);
+const camera = new THREE.PerspectiveCamera(36, W / H, 1, 1000);
+scene.add(new THREE.HemisphereLight('#f4ecff', '#1d1724', 1.4));
+const sun = new THREE.DirectionalLight('#fff3e0', 1.8); sun.position.set(-40, 60, 120); scene.add(sun);
+// the wall: rotate profiler space so lanes stack top → bottom (local z → −y) and blocks stand out toward the camera (local y → +z)
+const WALL = new THREE.Group(); WALL.rotation.x = Math.PI / 2; scene.add(WALL);
+const LZ = [-13.5, -4.5, 4.5, 13.5], NAMES = ['메인 스레드', '컴포지터', '래스터', 'GPU'], LCOL = [C.main, C.comp, C.raster, C.gpu];
+const LANES = createLanes(WALL, { lanes: LZ.map((z, i) => ({ z, color: LCOL[i] })),
+  colors: { bed: '#211b29', header: '#2b2434', budget: '#d9d0e6', over: C.over, tickMinor: '#4a4156', tickMajor: '#8e84a0', playhead: '#ffffff', wait: C.over },
+  bed: { y: -.3, h: .3, depth: 8, x0: 0, growLen: true, growDepth: false },
+  block: { h: 1.4, depth: 6.4, gap: .25, minW: .3, max: 200, glow: .45, growDepth: false },
+  nest: { h: 1, inset: 1.6 }, wait: { max: 6, opacity: .6, period: 1.6 },
+  sheet: { max: 10, w: .3, h: 4.5, y: -.3, opacity: .5, additive: true },
+  ruler: { max: 30, step: 5, major: 10, y: -.3, w: .2, h: .2, minorLen: .8, majorLen: 1.8, off: .8 },
+  playhead: { w: .3, h: 5.5, y: -.3, pad: 2 }, header: { x: -16, w: 15, y: -.3, h: .5, strip: .7 } });
+
+// ── what ran when (pure function of t) ───────────────────────
+function frameWork(B, f, long) {                  // one vsync interval starting at f × 16.7 ms
+  const v = f * VS;
+  if (long && v + 1 > LONG[0] && v < LONG[0] + LONG[1]) {        // main thread busy: compositor-only frame
+    B.push([1, v + .8, 1.4, C.comp, '']); B.push([3, v + 2.4, 1.6, C.gpu, '']); return;
+  }
+  const m0 = v + .5; let x = m0;
+  B.push([0, m0, 9.5, C.main, f === 1 ? '프레임 작업' : '']);
+  for (const [d, c] of [[4, C.script], [1.5, C.style], [2, C.layout], [1.5, C.paint]]) { B.push([0, x + .1, d - .2, c, '', { dep: 1 }]); x += d; }
+  B.push([1, m0 + 10, 1.6, C.comp, '']); B.push([2, m0 + 11.8, 3, C.raster, '']); B.push([3, m0 + 15, 2.5, C.gpu, '']);
+}
+function state(t) {
+  const long = t >= 10.5, B = [];
+  for (let f = 0; f < 6; f++) frameWork(B, f, long);
+  if (long) {
+    B.push([0, LONG[0], LONG[1], C.main, '긴 작업 55ms'], [0, LONG[0] + .3, 40, C.script, '', { dep: 1 }]);
+    B.push([2, LONG[0] + 2, LONG[1] - 2, C.over, '커밋 기다림', { wait: true }]);
+  }
+  const now = long ? (t - 11.6) * 18 : (t - 4.2) * 18;
+  const missed = f => long && f * VS > LONG[0] && f * VS < LONG[0] + LONG[1];
+  const k = eo(p(t, 3.2, .8)) * (1 - eio(p(t, 18.3, .7)));
+  const sheets = []; for (let f = 1; f <= 6; f++) sheets.push([f * VS, missed(f) && now > f * VS, eo(clamp((t - 3.6 - f * .1) / .5)) * k]);
+  return { blocks: B, laneK: LZ.map((_, i) => eo(p(t, 3.2 + i * .12, .6)) * (1 - eio(p(t, 18.3, .7)))), laneLen: [104, 104, 104, 104], now, clip: true,
+    sheets, rulerTo: 100, ruler: k > .5, k, missed: [1, 2, 3, 4, 5, 6].filter(f => missed(f) && now > f * VS).length };
+}
+
+// ── labels on the wall ───────────────────────────────────────
+const _v = new THREE.Vector3();
+function project(pt) {                           // profiler-space point → screen px
+  _v.set(pt[0], pt[1], pt[2]); WALL.localToWorld(_v); _v.project(camera);
+  return { x: (_v.x + 1) / 2 * W, y: (1 - _v.y) / 2 * H, ok: _v.z < 1 && Math.abs(_v.x) < 1.1 && Math.abs(_v.y) < 1.1 };
+}
+function txt(s, x, y, o = {}) {
+  const { size = 28, weight = 500, color = C.text, align = 'left', mono = false, alpha = 1 } = o; if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha; ctx.font = `${weight} ${size}px ${mono ? MONO : SANS}`; ctx.fillStyle = color; ctx.textAlign = align; ctx.fillText(s, x, y); ctx.restore();
+}
+function headers(t) {
+  for (const [s, e, n, title, sub] of HEAD) {
+    const a = win(t, s, e, .4); if (a <= 0) continue; const k = eo(p(t, s + .05, .7));
+    ctx.save(); ctx.globalAlpha = a * k;
+    txt(n, 120, 112, { size: 30, weight: 800, mono: true, color: C.main }); txt(title, 180, 114, { size: 54, weight: 800 });
+    txt(sub, 122, 166, { size: 28, color: C.dim }); ctx.restore();
+  }
+}
+function overlay(t, S) {
+  const a = win(t, 3.4, END + .3, .5); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  NAMES.forEach((nm, i) => { const q = project([-14.4, 1, LZ[i] - 1.2]); if (q.ok) txt(nm, q.x, q.y, { size: 26, weight: 800, color: LCOL[i] }); });
+  for (let ms = 0; ms <= 100; ms += 20) { const q = project([ms, 0, LZ[3] + 4 + 2.6]); if (q.ok) txt(ms + 'ms', q.x, q.y + 8, { size: 20, mono: true, color: C.dim, align: 'center' }); }
+  for (let f = 1; f <= 6; f++) { const q = project([f * VS, 4.5, LZ[0] - 4.6]); if (q.ok) txt('vsync', q.x, q.y - 10, { size: 18, mono: true, color: C.faint, align: 'center', alpha: eo(p(t, 4, .5)) }); }
+  for (const b of S.blocks) if (b[4] && S.now > b[1] + b[2] * .4) { const q = project(LANES.top(b)); if (q.ok) txt(b[4], q.x, q.y + 8, { size: 24, weight: 800, align: 'center', color: b[5]?.wait ? '#ffd5d1' : '#16121a' }); }
+  if (t > 10.5) {
+    const k = eo(p(t, 11.2, .5));
+    txt('놓친 프레임', 1800, 920, { size: 28, weight: 700, color: C.dim, align: 'right', alpha: k });
+    txt(String(S.missed), 1800, 1010, { size: 96, weight: 800, mono: true, color: S.missed ? C.over : C.text, align: 'right', alpha: k });
+    txt('컴포지터만으로 되는 스크롤은 계속 돈다', 120, 1000, { size: 28, color: C.text, alpha: eo(p(t, 14.5, .5)) });
+  } else txt('마감 전에 끝남 → 판은 흰색', 120, 1000, { size: 28, color: C.text, alpha: eo(p(t, 6.5, .5)) });
+  txt('* 수치는 예시', 1800, 112, { size: 20, color: C.faint, align: 'right' });
+  ctx.restore();
+}
+function endCard(t) {
+  const a = eo(p(t, END + .4, .8)); if (a <= 0) return;
+  ctx.fillStyle = `rgba(18,15,22,${.88 * a})`; ctx.fillRect(0, 0, W, H);
+  txt('메인 스레드 작업은 16.7ms 안에,', W / 2, 500, { size: 68, weight: 800, align: 'center', alpha: a });
+  txt('긴 작업은 50ms 아래로 나눈다.', W / 2, 600, { size: 68, weight: 800, align: 'center', color: C.main, alpha: a });
+}
+function intro(t) {
+  const a = win(t, 0, 3.3, .5); if (a <= 0) return;
+  txt('브라우저 한 프레임, 16.7ms', 120, 470, { size: 92, weight: 800, alpha: a * eo(p(t, .2, .7)) });
+  txt('메인 스레드 · 컴포지터 · 래스터 · GPU', 124, 550, { size: 32, color: C.dim, alpha: a * eo(p(t, .7, .7)) });
+}
+
+// ── frame ────────────────────────────────────────────────────
+function renderAt(t) {
+  t = clamp(t, 0, DURATION);
+  const push = eio(p(t, 0, 4)), pan = eio(p(t, 10.5, 2));
+  camera.position.set(lerp(70, 48, push) + 6 * pan, lerp(-30, -10, push), lerp(170, 120, push));
+  camera.lookAt(lerp(55, 44, push) + 6 * pan, -1, 0); camera.updateMatrixWorld();
+  const S = state(t);
+  LANES.draw(S);
+  renderer.render(scene, camera);
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
+  ctx.drawImage(renderer.domElement, 0, 0, W, H);
+  intro(t); overlay(t, S); headers(t); endCard(t);
+  const fo = p(t, DURATION - .5, .5); if (fo > 0) { ctx.fillStyle = `rgba(0,0,0,${fo})`; ctx.fillRect(0, 0, W, H); }
+}
+window.renderAt = renderAt;
+window.DURATION = DURATION;
+window.ready = (async () => {
+  const faces = [['Pretendard', 'Pretendard-Variable.woff2', '100 900'], ['JetBrains Mono', 'JetBrainsMono.woff2', '100 800']];
+  for (const [family, file, weight] of faces) {
+    for (const base of ['../assets/fonts/', 'assets/fonts/']) {
+      try { document.fonts.add(await new FontFace(family, `url(${base}${file})`, { weight }).load()); break; } catch (e) { /* try next */ }
+    }
+  }
+  await document.fonts.ready;
+  renderAt(0);
+})();
+// ── player (skipped when ?render) ────────────────────────────
+if (!location.search.includes('render')) {
+  const $ = id => document.getElementById(id);
+  const ICON = {
+    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>',
+    replay: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"/></svg>',
+  };
+  const CHAPTERS = [[0, '', '인트로'], ...HEAD.map(h => [h[0], h[2], h[3]]), [END, '', '정리']];
+  $('scrub').setAttribute('aria-valuemax', Math.round(DURATION));
+  const POSTER = 15.5;
+  let t = 0, playing = false, started = false, last = 0;
+  const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
+  CHAPTERS.forEach(([s, n, label], i) => {
+    const b = document.createElement('button');
+    b.innerHTML = (n ? `<span>${n}</span>` : '') + label;
+    b.addEventListener('click', () => { seek(s + .01); play(); });
+    $('chapters').appendChild(b);
+    if (i) { const tk = document.createElement('div'); tk.className = 'tick'; tk.style.left = (s / DURATION * 100) + '%'; $('ticks').appendChild(tk); }
+  });
+  function ui() {
+    const k = t / DURATION, ended = t >= DURATION;
+    $('fill').style.width = k * 100 + '%'; $('knob').style.left = k * 100 + '%';
+    $('time').textContent = `${mmss(t)} / ${mmss(DURATION)}`;
+    $('scrub').setAttribute('aria-valuenow', Math.round(t));
+    $('play').innerHTML = playing ? ICON.pause : ended ? ICON.replay : ICON.play;
+    $('play').setAttribute('aria-label', playing ? '일시정지' : '재생');
+    $('big').hidden = playing; $('big').innerHTML = ended ? ICON.replay : ICON.play; $('big').classList.toggle('replay', ended);
+    let cur = 0; CHAPTERS.forEach(([s], i) => { if (t >= s) cur = i; });
+    [...$('chapters').children].forEach((b, i) => b.setAttribute('aria-current', i === cur && started));
+  }
+  function draw() { renderAt(started ? Math.min(t, DURATION - .001) : POSTER); }
+  function play() { if (t >= DURATION) t = 0; started = true; playing = true; last = performance.now(); ui(); }
+  function pause() { playing = false; ui(); }
+  function toggle() { playing ? pause() : play(); }
+  function seek(x) { started = true; t = clamp(x, 0, DURATION); draw(); ui(); }
+  function frame(now) { if (playing) { t += (now - last) / 1000 * rate; last = now; if (t >= DURATION) { t = DURATION; playing = false; } draw(); ui(); } requestAnimationFrame(frame); }
+  const RATES = [1, .75, .5];
+  let rate = 1;
+  try { rate = +localStorage.getItem('mg-rate') || 1; } catch (e) { /* storage unavailable */ }
+  if (!RATES.includes(rate)) rate = 1;
+  function setRate(r) { rate = r; $('rate').textContent = r + '×'; $('rate').setAttribute('aria-label', `재생 속도 ${r}배`); try { localStorage.setItem('mg-rate', String(r)); } catch (e) { /* storage unavailable */ } }
+  setRate(rate);
+  $('rate').addEventListener('click', () => setRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length]));
+  $('stage').addEventListener('click', toggle);
+  $('play').addEventListener('click', toggle);
+  $('fs').addEventListener('click', () => { const el = $('stage'); if (document.fullscreenElement) document.exitFullscreen?.(); else el.requestFullscreen?.().catch(() => {}); });
+  const scrub = $('scrub');
+  const fromEvent = e => { const r = scrub.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width) * DURATION; };
+  let wasPlaying = false;
+  scrub.addEventListener('pointerdown', e => { scrub.setPointerCapture(e.pointerId); wasPlaying = playing; playing = false; seek(fromEvent(e)); });
+  scrub.addEventListener('pointermove', e => { if (scrub.hasPointerCapture(e.pointerId)) seek(fromEvent(e)); });
+  scrub.addEventListener('pointerup', () => { if (wasPlaying && t < DURATION) play(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key === 'k') { e.preventDefault(); toggle(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); seek(t + 5); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); seek(t - 5); }
+    else if (e.key === 'Home') seek(0);
+  });
+  const posterMode = location.hash === '#poster';
+  if (posterMode) document.body.classList.add('poster');
+  ui();
+  const deep = /^#ch(\d\d)$/.exec(location.hash), deepHead = deep && HEAD.find(r => r[2] === deep[1]);
+  window.ready.then(() => {
+    draw(); requestAnimationFrame(frame);
+    if (deepHead) seek(deepHead[0] + .01);
+    if (posterMode) { play(); setInterval(() => { if (!playing) { t = 0; play(); } }, 500); }
+  });
+}
+</script>
