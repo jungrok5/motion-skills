@@ -8,6 +8,18 @@
 - A citation was missing on one quote — verify every quote has its source line.
 - Reviewers flagged their own stale stills as bugs: always re-render stills after a change before judging.
 
+**Looking like a film, not a presentation** (feedback after release)
+- Viewers notice when one scene drops out of the film's language: numbered items (01/07), grids, bar charts, map
+  leader-line labels, hex-tile "game" islands and a marimba/kalimba bed all read as an explainer or a slide deck. Keep
+  every scene in film language — light, depth, one continuous camera, captions like subtitles — and score it like a film.
+- Cheap-looking effects: a flat full-screen white flash, and a "fireball" of overlapping additive sprites. Instead do what a
+  lens does: an exposure bloom from the light's position with falloff, lens ghosts, an anamorphic streak (not reflected in
+  water), a layered corona and slowly turning rays.
+- Pace for reading, not for the beat grid: give each text beat ≥ 8 s when there is a verse to read plus a drawing to watch;
+  when restyling a scene, re-time it — don't inherit a grid designed for a different style.
+- When restyling, keep every on-screen source string (they are the translation keys): change the look and timing freely
+  and every language keeps working.
+
 **Sound**
 - ElevenLabs queue cap ≈ 64 concurrent generations; 429 → batch smaller. Never retry a generation call.
 
@@ -21,6 +33,10 @@
 - Media requests must bypass a service worker (Range requests), and the CSP must allow same-origin frames/media/fonts.
 - Share: `navigator.share` where available (phones AND desktop OS share sheets), fall back to copying the link with a
   toast; support `#scene` deep links.
+
+**Deploying**
+- A host can report a deploy "successful" while the domain still serves an older build (e.g. the push only produced a
+  preview). After every deploy, fetch a changed file from the live domain and check it.
 
 **Typography & languages**
 - A CJK font draws "…" as a centred "⋯" — Latin languages need a Latin face (Noto Serif/Sans), not the Korean one.

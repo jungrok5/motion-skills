@@ -25,8 +25,9 @@ Built for and proven on a 13-minute, 21-scene, 11-language Bible film
 | `scripts/publish.py` | build the **live web player** site: scenes + subset webfonts + per-scene m4a + language files |
 | `scripts/i18n-scan.mjs` | list every on-screen string of a scene (source language) / what a language still misses or leaks |
 | `scripts/i18n-merge.mjs` | merge per-scene translation files into the one file each language loads |
+| `scripts/sheets.mjs` | contact sheets — every scene × both orientations × N moments, one image per scene (check a language or a restyle by eye) |
 | `player/index.html` | the player template (two-iframe preloading, audio as master clock, share sheet, deep links, theatre mode) |
-| `references/` | SCENE-RULES (hard rules for scene authors) · STYLES (21 looks and how each was drawn) · SOUND (ElevenLabs flow) · I18N (method + quality gate) · LESSONS (what went wrong and the fixes) |
+| `references/` | review-prompt (native-speaker review brief for a language) · SCENE-RULES (hard rules for scene authors) · STYLES (21 looks and how each was drawn) · SOUND (ElevenLabs flow) · I18N (method + quality gate) · LESSONS (what went wrong and the fixes) |
 | `examples/hello/` | a minimal project: `film.json`, one scene, a sound spec, a Korean translation — run everything on it first |
 
 ## Project layout (what you create)
@@ -64,7 +65,7 @@ installed locally (`~/.local/share/fonts`, e.g. Noto Serif/Sans KR) — renders 
    only) and optionally `&o=h|v` (fix the orientation) and `&lang=xx`.
 7. **Languages** (`references/I18N.md`): scan source strings → per-language translation files (Scripture/quotes verbatim
    from each language's own official text, site prose reused from the site's own translation, scene-only labels
-   translated) → scan for leaks → stills → **native-review agent per language** → fix → publish. Batch 4–6 languages at a
+   translated) → scan for leaks → contact sheets (`sheets.mjs`) → **native-review agent per language** (`references/review-prompt.md`) → fix → publish. Batch 4–6 languages at a
    time; one agent per language; only one agent may touch scene code at a time.
 
 ## Contract every scene page fulfils
