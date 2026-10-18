@@ -49,7 +49,10 @@ section{padding:40px 0;border-bottom:1px solid var(--line)}
 .soon{color:var(--mute)}
 code{font:13px ui-monospace,Menlo,monospace;background:var(--card);border:1px solid var(--line);padding:1px 6px;border-radius:6px}
 footer{padding:28px 0 48px;color:var(--mute);font-size:13px}
+.demo iframe.tme{aspect-ratio:16/14.6;background:#070a13}
+#tech-motion-explainer .meta{word-break:keep-all}
 @media (max-width:820px){.skill{grid-template-columns:1fr} .demo iframe{aspect-ratio:auto;height:min(86vh,760px)} header{padding-top:36px}}
+@media (max-width:820px){.demo iframe.tme{height:calc((100vw - 66px)*.5625 + 250px)}}
 </style>
 </head>
 <body>
@@ -177,6 +180,33 @@ footer{padding:28px 0 48px;color:var(--mute);font-size:13px}
   </div>
 </div></section>
 
+<section id="tech-motion-explainer"><div class="wrap skill">
+  <div class="meta">
+    <h2>tech-motion-explainer</h2>
+    <p>파이프라인 · 프로토콜 · 서버 루프 같은 기술 과정을 60–110초 설명 영상으로 그립니다. 주제마다 영상 · 설명 · 용어집 세 페이지가 한 세트이고, 같은 페이지를 MP4로도 굽습니다.</p>
+    <ul>
+      <li><b>엔진 + 플레이어</b> — 모든 프레임이 renderAt(t), 장 이동 · 0.75× / 0.5× 재생</li>
+      <li><b>설명 · 용어집</b> — 영상 페이지 안의 노트에서 생성</li>
+      <li><b>검증</b> — 스틸 렌더, 플레이어 자동 점검, 전문가 리뷰</li>
+      <li><b>세로 영상 · 3D</b> — 9:16 요약 컷, three.js로 7가지 설명 방식</li>
+      <li><b>임베드</b> — 이력서 같은 다른 페이지 안에서 스크롤로 재생</li>
+    </ul>
+    <div class="btns">
+      <a class="btn p" href="https://github.com/jungrok5/motion-skills/blob/main/tech-motion-explainer/SKILL.md">SKILL.md 보기</a>
+      <a class="btn" href="https://github.com/jungrok5/motion-skills/tree/main/tech-motion-explainer">폴더</a>
+      <a class="btn" href="https://jungrok5.github.io/motion-graphics/" target="_blank" rel="noopener">실제 작품 (12개 주제)</a>
+    </div>
+  </div>
+  <div class="demo">
+    <iframe id="tme" class="tme" src="tech-motion-explainer/demo/proto-bot-pipeline/" title="tech-motion-explainer 예제 — 실시간 재생" loading="lazy" allow="fullscreen" allowfullscreen></iframe>
+    <div class="bar"><span id="tme-cap">예제 <code>starter/proto-bot-pipeline</code> · 1:04 · 2D</span>
+      <span class="btns" role="group" aria-label="예제">
+        <button class="btn" data-tme="proto-bot-pipeline" aria-pressed="true">2D</button>
+        <button class="btn" data-tme="server-tick-inside-wide" aria-pressed="false">3D · 분해해 들어가기</button>
+      </span></div>
+  </div>
+</div></section>
+
 <section><div class="wrap">
   <h2>더 많은 스킬</h2>
   <p class="soon">다른 모션 스킬은 폴더별로 계속 추가됩니다. 각 스킬은 <code>&lt;skill&gt;/SKILL.md</code>에서 시작합니다.</p>
@@ -193,6 +223,15 @@ document.querySelectorAll('[data-l]').forEach(function (b) {
   b.addEventListener('click', function () {
     document.querySelectorAll('[data-l]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
     demo(b.dataset.l);
+  });
+});
+var TME = { 'proto-bot-pipeline': '예제 <code>starter/proto-bot-pipeline</code> · 1:04 · 2D',
+  'server-tick-inside-wide': '예제 <code>starter/server-tick-inside-wide</code> · 1:21 · three.js' };
+document.querySelectorAll('[data-tme]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    document.querySelectorAll('[data-tme]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    document.getElementById('tme').src = 'tech-motion-explainer/demo/' + b.dataset.tme + '/';
+    document.getElementById('tme-cap').innerHTML = TME[b.dataset.tme];
   });
 });
 </script>

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>패킷 정의 하나로, 개발부터 라이브까지 — 용어집</title>
+<meta name="description" content="패킷 정의 하나로, 개발부터 라이브까지 용어집">
+<style>
+  /* Reading page: one 720px column, light and dark. */
+  @font-face { font-family: Pretendard; src: url(assets/fonts/Pretendard-Variable.woff2) format("woff2"), url(../assets/fonts/Pretendard-Variable.woff2) format("woff2"); font-weight: 100 900; }
+  @font-face { font-family: "JetBrains Mono"; src: url(assets/fonts/JetBrainsMono.woff2) format("woff2"), url(../assets/fonts/JetBrainsMono.woff2) format("woff2"); font-weight: 100 800; }
+  :root {
+    --bg: #fbfbfd; --surface: #f1f2f7; --line: #dde0ea; --fg: #141826; --text2: #39405a; --dim: #6b7290; --accent: #6d4fd8;
+    --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #070a13; --surface: #0e1424; --line: #24304a; --fg: #e8ecf4; --text2: #c3cad8; --dim: #8b95a7; --accent: #a78bfa; color-scheme: dark; } }
+  :root[data-theme="dark"] { --bg: #070a13; --surface: #0e1424; --line: #24304a; --fg: #e8ecf4; --text2: #c3cad8; --dim: #8b95a7; --accent: #a78bfa; color-scheme: dark; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 17px; line-height: 1.8;
+    word-break: keep-all; overflow-wrap: anywhere;
+    padding-block: 48px 72px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  main { max-width: 720px; margin: 0 auto; }
+  a { color: var(--accent); }
+  .eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .18em; color: var(--dim); text-transform: uppercase; }
+  h1 { font-size: clamp(30px, 6vw, 42px); line-height: 1.25; letter-spacing: -.02em; margin: 12px 0 16px; text-wrap: balance; }
+  h2 { font-size: 24px; line-height: 1.4; margin: 56px 0 4px; text-wrap: balance; display: flex; gap: 12px; align-items: baseline; }
+  h2 .n { font: 600 15px/1 var(--mono); color: var(--accent); flex: none; }
+  .sub { color: var(--dim); margin: 0 0 16px; font-size: 16px; }
+  p, li { color: var(--text2); }
+  .lede { font-size: 19px; color: var(--fg); }
+  nav.tabs { display: flex; gap: 6px; margin: 0 0 28px; border-bottom: 1px solid var(--line); }
+  nav.tabs a { font: 700 15px/1 var(--sans); color: var(--dim); text-decoration: none; padding: 12px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  nav.tabs a:hover { color: var(--fg); }
+  nav.tabs a[aria-current="page"] { color: var(--fg); border-bottom-color: var(--accent); }
+  .next { margin-top: 48px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0 8px; }
+  .actions a { font: 600 14px/1 var(--sans); text-decoration: none; color: var(--fg); border: 1px solid var(--line); border-radius: 999px; padding: 10px 14px; background: var(--surface); }
+  .actions a:hover { border-color: var(--accent); }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; font: 500 12px/1 var(--mono); color: var(--dim); }
+  .tags span { border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; }
+  nav.toc { border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; margin: 32px 0 0; background: var(--surface); }
+  nav.toc ol { margin: 0; padding-left: 1.4em; } nav.toc li { color: var(--fg); }
+  nav.toc a { color: inherit; text-decoration: none; } nav.toc a:hover { color: var(--accent); }
+  .scene { font: 600 13px/1 var(--sans); }
+  code { font: 500 .88em var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+  dl.terms { display: grid; grid-template-columns: minmax(120px, max-content) minmax(0, 1fr); gap: 14px 28px; margin: 16px 0 0; }
+  dt { font-weight: 700; color: var(--fg); } dd { margin: 0; color: var(--text2); }
+  dd .src { display: block; font-size: 13px; color: var(--dim); }
+  @media (max-width: 600px) { dl.terms { grid-template-columns: minmax(0, 1fr); gap: 2px; } dd { margin-bottom: 16px; } }
+  input[type=search] { width: 100%; box-sizing: border-box; font: 500 16px var(--sans); color: var(--fg); background: var(--surface);
+    border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 16px 0 8px; }
+  footer { margin-top: 64px; font-size: 14px; color: var(--dim); }
+</style>
+</head>
+<body>
+<main>
+<nav class="tabs" aria-label="같은 주제"><a href="index.html">영상</a><a href="article.html">설명</a><a href="terms.html" aria-current="page">용어집</a></nav>
+<span class="eyebrow">1:04 · protobuf · codegen · bot client · load test</span>
+<h1>패킷 정의 하나로, 개발부터 라이브까지</h1>
+<p class="lede">이 영상에 나오는 용어 14개.</p>
+<input type="search" id="q" placeholder="용어 찾기" aria-label="용어 찾기">
+<dl class="terms" id="list">
+<dt><code>.proto</code> 파일</dt><dd>메시지 이름, 필드 이름, 타입, 번호를 선언하는 스키마 파일이다. 영상에서는 <code>game_packet.proto</code>가 모든 패킷의 원본이다.</dd>
+<dt>동접 (CCU)</dt><dd>같은 시점에 접속해 있는 사용자 수다. 서버 대수를 정할 때 기준이 되는 값이다.</dd>
+<dt>봇 클라이언트</dt><dd>사람 대신 프로그램이 실제 클라처럼 서버에 접속해 패킷을 보내는 테스트용 클라이언트다. 화면이나 리소스 없이 패킷 흐름만 재현한다.</dd>
+<dt>부하 테스트</dt><dd>많은 봇을 동시에 접속시켜 서버와 인프라가 어디까지 버티는지 재는 테스트다. 영상에서는 CPU 70%를 임계로 잡는다.</dd>
+<dt>코드 생성(codegen)</dt><dd>스키마에서 소스 코드를 자동으로 만들어 내는 과정이다. 사람이 직접 짜지 않으니 클라, 서버, 봇의 패킷 구조가 같게 유지된다.</dd>
+<dt>패킷</dt><dd>클라이언트와 서버가 주고받는 메시지 한 단위다. 영상에서는 <code>.proto</code>의 <code>message</code> 하나가 패킷 하나에 해당한다.</dd>
+<dt>패킷 플로우</dt><dd>로그인부터 던전 클리어까지 클라가 서버와 주고받는 패킷의 순서다. 봇은 이 순서를 그대로 따라 한다.</dd>
+<dt>퍼블리셔</dt><dd>게임을 서비스하고 운영하는 회사 또는 조직이다. 영상에서는 QA와 인프라팀이 봇을 받아 부하 테스트를 한다.</dd>
+<dt>필드 번호(tag)</dt><dd>각 필드 뒤의 <code>= 1</code>, <code>= 2</code> 같은 숫자다. 직렬화된 바이트에서는 이름 대신 이 번호로 필드를 구분하므로 한 번 정하면 바꾸지 않는다.</dd>
+<dt><code>p99</code> 지연</dt><dd>요청의 99%가 이 시간 안에 끝난다는 뜻의 응답 시간 지표다. 평균에 묻히는 느린 요청을 드러낸다.</dd>
+<dt>Protobuf (프로토콜 버퍼)</dt><dd>Google이 만든 직렬화 형식이다. 스키마를 <code>.proto</code> 파일에 적고, 여기서 각 언어용 직렬화 코드를 생성해 쓴다.</dd>
+<dt><code>protoc</code></dt><dd>Protobuf 컴파일러다. <code>.proto</code>를 읽어 C#, C++ 등 지정한 언어의 클래스 코드를 만든다.</dd>
+<dt><code>RPS</code> / <code>DB QPS</code></dt><dd>초당 요청 수와 DB의 초당 쿼리 수다. 동접이 늘 때 서버와 DB가 받는 부하를 나타낸다.</dd>
+<dt>Single Source of Truth</dt><dd>같은 정보의 원본을 한 곳에만 두는 원칙이다. 여기서는 패킷 정의가 <code>.proto</code> 한 파일에만 있다.</dd>
+</dl>
+<footer><a href="../index.html">전체 영상 목록</a></footer>
+<script>
+  const q = document.getElementById('q'), dts = [...document.querySelectorAll('#list dt')];
+  q.addEventListener('input', () => { const s = q.value.trim().toLowerCase();
+    dts.forEach(dt => { const show = !s || (dt.textContent + dt.nextElementSibling.textContent).toLowerCase().includes(s); dt.hidden = dt.nextElementSibling.hidden = !show; }); });
+</script>
+</main>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Motion Explainers</title>
+<style>
+  /* The project gallery: one card per topic. build-articles.mjs reads the VIDEOS list below. Single dark look. */
+  @font-face { font-family: Pretendard; src: url(assets/fonts/Pretendard-Variable.woff2) format("woff2"); font-weight: 100 900; }
+  @font-face { font-family: "JetBrains Mono"; src: url(assets/fonts/JetBrainsMono.woff2) format("woff2"); font-weight: 100 800; }
+  :root {
+    --bg: #070a13; --surface: #0e1424; --line: #24304a; --fg: #e8ecf4; --dim: #8b95a7; --accent: #a78bfa; --live: #34d399;
+    --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    color-scheme: dark;
+  }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans);
+    padding-block: 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  main { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
+  header { display: flex; flex-direction: column; gap: 10px; }
+  .eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .2em; color: var(--dim); text-transform: uppercase; }
+  h1 { margin: 0; font-size: clamp(32px, 6vw, 48px); font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
+  header p { margin: 0; color: var(--dim); font-size: 17px; line-height: 1.6; max-width: 60ch; }
+  ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 20px; }
+  a.card { display: grid; grid-template-columns: minmax(0, 1fr); text-decoration: none; color: inherit;
+    border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); transition: border-color .2s; }
+  a.card:hover, a.card:focus-visible { border-color: var(--accent); outline: none; }
+  .poster { position: relative; aspect-ratio: 16 / 9; max-width: 100%; background: var(--bg); }
+  a.card.v { grid-template-columns: minmax(0, 220px) minmax(0, 1fr); }
+  a.card.v .poster { aspect-ratio: 9 / 16; }
+  @media (max-width: 560px) { a.card.v { grid-template-columns: minmax(0, 1fr); } a.card.v .poster { width: 60%; justify-self: center; } }
+  .poster iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
+  .meta { display: flex; flex-direction: column; gap: 8px; padding: 18px 20px 20px; min-width: 0; }
+  .meta h2 { margin: 0; font-size: 22px; font-weight: 800; }
+  .meta p { margin: 0; color: var(--dim); line-height: 1.55; }
+  .meta .eyebrow { font: 700 13px/1 var(--sans); letter-spacing: .06em; color: var(--accent); }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; font: 500 12px/1 var(--mono); color: var(--dim); }
+  .tags span { border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; }
+  .tags .len { color: var(--live); border-color: var(--live); }
+  .links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .links a { font: 600 14px/1 var(--sans); color: var(--fg); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 9px 13px; background: var(--surface); }
+  .links a:hover { border-color: var(--accent); }
+  .section-head { display: flex; flex-direction: column; gap: 8px; }
+  .section-head h2 { margin: 0; font-size: 26px; font-weight: 800; }
+  .section-head p { margin: 0; color: var(--dim); line-height: 1.6; max-width: 62ch; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <span class="eyebrow">Code-driven motion graphics</span>
+    <h1>기술 설명 영상</h1>
+    <p>모든 프레임을 코드로 그립니다. 주제마다 영상 · 설명 · 용어집이 한 세트입니다.</p>
+  </header>
+  <ul id="list"></ul>
+  <section class="section-head"><h2>설명 방식 실험 (3D)</h2><p>같은 주제를 다른 설명 방식으로 다시 만든 페이지입니다. 가로(PC)는 본편 전체 내용입니다.</p></section>
+  <ul id="lab"></ul>
+</main>
+<script>
+  // One entry per topic (2D explainer) and per vertical cut. `path` is the folder holding its index.html.
+  // build-articles.mjs reads this list as text: it takes everything between the first "VIDEOS = [" and the next line that is
+  // exactly "  ];" (two spaces). Keep that closing line, and do not write the opening marker in a comment above it.
+  // Fields: path · title · desc · length 'm:ss' · tags [] · mp4 (baked file, e.g. 'out/<slug>.mp4')
+  //         vertical: true + full: '<slug>/' for a 9:16 cut (no reading pages of its own; build-articles skips it).
+  const VIDEOS = [
+    { path: 'proto-bot-pipeline/', mp4: 'out/proto-bot-pipeline.mp4', title: '패킷 정의 하나로, 개발부터 라이브까지', length: '1:04',
+      desc: '프로토버퍼로 패킷을 정의하고 클라·서버·봇 코드를 생성해, 서버 선개발 컨텐츠 테스트와 퍼블리셔 부하 테스트까지 잇는 과정.',
+      tags: ['protobuf', 'codegen', 'bot client', 'load test'] },
+  ];
+  // 3D approach pages (not read by build-articles): wide = full explainer, tall = ~20 s cut, full = the 2D topic it retells.
+  const LAB = [
+    { style: '분해해 들어가기', wide: 'server-tick-inside-wide/', length: '1:21',
+      title: '서버 안의 50ms, 무슨 일이 일어날까?',
+      desc: '랙에서 서버를 꺼내 열고, 프로세스 → 스레드 → 틱 하나 → AOI 단계로 들어간다. 프로파일러 타임라인 위에서 큐 · AOI · DB · 락 · GC가 틱을 늘리는 모습.',
+      tags: ['three.js', 'profiler', 'tick'] },
+  ];
+  const el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstChild; };
+  const tagRow = v => `<div class="tags"><span class="len">${v.length}</span>${v.tags.map(t => `<span>${t}</span>`).join('')}</div>`;
+  for (const v of VIDEOS) {
+    const li = el(`<li><a class="card${v.vertical ? ' v' : ''}" href="${v.path}">
+      <div class="poster"><iframe src="${v.path}#poster" loading="lazy" tabindex="-1"></iframe></div>
+      <div class="meta"><h2></h2><p></p>${tagRow(v)}</div></a><div class="links"></div></li>`);
+    li.querySelector('iframe').title = v.title;
+    li.querySelector('h2').textContent = v.title;
+    li.querySelector('p').textContent = v.desc;
+    li.querySelector('.links').innerHTML = v.vertical
+      ? `<a href="${v.path}">▶ 세로 영상 보기</a>${v.mp4 ? `<a href="${v.mp4}">MP4 받기</a>` : ''}<a href="${v.full}">전체 영상</a>`
+      : `<a href="${v.path}">▶ 영상 보기</a><a href="${v.path}article.html">설명</a><a href="${v.path}terms.html">용어집</a>${v.mp4 ? `<a href="${v.mp4}">MP4 받기</a>` : ''}`;
+    document.getElementById('list').appendChild(li);
+  }
+  for (const v of LAB) {
+    const li = el(`<li><a class="card" href="${v.wide}">
+      <div class="poster"><iframe src="${v.wide}#poster" loading="lazy" tabindex="-1"></iframe></div>
+      <div class="meta"><span class="eyebrow"></span><h2></h2><p></p>${tagRow(v)}</div></a><div class="links"><a href="${v.wide}">▶ 가로 (PC)</a></div></li>`);
+    li.querySelector('iframe').title = v.title;
+    li.querySelector('.eyebrow').textContent = v.style;
+    li.querySelector('h2').textContent = v.title;
+    li.querySelector('p').textContent = v.desc;
+    document.getElementById('lab').appendChild(li);
+  }
+</script>
+</body>
+</html>
