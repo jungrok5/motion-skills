@@ -7,6 +7,9 @@
 - Layout collisions only show in one orientation — always check h AND v.
 - A citation was missing on one quote — verify every quote has its source line.
 - Reviewers flagged their own stale stills as bugs: always re-render stills after a change before judging.
+- iPhone Safari (iOS 17.4+) ignores `globalAlpha` for text drawn with a shadow: every faded-out line showed at once,
+  piled on top of each other. Chromium and desktop WebKit look fine, so renders never show it. The harness now skips
+  fully faded text and bakes partial alpha into the text colours — keep text going through `fillText` (it is patched).
 
 **Looking like a film, not a presentation** (feedback after release)
 - Viewers notice when one scene drops out of the film's language: numbered items (01/07), grids, bar charts, map
