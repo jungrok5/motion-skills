@@ -19,30 +19,32 @@ Borrow the craft, write your own renderer; never copy a demo's shots, characters
    (the one moment only that medium can do) placed on the story's turn.
 
 ## A. canvas-film looks (21) — proven in this pipeline; details in STYLES.md
+Code: each look is one self-contained scene (style + Bible story together) in github.com/jungrok5/one-scroll-bible
+`motion/pilot/<scene>.html` (shared: `lib.js`, `goldline.js`). Read it for technique; packaged, reusable looks are in `kits/`.
 
-| scene | style | meaning carried |
-|---|---|---|
-| opening | **one-line drawing** | one story from promise to fulfilment |
-| creation | **light born like a lens sees it, IMAX grain** | "let there be light" |
-| fall | **ink wash on rice paper** | sin spreading; God seeking |
-| patriarch | **soft pastel, magic hour → night** | promise under the stars |
-| exodus | **1960s epic poster gouache (after Terpning, *Lawrence of Arabia*)** | plagues, Passover, the sea |
-| wilderness | **watercolour + parchment map** | the journey |
-| judges | **1920s silent film** | the repeating cycle |
-| kingdom | **illuminated manuscript** | shepherd → king, an everlasting throne |
-| exile | **Kollwitz expressionist woodcut** | a kingdom split, a city falls, weeping by the rivers |
-| return | **blueprint developing into a lit 3D dusk (after *Titanic*)** | rebuilding the walls |
-| silence | **Hopper-style quiet realism** | 400 years of waiting |
-| advent | **stained glass** | promises lit one by one, then the nativity |
-| cross | **black-and-white film + one red → Rembrandt oil** | darkness, the cost, "it is finished" |
-| rise | **impasto (palette knife)** | grey world repainted in colour |
-| church | **night cinematography: upper room → moonlit ridges → night earth** | Pentecost, to the ends of the earth |
-| renewal | **watercolour handscroll** | desert → garden |
-| mirror | **Warhol photo-silkscreen series** | idols, printed again and again |
-| gospel | **the gold line, one tracking shot** | 7 essentials, then the cross |
-| evidence | **explorer's watercolour scrapbook (after *The English Patient*)** | the record holds up |
-| ship | **18th-century sea-chart copperplate (after *Mutiny on the Bounty*)** | changing ships, not scrubbing decks |
-| invite | **the gold line returns** | a prayer written in light |
+| scene | style | meaning carried | code |
+|---|---|---|---|
+| opening | **one-line drawing** | one story from promise to fulfilment | `motion/pilot/opening.html` |
+| creation | **light born like a lens sees it, IMAX grain** | "let there be light" | `motion/pilot/creation.html` |
+| fall | **ink wash on rice paper** | sin spreading; God seeking | `motion/pilot/fall.html` |
+| patriarch | **soft pastel, magic hour → night** | promise under the stars | `motion/pilot/patriarch.html` |
+| exodus | **1960s epic poster gouache (after Terpning, *Lawrence of Arabia*)** | plagues, Passover, the sea | `motion/pilot/exodus.html` |
+| wilderness | **watercolour + parchment map** | the journey | `motion/pilot/wilderness.html` |
+| judges | **1920s silent film** | the repeating cycle | `motion/pilot/judges.html` |
+| kingdom | **illuminated manuscript** | shepherd → king, an everlasting throne | `motion/pilot/kingdom.html` |
+| exile | **Kollwitz expressionist woodcut** | a kingdom split, a city falls, weeping by the rivers | `motion/pilot/exile.html` |
+| return | **blueprint developing into a lit 3D dusk (after *Titanic*)** | rebuilding the walls | `motion/pilot/return.html` |
+| silence | **Hopper-style quiet realism** | 400 years of waiting | `motion/pilot/silence.html` |
+| advent | **stained glass** | promises lit one by one, then the nativity | `motion/pilot/advent.html` |
+| cross | **black-and-white film + one red → Rembrandt oil** | darkness, the cost, "it is finished" | `motion/pilot/cross.html` |
+| rise | **impasto (palette knife)** | grey world repainted in colour | `motion/pilot/rise.html` |
+| church | **night cinematography: upper room → moonlit ridges → night earth** | Pentecost, to the ends of the earth | `motion/pilot/church.html` |
+| renewal | **watercolour handscroll** | desert → garden | `motion/pilot/renewal.html` |
+| mirror | **Warhol photo-silkscreen series** | idols, printed again and again | `motion/pilot/mirror.html` |
+| gospel | **the gold line, one tracking shot** | 7 essentials, then the cross | `motion/pilot/gospel.html` |
+| evidence | **explorer's watercolour scrapbook (after *The English Patient*)** | the record holds up | `motion/pilot/evidence.html` |
+| ship | **18th-century sea-chart copperplate (after *Mutiny on the Bounty*)** | changing ships, not scrubbing decks | `motion/pilot/ship.html` |
+| invite | **the gold line returns** | a prayer written in light | `motion/pilot/invite.html` |
 
 ## B. Lemo-Opuscar technique styles (51) — brief: `styles/<slug>/STYLE.md`
 

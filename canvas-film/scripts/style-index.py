@@ -55,13 +55,15 @@ out = [
     "   (the one moment only that medium can do) placed on the story's turn.",
     "",
     f"## A. canvas-film looks ({len(own)}) — proven in this pipeline; details in STYLES.md",
+    "Code: each look is one self-contained scene (style + Bible story together) in github.com/jungrok5/one-scroll-bible",
+    "`motion/pilot/<scene>.html` (shared: `lib.js`, `goldline.js`). Read it for technique; packaged, reusable looks are in `kits/`.",
     "",
-    "| scene | style | meaning carried |",
-    "|---|---|---|",
+    "| scene | style | meaning carried | code |",
+    "|---|---|---|---|",
 ]
 for l in own:
     c = [x.strip() for x in l.strip().strip("|").split("|")]
-    out.append(f"| {c[0]} | {c[1]} | {c[2]} |")
+    out.append(f"| {c[0]} | {c[1]} | {c[2]} | `motion/pilot/{c[0]}.html` |")
 
 out += ["", f"## B. Lemo-Opuscar technique styles ({len(styles)}) — brief: `styles/<slug>/STYLE.md`", "",
         "| slug | style | category | its demo, in one line | good for |", "|---|---|---|---|---|"]
