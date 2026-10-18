@@ -20,7 +20,7 @@
     {
       "id": "tech-motion-explainer",
       "name": "tech-motion-explainer",
-      "tagline": "파이프라인 · 프로토콜 · 서버 루프 같은 기술 과정을 60–110초 설명 영상으로 그립니다. 주제마다 영상 · 설명 · 용어집 페이지와 MP4를 만듭니다.",
+      "tagline": "파이프라인, 프로토콜, 서버 루프 같은 기술 과정을 60–110초 설명 영상으로 그립니다. 주제마다 영상, 설명, 용어집 페이지와 MP4를 만듭니다.",
       "posterAlt": "tech-motion-explainer로 만든 설명 영상 네 편의 장면: protoc 코드 생성, 50ms 틱 루프, 200명 브로드캐스트 39,800 갱신, Delayed ACK 시퀀스 다이어그램",
       "poster": "tech-motion-explainer/poster.jpg",
       "tags": ["2D · 3D", "16:9 · 9:16", "MP4", "라이브 플레이어", "임베드"],

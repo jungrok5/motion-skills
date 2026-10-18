@@ -200,12 +200,14 @@ read `<skill>/references/EMBED.md`: `?embed` / `?layout=tall` / `?q=` modes, the
 - **Contrast beats**: at most one red dashed card + ✗ per video, for the main wrong approach, near the chapter that proves the point.
   Other bad states (waiting, overflow, threshold crossed) use red fills or red hatching without the ✗ card.
 - **Korean copy**: short declarative lines. Code, identifiers and metrics stay in English/mono. (For another language, keep the same rules: short declarative lines, identifiers untranslated.)
+<!-- style-ignore-start -->
 - **No AI-sounding copy** (titles, subtitles, canvas text, notes). Avoid:
   - metaphor nouns for a process: "받는 길", "~의 여정", "편도 여행", "전체 지도" → say what it is: "패킷을 받을 때", "전체 구간";
   - "~하는 곳", "핵심은 ~다", "단순히 ~가 아니라 ~다", "~라는 점이다", 살펴보자 / 알아보자, rhetorical questions;
   - aphorism taglines built on contrast or metaphor ("바이트는 작지만, 곱하기는 크다", "예측이 판정에 진 순간").
     The tagline states the takeaway plainly: "1바이트도 곱하면 월 6.5TB.";
   - more than one em dash (—) per line of copy; prefer a comma or a new line.
+<!-- style-ignore-end -->
 - **Honesty**: compare like with like (tuned vs tuned, not tuned vs default). Effects that depend on a bottleneck say which one
   ("대역폭이 병목일 때"). Small effects are shown as small. Illustrative numbers, layouts and sample logs are labelled `예시` / `개념도`;
   never present research or a plan as shipped, or a drawing as a real capture ("재현").
