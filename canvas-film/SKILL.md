@@ -27,7 +27,8 @@ Built for and proven on a 13-minute, 21-scene, 11-language Bible film
 | `scripts/i18n-merge.mjs` | merge per-scene translation files into the one file each language loads |
 | `scripts/sheets.mjs` | contact sheets — every scene × both orientations × N moments, one image per scene (check a language or a restyle by eye) |
 | `player/index.html` | the player template (two-iframe preloading, audio as master clock, share sheet, deep links, theatre mode) |
-| `references/` | review-prompt (native-speaker review brief for a language) · SCENE-RULES (hard rules for scene authors) · STYLES (21 looks and how each was drawn) · SOUND (ElevenLabs flow) · I18N (method + quality gate) · LESSONS (what went wrong and the fixes) |
+| `scripts/style-index.py` | rebuild `references/STYLE-INDEX.md` from STYLES.md + a Lemo-Opuscar clone |
+| `references/` | **STYLE-INDEX (every look to choose from, and how to search it)** · review-prompt (native-speaker review brief for a language) · SCENE-RULES (hard rules for scene authors) · STYLES (21 looks and how each was drawn) · SOUND (ElevenLabs flow) · I18N (method + quality gate) · LESSONS (what went wrong and the fixes) |
 | `examples/hello/` | a minimal project: `film.json`, one scene, a sound spec, a Korean translation — run everything on it first |
 
 ## Project layout (what you create)
@@ -46,8 +47,10 @@ installed locally (`~/.local/share/fonts`, e.g. Noto Serif/Sans KR) — renders 
 
 ## Workflow
 1. **Storyboard first, styles second.** Split the source into scenes (20–60 s each). For each scene pick a *film style that
-   carries its meaning* (`references/STYLES.md` — e.g. a fall into sin as ink spreading over a painting; a covenant as
-   stars in pastel; the cross as black-and-white with one red). Pick one motif that threads every scene (a gold line).
+   carries its meaning* (e.g. a fall into sin as ink spreading over a painting; a covenant as stars in pastel; the cross as
+   black-and-white with one red). **Search the whole catalogue every time**, not just the looks you remember:
+   `references/STYLE-INDEX.md` lists all 170 looks (21 proven here + 51 Lemo-Opuscar technique styles + 98 OPUSCAR film
+   looks) and says how to shortlist and where each full brief lives. Pick one motif that threads every scene (a gold line).
    Show the list to the person before building; build 2–3 pilots first and get them approved — they set the quality bar.
 2. **Build scenes** (`references/SCENE-RULES.md`): pure `draw(ctx,t)`, both orientations composed on purpose, ≥3.5 s per
    text line, ≤2 lines on screen, quotes verbatim with a source line, fade in/out from black. Parallelise across agents

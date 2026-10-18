@@ -1,6 +1,7 @@
 # Style catalogue — 21 looks, all drawn in Canvas 2D
 
 Choose the style for what the scene MEANS, not for variety's sake. Each entry: the look, and how it was drawn.
+These are the 21 looks proven in this pipeline; search all 170 (with Lemo-Opuscar's) in `STYLE-INDEX.md` before choosing.
 (Scene names are from the Bible film; the techniques are general.)
 Many looks follow OPUSCAR 98 by Lemomo (github.com/lemomo-ai/lemo-opuscar, MIT — 98 Best Picture winners, each in its
 own style; read its per-film `prompt_en` for technique detail) and the lemo-opuscar style guides; borrow the craft, write
