@@ -1,0 +1,35 @@
+{
+  "repo": "https://github.com/jungrok5/motion-skills",
+  "branch": "main",
+  "skills": [
+    {
+      "id": "canvas-film",
+      "name": "canvas-film",
+      "tagline": "장면마다 다른 화풍으로 HTML Canvas만으로 그리는 시네마틱 영상. 같은 장면 파일로 MP4(가로·세로)와 다국어 웹 플레이어를 함께 만듭니다.",
+      "poster": "canvas-film/poster.jpg",
+      "tags": ["16:9 · 9:16", "MP4", "라이브 플레이어", "사운드", "다국어"],
+      "stats": ["21 화풍", "11개 언어"],
+      "page": "canvas-film/",
+      "source": "canvas-film/",
+      "absorbedFrom": { "repo": "https://github.com/jungrok5/one-scroll-bible", "path": "motion/" },
+      "workedExample": [
+        { "title": "한눈에 보는 성경 이야기 · 13분 · 21장면 · 11개 언어", "url": "https://one-scroll-bible.com/film/" }
+      ]
+    },
+    {
+      "id": "tech-motion-explainer",
+      "name": "tech-motion-explainer",
+      "tagline": "파이프라인 · 프로토콜 · 서버 루프 같은 기술 과정을 60–110초 설명 영상으로. 주제마다 영상 · 설명 · 용어집 세 페이지와 MP4를 만듭니다.",
+      "poster": "tech-motion-explainer/poster.jpg",
+      "tags": ["2D · 3D", "16:9 · 9:16", "MP4", "라이브 플레이어", "임베드"],
+      "stats": ["12 주제", "설명 방식 7가지"],
+      "page": "tech-motion-explainer/",
+      "source": "tech-motion-explainer/",
+      "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-graphics", "path": ".claude/skills/tech-motion-explainer/" },
+      "workedExample": [
+        { "title": "MMO 서버 · 네트워크 설명 영상 12편", "url": "https://jungrok5.github.io/motion-graphics/" },
+        { "title": "인터랙티브 이력서 · 스크롤 재생 12조각", "url": "https://jungrok5.github.io/resume/interactive.html" }
+      ]
+    }
+  ]
+}

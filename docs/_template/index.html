@@ -1,0 +1,110 @@
+<!doctype html>
+<!--
+  Skill samples page template. Copy this folder to docs/<skill-id>/ and replace every __PLACEHOLDER__.
+  Keep the section order and class names: hero → 어떻게 쓰나 + 라이브 데모 → 샘플 → 실제 작품 → 링크.
+  Look and behaviour come from ../assets/site.css and ../assets/site.js; do not add page-level <style> unless a demo needs a size
+  (set --ar / --h-phone / --demo-bg on .demo instead). Checklist: CONTRIBUTING.md → "샘플 페이지".
+  Files next to this page:
+    poster.jpg            hub card image, ~1200×675, ≤ 200 KB
+    demo/                 the live demo (a copy of the skill's starter/example, self-contained, relative paths)
+    samples/<name>.jpg    gallery thumbnails, 640 px wide JPEG (quality ~80); no MP4s anywhere in docs/
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><!-- delete this line in the copy -->
+<title>__SKILL_ID__ · motion-skills</title>
+<meta name="description" content="__ONE_LINE__">
+<meta property="og:title" content="__SKILL_ID__ · motion-skills">
+<meta property="og:description" content="__ONE_LINE__">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/__SKILL_ID__/poster.jpg">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/__SKILL_ID__">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / __SKILL_ID__</nav>
+  <h1>__SKILL_ID__</h1>
+  <p>__ONE_LINE__ <!-- 1–2 sentences: what it makes, from what. Same meaning as "tagline" in docs/skills.json. --></p>
+  <ul class="tags"><li>__TAG__</li><li>__TAG__</li><li>__TAG__</li><!-- 3–5, same as skills.json "tags" --></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>어떻게 쓰나</h2>
+    <ul>
+      <li><b>입력</b> — __WHAT_THE_AGENT_IS_GIVEN__</li>
+      <li><b>__STEP__</b> — __WHAT_HAPPENS__</li>
+      <li><b>출력</b> — __FILES_AND_FORMATS__</li>
+      <!-- 3–5 bullets in total: inputs → outputs -->
+    </ul>
+    <pre><code>__QUICK_START_FROM_THE_SKILL_README__</code></pre>
+    <p class="mute">요구 사항: __REQUIREMENTS__. 자세한 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/__SKILL_ID__/SKILL.md">SKILL.md</a>.</p>
+  </div>
+  <!-- Live demo. data-src is loaded by site.js ({o} → h or v by screen width). Switch buttons: data-src + optional data-cap (HTML,
+       shown in [data-cap-target]). Size: --ar (desktop aspect), --h-phone (height under 820 px), --demo-bg. -->
+  <div class="demo" style="--ar:16/10.6">
+    <iframe data-src="demo/" title="__SKILL_ID__ 예제 — 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>__EXAMPLE_PATH__</code> · __LENGTH__</span>
+      <span class="btns" role="group" aria-label="예제">
+        <button class="btn" type="button" data-src="demo/" data-cap="예제 &lt;code&gt;__EXAMPLE_PATH__&lt;/code&gt; · __LENGTH__" aria-pressed="true">__VARIANT_A__</button>
+        <!-- more buttons, or delete the group if there is one demo -->
+      </span></div>
+  </div>
+</div></section>
+
+<!-- Samples gallery: every skill has one. Up to ~12 tiles: one .grid. More: split into .group blocks and/or add filter chips
+     (tiles carry data-tags="key …"; the chips' data-labels maps key → label; site.js builds the buttons and counts). -->
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">__WHAT_THE_SAMPLES_ARE__ 카드를 누르면 __WHERE_IT_GOES__.</p>
+  <div class="chips" data-for="gallery" data-labels='{"__KEY_A__":"__LABEL_A__","__KEY_B__":"__LABEL_B__"}' aria-label="샘플 걸러 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>__GROUP_TITLE__ <small>__GROUP_NOTE__</small></h3>
+      <p>__ONE_LINE_ABOUT_THIS_GROUP__</p>
+      <div class="grid">
+        <a class="tile" data-tags="__KEY_A__" href="__LIVE_URL__" target="_blank" rel="noopener">
+          <img src="samples/__NAME__.jpg" alt="__ALT__" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">__KICKER__</span><b>__TITLE__</b><span class="en">__SUBTITLE_OPTIONAL__</span>
+          <span class="how">__ONE_LINE__</span></div></a>
+        <!-- one tile per sample -->
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬이 처음 만들어진 프로젝트입니다. <!-- same links as skills.json "workedExample" + the source repo ("absorbedFrom") --></p>
+  <div class="works">
+    <a class="work" href="__WORK_URL__" target="_blank" rel="noopener"><b>__WORK_TITLE__</b><span>__WORK_FACTS__</span><span class="url">__WORK_URL_SHORT__</span></a>
+    <a class="work" href="__SOURCE_REPO_URL__"><b>원본 레포 · __SOURCE_REPO__</b><span>스킬의 출처</span><span class="url">__SOURCE_REPO_SHORT__</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/__SKILL_ID__/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/__SKILL_ID__">폴더</a> <span>scripts · references · starter</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/__SKILL_ID__/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/__SKILL_ID__/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+    <!-- one row per file in references/ -->
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · __IMAGE_CREDITS__
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
