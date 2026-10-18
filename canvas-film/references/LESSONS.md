@@ -22,6 +22,20 @@
   when restyling a scene, re-time it — don't inherit a grid designed for a different style.
 - When restyling, keep every on-screen source string (they are the translation keys): change the look and timing freely
   and every language keeps working.
+- A restyle is not automatically better: after viewers compared, two of seven restyled scenes went back to the originals
+  (a woodcut with buildings beat one with faces; a paper-cut lightbox beat a Hopper room). Keep the old scene file and its
+  sound so a scene can be restored in minutes, and show the maintainer both before replacing a scene people liked.
+
+**Pre-release review** (a full review found ~30 issues no single-scene check had caught)
+- Before a release, render contact sheets of every scene × both orientations × three languages (the source, a long
+  Latin one, and an RTL one) and have reviewers look at all of them, then render each suspect moment at full size.
+- Recurring bugs it found: two lines cross-fading in the same spot (one fades in before the other is gone — offset the
+  windows); a label still on screen while the camera zooms it off the frame (fade it first); a translation that wraps to
+  two lines pushing into the window/banner/citation below (lay out from the translated line count, not the source's);
+  subtitles over text in the picture (move them, or time them, onto calm ground); see-through figures (fill the
+  silhouette opaque before textured washes); things cut by a mask meant for something else (a room drawn with the window
+  cut out also hid the fire passing in front of it — draw foreground layers outside that clip).
+- When a subtitle must dodge the picture, move it rather than cut its time: ≥ 4 s per line, or viewers miss it.
 
 **Sound**
 - ElevenLabs queue cap ≈ 64 concurrent generations; 429 → batch smaller. Never retry a generation call.
