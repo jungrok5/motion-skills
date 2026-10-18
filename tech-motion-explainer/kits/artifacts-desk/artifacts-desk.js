@@ -444,7 +444,7 @@ export function createDesk(o = {}) {
   const NPOOL = F.pools;
   const poolDefault = new THREE.Vector3(...F.pool);
   const floorUniforms = { uCam: { value: new THREE.Vector3() }, uPool: { value: Array.from({ length: NPOOL }, () => new THREE.Vector4()) },
-    uPC: { value: Array.from({ length: NPOOL }, () => poolDefault.clone()) }, ...F.uniforms };
+    ...(F.poolColors ? { uPC: { value: Array.from({ length: NPOOL }, () => poolDefault.clone()) } } : {}), ...F.uniforms };
   const extraDecl = Object.entries(F.uniforms).map(([k, u]) => {
     const v = u.value, ty = typeof v === 'number' ? 'float' : v.isVector2 ? 'vec2' : v.isVector3 || v.isColor ? 'vec3' : v.isVector4 ? 'vec4' : 'float';
     return `uniform ${ty} ${k};`;
@@ -593,7 +593,7 @@ export function createDesk(o = {}) {
    * Also fills the floor light pools and redraws visible textures whose live time changed.
    */
   function place(t, placeFn) {
-    const pools = floorUniforms.uPool.value, pcs = floorUniforms.uPC.value; let pi = 0;
+    const pools = floorUniforms.uPool.value, pcs = F.poolColors ? floorUniforms.uPC.value : null; let pi = 0;
     for (const id of ORDER) {
       const a = ART[id], pl = (placeFn && placeFn(id, t)) || {}, k = pl.k ?? 1;
       const [x, y, z] = pl.pos || a.s.pos, yaw = pl.yaw ?? a.s.yaw, rimK = clamp(pl.rimK ?? 0, 0, RM.max), br = pl.bright ?? 1, grounded = pl.grounded ?? true;
