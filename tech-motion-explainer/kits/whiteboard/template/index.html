@@ -1,0 +1,399 @@
+<meta charset="utf-8">
+<title>DNS Whiteboard</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Layout (template convention): one 16:9 stage (a whiteboard drawn on canvas), a slim transport bar under it, chapter chips below. */
+  :root {
+    --bg: #070a13; --surface: #0e1424; --line: #24304a; --fg: #e8ecf4; --dim: #8b95a7;
+    --accent: #2dd4bf; --live: #34d399; --text2: #c3cad8;
+    --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    color-scheme: dark;
+  }
+  html, body { min-height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding-block: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    box-sizing: border-box; overflow-x: hidden; }
+  .player { width: min(100%, calc((100vh - 170px) * 16 / 9)); min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .stage { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--line); background: var(--bg); cursor: pointer; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .big { position: absolute; inset: auto 0 5% 0; margin: 0 auto; width: clamp(44px, 11%, 84px); height: auto; aspect-ratio: 1; border-radius: 50%; border: 1.5px solid var(--accent);
+    background: rgba(14,20,36,.78); color: var(--fg); display: grid; place-items: center; cursor: pointer; transition: transform .15s, opacity .2s; }
+  .big[hidden] { display: none; }
+  .big:hover { transform: scale(1.06); }
+  .big svg { width: 36%; height: 36%; margin-left: 6%; }
+  .big.replay svg { margin-left: 0; }
+  .bar { display: flex; align-items: center; gap: 14px; }
+  .btn { flex: none; width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface);
+    color: var(--fg); display: grid; place-items: center; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn svg { width: 16px; height: 16px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .time { flex: none; font: 500 13px/1 var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
+  .scrub { position: relative; flex: 1; min-width: 0; height: 28px; cursor: pointer; touch-action: none; }
+  .track { position: absolute; left: 0; right: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--line); }
+  .fill { position: absolute; left: 0; top: 12px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--live)); }
+  .tick { position: absolute; top: 8px; width: 2px; height: 12px; background: var(--dim); opacity: .6; }
+  .knob { position: absolute; top: 7px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--fg); box-shadow: 0 0 0 4px rgba(45,212,191,.25); }
+  .chapters { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chapters button { font: 600 13px/1 var(--sans); color: var(--dim); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+  .chapters button span { font-family: var(--mono); color: var(--accent); margin-right: 6px; }
+  .chapters button:hover { color: var(--fg); }
+  .chapters button[aria-current="true"] { color: var(--fg); border-color: var(--accent); background: rgba(45,212,191,.12); }
+  .hint { font-size: 12px; color: var(--dim); margin-left: auto; }
+  @media (max-width: 600px) { .hint { display: none; } .time { font-size: 12px; } }
+  .set { display: flex; flex-wrap: wrap; gap: 8px; }
+  .set a { font: 600 13px/1 var(--sans); color: var(--fg); text-decoration: none; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; background: var(--surface); }
+  .set a:hover { border-color: var(--accent); }
+  body.poster .set { display: none; }
+  .rate { width: auto; min-width: 56px; padding: 0 10px; font: 600 13px/1 var(--mono); }
+  /* Notes under the player: chapter-by-chapter explanation + glossary */
+  .notes { width: min(100%, 860px); margin-top: 56px; padding-bottom: 48px; font-size: 16px; line-height: 1.75; word-break: keep-all; overflow-wrap: anywhere; }
+  .notes h2 { font-size: 22px; line-height: 1.4; margin: 48px 0 16px; text-wrap: balance; }
+  .notes h2:first-child { margin-top: 0; }
+  .notes h2 .more { font: 600 13px/1 var(--sans); color: var(--accent); margin-left: 10px; white-space: nowrap; }
+  .notes .lede { font-size: 18px; color: var(--fg); }
+  .notes p, .notes li { color: var(--text2); }
+  .notes ul { padding-left: 1.2em; }
+  .notes article { border-top: 1px solid var(--line); padding-top: 20px; margin-top: 24px; }
+  .notes h3 { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 18px; line-height: 1.4; margin: 0 0 8px; }
+  .notes h3 .n { font: 600 13px/1 var(--mono); color: var(--accent); }
+  .notes h3 button { margin-left: auto; font: 600 12px/1 var(--sans); color: var(--dim); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 6px 10px; cursor: pointer; }
+  .notes h3 button:hover { color: var(--fg); border-color: var(--accent); }
+  .notes code { font: 500 .88em var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; overflow-wrap: anywhere; }
+  .notes .terms { display: grid; grid-template-columns: minmax(110px, max-content) minmax(0, 1fr); gap: 12px 24px; margin: 0; }
+  .notes dt { font-weight: 700; }
+  .notes dd { margin: 0; color: var(--text2); }
+  @media (max-width: 600px) { .notes .terms { grid-template-columns: minmax(0, 1fr); gap: 2px; } .notes dd { margin-bottom: 14px; } }
+  /* #poster: embed mode for gallery thumbnails — canvas only, loops */
+  body.poster { padding: 0; }
+  body.poster .player { width: 100%; }
+  body.poster .bar, body.poster .chapters, body.poster .big, body.poster .notes { display: none; }
+  body.poster .stage { border: 0; border-radius: 0; }
+</style>
+
+<div class="player">
+  <div class="stage" id="stage">
+    <canvas id="c" width="1920" height="1080" aria-label="DNS 조회 화이트보드 모션그래픽"></canvas>
+    <button class="big" id="big" aria-label="재생"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg></button>
+  </div>
+  <div class="bar">
+    <button class="btn" id="play" aria-label="재생"></button>
+    <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="37" aria-valuenow="0">
+      <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+    </div>
+    <div class="time" id="time">0:00 / 0:36</div>
+    <button class="btn rate" id="rate" aria-label="재생 속도 1배">1×</button>
+    <button class="btn" id="fs" aria-label="전체 화면"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+  <div class="chapters" id="chapters"></div>
+  <nav class="set" aria-label="같은 주제"><a href="article.html">설명 읽기</a><a href="terms.html">용어집</a></nav>
+</div>
+<!-- Source text for article.html (설명) and terms.html (용어집); scripts/build-articles.mjs builds both. Not shown on this page. -->
+<section class="notes" id="notes" hidden>
+<p class="lede">브라우저는 이름이 아니라 IP 주소로 접속합니다. 주소창에 <code>example.com</code>을 치면 먼저 그 이름의 IP 주소를 찾아야 하고, 이 과정이 DNS 조회입니다. 가까운 캐시에 답이 없을 때만 리졸버가 루트 → TLD → 권한 서버를 차례로 묻고, 받은 답은 TTL 동안 캐시에 남아 다음 조회를 바로 끝냅니다.</p>
+<article data-ch="01">
+<p>브라우저는 먼저 자기 DNS 캐시를, 그다음 운영체제의 캐시(와 <code>hosts</code> 파일)를 봅니다. 화면의 예시는 둘 다 비어 있는 경우입니다.</p>
+<p>둘 다 없으면 OS의 스텁 리졸버가 설정된 재귀 리졸버(ISP, 회사, 또는 공용 DNS)에 이름을 묻습니다. 여기서부터 답을 찾는 일은 리졸버가 맡습니다.</p>
+</article>
+<article data-ch="02">
+<p>리졸버의 캐시에도 답이 없으면, 리졸버는 서버를 차례로 묻습니다(반복 질의).</p>
+<ul>
+<li>루트 서버: <code>.com</code>을 맡은 TLD 서버 목록을 알려 줍니다.</li>
+<li><code>.com</code> TLD 서버: <code>example.com</code>을 맡은 권한 서버 목록을 알려 줍니다.</li>
+<li>권한 서버: A 레코드(IP 주소)와 TTL로 답합니다.</li>
+</ul>
+<p>리졸버는 이 답을 브라우저 쪽에 돌려줍니다. 화면의 <code>203.0.113.10</code>은 문서용 예시 주소이고 TTL 300초도 예시입니다. 실제로는 TLD 서버 목록 같은 위임 정보도 리졸버 캐시에 오래 남아 있어서, 매번 루트까지 가지는 않습니다.</p>
+</article>
+<article data-ch="03">
+<p>리졸버는 받은 답을 TTL 동안 캐시에 둡니다. 그동안 같은 이름을 묻는 다음 조회는 서버를 거치지 않고 리졸버 캐시에서 바로 끝납니다. 브라우저와 OS 캐시도 같은 답을 일정 시간 보관합니다.</p>
+<p>TTL이 지나면 캐시가 지워지고, 다음 조회는 다시 02의 과정을 거칩니다. 주소를 바꿀 계획이 있으면 TTL을 미리 짧게 줄여 두는 이유가 이것입니다.</p>
+</article>
+<h2>용어 정리</h2>
+<dl class="terms">
+<dt>DNS</dt><dd>이름(<code>example.com</code>)을 IP 주소로 바꿔 주는 분산 이름 체계.</dd>
+<dt>스텁 리졸버</dt><dd>OS에 들어 있는 작은 DNS 클라이언트. 직접 찾지 않고 재귀 리졸버에게 묻는다.</dd>
+<dt>재귀 리졸버</dt><dd>클라이언트 대신 서버들을 차례로 물어 최종 답을 찾아 주는 DNS 서버. ISP, 회사, 공용 DNS가 운영한다.</dd>
+<dt>루트 서버</dt><dd>DNS 계층의 맨 위. 각 TLD를 맡은 서버를 알려 준다.</dd>
+<dt>TLD 서버</dt><dd><code>.com</code>, <code>.kr</code> 같은 최상위 도메인을 맡은 서버. 그 아래 도메인의 권한 서버를 알려 준다.</dd>
+<dt>권한 서버</dt><dd>한 도메인의 레코드를 실제로 가지고 있는 서버. 최종 답을 준다.</dd>
+<dt>A 레코드</dt><dd>이름에 대응하는 IPv4 주소를 담은 레코드.</dd>
+<dt>TTL</dt><dd>답을 캐시에 둘 수 있는 시간(초). 레코드마다 권한 서버가 정한다.</dd>
+<dt>캐시 HIT</dt><dd>캐시에 답이 있어 더 묻지 않고 끝나는 경우.</dd>
+</dl>
+</section>
+<script src="../assets/kits/whiteboard.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────────
+//  DNS Whiteboard — template for the whiteboard kit (../assets/kits/whiteboard.js).
+//  One diagram that grows across chapters (PC → resolver → three servers), a zone wipe that removes the server
+//  fan once the answer is cached, stacked chapter stickies. Every frame is a pure function of time: renderAt(t).
+// ─────────────────────────────────────────────────────────────
+const W = 1920, H = 1080, DURATION = 36.5;
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+
+// Marker set for THIS topic (one meaning per colour): near-black = structure, violet = a question going out,
+// teal = an answer coming back, orange = cache. No red: nothing fails in this story.
+const INK = { k: '#23262c', q: '#5b3cc4', a: '#0a7a73', c: '#c45a00', dim: '#5d6470', faint: '#9aa0a8' };
+const WB = Whiteboard.SURFACES.whiteboard;
+const wb = Whiteboard.create(ctx, {
+  W, H, ink: INK, markers: [INK.k, INK.q, INK.a, INK.c],
+  surface: { ...WB, board: '#f4f3ee', ghost: { ...WB.ghost, land: { ...WB.ghost.land, seed: 9, count: 9 } } },
+  hand: { tilt: .02, cps: 24 },
+  wipe: { center: 580, swing: 230 },   // keep the eraser's zigzag below the sticky stack (y < 240)
+});
+const { clamp, lerp, p, eo, eio, stroke, arrowS, boxS, ringS, xmark, dotS, wr, say, sayParts, sticky, txt, tw, onBoard, eraser } = wb;
+
+// [start, end, number, title, subtitle]
+const HEAD = [
+  [4.5, 12.5, '01', '가까운 캐시부터', '브라우저와 OS에 없으면 리졸버에게 묻는다'],
+  [12.5, 25.5, '02', '리졸버가 차례로 묻는다', '루트 → .com → example.com, 한 번씩'],
+  [25.5, 31.0, '03', 'TTL 동안은 캐시', '받은 답은 TTL 동안 바로 돌려준다'],
+];
+const OUT = 31.0;                  // the whole board is wiped here; the takeaway follows
+const FAN = [960, W];              // x band of the server fan (wiped on its own when the answer is cached)
+wb.setWipes([[4.6, ...FAN], [HEAD[1][1], ...FAN], OUT]);
+
+// the parts of the drawing that later chapters point at
+const PC = { x: 150, y: 400, w: 340, h: 220 };
+const RES = { x: 700, y: 270, w: 250, h: 520, cx: 825 };
+const ROWS = [325, 530, 735];       // server rows (centre y)
+const SRV = [['"."', '루트 서버', '→ .com 서버에 물어봐'], ['.com', 'TLD 서버', '→ example.com 서버에 물어봐'], ['example.com', '권한 서버', 'A 203.0.113.10 · TTL 300']];
+
+// ── chapter sticky stack (top right): each chapter slaps a new note over the last ──
+function chSticky(t, i) {
+  const [S, , n, title, sub] = HEAD[i], k = clamp((t - S - .1) / .35);
+  sticky(1370 + i * 10, 40 + i * 6, 430, 170, k, { rot: [.03, -.02, .015][i], col: '#ffd9b0' }, () => {
+    txt(`${n} / 0${HEAD.length}`, 30, 46, { size: 24, weight: 700, mono: true, color: INK.dim });
+    txt(title, 30, 96, { size: 34, weight: 800 });
+    txt(sub, 30, 138, { size: 22, weight: 600, color: INK.dim });
+  });
+}
+
+// ── base layer: everything that stays until the end card ──
+function sBase(t) {
+  onBoard(t, 0, OUT, u => {
+    // title, written once at top left
+    say('DNS 조회', 120, 128, u, .2, { size: 64, weight: 800, cps: 10 });
+    stroke('title-ul', [[120, 150], [260, 155], [392, 147]], clamp((u - .9) / .3), INK.k, { lw: 5 });
+    say('example.com의 IP 주소를 찾기까지', 120, 200, u, .9, { size: 30, weight: 600, color: INK.dim, cps: 30 });
+    // the PC: screen, keyboard, address bar typed in
+    boxS('pc', PC.x, PC.y, PC.w, PC.h, clamp((u - 1.2) / .6), INK.k);
+    stroke('kbd', [[110, 622], [530, 622], [562, 664], [78, 664], [110, 622]], clamp((u - 1.8) / .4), INK.k, { lw: 5 });
+    boxS('url', 172, 422, 296, 52, clamp((u - 2.2) / .35), INK.dim, { lw: 3.5 });
+    say('example.com', 190, 458, u, 2.55, { size: 26, weight: 600, mono: true, cps: 10 });
+    say('내 PC', PC.x + PC.w / 2, 712, u, 2.4, { size: 28, weight: 700, color: INK.dim, align: 'center' });
+    // 01: the two caches on the PC miss, then the resolver
+    [['브라우저 캐시', 5.0], ['OS 캐시', 5.8]].forEach(([lab, t0], i) => {
+      say(lab, 190, 528 + i * 46, u, t0, { size: 26, weight: 700, color: INK.c });
+      xmark('miss' + i, 446, 519 + i * 46, 11, clamp((u - t0 - .55) / .3), INK.c, 4.5);
+    });
+    boxS('res', RES.x, RES.y, RES.w, RES.h, clamp((u - 7.0) / .8), INK.k);
+    say('리졸버', RES.cx, 500, u, 7.7, { size: 40, weight: 800, align: 'center' });
+    say('재귀 DNS', RES.cx, 544, u, 8.0, { size: 24, weight: 600, mono: true, color: INK.dim, align: 'center' });
+    say('ISP · 회사 · 공용 DNS', RES.cx, 842, u, 8.3, { size: 26, weight: 600, color: INK.dim, align: 'center', cps: 30 });
+    arrowS('q-pc', 500, 490, 688, 490, clamp((u - 8.9) / .6), INK.q, { lw: 5 });
+    say('example.com?', 594, 470, u, 9.2, { size: 22, weight: 600, mono: true, color: INK.q, align: 'center', cps: 20 });
+    // 02 (end): the answer comes back to the PC
+    arrowS('a-pc', 688, 556, 500, 556, clamp((u - 23.6) / .6), INK.a, { lw: 5, dash: [16, 11] });
+    say('203.0.113.10', 594, 592, u, 23.9, { size: 22, weight: 600, mono: true, color: INK.a, align: 'center', cps: 20 });
+    // the sticky stack
+    HEAD.forEach((_, i) => chSticky(t, i));
+  });
+}
+
+// ── intro hook, right half, wiped on its own at 4.6 ──
+function sHook(t) {
+  onBoard(t, 0, 4.6, u => {
+    say('브라우저는 이름이 아니라', 1040, 470, u, .6, { size: 46, weight: 800 });
+    sayParts([['IP 주소', INK.a], ['로 접속한다', INK.k]], 1040, 540, u, 1.4, { size: 46, weight: 800 });
+    say('그 주소를 찾는 일 = DNS 조회', 1040, 616, u, 2.6, { size: 30, weight: 600, color: INK.dim, cps: 26 });
+  }, FAN);
+}
+
+// ── 02: the server fan, wiped on its own when 03 starts ──
+function sFan(t) {
+  const [S, E] = HEAD[1];
+  onBoard(t, S, E, u => {
+    ROWS.forEach((cy, i) => {
+      const t0 = .3 + i * 3.6, [name, role, reply] = SRV[i];
+      boxS('srv' + i, 1400, cy - 55, 380, 110, clamp((u - t0) / .55), INK.k);
+      say(name, 1428, cy - 6, u, t0 + .4, { size: 32, weight: 800, mono: true });
+      say(role, 1428, cy + 34, u, t0 + .6, { size: 24, weight: 600, color: INK.dim });
+      arrowS('fq' + i, 975, cy - 20, 1385, cy - 20, clamp((u - t0 - .9) / .6), INK.q, { lw: 5 });
+      ringS('fn' + i, 1004, cy - 50, 17, 16, clamp((u - t0 - 1.0) / .3), INK.q, { lw: 3.5 });
+      txt(String(i + 1), 1004, cy - 41, { size: 22, weight: 800, mono: true, color: INK.q, align: 'center', alpha: clamp((u - t0 - 1.2) / .15) });
+      say('example.com?', 1040, cy - 36, u, t0 + 1.2, { size: 22, weight: 600, mono: true, color: INK.q, cps: 22 });
+      arrowS('fa' + i, 1385, cy + 20, 975, cy + 20, clamp((u - t0 - 2.1) / .6), INK.a, { lw: 5, dash: [16, 11] });
+      say(reply, 1010, cy + 58, u, t0 + 2.4, { size: 24, weight: 700, color: INK.a, mono: i === 2, cps: 24 });
+      // tally of server round trips
+      stroke('tally' + i, [[1590 + i * 24, 872], [1586 + i * 24, 912]], clamp((u - t0 - 2.9) / .2), INK.k, { lw: 5 });
+    });
+    say('서버 왕복', 1400, 906, u, 2.8, { size: 28, weight: 700, color: INK.dim });
+    say('= 3', 1672, 906, u, 11.0, { size: 30, weight: 800, mono: true });
+  }, FAN);
+}
+
+// ── 03: the cached answer ──
+function sCache(t) {
+  const [S] = HEAD[2];
+  onBoard(t, S, OUT, u => {
+    sticky(1010, 300, 360, 220, clamp((u - .4) / .35), { rot: -.025 }, () => {
+      txt('리졸버 캐시', 28, 46, { size: 24, weight: 700, color: INK.dim });
+      txt('example.com', 28, 92, { size: 26, weight: 700, mono: true });
+      txt('A 203.0.113.10', 28, 132, { size: 24, weight: 600, mono: true, color: INK.a });
+      txt('TTL 300 s', 28, 190, { size: 40, weight: 800, color: INK.c });
+    });
+    ringS('ttl-ring', 1126, 479, 124, 34, clamp((u - 1.3) / .45), INK.c, { lw: 4.5, alpha: wb.peel });   // goes with the sticky it circles
+    say('같은 이름을 다시 물으면', 1010, 640, u, 2.0, { size: 32, weight: 700 });
+    say('캐시에서 바로 답 · 서버 왕복 0번', 1010, 692, u, 2.9, { size: 32, weight: 800, color: INK.c, cps: 22 });
+    say('TTL이 지나면 다시 02의 길로 간다', 1010, 746, u, 4.0, { size: 26, weight: 600, color: INK.dim, cps: 26 });
+  });
+  // footnote: every example value labelled, kept until the end card
+  onBoard(t, HEAD[1][0], OUT, u => {
+    say('* 203.0.113.10은 문서용 예시 주소, TTL 300 s도 예시', 120, 1000, u, 1.0, { size: 22, weight: 500, color: INK.dim, cps: 60 });
+  });
+}
+
+// ── end card: the takeaway, written out ──
+function sOutro(t) {
+  const v = t - OUT; if (v < 0) return;
+  say('DNS가 멀리 가는 건', 160, 430, v, .3, { size: 86, weight: 800, cps: 14 });
+  const [lx, lw] = sayParts([['캐시', INK.c], ['가 비었을 때뿐이다.', INK.k]], 160, 550, v, 1.3, { size: 86, weight: 800, cps: 14 });
+  stroke('o-ul', [[lx, 578], [lx + lw * .5, 584], [lx + lw, 574]], clamp((v - 2.6) / .4), INK.c, { lw: 7 });
+  sayParts([['브라우저 · OS · 리졸버 캐시', INK.c], ['  →  루트  →  TLD  →  권한 서버', INK.k]], 164, 680, v, 2.9, { size: 30, weight: 700, mono: true, cps: 40 });
+}
+
+// ── chapter marks at the bottom edge ──
+function marks(t) {
+  const items = [...HEAD.map(h => [h[0], h[2] + ' ' + h[3]]), [OUT, '정리']];
+  items.forEach(([s, lab], i) => {
+    const x = 120 + i * 260, on = t >= s, cur = on && (i + 1 >= items.length || t < items[i + 1][0]);
+    dotS(x, 1028, cur ? 6 : 4, on ? INK.k : INK.faint, .9);
+    txt(lab, x + 14, 1034, { size: 16, weight: cur ? 800 : 600, color: on ? INK.dim : INK.faint });
+  });
+}
+
+// ── frame ────────────────────────────────────────────────────
+function renderAt(t) {
+  wb.begin();
+  wb.board();
+  sBase(t); sHook(t); sFan(t); sCache(t); sOutro(t);
+  const erasing = eraser(t);
+  wb.frame(); marks(t); wb.tray(erasing);
+  if (!erasing) wb.drawPen();
+  const fo = p(t, DURATION - .6, .6); if (fo > 0) { ctx.fillStyle = `rgba(7,10,19,${fo})`; ctx.fillRect(0, 0, W, H); }
+}
+window.renderAt = renderAt;
+window.DURATION = DURATION;
+
+window.ready = (async () => {
+  const faces = [['Pretendard', 'Pretendard-Variable.woff2', '100 900'], ['JetBrains Mono', 'JetBrainsMono.woff2', '100 800']];
+  for (const [family, file, weight] of faces) {
+    for (const base of ['assets/fonts/', '../assets/fonts/']) {
+      try { document.fonts.add(await new FontFace(family, `url(${base}${file})`, { weight }).load()); break; } catch (e) { /* try next */ }
+    }
+  }
+  await document.fonts.ready;
+})();
+
+// ── player (skipped when ?render) ────────────────────────────
+if (!location.search.includes('render')) {
+  const $ = id => document.getElementById(id);
+  const ICON = {
+    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>',
+    replay: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"/></svg>',
+  };
+  const CHAPTERS = [[0, '', '인트로'], ...HEAD.map(h => [h[0], h[2], h[3]]), [OUT, '', '정리']];
+  $('scrub').setAttribute('aria-valuemax', Math.round(DURATION));
+  const POSTER = 24.6;   // 02 complete: server fan, three round trips, answer back on the PC
+  let t = 0, playing = false, started = false, last = 0;
+  const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
+
+  CHAPTERS.forEach(([s, n, label], i) => {
+    const b = document.createElement('button');
+    b.innerHTML = (n ? `<span>${n}</span>` : '') + label;
+    b.addEventListener('click', () => { seek(s + .01); play(); });
+    $('chapters').appendChild(b);
+    if (i) { const tk = document.createElement('div'); tk.className = 'tick'; tk.style.left = (s / DURATION * 100) + '%'; $('ticks').appendChild(tk); }
+  });
+
+  function ui() {
+    const k = t / DURATION, ended = t >= DURATION;
+    $('fill').style.width = k * 100 + '%'; $('knob').style.left = k * 100 + '%';
+    $('time').textContent = `${mmss(t)} / ${mmss(DURATION)}`;
+    $('scrub').setAttribute('aria-valuenow', Math.round(t));
+    $('play').innerHTML = playing ? ICON.pause : ended ? ICON.replay : ICON.play;
+    $('play').setAttribute('aria-label', playing ? '일시정지' : '재생');
+    $('big').hidden = playing;
+    $('big').innerHTML = ended ? ICON.replay : ICON.play;
+    $('big').classList.toggle('replay', ended);
+    let cur = 0; CHAPTERS.forEach(([s], i) => { if (t >= s) cur = i; });
+    [...$('chapters').children].forEach((b, i) => b.setAttribute('aria-current', i === cur && started));
+  }
+  function draw() { renderAt(started ? Math.min(t, DURATION - .001) : POSTER); }
+  function play() { if (t >= DURATION) t = 0; started = true; playing = true; last = performance.now(); ui(); }
+  function pause() { playing = false; ui(); }
+  function toggle() { playing ? pause() : play(); }
+  function seek(x) { started = true; t = clamp(x, 0, DURATION); draw(); ui(); }
+
+  function frame(now) {
+    if (playing) {
+      t += (now - last) / 1000 * rate; last = now;
+      if (t >= DURATION) { t = DURATION; playing = false; }
+      draw(); ui();
+    }
+    requestAnimationFrame(frame);
+  }
+
+  const RATES = [1, .75, .5];
+  let rate = 1;
+  try { rate = +localStorage.getItem('mg-rate') || 1; } catch (e) { /* storage unavailable */ }
+  if (!RATES.includes(rate)) rate = 1;
+  function setRate(r) {
+    rate = r; $('rate').textContent = r + '×'; $('rate').setAttribute('aria-label', `재생 속도 ${r}배`);
+    try { localStorage.setItem('mg-rate', String(r)); } catch (e) { /* storage unavailable */ }
+  }
+  setRate(rate);
+  $('rate').addEventListener('click', () => setRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length]));
+  $('stage').addEventListener('click', toggle);
+  $('play').addEventListener('click', toggle);
+  $('fs').addEventListener('click', () => {
+    const el = $('stage');
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    else el.requestFullscreen?.().catch(() => {});
+  });
+  const scrub = $('scrub');
+  const fromEvent = e => { const r = scrub.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width) * DURATION; };
+  let wasPlaying = false;
+  scrub.addEventListener('pointerdown', e => { scrub.setPointerCapture(e.pointerId); wasPlaying = playing; playing = false; seek(fromEvent(e)); });
+  scrub.addEventListener('pointermove', e => { if (scrub.hasPointerCapture(e.pointerId)) seek(fromEvent(e)); });
+  scrub.addEventListener('pointerup', () => { if (wasPlaying && t < DURATION) play(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key === 'k') { e.preventDefault(); toggle(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); seek(t + 5); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); seek(t - 5); }
+    else if (e.key === 'Home') seek(0);
+    else if (e.key === ',' || e.key === '<') setRate(RATES[Math.min(RATES.length - 1, RATES.indexOf(rate) + 1)]);
+    else if (e.key === '.' || e.key === '>') setRate(RATES[Math.max(0, RATES.indexOf(rate) - 1)]);
+  });
+
+  const posterMode = location.hash === '#poster';
+  if (posterMode) document.body.classList.add('poster');
+  ui();
+  // chapter deep link: index.html#ch03 opens paused at that chapter
+  const deep = /^#ch(\d\d)$/.exec(location.hash), deepHead = deep && HEAD.find(r => r[2] === deep[1]);
+  window.ready.then(() => {
+    draw(); requestAnimationFrame(frame);
+    if (deepHead) seek(deepHead[0] + .01);
+    if (posterMode) { play(); setInterval(() => { if (!playing) { t = 0; play(); } }, 500); }
+  });
+  renderAt(POSTER);
+}
+</script>
