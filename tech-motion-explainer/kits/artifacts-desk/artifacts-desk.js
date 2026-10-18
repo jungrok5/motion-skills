@@ -180,7 +180,8 @@ export function createPaint(theme = {}) {
   }
   /** Split one line of code into [[token, colour], …] with a syntax spec (see createPaint). */
   function tokens(line, syntax) {
-    const S = prepSyntax(syntax), out = [], re = new RegExp(S.re.source, 'g'); let m;
+    const S = prepSyntax(syntax), out = [], re = S.re; let m;
+    re.lastIndex = 0;
     while ((m = re.exec(line))) {
       const s = m[0], n = S.norm(s); let c = S.col.txt;
       if (S.comments.some(cm => s.startsWith(cm))) c = S.col.com;
@@ -398,7 +399,8 @@ export function createPaint(theme = {}) {
  *   bloom: { strength .5, radius .45, threshold .86 },
  *   paint (a createPaint() set; used for floor labels and fonts), mono, sans,
  *   floor: { size 900, center [x, z], base [r,g,b] (raw linear), grain: { amount .004, scale [1.5, 28] } | null,
- *     grid: { cell 2, color [r,g,b], k .55, fade .02 } | null, pool [r,g,b] (light-pool colour), poolGain .085 (for per-artifact hex pools),
+ *     grid: { cell 2, color [r,g,b], k .55, fade .02 } | null, pool [r,g,b] (light-pool colour, raw),
+ *     poolColors false (true = placeFn may return pool: hex per artifact; costs a uniform array read per pool per pixel), poolGain .085,
  *     poolShape .55 (depth/width ratio of a pool), fadeTo [r,g,b], fade .012, fadeGain 1.4, pools 16 (max pools),
  *     uniforms {name: {value}}, glsl '' (extra code: may read vW, d, uniforms; adds to vec3 c before the distance fade) },
  *   pool: { dz 1.2, w .7, base .45, rim .9 }  (pool under each artifact: z offset, width × artifact width, k × (base + rim × rimK)),
@@ -438,7 +440,7 @@ export function createDesk(o = {}) {
 
   // ── floor ──
   const F = { size: 900, center: [0, 0], base: [.010, .010, .010], grain: { amount: .004, scale: [1.5, 28] }, grid: null, pool: [.06, .06, .06], poolGain: .085,
-    poolShape: .55, fadeTo: [.0102, .0102, .0102], fade: .012, fadeGain: 1.4, pools: 16, uniforms: {}, glsl: '', ...(o.floor || {}) };
+    poolShape: .55, fadeTo: [.0102, .0102, .0102], fade: .012, fadeGain: 1.4, pools: 16, poolColors: false, uniforms: {}, glsl: '', ...(o.floor || {}) };
   const NPOOL = F.pools;
   const poolDefault = new THREE.Vector3(...F.pool);
   const floorUniforms = { uCam: { value: new THREE.Vector3() }, uPool: { value: Array.from({ length: NPOOL }, () => new THREE.Vector4()) },
@@ -456,7 +458,7 @@ export function createDesk(o = {}) {
   const floorMat = new THREE.ShaderMaterial({
     depthWrite: false, fog: false, uniforms: floorUniforms,
     vertexShader: `varying vec3 vW; void main(){ vec4 w = modelMatrix * vec4(position,1.); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
-    fragmentShader: `varying vec3 vW; uniform vec3 uCam; uniform vec4 uPool[${NPOOL}]; uniform vec3 uPC[${NPOOL}]; ${extraDecl}
+    fragmentShader: `varying vec3 vW; uniform vec3 uCam; uniform vec4 uPool[${NPOOL}]; ${F.poolColors ? `uniform vec3 uPC[${NPOOL}];` : ''} ${extraDecl}
     float hash(vec2 p){ return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }
     void main(){
       float d = length(vW.xz - uCam.xz);
@@ -467,7 +469,7 @@ export function createDesk(o = {}) {
         vec4 P = uPool[i];
         if (P.w <= 0.) continue;
         vec2 q = (vW.xz - P.xy) / vec2(P.z, P.z * ${glf(F.poolShape)});
-        c += uPC[i] * exp(-dot(q,q)) * P.w;
+        c += ${F.poolColors ? 'uPC[i]' : glv(F.pool)} * exp(-dot(q,q)) * P.w;
       }
       ${F.glsl}
       float fade = exp(-d * ${glf(F.fade)});
@@ -606,7 +608,7 @@ export function createDesk(o = {}) {
       a.shadow.position.set(x, .012, z + SH.dz); a.shMat.opacity = SH.opacity * k * clamp(1.4 - (y - a.s.h / 200) * SH.falloff);
       if (pi < NPOOL && grounded) {
         pools[pi].set(x, z + PO.dz, a.s.w / 100 * PO.w, k * (PO.base + PO.rim * clamp(rimK)));
-        if (pl.pool) pcs[pi].set(...new THREE.Color(pl.pool).multiplyScalar(F.poolGain).toArray()); else pcs[pi].copy(poolDefault);
+        if (F.poolColors) { if (pl.pool) pcs[pi].set(...new THREE.Color(pl.pool).multiplyScalar(F.poolGain).toArray()); else pcs[pi].copy(poolDefault); }
         pi++;
       }
       if (vis) {

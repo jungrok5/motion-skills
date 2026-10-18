@@ -193,7 +193,7 @@ const desk = createDesk({
   paint, bg: K.desk, fov: 40, bloom: { strength: .55, radius: .5, threshold: .84 },
   // floor: cool tiles, a soft ring where the steps stand, pools tinted by each screen's role
   floor: { size: 400, center: [0, -10], base: [.007, .011, .012], grain: null, grid: { cell: 2, color: [.016, .03, .032], k: .7, fade: .03 },
-    pool: [.03, .05, .05], poolGain: .09, poolShape: .6, fadeTo: [.005, .009, .010], fade: .018, fadeGain: 1.5, pools: 8,
+    pool: [.03, .05, .05], poolColors: true, poolGain: .09, poolShape: .6, fadeTo: [.005, .009, .010], fade: .018, fadeGain: 1.5, pools: 8,
     uniforms: { uRing: { value: 0 } },
     glsl: `float rr = length(vW.xz); float ang = atan(vW.x, -vW.z);
       c += vec3(.015,.07,.065) * exp(-abs(rr - 17.) * 1.6) * smoothstep(1.35, 1.15, abs(ang)) * uRing;` },
