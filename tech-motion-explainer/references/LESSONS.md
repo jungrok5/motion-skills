@@ -33,3 +33,10 @@ scroll-embedded résumé pieces (github.com/jungrok5/resume → `public/motion/`
 - Example numbers without a label → `* 수치는 예시`, or take the number from the source.
 - Mechanism details that are not in the source (a protocol step, a data structure, a timing) → remove them or mark them as one typical
   implementation. On a résumé, every number and claim must come from the résumé text.
+
+**Kits (2026-10)**
+- The example pages copy-pasted each look's engine into ~100 KB topic pages, and copies drifted (a `blend` bug fix in only
+  one of two pages). Kits in `kits/` hold the engine; a topic page keeps only its own composition. Re-point a page at a kit
+  and diff stills before trusting it.
+- A kit must not carry a topic's look: no default scene, neutral default colours, and a template on a different subject.
+  The risk is sameness — every topic still designs its arrangement, palette and camera path.
