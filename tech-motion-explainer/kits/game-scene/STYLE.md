@@ -87,7 +87,7 @@ track), redo the look. Decide these per topic, from that topic's own world:
 | **Colour grade** | time of day and mood for the game view; a separate grade for debug or server views | `createStage` tone / exposure / fog / hemi / sun (colour, intensity, direction via `sun.offset`) / sky / bloom; `stage.grade()` + `mixGrade()` per frame; `dim()` amounts |
 | **Camera** | the genre's camera for the live view (over-the-shoulder, top-down MOBA, side-on, first person) and a different angle for the debug view | `camFrom(eye, target)`, `camPath` keys, `fov`, `sx/sy` framing, `shake` |
 | **Time beats** | which moments to show live, rewind, slow down or freeze | `timeRemap` segments and labels, `rewindFX`, `freezeFX` |
-| **Copy** | chapter titles, captions, chip texts, numbers (labelled `예시` when invented) | the page only; the kit has no strings except a default `netPanel` title of 'DEBUG' |
+| **Copy** | chapter titles, captions, chip texts, numbers (labelled `예시` when invented) | the page only; the kit has no topic strings (generic defaults only: `netPanel` title 'DEBUG', minimap 'N', metre labels on `laneTexture`) |
 
 The template turns these: a night yard (ACES, cool moonlight, sodium lamps) instead of a sunny arena; helmeted, stocky vs. lean
 characters with a rifle and `aim` pose instead of a running hero; a shooter HUD (crosshair, hit marker, score bar, kill feed,

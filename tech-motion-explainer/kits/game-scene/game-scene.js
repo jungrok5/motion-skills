@@ -942,7 +942,7 @@ const ICONS = {
  *   killFeed({ x, y, rows: [{ a, b, mid, colA, colB, alpha }], size 22, align 'right', fill })
  *   scoreBar({ cx, y, left: { text, col }, right: { text, col }, mid, size, fill })
  *   badge(text, x, y, col, opts) = P.chip
- *   netPanel({ x, y, w, title, statusCol, mode, modeCol, rows: [[label, value, col]], rowH 48, labelSize 24, valueSize 30 }) → bottom y
+ *   netPanel(a, { x, y (required), w 440, title, statusCol, mode, modeCol, rows: [[label, value, col]], rowH 48, labelSize 24, valueSize 30 }) → bottom y
  */
 export function gameHUD(P) {
   const { ctx, txt, rr, chip, panel, line, dot, theme: T } = P;
@@ -969,8 +969,8 @@ export function gameHUD(P) {
     ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fillStyle = o.fill || '#444'; ctx.fill(); ctx.strokeStyle = o.ring || 'rgba(240,240,240,.8)'; ctx.lineWidth = 3; ctx.stroke();
     if (o.portrait) o.portrait(ctx, x, y);
     if (o.name) txt(o.name, bx, y - 18, { size: o.nameSize || 26, weight: 800, sh: 6, color: o.nameCol || T.text });
-    rr(bx, y - 6, w, 16, 4); ctx.fillStyle = o.back || 'rgba(0,0,0,.5)'; ctx.fill(); rr(bx, y - 6, w * (o.hp ?? 1), 16, 4); ctx.fillStyle = o.hpCol || '#5bd16b'; ctx.fill();
-    if (o.mp != null) { rr(bx, y + 16, w, 10, 3); ctx.fillStyle = o.back || 'rgba(0,0,0,.5)'; ctx.fill(); rr(bx, y + 16, w * o.mp, 10, 3); ctx.fillStyle = o.mpCol || '#4c8cff'; ctx.fill(); }
+    rr(bx, y - 6, w, 16, 4); ctx.fillStyle = o.back || 'rgba(0,0,0,.5)'; ctx.fill(); rr(bx, y - 6, w * (o.hp ?? 1), 16, 4); ctx.fillStyle = o.hpCol || T.ok; ctx.fill();
+    if (o.mp != null) { rr(bx, y + 16, w, 10, 3); ctx.fillStyle = o.back || 'rgba(0,0,0,.5)'; ctx.fill(); rr(bx, y + 16, w * o.mp, 10, 3); ctx.fillStyle = o.mpCol || T.dim; ctx.fill(); }
   }
   function skillBar(o) {
     const n = o.n || o.icons.length, s = o.s || 70, g = o.g ?? 10, x0 = o.cx - (n * s + (n - 1) * g) / 2, y0 = o.y;
@@ -1039,7 +1039,8 @@ export function gameHUD(P) {
     if (o.mid) txt(o.mid, o.cx, o.y + sz * .3, { size: sz * .8, weight: 700, mono: true, align: 'center', color: T.text });
   }
   function netPanel(a, o = {}) {
-    const { x = 1384, y = 44, w = 440, title = 'DEBUG', mode = null, modeCol = T.text, rows = [], rowH = 48, labelSize = 24, valueSize = 30, statusCol = T.ok } = o;
+    if (o.x === undefined || o.y === undefined) throw new Error('netPanel: x and y are required (place it where it does not cover the action)');
+    const { x, y, w = 440, title = 'DEBUG', mode = null, modeCol = T.text, rows = [], rowH = 48, labelSize = 24, valueSize = 30, statusCol = T.ok } = o;
     if (a <= 0) return y;
     const h = 76 + rows.length * rowH;
     panel(x, y, w, h, { alpha: a, r: o.r ?? 10 });
