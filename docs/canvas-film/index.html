@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>canvas-film · motion-skills</title>
-<meta name="description" content="장면마다 다른 화풍으로 HTML Canvas만으로 그리는 시네마틱 영상 — 라이브 데모와 21가지 화풍">
+<meta name="description" content="장면마다 화풍이 다른 시네마틱 영상을 HTML Canvas만으로 그리는 스킬. 라이브 데모와 21가지 화풍 샘플.">
 <meta property="og:title" content="canvas-film · motion-skills">
-<meta property="og:description" content="장면마다 다른 화풍으로 HTML Canvas만으로 그리는 시네마틱 영상 — 라이브 데모와 21가지 화풍">
+<meta property="og:description" content="장면마다 화풍이 다른 시네마틱 영상을 HTML Canvas만으로 그리는 스킬. 라이브 데모와 21가지 화풍 샘플.">
 <meta property="og:image" content="https://jungrok5.github.io/motion-skills/canvas-film/poster.jpg">
 <link rel="stylesheet" href="../assets/site.css">
 </head>
@@ -19,28 +19,28 @@
 <header class="hero"><div class="wrap">
   <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / canvas-film</nav>
   <h1>canvas-film</h1>
-  <p>장면마다 다른 화풍으로, HTML Canvas만으로 그리는 시네마틱 영상. 같은 장면 파일로 MP4 녹화(가로·세로)와 웹 실시간 재생을 모두 하고, 언어 파일만 더하면 다국어가 됩니다.</p>
+  <p>장면마다 화풍이 다른 시네마틱 영상을 HTML Canvas만으로 그립니다. 같은 장면 파일로 가로와 세로 MP4를 녹화하고 웹 플레이어에서 실시간으로 재생하며, 언어 파일을 추가하면 그 언어로도 재생합니다.</p>
   <ul class="tags"><li>16:9 · 9:16</li><li>MP4</li><li>라이브 플레이어</li><li>사운드</li><li>다국어</li></ul>
 </div></header>
 
 <main>
 <section id="how"><div class="wrap split">
   <div class="how">
-    <h2>어떻게 쓰나</h2>
-    <ul>
-      <li><b>입력</b> — 이야기 · 대본 · 사이트 글. 장면(20–60초)으로 나누고, 장면마다 의미에 맞는 화풍을 고릅니다.</li>
-      <li><b>장면</b> — 장면 하나가 HTML 파일 하나. <code>seek(t)</code>로 어느 프레임이든 정확히 그립니다.</li>
-      <li><b>사운드</b> — ElevenLabs 음악 · 효과음 큐를 장면 타임라인에 믹스.</li>
-      <li><b>출력</b> — MP4 1920×1080 / 1080×1920, 그리고 영상 없이 도는 웹 플레이어(13분 ≈ 10MB).</li>
-      <li><b>다국어</b> — 번역 파일 · 폰트 교체 · RTL. 같은 장면 파일 그대로.</li>
-    </ul>
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>이야기 · 대본 · 사이트 글을 20–60초 장면으로 나누고, 장면마다 의미에 맞는 화풍 선택</dd>
+      <dt>장면</dt><dd>장면마다 HTML 파일 한 개. <code>seek(t)</code>로 어느 시점의 프레임이든 같은 그림</dd>
+      <dt>사운드</dt><dd>ElevenLabs 음악 · 효과음 큐를 장면 타임라인에 믹스</dd>
+      <dt>출력</dt><dd>MP4 1920×1080 · 1080×1920, 영상 파일 없이 재생하는 웹 플레이어(「한눈에 보는 성경 이야기」 13분 기준 약 10&nbsp;MB)</dd>
+      <dt>다국어</dt><dd>번역 파일 · 폰트 교체 · RTL. 장면 파일은 바꾸지 않음</dd>
+    </dl>
     <pre><code>cd canvas-film/examples/hello
 node ../../scripts/render.mjs h --scene dawn --stills 3,8
 python3 ../../scripts/publish.py   # → site/ (라이브 플레이어)</code></pre>
-    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg, Python 3. 자세한 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/SKILL.md">SKILL.md</a>.</p>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg, Python 3. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/SKILL.md">SKILL.md</a>에 있습니다.</p>
   </div>
   <div class="demo" style="--ar:16/10.6">
-    <iframe data-src="demo/?embed=1&amp;o={o}" title="canvas-film 예제 — 실시간 재생" allow="fullscreen; autoplay; web-share; clipboard-write" allowfullscreen></iframe>
+    <iframe data-src="demo/?embed=1&amp;o={o}" title="canvas-film 예제 examples/hello 실시간 재생" allow="fullscreen; autoplay; web-share; clipboard-write" allowfullscreen></iframe>
     <noscript><a href="demo/">데모 열기 (examples/hello)</a></noscript>
     <div class="bar"><span>예제 <code>examples/hello</code> · 12초 · 소리 있음</span>
       <span class="btns" role="group" aria-label="언어">
@@ -52,104 +52,104 @@ python3 ../../scripts/publish.py   # → site/ (라이브 플레이어)</code></
 
 <section id="samples"><div class="wrap">
   <h2>샘플 · 21가지 화풍</h2>
-  <p class="lead">「한눈에 보는 성경 이야기」 영상의 21개 장면. 장면의 의미에 맞춰 화풍을 고르고, 모두 Canvas 2D로 그렸습니다. 카드를 누르면 그 장면부터 실제 영상이 재생됩니다. 기법 설명은 <a href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/references/STYLES.md">STYLES.md</a>.</p>
-  <div class="chips" data-for="styles" data-labels='{"paint":"회화","craft":"종이 · 공예","film":"영화 · 사진","line":"선 · 픽셀"}' aria-label="화풍 걸러 보기" hidden></div>
+  <p class="lead">「한눈에 보는 성경 이야기」 영상의 21개 장면을 영상 순서대로 놓았습니다. 장면마다 의미에 맞는 화풍을 골라 모두 Canvas 2D로 그렸습니다. 카드를 누르면 새 탭에서 그 장면부터 영상을 재생합니다. 화풍별로 그리는 법은 <a href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/references/STYLES.md">STYLES.md</a>에 있습니다.</p>
+  <div class="chips" data-for="styles" data-labels='{"paint":"회화","craft":"종이 · 공예","film":"영화 · 사진","line":"선 · 픽셀"}' aria-label="화풍 종류로 나눠 보기" hidden></div>
   <div id="styles">
     <div class="grid">
       <a class="tile" data-tags="line" href="https://one-scroll-bible.com/film/#opening" target="_blank" rel="noopener">
         <img src="styles/opening.jpg" alt="하나의 줄거리 — 한 줄 드로잉" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">01</span><b>한 줄 드로잉</b><span class="en">one-line drawing</span>
-        <span class="sc">하나의 줄거리 · 36초</span><span class="how">a single gold polyline with glow, revealed by arc length; words written along it with a feathered mask wipe</span></div></a>
+        <div class="cap"><span class="no">장면 01 · 하나의 줄거리 · 36초</span><b>한 줄 드로잉</b><span class="en">one-line drawing</span>
+        <span class="how">a single gold polyline with glow, revealed by arc length; words written along it with a feathered mask wipe</span></div></a>
       <a class="tile" data-tags="film" href="https://one-scroll-bible.com/film/#creation" target="_blank" rel="noopener">
         <img src="styles/creation.jpg" alt="창조 — 렌즈가 본 빛의 탄생 · IMAX 그레인" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">02</span><b>렌즈가 본 빛의 탄생 · IMAX 그레인</b><span class="en">light born like a lens sees it, IMAX grain</span>
-        <span class="sc">창조 · 35초</span><span class="how">darkness over water, one point igniting into an exposure bloom with lens ghosts and an anamorphic streak, a layered corona with slowly turning rays, particles swirling into galaxies, a dive into a planet, a dawn garden</span></div></a>
+        <div class="cap"><span class="no">장면 02 · 창조 · 35초</span><b>렌즈가 본 빛의 탄생 · IMAX 그레인</b><span class="en">light born like a lens sees it, IMAX grain</span>
+        <span class="how">darkness over water, one point igniting into an exposure bloom with lens ghosts and an anamorphic streak, a layered corona with slowly turning rays, particles swirling into galaxies, a dive into a planet, a dawn garden</span></div></a>
       <a class="tile" data-tags="paint" href="https://one-scroll-bible.com/film/#fall" target="_blank" rel="noopener">
         <img src="styles/fall.jpg" alt="타락 — 화선지 수묵" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">03</span><b>화선지 수묵</b><span class="en">ink wash on rice paper</span>
-        <span class="sc">타락 · 34초</span><span class="how">painting &quot;paints itself&quot; (stroke reveal), an ink drop floods it (blurred mask with uneven, tendrilled edge), dry-brush wind streaks with feathered ends, a tiny gold point surviving, a vermilion seal</span></div></a>
+        <div class="cap"><span class="no">장면 03 · 타락 · 34초</span><b>화선지 수묵</b><span class="en">ink wash on rice paper</span>
+        <span class="how">painting &quot;paints itself&quot; (stroke reveal), an ink drop floods it (blurred mask with uneven, tendrilled edge), dry-brush wind streaks with feathered ends, a tiny gold point surviving, a vermilion seal</span></div></a>
       <a class="tile" data-tags="paint" href="https://one-scroll-bible.com/film/#patriarch" target="_blank" rel="noopener">
         <img src="styles/patriarch.jpg" alt="족장 — 소프트 파스텔 · 매직아워" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">04</span><b>소프트 파스텔 · 매직아워</b><span class="en">soft pastel, magic hour → night</span>
-        <span class="sc">족장 · 26초</span><span class="how">chalky pastel strokes over a toned paper speckle, one continuous camera, stars multiplying</span></div></a>
+        <div class="cap"><span class="no">장면 04 · 족장 · 26초</span><b>소프트 파스텔 · 매직아워</b><span class="en">soft pastel, magic hour → night</span>
+        <span class="how">chalky pastel strokes over a toned paper speckle, one continuous camera, stars multiplying</span></div></a>
       <a class="tile" data-tags="paint" href="https://one-scroll-bible.com/film/#exodus" target="_blank" rel="noopener">
         <img src="styles/exodus.jpg" alt="출애굽 — 대작 포스터 과슈" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">05</span><b>대작 포스터 과슈</b><span class="en">1960s epic poster gouache (after Terpning, *Lawrence of Arabia*)</span>
-        <span class="sc">출애굽 · 44초</span><span class="how">opaque gouache base + form-following strokes + cream edge highlights; painted layers in parallax: a desert at a huge low sun, Moses before colossal statues, a plague sky, one door&#x27;s blood under a lamp, a corridor between towering water walls lit by the pillar of fire with a whole people walking toward camera</span></div></a>
+        <div class="cap"><span class="no">장면 05 · 출애굽 · 44초</span><b>대작 포스터 과슈</b><span class="en">1960s epic poster gouache (after Terpning, *Lawrence of Arabia*)</span>
+        <span class="how">opaque gouache base + form-following strokes + cream edge highlights; painted layers in parallax: a desert at a huge low sun, Moses before colossal statues, a plague sky, one door&#x27;s blood under a lamp, a corridor between towering water walls lit by the pillar of fire with a whole people walking toward camera</span></div></a>
       <a class="tile" data-tags="paint" href="https://one-scroll-bible.com/film/#wilderness" target="_blank" rel="noopener">
         <img src="styles/wilderness.jpg" alt="광야 여정 — 수채화 + 양피지 지도" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">06</span><b>수채화 + 양피지 지도</b><span class="en">watercolour + parchment map</span>
-        <span class="sc">광야 여정 · 39초</span><span class="how">a big map canvas with a red dashed route drawing itself, dives into watercolour vignettes (Sinai, camp, Jordan)</span></div></a>
+        <div class="cap"><span class="no">장면 06 · 광야 여정 · 39초</span><b>수채화 + 양피지 지도</b><span class="en">watercolour + parchment map</span>
+        <span class="how">a big map canvas with a red dashed route drawing itself, dives into watercolour vignettes (Sinai, camp, Jordan)</span></div></a>
       <a class="tile" data-tags="film" href="https://one-scroll-bible.com/film/#judges" target="_blank" rel="noopener">
         <img src="styles/judges.jpg" alt="사사 시대 — 1920년대 무성영화" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">07</span><b>1920년대 무성영화</b><span class="en">1920s silent film</span>
-        <span class="sc">사사 시대 · 40초</span><span class="how">4:3 scratched print between curtains, intertitle cards, the same shot repeated faster and more damaged each cycle, the film burning through</span></div></a>
+        <div class="cap"><span class="no">장면 07 · 사사 시대 · 40초</span><b>1920년대 무성영화</b><span class="en">1920s silent film</span>
+        <span class="how">4:3 scratched print between curtains, intertitle cards, the same shot repeated faster and more damaged each cycle, the film burning through</span></div></a>
       <a class="tile" data-tags="craft" href="https://one-scroll-bible.com/film/#kingdom" target="_blank" rel="noopener">
         <img src="styles/kingdom.jpg" alt="통일 왕국 — 채색 필사본" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">08</span><b>채색 필사본</b><span class="en">illuminated manuscript</span>
-        <span class="sc">통일 왕국 · 39초</span><span class="how">vellum, lapis/vermilion border, burnished gold leaf with a moving candle glint, a gilded initial, text written in letter by letter</span></div></a>
+        <div class="cap"><span class="no">장면 08 · 통일 왕국 · 39초</span><b>채색 필사본</b><span class="en">illuminated manuscript</span>
+        <span class="how">vellum, lapis/vermilion border, burnished gold leaf with a moving candle glint, a gilded initial, text written in letter by letter</span></div></a>
       <a class="tile" data-tags="craft" href="https://one-scroll-bible.com/film/#exile" target="_blank" rel="noopener">
         <img src="styles/exile.jpg" alt="분열 · 포로 — 콜비츠 목판화" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">09</span><b>콜비츠 목판화</b><span class="en">Kollwitz expressionist woodcut</span>
-        <span class="sc">분열 · 포로 · 42초</span><span class="how">60–70% black, white gouge contours wider on the lit side, grief-stricken faces and big hands carved in as you watch; the block cracks in two; lyres hung on willows; one thin gold ray for the promise</span></div></a>
+        <div class="cap"><span class="no">장면 09 · 분열 · 포로 · 42초</span><b>콜비츠 목판화</b><span class="en">Kollwitz expressionist woodcut</span>
+        <span class="how">60–70% black, white gouge contours wider on the lit side, grief-stricken faces and big hands carved in as you watch; the block cracks in two; lyres hung on willows; one thin gold ray for the promise</span></div></a>
       <a class="tile" data-tags="line" href="https://one-scroll-bible.com/film/#return" target="_blank" rel="noopener">
         <img src="styles/return.jpg" alt="포로 귀환 — 청사진이 노을 속 3D로" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">10</span><b>청사진이 노을 속 3D로</b><span class="en">blueprint developing into a lit 3D dusk (after *Titanic*)</span>
-        <span class="sc">포로 귀환 · 38초</span><span class="how">white lines on Prussian-blue paper draw the city plan, stand up into wireframe, and colour develops outward into a golden-hour 3D world — scaffolds, builders with spears, the wall rising course by course, a ring of lamps at night, sunrise at the Water Gate</span></div></a>
+        <div class="cap"><span class="no">장면 10 · 포로 귀환 · 38초</span><b>청사진이 노을 속 3D로</b><span class="en">blueprint developing into a lit 3D dusk (after *Titanic*)</span>
+        <span class="how">white lines on Prussian-blue paper draw the city plan, stand up into wireframe, and colour develops outward into a golden-hour 3D world — scaffolds, builders with spears, the wall rising course by course, a ring of lamps at night, sunrise at the Water Gate</span></div></a>
       <a class="tile" data-tags="paint" href="https://one-scroll-bible.com/film/#silence" target="_blank" rel="noopener">
         <img src="styles/silence.jpg" alt="400년 침묵 — 호퍼풍 고요한 사실화" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">11</span><b>호퍼풍 고요한 사실화</b><span class="en">Hopper-style quiet realism</span>
-        <span class="sc">400년 침묵 · 38초</span><span class="how">one still room with hard window-light parallelograms; days, seasons and generations pass (a year counter, the light swinging, the room ageing, the waiting man changing); a star breaks into the window and the old man rises</span></div></a>
+        <div class="cap"><span class="no">장면 11 · 400년 침묵 · 38초</span><b>호퍼풍 고요한 사실화</b><span class="en">Hopper-style quiet realism</span>
+        <span class="how">one still room with hard window-light parallelograms; days, seasons and generations pass (a year counter, the light swinging, the room ageing, the waiting man changing); a star breaks into the window and the old man rises</span></div></a>
       <a class="tile" data-tags="craft" href="https://one-scroll-bible.com/film/#advent" target="_blank" rel="noopener">
         <img src="styles/advent.jpg" alt="예수님의 오심 — 스테인드글라스" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">12</span><b>스테인드글라스</b><span class="en">stained glass</span>
-        <span class="sc">예수님의 오심 · 36초</span><span class="how">lead lines + coloured panes that &quot;wake&quot; with a light band; coloured light on the floor</span></div></a>
+        <div class="cap"><span class="no">장면 12 · 예수님의 오심 · 36초</span><b>스테인드글라스</b><span class="en">stained glass</span>
+        <span class="how">lead lines + coloured panes that &quot;wake&quot; with a light band; coloured light on the floor</span></div></a>
       <a class="tile" data-tags="film paint" href="https://one-scroll-bible.com/film/#cross" target="_blank" rel="noopener">
         <img src="styles/cross.jpg" alt="십자가 — 흑백 필름 + 한 점의 빨강 → 렘브란트 유화" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">13</span><b>흑백 필름 + 한 점의 빨강 → 렘브란트 유화</b><span class="en">black-and-white film + one red → Rembrandt oil</span>
-        <span class="sc">십자가 · 39초</span><span class="how">grain, high contrast, one red drop; then a top-lit oil painting of a kneeling figure under the cross&#x27;s shadow</span></div></a>
+        <div class="cap"><span class="no">장면 13 · 십자가 · 39초</span><b>흑백 필름 + 한 점의 빨강 → 렘브란트 유화</b><span class="en">black-and-white film + one red → Rembrandt oil</span>
+        <span class="how">grain, high contrast, one red drop; then a top-lit oil painting of a kneeling figure under the cross&#x27;s shadow</span></div></a>
       <a class="tile" data-tags="paint" href="https://one-scroll-bible.com/film/#rise" target="_blank" rel="noopener">
         <img src="styles/rise.jpg" alt="부활 — 임파스토 (나이프 페인팅)" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">14</span><b>임파스토 (나이프 페인팅)</b><span class="en">impasto (palette knife)</span>
-        <span class="sc">부활 · 27초</span><span class="how">thousands of knife strokes laid in grey, the stone rolls, a light burst, then every stroke re-laid in colour in a wave from the empty tomb (an accumulating mask rebuilt for any seek)</span></div></a>
+        <div class="cap"><span class="no">장면 14 · 부활 · 27초</span><b>임파스토 (나이프 페인팅)</b><span class="en">impasto (palette knife)</span>
+        <span class="how">thousands of knife strokes laid in grey, the stone rolls, a light burst, then every stroke re-laid in colour in a wave from the empty tomb (an accumulating mask rebuilt for any seek)</span></div></a>
       <a class="tile" data-tags="film" href="https://one-scroll-bible.com/film/#church" target="_blank" rel="noopener">
         <img src="styles/church.jpg" alt="교회 — 밤의 시네마토그래피" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">15</span><b>밤의 시네마토그래피</b><span class="en">night cinematography: upper room → moonlit ridges → night earth</span>
-        <span class="sc">교회 · 35초</span><span class="how">a lamp-lit room of seated silhouettes rim-lit by tongues of fire, the camera through the window; layered night ridges with haze, lantern streams lighting villages; a per-pixel night globe with city lights spreading and dawn on the limb</span></div></a>
+        <div class="cap"><span class="no">장면 15 · 교회 · 35초</span><b>밤의 시네마토그래피</b><span class="en">night cinematography: upper room → moonlit ridges → night earth</span>
+        <span class="how">a lamp-lit room of seated silhouettes rim-lit by tongues of fire, the camera through the window; layered night ridges with haze, lantern streams lighting villages; a per-pixel night globe with city lights spreading and dawn on the limb</span></div></a>
       <a class="tile" data-tags="paint" href="https://one-scroll-bible.com/film/#renewal" target="_blank" rel="noopener">
         <img src="styles/renewal.jpg" alt="회복 — 수채 두루마리" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">16</span><b>수채 두루마리</b><span class="en">watercolour handscroll</span>
-        <span class="sc">회복 · 36초</span><span class="how">a painting front sweeping across, a tear wiped away in close-up, a city of light painted in</span></div></a>
+        <div class="cap"><span class="no">장면 16 · 회복 · 36초</span><b>수채 두루마리</b><span class="en">watercolour handscroll</span>
+        <span class="how">a painting front sweeping across, a tear wiped away in close-up, a city of light painted in</span></div></a>
       <a class="tile" data-tags="craft" href="https://one-scroll-bible.com/film/#mirror" target="_blank" rel="noopener">
         <img src="styles/mirror.jpg" alt="거울 — 워홀 실크스크린" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">17</span><b>워홀 실크스크린</b><span class="en">Warhol photo-silkscreen series</span>
-        <span class="sc">거울 · 44초</span><span class="how">halftone dot plates over off-register colour blocks, every print pulled live (mesh screen, squeegee, ink bead); the idol series repeats across the wall until a wave reprints every panel as a mirror showing me</span></div></a>
+        <div class="cap"><span class="no">장면 17 · 거울 · 44초</span><b>워홀 실크스크린</b><span class="en">Warhol photo-silkscreen series</span>
+        <span class="how">halftone dot plates over off-register colour blocks, every print pulled live (mesh screen, squeegee, ink bead); the idol series repeats across the wall until a wave reprints every panel as a mirror showing me</span></div></a>
       <a class="tile" data-tags="line" href="https://one-scroll-bible.com/film/#gospel" target="_blank" rel="noopener">
         <img src="styles/gospel.jpg" alt="복음의 핵심 — 금빛 선 하나의 트래킹 샷" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">18</span><b>금빛 선 하나의 트래킹 샷</b><span class="en">the gold line, one tracking shot</span>
-        <span class="sc">복음의 핵심 · 67초</span><span class="how">in the dark, one gold line runs left to right and draws each truth in light (bars short of glory, a ladder crumbling into a mirror, a gift, a robe of light, 66 points turning to the One, a dial filling); the line becomes the cross</span></div></a>
+        <div class="cap"><span class="no">장면 18 · 복음의 핵심 · 67초</span><b>금빛 선 하나의 트래킹 샷</b><span class="en">the gold line, one tracking shot</span>
+        <span class="how">in the dark, one gold line runs left to right and draws each truth in light (bars short of glory, a ladder crumbling into a mirror, a gift, a robe of light, 66 points turning to the One, a dial filling); the line becomes the cross</span></div></a>
       <a class="tile" data-tags="paint" href="https://one-scroll-bible.com/film/#evidence" target="_blank" rel="noopener">
         <img src="styles/evidence.jpg" alt="성경은 실화인가 — 탐험가 수채 스크랩북" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">19</span><b>탐험가 수채 스크랩북</b><span class="en">explorer&#x27;s watercolour scrapbook (after *The English Patient*)</span>
-        <span class="sc">성경은 실화인가 · 60초</span><span class="how">a journal on a desk in slanting window light: taped watercolours, photos and rubbings, handwritten tallies instead of charts, the Isaiah scroll joined word to word to the printed page, real page turns, a dusk painting at the end</span></div></a>
+        <div class="cap"><span class="no">장면 19 · 성경은 실화인가 · 60초</span><b>탐험가 수채 스크랩북</b><span class="en">explorer&#x27;s watercolour scrapbook (after *The English Patient*)</span>
+        <span class="how">a journal on a desk in slanting window light: taped watercolours, photos and rubbings, handwritten tallies instead of charts, the Isaiah scroll joined word to word to the printed page, real page turns, a dusk painting at the end</span></div></a>
       <a class="tile" data-tags="line" href="https://one-scroll-bible.com/film/#ship" target="_blank" rel="noopener">
         <img src="styles/ship.jpg" alt="착하게 살면? — 옛 해도 동판화" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">20</span><b>옛 해도 동판화</b><span class="en">18th-century sea-chart copperplate (after *Mutiny on the Bounty*)</span>
-        <span class="sc">착하게 살면? · 57초</span><span class="how">one engraved admiralty chart (compass roses, rhumb lines, cartouches, sea monsters); engraved ships sail along drawn courses; a man crosses by boat from the pirate ship to the ship of light; the old course is struck through</span></div></a>
+        <div class="cap"><span class="no">장면 20 · 착하게 살면? · 57초</span><b>옛 해도 동판화</b><span class="en">18th-century sea-chart copperplate (after *Mutiny on the Bounty*)</span>
+        <span class="how">one engraved admiralty chart (compass roses, rhumb lines, cartouches, sea monsters); engraved ships sail along drawn courses; a man crosses by boat from the pirate ship to the ship of light; the old course is struck through</span></div></a>
       <a class="tile" data-tags="line" href="https://one-scroll-bible.com/film/#invite" target="_blank" rel="noopener">
         <img src="styles/invite.jpg" alt="초대 — 금빛 선의 귀환" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">21</span><b>금빛 선의 귀환</b><span class="en">the gold line returns</span>
-        <span class="sc">초대 · 57초</span><span class="how">the line writes each sentence of the prayer, pulls back into one line, ends on the title card</span></div></a>
+        <div class="cap"><span class="no">장면 21 · 초대 · 57초</span><b>금빛 선의 귀환</b><span class="en">the gold line returns</span>
+        <span class="how">the line writes each sentence of the prayer, pulls back into one line, ends on the title card</span></div></a>
     </div>
   </div>
 </div></section>
 
 <section id="works"><div class="wrap">
   <h2>실제 작품</h2>
-  <p class="lead">이 스킬이 처음 만들어진 프로젝트입니다. 스킬의 모든 단계가 실제로 쓰였습니다.</p>
+  <p class="lead">이 스킬이 처음 만들어진 프로젝트입니다. 스킬의 모든 단계를 이 프로젝트에서 썼습니다.</p>
   <div class="works">
     <a class="work" href="https://one-scroll-bible.com/film/" target="_blank" rel="noopener"><b>한눈에 보는 성경 이야기</b><span>13분 · 21장면 · 11개 언어 · 라이브 플레이어와 MP4</span><span class="url">one-scroll-bible.com/film/</span></a>
-    <a class="work" href="https://github.com/jungrok5/one-scroll-bible/tree/main/motion"><b>원본 레포 · one-scroll-bible → motion/</b><span>장면 21개, 사운드 큐, 언어 파일 전체 — 스킬의 출처</span><span class="url">github.com/jungrok5/one-scroll-bible</span></a>
+    <a class="work" href="https://github.com/jungrok5/one-scroll-bible/tree/main/motion"><b>원본 레포 · one-scroll-bible → motion/</b><span>장면 21개, 사운드 큐, 언어 파일 전체. 스킬의 출처</span><span class="url">github.com/jungrok5/one-scroll-bible</span></a>
   </div>
 </div></section>
 

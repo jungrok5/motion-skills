@@ -5,7 +5,8 @@
     {
       "id": "canvas-film",
       "name": "canvas-film",
-      "tagline": "장면마다 다른 화풍으로 HTML Canvas만으로 그리는 시네마틱 영상. 같은 장면 파일로 MP4(가로·세로)와 다국어 웹 플레이어를 함께 만듭니다.",
+      "tagline": "장면마다 화풍이 다른 시네마틱 영상을 HTML Canvas만으로 그립니다. 같은 장면 파일로 가로와 세로 MP4, 다국어 웹 플레이어를 만듭니다.",
+      "posterAlt": "canvas-film으로 만든 영상의 장면 네 개: 빛의 탄생, 수묵화의 나무, 갈라진 바다 사이를 걷는 사람들, 흑백 필름의 십자가",
       "poster": "canvas-film/poster.jpg",
       "tags": ["16:9 · 9:16", "MP4", "라이브 플레이어", "사운드", "다국어"],
       "stats": ["21 화풍", "11개 언어"],
@@ -19,7 +20,8 @@
     {
       "id": "tech-motion-explainer",
       "name": "tech-motion-explainer",
-      "tagline": "파이프라인 · 프로토콜 · 서버 루프 같은 기술 과정을 60–110초 설명 영상으로. 주제마다 영상 · 설명 · 용어집 세 페이지와 MP4를 만듭니다.",
+      "tagline": "파이프라인 · 프로토콜 · 서버 루프 같은 기술 과정을 60–110초 설명 영상으로 그립니다. 주제마다 영상 · 설명 · 용어집 페이지와 MP4를 만듭니다.",
+      "posterAlt": "tech-motion-explainer로 만든 설명 영상 네 편의 장면: protoc 코드 생성, 50ms 틱 루프, 200명 브로드캐스트 39,800 갱신, Delayed ACK 시퀀스 다이어그램",
       "poster": "tech-motion-explainer/poster.jpg",
       "tags": ["2D · 3D", "16:9 · 9:16", "MP4", "라이브 플레이어", "임베드"],
       "stats": ["12 주제", "설명 방식 7가지"],

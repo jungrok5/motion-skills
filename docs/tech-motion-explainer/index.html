@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>tech-motion-explainer · motion-skills</title>
-<meta name="description" content="기술 과정을 60–110초 설명 영상으로 — 라이브 데모(2D · 3D), 주제 12개, 설명 방식 7가지">
+<meta name="description" content="기술 과정을 60–110초 설명 영상으로 그리는 스킬. 라이브 데모(2D · 3D), 주제 12개, 설명 방식 7가지 샘플.">
 <meta property="og:title" content="tech-motion-explainer · motion-skills">
-<meta property="og:description" content="기술 과정을 60–110초 설명 영상으로 — 라이브 데모(2D · 3D), 주제 12개, 설명 방식 7가지">
+<meta property="og:description" content="기술 과정을 60–110초 설명 영상으로 그리는 스킬. 라이브 데모(2D · 3D), 주제 12개, 설명 방식 7가지 샘플.">
 <meta property="og:image" content="https://jungrok5.github.io/motion-skills/tech-motion-explainer/poster.jpg">
 <link rel="stylesheet" href="../assets/site.css">
 </head>
@@ -19,32 +19,32 @@
 <header class="hero"><div class="wrap">
   <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / tech-motion-explainer</nav>
   <h1>tech-motion-explainer</h1>
-  <p>파이프라인 · 프로토콜 · 서버 루프 같은 기술 과정을 60–110초 설명 영상으로 그립니다. 주제마다 영상 · 설명 · 용어집 세 페이지가 한 세트이고, 같은 페이지를 MP4로도 굽습니다.</p>
+  <p>파이프라인 · 프로토콜 · 서버 루프 같은 기술 과정을 60–110초 설명 영상으로 그립니다. 주제마다 영상 · 설명 · 용어집 페이지를 한 세트로 만들고, 영상 페이지를 MP4로도 녹화합니다.</p>
   <ul class="tags"><li>2D · 3D</li><li>16:9 · 9:16</li><li>MP4</li><li>라이브 플레이어</li><li>임베드</li></ul>
 </div></header>
 
 <main>
 <section id="how"><div class="wrap split">
   <div class="how">
-    <h2>어떻게 쓰나</h2>
-    <ul>
-      <li><b>입력</b> — 기술 내용(구조, 흐름, 실제 파일 · 메시지 · 지표 이름). 4–8개 장으로 스토리보드를 짭니다.</li>
-      <li><b>영상</b> — 모든 프레임이 <code>renderAt(t)</code>. 장 이동 · 0.75× / 0.5× 재생 플레이어.</li>
-      <li><b>설명 · 용어집</b> — 영상 페이지 안의 노트에서 두 페이지를 생성.</li>
-      <li><b>검증</b> — 스틸 렌더, 플레이어 자동 점검, 별도 에이전트의 전문가 리뷰.</li>
-      <li><b>더</b> — 9:16 세로 컷, three.js로 7가지 설명 방식, 다른 페이지 안에서 스크롤로 재생.</li>
-    </ul>
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>기술 내용(구조, 흐름, 실제 파일 · 메시지 · 지표 이름)을 4–8개 장으로 나눈 스토리보드</dd>
+      <dt>영상</dt><dd>모든 프레임을 <code>renderAt(t)</code>로 그림. 장 이동, 0.75× · 0.5× 재생을 지원하는 플레이어</dd>
+      <dt>설명 · 용어집</dt><dd>영상 페이지 안의 노트로 두 페이지 생성</dd>
+      <dt>검증</dt><dd>스틸 렌더, 플레이어 자동 점검, 별도 에이전트의 전문가 리뷰</dd>
+      <dt>추가 형식</dt><dd>9:16 세로 컷, three.js로 그리는 설명 방식 7가지, 다른 페이지 안의 스크롤 재생</dd>
+    </dl>
     <pre><code>S=.claude/skills/tech-motion-explainer
 cp -r $S/starter/assets assets
 mkdir my-topic &amp;&amp; cp $S/template.html my-topic/index.html
 node $S/scripts/render.mjs my-topic/index.html /tmp/stills --stills 3,10,20</code></pre>
-    <p class="mute">요구 사항: Node 18+ · Playwright Chromium, ffmpeg(MP4). 자세한 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/tech-motion-explainer/SKILL.md">SKILL.md</a>.</p>
+    <p class="mute">요구 사항: Node 18+ · Playwright Chromium, ffmpeg(MP4). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/tech-motion-explainer/SKILL.md">SKILL.md</a>에 있습니다.</p>
   </div>
   <div class="demo" style="--ar:16/14.6;--h-phone:calc((100vw - 66px)*.5625 + 250px);--demo-bg:#070a13">
-    <iframe data-src="demo/proto-bot-pipeline/" title="tech-motion-explainer 예제 — 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <iframe data-src="demo/proto-bot-pipeline/" title="tech-motion-explainer 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
     <noscript><a href="demo/proto-bot-pipeline/">데모 열기 (starter/proto-bot-pipeline)</a></noscript>
     <div class="bar"><span data-cap-target>예제 <code>starter/proto-bot-pipeline</code> · 1:04 · 2D</span>
-      <span class="btns" role="group" aria-label="예제">
+      <span class="btns" role="group" aria-label="데모 예제">
         <button class="btn" type="button" data-src="demo/proto-bot-pipeline/" data-cap="예제 &lt;code&gt;starter/proto-bot-pipeline&lt;/code&gt; · 1:04 · 2D" aria-pressed="true">2D</button>
         <button class="btn" type="button" data-src="demo/server-tick-inside-wide/" data-cap="예제 &lt;code&gt;starter/server-tick-inside-wide&lt;/code&gt; · 1:21 · three.js" aria-pressed="false">3D · 분해해 들어가기</button>
       </span></div>
@@ -53,12 +53,12 @@ node $S/scripts/render.mjs my-topic/index.html /tmp/stills --stills 3,10,20</cod
 
 <section id="samples"><div class="wrap">
   <h2>샘플</h2>
-  <p class="lead">이 스킬로 만든 실제 페이지들입니다. 카드를 누르면 브라우저에서 바로 재생됩니다(새 탭, jungrok5.github.io/motion-graphics).</p>
-  <div class="chips" data-for="gallery" data-labels='{"topic":"주제","approach":"설명 방식","embed":"임베드"}' aria-label="샘플 걸러 보기" hidden></div>
+  <p class="lead">이 스킬로 만든 페이지입니다. 카드를 누르면 새 탭에서 그 페이지(jungrok5.github.io)를 열고 브라우저에서 재생합니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"topic":"주제","approach":"설명 방식","embed":"임베드"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
   <div id="gallery">
     <div class="group" id="topics">
       <h3>주제 12개 <small>2D 캔버스 · 영상 · 설명 · 용어집 세트 · MP4</small></h3>
-      <p>MMO 게임 서버와 네트워크에서 생기는 일. 정지 화면은 각 영상의 중간 장면입니다.</p>
+      <p>MMO 게임 서버와 네트워크에서 생기는 일을 다룹니다. 정지 화면은 각 영상의 중간 장면입니다.</p>
       <div class="grid">
       <a class="tile" data-tags="topic" href="https://jungrok5.github.io/motion-graphics/proto-bot-pipeline/" target="_blank" rel="noopener">
         <img src="samples/proto-bot-pipeline.jpg" alt="패킷 정의 하나로, 개발부터 라이브까지 — 영상 중간 장면" loading="lazy" width="640" height="360">
@@ -112,41 +112,41 @@ node $S/scripts/render.mjs my-topic/index.html /tmp/stills --stills 3,10,20</cod
     </div>
     <div class="group" id="approaches">
       <h3>설명 방식 7가지 <small>가로(PC) = 본편 전체 · 세로(모바일) = 20초 요약</small></h3>
-      <p>같은 주제를 가장 잘 맞는 방식으로 다시 그린 페이지. 그림체는 레퍼런스가 아니라 주제의 실제 세계에서 가져옵니다. 고르는 법은 <a href="https://github.com/jungrok5/motion-skills/blob/main/tech-motion-explainer/references/STYLES.md">STYLES.md</a>.</p>
+      <p>위 주제를 그 주제에 맞는 방식으로 다시 그린 페이지입니다. 그림체는 주제의 실제 세계(게임 존 지도, 서버 랙, 회의실 화이트보드)에서 가져옵니다. 방식을 고르는 기준은 <a href="https://github.com/jungrok5/motion-skills/blob/main/tech-motion-explainer/references/STYLES.md">STYLES.md</a>에 있습니다.</p>
       <div class="grid">
       <a class="tile" data-tags="approach" href="https://jungrok5.github.io/motion-graphics/boss-lag-flow-wide/" target="_blank" rel="noopener">
         <img src="samples/boss-lag-flow-wide.jpg" alt="흐름을 빛으로 — 보스가 뜨면 왜 렉이 걸릴까?" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">01 · 3D · three.js · 1:22</span><b>흐름을 빛으로</b><span class="en">make the invisible flow visible</span>
-        <span class="sc">보스가 뜨면 왜 렉이 걸릴까?</span><span class="how">밤의 게임 존 지도 위에서 플레이어마다 보내는 갱신 패킷이 보는 사람 모두에게 흐른다. 200명이면 39,800. 광역기 장판, 운영 지표 차트까지 본편 6장 전체.</span></div></a>
+        <div class="cap"><span class="no">3D · three.js · 1:22</span><b>흐름을 빛으로</b><span class="en">make the invisible flow visible</span>
+        <span class="sc">보스가 뜨면 왜 렉이 걸릴까?</span><span class="how">밤의 게임 존 지도 위에서 플레이어마다 보내는 갱신 패킷이 보는 사람 모두에게 흘러가는 모습을 빛으로 그립니다. 200명이면 39,800개입니다. 광역기 장판과 운영 지표 차트까지 본편 6장 전체를 담았습니다.</span></div></a>
       <a class="tile" data-tags="approach" href="https://jungrok5.github.io/motion-graphics/proto-bot-pipeline-artifacts-wide/" target="_blank" rel="noopener">
         <img src="samples/proto-bot-pipeline-artifacts-wide.jpg" alt="실물을 공간에 — 패킷 정의 하나로, 개발부터 라이브까지" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">02 · 3D · three.js · 1:04</span><b>실물을 공간에</b><span class="en">put the real artifacts in space</span>
-        <span class="sc">패킷 정의 하나로, 개발부터 라이브까지</span><span class="how">책상 위 에디터의 .proto, 터미널의 protoc, 생성된 세 파일, 봇 · 서버 로그, 부하 테스트 대시보드를 차례로 지나간다. 필드 하나가 세 파일로 퍼지는 것까지.</span></div></a>
+        <div class="cap"><span class="no">3D · three.js · 1:04</span><b>실물을 공간에</b><span class="en">put the real artifacts in space</span>
+        <span class="sc">패킷 정의 하나로, 개발부터 라이브까지</span><span class="how">책상 위 에디터의 .proto, 터미널의 protoc, 생성된 세 파일, 봇 · 서버 로그, 부하 테스트 대시보드를 차례로 지나갑니다. 필드 하나를 추가하면 세 파일이 함께 바뀌는 과정도 보여 줍니다.</span></div></a>
       <a class="tile" data-tags="approach" href="https://jungrok5.github.io/motion-graphics/server-tick-inside-wide/" target="_blank" rel="noopener">
         <img src="samples/server-tick-inside-wide.jpg" alt="분해해 들어가기 — 서버 안의 50ms, 무슨 일이 일어날까?" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">03 · 3D · three.js · 1:21</span><b>분해해 들어가기</b><span class="en">open it up</span>
-        <span class="sc">서버 안의 50ms, 무슨 일이 일어날까?</span><span class="how">랙에서 서버를 꺼내 열고, 프로세스 → 스레드 → 틱 하나 → AOI 단계로 들어간다. 프로파일러 타임라인 위에서 큐 · AOI · DB · 락 · GC가 틱을 늘리는 모습.</span></div></a>
+        <div class="cap"><span class="no">3D · three.js · 1:21</span><b>분해해 들어가기</b><span class="en">open it up</span>
+        <span class="sc">서버 안의 50ms, 무슨 일이 일어날까?</span><span class="how">랙에서 서버를 꺼내 열고, 프로세스 → 스레드 → 틱 하나 → AOI 단계로 들어갑니다. 프로파일러 타임라인 위에서 큐 · AOI · DB · 락 · GC가 틱을 늘리는 모습을 그립니다.</span></div></a>
       <a class="tile" data-tags="approach" href="https://jungrok5.github.io/motion-graphics/rubber-banding-ingame-wide/" target="_blank" rel="noopener">
         <img src="samples/rubber-banding-ingame-wide.jpg" alt="게임 화면 재현 — 앞으로 달렸는데, 왜 뒤로 끌려갈까?" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">04 · 3D · three.js · 1:07</span><b>게임 화면 재현</b><span class="en">show it in the game</span>
-        <span class="sc">앞으로 달렸는데, 왜 뒤로 끌려갈까?</span><span class="how">플레이어 화면에서 끌려가는 순간을 보고, 되감아 넷코드 디버그 화면(예측 위치 · 서버 유령 · 입력 번호 · 보정 벡터)으로 다시 본다. 원인마다 게임 안에서 재현.</span></div></a>
+        <div class="cap"><span class="no">3D · three.js · 1:07</span><b>게임 화면 재현</b><span class="en">show it in the game</span>
+        <span class="sc">앞으로 달렸는데, 왜 뒤로 끌려갈까?</span><span class="how">플레이어 화면에서 끌려가는 순간을 보여 준 뒤, 되감아 넷코드 디버그 화면(예측 위치 · 서버 유령 · 입력 번호 · 보정 벡터)으로 다시 봅니다. 원인마다 게임 안에서 재현합니다.</span></div></a>
       <a class="tile" data-tags="approach" href="https://jungrok5.github.io/motion-graphics/tick-and-rtt-explore-wide/" target="_blank" rel="noopener">
         <img src="samples/tick-and-rtt-explore-wide.jpg" alt="직접 조작해 보기 — 50ms와 RTT, 렉은 어디서 생길까?" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">05 · 2D 캔버스 · 1:23</span><b>직접 조작해 보기</b><span class="en">explorable</span>
-        <span class="sc">50ms와 RTT, 렉은 어디서 생길까?</span><span class="how">타이밍 분석기 화면. 재생하면 진행자가 노브를 돌리며 설명하고, 멈추면 틱 처리시간 · 틱레이트 · RTT · 지터 슬라이더로 누가 얼마나 늦는지 직접 바꿔 본다.</span></div></a>
+        <div class="cap"><span class="no">2D 캔버스 · 1:23</span><b>직접 조작해 보기</b><span class="en">explorable</span>
+        <span class="sc">50ms와 RTT, 렉은 어디서 생길까?</span><span class="how">타이밍 분석기 화면입니다. 재생하면 진행자가 노브를 돌리며 설명하고, 멈추면 틱 처리시간 · 틱레이트 · RTT · 지터 슬라이더로 누가 얼마나 늦는지 직접 바꿔 볼 수 있습니다.</span></div></a>
       <a class="tile" data-tags="approach" href="https://jungrok5.github.io/motion-graphics/one-byte-stack-wide/" target="_blank" rel="noopener">
         <img src="samples/one-byte-stack-wide.jpg" alt="바닥부터 쌓기 — 이동 패킷, 바이트를 줄이면 무슨 일이?" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">06 · 3D · three.js · 1:37</span><b>바닥부터 쌓기</b><span class="en">build it up</span>
-        <span class="sc">이동 패킷, 바이트를 줄이면 무슨 일이?</span><span class="how">비트 8칸이 1바이트가 되고, × 보는 사람 × 갱신 × 동접 × 시간으로 복제돼 월 6.5TB 도시가 된다. 헥스 덤프와 패킷 디섹터 색으로 쌓아 올린다.</span></div></a>
+        <div class="cap"><span class="no">3D · three.js · 1:37</span><b>바닥부터 쌓기</b><span class="en">build it up</span>
+        <span class="sc">이동 패킷, 바이트를 줄이면 무슨 일이?</span><span class="how">비트 8칸이 1바이트가 되고, × 보는 사람 × 갱신 × 동접 × 시간으로 복제돼 월 6.5TB 도시가 됩니다. 헥스 덤프와 패킷 디섹터 색으로 쌓아 올립니다.</span></div></a>
       <a class="tile" data-tags="approach" href="https://jungrok5.github.io/motion-graphics/nagle-nodelay-board-wide/" target="_blank" rel="noopener">
         <img src="samples/nagle-nodelay-board-wide.jpg" alt="그려 가며 설명 — Nagle과 TCP_NODELAY" loading="lazy" width="640" height="360">
-        <div class="cap"><span class="no">07 · 2D 캔버스 · 1:41</span><b>그려 가며 설명</b><span class="en">draw while reasoning</span>
-        <span class="sc">Nagle과 TCP_NODELAY</span><span class="how">회의실 화이트보드에 시퀀스 다이어그램을 마커로 그려 가며 추론한다. 보류 구간에 빗금, +60 ms 포스트잇, 옆에 NODELAY를 다시 그리고, ss · nstat 출력에 동그라미.</span></div></a>
+        <div class="cap"><span class="no">2D 캔버스 · 1:41</span><b>그려 가며 설명</b><span class="en">draw while reasoning</span>
+        <span class="sc">Nagle과 TCP_NODELAY</span><span class="how">회의실 화이트보드에 시퀀스 다이어그램을 마커로 그려 가며 추론합니다. 보류 구간에 빗금을 치고 +60 ms 포스트잇을 붙인 뒤, 옆에 NODELAY 경우를 다시 그리고 ss · nstat 출력에 동그라미를 칩니다.</span></div></a>
       </div>
     </div>
     <div class="group" id="embed">
       <h3>임베드 <small>다른 페이지 안에서 스크롤로 재생</small></h3>
-      <p>재생 대신 독자의 스크롤이 시간 t를 움직입니다. 한 파일에 가로(16:9)와 세로(4:5) 구도를 함께 담습니다. 방법은 <a href="https://github.com/jungrok5/motion-skills/blob/main/tech-motion-explainer/references/EMBED.md">EMBED.md</a>.</p>
+      <p>재생 버튼 대신 독자가 스크롤한 위치가 시간 t가 됩니다. 한 파일에 가로(16:9)와 세로(4:5) 구도가 함께 들어 있습니다. 만드는 법은 <a href="https://github.com/jungrok5/motion-skills/blob/main/tech-motion-explainer/references/EMBED.md">EMBED.md</a>에 있습니다.</p>
       <div class="grid">
       <a class="tile" data-tags="embed" href="https://jungrok5.github.io/resume/interactive.html" target="_blank" rel="noopener">
         <img src="samples/resume-embed.jpg" alt="모션 이력서 — 스크롤로 재생되는 조각의 첫 장면" loading="lazy" width="640" height="360">
@@ -159,7 +159,7 @@ node $S/scripts/render.mjs my-topic/index.html /tmp/stills --stills 3,10,20</cod
 
 <section id="works"><div class="wrap">
   <h2>실제 작품</h2>
-  <p class="lead">이 스킬이 처음 만들어지고 다듬어진 곳입니다.</p>
+  <p class="lead">이 스킬이 처음 만들어지고 다듬어진 프로젝트입니다.</p>
   <div class="works">
     <a class="work" href="https://jungrok5.github.io/motion-graphics/" target="_blank" rel="noopener"><b>MMO 서버 · 네트워크 설명 영상</b><span>주제 12개 · 세로 영상 12개 · 설명 방식 페이지 12개 · MP4</span><span class="url">jungrok5.github.io/motion-graphics</span></a>
     <a class="work" href="https://jungrok5.github.io/resume/interactive.html" target="_blank" rel="noopener"><b>모션 이력서</b><span>스크롤로 재생되는 조각 12개 (references/EMBED.md)</span><span class="url">jungrok5.github.io/resume/interactive.html</span></a>

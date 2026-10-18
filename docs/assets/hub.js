@@ -14,18 +14,18 @@
 
   function renderCard(s, reg) {
     var repo = reg.repo, branch = reg.branch || 'main', src = (s.source || s.id + '/').replace(/\/?$/, '/');
-    var from = s.absorbedFrom ? '<p class="from">출처 · ' + esc(shortRepo(s.absorbedFrom.repo)) +
-      (s.absorbedFrom.path ? ' → <code>' + esc(s.absorbedFrom.path) + '</code>' : '') + '</p>' : '';
+    var from = s.absorbedFrom ? '<p class="from">출처: ' + esc(shortRepo(s.absorbedFrom.repo)) +
+      (s.absorbedFrom.path ? '의 <code>' + esc(s.absorbedFrom.path) + '</code>' : '') + '</p>' : '';
     return '<article class="card" id="' + esc(s.id) + '" data-id="' + esc(s.id) + '">\n' +
-      '  <a class="img" href="' + esc(s.page) + '" tabindex="-1" aria-hidden="true"><img src="' + esc(s.poster) +
-      '" alt="" width="1200" height="675" loading="lazy"></a>\n' +
+      '  <a class="img" href="' + esc(s.page) + '" tabindex="-1"><img src="' + esc(s.poster) +
+      '" alt="' + esc(s.posterAlt || s.name + ' 포스터') + '" width="1200" height="675"></a>\n' +
       '  <div class="body">\n' +
       '    <h3><a href="' + esc(s.page) + '">' + esc(s.name) + '</a></h3>\n' +
       '    <p class="tagline">' + esc(s.tagline) + '</p>\n' +
-      '    <ul class="tags">' + (s.tags || []).map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>\n' +
       '    <p class="stats">' + (s.stats || []).map(esc).join(' · ') + '</p>\n' +
+      '    <ul class="tags">' + (s.tags || []).map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>\n' +
       (from ? '    ' + from + '\n' : '') +
-      '    <div class="btns"><a class="btn p" href="' + esc(s.page) + '">샘플 보기</a>' +
+      '    <div class="btns"><a class="btn p" href="' + esc(s.page) + '">샘플 페이지</a>' +
       '<a class="btn" href="' + esc(repo + '/blob/' + branch + '/' + src + 'SKILL.md') + '">SKILL.md</a>' +
       '<a class="btn" href="' + esc(repo + '/tree/' + branch + '/' + src.replace(/\/$/, '')) + '">폴더</a></div>\n' +
       '  </div>\n</article>';

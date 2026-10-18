@@ -2,7 +2,8 @@
    1. Live demo: <iframe data-src="demo/?o={o}">; {o} becomes "v" under 820 px wide, else "h".
       Buttons inside the same .demo with data-src (and optional data-cap, HTML) switch the iframe.
    2. Gallery filter: <div class="chips" data-for="ID" hidden> gets one button per tag found in #ID's tiles
-      (data-tags="a b", labels from the chips' data-labels JSON); groups (.group) with no visible tile hide. */
+      (data-tags="a b", labels from the chips' data-labels JSON); groups (.group) with no visible tile hide.
+   3. Command blocks: every <pre> gets a 복사 button that copies its text (wrapped in .cmd). Runs on the hub too. */
 (function () {
   function fill(src) { return src.replace(/\{o\}/g, innerWidth < 820 ? 'v' : 'h'); }
 
@@ -51,5 +52,20 @@
     order.forEach(function (k) { if (count[k]) button(k, labels[k] || k, count[k]); });
     chips.setAttribute('role', 'group');
     chips.hidden = false;
+  });
+
+  if (navigator.clipboard) document.querySelectorAll('pre').forEach(function (pre) {
+    var box = document.createElement('div'); box.className = 'cmd';
+    pre.parentNode.insertBefore(box, pre); box.appendChild(pre);
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn copy'; b.textContent = '복사';
+    b.setAttribute('aria-live', 'polite');
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.innerText.replace(/\n+$/, '')).then(function () {
+        b.textContent = '복사됨';
+        setTimeout(function () { b.textContent = '복사'; }, 1500);
+      });
+    });
+    box.appendChild(b);
   });
 })();

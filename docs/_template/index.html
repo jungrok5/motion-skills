@@ -1,9 +1,10 @@
 <!doctype html>
 <!--
   Skill samples page template. Copy this folder to docs/<skill-id>/ and replace every __PLACEHOLDER__.
-  Keep the section order and class names: hero → 어떻게 쓰나 + 라이브 데모 → 샘플 → 실제 작품 → 링크.
-  Look and behaviour come from ../assets/site.css and ../assets/site.js; do not add page-level <style> unless a demo needs a size
-  (set --ar / --h-phone / --demo-bg on .demo instead). Checklist: CONTRIBUTING.md → "샘플 페이지".
+  Keep the section order and class names: hero → 작업 흐름 + 라이브 데모 → 샘플 → 실제 작품 → 링크.
+  Look and behaviour come from ../assets/site.css and ../assets/site.js (demo switch, filter chips, copy button on every <pre>);
+  do not add page-level <style> unless a demo needs a size (set --ar / --h-phone / --demo-bg on .demo instead).
+  Copy: 합니다체 in sentences, noun phrases in <dd> and captions; see CONTRIBUTING.md → "샘플 페이지 만드는 순서".
   Files next to this page:
     poster.jpg            hub card image, ~1200×675, ≤ 200 KB
     demo/                 the live demo (a copy of the skill's starter/example, self-contained, relative paths)
@@ -30,30 +31,30 @@
 <header class="hero"><div class="wrap">
   <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / __SKILL_ID__</nav>
   <h1>__SKILL_ID__</h1>
-  <p>__ONE_LINE__ <!-- 1–2 sentences: what it makes, from what. Same meaning as "tagline" in docs/skills.json. --></p>
-  <ul class="tags"><li>__TAG__</li><li>__TAG__</li><li>__TAG__</li><!-- 3–5, same as skills.json "tags" --></ul>
+  <p>__ONE_LINE__ <!-- 1–2 sentences in 합니다체: what it makes, from what. Same meaning as "tagline" in docs/skills.json. --></p>
+  <ul class="tags"><li>__TAG__</li><li>__TAG__</li><li>__TAG__</li><!-- 3–5, same as skills.json "tags"; shown as one plain line --></ul>
 </div></header>
 
 <main>
 <section id="how"><div class="wrap split">
   <div class="how">
-    <h2>어떻게 쓰나</h2>
-    <ul>
-      <li><b>입력</b> — __WHAT_THE_AGENT_IS_GIVEN__</li>
-      <li><b>__STEP__</b> — __WHAT_HAPPENS__</li>
-      <li><b>출력</b> — __FILES_AND_FORMATS__</li>
-      <!-- 3–5 bullets in total: inputs → outputs -->
-    </ul>
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>__WHAT_THE_AGENT_IS_GIVEN__</dd>
+      <dt>__STEP__</dt><dd>__WHAT_HAPPENS__</dd>
+      <dt>출력</dt><dd>__FILES_AND_FORMATS__</dd>
+      <!-- 3–5 rows in total, inputs → outputs; each <dd> a noun phrase -->
+    </dl>
     <pre><code>__QUICK_START_FROM_THE_SKILL_README__</code></pre>
-    <p class="mute">요구 사항: __REQUIREMENTS__. 자세한 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/__SKILL_ID__/SKILL.md">SKILL.md</a>.</p>
+    <p class="mute">요구 사항: __REQUIREMENTS__. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/__SKILL_ID__/SKILL.md">SKILL.md</a>에 있습니다.</p>
   </div>
   <!-- Live demo. data-src is loaded by site.js ({o} → h or v by screen width). Switch buttons: data-src + optional data-cap (HTML,
        shown in [data-cap-target]). Size: --ar (desktop aspect), --h-phone (height under 820 px), --demo-bg. -->
   <div class="demo" style="--ar:16/10.6">
-    <iframe data-src="demo/" title="__SKILL_ID__ 예제 — 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <iframe data-src="demo/" title="__SKILL_ID__ 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
     <noscript><a href="demo/">데모 열기</a></noscript>
     <div class="bar"><span data-cap-target>예제 <code>__EXAMPLE_PATH__</code> · __LENGTH__</span>
-      <span class="btns" role="group" aria-label="예제">
+      <span class="btns" role="group" aria-label="데모 예제">
         <button class="btn" type="button" data-src="demo/" data-cap="예제 &lt;code&gt;__EXAMPLE_PATH__&lt;/code&gt; · __LENGTH__" aria-pressed="true">__VARIANT_A__</button>
         <!-- more buttons, or delete the group if there is one demo -->
       </span></div>
@@ -61,11 +62,12 @@
 </div></section>
 
 <!-- Samples gallery: every skill has one. Up to ~12 tiles: one .grid. More: split into .group blocks and/or add filter chips
-     (tiles carry data-tags="key …"; the chips' data-labels maps key → label; site.js builds the buttons and counts). -->
+     (tiles carry data-tags="key …"; the chips' data-labels maps key → label; site.js builds the buttons and counts).
+     .no is the kicker line: category · length. Put a number in it only when it is a real order (canvas-film: "장면 01 · 창조 · 35초"). -->
 <section id="samples"><div class="wrap">
   <h2>샘플</h2>
-  <p class="lead">__WHAT_THE_SAMPLES_ARE__ 카드를 누르면 __WHERE_IT_GOES__.</p>
-  <div class="chips" data-for="gallery" data-labels='{"__KEY_A__":"__LABEL_A__","__KEY_B__":"__LABEL_B__"}' aria-label="샘플 걸러 보기" hidden></div>
+  <p class="lead">__WHAT_THE_SAMPLES_ARE__ 카드를 누르면 __WHAT_OPENS__.</p>
+  <div class="chips" data-for="gallery" data-labels='{"__KEY_A__":"__LABEL_A__","__KEY_B__":"__LABEL_B__"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
   <div id="gallery">
     <div class="group">
       <h3>__GROUP_TITLE__ <small>__GROUP_NOTE__</small></h3>

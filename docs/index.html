@@ -4,65 +4,65 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>motion-skills</title>
-<meta name="description" content="AI 에이전트가 쓰는 모션그래픽 스킬 모음 — 스킬마다 샘플을 브라우저에서 바로 보기">
+<meta name="description" content="Claude Code 에이전트가 따르는 모션그래픽 스킬 모음. 스킬마다 라이브 데모와 샘플 페이지가 있습니다.">
 <meta property="og:title" content="motion-skills">
-<meta property="og:description" content="AI 에이전트가 쓰는 모션그래픽 스킬 모음 — 스킬마다 샘플을 브라우저에서 바로 보기">
+<meta property="og:description" content="Claude Code 에이전트가 따르는 모션그래픽 스킬 모음. 스킬마다 라이브 데모와 샘플 페이지가 있습니다.">
 <meta property="og:image" content="https://jungrok5.github.io/motion-skills/canvas-film/poster.jpg">
 <link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
 <header class="topbar"><div class="wrap">
   <a class="brand" href="./">motion-skills</a>
-  <nav><a href="https://github.com/jungrok5/motion-skills/blob/main/CONTRIBUTING.md">스킬 추가하기</a><a href="https://github.com/jungrok5/motion-skills">GitHub</a></nav>
+  <nav><a href="https://github.com/jungrok5/motion-skills/blob/main/CONTRIBUTING.md">스킬 추가</a><a href="https://github.com/jungrok5/motion-skills">GitHub</a></nav>
 </div></header>
 
-<header class="hero"><div class="wrap">
-  <div class="k">Claude Code skills</div>
-  <h1>코드로 그리는 <span class="g">모션그래픽</span></h1>
-  <p>AI 에이전트가 따라 할 수 있는 모션그래픽 스킬 모음입니다. 스킬마다 샘플 페이지가 있고, 데모는 영상 파일이 아니라 지금 이 브라우저에서 코드로 그려집니다.</p>
-  <div class="use">
-    <b>쓰는 법</b> — 스킬 폴더를 프로젝트의 <code>.claude/skills/</code>에 복사하거나 심볼릭 링크로 걸고, 에이전트에게 원하는 영상을 말하면 됩니다. 또는 에이전트에게 그 폴더의 <code>SKILL.md</code>를 읽으라고 하세요.
-    <pre><code>git clone https://github.com/jungrok5/motion-skills
-mkdir -p .claude/skills &amp;&amp; ln -s "$PWD/motion-skills/canvas-film" .claude/skills/</code></pre>
-  </div>
+<header class="hero hub"><div class="wrap">
+  <h1>코드로 그리는 모션그래픽 스킬</h1>
+  <p>Claude Code 에이전트가 따르는 모션그래픽 스킬 모음입니다. 영상은 HTML Canvas 코드로 그리고, 같은 코드로 MP4를 녹화하거나 브라우저에서 재생합니다. 카드의 그림은 각 스킬로 만든 영상의 실제 장면입니다.</p>
 </div></header>
 
 <main>
 <section><div class="wrap">
   <h2>스킬</h2>
-  <p class="lead">카드마다 그 스킬이 만드는 것과 샘플 페이지로 가는 길이 있습니다. 목록은 <a href="skills.json"><code>skills.json</code></a>에서 그립니다.</p>
   <div class="cards" id="skills">
 <!-- skills:start — generated from skills.json by tools/build-hub.mjs; edit skills.json, not this block -->
 <article class="card" id="canvas-film" data-id="canvas-film">
-  <a class="img" href="canvas-film/" tabindex="-1" aria-hidden="true"><img src="canvas-film/poster.jpg" alt="" width="1200" height="675" loading="lazy"></a>
+  <a class="img" href="canvas-film/" tabindex="-1"><img src="canvas-film/poster.jpg" alt="canvas-film으로 만든 영상의 장면 네 개: 빛의 탄생, 수묵화의 나무, 갈라진 바다 사이를 걷는 사람들, 흑백 필름의 십자가" width="1200" height="675"></a>
   <div class="body">
     <h3><a href="canvas-film/">canvas-film</a></h3>
-    <p class="tagline">장면마다 다른 화풍으로 HTML Canvas만으로 그리는 시네마틱 영상. 같은 장면 파일로 MP4(가로·세로)와 다국어 웹 플레이어를 함께 만듭니다.</p>
-    <ul class="tags"><li>16:9 · 9:16</li><li>MP4</li><li>라이브 플레이어</li><li>사운드</li><li>다국어</li></ul>
+    <p class="tagline">장면마다 화풍이 다른 시네마틱 영상을 HTML Canvas만으로 그립니다. 같은 장면 파일로 가로와 세로 MP4, 다국어 웹 플레이어를 만듭니다.</p>
     <p class="stats">21 화풍 · 11개 언어</p>
-    <p class="from">출처 · jungrok5/one-scroll-bible → <code>motion/</code></p>
-    <div class="btns"><a class="btn p" href="canvas-film/">샘플 보기</a><a class="btn" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/SKILL.md">SKILL.md</a><a class="btn" href="https://github.com/jungrok5/motion-skills/tree/main/canvas-film">폴더</a></div>
+    <ul class="tags"><li>16:9 · 9:16</li><li>MP4</li><li>라이브 플레이어</li><li>사운드</li><li>다국어</li></ul>
+    <p class="from">출처: jungrok5/one-scroll-bible의 <code>motion/</code></p>
+    <div class="btns"><a class="btn p" href="canvas-film/">샘플 페이지</a><a class="btn" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/SKILL.md">SKILL.md</a><a class="btn" href="https://github.com/jungrok5/motion-skills/tree/main/canvas-film">폴더</a></div>
   </div>
 </article>
 <article class="card" id="tech-motion-explainer" data-id="tech-motion-explainer">
-  <a class="img" href="tech-motion-explainer/" tabindex="-1" aria-hidden="true"><img src="tech-motion-explainer/poster.jpg" alt="" width="1200" height="675" loading="lazy"></a>
+  <a class="img" href="tech-motion-explainer/" tabindex="-1"><img src="tech-motion-explainer/poster.jpg" alt="tech-motion-explainer로 만든 설명 영상 네 편의 장면: protoc 코드 생성, 50ms 틱 루프, 200명 브로드캐스트 39,800 갱신, Delayed ACK 시퀀스 다이어그램" width="1200" height="675"></a>
   <div class="body">
     <h3><a href="tech-motion-explainer/">tech-motion-explainer</a></h3>
-    <p class="tagline">파이프라인 · 프로토콜 · 서버 루프 같은 기술 과정을 60–110초 설명 영상으로. 주제마다 영상 · 설명 · 용어집 세 페이지와 MP4를 만듭니다.</p>
-    <ul class="tags"><li>2D · 3D</li><li>16:9 · 9:16</li><li>MP4</li><li>라이브 플레이어</li><li>임베드</li></ul>
+    <p class="tagline">파이프라인 · 프로토콜 · 서버 루프 같은 기술 과정을 60–110초 설명 영상으로 그립니다. 주제마다 영상 · 설명 · 용어집 페이지와 MP4를 만듭니다.</p>
     <p class="stats">12 주제 · 설명 방식 7가지</p>
-    <p class="from">출처 · jungrok5/motion-graphics → <code>.claude/skills/tech-motion-explainer/</code></p>
-    <div class="btns"><a class="btn p" href="tech-motion-explainer/">샘플 보기</a><a class="btn" href="https://github.com/jungrok5/motion-skills/blob/main/tech-motion-explainer/SKILL.md">SKILL.md</a><a class="btn" href="https://github.com/jungrok5/motion-skills/tree/main/tech-motion-explainer">폴더</a></div>
+    <ul class="tags"><li>2D · 3D</li><li>16:9 · 9:16</li><li>MP4</li><li>라이브 플레이어</li><li>임베드</li></ul>
+    <p class="from">출처: jungrok5/motion-graphics의 <code>.claude/skills/tech-motion-explainer/</code></p>
+    <div class="btns"><a class="btn p" href="tech-motion-explainer/">샘플 페이지</a><a class="btn" href="https://github.com/jungrok5/motion-skills/blob/main/tech-motion-explainer/SKILL.md">SKILL.md</a><a class="btn" href="https://github.com/jungrok5/motion-skills/tree/main/tech-motion-explainer">폴더</a></div>
   </div>
 </article>
 <!-- skills:end -->
   </div>
 </div></section>
 
-<section><div class="wrap">
-  <h2>스킬 추가하기</h2>
-  <p class="lead">새 스킬은 다른 프로젝트 레포에서 다듬어진 것을 흡수해 오는 경우가 많습니다. 폴더 구조, 출처 표기, 샘플 페이지까지 같은 모양으로 들어오도록
-    <a href="https://github.com/jungrok5/motion-skills/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>에 순서를 정리해 두었습니다.</p>
+<section id="use"><div class="wrap duo">
+  <div>
+    <h2>설치</h2>
+    <p>스킬 폴더를 프로젝트의 <code>.claude/skills/</code>에 복사하거나 심볼릭 링크로 연결합니다. 아래 명령은 canvas-film을 연결하는 예입니다. 연결한 뒤 만들 영상을 설명하면 에이전트가 맞는 스킬을 골라 씁니다. 에이전트에게 그 폴더의 <code>SKILL.md</code>를 직접 읽게 해도 됩니다.</p>
+    <pre><code>git clone https://github.com/jungrok5/motion-skills
+mkdir -p .claude/skills &amp;&amp; ln -s "$PWD/motion-skills/canvas-film" .claude/skills/</code></pre>
+  </div>
+  <div>
+    <h2>스킬 추가</h2>
+    <p>새 스킬은 대개 다른 프로젝트 레포에서 실제 작품을 만들며 다듬은 뒤 이 레포로 옮겨 옵니다. 폴더 구조, 출처 표기, <code>LESSONS.md</code>, 샘플 페이지를 만드는 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>에 있습니다. 이 페이지의 카드 목록은 <a href="skills.json"><code>skills.json</code></a>에서 만듭니다.</p>
+  </div>
 </div></section>
 </main>
 
@@ -70,5 +70,6 @@ mkdir -p .claude/skills &amp;&amp; ln -s "$PWD/motion-skills/canvas-film" .claud
   <a href="https://github.com/jungrok5/motion-skills">github.com/jungrok5/motion-skills</a>
 </div></footer>
 <script src="assets/hub.js"></script>
+<script src="assets/site.js"></script>
 </body>
 </html>
