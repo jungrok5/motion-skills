@@ -32,6 +32,21 @@
         { "title": "MMO 서버 · 네트워크 설명 영상 12편", "url": "https://jungrok5.github.io/mmo-server-explained/" },
         { "title": "인터랙티브 이력서 · 스크롤 재생 12조각", "url": "https://jungrok5.github.io/resume/interactive.html" }
       ]
+    },
+    {
+      "id": "promo-video",
+      "name": "promo-video",
+      "tagline": "회사 사이트나 블로그를 읽고 15–40초 홍보 영상을 가로와 세로 MP4로 만듭니다. ElevenLabs 내레이션 · 효과음 · 배경음악을 넣고, 영상마다 원샷 프롬프트를 남깁니다.",
+      "posterAlt": "promo-video로 만든 홍보 영상 네 편의 장면: 파란 화면의 서비스 목차 01, 밤하늘 지구본 위 한국까지의 비행 궤적, 종이 노트의 경비 목록과 빨간 도장, 형광 연두 화면의 '국내 구매 추천해요'",
+      "poster": "promo-video/poster.jpg",
+      "tags": ["16:9 · 9:16", "MP4", "내레이션", "배경음악", "원샷 프롬프트"],
+      "stats": ["9 스타일", "고객 2곳"],
+      "page": "promo-video/",
+      "source": "promo-video/",
+      "absorbedFrom": { "repo": "https://github.com/jungrok5/ysw-tax", "path": "video/ · fortimove/ · audio/" },
+      "workedExample": [
+        { "title": "포티무브글로벌 홍보 영상 4편 · 회사 소개 페이지에서", "url": "https://www.fortimoveglobal.com/about" }
+      ]
     }
   ]
 }

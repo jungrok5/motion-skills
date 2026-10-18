@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 485 468" width="485" height="468">
+  <!-- Sample person (illustration) standing in for a real profile photo -->
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="35%" r="75%"><stop offset="0" stop-color="#E9EBEE"/><stop offset="1" stop-color="#CDD1D6"/></radialGradient>
+    <linearGradient id="knit" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22305A"/><stop offset="1" stop-color="#18213F"/></linearGradient>
+  </defs>
+  <rect width="485" height="468" fill="url(#bg)"/>
+  <!-- shoulders / cardigan -->
+  <path d="M60 468 C62 330 95 262 165 232 L210 214 L280 214 L326 232 C392 262 424 330 426 468 Z" fill="url(#knit)"/>
+  <!-- shirt -->
+  <path d="M205 214 L243 330 L282 214 L268 205 L218 205 Z" fill="#CFE0F4"/>
+  <path d="M205 214 L222 196 L243 238 Z M282 214 L265 196 L243 238 Z" fill="#E3EEFA" stroke="#B9CDE6" stroke-width="2"/>
+  <!-- cardigan V edges + buttons -->
+  <path d="M196 220 L243 360 L290 220" fill="none" stroke="#2C3B6B" stroke-width="8" stroke-linejoin="round"/>
+  <circle cx="243" cy="382" r="4.5" fill="#0F162C"/><circle cx="243" cy="420" r="4.5" fill="#0F162C"/><circle cx="243" cy="458" r="4.5" fill="#0F162C"/>
+  <!-- neck -->
+  <path d="M222 168 L222 205 Q243 222 264 205 L264 168 Z" fill="#E7B992"/>
+  <!-- head -->
+  <ellipse cx="243" cy="120" rx="52" ry="62" fill="#F2C9A3"/>
+  <ellipse cx="190" cy="126" rx="8" ry="13" fill="#EBBC95"/><ellipse cx="296" cy="126" rx="8" ry="13" fill="#EBBC95"/>
+  <!-- hair -->
+  <path d="M188 118 C182 66 210 40 246 40 C286 40 306 70 300 118 C296 96 288 82 270 76 C250 92 214 92 196 84 C190 94 189 106 188 118 Z" fill="#232120"/>
+  <!-- face: simple and friendly -->
+  <g fill="none" stroke="#3A3F4A" stroke-width="3.5">
+    <rect x="207" y="110" width="30" height="22" rx="8"/><rect x="249" y="110" width="30" height="22" rx="8"/>
+    <path d="M237 119 L249 119"/>
+  </g>
+  <circle cx="222" cy="121" r="3.4" fill="#2A2A2A"/><circle cx="264" cy="121" r="3.4" fill="#2A2A2A"/>
+  <path d="M228 150 Q243 162 258 150" fill="none" stroke="#B5675A" stroke-width="4" stroke-linecap="round"/>
+  <ellipse cx="214" cy="143" rx="8" ry="4" fill="#F0A994" opacity=".45"/><ellipse cx="272" cy="143" rx="8" ry="4" fill="#F0A994" opacity=".45"/>
+</svg>

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>promo-video · motion-skills</title>
+<meta name="description" content="회사 사이트나 블로그를 읽고 15–40초 홍보 영상을 가로와 세로 MP4로 만듭니다. ElevenLabs 내레이션 · 효과음 · 배경음악까지 넣습니다.">
+<meta property="og:title" content="promo-video · motion-skills">
+<meta property="og:description" content="회사 사이트나 블로그를 읽고 15–40초 홍보 영상을 가로와 세로 MP4로 만듭니다. ElevenLabs 내레이션 · 효과음 · 배경음악까지 넣습니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/promo-video/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/promo-video">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / promo-video</nav>
+  <h1>promo-video</h1>
+  <p>회사 사이트나 블로그를 읽고 15–40초 홍보 영상을 가로와 세로 MP4로 만듭니다. ElevenLabs 내레이션 · 효과음 · 배경음악을 넣고, 영상마다 다시 만들 수 있는 원샷 프롬프트를 남깁니다.</p>
+  <ul class="tags"><li>16:9 · 9:16</li><li>MP4</li><li>내레이션</li><li>배경음악</li><li>원샷 프롬프트</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>회사 사이트 · 블로그 · 프로필에서 확인한 사실만 모은 정리표</dd>
+      <dt>제안</dt><dd>추천 스타일 한 개와 이유, 다른 스타일 3–4개, 장면별 스토리보드</dd>
+      <dt>영상</dt><dd>영상마다 HTML 파일 한 개. <code>render(t)</code>로 프레임을 그리고 30fps로 녹화</dd>
+      <dt>사운드</dt><dd>내레이션 한 번 녹음을 문장별로 잘라 장면에 배치, 효과음, 직접 작곡하거나 ElevenLabs로 만든 배경음악, 덕킹 −10dB · −14 LUFS</dd>
+      <dt>출력</dt><dd>MP4 1920×1080 · 1080×1920, 영상별 원샷 프롬프트(영상 제작 · ElevenLabs 분리)</dd>
+    </dl>
+    <pre><code>cd promo-video
+node scripts/render.mjs examples/minimal/index.html --stills 2.5,14.5
+node scripts/render.mjs examples/minimal/index.html
+python3 scripts/mix.py examples/minimal/mix.json --mux</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg, Python 3 (numpy), 새 음성 · 음악은 ElevenLabs 커넥터. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/promo-video/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:min(86vh,calc((100vw - 34px)*1.7778));--demo-bg:#000">
+    <iframe data-src="demo/minimal/?o={o}" title="promo-video 예제 examples/minimal 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/minimal/">데모 열기 (examples/minimal)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/minimal</code> · 30초 · 소리 없음</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/minimal/?o={o}" data-cap="예제 &lt;code&gt;examples/minimal&lt;/code&gt; · 30초 · 소리 없음" aria-pressed="true">미니멀</button>
+        <button class="btn" type="button" data-src="demo/pop/?o={o}" data-cap="예제 &lt;code&gt;examples/pop&lt;/code&gt; · 18.75초 · 128bpm 박자 맞춤 · 소리 없음" aria-pressed="false">팝 숏폼</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">실제 고객 두 곳을 위해 만든 영상 9편입니다. 세무사 영상 5편은 가상 인물(이름 · 연락처 · 일러스트 초상)로 바꾼 샘플입니다. 카드를 누르면 브라우저에서 그리는 영상이 소리 없이 재생됩니다 (화면을 누르면 처음부터, <code>?f=p</code>는 세로).</p>
+  <div class="chips" data-for="gallery" data-labels='{"tax":"세무사 (샘플 인물)","forti":"해외 구매대행"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>세무사 홍보 <small>5편 · 가상 인물로 바꾼 샘플</small></h3>
+      <p>같은 사무소를 다섯 가지 화풍으로 그렸습니다. 고객과 채널에 맞춰 고르도록 제안한 시안입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="tax" href="demo/tax-promo/" target="_blank" rel="noopener">
+          <img src="samples/tax-promo.jpg" alt="남색 배경에 '누락' 도장이 찍힌 영수증 네 장과 '더 내는 세금이 됩니다' 문구" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">프리미엄 키네틱 · 30초</span><b>5월에만 찾는 세무사?</b>
+          <span class="how">남색과 금색, 단어별 등장, 금색 와이프 전환</span></div></a>
+        <a class="tile" data-tags="tax" href="demo/tax-paper/" target="_blank" rel="noopener">
+          <img src="samples/tax-paper.jpg" alt="크라프트지 위 줄노트에 손글씨 경비 목록과 빨간 '경비 처리 완료' 도장" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">종이 콜라주 · 20초</span><b>영수증 한 장이 곧 세금</b>
+          <span class="how">12fps 스톱모션, 찢긴 종이 · 테이프 · 도장</span></div></a>
+        <a class="tile" data-tags="tax" href="demo/tax-chat/" target="_blank" rel="noopener">
+          <img src="samples/tax-chat.jpg" alt="휴대폰 채팅 화면과 '간이과세자? 일반과세자?' 질문 제목" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">채팅 화면 · 24초</span><b>바로 묻는 세무사</b>
+          <span class="how">질문 · 입력 중 · 답변 세 번, 알림 카드로 마무리</span></div></a>
+        <a class="tile" data-tags="tax" href="demo/tax-editorial/" target="_blank" rel="noopener">
+          <img src="samples/tax-editorial.jpg" alt="파란 화면에 큰 숫자 01과 서비스 목차 여섯 줄" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">잡지형 큰 숫자 · 21초</span><b>16년, 숫자 뒤에서</b>
+          <span class="how">그리드 선, 숫자 롤링, 파란 패널 와이프</span></div></a>
+        <a class="tile" data-tags="tax" href="demo/tax-whiteboard/" target="_blank" rel="noopener">
+          <img src="samples/tax-whiteboard.jpg" alt="화이트보드에 '매출 − 경비 = 소득' 상자와 빨간 동그라미, 마커" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">화이트보드 · 37초</span><b>1분 세금 노트</b>
+          <span class="how">손글씨 선 그리기, 형광펜, 지우개 전환</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>해외 구매대행 홍보 <small>4편 · fortimoveglobal.com</small></h3>
+      <p>회사 소개 페이지 하나로 만든 네 가지 버전입니다. 미니멀과 팝 숏폼은 스킬의 예제로 들어 있습니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="forti" href="demo/minimal/" target="_blank" rel="noopener">
+          <img src="samples/minimal.jpg" alt="회색 배경에 4단계 진행바와 '결제 전에, 총액부터 확인하세요' 견적서 카드" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">미니멀 흑백 + 초록 · 30초</span><b>이거 어디서 팔아요?</b>
+          <span class="how">UI 목업, 숫자 올라가는 견적서, 원형 아이리스 전환</span></div></a>
+        <a class="tile" data-tags="forti" href="demo/globe/" target="_blank" rel="noopener">
+          <img src="samples/globe.jpg" alt="밤하늘의 점 지구본 위로 미국에서 한국까지 이어진 비행 궤적과 상자" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">지구본 여정 · 25초</span><b>지구 반대편에서도</b>
+          <span class="how">캔버스 지구본, 레이더 탐색, 비행 궤적</span></div></a>
+        <a class="tile" data-tags="forti" href="demo/pop/" target="_blank" rel="noopener">
+          <img src="samples/pop.jpg" alt="검은 배경에 초록 숫자 03과 카드 아이콘, '동의 후 결제'" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">팝 숏폼 · 18.75초</span><b>사진 한 장이면, 끝.</b>
+          <span class="how">128bpm, 모든 컷과 효과음을 박자에 맞춤</span></div></a>
+        <a class="tile" data-tags="forti" href="demo/unbox/" target="_blank" rel="noopener">
+          <img src="samples/unbox.jpg" alt="나무 책상 위 열린 택배 상자 안에서 빛나는 버섯 모양 조명" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">언박싱 스토리 · 25초</span><b>택배가 오기까지</b>
+          <span class="how">책상 위 소품, 폴라로이드 검수 사진, 3D로 열리는 상자</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬이 처음 만들어진 프로젝트입니다. 완성 MP4(소리 포함)는 원본 레포에 있습니다.</p>
+  <div class="works">
+    <a class="work" href="https://www.fortimoveglobal.com/about" target="_blank" rel="noopener"><b>포티무브글로벌 홍보 영상 4편</b><span>회사 소개 페이지 한 장을 바탕으로 · 가로/세로 MP4 · ElevenLabs 내레이션과 배경음악</span><span class="url">fortimoveglobal.com/about</span></a>
+    <div class="work"><b>원본 레포 · ysw-tax (비공개)</b><span>스킬의 출처: 영상 9편의 페이지, <code>audio/mix.py</code> · <code>music.py</code>, 영상별 원샷 프롬프트</span><span class="url">github.com/jungrok5/ysw-tax</span></div>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/promo-video/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/promo-video">폴더</a> <span>scripts · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/promo-video/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/promo-video/references/STORYBOARD.md">references/STORYBOARD.md</a> <span>사이트에서 스토리보드까지</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/promo-video/references/STYLES.md">references/STYLES.md</a> <span>검증된 스타일 9가지</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/promo-video/references/SOUND.md">references/SOUND.md</a> <span>ElevenLabs 내레이션 · 효과음 · 음악, 믹스</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/promo-video/references/PROMPT.md">references/PROMPT.md</a> <span>원샷 프롬프트 형식과 실제 예</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/promo-video/references/song-recipes.py">references/song-recipes.py</a> <span>코드로 작곡한 배경음악 5곡</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/promo-video/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 폰트 Pretendard · 나눔손글씨 펜 · 고운바탕 (SIL OFL) · 세무사 샘플의 인물과 연락처는 가상입니다
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

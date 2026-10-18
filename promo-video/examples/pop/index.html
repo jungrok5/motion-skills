@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Fortimove Global 팝 숏폼</title>
+<style>
+@font-face{font-family:P;src:url(../assets/fonts/Pretendard-Variable.woff2) format('woff2');font-weight:100 900}
+:root{--lime:#D4FF3A;--ink:#0B0B0D}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:#000;overflow:hidden}
+body{font-family:P,sans-serif;letter-spacing:-0.05em;word-break:keep-all;-webkit-font-smoothing:antialiased}
+#stage{position:relative;overflow:hidden;width:1920px;height:1080px;background:#000}
+body.P #stage{width:1080px;height:1920px}
+#cam{position:absolute;inset:0}
+#bg{position:absolute;inset:-40px}
+.layer{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;visibility:hidden}
+
+/* big word */
+#word{text-align:center;font-weight:900;line-height:.98}
+#word .t{font-size:300px;letter-spacing:-0.06em}
+body.P #word .t{font-size:250px}
+#word .t.m{font-size:210px}
+body.P #word .t.m{font-size:170px}
+#word .t.xl{font-size:520px}
+body.P #word .t.xl{font-size:440px}
+#word .s{font-size:48px;font-weight:800;letter-spacing:-0.02em;margin-top:26px}
+
+/* lamp sticker */
+.photo{position:relative;background:radial-gradient(120% 100% at 50% 15%,#F6D2BA,#E9AE8E 55%,#D98E6E);overflow:hidden}
+.photo svg{position:absolute;left:50%;top:54%;width:62%;transform:translate(-50%,-50%)}
+.polaroid{position:absolute;background:#fff;padding:18px 18px 70px;box-shadow:12px 12px 0 #000;border:5px solid #000}
+.polaroid .photo{width:360px;height:360px}
+.polaroid b{position:absolute;left:0;right:0;bottom:16px;text-align:center;font-size:30px;font-weight:900;color:#000;letter-spacing:-0.02em}
+
+/* stickers */
+.stk{position:absolute;white-space:nowrap;font-size:58px;font-weight:900;padding:20px 34px;border:6px solid #000;border-radius:22px;box-shadow:10px 10px 0 #000;letter-spacing:-0.03em}
+body.P .stk{font-size:56px}
+.stk.w{background:#fff;color:#000}
+.stk.k{background:#000;color:#fff;border-color:#fff;box-shadow:10px 10px 0 var(--lime)}
+.stk.l{background:var(--lime);color:#000}
+.search{position:absolute;display:flex;align-items:center;gap:22px;background:#fff;border:6px solid #000;border-radius:80px;padding:0 44px;height:130px;font-size:52px;font-weight:800;color:#000;box-shadow:10px 10px 0 #000;white-space:nowrap}
+.search svg{width:56px;height:56px;fill:none;stroke:#000;stroke-width:3;stroke-linecap:round}
+
+/* steps */
+#steps .num{font-size:300px;font-weight:900;line-height:.85;letter-spacing:-0.06em}
+body.P #steps .num{font-size:280px}
+#steps .row{display:flex;align-items:center;gap:80px}
+body.P #steps .row{flex-direction:column;gap:50px;text-align:center}
+#steps .ic{width:340px;height:340px;border-radius:60px;display:flex;align-items:center;justify-content:center;border:8px solid currentColor}
+#steps .ic svg{width:200px;height:200px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#steps .lb{font-size:150px;font-weight:900;line-height:1.02}
+body.P #steps .lb{font-size:130px}
+#steps .dots{position:absolute;bottom:90px;left:50%;transform:translateX(-50%);display:flex;gap:18px}
+body.P #steps .dots{bottom:260px}
+#steps .dots i{width:120px;height:14px;border-radius:7px;display:block}
+
+/* stamp */
+.stamp{position:absolute;width:520px;height:520px;border-radius:50%;border:16px solid var(--lime);color:var(--lime);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:900;line-height:1}
+.stamp b{font-size:96px}
+.stamp i{font-style:normal;font-size:200px;letter-spacing:-0.06em}
+.stamp::after{content:'';position:absolute;inset:22px;border-radius:50%;border:5px solid var(--lime)}
+
+/* end */
+#end{flex-direction:column;text-align:center;color:#fff}
+#end img{width:260px;height:260px;filter:invert(1);mix-blend-mode:screen}
+#end .nm{font-size:120px;font-weight:900;margin-top:10px;letter-spacing:-0.04em}
+body.P #end .nm{font-size:110px}
+#end .tg{font-size:58px;font-weight:900;color:var(--lime);margin-top:22px;letter-spacing:-0.04em}
+body.P #end .tg{font-size:60px;line-height:1.15}
+#end .ch{display:flex;gap:20px;margin-top:60px;justify-content:center}
+body.P #end .ch{flex-direction:column;align-items:center}
+#end .ch span{font-size:40px;font-weight:800;border:4px solid #fff;border-radius:999px;padding:16px 36px}
+#end .bar{height:12px;background:var(--lime);margin:40px auto 0;border-radius:6px}
+
+/* chrome */
+#tag{position:absolute;left:56px;top:46px;display:flex;align-items:center;gap:12px;font-size:26px;font-weight:900;z-index:10;letter-spacing:-0.02em}
+body.P #tag{left:56px;top:90px}
+#tag img{width:46px;height:46px}
+#prog{position:absolute;left:0;bottom:0;height:12px;background:var(--lime);z-index:10}
+#flash{position:absolute;inset:0;background:#fff;opacity:0;z-index:9;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="stage">
+ <div id="cam">
+  <div id="bg"></div>
+
+  <div class="layer" id="word"><div><div class="t"></div><div class="s"></div></div></div>
+
+  <div class="layer" id="ask">
+    <div class="polaroid" id="pol1"><div class="photo lamp"></div><b>이거 어디서…?</b></div>
+  </div>
+
+  <div class="layer" id="prob">
+    <div class="search" id="srch"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg><span class="q"></span></div>
+    <div class="stk w" id="p1">🔍 검색 결과 없음</div>
+    <div class="stk k" id="p2">외국어 상세페이지?!</div>
+    <div class="stk w" id="p3">해외 결제는…? 💳</div>
+    <div class="stk l" id="p4">배송은 또 어떻게?</div>
+  </div>
+
+  <div class="layer" id="photo1">
+    <div class="polaroid" id="pol2"><div class="photo lamp"></div><b>📸 찰칵</b></div>
+  </div>
+
+  <div class="layer" id="steps">
+    <div class="row"><div><div class="num"></div></div><div class="ic"></div><div class="lb"></div></div>
+    <div class="dots"><i></i><i></i><i></i><i></i></div>
+  </div>
+
+  <div class="layer" id="cost">
+    <div class="stamp" id="stp"><b>숨은 비용</b><i>없음</i></div>
+    <div class="stk l" id="c1">견적은 무료</div>
+    <div class="stk w" id="c2">회원가입 없음</div>
+  </div>
+
+  <div class="layer" id="end">
+    <img src="../assets/fg-logo.png" alt="">
+    <div class="nm">Fortimove Global</div>
+    <div class="tg">찾으시는 상품,<br class="pb"> 해외에서 찾아드려요</div>
+    <div class="ch"><span>fortimoveglobal.com</span><span>카카오톡 채널 상담</span></div>
+    <div class="bar"></div>
+  </div>
+ </div>
+ <div id="tag"><img src="../assets/fg-logo.png" alt=""><span>Fortimove Global</span></div>
+ <div id="flash"></div>
+ <div id="prog"></div>
+</div>
+
+<script>
+const Q = new URLSearchParams(location.search);
+const FMT = Q.get('f') === 'p' ? 'P' : 'L';
+document.body.classList.add(FMT);
+const W = FMT === 'L' ? 1920 : 1080, H = FMT === 'L' ? 1080 : 1920;
+const BPM = 128, BEAT = 60 / BPM;           // 0.46875 s
+const BEATS = 40, DUR = BEATS * BEAT;        // 18.75 s
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const out3 = x => 1 - Math.pow(1 - x, 3);
+const back = x => { const c1 = 2.2, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const hash = (a) => { const x = Math.sin(a * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+const LIME = '#D4FF3A';
+if (FMT === 'L') $$('br.pb').forEach(b => b.remove());
+
+const LAMP = `<svg viewBox="0 0 200 220"><defs><radialGradient id="g" cx="50%" cy="45%" r="55%"><stop offset="0" stop-color="#FFF6D9" stop-opacity=".95"/><stop offset="1" stop-color="#FFE7B8" stop-opacity="0"/></radialGradient><linearGradient id="d" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF9F0"/><stop offset="1" stop-color="#E8CDA9"/></linearGradient></defs>
+<ellipse cx="100" cy="96" rx="98" ry="84" fill="url(#g)"/><ellipse cx="100" cy="200" rx="70" ry="10" fill="#B9845F" opacity=".35"/>
+<rect x="91" y="100" width="18" height="84" rx="8" fill="#C99A72"/><rect x="91" y="100" width="7" height="84" rx="3" fill="#DDB28C"/>
+<path d="M24 106 C 24 34, 176 34, 176 106 Z" fill="url(#d)"/><path d="M24 106 C 24 34, 176 34, 176 106" fill="none" stroke="#B88D66" stroke-width="2.5"/><path d="M22 106 h156" stroke="#A9794F" stroke-width="5" stroke-linecap="round"/>
+<path d="M50 70 C 64 52, 86 46, 104 46" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".8"/>
+<ellipse cx="100" cy="192" rx="48" ry="13" fill="#A9794F"/><ellipse cx="100" cy="187" rx="48" ry="13" fill="#D6AE88"/></svg>`;
+$$('.lamp').forEach(e => e.innerHTML = LAMP);
+
+const ICONS = [
+  '<svg viewBox="0 0 24 24"><path d="M3 8h4l2-3h6l2 3h4v11H3z"/><circle cx="12" cy="13" r="3.6"/></svg>',                 // camera
+  '<svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 15.5h4"/></svg>',           // receipt
+  '<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 14.5h4"/><path d="M15 15l1.6 1.6L20 13" /></svg>', // card + check
+  '<svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/><path d="M7.5 5l9 4"/></svg>', // box
+];
+const STEPS = [['01', '사진<br>보내기'], ['02', '무료<br>견적'], ['03', '동의 후<br>결제'], ['04', '검수 후<br>배송']];
+
+/* beat map: [fromBeat, toBeat, kind, payload] */
+const SEG = [
+  [0, 1, 'word', { t: '이거.', bg: '#000', fg: '#fff' }],
+  [1, 2, 'word', { t: '어디서.', bg: '#fff', fg: '#000' }],
+  [2, 4, 'ask', { t: '팔아요?', bg: LIME, fg: '#000' }],
+  [4, 8, 'prob', { bg: '#fff' }],
+  [8, 10, 'photo', { t: '사진 한 장이면', bg: '#000', fg: '#fff' }],
+  [10, 12, 'word', { t: '끝.', bg: LIME, fg: '#000', cls: 'xl' }],
+  [12, 20, 'steps', {}],
+  [20, 21, 'word', { t: '숨은 비용', bg: '#000', fg: '#fff' }],
+  [21, 24, 'cost', { bg: '#000' }],
+  [24, 26, 'word', { t: '국내가<br>더 싸면?', bg: '#fff', fg: '#000', cls: 'm' }],
+  [26, 28, 'word', { t: '국내 구매<br>추천해요', s: '솔직하게, 먼저 말씀드려요', bg: LIME, fg: '#000', cls: 'm' }],
+  [28, 30, 'word', { t: '찾으시는<br>상품,', bg: '#000', fg: '#fff', cls: 'm' }],
+  [30, 32, 'word', { t: '해외에서<br>찾아드려요', bg: '#000', fg: LIME, cls: 'm' }],
+  [32, 40, 'end', { bg: '#000' }],
+];
+// cuts that get an extra flash + shake
+const HARD = new Set([2, 4, 8, 10, 12, 20, 21, 26, 32]);
+
+const L = (el, o) => { el.style.visibility = o ? 'visible' : 'hidden'; };
+function place(el, xL, yL, xP, yP, rot, s = 1, o = 1) {
+  const [x, y] = FMT === 'L' ? [xL, yL] : [xP, yP];
+  el.style.left = x + 'px'; el.style.top = y + 'px';
+  el.style.transform = `translate(-50%,-50%) rotate(${rot}deg) scale(${s})`;
+  el.style.opacity = o;
+}
+// slam-in: scale from 1.8 -> 1 with overshoot over ~0.18 s
+const slam = (k) => k < 0 ? 0 : 1 + 0.8 * (1 - back(clamp(k / 0.2)));
+
+function render(t) {
+  const b = Math.min(BEATS - 1e-6, t / BEAT);
+  const bi = Math.floor(b);
+  const seg = SEG.find(s => bi >= s[0] && bi < s[1]);
+  const [f0, f1, kind, P] = seg;
+  const kb = t - bi * BEAT;                 // time since current beat
+  const ks = t - f0 * BEAT;                 // time since segment start
+  $$('.layer').forEach(e => L(e, 0));
+  $('#bg').style.background = P.bg || '#000';
+
+  // camera punch on every beat + shake on hard cuts
+  const punch = 1 + 0.06 * Math.exp(-kb / 0.09);
+  let sx = 0, sy = 0;
+  if (HARD.has(bi) && kb < 0.22) { const a = (1 - kb / 0.22) * 18; sx = (hash(t * 97) - .5) * a; sy = (hash(t * 53 + 1) - .5) * a; }
+  $('#cam').style.transform = `translate(${sx}px,${sy}px) scale(${punch})`;
+  $('#flash').style.opacity = HARD.has(bi) ? Math.max(0, 0.75 - kb / 0.1) : 0;
+  $('#flash').style.background = (P.bg === '#000' || !P.bg) ? '#fff' : '#000';
+  if (kind === 'steps') $('#flash').style.opacity = 0;
+
+  // chrome
+  const tag = $('#tag');
+  tag.style.opacity = kind === 'end' ? 0 : 1;
+  let bgNow = P.bg || '#000';
+  if (kind === 'steps') bgNow = Math.floor((bi - 12) / 2) % 2 === 1 ? '#fff' : '#000';
+  const dark = bgNow === '#000';
+  tag.style.color = dark ? '#fff' : '#000';
+  $('#tag img').style.filter = dark ? 'invert(1)' : 'none';
+  $('#tag img').style.mixBlendMode = dark ? 'screen' : 'multiply';
+  $('#prog').style.width = (t / DUR * 100) + '%';
+  $('#prog').style.background = P.bg === LIME ? '#000' : LIME;
+
+  if (kind === 'word' || kind === 'ask' || kind === 'photo') {
+    const w = $('#word'); L(w, 1);
+    const tt = $('.t', w); tt.innerHTML = P.t; tt.className = 't' + (P.cls ? ' ' + P.cls : '');
+    tt.style.color = P.fg; $('.s', w).style.color = P.fg; $('.s', w).textContent = P.s || '';
+    const s = slam(ks);
+    const r = kind === 'ask' ? -4 : (f0 === 10 ? -6 : 0);
+    w.firstElementChild.style.transform = `scale(${s}) rotate(${r}deg)`;
+    $('.s', w).style.opacity = clamp((ks - 0.35) / 0.12);
+    if (kind === 'ask') {
+      w.firstElementChild.style.transform += FMT === 'L' ? ' translateX(-260px)' : ' translateY(-430px)';
+      const a = $('#ask'); L(a, 1);
+      const k = ks - BEAT * 0.5;
+      place($('#pol1'), 1330, 560, 540, 1250, 7, k < 0 ? 0 : slam(k), k < 0 ? 0 : 1);
+    }
+    if (kind === 'photo') {
+      w.firstElementChild.style.transform += FMT === 'L' ? ' translateX(-300px)' : ' translateY(-460px)';
+      tt.style.fontSize = FMT === 'L' ? '150px' : '140px';
+      const a = $('#photo1'); L(a, 1);
+      const k = ks - BEAT * 0.5;
+      place($('#pol2'), 1380, 560, 540, 1220, -6, k < 0 ? 0 : slam(k), k < 0 ? 0 : 1);
+    } else tt.style.fontSize = '';
+  }
+
+  if (kind === 'prob') {
+    const p = $('#prob'); L(p, 1);
+    const q = '버섯 조명 어디서 팔아요';
+    $('.q', p).textContent = q.slice(0, Math.ceil(clamp(ks / (BEAT * 1.4)) * q.length));
+    place($('#srch'), 960, 190, 540, 380, 0, 1);
+    const pos = FMT === 'L'
+      ? [[640, 470, -6], [1300, 560, 5], [700, 780, 4], [1260, 880, -5]]
+      : [[470, 760, -6], [600, 1000, 5], [460, 1240, 4], [610, 1480, -5]];
+    ['#p1', '#p2', '#p3', '#p4'].forEach((id, i) => {
+      const k = ks - i * BEAT;
+      const [x, y, r] = pos[i];
+      place($(id), x, y, x, y, r, k < 0 ? 0 : slam(k), k < 0 ? 0 : 1);
+    });
+  }
+
+  if (kind === 'steps') {
+    const i = Math.floor((bi - 12) / 2);
+    const inv = i % 2 === 1;                 // alternate black / white
+    $('#bg').style.background = inv ? '#fff' : '#000';
+    const s = $('#steps'); L(s, 1);
+    const fg = inv ? '#000' : '#fff';
+    s.style.color = fg;
+    const k = t - (12 + i * 2) * BEAT;
+    $('.num', s).textContent = STEPS[i][0];
+    $('.num', s).style.color = inv ? '#000' : LIME;
+    $('.num', s).style.transform = `scale(${slam(k)})`;
+    $('.ic', s).innerHTML = ICONS[i];
+    $('.ic', s).style.color = inv ? '#000' : LIME;
+    const k2 = k - BEAT * 0.5;
+    $('.ic', s).style.transform = `scale(${k2 < 0 ? 0 : slam(k2)}) rotate(${k2 < 0 ? 0 : (1 - out3(clamp(k2 / 0.25))) * -25}deg)`;
+    $('.lb', s).innerHTML = STEPS[i][1];
+    const k3 = k - BEAT * 1.0;
+    $('.lb', s).style.opacity = k3 < 0 ? 0 : 1;
+    $('.lb', s).style.transform = `translateY(${k3 < 0 ? 0 : (1 - out3(clamp(k3 / 0.18))) * 60}px)`;
+    $$('.dots i', s).forEach((d, j) => d.style.background = j <= i ? (inv ? '#000' : LIME) : (inv ? '#ddd' : '#333'));
+    $('#prog').style.background = inv ? '#000' : LIME;
+  }
+
+  if (kind === 'cost') {
+    const c = $('#cost'); L(c, 1);
+    const k = ks;
+    const stp = $('#stp');
+    place(stp, 960, 540, 540, 820, -12, k < 0 ? 0 : 1 + 1.2 * (1 - out3(clamp(k / 0.12))), clamp(k / 0.06));
+    [['#c1', 1, [520, 820, -7], [330, 1340, -7]], ['#c2', 2, [1420, 300, 6], [720, 1520, 6]]].forEach(([id, n, pl, pp]) => {
+      const kk = ks - n * BEAT;
+      place($(id), pl[0], pl[1], pp[0], pp[1], pl[2], kk < 0 ? 0 : slam(kk), kk < 0 ? 0 : 1);
+    });
+  }
+
+  if (kind === 'end') {
+    const e = $('#end'); L(e, 1);
+    const k = ks;
+    const img = $('img', e), nm = $('.nm', e), tg = $('.tg', e), ch = $('.ch', e), bar = $('.bar', e);
+    img.style.transform = `scale(${slam(k)})`;
+    const a1 = k - BEAT, a2 = k - 2 * BEAT, a3 = k - 3 * BEAT;
+    nm.style.opacity = a1 < 0 ? 0 : 1; nm.style.transform = `scale(${a1 < 0 ? 1 : slam(a1)})`;
+    tg.style.opacity = a2 < 0 ? 0 : 1; tg.style.transform = `translateY(${a2 < 0 ? 0 : (1 - out3(clamp(a2 / 0.2))) * 40}px)`;
+    ch.style.opacity = a3 < 0 ? 0 : 1; ch.style.transform = `scale(${a3 < 0 ? 1 : slam(a3)})`;
+    const a4 = k - 4 * BEAT;
+    bar.style.width = (a4 < 0 ? 0 : out3(clamp(a4 / 0.5)) * (FMT === 'L' ? 900 : 760)) + 'px';
+    // gentle pulse on remaining beats
+    const pulse = 1 + 0.03 * Math.exp(-kb / 0.12);
+    e.style.transform = `scale(${bi >= 36 ? pulse : 1})`;
+  }
+}
+
+window.render = render;
+window.DUR = DUR;
+render(0);
+
+if (!Q.has('render')) {
+  const fit = () => {
+    const s = Math.min(innerWidth / W, innerHeight / H), st = $('#stage');
+    st.style.transformOrigin = '0 0';
+    st.style.transform = `translate(${(innerWidth - W * s) / 2}px,${(innerHeight - H * s) / 2}px) scale(${s})`;
+  };
+  fit(); addEventListener('resize', fit);
+  let t0 = performance.now();
+  document.addEventListener('click', () => t0 = performance.now());
+  const loop = now => { render(((now - t0) / 1000) % (DUR + 0.5)); requestAnimationFrame(loop); };
+  document.fonts.ready.then(() => requestAnimationFrame(loop));
+}
+</script>
+</body>
+</html>

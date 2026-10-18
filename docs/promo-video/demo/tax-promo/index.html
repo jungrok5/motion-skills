@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>한서윤 세무회계 홍보 영상 (샘플)</title>
+<style>
+@font-face{font-family:P;src:url(../assets/fonts/Pretendard-Variable.woff2) format('woff2');font-weight:100 900}
+
+:root{
+  --navy:#0A1C36; --navy2:#13305A; --gold:#C8A256; --gold2:#E7CB8C;
+  --ivory:#F5F1E8; --ink:#0A1C36; --red:#E0464B; --muted:#7C8698; --line:#E4DDCD;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:#000;overflow:hidden}
+body{font-family:P,sans-serif;letter-spacing:-0.025em;word-break:keep-all;-webkit-font-smoothing:antialiased}
+em{font-style:normal}
+.red{color:var(--red)} .gold{color:var(--gold)}
+
+#stage{position:relative;overflow:hidden;width:1920px;height:1080px;background:var(--navy)}
+body.P #stage{width:1080px;height:1920px}
+
+/* backgrounds */
+.bg{position:absolute;inset:0}
+#bgN{background:radial-gradient(120% 90% at 20% 10%,#16386A 0%,#0A1C36 55%,#071327 100%)}
+#bgI{background:radial-gradient(120% 90% at 80% 0%,#FFFDF7 0%,#F5F1E8 55%,#ECE5D6 100%);opacity:0}
+#grid{position:absolute;inset:-120px;background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);background-size:96px 96px}
+.blob{position:absolute;border-radius:50%;filter:blur(40px);pointer-events:none}
+#b1{width:820px;height:820px;background:radial-gradient(circle,rgba(200,162,86,.30),transparent 65%)}
+#b2{width:1000px;height:1000px;background:radial-gradient(circle,rgba(70,120,200,.28),transparent 65%)}
+
+.scene{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0}
+
+/* kinetic text */
+.kt .w{display:inline-block;overflow:hidden;vertical-align:top;padding:0 .02em .1em;margin-bottom:-.1em}
+.kt .wi{display:inline-block;will-change:transform}
+br.p{display:none} body.P br.p{display:inline}
+br.l{display:inline} body.P br.l{display:none}
+
+.eyebrow{font-size:30px;font-weight:700;color:var(--gold);letter-spacing:.02em}
+.head{font-weight:800;line-height:1.22;color:#fff}
+
+/* ---------- S1 ---------- */
+#s1 .wrap{display:flex;align-items:center;gap:130px}
+body.P #s1 .wrap{flex-direction:column;gap:100px;text-align:center}
+body.P .cal{transform-origin:center;zoom:1.2}
+.cal{width:380px;height:440px;background:#fff;border-radius:30px;box-shadow:0 50px 90px rgba(0,0,0,.4);display:flex;flex-direction:column;position:relative;overflow:hidden}
+.cal .top{background:var(--red);height:112px;color:#fff;font-weight:800;font-size:38px;letter-spacing:.3em;display:flex;align-items:center;justify-content:center;padding-left:.3em}
+.cal .num{flex:1;display:flex;align-items:baseline;justify-content:center;padding-top:30px;color:var(--navy);font-weight:900}
+.cal .num b{font-size:200px;line-height:1}
+.cal .num span{font-size:84px;font-weight:800;margin-left:6px}
+.cal .lab{text-align:center;font-size:30px;font-weight:700;color:#6B7280;padding-bottom:40px}
+.cal .ring{position:absolute;top:18px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.22)}
+#s1 .txt{max-width:1060px}
+#s1 .head{font-size:84px;margin-top:22px}
+#s1 .sub{font-size:38px;font-weight:500;color:rgba(255,255,255,.72);margin-top:40px}
+body.P #s1 .head{font-size:88px}
+body.P #s1 .sub{font-size:40px}
+
+/* ---------- S2 ---------- */
+#s2 .wrap{display:flex;flex-direction:column;align-items:center;gap:60px;text-align:center}
+#s2 .head{font-size:76px}
+body.P #s2 .head{font-size:84px}
+.rcs{display:grid;grid-template-columns:repeat(4,320px);gap:34px}
+body.P .rcs{grid-template-columns:repeat(2,410px);gap:40px}
+.rc{position:relative;background:#FBFAF6;padding:30px 30px 52px;text-align:left;box-shadow:0 30px 60px rgba(0,0,0,.35)}
+.rc .hd{font-size:18px;font-weight:700;letter-spacing:.32em;color:#9AA1AD;padding-bottom:16px;border-bottom:2px dashed #D8D4CA}
+.rc .it{font-size:36px;font-weight:800;color:var(--ink);margin:22px 0 18px}
+.rc .ln{height:12px;border-radius:6px;background:#E9E5DC;margin-bottom:12px}
+.rc .ln.s{width:62%}
+.rc .amt{text-align:right;font-size:30px;font-weight:800;color:#5B6372;margin-top:18px}
+.stamp{position:absolute;left:50%;top:74%;border:7px solid var(--red);color:var(--red);font-size:58px;font-weight:900;padding:4px 26px 8px;border-radius:14px;letter-spacing:.08em;background:rgba(251,250,246,.6);white-space:nowrap}
+.meter{display:flex;align-items:center;gap:28px;width:1120px}
+body.P .meter{width:860px;flex-wrap:wrap;justify-content:center;gap:20px 24px}
+.meter .ml{font-size:32px;font-weight:700;color:#fff}
+.meter .tr{flex:1;height:28px;border-radius:14px;background:rgba(255,255,255,.12);overflow:hidden;min-width:520px}
+body.P .meter .tr{flex:none;width:860px;order:3}
+.meter .fl{height:100%;width:20%;border-radius:14px;background:linear-gradient(90deg,#B8343A,#FF6A6F);box-shadow:0 0 30px rgba(255,90,96,.7)}
+.meter .mr{font-size:32px;font-weight:800;color:var(--red)}
+
+/* ---------- S3 ---------- */
+#s3 .wrap{display:flex;flex-direction:column;align-items:center;gap:64px;text-align:center}
+#s3 .head{font-size:76px;color:var(--ink)}
+body.P #s3 .head{font-size:82px}
+.months{display:grid;grid-template-columns:repeat(6,232px);gap:22px}
+body.P .months{grid-template-columns:repeat(3,286px);gap:24px}
+.mo{position:relative;height:172px;border-radius:24px;background:#fff;border:2px solid var(--line);padding:24px 26px;text-align:left;box-shadow:0 14px 30px rgba(10,28,54,.06)}
+body.P .mo{height:196px}
+.mo .m{font-size:40px;font-weight:800;color:var(--ink)}
+.mo .e{position:absolute;left:26px;bottom:24px;font-size:24px;font-weight:700;color:#9AA1AD}
+.mo.ev .e{font-size:27px}
+.mo .ck{position:absolute;right:20px;top:20px;width:46px;height:46px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center}
+.mo .ck svg{width:26px;height:26px}
+#s3 .sub{font-size:42px;font-weight:600;color:var(--ink)}
+#s3 .sub b{font-weight:800;background:linear-gradient(transparent 62%,rgba(200,162,86,.45) 62%)}
+
+/* ---------- S4 ---------- */
+#s4 .wrap{display:flex;align-items:center;gap:120px}
+body.P #s4 .wrap{flex-direction:column;gap:70px;text-align:center}
+.pcard{position:relative;width:500px}
+body.P .pcard{width:520px}
+.pcard .frame{position:absolute;inset:0;border:3px solid var(--gold);border-radius:30px}
+.pcard .in{position:relative;border-radius:30px;overflow:hidden;background:#D7D8DA;box-shadow:0 40px 80px rgba(0,0,0,.4)}
+.pcard img{display:block;width:100%}
+.pcard .plate{background:var(--navy2);color:#fff;font-size:30px;font-weight:700;padding:22px 0;text-align:center;letter-spacing:.02em}
+.pcard .plate span{color:var(--gold2);font-weight:600;margin-right:12px}
+#s4 .txt{width:960px}
+#s4 .head{font-size:72px;margin-top:18px}
+.big{display:flex;align-items:flex-end;gap:26px;margin:14px 0 34px}
+body.P .big{justify-content:center}
+.big .n{font-size:230px;font-weight:900;line-height:.92;color:var(--gold);font-variant-numeric:tabular-nums;letter-spacing:-.04em}
+.big .n small{font-size:96px;font-weight:800;margin-left:8px;letter-spacing:0}
+.big .bl{font-size:34px;font-weight:600;color:rgba(255,255,255,.78);padding-bottom:22px;line-height:1.35;text-align:left}
+.chips{display:flex;flex-wrap:wrap;gap:16px}
+body.P .chips{justify-content:center;gap:18px}
+body.P .chip{font-size:31px;padding:16px 30px}
+body.P #s4 .head{font-size:76px}
+.chip{display:flex;align-items:center;gap:14px;border:2px solid rgba(200,162,86,.55);background:rgba(255,255,255,.05);border-radius:999px;padding:14px 28px;font-size:28px;font-weight:600;color:#fff}
+.chip i{width:10px;height:10px;border-radius:50%;background:var(--gold);display:block}
+
+/* ---------- S5 ---------- */
+#s5 .wrap{display:flex;flex-direction:column;align-items:center;gap:58px;text-align:center}
+#s5 .head{font-size:76px;color:var(--ink)}
+body.P #s5 .head{font-size:82px}
+.tiles{display:grid;grid-template-columns:repeat(3,460px);gap:26px}
+body.P .tiles{grid-template-columns:repeat(2,452px);gap:28px}
+.tile{display:flex;align-items:center;gap:28px;background:#fff;border:2px solid var(--line);border-radius:28px;padding:34px 34px;text-align:left;box-shadow:0 16px 34px rgba(10,28,54,.07)}
+body.P .tile{flex-direction:column;align-items:flex-start;gap:26px;padding:38px 36px}
+.tile .ic{flex:none;width:88px;height:88px;border-radius:22px;background:var(--navy);display:flex;align-items:center;justify-content:center}
+.tile .ic svg{width:48px;height:48px;fill:none;stroke:var(--gold2);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tile .t{font-size:36px;font-weight:800;color:var(--ink)}
+.tile .d{font-size:25px;font-weight:600;color:var(--muted);margin-top:8px}
+#s5 .foot{font-size:30px;font-weight:600;color:#5B6372}
+#s5 .foot b{color:var(--ink);font-weight:800}
+
+/* ---------- S6 ---------- */
+#s6 .wrap{display:flex;flex-direction:column;align-items:center;text-align:center}
+#s6 .tag{font-size:42px;font-weight:600;color:rgba(255,255,255,.82)}
+.mono{width:132px;height:132px;border-radius:50%;border:4px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:66px;font-weight:800;color:var(--gold);margin:56px 0 30px}
+#s6 .wm{font-size:120px;font-weight:900;color:#fff;letter-spacing:-.035em;line-height:1.1}
+body.P #s6 .wm{font-size:112px}
+#s6 .en{font-size:25px;font-weight:700;color:var(--gold);letter-spacing:.34em;margin-top:18px;padding-left:.34em}
+#s6 .div{height:3px;width:260px;background:var(--gold);margin:44px 0 40px;transform-origin:center}
+.phone{display:flex;align-items:center;gap:26px;font-size:104px;font-weight:900;color:var(--gold2);letter-spacing:-.01em;line-height:1}
+body.P .phone{font-size:100px}
+body.P .mono{width:150px;height:150px;font-size:76px;margin:70px 0 36px}
+body.P #s6 .tag{font-size:46px}
+body.P #s6 .info{font-size:38px;margin-top:44px}
+body.P #s6 .en{font-size:27px}
+body.P #s6 .hint{font-size:32px}
+.phone svg{width:84px;height:84px;fill:var(--gold2)}
+#s6 .info{font-size:32px;font-weight:500;color:rgba(255,255,255,.74);margin-top:34px;line-height:1.5}
+#s6 .info i{display:inline-block;width:2px;height:26px;background:rgba(255,255,255,.3);margin:0 24px;vertical-align:-3px}
+body.P #s6 .info i{display:none}
+.search{display:flex;align-items:center;gap:22px;width:760px;height:100px;border-radius:50px;background:#fff;padding:0 40px;margin-top:56px;box-shadow:0 30px 60px rgba(0,0,0,.35)}
+body.P .search{width:860px;margin-top:80px}
+.search svg{width:44px;height:44px;flex:none;fill:none;stroke:var(--navy);stroke-width:2.6;stroke-linecap:round}
+.search .q{font-size:42px;font-weight:700;color:var(--ink);white-space:pre}
+.search .caret{width:4px;height:48px;background:var(--navy);border-radius:2px}
+.search .go{margin-left:auto;font-size:26px;font-weight:800;color:#fff;background:var(--navy);border-radius:30px;padding:14px 30px}
+#s6 .hint{font-size:28px;font-weight:600;color:rgba(255,255,255,.66);margin-top:24px}
+
+/* overlay */
+#wipe{position:absolute;top:-10%;height:120%;width:160%;background:linear-gradient(90deg,#B98F42,#E2C27E 45%,#C8A256);transform:skewX(-14deg);box-shadow:0 0 0 14px rgba(255,255,255,.18);left:0;display:none}
+#bug{position:absolute;left:64px;bottom:50px;display:flex;align-items:center;gap:14px;font-size:26px;font-weight:800;letter-spacing:-.01em;opacity:0}
+body.P #bug{left:60px;top:84px;bottom:auto}
+#bug i{width:12px;height:12px;border-radius:50%;background:var(--gold);display:block}
+#bug span{font-weight:600;opacity:.6;font-size:22px;margin-left:4px}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="bg" id="bgN"></div>
+  <div class="bg" id="bgI"></div>
+  <div id="grid"></div>
+  <div class="blob" id="b1"></div>
+  <div class="blob" id="b2"></div>
+
+  <!-- S1 Hook -->
+  <section class="scene" id="s1"><div class="wrap">
+    <div class="cal"><div class="ring" style="left:110px"></div><div class="ring" style="right:110px"></div>
+      <div class="top">MAY</div><div class="num"><b>5</b><span>월</span></div><div class="lab">종합소득세 신고</div></div>
+    <div class="txt">
+      <div class="eyebrow">사업자 · 프리랜서 · 임대사업자라면</div>
+      <div class="head kt l1">5월에만 세무사 찾고,</div>
+      <div class="head kt l2" style="margin-top:0">신고 끝나면 <em class="gold">연락도 끝?</em></div>
+      <div class="sub">그 사이, 세금이 새고 있을지도 모릅니다.</div>
+    </div>
+  </div></section>
+
+  <!-- S2 Pain -->
+  <section class="scene" id="s2"><div class="wrap">
+    <div class="head kt h">놓친 경비 하나하나가</div>
+    <div class="rcs">
+      <div class="rc"><div class="hd">RECEIPT</div><div class="it">배달앱 수수료</div><div class="ln"></div><div class="ln s"></div><div class="amt">₩ ●●,●●●</div><div class="stamp">누락</div></div>
+      <div class="rc"><div class="hd">RECEIPT</div><div class="it">SNS 광고비</div><div class="ln"></div><div class="ln s"></div><div class="amt">₩ ●●●,●●●</div><div class="stamp">누락</div></div>
+      <div class="rc"><div class="hd">RECEIPT</div><div class="it">차량 유지비</div><div class="ln"></div><div class="ln s"></div><div class="amt">₩ ●●●,●●●</div><div class="stamp">누락</div></div>
+      <div class="rc"><div class="hd">RECEIPT</div><div class="it">업무용 통신비</div><div class="ln"></div><div class="ln s"></div><div class="amt">₩ ●●,●●●</div><div class="stamp">누락</div></div>
+    </div>
+    <div class="head kt h2"><em class="red">더 내는 세금</em>이 됩니다</div>
+    <div class="meter"><div class="ml">납부세액</div><div class="tr"><div class="fl"></div></div><div class="mr">▲ 증가</div></div>
+  </div></section>
+
+  <!-- S3 Turn -->
+  <section class="scene" id="s3"><div class="wrap">
+    <div class="head kt h">세금은 <em class="gold">5월 한 달</em>의<br class="p"> 일이 아닙니다</div>
+    <div class="months"></div>
+    <div class="sub">1년 내내 함께 챙기는 <b>기장 파트너</b>가 필요합니다</div>
+  </div></section>
+
+  <!-- S4 Credentials -->
+  <section class="scene" id="s4"><div class="wrap">
+    <div class="pcard"><div class="frame"></div><div class="in"><img src="../assets/avatar.svg" alt=""><div class="plate"><span>대표세무사</span>한서윤</div></div></div>
+    <div class="txt">
+      <div class="eyebrow">한서윤세무사사무소</div>
+      <div class="head kt h">상장사 회계팀장 출신 세무사</div>
+      <div class="big"><div class="n"><span class="cnt">16</span><small>년</small></div><div class="bl">건설·제조업<br>회계 실무 경력</div></div>
+      <div class="chips">
+        <div class="chip"><i></i>세무조사 대응 · 지방청·세무서·지자체</div>
+        <div class="chip"><i></i>삼일·안진·삼정 회계감사 대응</div>
+        <div class="chip"><i></i>구청 세법상담위원</div>
+        <div class="chip"><i></i>한국세무사회 정회원</div>
+        <div class="chip"><i></i>지역세무사회 위원</div>
+      </div>
+    </div>
+  </div></section>
+
+  <!-- S5 Services -->
+  <section class="scene" id="s5"><div class="wrap">
+    <div class="head kt h">개인부터 법인까지,<br class="p"> 한 곳에서</div>
+    <div class="tiles">
+      <div class="tile"><div class="ic"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></div><div><div class="t">기장 · 부가세</div><div class="d">매달 챙기는 장부 관리</div></div></div>
+      <div class="tile"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="2.2"/><circle cx="16" cy="16" r="2.2"/><path d="M18 6L6 18"/></svg></div><div><div class="t">종합소득세</div><div class="d">경비 누락 없는 신고</div></div></div>
+      <div class="tile"><div class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></svg></div><div><div class="t">프리랜서 · N잡</div><div class="d">3.3% 환급 신고까지</div></div></div>
+      <div class="tile"><div class="ic"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg></div><div><div class="t">상속 · 증여 · 양도</div><div class="d">미리 설계하는 절세</div></div></div>
+      <div class="tile"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 21V8l6-4v17"/><path d="M10 21h10V11l-6-2"/><path d="M14 13h2M14 17h2M6.5 11h1M6.5 15h1"/></svg></div><div><div class="t">건설 · 부동산</div><div class="d">업종 실무 경험 그대로</div></div></div>
+      <div class="tile"><div class="ic"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></div><div><div class="t">창업 · 법인전환</div><div class="d">시작부터 성장까지</div></div></div>
+    </div>
+    <div class="foot">네이버 블로그에 <b>업종별 절세 가이드</b> 연재 중</div>
+  </div></section>
+
+  <!-- S6 CTA -->
+  <section class="scene" id="s6"><div class="wrap">
+    <div class="tag">세금, 이제 혼자 고민하지 마세요</div>
+    <div class="mono">한</div>
+    <div class="wm kt">한서윤 세무회계</div>
+    <div class="en">HAN SEOYUN TAX &amp; ACCOUNTING</div>
+    <div class="div"></div>
+    <div class="phone"><svg viewBox="0 0 24 24"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg>02-000-0000</div>
+    <div class="info">서울 도심<i></i><br class="p">상담 평일 09:00 – 18:00</div>
+    <div class="search"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg><div class="q"></div><div class="caret"></div><div class="go">검색</div></div>
+    <div class="hint">블로그 · 온라인 상담에서 만나보세요</div>
+  </div></section>
+
+  <div id="wipe"></div>
+  <div id="bug"><i></i>한서윤 세무회계<span>세무사 한서윤</span></div>
+</div>
+
+<script>
+const Q = new URLSearchParams(location.search);
+const FMT = (Q.get('f') === 'p' || Q.get('o') === 'v') ? 'P' : 'L';
+document.body.classList.add(FMT);
+const W = FMT === 'L' ? 1920 : 1080, H = FMT === 'L' ? 1080 : 1920;
+const DUR = 30;
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+/* ---------- easing ---------- */
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, s, d) => clamp((t - s) / d);
+const lerp = (a, b, e) => a + (b - a) * e;
+const out3 = x => 1 - Math.pow(1 - x, 3);
+const out5 = x => 1 - Math.pow(1 - x, 5);
+const inOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const back = x => { const c1 = 1.6, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const mixHex = (a, b, e) => {
+  const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const A = p(a), B = p(b);
+  return `rgb(${A.map((v, i) => Math.round(lerp(v, B[i], e))).join(',')})`;
+};
+function tf(el, o, x = 0, y = 0, s = 1, r = 0) {
+  el.style.opacity = o;
+  el.style.transform = `translate(${x}px,${y}px) scale(${s}) rotate(${r}deg)`;
+}
+
+/* ---------- build dynamic DOM ---------- */
+// month tiles
+const MONTHS = [['1월', '부가세 신고', 1], ['2월', '원천세'], ['3월', '법인세 신고', 1], ['4월', '원천세'], ['5월', '종합소득세', 1], ['6월', '원천세'],
+  ['7월', '부가세 신고', 1], ['8월', '원천세'], ['9월', '원천세'], ['10월', '원천세'], ['11월', '중간예납', 1], ['12월', '원천세']];
+$('#s3 .months').innerHTML = MONTHS.map(([m, e, ev]) =>
+  `<div class="mo${ev ? ' ev' : ''}"><div class="m">${m}</div><div class="e">${e}</div><div class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div></div>`).join('');
+
+// receipt zigzag edge
+$$('.rc').forEach(rc => {
+  const n = 16, pts = ['0 0', '100% 0'];
+  for (let i = n; i >= 0; i--) pts.push(`${(i / n * 100).toFixed(2)}% ${i % 2 ? '100%' : 'calc(100% - 16px)'}`);
+  rc.style.clipPath = `polygon(${pts.join(',')})`;
+});
+
+// split kinetic text into words
+function splitKT(el) {
+  const words = [];
+  const walk = (node, cls) => {
+    [...node.childNodes].forEach(c => {
+      if (c.nodeType === 3) {
+        c.textContent.split(/(\s+)/).forEach(tok => {
+          if (!tok) return;
+          if (/^\s+$/.test(tok)) { el.appendChild(document.createTextNode(' ')); return; }
+          const w = document.createElement('span'); w.className = 'w';
+          const wi = document.createElement('span'); wi.className = 'wi' + (cls ? ' ' + cls : '');
+          wi.textContent = tok; w.appendChild(wi); el.appendChild(w); words.push(wi);
+        });
+      } else if (c.nodeName === 'BR') {
+        el.appendChild(c.cloneNode());
+      } else {
+        walk(c, c.className);
+      }
+    });
+  };
+  const src = el.cloneNode(true); el.innerHTML = '';
+  walk(src, '');
+  el._words = words;
+}
+$$('.kt').forEach(splitKT);
+
+/* ---------- timeline ---------- */
+const SCENES = [
+  { el: $('#s1'), a: 0, b: 4.55, exit: 4.15 },
+  { el: $('#s2'), a: 4.45, b: 9.5 },
+  { el: $('#s3'), a: 9.5, b: 14.5 },
+  { el: $('#s4'), a: 14.5, b: 21 },
+  { el: $('#s5'), a: 21, b: 26 },
+  { el: $('#s6'), a: 26, b: 99 },
+];
+const WIPES = [9.5, 14.5, 21, 26];
+const LIGHT = [[9.5, 14.5], [21, 26]]; // ivory scenes
+
+const A = [];  // [els, start, dur, kind, opts]
+const add = (sel, s, d, k, o = {}) => A.push([typeof sel === 'string' ? $$(sel) : sel, s, d, k, o]);
+// S1
+add('#s1 .cal', 0.1, 0.9, 'pop');
+add('#s1 .eyebrow', 0.35, 0.6, 'up');
+add('#s1 .l1', 0.55, 0, 'kt');
+add('#s1 .l2', 1.15, 0, 'kt');
+add('#s1 .sub', 2.35, 0.7, 'up');
+// S2
+add('#s2 .h', 4.65, 0, 'kt');
+$$('#s2 .rc').forEach((el, i) => add([el], 5.05 + i * 0.2, 0.75, 'drop', { r: [-3, 2, -2, 3][i] }));
+$$('#s2 .stamp').forEach((el, i) => add([el], 6.3 + i * 0.2, 0.38, 'stamp'));
+add('#s2 .h2', 7.2, 0, 'kt');
+add('#s2 .meter', 7.55, 0.6, 'up');
+// S3
+add('#s3 .h', 9.75, 0, 'kt');
+$$('#s3 .mo').forEach((el, i) => add([el], 10.1 + i * 0.045, 0.55, 'up', { dy: 50 }));
+add('#s3 .sub', 12.75, 0.7, 'up');
+// S4
+add('#s4 .pcard .in', 14.75, 0.9, FMT === 'L' ? 'left' : 'up', { dy: 80, dx: -100 });
+add('#s4 .eyebrow', 15.0, 0.6, 'up');
+add('#s4 .h', 15.15, 0, 'kt');
+add('#s4 .big', 15.6, 0.7, 'up');
+$$('#s4 .chip').forEach((el, i) => add([el], 16.8 + i * 0.26, 0.55, 'up', { dy: 30 }));
+// S5
+add('#s5 .h', 21.25, 0, 'kt');
+$$('#s5 .tile').forEach((el, i) => add([el], 21.65 + i * 0.14, 0.7, 'pop', { s0: .85 }));
+add('#s5 .foot', 24.2, 0.7, 'up');
+// S6
+add('#s6 .tag', 26.2, 0.7, 'up');
+add('#s6 .mono', 26.4, 0.8, 'pop');
+add('#s6 .wm', 26.6, 0, 'kt');
+add('#s6 .en', 27.0, 0.7, 'up', { dy: 20 });
+add('#s6 .phone', 27.35, 0.8, 'pop', { s0: .7 });
+add('#s6 .info', 27.75, 0.7, 'up');
+add('#s6 .search', 28.05, 0.7, 'up');
+add('#s6 .hint', 28.4, 0.7, 'up', { dy: 20 });
+
+function animate(t) {
+  for (const [els, s, d, k, o] of A) {
+    for (const el of els) {
+      if (k === 'kt') {
+        el._words.forEach((w, i) => {
+          const e = out5(prog(t, s + i * 0.075, 0.6));
+          w.style.transform = `translateY(${(1 - e) * 110}%)`;
+        });
+        continue;
+      }
+      const p = prog(t, s, d);
+      if (k === 'up') { const e = out3(p); tf(el, e, 0, (1 - e) * (o.dy ?? 44)); }
+      else if (k === 'left') { const e = out3(p); tf(el, e, (1 - e) * o.dx, 0); }
+      else if (k === 'pop') { const e = back(p); tf(el, clamp(p * 2.5), 0, 0, lerp(o.s0 ?? .6, 1, e)); }
+      else if (k === 'drop') { const e = out3(p); tf(el, clamp(p * 2), 0, (1 - e) * -140, 1, lerp(o.r * 4, o.r, e)); }
+      else if (k === 'stamp') { const e = out5(p); el.style.opacity = clamp(p * 3); el.style.transform = `translate(-50%,-50%) rotate(-14deg) scale(${lerp(2.4, 1, e)})`; }
+    }
+  }
+}
+
+function custom(t) {
+  // S1 calendar shake
+  const sh = prog(t, 1.75, 0.5);
+  if (sh > 0 && sh < 1) { const cal = $('#s1 .cal'); cal.style.transform += ` rotate(${Math.sin(sh * Math.PI * 6) * (1 - sh) * 6}deg)`; }
+  // S2 meter fill
+  const mf = inOut(prog(t, 7.9, 1.2));
+  $('#s2 .fl').style.width = lerp(18, 92, mf) + '%';
+  $('#s2 .mr').style.opacity = clamp((mf - .3) * 2);
+  // receipts shake when stamped
+  $$('#s2 .rc').forEach((rc, i) => {
+    const q = prog(t, 6.3 + i * 0.2 + 0.1, 0.3);
+    if (q > 0 && q < 1) rc.style.transform += ` translateX(${Math.sin(q * Math.PI * 5) * (1 - q) * 10}px)`;
+  });
+  // S3 month activation
+  $$('#s3 .mo').forEach((mo, i) => {
+    const a = prog(t, 10.75 + i * 0.14, 0.35), e = out3(a);
+    const ev = mo.classList.contains('ev');
+    const ck = $('.ck', mo);
+    ck.style.opacity = clamp(a * 3);
+    ck.style.transform = `scale(${back(a)})`;
+    mo.style.borderColor = mixHex('#E4DDCD', ev ? '#0A1C36' : '#C8A256', e);
+    if (ev) {
+      mo.style.background = mixHex('#FFFFFF', '#0A1C36', e);
+      $('.m', mo).style.color = mixHex('#0A1C36', '#FFFFFF', e);
+      $('.e', mo).style.color = mixHex('#9AA1AD', '#E7CB8C', e);
+      mo.style.transform += ` scale(${1 + Math.sin(a * Math.PI) * 0.06})`;
+    }
+  });
+  // S4 count + frame
+  const c = out3(prog(t, 15.6, 1.3));
+  $('#s4 .cnt').textContent = Math.round(16 * c);
+  const fr = out3(prog(t, 15.2, 0.8));
+  const off = FMT === 'L' ? 26 : 22;
+  $('#s4 .frame').style.opacity = fr;
+  $('#s4 .frame').style.transform = `translate(${fr * off}px,${fr * off}px)`;
+  // S5 highlight sweep
+  $$('#s5 .tile').forEach((tl, i) => {
+    const h = prog(t, 23.3 + i * 0.12, 0.4), e = Math.sin(clamp(h) * Math.PI);
+    tl.style.borderColor = mixHex('#E4DDCD', '#C8A256', clamp(h * 2));
+    tl.style.transform += ` translateY(${-e * 10}px)`;
+    $('.ic', tl).style.background = mixHex('#0A1C36', '#C8A256', e);
+  });
+  // S6 divider + typing
+  const dv = out3(prog(t, 27.05, 0.8));
+  $('#s6 .div').style.transform = `scaleX(${dv})`;
+  const q = '한서윤 세무회계';
+  const n = Math.floor(clamp((t - 28.5) / 0.9) * q.length);
+  $('#s6 .q').textContent = q.slice(0, n);
+  $('#s6 .caret').style.opacity = t < 28.3 ? 0 : (Math.floor(t * 2.2) % 2 === 0 || (t > 28.5 && t < 29.45) ? 1 : 0);
+  const go = prog(t, 29.4, 0.3);
+  $('#s6 .go').style.transform = `scale(${1 + Math.sin(go * Math.PI) * 0.12})`;
+}
+
+function background(t) {
+  let light = 0;
+  for (const [a, b] of LIGHT) if (t >= a && t < b) light = 1;
+  $('#bgI').style.opacity = light;
+  $('#grid').style.opacity = 1 - light;
+  $('#grid').style.transform = `translate(${(t * 12) % 96}px,${(t * 7) % 96}px)`;
+  const b1 = $('#b1'), b2 = $('#b2');
+  b1.style.left = (W * (0.72 + 0.10 * Math.sin(t * 0.32)) - 410) + 'px';
+  b1.style.top = (H * (0.25 + 0.10 * Math.cos(t * 0.27)) - 410) + 'px';
+  b2.style.left = (W * (0.18 + 0.08 * Math.cos(t * 0.22)) - 500) + 'px';
+  b2.style.top = (H * (0.80 + 0.08 * Math.sin(t * 0.3)) - 500) + 'px';
+  b1.style.opacity = light ? .55 : 1;
+  b2.style.opacity = light ? .25 : 1;
+
+  // gold wipe
+  const wipe = $('#wipe');
+  let shown = false;
+  for (const T of WIPES) {
+    const p = prog(t, T - 0.42, 0.84);
+    if (p > 0 && p < 1) {
+      const e = inOut(p);
+      wipe.style.display = 'block';
+      wipe.style.left = lerp(-2.0 * W, 1.4 * W, e) + 'px';
+      shown = true;
+    }
+  }
+  if (!shown) wipe.style.display = 'none';
+
+  // brand bug
+  const bug = $('#bug');
+  bug.style.opacity = clamp((t - 4.7) / 0.5) * (t < 25.9 ? 1 : 0);
+  bug.style.color = light ? '#0A1C36' : '#FFFFFF';
+}
+
+function scenes(t) {
+  for (const sc of SCENES) {
+    let o = (t >= sc.a && t < sc.b) ? 1 : 0;
+    let y = 0;
+    if (sc.exit != null && t >= sc.exit) { const e = inOut(prog(t, sc.exit, sc.b - sc.exit)); o *= 1 - e; y = -70 * e; }
+    sc.el.style.opacity = o;
+    sc.el.style.visibility = o > 0 ? 'visible' : 'hidden';
+    sc.el.style.transform = `translateY(${y}px)`;
+  }
+}
+
+window.render = function (t) {
+  scenes(t);
+  animate(t);
+  custom(t);
+  background(t);
+};
+window.DUR = DUR;
+window.FMT = FMT;
+render(0);
+
+// live preview mode (open the file in a browser)
+if (!Q.has('render')) {
+  const fit = () => {
+    const s = Math.min(innerWidth / W, innerHeight / H);
+    const st = $('#stage');
+    st.style.transformOrigin = '0 0';
+    st.style.transform = `translate(${(innerWidth - W * s) / 2}px,${(innerHeight - H * s) / 2}px) scale(${s})`;
+  };
+  fit(); addEventListener('resize', fit);
+  let t0 = performance.now();
+  document.addEventListener('click', () => t0 = performance.now());
+  const loop = now => { render(((now - t0) / 1000) % (DUR + 1)); requestAnimationFrame(loop); };
+  document.fonts.ready.then(() => requestAnimationFrame(loop));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>한서윤 세무회계 — 에디토리얼 (샘플)</title>
+<style>
+@font-face{font-family:P;src:url(../assets/fonts/Pretendard-Variable.woff2) format('woff2');font-weight:100 900}
+:root{--paper:#F2F0EB;--ink:#111;--blue:#1F3FD1}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:#000;overflow:hidden}
+body{font-family:P,sans-serif;letter-spacing:-.03em;word-break:keep-all;-webkit-font-smoothing:antialiased;color:var(--ink)}
+#stage{position:relative;overflow:hidden;width:1920px;height:1080px;background:var(--paper)}
+body.P #stage{width:1080px;height:1920px}
+.abs{position:absolute}
+.scene{position:absolute;inset:0;visibility:hidden}
+
+/* kinetic words */
+.kt .w{display:inline-block;overflow:hidden;vertical-align:top;padding:0 .02em .08em;margin-bottom:-.08em}
+.kt .wi{display:inline-block}
+.mk{overflow:hidden}
+.mk>*{display:block}
+
+/* grid + header */
+.vl{position:absolute;top:0;bottom:0;width:1px;background:rgba(0,0,0,.1);transform-origin:top}
+#hdr{position:absolute;left:96px;right:96px;top:62px;display:flex;justify-content:space-between;font:700 22px P;letter-spacing:.14em;z-index:20}
+body.P #hdr{left:64px;right:64px;top:84px;font-size:22px}
+body.P #hdr .mid{display:none}
+#hrule{position:absolute;left:96px;right:96px;top:108px;height:3px;background:var(--ink);transform-origin:left;z-index:20}
+body.P #hrule{left:64px;right:64px;top:130px}
+#prog{position:absolute;left:96px;right:96px;top:111px;height:6px;background:var(--blue);transform-origin:left;z-index:20}
+body.P #prog{left:64px;right:64px;top:133px}
+#foot{position:absolute;left:96px;bottom:56px;display:flex;gap:22px;align-items:center;font:800 28px P;z-index:20}
+body.P #foot{left:64px;bottom:84px;font-size:30px}
+#foot i{width:20px;height:20px;background:var(--blue);display:block}
+
+/* S2 — 16 */
+.roll{position:absolute;display:flex;color:var(--blue);font-weight:900;letter-spacing:-.07em;line-height:.86}
+.roll .col{height:.86em;overflow:hidden}
+.roll .strip{display:flex;flex-direction:column}
+.roll .strip span{height:.86em;display:block}
+#roll{left:70px;top:150px;font-size:660px}
+body.P #roll{left:40px;top:200px;font-size:800px}
+#cap2{left:96px;bottom:120px;font:900 66px/1.08 P}
+body.P #cap2{left:64px;top:1240px;bottom:auto;font-size:92px}
+#ticks{left:1000px;width:824px;top:560px;height:220px}
+body.P #ticks{left:64px;width:952px;top:950px;height:200px}
+#ticks .lab{position:absolute;top:0;left:0;font:800 22px P;letter-spacing:.14em;color:var(--blue)}
+#ticks .row{position:absolute;left:0;right:0;bottom:46px;height:120px;display:flex;justify-content:space-between;align-items:flex-end}
+#ticks .tk{width:4px;background:var(--ink);height:56px;transform-origin:bottom}
+#ticks .tk.f{height:96px}
+#ticks .tk.last{background:var(--blue);height:120px;width:8px}
+#ticks .base{position:absolute;left:0;right:0;bottom:44px;height:2px;background:var(--ink);transform-origin:left}
+#ticks .n{position:absolute;bottom:0;font:800 26px P}
+#side2{left:1000px;top:200px;width:824px;font:700 34px/1.45 P}
+body.P #side2{display:none}
+#side2 b{display:block;font:800 22px P;letter-spacing:.14em;color:var(--blue);margin-bottom:14px}
+
+/* S3 — profile */
+#photo{left:96px;top:170px;width:424px;height:430px;overflow:hidden;background:#D8D8D6}
+body.P #photo{left:64px;top:190px;width:452px;height:458px}
+#photo img{width:100%;height:100%;object-fit:cover;object-position:center 8%}
+#pcap{left:96px;top:630px;width:424px}
+body.P #pcap{left:576px;top:470px;width:440px}
+#pcap .k{font:800 22px P;letter-spacing:.14em;color:var(--blue)}
+#pcap .nm{font:900 64px/1.1 P;margin-top:10px}
+#pcap .of{font:700 26px P;margin-top:10px;color:#444}
+#vert{left:600px;top:180px;font:800 22px P;letter-spacing:.3em;color:var(--blue);writing-mode:vertical-rl}
+body.P #vert{display:none}
+#h3{left:1000px;top:170px;width:824px;font:900 78px/1.12 P;letter-spacing:-.045em}
+body.P #h3{left:64px;top:760px;width:952px;font-size:84px}
+#rows3{left:1000px;top:420px;width:824px}
+body.P #rows3{left:64px;top:1040px;width:952px}
+.rw{position:relative;display:grid;grid-template-columns:90px 1fr;padding:22px 0 22px;font:700 33px/1.3 P}
+body.P .rw{grid-template-columns:96px 1fr;padding:28px 0;font-size:38px}
+.rw .r{position:absolute;left:0;right:0;top:0;height:2px;background:var(--ink);transform-origin:left}
+.rw .r.bot{top:auto;bottom:0}
+.rw .no{font:800 24px P;color:var(--blue);padding-top:6px}
+body.P .rw .no{font-size:28px}
+
+/* panels */
+.panel{position:absolute;inset:0;visibility:hidden;z-index:10}
+#pBlue{background:var(--blue)}
+#pPaper{background:var(--paper)}
+
+/* S5 — services index (blue) */
+#s5{background:var(--blue);color:#fff;z-index:11}
+#t5{left:96px;top:170px;font:900 56px/1.15 P}
+body.P #t5{left:64px;top:190px;font-size:72px}
+#flip{left:70px;top:320px;font-size:400px}
+body.P #flip{left:44px;top:390px;font-size:520px}
+#flip .col{height:.86em}
+#flip, #flip .strip span{color:#fff}
+#nm5{left:96px;top:720px;width:860px;font:900 84px/1.1 P;height:1.12em}
+body.P #nm5{left:64px;top:860px;width:952px;font-size:96px}
+#ds5{left:96px;top:830px;width:860px;font:700 32px/1.3 P;height:1.3em;opacity:.85}
+body.P #ds5{left:64px;top:980px;width:952px;font-size:38px}
+.vstrip{overflow:hidden}
+.vstrip .in{display:flex;flex-direction:column}
+.vstrip .in span{display:block;white-space:nowrap}
+#nm5 .in span{height:1.12em}
+#ds5 .in span{height:1.3em}
+#toc{left:1000px;top:200px;width:824px}
+body.P #toc{left:64px;top:1150px;width:952px}
+.tr{position:relative;display:grid;grid-template-columns:80px 1fr auto;align-items:center;height:108px;padding:0 24px;font:800 38px P;border-top:2px solid rgba(255,255,255,.55)}
+body.P .tr{height:100px;font-size:40px}
+.tr:last-child{border-bottom:2px solid rgba(255,255,255,.55)}
+.tr .no{font:800 24px P;letter-spacing:.06em}
+.tr .pg{font:700 22px P;letter-spacing:.14em;opacity:.7}
+.tr .bgx{position:absolute;inset:0;background:#fff;transform-origin:left;z-index:-1}
+.tr{z-index:0}
+#lab5{left:1000px;top:150px;font:800 22px P;letter-spacing:.14em;color:#fff;opacity:.8}
+body.P #lab5{left:64px;top:1100px}
+
+/* S6 — contact */
+#k6{left:96px;top:170px;font:800 22px P;letter-spacing:.14em;color:var(--blue)}
+body.P #k6{left:64px;top:200px}
+#wm6{left:88px;top:210px;font:900 200px/1 P;letter-spacing:-.06em}
+body.P #wm6{left:56px;top:250px;font-size:210px}
+#sq6{left:96px;top:700px;width:72px;height:72px;background:var(--blue);transform-origin:left bottom}
+body.P #sq6{left:64px;top:740px;width:84px;height:84px}
+#tag6{left:200px;top:702px;font:800 34px/1.2 P;width:700px}
+body.P #tag6{left:176px;top:746px;font-size:40px;width:840px}
+#rows6{left:1000px;top:200px;width:824px}
+body.P #rows6{left:64px;top:1000px;width:952px}
+.cr{position:relative;display:grid;grid-template-columns:150px 1fr;align-items:baseline;padding:26px 0;font:800 36px/1.25 P}
+body.P .cr{grid-template-columns:170px 1fr;padding:30px 0;font-size:40px}
+.cr .r{position:absolute;left:0;right:0;top:0;height:2px;background:var(--ink);transform-origin:left}
+.cr .r.bot{top:auto;bottom:0}
+.cr .k{font:800 21px P;letter-spacing:.16em;color:var(--blue)}
+.cr.tel .v{font:900 84px/1 P;color:var(--blue);letter-spacing:-.04em}
+body.P .cr.tel .v{font-size:92px}
+.cr .sub{display:block;font:600 24px P;color:#555;margin-top:6px}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="grid"></div>
+
+  <!-- S2: 16 years -->
+  <section class="scene" id="s2">
+    <div class="roll" id="roll"><div class="col"><div class="strip" id="tens"></div></div><div class="col"><div class="strip" id="ones"></div></div></div>
+    <div class="abs mk" id="side2"><div><b>CAREER</b>상장사 회계팀장<br>건설·제조업 회계 실무</div></div>
+    <div class="abs" id="ticks"><div class="lab">YEARS</div><div class="row"></div><div class="base"></div><div class="n" style="left:0">1</div><div class="n" style="right:0;color:var(--blue)">16</div></div>
+    <div class="abs kt" id="cap2">년, 숫자 뒤에서<br>일해 왔습니다</div>
+  </section>
+
+  <!-- S3: profile -->
+  <section class="scene" id="s3">
+    <div class="abs" id="photo"><img src="../assets/avatar.svg" alt=""></div>
+    <div class="abs" id="pcap"><div class="mk"><div class="k">대표세무사</div></div><div class="mk"><div class="nm">한서윤</div></div><div class="mk"><div class="of">한서윤세무사사무소</div></div></div>
+    <div class="abs" id="vert">PROFILE — 02</div>
+    <div class="abs kt" id="h3">상장사 회계팀장이<br>세무사가 되었습니다</div>
+    <div class="abs" id="rows3">
+      <div class="rw"><div class="r"></div><div class="no">01</div><div class="mk"><div>건설·제조업 회계 실무 16년</div></div></div>
+      <div class="rw"><div class="r"></div><div class="no">02</div><div class="mk"><div>세무조사 대응 · 지방청·세무서·지자체</div></div></div>
+      <div class="rw"><div class="r"></div><div class="no">03</div><div class="mk"><div>삼일·안진·삼정 회계감사 대응</div></div></div>
+      <div class="rw"><div class="r"></div><div class="r bot"></div><div class="no">04</div><div class="mk"><div>구청 세법상담위원</div></div></div>
+    </div>
+  </section>
+
+  <div class="panel" id="pBlue"></div>
+
+  <!-- S5: services index -->
+  <section class="scene" id="s5">
+    <div class="abs kt" id="t5">개인부터 법인까지,<br>한 곳에서</div>
+    <div class="roll" id="flip"><div class="col"><div class="strip" id="flipS"></div></div></div>
+    <div class="abs vstrip" id="nm5"><div class="in"></div></div>
+    <div class="abs vstrip" id="ds5"><div class="in"></div></div>
+    <div class="abs" id="lab5">INDEX — SERVICES</div>
+    <div class="abs" id="toc"></div>
+  </section>
+
+  <div class="panel" id="pPaper"></div>
+
+  <!-- S6: contact -->
+  <section class="scene" id="s6">
+    <div class="abs" id="k6">CONTACT — 04</div>
+    <div class="abs kt" id="wm6">한서윤<br>세무회계</div>
+    <div class="abs" id="sq6"></div>
+    <div class="abs mk" id="tag6"><div>세금, 이제 혼자<br>고민하지 마세요</div></div>
+    <div class="abs" id="rows6">
+      <div class="cr tel"><div class="r"></div><div class="k">TEL</div><div class="mk"><div class="v">02-000-0000</div></div></div>
+      <div class="cr"><div class="r"></div><div class="k">ADDRESS</div><div class="mk"><div class="v">서울 도심</div></div></div>
+      <div class="cr"><div class="r"></div><div class="k">HOURS</div><div class="mk"><div class="v">평일 09:00 – 18:00</div></div></div>
+      <div class="cr"><div class="r"></div><div class="r bot"></div><div class="k">ONLINE</div><div class="mk"><div class="v">블로그 · 온라인 상담<span class="sub">「한서윤 세무회계」</span></div></div></div>
+    </div>
+  </section>
+
+  <div id="hdr"><span>HAN SEOYUN TAX &amp; ACCOUNTING</span><span class="mid">SEOUL</span><span>NO. <b id="no">01</b> / 04</span></div>
+  <div id="hrule"></div>
+  <div id="prog"></div>
+  <div id="foot"><i></i>한서윤 세무회계 · 02-000-0000</div>
+</div>
+
+<script>
+const Q = new URLSearchParams(location.search);
+const FMT = (Q.get('f') === 'p' || Q.get('o') === 'v') ? 'P' : 'L';
+document.body.classList.add(FMT);
+const W = FMT === 'L' ? 1920 : 1080, H = FMT === 'L' ? 1080 : 1920;
+const DUR = 21;
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, s, d) => clamp((t - s) / d);
+const lerp = (a, b, e) => a + (b - a) * e;
+const out3 = x => 1 - Math.pow(1 - x, 3);
+const out5 = x => 1 - Math.pow(1 - x, 5);
+const expo = x => x >= 1 ? 1 : 1 - Math.pow(2, -10 * x);
+const inOutExpo = x => x <= 0 ? 0 : x >= 1 ? 1 : x < .5 ? Math.pow(2, 20 * x - 10) / 2 : (2 - Math.pow(2, -20 * x + 10)) / 2;
+const backS = x => { const c1 = 1.15, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const mixHex = (a, b, e) => { const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); const A = p(a), B = p(b); return `rgb(${A.map((v, i) => Math.round(lerp(v, B[i], e))).join(',')})`; };
+
+/* ---------- build ---------- */
+// grid lines
+const GX = FMT === 'L' ? [96, 520, 1000, 1410, 1824] : [64, 376, 540, 704, 1016];
+$('#grid').innerHTML = GX.map(x => `<div class="vl" style="left:${x}px"></div>`).join('');
+
+// 16 roll strips (0..17 for the overshoot)
+const N = 18;
+$('#tens').innerHTML = Array.from({ length: N }, (_, i) => `<span>${Math.floor(i / 10)}</span>`).join('');
+$('#ones').innerHTML = Array.from({ length: N }, (_, i) => `<span>${i % 10}</span>`).join('');
+// ticks
+$('#ticks .row').innerHTML = Array.from({ length: 16 }, (_, i) => `<div class="tk${(i + 1) % 5 === 0 ? ' f' : ''}${i === 15 ? ' last' : ''}"></div>`).join('');
+
+// services
+const SV = [['기장 · 부가세', '매달 챙기는 장부 관리'], ['종합소득세', '경비 누락 없는 신고'], ['프리랜서 · N잡', '3.3% 환급 신고까지'],
+  ['상속 · 증여 · 양도', '미리 설계하는 절세'], ['건설 · 부동산', '업종 실무 경험 그대로'], ['창업 · 법인전환', '시작부터 성장까지']];
+$('#flipS').innerHTML = ['<span>&nbsp;</span>', ...SV.map((_, i) => `<span>0${i + 1}</span>`)].join('');
+$('#nm5 .in').innerHTML = ['<span>&nbsp;</span>', ...SV.map(s => `<span>${s[0]}</span>`)].join('');
+$('#ds5 .in').innerHTML = ['<span>&nbsp;</span>', ...SV.map(s => `<span>${s[1]}</span>`)].join('');
+$('#toc').innerHTML = SV.map((s, i) => `<div class="tr"><div class="bgx"></div><div class="no">0${i + 1}</div><div class="nm">${s[0]}</div><div class="pg">P. 0${i + 1}</div></div>`).join('');
+
+// kinetic split
+function splitKT(el) {
+  const words = [];
+  const walk = (node) => {
+    [...node.childNodes].forEach(c => {
+      if (c.nodeType === 3) {
+        c.textContent.split(/(\s+)/).forEach(tok => {
+          if (!tok) return;
+          if (/^\s+$/.test(tok)) { el.appendChild(document.createTextNode(' ')); return; }
+          const w = document.createElement('span'); w.className = 'w';
+          const wi = document.createElement('span'); wi.className = 'wi';
+          wi.textContent = tok; w.appendChild(wi); el.appendChild(w); words.push(wi);
+        });
+      } else if (c.nodeName === 'BR') el.appendChild(document.createElement('br'));
+      else walk(c);
+    });
+  };
+  const src = el.cloneNode(true); el.innerHTML = ''; walk(src); el._words = words;
+}
+$$('.kt').forEach(splitKT);
+function kt(el, t, s, stag = 0.06, d = 0.5) {
+  el._words.forEach((w, i) => { const e = expo(prog(t, s + i * stag, d)); w.style.transform = `translateY(${(1 - e) * 110}%)`; });
+}
+// mask reveal: child of .mk slides up
+function mk(el, t, s, d = 0.5) { const e = expo(prog(t, s, d)); el.firstElementChild.style.transform = `translateY(${(1 - e) * 110}%)`; }
+function rule(el, t, s, d = 0.45) { el.style.transform = `scaleX(${inOutExpo(prog(t, s, d))})`; }
+
+/* ---------- timeline (120 bpm → beat 0.5s) ---------- */
+const SC = { s2: [1.5, 6.0], s3: [6.0, 11.45], s5: [11.45, 16.95], s6: [16.95, 99] };
+
+function render(t) {
+  for (const id in SC) { const [a, b] = SC[id]; $('#' + id).style.visibility = t >= a && t < b ? 'visible' : 'hidden'; }
+
+  // grid + header (persistent)
+  $$('#grid .vl').forEach((v, i) => v.style.transform = `scaleY(${inOutExpo(prog(t, 0.1 + i * 0.12, 0.7))})`);
+  $('#hrule').style.transform = `scaleX(${inOutExpo(prog(t, 0.0, 0.8))})`;
+  $('#prog').style.transform = `scaleX(${clamp(t / DUR)})`;
+  const hdr = $('#hdr');
+  $$('#hdr span').forEach((s, i) => { const e = expo(prog(t, 0.45 + i * 0.12, 0.5)); s.style.opacity = e; s.style.transform = `translateY(${(1 - e) * 20}px)`; });
+  const no = t < 6 ? 1 : t < 11.45 ? 2 : t < 16.95 ? 3 : 4;
+  $('#no').textContent = '0' + no;
+  const onBlue = t >= 11.38 && t < 16.73;
+  hdr.style.color = onBlue ? '#fff' : '#111';
+  $('#hrule').style.background = onBlue ? '#fff' : '#111';
+  $('#prog').style.background = onBlue ? '#fff' : '#1F3FD1';
+  const foot = $('#foot');
+  foot.style.opacity = expo(prog(t, 1.0, 0.5)) * (t < 16.95 ? 1 : 0);
+  foot.style.color = onBlue ? '#fff' : '#111';
+  foot.firstElementChild.style.background = onBlue ? '#fff' : '#1F3FD1';
+
+  // ---- S2: 16 rolls in
+  const rp = prog(t, 1.55, 1.25);
+  const v = 16 * backS(rp);
+  const lh = 0.86;
+  $('#tens').style.transform = `translateY(${-v * lh}em)`;
+  $('#ones').style.transform = `translateY(${-v * lh}em)`;
+  const speed = rp > 0 && rp < 1 ? Math.abs(16 * (backS(clamp(rp + 0.01)) - backS(clamp(rp - 0.01))) / (0.02 * 1.25)) : 0;
+  $('#roll').style.filter = `blur(${Math.min(10, speed * 0.25).toFixed(2)}px)`;
+  const re = expo(prog(t, 1.5, 0.4));
+  $('#roll').style.opacity = re;
+  // ticks
+  $$('#ticks .tk').forEach((tk, i) => { const on = v >= i + 0.5; tk.style.transform = `scaleY(${on ? 1 : 0})`; });
+  $('#ticks .base').style.transform = `scaleX(${inOutExpo(prog(t, 1.5, 0.6))})`;
+  $$('#ticks .n, #ticks .lab').forEach((n, i) => n.style.opacity = expo(prog(t, 1.8 + i * 0.1, 0.4)));
+  // lock flash on the beat after landing
+  const lk = prog(t, 3.0, 0.5);
+  $('#roll').style.transform = `scale(${1 + Math.sin(lk * Math.PI) * 0.012})`;
+  mk($('#side2'), t, 3.0);
+  kt($('#cap2'), t, 3.5, 0.08);
+  // S2 out: snap upward on cut
+  const o2 = prog(t, 5.75, 0.25);
+  $('#s2').style.transform = `translateY(${-inOutExpo(o2) * 60}px)`;
+
+  // ---- S3: profile
+  const ph = $('#photo');
+  const pe = inOutExpo(prog(t, 6.0, 0.6));
+  ph.style.clipPath = `inset(${(1 - pe) * 100}% 0 0 0)`;
+  ph.firstElementChild.style.transform = `scale(${lerp(1.25, 1.0, out3(prog(t, 6.0, 2.5)))})`;
+  $$('#pcap .mk').forEach((m, i) => mk(m, t, 6.5 + i * 0.1));
+  $('#vert').style.opacity = expo(prog(t, 6.6, 0.4));
+  kt($('#h3'), t, 6.4, 0.07);
+  $$('#rows3 .rw').forEach((rw, i) => {
+    const s = 7.5 + i * 0.5;        // one row per beat
+    $$('.r', rw).forEach(r => rule(r, t, s - 0.05));
+    mk($('.mk', rw), t, s + 0.08);
+    const no = $('.no', rw); no.style.opacity = expo(prog(t, s + 0.05, 0.3));
+  });
+
+  // ---- blue wipe (bottom → up) 11.0–11.45
+  const pb = $('#pBlue');
+  const bw = prog(t, 11.0, 0.45);
+  pb.style.visibility = bw > 0 && t < 11.45 ? 'visible' : 'hidden';
+  pb.style.transform = `translateY(${(1 - inOutExpo(bw)) * 100}%)`;
+
+  // ---- S5: services index
+  kt($('#t5'), t, 11.5, 0.06);
+  const STEP = 0.75, S0 = 11.75;
+  let pos = 0;
+  for (let k = 0; k < SV.length; k++) pos += out5(prog(t, S0 + k * STEP, 0.32));
+  $('#flipS').style.transform = `translateY(${-pos * 0.86}em)`;
+  $('#nm5 .in').style.transform = `translateY(${-pos * 1.12}em)`;
+  let pos2 = 0;
+  for (let k = 0; k < SV.length; k++) pos2 += out5(prog(t, S0 + 0.06 + k * STEP, 0.32));
+  $('#ds5 .in').style.transform = `translateY(${-pos2 * 1.3}em)`;
+  $('#lab5').style.opacity = expo(prog(t, 11.6, 0.4)) * 0.8;
+  $$('#toc .tr').forEach((tr, i) => {
+    const e = expo(prog(t, 11.6 + i * 0.06, 0.45));
+    tr.style.opacity = e; tr.style.transform = `translateX(${(1 - e) * 60}px)`;
+    // active highlight: on while pos in (i+0.5, i+1.5]
+    const eIn = clamp(pos - i), eOut = clamp(pos - i - 1);
+    const bg = $('.bgx', tr);
+    bg.style.transformOrigin = eOut > 0 ? 'right' : 'left';
+    bg.style.transform = `scaleX(${eOut > 0 ? 1 - eOut : eIn})`;
+    tr.style.color = eIn > 0.5 && eOut < 0.5 ? '#1F3FD1' : '#FFFFFF';
+  });
+  // last row stays lit to end; at the end all rows flash checked
+  if (t > S0 + 5 * STEP + 0.4) {
+    const f = prog(t, S0 + 5 * STEP + 0.4, 0.5);
+    $$('#toc .tr').forEach((tr, i) => {
+      const e = inOutExpo(prog(t, S0 + 5 * STEP + 0.4 + i * 0.04, 0.3));
+      const bg = $('.bgx', tr); bg.style.transformOrigin = 'left';
+      bg.style.transform = `scaleX(${i === 5 ? 1 : e})`;
+      tr.style.color = (i === 5 || e > 0.5) ? '#1F3FD1' : '#fff';
+    });
+  }
+
+  // ---- paper wipe (right → left) 16.5–16.95
+  const pp = $('#pPaper');
+  const pw = prog(t, 16.5, 0.45);
+  pp.style.visibility = pw > 0 && t < 16.95 ? 'visible' : 'hidden';
+  pp.style.zIndex = 12;
+  pp.style.transform = `translateX(${(1 - inOutExpo(pw)) * 100}%)`;
+
+  // ---- S6: contact
+  $('#k6').style.opacity = expo(prog(t, 17.0, 0.4));
+  kt($('#wm6'), t, 17.0, 0.12, 0.55);
+  const sq = inOutExpo(prog(t, 17.6, 0.45));
+  $('#sq6').style.transform = `scale(${sq})`;
+  mk($('#tag6'), t, 17.8);
+  $$('#rows6 .cr').forEach((cr, i) => {
+    const s = 17.5 + i * 0.5;
+    $$('.r', cr).forEach(r => rule(r, t, s - 0.05));
+    mk($('.mk', cr), t, s + 0.08);
+    $('.k', cr).style.opacity = expo(prog(t, s + 0.05, 0.3));
+  });
+  // phone pulse on beats near the end
+  const tel = $('.cr.tel .v');
+  const pul = t > 19.5 ? Math.max(0, 1 - ((t - 19.5) % 1.0) / 0.25) : 0;
+  tel.style.scale = String(1 + pul * 0.03);
+  tel.style.transformOrigin = 'left center';
+}
+
+window.render = render;
+window.DUR = DUR;
+window.FMT = FMT;
+render(0);
+
+if (!Q.has('render')) {
+  const fit = () => { const s = Math.min(innerWidth / W, innerHeight / H), st = $('#stage'); st.style.transformOrigin = '0 0'; st.style.transform = `translate(${(innerWidth - W * s) / 2}px,${(innerHeight - H * s) / 2}px) scale(${s})`; };
+  fit(); addEventListener('resize', fit);
+  let t0 = performance.now();
+  document.addEventListener('click', () => t0 = performance.now());
+  const loop = now => { render(((now - t0) / 1000) % (DUR + 1)); requestAnimationFrame(loop); };
+  document.fonts.ready.then(() => requestAnimationFrame(loop));
+}
+</script>
+</body>
+</html>

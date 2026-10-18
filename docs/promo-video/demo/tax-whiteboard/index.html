@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>1분 세금 노트 (샘플)</title>
+<style>
+@font-face{font-family:P;src:url(../assets/fonts/Pretendard-Variable.woff2) format('woff2');font-weight:100 900}
+@font-face{font-family:Pen;src:url(../assets/fonts/NanumPen-ko.woff2)}
+@font-face{font-family:Pen;src:url(../assets/fonts/NanumPen-latin.woff2);unicode-range:U+0000-00FF,U+2190-21FF,U+00D7}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:#000;overflow:hidden}
+body{font-family:P,sans-serif;letter-spacing:-.02em;word-break:keep-all}
+#stage{position:relative;overflow:hidden;width:1920px;height:1080px;
+  background:radial-gradient(120% 100% at 50% 40%,#FFFFFE 0%,#FAFAF7 60%,#EFEFEA 100%)}
+body.P #stage{width:1080px;height:1920px}
+.smudge{position:absolute;border-radius:50%;background:radial-gradient(closest-side,rgba(120,130,150,.06),transparent);pointer-events:none}
+.board{position:absolute;inset:0}
+.board svg{position:absolute;inset:0;overflow:visible}
+.tx{position:absolute;white-space:nowrap;line-height:1;font-family:Pen;z-index:2}
+.pr{position:absolute;white-space:nowrap;line-height:1.1;font-family:P;z-index:2}
+.pr small{font-size:.5em;font-weight:800;letter-spacing:.06em;margin-right:.3em;vertical-align:.35em}
+.hl{position:absolute;z-index:1;background:rgba(255,222,72,.72);border-radius:8px;transform-origin:left center}
+.photo{position:absolute;border-radius:50%;overflow:hidden;background:#D7D8DA}
+.photo img{width:100%;height:100%;object-fit:cover;object-position:center 8%;transform:scale(1.25);transform-origin:center 20%}
+#pen{position:absolute;left:0;top:0;width:1px;height:1px;z-index:10;pointer-events:none}
+#pen svg{position:absolute;left:0;top:0;overflow:visible}
+#eraser{position:absolute;left:0;top:0;width:250px;height:120px;z-index:11;display:none}
+#eraser .top{height:62px;background:linear-gradient(#2A3A5C,#1D2A44);border-radius:16px 16px 4px 4px;box-shadow:0 14px 26px rgba(0,0,0,.25)}
+#eraser .felt{height:52px;background:repeating-linear-gradient(90deg,#CFCFCA 0 6px,#C2C2BC 6px 12px);border-radius:0 0 10px 10px}
+#eraser .top span{display:block;color:#E7CB8C;font:800 22px P;text-align:center;padding-top:18px;letter-spacing:.2em}
+#bug{position:absolute;left:150px;bottom:48px;display:flex;align-items:center;gap:14px;font:800 28px P;color:#1D2A44;z-index:5}
+body.P #bug{left:70px;top:64px;bottom:auto;font-size:30px}
+#bug i{width:16px;height:16px;border-radius:50%;background:#C8A256;display:block}
+#bug span{font-weight:600;color:#6B7486}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="smudge" style="left:8%;top:12%;width:46%;height:30%"></div>
+  <div class="smudge" style="left:52%;top:58%;width:40%;height:28%"></div>
+  <div class="smudge" style="left:20%;top:70%;width:30%;height:20%"></div>
+  <div class="board" id="b1"><svg></svg></div>
+  <div class="board" id="b2"><svg></svg></div>
+  <div class="board" id="b3"><svg></svg></div>
+  <div id="eraser"><div class="top"><span>ERASER</span></div><div class="felt"></div></div>
+  <div id="pen"><svg width="1" height="1"><g id="penG">
+    <g transform="translate(10 14)" opacity=".18"><g transform="rotate(-38)"><rect x="40" y="-27" width="300" height="54" rx="18" fill="#000"/></g></g>
+    <g transform="rotate(-38)">
+      <path id="penTip" d="M0 0 L30 -11 L30 11 Z" fill="#1D2A44"/>
+      <rect x="28" y="-17" width="22" height="34" rx="4" fill="#E9E9E4"/>
+      <rect x="46" y="-26" width="290" height="52" rx="18" fill="#22304D"/>
+      <rect x="262" y="-26" width="30" height="52" fill="#C8A256"/>
+      <rect id="penCap" x="318" y="-22" width="30" height="44" rx="10" fill="#1D2A44"/>
+      <rect x="60" y="-20" width="190" height="8" rx="4" fill="#fff" opacity=".18"/>
+    </g></g></svg></div>
+  <div id="bug"><i></i>한서윤 세무사의 1분 세금 노트<span>· 02-000-0000</span></div>
+</div>
+
+<script>
+const Q = new URLSearchParams(location.search);
+const FMT = (Q.get('f') === 'p' || Q.get('o') === 'v') ? 'P' : 'L';
+document.body.classList.add(FMT);
+const LS = FMT === 'L';
+const W = LS ? 1920 : 1080, H = LS ? 1080 : 1920;
+const c = (l, p) => LS ? l : p;
+const DUR = 37;
+const $ = (s, r = document) => r.querySelector(s);
+
+const INK = '#1D2A44', RED = '#E0463F', BLUE = '#2E6BE6', GRAY = '#8A93A6', HLC = '#F2C53D';
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, e) => a + (b - a) * e;
+const inOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const out3 = x => 1 - Math.pow(1 - x, 3);
+
+/* ---------- rough hand-drawn shapes (seeded, deterministic) ---------- */
+let seed = 7;
+const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const j = a => (rnd() * 2 - 1) * a;
+const f = n => n.toFixed(1);
+function line(x1, y1, x2, y2, a = 4) {
+  return `M${f(x1 + j(2))} ${f(y1 + j(2))} Q${f((x1 + x2) / 2 + j(a))} ${f((y1 + y2) / 2 + j(a))} ${f(x2 + j(2))} ${f(y2 + j(2))}`;
+}
+function rect(x, y, w, h) {
+  const P = [[x, y], [x + w, y], [x + w, y + h], [x, y + h], [x, y]];
+  let d = `M${f(x + j(4))} ${f(y + j(4))}`;
+  for (let i = 1; i < 5; i++) {
+    const [ax, ay] = P[i - 1], [bx, by] = P[i];
+    d += ` Q${f((ax + bx) / 2 + j(5))} ${f((ay + by) / 2 + j(5))} ${f(bx + j(4))} ${f(by + j(4))}`;
+  }
+  return d + ` L${f(x + 22)} ${f(y + j(3))}`;
+}
+function ellipse(cx, cy, rx, ry, a0 = -2.3, turns = 1.1) {
+  const N = 80; let d = '';
+  for (let i = 0; i <= N; i++) {
+    const a = a0 + (i / N) * Math.PI * 2 * turns;
+    const k = 1 + 0.035 * Math.sin(a * 3 + 1) + i / N * 0.05;
+    d += (i ? ' L' : 'M') + f(cx + Math.cos(a) * rx * k) + ' ' + f(cy + Math.sin(a) * ry * k);
+  }
+  return d;
+}
+function pill(x, y, w, h) {
+  const r = h / 2, a = x + w - r, b = x + r, k = r * 1.33;
+  return `M${f(b + j(3))} ${f(y + j(2))} L${f(a + j(3))} ${f(y + j(2))} C${f(a + k)} ${f(y + j(2))} ${f(a + k)} ${f(y + h + j(2))} ${f(a + j(2))} ${f(y + h + j(2))} L${f(b + j(3))} ${f(y + h + j(2))} C${f(b - k)} ${f(y + h)} ${f(b - k)} ${f(y + j(2))} ${f(b + 24)} ${f(y + j(2))}`;
+}
+const check = (x, y, s) => `M${x} ${y + s * .45} L${x + s * .36} ${y + s * .85} L${x + s * 1.1} ${y - s * .25}`;
+const head = (x, y, ang, s = 30) => { // arrow head with tip at x,y pointing along ang (deg)
+  const a = ang * Math.PI / 180, l = a + 2.6, r = a - 2.6;
+  return ` M${f(x + Math.cos(l) * s)} ${f(y + Math.sin(l) * s)} L${x} ${y} L${f(x + Math.cos(r) * s)} ${f(y + Math.sin(r) * s)}`;
+};
+
+/* ---------- item builders ---------- */
+const ITEMS = [];
+const boards = { 1: $('#b1'), 2: $('#b2'), 3: $('#b3') };
+function txt(b, s, d, html, o) {
+  const el = document.createElement('div');
+  el.className = o.print ? 'pr' : 'tx';
+  el.innerHTML = html;
+  el.style.fontSize = o.size + 'px';
+  el.style.color = o.color || INK;
+  if (o.weight) el.style.fontWeight = o.weight;
+  el.style.top = o.y + 'px';
+  el.style.left = (o.x ?? 0) + 'px';
+  boards[b].appendChild(el);
+  const it = { k: 'text', b, s, d, el, o, pen: !o.print, color: o.color || INK, n: el.textContent.length };
+  ITEMS.push(it); return it;
+}
+function path(b, s, d, pathD, o = {}) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  el.setAttribute('d', pathD);
+  el.setAttribute('fill', 'none');
+  el.setAttribute('stroke', o.color || INK);
+  el.setAttribute('stroke-width', o.w || 6);
+  el.setAttribute('stroke-linecap', 'round');
+  el.setAttribute('stroke-linejoin', 'round');
+  $('svg', boards[b]).appendChild(el);
+  const it = { k: 'path', b, s, d, el, pen: true, color: o.color || INK };
+  ITEMS.push(it); return it;
+}
+function hl(b, s, d, ref, o = {}) {
+  const el = document.createElement('div'); el.className = 'hl';
+  if (o.bg) el.style.background = o.bg;
+  boards[b].appendChild(el);
+  const it = { k: 'hl', b, s, d, el, ref, o, pen: true, color: HLC };
+  ITEMS.push(it); return it;
+}
+function photo(b, s, d, cx, cy, size) {
+  const el = document.createElement('div'); el.className = 'photo';
+  el.innerHTML = '<img src="../assets/avatar.svg" alt="">';
+  Object.assign(el.style, { left: cx - size / 2 + 'px', top: cy - size / 2 + 'px', width: size + 'px', height: size + 'px' });
+  boards[b].appendChild(el);
+  ITEMS.push({ k: 'img', b, s, d, el });
+}
+
+/* ---------- BOARD 1: 매출 − 경비 = 소득 → × 세율 = 세금 ---------- */
+txt(1, 0.6, 1.4, '세금은 이렇게 정해져요', c({ x: 150, y: 70, size: 116 }, { cx: 540, y: 170, size: 112 }));
+const BX = c([[190, 330, 330, 190], [700, 330, 330, 190], [1210, 330, 350, 190]],
+             [[140, 380, 400, 170], [140, 680, 400, 170], [140, 1000, 400, 170]]);
+const WORDS = ['매출', '경비', '소득'];
+const CAPS = c(['들어온 돈', '사업에 쓴 돈', '세금의 기준'], ['← 들어온 돈', '← 사업에 쓴 돈', '← 세금의 기준']);
+const T0 = [2.2, 4.4, 6.75];
+BX.forEach(([x, y, w, h], i) => {
+  path(1, T0[i], 0.7, rect(x, y, w, h), { w: 6 });
+  txt(1, T0[i] + 0.75, 0.45, WORDS[i], { cx: x + w / 2, y: y + (h - 100) / 2 + 6, size: 104, color: i === 1 ? RED : INK });
+  txt(1, T0[i] + 1.25, 0.5, CAPS[i], c({ cx: x + w / 2, y: y - 74, size: 56, color: GRAY }, { x: 580, y: y + 58, size: 60, color: GRAY }));
+});
+path(1, 4.0, 0.3, c(line(572, 428, 650, 425, 2), line(300, 625, 380, 622, 2)), { w: 8 });
+path(1, 6.25, 0.4, c(line(1082, 408, 1160, 405, 2) + ' ' + line(1084, 446, 1160, 444, 2), line(300, 912, 380, 909, 2) + ' ' + line(302, 948, 380, 946, 2)), { w: 8 });
+path(1, 8.75, 0.6, c('M1385 545 C1388 600 1392 650 1396 712' + head(1396, 712, 88), 'M340 1188 C342 1230 343 1270 345 1308' + head(345, 1308, 89)), { color: BLUE, w: 6 });
+const eqT = txt(1, 9.4, 1.0, '× 세율 = 세금', c({ x: 1235, y: 735, size: 92 }, { cx: 540, y: 1330, size: 104 }));
+hl(1, 10.5, 0.45, eqT, { pad: 30, top: .48, h: .55 });
+path(1, 11.2, 1.0, c(ellipse(865, 442, 238, 124), ellipse(340, 765, 268, 128, -2.6)), { color: RED, w: 7 });
+path(1, 12.3, 0.6, c('M845 592 C842 645 828 692 806 738' + head(806, 738, 115),
+                     'M612 800 C900 830 985 1150 935 1460' + head(935, 1460, 100)), { color: RED, w: 6 });
+txt(1, 13.0, 0.9, '경비 하나 빠지면', c({ x: 520, y: 770, size: 82, color: RED }, { cx: 520, y: 1490, size: 96, color: RED }));
+const up = txt(1, 14.0, 0.8, '소득 ↑ 세금 ↑', c({ x: 570, y: 862, size: 82, color: RED }, { cx: 520, y: 1600, size: 96, color: RED }));
+path(1, 14.9, 0.35, c(line(565, 958, 990, 950, 3), line(320, 1712, 730, 1704, 3)), { color: RED, w: 7 });
+
+/* ---------- BOARD 2: 1년 내내 장부(기장) + 놓치기 쉬운 경비 체크리스트 ---------- */
+const X2 = c(150, 90);
+txt(2, 17.6, 0.9, '그래서 1년 내내', { x: X2, y: c(70, 170), size: c(108, 116) });
+const jb = txt(2, 18.6, 0.6, '장부(기장)', { x: X2, y: c(195, 305), size: c(108, 116) });
+const jb2 = txt(2, 19.25, 0.7, '가 중요합니다', { x: X2, y: c(195, 305), size: c(108, 116) });
+jb2.after = jb;
+hl(2, 20.05, 0.35, jb, { pad: 16, top: .5, h: .5 });
+// calendar doodle = "1년 내내"
+const CAL = c([1220, 360, 440, 360], [300, 1150, 480, 330]);
+{
+  const [x, y, w, h] = CAL, hd = y + 95;
+  let d = rect(x, y, w, h) + ' ' + line(x, hd, x + w, hd, 3);
+  d += ' ' + line(x + w * .25, y - 30, x + w * .25, y + 28, 2) + ' ' + line(x + w * .75, y - 30, x + w * .75, y + 28, 2);
+  const gh = (h - 95) / 3, gw = w / 4;
+  for (let r = 1; r < 3; r++) d += ' ' + line(x + 6, hd + gh * r, x + w - 6, hd + gh * r, 3);
+  for (let q = 1; q < 4; q++) d += ' ' + line(x + gw * q, hd + 6, x + gw * q, y + h - 6, 3);
+  path(2, 20.5, 1.0, d, { w: 5 });
+  txt(2, 21.5, 0.55, '1월 ~ 12월', { cx: x + w / 2, y: y + 24, size: c(62, 64) });
+  // small checks in every month cell
+  let ck = '';
+  for (let r = 0; r < 3; r++) for (let q = 0; q < 4; q++) {
+    const cx = x + gw * q + gw / 2 - 14, cy = hd + gh * r + gh / 2 - 6;
+    ck += ' ' + check(cx, cy, 26);
+  }
+  path(2, 22.1, 0.8, ck, { color: RED, w: 5 });
+}
+txt(2, 23.0, 0.9, '자주 놓치는 경비, 챙기고 계신가요?', c({ x: 150, y: 355, size: 64, color: GRAY }, { x: 92, y: 480, size: 68, color: GRAY }));
+const LIST = ['배달앱 수수료', 'SNS 광고비', '차량 유지비', '업무용 통신비'];
+LIST.forEach((t, i) => {
+  const s = 24.0 + i * 0.95;
+  const bx = c(190, 110), by = c(468 + i * 104, 600 + i * 132), bs = c(62, 70);
+  path(2, s, 0.25, rect(bx, by, bs, bs), { w: 5 });
+  txt(2, s + 0.27, 0.45, t, { x: bx + bs + c(36, 40), y: by - c(4, 2), size: c(82, 92) });
+  path(2, s + 0.75, 0.18, check(bx + 6, by + 10, bs - 6), { color: RED, w: 8 });
+});
+txt(2, 27.95, 0.7, '업무 관련 지출이라면', c({ x: 1170, y: 790, size: 76, color: RED }, { cx: 540, y: 1560, size: 88, color: RED }));
+txt(2, 28.7, 0.55, '꼭 챙기세요!', c({ x: 1170, y: 880, size: 76, color: RED }, { cx: 540, y: 1665, size: 88, color: RED }));
+
+/* ---------- BOARD 3: 사인오프 ---------- */
+const PH = c([540, 540, 230], [540, 520, 240]);
+path(3, 30.75, 0.8, ellipse(PH[0], PH[1], PH[2], PH[2], -1.9, 1.08), { w: 6 });
+photo(3, 31.35, 0.5, PH[0], PH[1], PH[2] * 2 - 40);
+txt(3, 31.1, 0.6, '한서윤 세무사의', c({ x: 880, y: 240, size: 76 }, { cx: 540, y: 835, size: 80 }));
+const note = txt(3, 31.75, 0.8, '1분 세금 노트', c({ x: 870, y: 325, size: 168 }, { cx: 540, y: 920, size: 176 }));
+hl(3, 32.6, 0.35, note, { pad: 24, top: .52, h: .45 });
+txt(3, 33.0, 0.45, '<small>TEL</small>02-000-0000', c({ x: 882, y: 548, size: 88, print: 1, weight: 900 }, { cx: 540, y: 1165, size: 96, print: 1, weight: 900 }));
+txt(3, 33.35, 0.4, '한서윤 세무회계 · 서울 도심', c({ x: 886, y: 668, size: 34, print: 1, weight: 600, color: '#6B7486' }, { cx: 540, y: 1290, size: 38, print: 1, weight: 600, color: '#6B7486' }));
+const PL = c([880, 750, 660, 112], [120, 1390, 840, 124]);
+path(3, 33.65, 0.5, pill(...PL), { w: 5 });
+{
+  const [x, y, w, h] = PL, mx = x + 66, my = y + h / 2 - 6;
+  path(3, 34.15, 0.25, ellipse(mx, my, 22, 22, -1, 1.02) + ' ' + line(mx + 16, my + 16, mx + 40, my + 40, 1), { w: 6 });
+  txt(3, 34.45, 0.6, '한서윤 세무회계', { x: x + 120, y: y + (h - 80) / 2 + 4, size: c(80, 86) });
+}
+txt(3, 35.05, 0.4, '네이버 블로그에서 검색해 보세요', c({ x: 886, y: 895, size: 30, print: 1, weight: 600, color: '#6B7486' }, { cx: 540, y: 1560, size: 36, print: 1, weight: 600, color: '#6B7486' }));
+
+/* ---------- erase transitions ---------- */
+const ERASE = [{ b: 1, s: 16.1, d: 1.2 }, { b: 2, s: 29.45, d: 1.15 }];
+
+/* ---------- prepare ---------- */
+ITEMS.forEach(it => {
+  if (it.k === 'path') {
+    it.len = it.el.getTotalLength();
+    it.el.style.strokeDasharray = `${it.len} ${it.len + 2}`;
+  }
+});
+ITEMS.sort((a, b) => a.s - b.s);
+const PEN_ITEMS = ITEMS.filter(i => i.pen);
+
+function layout() {
+  for (const it of ITEMS) {
+    if (it.k !== 'text') continue;
+    const o = it.o;
+    if (o.cx != null) it.el.style.left = (o.cx - it.el.offsetWidth / 2) + 'px';
+    if (it.after) it.el.style.left = (it.after.el.offsetLeft + it.after.el.offsetWidth) + 'px';
+  }
+  for (const it of ITEMS) {
+    if (it.k !== 'hl') continue;
+    const r = it.ref.el, pad = it.o.pad || 20;
+    const hh = r.offsetHeight * it.o.h;
+    Object.assign(it.el.style, {
+      left: r.offsetLeft - pad / 2 + 'px', width: r.offsetWidth + pad + 'px',
+      top: r.offsetTop + r.offsetHeight * it.o.top + 'px', height: hh + 'px'
+    });
+  }
+}
+
+function tipOf(it, e) {
+  if (it.k === 'path') { const p = it.el.getPointAtLength(it.len * e); return [p.x, p.y]; }
+  const el = it.el;
+  if (it.k === 'hl') return [el.offsetLeft + el.offsetWidth * e, el.offsetTop + el.offsetHeight * .5];
+  const wob = Math.sin(e * it.n * Math.PI * 2.2) * el.offsetHeight * 0.16;
+  return [el.offsetLeft + el.offsetWidth * e, el.offsetTop + el.offsetHeight * 0.62 + wob];
+}
+
+const REST = [W + 180, H * 0.82];
+function penState(t) {
+  // pseudo stops: during erase, the pen leaves the board
+  let cur = null, prev = null, next = null;
+  for (const it of PEN_ITEMS) {
+    if (t >= it.s && t < it.s + it.d) { cur = it; break; }
+    if (it.s + it.d <= t) prev = it;
+    else if (!next && it.s > t) next = it;
+  }
+  if (cur) {
+    const e = clamp((t - cur.s) / cur.d);
+    return { p: tipOf(cur, e), color: cur.color, writing: true };
+  }
+  const inErase = ERASE.find(er => t >= er.s - 0.5 && t < er.s + er.d + 0.2);
+  const pPt = prev ? tipOf(prev, 1) : REST;
+  const nPt = next ? tipOf(next, 0) : REST;
+  const pEnd = prev ? prev.s + prev.d : -1;
+  const nStart = next ? next.s : DUR + 2;
+  if (inErase) return { p: REST, color: INK };
+  // travel between strokes; if the gap spans an erase, travel from/to rest
+  const erBetween = ERASE.find(er => er.s >= pEnd && er.s < nStart);
+  let a = pPt, b = nPt, s0 = pEnd, s1 = nStart;
+  if (erBetween) {
+    if (t < erBetween.s) { b = REST; s1 = erBetween.s - 0.5; }
+    else { a = REST; s0 = erBetween.s + erBetween.d + 0.2; }
+  }
+  if (!prev) { a = REST; s0 = Math.max(0, nStart - 0.6); }
+  if (!next) { b = REST; s1 = pEnd + 0.9; }
+  const e = inOut(clamp((t - s0) / Math.max(0.05, s1 - s0)));
+  const lift = Math.sin(e * Math.PI) * 26;
+  return { p: [lerp(a[0], b[0], e), lerp(a[1], b[1], e) - lift], color: (next || prev || {}).color || INK };
+}
+
+function render(t) {
+  layout();
+  for (const it of ITEMS) {
+    const e = clamp((t - it.s) / it.d);
+    const on = e > 0;
+    if (it.k === 'text') {
+      it.el.style.visibility = on ? 'visible' : 'hidden';
+      it.el.style.clipPath = `inset(-30% ${((1 - e) * 100).toFixed(2)}% -30% -8%)`;
+    } else if (it.k === 'path') {
+      it.el.style.visibility = on ? 'visible' : 'hidden';
+      it.el.style.strokeDashoffset = it.len * (1 - e);
+    } else if (it.k === 'hl') {
+      it.el.style.transform = `rotate(-0.8deg) scaleX(${e})`;
+    } else if (it.k === 'img') {
+      const q = out3(e);
+      it.el.style.opacity = q;
+      it.el.style.transform = `scale(${lerp(.85, 1, q)})`;
+    }
+  }
+  // erase: wipe boards away behind the eraser
+  const er = $('#eraser');
+  er.style.display = 'none';
+  for (const E of ERASE) {
+    const e = clamp((t - E.s) / E.d);
+    const bd = boards[E.b];
+    bd.style.display = e >= 1 ? 'none' : 'block';
+    if (e <= 0) { bd.style.clipPath = 'none'; continue; }
+    if (e >= 1) continue;
+    const k = inOut(e);
+    if (LS) {
+      const x = lerp(-260, W + 40, k);
+      const y = H / 2 + Math.sin(e * Math.PI * 7) * H * 0.36 - 60;
+      bd.style.clipPath = `inset(0 0 0 ${x + 125}px)`;
+      Object.assign(er.style, { display: 'block', transform: `translate(${x}px,${y}px) rotate(${Math.cos(e * Math.PI * 7) * 8 - 6}deg)` });
+    } else {
+      const y = lerp(-200, H + 40, k);
+      const x = W / 2 + Math.sin(e * Math.PI * 7) * W * 0.34 - 125;
+      bd.style.clipPath = `inset(${y + 60}px 0 0 0)`;
+      Object.assign(er.style, { display: 'block', transform: `translate(${x}px,${y}px) rotate(${Math.cos(e * Math.PI * 7) * 8 - 6}deg)` });
+    }
+  }
+  // pen
+  const ps = penState(t);
+  const wob = ps.writing ? Math.sin(t * 31) * 2.5 : 0;
+  $('#pen').style.transform = `translate(${ps.p[0].toFixed(1)}px,${ps.p[1].toFixed(1)}px) rotate(${wob}deg)`;
+  $('#penTip').setAttribute('fill', ps.color);
+  $('#penCap').setAttribute('fill', ps.color === HLC ? '#E2B42A' : ps.color);
+  // brand bug
+  $('#bug').style.opacity = clamp((t - 0.4) / 0.5) * (1 - clamp((t - 29.3) / 0.4));
+}
+
+window.render = render;
+window.DUR = DUR;
+window.FMT = FMT;
+render(0);
+
+if (!Q.has('render')) {
+  const fit = () => {
+    const s = Math.min(innerWidth / W, innerHeight / H);
+    const st = $('#stage');
+    st.style.transformOrigin = '0 0';
+    st.style.transform = `translate(${(innerWidth - W * s) / 2}px,${(innerHeight - H * s) / 2}px) scale(${s})`;
+  };
+  fit(); addEventListener('resize', fit);
+  let t0 = performance.now();
+  document.addEventListener('click', () => t0 = performance.now());
+  const loop = now => { render(((now - t0) / 1000) % (DUR + 1)); requestAnimationFrame(loop); };
+  document.fonts.ready.then(() => requestAnimationFrame(loop));
+}
+</script>
+</body>
+</html>

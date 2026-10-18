@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Fortimove Global 홍보 영상</title>
+<style>
+@font-face{font-family:P;src:url(../assets/fonts/Pretendard-Variable.woff2) format('woff2');font-weight:100 900}
+:root{--ink:#111114;--sub:#6B6F7B;--line:#E4E5EA;--bg:#F4F5F7;--green:#059669;--green2:#D1FAE5;--peach1:#F8DCC8;--peach2:#EFC2A6;--kakao:#FEE500}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:#000;overflow:hidden}
+body{font-family:P,sans-serif;letter-spacing:-0.03em;word-break:keep-all;color:var(--ink);-webkit-font-smoothing:antialiased}
+#stage{position:relative;overflow:hidden;width:1920px;height:1080px;background:var(--bg)}
+body.P #stage{width:1080px;height:1920px}
+.scene{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;visibility:hidden}
+.dark{background:#0E0E11;color:#fff}
+.light{background:var(--bg)}
+.white{background:#fff}
+br.p{display:none} body.P br.p{display:inline}
+br.l{display:inline} body.P br.l{display:none}
+.kt .w{display:inline-block;overflow:hidden;vertical-align:top;padding:0 .02em .12em;margin-bottom:-.12em}
+.kt .wi{display:inline-block}
+.h{font-weight:900;line-height:1.16;letter-spacing:-0.045em}
+.eb{font-size:28px;font-weight:800;color:var(--green);letter-spacing:0}
+.sub{font-weight:600;color:var(--sub)}
+em{font-style:normal}
+.hl{background:linear-gradient(transparent 62%,rgba(5,150,105,.25) 62%)}
+
+/* brand bug */
+#bug{position:absolute;left:64px;top:52px;display:flex;align-items:center;gap:14px;font-size:24px;font-weight:800;z-index:20}
+body.P #bug{left:60px;top:80px}
+#bug img{width:44px;height:44px;mix-blend-mode:multiply}
+#bug span{font-weight:600;opacity:.55;margin-left:4px;font-size:20px}
+
+/* product photo (lamp) */
+.photo{position:relative;background:radial-gradient(120% 100% at 50% 15%,#F6D2BA,#E9AE8E 55%,#D98E6E);overflow:hidden}
+.photo svg{position:absolute;left:50%;top:54%;width:62%;transform:translate(-50%,-50%)}
+
+/* ---------- S1 hook ---------- */
+#s1 .wrap{display:flex;align-items:center;gap:150px}
+body.P #s1 .wrap{flex-direction:column;gap:90px}
+#s1 .txt{width:720px}
+body.P #s1 .txt{width:auto;text-align:center}
+#s1 .h{font-size:108px}
+body.P #s1 .h{font-size:116px}
+#s1 .sub{font-size:36px;margin-top:30px}
+.post{position:relative;width:560px;background:#fff;border-radius:34px;box-shadow:0 40px 90px rgba(17,17,20,.14)}
+body.P .post{width:660px}
+.post .hd{display:flex;align-items:center;gap:16px;padding:22px 26px;font-size:24px;font-weight:800}
+.post .hd i{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#F3B58C,#E58C6B);display:block}
+.post .hd small{font-size:18px;font-weight:600;color:var(--sub);margin-left:auto}
+.post .photo{height:560px}
+body.P .post .photo{height:660px}
+.post .ac{display:flex;gap:22px;padding:22px 26px;font-size:22px;font-weight:700;color:var(--sub);align-items:center}
+.post .ac svg{width:34px;height:34px;fill:none;stroke:var(--ink);stroke-width:2}
+.bub{position:absolute;white-space:nowrap;background:#fff;border-radius:26px;padding:16px 24px;font-size:26px;font-weight:700;box-shadow:0 16px 40px rgba(17,17,20,.16);display:flex;align-items:center;gap:12px}
+.bub i{width:34px;height:34px;border-radius:50%;display:block;flex:none}
+
+/* ---------- S2 problem ---------- */
+#s2 .wrap{display:flex;flex-direction:column;align-items:center;gap:56px;text-align:center}
+#s2 .h{font-size:92px}
+body.P #s2 .h{font-size:100px}
+.search{display:flex;align-items:center;gap:22px;width:980px;height:120px;border-radius:60px;background:#fff;padding:0 44px;box-shadow:0 26px 60px rgba(17,17,20,.1);border:2px solid var(--line)}
+body.P .search{width:920px}
+.search svg{width:46px;height:46px;flex:none;fill:none;stroke:var(--ink);stroke-width:2.6;stroke-linecap:round}
+.search .q{font-size:42px;font-weight:700;white-space:pre}
+.search .cr{width:4px;height:50px;background:var(--ink);border-radius:2px}
+.empty{display:flex;align-items:center;gap:20px;font-size:34px;font-weight:700;color:var(--sub);background:#fff;border-radius:26px;padding:26px 40px;border:2px dashed #CDCFD6}
+.qs{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;width:1200px}
+body.P .qs{width:900px}
+.qchip{font-size:34px;font-weight:800;background:var(--ink);color:#fff;border-radius:999px;padding:18px 32px}
+
+/* ---------- S3 solution (dark) ---------- */
+#s3 .wrap{display:flex;align-items:center;gap:130px}
+body.P #s3 .wrap{flex-direction:column;gap:90px}
+.chat{width:640px;display:flex;flex-direction:column;gap:22px}
+body.P .chat{width:760px}
+.msg{align-self:flex-end;background:#2A2B31;border-radius:30px 30px 8px 30px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.msg .photo{width:300px;height:300px;border-radius:20px}
+body.P .msg .photo{width:340px;height:340px}
+.msg p{font-size:30px;font-weight:700;padding:0 10px 6px}
+.sent{align-self:flex-end;font-size:20px;font-weight:700;color:#8C8F99;margin-top:-10px}
+.rep{align-self:flex-start;display:flex;gap:16px;align-items:flex-end}
+.rep img{width:64px;height:64px;border-radius:18px;background:#fff;padding:8px}
+.rep p{background:#fff;color:var(--ink);border-radius:30px 30px 30px 8px;padding:22px 28px;font-size:30px;font-weight:700}
+#s3 .txt{width:820px}
+body.P #s3 .txt{width:auto;text-align:center}
+#s3 .logo{width:120px;height:120px;filter:invert(1);mix-blend-mode:screen;margin-bottom:28px}
+body.P #s3 .logo{display:none}
+#s3 .h{font-size:96px}
+body.P #s3 .h{font-size:100px}
+#s3 .sub{font-size:36px;color:#A3A6B0;margin-top:28px}
+
+/* ---------- stepper ---------- */
+.steps{position:absolute;left:50%;top:150px;transform:translateX(-50%);display:flex;gap:16px;z-index:6}
+body.P .steps{top:210px}
+.st{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--line);border-radius:999px;padding:12px 24px 12px 14px;font-size:24px;font-weight:800;color:#9A9DA8;white-space:nowrap}
+body.P .st{font-size:22px;padding:10px 18px 10px 10px}
+.st b{width:38px;height:38px;border-radius:50%;background:#ECEDF2;color:#9A9DA8;display:flex;align-items:center;justify-content:center;font-size:20px}
+body.P .st b{width:34px;height:34px}
+
+/* ---------- S4 quote ---------- */
+#s4 .wrap{display:flex;align-items:center;gap:140px;margin-top:80px}
+body.P #s4 .wrap{flex-direction:column;gap:70px;margin-top:120px}
+#s4 .txt{width:760px}
+body.P #s4 .txt{width:auto;text-align:center}
+#s4 .h{font-size:88px}
+body.P #s4 .h{font-size:92px}
+#s4 .sub{font-size:34px;margin-top:26px}
+.rcpt{position:relative;width:600px;background:#fff;border-radius:32px;padding:44px 48px;box-shadow:0 40px 90px rgba(17,17,20,.12)}
+body.P .rcpt{width:760px}
+.rcpt .tt{display:flex;justify-content:space-between;align-items:center;font-size:30px;font-weight:900;padding-bottom:26px;border-bottom:2px solid var(--line)}
+.rcpt .tt small{font-size:18px;font-weight:700;color:var(--sub);background:var(--bg);border-radius:999px;padding:6px 14px}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:30px;font-weight:700;padding:22px 0;border-bottom:1px dashed var(--line)}
+.row span{color:var(--sub);font-weight:600}
+.row b{font-variant-numeric:tabular-nums}
+.row.tot{border:none;font-size:38px;font-weight:900;padding-top:28px}
+.row.tot span{color:var(--ink);font-weight:900}
+.nohid{position:absolute;right:-70px;top:-80px;width:210px;height:210px;border-radius:50%;background:var(--green);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:34px;font-weight:900;line-height:1.15;text-align:center;box-shadow:0 20px 40px rgba(5,150,105,.35)}
+.nohid small{font-size:18px;font-weight:700;opacity:.85;margin-top:6px}
+
+/* ---------- S5 pay/inspect/ship ---------- */
+#s5 .wrap{display:flex;flex-direction:column;align-items:center;gap:56px;margin-top:90px;text-align:center}
+body.P #s5 .wrap{margin-top:140px;gap:50px}
+#s5 .h{font-size:84px}
+body.P #s5 .h{font-size:90px}
+.cards{display:flex;gap:30px}
+body.P .cards{flex-direction:column;gap:26px}
+.cd{width:470px;height:400px;background:#fff;border-radius:32px;box-shadow:0 30px 70px rgba(17,17,20,.1);position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px}
+body.P .cd{width:840px;height:300px;flex-direction:row;gap:40px}
+.cd .lb{font-size:30px;font-weight:900}
+.cd .lb small{display:block;font-size:22px;font-weight:600;color:var(--sub);margin-top:8px}
+body.P .cd .lb{text-align:left}
+.btn{background:var(--ink);color:#fff;font-size:28px;font-weight:800;border-radius:22px;padding:24px 36px;display:flex;align-items:center;gap:14px}
+.btn .ck{width:34px;height:34px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center}
+.vf{position:relative;width:220px;height:220px}
+.vf .photo{position:absolute;inset:18px;border-radius:14px}
+.vf .cn{position:absolute;width:40px;height:40px;border:5px solid var(--ink)}
+.flash{position:absolute;inset:0;background:#fff}
+.route{position:relative;width:360px;height:140px}
+body.P .route{width:420px}
+.route svg.path{position:absolute;inset:0;width:100%;height:100%}
+.route .end{position:absolute;top:50%;width:76px;height:76px;margin-top:-38px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:40px}
+.route .box{position:absolute;top:50%;width:62px;height:62px;margin:-31px 0 0 -31px;font-size:46px;display:flex;align-items:center;justify-content:center}
+.okb{position:absolute;top:22px;right:22px;background:var(--green2);color:var(--green);font-size:20px;font-weight:800;border-radius:999px;padding:8px 16px}
+
+/* ---------- S6 trust ---------- */
+#s6 .wrap{display:flex;flex-direction:column;align-items:center;gap:70px;text-align:center}
+#s6 .h{font-size:104px}
+body.P #s6 .h{font-size:100px}
+.chips{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;width:1400px}
+body.P .chips{width:940px}
+.chip{display:flex;align-items:center;gap:14px;background:#fff;border:2px solid var(--line);border-radius:999px;padding:18px 30px;font-size:30px;font-weight:800}
+.chip i{width:34px;height:34px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;flex:none}
+.chip i svg{width:20px;height:20px}
+
+/* ---------- S7 CTA ---------- */
+#s7 .wrap{display:flex;flex-direction:column;align-items:center;text-align:center}
+#s7 .logo{width:200px;height:200px;filter:invert(1);mix-blend-mode:screen}
+body.P #s7 .logo{width:240px;height:240px}
+body.P #s7 .nm{font-size:100px}
+body.P #s7 .tag{font-size:44px}
+body.P #s7 .cta{font-size:46px;padding:34px 60px}
+body.P #s7 .info{font-size:34px}
+#s7 .nm{font-size:84px;font-weight:900;letter-spacing:-0.03em;margin-top:18px}
+#s7 .tag{font-size:40px;font-weight:700;color:#C9CBD2;margin-top:20px}
+#s7 .cta{margin-top:60px;background:#fff;color:var(--ink);font-size:40px;font-weight:900;border-radius:28px;padding:30px 54px;display:flex;align-items:center;gap:18px;position:relative;overflow:hidden}
+#s7 .rip{position:absolute;width:40px;height:40px;border-radius:50%;background:rgba(5,150,105,.35);left:50%;top:50%}
+#s7 .info{margin-top:52px;font-size:30px;font-weight:600;color:#A3A6B0;line-height:1.6}
+#s7 .info b{color:#fff}
+#s7 .kk{display:inline-block;background:var(--kakao);color:#191600;font-weight:800;border-radius:10px;padding:2px 12px;margin:0 6px;font-size:26px}
+#s7 .ct{display:flex;gap:14px;margin-top:40px}
+#s7 .ct span{font-size:24px;font-weight:800;border:2px solid #3A3B42;border-radius:999px;padding:10px 22px;color:#D9DBE1}
+
+#iris{position:absolute;inset:0;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- S1 hook -->
+  <section class="scene light" id="s1"><div class="wrap">
+    <div class="txt">
+      <div class="eb">SNS에서 본 그 상품</div>
+      <div class="h kt" style="margin-top:20px">이거 어디서<br>팔아요?</div>
+      <div class="sub">사고 싶은데, 판매처를 모를 때.</div>
+    </div>
+    <div class="post">
+      <div class="hd"><i></i>daily.finds<small>· 2시간 전</small></div>
+      <div class="photo lamp"></div>
+      <div class="ac"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg><svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></svg>좋아요 2,481개</div>
+      <div class="bub" style="left:-120px;top:150px"><i style="background:#F2B8A0"></i>이거 어디서 팔아요? 😍</div>
+      <div class="bub" style="right:-110px;top:260px"><i style="background:#A9C7F0"></i>정보 좀 부탁드려요 🙏</div>
+      <div class="bub" style="left:-90px;top:390px"><i style="background:#C3E3B8"></i>판매처 아시는 분?</div>
+      <div class="bub" style="right:-70px;top:500px"><i style="background:#E7C6F0"></i>저도 궁금해요!!</div>
+      <div class="bub" style="left:-40px;top:610px"><i style="background:#F6D98B"></i>링크 주세요 ㅠㅠ</div>
+    </div>
+  </div></section>
+
+  <!-- S2 problem -->
+  <section class="scene light" id="s2"><div class="wrap">
+    <div class="h kt">판매처도 모르고,<br>해외 직구는 복잡하고.</div>
+    <div class="search"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg><div class="q"></div><div class="cr"></div></div>
+    <div class="empty">🔍 검색 결과가 없어요</div>
+    <div class="qs"><div class="qchip">어느 나라 사이트? 🌏</div><div class="qchip">외국어 상세페이지?</div><div class="qchip">해외 결제·배송은?</div></div>
+  </div></section>
+
+  <!-- S3 solution -->
+  <section class="scene dark" id="s3"><div class="wrap">
+    <div class="chat">
+      <div class="msg"><div class="photo lamp"></div><p>이 상품 찾아주세요!</p></div>
+      <div class="sent">전송됨 ✓</div>
+      <div class="rep"><img src="../assets/fg-logo.png" alt=""><p>네! 찾아서 무료로 견적 드릴게요 😊</p></div>
+    </div>
+    <div class="txt">
+      <img class="logo" src="../assets/fg-logo.png" alt="">
+      <div class="h kt">찾으시는 상품,<br>해외에서 찾아드려요</div>
+      <div class="sub">링크가 없어도 사진·브랜드명만 있으면 OK</div>
+    </div>
+  </div></section>
+
+  <!-- S4 quote -->
+  <section class="scene light" id="s4"><div class="wrap">
+    <div class="txt">
+      <div class="eb">STEP 2 · 무료 견적</div>
+      <div class="h kt" style="margin-top:18px">결제 전에,<br><em class="hl">총액부터</em> 확인하세요</div>
+      <div class="sub">상품가 · 수수료 · 배송비를 투명하게 안내해요</div>
+    </div>
+    <div class="rcpt">
+      <div class="tt">견적서<small>예시</small></div>
+      <div class="row"><span>상품가</span><b class="n" data-v="38000">₩0</b></div>
+      <div class="row"><span>구매대행 수수료</span><b class="n" data-v="5000">₩0</b></div>
+      <div class="row"><span>국제 배송비</span><b class="n" data-v="9000">₩0</b></div>
+      <div class="row tot"><span>합계</span><b class="n" data-v="52000">₩0</b></div>
+      <div class="nohid">숨은 비용<br>없음<small>견적은 무료</small></div>
+    </div>
+  </div></section>
+
+  <!-- S5 pay / inspect / ship -->
+  <section class="scene light" id="s5"><div class="wrap">
+    <div class="h kt">동의하면 결제,<br class="p"> 검수하고 배송</div>
+    <div class="cards">
+      <div class="cd c1"><div class="btn"><span class="ck"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>견적 동의 후 결제</div><div class="lb">견적 전엔 결제 없음<small>동의한 견적만 결제해요</small></div></div>
+      <div class="cd c2"><div class="vf"><div class="photo lamp"></div><i class="cn" style="left:0;top:0;border-right:0;border-bottom:0"></i><i class="cn" style="right:0;top:0;border-left:0;border-bottom:0"></i><i class="cn" style="left:0;bottom:0;border-right:0;border-top:0"></i><i class="cn" style="right:0;bottom:0;border-left:0;border-top:0"></i></div><div class="lb">실물 검수<small>사진으로 먼저 확인해요</small></div><div class="okb">검수 완료 ✓</div><div class="flash"></div></div>
+      <div class="cd c3"><div class="route"><svg class="path" viewBox="0 0 360 140" preserveAspectRatio="none"><path d="M40 70 C 120 0, 240 140, 320 70" fill="none" stroke="#C6C8D0" stroke-width="4" stroke-dasharray="10 10"/></svg><div class="end" style="left:0">🌏</div><div class="end" style="right:0">🏠</div><div class="box">📦</div></div><div class="lb">안전하게 배송<small>통관·배송 조회까지</small></div></div>
+    </div>
+  </div></section>
+
+  <!-- S6 trust -->
+  <section class="scene white" id="s6"><div class="wrap">
+    <div class="h kt">국내가 더 저렴하면,<br><em class="hl">국내 구매</em>를 권해드려요</div>
+    <div class="chips">
+      <div class="chip"><i></i>무료 견적</div>
+      <div class="chip"><i></i>회원가입 없음</div>
+      <div class="chip"><i></i>주말·공휴일도 접수</div>
+      <div class="chip"><i></i>가품·통관금지 품목 취급 안 함</div>
+      <div class="chip"><i></i>관세청 전자상거래업자 등록</div>
+    </div>
+  </div></section>
+
+  <!-- S7 CTA -->
+  <section class="scene dark" id="s7"><div class="wrap">
+    <img class="logo" src="../assets/fg-logo.png" alt="">
+    <div class="nm">Fortimove Global</div>
+    <div class="tag">해외 구매대행, 사진 한 장이면 충분해요</div>
+    <div class="cta">상품 찾기 요청 →<i class="rip"></i></div>
+    <div class="info"><b>fortimoveglobal.com</b><br><span class="kk">카카오톡 채널</span> 상담 · 070-8983-8495</div>
+    <div class="ct"><span>중국</span><span>일본</span><span>미국</span><span>동남아</span></div>
+  </div></section>
+
+  <div class="steps">
+    <div class="st"><b>1</b>사진 전송</div><div class="st"><b>2</b>무료 견적</div><div class="st"><b>3</b>동의 후 결제</div><div class="st"><b>4</b>검수·배송</div>
+  </div>
+  <div id="bug"><img src="../assets/fg-logo.png" alt="">Fortimove Global<span>해외 구매대행</span></div>
+  <canvas id="iris"></canvas>
+</div>
+
+<script>
+const Q = new URLSearchParams(location.search);
+const FMT = Q.get('f') === 'p' ? 'P' : 'L';
+document.body.classList.add(FMT);
+const W = FMT === 'L' ? 1920 : 1080, H = FMT === 'L' ? 1080 : 1920;
+const DUR = 30;
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, s, d) => clamp((t - s) / d);
+const lerp = (a, b, e) => a + (b - a) * e;
+const out3 = x => 1 - Math.pow(1 - x, 3);
+const out5 = x => 1 - Math.pow(1 - x, 5);
+const inOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const back = x => { const c1 = 1.7, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const tf = (el, o, x = 0, y = 0, s = 1, r = 0) => { el.style.opacity = o; el.style.transform = `translate(${x}px,${y}px) scale(${s}) rotate(${r}deg)`; };
+const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+/* lamp illustration */
+const LAMP = `<svg viewBox="0 0 200 220"><defs><radialGradient id="g" cx="50%" cy="45%" r="55%"><stop offset="0" stop-color="#FFF6D9" stop-opacity=".95"/><stop offset="1" stop-color="#FFE7B8" stop-opacity="0"/></radialGradient><linearGradient id="d" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF9F0"/><stop offset="1" stop-color="#E8CDA9"/></linearGradient></defs>
+<ellipse cx="100" cy="96" rx="98" ry="84" fill="url(#g)"/><ellipse cx="100" cy="200" rx="70" ry="10" fill="#B9845F" opacity=".35"/>
+<rect x="91" y="100" width="18" height="84" rx="8" fill="#C99A72"/><rect x="91" y="100" width="7" height="84" rx="3" fill="#DDB28C"/>
+<path d="M24 106 C 24 34, 176 34, 176 106 Z" fill="url(#d)"/><path d="M24 106 C 24 34, 176 34, 176 106" fill="none" stroke="#B88D66" stroke-width="2.5"/><path d="M22 106 h156" stroke="#A9794F" stroke-width="5" stroke-linecap="round"/>
+<path d="M50 70 C 64 52, 86 46, 104 46" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".8"/>
+<ellipse cx="100" cy="192" rx="48" ry="13" fill="#A9794F"/><ellipse cx="100" cy="187" rx="48" ry="13" fill="#D6AE88"/></svg>`;
+$$('.lamp').forEach(e => e.innerHTML = LAMP);
+$$('.chip i').forEach(e => e.innerHTML = CHECK);
+
+/* kinetic text */
+function splitKT(el) {
+  const words = [];
+  const walk = (node, cls) => [...node.childNodes].forEach(c => {
+    if (c.nodeType === 3) c.textContent.split(/(\s+)/).forEach(tok => {
+      if (!tok) return;
+      if (/^\s+$/.test(tok)) { el.appendChild(document.createTextNode(' ')); return; }
+      const w = document.createElement('span'); w.className = 'w';
+      const wi = document.createElement('span'); wi.className = 'wi' + (cls ? ' ' + cls : '');
+      wi.textContent = tok; w.appendChild(wi); el.appendChild(w); words.push(wi);
+    });
+    else if (c.nodeName === 'BR') el.appendChild(c.cloneNode());
+    else walk(c, c.className);
+  });
+  const src = el.cloneNode(true); el.innerHTML = ''; walk(src, ''); el._w = words;
+}
+$$('.kt').forEach(splitKT);
+const kt = (el, t, s) => el._w.forEach((w, i) => { const e = out5(prog(t, s + i * 0.07, 0.55)); w.style.transform = `translateY(${(1 - e) * 112}%)`; });
+const up = (el, t, s, d = 0.6, dy = 40) => { const e = out3(prog(t, s, d)); tf(el, e, 0, (1 - e) * dy); };
+const pop = (el, t, s, d = 0.55, s0 = .6) => { const p = prog(t, s, d); tf(el, clamp(p * 3), 0, 0, lerp(s0, 1, back(p))); };
+
+/* scenes & iris transitions */
+const SC = [['s1', 0, 4.2], ['s2', 4.2, 8.2], ['s3', 8.2, 12.6], ['s4', 12.6, 17.0], ['s5', 17.0, 21.6], ['s6', 21.6, 25.8], ['s7', 25.8, 99]];
+const IRIS = 0.5;
+function scenes(t) {
+  const R = Math.hypot(W, H) / 2 + 20;
+  SC.forEach(([id, a, b], i) => {
+    const el = $('#' + id);
+    const nextStart = SC[i + 1] ? SC[i + 1][1] : 999;
+    const vis = t >= a && t < nextStart + IRIS;
+    el.style.visibility = vis ? 'visible' : 'hidden';
+    el.style.zIndex = i + 1;
+    if (i === 0) { el.style.clipPath = 'none'; return; }
+    const e = inOut(prog(t, a, IRIS));
+    el.style.clipPath = e >= 1 ? 'none' : `circle(${(e * R).toFixed(1)}px at 50% 50%)`;
+    // content of the incoming scene settles slightly
+    el.firstElementChild.style.transform = `scale(${lerp(1.06, 1, out3(prog(t, a, 0.8)))})`;
+  });
+}
+
+function render(t) {
+  scenes(t);
+  // ---- S1
+  {
+    kt($('#s1 .h'), t, 0.25);
+    up($('#s1 .eb'), t, 0.1, 0.5, 20);
+    up($('#s1 .sub'), t, 1.2);
+    const post = $('#s1 .post');
+    const e = out3(prog(t, 0.0, 0.8));
+    tf(post, e, 0, (1 - e) * 80, 1, (1 - e) * 4);
+    $$('#s1 .bub').forEach((b, i) => pop(b, t, 0.9 + i * 0.32, 0.5, 0.4));
+    // slow zoom on the photo
+    $('#s1 .photo svg').style.transform = `translate(-50%,-50%) scale(${1 + t * 0.02})`;
+  }
+  // ---- S2
+  {
+    kt($('#s2 .h'), t, 4.45);
+    up($('#s2 .search'), t, 4.5, 0.6);
+    const q = '버섯 모양 조명 판매처';
+    const n = Math.floor(clamp((t - 5.0) / 1.0) * q.length);
+    $('#s2 .q').textContent = q.slice(0, n);
+    $('#s2 .cr').style.opacity = t > 5.0 && t < 6.6 ? (Math.floor(t * 4) % 2 ? 0 : 1) : 0;
+    const em = $('#s2 .empty'); pop(em, t, 6.2, 0.45, .8);
+    const sh = prog(t, 6.3, 0.45); if (sh > 0 && sh < 1) em.style.transform += ` translateX(${Math.sin(sh * Math.PI * 6) * (1 - sh) * 14}px)`;
+    $$('#s2 .qchip').forEach((c, i) => pop(c, t, 6.75 + i * 0.22, 0.5, .5));
+  }
+  // ---- S3
+  {
+    const m = $('#s3 .msg'); const e = back(prog(t, 8.6, 0.6)); tf(m, clamp(prog(t, 8.6, 0.2)), (1 - e) * 120, (1 - e) * 60, lerp(.7, 1, e));
+    up($('#s3 .sent'), t, 9.2, 0.3, 10);
+    const r = $('#s3 .rep'); pop(r, t, 9.7, 0.55, .7);
+    const lg = $('#s3 .logo'); pop(lg, t, 10.3, 0.6, .4);
+    kt($('#s3 .h'), t, 10.45);
+    up($('#s3 .sub'), t, 11.4);
+  }
+  // ---- stepper (visible S4-S5)
+  {
+    const st = $('.steps');
+    const o = clamp(prog(t, 12.8, 0.4)) * (1 - prog(t, 21.6, 0.3));
+    st.style.opacity = o;
+    st.style.transform = `translateX(-50%) translateY(${(1 - out3(prog(t, 12.8, 0.5))) * -30}px)`;
+    const act = [12.9, 13.4, 17.4, 18.9];          // when each step becomes done/active
+    $$('.st').forEach((s, i) => {
+      const a = prog(t, act[i], 0.3);
+      const done = a > 0;
+      s.style.borderColor = done ? '#059669' : '#E4E5EA';
+      s.style.color = done ? '#111114' : '#9A9DA8';
+      const b = $('b', s);
+      b.style.background = done ? '#059669' : '#ECEDF2';
+      b.style.color = done ? '#fff' : '#9A9DA8';
+      b.innerHTML = done ? '✓' : (i + 1);
+      s.style.transform = `scale(${1 + Math.sin(a * Math.PI) * 0.12})`;
+    });
+  }
+  // ---- S4
+  {
+    up($('#s4 .eb'), t, 12.95, 0.5, 20);
+    kt($('#s4 .h'), t, 13.05);
+    up($('#s4 .sub'), t, 14.0);
+    const rc = $('#s4 .rcpt'); const e = out3(prog(t, 12.9, 0.7)); tf(rc, e, 0, (1 - e) * 90);
+    $$('#s4 .n').forEach((b, i) => {
+      const v = +b.dataset.v, s = 13.6 + i * 0.45;
+      const k = out3(prog(t, s, 0.7));
+      b.textContent = '₩' + (Math.round(v * k / 100) * 100).toLocaleString('ko-KR');
+      b.parentElement.style.opacity = clamp(prog(t, s - 0.1, 0.3));
+    });
+    const nh = $('#s4 .nohid'); const p = prog(t, 15.7, 0.45);
+    nh.style.opacity = clamp(p * 3); nh.style.transform = `rotate(-12deg) scale(${lerp(2.2, 1, out5(p))})`;
+  }
+  // ---- S5
+  {
+    kt($('#s5 .h'), t, 17.2);
+    $$('#s5 .cd').forEach((c, i) => { const e = out3(prog(t, 17.35 + i * 0.18, 0.6)); tf(c, e, 0, (1 - e) * 70); });
+    // pay button press
+    const btn = $('#s5 .btn'), pr = prog(t, 17.9, 0.35);
+    btn.style.transform = `scale(${1 - Math.sin(pr * Math.PI) * 0.08})`;
+    $('#s5 .btn .ck').style.transform = `scale(${back(prog(t, 18.1, 0.4))})`;
+    // camera flash + ok badge
+    const fl = prog(t, 18.9, 0.35); $('#s5 .flash').style.opacity = fl > 0 && fl < 1 ? (1 - fl) * 0.95 : 0;
+    pop($('#s5 .okb'), t, 19.15, 0.45, .5);
+    // route
+    const rt = $('#s5 .route'), rw = rt.clientWidth, rh = rt.clientHeight;
+    const k = inOut(prog(t, 19.6, 1.5));
+    const P = (u) => { // cubic bezier matching the dashed path, scaled to box
+      const p0 = [40, 70], p1 = [120, 0], p2 = [240, 140], p3 = [320, 70];
+      const b = (a, b2, c, d) => (1 - u) ** 3 * a + 3 * (1 - u) ** 2 * u * b2 + 3 * (1 - u) * u * u * c + u ** 3 * d;
+      return [b(p0[0], p1[0], p2[0], p3[0]) / 360 * rw, b(p0[1], p1[1], p2[1], p3[1]) / 140 * rh];
+    };
+    const [bx, by] = P(k);
+    const box = $('#s5 .box');
+    box.style.left = bx + 'px'; box.style.top = by + 'px'; box.style.marginTop = '-31px';
+    box.style.transform = `translateY(${-Math.abs(Math.sin(k * Math.PI * 4)) * 8}px)`;
+    box.style.opacity = clamp(prog(t, 19.5, 0.2));
+  }
+  // ---- S6
+  {
+    kt($('#s6 .h'), t, 21.9);
+    $$('#s6 .chip').forEach((c, i) => pop(c, t, 23.3 + i * 0.22, 0.5, .6));
+  }
+  // ---- S7
+  {
+    pop($('#s7 .logo'), t, 26.1, 0.7, .3);
+    up($('#s7 .nm'), t, 26.45);
+    up($('#s7 .tag'), t, 26.75);
+    pop($('#s7 .cta'), t, 27.2, 0.6, .7);
+    const rp = prog(t, 28.3, 0.6), rip = $('#s7 .rip');
+    rip.style.opacity = rp > 0 && rp < 1 ? (1 - rp) : 0;
+    rip.style.transform = `translate(-50%,-50%) scale(${rp * 18})`;
+    $('#s7 .cta').style.transform += ` scale(${1 - Math.sin(prog(t, 28.25, 0.3) * Math.PI) * 0.06})`;
+    up($('#s7 .info'), t, 27.6);
+    $$('#s7 .ct span').forEach((s, i) => up(s, t, 28.0 + i * 0.1, 0.4, 16));
+  }
+  // ---- brand bug: dark on light scenes, hidden on dark ones
+  {
+    const bug = $('#bug');
+    const darkNow = (t >= 8.2 + IRIS / 2 && t < 12.6 + IRIS / 2) || t >= 25.8 + IRIS / 2;
+    bug.style.opacity = clamp(prog(t, 0.4, 0.5)) * (darkNow ? 0 : 1);
+  }
+}
+
+window.render = render;
+window.DUR = DUR;
+render(0);
+
+if (!Q.has('render')) {
+  const fit = () => {
+    const s = Math.min(innerWidth / W, innerHeight / H), st = $('#stage');
+    st.style.transformOrigin = '0 0';
+    st.style.transform = `translate(${(innerWidth - W * s) / 2}px,${(innerHeight - H * s) / 2}px) scale(${s})`;
+  };
+  fit(); addEventListener('resize', fit);
+  let t0 = performance.now();
+  document.addEventListener('click', () => t0 = performance.now());
+  const loop = now => { render(((now - t0) / 1000) % (DUR + 1)); requestAnimationFrame(loop); };
+  document.fonts.ready.then(() => requestAnimationFrame(loop));
+}
+</script>
+</body>
+</html>

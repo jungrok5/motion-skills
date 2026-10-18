@@ -1,0 +1,14 @@
+{
+  "dur": 30.0,
+  "narration": {
+    "take": "audio/narration.mp3",
+    "lines": 7, "thr": -50, "gap_cap": 0.18,
+    "splits": [2.3, 7.5, 14.1, 21.1, 27.0, 33.0],
+    "cues": [[0.35, 1.0], [4.4, 1.05], [8.5, 1.1], [13.15, 1.15], [17.6, 1.08], [21.9, 1.05], [26.4, 1.0]]
+  },
+  "sound": "sound.py",
+  "music_level": 0.36,
+  "sfx_dir": "../assets/sfx",
+  "out": "../../out/minimal.wav",
+  "videos": ["../../out/minimal-landscape.mp4", "../../out/minimal-portrait.mp4"]
+}

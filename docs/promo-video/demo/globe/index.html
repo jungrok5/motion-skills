@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Fortimove Global — 지구 반대편까지</title>
+<style>
+@font-face{font-family:P;src:url(../assets/fonts/Pretendard-Variable.woff2) format('woff2');font-weight:100 900}
+:root{--mint:#34D399;--mint2:#A7F3D0;--sub:#9AA6C0;--kakao:#FEE500}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:#000;overflow:hidden}
+body{font-family:P,sans-serif;letter-spacing:-0.035em;word-break:keep-all;color:#fff;-webkit-font-smoothing:antialiased}
+#stage{position:relative;overflow:hidden;width:1920px;height:1080px;background:radial-gradient(110% 90% at 60% 45%,#122046 0%,#0A1229 45%,#04060C 100%)}
+body.P #stage{width:1080px;height:1920px;background:radial-gradient(120% 80% at 50% 55%,#122046 0%,#0A1229 45%,#04060C 100%)}
+canvas{position:absolute;inset:0}
+.abs{position:absolute}
+br.p{display:none} body.P br.p{display:inline}
+br.l{display:inline} body.P br.l{display:none}
+.kt .w{display:inline-block;overflow:hidden;vertical-align:top;padding:0 .02em .12em;margin-bottom:-.12em}
+.kt .wi{display:inline-block}
+.h{font-weight:900;line-height:1.14;letter-spacing:-0.045em}
+.mint{color:var(--mint);text-shadow:0 0 30px rgba(52,211,153,.45)}
+.eb{font-size:26px;font-weight:800;color:var(--mint);letter-spacing:.14em}
+
+/* headlines */
+.hd{left:140px;width:820px}
+body.P .hd{left:0;width:100%;text-align:center;padding:0 60px}
+.hd .h{font-size:96px}
+body.P .hd .h{font-size:104px}
+.hd .s{font-size:34px;font-weight:600;color:var(--sub);margin-top:26px}
+#h1{top:330px} body.P #h1{top:300px}
+#h2{top:360px} body.P #h2{top:250px}
+#h3{top:360px} body.P #h3{top:250px}
+#h4{top:150px} body.P #h4{top:250px}
+#h2 .h,#h3 .h{font-size:80px}
+body.P #h2 .h,body.P #h3 .h{font-size:96px}
+
+/* lamp product card */
+#lamp{width:400px;height:400px;border-radius:36px;overflow:hidden;background:radial-gradient(120% 100% at 50% 15%,#F6D2BA,#E9AE8E 55%,#D98E6E);box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 2px rgba(255,255,255,.12)}
+#lamp svg{position:absolute;left:50%;top:54%;width:62%;transform:translate(-50%,-50%)}
+.ring{position:absolute;border-radius:50%;border:3px solid var(--mint);box-shadow:0 0 24px rgba(52,211,153,.6)}
+#seek{display:flex;align-items:center;gap:12px;font-size:26px;font-weight:800;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.18);border-radius:999px;padding:12px 22px;white-space:nowrap;backdrop-filter:blur(6px)}
+#seek i{width:14px;height:14px;border-radius:50%;background:var(--mint);box-shadow:0 0 14px var(--mint);display:block}
+
+/* pins */
+.pin{position:absolute;width:0;height:0}
+.pin .dot{position:absolute;left:-11px;top:-11px;width:22px;height:22px;border-radius:50%;background:var(--mint);box-shadow:0 0 18px 4px rgba(52,211,153,.75)}
+.pin .pr{position:absolute;left:-11px;top:-11px;width:22px;height:22px;border-radius:50%;border:3px solid var(--mint)}
+.pin .lb{position:absolute;left:22px;top:-24px;white-space:nowrap;font-size:28px;font-weight:800;background:rgba(6,12,28,.75);border:2px solid rgba(52,211,153,.55);border-radius:999px;padding:6px 18px}
+.pin.kr .dot{background:#fff;box-shadow:0 0 22px 6px rgba(255,255,255,.7)}
+.pin.kr .pr{border-color:#fff}
+.pin.kr .lb{border-color:rgba(255,255,255,.6)}
+.pin.left .lb{left:auto;right:22px}
+#found{display:flex;align-items:center;gap:16px;background:#fff;color:#0A1229;border-radius:24px;padding:12px 22px 12px 12px;font-size:30px;font-weight:900;white-space:nowrap;box-shadow:0 20px 50px rgba(0,0,0,.5),0 0 40px rgba(52,211,153,.5)}
+#found .mini{width:72px;height:72px;border-radius:16px;overflow:hidden;position:relative;background:radial-gradient(120% 100% at 50% 15%,#F6D2BA,#E9AE8E 55%,#D98E6E)}
+#found .mini svg{position:absolute;left:50%;top:54%;width:70%;transform:translate(-50%,-50%)}
+#found .ck{width:40px;height:40px;border-radius:50%;background:#059669;display:flex;align-items:center;justify-content:center}
+#box{font-size:56px;width:0;height:0}
+#box span{position:absolute;left:-30px;top:-34px;filter:drop-shadow(0 0 16px rgba(255,255,255,.55))}
+#arrive{font-size:28px;font-weight:900;background:var(--mint);color:#04241A;border-radius:999px;padding:8px 20px;white-space:nowrap}
+
+/* steps */
+#steps{left:140px;top:330px;display:flex;flex-direction:column;gap:22px}
+body.P #steps{left:50%;top:560px;transform:translateX(-50%)}
+.stp{position:relative;display:flex;align-items:center;gap:24px;width:640px;height:104px;padding:0 30px;border-radius:28px;background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.14);font-size:38px;font-weight:800}
+body.P .stp{width:860px;height:120px;font-size:44px}
+.stp b{width:56px;height:56px;border-radius:50%;border:2px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;flex:none}
+.stp small{margin-left:auto;font-size:24px;font-weight:700;color:var(--sub)}
+body.P .stp small{font-size:26px}
+#trust{left:140px;top:860px;font-size:32px;font-weight:800;color:var(--mint2);white-space:nowrap}
+body.P #trust{left:0;width:100%;text-align:center;top:1180px;font-size:38px}
+
+/* end card */
+#end{left:0;top:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+body.P #end{justify-content:flex-start;padding-top:470px}
+#end .logo{width:180px;height:180px;filter:invert(1);mix-blend-mode:screen}
+body.P #end .logo{width:230px;height:230px}
+#end .nm{font-size:92px;font-weight:900;margin-top:10px;letter-spacing:-0.03em}
+body.P #end .nm{font-size:104px}
+#end .tg{font-size:42px;font-weight:700;color:#D6DCEA;margin-top:18px}
+body.P #end .tg{font-size:46px}
+#end .info{font-size:30px;font-weight:600;color:var(--sub);margin-top:48px;line-height:1.7}
+body.P #end .info{font-size:34px}
+#end .info b{color:#fff}
+#end .kk{display:inline-block;background:var(--kakao);color:#191600;font-weight:800;border-radius:10px;padding:2px 12px;margin:0 6px;font-size:26px}
+#end .ct{display:flex;gap:14px;justify-content:center;margin-top:34px}
+#end .ct span{font-size:24px;font-weight:800;border:2px solid rgba(52,211,153,.5);color:var(--mint2);border-radius:999px;padding:10px 22px}
+body.P #end .ct span{font-size:28px}
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="cv"></canvas>
+
+  <div class="abs hd" id="h1"><div class="eb">FORTIMOVE GLOBAL</div><div class="h kt" style="margin-top:20px">사진 한 장으로,<br><em class="mint">전 세계</em>를 찾아요</div><div class="s">링크가 없어도, 브랜드명만 있어도 OK</div></div>
+  <div class="abs hd" id="h2"><div class="h kt">지구 반대편까지<br><em class="mint">찾아드려요</em></div><div class="s">중국 · 일본 · 미국 · 동남아</div></div>
+  <div class="abs hd" id="h3"><div class="h kt">실물 검수 후,<br><em class="mint">한국까지</em> 배송해요</div><div class="s">입고 상품은 사진으로 먼저 확인</div></div>
+  <div class="abs hd" id="h4"><div class="h kt">이렇게 <em class="mint">간단해요</em></div></div>
+
+  <div class="abs" id="lamp"></div>
+  <div class="abs" id="seek"><i></i><span>찾는 중…</span></div>
+
+  <div class="pin" data-lon="121.5" data-lat="31.2" id="pCN"><div class="pr"></div><div class="dot"></div><div class="lb">중국</div></div>
+  <div class="pin" data-lon="139.7" data-lat="35.7" id="pJP"><div class="pr"></div><div class="dot"></div><div class="lb">일본</div></div>
+  <div class="pin left" data-lon="100.5" data-lat="13.7" id="pSEA"><div class="pr"></div><div class="dot"></div><div class="lb">동남아</div></div>
+  <div class="pin" data-lon="-118.2" data-lat="34.0" id="pUS"><div class="pr"></div><div class="dot"></div><div class="lb">미국</div></div>
+  <div class="pin kr left" data-lon="127.0" data-lat="37.5" id="pKR"><div class="pr"></div><div class="dot"></div><div class="lb">한국</div></div>
+  <div class="abs" id="found"><div class="mini"></div>찾았어요!<span class="ck"></span></div>
+  <div class="abs" id="box"><span>📦</span></div>
+  <div class="abs" id="arrive">도착 ✓</div>
+
+  <div class="abs" id="steps">
+    <div class="stp"><b>1</b>사진 전송<small>링크·브랜드명도 OK</small></div>
+    <div class="stp"><b>2</b>무료 견적<small>상품가·수수료·배송비</small></div>
+    <div class="stp"><b>3</b>동의 후 결제<small>견적 전 결제 없음</small></div>
+    <div class="stp"><b>4</b>검수·배송<small>사진으로 먼저 확인</small></div>
+  </div>
+  <div class="abs" id="trust">숨은 비용 없음 · 회원가입 없음 · 견적 무료</div>
+
+  <div class="abs" id="end">
+    <img class="logo" src="../assets/fg-logo.png" alt="">
+    <div class="nm">Fortimove Global</div>
+    <div class="tg">찾으시는 상품, 해외에서 찾아드려요</div>
+    <div class="info"><b>fortimoveglobal.com</b><br><span class="kk">카카오톡 채널</span> 상담 · 070-8983-8495</div>
+    <div class="ct"><span>중국</span><span>일본</span><span>미국</span><span>동남아</span></div>
+  </div>
+</div>
+
+<script>
+const Q = new URLSearchParams(location.search);
+const FMT = (Q.get('f') === 'p' || Q.get('o') === 'v') ? 'P' : 'L';
+document.body.classList.add(FMT);
+const W = FMT === 'L' ? 1920 : 1080, H = FMT === 'L' ? 1080 : 1920;
+const DUR = 25;
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, s, d) => clamp((t - s) / d);
+const lerp = (a, b, e) => a + (b - a) * e;
+const out3 = x => 1 - Math.pow(1 - x, 3);
+const out5 = x => 1 - Math.pow(1 - x, 5);
+const inOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const back = x => { const c1 = 1.7, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const D2R = Math.PI / 180;
+const CHECK = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const LAMP = `<svg viewBox="0 0 200 220"><defs><radialGradient id="g" cx="50%" cy="45%" r="55%"><stop offset="0" stop-color="#FFF6D9" stop-opacity=".95"/><stop offset="1" stop-color="#FFE7B8" stop-opacity="0"/></radialGradient><linearGradient id="d" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF9F0"/><stop offset="1" stop-color="#E8CDA9"/></linearGradient></defs>
+<ellipse cx="100" cy="96" rx="98" ry="84" fill="url(#g)"/><ellipse cx="100" cy="200" rx="70" ry="10" fill="#B9845F" opacity=".35"/>
+<rect x="91" y="100" width="18" height="84" rx="8" fill="#C99A72"/><rect x="91" y="100" width="7" height="84" rx="3" fill="#DDB28C"/>
+<path d="M24 106 C 24 34, 176 34, 176 106 Z" fill="url(#d)"/><path d="M24 106 C 24 34, 176 34, 176 106" fill="none" stroke="#B88D66" stroke-width="2.5"/><path d="M22 106 h156" stroke="#A9794F" stroke-width="5" stroke-linecap="round"/>
+<path d="M50 70 C 64 52, 86 46, 104 46" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".8"/>
+<ellipse cx="100" cy="192" rx="48" ry="13" fill="#A9794F"/><ellipse cx="100" cy="187" rx="48" ry="13" fill="#D6AE88"/></svg>`;
+$('#lamp').innerHTML = LAMP;
+$('#found .mini').innerHTML = LAMP;
+$('#found .ck').innerHTML = CHECK;
+
+/* ---------- kinetic text ---------- */
+function splitKT(el) {
+  const words = [];
+  const walk = (node, cls) => [...node.childNodes].forEach(c => {
+    if (c.nodeType === 3) c.textContent.split(/(\s+)/).forEach(tok => {
+      if (!tok) return;
+      if (/^\s+$/.test(tok)) { el.appendChild(document.createTextNode(' ')); return; }
+      const w = document.createElement('span'); w.className = 'w';
+      const wi = document.createElement('span'); wi.className = 'wi' + (cls ? ' ' + cls : '');
+      wi.textContent = tok; w.appendChild(wi); el.appendChild(w); words.push(wi);
+    });
+    else if (c.nodeName === 'BR') el.appendChild(c.cloneNode());
+    else walk(c, c.className);
+  });
+  const src = el.cloneNode(true); el.innerHTML = ''; walk(src, ''); el._w = words;
+}
+$$('.kt').forEach(splitKT);
+const kt = (el, t, s) => el._w.forEach((w, i) => { const e = out5(prog(t, s + i * 0.07, 0.55)); w.style.transform = `translateY(${(1 - e) * 112}%)`; });
+const tf = (el, o, x = 0, y = 0, s = 1) => { el.style.opacity = o; el.style.transform = `translate(${x}px,${y}px) scale(${s})`; };
+const up = (el, t, s, d = 0.6, dy = 36) => { const e = out3(prog(t, s, d)); tf(el, e, 0, (1 - e) * dy); };
+const pop = (el, t, s, d = 0.5, s0 = .5) => { const p = prog(t, s, d); tf(el, clamp(p * 3), 0, 0, lerp(s0, 1, back(p))); };
+// headline block: in at s, out at e
+function head(el, t, s, e) {
+  kt($('.kt', el), t, s);
+  const sub = $('.s', el); if (sub) up(sub, t, s + 0.7);
+  const eb = $('.eb', el); if (eb) up(eb, t, s - 0.1, 0.5, 18);
+  const o = 1 - out3(prog(t, e, 0.4));
+  el.style.opacity = t < s - 0.05 ? 0 : o;
+  el.style.transform = `translateY(${-prog(t, e, 0.4) * 40}px)`;
+}
+
+/* ---------- land mask (rough continents, lon/lat) ---------- */
+const LAND = [
+  [[-168,66],[-140,70],[-95,72],[-80,62],[-60,55],[-55,48],[-67,45],[-76,35],[-81,25],[-97,26],[-97,18],[-87,15],[-83,9],[-78,8],[-90,14],[-105,20],[-112,30],[-117,33],[-124,40],[-124,48],[-135,57],[-150,60],[-165,60]],
+  [[-55,60],[-45,60],[-20,70],[-20,80],[-60,82],[-72,77]],
+  [[-80,10],[-62,11],[-50,0],[-35,-5],[-40,-22],[-48,-28],[-58,-38],[-65,-55],[-73,-50],[-72,-35],[-71,-18],[-81,-5]],
+  [[-10,36],[-9,43],[-2,48],[5,52],[8,57],[5,62],[15,70],[30,71],[60,70],[80,73],[110,77],[140,72],[180,68],[180,64],[160,60],[155,50],[142,47],[135,43],[130,42],[124,40],[122,40],[121,31],[118,24],[110,21],[108,16],[105,10],[103,1],[100,6],[98,16],[92,22],[80,15],[77,8],[72,20],[66,25],[57,25],[59,22],[52,13],[43,12],[39,21],[34,28],[35,32],[28,36],[26,40],[20,40],[15,38],[12,44],[3,43],[-5,36]],
+  [[126,34.5],[129.5,35],[129.5,38.5],[128,40],[124.5,40],[126,37]],
+  [[130,31],[132,34],[136,35],[140,35],[141,38],[142,43],[145,44],[141,45],[139,40],[137,37],[133,35],[130,33]],
+  [[-17,21],[-17,14],[-8,5],[5,5],[10,3],[9,-2],[13,-12],[12,-18],[18,-34],[26,-34],[33,-26],[40,-15],[40,-5],[51,12],[43,12],[35,27],[32,31],[20,32],[10,37],[-6,36],[-10,29]],
+  [[114,-22],[122,-18],[131,-12],[137,-12],[142,-11],[146,-19],[153,-26],[150,-37],[141,-38],[131,-31],[116,-35],[114,-26]],
+  [[109,2],[117,7],[119,1],[116,-4],[110,-3]],
+  [[95,5],[98,4],[106,-6],[102,-5]],
+  [[105,-6],[115,-8],[114,-8.5],[106,-7]],
+  [[120,18],[122,18],[126,7],[124,6],[120,12]],
+  [[131,-1],[141,-3],[150,-10],[141,-9],[136,-4]],
+  [[120,22],[122,25],[121,25.3],[120,23.5]],
+  [[-5,50],[1,51],[-2,57],[-6,58],[-5,54]],
+  [[166,-46],[174,-41],[178,-38],[173,-35],[172,-41]],
+  [[44,-25],[50,-16],[49,-12],[44,-17]],
+  [[-24,64],[-14,65],[-18,66.5],[-23,66]],
+  [[141,46],[143,46],[143,52],[142,54]],
+];
+function inPoly(x, y, poly) {
+  let c = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i], [xj, yj] = poly[j];
+    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) c = !c;
+  }
+  return c;
+}
+const DOTS = [];
+{
+  const N = 16000, ga = Math.PI * (3 - Math.sqrt(5));
+  for (let i = 0; i < N; i++) {
+    const y = 1 - (i / (N - 1)) * 2, r = Math.sqrt(1 - y * y), th = ga * i;
+    const lat = Math.asin(y) / D2R;
+    let lon = Math.atan2(Math.sin(th) * r, Math.cos(th) * r) / D2R;
+    if (LAND.some(p => inPoly(lon, lat, p))) DOTS.push([lon * D2R, lat * D2R]);
+  }
+}
+// stars
+const STARS = [];
+{ let s = 7; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 220; i++) STARS.push([rnd() * W, rnd() * H, rnd() * 1.8 + 0.4, rnd() * 6.28]); }
+
+/* ---------- globe state over time ---------- */
+const G = FMT === 'L'
+  ? { s1: [1380, 560, 330, .5], s2: [1330, 560, 410, 1], s4: [1500, 560, 380, .35], s5: [960, 1650, 1000, .55] }
+  : { s1: [540, 1060, 400, .5], s2: [540, 1180, 450, 1], s4: [540, 1700, 470, .35], s5: [540, 2420, 1150, .6] };
+function globeState(t) {
+  const mix = (a, b, e) => a.map((v, i) => lerp(v, b[i], e));
+  let g = G.s1;
+  g = mix(g, G.s2, inOut(prog(t, 3.9, 1.1)));
+  g = mix(g, G.s4, inOut(prog(t, 14.6, 1.0)));
+  g = mix(g, G.s5, inOut(prog(t, 19.7, 1.3)));
+  const fadeIn = out3(prog(t, 0, 1.2));
+  return { cx: g[0], cy: g[1], R: g[2], a: g[3] * fadeIn, lon0: (171 - t * 0.55) * D2R, lat0: 24 * D2R };
+}
+function project(lon, lat, g, lift = 1) {
+  const dl = lon - g.lon0;
+  const cosc = Math.sin(g.lat0) * Math.sin(lat) + Math.cos(g.lat0) * Math.cos(lat) * Math.cos(dl);
+  const x = g.cx + g.R * lift * Math.cos(lat) * Math.sin(dl);
+  const y = g.cy - g.R * lift * (Math.cos(g.lat0) * Math.sin(lat) - Math.sin(g.lat0) * Math.cos(lat) * Math.cos(dl));
+  return [x, y, cosc];
+}
+// great-circle points US -> KR
+function vec(lon, lat) { return [Math.cos(lat) * Math.cos(lon), Math.cos(lat) * Math.sin(lon), Math.sin(lat)]; }
+function slerpLL(a, b, u) {
+  const A = vec(...a), B = vec(...b);
+  const d = Math.acos(A[0] * B[0] + A[1] * B[1] + A[2] * B[2]);
+  const s1 = Math.sin((1 - u) * d) / Math.sin(d), s2 = Math.sin(u * d) / Math.sin(d);
+  const v = [A[0] * s1 + B[0] * s2, A[1] * s1 + B[1] * s2, A[2] * s1 + B[2] * s2];
+  return [Math.atan2(v[1], v[0]), Math.asin(v[2])];
+}
+const US = [-118.2 * D2R, 34.0 * D2R], KR = [127.0 * D2R, 37.5 * D2R];
+
+/* ---------- canvas ---------- */
+const cv = $('#cv'); cv.width = W; cv.height = H;
+const cx = cv.getContext('2d');
+function drawCanvas(t) {
+  cx.clearRect(0, 0, W, H);
+  // stars
+  for (const [x, y, r, ph] of STARS) {
+    cx.globalAlpha = 0.25 + 0.35 * (0.5 + 0.5 * Math.sin(t * 1.3 + ph));
+    cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(x, y, r, 0, 6.283); cx.fill();
+  }
+  const g = globeState(t);
+  if (g.a <= 0.001) return g;
+  cx.globalAlpha = g.a;
+  // atmosphere glow
+  const at = cx.createRadialGradient(g.cx, g.cy, g.R * 0.9, g.cx, g.cy, g.R * 1.28);
+  at.addColorStop(0, 'rgba(52,211,153,0.22)'); at.addColorStop(1, 'rgba(52,211,153,0)');
+  cx.fillStyle = at; cx.beginPath(); cx.arc(g.cx, g.cy, g.R * 1.28, 0, 6.283); cx.fill();
+  // sphere body
+  const bd = cx.createRadialGradient(g.cx - g.R * .35, g.cy - g.R * .4, g.R * .1, g.cx, g.cy, g.R);
+  bd.addColorStop(0, '#16305E'); bd.addColorStop(1, '#070D1E');
+  cx.fillStyle = bd; cx.beginPath(); cx.arc(g.cx, g.cy, g.R, 0, 6.283); cx.fill();
+  cx.strokeStyle = 'rgba(167,243,208,0.35)'; cx.lineWidth = 2; cx.stroke();
+  // graticule
+  cx.strokeStyle = 'rgba(255,255,255,0.06)'; cx.lineWidth = 1;
+  for (let la = -60; la <= 60; la += 30) {
+    cx.beginPath(); let pen = false;
+    for (let lo = -180; lo <= 180; lo += 4) { const [x, y, z] = project(lo * D2R, la * D2R, g); if (z > 0) { pen ? cx.lineTo(x, y) : cx.moveTo(x, y); pen = true; } else pen = false; }
+    cx.stroke();
+  }
+  for (let lo = -180; lo < 180; lo += 30) {
+    cx.beginPath(); let pen = false;
+    for (let la = -88; la <= 88; la += 4) { const [x, y, z] = project(lo * D2R, la * D2R, g); if (z > 0) { pen ? cx.lineTo(x, y) : cx.moveTo(x, y); pen = true; } else pen = false; }
+    cx.stroke();
+  }
+  // land dots
+  const dr = Math.max(1.3, g.R / 190);
+  for (const [lo, la] of DOTS) {
+    const [x, y, z] = project(lo, la, g);
+    if (z <= 0) continue;
+    cx.globalAlpha = g.a * (0.25 + 0.75 * z);
+    cx.fillStyle = z > 0.35 ? '#C9F7E3' : '#7FD9B5';
+    cx.fillRect(x - dr, y - dr, dr * 2, dr * 2);
+  }
+  cx.globalAlpha = g.a;
+  // scan beam 5.0-7.4
+  const sb = prog(t, 4.9, 2.6);
+  if (sb > 0 && sb < 1) {
+    const ang = -Math.PI / 2 + sb * Math.PI * 2.2;
+    cx.save(); cx.beginPath(); cx.arc(g.cx, g.cy, g.R, 0, 6.283); cx.clip();
+    const grd = cx.createConicGradient ? cx.createConicGradient(ang - 0.6, g.cx, g.cy) : null;
+    if (grd) {
+      grd.addColorStop(0, 'rgba(52,211,153,0)'); grd.addColorStop(0.09, 'rgba(52,211,153,0.28)'); grd.addColorStop(0.0955, 'rgba(52,211,153,0)'); grd.addColorStop(1, 'rgba(52,211,153,0)');
+      cx.fillStyle = grd; cx.globalAlpha = g.a * Math.sin(sb * Math.PI);
+      cx.fillRect(g.cx - g.R, g.cy - g.R, g.R * 2, g.R * 2);
+    }
+    cx.restore();
+  }
+  // flight arc US -> KR
+  const ad = out3(prog(t, 10.3, 1.2));
+  if (ad > 0 && t < 20.5) {
+    const pts = [];
+    const n = 80;
+    for (let i = 0; i <= n * ad; i++) {
+      const u = i / n; const [lo, la] = slerpLL(US, KR, u);
+      pts.push(project(lo, la, g, 1 + 0.22 * Math.sin(Math.PI * u)));
+    }
+    cx.lineCap = 'round';
+    for (const [w, col] of [[14, 'rgba(52,211,153,0.18)'], [6, 'rgba(52,211,153,0.6)'], [2.5, '#E8FFF5']]) {
+      cx.strokeStyle = col; cx.lineWidth = w * (g.R / 430);
+      cx.beginPath(); pts.forEach(([x, y], i) => i ? cx.lineTo(x, y) : cx.moveTo(x, y)); cx.stroke();
+    }
+  }
+  cx.globalAlpha = 1;
+  return g;
+}
+
+/* ---------- pins & overlays ---------- */
+const PIN_T = { pCN: 5.0, pJP: 5.4, pSEA: 5.8, pUS: 6.2, pKR: 10.0 };
+function render(t) {
+  const g = drawCanvas(t);
+  // headlines
+  head($('#h1'), t, 0.4, 3.7);
+  head($('#h2'), t, 4.5, 9.6);
+  head($('#h3'), t, 10.1, 14.5);
+  head($('#h4'), t, 15.2, 19.6);
+
+  // lamp card: big in S1, then shrinks to a thumbnail with the "searching" chip
+  {
+    const lamp = $('#lamp');
+    const L = FMT === 'L';
+    const big = L ? [G.s1[0] - 200, G.s1[1] - 200, 1] : [340, 860, 1];
+    const sm = L ? [140, 700, 0.42] : [372, 640, 0.42];
+    const e = inOut(prog(t, 3.8, 0.9));
+    const x = lerp(big[0], sm[0], e), y = lerp(big[1], sm[1], e), s = lerp(big[2], sm[2], e);
+    const ein = back(prog(t, 0.2, 0.7));
+    const o = clamp(prog(t, 0.2, 0.25)) * (1 - prog(t, 9.4, 0.4));
+    lamp.style.opacity = o;
+    lamp.style.left = x + 'px'; lamp.style.top = y + 'px';
+    lamp.style.transformOrigin = '0 0';
+    lamp.style.transform = `scale(${s * lerp(0.6, 1, ein)})`;
+    // radar rings around the big card
+    $$('.ring').forEach(r => r.remove());
+    if (t > 0.6 && t < 4.0) {
+      for (let k = 0; k < 3; k++) {
+        const ph = ((t - 0.6) / 0.9 - k * 0.33);
+        if (ph < 0) continue;
+        const f = ph % 1;
+        const r = document.createElement('div'); r.className = 'ring';
+        const rad = 220 + f * 260;
+        r.style.width = r.style.height = rad * 2 + 'px';
+        r.style.left = (big[0] + 200 - rad) + 'px'; r.style.top = (big[1] + 200 - rad) + 'px';
+        r.style.opacity = (1 - f) * 0.8 * (1 - prog(t, 3.6, 0.4));
+        $('#stage').insertBefore(r, $('#lamp'));
+      }
+    }
+    const sk = $('#seek');
+    const sx = sm[0] + (L ? 0 : -40), sy = sm[1] + 400 * sm[2] + 18;
+    sk.style.left = sx + 'px'; sk.style.top = sy + 'px';
+    sk.style.opacity = clamp(prog(t, 4.5, 0.4)) * (1 - prog(t, 9.4, 0.4));
+    const found = t >= 7.4;
+    $('#seek span').textContent = found ? '찾았어요 ✓' : '찾는 중' + '.'.repeat(1 + Math.floor(t * 3) % 3);
+    $('#seek i').style.background = found ? '#fff' : '#34D399';
+    sk.style.borderColor = found ? 'rgba(52,211,153,.9)' : 'rgba(255,255,255,.18)';
+  }
+
+  // pins
+  const gfade = 1 - prog(t, 14.6, 0.5);
+  for (const [id, ts] of Object.entries(PIN_T)) {
+    const el = $('#' + id);
+    const [x, y, z] = project(+el.dataset.lon * D2R, +el.dataset.lat * D2R, g);
+    el.style.left = x + 'px'; el.style.top = y + 'px';
+    const p = prog(t, ts, 0.45);
+    const vis = z > 0.05 ? 1 : 0;
+    el.style.opacity = clamp(p * 3) * vis * gfade;
+    el.style.transform = `scale(${lerp(0.3, 1, back(p))})`;
+    const pr = $('.pr', el); const f = ((t - ts) / 1.2) % 1;
+    pr.style.transform = `scale(${1 + f * 2.6})`; pr.style.opacity = t > ts ? (1 - f) * 0.9 : 0;
+    // dim the non-found pins once the US one is found
+    if (id !== 'pUS' && id !== 'pKR') { el.style.opacity *= lerp(1, 0.4, prog(t, 7.4, 0.4)); $('.lb', el).style.opacity = 1 - prog(t, 9.7, 0.3); }
+    if (id === 'pUS') { const h = back(prog(t, 7.4, 0.45)); $('.dot', el).style.transform = `scale(${lerp(1, 1.5, clamp(h))})`; }
+  }
+  // found card next to US pin
+  {
+    const [x, y] = project(US[0], US[1], g);
+    const fd = $('#found');
+    fd.style.left = (x - (FMT === 'L' ? 120 : 200)) + 'px'; fd.style.top = (y + 40) + 'px';
+    pop(fd, t, 7.45, 0.5, .4);
+    fd.style.opacity = +fd.style.opacity * (1 - prog(t, 10.0, 0.4));
+  }
+  // package along the arc
+  {
+    const bx = $('#box');
+    const k = inOut(prog(t, 11.3, 2.5));
+    const [lo, la] = slerpLL(US, KR, k);
+    const [x, y] = project(lo, la, g, 1 + 0.22 * Math.sin(Math.PI * k));
+    bx.style.left = x + 'px'; bx.style.top = y + 'px';
+    bx.style.opacity = clamp(prog(t, 11.2, 0.2)) * (1 - prog(t, 13.9, 0.3));
+    $('#box span').style.transform = `rotate(${Math.sin(t * 6) * 6}deg) scale(${1 + 0.15 * Math.sin(Math.PI * k)})`;
+    const [ax, ay] = project(KR[0], KR[1], g);
+    const ar = $('#arrive');
+    ar.style.left = (ax - 190) + 'px'; ar.style.top = (ay + 34) + 'px';
+    pop(ar, t, 13.8, 0.45, .4);
+    ar.style.opacity = +ar.style.opacity * gfade;
+  }
+
+  // steps
+  {
+    const box = $('#steps');
+    box.style.opacity = 1 - prog(t, 19.6, 0.4);
+    $$('.stp').forEach((s, i) => {
+      const e = out3(prog(t, 15.5 + i * 0.15, 0.55));
+      s.style.opacity = e; s.style.transform = `translateX(${(1 - e) * -60}px)`;
+      const a = prog(t, 16.0 + i * 0.55, 0.35);
+      const on = a > 0;
+      s.style.borderColor = on ? 'rgba(52,211,153,.9)' : 'rgba(255,255,255,.14)';
+      s.style.background = on ? 'rgba(52,211,153,.12)' : 'rgba(255,255,255,.05)';
+      s.style.boxShadow = on ? `0 0 ${30 + 30 * Math.sin(a * Math.PI)}px rgba(52,211,153,.35)` : 'none';
+      const b = $('b', s);
+      b.innerHTML = on ? CHECK : String(i + 1);
+      b.style.background = on ? '#059669' : 'transparent';
+      b.style.borderColor = on ? '#34D399' : 'rgba(255,255,255,.3)';
+    });
+    const tr = $('#trust'); up(tr, t, 18.4, 0.6, 24); tr.style.opacity = +tr.style.opacity * (1 - prog(t, 19.6, 0.4));
+  }
+
+  // end card
+  {
+    const e = $('#end');
+    e.style.visibility = t > 19.9 ? 'visible' : 'hidden';
+    pop($('.logo', e), t, 20.3, 0.6, .3);
+    up($('.nm', e), t, 20.6);
+    up($('.tg', e), t, 20.9);
+    up($('.info', e), t, 21.4);
+    $$('.ct span', e).forEach((s, i) => up(s, t, 21.8 + i * 0.1, 0.4, 16));
+  }
+}
+
+window.render = render;
+window.DUR = DUR;
+render(0);
+
+if (!Q.has('render')) {
+  const fit = () => {
+    const s = Math.min(innerWidth / W, innerHeight / H), st = $('#stage');
+    st.style.transformOrigin = '0 0';
+    st.style.transform = `translate(${(innerWidth - W * s) / 2}px,${(innerHeight - H * s) / 2}px) scale(${s})`;
+  };
+  fit(); addEventListener('resize', fit);
+  let t0 = performance.now();
+  document.addEventListener('click', () => t0 = performance.now());
+  const loop = now => { render(((now - t0) / 1000) % (DUR + 1)); requestAnimationFrame(loop); };
+  document.fonts.ready.then(() => requestAnimationFrame(loop));
+}
+</script>
+</body>
+</html>

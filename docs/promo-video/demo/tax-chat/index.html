@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>한서윤 세무회계 — 채팅형 홍보 영상 (샘플)</title>
+<style>
+@font-face{font-family:P;src:url(../assets/fonts/Pretendard-Variable.woff2) format('woff2');font-weight:100 900}
+:root{--navy:#0E1525;--navy2:#1B3A6B;--gold:#C8A256;--goldD:#9C7A35;--hl:#F3DFA8;--ink:#0E1525;--muted:#56627A}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:#000;overflow:hidden}
+body{font-family:P,sans-serif;letter-spacing:-0.025em;word-break:keep-all;-webkit-font-smoothing:antialiased}
+#stage{position:relative;overflow:hidden;width:1920px;height:1080px;background:linear-gradient(135deg,#EDF1FA 0%,#F7F5FD 55%,#FFF5E8 100%)}
+body.P #stage{width:1080px;height:1920px}
+.blob{position:absolute;border-radius:50%;filter:blur(30px)}
+#b1{width:900px;height:900px;background:radial-gradient(circle,rgba(120,150,230,.28),transparent 65%)}
+#b2{width:800px;height:800px;background:radial-gradient(circle,rgba(230,190,110,.30),transparent 65%)}
+
+/* kinetic text */
+.kt .w{display:inline-block;overflow:hidden;vertical-align:top;padding:0 .02em .1em;margin-bottom:-.1em}
+.kt .wi{display:inline-block}
+.wi.hl{background:linear-gradient(transparent 60%,var(--hl) 60%)}
+
+/* side panels */
+.panel{position:absolute;left:930px;top:0;bottom:0;width:1000px;display:flex;flex-direction:column;justify-content:center;opacity:0}
+body.P .panel{left:0;right:0;width:auto;top:110px;bottom:auto;height:430px;align-items:center;text-align:center}
+.panel .eb{font-size:32px;font-weight:800;color:#3B5BDB;margin-bottom:26px;display:flex;align-items:center;gap:14px}
+.panel .eb i{display:inline-block;font-style:normal;font-size:24px;font-weight:800;color:#fff;background:var(--navy);border-radius:999px;padding:6px 16px;letter-spacing:.02em}
+.panel .h{font-size:104px;font-weight:900;line-height:1.14;color:var(--ink)}
+body.P .panel .h{font-size:84px}
+.panel .sub{font-size:38px;font-weight:600;color:var(--muted);margin-top:36px;line-height:1.45}
+body.P .panel .sub{font-size:34px;margin-top:24px}
+body.P .panel .eb{font-size:30px;margin-bottom:18px}
+br.l{display:inline} body.P br.l{display:none}
+
+/* phone */
+#pw{position:absolute;left:330px;top:70px;width:460px;height:940px;transform-origin:0 0}
+body.P #pw{left:236px;top:560px;transform:scale(1.32)}
+#pa{width:100%;height:100%;opacity:0}
+.phone{position:relative;width:460px;height:940px;border-radius:64px;background:#0E1525;padding:15px;box-shadow:0 60px 120px rgba(20,30,70,.28),inset 0 0 0 2px #2A3550}
+.phone:before{content:'';position:absolute;right:-5px;top:210px;width:5px;height:90px;border-radius:3px;background:#1C2538}
+.scr{position:relative;width:100%;height:100%;border-radius:50px;background:#E8EDF4;overflow:hidden;display:flex;flex-direction:column}
+.status{height:52px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 34px 6px;font-size:17px;font-weight:700;color:#111;background:#fff}
+.status .isl{position:absolute;left:50%;top:12px;width:120px;height:34px;border-radius:20px;background:#0E1525;transform:translateX(-50%)}
+.status .ico{display:flex;gap:6px;align-items:center}
+.status .ico b{display:block;width:26px;height:13px;border:2px solid #111;border-radius:4px;position:relative}
+.status .ico b:after{content:'';position:absolute;left:1px;top:1px;bottom:1px;width:15px;background:#111;border-radius:1px}
+.bar{background:#fff;padding:12px 20px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #E2E6EE}
+.bar svg{width:24px;height:24px;fill:none;stroke:#111;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.av{width:48px;height:48px;border-radius:50%;background:url(../assets/avatar.svg) 50% 12%/190% no-repeat #D7D8DA;flex:none;box-shadow:0 0 0 2px var(--gold)}
+.bar .nm{font-size:21px;font-weight:800;color:#111;line-height:1.2}
+.bar .st{font-size:14px;font-weight:600;color:#6B778C;display:flex;align-items:center;gap:6px}
+.bar .st i{width:8px;height:8px;border-radius:50%;background:#2FB36B;display:block}
+.chat{position:relative;flex:1;overflow:hidden}
+.col{position:absolute;left:0;right:0;top:0}
+.it{position:absolute;left:0;right:0;padding:0 18px;display:flex}
+.it.me{justify-content:flex-end}
+.it.sep{justify-content:center}
+.bub{max-width:318px;padding:15px 19px;border-radius:22px;font-size:21px;font-weight:600;line-height:1.45;color:#111;opacity:0}
+.me .bub{background:var(--navy2);color:#fff;border-top-right-radius:6px;transform-origin:100% 100%}
+.them .bub{background:#fff;border-top-left-radius:6px;transform-origin:0 100%;box-shadow:0 2px 6px rgba(20,30,60,.05)}
+.them .bub b{font-weight:800;background:linear-gradient(transparent 58%,var(--hl) 58%)}
+.them.first{gap:10px}
+.them .mini{width:38px;height:38px;border-radius:50%;background:url(../assets/avatar.svg) 50% 12%/190% no-repeat #D7D8DA;flex:none;opacity:0}
+.them:not(.first) .bub{margin-left:48px}
+.them.first .bub{margin-left:0}
+.sep .bub{background:rgba(20,30,60,.10);color:#4A5568;font-size:15px;font-weight:700;padding:7px 16px;border-radius:999px}
+.typing .bub{display:flex;gap:7px;padding:18px 20px;margin-left:48px}
+.typing .bub i{width:11px;height:11px;border-radius:50%;background:#9AA6B8;display:block}
+.inp{background:#fff;padding:12px 16px 26px;display:flex;gap:10px;align-items:center;border-top:1px solid #E2E6EE}
+.inp .fld{flex:1;height:48px;border-radius:24px;background:#F1F3F7;padding:0 18px;display:flex;align-items:center;font-size:18px;font-weight:600;color:#111;white-space:nowrap;overflow:hidden}
+.inp .fld.ph{color:#A0A8B8;font-weight:500}
+.inp .cr{width:2px;height:24px;background:var(--navy2);margin-left:2px}
+.inp .snd{width:48px;height:48px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;flex:none}
+.inp .snd svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.noti{position:absolute;left:26px;right:26px;top:24px;background:rgba(255,255,255,.96);border-radius:26px;padding:18px 20px;display:flex;gap:16px;align-items:center;box-shadow:0 24px 50px rgba(20,30,70,.28);opacity:0;z-index:5}
+.noti .ic{width:58px;height:58px;border-radius:16px;background:var(--navy);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;flex:none}
+.noti b{display:block;font-size:20px;font-weight:800;color:#111}
+.noti span{font-size:15px;font-weight:600;color:#56627A}
+.noti em{font-style:normal;margin-left:auto;align-self:flex-start;font-size:13px;color:#8A93A6;font-weight:600}
+
+/* CTA */
+#cta{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;visibility:hidden}
+#cta .pic{width:170px;height:170px;border-radius:50%;background:url(../assets/avatar.svg) 50% 12%/190% no-repeat #D7D8DA;box-shadow:0 0 0 6px #fff,0 0 0 9px var(--gold),0 30px 60px rgba(20,30,70,.2)}
+#cta .tg{font-size:42px;font-weight:700;color:var(--muted);margin-top:52px}
+#cta .wm{font-size:132px;font-weight:900;color:var(--ink);letter-spacing:-.04em;line-height:1.12;margin-top:12px}
+body.P #cta .wm{font-size:118px}
+#cta .ph{display:flex;align-items:center;gap:22px;font-size:104px;font-weight:900;color:var(--goldD);margin-top:36px;line-height:1;letter-spacing:-.01em}
+#cta .ph svg{width:82px;height:82px;fill:var(--goldD)}
+body.P #cta .ph{font-size:96px}
+#cta .inf{font-size:32px;font-weight:600;color:var(--muted);margin-top:40px;line-height:1.55}
+#cta .inf i{display:inline-block;width:2px;height:26px;background:rgba(14,21,37,.2);margin:0 22px;vertical-align:-3px}
+body.P #cta .inf i{display:none}
+#cta .chip{margin-top:44px;display:flex;gap:14px;align-items:center;background:var(--navy);color:#fff;border-radius:999px;padding:18px 34px;font-size:28px;font-weight:700}
+#cta .chip b{color:var(--gold);font-weight:800}
+#cta .chip i{width:12px;height:12px;border-radius:50%;background:#2FB36B;display:block}
+br.p{display:none} body.P br.p{display:inline}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="blob" id="b1"></div><div class="blob" id="b2"></div>
+
+  <div class="panel" id="p0">
+    <div class="eb">프리랜서 · 사업자 · 임대사업자</div>
+    <div class="h kt">세금 궁금할 때,<br><em class="hl">바로 묻는</em> 세무사</div>
+    <div class="sub">5월에만 찾는 세무사 말고,<br>1년 내내 물어볼 수 있는 내 편.</div>
+  </div>
+  <div class="panel" id="p1">
+    <div class="eb"><i>Q1</i>프리랜서 · 크리에이터</div>
+    <div class="h kt">3.3% 떼였는데<br><em class="hl">또 신고</em>하라고요?</div>
+    <div class="sub">미리 낸 세금, 돌려받을 수도 있습니다</div>
+  </div>
+  <div class="panel" id="p2">
+    <div class="eb"><i>Q2</i>개인사업자</div>
+    <div class="h kt">간이과세자?<br><em class="hl">일반과세자?</em></div>
+    <div class="sub">매출과 업종에 맞는 선택부터 함께</div>
+  </div>
+  <div class="panel" id="p3">
+    <div class="eb"><i>Q3</i>임대사업자</div>
+    <div class="h kt">주택 월세 수입,<br><em class="hl">어떻게 신고</em>하죠?</div>
+    <div class="sub">분리과세 vs 종합과세,<br class="p"> 계산해보고 고르세요</div>
+  </div>
+
+  <div id="pw"><div id="pa"><div class="phone">
+    <div class="scr">
+      <div class="status"><span>2:14</span><div class="isl"></div><div class="ico"><span style="font-size:14px">5G</span><b></b></div></div>
+      <div class="bar">
+        <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+        <div class="av"></div>
+        <div><div class="nm">한서윤 세무사</div><div class="st"><i></i>평균 응답 30분 이내</div></div>
+        <svg viewBox="0 0 24 24" style="margin-left:auto"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </div>
+      <div class="chat"><div class="col"></div></div>
+      <div class="inp"><div class="fld ph"><span class="tx">메시지를 입력하세요</span><span class="cr"></span></div><div class="snd"><svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></div></div>
+    </div>
+    <div class="noti"><div class="ic">한</div><div><b>새 답변이 도착했어요</b><span>평균 응답 30분 이내 · 한서윤 세무회계</span></div><em>지금</em></div>
+  </div></div></div>
+
+  <div id="cta">
+    <div class="pic"></div>
+    <div class="tg">1년 내내 물어볼 수 있는 내 편</div>
+    <div class="wm kt">한서윤 세무회계</div>
+    <div class="ph"><svg viewBox="0 0 24 24"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg>02-000-0000</div>
+    <div class="inf">서울 도심<i></i><br class="p">상담 평일 09:00 – 18:00</div>
+    <div class="chip"><i></i>지금 물어보세요 · <b>평균 응답 30분 이내</b></div>
+  </div>
+</div>
+
+<script>
+const Q = new URLSearchParams(location.search);
+const FMT = (Q.get('f') === 'p' || Q.get('o') === 'v') ? 'P' : 'L';
+document.body.classList.add(FMT);
+const W = FMT === 'L' ? 1920 : 1080, H = FMT === 'L' ? 1080 : 1920;
+const DUR = 24;
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, s, d) => clamp((t - s) / d);
+const lerp = (a, b, e) => a + (b - a) * e;
+const out3 = x => 1 - Math.pow(1 - x, 3);
+const out5 = x => 1 - Math.pow(1 - x, 5);
+const inOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const back = x => { const c1 = 1.6, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const tf = (el, o, x = 0, y = 0, s = 1) => { el.style.opacity = o; el.style.transform = `translate(${x}px,${y}px) scale(${s})`; };
+
+/* ---------- conversation script ---------- */
+// type: sep | me | them | typing ; t = appear time ; end = typing disappear time
+const CHAT = [
+  { type: 'sep', t: 1.9, text: '5월 12일' },
+  { type: 'me', t: 2.6, text: '3.3% 떼고 받았는데<br>5월에 또 신고해야 하나요?' },
+  { type: 'typing', t: 3.2, end: 4.3 },
+  { type: 'them', t: 4.3, first: 1, text: '네, 신고하셔야 해요.' },
+  { type: 'them', t: 5.1, text: '3.3%는 <b>미리 낸 세금</b>이라 경비를 꼼꼼히 챙겨 신고하면 <b>환급</b>받으실 수도 있어요.' },
+  { type: 'them', t: 6.4, text: '작년 지출 내역부터 같이 볼까요?' },
+  { type: 'me', t: 7.8, text: '좋아요! 바로 보내드릴게요' },
+
+  { type: 'sep', t: 8.55, text: '7월 3일' },
+  { type: 'me', t: 9.6, text: '간이과세자랑 일반과세자,<br>저는 뭐가 유리해요?' },
+  { type: 'typing', t: 10.2, end: 11.3 },
+  { type: 'them', t: 11.3, first: 1, text: '<b>매출 규모와 업종</b>에 따라 달라요.' },
+  { type: 'them', t: 12.2, text: '간이과세자는 부가세 부담이 적은 대신 세금계산서 발행·매입세액 공제에 제한이 있어요. 거래처와 매출 구조를 같이 보고 정해드릴게요.' },
+
+  { type: 'sep', t: 13.65, text: '11월 20일' },
+  { type: 'me', t: 14.7, text: '주택 월세 수입이 연 2천만 원<br>이하인데 어떻게 신고해요?' },
+  { type: 'typing', t: 15.3, end: 16.4 },
+  { type: 'them', t: 16.4, first: 1, text: '<b>분리과세와 종합과세</b> 중에 고르실 수 있어요.' },
+  { type: 'them', t: 17.3, text: '다른 소득과 경비에 따라 유리한 쪽이 달라서, <b>두 가지 다 계산</b>해보고 알려드릴게요.' },
+  { type: 'me', t: 18.5, text: '역시 물어보길 잘했네요!' },
+];
+const INPUT = { 2.6: '3.3% 떼고 받았는데 5월에 또…', 7.8: '좋아요! 바로 보내드릴게요', 9.6: '간이과세자랑 일반과세자,…', 14.7: '주택 월세 수입이 연 2천만 원…', 18.5: '역시 물어보길 잘했네요!' };
+
+const col = $('.col');
+CHAT.forEach(m => {
+  const it = document.createElement('div');
+  it.className = `it ${m.type === 'typing' ? 'them typing' : m.type}${m.first ? ' first' : ''}`;
+  if (m.type === 'typing') it.innerHTML = '<div class="bub"><i></i><i></i><i></i></div>';
+  else it.innerHTML = (m.first ? '<div class="mini"></div>' : '') + `<div class="bub">${m.text}</div>`;
+  col.appendChild(it);
+  m.el = it; m.bub = $('.bub', it); m.mini = $('.mini', it); m.dots = $$('i', it);
+});
+
+/* ---------- kinetic text ---------- */
+function splitKT(el) {
+  const words = [];
+  const walk = (node, cls) => {
+    [...node.childNodes].forEach(c => {
+      if (c.nodeType === 3) {
+        c.textContent.split(/(\s+)/).forEach(tok => {
+          if (!tok) return;
+          if (/^\s+$/.test(tok)) { el.appendChild(document.createTextNode(' ')); return; }
+          const w = document.createElement('span'); w.className = 'w';
+          const wi = document.createElement('span'); wi.className = 'wi' + (cls ? ' ' + cls : '');
+          wi.textContent = tok; w.appendChild(wi); el.appendChild(w); words.push(wi);
+        });
+      } else if (c.nodeName === 'BR') el.appendChild(c.cloneNode());
+      else walk(c, c.className);
+    });
+  };
+  const src = el.cloneNode(true); el.innerHTML = ''; walk(src, ''); el._words = words;
+}
+$$('.kt').forEach(splitKT);
+const kt = (el, t, s) => el._words.forEach((w, i) => { const e = out5(prog(t, s + i * 0.08, 0.6)); w.style.transform = `translateY(${(1 - e) * 110}%)`; });
+
+/* ---------- panels ---------- */
+const PANELS = [['#p0', 0.35, 3.2], ['#p1', 3.25, 9.0], ['#p2', 9.05, 14.05], ['#p3', 14.1, 20.6]];
+function panels(t) {
+  for (const [sel, a, b] of PANELS) {
+    const p = $(sel);
+    if (t < a - 0.01 || t > b) { p.style.opacity = 0; continue; }
+    const ex = inOut(prog(t, b - 0.4, 0.4));
+    p.style.opacity = 1 - ex;
+    p.style.transform = `translateY(${-40 * ex}px)`;
+    const e1 = out3(prog(t, a, 0.5)); tf($('.eb', p), e1, 0, (1 - e1) * 30);
+    kt($('.h', p), t, a + 0.1);
+    const e2 = out3(prog(t, a + 0.7, 0.6)); tf($('.sub', p), e2, 0, (1 - e2) * 30);
+  }
+}
+
+/* ---------- chat ---------- */
+const GAP = 12;
+function chat(t) {
+  const viewH = $('.chat').clientHeight;
+  let y = 0;
+  const growth = [];
+  CHAT.forEach(m => {
+    let g = out3(prog(t, m.t, 0.4));
+    if (m.type === 'typing') g *= 1 - out3(prog(t, m.end, 0.22));
+    const extra = m.first ? 6 : 0;
+    m.el.style.top = (y + extra) + 'px';
+    const h = m.el.offsetHeight + GAP + extra;
+    y += h * g;
+    const p = prog(t, m.t, 0.45);
+    let s = lerp(0.6, 1, back(p)), o = clamp(p * 3);
+    if (m.type === 'typing') { o *= 1 - prog(t, m.end, 0.15); m.dots.forEach((d, k) => d.style.transform = `translateY(${Math.sin(t * 9 - k * 0.9) * -5 * (Math.sin(t * 9 - k * 0.9) > 0)}px)`); }
+    m.bub.style.opacity = o;
+    m.bub.style.transform = `scale(${s})`;
+    if (m.mini) { m.mini.style.opacity = o; m.mini.style.transform = `scale(${lerp(0.5, 1, out3(p))})`; }
+  });
+  const off = Math.min(0, viewH - 18 - y);
+  col.style.transform = `translateY(${off + 18 - 0}px)`;
+  col.style.top = '0px';
+
+  // input field typing
+  const fld = $('.fld'), tx = $('.tx'), cr = $('.cr');
+  let typed = null;
+  for (const k in INPUT) {
+    const ts = +k, s = INPUT[k];
+    if (t >= ts - 1.0 && t < ts) {
+      const n = Math.ceil(clamp((t - (ts - 1.0)) / 0.75) * s.length);
+      typed = s.slice(0, n);
+    }
+  }
+  if (typed !== null) { fld.classList.remove('ph'); tx.textContent = typed; cr.style.opacity = 1; }
+  else { fld.classList.add('ph'); tx.textContent = '메시지를 입력하세요'; cr.style.opacity = 0; }
+  let pulse = 0;
+  for (const k in INPUT) { const q = prog(t, +k - 0.12, 0.3); pulse = Math.max(pulse, Math.sin(q * Math.PI)); }
+  $('.snd').style.transform = `scale(${1 - pulse * 0.15})`;
+
+  // notification
+  const nt = prog(t, 19.4, 0.6), ne = back(nt);
+  tf($('.noti'), clamp(nt * 3), 0, lerp(-140, 0, ne));
+}
+
+/* ---------- phone + CTA ---------- */
+function phone(t) {
+  const e = out3(prog(t, 0.15, 1.0));
+  const x = inOut(prog(t, 20.55, 0.55));
+  const pa = $('#pa');
+  pa.style.opacity = e * (1 - x);
+  pa.style.transform = `translateY(${(1 - e) * 140 + x * 120}px) scale(${1 - x * 0.08})`;
+}
+function cta(t) {
+  const c = $('#cta');
+  c.style.visibility = t > 20.8 ? 'visible' : 'hidden';
+  const pic = prog(t, 20.9, 0.7); tf($('.pic', c), clamp(pic * 2.5), 0, 0, lerp(0.5, 1, back(pic)));
+  const a = out3(prog(t, 21.15, 0.6)); tf($('.tg', c), a, 0, (1 - a) * 30);
+  kt($('.wm', c), t, 21.3);
+  const ph = prog(t, 21.8, 0.7); tf($('.ph', c), clamp(ph * 2.5), 0, 0, lerp(0.7, 1, back(ph)));
+  const i = out3(prog(t, 22.2, 0.6)); tf($('.inf', c), i, 0, (1 - i) * 24);
+  const ch = prog(t, 22.5, 0.6); tf($('.chip', c), clamp(ch * 2.5), 0, (1 - out3(ch)) * 24, 1 + Math.sin(prog(t, 23.2, 0.5) * Math.PI) * 0.05);
+}
+function bg(t) {
+  const b1 = $('#b1'), b2 = $('#b2');
+  b1.style.left = (W * (0.15 + 0.08 * Math.sin(t * 0.3)) - 450) + 'px';
+  b1.style.top = (H * (0.2 + 0.08 * Math.cos(t * 0.25)) - 450) + 'px';
+  b2.style.left = (W * (0.85 + 0.06 * Math.cos(t * 0.27)) - 400) + 'px';
+  b2.style.top = (H * (0.8 + 0.07 * Math.sin(t * 0.33)) - 400) + 'px';
+}
+
+window.render = function (t) { bg(t); panels(t); phone(t); chat(t); cta(t); };
+window.DUR = DUR;
+render(0);
+
+if (!Q.has('render')) {
+  const fit = () => {
+    const s = Math.min(innerWidth / W, innerHeight / H), st = $('#stage');
+    st.style.transformOrigin = '0 0';
+    st.style.transform = `translate(${(innerWidth - W * s) / 2}px,${(innerHeight - H * s) / 2}px) scale(${s})`;
+  };
+  fit(); addEventListener('resize', fit);
+  let t0 = performance.now();
+  document.addEventListener('click', () => t0 = performance.now());
+  const loop = now => { render(((now - t0) / 1000) % (DUR + 1)); requestAnimationFrame(loop); };
+  document.fonts.ready.then(() => requestAnimationFrame(loop));
+}
+</script>
+</body>
+</html>
