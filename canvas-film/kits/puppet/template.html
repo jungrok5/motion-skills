@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>그림자극 · 템플릿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;600&display=swap">
+</head>
+<body>
+<script>window.FILM_FONTS = { serif: "'Gowun Batang'", sans: "'Noto Sans KR'" };</script>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-puppet.js"></script>
+<script>
+/* A new scene in the puppet house style (styles/puppet/STYLE.md). The kit draws the medium; this file draws the story.
+   PLACEHOLDER SUBJECT — replace it with your film's one image: a bird held far from the cloth (big soft shadow) presses
+   onto a branch, a jointed hand opens on the beat to show a red seed (the one colour), the lamp gutters and relights
+   warm, the bird lifts off into the light, and the camera pulls back to the little stage.
+   Keep: init → P.init + build pieces once;  draw → camera, P.beginT, pieces back-to-front, P.frame, captions, end card, fade. */
+const { clamp, lerp, ss, eo, eio } = Pilot;
+const P = Puppet, S = window.SCRIPT, B = S.beat, W = Pilot.W, H = Pilot.H;
+const LAMP = [540, 880];                      // the lamp's hot-spot on the cloth (world px; cloth = 1080 × 1920)
+let HILLS, GROUND, BRANCH, LEAF, BODY, WING, HAND, SEED;
+
+// ---------------------------------------------------------------- pieces (built once): any silhouette + dye + punch
+function build() {
+  HILLS = P.carve({ box: [-20, 1080, 1100, 1490], res: 1, seed: 2, dye: '#7a4c26', cutAlpha: .6, rim: 6, outline: 2,   // far lace scenery, thinned cuts
+    shape: [[-20, 1490], [-20, 1300], [120, 1210], [230, 1260], [380, 1120], [520, 1250], [640, 1200], [800, 1290], [930, 1180], [1100, 1260], [1100, 1490]],
+    punch: [{ kind: 'slits', area: [0, 1200, 1080, 1470], len: 46, w: 3, step: 34, angle: .12, jitter: .3, seed: 8 }, { kind: 'dots', area: [300, 1150, 460, 1230], r: 2.6, step: 15 }] });
+  GROUND = P.carve({ box: [-20, 1470, 1100, 1940], res: 1, seed: 3, dye: P.DYE.floor, smooth: false, rim: 0,
+    shape: [[-20, 1478], [1100, 1478], [1100, 1940], [-20, 1940]],
+    punch: { kind: 'slits', area: [0, 1540, 1080, 1720], len: 34, w: 3.2, step: 24, angle: Math.PI / 2 + .12, seed: 4 },
+    detail: g => {                                                     // a carved meander band and a row of coin holes
+      P.cutLine(g, 1.8, q => { const y = 1508, s = 8; q.moveTo(0, y); for (let x = 0; x < 1080; x += s * 2) { q.lineTo(x, y - s); q.lineTo(x + s * 1.4, y - s); q.lineTo(x + s * 1.4, y - s * .3); q.lineTo(x + s * .7, y - s * .3); q.lineTo(x + s * .7, y); q.lineTo(x + s * 2, y); } });
+      for (let x = 30; x < 1080; x += 60) P.coin(g, x, 1528, 6);
+    } });
+  BRANCH = P.carve({ box: [-40, 760, 720, 930], res: 1.5, seed: 6, dye: P.DYE.deep,
+    shape: [[-30, 862], [150, 858], [320, 848], [470, 842], [560, 826], [640, 790], [672, 778], [652, 806], [586, 846], [706, 850], [600, 868], [460, 874], [300, 886], [140, 902], [-30, 922]],
+    punch: { kind: 'crescents', area: [0, 846, 560, 916], r: 7, w: 1.4 }, rim: 4 });
+  LEAF = P.carve({ box: [-4, -22, 74, 22], res: 3, seed: 9, dye: P.DYE.brace,           // pivot at the stalk
+    shape: [[0, 0], [20, -16], [50, -14], [72, 0], [50, 14], [20, 16]],
+    punch: { kind: 'slits', len: 12, w: 2.2, step: 12, angle: -.5, seed: 2 }, rim: 3 });
+  BODY = P.carve({ box: [-130, -72, 150, 84], res: 2.5, seed: 11, dye: P.DYE.hide,      // origin = the rod point
+    shape: [[-96, -30], [-82, -50], [-60, -52], [-44, -40], [-18, -32], [22, -36], [62, -30], [104, -50], [144, -64], [122, -22], [82, 10], [40, 34], [-10, 38], [-50, 24], [-72, 2], [-90, -14]],
+    punch: { kind: 'crescents', area: [-30, -20, 90, 34], r: 8, w: 1.5 }, rim: 6,
+    detail: g => {
+      g.fillStyle = '#1a0f07'; g.beginPath(); P.poly(g, [[-92, -34], [-126, -24], [-92, -18]]); g.fill();   // beak
+      P.cut(g, q => { q.arc(-68, -34, 6, 0, 7); q.arc(-68, -34, 2.2, 0, 7); });                           // open-cut eye
+      g.strokeStyle = '#1a0f07'; g.lineWidth = 4; g.beginPath(); g.moveTo(-12, 34); g.lineTo(-16, 72); g.moveTo(12, 32); g.lineTo(14, 72); g.stroke();
+    } });
+  WING = P.carve({ box: [-16, -48, 130, 18], res: 2.5, seed: 14, dye: P.DYE.brace,       // pivot = the shoulder rivet
+    shape: [[-10, -6], [30, -30], [80, -42], [124, -38], [98, -14], [60, 4], [12, 10]],
+    punch: { kind: 'slits', len: 22, w: 2.4, step: 12, angle: -.25, seed: 5 }, rim: 4 });
+  HAND = P.buildHand({ nails: false, tendons: false, seed: 31, segs: [[38, 19], [31, 17], [25, 15]], rivets: [3.6, 3.2, 2.9],
+    dye: { hand: '#3a2010', arm: '#301a0c', seg: '#36200f' } });
+  SEED = P.carve({ box: [-20, -26, 20, 26], res: 3, seed: 17, dye: P.ACCENT, outline: 1.6,
+    shape: g => g.ellipse(0, 0, 15, 21, 0, 0, 7), detail: g => P.taper(g, 0, -13, 0, 13, 3) });
+}
+
+// ---------------------------------------------------------------- the story's motion (placeholder)
+function lampI(t) {
+  let I = ss(B.lampOn, B.lampOn + .8, t) * (1 + .25 * P.flare(t, B.lampOn + .9, .25)) * (1 + .1 * ss(B.open, B.open + .6, t));
+  if (t >= B.dark) I *= P.gutter(t, B.dark, B.dark + .9);
+  if (t >= B.dark + .9) I = .16 * ss(B.relight, B.relight + 1, t) + .84 * ss(B.relight + 1.4, B.relight + 2.8, t);
+  return Math.max(0, I * P.flicker(t, t > B.relight ? { amt: .09 - .05 * ss(B.relight + 1.4, B.relight + 3, t), hz: 6, seed: 3.1, buzz: .01, buzzHz: 19 } : {}));
+}
+const BEAK = [-120, -24];
+function bird(t) {     // pose of the bird rig: world position, scale, distance from the cloth, wing angle, opacity
+  const perch = [430, 790], tw = P.tremor(t, 5, 1);
+  if (t < B.near) return null;
+  if (t < B.press) { const k = eio(clamp((t - B.near) / (B.press - B.near)));
+    return { x: lerp(930, perch[0], k), y: lerp(600, perch[1], k), dist: Math.max(P.press(t, B.press - .55), .9 * (1 - k)), wing: -.6 * Math.sin(t * 2 * Math.PI * 1.6) * (1 - k * k), alpha: ss(B.near, B.near + .8, t) }; }
+  const fl = clamp((t - B.lift) / 2.6), up = eio(fl);
+  return { x: perch[0] + tw.x + lerp(0, 120, up), y: perch[1] + tw.y - 6 * Math.max(0, Math.sin((t - B.take - 1.2) * 9)) * ss(B.take + 1.1, B.take + 1.3, t) * (1 - ss(B.take + 1.5, B.take + 1.7, t)) - lerp(0, 330, up),
+    dist: P.liftOff(t, B.lift, 2.6), wing: t > B.lift ? -.7 * Math.sin((t - B.lift) * 2 * Math.PI * 2.2) : .02 + tw.r * 2, alpha: 1 - ss(B.lift + 1.8, B.lift + 2.9, t), rot: tw.r };
+}
+const birdRig = (st, hasSeed) => ({ box: [-130, -72, 150, 84], draw: g => {
+  P.drawP(g, BODY);
+  if (hasSeed) { g.save(); g.translate(BEAK[0] - 4, BEAK[1] + 6); g.scale(.7, .7); P.drawP(g, SEED); g.restore(); }
+  P.joint(g, WING, -6, -14, st.wing);
+  P.rivet(g, -6, -14, 3.2); g.globalCompositeOperation = 'multiply';
+} });
+const HAND_AT = t => ({ x: 770, y: lerp(2200, 1190, eo(clamp((t - B.hand) / 1.1))), rot: Math.PI / 2 - .5, scale: 1.5 });
+const handRig = t => ({ box: [-150, -100, 360, 100], draw: g => {
+  const c = 1 - eo(clamp((t - B.open) / .6));
+  P.drawHand(g, HAND, { curl: i => clamp(c * 1.25 - i * .08), thumb: c, bends: [.5, .9, .8] });
+} });
+
+function cam(t) {
+  let m = P.cam();
+  m = P.zoom(m, P.pullBack(t, B.pull, 1.0), 540, 1690);                       // pull back: the stage in a dark room
+  m = P.zoom(m, 1 + .05 * P.crash(t, B.press) + .04 * P.crash(t, B.open), 470, 900);   // crash zooms on the two hits
+  return P.zoom(m, 1 + .05 * ss(0, B.dark, t) + .03 * ss(B.relight, B.pull, t), 540, 900);   // slow push
+}
+
+function draw(ctx, t) {
+  const M = cam(t), g = P.beginT(M), bd = bird(t);
+  P.drawP(g, HILLS);
+  P.drawP(g, GROUND);
+  P.drawP(g, BRANCH);
+  for (const [x, y, a, i] of [[656, 788, -1.1, 0], [700, 850, -.2, 1], [250, 852, -1.9, 2]])         // loose leaves sway on rivets
+    P.place(g, LEAF, { x, y, rot: a + .07 * Math.sin(t * 1.3 + i * 2) });
+  // the hand on its rod (presses on as it rises), and the seed it offers
+  if (t >= B.hand) {
+    const h = HAND_AT(t), hm = new DOMMatrix().translate(h.x, h.y).rotate(h.rot * 180 / Math.PI).scale(h.scale);
+    const tk = eio(clamp((t - B.take) / 1.2)), sp = hm.transformPoint(new DOMPoint(-20, 78)), bp = bd ? new DOMMatrix().translate(bd.x, bd.y).rotate((bd.rot || 0) * 180 / Math.PI).transformPoint(new DOMPoint(BEAK[0] - 4, BEAK[1] + 6)) : sp;
+    if (t >= B.open && t < B.take + 1.2) {
+      const x = lerp(sp.x, bp.x, tk), y = lerp(sp.y, bp.y, tk) - 120 * Math.sin(Math.PI * tk);
+      P.place(g, SEED, { x, y, scale: lerp(1.3, .7, tk), alpha: ss(B.open, B.open + .3, t) });
+      if (tk > 0) P.rod(g, x, y + 10, x + 240, 2100, .8);
+    }
+    const hd = 1 - eo(clamp((t - B.hand) / .7));
+    P.place(g, handRig(t), { x: h.x, y: h.y, rot: h.rot, scale: h.scale, dist: hd * .5 });
+    const wr = hm.transformPoint(new DOMPoint(300, 10)); P.rod(g, wr.x, wr.y, wr.x + 60, 2100, 1 - hd);
+  }
+  // the bird: far (big, soft, a shadow) → pressed sharp on the branch → lifted off into the light
+  if (bd && bd.alpha > 0) {
+    P.place(g, birdRig(bd, t >= B.take + 1.2), { x: bd.x, y: bd.y, rot: bd.rot || 0, scale: 1.25, dist: bd.dist, alpha: bd.alpha });
+    if (bd.dist < .3) P.rod(g, bd.x + 10, bd.y + 20, bd.x + 280, 2100, (1 - bd.dist / .3) * bd.alpha);
+  }
+  P.frame(ctx, t, M, { I: .85 * lampI(t), color: P.warm(ss(B.relight + 1, B.relight + 3.5, t)), x: LAMP[0], y: LAMP[1] }, { audience: ss(B.pull - .1, B.pull + 1.4, t) });
+  P.captions(ctx, t, S.lines);
+  P.endCard(ctx, t, S.endCard, B.end);
+  P.fade(ctx, t, S.DUR);
+}
+
+async function init() { P.init(); build(); }
+Pilot.run({ W, H, dur: S.DUR, fonts: P.FONTS, init, draw });
+</script>
+</body>
+</html>

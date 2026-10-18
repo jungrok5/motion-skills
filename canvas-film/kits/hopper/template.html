@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>호퍼풍 · 새 장면</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;600&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-hopper.js"></script>
+<script>
+/* Template scene — house style "hopper" (see styles/hopper/STYLE.md). A placeholder 30 s story, no door:
+   an empty day room in the no. 48 palette; low sun comes through an UNSEEN window in the left wall and its hard
+   four-pane parallelogram travels across the floor and up the right wall; at SCRIPT.beat.reach it reaches the one
+   subject (a woman standing apart, beside the back window): a short burst of light, she is lit, her dress shows the
+   film's one accent colour, her shadow falls across the floor. Then stillness, the light warms, end card.
+   To make your film: keep the world set-up and the draw() skeleton; replace the SUBJECT block (and the light's path
+   if your image needs it) with your one image. Everything is in metres; the camera never moves except a slow push. */
+const { clamp, lerp, ss, eo, eio } = Pilot;
+const W = Pilot.W, H = Pilot.H, S = window.SCRIPT, B = S.beat, DUR = S.DUR, ACC = S.accent || Hopper.ACCENT;
+const Q = Hopper.Q, D = Hopper.PAL.day;
+
+// ---------------- the world (metres: x right, y up, z away) ----------------
+const cam = Hopper.camera(Hopper.eye());                                   // low still eye at 1 m
+const R = Hopper.room({ xl: -1.05, xr: 1.45, h: 3.2, zn: 0.7, zb: 5 }, cam);
+const SUN = D.sun, SUN_W = '#F7CB8C';                                      // morning sun → warmer later
+// the light's opening: an unseen 2×2 window in the left wall (u = z 2.2–3.4 m, v = height .35–2.6 m)
+const LEFT = R.wall('left'), CELLS = Hopper.panes(LEFT, [2.2, 3.4, .35, 2.6], 2, 2, .07), WIN_PLANE = Hopper.wallX(R.xl);
+// the back window (what is outside it is painted once, in the base layer)
+const BACK = R.wall('back'), BW = { u0: -.62, u1: .28, v0: .95, v1: 2.4 };
+
+// ---------------- SUBJECT (replace with your image) ----------------
+const FX = .62, FZ = 3.75;                                                  // where she stands
+const FIGP = Hopper.figureParts({ h: 1.64, skirt: true });
+const FIG_COL = { body: Hopper.shade(Hopper.mute(ACC, .72), .62), legs: '#4a4a42', skin: '#8a7464', hair: '#2a221d' };
+const FIG_LIT = { body: ACC, skin: '#ead0ac', legs: '#b8a78a', hair: '#5a4434' };
+// sample points on her body, for "is she in the light?"
+const FIG_PTS = []; for (const v of [.2, .5, .8, 1.1, 1.4, 1.6]) for (const u of [-.1, .1]) FIG_PTS.push([FX + u, v, FZ]);
+
+// ---------------- timing ----------------
+const E = .45;                                                             // sun elevation (dy per metre across)
+const DZ_HIT = (FZ - 3.4) / (FX - R.xl);                                   // azimuth at which the light reaches her
+function dz(t) {                                                           // the sun's azimuth: slow, then it arrives
+  if (t < B.reach) { const k = clamp((t - B.rise) / (B.reach - B.rise)); return lerp(-.45, DZ_HIT + .004, k * k); }
+  return DZ_HIT + .004 + (.42 - DZ_HIT) * eo((t - B.reach) / 5.5);
+}
+const sunAt = t => Hopper.sun([1, -E, dz(t)]);
+const sunI = t => ss(.3, 3.4, t);                                          // the light comes up with the dawn
+const ambK = t => ss(0, 1.4, t);
+const warmK = t => ss(B.settle - 1, B.end, t);
+const burst = t => t < B.reach ? 0 : Math.exp(-(t - B.reach) * 6) * ss(B.reach, B.reach + .05, t);
+
+// ---------------- static layers ----------------
+let base, lit, litW;
+function paintRoom(x, look, boards, k) {
+  R.paint(x, look);
+  R.boards(x, boards, { seed: 21 });
+  const sh = c => k === 1 ? c : Hopper.shade(c, k);
+  R.baseboards(x, { back: sh('#56665a'), left: sh('#46544a'), right: sh('#5c6c60'), line: ['rgba(236,230,210,.25)', 'rgba(236,230,210,.25)'] });
+}
+function buildBase() {
+  return Hopper.layer(x => {
+    const k = .72;
+    paintRoom(x, Hopper.dayLook(k), Hopper.boardsLook(D.floor, k), k);
+    // the back window: hole, reveals, cream casing with its soft shadow, sill ledge
+    const op = Hopper.opening(x, cam, BACK, { ...BW, depth: .16, hole: '#e8e6d2', reveal: Hopper.shade(D.cream, .62), head: Hopper.shade(D.cream, .5),
+      sill: Hopper.shade(D.cream, .8), casing: { w: .08, head: .1, c: Hopper.shade(D.cream, .8), shadow: .2, st: { n: 70, seed: 31, len: [.15, .5], slant: .01, w: .012, a: .06 } },
+      ledge: { d: .07, h: .04, c: Hopper.shade(D.cream, .7), top: Hopper.shade(D.cream, .9) } });
+    // outside: pale cream-green sky, the sunlit building across the street with its dark windows
+    Hopper.within(x, cam, [op.poly], c => {
+      const t0 = cam.P(0, 6, 14)[1], t1 = cam.P(0, 0, 14)[1], g = c.createLinearGradient(0, t0, 0, t1);
+      g.addColorStop(0, '#d5dfc6'); g.addColorStop(1, '#efe9d0'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      Hopper.box(c, cam, [-6, .9, 0, 3.5, 14, 18], { front: '#d8b585', top: '#c4a173' }, { n: 60, seed: 61, len: [.1, .3], slant: .05, w: .05, a: .08 });
+      Hopper.box(c, cam, [.9, 6, 0, 2.3, 13, 17], { front: '#a9b597', top: '#97a386', left: '#7f8a72' }, { n: 40, seed: 62, len: [.1, .3], slant: .05, w: .05, a: .08 });
+      for (let i = 0; i < 6; i++) for (let j = 0; j < 3; j++) {                 // windows across the street
+        const wx = -2.6 + i * .78, wy = .6 + j * .95; if (wx + .42 > .9) continue;
+        cam.fill(c, Q.z(wx, wx + .42, wy, wy + .62, 13.99), '#4c5a4c');
+        cam.fill(c, Q.z(wx - .04, wx + .46, wy - .06, wy, 13.98), '#ecdcb4');
+      }
+      cam.fill(c, Q.z(-6, .9, 3.3, 3.45, 13.98), '#e9d1a2');                    // cornice catching the sun
+      for (let i = 0; i < 3; i++) cam.fill(c, Q.z(1.3 + i * 1.05, 1.75 + i * 1.05, .7, 1.4, 12.99), '#5d6b58');
+      c.fillStyle = 'rgba(236,232,214,.10)'; c.fillRect(0, 0, W, H);           // glass
+    });
+    Hopper.mullions(x, cam, BACK, [BW.u0, BW.u1, BW.v0, BW.v1], 2, 2, .035, Hopper.shade(D.cream, .85), -.08);
+  });
+}
+// the same room in sunlight (same seeds → the same strokes and planks, lit colours)
+const buildLit = sun => Hopper.layer(x => paintRoom(x, Hopper.dayLook(1, sun), Hopper.boardsLook(Hopper.lit(D.floor, sun), 1), 1));
+
+// ---------------- draw ----------------
+function draw(ctx, t) {
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+  const L = sunAt(t), I = sunI(t), amb = ambK(t), wk = warmK(t);
+  ctx.save(); Hopper.push(ctx, 1 + .04 * ss(0, B.end, t), cam.P(FX - .3, 1.2, FZ));
+  // 1. the room in ambient light
+  ctx.drawImage(base, 0, 0); Hopper.dim(ctx, amb);
+  // 2. the sun through the unseen window: its panes projected onto the floor and the right wall, and her shadow
+  //    (a silhouette standing across the rays) projected onto both; shadows show only inside the light
+  const across = [-L.d[2], 1], n = Math.hypot(...across), place = (u, v) => [FX + u * across[0] / n, v, FZ + u * across[1] / n];
+  for (const [surf, pl] of [[R.poly.floor, Hopper.FLOOR], [R.poly.right, Hopper.wallX(R.xr)]]) {
+    const patch = CELLS.map(c => L.project(c, pl)), sh = L.cast(FIGP.sil, { place, plane: pl });
+    ctx.save(); Hopper.clip(ctx, cam, [surf]); Hopper.clip(ctx, cam, patch);
+    Hopper.drawLit(ctx, I, lit, litW, wk);
+    if (sh) Hopper.shadowIn(ctx, cam, [sh], c => { c.drawImage(base, 0, 0); Hopper.dim(c, amb); });
+    ctx.restore();
+  }
+  // bounce from the lit floor
+  const mid = L.onto(LEFT(2.8, 1.4), Hopper.FLOOR);
+  Hopper.glow(ctx, cam.P(clamp(mid[0], R.xl, R.xr), 0, clamp(mid[2], 2, R.zb)), 800, wk > .5 ? '255,214,160' : '252,236,190', .12 * I);
+  // 3. SUBJECT: she is lit exactly when the projected light reaches her
+  const fl = Hopper.litFraction(L, FIG_PTS, CELLS, WIN_PLANE) * I;
+  Hopper.figure(ctx, cam, FIGP, { x: FX, z: FZ, lit: fl, side: -1, colors: FIG_COL, litColors: FIG_LIT, sun: wk > .5 ? SUN_W : SUN });
+  // the one sudden event: a burst of light as it arrives
+  Hopper.flash(ctx, .5 * burst(t));
+  ctx.restore();
+  Hopper.finish(ctx);
+  Hopper.sink(ctx, ss(B.end - .2, B.end + .9, t));
+  Hopper.captions(ctx, t, S.lines);
+  Hopper.endCard(ctx, t, S.endCard, B.end);
+  Hopper.fade(ctx, t, DUR);
+}
+Pilot.run({ W, H, dur: DUR, fonts: Hopper.FONTS,
+  init: async () => { Hopper.init(); base = buildBase(); lit = buildLit(SUN); litW = buildLit(SUN_W); },
+  draw });
+</script>
+</body>
+</html>

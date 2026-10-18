@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>새 장면 · 고딕 목탄</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;600&display=swap">
+</head>
+<body>
+<script>window.FILM_SRC = 'ko'; window.FILM_FONTS = { serif: "'Gowun Batang'", sans: "'Noto Sans KR'" };</script>
+<script src="lib.js"></script>
+<script src="story.js"></script><script src="script.js"></script><script src="kit-charcoal.js"></script>
+<script>
+/* TEMPLATE — a new scene in the house style `charcoal` (styles/charcoal/STYLE.md). Placeholder story: a lone tree on a
+   hill at night. The moonlight is lifted out of the tone, darkness gathers from both sides, the one colour (a red cord)
+   is laid on at the turn, the dark withdraws, the end card is erased in. Replace the SUBJECT parts (marked ✎) with the
+   film's one image; keep the frame skeleton in draw(): begin → camera → plate → tone → light → threat → fog →
+   foreground → wipe → caption smudge → develop → colour → words → fade.
+   Beats and words come from script.js (window.SCRIPT). Pure function of t; seeded randomness only. */
+const C = Charcoal, S = window.SCRIPT, B = S.beat;
+const { clamp, lerp, ss, eo, eio, rng, noise } = Pilot;
+const W = Pilot.W, H = Pilot.H, SC = H / 1920;
+// ✎ the subject's placement (frame px; portrait first — subject in the centre band, words in the upper third)
+const TX = W * .54;                          // the tree stands here, on the crest of the near hill (TY below)
+const MOON = [W * .2, H * .37], MR = 46 * SC;
+let plate, subj, fg, TREE, TRUNK, CORD;
+
+/* ✎ the subject, as data built once: a seeded tree (branches = polylines with widths) */
+function growTree() {
+  const r = rng(7), out = [];
+  const grow = (x, y, ang, len, w, d) => {
+    const pts = [[x, y]], n = 6; let a = ang;
+    for (let i = 1; i <= n; i++) { a += (r() - .5) * .28; pts.push([pts[i - 1][0] + Math.cos(a) * len / n, pts[i - 1][1] + Math.sin(a) * len / n]); }
+    out.push({ pts, w, d });
+    if (d >= 5) return;
+    const kids = d < 1 ? 2 : 2 + (r() < .45 ? 1 : 0);
+    for (let k = 0; k < kids; k++) {
+      const i = Math.min(n, Math.round((.5 + r() * .45) * n)), sp = (k - (kids - 1) / 2) * (.55 + r() * .3);
+      grow(pts[i][0], pts[i][1], a + sp + (r() - .5) * .2, len * (.64 + r() * .12), w * .6, d + 1);
+    }
+  };
+  grow(TX, TY, -Math.PI / 2 + .04, 250 * SC, 44 * SC, 0);
+  return out;
+}
+// a polyline pushed sideways by d(i) px (d a number or a function of the point index) — edges of a limb, a rim
+const offset = (pts, d) => pts.map((p, i) => { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)], an = Math.atan2(b[1] - a[1], b[0] - a[0]) + Math.PI / 2, k = typeof d === 'function' ? d(i) : d; return [p[0] + Math.cos(an) * k, p[1] + Math.sin(an) * k]; });
+// half-width of a limb at point i: tapering along it, the trunk flaring into roots at the ground
+const halfW = (b, i) => b.w * .5 * (lerp(1.12, .62, i / (b.pts.length - 1)) + (b.d ? 0 : .7 * Math.exp(-i * 1.6)));
+// a hill line across the frame: from y0 (left) to y1 (right), noise amplitude amp, a crest raised under the tree
+const ridgeY = (x, y0, y1, amp, f, seed, crest = 0) => { const k = (x + 60) / (W + 120); return lerp(y0, y1, k) + (noise(k * f, seed) - .5) * amp - crest * Math.exp(-Math.pow((x - TX) / (W * .32), 2)); };
+const ridge = (y0, y1, amp, f, seed, crest = 0) => { const pts = []; for (let i = 0; i <= 40; i++) { const x = lerp(-60, W + 60, i / 40); pts.push([x, ridgeY(x, y0, y1, amp, f, seed, crest)]); } return pts; };
+const HILL = [H * .71, H * .7, 40 * SC, 2, 5, 34 * SC];                 // the near hill
+const TY = ridgeY(TX, ...HILL) + 6 * SC;                                 // foot of the tree, planted just below the crest line
+const ZC = [TX, TY - 260 * SC];             // the push zooms about the middle of the tree
+
+/* the static plate: sky, moon, hills, the tree — built once at 1.3× so the push stays crisp */
+function buildPlate() {
+  const c = C.sheet(1.3), x = c.getContext('2d'), R = rng(11); let sd = 100;
+  // sky: rubbed tone, then long side-of-the-stick drags across it (horizontal, like Kentridge's skies)
+  x.fillStyle = `rgba(${C.TONE},.42)`; x.fillRect(0, 0, W, H);
+  for (let k = 0; k < 60; k++) { const y = R() * H * .66, x0 = -100 + R() * W * .5; C.sweep(x, C.seg([x0, y], [x0 + (300 + R() * 700) * SC, y + (R() - .5) * 30], 8), (24 + R() * 40) * SC, .16 + R() * .2, sd++); }
+  C.blob(x, W * .5, -60 * SC, 760 * SC, 420 * SC, .5);                       // heavier at the top
+  // the moon: an eraser lift with a faint vine rim
+  C.poly(x, Array.from({ length: 32 }, (_, i) => [MOON[0] + Math.cos(i / 32 * 6.283) * MR, MOON[1] + Math.sin(i / 32 * 6.283) * MR])); C.fillA(x, .92, '255,255,255');
+  C.vine(x, Array.from({ length: 33 }, (_, i) => [MOON[0] + Math.cos(i / 32 * 6.283) * MR, MOON[1] + Math.sin(i / 32 * 6.283) * MR]), 2, .35, sd++);
+  // far hills, then the near hill (crest under the tree): rubbed masses, sweeps following the slope, hatching low down
+  const far = ridge(H * .6, H * .58, 70 * SC, 3, 2); C.smudgeFill(x, far.concat([[W + 60, H], [-60, H]]), .3, sd++);
+  for (let k = 0; k < 4; k++) C.sweep(x, far.map(p => [p[0], p[1] + (10 + k * 14) * SC]), 22 * SC, .25, sd++);
+  const near = ridge(...HILL); C.smudgeFill(x, near.concat([[W + 60, H], [-60, H]]), .55, sd++, 12);
+  for (let k = 0; k < 9; k++) C.sweep(x, near.map(p => [p[0], p[1] + (8 + k * 26) * SC]), (26 + k * 3) * SC, .22 + R() * .15, sd++);
+  C.vine(x, near, 2.6, .85, sd++); C.vine(x, near.map(p => [p[0], p[1] + 4]), 1.4, .3, sd++, '#fff', .3);   // the crest, lifted under the line
+  C.hatch(x, 20 * SC, H * .78, W * .4, H * .9, 40, 60 * SC, -.9, 1.4, .25, sd++);
+  // vignette: smudges toward the frame edges
+  for (let k = 0; k < 14; k++) { const side = k % 2 ? 1 : -1; C.blob(x, W / 2 + side * (W * .5 + R() * 60), lerp(0, H, R()), 230 * SC, 380 * SC, .3); }
+  return c;
+}
+/* ✎ the subject on its own transparent sheet, drawn AFTER the light so the lifted beam passes behind it */
+function buildSubject() {
+  const c = C.sheet(1.3, null), x = c.getContext('2d'); let sd = 500;
+  // the tree: rubbed body, stick grain along each limb, broken vine edges, the moon side lifted
+  const edges = TREE.map(b => [offset(b.pts, i => halfW(b, i)), offset(b.pts, i => -halfW(b, i))]);
+  TREE.forEach((b, k) => C.tone(x, edges[k][0].concat(edges[k][1].slice().reverse()), .86));      // the rubbed body
+  TREE.forEach((b, k) => {
+    C.sweep(x, b.pts, b.w * .9, .75, sd++);                                                          // stick grain along the limb
+    if (b.w > 5) { C.vine(x, edges[k][0], Math.min(2.6, b.w * .2), .85, sd++); C.vine(x, edges[k][1], Math.min(2.6, b.w * .2), .85, sd++); }
+    C.vine(x, offset(b.pts, i => -halfW(b, i) * .62), Math.max(1, b.w * .1), .3, sd++, '#fff', .25);   // moonlit edge (moon is to the left)
+  });
+  C.blob(x, TX + 24 * SC, TY + 8 * SC, 90 * SC, 16 * SC, .7);   // where the trunk meets the ground
+  return c;
+}
+/* the nearest ground, its own layer so it parts faster than the plate on a push (velvet black, a few lifted blades) */
+function buildFG() {
+  const c = C.sheet(1.2, null), x = c.getContext('2d'); let sd = 900;
+  const g = ridge(H * .9, H * .87, 60 * SC, 4, 9).concat([[W + 60, H + 80], [-60, H + 80]]);
+  C.poly(x, g); C.fillA(x, .96); C.sweep(x, g.slice(0, 41), 30 * SC, .8, sd++);
+  const r = rng(91); for (let k = 0; k < 70; k++) { const xx = r() * W, yy = H * .9 + (noise(xx / W * 4, 9) - .5) * 60 * SC - 6, h = (30 + r() * 70) * SC;
+    C.vine(x, [[xx, yy + 10], [xx + (r() - .3) * 20, yy - h * .5], [xx + (r() - .2) * 34, yy - h]], 2.2, .7, sd++, k % 5 ? '#000' : '#fff', 0); }
+  return c;
+}
+
+/* ✎ the one colour: a red cord tied on a branch at the turn (pastel stroke points in plate px) */
+function buildCord() {
+  const br = TREE.filter(b => b.d === 1).sort((a, b) => b.pts[3][0] - a.pts[3][0])[0], [ax, ay] = br.pts[3], r = rng(808);
+  return [
+    { t0: B.turn, pts: C.pastelPath([ax - 16 * SC, ay - 8 * SC], [ax + 18 * SC, ay + 6 * SC], 15 * SC, 12 * SC, 12, r, 4 * SC) },
+    { t0: B.turn + .35, pts: C.pastelPath([ax + 6 * SC, ay + 4 * SC], [ax + 14 * SC, ay + 170 * SC], 11 * SC, 7 * SC, 30, r, 7 * SC) },
+  ];
+}
+
+/* ✎ the timeline: a few numbers per frame, all pure functions of t */
+function state(t) {
+  const s = { t };
+  s.zm = 1 + C.push(t, 0, 9.5, .05, k => k) + C.push(t, B.grow, B.turn - B.grow, .09) - C.push(t, B.recoil, 8, .06);   // creep, push, pull back
+  [s.ox, s.oy] = C.shake(t, C.kick(t, B.turn, .7, 10));
+  s.light = .65 * ss(B.light, B.light + 2.2, t);                                        // the light comes up…
+  s.threat = ss(B.grow, B.turn, t) * (t < B.recoil ? 1 : 1 - eio(clamp((t - B.recoil - .25) / 1.6)));   // …the dark gathers, then withdraws
+  if (t >= B.recoil && t < B.recoil + .25) s.threat *= 1 + .06 * Math.sin((t - B.recoil) * 60);         // the flinch
+  s.light *= 1 - .45 * s.threat; s.light += .35 * ss(B.recoil, B.recoil + 2, t);
+  s.night = .5 + .14 * s.threat - .12 * ss(B.recoil, B.calm, t);
+  return s;
+}
+
+/* ------------------------------------------------------------------ per-frame layers (value canvas) */
+function drawLight(x, s, t) {   // moon halo + a shaft of moonlight to the tree's foot, both lifted out of the tone
+  if (s.light <= .002) return;
+  C.blob(x, MOON[0], MOON[1], MR * 4.2, MR * 4.2, .55 * s.light, 0, C.smudgeW);
+  const top = [[MOON[0] - 30 * SC, MOON[1] + 25 * SC], [MOON[0] + 40 * SC, MOON[1] - 15 * SC]], foot = [[TX + 230 * SC, TY + 60 * SC], [TX - 200 * SC, TY + 90 * SC]];
+  C.wedge(x, top.concat(foot), MOON, [TX, TY + 80 * SC], .55 * s.light, { reach: 1, falloff: [[0, .9], [.5, .4], [1, .55]], blur: 9 });
+  C.blob(x, TX + 30 * SC, TY + 70 * SC, 340 * SC, 80 * SC, .55 * s.light, -.05, C.smudgeW);    // the pool on the hill
+}
+function drawThreat(x, s, t) {   // ✎ the threat: darkness crawling in from both sides like smoke, edges boiling on twos
+  if (s.threat <= .002) return;
+  const bo = C.boil(t), jr = rng(bo * 7 + 3);
+  C.layer(x, l => {
+    for (const sd of [-1, 1]) {
+      const reach = s.threat * (W * .5 - 170 * SC), pts = [];
+      for (let i = 0; i <= 48; i++) { const y = lerp(H * .16, H * 1.02, i / 48), k = Math.sin(i / 48 * Math.PI);
+        const d = reach * (.5 + .5 * k) + (Pilot.fbm(i * .22, sd * 3 + t * .25, 3) - .5) * 260 * SC * s.threat + (jr() - .5) * 8 * SC;
+        pts.push([sd < 0 ? d : W - d, y]); }
+      C.poly(l, pts.concat(sd < 0 ? [[-80, H + 80], [-80, -80]] : [[W + 80, H + 80], [W + 80, -80]])); l.fillStyle = '#000'; l.fill();
+      for (let i = 0; i < 16; i++) { const p = pts[1 + i * 3]; C.blob(l, p[0] + sd * -30 * SC, p[1], (90 + 60 * jr()) * SC, (60 + 40 * jr()) * SC, .55, i, C.smudge); }   // rubbed, smoky rim
+    }
+  }, { blur: 7, alpha: .94 });
+}
+function drawGhost(x, s, t) {   // Kentridge's palimpsest: where the dark reached stays as a faint smear after it withdraws
+  const a = .22 * ss(B.recoil + .3, B.recoil + 1.4, t) * (1 - ss(B.end - 1, B.end, t)); if (a <= 0) return;
+  for (const sd of [-1, 1]) { const d = W * .5 - 150 * SC, pts = []; for (let i = 0; i <= 24; i++) { const y = lerp(H * .2, H * .95, i / 24); pts.push([sd < 0 ? d * (.55 + .45 * Math.sin(i / 24 * Math.PI)) : W - d * (.55 + .45 * Math.sin(i / 24 * Math.PI)), y]); }
+    C.sweep(x, pts, 34 * SC, a, 500 + sd); }
+}
+
+/* ------------------------------------------------------------------ frame */
+function draw(ctx, t) {
+  const s = state(t), x = C.begin();
+  C.setCam({ zm: s.zm, ox: s.ox, oy: s.oy, zc: ZC });
+  C.applyCam(x); C.drawSheet(x, plate);            // the static drawing
+  C.toneAll(x, s.night);                           // night: rubbed tone over everything
+  C.applyCam(x); drawLight(x, s, t);               // lifts (behind the subject)
+  C.applyCam(x); C.drawSheet(x, subj);             // ✎ the subject
+  C.glowLine(x, TRUNK, .55 * s.light, 40, { w: [9, 3.5], al: [.18, .8], brk: [.1, .05], col: ['#fff', '#fff'], off: [0, 3] });   // its moonlit edge
+  drawThreat(x, s, t);
+  C.applyCam(x); drawGhost(x, s, t);
+  C.fog(x, t, [[H * .6, .42, 12], [H * .69, .34 * (1 + .5 * s.threat), -20], [H * .5, .2, 7]]);   // 3 bands, 3 speeds
+  C.applyCam(x, 1.9, 1.4); C.drawSheet(x, fg);     // foreground parts faster on the push
+  const endK = C.eraseWipe(x, t, B.end);           // end card: erased to paper
+  C.captionSmudge(x, t, S.lines);
+  C.develop(ctx);                                  // ---- tooth pass: value → charcoal on paper
+  const zm = C.cam.zm, fade = 1 - .86 * endK;      // ---- the one colour, warm light, words
+  if (t >= B.turn) C.pastel(ctx, CORD.map(st => ({ pr: eo(clamp((t - st.t0) / .6)), pts: st.pts.map(q => ({ s: C.toScr(q.p), w: q.w * zm, j1: q.j1, j2: q.j2 })) })), fade, { color: S.accent || C.RED });
+  const wa = ss(B.calm - 1, B.calm + 1, t) * (1 - .75 * endK);
+  if (wa > 0) { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); C.glowLine(ctx, TRUNK.map(C.toScr), wa * .8, 950, { w: [12, 5, 2], al: [.1, .3, .9], col: C.WARM, off: [0, 1, 2] }); ctx.restore(); }
+  C.captions(ctx, t, S.lines);
+  C.endCard(ctx, t, S.endCard, B.end);
+  C.fade(ctx, t, S.DUR);
+}
+
+async function init() {
+  C.init();
+  TREE = growTree(); TRUNK = offset(TREE[0].pts, i => -halfW(TREE[0], i) * .72);   // the trunk's moon-side edge (for the lit rim)
+  plate = buildPlate(); subj = buildSubject(); fg = buildFG(); CORD = buildCord();
+}
+
+Pilot.run({ W, H, dur: S.DUR, fonts: C.FONTS, init, draw });
+</script>
+</body>
+</html>

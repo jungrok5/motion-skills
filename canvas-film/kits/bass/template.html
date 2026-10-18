@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>솔 바스 그래픽 · 템플릿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;900&family=Noto+Serif+KR:wght@700;900&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-bass.js"></script>
+<script>
+/* Bass template — a placeholder 30 s story in the Saul Bass house style (styles/bass/STYLE.md).
+   ONE subject: a cut-paper figure in a bare room. Title lines build the room out of black; a window's light stutters
+   on and falls on the floor through true rays; the figure slides into it (its shadow is cut out of the light); the
+   opening widens on two beats; crash push as the figure lifts the one red thing; negative stab → black, only the red
+   remains; the lines rebuild the room, the light comes back warm; end card.
+   To make a new film: write scenes/script.js, then replace the FIGURE / WINDOW / RED THING below with your image.
+   Keep: Bass.begin → world → Bass.paperPass → Bass.negFlash → Bass.captions → Bass.endCard → Bass.fadeOut. */
+const { lerp, ss, eio } = Pilot;
+const { eo4, twos, snap, jag, poly, seg } = Bass, S = window.SCRIPT, B = S.beat, C = Bass.C;
+
+// ---------------- world: one-point perspective, metres ----------------
+const V = Bass.view({ F: 1200, eye: 1.5, horizon: 800 }), P = V.P;   // camera 1.5 m high, horizon at y 800
+const WZ = 4, ZN = 1.1;                       // back wall 4 m away; the floor is drawn out to 1.1 m
+const L = { x: 0.8, y: 6.0, z: 7.5 };          // the light: behind the wall, high and to the right
+const WY0 = 1.05, WY1 = 2.15;                  // window sill / head (m)
+const FZ = 2.75;                               // the figure stands 2.75 m from the camera
+// window half-width (m): a slit when the light comes on, wider on each grow beat (stops dead)
+const winHalf = (t, act2) => act2 ? .42 : .14 + .14 * snap(t, B.grow[0], .3) + .14 * snap(t, B.grow[1], .3);
+const winQuad = hw => [[-hw, WY1, WZ], [hw, WY1, WZ], [hw, WY0, WZ], [-hw, WY0, WZ]];   // 3-D corners
+
+// ---------------- the figure (placeholder subject) ----------------
+// right half of a standing cut-out, [v across, u up] in metres, feet → head; mirror() makes the whole outline
+const HALF = [[.03, 0], [.13, 0], [.12, .05], [.11, .50], [.19, .52], [.235, .95], [.225, 1.30], [.19, 1.40], [.06, 1.45], [.045, 1.49],
+  [.061, 1.517], [.082, 1.54], [.094, 1.575], [.092, 1.615], [.076, 1.65], [.047, 1.672], [0, 1.685]];
+const FIG = Bass.mirror(HALF, [[0, .45]]);                                     // + the gap between the legs
+const figX = (t, act2) => act2 ? -.35 : lerp(-2.4, -.35, snap(twos(t), B.enter, .45));   // slides in on twos, stops dead
+const armAng = (t, act2) => act2 ? .62 : lerp(-1.48, .62, snap(twos(t), B.turn + .1, .3));   // radians, 0 = pointing right
+function armPts(fx, a) {   // the right arm as a cut strip from the shoulder (m, in the figure's plane) + hand centre
+  const sx = fx + .17, sy = 1.39, dx = Math.cos(a), dy = Math.sin(a), nx = -dy * .045, ny = dx * .045, l = .62;
+  return { pts: [[sx + nx, sy + ny], [sx + dx * l + nx, sy + dy * l + ny], [sx + dx * l - nx, sy + dy * l - ny], [sx - nx, sy - ny]],
+    hand: [sx + dx * (l + .06), sy + dy * (l + .06)] };
+}
+const disc = (c, r, n = 22) => Array.from({ length: n }, (_, i) => [c[0] + r * Math.cos(i / n * 6.283), c[1] + r * Math.sin(i / n * 6.283)]);
+const scr = (pts, z) => pts.map(([x, y]) => P(x, y, z));                      // figure-plane metres → screen
+
+// ---------------- light colour, camera ----------------
+const lightCol = t => t < B.rebuild ? Pilot.hex(C.paper) : Pilot.mix(Pilot.hex(C.paper), Pilot.hex(C.warm), eio((t - B.warm) / 1.2));
+function cam(t) {
+  if (t >= B.turn && t < B.rebuild) return Bass.cam(Bass.crashPush(t, B.turn, 1.6), 650, 620);   // crash push onto the hand (centre on the window head, so nothing rises into the words)
+  if (t >= B.end) return Bass.cam(Bass.pullBack(t, B.end), 540, 1400);                         // pull back for the card
+  return Bass.cam();
+}
+
+function drawWorld(ctx, t) {
+  const act1 = t < B.black, act2 = t >= B.rebuild, show = act1 || act2;
+  const u = act1 ? t : t - B.rebuild + .6;          // act 2 replays the build, quicker
+  const cm = cam(t), hw = winHalf(t, act2), fx = figX(t, act2), arm = armPts(fx, armAng(t, act2));
+  ctx.save(); Bass.applyCam(ctx, cm); ctx.lineCap = 'butt';
+  const X0 = P(-hw, 0, WZ)[0], X1 = P(hw, 0, WZ)[0], Y0 = P(0, WY1, WZ)[1], Y1 = P(0, WY0, WZ)[1], FL = P(0, 0, WZ)[1];
+
+  if (show) {
+    // the back wall fills in as one flat grey plane (a wipe out from the centre that stops dead), window cut out of it
+    const kw = snap(u, B.lines + 1.3, .35);
+    if (kw > 0) {
+      ctx.save(); ctx.beginPath(); ctx.rect(540 - 700 * kw, 0, 1400 * kw, FL); ctx.clip();
+      ctx.fillStyle = C.grey1; poly(ctx, jag([[-200, -200], [1280, -200], [1280, FL], [-200, FL]], 1.4, 3)); ctx.fill();
+      ctx.fillStyle = C.ink; poly(ctx, jag(scr(winQuad(hw), WZ), 1.2, 4)); ctx.fill();
+      ctx.restore();
+    }
+    // title lines: baseboard sweeps out, jambs grow up, head and sill run across, the floor grid grows toward us
+    const kb = snap(u, B.lines, .5), kj = snap(u, B.lines + .25, .45), kh = snap(u, B.lines + .5, .4);
+    seg(ctx, [540, FL], [-600, FL], kb, C.line, 2.5); seg(ctx, [540, FL], [1680, FL], kb, C.line, 2.5);
+    seg(ctx, [X0, Y1], [X0, Y0], kj, C.line, 2.5); seg(ctx, [X1, Y1], [X1, Y0], kj, C.line, 2.5);
+    seg(ctx, [X0, Y0], [X1, Y0], kh, C.line, 2.5); seg(ctx, [X1, Y1], [X0, Y1], kh, C.line, 2.5);
+    const xs = []; for (let x = -3.6; x <= 3.61; x += .3) xs.push(+x.toFixed(2));
+    Bass.gridBuild(ctx, V, { xs, zFar: WZ, zNear: ZN, t: u, at: B.lines + .55, color: C.floor });
+    // the thread of light: the very first thing on screen
+    const kt = eo4((t - .35) / .5);
+    if (act1 && t < B.light + .1) seg(ctx, [X1 - 1.5, Y0], [X1 - 1.5, Y1], kt, C.paper, 3.5);
+  }
+
+  // light layer: window pane + the patch it throws on the floor (4 corners through toFloor), shadow cut out of it
+  const on = act1 ? Bass.flicker(t, B.light, [.55, .1, .1, .35]) : act2 ? Bass.flicker(u, B.light, [.55, .1, .1, .35]) : 0;
+  const lc = Bass.lightBegin(cm);
+  if (on > 0) {
+    lc.fillStyle = Pilot.rgb(Pilot.mix(Pilot.hex(C.ink), lightCol(t), on));
+    poly(lc, jag(scr(winQuad(hw), WZ), 1.2, 4)); lc.fill();
+    const patch = winQuad(hw).map(p => P(...Bass.toFloor(L, p)));
+    poly(lc, jag(patch, 2, 5, 10)); lc.fill();
+    Bass.lightAtop(lc => {
+      lc.strokeStyle = Pilot.rgb(Pilot.mix(lightCol(t), [70, 64, 58], .26)); lc.lineWidth = 2.5;   // floor lines inside the light
+      for (let x = -3.6; x <= 3.61; x += .3) { const a = P(x, 0, WZ), b = P(x, 0, ZN); lc.beginPath(); lc.moveTo(a[0], a[1]); lc.lineTo(b[0], b[1]); lc.stroke(); }
+      if (act2 || t >= B.enter) {                                                  // the figure's shadow, true projection
+        lc.fillStyle = C.ink;
+        poly(lc, jag(FIG.map(([v, h]) => P(...Bass.toFloor(L, [fx + v, h, FZ]))), 1.6, 7, 8)); lc.fill();
+        poly(lc, jag(arm.pts.map(([x, y]) => P(...Bass.toFloor(L, [x, y, FZ]))), 1.2, 8, 8)); lc.fill();
+      }
+    });
+  }
+  ctx.restore(); Bass.lightEnd(ctx); ctx.save(); Bass.applyCam(ctx, cm);
+
+  // the figure: flat ink cut-out with a small paper shadow; the arm is its own piece
+  if (show && (act2 || t >= B.enter)) {
+    const body = jag(scr(FIG.map(([v, h]) => [fx + v, h]), FZ), 1.4, 9, 7), ap = jag(scr(arm.pts, FZ), 1.1, 10, 6);
+    Bass.paperShadow(ctx, body); Bass.paperShadow(ctx, ap);
+    ctx.fillStyle = C.ink; poly(ctx, body); ctx.fill(); poly(ctx, ap); ctx.fill();
+  }
+  // the one red thing: on the hand from the turn, the only thing left in the dark, still there when the room returns
+  if (t >= B.turn + .3) {
+    const h = act1 || act2 ? arm.hand : armPts(figX(B.black - .01, false), armAng(B.black - .01, false)).hand;
+    const r = .085 * (1 + .25 * (1 - snap(t, B.turn + .3, .12)));      // lands with a paper slap
+    const pts = jag(disc(P(h[0], h[1], FZ), r * V.F / FZ), 1.6, 12, 7);
+    if (show) Bass.paperShadow(ctx, pts);
+    ctx.fillStyle = Bass.RED; poly(ctx, pts); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function draw(ctx, t) {
+  Bass.begin(ctx);
+  drawWorld(ctx, t);
+  Bass.paperPass(ctx);
+  Bass.negFlash(ctx, t, B.flash);
+  Bass.captions(ctx, t, S.lines);
+  Bass.endCard(ctx, t, S.endCard, B.end);
+  Bass.fadeOut(ctx, t, S.DUR);
+}
+
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: Bass.FONTS, init: async () => Bass.init(), draw });
+</script>
+</body>
+</html>

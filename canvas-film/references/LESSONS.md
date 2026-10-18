@@ -53,3 +53,15 @@
 - Plurals: `Pilot.trn` with CLDR categories (`"{n} años#one": "{n} año"`, Arabic two/few…).
 - Japanese kana / Arabic joined letters can't be an illuminated initial — skip the initial for those scripts.
 - Lines without spaces (CJK) don't wrap on spaces — add explicit `\n` or wrap per character.
+
+**Phones and previews** (word-log, 2026-10)
+- A scene opened directly on a phone showed only a zoomed-in corner ("just black"): the 1080/1920-px canvas, positioned and
+  scaled with a CSS transform, widened the layout viewport. The harness now sizes the canvas with CSS width/height.
+- The first frame of a scene is black (fade-in): a live preview should open on a poster frame with a big play button.
+- Send a live HTML preview first and encode MP4s only for the versions the person picks; drawing the scenes is what takes
+  time (25–35 min per new look), encoding a 30-s short is 1–3 min.
+
+**Kits** (word-log, 2026-10)
+- Scenes mix style and story; packaging the style (kits/) is what makes the next film fast. Verify a refactor by diffing
+  stills (or frame hashes) before/after rendered in the same seek order — ±1 can come from seek order alone.
+- Several kits in one film: their templates use different beat names, so each starts with its own placeholder script.

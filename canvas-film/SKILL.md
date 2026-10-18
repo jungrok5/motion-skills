@@ -29,6 +29,8 @@ Built for and proven on a 13-minute, 21-scene, 11-language Bible film
 | `player/index.html` | the player template (two-iframe preloading, audio as master clock, share sheet, deep links, theatre mode) |
 | `scripts/style-index.py` | rebuild `references/STYLE-INDEX.md` from STYLES.md + a Lemo-Opuscar clone |
 | `references/` | **STYLE-INDEX (every look to choose from, and how to search it)** · review-prompt (native-speaker review brief for a language) · SCENE-RULES (hard rules for scene authors) · STYLES (21 looks and how each was drawn) · SOUND (ElevenLabs flow) · I18N (method + quality gate) · LESSONS (what went wrong and the fixes) |
+| `kits/` | **style kits** — four looks packaged for reuse (`charcoal`, `hopper`, `bass`, `puppet`): `kit.js` + STYLE.md + a template scene; start with `scripts/from-kit.py` (see kits/README.md) |
+| `scripts/from-kit.py` | start a project's scenes from one or more kits (vendors harness, story.js, kit, template, script) |
 | `examples/hello/` | a minimal project: `film.json`, one scene, a sound spec, a Korean translation — run everything on it first |
 
 ## Project layout (what you create)
@@ -52,6 +54,8 @@ installed locally (`~/.local/share/fonts`, e.g. Noto Serif/Sans KR) — renders 
    `references/STYLE-INDEX.md` lists all 170 looks (21 proven here + 51 Lemo-Opuscar technique styles + 98 OPUSCAR film
    looks) and says how to shortlist and where each full brief lives. Pick one motif that threads every scene (a gold line).
    Show the list to the person before building; build 2–3 pilots first and get them approved — they set the quality bar.
+   **If a kit fits** (`kits/README.md`), start from it — `from-kit.py` — and spend the time on the film's own image, not on
+   re-deriving the look; a kit changes how it's drawn, never what. When a new look works, package it as a kit.
 2. **Build scenes** (`references/SCENE-RULES.md`): pure `draw(ctx,t)`, both orientations composed on purpose, ≥3.5 s per
    text line, ≤2 lines on screen, quotes verbatim with a source line, fade in/out from black. Parallelise across agents
    (3 scenes each) with SCENE-RULES as the brief; every agent must render stills in h AND v and look at them.
