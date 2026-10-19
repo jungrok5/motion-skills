@@ -77,4 +77,6 @@ installed locally (`~/.local/share/fonts`, e.g. Noto Serif/Sans KR) — renders 
 
 ## Contract every scene page fulfils
 `window.seek(t)` draws frame t; `window.DURATION`; `window.__ready = true` after fonts/init. `?render=1` = no UI;
-`?o=v` = portrait; `?lang=xx` = language. That contract is what lets the same file be recorded, scrubbed, and driven live.
+`?o=v` = portrait; `?lang=xx` = language.
+Optional, from `window.SCRIPT`: `loop` (s) cross-fades the last seconds into frame 0 so a Short replays seamlessly;
+`cuts: { short: [[a, b], …] }` + `?cut=short` plays a shorter version made of source time ranges (render with `--cut short`). That contract is what lets the same file be recorded, scrubbed, and driven live.

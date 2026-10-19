@@ -17,6 +17,7 @@
   // (exact Korean string → translation), per scene: i18n/<lang>.json = { "_dir": "ltr|rtl", "<scene>": { "한국어": "…" } }.
   // ?lang=<code> picks the language (default ko = no lookup at all, so Korean renders exactly as authored).
   P.lang = (location.search.match(/[?&]lang=([\w-]+)/) || [])[1] || (window.FILM_SRC || 'ko');
+  P.cut = (location.search.match(/[?&]cut=([\w-]+)/) || [])[1] || '';   // ?cut=<name>: play a shorter version (SCRIPT.cuts)
   P.scene = decodeURIComponent(location.pathname.split('/').pop().replace(/\.html$/, ''));
   P.L = {}; P.dir = 'ltr';
   P.collect = /[?&]collect=1/.test(location.search); P.seen = new Set(); P.miss = new Set();
@@ -149,7 +150,25 @@
       for (const st of (P.fontsToLoad || [])) for (const fam of (st.match(/'[^']+'/g) || [])) for (const w of [400, 600, 700]) await document.fonts.load(`${w} 40px ${fam}`);
       await document.fonts.ready; } catch (e) {}
     if (cfg.init) await cfg.init();
-    const draw = t => { ctx.save(); cfg.draw(ctx, Math.max(0, Math.min(cfg.dur - 1e-3, t))); ctx.restore(); };
+    // Cuts: a shorter version made of source time ranges, e.g. SCRIPT.cuts = { short: [[0, 3.5], [10.6, 15.4], [20.6, 28]] },
+    // played with ?cut=short (same scene, same drawing; the soundtrack is cut the same way by the project's tools).
+    const SRC_DUR = cfg.dur, SC = window.SCRIPT || {};
+    const segs = P.cut && SC.cuts && SC.cuts[P.cut];
+    const map = segs ? (t => { for (const [a, b] of segs) { if (t < b - a) return a + t; t -= b - a; } const l = segs[segs.length - 1]; return l[1] - 1e-3; }) : (t => t);
+    if (segs) cfg.dur = segs.reduce((s, [a, b]) => s + (b - a), 0);
+    // Loop seam: Shorts/Reels replay from the start, so the last `loop` seconds cross-fade into the first frame
+    // (cfg.loop or SCRIPT.loop, in seconds; 0/undefined = off). Scenes are pure functions of t, so this is seek-safe.
+    const LOOP = +(cfg.loop ?? SC.loop ?? 0);
+    let seam = null;
+    const raw = (c, t) => { c.save(); cfg.draw(c, Math.max(0, Math.min(SRC_DUR - 1e-3, map(t)))); c.restore(); };
+    const draw = t => {
+      t = Math.max(0, Math.min(cfg.dur - 1e-3, t)); raw(ctx, t);
+      if (LOOP > 0 && t > cfg.dur - LOOP) {
+        if (!seam) seam = P.canvas(W, H);
+        const sx = seam.getContext('2d'); sx.setTransform(1, 0, 0, 1, 0, 0); sx.globalAlpha = 1; sx.clearRect(0, 0, W, H); raw(sx, 0);
+        ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = P.ss(cfg.dur - LOOP, cfg.dur, t); ctx.drawImage(seam, 0, 0); ctx.restore();
+      }
+    };
     window.seek = draw; window.DURATION = cfg.dur; draw(0); window.__ready = true;
     window.__i18n = () => ({ seen: [...P.seen], miss: [...P.miss], drawn: [...P.drawn] });
     if (RENDER) return;

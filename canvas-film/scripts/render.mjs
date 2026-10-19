@@ -4,6 +4,7 @@
 //   node <skill>/scripts/render.mjs v --scene cross                 → out/cross-v.mp4 (1080×1920)
 //   node <skill>/scripts/render.mjs h --scene cross --stills 3,12   → out/still-cross-h-3.png … (for checking — use these a lot)
 //   node <skill>/scripts/render.mjs h --scene cross --lang en       → the English version (scenes/i18n/en.json)
+//   node <skill>/scripts/render.mjs v --scene seed --cut short      → the SCRIPT.cuts.short version (out/seed-short-v.mp4)
 // A sibling scenes/<scene>.wav (from mix.py) is muxed in automatically.
 // Options: --root <dir> --page <path.html> --fps 30 --workers 4 --from 0 --to <sec>
 // Needs: Playwright (Chromium) + ffmpeg, and the scene fonts installed locally (Google Fonts is blocked while
@@ -24,12 +25,13 @@ const ori = args[0] === 'v' ? 'v' : 'h';
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i > -1 ? args[i + 1] : d; };
 const root = resolve(opt('root', '.'));
 const fps = +opt('fps', 30), workers = +opt('workers', 4), lang = opt('lang', '');
+const cut = opt('cut', '');   // --cut short → the SCRIPT.cuts.short version (scene-short-v.mp4, muxes scenes/<scene>-short.wav)
 const [W, H] = ori === 'h' ? [1920, 1080] : [1080, 1920];
 const out = join(root, 'out'); mkdirSync(out, { recursive: true });
 const page$ = opt('page') ? resolve(root, opt('page')) : join(root, 'scenes', opt('scene', 'scene') + '.html');
-const name = basename(page$).replace(/\.html$/, '') + (lang ? '-' + lang : '');
-const url = pathToFileURL(page$).href + `?render=1&o=${ori}` + (lang ? `&lang=${lang}` : '');
-const wav = page$.replace(/\.html$/, '.wav');
+const name = basename(page$).replace(/\.html$/, '') + (cut ? '-' + cut : '') + (lang ? '-' + lang : '');
+const url = pathToFileURL(page$).href + `?render=1&o=${ori}` + (lang ? `&lang=${lang}` : '') + (cut ? `&cut=${cut}` : '');
+const wav = page$.replace(/\.html$/, cut ? `-${cut}.wav` : '.wav');
 
 async function openPage(browser) {
   const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });

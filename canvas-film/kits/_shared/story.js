@@ -25,7 +25,20 @@
     text(ctx, card.title, W / 2, y, { size: 72, weight: 700, font: o.font, color: o.color || '#f3ece0', alpha: a, shadow: sh || undefined });
     text(ctx, card.passage, W / 2, y + 250, { size: 34, font: sf, weight: 500, color: o.srcColor || '#d9cfbf', alpha: a * ss(at + .4, at + 1.3, t) });
     text(ctx, card.by, W / 2, y + 310, { size: 30, font: sf, color: o.srcColor || '#d9cfbf', alpha: a * ss(at + .6, at + 1.5, t) * .9 });
-    text(ctx, card.cta, W / 2, y + 420, { size: 30, font: sf, weight: 600, color: o.ctaColor || (o.color || '#f3ece0'), alpha: a * ss(at + 1.2, at + 2.1, t), ls: 2 });
+    if (card.cta) text(ctx, card.cta, W / 2, y + 420, { size: 30, font: sf, weight: 600, color: o.ctaColor || (o.color || '#f3ece0'), alpha: a * ss(at + 1.2, at + 2.1, t), ls: 2 });
+  };
+  // The end card from the film's source (scenes/source.js → window.SOURCE, written from source.json by new-film.py).
+  // Short on screen (≤ 2.5 s): the title and two small lines; links, CTA and full credits go in the upload description.
+  //   sermon:     설교 제목 / 본문 / 날짜 · 교회 · 설교자
+  //   book:       제목(or 『책』) / 『책』 장·쪽 / 저자 · 출판사
+  //   meditation, topic, verse: 제목 / 본문 / by(교회·채널 등, 선택)
+  S.card = function (src = {}) {
+    const d = src.date ? String(src.date).replace(/-/g, '.') : '', j = a => a.filter(Boolean).join(' · ');
+    if (src.type === 'book') return { title: src.title || (src.book ? `『${src.book}』` : ''),
+      passage: j([src.book && src.title ? `『${src.book}』` : '', src.where]), by: j([src.author, src.publisher]), cta: src.cta || '' };
+    if (src.type === 'sermon' || (!src.type && src.preacher)) return { title: src.title || '', passage: src.passage || '',
+      by: j([d, src.church, src.preacher]), cta: src.cta || '' };
+    return { title: src.title || '', passage: src.passage || '', by: j([src.by, d]), cta: src.cta || '' };
   };
   // fade in from black over the first `fi` s and out over the last `fo` s (so films and cuts join cleanly)
   S.fadeBlack = function (ctx, t, dur, fi = 1, fo = .6) {
