@@ -28,7 +28,7 @@ Built for and proven on a 13-minute, 21-scene, 11-language Bible film
 | `scripts/sheets.mjs` | contact sheets — every scene × both orientations × N moments, one image per scene (check a language or a restyle by eye) |
 | `player/index.html` | the player template (two-iframe preloading, audio as master clock, share sheet, deep links, theatre mode) |
 | `scripts/style-index.py` | rebuild `references/STYLE-INDEX.md` from STYLES.md + a Lemo-Opuscar clone |
-| `references/` | **STYLE-INDEX (every look to choose from, and how to search it)** · review-prompt (native-speaker review brief for a language) · SCENE-RULES (hard rules for scene authors) · STYLES (21 looks and how each was drawn) · SOUND (ElevenLabs flow) · I18N (method + quality gate) · LESSONS (what went wrong and the fixes) |
+| `references/` | **MESSAGE (the 11-question message check for every storyboard)** · **STYLE-INDEX (every look to choose from, and how to search it)** · review-prompt (native-speaker review brief for a language) · SCENE-RULES (hard rules for scene authors) · STYLES (21 looks and how each was drawn) · SOUND (ElevenLabs flow) · I18N (method + quality gate) · LESSONS (what went wrong and the fixes) |
 | `kits/` | **style kits** — four looks packaged for reuse (`charcoal`, `hopper`, `bass`, `puppet`): `kit.js` + STYLE.md + a template scene; start with `scripts/from-kit.py` (see kits/README.md) |
 | `scripts/from-kit.py` | start a project's scenes from one or more kits (vendors harness, story.js, kit, template, script) |
 | `examples/hello/` | a minimal project: `film.json`, one scene, a sound spec, a Korean translation — run everything on it first |
@@ -53,6 +53,8 @@ installed locally (`~/.local/share/fonts`, e.g. Noto Serif/Sans KR) — renders 
    black-and-white with one red). **Search the whole catalogue every time**, not just the looks you remember:
    `references/STYLE-INDEX.md` lists all 170 looks (21 proven here + 51 Lemo-Opuscar technique styles + 98 OPUSCAR film
    looks) and says how to shortlist and where each full brief lives. Pick one motif that threads every scene (a gold line).
+   Before showing it, answer `references/MESSAGE.md` (11 questions: is the viewer in the picture, who acts, one
+   metaphor, the outsider and picture-only tests, a line to remember…) and change the scene until you can.
    Show the list to the person before building; build 2–3 pilots first and get them approved — they set the quality bar.
    **If a kit fits** (`kits/README.md`), start from it — `from-kit.py` — and spend the time on the film's own image, not on
    re-deriving the look; a kit changes how it's drawn, never what. When a new look works, package it as a kit.
