@@ -21,7 +21,7 @@ Built for and proven on a 13-minute, 21-scene, 11-language Bible film
 | `harness/lib.js` | the scene harness: `Pilot.run`, seek/DURATION/__ready contract, easing, seeded rng/noise/fbm, text, portrait reframe, **i18n** (`Pilot.tr`, `Pilot.trn`, `Pilot.chars`, font swap, RTL) |
 | `scripts/render.mjs` | record a scene (or stills) with Playwright + ffmpeg, parallel workers, muxes the scene's mix |
 | `scripts/mix.py` | place music/SFX cues from `<scene>.sound.json` on the timeline (fades, loops, ducks) → `<scene>.wav` |
-| `scripts/assemble.py` | join scenes into `film-h.mp4` / `film-v.mp4` (per-scene loudnorm −16 LUFS) |
+| `scripts/assemble.py` | join scenes into `film-h.mp4` / `film-v.mp4` (per-scene loudnorm −16 LUFS); `--upload` adds the copy for YouTube/Instagram |
 | `scripts/publish.py` | build the **live web player** site: scenes + subset webfonts + per-scene m4a + language files |
 | `scripts/i18n-scan.mjs` | list every on-screen string of a scene (source language) / what a language still misses or leaks |
 | `scripts/i18n-merge.mjs` | merge per-scene translation files into the one file each language loads |
@@ -61,7 +61,10 @@ installed locally (`~/.local/share/fonts`, e.g. Noto Serif/Sans KR) — renders 
 4. **Sound**: each scene writes `<id>.sound.json` (≤3 music cues, ≤8 SFX, ducks for silence). Generate with ElevenLabs
    (`references/SOUND.md` — one flow per batch, 2 variations, never retry), download, `mix.py`.
 5. **Render** (optional — the live player needs no video): `render.mjs h|v --scene <id>` per scene, then `assemble.py h|v`.
-   Hours of CPU; run in the background, check with stills before.
+   Hours of CPU; run in the background, check with stills before. For YouTube/Instagram upload `assemble.py h|v --upload`
+   → `film-<h|v>-upload.mp4` (H.265, closed GOP, keyframe every 2 s, no B-frames, < 400 MB for ~14 min). Never upload an
+   open-GOP/B-frame encode: sites re-encode in keyframe chunks and some renditions jump at every scene start. Build the
+   upload copy from the assembled master (its sound is aligned per scene), not by pairing re-joined pictures with its sound.
 6. **Publish the live player**: `publish.py` → `site/`; add `poster-h.jpg`/`poster-v.jpg` (a still of the title card) per
    language; deploy `site/` anywhere static. Check CSP (`media-src`, `font-src` self), and that a service worker does not
    intercept the m4a range requests. To put the player inside another page, iframe it with `?embed=1` (stage + controls

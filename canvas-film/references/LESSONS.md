@@ -51,6 +51,13 @@
 - Share: `navigator.share` where available (phones AND desktop OS share sheets), fall back to copying the link with a
   toast; support `#scene` deep links.
 
+- Uploading to YouTube: a 14-min film encoded H.265 with open GOPs and B-frames (x265 defaults) played fine as a file
+  and in some renditions, but on other phones every scene start showed a frame from ~3 s later for a moment, then snapped
+  back — first only in landscape, then in portrait for another viewer. YouTube re-encodes in chunks cut at keyframes
+  (which x265 puts at scene cuts); open-GOP leading frames reference the previous chunk. Fix: upload a closed-GOP,
+  fixed-2 s-keyframe, no-B-frame file (`assemble.py --upload`). Also: never mux re-joined scene pictures with the
+  assembled film's sound — the assembled sound carries per-scene padding, so the picture drifts (0.2 s by the end).
+
 **Deploying**
 - A host can report a deploy "successful" while the domain still serves an older build (e.g. the push only produced a
   preview). After every deploy, fetch a changed file from the live domain and check it.
