@@ -68,6 +68,8 @@ installed locally (`~/.local/share/fonts`, e.g. Noto Serif/Sans KR) — renders 
    Instagram: parts < 3 min, H.264, whole-scene covers — see LESSONS "Social platforms".
    Fixing one scene later: re-render only that scene, run `assemble.py` again — it joins clips by stream copy and keeps
    each scene's upload encode in `out/upcache/`, so it costs one scene's encode (seconds to minutes), not the film's.
+   Portrait for Shorts/Reels: `assemble.py v --shorts` → one file per scene in `out/shorts/` (scenes are self-contained:
+   own sound, fade from/to black, 25–70 s — under the 3-min Shorts limit). Landscape stays one whole film.
 6. **Publish the live player**: `publish.py` → `site/`; add `poster-h.jpg`/`poster-v.jpg` (a still of the title card) per
    language; deploy `site/` anywhere static. Check CSP (`media-src`, `font-src` self), and that a service worker does not
    intercept the m4a range requests. To put the player inside another page, iframe it with `?embed=1` (stage + controls
