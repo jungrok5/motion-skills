@@ -30,7 +30,7 @@ Built for and proven on a 13-minute, 21-scene, 11-language Bible film
 | `scripts/style-index.py` | rebuild `references/STYLE-INDEX.md` from STYLES.md + a Lemo-Opuscar clone |
 | `references/` | **STYLE-INDEX (every look to choose from, and how to search it)** · review-prompt (native-speaker review brief for a language) · SCENE-RULES (hard rules for scene authors) · STYLES (21 looks and how each was drawn) · SOUND (ElevenLabs flow) · I18N (method + quality gate) · LESSONS (what went wrong and the fixes) |
 | `examples/hello/` | a minimal project: `film.json`, one scene, a sound spec, a Korean translation — run everything on it first |
-| `examples/anime/` | one 27-s scene in a Japanese anime look (cel-shaded characters on twos, painted Shinkai-style sky, train at a railway crossing) — a reference for character drawing and cel shading in Canvas 2D (STYLES.md, "Anime") |
+| `examples/anime/` | one 27-s scene in a Japanese anime look (cel-shaded characters on twos, painted Shinkai-style sky, train at a railway crossing) — a reference for character drawing and cel shading in Canvas 2D (STYLES.md, "Anime"); `glance.html` is a close-up key frame with a face, layered hair and tapered ink lines, sharing `anime-kit.js` |
 
 ## Project layout (what you create)
 ```

@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>振り返り · anime example</title>
+</head>
+<body>
+<script>window.FILM_SRC = 'ko';</script>
+<script src="lib.js"></script>
+<script src="anime-kit.js"></script>
+<script>
+/* 02 振り返り (the look back) — a close-up key frame in a modern TV-anime drawing style, all in Canvas 2D.
+   What makes it read as anime rather than "vector cartoon" (the first scene's weakness):
+   - tapered ink: every line is a filled ribbon, thin at its ends and heavier where its normal faces away from the light;
+     colour lines (warm brown on skin, near-black on lashes), never one uniform stroke;
+   - two shadow tones on skin (1st kage + 2nd kage) with hard edges, the bangs casting a shadow on the forehead,
+     blush with hatch strokes, a rim of sky light on the shadow side;
+   - eyes built in layers: sclera with lid shadow, iris gradient dark→light downward, pupil, a lid shadow band, two
+     highlights, lash line with a heavy outer flick, a double-lid line; brows show through the bangs (透け眉);
+   - hair as pointed, S-curved clumps in layers (back mass/ponytail → cap → bangs → side locks), each with a cel shadow,
+     inner strand lines, one jagged highlight band across the crown, and a light rim;
+   - background painted then put out of focus (depth of field), diffusion glow on top. */
+const W = Pilot.W, H = Pilot.H, V = Pilot.ori === 'v', DUR = 6;
+const TW = t => Math.floor(t * 12 + 1e-6) / 12;
+const LIGHT = [-.55, -.83];                          // toward the key light (upper left)
+let BG;
+
+// ---------- curves ----------
+// sample a smooth curve through a control polygon (quadratic midpoints); [x,y,1] marks a sharp corner
+function curve(P, closed = true, n = 10) {
+  const N = P.length, out = [], mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  if (!closed) out.push([P[0][0], P[0][1], 1]);
+  for (let i = closed ? 0 : 1; i < (closed ? N : N - 1); i++) {
+    const p = P[i];
+    const a = !closed && i === 1 ? P[0] : mid(P[(i - 1 + N) % N], p), b = !closed && i === N - 2 ? P[N - 1] : mid(p, P[(i + 1) % N]);
+    if (p[2]) { out.push([a[0], a[1]], [p[0], p[1], 1]); continue; }
+    for (let k = 0; k < n; k++) { const t = k / n, u = 1 - t; out.push([u * u * a[0] + 2 * u * t * p[0] + t * t * b[0], u * u * a[1] + 2 * u * t * p[1] + t * t * b[1]]); }
+  }
+  if (!closed) out.push([P[N - 1][0], P[N - 1][1], 1]);
+  return out;
+}
+const path = (ctx, S) => { ctx.beginPath(); S.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); };
+const fillS = (ctx, S, c) => { path(ctx, S); ctx.fillStyle = c; ctx.fill(); };
+const shift = (S, dx, dy) => S.map(p => [p[0] + dx, p[1] + dy, p[2]]);
+// tapered ink ribbon along sampled points. o: closed, a/b taper fractions (open), dir = weight by light, wmin
+function ink(ctx, S, w, col, o = {}) {
+  const n = S.length, closed = !!o.closed, len = [0];
+  for (let i = 1; i < n; i++) len.push(len[i - 1] + Math.hypot(S[i][0] - S[i - 1][0], S[i][1] - S[i - 1][1]));
+  const tot = len[n - 1] + (closed ? Math.hypot(S[0][0] - S[n - 1][0], S[0][1] - S[n - 1][1]) : 0) || 1;
+  let cx = 0, cy = 0; S.forEach(p => { cx += p[0]; cy += p[1]; }); cx /= n; cy /= n; if (o.c) [cx, cy] = o.c;
+  const a = o.a == null ? .18 : o.a, b = o.b == null ? .22 : o.b, wmin = o.wmin == null ? .15 : o.wmin, dir = o.dir == null ? .7 : o.dir;
+  const W_ = i => { const p = S[i], q = S[Math.min(n - 1, i + 1)], r = S[Math.max(0, i - 1)];
+    let tx = q[0] - r[0], ty = q[1] - r[1]; const l = Math.hypot(tx, ty) || 1; let nx = -ty / l, ny = tx / l;
+    if (nx * (p[0] - cx) + ny * (p[1] - cy) < 0) { nx = -nx; ny = -ny; }
+    let k = 1 - dir + dir * (.35 + 1.1 * Math.max(0, -(nx * LIGHT[0] + ny * LIGHT[1])));
+    if (!closed) { const s = len[i] / tot; k *= Math.max(wmin, Math.min(1, s / a, (1 - s) / b)) ** .7; }
+    if (p[2] && o.sharp !== false) k *= .35;
+    return w * k; };
+  const ws = S.map((_, i) => W_(i)), Lp = [], Rp = [];
+  for (let i = 0; i < n; i++) { const p = S[i], q = closed ? S[(i + 1) % n] : S[Math.min(n - 1, i + 1)], r = closed ? S[(i - 1 + n) % n] : S[Math.max(0, i - 1)];
+    const tx = q[0] - r[0], ty = q[1] - r[1], l = Math.hypot(tx, ty) || 1, nx = -ty / l, ny = tx / l, h = ws[i] / 2;
+    Lp.push([p[0] + nx * h, p[1] + ny * h]); Rp.push([p[0] - nx * h, p[1] - ny * h]); }
+  ctx.fillStyle = col; ctx.beginPath();
+  if (closed) { Lp.forEach((p, i) => i ? ctx.lineTo(...p) : ctx.moveTo(...p)); ctx.closePath(); Rp.reverse().forEach((p, i) => i ? ctx.lineTo(...p) : ctx.moveTo(...p)); ctx.closePath(); }
+  else { Lp.forEach((p, i) => i ? ctx.lineTo(...p) : ctx.moveTo(...p)); Rp.reverse().forEach(p => ctx.lineTo(...p)); ctx.closePath(); }
+  ctx.fill();
+}
+// a pointed hair clump: root centre R, root width wr, tip T; bend bows it, s2 adds an S-curve
+function strand(R, wr, T, bend = 0, s2 = 0) {
+  const dx = T[0] - R[0], dy = T[1] - R[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
+  const at = (u, side) => { const w = wr / 2 * Math.pow(1 - u, .75), b = bend * Math.sin(Math.PI * u) + s2 * Math.sin(PI2 * u);
+    return [R[0] + dx * u + nx * (b + side * w), R[1] + dy * u + ny * (b + side * w)]; };
+  return [at(0, -1), at(.25, -1), at(.5, -1), at(.75, -1), [T[0], T[1], 1], at(.75, 1), at(.5, 1), at(.25, 1), at(0, 1)];
+}
+
+const clump = (...a) => { const S = curve(strand(...a), true, 8); S.strand = 1; return S; };
+
+// ---------- palette ----------
+const SKIN = { base: '#ffe6d8', s1: '#f6bfae', s2: '#e3998e', line: '#7a4240', blush: '255,128,128' };
+const HAIR = { base: '#7d4b3b', s1: '#5a3329', s2: '#3f2420', hi: '#c48d6c', rim: '#ffd9bd', line: '#2f1a18' };
+const EYE = { top: '#17284f', mid: '#2e6aa6', bot: '#7fd3f2', ring: '#10193a', pupil: '#0b1430', lash: '#22141a' };
+
+// ---------- the girl (local units; head centre at 0,0; head ~490 tall) ----------
+function girl(ctx, t) {
+  const q = TW(t), wv = Math.sin(q * 1.9), wv2 = Math.sin(q * 2.7 + 1);
+  // ===== back hair: the ponytail streaming right in the wind =====
+  const tie = [222, -58];
+  const tails = [
+    [[226, -40], 120, [440 + 8 * wv2, 310], 80, 24], [tie, 150, [560 + 14 * wv, 170 + 10 * wv2], 70, -30],
+    [tie, 130, [630 + 18 * wv2, 50 + 8 * wv], 40, 25], [tie, 110, [520 + 10 * wv, 250 + 12 * wv2], 90, -16],
+    [tie, 100, [680 + 20 * wv, -30 + 10 * wv2], 20, 30], [tie, 60, [720 + 22 * wv2, 110 + 14 * wv], 50, -20],
+  ];
+  const back = [], backC = [];
+  for (const [R, wr, T, b, s2] of tails) { const S = curve(strand(R, wr, T, b, s2), true, 8); S.strand = 1; back.push(S); }
+  // nape mass behind the neck (hair below the tie, under the cap)
+  const nape = curve([[120, -60], [235, -110], [250, 10], [215, 120], [175, 175, 1], [160, 120], [140, 60]], true, 8);
+  hairLayer(ctx, [nape, ...back], 1);
+
+  // ===== body: collar flap behind the neck, neck, blouse, lapels, scarf =====
+  const blouse = curve([[-300, 1200], [-262, 480], [-190, 396], [-84, 356], [30, 330], [146, 338], [244, 380], [306, 472], [340, 1200]], true, 10);
+  const flap = curve([[95, 300], [278, 348, 1], [300, 450, 1], [240, 402], [130, 360]], true, 6);
+  celS(ctx, flap, '#2b3b72', '#1c2752', -10, -8); ink(ctx, flap, 4, '#141a3a', { closed: true });
+  const neck = curve([[-40, 232], [20, 252], [96, 168], [108, 260], [116, 340, 1], [-50, 352, 1], [-44, 290]], true, 8);
+  fillS(ctx, neck, SKIN.base);
+  ctx.save(); path(ctx, neck); ctx.clip();
+  fillS(ctx, curve([[-120, 150], [200, 60], [220, 262], [80, 266], [-20, 292], [-120, 282]], true, 8), SKIN.s1);
+  fillS(ctx, curve([[80, 150], [200, 120], [200, 380], [112, 380], [92, 260]], true, 8), SKIN.s2);
+  ctx.restore();
+  ink(ctx, curve([[-42, 244], [-46, 300], [-48, 346]], false), 4, SKIN.line, { a: .3, b: .1 });
+  ink(ctx, curve([[104, 196], [110, 270], [116, 336]], false), 4.5, SKIN.line, { a: .3, b: .1 });
+  celS(ctx, blouse, '#f8f9fd', '#c4cae4', -26, -14); ink(ctx, blouse, 4.5, '#3a3550', { closed: true, sharp: false });
+  ctx.save(); path(ctx, blouse); ctx.clip();
+  for (const F of [[[-200, 500], [-150, 580], [-140, 700]], [[250, 470], [270, 560], [300, 700]], [[60, 600], [90, 650], [100, 720]]])
+    ink(ctx, curve(F, false), 3, 'rgba(90,96,140,.55)', { a: .3, b: .5, dir: 0 });
+  ctx.restore();
+  const lapF = curve([[-50, 336], [-196, 402, 1], [-160, 452], [-30, 560, 1], [-40, 452]], true, 8);
+  const lapN = curve([[100, 326], [244, 386, 1], [170, 452], [-30, 560, 1], [30, 452]], true, 8);
+  for (const L of [lapF, lapN]) { celS(ctx, L, '#2c3d76', '#1d2955', -12, -8); }
+  for (const [a, b] of [[[-186, 408], [-36, 549]], [[234, 394], [-24, 549]]]) for (const k of [16, 28]) {
+    const u = [b[0] - a[0], b[1] - a[1]], l = Math.hypot(...u), nx = -u[1] / l * (a[0] < 0 ? -1 : 1), ny = u[0] / l * (a[0] < 0 ? -1 : 1);
+    ink(ctx, [[a[0] + nx * k, a[1] + ny * k, 1], [b[0] + nx * k * .3, b[1] + ny * k * .3, 1]], 4, '#eef1fa', { a: .05, b: .05, dir: 0, sharp: false }); }
+  for (const L of [lapF, lapN]) ink(ctx, L, 4, '#141a3a', { closed: true });
+  // scarf: knot, two loops, tails fluttering right
+  const knot = [-30, 552];
+  const loops = [curve([knot, [-138, 506], [-158, 571], [-98, 596]], true, 8), curve([knot, [72, 511], [92, 576], [32, 596]], true, 8)];
+  const tailsR = [curve(strand([-18, 566], 46, [82 + 10 * wv, 661], 30, 8), true, 8), curve(strand([-38, 566], 40, [2 + 6 * wv2, 676], -20, 6), true, 8)];
+  for (const S of [...tailsR, ...loops]) { celS(ctx, S, '#e0414e', '#a62a39', -8, -8); ink(ctx, S, 3.5, '#5a141e', { closed: true }); }
+  const kn = curve([[-50, 536], [-10, 534], [-6, 568], [-48, 572]], true, 6); celS(ctx, kn, '#e8505c', '#b02f3e', -5, -5); ink(ctx, kn, 3.5, '#5a141e', { closed: true });
+
+  // ===== face =====
+  const face = curve([[0, -90], [150, -40], [158, 70], [148, 140], [118, 186], [60, 236], [-8, 266], [-64, 264, 1], [-104, 228], [-150, 172], [-178, 104], [-168, 40], [-160, -40]], true, 10);
+  fillS(ctx, face, SKIN.base);
+  ctx.save(); path(ctx, face); ctx.clip();
+  // 1st shadow: the side away from the light + under the cheekbone on the near side
+  fillS(ctx, curve([[124, -60], [200, -60], [200, 300], [-20, 300], [-6, 270], [64, 234], [114, 184], [140, 122], [146, 40]], true, 10), SKIN.s1);
+  fillS(ctx, curve([[154, 60], [200, 60], [200, 250], [96, 236], [134, 184], [152, 132]], true, 8), SKIN.s2);
+  // shadow the bangs cast on the forehead (the bangs themselves, dropped and nudged right)
+  for (const S of bangShapes(q)) fillS(ctx, shift(S, 12, 30), SKIN.s1);
+  // nose shading + cheek blush with hatching
+  fillS(ctx, curve([[-50, 128], [-40, 150], [-52, 172], [-60, 166]], true, 6), SKIN.s1);
+  for (const [bx, by, r] of [[70, 168, 70], [-128, 158, 52]]) {
+    const g = ctx.createRadialGradient(bx, by, 0, bx, by, r); g.addColorStop(0, `rgba(${SKIN.blush},.5)`); g.addColorStop(1, `rgba(${SKIN.blush},0)`);
+    ctx.fillStyle = g; ctx.fillRect(bx - r, by - r, r * 2, r * 2);
+    for (let i = -1; i <= 1; i++) ink(ctx, [[bx + i * 16 - 6, by + 10, 1], [bx + i * 16 + 8, by - 10, 1]], 3, 'rgba(230,110,110,.75)', { a: .3, b: .3, dir: 0 }); }
+  ctx.restore();
+  // rim of sky light along the shadowed jaw
+  ink(ctx, curve([[156, 80], [146, 150], [112, 196], [50, 240]], false), 3.5, 'rgba(225,240,255,.9)', { a: .25, b: .4, dir: 0 });
+  ink(ctx, face.slice(10), 5.5, SKIN.line, { closed: false, c: [0, 60], a: .08, b: .08 });
+
+  // ear (near side), mostly behind the side lock
+  const ear = curve([[146, 70], [176, 58], [190, 100], [180, 150], [156, 160], [148, 120]], true, 8);
+  celS(ctx, ear, SKIN.s1, SKIN.s2, -6, -4); ink(ctx, ear, 4, SKIN.line, { closed: true });
+  ink(ctx, curve([[170, 80], [180, 110], [166, 140]], false), 2.5, SKIN.line, { dir: 0 });
+
+  // nose & mouth
+  ink(ctx, curve([[-58, 140], [-66, 164], [-56, 168]], false), 3.2, SKIN.line, { a: .4, b: .3, dir: 0 });
+  ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.beginPath(); ctx.ellipse(-64, 150, 3, 5, -.3, 0, PI2); ctx.fill();
+  const mouth = curve([[-74, 208], [-50, 212], [-28, 208], [-44, 226, 1], [-60, 224]], true, 6);
+  fillS(ctx, mouth, '#b8485a'); ctx.save(); path(ctx, mouth); ctx.clip(); ctx.fillStyle = '#ef8a92'; ctx.beginPath(); ctx.ellipse(-50, 228, 16, 8, 0, 0, PI2); ctx.fill(); ctx.restore();
+  ink(ctx, curve([[-80, 206], [-52, 211], [-24, 205]], false), 3.4, '#6a2a34', { a: .3, b: .3, dir: 0 });
+  ink(ctx, curve([[-56, 236], [-46, 238]], false), 2.2, 'rgba(160,80,80,.7)', { dir: 0 });
+
+  // ===== eyes =====
+  eye(ctx, { lid: [[-22, 76], [-6, 38], [32, 16], [74, 20], [104, 42], [118, 62]], low: [[106, 60], [100, 112], [60, 142], [14, 136], [-12, 108]],
+    lowLash: [[28, 141], [60, 140], [88, 124]], ic: [46, 93], rx: 41, ry: 55, crease: [[2, 20], [50, 4], [98, 24]], flick: [[100, 38], [130, 34], [110, 52], [134, 62]] });
+  eye(ctx, { lid: [[-76, 78], [-84, 42], [-110, 20], [-142, 24], [-162, 42], [-176, 60]], low: [[-164, 58], [-152, 112], [-120, 140], [-90, 132], [-78, 102]],
+    lowLash: [[-102, 138], [-128, 140], [-150, 120]], ic: [-108, 95], rx: 31, ry: 54, crease: [[-86, 22], [-118, 6], [-156, 22]], flick: [[-160, 40], [-186, 38], [-168, 54], [-190, 66]] });
+
+  // ===== hair cap, bangs, side locks =====
+  const cap = curve([[-166, -40], [-204, -140], [-134, -236], [0, -266], [134, -250], [218, -172], [248, -66], [222, 14], [176, 56], [140, 28], [70, -64], [-60, -84]], true, 10);
+  const bangs = bangShapes(q);
+  const sideN = [clump([140, -30], 62, [178 + 6 * wv, 280], 26, -8), clump([158, -10], 40, [232 + 12 * wv2, 240], 30, 10)];
+  const sideF = [clump([-158, -40], 64, [-184 + 4 * wv, 262], -24, 10), clump([-150, -30], 30, [-120 + 10 * wv2, 250], 18, -14)];
+  cap.capInk = 1;
+  // hair pulled back to the tie: big clumps over the crown, so the top reads as hair, not a cap
+  const crown = [[[-150, -96], 70, [222, -62], -60, 10], [[-110, -170], 80, [222, -66], -40, 6], [[-40, -220], 90, [222, -70], -20, 0], [[40, -236], 80, [224, -72], 10, 0], [[120, -214], 60, [226, -70], 10, 0]]
+    .map(([R, wr, T, b, s2]) => clump(R, wr, T, b, s2));
+  hairLayer(ctx, [cap, ...crown, ...bangs, ...sideN, ...sideF], 0);
+  // brows show through the bangs
+  ctx.save(); ctx.globalAlpha = .6;
+  ink(ctx, curve([[-8, 2], [40, -14], [98, -4]], false), 6, '#4a2620', { a: .15, b: .5, dir: 0 });
+  ink(ctx, curve([[-84, 4], [-122, -8], [-160, -2]], false), 5.5, '#4a2620', { a: .15, b: .5, dir: 0 });
+  ctx.restore();
+  // a few loose strands blowing across, on twos
+  for (const [R, T, b] of [[[-150, -60], [-30 + 14 * wv, -150 - 10 * wv2], -30], [[60, -200], [260 + 16 * wv2, -250], 40], [[-170, 40], [-250 + 10 * wv, 150], 30]])
+    ink(ctx, curve(strand(R, 1, T, b, b * .3), false, 8).slice(0, 40), 3.2, HAIR.line, { a: .1, b: .5, dir: 0 });
+  // scrunchie at the tie
+  const sc = curve([[204, -92], [246, -90], [258, -54], [244, -20], [208, -24], [196, -56]], true, 8);
+  celS(ctx, sc, '#ff6f7d', '#c8404f', -8, -8); ink(ctx, sc, 4, '#5a141e', { closed: true });
+  for (const k of [-.6, 0, .6]) ink(ctx, curve([[226 + k * 30, -88], [230 + k * 34, -56], [226 + k * 30, -24]], false), 2.4, 'rgba(120,30,40,.6)', { dir: 0 });
+}
+function bangShapes(q) {
+  const w = Math.sin(q * 1.9) * 4;
+  const B = [
+    [[-172, -90], 60, [-176 + w, 34], -10, 6], [[-140, -100], 62, [-128 + w, 18], 8, -4], [[-104, -104], 64, [-92 + w, 50], 6, 6],
+    [[-66, -106], 62, [-60 + w, 8], -6, 0], [[-32, -106], 66, [-26 + w, 66], 10, -6], [[6, -104], 66, [8 + w, 20], -8, 4],
+    [[44, -100], 66, [46 + w, 38], 8, 2], [[82, -94], 64, [80 + w, 4], -6, 0], [[116, -84], 60, [118 + w, 30], 8, -4], [[146, -70], 50, [150 + w, 2], -4, 0],
+  ];
+  return B.map(([R, wr, T, b, s]) => { const S = curve(strand(R, wr, T, b, s), true, 8); S.strand = 1; return S; });
+}
+function celS(ctx, S, base, shade, dx, dy) { fillS(ctx, S, shade); ctx.save(); path(ctx, S); ctx.clip(); fillS(ctx, shift(S, dx, dy), base); ctx.restore(); }
+// hair: base + cel shadow per clump, inner strand lines, a jagged highlight band (crown only), a rim of light, ink
+function hairLayer(ctx, shapes, front) {
+  const U = new Path2D(); for (const S of shapes) { S.forEach((p, i) => i ? U.lineTo(p[0], p[1]) : U.moveTo(p[0], p[1])); U.closePath(); }
+  for (const S of shapes) {
+    celS(ctx, S, HAIR.base, front ? HAIR.s1 : HAIR.s2, -16, -12);
+    ctx.save(); path(ctx, S); ctx.clip();
+    const m = Math.floor(S.length / 2), root = [(S[0][0] + S[S.length - 1][0]) / 2, (S[0][1] + S[S.length - 1][1]) / 2], tip = S[m];
+    const g = ctx.createLinearGradient(root[0], root[1], tip[0], tip[1]); g.addColorStop(0, 'rgba(40,20,20,.35)'); g.addColorStop(.35, 'rgba(40,20,20,0)'); g.addColorStop(1, 'rgba(255,190,150,.12)');
+    ctx.fillStyle = g; ctx.fillRect(-800, -800, 1800, 1800);
+    for (const k of [.3, .62]) { const a = S[Math.floor(m * k)], c = S[S.length - 1 - Math.floor(m * k * .9)];
+      ink(ctx, [[(a[0] + root[0]) / 2, (a[1] + root[1]) / 2], [(a[0] * 2 + tip[0]) / 3, (a[1] * 2 + tip[1]) / 3], [(a[0] + c[0] + tip[0] * 2) / 4, (a[1] + c[1] + tip[1] * 2) / 4]], 2.4, 'rgba(47,26,24,.55)', { a: .2, b: .6, dir: 0 }); }
+    ctx.restore();
+  }
+  ctx.save(); ctx.clip(U);
+  if (front) {   // the "angel ring": a jagged highlight band following the crown
+    ctx.beginPath(); for (let x = -200; x <= 240; x += 8) ctx.lineTo(x, -172 + ((x - 20) / 220) ** 2 * 64 - 18);
+    for (let i = 0, x = 240; x >= -200; x -= 14, i++) ctx.lineTo(x, -172 + ((x - 20) / 220) ** 2 * 64 + (i % 2 ? 30 : 4));
+    ctx.closePath(); ctx.fillStyle = HAIR.hi; ctx.fill();
+    ctx.beginPath(); for (let x = -160; x <= 200; x += 8) ctx.lineTo(x, -182 + ((x - 20) / 220) ** 2 * 64 - 6); ctx.strokeStyle = 'rgba(255,236,214,.8)'; ctx.lineWidth = 3; ctx.stroke(); }
+  ctx.restore();
+  // light rim: the union minus itself shifted toward the light, on its own canvas
+  const R = rimBuf.getContext('2d'); R.setTransform(1, 0, 0, 1, 0, 0); R.clearRect(0, 0, rimBuf.width, rimBuf.height); R.setTransform(ctx.getTransform());
+  R.fillStyle = front ? HAIR.rim : '#cfe6ff'; R.fill(U); R.globalCompositeOperation = 'destination-out'; R.translate(6, 4); R.fill(U); R.globalCompositeOperation = 'source-over';
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = front ? .7 : .45; ctx.drawImage(rimBuf, 0, 0); ctx.restore();
+  for (const S of shapes) S.capInk ? ink(ctx, S.slice(5, 95), 4.6, HAIR.line, { a: .05, b: .2 }) : S.strand ? ink(ctx, S.slice(7, S.length - 7), 4.2, HAIR.line, { a: .12, b: .12, wmin: .05 }) : ink(ctx, S, 4.2, HAIR.line, { closed: true });
+}
+function eye(ctx, o) {
+  const lid = curve(o.lid, false, 10), low = curve(o.low, false, 10);
+  const scl = [...lid, ...low];
+  fillS(ctx, scl, '#ffffff');
+  ctx.save(); path(ctx, scl); ctx.clip();
+  fillS(ctx, shift(lid, 0, 18).concat(shift(lid, 0, -40).reverse()), '#c9d2ee');            // lid shadow on the white
+  const [ix, iy] = o.ic, g = ctx.createLinearGradient(0, iy - o.ry, 0, iy + o.ry);
+  g.addColorStop(0, EYE.top); g.addColorStop(.45, EYE.mid); g.addColorStop(1, EYE.bot);
+  ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(ix, iy, o.rx, o.ry, 0, 0, PI2); ctx.fill();
+  ctx.strokeStyle = 'rgba(160,230,255,.35)'; ctx.lineWidth = 2;
+  for (let k = 0; k < 14; k++) { const a = Math.PI * (.15 + .7 * k / 13); ctx.beginPath(); ctx.moveTo(ix + Math.cos(a) * o.rx * .45, iy + Math.sin(a) * o.ry * .45); ctx.lineTo(ix + Math.cos(a) * o.rx * .9, iy + Math.sin(a) * o.ry * .9); ctx.stroke(); }
+  ctx.fillStyle = EYE.pupil; ctx.beginPath(); ctx.ellipse(ix + 1, iy + 3, o.rx * .38, o.ry * .42, 0, 0, PI2); ctx.fill();
+  ctx.lineWidth = 4; ctx.strokeStyle = EYE.ring; ctx.beginPath(); ctx.ellipse(ix, iy, o.rx, o.ry, 0, 0, PI2); ctx.stroke();
+  fillS(ctx, shift(lid, 0, 26).concat(shift(lid, 0, -40).reverse()), 'rgba(16,18,50,.45)');   // lid shadow band on the iris
+  ctx.fillStyle = 'rgba(150,240,255,.55)'; ctx.beginPath(); ctx.ellipse(ix + o.rx * .1, iy + o.ry * .62, o.rx * .62, o.ry * .2, 0, 0, PI2); ctx.fill();
+  ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.ellipse(ix - o.rx * .42, iy - o.ry * .42, o.rx * .36, o.ry * .3, -.5, 0, PI2); ctx.fill();
+  ctx.beginPath(); ctx.arc(ix + o.rx * .45, iy + o.ry * .5, o.rx * .14, 0, PI2); ctx.fill();
+  ctx.restore();
+  ink(ctx, lid, 10, EYE.lash, { a: .12, b: .05, wmin: .3, dir: 0 });
+  for (let i = 0; i < o.flick.length; i += 2) { const a = o.flick[i], b = o.flick[i + 1]; fillS(ctx, [[a[0] - 6, a[1] - 5], [b[0], b[1]], [a[0] + 4, a[1] + 8]], EYE.lash); }
+  ink(ctx, curve(o.lowLash, false), 3.4, '#5a2e30', { a: .3, b: .3, dir: 0 });
+  ink(ctx, curve(o.crease, false), 2.6, 'rgba(122,66,64,.8)', { a: .3, b: .3, dir: 0 });
+}
+
+// ---------- background, painted then out of focus ----------
+function paintBG() {
+  const c = canvas(W, H), x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#1d4fae'); g.addColorStop(.5, '#4f9be4'); g.addColorStop(.85, '#a9d7f2'); g.addColorStop(1, '#e4f3f2'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+  const CB = cloudTex(3, 1500, 1400, DAY), CS = cloudTex(9, 800, 480, DAY, { prof: u => .44 - .26 * u, top: .22, ni: 30, ne: 120, ri: .1, re: .05 });
+  const ch = H * (V ? .62 : 1.05); x.drawImage(CB, W * (V ? .1 : .18) - ch * .53, H * (V ? .92 : 1.02) - ch * .9, ch * 1.07, ch);
+  x.drawImage(CS, W * (V ? .55 : .6), H * .12, H * (V ? .25 : .32), H * (V ? .15 : .2));
+  x.fillStyle = '#8ea3c9'; x.beginPath(); x.moveTo(0, H); for (let i = 0; i <= 24; i++) { const px = i / 24 * W, hh = H * (V ? .06 : .1) * (.6 + .5 * Math.abs(Math.sin(i * 1.7))); x.lineTo(px, H - hh); x.lineTo(px + W / 48, H - hh - 26); } x.lineTo(W, H); x.fill();
+  x.strokeStyle = '#2b3550'; x.lineWidth = 3;
+  for (const [y0, y1, s] of [[.18, .32, .1], [.22, .38, .1], [.3, .45, .08]]) { x.beginPath(); x.moveTo(-20, H * y0); x.quadraticCurveTo(W * .5, H * (y1 + s), W + 20, H * y1); x.stroke(); }
+  const px = W * (V ? .12 : .08), lx = px, ly = H * (V ? .5 : .46);   // crossing signal, lamp lit
+  x.fillStyle = '#b9bec8'; x.fillRect(px - 9, ly - 160, 18, H); x.fillStyle = '#16161b'; x.fillRect(px - 70, ly - 6, 140, 12);
+  for (const e of [-50, 50]) { x.fillStyle = '#16161b'; x.beginPath(); x.arc(lx + e, ly, 34, 0, PI2); x.fill(); x.fillStyle = e < 0 ? '#ff4a32' : '#5a1618'; x.beginPath(); x.arc(lx + e, ly, 21, 0, PI2); x.fill(); }
+  x.save(); x.translate(px, ly - 120); for (const a of [.62, -.62]) { x.save(); x.rotate(a); x.fillStyle = '#f2c520'; x.fillRect(-90, -14, 180, 28); x.fillStyle = '#1d1d22'; for (let k = -6; k < 6; k++) x.fillRect(k * 28, -14, 14, 28); x.restore(); } x.restore();
+  const out = canvas(W, H), o = out.getContext('2d'); o.filter = 'blur(5px)'; o.drawImage(c, 0, 0); o.filter = 'none';
+  o.globalCompositeOperation = 'lighter'; glow(o, lx - 50, ly, 220, '255,70,40', .55);
+  const r = rng(4); for (let i = 0; i < 14; i++) { const bx = r() * W * .7, by = H * (.25 + r() * .65), rr = 14 + r() * 40; o.fillStyle = `rgba(255,250,235,${.05 + r() * .08})`; o.beginPath(); o.arc(bx, by, rr, 0, PI2); o.fill(); }
+  return out;
+}
+let rimBuf;
+function draw(ctx, t) {
+  ctx.drawImage(BG, 0, 0);
+  const s = V ? 1.22 : 1.04, cx = V ? 560 : 1210, cy = V ? 1050 : 430;
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(s, s); girl(ctx, t); ctx.restore();
+  flare(ctx, W * .05, H * .04, .8);
+  post(ctx, t, .16);
+  ctx.fillStyle = `rgba(0,0,0,${1 - ss(0, .6, t) * (1 - ss(DUR - .8, DUR, t))})`; ctx.fillRect(0, 0, W, H);
+}
+Pilot.run({ W, H, dur: DUR, fonts: [], init: async () => { kitInit(); BG = paintBG(); rimBuf = canvas(W, H); }, draw });
+</script>
+</body>
+</html>
