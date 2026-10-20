@@ -85,6 +85,13 @@
   client id/secret/refresh token in environment variables, never in chat. With a Brand Account channel, pick the channel
   on the consent screen or the video lands on the personal channel.
 
+- Iterating on a finished film: re-encoding the whole 14 min after every one-scene fix cost ~50 min each time (a full
+  x264 master, then a full x265 upload copy). Join scene clips by stream copy and cache each scene's upload encode;
+  only the changed scene is encoded again. Cut or pad each scene's sound to its picture's exact frame count before
+  joining, so nothing drifts. Each language still has to be rendered in full (text is in almost every shot).
+- Long renders in a cloud session: a detached process (`nohup … &`) died when the container restarted while the session
+  was idle. Run them as tracked background tasks (one orientation per task, skip scenes already rendered) and resume.
+
 **Deploying**
 - A host can report a deploy "successful" while the domain still serves an older build (e.g. the push only produced a
   preview). After every deploy, fetch a changed file from the live domain and check it.

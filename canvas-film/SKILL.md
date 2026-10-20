@@ -66,6 +66,8 @@ installed locally (`~/.local/share/fonts`, e.g. Noto Serif/Sans KR) — renders 
    open-GOP/B-frame encode: sites re-encode in keyframe chunks and some renditions jump at every scene start. Build the
    upload copy from the assembled master (its sound is aligned per scene), not by pairing re-joined pictures with its sound.
    Instagram: parts < 3 min, H.264, whole-scene covers — see LESSONS "Social platforms".
+   Fixing one scene later: re-render only that scene, run `assemble.py` again — it joins clips by stream copy and keeps
+   each scene's upload encode in `out/upcache/`, so it costs one scene's encode (seconds to minutes), not the film's.
 6. **Publish the live player**: `publish.py` → `site/`; add `poster-h.jpg`/`poster-v.jpg` (a still of the title card) per
    language; deploy `site/` anywhere static. Check CSP (`media-src`, `font-src` self), and that a service worker does not
    intercept the m4a range requests. To put the player inside another page, iframe it with `?embed=1` (stage + controls
