@@ -77,6 +77,8 @@
   "Upload at highest quality" in the app (Android defaults it off). Paper grain and fine texture suffer most.
 - Sharing a reel through the app's share sheet sends the caption with the link; "Copy link" sends the link only.
   Instagram links show no preview card in most chat apps — share the site/YouTube link for a card.
+- Portrait on YouTube: a 14-min vertical film is a poor fit; upload each scene as a Short instead (`assemble.py v
+  --shorts`). This only works because no sound crosses a cut — keep every scene's sound self-contained.
 - Thumbnail claims must be literally true ("21 scenes, a different style each" was false: 19 styles).
 - YouTube Data API upload: an API project that has not passed Google's audit uploads every video as private and locked
   (the owner cannot make it public) — apply for the audit (same form raises the 10,000-unit daily quota; one upload costs
