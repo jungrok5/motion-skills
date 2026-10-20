@@ -18,6 +18,14 @@
 - WebGL scenes render slowly where there is no GPU (software GL: minutes per scene-second); render them at reduced
   internal resolution with adaptive downscale and budget the time.
 
+- Anime example (cel look): a colour helper that returned `rgba(...)` was fed into another that parses `#hex` → NaN →
+  the canvas kept the previous fillStyle and whole house fronts came out black. Keep colour helpers in one format.
+- Cel clouds made of a few large puffs, each with its own highlight, read as a pile of balls. Many small outline puffs
+  plus one large-scale terminator for the whole mass read as cumulus.
+- Motion blur from 6 sub-frame copies showed visible steps on window edges at train speed; 10 copies were smooth.
+- Figures drawn from behind still need checking at full size: stick arms with separate round hands looked like a
+  puppet — draw arm and hand as one shape, close to the body, and make the head ~1.15× realistic size.
+
 **Looking like a film, not a presentation** (feedback after release)
 - Viewers notice when one scene drops out of the film's language: numbered items (01/07), grids, bar charts, map
   leader-line labels, hex-tile "game" islands and a marimba/kalimba bed all read as an explainer or a slide deck. Keep
