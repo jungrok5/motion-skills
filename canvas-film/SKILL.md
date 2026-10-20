@@ -65,6 +65,7 @@ installed locally (`~/.local/share/fonts`, e.g. Noto Serif/Sans KR) — renders 
    → `film-<h|v>-upload.mp4` (H.265, closed GOP, keyframe every 2 s, no B-frames, < 400 MB for ~14 min). Never upload an
    open-GOP/B-frame encode: sites re-encode in keyframe chunks and some renditions jump at every scene start. Build the
    upload copy from the assembled master (its sound is aligned per scene), not by pairing re-joined pictures with its sound.
+   Instagram: parts < 3 min, H.264, whole-scene covers — see LESSONS "Social platforms".
 6. **Publish the live player**: `publish.py` → `site/`; add `poster-h.jpg`/`poster-v.jpg` (a still of the title card) per
    language; deploy `site/` anywhere static. Check CSP (`media-src`, `font-src` self), and that a service worker does not
    intercept the m4a range requests. To put the player inside another page, iframe it with `?embed=1` (stage + controls
