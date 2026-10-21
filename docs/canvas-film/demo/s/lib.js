@@ -125,9 +125,11 @@
     const { W = 1920, H = 1080 } = cfg;
     document.documentElement.style.cssText = 'margin:0;height:100%;background:#000;overflow:hidden';
     document.body.style.cssText = 'margin:0;height:100%;background:#000;overflow:hidden';
-    const cv = P.canvas(W, H); cv.style.cssText = 'position:absolute;left:0;top:0;transform-origin:0 0';
+    const cv = P.canvas(W, H); cv.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px';   // sized in CSS (fit) so a phone never widens the page to the canvas's 1920/1080 px
     document.body.appendChild(cv); const ctx = cv.getContext('2d');
-    const fit = () => { if (RENDER) return; const s = Math.min(innerWidth / W, innerHeight / H); cv.style.transform = `translate(${(innerWidth - W * s) / 2}px,${(innerHeight - H * s) / 2}px) scale(${s})`; };
+    const fit = () => { if (RENDER) { cv.style.width = W + 'px'; cv.style.height = H + 'px'; return; }
+      const vw = document.documentElement.clientWidth || innerWidth, vh = document.documentElement.clientHeight || innerHeight, s = Math.min(vw / W, vh / H);
+      Object.assign(cv.style, { width: W * s + 'px', height: H * s + 'px', left: (vw - W * s) / 2 + 'px', top: (vh - H * s) / 2 + 'px' }); };
     fit(); addEventListener('resize', fit);
     if (P.lang !== P.SRC) try {
       const j = await new Promise((ok, no) => { const x = new XMLHttpRequest();   // XHR, not fetch: also works from file:// when rendering

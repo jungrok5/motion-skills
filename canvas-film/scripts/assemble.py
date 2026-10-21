@@ -3,27 +3,100 @@
      python3 <skill>/scripts/assemble.py h        → out/film-h.mp4   (1920×1080)
      python3 <skill>/scripts/assemble.py v        → out/film-v.mp4   (1080×1920)
      python3 <skill>/scripts/assemble.py h en     → out/film-h-en.mp4 (scenes rendered with --lang en)
-   Picture: out/<scene>[-<lang>]-<h|v>.mp4.  Sound: scenes/<scene>.wav, loudness-normalised to −16 LUFS per scene.
-   Missing scenes are skipped and listed."""
+   Picture: out/<scene>[-<lang>]-<h|v>.mp4.  Sound: scenes/<scene>.wav, loudness-normalised to −16 LUFS per scene and
+   cut/padded to exactly its picture's length, so sound and picture stay in step scene by scene. Missing scenes are listed.
+   Add --upload to also write film-<h|v>…-upload.mp4: the copy to upload to YouTube/Instagram (H.265, closed GOP, a
+   keyframe every 2 s, no B-frames). Video sites re-encode each upload in chunks cut at keyframes; with open-GOP/B-frame
+   files some renditions show a later frame for a moment at every scene start ("the start jumps"), on some phones only.
+
+   Add --shorts (portrait) to write one file per scene instead of the film, for YouTube Shorts / Reels:
+   out/shorts/<lang|src>/NN-<scene>.mp4 (the upload encode + that scene's sound, 30 ms fades against clicks). Works
+   because every scene's sound is its own file and fades with the picture — no sound runs across a cut.
+
+   Fast: nothing is re-encoded as a whole. Pictures are joined as they are (stream copy — every clip comes from
+   render.mjs with the same settings); the upload copy is encoded per scene once and cached in out/upcache/ (re-made only
+   when that scene's clip is newer). After fixing one scene, re-render that scene and run this again: it costs about one
+   scene's encode, not the whole film's. A scene whose clip was deleted (disk) is taken from its cached upload encode
+   (then only the upload copy is written), so keep out/upcache/."""
 import os, json, subprocess, sys
 
+FPS = 30
+X265 = 'crf=20:bframes=0:open-gop=0:keyint=60:min-keyint=60:vbv-maxrate=3600:vbv-bufsize=7200:log-level=error'
+
 ROOT = os.path.abspath(os.environ.get('FILM_ROOT', '.'))
-ori = sys.argv[1] if len(sys.argv) > 1 else 'h'
-lang = sys.argv[2] if len(sys.argv) > 2 else ''
+argv = sys.argv[1:]
+def opt(name, default=None): return argv[argv.index(name) + 1] if name in argv else default
+only = opt('--only')   # testing: --only a,b
+pos = [a for i, a in enumerate(argv) if not a.startswith('--') and (i == 0 or argv[i - 1] != '--only')]   # h|v [lang]
+ori = pos[0] if pos else 'h'; lang = pos[1] if len(pos) > 1 else ''
+tag = f'-{lang}' if lang else ''
 ORDER = [s['id'] if isinstance(s, dict) else s for s in json.load(open(os.path.join(ROOT, 'film.json')))['scenes']]
-OUT = os.path.join(ROOT, 'out'); suf = f'-{lang}' if lang else ''
+OUT = os.path.join(ROOT, 'out'); TMP = os.path.join(OUT, 'assemble-tmp'); UPC = os.path.join(OUT, 'upcache')
+os.makedirs(TMP, exist_ok=True); os.makedirs(UPC, exist_ok=True)
+
+def run(args): subprocess.run(['ffmpeg', '-y', '-loglevel', 'error'] + args, check=True)
+def frames(path):
+    r = subprocess.run(['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-count_packets', '-show_entries',
+                        'stream=nb_read_packets', '-of', 'csv=p=0', path], capture_output=True, text=True, check=True)
+    return int(r.stdout.strip())
+def concat_list(name, paths):
+    p = os.path.join(TMP, name)
+    with open(p, 'w') as f: f.writelines(f"file '{x}'\n" for x in paths)
+    return p
+
+scenes = only.split(',') if only else ORDER
 have, missing = [], []
-for s in ORDER:
-    v, a = os.path.join(OUT, f'{s}{suf}-{ori}.mp4'), os.path.join(ROOT, 'scenes', f'{s}.wav')
+for s in scenes:
+    v, a = os.path.join(OUT, f'{s}{tag}-{ori}.mp4'), os.path.join(ROOT, 'scenes', f'{s}.wav')
+    u = os.path.join(UPC, f'{s}{tag}-{ori}.mp4')
+    if not os.path.exists(v) and os.path.exists(u): v = u   # clip deleted to save disk: its cached upload encode stands in
     (have if os.path.exists(v) and os.path.exists(a) else missing).append((s, v, a))
 if missing: print('skipped (not rendered or no sound yet):', ', '.join(m[0] for m in missing))
 if not have: sys.exit('nothing to assemble')
-args = ['ffmpeg', '-y', '-loglevel', 'error']
-for _, v, a in have: args += ['-i', v, '-i', a]
-parts = ''.join(f'[{2 * i}:v:0]setsar=1,fps=30[v{i}];[{2 * i + 1}:a:0]aresample=48000,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000[a{i}];' for i in range(len(have)))
-streams = ''.join(f'[v{i}][a{i}]' for i in range(len(have)))
-dst = os.path.join(OUT, f'film-{ori}{suf}.mp4')
-args += ['-filter_complex', parts + f'{streams}concat=n={len(have)}:v=1:a=1[v][a]', '-map', '[v]', '-map', '[a]',
-         '-c:v', 'libx264', '-preset', 'slow', '-crf', '22', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', dst]
-subprocess.run(args, check=True)
-print('→', dst, '·', len(have), 'scenes:', ' → '.join(h[0] for h in have))
+
+# sound: per scene, normalised and cut/padded to the picture's exact length
+auds = []
+for s, v, a in have:
+    d = frames(v) / FPS; out = os.path.join(TMP, f'aud-{s}.wav')
+    run(['-i', a, '-af', f'aresample=48000,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000,apad,atrim=0:{d:.6f}',
+         '-ac', '2', '-ar', '48000', '-c:a', 'pcm_s16le', out])
+    auds.append(out)
+sound = os.path.join(TMP, 'sound.wav')
+run(['-f', 'concat', '-safe', '0', '-i', concat_list('aud.txt', auds), '-c', 'copy', sound])
+
+def mux(video_paths, dst):
+    run(['-f', 'concat', '-safe', '0', '-i', concat_list('vid.txt', video_paths), '-i', sound, '-map', '0:v', '-map', '1:a',
+         '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', dst])
+
+def upload_encode(s, v):
+    u = os.path.join(UPC, f'{s}{tag}-{ori}.mp4')
+    if v != u and (not os.path.exists(u) or os.path.getmtime(u) < os.path.getmtime(v)):
+        print('  upload encode:', s, flush=True)
+        run(['-i', v, '-map', '0:v', '-c:v', 'libx265', '-preset', 'fast', '-x265-params', X265,
+             '-pix_fmt', 'yuv420p', '-tag:v', 'hvc1', u])
+    return u
+
+if '--shorts' in argv:   # one file per scene (Shorts/Reels), no film
+    SD = os.path.join(OUT, 'shorts', lang or 'src'); os.makedirs(SD, exist_ok=True)
+    for (s, v, _), aud in zip(have, auds):
+        u = upload_encode(s, v); d = frames(v) / FPS; n = ORDER.index(s) + 1
+        dst = os.path.join(SD, f'{n:02d}-{s}.mp4')
+        run(['-i', u, '-i', aud, '-map', '0:v', '-map', '1:a', '-c:v', 'copy',
+             '-af', f'afade=t=in:d=0.03,afade=t=out:st={d - 0.03:.3f}:d=0.03', '-c:a', 'aac', '-b:a', '192k',
+             '-movflags', '+faststart', dst])
+        print('→', dst, f'{d:.1f}s')
+    sys.exit(0)
+
+dst = os.path.join(OUT, f'film-{ori}{tag}.mp4')
+if any(os.path.dirname(v) == UPC for _, v, _ in have):   # can't mix codecs by stream copy: only the upload copy
+    print('master skipped (some scene clips were deleted; their cached upload encodes are used)')
+    if '--upload' not in argv: argv.append('--upload')
+else:
+    mux([v for _, v, _ in have], dst)
+    print('→', dst, '·', len(have), 'scenes:', ' → '.join(h[0] for h in have))
+
+if '--upload' in argv:
+    ups = [upload_encode(s, v) for s, v, _ in have]
+    up = dst[:-4] + '-upload.mp4'
+    mux(ups, up)
+    print('→', up, '(upload copy)')
