@@ -67,7 +67,8 @@ installed locally (`~/.local/share/fonts`, e.g. Noto Serif/Sans KR) — renders 
 4. **Sound**: each scene writes `<id>.sound.json` (≤3 music cues, ≤8 SFX, ducks for silence). Generate with ElevenLabs
    (`references/SOUND.md` — one flow per batch, 2 variations, never retry), download, `mix.py`.
 5. **Render** (optional — the live player needs no video): `render.mjs h|v --scene <id>` per scene, then `assemble.py h|v`.
-   Hours of CPU; run in the background, check with stills before. For YouTube/Instagram upload `assemble.py h|v --upload`
+   Hours of CPU; run in the background, check with stills before. render.mjs reads the canvas (not screenshots) and writes
+   the upload format directly, so `assemble.py h|v --upload` only joins (seconds)
    → `film-<h|v>-upload.mp4` (H.265, closed GOP, keyframe every 2 s, no B-frames, < 400 MB for ~14 min). Never upload an
    open-GOP/B-frame encode: sites re-encode in keyframe chunks and some renditions jump at every scene start. Build the
    upload copy from the assembled master (its sound is aligned per scene), not by pairing re-joined pictures with its sound.

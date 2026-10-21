@@ -98,6 +98,10 @@
   x264 master, then a full x265 upload copy). Join scene clips by stream copy and cache each scene's upload encode;
   only the changed scene is encoded again. Cut or pad each scene's sound to its picture's exact frame count before
   joining, so nothing drifts. Each language still has to be rendered in full (text is in almost every shot).
+- Rendering speed: in most scenes the page screenshot (~75–90 ms) cost more than drawing the frame (2–40 ms). Read the
+  scene canvas in the same task as the draw instead (pixel-identical on 42 frames, WebGL included; ~3x cheaper), and
+  encode straight to the upload format so no second encode follows: 179 s -> 114 s for the same scenes. More workers
+  than cores (3/4/6 on 4 cores) changed nothing. Measure where a frame's time goes before optimising.
 - Long renders in a cloud session: a detached process (`nohup … &`) died when the container restarted while the session
   was idle. Run them as tracked background tasks (one orientation per task, skip scenes already rendered) and resume.
 
