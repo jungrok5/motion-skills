@@ -51,7 +51,7 @@ Frame px unless noted; `C.SC = H/1920` scales numbers authored at 1080×1920. Ev
   broken line (`'#fff'` = eraser line); `blob(x, cx, cy, rx, ry, a, rot, spr)` finger smudge (`spr=C.smudgeW` = soft
   lift); `fillA(x, a, col)`; `tone(x, pts, a)` / `lift(x, pts, a)`; `toneAll(x, a, rub)` night or blackout;
   `smudgeFill(x, pts, a, seed, n)` an unevenly rubbed mass; `hatch(x, x0, y0, x1, y1, n, len, ang, w, a, seed)`.
-- **soft layers and light** — `layer(x, paint, {cam, blur, alpha})` half-res scratch layer (soft charcoal edges);
+- **soft layers and light** — `layer(x, paint, {cam, blur, alpha, q})` half-res (q: quarter-res) scratch layer (soft charcoal edges);
   `silhouette(x, pts, alpha, blur, clip)`; `wedge(x, quad, m0, m1, alpha, {reach, falloff, blur})` light lifted with
   the eraser (floor wedge, beam, pool); `glowLine(x, pts, a, seed, {w, al, brk, col, off})` thread of light / rim;
   `fog(x, t, [[y, alpha, px/s], …])`; `eraseWipe(x, t, at)` → 0..1; `captionSmudge(x, t, lines, {y, rx, ry, a})`.
@@ -96,6 +96,9 @@ boiling on twos) → palimpsest ghosts → `fog` → foreground sheet (`applyCam
 - `init` ≈ 0.6–0.9 s (tooth 2 M px + LUT 65 k entries + sprites; the door plate adds ≈ 0.3 s).
 - `develop` ≈ 20 ms per frame (getImageData + per-pixel LUT + putImageData) — the fixed cost of the style.
 - Door scene ≈ 80–95 ms/frame; template ≈ 80–90 ms/frame. `eraseWipe` frames cost ≈ +60 ms (≈ 600 smudge stamps).
+- The paper tooth follows the camera (`develop` maps it through `C.cam`): no grain sliding over the drawing on a push.
+- `layer(…, { q: true })` paints at quarter resolution (blur px at quarter res) — use it for cast shadows and glows
+  (a 1080×1920 film: the shadow layer 29 → 16 ms a frame).
 - The kit is not slower than the pre-kit scene (interleaved runs: 87–98 ms before, 75–85 ms after).
 
 ## Pitfalls

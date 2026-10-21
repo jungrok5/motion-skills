@@ -144,12 +144,22 @@
      Per pixel: darkness d = 255 − R is compared with the paper tooth height, so light pressure catches only the peaks,
      heavy pressure fills the valleys, velvet blacks stay solid, lifts are clean paper; the grain is scaled by how much
      of d came from the stick (B channel) and peaks in the midtones. ≈ 25–30 ms of the frame at 1080×1920. */
+  // The paper moves with the camera: a push-in enlarges the tooth with the drawing and a shake moves it, so the grain
+  // never slides over the picture (a grain fixed to the screen under a moving camera reads as a crawling shimmer on
+  // phones). Column/row lookups are rebuilt only when the camera changes. Reads pixels as 32-bit words (≈ 10 % faster).
+  let colIx = null, rowIx = null, camKey = '';
   C.develop = function (ctx) {
-    const src = vctx.getImageData(0, 0, W, H).data, N = W * H;
-    for (let i = 0, j = 0; i < N; i++, j += 4) {
-      const dR = 255 - src[j], o = dR + ((LUT[(dR << 8) | tooth[i]] * GM[(dR << 8) | (255 - src[j + 2])]) >> 8);
-      out32[i] = COL[o < 0 ? 0 : o > 255 ? 255 : o];
-    }
+    const c = C.cam || { zm: 1, ox: 0, oy: 0, zc: [W / 2, H / 2] }, key = c.zm + ',' + c.ox + ',' + c.oy + ',' + c.zc[0] + ',' + c.zc[1];
+    if (key !== camKey) { camKey = key; colIx = colIx || new Int32Array(W); rowIx = rowIx || new Int32Array(H);
+      const mod = (v, n) => ((v % n) + n) % n;
+      for (let x = 0; x < W; x++) colIx[x] = mod(Math.floor((x - c.zc[0] - c.ox) / c.zm + c.zc[0]), W);
+      for (let y = 0; y < H; y++) rowIx[y] = mod(Math.floor((y - c.zc[1] - c.oy) / c.zm + c.zc[1]), H) * W; }
+    const s32 = new Uint32Array(vctx.getImageData(0, 0, W, H).data.buffer);
+    for (let y = 0, i = 0; y < H; y++) { const r = rowIx[y];
+      for (let x = 0; x < W; x++, i++) {
+        const v = s32[i], dR = 255 - (v & 255), o = dR + ((LUT[(dR << 8) | tooth[r + colIx[x]]] * GM[(dR << 8) | (255 - ((v >>> 16) & 255))]) >> 8);
+        out32[i] = COL[o < 0 ? 0 : o > 255 ? 255 : o];
+      } }
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.putImageData(outImg, 0, 0);
   };
 
@@ -240,13 +250,19 @@
      in frame px as usual); cam: false → raw half-res px. blur px (at half res) softens edges — the natural charcoal edge
      for shadows and silhouettes. x null → just returns the layer canvas. One scratch layer: don't nest. paint must undo
      its own clip (save/restore inside paint); composite mode and alpha are reset after it. */
+  // o.q: paint at quarter resolution instead of half (blur px then count at quarter res) — for very soft things (cast
+  // shadows, glows), a quarter of the pixels to paint and to blur, and no visible difference once blurred.
+  let q1, q2, Q1, Q2;
   C.layer = function (x, paint, o = {}) {
-    l1.setTransform(1, 0, 0, 1, 0, 0); l1.clearRect(0, 0, low1.width, low1.height);
-    if (o.cam !== false) { const c = C.cam; l1.setTransform(.5 * c.zm, 0, 0, .5 * c.zm, .5 * (c.zc[0] * (1 - c.zm) + c.ox), .5 * (c.zc[1] * (1 - c.zm) + c.oy)); }
-    paint(l1);   // (no save/restore around paint: it changes Chrome's rasterisation by ±1 here; paint resets what it changes)
-    l1.globalCompositeOperation = 'source-over'; l1.globalAlpha = 1;
-    let src = low1;
-    if (o.blur) { l2.setTransform(1, 0, 0, 1, 0, 0); l2.clearRect(0, 0, low2.width, low2.height); l2.filter = `blur(${o.blur}px)`; l2.drawImage(low1, 0, 0); l2.filter = 'none'; src = low2; }
+    if (o.q && !q1) { q1 = canvas(W >> 2, H >> 2); Q1 = q1.getContext('2d'); q2 = canvas(W >> 2, H >> 2); Q2 = q2.getContext('2d'); }
+    const A = o.q ? q1 : low1, a = o.q ? Q1 : l1, B2 = o.q ? q2 : low2, b2 = o.q ? Q2 : l2, k = o.q ? .25 : .5;
+    a.setTransform(1, 0, 0, 1, 0, 0); a.clearRect(0, 0, A.width, A.height);
+    if (o.cam !== false) { const c = C.cam; a.setTransform(k * c.zm, 0, 0, k * c.zm, k * (c.zc[0] * (1 - c.zm) + c.ox), k * (c.zc[1] * (1 - c.zm) + c.oy)); }
+    else if (o.q) a.setTransform(.5, 0, 0, .5, 0, 0);   // (cam:false paints in half-res px)
+    paint(a);   // (no save/restore around paint: it changes Chrome's rasterisation by ±1 here; paint resets what it changes)
+    a.globalCompositeOperation = 'source-over'; a.globalAlpha = 1;
+    let src = A;
+    if (o.blur) { b2.setTransform(1, 0, 0, 1, 0, 0); b2.clearRect(0, 0, B2.width, B2.height); b2.filter = `blur(${o.blur}px)`; b2.drawImage(A, 0, 0); b2.filter = 'none'; src = B2; }
     if (x) { x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.globalAlpha = o.alpha ?? 1; x.drawImage(src, 0, 0, W, H); x.restore(); }
     return src;
   };

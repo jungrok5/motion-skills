@@ -101,11 +101,38 @@
     const lh = size * (o.lh || 1.55);
     ctx.textAlign = o.align || 'center'; ctx.textBaseline = 'alphabetic';
     if (o.ls) ctx.letterSpacing = o.ls + 'px';
+    // Shadowed text (captions, titles) is the costliest thing a frame draws (a CPU blur per glyph, 10–25 ms a frame), yet
+    // a caption stays the same for seconds while only its alpha changes: draw it once into a cached bitmap and blit it.
+    // Only with an identity-scale transform (a bitmap scaled by a camera would go soft); otherwise draw as before.
+    const m = ctx.getTransform();
+    if (o.shadow && !o.nocache && m.a === 1 && m.d === 1 && m.b === 0 && m.c === 0) {
+      const bmp = textBitmap(ctx.font, lines, lh, size, o, ctx.direction);
+      const ga = ctx.globalAlpha; ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = ga;
+      ctx.drawImage(bmp.c, Math.round(m.e + x - bmp.ax), Math.round(m.f + y - bmp.ay));
+      ctx.restore(); return;
+    }
     if (o.shadow) { ctx.shadowColor = o.shadow; ctx.shadowBlur = o.shadowBlur || 18; }
     ctx.fillStyle = o.color || '#f3ece0';
     lines.forEach((l, i) => ctx.fillText(l, x, y + i * lh));
     ctx.restore();
   };
+  const TXT = new Map();   // text bitmaps, least recently used dropped beyond 48
+  function textBitmap(font, lines, lh, size, o, dir) {
+    const key = [font, lines.join('\n'), lh, o.align || 'center', o.ls || 0, o.shadow, o.shadowBlur || 18, o.color || '#f3ece0', dir].join('|');
+    let b = TXT.get(key); if (b) { TXT.delete(key); TXT.set(key, b); return b; }
+    const mc = P.canvas(4, 4).getContext('2d'); mc.font = font; if (o.ls) mc.letterSpacing = o.ls + 'px'; if (dir) mc.direction = dir;
+    const ms = lines.map(l => mc.measureText(l)), w = Math.ceil(Math.max(1, ...ms.map(q => q.width)));
+    const asc = Math.ceil(Math.max(size, ...ms.map(q => q.actualBoundingBoxAscent || 0))), dsc = Math.ceil(Math.max(size * .35, ...ms.map(q => q.actualBoundingBoxDescent || 0)));
+    const pad = Math.ceil((o.shadowBlur || 18) * 1.6) + 4, al = o.align || 'center';
+    const c = P.canvas(w + 2 * pad, Math.ceil(asc + dsc + (lines.length - 1) * lh) + 2 * pad), x = c.getContext('2d');
+    const ax = al === 'center' ? pad + w / 2 : (al === 'right' || al === 'end') ? pad + w : pad, ay = pad + asc;
+    x.font = font; if (o.ls) x.letterSpacing = o.ls + 'px'; if (dir) x.direction = dir; x.textAlign = al; x.textBaseline = 'alphabetic';
+    x.shadowColor = o.shadow; x.shadowBlur = o.shadowBlur || 18; x.fillStyle = o.color || '#f3ece0';
+    lines.forEach((l, i) => x.fillText(l, ax, ay + i * lh));
+    b = { c, ax: Math.round(ax), ay: Math.round(ay) }; TXT.set(key, b);
+    if (TXT.size > 48) TXT.delete(TXT.keys().next().value);
+    return b;
+  }
 
   // Portrait from a scene authored at 1920×1080: re-render the world 1.78× larger (crisp vectors) and crop a 1080-wide
   // window centred on world-x `cx`; queued text is re-laid by mapText(s,x,y,o) → {s?,x,y,o?} (return null to drop).
@@ -164,8 +191,7 @@
     const draw = t => {
       t = Math.max(0, Math.min(cfg.dur - 1e-3, t)); raw(ctx, t);
       if (LOOP > 0 && t > cfg.dur - LOOP) {
-        if (!seam) seam = P.canvas(W, H);
-        const sx = seam.getContext('2d'); sx.setTransform(1, 0, 0, 1, 0, 0); sx.globalAlpha = 1; sx.clearRect(0, 0, W, H); raw(sx, 0);
+        if (!seam) { seam = P.canvas(W, H); raw(seam.getContext('2d'), 0); }   // frame 0 never changes: draw it once
         ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = P.ss(cfg.dur - LOOP, cfg.dur, t); ctx.drawImage(seam, 0, 0); ctx.restore();
       }
     };
@@ -188,9 +214,10 @@
     cv.addEventListener('click', () => setPlay(!playing));
     sk.oninput = () => { cur = sk.value / 1000 * cfg.dur; if (au) au.currentTime = cur; poke(); };
     addEventListener('pointermove', poke);
+    let shown = -1;   // draw only when the time moved (paused = no redraw: a still poster must not burn a phone's battery)
     (function loop(now) {
       if (playing) { cur = au && !au.paused ? au.currentTime : cur + Math.min(.1, (now - last) / 1000); if (cur >= cfg.dur) { cur = 0; if (au) au.currentTime = 0; } }
-      last = now; draw(cur); sk.value = Math.round(cur / cfg.dur * 1000); tm.textContent = fmt(cur) + ' / ' + fmt(cfg.dur);
+      last = now; if (cur !== shown) { draw(cur); shown = cur; } sk.value = Math.round(cur / cfg.dur * 1000); tm.textContent = fmt(cur) + ' / ' + fmt(cfg.dur);
       requestAnimationFrame(loop);
     })(last);
   };

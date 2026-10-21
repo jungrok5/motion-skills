@@ -15,6 +15,13 @@
   crawling shimmer on phones once the camera moves. Seed texture per object, not per frame, or move it with the camera.
 - Colour reads differently than intended: a Big Bang drawn warm read as "red"/violent to viewers; a molten young Earth read
   as a second sun. Show the maintainer stills of the key moment and ask what people will think it is.
+- Shadowed text was the costliest thing in a frame (CPU blur per glyph: 10–25 ms at 1080×1920, more than the drawing in
+  a simple scene). The harness now draws a shadowed caption once into a cached bitmap and blits it with alpha (≈ 1 ms);
+  a camera-scaled transform still draws live. Profile a scene by wrapping the kit's functions with timers before
+  optimising anything else — the slow part is rarely where you guess.
+- A paper/grain texture fixed to the screen under a moving camera (a push-in, a shake) slides over the picture and
+  crawls on phones. Lock it to the camera (the charcoal kit's tooth now follows `C.cam`); soft layers that are blurred
+  anyway (cast shadows, glows) can be painted at quarter resolution (`C.layer(…, { q: true })`).
 - WebGL scenes render slowly where there is no GPU (software GL: minutes per scene-second); render them at reduced
   internal resolution with adaptive downscale and budget the time.
 
