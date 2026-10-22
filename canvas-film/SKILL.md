@@ -81,8 +81,9 @@ installed locally (`~/.local/share/fonts`, e.g. Noto Serif/Sans KR) — renders 
    A scene whose costliest layer is language-independent (a WebGL sky at 0.6 s a frame on a CPU) exposes `__glFrame()`
    and `__prepare(t)` (see SCENE-RULES): render.mjs caches that layer once per orientation and every language reuses it.
    Many languages at once: `ci/render-film.yml` (GitHub Actions, one job per language × orientation; `scripts/ci-setup.sh`
-   prepares any Ubuntu box: Noto variable fonts, ffmpeg, Playwright). Measure before optimising — `references/LESSONS.md`
-   "Rendering speed" lists what helped and what did not.
+   prepares any Ubuntu box: Noto variable fonts, ffmpeg, Playwright). The workflow must sit on the default branch; commit
+   the published sound (site/s/*.m4a) since the runner has no wav; try two scenes of one language first. Measure before
+   optimising — `references/LESSONS.md` "Rendering speed" lists what helped and what did not.
 6. **Publish the live player**: `publish.py` → `site/`; add `poster-h.jpg`/`poster-v.jpg` (a still of the title card) per
    language; deploy `site/` anywhere static. Check CSP (`media-src`, `font-src` self), and that a service worker does not
    intercept the m4a range requests. To put the player inside another page, iframe it with `?embed=1` (stage + controls

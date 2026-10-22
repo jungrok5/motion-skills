@@ -123,6 +123,18 @@
 - Long renders in a cloud session: a detached process (`nohup … &`) died when the container restarted while the session
   was idle. Run them as tracked background tasks (one orientation per task, skip scenes already rendered) and resume.
 
+**Rendering on GitHub Actions** (ci/render-film.yml)
+- `workflow_dispatch` only works once the workflow file is on the default branch; a copy on a feature branch cannot be
+  started from the API or the UI. A YAML flow mapping with `${{ … }}` inside (`with: { path: out/${{ matrix.x }} }`)
+  fails to parse and the workflow silently shows "no workflow_dispatch trigger": write `with:` as block mappings.
+- The runner checks out git only: the per-scene mixes (wav) are not there. assemble.py falls back to the published
+  `site/s/<scene>.m4a`, so commit the published sound (or regenerate it in the job). A short run first (`scenes` input
+  = two scenes, one language) finds these in 5 min instead of after an hour.
+- Scene fonts: install the same Google Noto *variable* TTFs by name (`scripts/ci-setup.sh`); distro packages ship
+  "Noto Sans CJK KR", not "Noto Sans KR", and the scenes' font names would silently fall back.
+- A cloud box fills up: per-scene clips and finished films are rebuildable in seconds from `out/upcache/` — delete
+  those first, keep upcache and the cached layers.
+
 **Deploying**
 - A host can report a deploy "successful" while the domain still serves an older build (e.g. the push only produced a
   preview). After every deploy, fetch a changed file from the live domain and check it.
