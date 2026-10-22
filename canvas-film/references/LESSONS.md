@@ -130,6 +130,9 @@
 - The runner checks out git only: the per-scene mixes (wav) are not there. assemble.py falls back to the published
   `site/s/<scene>.m4a`, so commit the published sound (or regenerate it in the job). A short run first (`scenes` input
   = two scenes, one language) finds these in 5 min instead of after an hour.
+- Cut each scene's sound by sample count (`atrim=end_sample=N`), never by time: an AAC source (the published m4a) carries
+  an encoder delay, and a time-based cut came out 90 ms short per scene — the sound drifted ahead of the picture by
+  ~2 s over 21 scenes. Check a CI-rendered film's sound against a local one (per-scene cross-correlation) before trusting it.
 - Scene fonts: install the same Google Noto *variable* TTFs by name (`scripts/ci-setup.sh`); distro packages ship
   "Noto Sans CJK KR", not "Noto Sans KR", and the scenes' font names would silently fall back.
 - A cloud box fills up: per-scene clips and finished films are rebuildable in seconds from `out/upcache/` — delete
