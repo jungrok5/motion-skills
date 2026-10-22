@@ -98,10 +98,28 @@
   x264 master, then a full x265 upload copy). Join scene clips by stream copy and cache each scene's upload encode;
   only the changed scene is encoded again. Cut or pad each scene's sound to its picture's exact frame count before
   joining, so nothing drifts. Each language still has to be rendered in full (text is in almost every shot).
-- Rendering speed: in most scenes the page screenshot (~75–90 ms) cost more than drawing the frame (2–40 ms). Read the
-  scene canvas in the same task as the draw instead (pixel-identical on 42 frames, WebGL included; ~3x cheaper), and
-  encode straight to the upload format so no second encode follows: 179 s -> 114 s for the same scenes. More workers
-  than cores (3/4/6 on 4 cores) changed nothing. Measure where a frame's time goes before optimising.
+**Rendering speed** (a 14-min, 21-scene film; 4-core cloud CPU, no GPU; measured, not guessed)
+- Find out where the minutes go first: per-scene wall time from the render log. Half of one orientation was two
+  items — a WebGL scene run through SwiftShader (0.6 s a frame, 13 of 75 min) and a second full encode hidden after
+  the last scene (the log made it look like that scene took 21 min). Everything else was 2–4 min a scene.
+- In most scenes the page screenshot (~75–90 ms) cost more than drawing the frame (2–40 ms). Read the scene canvas in
+  the same task as the draw instead (pixel-identical on 42 frames, WebGL included; ~3x cheaper), and encode straight to
+  the upload format so no second encode follows.
+- For light scenes the encoder is the floor (x265 fast ≈ 190 ms CPU a frame). x264 faster at CRF 18 ≤ 12 Mbps gives the
+  same quality as x265 fast uncapped at half the CPU; a 3.6 Mbps HEVC cap chosen for a 400 MB transfer limit had cost
+  the busiest scenes 6 dB. x265 veryfast −17 % CPU for −0.4 dB; superfast/ultrafast −1.8/−3 dB: not worth it.
+- A language-independent expensive layer is rendered once per orientation and cached lossless (see SCENE-RULES):
+  13 min → ~1.5 min per language for that scene (8x; what remains is PNG decode and the capture). Two traps on the
+  way: the decoded <img> drawn straight to the frame resampled differently from the live canvas (±35; draw it into a
+  2D canvas first → a few pixels of ±1), and keying the cache on the whole scene file threw the cache away on every
+  unrelated edit (let the scene name its key).
+- Measured and dropped: raw RGBA frames over HTTP (4x slower than JPEG — 8 MB a frame), JPEG over HTTP (same as the
+  CDP path), 3/4/6 workers on 4 cores (same), single-threaded encoder instances (same CPU), Chromium raster flags
+  (--disable-gpu, --disable-accelerated-2d-canvas: same speed, same pixels), cached caption bitmaps (text is not what
+  these scenes spend time on; profile first). Per-frame cost did not grow over 300 sequential frames (no leak).
+- Many languages: run them in parallel on GitHub-hosted runners (ci/render-film.yml) rather than serially on one box —
+  wall-clock 11 languages ≈ 1 h instead of ~18 h; a GPU desktop would cut each language to ~10 min (shader ~60x, hardware
+  encode 10–20x).
 - Long renders in a cloud session: a detached process (`nohup … &`) died when the container restarted while the session
   was idle. Run them as tracked background tasks (one orientation per task, skip scenes already rendered) and resume.
 

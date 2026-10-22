@@ -69,7 +69,8 @@ installed locally (`~/.local/share/fonts`, e.g. Noto Serif/Sans KR) — renders 
 5. **Render** (optional — the live player needs no video): `render.mjs h|v --scene <id>` per scene, then `assemble.py h|v`.
    Hours of CPU; run in the background, check with stills before. render.mjs reads the canvas (not screenshots) and writes
    the upload format directly, so `assemble.py h|v --upload` only joins (seconds)
-   → `film-<h|v>-upload.mp4` (H.265, closed GOP, keyframe every 2 s, no B-frames, < 400 MB for ~14 min). Never upload an
+   → `film-<h|v>-upload.mp4` (H.264 faster CRF 18 ≤ 12 Mbps — YouTube's recommended range —, closed GOP, keyframe every
+   2 s, no B-frames; `--venc x265` for a 3.6 Mbps HEVC file when size matters more than texture). Never upload an
    open-GOP/B-frame encode: sites re-encode in keyframe chunks and some renditions jump at every scene start. Build the
    upload copy from the assembled master (its sound is aligned per scene), not by pairing re-joined pictures with its sound.
    Instagram: parts < 3 min, H.264, whole-scene covers — see LESSONS "Social platforms".
@@ -77,6 +78,11 @@ installed locally (`~/.local/share/fonts`, e.g. Noto Serif/Sans KR) — renders 
    each scene's upload encode in `out/upcache/`, so it costs one scene's encode (seconds to minutes), not the film's.
    Portrait for Shorts/Reels: `assemble.py v --shorts` → one file per scene in `out/shorts/` (scenes are self-contained:
    own sound, fade from/to black, 25–70 s — under the 3-min Shorts limit). Landscape stays one whole film.
+   A scene whose costliest layer is language-independent (a WebGL sky at 0.6 s a frame on a CPU) exposes `__glFrame()`
+   and `__prepare(t)` (see SCENE-RULES): render.mjs caches that layer once per orientation and every language reuses it.
+   Many languages at once: `ci/render-film.yml` (GitHub Actions, one job per language × orientation; `scripts/ci-setup.sh`
+   prepares any Ubuntu box: Noto variable fonts, ffmpeg, Playwright). Measure before optimising — `references/LESSONS.md`
+   "Rendering speed" lists what helped and what did not.
 6. **Publish the live player**: `publish.py` → `site/`; add `poster-h.jpg`/`poster-v.jpg` (a still of the title card) per
    language; deploy `site/` anywhere static. Check CSP (`media-src`, `font-src` self), and that a service worker does not
    intercept the m4a range requests. To put the player inside another page, iframe it with `?embed=1` (stage + controls

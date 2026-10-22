@@ -1,0 +1,55 @@
+# Render every language of a canvas film in parallel on GitHub's runners (free on a public repository, 20 jobs at once)
+# instead of one after another on one machine: one job per language × orientation, results as artifacts.
+# Copy to .github/workflows/ in the film project, set SKILL (where the canvas-film scripts live — vendored or a checkout
+# of motion-skills) and the language list; start it from the Actions tab ("Run workflow") or the API.
+# A scene that exposes __glFrame/__prepare (a cached language-independent layer) is built once per orientation first.
+name: render-film
+on:
+  workflow_dispatch:
+    inputs:
+      languages: { description: "space-separated language codes ('' = the source language only)", default: "en" }
+      orientations: { description: "h and/or v", default: "h v" }
+      scenes: { description: "scenes to render (empty = all in film.json; e.g. 'intro' for a quick test)", default: "" }
+env:
+  SKILL: tools/canvas-film          # <- the skill's folder inside this repo (scripts/, harness/)
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs: { langs: "${{ steps.m.outputs.langs }}", oris: "${{ steps.m.outputs.oris }}" }
+    steps:
+      - id: m
+        run: |
+          j() { printf '['; sep=''; for x in $1; do printf '%s"%s"' "$sep" "$x"; sep=','; done; printf ']'; }
+          echo "langs=$(j "${{ inputs.languages }}")" >> "$GITHUB_OUTPUT"
+          echo "oris=$(j "${{ inputs.orientations }}")" >> "$GITHUB_OUTPUT"
+  render:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        lang: ${{ fromJSON(needs.plan.outputs.langs) }}
+        o: ${{ fromJSON(needs.plan.outputs.oris) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: bash $SKILL/scripts/ci-setup.sh
+      - name: render every scene, then join
+        env:
+          SCENES: ${{ inputs.scenes }}
+        run: |
+          L="${{ matrix.lang }}"; O="${{ matrix.o }}"
+          [ -n "$SCENES" ] || SCENES=$(node -e "console.log(JSON.parse(require('fs').readFileSync('film.json')).scenes.map(s=>s.id||s).join(' '))")
+          for s in $SCENES; do node $SKILL/scripts/render.mjs $O --scene $s ${L:+--lang $L}; done
+          if [ "$O" = v ]; then python3 $SKILL/scripts/assemble.py v $L --shorts; else python3 $SKILL/scripts/assemble.py h $L --upload; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: film-${{ matrix.lang || 'src' }}-${{ matrix.o }}
+          path: |
+            out/film-*-upload.mp4
+            out/shorts
+          retention-days: 3
+          compression-level: 0
