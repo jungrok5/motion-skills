@@ -31,8 +31,8 @@ const Cutout = (() => {
   }
   function warp(ctx, img, x, y, w, h, field, o = {}) {
     if (!field) { ctx.drawImage(img, x, y, w, h); return; }
-    const nx = o.nx || 14, ny = o.ny || 20, iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height, P = [];
-    for (let j = 0; j <= ny; j++) { const row = []; for (let i = 0; i <= nx; i++) { const u = i / nx, v = j / ny, [dx, dy] = field(u, v); row.push([[u * iw, v * ih], [x + u * w + dx, y + v * h + dy]]); } P.push(row); }
+    const nx = o.nx || 14, ny = o.ny || 20, U0 = o.u0 ?? 0, V0 = o.v0 ?? 0, U1 = o.u1 ?? 1, V1 = o.v1 ?? 1, iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height, P = [];
+    for (let j = 0; j <= ny; j++) { const row = []; for (let i = 0; i <= nx; i++) { const u = U0 + (U1 - U0) * i / nx, v = V0 + (V1 - V0) * j / ny, [dx, dy] = field(u, v); row.push([[u * iw, v * ih], [x + u * w + dx, y + v * h + dy]]); } P.push(row); }
     for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
       const A = P[j][i], B = P[j][i + 1], C = P[j + 1][i], D = P[j + 1][i + 1];
       tri(ctx, img, A[0], B[0], C[0], A[1], B[1], C[1]); tri(ctx, img, B[0], D[0], C[0], B[1], D[1], C[1]);

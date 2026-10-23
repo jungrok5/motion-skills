@@ -11,6 +11,7 @@
 <script src="lib.js"></script>
 <script src="cutout.js"></script>
 <script src="rig.js"></script>
+<script src="layers.js"></script>
 <script>
 /* 01 건널목 (회화 배경판) — the rigged film, now on PAINTED backgrounds: every background is an image-model repaint
    of the code layout (?plate=1 renders it; tools/plate.py aligns the painting back), so the camera, the girl's feet,
@@ -575,7 +576,7 @@ let BGG;
 // rigged part driven by the scene's wind through spring physics.
 let BACKRIG, BUSTRIG;
 const SKIRT = { waist: 790, hem: 1268, x0: 350, x1: 870 };   // measured on art/back.webp (px)
-let SKIRTP, SHADOW;
+let SKIRTP, SHADOW, L2D, L2DSPR = {};
 const FIG = /[?&]fig=1/.test(location.search);   // review mode: only the figure, on magenta
 const ORIG = /[?&]orig=1/.test(location.search); // review mode: the original flat drawings instead of the rig (with rest=1 they must match)
 window.__rigStats = () => ({ back: BACKRIG.parts.map(p => p.stats), bust: BUSTRIG.parts.map(p => p.stats) });
@@ -633,6 +634,7 @@ function shotG(ctx, t) {
   ctx.save(); ctx.translate(W / 2, H / 2); ctx.scale(k, k); ctx.translate(-W / 2, -H / 2);
   Cutout.relight(ctx, c => { c.save(); c.translate(pv[0] + yaw * 14 * sc, pv[1]); c.rotate(sway - yaw * .018); c.scale(1, br); c.translate(-pv[0], -pv[1]);
       if (u < KT) { const kd = PL(u < .25 ? 'turn1' : 'turn2'); c.drawImage(kd, bx, by, bw, bh); }
+      else if (L2D) Layers.draw(c, L2D, bx, by, sc, ORIG || Rig.rest ? {} : l2dParams(t, u, yaw, under === R.expr.sad ? 'sad' : under === R.expr.blink ? 'blink' : ''));
       else if (ORIG) c.drawImage(orig, bx, by, bw, bh); else if (F) { Cutout.warp(c, F.base, bx, by, bw, bh, baseF, { nx: 16, ny: 20 }); Cutout.warp(c, ek ? F.expr[ek] : F.front, bx, by, bw, bh, frontF, { nx: 16, ny: 20 });
         R.parts.forEach((P, i) => Rig.draw(c, P, th[i], bx + hairDX, by, sc)); }
       else { c.drawImage(under, bx, by, bw, bh); R.parts.forEach((P, i) => Rig.draw(c, P, th[i], bx, by, sc)); } c.restore(); },
@@ -742,6 +744,19 @@ function shotD(ctx, t) {
     ctx.fillStyle = S2; ctx.beginPath(); ctx.moveTo(bx - 16 * z, by - fl * z); ctx.quadraticCurveTo(bx - 7 * z, by - 4 * z, bx, by + 2 * z); ctx.quadraticCurveTo(bx + 7 * z, by - 4 * z, bx + 16 * z, by - fl * z); ctx.quadraticCurveTo(bx + 6 * z, by + 1 * z, bx, by + 5 * z); ctx.quadraticCurveTo(bx - 6 * z, by + 1 * z, bx - 16 * z, by - fl * z); ctx.fill(); }
   flare(ctx, sx, sy, .8, true);
 }
+// close-up puppet parameters: the turn continues from the profile key drawing (angX −0.9 → 0, a small settle),
+// idle head motion, breath, and a spring per hair layer pushed by the after-train wind
+function l2dParams(t, u, yaw, expr) {
+  const hair = {};
+  for (const L of L2D.layers) if (L.hair) {
+    const sp = L2DSPR[L.name] || (L2DSPR[L.name] = Rig.pendulum(300, L.name === 'bangs' ? 70 : 34, { damp: 3.2, gravity: 0, gain: 1 }));
+    const k = L.name === 'bangs' ? .35 : 1, dir = L.name === 'backhair' ? -1 : 1;
+    const th = Rig.sim(sp, t, tt => [(gust(tt, L.depth * 7 + 3) * 1500 - 300) * k, 0], SH.G - 1.5)[0];
+    hair[L.name] = (th - Math.PI / 2) * (L.name === 'lockL' ? -1 : 1) * .9 * dir;
+  }
+  // after the settle a slow drift; when the sad smile comes (u ≈ 3.05) she lowers her head a little and tilts it
+  return { angX: yaw * 1.6 + .22 * Math.sin(u * .8 - .6) * ss(1.3, 2.4, u), angY: .1 * Math.sin(u * .7 + .3) - .32 * ss(2.85, 3.7, u), angZ: .03 * Math.sin(u * .8) + .05 * ss(2.85, 3.9, u), breath: .5 + .5 * Math.sin(u * 2.2), body: [0, 0], expr, hair };
+}
 // close-up background: the painted sky, out of focus
 function paintBGGp() {
   const img = PL('sky'), c = canvas(W, H), x = c.getContext('2d');
@@ -790,6 +805,7 @@ Pilot.run({ W, H, dur: DUR, audio: 'crossing.m4a', fonts: ["600 40px 'Noto Serif
     if (ORIG) await Promise.all(['back', 'bust', 'bust-blink', 'bust-sad'].map(n => Cutout.load(n, 'art/' + n + '.webp')));
     SKIRTP = Rig.pendulum(478, 46, { damp: 4.5, gravity: 900, gain: 1 });
     BACKRIG = await Rig.load('art/rig/', 'back', { parts: [{ k: 34, rootStiff: 5, damp: 4.2, gain: 1 }] });
+    if (!PLATE) L2D = await Layers.load('art/l2d/', 'bust');
     BUSTRIG = await Rig.load('art/rig/', 'bust', { parts: [{ k: 26, rootStiff: 9, damp: 3.6, gain: 1, rootLock: 1.6 }, { k: 30, rootStiff: 4, damp: 3.4, gain: 1.4 }, { k: 30, rootStiff: 4, damp: 3.4, gain: 1.4 }] });
     grain = Pilot.speckle(W / 2 + 32, H / 2 + 32, 60, 11); gravel = gravelPattern();
     gb = canvas(W / 4, H / 4); gx = gb.getContext('2d');

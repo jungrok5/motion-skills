@@ -49,3 +49,8 @@ steps: `../../WORKFLOW.md` §4b.
 Repaints of the code layout frames in `art/ref/` (crossing, signal, sunset; landscape and portrait), a tall sky,
 a train car on green (keyed), and two head-turn key drawings edited from the bust. ≈7,200 credits (≈ $1.30).
 Total for all art in this example ≈13,800 credits. Prompts and steps: `../../WORKFLOW.md` §4c.
+
+## Full layers (`art/l2d/`, used by `crossing-paint.html` shot G and `l2d-test.html`)
+Each layer drawn complete by one edit of the bust (back hair, body, face skin, features + blink + sad, bangs, side lock;
+a second side lock came back as a duplicate and is unused). ≈6,400 credits (≈ $1.15). Total for all art in this
+example ≈20,200 credits. Prompts and steps: `../../WORKFLOW.md` §4d.

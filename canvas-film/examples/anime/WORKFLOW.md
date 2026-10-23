@@ -235,7 +235,38 @@ camera: **render the code layout, have the image model repaint it, align the pai
 6. **Anime turn = key drawings**: two more bust edits (head away / side profile; ≈710 credits each) held for 3 and 2
    frames before the rig takes over with a small settle — a turn no warp or parallax could make.
 
-## 4d. Review before anyone sees it (do every time)
+## 4d. Full layers, like a real Live2D model (scenes/layers.js — use this for close-ups)
+Cutting parts out of one finished drawing (§4b) leaves every part incomplete where something covered it, so big
+motion shows cut edges. A Live2D artist draws each layer COMPLETE, hidden parts included. Do the same with the
+image model: one edit per layer, all from the same base drawing, same framing, on green.
+- Layers for a bust (draw order): back hair (crown + scrunchie + whole ponytail + hair behind the shoulders) · body
+  (neck + uniform, no hair over it) · face skin (face, ears, forehead up to the hairline, NO features, no hair) ·
+  features (eyes, brows, nose, mouth; variants: blink, sad — edited from the blink / sad drawings) · bangs · side lock.
+- Prompt pattern (≈710 credits each at 2K, 4:5):
+  ```
+  Change: this is one layer of a Live2D model (a cut-out puppet whose parts move separately), so draw ONLY her <PART>,
+  complete: <what belongs to it>. Draw it COMPLETE, including every part that is normally hidden behind <what covers
+  it>, as if those were transparent. Do NOT draw <the other parts> — leave all of that as pure green.
+
+  Preserve: the exact same framing, camera, size and position as the original picture, so this layer lies exactly on
+  top of it; the same colours, shading and the exact same anime art style.
+
+  Constraints: everything that is not <PART> is perfectly flat pure green #00FF00; no cast shadow, no text, no
+  redesign, no zoom, no crop change.
+  ```
+- What happened: the layers stacked into a coherent character (not pixel-identical to the base — the model redraws,
+  so treat the stack as the new model and drop the old one). "The side lock on the viewer's right" came back as the
+  same lock as the left one (check overlap, drop duplicates). The face skin came back as a whole bald head — fine,
+  `tools/l2dlayers.py` keeps only skin near what is visible at rest. The sad features came from a drawing framed a
+  little differently — `l2dlayers.py` aligns variants to their base (only when it clearly fits better: closed eyes
+  barely overlap anything, so the blink stays as drawn).
+- `python3 tools/l2dlayers.py <keyed layers dir> scenes/art/l2d bust` → `bust-<layer>.webp` + `bust-l2d.json`.
+- `layers.js` moves them: head turn X/Y = depth parallax on a cylinder profile (back hair against the turn, face,
+  features and bangs with it, more at the face's centre than its edge), tilt about the neck, breath, expression
+  variants, and one spring per hair layer bending it about its root. `scenes/l2d-test.html` is the stress test
+  (much bigger motion than a film needs) — review it like the film.
+
+## 4e. Review before anyone sees it (do every time)
 ```bash
 node tools/review.mjs scenes/crossing-rig.html --o h --shots "7:13:0.4,14.6:20.6:0.2,20.6:22:0.1,22:26:0.25" --sheet 0.5 --out out/review
 python3 tools/review.py out/review        # → out/review/report.txt, strips, film-sheet.jpg, holes-*/fidelity-*.png
@@ -283,6 +314,7 @@ node ../../scripts/render.mjs v --page scenes/crossing-rig.html --workers 4
 | `scenes/rig.js`, `scenes/art/rig/` | part skinning + spring physics; underlays, parts, rig JSON |
 | `tools/layers.py`, `tools/rigassets.py` | cut parts + spines from base vs underlay; build the rig assets |
 | `tools/facelayer.py` | face base + face front for the head turn |
+| `tools/l2dlayers.py`, `scenes/layers.js`, `scenes/l2d-test.html` | full Live2D-style layers: prepare, run, stress test |
 | `tools/plates.mjs`, `tools/plate.py` | render layout frames; align a repainted background and cut its front layer |
 | `tools/review.mjs`, `tools/review.py` | the review: figure/rest/orig passes, automatic checks, strips, sheets, report |
 | `scenes/crossing-art.html` | the first hybrid (one picture warped — the rubber look, kept for comparison) |
