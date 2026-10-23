@@ -76,7 +76,8 @@ installed locally (`~/.local/share/fonts`, e.g. Noto Serif/Sans KR) — renders 
    Instagram: parts < 3 min, H.264, whole-scene covers — see LESSONS "Social platforms".
    Fixing one scene later: re-render only that scene, run `assemble.py` again — it joins clips by stream copy and keeps
    each scene's upload encode in `out/upcache/`, so it costs one scene's encode (seconds to minutes), not the film's.
-   Portrait for Shorts/Reels: `assemble.py v --shorts` → one file per scene in `out/shorts/` (scenes are self-contained:
+   Portrait for Shorts/Reels: `assemble.py v --shorts` → one file per scene in `out/shorts/`, each opening 1 s in (past the
+   fade from black; per-scene override and peak limit in film.json `"shorts"`) (scenes are self-contained:
    own sound, fade from/to black, 25–70 s — under the 3-min Shorts limit). Landscape stays one whole film.
    A scene whose costliest layer is language-independent (a WebGL sky at 0.6 s a frame on a CPU) exposes `__glFrame()`
    and `__prepare(t)` (see SCENE-RULES): render.mjs caches that layer once per orientation and every language reuses it.

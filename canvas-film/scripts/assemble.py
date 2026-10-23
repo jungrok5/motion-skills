@@ -13,6 +13,10 @@
    Add --shorts (portrait) to write one file per scene instead of the film, for YouTube Shorts / Reels:
    out/shorts/<lang|src>/NN-<scene>.mp4 (the upload encode + that scene's sound, 30 ms fades against clicks). Works
    because every scene's sound is its own file and fades with the picture — no sound runs across a cut.
+   A Short starts `open` seconds into its scene, past the fade-in from black (a feed shows the first frame; black loses the
+   swipe), and its sound goes through a peak limiter. film.json "shorts": {"open": 1.0, "scenes": {"<id>": 0}, "limit": 0.84}
+   — a per-scene value overrides "open" (0 = keep the fade, e.g. a scene that must start from black; more to skip a silent
+   opening). Without the key the defaults above apply; "open": 0 and "limit": 1 give the old behaviour.
 
    Clips rendered straight to the upload format (render.mjs default) are joined as they are — no encode at all.
    Fast: nothing is re-encoded as a whole. Pictures are joined as they are (stream copy — every clip comes from
@@ -32,7 +36,8 @@ only = opt('--only')   # testing: --only a,b
 pos = [a for i, a in enumerate(argv) if not a.startswith('--') and (i == 0 or argv[i - 1] != '--only')]   # h|v [lang]
 ori = pos[0] if pos else 'h'; lang = pos[1] if len(pos) > 1 else ''
 tag = f'-{lang}' if lang else ''
-ORDER = [s['id'] if isinstance(s, dict) else s for s in json.load(open(os.path.join(ROOT, 'film.json')))['scenes']]
+FILM = json.load(open(os.path.join(ROOT, 'film.json'), encoding='utf-8'))
+ORDER = [s['id'] if isinstance(s, dict) else s for s in FILM['scenes']]
 OUT = os.path.join(ROOT, 'out'); TMP = os.path.join(OUT, 'assemble-tmp'); UPC = os.path.join(OUT, 'upcache')
 os.makedirs(TMP, exist_ok=True); os.makedirs(UPC, exist_ok=True)
 
@@ -96,13 +101,17 @@ def upload_target():   # the codec most of the clips already have (so the fewest
 
 if '--shorts' in argv:   # one file per scene (Shorts/Reels), no film
     SD = os.path.join(OUT, 'shorts', lang or 'src'); os.makedirs(SD, exist_ok=True); tgt = upload_target()
+    SH = FILM.get('shorts', {}); limit = SH.get('limit', 0.84)   # 0.84 ≈ −1.5 dBFS peaks
     for (s, v, _), aud in zip(have, auds):
         u = upload_encode(s, v, tgt); d = frames(v) / FPS; n = ORDER.index(s) + 1
+        skip = SH.get('scenes', {}).get(s, SH.get('open', 1.0)); dd = d - skip
         dst = os.path.join(SD, f'{n:02d}-{s}.mp4')
-        run(['-i', u, '-i', aud, '-map', '0:v', '-map', '1:a', '-c:v', 'copy',
-             '-af', f'afade=t=in:d=0.03,afade=t=out:st={d - 0.03:.3f}:d=0.03', '-c:a', 'aac', '-b:a', '192k',
-             '-movflags', '+faststart', dst])
-        print('→', dst, f'{d:.1f}s')
+        # a cut off the 2 s keyframe grid has to be re-encoded; skip 0 stays a stream copy
+        vid = ['-c:v', 'copy'] if skip == 0 else ENC[tgt] + ['-pix_fmt', 'yuv420p', '-metadata', 'comment=osb-upload']
+        af = (f'alimiter=limit={limit}:level=false,' if limit < 1 else '') + f'afade=t=in:d=0.05,afade=t=out:st={dd - 0.03:.3f}:d=0.03'
+        run(['-ss', f'{skip}', '-i', u, '-ss', f'{skip}', '-i', aud, '-map', '0:v', '-map', '1:a'] + vid +
+            ['-af', af, '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', dst])
+        print('→', dst, f'{dd:.1f}s (from {skip:g} s)')
     sys.exit(0)
 
 dst = os.path.join(OUT, f'film-{ori}{tag}.mp4')

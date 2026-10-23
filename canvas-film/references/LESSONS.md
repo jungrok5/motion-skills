@@ -88,6 +88,15 @@
   --shorts`). This only works because no sound crosses a cut — keep every scene's sound self-contained.
 - Source/credit end cards on Shorts: 2.5 s was too quick to read (word-log). Hold ~4 s (3.5–4.5), bring the title and
   the small lines in together within ~.5 s (`Story.card` → compact), so they stay sharp ≥ 3 s even after a 0.6-s loop seam.
+- Shorts opened on black: every scene fades in from black, so 20 of 21 Shorts showed a black first frame in the feed, and
+  one opened on ~3 s of near silence (−69 LUFS) — the feed decides in that first second. Start each Short ~1 s into its
+  scene (past the fade; 4 s for the silent one, 0 for a scene that must open on black), with a peak limiter (≈ −1.5 dBFS)
+  — `film.json "shorts"`. Shift any per-Short subtitle file by the same amount. Shorts already uploaded keep their file
+  (YouTube cannot swap it), so change the rule only for ones not yet uploaded.
+- Captions for a film with no speech: YouTube makes no automatic captions, and text burned into the picture is not read by
+  search. Upload a caption track per language (the scene lines with their times, SRT) with the Data API
+  (`captions.insert`, ~400 units each). Studio's manual caption upload rejected a file set by a script (no request sent);
+  the API took all 16 at once.
 - Thumbnail claims must be literally true ("21 scenes, a different style each" was false: 19 styles).
 - YouTube Data API upload: an API project that has not passed Google's audit uploads every video as private and locked
   (the owner cannot make it public) — apply for the audit (same form raises the 10,000-unit daily quota; one upload costs
@@ -95,6 +104,12 @@
   production. A "TV and limited input" client lets a phone-only owner authorise with a code at google.com/device. Keep
   client id/secret/refresh token in environment variables, never in chat. With a Brand Account channel, pick the channel
   on the consent screen or the video lands on the personal channel.
+  A loopback (Desktop app) sign-in script that opens the browser on Windows with `cmd /c start "" <url>` loses
+  everything after the first `&` (cmd treats it as a command separator) → Google answers "Required parameter is missing:
+  response_type". Open it with `rundll32 url.dll,FileProtocolHandler <url>` (or print the URL to paste). Serve the
+  "done" page with `charset=utf-8` or an em dash shows as mojibake. Which jobs the API can take on an unaudited project:
+  captions, descriptions, playlists, analytics — yes; public uploads — no (locked private); Studio's thumbnail A/B test
+  and pinning a comment have no API at all.
 
 - Iterating on a finished film: re-encoding the whole 14 min after every one-scene fix cost ~50 min each time (a full
   x264 master, then a full x265 upload copy). Join scene clips by stream copy and cache each scene's upload encode;
