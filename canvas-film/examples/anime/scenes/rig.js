@@ -18,6 +18,8 @@ const Rig = (() => {
     const R = { size: J.size, under: await loadImg(dir + J.under), expr: {}, parts: [] };
     for (const [k, f] of Object.entries(J.expr || {})) R.expr[k] = await loadImg(dir + f);
     for (let i = 0; i < J.parts.length; i++) R.parts.push(bind(await loadImg(dir + J.parts[i].file), J.parts[i], (opt.parts || [])[i] || {}));
+    if (J.face) { R.face = { base: await loadImg(dir + J.face.base), front: await loadImg(dir + J.face.front), expr: {}, bbox: J.face.bbox };
+      for (const [k, f] of Object.entries(J.face.expr || {})) R.face.expr[k] = await loadImg(dir + f); }
     return R;
   }
   function bind(img, p, o) {
@@ -42,9 +44,11 @@ const Rig = (() => {
   }
   // angular-spring chain; force(t) → [fx, fy] in px/s² (image px). Gravity is relative to the drawn (rest) pose.
   function sim(P, t, force, t0 = 0) {
+    if (api.rest) return P.th0.slice();   // review: the drawn pose
     const n = P.n, o = P.o, G = o.gravity ?? 600, damp = o.damp ?? 5, gain = o.gain ?? 1, dt = 1 / 240;
     let st = P.st;
     if (!st || st.t0 !== t0 || st.t > t + 1e-9) st = P.st = { t0, t: t0, d: new Float64Array(n), v: new Float64Array(n) };
+    P.stats = P.stats || { maxTip: 0, maxVel: 0, maxBend: 0 };
     const th = new Float64Array(n);
     while (st.t < t - 1e-9) {
       const h = Math.min(dt, t - st.t), F = force(st.t);
@@ -56,6 +60,8 @@ const Rig = (() => {
       }
       for (let j = 0; j < n; j++) st.d[j] += st.v[j] * h;
       st.t += h;
+      let tip = 0; for (let j = 0; j < n; j++) { tip += st.d[j]; P.stats.maxVel = Math.max(P.stats.maxVel, Math.abs(st.v[j])); P.stats.maxBend = Math.max(P.stats.maxBend, Math.abs(st.d[j])); }
+      P.stats.maxTip = Math.max(P.stats.maxTip, Math.abs(tip));
     }
     const out = []; let acc = 0; for (let j = 0; j < n; j++) { acc += st.d[j]; out.push(P.th0[j] + acc); } return out;
   }
@@ -69,5 +75,7 @@ const Rig = (() => {
       x = x * (1 - v.lock) + v.x * v.lock; y = y * (1 - v.lock) + v.y * v.lock; return [X + x * s, Y + y * s]; });
     for (const [a, b, c] of P.tris) { const A = P.verts[a], B = P.verts[b], C = P.verts[c]; Cutout.tri(ctx, P.img, [A.x, A.y], [B.x, B.y], [C.x, C.y], D[a], D[b], D[c]); }
   }
-  return { load, sim, draw };
+  // a single pendulum spring (skirt): pivot, length (image px), rest angle, stiffness → a part-like object for sim()
+  const pendulum = (len, k = 60, o = {}) => ({ n: 1, th0: [Math.PI / 2], L: [len], Ltot: len, k: [k], o });
+  const api = { load, sim, draw, pendulum, rest: /[?&]rest=1/.test(location.search) }; return api;
 })();

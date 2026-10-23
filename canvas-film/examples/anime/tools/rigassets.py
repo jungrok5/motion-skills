@@ -14,7 +14,8 @@ K = np.asarray(Image.open(base_key).convert('RGBA'), np.float32)
 def key(rgb):   # same rule as key.py: green dominance → alpha, despill
     r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]; dom = g - np.maximum(r, b)
     al = 1 - np.clip((dom - 28) / 62, 0, 1); g2 = np.where(dom > 0, np.maximum(r, b), g)
-    return np.dstack([r, g2, b, al * 255])
+    A = Image.fromarray((al * 255).astype(np.uint8)).filter(ImageFilter.MinFilter(3)).filter(ImageFilter.GaussianBlur(.6))   # same 1-px choke as key.py
+    return np.dstack([r, g2, b, np.asarray(A, np.float32)])
 save = (lambda arr, fn: Image.fromarray(arr.clip(0, 255).astype(np.uint8), 'RGBA').save(os.path.join(out, fn), 'WEBP', quality=92, method=6))
 union = np.zeros(K.shape[:2], np.float32)
 for i, p in enumerate(J['parts']):
@@ -24,7 +25,7 @@ for i, p in enumerate(J['parts']):
 U = key(np.asarray(Image.open(os.path.join(rig, f'{name}-under.png')).convert('RGB'), np.float32)); save(U, f'{name}-under.webp')
 J['under'] = f'{name}-under.webp'; J['expr'] = {}
 if '--expr' in a:
-    keep_out = np.asarray(Image.fromarray((union * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(9)), np.float32) / 255
+    keep_out = (union > .5).astype(np.float32)   # only the parts' cores: eye corners next to a lock still get the expression
     for spec in a[a.index('--expr') + 1].split(';'):
         en, rest = spec.split('='); src, regs = rest.split(':', 1)
         E = key(np.asarray(Image.open(src).convert('RGB'), np.float32)); M = Image.new('L', (U.shape[1], U.shape[0]), 0); d = ImageDraw.Draw(M); f = 8

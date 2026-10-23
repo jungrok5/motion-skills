@@ -179,7 +179,44 @@ and moves each part on its own pivots with physics. `scenes/crossing-rig.html` d
      (minus 1.5 s pre-roll), so any `seek(t)` gives the same frame.
    - The force is **relative to the drawn pose**: a drawing painted in a breeze gets zero-mean gusts; the train adds a
      big push. Smooth at the full frame rate (Live2D is not on twos); swap drawings only for blinks and expressions.
-   - Not rigged yet: the skirt (it would need an underlay of the legs) and head turns (would need face-part layers).
+   - **Head turn (Live2D angle X)** on the bust: one more edit paints a *face base* (bangs and features removed,
+     ≈710 credits — prompt below); `tools/facelayer.py` cuts the *face front* (everything that differs: eyes, brows,
+     nose, mouth, bangs, the 3/4 contour — the union over all expressions) from each expression underlay. In the scene
+     the front slides further than the base (parallax) and the whole bust turns a little with it (rigid, no artefacts).
+     Keep the front/base difference small (≤ ~7 image px): larger shows the base's own contour as a ghost line.
+     ```
+     Change: this is an animation layer for a cut-out rig. Remove ONLY her bangs (the fringe hanging over her forehead and between her eyes) and her facial features: both eyebrows, both eyes with lashes, the nose line and the mouth. Paint what is behind them: a clean forehead with the hairline of the hair on top of her head, and smooth, plain face skin with the same skin colour, the same soft cheek blush and the same face outline and jaw. Keep the ear, the hair on top and at the back of the head, the scrunchie, the neck and the uniform.
+
+     Preserve: everything else pixel-for-pixel: the exact same framing, size and position of the head and shoulders, the face outline, colours, line art and lighting. Same pure green background #00FF00.
+
+     Constraints: no redesign, no zoom, no crop change, no text, no new features.
+     ```
+     ```bash
+     python3 tools/facelayer.py rig/bust-under.png bust_facebase_raw.png scenes/art/rig bust --reg 950,100,1550,1000 --box 300,360,1010,1060 --expr "blink=scenes/art/rig/bust-under-blink.webp,sad=scenes/art/rig/bust-under-sad.webp"
+     ```
+   - **Skirt**: the image model refused to paint what is under the skirt (blocked by its policy — do not try to word
+     around it). So the skirt is a local warp of the underlay driven by one pendulum (`Rig.pendulum`): in the wind the
+     hem **flares outward and leans a little downwind** — it covers more and never reveals anything. A sideways swing
+     dragged the legs below the hem into a double line.
+   - Parts keep **hair-coloured pixels that really differ from the underlay** only (`layers.py` drops navy, white, skin,
+     red and contours running under the hair): otherwise collar stripes or the jaw line slide with the hair.
+
+## 4c. Review before anyone sees it (do every time)
+```bash
+node tools/review.mjs scenes/crossing-rig.html --o h --shots "7:13:0.4,14.6:20.6:0.2,20.6:22:0.1,22:26:0.25" --sheet 0.5 --out out/review
+python3 tools/review.py out/review        # → out/review/report.txt, strips, film-sheet.jpg, holes-*/fidelity-*.png
+```
+The scene supports three review modes: `?fig=1` (only the figure, on magenta), `&rest=1` (the drawn pose: no physics,
+no breath, no turn), `&orig=1` (the original flat drawings instead of the rig).
+- **Automatic** (FAIL = fix first): *fidelity* — rest must reproduce orig (catches broken strands, missing pieces,
+  expression masks that are too small); *seams* — cracks inside the figure beyond the drawn pose's own gaps; *jumps* —
+  silhouette area pops within a shot; *motion* — a part that never moves or goes wild (from the rig's stats).
+- **Look** (an agent or a person must open them): `LOOK exposed background` frames (air between hair locks is fine,
+  missing skin/cloth is not); every `strip-*.jpg` (figure crops in time order — this is how motion is judged); a
+  full-resolution crop of the most extreme pose of each move (the turn's first frame, the train gust's peak); the
+  whole-film `film-sheet.jpg`.
+- What the automatic checks did **not** catch and only looking did, in this example: collar stripes sliding with the
+  ponytail, legs dragged into a double line by a skirt swing, a ghost jaw line, a half-missing smile.
 
 ## 5. Render and check
 ```bash
@@ -211,6 +248,8 @@ node ../../scripts/render.mjs v --page scenes/crossing-rig.html --workers 4
 | `scenes/crossing-rig.html` | the hybrid scene, rigged like Live2D (use this) |
 | `scenes/rig.js`, `scenes/art/rig/` | part skinning + spring physics; underlays, parts, rig JSON |
 | `tools/layers.py`, `tools/rigassets.py` | cut parts + spines from base vs underlay; build the rig assets |
+| `tools/facelayer.py` | face base + face front for the head turn |
+| `tools/review.mjs`, `tools/review.py` | the review: figure/rest/orig passes, automatic checks, strips, sheets, report |
 | `scenes/crossing-art.html` | the first hybrid (one picture warped — the rubber look, kept for comparison) |
 | `scenes/cutout.js` | mesh warp + relight for keyed art |
 | `scenes/art/*.webp`, `scenes/art/README.md` | the keyed drawings and their provenance |
