@@ -19,18 +19,18 @@
     }
   };
   S.endCard = function (ctx, t, card, at, o = {}) {
-    const { text, ss } = Pilot, W = Pilot.W, H = Pilot.H, a = ss(at, at + .9, t);
+    const { text, ss } = Pilot, W = Pilot.W, H = Pilot.H, a = ss(at, at + (card.compact ? .5 : .9), t);
     if (a <= 0) return;
     const y = o.y || H * .40, sh = o.titleShadow ?? 'rgba(0,0,0,.6)', sf = o.srcFont || "'Noto Sans KR',sans-serif";
     if (card.kicker) text(ctx, card.kicker, W / 2, y - 118, { size: 32, font: sf, weight: 600, color: o.srcColor || '#d9cfbf', alpha: a, ls: 2 });
     text(ctx, card.title, W / 2, y, { size: 72, weight: 700, font: o.font, color: o.color || '#f3ece0', alpha: a, shadow: sh || undefined });
-    const q = card.compact ? .45 : 1;   // a compact (≤ 2.5 s) card brings its small lines in quickly so they are readable
+    const q = card.compact ? .3 : 1;    // a compact card (~4 s, word-log) brings everything in within ~.5 s, then holds it to read
     text(ctx, card.passage, W / 2, y + 250, { size: 34, font: sf, weight: 500, color: o.srcColor || '#d9cfbf', alpha: a * ss(at + .4 * q, at + 1.3 * q, t) });
     text(ctx, card.by, W / 2, y + 310, { size: 30, font: sf, color: o.srcColor || '#d9cfbf', alpha: a * ss(at + .6 * q, at + 1.5 * q, t) * .9 });
     if (card.cta) text(ctx, card.cta, W / 2, y + 420, { size: 30, font: sf, weight: 600, color: o.ctaColor || (o.color || '#f3ece0'), alpha: a * ss(at + 1.2, at + 2.1, t), ls: 2 });
   };
   // The end card from the film's source (scenes/source.js → window.SOURCE, written from source.json by new-film.py).
-  // Short on screen (≤ 2.5 s): the title and two small lines; links, CTA and full credits go in the upload description.
+  // ~4 s on screen (beat.end = DUR − 4): the title and two small lines, in together and held long enough to read; links, CTA and full credits go in the upload description.
   //   sermon:     (위 작은 줄) 날짜 주일 n부예배 / 설교 제목 / 본문 / 교회 · 설교자
   //   book:       제목(or 『책』) / 『책』 장·쪽 / 저자 · 출판사
   //   meditation, topic, verse: 제목 / 본문 / by(교회·채널 등, 선택)
