@@ -29,3 +29,14 @@
    gradient was meant, an "effect" that renders as a hatched rectangle. Don't render full videos while iterating.
 10. **Sound spec** next to the scene: `<id>.sound.json` (see SOUND.md). Music ≤ 3 cues (a cue that must hit a visual beat
     starts on that beat), SFX ≤ 8, only sounds that carry the story; `ducks` for silence before a beat.
+
+**Cached layer (optional, for one very expensive language-independent layer).** If a scene draws something that costs
+most of its frame time and is the same in every language (a WebGL cosmos, a fluid simulation), expose
+`window.__glFrame = () => thatLayerCanvas.toDataURL('image/png')` (plus a `key` getter naming what the layer depends on —
+shader source, resolution, the timeline code — so unrelated edits keep the cache) and `window.__prepare = async t => {…}`
+that, when `?glcache=<url>` is set, loads `<url><frame, 5 digits>.png` for `Math.round(t*30)` (XHR + createImageBitmap,
+reading 2–3 frames ahead so disk latency hides), draws it into a 2D canvas of the layer's size, and makes `draw()` blit
+that canvas with the exact same drawImage call (smoothing, size). Drawing the decoded image straight to the frame
+resamples differently (±35); through a canvas it matches the live blit to a handful of pixels of ±1. render.mjs builds
+the cache once per orientation (lossless PNGs) and passes `glcache` to every later render; the live page never uses it.
+Verify once with stills (`--glcache off` vs on). Worked example: one-scroll-bible `motion/pilot/creation.html`.

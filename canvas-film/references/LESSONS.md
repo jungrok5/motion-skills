@@ -100,8 +100,45 @@
   x264 master, then a full x265 upload copy). Join scene clips by stream copy and cache each scene's upload encode;
   only the changed scene is encoded again. Cut or pad each scene's sound to its picture's exact frame count before
   joining, so nothing drifts. Each language still has to be rendered in full (text is in almost every shot).
+**Rendering speed** (a 14-min, 21-scene film; 4-core cloud CPU, no GPU; measured, not guessed)
+- Find out where the minutes go first: per-scene wall time from the render log. Half of one orientation was two
+  items — a WebGL scene run through SwiftShader (0.6 s a frame, 13 of 75 min) and a second full encode hidden after
+  the last scene (the log made it look like that scene took 21 min). Everything else was 2–4 min a scene.
+- In most scenes the page screenshot (~75–90 ms) cost more than drawing the frame (2–40 ms). Read the scene canvas in
+  the same task as the draw instead (pixel-identical on 42 frames, WebGL included; ~3x cheaper), and encode straight to
+  the upload format so no second encode follows.
+- For light scenes the encoder is the floor (x265 fast ≈ 190 ms CPU a frame). x264 faster at CRF 18 ≤ 12 Mbps gives the
+  same quality as x265 fast uncapped at half the CPU; a 3.6 Mbps HEVC cap chosen for a 400 MB transfer limit had cost
+  the busiest scenes 6 dB. x265 veryfast −17 % CPU for −0.4 dB; superfast/ultrafast −1.8/−3 dB: not worth it.
+- A language-independent expensive layer is rendered once per orientation and cached lossless (see SCENE-RULES):
+  13 min → ~1.5 min per language for that scene (8x; what remains is PNG decode and the capture). Two traps on the
+  way: the decoded <img> drawn straight to the frame resampled differently from the live canvas (±35; draw it into a
+  2D canvas first → a few pixels of ±1), and keying the cache on the whole scene file threw the cache away on every
+  unrelated edit (let the scene name its key).
+- Measured and dropped: raw RGBA frames over HTTP (4x slower than JPEG — 8 MB a frame), JPEG over HTTP (same as the
+  CDP path), 3/4/6 workers on 4 cores (same), single-threaded encoder instances (same CPU), Chromium raster flags
+  (--disable-gpu, --disable-accelerated-2d-canvas: same speed, same pixels), cached caption bitmaps (text is not what
+  these scenes spend time on; profile first). Per-frame cost did not grow over 300 sequential frames (no leak).
+- Many languages: run them in parallel on GitHub-hosted runners (ci/render-film.yml) rather than serially on one box —
+  wall-clock 11 languages ≈ 1 h instead of ~18 h; a GPU desktop would cut each language to ~10 min (shader ~60x, hardware
+  encode 10–20x).
 - Long renders in a cloud session: a detached process (`nohup … &`) died when the container restarted while the session
   was idle. Run them as tracked background tasks (one orientation per task, skip scenes already rendered) and resume.
+
+**Rendering on GitHub Actions** (ci/render-film.yml)
+- `workflow_dispatch` only works once the workflow file is on the default branch; a copy on a feature branch cannot be
+  started from the API or the UI. A YAML flow mapping with `${{ … }}` inside (`with: { path: out/${{ matrix.x }} }`)
+  fails to parse and the workflow silently shows "no workflow_dispatch trigger": write `with:` as block mappings.
+- The runner checks out git only: the per-scene mixes (wav) are not there. assemble.py falls back to the published
+  `site/s/<scene>.m4a`, so commit the published sound (or regenerate it in the job). A short run first (`scenes` input
+  = two scenes, one language) finds these in 5 min instead of after an hour.
+- Cut each scene's sound by sample count (`atrim=end_sample=N`), never by time: an AAC source (the published m4a) carries
+  an encoder delay, and a time-based cut came out 90 ms short per scene — the sound drifted ahead of the picture by
+  ~2 s over 21 scenes. Check a CI-rendered film's sound against a local one (per-scene cross-correlation) before trusting it.
+- Scene fonts: install the same Google Noto *variable* TTFs by name (`scripts/ci-setup.sh`); distro packages ship
+  "Noto Sans CJK KR", not "Noto Sans KR", and the scenes' font names would silently fall back.
+- A cloud box fills up: per-scene clips and finished films are rebuildable in seconds from `out/upcache/` — delete
+  those first, keep upcache and the cached layers.
 
 **Deploying**
 - A host can report a deploy "successful" while the domain still serves an older build (e.g. the push only produced a
