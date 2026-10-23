@@ -86,6 +86,8 @@
   Instagram links show no preview card in most chat apps — share the site/YouTube link for a card.
 - Portrait on YouTube: a 14-min vertical film is a poor fit; upload each scene as a Short instead (`assemble.py v
   --shorts`). This only works because no sound crosses a cut — keep every scene's sound self-contained.
+- Source/credit end cards on Shorts: 2.5 s was too quick to read (word-log). Hold ~4 s (3.5–4.5), bring the title and
+  the small lines in together within ~.5 s (`Story.card` → compact), so they stay sharp ≥ 3 s even after a 0.6-s loop seam.
 - Thumbnail claims must be literally true ("21 scenes, a different style each" was false: 19 styles).
 - YouTube Data API upload: an API project that has not passed Google's audit uploads every video as private and locked
   (the owner cannot make it public) — apply for the audit (same form raises the 10,000-unit daily quota; one upload costs
