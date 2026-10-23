@@ -44,3 +44,8 @@ edits cost ≈1,230 credits more. `bust-facebase.webp` + `bust-front[-blink|-sad
 (`tools/facelayer.py`; the face-base edit ≈710 credits). Total for all art ≈6,600 credits. An edit for the skirt
 underlay was refused by the image provider's policy, so the skirt is animated in code only (flare). Prompts and
 steps: `../../WORKFLOW.md` §4b.
+
+## Painted backgrounds and turn drawings (`art/plates/`, `turn1/2.webp`, used by `crossing-paint.html`)
+Repaints of the code layout frames in `art/ref/` (crossing, signal, sunset; landscape and portrait), a tall sky,
+a train car on green (keyed), and two head-turn key drawings edited from the bust. ≈7,200 credits (≈ $1.30).
+Total for all art in this example ≈13,800 credits. Prompts and steps: `../../WORKFLOW.md` §4c.

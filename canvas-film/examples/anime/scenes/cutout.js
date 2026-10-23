@@ -5,7 +5,8 @@
      field(u, v) → [dx, dy] in output pixels (u, v in 0..1 over the image). Breathing, hair sway, wind on the skirt.
    - Cutout.relight(ctx, img, x, y, w, h, o): light that belongs to the scene, added on top of the art:
      o.rim = { c, dx, dy } a rim from the alpha shifted toward the light; o.band = { c, x0, x1, a } a sweeping light band;
-     o.tint = { c, a } a colour grade multiplied into the figure; o.sil = colour turns it into a silhouette.
+     o.tint = { c, a } a colour grade multiplied into the figure; o.shade = { c, x0, x1, a } a multiplied gradient (shadow side);
+     o.sil = colour turns it into a silhouette.
    All drawing is deterministic (no time inside; pass t through field). */
 const Cutout = (() => {
   const store = {};
@@ -55,6 +56,9 @@ const Cutout = (() => {
     if (o.band) { RX.setTransform(1, 0, 0, 1, 0, 0); RX.clearRect(0, 0, W, H); RX.drawImage(F, 0, 0); RX.globalCompositeOperation = 'source-in';
       const g = RX.createLinearGradient(o.band.x0, 0, o.band.x1, 0); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(.5, o.band.c); g.addColorStop(1, 'rgba(0,0,0,0)');
       RX.fillStyle = g; RX.fillRect(0, 0, W, H); RX.globalCompositeOperation = 'source-over'; ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = o.band.a ?? .6; ctx.drawImage(R, 0, 0); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; }
+    if (o.shade) { RX.setTransform(1, 0, 0, 1, 0, 0); RX.globalCompositeOperation = 'source-over'; RX.clearRect(0, 0, W, H); RX.drawImage(F, 0, 0); RX.globalCompositeOperation = 'source-in';   // the side away from the light, multiplied darker
+      const g = RX.createLinearGradient(o.shade.x0, o.shade.y0 ?? 0, o.shade.x1, o.shade.y1 ?? 0); g.addColorStop(0, o.shade.c); g.addColorStop(1, '#ffffff');
+      RX.fillStyle = g; RX.fillRect(0, 0, W, H); RX.globalCompositeOperation = 'source-over'; ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = o.shade.a ?? .5; ctx.drawImage(R, 0, 0); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; }
     ctx.restore();
   }
   return { load, img: n => store[n], warp, relight, tri };

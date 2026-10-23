@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>건널목 (리그판) · anime example</title>
+<title>건널목 (회화 배경판) · anime example</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600&family=Noto+Sans+KR:wght@400&display=swap">
 </head>
 <body>
@@ -12,7 +12,12 @@
 <script src="cutout.js"></script>
 <script src="rig.js"></script>
 <script>
-/* 01 건널목 (리그판) — the key-art version rigged like Live2D instead of warping one flat picture: each drawing is
+/* 01 건널목 (회화 배경판) — the rigged film, now on PAINTED backgrounds: every background is an image-model repaint
+   of the code layout (?plate=1 renders it; tools/plate.py aligns the painting back), so the camera, the girl's feet,
+   the lamp centres and the rails still line up; the near signal + pole are a separate front layer the train passes
+   behind. The close-up opens with a real anime turn: two key drawings (head away → profile) before the rig.
+   See WORKFLOW.md §4c. (Notes of the rigged version follow.)
+   01 건널목 (리그판) — the key-art version rigged like Live2D instead of warping one flat picture: each drawing is
    an underlay (loose hair removed and painted behind by the image model) + hair parts skinned to spines (rig.js).
    Face, body and clothes stay rigid (breath and a tiny head sway only); the ponytail and locks bend along their bones
    with spring physics (inertia, overshoot, gusts), smoothly at the full frame rate.
@@ -211,7 +216,7 @@ function boy(ctx, X, Y, s, t, wave = 0) {
 }
 
 // ---------------- shot A: summer sky, tilting down ----------------
-function shotA(ctx, t) {
+function shotAcode(ctx, t) {
   const WH = H * (V ? 1.75 : 2.05), cy = (WH - H) * eio(clamp((t - .3) / 6.4));
   ctx.save(); ctx.translate(0, -cy);
   const g = ctx.createLinearGradient(0, 0, 0, WH);
@@ -301,6 +306,7 @@ let gravel;
 function lampsOn(t) { return PLATE ? -1 : t >= SH.B && t < 20.3 ? (Math.floor((t - SH.B) / .45) % 2) : -1; }
 
 function street(ctx, t, train) {
+  if (!PLATE) return streetPaint(ctx, t, train);
   // sky, clouds, distant hills
   const g = ctx.createLinearGradient(0, CAM.hy - H * .6, 0, CAM.hy);
   g.addColorStop(0, '#2a61c4'); g.addColorStop(.5, '#58a2e6'); g.addColorStop(.86, '#b2daf2'); g.addColorStop(1, '#e9f5f1');
@@ -429,6 +435,12 @@ function buildCar(ppm) {
   return c;
 }
 const TR = { z: 4.1, v: 14, gap: .55, L: 18.5, cars: 3, t0: 14.9 };
+// the painted car (art/plates/train.webp, keyed): its length follows the painting's proportions; the see-through
+// windows get the dim interior tint behind them
+function paintedCar(ppm) {
+  const img = PL('train'), h = Math.ceil(3.85 * ppm), w = Math.ceil(h * img.width / img.height), c = canvas(w, h), x = c.getContext('2d');
+  TR.L = w / ppm; x.fillStyle = 'rgba(14,22,44,.62)'; x.fillRect(w * .01, h * .3, w * .98, h * .22); x.drawImage(img, 0, 0, w, h); return c;
+}
 function drawTrain(ctx, t) {
   const ppm = CAM.f / TR.z, vpx = TR.v * ppm, head = W + 30 - vpx * (t - TR.t0), step = (TR.L + TR.gap) * ppm;
   if (head > W + 40 || head + step * TR.cars < -40) return;
@@ -448,7 +460,7 @@ function drawTrain(ctx, t) {
 }
 
 // ---------------- shot L: the alarm lamps, close ----------------
-function shotL(ctx, t) {
+function shotLcode(ctx, t) {
   const u = t - SH.L, k = 1.0 + u * .025, on = lampsOn(t);
   const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#2f6fcd'); g.addColorStop(.7, '#8fc5ee'); g.addColorStop(1, '#d6ecf4');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
@@ -484,7 +496,7 @@ function shotL(ctx, t) {
 }
 
 // ---------------- shot D: dusk ----------------
-function shotD(ctx, t) {
+function shotDcode(ctx, t) {
   const u = t - SH.D, tilt = eio(clamp(u / 6.2)), hyD = H * (V ? .74 : .79) + tilt * H * (V ? .18 : .2);
   const g = ctx.createLinearGradient(0, hyD - H * 1.15, 0, hyD);
   g.addColorStop(0, '#1d2763'); g.addColorStop(.38, '#58489a'); g.addColorStop(.63, '#d9779a'); g.addColorStop(.84, '#ffad70'); g.addColorStop(1, '#ffe3a8');
@@ -563,7 +575,7 @@ let BGG;
 // rigged part driven by the scene's wind through spring physics.
 let BACKRIG, BUSTRIG;
 const SKIRT = { waist: 790, hem: 1268, x0: 350, x1: 870 };   // measured on art/back.webp (px)
-let SKIRTP;
+let SKIRTP, SHADOW;
 const FIG = /[?&]fig=1/.test(location.search);   // review mode: only the figure, on magenta
 const ORIG = /[?&]orig=1/.test(location.search); // review mode: the original flat drawings instead of the rig (with rest=1 they must match)
 window.__rigStats = () => ({ back: BACKRIG.parts.map(p => p.stats), bust: BUSTRIG.parts.map(p => p.stats) });
@@ -585,10 +597,16 @@ function artBack(ctx, X, Y, s, t, wind, o = {}) {
     const d = Math.min(py, SKIRT.hem) - SKIRT.waist, fall = 1 - ss(SKIRT.hem - 10, SKIRT.hem + 14, py), side = ss(SKIRT.x0 - 40, SKIRT.x0 + 30, px) * (1 - ss(SKIRT.x1 - 30, SKIRT.x1 + 40, px));
     const w = (d / (SKIRT.hem - SKIRT.waist)) ** 2 * fall * side, ripple = Math.sin(t * 7.3 + px * .03) * flare * 40;
     return [((px - cxs) * flare - Math.sin(ph) * d * .12) * w * k, (ripple * .3) * w * k]; };
-  if (!o.sil) { ctx.fillStyle = 'rgba(40,46,96,.24)'; ctx.beginPath(); ctx.ellipse(X + Hf * .12, Y, Hf * .17, Hf * .016, 0, 0, PI2); ctx.fill(); }
+  if (!o.sil) {
+    if (!PLATE && Cutout.img('back')) { if (!SHADOW) { const im = Cutout.img('back'); SHADOW = canvas(im.width, im.height); const x = SHADOW.getContext('2d'); x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#1c2450'; x.fillRect(0, 0, im.width, im.height); }
+      ctx.save(); ctx.translate(X, Y); ctx.transform(1, 0, .55, -.2, 0, 0); ctx.globalAlpha = .3; ctx.filter = `blur(${Math.max(1, Hf * .006)}px)`;
+      ctx.drawImage(SHADOW, -BACK.cx * k, -BACK.foot * k, R.size[0] * k, R.size[1] * k); ctx.restore(); }
+    else { ctx.fillStyle = 'rgba(40,46,96,.24)'; ctx.beginPath(); ctx.ellipse(X + Hf * .12, Y, Hf * .17, Hf * .016, 0, 0, PI2); ctx.fill(); } }
   Cutout.relight(ctx, c => { c.save(); c.translate(X, Y); c.scale(1, br); c.translate(-X, -Y);
       if (ORIG) c.drawImage(Cutout.img('back'), x, y, R.size[0] * k, R.size[1] * k); else { if (Rig.rest) c.drawImage(R.under, x, y, iw * k, ih * k); else Cutout.warp(c, R.under, x, y, iw * k, ih * k, skirtF, { nx: 10, ny: 60 }); Rig.draw(c, P, th, x, y, k); } c.restore(); },
-    o.sil ? { sil: o.sil } : { rim: { c: 'rgba(255,244,220,1)', dx: Math.max(2, Hf * .004), dy: Math.max(1.5, Hf * .003), a: .5 } });
+    o.sil ? { sil: o.sil } : PLATE ? { rim: { c: 'rgba(255,244,220,1)', dx: Math.max(2, Hf * .004), dy: Math.max(1.5, Hf * .003), a: .5 } }
+      : { tint: { c: '#fff1dc', a: .5 }, shade: { c: '#7d86c4', x0: X - Hf * .2, x1: X + Hf * .12, a: .38 },   // the painting's sun: upper right
+          rim: { c: 'rgba(255,246,222,1)', dx: -Math.max(2, Hf * .005), dy: Math.max(1.5, Hf * .003), a: .65 } });
 }
 // shot G: the look-back close-up after the train — surprised → blink → a small sad smile (drawings swap; wind on twos)
 function shotG(ctx, t) {
@@ -605,7 +623,8 @@ function shotG(ctx, t) {
   // head turn (Live2D angle X): she turns her head the last bit toward us as the shot opens, then tiny idle turns.
   // The face front (eyes, brows, nose, mouth, bangs, contour) slides further than the face base: parallax.
   const back = x => { const s_ = 1.4; x = clamp(x); return 1 + (s_ + 1) * (x - 1) ** 3 + s_ * (x - 1) ** 2; };
-  const yaw = Rig.rest ? 0 : -.75 * (1 - back(u / .9)) + .12 * Math.sin(u * .75) * ss(1.2, 2.2, u);
+  const KT = PLATE || Rig.rest || FIG && ORIG ? 0 : .42;   // key drawings 1 (head away) and 2 (profile) before the rig
+  const yaw = Rig.rest ? 0 : -.55 * (1 - back((u - KT) / .7)) + .12 * Math.sin(u * .75) * ss(1.2, 2.2, u);
   const F = R.face, ek = under === R.expr.sad ? 'sad' : under === R.expr.blink ? 'blink' : '', fiw = R.size[0], fih = R.size[1];
   const headW = (px, py) => { const d = Math.hypot((px - 820) / 620, (py - 560) / 560); return 1 - ss(.7, 1.15, d); };
   const baseF = (uu, vv) => [yaw * 8 * sc * headW(uu * fiw, vv * fih), 0];
@@ -613,7 +632,8 @@ function shotG(ctx, t) {
   const hairDX = yaw * 8 * sc;
   ctx.save(); ctx.translate(W / 2, H / 2); ctx.scale(k, k); ctx.translate(-W / 2, -H / 2);
   Cutout.relight(ctx, c => { c.save(); c.translate(pv[0] + yaw * 14 * sc, pv[1]); c.rotate(sway - yaw * .018); c.scale(1, br); c.translate(-pv[0], -pv[1]);
-      if (ORIG) c.drawImage(orig, bx, by, bw, bh); else if (F) { Cutout.warp(c, F.base, bx, by, bw, bh, baseF, { nx: 16, ny: 20 }); Cutout.warp(c, ek ? F.expr[ek] : F.front, bx, by, bw, bh, frontF, { nx: 16, ny: 20 });
+      if (u < KT) { const kd = PL(u < .25 ? 'turn1' : 'turn2'); c.drawImage(kd, bx, by, bw, bh); }
+      else if (ORIG) c.drawImage(orig, bx, by, bw, bh); else if (F) { Cutout.warp(c, F.base, bx, by, bw, bh, baseF, { nx: 16, ny: 20 }); Cutout.warp(c, ek ? F.expr[ek] : F.front, bx, by, bw, bh, frontF, { nx: 16, ny: 20 });
         R.parts.forEach((P, i) => Rig.draw(c, P, th[i], bx + hairDX, by, sc)); }
       else { c.drawImage(under, bx, by, bw, bh); R.parts.forEach((P, i) => Rig.draw(c, P, th[i], bx, by, sc)); } c.restore(); },
     { rim: { c: 'rgba(255,236,200,1)', dx: 5, dy: 3, a: .55 } });
@@ -640,11 +660,96 @@ function paintBGG() {
 
 // ---------------- plate export (reference frames for the image model to repaint) ----------------
 function drawPlate(ctx, t) {
-  if (t < SH.B) shotA(ctx, t);
+  if (t < SH.B) shotAcode(ctx, t);
   else if (t < SH.L || (t >= SH.C && t < SH.G)) { ctx.save(); street(ctx, t, false); ctx.restore(); }
-  else if (t < SH.C) shotL(ctx, t);
+  else if (t < SH.C) shotLcode(ctx, t);
   else if (t < SH.D) ctx.drawImage(BGG, 0, 0);
-  else shotD(ctx, t);
+  else shotDcode(ctx, t);
+}
+
+// ================= painted plates =================
+// Every background is an image-model REPAINT of the code layout above (tools/plates.mjs renders the layout,
+// tools/plate.py aligns the painting back onto it), so every position the code knows — lamp centres, the girl's feet,
+// the rails, the sun — is still right on the painting. The code adds what moves: light, lamps, train, wind, people.
+const PL = n => Cutout.img(n);
+function shotA(ctx, t) {
+  if (PLATE) return shotAcode(ctx, t);
+  const img = PL('sky'), s = Math.max(W / img.width, H * 1.3 / img.height), iw = img.width * s, ih = img.height * s;
+  const p = eio(clamp((t - .3) / 6.4)), y = -(ih - H) * p, x = (W - iw) / 2, z = 1 + .03 * t / 7;
+  ctx.save(); ctx.translate(W / 2, H / 2); ctx.scale(z, z); ctx.translate(-W / 2, -H / 2); ctx.drawImage(img, x, y, iw, ih); ctx.restore();
+  // contrail + plane, high in the sky (sky coordinates scroll with the tilt)
+  const v = W * .07, px = W * .04 + v * t, py = H * .38 + y * .9;
+  for (let a = t; a > 0; a -= .08) { const x0 = px - v * a - v * .09, wd = 2 + a * 2.2, al = clamp(.8 - a * .09);
+    ctx.strokeStyle = `rgba(255,255,255,${al})`; ctx.lineWidth = wd; ctx.beginPath(); ctx.moveTo(x0, py + 1 + fbm(x0 * .01, 2) * a * 1.5); ctx.lineTo(x0 + v * .09, py + 1 + fbm((x0 + v * .09) * .01, 2) * a * 1.5); ctx.stroke(); }
+  ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.ellipse(px, py, 9, 2.4, 0, 0, PI2); ctx.fill(); ctx.fillRect(px - 2, py - 6, 3, 12);
+  flare(ctx, W * .84, H * .13 + y * .9, 1);
+}
+// shots B / C: plate (everything behind the train) → boy → train → front layer (near signal, pole, barrier) → lamps
+function streetPaint(ctx, t, train) {
+  ctx.drawImage(PL('crossing'), 0, 0, W, H);
+  if (t < 17.4) { const [bx, by] = P3(CAM.bx, 0, 12); boy(ctx, bx, by, CAM.f / 12 / 100, t, ss(10.5, 10.9, TW(t)) * (1 - ss(12.5, 12.9, TW(t)))); }
+  if (train) drawTrain(ctx, t);
+  ctx.drawImage(PL('front'), 0, 0, W, H);
+  const on = lampsOn(t); if (on < 0) return;
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  { const z = 3.8, s = CAM.f / z, [bx] = P3(CAM.cpx, 0, z), ly = P3(0, 2.5, z)[1], cx = bx + (on ? .38 : -.38) * s;   // near signal
+    litLamp(ctx, cx, ly, .14 * s); }
+  { const z = 10.5, s = CAM.f / z, [px] = P3(-CAM.cpx - .1, 0, z), ly = P3(0, 2.55, z)[1], cx = px + (on ? -.38 : .38) * s;   // far signal (seen from behind: mirrored)
+    litLamp(ctx, cx, ly, .13 * s, .7); }
+  ctx.restore();
+}
+function litLamp(ctx, x, y, r, a = 1) {
+  const g = ctx.createRadialGradient(x - r * .2, y - r * .2, 0, x, y, r);
+  g.addColorStop(0, `rgba(255,246,230,${a})`); g.addColorStop(.35, `rgba(255,150,110,${a})`); g.addColorStop(.8, `rgba(255,50,30,${.9 * a})`); g.addColorStop(1, 'rgba(200,20,10,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, PI2); ctx.fill();
+  glow(ctx, x, y, r * 6, '255,70,40', .5 * a); glow(ctx, x, y, r * 2, '255,190,160', .45 * a);
+  ctx.save(); ctx.translate(x, y); ctx.scale(1, .05); glow(ctx, 0, 0, r * 11, '255,110,80', .45 * a); ctx.restore();
+}
+// shot L: the painted signal, pushed in; the lit lamp is light laid on the painting
+function shotL(ctx, t) {
+  if (PLATE) return shotLcode(ctx, t);
+  const u = t - SH.L, k = 1.0 + u * .025, on = lampsOn(t);
+  ctx.save(); ctx.translate(W / 2, H / 2); ctx.scale(k, k); ctx.translate(-W / 2, -H / 2); ctx.drawImage(PL('signal'), 0, 0, W, H); ctx.restore();
+  ctx.save(); ctx.globalCompositeOperation = 'screen'; const r = rng(5);
+  for (let i = 0; i < 9; i++) { const x = r() * W, y = H * (.2 + r() * .7), rr = 30 + r() * 70; ctx.fillStyle = `rgba(255,250,230,${.05 + r() * .06})`; ctx.beginPath(); ctx.arc(x - u * 20, y, rr, 0, PI2); ctx.fill(); }
+  ctx.restore();
+  if (on < 0) return;
+  const cx = W / 2, ly = V ? H * .5 : H * .58, dx = V ? 255 : 340, R = V ? 112 : 140;
+  ctx.save(); ctx.translate(W / 2, H / 2); ctx.scale(k, k); ctx.rotate(-.04); ctx.translate(-W / 2, -H / 2);
+  ctx.globalCompositeOperation = 'lighter'; const x = cx + (on ? dx : -dx);
+  const g = ctx.createRadialGradient(x - R * .25, ly - R * .25, 0, x, ly, R * 1.02);
+  g.addColorStop(0, 'rgba(255,246,230,1)'); g.addColorStop(.3, 'rgba(255,170,130,.95)'); g.addColorStop(.75, 'rgba(255,60,40,.85)'); g.addColorStop(1, 'rgba(200,20,10,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, ly, R, 0, PI2); ctx.fill();
+  glow(ctx, x, ly, R * 5, '255,70,40', .6); glow(ctx, x, ly, R * 1.6, '255,200,170', .5);
+  ctx.save(); ctx.translate(x, ly); ctx.scale(1, .045); glow(ctx, 0, 0, R * 9, '255,110,80', .55); ctx.restore();
+  ctx.restore();
+}
+// shot D: the painted sunset, tilted (the plate slides down at 1.2×); sun light, crows and her silhouette are code
+function shotD(ctx, t) {
+  if (PLATE) return shotDcode(ctx, t);
+  const u = t - SH.D, tilt = eio(clamp(u / 6.2)), S = 1.2, oy = -H * .2 * (1 - tilt);
+  const mx = x => W / 2 + (x - W / 2) * S, my = y => y * S + oy;
+  ctx.drawImage(PL('sunset'), mx(0), my(0), W * S, H * S);
+  const hy0 = H * (V ? .74 : .79), sx = mx(W * (V ? .64 : .67)), sy = my(hy0 - H * (V ? .055 : .09));
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.translate(sx, sy); ctx.rotate(u * .015);
+  for (let i = 0; i < 14; i++) { ctx.rotate(PI2 / 14); ctx.fillStyle = `rgba(255,214,160,${i % 2 ? .025 : .045})`; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(H * 1.6, -H * .07); ctx.lineTo(H * 1.6, H * .07); ctx.fill(); }
+  ctx.restore();
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; glow(ctx, sx, sy, H * .6, '255,190,120', .4); ctx.restore();
+  const cx = W * (V ? .18 : .2), S2 = '#1c1430';
+  // she is gone: only the summer sky is left (on the painting her silhouette would stand on the rooftops)
+  const q = TW(t), hyD = my(hy0);
+  for (let i = 0; i < 4; i++) { const bx = W * (.95 - .09 * i) - (q - SH.D) * (34 + i * 6), by = hyD - H * (V ? .52 : .6) + i * 26 + Math.sin(q * 1.3 + i) * 8, fl = Math.sin(q * 9 + i * 1.7) * 7, z = 1 - i * .12;
+    ctx.fillStyle = S2; ctx.beginPath(); ctx.moveTo(bx - 16 * z, by - fl * z); ctx.quadraticCurveTo(bx - 7 * z, by - 4 * z, bx, by + 2 * z); ctx.quadraticCurveTo(bx + 7 * z, by - 4 * z, bx + 16 * z, by - fl * z); ctx.quadraticCurveTo(bx + 6 * z, by + 1 * z, bx, by + 5 * z); ctx.quadraticCurveTo(bx - 6 * z, by + 1 * z, bx - 16 * z, by - fl * z); ctx.fill(); }
+  flare(ctx, sx, sy, .8, true);
+}
+// close-up background: the painted sky, out of focus
+function paintBGGp() {
+  const img = PL('sky'), c = canvas(W, H), x = c.getContext('2d');
+  const s = Math.max(W / img.width, H / (img.height * .62)), iw = img.width * s, ih = img.height * s;
+  x.filter = 'blur(9px)'; x.drawImage(img, (W - iw) / 2, H - ih * .97, iw, ih); x.filter = 'none';
+  x.globalCompositeOperation = 'lighter'; const r = rng(4);
+  for (let i = 0; i < 16; i++) { const bx = r() * W, by = H * (.2 + r() * .7), rr = 16 + r() * 46; x.fillStyle = `rgba(255,250,235,${.04 + r() * .06})`; x.beginPath(); x.arc(bx, by, rr, 0, PI2); x.fill(); }
+  return c;
 }
 
 // ---------------- the scene ----------------
@@ -679,6 +784,9 @@ function draw(ctx, t) {
 
 Pilot.run({ W, H, dur: DUR, audio: 'crossing.m4a', fonts: ["600 40px 'Noto Serif KR'", "400 20px 'Noto Sans KR'"],
   init: async () => {
+    await Promise.all([['sky', 'plates/sky'], ['crossing', 'plates/crossing-' + (V ? 'v' : 'h')], ['front', 'plates/crossing-front-' + (V ? 'v' : 'h')],
+      ['signal', 'plates/signal-' + (V ? 'v' : 'h')], ['sunset', 'plates/sunset-' + (V ? 'v' : 'h')], ['train', 'plates/train'], ['turn1', 'turn1'], ['turn2', 'turn2'], ['back', 'back']]
+      .map(([n, f]) => Cutout.load(n, 'art/' + f + '.webp')));
     if (ORIG) await Promise.all(['back', 'bust', 'bust-blink', 'bust-sad'].map(n => Cutout.load(n, 'art/' + n + '.webp')));
     SKIRTP = Rig.pendulum(478, 46, { damp: 4.5, gravity: 900, gain: 1 });
     BACKRIG = await Rig.load('art/rig/', 'back', { parts: [{ k: 34, rootStiff: 5, damp: 4.2, gain: 1 }] });
@@ -689,8 +797,8 @@ Pilot.run({ W, H, dur: DUR, audio: 'crossing.m4a', fonts: ["600 40px 'Noto Serif
     CD = cloudTex(3, 1500, 1400, DUSK, { light: [1, -.25] });
     CBand = cloudTex(21, 1800, 340, DUSK, { prof: u => .47 - .1 * u + .03 * Math.sin(u * 9), top: .22, base: .85, ni: 40, ne: 170, ri: .14, re: .07, light: [1, -.25] });
     CSoft = canvas(750, 700); { const x = CSoft.getContext('2d'); x.filter = 'blur(9px)'; x.drawImage(CB, 0, 0, 750, 700); }
-    BGG = paintBGG();
-    trainCar = buildCar(CAM.f / TR.z); trainBuf = canvas(Math.ceil(W * 1.2), trainCar.height);
+    BGG = PLATE ? paintBGG() : paintBGGp();
+    trainCar = PLATE ? buildCar(CAM.f / TR.z) : paintedCar(CAM.f / TR.z); trainBuf = canvas(Math.ceil(W * 1.2), trainCar.height);
     const r = rng(41);
     for (let i = 0; i < 26; i++) tufts.push([(r() < .5 ? -1 : 1) * (2.95 + r() * .9), 1.1 + r() * 3.1, r() < .5]);
     for (let i = 0; i < 16; i++) { const z = 14 + r() * 30, left = i < 10; trees.push({ x: left ? -(5 + r() * 14) : 10 + r() * 10, z, y: 3 + r() * 2, r: 2.4 + r() * 2.2, seed: i + 1 }); }

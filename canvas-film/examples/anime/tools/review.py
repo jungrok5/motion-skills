@@ -1,5 +1,5 @@
 """Analyse the frames written by review.mjs and make the sheets a reviewer looks at.
-  python3 tools/review.py out/review [--hole 40]
+  python3 tools/review.py out/review [--hole 40] [--swaps 20.85,21.02]
 Checks (FAIL lines are things to fix before showing anyone; LOOK lines need a human/agent look at the saved image):
 - FIDELITY: rendered in the drawn pose (rest=1) the rig must reproduce the original flat drawing (orig=1) — catches
   broken strands, missing pieces, misplaced parts.
@@ -34,6 +34,10 @@ def holes(mask):   # magenta components not touching the border (at 1/2 res)
     return len(ys) * 4, (list(zip((xs * 2).tolist(), (ys * 2).tolist())) if len(ys) else [])
 SJ = json.load(open(os.path.join(d, 'stats.json'))) if os.path.exists(os.path.join(d, 'stats.json')) else {}
 shots = [tuple(map(float, r.split(':')[:2])) for r in SJ.get('shots', '0:999').split(',')]
+# --swaps t1,t2: planned drawing swaps (key drawings of a turn) — a silhouette jump there is intended, not a pop
+if '--swaps' in sys.argv:
+    for c in sorted(float(v) for v in sys.argv[sys.argv.index('--swaps') + 1].split(',')):
+        shots = [p for a_, b_ in shots for p in ([(a_, c), (c, b_)] if a_ < c < b_ else [(a_, b_)])]
 shot_of = lambda t: next((i for i, (a, b) in enumerate(shots) if a - 1e-6 <= t < b - 1e-6), -1)
 def grow(mask, r=6):
     im = Image.fromarray((mask * 255).astype(np.uint8)).filter(__import__('PIL.ImageFilter', fromlist=['x']).MaxFilter(2 * r + 1)); return np.asarray(im) > 0
@@ -111,7 +115,7 @@ for g in groups:
     for i, (c, r) in enumerate(zip(crops, g)):
         X, Y = (i % cols) * tw, (i // cols) * (th + 18); sheet.paste(c.resize((tw, th)), (X, Y + 18)); dr.text((X + 4, Y + 3), f'{r[0]:.2f}s', fill=(230, 230, 230))
     fn = f'strip-{g[0][0]:.1f}-{g[-1][0]:.1f}.jpg'; sheet.save(os.path.join(d, fn), quality=85); rep.append(f'sheet {fn} ({len(g)} frames)')
-films = sorted(glob.glob(os.path.join(d, 'film-*.jpg')), key=lambda p: float(re.findall(r'film-([\d.]+)\.jpg', p)[0]))
+films = sorted([f for f in glob.glob(os.path.join(d, 'film-*.jpg')) if re.search(r'film-[\d.]+\.jpg$', f)], key=lambda p: float(re.findall(r'film-([\d.]+)\.jpg', p)[0]))
 if films:
     tw = 320; im0 = Image.open(films[0]); th = int(im0.height * tw / im0.width); cols = 8; rws = (len(films) + cols - 1) // cols
     sheet = Image.new('RGB', (cols * tw, rws * (th + 16)), (20, 20, 24)); dr = ImageDraw.Draw(sheet)

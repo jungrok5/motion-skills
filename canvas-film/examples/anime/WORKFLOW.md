@@ -201,7 +201,41 @@ and moves each part on its own pivots with physics. `scenes/crossing-rig.html` d
    - Parts keep **hair-coloured pixels that really differ from the underlay** only (`layers.py` drops navy, white, skin,
      red and contours running under the hair): otherwise collar stripes or the jaw line slide with the hair.
 
-## 4c. Review before anyone sees it (do every time)
+## 4c. Painted backgrounds: repaint the code layout (scenes/crossing-paint.html)
+Code-drawn backgrounds were the weakest part (flat shapes next to painted key art). Fix without losing the code's
+camera: **render the code layout, have the image model repaint it, align the painting back onto the layout.**
+1. `?plate=1` renders a shot's background only (no people, train, text, light); `?plate=nofront` also hides the
+   objects in front of the train (near signal, pole, barrier):
+   `node tools/plates.mjs scenes/crossing-paint.html --o h --out out/plates B:7 Bnf:7:nofront L:13 D:26` (and `--o v`).
+2. Put each frame on the flow (it must be reachable by URL — we pushed JPEGs to the branch and used
+   `creative_attach_reference_file` with the raw.githubusercontent URL), then one edit per frame, 2K, same aspect:
+   ```
+   Change: repaint this rough 3D layout as a finished, highly detailed anime background painting of <the place, the
+   time of day>. Give everything real materials and detail: <list the materials>. <light direction, shadows, haze>.
+
+   Medium: hand-painted background art from a 2020s Japanese anime feature film (the look of CoMix Wave Films
+   backgrounds): painterly yet precise, rich texture and detail, saturated summer colours, luminous light.
+
+   Preserve: the exact composition and perspective of this layout: <name every object the code must find again> —
+   same positions, sizes and silhouettes. <state of things the code animates: lamps unlit>.
+
+   Constraints: no people, no train, no cars, no text or lettering anywhere, no logos, no watermark, no border.
+   Do not crop, zoom, rotate or shift the view.
+   ```
+   (≈520 credits each at 2K.) It keeps the layout remarkably well (registration found ≤1% scale and ≤4 px shift).
+3. `python3 tools/plate.py painted.png out/plates/B-h.png art/plates/crossing-h.webp --front out/plates/Bnf-h.png
+   art/plates/crossing-front-h.webp --grow 2` aligns the painting to the layout and cuts the FRONT layer with the mask
+   the code geometry gives (difference of the two layout renders). Draw order: plate → boy → train → front → lamps.
+4. What stays code, on top of the painting: lit lamps (light added at the known lamp centres), the train (a painted car
+   on green, keyed, slid with motion blur; see-through windows get a dim tint behind them), the camera push, shake,
+   tilt, flares, dust, the grade. A tall sky painting (3:4, text-to-image) covers the opening tilt and, blurred, the
+   close-up background.
+5. Light the figure like the painting: its sun is upper right, so the rim goes on the right edge, a cool multiplied
+   shade on the left (`Cutout.relight` `shade`), and a cast shadow sheared toward the camera-left (her silhouette).
+6. **Anime turn = key drawings**: two more bust edits (head away / side profile; ≈710 credits each) held for 3 and 2
+   frames before the rig takes over with a small settle — a turn no warp or parallax could make.
+
+## 4d. Review before anyone sees it (do every time)
 ```bash
 node tools/review.mjs scenes/crossing-rig.html --o h --shots "7:13:0.4,14.6:20.6:0.2,20.6:22:0.1,22:26:0.25" --sheet 0.5 --out out/review
 python3 tools/review.py out/review        # → out/review/report.txt, strips, film-sheet.jpg, holes-*/fidelity-*.png
@@ -249,6 +283,7 @@ node ../../scripts/render.mjs v --page scenes/crossing-rig.html --workers 4
 | `scenes/rig.js`, `scenes/art/rig/` | part skinning + spring physics; underlays, parts, rig JSON |
 | `tools/layers.py`, `tools/rigassets.py` | cut parts + spines from base vs underlay; build the rig assets |
 | `tools/facelayer.py` | face base + face front for the head turn |
+| `tools/plates.mjs`, `tools/plate.py` | render layout frames; align a repainted background and cut its front layer |
 | `tools/review.mjs`, `tools/review.py` | the review: figure/rest/orig passes, automatic checks, strips, sheets, report |
 | `scenes/crossing-art.html` | the first hybrid (one picture warped — the rubber look, kept for comparison) |
 | `scenes/cutout.js` | mesh warp + relight for keyed art |
