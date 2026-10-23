@@ -57,5 +57,5 @@ const Cutout = (() => {
       RX.fillStyle = g; RX.fillRect(0, 0, W, H); RX.globalCompositeOperation = 'source-over'; ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = o.band.a ?? .6; ctx.drawImage(R, 0, 0); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; }
     ctx.restore();
   }
-  return { load, img: n => store[n], warp, relight };
+  return { load, img: n => store[n], warp, relight, tri };
 })();

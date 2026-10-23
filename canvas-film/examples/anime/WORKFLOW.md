@@ -129,13 +129,66 @@ const [X, Y] = P3(CAM.gx, 0, CAM.gz);          // feet on screen
 artBack(ctx, X, Y, CAM.f / CAM.gz / 100, t, wind);   // s = px per cm
 ```
 
+## 4b. Rig it like Live2D (use this, not the one-picture warp)
+Warping one flat picture moves the face, body and clothes together with the hair — it reads as **a rubber print blown
+by the wind** (the owner's words on `crossing-art`). Live2D cuts the drawing into parts, paints what each part hides,
+and moves each part on its own pivots with physics. `scenes/crossing-rig.html` does that:
+
+1. **Underlay** — one more edit per drawing: the same picture with the loose parts removed and what was behind them
+   painted in (≈520 / ≈710 credits at 2K).
+   Back view:
+   ```
+   Change: remove ONLY the hanging ponytail below the scrunchie — the long tail of hair that hangs down and to the right. Where it was, paint what is behind it: the back of her head and hair up to the red scrunchie (keep the scrunchie, with just a short tuft of hair under it), the back of her neck, the navy sailor collar flap with its two white stripes, and the white blouse, continued naturally.
+
+   Preserve: everything else pixel-for-pixel: the exact same framing, size and position of the figure, the head, hair on the head, arms, skirt, legs, socks and shoes, colours, line art and lighting. Same pure green background #00FF00.
+
+   Constraints: no redesign, no zoom, no crop change, no new strands, no text.
+   ```
+   Bust:
+   ```
+   Change: remove ONLY the long loose hair that the wind blows away from her head: the long side locks streaming out to the viewer's left (in the air beside her face and over her shoulder) and the hanging ponytail below the red scrunchie. Keep the hair on her head, the bangs over her forehead, the short hair at her temples and the red scrunchie. Where the removed hair was, paint what is behind it: her cheek, jaw line, ear, neck, the navy sailor collar and the white blouse, continued naturally; plain green where there was only air.
+
+   Preserve: everything else pixel-for-pixel: the exact same framing, size and position of the head and shoulders, the face, eyes, mouth, blush, bangs, uniform, colours, line art and lighting. Same pure green background #00FF00.
+
+   Constraints: no redesign, no zoom, no crop change, no new strands, no text.
+   ```
+2. **Cut the parts** — base vs registered underlay: where they differ (on the figure, inside a box) is a removed part.
+   Gaps where hair lies over hair are bridged by a closing; each connected part gets a spine (root → tip along its main
+   axis; root = the end nearest the given root point).
+   ```bash
+   python3 tools/layers.py back_raw.png back_under_raw.png rig back --reg 380,40,860,700 --box 470,60,920,580 --root 560,120 --min 15000
+   python3 tools/layers.py bust_raw.png bust_under_raw.png rig bust --reg 500,300,1200,1000 --box 0,100,1640,1450 --root '1230,200;560,560' --min 15000
+   ```
+   Check the parts by overlaying `rig/*-alpha.png` and the spines on the drawing before going on.
+3. **Assets** — parts cut from the keyed base (alpha × part mask), the keyed underlay, and expression underlays (the
+   expression's face regions pasted into the underlay, never inside a part):
+   ```bash
+   python3 tools/rigassets.py rig back back_key.png scenes/art/rig
+   python3 tools/rigassets.py rig bust bust_key.png scenes/art/rig --expr "blink=blinkfix.png:528,535,712,735,6|752,548,992,765,6;sad=sadfix.png:510,470,1010,930,22"
+   ```
+4. **Rig in the scene** (`scenes/rig.js`):
+   ```js
+   const R = await Rig.load('art/rig/', 'back', { parts: [{ k: 34, rootStiff: 5, damp: 4.2, gain: 1 }] });
+   const th = Rig.sim(R.parts[0], t, tt => [windX(tt) * 2600 + gust(tt) * 450, 0], shotStart - 1.5);   // force in px/s²
+   ctx.drawImage(R.under, x, y, R.size[0] * k, R.size[1] * k);   // rigid: breath = a tiny scale, head = a tiny rotation
+   Rig.draw(ctx, R.parts[0], th, x, y, k);                         // hair skinned to its bones
+   ```
+   - Parts are skinned to their spine with linear-blend weights over the bones: hair bends along bones and keeps its width.
+   - Each bone is an angular spring (stiff root `k·(1+rootStiff)`, soft tip `k`, `damp`); wind and gravity are torques
+     relative to the drawn pose (with no wind the drawing is exactly as painted). Simulated at 240 Hz from the shot start
+     (minus 1.5 s pre-roll), so any `seek(t)` gives the same frame.
+   - The force is **relative to the drawn pose**: a drawing painted in a breeze gets zero-mean gusts; the train adds a
+     big push. Smooth at the full frame rate (Live2D is not on twos); swap drawings only for blinks and expressions.
+   - Not rigged yet: the skirt (it would need an underlay of the legs) and head turns (would need face-part layers).
+
 ## 5. Render and check
 ```bash
 cd canvas-film/examples/anime
-node ../../scripts/render.mjs h --page scenes/crossing-art.html --stills 9,16.5,21.5,23.5,25,29   # look at them
-node ../../scripts/render.mjs v --page scenes/crossing-art.html --stills 9,16.5,22,25,29
-node ../../scripts/render.mjs h --page scenes/crossing-art.html --workers 4                       # → out/crossing-art-h.mp4
-node ../../scripts/render.mjs v --page scenes/crossing-art.html --workers 4
+node ../../scripts/render.mjs h --page scenes/crossing-rig.html --stills 9,15.4,16.6,18,22,25,29   # look at them
+# motion can't be judged from one still: crop the figure from a run of stills (e.g. 14.8…19.6 every 0.6 s) into a strip
+node ../../scripts/render.mjs v --page scenes/crossing-rig.html --stills 9,16.5,22,25,29
+node ../../scripts/render.mjs h --page scenes/crossing-rig.html --workers 4                       # → out/crossing-rig-h.mp4
+node ../../scripts/render.mjs v --page scenes/crossing-rig.html --workers 4
 ```
 32.4 s renders in ~3 min per orientation on 4 cores. Sound plan: `scenes/crossing.sound.json` (not generated yet).
 
@@ -147,13 +200,18 @@ node ../../scripts/render.mjs v --page scenes/crossing-art.html --workers 4
 - **Resolution**: 1K full-body art is too small for a medium shot; use 2K for poses you will show large.
 - **Warp seams**: grow each triangle's clip by ~0.6 px; draw only the source sub-rect per triangle (much faster).
 - **Light mismatch**: ask for flat even light from one fixed direction in every prompt, then add scene light in code.
+- **Rubber**: never warp a whole drawing; cut parts, paint underlays, rig bones (4b).
+- **Fragmented parts**: hair over hair barely differs from the underlay; blur both and close the mask (`--close`).
 - **Rule conflict**: canvas-film's SCENE-RULES say "no AI images". This hybrid belongs in its own skill (planned);
   in this folder it is an experiment, documented here.
 
 ## Files
 | path | role |
 |---|---|
-| `scenes/crossing-art.html` | the hybrid scene (code direction + key art) |
+| `scenes/crossing-rig.html` | the hybrid scene, rigged like Live2D (use this) |
+| `scenes/rig.js`, `scenes/art/rig/` | part skinning + spring physics; underlays, parts, rig JSON |
+| `tools/layers.py`, `tools/rigassets.py` | cut parts + spines from base vs underlay; build the rig assets |
+| `scenes/crossing-art.html` | the first hybrid (one picture warped — the rubber look, kept for comparison) |
 | `scenes/cutout.js` | mesh warp + relight for keyed art |
 | `scenes/art/*.webp`, `scenes/art/README.md` | the keyed drawings and their provenance |
 | `tools/key.py`, `tools/patch.py` | green-screen key; drift-free expression patch |

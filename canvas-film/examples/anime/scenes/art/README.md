@@ -35,3 +35,9 @@ Cost for this set: about 4,650 credits (4 base candidates ≈ 760, 2+2 pose cand
 In the scene, `cutout.js` draws the art as a triangle mesh that code bends (ponytail, locks, skirt in the wind, on twos;
 a breath), swaps drawings for blinks and expressions, and lays the scene's light on it (rim from the alpha shifted
 toward the light, a cast shadow, a silhouette at dusk).
+
+## Rig (`art/rig/`, used by `crossing-rig.html`)
+Live2D-style layers: `*-under.webp` (the drawing with the loose hair removed and what was behind it painted in by one
+more edit), `*-partK.webp` (the hair parts, cut from the original drawing), `bust-under-blink/sad.webp` (expressions on
+the underlay), `*-rig.json` (bboxes and spines). Made with `tools/layers.py` + `tools/rigassets.py`; the two underlay
+edits cost ≈1,230 credits more (total for all art ≈5,880). Prompts and steps: `../../WORKFLOW.md` §4b.
