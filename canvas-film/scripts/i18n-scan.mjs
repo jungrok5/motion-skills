@@ -23,7 +23,9 @@ const scenes = only.length ? only : ORDER;
 const step = 0.25;
 const browser = await chromium.launch({ args: ['--allow-file-access-from-files'] });
 let bad = 0;
-for (const sc of scenes) {
+// scenes are independent: scan several at once (JOBS, default cores-1 up to 8). One at a time took 9–17 min on a CI runner;
+// the scan is CPU-bound, so a scene with a heavy shader can skip it when Pilot.collect is set (the scan needs only the words).
+const scan = async sc => {
   const seen = new Set(), miss = new Set(), drawn = new Set();
   for (const ori of ['h', 'v']) {
     const page = await browser.newPage({ viewport: ori === 'h' ? { width: 1920, height: 1080 } : { width: 1080, height: 1920 } });
@@ -34,6 +36,14 @@ for (const sc of scenes) {
     r.seen.forEach(s => seen.add(s)); r.miss.forEach(s => miss.add(s)); r.drawn.forEach(s => drawn.add(s));
     await page.close();
   }
+  return { seen, miss, drawn };
+};
+const results = {}, queue = [...scenes];
+await Promise.all(Array.from({ length: Math.min(+(process.env.JOBS || Math.min(8, Math.max(2, (await import('node:os')).cpus().length - 1))), scenes.length) }, async () => {
+  while (queue.length) { const sc = queue.shift(); results[sc] = await scan(sc); }
+}));
+for (const sc of scenes) {   // report in scene order
+  const { seen, miss, drawn } = results[sc];
   if (lang === SRC) {
     // drawn but never passed through Pilot.tr, and not merely a typed-in prefix of a translatable string
     const ids = [...seen].sort(), direct = [...drawn].filter(d => !seen.has(d) && ![...seen].some(s => s.startsWith(d) || s.includes(d))).sort();

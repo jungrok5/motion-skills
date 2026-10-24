@@ -116,6 +116,14 @@
   only the changed scene is encoded again. Cut or pad each scene's sound to its picture's exact frame count before
   joining, so nothing drifts. Each language still has to be rendered in full (text is in almost every shot).
 **Rendering speed** (a 14-min, 21-scene film; 4-core cloud CPU, no GPU; measured, not guessed)
+- Measure the whole CI run, not only the encoder: per-step times (gh api …/jobs → steps) showed the setup step taking 0–51 min
+  per job (apt: ffmpeg 43 min, Playwright --with-deps 8 min on a slow mirror), and one slow job holds the whole matrix. A static
+  ffmpeg from GitHub releases + Chromium without --with-deps + actions/cache for fonts/browser/ffmpeg: setup 6–30 s every time.
+- ffprobe 8 (the static build) prints "1080," for -show_entries … -of csv=p=0 — parse bare values (-of default=nw=1:nk=1).
+- The missing-string scan (i18n-scan) ran again inside the CI contact-sheet job (9–17 of ~20 min) after the translator had run it:
+  run it once, locally, before the push. It is CPU-bound: scenes in parallel help only up to the core count, and one heavy
+  scene sets the floor — let a shader-heavy scene skip the shader when Pilot.collect is set (the scan only needs the words).
+- Ask CI for everything that is ready in one run (site files + film + Shorts + kit), not one run per stage.
 - Find out where the minutes go first: per-scene wall time from the render log. Half of one orientation was two
   items — a WebGL scene run through SwiftShader (0.6 s a frame, 13 of 75 min) and a second full encode hidden after
   the last scene (the log made it look like that scene took 21 min). Everything else was 2–4 min a scene.

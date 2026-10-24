@@ -36,6 +36,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - uses: actions/cache@v4   # fonts, Chromium, ffmpeg: setup in ~1 min instead of 1–50 (apt mirrors vary)
+        with:
+          path: |
+            ~/.local/share/fonts
+            ~/.cache/ms-playwright
+            ~/.local/ffmpeg
+          key: ci-tools-${{ runner.os }}-${{ hashFiles('**/scripts/ci-setup.sh') }}
       - run: bash $SKILL/scripts/ci-setup.sh
       - name: render every scene, then join
         env:
