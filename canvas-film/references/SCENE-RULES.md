@@ -40,3 +40,7 @@ that canvas with the exact same drawImage call (smoothing, size). Drawing the de
 resamples differently (±35); through a canvas it matches the live blit to a handful of pixels of ±1. render.mjs builds
 the cache once per orientation (lossless PNGs) and passes `glcache` to every later render; the live page never uses it.
 Verify once with stills (`--glcache off` vs on). Worked example: one-scroll-bible `motion/pilot/creation.html`.
+- **Bodies are physically possible.** Limbs keep their bone lengths (solve arms/legs with 2-bone IK from the shoulder
+  to the grip point, never by placing both ends freely); elbows and knees bend one way only; wrists turn ≤ ~80°; a hand
+  that holds something is drawn AT the grip and the object moves with it; near limbs in front, far limbs behind. Check
+  with `scripts/body-check.py` and `references/BODY-CHECK.md` before handing in.

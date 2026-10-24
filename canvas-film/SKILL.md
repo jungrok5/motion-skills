@@ -25,10 +25,11 @@ Built for and proven on a 13-minute, 21-scene, 11-language Bible film
 | `scripts/publish.py` | build the **live web player** site: scenes + subset webfonts + per-scene m4a + language files |
 | `scripts/i18n-scan.mjs` | list every on-screen string of a scene (source language) / what a language still misses or leaks |
 | `scripts/i18n-merge.mjs` | merge per-scene translation files into the one file each language loads |
+| `scripts/body-check.py` | **body check pack** — full-size stills every 0.2 s around the moments figures act (lift, cut, carry, fall) + index sheets, for the joints/hands review (`references/BODY-CHECK.md`) |
 | `scripts/sheets.mjs` | contact sheets — every scene × both orientations × N moments, one image per scene (check a language or a restyle by eye) |
 | `player/index.html` | the player template (two-iframe preloading, audio as master clock, share sheet, deep links, theatre mode) |
 | `scripts/style-index.py` | rebuild `references/STYLE-INDEX.md` from STYLES.md + a Lemo-Opuscar clone |
-| `references/` | **MESSAGE (the 12-question message check for every storyboard)** · **STYLE-INDEX (every look to choose from, and how to search it)** · review-prompt (native-speaker review brief for a language) · SCENE-RULES (hard rules for scene authors) · STYLES (21 looks and how each was drawn) · SOUND (ElevenLabs flow) · I18N (method + quality gate) · LESSONS (what went wrong and the fixes) |
+| `references/` | **MESSAGE (the 12-question message check for every storyboard)** · **STYLE-INDEX (every look to choose from, and how to search it)** · **BODY-CHECK (joints/hands/held things — a fresh rigger agent reviews every film with acting figures before anyone sees it)** · review-prompt (native-speaker review brief for a language) · SCENE-RULES (hard rules for scene authors) · STYLES (21 looks and how each was drawn) · SOUND (ElevenLabs flow) · I18N (method + quality gate) · LESSONS (what went wrong and the fixes) |
 | `kits/` | **style kits** — four looks packaged for reuse (`charcoal`, `hopper`, `bass`, `puppet`): `kit.js` + STYLE.md + a template scene; start with `scripts/from-kit.py` (see kits/README.md) |
 | `scripts/from-kit.py` | start a project's scenes from one or more kits (vendors harness, story.js, kit, template, script) |
 | `examples/hello/` | a minimal project: `film.json`, one scene, a sound spec, a Korean translation — run everything on it first |
@@ -61,12 +62,14 @@ installed locally (`~/.local/share/fonts`, e.g. Noto Serif/Sans KR) — renders 
 2. **Build scenes** (`references/SCENE-RULES.md`): pure `draw(ctx,t)`, both orientations composed on purpose, ≥3.5 s per
    text line, ≤2 lines on screen, quotes verbatim with a source line, fade in/out from black. Parallelise across agents
    (3 scenes each) with SCENE-RULES as the brief; every agent must render stills in h AND v and look at them.
-3. **Review stills yourself** (contact sheets of 6–9 times per scene, both orientations) and send back concrete fixes:
+3. **Body check** for every scene with acting figures (`references/BODY-CHECK.md`: `scripts/body-check.py` pack → a fresh
+   rigger agent → fix every HIGH). Code-drawn arms and hands break most often.
+4. **Review stills yourself** (contact sheets of 6–9 times per scene, both orientations) and send back concrete fixes:
    figures that read as blobs, heads floating off bodies, broken strings, text over faces, clipped portrait crops, hard
    unintended edges, rectangles where a soft effect was meant, missing citations. Users DO notice these.
-4. **Sound**: each scene writes `<id>.sound.json` (≤3 music cues, ≤8 SFX, ducks for silence). Generate with ElevenLabs
+5. **Sound**: each scene writes `<id>.sound.json` (≤3 music cues, ≤8 SFX, ducks for silence). Generate with ElevenLabs
    (`references/SOUND.md` — one flow per batch, 2 variations, never retry), download, `mix.py`.
-5. **Render** (optional — the live player needs no video): `render.mjs h|v --scene <id>` per scene, then `assemble.py h|v`.
+6. **Render** (optional — the live player needs no video): `render.mjs h|v --scene <id>` per scene, then `assemble.py h|v`.
    Hours of CPU; run in the background, check with stills before. render.mjs reads the canvas (not screenshots) and writes
    the upload format directly, so `assemble.py h|v --upload` only joins (seconds)
    → `film-<h|v>-upload.mp4` (H.264 faster CRF 18 ≤ 12 Mbps — YouTube's recommended range —, closed GOP, keyframe every
@@ -85,11 +88,11 @@ installed locally (`~/.local/share/fonts`, e.g. Noto Serif/Sans KR) — renders 
    prepares any Ubuntu box: Noto variable fonts, ffmpeg, Playwright). The workflow must sit on the default branch; commit
    the published sound (site/s/*.m4a) since the runner has no wav; try two scenes of one language first. Measure before
    optimising — `references/LESSONS.md` "Rendering speed" lists what helped and what did not.
-6. **Publish the live player**: `publish.py` → `site/`; add `poster-h.jpg`/`poster-v.jpg` (a still of the title card) per
+7. **Publish the live player**: `publish.py` → `site/`; add `poster-h.jpg`/`poster-v.jpg` (a still of the title card) per
    language; deploy `site/` anywhere static. Check CSP (`media-src`, `font-src` self), and that a service worker does not
    intercept the m4a range requests. To put the player inside another page, iframe it with `?embed=1` (stage + controls
    only) and optionally `&o=h|v` (fix the orientation) and `&lang=xx`.
-7. **Languages** (`references/I18N.md`): scan source strings → per-language translation files (Scripture/quotes verbatim
+8. **Languages** (`references/I18N.md`): scan source strings → per-language translation files (Scripture/quotes verbatim
    from each language's own official text, site prose reused from the site's own translation, scene-only labels
    translated) → scan for leaks → contact sheets (`sheets.mjs`) → **native-review agent per language** (`references/review-prompt.md`) → fix → publish. Batch 4–6 languages at a
    time; one agent per language; only one agent may touch scene code at a time.
