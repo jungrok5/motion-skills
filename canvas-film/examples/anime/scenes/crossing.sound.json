@@ -1,0 +1,8 @@
+{ "duration": 27,
+  "music": [ { "id": "m1", "at": 0, "len": 27, "db": -4, "fin": 1.0, "fout": 1.8,
+               "prompt": "Japanese anime film score: solo felt piano with soft strings, nostalgic late-summer feeling, a simple rising melody that opens up warmly near the end, gentle, no drums, 72 bpm" } ],
+  "sfx":   [ { "id": "s1", "at": 0, "len": 14.6, "db": -14, "loop": true, "prompt": "Japanese summer cicadas chorus (minminzemi) in a quiet town, steady ambience" },
+             { "id": "s2", "at": 7, "len": 13.4, "db": -10, "loop": true, "prompt": "Japanese railway crossing alarm bell, steady alternating 'kan kan kan' ding" },
+             { "id": "s3", "at": 14.6, "len": 5.4, "db": -6, "prompt": "Commuter train passing close and fast, rushing wind, rhythmic wheel clatter over rail joints, then fading away" },
+             { "id": "s4", "at": 20.6, "len": 6.4, "db": -14, "prompt": "Evening cicadas (higurashi) calling softly at dusk, a distant crow cawing twice" } ],
+  "ducks": [] }

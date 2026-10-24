@@ -1,0 +1,16 @@
+{
+ "title": "canvas-film anime example",
+ "source": "ko",
+ "scenes": [ { "id": "crossing", "label": "건널목", "dur": 27 } ],
+ "fonts": {
+  "base": [ ["Noto Serif", 600, "NotoSerif.ttf"], ["Noto Sans", 400, "NotoSans.ttf"] ],
+  "local": { "Noto Serif KR": "Noto-600.ttf", "Noto Sans KR": "NotoSansKR-400.ttf" }
+ },
+ "player": {
+  "title": "건널목 · canvas-film anime example", "desc": "일본 애니메이션 화풍을 코드로 그린 한 장면.", "home": "./", "homeLabel": "← 돌아가기",
+  "len": "27초", "h1": "건널목 <span class=\"em\">anime</span>", "sub": "브라우저에서 그려지는 애니메이션 한 장면.", "back": "",
+  "legal": "모든 그림은 코드로 그렸습니다.",
+  "ui": { "play": "재생", "pause": "일시정지", "prev": "이전 장면", "next": "다음 장면", "full": "전체 화면", "loading": "불러오는 중…",
+          "landscape": "가로", "portrait": "세로", "share": "공유", "copied": "링크를 복사했습니다", "ch": ["건널목"] }
+ }
+}

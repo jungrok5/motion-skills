@@ -32,6 +32,7 @@ Built for and proven on a 13-minute, 21-scene, 11-language Bible film
 | `kits/` | **style kits** — four looks packaged for reuse (`charcoal`, `hopper`, `bass`, `puppet`): `kit.js` + STYLE.md + a template scene; start with `scripts/from-kit.py` (see kits/README.md) |
 | `scripts/from-kit.py` | start a project's scenes from one or more kits (vendors harness, story.js, kit, template, script) |
 | `examples/hello/` | a minimal project: `film.json`, one scene, a sound spec, a Korean translation — run everything on it first |
+| `examples/anime/` | one 27-s scene in a Japanese anime look (cel-shaded characters on twos, painted Shinkai-style sky, train at a railway crossing) — a reference for character drawing and cel shading in Canvas 2D (STYLES.md, "Anime"); `glance.html` is a close-up key frame with a face, layered hair and tapered ink lines, sharing `anime-kit.js`. `crossing-art.html` is the hybrid: image-model key art for the character, code for everything else — step by step in `examples/anime/WORKFLOW.md` (breaks the no-AI-image rule on purpose; experiment for a separate skill) |
 
 ## Project layout (what you create)
 ```

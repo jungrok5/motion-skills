@@ -1,0 +1,11 @@
+{
+  "purpose": "영상이 끝났을 때 관객이 느끼거나 이해해야 할 것",
+  "audience": "대상 관객",
+  "theme": "한 문장 주제",
+  "durationSeconds": 32.4,
+  "emotionArc": ["기대", "단절", "여운"],
+  "characters": [{"id":"heroine","intention":"말을 건네고 싶다","designReference":"고정된 기준 원화"}],
+  "shots": [{"id":"A","duration":7,"place":"장소","action":"캐릭터가 실제로 하는 동작","camera":"카메라 동작","requiredArt":["배경","완성 레이어"],"sound":"환경/음악/효과","subtitle":"필요한 경우만"}],
+  "deliverables": ["독립 실행 HTML", "편집 가능한 코드와 시나리오", "검수 결과"],
+  "constraints": ["새 주제에는 새 샷과 필요한 원화를 설계한다", "카메라를 고정해도 캐릭터 움직임이 보여야 한다", "없는 각도를 과도한 warp로 만들지 않는다"]
+}
