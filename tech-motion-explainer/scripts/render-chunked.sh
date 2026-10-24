@@ -28,5 +28,5 @@ size=$(wc -c < "$out" | tr -d " ")
 if [ "$size" -gt 95000000 ]; then
   ffmpeg -y -loglevel error -i "$out" -c:v libx264 -preset slow -crf $((crf+5)) -pix_fmt yuv420p -movflags +faststart "$out.small.mp4" && mv "$out.small.mp4" "$out"
 fi
-echo "wrote $out ($(du -h "$out" | cut -f1), $(ffprobe -v error -show_entries format=duration -of csv=p=0 "$out")s)"
+echo "wrote $out ($(du -h "$out" | cut -f1), $(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "$out")s)"
 rm -rf "$work"

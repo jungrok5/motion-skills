@@ -179,6 +179,9 @@
 - Plurals: `Pilot.trn` with CLDR categories (`"{n} años#one": "{n} año"`, Arabic two/few…).
 - Japanese kana / Arabic joined letters can't be an illuminated initial — skip the initial for those scripts.
 - Lines without spaces (CJK) don't wrap on spaces — add explicit `\n` or wrap per character.
+- A long quote laid out as fixed rows (one source string per row) may not fit a longer language: let the translation
+  break a row with `\n` and lay the rows out from the translated split (`Pilot.tr(k).split('\n')`), so the source
+  language still looks the same and the citation moves down with the extra rows.
 
 **Phones and previews** (word-log, 2026-10)
 - A scene opened directly on a phone showed only a zoomed-in corner ("just black"): the 1080/1920-px canvas, positioned and
