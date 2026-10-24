@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=path.dirname(fileURLToPath(import.meta.url));
+let html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const data={background:'data:image/png;base64,'+fs.readFileSync(path.join(root,'assets/crossing-background.png')).toString('base64'),atlas:'data:image/png;base64,'+fs.readFileSync(path.join(root,'assets/character-atlas.png')).toString('base64')};
+html=html.replace('<script src="story.js"></script>','<script>window.ASSET_URLS='+JSON.stringify(data)+';</script>\n<script src="story.js"></script>');
+for(const name of ['story','rig','film','audio','player'])html=html.replace(`<script src="${name}.js"></script>`,`<script>\n${fs.readFileSync(path.join(root,name+'.js'),'utf8').replace(/<\/script/gi,'<\\/script')}\n</script>`);
+for(const name of ['sans','serif'])html=html.replace(`assets/noto-${name}.woff`,'data:font/woff;base64,'+fs.readFileSync(path.join(root,`assets/noto-${name}.woff`)).toString('base64'));
+const out=process.argv[2]||path.join(root,'summer-echo.html');fs.writeFileSync(out,html);console.log(out,fs.statSync(out).size);

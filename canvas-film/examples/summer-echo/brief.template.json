@@ -1,0 +1,13 @@
+{
+  "title": "작품 제목",
+  "purpose": "관객에게 무엇을 느끼게 할 것인가",
+  "audience": "누가 보는가",
+  "theme": "이 작품의 한 문장",
+  "durationSeconds": 38,
+  "beats": ["시작 감정", "감정을 바꾸는 사건", "마지막 행동"],
+  "cast": [{"id":"lead","description":"외형, 의상, 나이, 성격","actingRange":["gaze","head","hands","expression"]}],
+  "locations": ["장소, 시간대, 빛과 날씨"],
+  "shots": [{"start":0,"end":5,"framing":"wide","action":"화면에서 실제로 일어나는 행동","anticipation":"동작 전 준비","hold":"멈춤의 목적","secondaryMotion":"머리카락/옷의 지연"}],
+  "art": {"newBackgrounds":[],"newLayeredCharacters":[],"referencePolicy":"시나리오 외 기존 결과물 사용 안 함"},
+  "delivery":{"standaloneHtml":true,"landscape":true,"portrait":true,"offline":true}
+}
