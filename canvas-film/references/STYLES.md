@@ -31,27 +31,6 @@ your own renderer.
 | ship | **18th-century sea-chart copperplate (after *Mutiny on the Bounty*)** | changing ships, not scrubbing decks | one engraved admiralty chart (compass roses, rhumb lines, cartouches, sea monsters); engraved ships sail along drawn courses; a man crosses by boat from the pirate ship to the ship of light; the old course is struck through |
 | invite | **the gold line returns** | a prayer written in light | the line writes each sentence of the prayer, pulls back into one line, ends on the title card |
 
-## Anime (examples/anime) — beyond the Bible film
-A Japanese TV/film anime look, proven on one scene (`examples/anime/scenes/crossing.html`, a schoolgirl at a railway
-crossing: sky tilt-down → wide → lamp insert → train passes → dusk silhouettes).
-- **Painted background, flat characters.** Skies, clouds, houses get gradients, haze by distance and detail; figures get
-  flat fills, ONE hard shadow tone and a coloured ink line (`#2a2238`, ~0.35 cm at figure scale).
-- **The cel trick** (`cel()`): fill the shape in its shadow colour, clip to it, fill the same shape shifted toward the
-  light in the base colour. The uncovered crescent is a hard-edged shadow that follows any shape (skirt, sleeve, hair, bag).
-- **Characters on twos**: quantise time for figure deformation (`TW = t => floor(t*12)/12`) while camera, train and light
-  move at 30 fps. That mismatch is what reads as "anime" rather than "vector animation".
-- **Cel cumulonimbus** (`cloudTex`): ~70 large interior puffs + ~230 small puffs on the outline (sides + a dome cap),
-  drawn top-first so lower lumps overlap upper ones, each with a soft-toned crescent; then ONE large-scale terminator
-  (the whole union shifted toward the light; what it leaves uncovered is the shadow side), a thin lit rim, a shadowed
-  flat base fading into haze. Few big puffs with per-puff highlights read as a pile of balls — avoid.
-- **Compositing (撮影) pass**: whole-frame blurred copy screened at ~0.2 (diffusion), a warm corner light leak, vignette,
-  grain; lens flare with hexagonal ghosts on the sun→centre axis; red lamp glows as additive radial + a flattened streak.
-- **A fast train**: one car texture (see-through windows: cut holes, tint, straps, reflection streak), drawn with
-  ~10 additive sub-frame copies (`lighter`, alpha 1/N = true average) plus speed lines and a little camera shake; the
-  background shows through the windows, so the person on the far side flickers between cars.
-- Japan detail sells it: narrow-gauge double track, yellow-black crossbuck and barrier, twin alternating red lamps with
-  a lit direction arrow, a vending machine, utility poles with sagging wires, crows at dusk.
-
 ## Recurring craft
 - Texture: `Pilot.speckle` paper/grain overlays, fbm-driven edges; never perfectly straight lines in hand-made styles.
 - Light: radial gradients + `shadowBlur` glow + additive (`lighter`) bloom; a single motivated light source per shot.

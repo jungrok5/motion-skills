@@ -25,20 +25,6 @@
 - WebGL scenes render slowly where there is no GPU (software GL: minutes per scene-second); render them at reduced
   internal resolution with adaptive downscale and budget the time.
 
-- Anime example (cel look): a colour helper that returned `rgba(...)` was fed into another that parses `#hex` → NaN →
-  the canvas kept the previous fillStyle and whole house fronts came out black. Keep colour helpers in one format.
-- Cel clouds made of a few large puffs, each with its own highlight, read as a pile of balls. Many small outline puffs
-  plus one large-scale terminator for the whole mass read as cumulus.
-- Motion blur from 6 sub-frame copies showed visible steps on window edges at train speed; 10 copies were smooth.
-- The anime scene was first built without reading `styles/cel-anime-80s/STYLE.md` of Lemo-Opuscar, although STYLE-INDEX
-  lists it — and the result read as a child's drawing. That brief has the character rules that matter (construct the
-  head as sphere + jaw, almond eyes at mid-head, layered iris, coloured lines, hair as locks over a dark under-layer,
-  a model sheet approved before any shot, stage around front views). Read the full brief of the chosen look first.
-- Anime-quality characters in the public Claude video collections mostly come from image/video models, Blender, or
-  art the user supplied; pure-code faces top out around a clean TV-anime key frame. Say so when proposing the look.
-- Figures drawn from behind still need checking at full size: stick arms with separate round hands looked like a
-  puppet — draw arm and hand as one shape, close to the body, and make the head ~1.15× realistic size.
-
 **Looking like a film, not a presentation** (feedback after release)
 - Viewers notice when one scene drops out of the film's language: numbered items (01/07), grids, bar charts, map
   leader-line labels, hex-tile "game" islands and a marimba/kalimba bed all read as an explainer or a slide deck. Keep
