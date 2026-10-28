@@ -103,23 +103,23 @@
 <li><strong>서버까지</strong>: 그 서버의 접속자 전체(예시 1,284명)가 대상입니다.</li>
 <li><strong>캐릭터까지</strong>: 그 캐릭터 한 명의 세션까지 봅니다.</li>
 </ul>
-<p>오른쪽 "분석 범위"는 입력할 때마다 바뀝니다. "판정할 수 있는 층"에서 게임서버 · 인프라는 프로젝트만 골라도 판정할 수 있고, 클라이언트 · 네트워크는 캐릭터 단위 기록이 있어야 하므로 캐릭터를 넣은 뒤에 판정 가능으로 바뀝니다. 조회 구간은 따로 고르지 않으면 최근 10분이고, 영상에서는 21:20에 조회해 21:10–21:20을 봅니다.</p>
+<p>오른쪽 "분석 범위"는 입력할 때마다 바뀝니다. "판정할 수 있는 층"에서 게임서버 · 인프라는 프로젝트만 골라도 판정할 수 있고, 클라이언트 · 네트워크는 서버 범위에서도 접속자 RTT 분포처럼 전체 상태는 볼 수 있지만, 신고한 유저 한 명의 문제인지 가리려면 그 캐릭터의 기록이 있어야 하므로 캐릭터를 넣은 뒤에 "이 유저 기준"으로 판정 가능이 됩니다. 조회 구간은 따로 고르지 않으면 최근 10분이고, 영상에서는 21:20에 조회해 21:10–21:20을 봅니다.</p>
 </article>
 <article data-ch="02">
 <p>판정 시작을 누르면 판정 #2381 화면으로 넘어가고, 위쪽 단계 표시가 데이터 조회 → 층별 분석 → 판정 순서로 진행됩니다. 다섯 데이터 소스는 소스마다 다른 키로 찾습니다. 클라이언트 텔레메트리(<code>client_perf</code>)와 세션 · 네트워크 로그(<code>net_session</code>)는 캐릭터 ID로, 게임서버 메트릭(<code>server_tick</code>)과 운영 이벤트(<code>ops_events</code>)는 서버 이름으로, 인프라 모니터링(<code>host_metrics</code>)은 서버 → 호스트 · DB 매핑으로 알아낸 호스트와 DB 이름으로 찾습니다.</p>
-<p>"쿼리 미리보기"는 조건에 맞는 행을 골라내는 모습이고, "실행 로그"에는 쿼리마다 시작과 결과(행 수, 걸린 시간)가 한 줄씩 남습니다. 일치한 행은 600 + 120 + 12,000 + 60 + 3 = 12,783행입니다. 클라이언트 기록은 1초에 한 행(그 1초 동안 가장 긴 프레임 시간, <code>frame_ms_max</code>)이라 600행이고, 틱 메트릭은 초당 20틱 × 600초라 12,000행입니다. 평균이 아니라 최댓값을 남겨야 짧은 끊김이 묻히지 않습니다. 운영 이벤트에서는 21:14:03 <code>boss_spawn</code> 기록이 나옵니다. 화면은 보기 쉽게 천천히 돌렸고, 로그의 걸린 시간이 실제 쿼리 시간(예시)입니다.</p>
+<p>"쿼리 미리보기"는 조건에 맞는 행을 골라내는 모습이고, "실행 로그"에는 쿼리마다 시작과 결과(행 수, 걸린 시간)가 한 줄씩 남습니다. 일치한 행은 600 + 120 + 11,523 + 60 + 3 = 12,306행입니다. 클라이언트 기록은 1초에 한 행(그 1초 동안 가장 긴 프레임 시간, <code>frame_ms_max</code>)이라 600행입니다. 틱 메트릭은 정상이면 초당 20틱 × 600초 = 12,000행이지만, 틱이 밀린 35초 동안은 한 틱이 길어진 만큼 틱 수가 줄어 11,523행입니다. 틱 수가 줄어드는 것도 틱 초과의 증상입니다. 평균이 아니라 최댓값을 남겨야 짧은 끊김이 묻히지 않습니다. 운영 이벤트에서는 21:14:03 <code>boss_spawn</code> 기록이 나옵니다. 화면은 보기 쉽게 천천히 돌렸고, 로그의 걸린 시간이 실제 쿼리 시간(예시)입니다.</p>
 </article>
 <article data-ch="03">
 <p>모은 기록을 패킷이 지나는 순서대로 한 층씩 보고, 층마다 확인 항목(기준값은 예시)과 대조해 정상 · 이상을 붙입니다.</p>
 <ul>
-<li><strong>클라이언트</strong>: 1초마다 가장 긴 프레임 시간이 16.4–17ms로, 60fps(16.7ms) 안팎에서 고릅니다. 50ms 넘는 프레임 0회, FPS 30 미만 구간 0회, 히치 · 크래시 리포트 0건이라 정상입니다.</li>
-<li><strong>네트워크</strong>: 캐릭터와 서버 사이 RTT p95가 41ms(평균 38ms), 손실 0.0%, 재연결 0회라 정상입니다. 이 RTT는 게임 루프 밖, 네트워크 스레드에서 잰 값이라는 전제입니다. 핑을 게임 루프 안에서 응답하는 구성이면 서버 틱 지연이 RTT에 섞여 두 층을 이렇게 나눌 수 없습니다.</li>
-<li><strong>게임서버</strong>: 5초마다 가장 긴 틱을 막대로 그렸습니다. 평소 20ms 안팎이던 틱이 21:14:05부터 36초 동안 예산 50ms를 넘고 최대 210ms(예산의 4.2배)까지 갑니다. 같은 시각 운영 이벤트로 21:14:03 보스 스폰이 있습니다. 틱이 밀리면 그 서버의 모든 접속자에게 상태 갱신이 늦게 가므로 영향 범위는 서버 접속자 전원입니다. 이상입니다.</li>
+<li><strong>클라이언트</strong>: 1초마다 가장 긴 프레임 시간이 17–22ms로 고릅니다(60fps면 평균이 16.7ms이고, 1초 중 가장 긴 프레임은 그보다 조금 깁니다). 50ms 넘는 프레임 0회, FPS 30 미만 구간 0회, 히치 · 크래시 리포트 0건이라 정상입니다.</li>
+<li><strong>네트워크</strong>: 캐릭터와 서버 사이 RTT p95가 40ms(평균 38ms), 손실 0.0%, 재연결 0회라 정상입니다. 이 RTT는 게임 루프 밖, 네트워크 스레드에서 잰 값이라는 전제입니다. 핑을 게임 루프 안에서 응답하는 구성이면 서버 틱 지연이 RTT에 섞여 두 층을 이렇게 나눌 수 없습니다.</li>
+<li><strong>게임서버</strong>: 5초마다 가장 긴 틱을 막대로 그렸습니다. 평소 20ms 안팎이던 틱이 21:14:05부터 35초 동안 예산 50ms를 넘고 최대 210ms(예산의 4.2배)까지 갑니다. 같은 시각 운영 이벤트로 21:14:03 보스 스폰이 있습니다. 틱이 밀리면 그 틱 루프의 모든 접속자에게 상태 갱신이 늦게 가므로 영향 범위는 서버 접속자 전원으로 추정합니다(서버당 틱 루프 하나인 구성 기준. 존 · 채널마다 루프가 따로면 그 존의 접속자). 이상입니다.</li>
 <li><strong>인프라</strong>: 호스트 CPU 최대 66%, CPU steal 0.2%, 디스크 대기 1ms, DB p99 9ms로 모두 기준 아래입니다. 비교용으로 같은 호스트의 다른 서버 세 대의 틱을 추가로 조회하면, 그 서버들은 정상이고 asterra-03만 튑니다. 호스트가 원인이었다면 그 서버들도 함께 튀었을 것이므로 호스트는 정상으로 봅니다. DB는 이웃 서버와 다른 DB를 쓸 수 있으므로 DB 자체의 p99로 따로 확인합니다.</li>
 </ul>
 </article>
 <article data-ch="04">
-<p>판정 리포트 #2381은 게임서버 렉입니다. 구간은 21:14:05–21:14:41(36초), 영향은 asterra-03 접속자 전원, 계기는 21:14:03 <code>boss_spawn</code>입니다. "같은 시간축으로 본 네 층"에서 판정 구간에 마우스를 올리면, 그 구간에서 게임서버 틱만 붉게 튀고(최대 210ms) RTT 38ms, 프레임 17ms 이하, 호스트 CPU 최대 66%는 그대로라는 것이 툴팁으로 나옵니다.</p>
+<p>판정 리포트 #2381은 게임서버 렉입니다. 구간은 21:14:05–21:14:40(35초), 영향은 asterra-03 접속자 전원(추정), 계기는 21:14:03 <code>boss_spawn</code>입니다. "같은 시간축으로 본 네 층"에서 판정 구간에 마우스를 올리면, 그 구간에서 게임서버 틱만 붉게 튀고(최대 210ms) RTT 38ms, 1초 최대 프레임 22ms 이하, 호스트 CPU 최대 66%는 그대로라는 것이 툴팁으로 나옵니다.</p>
 <p>오른쪽 "근거"에는 원인(틱 20ms → 최대 210ms), 계기(보스 스폰), 그리고 제외한 층과 그 이유(네트워크 RTT · 손실 그대로, 클라이언트 프레임 그대로, 호스트 · DB 지표 정상이고 같은 호스트의 이웃 서버도 정상)가 다섯 줄로 남습니다. 리포트는 공유 링크로 보내거나 티켓으로 만들 수 있습니다. 왼쪽 "최근 판정" 목록에도 #2381이 추가됩니다.</p>
 </article>
 <article data-ch="05">
@@ -127,10 +127,10 @@
 <ul>
 <li><strong>네트워크 렉</strong>: RTT · 손실이 튀고 서버 틱은 정상입니다. 같은 서버라도 경로가 다른 유저는 정상입니다.</li>
 <li><strong>인프라 렉</strong>: 호스트 · DB 지표가 튑니다. 틱 안에서 DB를 동기로 부르는 구조면 틱도 따라 늘어나고, 비동기로 부르면 틱은 그대로인 채 저장 · 거래 같은 요청만 늦어집니다. 같은 호스트나 DB를 쓰는 서버들이 함께 느려지는지로 게임서버 렉과 구분합니다.</li>
-<li><strong>게임서버 렉</strong>: 틱만 예산을 넘고 호스트 · DB는 정상입니다. 그 서버 접속자 전원이 동시에 느려집니다. 이번 판정입니다.</li>
+<li><strong>게임서버 렉</strong>: 틱만 예산을 넘고 호스트 · DB는 정상입니다. 그 서버(틱 루프)의 접속자 전원이 동시에 느려집니다. 이번 판정입니다.</li>
 <li><strong>클라이언트 렉</strong>: 프레임 시간만 튀고 RTT · 틱은 정상입니다. 같은 서버라도 PC 사양이나 보고 있는 장면에 따라 갈립니다. 무거운 장면이나 새 클라이언트 빌드 때문에 여러 명이 동시에 겪을 수도 있고, 그때도 기준은 RTT · 틱이 정상이라는 점입니다.</li>
 </ul>
-<p>입력이 프로젝트나 서버에서 멈추면 캐릭터 단위 기록이 없으므로, 서버끼리 · 호스트끼리 비교해 게임서버 · 인프라 층을 가립니다.</p>
+<p>입력이 프로젝트나 서버에서 멈추면 특정 유저의 기록이 없으므로, 서버끼리 · 호스트끼리 비교해 게임서버 · 인프라 층을 가리고, 클라이언트 · 네트워크는 접속자 전체의 분포로만 봅니다.</p>
 </article>
 <h2>용어 정리</h2>
 <dl class="terms">
@@ -390,13 +390,13 @@ const HAN = /[가-힣]/;
 // ── sample data: s = seconds since 21:10:00, window 0..600 (21:10–21:20) ──
 const hash = (i, s = 0) => { const x = Math.sin(i * 127.1 + s * 311.7) * 43758.5453; return x - Math.floor(x); };
 const sn = (x, s) => { const i = Math.floor(x), f = x - i, k = f * f * (3 - 2 * f); return lerp(hash(i, s), hash(i + 1, s), k); };
-const SPAN = 600, B0 = 245, B1 = 281;          // 21:14:05 – 21:14:41
-// worst tick per 5 s bucket (ms); buckets 49..55 hold the spike (over 50 ms ≈ 21:14:05–21:14:41), peak 210
+const SPAN = 600, B0 = 245, B1 = 280;          // 21:14:05 – 21:14:40
+// worst tick per 5 s bucket (ms); buckets 49..55 hold the spike (over 50 ms = 21:14:05–21:14:40), peak 210
 const SPIKE = { 49: 96, 50: 168, 51: 210, 52: 188, 53: 174, 54: 192, 55: 141, 56: 48 };
 const TICKS = Array.from({ length: 120 }, (_, b) => SPIKE[b] ?? Math.round(14 + hash(b, 3) * 12));
-const frameMs = s => 16.4 + sn(s / 6, 1) * .6;                  // 1 s max frame: 16.4–17.0
+const frameMs = s => 17 + sn(s / 6, 1) * 5;                      // 1 s max frame: 17–22 (above the 16.7 ms average at 60 fps)
 const rttMs = s => 35 + sn(s / 8, 2) * 6;                        // 35–41, avg 38, p95 ≈ 41
-const tickMs = s => { const b = clamp((s - 2.5) / 5, 0, 118.999), i = Math.floor(b), f = b - i; return lerp(TICKS[i], TICKS[Math.min(119, i + 1)], f); };
+const tickMs = s => { const c = clamp(s, 0, 599.999), i = Math.floor(c / 5), f = clamp((c - i * 5 - 4.2) / .8); return lerp(TICKS[i], TICKS[Math.min(119, i + 1)], eio(f)); };
 const cpuPct = s => 55 + sn(s / 10, 5) * 7 + 8 * clamp(1 - Math.abs((s - 263) / 24)); // peak ≈ 66
 const flat = (base, amp, seed) => s => base + sn(s / 7, seed) * amp;
 const sx = (s, x, w) => x + w * s / SPAN;
@@ -544,12 +544,12 @@ function drawPointer(t) {
 const near = (t, x0, y0, x1, y1) => { const [x, y] = pointerAt(t); return t > 67.6 && x >= x0 && x <= x1 && y >= y0 && y <= y1; };
 const CAPS = [
   [4.0, 10.6, '프로젝트 → 서버 → 캐릭터 순서로 넣고, 뒤 칸은 비워 둬도 됩니다'],
-  [11.4, 14.4, '캐릭터까지 넣으면 네 층을 모두 판정할 수 있습니다'],
+  [11.4, 14.4, '캐릭터까지 넣으면 이 유저 기준으로 네 층을 모두 판정합니다'],
   [18.2, 25.6, '다섯 데이터 소스에서 이 캐릭터 · 서버의 기록만 골라냅니다'],
   [26.4, 33.8, '서버 틱은 서버 이름으로, 호스트 · DB는 매핑된 이름으로 찾습니다'],
   [37.9, 40.3, '운영 이벤트에서 21:14:03 보스 스폰 기록을 찾았습니다'],
   [41.8, 52.6, '패킷이 지나는 순서대로 한 층씩 확인 항목을 대조합니다'],
-  [53.2, 58.4, '게임서버 틱이 36초 동안 예산 50ms를 넘었습니다'],
+  [53.2, 58.4, '게임서버 틱이 35초 동안 예산 50ms를 넘었습니다'],
   [59.0, 64.2, '같은 호스트의 다른 서버가 정상이라 호스트는 원인에서 뺍니다'],
   [65.4, 73.8, '판정 구간에서 게임서버 틱만 튀고, 나머지 층은 그대로입니다'],
   [74.6, 78.8, '원인 · 계기 · 제외 이유가 근거로 남습니다'],
@@ -572,7 +572,7 @@ const HEAD = [
   [3.0, 16.4, '01', '대상 입력', '프로젝트 → 서버 → 캐릭터, 채운 만큼 범위가 좁아짐'],
   [16.4, 41.0, '02', '데이터 조회', '다섯 곳에서 이 캐릭터 · 서버의 기록만 골라냄'],
   [41.0, 64.5, '03', '층별 분석', '패킷이 지나는 순서대로 확인 항목을 대조'],
-  [64.5, 82.0, '04', '판정 리포트', '게임서버 렉 · 21:14:05–21:14:41 (36초)'],
+  [64.5, 82.0, '04', '판정 리포트', '게임서버 렉 · 21:14:05–21:14:40 (35초)'],
   [82.0, 94.5, '05', '판정 기준', '어느 지표가 튀고, 누가 같이 느린지로 갈림'],
 ];
 
@@ -738,17 +738,17 @@ function scrA(t) {
     if (sub) txt(sub, 1312, 582, { size: 18, color: U.accent, alpha: k, mono: !HAN.test(sub) });
   });
   hline(1312, 1848, 616, U.line);
-  txt('판정할 수 있는 층', 1312, 660, { size: 20, weight: 800 });
+  txt('판정할 수 있는 층', 1312, 654, { size: 20, weight: 800 });
   const LAYERS = [['게임서버', L.server, 'srv', 0], ['인프라', L.infra, 'db', 0], ['네트워크', L.net, 'net', 2], ['클라이언트', L.client, 'pc', 2]];
   LAYERS.forEach(([name, col, ic, need], j) => {
-    const y = 700 + j * 66, have = t >= STEP[0].pick, okk = have && t >= STEP[need].pick, k = eback(p(t, need ? STEP[2].pick : STEP[0].pick, .4));
+    const y = 704 + j * 66, have = t >= STEP[0].pick, okk = have && t >= STEP[need].pick, k = eback(p(t, need ? STEP[2].pick : STEP[0].pick, .4));
     box(1300, y, 560, 56, { r: 10, fill: okk ? rgba(col, .06) : '#fafbfc', stroke: okk ? rgba(col, .35) : U.line });
     icon(ic, 1334, y + 28, 26, okk ? col : U.off);
     txt(name, 1366, y + 36, { size: 20, weight: 700, color: okk ? U.text : U.faint });
     if (okk) { ctx.save(); ctx.globalAlpha *= clamp(k); chip('판정 가능', 1842, y + 28, U.ok, { size: 16, align: 'right', fillA: .1 }); ctx.restore(); }
-    else txt(have ? '캐릭터를 넣으면 판정' : '—', 1842, y + 35, { size: 16, color: U.faint, align: 'right' });
+    else txt(have ? '캐릭터를 넣으면 이 유저 기준 판정' : '—', 1842, y + 35, { size: 16, color: U.faint, align: 'right' });
   });
-  txt('클라이언트 · 네트워크는 캐릭터 단위 기록이 있어야 봅니다', 1312, 976, { size: 16, color: U.dim });
+  txt('이 유저의 클라이언트 · 네트워크 문제는 캐릭터를 넣어야 가립니다', 1312, 684, { size: 16, color: U.dim });
   // dropdowns on top
   STEP.forEach((f, i) => {
     const k = Math.min(eo(p(t, f.open + .08, .18)), 1 - eo(p(t, f.pick + .05, .15))); if (k <= 0) return;
@@ -777,7 +777,7 @@ function scrA(t) {
 const SRC = [
   { name: '클라이언트 텔레메트리', tbl: 'client_perf', col: L.client, key: 'char_id = 88213', keyName: 'char_id', cols: ['ts', 'char_id', 'fps', 'frame_ms_max'], scan: 11052000, hit: 600, fn: frameMs, max: 60, sec: '0.41' },
   { name: '세션 · 네트워크 로그', tbl: 'net_session', col: L.net, key: 'char_id = 88213', keyName: 'char_id', cols: ['ts', 'char_id', 'rtt_ms', 'loss_%'], scan: 2210400, hit: 120, fn: rttMs, max: 200, sec: '0.22' },
-  { name: '게임서버 메트릭', tbl: 'server_tick', col: L.server, key: "server = 'asterra-03'", keyName: 'server', cols: ['ts', 'server', 'tick_ms', 'entities'], scan: 288000, hit: 12000, fn: tickMs, max: 250, th: 50, sec: '0.88' },
+  { name: '게임서버 메트릭', tbl: 'server_tick', col: L.server, key: "server = 'asterra-03'", keyName: 'server', cols: ['ts', 'server', 'tick_ms', 'entities'], scan: 287523, hit: 11523, fn: tickMs, max: 250, th: 50, sec: '0.88' },
   { name: '인프라 모니터링', tbl: 'host_metrics', col: L.infra, key: "(host = 'gs-host-12' OR db = 'game-db-2')", keyName: 'host · db', cols: ['ts', 'host', 'cpu_%', 'db_p99_ms'], scan: 9600, hit: 60, fn: cpuPct, max: 100, sec: '0.09' },
   { name: '운영 이벤트', tbl: 'ops_events', col: OPS, key: "server = 'asterra-03'", keyName: 'server', cols: ['ts', 'server', 'event', ''], scan: 1240, hit: 3, fn: null, max: 1, sec: '0.03' },
 ];
@@ -807,7 +807,7 @@ SRC.forEach((sc, i) => {
   LOG.push([s0 + 3.0, f(ts0 + +sc.sec), `${sc.tbl}  → ${nfmt(sc.hit)}행 · ${sc.sec}s`, sc.col === OPS ? '#aab4c8' : sc.col]);
 });
 LOG.push([S0 + 4 * SDT + 3.25, '21:20:04.873', 'boss_spawn 화염룡 21:14:03 · asterra-03', '#fbbf24']);
-LOG.push([RUN_DONE + .1, '21:20:04.902', '조회 완료 · 5곳 · 12,783행', '#a5b4fc']);
+LOG.push([RUN_DONE + .1, '21:20:04.902', '조회 완료 · 5곳 · 12,306행', '#a5b4fc']);
 LOG.push([RUN_DONE + 1.6, '21:20:04.910', '층별 분석 시작', '#a5b4fc']);
 function runHeader(t) {
   txt('판정 #2381', 320, 200, { size: 36, weight: 800 });
@@ -908,7 +908,7 @@ function phaseSources(t) {
       ctx.save(); ctx.globalAlpha *= kd; ctx.fillStyle = rgba(U.ok, .1); ctx.beginPath(); ctx.arc(QX + QW / 2, QY + 190, 44, 0, 7); ctx.fill(); ctx.restore();
       check(QX + QW / 2, QY + 190, 50, U.ok, kd);
       txt('조회 완료 · 데이터 소스 5곳', QX + QW / 2, QY + 292, { size: 32, weight: 800, align: 'center', alpha: kd });
-      txt('일치 12,783행  (600 + 120 + 12,000 + 60 + 3)', QX + QW / 2, QY + 336, { size: 18, color: U.dim, align: 'center', mono: true, alpha: kd });
+      txt('일치 12,306행  (600 + 120 + 11,523 + 60 + 3)', QX + QW / 2, QY + 336, { size: 18, color: U.dim, align: 'center', mono: true, alpha: kd });
     }
   }
   // console log
@@ -929,9 +929,9 @@ const LAY = [
   { name: '클라이언트', src: 'client_perf', col: L.client, icon: 'pc', verdict: 'ok',
     rules: [['1초 최대 프레임 > 50ms', '0회', 'ok'], ['FPS 30 미만 구간', '0회', 'ok'], ['클라이언트 히치 · 크래시 리포트', '0건', 'ok']] },
   { name: '네트워크', src: 'net_session', col: L.net, icon: 'net', verdict: 'ok',
-    rules: [['RTT p95 > 150ms', '41ms', 'ok'], ['패킷 손실 > 1%', '0.0%', 'ok'], ['재연결', '0회', 'ok']] },
+    rules: [['RTT p95 > 150ms', '40ms', 'ok'], ['패킷 손실 > 1%', '0.0%', 'ok'], ['재연결', '0회', 'ok']] },
   { name: '게임서버', src: 'server_tick · ops_events', col: L.server, icon: 'srv', verdict: 'bad',
-    rules: [['틱 > 예산 50ms', '36초 동안', 'bad'], ['최대 틱', '210ms · 예산의 4.2배', 'bad'], ['같은 시각 운영 이벤트', 'boss_spawn 21:14:03', 'warn'], ['영향 범위', '서버 접속자 전원', 'bad']] },
+    rules: [['틱 > 예산 50ms', '35초 동안', 'bad'], ['최대 틱', '210ms · 예산의 4.2배', 'bad'], ['같은 시각 운영 이벤트', 'boss_spawn 21:14:03', 'warn'], ['영향 범위 (추정)', '서버 접속자 전원', 'warn']] },
   { name: '인프라', src: 'host_metrics', col: L.infra, icon: 'db', verdict: 'ok',
     rules: [['호스트 CPU > 90%', '최대 66%', 'ok'], ['CPU steal > 5%', '0.2%', 'ok'], ['DB p99 > 50ms · game-db-2', '9ms', 'ok'], ['같은 호스트 다른 서버 틱', '정상 3/3', 'ok']] },
 ];
@@ -988,7 +988,7 @@ function vClient(w, t, i) {
   const x = 830, y = 420, cw = 1010, ch = 220, k0 = eo(p(w, .1, .4));
   txt('frame_ms_max · 1초마다 가장 긴 프레임', x, 404, { size: 16, color: U.dim, alpha: k0 });
   hline(x, x + cw, y + ch - ch * 16.7 / 60, U.faint, 1.5, [8, 6], k0);
-  txt('16.7ms = 60fps', x + cw, y + ch - ch * 16.7 / 60 - 8, { size: 15, color: U.dim, align: 'right', mono: true, alpha: k0 });
+  txt('16.7ms = 60fps 평균', x + cw, y + ch - ch * 16.7 / 60 + 22, { size: 15, color: U.dim, align: 'right', mono: true, alpha: k0 });
   hline(x, x + cw, y + ch - ch * 50 / 60, rgba(U.red, .7), 1.5, [4, 6], k0);
   txt('50ms 넘으면 끊김으로 셈', x + cw, y + ch - ch * 50 / 60 - 8, { size: 15, color: U.red, align: 'right', alpha: k0 });
   series(frameMs, x, y, cw, ch, { max: 60, color: L.client, k: eio(p(w, .3, 1.6)), lw: 3 });
@@ -1040,7 +1040,7 @@ function vServer(w, t, i) {
   const kk = eo(p(w, 2.2, .4)), bx0 = sx(B0, x, cw), bx1 = sx(B1, x, cw);
   ctx.save(); ctx.globalAlpha *= kk; ctx.strokeStyle = U.red; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(bx0, Y(222)); ctx.lineTo(bx0, Y(230)); ctx.lineTo(bx1, Y(230)); ctx.lineTo(bx1, Y(222)); ctx.stroke(); ctx.restore();
-  txt('36초', bx1 + 10, Y(230) + 6, { size: 19, weight: 800, color: U.red, alpha: kk });
+  txt('35초', bx1 + 10, Y(230) + 6, { size: 19, weight: 800, color: U.red, alpha: kk });
 }
 function vInfra(w, t, i) {
   viewHead(i, '인프라 · gs-host-12 · game-db-2', w);
@@ -1079,10 +1079,10 @@ const TRACKS = [
   ['인프라', 'cpu_%', L.infra, cpuPct, 100, null],
 ];
 const WHY = [
-  [L.server, '틱 20ms → 최대 210ms', '예산 50ms의 4.2배, 36초 지속', '원인', U.red],
+  [L.server, '틱 20ms → 최대 210ms', '예산 50ms의 4.2배, 35초 지속', '원인', U.red],
   [OPS, '21:14:03 보스 스폰 직후 시작', 'ops_events 기록과 시각이 맞음', '계기', OPS],
   [L.net, 'RTT 38ms · 손실 0% 그대로', '같은 구간 네트워크 정상', '제외', U.dim],
-  [L.client, '프레임 최대 17ms 이하 그대로', '같은 구간 클라이언트 정상', '제외', U.dim],
+  [L.client, '1초 최대 프레임 22ms 이하 그대로', '같은 구간 클라이언트 정상', '제외', U.dim],
   [L.infra, '호스트 CPU 최대 66% · DB p99 9ms', '같은 호스트의 다른 서버 정상', '제외', U.dim],
 ];
 function scrD(t) {
@@ -1091,7 +1091,7 @@ function scrD(t) {
   ctx.save(); ctx.globalAlpha *= a; ctx.translate(0, (1 - a) * 18);
   txt('판정 #2381', 320, 200, { size: 36, weight: 800 });
   chip('완료', 320 + tw('판정 #2381', 36, 800) + 18, 188, U.ok, { size: 17, fillA: .1 });
-  txt('PROJECT-K › asterra-03 › 달빛궁수 · 조회 21:10–21:20 · 소요 2.9초', 320, 246, { size: 18, color: U.dim });
+  txt('PROJECT-K › asterra-03 › 달빛궁수 · 조회 21:10–21:20 · 소요 4.3초', 320, 246, { size: 18, color: U.dim });
   const hvGuide = near(t, 1270, 176, 1440, 220) || (t >= 81.9 && t < 82.3), hvShare = near(t, 1500, 170, 1650, 226);
   txt('판정 기준 보기', 1355, 205, { size: 19, weight: 700, color: U.accent, align: 'center' });
   if (hvGuide) hline(1290, 1420, 212, U.accent, 1.5);
@@ -1107,7 +1107,7 @@ function scrD(t) {
   txt('판정 결과', 440, 334, { size: 17, weight: 700, color: '#a16207' });
   const kv = eback(p(t, 65.0, .5));
   ctx.save(); ctx.translate(440, 394); ctx.scale(clamp(kv, 0, 1.15), clamp(kv, 0, 1.15)); txt('게임서버 렉', 0, 0, { size: 46, weight: 900, color: '#b45309' }); ctx.restore();
-  [['구간', '21:14:05–21:14:41 (36초)'], ['영향', 'asterra-03 접속자 전원'], ['계기', '21:14:03 boss_spawn']].forEach(([lab, val], j) => {
+  [['구간', '21:14:05–21:14:40 (35초)'], ['영향 (추정)', 'asterra-03 접속자 전원'], ['계기', '21:14:03 boss_spawn']].forEach(([lab, val], j) => {
     const x = 900 + j * 330, k = eo(p(t, 65.4 + j * .2, .4));
     vline(x - 24, 312, 396, '#f2cf94', 1.5, null, k);
     txt(lab, x, 340, { size: 16, weight: 700, color: '#a16207', alpha: k });
@@ -1122,7 +1122,7 @@ function scrD(t) {
   const sx0 = TX + 170, sw = TW - 200, ph = eio(p(t, 65.2, 1.6));
   const bx0 = sx(B0, sx0, sw), bx1 = sx(B1, sx0, sw), kband = eo(p(t, 66.3, .4));
   box(bx0, TY + 64, bx1 - bx0, 4 * 108, { r: 4, fill: rgba(U.red, .10), stroke: rgba(U.red, .55), lw: 1.5, alpha: kband });
-  if (kband > 0) chip('36초', (bx0 + bx1) / 2, TY + 64, U.red, { size: 15, align: 'center', alpha: kband, fillA: .14 });
+  if (kband > 0) chip('35초', (bx0 + bx1) / 2, TY + 64, U.red, { size: 15, align: 'center', alpha: kband, fillA: .14 });
   TRACKS.forEach(([name, unit, col, fn, max, th], j) => {
     const y = TY + 76 + j * 108;
     txt(name, TX + 28, y + 40, { size: 21, weight: 800, color: col });
@@ -1141,9 +1141,9 @@ function scrD(t) {
     const k = eo(p(t, 70.3, .3)), tx = bx1 + 24, ty = TY + 120;
     box(tx, ty, 360, 140, { r: 12, shadow: 1.4, stroke: U.line2, alpha: k });
     ctx.save(); ctx.globalAlpha *= k;
-    txt('21:14:05–21:14:41 · 36초', tx + 20, ty + 36, { size: 19, weight: 800, mono: false });
+    txt('21:14:05–21:14:40 · 35초', tx + 20, ty + 36, { size: 19, weight: 800, mono: false });
     txt('tick_ms 최대 210ms (예산 50ms)', tx + 20, ty + 72, { size: 17, color: U.red, weight: 700 });
-    txt('RTT 38ms · 프레임 ≤ 17ms', tx + 20, ty + 102, { size: 16, color: U.dim });
+    txt('RTT 38ms · 1초 최대 프레임 ≤ 22ms', tx + 20, ty + 102, { size: 16, color: U.dim });
     txt('호스트 CPU 최대 66%', tx + 20, ty + 126, { size: 16, color: U.dim });
     ctx.restore();
   }
@@ -1179,7 +1179,7 @@ const bump = (c, wd, hgt) => s => hgt * Math.exp(-Math.pow((s - c) / wd, 2));
 const CASES = [
   { name: '네트워크 렉', col: L.net, hot: [1], l1: 'RTT · 손실이 튀고, 틱은 정상', l2: '같은 서버라도 경로가 다른 유저는 정상' },
   { name: '인프라 렉', col: L.infra, hot: [3, 2], l1: '호스트 · DB 지표가 튐 (동기 DB 호출이면 틱도)', l2: '같은 호스트 · DB를 쓰는 서버들이 함께 느려짐' },
-  { name: '게임서버 렉', col: L.server, hot: [2], l1: '틱만 예산을 넘고, 호스트 · DB는 정상', l2: '그 서버 접속자 전원이 동시에 느려짐', now: true },
+  { name: '게임서버 렉', col: L.server, hot: [2], l1: '틱만 예산을 넘고, 호스트 · DB는 정상', l2: '그 서버(틱 루프)의 접속자 전원이 동시에 느려짐', now: true },
   { name: '클라이언트 렉', col: L.client, hot: [0], l1: '프레임 시간만 튀고, RTT · 틱은 정상', l2: '같은 서버라도 PC · 장면에 따라 갈림' },
 ];
 const SIG = ['프레임', 'RTT', '틱', '호스트·DB'];
