@@ -5,6 +5,8 @@ cut paper, a backlit screen…), separate from any story. A new film draws its o
 re-deriving the look from an old scene. Kits change *how it is drawn*, never *what is drawn* — every film still
 composes its own subject, beats and words.
 
+`templates.jpg` — every 2026-10 kit's template at 15 s (same seed story in each look), for picking at a glance.
+
 | kit | look | carries well | worked example |
 |---|---|---|---|
 | `charcoal` | gothic charcoal: value image → paper-tooth pass, stick vs finger, eraser lifts, fog, one red pastel | darkness and light, temptation, fear, erasing / restoring | word-log `door-a` |
@@ -32,6 +34,7 @@ composes its own subject, beats and words.
 | `graphite` | graphite night picture book: white pencil, sheet ghosts, one torch beam | fear at night made gentle, a light that seeks, comfort | word-log `cs-graphite` |
 | `ukiyoe` | ukiyo-e woodblock: off-register colour blocks, sumi key line, bokashi sky, light cut as bare paper, one beni red | pilgrimage, patience, landscape bigger than people, folk parables | word-log `cross-ukiyoe` |
 | `papercut` | red paper-cut: red sheets on navy, cut lace patterns, one gold piece, backlight | one among many, cutting and loss, light from behind | word-log `cross-papercut` |
+| `mograph` | beat-cut motion graphics: a new world every bar (window grid, red stage, drafting sheet, 3-D keyboard with jamo that assemble into a word, bubbles, manga, kaleidoscope), chunky 3-D type; code figure by default, or a keyed video-model sprite (`tools/` keyer + footfall detector) when the owner asks | channel/series intros, one truth through many lenses, lists, joy and invitation | word-log `intro-class` |
 
 Worked examples: github.com/jungrok5/word-log → `sermons/2026-10-18-1cor5/film/scenes/door-{a,b,c,d}.html` — one
 30-s portrait short ("the door") in the first four kits; `sermons/2026-10-24-cross-styles/film/scenes/cs-<kit>.html` and
