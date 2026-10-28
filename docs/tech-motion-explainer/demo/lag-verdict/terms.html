@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>렉 원인 판정 시연: 입력부터 판정까지 — 용어집</title>
+<meta name="description" content="렉 원인 판정 시연: 입력부터 판정까지 용어집">
+<style>
+  /* Reading page: one 720px column, light and dark. */
+  @font-face { font-family: Pretendard; src: url(../assets/fonts/Pretendard-Variable.woff2) format("woff2"), url(assets/fonts/Pretendard-Variable.woff2) format("woff2"); font-weight: 100 900; }
+  @font-face { font-family: "JetBrains Mono"; src: url(../assets/fonts/JetBrainsMono.woff2) format("woff2"), url(assets/fonts/JetBrainsMono.woff2) format("woff2"); font-weight: 100 800; }
+  :root {
+    --bg: #fbfbfd; --surface: #f1f2f7; --line: #dde0ea; --fg: #141826; --text2: #39405a; --dim: #6b7290; --accent: #6d4fd8;
+    --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #070a13; --surface: #0e1424; --line: #24304a; --fg: #e8ecf4; --text2: #c3cad8; --dim: #8b95a7; --accent: #a78bfa; color-scheme: dark; } }
+  :root[data-theme="dark"] { --bg: #070a13; --surface: #0e1424; --line: #24304a; --fg: #e8ecf4; --text2: #c3cad8; --dim: #8b95a7; --accent: #a78bfa; color-scheme: dark; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 17px; line-height: 1.8;
+    word-break: keep-all; overflow-wrap: anywhere;
+    padding-block: 48px 72px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  main { max-width: 720px; margin: 0 auto; }
+  a { color: var(--accent); }
+  .eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .18em; color: var(--dim); text-transform: uppercase; }
+  h1 { font-size: clamp(30px, 6vw, 42px); line-height: 1.25; letter-spacing: -.02em; margin: 12px 0 16px; text-wrap: balance; }
+  h2 { font-size: 24px; line-height: 1.4; margin: 56px 0 4px; text-wrap: balance; display: flex; gap: 12px; align-items: baseline; }
+  h2 .n { font: 600 15px/1 var(--mono); color: var(--accent); flex: none; }
+  .sub { color: var(--dim); margin: 0 0 16px; font-size: 16px; }
+  p, li { color: var(--text2); }
+  .lede { font-size: 19px; color: var(--fg); }
+  nav.tabs { display: flex; gap: 6px; margin: 0 0 28px; border-bottom: 1px solid var(--line); }
+  nav.tabs a { font: 700 15px/1 var(--sans); color: var(--dim); text-decoration: none; padding: 12px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  nav.tabs a:hover { color: var(--fg); }
+  nav.tabs a[aria-current="page"] { color: var(--fg); border-bottom-color: var(--accent); }
+  .next { margin-top: 48px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0 8px; }
+  .actions a { font: 600 14px/1 var(--sans); text-decoration: none; color: var(--fg); border: 1px solid var(--line); border-radius: 999px; padding: 10px 14px; background: var(--surface); }
+  .actions a:hover { border-color: var(--accent); }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; font: 500 12px/1 var(--mono); color: var(--dim); }
+  .tags span { border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; }
+  nav.toc { border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; margin: 32px 0 0; background: var(--surface); }
+  nav.toc ol { margin: 0; padding-left: 1.4em; } nav.toc li { color: var(--fg); }
+  nav.toc a { color: inherit; text-decoration: none; } nav.toc a:hover { color: var(--accent); }
+  .scene { font: 600 13px/1 var(--sans); }
+  code { font: 500 .88em var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+  dl.terms { display: grid; grid-template-columns: minmax(120px, max-content) minmax(0, 1fr); gap: 14px 28px; margin: 16px 0 0; }
+  dt { font-weight: 700; color: var(--fg); } dd { margin: 0; color: var(--text2); }
+  dd .src { display: block; font-size: 13px; color: var(--dim); }
+  @media (max-width: 600px) { dl.terms { grid-template-columns: minmax(0, 1fr); gap: 2px; } dd { margin-bottom: 16px; } }
+  input[type=search] { width: 100%; box-sizing: border-box; font: 500 16px var(--sans); color: var(--fg); background: var(--surface);
+    border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 16px 0 8px; }
+  footer { margin-top: 64px; font-size: 14px; color: var(--dim); }
+</style>
+</head>
+<body>
+<main>
+<nav class="tabs" aria-label="같은 주제"><a href="index.html">영상</a><a href="article.html">설명</a><a href="terms.html" aria-current="page">용어집</a></nav>
+<span class="eyebrow">1:32 · lag triage · telemetry · tick · RTT · infra</span>
+<h1>렉 원인 판정 시연: 입력부터 판정까지</h1>
+<p class="lede">이 영상에 나오는 용어 14개.</p>
+<input type="search" id="q" placeholder="용어 찾기" aria-label="용어 찾기">
+<dl class="terms" id="list">
+<dt>데이터 소스</dt><dd>판정에 쓰는 기록이 쌓이는 곳. 영상에서는 클라이언트 텔레메트리, 세션 · 네트워크 로그, 게임서버 메트릭, 인프라 모니터링, 운영 이벤트 다섯 곳.</dd>
+<dt>렉 판정</dt><dd>렉 신고 한 건의 원인을 클라이언트 · 네트워크 · 게임서버 · 인프라 중 한 층으로 정하고, 그 구간과 근거를 내는 일.</dd>
+<dt>순차 입력</dt><dd>프로젝트 → 서버 → 캐릭터 순서로 넣는 입력. 앞 칸을 채워야 다음 칸이 열리고, 뒤 칸은 비워 둘 수 있다.</dd>
+<dt>운영 이벤트</dt><dd>보스 스폰, 자동 저장, 배포처럼 서버에서 일어난 일을 시각과 함께 남긴 기록. 지표가 튄 계기를 찾을 때 쓴다.</dd>
+<dt>클라이언트 텔레메트리</dt><dd>게임 클라이언트가 보내는 성능 기록. FPS, 프레임 시간 등.</dd>
+<dt>틱</dt><dd>게임서버가 입력을 처리하고 상태를 갱신해 보내는 한 번의 루프. 초당 20틱이면 한 틱의 예산은 50ms.</dd>
+<dt>틱 예산</dt><dd>한 틱이 넘지 말아야 할 시간. 넘으면 다음 틱이 밀려 모든 접속자에게 갱신이 늦게 간다.</dd>
+<dt>패킷 손실</dt><dd>보낸 패킷이 도착하지 못한 비율. 손실이 생기면 재전송 때문에 지연이 커진다.</dd>
+<dt>호스트</dt><dd>게임서버 프로세스가 올라가 있는 물리 서버나 VM. 한 호스트에 서버 여러 대가 함께 올라갈 수 있다.</dd>
+<dt>CPU steal</dt><dd>VM이 CPU를 쓰려 했지만 같은 물리 장비의 다른 VM 때문에 기다린 시간 비율.</dd>
+<dt>DB p99</dt><dd>DB 응답 시간 중 상위 1%를 뺀 가장 느린 값. 대부분의 요청이 이 시간 안에 끝난다.</dd>
+<dt>frame_ms_max</dt><dd>1초 동안 가장 오래 걸린 프레임의 시간. 60fps면 16.7ms 안팎. 평균은 짧은 끊김을 묻어 버려서 최댓값을 본다.</dd>
+<dt>RTT</dt><dd>Round Trip Time. 패킷이 서버에 갔다가 응답이 돌아오기까지 걸린 시간.</dd>
+<dt>tick_ms</dt><dd>한 틱을 처리하는 데 걸린 시간. 영상에서는 5초마다 가장 긴 값을 막대로 그렸다.</dd>
+</dl>
+<footer><a href="../index.html">전체 영상 목록</a></footer>
+<script>
+  const q = document.getElementById('q'), dts = [...document.querySelectorAll('#list dt')];
+  q.addEventListener('input', () => { const s = q.value.trim().toLowerCase();
+    dts.forEach(dt => { const show = !s || (dt.textContent + dt.nextElementSibling.textContent).toLowerCase().includes(s); dt.hidden = dt.nextElementSibling.hidden = !show; }); });
+</script>
+</main>
+</body>
+</html>
