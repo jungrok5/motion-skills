@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>미니멀 고양이 · 템플릿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hi+Melody&family=Noto+Sans+KR:wght@500&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-minicat.js"></script>
+<script>
+/* MiniCat template — the shared placeholder story in the minimal-line / flat-blue house style (styles/minicat/STYLE.md).
+   A white cat in cream pyjamas walks along the ledge of shallow water (every footfall rings), kneels, presses a honey seed
+   into a small mound and pats it, waits (ripples, drifting sky), a sprout rises in the honey glow, the cat stands and looks
+   at it and touches a leaf; end plate + card. To make a film: write scenes/script.js, then replace the SEED / SPROUT and the
+   cat's choreography below with your image. Keep the frame order: background → sky → world (ledge, ripples, reflections,
+   things, cats) → captions → end plate/card → grain. */
+const MC = MiniCat, S = window.SCRIPT, B = S.beat, C = MC.C, { clamp, lerp, ss, eo, eio, rng } = Pilot;
+const { t12, lerp2, ink, ell, CS, frameOf, armOf, drawCat, drawCatRefl, walkSpec, standSpec, kneelSpec, mixSpec } = MC;
+
+// ---------------- world ----------------
+const WL = 1300, FY = WL, TOPE = WL - 46, FRONTE = WL + 10;   // feet line, the ledge's back edge, its front edge (= water line)
+const X0 = 230, XK = 600;                                     // where the cat enters, where it kneels
+const SEED = [XK + 78, FY - 18];                               // the planting point (in reach of the kneeling cat's near paw)
+const STRIDE = 92;
+
+// ---------------- the cat's choreography (poses on twos) ----------------
+function catX(t) { const u = clamp(t / B.walk[1]); return X0 + (XK - X0) * (u < .75 ? u / .75 * .86 : .86 + .14 * eo((u - .75) / .25)); }   // steady, then settles
+const KNEEL = () => ({ ...kneelSpec(XK, FY, 1, { lean: .85, crouch: 34, head: -.1 }) });
+const XB = XK - 70;                                            // where it stands after stepping back to look
+const STAND = (x = XK) => ({ ...standSpec(x, FY, 1, { lean: .05, head: -.16 }), face: 'look' });
+function poseMe(t) {
+  const tp = t12(t), x = catX(tp);
+  if (tp < B.walk[1]) return walkSpec(x, FY, 1, x / STRIDE, STRIDE, { lean: .16, head: .12, bob: 5, lift: 12 });
+  const W = walkSpec(catX(B.walk[1]), FY, 1, catX(B.walk[1]) / STRIDE, STRIDE, { lean: .16, head: .12, bob: 5, lift: 12 });
+  if (tp < B.kneel) return mixSpec(W, KNEEL(), eio((tp - B.walk[1]) / (B.kneel - B.walk[1])));
+  if (tp < B.rise) {
+    const F = KNEEL(), rest = armOf(frameOf(F), F, true).hand, pat = Math.max(0, Math.sin(Math.PI * clamp((tp - B.plant - .2) / .5) * 2)) * 16;
+    // the near paw: down to the seed point → press → two pats → back to rest
+    let h = rest;
+    if (tp >= B.plant - .8 && tp < B.plant) h = lerp2(rest, SEED, eio((tp - B.plant + .8) / .8));
+    else if (tp >= B.plant && tp < B.plant + 1.2) h = [SEED[0], SEED[1] - pat];
+    else if (tp >= B.plant + 1.2 && tp < B.plant + 1.8) h = lerp2(SEED, rest, eio((tp - B.plant - 1.2) / .6));
+    F.hands = [null, h];
+    F.bob = tp > B.wait[0] ? 1.6 * Math.sin((tp - B.wait[0]) * 2.1) : 0;                      // breathing while it waits
+    F.face = tp > B.wait[0] + 2.5 && tp < B.wait[0] + 2.75 ? 'down' : tp > B.sprout ? 'shock' : 'calm';   // one blink; the start
+    if (tp > B.sprout + .8) { F.face = 'look'; F.head = .1; }
+    return F;
+  }
+  // stand up (.6 s), then back off two small steps, still facing it, to look up at it
+  const bx = XK - (XK - XB) * eio((tp - B.rise - .6) / .8), back = tp > B.rise + .6 && tp < B.rise + 1.4;
+  const F = tp < B.rise + .6 ? mixSpec(KNEEL(), STAND(), eio((tp - B.rise) / .6)) : back ? { ...walkSpec(bx, FY, 1, bx / 60, 60, { lean: .08, head: -.05, bob: 3, lift: 8 }), face: 'look' } : STAND(XB);
+  F.face = tp > B.rise + 1.6 ? 'happy' : 'look';
+  // a paw lifted to touch the lowest leaf, then lowered (the grip point is a leaf tip; the arm's IK does the rest)
+  const touch = Pilot.win(tp, B.rise + 2.4, B.rise + 5.2, .7, .7);
+  if (touch > 0) { const rest = armOf(frameOf({ ...F, hands: [null, null] }), { ...F, hands: [null, null] }, true).hand, leaf = leafTip(t, 0); F.hands = [null, lerp2(rest, leaf, eio(touch))]; }
+  return F;
+}
+
+// ---------------- the seed, the mound, the sprout (the placeholder subject) ----------------
+const sproutH = t => t < B.sprout ? 0 : 160 * eo((t - B.sprout) / 1.3) + 190 * ss(B.sprout + 1.2, B.sprout + 8, t);
+const sway = t => .05 * Math.sin(t * 1.3) + .02 * Math.sin(t * 2.9);
+function stemPt(t, u) { const h = sproutH(t), a = sway(t) * u; return [SEED[0] + Math.sin(a) * h * u * .6 + 6 * Math.sin(u * 2.4) * Math.min(1, h / 80), SEED[1] - 6 - h * u]; }
+const LEAVES = [[.4, -1, 62], [.6, 1, 70], [.84, -1, 52]];   // [height along the stem, side, length]
+function leafOpen(t, i) { return eo((t - B.sprout - .4 - i * .45) / .9); }
+function leafTip(t, i) { const [u, s, l] = LEAVES[i], b = stemPt(t, u), o = leafOpen(t, i), a = -Math.PI / 2 + s * (.35 + 1.0 * o) + sway(t); return [b[0] + Math.cos(a) * l * o, b[1] + Math.sin(a) * l * o]; }
+function drawSprout(ctx, t) {
+  const h = sproutH(t); if (h <= 0) return;
+  const glow = ss(B.sprout - .1, B.sprout + .8, t) * (.85 + .15 * Math.sin(t * 2.2));
+  MC.glow(ctx, SEED[0], SEED[1] - h * .55, 220 + h * 1.4, 160 + h * 1.6, glow);
+  const line = []; for (let i = 0; i <= 8; i++) line.push(stemPt(t, i / 8));
+  ink(ctx, MC.tube(line, line.map((_, i) => 8 - i * .45)), { fill: C.cream, lw: 2.6 });
+  LEAVES.forEach(([u, s, l], i) => { const o = leafOpen(t, i); if (o <= .02) return;
+    const b = stemPt(t, u), tip = leafTip(t, i), d = [tip[0] - b[0], tip[1] - b[1]], n = [-d[1] * .42, d[0] * .42];
+    ink(ctx, [b, [b[0] + d[0] * .5 + n[0], b[1] + d[1] * .5 + n[1]], tip, [b[0] + d[0] * .5 - n[0] * .6, b[1] + d[1] * .5 - n[1] * .6]], { fill: C.honey, lw: 2.6, it: 2 });
+    ink(ctx, [b, lerp2(b, tip, .8)], { closed: false, lw: 1.6, col: C.honeyF }); });
+  const top = stemPt(t, 1); ink(ctx, ell(top[0], top[1] - 7, 11, 13, 12), { fill: C.honey, lw: 2.6 });   // the bud
+  MC.rays(ctx, t, SEED[0], SEED[1] - 20, (1 - ss(B.sprout, B.sprout + .7, t)) * (t >= B.sprout ? 1 : 0), { r0: 34, r1: 64 });
+}
+function drawMound(ctx, t) {
+  const k = eo((t - B.plant) / .5); if (t < B.plant) return;
+  ink(ctx, [[SEED[0] - 40 * k - 6, SEED[1] + 6], [SEED[0] - 16, SEED[1] - 9 * k], [SEED[0] + 18, SEED[1] - 10 * k], [SEED[0] + 42 * k + 6, SEED[1] + 6]], { fill: C.lavL, lw: 2.6, it: 2 });
+}
+function drawSeed(ctx, p) { ink(ctx, ell(p[0], p[1], 8, 6, 12), { fill: C.honey, lw: 2.4 }); }
+
+// ---------------- camera ----------------
+function camAt(t) {
+  let c = { x: catX(t) + 110, y: WL - 290, z: 1.5 };                                         // the hook: close on the walking cat
+  c = MC.mixCam(c, { x: XK + 60, y: WL - 270, z: 1.6 }, eio((t - 3.6) / 2.2));            // in on the planting
+  c = MC.mixCam(c, { x: XK + 50, y: WL - 290, z: 1.8 }, eio((t - B.wait[0]) / (B.wait[1] - B.wait[0] + 1)));   // a slow push while nothing happens
+  c = MC.mixCam(c, { x: XK + 60, y: WL - 330, z: 1.4 }, eio((t - B.sprout) / 1.6));       // the sprout: back off so it can rise
+  c = MC.mixCam(c, { x: XK + 20, y: WL - 360, z: 1.34 }, eio((t - B.rise) / 2));
+  return c;
+}
+
+// ---------------- prebuilt ----------------
+let SKY, ARCS, STEPS;
+function init() {
+  MC.init();
+  const r = rng(31);
+  SKY = MC.buildSky(r, { moons: [{ x: 760, y: 640, rx: 56, ry: 44, f: [1.7, 2.3] }], from: -500, to: 1900, starsFrom: -500, starsSpan: 2500 });
+  ARCS = MC.buildArcs(r, { from: -700, to: 2200, y: FRONTE });
+  STEPS = MC.footfalls(t => [poseMe(t)], { dur: S.DUR, until: B.kneel });
+}
+
+function draw(ctx, t) {
+  const cm = camAt(t), F = poseMe(t);
+  ctx.setTransform(1, 0, 0, 1, 0, 0); MC.background(ctx);
+  MC.drawSky(ctx, cm, SKY);
+  ctx.save(); MC.setCam(ctx, cm, 1);
+  MC.ledge(ctx, cm, { top: TOPE, front: FRONTE });
+  MC.ripples(ctx, t, ARCS, STEPS);
+  drawCatRefl(ctx, F, FRONTE);
+  drawMound(ctx, t);
+  drawSprout(ctx, t);
+  // the seed: in the near paw until it is pressed in, then a honey dot sinking into the mound
+  if (t < B.plant) F.front = () => drawSeed(ctx, armOf(frameOf(F), F, true).hand);
+  else if (t < B.plant + .5) drawSeed(ctx, [SEED[0], SEED[1] + 6 * eo((t - B.plant) / .5)]);
+  drawCat(ctx, F);
+  ctx.restore(); MC.setLW(1);
+  if (t < B.end) MC.captions(ctx, t, S.lines);
+  MC.endPlate(ctx, t, B.end);
+  MC.endCard(ctx, t, S.endCard, B.end);
+  MC.grain(ctx);
+}
+
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: MC.FONTS, init, draw });
+</script>
+</body>
+</html>

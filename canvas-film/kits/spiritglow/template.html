@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>빛나는 영혼의 숲 · 템플릿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700&family=Noto+Sans+KR:wght@400;500&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-spiritglow.js"></script>
+<script>
+/* A new scene in the spiritglow house style (styles/spiritglow/STYLE.md). The kit draws the medium; this file draws the story.
+   PLACEHOLDER STORY (the same in every kit): a glowing hooded traveller walks along the dark rock path with a seed glowing
+   amber in its fist, crouches and plants it, kneels and waits while the pools breathe and the far crowd flickers, a sprout
+   rises with the one warm light (motes drift up around it), the traveller stands and looks down at it; then the end plate.
+   Keep: init → SG.init, forest, ground, life, finish;  draw → backdrop, world layer, figures (bloom + rim), warm light,
+   foreground, captions, end plate, end card. Replace the subject (seed, sprout, poses, camera) with your film's one image. */
+const S = window.SCRIPT, B = S.beat, { clamp, lerp, ss, eo, eio, rng } = Pilot;
+const SG = window.SpiritGlow, C = SG.C, TX = SG.TX;
+const FY = 1300, RT = 1212, SME = 1.04;              // the near lane, the path's far edge, figure scale
+const X0 = 250, KX = 800;                             // where the walk starts, where the traveller crouches
+const SPOT = [KX + 178, FY - 2];                      // where the seed goes in (in reach of the crouch: ≈ x + 170·s)
+
+// ---------------- the traveller's path and poses ----------------
+const STOP = B.walk[1] + .2, T1 = STOP - .5, WALKV = (KX - X0) / (T1 + .25);       // walk speed px/s, decelerating to 0 over the last .5 s
+const xAt = t => { if (t < T1) return X0 + WALKV * t; const u = clamp((t - T1) / .5); return X0 + WALKV * T1 + WALKV * .5 * (u - u * u / 2); };
+function pose(t) {
+  const x = xAt(Math.min(t, STOP)), ph = x / (150 * SME);                              // phase tied to distance: no foot sliding
+  const walking = SG.walk(x, FY, SME, 1, ph, 150, .1, 26);
+  const seedHand = F => { const sh = SG.shoulderOf(F); return [sh[0] + 30 * SME + 14 * Math.sin(Math.PI * 2 * (F.ph || 0)), sh[1] + 128 * SME]; };   // fist a little forward, swinging
+  walking.hands = [null, seedHand(walking)]; walking.tilt = .1;
+  if (t < STOP) return { F: walking, seed: 'hand' };
+  const CR = SG.crouch(KX, FY, SME, 1, 1.1); CR.tilt = -.1;
+  const crouchHands = hand => { CR.hands = [SG.knee(CR, 0), hand]; return CR; };
+  const reach0 = [lerp(KX + 120, SPOT[0], .3), FY - 60];
+  if (t < 4.9) { const k = eio((t - STOP) / (4.9 - STOP)), Bc = crouchHands(reach0), F = SG.mix(walking, Bc, k), h0 = seedHand(walking); F.hands[1] = [lerp(h0[0], reach0[0], k), lerp(h0[1], reach0[1], k)]; return { F, seed: 'hand' }; }
+  if (t < B.plant) { const k = eio((t - 4.9) / (B.plant - 4.9)); return { F: crouchHands([lerp(reach0[0], SPOT[0], k), lerp(reach0[1], SPOT[1] - 14, k)]), seed: 'hand' }; }
+  if (t < 7.4) {   // the hand opens (the seed drops in), then pats the soil twice, flat
+    const u = t - B.plant, pat = u < .35 ? 0 : Math.abs(Math.sin((u - .35) * Math.PI / .5)) * 18 * (1 - ss(1.1, 1.4, u));
+    const F = crouchHands([SPOT[0] - 4, SPOT[1] - 16 - pat]); F.hand = ['fist', u < .35 ? 'open' : 'flat']; return { F, seed: 'ground' };
+  }
+  const KN = SG.kneel(KX - 30, FY, SME, 1, .12);
+  const kneeling = t2 => { const F = { ...KN, hip: [KN.hip[0], KN.hip[1] + 3 * Math.sin(t2 * Math.PI * 2 / 3.6)], feet: KN.feet.map(p => p.slice()) };
+    const kn = SG.knee(F, 1); F.hands = [[kn[0] - 14, kn[1] + 6], [kn[0] + 4, kn[1] - 4]]; F.hand = ['fist', 'flat'];
+    const up = Pilot.win(t2, 10.4, 12.4, .6, .7), back = ss(B.sprout, B.sprout + .5, t2);   // a look up into the dark canopy; a start back at the sprout
+    SG.look(F, .42 - .8 * up + .1 * back); F.ang -= .1 * back; return F; };
+  if (t < 8.0) { const A = crouchHands([SPOT[0] - 4, SPOT[1] - 16]); A.hand = ['fist', 'flat']; return { F: SG.mix(A, kneeling(t), eio((t - 7.4) / .6)), seed: 'ground' }; }
+  if (t < B.rise) return { F: kneeling(t), seed: 'ground' };
+  const ST = SG.look(SG.stand(KX - 40, FY, SME, 1, .1), .55);
+  return { F: SG.mix(kneeling(B.rise), ST, eio((t - B.rise) / .65)), seed: 'ground' };
+}
+
+// ---------------- the seed, the mound, the sprout ----------------
+const sproutH = t => t < B.sprout ? 0 : 150 * eo((t - B.sprout) / 1.6) + 40 * ss(B.rise, B.rise + 5, t);
+function drawSprout(a, t) {
+  const [sx, sy] = SPOT, h = sproutH(t);
+  const m = ss(B.plant + .3, B.plant + 1.2, t); if (m > 0) { a.fillStyle = '#0d2a2c'; a.beginPath(); a.ellipse(sx, sy + 2, 30 * m, 9 * m, 0, Math.PI, 0); a.fill(); }
+  if (h <= 0) return;
+  const sw = Math.sin(t * 1.3) * 4 * ss(B.sprout + 1, B.sprout + 2.5, t), tip = [sx + sw, sy - h], mid = [sx + sw * .3 - 6, sy - h * .55];
+  a.strokeStyle = '#123a3c'; a.lineCap = 'round'; a.lineWidth = 9; a.beginPath(); a.moveTo(sx, sy); a.quadraticCurveTo(mid[0], mid[1], tip[0], tip[1]); a.stroke();
+  const open = ss(B.sprout + .9, B.sprout + 2.2, t);
+  for (const sd of [-1, 1]) { const ang = -Math.PI / 2 + sd * (.25 + 1.0 * open), l = 18 + 34 * open;
+    a.fillStyle = '#1d5a58'; a.beginPath(); a.moveTo(tip[0], tip[1]);
+    a.quadraticCurveTo(tip[0] + Math.cos(ang - sd * .5) * l * .7, tip[1] + Math.sin(ang - sd * .5) * l * .7, tip[0] + Math.cos(ang) * l, tip[1] + Math.sin(ang) * l);
+    a.quadraticCurveTo(tip[0] + Math.cos(ang + sd * .5) * l * .6, tip[1] + Math.sin(ang + sd * .5) * l * .6, tip[0], tip[1]); a.fill(); }
+  const gb = a.createRadialGradient(tip[0], tip[1] - 6, 1, tip[0], tip[1] - 6, 11); gb.addColorStop(0, C.goldL); gb.addColorStop(.5, C.gold); gb.addColorStop(1, C.goldD);
+  a.fillStyle = gb; a.beginPath(); a.ellipse(tip[0], tip[1] - 6, 8, 11, 0, 0, Math.PI * 2); a.fill();   // the bud: THE warm thing
+}
+function seedAt(t, P) {
+  if (P.seed === 'hand') return { p: P.F.hands[1], r: 5, glow: .35 };
+  const u = t - B.plant; if (u < .3) return { p: [SPOT[0], lerp(SPOT[1] - 14, SPOT[1], eo(u / .3))], r: 6, glow: .5 };
+  const beat = Pilot.win(t, 11.8, B.sprout, .6, .3) * (.5 + .5 * Math.sin(t * 9));     // a faint heartbeat under the soil before it breaks
+  return { p: SPOT, r: 0, glow: .15 * (1 - ss(B.plant + .4, B.plant + 1.4, t)) + .2 * beat };
+}
+
+// ---------------- camera ----------------
+function camAt(t) {
+  let c = { x: xAt(Math.min(t, STOP)) + 110, y: 1060, z: 1.08 };
+  c = SG.mixCam(c, { x: KX + 70, y: 1130, z: 1.3 }, eio((t - 4.2) / 1.2));
+  c = SG.mixCam(c, { x: KX + 60, y: 1100, z: 1.22 }, eio((t - 8) / 5));
+  c = SG.mixCam(c, { x: SPOT[0] - 40, y: 1170, z: 1.55 }, eo((t - B.sprout) / 1.4));
+  c = SG.mixCam(c, { x: KX + 110, y: 1080, z: 1.12 }, eio((t - B.rise) / 2.2));
+  c.sx = c.sy = 0; return c;
+}
+
+// ---------------- frame ----------------
+function draw(ctx, t) {
+  const cm = camAt(t), [z1, ex1, ey1] = SG.layerM(cm, 1), P = pose(t), sd = seedAt(t, P), h = sproutH(t), lit = ss(B.sprout, B.sprout + 1.2, t);
+  SG.backdrop(ctx, cm, t);
+  SG.layer(ctx, cm, 1, () => {
+    SG.drawGround(ctx);
+    SG.groundGlow(ctx, P.F.hip[0], FY + 8, 230, .26);                                      // the traveller's own light on the rock
+    if (h > 0) SG.groundGlow(ctx, SPOT[0], SPOT[1] + 6, 260, .5 * lit, true);               // the sprout's warm pool
+  });
+  SG.figures(ctx, z1, ex1, ey1, FY - 760, FY + 220, [
+    ['act', a => drawSprout(a, t), .8],
+    ['me', a => { SG.figure(a, SG.hero(P.F, t));
+      if (sd.r > 0) { a.fillStyle = C.gold; a.beginPath(); a.ellipse(sd.p[0], sd.p[1], sd.r, sd.r * .75, .4, 0, Math.PI * 2); a.fill(); } }, 1]]);
+  SG.layer(ctx, cm, 1, () => {
+    SG.warmLight(ctx, sd.p[0], sd.p[1], 60, sd.glow);
+    if (h > 0) { const tip = [SPOT[0], SPOT[1] - h - 6], br = 1 + .08 * Math.sin(t * 2.1);
+      SG.warmLight(ctx, tip[0], tip[1], 240 * br, .6 * lit);
+      ctx.save(); ctx.globalCompositeOperation = 'screen'; SG.sprite(ctx, TX.warm, tip[0], tip[1] - 60, 560, 460, .4 * lit); ctx.restore();
+      SG.motes(ctx, t, FY - 520, 300, lit, FY - 4); }                                      // motes drifting up around it
+  });
+  SG.foreground(ctx, cm, t, { cx: KX + 100 });
+  if (t < B.end) SG.captions(ctx, t, S.lines);
+  SG.endPlate(ctx, t, B.end); SG.endCard(ctx, t, S.endCard, B.end);
+}
+async function init() {
+  SG.init({ cam: camAt, dur: S.DUR });
+  SG.forest();
+  SG.ground({ top: RT });
+  SG.life({ motes: { x: SPOT[0] - 150, w: 300, y: FY - 300 } });
+  SG.finish();
+}
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: SG.FONTS, init, draw });
+</script>
+</body>
+</html>

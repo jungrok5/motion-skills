@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>게임 광고 카툰 · 템플릿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-gamecartoon.js"></script>
+<script>
+/* GameCartoon template — the shared placeholder story in the mobile-game-ad cartoon house style (styles/gamecartoon/STYLE.md).
+   Under a storm sky the orange cat (goggles, red scarf) walks the road with a golden seed in its paw, kneels, presses the
+   seed into the ground and pats it twice, waits (clouds drift, a lightning flash, it breathes and blinks, the tail sways),
+   a golden sprout POPS up (squash + overshoot, a speed ring, sparkles) and the sky warms; the cat stands, looks up with big
+   eyes and touches a leaf; end card. To make a film: write scenes/script.js, then replace the SEED / SPROUT and the
+   choreography below. Keep the frame order: sky → far layers → world layer (ground, things, cats) → effects → grade →
+   vignette → captions → end card. */
+const GC = GameCartoon, S = window.SCRIPT, B = S.beat, { clamp, lerp, ss, eo, eio } = Pilot;
+const { INK, C, PME, P2, inked, cel, shine, ell, star, catMatrix, toWorld, drawCat, SH_NEAR, walkSpec, standSpec, kneelSpec, mixSpec, lerpP, t12, layer, view } = GC;
+const TAU = Math.PI * 2, GOLD = GC.WOOD.gold;
+
+// ---------------- world ----------------
+const FY = 1340, SME = .64;                       // the front lane on the road, the hero's scale
+const X0 = 160, XK = 600;                         // where the cat enters, where it kneels
+const SEED = [XK + 118, FY + 6];                  // the planting point on the road, in reach of the kneeling cat's near paw
+const STRIDE = 150;
+
+// ---------------- the cat's choreography (on twos) ----------------
+function catX(t) { const u = clamp(t / B.walk[1]); return X0 + (XK - X0) * (u < .8 ? u / .8 * .9 : .9 + .1 * eo((u - .8) / .2)); }
+// the near paw's hanging point (where a held thing sits when the arm is relaxed)
+const hang = F => toWorld(catMatrix(F), [SH_NEAR[0] + 30, SH_NEAR[1] + 110 + 50 * (F.crouch || 0) + (F.bob || 0)]);
+const KNEEL = () => kneelSpec(XK, FY, SME, 1, { eye: 'focus', mouth: 'w' });
+const XS = XK - 80, XB = XK - 130;                // after planting it sits back (XS) to wait; standing, it steps back to XB to look up
+function poseMe(t) {
+  const tp = t12(t);
+  const W0 = x => walkSpec(x, FY, SME, 1, x / STRIDE, { amp: 1, stride: 1.1, lift: 1.1, lean: .12, eye: 'calm', mouth: 'w' });
+  let F;
+  if (tp < B.walk[1]) F = W0(catX(tp));
+  else if (tp < B.kneel) F = mixSpec(W0(XK), KNEEL(), eio((tp - B.walk[1]) / (B.kneel - B.walk[1])));
+  else if (tp < B.rise) {
+    F = KNEEL(); const rest = hang(F), pat = Math.max(0, Math.sin(Math.PI * 2 * clamp((tp - B.plant - .1) / .9))) * 26;
+    F.near = rest; F.nearKind = 'fist';
+    if (tp >= B.plant - .8 && tp < B.plant) F.near = lerpP(rest, [SEED[0], SEED[1] - 14], eio((tp - B.plant + .8) / .7));
+    else if (tp >= B.plant && tp < B.plant + 1.0) { F.near = [SEED[0], SEED[1] - 14 - pat]; F.nearKind = 'flat'; }
+    else if (tp >= B.plant + 1.0 && tp < B.plant + 1.6) F.near = lerpP([SEED[0], SEED[1] - 14], rest, eio((tp - B.plant - 1.0) / .6));
+    F.mouth = tp > B.plant + .3 ? 'grin' : 'w'; F.eye = tp > B.plant + .3 ? 'happy' : 'focus';
+    if (tp > B.plant + 1.6) {   // sit back on its heels, out of the way, paws on the knees
+      const SB = standSpec(XS, FY, SME, 1, { lean: .02, crouch: .42, tilt: .1, eye: 'happy', mouth: 'grin' }), k = eio((tp - B.plant - 1.6) / .5);
+      const n0 = F.near; F = mixSpec(F, SB, k); F.near = lerpP(n0, hang(SB), k); F.nearKind = 'fist'; F.eye = 'happy'; F.mouth = 'grin'; }
+    if (tp > B.wait[0]) { F.eye = 'calm'; F.mouth = 'w'; F.bob = 3 * Math.sin((tp - B.wait[0]) * 2); F.blink = Math.abs(tp - 10.3) < .09 || Math.abs(tp - 12.4) < .09; }
+    if (tp > 10.6 && tp < 11.2) { F.eye = 'shock'; F.mouth = 'oh'; }                        // the lightning makes it jump
+    if (tp >= B.sprout) { F.eye = 'shock'; F.mouth = 'oh'; F.tilt = lerp(.22, -.2, eio((tp - B.sprout) / .4)); if (tp > B.sprout + 1.2) { F.eye = 'big'; F.mouth = 'w'; } }
+  } else {
+    // stand (.5 s), two little steps back still facing it (squash on each), then look up at it with big eyes
+    const STAND = x => standSpec(x, FY, SME, 1, { lean: -.04, tilt: -.28, eye: 'big', mouth: 'grin' });
+    if (tp < B.rise + .5) F = mixSpec(standSpec(XS, FY, SME, 1, { lean: .02, crouch: .42, tilt: -.2 }), STAND(XS), eio((tp - B.rise) / .5));
+    else if (tp < B.rise + 1.3) { const x = lerp(XS, XB, eio((tp - B.rise - .5) / .8)); F = walkSpec(x, FY, SME, 1, x / 90, { amp: .7, stride: .7, lean: -.06, tilt: -.2, eye: 'big', mouth: 'w' }); }
+    else F = STAND(XB);
+    if (tp > B.rise + 2) F.eye = 'happy';
+    const touch = Pilot.win(tp, B.rise + 2.4, B.rise + 5.4, .6, .6);   // reach up and touch the lowest leaf, then lower the paw
+    if (touch > 0) { F.near = lerpP(hang(F), leafAt(t, 0, .8), eio(touch)); F.nearKind = 'flat'; }
+  }
+  F.pal = PME; F.seed = 0; return F;
+}
+
+// ---------------- the seed, the mound, the golden sprout (the placeholder subject) ----------------
+const pop = t => t < B.sprout ? 0 : eo((t - B.sprout) / .35) + .18 * Math.exp(-(t - B.sprout) * 5) * Math.sin((t - B.sprout) * 24);   // overshoot
+const sproutH = t => t < B.sprout ? 0 : 200 * pop(t) + 190 * ss(B.sprout + .6, B.sprout + 8, t);
+const sway = t => .05 * Math.sin(t * 1.6) + .02 * Math.sin(t * 3.1);
+const stemAt = (t, u) => { const h = sproutH(t), a = sway(t) * u; return [SEED[0] + Math.sin(a) * h * u * .6 + 10 * Math.sin(u * 2.4) * Math.min(1, h / 90), SEED[1] - 8 - h * u]; };
+const LEAVES = [[.4, -1, 58], [.62, 1, 66], [.84, -1, 50]];
+const leafOpen = (t, i) => eo((t - B.sprout - .25 - i * .3) / .45);
+function leafAt(t, i, f = 1) { const [u, s, l] = LEAVES[i], b = stemAt(t, u), o = leafOpen(t, i), a = -Math.PI / 2 + s * (.55 + .8 * o) + sway(t); return [b[0] + Math.cos(a) * l * o * f, b[1] + Math.sin(a) * l * o * f]; }
+function drawSprout(ctx, t) {
+  const h = sproutH(t); if (h <= 0) return;
+  const top = stemAt(t, 1), glow = ss(B.sprout, B.sprout + .6, t);
+  // golden light: a soft radial bloom + a few rays (added light)
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  const g = ctx.createRadialGradient(SEED[0], SEED[1] - h * .55, 10, SEED[0], SEED[1] - h * .55, 160 + h * .6); g.addColorStop(0, `rgba(255,220,130,${.5 * glow})`); g.addColorStop(1, 'rgba(255,180,90,0)');
+  ctx.fillStyle = g; ctx.fillRect(SEED[0] - 420, SEED[1] - h - 400, 840, h + 460);
+  for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + (i - 2) * .34 + Math.sin(t * .8 + i) * .04; ctx.fillStyle = `rgba(255,240,190,${.09 * glow})`;
+    ctx.beginPath(); ctx.moveTo(top[0], top[1]); ctx.lineTo(top[0] + Math.cos(a - .07) * 620, top[1] + Math.sin(a - .07) * 620); ctx.lineTo(top[0] + Math.cos(a + .07) * 620, top[1] + Math.sin(a + .07) * 620); ctx.fill(); }
+  ctx.restore();
+  // the stem: an inked tube (like the cat's tail)
+  const st = new Path2D(), p = [0, .33, .66, 1].map(u => stemAt(t, u)); st.moveTo(...p[0]); st.bezierCurveTo(...p[1], ...p[2], ...p[3]);
+  ctx.lineCap = 'round'; ctx.strokeStyle = INK; ctx.lineWidth = 26; ctx.stroke(st); ctx.strokeStyle = C.grass; ctx.lineWidth = 12; ctx.stroke(st);
+  ctx.strokeStyle = C.grassH; ctx.lineWidth = 3; ctx.stroke(st);
+  // golden leaves: inked, one cel shadow, a gloss stripe
+  LEAVES.forEach(([u], i) => { const o = leafOpen(t, i); if (o <= .02) return; const b = stemAt(t, u), tip = leafAt(t, i), a = Math.atan2(tip[1] - b[1], tip[0] - b[0]), l = Math.hypot(tip[0] - b[0], tip[1] - b[1]);
+    const lf = P2(q => { q.moveTo(0, 0); q.quadraticCurveTo(l * .5, -l * .42, l, 0); q.quadraticCurveTo(l * .5, l * .42, 0, 0); q.closePath(); });
+    ctx.save(); ctx.translate(...b); ctx.rotate(a); inked(ctx, lf, GOLD.wood, 6); cel(ctx, lf, GOLD.woodS, 0, -9); shine(ctx, l * .45, -l * .1, l * .2, l * .05, 0, 'rgba(255,255,230,.8)'); ctx.restore(); });
+  const bud = ell(top[0], top[1] - 10, 20, 26); inked(ctx, bud, GOLD.wood, 7); cel(ctx, bud, GOLD.woodS, 8, -8); shine(ctx, top[0] - 6, top[1] - 22, 6, 9, -.3, 'rgba(255,255,235,.9)');
+  // sparkles drifting up from it
+  for (let i = 0; i < 8; i++) { const r = Pilot.rng(700 + i), per = 1.8 + r() * 1.6, u = GC.frac((t + r() * per) / per), x = SEED[0] + (r() - .5) * 200 + Math.sin(t + i) * 12, y = SEED[1] - 30 - u * (h + 120);
+    star(ctx, x, y, (3 + r() * 5) * Math.sin(Math.PI * u) * glow, `rgba(255,250,215,${.9 * Math.sin(Math.PI * u) * glow})`); }
+}
+function drawMound(ctx, t) {
+  if (t < B.plant) return; const k = eo((t - B.plant) / .4), m = P2(q => { q.moveTo(SEED[0] - 56 * k - 6, SEED[1] + 6); q.quadraticCurveTo(SEED[0], SEED[1] - 40 * k, SEED[0] + 56 * k + 6, SEED[1] + 6); q.closePath(); });
+  inked(ctx, m, C.dirt, 6); cel(ctx, m, C.dirtS, 10, -8); shine(ctx, SEED[0] - 14, SEED[1] - 14 * k, 12, 4, -.2, 'rgba(255,230,200,.4)');
+}
+function drawSeed(ctx, p) { const s = ell(p[0], p[1], 14, 11, -.4); inked(ctx, s, GOLD.wood, 5); cel(ctx, s, GOLD.woodS, 4, -4); shine(ctx, p[0] - 4, p[1] - 4, 4, 3, -.4, 'rgba(255,255,230,.9)'); }
+
+// ---------------- camera ----------------
+function camAt(t) {
+  let c = { x: catX(t) + 120, y: 1170, z: 1.35 };                                              // the hook: on the cat, frame 0
+  c = GC.mixCam(c, { x: XK + 90, y: 1190, z: 1.55 }, eio((t - 3.4) / 2.2));                     // in on the planting
+  c = GC.mixCam(c, { x: XK + 70, y: 1200, z: 1.7 }, eio((t - B.wait[0]) / 6));                  // a slow push while it waits
+  c = GC.mixCam(c, { x: XK + 40, y: 1080, z: 1.15 }, eio((t - B.sprout) / 1.2));                // the pop: back off for the sprout
+  c = GC.mixCam(c, { x: XK + 10, y: 1060, z: 1.12 }, eio((t - B.rise) / 2));
+  const [sx, sy] = GC.shake(t, B.sprout, 10, 8, .4); c.sx = sx; c.sy = sy; return c;
+}
+
+function draw(ctx, t) {
+  const cm = camAt(t), warm = .75 * ss(B.sprout, B.sprout + 3, t), F = poseMe(t);   // the storm warms to gold once it has grown
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  GC.sky(ctx, t, cm, warm, [10.6]);
+  GC.farLayers(ctx, cm, warm);
+  layer(ctx, cm, 1, () => {
+    GC.ground(ctx, t, view(cm), {});
+    drawMound(ctx, t);
+    drawSprout(ctx, t);
+    // the seed: in the near paw (drawn just before the near arm, so the fist closes over it), then pressed into the ground
+    if (t < B.plant) F.prop = c => drawSeed(c, [F.near ? F.near[0] : hang(F)[0], (F.near ? F.near[1] : hang(F)[1]) + 2]);
+    ctx.fillStyle = 'rgba(40,20,40,.25)'; ctx.beginPath(); ctx.ellipse(F.x + 6, FY + 4, 120, 16, 0, 0, TAU); ctx.fill();   // contact shadow
+    drawCat(ctx, t, F);
+  });
+  GC.speedRing(ctx, 560, 1060, (t >= B.sprout ? 1 - ss(B.sprout + .05, B.sprout + .5, t) : 0) * .8, 21, 380);   // the pop
+  GC.grade(ctx, warm);
+  GC.vignette(ctx);
+  if (t < B.end) GC.captions(ctx, t, S.lines);
+  GC.endCard(ctx, t, S.endCard, B.end);
+}
+
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: GC.FONTS, init: async () => GC.init(), draw });
+</script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>플랫 벡터 밤숲 · 템플릿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-flatnight.js"></script>
+<script>
+/* Flat night forest template — the house-style demo story (styles/flatnight/STYLE.md), 30 s.
+   A hooded traveller walks along the night road into frame, kneels, plants a seed (a tiny warm light goes into the
+   ground), waits while the forest does its ambient things (eyes blink in the bushes, fireflies, swaying plants); at
+   `sprout` the seed bursts up as a golden sprout and its light disc opens the forest into the lit palette; at `rise` the
+   traveller stands and looks up at it; the night closes in for the end card.
+   To make a new film: write scenes/script.js, then replace the SEED / SPROUT and the poses below with your image.
+   Keep the frame order: backdrop → world → FN.lit → overlays → foreground → endPlate → captions → endCard. */
+const S = window.SCRIPT, B = S.beat, { clamp, lerp, ss, eo, eio } = Pilot;
+const FN = Flatnight, TAU = Math.PI * 2;
+const { DK, LT, WOOD } = FN, ME = FN.FIG.me;
+const FY = 1300, RT = 1212, SC = 1.04;          // the traveller's lane (ground y), the road's far edge, figure scale
+const X0 = -330, XK = 0, SEED = [XK + 100, FY - 4];   // walk start, where it kneels, where the seed goes
+let FOREST;
+
+// ---------------- the traveller's poses ----------------
+const STRIDE = 140, walkX = t => X0 + (XK - X0) * (t < B.walk[1] - .7 ? (t / (B.walk[1] - .7)) * .86 : .86 + .14 * eo((t - B.walk[1] + .7) / .7));
+function pose(t) {
+  const sway = Math.sin(t * 1.3) * .5;
+  if (t < B.walk[1]) { const x = walkX(t), F = FN.walk(x, FY, SC, 1, (x - X0) / (STRIDE * SC), STRIDE, .12, 22);
+    F.hands = FN.hangHands(F, 20 * Math.sin(TAU * F.ph)); F.eye = 'calm'; return F; }
+  const ST = FN.stand(XK, FY, SC, 1, .06), KN = FN.kneel(XK, FY, SC, 1, .25), BEND = { ...FN.kneel(XK, FY, SC, 1, .85), tilt: .25, eye: 'down' };
+  const plantHand = [SEED[0] - 6, SEED[1] - 10], onKnee = F => FN.frame(F).P(46, -10);   // the far hand rests on the raised knee
+  if (t < B.kneel) return FN.mix(FN.walk(XK, FY, SC, 1, (XK - X0) / (STRIDE * SC), STRIDE, .12, 22), ST, eio((t - B.walk[1]) / .3));
+  if (t < B.kneel + .5) return FN.mix(ST, KN, eio((t - B.kneel) / .5));
+  if (t < B.plant + 1.6) {   // bend over, the near hand carries the seed down, presses it in, pats the soil twice
+    const k = eio((t - B.kneel - .5) / .6), F = FN.mix(KN, BEND, k);
+    const pat = t > B.plant ? 12 * Math.abs(Math.sin((t - B.plant) * TAU * 1.25)) * (1 - ss(B.plant + 1.1, B.plant + 1.5, t)) : 0;
+    const up = [FN.frame(F).P(60, 40)[0], FN.frame(F).P(60, 40)[1]], hp = [lerp(up[0], plantHand[0], k), lerp(up[1], plantHand[1], k) - pat];
+    F.hands = [onKnee(F), hp]; F.hand = ['flat', t > B.plant ? 'flat' : 'fist']; F.eye = 'down'; return F; }
+  // waiting: sitting back on the heel, breathing; a lean forward when the light pulses under the soil
+  const WAIT = { ...FN.kneel(XK, FY, SC, 1, .3 + .03 * Math.sin(t * 1.6)), tilt: .3 };
+  WAIT.hip = [WAIT.hip[0], WAIT.hip[1] + 2 * Math.sin(t * 1.6)];
+  if (t < B.sprout) { const k = eio((t - B.plant - 1.6) / .6), F = FN.mix(BEND, WAIT, k); F.hands = [onKnee(F), onKnee(F).map((v, i) => v + (i ? 4 : -22))]; F.eye = t > B.wait[1] ? 'calm' : 'down'; return F; }
+  // the sprout: thrown back on the heel, then looking up as it grows
+  const BACK = { ...FN.kneel(XK - 8, FY, SC, 1, -.12), tilt: -.2, eye: 'shock' };
+  if (t < B.rise) { const F = FN.mix(WAIT, BACK, eo((t - B.sprout) / .25)); F.hands = [onKnee(F), FN.hangHands(F)[1]]; F.eye = t < B.sprout + 1.2 ? 'shock' : 'up';
+    F.tilt = lerp(-.2, -.32, ss(B.sprout + .8, B.sprout + 3, t)); return F; }
+  const UP = FN.lookUp(FN.stand(XK - 20, FY, SC, 1, -.04), 1), k = eio((t - B.rise) / .8), F = FN.mix(BACK, UP, k);
+  F.eye = 'up'; F.tilt = lerp(-.32, -.42 + .03 * sway, k); return F;
+}
+
+// ---------------- the seed and the sprout (the film's one image goes here) ----------------
+const grow = t => t < B.sprout ? 0 : 210 * backEase(clamp((t - B.sprout) / .9)) + 230 * ss(B.sprout + 1, B.rise + 3, t);   // height px
+function backEase(u) { return 1 + 2.70158 * Math.pow(u - 1, 3) + 1.70158 * Math.pow(u - 1, 2); }
+function seed(ctx, t) {   // in the hand → in the ground (a little mound), glowing
+  if (t < B.plant - 1.0 || t >= B.sprout + .4) return;
+  const k = 1 - ss(B.sprout, B.sprout + .4, t);
+  ctx.fillStyle = DK.road2; ctx.beginPath(); ctx.ellipse(SEED[0], SEED[1] + 4, 34 * ss(B.plant, B.plant + .3, t), 9, 0, Math.PI, TAU); ctx.fill();   // the mound
+  if (t < B.plant) { const F = pose(t), h = F.hands[1]; ctx.fillStyle = WOOD.c; ctx.beginPath(); ctx.ellipse(h[0] + 4, h[1] + 12, 8, 6, .4, 0, TAU); ctx.fill(); }
+  else { ctx.globalAlpha = k; ctx.fillStyle = WOOD.c; ctx.beginPath(); ctx.ellipse(SEED[0], SEED[1] - 2, 6, 4, 0, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; }
+}
+function sprout(ctx, t) {
+  const h = grow(t); if (h < 2) return;
+  const x = SEED[0], y = SEED[1], sw = Math.sin(t * 1.4) * Math.min(1, h / 200) * 8, top = [x + sw, y - h];
+  ctx.strokeStyle = WOOD.a; ctx.lineCap = 'round'; ctx.lineWidth = 7 + h * .025;
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x - 10, y - h * .55, top[0], top[1]); ctx.stroke();
+  const at = u => [lerp(x, top[0], u) - 10 * Math.sin(Math.PI * u) * .9, lerp(y, top[1], u)];
+  const pairs = [[.38, 0], [.6, .35], [.8, .7]];   // [height along stem, when it opens (0..1 of growth)]
+  for (const [u, o] of pairs) { const op = ss(o, o + .25, h / 440 + .1); if (op <= 0) continue; const [px, py] = at(u), Ln = (56 + 52 * (1 - u)) * op;
+    ctx.fillStyle = WOOD.c; FN.leaf(ctx, px + Ln * .46, py - Ln * .22, Ln, Ln * .42, 1.1 + sw * .02);
+    ctx.fillStyle = WOOD.a; FN.leaf(ctx, px - Ln * .46, py - Ln * .22, Ln, Ln * .42, -1.1 + sw * .02); }
+  ctx.fillStyle = WOOD.c; FN.leaf(ctx, top[0], top[1] - 22, 50, 20, sw * .02);   // the bud
+}
+
+// ---------------- camera, light ----------------
+function cam(t) {
+  let c = { x: walkX(Math.min(t, B.walk[1])) + 120, y: 1070, z: 1.34 };
+  c = FN.mixCam(c, { x: XK + 70, y: 1120, z: 1.62 }, eio((t - B.kneel) / 1.2));                 // in on the planting
+  c = FN.mixCam(c, { x: XK + 60, y: 1130, z: 1.74 }, ss(B.wait[0], B.wait[1] + .8, t));         // a slow push while waiting
+  c = FN.mixCam(c, { x: XK + 70, y: 1040, z: 1.32 }, eio((t - B.sprout) / .7));                 // the sprout throws the frame open
+  c = FN.mixCam(c, { x: XK + 60, y: 1000, z: 1.2 }, eio((t - B.rise) / 1.6));
+  [c.sx, c.sy] = FN.shake(t, B.sprout, .45, 8, 6);
+  return c;
+}
+function lights(t) {   // world coords: the seed's small light, then the sprout's
+  const D = [];
+  if (t >= B.plant - 1.0 && t < B.sprout + .3) { const pulse = 1 + .35 * Math.exp(-((t - 10.5) ** 2) * 18) + .5 * Math.exp(-((t - 12.4) ** 2) * 18) + .8 * Math.exp(-((t - 13.6) ** 2) * 30);
+    const h = t < B.plant ? pose(t).hands[1] : SEED; D.push({ x: h[0], y: h[1] - 4, r: 70 * pulse * ss(B.plant - 1.0, B.plant - .6, t), warm: 1 }); }
+  if (t >= B.sprout) D.push({ x: SEED[0], y: SEED[1] - grow(t) * .55, r: 160 + 320 * eo((t - B.sprout) / .8) + 18 * Math.sin(t * 2.1), warm: 1 });
+  return D;
+}
+
+// ---------------- frame ----------------
+function draw(ctx, t) {
+  const cm = cam(t), F = pose(t), T1 = FN.layerT(cm, 1), x0 = (0 - T1.e) / T1.z, x1 = (Pilot.W - T1.e) / T1.z;
+  const pass = (g, k) => {
+    FN.backdrop(g, cm, k === 'd' ? DK : LT, FOREST);
+    if (k === 'd') FN.eyes(g, t, cm, FOREST.eyes);
+    FN.layer(g, cm, 1, () => {
+      FN.road(g, k === 'd' ? DK : LT, x0, x1, { top: RT });
+      seed(g, t); sprout(g, t);
+      FN.figure(g, F, ME[k]);
+    });
+  };
+  pass(ctx, 'd');
+  FN.lit(ctx, FN.discs(cm, lights(t)), g => pass(g, 'l'));
+  FN.layer(ctx, cm, 1, () => {
+    if (t >= B.plant - 1 && t < B.sprout + .3) { const h = t < B.plant ? pose(t).hands[1] : SEED; FN.halo(ctx, h[0], h[1], 46, 1 - ss(B.sprout, B.sprout + .3, t)); }
+    if (t >= B.sprout) { const h = grow(t); FN.halo(ctx, SEED[0], SEED[1] - h, 120, .8); }
+    FN.hitRing(ctx, t, B.sprout, SEED[0], SEED[1] - 40);
+  });
+  FN.fireflies(ctx, t, cm, { x0: -500, x1: 700, y0: 820, y1: 1240, alpha: 1 - ss(B.end - .3, B.end, t) });
+  FN.foreground(ctx, cm, t);
+  FN.endPlate(ctx, t, B.end);
+  if (t < B.end) FN.captions(ctx, t, S.lines);
+  FN.endCard(ctx, t, S.endCard, B.end);
+}
+
+async function init() { FOREST = FN.forest(5); FN.init(); }
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: FN.FONTS, init, draw });
+</script>
+</body>
+</html>

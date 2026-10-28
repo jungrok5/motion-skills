@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>새 장면 · 펜 낙서</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script><script src="script.js"></script><script src="kit-pendoodle.js"></script>
+<script>
+/* TEMPLATE — a new scene in the house style `pendoodle` (styles/pendoodle/STYLE.md). Placeholder story (the same for
+   every house style): the doodled bird walks in through the rain with a seed, kneels, digs, plants it, pats the earth
+   down, waits (rain on twos, puddles rippling, the line boiling), a sprout rises in yellow highlighter, the bird stands
+   and looks at it; end card on plain paper. Replace the parts marked ✎ with the film's one image; keep the frame
+   skeleton in draw(): K.begin → rain → world → figures → effects → K.end → words → end card.
+   Beats and words come from script.js (window.SCRIPT). Pure function of t; seeded randomness only. */
+const K = PenDoodle, HD = K.HD, TAU = Math.PI * 2;
+const { clamp, lerp, ss, eo, eio, rng } = Pilot;
+const S = window.SCRIPT, B = S.beat, HLC = S.accent || K.HL;
+const { penS, penW, whiteS, hatchS, hiS, hiLine, toS } = K;
+
+// ✎ the world (world px; the camera looks at it — the pen is drawn in screen px so it never scales)
+const FY = 1300, RT = 1100;                    // ground line the bird stands on; the far edge of the ground
+const X0 = -40, X1 = 300, SME = 1.6;           // the walk: from X0 to X1; "me" at 1.6× (the dense black bird)
+const SEED = [X1 + 120, FY + 6];               // where the seed goes in (in reach of the near wing when kneeling at X1)
+const XW = X1 - 100;                            // after planting the bird hops back a step to watch (clear of the sprout)
+const walkX = HD.walker(X0, X1, B.walk[1], .35);
+let MARKS = [], SPECKS = [];
+
+// ✎ the figure, as a pure function of t (poses on twos: t12) — the kit's rig does bodies, wings, legs, hands
+function me(t) {
+  const tp = K.t12(t), x = walkX(Math.min(tp, B.walk[1]));
+  const walk = K.walkSpec(x, FY, SME, 1, x / 110, 110, .12, 18); walk.ph = x / 110;
+  const kneel = (k, x = X1) => K.crouchSpec(x, FY, SME, 1, k);
+  let F;
+  if (tp < B.walk[1]) { F = walk; F.hands = [null, K.hangGrip(F, 10 * Math.sin(TAU * x / 110))]; F.hand = ['rest', 'grip']; }   // the seed in the near wing
+  else if (tp < B.kneel) { const k = eio((tp - B.walk[1]) / (B.kneel - B.walk[1])); F = K.mixSpec(K.standSpec(X1, FY, SME, 1), kneel(1), k);
+    F.hands = [null, K.hangGrip(F)]; F.hand = ['rest', 'grip']; }
+  else if (tp < B.rise) { F = kneel(1);
+    const far = [SEED[0] - 34, SEED[1] - 4];                       // the far wing digs (scratches back and forth), the near one holds the seed
+    if (tp < B.plant - .5) { F.hands = [[far[0] + 14 * Math.sin(tp * 22), far[1] - 6 * Math.abs(Math.cos(tp * 22))], K.hangGrip(F)]; F.hand = ['open', 'grip']; }
+    else if (tp < B.plant) { const k = eio((tp - B.plant + .5) / .5); F.hands = [far, [lerp(K.hangGrip(F)[0], SEED[0], k), lerp(K.hangGrip(F)[1], SEED[1] - 14, k)]]; F.hand = ['flat', 'grip']; }
+    else if (tp < B.plant + 1.4) { const pat = Math.abs(Math.sin((tp - B.plant - .25) * Math.PI / .45)); F.hands = [far, [SEED[0] + 4, SEED[1] - 10 - (tp > B.plant + .25 ? 26 * pat : 0)]]; F.hand = ['flat', tp < B.plant + .25 ? 'open' : 'flat']; }
+    else { const u = clamp((tp - B.plant - 1.4) / .6), k = eio(u); F = K.mixSpec(kneel(1), kneel(.55, XW), k); F.hip = [F.hip[0], F.hip[1] - 26 * Math.sin(Math.PI * u)];   // hops back a step…
+      F.feet = F.feet.map(f => [f[0], f[1] - 14 * Math.sin(Math.PI * u)]); F.eye = 'calm'; F.look = [7, 6]; F.tilt = .22; }   // …and watches the spot
+    if (tp >= B.wait[0] && tp < B.sprout) {   // waiting: a curious head tilt, a blink, a little impatience
+      F.tilt = .22 + .08 * Math.sin((tp - B.wait[0]) * 1.3); if (Math.abs(tp - 9.6) < .09 || Math.abs(tp - 11.9) < .09) F.eye = 'happy';
+      F.ticks = tp > 12.2 && tp < 12.9; }
+    if (tp >= B.sprout) { F.eye = tp < B.sprout + .9 ? 'shock' : 'happy'; F.bang = tp < B.sprout + .8; F.tilt = .1; }
+  } else { const k = eio((tp - B.rise) / .6), st = K.standSpec(XW - 6, FY, SME, 1, .1); st.tilt = .26; st.look = [7, 6];   // stands, looks at it
+    F = K.mixSpec(kneel(.55, XW), st, k); F.eye = tp > B.rise + 1.2 && tp < B.rise + 1.5 ? 'happy' : 'calm'; F.look = [7, 6]; F.tilt = lerp(.1, .26, k); }
+  F.kind = 'me'; return F;
+}
+const seedOn = t => t < B.plant;                                    // still in the wing (drawn under the wingtip)
+
+// ✎ the subject: a sprout from the planted spot (height grows from B.sprout; leaves unfold)
+function sprout(t) {
+  const g = eo((t - B.sprout) / 1.6) * .75 + .25 * ss(B.sprout + 1, B.rise + 2, t), lf = eo((t - B.sprout - .8) / 1.3) * (.7 + .3 * ss(B.rise, B.rise + 2, t));
+  if (g <= 0) return;
+  const h = 210 * g, base = [SEED[0], SEED[1] - 14], sw = 6 * Math.sin(t * 1.7) * g;
+  const stem = HD.spline([base, [base[0] - 8, base[1] - h * .35], [base[0] + 6 + sw * .5, base[1] - h * .7], [base[0] + sw, base[1] - h]], 3), top = stem[stem.length - 1];
+  // the accent light: a soft highlighter halo, rays, the stem traced over — before the ink so the pen sits on it
+  const c = toS([top[0], top[1] + 40]), z = K.cam.z, a = ss(B.sprout, B.sprout + .6, t);
+  K.hl.save(); K.hl.globalAlpha = a; for (const [r, al] of [[150, .1], [105, .14], [62, .2]]) hiS(HD.arc(c[0], c[1], r * z * g, r * z * g * .9, 0, TAU, 8), al, HLC); K.hl.restore();
+  for (let i = 0; i < 15; i++) { const an = -Math.PI * (.04 + i * .066), r0 = 96 * z, r1 = (160 + 34 * (i % 2)) * z * (.6 + .4 * g); hiLine([[c[0] + Math.cos(an) * r0, c[1] + Math.sin(an) * r0], [c[0] + Math.cos(an) * r1, c[1] + Math.sin(an) * r1]], 8 * z, .22 * a, HLC); }
+  hiLine(stem.map(toS), 22 * z, .45, HLC);
+  penW(stem, 7100, { w: 4.2, ts: 6, te: 4, mn: .5 });
+  for (const [side, u, sz] of [[-1, .78, 1], [1, .9, .85]]) {       // two leaves on the upper stem
+    if (lf <= 0) continue; const p = stem[Math.round((stem.length - 1) * u)], L = 74 * sz * lf, an = side < 0 ? -2.5 : -.6;
+    const tip = [p[0] + Math.cos(an) * L, p[1] + Math.sin(an) * L], n = [-Math.sin(an), Math.cos(an)];
+    const leaf = HD.spline([p, [p[0] + Math.cos(an) * L * .5 + n[0] * L * .28, p[1] + Math.sin(an) * L * .5 + n[1] * L * .28], tip, [p[0] + Math.cos(an) * L * .5 - n[0] * L * .22, p[1] + Math.sin(an) * L * .5 - n[1] * L * .22]], 3, true).map(toS);
+    whiteS(leaf); hiS(leaf, .62, HLC); penS(leaf, 7110 + side, { w: 3.8, ts: 3, te: 3, mn: .7 });
+    penS(HD.seg(toS(p), toS([p[0] + Math.cos(an) * L * .7, p[1] + Math.sin(an) * L * .7]), 3), 7120 + side, { w: 2.4, mn: .4 });   // the midrib
+  }
+}
+// ✎ the earth: a little dug hole, then the seed in it, then the patted mound over it
+function earth(t) {
+  if (t < B.kneel + .2) return;
+  const dug = ss(B.kneel + .2, B.plant - .6, t), mound = ss(B.plant + .3, B.plant + 1.3, t);
+  const hole = HD.arc(SEED[0], SEED[1] + 2, 30 * dug, 9 * dug, 0, TAU, 3).map(toS);
+  if (dug > .05 && mound < 1) { whiteS(hole); hatchS(hole, K.TX.hDense, ...toS(SEED)); penS(hole, 7000, { w: 3.2, ts: 2, te: 2, mn: .7 }); }
+  if (t >= B.plant && t < B.plant + .5) { const k = eo((t - B.plant) / .25); penW(HD.arc(SEED[0], SEED[1] - 14 + 14 * k, 6, 8, 0, TAU, 2), 7010, { w: 3, raw: true }); }   // the seed drops in
+  if (mound > 0) { const m = HD.arc(SEED[0], SEED[1] + 6, 46, 26 * mound, Math.PI, TAU, 3).map(toS); m.push(toS([SEED[0] + 46, SEED[1] + 6]));
+    whiteS(m); hatchS(m, K.TX.hPil[K.fd], ...toS(SEED)); penS(m.slice(0, -1), 7020, { w: 3.6, mn: .5 }); }
+  for (const [dx, sd] of [[-58, 7030], [62, 7031], [-74, 7032]]) if (dug > .5) penW(HD.arc(SEED[0] + dx, SEED[1] + 2, 9, 5, Math.PI, TAU, 2), sd, { w: 3 });   // kicked-up crumbs
+}
+// ✎ the camera: a slow walk-along, a push in on the waiting, a small kick at the sprout, a pull back to show both
+function camAt(t) {
+  let c = { x: 300, y: 1090, z: 1.12 };
+  c = K.mixCam(c, { x: 360, y: 1140, z: 1.3 }, eio((t - 3.6) / 1.6));
+  c = K.mixCam(c, { x: SEED[0] - 30, y: 1150, z: 1.42 }, eio((t - B.wait[0]) / (B.sprout - B.wait[0])));
+  c = K.mixCam(c, { x: SEED[0] - 50, y: 1090, z: 1.2 }, eio((t - B.rise) / 1.8));
+  [c.sx, c.sy] = K.shake(t, B.sprout, .45, 8, 6);
+  return c;
+}
+
+/* ------------------------------------------------------------------ frame */
+function draw(ctx, t) {
+  K.begin(ctx, t, camAt(t));
+  const F = me(t);
+  K.rain(t, { keep: [K.keepBox(F)], hole: K.capRect(t, S.lines), a: 1 - .6 * ss(B.rise, B.rise + 3, t) });   // the rain thins after the sprout
+  K.drawPuddles(MARKS, t);
+  K.lamp(760, RT + 2, 5000);                                       // one unlit lamp behind, for depth
+  earth(t);
+  K.drawBird(F, null, () => { if (seedOn(t)) { const p = F.hands[1]; penW(HD.arc(p[0] + 2, p[1] + 2, 6, 8, 0, TAU, 2), 7010, { w: 3, raw: true }); } });
+  sprout(t);
+  K.specks(SPECKS, t);
+  K.end(ctx, 1 - ss(B.end - .15, B.end + .35, t));                 // the end card sits on plain paper
+  K.captions(ctx, t, S.lines, { until: B.end });
+  K.endCard(ctx, t, S.endCard, B.end);
+}
+async function init() {
+  K.init();
+  MARKS = K.puddles({ x0: -900, x1: 1500, top: RT, skip: (x, y) => Math.abs(x - SEED[0]) < 90 && Math.abs(y - SEED[1]) < 30 });
+  const r = rng(31);   // dirt flicked up while digging
+  for (let n = 0; n < 14; n++) SPECKS.push({ t0: B.kneel + .3 + n * .08, x: SEED[0] - 20 + r() * 20, y: SEED[1], vx: -(60 + r() * 160), vy: -(120 + r() * 200), land: FY + 4 + r() * 20, r0: r() * TAU, vr: (r() - .5) * 20, sz: 3 + r() * 3, seed: 7200 + n });
+}
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: K.FONTS, init, draw });
+</script>
+</body>
+</html>

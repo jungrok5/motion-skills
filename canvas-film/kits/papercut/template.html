@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>붉은 전지 오림 · 템플릿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Noto+Serif+KR:wght@600;700&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-papercut.js"></script>
+<script>
+/* A new scene in the red paper-cut house style (styles/papercut/STYLE.md). The kit cuts the paper; this file tells the story.
+   PLACEHOLDER STORY (the shared template story — replace it with your film's one image): a red cut-out figure walks along
+   the road, kneels and presses a gold seed (the one piece of different paper) into the ground; clouds drift and paper
+   swallows cross while he waits; at 14 the backing lights up behind a red window-flower sprout that rises from a slit in
+   the ground; at 18 he stands and looks up as its gold flower opens; the curtain comes down for the end card at 26.
+   Keep: init → PC.init, sheets and sprites once;  draw → backing, parallax layers, world, curtain, grain, captions, end card.
+   Figures pose on 12 fps (t12), the camera on ones. */
+const S = window.SCRIPT, B = S.beat, { clamp, lerp, ss, eo, eio, rng } = Pilot;
+const W = Pilot.W, H = Pilot.H, TAU = Math.PI * 2;
+const PC = Papercut, C = PC.C, { t12, pathOf, paper, holes, diamond, crescentPts, drawSheet, drawFig, walkSpec, standSpec, kneelSpec, mixSpec, layer, mixCam } = PC;
+const FY = 1300, RT = 1212;                       // the figure's ground line, the road's far (grass) edge
+const X0 = -330, X1 = 190, HX = 350;              // walk in from / stop at, the hole
+const TX = {};
+
+// ---------------- pieces (built once) ----------------
+function build() {
+  TX.cloud = PC.clouds(-900, 260, 1500, 760);
+  TX.mt = PC.mountains(-1000, 600, 1700, 1260);
+  TX.hill = PC.hills(-1100, 900, 2500, 1290);
+  TX.road = PC.road(-1500, 2000, RT, 2300);
+  TX.seed = PC.sprite(-14, -20, 14, 20, g => { PC.fillPts(g, [[0, -18], [10, -6], [12, 6], [0, 18], [-12, 6], [-10, -6]], C.gold); PC.cutSlit(g, [[0, -9], [0, 10]], 2.2); }, 21);
+  TX.mound = PC.sprite(-60, -26, 60, 4, g => { PC.fillPts(g, [[-58, 2], [-40, -12], [-14, -22], [14, -22], [40, -12], [58, 2]], PC.shade(C.road, 1.25));
+    PC.cutPts(g, [-36, -12, 12, 36].map(x => crescentPts(x, -10, 7, .3, Math.PI - .3, 2.6, 8))); }, 22);
+  // the window-flower sprout: a stem with three pairs of lace leaves (cut slits and diamonds), drawn upright, base at (0, 0)
+  TX.sprout = PC.sprite(-150, -440, 150, 6, g => {
+    const stem = []; for (let i = 0; i <= 20; i++) { const u = i / 20; stem.push([Math.sin(u * 3.2) * 16 * u, -u * 420]); }
+    const L = stem.map(([x, y], i) => [x - (9 - i * .3), y]), R = stem.map(([x, y], i) => [x + (9 - i * .3), y]).reverse();
+    PC.fillPts(g, L.concat(R), C.gate);
+    for (const [u, sd, sc] of [[.22, -1, 1], [.34, 1, .95], [.5, -1, .85], [.62, 1, .78], [.76, -1, .64], [.86, 1, .55]]) {
+      const b = stem[Math.round(u * 20)], len = 120 * sc, an = -.55, tip = [b[0] + sd * Math.cos(an) * len, b[1] + Math.sin(an) * len], m = [(b[0] + tip[0]) / 2, (b[1] + tip[1]) / 2];
+      const nx = -(tip[1] - b[1]) * .3, ny = (tip[0] - b[0]) * .3, leaf = []; for (let i = 0; i <= 12; i++) { const v = i / 12, w = Math.sin(v * Math.PI); leaf.push([b[0] + (tip[0] - b[0]) * v + nx * w, b[1] + (tip[1] - b[1]) * v + ny * w]); }
+      for (let i = 12; i >= 0; i--) { const v = i / 12, w = Math.sin(v * Math.PI); leaf.push([b[0] + (tip[0] - b[0]) * v - nx * w * .7, b[1] + (tip[1] - b[1]) * v - ny * w * .7]); }
+      PC.fillPts(g, leaf, C.gate);
+      PC.cutSlit(g, [[b[0] + (tip[0] - b[0]) * .12, b[1] + (tip[1] - b[1]) * .12], [b[0] + (tip[0] - b[0]) * .85, b[1] + (tip[1] - b[1]) * .85]], 2.4);   // the vein
+      PC.cutPts(g, [.35, .55, .72].map(v => diamond(b[0] + (tip[0] - b[0]) * v + nx * .45, b[1] + (tip[1] - b[1]) * v + ny * .45, 4 * sc, 3 * sc)));
+    }
+    PC.cutPts(g, [.1, .3, .45, .58, .7].map(v => diamond(stem[Math.round(v * 20)][0], stem[Math.round(v * 20)][1], 3, 6)));
+  }, 23);
+  TX.bud = PC.sprite(-24, -40, 24, 6, g => { PC.fillPts(g, [[0, -38], [14, -22], [18, -6], [8, 4], [-8, 4], [-18, -6], [-14, -22]], C.gold); PC.cutSlit(g, [[0, -28], [0, -2]], 2.4); }, 24);
+  TX.flower = PC.sprite(-70, -70, 70, 70, g => {
+    for (let k = 0; k < 8; k++) { const a = k * TAU / 8, pts = []; for (let i = 0; i <= 10; i++) { const v = i / 10, w = Math.sin(v * Math.PI) * 17; pts.push([Math.cos(a) * 66 * v - Math.sin(a) * w, Math.sin(a) * 66 * v + Math.cos(a) * w]); }
+      PC.fillPts(g, pts, C.gold); }
+    g.save(); g.globalCompositeOperation = 'destination-out'; g.fillStyle = '#000';
+    for (let k = 0; k < 8; k++) { const a = k * TAU / 8 + TAU / 16; g.beginPath(); g.ellipse(Math.cos(a) * 26, Math.sin(a) * 26, 7, 3, a, 0, TAU); g.fill(); }
+    g.beginPath(); g.arc(0, 0, 10, 0, TAU); g.fill(); g.restore();
+    PC.fillPts(g, [...Array(12)].map((_, i) => [Math.cos(i * TAU / 12) * (i % 2 ? 6 : 9), Math.sin(i * TAU / 12) * (i % 2 ? 6 : 9)]), C.gold);
+  }, 25);
+}
+
+// ---------------- the figure ----------------
+const SME = 1.0;
+const walkX = t => lerp(X0, X1, clamp(t / B.walk[1]));
+function poseMe(t) {
+  const tp = Math.max(0, t12(t)), ph = (walkX(tp) - X0) / 210;
+  const WALK = tt => { const F = walkSpec(walkX(tt), FY, SME, 1, (walkX(tt) - X0) / 210, 120, .14, 20); F.hands = PC.hangHands(F, 22 * Math.sin(TAU * F.ph)); return F; };
+  if (t < B.walk[1]) { const F = WALK(tp); F.hip[0] += walkX(t) - walkX(tp); F.feet = F.feet.map(p => [p[0] + walkX(t) - walkX(tp), p[1]]); F.hands = F.hands.map(p => [p[0] + walkX(t) - walkX(tp), p[1]]); return F; }
+  const ST = standSpec(X1, FY, SME, 1, .06), KN = kneelSpec(X1, FY, SME, 1, 1.15), hole = [HX, FY + 2];
+  KN.eye = 'down'; KN.tilt = .25;
+  // kneeling hands: the near hand holds the seed, presses it into the ground at the hole, pats; the far hand braces on the ground
+  const kneelHands = tt => { const far = [X1 + 112, FY - 4], hold = [X1 + 160, FY - 120];
+    let near = hold;
+    if (tt >= B.kneel + .4 && tt < B.plant) near = [lerp(hold[0], hole[0], eio((tt - B.kneel - .4) / (B.plant - B.kneel - .4))), lerp(hold[1], hole[1] - 6, eio((tt - B.kneel - .4) / (B.plant - B.kneel - .4)))];
+    else if (tt >= B.plant && tt < B.plant + 1.3) near = [hole[0] - 4, hole[1] - 8 - 30 * Math.abs(Math.sin((tt - B.plant) * Math.PI * 2.3))];
+    else if (tt >= B.plant + 1.3) near = [lerp(hole[0], X1 + 150, eio((tt - B.plant - 1.3) / .6)), lerp(hole[1] - 8, FY - 100, eio((tt - B.plant - 1.3) / .6))];
+    return [far, near]; };
+  if (t < B.rise) {
+    const k = eio((tp - B.walk[1] - .3) / (B.kneel + .5 - B.walk[1] - .3));
+    const K = { ...KN, hands: kneelHands(tp), hand: ['flat', tp >= B.plant && tp < B.plant + 1.3 ? 'flat' : 'fist'] };
+    // after planting: sit back up a little and wait (breathing), then look up at the light
+    if (tp >= B.plant + 1.3) { const up = eio((tp - B.plant - 1.3) / .7), F = mixSpec(K, { ...kneelSpec(X1, FY, SME, 1, .35), hands: [[X1 + 62, FY - 92], [X1 + 150, FY - 100]], hand: ['flat', 'fist'], tilt: .2, eye: 'calm' }, up);
+      F.ang += .02 * Math.sin(tp * 2.1); if (tp >= B.sprout) { F.tilt = lerp(.2, -.3, eio((tp - B.sprout) / .4)); F.eye = tp < B.sprout + 1.2 ? 'shock' : 'calm'; } return F; }
+    return k < 1 ? { ...mixSpec(ST, K, k), eye: 'calm' } : K;
+  }
+  const KW = { ...kneelSpec(X1, FY, SME, 1, .35), hands: [[X1 + 62, FY - 92], [X1 + 150, FY - 100]], hand: ['flat', 'fist'], tilt: -.3, eye: 'calm' };
+  const UP = { ...standSpec(X1, FY, SME, 1, -.04), tilt: -.42, eye: 'calm' };
+  const F = mixSpec(KW, UP, eio((tp - B.rise) / .5));
+  if (tp >= 21 && tp < 23.6) { const leaf = [HX - 70, FY - 175], u = Math.sin(Math.PI * clamp((tp - 21) / 2.6)); F.hands = [F.hands[0], PC.mixSpec({ ...UP, hands: [null, PC.hangHands(UP)[1]] }, { ...UP, hands: [null, leaf] }, eio(clamp(u * 1.6))).hands[1]]; F.hand = ['fist', 'open']; }
+  return F;
+}
+
+// ---------------- the sprout and its light ----------------
+const grow = t => eo(clamp((t12(t) - B.sprout) / 3.4));
+function drawSprout(ctx, t) {
+  if (t < B.sprout) return;
+  const g = grow(t), h = 420 * g;
+  ctx.save(); ctx.beginPath(); ctx.rect(HX - 400, FY - 900, 800, 900 + 4); ctx.clip();        // it rises out of a slit in the ground
+  PC.drawSprite(ctx, TX.sprout, HX, FY + 420 - h, Math.sin(t12(t) * 1.4) * .015);
+  ctx.restore();
+  const top = [HX - 1, FY - h + 2], open = eio(clamp((t12(t) - B.rise - 1.2) / .8));
+  if (open < 1) PC.drawSprite(ctx, TX.bud, top[0], top[1] + 4, 0, 1 - open * .4, 1 - open);
+  if (open > 0) PC.drawSprite(ctx, TX.flower, top[0], top[1] - 26, open * .4, .3 + 1.0 * open);
+}
+function sproutTop(t) { return [HX - 1, FY - 420 * grow(t) - 16]; }
+
+// ---------------- ambient: paper swallows crossing while he waits ----------------
+function drawSwallows(ctx, t) {
+  const u = (t - B.wait[0] + .5) / 6.5; if (u <= 0 || u >= 1) return;
+  for (let i = 0; i < 3; i++) {
+    const x = lerp(-700, 1100, u) + i * 120 - (i % 2) * 40, y = 640 + i * 46 + Math.sin(u * 9 + i) * 18, fl = Math.floor(t * 12 + i * 3) % 2 ? 1 : -.4, s = .9 - i * .12;
+    const pts = [[x + 34 * s, y], [x + 8 * s, y - 4 * s], [x - 10 * s, y - 34 * fl * s], [x - 6 * s, y - 4 * s], [x - 30 * s, y - 2 * s], [x - 44 * s, y - 12 * s], [x - 34 * s, y + 4 * s], [x - 44 * s, y + 14 * s], [x - 26 * s, y + 6 * s], [x - 6 * s, y + 6 * s], [x - 10 * s, y + 26 * fl * s], [x + 10 * s, y + 6 * s]];
+    paper(ctx, pathOf(pts), C.pil, { sh: .8 });
+  }
+}
+
+// ---------------- camera ----------------
+function camAt(t) {
+  let c = { x: walkX(t) + 150, y: 960, z: 1.2 };
+  c = mixCam(c, { x: (X1 + HX) / 2 + 20, y: 1080, z: 1.5 }, eio((t - 4.2) / 1.0));             // close on the planting
+  c = mixCam(c, { x: (X1 + HX) / 2 + 30, y: 1086, z: 1.58 }, ss(5.2, 13.6, t));                 // a slow push while he waits
+  c = mixCam(c, { x: HX - 30, y: 1010, z: 1.1 }, eio((t - 13.7) / 1.0));                         // the light: pull back to see it rise
+  c = mixCam(c, { x: HX - 50, y: 1030, z: 1.22 }, eio((t - B.rise) / 1.0));
+  return c;
+}
+
+// ---------------- frame ----------------
+function world(ctx, t) {
+  drawSheet(ctx, TX.road);
+  const L = ss(B.sprout, B.sprout + .6, t), top = sproutTop(t);
+  if (L > 0) PC.lightWindow(ctx, top[0], top[1] + 60, 300 + 120 * grow(t), L * (.8 - .3 * ss(B.rise, B.rise + 2, t)), { rays: 12, rayA: .2, rot: t12(t) * .05 });
+  if (t >= B.plant + .2) PC.drawSprite(ctx, TX.mound, HX, FY + 4, 0, eo(clamp((t12(t) - B.plant - .2) / .8)));
+  if (t >= B.plant && t < B.plant + .5) PC.drawSprite(ctx, TX.seed, HX, FY - 6, .3, .9);
+  drawSprout(ctx, t);
+  const F = poseMe(t); F.col = C.me;
+  drawFig(ctx, F, t >= B.walk[1] && t < B.plant ? () => {} : null);
+  if (t >= B.walk[1] && t < B.plant) { const hN = F.hands[1] || PC.hangHands(F)[1]; PC.drawSprite(ctx, TX.seed, hN[0] + 4, hN[1] - 8, .3, .9); }   // the seed in his fist
+  if (L > 0) PC.glow(ctx, top[0], top[1], 200, .22 * L * (1 - .5 * ss(B.rise, B.rise + 2, t)), '255,226,160', '255,180,100');
+}
+function draw(ctx, t) {
+  const cm = camAt(t), drift = t * 9;
+  ctx.fillStyle = C.back; ctx.fillRect(0, 0, W, H);
+  layer(ctx, cm, .15, () => { ctx.translate(-drift, 0); drawSheet(ctx, TX.cloud); });
+  layer(ctx, cm, .35, () => drawSheet(ctx, TX.mt));
+  layer(ctx, cm, .5, () => drawSwallows(ctx, t));
+  layer(ctx, cm, .65, () => drawSheet(ctx, TX.hill));
+  layer(ctx, cm, 1, () => world(ctx, t));
+  PC.curtain(ctx, t, B.end);
+  PC.grain(ctx, cm);
+  PC.captions(ctx, t, S.lines, B.end);
+  PC.endCard(ctx, t, S.endCard, B.end);
+}
+async function init() { PC.init(); build(); }
+Pilot.run({ W, H, dur: S.DUR, fonts: PC.FONTS, init, draw });
+</script>
+</body>
+</html>

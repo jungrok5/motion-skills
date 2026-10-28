@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>스테인드글라스 · 템플릿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@500;600;700&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-glass.js"></script>
+<script>
+/* Glass template — the house demo story in the stained-glass style (styles/glass/STYLE.md).
+   One lancet window; inside, a living panel: hills, a flagstone road, umber rock below it. A pilgrim walks in with a seed
+   (the one RUBY piece) in his hand, kneels (frontal, hunched over the work), presses it into the ground: the seed slides
+   down through the road into the rock band, where — while he waits and cloud shadows drift over the window — a root is
+   leaded in piece by piece, each joint welded with a spark. At 14 the sprout rises above the road piece by piece with a
+   ruby bud, and light pours in; at 18 he stands (profile) and looks down at it. End card at 26.
+   To make a new film: write scenes/script.js, then replace the ✎ parts (world, the subject, poses by time).
+   Frame order: begin (sky) → panel (world canvas, lights behind, figures, subject, glows) → cloud → glaze (light, frame,
+   bloom, band) → captions → endCard. World px, y down; figures and pieces move on 12 fps (G.step), camera and light smooth. */
+const { clamp, lerp, ss, eo, eio } = Pilot;
+const S = window.SCRIPT, B = S.beat, G = Glass, C = G.C;
+const { piece, polyP, rectP, ellP, smoothP } = G;
+
+// ✎ the world: road surface band, my lane, the spot
+const ROAD0 = 1296, ROAD1 = 1392, MEY = 1368, ME_S = 1.08;
+const WX0 = -240, WY0 = 260, WW = 2000, WH = 1900;
+const X0 = 250, XK = 600;                        // walk from X0 to the kneeling spot XK
+const SPOT = [XK + 88, 1340], DEEP = 1450;       // where the seed is pressed in, and where it comes to rest (in the rock band)
+let WORLD;
+function buildWorld() {
+  WORLD = G.world({ x0: WX0, y0: WY0, w: WW, h: WH, scale: 1.5, seed: 9 }, wb => {
+    const X1 = WX0 + WW, Y1 = WY0 + WH;
+    G.mountains(wb, WX0, X1, { y: 1010 });
+    G.hills(wb, WX0, X1, { bottom: ROAD0 + 4 });
+    for (const tx of [60, 230, 880, 1130]) G.tree(wb, tx, G.hillY(tx));
+    G.road(wb, WX0, X1, { y0: ROAD0, y1: ROAD1, lit: x => Math.abs(x - SPOT[0]) < 60 });
+    G.ground(wb, WX0, X1, 0, { y0: ROAD1, y1: Y1 });
+  });
+}
+
+// ---------------------------------------------------------------- the pilgrim: pose by time (12 fps)
+const ME = { s: ME_S, col: G.ROBES.me, id: 900 };
+function holdSeed(c, Wr, ha) {                   // the seed between the fingers (drawn under the fist)
+  const x = Wr[0] + Math.cos(ha) * 23, y = Wr[1] + Math.sin(ha) * 23;
+  piece(c, polyP([[x - 12, y], [x, y - 8], [x + 12, y], [x, y + 8]]), C.ruby, 950, { lead: 3, mat: 0, ts: .4 });
+}
+function me(t) {
+  if (t < B.kneel - .15) {                       // walking in, the seed held out in front
+    const k = clamp(t / B.walk[1]), x = lerp(X0, XK - 30, k * .8 + eo(k) * .2), walking = t < B.walk[1];
+    return { profile: { ...ME, x, y: MEY, dir: 1, lean: .08, phase: x / 34 * Math.PI, stand: !walking, hand: [x + 46, MEY - 148], holding: holdSeed, look: .5 } };
+  }
+  if (t < B.kneel) return { profile: { ...ME, x: XK - 30, y: MEY, dir: 1, lean: .3, crouch: .55, stand: true, hand: [XK + 20, MEY - 70], holding: holdSeed, look: 1 } };   // the in-between
+  if (t < B.rise) {                              // kneeling, frontal, hunched over the spot
+    const bob = t > B.wait[0] ? Math.round(Math.sin(G.step(t) * 2.2)) : 0;              // breathing, stepped
+    const k = { ...ME, x: XK, y: MEY - 6 + bob, id: 900 };
+    const press = ss(B.plant - .3, B.plant, t) * (1 - ss(B.plant + .5, B.plant + .9, t)), back = ss(B.plant + .9, B.plant + 1.2, t);
+    const hand = [lerp(SPOT[0] - 8, XK + 30, back), lerp(SPOT[1] - 12 + 10 * press, MEY - 30, back)];
+    return { kneel: k, near: hand, far: [XK - 40, MEY - 26] };
+  }
+  if (t < B.rise + .17) return { profile: { ...ME, x: XK - 20, y: MEY, dir: 1, lean: .25, crouch: .45, stand: true, look: 1 } };
+  return { profile: { ...ME, x: XK - 20, y: MEY, dir: 1, lean: .06, stand: true, look: 1 } };                       // stands, looks down at it
+}
+
+// ---------------------------------------------------------------- ✎ the subject: seed, root, sprout
+function seedPos(t) {                            // in the fingers → pressed in → slides down through the road into the rock
+  if (t < B.plant) return null;
+  const q = Math.floor(clamp((t - B.plant) / .6) * 6) / 6;          // stepped: a piece sliding along the leads
+  return [SPOT[0], lerp(SPOT[1], DEEP, q)];
+}
+function seed(c, p, id = 951) { piece(c, polyP([[p[0] - 13, p[1]], [p[0], p[1] - 8], [p[0] + 13, p[1]], [p[0], p[1] + 8]]), C.ruby, id, { lead: 3.5, mat: 0, ts: .4 }); }
+// the root (below the seed) and the shoot (up to the road), as joints; one strip per joint, leaded in one by one
+const ROOT = [[0, 6], [-6, 28], [4, 52], [-8, 78], [6, 104], [-4, 132], [10, 158]];
+const ROOT2 = [[2, 36], [26, 54], [40, 80]], ROOT3 = [[-6, 70], [-32, 92], [-44, 118]];
+function strip(c, a, b, w, col, id) {
+  const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1, nx = -dy / l * w / 2, ny = dx / l * w / 2;
+  piece(c, polyP([[a[0] + nx, a[1] + ny], [b[0] + nx, b[1] + ny], [b[0] - nx, b[1] - ny], [a[0] - nx, a[1] - ny]]), col, id, { lead: 3, mat: 0, ts: .5 });
+}
+function growLine(c, t, pts, t0, t1, w, col, id, base) {   // joints appear one by one between t0 and t1; a weld spark at each
+  const n = pts.length - 1, at = i => t0 + (t1 - t0) * i / n, P = q => [base[0] + q[0], base[1] + q[1]];
+  for (let i = 0; i < n; i++) if (t >= at(i)) strip(c, P(pts[i]), P(pts[i + 1]), w, col, id + i);
+  for (let i = 0; i < n; i++) G.spark(c, ...P(pts[i + 1]), (t - at(i)) / .35, .55);
+}
+function under(c, t) {                           // in the rock band: the seed, its root, the shoot climbing to the road
+  const p = seedPos(t); if (!p) return;
+  if (t >= B.wait[0]) {
+    growLine(c, t, ROOT, B.wait[0], B.wait[1] - 1, 9, '#d9b25c', 960, p);
+    growLine(c, t, ROOT2, B.wait[0] + 1.6, B.wait[1] - .4, 5, '#d9b25c', 970, p);
+    growLine(c, t, ROOT3, B.wait[0] + 2.4, B.wait[1], 5, '#d9b25c', 975, p);
+    growLine(c, t, [[0, -6], [3, -34], [-2, -62], [0, -94]], B.wait[1] - .6, B.sprout, 7, C.green, 980, p);
+  }
+  seed(c, p);
+}
+function sprout(c, t) {                          // above the road: the stem leaded up, two leaves, the ruby bud — and light
+  if (t < B.sprout) return;
+  const b = SPOT, stem = [[0, 0], [3, -34], [-3, -70], [2, -104], [0, -136]];
+  growLine(c, t, stem, B.sprout, B.sprout + .6, 9, C.green, 985, b);
+  const top = [b[0], b[1] - 136], u = ss(B.sprout + .6, B.sprout + 1.2, t);
+  for (const [s, id, at] of [[-1, 990, B.sprout + .7], [1, 991, B.sprout + .85]]) if (t >= at) {
+    const y0 = b[1] - 70 - (s > 0 ? 24 : 0), lf = smoothP([[b[0], y0, 1], [b[0] + s * 30, y0 - 26], [b[0] + s * 66, y0 - 22, 1], [b[0] + s * 34, y0 - 4]], true, .6);
+    piece(c, lf, s < 0 ? C.green : C.green2, id, { lead: 3.5, mat: 7, paint: q => G.brush(q, [[b[0] + s * 6, y0 - 4], [b[0] + s * 30, y0 - 16], [b[0] + s * 56, y0 - 20]], 2, G.INK2) });
+    G.spark(c, b[0] + s * 10, y0 - 6, (t - at) / .35, .7);
+  }
+  if (t >= B.sprout + 1.05) {
+    const k = ss(B.sprout + 1.05, B.sprout + 1.6, t), pulse = .75 + .25 * Math.sin((t - B.sprout) * 2.4);
+    G.haloAt(c, top[0], top[1] + 20, .4 * k * pulse, 190);                     // light pours in round it
+    piece(c, smoothP([[top[0], top[1] - 30, 1], [top[0] + 15, top[1] - 8], [top[0], top[1] + 6, 1], [top[0] - 15, top[1] - 8]], true, .7), C.ruby, 992, { lead: 3.5, mat: 5 });
+    G.rubyGlow(c, top[0], top[1] - 10, .7 * k * pulse, 120);
+    G.spark(c, top[0], top[1] - 12, (t - B.sprout - 1.05) / .4, 1.2);
+  }
+}
+
+// ---------------------------------------------------------------- camera: [t, x, y, zoom, ease]
+const CAMK = [[0, 430, 1220, 1.75], [B.walk[1], 560, 1225, 1.75], [B.kneel + 1.2, SPOT[0] - 20, 1270, 2.05, eio], [B.wait[0], SPOT[0] - 20, 1290, 2.1],
+  [B.wait[1], SPOT[0] - 10, 1320, 2.3], [B.sprout + .8, SPOT[0] - 20, 1260, 2.0, eo], [B.rise, SPOT[0] - 30, 1250, 1.95], [B.rise + 2.5, SPOT[0] - 40, 1230, 1.75, eio], [99, SPOT[0] - 40, 1230, 1.75]];
+
+// ---------------------------------------------------------------- frame
+function panel(c, t) {
+  const tf = G.step(t), m = me(tf);
+  G.drawWorld(c, WORLD);
+  under(c, tf);
+  if (m.kneel) {
+    G.kneelBody(c, m.kneel);
+    if (tf >= B.plant - .1 && tf < B.plant + 1.2) piece(c, ellP(SPOT[0], SPOT[1] + 4, 20, 7), C.earth, 955, { lead: 3.5, mat: 4 });   // the opened soil
+    if (tf < B.plant) seed(c, [m.near[0] + 6, m.near[1] + 8], 951);
+    const g = G.kneelGeo(m.kneel);
+    G.arm(c, g.R, m.far, ME_S, ME.col.robe2, 930, 1);
+    G.arm(c, g.Lh, m.near, ME_S, ME.col.robe2, 940, 1);
+  } else G.profile(c, m.profile);
+  if (tf >= B.plant + .6) piece(c, smoothP([[SPOT[0] - 24, SPOT[1] + 8, 1], [SPOT[0], SPOT[1] - 4], [SPOT[0] + 24, SPOT[1] + 8, 1]], true, .6), C.umber, 956, { lead: 3.5, mat: 4 });   // the little mound
+  sprout(c, tf);
+}
+function draw(ctx, t) {
+  const cm = G.camKeys(CAMK, t);
+  G.begin(ctx);
+  G.panel(ctx, cm, c => panel(c, t));
+  G.cloud(ctx, t, { speed: 46, depth: .2, at: 4 });                     // ambient: cloud shadows drift across the window
+  G.glaze(ctx, 1 - .12 * ss(B.wait[0], B.wait[0] + 1, t) * (1 - ss(B.sprout, B.sprout + 1, t)));   // the waiting is a little dimmer
+  G.captions(ctx, t, S.lines);
+  G.endCard(ctx, t, S.endCard, B.end);
+}
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: G.FONTS, init: async () => { G.init(); buildWorld(); }, draw });
+</script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>청사진 설계도 · 템플릿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&family=Noto+Serif+KR:wght@600;700&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-blueprint.js"></script>
+<script>
+/* Blueprint template — the house demo story in the cyanotype engineering-drawing style (styles/blueprint/STYLE.md).
+   A pilgrim walks along the drawn ground with a seed (the one red-pencil thing) in his hand, kneels, presses it in, and
+   sits back to wait. Above ground nothing changes — the dimension over the spot keeps reading 0 m — but a DETAIL
+   CALLOUT (상세 A) shows the section under the ground: the seed splits and a root is drawn on. At 14 the sprout rises in
+   red pencil, the old "0 m" is struck through and corrected; at 18 he stands and looks at it. End card at 26.
+   To make a new film: write scenes/script.js, then replace the ✎ parts (spot, subject, callout contents, numbers).
+   Frame order: setCam → sheet → ground → under-ground / light → figures → accent → annotations → finish → negative →
+   captions → endCard. World: metres, x along the ground, y up, d depth (0 = the pilgrim's lane). */
+const S = window.SCRIPT, B = S.beat, BP = Blueprint, W = Pilot.W, H = Pilot.H;
+const { clamp, lerp, ss, eo, eio } = Pilot;
+const { P, P3, add, mix3, line, hatch, label } = BP;
+
+// ✎ the place and the one subject
+const SPOT = [0, 0, 0];                 // where the seed goes (on the ground, my lane)
+const X0 = -3.3, XK = -.62;             // walk from X0 to the kneeling spot XK (hip x)
+const STRIDE = .9;                      // metres per stride (phase advances 2π per stride → feet don't slide)
+const H_SPROUT = .56;                   // the sprout's height at full growth (m) — the number the drawing corrects
+
+// ---------------------------------------------------------------- the pilgrim: pose by time
+const walkK = t => eio(clamp(t / B.walk[1])) * .25 + clamp(t / B.walk[1]) * .75;   // nearly constant pace, settling into the stop
+const meX = t => lerp(X0, XK, walkK(t));
+const amp = t => .26 * (1 - ss(B.walk[1] - .35, B.walk[1], t));
+function pose(t) {
+  const x = meX(t), ph = Math.PI * 2 * (x - X0) / STRIDE + .4;
+  const Wp = BP.walkPose(x, 0, 1, ph, amp(t), .15), Kn = BP.kneelPose(x, 0, 1), Sb = BP.sitBackPose(x, 0, 1);
+  let F = Wp, hands = [add(Wp.sh, [.2, -.42, -.14]), null];            // seed cupped in front of me (near hand)
+  if (t >= B.kneel) {
+    const kk = ss(B.kneel, B.kneel + .35, t);                           // stand → kneel in-between
+    F = BP.mixPose(Wp, Kn, kk);
+    const ground = add(SPOT, [-.02, .05, -.1]), press = add(SPOT, [-.02, .015, -.1]);
+    const reach = ss(B.kneel + .2, B.plant - .3, t), push = ss(B.plant - .25, B.plant, t) * (1 - ss(B.plant + .35, B.plant + .7, t));
+    hands = [mix3(mix3(add(F.sh, [.2, -.42, -.14]), ground, reach), press, push), null];
+    const back = ss(B.plant + .9, B.plant + 1.5, t);                    // sits back on his heels to wait, hands on his knees
+    if (back > 0) { F = BP.mixPose(F, Sb, back); hands = [mix3(hands[0], add(Sb.kn[0], [-.05, .06, -.04]), back), mix3(add(F.sh, [.1, -.55, .14]), add(Sb.kn[1], [-.06, .06, .04]), back)]; }
+  }
+  if (t >= B.rise) {                                                    // stands up and looks down at it
+    const up = ss(B.rise, B.rise + .6, t), St = BP.walkPose(XK - .15, 0, 1, 0, 0, 0);
+    F = BP.look(BP.mixPose(F, St, up), -ss(B.rise + .4, B.rise + 1, t));
+    hands = up < 1 ? hands.map(h => h && mix3(h, add(St.sh, [.05, -.58, 0]), up)) : [null, null];
+  }
+  return { F, hands };
+}
+// the seed: in the hand until it is pressed in, then just under the surface
+function seedAt(t, hand) { return t < B.plant ? hand : add(SPOT, [0, -lerp(.015, .08, ss(B.plant, B.plant + .4, t)), 0]); }
+
+// ---------------------------------------------------------------- camera
+function cam(t) {
+  const follow = { cx: meX(Math.min(t, B.walk[1])) + .75, cy: .95, z: 205 };
+  const close = { cx: -.05, cy: .62, z: 280 + 8 * clamp((t - B.kneel) / 9) };
+  let c = BP.camMix(follow, close, eio(clamp((t - B.kneel + .2) / 1.4)));
+  c = BP.hitCam(c, t, B.sprout, { cx: c.cx + .05, cy: c.cy + .06 }, { zoom: .06, shake: .012, creep: 1.2 });   // the sprout's beat
+  if (t >= B.rise) c = BP.camMix(c, { cx: -.05, cy: .9, z: 245 }, eio(clamp((t - B.rise) / 2.2)));
+  return c;
+}
+
+// ---------------------------------------------------------------- ✎ the subject: seed, root, sprout (red pencil = mine)
+function seed(g, p, split = 0) {
+  const c = P3(p), z = BP.cam.z, rx = .03 * z, ry = .02 * z;
+  g.save(); g.fillStyle = BP.paper(); g.strokeStyle = BP.RED; g.lineWidth = BP.LW(2.4);
+  g.beginPath(); g.ellipse(c[0], c[1], rx, ry, -.3, 0, 7); g.fill(); g.stroke();
+  g.fillStyle = 'rgba(255,93,77,.35)'; g.fill();
+  if (split > 0) { g.beginPath(); g.moveTo(c[0] - rx * .7, c[1] + ry * .2); g.lineTo(c[0] - rx * .7 + rx * 1.4 * split, c[1] - ry * .3 * split); g.lineWidth = BP.LW(1.4); g.stroke(); }
+  g.restore();
+}
+// root and shoot polylines in metres (relative to the seed), drawn on with k
+const ROOT = [[0, 0], [.004, -.03], [-.01, -.07], [.006, -.11], [-.004, -.155], [.01, -.2], [0, -.25]];
+const HAIRS = [[2, -.045, -.05], [3, .05, -.04], [4, -.05, -.055], [5, .04, -.05]];
+function root(g, s, k) {
+  if (k <= 0) return;
+  const pts = ROOT.map(([x, y]) => P(s[0] + x, s[1] + y, s[2]));
+  line(g, pts, 2.2, BP.RED, { k });
+  for (const [i, dx, dy] of HAIRS) { const kk = clamp((k * (ROOT.length - 1) - i) / 1.5); if (kk > 0) { const a = ROOT[i];
+    line(g, [P(s[0] + a[0], s[1] + a[1], s[2]), P(s[0] + a[0] + dx, s[1] + a[1] + dy, s[2])], 1.4, BP.RED, { k: kk, nib: false }); } }
+}
+function sprout(g, t) {
+  const k = ss(B.sprout, B.sprout + .9, t); if (k <= 0) return;
+  const h = H_SPROUT * eo(clamp((t - B.sprout) / 1.1)), sway = .012 * Math.sin((t - B.sprout) * 1.7) * k, b = SPOT;
+  const stem = []; for (let i = 0; i <= 10; i++) { const u = i / 10; stem.push([b[0] + .02 * Math.sin(u * 2.6) + sway * u * u, u * h]); }
+  BP.redGlow(g, P(b[0], h * .6, 0), (.55 + .15 * Math.sin(t * 2.1)) * BP.cam.z, .9 * ss(B.sprout, B.sprout + .6, t));
+  line(g, stem.map(([x, y]) => P(x, y, 0)), 3.0, BP.RED, { k });
+  const top = stem[10], lk = ss(B.sprout + .6, B.sprout + 1.4, t);
+  for (const s of [-1, 1]) if (lk > 0) {               // two leaves, opening from the tip
+    const L = .16 * lk, a = (s < 0 ? 2.5 : .65) + .1 * Math.sin(t * 1.3 + s), tip = [top[0] + Math.cos(a) * L, top[1] + Math.sin(a) * L * .7];
+    const n = [-(tip[1] - top[1]) * .32, (tip[0] - top[0]) * .32], m = [(top[0] + tip[0]) / 2, (top[1] + tip[1]) / 2];
+    const leaf = [top, [m[0] + n[0], m[1] + n[1]], tip, [m[0] - n[0], m[1] - n[1]], top].map(([x, y]) => P(x, y, 0));
+    g.save(); BP.PL(g, leaf, true); g.fillStyle = 'rgba(255,93,77,.22)'; g.fill(); g.restore();
+    line(g, leaf, 2.2, BP.RED, { close: true });
+    line(g, [P(...top, 0), P(...tip, 0)], 1.0, BP.RED, { alpha: .6 });
+  }
+}
+
+// ---------------------------------------------------------------- the ground and the under-ground callout
+function ground(g, t) {
+  BP.road(g, [[-16, 12]], { d0: -1.4, d1: 3.2, lane: 1.0 });
+  // grid line A through the spot: a dash-dot centre line up to a lettered bubble — the drawing points at the place first
+  const top = P(SPOT[0], 2.35, 0), a = 1 - ss(B.end - .3, B.end, t);
+  line(g, [P(SPOT[0], -.3, 0), P(SPOT[0], 2.18, 0)], BP.HAIR, BP.INK, { alpha: .55 * a, dash: [26, 7, 4, 7] });
+  g.save(); g.globalAlpha *= a; g.beginPath(); g.arc(top[0], top[1], 32, 0, 7); g.fillStyle = BP.paper(); g.fill(); g.strokeStyle = BP.INK; g.lineWidth = BP.LW(BP.DET); g.stroke(); g.restore();
+  label(g, 'A', top[0], top[1] + 12, { size: 34, weight: 800, alpha: a });
+  // the spot itself: a small red cross on the ground until the seed is in
+  const m = 1 - ss(B.plant, B.plant + .4, t);
+  if (m > 0) for (const s of [-1, 1]) line(g, [P(SPOT[0] - .06, 0, -.06 * s), P(SPOT[0] + .06, 0, .06 * s)], 2.2, BP.RED, { alpha: m });
+}
+function callout(g, t) {   // 상세 A: the soil section under the spot, 6× — the only place where the growing shows before 14
+  const k = ss(B.plant + .6, B.plant + 1.6, t) * (1 - ss(B.rise + .5, B.rise + 1.3, t)); if (k <= 0) return;
+  const c = [770, 760], r = 185, s = seedAt(t, null);
+  BP.detail(g, c, r, { cx: SPOT[0], cy: -.14, z: 700 }, g => {
+    hatch(g, [P(-1, 0), P(1, 0), P(1, -1), P(-1, -1)], .05, .45);                   // soil, in section
+    g.save(); g.fillStyle = BP.paper(); g.beginPath(); g.arc(P3(s)[0], P3(s)[1], .045 * BP.cam.z, 0, 7); g.fill(); g.restore();   // the seed's pocket
+    line(g, [P(-1, 0), P(1, 0)], BP.OUT);
+    const grow = ss(B.wait[0], B.wait[1] + 1, t);
+    root(g, s, grow);
+    if (grow > .3) line(g, [P(s[0], s[1] + .01), P(s[0] + .012, lerp(s[1] + .01, 0, ss(B.wait[0] + 2, B.sprout, t)))], 2.4, BP.RED, { k: ss(B.wait[0] + 1.5, B.wait[0] + 2.2, t) });
+    seed(g, s, ss(B.wait[0], B.wait[0] + 1.5, t));
+    const day = Math.max(1, Math.floor(1 + (t - B.plant) * 4));              // ambient: the day count ticks on
+    label(g, 'D+' + day, P(.1, -.33)[0], P(.1, -.33)[1], { size: 34, weight: 800, patch: true, alpha: ss(B.plant + 1, B.plant + 1.6, t) });
+  }, { k, at: P3(SPOT), label: '상세 A — 땅속', labelSize: 30 });
+}
+
+// ---------------------------------------------------------------- annotations: the height over the spot, corrected at 14
+function annotations(g, t) {
+  const a = ss(B.plant + .8, B.plant + 1.6, t) * (1 - ss(B.end - .3, B.end, t)); if (a <= 0) return;
+  const h = t < B.sprout ? 0 : H_SPROUT * eo(clamp((t - B.sprout) / 1.1)), fresh = t - B.sprout - .9, x = SPOT[0] + .5;
+  line(g, [P(SPOT[0] + .05, 0, 0), P(x + .12, 0, 0)], BP.HAIR, BP.INK, { alpha: .7 * a });
+  if (t < B.sprout + .9) {                                                    // nothing to see: "0 m", hung over the empty spot
+    BP.label(g, '높이 0 m', P(x + .2, .32)[0], P(x + .2, .32)[1], { size: 40, weight: 800, patch: true, alpha: a, align: 'left' });
+  } else {
+    line(g, [P(SPOT[0] + .08, H_SPROUT, 0), P(x + .12, H_SPROUT, 0)], BP.HAIR, BP.RED, { alpha: a, k: ss(0, .3, fresh) });
+    BP.dim(g, P(x, 0, 0), P(x, h, 0), -26, BP.fmt(H_SPROUT) + ' m', { col: BP.RED, red: true, k: a * ss(0, .5, fresh), size: 48, weight: 800 });
+    const p = P(x + .2, .32); if (fresh < 1.6) BP.strikeOld(g, p[0] + 92, p[1] - 12, 0, '0 m', fresh, { w: 50 });
+  }
+}
+
+// ---------------------------------------------------------------- frame
+function draw(ctx, t) {
+  BP.setCam(cam(t));
+  BP.sheet(ctx);
+  ground(ctx, t);
+  const m = pose(t), sd = seedAt(t, m.hands[0]);
+  sprout(ctx, t);
+  BP.figure(ctx, m.F, { hands: m.hands, swing: .6 });
+  if (t < B.plant + .5) seed(ctx, t < B.plant ? add(sd, [.035, .01, 0]) : sd);   // in the fingers, then pressed under
+  annotations(ctx, t);
+  callout(ctx, t);
+  BP.finish(ctx);
+  BP.captions(ctx, t, S.lines);
+  BP.endCard(ctx, t, S.endCard, B.end);
+}
+Pilot.run({ W, H, dur: S.DUR, fonts: BP.FONTS, init: async () => BP.init(), draw });
+</script>
+</body>
+</html>

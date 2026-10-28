@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>픽셀 캠프파이어 · 템플릿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-flatcamp.js"></script>
+<script>
+/* Pixel campfire template — the house-style demo story (styles/flatcamp/STYLE.md), 30 s.
+   Seen through the dark blobby window: a little hooded wanderer walks along the night forest floor (on twos), kneels,
+   plants a seed (a single ember pixel with its own small circle of campfire light), waits while the forest does its
+   ambient things (mist bars drift, light shafts, eyes blink in the frame); at `sprout` the camera cuts close, the seed
+   bursts up as a burning-orange sprout, the palette swaps to the lit forest inside a big dithered circle and embers rise;
+   at `rise` the wanderer stands and looks up at it; the frame closes in for the end card.
+   To make a new film: write scenes/script.js, then replace the SEED / SPROUT, the poses and the shots below.
+   Keep: setView → world (night) → FC.lit → embers/haze → present → windowFrame → captions → endCard. */
+const S = window.SCRIPT, B = S.beat, { clamp, lerp, ss, eo, eio } = Pilot;
+const FC = Flatcamp, TAU = Math.PI * 2, U = FC.U, { step8, step12, backEase, B2, R } = FC;
+const ME = FC.FIG.me, FY = 1300, RT = 1212, GYP = Math.round(RT / U), SC = 1.04;
+const X0 = -330, XK = 0, SEED = [XK + 100, FY - 4];
+let FOREST;
+
+// ---------------- the wanderer's poses (design units; evaluate at step8(t): on twos) ----------------
+const STRIDE = 140, walkX = t => X0 + (XK - X0) * (t < B.walk[1] - .7 ? (t / (B.walk[1] - .7)) * .86 : .86 + .14 * eo((t - B.walk[1] + .7) / .7));
+function pose(t) {
+  if (t < B.walk[1]) { const x = walkX(t), F = FC.walk(x, FY, SC, 1, (x - X0) / (STRIDE * SC), STRIDE, .12, 22);
+    F.hands = FC.hangHands(F, 20 * Math.sin(TAU * F.ph)); return F; }
+  const ST = FC.stand(XK, FY, SC, 1, .06), KN = FC.kneel(XK, FY, SC, 1, .25), BEND = { ...FC.kneel(XK, FY, SC, 1, .85), tilt: .25, eye: 'down' };
+  const plantHand = [SEED[0] - 6, SEED[1] - 10], onKnee = F => FC.frame(F).P(46, -10);
+  if (t < B.kneel) return FC.mix(FC.walk(XK, FY, SC, 1, (XK - X0) / (STRIDE * SC), STRIDE, .12, 22), ST, eio((t - B.walk[1]) / .3));
+  if (t < B.kneel + .5) return FC.mix(ST, KN, eio((t - B.kneel) / .5));
+  if (t < B.plant + 1.6) {   // bend over, the near hand carries the seed down, presses it in, pats the soil twice
+    const k = eio((t - B.kneel - .5) / .6), F = FC.mix(KN, BEND, k);
+    const pat = t > B.plant ? 12 * Math.abs(Math.sin((t - B.plant) * TAU * 1.25)) * (1 - ss(B.plant + 1.1, B.plant + 1.5, t)) : 0;
+    const up = FC.frame(F).P(60, 40), hp = [lerp(up[0], plantHand[0], k), lerp(up[1], plantHand[1], k) - pat];
+    F.hands = [onKnee(F), hp]; F.hand = ['flat', t > B.plant ? 'flat' : 'fist']; F.eye = 'down'; return F; }
+  const WAIT = { ...FC.kneel(XK, FY, SC, 1, .3 + .03 * Math.sin(t * 1.6)), tilt: .3 };
+  if (t < B.sprout) { const k = eio((t - B.plant - 1.6) / .6), F = FC.mix(BEND, WAIT, k); F.hands = [onKnee(F), onKnee(F).map((v, i) => v + (i ? 4 : -22))]; F.eye = t > B.wait[1] ? 'calm' : 'closed'; return F; }
+  const BACK = { ...FC.kneel(XK - 8, FY, SC, 1, -.12), tilt: -.2, eye: 'shock' };
+  if (t < B.rise) { const F = FC.mix(WAIT, BACK, eo((t - B.sprout) / .25)); F.hands = [onKnee(F), FC.hangHands(F)[1]]; F.eye = t < B.sprout + 1.2 ? 'shock' : 'up';
+    F.tilt = lerp(-.2, -.32, ss(B.sprout + .8, B.sprout + 3, t)); return F; }
+  const UP = FC.lookUp(FC.stand(XK - 20, FY, SC, 1, -.04), 1), F = FC.mix(BACK, UP, eio((t - B.rise) / .8));
+  F.eye = 'up'; F.tilt = lerp(-.32, -.42, eio((t - B.rise) / .8)); return F;
+}
+
+// ---------------- the seed and the sprout (the film's one image goes here) ----------------
+const grow = t => t < B.sprout ? 0 : 210 * backEase(clamp((t - B.sprout) / .9)) + 230 * ss(B.sprout + 1, B.rise + 3, t);   // design units, on 12s
+function seedPx(c, t) {
+  if (t < B.plant - 1.0 || t >= B.sprout + .2) return;
+  if (t >= B.plant) { const m = B2([SEED[0], SEED[1] + 2]), w = Math.round(4 * ss(B.plant, B.plant + .3, t)); R(c, m[0] - w, m[1] - 1, 2 * w + 1, 1, '#1d2366'); R(c, m[0] - w + 1, m[1] - 2, 2 * w - 1, 1, '#1d2366');   // the mound
+    const e = B2(SEED); R(c, e[0], e[1] - 3, 1, 1, FC.FIRE[(Math.floor(step8(t) * 2) % 2) ? 1 : 2]); return; }
+  const h = B2(pose(step8(t)).hands[1]); R(c, h[0] + 1, h[1] + 1, 2, 2, FC.FIRE[1]);   // in the hand
+}
+function sproutPx(c, t) {
+  const h = grow(step12(t)); if (h < 8) return;
+  const x = SEED[0], y = SEED[1], sw = Math.round(Math.sin(step8(t) * 1.4) * Math.min(1, h / 200) * 8), top = [x + sw, y - h];
+  const at = u => [lerp(x, top[0], u) - 10 * Math.sin(Math.PI * u) * .9, lerp(y, top[1], u)];
+  const pb = FC.pathB().m([x, y]).q([x - 10, y - h * .55], top, 8), P = pb.pts.map(B2), th = h > 260 ? 3 : 2;
+  for (let i = 1; i < P.length; i++) FC.pxLine(c, P[i - 1][0], P[i - 1][1], P[i][0], P[i][1], th, FC.WOOD.a);
+  for (const [u, o] of [[.38, 0], [.6, .35], [.8, .7]]) { const op = ss(o, o + .25, h / 440 + .1); if (op <= 0) continue;
+    const [px, py] = at(u), Ln = (56 + 52 * (1 - u)) * op;
+    for (const sg of [-1, 1]) { const tip = [px + sg * Ln, py - Ln * .45], mid = [px + sg * Ln * .5, py - Ln * .22];
+      FC.pxPoly(c, [[px, py], [mid[0], mid[1] - Ln * .2], tip, [mid[0], mid[1] + Ln * .12]].map(B2), sg > 0 ? FC.FIRE[1] : FC.WOOD.c); } }
+  FC.pxPoly(c, [[top[0], top[1] + 4], [top[0] - 12, top[1] - 16], [top[0], top[1] - 44], [top[0] + 12, top[1] - 16]].map(B2), '#fff0a0');   // the bud
+}
+
+// ---------------- shots (hard cuts between whole-pixel scales) and light ----------------
+function shotAt(t) {
+  if (t < B.walk[1]) return { K: 9, x: walkX(t) + 140, y: 1040 };                 // the walk
+  if (t < B.wait[0]) return { K: 12, x: XK + 70, y: 1110 };                          // close: the planting
+  if (t < B.sprout - .1) return { K: 7, x: XK + 120 + 4 * (t - B.wait[0]), y: 1000 };   // wide: the wait (a slow pan)
+  if (t < B.sprout + .7) return { K: 11, x: XK + 80, y: 1080, shake: 1 - ss(B.sprout, B.sprout + .5, t) };   // the sprout: close + shake
+  if (t < B.rise) return { K: 9, x: XK + 70, y: 1010 };
+  return { K: 8, x: XK + 60, y: 960 };                                               // stand and look up
+}
+function lightsAt(t) {   // design units
+  const q = step8(t), D = [];
+  if (t >= B.plant - 1.0 && t < B.sprout) { const p = q < B.plant ? pose(q).hands[1] : SEED, pulse = 1 + .4 * (Math.abs(q - 10.5) < .2) + .6 * (Math.abs(q - 12.4) < .2);
+    D.push({ x: p[0], y: p[1], r: 56 * pulse }); }
+  if (q >= B.sprout) D.push({ x: SEED[0], y: SEED[1] - grow(step12(t)) * .5, r: 120 + 330 * backEase(clamp((q - B.sprout) / .5)) });
+  return D;
+}
+function world(c, P, pk, t) {
+  FC.background(c, P, FOREST, GYP);
+  FC.ground(c, P, GYP);
+  seedPx(c, t); sproutPx(c, t);
+  FC.figure(c, pose(step8(t)), ME[pk]);
+}
+
+// ---------------- frame ----------------
+function draw(ctx, t) {
+  const sh = shotAt(t), bb = FC.bufs(sh.K), [shx, shy] = FC.shake(sh, t);
+  FC.setView(sh.K, sh.x, sh.y, shx, shy);
+  world(bb.n, FC.NIGHT, 'N', t);
+  FC.lit(bb, lightsAt(t), g => world(g, FC.LIT, 'L', t), t >= B.sprout && t < B.sprout + .1);
+  if (t >= B.sprout) { const b = B2([SEED[0], SEED[1] - grow(step12(t))]); FC.embers(bb.n, t, b[0], b[1], 8, 40, 16); }
+  FC.haze(bb.n, t, FOREST);
+  FC.present(ctx, bb);
+  FC.windowFrame(ctx, t, B.end, { eyes: true });
+  if (t < B.end) FC.captions(ctx, t, S.lines);
+  FC.endCard(ctx, t, S.endCard, B.end);
+}
+
+async function init() { FOREST = FC.forest(11, { from: -500, farTo: 900, midTo: 1100 }); FC.init(); }
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: FC.FONTS, init, draw });
+</script>
+</body>
+</html>

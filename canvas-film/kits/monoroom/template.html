@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>보라 단색 · 템플릿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gamja+Flower&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-monoroom.js"></script>
+<script>
+/* A new scene in the monoroom house style (styles/monoroom/STYLE.md). The kit draws the medium, the storm and the kid;
+   this file draws the story. PLACEHOLDER STORY (script.js): the wet-haired kid walks in through the rain with a seed,
+   kneels, plants it, pats the soil, waits (rain, wind-bent trees, puddle rings, a far lightning flash), a sprout comes on
+   like the lab's lamp — the one colour — the kid stands and looks at it while the rain eases.
+   Keep: init → Mono.init + build the world once;  draw → Mono.onTwos(scene) + captions + end card;
+         scene → boil, sky, storm, cam(1), ground, figures, marks, screen, rain, lightning, end plate, grain.
+   Replace: pose() (the figure's beats), the seed / mound / sprout (your one image), cam() (your camera). */
+const S = window.SCRIPT, B = S.beat, { clamp, lerp, ss, eo, eio } = Pilot;
+const Rig = Mono.Rig, C = Mono.C, { ink, ell, tube, glow, pat } = Mono;
+const FY = 1300, SK = 1.0;                       // the lane the kid walks on (world y), the kid's scale
+const KX = 548, X0 = 330;                        // where the kid kneels, where it enters (visible at frame 0)
+const P0 = [KX + 96, FY - 36];                   // where the seed goes into the ground (a little back on the road, within reach)
+let GROUND = null;
+function init() {
+  Mono.init();
+  GROUND = Mono.makeGround({ top: 1180, lane: FY });   // add gaps: [[a, b]] for a ravine
+}
+
+// ---------------------------------------------------------------- the kid's beats (all poses come from the kit's rig)
+const walkX = t => X0 + (KX - X0) * (1 - Math.pow(1 - clamp(t / B.walk[1]), 1.6));
+function kneelUp() { const F = Rig.kneelSpec(KX, FY, SK, 1, .22); F.me = true; return F; }
+function kneelReach(target) {   // bowing forward from the kneel, the near hand on the ground (the body leans until the hand reaches)
+  const F = { ...kneelUp(), ang: .95, tilt: .3 }; F.hip = [F.hip[0] + 6, F.hip[1] + 4]; Rig.kneelLegs(F);
+  Rig.fitReach(F, 1, target); F.hand = ['hang', 'grip']; return F;
+}
+function pose(t) {
+  const tp = Mono.t12(t);
+  let F, seed = true;
+  if (tp < 4.2) {                                                         // walk in, the seed in the near fist
+    const x = walkX(tp), W = Rig.walkSpec(x, FY, SK, 1, (x - X0) / (120 * SK), 120, .1, 22);
+    W.hands = Rig.hangHands(W, 16 * Math.sin(Math.PI * 2 * W.ph)); W.hands[1] = Rig.hangGrip(W, 10 * Math.sin(Math.PI * 2 * W.ph)); W.hand = ['hang', 'grip'];
+    const ST = Rig.standSpec(KX, FY, SK, 1); ST.hands = [null, Rig.hangGrip(ST)]; ST.hand = ['hang', 'grip'];
+    F = Rig.mixSpec(W, ST, ss(3.5, 4.2, tp)); F.me = true;
+    if (tp > 3.6) Rig.lookAt(F, P0, .45);
+  } else if (tp < B.kneel + .7) {                                         // stand → crouch → kneel
+    const ST = Rig.standSpec(KX, FY, SK, 1); ST.hands = [null, Rig.hangGrip(ST)]; ST.hand = ['hang', 'grip'];
+    const CR = Rig.crouchSpec(KX, FY, SK, 1, .6, .6); CR.hands = [null, Rig.hangGrip(CR)]; CR.hand = ['hang', 'grip'];
+    const KN = kneelUp(); KN.hands = [null, Rig.hangGrip(KN)]; KN.hand = ['hang', 'grip'];
+    const k = clamp((tp - B.kneel) / .7);
+    F = k < .45 ? Rig.mixSpec(ST, CR, eio(k / .45)) : Rig.mixSpec(CR, KN, eio((k - .45) / .55)); F.me = true;
+    Rig.lookAt(F, P0, .45);
+  } else if (tp < B.plant + 1.4) {                                        // reach down, press the seed in, pat the soil
+    const KN = kneelUp(); KN.hands = [null, Rig.hangGrip(KN)]; KN.hand = ['hang', 'grip'];
+    const k = eio(clamp((tp - B.kneel - .7) / (B.plant - B.kneel - .7)));
+    const pat = tp < B.plant ? 0 : Math.abs(Math.sin((tp - B.plant) * 9)) * (1 - ss(B.plant + .9, B.plant + 1.4, tp));
+    const RE = kneelReach([P0[0] - 6, P0[1] - 10 - 18 * pat]);
+    F = Rig.mixSpec(KN, RE, k); F.me = true; F.hand = tp >= B.plant ? ['hang', 'flat'] : ['hang', 'grip'];
+    seed = tp < B.plant; Rig.lookAt(F, P0, .5);
+  } else {
+    seed = false;
+    const RE = kneelReach([P0[0] - 6, P0[1] - 10]), KN = kneelUp();
+    const breathe = Math.sin((tp - 7) * 2.2) * 3;
+    KN.hip = [KN.hip[0], KN.hip[1] + breathe]; Rig.kneelLegs(KN);
+    if (tp < B.rise) {                                                    // sit back up, and wait
+      F = Rig.mixSpec(RE, KN, eio(clamp((tp - B.plant - 1.4) / .6))); F.me = true;
+      Rig.lookAt(F, [P0[0], P0[1] - (tp > B.sprout ? 160 * ss(B.sprout, B.sprout + 1, tp) : 0)], .5);
+      F.eye = tp > B.sprout ? 'shock' : (tp % 3 < .17 ? 'tired' : 'dot'); F.mouth = tp > B.sprout ? 'o' : 'flat';
+      if (tp > B.sprout + 1.4) { F.eye = 'glint'; F.mouth = 'smile'; }
+      if (tp > B.sprout && tp < B.sprout + .5) F.ang -= .12 * Math.sin(Math.PI * (tp - B.sprout) / .5);   // a start
+    } else {                                                              // kneel → crouch → stand, looking at it
+      const CR = Rig.crouchSpec(KX - 30, FY, SK, 1, .55, .5), ST = Rig.standSpec(KX - 56, FY, SK, 1, .02);
+      const k = clamp((tp - B.rise) / .8);
+      F = k < .5 ? Rig.mixSpec(KN, CR, eio(k / .5)) : Rig.mixSpec(CR, ST, eio((k - .5) / .5)); F.me = true;
+      Rig.lookAt(F, [P0[0], P0[1] - sproutH(tp) * .8], .5); F.eye = 'glint'; F.mouth = 'smile';
+    }
+  }
+  return { F, seed };
+}
+
+// ---------------------------------------------------------------- the one image (placeholder): seed, mound, sprout
+const sproutH = t => t < B.sprout ? 0 : 110 * eo(clamp((t - B.sprout) / .5)) * (1 + .1 * Math.sin(Math.PI * clamp((t - B.sprout) / .6))) + 190 * eio(clamp((t - B.sprout - 1.5) / 8));
+function leaf(ctx, p, a, len, open) {   // an inked yellow leaf on the stem at p, angle a, opening 0…1
+  if (open <= .02) return; const l = len * open, q = (u, v) => [p[0] + Math.cos(a) * u - Math.sin(a) * v, p[1] + Math.sin(a) * u + Math.cos(a) * v];
+  ink(ctx, [q(0, 0), q(l * .35, -l * .3), q(l, -l * .04), q(l * .45, l * .16)], { fill: C.yel, lw: 5 });
+  ink(ctx, [q(l * .1, 0), q(l * .7, -l * .06)], { closed: false, lw: 3, single: true });
+}
+const lamp = t => Mono.flicker(t - B.sprout);   // the sprout comes on like the lab's lamp
+function sprout(ctx, t) {
+  const h = sproutH(t); if (h <= 1) return;
+  const on = lamp(t), pulse = 1 + .04 * Math.sin(t * 3.1);
+  glow(ctx, P0[0], P0[1] - h * .5, (260 + h) * pulse, .7 * on, true);              // a pale halo (a lighter value of the violet)…
+  glow(ctx, P0[0], P0[1] - h * .55, (130 + h * .6) * pulse, .9 * on);             // …and the yellow
+  const sway = Math.sin(t * 1.7) * 6, pts = []; for (let i = 0; i <= 6; i++) { const u = i / 6; pts.push([P0[0] + Math.sin(u * 2.2) * 9 * u + sway * u * u, P0[1] - 8 - h * u]); }
+  const col = on > .5 ? C.yel : C.yelL;
+  ink(ctx, tube(pts, pts.map((_, i) => 10 - i * .6)), { fill: col, lw: 5 });
+  const top = pts[6], o1 = ss(B.sprout + .3, B.sprout + 1.2, t), o2 = ss(B.rise + 1.5, B.rise + 3, t);
+  leaf(ctx, top, -Math.PI * .82, 74, o1); leaf(ctx, top, -Math.PI * .2, 84, o1);
+  if (o2 > 0) { const m = pts[3]; leaf(ctx, m, -Math.PI * .9, 64, o2); leaf(ctx, m, -Math.PI * .08, 70, o2); }
+}
+function ground(ctx, t, seedInHand) {
+  const k = ss(B.plant + .1, B.plant + .8, t);
+  if (!seedInHand && k < 1) ink(ctx, ell(P0[0], P0[1] - 6, 10, 7, 12), { fill: C.yel, lw: 4, single: true });   // the seed, just pressed in
+  if (k > 0) { const pts = []; for (let i = 0; i <= 12; i++) { const a = Math.PI + Math.PI * i / 12; pts.push([P0[0] + Math.cos(a) * 52, P0[1] + 6 + Math.sin(a) * 20 * k]); }
+    ink(ctx, pts, { fill: C.deep2, tone: pat('hatch', P0[0], P0[1]), lw: 5 }); }
+}
+
+// ---------------------------------------------------------------- camera
+function cam(t) {
+  let c = { x: 600, y: 1080, z: 1.4 };
+  c = Mono.mixCam(c, { x: 630, y: 1120, z: 1.6 }, eio(clamp((t - B.wait[0]) / (B.wait[1] - B.wait[0]))));   // the wait: a slow push in
+  if (t >= B.sprout) c = Mono.mixCam(c, { x: 640, y: 1100, z: 1.72 }, eo(clamp((t - B.sprout) / .12)));   // the hit: snap in
+  if (t >= B.rise) c = Mono.mixCam(c, { x: 610, y: 1050, z: 1.45 }, eio(clamp((t - B.rise) / 1.4)));
+  if (t >= 22) c = Mono.mixCam(c, { x: 600, y: 1000, z: 1.15 }, eio(clamp((t - 22) / 3.5)));
+  [c.sx, c.sy] = Mono.shake(t, B.sprout, .45, 10, 8);
+  return c;
+}
+
+// ---------------------------------------------------------------- frame
+function scene(ctx, t) {
+  Mono.boil(t);
+  const cm = cam(t);
+  Mono.sky(ctx, cm);
+  Mono.storm(ctx, cm, t);
+  const z = Mono.cam(ctx, cm, 1), x0 = cm.x - 540 / z - 60, x1 = cm.x + 540 / z + 60;
+  GROUND.draw(ctx, x0, x1, t);
+  const { F, seed } = pose(t);
+  if (seed) F.held = (c, G) => { const h = G.hands[1]; ink(c, ell(h[0] + 8, h[1] - 14, 9, 7, 12), { fill: C.yel, lw: 4, single: true }); };   // peeking out of the fist
+  ground(ctx, t, seed);
+  Mono.kid(ctx, F);
+  sprout(ctx, t);
+  const { hc } = Rig.headFrame(F);
+  if (t < B.sprout) Mono.drips(ctx, hc, F.s, t);                                   // drips off the wet hair while it rains hard
+  if (t < B.walk[1]) Mono.splashes(ctx, F, FY, 1 - ss(3, 3.8, t));                  // splashes behind the feet
+  Mono.screen(ctx);
+  Mono.rain(ctx, t, Math.round(150 - 90 * ss(B.rise, B.rise + 4, t)));              // the rain eases once it has come up
+  Mono.lightning(ctx, t, 10.2, 700);                                                 // the wait: a far strike (the style's hit)
+  Mono.endPlate(ctx, t, B.end, { stamp: (c, y0) => Mono.stamp(c, 540, y0 + 74, .5, 0, Mono.sproutIcon) });
+  Mono.grain(ctx, cm);
+}
+function draw(ctx, t) {
+  Mono.onTwos(ctx, t, scene);
+  if (t < B.end) Mono.captions(ctx, t, S.lines);
+  Mono.endCard(ctx, t, S.endCard, B.end);
+}
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: Mono.FONTS, init, draw });
+</script>
+</body>
+</html>

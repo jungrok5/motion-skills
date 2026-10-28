@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>그림책 과슈 · 템플릿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-storybook.js"></script>
+<script>
+/* A new scene in the picture-book gouache house style (styles/storybook/STYLE.md). The kit paints the forest, the fox and
+   the light; this file draws the story. DEMO STORY (replace with your film's one image): the fox in its cloak walks along
+   the mossy bank under the moon, kneels and plants a seed; waits while the swamp breathes; a sprout rises with a lantern-
+   gold bud; the fox stands and looks at it. Beats come from script.js (SCRIPT.beat).
+   Keep: init → K.init + K.buildWorld once;  draw → camera, backdrop, world plane (ground → figures(…) → glows on top), fore,
+   post, end plate, captions, end card. */
+const S = window.SCRIPT, B = S.beat, { clamp, lerp, ss, eo, eio } = Pilot;
+const K = Storybook, C = K.C, { FY } = K.Y;
+const SME = 1.04;                         // the fox's scale (the worked example's "me")
+const X0 = -120, V = 160, KX = 456;       // walk in from X0 at V px/s, kneel with the hip at KX
+const SX = KX + 172, SY = FY + 2;         // where the seed goes into the ground (in reach of the kneeling near paw)
+
+// ---------------- the fox ----------------
+const xAt = t => X0 + V * Math.min(t, 3.4) + V * .2 * eo((t - 3.4) / .6);          // walk, then ease to a stop at ~4.0
+function pose(t) {
+  const tp = K.t12(t);                                                                 // poses on twos, like a hand-animated book
+  const x = xAt(tp), WALK = K.walkFree(x, FY, SME, 1, x / (150 * SME), 150, .1, 24);
+  if (t < 4.0) return WALK;
+  const STAND = K.stand(KX, FY, SME, 1, .05);
+  const DOWN = K.kneel(KX, FY, SME, 1, 1.25);                                          // bent low over the spot
+  K.reach(DOWN, 0, [KX + 112, FY - 4], 'flat');                                        // far paw steadies on the ground
+  const UP = K.kneel(KX, FY, SME, 1, .28);                                             // kneeling upright, waiting
+  if (t < 4.6) return K.mix(K.mix(WALK, STAND, eio((tp - 4.0) / .25)), DOWN, eio((tp - 4.15) / .45));
+  if (t < 7.6) {                                                                       // reach the seed down, press it in, pat the soil
+    const F = { ...DOWN, hands: DOWN.hands.slice(), hand: DOWN.hand.slice() };
+    const press = t >= B.plant ? 1 : eio((tp - 4.6) / 1.2), pat = t >= B.plant ? Math.max(0, Math.sin((tp - B.plant) * 9)) * (1 - ss(B.plant + 1, B.plant + 1.5, tp)) : 0;
+    K.reach(F, 1, [lerp(KX + 120, SX - 6, press), lerp(FY - 70, SY - 10, press) - 14 * pat], t >= B.plant ? 'flat' : 'open');
+    return K.lookAt(F, [SX, SY]);
+  }
+  const breathe = 2.5 * Math.sin(t * 1.7);
+  if (t < B.rise) {
+    const F = K.mix(DOWN, UP, eio((tp - 7.6) / .6)); F.hip = [F.hip[0], F.hip[1] + breathe];
+    return K.lookAt(F, t < B.sprout ? [SX, SY] : TIP, .6);
+  }
+  const F = K.mix(UP, K.stand(KX, FY, SME, 1, .04), eio((tp - B.rise) / .7));
+  return K.lookAt(F, TIP, .6);
+}
+
+// ---------------- the seed and the sprout (the one warm thing) ----------------
+const SH = 300;                                                                         // the sprout's full height
+const grow = t => ss(B.sprout, B.sprout + 3.6, t);
+let TIP = [SX, SY];                                                                     // the bud's tip this frame (set before the pose)
+const light = t => .25 * ss(12.2, 13.8, t) * (.75 + .25 * Math.sin(t * 3.1)) * (1 - ss(B.sprout, B.sprout + .3, t)) + ss(B.sprout, B.sprout + 1.2, t);
+function seed(g, t, F) {                                                                // painted things in the figures layer (chalked)
+  if (t >= 4.7 && t < B.plant) {                                                       // the seed in the open near paw
+    const h = F.hands[1], k = ss(4.7, 5.0, t);
+    g.fillStyle = C.gold; g.globalAlpha = k; g.beginPath(); g.ellipse(h[0] + 2, h[1] - 8, 6, 8, .3, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+  }
+  if (t >= B.plant) {                                                                   // the little mound of earth
+    K.paint(g, K.smooth(K.rough([[SX - 34, SY + 4], [SX - 18, SY - 9], [SX + 16, SY - 10], [SX + 34, SY + 4]], 3, 7, 6)), '#163844', .9);
+  }
+  K.sprout(g, t, SX, SY, grow(t), { h: SH });
+}
+function glows(ctx, t, F) {                                                             // light on top of the chalked layer
+  if (t >= 4.7 && t < B.plant) { const h = F.hands[1]; K.halo(ctx, h[0], h[1] - 8, 40, .7 * ss(4.7, 5.0, t)); }
+  const L0 = light(t);
+  if (L0 > 0 && t < B.sprout + .3) K.soft(ctx, SX, SY - 4, 60 + 40 * L0, .6 * L0);     // a glow under the soil before it breaks
+  if (grow(t) > .3) K.sproutGlow(ctx, TIP, L0 * K.flicker(t));
+}
+
+// ---------------- camera ----------------
+function cam(t) {
+  let c = K.cam(xAt(Math.min(t, 4)) + 110, 1060, 1.36);                                // follow the walk in
+  c = K.mixCam(c, { x: SX - 70, y: 1080, z: 1.56 }, eio((t - 4.0) / 2.0));            // settle on the spot
+  c = K.mixCam(c, { x: SX - 70, y: 1100, z: 1.72 }, ss(8, 13.5, t));                  // the wait: a slow push
+  c = K.mixCam(c, { x: SX - 60, y: 1040, z: 1.4 }, eio((t - B.sprout) / 2.4));        // the sprout: open up as it rises
+  c = K.mixCam(c, { x: SX - 80, y: 1030, z: 1.28 }, ss(B.rise, B.end, t));            // the fox stands: settle wide
+  return K.shake(c, t, B.sprout);                                                       // the ground breaks: a small kick
+}
+
+function draw(ctx, t) {
+  const cm = cam(t), lk = 1;
+  TIP = [SX + Math.sin(t * 1.1) * 7 * grow(t), SY - SH * eo(grow(t))];
+  const F = pose(t); F.me = true;
+  K.backdrop(ctx, t, cm);
+  K.layer(ctx, cm, 1, () => {
+    K.ground(ctx, t, cm, lk);
+    K.figures(ctx, cm, g => K.figure(g, F, () => seed(g, t, F)));                      // seed, mound and sprout under the near arm
+    glows(ctx, t, F);
+    K.dust(ctx, t, B.sprout, SX, SY);                                                   // the ground breaks
+  });
+  K.fore(ctx, t, cm);
+  K.post(ctx, cm, lk);
+  K.endPlate(ctx, t, B.end);
+  K.captions(ctx, t, S.lines, B.end);
+  K.endCard(ctx, t, S.endCard, B.end);
+}
+
+async function init() {
+  K.init();
+  K.buildWorld({ x0: -1600, x1: 2600, WATER: 1590, moon: [250, 330], clearOK: x => Math.abs(x - SX) > 240 && Math.abs(x - KX) > 200 });   // keep the spot clear
+}
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: K.FONTS, init, draw });
+</script>
+</body>
+</html>

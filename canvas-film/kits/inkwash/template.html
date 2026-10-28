@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>새 장면 · 잉크와 수채 스케치</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap">
+</head>
+<body>
+<script src="lib.js"></script><script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-inkwash.js"></script>
+<script>
+/* TEMPLATE — a new scene in the house style `inkwash` (styles/inkwash/STYLE.md): ink + grey watercolour + orange pencil
+   on a sketchbook page, one amber accent. Demo story (script.js): the crow-traveller walks in, kneels and plants a seed,
+   waits, a sprout rises in amber light at 14, stands and looks at it at 18, end card at 26.
+   Replace the parts marked ✎ with the film's one image; keep the skeleton:
+     init: K.init() → timeline numbers → layers built ONCE (far, plate = washes + 3 boiled line drawings, foreground)
+     draw: K.boilAt → camera → K.paper → far ×.5 → plate ×1 (+ live things) → foreground ×1.25 → end plate → words.
+   Pure function of t; seeded randomness only. Motion on twos (K.t12) for bodies; lines boil at 8 fps. */
+const K = Inkwash, HD = K.HD, PAT = K.PAT, S = window.SCRIPT, B = S.beat;
+const { clamp, lerp, ss, eo, eio, rng } = Pilot;
+const lerp2 = (a, b, k) => [lerp(a[0], b[0], k), lerp(a[1], b[1], k)];
+const TAU = Math.PI * 2, TX = {};
+
+// ✎ the world's numbers (world px; the frame is 1080×1920, world y 960 = frame centre at zoom 1)
+const GY = 1300;                 // where the character stands
+const TOP = 1236;                // the field's far edge (behind the character)
+const X0 = 120, XK = 470;        // walk from X0 to the kneeling spot XK
+const SC = 1.04;                 // figure scale
+const KN = K.kneel(XK, GY, SC, 1, .42), BOW = K.kneel(XK, GY, SC, 1, 1.1);   // kneeling upright / bowed to the ground
+const SPOT = K.reachGround(BOW);   // the seed's place in the ground: where the bowed figure's hand really reaches
+const PY0 = 470, PY1 = 2460, FY0 = 640, FY1 = 1290, GY0 = 1440, GY1 = 2700;
+let PX0, PX1, FX0, FX1, GX0, GX1;
+const TREES = [], POSTS = [];
+
+/* ✎ the camera: a slow push onto the spot while waiting, a little more when the sprout comes, eased back on the rise */
+function camAt(t) {
+  const xw = lerp(X0, XK, eo(clamp(K.t12(t) / B.walk[1])));
+  let c = { x: lerp(xw + 150, SPOT[0] - 30, ss(2.4, 5.2, t)), y: 1112, z: 1.55 };
+  c = K.mixCam(c, { x: SPOT[0] - 20, y: 1150, z: 1.72 }, eio((t - 6.5) / 6.5));
+  c = K.mixCam(c, { x: SPOT[0], y: 1135, z: 1.86 }, eio((t - B.sprout) / 2.2));
+  c = K.mixCam(c, { x: SPOT[0] - 40, y: 1090, z: 1.6 }, eio((t - B.rise) / 1.6));
+  c.sx = c.sy = 0; return c;
+}
+
+/* ✎ the character's pose at time t (bodies move on twos: tp = K.t12(t)) */
+function pose(t) {
+  const tp = K.t12(t), xAt = tt => lerp(X0, XK, eo(clamp(tt / B.walk[1])));
+  const walkAt = tt => { const x = xAt(tt); const F = K.walk(x, GY, SC, 1, x / (150 * SC), 150, .12, 22); F.hands = K.hangHands(F, 18 * Math.sin(TAU * F.ph)); return F; };
+  const rest = F => [F.feet[1][0] - 6 * SC, F.feet[1][1] - 92 * SC];   // the near hand resting on the front knee
+  const hangN = F => K.hangHands(F)[1];
+  if (tp < B.walk[1]) return { F: walkAt(tp), seed: 1 };
+  if (tp < B.kneel) { const F = K.mix(walkAt(B.walk[1]), KN, eio((tp - B.walk[1]) / (B.kneel - B.walk[1]))); F.eye = 'down'; return { F, seed: 1 }; }
+  const F = { ...KN, hands: KN.hands.slice(), hand: KN.hand.slice() };
+  const g = SPOT;
+  if (tp < B.plant + 1.4) {   // bow and reach down with the seed (5.2–6.0), open (6.0), pat the soil twice (6.2–6.8), sit back up, hand to the knee
+    const k1 = eio((tp - 5.2) / .8), bw = k1 * (1 - eio((tp - B.plant - .9) / .5)); F.hip = lerp2(KN.hip, BOW.hip, bw); F.ang = lerp(KN.ang, BOW.ang, bw); pat = tp >= B.plant + .2 && tp < B.plant + .8 ? Math.abs(Math.sin((tp - B.plant - .2) * Math.PI / .3)) * 14 : 0, k2 = eio((tp - B.plant - .9) / .5);
+    const hand = [lerp(hangN(KN)[0], g[0], k1), lerp(hangN(KN)[1], g[1] - 4, k1) - pat];
+    F.hands[1] = [lerp(hand[0], rest(KN)[0], k2), lerp(hand[1], rest(KN)[1], k2)];
+    F.hand[1] = tp < B.plant ? 'fist' : tp < B.plant + .2 ? 'open' : tp < B.plant + .9 ? 'flat' : 'fist';
+    return { F, seed: tp < B.plant ? 1 : 0 };
+  }
+  F.hands[1] = rest(KN);
+  if (tp < B.rise) {   // waiting: a breath, a glance up at the sky (10.2–11.6), eyes back on the spot
+    const br = Math.sin((tp - 8) * TAU / 2.4); F.hip = [F.hip[0], F.hip[1] - 2 * br]; F.ang += .02 * br;
+    const up = Pilot.win(tp, 10.2, 11.6, .35, .35); K.lookUp(F, up); if (up < .3) F.eye = tp >= B.sprout ? 'calm' : 'down';
+    if (tp >= B.sprout) F.tilt = .05;   // the light: head up a little, eye wide open
+    return { F };
+  }
+  const ST = { ...K.stand(XK - 20, GY, SC, 1, .1), tilt: .38, eye: 'down' };   // stands, then looks down at it
+  const k = eio((tp - B.rise) / .6), M = K.mix({ ...F }, ST, k); M.eye = 'down'; return { F: M };
+}
+
+/* ✎ the sprout: an ink stem that grows, amber-washed leaves that unfold (the one colour), a soil mound under it */
+function drawSprout(ctx, t) {
+  const [x, y] = SPOT;
+  if (t >= B.plant) {   // the soil mound: a grey wash, an ink arc
+    K.washLive(ctx, [[x - 34, y + 4], [x - 16, y - 9], [x + 16, y - 9], [x + 34, y + 4]], K.W0, .3, { seed: 51, round: 1 });
+    K.ink(ctx, HD.arc(x, y + 6, 32, 14, Math.PI * 1.05, Math.PI * 1.95, 3), 52, K.BF, { w: 3.6, ts: 4, te: 6, wob: .6, boil: .7 });
+  }
+  const g = eo(clamp((t - B.sprout) / 2.4)); if (g <= 0) return;
+  const h = 230 * g, sway = 4 * Math.sin(t * 1.3), stem = HD.spline([[x, y - 4], [x + 3 + sway * .3, y - h * .5], [x - 4 + sway, y - h]], 3);
+  K.ink(ctx, stem, 60, K.BF, { w: 4.6, ts: 4, te: 10, wob: .6, boil: .7 });
+  const tip = stem[stem.length - 1];
+  for (const [u, side, size, t0] of [[.5, -1, 56, .5], [.6, 1, 50, .8], [.98, -1, 36, 1.3], [.98, 1, 34, 1.5]]) {
+    const k = eo(clamp((t - B.sprout - t0) / 1.2)); if (k <= 0) continue;
+    const b = stem[Math.min(stem.length - 1, Math.round(u * (stem.length - 1)))], L = size * k, a = -Math.PI / 2 + side * (1.05 - .35 * k);
+    const e = [b[0] + Math.cos(a) * L, b[1] + Math.sin(a) * L], n = [-Math.sin(a) * L * .32, Math.cos(a) * L * .32], m = [(b[0] + e[0]) / 2, (b[1] + e[1]) / 2];
+    const leaf = [b, [m[0] + n[0], m[1] + n[1]], e, [m[0] - n[0], m[1] - n[1]]];
+    K.washLive(ctx, leaf, K.AMBER, .72, { seed: 70 + size, round: 1, wob: 1 });
+    K.ink(ctx, HD.spline([b, [m[0] + n[0], m[1] + n[1]], e, [m[0] - n[0], m[1] - n[1]], b], 2), 80 + size, K.BF, { w: 2.6, ts: 2, te: 2, wob: .3, boil: .5 });
+  }
+  K.halo(ctx, tip[0], tip[1] + 30, ss(B.sprout, B.sprout + 1.5, t) * .8, .9 + .1 * Math.sin(t * 3));
+}
+
+/* the plate: a field at the edge of a road — ground washes and lines, poplars, a fence (✎ your setting) */
+function buildWashes(g) {
+  K.field(g, -1, PX0 - 40, PX1 + 40, TOP, PY1);
+  for (const T of TREES) K.poplarWash(g, T, TOP - 4);
+  for (const x of POSTS) K.postWash(g, x, TOP);
+}
+function buildLines(g, f) {
+  K.pencil(g, HD.seg([PX0 + 30, 1046], [PX1 - 30, 1040], 8), 1, f, PAT.orange, { w: 2.8 });   // construction: the horizon
+  K.field(g, f, PX0 - 40, PX1 + 40, TOP, PY1);
+  for (const T of TREES) K.poplarLines(g, T, TOP - 4, f);
+  K.fenceLines(g, POSTS, TOP, f);
+  K.pencil(g, HD.seg([SPOT[0] + 2, TOP - 260], [SPOT[0] - 3, GY + 220], 8), 9, f, PAT.orange, { w: 2.2 });   // a construction line through the spot
+}
+
+function draw(ctx, t) {
+  K.boilAt(t);
+  const cm = camAt(t), P = pose(t);
+  K.paper(ctx, cm);
+  K.layer(ctx, cm, .5, () => K.mulSheet(ctx, TX.far));
+  K.layer(ctx, cm, 1, () => {
+    K.mulSheet(ctx, TX.plate[K.BF]);
+    const R = 460 * eo((K.t12(t) - B.sprout) / 1.6) + 8 * Math.max(0, t - B.sprout - 1.6);   // the amber light blooms out of the soil
+    if (t >= B.sprout) K.drawBloom(ctx, TX.bloom, [SPOT[0], SPOT[1] - 90], R, t);
+    drawSprout(ctx, t);
+    const F = P.F; F.me = true;
+    K.drawFig(ctx, F);
+    if (P.seed) { const hd = F.hands[1] || K.hangHands(F)[1]; ctx.fillStyle = K.rgba(K.AMBER, .95); ctx.beginPath(); ctx.ellipse(hd[0] + 3, hd[1] + 2, 6.5, 5, .3, 0, TAU); ctx.fill(); K.ink(ctx, HD.arc(hd[0] + 3, hd[1] + 2, 7, 5.5, 0, TAU, 2), 90, K.BF, { w: 1.8, ts: 1, te: 1, wob: .2, boil: .3 }); }   // the seed, held up in the fist
+  });
+  K.layer(ctx, cm, 1.25, () => K.mulSheet(ctx, TX.fg));
+  K.endPlate(ctx, t, B.end);
+  if (t < B.end) K.captions(ctx, t, S.lines);
+  K.endCard(ctx, t, S.endCard, B.end);
+}
+
+async function init() {
+  K.init();
+  const [x0, x1] = K.camExtent(camAt, S.DUR, 1), [fx0, fx1] = K.camExtent(camAt, S.DUR, .5); [GX0, GX1] = K.camExtent(camAt, S.DUR, 1.25);
+  PX0 = Math.floor(x0); PX1 = Math.ceil(x1); FX0 = Math.floor(fx0); FX1 = Math.ceil(fx1);
+  const r = rng(77);   // ✎ props: poplars and posts along the far edge, clear of the spot
+  for (let x = PX0 + 80; x < PX1; x += 300 + r() * 260) { if (Math.abs(x - SPOT[0]) < 150) continue; TREES.push({ x, h: 330 + r() * 150, w: 70 + r() * 34, s: TREES.length }); }
+  for (let x = PX0 + 40; x < PX1; x += 230 + r() * 90) POSTS.push(x);
+  K.scratch(FX1 - FX0, FY1 - FY0, FX0, FY0); TX.far = K.whiteLayer(FX1 - FX0, FY1 - FY0, FX0, FY0); K.farLand(TX.far.g, FX0, FX1);
+  const pw = PX1 - PX0, ph = PY1 - PY0; K.scratch(pw, ph, PX0, PY0);
+  const base = K.whiteLayer(pw, ph, PX0, PY0); buildWashes(base.g);
+  TX.plate = [0, 1, 2].map(f => { const Lr = K.whiteLayer(pw, ph, PX0, PY0); Lr.g.setTransform(1, 0, 0, 1, 0, 0); Lr.g.drawImage(base.c, 0, 0); Lr.g.setTransform(1, 0, 0, 1, -PX0, -PY0);
+    Lr.g.globalCompositeOperation = 'multiply'; buildLines(Lr.g, f); return Lr; });
+  base.c.width = base.c.height = 1;
+  { const w = Math.ceil(GX1 - GX0), h = GY1 - GY0; K.scratch(w, h, GX0, GY0); TX.fg = K.whiteLayer(w, h, GX0, GY0); K.foreground(TX.fg.g, GX0, GX1, { y: 1600 }); }
+  TX.bloom = K.bloomSheet([SPOT[0], SPOT[1] - 90], { radii: [[420, .16, 1], [260, .16, 2], [130, .22, 3]] });
+  K.scratchFree();
+}
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: K.FONTS, init, draw });
+</script>
+</body>
+</html>

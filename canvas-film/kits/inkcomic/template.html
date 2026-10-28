@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>미니멀 잉크 만화 · 템플릿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-inkcomic.js"></script>
+<script>
+/* InkComic template — the shared placeholder story in the minimal ink-comic house style (styles/inkcomic/STYLE.md).
+   A bear plods along the road with a seed in its mouth. It bows (front down) and drops the seed, presses it into the
+   ground with its near forepaw and pats the earth twice, lies down and waits (the drawing boils, a cloud drifts, it
+   breathes and blinks), a sprout rises in the warm light, the bear gets up, sits up on its haunches and looks up at it; end
+   card on a blank page. To make a film: write scenes/script.js, then replace the SEED / SPROUT and the choreography below.
+   Keep the frame order: IC.begin → world on g (road, things, figures) → IC.endWhite → IC.finish → captions → end card. */
+const IC = InkComic, HD = IC.HD, S = window.SCRIPT, B = S.beat, { clamp, lerp, ss, eo, eio } = Pilot;
+const { cam, mk, fillC, SC, t12, lerp2, walkSpec, standSpec, legsOf, sitSpec, lieSpec, mixSpec } = IC;
+const TAU = Math.PI * 2;
+
+// ---------------- world ----------------
+const FY = 1388, G1 = 1404, GB = 1286;          // feet line, the road's front and back edges
+const X0 = 120, XK = 520;                        // where the bear enters, where it stops
+const SEED = [XK + 196, FY - 4];                 // the planting point, just ahead of the near forepaw
+const XB = XK - 130;                             // after planting it backs off to here, so the sprout rises clear of its head
+
+// ---------------- the bear's choreography (poses on 12 fps) ----------------
+const walkX = HD.walker(X0, XK, B.walk[1], .35);
+const BOW = () => { const F = standSpec(XK, FY, 1, { rot: .14, sag: 22, head: .5 }); F.legs = legsOf(F); return F; };     // front down over the spot
+const LIE = () => lieSpec(XB, FY, 1, { head: .42 });
+const STAND = () => standSpec(XB, FY, 1, { head: -.1, sag: 4 });
+const SIT = () => sitSpec(XB, FY, 1, [[XB + 70, FY - 128], [XB + 92, FY - 140]], { head: -.48, face: 'look' });   // up on the haunches, forepaws curled at the chest
+function poseMe(t) {
+  const tp = t12(t);
+  if (tp < B.walk[1]) { const x = walkX(tp); return walkSpec(x, FY, 1, x / 150, { stride: 22, sag: 4, head: .14 }); }
+  const W0 = walkSpec(XK, FY, 1, XK / 150, { stride: 22, sag: 4, head: .14 });
+  if (tp < B.kneel) return mixSpec({ ...W0, moving: false }, BOW(), eio((tp - B.walk[1]) / (B.kneel - B.walk[1])));
+  if (tp < B.wait[0] + .7) {
+    const F = BOW(), rest = F.legs[0], up = [SEED[0] - 10, SEED[1] - 46];
+    // the near forepaw: lifts and reaches forward, sets the seed down (B.plant), pats twice, comes back
+    let p = rest;
+    if (tp < B.plant - .7) p = rest;
+    else if (tp < B.plant) p = lerp2(rest, up, eio((tp - B.plant + .7) / .5)), p = tp > B.plant - .2 ? lerp2(up, [SEED[0] - 10, SEED[1]], eio((tp - B.plant + .2) / .2)) : p;
+    else if (tp < B.plant + 1.0) p = [SEED[0] - 10, SEED[1] - 26 * Math.max(0, Math.sin(Math.PI * 2 * (tp - B.plant - .1) / .9))];
+    else p = lerp2([SEED[0] - 10, SEED[1]], rest, eio((tp - B.plant - 1.0) / .5));
+    F.legs[0] = p; F.face = tp > B.plant + .3 ? 'happy' : 'calm';
+    if (tp < B.plant + 1.5) return F;
+    // backs off a few steps (still facing it), then lies down to wait
+    const bx = lerp(XK, XB, eio((tp - B.plant - 1.5) / .7)), BK = { ...walkSpec(bx, FY, 1, bx / 150, { stride: 18, sag: 6, head: .2 }), face: 'happy' };
+    if (tp < B.plant + 1.7) return mixSpec(F, BK, eio((tp - B.plant - 1.5) / .2));
+    return tp < B.plant + 2.2 ? BK : mixSpec({ ...BK, moving: false }, LIE(), eio((tp - B.plant - 2.2) / .5));
+  }
+  if (tp < B.rise) {
+    const F = LIE(); F.sag += 3 * Math.sin((tp - B.wait[0]) * 2.2);                       // breathing
+    F.face = (tp > 10.2 && tp < 10.4) || (tp > 12.1 && tp < 12.3) ? 'down' : 'calm';         // a blink, another
+    if (tp > B.sprout) { F.face = tp < B.sprout + 1.2 ? 'shock' : 'look'; F.head = lerp(.42, -.1, eio((tp - B.sprout) / .6)); }
+    return F;
+  }
+  if (tp < B.rise + .6) { const F = mixSpec(LIE(), STAND(), eio((tp - B.rise) / .6)); F.face = 'look'; return F; }
+  const F = mixSpec(STAND(), SIT(), eio((tp - B.rise - .9) / .7)); F.face = tp > B.rise + 2.4 ? 'happy' : 'look';
+  return F;
+}
+
+// ---------------- the seed, the mound, the sprout (the placeholder subject) ----------------
+const sproutH = t => t < B.sprout ? 0 : 190 * eo((t - B.sprout) / 1.3) + 230 * ss(B.sprout + 1.2, B.sprout + 8, t);
+const sway = t => .05 * Math.sin(t * 1.2) + .02 * Math.sin(t * 2.7);
+const stemPt = (t, u) => { const h = sproutH(t); return [SEED[0] + Math.sin(sway(t) * u) * h * u * .5 + 8 * Math.sin(u * 2.6) * Math.min(1, h / 90), SEED[1] - 10 - h * u]; };
+const LEAVES = [[.36, -1, 70], [.58, 1, 82], [.82, -1, 60]];
+const leafOpen = (t, i) => eo((t - B.sprout - .4 - i * .45) / .9);
+function drawSprout(g, t) {
+  const h = sproutH(t); if (h <= 0) return;
+  const lit = ss(B.sprout - .1, B.sprout + .8, t), base = cam([[SEED[0], SEED[1] - h * .5]])[0];
+  // the warm light: one big highlighter oval behind it + the breathing glow at its foot (both multiplied)
+  g.save(); g.globalAlpha = lit * .8; g.globalCompositeOperation = 'multiply';
+  HD.fillPts(g, HD.arc(base[0], base[1], (90 + h * .26) * IC.ZK, (50 + h * .56) * IC.ZK, 0, TAU, 8), IC.LIGHT + '.34)'); g.restore();
+  IC.glowAt(g, cam([SEED])[0], t, 150 * IC.ZK, 3, lit);
+  const line = []; for (let i = 0; i <= 10; i++) line.push(stemPt(t, i / 10));
+  mk(g, cam(line), 3100, { w: 8, mn: .7, ts: 4, te: 30, blob: 0 });
+  LEAVES.forEach(([u, s, l], i) => { const o = leafOpen(t, i); if (o <= .02) return;
+    const b = stemPt(t, u), a = -Math.PI / 2 + s * (.4 + .95 * o) + sway(t), tip = [b[0] + Math.cos(a) * l * o, b[1] + Math.sin(a) * l * o], d = [tip[0] - b[0], tip[1] - b[1]], n = [-d[1] * .38, d[0] * .38];
+    const leaf = HD.spline([b, [b[0] + d[0] * .5 + n[0], b[1] + d[1] * .5 + n[1]], tip, [b[0] + d[0] * .5 - n[0], b[1] + d[1] * .5 - n[1]], b], 3);
+    fillC(g, cam(leaf), 3110 + i, IC.WARM); mk(g, cam(leaf), 3120 + i, { w: 6, mn: .8, blob: 0 }); mk(g, cam([b, lerp2(b, tip, .75)]), 3130 + i, { w: 3.5, mn: .4, blob: 0 }); });
+  const top = stemPt(t, 1), bud = HD.spline([[top[0] - 12, top[1] + 4], [top[0] - 6, top[1] - 20], [top[0] + 4, top[1] - 26], [top[0] + 12, top[1] - 4], [top[0] - 12, top[1] + 4]], 3);
+  fillC(g, cam(bud), 3140, IC.WARM); mk(g, cam(bud), 3141, { w: 6, mn: .8, blob: 0 });
+  const pop = t >= B.sprout && t < B.sprout + .9 ? 1 : 0;   // comic "it's here!" ticks over the bud
+  if (pop) { const c = cam([[top[0], top[1] - 10]])[0]; IC.ticks(g, c, 34 * IC.ZK, (58 + 30 * eo((t - B.sprout) / .4)) * IC.ZK, 6, 3150); }
+}
+function drawMound(g, t) {
+  if (t < B.plant) return; const k = eo((t - B.plant) / .5), m = [[SEED[0] - 52 * k - 6, SEED[1] + 2], [SEED[0] - 20, SEED[1] - 16 * k], [SEED[0] + 20, SEED[1] - 18 * k], [SEED[0] + 54 * k + 6, SEED[1] + 2]];
+  const p = HD.spline(m, 3); fillC(g, cam(p), 3000); mk(g, cam(p), 3001, { w: 7, mn: .6 });
+  mk(g, cam(HD.seg([SEED[0] - 30, SEED[1] - 4], [SEED[0] - 14, SEED[1] - 9], 3)), 3002, { w: 3.5, mn: .4, blob: 0 });
+}
+function drawSeed(g, p, seed = 3010) { const c = cam([p])[0], o = HD.arc(c[0], c[1], 11 * IC.ZK, 8 * IC.ZK, 0, TAU, 3); fillC(g, o, seed, IC.WARM); mk(g, o, seed + 1, { w: 5, mn: 1, blob: 0 }); }
+function drawCloud(g, t) {   // one comic cloud drifting across the sky — the wait's ambient motion (with the boil)
+  const x = 340 + t * 9, y = 760, pts = [[x - 120, y], [x - 110, y - 40], [x - 60, y - 66], [x - 6, y - 52], [x + 40, y - 80], [x + 100, y - 46], [x + 128, y]];
+  mk(g, cam(HD.spline(pts, 4)), 3200, { w: 6, mn: .5, ts: 20, te: 20 }); mk(g, cam(HD.seg([x - 150, y + 2], [x + 160, y], 6)), 3201, { w: 5, mn: .3, ts: 40, te: 40 });
+}
+
+// ---------------- camera ----------------
+function camAt(t) {
+  let c = { x: walkX(Math.min(t, B.walk[1])) + 190, y: 1190, z: 1.25 };                       // the hook: the bear on the road at frame 0
+  c = IC.mixCam(c, { x: XK + 150, y: 1210, z: 1.45 }, eio((t - 3.4) / 2.4));               // in on the planting
+  c = IC.mixCam(c, { x: XK + 60, y: 1230, z: 1.55 }, eio((t - B.wait[0]) / 6));             // a slow push while nothing happens
+  c = IC.mixCam(c, { x: XK + 60, y: 1120, z: 1.1 }, eio((t - B.sprout) / 1.8));           // back off: the sprout rises
+  c = IC.mixCam(c, { x: XK + 40, y: 1080, z: 1.05 }, eio((t - B.rise) / 2));
+  c.sx = 0; c.sy = 0; return c;
+}
+
+function draw(ctx, t) {
+  const cm = camAt(t), g = IC.begin(ctx, t, cm), F = poseMe(t);
+  drawCloud(g, t);
+  IC.road(g, cm, { front: G1, back: GB });
+  drawMound(g, t);
+  drawSprout(g, t);
+  // the seed: in the bear's mouth (a four-legged character uses its mouth), dropped at the bow, then pressed in by the paw
+  const mouth = HD.pt(IC.headM(IC.bodyM(F), F), 250, -30), drop = B.plant - .9;
+  if (t < drop) F.front = () => drawSeed(g, mouth);
+  else if (t < B.plant + .4) { const k = clamp((t - drop) / .35); IC.drawBear(g, F); drawSeed(g, t < B.plant ? [lerp(mouth[0], SEED[0], k), lerp(mouth[1], SEED[1] - 6, k * k)] : [SEED[0], SEED[1] - 6 + 8 * eo((t - B.plant) / .4)]); }
+  if (!(t >= drop && t < B.plant + .4)) IC.drawBear(g, F);
+  IC.endWhite(g, t, B.end);
+  IC.finish(ctx);
+  if (t < B.end) IC.captions(ctx, t, S.lines);
+  IC.endCard(ctx, t, S.endCard, B.end);
+}
+
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: IC.FONTS, init: async () => IC.init(), draw });
+</script>
+</body>
+</html>
