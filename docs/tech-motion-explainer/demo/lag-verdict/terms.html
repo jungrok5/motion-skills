@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="claude:viewport-fit-sides" content="cover">
-<title>렉 원인 판정 시연: 입력부터 판정까지 — 용어집</title>
-<meta name="description" content="렉 원인 판정 시연: 입력부터 판정까지 용어집">
+<title>렉 원인 판정 시연: 제품 화면으로 입력부터 리포트까지 — 용어집</title>
+<meta name="description" content="렉 원인 판정 시연: 제품 화면으로 입력부터 리포트까지 용어집">
 <style>
   /* Reading page: one 720px column, light and dark. */
   @font-face { font-family: Pretendard; src: url(../assets/fonts/Pretendard-Variable.woff2) format("woff2"), url(assets/fonts/Pretendard-Variable.woff2) format("woff2"); font-weight: 100 900; }
@@ -57,8 +57,8 @@
 <body>
 <main>
 <nav class="tabs" aria-label="같은 주제"><a href="index.html">영상</a><a href="article.html">설명</a><a href="terms.html" aria-current="page">용어집</a></nav>
-<span class="eyebrow">1:32 · lag triage · telemetry · tick · RTT · infra</span>
-<h1>렉 원인 판정 시연: 입력부터 판정까지</h1>
+<span class="eyebrow">1:40 · product demo · prototype · lag triage · tick · RTT</span>
+<h1>렉 원인 판정 시연: 제품 화면으로 입력부터 리포트까지</h1>
 <p class="lede">이 영상에 나오는 용어 14개.</p>
 <input type="search" id="q" placeholder="용어 찾기" aria-label="용어 찾기">
 <dl class="terms" id="list">
@@ -71,11 +71,11 @@
 <dt>틱 예산</dt><dd>한 틱이 넘지 말아야 할 시간. 넘으면 다음 틱이 밀려 모든 접속자에게 갱신이 늦게 간다.</dd>
 <dt>패킷 손실</dt><dd>보낸 패킷이 도착하지 못한 비율. 손실이 생기면 재전송 때문에 지연이 커진다.</dd>
 <dt>호스트</dt><dd>게임서버 프로세스가 올라가 있는 물리 서버나 VM. 한 호스트에 서버 여러 대가 함께 올라갈 수 있다.</dd>
+<dt>확인 항목</dt><dd>층마다 정상 · 이상을 가르는 규칙과 기준값. 예: RTT p95 &gt; 150ms, 틱 &gt; 50ms. 영상의 기준값은 예시.</dd>
 <dt>CPU steal</dt><dd>VM이 CPU를 쓰려 했지만 같은 물리 장비의 다른 VM 때문에 기다린 시간 비율.</dd>
-<dt>DB p99</dt><dd>DB 응답 시간 중 상위 1%를 뺀 가장 느린 값. 대부분의 요청이 이 시간 안에 끝난다.</dd>
 <dt>frame_ms_max</dt><dd>1초 동안 가장 오래 걸린 프레임의 시간. 60fps면 16.7ms 안팎. 평균은 짧은 끊김을 묻어 버려서 최댓값을 본다.</dd>
+<dt>p95 · p99</dt><dd>값을 작은 것부터 줄 세웠을 때 95% · 99% 지점의 값. 상위 몇 %를 뺀, 느린 쪽의 대표값.</dd>
 <dt>RTT</dt><dd>Round Trip Time. 패킷이 서버에 갔다가 응답이 돌아오기까지 걸린 시간.</dd>
-<dt>tick_ms</dt><dd>한 틱을 처리하는 데 걸린 시간. 영상에서는 5초마다 가장 긴 값을 막대로 그렸다.</dd>
 </dl>
 <footer><a href="../index.html">전체 영상 목록</a></footer>
 <script>
