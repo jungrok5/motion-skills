@@ -1,0 +1,879 @@
+<meta charset="utf-8">
+<title>Lag Verdict 소개</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Layout: one 16:9 stage, a slim transport bar under it, chapter chips below. Single dark look. */
+  :root {
+    --bg: #070a13; --surface: #0e1424; --line: #24304a; --fg: #e8ecf4; --dim: #8b95a7;
+    --accent: #a78bfa; --live: #34d399; --text2: #c3cad8;
+    --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    color-scheme: dark;
+  }
+  html, body { min-height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding-block: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    box-sizing: border-box; overflow-x: hidden; }
+  .player { width: min(100%, calc((100vh - 170px) * 16 / 9)); min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .stage { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--line); background: var(--bg); cursor: pointer; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .big { position: absolute; inset: auto 0 5% 0; margin: 0 auto; width: clamp(44px, 11%, 84px); height: auto; aspect-ratio: 1; border-radius: 50%; border: 1.5px solid var(--accent);
+    background: rgba(14,20,36,.78); color: var(--fg); display: grid; place-items: center; cursor: pointer; transition: transform .15s, opacity .2s; }
+  .big[hidden] { display: none; }
+  .big:hover { transform: scale(1.06); }
+  .big svg { width: 36%; height: 36%; margin-left: 6%; }
+  .big.replay svg { margin-left: 0; }
+  .bar { display: flex; align-items: center; gap: 14px; }
+  .btn { flex: none; width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface);
+    color: var(--fg); display: grid; place-items: center; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn svg { width: 16px; height: 16px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .time { flex: none; font: 500 13px/1 var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
+  .scrub { position: relative; flex: 1; min-width: 0; height: 28px; cursor: pointer; touch-action: none; }
+  .track { position: absolute; left: 0; right: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--line); }
+  .fill { position: absolute; left: 0; top: 12px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--live)); }
+  .tick { position: absolute; top: 8px; width: 2px; height: 12px; background: var(--dim); opacity: .6; }
+  .knob { position: absolute; top: 7px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--fg); box-shadow: 0 0 0 4px rgba(167,139,250,.25); }
+  .chapters { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chapters button { font: 600 13px/1 var(--sans); color: var(--dim); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+  .chapters button span { font-family: var(--mono); color: var(--accent); margin-right: 6px; }
+  .chapters button:hover { color: var(--fg); }
+  .chapters button[aria-current="true"] { color: var(--fg); border-color: var(--accent); background: rgba(167,139,250,.12); }
+  .hint { font-size: 12px; color: var(--dim); margin-left: auto; }
+  @media (max-width: 600px) { .hint { display: none; } .time { font-size: 12px; } }
+  .set { display: flex; flex-wrap: wrap; gap: 8px; }
+  .set a { font: 600 13px/1 var(--sans); color: var(--fg); text-decoration: none; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; background: var(--surface); }
+  .set a:hover { border-color: var(--accent); }
+  body.poster .set { display: none; }
+  .rate { width: auto; min-width: 56px; padding: 0 10px; font: 600 13px/1 var(--mono); }
+  /* Notes under the player: chapter-by-chapter explanation + glossary */
+  .notes { width: min(100%, 860px); margin-top: 56px; padding-bottom: 48px; font-size: 16px; line-height: 1.75; word-break: keep-all; overflow-wrap: anywhere; }
+  .notes h2 { font-size: 22px; line-height: 1.4; margin: 48px 0 16px; text-wrap: balance; }
+  .notes h2:first-child { margin-top: 0; }
+  .notes h2 .more { font: 600 13px/1 var(--sans); color: var(--accent); margin-left: 10px; white-space: nowrap; }
+  .notes .lede { font-size: 18px; color: var(--fg); }
+  .notes p, .notes li { color: var(--text2); }
+  .notes ul { padding-left: 1.2em; }
+  .notes article { border-top: 1px solid var(--line); padding-top: 20px; margin-top: 24px; }
+  .notes h3 { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 18px; line-height: 1.4; margin: 0 0 8px; }
+  .notes h3 .n { font: 600 13px/1 var(--mono); color: var(--accent); }
+  .notes h3 button { margin-left: auto; font: 600 12px/1 var(--sans); color: var(--dim); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 6px 10px; cursor: pointer; }
+  .notes h3 button:hover { color: var(--fg); border-color: var(--accent); }
+  .notes code { font: 500 .88em var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; overflow-wrap: anywhere; }
+  .notes .terms { display: grid; grid-template-columns: minmax(110px, max-content) minmax(0, 1fr); gap: 12px 24px; margin: 0; }
+  .notes dt { font-weight: 700; }
+  .notes dd { margin: 0; color: var(--text2); }
+  @media (max-width: 600px) { .notes .terms { grid-template-columns: minmax(0, 1fr); gap: 2px; } .notes dd { margin-bottom: 14px; } }
+  /* #poster: embed mode for gallery thumbnails — canvas only, loops */
+  body.poster { padding: 0; }
+  body.poster .player { width: 100%; }
+  body.poster .bar, body.poster .chapters, body.poster .big, body.poster .notes { display: none; }
+  body.poster .stage { border: 0; border-radius: 0; }
+</style>
+
+<div class="player">
+  <div class="stage" id="stage">
+    <canvas id="c" width="1920" height="1080" aria-label="Lag Verdict 소개 모션그래픽"></canvas>
+    <button class="big" id="big" aria-label="재생"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg></button>
+  </div>
+  <div class="bar">
+    <button class="btn" id="play" aria-label="재생"></button>
+    <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="30" aria-valuenow="0">
+      <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+    </div>
+    <div class="time" id="time">0:00 / 0:30</div>
+    <button class="btn rate" id="rate" aria-label="재생 속도 1배">1×</button>
+    <button class="btn" id="fs" aria-label="전체 화면"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+  <div class="chapters" id="chapters"></div>
+  <nav class="set" aria-label="같은 주제"><a href="article.html">설명 읽기</a><a href="terms.html">용어집</a><a href="../lag-verdict/">제품 시연 영상</a><a href="../lag-globe/">글로벌 현황 프로토타입</a></nav>
+</div>
+<!-- Source text for article.html (설명) and terms.html (용어집); scripts/build-articles.mjs builds both. Not shown on this page. -->
+<section class="notes" id="notes" hidden>
+
+<p class="lede">렉 판정 서비스 Lag Verdict를 소개하는 영상입니다. 렉 신고가 들어오면 사람마다 아는 데이터 소스에서 아는 방식으로 기록을 찾고, 각자의 순서로 조사하고, AI에게 각자 다르게 묻습니다. 그래서 같은 신고에도 결론과 대응이 갈립니다. Lag Verdict는 조사 순서와 기준을 코드로 고정해, 같은 데이터면 누가 실행해도 같은 판정을 내고, 원인을 네트워크 · 인프라 · 게임서버 · 클라이언트 중 한 층으로 나눕니다. 화면의 인물 · 질문 · 답변 · 이름 · 수치는 모두 예시입니다.</p>
+<article data-ch="01">
+<p>"보스 잡을 때 캐릭터가 뚝뚝 끊겨요"라는 신고 하나를 운영 담당 · 서버 개발자 · QA 세 사람이 조사합니다.</p>
+<ul>
+<li><strong>운영 담당</strong>: 접속 · 핑 대시보드, 유저 신고 게시판, 네트워크 장비 알림 순서로 보고 AI에게 "핑이 튄 것 같은데 네트워크 문제 맞지?"라고 묻습니다. 결론은 네트워크 렉입니다.</li>
+<li><strong>서버 개발자</strong>: 서버 틱 메트릭, 서버 로그, GC 로그를 보고 "틱이 밀렸는데 GC 때문일까?"라고 묻습니다. 결론은 게임서버 렉이지만 원인은 GC로 짐작합니다.</li>
+<li><strong>QA</strong>: 클라이언트 로그, 재현 영상, 프레임 캡처를 보고 "클라 프레임이 떨어진 거 아닐까?"라고 묻습니다. 결론은 클라이언트 렉입니다.</li>
+</ul>
+<p>어떤 데이터를 먼저 보는지, 무엇을 빼먹는지, 질문에 어떤 가정을 담는지에 따라 답이 달라집니다. 결론이 셋으로 갈리면 네트워크팀 호출, GC 튜닝 검토, 클라이언트 재현 테스트처럼 대응도 셋으로 갈립니다.</p>
+</article>
+<article data-ch="02">
+<p>Lag Verdict는 조사를 코드로 고정합니다. 입력(프로젝트 · 서버 · 캐릭터) → 데이터 소스 다섯 곳(<code>client_perf</code>, <code>net_session</code>, <code>server_tick</code>, <code>host_metrics</code>, <code>ops_events</code>) → 확인 항목(클라이언트 → 네트워크 → 게임서버 → 인프라 순서) → 판정의 길이 항상 같습니다.</p>
+<p>확인 항목과 기준값도 코드에 있습니다. 영상의 <code>verdict.rules</code>는 예시로, 1초 최대 프레임 50ms 초과, RTT p95 150ms · 손실 1% 초과, 틱 p95 50ms 초과가 10초 이상, 호스트 · DB 경고와 이웃 서버 동시 이상을 각 층의 이상 조건으로 둡니다. 세 사람이 같은 신고로 실행하면 세 번 모두 같은 데이터를 같은 순서로 보고, 같은 판정(게임서버 렉, 21:14:05–21:14:40, 근거 5개)이 나옵니다. 같은 판정이 나오는 조건은 같은 데이터입니다. 기록이 더 쌓이거나 바뀌면 판정도 그에 따라 바뀝니다.</p>
+</article>
+<article data-ch="03">
+<p>판정은 네트워크 · 인프라 · 게임서버 · 클라이언트 네 층 중 하나입니다. 어느 지표가 튀었는지와 누가 같이 느렸는지로 가릅니다.</p>
+<ul>
+<li><strong>네트워크</strong>: RTT · 손실이 튀고 서버 틱은 정상입니다.</li>
+<li><strong>인프라</strong>: 호스트 · DB 지표가 튀고, 같은 호스트 · DB를 쓰는 이웃 서버가 함께 느려집니다.</li>
+<li><strong>게임서버</strong>: 틱만 예산을 넘습니다. 이번 판정이고, 계기는 21:14:03 <code>boss_spawn</code>, 틱은 최대 210ms였습니다.</li>
+<li><strong>클라이언트</strong>: 프레임만 튀고 RTT · 틱은 정상입니다.</li>
+</ul>
+<p>판정에는 원인 층과 함께 구간과 근거가 남아, 같은 리포트를 보고 대응을 정할 수 있습니다.</p>
+</article>
+<h2>용어 정리</h2>
+<dl class="terms">
+<dt>렉 판정</dt><dd>렉 신고 한 건의 원인을 네트워크 · 인프라 · 게임서버 · 클라이언트 중 한 층으로 정하고, 구간과 근거를 내는 일.</dd>
+<dt>결정론적 분석</dt><dd>같은 입력과 같은 데이터면 항상 같은 결과가 나오는 분석. 조사 순서와 기준이 코드에 고정되어 있어야 한다.</dd>
+<dt>데이터 소스</dt><dd>판정에 쓰는 기록이 쌓이는 곳. 영상에서는 클라이언트 텔레메트리, 세션 · 네트워크 로그, 게임서버 메트릭, 인프라 모니터링, 운영 이벤트.</dd>
+<dt>확인 항목</dt><dd>층마다 정상 · 이상을 가르는 규칙과 기준값. 영상의 기준값은 예시.</dd>
+<dt>유도 질문</dt><dd>답을 가정한 채 묻는 질문. "네트워크 문제 맞지?"처럼 물으면 그 가정에 맞는 근거부터 찾게 된다.</dd>
+<dt>RTT p95</dt><dd>서버까지 왕복 지연 시간을 줄 세웠을 때 95% 지점의 값.</dd>
+<dt>틱</dt><dd>게임서버가 입력을 처리하고 상태를 갱신해 보내는 한 번의 루프. 초당 20틱이면 한 틱의 예산은 50ms.</dd>
+<dt>GC 일시정지</dt><dd>가비지 컬렉션 때문에 프로그램이 잠깐 멈추는 시간. 틱 지연의 한 가지 원인이 될 수 있다.</dd>
+<dt>운영 이벤트</dt><dd>보스 스폰, 자동 저장, 배포처럼 서버에서 일어난 일을 시각과 함께 남긴 기록.</dd>
+<dt>이웃 서버</dt><dd>같은 호스트나 같은 DB를 쓰는 다른 게임서버. 함께 느려졌는지가 인프라 렉을 가리는 단서다.</dd>
+</dl>
+</section>
+<script>
+// ─────────────────────────────────────────────────────────────
+//  TEMPLATE — copy to <slug>/index.html, then edit HEAD, TITLE, OUTRO and the scenes.
+//  Every frame is a pure function of time: renderAt(t).
+// ─────────────────────────────────────────────────────────────
+const W = 1920, H = 1080, DURATION = 57;
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+
+const C = {
+  bg: '#070a13', text: '#e8ecf4', dim: '#8b95a7', faint: '#4b5568',
+  proto: '#a78bfa', client: '#38bdf8', server: '#fbbf24', bot: '#34d399',
+  pub: '#f472b6', red: '#f87171', panel: '#0e1424', line: '#24304a',
+};
+const SANS = 'Pretendard, "WenQuanYi Zen Hei", "DejaVu Sans", sans-serif';
+const MONO = '"JetBrains Mono", Pretendard, "DejaVu Sans Mono", monospace';
+
+// ── math / easing ────────────────────────────────────────────
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const p = (t, s, d) => clamp((t - s) / d);
+const eo = t => 1 - Math.pow(1 - t, 3);
+const eio = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const eback = t => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
+// fade in at s, fade out at e
+const win = (t, s, e, f = .45) => Math.min(eo(p(t, s, f)), 1 - eio(p(t, e - f, f)));
+
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let x = Math.imul(seed ^ seed >>> 15, 1 | seed); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; }; }
+const R = rng(7);
+const PARTS = Array.from({ length: 70 }, () => ({ x: R() * W, y: R() * H, vx: (R() - .5) * 14, vy: -4 - R() * 10, s: 1 + R() * 2, a: .05 + R() * .18 }));
+
+// ── drawing helpers ──────────────────────────────────────────
+function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+function font(sz, wt = 500, mono = false) { ctx.font = `${wt} ${sz}px ${mono ? MONO : SANS}`; }
+function txt(s, x, y, o = {}) {
+  const { size = 32, weight = 500, color = C.text, align = 'left', base = 'alphabetic', alpha = 1, mono = false, ls = 0 } = o;
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha; font(size, weight, mono);
+  ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = base;
+  if (ls) ctx.letterSpacing = ls + 'px';
+  ctx.fillText(s, x, y); ctx.restore();
+}
+function tw(s, size, weight = 500, mono = false) { font(size, weight, mono); return ctx.measureText(s).width; }
+function panel(x, y, w, h, o = {}) {
+  const { r = 18, fill = C.panel, stroke = C.line, glow = null, glowA = 1, alpha = 1, lw = 1.5, dash = null } = o;
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha;
+  if (glow) { ctx.shadowColor = rgba(glow, .55 * glowA); ctx.shadowBlur = 50; }
+  rr(x, y, w, h, r); ctx.fillStyle = fill; ctx.fill(); ctx.shadowBlur = 0;
+  if (dash) ctx.setLineDash(dash);
+  ctx.lineWidth = lw; ctx.strokeStyle = stroke; ctx.stroke(); ctx.restore();
+}
+function chip(label, x, y, color, o = {}) {
+  const { alpha = 1, size = 18, align = 'left', fillA = .14 } = o;
+  font(size, 700, true);
+  const w = ctx.measureText(label).width + size * 1.2, h = size * 1.6;
+  const X = align === 'right' ? x - w : align === 'center' ? x - w / 2 : x;
+  ctx.save(); ctx.globalAlpha *= alpha;
+  rr(X, y - h / 2, w, h, h / 2); ctx.fillStyle = rgba(color, fillA); ctx.fill();
+  ctx.strokeStyle = rgba(color, .7); ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(label, X + w / 2, y + 1); ctx.restore();
+  return w;
+}
+function dot(x, y, r, color, a = 1, glow = 18) {
+  ctx.save(); ctx.globalAlpha *= a; ctx.shadowColor = color; ctx.shadowBlur = glow;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill(); ctx.restore();
+}
+function check(x, y, s, color, a = 1) {
+  ctx.save(); ctx.globalAlpha *= a; ctx.strokeStyle = color; ctx.lineWidth = s * .16; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(x - s * .36, y); ctx.lineTo(x - s * .1, y + s * .26); ctx.lineTo(x + s * .38, y - s * .28); ctx.stroke(); ctx.restore();
+}
+function cross(x, y, s, color, a = 1) {
+  ctx.save(); ctx.globalAlpha *= a; ctx.strokeStyle = color; ctx.lineWidth = s * .16; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x - s * .3, y - s * .3); ctx.lineTo(x + s * .3, y + s * .3);
+  ctx.moveTo(x + s * .3, y - s * .3); ctx.lineTo(x - s * .3, y + s * .3); ctx.stroke(); ctx.restore();
+}
+function botIcon(x, y, s, color, a = 1) {
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha *= a; ctx.strokeStyle = color; ctx.lineWidth = Math.max(2, s * .07);
+  rr(x - s / 2, y - s * .36, s, s * .72, s * .2); ctx.fillStyle = rgba(color, .15); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x, y - s * .36); ctx.lineTo(x, y - s * .54); ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(x, y - s * .6, s * .07, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.arc(x - s * .19, y - s * .04, s * .08, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + s * .19, y - s * .04, s * .08, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(x - s * .16, y + s * .18); ctx.lineTo(x + s * .16, y + s * .18); ctx.stroke();
+  ctx.restore();
+}
+function bezPt(P, t) {
+  const [a, b, c, d] = P, u = 1 - t;
+  return [u * u * u * a[0] + 3 * u * u * t * b[0] + 3 * u * t * t * c[0] + t * t * t * d[0],
+          u * u * u * a[1] + 3 * u * u * t * b[1] + 3 * u * t * t * c[1] + t * t * t * d[1]];
+}
+function bezLine(P, k, color, lw = 2, a = 1) {
+  if (k <= 0 || a <= 0) return;
+  ctx.save(); ctx.globalAlpha *= a; ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.beginPath();
+  for (let i = 0; i <= 48; i++) { const q = bezPt(P, k * i / 48); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }
+  ctx.stroke(); ctx.restore();
+}
+
+// ── tiny syntax highlighter ──────────────────────────────────
+const KW = new Set(['syntax', 'package', 'message', 'public', 'sealed', 'partial', 'class', 'final', 'var', 'new', 'const', 'get', 'set']);
+const TY = new Set(['string', 'int32', 'int64', 'int', 'int32_t', 'IMessage']);
+function tokens(line) {
+  const out = [], re = /(\/\/.*$|"[^"]*"|\s+|\d+|[A-Za-z_]\w*|.)/g; let m;
+  while ((m = re.exec(line))) {
+    const s = m[0]; let c = C.text;
+    if (s.startsWith('//')) c = C.faint;
+    else if (s[0] === '"') c = '#86efac';
+    else if (/^\d+$/.test(s)) c = C.server;
+    else if (KW.has(s)) c = C.proto;
+    else if (TY.has(s)) c = C.client;
+    else if (/^[^\w\s]$/.test(s)) c = C.dim;
+    out.push([s, c]);
+  }
+  return out;
+}
+// lines: array of strings. chars: how many characters are revealed (newline = 1).
+// insert: {idx, s, k, chars} — a line sliding in at idx (k: 0..1).
+function code(lines, x, y, o = {}) {
+  const { size = 24, lh = 36, chars = Infinity, alpha = 1, insert = null, hlW = 600 } = o;
+  ctx.save(); ctx.globalAlpha *= alpha; font(size, 500, true); ctx.textBaseline = 'alphabetic';
+  const cw = ctx.measureText('M').width; let left = chars, cursor = null;
+  const drawLine = (s, yy, limit) => {
+    let col = 0;
+    for (const [tok, c] of tokens(s)) {
+      if (limit <= 0) break;
+      const vis = tok.slice(0, limit); ctx.fillStyle = c;
+      ctx.fillText(vis, x + col * cw, yy); col += vis.length; limit -= vis.length;
+    }
+    return col;
+  };
+  let shift = 0;
+  const drawInsert = i => {
+    if (!insert || i !== insert.idx || insert.k <= 0) return;
+    {
+      const yy = y + i * lh; const k = insert.k;
+      ctx.save(); ctx.globalAlpha *= k;
+      ctx.fillStyle = rgba(C.bot, .16 * (insert.flash ?? 1)); ctx.fillRect(x - 18, yy - lh * .74, hlW, lh);
+      ctx.fillStyle = C.bot; ctx.fillRect(x - 18, yy - lh * .74, 4, lh);
+      drawLine(insert.s, yy, insert.chars ?? Infinity); ctx.restore();
+      shift = insert.k;
+    }
+  };
+  lines.forEach((ln, i) => {
+    drawInsert(i);
+    if (left <= 0) return;
+    const yy = y + (i + shift) * lh;
+    const col = drawLine(ln, yy, left);
+    cursor = [x + col * cw, yy]; left -= ln.length + 1;
+  });
+  drawInsert(lines.length);
+  ctx.restore();
+  return { cw, cursor };
+}
+
+// ── background, headers, progress ────────────────────────────
+function background(t) {
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  const glow = (cx, cy, r, col) => { const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); };
+  glow(W * .18 + Math.sin(t * .2) * 80, H * .1, 900, 'rgba(167,139,250,0.10)');
+  glow(W * .86, H * .92 + Math.cos(t * .17) * 60, 900, 'rgba(56,189,248,0.08)');
+  ctx.strokeStyle = 'rgba(148,163,184,0.055)'; ctx.lineWidth = 1;
+  const off = (t * 10) % 60; ctx.beginPath();
+  for (let x = -60 + off; x < W; x += 60) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+  for (let y = -60 + off; y < H; y += 60) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
+  ctx.stroke();
+  for (const q of PARTS) {
+    const x = ((q.x + t * q.vx) % W + W) % W, y = ((q.y + t * q.vy) % H + H) % H;
+    ctx.fillStyle = `rgba(200,210,255,${q.a})`; ctx.fillRect(x, y, q.s, q.s);
+  }
+}
+function headers(t) {
+  for (const [s, e, n, title, sub] of HEAD) {
+    const a = win(t, s, e, .4); if (a <= 0) continue;
+    const k = eo(p(t, s + .05, .7)), k2 = eo(p(t, s + .3, .7));
+    ctx.save(); ctx.globalAlpha = a;
+    chip(n, 120 - (1 - k) * 30, 106, C.proto, { size: 22, alpha: k });
+    txt(title, 196 - (1 - k) * 30, 122, { size: 50, weight: 800, alpha: k });
+    txt(sub, 122, 174, { size: 27, weight: 500, color: C.dim, alpha: k2 });
+    ctx.restore();
+  }
+}
+function progress(t) {
+  const x0 = 120, x1 = 1800, y = 1040;
+  const a = clamp(Math.min(t - HEAD[0][0] + .4, DURATION - .6 - t) * 2) * .9; if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  ctx.fillStyle = 'rgba(148,163,184,0.15)'; ctx.fillRect(x0, y, x1 - x0, 3);
+  const g = ctx.createLinearGradient(x0, 0, x1, 0);
+  g.addColorStop(0, C.proto); g.addColorStop(.5, C.bot); g.addColorStop(1, C.pub);
+  ctx.fillStyle = g; ctx.fillRect(x0, y, (x1 - x0) * clamp(t / DURATION), 3);
+  HEAD.forEach((h, i) => {
+    const x = x0 + (x1 - x0) * h[0] / DURATION;
+    const nx = i + 1 < HEAD.length ? x0 + (x1 - x0) * HEAD[i + 1][0] / DURATION : x1;
+    ctx.fillStyle = t >= h[0] ? C.text : C.faint; ctx.fillRect(x, y - 4, 2, 11);
+    // label only as long as the gap to the next tick allows
+    let lab = h[2] + ' ' + h[3];
+    while (lab.length > 2 && tw(lab, 16, 600) > nx - x - 18) lab = lab.slice(0, -1);
+    if (lab !== h[2] + ' ' + h[3]) lab = lab.length > 4 ? lab.slice(0, -1).trimEnd() + '…' : h[2];
+    txt(lab, x + 8, y - 10, { size: 16, weight: 600, color: t >= h[0] ? C.dim : C.faint });
+  });
+  ctx.restore();
+}
+
+// ── word-by-word title ───────────────────────────────────────
+function words(ws, cx, y, t, t0, o = {}) {
+  const { size = 96, weight = 800, stagger = .12, colors = [] } = o;
+  font(size, weight); const sp = size * .28;
+  const widths = ws.map(w => ctx.measureText(w).width);
+  let x = cx - (widths.reduce((a, b) => a + b, 0) + sp * (ws.length - 1)) / 2;
+  ws.forEach((w, i) => {
+    const k = eo(p(t, t0 + i * stagger, .8));
+    ctx.save(); ctx.globalAlpha *= k; font(size, weight); ctx.fillStyle = colors[i] || C.text;
+    if (colors[i]) { ctx.shadowColor = rgba(colors[i], .5); ctx.shadowBlur = 40; }
+    ctx.fillText(w, x, y + (1 - k) * 46); ctx.restore();
+    x += widths[i] + sp;
+  });
+}
+
+// ═════════════════════════════════════════════════════════════
+//  Lag Verdict — 제품 소개 (landing-page film)
+//  Problem: one lag report, three people, three ways of digging, three conclusions.
+//  Product: the investigation fixed as code; same data in → same verdict out; four layers.
+//  Colour = layer: client sky · network green · game server amber · infra pink. Indigo = the product.
+// ═════════════════════════════════════════════════════════════
+const U = { text: '#eaeef8', text2: '#c3cadb', dim: '#8b94aa', faint: '#5d6782', panel: '#111827', panel2: '#172033', line: '#222c44', line2: '#2f3b58', accent: '#8b7cff', red: '#f87171', ok: '#4ade80' };
+const L = { client: '#38bdf8', net: '#34d399', server: '#fbbf24', infra: '#f472b6' };
+const OPS = '#94a3b8';
+const HAN = /[가-힣]/;
+
+// ── helpers ──────────────────────────────────────────────────
+function box(x, y, w, h, o = {}) {
+  const { r = 16, fill = U.panel, stroke = U.line, lw = 1.5, alpha = 1, glow = null, shadow = 1 } = o;
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha;
+  if (glow) { ctx.shadowColor = rgba(glow, .45); ctx.shadowBlur = 40; } else if (shadow) { ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10; }
+  rr(x, y, w, h, r); ctx.fillStyle = fill; ctx.fill(); ctx.shadowColor = 'transparent';
+  if (stroke) { ctx.lineWidth = lw; ctx.strokeStyle = stroke; ctx.stroke(); }
+  ctx.restore();
+}
+function flowBorder(x, y, w, h, r, color, t, a = 1, lw = 2.5) {
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha *= a;
+  const g = ctx.createConicGradient(t * 2.4, x + w / 2, y + h / 2);
+  g.addColorStop(0, rgba(color, 0)); g.addColorStop(.14, rgba(color, 1)); g.addColorStop(.3, rgba(color, .05));
+  g.addColorStop(.55, rgba(color, .05)); g.addColorStop(.66, rgba(color, .9)); g.addColorStop(.82, rgba(color, 0)); g.addColorStop(1, rgba(color, 0));
+  rr(x, y, w, h, r); ctx.lineWidth = lw; ctx.strokeStyle = g; ctx.shadowColor = rgba(color, .9); ctx.shadowBlur = 16; ctx.stroke(); ctx.restore();
+}
+function icon(kind, x, y, s, color, a = 1) {
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha *= a; ctx.strokeStyle = color; ctx.fillStyle = rgba(color, .14); ctx.lineWidth = Math.max(2, s * .07); ctx.lineJoin = 'round';
+  if (kind === 'pc') {
+    rr(x - s * .5, y - s * .38, s, s * .62, s * .08); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x, y + s * .24); ctx.lineTo(x, y + s * .38); ctx.moveTo(x - s * .22, y + s * .4); ctx.lineTo(x + s * .22, y + s * .4); ctx.stroke();
+  } else if (kind === 'net') {
+    for (let i = 1; i <= 3; i++) { ctx.beginPath(); ctx.arc(x, y + s * .3, s * .17 * i, -Math.PI * .78, -Math.PI * .22); ctx.stroke(); }
+    ctx.beginPath(); ctx.arc(x, y + s * .3, s * .07, 0, 7); ctx.fillStyle = color; ctx.fill();
+  } else if (kind === 'srv') {
+    for (let i = 0; i < 3; i++) { rr(x - s * .46, y - s * .42 + i * s * .29, s * .92, s * .24, s * .05); ctx.fill(); ctx.stroke();
+      ctx.save(); ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x + s * .3, y - s * .3 + i * s * .29, s * .04, 0, 7); ctx.fill(); ctx.restore(); }
+  } else if (kind === 'db') {
+    const rx = s * .4, ry = s * .12;
+    ctx.beginPath(); ctx.ellipse(x, y - s * .3, rx, ry, 0, 0, 7); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x - rx, y - s * .3); ctx.lineTo(x - rx, y + s * .3); ctx.ellipse(x, y + s * .3, rx, ry, 0, Math.PI, 0, true); ctx.lineTo(x + rx, y - s * .3); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI); ctx.stroke();
+  }
+  ctx.restore();
+}
+function mark(x, y, s, a = 1) {
+  ctx.save(); ctx.globalAlpha *= a; rr(x - s / 2, y - s / 2, s, s, s * .26); ctx.fillStyle = U.accent; ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = s * .09; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.beginPath();
+  ctx.moveTo(x - s * .32, y + s * .04); ctx.lineTo(x - s * .12, y + s * .04); ctx.lineTo(x - s * .02, y - s * .2); ctx.lineTo(x + s * .1, y + s * .22); ctx.lineTo(x + s * .18, y + s * .04); ctx.lineTo(x + s * .32, y + s * .04);
+  ctx.stroke(); ctx.restore();
+}
+function wordmark(x, y, size, t0, t, a = 1) {
+  if (a <= 0) return;
+  font(size, 800); const w = ctx.measureText('Lag Verdict').width, pos = clamp((t - t0) / 1.1) * 1.6 - .3;
+  const g = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0);
+  g.addColorStop(0, '#cfc9ff'); g.addColorStop(clamp(pos - .14), '#cfc9ff'); g.addColorStop(clamp(pos), '#ffffff'); g.addColorStop(clamp(pos + .14), '#cfc9ff'); g.addColorStop(1, '#cfc9ff');
+  ctx.save(); ctx.globalAlpha *= a; ctx.fillStyle = g; ctx.textAlign = 'center'; ctx.shadowColor = 'rgba(139,124,255,0.55)'; ctx.shadowBlur = 40; ctx.fillText('Lag Verdict', x, y); ctx.restore();
+}
+function ring(x, y, k, r0, r1, col) {
+  if (k <= 0 || k >= 1) return;
+  ctx.save(); ctx.globalAlpha *= (1 - k) * .8; ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.shadowColor = col; ctx.shadowBlur = 20;
+  ctx.beginPath(); ctx.arc(x, y, lerp(r0, r1, eo(k)), 0, 7); ctx.stroke(); ctx.restore();
+}
+function avatar(x, y, r, label, col, a = 1) {
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha *= a; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fillStyle = rgba(col, .18); ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = col; ctx.stroke(); ctx.restore();
+  txt(label, x, y + r * .36, { size: r * .95, weight: 800, color: col, align: 'center', alpha: a });
+}
+const typedS = (s, t, t0, dur) => { const a = Array.from(s); return a.slice(0, Math.floor(a.length * clamp((t - t0) / dur))).join(''); };
+function desk(t) {
+  ctx.fillStyle = '#04060d'; ctx.fillRect(0, 0, W, H);
+  const blob = (x, y, r, col, a) => { const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, rgba(col, a)); g.addColorStop(1, rgba(col, 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); };
+  blob(W * .28 + Math.sin(t * .23) * 220, H * .3 + Math.cos(t * .19) * 90, 980, '#6d5df5', .24);
+  blob(W * .78 + Math.cos(t * .17) * 200, H * .74 + Math.sin(t * .21) * 80, 900, '#0ea5e9', .14);
+  ctx.fillStyle = 'rgba(170,180,230,0.07)';
+  for (let x = 30; x < W; x += 60) for (let y = 30; y < H; y += 60) ctx.fillRect(x, y, 2, 2);
+  const v = ctx.createRadialGradient(W / 2, H / 2, H * .35, W / 2, H / 2, H * 1.05); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.6)');
+  ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+}
+// kinetic headline: words rise in; one optional accent word
+function headline(t, s, e, ws, accent = [], y = 170, sub = null) {
+  const a = win(t, s, e, .4); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  const colors = ws.map((_, i) => accent.includes(i) ? '#b3a8ff' : null);
+  words(ws, W / 2, y, t, s, { size: 54, weight: 800, stagger: .07, colors });
+  if (sub) txt(sub, W / 2, y + 54, { size: 26, weight: 500, color: U.dim, align: 'center', alpha: eo(p(t, s + .5, .5)) });
+  ctx.restore();
+}
+function note(t, s, e, line) { const a = win(t, s, e, .3); if (a > 0) txt(line, W - 40, H - 28, { size: 16, color: '#5d6782', align: 'right', alpha: a }); }
+
+// [start, end, number, title, subtitle] — player chapters and reading pages
+const HEAD = [
+  [0.0, 27.0, '01', '사람마다 다른 조사', '같은 신고, 다른 데이터 · 순서 · 질문, 다른 결론'],
+  [27.0, 43.0, '02', '코드로 고정한 조사', '같은 데이터면 같은 순서 · 기준 · 판정'],
+  [43.0, 51.0, '03', '네 층으로 나누기', '네트워크 · 인프라 · 게임서버 · 클라이언트'],
+];
+
+// ═════════════════════════════════════════════════════════════
+//  1 · one report, three people (0 – 6.4)
+// ═════════════════════════════════════════════════════════════
+const PEOPLE = [
+  { id: 'A', role: '운영 담당', col: '#c4b5fd', x: 410 },
+  { id: 'B', role: '서버 개발자', col: '#fdba74', x: 960 },
+  { id: 'C', role: 'QA', col: '#93c5fd', x: 1510 },
+];
+function reportCard(x, y, s, t, a = 1) {
+  ctx.save(); ctx.globalAlpha *= a; ctx.translate(x, y); ctx.scale(s, s);
+  box(-490, -95, 980, 190, { r: 18, fill: '#131b2e', stroke: 'rgba(248,113,113,0.35)', glow: '#f87171' });
+  flowBorder(-490, -95, 980, 190, 18, '#f87171', t, .9);
+  dot(-444, -47, 7, '#f87171', 1, 10 + 14 * (.5 + .5 * Math.sin(t * 8)));
+  chip('렉 신고', -424, -47, '#f87171', { size: 17, fillA: .14 });
+  txt('PROJECT-K · asterra-03 · 21:14:20', 460, -41, { size: 17, color: '#8b94aa', align: 'right', mono: true });
+  txt('"보스 잡을 때 캐릭터가 뚝뚝 끊겨요"', -446, 25, { size: 36, weight: 800, color: '#f4f6fb' });
+  txt('달빛궁수 · Lv.62', -446, 67, { size: 20, color: '#8b94aa' });
+  ctx.restore();
+}
+function sOpen(t) {
+  if (t > 7) return;
+  const k = eback(p(t, .3, .6)), move = eio(p(t, 5.5, .8));
+  const y = lerp(430, 96, move), s = lerp(1, .5, move);
+  reportCard(W / 2, y + (1 - clamp(k)) * 40, s, t, clamp(k) * (1 - eo(p(t, 6.2, .4))));
+  headline(t, 1.3, 5.6, ['같은', '렉', '신고를', '세', '사람이', '조사합니다'], [3, 4], 210);
+  PEOPLE.forEach((pp, i) => {
+    const kk = eback(p(t, 2.3 + i * .25, .5)); if (kk <= 0) return;
+    const a = clamp(kk) * (1 - eo(p(t, 5.6, .4)));
+    const P = [[W / 2, 525], [W / 2, 620], [pp.x, 600], [pp.x, 700]];
+    bezLine(P, eo(p(t, 2.1 + i * .25, .5)), rgba(pp.col, .5 * a), 2.5);
+    ctx.save(); ctx.translate(pp.x, 770); ctx.scale(clamp(kk, 0, 1.1), clamp(kk, 0, 1.1)); avatar(0, 0, 46, pp.id, pp.col, a); ctx.restore();
+    txt(pp.role, pp.x, 860, { size: 26, weight: 700, color: U.text, align: 'center', alpha: a });
+  });
+}
+
+// ═════════════════════════════════════════════════════════════
+//  2 · three ways of digging (6 – 21.4)
+// ═════════════════════════════════════════════════════════════
+const DIG = [
+  { data: [['접속 · 핑 대시보드', 7.0], ['유저 신고 게시판', 8.1], ['네트워크 장비 알림', 9.3]],
+    ask: ['핑이 튄 것 같은데', '네트워크 문제 맞지?'], askT: 10.6,
+    reply: ['핑 그래프로 보면', '네트워크 지연일 가능성이 있습니다'],
+    res: ['네트워크 렉', L.net, 'net'], resT: 15.4 },
+  { data: [['서버 틱 메트릭', 7.5], ['서버 로그 grep', 8.9], ['GC 로그', 10.0]],
+    ask: ['틱이 밀렸는데', 'GC 때문일까?'], askT: 11.2,
+    reply: ['GC 일시정지가', '원인일 수 있습니다'],
+    res: ['게임서버 렉 · GC?', L.server, 'srv'], resT: 16.0 },
+  { data: [['클라이언트 로그', 7.9], ['재현 영상', 8.6], ['프레임 캡처', 10.4]],
+    ask: ['클라 프레임이', '떨어진 거 아닐까?'], askT: 11.8,
+    reply: ['프레임 드랍이', '원인일 수 있습니다'],
+    res: ['클라이언트 렉', L.client, 'pc'], resT: 16.6 },
+];
+const COLX = [150, 700, 1250], CW = 520, CY = 262;
+function sDig(t) {
+  if (t < 5.6 || t > 27.5) return;
+  headline(t, 6.3, 20.6, ['찾는', '데이터도,', '순서도,', '묻는', '방식도', '다릅니다'], [], 150, '각자 아는 만큼, 아는 방식으로 조사합니다');
+  PEOPLE.forEach((pp, i) => {
+    const d = DIG[i], x = COLX[i], kin = eo(p(t, 5.8 + i * .15, .6)), aCard = kin * (1 - eo(p(t, 21.2, .5)));
+    if (aCard > 0) {
+      const y = CY + (1 - kin) * 40;
+      box(x, y, CW, 680, { alpha: aCard, fill: 'rgba(17,24,39,0.88)' });
+      ctx.save(); ctx.globalAlpha *= aCard;
+      avatar(x + 50, y + 52, 26, pp.id, pp.col);
+      txt(pp.role, x + 90, y + 61, { size: 24, weight: 800 });
+      txt('자기 경험대로', x + CW - 24, y + 60, { size: 16, color: U.faint, align: 'right' });
+      hline(x, x + CW, y + 100, U.line);
+      txt('찾아본 데이터', x + 24, y + 138, { size: 17, weight: 700, color: U.dim });
+      d.data.forEach(([lab, at], k) => {
+        const kk = eo(p(t, at, .4)); if (kk <= 0) return;
+        const yy = y + 160 + k * 56 + (1 - kk) * 14;
+        box(x + 24, yy, CW - 48, 46, { r: 10, fill: U.panel2, stroke: rgba(pp.col, .35), alpha: kk, shadow: 0 });
+        txt(String(k + 1), x + 46, yy + 31, { size: 18, weight: 800, color: pp.col, align: 'center', mono: true, alpha: kk });
+        txt(lab, x + 70, yy + 31, { size: 20, weight: 600, alpha: kk });
+      });
+      txt('AI에게 물은 것', x + 24, y + 366, { size: 17, weight: 700, color: U.dim });
+      // question bubble (typed)
+      const q = d.ask.join('\n'), qn = typedS(d.ask.join(''), t, d.askT, 1.4), split = d.ask[0].length;
+      if (t >= d.askT - .2) {
+        const ka = eo(p(t, d.askT - .2, .3));
+        box(x + 90, y + 384, CW - 114, 84, { r: 14, fill: rgba(pp.col, .16), stroke: rgba(pp.col, .45), alpha: ka, shadow: 0 });
+        txt(qn.slice(0, split), x + 112, y + 418, { size: 20, weight: 600, alpha: ka });
+        txt(qn.slice(split), x + 112, y + 450, { size: 20, weight: 600, alpha: ka });
+      }
+      const rT = d.askT + 2.0;
+      if (t >= rT - .8) {
+        const ka = eo(p(t, rT - .8, .3));
+        box(x + 24, y + 484, CW - 114, 84, { r: 14, fill: U.panel2, stroke: U.line2, alpha: ka, shadow: 0 });
+        if (t < rT) [0, 1, 2].forEach(j => dot(x + 56 + j * 18, y + 526, 4.5, U.dim, ka * (.4 + .6 * Math.max(0, Math.sin(t * 9 - j))), 0));
+        else { const kr = eo(p(t, rT, .4)); txt(d.reply[0], x + 46, y + 518, { size: 19, color: U.text2, alpha: kr }); txt(d.reply[1], x + 46, y + 549, { size: 19, color: U.text2, alpha: kr }); }
+      }
+      ctx.restore();
+    }
+    // result chip (stays and flies to the comparison row)
+    const kr = eback(p(t, d.resT, .5)); if (kr <= 0) return;
+    const fly = eio(p(t, 21.3, .9)), aOut = 1 - eo(p(t, 26.4, .5));
+    const rx = lerp(x + 24, lerp(250, 1350, i / 2) - 60, fly), ry = lerp(CY + 594, 452, fly), rw = lerp(CW - 48, 440, fly), rh = lerp(64, 120, fly);
+    const [lab, col, ic] = d.res;
+    ctx.save(); ctx.globalAlpha *= clamp(kr) * aOut;
+    box(rx, ry, rw, rh, { r: 14, fill: rgba(col, .12), stroke: rgba(col, .6), glow: col });
+    icon(ic, rx + 40, ry + rh / 2, lerp(30, 46, fly), col);
+    txt('결론', rx + lerp(70, 90, fly), ry + rh / 2 - lerp(0, 16, fly) + (fly > .5 ? 0 : 7), { size: lerp(17, 18, fly), weight: 700, color: U.dim, alpha: fly > .5 ? 1 : 0 });
+    txt(lab, rx + lerp(70, 90, fly), ry + rh / 2 + lerp(8, 22, fly), { size: lerp(22, 32, fly), weight: 800, color: col });
+    ctx.restore();
+  });
+}
+
+// ═════════════════════════════════════════════════════════════
+//  3 · split conclusions, split responses (21 – 27)
+// ═════════════════════════════════════════════════════════════
+const ACTIONS = ['네트워크팀 호출', 'GC 튜닝 검토', '클라이언트 재현 테스트'];
+function sSplit(t) {
+  if (t < 21 || t > 27.5) return;
+  const aOut = 1 - eo(p(t, 26.4, .5));
+  headline(t, 21.8, 26.6, ['결론이', '갈리면,', '대응도', '갈립니다'], [1, 3], 250);
+  ctx.save(); ctx.globalAlpha *= aOut;
+  [0, 1].forEach(j => { const k = eback(p(t, 22.6 + j * .2, .5)); if (k <= 0) return; txt('≠', lerp(250, 1350, (j + .5) / 2) + 160, 530, { size: 64, weight: 800, color: U.red, align: 'center', alpha: clamp(k) }); });
+  ACTIONS.forEach((a, i) => {
+    const k = eo(p(t, 23.4 + i * .3, .5)); if (k <= 0) return;
+    const cx = lerp(250, 1350, i / 2) + 160, col = DIG[i].res[1];
+    vline(cx, 584, lerp(584, 690, k), rgba(col, .6), 2.5, [6, 6]);
+    box(cx - 190, 700, 380, 76, { r: 14, fill: U.panel2, stroke: U.line2, alpha: k });
+    txt(a, cx, 748, { size: 24, weight: 700, align: 'center', alpha: k });
+  });
+  txt('* 인물 · 질문 · 결론은 예시', W / 2, 860, { size: 18, color: U.faint, align: 'center', alpha: eo(p(t, 24.4, .5)) });
+  ctx.restore();
+}
+function vline(x, y0, y1, color, lw = 1, dash = null, a = 1) {
+  ctx.save(); ctx.globalAlpha *= a; ctx.strokeStyle = color; ctx.lineWidth = lw; if (dash) ctx.setLineDash(dash);
+  ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke(); ctx.restore();
+}
+function hline(x0, x1, y, color, lw = 1, a = 1) {
+  ctx.save(); ctx.globalAlpha *= a; ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke(); ctx.restore();
+}
+
+// ═════════════════════════════════════════════════════════════
+//  4 · the investigation fixed as code (27 – 43)
+// ═════════════════════════════════════════════════════════════
+const NODES = [
+  { x: 280, title: '입력', lines: ['프로젝트  PROJECT-K', '서버  asterra-03', '캐릭터  달빛궁수'] },
+  { x: 730, title: '데이터 소스 5곳', mono: true, lines: ['client_perf', 'net_session', 'server_tick', 'host_metrics', 'ops_events'] },
+  { x: 1180, title: '확인 항목 · 고정 순서', layers: true },
+  { x: 1630, title: '판정', lines: ['원인 층 · 게임서버', '구간 · 21:14:05–21:14:40', '근거 · 5개'] },
+];
+const NY = 420, NW = 330, NH = 230;
+const RULES = [
+  ['client ', 'frame_ms_max > 50ms', '→ 이상', L.client],
+  ['network', 'rtt_p95 > 150ms · loss > 1%', '→ 이상', L.net],
+  ['server ', 'tick_p95 > 50ms (10초 이상)', '→ 이상', L.server],
+  ['infra  ', 'host · db 경고 · 이웃 서버 동시', '→ 이상', L.infra],
+];
+const RUNS = [[33.6, 0], [34.5, 1], [35.4, 2]];
+function sCode(t) {
+  if (t < 26.8 || t > 43.6) return;
+  const aOut = 1 - eo(p(t, 42.6, .6));
+  ctx.save(); ctx.globalAlpha *= aOut;
+  // headline with the product name
+  const ka = eo(p(t, 27.2, .6));
+  ctx.save(); ctx.globalAlpha *= ka; mark(W / 2 - tw('Lag Verdict는 조사를 코드로 고정합니다', 54, 800) / 2 - 44, 152, 46); ctx.restore();
+  headline(t, 27.2, 99, ['Lag Verdict는', '조사를', '코드로', '고정합니다'], [0, 2], 170, '같은 데이터면 같은 순서 · 같은 기준 · 같은 판정');
+  // rail
+  const railK = eio(p(t, 28.2, 1.6));
+  ctx.save(); ctx.strokeStyle = 'rgba(139,124,255,0.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(NODES[0].x, NY + NH / 2); ctx.lineTo(lerp(NODES[0].x, NODES[3].x, railK), NY + NH / 2); ctx.stroke(); ctx.restore();
+  NODES.forEach((n, i) => {
+    const k = eback(p(t, 28.3 + i * .35, .55)); if (k <= 0) return;
+    const x = n.x - NW / 2, y = NY;
+    const lit = RUNS.some(([s0]) => { const f = (t - s0) / 2.6; return f > i / 3 - .06 && f < i / 3 + .12; });
+    ctx.save(); ctx.translate(n.x, y + NH / 2); ctx.scale(clamp(k, 0, 1.06), clamp(k, 0, 1.06)); ctx.translate(-n.x, -(y + NH / 2));
+    box(x, y, NW, NH, { r: 18, fill: 'rgba(17,24,39,0.92)', stroke: lit ? rgba(U.accent, .9) : rgba(U.accent, .3), glow: lit ? U.accent : null });
+    flowBorder(x, y, NW, NH, 18, U.accent, t + i, .35);
+    txt(String(i + 1), x + 28, y + 44, { size: 18, weight: 800, color: U.accent, mono: true });
+    txt(n.title, x + 54, y + 44, { size: 22, weight: 800 });
+    if (n.layers) {
+      [['pc', L.client, '클라이언트'], ['net', L.net, '네트워크'], ['srv', L.server, '게임서버'], ['db', L.infra, '인프라']].forEach(([ic, col, lab], j) => {
+        const yy = y + 88 + j * 36; icon(ic, x + 46, yy - 7, 24, col); txt(lab, x + 72, yy, { size: 18, weight: 600, color: U.text2 });
+        if (j < 3) txt('↓', x + NW - 36, yy + 14, { size: 16, color: U.faint, align: 'center' });
+      });
+    } else n.lines.forEach((ln, j) => txt(ln, x + 28, y + 88 + j * (n.mono ? 28 : 40), { size: n.mono ? 17 : 21, weight: n.mono ? 500 : 600, color: U.text2, mono: n.mono }));
+    ctx.restore();
+  });
+  // rules as code
+  const kc = eo(p(t, 30.4, .6));
+  const CX = 120, CY2 = 700, CWD = 900, CHT = 300;
+  box(CX, CY2 + (1 - kc) * 30, CWD, CHT, { r: 16, fill: '#060912', stroke: rgba(U.accent, .3), alpha: kc });
+  ctx.save(); ctx.globalAlpha *= kc;
+  [['#ff5f57', 0], ['#febc2e', 1], ['#28c840', 2]].forEach(([c, j]) => dot(CX + 30 + j * 20, CY2 + 30, 6, c, .8, 0));
+  txt('verdict.rules · 예시', CX + 100, CY2 + 37, { size: 17, color: U.dim, mono: true });
+  hline(CX, CX + CWD, CY2 + 60, U.line);
+  RULES.forEach(([layer, cond, res, col], j) => {
+    const s0 = 31.0 + j * .55, n = typedS(cond, t, s0, .45), y = CY2 + 104 + j * 46; if (t < s0) return;
+    txt(layer, CX + 36, y, { size: 20, weight: 700, color: col, mono: true });
+    txt(':', CX + 140, y, { size: 20, color: U.faint, mono: true });
+    txt(n, CX + 168, y, { size: 20, color: U.text, mono: true });
+    if (n.length === cond.length) txt(res, CX + CWD - 36, y, { size: 20, weight: 700, color: U.red, mono: true, align: 'right', alpha: eo(p(t, s0 + .45, .3)) });
+  });
+  txt('순서와 기준값이 코드에 있어서, 실행할 때마다 같은 길로 조사합니다', CX + 36, CY2 + CHT - 18, { size: 18, color: U.dim, alpha: eo(p(t, 33.4, .5)) });
+  ctx.restore();
+  // three runs, one per person, through the same pipeline
+  RUNS.forEach(([s0, i]) => {
+    const f = p(t, s0, 2.6), pp = PEOPLE[i];
+    if (f > 0 && f < 1) {
+      const x = lerp(NODES[0].x - 200, NODES[3].x, eio(f)), y = NY + NH / 2;
+      dot(x, y, 10, pp.col, 1, 24); avatar(x, y - 54, 22, pp.id, pp.col, Math.sin(f * Math.PI) * 1.2);
+    }
+    const ko = eback(p(t, s0 + 2.6, .5)); if (ko <= 0) return;
+    const ox = 1130, oy = 712 + i * 92;
+    ctx.save(); ctx.globalAlpha *= clamp(ko);
+    box(ox, oy, 680, 78, { r: 14, fill: rgba(L.server, .09), stroke: rgba(L.server, .5) });
+    avatar(ox + 40, oy + 39, 20, pp.id, pp.col);
+    icon('srv', ox + 92, oy + 39, 30, L.server);
+    txt('게임서버 렉', ox + 120, oy + 48, { size: 24, weight: 800, color: L.server });
+    txt('21:14:05–21:14:40 · 근거 5개', ox + 660, oy + 48, { size: 18, color: U.text2, align: 'right', mono: false });
+    ctx.restore();
+  });
+  const ks = eback(p(t, 38.8, .6));
+  if (ks > 0) {
+    ctx.save(); ctx.globalAlpha *= clamp(ks);
+    flowBorder(1120, 700, 700, 292, 18, L.server, t, .9, 3);
+    const lab = '같은 데이터 → 같은 판정'; const lw = tw(lab, 22, 800) + 66;
+    box(1470 - lw / 2, 668, lw, 48, { r: 24, fill: '#0d1424', stroke: rgba(U.ok, .6), glow: U.ok });
+    check(1470 - lw / 2 + 30, 692, 22, U.ok); txt(lab, 1470 - lw / 2 + 52, 700, { size: 22, weight: 800, color: U.ok });
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+// ═════════════════════════════════════════════════════════════
+//  5 · four layers (43 – 51)
+// ═════════════════════════════════════════════════════════════
+const bump = (c, wd, hgt) => s => hgt * Math.exp(-Math.pow((s - c) / wd, 2));
+const LAYERS4 = [
+  { name: '네트워크', col: L.net, ic: 'net', hot: 1, line: 'RTT · 손실이 튀고 틱은 정상' },
+  { name: '인프라', col: L.infra, ic: 'db', hot: 3, line: '호스트 · DB와 이웃 서버가 함께' },
+  { name: '게임서버', col: L.server, ic: 'srv', hot: 2, line: '틱만 예산을 넘음', now: true },
+  { name: '클라이언트', col: L.client, ic: 'pc', hot: 0, line: '프레임만 튀고 RTT · 틱은 정상' },
+];
+const SIG = ['프레임', 'RTT', '틱', '호스트'];
+function mini(fn, x, y, w, h, col, k, th) {
+  ctx.save(); ctx.lineWidth = 2; ctx.lineJoin = 'round';
+  for (let i = 0; i < Math.round(80 * k); i++) {
+    const s0 = i / 80, s1 = (i + 1) / 80, v0 = fn(s0), v1 = fn(s1);
+    ctx.strokeStyle = th && Math.max(v0, v1) > .45 ? U.red : col;
+    ctx.beginPath(); ctx.moveTo(x + w * s0, y + h - h * v0); ctx.lineTo(x + w * s1, y + h - h * v1); ctx.stroke();
+  }
+  ctx.restore();
+}
+function sLayers(t) {
+  if (t < 42.8 || t > 51.6) return;
+  const aOut = 1 - eo(p(t, 50.6, .6));
+  ctx.save(); ctx.globalAlpha *= aOut;
+  headline(t, 43.2, 99, ['네', '층', '중', '어디인지', '나눕니다'], [0, 1], 170, '어느 지표가 튀고, 누가 같이 느린지로 가릅니다');
+  const cw = 395, gap = 33, x0 = (W - (cw * 4 + gap * 3)) / 2;
+  LAYERS4.forEach((ly, i) => {
+    const k = eo(p(t, 43.8 + i * .2, .6)); if (k <= 0) return;
+    const x = x0 + i * (cw + gap), y = 290 + (1 - k) * 40, h = 430, now = ly.now && t > 46.4, kn = eo(p(t, 46.4, .5));
+    const dimmed = t > 46.4 && !ly.now ? lerp(1, .45, kn) : 1;
+    ctx.save(); ctx.globalAlpha *= k * dimmed;
+    box(x, y, cw, h, { r: 18, fill: now ? rgba(ly.col, .1) : 'rgba(17,24,39,0.9)', stroke: rgba(ly.col, now ? .6 : .35), glow: now ? ly.col : null });
+    if (now) flowBorder(x, y, cw, h, 18, ly.col, t, kn, 3);
+    icon(ly.ic, x + 52, y + 56, 46, ly.col);
+    txt(ly.name, x + 92, y + 68, { size: 30, weight: 800, color: ly.col });
+    if (now) chip('이번 판정', x + cw - 20, y + 56, U.accent, { size: 16, align: 'right', fillA: .2, alpha: kn });
+    SIG.forEach((lab, j) => {
+      const ty = y + 120 + j * 52, hot = ly.hot === j || (ly.hot === 3 && j === 2 && false);
+      txt(lab, x + 28, ty + 28, { size: 16, weight: 600, color: hot ? U.text2 : U.faint });
+      const fn = s => .12 + .06 * Math.sin(s * 40 + i * 3 + j) * .5 + (hot ? bump(.5, .07, .55)(s) : 0);
+      mini(fn, x + 116, ty, cw - 144, 36, hot ? ly.col : '#3a4560', eio(p(t, 44.2 + i * .2, 1.0)), hot);
+    });
+    txt(ly.line, x + 28, y + h - 30, { size: 19, weight: 700, color: U.text });
+    ctx.restore();
+  });
+  // verdict strip for this case
+  const kv = eo(p(t, 47.2, .6));
+  if (kv > 0) {
+    const x = x0, w = cw * 4 + gap * 3, y = 760;
+    box(x, y + (1 - kv) * 20, w, 110, { r: 16, fill: rgba(L.server, .08), stroke: rgba(L.server, .45), alpha: kv });
+    ctx.save(); ctx.globalAlpha *= kv;
+    icon('srv', x + 56, y + 55, 50, L.server);
+    txt('판정 결과', x + 104, y + 44, { size: 17, weight: 700, color: '#fcd34d' });
+    txt('게임서버 렉', x + 104, y + 84, { size: 36, weight: 900, color: L.server });
+    [['구간', '21:14:05–21:14:40 (35초)'], ['계기', '21:14:03 boss_spawn'], ['근거', '틱 최대 210ms · 다른 층 정상']].forEach(([lab, val], j) => {
+      const xx = x + 560 + j * 380;
+      txt(lab, xx, y + 44, { size: 16, weight: 700, color: '#fcd34d' });
+      txt(val, xx, y + 82, { size: 22, weight: 700 });
+    });
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+// ═════════════════════════════════════════════════════════════
+//  6 · end card (51 – 57)
+// ═════════════════════════════════════════════════════════════
+function sEnd(t) {
+  const a = eo(p(t, 51.2, .7)); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  ring(W / 2, 330, p(t, 51.3, 1.1), 60, 520, '#8b7cff'); ring(W / 2, 330, p(t, 51.55, 1.1), 60, 380, '#38bdf8');
+  const km = eback(p(t, 51.3, .6)); ctx.save(); ctx.translate(W / 2, 330); ctx.scale(clamp(km, 0, 1.2), clamp(km, 0, 1.2)); mark(0, 0, 110); ctx.restore();
+  wordmark(W / 2, 498, 88, 51.7, t, eo(p(t, 51.6, .5)));
+  txt('누가 조사해도, 같은 판정.', W / 2, 586, { size: 42, weight: 800, color: '#e6e3ff', align: 'center', alpha: eo(p(t, 52.2, .6)) });
+  txt('렉 원인을 네트워크 · 인프라 · 게임서버 · 클라이언트로 나누고, 구간과 근거를 남깁니다', W / 2, 646, { size: 24, color: U.dim, align: 'center', alpha: eo(p(t, 52.7, .6)) });
+  const ls = [['net', L.net], ['db', L.infra], ['srv', L.server], ['pc', L.client]];
+  ls.forEach(([ic, col], i) => { const k = eback(p(t, 53.0 + i * .12, .5)); if (k <= 0) return; ctx.save(); ctx.translate(W / 2 + (i - 1.5) * 96, 750); ctx.scale(clamp(k, 0, 1.15), clamp(k, 0, 1.15)); icon(ic, 0, 0, 44, col); ctx.restore(); });
+  txt('* 개념 시연 · 화면의 이름과 수치는 예시', W / 2, 1000, { size: 18, color: '#5d6782', align: 'center', alpha: eo(p(t, 53.4, .6)) });
+  ctx.restore();
+}
+
+function renderAt(t) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
+  desk(t);
+  sOpen(t); sDig(t); sSplit(t); sCode(t); sLayers(t); sEnd(t);
+  note(t, 6.5, 26.4, '* 인물 · 질문 · 답변 · 결론은 예시');
+  const fo = p(t, DURATION - .6, .6); if (fo > 0) { ctx.fillStyle = `rgba(0,0,0,${fo})`; ctx.fillRect(0, 0, W, H); }
+}
+window.renderAt = renderAt;
+window.DURATION = DURATION;
+
+window.ready = (async () => {
+  const faces = [['Pretendard', 'Pretendard-Variable.woff2', '100 900'], ['JetBrains Mono', 'JetBrainsMono.woff2', '100 800']];
+  for (const [family, file, weight] of faces) {
+    for (const base of ['../assets/fonts/', 'assets/fonts/']) {
+      try { document.fonts.add(await new FontFace(family, `url(${base}${file})`, { weight }).load()); break; } catch (e) { /* try next */ }
+    }
+  }
+  await document.fonts.ready;
+})();
+
+// ── player (skipped when ?render) ────────────────────────────
+if (!location.search.includes('render')) {
+  const $ = id => document.getElementById(id);
+  const ICON = {
+    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>',
+    replay: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"/></svg>',
+  };
+  const CHAPTERS = [[0, '', '인트로'], ...HEAD.map(h => [h[0], h[2], h[3]]), [DURATION - 5.5, '', '정리']];
+  $('scrub').setAttribute('aria-valuemax', Math.round(DURATION));
+  const POSTER = 54.2;
+  let t = 0, playing = false, started = false, last = 0;
+  const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
+
+  CHAPTERS.forEach(([s, n, label], i) => {
+    const b = document.createElement('button');
+    b.innerHTML = (n ? `<span>${n}</span>` : '') + label;
+    b.addEventListener('click', () => { seek(s + .01); play(); });
+    $('chapters').appendChild(b);
+    if (i) { const tk = document.createElement('div'); tk.className = 'tick'; tk.style.left = (s / DURATION * 100) + '%'; $('ticks').appendChild(tk); }
+  });
+
+  function ui() {
+    const k = t / DURATION, ended = t >= DURATION;
+    $('fill').style.width = k * 100 + '%'; $('knob').style.left = k * 100 + '%';
+    $('time').textContent = `${mmss(t)} / ${mmss(DURATION)}`;
+    $('scrub').setAttribute('aria-valuenow', Math.round(t));
+    $('play').innerHTML = playing ? ICON.pause : ended ? ICON.replay : ICON.play;
+    $('play').setAttribute('aria-label', playing ? '일시정지' : '재생');
+    $('big').hidden = playing;
+    $('big').innerHTML = ended ? ICON.replay : ICON.play;
+    $('big').classList.toggle('replay', ended);
+    let cur = 0; CHAPTERS.forEach(([s], i) => { if (t >= s) cur = i; });
+    [...$('chapters').children].forEach((b, i) => b.setAttribute('aria-current', i === cur && started));
+  }
+  function draw() { renderAt(started ? Math.min(t, DURATION - .001) : POSTER); }
+  function play() { if (t >= DURATION) t = 0; started = true; playing = true; last = performance.now(); ui(); }
+  function pause() { playing = false; ui(); }
+  function toggle() { playing ? pause() : play(); }
+  function seek(x) { started = true; t = clamp(x, 0, DURATION); draw(); ui(); }
+
+  function frame(now) {
+    if (playing) {
+      t += (now - last) / 1000 * rate; last = now;
+      if (t >= DURATION) { t = DURATION; playing = false; }
+      draw(); ui();
+    }
+    requestAnimationFrame(frame);
+  }
+
+  const RATES = [1, .75, .5];
+  let rate = 1;
+  try { rate = +localStorage.getItem('mg-rate') || 1; } catch (e) { /* storage unavailable */ }
+  if (!RATES.includes(rate)) rate = 1;
+  function setRate(r) {
+    rate = r; $('rate').textContent = r + '×'; $('rate').setAttribute('aria-label', `재생 속도 ${r}배`);
+    try { localStorage.setItem('mg-rate', String(r)); } catch (e) { /* storage unavailable */ }
+  }
+  setRate(rate);
+  $('rate').addEventListener('click', () => setRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length]));
+  $('stage').addEventListener('click', toggle);
+  $('play').addEventListener('click', toggle);
+  $('fs').addEventListener('click', () => {
+    const el = $('stage');
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    else el.requestFullscreen?.().catch(() => {});
+  });
+  const scrub = $('scrub');
+  const fromEvent = e => { const r = scrub.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width) * DURATION; };
+  let wasPlaying = false;
+  scrub.addEventListener('pointerdown', e => { scrub.setPointerCapture(e.pointerId); wasPlaying = playing; playing = false; seek(fromEvent(e)); });
+  scrub.addEventListener('pointermove', e => { if (scrub.hasPointerCapture(e.pointerId)) seek(fromEvent(e)); });
+  scrub.addEventListener('pointerup', () => { if (wasPlaying && t < DURATION) play(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key === 'k') { e.preventDefault(); toggle(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); seek(t + 5); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); seek(t - 5); }
+    else if (e.key === 'Home') seek(0);
+    else if (e.key === ',' || e.key === '<') setRate(RATES[Math.min(RATES.length - 1, RATES.indexOf(rate) + 1)]);
+    else if (e.key === '.' || e.key === '>') setRate(RATES[Math.max(0, RATES.indexOf(rate) - 1)]);
+  });
+
+  const posterMode = location.hash === '#poster';
+  if (posterMode) document.body.classList.add('poster');
+  ui();
+  // chapter deep link: index.html#ch03 opens paused at that chapter
+  const deep = /^#ch(\d\d)$/.exec(location.hash), deepHead = deep && HEAD.find(r => r[2] === deep[1]);
+  window.ready.then(() => {
+    draw(); requestAnimationFrame(frame);
+    if (deepHead) seek(deepHead[0] + .01);
+    if (posterMode) { play(); setInterval(() => { if (!playing) { t = 0; play(); } }, 500); }
+  });
+  renderAt(POSTER);
+}
+</script>
