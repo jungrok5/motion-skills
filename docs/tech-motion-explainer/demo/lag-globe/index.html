@@ -1,0 +1,664 @@
+<meta charset="utf-8">
+<title>글로벌 렉 현황</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+  /* One 16:9 stage holding the whole product screen (drawn on one canvas), links under it. Single dark look. */
+  :root { --bg: #04060d; --fg: #e8ecf6; --dim: #8b94aa; --line: #222b42; --surface: #0e1424; --accent: #8b7cff;
+    --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif; color-scheme: dark; }
+  html, body { min-height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 12px; padding-block: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    box-sizing: border-box; overflow-x: hidden; }
+  .stage { position: relative; width: min(100%, calc((100vh - 96px) * 16 / 9)); max-width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden;
+    border: 1px solid var(--line); background: var(--bg); touch-action: none; }
+  canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+  canvas.drag { cursor: grabbing; } canvas.point { cursor: pointer; }
+  .set { display: flex; flex-wrap: wrap; gap: 8px; width: min(100%, calc((100vh - 96px) * 16 / 9)); align-items: center; }
+  .set a, .set button { font: 600 13px/1 var(--sans); color: var(--fg); text-decoration: none; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; background: var(--surface); cursor: pointer; }
+  .set a:hover, .set button:hover { border-color: var(--accent); }
+  .set span { font-size: 12px; color: var(--dim); margin-left: auto; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (max-width: 600px) { .set span { display: none; } }
+  body.render { padding: 0; } body.render .set { display: none; } body.render .stage { border: 0; border-radius: 0; width: 100%; }
+</style>
+
+<div class="stage"><canvas id="c" width="1920" height="1080" aria-label="글로벌 렉 현황 3D 대시보드 프로토타입"></canvas></div>
+<nav class="set" aria-label="관련 페이지">
+  <button type="button" id="tour">▶ 자동 시연</button>
+  <a href="../lag-verdict/">렉 판정 시연 영상</a>
+  <a href="../">데모 목록</a>
+  <span>스크롤 확대 · 드래그 이동 · 기둥 클릭 · 1–5 지표 전환 · Esc 전체 보기</span>
+</nav>
+
+<script type="importmap">
+{ "imports": { "three": "../assets/vendor/three/build/three.module.min.js", "three/addons/": "../assets/vendor/three/examples/jsm/" } }
+</script>
+<script type="module">
+// ─────────────────────────────────────────────────────────────
+//  Lag Verdict · 글로벌 현황 — 3D dashboard prototype.
+//  A dot-matrix world map lies on part of a large sphere. Square columns stand on it:
+//  one per region in the overview, one per game server when you zoom into a region.
+//  Height = the selected metric on one shared scale per level, so columns compare directly.
+//  Two drivers share one draw(): the interactive loop (mouse, keys) and the tour, where every
+//  frame is a pure function of t (window.renderAt) so the tour can be baked to MP4.
+//  Map: Natural Earth 1:110m land (public domain) via world-atlas, rasterized to a 400×153 mask.
+//  All names and numbers are examples.
+// ─────────────────────────────────────────────────────────────
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const W = 1920, H = 1080, DURATION = 62;
+const RENDER = location.search.includes('render');
+if (RENDER) document.body.classList.add('render');
+const SANS = 'Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif', MONO = '"JetBrains Mono", Pretendard, monospace';
+
+// ── math ─────────────────────────────────────────────────────
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const p = (t, s, d) => clamp((t - s) / d);
+const eo = k => 1 - Math.pow(1 - k, 3);
+const eio = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+const sstep = (a, b, x) => { const k = clamp((x - a) / (b - a)); return k * k * (3 - 2 * k); };
+const win = (t, s, e, f = .3) => Math.min(eo(p(t, s, f)), 1 - eio(p(t, e - f, f)));
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let x = Math.imul(seed ^ seed >>> 15, 1 | seed); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; }; }
+const nfmt = n => Math.round(n).toLocaleString('en-US');
+const hex = c => new THREE.Color(c);
+function rgba(h, a) { const n = parseInt(h.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
+
+// ── world mask ───────────────────────────────────────────────
+const LAND = {"cols":400,"rows":153,"lat0":80,"lat1":-58,"bits":"AAAAAAAAAAAAAADg//9/wP///////wcAAADw/x8AAAAAAAAAAIB/AAAAAAAAAAAAAAAAAAAAAAAAAAAQ+Bj//w//////////AwAAAOB/AAAAAAAAAAAAALAfAAAAAAAAAAAAAAAAAAAAAAAAABwAYMD/A/////////8DAAAAgI8DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB+QADw4/8B/v///////wcAAAAABgAAAAAAAA4AAAAAfwcAAAAAAAAAAAAAAAAAAAAAAMfPwwcPIAAQ8P//////AwAAAAAAAAAAAAD+BwAAgP//fwAAAH4AAAAAAAAAAAAAAAAAwP8D5/5/AACA//////8DAAAAAAAAAAAAwA8AAAD///8/AAAA/nkAAAAAAAAAAAAAAMA/AADAAwAAAAD+/////wMAAAAAAAAAAADwAQAAAP///wcAAAAAAAAAAAAAAAAAAAAA4P8BD+/n/gcAAPz/////AAAAAAAAAAAAAHgAAAD+/////z9+AHAAAAAAAAAAAAAAAADw/3/H3/D/DwAA+P///38AAAAAAAAAAAAAPADwyf///////38A+D8AAAAAAwAAAAAAAMDz/w/u8f//AAD8/////wAAAAAAAMAAAAB+APj+//////////z//wAAAAAAAOD/BwAAAOD/P+Dj//8PAPj///9vAAAAAAAA/AMAAEAA/P3//////////////wMAAAAA+P//H/y/w///3Ac+/B8A+P///z8AAAAAAOD/HwAAAHj8/f//////////////A+AP/v//////////////////////////////////BwAA/v//Dx4GAAAAAAAAAAAAAAAAEAD4//////////////////////////////////8BAADg+QAAAAYAAAAAAAAAAAAAAAAAAOD/////////////////////////////////fwAAAOAZAAAAAwAAAAAAAAAAAAAAAAAAAPj///////////////////////////////8/AATAPwAAAAAAAAAAAAAAAAAAAAAAAADP//////////////////////////////////9////v////////////////////////f4AA4P///////////z8/zv8AwP8HAIB/AAAA+H/8//7///////////////////////8/AA74////////////BwIA/wCA/wMAAAAAAAD+P////////////////////////////38AAP////////////8BmC44AAD/AQAAAAAAwP+P////////////////////////////fwAA/////////////wAA/gAAAP4BAAAAAADg/wf/////////////////////////3v8BAAD//+////////9/AAD8BwAA4AAAAAAAAMD/D////////////////////////x/wfwAAgPC/A/j//////38AAPyHAQAAAAAAAAAAwP8fkP//////////////////////D3wAAAAA8B8AwP///////wAA/s8DAAAAAAAAAADA8w/8////////////////////PwADHgAAAAAAfgAA+P//////AQD8/wcAAAAAAAAADADgB/j///////////////////8PAMAfAAAAAIAzAADw//////8fAPj/DwAAAAAAAAA+AO6D/////////////////////wMA4B8AAAAA4AAAAOD//////38A/P8PAAAAAAAAABwA7oP/////////////////////AQDgHwAAAAAcAAAAwP///////w/+/38AAAAAAAAAPQA2gP///////////////////38AAOAPAAAAAAAAAACA////////H////wEAAAAAAMDzAG7+/////////////////////wQA4AcAAAAAAAAAADD///////8f////AwAAAAAA4PnA////////////////////////XwDgAwAAAAAAAAAAIP7//////x////8DAAAAAADg+eP///////////////////////9/AOAAAAAAAAAAAAAA/P//////f////wMAAAAAAAD48////////////////////////38AQAAAAAAAAAAAAAD8//////////8/AwAAAAAAAPz8////////////////////////zwAAAAAAAAAAAAAAAPz/////////P4YDAAAAAAAAAP/////////////////////////PAAAAAAAAAAAAAAAA8P/////////vgB8AAAAAAADY/////////////////////////08AAAAAAAAAAAAAAABA///////////AHwAAAAAAAPj/////////////////////////RwAAAAAAAAAAAAAAAMD//////////wAUAAAAAAAA4P////////////////////////9DAAAAAAAAAAAAAAAAwP//////////FwAAAAAAAADA/////3P8f/j//////////////wMAAAAAAAAAAAAAAADA//////////8PAAAAAAAAAMD/v///8f4f/v//////////////AAAAAAAAAAAAAAAAAMD/////////3wEAAAAAAAAAwP8//v8g/A///////////////3/gAAAAAAAAAAAAAAAAwP////////8DAAAAAAAAAMD//3j8/wDwH/7/////////////P/ADAAAAAAAAAAAAAADA/////////wEAAAAAAAAAwP8P9PB/AMAf/P////////////8D+AAAAAAAAAAAAAAAAMD/////////AwAAAAAAAADA/wfg4//wwD/0/////////////wAQAAAAAAAAAAAAAAAAwP///////38AAAAAAAAAAMD/AQbv////f/j/////////////ABgAAAAAAAAAAAAAAADA////////PwAAAAAAAAAAwP8ABsbj//9/+P//////////nz8AOAAAAAAAAAAAAAAAAMD///////8fAAAAAAAAAADg/wAAhOP//3/4//////////8HOAA4AAAAAAAAAAAAAAAAgP///////w8AAAAAAAAAAMD/AMCD5///f/D//////////w94ABwAAAAAAAAAAAAAAAAA////////DwAAAAAAAAAAwD+AjAHD////8P////////////AAHgAAAAAAAAAAAAAAAAD+//////8PAAAAAAAAAAAABv8PAAAz//////////////8/8IAPAAAAAAAAAAAAAAAAAP7//////w8AAAAAAAAAAADe/w8ACDD//////////////x/w+A8AAAAAAAAAAAAAAAAA/P//////AwAAAAAAAAAAAP//DwAAAP//////////////HyD8AQAAAAAAAAAAAAAAAADg//////8AAAAAAAAAAACA//8PAACA//////////////8/ADsAAAAAAAAAAAAAAAAAAMD/////fwAAAAAAAAAAAMD///+AAYD//////////////38ABwAAAAAAAAAAAAAAAAAAwP////8/AAAAAAAAAAAA4P///8EfwP//////////////fwACAAAAAAAAAAAAAAAAAACA/f///z8AAAAAAAAAAADg////z/////////////////9/AAAAAAAAAAAAAAAAAAAAAID5//8fPgAAAAAAAAAAAOD/////////v////////////38AAAAAAAAAAAAAAAAAAAAAAPv/PwgwAAAAAAAAAAAA8P////////8//////////////wAAAAAAAAAAAAAAAAAAAAAA9v8fAHAAAAAAAAAAAAD8/////////z/+//////////9/AAAAAAAAAAAAAAAAAAAAAADm/w8AcAAAAAAAAAAAAP7//////x//f/j//////////z8AAAAAAAAAAAAAAAAAAAAAAMz/DwBgAAAAAAAAAAAA////////P///gP//////////HwAAAAAAAAAAAAAAAAAAAAAAmP8PAEAAAAAAAAAAAID///////9//v9h/v////////8fAAAAAAAAAAAAAAAAAAAAAAAQ/w8AAAIAAAAAAAAAgP///////3/+/3EA+P///////88AAAAAAAAAAAAAAAAAAAAAACD+DwAAAAAAAAAAAADA//////////j//wH4////////ZwAAAAAAAAAAAAAAAAAAAAAAAPwHAPgAAAAAAAAAAMD/////////+P//A+D///////9BAAAAAAAAAAAAAAAAAAAAAAAA+A8AgAMAAAAAAAAA4P/////////5//8D4P//x///HwAAAAAAAAAAAAAAAAAAAAAAAAD4D/AADgAAAAAAAADg//////////H//wHA/v/B/38EAAAAAAAAAAAAAAAACAAAAAAAAPgfeAAcAAAAAAAAAMD/////////4f//AAD+/4D/PwQAAAAAAAAAAAAAAAAIAAAAAAAA8B94AIAHAAAAAAAAwP/////////j//8AAP4/AP8/BgAAAAAAAAAAAAAAAAAAAAAAAADg/z8A5msAAAAAAADA/////////8P/fwAA/h8A/j8CwAAAAAAAAAAAAAAAAAAAAAAAAID/PwAAAAAAAAAAAMD/////////h/8fAAD+DwD+fwDAAAAAAAAAAAAAAAAAAAAAAAAAAPw/AAAAAAAAAAAAwP////////+P/wcAAP4HAPb/AOAAAAAAAAAAAAAAAAAAAAAAAAAAAP8HAAAAAAAAAADg/////////4//AwAA/AEA8P8BYAAAAAAAAAAAAAAAAAAAAAAAAAAA/g8AAAAAAAAAAOD/////////P38AAAD4AQDg/wFAAAAAAAAAAAAAAAAAAAAAAAAAAAD4BwAAAAAAAAAA4P////////9/HwAAAPgBAOD/A8ADAAAAAAAAAAAAAAAAAAAAAAAAAIAHAAAAAAAAAADg//////////8DAAAA+AEAYP8DQAIAAAAAAAAAAAAAAAAAAAAAAAAAAAeABQAAAAAAAMD//////////wABAADwAQBg/AEADAAAAAAAAAAAAAAAAAAAAAAAAAAAB/APAAAAAAAAgP//////////8QEAAPABAGD4AYAFAAAAAAAAAAAAAAAAAAAAAAAAAAAO8P4PAAAAAAAA////////////AQAA8AAAIHAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAANj5/x8AAAAAAAD+//////////8AAADgAgBgMAAICQAAAAAAAAAAAAAAAAAAAAAAAAAAeP7/PwAAAAAAAP7//////////wAAAEAHAOAAAAAfAAAAAAAAAAAAAAAAAAAAAAAAAABA/v9/AAAAAAAA/P////////9/AAAAAAYAwAAAgB0AAAAAAAAAAAAAAAAAAAAAAAAAAAD8//8AAAAAAAD4/////////38AAAAABgCAAQAGDAAAAAAAAAAAAAAAAAAAAAAAAAAAAPz//x8AAAAAAOD/4f//////PwAAAAAAAIQDAA8AAAAAAAAAAAAAAAAAAAAAAAAAAAAA/P//PwAAAAAAwAHA//////8/AAAAAAAAHAeADwAAAAAAAAAAAAAAAAAAAAAAAAAAAAD8//9/AAAAAAAAAAD8/////x8AAAAAAAA4B8AHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP7///8AAAAAAAAAAPj/////DwAAAAAAAHAG8AcAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/////wAAAAAAAAAA/P////8HAAAAAAAA4A/4BwAAAAAAAAAAAAAAAAAAAAAAAAAAAID/////AQAAAAAAAAD8/////wEAAAAAAADAA/7PZAAAAAAAAAAAAAAAAAAAAAAAAAAAgP////8AAAAAAAAAAPz/////AAAAAAAAAMAH/idCAAAAAAAAAAAAAAAAAAAAAAAAAADA/////wsAAAAAAAAA/P///38AAAAAAAAAgAf+JwEcAAAAAAAAAAAAAAAAAAAAAAAAAMD/////PwAAAAAAAAD8////PwAAAAAAAAAAD/zzABwCAAAAAAAAAAAAAAAAAAAAAAAAwP//////AQAAAAAAAPj///8fAAAAAAAAAAA//PMAuB8AAAAAAAAAAAAAAAAAAAAAAACA//////8fAAAAAAAA8P///x8AAAAAAAAAAD7A8dD5/wAAAAAAAAAAAAAAAAAAAAAAAMD//////z8AAAAAAADw////DwAAAAAAAAAAPACgAcD/AwMAAAAAAAAAAAAAAAAAAAAAwP///////wEAAAAAAOD///8HAAAAAAAAAAA4ACABAP8DAQAAAAAAAAAAAAAAAAAAAADA////////AQAAAAAA4P///wcAAAAAAAAAAOAAAAAg/O8QAAAAAAAAAAAAAAAAAAAAAID///////8BAAAAAADA////DwAAAAAAAAAAwB8AAAD8DwAAAAAAAAAAAAAAAAAAAAAAAP///////wEAAAAAAMD///8PAAAAAAAAAAAA/AAAAP4eAAAAAAAAAAAAAAAAAAAAAAAA////////AQAAAAAAwP///w8AAAAAAAAAAAAA7BgAcBgAAAAAAAAAAAAAAAAAAAAAAAD+//////8AAAAAAADA////DwAAAAAAAAAAAAAgBgAAcAAAAAAAAAAAAAAAAAAAAAAAAP7/////fwAAAAAAAID///8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/P////9/AAAAAAAAgP///x8AAAAAAAAAAAAAAAAIQAAAAAAAAAAAAAAAAAAAAAAAAAD8/////z8AAAAAAACA////H0AAAAAAAAAAAAAAAP5gAAAAAAAAAAAAAAAAAAAAAAAAAPj/////HwAAAAAAAMD///8fwAAAAAAAAAAAAAAA/+AAAAAAAAAAAAAAAAAAAAAAAAAA+P////8fAAAAAAAA4P///x/gAAAAAAAAAAAAADB/4AEAAAAAAAAAAAAAAAAAAAAAAADw/////x8AAAAAAADg////H/AAAAAAAAAAAAAA+H/gAwAAAgD///////////////////////////////////////8f/AAAAAAAAAAAAAD8/+EDAAAAAAAAAAAAAAAAAAAAAAAAgP////8fAAAAAAAA4P///w9+AAAAAAAAAAAAAP//9wcAAAAAAAAAAAAAAAAAAAAAAAAA/v///w8AAAAAAADg////AX4AAAAAAAAAAAAA////AwAAAGAAAAAAAAAAAAAAAAAAAAD8////DwAAAAAAAMD///8AfgAAAAAAAAAAAID///8HAAAAAAAAAAAAAAAAAAAAAAAAAPz///8PAAAAAAAAwP//fwA+AAAAAAAAAAAAwP///w8AAAAAAAAAAAAAAAAAAAAAAAAA/P///wcAAAAAAACA//9/AD4AAAAAAAAAAAD8////HwDAAAAAAAAAAAAAAAAAAAAAAAD8////BwAAAAAAAID//38APwAAAAAAAAAAAP////8/AIABAAAAAAAAAAAAAAAAAAAAAPz///8DAAAAAAAAAP///wAfAAAAAAAAAADA/////38AAAAAAAAAAAAAAAAAAAAAAAAA/P//fwAAAAAAAAAA////AB8AAAAAAAAAAMD//////wAAAAAAAAAAAAAAAAAAAAAAAAD8//8fAAAAAAAAAAD//38AHwAAAAAAAAAAwP//////AQAAAAAAAAAAAAAAAAAAAAAAAP7//wcAAAAAAAAAAP//PwAOAAAAAAAAAADA//////8DAAAAAAAAAAAAAAAAAAAAAAAA/v//AwAAAAAAAAAA//8fAAAAAAAAAAAAAMD//////wMAAAAAAAAAAAAAAAAAAAAAAAD+//8DAAAAAAAAAAD+/x8AAAAAAAAAAAAAwP//////AwAAAAAAAAAAAAAAAAAAAAAAAP7//wMAAAAAAAAAAP7/DwAAAAAAAAAAAACA//////8HAAAAAAAAAAAAAAAAAAAAAAAA/v//AwAAAAAAAAAA/P8PAAAAAAAAAAAAAID//////wcAAAAAAAAAAAAAAAAAAAAAAAD///8BAAAAAAAAAAD4/wcAAAAAAAAAAAAAAP//////AwAAAAAAAAAAAAAAAAAAAAAAAP///wAAAAAAAAAAAPj/AwAAAAAAAAAAAAAA//////8DAAAAAAAAAAAAAAAAAAAAAAAA//9/AAAAAAAAAAAA8P8BAAAAAAAAAAAAAAD//////wMAAAAAAAAAAAAAAAAAAAAAAAD//z8AAAAAAAAAAADw/wAAAAAAAAAAAAAAAP8/8P//AwAAAAAAAAAAAAAAAAAAAAAAAP//PwAAAAAAAAAAAPB/AAAAAAAAAAAAAAAA/wPg//8BAAAAAAAAAAAAAAAAAAAAAAAA//8fAAAAAAAAAAAA8AEAAAAAAAAAAAAAAAA/AMD+/wAAAAAAAAAAAAAAAAAAAAAAAID//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYAAP//AAAAAQAAAAAAAAAAAAAAAAAAgP//AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/H8AAAACAAAAAAAAAAAAAAAAAACA//8BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD4fwAAAAQAAAAAAAAAAAAAAAAAAMD//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPA/AAAALAAAAAAAAAAAAAAAAAAAwP9/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAYAAAA8AAAAAAAAAAAAAAAAAADA/wcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB4AAAAAAAAAAAAAAAAAAMD/BwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAAAAAAAAAAwP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB4AAIAPAAAAAAAAAAAAAAAAAADA/wEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHgAAwAEAAAAAAAAAAAAAAAAAAKD/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAADgAAAAAAAAAAAAAAAAAAAAgP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPgAAAAAAAAAAAAAAAAAAADgfwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPAAAAAAAAAAAAAAAAAAAAOAfAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+AAAAAAAAAAAAAAAAAAAA8D8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAADwfwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPA/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8B8AAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwDwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPAPYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4A9QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADADwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAfAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"};
+const landBits = Uint8Array.from(atob(LAND.bits), c => c.charCodeAt(0));
+const isLand = (q, r) => { const i = r * LAND.cols + q; return (landBits[i >> 3] >> (i & 7)) & 1; };
+
+// ── sphere patch: lon/lat → point on a big sphere (1/4 of the angle, so the map bends gently) ──
+const R = 130, K = 1 / 4, D2R = Math.PI / 180, UPD = R * K * D2R;   // UPD: surface units per map degree
+function surf(lon, lat, h = 0, out = new THREE.Vector3()) {
+  const ph = lon * D2R * K, al = lat * D2R * K, r = R + h;
+  return out.set(r * Math.cos(al) * Math.sin(ph), r * Math.sin(al), r * Math.cos(al) * Math.cos(ph));
+}
+const upAt = (lon, lat, out = new THREE.Vector3()) => surf(lon, lat, 0, out).normalize();
+function northAt(lon, lat, out = new THREE.Vector3()) { const ph = lon * D2R * K, al = lat * D2R * K; return out.set(-Math.sin(al) * Math.sin(ph), Math.cos(al), -Math.sin(al) * Math.cos(ph)); }
+function eastAt(lon, out = new THREE.Vector3()) { const ph = lon * D2R * K; return out.set(Math.cos(ph), 0, -Math.sin(ph)); }
+
+// ── example data: regions, hubs (data centres), servers ──────
+const REGIONS = [
+  { id: 'na', name: '북미', lon: -99, lat: 41, rtt: [46, 14], hubs: [['us-west · 오리건', -120.5, 45.6, 70, 'sequoia'], ['us-east · 버지니아', -77.5, 38.9, 90, 'liberty']] },
+  { id: 'sa', name: '남미', lon: -60, lat: -12, rtt: [112, 30], hubs: [['sa-east · 상파울루', -46.6, -23.5, 60, 'samba']] },
+  { id: 'eu', name: '유럽', lon: 17, lat: 47, rtt: [40, 12], hubs: [['eu-west · 런던', -0.6, 52.5, 60, 'thames'], ['eu-central · 프랑크푸르트', 9.2, 49.6, 90, 'rhein']] },
+  { id: 'me', name: '중동', lon: 46, lat: 27, rtt: [94, 26], hubs: [['me-south · 바레인', 51, 25.4, 40, 'oasis']] },
+  { id: 'as', name: '아시아', lon: 104, lat: 33, rtt: [34, 10], hubs: [['ap-northeast · 서울', 127, 37.5, 110, 'asterra'], ['ap-northeast · 도쿄', 140, 36, 90, 'kirin'], ['ap-east · 홍콩', 114.2, 22.3, 50, 'lotus'], ['ap-southeast · 싱가포르', 103.8, 1.5, 70, 'merlion']] },
+  { id: 'oc', name: '오세아니아', lon: 135, lat: -25, rtt: [52, 14], hubs: [['ap-southeast · 시드니', 150.5, -33.4, 40, 'koala']] },
+];
+const lagIndex = (tick, rtt, loss) => clamp(6 + 70 * clamp((tick - 25) / 75) + 40 * clamp((rtt - 50) / 130) + 12 * clamp(loss / 2), 0, 100);
+const SERVERS = [], HUBS = [];
+{
+  const rr = rng(20261029), gap = .74;
+  REGIONS.forEach((rg, ri) => {
+    rg.servers = [];
+    rg.hubs.forEach(([hname, hlon, hlat, n, prefix]) => {
+      const cols = Math.ceil(Math.sqrt(n * 1.25)), rows = Math.ceil(n / cols), hub = { name: hname, lon: hlon, lat: hlat, n, region: ri, servers: [] };
+      for (let k = 0; k < n; k++) {
+        const c = k % cols, r = Math.floor(k / cols);
+        const lon = hlon + (c - (cols - 1) / 2) * gap, lat = hlat + ((rows - 1) / 2 - r) * gap;
+        const users = 380 + rr() * 2300, tick = 15 + rr() * 13, rtt = Math.max(14, rg.rtt[0] + (rr() * 2 - 1) * rg.rtt[1] * 1.3), loss = rr() < .9 ? rr() * .3 : .4 + rr() * 1.4;
+        const s = { name: `${prefix}-${String(k + 1).padStart(2, '0')}`, region: ri, hub: HUBS.length, lon, lat, users, tick, rtt, loss, ph: rr() * 6.28 };
+        SERVERS.push(s); rg.servers.push(s); hub.servers.push(s);
+      }
+      HUBS.push(hub);
+    });
+  });
+  const by = n => SERVERS.find(s => s.name === n);
+  Object.assign(by('asterra-03'), { tick: 210, users: 1284, rtt: 35, loss: .1 });      // the boss-spawn server from the lag-verdict demo
+  Object.assign(by('asterra-04'), { tick: 58 }); Object.assign(by('asterra-07'), { tick: 64 });
+  Object.assign(by('samba-17'), { rtt: 186, loss: 1.6 }); Object.assign(by('oasis-09'), { rtt: 171, loss: 1.2 });
+  SERVERS.forEach(s => s.lag = lagIndex(s.tick, s.rtt, s.loss));
+}
+// live wobble (example): small slow variation per server
+const live = (s, t) => {
+  const w = Math.sin(t * .55 + s.ph), w2 = Math.sin(t * .37 + s.ph * 1.7);
+  const tick = s.tick * (1 + .03 * w), rtt = s.rtt * (1 + .04 * w2), users = s.users * (1 + .025 * w2);
+  return { tick, rtt, users, loss: s.loss, lag: lagIndex(tick, rtt, s.loss) };
+};
+function regionStats(rg, t) {
+  let u = 0, lagW = 0, tk = 0, rt = 0, warn = 0;
+  for (const s of rg.servers) { const v = live(s, t); u += v.users; lagW += v.lag * v.users; tk += v.tick; rt += v.rtt; if (v.lag >= 70 || v.tick > 50 || v.rtt > 150) warn++; }
+  const n = rg.servers.length; return { users: u, lag: lagW / u, tick: tk / n, rtt: rt / n, n, warn };
+}
+
+// metrics: one shared height scale per level (region overview / servers)
+const METRICS = [
+  { id: 'lag', name: '종합 렉 지수', short: '렉 지수', unit: '', max: [100, 100], good: 15, bad: 70, col: '#a78bfa', fmt: v => v.toFixed(0) },
+  { id: 'users', name: '접속자 수', short: '접속자', unit: '명', max: [300000, 3000], col: '#38bdf8', fmt: v => nfmt(v) },
+  { id: 'tick', name: '서버 틱 p95', short: '서버 틱', unit: 'ms', max: [60, 250], good: 30, bad: 50, col: '#fbbf24', fmt: v => v.toFixed(0) },
+  { id: 'rtt', name: 'RTT p95', short: 'RTT', unit: 'ms', max: [150, 200], good: 60, bad: 150, col: '#2dd4bf', fmt: v => v.toFixed(0) },
+];
+const HMAX = [26, 9];         // tallest column per level (scene units)
+const metricVal = (m, v) => v[METRICS[m].id];
+const heightOf = (m, val, lvl) => Math.max(.12, HMAX[lvl] * Math.min(val / METRICS[m].max[lvl], 1.12));
+const SEV = ['#34d399', '#fbbf24', '#f87171'];
+const sevOf = (m, val) => { const M = METRICS[m]; return M.good === undefined ? -1 : clamp((val - M.good) / (M.bad - M.good)); };
+function colorFor(m, val, lvl, out) {
+  const M = METRICS[m], s = sevOf(m, val);
+  if (s < 0) return out.copy(hex('#38bdf8')).lerp(hex('#a78bfa'), clamp(val / M.max[lvl]));
+  return s < .5 ? out.copy(hex(SEV[0])).lerp(hex(SEV[1]), s * 2) : out.copy(hex(SEV[1])).lerp(hex(SEV[2]), (s - .5) * 2);
+}
+
+// ── three.js scene ───────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(1); renderer.setSize(W, H, false);
+const scene = new THREE.Scene(); scene.background = hex('#04060d');
+const cam = new THREE.PerspectiveCamera(34, W / H, .5, 3000);
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, cam));
+const bloom = new UnrealBloomPass(new THREE.Vector2(W / 2, H / 2), .72, .5, .55); composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+// map texture: dot per land cell, tinted inside each region, faint graticule, faded edges
+const TEXW = 4000, TEXH = Math.round(TEXW * LAND.rows / LAND.cols);
+function regionTint(lon, lat) {
+  if (lon > -170 && lon < -52 && lat > 12 && lat < 72) return '#38bdf8';
+  if (lon > -95 && lon < -32 && lat <= 12 && lat > -57) return '#34d399';
+  if (lon > -25 && lon < 42 && lat >= 36 && lat < 71) return '#a78bfa';
+  if (lon >= 34 && lon < 63 && lat > 12 && lat < 38) return '#fbbf24';
+  if (lon >= 63 && lon < 150 && lat > -10 && lat < 56) return '#f472b6';
+  if (lon > 110 && lon < 180 && lat <= -10 && lat > -50) return '#2dd4bf';
+  return null;
+}
+function mapTexture() {
+  const c = document.createElement('canvas'); c.width = TEXW; c.height = TEXH; const g = c.getContext('2d');
+  const cw = TEXW / LAND.cols, degPerRow = (LAND.lat0 - LAND.lat1) / LAND.rows;
+  g.strokeStyle = 'rgba(120,140,200,0.10)'; g.lineWidth = 2;
+  for (let lon = -180; lon <= 180; lon += 30) { const x = (lon + 180) / 360 * TEXW; g.beginPath(); g.moveTo(x, 0); g.lineTo(x, TEXH); g.stroke(); }
+  for (let lat = -40; lat <= 80; lat += 20) { const y = (LAND.lat0 - lat) / (LAND.lat0 - LAND.lat1) * TEXH; g.beginPath(); g.moveTo(0, y); g.lineTo(TEXW, y); g.stroke(); }
+  for (let r = 0; r < LAND.rows; r++) for (let q = 0; q < LAND.cols; q++) {
+    if (!isLand(q, r)) continue;
+    const lon = -180 + (q + .5) * 360 / LAND.cols, lat = LAND.lat0 - (r + .5) * degPerRow, tint = regionTint(lon, lat);
+    g.fillStyle = tint ? rgba(tint, .42) : 'rgba(110,128,175,0.30)';
+    g.beginPath(); g.arc((q + .5) * cw, (r + .5) * cw * TEXH / TEXH, cw * .34, 0, 7); g.fill();
+  }
+  g.globalCompositeOperation = 'destination-in';
+  const gx = g.createLinearGradient(0, 0, TEXW, 0); [[0, 0], [.05, 1], [.95, 1], [1, 0]].forEach(([o, a]) => gx.addColorStop(o, `rgba(0,0,0,${a})`)); g.fillStyle = gx; g.fillRect(0, 0, TEXW, TEXH);
+  const gy = g.createLinearGradient(0, 0, 0, TEXH); [[0, 0], [.08, 1], [.92, 1], [1, 0]].forEach(([o, a]) => gy.addColorStop(o, `rgba(0,0,0,${a})`)); g.fillStyle = gy; g.fillRect(0, 0, TEXW, TEXH);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8; return tex;
+}
+function patchGeometry(h) {
+  const NX = 200, NY = 80, pos = [], uv = [], idx = [], v = new THREE.Vector3();
+  for (let j = 0; j <= NY; j++) for (let i = 0; i <= NX; i++) {
+    const lon = -180 + 360 * i / NX, lat = LAND.lat0 - (LAND.lat0 - LAND.lat1) * j / NY;
+    surf(lon, lat, h, v); pos.push(v.x, v.y, v.z); uv.push(i / NX, 1 - j / NY);
+  }
+  for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) { const a = j * (NX + 1) + i, b = a + 1, c = a + NX + 1, d = c + 1; idx.push(a, c, b, b, c, d); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); return g;
+}
+// base: dark shell with a soft centre glow so the curve reads
+{
+  const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d');
+  const rg = g.createRadialGradient(256, 128, 0, 256, 128, 300); rg.addColorStop(0, '#111a33'); rg.addColorStop(1, '#05070f');
+  g.fillStyle = rg; g.fillRect(0, 0, 512, 256);
+  const t2 = new THREE.CanvasTexture(c); t2.colorSpace = THREE.SRGBColorSpace;
+  const base = new THREE.Mesh(patchGeometry(-.06), new THREE.MeshBasicMaterial({ map: t2 })); scene.add(base);
+}
+let mapMesh = null;
+
+// columns: unit box standing on y=0, faces shaded by vertex colour (top bright, sides darker toward the floor)
+function columnGeometry() {
+  const g = new THREE.BoxGeometry(1, 1, 1); g.translate(0, .5, 0);
+  const pos = g.attributes.position, nor = g.attributes.normal, col = [];
+  for (let i = 0; i < pos.count; i++) {
+    const ny = nor.getY(i), y = pos.getY(i), side = Math.abs(nor.getX(i)) > .5 ? .78 : 1;
+    const k = ny > .5 ? 1.35 : ny < -.5 ? .15 : lerp(.22, .82, y) * side;
+    col.push(k, k, k);
+  }
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); return g;
+}
+const colGeo = columnGeometry();
+const colMat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: .96 });
+const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); const r = g.createRadialGradient(64, 64, 0, 64, 64, 64); r.addColorStop(0, 'rgba(255,255,255,0.9)'); r.addColorStop(.35, 'rgba(255,255,255,0.25)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
+const glowGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+const glowMat = new THREE.MeshBasicMaterial({ map: glowTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+function instanced(geo, mat, n) {
+  const m = new THREE.InstancedMesh(geo, mat, n); m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  m.setColorAt(0, hex('#ffffff')); m.instanceColor.setUsage(THREE.DynamicDrawUsage); m.boundingSphere = new THREE.Sphere(new THREE.Vector3(), R + 60); scene.add(m); return m;
+}
+const regionBars = instanced(colGeo, colMat, REGIONS.length * 4);
+const serverBars = instanced(colGeo, colMat, SERVERS.length * 4);
+const regionGlow = instanced(glowGeo, glowMat, REGIONS.length);
+const serverGlow = instanced(glowGeo, glowMat, SERVERS.length);
+
+// ── state: camera target on the map, distance, metric blend, hover ──
+// sel 0..3 = one metric, 4 = all four side by side
+const VIEW0 = { lon: 14, lat: 14, D: 176 };
+const ZOOM_IN = 44;
+function revealOf(D) { return sstep(80, 46, D); }          // 0 = regions, 1 = servers
+function tiltOf(D) { return lerp(.95, .6, sstep(30, 176, D)); }
+function placeCamera(lon, lat, D) {
+  const T = surf(lon, lat, 0), up = upAt(lon, lat), north = northAt(lon, lat), tl = tiltOf(D);
+  cam.position.copy(T).addScaledVector(up, D * Math.cos(tl)).addScaledVector(north, -D * Math.sin(tl));
+  cam.up.copy(north); cam.lookAt(T.addScaledVector(up, lerp(1, 6, sstep(40, 176, D))));
+  cam.updateMatrixWorld(); cam.updateProjectionMatrix();
+}
+const _m = new THREE.Matrix4(), _q = new THREE.Vector3(), _e = new THREE.Vector3(), _n = new THREE.Vector3(), _s = new THREE.Vector3(), _c = new THREE.Color(), _c2 = new THREE.Color();
+const QUAD = [[-1, -1], [1, -1], [-1, 1], [1, 1]];   // lag, users, tick, rtt
+const UPREF = new THREE.Vector3(0, 0, 1);   // the surface normal under the camera target, set per frame
+function setColumn(mesh, idx, lon, lat, w, h, color) {
+  surf(lon, lat, 0, _q); upAt(lon, lat, _n).multiplyScalar(.2).addScaledVector(UPREF, .8).normalize();
+  eastAt(lon, _e); _e.addScaledVector(_n, -_e.dot(_n)).normalize(); const south = _s.copy(_e).cross(_n);
+  _m.makeBasis(_e, _n, south); _m.scale(new THREE.Vector3(w, h, w)); _m.setPosition(_q);
+  mesh.setMatrixAt(idx, _m); mesh.setColorAt(idx, color);
+}
+// one item (region or server) = 4 sub-columns that merge into one in single-metric mode
+function layoutItem(mesh, base, lon, lat, size, vals, lvl, st, rise, hl) {
+  const a = st.all, gapDeg = size * .08, half = (size - gapDeg) / 2;
+  let hs = 0; for (let m = 0; m < 4; m++) hs += st.mw[m] * heightOf(m, vals[m], lvl);
+  _c2.set(0, 0, 0); for (let m = 0; m < 4; m++) _c2.add(colorFor(m, vals[m], lvl, _c).multiplyScalar(st.mw[m]));
+  const single = _c2.clone();
+  for (let q = 0; q < 4; q++) {
+    const hq = lerp(hs, heightOf(q, vals[q], lvl), a) * rise;
+    const off = a * (half + gapDeg) / 2, dLon = QUAD[q][0] * off / Math.cos(lat * D2R * K), dLat = -QUAD[q][1] * off;
+    const own = hex(METRICS[q].col); const s = sevOf(q, vals[q]); if (s >= 1) own.set(SEV[2]);
+    const col = single.clone().lerp(own, a); if (hl) col.lerp(hex('#ffffff'), .35);
+    const wdeg = lerp(size, half, a) * (rise > 0 ? 1 : 0);
+    setColumn(mesh, base + q, lon + dLon, lat + dLat, Math.max(.001, wdeg * UPD), Math.max(.001, hq), col);
+  }
+  return single;
+}
+
+// ── 2D overlay (HUD, labels, tooltip, captions, pointer) ─────
+const cv = document.getElementById('c'), x2 = cv.getContext('2d');
+function rr2(x, y, w, h, r) { x2.beginPath(); x2.roundRect(x, y, w, h, r); }
+function T(s, x, y, o = {}) {
+  const { size = 20, weight = 500, color = '#e9edf7', align = 'left', alpha = 1, mono = false, base = 'alphabetic', ls = 0 } = o;
+  if (alpha <= 0) return; x2.save(); x2.globalAlpha *= alpha; x2.font = `${weight} ${size}px ${mono ? MONO : SANS}`; x2.fillStyle = color; x2.textAlign = align; x2.textBaseline = base;
+  if (ls) x2.letterSpacing = ls + 'px'; x2.fillText(s, x, y); x2.restore();
+}
+const TW = (s, size, weight = 500, mono = false) => { x2.font = `${weight} ${size}px ${mono ? MONO : SANS}`; return x2.measureText(s).width; };
+function glass(x, y, w, h, o = {}) {
+  const { r = 16, a = 1, stroke = 'rgba(150,160,220,0.16)', fill = 'rgba(9,13,26,0.74)' } = o; if (a <= 0) return;
+  x2.save(); x2.globalAlpha *= a; x2.shadowColor = 'rgba(0,0,0,.45)'; x2.shadowBlur = 30; x2.shadowOffsetY = 10; rr2(x, y, w, h, r); x2.fillStyle = fill; x2.fill();
+  x2.shadowColor = 'transparent'; x2.lineWidth = 1.5; x2.strokeStyle = stroke; x2.stroke(); x2.restore();
+}
+function mark(x, y, s, a = 1) {
+  x2.save(); x2.globalAlpha *= a; rr2(x - s / 2, y - s / 2, s, s, s * .26); x2.fillStyle = '#8b7cff'; x2.fill();
+  x2.strokeStyle = '#fff'; x2.lineWidth = s * .09; x2.lineJoin = 'round'; x2.lineCap = 'round'; x2.beginPath();
+  x2.moveTo(x - s * .32, y + s * .04); x2.lineTo(x - s * .12, y + s * .04); x2.lineTo(x - s * .02, y - s * .2); x2.lineTo(x + s * .1, y + s * .22); x2.lineTo(x + s * .18, y + s * .04); x2.lineTo(x + s * .32, y + s * .04);
+  x2.stroke(); x2.restore();
+}
+const project = (v) => { const q = v.clone().project(cam); return [(q.x + 1) / 2 * W, (1 - q.y) / 2 * H, q.z]; };
+let BTN = [];   // clickable HUD rects, rebuilt every frame: {x,y,w,h,act}
+const SEG = ['종합 렉 지수', '접속자 수', '서버 틱 p95', 'RTT p95', '모두 보기'];
+function segRects() {
+  const ws = SEG.map(s => TW(s, 19, 700) + 44), tot = ws.reduce((a, b) => a + b, 0) + 6 * 4 + 12;
+  let x = W / 2 - tot / 2 + 6; return ws.map(w => { const r = [x, 34, w, 48]; x += w + 6; return r; });
+}
+
+function hud(st, t, F) {
+  const a = F.hudA; if (a <= 0) return;
+  x2.save(); x2.globalAlpha = a;
+  // brand + breadcrumb
+  mark(62, 62, 40); T('Lag Verdict', 96, 72, { size: 25, weight: 800 }); T('글로벌 현황', 96 + TW('Lag Verdict', 25, 800) + 14, 71, { size: 19, color: '#8b94aa' });
+  const crumbX = 42; T('전 세계', crumbX, 122, { size: 18, weight: 700, color: F.focus >= 0 ? '#a99cff' : '#e9edf7' });
+  if (F.focus >= 0) { T('›', crumbX + TW('전 세계', 18, 700) + 10, 122, { size: 18, color: '#5d6782' }); T(REGIONS[F.focus].name, crumbX + TW('전 세계', 18, 700) + 28, 122, { size: 18, weight: 700, alpha: F.rev }); BTN.push({ x: 36, y: 100, w: TW('전 세계', 18, 700) + 12, h: 30, act: 'home' }); }
+  // KPIs
+  glass(36, 140, 470, 96);
+  const k = F.kpi;
+  [['접속자', nfmt(k.users)], ['서버', `${nfmt(k.n)}대`], ['주의 서버', `${k.warn}대`]].forEach(([lab, val], i) => {
+    const x = [60, 252, 378][i]; T(lab, x, 176, { size: 15, weight: 600, color: '#8b94aa' });
+    T(val, x, 214, { size: 27, weight: 800, color: i === 2 && k.warn ? '#f87171' : '#e9edf7', mono: true });
+  });
+  // metric segments
+  const rs = segRects(), x0 = rs[0][0] - 6, x1 = rs[4][0] + rs[4][2] + 6;
+  glass(x0, 28, x1 - x0, 60, { r: 14 });
+  rs.forEach(([x, y, w, h], i) => {
+    const on = F.selShown === i;
+    if (on) { x2.save(); rr2(x, y, w, h, 10); x2.fillStyle = 'rgba(139,124,255,0.22)'; x2.fill(); x2.lineWidth = 1.5; x2.strokeStyle = 'rgba(169,156,255,0.8)'; x2.stroke(); x2.restore(); }
+    if (i < 4) { x2.save(); x2.fillStyle = METRICS[i].col; x2.beginPath(); x2.arc(x + 18, y + h / 2, 4.5, 0, 7); x2.fill(); x2.restore(); }
+    else [0, 1, 2, 3].forEach(m => { x2.save(); x2.fillStyle = METRICS[m].col; x2.fillRect(x + 11 + (m % 2) * 7, y + h / 2 - 7 + Math.floor(m / 2) * 7, 5, 5); x2.restore(); });
+    T(SEG[i], x + 30, y + 31, { size: 19, weight: 700, color: on ? '#ffffff' : '#aab2c6' });
+    BTN.push({ x, y, w, h, act: 'sel' + i });
+  });
+  // live + clock
+  const sec = Math.floor(t) % 60, clock = `21:${String(20 + Math.floor(t / 60)).padStart(2, '0')}:${String(sec).padStart(2, '0')} KST`;
+  const pulse = .5 + .5 * Math.sin(t * 5);
+  x2.save(); x2.fillStyle = '#4ade80'; x2.shadowColor = '#4ade80'; x2.shadowBlur = 8 + 10 * pulse; x2.beginPath(); x2.arc(1640, 60, 6, 0, 7); x2.fill(); x2.restore();
+  T('LIVE', 1654, 67, { size: 17, weight: 800, color: '#4ade80', ls: 1 });
+  T(clock, 1884, 67, { size: 18, color: '#aab2c6', mono: true, align: 'right' });
+  T('예시 데이터', 1884, 94, { size: 14, color: '#5d6782', align: 'right' });
+  // ranking panel
+  rankPanel(st, t, F);
+  // legend
+  legend(st, F);
+  // hint / footnote
+  if (!F.tour) {
+    const hint = '스크롤 확대 · 드래그 이동 · 기둥 클릭 · 1–5 지표 · Esc 전체 보기', w = TW(hint, 17, 600) + 44;
+    glass(W / 2 - w / 2, 1012, w, 42, { r: 21, fill: 'rgba(9,13,26,0.6)' }); T(hint, W / 2, 1039, { size: 17, weight: 600, color: '#aab2c6', align: 'center' });
+  }
+  T('* 예시 데이터 · 개념 프로토타입', 1884, 1060, { size: 14, color: '#5d6782', align: 'right' });
+  x2.restore();
+}
+function rankPanel(st, t, F) {
+  const m = F.selShown === 4 ? 0 : F.selShown, M = METRICS[m], zoomed = F.rev > .5 && F.focus >= 0;
+  const x = 1530, y = 140, w = 354;
+  let rows;
+  if (!zoomed) rows = REGIONS.map((rg, i) => ({ name: rg.name, v: metricVal(m, F.rstats[i]), max: M.max[0], key: 'r' + i, mono: false })).sort((a, b) => b.v - a.v);
+  else rows = REGIONS[F.focus].servers.map(s => ({ name: s.name, v: metricVal(m, live(s, t)), max: M.max[1], key: 's' + SERVERS.indexOf(s), mono: true })).sort((a, b) => b.v - a.v).slice(0, 8);
+  const rh = zoomed ? 42 : 46, h = 74 + rows.length * rh + 14;
+  glass(x, y, w, h);
+  const title = zoomed ? `${REGIONS[F.focus].name} · 서버 ${REGIONS[F.focus].servers.length}대` : '리전 비교';
+  T(title, x + 24, y + 38, { size: 20, weight: 800 });
+  T(`${M.short} ${zoomed ? '상위 8' : '높은 순'}${M.unit ? ' · ' + M.unit : ''}`, x + w - 24, y + 38, { size: 15, color: '#8b94aa', align: 'right' });
+  rows.forEach((r, i) => {
+    const yy = y + 74 + i * rh, hov = F.hoverKey === r.key;
+    if (hov) { x2.save(); rr2(x + 10, yy - 4, w - 20, rh - 4, 8); x2.fillStyle = 'rgba(255,255,255,0.06)'; x2.fill(); x2.restore(); }
+    T(r.name, x + 24, yy + (zoomed ? 22 : 26), { size: zoomed ? 16 : 19, weight: 700, mono: r.mono });
+    const bx = x + (zoomed ? 142 : 124), bw = w - (zoomed ? 142 : 124) - 80, f = clamp(r.v / r.max);
+    x2.save(); rr2(bx, yy + (zoomed ? 12 : 15), bw, 10, 5); x2.fillStyle = 'rgba(255,255,255,0.06)'; x2.fill();
+    rr2(bx, yy + (zoomed ? 12 : 15), Math.max(6, bw * f), 10, 5); x2.fillStyle = colorFor(m, r.v, zoomed ? 1 : 0, _c).getStyle(); x2.fill(); x2.restore();
+    T(M.fmt(r.v), x + w - 24, yy + (zoomed ? 22 : 26), { size: zoomed ? 16 : 18, weight: 700, mono: true, align: 'right' });
+    BTN.push({ x: x + 10, y: yy - 6, w: w - 20, h: rh, act: 'go' + r.key });
+  });
+  T(zoomed ? '막대 길이 = 서버 기둥과 같은 척도' : '막대 길이 = 리전 기둥과 같은 척도', x + 24, y + h - 10 + 26, { size: 14, color: '#5d6782' });
+}
+function legend(st, F) {
+  const x = 36, y = 824, w = 470, h = 216, lvl = F.rev > .5 ? 1 : 0;
+  glass(x, y, w, h);
+  if (F.selShown === 4) {
+    T('모두 보기 · 한 자리에 네 지표', x + 24, y + 38, { size: 19, weight: 800 });
+    METRICS.forEach((M, i) => {
+      const yy = y + 76 + i * 32; x2.save(); x2.fillStyle = M.col; x2.fillRect(x + 26, yy - 13, 14, 14); x2.restore();
+      T(M.name, x + 52, yy, { size: 17, weight: 600 }); T(`기둥 최대 ${M.fmt(M.max[lvl])}${M.unit}`, x + w - 24, yy, { size: 15, color: '#8b94aa', align: 'right', mono: true });
+    });
+    T('기준을 넘은 지표는 빨간 기둥', x + 24, y + h - 18, { size: 15, color: '#f87171' });
+    return;
+  }
+  const m = F.selShown, M = METRICS[m];
+  T(M.name, x + 24, y + 38, { size: 19, weight: 800 }); T(lvl ? '서버 단위' : '리전 단위', x + w - 24, y + 38, { size: 15, color: '#8b94aa', align: 'right' });
+  // height ruler: one column, ticks at 0/50/100% of the shared scale
+  const rx = x + 40, ry0 = y + 190, rhh = 120;
+  x2.save(); const g = x2.createLinearGradient(0, ry0, 0, ry0 - rhh); g.addColorStop(0, rgba(M.col, .15)); g.addColorStop(1, rgba(M.col, .85)); x2.fillStyle = g; x2.fillRect(rx, ry0 - rhh, 26, rhh); x2.restore();
+  [0, .5, 1].forEach(f => { const yy = ry0 - rhh * f; x2.save(); x2.fillStyle = 'rgba(255,255,255,0.35)'; x2.fillRect(rx + 30, yy, 10, 1.5); x2.restore();
+    T(`${M.fmt(M.max[lvl] * f)}${M.unit}`, rx + 48, yy + 6, { size: 15, mono: true, color: '#aab2c6' }); });
+  T('기둥 높이 · 모든 기둥이 같은 척도', x + 200, y + 76, { size: 15, color: '#8b94aa' });
+  if (M.good !== undefined) {
+    const bx = x + 200, by = y + 104, bw = w - 224;
+    x2.save(); const g2 = x2.createLinearGradient(bx, 0, bx + bw, 0); SEV.forEach((c, i) => g2.addColorStop(i / 2, c)); rr2(bx, by, bw, 12, 6); x2.fillStyle = g2; x2.fill(); x2.restore();
+    T(`${M.good}${M.unit} 이하 좋음`, bx, by + 36, { size: 14, color: '#34d399' }); T(`${M.bad}${M.unit}+ 나쁨`, bx + bw, by + 36, { size: 14, color: '#f87171', align: 'right' });
+  } else T('색 = 규모 (적음 → 많음)', x + 200, y + 116, { size: 15, color: '#aab2c6' });
+  T(m === 0 ? '틱 · RTT · 손실을 합친 0–100 점수 (예시 공식)' : m === 2 ? '틱 예산 50ms 기준 (초당 20틱)' : m === 3 ? '서버까지 왕복 지연의 95번째 백분위' : '현재 접속 중인 캐릭터 수', x + 200, y + 168, { size: 14, color: '#5d6782' });
+}
+const HUDR = [[30, 96, 482, 146], [626, 24, 668, 70], [1524, 134, 366, 430], [30, 818, 482, 228]];   // panels labels must not sit under
+const underHud = (x, y) => HUDR.some(([a, b, w, h]) => x > a - 40 && x < a + w + 40 && y > b - 10 && y < b + h + 50);
+function labels(st, t, F) {
+  const v = new THREE.Vector3();
+  // region labels (overview)
+  const ra = (1 - F.rev * 1.6) * F.hudA; if (ra > 0) REGIONS.forEach((rg, i) => {
+    const h = F.rheight[i]; surf(rg.lon, rg.lat, h + 1.8, v); const [sx, sy, sz] = project(v); if (sz > 1 || underHud(sx, sy)) return;
+    const val = F.selShown === 4 ? null : METRICS[F.selShown].fmt(metricVal(F.selShown, F.rstats[i])) + METRICS[F.selShown].unit;
+    const nw = TW(rg.name, 20, 800), vw = val ? TW(val, 18, 700, true) : 0, w = Math.max(nw, vw) + 28, hh = val ? 58 : 36;
+    glass(sx - w / 2, sy - hh - 8, w, hh, { r: 10, a: ra, fill: 'rgba(9,13,26,0.62)' });
+    T(rg.name, sx, sy - hh + 16, { size: 20, weight: 800, align: 'center', alpha: ra });
+    if (val) T(val, sx, sy - 18, { size: 18, weight: 700, mono: true, align: 'center', alpha: ra, color: colorFor(F.selShown, metricVal(F.selShown, F.rstats[i]), 0, _c).getStyle() });
+  });
+  // hub labels (zoomed)
+  const ha = clamp(F.rev * 2 - 1) * F.hudA; if (ha > 0) HUBS.forEach(hb => {
+    const top = hb.lat + Math.ceil(hb.n / Math.ceil(Math.sqrt(hb.n * 1.25))) * .37 + .9;
+    surf(hb.lon, top, .5, v); const [sx, sy, sz] = project(v); if (sz > 1 || sx < 0 || sx > W || underHud(sx, sy)) return;
+    const t1 = hb.name, t2 = `${hb.n}대`, w = TW(t1, 17, 700) + TW(t2, 16, 600, true) + 46;
+    glass(sx - w / 2, sy - 40, w, 34, { r: 17, a: ha, fill: 'rgba(9,13,26,0.62)' });
+    T(t1, sx - w / 2 + 18, sy - 17, { size: 17, weight: 700, alpha: ha }); T(t2, sx + w / 2 - 18, sy - 17, { size: 16, weight: 600, mono: true, color: '#8b94aa', align: 'right', alpha: ha });
+  });
+}
+function tooltip(st, t, F) {
+  if (!F.hover) return;
+  const { kind, i } = F.hover, isR = kind === 'r', name = isR ? REGIONS[i].name : SERVERS[i].name;
+  const vals = isR ? F.rstats[i] : live(SERVERS[i], t), lvl = isR ? 0 : 1;
+  const lon = isR ? REGIONS[i].lon : SERVERS[i].lon, lat = isR ? REGIONS[i].lat : SERVERS[i].lat;
+  const v = surf(lon, lat, isR ? F.rheight[i] : F.sheight[i]); const [sx, sy] = project(v);
+  const w = 330, h = 214, x = sx + 28 + w > 1510 ? clamp(sx - w - 28, 20, W - w - 20) : clamp(sx + 28, 20, W - w - 20), y = clamp(sy - h - 10, 110, H - h - 20);
+  const a = F.hover.a ?? 1;
+  glass(x, y, w, h, { r: 14, a, fill: 'rgba(12,16,32,0.92)', stroke: 'rgba(169,156,255,0.45)' });
+  x2.save(); x2.globalAlpha *= a;
+  T(name, x + 20, y + 36, { size: 21, weight: 800, mono: !isR });
+  const sub = isR ? `서버 ${vals.n}대 · 주의 ${vals.warn}대` : `${HUBS[SERVERS[i].hub].name}`;
+  T(sub, x + 20, y + 62, { size: 15, color: '#8b94aa' });
+  METRICS.forEach((M, m) => {
+    const yy = y + 96 + m * 28, val = metricVal(m, vals), sev = sevOf(m, val);
+    x2.save(); x2.fillStyle = M.col; x2.fillRect(x + 20, yy - 11, 10, 10); x2.restore();
+    T(M.name + (isR && m >= 2 ? ' (서버 평균)' : ''), x + 40, yy, { size: 16, color: '#c3cadb' });
+    T(M.fmt(val) + M.unit, x + w - 20, yy, { size: 17, weight: 800, mono: true, align: 'right', color: sev >= 1 ? '#f87171' : sev >= .5 ? '#fbbf24' : '#e9edf7' });
+  });
+  x2.restore();
+}
+
+// ── draw one frame from a state ──────────────────────────────
+// st: { lon, lat, D, mw[4], all, sel, hover:{kind,i,a}|null, hudA, introT }
+function draw(st, t, extra = {}) {
+  placeCamera(st.lon, st.lat, st.D); upAt(st.lon, st.lat, UPREF);
+  const rev = revealOf(st.D);
+  // focus region = the one whose hubs are nearest the camera target
+  let focus = -1, best = 1e9;
+  HUBS.forEach(hb => { const d = Math.hypot(hb.lon - st.lon, hb.lat - st.lat); if (d < best) { best = d; focus = hb.region; } });
+  if (best > 30) focus = -1;
+  const rstats = REGIONS.map(rg => regionStats(rg, t)), rheight = [], sheight = [];
+  const intro = st.introT ?? 99;
+  REGIONS.forEach((rg, i) => {
+    const vals = [rstats[i].lag, rstats[i].users, rstats[i].tick, rstats[i].rtt];
+    const grow = eo(clamp((intro - .3 - (rg.lon + 120) / 280 * .8) / 1.4));
+    const rise = grow * (1 - rev);
+    const hl = st.hover && st.hover.kind === 'r' && st.hover.i === i;
+    const col = layoutItem(regionBars, i * 4, rg.lon, rg.lat, 5.6, vals, 0, st, rise, hl);
+    let h = 0; for (let m = 0; m < 4; m++) h += st.mw[m] * heightOf(m, vals[m], 0); rheight.push(lerp(h, Math.max(...vals.map((v, m) => heightOf(m, v, 0))), st.all) * rise);
+    surf(rg.lon, rg.lat, .05, _q); eastAt(rg.lon, _e); upAt(rg.lon, rg.lat, _n); _m.makeBasis(_e, _n, _s.copy(_e).cross(_n)); const gsz = 9 * UPD * rise; _m.scale(new THREE.Vector3(gsz, 1, gsz)); _m.setPosition(_q);
+    regionGlow.setMatrixAt(i, _m); regionGlow.setColorAt(i, col.clone().multiplyScalar(.7));
+  });
+  SERVERS.forEach((s, i) => {
+    const v = live(s, t), vals = [v.lag, v.users, v.tick, v.rtt];
+    const d = Math.hypot(s.lon - st.lon, (s.lat - st.lat)) / 40;
+    const rise = eo(clamp(rev * 1.7 - d)) * eo(clamp((intro - .3) / 1.4));
+    const hl = st.hover && st.hover.kind === 's' && st.hover.i === i;
+    const col = layoutItem(serverBars, i * 4, s.lon, s.lat, .58, vals, 1, st, rise, hl);
+    let h = 0; for (let m = 0; m < 4; m++) h += st.mw[m] * heightOf(m, vals[m], 1); sheight.push(lerp(h, Math.max(...vals.map((vv, m) => heightOf(m, vv, 1))), st.all) * rise);
+    surf(s.lon, s.lat, .04, _q); eastAt(s.lon, _e); upAt(s.lon, s.lat, _n); _m.makeBasis(_e, _n, _s.copy(_e).cross(_n)); const gsz = 1.6 * UPD * rise; _m.scale(new THREE.Vector3(gsz, 1, gsz)); _m.setPosition(_q);
+    serverGlow.setMatrixAt(i, _m); serverGlow.setColorAt(i, col.clone().multiplyScalar(.22));
+  });
+  for (const m of [regionBars, serverBars, regionGlow, serverGlow]) { m.instanceMatrix.needsUpdate = true; m.instanceColor.needsUpdate = true; }
+  composer.render();
+  x2.setTransform(1, 0, 0, 1, 0, 0); x2.globalAlpha = 1; x2.drawImage(renderer.domElement, 0, 0, W, H);
+  const vg = x2.createRadialGradient(W / 2, H / 2, H * .45, W / 2, H / 2, H * 1.05); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.55)'); x2.fillStyle = vg; x2.fillRect(0, 0, W, H);
+  // KPI: whole world, or the focused region when zoomed in
+  const kr = rev > .5 && focus >= 0 ? [rstats[focus]] : rstats;
+  const kpi = { users: kr.reduce((a, r) => a + r.users, 0), n: kr.reduce((a, r) => a + r.n, 0), warn: kr.reduce((a, r) => a + r.warn, 0) };
+  const hoverKey = st.hover ? st.hover.kind + st.hover.i : null;
+  const F = { rev, focus, rstats, rheight, sheight, kpi, selShown: st.sel, hudA: st.hudA ?? 1, hover: st.hover, hoverKey, tour: !!extra.tour };
+  BTN = [];
+  labels(st, t, F); hud(st, t, F); tooltip(st, t, F);
+  if (extra.after) extra.after(F);
+  return F;
+}
+
+// ═════════════════════════════════════════════════════════════
+//  TOUR — every value from t (renderAt) so it can be recorded
+// ═════════════════════════════════════════════════════════════
+const CAMK = [   // [t, lon, lat, D]
+  [0, 14, 14, 192], [3.2, 14, 14, 176], [21.6, 14, 14, 176], [26.6, 124, 31, 42], [31.4, 126.5, 35, 31], [44.6, 126.5, 35, 31],
+  [47.6, 120, 28, 54], [50.6, 14, 14, 176], [53.4, 14, 14, 176], [56.6, -47, -21.5, 35], [59.4, -47, -21.5, 35], [62, -40, -10, 60],
+];
+const SELK = [[0, 0], [9.2, 1], [12.8, 3], [16.2, 4], [20.2, 0], [38.6, 2], [47.4, 0], [52.4, 3]];
+const HOVK = [[4.2, 7.8, 'r', 'sa'], [17.6, 19.6, 'r', 'as'], [31.8, 38.2, 's', 'asterra-03'], [39.4, 44.6, 's', 'asterra-03'], [57.2, 59.6, 's', 'samba-17']];
+const CAPS = [
+  [3.6, 8.8, '리전별 종합 렉 지수 · 모든 기둥이 같은 척도라 높이로 바로 비교됩니다'],
+  [9.4, 12.6, '접속자 수로 바꾸면 기둥이 그 척도로 다시 섭니다'],
+  [13.0, 16.0, 'RTT p95로 보면 남미 · 중동이 높습니다'],
+  [16.4, 20.0, '모두 보기: 한 자리에 네 지표를 나란히 세웁니다'],
+  [21.8, 27.4, '권역을 확대하면 그 안의 서버 수백 대가 기둥으로 올라옵니다'],
+  [31.8, 38.4, '서울 asterra-03 하나만 종합 렉 지수가 높습니다'],
+  [38.8, 44.8, '서버 틱 p95로 보면 약 210ms, 예산 50ms의 4배가 넘습니다'],
+  [47.6, 51.8, '전 세계로 돌아가면 서버 기둥은 가라앉고 리전 기둥이 다시 섭니다'],
+  [53.6, 59.6, '남미는 서버 한 대가 아니라 서버 전반의 RTT가 높습니다'],
+];
+const SEGC = i => { const r = segRects()[i]; return [r[0] + r[2] / 2, r[1] + r[3] / 2]; };
+const CURK = [   // [t, target]: [x,y] | ['seg', i] | ['r', id] | ['s', name] | ['home']
+  [2.6, [1500, 1160]], [4.2, ['r', 'sa']], [7.8, ['r', 'sa']], [8.7, ['seg', 1]], [9.5, ['seg', 1]], [12.3, ['seg', 3]], [13.1, ['seg', 3]],
+  [15.7, ['seg', 4]], [16.5, ['seg', 4]], [17.6, ['r', 'as']], [19.6, ['seg', 0]], [20.4, ['seg', 0]], [21.1, ['r', 'as']], [21.7, ['r', 'as']],
+  [26.6, [1180, 760]], [31.8, ['s', 'asterra-03']], [37.6, ['s', 'asterra-03']], [38.2, ['seg', 2]], [38.9, ['seg', 2]], [39.4, ['s', 'asterra-03']],
+  [44.6, ['s', 'asterra-03']], [46.8, ['home']], [47.5, ['home']], [51.6, ['seg', 3]], [52.5, ['seg', 3]], [53.2, ['r', 'sa']], [53.6, ['r', 'sa']],
+  [57.2, ['s', 'samba-17']], [59.6, ['s', 'samba-17']], [61, [1500, 1160]],
+];
+const CLICKS = [9.2, 12.8, 16.2, 20.2, 21.6, 38.6, 47.3, 52.4, 53.5];
+function keyAt(K, t) {
+  if (t <= K[0][0]) return K[0].slice(1);
+  for (let i = 0; i < K.length - 1; i++) { const a = K[i], b = K[i + 1]; if (t < b[0]) { const k = eio((t - a[0]) / (b[0] - a[0])); return a.slice(1).map((v, j) => lerp(v, b[j + 1], k)); } }
+  return K[K.length - 1].slice(1);
+}
+function tourState(t) {
+  const [lon, lat, D] = keyAt(CAMK, t);
+  let mw = [1, 0, 0, 0], all = 0, sel = 0;
+  for (let i = 0; i < SELK.length; i++) {
+    const [ts, s] = SELK[i]; if (t < ts) break;
+    const k = eio(p(t, ts, .8)), prev = i ? SELK[i - 1][1] : 0; sel = s;
+    const pm = prev === 4 ? (i > 1 ? SELK[i - 2][1] : 0) : prev, nm = s === 4 ? pm : s;
+    mw = [0, 1, 2, 3].map(m => lerp(m === pm ? 1 : 0, m === nm ? 1 : 0, k));
+    all = lerp(prev === 4 ? 1 : 0, s === 4 ? 1 : 0, k);
+  }
+  let hover = null;
+  for (const [s, e, kind, id] of HOVK) if (t >= s && t < e) hover = { kind, i: kind === 'r' ? REGIONS.findIndex(r => r.id === id) : SERVERS.findIndex(x => x.name === id), a: win(t, s, e, .25) };
+  return { lon, lat, D, mw, all, sel, hover, hudA: eo(p(t, 1.4, .8)), introT: t };
+}
+function resolveTarget(tg, F) {
+  if (typeof tg[0] === 'number') return tg;
+  if (tg[0] === 'seg') return SEGC(tg[1]);
+  if (tg[0] === 'home') return [42 + 30, 116];
+  if (tg[0] === 'r') { const i = REGIONS.findIndex(r => r.id === tg[1]); const [x, y] = project(surf(REGIONS[i].lon, REGIONS[i].lat, Math.max(2, F.rheight[i] * .6))); return [x, y]; }
+  const i = SERVERS.findIndex(s => s.name === tg[1]); const [x, y] = project(surf(SERVERS[i].lon, SERVERS[i].lat, Math.max(.5, F.sheight[i] * .7))); return [x, y];
+}
+function pointer(t, F) {
+  if (t < 2.6 || t > 61) return;
+  let a = null, b = null, k = 0;
+  for (let i = 0; i < CURK.length - 1; i++) if (t >= CURK[i][0] && t < CURK[i + 1][0]) { a = CURK[i]; b = CURK[i + 1]; k = eio((t - a[0]) / (b[0] - a[0])); }
+  if (!a) return;
+  const pa = resolveTarget(a[1], F), pb = resolveTarget(b[1], F), x = lerp(pa[0], pb[0], k), y = lerp(pa[1], pb[1], k);
+  CLICKS.forEach(c => { const q = p(t, c, .55); if (q <= 0 || q >= 1) return; x2.save(); x2.globalAlpha = 1 - q; x2.strokeStyle = '#a99cff'; x2.lineWidth = 3; x2.beginPath(); x2.arc(x, y, 10 + 34 * eo(q), 0, 7); x2.stroke(); x2.restore(); });
+  const down = CLICKS.some(c => t >= c && t < c + .14), s = down ? 1.3 : 1.45;
+  x2.save(); x2.translate(x, y); x2.scale(s, s); x2.beginPath(); x2.moveTo(0, 0); x2.lineTo(0, 22); x2.lineTo(5.5, 17); x2.lineTo(9.5, 26); x2.lineTo(13, 24.5); x2.lineTo(9, 15.8); x2.lineTo(16, 15.5); x2.closePath();
+  x2.shadowColor = 'rgba(0,0,0,.5)'; x2.shadowBlur = 6; x2.fillStyle = '#111827'; x2.fill(); x2.shadowColor = 'transparent'; x2.lineWidth = 1.6; x2.strokeStyle = '#fff'; x2.stroke(); x2.restore();
+}
+function captions(t) {
+  for (const [s, e, line] of CAPS) {
+    const a = win(t, s, e, .3); if (a <= 0) continue;
+    x2.font = `600 26px ${SANS}`; const w = x2.measureText(line).width + 60, y = 1004 + (1 - eo(p(t, s, .3))) * 12;
+    x2.save(); x2.globalAlpha = a; rr2(W / 2 - w / 2, y - 30, w, 60, 30); x2.fillStyle = 'rgba(14,18,34,0.9)'; x2.fill(); x2.lineWidth = 1.5; x2.strokeStyle = 'rgba(160,150,255,0.35)'; x2.stroke(); x2.restore();
+    T(line, W / 2, y + 9, { size: 26, weight: 600, color: '#f4f6fb', align: 'center', alpha: a });
+  }
+}
+function titleCard(t) {
+  const a = Math.min(eo(p(t, .1, .6)), 1 - eo(p(t, 2.2, .6)));
+  if (a > 0) { x2.save(); x2.globalAlpha = a; mark(W / 2, 430, 96); T('Lag Verdict', W / 2, 560, { size: 76, weight: 800, align: 'center' }); T('글로벌 현황 · 3D 대시보드 프로토타입', W / 2, 620, { size: 28, color: '#aab2c6', align: 'center' }); x2.restore(); }
+  const b = eo(p(t, 59.8, .7)); if (b <= 0) return;
+  x2.save(); x2.globalAlpha = b; x2.fillStyle = 'rgba(3,5,12,0.78)'; x2.fillRect(0, 0, W, H);
+  mark(W / 2, 400, 96); T('Lag Verdict', W / 2, 530, { size: 72, weight: 800, align: 'center' });
+  T('리전에서 서버까지, 같은 척도로.', W / 2, 600, { size: 34, weight: 700, color: '#d9dcf7', align: 'center' });
+  T('* 예시 데이터 · 개념 프로토타입', W / 2, 680, { size: 19, color: '#7a8199', align: 'center' });
+  x2.restore();
+}
+function renderAt(t) {
+  draw(tourState(t), t, { tour: true, after: F => { captions(t); pointer(t, F); titleCard(t); } });
+  const fo = p(t, DURATION - .5, .5); if (fo > 0) { x2.fillStyle = `rgba(0,0,0,${fo})`; x2.fillRect(0, 0, W, H); }
+}
+window.renderAt = renderAt; window.DURATION = DURATION;
+
+// ═════════════════════════════════════════════════════════════
+//  INTERACTIVE
+// ═════════════════════════════════════════════════════════════
+const UI = { lon: VIEW0.lon, lat: VIEW0.lat, D: VIEW0.D, sel: 0 };       // targets
+const S = { lon: VIEW0.lon, lat: VIEW0.lat, D: 192, mw: [1, 0, 0, 0], all: 0, sel: 0, hover: null, hudA: 0, introT: 0 };
+let lastSingle = 0, hoverPick = null, pinned = null, tourStart = null, t0 = null, last = null, lastF = null;
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+function toLogical(e) { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; }
+function pick(x, y) {
+  ndc.set(x / W * 2 - 1, 1 - y / H * 2); ray.setFromCamera(ndc, cam);
+  const rev = revealOf(S.D), mesh = rev > .5 ? serverBars : regionBars, hit = ray.intersectObject(mesh, false)[0];
+  if (!hit) return null; const i = Math.floor(hit.instanceId / 4); return { kind: mesh === serverBars ? 's' : 'r', i };
+}
+function surfacePoint(x, y) {
+  ndc.set(x / W * 2 - 1, 1 - y / H * 2); ray.setFromCamera(ndc, cam);
+  const o = ray.ray.origin, d = ray.ray.direction, b = o.dot(d), c = o.dot(o) - R * R, disc = b * b - c; if (disc < 0) return null;
+  const q = o.clone().addScaledVector(d, -b - Math.sqrt(disc));
+  const lat = Math.asin(clamp(q.y / R, -1, 1)) / K / D2R, lon = Math.atan2(q.x, q.z) / K / D2R; return [lon, lat];
+}
+function flyTo(lon, lat, D) { UI.lon = lon; UI.lat = lat; UI.D = D; }
+function act(a) {
+  if (a.startsWith('sel')) { UI.sel = +a.slice(3); if (UI.sel < 4) lastSingle = UI.sel; }
+  else if (a === 'home') { flyTo(VIEW0.lon, VIEW0.lat, VIEW0.D); pinned = null; }
+  else if (a.startsWith('gor')) { const rg = REGIONS[+a.slice(3)]; const hb = HUBS.filter(h => h.region === REGIONS.indexOf(rg)); flyTo(hb.reduce((s, h) => s + h.lon, 0) / hb.length, hb.reduce((s, h) => s + h.lat, 0) / hb.length - 4, ZOOM_IN); }
+  else if (a.startsWith('gos')) { const s = SERVERS[+a.slice(3)]; pinned = { kind: 's', i: +a.slice(3) }; flyTo(s.lon, s.lat - 3, 30); }
+}
+let drag = null;
+cv.addEventListener('pointerdown', e => { if (tourStart !== null) return; const [x, y] = toLogical(e); drag = { x, y, lon: UI.lon, lat: UI.lat, moved: false }; cv.setPointerCapture(e.pointerId); });
+cv.addEventListener('pointermove', e => {
+  const [x, y] = toLogical(e);
+  if (drag) {
+    const dx = x - drag.x, dy = y - drag.y; if (Math.hypot(dx, dy) > 4) drag.moved = true;
+    if (drag.moved) { const k = S.D / 900; UI.lon = clamp(drag.lon - dx * k * 1.15, -170, 170); UI.lat = clamp(drag.lat + dy * k * 1.15, -50, 70); cv.classList.add('drag'); }
+    return;
+  }
+  const overBtn = BTN.some(b => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h);
+  hoverPick = overBtn ? null : pick(x, y); cv.classList.toggle('point', overBtn || !!hoverPick);
+});
+cv.addEventListener('pointerup', e => {
+  cv.classList.remove('drag'); const d = drag; drag = null; if (!d || d.moved || tourStart !== null) return;
+  const [x, y] = toLogical(e), b = BTN.find(b => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h);
+  if (b) { act(b.act); return; }
+  const hit = pick(x, y);
+  if (hit && hit.kind === 'r') act('gor' + hit.i);
+  else if (hit) { pinned = hit; const s = SERVERS[hit.i]; flyTo(s.lon, s.lat - 3, Math.min(UI.D, 32)); }
+  else pinned = null;
+});
+cv.addEventListener('pointerleave', () => { hoverPick = null; });
+cv.addEventListener('wheel', e => {
+  if (tourStart !== null) return; e.preventDefault();
+  const [x, y] = toLogical(e), f = Math.exp(clamp(e.deltaY, -120, 120) * .0016), nD = clamp(UI.D * f, 24, 200), sp = surfacePoint(x, y);
+  if (sp && f < 1) { const k = 1 - nD / UI.D; UI.lon = lerp(UI.lon, sp[0], k); UI.lat = lerp(UI.lat, sp[1] - 3 * k, k); }
+  if (f > 1 && nD > 120) { const k = sstep(120, 200, nD) * .35; UI.lon = lerp(UI.lon, VIEW0.lon, k); UI.lat = lerp(UI.lat, VIEW0.lat, k); }
+  UI.D = nD;
+}, { passive: false });
+document.addEventListener('keydown', e => {
+  if (tourStart !== null) { if (e.key === 'Escape') stopTour(); return; }
+  if (e.key >= '1' && e.key <= '5') act('sel' + (+e.key - 1));
+  else if (e.key === 'Escape') act('home');
+});
+const tourBtn = document.getElementById('tour');
+function stopTour() { tourStart = null; tourBtn.textContent = '▶ 자동 시연'; }
+tourBtn.addEventListener('click', () => { if (tourStart !== null) { stopTour(); return; } tourStart = performance.now(); tourBtn.textContent = '■ 시연 멈추기'; });
+
+function frame(now) {
+  requestAnimationFrame(frame);
+  if (t0 === null) t0 = now; const dt = Math.min(.05, (now - (last ?? now)) / 1000); last = now; const t = (now - t0) / 1000;
+  if (tourStart !== null) {
+    const tt = (now - tourStart) / 1000;
+    if (tt >= DURATION) { const ts = tourState(DURATION - .01); Object.assign(UI, { lon: VIEW0.lon, lat: VIEW0.lat, D: VIEW0.D, sel: 0 }); Object.assign(S, { lon: ts.lon, lat: ts.lat, D: ts.D }); stopTour(); }
+    else { renderAt(tt); return; }
+  }
+  const k = 1 - Math.exp(-dt * 5.5);
+  S.lon = lerp(S.lon, UI.lon, k); S.lat = lerp(S.lat, UI.lat, k); S.D = lerp(S.D, UI.D, k);
+  const tgtAll = UI.sel === 4 ? 1 : 0; S.all = lerp(S.all, tgtAll, 1 - Math.exp(-dt * 6));
+  const m = UI.sel === 4 ? lastSingle : UI.sel; S.mw = S.mw.map((w, i) => lerp(w, i === m ? 1 : 0, 1 - Math.exp(-dt * 6)));
+  S.sel = UI.sel; S.introT = t; S.hudA = eo(p(t, .8, .8));
+  const hv = pinned || hoverPick; S.hover = hv ? { ...hv, a: 1 } : null;
+  if (S.hover && S.hover.kind === 's' && revealOf(S.D) < .5) S.hover = null;
+  if (S.hover && S.hover.kind === 'r' && revealOf(S.D) > .5) S.hover = null;
+  lastF = draw(S, t);
+}
+
+window.ready = (async () => {
+  const faces = [['Pretendard', 'Pretendard-Variable.woff2', '100 900'], ['JetBrains Mono', 'JetBrainsMono.woff2', '100 800']];
+  for (const [family, file, weight] of faces) for (const base of ['../assets/fonts/', 'assets/fonts/']) {
+    try { document.fonts.add(await new FontFace(family, `url(${base}${file})`, { weight }).load()); break; } catch (e) { /* try next */ }
+  }
+  await document.fonts.ready;
+  mapMesh = new THREE.Mesh(patchGeometry(0), new THREE.MeshBasicMaterial({ map: mapTexture(), transparent: true, depthWrite: false })); mapMesh.renderOrder = -1; scene.add(mapMesh);
+})();
+window.ready.then(() => { if (!RENDER) { if (location.hash === '#tour') tourBtn.click(); requestAnimationFrame(frame); } });
+</script>
