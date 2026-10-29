@@ -106,7 +106,7 @@
 <p>오른쪽 "분석 범위"는 입력할 때마다 바뀝니다. "판정할 수 있는 층"에서 게임서버 · 인프라는 프로젝트만 골라도 판정할 수 있고, 클라이언트 · 네트워크는 서버 범위에서도 접속자 RTT 분포처럼 전체 상태는 볼 수 있지만, 신고한 유저 한 명의 문제인지 가리려면 그 캐릭터의 기록이 있어야 하므로 캐릭터를 넣은 뒤에 "이 유저 기준"으로 판정 가능이 됩니다. 조회 구간은 따로 고르지 않으면 최근 10분이고, 영상에서는 21:20에 조회해 21:10–21:20을 봅니다.</p>
 </article>
 <article data-ch="02">
-<p>판정 시작을 누르면 판정 #2381 화면으로 넘어가고, 위쪽 단계 표시가 데이터 조회 → 층별 분석 → 판정 순서로 진행됩니다. 다섯 데이터 소스는 소스마다 다른 키로 찾습니다. 클라이언트 텔레메트리(<code>client_perf</code>)와 세션 · 네트워크 로그(<code>net_session</code>)는 캐릭터 ID로, 게임서버 메트릭(<code>server_tick</code>)과 운영 이벤트(<code>ops_events</code>)는 서버 이름으로, 인프라 모니터링(<code>host_metrics</code>)은 서버 → 호스트 · DB 매핑으로 알아낸 호스트와 DB 이름으로 찾습니다.</p>
+<p>판정 시작을 누르면 판정 #2381 화면으로 넘어가고, 위쪽 단계 표시가 데이터 조회 → 층별 분석 → 판정 순서로 진행됩니다. 조사하는 동안 세 가지가 지금 무엇을 하는지 보여 줍니다. "지금 하는 일" 줄은 10단계 중 몇 번째인지와 지금 모으거나 확인하는 기록을 한 문장으로 알려 줍니다. 왼쪽 조사 지도는 달빛궁수 PC · 네트워크 경로 · 게임서버 · 호스트와 DB 가운데 지금 보는 곳을 밝히고, 기록을 다 모으면 그 자리에 핵심 수치를 띄웁니다. 오른쪽 후보 네 개는 근거가 모일 때마다 표시가 늘고, 층별 분석에서 하나씩 제외되거나 유력으로 바뀝니다. 다섯 데이터 소스는 소스마다 다른 키로 찾습니다. 클라이언트 텔레메트리(<code>client_perf</code>)와 세션 · 네트워크 로그(<code>net_session</code>)는 캐릭터 ID로, 게임서버 메트릭(<code>server_tick</code>)과 운영 이벤트(<code>ops_events</code>)는 서버 이름으로, 인프라 모니터링(<code>host_metrics</code>)은 서버 → 호스트 · DB 매핑으로 알아낸 호스트와 DB 이름으로 찾습니다.</p>
 <p>"쿼리 미리보기"는 조건에 맞는 행을 골라내는 모습이고, "실행 로그"에는 쿼리마다 시작과 결과(행 수, 걸린 시간)가 한 줄씩 남습니다. 일치한 행은 600 + 120 + 11,523 + 60 + 3 = 12,306행입니다. 클라이언트 기록은 1초에 한 행(그 1초 동안 가장 긴 프레임 시간, <code>frame_ms_max</code>)이라 600행입니다. 틱 메트릭은 정상이면 초당 20틱 × 600초 = 12,000행이지만, 틱이 밀린 35초 동안은 한 틱이 길어진 만큼 틱 수가 줄어 11,523행입니다. 틱 수가 줄어드는 것도 틱 초과의 증상입니다. 평균이 아니라 최댓값을 남겨야 짧은 끊김이 묻히지 않습니다. 운영 이벤트에서는 21:14:03 <code>boss_spawn</code> 기록이 나옵니다. 화면은 보기 쉽게 천천히 돌렸고, 로그의 걸린 시간이 실제 쿼리 시간(예시)입니다.</p>
 </article>
 <article data-ch="03">
@@ -526,11 +526,9 @@ const FULL = [960, 540, .94];
 const CAM = [
   [0, ...FULL],
   [10.9, ...FULL], [11.8, 1182, 640, 1.3], [13.8, 1182, 640, 1.3], [14.6, ...FULL],
-  [18.3, ...FULL], [19.2, 1193, 525, 1.32], [21.8, 1193, 525, 1.32], [22.6, ...FULL],
-  [26.3, ...FULL], [27.1, 1193, 525, 1.32], [30.0, 1193, 525, 1.32], [30.8, ...FULL],
-  [34.9, ...FULL], [35.7, 1193, 665, 1.3], [39.4, 1193, 665, 1.3], [40.2, ...FULL],
-  [40.7, ...FULL], [41.7, 1085, 610, 1.15], [55.0, 1085, 610, 1.15], [55.8, 1209, 680, 1.38], [58.0, 1209, 680, 1.38],
-  [58.8, 1085, 610, 1.15], [63.8, 1085, 610, 1.15], [64.8, ...FULL],
+  [18.3, ...FULL], [19.4, 1000, 600, 1.06], [38.6, 1000, 600, 1.06], [39.6, ...FULL],
+  [41.0, ...FULL], [42.0, 1000, 600, 1.06], [54.6, 1000, 600, 1.06], [55.6, 1000, 590, 1.1], [58.2, 1000, 590, 1.1],
+  [59.0, 1000, 600, 1.06], [63.6, 1000, 600, 1.06], [64.6, ...FULL],
   [69.2, ...FULL], [70.0, 830, 658, 1.28], [73.8, 830, 658, 1.28], [74.7, 1120, 640, 1.2], [77.9, 1120, 640, 1.2], [78.7, ...FULL],
   [94.5, ...FULL], [95.6, 960, 540, .78],
 ];
@@ -563,12 +561,6 @@ const near = (t, x0, y0, x1, y1) => { const [x, y] = pointerAt(t); return t > 67
 const CAPS = [
   [4.0, 10.6, '프로젝트 → 서버 → 캐릭터 순서로 넣고, 뒤 칸은 비워 둬도 됩니다'],
   [11.4, 14.4, '캐릭터까지 넣으면 이 유저 기준으로 네 층을 모두 판정합니다'],
-  [18.2, 25.6, '다섯 데이터 소스에서 이 캐릭터 · 서버의 기록만 골라냅니다'],
-  [26.4, 33.8, '서버 틱은 서버 이름으로, 호스트 · DB는 매핑된 이름으로 찾습니다'],
-  [37.9, 40.3, '운영 이벤트에서 21:14:03 보스 스폰 기록을 찾았습니다'],
-  [41.8, 52.6, '패킷이 지나는 순서대로 한 층씩 확인 항목을 대조합니다'],
-  [53.2, 58.4, '게임서버 틱이 35초 동안 예산 50ms를 넘었습니다'],
-  [59.0, 64.2, '같은 호스트의 다른 서버가 정상이라 호스트는 원인에서 뺍니다'],
   [66.6, 73.8, '판정 구간에서 게임서버 틱만 튀고, 나머지 층은 그대로입니다'],
   [74.6, 78.8, '원인 · 계기 · 제외 이유가 근거로 남습니다'],
 ];
@@ -928,39 +920,167 @@ function runHeader(t) {
     txt(lab, xs[i], 240, { size: 17, weight: act || done ? 700 : 500, color: act ? U.accent : done ? U.text2 : U.faint, align: 'center' });
   });
 }
+// ── "what it is doing / where it is looking": narration bar, investigation map, suspect pills ──
+const MAPN = [
+  { name: '달빛궁수 PC', sub: 'client_perf', ic: 'pc', col: L.client, metric: '1초 최대 프레임 17–22ms', src: [0] },
+  { name: '네트워크 경로', sub: 'net_session · ISP → IDC 에지', ic: 'net', col: L.net, metric: 'RTT 38ms · 손실 0%', src: [1] },
+  { name: 'asterra-03 게임서버', sub: 'server_tick', ic: 'srv', col: L.server, metric: '최대 틱 210ms (예산 50ms)', src: [2, 4] },
+  { name: 'gs-host-12 · game-db-2', sub: 'host_metrics', ic: 'db', col: L.infra, metric: 'CPU 최대 66% · DB p99 9ms', src: [3] },
+];
+const SRC_NODE = [0, 1, 2, 3, 2];
+const STEPS = [
+  ['데이터 조회', '달빛궁수 PC가 보낸 프레임 기록을 모으는 중', 'client_perf · char_id 88213 · 1초마다 가장 긴 프레임'],
+  ['데이터 조회', '달빛궁수 ↔ 서버 사이 왕복 지연을 모으는 중', 'net_session · RTT · 손실 · 재연결'],
+  ['데이터 조회', 'asterra-03 서버의 틱 기록을 모으는 중', 'server_tick · 초당 20틱'],
+  ['데이터 조회', '서버가 올라간 호스트와 DB 상태를 모으는 중', 'host_metrics · gs-host-12 · game-db-2'],
+  ['데이터 조회', '같은 시간 서버에서 있었던 일을 찾는 중', 'ops_events · 보스 스폰 · 저장 · 배포 기록'],
+  ['정리', '모은 기록 12,306행을 층별로 나누는 중', '클라이언트 → 네트워크 → 게임서버 → 인프라 순서로 확인합니다'],
+  ['층별 분석', '클라이언트 확인: 프레임이 끊긴 구간을 찾는 중', '클라이언트 정상 · 1초 최대 프레임 22ms 이하'],
+  ['층별 분석', '네트워크 확인: 지연 · 손실이 튄 구간을 찾는 중', '네트워크 정상 · RTT p95 40ms · 손실 0%'],
+  ['층별 분석', '게임서버 확인: 틱이 예산 50ms를 넘은 구간을 찾는 중', '게임서버 이상 · 21:14:05부터 35초간 틱 예산 초과'],
+  ['층별 분석', '인프라 확인: 호스트 · DB와 이웃 서버를 보는 중', '인프라 정상 · 이웃 서버 3대 정상 · DB p99 9ms'],
+];
+function stepAt(t) {
+  if (t < S0) return null;
+  if (t < RUN_DONE) { const i = Math.floor((t - S0) / SDT); return { i, s: S0 + i * SDT, judged: false }; }
+  if (t < C0) return { i: 5, s: RUN_DONE, judged: false };
+  const l = clamp(Math.floor((t - C0) / CDT), 0, 3); return { i: 6 + l, s: C0 + l * CDT, layer: l, judged: t >= verdictAt(l) };
+}
+function narration(t) {
+  const x = 320, y = 278, w = 1560, h = 98;
+  box(x, y, w, h, { r: 16, fill: 'rgba(17,24,39,0.94)', stroke: rgba(U.accent, .35) });
+  const st = stepAt(t), done = t >= 64.0;
+  // radar
+  const rx = x + 50, ry = y + h / 2;
+  ctx.save(); ctx.strokeStyle = rgba(U.accent, .35); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(rx, ry, 24, 0, 7); ctx.stroke(); ctx.beginPath(); ctx.arc(rx, ry, 12, 0, 7); ctx.stroke();
+  if (!done && st) { const g = ctx.createConicGradient(t * 3.2, rx, ry); g.addColorStop(0, rgba(U.accent, .75)); g.addColorStop(.18, rgba(U.accent, 0)); g.addColorStop(1, rgba(U.accent, 0));
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(rx, ry); ctx.arc(rx, ry, 24, 0, 7); ctx.fill(); }
+  ctx.restore();
+  if (done) check(rx, ry, 26, U.ok);
+  if (!st) { txt('조회를 준비하는 중', x + 96, y + 58, { size: 22, color: U.dim }); }
+  else if (done) { txt('판정 완료 · 리포트를 만드는 중', x + 96, y + 36, { size: 16, weight: 700, color: U.ok }); txt('원인 층 · 구간 · 근거를 정리합니다', x + 96, y + 72, { size: 24, weight: 700 }); }
+  else {
+    const [phase, main, sub] = STEPS[st.i], k = eo(p(t, st.s, .35));
+    const lab1 = `단계 ${st.i + 1} / 10 · ${phase}`;
+    txt(lab1, x + 96, y + 36, { size: 16, weight: 700, color: '#a99cff', alpha: k });
+    if (st.layer === undefined) txt(sub, x + 96 + tw(lab1, 16, 700) + 16, y + 36, { size: 16, color: U.faint, alpha: eo(p(t, st.s + .4, .4)) });
+    if (st.judged) {
+      const bad = LAY[st.layer].verdict === 'bad', kr = eback(p(t, verdictAt(st.layer), .4));
+      ctx.save(); ctx.translate(x + 96, y + 72); ctx.scale(clamp(kr, 0, 1.04), clamp(kr, 0, 1.04));
+      txt(sub, 0, 0, { size: 23, weight: 800, color: bad ? U.red : U.ok }); ctx.restore();
+    } else {
+      const s = typed(main, t, st.s + .1, .9);
+      txt(s, x + 96, y + 72, { size: 24, weight: 700, alpha: k });
+      if (s.length < main.length || Math.floor(t * 2.5) % 2 === 0) { ctx.fillStyle = U.accent; ctx.fillRect(x + 100 + tw(s, 24, 700), y + 51, 2.5, 27); }
+    }
+  }
+  // suspects
+  txt('후보', 1318, y + 46, { size: 16, weight: 700, color: U.dim, align: 'right' });
+  const order = [0, 1, 2, 3];
+  order.forEach((li, j) => {
+    const ly = LAY[li], px = 1330 + j * 136, pw = 128, py = y + 14, ph = 40;
+    const vt = verdictAt(li), judged = t >= vt, checking = st && st.layer === li && !judged, kj = eback(p(t, vt, .45));
+    const ev = MAPN[li].src.filter(si => t >= S0 + si * SDT + 3.0).length, evMax = MAPN[li].src.length;
+    let fill = 'rgba(255,255,255,0.03)', stroke = U.line2, col = U.text2, a = 1;
+    if (checking) { fill = rgba(ly.col, .12); stroke = ly.col; col = ly.col; }
+    if (judged && ly.verdict === 'ok') { a = lerp(1, .42, clamp(kj)); }
+    if (judged && ly.verdict === 'bad') { fill = rgba(U.red, .2); stroke = U.red; col = '#fecaca'; }
+    ctx.save(); ctx.globalAlpha *= a;
+    if (judged && ly.verdict === 'bad') { ctx.save(); ctx.shadowColor = U.red; ctx.shadowBlur = 24; rr(px, py, pw, ph, 20); ctx.fillStyle = fill; ctx.fill(); ctx.restore(); }
+    rr(px, py, pw, ph, 20); ctx.fillStyle = fill; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = stroke; ctx.stroke();
+    if (checking) flowBorder(px, py, pw, ph, 20, ly.col, t, 1, 2);
+    dot(px + 18, py + ph / 2, 5, ly.col, 1, 0);
+    txt(ly.name, px + 30, py + 27, { size: 16, weight: 800, color: col });
+    if (judged && ly.verdict === 'ok') hline(px + 28, px + 28 + tw(ly.name, 16, 800) * clamp(kj), py + ph / 2, U.text2, 2);
+    for (let e = 0; e < evMax; e++) dot(px + pw - 14 - e * 10, py + ph / 2, 3, e < ev ? ly.col : U.off, 1, 0);
+    const state = judged ? (ly.verdict === 'bad' ? '유력' : '제외') : checking ? '확인 중' : ev ? `근거 ${ev}` : '대기';
+    txt(state, px + pw / 2, py + ph + 22, { size: 14, weight: 700, align: 'center', color: judged && ly.verdict === 'bad' ? U.red : checking ? ly.col : U.dim });
+    ctx.restore();
+    if (judged && ly.verdict === 'bad') { const kq = p(t, vt, .9); if (kq > 0 && kq < 1) { ctx.save(); ctx.globalAlpha *= 1 - kq; ctx.strokeStyle = U.red; ctx.lineWidth = 2.5; rr(px - 10 * kq, py - 10 * kq, pw + 20 * kq, ph + 20 * kq, 24); ctx.stroke(); ctx.restore(); } }
+  });
+  // progress
+  const pr = clamp((t - S0) / (64.0 - S0));
+  ctx.save(); rr(x + 16, y + h - 6, w - 32, 3, 1.5); ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fill();
+  const g = ctx.createLinearGradient(x, 0, x + w, 0); g.addColorStop(0, U.accent); g.addColorStop(1, '#38bdf8');
+  rr(x + 16, y + h - 6, (w - 32) * pr, 3, 1.5); ctx.fillStyle = g; ctx.fill(); ctx.restore();
+}
+function investigationMap(t) {
+  const X = 320, Y = 388, Wd = 446, Ht = 652;
+  box(X, Y, Wd, Ht, { r: 16, fill: 'rgba(13,19,33,0.96)' });
+  txt('조사 지도', X + 26, Y + 38, { size: 20, weight: 800 });
+  dot(X + Wd - 116, Y + 32, 5, U.accent, 1, 12); txt('지금 보는 곳', X + Wd - 24, Y + 38, { size: 15, color: U.dim, align: 'right' });
+  const st = stepAt(t), inB = t >= S0 && t < RUN_DONE, inC = t >= C0 && t < 64.2;
+  const cur = inB ? Math.floor((t - S0) / SDT) : -1, v = inB ? t - S0 - cur * SDT : 0;
+  const focus = inB ? SRC_NODE[cur] : inC ? st.layer : -1;
+  const pos = i => [X + 22, Y + 62 + i * 146, Wd - 44, 122];
+  // path + packets
+  for (let i = 0; i < 3; i++) {
+    const [x, y, w, h] = pos(i), cx = x + 46, y0 = y + h, y1 = pos(i + 1)[1];
+    vline(cx, y0, y1, U.line2, 2);
+    for (let j = 0; j < 2; j++) { const f = ((t * .9 + j * .5 + i * .3) % 1), down = j === 0; dot(cx + (down ? -5 : 5), lerp(down ? y0 : y1, down ? y1 : y0, f), 3.5, down ? MAPN[i + 1].col : MAPN[i].col, Math.sin(f * Math.PI), 8); }
+  }
+  MAPN.forEach((n, i) => {
+    const [x, y, w, h] = pos(i), on = focus === i, ly = LAY[i];
+    const collected = n.src.every(si => t >= S0 + si * SDT + 3.0), judged = t >= verdictAt(i);
+    const anyActive = inB && n.src.includes(cur);
+    // beam from the node to the panel it is reading
+    if (on) {
+      ctx.save(); const g = ctx.createLinearGradient(x + w, 0, 790, 0); g.addColorStop(0, rgba(n.col, .22)); g.addColorStop(1, rgba(n.col, .04));
+      ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x + w, y + 10); ctx.lineTo(800, 388); ctx.lineTo(800, 1040); ctx.lineTo(x + w, y + h - 10); ctx.closePath(); ctx.fill(); ctx.restore();
+    }
+    box(x, y, w, h, { r: 14, fill: on ? rgba(n.col, .10) : U.panel2, stroke: on ? rgba(n.col, .45) : U.line, shadow: 0, glow: on ? n.col : null });
+    if (on) flowBorder(x, y, w, h, 14, n.col, t);
+    // radar sweep on the icon while looking
+    const icx = x + 46, icy = y + 48;
+    if (on) { ctx.save(); const g = ctx.createConicGradient(t * 4, icx, icy); g.addColorStop(0, rgba(n.col, .55)); g.addColorStop(.2, rgba(n.col, 0)); g.addColorStop(1, rgba(n.col, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(icx, icy, 34, 0, 7); ctx.fill(); ctx.restore(); }
+    icon(n.ic, icx, icy, 36, n.col, on || collected ? 1 : .5);
+    txt(n.name, x + 84, y + 42, { size: 19, weight: 800, color: on || collected ? U.text : U.dim });
+    txt(n.sub, x + 84, y + 66, { size: 14, color: U.faint, mono: true });
+    // status
+    let stt = 'wait', label = null;
+    if (inC && on && !judged) stt = 'run';
+    else if (judged) stt = ly.verdict;
+    else if (anyActive) { stt = 'run'; label = '조회 중'; }
+    else if (collected) { stt = 'done'; label = '수집'; }
+    const pw = statusPill(stt, x + w - 14, y + 30, 1, label);
+    if (stt === 'run') spinner(x + w - 14 - pw - 16, y + 30, 7, n.col, t);
+    // collected metric
+    const km = eo(p(t, S0 + Math.max(...n.src) * SDT + 3.0, .5));
+    if (km > 0) {
+      const bad = judged && ly.verdict === 'bad', col = bad ? U.red : judged ? U.ok : U.text2;
+      txt(n.metric, x + 84, y + 100, { size: 17, weight: 700, color: col, alpha: km, mono: false });
+    }
+    if (i === 2) {
+      const ko = t >= S0 + 4 * SDT + 3.0, act4 = inB && cur === 4;
+      const lab = ko ? 'boss_spawn 21:14:03' : 'ops_events';
+      chip(lab, x + w - 14, y + 62, ko ? L.server : act4 ? OPS : U.off, { size: 14, align: 'right', fillA: ko ? .16 : .06 });
+      if (act4) flowBorder(x + w - 14 - tw(lab, 14, 700, true) - 17, y + 62 - 11, tw(lab, 14, 700, true) + 17, 22, 11, OPS, t, 1, 1.5);
+    }
+    // scanning bar across the card while a layer is being checked
+    if (inC && on && !judged) { const f = ((t - st.s) * .7) % 1, sxx = x + 10 + (w - 20) * f; ctx.save(); const g = ctx.createLinearGradient(sxx - 40, 0, sxx, 0); g.addColorStop(0, rgba(n.col, 0)); g.addColorStop(1, rgba(n.col, .35)); ctx.fillStyle = g; ctx.fillRect(sxx - 40, y + 4, 40, h - 8); ctx.restore(); }
+    // red alarm on the anomaly
+    if (judged && ly.verdict === 'bad') { [0, .3].forEach(d => { const kq = p(t, verdictAt(i) + d, 1.0); if (kq > 0 && kq < 1) { ctx.save(); ctx.globalAlpha *= 1 - kq; ctx.strokeStyle = U.red; ctx.lineWidth = 3; ctx.shadowColor = U.red; ctx.shadowBlur = 18; rr(x - 14 * kq, y - 14 * kq, w + 28 * kq, h + 28 * kq, 18); ctx.stroke(); ctx.restore(); } }); }
+    // data flowing into the node when a source finishes
+    n.src.forEach(si => {
+      const f0 = S0 + si * SDT + 3.0;
+      for (let j = 0; j < 12; j++) { const f = clamp((t - f0 - j * .04) / .6); if (f <= 0 || f >= 1) continue;
+        const P = [[800, 520 + j * 22], [780, 500], [x + w + 30, y + h / 2], [x + w - 30, y + h / 2]], q = bezPt(P, eio(f));
+        dot(q[0], q[1], 4, n.col, Math.sin(f * Math.PI), 14); }
+    });
+  });
+}
 function scrRun(t) {
   if (t < 16.0 || t > 65.0) return;
   const a = Math.min(eo(p(t, 16.35, .45)), 1 - eo(p(t, 63.9, .4))); if (a <= 0) return;
   ctx.save(); ctx.globalAlpha *= a; ctx.translate(0, (1 - eo(p(t, 16.35, .45))) * 18);
-  runHeader(t);
-  const aB = 1 - eo(p(t, 40.6, .5)), aC = eo(p(t, 40.9, .5));
-  if (aB > 0) { ctx.save(); ctx.globalAlpha *= aB; phaseSources(t); ctx.restore(); }
-  if (aC > 0) { ctx.save(); ctx.globalAlpha *= aC; phaseLayers(t); ctx.restore(); }
+  runHeader(t); narration(t); investigationMap(t);
+  const aB = 1 - eo(p(t, 40.6, .5)), aC = eo(p(t, 40.9, .5)), k = .869;
+  if (aB > 0) { ctx.save(); ctx.globalAlpha *= aB; ctx.translate(790 + (1090 - 1010 * k) / 2, 388); ctx.scale(k, k); ctx.translate(-870, -290); phaseSources(t); ctx.restore(); }
+  if (aC > 0) { ctx.save(); ctx.globalAlpha *= aC; ctx.translate(790 + (1090 - 1090 * k) / 2, 388); ctx.scale(k, k); ctx.translate(-790, -290); phaseLayers(t); ctx.restore(); }
   ctx.restore();
 }
 function phaseSources(t) {
   const cur = Math.floor((t - S0) / SDT), v = t - S0 - cur * SDT, live = cur >= 0 && cur < 5;
-  // left: source list
-  box(320, 290, 520, 750, { shadow: .6 });
-  const nDone = SRC.filter((_, i) => t >= S0 + i * SDT + 3.0).length;
-  txt('데이터 소스', 348, 334, { size: 21, weight: 800 });
-  txt(`${nDone}/5`, 812, 334, { size: 18, weight: 700, color: U.dim, mono: true, align: 'right' });
-  SRC.forEach((sc, i) => {
-    const x = 336, y = 358 + i * 134, w = 488, h = 120, s0 = S0 + i * SDT, act = t >= s0 && t < s0 + 3.0, done = t >= s0 + 3.0;
-    box(x, y, w, h, { r: 12, fill: act ? rgba(sc.col, .08) : done ? U.panel2 : U.panel, stroke: act ? rgba(sc.col, .35) : U.line, lw: 1.5 });
-    if (act) flowBorder(x, y, w, h, 12, sc.col, t);
-    ctx.fillStyle = done || act ? sc.col : U.off; ctx.fillRect(x, y + 16, 4, h - 32);
-    const ta = done || act ? 1 : .55;
-    txt(sc.name, x + 22, y + 38, { size: 20, weight: 700, alpha: ta });
-    txt(sc.tbl, x + 22, y + 68, { size: 16, weight: 600, color: sc.col, mono: true, alpha: ta });
-    txt('키 ' + sc.keyName, x + 22, y + 96, { size: 15, color: U.faint, mono: true });
-    if (done) {
-      check(x + w - 30, y + 30, 22, sc.col);
-      txt(nfmt(sc.hit) + (sc.fn ? '행' : '건'), x + w - 48, y + 37, { size: 17, weight: 700, color: sc.col, align: 'right', mono: true });
-      srcSpark(i, x + 236, y + 58, 232, 44, eo(p(t, s0 + 3.0, .5)));
-    } else if (act) { spinner(x + w - 30, y + 30, 10, sc.col, t); txt('조회 중', x + w - 50, y + 36, { size: 16, weight: 600, color: sc.col, align: 'right' }); }
-    else txt('대기', x + w - 20, y + 37, { size: 16, color: U.faint, align: 'right' });
-  });
   // right: query preview
   const QX = 870, QY = 290, QW = 1010, QH = 470;
   box(QX, QY, QW, QH, { shadow: .6 });
@@ -1012,15 +1132,6 @@ function phaseSources(t) {
       txt('일치 12,306행  (600 + 120 + 11,523 + 60 + 3)', QX + QW / 2, QY + 336, { size: 18, color: U.dim, align: 'center', mono: true, alpha: kd });
     }
   }
-  // results stream into the source row
-  if (live && v > 3.0 && v < 4.0) {
-    const tx = 336 + 236 + 116, ty = 358 + cur * 134 + 80, sc2 = SRC[cur];
-    for (let j = 0; j < 14; j++) {
-      const f = clamp((v - 3.0 - j * .035) / .62); if (f <= 0 || f >= 1) continue;
-      const P = [[QX + 300 + j * 30, QY + 300], [QX + 120, QY + 80 - j * 6], [tx + 160, ty - 120], [tx, ty]], q = bezPt(P, eio(f));
-      dot(q[0], q[1], 4, sc2.col, Math.sin(f * Math.PI), 16);
-    }
-  }
   // console log
   const LX = 870, LY = 780, LW = 1010, LH = 260;
   box(LX, LY, LW, LH, { fill: U.console, stroke: U.console, shadow: .6 });
@@ -1049,22 +1160,6 @@ const C0 = 41.6, CDT = 5.7;
 const verdictAt = i => C0 + i * CDT + 2.3 + LAY[i].rules.length * .45;
 function phaseLayers(t) {
   const cur = clamp(Math.floor((t - C0) / CDT), -1, 3);
-  box(320, 290, 440, 750, { shadow: .6 });
-  txt('확인 순서', 348, 334, { size: 21, weight: 800 });
-  txt('패킷 경로', 732, 334, { size: 16, color: U.faint, align: 'right' });
-  LAY.forEach((ly, i) => {
-    const x = 336, y = 356 + i * 170, w = 408, h = 150, s0 = C0 + i * CDT, act = cur === i, judged = t >= verdictAt(i);
-    if (i < 3) { vline(x + 52, y + h + 2, y + h + 18, U.line2, 2); ctx.save(); ctx.fillStyle = U.line2; ctx.beginPath(); ctx.moveTo(x + 46, y + h + 14); ctx.lineTo(x + 58, y + h + 14); ctx.lineTo(x + 52, y + h + 21); ctx.fill(); ctx.restore(); }
-    box(x, y, w, h, { r: 12, fill: act ? rgba(ly.col, .08) : U.panel2, stroke: act ? rgba(ly.col, .35) : U.line, lw: 1.5 });
-    if (act) flowBorder(x, y, w, h, 12, ly.col, t);
-    const ta = act || judged || cur < 0 ? 1 : .55;
-    icon(ly.icon, x + 52, y + 72, 46, ly.col, ta);
-    txt(ly.name, x + 100, y + 68, { size: 24, weight: 800, color: ly.col, alpha: ta });
-    txt(ly.src, x + 100, y + 102, { size: 15, color: U.dim, mono: true, alpha: ta });
-    if (judged) { const k = eback(p(t, verdictAt(i), .4)); statusPill(ly.verdict, x + w - 16, y + 34, clamp(k)); }
-    else if (act) { const w2 = statusPill('run', x + w - 16, y + 34, 1); spinner(x + w - 16 - w2 - 18, y + 34, 8, U.accent, t); }
-    else statusPill('wait', x + w - 16, y + 34, 1);
-  });
   box(790, 290, 1090, 750, { shadow: .6 });
   if (t < C0) txt('층별 분석을 준비하는 중…', 1335, 660, { size: 22, color: U.faint, align: 'center' });
   [vClient, vNetwork, vServer, vInfra].forEach((fn, i) => {
