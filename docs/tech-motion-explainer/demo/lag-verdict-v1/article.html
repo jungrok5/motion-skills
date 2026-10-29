@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>렉 원인 판정 시연 v1 · 해설형 — 설명</title>
+<meta name="description" content="장 제목과 진행 막대가 있는 설명 영상 형식. 입력 · 데이터 소스 조회 · 층별 분석 · 판정 결과 · 판정 네 가지를 차례로 그린 첫 버전.">
+<style>
+  /* Reading page: one 720px column, light and dark. */
+  @font-face { font-family: Pretendard; src: url(../assets/fonts/Pretendard-Variable.woff2) format("woff2"), url(assets/fonts/Pretendard-Variable.woff2) format("woff2"); font-weight: 100 900; }
+  @font-face { font-family: "JetBrains Mono"; src: url(../assets/fonts/JetBrainsMono.woff2) format("woff2"), url(assets/fonts/JetBrainsMono.woff2) format("woff2"); font-weight: 100 800; }
+  :root {
+    --bg: #fbfbfd; --surface: #f1f2f7; --line: #dde0ea; --fg: #141826; --text2: #39405a; --dim: #6b7290; --accent: #6d4fd8;
+    --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #070a13; --surface: #0e1424; --line: #24304a; --fg: #e8ecf4; --text2: #c3cad8; --dim: #8b95a7; --accent: #a78bfa; color-scheme: dark; } }
+  :root[data-theme="dark"] { --bg: #070a13; --surface: #0e1424; --line: #24304a; --fg: #e8ecf4; --text2: #c3cad8; --dim: #8b95a7; --accent: #a78bfa; color-scheme: dark; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 17px; line-height: 1.8;
+    word-break: keep-all; overflow-wrap: anywhere;
+    padding-block: 48px 72px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  main { max-width: 720px; margin: 0 auto; }
+  a { color: var(--accent); }
+  .eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .18em; color: var(--dim); text-transform: uppercase; }
+  h1 { font-size: clamp(30px, 6vw, 42px); line-height: 1.25; letter-spacing: -.02em; margin: 12px 0 16px; text-wrap: balance; }
+  h2 { font-size: 24px; line-height: 1.4; margin: 56px 0 4px; text-wrap: balance; display: flex; gap: 12px; align-items: baseline; }
+  h2 .n { font: 600 15px/1 var(--mono); color: var(--accent); flex: none; }
+  .sub { color: var(--dim); margin: 0 0 16px; font-size: 16px; }
+  p, li { color: var(--text2); }
+  .lede { font-size: 19px; color: var(--fg); }
+  nav.tabs { display: flex; gap: 6px; margin: 0 0 28px; border-bottom: 1px solid var(--line); }
+  nav.tabs a { font: 700 15px/1 var(--sans); color: var(--dim); text-decoration: none; padding: 12px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  nav.tabs a:hover { color: var(--fg); }
+  nav.tabs a[aria-current="page"] { color: var(--fg); border-bottom-color: var(--accent); }
+  .next { margin-top: 48px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0 8px; }
+  .actions a { font: 600 14px/1 var(--sans); text-decoration: none; color: var(--fg); border: 1px solid var(--line); border-radius: 999px; padding: 10px 14px; background: var(--surface); }
+  .actions a:hover { border-color: var(--accent); }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; font: 500 12px/1 var(--mono); color: var(--dim); }
+  .tags span { border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; }
+  nav.toc { border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; margin: 32px 0 0; background: var(--surface); }
+  nav.toc ol { margin: 0; padding-left: 1.4em; } nav.toc li { color: var(--fg); }
+  nav.toc a { color: inherit; text-decoration: none; } nav.toc a:hover { color: var(--accent); }
+  .scene { font: 600 13px/1 var(--sans); }
+  code { font: 500 .88em var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+  dl.terms { display: grid; grid-template-columns: minmax(120px, max-content) minmax(0, 1fr); gap: 14px 28px; margin: 16px 0 0; }
+  dt { font-weight: 700; color: var(--fg); } dd { margin: 0; color: var(--text2); }
+  dd .src { display: block; font-size: 13px; color: var(--dim); }
+  @media (max-width: 600px) { dl.terms { grid-template-columns: minmax(0, 1fr); gap: 2px; } dd { margin-bottom: 16px; } }
+  input[type=search] { width: 100%; box-sizing: border-box; font: 500 16px var(--sans); color: var(--fg); background: var(--surface);
+    border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 16px 0 8px; }
+  footer { margin-top: 64px; font-size: 14px; color: var(--dim); }
+</style>
+</head>
+<body>
+<main>
+<nav class="tabs" aria-label="같은 주제"><a href="index.html">영상</a><a href="article.html" aria-current="page">설명</a><a href="terms.html">용어집</a></nav>
+<span class="eyebrow">1:32 · explainer · lag triage</span>
+<h1>렉 원인 판정 시연 v1 · 해설형</h1>
+<p class="lede">렉 신고 한 건을 두고 프로젝트 · 서버 · 캐릭터를 차례로 넣으면, 서비스가 다섯 데이터 소스에서 해당 기록만 골라 클라이언트 · 네트워크 · 게임서버 · 인프라 네 층을 차례로 확인하고 원인 층과 구간을 판정하는 과정을 보여 주는 시연 영상입니다. 층은 두 가지로 갈립니다. 어느 지표가 튀었는지, 그리고 누가 같이 느렸는지입니다. 화면의 프로젝트 · 서버 · 캐릭터 이름과 수치는 모두 예시입니다.</p>
+<nav class="toc" aria-label="목차"><ol><li><a href="#ch01">순차 입력</a></li><li><a href="#ch02">데이터 소스 조회</a></li><li><a href="#ch03">층별 분석</a></li><li><a href="#ch04">판정 결과</a></li><li><a href="#ch05">판정 네 가지</a></li></ol></nav>
+<section id="ch01">
+<h2><span class="n">01</span>순차 입력</h2>
+<p class="sub">프로젝트 → 서버 → 캐릭터, 채운 만큼 범위가 좁아짐 · <a class="scene" href="index.html#ch01">▶ 이 장면 보기</a></p>
+<p>입력 칸은 세 개이고 앞 칸을 채워야 다음 칸이 열립니다. 프로젝트는 필수, 서버와 캐릭터는 선택입니다. 채운 칸까지가 판정 대상이 됩니다.</p>
+<ul>
+<li><strong>프로젝트만</strong>: 그 프로젝트의 서버 24대를 서로 비교해, 어느 서버(또는 어느 호스트)에서 지표가 튀었는지 봅니다.</li>
+<li><strong>서버까지</strong>: 그 서버의 접속자 전체(예시 1,284명)가 대상입니다.</li>
+<li><strong>캐릭터까지</strong>: 그 캐릭터 한 명의 세션만 봅니다. 클라이언트 · 네트워크 층은 캐릭터까지 넣어야 그 캐릭터의 기록으로 확인할 수 있습니다.</li>
+</ul>
+<p>조회 구간은 따로 넣지 않으면 최근 10분입니다. 영상에서는 21:20에 조회해 21:10–21:20을 봅니다.</p>
+</section>
+<section id="ch02">
+<h2><span class="n">02</span>데이터 소스 조회</h2>
+<p class="sub">다섯 곳에서 이 캐릭터 · 서버의 기록만 골라냄 · <a class="scene" href="index.html#ch02">▶ 이 장면 보기</a></p>
+<p>판정 시작을 누르면 다섯 데이터 소스를 차례로 조회합니다. 소스마다 찾는 키가 다릅니다. 클라이언트 텔레메트리(<code>client_perf</code>)와 세션 · 네트워크 로그(<code>net_session</code>)는 캐릭터 ID로, 게임서버 메트릭(<code>server_tick</code>)과 운영 이벤트(<code>ops_events</code>)는 서버 이름으로, 인프라 모니터링(<code>host_metrics</code>)은 서버 → 호스트 · DB 매핑으로 알아낸 호스트와 DB 이름으로 찾습니다.</p>
+<p>화면의 표는 각 소스에서 조건에 맞는 행을 골라내는 모습입니다. 일치한 행은 600 + 120 + 12,000 + 60 + 3 = 12,783행입니다. 틱 메트릭은 초당 20틱 × 600초라서 12,000행, 클라이언트 기록은 1초에 한 행(그 1초 동안 가장 긴 프레임 시간, <code>frame_ms_max</code>)이라 600행입니다. 평균이 아니라 최댓값을 남겨야 짧은 끊김이 묻히지 않습니다. 골라낸 행은 아래 "모은 근거" 칸에 지표별 그래프로 쌓입니다.</p>
+</section>
+<section id="ch03">
+<h2><span class="n">03</span>층별 분석</h2>
+<p class="sub">패킷이 지나는 순서대로 한 층씩 확인 · <a class="scene" href="index.html#ch03">▶ 이 장면 보기</a></p>
+<p>모은 근거를 패킷이 지나는 순서대로 한 층씩 봅니다.</p>
+<ul>
+<li><strong>클라이언트</strong>: 1초마다 가장 긴 프레임 시간이 16.4–17ms로, 60fps(16.7ms) 안팎에서 고르고 50ms를 넘는 프레임이 없습니다. 정상입니다.</li>
+<li><strong>네트워크</strong>: 캐릭터와 서버 사이 RTT가 평균 38ms(±3ms), 손실 0%, 재연결 0회입니다. 정상입니다. 이 RTT는 게임 루프 밖, 네트워크 스레드에서 잰 값이라는 전제입니다. 핑을 게임 루프 안에서 응답하는 구성이면 서버 틱 지연이 RTT에 섞여 두 층을 이렇게 나눌 수 없습니다.</li>
+<li><strong>게임서버</strong>: 5초마다 가장 긴 틱을 막대로 그렸습니다. 평소 20ms 안팎이던 틱이 21:14:05부터 36초 동안 예산 50ms를 넘고 최대 210ms(예산의 4.2배)까지 갑니다. 운영 이벤트에 21:14:03 보스 스폰 기록이 있습니다. 이상입니다.</li>
+<li><strong>인프라</strong>: 호스트 CPU 최대 66%, CPU steal 0.2%, 디스크 대기 1ms, DB p99 9ms로 모두 경고 기준(예시) 아래입니다. 비교용으로 같은 호스트의 다른 서버 세 대의 틱도 추가로 조회하면, 그 서버들은 정상이고 asterra-03만 튑니다. 호스트가 원인이었다면 그 서버들도 함께 튀었을 것이므로 호스트는 정상으로 봅니다. DB는 이웃 서버와 다른 DB를 쓸 수 있으므로 DB 자체의 p99로 따로 확인합니다.</li>
+</ul>
+</section>
+<section id="ch04">
+<h2><span class="n">04</span>판정 결과</h2>
+<p class="sub">게임서버 렉 · 21:14:05–21:14:41 (36초) · <a class="scene" href="index.html#ch04">▶ 이 장면 보기</a></p>
+<p>판정은 게임서버 렉, 구간은 21:14:05–21:14:41(36초)입니다. 네 층의 그래프를 같은 시간축에 겹치면 그 구간에서 게임서버 틱만 붉게 튀고 나머지는 평평합니다.</p>
+<p>판정 근거는 다섯 줄로 나옵니다. 원인(틱 20ms → 최대 210ms), 계기(21:14:03 보스 스폰), 그리고 제외한 층과 그 이유(네트워크 RTT · 손실 그대로, 클라이언트 프레임 최대 17ms 이하 그대로, 호스트 · DB 지표 정상이고 같은 호스트의 이웃 서버도 정상)입니다. 틱이 밀리면 그 서버의 모든 접속자에게 상태 갱신이 늦게 가므로, 영향 범위는 asterra-03 접속자 전원입니다.</p>
+</section>
+<section id="ch05">
+<h2><span class="n">05</span>판정 네 가지</h2>
+<p class="sub">어느 지표가 튀고, 누가 같이 느린지로 갈림 · <a class="scene" href="index.html#ch05">▶ 이 장면 보기</a></p>
+<p>판정은 네 가지 중 하나이고, 어느 지표가 튀는지와 누가 같이 느린지로 갈립니다.</p>
+<ul>
+<li><strong>네트워크 렉</strong>: RTT · 손실이 튀고 서버 틱은 정상입니다. 같은 서버라도 경로가 다른 유저는 정상입니다.</li>
+<li><strong>인프라 렉</strong>: 호스트 · DB 지표가 튑니다. 틱 안에서 DB를 동기로 부르는 구조면 틱도 따라 늘어나고, 비동기로 부르면 틱은 그대로인 채 저장 · 거래 같은 요청만 늦어집니다. 같은 호스트나 DB를 쓰는 서버들이 함께 느려진다는 점으로 게임서버 렉과 구분합니다.</li>
+<li><strong>게임서버 렉</strong>: 틱만 예산을 넘고 호스트 · DB는 정상입니다. 그 서버 접속자 전원이 동시에 느려집니다. 이번 판정입니다.</li>
+<li><strong>클라이언트 렉</strong>: 프레임 시간만 튀고 RTT · 틱은 정상입니다. 같은 서버라도 PC 사양이나 보고 있는 장면에 따라 갈립니다. 무거운 장면이나 새 클라이언트 빌드 때문에 여러 명이 동시에 겪을 수도 있고, 그때도 기준은 RTT · 틱이 정상이라는 점입니다.</li>
+</ul>
+<p>입력이 프로젝트나 서버에서 멈추면 캐릭터 단위 기록이 없으므로, 서버끼리 · 호스트끼리 비교해 게임서버 · 인프라 층을 가립니다.</p>
+</section>
+<p class="next">이 영상에 나온 용어는 <a href="terms.html">용어집</a>에 정리했다.</p>
+<footer><a href="../index.html">전체 영상 목록</a></footer>
+</main>
+</body>
+</html>
