@@ -155,9 +155,9 @@
 //  렉 원인 판정 시연 — built from tech-motion-explainer/template.html
 //  Every frame is a pure function of time: renderAt(t).
 // ─────────────────────────────────────────────────────────────
-const W = 1920, H = 1080, DURATION = 100;
+const W = 1920, H = 1080, DURATION = 105;
 const cv = document.getElementById('c');
-const ctx = cv.getContext('2d');
+let ctx = cv.getContext('2d');
 
 const C = {
   bg: '#070a13', text: '#e8ecf4', dim: '#8b95a7', faint: '#4b5568',
@@ -378,13 +378,13 @@ function words(ws, cx, y, t, t0, o = {}) {
 //  OPS slate (운영 이벤트) · U.accent indigo (the product itself) · U.red / U.ok states.
 // ═════════════════════════════════════════════════════════════
 const U = {
-  desk: '#0b1020', desk2: '#161c36', win: '#ffffff', side: '#f6f7fb', chrome: '#eceef4', line: '#e3e6ee', line2: '#d0d5e1',
-  text: '#131a2b', text2: '#3d4558', dim: '#687083', faint: '#9aa1b2', off: '#c3c8d3',
-  accent: '#4f46e5', accentSoft: '#eef0fe', ok: '#15803d', red: '#dc2626', console: '#0f1424',
+  desk: '#04060d', desk2: '#0a0f22', win: '#0b101d', panel: '#111827', panel2: '#172033', side: '#080c18', chrome: '#070b15', line: '#212b42', line2: '#2f3b58',
+  text: '#eaeef8', text2: '#c3cadb', dim: '#8b94aa', faint: '#5d6782', off: '#3a4560',
+  accent: '#8b7cff', accentSoft: 'rgba(139,124,255,0.16)', ok: '#4ade80', red: '#f87171', console: '#060912',
 };
-const L = { client: '#0284c7', net: '#059669', server: '#d97706', infra: '#db2777' };
-const OPS = '#64748b';
-C.text = U.text; C.dim = U.dim; C.faint = U.faint; C.red = U.red; C.line = U.line; C.panel = U.win;
+const L = { client: '#38bdf8', net: '#34d399', server: '#fbbf24', infra: '#f472b6' };
+const OPS = '#94a3b8';
+C.text = U.text; C.dim = U.dim; C.faint = U.faint; C.red = U.red; C.line = U.line; C.panel = U.panel;
 const HAN = /[가-힣]/;
 
 // ── sample data: s = seconds since 21:10:00, window 0..600 (21:10–21:20) ──
@@ -405,14 +405,32 @@ const typed = (s, t, t0, dur) => { const a = Array.from(s); return a.slice(0, Ma
 
 // ── drawing helpers ──────────────────────────────────────────
 function box(x, y, w, h, o = {}) {
-  const { r = 14, fill = U.win, stroke = U.line, lw = 1.5, shadow = 0, alpha = 1, dash = null } = o;
+  const { r = 14, fill = U.panel, stroke = U.line, lw = 1.5, shadow = 0, alpha = 1, dash = null, glow = null } = o;
   if (alpha <= 0) return;
   ctx.save(); ctx.globalAlpha *= alpha;
-  if (shadow) { ctx.shadowColor = `rgba(15,23,42,${.09 * shadow})`; ctx.shadowBlur = 26 * shadow; ctx.shadowOffsetY = 8 * shadow; }
+  if (glow) { ctx.shadowColor = rgba(glow, .45); ctx.shadowBlur = 40; }
+  else if (shadow) { ctx.shadowColor = `rgba(0,0,0,${.32 * shadow})`; ctx.shadowBlur = 30 * shadow; ctx.shadowOffsetY = 10 * shadow; }
   rr(x, y, w, h, r); ctx.fillStyle = fill; ctx.fill();
   ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
   if (stroke) { if (dash) ctx.setLineDash(dash); ctx.lineWidth = lw; ctx.strokeStyle = stroke; ctx.stroke(); }
   ctx.restore();
+}
+// rotating light along a rounded rect (active / focused element)
+function flowBorder(x, y, w, h, r, color, t, a = 1, lw = 2.5) {
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha *= a;
+  const g = ctx.createConicGradient(t * 2.4, x + w / 2, y + h / 2);
+  g.addColorStop(0, rgba(color, 0)); g.addColorStop(.14, rgba(color, 1)); g.addColorStop(.3, rgba(color, .05));
+  g.addColorStop(.55, rgba(color, .05)); g.addColorStop(.66, rgba(color, .9)); g.addColorStop(.82, rgba(color, 0)); g.addColorStop(1, rgba(color, 0));
+  rr(x, y, w, h, r); ctx.lineWidth = lw; ctx.strokeStyle = g; ctx.shadowColor = rgba(color, .9); ctx.shadowBlur = 16; ctx.stroke();
+  ctx.restore();
+}
+function glowLine(x0, x1, y, color, a = 1) {
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha *= a;
+  const g = ctx.createLinearGradient(0, y - 44, 0, y + 4); g.addColorStop(0, rgba(color, 0)); g.addColorStop(1, rgba(color, .24));
+  ctx.fillStyle = g; ctx.fillRect(x0, y - 44, x1 - x0, 48);
+  ctx.shadowColor = color; ctx.shadowBlur = 14; ctx.fillStyle = color; ctx.fillRect(x0, y - 1, x1 - x0, 2.5); ctx.restore();
 }
 function hline(x0, x1, y, color, lw = 1, dash = null, a = 1) {
   if (a <= 0) return;
@@ -506,7 +524,7 @@ function keyLerp(K, t) {
 }
 const FULL = [960, 540, .94];
 const CAM = [
-  [0, 960, 660, .80], [2.4, 960, 660, .80], [3.4, ...FULL],
+  [0, ...FULL],
   [10.9, ...FULL], [11.8, 1182, 640, 1.3], [13.8, 1182, 640, 1.3], [14.6, ...FULL],
   [18.3, ...FULL], [19.2, 1193, 525, 1.32], [21.8, 1193, 525, 1.32], [22.6, ...FULL],
   [26.3, ...FULL], [27.1, 1193, 525, 1.32], [30.0, 1193, 525, 1.32], [30.8, ...FULL],
@@ -551,14 +569,15 @@ const CAPS = [
   [41.8, 52.6, '패킷이 지나는 순서대로 한 층씩 확인 항목을 대조합니다'],
   [53.2, 58.4, '게임서버 틱이 35초 동안 예산 50ms를 넘었습니다'],
   [59.0, 64.2, '같은 호스트의 다른 서버가 정상이라 호스트는 원인에서 뺍니다'],
-  [65.4, 73.8, '판정 구간에서 게임서버 틱만 튀고, 나머지 층은 그대로입니다'],
+  [66.6, 73.8, '판정 구간에서 게임서버 틱만 튀고, 나머지 층은 그대로입니다'],
   [74.6, 78.8, '원인 · 계기 · 제외 이유가 근거로 남습니다'],
 ];
 function captions(t) {
   for (const [s, e, line] of CAPS) {
     const a = win(t, s, e, .3); if (a <= 0) continue;
     font(26, 600); const w = ctx.measureText(line).width + 60, y = 998 + (1 - eo(p(t, s, .3))) * 12;
-    ctx.save(); ctx.globalAlpha = a; rr(W / 2 - w / 2, y - 30, w, 60, 30); ctx.fillStyle = 'rgba(9,12,24,0.86)'; ctx.fill(); ctx.restore();
+    ctx.save(); ctx.globalAlpha = a; rr(W / 2 - w / 2, y - 30, w, 60, 30); ctx.fillStyle = 'rgba(14,18,34,0.88)'; ctx.fill();
+    ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(160,150,255,0.35)'; ctx.stroke(); ctx.restore();
     txt(line, W / 2, y + 9, { size: 26, weight: 600, color: '#f4f6fb', align: 'center', alpha: a });
   }
 }
@@ -568,47 +587,125 @@ function footnote(t) {
 }
 
 // [start, end, number, title, subtitle] — used by the player's chapter chips and the reading pages
-const HEAD = [
-  [3.0, 16.4, '01', '대상 입력', '프로젝트 → 서버 → 캐릭터, 채운 만큼 범위가 좁아짐'],
-  [16.4, 41.0, '02', '데이터 조회', '다섯 곳에서 이 캐릭터 · 서버의 기록만 골라냄'],
-  [41.0, 64.5, '03', '층별 분석', '패킷이 지나는 순서대로 확인 항목을 대조'],
-  [64.5, 82.0, '04', '판정 리포트', '게임서버 렉 · 21:14:05–21:14:40 (35초)'],
-  [82.0, 94.5, '05', '판정 기준', '어느 지표가 튀고, 누가 같이 느린지로 갈림'],
+const HEAD = [   // real time t (app time + SHIFT)
+  [6.0, 19.4, '01', '대상 입력', '프로젝트 → 서버 → 캐릭터, 채운 만큼 범위가 좁아짐'],
+  [19.4, 44.0, '02', '데이터 조회', '다섯 곳에서 이 캐릭터 · 서버의 기록만 골라냄'],
+  [44.0, 67.5, '03', '층별 분석', '패킷이 지나는 순서대로 확인 항목을 대조'],
+  [67.5, 85.0, '04', '판정 리포트', '게임서버 렉 · 21:14:05–21:14:40 (35초)'],
+  [85.0, 97.5, '05', '판정 기준', '어느 지표가 튀고, 누가 같이 느린지로 갈림'],
 ];
 
 // ── desk, intro, outro ───────────────────────────────────────
 function desk(t) {
-  const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, U.desk); g.addColorStop(1, U.desk2);
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  const r = ctx.createRadialGradient(W * .5, H * .45, 0, W * .5, H * .45, 900); r.addColorStop(0, 'rgba(79,70,229,0.16)'); r.addColorStop(1, 'rgba(79,70,229,0)');
-  ctx.fillStyle = r; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = 'rgba(160,170,210,0.08)';
+  ctx.fillStyle = U.desk; ctx.fillRect(0, 0, W, H);
+  const blob = (x, y, r, col, a) => { const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, rgba(col, a)); g.addColorStop(1, rgba(col, 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); };
+  blob(W * .28 + Math.sin(t * .23) * 220, H * .32 + Math.cos(t * .19) * 90, 980, '#6d5df5', .26);
+  blob(W * .78 + Math.cos(t * .17) * 200, H * .72 + Math.sin(t * .21) * 80, 900, '#0ea5e9', .16);
+  blob(W * .55 + Math.sin(t * .13) * 260, H * .95, 700, '#f59e0b', .07);
+  ctx.fillStyle = 'rgba(170,180,230,0.07)';
   for (let x = 30; x < W; x += 60) for (let y = 30; y < H; y += 60) ctx.fillRect(x, y, 2, 2);
+  const v = ctx.createRadialGradient(W / 2, H / 2, H * .35, W / 2, H / 2, H * 1.05); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.6)');
+  ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
 }
+// wordmark with a light sweep running through it
+function wordmark(x, y, size, t0, t, a = 1) {
+  if (a <= 0) return;
+  font(size, 800); const w = ctx.measureText('Lag Verdict').width, pos = clamp((t - t0) / 1.1) * 1.6 - .3;
+  const g = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0);
+  g.addColorStop(0, '#cfc9ff'); g.addColorStop(clamp(pos - .14), '#cfc9ff'); g.addColorStop(clamp(pos), '#ffffff'); g.addColorStop(clamp(pos + .14), '#cfc9ff'); g.addColorStop(1, '#cfc9ff');
+  ctx.save(); ctx.globalAlpha *= a; ctx.fillStyle = g; ctx.textAlign = 'center'; ctx.shadowColor = 'rgba(139,124,255,0.55)'; ctx.shadowBlur = 40;
+  ctx.fillText('Lag Verdict', x, y); ctx.restore();
+}
+function ring(x, y, k, r0, r1, col) {
+  if (k <= 0 || k >= 1) return;
+  ctx.save(); ctx.globalAlpha *= (1 - k) * .8; ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.shadowColor = col; ctx.shadowBlur = 20;
+  ctx.beginPath(); ctx.arc(x, y, lerp(r0, r1, eo(k)), 0, 7); ctx.stroke(); ctx.restore();
+}
+// ── intro: an incoming report, then the product (real time t) ──
 function intro(t) {
-  const a = 1 - eo(p(t, 2.2, .5)); if (a <= 0) return;
-  ctx.save(); ctx.globalAlpha = a;
-  const k = eback(p(t, .15, .6));
-  ctx.save(); ctx.translate(W / 2, 400); ctx.scale(clamp(k, 0, 1.2), clamp(k, 0, 1.2)); mark(0, 0, 110); ctx.restore();
-  txt('Lag Verdict', W / 2, 560 + (1 - eo(p(t, .45, .6))) * 24, { size: 76, weight: 800, color: '#f4f6fb', align: 'center', alpha: eo(p(t, .45, .6)) });
-  txt('렉 원인 판정 · 제품 시연', W / 2, 626, { size: 30, weight: 500, color: '#a3abc4', align: 'center', alpha: eo(p(t, .8, .6)) });
-  txt('* 개념 프로토타입 · 화면의 이름과 수치는 예시', W / 2, 700, { size: 20, color: '#6f7794', align: 'center', alpha: eo(p(t, 1.1, .6)) });
+  const out = 1 - eo(p(t, 2.75, .45));
+  if (out > 0) {
+    ctx.save(); ctx.globalAlpha = out;
+    const sh = 1 - eio(p(t, 2.6, .6)) * .6; ctx.translate(W / 2, 540); ctx.scale(sh, sh); ctx.translate(-W / 2, -540);
+    txt('INCOMING · 렉 신고', W / 2, 372, { size: 20, weight: 700, color: '#8b94aa', align: 'center', mono: true, ls: 6, alpha: eo(p(t, .1, .5)) });
+    [[2, 1.05], [1, .8]].forEach(([j, s0]) => {
+      const k = eo(p(t, s0, .5)); if (k <= 0) return;
+      const cw = 980 - j * 60, x = W / 2 - cw / 2, y = 446 - j * 26 - (1 - k) * 20;
+      box(x, y, cw, 190, { r: 18, fill: '#101828', stroke: 'rgba(255,255,255,0.08)', alpha: k * (j === 1 ? .7 : .45) });
+    });
+    const k = eback(p(t, .25, .6)), x = W / 2 - 490, y = 446 + (1 - clamp(k)) * 40;
+    ctx.save(); ctx.globalAlpha *= clamp(k);
+    box(x, y, 980, 190, { r: 18, fill: '#131b2e', stroke: 'rgba(248,113,113,0.35)', glow: '#f87171' });
+    flowBorder(x, y, 980, 190, 18, '#f87171', t, .9);
+    const pulse = .5 + .5 * Math.sin(t * 8);
+    dot(x + 46, y + 48, 7, '#f87171', 1, 10 + 14 * pulse);
+    chip('렉 신고', x + 66, y + 48, '#f87171', { size: 17, fillA: .14 });
+    txt('PROJECT-K · asterra-03 · 21:14:20', x + 950, y + 54, { size: 17, color: '#8b94aa', align: 'right', mono: true });
+    txt('"보스 잡을 때 캐릭터가 뚝뚝 끊겨요"', x + 44, y + 120, { size: 36, weight: 800, color: '#f4f6fb' });
+    txt('달빛궁수 · Lv.62 · 같은 서버에서 신고가 이어지는 중', x + 44, y + 162, { size: 20, color: '#8b94aa' });
+    ctx.restore();
+    txt('클라이언트 · 네트워크 · 게임서버 · 인프라, 어느 층의 렉인지 판정합니다', W / 2, 736, { size: 26, weight: 600, color: '#b9c0d4', align: 'center', alpha: eo(p(t, 1.35, .5)) });
+    ctx.restore();
+  }
+  const a = Math.min(eo(p(t, 2.95, .4)), 1 - eo(p(t, 4.15, .4))); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a; ctx.translate(0, -eio(p(t, 4.15, .4)) * 60);
+  ring(W / 2, 420, p(t, 3.0, 1.0), 60, 520, '#8b7cff'); ring(W / 2, 420, p(t, 3.25, 1.0), 60, 380, '#38bdf8');
+  const km = eback(p(t, 2.95, .55)); ctx.save(); ctx.translate(W / 2, 420); ctx.scale(clamp(km, 0, 1.2), clamp(km, 0, 1.2)); mark(0, 0, 116); ctx.restore();
+  wordmark(W / 2, 586, 84, 3.25, t, eo(p(t, 3.2, .45)));
+  txt('렉 원인 판정 · 제품 시연', W / 2, 650, { size: 28, weight: 500, color: '#a3abc4', align: 'center', alpha: eo(p(t, 3.55, .5)) });
+  txt('* 개념 프로토타입 · 화면의 이름과 수치는 예시', W / 2, 990, { size: 19, color: '#6f7794', align: 'center', alpha: eo(p(t, 3.7, .5)) });
   ctx.restore();
 }
-function outro(t) {
-  const a = eo(p(t, 95.3, .6)); if (a <= 0) return;
-  ctx.save(); ctx.globalAlpha = a;
-  mark(W / 2, 330, 96);
-  txt('Lag Verdict', W / 2, 470, { size: 70, weight: 800, color: '#f4f6fb', align: 'center' });
-  txt('입력 세 칸으로, 원인 층과 구간까지.', W / 2, 548, { size: 38, weight: 700, color: '#d9dcf7', align: 'center', alpha: eo(p(t, 95.7, .6)) });
-  const steps = [['입력', U.accent], ['조회', OPS], ['층별 분석', L.server], ['판정', U.accent]], xs = steps.map((_, i) => lerp(600, 1320, i / 3));
-  hline(xs[0], lerp(xs[0], xs[3], eio(p(t, 96.0, 1.0))), 680, 'rgba(160,170,210,0.35)', 2);
-  steps.forEach(([lab, col], i) => {
-    const k = eback(p(t, 96.0 + i * .22, .5)); if (k <= 0) return;
-    dot(xs[i], 680, 9 * k, col, 1, 20);
-    txt(lab, xs[i], 726, { size: 24, weight: 700, color: '#e6e8f5', align: 'center', alpha: clamp(k) });
+// ── offscreen renders of the app: the fly-in and the closing montage ──
+function offscreen(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function renderAppTo(c, ta, scale) {
+  const saved = ctx; ctx = c.getContext('2d');
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.clearRect(0, 0, c.width, c.height); ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  drawApp(ta, true); ctx = saved;
+}
+let FLY = null; const SNAP = new Map();
+function snap(ta) { if (!SNAP.has(ta)) { const c = offscreen(960, 540); renderAppTo(c, ta, .5); SNAP.set(ta, c); } return SNAP.get(ta); }
+// the window tilted back in 3D, drawn in horizontal strips; k = 1 lands exactly on the FULL camera
+function drawPersp(img, k) {
+  const th = (1 - k) * .7, S = lerp(.7, .94, k), cx = W / 2, cy = lerp(H * .74, H / 2, k), f = 1700, N = 90, sh = H / N;
+  const pj = y => { const z = -y * Math.sin(th), s = f / (f + z); return [y * Math.cos(th) * s, s]; };
+  ctx.save(); ctx.globalAlpha = clamp(k * 2);
+  const [top] = pj(-H / 2), [bot, sb] = pj(H / 2);
+  ctx.save(); ctx.globalAlpha *= .8; ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 90; ctx.shadowOffsetY = 40; ctx.fillStyle = '#000';
+  ctx.beginPath(); ctx.ellipse(cx, cy + bot * S, W * sb * S * .45, 30, 0, 0, 7); ctx.fill(); ctx.restore();
+  for (let i = 0; i < N; i++) {
+    const y0 = i * sh - H / 2, [a0, s0] = pj(y0), [a1] = pj(y0 + sh), ww = W * s0 * S;
+    ctx.drawImage(img, 0, i * sh, W, sh, cx - ww / 2, cy + a0 * S, ww, (a1 - a0) * S + 1);
+  }
+  // sheen
+  const g = ctx.createLinearGradient(0, cy + top * S, 0, cy + bot * S); g.addColorStop(0, `rgba(255,255,255,${.10 * (1 - k)})`); g.addColorStop(.4, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g; ctx.fillRect(cx - W * S / 2, cy + top * S, W * S, (bot - top) * S);
+  ctx.restore();
+}
+// ── outro: the four screens fanned out, then the product (app time ta) ──
+const MONT = [[12.6, '대상 입력', U.accent], [30.4, '데이터 조회', OPS], [57.4, '층별 분석', L.server], [76.0, '판정 리포트', U.accent]];
+function outro(ta) {
+  if (ta < 94.9) return;
+  const kOut = eio(p(ta, 97.6, 1.1));
+  MONT.forEach(([at, lab, col], i) => {
+    const k = eback(p(ta, 95.0 + i * .16, .7)); if (k <= 0) return;
+    const img = snap(at), f = i / 3;
+    const cx = lerp(lerp(390, 1530, f), lerp(490, 1430, f), kOut), cy = lerp(520, 830, kOut) + (1 - clamp(k)) * 220;
+    const s = lerp(.34, .28, kOut) * clamp(k, 0, 1.06), rot = lerp(-.1, .1, f) * (1 - kOut * .6);
+    ctx.save(); ctx.globalAlpha = clamp(k) * lerp(1, .5, kOut); ctx.translate(cx, cy); ctx.rotate(rot); ctx.scale(s, s);
+    ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 80; ctx.shadowOffsetY = 40; rr(-W / 2, -H / 2, W, H, 24); ctx.fillStyle = U.win; ctx.fill();
+    ctx.shadowColor = 'transparent'; ctx.drawImage(img, -W / 2, -H / 2, W, H);
+    rr(-W / 2, -H / 2, W, H, 24); ctx.lineWidth = 4 / s; ctx.strokeStyle = rgba(col, .55); ctx.stroke();
+    ctx.restore();
+    txt(lab, cx, cy + H * s / 2 + 52, { size: 26, weight: 700, color: '#e6e8f5', align: 'center', alpha: clamp(k) * (1 - kOut) });
   });
-  txt('* 화면의 프로젝트 · 서버 · 캐릭터 이름과 수치는 예시입니다 (개념 프로토타입)', W / 2, 880, { size: 21, color: '#7a8199', align: 'center', alpha: eo(p(t, 96.6, .6)) });
+  const a = eo(p(ta, 97.9, .6)); if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a;
+  ring(W / 2, 220, p(ta, 97.9, 1.0), 50, 420, '#8b7cff');
+  mark(W / 2, 220, 96);
+  wordmark(W / 2, 362, 76, 98.2, ta);
+  txt('입력 세 칸으로, 원인 층과 구간까지.', W / 2, 438, { size: 36, weight: 700, color: '#d9dcf7', align: 'center', alpha: eo(p(ta, 98.4, .6)) });
+  txt('* 화면의 프로젝트 · 서버 · 캐릭터 이름과 수치는 예시입니다 (개념 프로토타입)', W / 2, 500, { size: 19, color: '#7a8199', align: 'center', alpha: eo(p(ta, 98.8, .6)) });
   ctx.restore();
 }
 
@@ -616,7 +713,7 @@ function outro(t) {
 function chrome(url) {
   ctx.fillStyle = U.chrome; ctx.fillRect(0, 0, W, 52); hline(0, W, 52, U.line2);
   [['#ff5f57', 30], ['#febc2e', 54], ['#28c840', 78]].forEach(([c, x]) => dot(x, 26, 7, c, 1, 0));
-  box(640, 10, 640, 32, { r: 16, fill: '#ffffff', stroke: U.line });
+  box(640, 10, 640, 32, { r: 16, fill: U.panel2, stroke: U.line });
   ctx.save(); ctx.strokeStyle = U.faint; ctx.lineWidth = 2; rr(664, 22, 11, 10, 2); ctx.stroke(); ctx.beginPath(); ctx.arc(669.5, 22, 4, Math.PI, 0); ctx.stroke(); ctx.restore();
   txt('lagverdict.ops.internal' + url, 690, 32, { size: 16, color: U.dim, mono: true });
 }
@@ -640,7 +737,7 @@ function sidebar(t) {
     txt(lab, 118, y, { size: 16, color: U.dim, alpha: a });
   });
   hline(16, 264, 990, U.line);
-  ctx.save(); ctx.fillStyle = '#c7d2fe'; ctx.beginPath(); ctx.arc(46, 1030, 18, 0, 7); ctx.fill(); ctx.restore();
+  ctx.save(); ctx.fillStyle = 'rgba(139,124,255,0.28)'; ctx.beginPath(); ctx.arc(46, 1030, 18, 0, 7); ctx.fill(); ctx.restore();
   txt('운', 46, 1037, { size: 17, weight: 800, color: U.accent, align: 'center' });
   txt('운영팀', 76, 1024, { size: 18, weight: 700 }); txt('ops-oncall', 76, 1046, { size: 15, color: U.dim, mono: true });
 }
@@ -681,15 +778,16 @@ function scrA(t) {
     // step marker + rail
     if (i < 2) vline(360, y0 + 98, y0 + 190 + 52, t >= f.pick ? U.accent : U.line2, 2.5);
     ctx.save(); ctx.beginPath(); ctx.arc(360, y0 + 74, 20, 0, 7);
-    ctx.fillStyle = done ? U.accent : '#ffffff'; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = done || focus ? U.accent : U.line2; ctx.stroke(); ctx.restore();
+    ctx.fillStyle = done ? U.accent : U.panel2; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = done || focus ? U.accent : U.line2; ctx.stroke(); ctx.restore();
     if (done) check(360, y0 + 74, 22, '#ffffff'); else txt(String(i + 1), 360, y0 + 81, { size: 19, weight: 800, color: focus ? U.accent : U.faint, align: 'center' });
     // label
     txt(f.label, 420, y0 + 26, { size: 23, weight: 700, color: enabled ? U.text : U.faint });
     chip(f.req, 420 + tw(f.label, 23, 700) + 12, y0 + 18, f.req === '필수' ? U.accent : U.dim, { size: 15, fillA: .08, alpha: enabled ? 1 : .5 });
     // combobox
     const bx = 420, by = y0 + 40, bw = 780, bh = 68;
-    if (focus) box(bx - 4, by - 4, bw + 8, bh + 8, { r: 15, fill: rgba(U.accent, .12), stroke: null });
-    box(bx, by, bw, bh, { r: 12, fill: enabled ? '#ffffff' : '#f4f5f8', stroke: focus ? U.accent : U.line2, lw: focus ? 2.5 : 1.5 });
+    if (focus) box(bx - 5, by - 5, bw + 10, bh + 10, { r: 16, fill: rgba(U.accent, .10), stroke: null, glow: U.accent });
+    box(bx, by, bw, bh, { r: 12, fill: enabled ? U.panel2 : U.panel, stroke: focus ? rgba(U.accent, .5) : U.line2, lw: 1.5 });
+    if (focus) flowBorder(bx, by, bw, bh, 12, U.accent, t);
     if (done) {
       txt(f.val, bx + 24, by + 44, { size: 25, weight: 700, mono: !HAN.test(f.val) });
       if (f.meta) txt(f.meta, bx + 30 + tw(f.val, 25, 700, !HAN.test(f.val)), by + 43, { size: 18, color: U.dim });
@@ -708,11 +806,12 @@ function scrA(t) {
   // buttons
   const ready = t >= STEP[0].pick, press = Math.sin(Math.PI * p(t, 15.0, .22)), loading = t >= 15.05;
   ctx.save(); ctx.translate(550, 938); ctx.scale(1 - .05 * press, 1 - .05 * press);
-  box(-130, -33, 260, 66, { r: 12, fill: ready ? (loading ? '#4338ca' : U.accent) : '#c9cde4', stroke: null, shadow: ready ? .6 : 0 });
+  box(-130, -33, 260, 66, { r: 12, fill: ready ? (loading ? '#7563f0' : U.accent) : U.off, stroke: null, glow: ready ? U.accent : null });
+  if (ready) flowBorder(-130, -33, 260, 66, 12, '#ffffff', t, .35 + .65 * win(t, 13.9, 15.6, .3), 2);
   if (loading) { spinner(-62, 0, 11, '#ffffff', t); txt('시작하는 중', 12, 8, { size: 22, weight: 700, color: '#fff', align: 'center' }); }
   else txt('판정 시작', 0, 8, { size: 23, weight: 800, color: '#fff', align: 'center' });
   ctx.restore();
-  box(700, 905, 340, 66, { r: 12, fill: '#ffffff', stroke: U.line2 });
+  box(700, 905, 340, 66, { r: 12, fill: U.panel2, stroke: U.line2 });
   txt('조회 구간', 724, 946, { size: 18, color: U.dim });
   txt('최근 10분', 820, 946, { size: 20, weight: 700 });
   icon('chev', 1010, 938, 22, U.dim);
@@ -742,7 +841,7 @@ function scrA(t) {
   const LAYERS = [['게임서버', L.server, 'srv', 0], ['인프라', L.infra, 'db', 0], ['네트워크', L.net, 'net', 2], ['클라이언트', L.client, 'pc', 2]];
   LAYERS.forEach(([name, col, ic, need], j) => {
     const y = 704 + j * 66, have = t >= STEP[0].pick, okk = have && t >= STEP[need].pick, k = eback(p(t, need ? STEP[2].pick : STEP[0].pick, .4));
-    box(1300, y, 560, 56, { r: 10, fill: okk ? rgba(col, .06) : '#fafbfc', stroke: okk ? rgba(col, .35) : U.line });
+    box(1300, y, 560, 56, { r: 10, fill: okk ? rgba(col, .06) : U.panel, stroke: okk ? rgba(col, .35) : U.line });
     icon(ic, 1334, y + 28, 26, okk ? col : U.off);
     txt(name, 1366, y + 36, { size: 20, weight: 700, color: okk ? U.text : U.faint });
     if (okk) { ctx.save(); ctx.globalAlpha *= clamp(k); chip('판정 가능', 1842, y + 28, U.ok, { size: 16, align: 'right', fillA: .1 }); ctx.restore(); }
@@ -814,9 +913,9 @@ function runHeader(t) {
   const fin = t >= 64.0, x = 320 + tw('판정 #2381', 36, 800) + 18;
   if (fin) chip('완료', x, 188, U.ok, { size: 17, fillA: .1 });
   else { const w = chip('진행 중', x, 188, U.accent, { size: 17, fillA: .1 }); spinner(x + w + 18, 188, 8, U.accent, t); }
-  box(320, 222, 470, 42, { r: 10, fill: '#f6f7fb', stroke: U.line });
+  box(320, 222, 470, 42, { r: 10, fill: U.panel2, stroke: U.line });
   txt('PROJECT-K  ›  asterra-03  ›  달빛궁수', 340, 250, { size: 18, weight: 600, color: U.text2 });
-  box(804, 222, 270, 42, { r: 10, fill: '#f6f7fb', stroke: U.line });
+  box(804, 222, 270, 42, { r: 10, fill: U.panel2, stroke: U.line });
   txt('21:10–21:20 · 최근 10분', 822, 250, { size: 18, color: U.text2 });
   // stepper
   const ST = [['데이터 조회', S0 - .3, RUN_DONE], ['층별 분석', 41.4, 64.0], ['판정', 64.0, 64.0]];
@@ -824,7 +923,7 @@ function runHeader(t) {
   ST.forEach(([lab, s, e], i) => {
     const pr = clamp((t - s) / Math.max(.01, e - s)), done = t >= e && (i < 2 || t >= 64.0), act = t >= s && !done;
     if (i < 2) { hline(xs[i] + 22, xs[i + 1] - 22, 196, U.line2, 3); hline(xs[i] + 22, lerp(xs[i] + 22, xs[i + 1] - 22, pr), 196, U.accent, 3); }
-    ctx.save(); ctx.beginPath(); ctx.arc(xs[i], 196, 17, 0, 7); ctx.fillStyle = done ? U.accent : '#fff'; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = done || act ? U.accent : U.line2; ctx.stroke(); ctx.restore();
+    ctx.save(); ctx.beginPath(); ctx.arc(xs[i], 196, 17, 0, 7); ctx.fillStyle = done ? U.accent : U.panel2; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = done || act ? U.accent : U.line2; ctx.stroke(); ctx.restore();
     if (done) check(xs[i], 196, 19, '#fff'); else txt(String(i + 1), xs[i], 202, { size: 17, weight: 800, color: act ? U.accent : U.faint, align: 'center' });
     txt(lab, xs[i], 240, { size: 17, weight: act || done ? 700 : 500, color: act ? U.accent : done ? U.text2 : U.faint, align: 'center' });
   });
@@ -848,7 +947,8 @@ function phaseSources(t) {
   txt(`${nDone}/5`, 812, 334, { size: 18, weight: 700, color: U.dim, mono: true, align: 'right' });
   SRC.forEach((sc, i) => {
     const x = 336, y = 358 + i * 134, w = 488, h = 120, s0 = S0 + i * SDT, act = t >= s0 && t < s0 + 3.0, done = t >= s0 + 3.0;
-    box(x, y, w, h, { r: 12, fill: act ? rgba(sc.col, .06) : done ? '#ffffff' : '#fafbfc', stroke: act ? rgba(sc.col, .6) : U.line, lw: act ? 2.2 : 1.5 });
+    box(x, y, w, h, { r: 12, fill: act ? rgba(sc.col, .08) : done ? U.panel2 : U.panel, stroke: act ? rgba(sc.col, .35) : U.line, lw: 1.5 });
+    if (act) flowBorder(x, y, w, h, 12, sc.col, t);
     ctx.fillStyle = done || act ? sc.col : U.off; ctx.fillRect(x, y + 16, 4, h - 32);
     const ta = done || act ? 1 : .55;
     txt(sc.name, x + 22, y + 38, { size: 20, weight: 700, alpha: ta });
@@ -864,6 +964,7 @@ function phaseSources(t) {
   // right: query preview
   const QX = 870, QY = 290, QW = 1010, QH = 470;
   box(QX, QY, QW, QH, { shadow: .6 });
+  if (live && v < 3.1) flowBorder(QX, QY, QW, QH, 14, SRC[cur].col, t, .55 * win(v, 0, 3.1, .25));
   txt('쿼리 미리보기', QX + 28, QY + 40, { size: 19, weight: 800 });
   hline(QX, QX + QW, QY + 60, U.line);
   const i = clamp(cur, 0, 4), sc = SRC[i];
@@ -874,7 +975,7 @@ function phaseSources(t) {
     txt(sc.tbl, QX + 28 + tw('쿼리 미리보기', 19, 800) + 16, QY + 40, { size: 19, weight: 700, color: sc.col, mono: true });
     const pr = eio(p(vv, .8, 2.2));
     txt(`조회 범위 ${nfmt(sc.scan * pr)}행 · 일치 ${nfmt(sc.hit * pr)}행`, QX + QW - 28, QY + 40, { size: 16, weight: 600, color: U.dim, align: 'right', mono: true });
-    box(QX + 16, QY + 74, QW - 32, 50, { r: 8, fill: '#f6f7fb', stroke: U.line });
+    box(QX + 16, QY + 74, QW - 32, 50, { r: 8, fill: U.panel2, stroke: U.line });
     const q = `WHERE ${sc.key} AND ts >= now() - 10m`, qn = Math.floor(q.length * p(vv, .1, .7));
     txt('›', QX + 32, QY + 107, { size: 21, weight: 700, color: U.accent, mono: true });
     txt(q.slice(0, qn), QX + 56, QY + 107, { size: 19, weight: 500, mono: true });
@@ -892,10 +993,10 @@ function phaseSources(t) {
       if (match) check(QX + QW - 34, y - 6, 16, sc.col, .5 + .5 * nr);
     }
     ctx.restore();
-    if (vv > .8 && vv < 3.0) hline(QX + 1, QX + QW - 1, scanY, rgba(U.accent, .5), 1.5, [6, 5]);
+    if (vv > .8 && vv < 3.0) glowLine(QX + 1, QX + QW - 1, scanY, sc.col, win(vv, .8, 3.0, .2));
     const ko = eo(p(vv, 3.0, .3));
     if (ko > 0) {
-      ctx.save(); ctx.globalAlpha *= ko * .9; ctx.fillStyle = '#ffffff'; ctx.fillRect(QX + 1, RY, QW - 2, NR * RH); ctx.restore();
+      ctx.save(); ctx.globalAlpha *= ko * .9; ctx.fillStyle = U.panel; ctx.fillRect(QX + 1, RY, QW - 2, NR * RH); ctx.restore();
       txt(`일치 ${nfmt(sc.hit)}${sc.fn ? '행' : '건'}`, QX + QW / 2, RY + 132, { size: 40, weight: 800, color: sc.col, align: 'center', alpha: ko });
       txt(`${sc.name} · ${sc.keyName}`, QX + QW / 2, RY + 174, { size: 19, color: U.dim, align: 'center', alpha: ko });
       if (i === 3) txt('서버 → 호스트 · DB 매핑으로 찾은 이름', QX + QW / 2, RY + 208, { size: 17, color: U.faint, align: 'center', alpha: ko });
@@ -904,11 +1005,20 @@ function phaseSources(t) {
     ctx.restore();
     const kd = eo(p(t, RUN_DONE + .05, .4));
     if (kd > 0) {
-      ctx.save(); ctx.globalAlpha *= kd; ctx.fillStyle = '#ffffff'; ctx.fillRect(QX + 1, QY + 62, QW - 2, QH - 64); ctx.restore();
+      ctx.save(); ctx.globalAlpha *= kd; ctx.fillStyle = U.panel; ctx.fillRect(QX + 1, QY + 62, QW - 2, QH - 64); ctx.restore();
       ctx.save(); ctx.globalAlpha *= kd; ctx.fillStyle = rgba(U.ok, .1); ctx.beginPath(); ctx.arc(QX + QW / 2, QY + 190, 44, 0, 7); ctx.fill(); ctx.restore();
       check(QX + QW / 2, QY + 190, 50, U.ok, kd);
       txt('조회 완료 · 데이터 소스 5곳', QX + QW / 2, QY + 292, { size: 32, weight: 800, align: 'center', alpha: kd });
       txt('일치 12,306행  (600 + 120 + 11,523 + 60 + 3)', QX + QW / 2, QY + 336, { size: 18, color: U.dim, align: 'center', mono: true, alpha: kd });
+    }
+  }
+  // results stream into the source row
+  if (live && v > 3.0 && v < 4.0) {
+    const tx = 336 + 236 + 116, ty = 358 + cur * 134 + 80, sc2 = SRC[cur];
+    for (let j = 0; j < 14; j++) {
+      const f = clamp((v - 3.0 - j * .035) / .62); if (f <= 0 || f >= 1) continue;
+      const P = [[QX + 300 + j * 30, QY + 300], [QX + 120, QY + 80 - j * 6], [tx + 160, ty - 120], [tx, ty]], q = bezPt(P, eio(f));
+      dot(q[0], q[1], 4, sc2.col, Math.sin(f * Math.PI), 16);
     }
   }
   // console log
@@ -945,7 +1055,8 @@ function phaseLayers(t) {
   LAY.forEach((ly, i) => {
     const x = 336, y = 356 + i * 170, w = 408, h = 150, s0 = C0 + i * CDT, act = cur === i, judged = t >= verdictAt(i);
     if (i < 3) { vline(x + 52, y + h + 2, y + h + 18, U.line2, 2); ctx.save(); ctx.fillStyle = U.line2; ctx.beginPath(); ctx.moveTo(x + 46, y + h + 14); ctx.lineTo(x + 58, y + h + 14); ctx.lineTo(x + 52, y + h + 21); ctx.fill(); ctx.restore(); }
-    box(x, y, w, h, { r: 12, fill: act ? rgba(ly.col, .06) : '#ffffff', stroke: act ? ly.col : U.line, lw: act ? 2.5 : 1.5 });
+    box(x, y, w, h, { r: 12, fill: act ? rgba(ly.col, .08) : U.panel2, stroke: act ? rgba(ly.col, .35) : U.line, lw: 1.5 });
+    if (act) flowBorder(x, y, w, h, 12, ly.col, t);
     const ta = act || judged || cur < 0 ? 1 : .55;
     icon(ly.icon, x + 52, y + 72, 46, ly.col, ta);
     txt(ly.name, x + 100, y + 68, { size: 24, weight: 800, color: ly.col, alpha: ta });
@@ -1035,7 +1146,7 @@ function vServer(w, t, i) {
   const ke = eo(p(w, 1.9, .4)), ex = sx(243, x, cw);
   vline(ex, y - 2, y + ch, OPS, 2, [5, 5], ke);
   const el = '21:14:03 boss_spawn 화염룡', elw = tw(el, 16, 600, true) + 22;
-  box(ex - elw - 10, y + 8, elw, 32, { r: 8, fill: '#ffffff', stroke: OPS, alpha: ke });
+  box(ex - elw - 10, y + 8, elw, 32, { r: 8, fill: U.panel2, stroke: OPS, alpha: ke });
   txt(el, ex - elw + 1, y + 30, { size: 16, weight: 600, color: OPS, mono: true, alpha: ke });
   const kk = eo(p(w, 2.2, .4)), bx0 = sx(B0, x, cw), bx1 = sx(B1, x, cw);
   ctx.save(); ctx.globalAlpha *= kk; ctx.strokeStyle = U.red; ctx.lineWidth = 2;
@@ -1051,7 +1162,7 @@ function vInfra(w, t, i) {
     const y = 444 + j * 64, k = eo(p(w, .2 + j * .15, .4)), fill = eio(p(w, .4 + j * .15, .7));
     txt(lab, gx, y, { size: 19, weight: 600, alpha: k });
     txt((v < 1 ? v.toFixed(1) : String(v)) + unit, gx + gw, y, { size: 19, weight: 700, color: L.infra, align: 'right', mono: true, alpha: k });
-    box(gx, y + 12, gw, 14, { r: 7, fill: '#eef0f5', stroke: null, alpha: k });
+    box(gx, y + 12, gw, 14, { r: 7, fill: U.line, stroke: null, alpha: k });
     ctx.save(); ctx.globalAlpha *= k; rr(gx, y + 12, Math.max(14, gw * v / max * fill), 14, 7); ctx.fillStyle = L.infra; ctx.fill(); ctx.restore();
     vline(gx + gw * lim / max, y + 6, y + 32, U.red, 2, null, k);
   });
@@ -1060,7 +1171,7 @@ function vInfra(w, t, i) {
   const N = [['asterra-01', flat(16, 10, 61)], ['asterra-02', flat(17, 9, 62)], ['asterra-03', tickMs], ['asterra-04', flat(15, 11, 63)]];
   N.forEach(([name, fn], j) => {
     const y = 420 + j * 60, k = eo(p(w, .4 + j * .2, .4)), me = name === 'asterra-03';
-    box(nx, y, nw, 52, { r: 8, alpha: k, stroke: me ? rgba(L.server, .6) : U.line, fill: me ? rgba(L.server, .06) : '#ffffff' });
+    box(nx, y, nw, 52, { r: 8, alpha: k, stroke: me ? rgba(L.server, .6) : U.line, fill: me ? rgba(L.server, .06) : U.panel2 });
     txt(name, nx + 14, y + 33, { size: 16, weight: 700, color: me ? L.server : U.text, mono: true, alpha: k });
     series(fn, nx + 132, y + 8, nw - 210, 36, { max: 250, th: 50, color: L.server, k: eio(p(w, .6 + j * .2, .9)), lw: 2, n: 120, a: k });
     if (me) txt('여기만 튐', nx + nw - 12, y + 32, { size: 15, weight: 700, color: U.red, align: 'right', alpha: k });
@@ -1095,22 +1206,23 @@ function scrD(t) {
   const hvGuide = near(t, 1270, 176, 1440, 220) || (t >= 81.9 && t < 82.3), hvShare = near(t, 1500, 170, 1650, 226);
   txt('판정 기준 보기', 1355, 205, { size: 19, weight: 700, color: U.accent, align: 'center' });
   if (hvGuide) hline(1290, 1420, 212, U.accent, 1.5);
-  box(1500, 170, 150, 56, { r: 10, fill: hvShare ? '#f3f4f8' : '#ffffff', stroke: U.line2 });
+  box(1500, 170, 150, 56, { r: 10, fill: hvShare ? U.line : U.panel2, stroke: U.line2 });
   txt('공유', 1575, 206, { size: 20, weight: 700, align: 'center' });
   box(1670, 170, 210, 56, { r: 10, fill: U.accent, stroke: null });
   txt('티켓 만들기', 1775, 206, { size: 20, weight: 700, color: '#fff', align: 'center' });
   // verdict banner
-  const kb = eo(p(t, 64.8, .5));
-  box(320, 280, 1560, 146, { r: 16, fill: '#fff7ea', stroke: '#f2cf94', alpha: kb });
+  const kb = eo(p(t, 66.0, .5));
+  box(320, 280, 1560, 146, { r: 16, fill: 'rgba(251,191,36,0.07)', stroke: 'rgba(251,191,36,0.42)', alpha: kb });
+  flowBorder(320, 280, 1560, 146, 16, L.server, t, kb * .8);
   ctx.save(); ctx.globalAlpha *= kb;
   icon('srv', 382, 353, 58, L.server);
-  txt('판정 결과', 440, 334, { size: 17, weight: 700, color: '#a16207' });
-  const kv = eback(p(t, 65.0, .5));
-  ctx.save(); ctx.translate(440, 394); ctx.scale(clamp(kv, 0, 1.15), clamp(kv, 0, 1.15)); txt('게임서버 렉', 0, 0, { size: 46, weight: 900, color: '#b45309' }); ctx.restore();
+  txt('판정 결과', 440, 334, { size: 17, weight: 700, color: '#fcd34d' });
+  const kv = eback(p(t, 66.05, .5));
+  ctx.save(); ctx.translate(440, 394); ctx.scale(clamp(kv, 0, 1.15), clamp(kv, 0, 1.15)); txt('게임서버 렉', 0, 0, { size: 46, weight: 900, color: '#fbbf24' }); ctx.restore();
   [['구간', '21:14:05–21:14:40 (35초)'], ['영향 (추정)', 'asterra-03 접속자 전원'], ['계기', '21:14:03 boss_spawn']].forEach(([lab, val], j) => {
-    const x = 900 + j * 330, k = eo(p(t, 65.4 + j * .2, .4));
-    vline(x - 24, 312, 396, '#f2cf94', 1.5, null, k);
-    txt(lab, x, 340, { size: 16, weight: 700, color: '#a16207', alpha: k });
+    const x = 900 + j * 330, k = eo(p(t, 66.3 + j * .2, .4));
+    vline(x - 24, 312, 396, 'rgba(251,191,36,0.42)', 1.5, null, k);
+    txt(lab, x, 340, { size: 16, weight: 700, color: '#fcd34d', alpha: k });
     txt(val, x, 380, { size: 21, weight: 700, alpha: k });
   });
   ctx.restore();
@@ -1119,8 +1231,8 @@ function scrD(t) {
   box(TX, TY, TW, TH, { shadow: .6 });
   txt('같은 시간축으로 본 네 층', TX + 28, TY + 40, { size: 20, weight: 800 });
   txt('빨간 구간 = 판정 구간', TX + TW - 28, TY + 40, { size: 15, color: U.dim, align: 'right' });
-  const sx0 = TX + 170, sw = TW - 200, ph = eio(p(t, 65.2, 1.6));
-  const bx0 = sx(B0, sx0, sw), bx1 = sx(B1, sx0, sw), kband = eo(p(t, 66.3, .4));
+  const sx0 = TX + 170, sw = TW - 200, ph = eio(p(t, 66.3, 1.6));
+  const bx0 = sx(B0, sx0, sw), bx1 = sx(B1, sx0, sw), kband = eo(p(t, 67.3, .4));
   box(bx0, TY + 64, bx1 - bx0, 4 * 108, { r: 4, fill: rgba(U.red, .10), stroke: rgba(U.red, .55), lw: 1.5, alpha: kband });
   if (kband > 0) chip('35초', (bx0 + bx1) / 2, TY + 64, U.red, { size: 15, align: 'center', alpha: kband, fillA: .14 });
   TRACKS.forEach(([name, unit, col, fn, max, th], j) => {
@@ -1152,9 +1264,9 @@ function scrD(t) {
   box(EX, EY, EW, TH, { shadow: .6 });
   txt('근거', EX + 28, EY + 40, { size: 20, weight: 800 });
   WHY.forEach(([col, title, sub, tag, tagCol], j) => {
-    const k = eo(p(t, 66.6 + j * .3, .4)); if (k <= 0) return;
+    const k = eo(p(t, 67.5 + j * .3, .4)); if (k <= 0) return;
     const x = EX + 16, y = EY + 60 + j * 104, w = EW - 32, h = 94, hv = near(t, x, y, x + w, y + h);
-    box(x, y, w, h, { r: 12, alpha: k, fill: hv ? '#f6f7fb' : j === 0 ? rgba(U.red, .04) : '#ffffff', stroke: hv ? U.line2 : j === 0 ? rgba(U.red, .35) : U.line });
+    box(x, y, w, h, { r: 12, alpha: k, fill: hv ? U.panel2 : j === 0 ? rgba(U.red, .04) : U.panel2, stroke: hv ? U.line2 : j === 0 ? rgba(U.red, .35) : U.line });
     ctx.save(); ctx.globalAlpha *= k; ctx.fillStyle = col; ctx.fillRect(x, y + 16, 4, h - 32); ctx.restore();
     txt(title, x + 22, y + 40, { size: 19, weight: 800, alpha: k });
     txt(sub, x + 22, y + 72, { size: 16, color: U.dim, alpha: k });
@@ -1164,7 +1276,7 @@ function scrD(t) {
   const kt = Math.min(eo(p(t, 79.6, .3)), 1 - eo(p(t, 81.7, .3)));
   if (kt > 0) {
     ctx.save(); ctx.globalAlpha *= kt; ctx.translate(0, (1 - kt) * 20);
-    box(890, 900, 420, 64, { r: 14, fill: '#111827', stroke: null, shadow: 1.5 });
+    box(890, 900, 420, 64, { r: 14, fill: '#222b45', stroke: null, shadow: 1.5 });
     check(926, 932, 24, '#4ade80');
     txt('리포트 링크를 복사했습니다', 952, 940, { size: 20, weight: 700, color: '#f9fafb' });
     ctx.restore();
@@ -1183,18 +1295,46 @@ const CASES = [
   { name: '클라이언트 렉', col: L.client, hot: [0], l1: '프레임 시간만 튀고, RTT · 틱은 정상', l2: '같은 서버라도 PC · 장면에 따라 갈림' },
 ];
 const SIG = ['프레임', 'RTT', '틱', '호스트·DB'];
+function reveal(t) {
+  if (t < 64.2 || t > 66.6) return;
+  const dim = Math.min(eo(p(t, 64.3, .45)), 1 - eo(p(t, 65.9, .5)));
+  ctx.save(); ctx.globalAlpha *= dim; ctx.fillStyle = 'rgba(2,4,10,0.72)'; ctx.fillRect(280, 52, W - 280, H - 52); ctx.restore();
+  const cx = 1100, cy = 560, fly = eio(p(t, 65.7, .55));
+  // ring pulses
+  [65.0, 65.25].forEach(s0 => { const k = p(t, s0, .9); if (k <= 0 || k >= 1) return;
+    ctx.save(); ctx.globalAlpha *= (1 - k) * .8; ctx.strokeStyle = L.server; ctx.lineWidth = 3; ctx.shadowColor = L.server; ctx.shadowBlur = 24;
+    ctx.beginPath(); ctx.arc(cx, cy, 120 + 620 * eo(k), 0, 7); ctx.stroke(); ctx.restore(); });
+  const k = eback(p(t, 64.6, .6)); if (k <= 0) return;
+  const w0 = 860, h0 = 250, bx = lerp(cx - w0 / 2, 320, fly), by = lerp(cy - h0 / 2, 280, fly), bw = lerp(w0, 1560, fly), bh = lerp(h0, 146, fly);
+  const a = clamp(k) * (1 - eo(p(t, 66.0, .35)));
+  ctx.save(); ctx.globalAlpha *= a;
+  const s = lerp(clamp(k, 0, 1.08), 1, fly); ctx.translate(bx + bw / 2, by + bh / 2); ctx.scale(s, s); ctx.translate(-(bx + bw / 2), -(by + bh / 2));
+  const bloom = ctx.createRadialGradient(bx + bw / 2, by + bh / 2, 0, bx + bw / 2, by + bh / 2, 600);
+  bloom.addColorStop(0, rgba(L.server, .28 * (1 - fly))); bloom.addColorStop(1, rgba(L.server, 0)); ctx.fillStyle = bloom; ctx.fillRect(bx - 600, by - 600, bw + 1200, bh + 1200);
+  box(bx, by, bw, bh, { r: 20, fill: U.panel, stroke: rgba(L.server, .5), glow: L.server });
+  flowBorder(bx, by, bw, bh, 20, L.server, t, 1, 3);
+  ctx.save(); ctx.beginPath(); ctx.rect(bx, by, bw, bh); ctx.clip();
+  icon('srv', bx + 92, by + bh / 2, lerp(84, 58, fly), L.server);
+  txt('판정 결과', bx + 170, by + lerp(88, 54, fly), { size: lerp(22, 17, fly), weight: 700, color: '#fcd34d' });
+  ctx.save(); ctx.shadowColor = rgba(L.server, .8); ctx.shadowBlur = 30;
+  txt('게임서버 렉', bx + 170, by + lerp(170, 114, fly), { size: lerp(76, 46, fly), weight: 900, color: L.server }); ctx.restore();
+  txt('21:14:05–21:14:40 · 35초 · 근거 5개', bx + 172, by + 216, { size: 22, color: U.text2, alpha: 1 - fly });
+  ctx.restore(); ctx.restore();
+}
 function drawer(t) {
   const k = eo(p(t, 82.0, .5)); if (k <= 0) return;
-  ctx.save(); ctx.fillStyle = `rgba(15,23,42,${.3 * k})`; ctx.fillRect(280, 52, W - 280, H - 52); ctx.restore();
+  ctx.save(); ctx.fillStyle = `rgba(2,4,10,${.55 * k})`; ctx.fillRect(280, 52, W - 280, H - 52); ctx.restore();
   const dx = lerp(W + 20, 1100, k), dw = 820;
-  ctx.save(); ctx.shadowColor = 'rgba(15,23,42,.25)'; ctx.shadowBlur = 40; ctx.fillStyle = '#ffffff'; ctx.fillRect(dx, 52, dw, H - 52); ctx.restore();
+  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 60; ctx.fillStyle = U.win; ctx.fillRect(dx, 52, dw, H - 52); ctx.restore();
+  vline(dx, 52, H, U.line2, 1.5);
   txt('판정 기준', dx + 40, 116, { size: 30, weight: 800 });
   cross(dx + dw - 44, 104, 24, U.dim);
   txt('어느 지표가 튀고, 누가 같이 느린지로 층이 갈립니다', dx + 40, 154, { size: 18, color: U.dim });
   CASES.forEach((cs, i) => {
     const kr = eo(p(t, 82.4 + i * .3, .45)); if (kr <= 0) return;
     const x = dx + 28, y = 178 + i * 214 + (1 - kr) * 16, w = dw - 56, h = 202, now = cs.now;
-    box(x, y, w, h, { r: 14, alpha: kr, fill: now ? rgba(cs.col, .06) : '#ffffff', stroke: now ? cs.col : U.line, lw: now ? 2.5 : 1.5 });
+    box(x, y, w, h, { r: 14, alpha: kr, fill: now ? rgba(cs.col, .08) : U.panel2, stroke: now ? rgba(cs.col, .4) : U.line, lw: 1.5 });
+    if (now) flowBorder(x, y, w, h, 14, cs.col, t, kr);
     ctx.save(); ctx.globalAlpha *= kr;
     txt(cs.name, x + 24, y + 40, { size: 24, weight: 800, color: cs.col });
     if (now) chip('이번 판정', x + w - 18, y + 30, U.accent, { size: 16, align: 'right', fillA: .1 });
@@ -1211,20 +1351,27 @@ function drawer(t) {
 }
 
 // ── app + frame ──────────────────────────────────────────────
-function drawApp(t) {
-  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = 90; ctx.shadowOffsetY = 30; rr(0, 0, W, H, 24); ctx.fillStyle = U.win; ctx.fill(); ctx.restore();
+function drawApp(t, flat = false) {
+  ctx.save(); if (!flat) { ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 90; ctx.shadowOffsetY = 30; } rr(0, 0, W, H, 24); ctx.fillStyle = U.win; ctx.fill(); ctx.restore();
   ctx.save(); rr(0, 0, W, H, 24); ctx.clip();
   chrome(t < 16.4 ? '/diagnose/new' : t < 64.5 ? '/diagnose/2381' : '/verdicts/2381');
   sidebar(t); topbar(t);
-  scrA(t); scrRun(t); scrD(t); drawer(t);
+  scrA(t); scrRun(t); scrD(t); reveal(t); drawer(t);
   ctx.restore();
 }
+const SHIFT = 3.0;   // the intro runs before app time 0
 function renderAt(t) {
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
+  const ta = t - SHIFT;
   desk(t); intro(t);
-  const aApp = Math.min(eo(p(t, 2.5, .8)), 1 - eo(p(t, 94.6, .6)));
-  if (aApp > 0) { ctx.save(); camera(t); ctx.globalAlpha = aApp; drawApp(t); drawPointer(t); ctx.restore(); }
-  captions(t); footnote(t); outro(t);
+  if (t >= 4.4 && ta < 3.0) {
+    if (!FLY) FLY = offscreen(W, H);
+    renderAppTo(FLY, Math.max(0, ta), 1);
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; drawPersp(FLY, eio(p(t, 4.4, 1.6)));
+  }
+  const aApp = ta >= 3.0 ? 1 - eo(p(ta, 94.6, .6)) : 0;
+  if (aApp > 0) { ctx.save(); camera(ta); ctx.globalAlpha = aApp; drawApp(ta); drawPointer(ta); ctx.restore(); }
+  captions(ta); footnote(ta); outro(ta);
   const fo = p(t, DURATION - .6, .6); if (fo > 0) { ctx.fillStyle = `rgba(0,0,0,${fo})`; ctx.fillRect(0, 0, W, H); }
 }
 window.renderAt = renderAt;
@@ -1250,7 +1397,7 @@ if (!location.search.includes('render')) {
   };
   const CHAPTERS = [[0, '', '인트로'], ...HEAD.map(h => [h[0], h[2], h[3]]), [DURATION - 5.5, '', '정리']];
   $('scrub').setAttribute('aria-valuemax', Math.round(DURATION));
-  const POSTER = 1.6;
+  const POSTER = 1.8;
   let t = 0, playing = false, started = false, last = 0;
   const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
 
