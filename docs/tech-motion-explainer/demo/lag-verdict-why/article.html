@@ -75,17 +75,17 @@
 <section id="ch02">
 <h2><span class="n">02</span>코드로 고정한 조사</h2>
 <p class="sub">같은 데이터면 같은 순서 · 기준 · 판정 · <a class="scene" href="index.html#ch02">▶ 이 장면 보기</a></p>
-<p>Lag Verdict는 조사를 코드로 고정합니다. 입력(프로젝트 · 서버 · 캐릭터) → 데이터 소스 다섯 곳(<code>client_perf</code>, <code>net_session</code>, <code>server_tick</code>, <code>host_metrics</code>, <code>ops_events</code>) → 확인 항목(클라이언트 → 네트워크 → 게임서버 → 인프라 순서) → 판정의 길이 항상 같습니다.</p>
+<p>Lag Verdict는 조사를 코드로 고정합니다. 입력(프로젝트 · 서버 · 캐릭터 · 신고 시각) → 데이터 소스 다섯 곳(<code>client_perf</code>, <code>net_session</code>, <code>server_tick</code>, <code>host_metrics</code>, <code>ops_events</code>) → 확인 항목(클라이언트 → 네트워크 → 게임서버 → 인프라 순서) → 판정의 길이 항상 같습니다.</p>
 <p>확인 항목과 기준값도 코드에 있습니다. 영상의 <code>verdict.rules</code>는 예시로, 1초 최대 프레임 50ms 초과, RTT p95 150ms · 손실 1% 초과, 틱 p95 50ms 초과가 10초 이상, 호스트 · DB 경고와 이웃 서버 동시 이상을 각 층의 이상 조건으로 둡니다. 세 사람이 같은 신고로 실행하면 세 번 모두 같은 데이터를 같은 순서로 보고, 같은 판정(게임서버 렉, 21:14:05–21:14:40, 근거 5개)이 나옵니다. 같은 판정이 나오는 조건은 같은 데이터입니다. 기록이 더 쌓이거나 바뀌면 판정도 그에 따라 바뀝니다.</p>
 </section>
 <section id="ch03">
 <h2><span class="n">03</span>네 층으로 나누기</h2>
 <p class="sub">네트워크 · 인프라 · 게임서버 · 클라이언트 · <a class="scene" href="index.html#ch03">▶ 이 장면 보기</a></p>
-<p>판정은 네트워크 · 인프라 · 게임서버 · 클라이언트 네 층 중 하나입니다. 어느 지표가 튀었는지와 누가 같이 느렸는지로 가릅니다.</p>
+<p>판정은 네트워크 · 인프라 · 게임서버 · 클라이언트 네 층 중 하나이고, 어느 층도 기준을 넘지 않으면 '이상 없음'입니다. 어느 지표가 튀었는지와 누가 같이 느렸는지로 가릅니다.</p>
 <ul>
 <li><strong>네트워크</strong>: RTT · 손실이 튀고 서버 틱은 정상입니다.</li>
-<li><strong>인프라</strong>: 호스트 · DB 지표가 튀고, 같은 호스트 · DB를 쓰는 이웃 서버가 함께 느려집니다.</li>
-<li><strong>게임서버</strong>: 틱만 예산을 넘습니다. 이번 판정이고, 계기는 21:14:03 <code>boss_spawn</code>, 틱은 최대 210ms였습니다.</li>
+<li><strong>인프라</strong>: 호스트 · DB 지표가 튀고, 같은 호스트 · DB를 쓰는 이웃 서버가 함께 느려집니다. 이때 그 서버들의 틱도 같이 밀리므로, 틱만 보고 게임서버로 정하지 않고 호스트 · 이웃 서버를 함께 봅니다.</li>
+<li><strong>게임서버</strong>: 틱만 예산을 넘고 호스트 · 이웃 서버는 정상입니다. 이번 판정이고, 틱 p95는 210ms, 직전 이벤트는 21:14:03 <code>boss_spawn</code>입니다. 판정은 층과 구간까지 말합니다. 보스 스폰 때 무엇이 틱을 밀었는지(예: 할당이 몰려 생긴 GC)는 그다음 조사입니다.</li>
 <li><strong>클라이언트</strong>: 프레임만 튀고 RTT · 틱은 정상입니다.</li>
 </ul>
 <p>판정에는 원인 층과 함께 구간과 근거가 남아, 같은 리포트를 보고 대응을 정할 수 있습니다.</p>
