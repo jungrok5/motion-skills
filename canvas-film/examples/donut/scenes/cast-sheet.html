@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>마지막 도넛 · 캐스트 시트</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Gaegu:wght@400;700&family=Jua&family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;700&family=Noto+Serif+KR:wght@600&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="kit-webtoon.js"></script>
+<script src="donut-cast.js"></script>
+<script>
+/* The cast sheet: every character in the shared cast file, normal + SD + key expressions, the props, and one of each balloon /
+   SFX / effect from the webtoon kit — the reference every scene author checks against. Four pages, 1.5 s each (stills at
+   1, 2.2, 3.7, 5.2 show one page each; the micro-motion — blinks, sway, focus-line boil, crumble — runs inside a page). */
+const WT = Webtoon, C = Cast, DUR = 6, { clamp, lerp, ss } = Pilot;
+const head = (ctx, s, y) => Pilot.text(ctx, s, 540, y, { size: 40, font: WT.F.shout, color: WT.C.ink });
+const label = (ctx, s, x, y, sz = 26) => Pilot.text(ctx, s, x, y, { size: sz, font: WT.F.talk, color: '#6a5f66' });
+const COLX = [118, 329, 540, 751, 962];
+function page1(ctx, t, u) {
+  head(ctx, '캐스트 · 정면 / 3/4 / SD', 70);
+  C.WHO.forEach((w, i) => {
+    C.draw(ctx, t, w, { x: COLX[i], y: 760, s: .98 });
+    label(ctx, C.NAME[w], COLX[i], 800, 30);
+  });
+  // 3/4 views with hand poses (IK to targets)
+  const y2 = 1390, s2 = .82;
+  C.draw(ctx, t, 'park', { x: COLX[0] - 20, y: y2, s: s2, turn: .55, expr: 'glint', arms: { L: { to: [COLX[0] + 70, y2 - 330], hand: 'grab' } } });
+  C.draw(ctx, t, 'kim', { x: COLX[1] - 10, y: y2, s: s2, turn: .5, arms: { L: { to: [COLX[1] + 44, y2 - 300], hand: 'hold', prop: (c, H) => C.mug(c, H.grip[0] + 6, H.grip[1] + 30, .62, { steam: true, t }) } } });
+  C.draw(ctx, t, 'choi', { x: COLX[2] + 10, y: y2, s: s2, turn: -.5, expr: 'determined', arms: { R: { to: [COLX[2] - 50, y2 - 450], hand: 'fist', ang: -1.9 } } });
+  C.draw(ctx, t, 'haneul', { x: COLX[3], y: y2, s: s2, turn: .5, expr: 'chew', arms: { L: { to: [COLX[3] + 40, y2 - 365], hand: 'pinch', propFront: (c, H) => C.donut(c, H.grip[0] + 18, H.grip[1] - 4, 22, { bite: 1, seed: 3 }) } } });
+  C.draw(ctx, t, 'boss', { x: COLX[4] + 10, y: y2, s: s2, turn: -.5, arms: { R: { to: [COLX[4] - 60, y2 - 440], hand: 'wave', ang: -1.7 } } });
+  label(ctx, '3/4 · IK 손: 잡기 · 컵 · 주먹 · 집기 · 흔들기', 540, 1440, 24);
+  // SD row
+  C.WHO.forEach((w, i) => C.sd(ctx, t, w, { x: COLX[i], y: 1850, s: .82, expr: ['neutral', 'smile', 'determined', 'happy', 'happy'][i] }));
+  label(ctx, 'SD 1:1.5', 540, 1895, 24);
+}
+const EXP = ['neutral', 'smile', 'glint', 'shock', 'cry', 'chew', 'determined', 'dead'];
+const EXPK = { neutral: '보통', smile: '눈웃음', glint: '번뜩', shock: '충격', cry: '울음', chew: '냠냠', determined: '결의', dead: '동태눈' };
+function page2(ctx, t, u) {
+  head(ctx, '표정 8종 (얼굴 클로즈업)', 70);
+  EXP.forEach((e, j) => {
+    const y = 210 + j * 216;
+    label(ctx, EXPK[e], 40, y - 80, 22);
+    C.WHO.forEach((w, i) => { ctx.save(); ctx.beginPath(); ctx.rect(COLX[i] - 104, y - 108, 208, 212); ctx.clip();
+      C.face(ctx, t, w, COLX[i] + 6, y + 8, 1.42, { expr: e, turn: i % 2 ? -.3 : .3 }); ctx.restore(); });
+  });
+}
+function page3(ctx, t, u) {
+  head(ctx, '도넛 · 소품 · 손', 70);
+  C.donut(ctx, 140, 220, 90, { t }); label(ctx, '도넛', 140, 330);
+  C.donut(ctx, 360, 220, 90, { bite: 2, seed: 4, t }); label(ctx, '한 입', 360, 330);
+  C.box(ctx, 610, 350, 240, { n: 1, last: true, t, seed: 2 }); label(ctx, '마지막 하나', 610, 386);
+  C.box(ctx, 900, 350, 240, { n: 6, t, glow: 1, seed: 5 }); label(ctx, '가득 (빛)', 900, 386);
+  // props
+  ctx.save(); ctx.translate(0, 400); ctx.beginPath(); ctx.rect(0, 0, 1080, 560); ctx.clip(); C.room(ctx, t, 'pantry', 1080, 560, { horizon: 470 });
+  C.fridge(ctx, 40, 470, .58); C.counter(ctx, 250, 300, 500, .52); C.coffee(ctx, 380, 300, .7); C.mug(ctx, 500, 300, .9, { steam: true, t }); C.box(ctx, 640, 300, 170, { n: 1, last: true, seed: 2 });
+  C.desk(ctx, 800, 330, 260, .45, { t, glow: 1 }); ctx.restore();
+  ctx.strokeStyle = WT.C.border; ctx.lineWidth = 5; ctx.strokeRect(0, 400, 1080, 560);
+  label(ctx, '냉장고 · 조리대 · 커피머신 · 머그 · 상자 · 책상', 540, 1000);
+  // hands
+  const hy = 1180, poses = [['scissors', '가위'], ['rock', '바위'], ['paper', '보'], ['point', '가리킴'], ['grab', '잡기'], ['pinch', '집기']];
+  const who = ['park', 'kim', 'choi', 'park', 'choi', 'haneul'];
+  poses.forEach(([p, n], i) => { const x = 110 + i * 172; C.hand(ctx, who[i], p, x - 10, hy + 20, -1.5, 46, { flip: 1, len: 1.6 }); label(ctx, n, x, hy + 150, 24); });
+  // balloons
+  const bl = [
+    { kind: 'talk', text: '과장님 드세요~', x: 270, y: 1420, tail: [180, 1530] },
+    { kind: 'shout', text: '가위바위보!', x: 790, y: 1420, tail: [900, 1540] },
+    { kind: 'think', text: '(절대 양보 못 해)', x: 280, y: 1640, tail: [150, 1760] },
+    { kind: 'whisper', text: '……드실래요?', x: 790, y: 1640, tail: [860, 1750] },
+    { kind: 'narr', text: '오후 3시. 당이 떨어지는 시간.', x: 300, y: 1830 },
+    { kind: 'mono', text: '…단 거.', x: 820, y: 1830 },
+  ];
+  WT.balloons(ctx, 10, bl);
+}
+function page4(ctx, t, u) {
+  head(ctx, '효과 · 기호 · 효과음 · 석화', 70);
+  const tile = (x, y, w, h, fn, name) => { ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip(); ctx.translate(x, y); fn(w, h); ctx.restore(); ctx.strokeStyle = WT.C.border; ctx.lineWidth = 4; ctx.strokeRect(x, y, w, h); label(ctx, name, x + w / 2, y + h + 32, 24); };
+  const W3 = 320, H3 = 360, X = [30, 380, 730];
+  tile(X[0], 120, W3, H3, (w, h) => { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); WT.focus(ctx, t, { cx: w / 2, cy: h / 2, rx: w / 2, ry: h / 2, seed: 3 }); C.face(ctx, t, 'park', w / 2, h / 2, 1.3, { expr: 'shock' }); }, '집중선 (10fps)');
+  tile(X[1], 120, W3, H3, (w, h) => { ctx.fillStyle = '#eef2f8'; ctx.fillRect(0, 0, w, h); WT.speed(ctx, t, { x: 0, y: 0, w, h, ang: 0, n: 60, color: WT.rgba('#3a4058', .7), gap: { cx: w / 2, cy: h / 2 + 20, rx: 90, ry: 120 } }); C.sd(ctx, t, 'choi', { x: w / 2, y: h - 20, s: .8, pose: 'run', ph: t * 2.5, turn: .5, expr: 'determined' }); }, '속도선');
+  tile(X[2], 120, W3, H3, (w, h) => { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); WT.toneGrad(ctx, 0, 0, w, h, { from: .85, to: 0, y1: h * .8 }); WT.tone(ctx, .18, [0, h * .78, w / 2, h * .22]); WT.tone(ctx, .42, [w / 2, h * .78, w / 2, h * .22]); }, '그라데이션 톤 · 18/42%');
+  tile(X[0], 560, W3, H3, (w, h) => { WT.moodBg(ctx, t, 'sparkle', 0, 0, w, h); WT.rays(ctx, t, w / 2, h * .55, { r1: 500 }); C.donut(ctx, w / 2, h * .55, 70, { glow: 1, t }); }, '빛줄기 · 반짝');
+  tile(X[1], 560, W3, H3, (w, h) => { ctx.fillStyle = '#e9e4ef'; ctx.fillRect(0, 0, w, h); WT.aura(ctx, t, { x: w / 2, y: h * .58, w: 220, h: 300 }); C.sd(ctx, t, 'kim', { x: w / 2, y: h - 30, s: .78, expr: 'glint', eyes: 'focus' }); WT.rumble(ctx, t, { text: '쿠구구구', x: w / 2 + 20, y: 70, size: 64, at: 0 }); }, '오라 · 쿠구구구');
+  tile(X[2], 560, W3, H3, (w, h) => { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); WT.flash(ctx, u, .2, { rect: [0, 0, w, h], dur: 1.2 }); WT.sfx(ctx, t, { text: '번쩍', x: w / 2, y: h / 2, size: 120, at: 4.5, fill: ['#fff6a0', '#ffb43a'], echo: 2 }); }, '플래시 · 번쩍');
+  // emotes on SD heads
+  const ex = ['sweat', 'vein', 'blush', 'sparkle', 'gloom', 'swirl', 'qex', 'shock'];
+  ex.forEach((k, i) => { const x = 70 + i * 134, y = 1160; const w = C.WHO[i % 5]; const g = C.sd(ctx, t, w, { x, y, s: .5, expr: k === 'gloom' ? 'dead' : k === 'vein' ? 'angry' : k === 'blush' ? 'smile' : 'neutral' });
+    WT.emote(ctx, t, k, g.head, { at: 4.5 + i * .02 }); label(ctx, k, x, y + 36, 20); });
+  // SFX row
+  WT.sfx(ctx, t, { text: '꼬르륵', x: 190, y: 1300, size: 84, at: 4.5, fill: '#fff', rot: -.08 });
+  WT.sfx(ctx, t, { text: '두근', x: 470, y: 1300, size: 96, at: 4.6, fill: '#ff8fae', beat: 1.2, rot: .05 });
+  WT.sfx(ctx, t, { text: '바삭', x: 720, y: 1300, size: 84, at: 4.7, fill: '#ffe08a' });
+  WT.sfx(ctx, t, { text: '털썩', x: 940, y: 1300, size: 80, at: 4.8, fill: '#d6d6dc', rot: .12 });
+  // tears + stone + crumble
+  C.sd(ctx, t, 'park', { x: 150, y: 1720, s: .85, expr: 'joy', tearAt: 4.5, tearFloor: 1720 }); label(ctx, '기쁨의 눈물', 150, 1770, 22);
+  C.face(ctx, t, 'choi', 390, 1600, 1.5, { expr: 'cry', tearAt: 4.5 }); label(ctx, '울음', 500, 1500, 22);
+  C.stone(ctx, t, 'kim', { x: 620, y: 1720, s: .85, crack: clamp(u / 1.2) }); label(ctx, '석화', 620, 1770, 22);
+  C.crumble(ctx, t, 'haneul', { x: 860, y: 1720, s: .85 }, { t0: 4.9 }); label(ctx, '와르르', 860, 1770, 22);
+  WT.sfx(ctx, t, { text: '털썩', x: 860, y: 1840, size: 64, at: 5.2, fill: '#d6d6dc' });
+}
+function draw(ctx, t) {
+  WT.begin(ctx);
+  WT.paper(ctx, 0, 0, 1080, 1920);
+  const pg = Math.min(3, Math.floor(t / 1.5)), u = t - pg * 1.5;
+  [page1, page2, page3, page4][pg](ctx, t, u);
+}
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: DUR, fonts: WT.FONTS, draw });
+</script>
+</body>
+</html>
