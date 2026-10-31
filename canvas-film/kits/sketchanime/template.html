@@ -97,7 +97,7 @@ function seed(ctx, p) { D.shape(ctx, P().ell(p[0], p[1], 7, 5, .4), '#a8825f', {
 // ---------------------------------------------------------------- sky, ground, camera
 function world(ctx, t) {
   const drift = t * 9;
-  D.cloud(ctx, 780 - drift, 600, 230, 120, t, { seed: 5, col: '#eef2f7', sh: '#d8e1ec', n: 10, front: 2, lw: 1.6, shade: .5 });
+  D.cloud(ctx, 780 - drift, 600, 230, 120, t, { seed: 5, col: '#eef2f7', sh: '#d8e1ec', n: 10, front: 1, lw: 1.6, shade: .5 });
   D.cloud(ctx, 230 - drift * .6, 790, 150, 80, t, { seed: 9, col: '#f2f4f8', sh: '#dde4ee', n: 8, front: 1, lw: 1.4, shade: .4 });
   D.ink(ctx, [[-60, GROUND], [1140, GROUND]], { lw: 2, heavy: null, over: 0 });
   for (let i = 0; i < 26; i++) { const x = 20 + i * 42 + 10 * Math.sin(i * 2.7), g = 6 + 6 * ((i * 7) % 3);

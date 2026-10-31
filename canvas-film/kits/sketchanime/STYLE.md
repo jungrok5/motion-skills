@@ -84,7 +84,7 @@ const S = window.SCRIPT, D = SketchAnime, GROUND = 1420;
 function draw(ctx, t) {
   D.begin(ctx, t);                                   // paper + the boil frame for this t
   ctx.save(); D.cam(ctx, 1.05, 540, 1300);
-  D.cloud(ctx, 760 - t * 9, 600, 230, 120, t, { col: '#eef2f7', sh: '#d8e1ec', front: 2 });
+  D.cloud(ctx, 760 - t * 9, 600, 230, 120, t, { col: '#eef2f7', sh: '#d8e1ec', front: 1 });
   D.ink(ctx, [[-60, GROUND], [1140, GROUND]], { lw: 2, heavy: null, over: 0 });
   const G = D.pose({ x: 480, y: D.standY(GROUND, 1.4), s: 1.4, dir: 1, ground: GROUND, t, wind: .4, seed: 3,
     look: { hairStyle: 'bob', hair: '#c9a58e', top: D.C.cream, topStyle: 'cardigan', sleeve: 'long', bottom: D.C.sage },
