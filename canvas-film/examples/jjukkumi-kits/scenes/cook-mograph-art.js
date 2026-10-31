@@ -13,8 +13,13 @@
   A.RED = '#e2452b';           // 쭈꾸미 red (the kit accent for this film)
   A.MUSTARD = '#e2a93b';
   A.NAVY = '#34497a';          // lum just above the line-art filter's solid-ink threshold, so the drafting look reads it as line work
-  A.COOK = { cook: 1, line: LINE, skin: '#ffe3d2', skin2: '#f1c2a8', blush: '#ff9e9e', hair: '#2a2321', hair2: '#4a3e3a', eye: '#2a1c16',
+  // 명현 (she caught the 쭈꾸미): dark hair tied back in a low bun, navy top, the mustard apron (her mark)
+  A.MH = { cook: 1, bun: 1, line: LINE, skin: '#ffe3d2', skin2: '#f1c2a8', blush: '#ff9e9e', hair: '#2a2321', hair2: '#4a3e3a', eye: '#2a1c16',
     top: A.NAVY, top2: '#2a3b64', cuff: '#41598f', apron: A.MUSTARD, apron2: '#c48d27', pants: '#5d5a68', pants2: '#4b4856', shoe: '#f6f1e8', shoe2: A.NAVY };
+  // 경찬: short dark hair, green-grey top, a plain cream apron
+  A.KC = { cook: 1, line: LINE, skin: '#f9dcc6', skin2: '#e9b99c', blush: '#f2a08e', hair: '#231e1c', hair2: '#453a36', eye: '#2a1c16', brow: 7,
+    top: '#6f8a6a', top2: '#5a7356', cuff: '#809b7a', apron: '#ece4d2', apron2: '#cfc4ac', pants: '#4f5360', pants2: '#40434f', shoe: '#f6f1e8', shoe2: '#5a7356' };
+  A.COOK = A.MH;
 
   // ---------------------------------------------------------------- the cook (fork of Mograph.drawFigure)
   const BODY = MG.BODY;
@@ -75,15 +80,19 @@
     ctx.beginPath(); ctx.ellipse(4, 8, 64, 70, 0, 0, TAU); ctx.fill(); ctx.stroke();                              // skull
     ctx.beginPath(); ctx.moveTo(-8, 40); ctx.quadraticCurveTo(66, 52, 70, 0); ctx.quadraticCurveTo(72, -42, 40, -60); ctx.quadraticCurveTo(0, -70, -14, -40); ctx.closePath(); ctx.fill(); ctx.stroke();   // face, chin forward
     ctx.beginPath(); ctx.ellipse(4, 8, 60, 66, 0, 0, TAU); ctx.fill();                                            // clean the skull/face seam
-    ctx.fillStyle = C.hair; ctx.beginPath();                                                                      // short hair: cap over the crown and back, nape above the collar
-    ctx.moveTo(-50, -26); ctx.quadraticCurveTo(-78, 10, -62, 50); ctx.quadraticCurveTo(-30, 96, 22, 90); ctx.quadraticCurveTo(64, 82, 72, 40);
-    ctx.lineTo(56, 46); ctx.lineTo(50, 30); ctx.lineTo(36, 42); ctx.lineTo(26, 30); ctx.lineTo(8, 40); ctx.quadraticCurveTo(-6, 30, -16, 6); ctx.quadraticCurveTo(-26, -14, -50, -26); ctx.closePath(); ctx.fill(); ctx.stroke();
+    if (C.bun) {   // a low bun at the back of the head, with a mustard tie
+      ctx.fillStyle = C.hair; ctx.beginPath(); ctx.ellipse(-70, -24, 30, 27, .3, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = C.hair2; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(-74, -22, 16, 2.2, 4.2); ctx.stroke();
+      ctx.fillStyle = A.MUSTARD; ctx.strokeStyle = L; ctx.lineWidth = 4; ctx.beginPath(); ctx.ellipse(-52, -18, 8, 16, .35, 0, TAU); ctx.fill(); ctx.stroke(); ctx.lineWidth = LW; }
+    ctx.fillStyle = C.hair; ctx.strokeStyle = L; ctx.lineWidth = LW; ctx.beginPath();                              // hair: cap over the crown and back (to the nape for the bun)
+    if (C.bun) ctx.moveTo(-40, -44), ctx.quadraticCurveTo(-70, -30, -66, 10), ctx.quadraticCurveTo(-74, 34, -62, 50); else { ctx.moveTo(-50, -26); ctx.quadraticCurveTo(-78, 10, -62, 50); } ctx.quadraticCurveTo(-30, 96, 22, 90); ctx.quadraticCurveTo(64, 82, 72, 40);
+    ctx.lineTo(56, 46); ctx.lineTo(50, 30); ctx.lineTo(36, 42); ctx.lineTo(26, 30); ctx.lineTo(8, 40); ctx.quadraticCurveTo(-6, 30, -16, 6); if (C.bun) ctx.quadraticCurveTo(-24, -26, -40, -44); else ctx.quadraticCurveTo(-26, -14, -50, -26); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.strokeStyle = C.hair2; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(-40, 64); ctx.quadraticCurveTo(-8, 84, 24, 80); ctx.stroke();   // shine
     ctx.fillStyle = C.skin; ctx.strokeStyle = L; ctx.lineWidth = 4; ctx.beginPath(); ctx.ellipse(-12, 0, 13, 17, .1, 0, TAU); ctx.fill(); ctx.stroke();   // ear
     ctx.fillStyle = C.blush; ctx.globalAlpha = .45; ctx.beginPath(); ctx.ellipse(46, -22, 13, 7, 0, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
     const bl = r.blink; ctx.fillStyle = C.eye; ctx.beginPath(); ctx.ellipse(42, 6, 9, 14 * (1 - .9 * bl), 0, 0, TAU); ctx.fill();
     if (bl < .5) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(45, 12, 3.6, 0, TAU); ctx.fill(); }
-    ctx.strokeStyle = L; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(28, 30); ctx.lineTo(54, 32); ctx.stroke();   // brow
+    ctx.strokeStyle = L; ctx.lineWidth = C.brow || 5; ctx.beginPath(); ctx.moveTo(28, 30); ctx.lineTo(54, 32); ctx.stroke();   // brow
     ctx.fillStyle = '#b8505a'; ctx.beginPath(); ctx.ellipse(56, -36, 7, 2.5 + 7 * r.mouth, 0, 0, TAU); ctx.fill();
     ctx.restore();
     armDraw(r.aNear, 0);
@@ -93,9 +102,11 @@
   MG.drawFigure = function (ctx, r, C, ax, ay) { return C && C.cook ? drawCook(ctx, r, C, ax, ay) : kitDraw(ctx, r, C, ax, ay); };
 
   // ---------------------------------------------------------------- local ↔ screen for an actor placed at (x, y, h)
-  // L(p, [lx, ly]) → screen point of a rig-local point (face = +1)
-  A.L = (p, q) => [p.x + q[0] * p.s, p.y - q[1] * p.s];
-  A.at = (x, y, h, figH = 820) => ({ x, y, s: h / figH });
+  // L(p, [lx, ly]) → screen point of a rig-local point (p.f = the actor's facing)
+  A.L = (p, q) => [p.x + (p.f || 1) * q[0] * p.s, p.y - q[1] * p.s];
+  A.toLocal = (p, q) => [(q[0] - p.x) / ((p.f || 1) * p.s), (p.y - q[1]) / p.s];
+  // at(x, y, h, f): an actor anchored at (x, y), figure h px tall, facing f = +1 (right) | −1 (left)
+  A.at = (x, y, h, f = 1, figH = 820) => ({ x, y, s: h / figH, f, h });
 
   // ---------------------------------------------------------------- 쭈꾸미 (palm-sized, round mantle, eight curled arms)
   // octo(ctx, x, y, R, o): mantle centre (x, y), mantle radius R; o = { col, rot, t (wiggle time), seed, flour 0..1, gloss 0..1,
