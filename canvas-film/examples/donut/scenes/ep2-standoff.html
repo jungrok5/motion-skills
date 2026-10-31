@@ -69,7 +69,7 @@ function eyes(c, t, P) {   // the call-back to scene 1's eye strip: three glints
     if (polite) WT.star4(c, x + w * .78, 70, 30 * WT.popPeak(clamp((t - B.polite - i * .06) / .3)), .3, '#fff6c0');
   });
   c.fillStyle = '#1d1a1f'; c.fillRect(w, 0, 12, P.h); c.fillRect(2 * w + 12, 0, 12, P.h);
-  if (polite) WT.sfx(c, t, { text: S.sfx.polite, x: P.w / 2, y: P.h - 30, size: 54, at: B.polite + .05, fill: '#ffd9e6', rot: -.04, grow: [1, 1], wild: .12 });
+  if (polite) WT.sfx(c, t, { text: S.sfx.polite, x: P.w - 130, y: P.h - 40, size: 60, at: B.polite + .05, fill: '#ffd9e6', rot: -.04, grow: [1, 1], wild: .12 });
 }
 const BOX = { x: 560, y: 616, w: 230 };
 function pantry(c, t, P) {
