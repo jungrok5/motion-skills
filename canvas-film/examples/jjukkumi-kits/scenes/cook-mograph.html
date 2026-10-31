@@ -155,7 +155,7 @@ function poseK(t) {   // 경찬
     Object.assign(P, { lean: .16 - .06 * ss(13.4, 13.8, t), look: -.18 + .1 * ss(13.4, 13.8, t), reach: toL(p, sb.near), reachAmt: 1, reachFar: toL(p, sb.far), reachFarAmt: 1, mouth: .3 + .4 * MG.beatPulse(t) });
   } else if (id === 'chat') {
     const rep = ss(18.55, 18.75, t);
-    Object.assign(P, { lean: lerp(.24, .04, rep), look: lerp(-.3, .12, rep), reachAmt: 0, reachFar: [70, 840 + 30 * Math.max(0, Math.sin((t - 19) * TAU * 2))], reachFarAmt: rep, mouth: .3 + .6 * rep, bounce: -9 * MG.beatPulse(t) + 14 * rep * (1 - ss(18.8, 19.0, t)) });
+    Object.assign(P, { lean: lerp(.24, .04, rep), look: lerp(-.3, .12, rep), reachAmt: 0, reachFar: [150, 860 + 30 * Math.max(0, Math.sin((t - 19) * TAU * 2))], reachFarAmt: rep, mouth: .3 + .6 * rep, bounce: -9 * MG.beatPulse(t) + 14 * rep * (1 - ss(18.8, 19.0, t)) });
   } else if (id === 'done') {
     const y = plateYs(t), off = 1 - ss(B.set + .05, B.set + .35, t), ch = ss(B.set + .2, B.set + .5, t), hx = PLATE_CX + PLATE_W / 2;
     Object.assign(P, { lean: (.2 + .15 * ss(B.set - .35, B.set, t)) * off + .05, look: lerp(-.25, .12, ch), cheer: ch, mouth: .3 + .6 * ch,
