@@ -407,10 +407,23 @@
     K.flat(ctx, c => K.ell(c, x, top + 6 * s, 9 * s, 7 * s), fr, { lw: 1.6, line: C.goldDk });
   };
 
+  // placeCard(ctx, s, x, y, { size = 22, w }): a little folded tent card standing on a table, a name in the centred serif
+  // (very Wes Anderson). (x, y) = the bottom centre of its front face; s = the whole string (translated).
+  K.placeCard = function (ctx, s, x, y, o = {}) {
+    const C = K.C, size = o.size || 22; ctx.save(); ctx.font = `600 ${size}px ${K.SERIF}`;
+    const w = o.w || Math.max(70, ctx.measureText(Pilot.tr(s)).width + 30), h = size + 16;
+    ctx.fillStyle = 'rgba(60,20,50,.2)'; ctx.beginPath(); ctx.ellipse(x, y + 1, w * .55, 5, 0, 0, 7); ctx.fill();
+    K.flat(ctx, c => { c.moveTo(x - w / 2 + 3, y - h - 6); c.lineTo(x + w / 2 - 3, y - h - 6); c.lineTo(x + w / 2, y - h); c.lineTo(x - w / 2, y - h); c.closePath(); }, K.tone(C.cream, -.06), { lw: 1.4, line: '#b9a99a' });
+    K.flat(ctx, c => c.rect(x - w / 2, y - h, w, h), C.cream, { y0: y - h, y1: y, light: .3, lw: 1.6, line: '#b9a99a' });
+    ctx.strokeStyle = C.gold; ctx.lineWidth = 1.2; ctx.strokeRect(x - w / 2 + 4, y - h + 4, w - 8, h - 8);
+    ctx.restore();
+    Pilot.text(ctx, s, x, y - h / 2 + size * .36, { size, weight: 600, font: K.SERIF, color: C.ink });
+  };
+
   // ---------------- figures (frontal pastel rig) ----------------
   // Units at s = 1 (px). A figure F is placed by its pelvis (F.x, F.y); everything else is solved by pose(F).
   K.BODY = { headRx: 47, headRy: 53, neck: 14, shW: 70, torso: 200, hipW: 44, arm1: 108, arm2: 102, armW: 30, hand: 14, leg1: 112, leg2: 106, legW: 46, foot: 20 };
-  // A look: clothes and hair. hair: 'short' | 'bun' | 'bob' | 'wave'; collar: 'round' | 'v' | 'shirt'; apron: a colour or null.
+  // A look: clothes and hair. hairStyle: 'short' | 'bun' (top knot) | 'tied' (pulled back, low bun) | 'bob' | 'wave'; collar: 'round' | 'v' | 'shirt'; apron: a colour or null.
   K.LOOK = { top: '#86a9a3', apron: null, skin: '#f4d2bd', hair: '#4b3530', hairStyle: 'short', legs: '#5d4e6e', shoe: '#4a3040', collar: 'round', glasses: false, cheek: '#f0a3a6' };
   // ik3(a, t, l1, l2, hint) → { el, end, ok }: two-bone IK in 3-D (x right, y down, z toward the camera). Bone lengths are
   // kept; the elbow/knee bends toward `hint` (a direction); the end is clamped to reach (ok = false if it had to be).
@@ -557,13 +570,16 @@
   K.hairBack = function (ctx, L, tn) {
     const c0 = L.hair, rx = K.BODY.headRx;
     if (L.hairStyle === 'bun') K.flat(ctx, c => K.ell(c, tn * -4, -K.BODY.headRy - 8, 23, 20), c0, { y0: -90, y1: -40, light: .14 });
+    if (L.hairStyle === 'tied') { const sd = tn > 0 ? -1 : 1;   // a low bun at the nape, peeking out on the far side
+      K.flat(ctx, c => K.ell(c, sd * (rx - 6), 30, 19, 17), c0, { y0: 12, y1: 48, light: .12 });
+      ctx.fillStyle = L.tie || K.tone(c0, .35); ctx.beginPath(); ctx.ellipse(sd * (rx - 14), 22, 5, 7, sd * .5, 0, 7); ctx.fill(); }
     if (L.hairStyle === 'bob') K.flat(ctx, c => { c.moveTo(-rx - 8, -10); c.bezierCurveTo(-rx - 16, 30, -rx - 14, 50, -rx + 4, 58); c.lineTo(rx - 4, 58); c.bezierCurveTo(rx + 14, 50, rx + 16, 30, rx + 8, -10); c.closePath(); }, K.tone(c0, -.08));
   };
   K.hairFront = function (ctx, L, tn) {
     const c0 = L.hair, rx = K.BODY.headRx, ry = K.BODY.headRy, st = L.hairStyle, o = { y0: -ry - 8, y1: 10, light: .16 }, sx = tn * 6;
     if (st === 'short') K.flat(ctx, c => { c.moveTo(-rx - 3, 8); c.bezierCurveTo(-rx - 8, -ry * 1.52, rx + 8, -ry * 1.52, rx + 3, 8);
       c.quadraticCurveTo(rx - 4, -14, rx - 14, -20); c.quadraticCurveTo(sx + 14, -10, sx - 6, -26); c.quadraticCurveTo(sx - 22, -12, -rx + 12, -18); c.quadraticCurveTo(-rx + 2, -10, -rx - 3, 8); c.closePath(); }, c0, o);
-    else if (st === 'bun') K.flat(ctx, c => { c.moveTo(-rx - 2, 4); c.bezierCurveTo(-rx - 6, -ry * 1.5, rx + 6, -ry * 1.5, rx + 2, 4);
+    else if (st === 'bun' || st === 'tied') K.flat(ctx, c => { c.moveTo(-rx - 2, 4); c.bezierCurveTo(-rx - 6, -ry * 1.5, rx + 6, -ry * 1.5, rx + 2, 4);
       c.quadraticCurveTo(rx - 6, -24, sx + 2, -34); c.quadraticCurveTo(-rx + 6, -24, -rx - 2, 4); c.closePath(); }, c0, o);
     else if (st === 'bob') K.flat(ctx, c => { c.moveTo(-rx - 9, 30); c.bezierCurveTo(-rx - 14, -ry * 1.62, rx + 14, -ry * 1.62, rx + 9, 30);
       c.quadraticCurveTo(rx + 2, 34, rx - 6, 12); c.lineTo(rx - 10, -18); c.quadraticCurveTo(sx + 20, -24, sx, -20); c.quadraticCurveTo(sx - 20, -24, -rx + 10, -18); c.lineTo(-rx + 6, 12); c.quadraticCurveTo(-rx - 2, 34, -rx - 9, 30); c.closePath(); }, c0, o);
@@ -675,18 +691,21 @@
     }
   };
   // endCard(ctx, t, card, at, { y = 640, dim = true, hang = 262 }): the room dims, a framed cream plaque drops in (hung from the
-  // pelmet) and the shared Story.endCard (title · passage · by) is set on it in Serif/Sans plum.
+  // pelmet; 740–1000 px wide, to fit the longest line) and the shared Story.endCard (title · passage · by) is set on it in Serif/Sans plum.
   K.endCard = function (ctx, t, card, at, o = {}) {
     const a = ss(at, at + (card.compact ? .5 : .9), t); if (a <= 0) return;
     if (o.dim !== false) K.dim(ctx, ss(at - .4, at + .4, t));
-    const C = K.C, y = o.y ?? 640, dy = -22 * (1 - eo((t - at) / .55)), x0 = 170, w = 740, y0 = y - (card.kicker ? 192 : 118), h = y + 352 - y0;
+    const C = K.C, y = o.y ?? 640, dy = -22 * (1 - eo((t - at) / .55));
+    ctx.save(); const mw = (f, str) => { ctx.font = f; return Math.max(0, ...String(Pilot.tr(str || '')).split('\n').map(l => ctx.measureText(l).width)); };
+    const need = Math.max(mw(`700 72px ${K.SERIF}`, card.title), mw(`500 34px ${K.SANS}`, card.passage), mw(`400 30px ${K.SANS}`, card.by)); ctx.restore();
+    const w = clamp(need + 130, 740, 1000), x0 = CX - w / 2, y0 = y - (card.kicker ? 192 : 118), h = y + 352 - y0;
     const two = String(Pilot.tr(card.title)).includes('\n');
     ctx.save(); ctx.translate(0, dy); ctx.globalAlpha = a;
-    ctx.strokeStyle = C.goldDk; ctx.lineWidth = 2; for (const d of [-290, 290]) { ctx.beginPath(); ctx.moveTo(CX + d, (o.hang ?? 262) - dy); ctx.lineTo(CX + d, y0 + 4); ctx.stroke(); }
+    ctx.strokeStyle = C.goldDk; ctx.lineWidth = 2; for (const d of [-w / 2 + 80, w / 2 - 80]) { ctx.beginPath(); ctx.moveTo(CX + d, (o.hang ?? 262) - dy); ctx.lineTo(CX + d, y0 + 4); ctx.stroke(); }
     ctx.fillStyle = 'rgba(20,6,24,.35)'; ctx.fillRect(x0 + 9, y0 + 11, w, h);
     K.flat(ctx, c => c.rect(x0, y0, w, h), C.cream, { y0, y1: y0 + h, light: .3, dark: .04, line: C.ink, lw: 3 });
     ctx.strokeStyle = C.gold; ctx.lineWidth = 2; ctx.strokeRect(x0 + 12, y0 + 12, w - 24, h - 24); ctx.lineWidth = 1; ctx.strokeRect(x0 + 18, y0 + 18, w - 36, h - 36);
-    ctx.fillStyle = C.gold; for (const d of [-290, 290]) { ctx.beginPath(); ctx.arc(CX + d, y0 + 4, 4.5, 0, 7); ctx.fill(); }
+    ctx.fillStyle = C.gold; for (const d of [-w / 2 + 80, w / 2 - 80]) { ctx.beginPath(); ctx.arc(CX + d, y0 + 4, 4.5, 0, 7); ctx.fill(); }
     // an ornament between title and the small lines: a rule with a diamond
     ctx.strokeStyle = C.gold; ctx.lineWidth = 1.6; const oy = y + (two ? 184 : 118); ctx.beginPath(); ctx.moveTo(CX - 120, oy); ctx.lineTo(CX - 14, oy); ctx.moveTo(CX + 14, oy); ctx.lineTo(CX + 120, oy); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(CX, oy - 8); ctx.lineTo(CX + 8, oy); ctx.lineTo(CX, oy + 8); ctx.lineTo(CX - 8, oy); ctx.fill();

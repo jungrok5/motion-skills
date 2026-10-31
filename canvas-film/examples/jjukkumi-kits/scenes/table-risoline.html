@@ -158,8 +158,10 @@ function scene(ctx, t) {
       T.face(c, who, x0 + w / 2, y0 + h * .58, .78, expr, t, expr === 'chew' ? Math.sin(Riso.t12(t) * 9) * .03 : -.04);
       c.save(); c.translate(x0 + w / 2, y0 + 72); c.rotate(left ? -.06 : .06); Pilot.text(c, word, 0, 0, { size: 58, font: T.FONT, color: Riso.C.ink }); c.restore();
     });
+    if (t >= a0 + .12 && t < a1) T.nameTag(ctx, { blue: '세진', cream: '정록' }[who], x0 + w / 2, y0 + h + 2, ss(a0 + .12, a0 + .3, t) * (1 - ss(a1 - .3, a1 - .06, t)));
   }
   const LP = { cream: [205, 505], blue: [875, 505], spouse: [205, 1380], me: [875, 1380] }, LW = ['cream', 'blue', 'spouse', 'me'];
+  const NAME = { me: '명현', spouse: '경찬', cream: '정록', blue: '세진' };
   S.laughs.forEach((a0, j) => {
     const who = LW[j], [cx, cy] = LP[who], r = 138;
     T.panel(ctx, t, a0, 19.45 + j * .04, Riso.ell(cx, cy, r, r, 36), c => {
@@ -168,6 +170,7 @@ function scene(ctx, t) {
       T.face(c, who, cx, cy + 4 + Math.abs(Math.sin(tp * 14 + j * 2)) * 4, .54, 'laugh', t + j * .08, tl);
       T.laughMarks(c, cx, cy + 4, .54, t + j * .08);
     });
+    const a1 = 19.45 + j * .04; if (t >= a0 + .12 && t < a1) T.nameTag(ctx, NAME[who], cx, cy + (cy < 960 ? r + 2 : -r - 2), ss(a0 + .12, a0 + .3, t) * (1 - ss(a1 - .3, a1 - .06, t)));
   });
   T.endPlate(ctx, t, B.end);
   Riso.grain(ctx, cm);

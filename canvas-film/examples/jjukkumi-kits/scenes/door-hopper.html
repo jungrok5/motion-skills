@@ -16,7 +16,7 @@
    One light: a bare bulb under a small cap shade hanging low over a side table in the foreground, where the red
    쭈꾸미볶음 waits on a plate. The front door (back wall) opens OUTWARD, as Korean front doors do; 나 (navy, mustard apron
    ties) waits beside it, back to us. 딩동 → 나 presses the lever and gives the door a push → it swings open on a stiff
-   hinge, and the lamp's light, passing through the widening gap, sweeps across the two guests standing back on the
+   hinge, and the lamp's light, passing through the widening gap, sweeps across the two guests (정록 · 세진) standing back on the
    landing against the blue dusk; their shadows fall onto the landing and the garden wall behind them. Then the red comes
    up and the bulb warms. Everything is in metres and every light/shadow shape is a true projection from the bulb. */
 const { clamp, lerp, ss, eo, eio, rng, hex, mix, rgb } = Pilot;
@@ -193,24 +193,28 @@ function withTrousers(F, hem) {                                              // 
   return { ...F, parts };
 }
 for (const G of GUESTS) { G.F = Hopper.figureParts({ h: G.h, w: G.w, skirt: G.skirt }); if (!G.skirt) G.F = withTrousers(G.F, .9 * G.h / 1.7); }
-// 나 seen from behind: back of the head is hair, the near-door (right) arm is drawn by IK, apron ties in mustard
+// 명현 seen from behind: back of the head is hair, the near-door (right) arm is drawn by IK, apron ties in mustard
 const MUSTARD = '#e2a93b';
+const HS = 1.64 / 1.7;                                                       // 명현's scale (kit figure is 1.7 m)
 const HOSTF = (() => {
-  const F = Hopper.figureParts({ h: 1.7, w: .19, skirt: false }), out = [];
+  const F = Hopper.figureParts({ h: 1.64, w: .178, skirt: false }), out = [], sc = q => q.map(([u, v]) => [u * HS, v * HS]);
   const cen = p => p.reduce((s, q) => [s[0] + q[0] / p.length, s[1] + q[1] / p.length], [0, 0]);
   const loop = (cx, cy, rx, ry) => Array.from({ length: 14 }, (_, i) => [cx + rx * Math.cos(i / 14 * 2 * Math.PI), cy + ry * Math.sin(i / 14 * 2 * Math.PI)]);
   for (const p of F.parts) {
     const [u, v] = cen(p.poly);
     if ((p.c === 'body' && u > .1 && v < 1.42) || (p.c === 'skin' && u > .1 && v < 1)) continue;   // right arm + hand → IK
     if (p.c === 'skin' && v > 1.5) { out.push({ ...p, c: 'hair' }); continue; }                     // back of the head
+    if (p.c === 'hair') { out.push(p, { poly: sc(loop(0, 1.505, .052, .042)), c: 'hair' }); continue; }   // hair tied back: a low bun
     out.push(p);
     if (p.c === 'body' && Math.abs(u) < .05) {
-      out.push({ poly: Hopper.clipRect(p.poly, -1, 1, -1, .9), c: 'legs' });
+      out.push({ poly: Hopper.clipRect(p.poly, -1, 1, -1, .9 * HS), c: 'legs' });
+      const n0 = out.length;
       out.push({ poly: [[-.121, .975], [-.139, .97], [-.142, .8], [-.138, .66], [-.128, .66], [-.124, .8]], c: 'apron' });   // apron edges at the hips
       out.push({ poly: [[.121, .975], [.139, .97], [.142, .8], [.138, .66], [.128, .66], [.124, .8]], c: 'apron' });
       out.push({ poly: [[-.124, .975], [.124, .975], [.122, 1.028], [-.122, 1.028]], c: 'apron' });                      // waist tie
       out.push({ poly: loop(-.036, 1.0, .036, .024), c: 'apron' }, { poly: loop(.036, 1.0, .036, .024), c: 'apron' });  // the bow
       out.push({ poly: [[-.014, .99], [-.002, .99], [-.016, .84], [-.034, .846]], c: 'apron' }, { poly: [[.002, .99], [.014, .99], [.036, .85], [.018, .844]], c: 'apron' });
+      for (let i = n0; i < out.length; i++) out[i].poly = sc(out[i].poly);
     }
   }
   return { parts: out, sil: F.sil, h: F.h };
@@ -219,8 +223,8 @@ const HOST_COL = { body: '#2f3d5c', legs: '#2b2d33', skin: '#c9a487', hair: '#1e
 const ambCols = c => Object.fromEntries(Object.entries(c).map(([k, v]) => [k, toneHex(v, 'amb', 1.25)]));
 const litCols = (c, f, wk) => Object.fromEntries(Object.entries(c).map(([k, v]) => [k, mixHex(toneHex(v, 'lit', f), toneHex(v, 'warm', f), wk)]));
 
-// 나's right arm: 2-bone IK from the shoulder to the hand (bone lengths fixed, elbow bends back/down only)
-const UPPER = .30, FORE = .32, SH = [HOST.x + .165, 1.37, HOST.z], REST = [HOST.x + .185, .8, HOST.z + .01], POLE = [.35, -.35, -1];
+// 명현's right arm: 2-bone IK from the shoulder to the hand (bone lengths fixed, elbow bends back/down only)
+const UPPER = .29, FORE = .31, SH = [HOST.x + .16 * HS, 1.37 * HS, HOST.z], REST = [HOST.x + .18 * HS, .8 * HS, HOST.z + .01], POLE = [.35, -.35, -1];
 const v3 = { sub: (a, b) => a.map((v, i) => v - b[i]), add: (a, b) => a.map((v, i) => v + b[i]), mul: (a, k) => a.map(v => v * k),
   dot: (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2] }; v3.len = a => Math.sqrt(v3.dot(a, a)); v3.norm = a => v3.mul(a, 1 / v3.len(a));
 function ik(Sh, Tg) {
@@ -327,7 +331,7 @@ function draw(ctx, t) {
   ctx.save(); Hopper.push(ctx, 1 + .045 * t / DUR, PUSHC);
   // 1. the hall in dusk ambient
   ctx.drawImage(base, 0, 0);
-  // 2. the bulb: every surface it reaches, clipped to the shade's hard cut-off; shadows of 나 and the table inside it
+  // 2. the bulb: every surface it reaches, clipped to the shade's hard cut-off; shadows of 명현 and the table inside it
   const arm = ik(SH, handAt(t));
   const armQuad = (pl) => { const a = arm.S, b = arm.E, c = arm.Hd, o = [.03, .03, 0];
     return [LAMP.onto(v3.sub(a, o), pl), LAMP.onto(v3.add(a, o), pl), LAMP.onto(v3.add(b, o), pl), LAMP.onto(v3.add(c, o), pl), LAMP.onto(v3.sub(c, o), pl), LAMP.onto(v3.sub(b, o), pl)]; };
@@ -382,7 +386,7 @@ function draw(ctx, t) {
   ctx.save(); Hopper.clip(ctx, cam, [TOP]); Hopper.drawLit(ctx, I, tLit, tWarm, wk); ctx.restore();
   drawDish(ctx, t, I, wk);
   drawLamp(ctx, I, wk);
-  // 5. 나, back to us: the IK arm (behind the body), then the body in soft value shapes, lit from the bulb's side
+  // 5. 명현, back to us: the IK arm (behind the body), then the body in soft value shapes, lit from the bulb's side
   const fh = 1.6 * fallAt([HOST.x, 1, HOST.z]);
   const sleeve = rgb(mix(toneA(HOST_COL.body, 'amb', 1.25), mix(toneA(HOST_COL.body, 'lit', fh), toneA(HOST_COL.body, 'warm', fh), wk), .85 * I));
   const skin = rgb(mix(toneA(HOST_COL.skin, 'amb', 1.25), mix(toneA(HOST_COL.skin, 'lit', fh), toneA(HOST_COL.skin, 'warm', fh), wk), .85 * I));

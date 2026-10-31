@@ -27,8 +27,8 @@
 
   /* ---------------------------------------------------------------- the four, one per side (local u = toward the table centre, v = their right) */
   const PEOPLE = [
-    { id: 'me', E: [540, TB.y1], f: [0, -1], top: K.NAVY, hair: 'me', arrive: 2.7 },
-    { id: 'spouse', E: [TB.x0, 960], f: [1, 0], top: K.SAGE, hair: 'bob', arrive: 3.05 },
+    { id: 'me', E: [540, TB.y1], f: [0, -1], top: K.NAVY, hair: 'bun', arrive: 2.7 },
+    { id: 'spouse', E: [TB.x0, 960], f: [1, 0], top: K.SAGE, hair: 'short', arrive: 3.05 },
     { id: 'cream', E: [540, TB.y0], f: [0, 1], top: K.CTOP, hair: 'ash', arrive: 3.4 },
     { id: 'blue', E: [TB.x1, 960], f: [-1, 0], top: K.BLUE, hair: 'pony', arrive: 3.75 },
   ];
@@ -238,12 +238,14 @@
     for (const s of [-1, 1]) ink(ctx, E(6, s * 60, 13, 10, 10), { fill: K.SKIN, lw: 4.4, single: true });   // ears
     ink(ctx, E(4, 0, 72, 62), { fill: K.SKIN, lw: 5.5 });
     ink(ctx, E(70, 0, 9, 9, 10), { fill: K.SKIN, lw: 3.4, single: true });   // the nose tip, peeking
-    if (P.hair === 'me') {
+    if (P.hair === 'bun') {   // 명현: dark hair pulled back into a low bun, a mustard tie
+      ink(ctx, E(-6, 0, 70, 64), { fill: K.HAIR, lw: 5 });
+      ink(ctx, E(-82, 0, 30, 32, 16), { fill: K.HAIR, lw: 5 });
+      ink(ctx, E(-62, 0, 9, 20, 10), { fill: K.MUST, lw: 3.6, single: true });
+      for (const v of [-34, -12, 12, 34]) ink(ctx, [Q(52, v * 1.2), Q(0, v), Q(-50, v * .5)], { closed: false, lw: 2.6, col: '#5a5450', single: true });   // combed back
+    } else if (P.hair === 'short') {   // 경찬: short dark hair
       ink(ctx, E(-8, 0, 68, 63), { fill: K.HAIR, lw: 5 });
       ink(ctx, [Q(46, -40), Q(56, -16), Q(50, 6), Q(58, 26), Q(48, 44)], { closed: false, lw: 3.4, col: '#5a5450', single: true });
-    } else if (P.hair === 'bob') {
-      ink(ctx, E(-12, 0, 74, 70), { fill: K.BROWN, lw: 5 });
-      ink(ctx, [Q(52, -54), Q(60, 0), Q(52, 54)], { closed: false, lw: 3, col: '#7a6656', single: true });
     } else if (P.hair === 'ash') {
       ink(ctx, E(-10, 0, 66, 62), { fill: K.ASH, lw: 5 });
       for (const s of [-1, 1]) ink(ctx, [Q(62, s * 50), Q(12, s * 64)], { closed: false, lw: 3.6, single: true });   // glasses' arms over the ears
@@ -253,12 +255,13 @@
       ink(ctx, tube(tail, [16, 15, 12, 7].map(v => v * k)), { fill: K.HAIR, lw: 4.4 });
       ink(ctx, E(-72, 0, 10, 14, 10), { fill: K.BLUE, lw: 3.6, single: true });   // the tie
     }
+    if (P.hair === 'bun') return;
     const wh = Q(-26, 8), sp = []; for (let i = 0; i < 9; i++) { const a = i * .8, r = (2 + i * 2.3) * k; sp.push([wh[0] + Math.cos(a + fa) * r, wh[1] + Math.sin(a + fa) * r]); }
     ink(ctx, sp, { closed: false, lw: 2.6, col: P.hair === 'ash' ? C.ink : '#6a625c', single: true, raw: true });   // the crown whorl
   }
 
   /* ---------------------------------------------------------------- faces for the comic inserts (front view; origin = head centre) */
-  const FACE_OF = { me: { top: K.NAVY, hair: K.HAIR }, spouse: { top: K.SAGE, hair: K.BROWN }, cream: { top: K.CTOP, hair: K.ASH }, blue: { top: K.BLUE, hair: K.HAIR } };
+  const FACE_OF = { me: { top: K.NAVY, hair: K.HAIR }, spouse: { top: K.SAGE, hair: K.HAIR }, cream: { top: K.CTOP, hair: K.ASH }, blue: { top: K.BLUE, hair: K.HAIR } };
   function face(ctx, who, x, y, s, expr, t, tilt = 0) {
     const F = FACE_OF[who], Q = (u, v) => [x + (u * Math.cos(tilt) - v * Math.sin(tilt)) * s, y + (u * Math.sin(tilt) + v * Math.cos(tilt)) * s];
     const E = (cx, cy, rx, ry, n = 20, rot = 0) => ell(...Q(cx, cy), rx * s, ry * s, n, rot + tilt);
@@ -270,15 +273,17 @@
     if (who === 'cream') ink(ctx, [Q(-56, 160), Q(0, 236), Q(56, 160)], { closed: false, lw: 4.5, single: true });
     if (who === 'spouse' || who === 'blue') ink(ctx, [Q(-62, 158), Q(-30, 196), Q(30, 196), Q(62, 158)], { closed: false, lw: 4.5, single: true });
     ink(ctx, [Q(-38, 92), Q(-36, 168), Q(36, 168), Q(38, 92)], { fill: K.SKIN, lw: 5 });   // neck
-    if (who === 'spouse') ink(ctx, [Q(-122, 60), Q(-128, -60), Q(-90, -128), Q(0, -142), Q(90, -128), Q(128, -60), Q(122, 60), Q(70, 70), Q(-70, 70)], { fill: F.hair, lw: 5.5 });   // bob, behind
+    if (who === 'me') { ink(ctx, E(66, -118, 44, 40, 16), { fill: F.hair, lw: 5.5 }); ink(ctx, E(48, -96, 12, 20, 10, .8), { fill: K.MUST, lw: 4 }); }   // 명현's bun + mustard tie, behind
     if (who === 'blue') { ink(ctx, tube([Q(96, -60), Q(134, -20), Q(144, 40), Q(128, 96)], [24, 22, 18, 10].map(v => v * s)), { fill: F.hair, lw: 5 }); ink(ctx, E(104, -58, 14, 18, 10), { fill: K.BLUE, lw: 4 }); }
     for (const sx of [-1, 1]) ink(ctx, E(sx * 96, 8, 18, 26, 12), { fill: K.SKIN, lw: 5 });
     const cheek = expr === 'chew' ? (ph ? 1 : -1) : 0, fp = [];
     for (let i = 0; i < 28; i++) { const a = i / 28 * TAU, bul = cheek && Math.cos(a) * cheek > .3 && Math.sin(a) > -.1 ? 12 * (Math.cos(a) * cheek - .3) : 0; fp.push(Q(Math.cos(a) * (94 + bul), Math.sin(a) * (110 + (Math.sin(a) > 0 ? 6 : 0)))); }
     ink(ctx, fp, { fill: K.SKIN, lw: 6 });
     // hair (front)
-    if (who === 'me') ink(ctx, [Q(-98, 0), Q(-104, -64), Q(-74, -112), Q(-20, -130), Q(40, -128), Q(86, -104), Q(104, -60), Q(98, 0), Q(84, -36), Q(54, -56), Q(30, -42), Q(4, -60), Q(-30, -48), Q(-60, -58), Q(-84, -30)], { fill: F.hair, lw: 5.5 });
-    else if (who === 'spouse') ink(ctx, [Q(-100, -10), Q(-96, -80), Q(-50, -124), Q(20, -128), Q(80, -104), Q(102, -50), Q(100, -10), Q(80, -48), Q(-80, -48)], { fill: F.hair, lw: 5.5 });
+    if (who === 'spouse') ink(ctx, [Q(-98, 0), Q(-104, -64), Q(-74, -112), Q(-20, -130), Q(40, -128), Q(86, -104), Q(104, -60), Q(98, 0), Q(84, -36), Q(54, -56), Q(30, -42), Q(4, -60), Q(-30, -48), Q(-60, -58), Q(-84, -30)], { fill: F.hair, lw: 5.5 });
+    else if (who === 'me') { ink(ctx, [Q(-100, 4), Q(-102, -70), Q(-60, -118), Q(10, -130), Q(76, -112), Q(102, -64), Q(100, 4), Q(90, -40), Q(60, -66), Q(-6, -78), Q(-34, -70), Q(-70, -50), Q(-90, -24)], { fill: F.hair, lw: 5.5 });
+      ink(ctx, [Q(-34, -70), Q(-14, -104), Q(20, -122)], { closed: false, lw: 3, col: '#5a5450', single: true });
+      ink(ctx, tube([Q(-96, -10), Q(-104, 30), Q(-98, 62)], [7, 5, 2].map(v => v * s)), { fill: F.hair, lw: 3.4, single: true }); }   // side part, a loose strand
     else if (who === 'cream') ink(ctx, [Q(-98, -6), Q(-100, -70), Q(-60, -118), Q(10, -128), Q(70, -112), Q(100, -66), Q(98, -6), Q(82, -52), Q(30, -70), Q(-40, -66), Q(-82, -46)], { fill: F.hair, lw: 5.5 });
     else ink(ctx, [Q(-98, -4), Q(-100, -74), Q(-56, -122), Q(16, -130), Q(80, -110), Q(102, -62), Q(98, -4), Q(70, -56), Q(10, -76), Q(-30, -60), Q(-80, -40)], { fill: F.hair, lw: 5.5 });
     // brows, eyes, nose, mouth
@@ -290,6 +295,7 @@
       else if (expr === 'chew') ink(ctx, [Q(sx * 38 - 15, eyeY - 2), Q(sx * 38, eyeY + 9), Q(sx * 38 + 15, eyeY - 2)], { closed: false, lw: 5, single: true });
       else ink(ctx, [Q(sx * 38 - 16, eyeY + 6), Q(sx * 38, eyeY - 10), Q(sx * 38 + 16, eyeY + 6)], { closed: false, lw: 5, single: true });
     }
+    if (who === 'me' || who === 'blue') for (const sx of [-1, 1]) ink(ctx, [Q(sx * 54, eyeY - 2), Q(sx * 64, eyeY - 10)], { closed: false, lw: 3.6, single: true });   // a lash
     if (who === 'cream') for (const sx of [-1, 1]) { ink(ctx, E(sx * 38, eyeY, 30, 26, 16), { closed: true, lw: 4.2, single: true }); if (sx > 0) ink(ctx, [Q(-8, eyeY - 4), Q(8, eyeY - 4)], { closed: false, lw: 4, single: true }); }
     for (const sx of [-1, 1]) for (let i = 0; i < 3; i++) ink(ctx, [Q(sx * 62 - 14 + i * 11, 46), Q(sx * 62 - 8 + i * 11, 32)], { closed: false, lw: 3.4, single: true });   // blush (hatch)
     ink(ctx, [Q(-4, 14), Q(-10, 34), Q(4, 38)], { closed: false, lw: 4, single: true });
@@ -366,7 +372,15 @@
     return y0;
   }
 
+  /* a name tag (a small cream label straddling a panel's rim), screen space */
+  function nameTag(ctx, s, x, y, a = 1) {
+    if (a <= 0) return; const size = 38, font = `400 ${size}px ${Table.FONT}`;
+    ctx.save(); ctx.font = font; const w = ctx.measureText(Pilot.tr(s)).width; ctx.restore();
+    const x0 = x - w / 2 - 20, x1 = x + w / 2 + 20, y0 = y - 30, y1 = y + 26, box = [[x0, y0], [x1, y0 + 2], [x1 - 2, y1], [x0 + 2, y1 - 2]];
+    ctx.save(); ctx.globalAlpha *= a; ink(ctx, resample(box, true, 14), { fill: C.cream, smooth: false, lw: 5, raw: true });
+    Pilot.text(ctx, s, x, y + 13, { size, weight: 400, font: Table.FONT, color: C.ink }); ctx.restore();
+  }
   window.Table = { K, CX, CY, DCAM, prj, TB, PAN, PEOPLE, loc, PLACE, ARM1, ARM2, SH, ik3, PIECES, n2, n3, add3, sub3, lerp3,
     piece, octoIcon, table, bowl, sticks, spoon, glass, lettuce, jang, pan, steam, sizzle, arm, torso, headTop, handTop, face, laughMarks,
-    panel, captionBox, burst, impact, endPlate, FONT: "'Do Hyeon',sans-serif" };
+    panel, nameTag, captionBox, burst, impact, endPlate, FONT: "'Do Hyeon',sans-serif" };
 })();
