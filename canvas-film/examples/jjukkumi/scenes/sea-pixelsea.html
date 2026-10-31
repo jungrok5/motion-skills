@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>쭈꾸미 한 접시 · 바다</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script-pixelsea.js"></script>
+<script src="kit-pixelsea.js"></script>
+<script src="sea-pixelsea-props.js"></script>
+<script>
+/* sea-pixelsea — 「쭈꾸미 한 접시」 scene 1 (22 s, portrait), Pixelsea kit (kits/pixelsea/STYLE.md).
+   Dawn pixel sea → cut in: 나 casts, the line arcs out → under the water: 고패질 on the seabed, a red 쭈꾸미 creeps up →
+   HIT! (rod bends, ≤ .25 s pixel shake) → portrait insert → the 쭈꾸미 lifted out, shaken into the bucket (×1) → six quick
+   catches (×7) while the sun comes up → wide: heading home → close on the bucket full of red 쭈꾸미.
+   Shots are hard cuts between whole-pixel scales; acting on 10 fps; water on 6; camera on whole pixels. */
+const S = window.SCRIPT, B = S.beat, { clamp, lerp, ss, eio } = Pilot, PS = Pixelsea, SP = SeaProps, R = PS.R;
+const st = t => PS.step(t, 10);
+const todAt = t => .3 + .55 * ss(0, 9.5, t) + .95 * ss(11, 18.6, t);          // blue hour → sunrise → morning
+const bob = t => (Math.floor(t * 2.2) % 3 === 2 ? 1 : 0);                        // the boat rides a pixel up and down
+const sunRise = t => ss(2.5, 18, t);
+
+// ---------------- set-ups (each in its own buffer pixels) ----------------
+const WIDE = { K: 4, hz: 270, sun: [184, 22], h: 18, deck: 368 };
+const MED = { K: 6, hz: 168, sun: [126, 26], h: 26, me: 40, bucket: 68, boatX: 6, deck: 246, RL: 36, LH: 17 };
+const UND = { K: 5, top: 30, bed: 300, line: 92 };
+
+function shotAt(t) {
+  if (t < B.cast) return 'wide';
+  if (t < B.under) return 'med';
+  if (t < B.hit) return 'under';
+  if (t >= B.face[0] && t < B.face[1]) return 'face';
+  if (t < B.home) return 'med';
+  if (t < B.bucket) return 'home';
+  return 'bucket';
+}
+
+// ---------------- sky + sea for a set-up ----------------
+function seaWorld(b, t, hz, sun, o = {}) {
+  const c = b.c, P = PS.tod(todAt(t)), r = sun[1], sy = Math.round(hz + r * .6 - (r * 2.1) * sunRise(t));
+  PS.backdrop(c, b, P, hz);
+  PS.stars(c, t, P, { y1: hz - 24, n: Math.round(b.w / 5) });
+  PS.clouds(c, t, P, o.clouds || [], 1);
+  PS.sun(c, sun[0], sy, r, P, hz);
+  PS.islands(c, P, hz, o.islands || []);
+  PS.glints(c, t, P, hz);
+  const len = clamp((hz - sy + r) / (2 * r)) * .85 + .12;
+  PS.reflection(c, t, sun[0], hz, r, P, { len });
+  return { P, sy, refl: [sun[0], r, len] };
+}
+
+// ---------------- the rod's story in the medium shot ----------------
+// → { ang, bend, raise (butt toward the shoulder), brace (0..1), lean, line: 'dangle'|'flight'|'slack'|'taut'|'lift', lure, octo }
+const ENTRY = [140, 262];
+function catchAt(t) {   // which quick catch (−1 = the first, big one) and the time inside it
+  if (t < B.catches) return { i: -1, u: t - B.lift };
+  const i = Math.min(5, Math.floor((t - B.catches) / B.every)); return { i, u: t - B.catches - i * B.every };
+}
+function rodAt(t) {
+  if (t < B.release) {                                       // ready → backswing
+    const k = eio(clamp((t - B.cast - .2) / .35));
+    return { ang: lerp(-.9, -2.2, k), bend: -3 * k, raise: .8 * k, lean: -.06 * k, line: 'dangle' };
+  }
+  if (t < B.under) {                                         // the whip forward, follow-through, line settles
+    const k = clamp((t - B.release) / .1), f = clamp((t - B.release - .1) / 1.2);
+    return { ang: lerp(lerp(-2.2, -.5, k), -.82, eio(f)), bend: lerp(5, 0, f), raise: lerp(.8, .1, k), lean: lerp(.28, .05, eio(f)), line: t < B.land ? 'flight' : 'slack' };
+  }
+  if (t < B.lift) {                                          // HIT: braced, rod bent hard, tugging on 10 fps
+    const tug = (Math.floor(st(t) * 10) % 3) - 1;
+    return { ang: -.62, bend: 13 + tug * 2, raise: 0, brace: 1, lean: 0, line: 'taut', entry: ENTRY };
+  }
+  const { i, u } = catchAt(t);
+  if (i < 0) {                                               // the first lift: slow, heavy
+    if (u < .5) { const k = eio(u / .5); return { ang: lerp(-.62, -1.25, k), bend: lerp(13, 9, k), brace: lerp(1, .5, k), line: 'taut', entry: ENTRY }; }
+    const sw = clamp((u - .5) / .55), dr = clamp((t - B.drop) / .15), back = clamp((t - B.drop - .2) / .3);
+    return { ang: lerp(lerp(-1.25, -.98, eio(sw)), -.84, eio(back)), bend: lerp(9, 4, sw) * (1 - back), brace: .5 * (1 - sw), line: 'lift',
+      from: ENTRY, rise: B.lift + .5, sw, drop: dr, s: 14, gone: t > B.drop + .16 };
+  }
+  const ent = [134 + (i * 7) % 14, 260 + (i % 2) * 3];      // quick catches
+  if (u < .18) { const k = eio(u / .18); return { ang: lerp(-.84, -1.2, k), bend: 9, brace: .4, line: 'taut', entry: ent }; }
+  const sw = clamp((u - .18) / .24), dr = clamp((u - .54) / .08), back = clamp((u - .62) / .1);
+  return { ang: lerp(lerp(-1.2, -.98, eio(sw)), -.84, back), bend: lerp(8, 3, sw) * (1 - back), brace: .3 * (1 - sw), line: 'lift',
+    from: ent, rise: B.catches + i * B.every + .18, sw, drop: dr, s: 11 + (i * 2) % 4, gone: u > .62, i };
+}
+function landed(t) {   // how many 쭈꾸미 are in the bucket at t
+  if (t < B.drop + .1) return 0;
+  if (t < B.catches) return 1;
+  const { i, u } = catchAt(t); return 1 + i + (u >= .58 ? 1 : 0);
+}
+function lastLand(t) { const n = landed(t); return n <= 1 ? B.drop + .1 : B.catches + (n - 2) * B.every + .58; }
+
+function fisher(t, deckY, R) {
+  const h = MED.h, y = deckY + 3, F = R.brace ? PS.brace(MED.me, y, h, 1, R.brace) : PS.stand(MED.me, y, h, 1);
+  F.lean += R.lean || 0; if (t >= B.hit && t < B.lift + .4) F.eye = 'wide';
+  const J = PS.joints(F), belly = [F.hip[0] + 3, F.hip[1] - 3], over = [J.sh[0] - 1, J.sh[1] - 4];
+  const butt = [lerp(belly[0], over[0], R.raise || 0), lerp(belly[1], over[1], R.raise || 0)];
+  const P = PS.polePts(butt, R.ang, MED.RL, R.bend || 0);
+  F.hands = [P.at(.05), P.at(.27)];
+  return { F, P };
+}
+function drawRod(c, P) { const p = P.pts; for (let i = 1; i < p.length; i++) PS.pxLine(c, p[i - 1][0], p[i - 1][1], p[i][0], p[i][1], i <= 4 ? 2 : 1, i >= p.length - 2 ? SP.ROD_TIP : SP.ROD); }
+const lineTo = (c, a, b, sag = 0) => PS.pxPath(c, PS.quadPts(a, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 + sag], b, 18), 1, SP.LINE);
+
+// the cast: the lure's flight from the rod tip at release to the landing point (a high arc), with a dotted trail
+const LAND = [172, 186];
+function flightAt(t, tip0) { const u = clamp((t - B.release) / (B.land - B.release)), q = [(tip0[0] + LAND[0]) / 2 + 8, tip0[1] - 250]; return PS.quadPts(tip0, q, LAND, 60).slice(0, Math.max(1, Math.round(u * 60)) + 1); }
+
+function medShot(b, t) {
+  const c = b.c, by = bob(t), deckY = MED.deck + by;
+  const W = seaWorld(b, t, MED.hz, MED.sun, { clouds: [[14, 58, 30, 1], [118, 96, 36, 2], [70, 128, 20, 3]], islands: [[-6, 56, 6], [70, 40, 4], [150, 40, 11, true]] });
+  const Rd = rodAt(t), { F, P } = fisher(t, deckY, Rd), tip = P.tip;
+  // the bucket's back wall + what is in it (mantles over the rim), then the bucket
+  const bx = MED.bucket, rim = deckY - 11, n = landed(t);
+  SP.bucket(c, bx, rim, 18, 15, { back: true });
+  for (let k = 0; k < Math.min(n, 4); k++) SP.octo(c, bx - 5 + k * 3.5, rim + 3 - (k % 2), 7, { mode: 'hang', ph: st(t) * 4 + k, f: k % 2 ? 1 : -1, outline: '#2a0c14' });
+  SP.bucket(c, bx, rim, 18, 15);
+  // rod, then 나 (hands at the grips), then the hull over the feet, then the sea over the waterline
+  drawRod(c, P);
+  PS.figure(c, F, SP.ME);
+  const boat = PS.boat(c, MED.boatX, deckY, 122, { depth: 14, f: 1, cabin: { u: .66, w: 17, h: 12 } });
+  PS.seaFront(c, b, t, W.P, MED.hz, 0, deckY + 11, b.w, b.h, { refl: W.refl });
+  PS.wake(c, t, MED.boatX + 2, deckY + 11, -1, 6);
+  // the line and what is on it
+  if (Rd.line === 'dangle') { const e = [tip[0], tip[1] + 6]; PS.pxLine(c, tip[0], tip[1], e[0], e[1], 1, SP.LINE); SP.egi(c, e[0], e[1], Math.PI / 2, 4); }
+  else if (Rd.line === 'flight') {
+    const tip0 = fisher(B.release + .1, deckY, rodAt(B.release + .1)).P.tip, path = flightAt(t, tip0), lure = path[path.length - 1];
+    path.forEach((p, i) => { if (i % 2 === 0 && i < path.length - 2) R(c, p[0], p[1], 1, 1, '#fff2d8'); });
+    lineTo(c, tip, lure, Math.hypot(lure[0] - tip[0], lure[1] - tip[1]) * .14); SP.egi(c, lure[0], lure[1], .6 + (t - B.release) * 3, 4);
+  } else if (Rd.line === 'slack') { lineTo(c, tip, LAND, 10); PS.splash(c, t, LAND[0], LAND[1], B.land, { n: 8, up: 30, seed: 3 }); }
+  else if (Rd.line === 'taut') { PS.pxLine(c, tip[0], tip[1], Rd.entry[0], Rd.entry[1], 1, SP.LINE); PS.splash(c, t, Rd.entry[0], Rd.entry[1], B.hit, { n: 12, up: 46, seed: 8 }); }
+  else if (Rd.line === 'lift') {
+    const hang = [tip[0] + Math.round(2.5 * Math.sin((t - Rd.rise) * 9) * Math.exp(-(t - Rd.rise) * 1.5)), tip[1] + MED.LH];
+    const q = [lerp(Rd.from[0], hang[0], .5) + 8, Math.min(Rd.from[1], hang[1]) - 26], arc = PS.quadPts(Rd.from, q, hang, 20), at = arc[Math.round(eio(Rd.sw) * 20)];
+    PS.splash(c, t, Rd.from[0], Rd.from[1], Rd.rise, { n: 10, up: 40, seed: 11 + (Rd.i || 0) });
+    if (!Rd.gone) {
+      const pos = Rd.drop > 0 ? [lerp(at[0], bx, Rd.drop), lerp(at[1], rim + 2, Rd.drop * Rd.drop)] : at;
+      PS.pxLine(c, tip[0], tip[1], Rd.drop > 0 ? at[0] : pos[0], (Rd.drop > 0 ? at[1] : pos[1]) - 1, 1, SP.LINE);
+      if (Rd.drop > 0) SP.egi(c, at[0], at[1], Math.PI / 2, 4);
+      SP.octo(c, pos[0], pos[1] + 1, Rd.s, { mode: 'hang', ph: st(t) * 6, f: -1 });
+    } else { PS.pxLine(c, tip[0], tip[1], tip[0], tip[1] + 6, 1, SP.LINE); SP.egi(c, tip[0], tip[1] + 6, Math.PI / 2, 4); }
+  }
+  return { tip, F };
+}
+
+// ---------------- under the water: the lure on the seabed, the 쭈꾸미 creeping up ----------------
+function jigLift(t) {   // px the sinker is lifted off the bed (고패질): up fast, a short hold, down slower, lands on the beat
+  let y = 0; for (const J of B.jigs) { const u = st(t) - (J - .55); if (u < 0 || u > .55) continue; y = u < .15 ? u / .15 : u < .25 ? 1 : 1 - (u - .25) / .3; }
+  return Math.round(16 * clamp(y));
+}
+function octoUnder(t) {   // → { x, y, mode, ph, at }
+  const q = st(t), ph = q * 7;
+  if (q < B.spot) { const k = clamp((q - B.creep) / (B.spot - B.creep)); return { x: Math.round(lerp(238, 134, k)), y: UND.bed - 2, mode: 'crawl', ph }; }
+  if (q < B.grab) return { x: 134, y: UND.bed - 2, mode: 'crawl', ph: B.spot * 7 + Math.sin(q * 20) * .3, look: true };
+  return null;
+}
+function underShot(b, t) {
+  const c = b.c, P = PS.tod(todAt(t)), top = UND.top, bed = UND.bed;
+  PS.backdrop(c, b, P, top);
+  PS.underwater(c, b, P, top, bed, t);
+  PS.shafts(c, t, P, top, bed, [[34, 7, .3], [112, 10, .3], [176, 6, .3]]);
+  PS.seabed(c, t, P, bed, { weed: [[18, 34], [28, 22], [190, 40], [201, 26], [62, 14]], rocks: [[54, 16], [160, 20]] });
+  // rig: line from the surface → swivel → 에기 on a dropper, sinker on the end
+  const lift = t >= B.grab ? Math.round(6 * ss(B.grab + .35, B.hit, t)) : jigLift(t), sk = [102, bed - 6 - lift], sw = [sk[0] - 2, sk[1] - 14];
+  const ox = octoUnder(t), grabbed = t >= B.grab;
+  const egiAt = [sw[0] + 3, sw[1] + 4];
+  PS.pxLine(c, UND.line, top, sw[0], sw[1], 1, SP.LINE); PS.pxLine(c, sw[0], sw[1], sk[0], sk[1], 1, SP.LINE); PS.pxLine(c, sw[0], sw[1], egiAt[0], egiAt[1], 1, SP.LINE);
+  SP.sinker(c, sk[0], sk[1]);
+  for (const J of B.jigs) PS.puff(c, t, sk[0], bed - 1, J, P.sand[2]);
+  SP.egi(c, egiAt[0], egiAt[1], .35 - lift * .02, 14);
+  if (ox) {
+    SP.octo(c, ox.x, ox.y, 18, { mode: ox.mode, ph: ox.ph, f: -1 });
+    PS.bubbles(c, t, ox.x + 6, ox.y - 24, { n: 2, h: 40, seed: 4, col: P.bubble });
+  } else if (grabbed) {
+    const j = clamp((st(t) - B.grab) / .25), from = [134, bed - 2], to = [egiAt[0] + 9, egiAt[1] - 3];
+    const p = j < 1 ? [lerp(from[0], to[0], j), lerp(from[1], to[1], j) - Math.round(Math.sin(Math.PI * j) * 14)] : to;
+    SP.octo(c, p[0], p[1], 18, { mode: j < 1 ? 'hang' : 'cling', at: [egiAt[0] + 6, egiAt[1] + 2], ph: st(t) * 9, f: -1, lean: j < 1 ? 0 : -1 });
+    PS.bubbles(c, t, p[0] + 4, p[1] - 22, { n: 3, h: 44, seed: 9, col: P.bubble });
+  }
+  PS.bubbles(c, t, sk[0], sk[1] - 2, { n: 1, h: 26, seed: 2, col: P.bubble });
+}
+
+// ---------------- the portrait insert: 나's face on the HIT ----------------
+function faceShot(b, t) {
+  const c = b.c, P = PS.tod(todAt(t)), dt = t - B.face[0];
+  PS.backdrop(c, b, P, 206);
+  PS.clouds(c, t, P, [[6, 34, 40, 2], [92, 70, 30, 3]], 2);
+  PS.sun(c, 112, 178, 24, P, 206);
+  PS.glints(c, t, P, 206);
+  PS.portrait(c, 58, 116, 4, { pal: SP.ME, f: 1, mouth: dt < .38 ? 'o' : 'grin', brows: dt < .38 ? 1 : .2, look: dt < .38 ? [.8, .6] : [1, .2], sweat: true });
+  // the bent rod in front of him (his hands are below the frame), its line running off to the right
+  const P2 = PS.polePts([88, 246], -1.08, 74, 22); for (let i = 1; i < P2.pts.length; i++) PS.pxLine(c, P2.pts[i - 1][0], P2.pts[i - 1][1], P2.pts[i][0], P2.pts[i][1], i < 6 ? 3 : 2, SP.ROD);
+  PS.pxLine(c, P2.tip[0], P2.tip[1], 140, 196, 1, SP.LINE);
+}
+
+// ---------------- wide shots ----------------
+function wideShot(b, t, home) {
+  const c = b.c, W = seaWorld(b, t, WIDE.hz, WIDE.sun, { clouds: [[24, 64, 34, 1], [150, 104, 46, 2], [64, 160, 26, 3], [200, 34, 30, 4]], islands: [[-10, 74, 5], [120, 46, 4], [212, 70, 7], [232, 46, 12, true]] });
+  const f = home ? -1 : 1, by = bob(t), deckY = WIDE.deck + by, len = 96;
+  const sx = home ? Math.round(236 - 30 * clamp((st(t) - B.home) / 2.4)) : 44;        // heading home: the stern moves left on whole pixels
+  const meX = sx + f * 22, bx = sx + f * 42, rim = deckY - 7;
+  SP.bucket(c, bx, rim, 11, 10, { back: true });
+  if (home) for (let k = 0; k < 4; k++) SP.octo(c, bx - 3 + k * 2, rim + 2 - (k % 2), 5, { mode: 'hang', ph: st(t) * 4 + k, f: 1 });
+  SP.bucket(c, bx, rim, 11, 10);
+  const F = PS.stand(meX, deckY + 2, WIDE.h, f); if (!home && t > 1.6 && t < 1.75) F.eye = 'shut';
+  const J = PS.joints(F), P = PS.polePts([F.hip[0] + f * 2, F.hip[1] - 2], home ? -Math.PI + 1.3 : -1.3, 26, 0);
+  F.hands = [P.at(.05), P.at(.3)];
+  PS.pxPath(c, P.pts, 1, SP.ROD); PS.pxLine(c, P.tip[0], P.tip[1], P.tip[0], P.tip[1] + 4, 1, SP.LINE);
+  PS.figure(c, F, SP.ME);
+  PS.boat(c, sx, deckY, len, { f, depth: 12, cabin: { u: .64, w: 14, h: 10 } });
+  PS.seaFront(c, b, t, W.P, WIDE.hz, 0, deckY + 9, b.w, b.h, { refl: W.refl });
+  PS.wake(c, t, sx - f * 1, deckY + 9, -f, home ? 30 : 6);
+}
+
+// ---------------- close: the bucket full of red 쭈꾸미 ----------------
+function bucketShot(b, t) {
+  const c = b.c, P = PS.tod(todAt(t)), hz = 98;
+  PS.backdrop(c, b, P, hz); PS.clouds(c, t, P, [[4, 30, 30, 2], [70, 66, 22, 1]], 1.5);
+  PS.sun(c, 112, 52, 15, P, hz); PS.glints(c, t, P, hz); PS.reflection(c, t, 112, hz, 15, P, { len: 1 });
+  // the boat's far gunwale and the deck planks
+  const bow = PS.BOAT; R(c, 0, 138, b.w, 12, bow.hull); R(c, 0, 142, b.w, 3, bow.stripe); R(c, 0, 138, b.w, 1, bow.trim); R(c, 0, 149, b.w, 2, bow.shade);
+  for (let y = 151, i = 0; y < b.h; i++) { const ph = 5 + i * 2; R(c, 0, y, b.w, ph, P.deck[0]); R(c, 0, y + ph - 1, b.w, 1, P.deck[1]); R(c, 0, y, b.w, 1, PS.tod(2).deck[0]);
+    R(c, (i * 53 + 17) % b.w, y, 1, ph - 1, P.deck[1]); y += ph; }
+  const cx = 64, rim = 150, w = 72, h = 62;
+  PS.pxEllipse(c, cx + 4, rim + h + 2, w * .46, 4, 'rgba(0,0,0,.28)');
+  SP.bucket(c, cx, rim, w, h, { back: true });
+  const q = st(t);
+  const inside = [[44, 150, 14, 1], [80, 149, 15, -1], [62, 146, 16, 1], [30, 156, 12, 1], [96, 155, 13, -1]];
+  inside.forEach(([x, y, s, f], i) => SP.octo(c, x, y - Math.round(Math.abs(Math.sin(q * 3 + i)) * 1.5), s, { mode: 'rim', ph: q * 5 + i * 1.7, f, outline: '#2a0c14' }));
+  SP.bucket(c, cx, rim, w, h);
+  // two climbing over the rim, arms down the front
+  SP.octo(c, 50, rim + 3 - Math.round(ss(B.bucket + .4, B.bucket + 1.2, q) * 2), 13, { mode: 'hang', ph: q * 6, f: -1, reach: 1.6 });
+  SP.octo(c, 86, rim + 2, 12, { mode: 'hang', ph: q * 6 + 2, f: 1, reach: 1.5 });
+}
+
+// ---------------- frame ----------------
+const octoIcon = (() => { let cv = null; return (ctx, x, y, u) => {   // the counter's icon: a tiny 쭈꾸미, 1 icon px = UI px
+  if (!cv) { cv = Pilot.canvas(12, 12); const g = cv.getContext('2d'); SP.octo(g, 6, 9, 7, { mode: 'hang', ph: 1, f: 1 }); }
+  ctx.save(); ctx.imageSmoothingEnabled = false; ctx.drawImage(cv, x - u, y - u, 12 * u, 12 * u); ctx.restore(); }; })();
+
+function draw(ctx, t) {
+  PS.begin(ctx);
+  const sh = shotAt(t);
+  if (sh === 'wide' || sh === 'home') { const b = PS.buf(WIDE.K); wideShot(b, t, sh === 'home'); PS.present(ctx, b); }
+  else if (sh === 'med') { const b = PS.buf(MED.K); medShot(b, t); PS.present(ctx, b, ...PS.shake(t, B.hit, .25, 2)); }
+  else if (sh === 'under') { const b = PS.buf(UND.K); underShot(b, t); PS.present(ctx, b); }
+  else if (sh === 'face') { const b = PS.buf(8); faceShot(b, t); PS.present(ctx, b); }
+  else { const b = PS.buf(8); bucketShot(b, t); PS.present(ctx, b); }
+  // in-picture game UI: the '!' over the 쭈꾸미 when it sees the lure, HIT!, the catch counter over 나 / the bucket
+  if (sh === 'under' && st(t) >= B.spot && st(t) < B.grab) PS.bitText(ctx, '!', 134 * 5 + 2, (UND.bed - 30) * 5 - 70 - (Math.floor(st(t) * 10) % 2) * 5, { px: 10, bold: true, color: PS.GOLD[0], lo: PS.GOLD[1], outline: PS.INK, align: 'center' });
+  if (sh === 'med') PS.impact(ctx, t, 'HIT!', 540, 610, B.hit, { until: B.face[0], px: 20 });
+  const n = landed(t);
+  if (sh === 'med' && n > 0) PS.counter(ctx, t, n, 250, 1000, lastLand(t), { icon: octoIcon, iconW: 11, px: 7 });
+  if (sh === 'bucket') PS.counter(ctx, t, 7, 540, 836, B.bucket + .3, { icon: octoIcon, iconW: 11, px: 9 });
+  PS.captions(ctx, t, S.lines);
+  PS.fade(ctx, t, S.DUR, .5, .5);
+}
+
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: PS.FONTS, init: async () => PS.init(), draw });
+</script>
+</body>
+</html>

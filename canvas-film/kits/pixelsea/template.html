@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>픽셀 새벽 바다 · 템플릿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-pixelsea.js"></script>
+<script>
+/* Pixelsea template — the house-style seed story (kits/pixelsea/STYLE.md), 30 s.
+   A pixel clifftop over the dawn sea: a small figure walks along the grass (on 10 fps), kneels, plants a seed, waits while
+   the banded sun climbs out of the sea, the stars go out and the glints drift; at `sprout` a hard cut in, the sprout pops
+   up in the accent red with a two-frame pixel shake and an impact '!', then a close-up portrait insert; at `rise` the
+   figure stands and looks at it in the morning light; the end card opens as a pixel panel.
+   To make a new film: write scenes/script.js, then replace the SEED / SPROUT, the poses and the shot list below.
+   Keep: begin → buf(K) → backdrop → sky pieces → sun → islands → glints/reflection → land → figures → present(shake) →
+   captions → impact → endCard → fade. */
+const S = window.SCRIPT, B = S.beat, { clamp, lerp, ss } = Pilot, PS = Pixelsea, st = t => PS.step(t, 10);
+const ME = { ...PS.PERSON, hair: '#2a1d24', top: '#3b6a7a', topS: '#2a4c5a', topHi: '#5a8a98', hat: '#4a3a5a', hatS: '#2e2440', hatStyle: 'cap' };
+const tod = t => .55 + 1.05 * ss(0, 24, t);                       // blue-hour edge → sunrise → morning
+const CLOUDS4 = [[20, 70, 34, 1], [150, 112, 44, 2], [60, 168, 26, 3], [196, 40, 30, 4]];
+
+// ---------------- the two set-ups (each composed in its own buffer pixels) ----------------
+// WIDE (4×, 270×480): horizon 268, cliff top 318 from the left edge to x 150, the spot at x 92.
+// CLOSE (6×, 180×320): horizon 172, cliff top 236 to x 128, the spot at x 80.
+const WIDE = { K: 4, hz: 268, top: 318, x1: 150, h: 14, spot: 92, sun: [206, 30], kneelX: 80 };
+const CLOSE = { K: 6, hz: 172, top: 236, x1: 128, h: 22, spot: 80, sun: [150, 46], kneelX: 62 };
+
+function shotAt(t) {
+  if (t < B.kneel) return { ...WIDE, walk: true };
+  if (t < B.wait[0]) return CLOSE;
+  if (t < B.sprout - .1) return WIDE;
+  if (t >= B.sprout + 2.0 && t < B.sprout + 3.0) return { portrait: true };
+  if (t < B.rise) return CLOSE;
+  return WIDE;
+}
+
+// ---------------- poses (evaluate at st(t): on 10 fps) ----------------
+function pose(sh, t) {
+  const y = sh.top, h = sh.h, kx = sh.kneelX, seed = [sh.spot, y - 1];
+  if (sh.walk) { const x = lerp(-10, kx, Math.min(1, t / B.walk[1])), F = t < B.walk[1] ? PS.walk(x, y, h, 1, x / (h * .56)) : PS.stand(kx, y, h, 1); return F; }
+  if (t < B.kneel + .5) return PS.mix(PS.stand(kx, y, h, 1), PS.kneel(kx, y, h, 1), clamp((t - B.kneel) / .5));
+  const F = PS.kneel(kx, y, h, 1), knee = [kx + h * .28, y - h * .3];
+  if (t < B.plant + 1.4) {                                          // reach down, press the seed in, pat twice
+    const k = clamp((t - B.kneel - .5) / .6), pat = t > B.plant ? Math.round(Math.abs(Math.sin((t - B.plant) * 7.5))) * (t < B.plant + 1.1 ? 2 : 0) : 0;
+    F.lean = lerp(.12, .55, k); F.hands = [knee, [lerp(kx + 4, seed[0], k), lerp(y - h * .45, seed[1] - 1, k) - pat]]; return F; }
+  if (t < B.rise) { F.lean = t >= B.sprout ? -.1 : .2; F.hands = [knee, [knee[0] + 2, knee[1] + 1]]; F.eye = t >= B.sprout ? 'wide' : (t > B.wait[0] + 1 && t < B.wait[1] && Math.floor(t * 1.3) % 3 === 0 ? 'shut' : 'open'); return F; }
+  const k = clamp((t - B.rise) / .6), U = PS.stand(kx - 2, y, h, 1); U.lean = -.12; return PS.mix(F, U, k);
+}
+
+// ---------------- the seed and the sprout (the film's one image goes here) ----------------
+function sprout(c, sh, t) {
+  const x = sh.spot, y = sh.top, u = sh.h / 14;
+  if (t >= B.plant && t < B.sprout) { PS.R(c, x - 2, y - 1, 5, 1, '#5a3a3a'); PS.R(c, x - 1, y - 2, 3, 1, '#5a3a3a'); return; }   // the mound
+  if (t < B.sprout) return;
+  const g = PS.pop(PS.hold(t, B.sprout, .35)) * 7 * u + 5 * u * ss(B.sprout + 1, B.rise + 4, st(t)), top = [x + Math.round(Math.sin(st(t) * 1.7) * .6), y - 1 - Math.round(g)];
+  PS.stamp(c, [x - 8 * u, top[1] - 4 * u, 16 * u, g + 6 * u], s => {
+    PS.pxLine(s, x, y - 1, top[0], top[1], u > 1.2 ? 2 : 1, PS.ACCENT);
+    const L = Math.round(3 * u * Math.min(1, g / (5 * u)));
+    if (L > 0) { PS.pxPoly(s, [[top[0], top[1] + 1], [top[0] - L - 1, top[1] - L + 1], [top[0] - L, top[1] + 1]], PS.ACCENT); PS.pxPoly(s, [[top[0] + 1, top[1] + 2], [top[0] + L + 2, top[1] - L + 2], [top[0] + L + 1, top[1] + 2]], '#ff7a52'); }
+  });
+}
+
+// ---------------- the world in one set-up ----------------
+function world(b, sh, t) {
+  const c = b.c, P = PS.tod(tod(t)), hz = sh.hz, sy = hz + 10 - Math.round(sh.K === 4 ? 46 : 36) * ss(1, 24, st(t)), r = sh.sun[1];
+  PS.backdrop(c, b, P, hz);
+  PS.stars(c, t, P, { y1: hz - 30 });
+  PS.clouds(c, t, P, sh.K === 4 ? CLOUDS4 : CLOUDS4.map(([x, y, w, s]) => [x * .7, y * .7 - 6, w * 1.2, s]), 1.2);
+  PS.sun(c, sh.sun[0], sy, r, P, hz);
+  PS.islands(c, P, hz, sh.K === 4 ? [[-10, 70, 5], [150, 50, 4], [218, 70, 7], [236, 44, 12, true]] : [[-10, 60, 6], [100, 30, 4], [160, 40, 12, true]]);
+  PS.glints(c, t, P, hz);
+  PS.reflection(c, t, sh.sun[0], hz, r, P, { len: clamp((hz - sy + r) / (2 * r)) * .9 + .1 });
+  PS.cliff(c, P, -2, sh.x1, sh.top, { drop: sh.K === 4 ? 44 : 40, seed: 8 });
+  sprout(c, sh, t);
+  PS.figure(c, pose(sh, st(t)), ME);
+}
+
+function draw(ctx, t) {
+  PS.begin(ctx);
+  const sh = shotAt(t);
+  if (sh.portrait) {                                                // the close-up insert: a hard cut in, held ~1 s
+    const b = PS.buf(8), P = PS.tod(tod(t)); PS.backdrop(b.c, b, P, 300); PS.stars(b.c, t, P, { y1: 120 });
+    PS.clouds(b.c, t, P, [[10, 40, 40, 2], [90, 90, 34, 3]], 2); PS.sun(b.c, 104, 168, 30, P, 300, { stripes: false });
+    const dt = t - B.sprout - 2.0;
+    PS.portrait(b.c, 62, 120, 4, { pal: ME, f: 1, mouth: dt < .45 ? 'o' : 'grin', brows: dt < .45 ? 1 : .4, look: [.7, .4], blink: dt > .8 && dt < .88 });
+    PS.present(ctx, b);
+  } else {
+    const b = PS.buf(sh.K); world(b, sh, t);
+    PS.present(ctx, b, ...PS.shake(t, B.sprout, .2, 1));
+  }
+  if (t < B.end) PS.captions(ctx, t, S.lines);
+  if (!sh.portrait && sh.K === 6) PS.impact(ctx, t, '!', CLOSE.spot * 6 + 4, 980, B.sprout + .05, { until: B.sprout + 1.4, px: 14 });
+  PS.endCard(ctx, t, S.endCard, B.end);
+  PS.fade(ctx, t, S.DUR, 0, .6);
+}
+
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: PS.FONTS, init: async () => PS.init(), draw });
+</script>
+</body>
+</html>

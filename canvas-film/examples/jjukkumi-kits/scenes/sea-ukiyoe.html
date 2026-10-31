@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>우키요에 · 템플릿</title>
+<title>바다 · 쭈꾸미 낚시</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@600;700&display=swap">
 </head>
 <body>
@@ -12,187 +12,537 @@
 <script src="script-ukiyoe.js"></script>
 <script src="kit-ukiyoe.js"></script>
 <script>
-/* A new scene in the ukiyo-e house style (styles/ukiyoe/STYLE.md). The kit prints the medium; this file draws the story.
-   PLACEHOLDER STORY (the shared template story — replace it with your film's one image): a pilgrim walks along a field
-   above the sea under Fuji, kneels and plants a beni-red seed, waits while geese cross and the waves roll; at 14 a sprout
-   rises in a fan of bare-paper light; at 18 he stands and looks up at it as its beni bud opens; end card at 26.
-   Keep: init → U.init + build static paths once;  draw → U.begin, world into the ink, U.print, glows, captions, end card.
-   Figures pose on 8 fps (st8), water on 12 (the kit's sea), the camera on ones. */
+/* sea-ukiyoe — scene 1 of 「쭈꾸미 한 접시」, an ukiyo-e print of 쭈꾸미 fishing at dawn (styles/ukiyoe/STYLE.md).
+   One sheet: a dawn bokashi sky with mist bands and islands, the sea seen obliquely from the horizon (y 1000) down to the
+   front cut (y 1300), and below the cut a printed SECTION of the water down to the sandy seabed (y ≈ 1830).
+   A small wooden boat sits on the cut; 나 (navy, straw kasa with a mustard band) fishes with a short rod. The rig (snap,
+   lead sinker, an ochre/green 에기) sinks to the seabed and is jigged (고패질); a beni-red 쭈꾸미 — the only red thing —
+   peeks from behind a rock, climbs over and grabs the lure; the hit is a hard cut to a tight print with spray claws; it is
+   reeled up, dangles, swung into the wooden bucket; two more follow; the sun comes up, the boat turns home, and the
+   scene closes on the bucket full of red 쭈꾸미 (scene 2 opens on it).
+   Clocks: figure, boat bob and rig on 8 fps (st8), water on 12 (st12), camera and captions on ones. */
 const { clamp, lerp, ss, eo, eio, rng } = Pilot;
 const U = Ukiyoe, PAL = U.PAL, KW = U.KW;
-const { LN, add, sub, lp2, seg, st8, poly, smooth, circ, fill, key, both, erase, walkPhase } = U;
+const { add, sub, lp2, seg, st8, st12, poly, smooth, circ, fill, key, both, erase, eraseStroke, len, nrm } = U;
 const S = window.SCRIPT, B = S.beat, W = Pilot.W, H = Pilot.H, TAU = Math.PI * 2;
 
-// ---------------------------------------------------------------- the world (world px; one sheet, oblique depth)
-const SX0 = 0, SY0 = -520, SX1 = 1800, SY1 = 2250;   // the printed sheet
-const GY = 1300, ROAD_D = 200, SEA = 1480;           // the field's front edge, its depth, the waterline below the bank
-const FD = 60, FX0 = 1330, FX1 = 850;                // the pilgrim's lane, where he walks in from and stops
-const HOLE = 772, HP = LN(FD, HOLE, GY - 4);         // where the seed goes (world point on the field)
-let SKY, STATIC = [], ROCK, MARKS;
+// ---------------------------------------------------------------- the world (world px)
+const SX0 = -300, SY0 = -700, SX1 = 2200, SY1 = 2700;   // the printed sheet
+const HZ = 1000, SEA = 1300, BED = 1930;                 // horizon, the front cut (waterline of the section), seabed
+const MUST = '#e2a93b';                                  // 나's identity mark (hat band + tie)
+const OS = 1.3;                                          // the 쭈꾸미's print scale (palm-sized, drawn readable)
+const OCT = PAL.beni, OCT_T = PAL.beniT, OCT_D = '#963426', OCT_C = PAL.beniC;   // the one accent: 쭈꾸미 red
+const bedY = x => BED + 6 * Math.sin(x * .011) + 4 * Math.sin(x * .037 + 1.3);
+let SKY, ISL = [], RIPPLES, LX = 1060, RX, ROCK;
 
+// ---------------------------------------------------------------- small helpers
+// eased keyframes: ks = [[t, v], …] → v at t (eio between keys)
+function kf(t, ks) {
+  if (t <= ks[0][0]) return ks[0][1];
+  for (let i = 1; i < ks.length; i++) if (t <= ks[i][0]) { const [a, va] = ks[i - 1], [b, vb] = ks[i]; return lerp(va, vb, eio(seg(t, a, b))); }
+  return ks[ks.length - 1][1];
+}
+const rot = (v, a) => [v[0] * Math.cos(a) - v[1] * Math.sin(a), v[0] * Math.sin(a) + v[1] * Math.cos(a)];
+// a tapered, curling stroke (octopus arm, seaweed frond) → { path, pts }
+function taper(p0, a, L, w0, curl, wig = 0, ph = 0, n = 10) {
+  const pts = []; let x = p0[0], y = p0[1];
+  for (let i = 0; i <= n; i++) { pts.push([x, y]); const k = i / n; a += curl * k * k * .5 + wig * Math.sin(k * 5 + ph) * .1; x += Math.cos(a) * L / n; y += Math.sin(a) * L / n; }
+  const Lp = [], Rp = [];
+  for (let i = 0; i <= n; i++) {
+    const q = pts[Math.min(i + 1, n)], pq = pts[Math.max(0, i - 1)], d = nrm(sub(q, pq)), w = w0 * Math.pow(1 - i / (n + 1), .85) + .5;
+    Lp.push([pts[i][0] - d[1] * w, pts[i][1] + d[0] * w]); Rp.push([pts[i][0] + d[1] * w, pts[i][1] - d[0] * w]);
+  }
+  return { path: smooth(Lp.concat(Rp.reverse()), true), pts };
+}
+
+// ---------------------------------------------------------------- the boat (local u along the hull, v up(−)/down(+), d depth)
+const BOW = 185, STERN = -205, BEAM = 80;
+const gunV = u => { const k = u / 200; return -52 - 6 * k * k - (u > 0 ? 16 * Math.pow(u / BOW, 4) : 5 * Math.pow(-k, 3)); };
+const keelV = u => u > 0 ? 36 * (1 - Math.pow(u / BOW, 2.4)) : 36 - 18 * Math.pow(-u / -STERN, 3);
+function boatAt(t) {
+  const tq = st8(t), bf = U.turn(t, B.turn, 1, -1, .375);
+  const bx = lerp(820, 640, U.trap(seg(t, B.home, 23.5), .3));
+  const by = SEA + 2.5 * Math.sin(tq * 2.1) + 1.2 * Math.sin(tq * 3.7 + 1);
+  return { bx, by, bf };
+}
+const BP = (b, u, v, d = 0) => [b.bx + b.bf * u + U.DX * d, b.by + v + U.DY * d];
+function boatBack(b) {
+  const near = [], far = [];
+  for (let u = STERN; u <= BOW; u += 10) { near.push(BP(b, u, gunV(u), 0)); far.push(BP(b, u, gunV(u), BEAM)); }
+  near.push(BP(b, BOW, gunV(BOW), 0)); far.push(BP(b, BOW, gunV(BOW), BEAM));
+  // the opening: floor boards (light) with the far inner wall above them
+  fill(poly(near.concat(far.slice().reverse())), PAL.woodT);
+  const wall = far.map(p => add(p, [0, 24]));
+  both(poly(far.concat(wall.slice().reverse())), PAL.wood, 1.8);
+  const pl = new Path2D(); for (const k of [.45]) { pl.moveTo(far[0][0], far[0][1] + 24 * k); for (const p of far) pl.lineTo(p[0], p[1] + 24 * k); } key(pl, 1.2, PAL.woodD, .8);
+  // transom (stern face) + thwart (seat) across the beam
+  both(poly([BP(b, STERN, gunV(STERN), 0), BP(b, STERN, gunV(STERN), BEAM), BP(b, STERN, -8, BEAM), BP(b, STERN, -8, 0)]), PAL.woodD, 1.8);
+  for (const [u0, w0] of [[-150, 16], [BK_U - 24, 48]]) { const a = u0, c = u0 + w0; both(poly([BP(b, a, gunV(a) + 4, 0), BP(b, c, gunV(c) + 4, 0), BP(b, c, gunV(c) + 4, BEAM), BP(b, a, gunV(a) + 4, BEAM)]), PAL.woodT, 1.6); }
+  key(poly(far, false), 2.2);
+}
+function boatFront(b, t) {
+  const top = [], bot = [];
+  for (let u = STERN; u <= BOW; u += 10) top.push(BP(b, u, gunV(u)));
+  top.push(BP(b, BOW, gunV(BOW)));
+  for (let u = BOW; u >= STERN; u -= 10) bot.push(BP(b, u, keelV(u)));
+  bot.push(BP(b, STERN, keelV(STERN)));
+  const hull = poly(top.concat(bot));
+  both(hull, PAL.wood, KW);
+  const s0 = BP(b, BOW, gunV(BOW) - 8), s1 = BP(b, BOW - 4, 4), stem = new Path2D(); stem.moveTo(s0[0], s0[1]); stem.quadraticCurveTo(s0[0] + b.bf * 6, (s0[1] + s1[1]) / 2, s1[0], s1[1]); key(stem, 7, PAL.sumi); key(stem, 4, PAL.woodD);
+  // strakes (plank seams) + the gunwale rail
+  const sk = new Path2D();
+  for (const k of [.36, .68]) { let first = true; for (let u = STERN + 4; u <= BOW - 6; u += 10) { const g = gunV(u), kv = keelV(u), p = BP(b, u, lerp(g, kv, k * (u > 120 ? 1 - (u - 120) / 200 : 1))); if (first) { sk.moveTo(p[0], p[1]); first = false; } else sk.lineTo(p[0], p[1]); } }
+  key(sk, 1.5, PAL.woodD, .9);
+  const rail = []; for (let u = STERN; u <= BOW; u += 10) rail.push(BP(b, u, gunV(u) + 7)); rail.push(BP(b, BOW, gunV(BOW) + 7));
+  both(poly(top.concat(rail.slice().reverse())), PAL.woodD, 1.6);
+  // the part under the waterline is seen through the water: a Prussian glaze over it
+  const wl = []; for (let u = STERN; u <= BOW; u += 10) wl.push(BP(b, u, 0));
+  fill(poly(wl.concat(bot)), PAL.prus, .5);
+  key(poly(wl, false), 1.6, PAL.prusL, .9);
+  // a small outboard on the transom (steel greys, never red)
+  const e0 = -222, E = (u, v) => BP(b, e0 + u, v, 40);
+  both(poly([E(-6, -64), E(8, -64), E(6, 24), E(14, 30), E(-8, 30), E(-4, 22)]), PAL.greyD, 1.8);            // leg + skeg
+  both(smooth([E(-22, -76), E(-18, -100), E(10, -104), E(22, -92), E(18, -66), E(-16, -62)], true), PAL.greyL, 2);   // cowl
+  key(poly([E(-20, -80), E(20, -84)], false), 2.4, PAL.greyD);
+  const tl = new Path2D(), t0 = E(16, -80), t1 = E(58, -70); tl.moveTo(t0[0], t0[1]); tl.lineTo(t1[0], t1[1]); key(tl, 5, PAL.sumi); key(tl, 2.6, PAL.greyD);  // tiller
+  const pr = E(-2, 24); both(smooth([add(pr, [-3, -10]), add(pr, [4, -2]), add(pr, [-3, 10]), add(pr, [-6, 0])], true), PAL.grey, 1.4);
+}
+
+// ---------------------------------------------------------------- 나 (the kit's rig; this scene's poses)
+const ME = { robe: '#2f4366', robeD: '#24365a', legs: '#22304c', shin: '#1c2840', shinD: '#141c2c', arm: '#283b5e', armD: '#1f3050', obi: '#3b3531', hat: 'none' };
+const C2 = B.c2, C3 = B.c3, CY = [C2, C3];
+function meAt(t, b) {
+  const ta = st8(t), f = U.turn(t, B.turn, 1, -1, .375);
+  let lean = kf(ta, [[0, .06], [10.45, .08], [10.6, -.14], [12.6, -.1], [13.4, .02], [14.3, .03], [15.1, .14], [15.5, .05],
+    [C2 + .35, .06], [C2 + .5, -.04], [C2 + .75, .12], [C2 + .9, .05], [C3 + .35, .06], [C3 + .5, -.04], [C3 + .75, .12], [C3 + .9, .05], [17.9, .0]]);
+  lean += .012 * Math.sin(ta * 1.9);
+  const bow = kf(ta, [[0, .2], [3.8, .3], [6.5, .42], [10.45, .42], [10.6, .15], [13.0, .1], [13.4, -.02], [14.3, .0], [15.1, .45], [15.5, .3],
+    [17.3, .25], [17.9, .0], [19.0, -.12], [21, -.05]]);
+  return { x: b.bx + b.bf * -60, d: 40, gy: b.by - 12, f, mode: 'stand', lean, bow, hipH: 134, s: 1, ...ME };
+}
+// rod angle θ (rad from horizontal, − = up) and bend 0..1 per moment, + the 고패질 jig on 8 fps
+function jig(ta) { for (const j0 of [7.0, 8.0, 9.0]) { const k = ta - j0; if (k >= 0 && k < .625) return k < .25 ? eo(k / .25) : k < .5 ? 1 : 1 - (k - .5) / .125; } return 0; }
+function rodAngle(ta) {
+  const ks = [[0, -.2], [3.6, -.2], [4.0, -.1], [6.5, -.17], [10.45, -.17], [10.55, -.02], [11.3, -.12], [13.0, -.42], [13.4, -.5], [14.3, -.5], [15.1, -1.0], [15.5, -.25]];
+  for (const c of CY) ks.push([c + .35, -.25], [c + .5, -.5], [c + .75, -1.0], [c + .9, -.25]);
+  ks.push([B.stow, -.25], [B.stow + .6, -1.42]);
+  return kf(ta, ks) - .14 * jig(ta);
+}
+function rodBend(ta) {
+  const ks = [[0, 0], [10.45, 0], [10.5, .95], [11.0, .8], [13.0, .6], [13.4, .28], [14.3, .25], [15.1, .2], [15.25, 0]];
+  for (const c of CY) ks.push([c + .3, 0], [c + .38, .55], [c + .5, .32], [c + .75, .2], [c + .82, 0]);
+  return kf(ta, ks);
+}
+const ROD = 250;
+function rodAt(t) {
+  const ta = st8(t), b = boatAt(t), st = meAt(t, b), R = U.pose(st), f = R.f;
+  const th = rodAngle(ta), bend = rodBend(ta), stow = eio(seg(ta, B.stow, B.stow + .6));
+  const G = U.reach(R, add(R.sh, lp2([30 * Math.sign(f) * Math.abs(f), 64], [24 * f, 42], stow)));
+  const u = nrm([f * Math.cos(th), Math.sin(th)]);
+  // bent rod: the tip is pulled down toward the line; the curve's control point stays on the straight rod
+  const tip = add(G, rot(u, Math.sign(f) * bend * .55), ROD * (1 - .05 * bend)), ctrl = add(G, u, ROD * .5), butt = add(G, u, -24);
+  let far = null;
+  if (stow < .5) { for (let k = 52; k >= 22; k -= 3) { const p = add(G, u, k); if (len(sub(p, R.sh)) < (R.UA + R.FA) * .97) { far = p; break; } } }
+  return { ta, b, st, R, G, u, tip, ctrl, butt, far, bend, stow };
+}
+function rodPts(r) { const pts = []; for (let i = 0; i <= 14; i++) { const k = i / 14, a = lp2(r.G, r.ctrl, k), c = lp2(r.ctrl, r.tip, k); pts.push(lp2(a, c, k)); } return pts; }
+function drawRod(r) {
+  const pts = rodPts(r);
+  const p1 = new Path2D(); p1.moveTo(r.butt[0], r.butt[1]); for (let i = 0; i <= 8; i++) p1.lineTo(pts[i][0], pts[i][1]);
+  const p2 = new Path2D(); p2.moveTo(pts[8][0], pts[8][1]); for (let i = 9; i <= 14; i++) p2.lineTo(pts[i][0], pts[i][1]);
+  key(p1, 7, PAL.sumi); key(p1, 4, PAL.woodD); key(p2, 4.6, PAL.sumi); key(p2, 2.2, PAL.woodD);
+  // cork grip + a small spinning reel under it
+  const g0 = r.butt, g1 = add(r.G, r.u, 10), gp = new Path2D(); gp.moveTo(g0[0], g0[1]); gp.lineTo(g1[0], g1[1]); key(gp, 10, PAL.sumi); key(gp, 7, PAL.roadD);
+  let n = [-r.u[1], r.u[0]]; if (n[1] < 0) n = [-n[0], -n[1]];
+  const rc = add(add(r.G, r.u, 16), n, 13), st = new Path2D(); const s0 = add(r.G, r.u, 16); st.moveTo(s0[0], s0[1]); st.lineTo(rc[0], rc[1]);
+  key(st, 3, PAL.sumi); both(circ(rc, 7.5), PAL.greyL, 1.8); both(circ(rc, 2.6), PAL.greyD, 1);
+  // guides
+  const gd = new Path2D(); for (const i of [6, 10, 13]) { const q = pts[i]; gd.moveTo(q[0] + 3, q[1]); gd.arc(q[0], q[1], 3, 0, TAU); } key(gd, 1.2);
+}
+// the hat: a mustard band round the kasa + a mustard chin tie, short dark hair under it (drawn right after the head)
+function hatBand(R) {
+  const s = R.s, f = R.f, hb = R.hb, up = [Math.sin(hb) * f, -Math.cos(hb)], fw = [Math.cos(hb) * f, Math.sin(hb)];
+  const K = (u, v) => add(add(R.head, fw, u * s), up, v * s);
+  both(poly([K(-13, 1), K(-15, -7), K(-10, -11), K(-6, -2)]), PAL.sumi, KW * .4);          // short dark hair under the brim
+  const tie = new Path2D(), a = K(-7, 3), c = K(-1, -12), e = K(5, -16); tie.moveTo(a[0], a[1]); tie.quadraticCurveTo(c[0], c[1], e[0], e[1]); key(tie, 2.8, MUST);
+  both(poly([K(-52, 2), K(-30, 12), K(-4, 30), K(4, 30), K(30, 12), K(54, 2), K(0, 6)]), '#e4d3a4', KW * s);
+  const sl = new Path2D(); for (const q of [-30, -14, 0, 16, 32]) { const a0 = K(q * .1, 28), a1 = K(q * 1.5, 4); sl.moveTo(a0[0], a0[1]); sl.lineTo(a1[0], a1[1]); } key(sl, KW * s * .4, '#9c8250');
+  both(poly([K(-50, 2), K(52, 2), K(0, -2)]), '#8a6a36', KW * s * .5);
+  both(poly([K(-37, 9), K(38, 9), K(25, 17.5), K(-25, 17.5)]), MUST, KW * .8);
+}
+
+// ---------------------------------------------------------------- the rig: snap → lead sinker below, the 에기 hanging beside it
+function drawEgi(n, a, s = 1) {
+  const u = [Math.cos(a), Math.sin(a)], v = [-Math.sin(a), Math.cos(a)], L = (x, y) => [n[0] + (u[0] * x + v[0] * y) * s, n[1] + (u[1] * x + v[1] * y) * s];
+  const body = smooth([L(-1, 0), L(8, -6.5), L(22, -8.5), L(36, -6.5), L(45, -3), L(47, 0), L(45, 3.5), L(31, 7.5), L(14, 7.5), L(4, 4.5)], true);
+  both(body, PAL.ochre, 2);
+  fill(smooth([L(6, -4.5), L(20, -8), L(36, -6.4), L(44, -2.6), L(34, -2.2), L(18, -2.4)], true), PAL.greenD);
+  const st = new Path2D(); for (const x of [14, 22, 30]) { const p = L(x, -2), q = L(x + 4, 4.5); st.moveTo(p[0], p[1]); st.lineTo(q[0], q[1]); } key(st, 1.2, PAL.woodD, .7);
+  key(body, 2);
+  const e = L(7, 0); erase(circ(e, 2.8 * s), 1); key(circ(e, 2.8 * s), 1.2); fill(circ(e, 1.2 * s), PAL.sumi);
+  const fn = new Path2D(); for (const x of [18, 26]) { const p = L(x, 7), q = L(x + 5, 12); fn.moveTo(p[0], p[1]); fn.lineTo(q[0], q[1]); } key(fn, 1.4);
+  const hk = new Path2D(); for (let i = 0; i < 7; i++) { const aa = (i - 3) * .28, p = L(47, 0), q = add(p, rot(u, aa), 10 * s), r2 = add(q, rot(u, aa + (i < 3 ? -2.4 : 2.4)), 3 * s); hk.moveTo(p[0], p[1]); hk.lineTo(q[0], q[1]); hk.lineTo(r2[0], r2[1]); }
+  key(hk, 1.1, PAL.greyD);
+}
+function drawRig(Sp, egiA, sinkA = 0) {
+  const sk = add(Sp, rot([0, 30], sinkA)), ld = new Path2D(); ld.moveTo(Sp[0], Sp[1]); ld.lineTo(sk[0], sk[1] - 6);
+  key(ld, 1.2, PAL.sumi, .9);
+  both(smooth([add(sk, [0, -9]), add(sk, [6, -1]), add(sk, [5, 6]), add(sk, [-5, 6]), add(sk, [-6, -1])], true), PAL.greyD, 1.6);
+  both(circ(Sp, 2.6), PAL.greyL, 1.2);
+  drawEgi(add(Sp, [1, 3]), egiA);
+}
+// the line: sumi in the air, a paper thread in the water (light is paper)
+function drawLine(T, Sp) {
+  const p = new Path2D(); p.moveTo(T[0], T[1]); p.lineTo(Sp[0], Sp[1]);
+  if (Sp[1] <= SEA - 2) { key(p, 1.5); return; }
+  const k = clamp((SEA - T[1]) / (Sp[1] - T[1])), m = lp2(T, Sp, k), a = new Path2D(), w = new Path2D();
+  a.moveTo(T[0], T[1]); a.lineTo(m[0], m[1]); w.moveTo(m[0], m[1]); w.lineTo(Sp[0], Sp[1]);
+  key(a, 1.5); eraseStroke(w, 2.6, .85);
+}
+
+// ---------------------------------------------------------------- the 쭈꾸미 (palm-sized: round mantle, two eyes, 8 curling arms)
+/* drawOcto(c, o): c = mantle centre; o = { s, ang (0 = mantle up), mode 'dangle' | 'crawl' | 'wrap' | 'tuck', t, seed, look,
+   armL, front: false (draw only the far arms + body, for something to sit between) } */
+function drawOcto(c, o) {
+  const s = o.s ?? 1, ang = o.ang ?? 0, ta = st8(o.t ?? 0), R = rng(o.seed ?? 1), mode = o.mode || 'dangle';
+  const rt = [Math.cos(ang), Math.sin(ang)], dn = [-Math.sin(ang), Math.cos(ang)];
+  const P = (x, y) => [c[0] + (rt[0] * x + dn[0] * y) * s, c[1] + (rt[1] * x + dn[1] * y) * s];
+  const arms = [];
+  for (let i = 0; i < 8; i++) {
+    const side = i < 4 ? -1 : 1, k = (i - 3.5) / 3.5, r1 = R(), r2 = R();
+    let a, curl, Ln = 46 * (o.armL ?? 1) * (.82 + r1 * .3);
+    if (mode === 'crawl') { a = Math.PI / 2 + k * 1.35; curl = -side * (.7 + r2 * .6); Ln *= 1.05; }
+    else if (mode === 'wrap') { a = Math.PI / 2 + k * .9; curl = side * (1.3 + r2 * .7); }
+    else if (mode === 'tuck') { a = Math.PI / 2 + k * 1.2; curl = -side * (1 + r2 * .6); Ln *= .62; }
+    else { a = Math.PI / 2 + k * .5; curl = (i % 2 ? 1 : -1) * (.6 + r2 * .7); }
+    const wig = Math.sin(ta * 4.2 + i * 1.7) * (mode === 'crawl' ? 1.2 : .8);
+    const base = P(k * 10.5, 14 + (1 - Math.abs(k)) * 2.5);
+    arms.push({ i, far: i % 2 === 1, base, a: a + ang, curl: curl * (o.curlK ?? 1), Ln: Ln * s, wig });
+  }
+  const drawArm = (A, col) => { const tp = taper(A.base, A.a, A.Ln, 5.4 * s, A.curl, A.wig, A.i); both(tp.path, col, 1.5 * Math.min(1.4, s)); return tp; };
+  const part = o.part || 'all';
+  if (part !== 'front') {
+  for (const A of arms) if (A.far) drawArm(A, OCT_D);
+  // mantle + head as one rounded body
+  const body = smooth([P(0, -20), P(11, -17), P(15.5, -7), P(14, 2), P(10.5, 7), P(12.5, 12), P(9, 16.5), P(0, 17.5), P(-9, 16.5), P(-12.5, 12), P(-10.5, 7), P(-14, 2), P(-15.5, -7), P(-11, -17)], true);
+  both(body, OCT, 2 * Math.min(1.4, s));
+  fill(smooth([P(-10, -11), P(-4, -17), P(3, -16), P(-4, -11), P(-11, -4)], true), OCT_T);
+  const spots = new Path2D(); for (const [x, y, r] of [[4, -8, 1.6], [7, -1, 1.3], [-2, -3, 1.2], [-6, 2, 1.1]]) { const q = P(x, y); spots.moveTo(q[0] + r * s, q[1]); spots.arc(q[0], q[1], r * s, 0, TAU); }
+  fill(spots, OCT_D, .8);
+  }
+  if (part !== 'back') for (const A of arms) if (!A.far) {
+    const tp = drawArm(A, OCT);
+    if (s >= .9) { const sp = new Path2D(); for (let j = 3; j <= 8; j++) { const q = tp.pts[j], d = nrm(sub(tp.pts[j + 1], q)), side = A.curl > 0 ? 1 : -1, w = 5.4 * s * Math.pow(1 - j / 11, .85) * .45, cc = [q[0] - d[1] * w * side, q[1] + d[0] * w * side], r = 1.15 * s * (1 - j / 14); sp.moveTo(cc[0] + r, cc[1]); sp.arc(cc[0], cc[1], r, 0, TAU); } fill(sp, OCT_C); }
+  }
+  if (part === 'front') return;
+  // eyes: pale bulbs with horizontal slit pupils
+  const look = o.look ?? 0;
+  for (const sx of [-1, 1]) {
+    const e = P(sx * 7.6, 9.5);
+    both(circ(e, 4.1 * s), '#efe0c0', 1.4 * Math.min(1.4, s));
+    const pu = new Path2D(), a0 = P(sx * 7.6 - 2.1 + look * 1.2, 9.8), a1 = P(sx * 7.6 + 2.1 + look * 1.2, 9.8); pu.moveTo(a0[0], a0[1]); pu.lineTo(a1[0], a1[1]);
+    key(pu, 1.9 * s, PAL.sumi);
+  }
+}
+
+// ---------------------------------------------------------------- the rig's path through time (pure functions of t)
+const SNAP_BED = () => bedY(LX) - 37;
+function rigAt(t) {
+  const r = rodAt(t), ta = r.ta, T = r.tip;
+  let Sp, egiA = 1.15, oct = -1, inBucket = false;
+  const sway = (amp, w) => Math.sin(ta * w) * amp;
+  const bedTop = SNAP_BED();
+  const swingTo = (t0, t1, L0) => {        // pendulum swing from hanging L0 below the tip into the bucket
+    const r1 = rodAt(t1), bk = bucketTop(r1.b), end = add(bk, [r1.b.bf * -4, -30]);
+    const L1 = len(sub(end, r1.tip)), ph1 = Math.atan2(end[0] - r1.tip[0], end[1] - r1.tip[1]), k = eio(seg(ta, t0, t1));
+    const ph = lerp(0, ph1, k) + Math.sin(k * Math.PI) * -.25 * Math.sign(ph1 || 1), L = lerp(L0, L1, k);
+    return add(T, [Math.sin(ph) * L, Math.cos(ph) * L]);
+  };
+  if (ta < B.drop) Sp = add(T, [sway(2, 2.3), 62]);
+  else if (ta < B.bed) { const L = lerp(62, bedTop - T[1] + 30, eo(seg(ta, B.drop, B.bed))); Sp = [T[0], Math.min(T[1] + L, bedTop)]; }
+  else if (ta < B.hit) {
+    Sp = [T[0], Math.min(T[1] + (bedTop - rodAt(6.5).tip[1]) + 3, bedTop)];
+    egiA = lerp(1.15, .42, clamp((Sp[1] - (bedTop - 30)) / 30));
+  }
+  else if (ta < B.reel) { Sp = [T[0], bedTop - 24 * eo(seg(ta, B.hit, B.hit + .25))]; egiA = .7; oct = 0; }
+  else if (ta < B.surface) { Sp = [T[0], lerp(bedTop - 24, SEA + 26, Math.pow(seg(ta, B.reel, B.surface), 1.15))]; egiA = .9; oct = 0; }
+  else if (ta < 13.4) { Sp = [T[0], lerp(SEA + 26, T[1] + 150, eo(seg(ta, B.surface, 13.4)))]; egiA = 1.0; oct = 0; }
+  else if (ta < B.swing) { const ph = .16 * Math.sin((ta - 13.4) * 6.5) * (1 - .6 * seg(ta, 13.4, B.swing)); Sp = add(T, [Math.sin(ph) * 150, Math.cos(ph) * 150]); egiA = 1.05 + ph; oct = 0; }
+  else if (ta < B.bucket) { Sp = swingTo(B.swing, B.bucket, 150); egiA = 1.05; oct = 0; }
+  else if (ta < C2) { const r0 = rodAt(B.bucket), bk = add(bucketTop(r0.b), [r0.b.bf * -4, -30]); Sp = lp2(bk, add(T, [0, 110]), eio(seg(ta, B.bucket, B.bucket + .35))); }
+  else if (ta < C3 + .9) {
+    const c = ta < C3 ? C2 : C3, k = ta - c, idx = c === C2 ? 1 : 2;
+    if (k < .15) Sp = add(T, [0, lerp(110, 430, eio(k / .15))]);
+    else if (k < .35) Sp = add(T, [0, 430]);
+    else if (k < .5) { Sp = add(T, [0, lerp(430, 150, eo((k - .35) / .15))]); oct = idx; }
+    else if (k < .75) { Sp = swingTo(c + .5, c + .75, 150); oct = idx; }
+    else { const r0 = rodAt(c + .75), bk = add(bucketTop(r0.b), [r0.b.bf * -4, -30]); Sp = lp2(bk, add(T, [0, 110]), eio((k - .75) / .15)); }
+  }
+  else if (ta < B.stow + .6) Sp = add(T, [0, lerp(110, 46, eio(seg(ta, B.stow, B.stow + .6)))]);
+  else Sp = add(T, [sway(3, 1.7), 46]);
+  if (Sp[1] > SEA + 40 && egiA > .9 && ta >= B.hit) egiA = .8;
+  return { r, Sp, egiA, oct };
+}
+
+// ---------------------------------------------------------------- the bucket (a wooden oke on the boat floor, in front of 나)
+const BK_U = 88, BK_R = 33, BK_H = 50;
+const bucketBase = b => BP(b, BK_U, gunV(BK_U) + 4, 40);   // it stands on the forward thwart, clear of the gunwale
+const bucketTop = b => add(bucketBase(b), [0, -BK_H]);
+const DROPS = [B.bucket, C2 + .75, C3 + .75];
+function bucketCount(t) { let n = 0; for (const d of DROPS) if (t >= d) n++; if (t >= B.turn + .2) n = 6; return n; }
+// six heads in the oke (x, y in rim units, tilt), filled in this order; drawn back (−y) to front
+const SLOTS = [[.05, .1, .1], [-.42, -.25, -.25], [.45, -.2, .28], [-.12, -.45, .05], [-.5, .3, -.15], [.48, .35, .2]];
+function drawBucket(b, t) {
+  const c = bucketBase(b), tp = add(c, [0, -BK_H]), sq = Math.abs(b.bf) ** .2, rx = BK_R * sq, ry = BK_R * .4, rb = (BK_R - 4) * sq;
+  const ell = (p, rX, rY, a0 = 0, a1 = TAU) => { const q = new Path2D(); q.ellipse(p[0], p[1], rX, rY, 0, a0, a1); return q; };
+  const n = bucketCount(t), ta = st8(t), os = .85;
+  const heads = SLOTS.slice(0, n).map(([x, y, a], i) => ({ i, a, c: add(tp, [x * rx, y * ry - 5 * os - (i % 2) * 3]) })).sort((p, q) => p.c[1] - q.c[1]);
+  // the back of the bucket + the water inside
+  both(ell(tp, rx, ry), PAL.woodT, 2);
+  both(ell(add(tp, [0, 3]), rx - 4, ry - 3), PAL.prusD, 1.4);
+  for (const h of heads) drawOcto(h.c, { s: os, ang: h.a * Math.sign(b.bf), mode: 'tuck', t, seed: 30 + h.i, part: 'back', look: Math.sin(ta * 1.3 + h.i * 2) > .5 ? 1 : 0 });
+  // the bucket's front (staves) hides their bodies below the rim
+  const fr = new Path2D(); fr.ellipse(tp[0], tp[1], rx, ry, 0, Math.PI, 0, true); fr.lineTo(c[0] + rb, c[1]); fr.ellipse(c[0], c[1], rb, ry * .9, 0, 0, Math.PI); fr.closePath();
+  both(fr, PAL.woodT, 2.2);
+  const sv = new Path2D(); for (let k = -3; k <= 3; k++) { const q = k / 3.7, x0 = tp[0] + rx * q, x1 = c[0] + rb * q, y0 = tp[1] + ry * Math.sqrt(1 - q * q), y1 = c[1] + ry * .9 * Math.sqrt(1 - q * q); sv.moveTo(x0, y0); sv.lineTo(x1, y1); }
+  key(sv, 1.2, PAL.woodD, .85);
+  for (const k of [.2, .74]) { const hp = new Path2D(); hp.ellipse(lerp(tp[0], c[0], k), lerp(tp[1], c[1], k), lerp(rx, rb, k) + 1, ry * .95, 0, 0, Math.PI); key(hp, 5.5, PAL.sumi); key(hp, 3.2, PAL.straw); }
+  key(ell(tp, rx, ry, 0, Math.PI), 2.4);
+  // arms curling over the front rim
+  for (const h of heads) if (h.c[1] > tp[1] - 8) for (const sd of [-1, 1]) {
+    if ((h.i + (sd > 0 ? 1 : 0)) % 2) continue;
+    const p0 = [h.c[0] + sd * 7 * os, tp[1] + ry * .8], A = taper(p0, Math.PI / 2 + sd * .3, 36 * os, 4.6 * os, -sd * 2.3, Math.sin(ta * 2.6 + h.i + sd) * .8, h.i + sd);
+    both(A.path, OCT, 1.3);
+    const sp = new Path2D(); for (let j = 3; j <= 8; j++) { const q = A.pts[j], r = 1.1 * (1 - j / 14); sp.moveTo(q[0] + r, q[1]); sp.arc(q[0], q[1], r, 0, TAU); } fill(sp, OCT_C);
+  }
+  // a plop of paper drops when one lands
+  for (const d of DROPS) { const k = st12(t) - d; if (k < 0 || k > .45) continue; const dp = new Path2D(), R2 = rng(70 + d * 10 | 0);
+    for (let i = 0; i < 7; i++) { const a = -Math.PI / 2 + (R2() - .5) * 2, v = 110 + R2() * 90, x = tp[0] + Math.cos(a) * v * k, y = tp[1] - 6 + Math.sin(a) * v * k + 700 * k * k, rr = 2 + R2() * 2.5; dp.moveTo(x + rr, y); dp.arc(x, y, rr, 0, TAU); }
+    erase(dp, 1); key(dp, 1, PAL.prusL, .8); }
+}
+
+// ---------------------------------------------------------------- landscape
 function buildStatic() {
-  const L = STATIC;
-  // Fuji: a concave cone, snow cap cut back to paper with a ragged lower edge
-  const fuji = []; for (let x = -160; x <= 1360; x += 20) { const u = Math.abs(x - 560) / 760; fuji.push([x, 760 + 470 * Math.pow(u, 1.35) + (Math.abs(x - 560) < 46 ? -6 * Math.cos((x - 560) / 46 * Math.PI * 3) : 0)]); }
-  L.push({ p: poly([[-160, 1260], ...fuji, [1360, 1260]]), fill: PAL.mtn2, key: 2, keyCol: PAL.prus });
-  const R = rng(3), FY = x => fuji[Math.round((x + 160) / 20)][1], cap = [], low = [];
-  for (let x = 360; x <= 760; x += 20) cap.push([x, FY(x) - 2]);
-  for (let x = 760, i = 0; x >= 360; x -= 20, i++) low.push([x, FY(x) + (x === 760 || x === 360 ? 0 : (i % 2 ? 22 + R() * 18 : 64 + R() * 70) * (1 - Math.pow(Math.abs(x - 560) / 210, 4)))]);
-  L.push({ snow: smooth([...cap, ...low], true), rim: poly(fuji.filter(([x]) => x >= 300 && x <= 820), false), ridges: (() => { const p = new Path2D(); for (const [x, y] of low.filter((_, i) => i % 2 === 0)) { p.moveTo(x, y); p.quadraticCurveTo(x + (x - 560) * .12, y + 50, x + (x - 560) * .3, y + 120); } return p; })() });
-  L.push({ mist: [[-100, 1130, 1300, 42], [700, 1185, 1200, 34]] });
-  // two green ridges with small pines, down to the field's back edge
-  const h1 = U.ridge(SX0 - 20, SX1 + 20, 1205, 60, 4.2, 20, .0034);
-  L.push({ p: poly([[SX0 - 20, 1320], ...h1, [SX1 + 20, 1320]]), fill: PAL.greenL, key: 2 });
-  for (const [x, hh, ln, sd, sc] of [[1180, 110, .08, 3, .6], [1460, 130, -.06, 5, .66], [300, 96, .1, 8, .56]])
-    L.push({ pine: U.pine(x, h1[Math.round((x + 20) / 20)][1] + 22, hh, ln, sd, sc) });
-  const h2 = U.ridge(SX0 - 20, SX1 + 20, 1232, 26, 9.1, 20, .007);
-  L.push({ p: poly([[SX0 - 20, 1320], ...h2, [SX1 + 20, 1320]]), fill: PAL.green, key: 2.2 });
-  // the field (oblique top) and its bank face down to the sea
-  L.push({ p: U.roadTop(SX0 - 60, SX1 + 60, GY, ROAD_D), fill: PAL.road, key: 2.4, marks: true });
-  const bank = U.jagged(SX1 + 60, GY, SY1, 60, 10, 0, 6);
-  L.push({ p: poly([[SX0 - 60, GY], [SX1 + 60, GY], [SX1 + 60, SY1 + 10], [SX0 - 60, SY1 + 10]]), fill: PAL.rock, key: 2.6, rock: true });
-  // the big foreground pine leaning in from the left (Hiroshige framing)
-  L.push({ pine: U.pine(1240, GY + 60, 560, -.42, 11, 1.2), front: true });
+  // islands on the horizon: a tall one at left, a long low one at right
+  const isl = (x0, x1, hgt, seed, col, kw) => { const pts = []; for (let x = x0; x <= x1; x += 16) { const u = (x - x0) / (x1 - x0), bell = Math.pow(Math.sin(u * Math.PI), 1.3); pts.push([x, HZ + 2 - hgt * bell * (.72 + .5 * Pilot.fbm(x * .006 + seed, seed, 3))]); } return { p: poly([[x0, HZ + 4], ...pts, [x1, HZ + 4]]), col, kw }; };
+  ISL.push(isl(1540, 2260, 70, 4.1, PAL.mtn, 1.6));
+  ISL.push(isl(-340, 560, 190, 1.7, PAL.mtn2, 2));
+  ISL.push(isl(260, 760, 70, 8.3, PAL.mtn, 1.6));
+  // seabed ripples
+  const rp = new Path2D(), R = rng(12);
+  for (let i = 0; i < 70; i++) { const x = SX0 + R() * (SX1 - SX0), y = bedY(x) + 22 + R() * 300, l = 14 + R() * 26; rp.moveTo(x, y); rp.quadraticCurveTo(x + l / 2, y - 5, x + l, y); }
+  RIPPLES = rp;
 }
-
-// ---------------------------------------------------------------- the pilgrim (the kit's rig; this story's poses)
-const ME = { robe: '#3f5878', robeD: '#2c4a70', legs: '#25304a' };
-function me(t) {
-  const ta = st8(t), base = { d: FD, s: 1, f: -1, x: FX1, ...ME };
-  if (t < B.walk[1]) { const x = lerp(FX0, FX1, U.trap(seg(t, B.walk[0], B.walk[1]), .12));
-    return { ...base, x, mode: 'walk', ph: walkPhase(FX0 - x, 24), stride: 24, lean: .08, hipH: 134, bow: .06 }; }
-  if (t < B.kneel) return { ...base, mode: 'stand', lean: lerp(.08, .3, seg(ta, B.walk[1], B.kneel)), hipH: 134, bow: .25 };
-  const k = eio(seg(ta, B.kneel, B.kneel + .5)) * (1 - eio(seg(ta, B.rise, B.rise + .6)));
-  if (t < B.rise + .6) {
-    const breathe = .02 * Math.sin(ta * 2.2);
-    let lean = .55, bow = .2;
-    if (t >= B.kneel + .5) lean = lerp(.55, 1.0, eio(seg(ta, B.kneel + .5, B.plant - .2)));   // bend down to the ground
-    if (t >= B.plant + 1.2) lean = lerp(1.0, .4, eio(seg(ta, B.plant + 1.2, B.wait[0]))) + breathe;
-    if (t >= B.sprout) { lean = lerp(.4, .05, eio(seg(ta, B.sprout, B.sprout + .4))); bow = lerp(.2, -.25, eio(seg(ta, B.sprout, B.sprout + .5))); }
-    if (t >= B.rise) { lean = lerp(.05, .02, seg(ta, B.rise, B.rise + .6)); bow = lerp(-.25, -.42, seg(ta, B.rise, B.rise + .6)); }
-    return { ...base, mode: 'kneel', k, lean, hipH: 134, bow };
-  }
-  return { ...base, mode: 'stand', lean: .02 + .015 * Math.sin(ta * 1.7), hipH: 134, bow: -.42 + .06 * ss(B.end - 2, B.end, t) };
+function buildRock() {
+  RX = LX + 128;
+  const gy = bedY(RX) + 6, R = rng(5), pts = [];
+  for (let i = 0; i <= 12; i++) { const a = Math.PI + i / 12 * Math.PI, rr = 1 + (R() - .5) * .14; pts.push([RX + Math.cos(a) * 64 * rr, gy + Math.sin(a) * 58 * rr]); }
+  const top = poly(pts.slice(3, 9).map(([x, y]) => [x, y + 6]).concat(pts.slice(3, 9).reverse().map(([x, y]) => [x - 4, y + 24])));
+  const small = []; for (let i = 0; i <= 8; i++) { const a = Math.PI + i / 8 * Math.PI; small.push([RX + 82 + Math.cos(a) * 34, gy + 2 + Math.sin(a) * 26]); }
+  const ch = new Path2D(); for (const [x, y, l] of [[RX - 30, gy - 40, 30], [RX + 10, gy - 48, 36], [RX + 34, gy - 30, 24], [RX - 8, gy - 22, 18]]) { ch.moveTo(x, y); ch.quadraticCurveTo(x + 6, y + l * .5, x + 2, y + l); }
+  ROCK = { main: poly(pts), top, small: poly(small), ch, gy, topY: gy - 58 };
 }
-// hand targets for each moment (hands are drawn AT these points; the arms come from the kit's IK)
-function hands(R, st, t) {
-  const ta = st8(t);
-  if (st.mode === 'walk' || (st.mode === 'stand' && t < B.kneel)) return {};
-  const onKnee = add(R.kneeN, [6, -10]), onThigh = lp2(R.hip, R.kneeN, .62);
-  if (t < B.rise + .6) {
-    let near = onThigh, far = onKnee;
-    if (t < B.wait[0]) {
-      const hole = [HP[0], HP[1] - 6], hold = add(R.sh, [R.f * 20, 52]);
-      if (ta < B.plant) near = lp2(hold, hole, eio(seg(ta, B.kneel + .6, B.plant)));
-      else if (ta < B.plant + 1.2) near = add(hole, [R.f * -4, -(Math.abs(Math.sin((ta - B.plant) * Math.PI * 2.5)) * 22)]);   // patting the soil
-      else near = lp2(hole, onThigh, eio(seg(ta, B.plant + 1.2, B.wait[0])));
-      far = onKnee;
-    }
-    return { near: U.reach(R, near), far: U.reach(R, far) };
-  }
-  if (t > 21 && t < 23.6) { const lf = leafTip(t, 1), u = Math.sin(seg(ta, 21, 23.6) * Math.PI); return { near: U.reach(R, lp2(U.hangArm(R, .1)[1], lf, eio(clamp(u * 1.6)))) }; }
-  return {};
+function drawRock() {
+  both(ROCK.small, PAL.rockD, 2);
+  both(ROCK.main, PAL.rock, KW);
+  fill(ROCK.top, '#a3ae9c'); key(ROCK.ch, 1.6, PAL.rockF, .9);
+  const mp = new Path2D(); for (const [x, y, r] of [[RX - 40, ROCK.gy - 8, 4], [RX - 26, ROCK.gy - 4, 3], [RX + 46, ROCK.gy - 12, 3.5]]) { mp.moveTo(x + r, y); mp.arc(x, y, r, 0, TAU); } fill(mp, PAL.greenD);
 }
-
-// ---------------------------------------------------------------- the sprout (accent: a beni bud that opens)
-const SPH = 300;
-function sproutH(t) { return SPH * eo(seg(st8(t), B.sprout, B.sprout + 3.6)); }
-function stemPt(t, u) { const h = sproutH(t), sw = Math.sin(st8(t) * 1.6) * 6 * u * u; return [HP[0] + Math.sin(u * 2.6) * 14 * u + sw, HP[1] - h * u]; }
-const LEAVES = [[.28, -1, 1.0], [.46, 1, .9], [.64, -1, .75], [.8, 1, .6]];
-function leafTip(t, i) { const [u, sd, sc] = LEAVES[i], b = stemPt(t, u), g = clamp((sproutH(t) / SPH - u) / .25); return add(b, [sd * 62 * sc * g, -26 * sc * g]); }
-function drawSprout(t) {
-  if (t < B.sprout) return;
-  const h = sproutH(t); if (h < 2) return;
-  const pts = []; for (let i = 0; i <= 10; i++) pts.push(stemPt(t, i / 10));
-  key(smooth(pts), 9, PAL.greenD); key(smooth(pts), 5.5, PAL.green);
-  for (let i = 0; i < LEAVES.length; i++) {
-    const [u, sd, sc] = LEAVES[i], g = clamp((h / SPH - u) / .25); if (g <= 0) continue;
-    const b = stemPt(t, u), tip = leafTip(t, i), mid = lp2(b, tip, .5), nv = [-(tip[1] - b[1]), tip[0] - b[0]], k = .32;
-    const leaf = smooth([b, add(mid, nv, k), tip, add(mid, nv, -k)], true);
-    both(leaf, i % 2 ? PAL.green : PAL.greenL, 2);
-    const vein = new Path2D(); vein.moveTo(b[0], b[1]); vein.lineTo(tip[0], tip[1]); key(vein, 1.2, PAL.greenD);
-  }
-  const top = stemPt(t, 1), open = eio(seg(st8(t), B.rise + 1.4, B.rise + 2.4)), r = 7 + 7 * clamp(h / SPH);
-  if (open > 0) for (let i = 0; i < 5; i++) {                       // five petals turning out
-    const a = -Math.PI / 2 + (i - 2) * (.5 + .35 * open), tipP = add(top, [Math.cos(a), Math.sin(a)], r * (1.2 + 1.6 * open)), nv = [-Math.sin(a), Math.cos(a)];
-    both(smooth([top, add(lp2(top, tipP, .6), nv, r * .7 * open + 2), tipP, add(lp2(top, tipP, .6), nv, -r * .7 * open - 2)], true), i % 2 ? PAL.beniT : PAL.beni, 1.8);
-  }
-  both(smooth([add(top, [-r * .8, 2]), add(top, [0, -r * 1.7]), add(top, [r * .8, 2]), add(top, [0, r * .7])], true), PAL.beni, 2);   // the bud
+function drawShell(x, s, a) {
+  const g = [x, bedY(x) - 2], pts = [g]; for (let i = 0; i <= 8; i++) { const an = Math.PI + a + i / 8 * Math.PI; pts.push([g[0] + Math.cos(an) * 16 * s, g[1] + Math.sin(an) * 14 * s]); }
+  const sh = smooth(pts, true); both(sh, '#e9dcbc', 1.6);
+  const rb = new Path2D(); for (let i = 1; i < 8; i++) { const an = Math.PI + a + i / 8 * Math.PI; rb.moveTo(g[0], g[1]); rb.lineTo(g[0] + Math.cos(an) * 14 * s, g[1] + Math.sin(an) * 12 * s); } key(rb, 1, PAL.roadD);
 }
-// the seed in the hand → in the hole → covered by a small mound
-function drawGround(t, R, hN) {
-  const mound = eo(seg(st8(t), B.plant + .2, B.plant + 1.2));
-  if (t >= B.plant && mound < 1) both(circ([HP[0], HP[1] - 3], 6), PAL.beni, 1.6);
-  if (mound > 0) { const w = 34 * mound, hh = 12 * mound; both(smooth([[HP[0] - w, HP[1] + 2], [HP[0], HP[1] - hh], [HP[0] + w, HP[1] + 2], [HP[0], HP[1] + 5]], true), PAL.roadD, 1.8); }
+function drawSky(t) {
+  U.drawSky(SKY);
+  // warm dawn bokashi along the horizon (ochre, never red), growing as the sun comes
+  const rise = ss(B.sun, B.sun + 3.4, t);
+  U.ix.setTransform(U.MF); const g = U.ix.createLinearGradient(0, HZ - 420, 0, HZ);
+  g.addColorStop(0, U.rgba(PAL.ochreL, 0)); g.addColorStop(.6, U.rgba(PAL.ochreL, .3 + .2 * rise)); g.addColorStop(1, U.rgba(PAL.ochreL, .62 + .2 * rise));
+  U.ix.fillStyle = g; U.ix.fillRect(SX0, HZ - 420, SX1 - SX0, 430);
+  const sun = sunPos(t);
+  U.pool([sun[0], HZ - 10], 760, PAL.ochre, .22 + .3 * rise, { r0: 40 });
+  if (sun[1] < HZ + 50) { erase(circ(sun, 50), .97); key(circ(sun, 50), 2.2, PAL.ochre, .9); }
+  // mist bands (suyari-gasumi), drifting slowly
+  U.mistBand(-260 + Math.sin(t * .3) * 16 + t * 5, 260, 1500, 70, .75);
+  U.mistBand(900 + Math.sin(t * .27 + 2) * 16 - t * 4, 520, 1300, 54, .7);
+  for (const l of ISL) { fill(l.p, l.col); key(l.p, l.kw, PAL.prus); }
+  U.mistBand(-420 + Math.sin(t * .35) * 16 + t * 6, HZ - 52, 1250, 40, .95);
+  U.mistBand(1300 + Math.sin(t * .31 + 1) * 16 - t * 5, HZ - 22, 1100, 26, .85);
+  drawGulls(t);
 }
-function drawSeedInHand(t, hN) { if (t >= B.kneel && t < B.plant) both(smooth([add(hN, [-7, -2]), add(hN, [0, -9]), add(hN, [7, -2]), add(hN, [0, 4])], true), PAL.beni, 1.6); }
-
-// ---------------------------------------------------------------- ambient: geese crossing while he waits
-function drawGeese(t) {
-  const u = seg(t, B.wait[0] - .5, B.wait[1] + 1); if (u <= 0 || u >= 1) return;
+const sunPos = t => [1340, lerp(HZ + 70, HZ - 150, eio(seg(t, B.sun, B.sun + 4)))];
+function drawGulls(t) {
   const ta = st8(t), p = new Path2D();
-  for (let i = 0; i < 7; i++) {
-    const x = lerp(1620, -120, u) + i * 46 + (i % 2) * 8, y = 560 + Math.abs(i - 0) * 18 - i * 6 + Math.sin(i * 1.7) * 6, fl = Math.sin(ta * 9 + i * 1.3) * 7, w = 15;
-    p.moveTo(x - w, y + fl); p.quadraticCurveTo(x - w * .4, y - 4, x, y + 2); p.quadraticCurveTo(x + w * .4, y - 4, x + w, y + fl);
+  for (const [x0, y0, sp, ph] of [[180, 560, 14, 0], [250, 610, 14, 1.4], [1450, 420, -10, 2.2]]) {
+    const x = x0 + sp * t, y = y0 + Math.sin(t * .6 + ph) * 8, fl = Math.sin(ta * 7 + ph) * 7, w = 17;
+    p.moveTo(x - w, y + fl); p.quadraticCurveTo(x - w * .4, y - 6, x, y + 2); p.quadraticCurveTo(x + w * .4, y - 6, x + w, y + fl);
   }
   key(p, 3, PAL.sumi, .85);
 }
+// the sea from the horizon to the front cut, seen obliquely: rows of paper crests growing toward us (water on 12 fps)
+function drawSurface(t) {
+  const tq = st12(t), ix = U.ix;
+  const band = poly([[SX0, HZ], [SX1, HZ], [SX1, SEA + 20], [SX0, SEA + 20]]);
+  ix.setTransform(U.MF); const g = ix.createLinearGradient(0, HZ, 0, SEA); g.addColorStop(0, PAL.skyL); g.addColorStop(.18, PAL.sky); g.addColorStop(.5, PAL.prusL); g.addColorStop(1, PAL.prus);
+  ix.fillStyle = g; ix.fill(band);
+  key(poly([[SX0, HZ], [SX1, HZ]], false), 1.6, PAL.prus, .8);
+  // the sun's path on the water (paper dashes)
+  const rise = ss(B.sun, B.sun + 3, t);
+  if (rise > 0) { const sp = new Path2D(), R = rng(8), sx = sunPos(t)[0]; for (let i = 0; i < 26; i++) { const y = HZ + 6 + Math.pow(R(), 1.4) * 280, w = 8 + (y - HZ) * .16 * R() + 6; const x = sx + (R() - .5) * (30 + (y - HZ) * .5) + Math.sin(tq * 3 + i) * 4; sp.moveTo(x - w, y); sp.lineTo(x + w, y); } eraseStroke(sp, 3, .7 * rise); }
+  for (let r = 1; r <= 7; r++) {
+    const k = Math.pow(r / 7, 1.6), y = HZ + 8 + k * 256, s = .16 + k * .8, wl = 120 * s, amp = 9 * s, drift = (tq * (10 + 26 * s) + r * 41) % wl;
+    const p = new Path2D(), q = new Path2D();
+    for (let x = SX0 - wl + drift; x < SX1 + wl; x += wl) {
+      p.moveTo(x, y); p.quadraticCurveTo(x + wl * .3, y - amp * 1.6, x + wl * .55, y - amp * .6); p.quadraticCurveTo(x + wl * .62, y + amp * .2, x + wl * .5, y + amp * .35);
+      q.moveTo(x + wl * .55, y + amp * .9); q.quadraticCurveTo(x + wl * .8, y + amp * .3, x + wl * 1.05, y + amp * .9);
+    }
+    eraseStroke(p, 1.2 + 2.2 * s, .9); key(q, .8 + .8 * s, PAL.prusD, .75);
+  }
+}
+const topY = (x, tq) => SEA + 5 * Math.sin(x * .02 - tq * 2) + 3 * Math.sin(x * .047 + tq * 1.3);
+// the cut: a printed section of the water (Prussian blocks + key lines) down to the sandy seabed
+function drawSection(t) {
+  const tq = st12(t), ix = U.ix, top = [];
+  for (let x = SX0; x <= SX1; x += 12) top.push([x, topY(x, tq)]);
+  const body = poly([...top, [SX1, SY1 + 20], [SX0, SY1 + 20]]);
+  ix.setTransform(U.MF); const g = ix.createLinearGradient(0, SEA, 0, BED); g.addColorStop(0, PAL.prusL); g.addColorStop(.25, PAL.prus); g.addColorStop(1, PAL.prusD);
+  ix.fillStyle = g; ix.fill(body);
+  // currents: wavy key lines + a few paper threads
+  for (let i = 0; i < 8; i++) {
+    const y0 = SEA + 70 + i * 62, p = new Path2D(), dr = (tq * (8 + i * 2)) % 240;
+    for (let x = SX0 - 240 + dr + (i % 2) * 90; x < SX1; x += 240) { p.moveTo(x, y0); p.bezierCurveTo(x + 40, y0 - 10, x + 80, y0 + 10, x + 120, y0); p.bezierCurveTo(x + 150, y0 - 6, x + 170, y0 + 4, x + 190, y0); }
+    key(p, 1.5, i < 3 ? PAL.prusD : PAL.prusL, .45);
+  }
+  // light shafts slanting down from the dawn surface (paper cut out of the ink, kept inside the section)
+  ix.save(); ix.setTransform(U.MK); ix.clip(body);
+  const sh = new Path2D(), R = rng(4), sx = sunPos(t)[0];
+  for (let i = 0; i < 9; i++) { const x = sx - 900 + i * 190 + R() * 60 + Math.sin(tq * .7 + i) * 10, w = 16 + R() * 26, dx = -.32 * 700; sh.moveTo(x, SEA); sh.lineTo(x + w, SEA); sh.lineTo(x + w + dx, SEA + 700); sh.lineTo(x + dx - w * .6, SEA + 700); sh.closePath(); }
+  ix.setTransform(U.MF); const lg = ix.createLinearGradient(0, SEA, 0, SEA + 640); lg.addColorStop(0, `rgba(0,0,0,${.11 + .1 * ss(B.sun, B.sun + 3, t)})`); lg.addColorStop(1, 'rgba(0,0,0,0)');
+  erase(sh, 1, lg);
+  ix.restore();
+  key(poly(top, false), 2.4, PAL.prusD);
+  // a lighter skin of water just under the cut
+  const sk = new Path2D(); for (const [x, y] of top) { if (x === SX0) sk.moveTo(x, y + 16); else sk.lineTo(x, y + 16); } key(sk, 1.2, PAL.skyL, .5);
+}
+function drawSeabed(t) {
+  const ta = st8(t), pts = []; for (let x = SX0; x <= SX1; x += 16) pts.push([x, bedY(x)]);
+  const sand = poly([[SX0, SY1 + 20], ...pts, [SX1, SY1 + 20]]);
+  fill(sand, PAL.road);
+  U.ix.setTransform(U.MF); const g = U.ix.createLinearGradient(0, BED + 40, 0, BED + 520); g.addColorStop(0, U.rgba(PAL.roadD, 0)); g.addColorStop(1, U.rgba(PAL.roadD, .85)); U.ix.fillStyle = g; U.ix.fill(sand);
+  key(poly(pts, false), 2.2);
+  key(RIPPLES, 1.3, PAL.roadD, .9);
+  for (const [dy, col, a] of [[90, PAL.roadD, .55], [230, '#b8945a', .6], [400, '#a8844e', .65]]) {   // strata of the cut seabed
+    const sp = []; for (let x = SX0; x <= SX1; x += 24) sp.push([x, bedY(x) + dy + 14 * Math.sin(x * .006 + dy)]);
+    const band = poly([...sp, [SX1, SY1 + 20], [SX0, SY1 + 20]]); fill(band, col, a); key(poly(sp, false), 1.6, PAL.woodD, .6);
+  }
+  const pb = new Path2D(), R = rng(31); for (let i = 0; i < 60; i++) { const x = SX0 + R() * (SX1 - SX0), y = bedY(x) + 40 + R() * 520, r = 3 + R() * 6; pb.moveTo(x + r, y); pb.ellipse(x, y, r, r * .7, 0, 0, TAU); }
+  both(pb, PAL.greyL, 1.2);
+  // seaweed fronds swaying on 8 fps
+  for (const [x, h, sd] of [[LX - 260, 150, 1], [LX - 228, 110, 2], [LX - 520, 170, 3], [LX + 330, 130, 4], [LX + 360, 90, 5], [LX - 700, 120, 6]]) {
+    const sw = Math.sin(ta * 1.4 + sd) * .5, A = taper([x, bedY(x) + 4], -Math.PI / 2 + .08 * sw, h, 7, sw * .9, 1.2, sd);
+    both(A.path, sd % 2 ? PAL.greenD : PAL.pine, 1.6);
+  }
+  drawShell(LX - 120, 1, .1); drawShell(LX + 250, .8, -.2); drawShell(LX - 400, .9, .05);
+}
+// two grey fish drifting through the section (ambient life that is not red)
+function drawFish(t) {
+  for (const [x0, y, sp, s, ph] of [[1500, 1470, -22, 1, 0], [300, 1590, 16, .8, 1.3]]) {
+    const ta = st8(t), x = x0 + sp * t, f = Math.sign(sp), c = [x, y + Math.sin(t * 1.1 + ph) * 6], w = Math.sin(ta * 9 + ph) * 3;
+    const body = smooth([add(c, [f * 22 * s, 0]), add(c, [f * 6 * s, -9 * s]), add(c, [-f * 14 * s, -4 * s]), add(c, [-f * 18 * s, 0]), add(c, [-f * 14 * s, 4 * s]), add(c, [f * 6 * s, 8 * s])], true);
+    const tail = poly([add(c, [-f * 16 * s, 0]), add(c, [-f * 30 * s, -9 * s + w]), add(c, [-f * 27 * s, 0]), add(c, [-f * 30 * s, 9 * s + w])]);
+    both(tail, PAL.greyL, 1.4); both(body, PAL.greyL, 1.6);
+    const e = add(c, [f * 13 * s, -2 * s]); fill(circ(e, 1.8 * s), PAL.sumi);
+  }
+}
+
+// ---------------------------------------------------------------- the 쭈꾸미 before the hit: hidden → peeks → climbs over → creeps → pounces
+function octo0(t) {
+  const ta = st8(t), top = ROCK.topY, lure = rigAt(t).Sp, bx = RX - 104, by = bedY(RX - 104) - 36;
+  if (ta < B.peek) return null;
+  if (ta < B.climb) { const k = eo(seg(ta, B.peek, B.peek + .6)); return { c: [RX - 6 + Math.sin(ta * 1.2) * 3, lerp(top + 42, top - 12, k)], behind: true, mode: 'dangle', ang: .12 * Math.sin(ta * 1.7), look: ta > 8 ? -1 : Math.sin(ta * 2) > 0 ? -1 : 0 }; }
+  if (ta < 9.0) { const k = eio(seg(ta, B.climb, 9.0)); return { c: [lerp(RX - 6, RX - 40, k), lerp(top - 12, top - 40, Math.sin(k * Math.PI * .5))], behind: k < .4, mode: 'crawl', ang: -.35 * k, look: -1 }; }
+  if (ta < 9.6) { const k = eio(seg(ta, 9.0, 9.6)); return { c: [lerp(RX - 40, bx, k), lerp(top - 40, by, k)], mode: 'crawl', ang: -.35 + .2 * k, look: -1 }; }
+  if (ta < B.pounce) { const k = seg(ta, 9.6, B.pounce); return { c: [lerp(bx, lure[0] + 78, k), by + Math.sin(k * 6) * 2], mode: 'crawl', ang: -.1, look: -1 }; }
+  const k = eo(seg(ta, B.pounce, B.hit - .05)); return { c: lp2([lure[0] + 78, by], add(lure, [20, 2]), k), mode: k < .8 ? 'crawl' : 'wrap', ang: -.4 * (1 - k), look: -1 };
+}
+// the 쭈꾸미 riding the lure (wrapped round the 에기)
+function octoOnRig(rg, t, part) {
+  const a = rg.egiA, mid = add(rg.Sp, [Math.cos(a) * 24, Math.sin(a) * 24 + 3]), n = [Math.sin(a), -Math.cos(a)];
+  const c = add(mid, n, 20), ang = Math.atan2(n[0], -n[1]) * .5;
+  drawOcto(c, { s: OS, ang, mode: 'wrap', t, seed: 11 + rg.oct * 7, look: 1, part });
+  return c;
+}
+function drips(c, t, t0) {
+  const tq = st12(t), dp = new Path2D();
+  for (let i = 0; i < 3; i++) { const ph = ((tq - t0) * 1.6 + i / 3) % 1, x = c[0] + (i - 1) * 14, y = c[1] + 40 + ph * ph * 160, r = 2.6; if (y > SEA - 4) continue; dp.moveTo(x + r, y); dp.arc(x, y, r, 0, TAU); }
+  erase(dp, 1); key(dp, 1, PAL.prusL, .8);
+}
 
 // ---------------------------------------------------------------- camera
-const C0 = U.follow(1.0, 900, 1330, GY), C1 = U.follow(1.55, 812, 1240, GY), C2 = U.follow(1.18, 800, 1360, GY), C3 = U.follow(1.3, 806, 1330, GY);
+const CA0 = { z: 1.27, x: 905, y: 1150 }, CA1 = { z: 1.33, x: 890, y: 1140 }, CB = { z: .98, x: 950, y: 1450 };
+let CC, CH;
+const CL = { z: 1.5, x: 915, y: 1150 }, CW = { z: .86, x: 900, y: 990 };
 function camera(t) {
-  if (t < 4.2) return { ...C0, x: lerp(940, 900, seg(t, 0, 4.2)) };
-  if (t < 13.6) { const c = U.camMix(C0, C1, eio(seg(t, 4.2, 5.4))); return U.camMix(c, { ...C1, z: 1.66 }, ss(5.4, 13.6, t) * eio(seg(t, 4.2, 5.4))); }
-  if (t < 17.8) return U.camMix({ ...C1, z: 1.66 }, C2, eio(seg(t, 13.6, 14.7)));
-  return U.camMix(C2, C3, eio(seg(t, 17.8, 18.9)));
+  let c;
+  if (t < 4.6) c = U.camMix(CA0, CA1, seg(t, 0, 4.6));
+  else if (t < 8.4) c = U.camMix(CA1, CB, eio(seg(t, 4.6, 6.6)));
+  else if (t < B.hit) c = U.camMix(CB, CC, eio(seg(t, 8.4, B.hit - .1)));
+  else if (t < 11.7) c = { ...CH, x: CH.x + U.shake(t, B.hit, .3, 12), y: CH.y - 12 * seg(t, B.hit, 11.7) };
+  else if (t < 17.0) { c = U.camMix({ ...CH, y: CH.y - 12 }, CL, eio(seg(t, 11.7, 12.9))); c.x += 8 * seg(t, 12.9, 17); }
+  else if (t < B.close) { const b = boatAt(t); c = U.camMix({ ...CL, x: CL.x + 8 }, { ...CW, x: CW.x + (b.bx - 820) * .5 }, eio(seg(t, 17.0, 18.4))); }
+  else { const b = boatAt(t), bk = bucketTop(b), CE = { z: 4.4, x: bk[0] + 4, y: bk[1] + 22 }; c = U.camMix({ ...CW, x: CW.x + (b.bx - 820) * .5 }, CE, eio(seg(t, B.close, 21.0))); }
+  return c;
 }
 
 // ---------------------------------------------------------------- frame
 function world(t) {
-  U.drawSky(SKY);
-  const light = ss(B.sprout, B.sprout + .5, t);                     // the sprout's light warms the sky (ochre bokashi)
-  U.pool(stemPt(t, 1), 760, PAL.ochreL, .12 + .3 * light);
-  let front = null;
-  for (const l of STATIC) {
-    if (l.mist) { for (const [x, y, w, h] of l.mist) U.mistBand(x + Math.sin(t * .3 + y) * 18 + t * 6, y, w, h * 1.4, .95); continue; }
-    if (l.snow) { erase(l.snow, .92); key(l.ridges, 1.6, PAL.prusL, .8); key(l.rim, 2, PAL.prus); continue; }   // snow = bare paper
-    if (l.pine) { if (l.front) front = l.pine; else U.drawPine(l.pine); continue; }
-    if (l.fill) fill(l.p, l.fill);
-    if (l.rock) U.drawRock(ROCK);
-    if (l.marks) key(MARKS, 1.6, PAL.roadD);
-    if (l.key) key(l.p, l.key, l.keyCol || PAL.sumi);
-  }
-  drawGeese(t);
-  U.mistBand(-80 + Math.sin(t * .35) * 16, GY + 90, 1300, 30, .6);
-  U.sea(t, { x0: SX0, x1: SX1, y: SEA, bottom: SY1 });
-  // the accent light: a fan of bare-paper rays from the sprout, and paper glowing round the bud
-  if (light > 0) { const top = stemPt(t, 1), fade = 1 - .45 * ss(B.rise, B.end, t);
-    U.rays(HP, { a: .55 * light * fade, r: 300 + sproutH(t) * 1.4, len: 260 + sproutH(t), n: 9, a0: -Math.PI * .16, a1: -Math.PI * .84 });
-    U.paperGlow(top, 70 + 40 * light, .7 * light * fade); }
-  const st = me(t), R = U.pose(st), hd = hands(R, st, t);
-  drawSprout(t);
-  drawGround(t, R);
-  const fig = U.figure(R, ME, { near: hd.near, far: hd.far, st, nearFist: !(t > 21 && t < 23.6) });   // open hand on the leaf
-  drawSeedInHand(t, fig.hN);
-  if (front) U.drawPine(front);
+  const ta = st8(t);
+  drawSky(t);
+  drawSurface(t);
+  drawSection(t);
+  drawFish(t);
+  drawSeabed(t);
+  const rg = rigAt(t), r = rg.r, b = r.b;
+  // the 쭈꾸미 before the hit (behind the rock while it peeks)
+  const o0 = t < B.hit ? octo0(t) : null;
+  if (o0 && o0.behind) drawOcto(o0.c, { s: OS, ang: o0.ang, mode: o0.mode, t, seed: 11, look: o0.look });
+  drawRock();
+  // the hit: spray claws thrown up round the lure on the seabed (Hokusai's wave as punctuation)
+  U.splash(t, { x: LX + 22, y: bedY(LX) - 16, t0: B.hit, sea: bedY(LX) - 8, size: .55 });
+  // surface splashes as each one breaks the water
+  U.splash(t, { x: rigAt(B.surface + .05).Sp[0], y: SEA - 2, t0: B.surface, sea: SEA + 4, size: .38 });
+  for (const c of CY) U.splash(t, { x: rigAt(c + .4).Sp[0], y: SEA - 2, t0: c + .4, sea: SEA + 4, size: .26 });
+  // boat (back half), 나, bucket, boat (front half)
+  boatBack(b);
+  drawBucket(b, t);
+  const st = r.st, R = r.R;
+  const holding = r.stow < .5;
+  U.figure(R, ME, { st, near: r.G, far: r.far || undefined, nearFist: true, farFist: !!r.far,
+    front: RR => { hatBand(RR); drawRod(r); } });
+  boatFront(b, t);
+  // the rig on its line, with the 쭈꾸미 riding it after the hit
+  drawLine(r.tip, rg.Sp);
+  if (o0 && !o0.behind) drawOcto(o0.c, { s: OS, ang: o0.ang, mode: o0.mode, t, seed: 11, look: o0.look });
+  if (rg.oct >= 0) octoOnRig(rg, t, 'back');                       // body + far arms behind the lure, near arms over it
+  drawRig(rg.Sp, rg.egiA);
+  if (rg.oct >= 0) { const c = octoOnRig(rg, t, 'front'); if (rg.Sp[1] < SEA - 30) drips(c, t, 0); }
   U.border();
 }
 function draw(ctx, t) {
   const c = camera(t);
   U.begin(ctx, c);
   world(t);
-  const wash = ss(B.end, B.end + .6, t);
-  U.print(ctx, { wash });
-  const light = ss(B.sprout, B.sprout + .5, t);
-  if (light > 0) U.glow(ctx, stemPt(t, 1), 260 * c.z, .45 * light * (1 - wash));   // warm screen glow over the print
+  U.print(ctx, {});
   U.captions(ctx, t, S.lines);
-  U.endCard(ctx, t, S.endCard, B.end, wash);
+  Story.fadeBlack(ctx, t, S.DUR, .5, .5);
 }
 async function init() {
-  U.init({ sheet: [SX0, SY0, SX1, SY1], ground: GY });
-  SKY = U.sky({ top: -60, haze: 560, hazeSoft: 380, hazeA: .7 }); buildStatic();
-  ROCK = U.rockFace(SX0 + 20, SX1 - 20, 21, GY, SEA);
-  MARKS = U.roadMarks(SX0, SX1, 41, GY, ROAD_D);
+  U.init({ sheet: [SX0, SY0, SX1, SY1], ground: SEA });
+  SKY = U.sky({ y0: SY0, h: HZ + 40 - SY0, top: 120, topSoft: 640, haze: 760, hazeSoft: 260, hazeA: .3 });
+  LX = rodAt(6.5).tip[0];
+  buildStatic(); buildRock();
+  CC = { z: 1.6, x: LX + 70, y: bedY(LX) - 150 }; CH = { z: 2.9, x: LX + 40, y: bedY(LX) - 70 };
 }
 Pilot.run({ W, H, dur: S.DUR, fonts: U.FONTS, init, draw });
 </script>

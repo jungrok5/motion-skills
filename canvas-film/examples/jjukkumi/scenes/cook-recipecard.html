@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>쭈꾸미볶음 레시피</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script-recipecard.js"></script>
+<script src="kit-recipecard.js"></script>
+<script>
+/* cook-recipecard — scene 2 of 「쭈꾸미 한 접시」 in the recipecard kit (kits/recipecard/STYLE.md).
+   Opens on the bucket of red 쭈꾸미 from the sea scene tipping into a glass bowl; 「쭈꾸미볶음」 pops in; the rail draws on.
+   STEP 1 flour + salt, the pile swirls (바락바락), rinse · STEP 2 the pot, a 30-second dial, the arms curl as they cook ·
+   STEP 3 one spoon per beat, the sauce deepens, the checklist ticks · STEP 4 the pan on high heat, onion and leek, two tosses ·
+   STEP 5 sesame oil, one turn around the pan, heat off · STEP 6 the plate and a phone: the invitation and the reply · 완성!
+   Film drawing here (the octopus, bucket, vegetables, dish); the look comes from RecipeCard. */
+const S = window.SCRIPT, B = S.beat, R = RecipeCard, C = R.C;
+const { clamp, lerp, ss, eo, eio, rng } = Pilot;
+const TAU = Math.PI * 2;
+const mixc = (a, b, k) => Pilot.rgb(Pilot.mix(R.rgbOf(a), R.rgbOf(b), clamp(k)));
+
+// ---------------- the octopus (쭈꾸미): round mantle, two eyes, eight curling arms ----------------
+const ARMS = new Map();
+function armsOf(seed) {
+  let a = ARMS.get(seed); if (a) return a;
+  const r = rng(seed * 31 + 7); a = [];
+  for (let i = 0; i < 8; i++) {
+    const ba = Math.PI / 2 + (i - 3.5) * .37 + (r() - .5) * .18, cx = Math.cos(ba);
+    a.push({ ba, L: 64 * (.85 + .3 * r()), sg: cx > .06 ? -1 : cx < -.06 ? 1 : (r() < .5 ? -1 : 1), wv: r() * 6 });
+  }
+  ARMS.set(seed, a); return a;
+}
+function armPoly(a, curl) {   // a tapered arm whose tip curls outward (more as `curl` → 1, i.e. cooked)
+  const N = 16, st = a.L / N; let x = Math.cos(a.ba) * 11, y = 3 + Math.sin(a.ba) * 5, d = a.ba; const P = [[x, y]];
+  for (let j = 1; j <= N; j++) { const u = j / N; d += a.sg * (.012 + curl * (.03 + .34 * u * u)) + .04 * Math.sin(u * 6 + a.wv); x += Math.cos(d) * st; y += Math.sin(d) * st; P.push([x, y]); }
+  const Lf = [], Rt = [];
+  P.forEach((p, j) => { const u = j / N, q = P[Math.min(N, j + 1)], pr = P[Math.max(0, j - 1)], dx = q[0] - pr[0], dy = q[1] - pr[1], l = Math.hypot(dx, dy) || 1, w = 7.4 * (1 - .84 * u) + .8;
+    Lf.push([p[0] - dy / l * w, p[1] + dx / l * w]); Rt.push([p[0] + dy / l * w, p[1] - dx / l * w]); });
+  return Lf.concat(Rt.reverse());
+}
+const MANTLE = (() => { const m = []; for (let i = 0; i < 32; i++) { const a = i / 32 * TAU, s = Math.sin(a); m.push([Math.cos(a) * (23 + 2 * Math.cos(2 * a)), -24 + s * (s < 0 ? 31 : 26)]); } return m; })();
+function octo(c, x, y, s, o = {}) {
+  const sd = o.seed ?? 1, col = o.col || R.ACCENT, lw = 2.5 / s;
+  c.save(); c.translate(x, y); c.rotate(o.rot || 0); c.scale(s * (1 + (o.sq || 0) * .1), s * (1 - (o.sq || 0) * .12));
+  armsOf(sd).forEach((a, i) => R.ink(c, armPoly(a, o.curl ?? .45), { closed: true, fill: col, w: lw, seed: sd * 10 + i, amp: .45 }));
+  R.ink(c, MANTLE, { closed: true, fill: col, w: lw * 1.1, seed: sd * 10 + 9, amp: .5 });
+  c.fillStyle = 'rgba(255,246,236,.5)'; c.beginPath(); c.ellipse(-9, -38, 5, 10, -.45, 0, TAU); c.fill();
+  for (const ex of [-10, 10]) {
+    R.ink(c, R.ell(ex, -5, 6.2, 5.4, 0, TAU, 14), { closed: true, fill: C.card, w: lw * .8, seed: sd * 10 + 12, amp: .3 });
+    c.fillStyle = C.ink; c.beginPath(); c.arc(ex + 1, -4.5, 2.7, 0, TAU); c.fill();
+  }
+  c.restore();
+}
+
+// ---------------- the bucket (handed over from the sea scene) ----------------
+function bucket(c, x, y, ang, inside) {   // (x, y) = mouth centre
+  // the wire handle hangs from the two ears under gravity (world space), behind the bucket
+  const ear = sx => [x + Math.cos(ang) * sx * 98 - Math.sin(ang) * 26, y + Math.sin(ang) * sx * 98 + Math.cos(ang) * 26];
+  const e0 = ear(-1), e1 = ear(1), sag = Math.max(40, 150 - Math.abs(e1[0] - e0[0]) * .25), hang = [];
+  for (let i = 0; i <= 16; i++) { const u = i / 16; hang.push([lerp(e0[0], e1[0], u), lerp(e0[1], e1[1], u) - Math.sin(Math.PI * u) * (Math.abs(ang) < .6 ? sag : -sag * .5)]); }
+  R.ink(c, hang, { w: 4, seed: 301 });
+  c.save(); c.translate(x, y); c.rotate(ang);
+  [-1, 1].forEach(sg => R.ink(c, R.ell(sg * 98, 26, 7, 7, 0, TAU, 10), { closed: true, fill: C.ink, w: 2, seed: 305 + sg }));
+  const body = R.ell(0, 0, 95, 24, Math.PI, TAU, 20).concat([[74, 165]], R.ell(0, 165, 74, 18, 0, Math.PI, 16), [[-74, 165]]);
+  R.ink(c, body, { closed: true, fill: C.wash, w: 3.5, seed: 302 });
+  c.fillStyle = C.inner; c.beginPath(); c.ellipse(0, 0, 92, 22, 0, 0, TAU); c.fill();
+  if (inside > 0) {   // red arms peeking over the rim
+    c.save(); c.beginPath(); c.rect(-120, -200, 240, 200); c.ellipse(0, 0, 92, 22, 0, 0, TAU); c.clip();
+    if (inside > 2) octo(c, -36, 6, .55, { seed: 41, rot: -.3 });
+    if (inside > 1) octo(c, 30, 10, .5, { seed: 42, rot: .5 });
+    octo(c, 0, 18, .6, { seed: 43, rot: .1 });
+    c.restore();
+  }
+  R.ink(c, R.ell(0, 0, 95, 24, 0, Math.PI, 20), { w: 3.5, seed: 303 });
+  R.ink(c, R.ell(0, 40, 90, 22, .15, Math.PI - .15, 16), { w: 2.5, color: C.soft, seed: 304 });
+  c.restore();
+}
+
+// ---------------- vegetables, dish bits ----------------
+function onion(c, x, y, s, rot, sd) {   // a crescent slice
+  c.save(); c.translate(x, y); c.rotate(rot); c.scale(s, s);
+  const p = R.ell(0, 14, 40, 26, Math.PI * 1.12, Math.PI * 1.88, 14).concat(R.ell(0, 16, 36, 20, Math.PI * 1.86, Math.PI * 1.14, 14));
+  R.ink(c, p, { closed: true, fill: '#f8f1dc', w: 2.4, seed: sd, amp: .4 }); c.restore();
+}
+function leek(c, x, y, s, rot, sd, green) {   // a 대파 ring (white) or a green piece
+  c.save(); c.translate(x, y); c.rotate(rot); c.scale(s, s);
+  if (green) R.ink(c, R.rrect(-22, -7, 44, 14, 7), { closed: true, fill: C.leaf, w: 2.4, seed: sd, amp: .4 });
+  else R.ink(c, R.rrect(-15, -9, 30, 18, 8), { closed: true, fill: '#dfe9c4', w: 2.4, seed: sd, amp: .3 });
+  c.restore();
+}
+
+// ---------------- vessels (rim centre, size) ----------------
+const BOWL = R.vessel({ kind: 'bowl', x: 540, y: 760, w: 600, h: 290, seed: 31 });
+const POT = R.vessel({ kind: 'pot', x: 520, y: 790, w: 480, h: 220, seed: 37 });
+const SB = R.vessel({ kind: 'bowl', x: 380, y: 800, w: 460, h: 250, seed: 43 });
+const PAN = R.vessel({ kind: 'pan', x: 570, y: 900, w: 560, h: 80, handle: -1, seed: 47 });
+const PLATE = R.vessel({ kind: 'plate', x: 318, y: 900, w: 460, h: 40, seed: 53 });
+
+// the pile in the bowl (dx, dy from the rim centre, scale, rotation), bottom first
+const PILE = [[-125, 190, .95, -.5], [35, 205, 1, .35], [150, 168, .9, .9], [-60, 122, .95, -1.3], [105, 100, .9, 2.0], [-175, 92, .85, .7], [10, 42, .95, -.2]];
+const SW = [540, 760 + 140];
+const BAND = 596;   // the top of the picture band (just under the rail labels): drops enter here   // swirl centre
+function bucketPose(t) {   // mouth position + angle: comes down from upper right while tipping, then leaves to the right
+  const k = R.spring(R.k(t, B.tip - .1, .6), .6), out = R.eo4(R.k(t, 1.65, .45));
+  return { x: lerp(850, 700, k) + 760 * out, y: lerp(430, 590, k) - 60 * out, a: -1.85 * k };
+}
+const REL = PILE.map((_, i) => lerp(B.pour[0], B.pour[1], i / (PILE.length - 1)));
+function swirlAng(t) { return 2.6 * eio(R.k(t, B.rub[0], B.rub[1] - B.rub[0])) + .09 * Math.sin(t * 15) * ss(B.rub[0], B.rub[0] + .2, t) * (1 - ss(B.rub[1] - .2, B.rub[1], t)); }
+function pilePos(i, t) {   // where piece i is now (after its drop and during the rub)
+  const [dx, dy, s, r] = PILE[i], x = BOWL.x + dx, y = BOWL.y + dy, th = swirlAng(t);
+  const ex = x - SW[0], ey = (y - SW[1]) / .42, rr = Math.hypot(ex, ey), ph = Math.atan2(ey, ex) + th;
+  return { x: SW[0] + rr * Math.cos(ph), y: SW[1] + rr * Math.sin(ph) * .42, s, r: r + th * .6 };
+}
+
+// spoon act: enters from upper right to (x, y), tips, empties, leaves. → { x, y, a, full } or null
+function spoonAct(t, at, x, y) {
+  const d = t - at; if (d < 0 || d > .9) return null;
+  const kin = R.eo4(d / .25), kout = R.eo4((d - .62) / .26), from = [x + 520, y - 70];
+  const tip = d < .62 ? R.spring((d - .28) / .16, .7) : 1 - R.eo4((d - .62) / .2);
+  return { x: lerp(lerp(from[0], x, kin), from[0], kout), y: lerp(lerp(from[1], y, kin), from[1], kout), a: -1.1 * clamp(tip), full: d < .33 ? 1 : 0, d };
+}
+// a bottle act: spout enters from upper right to (x, y), tips (R.tilt), leaves. → { x, y, a } or null
+function bottleAct(t, at, x, y, hold, to = 2.15) {
+  const d = t - at; if (d < -.3 || d > hold + 1.1) return null;
+  const kin = R.eo4((d + .3) / .3), kout = R.eo4((d - hold - .65) / .35), from = [x + 560, y - 120];
+  return { x: lerp(lerp(from[0], x, kin), from[0], kout), y: lerp(lerp(from[1], y, kin), from[1], kout), a: R.tilt(t, at, { lift: .28, hold, back: .3, to }) };
+}
+
+// ---------------- scenes inside the frame ----------------
+function stepBowl(c, t) {   // 0 – 6.4: bucket → bowl, flour, salt, rub, rinse
+  const dx = R.slideX(t, null, B.step[1]); if (dx <= -1100) return;
+  c.save(); c.translate(dx, 0);
+  const flour = ss(B.flour + .35, B.flour + .75, t) * (1 - ss(B.rinse[0] + .25, B.rinse[1], t));
+  const water = .4 * ss(B.rinse[0] + .2, B.rinse[1] + .1, t), col = mixc(R.ACCENT, C.flour, .62 * flour);
+  BOWL.back(c);
+  c.save(); BOWL.clip(c);
+  PILE.forEach((p, i) => {
+    if (t < REL[i]) return;
+    const f = R.fall(t, REL[i], 0, 1, .4), q = pilePos(i, t);
+    if (f.landed) octo(c, q.x, q.y, q.s, { seed: i + 1, rot: q.r, col, sq: f.sq });
+  });
+  if (water > 0) { c.save(); c.globalAlpha = .55; BOWL.liquid(c, water, C.water); c.restore(); }
+  c.restore();
+  PILE.forEach((p, i) => {   // falling from the bucket mouth to its place (not clipped: they start above the rim)
+    if (t < REL[i]) return;
+    const f = R.fall(t, REL[i], 0, 1, .4); if (f.landed) return;
+    const q = pilePos(i, t), m = bucketPose(REL[i]), sx = m.x - 60, sy = m.y + 30;
+    octo(c, lerp(sx, q.x, eo(f.k)), lerp(sy, q.y, f.k * f.k), q.s, { seed: i + 1, rot: q.r + (1 - f.k) * 1.6, col });
+  });
+  // flour dust sitting on top of the pile
+  BOWL.front(c);
+  // the rub: two curved pen arrows chasing round the bowl
+  const ra = ss(B.rub[0], B.rub[0] + .2, t) * (1 - ss(B.rub[1] - .15, B.rub[1] + .05, t));
+  if (ra > 0) {
+    c.save(); c.globalAlpha = ra;
+    const th = swirlAng(t) * 1.3;
+    for (let j = 0; j < 2; j++) {
+      const a0 = th + j * Math.PI + .3, a1 = a0 + 1.5, pts = R.ell(SW[0], SW[1] - 10, 360, 150, a0, a1, 18);
+      R.ink(c, pts, { w: 5, seed: 311 + j });
+      const e = pts[pts.length - 1], p = pts[pts.length - 3], an = Math.atan2(e[1] - p[1], e[0] - p[0]);
+      R.ink(c, [[e[0] - 22 * Math.cos(an - .5), e[1] - 22 * Math.sin(an - .5)], e, [e[0] - 22 * Math.cos(an + .5), e[1] - 22 * Math.sin(an + .5)]], { w: 5, seed: 313 + j });
+    }
+    c.restore();
+  }
+  // the bucket
+  const m = bucketPose(t), left = PILE.length - REL.filter(r => t >= r).length;
+  if (t < 2.2) bucket(c, m.x, m.y, m.a, left >= 5 ? 3 : left >= 3 ? 2 : left > 0 ? 1 : 0);
+  // flour, then coarse salt
+  const sp1 = spoonAct(t, B.flour, 620, 728);
+  if (sp1) { R.grains(c, t, { x: sp1.x - 34, y0: sp1.y + 8, y1: 860, at: B.flour + .33, dur: .32, n: 40, spread: 46, size: 7, color: C.flour, shape: 'dot', seed: 321 });
+    R.spoon(c, sp1.x, sp1.y, sp1.a, { fill: C.flour, full: sp1.full, seed: 61, len: 112 }); }
+  const sp2 = spoonAct(t, B.salt, 640, 728);
+  if (sp2) { R.grains(c, t, { x: sp2.x - 34, y0: sp2.y + 8, y1: 860, at: B.salt + .33, dur: .3, n: 26, spread: 40, size: 8, color: C.flour, seed: 322 });
+    R.spoon(c, sp2.x, sp2.y, sp2.a, { fill: '#f4f1ea', full: sp2.full, seed: 62, len: 112 }); }
+  // rinse: a water bottle pours
+  const wb = bottleAct(t, B.rinse[0], 700, 664, .5);
+  if (wb) {
+    const k = R.k(t, B.rinse[0] + .2, .12), tl = R.k(t, B.rinse[0] + .78, .14);
+    R.stream(c, wb.x + 6, wb.y + 4, 575, 880, { color: C.water, w: 13, head: k, tail: tl });
+    R.bottle(c, wb.x, wb.y, wb.a, { fill: C.water, label: '물', w: 92, h: 228, seed: 331 });
+  }
+  c.restore();
+}
+
+function stepPot(c, t) {   // 6.0 – 9.4: pot of boiling water, 30 s dial, the arms curl
+  const dx = R.slideX(t, B.step[1], B.step[2]); if (dx >= 1100 || dx <= -1100) return;
+  c.save(); c.translate(dx, 0);
+  const V = POT, cook = ss(B.timer[0], B.timer[1], t), col = mixc(R.ACCENT, R.DEEP, .45 * cook), wf = .62;
+  R.flames(c, V.x, V.bottomY + 92, 300, t, { k: 1, h: 40 });
+  V.back(c);
+  c.save(); V.clip(c);
+  V.liquid(c, wf, C.water, { line: true });
+  const pos = [[-120, 150, .8, -.4], [5, 168, .82, .5], [125, 150, .78, 1.1], [-60, 108, .8, -1.5], [70, 102, .78, 2.1], [-150, 92, .74, .6], [150, 92, .74, -.8]];
+  pos.forEach(([px, py, s, r], i) => {
+    const at = B.drop2 + i * .06, f = R.fall(t, at - .2, -140, V.y + py, .56); if (t < at || !f.landed) return;
+    octo(c, V.x + px, f.y, s, { seed: i + 1, rot: r, col, curl: lerp(.45, 1, cook), sq: f.sq });
+  });
+  // bubbles rising through the water (boiling)
+  const r = rng(341);
+  for (let i = 0; i < 16; i++) {
+    const bx = V.x + (r() - .5) * 360, ph = (t * (.7 + r() * .5) + r()) % 1, by = lerp(V.bottomY - 10, V.levelY(wf) + 6, ph), br = 3 + r() * 5;
+    c.save(); c.globalAlpha = .8; c.fillStyle = '#eef5f4'; c.strokeStyle = C.ink; c.lineWidth = 1.6; c.beginPath(); c.arc(bx, by, br, 0, TAU); c.fill(); c.stroke(); c.restore();
+  }
+  c.save(); c.globalAlpha = .35; V.liquid(c, wf, C.water, { line: false }); c.restore();
+  pos.forEach((_, i) => R.ripple(c, V.x + pos[i][0], V.levelY(wf), 60, R.k(t, B.drop2 + i * .06 + .36, .5)));
+  c.restore();
+  c.save(); V.band(c, BAND);   // pieces still falling: they enter through the top of the picture band
+  pos.forEach(([px, py, s, r], i) => {
+    const at = B.drop2 + i * .06, f = R.fall(t, at - .2, -140, V.y + py, .56); if (t < at - .2 || f.landed) return;
+    octo(c, V.x + px, f.y, s, { seed: i + 1, rot: r + (1 - f.k) * 1.2, col, curl: .45 });
+  });
+  c.restore();
+  V.front(c, { ticks: [{ f: wf, label: '물', on: true }] });
+  R.steam(c, V.x, V.y - 30, t, { n: 3, spread: 90, h: 170 });
+  c.restore();
+  // the 30-second dial
+  if (dx === 0) {
+    const kd = R.k(t, B.timer[0], B.timer[1] - B.timer[0]);
+    R.dial(c, 878, 702, 54, kd, { k0: R.k(t, B.drop2 + .1, .3), label: Pilot.trn('{n}초', Math.round(30 * kd)) });
+  }
+}
+
+const SAUCE_COL = ['#cf432c', '#c4371f', '#a92c1c', '#a62d1d', '#9c2719'];
+const AMT = [2, 1, 1, 1, 1];
+const landAt = i => B.spoons[i] + .55;
+function sauceTbsp(t) { let n = 0; AMT.forEach((a, i) => { n += a * ss(landAt(i) - .05, landAt(i) + .2, t); }); return n; }
+function sauceCol(t) { let c = SAUCE_COL[0]; for (let i = 1; i < 5; i++) c = mixc(c, SAUCE_COL[i], ss(landAt(i), landAt(i) + .25, t)); return c; }
+const sauceF = n => n <= 0 ? 0 : .07 + n * .085;
+
+function stepSauce(c, t) {   // 9.0 – 14: one spoon per beat
+  const dx = R.slideX(t, B.step[2], B.step[3]); if (dx >= 1100 || dx <= -1100) return;
+  c.save(); c.translate(dx, 0);
+  const V = SB, n = sauceTbsp(t), f = sauceF(n), col = sauceCol(t);
+  V.back(c);
+  c.save(); V.clip(c);
+  if (f > 0) V.liquid(c, f, col, { top: mixc(col, '#ffffff', .12) });
+  if (t >= landAt(3)) {   // minced garlic on the surface
+    const r = rng(351), yl = V.levelY(f), hw = V.halfW(yl) * .8, k = ss(landAt(3), landAt(3) + .2, t) * (1 - ss(landAt(4) + .3, landAt(4) + 1.2, t) * .5);
+    c.fillStyle = '#efe2bf'; c.strokeStyle = C.ink; c.lineWidth = 1.2;
+    for (let i = 0; i < 26; i++) { const a = r() * TAU, rr = Math.sqrt(r()); if (r() > k) continue; c.beginPath(); c.arc(V.x + Math.cos(a) * hw * rr, yl + Math.sin(a) * hw * rr * V.ry / V.rx, 3 + r() * 2, 0, TAU); c.fill(); c.stroke(); }
+  }
+  for (let i = 0; i < 5; i++) R.ripple(c, V.x, V.levelY(f), 90, R.k(t, landAt(i), .5));
+  c.restore();
+  V.front(c, { side: -1, ticks: [2, 4, 6].map(m => ({ f: sauceF(m), label: m === 6 ? Pilot.trn('{n} 큰술', m) : String(m), on: n >= m - .01 })) });
+  c.restore();
+  // the spoons
+  const fills = ['#b8321f', '#c23b22', '#4a2c22', '#efe2bf', '#fbf8f0'];
+  B.spoons.forEach((at, i) => {
+    const sp = spoonAct(t, at, V.x + 70, 752); if (!sp) return;
+    const sx = sp.x - 34, sy = sp.y + 8, y1 = V.levelY(sauceF(sauceTbsp(at + .3)) || .05);
+    if (i === 0) { const fl = R.fall(t, at + .32, sy, y1, .24); if (t >= at + .32 && !fl.landed) R.blob(c, sx, fl.y, 24, fills[0], { seed: 361 }); }
+    if (i === 1) R.grains(c, t, { x: sx, y0: sy, y1, at: at + .32, dur: .26, n: 30, spread: 40, size: 9, color: fills[1], shape: 'flake', seed: 362 });
+    if (i === 2) R.stream(c, sx, sy, sx - 6, y1, { color: fills[2], w: 9, head: R.k(t, at + .3, .1), tail: R.k(t, at + .5, .1), bow: .05 });
+    if (i === 3) R.grains(c, t, { x: sx, y0: sy, y1, at: at + .32, dur: .24, n: 22, spread: 34, size: 8, color: fills[3], shape: 'dot', seed: 363 });
+    if (i === 4) R.grains(c, t, { x: sx, y0: sy, y1, at: at + .32, dur: .26, n: 30, spread: 36, size: 6, color: fills[4], seed: 364 });
+    R.spoon(c, sp.x, sp.y, sp.a, { fill: fills[i], full: sp.full, seed: 65 + i, len: 112 });
+  });
+  // the checklist beside the bowl
+  c.save(); c.translate(dx, 0);
+  R.say(c, '양념장', 662, 660, { size: 25, weight: 700, color: C.soft, align: 'left', ls: 4, alpha: R.k(t, B.step[2] + .2, .3) });
+  R.checklist(c, t, { x: 676, y: 728, lh: 66, col: 104, size: 30, appear: B.step[2] + .25,
+    items: S.sauce.map(([amt, name], i) => ({ amount: amt, name, at: landAt(i) })) });
+  c.restore();
+}
+
+// pan contents: (dx, dy from the rim centre, scale, rotation)
+const PAN_OCTO = [[-150, 12, .74, -.5], [-40, 26, .78, .4], [80, 16, .74, 1.0], [180, 4, .7, -1.1], [-95, -24, .72, 1.6], [35, -32, .74, -.9], [140, -30, .7, 2.3]];
+const PAN_VEG = [[-190, 30, 0], [-10, 44, 1], [110, 40, 0], [60, -6, 2], [-120, 2, 3], [200, 20, 2], [-60, 48, 3], [170, -14, 0], [-170, -14, 2]];
+function tossUp(t, i, h) { let y = 0, r = 0; for (const ts of B.toss) { const k = R.k(t, ts + .06 + (i % 3) * .03, .5); if (k > 0 && k < 1) { y += Math.sin(Math.PI * k) * h; r += Math.sin(Math.PI * k) * (i % 2 ? .9 : -.8); } } return { y, r }; }
+function panLift(t) { let y = 0, a = 0; for (const ts of B.toss) { const k = R.k(t, ts, .62); if (k > 0 && k < 1) { y += Math.sin(Math.PI * k) * 30; a += Math.sin(Math.PI * k) * -.05; } } return { y, a }; }
+
+function stepPan(c, t) {   // 13.6 – 19.4: pan on high heat, toss, sesame oil
+  const dx = R.slideX(t, B.step[3], B.step[5]); if (dx >= 1100 || dx <= -1100) return;
+  const V = PAN, lift = panLift(t), heat = 1 - ss(B.heatOff, B.heatOff + .35, t);
+  const sauce = R.eo4(R.k(t, B.drop4 + .3, .35)), cookCol = mixc(R.ACCENT, R.DEEP, .3);
+  c.save(); c.translate(dx, 0);
+  R.flames(c, V.x, V.bottomY + 110, 300, t, { k: heat, h: 44 });
+  c.save(); c.translate(V.x, V.y - lift.y); c.rotate(lift.a); c.translate(-V.x, -V.y);
+  V.back(c);
+  c.save(); V.clip(c, { top: BAND });
+  if (sauce > 0) R.ink(c, R.ell(V.x, V.y + 8, V.rx * .76 * sauce, V.ry * .66 * sauce, 0, TAU, 36), { closed: true, fill: R.DEEP, w: 2, seed: 371 });
+  PAN_OCTO.forEach(([px, py, s, r], i) => {
+    const at = B.drop4 + i * .05; if (t < at) return;
+    const f = R.fall(t, at - .2, -140, V.y + py, .54), tu = tossUp(t, i, 70 + (i % 3) * 30);
+    octo(c, V.x + px, f.y - tu.y, s, { seed: i + 11, rot: r + tu.r + (1 - f.k), col: cookCol, curl: 1, sq: f.sq });
+  });
+  PAN_VEG.forEach(([px, py, kind], i) => {
+    const at = (kind < 2 ? B.onion : B.leek) + (i % 4) * .05; if (t < at) return;
+    const f = R.fall(t, at - .2, -140, V.y + py, .52), tu = tossUp(t, i + 3, 60 + (i % 3) * 30), rot = i * 1.7 + tu.r * 1.4;
+    if (kind < 2) onion(c, V.x + px, f.y - tu.y, .9, rot, 381 + i); else leek(c, V.x + px, f.y - tu.y, .95, rot, 391 + i, kind === 3);
+  });
+  // sesame oil: one turn around the pan
+  const ko = R.k(t, B.oil[0], B.oil[1] - B.oil[0]);
+  if (ko > 0) {
+    const a0 = -Math.PI * .1, pts = R.ell(V.x, V.y + 4, V.rx * .62, V.ry * .58, a0, a0 + TAU * ko, Math.max(2, Math.round(60 * ko)));
+    c.save(); c.globalAlpha = .9; R.ink(c, pts, { w: 9, seed: 401, amp: .6 }); R.ink(c, pts, { w: 5, color: C.oil, seed: 401, amp: .6 }); c.restore();
+  }
+  c.restore();
+  V.front(c);
+  c.restore();
+  if (t >= B.drop4) R.steam(c, V.x, V.y - 40, t, { n: 4, spread: 160, h: 200, a: .5 * (.4 + .6 * heat) + .2 });
+  c.restore();
+  // the sesame-oil bottle follows the circle
+  const ob = bottleAct(t, B.oil[0] - .2, 0, 0, 1.2, 2.05);
+  if (ob && dx === 0) {
+    const ph = -Math.PI * .1 + TAU * clamp((t - B.oil[0]) / (B.oil[1] - B.oil[0])), lx = V.x + V.rx * .62 * Math.cos(ph), ly = V.y + 4 + V.ry * .58 * Math.sin(ph);
+    const ent = R.eo4(R.k(t, B.oil[0] - .5, .3)), ext = R.eo4(R.k(t, B.oil[1] + .2, .4));
+    const sx = lerp(lerp(1240, lx + 26, ent), 1240, ext), sy = lerp(lerp(600, ly - 172, ent), 600, ext);
+    R.stream(c, sx + 4, sy + 4, lx, ly, { color: C.oil, w: 6, head: R.k(t, B.oil[0] - .05, .1), tail: R.k(t, B.oil[1], .1), bow: .1 });
+    R.bottle(c, sx, sy, ob.a, { fill: '#c98a2e', glass: '#f3e7cc', label: '참기름', w: 84, h: 222, labelSize: 25, seed: 411 });
+  }
+}
+
+function stepInvite(c, t) {   // 19.0 – 24: the plate + the phone
+  const dx = R.slideX(t, B.step[5], null); if (dx >= 1100) return;
+  c.save(); c.translate(dx, 0);
+  const V = PLATE;
+  V.back(c);
+  V.front(c, { shine: false });
+  // the dish on the plate
+  R.ink(c, R.ell(V.x, V.y + 4, V.rx * .64, V.ry * .54, 0, TAU, 36), { closed: true, fill: R.DEEP, w: 2, seed: 421 });
+  const dish = [[-80, 10, .72, -.6], [45, 20, .74, .5], [125, -4, .68, 1.2], [-135, -14, .66, 1.9], [-20, -30, .74, -1.2], [85, -44, .7, 2.5], [-75, -60, .7, .3]];
+  const veg = [[-110, 24, 0], [5, 36, 2], [105, 24, 3], [-40, -6, 1], [140, -30, 2], [-165, 2, 3]];
+  dish.forEach(([px, py, s, r], i) => octo(c, V.x + px, V.y + py - 6, s, { seed: i + 21, rot: r, col: mixc(R.ACCENT, R.DEEP, .3), curl: 1 }));
+  veg.forEach(([px, py, kind], i) => kind < 2 ? onion(c, V.x + px, V.y + py - 10, .8, i * 1.3, 431 + i) : leek(c, V.x + px, V.y + py - 10, .85, i * 1.1, 441 + i, kind === 3));
+  const r = rng(451); c.fillStyle = C.flour; c.strokeStyle = C.ink; c.lineWidth = 1.2;
+  for (let i = 0; i < 22; i++) { const a = r() * TAU, rr = Math.sqrt(r()); c.save(); c.translate(V.x + Math.cos(a) * 140 * rr, V.y - 20 + Math.sin(a) * 50 * rr); c.rotate(r() * 3); c.beginPath(); c.ellipse(0, 0, 4, 2.2, 0, 0, TAU); c.fill(); c.stroke(); c.restore(); }
+  R.steam(c, V.x, V.y - 70, t, { n: 3, spread: 90, h: 160 });
+  R.dashes(c, V.x, V.y - 30, 200, R.k(t, B.done + .05, .3), { n: 7, len: 30 });
+  c.restore();
+  // the phone: invitation and reply
+  const kp = R.k(t, B.step[5] + .25, .45); if (kp <= 0) return;
+  const scr = R.phone(c, { x: 768, y: 850, w: 330, h: 450, name: S.phone.name, k: kp });
+  R.chat(c, t, scr, [
+    { at: B.msgs[0], s: S.phone.me[0], me: true },
+    { at: B.msgs[1], s: S.phone.me[1], me: true },
+    { typing: B.typing },
+    { at: B.reply, s: S.phone.reply, me: false },
+  ], { size: 26 });
+}
+
+// ---------------- the card deck ----------------
+function cards(t) {
+  const out = [];
+  S.cards.forEach((q, i) => {
+    if (q.sauce) {
+      S.sauce.forEach(([amount, name, note], j) => out.push({ at: j ? B.spoons[j] - .25 : B.step[2], step: 3, of: 6, amount, name, note,
+        bar: sauceTbsp(t) / 6, barLabel: k => Pilot.trn(S.sauceUnit, Math.round(k * 6)) }));
+      return;
+    }
+    out.push({ at: B.step[i], step: q.step, of: 6, amount: q.amount, name: q.name, note: q.note, bar: q.bar,
+      barLabel: q.wait ? (k => Pilot.tr(k < 1 ? q.wait : q.got)) : (k => Pilot.trn(q.unit, Math.round(k * q.n))) });
+  });
+  out.push({ at: B.done, step: 7, fresh: true, ...S.final });
+  return out;
+}
+
+function draw(ctx, t) {
+  R.begin(ctx);
+  R.wordmark(ctx, S.title, 540, 300, { size: 120, k: R.k(t, B.title, .45) });
+  R.subtitle(ctx, S.sub, 540, 376, { k: R.k(t, B.sub, .5) });
+  R.rail(ctx, t, { labels: S.rail, at: B.step, done: B.step.slice(1).concat([B.done]), appear: B.rail, y: 500 });
+  stepPan(ctx, t);
+  stepSauce(ctx, t);
+  stepPot(ctx, t);
+  stepBowl(ctx, t);
+  stepInvite(ctx, t);
+  R.deck(ctx, t, cards(t));
+  R.fade(ctx, t, S.DUR, .5, .5);
+}
+
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: R.FONTS, init: async () => R.init({ accent: '#d9432b', deep: '#a8261b' }), draw });
+</script>
+</body>
+</html>

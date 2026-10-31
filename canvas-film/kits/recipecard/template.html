@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>레시피 카드 · 템플릿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-recipecard.js"></script>
+<script>
+/* RecipeCard template — the shared seed story told as a recipe, 「싹 한 포기」 (kits/recipecard/STYLE.md).
+   One clear planter dead-centre. STEP 1 three scoops of soil (walk) · STEP 2 a dibber presses a hole (kneel) · STEP 3 the
+   seed drops in and is covered (plant) · STEP 4 the planter slides aside for the checklist: water, light, days; under the
+   soil a root draws itself (wait) · STEP 5 the sprout rises in the accent as a bent hook (sprout, 14) · STEP 6 it stands
+   up straight and opens its leaves (rise, 18), a second pair at 20 · 완성 at 22 · end card at 26.
+   To make a new film: write scenes/script.js, then replace the ✎ parts (the vessel, what goes in, the hero contents).
+   Keep: begin → title/captions → rail → vessel back → contents (clipped) → vessel front → props → deck → checklist → endCard. */
+const S = window.SCRIPT, B = S.beat, R = RecipeCard, C = R.C;
+const { clamp, lerp, ss, eo, rng } = Pilot;
+const TAU = Math.PI * 2;
+const mixc = (a, b, k) => Pilot.rgb(Pilot.mix(R.rgbOf(a), R.rgbOf(b), clamp(k)));
+
+// ✎ the vessel and the band
+const POT = R.vessel({ kind: 'planter', x: 540, y: 790, w: 360, h: 300, clear: true, seed: 33 });
+const BAND = 624;                                      // top of the picture band (under the rail): drops enter here
+const SCOOPS = [.55, 1.55, 2.55], SOIL = .72;          // three scoops of soil, landing ≈ .55 s after each
+const DRY = '#8f6d55', WET = '#6b4e3d';
+const shiftX = t => -150 * R.eo4(R.k(t, B.wait[0], .45)) * (1 - R.eo4(R.k(t, B.wait[1] + .5, .45)));   // aside for the checklist
+const soilF = t => SOIL / 3 * SCOOPS.reduce((n, a) => n + ss(a + .5, a + .7, t), 0);
+const soilCol = t => mixc(DRY, WET, ss(B.wait[0] + 1.4, B.wait[0] + 2.1, t));
+const surfY = () => POT.levelY(SOIL);
+
+// a prop that comes in from the right, tips, and leaves (spoon / bottle)
+function act(t, at, x, y, hold) {
+  const d = t - at; if (d < -.3 || d > hold + .95) return null;
+  const kin = R.eo4((d + .3) / .3), kout = R.eo4((d - hold - .6) / .3), fx = x + 520, fy = y - 80;
+  return { x: lerp(lerp(fx, x, kin), fx, kout), y: lerp(lerp(fy, y, kin), fy, kout), d };
+}
+
+// ✎ the hero contents: a sprout — a stem that rises as a bent hook, then straightens; leaves fold open
+function leaf(c, x, y, ang, L, W, sd) {
+  if (L < 1) return;
+  const pts = []; for (let i = 0; i <= 10; i++) { const u = i / 10; pts.push([u * L, Math.sin(u * Math.PI) * W]); }
+  for (let i = 9; i >= 1; i--) { const u = i / 10; pts.push([u * L, -Math.sin(u * Math.PI) * W * .8]); }
+  c.save(); c.translate(x, y); c.rotate(ang);
+  R.ink(c, pts, { closed: true, fill: R.ACCENT, w: 2.6, seed: sd, amp: .5 });
+  R.line(c, 4, 0, L * .8, 0, { w: 2, seed: sd + 1, amp: .3 });
+  c.restore();
+}
+function sprout(c, t, bx, by) {
+  const g1 = R.spring(R.k(t, B.sprout, .7), .8), g2 = R.spring(R.k(t, B.rise, .8), .8); if (g1 <= 0) return;
+  const H = 120 * g1 + 120 * g2, bend = 1 - g2, sway = .05 * Math.sin(t * 1.4) * g2, N = 22, P = [[bx, by]];
+  let a = -Math.PI / 2, x = bx, y = by;
+  for (let i = 1; i <= N; i++) { const u = i / N; a = -Math.PI / 2 + bend * 2.7 * u * u + sway * u; x += Math.cos(a) * H / N; y += Math.sin(a) * H / N; P.push([x, y]); }
+  c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
+  R.path(c, P); c.strokeStyle = C.ink; c.lineWidth = 12; c.stroke();
+  R.path(c, P); c.strokeStyle = R.ACCENT; c.lineWidth = 6.5; c.stroke(); c.restore();
+  const open = .12 + .88 * g2, L = 30 + 26 * g1 + 18 * g2;
+  leaf(c, x, y, a - .15 - .95 * open, L, 13 + 5 * g2, 501);                 // the first pair, at the tip
+  leaf(c, x, y, a + .15 + .95 * open, L, 13 + 5 * g2, 503);
+  const g3 = R.spring(R.k(t, B.leaves, .6), .8);                          // a second, smaller pair halfway up
+  if (g3 > 0) { const m = P[Math.round(N * .5)], am = -Math.PI / 2 + sway * .5;
+    leaf(c, m[0], m[1], am - 1.35, 34 * g3, 10 * g3, 505); leaf(c, m[0], m[1], am + 1.35, 34 * g3, 10 * g3, 507); }
+  return { x, y };
+}
+
+function drawPlanter(c, t) {
+  const V = POT, sx = shiftX(t), cx = V.x, ys = surfY(), f = soilF(t), col = soilCol(t);
+  c.save(); c.translate(sx, 0);
+  V.back(c);
+  c.save(); V.clip(c);
+  if (f > 0) {
+    V.liquid(c, f, col, { top: mixc(col, '#ffffff', .14) });
+    const r = rng(511), yl = V.levelY(f);                                 // a few pebbles in the soil (seen through the glass)
+    c.fillStyle = mixc(col, '#000000', .25);
+    for (let i = 0; i < 40; i++) { const px = cx + (r() - .5) * 330, py = lerp(yl + 10, V.bottomY + 20, r()); c.beginPath(); c.arc(px, py, 2 + r() * 3, 0, TAU); c.fill(); }
+  }
+  // the hole (kneel) and the seed (plant), then the root (wait)
+  const hole = ss(B.kneel + .15, B.kneel + .25, t) * (1 - ss(B.plant + .7, B.plant + 1, t));
+  if (hole > 0) { c.fillStyle = `rgba(40,26,20,${.75 * hole})`; c.beginPath(); c.ellipse(cx, ys + 2, 20, 7, 0, 0, TAU); c.fill(); }
+  const sd = R.fall(t, B.plant, BAND, ys + 14, .36);
+  if (t >= B.plant && sd.landed) {
+    c.save(); c.translate(cx, sd.y); c.rotate(.5); R.ink(c, R.ell(0, 0, 11, 7, 0, TAU, 16), { closed: true, fill: '#d2ad74', w: 2.4, seed: 523 }); c.restore();
+  }
+  c.restore();
+  V.front(c, { ticks: [{ f: SOIL, label: '흙', on: f >= SOIL - .01 }], side: -1 });
+  c.restore();
+  return { sx };
+}
+
+function drawRoot(c, t, sx) {   // under the soil: the root draws itself downward while nothing shows above
+  const k = R.k(t, B.wait[0] + .5, B.wait[1] - B.wait[0] - .5); if (k <= 0) return;
+  const cx = POT.x + sx, ys = surfY() + 20, main = [], br = [];
+  for (let i = 0; i <= 12; i++) { const u = i / 12; main.push([cx + Math.sin(u * 5) * 7, ys + u * 150]); }
+  const cut = (pts, kk) => pts.slice(0, Math.max(2, Math.round(pts.length * clamp(kk))));
+  c.save(); c.beginPath(); c.rect(0, ys - 4, R.W, 400); c.clip();
+  R.ink(c, cut(main, k), { w: 3, seed: 531, amp: .8 });
+  if (k > .5) R.ink(c, cut([[cx + 3, ys + 60], [cx + 26, ys + 80], [cx + 38, ys + 108]], (k - .5) * 2), { w: 2.5, seed: 532, amp: .6 });
+  if (k > .7) R.ink(c, cut([[cx - 4, ys + 90], [cx - 28, ys + 108], [cx - 36, ys + 132]], (k - .7) * 3.3), { w: 2.5, seed: 533, amp: .6 });
+  c.restore();
+}
+
+function drawProps(c, t, sx) {
+  const cx = POT.x + sx, ys = surfY();
+  // STEP 1: three scoops of soil
+  SCOOPS.forEach((at, i) => {
+    const a = act(t, at, cx + 60, ys - 120, .25); if (!a) return;
+    const tip = a.d < .55 ? R.spring((a.d - .1) / .16, .7) : 1 - R.eo4((a.d - .55) / .2);
+    const fl = R.fall(t, at + .15, a.y + 8, POT.levelY(soilF(at + .2) + SOIL / 3), .3);
+    if (t >= at + .15 && !fl.landed) R.blob(c, a.x - 36, fl.y, 30, DRY, { seed: 541 + i });
+    R.spoon(c, a.x, a.y, -1.1 * clamp(tip), { r: 46, len: 110, fill: DRY, full: a.d < .15 ? 1 : 0, seed: 551 + i });
+  });
+  // STEP 2: a dibber presses the hole (down, hold, up)
+  const dk = R.eo4(R.k(t, B.kneel - .25, .3)) - R.eo4(R.k(t, B.kneel + .45, .3));
+  if (dk > 0) { c.save(); c.beginPath(); c.rect(0, BAND, R.W, R.H); c.clip();
+    const tipY = lerp(BAND - 40, ys + 18, dk);
+    R.ink(c, R.rrect(cx - 11, tipY - 240, 22, 240, 11), { closed: true, fill: '#e6d3b0', w: 3, seed: 561 });
+    R.line(c, cx - 11, tipY - 70, cx + 11, tipY - 70, { w: 2.5, seed: 562 });
+    c.restore(); }
+  // STEP 3: the seed drops in, then a pinch of soil covers it
+  const sd = R.fall(t, B.plant, BAND, ys + 14, .36);
+  if (t >= B.plant && !sd.landed) { c.save(); c.translate(cx, sd.y); c.rotate(.5 + (1 - sd.k) * 2); R.ink(c, R.ell(0, 0, 11, 7, 0, TAU, 16), { closed: true, fill: '#d2ad74', w: 2.4, seed: 523 }); c.restore(); }
+  c.save(); c.beginPath(); c.rect(0, BAND, R.W, R.H); c.clip();
+  R.grains(c, t, { x: cx, y0: BAND, y1: ys, at: B.plant + .55, dur: .3, n: 26, spread: 50, size: 7, color: DRY, shape: 'dot', seed: 571 });
+  c.restore();
+  // STEP 4: water
+  const w = act(t, B.wait[0] + 1.0, cx + 70, ys - 190, .7);
+  if (w) {
+    const ang = R.tilt(t, B.wait[0] + 1.0, { lift: .28, hold: .7, back: .3, to: 2.1 });
+    R.stream(c, w.x + 4, w.y + 4, cx + 30, ys, { color: C.water, w: 11, head: R.k(t, B.wait[0] + 1.22, .1), tail: R.k(t, B.wait[0] + 1.9, .1) });
+    R.bottle(c, w.x, w.y, ang, { fill: C.water, label: '물', w: 86, h: 220, labelSize: 26, seed: 581 });
+  }
+}
+
+function cards(t) {
+  const out = S.cards.map((q, i) => ({ at: i ? [B.kneel, B.plant, B.wait[0], B.sprout, B.rise][i - 1] : .15, step: i + 1, of: 6, ...q }));
+  out[0].bar = SOIL > 0 ? soilF(t) / SOIL : 0; out[0].barLabel = k => Pilot.trn('{n} / 3 스푼', Math.round(k * 3));
+  out[3].bar = [B.wait[0], B.wait[1]]; out[3].barLabel = k => Pilot.trn('{n} / 5일', Math.floor(k * 5 + .001));
+  out[5].bar = [B.rise, B.done]; out[5].barLabel = k => Pilot.trn('{n} cm', Math.round(4 + k * 8));
+  out.push({ at: B.done, step: 7, fresh: true, ...S.final });
+  return out;
+}
+
+function draw(ctx, t) {
+  R.begin(ctx);
+  R.subtitle(ctx, S.sub, 540, 196, { size: 32, k: R.k(t, 0, .4) });
+  R.wordmark(ctx, S.title, 540, 316, { size: 120 });
+  R.captions(ctx, t, S.lines, { y: 410, size: 40 });
+  R.rail(ctx, t, { labels: S.rail, at: [0, B.kneel, B.plant, B.wait[0], B.sprout, B.rise], done: [B.kneel, B.plant, B.wait[0], B.sprout, B.rise, B.done], appear: 0, y: 540 });
+  const { sx } = drawPlanter(ctx, t);
+  drawRoot(ctx, t, sx);
+  const tip = sprout(ctx, t, POT.x + sx, surfY() + 2);
+  if (tip) R.dashes(ctx, tip.x, tip.y - 10, 70, R.k(t, B.done + .05, .3), { n: 7, len: 26 });
+  drawProps(ctx, t, sx);
+  // the checklist beside the planter while we wait
+  const ko = R.eo4(R.k(t, B.wait[1] + .4, .35));
+  if (t >= B.wait[0] && ko < 1) { ctx.save(); ctx.translate(600 * ko, 0);
+    R.checklist(ctx, t, { x: 640, y: 790, lh: 72, col: 108, size: 32, appear: B.wait[0] + .3,
+      items: S.checklist.map(([amount, name], i) => ({ amount, name, at: [B.wait[0] + 2.0, B.wait[0] + 3.3, B.wait[1]][i] })) });
+    ctx.restore(); }
+  R.deck(ctx, t, cards(t));
+  R.endCard(ctx, t, S.endCard, B.end, { y: 660 });
+}
+
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: R.FONTS, init: async () => R.init(), draw });
+</script>
+</body>
+</html>

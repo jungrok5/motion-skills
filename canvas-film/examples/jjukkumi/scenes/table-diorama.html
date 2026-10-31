@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>식탁 · 쭈꾸미 한 접시</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@600;700&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script-diorama.js"></script>
+<script src="kit-diorama.js"></script>
+<script src="table-diorama-food.js"></script>
+<script>
+/* table-diorama — scene 4 of 쭈꾸미 한 접시, in the diorama kit (kits/diorama/STYLE.md).
+   A night dining room seen dead-centre. The curtains part on the table: 나 (navy, mustard apron) and 배우자 (green-grey)
+   on the left, the guests (cream, dusty blue) on the right, the red 쭈꾸미볶음 steaming in the exact centre.
+   「잘 먹겠습니다!」 — a nod; the guests reach in first and taste (나 claps), then 배우자; four glasses meet over the pan
+   「짠!」; a sip; laughter goes round 「넷이 먹으니 더 맛있다」; the push-in eases back and the end card hangs over the
+   dimmed room. Hands are solved with the kit's 3-D two-bone IK and drawn AT the grip; held things move with the hand. */
+const S = window.SCRIPT, B = S.beat, D = Diorama, { clamp, lerp, ss, eio, eo } = Pilot;
+const WIN = { x: 250, y: 330, w: 580, h: 600 };
+const TABLE = { x: 150, y: 1240, w: 780, d: 190, h: 172 };
+const HIP = 1332, CHOP = 70;                       // pelvis row of the seated four; chopstick length grip → tip
+const PEOPLE = [
+  { x: 305, seed: 1, look: { top: '#2f3f68', apron: '#e2a93b', hair: '#2b2226', hairStyle: 'short', collar: 'round' } },   // 나
+  { x: 455, seed: 2, look: { top: '#6f8a6a', hair: '#4a3126', hairStyle: 'bun', collar: 'v' } },                          // 배우자
+  { x: 625, seed: 3, look: { top: '#efe6d2', hair: '#8a5638', hairStyle: 'bob', collar: 'round', skin: '#f6d6c2' } },      // guest (cream)
+  { x: 775, seed: 4, look: { top: '#5f7fa8', hair: '#5a4034', hairStyle: 'wave', collar: 'shirt', glasses: true, skin: '#f0cdb6' } },   // guest (blue)
+];
+const REST = i => [[PEOPLE[i].x - 54, 1272], [PEOPLE[i].x + 54, 1272]];         // forearms resting on the cloth, beside the bowl
+const BOWL = i => [PEOPLE[i].x, 1262];
+const GLASS = [[384, 1326], [508, 1302], [572, 1302], [696, 1326]];            // glass bases on the table
+const TOAST = [1, 1, 0, 0];                                                     // which hand raises the glass (the inner one)
+const MEET = [[498, 1172], [522, 1198], [558, 1198], [582, 1172]];             // grip points where the glasses meet
+const MEET_TILT = [.2, .1, -.1, -.2];
+// the three who take a bite: person index, the piece they lift, when they reach in
+const EAT = { 1: { piece: 'b', reach: B.reach + .7 }, 2: { piece: 'c', reach: B.reach }, 3: { piece: 'd', reach: B.reach + .12 } };
+
+// track(t, [[t0, v0], [t1, v1], …]) → v at t, eased between keys (numbers or arrays).
+function track(t, keys) {
+  if (t <= keys[0][0]) return keys[0][1];
+  for (let i = 1; i < keys.length; i++) if (t < keys[i][0]) {
+    const [ta, a] = keys[i - 1], [tb, b] = keys[i], k = eio((t - ta) / (tb - ta));
+    return Array.isArray(a) ? a.map((v, j) => lerp(v, b[j], k)) : lerp(a, b, k);
+  }
+  return keys[keys.length - 1][1];
+}
+const pulse = (t, a, b, up = .3, dn = .3) => ss(a, a + up, t) * (1 - ss(b - dn, b, t));
+const dirOf = a => [Math.cos(a), Math.sin(a)];
+
+// ---------------------------------------------------------------- chopsticks of an eater: tips + angle over time
+function chopState(i, t, mouth) {
+  const E = EAT[i], px = PEOPLE[i].x, r = E.reach, st = B.chop + (i === 1 ? .2 : i === 3 ? .1 : 0);
+  const lyingTip = [px + 40, 1246], lyingA = -.05;
+  const piece = Food.PICK[E.piece], pa = i === 1 ? .98 : i === 2 ? 1.28 : 2.02;
+  const readyTip = [px + (i === 3 ? -14 : 14), 1268], readyA = i === 3 ? Math.PI - .55 : .55;
+  const mouthTip = [mouth[0] + (i === 3 ? 2 : -2), mouth[1] - 1], mouthA = -.95;
+  const keys = [
+    [st, [...lyingTip, lyingA]], [st + .5, [...readyTip, readyA]],
+    [r, [...readyTip, readyA]], [r + .6, [piece[0], piece[1] - 2, pa]], [r + .8, [piece[0], piece[1] - 4, pa]],
+    [r + 1.6, [...mouthTip, mouthA]], [r + 1.7, [...mouthTip, mouthA]], [r + 2.3, [...readyTip, readyA]],
+    [B.down, [...readyTip, readyA]], [B.down + .5, [...lyingTip, lyingA]],
+  ];
+  const v = track(t, keys), tip = [v[0], v[1]], d = dirOf(v[2]);
+  const held = t >= st && t < B.down + .5;
+  const gap = t < r + .55 ? 7 : t < r + .7 ? lerp(7, 2, (t - r - .55) / .15) : t < r + 1.62 ? 2 : 7;
+  return { tip, hand: [tip[0] - d[0] * CHOP, tip[1] - d[1] * CHOP], held, gap, piece: t >= r + .72 && t < r + 1.62, eaten: t >= r + .72,
+    grabAt: st, releaseAt: B.down + .5, r };
+}
+
+// ---------------------------------------------------------------- the glass of person i over time
+function glassState(i, t, mouth) {
+  const base = GLASS[i], g0 = B.glass + [.1, 0, .05, .15][i], grip = [base[0], base[1] - 26];
+  const out = TOAST[i] ? -1 : 1, side = i < 2 ? -1 : 1;
+  const meet = MEET[i], appr = [meet[0] + side * 16, meet[1] + 4], reb = [meet[0] + side * 9, meet[1] + 2];
+  const drinkTilt = TOAST[i] ? -.75 : .75, dv = [40 * Math.sin(drinkTilt), -40 * Math.cos(drinkTilt)];
+  const atMouth = [mouth[0] - dv[0] + (TOAST[i] ? 6 : -6), mouth[1] - dv[1] + 4];
+  const keys = [
+    [g0 + .45, [...grip, 0]], [B.clink - .14, [...appr, MEET_TILT[i] * .6]], [B.clink, [...meet, MEET_TILT[i]]],
+    [B.clink + .3, [...reb, MEET_TILT[i] * .5]], [B.drink, [...reb, MEET_TILT[i] * .5]], [B.drink + .55, [...atMouth, drinkTilt]],
+    [B.drink + 1.0, [...atMouth, drinkTilt]], [B.drink + 1.7, [...grip, 0]],
+  ];
+  const v = track(t, keys);
+  return { p: [v[0], v[1]], tilt: v[2], held: t >= g0 + .45 && t < B.drink + 1.7, fill: 1 - .28 * ss(B.drink + .5, B.drink + 1.0, t), reach: g0, release: B.drink + 1.7 };
+}
+
+// ---------------------------------------------------------------- one person's pose at t
+function person(i, t) {
+  const P = PEOPLE[i], rest = REST(i), side = i < 2 ? -1 : 1;
+  const F = { x: P.x, y: HIP, look: P.look, seed: P.seed, eyes: 'open', mouth: 'smile', blink: D.blink(t, P.seed), hands: [rest[0], rest[1]] };
+  // 잘 먹겠습니다: a nod together
+  const bow = pulse(t, B.bow, B.bow + 1.0, .35, .4); F.bow = .9 * bow; if (bow > .4) F.eyes = 'closed';
+  // looking toward whoever is eating
+  if (i === 0) F.turn = .42 * pulse(t, B.reach - .2, B.yum + 1.2, .4, .5);
+  if (i === 1) F.turn = .3 * pulse(t, B.reach - .1, B.reach + .7, .3, .3);
+  // a mouth/glass/chopsticks scene runs off a provisional pose (to know where the mouth is), then the hands are set
+  const mouth = D.pose(F).mouth;
+  const held = [null, null];
+  // eating
+  const E = EAT[i];
+  if (E) {
+    const c = chopState(i, t, mouth), r = c.r;
+    F.lean = side * -1 * (i === 2 ? .03 : .11) * pulse(t, r - .1, r + 1.0, .4, .5);
+    if (t >= c.grabAt - .45 && t < c.releaseAt + .45) {
+      const grab = [P.x - 30, 1249];
+      F.hands[0] = t < c.grabAt ? track(t, [[c.grabAt - .45, rest[0]], [c.grabAt, grab]]) : t >= c.releaseAt ? track(t, [[c.releaseAt, c.hand], [c.releaseAt + .45, rest[0]]]) : c.hand;
+      if (t >= c.grabAt + .5 && t < c.releaseAt) F.elbows = [[-.5, .9, .1], null];
+    }
+    if (c.held) held[0] = (ctx, h, ang) => {
+      const d = [c.tip[0] - c.hand[0], c.tip[1] - c.hand[1]], L = Math.hypot(d[0], d[1]), u = [d[0] / L, d[1] / L], hh = h;
+      const tip = [hh[0] + u[0] * CHOP, hh[1] + u[1] * CHOP];
+      if (c.piece) Food.piece(ctx, tip[0] - 8, tip[1] + 6, .9, .3);
+      Food.chop(ctx, [hh[0] - u[0] * 18, hh[1] - u[1] * 18], tip, c.gap);
+    };
+    if (t > r + 1.2 && t < r + 1.65) { F.mouth = 'open'; F.open = .55 * ss(r + 1.2, r + 1.45, t); }
+    else if (t >= r + 1.65 && t < r + 2.9) { F.mouth = 'chew'; F.open = .5 + .5 * Math.sin((t - r) * 15); F.eyes = t > r + 2.0 ? 'smile' : 'open'; }
+    if (t >= r + 2.9 && t < B.down + .3) F.eyes = 'smile';
+    if (i > 1 && t > r + 2.3 && t < r + 3.0) F.bow = .25 * pulse(t, r + 2.3, r + 3.0, .25, .3);   // a happy nod
+  }
+  // 나: watches the guests taste, then two claps
+  if (i === 0) {
+    const c0 = B.yum, cl = t - c0;
+    if (t > c0 - .35 && t < c0 + 1.25) {
+      const k = ss(c0 - .35, c0, t) * (1 - ss(c0 + .85, c0 + 1.25, t)), gap = 12 + 26 * Math.abs(Math.cos(Math.PI * clamp(cl / .32, 0, 2.5)));
+      const ctr = [P.x + 30, 1196];
+      F.hands = [[lerp(rest[0][0], ctr[0] - gap, k), lerp(rest[0][1], ctr[1], k), lerp(0, 70, k)], [lerp(rest[1][0], ctr[0] + gap, k), lerp(rest[1][1], ctr[1], k), lerp(0, 70, k)]];
+      if (cl > 0) { F.eyes = 'smile'; F.mouth = 'open'; F.open = .45; }
+    }
+    if (t >= c0 + 1.25 && t < B.down + .6) F.eyes = 'smile';
+  }
+  // the toast
+  const g = glassState(i, t, mouth), hi = TOAST[i];
+  if (t >= g.reach && t < g.release + .45) {
+    F.hands[hi] = t < g.reach + .45 ? track(t, [[g.reach, rest[hi]], [g.reach + .45, g.p]]) : t >= g.release ? track(t, [[g.release, g.p], [g.release + .45, rest[hi]]]) : g.p;
+    F.lean = (F.lean || 0) + (i < 2 ? 1 : -1) * [.1, .05, .05, .1][i] * pulse(t, g.reach + .3, B.drink + .4, .5, .4);
+  }
+  if (g.held) held[hi] = (ctx, h) => Food.glass(ctx, h[0], h[1], g.tilt, g.fill);
+  if (t > B.drink + .45 && t < B.drink + 1.1) F.eyes = 'closed';
+  if (t > B.clink - .1 && t < B.drink) { F.eyes = 'smile'; F.mouth = 'open'; F.open = .35; }
+  // laughter goes round the table
+  const lst = B.laugh + [.25, .35, 0, .12][i], ldur = 2.9;
+  if (t > lst - .05 && t < lst + ldur + .6) {
+    const k = ss(lst, lst + .25, t) * (1 - ss(lst + ldur - .2, lst + ldur + .5, t));
+    F.bob = D.laugh(t, lst, ldur, 7); F.tilt = [-.13, .12, -.12, .13][i] * k;
+    if (k > .15) { F.eyes = 'smile'; F.mouth = 'open'; F.open = .45 + .45 * Math.abs(Math.sin((t - lst) * 9)); }
+    if (i === 1) {   // 배우자 laughs behind a hand
+      const hk = ss(lst + .05, lst + .45, t) * (1 - ss(lst + 2.1, lst + 2.6, t)); const pm = D.pose(F).mouth;
+      F.hands[0] = [lerp(rest[0][0], pm[0] - 4, hk), lerp(rest[0][1], pm[1] + 16, hk), lerp(0, 34, hk)];
+      if (hk > .3) F.elbows = [[-.6, .8, 0], null];
+    }
+  }
+  if (t > B.laugh + 3.6) { F.eyes = F.blink > .6 ? 'closed' : 'open'; }
+  const G = D.pose(F);
+  return { G, held, F, chop: E ? chopState(i, t, mouth) : null, glass: g };
+}
+
+// ---------------------------------------------------------------- the room
+function room(ctx, t) {
+  D.room(ctx, { dado: 1196, floor: 1640, horizon: 980 });
+  D.window(ctx, WIN, (c, r, tt) => D.views.night(c, r, tt, { horizon: .8, moonY: .44 }), t);
+}
+
+function draw(ctx, t) {
+  D.begin(ctx);
+  let zoom = 1 + .07 * eio((t - 3) / 13.5); if (t > B.back) zoom = lerp(zoom, 1, eio((t - B.back) / 1.3));
+  const CAM = [zoom, 540, 1230];
+  ctx.save(); D.cam(ctx, ...CAM);
+  room(ctx, t);
+  const ps = PEOPLE.map((_, i) => person(i, t));
+  PEOPLE.forEach(P => D.chair(ctx, P.x, HIP - 8, 1));
+  ps.forEach(p => D.body(ctx, p.G));
+  D.table(ctx, TABLE);
+  // things on the table, far to near
+  const picked = new Set(Object.entries(EAT).filter(([i]) => ps[i].chop.eaten).map(([, E]) => E.piece));
+  PEOPLE.forEach((P, i) => {
+    Food.bowl(ctx, ...BOWL(i));
+    const c = ps[i].chop; if (!c || !c.held) Food.chop(ctx, [P.x - 44, 1250], [P.x + 40, 1246], 3);
+  });
+  PEOPLE.forEach((P, i) => { if (!ps[i].glass.held) Food.glass(ctx, GLASS[i][0], GLASS[i][1] - 26, 0, ps[i].glass.fill); });
+  const L1 = D.lamp(ctx, 196, 1300, 1, 1), L2 = D.lamp(ctx, 884, 1300, 1, 1);
+  Food.lettuce(ctx, 286, 1392);
+  Food.gift(ctx, 800, 1414);
+  Food.pan(ctx, t, picked);
+  // arms over the table: inner pair first, outer pair over them
+  for (const i of [1, 2, 0, 3]) D.arms(ctx, ps[i].G, { held: ps[i].held });
+  D.lampGlow(ctx, 196, 1300, 1, 1); D.lampGlow(ctx, 884, 1300, 1, 1);
+  D.steam(ctx, 540, 1350, 150, 260, t, 1);
+  D.clink(ctx, 540, 1150, (t - B.clink) / .55, 1.1);
+  D.curtains(ctx, D.slide(t, B.open, 2.4), { top: 240, tieY: 1000 });
+  D.pelmet(ctx, { y: 250 });
+  ctx.restore();
+  D.finish(ctx, { vignette: 1 });
+  ctx.save(); D.cam(ctx, ...CAM);
+  D.captions(ctx, t, S.lines, { y: 470, hang: 262 });
+  ctx.restore();
+  D.endCard(ctx, t, S.endCard, B.end, { y: 690 });
+  D.fade(ctx, t, S.DUR);
+}
+
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: D.FONTS, init: async () => D.init(), draw });
+</script>
+</body>
+</html>

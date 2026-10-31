@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>호퍼풍 · 새 장면</title>
+<title>호퍼풍 · 초대</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;600&display=swap">
 </head>
 <body>
@@ -12,118 +12,416 @@
 <script src="script-hopper.js"></script>
 <script src="kit-hopper.js"></script>
 <script>
-/* Template scene — house style "hopper" (see styles/hopper/STYLE.md). A placeholder 30 s story, no door:
-   an empty day room in the no. 48 palette; low sun comes through an UNSEEN window in the left wall and its hard
-   four-pane parallelogram travels across the floor and up the right wall; at SCRIPT.beat.reach it reaches the one
-   subject (a woman standing apart, beside the back window): a short burst of light, she is lit, her dress shows the
-   film's one accent colour, her shadow falls across the floor. Then stillness, the light warms, end card.
-   To make your film: keep the world set-up and the draw() skeleton; replace the SUBJECT block (and the light's path
-   if your image needs it) with your one image. Everything is in metres; the camera never moves except a slow push. */
-const { clamp, lerp, ss, eo, eio } = Pilot;
-const W = Pilot.W, H = Pilot.H, S = window.SCRIPT, B = S.beat, DUR = S.DUR, ACC = S.accent || Hopper.ACCENT;
-const Q = Hopper.Q, D = Hopper.PAL.day;
+/* Scene 3 「초대」 — Hopper-style quiet realism. Our front hall at seven in the evening, seen from a low fixed eye.
+   One light: a bare bulb under a small cap shade hanging low over a side table in the foreground, where the red
+   쭈꾸미볶음 waits on a plate. The front door (back wall) opens OUTWARD, as Korean front doors do; 나 (navy, mustard apron
+   ties) waits beside it, back to us. 딩동 → 나 presses the lever and gives the door a push → it swings open on a stiff
+   hinge, and the lamp's light, passing through the widening gap, sweeps across the two guests standing back on the
+   landing against the blue dusk; their shadows fall onto the landing and the garden wall behind them. Then the red comes
+   up and the bulb warms. Everything is in metres and every light/shadow shape is a true projection from the bulb. */
+const { clamp, lerp, ss, eo, eio, rng, hex, mix, rgb } = Pilot;
+const W = Pilot.W, H = Pilot.H, S = window.SCRIPT, B = S.beat, DUR = S.DUR, ACC = S.accent;
+const Q = Hopper.Q, D2R = Math.PI / 180;
 
 // ---------------- the world (metres: x right, y up, z away) ----------------
-const cam = Hopper.camera(Hopper.eye());                                   // low still eye at 1 m
-const R = Hopper.room({ xl: -1.05, xr: 1.45, h: 3.2, zn: 0.7, zb: 5 }, cam);
-const SUN = D.sun, SUN_W = '#F7CB8C';                                      // morning sun → warmer later
-// the light's opening: an unseen 2×2 window in the left wall (u = z 2.2–3.4 m, v = height .35–2.6 m)
-const LEFT = R.wall('left'), CELLS = Hopper.panes(LEFT, [2.2, 3.4, .35, 2.6], 2, 2, .07), WIN_PLANE = Hopper.wallX(R.xl);
-// the back window (what is outside it is painted once, in the base layer)
-const BACK = R.wall('back'), BW = { u0: -.62, u1: .28, v0: .95, v1: 2.4 };
+const cam = Hopper.camera(Hopper.eye());                                    // low still eye at 1 m
+const XL = -1.35, XR = 1.6, HC = 2.6, ZB = 5, T = .16, ZO = ZB + T;         // room; back wall thickness T
+const R = Hopper.room({ xl: XL, xr: XR, h: HC, zn: .7, zb: ZB }, cam);
+const BACK = R.wall('back');
+const DOOR = { u0: -.65, u1: .35, v0: 0, v1: 2.1 };                         // front door (hinge on the right, opens out)
+const WIN = { u0: .72, u1: 1.34, v0: 1.02, v1: 1.9 };                        // dusk window behind the lamp
+const HX = DOOR.u1, HZ = ZO, LEAF = 1.0, LEAF_H = 2.08;                      // hinge line at the outer face
+const LAMP = Hopper.lamp({ x: .7, y: 2.05, z: 3.0 }), CONE = 12;             // bare bulb under a cap shade (tan of the cut-off)
+const TABLE = [.38, 1.02, .725, .76, 2.72, 3.28], DISH = [.72, .762, 3.0];
+const HOST = { x: -.92, z: 4.85 };
+const GUESTS = [
+  { id: 'cream', x: -.5, z: 6.15, h: 1.63, skirt: true, w: .18,
+    col: { body: '#e8decb', legs: '#3c3a38', skin: '#caa387', hair: '#2b211c' } },
+  { id: 'blue', x: -.05, z: 6.35, h: 1.72, skirt: false, w: .19, box: true,
+    col: { body: '#5f7fa8', legs: '#30333a', skin: '#b98f72', hair: '#1f1b18' } },
+];
+const LAND = Q.y(0, -4, 4, ZO, 7.2), GWALL_Z = 7.2, GWALL = Q.z(-4, 4, 0, .85, GWALL_Z);
+const ycut = (x, z) => LAMP.y - Math.hypot(x - LAMP.x, z - LAMP.z) / CONE;   // the shade's hard cut-off height
 
-// ---------------- SUBJECT (replace with your image) ----------------
-const FX = .62, FZ = 3.75;                                                  // where she stands
-const FIGP = Hopper.figureParts({ h: 1.64, skirt: true });
-const FIG_COL = { body: Hopper.shade(Hopper.mute(ACC, .72), .62), legs: '#4a4a42', skin: '#8a7464', hair: '#2a221d' };
-const FIG_LIT = { body: ACC, skin: '#ead0ac', legs: '#b8a78a', hair: '#5a4434' };
-// sample points on her body, for "is she in the light?"
-const FIG_PTS = []; for (const v of [.2, .5, .8, 1.1, 1.4, 1.6]) for (const u of [-.1, .1]) FIG_PTS.push([FX + u, v, FZ]);
+// ---------------- colour: one paint colour, three lights ----------------
+// amb = dusk ambient (cool, dim), lit = the bulb (cream), warm = the bulb later (amber)
+const LIGHT = { amb: [.29, .325, .41], lit: [1.08, .975, .80], warm: [1.12, .86, .55] };
+const toneA = (c, m, k = 1) => hex(c).map((v, i) => Math.min(255, Math.round(v * LIGHT[m][i] * k)));
+const tone = (c, m, k = 1) => rgb(toneA(c, m, k));
+const toneHex = (c, m, k = 1) => '#' + toneA(c, m, k).map(v => v.toString(16).padStart(2, '0')).join('');
+const mixHex = (a, b, k) => '#' + mix(hex(a), hex(b), k).map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+// the bulb's falloff, baked into the lit layers as a radial multiply around the lamp's foot (and sampled for moving things)
+const FC = cam.P(LAMP.x, 0, LAMP.z), FR = 1500, FSTOPS = [[0, 1], [.3, .93], [1, .52]];
+function FALL(sx, sy) { const r = clamp(Math.hypot(sx - FC[0], sy - FC[1]) / FR); let i = 0; while (i < FSTOPS.length - 2 && r > FSTOPS[i + 1][0]) i++;
+  const a = FSTOPS[i], b = FSTOPS[i + 1]; return lerp(a[1], b[1], (r - a[0]) / (b[0] - a[0])); }
+const fallAt = p => FALL(...cam.P(...p));
+
+// ---------------- the room layers ----------------
+function look(m) {
+  const c = x => tone(x, m);
+  return { bg: c('#2a2a2a'), ceiling: tone('#8a8478', 'amb', .8), left: c('#8e8574'), right: c('#a09886'), back: [c('#9f9686'), c('#a99e8b'), c('#b0a48e')],
+    st: { back: { n: 300, seed: 11, len: [.12, .35], slant: .12, w: .035, a: .045 }, left: { n: 120, seed: 12, len: [.12, .3], slant: .12, w: .04, a: .04 },
+          right: { n: 120, seed: 13, len: [.12, .3], slant: .12, w: .04, a: .04 } }, corner: { px: 120, a: .22 } };
+}
+function boards(m) {
+  const A = toneA('#8e6c4c', m), Bc = toneA('#7a5a3f', m);
+  return { a: A, b: Bc, joint: rgb(A.map(v => v * .45), .45), seam: rgb(A.map(v => v * .42), .6), sa: .06 };
+}
+const TRIM = '#d6ccb6';
+function paintRoom(x, m) {
+  R.paint(x, look(m));
+  R.boards(x, boards(m), { seed: 21 });
+  R.baseboards(x, { gaps: [[DOOR.u0 - .09, DOOR.u1 + .09]], back: tone('#6a5d4e', m), left: tone('#5c5144', m), right: tone('#665a4b', m),
+    line: [tone(TRIM, m, .55), tone(TRIM, m, .55)] });
+  const cst = { n: 80, seed: 31, len: [.15, .5], slant: .01, w: .012, a: .05 };
+  Hopper.opening(x, cam, BACK, { ...DOOR, depth: T, hole: '#050608', reveal: tone('#cfc4ad', m, .92), head: tone('#cfc4ad', 'amb', .7),
+    sill: tone('#8d8578', m), casing: { w: .085, head: .11, c: tone(TRIM, m), shadow: .22, st: cst } });
+  const wo = Hopper.opening(x, cam, BACK, { ...WIN, depth: .16, hole: '#000', reveal: tone('#cfc4ad', m, .85), head: tone('#cfc4ad', 'amb', .7),
+    sill: tone('#cfc4ad', m), casing: { w: .07, head: .09, c: tone(TRIM, m), shadow: .2, st: { ...cst, seed: 37 } },
+    ledge: { d: .07, h: .035, c: tone(TRIM, m, .85), top: tone(TRIM, m) } });
+  let f = 1;
+  if (m !== 'amb') {                                                         // the bulb falls off with distance
+    const g = x.createRadialGradient(FC[0], FC[1], 0, FC[0], FC[1], FR);
+    for (const [k, v] of FSTOPS) { const q = Math.round(v * 255); g.addColorStop(k, `rgb(${q},${q},${q})`); }
+    x.globalCompositeOperation = 'multiply'; x.fillStyle = g; x.fillRect(0, 0, W, H); x.globalCompositeOperation = 'source-over';
+    f = fallAt(BACK((WIN.u0 + WIN.u1) / 2, (WIN.v0 + WIN.v1) / 2));
+  }
+  Hopper.within(x, cam, [wo.poly], c => paintBeyond(c, 'amb'));             // the glass shows the dusk, lit or not
+  Hopper.mullions(x, cam, BACK, [WIN.u0, WIN.u1, WIN.v0, WIN.v1], 2, 2, .035, tone(TRIM, m, .9 * f), -.08);
+  return wo;
+}
+
+// ---------------- outside: dusk sky, rooftops, the landing and the garden wall ----------------
+const SKY = [[150, '#18223b'], [420, '#1f2c4b'], [620, '#2a3c62'], [760, '#3d5580'], [860, '#5a7298'], [930, '#7f8fab'], [985, '#a59ea6'], [1040, '#b8a398']];
+function skyAt(y) { let i = 0; while (i < SKY.length - 2 && y > SKY[i + 1][0]) i++; const a = SKY[i], b = SKY[i + 1];
+  return mix(hex(a[1]), hex(b[1]), clamp((y - a[0]) / (b[0] - a[0]))); }
+function paintBeyond(c, m) {
+  // the sky: a deliberately banded, painted dusk (deep blue above → grey-peach over the roofs)
+  for (let y = 0; y < 1100; y += 22) { c.fillStyle = rgb(skyAt(y + 11)); c.fillRect(0, y, W, 23); }
+  const r = rng(91);
+  for (let i = 0; i < 90; i++) {                                            // long dragged strokes along the bands
+    const y = 200 + r() * 860, x0 = r() * W - 200, len = 200 + r() * 500, col = skyAt(y);
+    c.strokeStyle = rgb(col.map(v => v * (r() < .5 ? 1.08 : .92)), .35); c.lineWidth = 4 + r() * 9; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(x0, y); c.quadraticCurveTo(x0 + len / 2, y + (r() - .5) * 6, x0 + len, y + (r() - .5) * 4); c.stroke();
+  }
+  // a low ridge far away, then the neighbourhood's roofs (dusk-dark value shapes, a few warm windows)
+  const ridge = [[-60, 0, 140]]; for (let i = 0; i <= 24; i++) { const x = -60 + i * 5; ridge.push([x, 7 + 3 * Math.sin(i * .7) + 2 * Math.sin(i * 1.9), 140]); } ridge.push([60, 0, 140]);
+  cam.fill(c, ridge, '#2b3858');
+  const rh = rng(17);
+  for (let i = 0; i < 26; i++) {
+    const z = 38 + rh() * 14, x0 = -9 + i * .82 + rh() * .3, w = 1.6 + rh() * 1.6, h = 2.6 + rh() * 1.3, roof = rh() < .55, col = ['#232c43', '#28314a', '#2d3651'][i % 3];
+    cam.fill(c, Q.z(x0, x0 + w, 0, h, z), col);
+    if (roof) cam.fill(c, [[x0 - .15, h, z], [x0 + w + .15, h, z], [x0 + w / 2, h + .9, z]], '#1f273c');
+    if (rh() < .35) { const wx = x0 + w * (.25 + rh() * .4); cam.fill(c, Q.z(wx, wx + .45, h * .45, h * .45 + .4, z - .01), rh() < .5 ? '#d8a860' : '#c99a58'); }
+  }
+  // the garden wall across the landing, and the stone landing (these take the bulb's light when m is lit/warm)
+  const kW = m === 'amb' ? 1 : .55, kL = m === 'amb' ? 1 : .62;
+  Hopper.plane(c, cam, GWALL, tone('#8b8880', m, kW), { n: 70, seed: 41, len: [.1, .3], slant: .05, w: .03, a: .05, fn: (u, v) => [lerp(-4, 4, u), lerp(0, .85, v), GWALL_Z] });
+  cam.fill(c, Q.y(.85, -4, 4, GWALL_Z - .04, GWALL_Z + .28), tone('#a29d92', m, kW));
+  cam.fill(c, Q.z(-4, 4, .8, .85, GWALL_Z - .041), tone('#a29d92', m, kW * .9));
+  cam.fill(c, LAND, tone('#7f7b72', m, kL));
+  for (let i = 0; i < 22; i++) { const x = -4 + i * .4; cam.fill(c, [[x - .006, 0, ZO], [x + .006, 0, ZO], [x + .006, 0, GWALL_Z], [x - .006, 0, GWALL_Z]], tone('#4a4740', m, kL * .9)); }
+  for (const z of [5.6, 6.05, 6.5, 6.95]) cam.fill(c, Q.y(0, -4, 4, z, z + .012), tone('#4a4740', m, kL * .9));
+}
+
+// ---------------- the side table (cached: ambient and lit versions; only its top faces the bulb) ----------------
+function paintTable(x, m) {
+  const [x0, x1, y0, y1, z0, z1] = TABLE, wood = c => tone(c, m), legs = (a, b) => Hopper.box(x, cam, [a, a + .045, 0, .64, b, b + .045], { front: wood('#5a402c'), left: wood('#4a3424'), right: wood('#4a3424') });
+  legs(x0 + .03, z1 - .075); legs(x1 - .075, z1 - .075);
+  Hopper.box(x, cam, [x0 + .03, x1 - .03, .64, y0, z0 + .03, z1 - .03], { front: wood('#563d2a'), left: wood('#45311f') });
+  legs(x0 + .03, z0 + .03); legs(x1 - .075, z0 + .03);
+  Hopper.box(x, cam, [x0, x1, y0, y1, z0, z1], { front: wood('#5e4430'), left: wood('#4d3726'), top: wood('#7b5b40') },
+    { n: 26, seed: 51, len: [.4, .9], slant: .02, w: .006, a: .06 });
+  x.save(); cam.path(x, Q.y(y1, x0, x1, z0, z1)); x.clip();                  // grain on the top
+  Hopper.strokes(x, cam, 60, 52, (u, v) => [lerp(x0, x1, v), y1, lerp(z0, z1, u)], { len: [.3, .8], slant: .01, w: .008, a: .07 }); x.restore();
+}
+const TOP = Q.y(TABLE[3], TABLE[0], TABLE[1], TABLE[4], TABLE[5]);
+
+// ---------------- the door leaf (opens outward, hinge on the right) ----------------
+function leafP(th, a, y, b = 0) { const c = Math.cos(th * D2R), s = Math.sin(th * D2R); return [HX - a * c - b * s, y, HZ + a * s - b * c]; }
+function drawLeaf(ctx, th, m, k, press) {
+  const P = (a, y, b = 0) => leafP(th, a, y, b), door = '#4f6a62';
+  cam.fill(ctx, [P(0, 0), P(LEAF, 0), P(LEAF, LEAF_H), P(0, LEAF_H)], tone(door, m, k));
+  const M = (a, y) => P(a, y, .003);
+  for (const [y0, y1] of [[1.12, 1.95], [.14, .98]])
+    Hopper.bevelPanel(ctx, cam, M, [.13, .87, y0, y1], .035, { top: tone(door, m, k * .62), bottom: tone(door, m, k * 1.18), left: tone(door, m, k * 1.08),
+      right: tone(door, m, k * .8), field: tone('#55716a', m, k) });
+  // the lever handle near the free edge (rose plate, lever toward the hinge; it dips when pressed)
+  cam.fill(ctx, [P(.905, .9, .01), P(.945, .9, .01), P(.945, 1.06, .01), P(.905, 1.06, .01)], tone('#4a4136', m, k));
+  const d = .045 * press;
+  cam.fill(ctx, [P(.935, .965, .06), P(.79, .965 - d, .06), P(.79, .992 - d, .06), P(.935, .992, .06)], tone('#5b4f3f', m, k * 1.1));
+  cam.fill(ctx, [P(.93, .965, .01), P(.94, .965, .01), P(.94, .992, .06), P(.93, .992, .06)], tone('#3f372d', m, k));
+}
+const segX = (a, b, c, d) => { const o = (p, q, r) => Math.sign((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]));
+  return o(a, b, c) !== o(a, b, d) && o(c, d, a) !== o(c, d, b); };
+// does the bulb reach point P? (through the doorway — both faces of the wall — and not blocked by the leaf)
+function rayOK(P, th, self = false) {
+  for (const zc of [ZB, ZO]) {
+    const k = (zc - LAMP.z) / (P[2] - LAMP.z); if (k <= 0 || k > 1.0001) return false;
+    const x = LAMP.x + (P[0] - LAMP.x) * k, y = LAMP.y + (P[1] - LAMP.y) * k;
+    if (x < DOOR.u0 || x > DOOR.u1 || y > DOOR.v1) return false;
+  }
+  if (!self && th > .01) { const E = leafP(th, LEAF, 0); if (segX([LAMP.x, LAMP.z], [P[0], P[2]], [HX, HZ], [E[0], E[2]])) return false; }
+  return true;
+}
+// the lit part of the leaf's room face: an a-range (doorway + facing), up to the shade's cut-off; and its Lambert level
+const LAM0 = (() => { const P = leafP(0, .5, 1), L = [LAMP.x - P[0], LAMP.y - P[1], LAMP.z - P[2]]; return -L[2] / Math.hypot(...L); })();
+function leafLight(th) {
+  const c = Math.cos(th * D2R), s = Math.sin(th * D2R), n = [-s, 0, -c];
+  let a0 = null, a1 = null;
+  for (let i = 0; i <= 60; i++) { const a = i / 60 * LEAF, P = leafP(th, a, 1); if (rayOK(P, th, true)) { if (a0 === null) a0 = a; a1 = a; } }
+  if (a0 === null) return null;
+  const Pc = leafP(th, (a0 + a1) / 2, 1), L = [LAMP.x - Pc[0], LAMP.y - Pc[1], LAMP.z - Pc[2]], lam = (n[0] * L[0] + n[2] * L[2]) / Math.hypot(...L);
+  if (lam <= 0) return null;
+  const poly = [], N = 12;
+  for (let i = 0; i <= N; i++) poly.push(leafP(th, lerp(a0, a1, i / N), -.05, -.01));
+  for (let i = N; i >= 0; i--) { const a = lerp(a0, a1, i / N), P = leafP(th, a, 0); poly.push(leafP(th, a, Math.min(LEAF_H + .05, ycut(P[0], P[2])), -.01)); }
+  return { poly, lam: Math.min(1.1, lam / LAM0) };
+}
+// the lit x-interval on a vertical plane z (at height y): where the bulb's light lands through the gap
+function litSpan(z, th, y = 1) {
+  let x0 = null, x1 = null;
+  for (let x = -2.4; x <= 1.4; x += .004) if (rayOK([x, y, z], th)) { if (x0 === null) x0 = x; x1 = x; }
+  return x0 === null ? null : [x0, x1];
+}
+
+// ---------------- figures ----------------
+function withTrousers(F, hem) {                                              // a coat-and-trousers figure: dark legs below the hem
+  const parts = [];
+  for (const p of F.parts) { parts.push(p); if (p.c === 'body' && Math.abs(p.poly.reduce((s, q) => s + q[0], 0) / p.poly.length) < .05)
+    parts.push({ poly: Hopper.clipRect(p.poly, -1, 1, -1, hem), c: 'legs' }); }
+  return { ...F, parts };
+}
+for (const G of GUESTS) { G.F = Hopper.figureParts({ h: G.h, w: G.w, skirt: G.skirt }); if (!G.skirt) G.F = withTrousers(G.F, .9 * G.h / 1.7); }
+// 나 seen from behind: back of the head is hair, the near-door (right) arm is drawn by IK, apron ties in mustard
+const MUSTARD = '#e2a93b';
+const HOSTF = (() => {
+  const F = Hopper.figureParts({ h: 1.7, w: .19, skirt: false }), out = [];
+  const cen = p => p.reduce((s, q) => [s[0] + q[0] / p.length, s[1] + q[1] / p.length], [0, 0]);
+  const loop = (cx, cy, rx, ry) => Array.from({ length: 14 }, (_, i) => [cx + rx * Math.cos(i / 14 * 2 * Math.PI), cy + ry * Math.sin(i / 14 * 2 * Math.PI)]);
+  for (const p of F.parts) {
+    const [u, v] = cen(p.poly);
+    if ((p.c === 'body' && u > .1 && v < 1.42) || (p.c === 'skin' && u > .1 && v < 1)) continue;   // right arm + hand → IK
+    if (p.c === 'skin' && v > 1.5) { out.push({ ...p, c: 'hair' }); continue; }                     // back of the head
+    out.push(p);
+    if (p.c === 'body' && Math.abs(u) < .05) {
+      out.push({ poly: Hopper.clipRect(p.poly, -1, 1, -1, .9), c: 'legs' });
+      out.push({ poly: [[-.121, .975], [-.138, .97], [-.142, .75], [-.136, .52], [-.119, .52], [-.123, .75]], c: 'apron' });   // apron edges at the hips
+      out.push({ poly: [[.121, .975], [.138, .97], [.142, .75], [.136, .52], [.119, .52], [.123, .75]], c: 'apron' });
+      out.push({ poly: [[-.124, .975], [.124, .975], [.122, 1.028], [-.122, 1.028]], c: 'apron' });                      // waist tie
+      out.push({ poly: loop(-.036, 1.0, .036, .024), c: 'apron' }, { poly: loop(.036, 1.0, .036, .024), c: 'apron' });  // the bow
+      out.push({ poly: [[-.014, .99], [-.002, .99], [-.016, .84], [-.034, .846]], c: 'apron' }, { poly: [[.002, .99], [.014, .99], [.036, .85], [.018, .844]], c: 'apron' });
+      out.push({ poly: [[-.036, 1.432], [.036, 1.432], [.034, 1.46], [-.034, 1.46]], c: 'apron' });                     // neck strap
+    }
+  }
+  return { parts: out, sil: F.sil, h: F.h };
+})();
+const HOST_COL = { body: '#2f3d5c', legs: '#2b2d33', skin: '#c9a487', hair: '#1e1a17', apron: MUSTARD };
+const ambCols = c => Object.fromEntries(Object.entries(c).map(([k, v]) => [k, toneHex(v, 'amb', 1.25)]));
+const litCols = (c, f, wk) => Object.fromEntries(Object.entries(c).map(([k, v]) => [k, mixHex(toneHex(v, 'lit', f), toneHex(v, 'warm', f), wk)]));
+
+// 나's right arm: 2-bone IK from the shoulder to the hand (bone lengths fixed, elbow bends back/down only)
+const UPPER = .30, FORE = .32, SH = [HOST.x + .165, 1.37, HOST.z], REST = [HOST.x + .185, .8, HOST.z + .01], POLE = [.35, -.35, -1];
+const v3 = { sub: (a, b) => a.map((v, i) => v - b[i]), add: (a, b) => a.map((v, i) => v + b[i]), mul: (a, k) => a.map(v => v * k),
+  dot: (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2] }; v3.len = a => Math.sqrt(v3.dot(a, a)); v3.norm = a => v3.mul(a, 1 / v3.len(a));
+function ik(Sh, Tg) {
+  const d = v3.sub(Tg, Sh), dist = Math.min(v3.len(d), UPPER + FORE - 1e-4), dn = v3.norm(d);
+  const a = (UPPER * UPPER - FORE * FORE + dist * dist) / (2 * dist), h = Math.sqrt(Math.max(0, UPPER * UPPER - a * a));
+  const p = v3.norm(v3.sub(POLE, v3.mul(dn, v3.dot(POLE, dn))));
+  return { S: Sh, E: v3.add(Sh, v3.add(v3.mul(dn, a), v3.mul(p, h))), Hd: v3.add(Sh, v3.mul(dn, dist)) };
+}
+const grip = (th, press) => leafP(th, .87, .978 - .04 * press, .075);
+function doorAngle(t) {
+  if (t < B.push) return 0;
+  if (t < B.release) { const k = (t - B.push) / (B.release - B.push); return 8 * k * k; }      // the push builds, then a shove
+  return 8 + 70 * Hopper.creak(t - B.release, 1.35);                                          // it swings on, stiff, and settles
+}
+const pressAt = t => t < B.press ? 0 : t < B.push ? eio((t - B.press) / (B.push - B.press)) : t < B.release ? 1 : 1 - ss(B.release, B.release + .25, t);
+function handAt(t) {
+  if (t < B.reach) return REST;
+  if (t < B.press) { const k = eio((t - B.reach) / (B.press - B.reach)), g = grip(0, 0), lift = Math.sin(Math.PI * k);
+    return v3.add(v3.add(v3.mul(REST, 1 - k), v3.mul(g, k)), [.02 * lift, .06 * lift, -.04 * lift]); }
+  if (t < B.release) return grip(doorAngle(t), pressAt(t));
+  const g = grip(8, 1), k = eio((t - B.release) / .9);
+  return v3.add(v3.add(v3.mul(g, 1 - k), v3.mul(REST, k)), [0, .04 * Math.sin(Math.PI * k), -.03 * Math.sin(Math.PI * k)]);
+}
+let ARMC = null;
+function drawArm(ctx, A, sleeve, skin) {
+  const s = cam.P(...A.S), e = cam.P(...A.E), h = cam.P(...A.Hd), k = cam.ppm(A.S[2]);
+  const xs = [s[0], e[0], h[0]], ys = [s[1], e[1], h[1]], pad = 40, x0 = Math.min(...xs) - pad, y0 = Math.min(...ys) - pad;
+  const w = Math.ceil(Math.max(...xs) - x0 + pad), hh = Math.ceil(Math.max(...ys) - y0 + pad);
+  if (!ARMC || ARMC.width < w || ARMC.height < hh) ARMC = Pilot.canvas(Math.max(w, 400), Math.max(hh, 700));
+  const x = ARMC.getContext('2d'); x.clearRect(0, 0, ARMC.width, ARMC.height); x.save(); x.translate(-x0, -y0);
+  const seg = (a, b, w0, w1, col) => { const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
+    x.fillStyle = col; x.beginPath(); x.moveTo(a[0] + nx * w0 / 2, a[1] + ny * w0 / 2); x.lineTo(b[0] + nx * w1 / 2, b[1] + ny * w1 / 2);
+    x.lineTo(b[0] - nx * w1 / 2, b[1] - ny * w1 / 2); x.lineTo(a[0] - nx * w0 / 2, a[1] - ny * w0 / 2); x.closePath(); x.fill();
+    x.beginPath(); x.arc(b[0], b[1], w1 / 2, 0, 7); x.fill(); x.beginPath(); x.arc(a[0], a[1], w0 / 2, 0, 7); x.fill(); };
+  seg(s, e, .088 * k, .072 * k, sleeve);
+  const wr = [lerp(e[0], h[0], .86), lerp(e[1], h[1], .86)];
+  seg(e, wr, .072 * k, .058 * k, sleeve);
+  x.fillStyle = skin; x.beginPath(); x.ellipse(h[0], h[1], .03 * k, .042 * k, Math.atan2(h[1] - e[1], h[0] - e[0]) - Math.PI / 2, 0, 7); x.fill();
+  x.restore();
+  ctx.save(); ctx.filter = 'blur(1.5px)'; ctx.drawImage(ARMC, x0, y0); ctx.restore();
+}
 
 // ---------------- timing ----------------
-const E = .45;                                                             // sun elevation (dy per metre across)
-const DZ_HIT = (FZ - 3.4) / (FX - R.xl);                                   // azimuth at which the light reaches her
-function dz(t) {                                                           // the sun's azimuth: slow, then it arrives
-  if (t < B.reach) { const k = clamp((t - B.rise) / (B.reach - B.rise)); return lerp(-.45, DZ_HIT + .004, k * k); }
-  return DZ_HIT + .004 + (.42 - DZ_HIT) * eo((t - B.reach) / 5.5);
+const lampI = t => .88 + .12 * ss(B.warm, B.warm + 3, t);
+const warmK = t => ss(B.warm, B.warm + 3.8, t);
+const redK = t => ss(B.colour, B.colour + 1.6, t);                          // colour arrives
+const PUSHC = cam.P(-.15, 1.0, ZO);
+
+// ---------------- the dish: 쭈꾸미볶음 on a white plate (the one saturated colour) ----------------
+const DISHR = (() => { const r = rng(64); return { bumps: Array.from({ length: 9 }, (_, i) => ({ u: -1 + (i + .5) / 9 * 2 + (r() - .5) * .12, h: .5 + r() * .6, w: .14 + r() * .1 })),
+  bits: Array.from({ length: 34 }, () => ({ u: r() * 2 - 1, v: r(), kind: r(), rot: r() * Math.PI, s: .6 + r() * .6 })) }; })();
+function drawDish(ctx, t, I, wk) {
+  const [cx, cy, cz] = DISH, f = fallAt(DISH), litC = (c, k = 1) => mix(toneA(c, 'amb', 1.1 * k), mix(toneA(c, 'lit', f * k), toneA(c, 'warm', f * k), wk), I);
+  const circ = (r, y) => Array.from({ length: 40 }, (_, i) => [cx + r * Math.cos(i / 40 * 2 * Math.PI), y, cz + r * Math.sin(i / 40 * 2 * Math.PI)]);
+  cam.fill(ctx, circ(.172, cy - .004), rgb(litC('#6e655a', .7)));          // the plate's foot shadow edge
+  cam.fill(ctx, circ(.168, cy + .006), rgb(litC('#ece6da')));
+  cam.fill(ctx, circ(.125, cy + .004), rgb(litC('#d9d2c4')));
+  // the heap: a red mound with curled arms on top
+  const k = cam.ppm(cz), base = cam.P(cx, cy + .006, cz), rx = .118 * k, ht = .072 * k, ry = rx * .085;
+  const red = hex(Hopper.mute(ACC, .55)), full = hex(ACC), rk = redK(t), accent = mix(red, full, rk), bright = .78 + .22 * rk;
+  const sauce = (k2) => rgb(mix(accent.map(v => v * .3), mix(accent.map(v => v * f * k2 * bright), accent.map((v, i) => v * f * k2 * bright * [1.08, .9, .75][i]), wk), I));
+  const top = u => { let h = Math.pow(Math.max(0, 1 - u * u), .55); for (const b of DISHR.bumps) h += .16 * b.h * Math.exp(-((u - b.u) ** 2) / (b.w * b.w * .3)); return h * .86; };
+  ctx.beginPath(); ctx.moveTo(base[0] - rx, base[1]);
+  for (let i = 0; i <= 40; i++) { const u = -1 + i / 20; ctx.lineTo(base[0] + u * rx, base[1] - ht * top(u)); }
+  ctx.ellipse(base[0], base[1], rx, ry, 0, 0, Math.PI); ctx.closePath(); ctx.fillStyle = sauce(1); ctx.fill();
+  ctx.save(); ctx.clip();
+  const r = rng(65);
+  for (let i = 0; i < 9; i++) {                                              // curled arms and mantles: darker and glossier values
+    const u = -.85 + r() * 1.7, y = base[1] - ht * top(u) * (.25 + r() * .6);
+    ctx.strokeStyle = sauce(.62 + r() * .2); ctx.lineWidth = 3 + r() * 4; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(base[0] + u * rx, y, 6 + r() * 9, r() * 3, 3 + r() * 3); ctx.stroke();
+  }
+  for (let i = 0; i < 6; i++) { const u = -.7 + r() * 1.4; ctx.fillStyle = sauce(1.25); ctx.beginPath();
+    ctx.ellipse(base[0] + u * rx, base[1] - ht * top(u) * (.55 + r() * .35), 5 + r() * 6, 2.5 + r() * 2, -.3, 0, 7); ctx.fill(); }
+  for (const b of DISHR.bits) {                                              // scallion, onion, sesame
+    const x = base[0] + b.u * rx * .9, y = base[1] - ht * top(b.u) * b.v * .95;
+    if (b.kind < .35) { ctx.fillStyle = rgb(litC('#7f9a52')); ctx.save(); ctx.translate(x, y); ctx.rotate(b.rot); ctx.fillRect(-5 * b.s, -1.6 * b.s, 10 * b.s, 3.2 * b.s); ctx.restore(); }
+    else if (b.kind < .5) { ctx.fillStyle = rgb(litC('#e6dcc6')); ctx.save(); ctx.translate(x, y); ctx.rotate(b.rot); ctx.fillRect(-6 * b.s, -1.4 * b.s, 12 * b.s, 2.8 * b.s); ctx.restore(); }
+    else if (b.kind < .72) { ctx.fillStyle = rgb(litC('#efe6cf')); ctx.fillRect(x, y, 2.2, 1.4); }
+  }
+  ctx.restore();
 }
-const sunAt = t => Hopper.sun([1, -E, dz(t)]);
-const sunI = t => ss(.3, 3.4, t);                                          // the light comes up with the dawn
-const ambK = t => ss(0, 1.4, t);
-const warmK = t => ss(B.settle - 1, B.end, t);
-const burst = t => t < B.reach ? 0 : Math.exp(-(t - B.reach) * 6) * ss(B.reach, B.reach + .05, t);
+// the lamp: cord, cap shade (we look up into its lit enamel), the bare bulb under it
+function drawLamp(ctx, I, wk) {
+  const { x, y, z } = LAMP, c0 = cam.P(x, HC, z), c1 = cam.P(x, y + .1, z);
+  ctx.strokeStyle = '#141414'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(c0[0], c0[1]); ctx.lineTo(c1[0], c1[1]); ctx.stroke();
+  const circ = (r, yy) => Array.from({ length: 36 }, (_, i) => [x + r * Math.cos(i / 36 * 2 * Math.PI), yy, z + r * Math.sin(i / 36 * 2 * Math.PI)]);
+  const rimY = y + .16 / CONE, top = circ(.045, y + .1), rim = circ(.16, rimY);
+  const outer = Hopper.hull(top.concat(rim).map(p => [...cam.P(...p), 0]), 0, 1).map(p => [p[0], p[1]]);
+  ctx.beginPath(); outer.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath();
+  ctx.fillStyle = rgb(mix([214, 198, 168], [228, 182, 120], wk).map(v => v * (.55 + .45 * I))); ctx.fill();   // the enamel, lit from inside
+  cam.fill(ctx, rim, rgb(mix([246, 232, 200], [250, 214, 156], wk)));
+  const b = cam.P(x, y - .015, z), br = .036 * cam.ppm(z);
+  ctx.fillStyle = rgb(mix([255, 250, 236], [255, 232, 190], wk)); ctx.beginPath(); ctx.arc(b[0], b[1], br, 0, 7); ctx.fill();
+  // the rim's thin dark edge on the near side (enamel lip)
+  ctx.save(); cam.path(ctx, rim); ctx.clip(); ctx.strokeStyle = 'rgba(40,36,30,.5)'; ctx.lineWidth = 3; cam.path(ctx, circ(.16, rimY)); ctx.stroke(); ctx.restore();
+}
 
 // ---------------- static layers ----------------
-let base, lit, litW;
-function paintRoom(x, look, boards, k) {
-  R.paint(x, look);
-  R.boards(x, boards, { seed: 21 });
-  const sh = c => k === 1 ? c : Hopper.shade(c, k);
-  R.baseboards(x, { back: sh('#56665a'), left: sh('#46544a'), right: sh('#5c6c60'), line: ['rgba(236,230,210,.25)', 'rgba(236,230,210,.25)'] });
-}
-function buildBase() {
-  return Hopper.layer(x => {
-    const k = .72;
-    paintRoom(x, Hopper.dayLook(k), Hopper.boardsLook(D.floor, k), k);
-    // the back window: hole, reveals, cream casing with its soft shadow, sill ledge
-    const op = Hopper.opening(x, cam, BACK, { ...BW, depth: .16, hole: '#e8e6d2', reveal: Hopper.shade(D.cream, .62), head: Hopper.shade(D.cream, .5),
-      sill: Hopper.shade(D.cream, .8), casing: { w: .08, head: .1, c: Hopper.shade(D.cream, .8), shadow: .2, st: { n: 70, seed: 31, len: [.15, .5], slant: .01, w: .012, a: .06 } },
-      ledge: { d: .07, h: .04, c: Hopper.shade(D.cream, .7), top: Hopper.shade(D.cream, .9) } });
-    // outside: pale cream-green sky, the sunlit building across the street with its dark windows
-    Hopper.within(x, cam, [op.poly], c => {
-      const t0 = cam.P(0, 6, 14)[1], t1 = cam.P(0, 0, 14)[1], g = c.createLinearGradient(0, t0, 0, t1);
-      g.addColorStop(0, '#d5dfc6'); g.addColorStop(1, '#efe9d0'); c.fillStyle = g; c.fillRect(0, 0, W, H);
-      Hopper.box(c, cam, [-6, .9, 0, 3.5, 14, 18], { front: '#d8b585', top: '#c4a173' }, { n: 60, seed: 61, len: [.1, .3], slant: .05, w: .05, a: .08 });
-      Hopper.box(c, cam, [.9, 6, 0, 2.3, 13, 17], { front: '#a9b597', top: '#97a386', left: '#7f8a72' }, { n: 40, seed: 62, len: [.1, .3], slant: .05, w: .05, a: .08 });
-      for (let i = 0; i < 6; i++) for (let j = 0; j < 3; j++) {                 // windows across the street
-        const wx = -2.6 + i * .78, wy = .6 + j * .95; if (wx + .42 > .9) continue;
-        cam.fill(c, Q.z(wx, wx + .42, wy, wy + .62, 13.99), '#4c5a4c');
-        cam.fill(c, Q.z(wx - .04, wx + .46, wy - .06, wy, 13.98), '#ecdcb4');
-      }
-      cam.fill(c, Q.z(-6, .9, 3.3, 3.45, 13.98), '#e9d1a2');                    // cornice catching the sun
-      for (let i = 0; i < 3; i++) cam.fill(c, Q.z(1.3 + i * 1.05, 1.75 + i * 1.05, .7, 1.4, 12.99), '#5d6b58');
-      c.fillStyle = 'rgba(236,232,214,.10)'; c.fillRect(0, 0, W, H);           // glass
-    });
-    Hopper.mullions(x, cam, BACK, [BW.u0, BW.u1, BW.v0, BW.v1], 2, 2, .035, Hopper.shade(D.cream, .85), -.08);
-  });
-}
-// the same room in sunlight (same seeds → the same strokes and planks, lit colours)
-const buildLit = sun => Hopper.layer(x => paintRoom(x, Hopper.dayLook(1, sun), Hopper.boardsLook(Hopper.lit(D.floor, sun), 1), 1));
-
-// ---------------- draw ----------------
+let base, lit, litW, out0, outL, outW, tAmb, tLit, tWarm, WINP;
 function draw(ctx, t) {
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
-  const L = sunAt(t), I = sunI(t), amb = ambK(t), wk = warmK(t);
-  ctx.save(); Hopper.push(ctx, 1 + .04 * ss(0, B.end, t), cam.P(FX - .3, 1.2, FZ));
-  // 1. the room in ambient light
-  ctx.drawImage(base, 0, 0); Hopper.dim(ctx, amb);
-  // 2. the sun through the unseen window: its panes projected onto the floor and the right wall, and her shadow
-  //    (a silhouette standing across the rays) projected onto both; shadows show only inside the light
-  const across = [-L.d[2], 1], n = Math.hypot(...across), place = (u, v) => [FX + u * across[0] / n, v, FZ + u * across[1] / n];
-  for (const [surf, pl] of [[R.poly.floor, Hopper.FLOOR], [R.poly.right, Hopper.wallX(R.xr)]]) {
-    const patch = CELLS.map(c => L.project(c, pl)), sh = L.cast(FIGP.sil, { place, plane: pl });
-    ctx.save(); Hopper.clip(ctx, cam, [surf]); Hopper.clip(ctx, cam, patch);
-    Hopper.drawLit(ctx, I, lit, litW, wk);
-    if (sh) Hopper.shadowIn(ctx, cam, [sh], c => { c.drawImage(base, 0, 0); Hopper.dim(c, amb); });
-    ctx.restore();
+  const th = doorAngle(t), press = pressAt(t), I = lampI(t), wk = warmK(t), wkq = Math.round(wk * 6) / 6;
+  ctx.save(); Hopper.push(ctx, 1 + .045 * t / DUR, PUSHC);
+  // 1. the hall in dusk ambient
+  ctx.drawImage(base, 0, 0);
+  // 2. the bulb: every surface it reaches, clipped to the shade's hard cut-off; shadows of 나 and the table inside it
+  const arm = ik(SH, handAt(t));
+  const armQuad = (pl) => { const a = arm.S, b = arm.E, c = arm.Hd, o = [.04, 0, 0];
+    return [LAMP.onto(v3.sub(a, o), pl), LAMP.onto(v3.add(a, o), pl), LAMP.onto(v3.add(b, o), pl), LAMP.onto(v3.add(c, o), pl), LAMP.onto(v3.sub(c, o), pl), LAMP.onto(v3.sub(b, o), pl)]; };
+  const hostSh = pl => [LAMP.cast(HOSTF.sil, { x: HOST.x, z: HOST.z, clip: [-5, 5, 0, 1.95], plane: pl })].filter(Boolean);
+  const unlit = c => c.drawImage(base, 0, 0);
+  const surfaces = [
+    [R.poly.floor, null, [...hostSh(Hopper.FLOOR), Hopper.boxShadow(LAMP, [TABLE[0], TABLE[1], TABLE[2], TABLE[3], TABLE[4], TABLE[5]])]],
+    [R.poly.back, coneOnZ(ZB), [...hostSh(Hopper.wallZ(ZB)), armQuad(Hopper.wallZ(ZB))]],
+    [R.poly.left, coneOnX(XL), []], [R.poly.right, coneOnX(XR), []],
+  ];
+  for (const [surf, cone, sh] of surfaces) {
+    ctx.save(); Hopper.clip(ctx, cam, [surf]); if (cone) Hopper.clip(ctx, cam, [cone]);
+    Hopper.drawLit(ctx, I, lit, litW, wk); Hopper.shadowIn(ctx, cam, sh, unlit); ctx.restore();
   }
-  // bounce from the lit floor
-  const mid = L.onto(LEFT(2.8, 1.4), Hopper.FLOOR);
-  Hopper.glow(ctx, cam.P(clamp(mid[0], R.xl, R.xr), 0, clamp(mid[2], 2, R.zb)), 800, wk > .5 ? '255,214,160' : '252,236,190', .12 * I);
-  // 3. SUBJECT: she is lit exactly when the projected light reaches her
-  const fl = Hopper.litFraction(L, FIG_PTS, CELLS, WIN_PLANE) * I;
-  Hopper.figure(ctx, cam, FIGP, { x: FX, z: FZ, lit: fl, side: -1, colors: FIG_COL, litColors: FIG_LIT, sun: wk > .5 ? SUN_W : SUN });
-  // the one sudden event: a burst of light as it arrives
-  Hopper.flash(ctx, .5 * burst(t));
+  // 3. the doorway: dusk outside; when the door opens, the bulb's light goes out through the gap onto the landing
+  const dusk = .16 * ss(0, DUR, t);
+  Hopper.within(ctx, cam, [WINP], c => { c.fillStyle = `rgba(6,10,26,${dusk})`; c.fillRect(0, 0, W, H); });
+  Hopper.within(ctx, cam, [DOORP], c => {
+    c.drawImage(out0, 0, 0); c.fillStyle = `rgba(6,10,26,${dusk})`; c.fillRect(0, 0, W, H);
+    if (th > .3) {
+      const gap = [[DOOR.u0, 0, ZO], [DOOR.u1, 0, ZB], [DOOR.u1, 2.0, ZB], [DOOR.u0, 2.0, ZO]];
+      const leafQ = [leafP(th, 0, 0), leafP(th, LEAF, 0), leafP(th, LEAF, 2.0), leafP(th, 0, 2.0)];
+      const gSh = pl => GUESTS.map(G => LAMP.cast(G.F.sil, { x: G.x, z: G.z, clip: [-5, 5, 0, 1.95], plane: pl })).filter(Boolean);
+      for (const [surf, pl] of [[LAND, Hopper.FLOOR], [GWALL, Hopper.wallZ(GWALL_Z)]]) {
+        c.save(); Hopper.clip(c, cam, [surf]); Hopper.clip(c, cam, [LAMP.project(gap, pl)]);
+        Hopper.drawLit(c, I, outL, outW, wk);
+        Hopper.shadowIn(c, cam, [LAMP.project(leafQ, pl), ...gSh(pl)], cc => { cc.drawImage(out0, 0, 0); cc.fillStyle = `rgba(6,10,26,${dusk})`; cc.fillRect(0, 0, W, H); });
+        c.restore();
+      }
+      // the guests: shade first, then the light where it actually lands on them (a hard vertical edge from the jamb / leaf)
+      for (const G of GUESTS) {
+        const fo = .62 * fallAt([G.x, 1, G.z]), o = { x: G.x, z: G.z, side: 1, colors: ambCols(G.col), litColors: litCols(G.col, fo, wkq), sun: '#f3dcb0' };
+        Hopper.figure(c, cam, G.F, { ...o, lit: 0 });
+        const sp = litSpan(G.z, th), yc = Math.min(2.2, ycut(G.x, G.z));
+        if (sp) { c.save(); Hopper.clip(c, cam, [Q.z(sp[0], sp[1], -.2, yc, G.z)]);
+          Hopper.figure(c, cam, G.F, { ...o, lit: I }); Hopper.figure(c, cam, G.F, { ...o, side: -1, lit: .45 * I }); c.restore(); }
+        if (G.box) drawBox(c, G, th, I, wk, fo);
+      }
+    } else {
+      for (const G of GUESTS) Hopper.figure(c, cam, G.F, { x: G.x, z: G.z, side: 1, colors: ambCols(G.col), lit: 0 });
+    }
+    // the leaf itself: ambient, then its lit part
+    drawLeaf(c, th, 'amb', 1.15, press);
+    const LL = leafLight(th);
+    if (LL) { const f = fallAt(leafP(th, .5, 1)); c.save(); Hopper.clip(c, cam, [LL.poly]);
+      c.globalAlpha = Math.min(1, I * LL.lam); drawLeaf(c, th, 'lit', f, press);
+      if (wk > 0) { c.globalAlpha = Math.min(1, I * LL.lam) * wk; drawLeaf(c, th, 'warm', f, press); }
+      c.globalAlpha = 1; c.restore(); }
+  });
+  // 4. the side table (only its top faces the bulb), the dish, the lamp
+  ctx.drawImage(tAmb, 0, 0);
+  ctx.save(); Hopper.clip(ctx, cam, [TOP]); Hopper.drawLit(ctx, I, tLit, tWarm, wk); ctx.restore();
+  drawDish(ctx, t, I, wk);
+  drawLamp(ctx, I, wk);
+  // 5. 나, back to us: the IK arm (behind the body), then the body in soft value shapes, lit from the bulb's side
+  const fh = fallAt([HOST.x, 1, HOST.z]);
+  const sleeve = rgb(mix(toneA(HOST_COL.body, 'amb', 1.25), mix(toneA(HOST_COL.body, 'lit', fh), toneA(HOST_COL.body, 'warm', fh), wk), .85 * I));
+  const skin = rgb(mix(toneA(HOST_COL.skin, 'amb', 1.25), mix(toneA(HOST_COL.skin, 'lit', fh), toneA(HOST_COL.skin, 'warm', fh), wk), .85 * I));
+  drawArm(ctx, arm, sleeve, skin);
+  Hopper.figure(ctx, cam, HOSTF, { x: HOST.x, z: HOST.z, side: 1, lit: I, colors: ambCols(HOST_COL), litColors: litCols(HOST_COL, fh, wkq), sun: '#f3dcb0' });
   ctx.restore();
   Hopper.finish(ctx);
-  Hopper.sink(ctx, ss(B.end - .2, B.end + .9, t));
   Hopper.captions(ctx, t, S.lines);
-  Hopper.endCard(ctx, t, S.endCard, B.end);
-  Hopper.fade(ctx, t, DUR);
+  Hopper.captions(ctx, t, S.small, { size: 44, color: Hopper.PAL.src });
+  Story.fadeBlack(ctx, t, DUR, .6, .6);
 }
+function drawBox(c, G, th, I, wk, fo) {
+  const b = [G.x - .165, G.x + .165, .69, .89, G.z - .28, G.z - .06], kraft = '#a88a5f', rib = '#e6dcc4';
+  const paint = (m, k) => { Hopper.box(c, cam, b, { front: tone(kraft, m, k), top: tone(kraft, m, k * 1.12), left: tone(kraft, m, k * .8), right: tone(kraft, m, k * .8) });
+    cam.fill(c, Q.z(G.x - .022, G.x + .022, b[2], b[3], b[4] - .002), tone(rib, m, k));
+    cam.fill(c, Q.y(b[3] + .002, G.x - .022, G.x + .022, b[4], b[5]), tone(rib, m, k)); };
+  paint('amb', 1.25);
+  const sp = litSpan(b[4], th, .8); if (!sp) return;
+  c.save(); Hopper.clip(c, cam, [Q.z(sp[0], sp[1], 0, 2, b[4])]); c.globalAlpha = I; paint('lit', fo);
+  if (wk > 0) { c.globalAlpha = I * wk; paint('warm', fo); } c.globalAlpha = 1; c.restore();
+}
+// the shade's cut-off on a wall plane, as a 3D polygon (a hyperbola: lit below it)
+function coneOnZ(Zp) { const dz = Math.abs(Zp - LAMP.z), yA = LAMP.y - dz / CONE, L = [], Rr = [];
+  for (let i = 0; i <= 40; i++) { const y = lerp(-.3, yA, i / 40), r = CONE * (LAMP.y - y), hw = Math.sqrt(Math.max(0, r * r - dz * dz)); L.push([LAMP.x - hw, y, Zp]); Rr.push([LAMP.x + hw, y, Zp]); }
+  return L.concat(Rr.reverse()); }
+function coneOnX(Xp) { const dx = Math.abs(Xp - LAMP.x), yA = LAMP.y - dx / CONE, L = [], Rr = [];
+  for (let i = 0; i <= 40; i++) { const y = lerp(-.3, yA, i / 40), r = CONE * (LAMP.y - y), hw = Math.sqrt(Math.max(0, r * r - dx * dx)); L.push([Xp, y, Math.max(.75, LAMP.z - hw)]); Rr.push([Xp, y, LAMP.z + hw]); }
+  return L.concat(Rr.reverse()); }
+let DOORP;
 Pilot.run({ W, H, dur: DUR, fonts: Hopper.FONTS,
-  init: async () => { Hopper.init(); base = buildBase(); lit = buildLit(SUN); litW = buildLit(SUN_W); },
+  init: async () => {
+    Hopper.init();
+    base = Hopper.layer(x => { WINP = paintRoom(x, 'amb').poly; });
+    lit = Hopper.layer(x => paintRoom(x, 'lit')); litW = Hopper.layer(x => paintRoom(x, 'warm'));
+    DOORP = [BACK(DOOR.u0, DOOR.v0, -T), BACK(DOOR.u1, DOOR.v0, -T), BACK(DOOR.u1, DOOR.v1, -T), BACK(DOOR.u0, DOOR.v1, -T)];
+    out0 = Hopper.layer(x => paintBeyond(x, 'amb')); outL = Hopper.layer(x => paintBeyond(x, 'lit')); outW = Hopper.layer(x => paintBeyond(x, 'warm'));
+    tAmb = Hopper.layer(x => paintTable(x, 'amb')); tLit = Hopper.layer(x => paintTable(x, 'lit')); tWarm = Hopper.layer(x => paintTable(x, 'warm'));
+  },
   draw });
 </script>
 </body>

@@ -1,22 +1,23 @@
-/* script.js — THE STORY of one film: beats (seconds), on-screen lines, end card. Placeholder text: replace all of it.
-   Lines: [from, to, '한 줄\n두 줄', '출처 (개역개정)'?] — ≤ 2 lines, ≥ 3.5 s each (4.5 s for two lines); scripture verbatim
-   from 개역개정 with its source line. Portrait: no words in the bottom 380 px or right 140 px. */
+/* script-hopper.js — scene 3 「초대」 (door-hopper): the story's beats (seconds), on-screen lines.
+   Lines: [from, to, '한 줄'] — portrait: words in the upper third (y 400), never in the bottom 380 px or right 140 px. */
 window.SCRIPT = {
-  DUR: 30,
+  DUR: 14,
   beat: {
-    hookIn: 0.0,   // fade in: a quiet room, the first light appears on the floor
-    rise: 3.5,     // the light starts to travel across the floor
-    reach: 14.0,   // THE moment: the light reaches the one subject (a burst, the accent appears)
-    settle: 19.5,  // stillness; the light warms
-    end: 25.8,     // end card
+    still: 0.0,     // fade in: the hall at dusk, the lamp over the side table, the red dish waiting, 나 by the door
+    bell: 5.0,      // 딩동
+    reach: 5.7,     // 나's hand goes to the lever
+    press: 6.75,    // the lever goes down (latch)
+    push: 6.92,     // a short push outward…
+    release: 7.32,  // …let go: the door swings open on its own (stiff creak), the lamp light sweeps over the guests
+    colour: 7.6,    // colour arrives: the dish's red comes up
+    warm: 8.6,      // the bulb warms
+    welcome: 9.0,   // 「어서 와!」
+    out: 13.4,      // fade to black (scene 4 opens on warm light over the table)
   },
   lines: [
-    [0.6, 4.2, '아직 아무 일도 없는 방'],
-    [4.6, 9.2, '빛은 조금씩\n자리를 옮긴다'],
-    [9.6, 13.6, '아무도 보지 않는 동안에도'],
-    [14.4, 19.0, '그리고 마침내\n그 사람에게 닿는다'],
-    [19.6, 25.4, '여기에 본문 한 구절', '책 장:절 (개역개정)'],
+    [0.8, 4.6, '저녁 일곱 시'],
+    [9.0, 13.2, '어서 와!'],
   ],
-  endCard: { title: '설교 제목\n두 줄까지', passage: '본문 장:절', by: '설교자 · 교회', cta: '전체 설교는 채널에서' },
-  accent: '#9c1a1a',
+  small: [[5.0, 7.0, '딩동']],
+  accent: '#c8402a',   // 쭈꾸미 red — the one saturated colour
 };

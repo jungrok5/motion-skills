@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>쭈꾸미 한 접시 · 초대</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500&family=Noto+Serif+KR:wght@600;700&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script-shadowstage.js"></script>
+<script src="kit-shadowstage.js"></script>
+<script>
+/* 쭈꾸미 한 접시 — scene 3 「초대」 in the paper shadow-theatre kit (kits/shadowstage/STYLE.md).
+   The curtains part on our house at dusk; the sky goes dusk → night while the lamp and the windows light one by one
+   (in the kitchen window the red dish already waits on the table — the film's one red); the two friends walk in from
+   the left (B carries the gift box) and stop by the door; the door swings open, a wedge of warm light falls on them,
+   the host stands in the doorway and waves; hold on the warm open door. */
+const S = window.SCRIPT, B = S.beat, { clamp, lerp, ss, eo, eio } = Pilot;
+const K = ShadowStage, C = K.C, RED = '#d9432b';
+const G = 1420;                                                    // the ground line everything stands on
+const HOUSE = { x: 380, gy: G, w: 520, wallH: 330, roofH: 250, over: 32, seed: 41,
+  chimney: { x: 370, w: 42, top: 560 }, door: { x: 34, w: 124, h: 262 }, lantern: { x: 172, y: 250 },
+  windows: [{ x: 200, y: 262, w: 152, h: 132 }, { x: 236, y: 448, w: 68, h: 68, shape: 'round' }, { x: 398, y: 262, w: 88, h: 132 }] };
+const GEO = K.houseGeo(HOUSE), D = GEO.door;
+const SA = 1.12, SB = 1.06, SH = 1.12;                             // guest A (cap, jacket), guest B (bob, coat), host
+const AX0 = -30, AX1 = 318, BX0 = -150, BX1 = 196;
+const STA = K.stopStride(AX1 - AX0, 120 * SA), STB = K.stopStride(BX1 - BX0, 120 * SB);
+const HX = D.x + D.w * .6;                                         // the host stands in the doorway
+let LAND = null, NOW = 0;               // NOW: the frame's time, for the steam in the window hook
+
+function buildLand() {
+  LAND = {
+    town: K.townPath({ y: G - 78, seed: 6, scale: .95, hill: 24 }),
+    hills: K.hillPath({ y: G - 30, amp: 22, freq: .006, seed: 5 }),
+    trees: K.treesPath([[40, G - 26, 96, 28], [952, G - 24, 104, 30], [1010, G - 28, 70, 20]], 12),
+    fence: K.fencePath(908, 1060, G, 30),
+    ground: K.flatGround({ y: G, bottom: 1796, seed: 8 }),
+  };
+}
+
+// ---------------- timing helpers ----------------
+const openK = t => eio((t - B.open[0]) / (B.open[1] - B.open[0]));   // the door swing
+const winK = (t, i) => K.lightOn(t, B.win[i]);
+
+// ---------------- the three people ----------------
+function guestA(t) {
+  const tp = K.on2(t), w = K.walkAlong(tp, B.walkA[0], B.walkA[1], AX0, AX1, STA, .3);
+  let F = tp < B.walkA[1] ? K.walk(w.x, G, SA, 1, w.ph, STA) : K.closeStep(K.walk(AX1, G, SA, 1, (AX1 - AX0) / STA, STA), (tp - B.walkA[1]) / .45);
+  Object.assign(F, { head: 'cap', dress: 'jacket' });
+  if (tp >= B.walkA[1]) {
+    K.lookAt(F, [D.x + D.w / 2, D.y + 60], .3 * ss(B.open[0], B.open[0] + .5, tp));
+    const wk = ss(B.wave + .4, B.wave + .8, tp) * (1 - ss(B.wave + 1.8, B.wave + 2.3, tp));   // waves back
+    K.wave(F, 1, t, wk);
+  }
+  return F;
+}
+function guestB(t) {
+  const tp = K.on2(t), w = K.walkAlong(tp, B.walkB[0], B.walkB[1], BX0, BX1, STB, .3);
+  let F = tp < B.walkB[1] ? K.walk(w.x, G, SB, 1, w.ph, STB) : K.closeStep(K.walk(BX1, G, SB, 1, (BX1 - BX0) / STB, STB), (tp - B.walkB[1]) / .45);
+  Object.assign(F, { head: 'bob', dress: 'coat' });
+  const offer = ss(B.wave + .8, B.wave + 1.5, tp);                 // holds the gift out toward the door
+  K.holdBox(F, 40, 30, 26, offer);
+  F.box.ribbon = 'rgba(150,120,95,.85)';
+  if (tp >= B.walkB[1]) K.lookAt(F, [D.x + D.w / 2, D.y + 60], .25 * ss(B.open[0], B.open[0] + .5, tp));
+  return F;
+}
+function host(t) {
+  const tp = K.on2(t), F = Object.assign(K.stand(HX, G, SH, -1, { spread: 10 }), { head: 'short', dress: 'apron' });
+  const lw = D.w * Math.cos(openK(tp) * Math.PI * .46);
+  K.reach(F, 0, [D.x + lw + 4, G - 128 * SH]);                    // the far hand on the door's edge as it swings
+  const wv = ss(B.wave, B.wave + .35, tp) * (1 - ss(B.beckon, B.beckon + .4, tp));
+  K.wave(F, 1, t, wv);
+  if (tp >= B.beckon) K.beckon(F, 1, ss(B.beckon, B.beckon + .6, tp));
+  return K.lookAt(F, [AX1, G - 200], .2);
+}
+
+// ---------------- inside the windows (warm-brown silhouettes; the one red) ----------------
+function inWindow(ctx, i, w, k) {
+  ctx.fillStyle = C.prop;
+  if (i === 0) {                                                   // the kitchen: a pendant lamp over the table, the red dish
+    const cx = w.x + w.w * .5, ty = w.y + w.h * .74;
+    ctx.fillRect(cx - 1.5, w.y, 3, 26); ctx.beginPath(); ctx.moveTo(cx - 20, w.y + 42); ctx.lineTo(cx + 20, w.y + 42); ctx.lineTo(cx + 9, w.y + 24); ctx.lineTo(cx - 9, w.y + 24); ctx.fill();
+    K.halo(ctx, cx, w.y + 46, 46, [255, 240, 200], k * .9);
+    ctx.fillStyle = C.prop; ctx.fillRect(w.x + 14, ty, w.w - 28, 7); ctx.fillRect(w.x + 22, ty + 7, 6, 40); ctx.fillRect(w.x + w.w - 28, ty + 7, 6, 40);
+    ctx.fillStyle = '#f3dfb8'; ctx.beginPath(); ctx.ellipse(cx, ty - 2, 26, 6, 0, 0, Math.PI * 2); ctx.fill();   // the plate
+    ctx.fillStyle = RED; ctx.beginPath(); ctx.ellipse(cx, ty - 5, 17, 8, 0, Math.PI, 0); ctx.fill();           // 쭈꾸미볶음
+    ctx.strokeStyle = 'rgba(94,53,23,.55)'; ctx.lineWidth = 2; ctx.lineCap = 'round';                          // a little steam
+    for (let j = -1; j <= 1; j++) { ctx.beginPath(); for (let q = 0; q <= 8; q++) ctx.lineTo(cx + j * 9 + 3 * Math.sin(q * .9 + j + NOW * 2.2), ty - 16 - q * 3); ctx.stroke(); }
+  } else if (i === 2) {                                            // the side room: the spouse (hair tied back), turning to the door
+    const F = Object.assign(K.stand(w.x + w.w * .55, w.y + w.h + 70, .8, -1), { head: 'bun', dress: 'jacket' });
+    K.lookAt(F, [w.x - 200, w.y + 20], .25);
+    K.body(ctx, F, C.prop, C.prop);
+  }
+}
+
+// ---------------- the path to the door (stepping stones that catch the light) ----------------
+function stones(ctx, t) {
+  [[0, 34, 34, 8], [-8, 92, 42, 10], [10, 164, 50, 12], [-6, 252, 58, 14]].forEach(([dx, dy, rx, ry], i) => {
+    const pts = K.jag(K.circlePts(D.x + D.w / 2 + dx, G + dy, rx, 16, ry), 1.2, 70 + i, 6);
+    ctx.fillStyle = '#1c1314'; ctx.fill(K.addPoly(new Path2D(), pts));
+  });
+}
+
+function draw(ctx, t) {
+  NOW = t;
+  K.begin(ctx);
+  const k = K.skyTrack(t, S.sky), pal = K.sky(ctx, k, { y1: G });
+  K.stars(ctx, ss(8.5, 12.5, t), t);
+  K.sun(ctx, 240, lerp(1160, 1440, eio(t / 8)), 48, pal, 1 - ss(6.5, 8.5, t));
+  K.moon(ctx, lerp(870, 850, eo((t - 6) / 9)), lerp(900, 590, eo((t - 6) / 9)), 44, pal, ss(7, 9.5, t));
+  K.cloud(ctx, 120, 700, 240, Pilot.mix(pal.mid, pal.far, .3), 5);
+  K.layer(ctx, LAND.town, pal.far, { liftA: .12 });
+  K.layer(ctx, LAND.hills, pal.mid2, { liftA: .18 });
+  K.layer(ctx, LAND.trees, pal.mid2, { liftA: .18 });
+  ctx.fillStyle = Pilot.rgb(Pilot.mix(pal.mid2, [10, 8, 10], .45)); ctx.fill(LAND.fence);
+  const lampOn = K.lightOn(t, B.lamp), wins = [winK(t, 0), winK(t, 1), winK(t, 2)], op = openK(t);
+  K.lamp(ctx, 110, G, 300, lampOn);
+  K.house(ctx, HOUSE, { win: wins, door: op, lantern: K.lightOn(t, B.lantern), doorWin: wins[0] },
+    { window: inWindow, door: (c, d) => K.person(c, host(t)) });
+  K.smoke(ctx, ...GEO.chimney.mouth, t, { col: Pilot.rgb(Pilot.mix(pal.mid2, [20, 12, 16], .4), .8) });
+  K.layer(ctx, LAND.ground, C.ground, { liftA: 0 });
+  stones(ctx, t);
+  K.groundPool(ctx, 110, G, 230, 70, lampOn);
+  K.groundPool(ctx, GEO.windows[0].x + 76, G, 260, 60, wins[0] * .55);
+  // the door's light on the ground, the three shadows cut out of it
+  const A = guestA(t), Bg = guestB(t), lc = K.lightBegin(), L = K.doorLight(lc, D, op, { len: 420, pool: [430, 170] });
+  if (op > 0) { K.castShadow(lc, A, L, { len: .95 }); K.castShadow(lc, Bg, L, { len: .95 }); K.castShadow(lc, host(t), L, { len: .42, a: .6 }); }
+  K.lightEnd(ctx);
+  const rim = { x: D.x + D.w / 2, y: G - 130, a: op, reach: 460 };
+  K.person(ctx, Bg, { rim });
+  K.person(ctx, A, { rim });
+  K.apron(ctx, 1790);
+  K.captions(ctx, t, S.lines, { from: B.plaque });
+  K.curtains(ctx, K.curtainOpen(t, B.part[0], B.part[1] - B.part[0]));
+  K.post(ctx);
+  K.fade(ctx, t, S.DUR, .5, .5);
+}
+
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: K.FONTS, init: async () => { K.init(); buildLand(); }, draw });
+</script>
+</body>
+</html>

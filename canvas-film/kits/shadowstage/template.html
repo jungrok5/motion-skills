@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>그림자 극장 · 템플릿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500&family=Noto+Serif+KR:wght@600;700&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-shadowstage.js"></script>
+<script>
+/* A new scene in the paper shadow-theatre house style (kits/shadowstage/STYLE.md). The kit draws the theatre, the sky,
+   the cut-out land, the house, the figures and the plaque; this file draws the story. DEMO STORY (replace with your
+   film's one image): the curtains part on a cottage at dusk; a figure in a hat walks in, kneels and plants a seed; dusk
+   turns to night while the lamp and the windows light one by one; a sprout rises and opens one red flower (the accent);
+   the figure stands and looks at it; the curtains close on the end card. Beats come from script.js (SCRIPT.beat).
+   Keep: init → K.init + build the land once;  draw → begin, sky, sun/moon/stars, far → mid layers, house, ground,
+   light, figures, plaque (captions), curtains, post, end card, fade. */
+const S = window.SCRIPT, B = S.beat, { clamp, lerp, ss, eo, eio } = Pilot;
+const K = ShadowStage, C = K.C;
+const G = 1410;                               // the ground line: the house and the figure stand on it
+const HOUSE = { x: 556, gy: G, w: 370, wallH: 300, roofH: 215, over: 28, seed: 31,
+  chimney: { x: 268, w: 40, top: 488 }, door: { x: 34, w: 104, h: 242 },
+  windows: [{ x: 180, y: 236, w: 140, h: 124 }, { x: 155, y: 400, w: 60, h: 60, shape: 'round' }], lantern: { x: 156, y: 230 } };
+const SME = 1.1, X0 = 30, KX = 392;           // the figure: scale, start x, where it kneels (hip x)
+const STRIDE = K.stopStride(KX - X0, 118 * SME);
+const SX = KX + 66 * SME, SH = 150;           // the seed spot (in reach of the kneeling near hand), the sprout's height
+let LAND = null;
+
+function buildLand() {
+  LAND = {
+    town: K.townPath({ y: G - 70, seed: 4, scale: .9, hill: 26 }),
+    hills: K.hillPath({ y: G - 34, amp: 26, freq: .005, seed: 3 }),
+    trees: K.treesPath([[60, G - 30, 92, 26], [128, G - 24, 70, 20], [980, G - 26, 86, 24], [1040, G - 30, 64, 18]], 8),
+    fence: K.fencePath(930, 1060, G, 30),
+    ground: K.flatGround({ y: G, bottom: 1796 }),
+  };
+}
+
+// ---------------- the figure ----------------
+function pose(t) {
+  const tp = K.on2(t);                                                        // cut-outs move on twos
+  const w = K.walkAlong(tp, 0, B.walk[1], X0, KX, STRIDE, .3);
+  let F = K.walk(w.x, G, SME, 1, w.ph, STRIDE);
+  F.head = 'hat'; F.dress = 'coat';
+  if (tp < B.walk[1]) return F;
+  F = Object.assign(K.fromWalk(K.walk(KX, G, SME, 1, (KX - X0) / STRIDE, STRIDE)), { head: 'hat', dress: 'coat' });
+  const DOWN = Object.assign(K.kneel(KX, G, SME, 1, .8), { head: 'hat', dress: 'coat' });
+  const UP = Object.assign(K.kneel(KX, G, SME, 1, .28), { head: 'hat', dress: 'coat' });
+  const STAND = Object.assign(K.stand(KX, G, SME, 1), { head: 'hat', dress: 'coat' });
+  if (tp < B.plant + 1.2) {                               // kneel down, bent over the spot
+    F = K.mix(F, DOWN, eio((tp - B.walk[1]) / (B.kneel + .3 - B.walk[1])));
+    const reach = eio((tp - B.kneel) / 1.1), pat = tp > B.plant ? Math.max(0, Math.sin((tp - B.plant) * 11)) * (1 - ss(B.plant + .7, B.plant + 1.1, tp)) : 0;
+    const sh = K.shoulder(F, 1);
+    if (reach > 0) K.reach(F, 1, [lerp(sh[0] + 10, SX - 4, reach), lerp(sh[1] + 60, G - 12, reach) - 12 * pat]);
+    return K.lookAt(F, [SX, G], .5);
+  }
+  if (tp < B.rise) {                                                          // straighten up, wait, watch the spot / sprout
+    F = K.mix(DOWN, UP, eio((tp - B.plant - 1.2) / .8));
+    return K.lookAt(F, tp < B.sprout ? [SX, G] : sproutTip(t), .55);
+  }
+  F = K.mix(UP, STAND, eio((tp - B.rise) / .9));                              // stand and look at it
+  return K.lookAt(F, sproutTip(t), .45);
+}
+
+// ---------------- the seed and the sprout (the one accent) ----------------
+const grow = t => ss(B.sprout, B.sprout + 2.6, t);
+const bloom = t => eio((t - B.sprout - 1.9) / 1.4);
+const sproutTip = t => [SX + 6 * Math.sin(grow(t) * 3), G - 8 - SH * eo(grow(t))];
+function sprout(ctx, t) {
+  if (t >= B.kneel + .4 && t < B.plant) {                                     // the seed in the hand
+    const F = pose(t), hd = F.hands[1];
+    ctx.fillStyle = K.ACCENT; ctx.beginPath(); ctx.ellipse(hd[0] + 6, hd[1] + 2, 5, 3.6, .4, 0, Math.PI * 2); ctx.fill();
+  }
+  if (t >= B.plant) {                                                         // the little mound of soil
+    ctx.fillStyle = C.ink; ctx.beginPath(); ctx.ellipse(SX, G + 2, 26, 9 * ss(B.plant, B.plant + .3, t), 0, Math.PI, 0); ctx.fill();
+  }
+  const g = grow(t); if (g <= 0) return;
+  const sw = .06 * Math.sin(t * 1.3) * g, tip = sproutTip(t), h = G - 8 - tip[1], pts = [];
+  for (let i = 0; i <= 12; i++) { const u = i / 12; pts.push([SX + Math.sin(u * 2.2) * 8 * g + sw * h * u * u, G - 6 - h * u]); }
+  ctx.strokeStyle = C.ink; ctx.lineCap = 'round'; ctx.lineWidth = 6; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke();
+  ctx.fillStyle = C.ink;
+  [[.42, -1, B.sprout + .8], [.62, 1, B.sprout + 1.3]].forEach(([u, side, at]) => {   // two leaves unfold
+    const k = eio((t - at) / .7); if (k <= 0) return; const p = pts[Math.round(u * 12)];
+    ctx.save(); ctx.translate(p[0], p[1]); ctx.rotate(side * (1.25 - .55 * k)); ctx.beginPath(); ctx.ellipse(0, -26 * k, 10 * k, 26 * k, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  });
+  const b = bloom(t), top = pts[12];
+  ctx.save(); ctx.translate(top[0], top[1]);
+  if (b <= 0) { ctx.beginPath(); ctx.ellipse(0, -8, 7, 11, 0, 0, Math.PI * 2); ctx.fill(); }  // the closed bud
+  else {
+    ctx.fillStyle = K.ACCENT;                                                 // five cut-paper petals open
+    for (let i = 0; i < 5; i++) { ctx.save(); ctx.rotate(-Math.PI / 2 + (i - 2) * .55 * b); ctx.beginPath(); ctx.ellipse(0, -16 * (.6 + .4 * b), 9, 18 * (.6 + .4 * b), 0, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+    ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(0, -4, 7, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function draw(ctx, t) {
+  K.begin(ctx);
+  // the sky: dusk → night across the wait
+  const k = K.skyTrack(t, [[2, 0], [8.5, 1], [11, 2], [13.5, 3]]), pal = K.sky(ctx, k, { y1: G });
+  K.stars(ctx, ss(10.5, 14.5, t), t);
+  K.sun(ctx, 250, lerp(1180, 1420, eio(t / 10)), 46, pal, 1 - ss(8, 10, t));
+  K.moon(ctx, lerp(830, 790, eo((t - 9) / 7)), lerp(980, 640, eo((t - 9) / 7)), 44, pal, ss(9, 11, t));
+  K.cloud(ctx, 640, 760, 260, Pilot.mix(pal.mid, pal.far, .35), 3);
+  // the cut-out land, far to near
+  K.layer(ctx, LAND.town, pal.far, { liftA: .12 });
+  K.layer(ctx, LAND.hills, pal.mid2, { liftA: .18 });
+  K.layer(ctx, LAND.trees, pal.mid2, { liftA: .18 });
+  ctx.fillStyle = Pilot.rgb(Pilot.mix(pal.mid2, [10, 8, 10], .45)); ctx.fill(LAND.fence);
+  const lampOn = K.lightOn(t, 8.6), wins = [K.lightOn(t, 9.4), K.lightOn(t, 10.4)];
+  K.lamp(ctx, 150, G, 290, lampOn);
+  const geo = K.house(ctx, HOUSE, { win: wins, lantern: K.lightOn(t, 11.2), doorWin: wins[0] });
+  K.smoke(ctx, ...geo.chimney.mouth, t, { col: Pilot.rgb(Pilot.mix(pal.mid2, [20, 12, 16], .4), .8) });
+  K.layer(ctx, LAND.ground, C.ground, { liftA: 0 });
+  K.groundPool(ctx, 150, G, 220, 70, lampOn);
+  K.groundPool(ctx, geo.windows[0].x + 70, G, 240, 60, wins[0] * .6);
+  // the figure and the sprout
+  sprout(ctx, t);
+  K.person(ctx, pose(t), { rim: { x: 150, y: G - 290, a: lampOn * .8, reach: 420 } });
+  K.apron(ctx, 1790);
+  // the plaque, the proscenium, paper, words
+  K.captions(ctx, t, S.lines, { from: .1, to: B.end - 1.2 });
+  K.curtains(ctx, K.curtainOpen(t, -.9, 2.3, B.end - 1.0, 1.0));
+  K.post(ctx);
+  K.endCard(ctx, t, S.endCard, B.end);
+  K.fade(ctx, t, S.DUR, 0, .6);
+}
+
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: K.FONTS, init: async () => { K.init(); buildLand(); }, draw });
+</script>
+</body>
+</html>
