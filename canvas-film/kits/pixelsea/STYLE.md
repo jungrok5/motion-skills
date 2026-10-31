@@ -69,9 +69,11 @@ it opens in 3 steps, types the text at 22 chars/s, snaps shut — no fades. Coun
   `seabed(c, t, P, y, { weed, rocks })`; `puff(c, t, x, y, at, col)`; `cliff(c, P, x0, x1, top, { edge, drop })`.
 - **boat** — `BOAT`, `boat(c, x, y, len, { f, depth, sheer, cabin: { u, w, h }, col })` → `{ stern, bow, deckY, at(u) }`.
 - **figure rig** — `BODY(h)`, `ik(a, t, l1, l2, pick)` (2-bone, fixed lengths), `joints(F)`, poses `stand walk kneel sit
-  brace mix hangHands`, `PERSON` palette, `figure(c, F, pal, { mid, front })` (hands drawn AT `F.hands`),
+  brace mix hangHands`, `PERSON` palette (`hatStyle` bucket/cap/none, `hairStyle` short/tied — a low bun at the nape, `tie`),
+  `figure(c, F, pal, { mid, front })` (hands drawn AT `F.hands`),
   `polePts(butt, ang, len, bend)` / `pole(…)` (a rod/oar; put the hands at `at(u)`).
-- **portrait insert** — `portrait(c, cx, cy, u, { pal, f, mouth 'calm'|'o'|'grin'|'set', brows, look, blink, sweat, hatStyle })`.
+- **portrait insert** — `portrait(c, cx, cy, u, { pal, f, mouth 'calm'|'o'|'grin'|'set', brows, look, blink, sweat, hatStyle,
+  lashes, jaw })`; `pal.hairStyle: 'tied'` gives pulled-back hair with a low bun and a side-swept fringe.
 - **words/UI** — `pixelText(ctx, s, x, y, { size, tpx, color, shadow, align })`, `measure`, `text` (via `Pilot.tr`),
   `bitText(ctx, s, x, y, { px, bold, color, lo, outline, shadow, align })`, `GLYPHS`, `box(ctx, x, y, w, h)`, `tag(ctx, s, x, y)`,
   `captions(ctx, t, lines, o)` / `caption(…)`, `impact(ctx, t, 'HIT!', cx, y, at, { until, px })`,
@@ -133,6 +135,6 @@ per string. Stills ~1 s each.
 - Portrait-first: landscape renders pillarboxed, not recomposed.
 
 ## What a scene author still draws
-The subject in pixels (here: the 쭈꾸미, the 에기 lure, the sinker, the bucket — `scenes/sea-pixelsea-props.js`), each
+The subject in pixels (here: the 쭈꾸미, the 에기 lure, the sinker, the bucket, the fisher 명현's palette — `scenes/sea-pixelsea-props.js`), each
 set-up's numbers (scale, horizon row, sun, islands, where the boat and figure stand), the poses and the rod/line
 choreography on 10 fps, which shot is on screen when, the captions and tags (`script.js`), and the one accent thing.

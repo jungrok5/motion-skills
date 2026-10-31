@@ -77,9 +77,10 @@ function myeonghyeon(t) {                                          // 명현: ho
   K.armTo(F, 1, lerp(up, 1.35, eio((tp - B.beckon) / .7)));
   return K.lookAt(F, [AX1, G - 200], .2);
 }
-function gyeongchan(t) {                                           // 경찬: behind her, a hand up over her shoulder
+function gyeongchan(t) {                                           // 경찬: a step behind her, his hand on her shoulder
   const tp = K.on2(t), F = Object.assign(K.stand(KX, G, SK, -1, { spread: 8 }), { head: 'short', dress: 'jacket' });
-  K.wave(F, 1, t + .4, ss(B.wave + .3, B.wave + .8, tp) * (1 - ss(B.beckon + .4, B.beckon + 1, tp)) * .9);
+  const sh = K.shoulder(myeonghyeon(t), 0), k = eio((tp - B.wave - .2) / .6);
+  if (k > 0) { const me = K.shoulder(F, 1); K.reach(F, 1, [lerp(me[0] + 4 * SK, sh[0] + 6, k), lerp(me[1] + 70 * SK, sh[1] - 4, k)]); }
   return K.lookAt(F, [AX1, G - 200], .15);
 }
 const hosts = t => [gyeongchan(t), myeonghyeon(t)];                 // back to front
