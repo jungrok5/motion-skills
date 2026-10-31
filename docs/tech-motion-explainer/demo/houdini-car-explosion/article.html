@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Houdini로 만드는 자동차 폭파 이펙트 — 설명</title>
+<meta name="description" content="책상 위 네트워크 · 뷰포트 · 파라미터 · 타임라인 화면을 불씨 캐릭터가 옮겨 다니며, 모델 준비 → 파괴 → RBD → Pyro → 파편 · 불티 → 렌더 6단계로 자동차 폭파 이펙트를 만드는 과정을 보여 준다. 화면은 설명용 재구성.">
+<style>
+  /* Reading page: one 720px column, light and dark. */
+  @font-face { font-family: Pretendard; src: url(../assets/fonts/Pretendard-Variable.woff2) format("woff2"), url(assets/fonts/Pretendard-Variable.woff2) format("woff2"); font-weight: 100 900; }
+  @font-face { font-family: "JetBrains Mono"; src: url(../assets/fonts/JetBrainsMono.woff2) format("woff2"), url(assets/fonts/JetBrainsMono.woff2) format("woff2"); font-weight: 100 800; }
+  :root {
+    --bg: #fbfbfd; --surface: #f1f2f7; --line: #dde0ea; --fg: #141826; --text2: #39405a; --dim: #6b7290; --accent: #6d4fd8;
+    --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #070a13; --surface: #0e1424; --line: #24304a; --fg: #e8ecf4; --text2: #c3cad8; --dim: #8b95a7; --accent: #a78bfa; color-scheme: dark; } }
+  :root[data-theme="dark"] { --bg: #070a13; --surface: #0e1424; --line: #24304a; --fg: #e8ecf4; --text2: #c3cad8; --dim: #8b95a7; --accent: #a78bfa; color-scheme: dark; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 17px; line-height: 1.8;
+    word-break: keep-all; overflow-wrap: anywhere;
+    padding-block: 48px 72px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  main { max-width: 720px; margin: 0 auto; }
+  a { color: var(--accent); }
+  .eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .18em; color: var(--dim); text-transform: uppercase; }
+  h1 { font-size: clamp(30px, 6vw, 42px); line-height: 1.25; letter-spacing: -.02em; margin: 12px 0 16px; text-wrap: balance; }
+  h2 { font-size: 24px; line-height: 1.4; margin: 56px 0 4px; text-wrap: balance; display: flex; gap: 12px; align-items: baseline; }
+  h2 .n { font: 600 15px/1 var(--mono); color: var(--accent); flex: none; }
+  .sub { color: var(--dim); margin: 0 0 16px; font-size: 16px; }
+  p, li { color: var(--text2); }
+  .lede { font-size: 19px; color: var(--fg); }
+  nav.tabs { display: flex; gap: 6px; margin: 0 0 28px; border-bottom: 1px solid var(--line); }
+  nav.tabs a { font: 700 15px/1 var(--sans); color: var(--dim); text-decoration: none; padding: 12px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  nav.tabs a:hover { color: var(--fg); }
+  nav.tabs a[aria-current="page"] { color: var(--fg); border-bottom-color: var(--accent); }
+  .next { margin-top: 48px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0 8px; }
+  .actions a { font: 600 14px/1 var(--sans); text-decoration: none; color: var(--fg); border: 1px solid var(--line); border-radius: 999px; padding: 10px 14px; background: var(--surface); }
+  .actions a:hover { border-color: var(--accent); }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; font: 500 12px/1 var(--mono); color: var(--dim); }
+  .tags span { border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; }
+  nav.toc { border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; margin: 32px 0 0; background: var(--surface); }
+  nav.toc ol { margin: 0; padding-left: 1.4em; } nav.toc li { color: var(--fg); }
+  nav.toc a { color: inherit; text-decoration: none; } nav.toc a:hover { color: var(--accent); }
+  .scene { font: 600 13px/1 var(--sans); }
+  code { font: 500 .88em var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+  dl.terms { display: grid; grid-template-columns: minmax(120px, max-content) minmax(0, 1fr); gap: 14px 28px; margin: 16px 0 0; }
+  dt { font-weight: 700; color: var(--fg); } dd { margin: 0; color: var(--text2); }
+  dd .src { display: block; font-size: 13px; color: var(--dim); }
+  @media (max-width: 600px) { dl.terms { grid-template-columns: minmax(0, 1fr); gap: 2px; } dd { margin-bottom: 16px; } }
+  input[type=search] { width: 100%; box-sizing: border-box; font: 500 16px var(--sans); color: var(--fg); background: var(--surface);
+    border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 16px 0 8px; }
+  footer { margin-top: 64px; font-size: 14px; color: var(--dim); }
+</style>
+</head>
+<body>
+<main>
+<nav class="tabs" aria-label="같은 주제"><a href="index.html">영상</a><a href="article.html" aria-current="page">설명</a><a href="terms.html">용어집</a></nav>
+<span class="eyebrow">1:04 · Houdini · VFX · RBD · Pyro · three.js</span>
+<h1>Houdini로 만드는 자동차 폭파 이펙트</h1>
+<p class="lede">Houdini로 자동차 폭파 장면의 이펙트를 만드는 과정을 6단계로 보여 주는 설명 영상입니다. 책상 위에 놓인 네트워크 · 뷰포트 · 파라미터 · 타임라인 화면을 작은 불씨 캐릭터가 옮겨 다니며 노드를 누르고, 가운데 뷰포트에서는 같은 자동차가 단계마다 모델 → 조각 → 리지드 바디 → 불과 연기 → 파편과 불티 → 렌더로 바뀝니다. 화면은 설명용으로 다시 그린 것이고, 노드 이름 외의 값은 예시입니다.</p>
+<nav class="toc" aria-label="목차"><ol><li><a href="#ch01">모델 준비</a></li><li><a href="#ch02">파괴 준비</a></li><li><a href="#ch03">리지드 바디</a></li><li><a href="#ch04">불과 연기</a></li><li><a href="#ch05">파편과 불티</a></li><li><a href="#ch06">렌더와 합성</a></li></ol></nav>
+<section id="ch01">
+<h2><span class="n">01</span>모델 준비</h2>
+<p class="sub">파트별 name 속성 · 충돌용 프록시 · <a class="scene" href="index.html#ch01">▶ 이 장면 보기</a></p>
+<p>자동차 모델을 불러와 문 · 후드 · 지붕 · 범퍼 · 바퀴 · 유리처럼 따로 날아갈 단위로 나누고, 각 파트에 <code>name</code> 속성을 붙입니다. 뷰포트의 색은 name별 색입니다. 시뮬레이션의 충돌 계산은 렌더용 모델 대신 단순한 프록시(볼록 껍질 등)로 하면 빠르고 안정적입니다.</p>
+</section>
+<section id="ch02">
+<h2><span class="n">02</span>파괴 준비</h2>
+<p class="sub">유리는 조각내고, 패널은 접착 제약으로 연결 · <a class="scene" href="index.html#ch02">▶ 이 장면 보기</a></p>
+<p>유리는 <code>RBD Material Fracture</code>의 Glass 타입으로 조각냅니다. 금속 패널은 잘게 부수지 않고 통째로 두되, <code>RBD Constraints From Rules</code>로 이웃 파트 사이에 제약 연결선을 만들고 <code>RBD Constraint Properties</code>로 접착(glue) 타입과 세기를 줍니다. 뷰포트의 무작위 색은 조각 하나하나를 구분해 보여 주는 색이고, 잠깐 벌려 보여 준 것은 잘린 면을 확인하기 위해서입니다.</p>
+</section>
+<section id="ch03">
+<h2><span class="n">03</span>리지드 바디</h2>
+<p class="sub">폭발 반경 접착을 풀고 바깥으로 속도 · <a class="scene" href="index.html#ch03">▶ 이 장면 보기</a></p>
+<p><code>RBD Bullet Solver</code>로 시뮬레이션합니다. 폭발 순간 폭발 반경 안의 접착을 풀거나 세기를 낮추고 중심에서 바깥으로 속도(v)를 줍니다. 서로 붙은 조각에 속도만 주면 덩어리째 날아가기 쉬우므로 이 처리가 필요합니다. 나머지 접착은 충돌 충격이 세기를 넘으면 끊기고, 패널과 유리 조각이 날아갔다가 중력과 지면 충돌로 떨어져 튑니다. 무거운 차체는 조금 들렸다 내려앉습니다. 타임라인의 RBD 막대는 시뮬레이션 결과를 캐시로 저장하는 진행을 뜻합니다.</p>
+</section>
+<section id="ch04">
+<h2><span class="n">04</span>불과 연기</h2>
+<p class="sub">Burst Source → 래스터화 → Pyro Solver · <a class="scene" href="index.html#ch04">▶ 이 장면 보기</a></p>
+<p>불과 연기는 Pyro로 만듭니다. <code>Pyro Burst Source</code>로 폭발 모양의 소스 점(밀도 · 온도 · 불꽃 · 속도 속성)을 만들고, <code>Volume Rasterize Attributes</code>로 볼륨으로 바꾼 뒤 <code>Pyro Solver</code>에 소스로 넣어 풉니다. 온도가 높은 곳은 흰색 · 노란색, 식으면서 주황 · 빨강을 거쳐 연기로 바뀝니다. 복셀 크기가 작을수록 디테일이 늘지만 계산 시간과 용량이 크게 늘어납니다. Disturbance · Turbulence 같은 값으로 불의 결을 만듭니다(영상의 값은 예시).</p>
+</section>
+<section id="ch05">
+<h2><span class="n">05</span>파편과 불티</h2>
+<p class="sub">RBD 결과 → Debris Source → POP · <a class="scene" href="index.html#ch05">▶ 이 장면 보기</a></p>
+<p><code>Debris Source</code>로 RBD 시뮬레이션 결과에서 조각이 벌어지는 면을 따라 작은 파편이 떨어질 점을 만들고, POP으로 파편과 불티를 날립니다. Pyro 쪽에서는 속도장만 POP으로 넘겨, <code>POP Advect by Volumes</code>로 불티가 불길과 같은 흐름으로 움직이게 합니다. 중력은 같게 두고, 파편은 Advect 영향을 작게 · 불티는 크게 하고 drag와 수명을 달리해 불티가 오래 떠다니게 합니다.</p>
+</section>
+<section id="ch06">
+<h2><span class="n">06</span>렌더와 합성</h2>
+<p class="sub">불빛 · 모션 블러 · 패스 분리 · <a class="scene" href="index.html#ch06">▶ 이 장면 보기</a></p>
+<p>Karma로 렌더합니다. 폭발 중심에 광원을 두고 세기를 불 밝기에 맞춰 바꾸면 불빛이 차와 바닥을 비춥니다. 빠르게 날아가는 조각과 불티가 자연스럽게 보이도록 모션 블러를 켜고, 불 · 연기 · 파편을 따로 렌더해(패스 분리) 합성에서 밝기와 색을 조정합니다.</p>
+</section>
+<p class="next">이 영상에 나온 용어는 <a href="terms.html">용어집</a>에 정리했다.</p>
+<footer><a href="../index.html">전체 영상 목록</a></footer>
+</main>
+</body>
+</html>
