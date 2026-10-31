@@ -56,21 +56,24 @@
   K.rgba = (c, a) => { const v = c[0] === '#' ? Pilot.hex(c) : c.match(/[\d.]+/g).slice(0, 3).map(Number); return `rgba(${v[0]},${v[1]},${v[2]},${a})`; };
 
   // ---------------- setup ----------------
-  let grain = null, vig = null;
-  // init({ accent?, grainSeed = 11 }): builds the paper grain (half-res, ~40 ms) and the vignette. Call once from
-  // Pilot.run({ init }). Everything else is stateless.
+  let post = null; const ROOMS = new Map();
+  // init({ accent?, grainSeed = 11 }): builds the post layer once (paper grain × soft plum vignette, full-res, ~80 ms)
+  // — finish() lays it over each frame in one unscaled multiply. Call once from Pilot.run({ init}). Everything else is
+  // stateless (room() caches its static wall/floor per option set).
   K.init = function (o = {}) {
     if (o.accent) K.ACCENT = o.accent;
-    const w = 540, h = 960; grain = canvas(w, h);
+    const w = 540, h = 960, grain = canvas(w, h);
     const x = grain.getContext('2d'), d = x.createImageData(w, h), r = rng(o.grainSeed ?? 11);
     for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {   // soft mottling + fine tooth, multiplied (white = no change)
       const m = fbm(i * .02, j * .02, 3), v = 255 - 9 * m - 7 * r() - (r() < .0015 ? 14 : 0);
       const p = (j * w + i) * 4; d.data[p] = v; d.data[p + 1] = v - 1; d.data[p + 2] = v - 2; d.data[p + 3] = 255;
     }
     x.putImageData(d, 0, 0);
-    vig = canvas(270, 480); const vx = vig.getContext('2d'), g = vx.createRadialGradient(135, 240, 60, 135, 240, 300);
+    post = canvas(K.W, K.H); const px = post.getContext('2d');
+    px.drawImage(grain, 0, 0, K.W, K.H);
+    const g = px.createRadialGradient(540, 960, 240, 540, 960, 1200);   // the vignette, baked in (multiplied: white = none)
     g.addColorStop(0, 'rgba(60,24,62,0)'); g.addColorStop(.55, 'rgba(60,24,62,.06)'); g.addColorStop(1, 'rgba(48,16,52,.55)');
-    vx.fillStyle = g; vx.fillRect(0, 0, 270, 480);
+    px.fillStyle = g; px.fillRect(0, 0, K.W, K.H);
   };
 
   // ---------------- timing ----------------
@@ -121,8 +124,14 @@
   // ---------------- the room ----------------
   // room(ctx, { dado = 1200, floor = 1640, horizon = 1000, panels = true, stripes = true }): the back wall (dusty pink,
   // faint wallpaper stripes, soft vertical shading darker toward both sides), the darker dado with panel mouldings and a
-  // rail, the skirting, and a pastel checker floor in one-point perspective toward (540, horizon).
+  // rail, the skirting, and a pastel checker floor in one-point perspective toward (540, horizon). Static: drawn once per
+  // option set into a cached canvas (120 px margin all round for push-ins) and blitted.
   K.room = function (ctx, o = {}) {
+    const key = JSON.stringify(o); let cv = ROOMS.get(key);
+    if (!cv) { cv = canvas(K.W + 240, K.H + 240); const c = cv.getContext('2d'); c.translate(120, 120); roomDraw(c, o); ROOMS.set(key, cv); }
+    ctx.drawImage(cv, -120, -120);
+  };
+  function roomDraw(ctx, o) {
     const C = K.C, dy = o.dado ?? 1200, fy = o.floor ?? 1640, H = K.H;
     let g = ctx.createLinearGradient(0, 0, 0, dy); g.addColorStop(0, C.wallLt); g.addColorStop(1, C.wall);
     ctx.fillStyle = g; ctx.fillRect(-60, -60, K.W + 120, dy + 60);
@@ -145,7 +154,7 @@
     // the wall/floor seam shadow
     g = ctx.createLinearGradient(0, fy, 0, fy + 40); g.addColorStop(0, 'rgba(50,20,50,.25)'); g.addColorStop(1, 'rgba(50,20,50,0)');
     ctx.fillStyle = g; ctx.fillRect(-60, fy, K.W + 120, 40);
-  };
+  }
   // floor(ctx, y0, y1, { horizon = 1000, tile = 96, depth = 9, step = .75, floorA, floorB }): checker tiles in one-point
   // perspective (rows in true depth steps from `depth` toward the camera by `step`, columns converging on x = 540).
   K.floor = function (ctx, y0, y1, o = {}) {
@@ -266,14 +275,23 @@
   // curtains(ctx, k, { top = 240, tieY = 1000, openTop = 205, openTie = 96, openBot = 150, bottom = 1960, folds = 16 }):
   // the two front velvet curtains. k = 0 closed (they meet at the centre) … 1 open and gathered at the gold tie-backs —
   // they always move symmetrically. Folds are flat bands of plum shades; a gold edge runs down each inner edge.
+  // At k = 1 the open curtains are cached (one strip, mirrored).
   K.curtains = function (ctx, k, o = {}) {
+    if (k >= 1) {   // open: static — one cached strip (the left curtain), drawn and mirrored
+      const key = 'c' + JSON.stringify(o); let cv = ROOMS.get(key);
+      if (!cv) { cv = canvas(360, K.H + 140); const c = cv.getContext('2d'); c.translate(60, 60); curtainDraw(c, 1, o, false); ROOMS.set(key, cv); }
+      ctx.drawImage(cv, -60, -60); ctx.save(); ctx.translate(K.W, 0); ctx.scale(-1, 1); ctx.drawImage(cv, -60, -60); ctx.restore(); return;
+    }
+    curtainDraw(ctx, k, o, true);
+  };
+  function curtainDraw(ctx, k, o, both) {
     const C = K.C, top = o.top ?? 240, ty = o.tieY ?? 1000, bot = o.bottom ?? K.H + 40, xo = -30;
     const xT = o.openTop ?? 205, xI = o.openTie ?? 96, xB = o.openBot ?? 150, n = o.folds ?? 16, e = clamp(k);
     const open = y => y < ty ? lerp(xI, xT, Math.pow((ty - y) / (ty - top), 1.7)) : lerp(xI, xB, Math.pow((y - ty) / (bot - ty), .75));
     const inner = y => lerp(CX + 6, open(y), e);
     const ys = []; for (let y = top; y < bot; y += 24) ys.push(y); ys.push(bot);
     const shades = [C.plumLt, K.tone(C.plum, .12), C.plum, K.tone(C.plum, -.12), C.plumDk, K.tone(C.plum, -.12), C.plum, K.tone(C.plum, .12)];
-    K.mirror(ctx, c => {
+    const one = c => {
       for (let j = 0; j < n; j++) {   // fold bands between outer edge and inner edge
         const f0 = j / n, f1 = (j + 1) / n, col = shades[(j * 3) % shades.length];
         c.beginPath();
@@ -300,8 +318,9 @@
         K.tassel(c, xi + 10, ty + 2, 1);
         c.restore();
       }
-    });
-  };
+    };
+    if (both) K.mirror(ctx, one); else one(ctx);
+  }
   // tassel(ctx, x, y, s = 1): a small gold tassel hanging from (x, y): knob, waist, fringe.
   K.tassel = function (ctx, x, y, s = 1) {
     const C = K.C;
@@ -312,8 +331,13 @@
   };
   // pelmet(ctx, { y = 250, swags = 9, dip = 36, medY = 175, shadow = true }): the valance across the top — a plum band
   // (the top 160 px stay plain), a scalloped lower edge with a gold braid and fringe, tassels where the swags meet, and a
-  // gold medallion at dead centre. It casts a soft shadow on what is below it.
+  // gold medallion at dead centre. It casts a soft shadow on what is below it. Static: cached per option set.
   K.pelmet = function (ctx, o = {}) {
+    const key = 'p' + JSON.stringify(o); let cv = ROOMS.get(key);
+    if (!cv) { cv = canvas(K.W + 120, 560); const c = cv.getContext('2d'); c.translate(60, 100); pelmetDraw(c, o); ROOMS.set(key, cv); }
+    ctx.drawImage(cv, -60, -100);
+  };
+  function pelmetDraw(ctx, o) {
     const C = K.C, y1 = o.y ?? 250, n = o.swags ?? 9, dip = o.dip ?? 36, x0 = -20, x1 = K.W + 20, sw = (x1 - x0) / n;
     if (o.shadow !== false) { const g = ctx.createLinearGradient(0, y1, 0, y1 + dip + 120); g.addColorStop(0, 'rgba(30,8,40,.4)'); g.addColorStop(1, 'rgba(30,8,40,0)');
       ctx.fillStyle = g; ctx.fillRect(-60, y1, K.W + 120, dip + 120); }
@@ -339,7 +363,7 @@
     ctx.fillStyle = C.gold; ctx.strokeStyle = C.goldDk; ctx.lineWidth = 1.2;   // a tiny crest: three points and a band
     ctx.beginPath(); ctx.moveTo(CX - 15, my + 7); ctx.lineTo(CX - 15, my - 6); ctx.lineTo(CX - 8, my); ctx.lineTo(CX, my - 11); ctx.lineTo(CX + 8, my); ctx.lineTo(CX + 15, my - 6); ctx.lineTo(CX + 15, my + 7); ctx.closePath(); ctx.fill(); ctx.stroke();
     for (const dx of [-15, 0, 15]) { ctx.beginPath(); ctx.arc(CX + dx, my + (dx ? -8 : -13), 2.4, 0, 7); ctx.fill(); }
-  };
+  }
 
   // ---------------- lamps ----------------
   // lamp(ctx, x, y, s = 1, on = 1): a table lamp standing on (x, y): round gold foot, a gold stem with two knobs, a pink
@@ -647,11 +671,10 @@
   K.cam = function (ctx, s = 1, x = CX, y = 960) { ctx.translate(x, y); ctx.scale(s, s); ctx.translate(-x, -y); };
   // push(t, a, b, from = 1, to = 1.08) → scale: a slow, straight, eased push between a and b (s).
   K.push = (t, a, b, from = 1, to = 1.08) => lerp(from, to, eio((t - a) / (b - a)));
-  // finish(ctx, { vignette = 1, grain = 1 }): paper grain (multiply) and the soft plum vignette over the picture.
-  // Draw the words after it.
-  K.finish = function (ctx, o = {}) {
-    if (grain && (o.grain ?? 1) > 0) { ctx.save(); ctx.globalAlpha = o.grain ?? 1; ctx.globalCompositeOperation = 'multiply'; ctx.drawImage(grain, 0, 0, K.W, K.H); ctx.restore(); }
-    if (vig && (o.vignette ?? 1) > 0) { ctx.save(); ctx.globalAlpha = o.vignette ?? 1; ctx.drawImage(vig, 0, 0, K.W, K.H); ctx.restore(); }
+  // finish(ctx, a = 1): paper grain and the soft plum vignette over the picture (one baked layer, multiplied, unscaled;
+  // a = its strength). Draw the words after it.
+  K.finish = function (ctx, a = 1) {
+    if (!post || a <= 0) return; ctx.save(); ctx.globalAlpha = a; ctx.globalCompositeOperation = 'multiply'; ctx.drawImage(post, 0, 0); ctx.restore();
   };
   // night(ctx, a = .5, color = '#c9b6d6'): evening in the room — a cool lavender multiplied over everything drawn so far
   // (draw lampGlow AFTER it, so the lamps warm the table back up). a = 0 is day.

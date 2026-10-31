@@ -195,7 +195,7 @@ function draw(ctx, t) {
   D.curtains(ctx, D.slide(t, B.open, 2.4), { top: 240, tieY: 1000 });
   D.pelmet(ctx, { y: 250 });
   ctx.restore();
-  D.finish(ctx, { vignette: 1 });
+  D.finish(ctx);
   ctx.save(); D.cam(ctx, ...CAM);
   D.captions(ctx, t, S.lines, { y: 470, hang: 262 });
   ctx.restore();

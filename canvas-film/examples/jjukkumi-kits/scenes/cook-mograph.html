@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>부엌 · 쭈꾸미 손질하고 요리</title>
+<title>부엌 · 경찬 · 명현 부부의 쭈꾸미볶음</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@500;700;900&display=swap">
 </head>
 <body>
@@ -14,90 +14,108 @@
 <script src="cook-mograph-art.js"></script>
 <script>
 /* 「쭈꾸미 한 접시」 scene 2 — cook-mograph (22 s, 120 BPM, 11 bars), the 「word-log 교실」 mograph kit.
-   The cook (나: short dark hair, navy top, mustard apron — CookArt's re-dress of the kit's code rig) stays at the centre-left
-   and keeps moving; the world swaps on bar lines and every step is labelled as it happens:
-   ① window grid: opens close on the bucket of red 쭈꾸미 (scene 1's last image), pulls back into the gold window, she tips
-     the bucket out onto the counter, 「손질 시작!」, then dives into the pile → ② manga: flour poured from the bag, both hands
-     rub, a close-up panel 박박! → ③ drafting sheet: drawn in blue line, pot cross-section boiling, the strainer dips, a
-     30-second dial sweeps, the octopus turns red → yellow floods up → ④ yellow: a measuring spoon drops into the bowl on
-     every beat, its amount pops and parks in a list, then the jamo of 양념 jump out of the bowl and snap together →
-     ⑤ navy stage: the wok on a high flame, tossed on every beat, the sauce coats it deep red, 「센 불에 휘리릭」 → a bubble
-     grows from her chest → ⑥ pink bubbles: the phone chat (typed, sent, photo, typing dots, the reply 「콜! 7시에 갈게」) →
-     ⑦ kaleidoscope of every world: the plate is set down, 「완성!」, fade to black.
-   Only the octopus and its sauce use the accent red (#e2452b). Hands that hold things are IK'd to the grip (Mograph.rig),
-   and every held prop is drawn from the same quantised time as the actor's frame (12 fps), so it never drifts off the hand. */
+   The cooks are the couple 경찬 · 명현: 명현 (dark hair in a low bun, navy top, the mustard apron — she caught the 쭈꾸미)
+   on the left facing right, 경찬 (short dark hair, green-grey top, cream apron) on the right facing left, the work between
+   them. Both are CookArt re-dresses of the kit's code rig (two actors, two pose tracks); the world swaps on bar lines and
+   every step is labelled as it happens:
+   ① window grid: close on the wooden tub of red 쭈꾸미 (scene 1's last image), pull back into the gold window, 「경찬 · 명현
+     부부의」「손질 시작!」, she tips the tub out on the counter, he cheers → dive into the pile → ② manga: he pours the flour, she
+     rubs while he holds the bowl, close-up 박박! → ③ drafting sheet: she dips the strainer, he times it — a 30-second dial →
+     yellow floods up → ④ yellow: he tips a measuring spoon into the bowl on every beat (the amount pops and parks), she
+     stirs, the jamo of 양념 jump out → ⑤ navy stage: she tosses the wok on a high flame on every beat, he pours the sauce in,
+     it coats the 쭈꾸미 deep red, 「센 불에 휘리릭」 → a bubble grows → ⑥ pink bubbles: 명현's phone, the chat to 「정록 · 세진」
+     (typed, sent, photo, typing dots, 「콜! 7시에 갈게」), 경찬 leans in → ⑦ kaleidoscope: they set the plate down together,
+     「완성!」, fade to black.
+   Only the octopus and its sauce use the accent red. Hands that hold things are IK'd to the grip (Mograph.rig), and every
+   held prop is drawn from the same quantised time as the actors' frames (12 fps), so it never drifts off the hand. */
 const S = window.SCRIPT, B = S.beat, MG = Mograph, A = CookArt, { clamp, lerp, ss, eo, eio, rng } = Pilot;
 const W = 1080, H = 1920, TAU = Math.PI * 2, FPS = 12;
 MG.tempo(S.BPM);
 const SC = MG.sceneTable(S.scenes, S.DUR), scAt = id => SC.find(s => s.id === id);
-const tq = t => Math.floor(t * FPS + 1e-6) / FPS;                                   // the actor's frame time
+const tq = t => Math.floor(t * FPS + 1e-6) / FPS;                                   // the actors' frame time
 const beatU = t => ((t % MG.BEAT) + MG.BEAT) % MG.BEAT / MG.BEAT;                  // 0..1 within the beat
 const tri = (t, at, len = .14) => Math.max(0, 1 - Math.abs(t - at) / len);
 const T = s => Pilot.tr(s);
 const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
-const toLocal = (p, q) => [(q[0] - p.x) / p.s, (p.y - q[1]) / p.s];
-const rotAbout = (q, c, a) => { const dx = q[0] - c[0], dy = q[1] - c[1], co = Math.cos(a), si = Math.sin(a); return [c[0] + dx * co - dy * si, c[1] + dx * si + dy * co]; };   // y-up CCW
+const rotAbout = (q, c, a) => { const dx = q[0] - c[0], dy = q[1] - c[1], co = Math.cos(a), si = Math.sin(a); return [c[0] + dx * co - dy * si, c[1] + dx * si + dy * co]; };
 const mixHex = (a, b, k) => Pilot.rgb(Pilot.mix(Pilot.hex(a), Pilot.hex(b), k));
+const L = A.L, toL = A.toLocal;
 
-// ---------------- where she stands in each world (anchor x, ground y, figure height) ----------------
+// ---------------- where they stand in each world: m = 명현 (faces right), k = 경찬 (faces left) ----------------
 const PL = {
-  counter: A.at(290, 1460, 700),   // grid coordinates (inside the hero window)
-  flour: A.at(330, 1150, 680),
-  blanch: A.at(290, 1600, 920),
-  season: A.at(270, 1640, 930),
-  wok: A.at(280, 1640, 940),
-  chat: A.at(250, 1850, 770),
-  done: A.at(280, 1660, 900),
+  counter: { m: A.at(200, 1440, 700), k: A.at(900, 1440, 730, -1) },   // grid coordinates (inside the wide hero window)
+  flour: { m: A.at(290, 1150, 640), k: A.at(800, 1150, 660, -1) },
+  blanch: { m: A.at(190, 1600, 860), k: A.at(990, 1600, 880, -1) },
+  season: { m: A.at(210, 1640, 880), k: A.at(880, 1640, 900, -1) },
+  wok: { m: A.at(190, 1640, 860), k: A.at(940, 1640, 880, -1) },
+  chat: { m: A.at(250, 1850, 760), k: A.at(700, 1850, 790, -1) },
+  done: { m: A.at(170, 1660, 860), k: A.at(910, 1660, 880, -1) },
 };
-const COUNTER_Y = 380;   // worktop height, local px
+const COUNTER_Y = 380;   // worktop height, 명현-local px
+const counterTop = id => L(PL[id].m, [0, COUNTER_Y])[1];
 
-// ---------------- props over time (local px) ----------------
-// ① bucket tip: rot 0 → .95 rad (pivot at its front-bottom corner) and back
+// ---------------- props over time (명현-local px unless noted) ----------------
+// ① the tub: rot 0 → .95 rad (pivot at its front-bottom corner) and back; the 쭈꾸미 that slide out
 const tipRot = t => .95 * eio(ss(B.tip, B.tip + .45, t)) * (1 - eio(ss(3.0, 3.4, t)));
-// the 쭈꾸미 that slide out: release time, landing spot
 const SPILL = [0, 1, 2, 3].map(i => ({ tr: B.tip + .2 + i * .07, land: [425 + i * 44, COUNTER_Y], seed: 11 + i, rot: [-.2, .15, -.1, .25][i] }));
-// ② flour: the bag's grip, then rubbing
+// ② flour: 경찬 pours (his local grip on the bag's bottom), then holds the bowl; 명현 rubs
 const FL_BOWL = [300, 470], FL_W = 260;
-const bagGrip = t => [196 + 5 * Math.sin(t * TAU * 2), 612 + 8 * Math.abs(Math.sin(t * TAU * 2))];   // the bag's bottom, mouth tipped down into the bowl
+const bagGripK = t => [205 + 5 * Math.sin(t * TAU * 2), 612 + 8 * Math.abs(Math.sin(t * TAU * 2))];
 const rubPh = t => Math.sin((t - B.rub) * TAU * 2);   // one stroke a beat
-// ③ blanch: the strainer basket's centre height
+// ③ blanch: the strainer basket's centre height; 경찬's kitchen timer (his local)
 const basketY = t => lerp(lerp(680, 540, eio(ss(6.0, B.dip, t))), 650, eio(ss(B.lift, B.lift + .35, t)));
-const BASKET_X = 470;
-// ④ seasoning bowl + the stirring spoon
+const BASKET_X = 415, POT_X0 = 290, POT_X1 = 540, TIMER_K = [185, 680];
+// ④ seasoning bowl, 명현's stirring spoon, 경찬's measuring spoon (screen px)
 const SE_BOWL = [300, 480], SE_W = 300;
 const stirGrip = t => { const a = (t - 8) * TAU * 1; return [282 + 30 * Math.cos(a), 578 + 10 * Math.sin(a)]; };
-// ⑤ wok: centre, tilt and grip under the toss (one toss a beat)
-const WOK_C = [470, 480], WOK_W = 360, WOK_D = 100, WOK_GRIP = [210, 522], WOK_GRIP_F = [254, 516];
+function mspoonState(t) {   // → { g (screen grip), tilt 0..1, kind, amt } — rest → over the bowl → tip on the beat → back
+  const p = PL.season, bc = L(p.m, SE_BOWL), OVER = [bc[0] + 150, bc[1] - 105], REST = L(p.k, [160, 590]), bt = S.season.map(r => r[0]);
+  let i = bt.findIndex((b, j) => t >= b && (j === bt.length - 1 || t < bt[j + 1])); if (t < bt[0]) i = -1;
+  const t0 = i < 0 ? bt[0] - .5 : bt[i], ph = clamp((t - t0) / .5), nxt = S.season[i + 1], cur = S.season[i];
+  if (i >= 0 && (ph < .25 || !nxt)) {   // tipped over the bowl (then home after the last one)
+    const home = nxt ? 0 : eio(ss(.25, .6, ph)), END = L(p.k, [130, 500]);   // after the last spoonful the spoon comes to rest on the rim
+    return { g: [lerp(OVER[0], END[0], home), lerp(OVER[1], END[1], home)], tilt: 1 - .8 * home, kind: cur[2], amt: 0 }; }
+  if (ph < .5 && i >= 0) { const v = eio((ph - .25) / .25); return { g: [lerp(OVER[0], REST[0], v), lerp(OVER[1], REST[1], v)], tilt: 1 - v, kind: cur[2], amt: 0 }; }
+  const v = eio(ss(.6, .9, ph)), fill = MG.popScale((ph - .5) * .5, .2)[0];
+  return { g: [lerp(REST[0], OVER[0], v), lerp(REST[1], OVER[1], v)], tilt: eio(ss(.9, 1, ph)), kind: nxt[2], amt: (nxt[3] > 1 ? 1.15 : 1) * Math.min(1, fill) * (1 - ss(.94, 1, ph)) };
+}
+// ⑤ wok (명현 tosses): centre, tilt and grip under the toss; 경찬's sauce bowl (screen px)
+const WOK_C = [420, 480], WOK_W = 280, WOK_D = 85, WOK_GRIP = [200, 522], WOK_GRIP_F = [244, 516];
 function wokState(t) {
   const u = beatU(t), b = Math.sin(Math.PI * clamp(u / .5)), ang = .2 * b, off = [-20 * b, 18 * b];
-  const C = [WOK_C[0] + off[0], WOK_C[1] + off[1]];
   const g = q => { const r = rotAbout(q, WOK_C, ang); return [r[0] + off[0], r[1] + off[1]]; };
-  return { C, ang, grip: g(WOK_GRIP), gripF: g(WOK_GRIP_F), b };
+  return { C: [WOK_C[0] + off[0], WOK_C[1] + off[1]], ang, grip: g(WOK_GRIP), gripF: g(WOK_GRIP_F), b };
 }
-// ⑥ phone in both hands
+const pourTilt = t => .95 * eio(ss(12.0, 12.3, t)) * (1 - eio(ss(13.3, 13.6, t)));
+function sauceBowl(t) {   // → { c (screen centre), rot (screen, CCW negative), near, far (screen grips) }
+  const p = PL.wok, up = L(p.k, [150, 600]), down = L(p.k, [120, 540]), k = ss(13.4, 13.8, t);
+  const c = [lerp(up[0], down[0], k), lerp(up[1], down[1], k) + 6 * MG.beatPulse(t) * k], rot = -pourTilt(t);
+  const g = q => rotAbout([c[0] + q[0], c[1] + q[1]], c, rot);
+  return { c, rot, near: g([62, 14]), far: g([30, 40]) };
+}
+// ⑥ phone in 명현's hands
 const PHONE = [236, 600];
 const tapDip = t => (t > 16.05 && t < 17.5) ? 7 * Math.max(0, Math.sin(t * TAU * 4)) : 0;
-// ⑦ the plate: held, then set on the counter at B.set
-const plateY = t => lerp(530, COUNTER_Y + 14, eio(ss(B.set - .35, B.set, t)));
-const PLATE_X = 340;
+// ⑦ the plate (screen): carried by both, set on the counter at B.set
+const PLATE_W = 400, PLATE_CX = 540;
+const plateYs = t => lerp(L(PL.done.m, [0, 530])[1], counterTop('done') - 10, eio(ss(B.set - .35, B.set, t)));
 
-// ---------------- the cook's pose over time ----------------
-const BLINKS = [1.2, 3.3, 5.6, 9.1, 13.4, 15.2, 17.9, 21.3];
-function pose(t) {
-  const id = MG.sceneOf(SC, t).id, u = t - scAt(id).at, bp = MG.beatPulse(t);
-  const P = { walk: 0, walkAmt: 0, armSwing: 0, look: -.15, lean: .15, bounce: -9 * bp, mouth: .3, blink: Math.max(...BLINKS.map(b => tri(t, b))) };
+// ---------------- the two pose tracks ----------------
+const base = (t, f, blinks) => ({ walk: 0, walkAmt: 0, armSwing: 0, look: -.15, lean: .15, bounce: -9 * MG.beatPulse(t), mouth: .3, face: f, blink: Math.max(...blinks.map(b => tri(t, b))) });
+const idAt = t => MG.sceneOf(SC, t).id;
+function poseM(t) {   // 명현
+  const id = idAt(t), P = base(t, 1, [1.2, 3.3, 5.6, 9.1, 13.4, 15.2, 17.9, 21.3]), p = PL[id] && PL[id].m;
   if (id === 'counter') {
     const r = tipRot(t), k = r / .95;
     Object.assign(P, { lean: .2 + .2 * k, look: -.12 - .2 * k, reach: A.bucketPt(r, 230, 405), reachAmt: 1, reachFar: A.bucketPt(r, 230, 520), reachFarAmt: 1,
       mouth: Math.max(.3, .9 * ss(2.4, 2.55, t) * (1 - ss(3.2, 3.5, t))) });
   } else if (id === 'flour') {
-    const rub = ss(B.pourEnd, B.rub, t), ph = rubPh(t);
-    const near = rub > 0 ? [lerp(bagGrip(B.pourEnd)[0], FL_BOWL[0] + 36 * ph, eio(rub)), lerp(bagGrip(B.pourEnd)[1], FL_BOWL[1] - 18, eio(rub))] : bagGrip(t);
-    const far = [lerp(190, FL_BOWL[0] + 14 - 36 * ph * rub, eio(rub)), lerp(474, FL_BOWL[1] - 14, eio(rub))];
-    Object.assign(P, { lean: .22 + .06 * rub, look: -.32, reach: near, reachAmt: 1, reachFar: far, reachFarAmt: 1, bounce: -6 * bp, mouth: .25 + .35 * rub });
+    const rub = eio(ss(B.pourEnd, B.rub, t)), ph = rubPh(t);
+    Object.assign(P, { lean: .22 + .06 * rub, look: -.32, bounce: -6 * MG.beatPulse(t), mouth: .25 + .35 * rub,
+      reach: [lerp(222, FL_BOWL[0] + 36 * ph, rub), lerp(478, FL_BOWL[1] - 18, rub)], reachAmt: 1,
+      reachFar: [lerp(190, FL_BOWL[0] + 14 - 36 * ph, rub), lerp(474, FL_BOWL[1] - 14, rub)], reachFarAmt: 1 });
   } else if (id === 'blanch') {
-    const by = basketY(t);
-    Object.assign(P, { lean: .12, look: -.2, reach: [215, by + 96], reachAmt: 1, reachFarAmt: 0, swing: 0, mouth: .3 + .5 * ss(7.5, 7.7, t) });
+    Object.assign(P, { lean: .12, look: -.2, reach: [205, basketY(t) + 96], reachAmt: 1, reachFarAmt: 0, mouth: .3 + .5 * ss(7.5, 7.7, t) });
   } else if (id === 'season') {
     const up = ss(B.jamo, B.jamo + .4, t);
     Object.assign(P, { lean: .16, look: lerp(-.22, .2, up), reach: stirGrip(t), reachAmt: 1, reachFar: [175, SE_BOWL[1] + 4], reachFarAmt: 1, mouth: .3 + .6 * up });
@@ -108,52 +126,82 @@ function pose(t) {
     const rep = ss(18.5, 18.7, t), pump = t > 19 ? Math.max(0, Math.sin((t - 19) * TAU * 2)) : 0;
     Object.assign(P, { lean: .06, look: lerp(-.32, .1, rep), reach: [PHONE[0] - 8, PHONE[1] - 10 - tapDip(t)], reachAmt: 1,
       reachFar: [lerp(PHONE[0] + 14, 175, ss(18.9, 19.1, t)), lerp(PHONE[1] + 8, 790 + 30 * pump, ss(18.9, 19.1, t))], reachFarAmt: 1,
-      bounce: -9 * bp + 16 * rep * (1 - ss(18.8, 19.0, t)), mouth: .3 + .6 * rep });
+      bounce: -9 * MG.beatPulse(t) + 16 * rep * (1 - ss(18.8, 19.0, t)), mouth: .3 + .6 * rep });
   } else if (id === 'done') {
-    const y = plateY(t), off = 1 - ss(B.set + .05, B.set + .35, t), ch = ss(B.set + .15, B.set + .45, t);
-    Object.assign(P, { lean: (.2 + .2 * ss(B.set - .35, B.set, t)) * off + .05, look: lerp(-.25, .12, ch), reach: [PLATE_X - 100, y - 6], reachAmt: off, reachFar: [PLATE_X - 48, y - 10], reachFarAmt: off,
-      cheer: ch, mouth: .3 + .6 * ch });
+    const y = plateYs(t), off = 1 - ss(B.set + .05, B.set + .35, t), ch = ss(B.set + .15, B.set + .45, t), hx = PLATE_CX - PLATE_W / 2;
+    Object.assign(P, { lean: (.2 + .15 * ss(B.set - .35, B.set, t)) * off + .05, look: lerp(-.25, .12, ch), cheer: ch, mouth: .3 + .6 * ch,
+      reach: toL(p, [hx + 10, y + 8]), reachAmt: off, reachFar: toL(p, [hx + 52, y + 20]), reachFarAmt: off });
   }
   return P;
 }
-let D;   // the actor
-const actorAt = (ctx, t, p, o) => D.draw(ctx, t, p.x, p.y, p.s * D.figH, o);
-const shadowAt = (ctx, t, p, col) => D.shadow(ctx, t, p.x, p.y, p.s * D.figH, col);
-const whiteIn = (ctx, t, p, u) => { const a = 1 - ss(0, .3, u); if (a > 0) { ctx.save(); ctx.globalAlpha = a; actorAt(ctx, t, p, { mode: 'white' }); ctx.restore(); } };
+function poseK(t) {   // 경찬
+  const id = idAt(t), P = base(t, -1, [.9, 2.8, 6.2, 8.6, 11.8, 14.1, 17.2, 20.2]), p = PL[id] && PL[id].k;
+  P.bounce = -9 * MG.beatPulse(t - .02);
+  if (id === 'counter') {
+    const ct = toL(p, [0, counterTop('counter')])[1] + 6, wow = ss(2.45, 2.7, t) * (1 - ss(3.35, 3.6, t));
+    Object.assign(P, { lean: .2 - .15 * wow, look: lerp(-.28, .12, wow), reach: [175, ct], reachAmt: 1 - wow, reachFar: [205, ct], reachFarAmt: 1 - wow, cheer: .85 * wow, mouth: .3 + .6 * wow });
+  } else if (id === 'flour') {
+    const pm = PL.flour.m, rim = toL(p, L(pm, [FL_BOWL[0] + FL_W / 2 - 4, FL_BOWL[1] - 6])), to = eio(ss(B.pourEnd, B.rub, t));
+    Object.assign(P, { lean: .22, look: -.3, reach: to > 0 ? [lerp(bagGripK(B.pourEnd)[0], rim[0], to), lerp(bagGripK(B.pourEnd)[1], rim[1], to)] : bagGripK(t), reachAmt: 1,
+      reachFar: [rim[0] + 26, rim[1] + 4], reachFarAmt: 1, mouth: .3 + .3 * ss(B.rub, B.rub + .2, t) });
+  } else if (id === 'blanch') {
+    const done = ss(7.75, 7.95, t);
+    Object.assign(P, { lean: .1, look: lerp(-.12, .1, done), reach: TIMER_K, reachAmt: 1, reachFarAmt: 0, cheer: .7 * done, mouth: .3 + .5 * done });
+  } else if (id === 'season') {
+    const sp = mspoonState(t), rim = toL(p, L(PL.season.m, [SE_BOWL[0] + SE_W / 2 - 4, SE_BOWL[1] + 4])), up = ss(B.jamo, B.jamo + .4, t);
+    Object.assign(P, { lean: .18, look: lerp(-.25, .2, up), reach: toL(p, sp.g), reachAmt: 1, reachFar: rim, reachFarAmt: 1, mouth: .3 + .5 * up });
+  } else if (id === 'wok') {
+    const sb = sauceBowl(t);
+    Object.assign(P, { lean: .16 - .06 * ss(13.4, 13.8, t), look: -.18 + .1 * ss(13.4, 13.8, t), reach: toL(p, sb.near), reachAmt: 1, reachFar: toL(p, sb.far), reachFarAmt: 1, mouth: .3 + .4 * MG.beatPulse(t) });
+  } else if (id === 'chat') {
+    const rep = ss(18.55, 18.75, t);
+    Object.assign(P, { lean: lerp(.24, .04, rep), look: lerp(-.3, .12, rep), reachAmt: 0, reachFar: [70, 840 + 30 * Math.max(0, Math.sin((t - 19) * TAU * 2))], reachFarAmt: rep, mouth: .3 + .6 * rep, bounce: -9 * MG.beatPulse(t) + 14 * rep * (1 - ss(18.8, 19.0, t)) });
+  } else if (id === 'done') {
+    const y = plateYs(t), off = 1 - ss(B.set + .05, B.set + .35, t), ch = ss(B.set + .2, B.set + .5, t), hx = PLATE_CX + PLATE_W / 2;
+    Object.assign(P, { lean: (.2 + .15 * ss(B.set - .35, B.set, t)) * off + .05, look: lerp(-.25, .12, ch), cheer: ch, mouth: .3 + .6 * ch,
+      reach: toL(p, [hx - 10, y + 8]), reachAmt: off, reachFar: toL(p, [hx - 52, y + 20]), reachFarAmt: off });
+  }
+  return P;
+}
+let D, E;   // the actors: D = 명현, E = 경찬
+const actorAt = (ctx, X, t, p, o) => X.draw(ctx, t, p.x, p.y, p.h, o);
+const shadowAt = (ctx, X, t, p, col) => X.shadow(ctx, t, p.x, p.y, p.h, col);
+const whiteIn = (ctx, X, t, p, u) => { const a = 1 - ss(0, .3, u); if (a > 0) { ctx.save(); ctx.globalAlpha = a; actorAt(ctx, X, t, p, { mode: 'white' }); ctx.restore(); } };
+const pair = (ctx, t, id, o) => { actorAt(ctx, D, t, PL[id].m, o); actorAt(ctx, E, t, PL[id].k, o); };
+const pairWhite = (ctx, t, id, u) => { whiteIn(ctx, D, t, PL[id].m, u); whiteIn(ctx, E, t, PL[id].k, u); };
+const pairShadow = (ctx, t, id, col) => { shadowAt(ctx, D, t, PL[id].m, col); shadowAt(ctx, E, t, PL[id].k, col); };
 
-// ---------------- ① window grid: the bucket, tipped out ----------------
-const WIN = MG.WIN;
-const GRID = { hero: '부엌 – 쭈꾸미', side: [['손질', -1, -1], ['데치기', 0, -1], ['양념', 1, -1], ['밀가루', -1, 0], ['볶기', 1, 0], ['초대', -1, 1], ['30초', 0, 1], ['완성', 1, 1]] };
-const BUCKET_C = (() => { const p = PL.counter; return A.L(p, [315, 465]); })(), PILE_C = A.L(PL.counter, [520, 410]);
+// ---------------- ① window grid: the tub, tipped out ----------------
+const WINC = { x: 40, y: 420, w: 1000, h: 1080, bar: 54 };   // a wide hero window: the kitchen holds two
+const GRID = { hero: T('부엌 – 쭈꾸미'), win: WINC, side: [['손질', -1, -1], ['데치기', 0, -1], ['양념', 1, -1], ['', -1, 0], ['', 1, 0], ['', -1, 1], ['', 0, 1], ['', 1, 1]] };
+const BUCKET_C = L(PL.counter.m, [315, 465]), PILE_C = L(PL.counter.m, [500, 410]);
 function camTo(ctx, c, k) { ctx.translate(540, 960); ctx.scale(k, k); ctx.translate(-c[0], -c[1]); }
-function octoInBucket(t, which) {   // octopus in the bucket (bucket-local px): which 'in' (clipped, inside) | 'over' (draped over the rim)
+function octoInBucket(t, which) {   // octopus in the tub (tub-local px): which 'in' (clipped, inside) | 'over' (draped over the rim)
   return (ctx, cx, top) => {
     const tt = tq(t), list = which === 'in' ? [[-46, 30, 2], [44, 26, 3]] : [[-30, -14, 0, -.25], [34, -20, 1, .2]];
-    for (const [dx, dy, i, rot] of list) { if (which === 'over' && SPILL[i] && t >= SPILL[i].tr) continue; if (which === 'in' && SPILL[i] && t >= SPILL[i].tr) continue;
+    for (const [dx, dy, i, rot] of list) { if (SPILL[i] && t >= SPILL[i].tr) continue;
       A.octo(ctx, cx + dx, top + dy, 34, { col: A.RAW, t: tt + i, seed: 11 + i, rot: rot || 0, spread: .35 }); }
   };
 }
 function gridInner(ctx, t) {
-  const p = PL.counter, tt = tq(t);
-  MG.heroPage(ctx, WIN);
-  const ct = A.L(p, [110, COUNTER_Y]);
-  A.counter(ctx, ct[0], WIN.x + WIN.w + 20, ct[1], 420);
-  shadowAt(ctx, t, p, 'rgba(110,70,20,.3)');
-  // the spilled 쭈꾸미 (on the counter, or sliding out of the mouth)
+  const p = PL.counter.m, tt = tq(t);
+  MG.heroPage(ctx, WINC);
+  A.counter(ctx, L(p, [110, 0])[0], L(PL.counter.k, [110, 0])[0], counterTop('counter'), 420);
+  pairShadow(ctx, t, 'counter', 'rgba(110,70,20,.3)');
   for (const o of SPILL) { if (t < o.tr) continue;
     const v = clamp((t - o.tr) / .3), r0 = tipRot(o.tr), m0 = A.bucketPt(r0, 330 + (o.seed % 2) * 30, 540), land = [o.land[0], o.land[1] + 30];
     const q = [lerp(m0[0], land[0], eo(v)), lerp(m0[1], land[1], v) + 60 * Math.sin(Math.PI * v)];
-    const sq = v >= 1 ? Math.max(0, 1 - (t - o.tr - .3) / .18) : 0, sc = A.L(p, q);
+    const sq = v >= 1 ? Math.max(0, 1 - (t - o.tr - .3) / .18) : 0, sc = L(p, q);
     A.octo(ctx, sc[0], sc[1], 34 * p.s, { col: A.RAW, t: tt + o.seed, seed: o.seed, rot: lerp(r0, o.rot, eo(v)), spread: lerp(.4, 1, v), squash: sq });
   }
   A.bucket(ctx, p, tipRot(tt), { inner: octoInBucket(t, 'in'), over: octoInBucket(t, 'over') });
-  actorAt(ctx, t, p);
+  pair(ctx, t, 'counter');
 }
 function sceneCounter(ctx, t, u) {
-  // camera: close on the bucket → pull back into the window grid → dive into the pile on the last half beat
+  // camera: close on the tub → pull back into the window → dive into the pile on the last half beat
   const pb = eio(ss(1.0, 2.0, t)), dv = eio(ss(B.dive, 4.0, t));
-  let c = [lerp(BUCKET_C[0], 540, pb), lerp(BUCKET_C[1], 900, pb)], k = lerp(2.5, 1.2, pb);
-  c = [lerp(c[0], PILE_C[0], dv), lerp(c[1], PILE_C[1], dv)]; k = k * Math.pow(3.2 / 1.2, dv);
+  let c = [lerp(BUCKET_C[0], 540, pb), lerp(BUCKET_C[1], 960, pb)], k = lerp(2.4, 1, pb);
+  c = [lerp(c[0], PILE_C[0], dv), lerp(c[1], PILE_C[1], dv)]; k = k * Math.pow(2.8, dv);
   ctx.save(); camTo(ctx, c, k); MG.windowGrid(ctx, t, u, x => gridInner(x, t), GRID); ctx.restore();
 }
 
@@ -173,42 +221,49 @@ function mangaHand(ctx, x, y, ang, sc) {   // a hand seen from above in the bowl
     ctx.lineWidth = 24 + g; ctx.beginPath(); ctx.moveTo(-6, 26); ctx.lineTo(26, 48); ctx.stroke();
     ctx.beginPath(); ctx.ellipse(-8, 0, 46 + g / 2, 40 + g / 2, 0, 0, TAU); ctx.fill(); }
   ctx.restore(); }
+
 function sceneFlour(ctx, t, u) {
   MG.mangaPaper(ctx);
-  const p = PL.flour, tt = tq(t), bw = FL_W * p.s, bc = A.L(p, FL_BOWL), flour = ss(4.15, B.pourEnd, t), coat = ss(B.rub, 5.9, t);
+  const p = PL.flour.m, pk = PL.flour.k, tt = tq(t), bw = FL_W * p.s, bc = L(p, FL_BOWL), flour = ss(4.15, B.pourEnd, t), coat = ss(B.rub, 5.9, t);
   MG.panel(ctx, 40, 430, 1000, 760, u, 'l', () => {
     MG.focusLines(ctx, bc[0], bc[1] - 60, 40, 430, 1000, 760, 23, .9);
-    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(bc[0] - 60, 860, 470, 400, 0, 0, TAU); ctx.fill();
-    ctx.strokeStyle = INK; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(A.L(p, [110, 0])[0], A.L(p, [0, COUNTER_Y])[1]); ctx.lineTo(1040, A.L(p, [0, COUNTER_Y])[1]); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(bc[0], 860, 500, 400, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = INK; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(L(p, [110, 0])[0], counterTop('flour')); ctx.lineTo(L(pk, [110, 0])[0], counterTop('flour')); ctx.stroke();
     A.bowl(ctx, bc[0], bc[1], bw, 'back', { line: INK, inside: '#e9e9e9' });
     for (let i = 0; i < 3; i++) A.octo(ctx, bc[0] + (i - 1) * bw * .24, bc[1] - 6 + (i % 2) * 8, 26, { col: mixHex(A.RAW, '#e8b4a6', .55 * coat), t: tt + i, seed: 21 + i, spread: .9, flour: Math.max(flour * .5, coat), rot: (i - 1) * .3 });
     flourHeap(ctx, bc[0], bc[1] + 4, bw, flour * (1 - coat));
-    if (t < B.pourEnd) {   // the bag, held by its bottom and tipped; the stream into the bowl
-      const g = A.L(p, bagGrip(tt)), rot = 2.15 + .08 * Math.sin(tt * TAU * 2), s = .78, ax = Math.sin(rot), ay = -Math.cos(rot), mouth = [g[0] + ax * 165 * s, g[1] + ay * 165 * s];
+    if (t < B.pourEnd) {   // 경찬's bag, held by its bottom and tipped down-left into the bowl; the stream
+      const g = L(pk, bagGripK(tt)), rot = -2.15 - .08 * Math.sin(tt * TAU * 2), s = .78, mouth = [g[0] + Math.sin(rot) * 165 * s, g[1] - Math.cos(rot) * 165 * s];
       if (t > 4.1) { ctx.save(); ctx.strokeStyle = INK; ctx.lineWidth = 4; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(mouth[0] - 14, mouth[1]); ctx.lineTo(bc[0] - 22, bc[1] - 6); ctx.lineTo(bc[0] + 22, bc[1] - 6); ctx.lineTo(mouth[0] + 14, mouth[1]); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore(); }
       A.flourBag(ctx, g[0], g[1], s, rot, INK, '#fff');
-    } else {   // tossed aside (flies off to the right, out of the panel)
-      const v = t - B.pourEnd, g = A.L(p, bagGrip(B.pourEnd));
-      A.flourBag(ctx, g[0] + 900 * v, g[1] - 600 * v + 1800 * v * v, .78, 2.15 + 7 * v, INK, '#fff');
+    } else {   // tossed up and out of the panel
+      const v = t - B.pourEnd, g = L(pk, bagGripK(B.pourEnd));
+      A.flourBag(ctx, g[0] + 300 * v, g[1] - 1500 * v + 900 * v * v, .78, -2.15 + 8 * v, INK, '#fff');
     }
-    actorAt(ctx, t, p, { mode: 'manga' });
+    pair(ctx, t, 'flour', { mode: 'manga' });
     A.bowl(ctx, bc[0], bc[1], bw, 'front', { line: INK, body: '#fff', band: '#bbb' });
     if (t > B.rub) for (let k = 0; k < 3; k++) { const v = ((t - B.rub) * 2 + k / 3) % 1; puff(ctx, bc[0] + (k - 1) * 70 + 30 * v * (k - 1), bc[1] - 20 - 90 * v, 18 + 26 * v, 1 - v); }
   });
-  MG.panel(ctx, 40, 1220, 1000, 480, u - .95, 'd', () => {   // close-up: two hands rubbing in the bowl
-    const cx = 520, cy = 1440, ph = rubPh(tt);
+  MG.panel(ctx, 40, 1220, 1000, 480, u - .95, 'd', () => {   // close-up: her hands rub, his hold the bowl
+    const cx = 500, cy = 1440, ph = rubPh(tt);
     MG.focusLines(ctx, cx, cy, 40, 1220, 1000, 480, 44, .8);
     ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(cx, cy, 440, 230, 0, 0, TAU); ctx.fill();
     A.bowl(ctx, cx, cy, 620, 'back', { line: INK, inside: '#e9e9e9' });
     for (let i = 0; i < 3; i++) A.octo(ctx, cx + (i - 1) * 150 + 14 * ph * (i - 1), cy - 4 + (i % 2) * 14, 52, { col: mixHex(A.RAW, '#e8b4a6', .55 * coat), t: tt + i, seed: 31 + i, spread: 1, flour: .5 + .5 * coat, rot: (i - 1) * .35 + .1 * ph });
-    for (const [s, dx] of [[1, -70], [-1, 90]]) {   // forearms from the upper left (navy sleeves read black), hands in the bowl
+    for (const [s, dx] of [[1, -90], [-1, 70]]) {   // 명현: forearms from the upper left (navy sleeves read black), hands in the bowl
       const hx = cx + dx + 60 * ph * s, hy = cy - 20 + 10 * s;
       ctx.save(); ctx.lineCap = 'round'; ctx.strokeStyle = INK; ctx.lineWidth = 98; ctx.beginPath(); ctx.moveTo(-40, 1180 + (s > 0 ? 40 : 0)); ctx.lineTo(hx - 70, hy - 50); ctx.stroke();
       ctx.strokeStyle = '#fff'; ctx.lineWidth = 86; ctx.beginPath(); ctx.moveTo(hx - 140, hy - 96); ctx.lineTo(hx - 70, hy - 50); ctx.stroke();
       ctx.restore(); mangaHand(ctx, hx - 10, hy, .35, 1.05); }
+    for (const [dy, a] of [[-46, Math.PI + .5], [36, Math.PI + .15]]) {   // 경찬: hands on the right rim (green-grey sleeves in screentone grey)
+      const hx = cx + 300, hy = cy + dy;
+      ctx.save(); ctx.lineCap = 'round'; ctx.strokeStyle = INK; ctx.lineWidth = 98; ctx.beginPath(); ctx.moveTo(1120, hy - 150); ctx.lineTo(hx + 80, hy - 30); ctx.stroke();
+      ctx.strokeStyle = '#a9a9a9'; ctx.lineWidth = 84; ctx.beginPath(); ctx.moveTo(1120, hy - 150); ctx.lineTo(hx + 150, hy - 60); ctx.stroke();
+      ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.moveTo(hx + 150, hy - 60); ctx.lineTo(hx + 80, hy - 30); ctx.stroke();
+      ctx.restore(); mangaHand(ctx, hx, hy, a, .95); }
     A.bowl(ctx, cx, cy, 620, 'front', { line: INK, body: '#fff', band: '#bbb' });
     for (let k = 0; k < 3; k++) { const v = ((tt - B.rub) * 2 + k / 3) % 1; if (t > B.rub) puff(ctx, cx - 200 + k * 200, cy - 70 - 120 * v, 26 + 30 * v, 1 - v); }
-    MG.pop(ctx, t, B.rub + .1, T('박박!'), 830, 1330, 130, { ...MG.MANGA_WORD, d: .4, rot: -.12 });
+    MG.pop(ctx, t, B.rub + .1, T('박박!'), 790, 1310, 130, { ...MG.MANGA_WORD, d: .4, rot: -.12 });
   });
 }
 
@@ -226,8 +281,9 @@ function dial(ctx, t, cx, cy, R) {
   ctx.fillText(Pilot.trn('{n}초', Math.round(30 * sw)), cx, cy + R * .5);
   ctx.restore();
 }
+
 function strainer(ctx, p, by, col = MG.BLUE) {
-  const c = A.L(p, [BASKET_X, by]), R = 78 * p.s, gr = A.L(p, [215, by + 96]), rim = A.L(p, [BASKET_X - 72, by + 4]);
+  const c = L(p, [BASKET_X, by]), R = 62 * p.s, gr = L(p, [205, by + 96]), rim = L(p, [BASKET_X - 72, by + 4]);
   ctx.save(); ctx.strokeStyle = col; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(c[0], c[1], R, 0, Math.PI); ctx.stroke();
   ctx.save(); ctx.beginPath(); ctx.arc(c[0], c[1], R, 0, Math.PI); ctx.closePath(); ctx.clip(); ctx.globalAlpha = .6; ctx.lineWidth = 2;
@@ -237,28 +293,39 @@ function strainer(ctx, p, by, col = MG.BLUE) {
   ctx.strokeStyle = '#f3ecdc'; ctx.lineWidth = 5; ctx.stroke();
   ctx.restore();
 }
+function kitchenTimer(ctx, t, x, y, r, dialC, a) {   // the timer in 경찬's hand, with a dashed leader up to its big dial
+  if (a <= 0) return; const sw = clamp((t - B.dip) / (7.8 - B.dip)), col = MG.BLUE;
+  ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = col; ctx.fillStyle = '#f3ecdc'; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.rect(x - 7, y - r - 12, 14, 12); ctx.fill(); ctx.stroke();
+  const na = -Math.PI / 2 + TAU * sw; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(na) * r * .7, y + Math.sin(na) * r * .7); ctx.stroke();
+  ctx.setLineDash([8, 8]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - r * .6, y - r * .8); ctx.lineTo(dialC[0] - 60, dialC[1] + 92); ctx.moveTo(x + r * .6, y - r * .8); ctx.lineTo(dialC[0] + 60, dialC[1] + 92); ctx.stroke();
+  ctx.restore();
+}
 function sceneBlanch(ctx, t, u) {
   ctx.drawImage(MG.paperSheet(), 0, 0);
-  const p = PL.blanch, tt = tq(t), by = basketY(tt);
-  const top = A.L(p, [110, COUNTER_Y]), x0 = A.L(p, [292, 0])[0], x1 = A.L(p, [640, 0])[0], yb = A.L(p, [0, 440])[1], ph = 230 * p.s;
-  const lv = eio(ss(0, .55, u));
-  ctx.save(); ctx.strokeStyle = MG.BLUE; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(top[0], top[1]); ctx.lineTo(top[0] + (W - top[0]) * lv, top[1]); ctx.stroke(); ctx.restore();
+  const p = PL.blanch.m, pk = PL.blanch.k, tt = tq(t), by = basketY(tt);
+  const top = L(p, [110, COUNTER_Y]), x0 = L(p, [POT_X0, 0])[0], x1 = L(p, [POT_X1, 0])[0], yb = L(p, [0, 440])[1], ph = 230 * p.s;
+  const lv = eio(ss(0, .55, u)), cv = eio(ss(.7, 1.3, u)), xr = L(pk, [110, 0])[0];
+  ctx.save(); ctx.strokeStyle = MG.BLUE; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(top[0], top[1]); ctx.lineTo(top[0] + (xr - top[0]) * lv, top[1]); ctx.stroke(); ctx.restore();
   MG.guides(ctx, [540, 520], [[x0, yb], [x1, yb], [x0, yb - ph], [x1, yb - ph]], .4 * ss(.05, .5, u));
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, 300 + 1700 * lv); ctx.clip();
   A.flames(ctx, x0 + 20, x1 - 20, top[1], yb - top[1] + 6, t, 'line');
   A.potSection(ctx, x0, x1, yb, ph, t, .74);
   ctx.restore();
-  const oc = A.L(p, [BASKET_X, by + 16]), red = ss(6.7, 7.5, t);
-  A.octo(ctx, oc[0], oc[1], 46 * p.s, { col: mixHex(A.RAW, A.BLANCHED, red), t: tt, seed: 51, spread: .5 });
+  const oc = L(p, [BASKET_X, by + 16]), red = ss(6.7, 7.5, t);
+  A.octo(ctx, oc[0], oc[1], 40 * p.s, { col: mixHex(A.RAW, A.BLANCHED, red), t: tt, seed: 51, spread: .5 });
   strainer(ctx, p, by);
-  MG.drawIn(ctx, t, D, p.x, p.y, p.s * D.figH, lv, eio(ss(.7, 1.3, u)));
-  dial(ctx, t, 820, 590, 112);
+  const DC = [700, 560], tm = L(pk, TIMER_K);
+  kitchenTimer(ctx, t, tm[0] - 6, tm[1] - 4, 30, DC, ss(.3, .7, u));
+  MG.drawIn(ctx, t, D, p.x, p.y, p.h, lv, cv);
+  MG.drawIn(ctx, t, E, pk.x, pk.y, pk.h, lv, cv);
+  dial(ctx, t, DC[0], DC[1], 105);
 }
 
 // ---------------- ④ yellow: the seasoning, spoon by spoon → 양념 ----------------
 const WORD = MG.jamoLayout(T('양념'), { y: 300, size: 220 });
 let JHITS = [];
-const TAG_X = 500, TAG_Y0 = 520, TAG_DY = 96, TAG_SIZE = 80;
+const TAG_X = 535, TAG_Y0 = 455, TAG_DY = 80, TAG_SIZE = 70;
 function seasonBowl(ctx, t, bc, bw, part) {
   if (part === 'back') {
     const stir = ss(10.15, 10.9, t);
@@ -269,34 +336,32 @@ function seasonBowl(ctx, t, bc, bw, part) {
       for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.ellipse(bc[0], bc[1] + 8, bw * (.12 + .1 * k), bw * (.03 + .025 * k), 0, a + k, a + k + 2.2); ctx.stroke(); } ctx.restore(); }
   } else A.bowl(ctx, bc[0], bc[1], bw, 'front');
 }
-function spoonFly(ctx, t, bc) {
-  for (const [tb, , kind, n] of S.season) { if (t < tb - .32 || t > tb + .45) continue;
-    const v = clamp((t - (tb - .32)) / .32), out = clamp((t - tb - .14) / .3), tip = eio(clamp((t - tb) / .12));
-    const p0 = [1200, 880], p1 = [bc[0] + 120, bc[1] - 70];
-    let x = lerp(p0[0], p1[0], eo(v)), y = lerp(p0[1], p1[1], eo(v)) - 60 * Math.sin(Math.PI * v);
-    if (out > 0) { x = lerp(p1[0], 1220, eio(out)); y = lerp(p1[1], 780, eio(out)); }
-    A.mspoon(ctx, x, y, .9, -1.15 * tip * (1 - out * .5), kind, (n > 1 ? 1.15 : 1) * (1 - tip));
-    if (tip > 0 && t < tb + .14) { const f = clamp((t - tb) / .14); A.stuff(ctx, lerp(x - 20, bc[0] + 30, f), lerp(y + 10, bc[1], f * f), 22, 14, kind); }
-  }
+
+function spoonInHand(ctx, t, bc) {   // 경찬's measuring spoon: handle in his hand, head forward (to the left), tipped on the beat
+  const st = mspoonState(tq(t)), s = .8, th = -.95 * st.tilt;
+  ctx.save(); ctx.translate(st.g[0], st.g[1]); ctx.rotate(th); A.mspoon(ctx, -186 * s, 0, s, 0, st.kind, st.amt); ctx.restore();
+  for (const [tb, , kind] of S.season) { if (t < tb || t > tb + .14) continue;   // the dollop falls from the spoon into the bowl
+    const f = clamp((t - tb) / .14), hx = st.g[0] - 186 * s * Math.cos(th), hy = st.g[1] - 186 * s * Math.sin(th);
+    A.stuff(ctx, lerp(hx, bc[0] + 30, f), lerp(hy + 12, bc[1], f * f), 22, 14, kind); }
 }
-function seasonTags(ctx, t) {
+function seasonTags(ctx, t, bc) {
   S.season.forEach(([tb, label], i) => { if (t < tb) return;
     const g = MG.chunky(T(label), TAG_SIZE), v = eo(ss(tb + .12, tb + .42, t)), [sx, sy] = MG.popScale(t - tb, .35);
-    const from = [620, 1000], to = [TAG_X + g.w / 2, TAG_Y0 + i * TAG_DY], sc = lerp(1.3, 1, v);
+    const from = [bc[0] + 40, bc[1] - 90], to = [TAG_X, TAG_Y0 + i * TAG_DY], sc = lerp(1.3, 1, v);
     MG.glyph(ctx, g, lerp(from[0], to[0], v), lerp(from[1], to[1], v), sx * sc, sy * sc, 0, 1); });
 }
 function sceneSeason(ctx, t, u) {
   ctx.drawImage(MG.keyboardBG(), 0, 0);
-  const p = PL.season, tt = tq(t), bc = A.L(p, SE_BOWL), bw = SE_W * p.s, ct = A.L(p, [110, COUNTER_Y]);
-  A.counter(ctx, ct[0], W + 20, ct[1], 520, '#d9a86c', '#fbf3df');
-  shadowAt(ctx, t, p, 'rgba(120,70,0,.35)');
+  const p = PL.season.m, pk = PL.season.k, tt = tq(t), bc = L(p, SE_BOWL), bw = SE_W * p.s;
+  A.counter(ctx, L(p, [110, 0])[0], L(pk, [110, 0])[0], counterTop('season'), 520, '#d9a86c', '#fbf3df');
+  pairShadow(ctx, t, 'season', 'rgba(120,70,0,.35)');
   seasonBowl(ctx, t, bc, bw, 'back');
-  const g = A.L(p, stirGrip(tt)), tip = A.L(p, [SE_BOWL[0] + 20, SE_BOWL[1] - 18]), ang = Math.atan2(tip[1] - g[1], tip[0] - g[0]);
+  const g = L(p, stirGrip(tt)), tip = L(p, [SE_BOWL[0] + 20, SE_BOWL[1] - 18]), ang = Math.atan2(tip[1] - g[1], tip[0] - g[0]);
   A.woodSpoon(ctx, g[0], g[1], ang, dist(g, tip) + 30);
-  actorAt(ctx, t, p);   // no white-in here: the yellow wipe is this world's join
+  spoonInHand(ctx, t, bc);
+  pair(ctx, t, 'season');   // no white-in here: the yellow wipe is this world's join
   seasonBowl(ctx, t, bc, bw, 'front');
-  spoonFly(ctx, t, bc);
-  seasonTags(ctx, t);
+  seasonTags(ctx, t, bc);
   if (WORD.syl.join('') === '양념') MG.jamoLayer(ctx, t, JHITS, WORD, B.assemble);
   else MG.pop(ctx, t, B.assemble, T('양념'), 540, 300, 200);
 }
@@ -313,18 +378,17 @@ function navyStage(ctx, t, u) {
   ctx.fillStyle = '#1f2a5c'; ctx.beginPath(); ctx.ellipse(540, 1640, 454, 80, 0, 0, TAU); ctx.fill();
   ctx.strokeStyle = 'rgba(255,214,120,.65)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.ellipse(540, 1640, 454, 80, 0, 0, TAU); ctx.stroke();
 }
+
 const PIECES = Array.from({ length: 10 }, (_, k) => { const r = rng(300 + k); return { k, kind: k < 5 ? 'octo' : k < 8 ? 'onion' : 'scallion', dx: (r() - .5) * .62, h: 110 + r() * 100, lag: r() * .06, sp: (r() - .5) * 7, rot: r() * TAU, seed: 60 + k }; });
 function sceneWok(ctx, t, u) {
   navyStage(ctx, t, u);
-  const p = PL.wok, tt = tq(t), w = wokState(tt), s = p.s, c = A.L(p, w.C), ww = WOK_W * s, wd = WOK_D * s;
-  const sauce = ss(12.3, 14.6, t), col = mixHex(A.BLANCHED, A.SAUCED, sauce);
-  const burner = A.L(p, [WOK_C[0], 330]);
-  shadowAt(ctx, t, p, 'rgba(0,0,0,.45)');
-  A.burner(ctx, burner[0], burner[1], 340 * s);
-  A.flames(ctx, burner[0] - 160 * s, burner[0] + 160 * s, burner[1] - 8, (150 + 30 * MG.beatPulse(t)) * s, t, 'color', 7);
-  // the wok, rotated about its centre (screen rotation = −local)
-  const gS = A.L(p, w.grip), rel = rotAbout([gS[0], gS[1]], c, w.ang);   // grip in the wok's unrotated frame (screen px; the wok is drawn rotated by −ang)
-  const relG = [rel[0] - c[0], rel[1] - c[1]];
+  const p = PL.wok.m, tt = tq(t), w = wokState(tt), s = p.s, c = L(p, w.C), ww = WOK_W * s, wd = WOK_D * s;
+  const sauce = ss(12.25, 14.6, t), col = mixHex(A.BLANCHED, A.SAUCED, sauce);
+  const burner = L(p, [WOK_C[0], 330]);
+  pairShadow(ctx, t, 'wok', 'rgba(0,0,0,.45)');
+  A.burner(ctx, burner[0], burner[1], 320 * s);
+  A.flames(ctx, burner[0] - 150 * s, burner[0] + 150 * s, burner[1] - 8, (150 + 30 * MG.beatPulse(t)) * s, t, 'color', 7);
+  const gS = L(p, w.grip), rel = rotAbout([gS[0], gS[1]], c, w.ang), relG = [rel[0] - c[0], rel[1] - c[1]];   // grip in the wok's unrotated frame
   ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(-w.ang);
   A.wok(ctx, -ww / 2, ww / 2, 0, wd, 'back');
   ctx.fillStyle = col; ctx.globalAlpha = .9 * ss(12.2, 12.8, t); ctx.beginPath(); ctx.ellipse(0, 8, ww * .4, ww * .07, 0, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
@@ -335,7 +399,15 @@ function sceneWok(ctx, t, u) {
   }
   A.wok(ctx, -ww / 2, ww / 2, 0, wd, 'front', relG);
   ctx.restore();
-  actorAt(ctx, t, p); whiteIn(ctx, t, p, u);
+  // 경찬's sauce bowl, tipped into the wok; the stream while it pours
+  const sb = sauceBowl(tt), bwid = 150;
+  if (pourTilt(t) > .5) { const lip = rotAbout([sb.c[0] - bwid / 2, sb.c[1]], sb.c, sb.rot); ctx.save(); ctx.strokeStyle = '#2b1d1a'; ctx.lineCap = 'round'; ctx.lineWidth = 22;
+    ctx.beginPath(); ctx.moveTo(lip[0], lip[1]); ctx.quadraticCurveTo(lip[0] - 30, lip[1] + 40, c[0] + 40, c[1] - 6); ctx.stroke(); ctx.strokeStyle = A.SAUCED; ctx.lineWidth = 13; ctx.stroke(); ctx.restore(); }
+  ctx.save(); ctx.translate(sb.c[0], sb.c[1]); ctx.rotate(sb.rot);
+  const left = 1 - ss(12.3, 13.3, t);
+  A.bowl(ctx, 0, 0, bwid, 'back', { fill: left > .02 ? A.SAUCED : null, level: .4 + .6 * left }); A.bowl(ctx, 0, 0, bwid, 'front');
+  ctx.restore();
+  pair(ctx, t, 'wok'); pairWhite(ctx, t, 'wok', u);
 }
 
 // ---------------- ⑥ bubbles: the chat ----------------
@@ -354,17 +426,17 @@ function avatar(ctx, x, y, r, col) { ctx.save(); ctx.fillStyle = col; ctx.stroke
 function chatCard(ctx, t) {
   const { x, y, w, h } = CARD, k = MG.backOut(clamp((t - 16.0) / .3), 1.2);
   ctx.save(); ctx.translate(x + w / 2, y + h); ctx.scale(k, k); ctx.translate(-(x + w / 2), -(y + h));
-  // tail to the phone in her hands
-  const ph = A.L(PL.chat, PHONE);
+  // tail to the phone in 명현's hands
+  const ph = L(PL.chat.m, PHONE);
   ctx.fillStyle = '#fffaf1'; ctx.strokeStyle = '#2b1d1a'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(x + w * .42, y + h - 4); ctx.lineTo(ph[0] + 16, ph[1] - 80); ctx.lineTo(x + w * .58, y + h - 4); ctx.closePath(); ctx.fill(); ctx.stroke();
   ctx.beginPath(); ctx.roundRect(x, y, w, h, 46); ctx.fill(); ctx.stroke();
   ctx.fillStyle = '#fffaf1'; ctx.fillRect(x + w * .42 + 6, y + h - 10, w * .16 - 12, 12);
-  // header: back chevron, the couple's avatars (cream, dusty blue), name
+  // header: back chevron, the guests' avatars (정록 cream, 세진 dusty blue), the group name
   ctx.fillStyle = '#f1e6d6'; ctx.beginPath(); ctx.roundRect(x + 3, y + 3, w - 6, 110, [44, 44, 0, 0]); ctx.fill();
   ctx.strokeStyle = '#2b1d1a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x, y + 113); ctx.lineTo(x + w, y + 113); ctx.stroke();
   ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(x + 56, y + 38); ctx.lineTo(x + 36, y + 58); ctx.lineTo(x + 56, y + 78); ctx.stroke();
   avatar(ctx, x + 110, y + 58, 30, '#efe6d2'); avatar(ctx, x + 150, y + 58, 30, '#5f7fa8');
-  ctx.fillStyle = '#2b1d1a'; ctx.font = `700 40px ${MG.SANS}`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(T(S.friend), x + 200, y + 60);
+  ctx.fillStyle = '#2b1d1a'; ctx.font = `700 40px ${MG.SANS}`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(T(S.group), x + 200, y + 60);
   // messages
   let yy = y + 150;
   for (const [at, who, str, until] of S.chat) {
@@ -394,15 +466,16 @@ function chatCard(ctx, t) {
   ctx.fillStyle = '#2b1d1a'; ctx.beginPath(); ctx.moveTo(x + w - 84, y + h - 62); ctx.lineTo(x + w - 52, y + h - 48); ctx.lineTo(x + w - 84, y + h - 34); ctx.lineTo(x + w - 78, y + h - 48); ctx.closePath(); ctx.fill();
   ctx.restore();
 }
+
 function sceneChat(ctx, t, u) {
   MG.bubbleSky(ctx, u);
-  const p = PL.chat, tt = tq(t);
-  shadowAt(ctx, t, p, 'rgba(110,40,120,.35)');
+  const p = PL.chat.m, tt = tq(t);
+  pairShadow(ctx, t, 'chat', 'rgba(110,40,120,.35)');
   MG.bubblesBack(ctx, u);
   chatCard(ctx, t);
-  const ph = A.L(p, [PHONE[0], PHONE[1] - tapDip(tt) * .5]);
+  const ph = L(p, [PHONE[0], PHONE[1] - tapDip(tt) * .5]);
   A.phone(ctx, ph[0] + 6, ph[1] - 26, p.s * 1.05, -.35, true);
-  actorAt(ctx, t, p); whiteIn(ctx, t, p, u);
+  pair(ctx, t, 'chat'); pairWhite(ctx, t, 'chat', u);
   MG.bubblesFront(ctx, u);
 }
 
@@ -411,41 +484,48 @@ let SNAP = [];
 function sceneDone(ctx, t, u) {
   MG.kaleido(ctx, SNAP, u, { cy: 820 });
   ctx.fillStyle = 'rgba(27,20,48,.8)'; ctx.fillRect(0, 0, W, H);   // the worlds turn quietly behind; the dish is the subject
-  const sp = A.L(PL.done, [PLATE_X, COUNTER_Y + 120]);
-  ctx.save(); ctx.translate(sp[0], sp[1]); ctx.scale(.62, .62); MG.bigStar(ctx, u + .1, 0, 0); ctx.restore();
-  const p = PL.done, tt = tq(t), ct = A.L(p, [110, COUNTER_Y]);
-  A.counter(ctx, ct[0], W + 20, ct[1], 600, '#d9a86c', '#fbf3df');
-  shadowAt(ctx, t, p, 'rgba(0,0,0,.35)');
-  const pc = A.L(p, [PLATE_X, plateY(tt)]);
-  if (t > B.set) A.steam(ctx, pc[0], pc[1] - 70, 260, t, ss(B.set, B.set + .4, t));
-  A.dish(ctx, pc[0], pc[1], 400, t);
-  actorAt(ctx, t, p); whiteIn(ctx, t, p, u);
+  const tt = tq(t), ct = counterTop('done');
+  ctx.save(); ctx.translate(PLATE_CX, ct - 80); ctx.scale(.62, .62); MG.bigStar(ctx, u + .1, 0, 0); ctx.restore();
+  A.counter(ctx, L(PL.done.m, [110, 0])[0], L(PL.done.k, [110, 0])[0], ct, 600, '#d9a86c', '#fbf3df');
+  pairShadow(ctx, t, 'done', 'rgba(0,0,0,.35)');
+  const py = plateYs(tt);
+  if (t > B.set) A.steam(ctx, PLATE_CX, py - 70, 260, t, ss(B.set, B.set + .4, t));
+  A.dish(ctx, PLATE_CX, py, PLATE_W, t);
+  pair(ctx, t, 'done'); pairWhite(ctx, t, 'done', u);
 }
 
 // ---------------- frame ----------------
 const SCENES = { counter: sceneCounter, flour: sceneFlour, blanch: sceneBlanch, season: sceneSeason, wok: sceneWok, chat: sceneChat, done: sceneDone };
 function sceneAt(ctx, id, t) { const s = scAt(id); SCENES[id](ctx, t, t - s.at); }
+function intro(ctx, t) {   // 「경찬 · 명현 부부의」 then 「손질 시작!」, out together before the dive
+  const a = 1 - ss(3.6, 3.9, t); if (a <= 0) return;
+  MG.pop(ctx, t, .5, T(S.intro[0]), 540, 215, 66, { alpha: a, d: .45 });
+  MG.pop(ctx, t, 1.5, T(S.intro[1]), 540, 322, 110, { alpha: a });
+}
 function draw(ctx, t) {
   const sc = MG.sceneOf(SC, t);
   sceneAt(ctx, sc.id, t);
   if (sc.id === 'blanch' && t > sc.end - .3) MG.wipeUp(ctx, eio(ss(sc.end - .3, sc.end, t)), o => sceneSeason(o, sc.end, 0));
-  if (sc.id === 'wok' && t > sc.end - .3) MG.bubblePop(ctx, eo(ss(sc.end - .3, sc.end, t)), o => sceneChat(o, sc.end, 0), ...A.L(PL.wok, [40, 560]));
+  if (sc.id === 'wok' && t > sc.end - .3) MG.bubblePop(ctx, eo(ss(sc.end - .3, sc.end, t)), o => sceneChat(o, sc.end, 0), ...L(PL.wok.m, [40, 560]));
   for (const id of ['flour', 'blanch', 'wok', 'done']) MG.flash(ctx, .8 * MG.pulse(t, scAt(id).at, .2));
+  intro(ctx, t);
   MG.captions(ctx, t, S.lines);
   Story.fadeBlack(ctx, t, S.DUR, .5, .5);
 }
 
 async function init() {
   MG.init({ bpm: S.BPM, accent: A.RED }); MG.MAG2 = '#ffe9b0';   // the kit's light accent (spark tips) — warm cream, never a second red/pink
-  D = MG.codeActor({ pose, dur: S.DUR, fps: FPS, colors: A.COOK });
-  const bc = A.L(PL.season, SE_BOWL);
+  D = MG.codeActor({ pose: poseM, dur: S.DUR, fps: FPS, colors: A.MH });
+  E = MG.codeActor({ pose: poseK, dur: S.DUR, fps: FPS, colors: A.KC });
+  const bc = L(PL.season.m, SE_BOWL);
   JHITS = WORD.jamo.map((_, i) => ({ t: B.jamo + i * .06, j: i, m: { x: bc[0] + (i - 2.5) * 36, y: bc[1] - 10 } }));
   for (const [id, dt] of [['counter', 3.0], ['flour', 1.5], ['blanch', 1.4], ['season', 3.6], ['wok', 2.2], ['chat', 2.9]])
     SNAP.push(MG.snap(x => sceneAt(x, id, scAt(id).at + dt)));
-  // grip check (dev): a held thing must be within reach of the arm (IK pulls the hand short otherwise)
-  window.__grip = ts => ts.map(t => { const i = D.fidx(t), r = D.rig(i), P = pose(i / FPS), o = [];
-    for (const [k, key, amt] of [['aNear', 'reach', 'reachAmt'], ['aFar', 'reachFar', 'reachFarAmt']]) if (P[key] && (P[amt] ?? 1) >= .999) o.push(+dist(r[k].h, P[key]).toFixed(1));
-    return [t, ...o]; });
+  // grip check (dev): a held thing must be within reach of the arm (IK pulls the hand short otherwise) — both actors
+  window.__grip = ts => ts.map(t => { const o = [t];
+    for (const [X, pf] of [[D, poseM], [E, poseK]]) { const i = X.fidx(t), r = X.rig(i), P = pf(i / FPS);
+      for (const [k, key, amt] of [['aNear', 'reach', 'reachAmt'], ['aFar', 'reachFar', 'reachFarAmt']]) if (P[key] && (P[amt] ?? 1) >= .999) o.push(+dist(r[k].h, P[key]).toFixed(1)); }
+    return o; });
 }
 Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: MG.FONTS, init, draw });
 </script>
