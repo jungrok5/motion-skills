@@ -1,0 +1,127 @@
+{
+ "duration": 24,
+ "music": [
+  {
+   "id": "m1",
+   "src": "m1-tail",
+   "at": 18.45,
+   "len": 5.55,
+   "db": -5,
+   "fin": 0.08,
+   "fout": 0.2,
+   "prompt": "Bouncy comedic cartoon office tune, 120 bpm, C major: tuba, pizzicato, clarinet, xylophone (take ran 21 s; last 5.6 s used so its button lands at the end)"
+  }
+ ],
+ "sfx": [
+  {
+   "id": "flash",
+   "at": 0.0,
+   "db": -6,
+   "prompt": "번쩍 freeze flash (music stops dead: ep2 ends full, ep3 opens on this)"
+  },
+  {
+   "id": "bite",
+   "src": "bite_b",
+   "at": 2.42,
+   "db": -4,
+   "prompt": "바삭"
+  },
+  {
+   "id": "deflate",
+   "src": "deflate_b",
+   "at": 8.55,
+   "db": -6,
+   "fout": 0.3,
+   "prompt": "sad trombone on the stone"
+  },
+  {
+   "id": "crumble",
+   "at": 8.9,
+   "db": -1,
+   "prompt": "털썩 (thud at +0.79 = 9.69)"
+  },
+  {
+   "id": "door",
+   "src": "door_b",
+   "at": 10.45,
+   "db": -4,
+   "prompt": "끼익"
+  },
+  {
+   "id": "angel",
+   "src": "angel_b",
+   "at": 10.7,
+   "len": 4.0,
+   "db": -7,
+   "fin": 0.2,
+   "fout": 1.0,
+   "prompt": "angelic choir sting (사장님 + boxes)"
+  },
+  {
+   "id": "dundun",
+   "src": "dundun_b",
+   "at": 16.6,
+   "db": -4,
+   "prompt": "sting on 「지금 회의 시작!」"
+  },
+  {
+   "id": "drag",
+   "src": "drag_b",
+   "at": 18.55,
+   "len": 2.4,
+   "db": -7,
+   "fout": 0.4,
+   "prompt": "질질"
+  },
+  {
+   "id": "n1",
+   "kind": "narration",
+   "src": "n1-cut",
+   "at": 13.2,
+   "len": 2.15,
+   "db": 2,
+   "text": "자연은… 예상을 빗나간다."
+  },
+  {
+   "id": "n2",
+   "kind": "narration",
+   "src": "n2-cut",
+   "at": 21.75,
+   "len": 2.04,
+   "db": 2,
+   "text": "그리고 회의는… 길었다."
+  }
+ ],
+ "ducks": [
+  {
+   "from": 13.0,
+   "to": 15.4,
+   "db": -8,
+   "ramp": 0.3
+  },
+  {
+   "from": 15.4,
+   "to": 15.53,
+   "db": -6.0,
+   "ramp": 0.01
+  },
+  {
+   "from": 15.53,
+   "to": 15.66,
+   "db": -4.0,
+   "ramp": 0.01
+  },
+  {
+   "from": 15.66,
+   "to": 15.79,
+   "db": -2.0,
+   "ramp": 0.01
+  },
+  {
+   "from": 21.55,
+   "to": 23.85,
+   "db": -12,
+   "ramp": 0.3
+  }
+ ]
+}

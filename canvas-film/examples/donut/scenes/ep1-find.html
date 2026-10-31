@@ -51,7 +51,7 @@ function pOffice(c, t, P) {
   C.chair(c, 640, 920, .6, 1);
   const breath = Math.sin(t * 2.1) * .02;
   C.draw(c, t, 'park', { x: 664, y: 920, s: .7, pose: 'sit', turn: .55, lean: .32 + breath, nod: .85, expr: 'dead', look: [.4, .5],
-    arms: { L: { to: [770, 690], hand: 'open', ang: .3 } } });
+    arms: { L: { to: [770, 690], hand: 'open', ang: .3 }, R: { to: [735, 694], hand: 'open', ang: .2 } } });   // both hands on the desk
   C.desk(c, 550, 702, 420, .6, { t, mx: .76, plant: false });
 }
 function oOffice(c, t, P) { tagLine(c, t, Wd.narr1, 34, 36, 40); }
@@ -86,7 +86,8 @@ function pWalk(c, t, P) {
   MG.figure(old);
   const x = walkX(t), stop = t > B.walk[1];
   c.fillStyle = MG.tone(c, .4); c.beginPath(); c.ellipse(x + 10, 728, 120, 16, 0, 0, TAU); c.fill();
-  C.draw(c, t, 'park', { x, y: 725, s: .8, turn: .55, pose: stop ? 'stand' : 'walk', ph: (x - WALK[0]) / 150, lean: .2, nod: .5, expr: 'dead', look: [.6, .3], hairEv: [B.walk[1]] });
+  C.draw(c, t, 'park', { x, y: 725, s: .8, turn: .32, pose: stop ? 'stand' : 'walk', ph: (x - WALK[0]) / 150, lean: .2, nod: .5, expr: 'dead', look: [.6, .3], hairEv: [B.walk[1]],
+    arms: { L: { to: [x + 46 + Math.sin((x - WALK[0]) / 150 * TAU) * 10, 532], hand: 'open', ang: 1.65 } } });   // the near arm dangles in front of the thigh (zombie walk)
 }
 function oWalk(c, t, P) {
   sfx(c, t, { text: Wd.sfx.step, x: 200, y: 560, size: 64, at: 8.9, out: 10.0, rot: .12, seed: 4 });
@@ -123,10 +124,10 @@ function pHand(c, t, P) {
   if (t > B.reach - .05) {
     const tr = t > B.reach + .75 ? WT.tremble(t, t > B.shadow ? 4 : 1.5, 14, 5) : [0, 0];
     const tgt = [DN[0] + 64, DN[1] - 44], dir = [.95, -.31];
-    const pull = lerp(620, 0, inK) + lerp(55, 0, creep) + 50 * fl;
-    const wr = [tgt[0] + dir[0] * pull + tr[0], tgt[1] + dir[1] * pull + tr[1]];
+    const pull = lerp(620, 0, inK) + lerp(55, 0, creep) + 12 * fl;
+    const wr = [tgt[0] + dir[0] * pull + tr[0], tgt[1] + dir[1] * pull + tr[1] - 16 * fl];   // the flinch: a small lift, same claw
     const shp = [wr[0] + 330, wr[1] - 430];   // shoulder above the panel top, up-right of the wrist: 542 px < l1 + l2 = 576, so the hand always reaches
-    A.reachArm(c, t, 'park', shp, wr, { sz: 72, l1: 72 * 4.6, l2: 72 * 3.4, pose: t > B.shadow + .05 ? 'open' : 'grab', aim: Math.PI - .32 + .25 * fl, pole: [.2, 1, .5] });
+    A.reachArm(c, t, 'park', shp, wr, { sz: 72, l1: 72 * 4.6, l2: 72 * 3.4, pose: 'grab', aim: Math.PI - .32, pole: [.2, 1, .5] });
   }
   A.castShadow(c, clamp((t - B.shadow) / .4), { x: 470, y: 250, s: 1.15, tone: .45 });
 }
@@ -154,7 +155,7 @@ function oChoi(c, t, P) {
   if (t >= B.choi) {
     const k = WT.backOut(clamp((t - B.choi) / .28), 2.2), hk = ss(B.choi + .02, B.choi + .17, t);
     const o = { x: lerp(190, 330, k), y: 1110, s: 1.7, turn: -.38, lean: lerp(0, -.3, k), expr: 'happy', hairEv: [B.choi + .26],
-      arms: { R: { to: [lerp(500, 690, hk), lerp(420, -150, hk)], hand: 'paper', ang: -1.45 } } };
+      arms: { R: { to: [lerp(560, 840, hk), lerp(430, -70, hk)], hand: 'paper', ang: -1.15 } } };   // up and OUT, clear of the head
     if (hk > .9) { const hd = C.geom(t, 'choi', o).hands.R; MG.ticks(c, hd.x, hd.y - 20, 150, { n: 7, a0: -Math.PI * .95, a1: -.05, len: 1, seed: 6 }); }   // behind the hand
     P.G = C.draw(c, t, 'choi', o);
   } else P.G = null;
@@ -176,7 +177,8 @@ function pEye(i) {
     const t0 = B.eyes - .35 + i * .2, k = eo(clamp((t - t0) / .28)); if (k <= 0) return;
     const x = P.w / 2 + E.dir * (1 - k) * 1100 + Math.sin(t * .9 + i) * 6;
     const G = A.eyeBand(c, t, E.who, x, 190, 6.8, { expr: E.expr, look: E.look(t), sway: .3 });
-    if (i === 0) WT.emote(c, t, 'sweat', G.head, { at: B.sweat, k: .42, side: -1 });
+    if (i === 0) { const [e0, e1] = G.eyes[0][0] < G.eyes[1][0] ? G.eyes : [G.eyes[1], G.eyes[0]], ed = e1[0] - e0[0], r = ed * .32;   // a drop at the temple, outside the lens
+      WT.emote(c, t, 'sweat', { x: e0[0] - ed * .78 + r, y: e0[1] - ed * .2 + r * .45, r, dir: -1 }, { at: B.sweat, side: -1 }); }
   };
 }
 function oEyes(c, t, P) {

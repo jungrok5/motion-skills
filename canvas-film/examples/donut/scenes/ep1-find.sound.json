@@ -1,0 +1,195 @@
+{
+ "duration": 24,
+ "music": [
+  {
+   "id": "m1",
+   "src": "m1_b",
+   "at": 0,
+   "len": 10.95,
+   "db": -7.5,
+   "fin": 0.4,
+   "fout": 0.6,
+   "prompt": "Lazy lo-fi office afternoon groove, 76 bpm, F major: Rhodes, vibraphone, brushed drums, upright bass (eleven_music_v2_5, 12 s)"
+  },
+  {
+   "id": "m2",
+   "src": "m2_b",
+   "at": 10.92,
+   "len": 13.08,
+   "db": -2,
+   "fout": 0.5,
+   "prompt": "Mock-epic orchestral hit (brass, choir pad, timpani, harp/celesta) dropping into suspense underscore; take has 0.5 s silence so the hit lands on the donut at 11.42"
+  }
+ ],
+ "sfx": [
+  {
+   "id": "pop",
+   "at": 0.3,
+   "db": -8,
+   "prompt": "cartoon whoosh-pop (title card)"
+  },
+  {
+   "id": "growl",
+   "src": "growl_b",
+   "at": 5.95,
+   "len": 1.9,
+   "db": -6,
+   "fout": 0.3,
+   "prompt": "꼬르륵 stomach growl"
+  },
+  {
+   "id": "shimmer",
+   "at": 11.62,
+   "db": -13,
+   "fout": 0.4,
+   "prompt": "sparkle shimmer on the donut"
+  },
+  {
+   "id": "glint",
+   "at": 17.45,
+   "db": -9,
+   "prompt": "김과장 eye glint shing"
+  },
+  {
+   "id": "pop2",
+   "src": "pop",
+   "at": 19.05,
+   "db": -6,
+   "prompt": "최주임 pops out"
+  },
+  {
+   "id": "heart1",
+   "src": "heart_b",
+   "at": 21.9,
+   "len": 0.7,
+   "db": -13,
+   "fout": 0.3,
+   "prompt": "두근"
+  },
+  {
+   "id": "heart2",
+   "src": "heart_b",
+   "at": 22.45,
+   "len": 0.7,
+   "db": -13,
+   "fout": 0.3,
+   "prompt": "두근"
+  },
+  {
+   "id": "n1",
+   "kind": "narration",
+   "src": "n1-cut",
+   "at": 2.55,
+   "len": 2.66,
+   "db": 2,
+   "text": "오후 세 시. 당이 떨어지는 시간."
+  },
+  {
+   "id": "n2",
+   "kind": "narration",
+   "src": "n2-cut",
+   "at": 8.15,
+   "len": 2.8,
+   "db": 2,
+   "text": "그리고… 그는 발견했다."
+  },
+  {
+   "id": "n3",
+   "kind": "narration",
+   "src": "n3-cut",
+   "at": 11.8,
+   "len": 1.87,
+   "db": 2,
+   "text": "마지막… 하나."
+  },
+  {
+   "id": "n4",
+   "kind": "narration",
+   "src": "n4-cut",
+   "at": 20.95,
+   "len": 2.62,
+   "db": 2,
+   "text": "그러나 이곳은… 정글이다."
+  }
+ ],
+ "ducks": [
+  {
+   "from": 2.3,
+   "to": 5.25,
+   "db": -10,
+   "ramp": 0.3
+  },
+  {
+   "from": 5.25,
+   "to": 5.38,
+   "db": -7.5,
+   "ramp": 0.01
+  },
+  {
+   "from": 5.38,
+   "to": 5.51,
+   "db": -5.0,
+   "ramp": 0.01
+  },
+  {
+   "from": 5.51,
+   "to": 5.64,
+   "db": -2.5,
+   "ramp": 0.01
+  },
+  {
+   "from": 7.9,
+   "to": 10.96,
+   "db": -10,
+   "ramp": 0.3
+  },
+  {
+   "from": 10.96,
+   "to": 11.09,
+   "db": -7.5,
+   "ramp": 0.01
+  },
+  {
+   "from": 11.09,
+   "to": 11.22,
+   "db": -5.0,
+   "ramp": 0.01
+  },
+  {
+   "from": 11.22,
+   "to": 11.35,
+   "db": -2.5,
+   "ramp": 0.01
+  },
+  {
+   "from": 11.58,
+   "to": 13.7,
+   "db": -18,
+   "ramp": 0.3
+  },
+  {
+   "from": 13.7,
+   "to": 13.83,
+   "db": -13.5,
+   "ramp": 0.01
+  },
+  {
+   "from": 13.83,
+   "to": 13.96,
+   "db": -9.0,
+   "ramp": 0.01
+  },
+  {
+   "from": 13.96,
+   "to": 14.09,
+   "db": -4.5,
+   "ramp": 0.01
+  },
+  {
+   "from": 20.7,
+   "to": 23.6,
+   "db": -14,
+   "ramp": 0.3
+  }
+ ]
+}

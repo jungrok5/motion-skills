@@ -1,0 +1,246 @@
+{
+ "duration": 26,
+ "music": [
+  {
+   "id": "m1",
+   "src": "m1_b",
+   "at": 0,
+   "len": 11.25,
+   "db": -3,
+   "fin": 0.4,
+   "fout": 0.3,
+   "prompt": "Mock-serious comedic tension, 96 bpm, D minor: pizzicato, low toms, bassoon (12 s; the take thins out at ~10 s)"
+  },
+  {
+   "id": "m2",
+   "src": "m2_b",
+   "at": 11.25,
+   "len": 6.15,
+   "db": -4.5,
+   "fout": 0.04,
+   "prompt": "Over-the-top shōnen battle orchestra, 150 bpm: taiko, brass stabs, strings, guitar (16 s); cut dead by the record scratch"
+  },
+  {
+   "id": "m2tail",
+   "src": "m2-tail",
+   "at": 18.85,
+   "len": 7.15,
+   "db": -4.5,
+   "fin": 0.15,
+   "fout": 0.4,
+   "prompt": "same take from 6.25 s, so its slow-motion climax (~11–13 s) sits under the lunge (23.6–25.6)"
+  }
+ ],
+ "sfx": [
+  {
+   "id": "rumble2",
+   "src": "rumble",
+   "at": 4.15,
+   "db": -6,
+   "fout": 0.4,
+   "prompt": "쿠구구구 dark aura (김과장)"
+  },
+  {
+   "id": "rumble3",
+   "src": "rumble",
+   "at": 6.95,
+   "db": -8,
+   "fout": 0.4,
+   "prompt": "쿠구구구 (two auras)"
+  },
+  {
+   "id": "shout",
+   "src": "impact_b",
+   "at": 11.25,
+   "db": -7,
+   "prompt": "impact on 그럼… 가위바위보!"
+  },
+  {
+   "id": "rps1a",
+   "src": "taiko",
+   "at": 13.6,
+   "db": 12,
+   "prompt": "가위!"
+  },
+  {
+   "id": "rps1b",
+   "src": "taiko",
+   "at": 14.05,
+   "db": 12,
+   "prompt": "바위!"
+  },
+  {
+   "id": "rps1c",
+   "src": "impact_b",
+   "at": 14.5,
+   "db": -2,
+   "prompt": "보! (all paper)"
+  },
+  {
+   "id": "rps2a",
+   "src": "taiko",
+   "at": 15.7,
+   "db": 10,
+   "prompt": "가위바위보! again"
+  },
+  {
+   "id": "rps2c",
+   "src": "impact_b",
+   "at": 16.22,
+   "db": -5,
+   "prompt": "보! again"
+  },
+  {
+   "id": "scratch",
+   "at": 17.4,
+   "db": -4,
+   "prompt": "record scratch → deadpan 「…」"
+  },
+  {
+   "id": "count1",
+   "src": "taiko",
+   "at": 22.9,
+   "db": 11,
+   "prompt": "하나"
+  },
+  {
+   "id": "count2",
+   "src": "taiko",
+   "at": 23.25,
+   "db": 11,
+   "prompt": "둘"
+  },
+  {
+   "id": "count3",
+   "src": "taiko",
+   "at": 23.6,
+   "db": 13,
+   "prompt": "셋!"
+  },
+  {
+   "id": "slowmo",
+   "src": "slowmo_b",
+   "at": 23.62,
+   "len": 2.38,
+   "db": -4,
+   "fout": 0.3,
+   "prompt": "slow-motion lunge whoosh"
+  },
+  {
+   "id": "n1",
+   "kind": "narration",
+   "src": "n1-cut",
+   "at": 0.05,
+   "len": 1.78,
+   "db": 2,
+   "text": "겉으로는, 양보."
+  },
+  {
+   "id": "n2",
+   "kind": "narration",
+   "src": "n2-cut",
+   "at": 7.58,
+   "len": 0.98,
+   "db": 2,
+   "text": "속으로는…"
+  },
+  {
+   "id": "n3",
+   "kind": "narration",
+   "src": "n3-cut",
+   "at": 9.25,
+   "len": 1.92,
+   "db": 2,
+   "text": "협상은, 결렬되었다."
+  },
+  {
+   "id": "n4",
+   "kind": "narration",
+   "src": "n4-cut",
+   "at": 20.98,
+   "len": 1.79,
+   "db": 2,
+   "text": "결전의… 순간."
+  }
+ ],
+ "ducks": [
+  {
+   "from": 0.02,
+   "to": 1.85,
+   "db": -10,
+   "ramp": 0.3
+  },
+  {
+   "from": 1.85,
+   "to": 1.98,
+   "db": -7.5,
+   "ramp": 0.01
+  },
+  {
+   "from": 1.98,
+   "to": 2.11,
+   "db": -5.0,
+   "ramp": 0.01
+  },
+  {
+   "from": 2.11,
+   "to": 2.24,
+   "db": -2.5,
+   "ramp": 0.01
+  },
+  {
+   "from": 7.35,
+   "to": 8.6,
+   "db": -15,
+   "ramp": 0.3
+  },
+  {
+   "from": 8.6,
+   "to": 8.73,
+   "db": -11.25,
+   "ramp": 0.01
+  },
+  {
+   "from": 8.73,
+   "to": 8.86,
+   "db": -7.5,
+   "ramp": 0.01
+  },
+  {
+   "from": 8.86,
+   "to": 8.99,
+   "db": -3.75,
+   "ramp": 0.01
+  },
+  {
+   "from": 9.0,
+   "to": 11.2,
+   "db": -10,
+   "ramp": 0.3
+  },
+  {
+   "from": 11.2,
+   "to": 11.33,
+   "db": -7.5,
+   "ramp": 0.01
+  },
+  {
+   "from": 11.33,
+   "to": 11.46,
+   "db": -5.0,
+   "ramp": 0.01
+  },
+  {
+   "from": 11.46,
+   "to": 11.59,
+   "db": -2.5,
+   "ramp": 0.01
+  },
+  {
+   "from": 20.75,
+   "to": 22.85,
+   "db": -30,
+   "ramp": 0.25
+  }
+ ]
+}

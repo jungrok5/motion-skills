@@ -37,7 +37,7 @@
     const ue = [e[0] - sh[0], e[1] - sh[1]], ul = Math.hypot(ue[0], ue[1]) || 1, fe = [w[0] - e[0], w[1] - e[1]], fl = Math.hypot(fe[0], fe[1]) || 1;
     const at = (p, v, k) => [p[0] + v[0] * k, p[1] + v[1] * k];
     // upper arm in the shirt sleeve (shoulder → elbow), then the bare forearm (elbow → wrist), the rolled cuff over the joint
-    MG.ink(ctx, MG.tube([at(sh, ue, -(o.past ?? .6)), sh, at(sh, ue, .5), at(sh, ue, 1.06)], [sz * .66, sz * .62, sz * .58, sz * .52]), SHIRT(0, 10));   // the sleeve runs on past the shoulder (off-panel torso)
+    MG.ink(ctx, MG.tube([at(sh, ue, -(o.past ?? .6)), sh, at(sh, ue, .5), at(sh, ue, 1.06)], [sz * .6, sz * .6, sz * .58, sz * .55]), Object.assign({ smooth: false }, SHIRT(0, 10)));   // the sleeve runs on past the shoulder (off-panel torso)
     MG.ink(ctx, MG.tube([at(e, fe, -.06), at(e, fe, .5), w], [sz * .44, sz * .4, sz * .34]), SKIN);
     if (o.roll !== false) MG.ink(ctx, MG.tube([at(e, fe, -.02), at(e, fe, .1), at(e, fe, .2)], [sz * .56, sz * .56, sz * .53]), SHIRT(0, 6));
     MG.figure(old);
@@ -61,7 +61,7 @@
     MG.ink(ctx, MG.tube([[X(565), Y(24)], [X(515), Y(26)], [X(470), Y(28)]], [60 * k, 60 * k, 57 * k]), SHIRT(0, 8));
     MG.figure(old);
     const G = C.face(ctx, t, who, X(-10), Y(-140) + br * .3, s, Object.assign({ expr: o.expr || 'dead', tilt: -1.2 * sd }, o.face || {}));
-    C.hand(ctx, who, 'open', X(60), Y(50), sd > 0 ? Math.PI + .1 : -.1, 46 * k, { sleeve: false, flip: sd, t });
+    C.hand(ctx, who, 'open', X(118), Y(51), sd > 0 ? Math.PI + .06 : -.06, 46 * k, { sleeve: false, flip: sd, t });   // the wrist AT the forearm's end
     return G;
   };
 
