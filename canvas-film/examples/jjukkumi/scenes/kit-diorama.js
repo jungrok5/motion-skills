@@ -625,12 +625,12 @@
     }
     ctx.restore();
   };
-  // clink(ctx, x, y, k, s = 1): a small symmetric impact mark above a meeting point (glasses, hands): five short gold
-  // strokes fanning upward that fly out and fade as k goes 0 → 1. No particles.
-  K.clink = function (ctx, x, y, k, s = 1) {
+  // clink(ctx, x, y, k, s = 1, spread = 64): a small symmetric impact mark above a meeting point (glasses, hands): five
+  // short gold strokes fanning upward (±spread°) that fly out and fade as k goes 0 → 1. No particles.
+  K.clink = function (ctx, x, y, k, s = 1, spread = 64) {
     if (k <= 0 || k >= 1) return; const a = 1 - k * k, r0 = (16 + 26 * eo(k)) * s, len = 22 * (1 - .6 * k) * s;
     ctx.save(); ctx.lineCap = 'round';
-    for (const d of [-64, -32, 0, 32, 64]) { const an = (-90 + d) * Math.PI / 180, c = Math.cos(an), sn = Math.sin(an), l = d ? len * .8 : len;
+    for (const d of [-spread, -spread / 2, 0, spread / 2, spread]) { const an = (-90 + d) * Math.PI / 180, c = Math.cos(an), sn = Math.sin(an), l = d ? len * .8 : len;
       ctx.strokeStyle = K.rgba(K.C.ink, .5 * a); ctx.lineWidth = 7 * s; ctx.beginPath(); ctx.moveTo(x + c * r0, y + sn * r0); ctx.lineTo(x + c * (r0 + l), y + sn * (r0 + l)); ctx.stroke();
       ctx.strokeStyle = K.rgba(K.C.goldLt, a); ctx.lineWidth = 4 * s; ctx.stroke(); }
     ctx.restore();

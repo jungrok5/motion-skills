@@ -44,7 +44,6 @@ function buildLand() {
 // ---------------- timing helpers ----------------
 const openK = t => eio((t - B.open[0]) / (B.open[1] - B.open[0]));   // the door swing
 const winK = (t, i) => K.lightOn(t, B.win[i]);
-const op0 = t => openK(t);
 
 // ---------------- the three people ----------------
 function guestA(t) {
@@ -125,7 +124,7 @@ function draw(ctx, t) {
   K.layer(ctx, LAND.hills, pal.mid2, { liftA: .18 });
   K.layer(ctx, LAND.trees, pal.mid2, { liftA: .18 });
   ctx.fillStyle = Pilot.rgb(Pilot.mix(pal.mid2, [10, 8, 10], .45)); ctx.fill(LAND.fence);
-  const HO = op0(t) > 0 ? hosts(t) : [];                          // the hosts (posed once per frame)
+  const HO = openK(t) > 0 ? hosts(t) : [];                          // the hosts (posed once per frame)
   const lampOn = K.lightOn(t, B.lamp), wins = [winK(t, 0), winK(t, 1), winK(t, 2)], op = openK(t);
   K.lamp(ctx, 110, G, 300, lampOn);
   K.house(ctx, HOUSE, { win: wins, door: op, lantern: K.lightOn(t, B.lantern), doorWin: wins[0] },

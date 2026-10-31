@@ -191,7 +191,7 @@ function draw(ctx, t) {
   D.night(ctx, .55);
   D.lampGlow(ctx, 196, 1300, 1, 1); D.lampGlow(ctx, 884, 1300, 1, 1);
   D.steam(ctx, 540, 1350, 150, 260, t, 1);
-  D.clink(ctx, 540, 1118, (t - B.clink) / .6, 1.7);
+  D.clink(ctx, 540, 1126, (t - B.clink) / .6, 1.25, 36);
   D.curtains(ctx, D.slide(t, B.open, 2.4), { top: 240, tieY: 1000 });
   D.pelmet(ctx, { y: 250 });
   ctx.restore();
