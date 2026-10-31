@@ -6,7 +6,8 @@
                                        → Cast.drawHand at the wrist, its angle clamped ≤ 80° off the forearm. The sleeve follows the bones
                                        (박대리: shirt to a roll below the elbow, skin forearm; 김과장: white shirt + cuff; 최주임: black blazer,
                                        hoodie cuff, black wristband). o { sh, wrist, ang, sz, flip, pole [x, y], L1, L2 (× sz), halo (paper outline
-                                       px, for black panels) } → { grip, tip, elbow, wrist, reach }
+                                       px, for black panels), lite (a black sleeve printed as dark dot tone so it reads on black), back (back of the
+                                       hand toward camera: knuckle bumps) } → { grip, tip, elbow, wrist, reach }
      EP2.flame(ctx, t, o)              a solid black flame aura (fake-epic menace) rising behind a figure: o { x, y (base centre), w, h, k (0…1),
                                        n (tongues), seed, edge (paper edge line, for black panels), licks (white flame licks) }
      EP2.rumble(ctx, t, o)             쿠구구구 as chunky white Manga.sfx letters that tremble (o as Manga.sfx + lines, dx, dy, tremble)
@@ -57,7 +58,8 @@
       const bk = k => [wr[0] - ux * sz * k, wr[1] - uy * sz * k], outer = sleeveKey === 'outer' ? tube([el, bk(1.45)], [.5, .5]) : null;
       for (const p of [upper, roll ? tube([el, rollAt], [.5, .48]) : null, outer || fore]) if (p) { const q = MG.pathOf(p, true, true); ctx.stroke(q); ctx.fill(q); } ctx.restore();
     }
-    const sp = paintOf(S, sleeveKey, lx, ly);
+    const lite = o.lite && C.style !== 'riso', liteP = { fill: PAP(), tone: .55, shade: { tone: .78, dx: lx, dy: ly } };
+    const sp = lite && (S.look[sleeveKey] || {}).ink ? liteP : paintOf(S, sleeveKey, lx, ly);
     if (roll) {
       MG.ink(ctx, tube([sh, el, rollAt], [.6, .5, .48]), Object.assign({ lw: 1 }, sp));
       MG.ink(ctx, fore, Object.assign({ lw: 1 }, paintOf(S, 'skin', 0, 0)));
@@ -71,13 +73,18 @@
         MG.ink(ctx, tube([el, lp(el, back(1.2), .5), back(1.2)], [.5, .47, .45]), Object.assign({ lw: 1 }, sp));
         MG.ink(ctx, tube([back(1.28), back(.86)], [.42, .4]), Object.assign({ lw: .9 }, paintOf(S, 'shirt', lx, ly)));
         MG.ink(ctx, tube([back(1.45), back(1.1)], [.5, .49]), Object.assign({ lw: .9 }, sp));
-        if (S.band) MG.ink(ctx, tube([back(.62), back(.3)], [.4, .39]), Object.assign({ lw: .9 }, paintOf(S, 'band', lx, ly)));
+        if (S.band) MG.ink(ctx, tube([back(.62), back(.3)], [.4, .39]), Object.assign({ lw: .9 }, lite ? { fill: PAP(), tone: .8 } : paintOf(S, 'band', lx, ly)));
       } else {
         MG.ink(ctx, fore, Object.assign({ lw: 1 }, sp));
         MG.ink(ctx, tube([back(.7), back(.16)], [.47, .45]), Object.assign({ lw: .9 }, sp));   // shirt cuff
       }
     }
     const H = C.drawHand(ctx, pose, wr[0], wr[1], ang, sz, o.flip ?? 1, S, {});
+    if (o.back) {   // the back of the hand toward camera: knuckle bumps + two tendon lines
+      ctx.save(); ctx.strokeStyle = INK(); ctx.lineCap = 'round'; ctx.lineWidth = MG.lwScreen() * .5;
+      for (const v of [-.27, -.09, .09, .27]) { const c0 = H.P(.8, v); ctx.beginPath(); ctx.arc(c0[0], c0[1], sz * .075, ang - 1.3, ang + 1.3); ctx.stroke(); }
+      for (const v of [-.14, .1]) { const a0 = H.P(.3, v * .7), a1 = H.P(.66, v); ctx.beginPath(); ctx.moveTo(a0[0], a0[1]); ctx.lineTo(a1[0], a1[1]); ctx.stroke(); }
+      ctx.restore(); }
     ctx.restore(); MG.figure(old);
     return Object.assign(H, { elbow: el, wrist: wr, reach: sol.reach, ang });
   };

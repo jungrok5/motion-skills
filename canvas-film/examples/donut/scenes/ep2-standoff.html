@@ -81,7 +81,7 @@ function pantry(c, t, P) {
   C.fridge(c, 700, 830, .78);
   const ex = t < B.polite ? 'glint' : 'smile';
   C.draw(c, t, 'choi', { x: 530, y: 905, s: 1.04, turn: -.12, expr: ex, nod: .1, hairEv: [.2] });   // 최주임 behind the counter
-  C.counter(c, 210, 600, 640, .7);
+  C.counter(c, 210, 600, 640, .97);   // cabinets run down to y ≈ 920, past 최주임's feet (905)
   C.coffee(c, 300, 600, .55);
   C.box(c, BOX.x, BOX.y, BOX.w, { n: 1, last: true, seed: 2, lid: .55 });
   X.spark(c, t, BOX.x + 64, BOX.y - 112, 14 * (.7 + .3 * Math.abs(Math.sin(t * 3))));   // the last donut twinkles
@@ -89,14 +89,14 @@ function pantry(c, t, P) {
   const gp = C.draw(c, t, 'park', { x: 190, y: 990, s: 1.1, turn: .5, expr: ex, mouth: mouthOf(t, 'offer1', 'smile'), lean: .04 * off,
     arms: { L: { to: [lerp(270, 400, off), lerp(700, 560, off)], hand: off > .3 ? 'cup' : 'open', ang: -.25 } } });
   C.draw(c, t, 'kim', { x: 900, y: 990, s: 1.1, turn: -.5, expr: ex,
-    arms: { R: { to: [850, 560], hand: 'hold', prop: (cc, H) => C.mug(cc, H.grip[0] - 6, H.grip[1] + 30, .7, { steam: true, t }) } } });
+    arms: { R: { to: [846, 560], hand: 'hold', prop: (cc, H) => C.mug(cc, H.grip[0] - 8, H.grip[1] + 40, 1.2, { steam: true, t }) }, L: { to: [858, 618], hand: 'cup', ang: -.2 } } });
   WT.balloon(c, t, say('offer1', { kind: 'talk', x: 330, y: 150, tail: beside(gp, 1, -.6), maxW: 420 }));
 }
 function kimPanel(c, t, P) {
   const k = ss(B.aura2, B.aura2 + 1.1, t);
   C.room(c, t, 'pantry', P.w, P.h, { horizon: 1400 });
   const o = { x: 650, y: 1660, s: 2.3, turn: -.42, expr: 'smile', mouth: mouthOf(t, 'offer2', 'smile'), nod: -.1,
-    arms: { R: { to: [600, 760], hand: 'hold', prop: (cc, H) => C.mug(cc, H.grip[0] - 12, H.grip[1] + 66, 1.5, { steam: t < B.aura2 + .6, t }) } } };
+    arms: { R: { to: [600, 760], hand: 'hold', prop: (cc, H) => C.mug(cc, H.grip[0] - 34, H.grip[1] + 70, 1.5, { steam: t < B.aura2 + .6, t }) } } };
   const g0 = C.geom(t, 'kim', o);
   X.flame(c, t, { x: g0.head.x + 10, y: g0.head.y + 420, w: 820, h: 760, k, seed: 4, n: 8 });
   const G = C.draw(c, t, 'kim', o);
@@ -153,7 +153,7 @@ function rps(c, t, P, n) {
     const pre = t < T.beats[0] ? .3 * Math.sin(t * 9) : 0, thrust = hit ? 50 * eo(clamp((t - T.reveal) / .12)) : 0;
     const d = (450 + 110 * pump + 20 * pre - thrust) * k, ca = Math.cos(h.dir), sa = Math.sin(h.dir), dSh = 400 * k + Ltot * .97;
     const [tx, ty] = hit ? [0, 0] : WT.tremble(t, 3, 14, h.who.length);
-    X.arm(c, t, h.who, hit ? 'paper' : 'rock', { sh: [cx - ca * dSh, cy - sa * dSh], wrist: [cx - ca * d + tx, cy - sa * d + ty], ang: h.dir, sz, flip: h.flip, pole: h.pole, halo: hit ? 0 : 7 });
+    X.arm(c, t, h.who, hit ? 'paper' : 'rock', { sh: [cx - ca * dSh, cy - sa * dSh], wrist: [cx - ca * d + tx, cy - sa * d + ty], ang: h.dir, sz, flip: h.flip, pole: h.pole, halo: hit ? 0 : 7, lite: !hit });
   }
   if (hit) { MG.ticks(c, cx, cy, 120 * k, { n: 9, a0: 0, a1: TAU, len: 1.1, seed: n });
     X.drop(c, t, cx - 330 * k, cy - 260 * k, 50 * k, T.sweat, { ang: -.3 }); X.drop(c, t, cx + 330 * k, cy - 240 * k, 44 * k, T.sweat + .12, { ang: .3 }); if (n === 2) X.drop(c, t, cx + 60 * k, cy + 330 * k, 56 * k, T.sweat + .2, { ang: .1 }); }
@@ -186,9 +186,9 @@ function deadpan(c, t, P) {   // flat SD aftermath on bare paper: three blank fa
 function planPanel(c, t, P) {
   fill(c, P, PAPL);
   if (t >= B.plan) MG.focus(c, t, { x: 0, y: -80, w: P.w, h: P.h + 80, cx: P.w * .45, cy: 640, rx: 360, ry: 470, n: 76, wMax: 24, seed: 31 });
-  const raise = ss(B.plan - .05, B.plan + .25, t);
+  const raise = ss(B.plan - .35, B.plan + .2, t);
   const G = C.draw(c, t, 'park', { x: 430, y: 2130, s: 2.6, turn: .3, expr: 'glint', mouth: mouthOf(t, 'plan', 'smirk'), nod: .1,
-    arms: { R: { to: [lerp(640, 720, raise), lerp(1250, 560, raise)], hand: 'point', ang: -1.5, front: true } } });
+    arms: { R: { to: [lerp(650, 720, raise), lerp(980, 560, raise)], hand: 'point', ang: -1.5, front: true } } });
   X.spark(c, t, G.eyes[1][0] + 18, G.eyes[1][1] - 26, 44, B.glint);
   WT.balloon(c, t, say('plan', { kind: 'shout', x: 480, y: 210, tail: beside(G, -1, -1), maxW: 600, size: 64 }));
 }
@@ -212,8 +212,8 @@ function lungeBg(c, t, P) {
 }
 // slow motion: a quick start that bleeds into an almost-stop just short of contact
 const lungeK = t => { const [a, b] = B.lunge, u = clamp((t - a) / (b - a)); return 1 - Math.pow(1 - u, 2.8); };
-const LUNGE = [{ who: 'park', ang: .36, flip: 1, hide: 700, ready: 330, pole: [0, 1] }, { who: 'kim', ang: Math.PI - .36, flip: -1, hide: 700, ready: 330, pole: [0, 1] },
-  { who: 'choi', ang: Math.PI / 2, flip: 1, hide: 1250, ready: 520, pole: [1, 0] }];
+const LUNGE = [{ who: 'park', ang: .36, flip: 1, hide: 640, ready: 640, pole: [0, 1], body: 1 }, { who: 'kim', ang: Math.PI - .36, flip: -1, hide: 640, ready: 640, pole: [0, 1], body: 1 },
+  { who: 'choi', ang: Math.PI / 2, flip: -1, hide: 1250, ready: 520, pole: [1, 0], body: .6, back: true }];
 const HSZ = 122, GAPD = 46, LT = (3.1 + 2.75) * HSZ;
 function handAt(h, P, back) {   // wrist position for a hand `back` px behind its final pose (fingertips GAPD short of the glaze)
   const [dx, dy] = DON(P), ca = Math.cos(h.ang), sa = Math.sin(h.ang), rd = 1 / Math.hypot(ca / DR, sa / (DR * .62)) + 18 * Math.abs(sa);
@@ -221,22 +221,22 @@ function handAt(h, P, back) {   // wrist position for a hand `back` px behind it
   return [tip[0] - ca * L, tip[1] - sa * L];
 }
 function lungeHands(c, t, P) {
+  // the border gives way (drawn first: debris stays behind the hands) where the arms burst through
+  for (const h of LUNGE) { const a = handAt(h, P, h.ready), ca = Math.cos(h.ang), sa = Math.sin(h.ang);
+    const s = Math.abs(ca) > .3 ? (ca > 0 ? -a[0] / ca : (P.w - a[0]) / ca) : -a[1] / sa, hit = [a[0] + ca * s, a[1] + sa * s];
+    if (hit[1] < 0) { const s2 = -a[1] / sa; hit[0] = a[0] + ca * s2; hit[1] = 0; }
+    X.shards(c, t, hit[0], hit[1], h.ang + Math.PI, B.lunge[0] + (h.body === 1 ? .43 : .05), { seed: h.who.length * 3 }); }   // sides: when the fingertips reach the border
   c.save(); c.beginPath(); c.rect(-500, -158, P.w + 1000, P.h + 700); c.clip();   // may break out of the panel, never into the panel above
   const k = lungeK(t), coil = ss(B.count[0] - .15, B.count[1] + .2, t);
   for (const h of LUNGE) {
     const back = t < B.lunge[0] ? lerp(h.hide, h.ready, eo(coil)) : lerp(h.ready, 0, k), pose = k > .5 ? 'grab' : 'open', sz = HSZ * lerp(1, 1.06, k);
     const ca = Math.cos(h.ang), sa = Math.sin(h.ang), wf = handAt(h, P, 0), w = handAt(h, P, back);
-    const sh = [wf[0] - ca * (LT * .95 + back * .6), wf[1] - sa * (LT * .95 + back * .6)];   // the body lunges too: the shoulder travels 60 % of the hand's way
+    const sh = [wf[0] - ca * (LT * .95 + back * h.body), wf[1] - sa * (LT * .95 + back * h.body)];   // the body lunges too: the shoulder travels with the hand (sides: all the way, a straight arm)
     if (t > B.lunge[0] && k < .97) X.streaks(c, t, w[0], w[1], h.ang, { n: 5, len: 300, spread: 90, w: 12, seed: h.who.length, alpha: 1 - k });
     const [tx, ty] = WT.tremble(t, 1.5 + 2 * k, 12, h.ang * 10);
-    X.arm(c, t, h.who, pose, { sh, wrist: [w[0] + tx, w[1] + ty], ang: h.ang, sz, flip: h.flip, pole: h.pole });
+    X.arm(c, t, h.who, pose, { sh, wrist: [w[0] + tx, w[1] + ty], ang: h.ang, sz, flip: h.flip, pole: h.pole, back: h.back });
   }
   c.restore();
-  // the border gives way where the arms burst through
-  for (const h of LUNGE) { const a = handAt(h, P, h.ready), ca = Math.cos(h.ang), sa = Math.sin(h.ang);
-    const s = Math.abs(ca) > .3 ? (ca > 0 ? -a[0] / ca : (P.w - a[0]) / ca) : -a[1] / sa, hit = [a[0] + ca * s, a[1] + sa * s];
-    if (hit[1] < 0) { const s2 = -a[1] / sa; hit[0] = a[0] + ca * s2; hit[1] = 0; }
-    X.shards(c, t, hit[0], hit[1], h.ang + Math.PI, B.lunge[0] + .05, { seed: h.who.length * 3 }); }
   const [a, b, r] = B.count;
   if (t < B.lunge[0] + .6) { MG.sfx(c, t, { text: S.sfx.count[0], x: 200, y: 300, size: 120, at: a, rot: -.12, seed: 8 }); MG.sfx(c, t, { text: S.sfx.count[1], x: P.w - 190, y: 300, size: 120, at: b, rot: .1, seed: 9 }); }
   if (t < B.lunge[0] + 1.2) MG.sfx(c, t, { text: S.sfx.count[2], x: 250, y: 560, size: 200, at: r, rot: -.08, seed: 10 });
