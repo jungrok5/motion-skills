@@ -13,8 +13,8 @@
 //   node <skill>/scripts/render.mjs v --scene seed --cut short      → the SCRIPT.cuts.short version (out/seed-short-v.mp4)
 // A sibling scenes/<scene>.wav (from mix.py) is muxed in automatically.
 // Options: --root <dir> --page <path.html> --fps 30 --workers 4 --from 0 --to <sec>
-// Needs: Playwright (Chromium) + ffmpeg, and the scene fonts installed locally (Google Fonts is blocked while
-// recording, so the output never depends on the network).
+// Needs: Playwright (Chromium) + ffmpeg, and the scene fonts: film.json's fonts.base/local TTFs in $FONTS_DIR (default
+// ~/.local/share/fonts) or installed; the render stops if a named family is missing (it never touches the network).
 import { createRequire } from 'node:module';
 import { spawn, execSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, rmSync, existsSync, readFileSync } from 'node:fs';
@@ -56,11 +56,29 @@ const glAble = glmode !== 'off' && /__glFrame/.test(pageSrc);
 let glDir = null, glReady = false;   // set after the probe page: the scene may name its own cache key (__glFrame.key)
 const wav = page$.replace(/\.html$/, cut ? `-${cut}.wav` : '.wav');
 
+// Fonts: the Google Fonts stylesheet is answered with local @font-face rules for the faces film.json names (fonts.base +
+// fonts.local, TTFs in $FONTS_DIR, default ~/.local/share/fonts), so a render never touches the network and never depends
+// on what the machine happens to have installed. Then every fonts.base family is checked against a font that cannot exist:
+// without this, a machine lacking the face silently draws the whole film in its default serif (on Windows: Batang with
+// faux bold — a 2-min film went out like that before anyone noticed, one-scroll-bible 2026-10-31).
+const FONTS_DIR = resolve((process.env.FONTS_DIR || join(process.env.HOME || process.env.USERPROFILE || '.', '.local/share/fonts')).replace(/^~/, process.env.HOME || process.env.USERPROFILE || '~'));
+let filmJson = {}; try { filmJson = JSON.parse(readFileSync(join(root, 'film.json'), 'utf8')); } catch {}
+const FACES = [...((filmJson.fonts || {}).base || []).map(([fam, , file]) => [fam, file]), ...Object.entries((filmJson.fonts || {}).local || {})];
+const FONT_CSS = FACES.filter(([, f]) => f && existsSync(join(FONTS_DIR, f))).map(([fam, f]) => `@font-face{font-family:'${fam}';src:url('${pathToFileURL(join(FONTS_DIR, f)).href}');font-weight:100 900;}`).join('\n');
+const FAMILIES = [...new Set(((filmJson.fonts || {}).base || []).map(([fam]) => fam))];   // checked: the faces every language uses
 async function openPage(browser) {
   const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
-  await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
+  await page.route(/fonts\.googleapis\.com/, r => FONT_CSS ? r.fulfill({ status: 200, contentType: 'text/css', body: FONT_CSS }) : r.abort());
+  await page.route(/fonts\.gstatic\.com/, r => r.abort());
   await page.goto(url);
   await page.waitForFunction(() => window.__ready === true, null, { timeout: 120000 });
+  const missing = await page.evaluate(async fams => {
+    await Promise.all(fams.flatMap(f => [400, 600, 700].map(w => document.fonts.load(`${w} 40px '${f}'`, 'Aa 가나 123'))));
+    // document.fonts.check() is true for a family nobody declared, so compare widths against a face that cannot exist
+    const c = document.createElement('canvas').getContext('2d'), w = f => { c.font = f; return c.measureText('Hamburgefonstiv 하나님이 123').width; };
+    return fams.filter(f => w(`600 40px '${f}'`) === w(`600 40px 'NoSuchFont-cf', '${f}-missing'`));
+  }, FAMILIES);
+  if (missing.length) throw new Error(`font(s) not available: ${missing.join(', ')} — install them, or put the TTFs film.json names in ${FONTS_DIR} (or set FONTS_DIR)`);
   return page;
 }
 

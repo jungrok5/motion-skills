@@ -194,3 +194,23 @@
 - Scenes mix style and story; packaging the style (kits/) is what makes the next film fast. Verify a refactor by diffing
   stills (or frame hashes) before/after rendered in the same seek order — ±1 can come from seek order alone.
 - Several kits in one film: their templates use different beat names, so each starts with its own placeholder script.
+
+**A narrated single-shot film** (one-scroll-bible 「침묵의 400년」, 2026-10 — 3 min, both orientations, 4 languages)
+- Font fallback went unnoticed: Noto Serif KR was not installed on the Windows render box, so the whole film rendered in
+  Batang with faux bold and was published like that. Contact sheets looked "fine" because nobody compared against the
+  intended face. render.mjs now answers Google Fonts with the TTFs film.json names and **stops** if a `fonts.base`
+  family is missing (a width check against a font that cannot exist; `document.fonts.check()` says yes to undeclared families).
+- Text over art: every narrated line anchors its last line to one baseline near the bottom; pictures keep above a
+  SAFE line; over a light picture (parchment, map) a dark band carries the words. Scan every second of a render
+  (crop the text band, tile it) before sending a draft — overlaps hide between the stills you happened to pick.
+- Translated lines break differently: write break points into the source (`/`) and let each language move them;
+  a 3-line piece in English covered the art where Korean took 2. Labels laid out at fixed gaps (medallions) need a
+  gap measured from the longest translated label.
+- YouTube chapters need ≥ 10 s each and start at 0:00, or the whole chapter list is silently dropped.
+- Captions on the top: upload WebVTT with `line:6% position:50% align:center` — SRT ignores position; check the
+  watch page (and ask TV viewers) that it really sits on top.
+- A whole section on ONE map (camera keys, nothing cuts) explained "it was all prepared" far better than cuts between
+  maps. Light that runs along a scroll or a road reads as connection; use it sparingly (it was the film's climax twice).
+- Packaging: the film's three looks became kits (`lamplit`, `inkmap`, `illuminated`) by moving functions verbatim and
+  aliasing them in the film; 276 stills before/after, max diff 0. Dead code turned up on the way (a simpler sky the film
+  no longer drew) — kit what the film actually draws.
