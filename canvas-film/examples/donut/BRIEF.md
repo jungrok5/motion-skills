@@ -2,7 +2,7 @@
 
 A ~74 s **portrait** (1080×1920) **motion webtoon** (무빙툰) drawn entirely in code with the canvas-film harness, in a new
 style kit **`webtoon`** built from a survey of webtoon/manga craft collected on GitHub
-(`/tmp/claude-0/-home-user-motion-skills/fd9eea32-8e0a-5b99-b5e8-2c64b44dab5a/scratchpad/webtoon-research.md` — read it
+(`canvas-film/kits/webtoon/RESEARCH.md` — read it
 first; credit the sources you actually borrow from in the kit's STYLE.md). **No sound.** All-ages office comedy.
 
 ## The story (original)
@@ -45,7 +45,7 @@ or the bottom 300 px of the frame (phone UI) — the scroll can carry panels thr
 `../../references/SCENE-RULES.md` applies (pure `draw(ctx,t)`, seeded rng only — no `Math.random`, both orientations: this
 film is portrait-only, landscape may pillarbox; every string through `Pilot.text`/`Pilot.tr`). Bodies: `../../references/BODY-CHECK.md`
 (2-bone IK, hands at the grip, held things move with the hand). Fonts installed and in film.json: Noto Sans KR, Noto Serif KR,
-Do Hyeon, Black Han Sans, Nanum Pen Script, Jua (+ Gaegu installed but not listed). Render stills from this project root:
+Do Hyeon, Black Han Sans, Nanum Pen Script, Jua, Gaegu. Render stills from this project root:
 `node ../../scripts/render.mjs v --scene <id> --stills 1,3,…` and LOOK at every PNG.
 
 ## Files
