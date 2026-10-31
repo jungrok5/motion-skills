@@ -64,24 +64,27 @@
   };
 
   // ================================================================ setup
-  let grain = null, vign = null, curL = null, val = null, scratch = null, sx = null, lit = null, lx = null, STARS = [];
-  // init({ accent, seed = 7 }): builds the paper grain, vignette, curtain and valance sprites, the star field and the
+  let grain = null, curL = null, curOpen = null, val = null, scratch = null, sx = null, lit = null, lx = null, STARS = [];
+  // init({ accent, seed = 7, vignette = 1 }): builds the paper grain (with the vignette baked in), curtain and valance sprites, the star field and the
   // scratch/light layers (~150 ms). Call once from Pilot.run({ init }).
   K.init = function (o = {}) {
     if (o.accent) K.ACCENT = o.accent;
     const seed = o.seed ?? 7;
-    // paper grain, half resolution: fibre mottling + fine tooth, centred on mid-grey (drawn with soft-light)
-    { const w = 540, h = 960; grain = canvas(w, h); const x = grain.getContext('2d'), d = x.createImageData(w, h), r = rng(seed);
+    // paper grain + vignette in ONE full-resolution sheet, laid with 'overlay' (mid-grey = no change, darker = darker):
+    // fibre mottling and fine tooth built at half resolution and scaled up once, the vignette baked in as darkening
+    // toward the corners. One unscaled overlay blit ≈ 4 ms (a scaled soft-light pass cost 30 ms).
+    { const w = 540, h = 960, half = canvas(w, h), x = half.getContext('2d'), d = x.createImageData(w, h), r = rng(seed);
       for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
         const m = fbm(i * .02, j * .02, 3) - .5, fib = noise(i * .6, j * .05) - .5, v = 128 + 26 * m + 10 * fib + (r() - .5) * 22;
         const p = (j * w + i) * 4; d.data[p] = d.data[p + 1] = d.data[p + 2] = v; d.data[p + 3] = 255;
       }
-      x.putImageData(d, 0, 0); }
-    // vignette (quarter res, scaled up)
-    { vign = canvas(270, 480); const x = vign.getContext('2d'), g = x.createRadialGradient(135, 230, 60, 135, 240, 300);
-      g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(.6, 'rgba(10,4,6,.12)'); g.addColorStop(1, 'rgba(10,4,6,.62)');
-      x.fillStyle = g; x.fillRect(0, 0, 270, 480); }
+      x.putImageData(d, 0, 0);
+      grain = canvas(K.W, K.H); const gx = grain.getContext('2d'); gx.drawImage(half, 0, 0, K.W, K.H);
+      const vs = o.vignette ?? 1, g = gx.createRadialGradient(540, 920, 120, 540, 960, 1180);
+      g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(.55, `rgba(0,0,0,${.1 * vs})`); g.addColorStop(1, `rgba(0,0,0,${.62 * vs})`);
+      gx.fillStyle = g; gx.fillRect(0, 0, K.W, K.H); }
     curL = buildCurtain(seed); val = buildValance(seed);
+    curOpen = canvas(92 + 20, K.H); curOpen.getContext('2d').drawImage(curL, 0, 0, 580, K.H, 0, 0, 112, K.H);   // the gathered curtain, pre-scaled
     scratch = canvas(K.W, K.H); sx = scratch.getContext('2d');
     lit = canvas(K.W, K.H); lx = lit.getContext('2d');
     // the star field: positions over the upper sky, each with its own "comes out at" threshold
@@ -228,12 +231,12 @@
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, Pilot.W, Pilot.H);
     if (Pilot.ori !== 'v') { ctx.translate((Pilot.W - K.W * Pilot.H / K.H) / 2, 0); ctx.scale(Pilot.H / K.H, Pilot.H / K.H); ctx.beginPath(); ctx.rect(0, 0, K.W, K.H); ctx.clip(); }
   };
-  // sky(ctx, k, { y0 = 0, y1 = 1500 }) → the palette (skyAt(k)): the painted sky for time-of-day k, zenith at y0,
-  // horizon at y1 (below y1 it keeps the horizon colour).
+  // sky(ctx, k, { y0 = 0, y1 = 1500, below = 80 }) → the palette (skyAt(k)): the painted sky for time-of-day k, zenith
+  // at y0, horizon at y1; it is filled only down to y1 + below (the ground must cover the rest — saves ~2 ms).
   K.sky = function (ctx, k, o = {}) {
     const pal = K.skyAt(k), y0 = o.y0 ?? 0, y1 = o.y1 ?? 1500, g = ctx.createLinearGradient(0, y0, 0, y1);
     g.addColorStop(0, rgb(pal.top)); g.addColorStop(.5, rgb(pal.mid)); g.addColorStop(1, rgb(pal.low));
-    ctx.fillStyle = g; ctx.fillRect(0, 0, K.W, K.H);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, K.W, Math.min(K.H, y1 + (o.below ?? 80)));
     return pal;
   };
   // halo(ctx, x, y, r, rgbArr, a): a soft round glow around a light source (sun, moon, lamp) — only ever AT a source
@@ -437,9 +440,9 @@
 
   // ================================================================ light on the ground (door wedge), shadows
   // lightBegin() → the light layer's ctx, cleared. Draw light shapes on it (doorLight, pools), cut shadows out of it
-  // (castShadow), then lightEnd(ctx) lays it over the frame. Draw it after the ground, before the figures.
+  // (castShadow), then lightEnd(ctx, y0 = 0) lays it over the frame (only rows ≥ y0: pass the ground line). Draw it after the ground, before the figures.
   K.lightBegin = function () { lx.setTransform(1, 0, 0, 1, 0, 0); lx.globalCompositeOperation = 'source-over'; lx.clearRect(0, 0, K.W, K.H); return lx; };
-  K.lightEnd = function (ctx) { ctx.drawImage(lit, 0, 0); };
+  K.lightEnd = function (ctx, y0 = 0) { y0 = clamp(Math.round(y0), 0, K.H - 1); ctx.drawImage(lit, 0, y0, K.W, K.H - y0, 0, y0, K.W, K.H - y0); };
   // doorLight(lc, door, open, { len = 430, spread = 1.15, pool = [380, 150], gy, ly = 160 }) → the light point L {x, y} for
   // shadows: the warm wedge an open door throws on the ground in front of it (a trapezoid fanning toward us from the
   // opening, fading with distance) plus a soft pool around the step. door = geo.door; open 0..1.
@@ -467,10 +470,12 @@
   // figure, so the shadow falls toward us), `len` × its height. draw(c, F) defaults to K.body.
   K.castShadow = function (lc, F, L, o = {}) {
     const fx = F.hip[0], gy = F.gy, dx0 = fx - L.x, dy0 = gy - L.y, dl = Math.hypot(dx0, dy0) || 1, dx = dx0 / dl, dy = dy0 / dl, k = o.len ?? 1;
-    sx.setTransform(1, 0, 0, 1, 0, 0); sx.clearRect(0, 0, K.W, K.H);
+    const bx = clamp(Math.floor(fx - 520), 0, K.W), by = clamp(Math.floor(gy - 300 * F.s), 0, K.H), bw = Math.min(K.W, Math.ceil(fx + 520)) - bx, bh = Math.min(K.H, Math.ceil(gy + 320 * F.s)) - by;
+    if (bw <= 0 || bh <= 0) return;
+    sx.setTransform(1, 0, 0, 1, 0, 0); sx.clearRect(bx, by, bw, bh);
     sx.save(); sx.translate(fx, gy); sx.transform(1, 0, -dx * k, -dy * k, 0, 0); sx.translate(-fx, -gy);   // height h above the feet → h·k along (dx, dy)
     (o.draw || K.body)(sx, F, '#000', '#000'); sx.restore();
-    lc.save(); lc.globalCompositeOperation = 'destination-out'; lc.globalAlpha = o.a ?? .85; lc.drawImage(scratch, 0, 0); lc.restore();
+    lc.save(); lc.globalCompositeOperation = 'destination-out'; lc.globalAlpha = o.a ?? .85; lc.drawImage(scratch, bx, by, bw, bh, bx, by, bw, bh); lc.restore();
   };
 
   // ================================================================ figures (jointed cut-outs, 2-bone IK)
@@ -723,7 +728,8 @@
     for (const side of [-1, 1]) {
       ctx.save();
       if (side > 0) { ctx.translate(K.W, 0); ctx.scale(-1, 1); }
-      for (let i = 0; i < bands; i++) {   // the leading edge lags in the middle (a belly) while moving
+      if (open >= .999 && gw === 92) ctx.drawImage(curOpen, -20, 0);   // fully open: the pre-scaled gathered curtain
+      else for (let i = 0; i < bands; i++) {   // the leading edge lags in the middle (a belly) while moving
         const y = i * bh, bx = belly * Math.sin(Math.PI * (y + bh / 2) / K.H) * .9, ww = cw - bx + 20;
         ctx.drawImage(curL, 0, y, 580, bh, -20, y, ww, bh + .6);
       }
@@ -813,13 +819,11 @@
   };
 
   // ================================================================ post
-  // post(ctx, { grain = .55, vignette = 1 }): paper grain (soft-light) and the vignette over the whole frame. Draw it
-  // after the curtains and before the words (words stay crisp) — the plaque is drawn before it so the board gets grain.
+  // post(ctx, { grain = .7 }): paper grain and vignette (one overlay sheet, see init) over the whole frame. Draw it after
+  // the curtains; the plaque is drawn before it so the board gets the grain too; end-card words go after it.
   K.post = function (ctx, o = {}) {
-    ctx.save();
-    if ((o.grain ?? .55) > 0) { ctx.globalCompositeOperation = 'soft-light'; ctx.globalAlpha = o.grain ?? .55; ctx.drawImage(grain, 0, 0, K.W, K.H); }
-    ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = o.vignette ?? 1; ctx.drawImage(vign, 0, 0, K.W, K.H);
-    ctx.restore();
+    const a = o.grain ?? .7; if (a <= 0) return;
+    ctx.save(); ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = a; ctx.drawImage(grain, 0, 0); ctx.restore();
   };
   // fade(ctx, t, dur, fi = .5, fo = .5): from/to black at the ends (Story.fadeBlack's curve; fi or fo 0 = no fade there)
   K.fade = function (ctx, t, dur, fi = .5, fo = .5) {

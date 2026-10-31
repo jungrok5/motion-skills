@@ -82,7 +82,7 @@ function rodAt(t) {
   }
   const ent = [134 + (i * 7) % 14, 260 + (i % 2) * 3];      // quick catches
   if (u < .18) { const k = eio(u / .18); return { ang: lerp(-.84, -1.2, k), bend: 9, brace: .4, line: 'taut', entry: ent }; }
-  const sw = clamp((u - .18) / .24), dr = clamp((u - .54) / .08), back = clamp((u - .62) / .1);
+  const sw = clamp((u - .18) / .24), dr = clamp((u - .54) / .08), back = clamp((u - .62) / .06);
   return { ang: lerp(lerp(-1.2, -.98, eio(sw)), -.84, back), bend: lerp(8, 3, sw) * (1 - back), brace: .3 * (1 - sw), line: 'lift',
     from: ent, rise: B.catches + i * B.every + .18, sw, drop: dr, s: 11 + (i * 2) % 4, gone: u > .62, i };
 }

@@ -80,3 +80,23 @@ Portrait safe zones: no words in the bottom 380 px or the right 140 px; nothing 
 Own only: `kits/<your kit>/`, `scenes/kit-<your kit>.js`, `scenes/<your id>.html`, `scenes/script-<your kit>.js`,
 `scenes/<your id>-*.js`. Do not edit `lib.js`, `story.js`, `film.json`, `kits/README.md`, STYLE-INDEX, other kits or
 other scenes. Don't commit. Don't render videos.
+
+## CAST — owner's correction (overrides "나 / 배우자 / 친구 부부" everywhere above)
+This is a real story: **경찬 · 명현 부부** caught the 쭈꾸미 and invited **정록 · 세진 부부** to dinner.
+- **명현 (host, wife of 경찬) caught the 쭈꾸미.** She is the fisher in scene 1. Woman, dark hair tied back (low
+  ponytail/bun), navy top; her identity mark is the **mustard `#e2a93b`** (bucket hat when fishing, apron at home).
+- **경찬 (host, husband):** man, short dark hair, green-grey `#6f8a6a` top (+ an apron at home if cooking).
+- **Cooking: the two of them together** (경찬 and 명현 side by side; e.g. one rubs/stirs while the other adds the sauce, or
+  they hand over the pan). Where a scene has no figures, say it in words (「경찬 · 명현 부부의 쭈꾸미볶음」).
+- **정록 · 세진 (guests, a couple):** one in cream `#efe6d2`, one in dusty blue `#5f7fa8`; they bring a small gift box.
+  (Keep them as already drawn; just give them their names where names appear.)
+- **Names on screen (owner wants them):** use them naturally and sparingly, polite form with 님 in captions, plain in
+  the chat UI. Suggestions:
+  - scene 1: after the hit 「명현님이 낚았다!」 (or 「명현님, 한 마리 또 한 마리」)
+  - scene 2: subtitle/caption 「경찬 · 명현 부부의」; the chat is sent by 명현 to a group 「정록 · 세진」:
+    「쭈꾸미 잡았어!」 → 「저녁 먹으러 와」 → reply 「콜! 7시에 갈게」
+  - scene 3: 「정록 · 세진 부부가 왔다」 → 「어서 와!」
+  - scene 4: place cards / name tags or face-panel labels 경찬 · 명현 · 정록 · 세진; end card
+    `{ title: '쭈꾸미 한 접시', passage: '명현님이 낚고, 경찬 · 명현 부부가 차린 저녁', by: '정록 · 세진 부부 초대 · 2026. 10. 31', compact: true }`
+    (shorten if it doesn't fit; keep ≤ 2 lines per field).
+- Seating at the table: hosts 경찬 · 명현 together on one side, guests 정록 · 세진 on the other.

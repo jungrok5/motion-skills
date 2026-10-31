@@ -409,7 +409,7 @@
 
   // ---------------- figures (frontal pastel rig) ----------------
   // Units at s = 1 (px). A figure F is placed by its pelvis (F.x, F.y); everything else is solved by pose(F).
-  K.BODY = { headRx: 47, headRy: 53, neck: 14, shW: 70, torso: 200, hipW: 44, arm1: 108, arm2: 102, armW: 30, hand: 14, leg1: 124, leg2: 118, legW: 36, foot: 20 };
+  K.BODY = { headRx: 47, headRy: 53, neck: 14, shW: 70, torso: 200, hipW: 44, arm1: 108, arm2: 102, armW: 30, hand: 14, leg1: 112, leg2: 106, legW: 46, foot: 20 };
   // A look: clothes and hair. hair: 'short' | 'bun' | 'bob' | 'wave'; collar: 'round' | 'v' | 'shirt'; apron: a colour or null.
   K.LOOK = { top: '#86a9a3', apron: null, skin: '#f4d2bd', hair: '#4b3530', hairStyle: 'short', legs: '#5d4e6e', shoe: '#4a3040', collar: 'round', glasses: false, cheek: '#f0a3a6' };
   // ik3(a, t, l1, l2, hint) → { el, end, ok }: two-bone IK in 3-D (x right, y down, z toward the camera). Bone lengths are
@@ -470,7 +470,7 @@
     if (F.legs) {
       const Lg = F.legs, kn = Lg.kneel || 0, l1 = B.leg1 * s, l2 = B.leg2 * s;
       legs = [0, 1].map(i => {
-        const side = i ? 1 : -1, hj = T(side * (B.hipW - 16), 6), lift = (Lg.lift && Lg.lift[i]) || 0;
+        const side = i ? 1 : -1, hj = T(side * (B.hipW - 20), 6), lift = (Lg.lift && Lg.lift[i]) || 0;
         const ank = [Lg.feet ? Lg.feet[i] : hj[0] + side * 6 * s, Lg.floor - B.foot * s - lift];
         const d = Math.hypot(ank[0] - hj[0], ank[1] - hj[1]), bend = Math.sqrt(Math.max(0, Math.pow((l1 + l2) / 2, 2) - Math.pow(d / 2, 2)));
         const f = l1 / (l1 + l2), dir = Lg.dir || 0;
@@ -500,7 +500,8 @@
     const th = G.th, w = B.shW, hw = B.hipW;
     const torso = c => { c.moveTo(-18, -th - 2); c.quadraticCurveTo(-w + 6, -th + 2, -w - 4, -th + 30); c.lineTo(-hw - 8, 10); c.lineTo(hw + 8, 10); c.lineTo(w + 4, -th + 30); c.quadraticCurveTo(w - 6, -th + 2, 18, -th - 2); c.closePath(); };
     K.flat(ctx, torso, L.top, { y0: -th, y1: 0, light: .12, dark: .08 });
-    if (G.legs) K.flat(ctx, c => { c.moveTo(-hw - 8, -30); c.lineTo(hw + 8, -30); c.lineTo(hw + 10, 14); c.lineTo(-hw - 10, 14); c.closePath(); }, L.legs, { lw: 2.2 });
+    if (G.legs) K.flat(ctx, c => { c.moveTo(-hw - 8, -28); c.lineTo(hw + 8, -28); c.quadraticCurveTo(hw + 12, 0, hw + 4, 16); c.lineTo(-hw - 4, 16); c.quadraticCurveTo(-hw - 12, 0, -hw - 8, -28); c.closePath(); }, L.legs, { lw: 2.2 });
+    if (G.legs && L.belt !== false) { ctx.fillStyle = K.tone(L.legs, -.25); ctx.fillRect(-hw - 8, -30, 2 * hw + 16, 6); }
     if (L.collar === 'v') K.flat(ctx, c => { c.moveTo(-20, -th); c.lineTo(0, -th + 34); c.lineTo(20, -th); c.closePath(); }, L.skin, { lw: 2 });
     else if (L.collar === 'shirt') { K.flat(ctx, c => { c.moveTo(-22, -th - 1); c.lineTo(-4, -th + 26); c.lineTo(-30, -th + 20); c.closePath(); c.moveTo(22, -th - 1); c.lineTo(4, -th + 26); c.lineTo(30, -th + 20); c.closePath(); }, K.tone(L.top, .55), { lw: 2 }); }
     else { ctx.strokeStyle = K.tone(L.top, -.22); ctx.lineWidth = 4; ctx.beginPath(); ctx.ellipse(0, -th + 2, 22, 12, 0, .15, Math.PI - .15); ctx.stroke(); }

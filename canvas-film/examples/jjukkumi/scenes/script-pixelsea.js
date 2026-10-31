@@ -17,8 +17,8 @@ window.SCRIPT = {
     face: [10.2, 11.0],      // close-up portrait insert
     lift: 11.0,              // pulling up: the 쭈꾸미 breaks the surface at 11.5
     drop: 12.45,             // shaken off into the bucket → ×1 at 12.55
-    catches: 13.0,           // six quick catches, one every .72 s → ×7 at 16.9
-    every: 0.72,
+    catches: 12.9,           // six quick catches, one every .68 s → ×7 at 16.88
+    every: 0.68,
     home: 17.4,              // wide: the sun is up, the boat heads home
     bucket: 19.8,            // close on the bucket full of red 쭈꾸미 (hands off to the recipe scene)
   },

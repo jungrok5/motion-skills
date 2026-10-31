@@ -139,26 +139,37 @@
     ctx.restore();
   };
 
-  // ---------------------------------------------------------------- bucket (tin, pale blue-grey) — rotates about its front-bottom corner
+  // ---------------------------------------------------------------- bucket (wooden tub, matching scene 1) — rotates about its front-bottom corner
   // bucket(ctx, p, rot, o): p = actor place, local frame: bottom from x 230 to 400 at y 380 (counter top), height 170.
-  // rot (rad, clockwise = tipping forward). o.inner(ctx) draws its contents (bucket-local px, origin at the mouth centre).
+  // rot (rad, clockwise = tipping forward). o.inner / o.over (ctx, cx, top) draw its contents (bucket-local px, origin at
+  // the mouth centre) — inner clipped inside the mouth, over on top (arms draped over the rim).
   A.BKT = { x0: 230, x1: 400, y0: 380, h: 170 };
+  A.WOOD = { stave: '#c19c69', stave2: '#b08a58', seam: '#7d603c', hoop: '#cba862', inside: '#7d603c' };
   A.bucketPt = (rot, lx, ly) => { const B = A.BKT, px = B.x1, py = B.y0, dx = lx - px, dy = ly - py, c = Math.cos(-rot), s = Math.sin(-rot); return [px + dx * c - dy * s, py + dx * s + dy * c]; };
+  // tub(ctx, cx, by, w, h, o): a wooden tub drawn upright with its bottom centre at (cx, by), bottom width w, height h
+  A.tub = function (ctx, cx, by, w, h, o = {}) {
+    const C = A.WOOD, fl = w * .09, top = by - h, L = (u, v) => [cx + lerp(-w / 2, w / 2, u) + lerp(0, (u - .5) * 2 * fl, v), by - h * v];   // u across, v up
+    ctx.save(); ctx.lineJoin = 'round'; ctx.strokeStyle = LINE; ctx.lineWidth = LW;
+    ctx.fillStyle = C.inside; ctx.beginPath(); ctx.ellipse(cx, top, w / 2 + fl, w * .13, 0, 0, TAU); ctx.fill(); ctx.stroke();   // mouth (inside)
+    if (o.inner) { ctx.save(); ctx.beginPath(); ctx.ellipse(cx, top, w / 2 + fl - 4, w * .13 - 3, 0, Math.PI, TAU); ctx.rect(cx - w, top, 2 * w, h + 40); ctx.clip(); o.inner(ctx, cx, top); ctx.restore(); }
+    const body = () => { ctx.beginPath(); const a = L(0, 1), b = L(0, 0), c = L(1, 0), d = L(1, 1); ctx.moveTo(...a); ctx.lineTo(...b); ctx.quadraticCurveTo(cx, by + w * .1, ...c); ctx.lineTo(...d); ctx.quadraticCurveTo(cx, top + w * .13, ...a); ctx.closePath(); };
+    body(); ctx.fillStyle = C.stave; ctx.fill();
+    ctx.save(); body(); ctx.clip();
+    for (let k = 0; k < 7; k++) { if (k % 2) { ctx.fillStyle = C.stave2; const a = L(k / 7, 1.05), b = L(k / 7, -.1), c = L((k + 1) / 7, -.1), d = L((k + 1) / 7, 1.05); M4(ctx, a, b, c, d); ctx.fill(); } }
+    ctx.strokeStyle = C.seam; ctx.lineWidth = 3; for (let k = 1; k < 7; k++) { const a = L(k / 7, 1.05), b = L(k / 7, -.1); ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b); ctx.stroke(); }
+    for (const v of [.2, .78]) { const hh = h * .1, a = L(-.05, v + .05), b = L(1.05, v + .05), c = L(1.05, v - .05), d = L(-.05, v - .05);   // the hoops
+      ctx.fillStyle = C.hoop; ctx.beginPath(); ctx.moveTo(...a); ctx.quadraticCurveTo(cx, a[1] + w * .1, ...b); ctx.lineTo(...c); ctx.quadraticCurveTo(cx, c[1] + w * .1, ...d); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = LINE; ctx.lineWidth = 4; ctx.stroke(); }
+    ctx.restore();
+    body(); ctx.strokeStyle = LINE; ctx.lineWidth = LW; ctx.stroke();
+    if (o.over) o.over(ctx, cx, top);
+    ctx.restore();
+  };
+  function M4(ctx, a, b, c, d) { ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b); ctx.lineTo(...c); ctx.lineTo(...d); ctx.closePath(); }
   A.bucket = function (ctx, p, rot, o = {}) {
-    const B = A.BKT, s = p.s, [px, py] = A.L(p, [B.x1, B.y0]);
-    ctx.save(); ctx.translate(px, py); ctx.rotate(rot); ctx.scale(s, s); ctx.lineJoin = 'round';
-    const w0 = B.x1 - B.x0, top = -B.h, flare = 16;
-    // back rim (inside)
-    ctx.fillStyle = '#6f7d8c'; ctx.strokeStyle = LINE; ctx.lineWidth = LW;
-    ctx.beginPath(); ctx.ellipse(-w0 / 2, top, w0 / 2 + flare, 22, 0, 0, TAU); ctx.fill(); ctx.stroke();
-    if (o.inner) { ctx.save(); ctx.beginPath(); ctx.ellipse(-w0 / 2, top, w0 / 2 + flare - 4, 19, 0, Math.PI, TAU); ctx.rect(-w0 - flare, top, w0 + 2 * flare, 400); ctx.clip(); o.inner(ctx, -w0 / 2, top); ctx.restore(); }
-    // body
-    ctx.fillStyle = '#b9c6d2'; ctx.beginPath(); ctx.moveTo(-w0 - flare, top); ctx.lineTo(-w0, 0); ctx.quadraticCurveTo(-w0 / 2, 14, 0, 0); ctx.lineTo(flare, top); ctx.quadraticCurveTo(-w0 / 2, top + 26, -w0 - flare, top); ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.strokeStyle = 'rgba(60,70,90,.45)'; ctx.lineWidth = 4; for (const f of [.35, .7]) { ctx.beginPath(); ctx.moveTo(-w0 - flare * (1 - f), top * (1 - f)); ctx.quadraticCurveTo(-w0 / 2, top * (1 - f) + 18, flare * (1 - f), top * (1 - f)); ctx.stroke(); }
-    ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.moveTo(-w0 + 18, top + 30); ctx.lineTo(-w0 + 34, top + 30); ctx.lineTo(-w0 + 40, -16); ctx.lineTo(-w0 + 26, -16); ctx.closePath(); ctx.fill();
-    // bail handle (folded down at the back)
-    ctx.strokeStyle = LINE; ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(-w0 - flare + 4, top + 10); ctx.quadraticCurveTo(-w0 - 60, top + 70, -w0 - flare + 8, top + 110); ctx.stroke();
-    if (o.over) o.over(ctx, -w0 / 2, top);
+    const B = A.BKT, s = p.s, [px, py] = A.L(p, [B.x1, B.y0]), w0 = B.x1 - B.x0;
+    ctx.save(); ctx.translate(px, py); ctx.rotate(rot); ctx.scale(s, s);
+    A.tub(ctx, -w0 / 2, 0, w0, B.h, o);
     ctx.restore();
   };
 

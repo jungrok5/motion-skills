@@ -31,8 +31,8 @@ const BACK = R.wall('back');
 const DOOR = { u0: -.65, u1: .35, v0: 0, v1: 2.1 };                         // front door (hinge on the right, opens out)
 const WIN = { u0: .72, u1: 1.34, v0: 1.02, v1: 1.9 };                        // dusk window behind the lamp
 const HX = DOOR.u1, HZ = ZO, LEAF = 1.0, LEAF_H = 2.08;                      // hinge line at the outer face
-const LAMP = Hopper.lamp({ x: .7, y: 2.05, z: 3.0 }), CONE = 12;             // bare bulb under a cap shade (tan of the cut-off)
-const TABLE = [.38, 1.02, .725, .76, 2.72, 3.28], DISH = [.72, .762, 3.0];
+const LAMP = Hopper.lamp({ x: .76, y: 2.05, z: 3.0 }), CONE = 12;             // bare bulb under a cap shade (tan of the cut-off)
+const TABLE = [.47, 1.05, .725, .76, 2.72, 3.28], DISH = [.77, .762, 3.0];
 const HOST = { x: -.92, z: 4.85 };
 const GUESTS = [
   { id: 'cream', x: -.5, z: 6.15, h: 1.63, skirt: false, w: .18,
@@ -206,12 +206,11 @@ const HOSTF = (() => {
     out.push(p);
     if (p.c === 'body' && Math.abs(u) < .05) {
       out.push({ poly: Hopper.clipRect(p.poly, -1, 1, -1, .9), c: 'legs' });
-      out.push({ poly: [[-.121, .975], [-.138, .97], [-.142, .75], [-.136, .52], [-.119, .52], [-.123, .75]], c: 'apron' });   // apron edges at the hips
-      out.push({ poly: [[.121, .975], [.138, .97], [.142, .75], [.136, .52], [.119, .52], [.123, .75]], c: 'apron' });
+      out.push({ poly: [[-.121, .975], [-.139, .97], [-.142, .8], [-.138, .66], [-.128, .66], [-.124, .8]], c: 'apron' });   // apron edges at the hips
+      out.push({ poly: [[.121, .975], [.139, .97], [.142, .8], [.138, .66], [.128, .66], [.124, .8]], c: 'apron' });
       out.push({ poly: [[-.124, .975], [.124, .975], [.122, 1.028], [-.122, 1.028]], c: 'apron' });                      // waist tie
       out.push({ poly: loop(-.036, 1.0, .036, .024), c: 'apron' }, { poly: loop(.036, 1.0, .036, .024), c: 'apron' });  // the bow
       out.push({ poly: [[-.014, .99], [-.002, .99], [-.016, .84], [-.034, .846]], c: 'apron' }, { poly: [[.002, .99], [.014, .99], [.036, .85], [.018, .844]], c: 'apron' });
-      out.push({ poly: [[-.036, 1.432], [.036, 1.432], [.034, 1.46], [-.034, 1.46]], c: 'apron' });                     // neck strap
     }
   }
   return { parts: out, sil: F.sil, h: F.h };
@@ -360,7 +359,7 @@ function draw(ctx, t) {
       }
       // the guests: shade first, then the light where it actually lands on them (a hard vertical edge from the jamb / leaf)
       for (const G of GUESTS) {
-        const fo = .62 * fallAt([G.x, 1, G.z]), o = { x: G.x, z: G.z, side: 1, colors: ambCols(G.col), litColors: litCols(G.col, fo, wkq), sun: '#f3dcb0' };
+        const fo = 1.05 * fallAt([G.x, 1, G.z]), o = { x: G.x, z: G.z, side: 1, colors: ambCols(G.col), litColors: litCols(G.col, fo, wkq), sun: '#f3dcb0' };
         Hopper.figure(c, cam, G.F, { ...o, lit: 0 });
         const sp = litSpan(G.z, th), yc = Math.min(2.2, ycut(G.x, G.z));
         if (sp) { c.save(); Hopper.clip(c, cam, [Q.z(sp[0], sp[1], -.2, yc, G.z)]);
@@ -384,7 +383,7 @@ function draw(ctx, t) {
   drawDish(ctx, t, I, wk);
   drawLamp(ctx, I, wk);
   // 5. 나, back to us: the IK arm (behind the body), then the body in soft value shapes, lit from the bulb's side
-  const fh = fallAt([HOST.x, 1, HOST.z]);
+  const fh = 1.6 * fallAt([HOST.x, 1, HOST.z]);
   const sleeve = rgb(mix(toneA(HOST_COL.body, 'amb', 1.25), mix(toneA(HOST_COL.body, 'lit', fh), toneA(HOST_COL.body, 'warm', fh), wk), .85 * I));
   const skin = rgb(mix(toneA(HOST_COL.skin, 'amb', 1.25), mix(toneA(HOST_COL.skin, 'lit', fh), toneA(HOST_COL.skin, 'warm', fh), wk), .85 * I));
   drawArm(ctx, arm, sleeve, skin);

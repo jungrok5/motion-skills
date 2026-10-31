@@ -409,7 +409,7 @@
 
   // ---------------- figures (frontal pastel rig) ----------------
   // Units at s = 1 (px). A figure F is placed by its pelvis (F.x, F.y); everything else is solved by pose(F).
-  K.BODY = { headRx: 47, headRy: 53, neck: 14, shW: 70, torso: 200, hipW: 44, arm1: 108, arm2: 102, armW: 30, hand: 14, leg1: 124, leg2: 118, legW: 36, foot: 20 };
+  K.BODY = { headRx: 47, headRy: 53, neck: 14, shW: 70, torso: 200, hipW: 44, arm1: 108, arm2: 102, armW: 30, hand: 14, leg1: 112, leg2: 106, legW: 46, foot: 20 };
   // A look: clothes and hair. hair: 'short' | 'bun' | 'bob' | 'wave'; collar: 'round' | 'v' | 'shirt'; apron: a colour or null.
   K.LOOK = { top: '#86a9a3', apron: null, skin: '#f4d2bd', hair: '#4b3530', hairStyle: 'short', legs: '#5d4e6e', shoe: '#4a3040', collar: 'round', glasses: false, cheek: '#f0a3a6' };
   // ik3(a, t, l1, l2, hint) → { el, end, ok }: two-bone IK in 3-D (x right, y down, z toward the camera). Bone lengths are
@@ -470,7 +470,7 @@
     if (F.legs) {
       const Lg = F.legs, kn = Lg.kneel || 0, l1 = B.leg1 * s, l2 = B.leg2 * s;
       legs = [0, 1].map(i => {
-        const side = i ? 1 : -1, hj = T(side * (B.hipW - 16), 6), lift = (Lg.lift && Lg.lift[i]) || 0;
+        const side = i ? 1 : -1, hj = T(side * (B.hipW - 20), 6), lift = (Lg.lift && Lg.lift[i]) || 0;
         const ank = [Lg.feet ? Lg.feet[i] : hj[0] + side * 6 * s, Lg.floor - B.foot * s - lift];
         const d = Math.hypot(ank[0] - hj[0], ank[1] - hj[1]), bend = Math.sqrt(Math.max(0, Math.pow((l1 + l2) / 2, 2) - Math.pow(d / 2, 2)));
         const f = l1 / (l1 + l2), dir = Lg.dir || 0;
@@ -500,7 +500,8 @@
     const th = G.th, w = B.shW, hw = B.hipW;
     const torso = c => { c.moveTo(-18, -th - 2); c.quadraticCurveTo(-w + 6, -th + 2, -w - 4, -th + 30); c.lineTo(-hw - 8, 10); c.lineTo(hw + 8, 10); c.lineTo(w + 4, -th + 30); c.quadraticCurveTo(w - 6, -th + 2, 18, -th - 2); c.closePath(); };
     K.flat(ctx, torso, L.top, { y0: -th, y1: 0, light: .12, dark: .08 });
-    if (G.legs) K.flat(ctx, c => { c.moveTo(-hw - 8, -30); c.lineTo(hw + 8, -30); c.lineTo(hw + 10, 14); c.lineTo(-hw - 10, 14); c.closePath(); }, L.legs, { lw: 2.2 });
+    if (G.legs) K.flat(ctx, c => { c.moveTo(-hw - 8, -28); c.lineTo(hw + 8, -28); c.quadraticCurveTo(hw + 12, 0, hw + 4, 16); c.lineTo(-hw - 4, 16); c.quadraticCurveTo(-hw - 12, 0, -hw - 8, -28); c.closePath(); }, L.legs, { lw: 2.2 });
+    if (G.legs && L.belt !== false) { ctx.fillStyle = K.tone(L.legs, -.25); ctx.fillRect(-hw - 8, -30, 2 * hw + 16, 6); }
     if (L.collar === 'v') K.flat(ctx, c => { c.moveTo(-20, -th); c.lineTo(0, -th + 34); c.lineTo(20, -th); c.closePath(); }, L.skin, { lw: 2 });
     else if (L.collar === 'shirt') { K.flat(ctx, c => { c.moveTo(-22, -th - 1); c.lineTo(-4, -th + 26); c.lineTo(-30, -th + 20); c.closePath(); c.moveTo(22, -th - 1); c.lineTo(4, -th + 26); c.lineTo(30, -th + 20); c.closePath(); }, K.tone(L.top, .55), { lw: 2 }); }
     else { ctx.strokeStyle = K.tone(L.top, -.22); ctx.lineWidth = 4; ctx.beginPath(); ctx.ellipse(0, -th + 2, 22, 12, 0, .15, Math.PI - .15); ctx.stroke(); }
@@ -678,7 +679,8 @@
   K.endCard = function (ctx, t, card, at, o = {}) {
     const a = ss(at, at + (card.compact ? .5 : .9), t); if (a <= 0) return;
     if (o.dim !== false) K.dim(ctx, ss(at - .4, at + .4, t));
-    const C = K.C, y = o.y ?? 640, dy = -22 * (1 - eo((t - at) / .55)), x0 = 170, w = 740, y0 = y - 118, h = 470;
+    const C = K.C, y = o.y ?? 640, dy = -22 * (1 - eo((t - at) / .55)), x0 = 170, w = 740, y0 = y - (card.kicker ? 192 : 118), h = y + 352 - y0;
+    const two = String(Pilot.tr(card.title)).includes('\n');
     ctx.save(); ctx.translate(0, dy); ctx.globalAlpha = a;
     ctx.strokeStyle = C.goldDk; ctx.lineWidth = 2; for (const d of [-290, 290]) { ctx.beginPath(); ctx.moveTo(CX + d, (o.hang ?? 262) - dy); ctx.lineTo(CX + d, y0 + 4); ctx.stroke(); }
     ctx.fillStyle = 'rgba(20,6,24,.35)'; ctx.fillRect(x0 + 9, y0 + 11, w, h);
@@ -686,7 +688,7 @@
     ctx.strokeStyle = C.gold; ctx.lineWidth = 2; ctx.strokeRect(x0 + 12, y0 + 12, w - 24, h - 24); ctx.lineWidth = 1; ctx.strokeRect(x0 + 18, y0 + 18, w - 36, h - 36);
     ctx.fillStyle = C.gold; for (const d of [-290, 290]) { ctx.beginPath(); ctx.arc(CX + d, y0 + 4, 4.5, 0, 7); ctx.fill(); }
     // an ornament between title and the small lines: a rule with a diamond
-    ctx.strokeStyle = C.gold; ctx.lineWidth = 1.6; const oy = y + 118; ctx.beginPath(); ctx.moveTo(CX - 120, oy); ctx.lineTo(CX - 14, oy); ctx.moveTo(CX + 14, oy); ctx.lineTo(CX + 120, oy); ctx.stroke();
+    ctx.strokeStyle = C.gold; ctx.lineWidth = 1.6; const oy = y + (two ? 184 : 118); ctx.beginPath(); ctx.moveTo(CX - 120, oy); ctx.lineTo(CX - 14, oy); ctx.moveTo(CX + 14, oy); ctx.lineTo(CX + 120, oy); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(CX, oy - 8); ctx.lineTo(CX + 8, oy); ctx.lineTo(CX, oy + 8); ctx.lineTo(CX - 8, oy); ctx.fill();
     ctx.restore();
     ctx.save(); ctx.translate(0, dy);

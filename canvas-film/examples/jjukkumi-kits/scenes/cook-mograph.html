@@ -376,9 +376,8 @@ function chatCard(ctx, t) {
     if (who === 'photo') { if (t >= at) { const pw = 250, phh = 180, px = x + w - 40 - pw, sc = .6 + .4 * kk;
         ctx.save(); ctx.translate(px + pw, yy + phh); ctx.scale(sc, sc); ctx.translate(-(px + pw), -(yy + phh));
         ctx.beginPath(); ctx.roundRect(px, yy, pw, phh, 26); ctx.fillStyle = '#cfe0ea'; ctx.fill(); ctx.save(); ctx.clip();
-        ctx.fillStyle = '#9fb9c9'; ctx.fillRect(px, yy + phh * .62, pw, phh); ctx.fillStyle = '#b9c6d2'; ctx.strokeStyle = '#2b1d1a'; ctx.lineWidth = 4;
-        ctx.beginPath(); ctx.moveTo(px + 60, yy + 70); ctx.lineTo(px + 76, yy + 170); ctx.lineTo(px + 174, yy + 170); ctx.lineTo(px + 190, yy + 70); ctx.closePath(); ctx.fill(); ctx.stroke();
-        A.octo(ctx, px + 100, yy + 68, 24, { col: A.RAW, seed: 3, spread: .3, t: 0 }); A.octo(ctx, px + 150, yy + 62, 24, { col: A.RAW, seed: 4, spread: .3, t: 0, rot: .2 });
+        ctx.fillStyle = '#9fb9c9'; ctx.fillRect(px, yy + phh * .62, pw, phh);   // the photo: scene 1's wooden tub of 쭈꾸미 on the boat deck
+        A.tub(ctx, px + pw / 2, yy + phh - 12, 120, 92, { over: (c, cx, top) => { A.octo(c, cx - 26, top + 4, 24, { col: A.RAW, seed: 3, spread: .3, t: 0 }); A.octo(c, cx + 26, top, 24, { col: A.RAW, seed: 4, spread: .3, t: 0, rot: .2 }); } });
         ctx.restore(); ctx.strokeStyle = '#2b1d1a'; ctx.lineWidth = 4; ctx.beginPath(); ctx.roundRect(px, yy, pw, phh, 26); ctx.stroke(); ctx.restore(); }
       yy += 200; continue; }
     if (who === 'them') { if (t >= at) { avatar(ctx, x + 80, yy + 40, 30, '#5f7fa8'); bubbleBox(ctx, T(str), 'them', yy, 1, kk); } yy += 104; continue; }

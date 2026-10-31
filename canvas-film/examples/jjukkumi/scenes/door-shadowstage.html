@@ -128,7 +128,7 @@ function draw(ctx, t) {
   // the door's light on the ground, the three shadows cut out of it
   const A = guestA(t), Bg = guestB(t), lc = K.lightBegin(), L = K.doorLight(lc, D, op, { len: 420, pool: [430, 170] });
   if (op > 0) { K.castShadow(lc, A, L, { len: .95 }); K.castShadow(lc, Bg, L, { len: .95 }); K.castShadow(lc, host(t), L, { len: .42, a: .6 }); }
-  K.lightEnd(ctx);
+  if (op > 0) K.lightEnd(ctx, G);
   const rim = { x: D.x + D.w / 2, y: G - 130, a: op, reach: 460 };
   K.person(ctx, Bg, { rim });
   K.person(ctx, A, { rim });
