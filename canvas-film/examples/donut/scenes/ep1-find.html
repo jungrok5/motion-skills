@@ -83,8 +83,10 @@ function pDonut(c, t, P) {
   WT.toneGrad(c, 0, 0, P.w, P.h, { from: .8, to: .0, dir: 'r', cx: DC[0], cy: DC[1], r0: 220, r1: 820, color: '#4a3874', pitch: 16 });
   WT.rays(c, t, DC[0], DC[1], { col: '#fff3c4', alpha: .5, r1: 1500, n: 18, spin: .05 });
   WT.glow(c, DC[0], DC[1], 560, '#fff1c0', .85 + .1 * Math.sin(t * 3));
+  // inside the box: the floor liner the donut sits on, fading up into the drama background
+  const fl = c.createLinearGradient(0, 760, 0, 940); fl.addColorStop(0, 'rgba(242,231,216,0)'); fl.addColorStop(1, 'rgba(242,231,216,.95)'); c.fillStyle = fl; c.fillRect(0, 760, P.w, 200);
   C.donut(c, DC[0], DC[1] + 60, 300, { t, glow: 1, tilt: .58, seed: 7 });
-  A.boxRim(c, -30, 960, 1140, 330, { tilt: 26, lw: 8 });
+  A.boxRim(c, -40, 925, 900, 340, { tilt: 30, lw: 8, lip: 26, corner: 260, shadow: 70, logo: [.74, 50] });
   WT.sparkles(c, t, { cx: DC[0], cy: DC[1] - 40, rx: 470, ry: 400, n: 14, r: [14, 48], seed: 9, glow: true });
   WT.flash(c, t, B.donut, { rect: [0, 0, P.w, P.h], hold: .04, dur: .32 });
 }
@@ -102,6 +104,7 @@ function pHand(c, t, P) {
   for (let r = 0; r * 52 < 460; r++) for (let x = (r % 2) * 52; x < P.w; x += 104) { c.beginPath(); c.moveTo(x, 140 + r * 52); c.lineTo(x, 192 + r * 52); c.stroke(); }
   C.counter(c, -10, 600, P.w + 20, 1);
   C.box(c, BOX.x, BOX.y, BOX.w, { n: 1, last: true, seed: 2 });
+  A.boxRim(c, BOX.x - BOX.w / 2, BOX.y - BOX.w * .2, BOX.w, BOX.w * .2, { lw: 4, lip: 9, logo: [.78, 17] });   // repaint the front wall as plain board + stamp
   // the hand: glides in from the top-right, creeps the last bit, flinches back when the shadow lands
   const ang = Math.PI - .32, sz = 72, d = [Math.cos(ang), Math.sin(ang)], back = [-d[0], -d[1]];
   const inK = eo(clamp((t - B.reach) / .75)), creep = clamp((t - B.reach - .75) / (B.shadow - B.reach - .75)), fl = ss(B.shadow, B.shadow + .12, t);

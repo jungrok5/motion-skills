@@ -53,7 +53,7 @@ const STRIP = WT.strip({
 });
 // the opening stop frames the eye strip + the pantry together (scene 1 ended on the eye strip)
 const P0 = STRIP.P.p0, P1 = STRIP.P.p1;
-const CAM = X.camera(STRIP, S.stops.map(([id, a, l]) => [id === 'p1' ? { at: (P0.y + P1.y + P1.h) / 2 + 30 } : id === 'p4' ? 'p4a' : id, a, l]));
+const CAM = X.camera(STRIP, S.stops.map(([id, a, l]) => [id === 'p1' ? { at: (P0.y + P1.y + P1.h) / 2 + 30 } : id === 'p4' ? 'p4a' : id === 'p11' ? { panel: 'p11', off: 190 } : id, a, l]));
 
 // readability guard: every balloon holds ≥ readTime
 for (const k in Ln) { const [a, b, s] = Ln[k], need = WT.readTime(s); if (b - a < need) console.warn('balloon too short', k, (b - a).toFixed(2), '<', need.toFixed(2)); }
@@ -69,7 +69,7 @@ function eyes(c, t, P) {   // the call-back to scene 1's eye strip: three glints
     if (polite) WT.star4(c, x + w * .78, 70, 30 * WT.popPeak(clamp((t - B.polite - i * .06) / .3)), .3, '#fff6c0');
   });
   c.fillStyle = '#1d1a1f'; c.fillRect(w, 0, 12, P.h); c.fillRect(2 * w + 12, 0, 12, P.h);
-  if (polite) WT.sfx(c, t, { text: S.sfx.polite, x: P.w / 2, y: P.h - 46, size: 64, at: B.polite + .05, fill: '#ffd9e6', rot: -.04, grow: [1, 1], wild: .12 });
+  if (polite) WT.sfx(c, t, { text: S.sfx.polite, x: P.w / 2, y: P.h - 30, size: 54, at: B.polite + .05, fill: '#ffd9e6', rot: -.04, grow: [1, 1], wild: .12 });
 }
 const BOX = { x: 560, y: 616, w: 230 };
 function pantry(c, t, P) {
@@ -235,7 +235,7 @@ function lungeHands(c, t, P) {
   const [a, b, r] = B.count;
   WT.sfx(c, t, { text: S.sfx.count[0], x: 200, y: 300, size: 120, at: a, out: B.lunge[0] + .6, fill: '#ffffff', rot: -.12 });
   WT.sfx(c, t, { text: S.sfx.count[1], x: P.w - 190, y: 300, size: 120, at: b, out: B.lunge[0] + .6, fill: '#ffffff', rot: .1 });
-  WT.sfx(c, t, { text: S.sfx.count[2], x: P.w / 2, y: 470, size: 200, at: r, out: B.lunge[0] + 1.2, fill: ['#fff6c0', '#ffb43a'], rot: -.08, echo: 2, grow: [1, 1] });
+  WT.sfx(c, t, { text: S.sfx.count[2], x: 250, y: 560, size: 190, at: r, out: B.lunge[0] + 1.2, fill: ['#fff6c0', '#ffb43a'], rot: -.08, echo: 2, grow: [1, 1] });
 }
 
 // ---------------------------------------------------------------- frame
