@@ -1,4 +1,5 @@
 /* script-recipecard.js — scene 2 of 「쭈꾸미 한 접시」 (cook-recipecard, 24 s): beats and every word on screen.
+   Cast (BRIEF.md CAST): 명현 caught it, 경찬 · 명현 부부 cook it; the chat is 명현's phone writing to the group 「정록 · 세진」.
    The step cards carry the words (no captions): title → 6 steps → 완성!. Beats are seconds. */
 window.SCRIPT = {
   DUR: 24,
@@ -16,7 +17,7 @@ window.SCRIPT = {
     msgs: [19.7, 20.3], typing: [20.8, 21.6], reply: 21.6,
     done: 22.4,            // 완성! — the last dot ticks, the dish gets its dashes
   },
-  title: '쭈꾸미볶음', sub: '바다에서 바로 온',
+  title: '쭈꾸미볶음', sub: '경찬 · 명현 부부의',
   rail: ['손질', '데치기', '양념', '볶기', '참기름', '초대'],
   cards: [
     { step: 1, amount: '2 큰술', name: '밀가루 + 굵은소금', note: '바락바락 주무르고, 헹구기', bar: [3.9, 5.0], unit: '{n} / 30번', n: 30 },
@@ -24,7 +25,7 @@ window.SCRIPT = {
     { step: 3, sauce: true },
     { step: 4, amount: '센 불', name: '볶기 + 양파 · 대파', note: '물 생기기 전에, 빠르게', bar: [14.0, 16.6], unit: '{n}분', n: 2 },
     { step: 5, amount: '한 바퀴', name: '참기름', note: '불 끄고 마지막에 휘—', bar: [17.35, 18.45], unit: '{n}°', n: 360 },
-    { step: 6, amount: '2 명', name: '친구 부부 초대', note: '갓 잡은 쭈꾸미로 저녁 한 끼', bar: [19.7, 21.6], wait: '답장 기다리는 중', got: '답장 왔다!' },
+    { step: 6, amount: '2 명', name: '정록 · 세진 부부 초대', note: '명현님이 낚아 온 쭈꾸미로 저녁 한 끼', bar: [19.7, 21.6], wait: '답장 기다리는 중', got: '답장 왔다!' },
   ],
   // step 3: one spoon per beat (amount, name, note) — the checklist ticks them off as they land
   sauce: [
@@ -35,7 +36,7 @@ window.SCRIPT = {
     ['1 큰술', '설탕', '매운맛을 둥글게'],
   ],
   sauceUnit: '{n} / 6 큰술',
-  phone: { name: '친구 부부', me: ['쭈꾸미 잡았어!', '저녁 먹으러 와'], reply: '콜! 7시에 갈게' },
+  phone: { name: '정록 · 세진', me: ['쭈꾸미 잡았어!', '저녁 먹으러 와'], reply: '콜! 7시에 갈게' },
   final: { kicker: '다 됐다!', amount: '완성!', name: '쭈꾸미볶음', note: '넷이 먹을 저녁 한 접시' },
   lines: [],
 };

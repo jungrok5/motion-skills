@@ -15,7 +15,7 @@
 /* sea-ukiyoe — scene 1 of 「쭈꾸미 한 접시」, an ukiyo-e print of 쭈꾸미 fishing at dawn (styles/ukiyoe/STYLE.md).
    One sheet: a dawn bokashi sky with mist bands and islands, the sea seen obliquely from the horizon (y 1000) down to the
    front cut (y 1300), and below the cut a printed SECTION of the water down to the sandy seabed (y ≈ 1830).
-   A small wooden boat sits on the cut; 나 (navy, straw kasa with a mustard band) fishes with a short rod. The rig (snap,
+   A small wooden boat sits on the cut; 명현 (navy, hair in a low bun, straw kasa with a mustard band) fishes with a short rod. The rig (snap,
    lead sinker, an ochre/green 에기) sinks to the seabed and is jigged (고패질); a beni-red 쭈꾸미 — the only red thing —
    peeks from behind a rock, climbs over and grabs the lure; the hit is a hard cut to a tight print with spray claws; it is
    reeled up, dangles, swung into the wooden bucket; two more follow; the sun comes up, the boat turns home, and the
@@ -29,7 +29,7 @@ const S = window.SCRIPT, B = S.beat, W = Pilot.W, H = Pilot.H, TAU = Math.PI * 2
 // ---------------------------------------------------------------- the world (world px)
 const SX0 = -300, SY0 = -700, SX1 = 2200, SY1 = 2700;   // the printed sheet
 const HZ = 1000, SEA = 1300, BED = 1930;                 // horizon, the front cut (waterline of the section), seabed
-const MUST = '#e2a93b';                                  // 나's identity mark (hat band + tie)
+const MUST = '#e2a93b';                                  // 명현's identity mark (hat band + tie)
 const OS = 1.3;                                          // the 쭈꾸미's print scale (palm-sized, drawn readable)
 const OCT = PAL.beni, OCT_T = PAL.beniT, OCT_D = '#963426', OCT_C = PAL.beniC;   // the one accent: 쭈꾸미 red
 const bedY = x => BED + 6 * Math.sin(x * .011) + 4 * Math.sin(x * .037 + 1.3);
@@ -108,7 +108,7 @@ function boatFront(b, t) {
   const pr = E(-2, 24); both(smooth([add(pr, [-3, -10]), add(pr, [4, -2]), add(pr, [-3, 10]), add(pr, [-6, 0])], true), PAL.grey, 1.4);
 }
 
-// ---------------------------------------------------------------- 나 (the kit's rig; this scene's poses)
+// ---------------------------------------------------------------- 명현 (the fisher; the kit's rig, this scene's poses)
 const ME = { robe: '#2f4366', robeD: '#24365a', legs: '#22304c', shin: '#1c2840', shinD: '#141c2c', arm: '#283b5e', armD: '#1f3050', obi: '#3b3531', hat: 'none' };
 const C2 = B.c2, C3 = B.c3, CY = [C2, C3];
 function meAt(t, b) {
@@ -163,7 +163,10 @@ function drawRod(r) {
 function hatBand(R) {
   const s = R.s, f = R.f, hb = R.hb, up = [Math.sin(hb) * f, -Math.cos(hb)], fw = [Math.cos(hb) * f, Math.sin(hb)];
   const K = (u, v) => add(add(R.head, fw, u * s), up, v * s);
-  both(poly([K(-13, 1), K(-15, -7), K(-10, -11), K(-6, -2)]), PAL.sumi, KW * .4);          // short dark hair under the brim
+  // 명현: dark hair drawn back under the brim into a low bun at the nape (+ a thin tie)
+  both(smooth([K(-5, 3), K(-13, 2), K(-17, -5), K(-16, -12), K(-11, -12), K(-8, -5)], true), PAL.sumi, KW * .4);
+  both(circ(K(-19, -13), 6.5 * s), PAL.sumi, KW * .45);
+  const ht = new Path2D(), h0 = K(-14.5, -9), h1 = K(-15, -16); ht.moveTo(h0[0], h0[1]); ht.lineTo(h1[0], h1[1]); key(ht, 1.8, '#5a5048');
   const tie = new Path2D(), a = K(-7, 3), c = K(-1, -12), e = K(5, -16); tie.moveTo(a[0], a[1]); tie.quadraticCurveTo(c[0], c[1], e[0], e[1]); key(tie, 2.8, MUST);
   both(poly([K(-52, 2), K(-30, 12), K(-4, 30), K(4, 30), K(30, 12), K(54, 2), K(0, 6)]), '#e4d3a4', KW * s);
   const sl = new Path2D(); for (const q of [-30, -14, 0, 16, 32]) { const a0 = K(q * .1, 28), a1 = K(q * 1.5, 4); sl.moveTo(a0[0], a0[1]); sl.lineTo(a1[0], a1[1]); } key(sl, KW * s * .4, '#9c8250');
