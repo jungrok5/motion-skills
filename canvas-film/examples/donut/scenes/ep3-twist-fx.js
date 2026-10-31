@@ -7,6 +7,7 @@
      EP3.dust(ctx, t, x, y, o)   trailing dust puffs behind something sliding (drag / skid), o { dir, n, r, rate, seed }
      EP3.streaks(ctx, t, pts, o) motion streaks along a path (a fast hand entering): white lines behind the moving point
      EP3.crumbs(ctx, t, t0, x, y, o) bite crumbs that burst out and fall (바삭), o { n, r, g, seed, col }
+     EP3.sfx / trail / rays / star / monoCard — the mono manga wrappers (see below)
      EP3.nextLine(ctx, t, at, s, o) the end card's "다음 화" line on our own timing (the kit's endCard shows it only at +1 s) */
 (function () {
   const WT = window.Webtoon, C = window.Cast, { clamp, lerp, ss, eo, rng } = Pilot, TAU = Math.PI * 2;
@@ -63,6 +64,56 @@
   E.nextLine = function (ctx, t, at, s, o = {}) {
     const a = ss(at, at + .35, t); if (a <= 0) return;
     Pilot.text(ctx, s, o.x ?? 540, o.y ?? 1360, { size: o.size || 40, font: WT.F.talk, color: o.color || '#5d545a', alpha: a });
+  };
+
+  /* --- mono manga finish (2026-10-31 restyle): wrappers round window.Manga ---
+     EP3.sfx(ctx, t, o)           Manga.sfx + an `out` (fades over .2 s) — chunky white letters, thick outline, hard shadow
+     EP3.trail(ctx, t, xAt, y, o) halftone dust puffs left behind something sliding: a puff every o.every s at xAt(spawn time)
+     EP3.rays(ctx, t, cx, cy, o)  white rays cut from solid black (fills o.rect black first) — the mono "glow"
+     EP3.star(ctx, x, y, r)       an inked 4-point sparkle (paper fill, black outline) — survives the print pass
+     EP3.monoCard(ctx, t, at, card) the premium mono end card: paper, thick double frame with an offset black shadow, title,
+                                  the donut (the one colour), a black 끝 stamp, and the ✱ tag with the next-episode line */
+  E.sfx = function (ctx, t, o) {
+    if (o.out != null && t > o.out) return; if (t < (o.at ?? -1e9)) return;
+    ctx.save(); if (o.out != null) ctx.globalAlpha *= 1 - ss(o.out - .2, o.out, t); window.Manga.sfx(ctx, t, o); ctx.restore();
+  };
+  E.trail = function (ctx, t, xAt, y, o = {}) {
+    const ev = o.every ?? .22, t0 = o.t0 ?? -1e9, life = o.life ?? .8, MG = window.Manga;
+    const n1 = Math.floor((t - t0) / ev); if (n1 < 0) return;
+    for (let i = Math.max(0, n1 - Math.ceil(life / ev)); i <= n1; i++) { const at = t0 + i * ev; if (o.t1 != null && at > o.t1) continue;
+      const r = (o.r ?? 60) * (.8 + .4 * ((i * 7919) % 13) / 13);
+      MG.puff(ctx, t, xAt(at) + (o.dx ?? 0), y + ((i * 31) % 3) * 6, r, { at, life, dir: o.dir ?? 1, seed: (o.seed || 3) + i, tone: o.tone ?? .34 }); }
+  };
+  E.rays = function (ctx, t, cx, cy, o = {}) {
+    const MG = window.Manga, [x, y, w, h] = o.rect; ctx.save(); ctx.globalAlpha *= o.alpha ?? 1;
+    ctx.fillStyle = MG.C.ink; ctx.fillRect(x, y, w, h);
+    MG.focus(ctx, t, { x, y, w, h, cx, cy, rx: o.rx ?? 140, ry: o.ry ?? 140, n: o.n ?? 44, wMax: o.wMax ?? 46, col: MG.C.paperL, seed: o.seed ?? 5, fps: o.fps ?? 4, inner: .25 });
+    ctx.restore();
+  };
+  E.star = function (ctx, x, y, r, rot = 0) {
+    const MG = window.Manga; if (r < 2) return; ctx.save(); ctx.translate(x, y); ctx.rotate(rot); const p = new Path2D(); p.moveTo(r, 0);
+    for (let k = 1; k <= 4; k++) { const a0 = (k - .5) * Math.PI / 2, a1 = k * Math.PI / 2; p.quadraticCurveTo(Math.cos(a0) * r * .22, Math.sin(a0) * r * .22, Math.cos(a1) * r, Math.sin(a1) * r); }
+    ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(3, r * .16); ctx.strokeStyle = MG.C.ink; ctx.stroke(p); ctx.fillStyle = MG.C.paperL; ctx.fill(p); ctx.restore();
+  };
+  E.monoCard = function (ctx, t, at, card) {
+    const MG = window.Manga, a = ss(at, at + .45, t); if (a <= 0) return; const W = 1080, H = 1920, ink = MG.C.ink;
+    ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = MG.C.paper; ctx.fillRect(-20, -20, W + 40, H + 40); ctx.restore();
+    const k = eo(ss(at + .05, at + .5, t)), y0 = 600, fw = 860, fh = 520, fx = (W - fw) / 2;
+    ctx.save(); ctx.globalAlpha = a; ctx.translate(0, (1 - k) * 40);
+    ctx.fillStyle = ink; ctx.fillRect(fx + 18, y0 + 18, fw, fh); ctx.fillStyle = MG.C.paperL; ctx.fillRect(fx, y0, fw, fh);
+    ctx.strokeStyle = ink; ctx.lineWidth = 12; ctx.strokeRect(fx + 6, y0 + 6, fw - 12, fh - 12); ctx.lineWidth = 3; ctx.strokeRect(fx + 30, y0 + 30, fw - 60, fh - 60);
+    // fine 45° tone in the corners band (deliberate, small)
+    ctx.fillStyle = MG.tone(ctx, .22); ctx.fillRect(fx + 30, y0 + fh - 120, fw - 60, 90);
+    ctx.restore();
+    Pilot.text(ctx, card.kicker || '3화 · 반전', W / 2, y0 + 112, { size: 34, font: "'Noto Sans KR',sans-serif", weight: 700, color: ink, alpha: a, ls: 6 });
+    Pilot.text(ctx, card.title, W / 2, y0 + 270, { size: 120, font: "'Black Han Sans',sans-serif", color: ink, alpha: a });
+    const dk = window.Webtoon.pop(t, at + .3, .35, .4, 2.4); if (dk > 0) { ctx.save(); ctx.translate(W / 2, y0 - 70); ctx.scale(dk, dk); window.Cast.donut(ctx, 0, 0, 84, { t, seed: 7 }); ctx.restore(); }
+    const sc = window.Webtoon.pop(t, at + .5, .3, .3, 3);
+    if (sc > 0) { ctx.save(); ctx.translate(W / 2, y0 + fh + 120); ctx.rotate(-.1); ctx.scale(sc, sc); ctx.fillStyle = ink; ctx.beginPath(); ctx.arc(10, 12, 96, 0, TAU); ctx.fill();
+      ctx.fillStyle = MG.C.paperL; ctx.beginPath(); ctx.arc(0, 0, 96, 0, TAU); ctx.fill(); ctx.lineWidth = 10; ctx.strokeStyle = ink; ctx.stroke(); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, 78, 0, TAU); ctx.stroke();
+      Pilot.text(ctx, card.end || '끝', 0, 32, { size: 96, font: "'Black Han Sans',sans-serif", color: ink }); ctx.restore(); }
+    if (card.next && t > at + .6) { const s = 36; ctx.save(); ctx.font = `700 ${s}px 'Noto Sans KR',sans-serif`; const tw = ctx.measureText(Pilot.tr(card.next)).width; ctx.restore();
+      MG.tag(ctx, card.next, (W - (tw + s * 2.05)) / 2, y0 + fh + 290, { size: s, t, at: at + .6 }); }
   };
   window.EP3 = E;
 })();
