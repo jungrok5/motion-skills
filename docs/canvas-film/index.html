@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>canvas-film · motion-skills</title>
-<meta name="description" content="장면마다 화풍이 다른 시네마틱 영상을 HTML Canvas만으로 그리는 스킬. 라이브 데모와 21가지 화풍 샘플.">
+<meta name="description" content="장면마다 화풍이 다른 시네마틱 영상을 HTML Canvas만으로 그리는 스킬. 라이브 데모, 21가지 화풍 샘플과 브라우저에서 바로 그려지는 35가지 스타일 키트.">
 <meta property="og:title" content="canvas-film · motion-skills">
-<meta property="og:description" content="장면마다 화풍이 다른 시네마틱 영상을 HTML Canvas만으로 그리는 스킬. 라이브 데모와 21가지 화풍 샘플.">
+<meta property="og:description" content="장면마다 화풍이 다른 시네마틱 영상을 HTML Canvas만으로 그리는 스킬. 라이브 데모, 21가지 화풍 샘플과 브라우저에서 바로 그려지는 35가지 스타일 키트.">
 <meta property="og:image" content="https://jungrok5.github.io/motion-skills/canvas-film/poster.jpg">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
@@ -21,7 +21,7 @@
 <header class="hero"><div class="wrap">
   <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / canvas-film</nav>
   <h1>canvas-film</h1>
-  <p>장면마다 화풍이 다른 시네마틱 영상을 HTML Canvas만으로 그립니다. 같은 장면 파일로 가로와 세로 MP4를 녹화하고 웹 플레이어에서 실시간으로 재생하며, 언어 파일을 추가하면 그 언어로도 재생합니다.</p>
+  <p>장면마다 화풍이 다른 시네마틱 영상을 HTML Canvas만으로 그립니다. 같은 장면 파일로 가로와 세로 MP4를 녹화하고 웹 플레이어에서 실시간으로 재생하며, 언어 파일을 추가하면 그 언어로도 재생합니다. 화풍은 21가지 장면 샘플과, 새 영상에 바로 가져다 쓰는 35가지 키트로 정리되어 있습니다.</p>
   <ul class="tags"><li>16:9 · 9:16</li><li>MP4</li><li>라이브 플레이어</li><li>사운드</li><li>다국어</li></ul>
 </div></header>
 
@@ -30,7 +30,7 @@
   <div class="how">
     <h2>작업 흐름</h2>
     <dl>
-      <dt>입력</dt><dd>이야기 · 대본 · 사이트 글을 20–60초 장면으로 나누고, 장면마다 의미에 맞는 화풍 선택</dd>
+      <dt>입력</dt><dd>이야기 · 대본 · 사이트 글을 20–60초 장면으로 나누고, 장면마다 의미에 맞는 화풍이나 키트 선택</dd>
       <dt>장면</dt><dd>장면마다 HTML 파일 한 개. <code>seek(t)</code>로 어느 시점의 프레임이든 같은 그림</dd>
       <dt>사운드</dt><dd>ElevenLabs 음악 · 효과음 큐를 장면 타임라인에 믹스</dd>
       <dt>출력</dt><dd>MP4 1920×1080 · 1080×1920, 영상 파일 없이 재생하는 웹 플레이어(「한눈에 보는 성경 이야기」 13분 기준 약 10&nbsp;MB)</dd>
@@ -146,6 +146,242 @@ python3 ../../scripts/publish.py   # → site/ (라이브 플레이어)</code></
   </div>
 </div></section>
 
+<section id="kits"><div class="wrap">
+  <h2>키트 · 35가지</h2>
+  <p class="lead">키트는 한 가지 화풍을 다시 쓸 수 있게 묶은 것입니다. 종이 결, 빛, 오린 종이, 빛나는 막 같은 재료와 그리는 순서를 함수로 담고, 이야기는 담지 않습니다. 새 영상은 <code>python3 canvas-film/scripts/from-kit.py my-film --kit &lt;slug&gt;</code>로 시작해 그 영상의 그림을 키트로 그립니다. 템플릿 28개는 같은 씨앗 이야기(걸어와 무릎 꿇고 씨앗을 심고 기다리면 14초에 강조색 싹이 오르고 18초에 일어섬, 26초 엔드 카드, 30초)를 그려서 나란히 비교할 수 있고, 처음 네 키트와 「침묵의 400년」 세 키트는 각자의 짧은 자리표시 이야기를 그립니다. 카드를 누르면 새 탭에서 그 템플릿이 브라우저에서 바로 그려집니다(세로, 소리 없음). 키트 목록과 쓰는 법은 <a href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/README.md">kits/README.md</a>에 있습니다.</p>
+  <div class="chips" data-for="kitgrid" data-labels='{"paint": "회화 · 그림책", "craft": "종이 · 공예 · 인쇄", "light": "빛 · 밤", "line": "선 · 픽셀 · 도면", "comic": "웹툰 · 만화 · 모션그래픽", "new": "새 키트"}' aria-label="키트를 화풍 종류로 나눠 보기" hidden></div>
+  <div id="kitgrid">
+    <div class="group">
+      <h3>새로 만든 키트 <small>6 · 2026-10</small></h3>
+      <p>prompt-motion.com 갤러리에서 본 네 가지 룩과 GitHub 만화 소스 21곳 조사, 참고 일러스트 한 장에서 시작해 렌더러는 새로 짰습니다. 「쭈꾸미 한 접시」(<a href="https://github.com/jungrok5/motion-skills/tree/main/canvas-film/examples/jjukkumi"><code>examples/jjukkumi</code></a>)는 pixelsea · recipecard · shadowstage · diorama로, 같은 이야기의 기존 키트판(<a href="https://github.com/jungrok5/motion-skills/tree/main/canvas-film/examples/jjukkumi-kits"><code>examples/jjukkumi-kits</code></a>)은 ukiyoe · mograph · hopper · risoline으로, 「도넛 가게 마감까지 3분」(<a href="https://github.com/jungrok5/motion-skills/tree/main/canvas-film/examples/sketchride"><code>examples/sketchride</code></a>)은 sketchanime로 그렸습니다. webtoon 키트로 영상 한 편을 만들 때는 <a href="../motion-webtoon/">motion-webtoon</a> 스킬을 씁니다.</p>
+      <div class="grid tall">
+        <div class="tile kit" data-tags="line new">
+          <a class="open" href="kits/pixelsea/?o=v&amp;t=15" target="_blank" rel="noopener">
+          <img src="kits/pixelsea.jpg" alt="픽셀 새벽 바다 키트 템플릿 15초: 픽셀로 그린 새벽 바다 절벽 위에 무릎 꿇은 사람, 빨간 새싹과 느낌표, 줄무늬 해와 DAY 40 자막 상자" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no"><span class="badge">새</span> prompt-motion.com · @pluginplay · @hoyoyoda</span><b>픽셀 새벽 바다</b><span class="en">pixelsea</span>
+          <span class="how">게임 같은 재미, 잡았다 · 점수가 오른다, 새벽에서 아침으로 흐르는 시간, 가벼운 유머</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/pixelsea/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="comic new">
+          <a class="open" href="kits/recipecard/?o=v&amp;t=20" target="_blank" rel="noopener">
+          <img src="kits/recipecard.jpg" alt="레시피 카드 키트 템플릿 20초: 크림색 종이 한가운데 흙이 담긴 컵에서 빨간 싹이 나고, 아래 STEP 6 OF 6 카드에 쏙! 일어서기" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no"><span class="badge">새</span> prompt-motion.com · @ror_fly · @sarut0bisasuke</span><b>레시피 카드</b><span class="en">recipecard</span>
+          <span class="how">처음부터 끝까지 이어지는 과정, 들어가는 재료와 양, 하우투, 무엇이든 단계별로</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/recipecard/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="craft light new">
+          <a class="open" href="kits/shadowstage/?o=v&amp;t=16.5" target="_blank" rel="noopener">
+          <img src="kits/shadowstage.jpg" alt="그림자 극장 키트 템플릿 16.5초: 붉은 커튼 사이 밤하늘 무대, 창에 불 켜진 검은 오린 집 옆에서 무릎 꿇은 실루엣과 빨간 싹, 걸린 자막 판" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no"><span class="badge">새</span> prompt-motion.com · @x4b47x</span><b>그림자 극장</b><span class="en">shadowstage</span>
+          <span class="how">집과 환영, 도착, 저녁, 작고 따뜻한 불빛, 우화처럼 들려주는 이야기</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/shadowstage/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="craft new">
+          <a class="open" href="kits/diorama/?o=v&amp;t=16.5" target="_blank" rel="noopener">
+          <img src="kits/diorama.jpg" alt="파스텔 디오라마 키트 템플릿 16.5초: 보라 커튼과 분홍 벽의 대칭 무대, 창 아래 화분의 빨간 꽃 옆에 무릎 꿇은 사람, 창에 걸린 자막 카드" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no"><span class="badge">새</span> prompt-motion.com · @itsolelehmann</span><b>파스텔 디오라마</b><span class="en">diorama</span>
+          <span class="how">모임과 식탁, 가족사진, 윙크가 있는 따뜻함, 액자 같은 마지막 장면</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/diorama/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="comic new">
+          <a class="open" href="kits/webtoon/?o=v&amp;t=15" target="_blank" rel="noopener">
+          <img src="kits/webtoon.jpg" alt="웹툰 키트 템플릿 15초: 흰 집중선 패널 한가운데 솟은 분홍 꽃봉오리 싹과 효과음 뾰옥!, 자막 자라고 있었다" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no"><span class="badge">새</span> GitHub 만화 소스 21곳 조사</span><b>웹툰</b><span class="en">webtoon</span>
+          <span class="how">개그와 코미디, 회사 · 학교 일상, 리액션, 사소한 일이 장엄해지는 확대, 대사 중심 이야기</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/webtoon/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="comic new">
+          <a class="open" href="kits/sketchanime/?o=v&amp;t=16.5" target="_blank" rel="noopener">
+          <img src="kits/sketchanime.jpg" alt="스케치 애니 키트 템플릿 16.5초: 흰 종이에 가는 연필 선과 파스텔 채색, 화분의 빨간 꽃 옆에 무릎 꿇은 소녀와 구름, 손글씨 제목 자라고 있었다" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no"><span class="badge">새</span> 참고 일러스트 한 장</span><b>스케치 애니</b><span class="en">sketchanime</span>
+          <span class="how">가벼운 코미디와 일상, 속도와 바람, 카운트다운 · 홍보 비트, 탈것과 기계, 표정 연기, 바깥 공기</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/sketchanime/STYLE.md">STYLE.md</a></div>
+      </div>
+    </div>
+    <div class="group">
+      <h3>word-log 키트 <small>26 · 세로 쇼츠</small></h3>
+      <p>word-log의 30초 세로 쇼츠에 쓰인 키트입니다. 장면은 이야기만 갖고 그림은 키트가 그립니다. 처음 네 개(charcoal · hopper · bass · puppet)는 같은 쇼츠 「문」을 네 화풍으로 그렸습니다.</p>
+      <div class="grid tall">
+        <div class="tile kit" data-tags="paint">
+          <a class="open" href="kits/charcoal/?o=v&amp;t=22" target="_blank" rel="noopener">
+          <img src="kits/charcoal.jpg" alt="고딕 목탄 키트 템플릿 22초: 종이 결이 보이는 목탄 그림, 달빛 줄기 아래 마른 나무 한 그루와 줄기의 붉은 파스텔 한 점" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · door-a</span><b>고딕 목탄</b><span class="en">charcoal</span>
+          <span class="how">어둠과 빛, 유혹과 두려움, 지우고 되살리기</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/charcoal/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="paint">
+          <a class="open" href="kits/hopper/?o=v&amp;t=18" target="_blank" rel="noopener">
+          <img src="kits/hopper.jpg" alt="호퍼풍 사실주의 키트 템플릿 18초: 초록 벽의 빈 방, 창 옆에 선 빨간 옷의 사람과 바닥에 비스듬히 떨어진 햇빛" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · door-b</span><b>호퍼풍 사실주의</b><span class="en">hopper</span>
+          <span class="how">고독과 기다림, 멈춘 세상 속 한 가지 변화</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/hopper/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="craft">
+          <a class="open" href="kits/bass/?o=v&amp;t=15" target="_blank" rel="noopener">
+          <img src="kits/bass.jpg" alt="솔 바스 그래픽 키트 템플릿 15초: 어두운 방에 크게 선 검은 오린 실루엣, 흰 종이 창에서 뻗은 검은 빛줄기 끝의 빨간 원" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · door-c</span><b>솔 바스 그래픽</b><span class="en">bass</span>
+          <span class="how">강한 대비, 빠른 메시지, 쇼츠의 리듬</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/bass/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="craft light">
+          <a class="open" href="kits/puppet/?o=v&amp;t=22" target="_blank" rel="noopener">
+          <img src="kits/puppet.jpg" alt="그림자극 키트 템플릿 22초: 등불에 비친 막 위로 뚫린 가죽 새가 열매를 물고 있고, 아래에서 막대에 달린 가죽 손이 올라옴" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · door-d</span><b>그림자극</b><span class="en">puppet</span>
+          <span class="how">비유와 옛이야기, 보이지 않는 존재, 무대 위 드라마</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/puppet/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="light">
+          <a class="open" href="kits/flatnight/?o=v&amp;t=16.5" target="_blank" rel="noopener">
+          <img src="kits/flatnight.jpg" alt="플랫 벡터 밤숲 키트 템플릿 16.5초: 짙은 파랑 밤숲, 두건 쓴 사람 옆에 촛불처럼 빛나는 노란 싹" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · cs-flatnight</span><b>플랫 벡터 밤숲</b><span class="en">flatnight</span>
+          <span class="how">밤, 그리움, 어둠 속 불빛 하나</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/flatnight/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="line">
+          <a class="open" href="kits/flatcamp/?o=v&amp;t=16.5" target="_blank" rel="noopener">
+          <img src="kits/flatcamp.jpg" alt="픽셀 캠프파이어 키트 템플릿 16.5초: 디더링한 밤숲 픽셀 아트, 초록 언덕에 무릎 꿇은 사람과 불꽃처럼 솟은 주황 싹" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · cs-flatcamp</span><b>픽셀 캠프파이어</b><span class="en">flatcamp</span>
+          <span class="how">게임 같은 우화, 경쾌한 레트로, 작은 선택</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/flatcamp/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="line">
+          <a class="open" href="kits/pendoodle/?o=v&amp;t=16.5" target="_blank" rel="noopener">
+          <img src="kits/pendoodle.jpg" alt="펜 낙서 키트 템플릿 16.5초: 회색 종이에 볼펜으로 그린 비와 까마귀, 노란 수채 빛 속의 작은 싹" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · cs-pendoodle</span><b>펜 낙서</b><span class="en">pendoodle</span>
+          <span class="how">잔잔한 유머, 빗속의 기다림, 작은 희망</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/pendoodle/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="line">
+          <a class="open" href="kits/brushline/?o=v&amp;t=16.5" target="_blank" rel="noopener">
+          <img src="kits/brushline.jpg" alt="미니멀 붓선 키트 템플릿 16.5초: 흰 바탕에 붓선 한 번으로 그린 곰과 땅, 꿀색 동그라미 안의 싹" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · cs-brushline</span><b>미니멀 붓선</b><span class="en">brushline</span>
+          <span class="how">미니멀한 비유, 옅은 종교색, 말하는 색 한 점</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/brushline/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="light">
+          <a class="open" href="kits/fogforest/?o=v&amp;t=16.5" target="_blank" rel="noopener">
+          <img src="kits/fogforest.jpg" alt="안개 숲 실루엣 키트 템플릿 16.5초: 청록 안개 숲의 실루엣 사람이 무릎 꿇고 빛나는 싹을 바라봄" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · cs-fogforest</span><b>안개 숲 실루엣</b><span class="en">fogforest</span>
+          <span class="how">방황과 신비, 길을 비추는 빛</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/fogforest/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="light">
+          <a class="open" href="kits/spiritglow/?o=v&amp;t=16.5" target="_blank" rel="noopener">
+          <img src="kits/spiritglow.jpg" alt="빛나는 영혼의 숲 키트 템플릿 16.5초: 어두운 청록 숲, 빛 테두리가 감싼 사람 옆에 호박빛으로 빛나는 싹" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · cs-spiritglow</span><b>빛나는 영혼의 숲</b><span class="en">spiritglow</span>
+          <span class="how">임재와 경이, 보이지 않던 것이 보이는 순간</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/spiritglow/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="line">
+          <a class="open" href="kits/blueprint/?o=v&amp;t=16.5" target="_blank" rel="noopener">
+          <img src="kits/blueprint.jpg" alt="청사진 설계도 키트 템플릿 16.5초: 파란 청사진 위 흰 선으로 그린 무릎 꿇은 사람, 땅속 뿌리 확대 원과 0.56 m 치수선, 빨간 싹" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · cross-blueprint</span><b>청사진 설계도</b><span class="en">blueprint</span>
+          <span class="how">재어 보고 모자람을 드러내기, 계획과 현실</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/blueprint/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="craft light">
+          <a class="open" href="kits/glass/?o=v&amp;t=16.5" target="_blank" rel="noopener">
+          <img src="kits/glass.jpg" alt="스테인드글라스 키트 템플릿 16.5초: 아치형 스테인드글라스 창, 납선 사이 무릎 꿇은 사람 옆에 빨간 꽃봉오리 싹과 땅속 뿌리" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · cross-glass</span><b>스테인드글라스</b><span class="en">glass</span>
+          <span class="how">예배와 거룩한 빛, 이야기 패널</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/glass/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="craft">
+          <a class="open" href="kits/risoline/?o=v&amp;t=16.5" target="_blank" rel="noopener">
+          <img src="kits/risoline.jpg" alt="리소 라인 키트 템플릿 16.5초: 두 색 리소 인쇄 느낌의 청록 바탕, 털모자 쓴 사람이 노랗게 빛나는 싹 앞에 무릎 꿇음" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · cs-risoline</span><b>리소 라인</b><span class="en">risoline</span>
+          <span class="how">일상의 「내 이야기」, 따뜻한 유머, 비교</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/risoline/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="craft">
+          <a class="open" href="kits/monoroom/?o=v&amp;t=16.5" target="_blank" rel="noopener">
+          <img src="kits/monoroom.jpg" alt="보라 단색 키트 템플릿 16.5초: 보라 한 가지 색의 비 오는 들판, 무릎 꿇은 사람 앞의 노란 싹" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · cs-monoroom</span><b>보라 단색</b><span class="en">monoroom</span>
+          <span class="how">고독과 비, 솔직한 얼굴 — 「저게 나다」</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/monoroom/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="light">
+          <a class="open" href="kits/cavesil/?o=v&amp;t=16.5" target="_blank" rel="noopener">
+          <img src="kits/cavesil.jpg" alt="동굴 실루엣 키트 템플릿 16.5초: 빛나는 푸른 동굴의 실루엣 사람 옆에 금빛 꽃봉오리가 달린 식물" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · cs-cavesil</span><b>동굴 실루엣</b><span class="en">cavesil</span>
+          <span class="how">내려감과 빛, 내면의 어둠, 발견</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/cavesil/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="paint">
+          <a class="open" href="kits/storybook/?o=v&amp;t=16.5" target="_blank" rel="noopener">
+          <img src="kits/storybook.jpg" alt="그림책 과슈 키트 템플릿 16.5초: 결이 보이는 청록 숲, 외투 입은 여우가 무릎 꿇고 반짝이는 푸른 싹을 바라봄" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · cs-storybook</span><b>그림책 과슈</b><span class="en">storybook</span>
+          <span class="how">우화와 순례, 잘 다듬은 그림책</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/storybook/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="line">
+          <a class="open" href="kits/minicat/?o=v&amp;t=20" target="_blank" rel="noopener">
+          <img src="kits/minicat.jpg" alt="미니멀 고양이 키트 템플릿 20초: 코발트 밤 물가에 잠옷 입은 흰 고양이가 꿀색으로 빛나는 싹 옆에 섬" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · cs-minicat</span><b>미니멀 고양이</b><span class="en">minicat</span>
+          <span class="how">조용한 우화, 비교, 뒤늦은 깨달음</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/minicat/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="line comic">
+          <a class="open" href="kits/inkcomic/?o=v&amp;t=16.5" target="_blank" rel="noopener">
+          <img src="kits/inkcomic.jpg" alt="미니멀 잉크 만화 키트 템플릿 16.5초: 흰 종이에 마커 선으로 그린 곰이 노란 형광 빛 속의 싹에 코를 댐" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · cs-inkcomic</span><b>미니멀 잉크 만화</b><span class="en">inkcomic</span>
+          <span class="how">건조한 유머, 짐, 고집스러운 작은 선택</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/inkcomic/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="comic">
+          <a class="open" href="kits/gamecartoon/?o=v&amp;t=16.5" target="_blank" rel="noopener">
+          <img src="kits/gamecartoon.jpg" alt="게임 광고 카툰 키트 템플릿 16.5초: 굵은 외곽선의 고글 쓴 고양이 옆에 노란 꽃 싹, 폭풍 하늘이 노을빛으로 갬" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · cs-gamecartoon</span><b>게임 광고 카툰</b><span class="en">gamecartoon</span>
+          <span class="how">에너지, 장애물과 보상, 누구에게나 바로 읽힘</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/gamecartoon/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="paint">
+          <a class="open" href="kits/pastelbook/?o=v&amp;t=16.5" target="_blank" rel="noopener">
+          <img src="kits/pastelbook.jpg" alt="파스텔 색연필 그림책 키트 템플릿 16.5초: 파스텔 색연필로 그린 곰 인형이 분홍 지붕 집 앞 길에서 자라는 싹을 바라봄" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · cs-pastelbook</span><b>파스텔 색연필 그림책</b><span class="en">pastelbook</span>
+          <span class="how">아이들, 집과 소속, 부드러운 희망</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/pastelbook/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="paint">
+          <a class="open" href="kits/clover/?o=v&amp;t=16.5" target="_blank" rel="noopener">
+          <img src="kits/clover.jpg" alt="클로버 수채 키트 템플릿 16.5초: 수채 클로버 들판의 햄스터 옆에 햇빛 받은 네 잎 클로버 싹" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · cs-clover</span><b>클로버 수채</b><span class="en">clover</span>
+          <span class="how">작음과 신뢰, 공급하심, 쉼과 자람</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/clover/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="paint">
+          <a class="open" href="kits/inkwash/?o=v&amp;t=16.5" target="_blank" rel="noopener">
+          <img src="kits/inkwash.jpg" alt="잉크와 수채 스케치북 키트 템플릿 16.5초: 잉크와 회색 수채 스케치북, 까마귀 나그네 옆에 주황 번짐 속의 싹" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · cs-inkwash</span><b>잉크와 수채 스케치북</b><span class="en">inkwash</span>
+          <span class="how">길과 순례, 계획과 현실, 겸손</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/inkwash/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="paint">
+          <a class="open" href="kits/graphite/?o=v&amp;t=16.5" target="_blank" rel="noopener">
+          <img src="kits/graphite.jpg" alt="흑연 그림책 키트 템플릿 16.5초: 흑연으로 그린 밤 마을, 흰 천 유령이 금빛으로 빛나는 싹을 내려다봄" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · cs-graphite</span><b>흑연 그림책</b><span class="en">graphite</span>
+          <span class="how">밤의 두려움을 부드럽게, 찾아오는 빛, 위로</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/graphite/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="craft">
+          <a class="open" href="kits/ukiyoe/?o=v&amp;t=16.5" target="_blank" rel="noopener">
+          <img src="kits/ukiyoe.jpg" alt="우키요에 목판화 키트 템플릿 16.5초: 눈 덮인 산과 소나무, 파도 무늬 바다 위 길에서 삿갓 쓴 사람이 빛줄기 속 싹 앞에 무릎 꿇음" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · cross-ukiyoe</span><b>우키요에 목판화</b><span class="en">ukiyoe</span>
+          <span class="how">순례와 인내, 사람보다 큰 풍경, 민담</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/ukiyoe/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="craft">
+          <a class="open" href="kits/papercut/?o=v&amp;t=20" target="_blank" rel="noopener">
+          <img src="kits/papercut.jpg" alt="붉은 전지 오림 키트 템플릿 20초: 남색 바탕에 붉은 종이로 오린 사람과 큰 식물, 금빛 꽃과 뒤에서 퍼지는 빛" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · cross-papercut</span><b>붉은 전지 오림</b><span class="en">papercut</span>
+          <span class="how">많은 것 가운데 하나, 잘라냄과 상실, 뒤에서 비추는 빛</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/papercut/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="comic">
+          <a class="open" href="kits/mograph/?o=v&amp;t=15" target="_blank" rel="noopener">
+          <img src="kits/mograph.jpg" alt="모션그래픽 키트 템플릿 15초: 빨간 무대 위 큰 주황 원 앞에 무릎 꿇은 사람과 초록 싹, 입체 글자 쑥!" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">word-log · intro-class</span><b>모션그래픽</b><span class="en">mograph</span>
+          <span class="how">채널 · 시리즈 인트로, 여러 렌즈로 본 하나의 진리, 목록, 기쁨과 초대</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/mograph/STYLE.md">STYLE.md</a></div>
+      </div>
+    </div>
+    <div class="group">
+      <h3>「침묵의 400년」 키트 <small>3 · 가로 · 세로</small></h3>
+      <p>one-scroll-bible의 3분 영상 「침묵의 400년」을 이 세 키트로 다시 짜고, 스틸 276장이 픽셀 단위로 같은지 비교했습니다. 가로와 세로 모두에 맞춰 구성되어 있습니다.</p>
+      <div class="grid tall">
+        <div class="tile kit" data-tags="light">
+          <a class="open" href="kits/lamplit/?o=v&amp;t=15" target="_blank" rel="noopener">
+          <img src="kits/lamplit.jpg" alt="등잔 아래 두루마리 키트 템플릿 15초: 어둠 속 등잔 옆에 펼친 양피지 두루마리, 손글씨 문장 중 몇 글자가 금빛으로 밑줄" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">one-scroll-bible 「침묵의 400년」</span><b>등잔 아래 두루마리</b><span class="en">lamplit</span>
+          <span class="how">옮겨 적고 지켜 온 말씀, 약속과 응답, 오랜 기다림, 번역</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/lamplit/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="line">
+          <a class="open" href="kits/inkmap/?o=v&amp;t=22" target="_blank" rel="noopener">
+          <img src="kits/inkmap.jpg" alt="양피지 잉크 지도 키트 템플릿 22초: 얼룩진 양피지 위 잉크 해안선과 산, 출발지에서 도착지로 이어진 금빛 길" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">one-scroll-bible 「침묵의 400년」</span><b>양피지 잉크 지도</b><span class="en">inkmap</span>
+          <span class="how">여정과 퍼져 나감, 준비, 한 지역 전체를 한눈에</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/inkmap/STYLE.md">STYLE.md</a></div>
+        <div class="tile kit" data-tags="craft">
+          <a class="open" href="kits/illuminated/?o=v&amp;t=22" target="_blank" rel="noopener">
+          <img src="kits/illuminated.jpg" alt="채색 필사본 키트 템플릿 22초: 금박 테두리의 필사본 그림, 고딕 아치 안 푸른 밤하늘에 금빛 별과 빛살, 풀밭의 양 떼" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">one-scroll-bible 「침묵의 400년」</span><b>채색 필사본</b><span class="en">illuminated</span>
+          <span class="how">왕권과 영광, 환상 풀이, 천사, 고요하고 거룩한 순간</span></div></a>
+          <a class="more" href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/illuminated/STYLE.md">STYLE.md</a></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
 <section id="works"><div class="wrap">
   <h2>실제 작품</h2>
   <p class="lead">이 스킬이 처음 만들어진 프로젝트입니다. 스킬의 모든 단계를 이 프로젝트에서 썼습니다.</p>
@@ -159,9 +395,10 @@ python3 ../../scripts/publish.py   # → site/ (라이브 플레이어)</code></
   <h2>링크</h2>
   <ul class="links">
     <li><a href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/SKILL.md">SKILL.md</a> <span>워크플로 · 장면 계약</span></li>
-    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/canvas-film">폴더</a> <span>harness · scripts · player · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/canvas-film">폴더</a> <span>harness · scripts · player · kits · examples</span></li>
     <li><a href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/README.md">README.md</a> <span>빠른 시작</span></li>
     <li><a href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/references/STYLES.md">references/STYLES.md</a> <span>21가지 화풍과 그리는 법</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/kits/README.md">kits/README.md</a> <span>35가지 키트 · 템플릿 · 키트 만드는 법</span></li>
     <li><a href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/references/SCENE-RULES.md">references/SCENE-RULES.md</a> <span>장면 작성 규칙</span></li>
     <li><a href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/references/SOUND.md">references/SOUND.md</a> <span>ElevenLabs 사운드</span></li>
     <li><a href="https://github.com/jungrok5/motion-skills/blob/main/canvas-film/references/I18N.md">references/I18N.md</a> <span>다국어 방법과 품질 기준</span></li>
@@ -172,7 +409,7 @@ python3 ../../scripts/publish.py   # → site/ (라이브 플레이어)</code></
 </main>
 
 <footer><div class="wrap">
-  <a href="../">← 스킬 목록</a> · 샘플 이미지는 one-scroll-bible.com 영상의 장면입니다.
+  <a href="../">← 스킬 목록</a> · 샘플 이미지는 one-scroll-bible.com 영상의 장면이고, 키트 이미지는 각 키트 템플릿의 스틸입니다.
 </div></footer>
 <script src="../assets/site.js"></script>
 </body>

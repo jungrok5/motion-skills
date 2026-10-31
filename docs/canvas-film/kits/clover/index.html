@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>새 장면 · 클로버 수채</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hi+Melody&family=Noto+Sans+KR:wght@400;500;600&display=swap">
+</head>
+<body>
+<script src="../_shared/lib.js"></script>
+<script>/* site copy: ?t=<sec> holds that frame as the poster until play (tools/build-kit-demos.py) */(function (run) { Pilot.run = c => { let go = false; const d = c.draw, q = new URLSearchParams(location.search), P = q.has("t") ? +q.get("t") : 0; c = Object.assign({}, c, { draw: (x, t) => { if (t > 0) go = true; d(x, go ? t : Math.min(P, c.dur - .01)); } }); return run(c); }; })(Pilot.run);</script>
+<script src="../_shared/story.js"></script><script src="script.js"></script><script src="kit-clover.js"></script>
+<script>
+/* TEMPLATE — a new scene in the house style `clover` (styles/clover/STYLE.md). Demo story (script.js): an orange hamster
+   waddles along the sandy path through the clover holding a honey-coloured seed in both paws, sits down, digs and plants it,
+   waits (leaves sway, dapple drifts, a ladybug walks a leaf), a clover sprout rises as a sunbeam pours onto it, the hamster
+   stands and looks up at it, a happy hop, end card.
+   Replace the SUBJECT parts (marked ✎) with the film's one image; keep the frame skeleton in draw():
+   sky (.1) → far meadow (.32) → tall flowers (.55) → clover band (.72) → world (1: ground, dapple, arch, subject, figures)
+   → foreground clover (1.18) → warm wash → end plate → paper → captions → end card.
+   Beats and words come from script.js (window.SCRIPT). Pure function of t; seeded randomness only; figures on twos. */
+const K = window.Clover, S = window.SCRIPT, B = S.beat;
+const { clamp, lerp, ss, eo, eio, rng } = Pilot;
+const { C, t12 } = K, TAU = Math.PI * 2, W = Pilot.W, H = Pilot.H;
+// ✎ layout (world px; the frame is 1080×1920 at zoom 1)
+const RT = 1204, PN = 1352, FY = 1300;      // path's far / near edge; the front lane (feet)
+const KM = 2.5;                             // the hamster's scale (world px per lab unit)
+const X0 = 640;                             // ✎ where the seed goes
+const XS = 170, XK = X0 - 200;              // the hamster starts here (just out of the arch); sits down here
+const AX = 40, AB = 1250;                    // the willow arch it comes out of (far side of the path), its base
+const TX = {}, FX = {};
+
+/* ✎ the subject: built once */
+function buildSubject() {
+  FX.mound = K.smooth(K.rough(K.ellPts(0, 0, 46, 14, 18), 2, 42, 7));
+  FX.hole = K.smooth(K.rough(K.ellPts(0, 2, 24, 7, 14), 1.2, 43, 6));
+  const r = rng(9); FX.dirt = [];   // soil flicked out by the digging paws (5.45–5.95)
+  for (let n = 0; n < 16; n++) FX.dirt.push({ t0: lerp(5.45, 5.95, n / 15), x: X0 + (r() - .5) * 18, y: FY - 4, vx: (n % 2 ? 1 : -.4) * (80 + r() * 160), vy: -(100 + r() * 200), land: FY + 4 + r() * 26,
+    r0: r() * TAU, vr: (r() - .5) * 14, sz: 3 + r() * 4, col: r() < .5 ? C.earth : '#b08a62' });
+}
+const sproutState = t => { const u = clamp((t - B.sprout) / 4.2); return { u, h: 380 * eo(u), sw: Math.sin(t * .9) * 10 * ss(B.sprout, B.sprout + 2, t) }; };
+function drawSprout(ctx, t) {
+  if (t < B.sprout - .05) return;
+  const st = sproutState(t), base = [X0, FY - 2], c = [X0 - 12, FY - st.h * .5], tip = [X0 + st.sw, FY - st.h];
+  const at = k => [lerp(lerp(base[0], c[0], k), lerp(c[0], tip[0], k), k), lerp(lerp(base[1], c[1], k), lerp(c[1], tip[1], k), k)];
+  const stem = new Path2D(); stem.moveTo(...base); stem.quadraticCurveTo(c[0], c[1], tip[0], tip[1]);
+  ctx.save(); ctx.lineCap = 'round'; ctx.strokeStyle = C.bladeL; ctx.lineWidth = 12; ctx.stroke(stem); ctx.strokeStyle = C.stem; ctx.lineWidth = 8; ctx.stroke(stem); ctx.restore();
+  // two side leaves on short petioles, then the big three-leaf clover on top (washes are cheap to draw live: no noise in them)
+  for (const [k, side, sz, d] of [[.45, -1, 40, 0], [.68, 1, 46, .25]]) {
+    const o = eo(clamp((st.u - .2 - d * .4) / .35)); if (o <= 0) continue;
+    const p = at(k), q = [p[0] + side * 34 * o, p[1] - 18 * o];
+    ctx.save(); ctx.strokeStyle = C.stem; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(...p); ctx.quadraticCurveTo(p[0] + side * 20 * o, p[1] - 2, q[0], q[1]); ctx.stroke(); ctx.restore();
+    K.cloverLeaf(ctx, q[0], q[1], sz * o, side * .5 + Math.sin(t * 1.3 + k * 5) * .05, .78, C.near, C.nearL, 70 + k * 10);
+  }
+  const ot = eo(clamp((st.u - .35) / .5)); if (ot > 0) K.cloverLeaf(ctx, tip[0], tip[1], 78 * ot, Math.sin(t * 1.1) * .06, .82, C.mid, C.midL, 77);
+}
+function drawGround(ctx, t) {   // the hole, the seed in it, then the mound over it
+  if (t >= 5.5 && t < 6.35) { ctx.save(); ctx.translate(X0, FY); ctx.fillStyle = '#8f6c4c'; ctx.fill(FX.hole); ctx.restore(); if (t >= B.plant) seed(ctx, X0 + 2, FY + 1); }
+  if (t >= 6.35) { const k = eo((t - 6.35) / .25); ctx.save(); ctx.translate(X0, FY + 2); ctx.scale(1, k); K.wash(ctx, FX.mound, C.earth, C.earthD, { bloom: .5, ew: 6, pool: .6, line: C.earthL, lw: 1.6 }); ctx.restore(); }
+}
+const seed = (ctx, x, y) => { ctx.save(); ctx.translate(x, y); ctx.rotate(-.4); const p = new Path2D(); p.ellipse(0, 0, 10, 7, 0, 0, TAU);
+  K.wash(ctx, p, C.gold, C.goldD, { bloom: .3, ew: 3, pool: .6, line: C.goldL, lw: 1.4, la: .9, dash: [] }); ctx.fillStyle = 'rgba(255,240,200,.8)'; ctx.beginPath(); ctx.ellipse(-3, -2, 3.5, 2, 0, 0, TAU); ctx.fill(); ctx.restore(); };
+
+/* ✎ the figure: one pose function of t (on twos) built from the kit's poses */
+const dWalk = t => { t = Math.min(t, 4.4); return t < 3.5 ? t : 3.5 + (t - 3.5) - (t - 3.5) * (t - 3.5) / 1.8; };
+const hx = t => XS + (XK - XS) * dWalk(t) / 3.95;
+function poseHam(t) {
+  const tp = Math.max(0, t12(t)), pal = K.PAL.me;
+  const held = F => { const c = K.worldPt(F, 46, -40); F.paws = [[c[0] + 4, c[1] - 2], [c[0] - 2, c[1] + 4]]; return F; };   // the seed held in both paws in front of the chest
+  const WALK = tt => held(K.hamWalk(hx(tt), FY, KM, 1, (hx(tt) - XS) / 86, { stride: 24, lift: 8, lean: .14, head: .05 }));
+  const SIT = K.kneelSpec(XK, FY, KM, 1, { lean: .12, crouch: .6, head: -.05 });
+  const DIG = K.kneelSpec(X0 - 125, FY, KM, 1, { lean: .55, crouch: 1, head: -.3, eye: 'down' });
+  const dig = k => tp > 5.45 && tp < 5.95 ? 10 * Math.max(0, Math.sin(TAU * 4 * (tp - 5.45) + k * Math.PI)) : 0, pat = tp > 6.1 && tp < 6.8 ? 8 * Math.abs(Math.sin(TAU * 1.5 * (tp - 6.1))) : 0;
+  DIG.paws = [[X0 + 8, FY - 6 - dig(0) - pat], [X0 - 10, FY - 4 - dig(1) - pat]]; K.stepTo(DIG, 60);
+  const STAND = K.standSpec(XK - 6, FY, KM, 1, { lean: .04 });
+  let F, sd = 0;
+  if (t < 4.2) { F = WALK(tp); sd = 1; }
+  else if (t < 4.75) { F = K.mixSpec(WALK(4.4), held({ ...SIT }), eio((tp - 4.2) / .5)); sd = 1; }
+  else if (t < 5.1) { F = held({ ...SIT }); F.eye = 'down'; F.head = -.2; sd = 1; }
+  else if (t < 5.45) { F = K.mixSpec(held({ ...SIT }), DIG, eio((tp - 5.1) / .35)); sd = 1; }   // scoot forward and lean in
+  else if (t < 6.8) { F = DIG; sd = tp < 5.5 ? 1 : 0; }
+  else if (t < 7.3) F = K.mixSpec(DIG, SIT, eio((tp - 6.8) / .45));
+  else if (t < B.rise) {   // waiting: breathing, a slow head tilt, blinks; startled, then looking up when the sprout comes
+    F = { ...SIT, breath: 1 + .012 * Math.sin(tp * 2.6), head: -.05 + .08 * Math.sin(tp * .7) };
+    if ((tp > 9.5 && tp < 9.7) || (tp > 11.8 && tp < 11.95)) F.eye = 'closed';
+    if (tp >= B.sprout) { const k = eio((tp - B.sprout) / .4); F.lean = SIT.lean - .1 * k; F.head = lerp(F.head, .4, k); F.eye = tp < B.sprout + 1.1 ? 'shock' : 'up'; }
+  } else {
+    F = K.mixSpec({ ...SIT, head: .4, lean: SIT.lean - .1, eye: 'up' }, STAND, eio((tp - B.rise) / .5));
+    F = K.lookUp(F, ss(B.rise + .3, B.rise + .9, tp));
+    const u = clamp((tp - 21.6) / .5); if (u > 0 && u < 1) { F.bob = 26 * Math.sin(Math.PI * u); F.sq = 1 + .06 * Math.sin(Math.PI * u); }   // a happy hop
+    if (tp > 21.5 && tp < 23.5) F.eye = 'closed';
+  }
+  F.pal = pal; F.rim = .55 * ss(B.sprout, B.sprout + 1, t);   // the sunbeam lights the hamster's front edge
+  return { F, seed: sd };
+}
+
+/* ✎ the camera: follow the walk, push in on the planting, hold, pull back for the sprout and the light */
+function camAt(t) {
+  let c = { x: 400 + .55 * (hx(t) - XS), y: 1120, z: 1.22 };
+  c = K.mixCam(c, { x: X0 - 90, y: 1180, z: 1.55 }, eio((t - 4.3) / 1.1));
+  c = K.mixCam(c, { x: X0 - 80, y: 1185, z: 1.66 }, eio((t - 7.6) / 6));
+  c = K.mixCam(c, { x: X0 - 60, y: 1080, z: 1.3 }, eio((t - 13.85) / 1.1));
+  c = K.mixCam(c, { x: X0 - 70, y: 1060, z: 1.22 }, eio((t - B.rise) / 1.4));
+  c.sx = c.sy = 0; return c;
+}
+
+function world(ctx, t) {
+  K.drawSheet(ctx, TX.ground);
+  K.drawDapple(ctx, t, FX.dapple, -1200, 2600, RT, PN);
+  TX.arch.back(ctx); TX.arch.front(ctx, t);
+  drawGround(ctx, t);
+  // the accent light: a sunbeam pours onto the sprout from the upper right, motes drifting down it, a glow at the tip
+  const lit = ss(13.6, 14.8, t);
+  if (lit > 0) { ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = lit * (.85 + .1 * Math.sin(t * 1.7)); ctx.drawImage(FX.beam, X0 - 700, FY - 1430, 1400, 1700); ctx.restore();
+    ctx.save(); ctx.globalAlpha = lit; K.drawMotes(ctx, t, FX.motes, X0, FY); ctx.restore(); }
+  drawSprout(ctx, t);
+  if (t >= B.sprout) { const st = sproutState(t); K.warmGlow(ctx, X0 + st.sw, FY - st.h + 10, 170 + 50 * st.u, .3 * ss(B.sprout, B.sprout + .8, t)); }
+  if (t >= B.sprout && t < B.sprout + .09) K.cutFlash(ctx, X0, FY - 20, 40);   // the pop as it breaks the ground
+  const M = poseHam(t);
+  K.hamShadow(ctx, M.F);
+  K.drawHam(ctx, M.F, M.seed ? () => { const c = K.worldPt(M.F, 46, -40); seed(ctx, c[0] + 2, c[1]); } : null);
+  K.chips(ctx, t, FX.dirt);
+}
+
+function draw(ctx, t) {
+  const cm = camAt(t);
+  ctx.fillStyle = C.sky1; ctx.fillRect(0, 0, W, H);
+  K.layer(ctx, cm, .1, () => K.drawSheet(ctx, TX.sky));
+  K.layer(ctx, cm, .32, () => K.drawSheet(ctx, TX.far));
+  K.layer(ctx, cm, .55, () => K.drawTall(ctx, t, FX.tall));
+  K.layer(ctx, cm, .72, () => K.drawSheet(ctx, TX.mid));
+  K.layer(ctx, cm, 1, () => world(ctx, t));
+  K.layer(ctx, cm, 1.18, () => K.drawFore(ctx, t, FX.fore, 2));
+  K.warmWash(ctx, ss(13.8, 15, t));
+  K.endPlate(ctx, t, B.end);
+  K.paperPass(ctx);
+  if (t < B.end) K.captions(ctx, t, S.lines);
+  K.endCard(ctx, t, S.endCard, B.end);
+}
+
+async function init() {
+  K.init();
+  const r = rng(5);   // one random stream through the builders (keep the order)
+  TX.sky = K.skySheet(r);
+  TX.far = K.farMeadow(r, -1100, 1900);
+  TX.mid = K.midBand(r, -1300, 2300);
+  FX.tall = K.tallFlowers(r, -900, 1800);
+  TX.ground = K.ground(r, { x0: -1200, x1: 2600, top: RT, bottom: PN });
+  FX.dapple = K.dapple();
+  FX.beam = K.sunbeam(r);
+  FX.motes = K.motes(r, X0 - 300);
+  TX.arch = K.arch({ x: AX, top: AB - 290, base: AB }, null, null);
+  FX.fore = K.foreLeaves(r, -1200, 2600 * 1.18);
+  buildSubject();
+}
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: K.FONTS, init, draw });
+</script>
+</body>
+</html>

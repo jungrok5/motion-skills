@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>모션그래픽 · 템플릿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@500;700;900&display=swap">
+</head>
+<body>
+<script src="../_shared/lib.js"></script>
+<script>/* site copy: ?t=<sec> holds that frame as the poster until play (tools/build-kit-demos.py) */(function (run) { Pilot.run = c => { let go = false; const d = c.draw, q = new URLSearchParams(location.search), P = q.has("t") ? +q.get("t") : 0; c = Object.assign({}, c, { draw: (x, t) => { if (t > 0) go = true; d(x, go ? t : Math.min(P, c.dur - .01)); } }); return run(c); }; })(Pilot.run);</script>
+<script src="../_shared/story.js"></script>
+<script src="script.js"></script>
+<script src="kit-mograph.js"></script>
+<script>
+/* Mograph template — the house template story (a seed) in the 「word-log 교실」 motion-graphics style (styles/mograph/STYLE.md).
+   NO video model: the character is the kit's code figure (Mograph.codeActor). She stays at the centre while the world swaps
+   on bar lines (120 BPM → a bar = 2 s): ① window grid — she walks in inside the gold window, the ground scrolls under her
+   steps (one step per beat) → dive into the window → ② drafting sheet — drawn in blue line, she kneels and plants a seed
+   (a compass rings it), then the colour fills → a bubble pops → ③ pink bubbles — she waits: '기다리는 중…', neon '기다림',
+   the mound pulses on the beat → ④ red stage — the sprout springs up in the accent light, '쑥!' → ⑤ manga panels — she
+   stands and looks, '와!', a close-up, '반짝!' → ink wipe → ⑥ 3-D keyboard — happy steps press ㅆ ㅏ ㄱ, they jump up and snap
+   into '싹!' → ⑦ kaleidoscope of the worlds + the end card in a gold window; the loop seam fades into frame 0.
+   To make a new film: write scenes/script.js (beats, scenes, lines), then change the POSE (what she does), the SUBJECT
+   (seed/sprout → your one image) and the WORDS of each world below. Keep one world per bar-aligned scene and the order
+   world → captions → end card. To use a video-model sprite instead (owner's request only): D = await Mograph.loadSprite(…). */
+const S = window.SCRIPT, B = S.beat, MG = Mograph, { clamp, lerp, ss, eo, eio } = Pilot;
+const W = 1080, H = 1920, TAU = Math.PI * 2;
+MG.tempo(S.BPM || 120);
+const SC = MG.sceneTable(S.scenes, S.DUR), scAt = id => SC.find(s => s.id === id);
+const tri = (t, at, len = .14) => Math.max(0, 1 - Math.abs(t - at) / len);   // a blink
+
+// ---------------- the character: what she does, as a pose over time (sprite px; see Mograph.rig) ----------------
+const W0 = B.walk[0], W1 = B.walk[1], WM = (W0 + W1) / 2;
+const walkDist = t => { const v = 320, u = t - W0, h = WM - W0;   // full speed (a step a beat), then slow to a stop on the near foot
+  return u < 0 ? 0 : t < WM ? v * u : t < W1 ? v * (h + (t - WM) - (t - WM) ** 2 / (2 * (W1 - WM))) : v * (h + (W1 - WM) / 2); };
+const GRIP = [290, 28], KNEE_REST = [200, 252];   // the planting hand on the ground in front of the knee; at rest on the knee
+function pose(t) {
+  const kn = ss(B.kneel, B.kneel + .7, t) * (1 - ss(B.rise, B.rise + .8, t));
+  const r = ss(B.plant - .6, B.plant, t) * (1 - ss(B.plant + .2, B.plant + .9, t));               // reach down to plant
+  const sp = ss(B.sprout, B.sprout + 1.4, t);
+  const mch = Math.max(0, t - scAt('keys').at - .3), ma = ss(scAt('keys').at + .2, scAt('keys').at + .4, t) * (1 - ss(B.end - 1, B.end - .7, t));
+  let look = -.08 - .2 * kn - .15 * r;
+  if (t > B.wait[0] && t < B.sprout) look += .05 * MG.beatPulse(t);                                // nods along while waiting
+  look = lerp(look, .12, sp * (1 - ss(B.rise, B.rise + .8, t)));                                    // follows the sprout up
+  if (t > B.rise) look = lerp(look, -.18, ss(B.rise, B.rise + .8, t) * (1 - ma));                     // stands, looks down at it
+  const ch = ss(B.end - 1.5, B.end - 1.2, t) * (1 - ss(B.end - .2, B.end + .2, t));
+  return { walk: walkDist(t), walkAmt: 1, armSwing: 1 - ss(W1 - .6, W1 + .2, t), kneel: kn, lean: .1 * kn + 1.1 * eio(r) - .08 * sp * kn,
+    reach: [lerp(KNEE_REST[0], GRIP[0], eio(r)), lerp(KNEE_REST[1], GRIP[1], eio(r))], reachAmt: kn, reachFar: [60, 250], reachFarAmt: kn,
+    march: mch, marchAmt: ma, cheer: ch, look, mouth: Math.max(.3, sp * (1 - ss(16, 17, t)), ch),
+    blink: Math.max(tri(t, 2.6), tri(t, 9.7), tri(t, 12.3), tri(t, 19.6), tri(t, 23.1)) };
+}
+let D, SEED;   // the actor; the seed's spot in sprite px (where her hand is at the plant beat)
+
+// ---------------- the subject: seed, mound, sprout (replace with your image) ----------------
+// sprout(ctx, x, y, h, g, mode): a stem with two leaves, grown g (0..1); mode 'color' | 'ink' (manga) | 'line' (drafting)
+function sprout(ctx, x, y, h, g, mode = 'color', t = 0) {
+  if (g <= 0) return; const top = [x + Math.sin(t * 1.7) * h * .03 * g, y - h * g], o = ss(.45, 1, g), lw = Math.max(4, h * .05);
+  const line = mode === 'line' ? MG.BLUE : mode === 'ink' ? '#111' : MG.INK, stem = mode === 'color' ? '#3faa4c' : mode === 'ink' ? '#111' : 'rgba(0,0,0,0)';
+  const leafF = mode === 'color' ? '#7ad86b' : mode === 'ink' ? '#fff' : 'rgba(0,0,0,0)';
+  ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.strokeStyle = line; ctx.lineWidth = lw + 8; ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x - h * .08, y - h * g * .5, top[0], top[1]); ctx.stroke();
+  if (mode !== 'line') { ctx.strokeStyle = stem; ctx.lineWidth = lw; ctx.stroke(); }
+  for (const s of [-1, 1]) { const a = s * (.25 + 1.05 * o), L = h * .42 * (.25 + .75 * o);
+    ctx.save(); ctx.translate(top[0], top[1] + 4); ctx.rotate(a); ctx.beginPath(); ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(L * .55, -L * .45, 0, -L); ctx.quadraticCurveTo(-L * .55, -L * .45, 0, 0); ctx.closePath();
+    ctx.fillStyle = leafF; ctx.fill(); ctx.strokeStyle = line; ctx.lineWidth = 5; ctx.stroke();
+    ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(0, -2); ctx.lineTo(0, -L * .8); ctx.stroke(); ctx.restore(); }
+  ctx.restore();
+}
+function seed(ctx, x, y, s, col = '#8a5a2b', line = MG.INK) { ctx.save(); ctx.fillStyle = col; ctx.strokeStyle = line; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.ellipse(x, y - 9 * s, 13 * s, 9 * s, -.3, 0, TAU); ctx.fill(); ctx.stroke(); ctx.restore(); }
+function mound(ctx, x, y, s, fill, line = MG.INK) { ctx.save(); ctx.fillStyle = fill; ctx.strokeStyle = line; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.moveTo(x - 70 * s, y); ctx.quadraticCurveTo(x, y - 46 * s, x + 70 * s, y); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore(); }
+function accentGlow(ctx, x, y, R, a) { if (a <= 0) return; ctx.save(); ctx.globalCompositeOperation = 'screen';
+  const g = ctx.createRadialGradient(x, y, 0, x, y, R); g.addColorStop(0, `rgba(255,120,200,${.9 * a})`); g.addColorStop(.35, `rgba(255,47,158,${.45 * a})`); g.addColorStop(1, 'rgba(255,47,158,0)');
+  ctx.fillStyle = g; ctx.fillRect(x - R, y - R, 2 * R, 2 * R); ctx.restore(); }
+const growth = t => MG.elastic(clamp((t - B.sprout) / 1.2, 0, 1));
+
+// ---------------- ① window grid: she walks in ----------------
+const WIN = MG.WIN, KFULL = MG.kfull(WIN), GRID = { hero: 'word-log – 씨앗', side: MG.SIDE };
+function gridInner(ctx, t) {
+  const { x0, y0, w, h } = MG.heroPage(ctx, WIN), fh = 760, fy = y0 + h - 70, s = fh / D.figH;
+  const wx = 200 + walkDist(t) * s, x = Math.min(540, wx), off = wx - x;          // she enters, then the page scrolls under her steps
+  ctx.strokeStyle = 'rgba(90,60,30,.55)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x0, fy + 2); ctx.lineTo(x0 + w, fy + 2); ctx.stroke();
+  ctx.fillStyle = 'rgba(90,60,30,.35)'; for (let k = -2; k < 14; k++) { const gx = x0 + ((k * 90 - off) % 1260 + 1260) % 1260 - 90; ctx.fillRect(gx, fy + 14, 34, 6); }
+  D.shadow(ctx, t, x, fy, fh, 'rgba(110,70,20,.35)');
+  const p = D.draw(ctx, t, x, fy, fh);
+  const hh = D.highHand(t, p); if (hh) MG.sparkleTrail(ctx, hh.x, hh.y, t);
+}
+function sceneGrid(ctx, t, u) {   // push in, then dive into the gold window on the scene's last beat
+  const L = scAt('grid').end, k = lerp(1, 1.06, eio(ss(0, L - .7, u))) * Math.pow(KFULL / 1.06, eio(ss(L - .75, L, t)));
+  ctx.save(); MG.gridView(ctx, k, WIN); MG.windowGrid(ctx, t, u, c => gridInner(c, t), GRID); ctx.restore();
+}
+
+// ---------------- ② drafting sheet: drawn in, kneels, plants ----------------
+function sceneDraft(ctx, t, u) {
+  ctx.drawImage(MG.paperSheet(), 0, 0);
+  const x = 420, y = 1480, fh = 900, p = D.place(x, y, fh), sx = p.X(SEED[0]);
+  const gp = []; for (let k = -2; k <= 11; k++) gp.push([k * 110, y]);
+  MG.guides(ctx, [540, 640], gp, .5 * ss(.1, .7, u));
+  ctx.save(); ctx.strokeStyle = MG.BLUE; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W * eio(ss(0, .8, u)), y); ctx.stroke(); ctx.restore();
+  MG.drawIn(ctx, t, D, x, y, fh, eio(ss(.1, 1.2, u)), eio(ss(2.3, 3.0, u)));
+  if (t >= B.plant) {   // the seed, ringed by a compass, with its dimension
+    seed(ctx, sx, y, 1.2, ss(B.plant + 1.2, B.plant + 1.6, t) > 0 ? '#8a5a2b' : '#f3ecdc', MG.BLUE);
+    MG.compass(ctx, [sx, y - 10], 92, t - B.plant + .1);
+    MG.dimension(ctx, sx + 80, y - 140, y, '씨앗 1', ss(B.plant + .5, B.plant + .9, t));
+    MG.sparkBurst(ctx, sx, y - 12, (t - B.plant) / .45, 12, 160, 3, [MG.BLUE, '#fff']);
+  }
+}
+
+// ---------------- ③ bubbles: waiting ----------------
+function sceneBubble(ctx, t, u) {
+  MG.bubbleSky(ctx, u);
+  const x = 420, y = 1500, fh = 900, s = fh / D.figH, sx = D.place(x, y, fh).X(SEED[0]);
+  MG.lightCross(ctx, t, x + 80, y);
+  MG.bubblesBack(ctx, u);
+  accentGlow(ctx, sx, y - 20, 150, .35 + .4 * MG.beatPulse(t));   // the buried seed keeps a heartbeat
+  mound(ctx, sx, y + 2, s, '#c98ad8');
+  D.draw(ctx, t, x, y, fh);
+  const wv = 1 - ss(0, .7, u); if (wv > 0) { ctx.save(); ctx.globalAlpha = wv; D.draw(ctx, t, x, y, fh, { mode: 'white' }); ctx.restore(); }
+  MG.bubblesFront(ctx, u);
+  MG.neonType(ctx, t, u, ['기', '다', '림'], [10, 10.5, 11], 540, 500, 160);
+  MG.statusPill(ctx, '기다리는 중', u, 540, 660);
+}
+
+// ---------------- ④ red stage: the sprout ----------------
+function sceneStage(ctx, t, u) {
+  MG.stageBack(ctx, t, u);
+  const x = 420, y = 1488, fh = 860, s = fh / D.figH, sx = D.place(x, y, fh).X(SEED[0]), g = growth(t);
+  accentGlow(ctx, sx, y - 40, 260 + 140 * g, ss(B.sprout - .1, B.sprout + .4, t) * (.75 + .25 * MG.beatPulse(t)));   // the accent light
+  D.shadow(ctx, t, x, y, fh, 'rgba(90,0,0,.45)');
+  mound(ctx, sx, y + 2, s, '#7a3b1e');
+  D.draw(ctx, t, x, y, fh);
+  sprout(ctx, sx, y - 20 * s, 470 * s, g, 'color', t);
+  MG.pop(ctx, t, B.sprout + .25, '쑥!', sx + 30, y - 660 * s, 170, { face: '#fff36b', face2: '#ffc21a', depth: .12, rot: .08, burst: [24, 360, 21, ['#fff', '#ffe14d']] });
+}
+
+// ---------------- ⑤ manga: she stands and looks ----------------
+function sceneManga(ctx, t, u) {
+  MG.mangaPaper(ctx);
+  MG.panel(ctx, 40, 110, 1000, 980, u, 'l', () => {
+    MG.focusLines(ctx, 560, 700, 40, 110, 1000, 980, 31);
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(540, 720, 400, 420, 0, 0, TAU); ctx.fill();
+    const x = 380, y = 1030, fh = 760, s = fh / D.figH, sx = D.place(x, y, fh).X(SEED[0]);
+    ctx.strokeStyle = '#111'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(60, y + 2); ctx.lineTo(1020, y + 2); ctx.stroke();
+    D.draw(ctx, t, x, y, fh, { mode: 'manga' });
+    sprout(ctx, sx, y, 470 * s, 1, 'ink', t);
+    MG.pop(ctx, t, B.rise + .9, '와!', 850, 260, 150, { ...MG.MANGA_WORD, d: .45, rot: .16 });
+  });
+  MG.panel(ctx, 40, 1120, 470, 400, u - 1.5, 'd', () => {   // close-up: the sprout
+    MG.focusLines(ctx, 275, 1330, 40, 1120, 470, 400, 44, .8);
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(275, 1330, 150, 170, 0, 0, TAU); ctx.fill();
+    sprout(ctx, 275, 1515, 270, 1, 'ink', t);
+  });
+  MG.panel(ctx, 540, 1120, 500, 400, u - 2.5, 'r', () => {
+    ctx.fillStyle = '#111'; ctx.fillRect(540, 1120, 500, 400);
+    const at = scAt('manga').at + 2.55; MG.inkBurst(ctx, 790, 1320, 170, 9, t - at);
+    MG.pop(ctx, t, at, '반짝!', 790, 1320, 120, { ...MG.MANGA_WORD_NEG, d: .4, rot: -.1 });
+  });
+}
+
+// ---------------- ⑥ keyboard: happy steps → '싹!' ----------------
+const K = () => scAt('keys');
+const keyCam = t => { const u = t - K().at; return MG.keyCam(13.4 - .9 * eio(ss(0, 3.6, u)), .2 * Math.sin(u * .9)); };
+const WORD = MG.jamoLayout('싹', { y: 280, size: 260 }), ASSEMBLE = () => B.end - 1.4;
+let HITS = [], FLY = [];
+function sceneKeys(ctx, t, u) {
+  const cam = keyCam(t), fh = MG.KB.figu * cam.ppu, A = MG.KB.anchor;
+  ctx.drawImage(MG.keyboardBG(), 0, 0);
+  MG.drawKeyboard(ctx, cam, MG.keyState(t, HITS, FLY, WORD.jamo));
+  MG.hitSparks(ctx, t, HITS);
+  const sp = cam.P(2.3, MG.KB.CAPTOP, 1.4);   // the sprout grows out between the keys, behind her and to the right
+  accentGlow(ctx, sp[0], sp[1] - 40, 220, .55 + .3 * MG.beatPulse(t));
+  sprout(ctx, sp[0], sp[1], 3.4 * cam.ppu, 1, 'color', t);
+  D.shadow(ctx, t, A[0], A[1] + 4, fh, 'rgba(0,0,0,.55)', .13);
+  D.draw(ctx, t, A[0], A[1], fh);
+  MG.flyingCaps(ctx, t, cam, FLY, WORD.jamo);
+  MG.jamoLayer(ctx, t, HITS, WORD, ASSEMBLE());
+}
+
+// ---------------- ⑦ kaleidoscope + end card ----------------
+let SNAP = [];
+function sceneCard(ctx, t, u) {
+  MG.kaleido(ctx, SNAP, u);
+  MG.bigStar(ctx, u, 540, 1500);
+}
+
+// ---------------- frame ----------------
+const SCENES = { grid: sceneGrid, draft: sceneDraft, bubble: sceneBubble, stage: sceneStage, manga: sceneManga, keys: sceneKeys, card: sceneCard };
+function sceneAt(ctx, id, t) { const s = scAt(id); SCENES[id](ctx, t, t - s.at); }
+function draw(ctx, t) {
+  const sc = MG.sceneOf(SC, t);
+  sceneAt(ctx, sc.id, t);
+  // transitions on the bar lines: a bubble pops ② → ③, ink swallows ⑤ → ⑥, the rest cut hard with a flash
+  if (sc.id === 'draft' && t > sc.end - .3) MG.bubblePop(ctx, eo(ss(sc.end - .3, sc.end, t)), o => sceneBubble(o, sc.end, 0), 540, 1100);
+  if (sc.id === 'manga' && t > sc.end - .3) MG.inkWipe(ctx, eio(ss(sc.end - .3, sc.end, t)));
+  for (const id of ['draft', 'stage', 'manga', 'card']) MG.flash(ctx, .85 * MG.pulse(t, scAt(id).at, .2));
+  MG.captions(ctx, t, S.lines);
+  MG.endCard(ctx, t, S.endCard, B.end);
+}
+
+async function init() {
+  MG.init({ bpm: S.BPM || 120 });
+  D = MG.codeActor({ pose, dur: S.DUR, fps: 12 });
+  const h = D.hands(D.fidx(B.plant)); SEED = [h[0], D.ay];
+  HITS = MG.footHits(D, { t0: K().at + .15, t1: K().end - .1, need: WORD.jamo.length, before: ASSEMBLE() - .45, camAt: keyCam });
+  FLY = MG.flyCaps(HITS, [[1, 2, 1]]);
+  for (const [id, dt] of [['grid', 2], ['draft', 3.5], ['bubble', 3.2], ['stage', 2.2], ['manga', 3.2], ['keys', 3.6]])
+    SNAP.push(MG.snap(x => sceneAt(x, id, scAt(id).at + dt)));
+}
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: MG.FONTS, init, draw });
+</script>
+</body>
+</html>

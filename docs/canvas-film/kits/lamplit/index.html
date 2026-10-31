@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>등잔 아래 두루마리 · 새 장면</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@400;600&display=swap">
+</head>
+<body>
+<script src="../_shared/lib.js"></script>
+<script>/* site copy: ?t=<sec> holds that frame as the poster until play (tools/build-kit-demos.py) */(function (run) { Pilot.run = c => { let go = false; const d = c.draw, q = new URLSearchParams(location.search), P = q.has("t") ? +q.get("t") : 0; c = Object.assign({}, c, { draw: (x, t) => { if (t > 0) go = true; d(x, go ? t : Math.min(P, c.dur - .01)); } }); return run(c); }; })(Pilot.run);</script>
+<script src="../_shared/story.js"></script>
+<script src="script.js"></script>
+<script src="kit-lamplit.js"></script>
+<script>
+/* Template scene — house style "lamplit" (see kits/lamplit/STYLE.md). A placeholder 30 s story with a different subject
+   from the worked example: a lamp is lit, a scroll opens, a passage is written in letter by letter, a pen of light reads
+   it, its shared word burns to gold; the scroll unrolls across blank years to a far passage that answers with the same
+   word; the camera pulls back until both are one scroll, and light runs from one to the other. End card.
+   To make your film: keep draw()'s skeleton (night → camera → pool, scroll, words → screen-space dust, grain, vignette,
+   captions); replace the SCRIPT and the beats; the scroll's words always come from the script (translatable). */
+const { clamp, lerp, ss, eo, eio } = Pilot;
+const W = Pilot.W, H = Pilot.H, V = Pilot.ori === 'v', S = window.SCRIPT, B = S.beat, DUR = S.DUR, L = Lamplit, SC = S.scroll;
+
+// ---------------- layout (px) ----------------
+const cy = V ? H * .44 : H * .46, sw = V ? 900 : 1340, sh = V ? 700 : 520;   // one passage's stretch of scroll
+const Mx = W / 2, Fx = Mx + (V ? 1500 : 2200);                                  // the near and the far passage
+const size = V ? 46 : 46, maxW = sw - (V ? 150 : 240);
+
+// the words: translated (Pilot.tr), then wrapped at the kit's font (once the fonts are in, so on first draw)
+let near, far;
+const wrapAll = () => { near = L.lines(Pilot.tr(SC.near), size, maxW); far = L.lines(Pilot.tr(SC.far), size, maxW); };
+
+function draw(ctx, t) {
+  if (!near) wrapAll();
+  ctx.fillStyle = L.PAL.night; ctx.fillRect(0, 0, W, H);
+  const light = ss(B.lamp, B.lamp + 1.8, t) * L.flicker(t);
+  const open = eio(clamp((t - B.open) / 2.4)), un = eio(clamp((t - B.unroll) / 3.4)), pull = eio(clamp((t - B.pull) / 3.8));
+  const x1 = lerp(Mx + sw / 2, Fx + sw / 2, un), span = (Fx - Mx) + sw + 160, zf = W * .94 / span;
+  // the camera: on the near passage, travels with the unrolling edge, then pulls back to the whole scroll
+  let cx = lerp(Mx, Fx, un), z = lerp(1.06, 1, un) * (1 + .03 * eio(clamp((t - B.lamp) / 10)) * (1 - un));
+  cx = lerp(cx, (Mx + Fx) / 2, pull); z = Math.exp(lerp(Math.log(z), Math.log(zf), pull));
+  ctx.save(); ctx.translate(W / 2, cy); ctx.scale(z, z); ctx.translate(-cx, -cy);
+  L.pool(ctx, Mx, cy, sh, light * (1 - .5 * pull));
+  // the scroll: opening from the middle, then one long scroll unrolled to the far passage
+  if (un <= 0) L.scroll(ctx, Mx, cy, sw, sh, open, light);
+  else L.longScroll(ctx, Mx - sw / 2, x1, cy, sh, light, cx);
+  L.lamp(ctx, Mx - sw / 2 + (V ? 70 : -70), cy + sh / 2 + (V ? 110 : 64), V ? 46 : 52, t, light);
+  const lit = ss(B.lit, B.lit + 1.1, t), shared = Pilot.tr(SC.shared);
+  // near passage: written in letter by letter, each letter flaring as the pen passes
+  { const y0 = L.centredY(cy, near.length, size), n = near.reduce((s, l) => s + Pilot.chars(l).length, 0), r0 = B.write, r1 = B.written;
+    const at = k => r0 + (r1 - r0) * k / n;
+    L.inkText(ctx, near, Mx, y0, size, { lit: lit * .6, alpha: open > .6 ? 1 : 0, reveal: k => ss(at(k), at(k) + .3, t), glow: k => ss(at(k), at(k) + .15, t) * (1 - ss(at(k) + .2, at(k) + .7, t)) });    L.pen(ctx, near, Mx, y0, size, clamp((t - B.read) / 3.2), t < B.read + 3.4);
+    L.underline(ctx, near, Mx, y0, size, shared, lit);
+    Pilot.text(ctx, SC.label, Mx, cy - sh / 2 + (V ? 66 : 60), { size: V ? 36 : 34, weight: 600, color: L.PAL.label, alpha: ss(B.open + 1, B.open + 2, t) * light, ls: 3 });
+    Pilot.text(ctx, SC.nearCite, Mx, cy + sh / 2 - (V ? 50 : 44), { size: V ? 30 : 28, font: L.SANS, color: L.PAL.cite, alpha: ss(B.written, B.written + .8, t) * light }); }
+  // the blank years between them, ticking by under the unrolling scroll
+  if (un > 0) { const a = Mx + sw / 2 + 60, b = Fx - sw / 2 - 60; L.ruler(ctx, a, b, cy + sh / 2 - 46, x1);
+    Pilot.text(ctx, SC.years, (a + b) / 2, cy + 22, { size: V ? 84 : 92, weight: 700, color: '#4a2f16', alpha: .8 * ss(.45, .7, un), ls: 10 }); }
+  // far passage: already written; it lights its shared word when the camera reaches it
+  if (x1 > Fx - sw / 2 + 40) { const y0 = L.centredY(cy, far.length, size), fl = ss(B.far, B.far + 1.1, t);
+    ctx.save(); ctx.beginPath(); ctx.rect(Mx - sw / 2, cy - sh / 2, x1 - 24 - (Mx - sw / 2), sh); ctx.clip();   // only what is unrolled
+    L.inkText(ctx, far, Fx, y0, size, { lit: fl * .6 });
+    L.underline(ctx, far, Fx, y0, size, shared, fl);
+    Pilot.text(ctx, SC.farLabel, Fx, cy - sh / 2 + (V ? 66 : 60), { size: V ? 36 : 34, weight: 600, color: L.PAL.label, ls: 3 });
+    Pilot.text(ctx, SC.farCite, Fx, cy + sh / 2 - (V ? 50 : 44), { size: V ? 30 : 28, font: L.SANS, color: L.PAL.cite }); ctx.restore(); }
+  // light runs from the near passage to the far one during the pull-back
+  { const k = clamp((t - B.pull - .6) / 2.8), on = ss(B.pull + .4, B.pull + .8, t) * (1 - ss(B.end - .8, B.end, t));
+    if (on > 0) { L.sweep(ctx, Mx - sw * .2, Fx - sw * .1, cy, sh, k, on); L.glow(ctx, Fx, cy, sw * .5, L.PAL.glow, .6 * on * ss(.85, 1, k)); } }
+  ctx.restore();
+  // screen space: dust in the lamplight, grain, vignette, then the words
+  L.dust(ctx, t, [W / 2, cy - sh * .3], light * (1 - pull));
+  L.filmGrain(ctx, t); L.vignette(ctx, .7);
+  { const k = ss(B.end - .2, B.end + .9, t); if (k > 0) { ctx.fillStyle = `rgba(5,6,10,${.86 * k})`; ctx.fillRect(0, 0, W, H); } }
+  Story.captions(ctx, t, S.lines, { y: V ? 300 : 120, size: V ? 54 : 50, color: L.PAL.text });
+  Story.endCard(ctx, t, S.endCard, B.end, { color: L.PAL.text, srcColor: '#d9cfbf', ctaColor: '#e9c77a' });
+  Story.fadeBlack(ctx, t, DUR);
+}
+Pilot.run({ W, H, dur: DUR, fonts: L.FONTS, init: async () => { L.init(); }, draw });
+</script>
+</body>
+</html>

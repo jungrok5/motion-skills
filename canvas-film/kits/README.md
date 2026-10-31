@@ -5,7 +5,9 @@ cut paper, a backlit screen…), separate from any story. A new film draws its o
 re-deriving the look from an old scene. Kits change *how it is drawn*, never *what is drawn* — every film still
 composes its own subject, beats and words.
 
-`templates.jpg` — every 2026-10 kit's template at 15 s (same seed story in each look), for picking at a glance.
+`templates.jpg` — all 35 templates, portrait, in the table's order, each at a representative moment (mostly 16.5 s, just
+after the accent sprout at 14 s; the time is on each label), for picking at a glance. The same stills, and every template
+playing live in the browser, are on the samples page: https://jungrok5.github.io/motion-skills/canvas-film/#kits
 
 | kit | look | carries well | worked example |
 |---|---|---|---|

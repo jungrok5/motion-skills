@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>안개 숲 실루엣 · 템플릿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@400;500&display=swap">
+</head>
+<body>
+<script src="../_shared/lib.js"></script>
+<script>/* site copy: ?t=<sec> holds that frame as the poster until play (tools/build-kit-demos.py) */(function (run) { Pilot.run = c => { let go = false; const d = c.draw, q = new URLSearchParams(location.search), P = q.has("t") ? +q.get("t") : 0; c = Object.assign({}, c, { draw: (x, t) => { if (t > 0) go = true; d(x, go ? t : Math.min(P, c.dur - .01)); } }); return run(c); }; })(Pilot.run);</script>
+<script src="../_shared/story.js"></script>
+<script src="script.js"></script>
+<script src="kit-fogforest.js"></script>
+<script>
+/* A new scene in the fogforest house style (styles/fogforest/STYLE.md). The kit draws the medium; this file draws the story.
+   PLACEHOLDER STORY (the same in every kit): a hooded silhouette walks in along the fog path with a seed glowing faintly in
+   its fist, crouches and plants it, kneels and waits while the fog drifts, a sprout
+   rises carrying the one warm light, the figure stands and looks down at it; the fog closes in for the end card.
+   Keep: init → FF.init + forest/buildFrame + road once;  draw → backdrop, world layer, midFog, action (+ rims), warm light,
+   foreground, captions, end plate, end card. Replace the subject (seed, sprout, poses, camera) with your film's one image. */
+const S = window.SCRIPT, B = S.beat, { clamp, lerp, ss, eo, eio, rng } = Pilot;
+const FF = window.FogForest, C = FF.C;
+const FY = 1300, RT = 1212, SME = 1.04;              // the near lane (where the figure walks), the path's far edge, figure scale
+const X0 = 250, KX = 800;                             // where the walk starts, where the figure crouches
+const SPOT = [KX + 178, FY - 2];                      // where the seed goes in (in reach of the crouch: ≈ x + 170·s)
+let ROAD;
+
+// ---------------- the figure's path and poses ----------------
+const STOP = B.walk[1] + .2;                                                         // the walk ends here (eased in the last .5 s)
+const T1 = STOP - .5, WALKV = (KX - X0) / (T1 + .25);                            // walking speed px/s (decelerates to 0 over the last .5 s)
+const xAt = t => { if (t < T1) return X0 + WALKV * t; const u = clamp((t - T1) / .5); return X0 + WALKV * T1 + WALKV * .5 * (u - u * u / 2); };
+function pose(t) {
+  const x = xAt(Math.min(t, STOP)), ph = x / (150 * SME);                              // phase tied to distance: no foot sliding
+  const walking = FF.walk(x, FY, SME, 1, ph, 150, .1, 26);
+  const seedHand = F => { const sh = FF.shoulderOf(F); return [sh[0] + 30 * SME + 14 * Math.sin(Math.PI * 2 * (F.ph || 0)), sh[1] + 128 * SME]; };   // fist a little forward, swinging
+  walking.hands = [null, seedHand(walking)]; walking.tilt = .1;
+  if (t < STOP) return { F: walking, seed: 'hand' };
+  // crouch at the spot: near hand comes down to the ground in front, far hand on the far knee
+  const CR = FF.crouch(KX, FY, SME, 1, 1.1); CR.tilt = -.1;
+  const crouchHands = (k, hand) => { CR.hands = [FF.knee(CR, 0), hand]; return CR; };
+  if (t < 4.9) { const k = eio((t - STOP) / (4.9 - STOP)), A = walking, Bc = crouchHands(0, [lerp(KX + 120, SPOT[0], .3), FY - 60]); const F = FF.mix(A, Bc, k); F.hands[1] = [lerp(seedHand(A)[0], Bc.hands[1][0], k), lerp(seedHand(A)[1], Bc.hands[1][1], k)]; return { F, seed: 'hand' }; }
+  if (t < B.plant) { const k = eio((t - 4.9) / (B.plant - 4.9)), F = crouchHands(0, [lerp(lerp(KX + 120, SPOT[0], .3), SPOT[0], k), lerp(FY - 60, SPOT[1] - 14, k)]); return { F, seed: 'hand' }; }
+  if (t < 7.4) {   // the hand opens (the seed drops in), then pats the soil twice, flat
+    const u = t - B.plant, pat = u < .35 ? 0 : Math.abs(Math.sin((u - .35) * Math.PI / .5)) * 18 * (1 - ss(1.1, 1.4, u));
+    const F = crouchHands(0, [SPOT[0] - 4, SPOT[1] - 16 - pat]); F.hand = ['fist', u < .35 ? 'open' : 'flat']; return { F, seed: 'ground' };
+  }
+  // sit back onto the far knee, hands resting on the near knee
+  const KN = FF.kneel(KX - 30, FY, SME, 1, .12);
+  const kneelHands = F => { const kn = FF.knee(F, 1); F.hands = [[kn[0] - 14, kn[1] + 6], [kn[0] + 4, kn[1] - 4]]; F.hand = ['fist', 'flat']; return F; };
+  const breathe = t2 => 3 * Math.sin(t2 * Math.PI * 2 / 3.6);
+  const kneeling = t2 => { const F = { ...KN, hip: [KN.hip[0], KN.hip[1] + breathe(t2)], feet: KN.feet.map(p => p.slice()) }; kneelHands(F);
+    // the wait: head down at the soil, a look up into the canopy (10.4–12.4), back down; at the sprout a little start back
+    const up = Pilot.win(t2, 10.4, 12.4, .6, .7), back = ss(B.sprout, B.sprout + .5, t2);
+    FF.look(F, .42 - .8 * up + .1 * back); F.ang -= .1 * back; return F; };
+  if (t < 8.0) { const k = eio((t - 7.4) / .6), A = crouchHands(0, [SPOT[0] - 4, SPOT[1] - 16]); A.hand = ['fist', 'flat']; return { F: FF.mix(A, kneeling(t), k), seed: 'ground' }; }
+  if (t < B.rise) return { F: kneeling(t), seed: 'ground' };
+  // stand up (.6 s, hands push off the knee) and look down at the sprout
+  const ST = FF.look(FF.stand(KX - 40, FY, SME, 1, .1), .55);
+  return { F: FF.mix(kneeling(B.rise), ST, eio((t - B.rise) / .65)), seed: 'ground' };
+}
+
+// ---------------- the seed, the mound, the sprout ----------------
+const sproutH = t => t < B.sprout ? 0 : 150 * eo((t - B.sprout) / 1.6) + 40 * ss(B.rise, B.rise + 5, t);
+function drawSprout(a, t) {
+  const [sx, sy] = SPOT, h = sproutH(t);
+  // the mound of pressed soil
+  const m = ss(B.plant + .3, B.plant + 1.2, t); if (m > 0) { a.fillStyle = C.me; a.beginPath(); a.ellipse(sx, sy + 2, 30 * m, 9 * m, 0, Math.PI, 0); a.fill(); }
+  if (h <= 0) return;
+  const sw = Math.sin(t * 1.3) * 4 * ss(B.sprout + 1, B.sprout + 2.5, t), tip = [sx + sw, sy - h], mid = [sx + sw * .3 - 6, sy - h * .55];
+  a.strokeStyle = C.me; a.lineCap = 'round'; a.lineWidth = 9; a.beginPath(); a.moveTo(sx, sy); a.quadraticCurveTo(mid[0], mid[1], tip[0], tip[1]); a.stroke();
+  const open = ss(B.sprout + .9, B.sprout + 2.2, t);                                     // two leaves unfold from the tip
+  for (const sd of [-1, 1]) { const ang = -Math.PI / 2 + sd * (.25 + 1.0 * open), l = 18 + 34 * open;
+    a.fillStyle = C.me; a.beginPath(); a.moveTo(tip[0], tip[1]);
+    a.quadraticCurveTo(tip[0] + Math.cos(ang - sd * .5) * l * .7, tip[1] + Math.sin(ang - sd * .5) * l * .7, tip[0] + Math.cos(ang) * l, tip[1] + Math.sin(ang) * l);
+    a.quadraticCurveTo(tip[0] + Math.cos(ang + sd * .5) * l * .6, tip[1] + Math.sin(ang + sd * .5) * l * .6, tip[0], tip[1]); a.fill(); }
+  // the bud: THE warm thing
+  const gb = a.createRadialGradient(tip[0], tip[1] - 6, 1, tip[0], tip[1] - 6, 11); gb.addColorStop(0, C.goldL); gb.addColorStop(.5, C.gold); gb.addColorStop(1, C.goldD);
+  a.fillStyle = gb; a.beginPath(); a.ellipse(tip[0], tip[1] - 6, 8, 11, 0, 0, Math.PI * 2); a.fill();
+}
+function seedAt(t, P) {   // where the seed is: in the fist, falling into the hole, under the soil
+  if (P.seed === 'hand') return { p: P.F.hands[1], r: 5, glow: .22 };
+  const u = t - B.plant; if (u < .3) return { p: [SPOT[0], lerp(SPOT[1] - 14, SPOT[1], eo(u / .3))], r: 6, glow: .4 };
+  const beat = Pilot.win(t, 11.8, B.sprout, .6, .3) * (.5 + .5 * Math.sin(t * 9));     // a faint heartbeat under the soil before it breaks
+  return { p: SPOT, r: 0, glow: .1 * (1 - ss(B.plant + .4, B.plant + 1.4, t)) + .12 * beat };
+}
+
+// ---------------- camera ----------------
+function camAt(t) {
+  let c = { x: xAt(Math.min(t, STOP)) + 110, y: 1060, z: 1.08 };
+  c = FF.mixCam(c, { x: KX + 70, y: 1130, z: 1.3 }, eio((t - 4.2) / 1.2));             // settle on the crouch
+  c = FF.mixCam(c, { x: KX + 60, y: 1100, z: 1.22 }, eio((t - 8) / 5));                  // drift out a little during the wait
+  c = FF.mixCam(c, { x: SPOT[0] - 40, y: 1170, z: 1.55 }, eo((t - B.sprout) / 1.4));       // push in on the sprout
+  c = FF.mixCam(c, { x: KX + 110, y: 1080, z: 1.12 }, eio((t - B.rise) / 2.2));          // pull back as the figure stands
+  c.sx = c.sy = 0; return c;
+}
+
+// ---------------- frame ----------------
+function draw(ctx, t) {
+  const cm = camAt(t), [z1, ex1, ey1] = FF.layerM(cm, 1), P = pose(t), sd = seedAt(t, P), h = sproutH(t);
+  FF.backdrop(ctx, cm, t);
+  FF.layer(ctx, cm, 1, () => FF.drawRoad(ctx, ROAD));
+  FF.midFog(ctx, cm, t);
+  FF.action(ctx, z1, ex1, ey1, FY - 760, FY + 220, a => {
+    drawSprout(a, t);
+    P.F.col = C.me; P.F.armCol = '#26413f';
+    FF.figure(a, P.F);
+    if (sd.r > 0) { a.fillStyle = C.gold; a.beginPath(); a.ellipse(sd.p[0], sd.p[1], sd.r, sd.r * .75, .4, 0, Math.PI * 2); a.fill(); }
+  });
+  FF.rim(ctx, ...FF.RIM_FOG(z1), 1);
+  FF.rim(ctx, ...FF.RIM_WARM(z1), ss(B.sprout + .3, B.sprout + 1.5, t) * .9);             // the sprout's light catches the figure's edge
+  FF.layer(ctx, cm, 1, () => {
+    FF.glowAt(ctx, sd.p[0], sd.p[1], 46, sd.glow);
+    if (h > 0) { const tip = [SPOT[0], SPOT[1] - h - 6], k = ss(B.sprout, B.sprout + 1.2, t), br = 1 + .08 * Math.sin(t * 2.1);
+      FF.glowAt(ctx, tip[0], tip[1] - 6, 150 * br, .32 * k); FF.warm(ctx, tip[0], tip[1], 520, .3 * k * br, 'screen');
+      ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = ss(B.rise, B.rise + 3, t); FF.shafts(ctx, tip[0] + 200, tip[1] + 20); ctx.restore(); }
+  });
+  FF.foreground(ctx, cm, t, { cx: KX + 100 });
+  if (t < B.end) FF.captions(ctx, t, S.lines);
+  FF.endPlate(ctx, t, B.end);
+  FF.endCard(ctx, t, S.endCard, B.end);
+}
+async function init() {
+  FF.init({ cam: camAt, dur: S.DUR });
+  FF.forest();   // opt-in: FF.forest({ stag: { x, s } }) puts the giant stag in the fog — it puzzled viewers, use only when the story needs it
+  FF.buildFrame();
+  ROAD = FF.road({ x0: -1200, x1: 3200, top: RT });
+}
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: FF.FONTS, init, draw });
+</script>
+</body>
+</html>

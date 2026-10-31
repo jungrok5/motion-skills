@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>웹툰 · 템플릿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Gaegu:wght@400;700&family=Jua&family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;700&family=Noto+Serif+KR:wght@600&display=swap">
+</head>
+<body>
+<script src="../_shared/lib.js"></script>
+<script>/* site copy: ?t=<sec> holds that frame as the poster until play (tools/build-kit-demos.py) */(function (run) { Pilot.run = c => { let go = false; const d = c.draw, q = new URLSearchParams(location.search), P = q.has("t") ? +q.get("t") : 0; c = Object.assign({}, c, { draw: (x, t) => { if (t > 0) go = true; d(x, go ? t : Math.min(P, c.dur - .01)); } }); return run(c); }; })(Pilot.run);</script>
+<script src="../_shared/story.js"></script>
+<script src="script.js"></script>
+<script src="kit-webtoon.js"></script>
+<script>
+/* A new scene in the webtoon house style (kits/webtoon/STYLE.md). The kit draws the medium (strip, scroll, panels, balloons,
+   SFX, effect lines, the person rig); this file draws the story. PLACEHOLDER STORY (script.js): a gardener walks in, kneels,
+   plants a seed, waits (two silent-beat panels), a sprout bursts up with the accent bud at 14 (the hit: snap scroll, zoom punch,
+   focus lines, flash, SFX), stands at 18 and looks at it, end card at 26.
+   Keep: STRIP (panels top → bottom, gutters = time) → CAM (stops timed to the beats) → draw: begin, drawStrip(…, over: words),
+         flash, end card, fade.
+   Replace: SPEC (your cast — or load a cast file), each panel's draw(), the words (script.js). */
+const WT = Webtoon, R = WT.Rig, S = window.SCRIPT, B = S.beat, { clamp, lerp, ss, eo, eio } = Pilot;
+
+// ---------------------------------------------------------------- the cast (one placeholder person; a film loads its own cast file)
+const SPEC = {
+  name: 'gardener', seed: 5, h: .96, build: { sh: 56, waist: 40, hip: 45 },
+  pal: { skin: '#ffe2d2', hair: '#3a2a24', hairL: '#6a5048', eye: '#4a3328', shirt: '#f4efe4', outer: '#6f9c8f', pants: '#4f5568', shoes: '#7a5440' },
+  shirt: { collar: 'round' }, outer: { kind: 'jacket', open: 40 },
+  hairBack(ctx, G) { const b = G.bx, p = WT.smooth([[-1.12, .5], [-1.24, -.3], [-1.1, -1.25], [-.5, -1.8], [.4, -1.82], [1.08, -1.3], [1.24, -.3], [1.12, .5], [0, .3]].map(([x, y]) => [b(x), y])); G.inked(ctx, p, G.pal.hair, G.pal.hairS); },
+  hairFront(ctx, G) { const f = G.fx, o = G.ox, p = WT.poly([[o(-1.07, -.5), -.5], [o(-1.1, -1.05), -1.05], [-.9, -1.6], [-.2, -1.9], [.5, -1.84], [1.0, -1.45], [o(1.1, -1.0), -1.0], [o(1.07, -.4), -.4],
+    [f(.8), -.75], [f(.55), -.5], [f(.38), -.82], [f(.1), -.55], [f(-.12), -.86], [f(-.42), -.5], [f(-.66), -.8], [o(-1.0, -.2), -.2]]); G.inked(ctx, p, G.pal.hair, G.pal.hairS);
+    if (!G.shadow) { ctx.save(); ctx.clip(p); WT.taper(ctx, WT.qb([f(-.6), -1.3], [f(0), -1.62], [f(.6), -1.35], 8), G.lw * .5, G.lw * 1.4, G.pal.hairL); ctx.restore(); } },
+};
+const ACC = WT.ACCENT;
+
+// ---------------------------------------------------------------- the strip (panel-local coords in every draw)
+const GY1 = 720, X0 = 120, XK = 470;        // P1 ground line, walk start, where the gardener kneels (panel-local)
+const STRIP = WT.strip({
+  top: 300, side: 48, bottom: 600,
+  bg: [[0, WT.C.paper], ['p3a:end', WT.C.paper], ['p4', '#1c1a22'], ['p4:end', '#1c1a22'], ['p5', WT.C.paper]],
+  panels: [
+    { id: 'p1', h: 820, border: 'fade', bg: (c, t, P) => sky(c, P, 0), draw: (c, t, P) => panelWalk(c, t, P) },
+    { id: 'p2', h: 760, gap: 'action', bg: (c, t, P) => sky(c, P, .1), draw: (c, t, P) => panelKneel(c, t, P), over: (c, t, P) => plantSfx(c, t, P) },
+    { id: 'p3a', h: 470, gap: 'action', w: 480, bg: '#f3eadb', draw: (c, t, P) => panelSoil(c, t, P) },
+    { id: 'p3b', h: 470, row: true, x: 552, w: 480, bg: '#efe6f0', draw: (c, t, P) => panelFace(c, t, P) },
+    { id: 'p4', h: 1180, gap: 'beat', border: 'bleed', bg: '#ffffff', draw: (c, t, P) => panelSprout(c, t, P), over: (c, t, P) => sproutSfx(c, t, P),
+      cam: (t, P) => WT.mixCam({ fx: P.w / 2, fy: 760 }, WT.punch(t, B.sprout), { z: t > B.sprout + .2 ? WT.kenBurns(t, B.sprout + .2, B.rise - .6, 1.05).z : 1 }) },
+    { id: 'p5', h: 960, gap: 'beat', bg: (c, t, P) => sky(c, P, .45), draw: (c, t, P) => panelStand(c, t, P), cam: (t, P) => WT.kenBurns(t, B.rise, B.end, 1.06, P.w / 2, 560) },
+  ],
+});
+// the scroll: stop on each panel at its beat, glide through the gutters; snap (.12 s) into the hit; pause mid-gap before it
+const P4 = STRIP.P.p4, P3 = STRIP.P.p3a;
+const CAM = WT.camera(STRIP, [
+  { panel: 'p1', hold: 4.0 },
+  { panel: 'p2', glide: .6, hold: 3.0 },
+  { panel: 'p3a', glide: .5, hold: 4.6, drift: 30 },
+  { at: P3.y + P3.h + 160, glide: .7, hold: .48 },            // the silent gutter before the punchline
+  { panel: 'p4', glide: .12, hold: 3.4, ease: 'out' },
+  { panel: 'p5', glide: .6, hold: 8.4, drift: 40 },
+]);
+
+// ---------------------------------------------------------------- panels
+function sky(c, P, k) {   // evening sky → night as the strip goes on, a low hill, the ground (panel-local)
+  const g = c.createLinearGradient(0, 0, 0, P.h); g.addColorStop(0, WT.mixC('#bfdcf0', '#f6c9a8', k)); g.addColorStop(.7, WT.mixC('#f4ecdc', '#ffe7c9', k)); g.addColorStop(1, '#efe3cc'); c.fillStyle = g; c.fillRect(0, 0, P.w, P.h);
+}
+function ground(c, P, gy, seed) {
+  c.fillStyle = '#c9dcb0'; c.beginPath(); c.moveTo(0, gy - 70); c.quadraticCurveTo(P.w * .35, gy - 150, P.w * .7, gy - 90); c.quadraticCurveTo(P.w * .9, gy - 60, P.w, gy - 100); c.lineTo(P.w, P.h); c.lineTo(0, P.h); c.fill();
+  c.fillStyle = '#e6d3b0'; c.fillRect(0, gy - 10, P.w, P.h); c.strokeStyle = WT.rgba(WT.C.ink, .6); c.lineWidth = 3; c.beginPath(); c.moveTo(0, gy - 10); c.lineTo(P.w, gy - 10); c.stroke();
+  const r = WT.rnd(seed); c.strokeStyle = '#8fb37a'; c.lineWidth = 3; for (let i = 0; i < 22; i++) { const x = r() * P.w, y = gy + 10 + r() * (P.h - gy - 20); c.beginPath(); c.moveTo(x, y); c.lineTo(x - 6, y - 14); c.moveTo(x, y); c.lineTo(x + 5, y - 12); c.stroke(); }
+}
+const seedProp = (c, H) => { c.fillStyle = '#8a5a3a'; c.strokeStyle = WT.C.ink; c.lineWidth = 2.5; c.beginPath(); c.ellipse(H.grip[0], H.grip[1], 8, 6, .4, 0, 6.3); c.fill(); c.stroke(); };
+function panelWalk(c, t, P) {
+  ground(c, P, GY1, 1);
+  const k = eo(clamp(t / B.walk[1])), x = lerp(X0, XK, k), ph = (x - X0) / 150;
+  const stop = ss(B.walk[1] - .4, B.walk[1], t);
+  R.person(c, t, SPEC, { x, y: GY1, s: .86, turn: .55, pose: stop > .5 ? 'stand' : 'walk', ph, expr: 'neutral', hairEv: [B.walk[1]],
+    arms: { L: { hand: 'fist', prop: seedProp } } });
+  if (t < B.walk[1]) WT.balloon(c, t, { kind: 'narr', text: S.lines[0][2], x: P.w / 2, y: 110, at: S.lines[0][0], out: S.lines[0][1] + 1 });
+}
+const SOIL = [520, 646];   // P2: where the seed goes (panel-local)
+function panelKneel(c, t, P) {
+  ground(c, P, 660, 2);
+  const kd = clamp((t - B.kneel + .5) / .7), pose = kd < .45 ? 'crouch' : 'kneel';
+  const pat = t > B.plant ? Math.abs(Math.sin((t - B.plant) * 9)) * (1 - ss(B.plant + .9, B.plant + 1.4, t)) : 0;
+  const reach = ss(B.kneel + .2, B.plant - .2, t), rest = [380, 470], hand = [lerp(rest[0], SOIL[0], reach), lerp(rest[1], SOIL[1] - 10 - 22 * pat, reach)];
+  // the soil mound rises once the seed is in
+  const mk = ss(B.plant + .1, B.plant + .8, t); if (mk > 0) { c.fillStyle = '#b08a64'; c.strokeStyle = WT.C.ink; c.lineWidth = 4; c.beginPath(); c.ellipse(SOIL[0], SOIL[1] + 4, 56, 22 * mk, 0, Math.PI, 0); c.fill(); c.stroke(); }
+  // lean until the hand really gets to the ground (Rig.fitReach), never a hand floating short of it
+  const o0 = { x: 330, y: 660, s: 1.2, turn: .55, pose, crouch: kd / .45, nod: .5 * reach, expr: t > B.plant + .4 ? 'smile' : 'neutral',
+    arms: { L: { hand: t < B.plant ? 'pinch' : 'open', ang: 1.3, propFront: t < B.plant ? seedProp : null } } };
+  const o = reach > 0 ? R.fitReach(t, SPEC, o0, 'L', hand, 1.0) : (o0.arms.L.hand = 'fist', o0.arms.L.prop = seedProp, o0.arms.L.propFront = null, o0);
+  R.person(c, t, SPEC, o);
+  if (t > S.lines[1][0] - .2) WT.balloon(c, t, { kind: 'narr', text: S.lines[1][2], x: P.w - 230, y: 90, at: S.lines[1][0], out: S.lines[1][1] });
+}
+function plantSfx(c, t, P) { WT.sfx(c, t, { text: '꾹', x: SOIL[0] + 110, y: SOIL[1] - 120, size: 110, at: B.plant, out: B.plant + 1.8, fill: '#fff', rot: .15 }); }
+function panelSoil(c, t, P) {   // silent beat 1: the mound; the light walks across it as time passes
+  const k = ss(B.wait[0], B.wait[1], t);
+  c.fillStyle = WT.mixC('#f3e6cf', '#e9c9a7', k); c.fillRect(0, 0, P.w, P.h);
+  c.fillStyle = WT.rgba('#7b6a8f', .18); c.beginPath(); c.ellipse(P.w / 2 + lerp(-120, 120, k), 360, 230, 40, 0, 0, 6.3); c.fill();
+  c.fillStyle = '#b08a64'; c.strokeStyle = WT.C.ink; c.lineWidth = 5; c.beginPath(); c.ellipse(P.w / 2, 330, 170, 70, 0, Math.PI, 0); c.closePath(); c.fill(); c.stroke();
+  WT.tone(c, .18, [0, 380, P.w, 90], { pitch: 12, alpha: .5 });
+  if (t > B.wait[1] - 1.2 && t < B.sprout) WT.star4(c, P.w / 2 + 10, 250, 16 * Math.abs(Math.sin((t - 12) * 5)), .2, '#fff6b0');
+}
+function panelFace(c, t, P) {   // silent beat 2: the gardener's face, waiting (blink, a sweat drop, "……")
+  const G = R.face(c, t, SPEC, P.w / 2 + 20, 260, 2.4, { expr: 'neutral', turn: -.25, nod: .5, look: [0, .6] });
+  if (t > B.wait[0] + 2.2) WT.emote(c, t, 'sweat', G.head, { at: B.wait[0] + 2.2, side: 1 });
+  WT.balloon(c, t, { kind: 'whisper', text: '……', x: 110, y: 90, at: B.wait[0] + .9, out: B.wait[1] + .6, size: 44 });
+}
+// the sprout: an accent bud on a curling stem (scene art drawn with kit helpers)
+const sproutH = t => t < B.sprout ? 0 : 260 * WT.backOut(clamp((t - B.sprout) / .45), 2) + 160 * eio(clamp((t - B.sprout - 1) / 9));
+function sprout(c, t, x, y, sc) {
+  const h = sproutH(t) * sc; if (h <= 1) return; const sway = Math.sin(t * 1.7) * 6 * sc, pts = [];
+  for (let i = 0; i <= 10; i++) { const u = i / 10; pts.push([x + Math.sin(u * 2.4) * 18 * sc * u + sway * u * u, y - h * u]); }
+  WT.taper(c, pts, 20 * sc + 8, 12 * sc + 8, WT.C.ink); WT.taper(c, pts, 20 * sc, 12 * sc, '#79c27c');
+  const top = pts[10], open = ss(B.sprout + .2, B.sprout + 1.2, t);
+  for (const sg of [-1, 1]) { const lp = WT.ell(top[0] + sg * 46 * sc * open, top[1] + 30 * sc, 50 * sc * open + 1, 20 * sc * open + 1, sg * .5); WT.inked(c, lp, '#8ed18a', 4, WT.C.ink); }
+  const bud = WT.ell(top[0], top[1] - 18 * sc, 30 * sc, 40 * sc); WT.inked(c, bud, ACC, 4.5, WT.C.ink); WT.cel(c, bud, ACC, WT.shadeOf(ACC), -8 * sc, -6 * sc);
+  WT.star4(c, top[0] - 10 * sc, top[1] - 34 * sc, 12 * sc, .2, '#fff');
+}
+function panelSprout(c, t, P) {
+  const hit = t >= B.sprout;
+  if (hit) { WT.rays(c, t, P.w / 2, 700, { col: '#fff1c8', alpha: .7, r1: 1300 }); WT.focus(c, t, { x: 0, y: 0, w: P.w, h: P.h, cx: P.w / 2, cy: 640, rx: P.w * .55, ry: P.h * .5, inner: .62, at: B.sprout, seed: 4 }); }
+  else { c.fillStyle = '#efe7da'; c.fillRect(0, 0, P.w, P.h); }
+  c.fillStyle = '#b08a64'; c.strokeStyle = WT.C.ink; c.lineWidth = 6; c.beginPath(); c.ellipse(P.w / 2, 1000, 300, 110, 0, Math.PI, 0); c.closePath(); c.fill(); c.stroke();
+  sprout(c, t, P.w / 2, 960, 1.6);
+  if (hit) WT.sparkles(c, t, { cx: P.w / 2, cy: 560, rx: 380, ry: 300, n: 12, r: [14, 40], seed: 6 });
+  if (t > S.lines[2][0] - .2) WT.balloon(c, t, { kind: 'narr', text: S.lines[2][2], x: P.w / 2, y: 1110, at: S.lines[2][0], out: S.lines[2][1], dark: true });
+}
+function sproutSfx(c, t, P) { WT.sfx(c, t, { text: '뾰옥!', x: P.w / 2 - 40, y: 170, size: 170, at: B.sprout + .02, fill: ['#ffe2ef', ACC], rot: -.12, echo: 1, grow: [1, 1.25] }); }
+function panelStand(c, t, P) {
+  ground(c, P, 860, 3);
+  const k = clamp((t - B.rise) / .9), sx = 640, sy = 860;
+  c.fillStyle = '#b08a64'; c.strokeStyle = WT.C.ink; c.lineWidth = 4; c.beginPath(); c.ellipse(sx, sy, 70, 26, 0, Math.PI, 0); c.fill(); c.stroke();
+  sprout(c, t, sx, sy - 10, .6);
+  const G = R.person(c, t, SPEC, { x: 400, y: 860, s: 1.05, turn: .55, pose: k < 1 ? 'crouch' : 'stand', crouch: 1 - eio(k), expr: t > B.rise + 1 ? 'happy' : 'smile', nod: .3, look: [.6, .5], hairEv: [B.rise + .9] });
+  if (t > B.rise + 1.3) WT.emote(c, t, 'sparkle', G.head, { at: B.rise + 1.3, side: 1 });
+  WT.balloon(c, t, { kind: 'mono', text: '안녕?', x: 250, y: 160, at: B.rise + 1.6, out: B.end });
+}
+
+// ---------------------------------------------------------------- frame
+function draw(ctx, t) {
+  WT.begin(ctx);
+  const y = CAM.y(t);
+  WT.drawStrip(ctx, t, STRIP, y, { shake: WT.shake(t, B.sprout, 10) });
+  WT.flash(ctx, t, B.sprout, { hold: .05, dur: .3 });
+  if (t >= B.end) WT.endCard(ctx, t, B.end, S.endCard);
+  WT.fade(ctx, t, S.DUR, .4, .6);
+}
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: WT.FONTS, draw });
+</script>
+</body>
+</html>
