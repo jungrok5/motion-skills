@@ -1,0 +1,20 @@
+{
+ "title": "마지막 도넛",
+ "source": "ko",
+ "scenes": [
+  { "id": "ep1-find", "label": "발견", "dur": 24 },
+  { "id": "ep2-standoff", "label": "눈치 싸움", "dur": 26 },
+  { "id": "ep3-twist", "label": "반전", "dur": 24 }
+ ],
+ "fonts": {
+  "base": [
+   ["Noto Sans KR", 400, "NotoSansKRwght.ttf"],
+   ["Noto Serif KR", 600, "NotoSerifKRwght.ttf"],
+   ["Do Hyeon", 400, "DoHyeon-Regular.ttf"],
+   ["Black Han Sans", 400, "BlackHanSans-Regular.ttf"],
+   ["Nanum Pen Script", 400, "NanumPenScript-Regular.ttf"],
+   ["Jua", 400, "Jua-Regular.ttf"]
+  ],
+  "local": {}
+ }
+}
