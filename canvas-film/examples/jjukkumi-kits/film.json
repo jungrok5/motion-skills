@@ -1,0 +1,46 @@
+{
+ "title": "쭈꾸미 한 접시 (기존 키트판)",
+ "source": "ko",
+ "scenes": [
+  {
+   "id": "sea-ukiyoe",
+   "label": "바다",
+   "dur": 22
+  },
+  {
+   "id": "cook-mograph",
+   "label": "부엌",
+   "dur": 22
+  },
+  {
+   "id": "door-hopper",
+   "label": "초대",
+   "dur": 14
+  },
+  {
+   "id": "table-risoline",
+   "label": "식탁",
+   "dur": 24
+  }
+ ],
+ "fonts": {
+  "base": [
+   [
+    "Noto Serif KR",
+    600,
+    "NotoSerifKRwght.ttf"
+   ],
+   [
+    "Noto Sans KR",
+    400,
+    "NotoSansKRwght.ttf"
+   ],
+   [
+    "Do Hyeon",
+    400,
+    "DoHyeon-Regular.ttf"
+   ]
+  ],
+  "local": {}
+ }
+}
