@@ -3,156 +3,184 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>리소 라인 · 템플릿</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&display=swap">
+<title>식탁 · 리소 라인</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap">
 </head>
 <body>
 <script src="lib.js"></script>
 <script src="story.js"></script>
 <script src="script-risoline.js"></script>
 <script src="kit-risoline.js"></script>
+<script src="table-risoline-draw.js"></script>
 <script>
-/* A new scene in the risoline house style (styles/risoline/STYLE.md). The kit draws the medium and the kid; this file
-   draws the story. PLACEHOLDER STORY (script.js): the beanie kid walks in with a seed, kneels, plants it, pats the soil,
-   waits (clouds drift, thought dots), a yellow sprout pops up (focus lines = the hit), the kid stands and looks at it.
-   Keep: init → Riso.init + build the world once;  draw → Riso.onTwos(scene) + captions + end card;
-         scene → boil, field, sky, cam(1), world, figures, marks, screen, hit / inset / end plate, grain.
-   Replace: pose() (the figure's beats), the seed / mound / sprout (your one image), cam() (your camera). */
-const S = window.SCRIPT, B = S.beat, { clamp, lerp, ss, eo, eio } = Pilot;
-const Rig = Riso.Rig, C = Riso.C, { ink, ell, tube, glow, tone } = Riso;
-const FY = 1300, SK = 1.0;                       // the lane the kid walks on (world y), the kid's scale
-const KX = 548, X0 = 330;                        // where the kid kneels, where it enters (visible at frame 0)
-const P0 = [KX + 96, FY - 36];                   // where the seed goes into the ground (a little back on the road, within reach)
-let ROAD = null;
-function init() {
-  Riso.init();
-  ROAD = Riso.makeRoad({ top: 1180, front: FY + 66, bottom: FY + 150 });   // add gaps: [[a, b]] for a broken road
-}
+/* Scene 4 · 식탁 — the dinner for four seen from above, in the risoline kit (risograph two-ink comic line).
+   The kit's one accent (yellow) becomes 쭈꾸미 red here: only the octopus and its sauce carry it.
+   0–3 the lamp comes on over the table, the red pan sizzles · 3–7 the four sit down, one per side, 잘 먹겠습니다 ·
+   7–12 chopsticks reach in and lift curly red pieces, face inserts "맛있다!" · 12–15 the glasses meet over the pan: 짠! ·
+   15–19 laughter (four round inserts), the pan empties · 19.8 end card over the table, fade to black 23.4–24.
+   Hands are drawn AT the grip; arms are solved from the shoulders (3D 2-bone IK, fixed bone lengths) and projected. */
+const S = window.SCRIPT, B = S.beat, T = window.Table, { clamp, lerp, ss, eo, eio } = Pilot;
+const { PEOPLE, loc, PLACE, prj, n2, PIECES, CX, CY, ik3, sub3, add3, lerp3 } = T;
+Riso.ACCENT = T.K.RED;
 
-// ---------------------------------------------------------------- the kid's beats (all poses come from the kit's rig)
-const walkX = t => X0 + (KX - X0) * (1 - Math.pow(1 - clamp(t / B.walk[1]), 1.6));
-function kneelUp() { const F = Rig.kneelSpec(KX, FY, SK, 1, .22); F.me = true; return F; }
-function kneelReach(target) {   // bowing forward from the kneel, the near hand on the ground (the body leans until the hand reaches)
-  const F = { ...kneelUp(), ang: .95, tilt: .3 }; F.hip = [F.hip[0] + 6, F.hip[1] + 4]; Rig.kneelLegs(F);
-  Rig.fitReach(F, 1, target); F.hand = ['hang', 'grip']; return F;
+// ---------------------------------------------------------------- who reaches when (person index, start); each reach 1.45 s
+const REACH = [[0, 7.0], [3, 7.45], [1, 8.1], [2, 8.7], [0, 10.0], [3, 10.5],
+  [0, 15.95], [1, 16.25], [2, 16.55], [3, 16.85], [0, 17.55], [1, 17.85], [2, 18.15], [3, 18.45]];
+(() => {   // each reach takes the untaken piece nearest the reacher's side of the pan
+  for (const [i, r] of REACH) { const P = PEOPLE[i], want = [T.PAN.x - P.f[0] * 92, T.PAN.y - P.f[1] * 92];
+    let best = null, bd = 1e9; for (const pc of PIECES) { if (pc.take) continue; const d = Math.hypot(pc.x - want[0], pc.y - want[1]); if (d < bd) { bd = d; best = pc; } }
+    best.take = { p: i, t0: r + .45, t1: r + 1.05 }; }
+})();
+// ---------------------------------------------------------------- the right hand's keyframes per person: [t, state, piece?]
+const KEYS = PEOPLE.map((P, i) => {
+  const k = [[0, 'rest']], pick = 6.3 + i * .12;
+  k.push([pick, 'rest'], [pick + .35, 'lying'], [pick + .75, 'ready']);
+  const reaches = REACH.filter(q => q[0] === i).map(q => q[1]);
+  const add = r => { const pc = PIECES.find(p => p.take && p.take.p === i && Math.abs(p.take.t0 - r - .45) < 1e-6); k.push([r, 'ready'], [r + .45, 'at', pc], [r + 1.05, 'mouth'], [r + 1.45, 'ready']); };
+  reaches.filter(r => r < 12).forEach(add);
+  const ls = 11.95 + i * .06; k.push([ls, 'ready'], [ls + .35, 'lying'], [12.95, 'gT'], [B.clink, 'gU'], [14.25, 'gU'], [14.9, 'gT']);
+  const p2 = 15.25 + i * .06; k.push([p2, 'lying'], [p2 + .35, 'ready']);
+  reaches.filter(r => r > 12).forEach(add);
+  const le = 19.95 + i * .05; k.push([le, 'ready'], [le + .35, 'lying'], [le + .6, 'rest']);
+  return k;
+});
+const arriveOff = (P, t) => { const u = clamp((t - P.arrive) / .7); return u <= 0 ? null : -380 * (1 - (eo(u) + .03 * Math.sin(Math.PI * u))); };
+const shoulderXY = (P, side) => loc(P, T.SH[0], side * T.SH[1]);
+function stateOf(P, name, pc, arr) {
+  const sh = shoulderXY(P, 1);
+  if (name === 'rest') return { type: 'rest', H: loc(P, 30 + arr, 72, 14) };
+  if (name === 'lying') return { type: 'chop', H: loc(P, 95, PLACE.chopBack[1], 12), tip: loc(P, 220, PLACE.chopTip[1], 5) };
+  if (name === 'ready') { const H = loc(P, 88, 74, 78), d = n2([CX - H[0], CY - H[1]]); return { type: 'chop', H, tip: [H[0] + d[0] * 112, H[1] + d[1] * 112, 32] }; }
+  if (name === 'at') { const tip = [pc.x, pc.y, 10], d = n2([tip[0] - sh[0], tip[1] - sh[1]]); return { type: 'chop', H: [tip[0] - d[0] * 101, tip[1] - d[1] * 101, 81], tip }; }
+  if (name === 'mouth') return { type: 'chop', H: loc(P, 22, 40, 206), tip: loc(P, -60, 6, 228) };
+  const G = name === 'gT' ? loc(P, PLACE.glass[0], PLACE.glass[1], 0) : [CX - P.f[0] * 62, CY - P.f[1] * 62, 165], d = n2([sh[0] - G[0], sh[1] - G[1]]);
+  return { type: 'glass', G, H: [G[0] + d[0] * 30, G[1] + d[1] * 30, G[2] + 40] };
 }
-function pose(t) {
-  const tp = Riso.t12(t);
-  let F, seed = true;
-  if (tp < 4.2) {                                                         // walk in, the seed in the near fist
-    const x = walkX(tp), W = Rig.walkSpec(x, FY, SK, 1, (x - X0) / (120 * SK), 120, .1, 22);
-    W.hands = Rig.hangHands(W, 16 * Math.sin(Math.PI * 2 * W.ph)); W.hands[1] = Rig.hangGrip(W, 10 * Math.sin(Math.PI * 2 * W.ph)); W.hand = ['hang', 'grip'];
-    const ST = Rig.standSpec(KX, FY, SK, 1); ST.hands = [null, Rig.hangGrip(ST)]; ST.hand = ['hang', 'grip'];
-    F = Rig.mixSpec(W, ST, ss(3.5, 4.2, tp)); F.me = true; F.wind = .4;
-    if (tp > 3.6) Rig.lookAt(F, P0, .45);
-  } else if (tp < B.kneel + .7) {                                         // stand → crouch → kneel
-    const ST = Rig.standSpec(KX, FY, SK, 1); ST.hands = [null, Rig.hangGrip(ST)]; ST.hand = ['hang', 'grip'];
-    const CR = Rig.crouchSpec(KX, FY, SK, 1, .6, .6); CR.hands = [null, Rig.hangGrip(CR)]; CR.hand = ['hang', 'grip'];
-    const KN = kneelUp(); KN.hands = [null, Rig.hangGrip(KN)]; KN.hand = ['hang', 'grip'];
-    const k = clamp((tp - B.kneel) / .7);
-    F = k < .45 ? Rig.mixSpec(ST, CR, eio(k / .45)) : Rig.mixSpec(CR, KN, eio((k - .45) / .55)); F.me = true;
-    Rig.lookAt(F, P0, .45);
-  } else if (tp < B.plant + 1.4) {                                        // reach down, press the seed in, pat the soil
-    const KN = kneelUp(); KN.hands = [null, Rig.hangGrip(KN)]; KN.hand = ['hang', 'grip'];
-    const k = eio(clamp((tp - B.kneel - .7) / (B.plant - B.kneel - .7)));
-    const pat = tp < B.plant ? 0 : Math.abs(Math.sin((tp - B.plant) * 9)) * (1 - ss(B.plant + .9, B.plant + 1.4, tp));
-    const RE = kneelReach([P0[0] - 6, P0[1] - 10 - 18 * pat]);
-    F = Rig.mixSpec(KN, RE, k); F.me = true; F.hand = tp >= B.plant ? ['hang', 'flat'] : ['hang', 'grip'];
-    seed = tp < B.plant; Rig.lookAt(F, P0, .5);
-  } else {
-    seed = false;
-    const RE = kneelReach([P0[0] - 6, P0[1] - 10]), KN = kneelUp();
-    const breathe = Math.sin((tp - 7) * 2.2) * 3;
-    KN.hip = [KN.hip[0], KN.hip[1] + breathe]; Rig.kneelLegs(KN);
-    if (tp < B.rise) {                                                    // sit back up, and wait
-      F = Rig.mixSpec(RE, KN, eio(clamp((tp - B.plant - 1.4) / .6))); F.me = true;
-      Rig.lookAt(F, [P0[0], P0[1] - (tp > B.sprout ? 160 * ss(B.sprout, B.sprout + 1, tp) : 0)], .5);
-      F.eye = tp > B.sprout ? 'shock' : (tp % 3 < .17 ? 'tired' : 'dot'); F.mouth = tp > B.sprout ? 'o' : 'flat';
-      if (tp > B.sprout + 1.4) { F.eye = 'glint'; F.mouth = 'smile'; }
-      if (tp > B.sprout && tp < B.sprout + .5) F.ang -= .12 * Math.sin(Math.PI * (tp - B.sprout) / .5);   // a start
-    } else {                                                              // kneel → crouch → stand, looking at it
-      const CR = Rig.crouchSpec(KX - 30, FY, SK, 1, .55, .5), ST = Rig.standSpec(KX - 56, FY, SK, 1, .02);
-      const k = clamp((tp - B.rise) / .8);
-      F = k < .5 ? Rig.mixSpec(KN, CR, eio(k / .5)) : Rig.mixSpec(CR, ST, eio((k - .5) / .5)); F.me = true;
-      Rig.lookAt(F, [P0[0], P0[1] - sproutH(tp) * .8], .5); F.eye = 'glint'; F.mouth = 'smile'; F.wind = .5 + .2 * Math.sin(tp * 1.3);
-    }
+/* the right hand at t: { H, chop: { back, tip } | null (lying on the table), glass: G | null (on the table), piece } */
+function handAt(i, t, arr) {
+  const P = PEOPLE[i], ks = KEYS[i];
+  let j = 0; while (j < ks.length - 1 && ks[j + 1][0] <= t) j++;
+  const A = stateOf(P, ks[j][1], ks[j][2], arr), nx = ks[j + 1];
+  let Bs = A, k = 0; if (nx && t > ks[j][0]) { Bs = stateOf(P, nx[1], nx[2], arr); k = eio((t - ks[j][0]) / (nx[0] - ks[j][0])); }
+  const o = { H: lerp3(A.H, Bs.H, k), chop: null, glass: null, piece: null, type: k < .5 ? A.type : Bs.type };
+  if (A.type === 'chop' && Bs.type === 'chop') {
+    const tp = lerp3(A.tip, Bs.tip, k), d = T.n3(sub3(tp, o.H));
+    o.chop = { dir: d, tip: add3(o.H, d, 120), back: add3(o.H, d, -48) }; o.type = 'chop';
   }
-  return { F, seed };
+  if (A.type === 'glass' && Bs.type === 'glass') { o.glass = lerp3(A.G, Bs.G, k); o.type = 'glass'; }
+  if (o.glass && t >= B.clink && t < B.clink + .3) {   // the tiny recoil after the glasses touch
+    const q = 7 * Math.sin(Math.PI * (t - B.clink) / .3); o.glass = [o.glass[0] - P.f[0] * q, o.glass[1] - P.f[1] * q, o.glass[2]]; o.H = [o.H[0] - P.f[0] * q, o.H[1] - P.f[1] * q, o.H[2]];
+  }
+  for (const pc of PIECES) if (pc.take && pc.take.p === i && t >= pc.take.t0 && t < pc.take.t1) o.piece = pc;
+  return o;
 }
-
-// ---------------------------------------------------------------- the one image (placeholder): seed, mound, sprout
-const sproutH = t => t < B.sprout ? 0 : 110 * eo(clamp((t - B.sprout) / .5)) * (1 + .1 * Math.sin(Math.PI * clamp((t - B.sprout) / .6))) + 190 * eio(clamp((t - B.sprout - 1.5) / 8));
-function leaf(ctx, p, a, len, open) {   // an inked yellow leaf on the stem at p, angle a, opening 0…1
-  if (open <= .02) return; const l = len * open, q = (u, v) => [p[0] + Math.cos(a) * u - Math.sin(a) * v, p[1] + Math.sin(a) * u + Math.cos(a) * v];
-  ink(ctx, [q(0, 0), q(l * .35, -l * .3), q(l, -l * .04), q(l * .45, l * .16)], { fill: C.yel, lw: 5 });
-  ink(ctx, [q(l * .1, 0), q(l * .7, -l * .06)], { closed: false, lw: 3, single: true });
+/* body: slide in, lean toward the hand, the bow, laughing/chewing bobs */
+function bodyOf(i, t, hand, arr) {
+  const P = PEOPLE[i];
+  const hu = (hand.H[0] - P.E[0]) * P.f[0] + (hand.H[1] - P.E[1]) * P.f[1];
+  const lean = clamp((hu - 90) * .4, 0, 82), bowU = clamp((t - B.bow - i * .06) / .8), bow = Math.sin(Math.PI * bowU) * (bowU > 0 && bowU < 1 ? 1 : 0);
+  const tp = Riso.t12(t), lk = ss(15.4, 15.7, t) * (1 - ss(19.2, 19.6, t));
+  let ch = 0; for (const pc of PIECES) if (pc.take && pc.take.p === i && t > pc.take.t1 && t < pc.take.t1 + 1.1) ch = 1;
+  const bob = [Math.sin(tp * 26 + i * 1.7) * 6 * lk + (ch ? (Math.floor(tp * 6) % 2 ? 3 : -3) : 0), Math.sin(tp * 19 + i) * 3 * lk];
+  return { off: arr + lean, arr, lean, bow, bob, sway: 0 };
 }
-function sprout(ctx, t) {
-  const h = sproutH(t); if (h <= 1) return;
-  const pulse = 1 + .05 * Math.sin(t * 3.1);
-  glow(ctx, P0[0], P0[1] - h * .55, (150 + h * .7) * pulse, .85 * ss(B.sprout, B.sprout + .3, t));
-  const sway = Math.sin(t * 1.7) * 6, pts = []; for (let i = 0; i <= 6; i++) { const u = i / 6; pts.push([P0[0] + Math.sin(u * 2.2) * 9 * u + sway * u * u, P0[1] - 8 - h * u]); }
-  ink(ctx, tube(pts, pts.map((_, i) => 10 - i * .6)), { fill: C.yel, lw: 5.5 });
-  const top = pts[6], o1 = ss(B.sprout + .3, B.sprout + 1.2, t), o2 = ss(B.rise + 1.5, B.rise + 3, t);
-  leaf(ctx, top, -Math.PI * .82, 74, o1); leaf(ctx, top, -Math.PI * .2, 84, o1);
-  if (o2 > 0) { const m = pts[3]; leaf(ctx, m, -Math.PI * .9, 64, o2); leaf(ctx, m, -Math.PI * .08, 70, o2); }
-  for (const [dx, dy, r, ph] of [[-90, -.7, 16, 0], [86, -.95, 13, .5], [60, -.35, 11, .2], [-60, -1.1, 12, .8]])   // twinkles round it
-    Riso.sparkle(ctx, P0[0] + dx, P0[1] + dy * h - 30, r * (.45 + .55 * Math.abs(Math.sin(t * 2.4 + ph * 6))), ss(B.sprout + .2, B.sprout + .8, t), .5);
+function solveArm(P, Bd, side, H, dir) {
+  const S = loc(P, T.SH[0] + Bd.off, side * T.SH[1], T.SH[2] - Bd.lean * .25), W = [H[0] - dir[0] * 24, H[1] - dir[1] * 24, H[2]];
+  const pole = [P.r[0] * side * .75 - P.f[0] * .3, P.r[1] * side * .75 - P.f[1] * .3, -1];
+  const [El, Wr] = ik3(S, W, T.ARM1, T.ARM2, pole), delta = sub3(Wr, W);
+  return { S, El, Wr, H: add3(H, delta), delta };
 }
-function ground(ctx, t, seedInHand) {
-  const k = ss(B.plant + .1, B.plant + .8, t);
-  if (!seedInHand && k < 1) ink(ctx, ell(P0[0], P0[1] - 6, 10, 7, 12), { fill: C.yel, lw: 4, single: true });   // the seed, just pressed in
-  if (k > 0) { const pts = []; for (let i = 0; i <= 12; i++) { const a = Math.PI + Math.PI * i / 12; pts.push([P0[0] + Math.cos(a) * 52, P0[1] + 6 + Math.sin(a) * 20 * k]); }
-    ink(ctx, pts, { fill: C.ground, tone: tone(true, P0[0], P0[1]), lw: 5 }); }
-  if (t > B.wait[1] - 1.2 && t < B.sprout) Riso.sparkle(ctx, P0[0] + 8, P0[1] - 22, 9 * Math.abs(Math.sin((t - 12) * 5)), ss(B.wait[1] - 1.2, B.wait[1] - .6, t), .4);   // a hint
-}
-function thoughtDots(ctx, t, F) {   // the wait: three dots rising one by one over the head
-  const { hc } = Rig.headFrame(F), a = Pilot.win(t, B.wait[0] + .8, B.wait[1] - .3, .2, .3); if (a <= 0) return;
-  ctx.save(); ctx.globalAlpha *= a;
-  for (let i = 0; i < 3; i++) { const on = ss(B.wait[0] + 1 + i * .9, B.wait[0] + 1.2 + i * .9, t); if (on <= 0) continue;
-    ink(ctx, ell(hc[0] + 70 + i * 34, hc[1] - 120 - i * 26, 9 + i * 2, 9 + i * 2, 12), { fill: C.cream, lw: 4.5, single: true }); }
-  ctx.restore();
-}
+const eatenAt = t => PIECES.filter(pc => pc.take && t >= pc.take.t1).length / PIECES.length;
 
 // ---------------------------------------------------------------- camera
 function cam(t) {
-  let c = { x: 600, y: 1080, z: 1.4 };
-  c = Riso.mixCam(c, { x: 630, y: 1120, z: 1.6 }, eio(clamp((t - B.wait[0]) / (B.wait[1] - B.wait[0]))));   // the wait: a slow push in
-  if (t >= B.sprout) c = Riso.mixCam(c, { x: 640, y: 1100, z: 1.72 }, eo(clamp((t - B.sprout) / .12)));   // the hit: snap in
-  if (t >= B.rise) c = Riso.mixCam(c, { x: 610, y: 1050, z: 1.45 }, eio(clamp((t - B.rise) / 1.4)));
-  if (t >= 22) c = Riso.mixCam(c, { x: 600, y: 1000, z: 1.15 }, eio(clamp((t - 22) / 3.5)));
-  [c.sx, c.sy] = Riso.shake(t, B.sprout, .45, 10, 8);
+  let c = { x: 540, y: 960, z: 1.12 };
+  c = Riso.mixCam(c, { x: 540, y: 960, z: 1.0 }, eio(clamp((t - .2) / 3.2)));
+  if (t > 7) c = Riso.mixCam(c, { x: 540, y: 968, z: 1.035 }, eio(clamp((t - 7) / 4.5)));
+  if (t > 12.6) c = Riso.mixCam(c, { x: 540, y: 950, z: 1.06 }, eio(clamp((t - 12.6) / .95)));
+  if (t >= B.clink) c = Riso.mixCam(c, { x: 540, y: 950, z: 1.09 }, eo(clamp((t - B.clink) / .1)));
+  if (t > 14.4) c = Riso.mixCam(c, { x: 540, y: 960, z: 1.0 }, eio(clamp((t - 14.4) / 1.2)));
+  if (t > 19.5) c = Riso.mixCam(c, { x: 540, y: 868, z: .9 }, eio(clamp((t - 19.5) / 1.1)));
   return c;
 }
 
 // ---------------------------------------------------------------- frame
+function init() { Riso.init(); }
 function scene(ctx, t) {
   Riso.boil(t);
   const cm = cam(t);
   Riso.field(ctx, cm);
-  Riso.sky(ctx, cm, t);
-  const z = Riso.cam(ctx, cm, 1), x0 = cm.x - 540 / z - 60, x1 = cm.x + 540 / z + 60;
-  ROAD.draw(ctx, x0, x1);
-  const { F, seed } = pose(t);
-  if (seed) F.held = (c, G) => { const h = G.hands[1]; ink(c, ell(h[0] + 8, h[1] - 14, 9, 7, 12), { fill: C.yel, lw: 4, single: true }); };   // peeking out of the fist
-  ground(ctx, t, seed);
-  Riso.kid(ctx, F);
-  sprout(ctx, t);
-  const { hc } = Rig.headFrame(F);
-  thoughtDots(ctx, t, F);
-  Riso.ticks(ctx, hc, F.s, ss(B.sprout + .05, B.sprout + .2, t) * (1 - ss(B.sprout + 1.2, B.sprout + 1.4, t)), 1);
-  if (t < B.walk[1]) Riso.puffs(ctx, F, FY, 1 - ss(3, 3.8, t));
+  Riso.cam(ctx, cm, 1);
+  T.table(ctx, ss(.15, 1.3, t));
+  const eaten = eatenAt(t);
+  const hands = PEOPLE.map((P, i) => { const arr = arriveOff(P, t); return arr == null ? null : { arr, h: handAt(i, t, arr) }; });
+  T.lettuce(ctx); T.jang(ctx);
+  PEOPLE.forEach((P, i) => {   // each place: rice, spoon, chopsticks (unless held), glass (unless held)
+    const b = loc(P, PLACE.bowl[0], PLACE.bowl[1]); T.bowl(ctx, b[0], b[1], PLACE.bowl[2]); T.spoon(ctx, P);
+    const hd = hands[i] && hands[i].h;
+    if (!(hd && hd.chop)) T.sticks(ctx, loc(P, PLACE.chopBack[0], PLACE.chopBack[1]), loc(P, PLACE.chopTip[0], PLACE.chopTip[1]), 7);
+    if (!(hd && hd.glass)) { const g = loc(P, PLACE.glass[0], PLACE.glass[1]); T.glass(ctx, g[0], g[1]); }
+  });
+  T.pan(ctx, t, eaten, pc => pc.take && t >= pc.take.t0);
+  T.sizzle(ctx, t, ss(.5, 1.1, t) * (1 - ss(6.5, 7.5, t)));
+  T.steam(ctx, t, ss(.3, 1.4, t) * (1 - .8 * eaten));
+  // arms (held things under the hands), then shoulders + heads on top
+  const order = [2, 1, 3, 0], bodies = [];
+  for (const i of order) {
+    const P = PEOPLE[i], hs = hands[i]; if (!hs) continue;
+    const h = hs.h, Bd = bodyOf(i, t, h, hs.arr); bodies[i] = Bd;
+    const L = loc(P, 34 + hs.arr + Bd.lean * .85, -78 - Bd.lean * .15, 14), shL = loc(P, T.SH[0] + Bd.off, -T.SH[1], 200);
+    const AL = solveArm(P, Bd, -1, L, n2([L[0] - shL[0], L[1] - shL[1]]));
+    T.arm(ctx, P, AL, -1, 'flat');
+    const shR = loc(P, T.SH[0] + Bd.off, T.SH[1], 200);
+    let dir = n2([h.H[0] - shR[0], h.H[1] - shR[1]]);
+    if (h.chop) { const cd = n2([h.chop.dir[0], h.chop.dir[1]]); dir = n2([dir[0] + cd[0] * 1.4, dir[1] + cd[1] * 1.4]); }
+    if (h.glass) dir = n2([h.glass[0] - h.H[0], h.glass[1] - h.H[1]]);
+    const AR = solveArm(P, Bd, 1, h.H, dir);
+    if (h.chop) {
+      const tip = add3(h.chop.tip, AR.delta), back = add3(h.chop.back, AR.delta), tp = prj(tip), bp = prj(back);
+      if (h.piece) T.piece(ctx, h.piece, tp[0], tp[1], tp[2]);
+      T.sticks(ctx, bp, tp, h.piece ? 5 : 10, tp[2]);
+    }
+    if (h.glass) { const g = prj(add3(h.glass, AR.delta)); T.glass(ctx, g[0], g[1], g[2]); }
+    T.arm(ctx, P, AR, 1, h.type === 'rest' ? 'flat' : 'grip');
+  }
+  for (const i of order) { if (!bodies[i]) continue; T.torso(ctx, PEOPLE[i], bodies[i]); T.headTop(ctx, PEOPLE[i], bodies[i], t); }
+  // 짠: impact marks round the meeting glasses
+  if (t >= B.clink && t < B.clink + .7) { const c = prj([CX, CY, 165]); T.impact(ctx, c[0], c[1], 1 - ss(B.clink + .45, B.clink + .7, t), ss(B.clink, B.clink + .3, t)); }
   Riso.screen(ctx);
-  if (t >= B.sprout) Riso.focus(ctx, 540 + (P0[0] - cm.x) * cm.z, 960 + (P0[1] - 60 - cm.y) * cm.z, 1 - ss(B.sprout + .25, B.sprout + .5, t));   // the hit
-  Riso.endPlate(ctx, t, B.end, { stamp: (c, y0) => Riso.stamp(c, 540, y0 + 74, .5, 0, Riso.sproutIcon) });
+  if (t >= B.clink) { const z = cm.z, c = prj([CX, CY, 165]); Riso.focus(ctx, 540 + (c[0] - cm.x) * z, 960 + (c[1] - cm.y) * z, .85 * (1 - ss(B.clink + .2, B.clink + .45, t))); }
+  // face inserts
+  for (const [a0, a1, who, expr, word] of S.inserts) {
+    const left = who === 'cream', x0 = left ? 70 : 640, y0 = 345, w = 370, h = 355;
+    T.panel(ctx, t, a0, a1, [[x0, y0], [x0 + w, y0 + 4], [x0 + w - 4, y0 + h], [x0 + 3, y0 + h - 3]], c => {
+      c.save(); c.globalAlpha *= .4; c.fillStyle = Riso.tone(false, 0, 0); c.fillRect(x0, y0 + h * .55, w, h); c.restore();
+      T.face(c, who, x0 + w / 2, y0 + h * .58, .78, expr, t, expr === 'chew' ? Math.sin(Riso.t12(t) * 9) * .03 : -.04);
+      c.save(); c.translate(x0 + w / 2, y0 + 72); c.rotate(left ? -.06 : .06); Pilot.text(c, word, 0, 0, { size: 58, font: T.FONT, color: Riso.C.ink }); c.restore();
+    });
+  }
+  const LP = { cream: [205, 505], blue: [875, 505], spouse: [205, 1380], me: [875, 1380] }, LW = ['cream', 'blue', 'spouse', 'me'];
+  S.laughs.forEach((a0, j) => {
+    const who = LW[j], [cx, cy] = LP[who], r = 138;
+    T.panel(ctx, t, a0, 19.45 + j * .04, Riso.ell(cx, cy, r, r, 36), c => {
+      const tp = Riso.t12(t), tl = Math.sin(tp * 14 + j * 2) * .07;
+      c.save(); c.globalAlpha *= .35; c.fillStyle = Riso.tone(false, 0, 0); c.fillRect(cx - r, cy + 30, r * 2, r * 2); c.restore();
+      T.face(c, who, cx, cy + 4 + Math.abs(Math.sin(tp * 14 + j * 2)) * 4, .54, 'laugh', t + j * .08, tl);
+      T.laughMarks(c, cx, cy + 4, .54, t + j * .08);
+    });
+  });
+  T.endPlate(ctx, t, B.end);
   Riso.grain(ctx, cm);
 }
 function draw(ctx, t) {
   Riso.onTwos(ctx, t, scene);
-  if (t < B.end) Riso.captions(ctx, t, S.lines);
-  Riso.endCard(ctx, t, S.endCard, B.end);
+  Riso.boil(t); Riso.screen(ctx);
+  for (const [a, b, s] of S.lines) T.captionBox(ctx, s, 285, Pilot.win(t, a, b, .3, .4));
+  { const [a, b, s] = S.clink; if (t >= a && t < b) T.burst(ctx, s, 300, 316, clamp((t - a) / .2), 1 - ss(b - .35, b, t)); }
+  Riso.endCard(ctx, t, S.endCard, B.end, { font: T.FONT, srcFont: T.FONT, y: 412, color: Riso.C.ink, srcColor: '#2c3a3e' });
+  Story.fadeBlack(ctx, t, S.DUR, .9, .6);
 }
-Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: Riso.FONTS, init, draw });
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: ["400 70px 'Do Hyeon'"], init, draw });
 </script>
 </body>
 </html>

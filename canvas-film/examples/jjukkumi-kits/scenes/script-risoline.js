@@ -1,23 +1,30 @@
-/* script.js — THE STORY of one film: beats (seconds), on-screen lines, end card. Every style's scene reads this.
-   Placeholder for the house-style templates (the same story in every kit, so templates are comparable): a figure walks in,
-   kneels and plants a seed, waits, a sprout rises in the style's accent light, the figure stands and looks at it.
-   Replace it with the film's own words and beats. lines: [from, to, '한 줄\n두 줄', '출처 (개역개정)'?] — ≤ 2 lines,
-   ≥ 1.6 s each; scripture verbatim from bskorea.or.kr. new-film.py appends the end card from source.js and the loop seam. */
+/* script-risoline.js — scene 4 of 쭈꾸미 한 접시: the dinner table, seen from above (table-risoline.html).
+   Beats in seconds; lines: [from, to, '한 줄']. Portrait only: words in the top band, nothing in the bottom 380 px. */
 window.SCRIPT = {
-  DUR: 30,
+  DUR: 24,
   beat: {
-    walk: [0, 4],    // the figure walks in (visible from frame 0), something small held in the near hand
-    kneel: 4.6,      // kneels (stand → crouch → kneel)
-    plant: 6.0,      // the hand presses the seed into the ground; pats the soil over it
-    wait: [8, 13],   // waits — nothing shows (the style's ambient motion carries it)
-    sprout: 14.0,    // THE CHANGE: a sprout rises in the accent light (the style's hit)
-    rise: 18.0,      // the figure stands and looks at it; it keeps growing
-    end: 26.0,       // end card (~4 s)
+    light: 0.0,    // fade in from black: the warm lamp comes on over the table, the red pan sizzles and steams
+    sit: 2.7,      // the four sit down, one per side (나 2.7, 배우자 3.05, 크림 손님 3.4, 파랑 손님 3.75)
+    bow: 5.3,      // 잘 먹겠습니다 — four heads dip
+    chop: 6.3,     // chopsticks picked up
+    eat: 7.0,      // chopsticks reach into the pan, curly red pieces lifted and eaten; face inserts "맛있다!"
+    lay: 11.85,    // chopsticks down
+    raise: 12.6,   // glasses picked up and raised over the pan
+    clink: 13.55,   // 짠! — the four glasses meet
+    down: 14.3,    // glasses back down
+    laugh: 15.3,   // laughter: four face inserts; the pan empties
+    end: 19.8,     // end card over the table (empty pan, four glasses); fade to black 23.4–24
   },
   lines: [
-    [0.3, 3.8, '아무것도\n보이지 않아도'],
-    [6.0, 9.5, '묻어 둔 것은'],
-    [14.0, 17.6, '자라고 있었다'],
+    [4.3, 7.1, '잘 먹겠습니다!'],
+    [7.5, 11.6, '바다에서 온 한 접시'],
+    [15.9, 19.7, '넷이 먹으니 더 맛있다'],
   ],
-  endCard: { kicker: '2026.00.00 주일 1부예배', title: '영상 제목은\n두 줄까지', passage: '본문 0:0-0', by: '교회 · 설교자', compact: true },
+  clink: [13.45, 15.4, '짠!'],
+  inserts: [   // face inserts: [from, to, who, expression, word]
+    [8.75, 10.75, 'blue', 'chew', '맛있다!'],
+    [10.15, 12.15, 'cream', 'yum', '음~!'],
+  ],
+  laughs: [15.4, 15.7, 16.0, 16.3],   // the four round laughter panels pop in (cream, blue, spouse, me) and close at 19.45
+  endCard: { title: '쭈꾸미 한 접시', passage: '낚시 · 요리 · 초대', by: '2026. 10. 31', compact: true },
 };
