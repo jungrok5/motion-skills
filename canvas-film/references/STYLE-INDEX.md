@@ -46,7 +46,7 @@ Code: each look is one self-contained scene (style + Bible story together) in gi
 | ship | **18th-century sea-chart copperplate (after *Mutiny on the Bounty*)** | changing ships, not scrubbing decks | `motion/pilot/ship.html` |
 | invite | **the gold line returns** | a prayer written in light | `motion/pilot/invite.html` |
 
-## A2. Style kits (33) — packaged, start a scene with `scripts/from-kit.py --kit <slug>`; brief: `kits/<slug>/STYLE.md`
+## A2. Style kits (34) — packaged, start a scene with `scripts/from-kit.py --kit <slug>`; brief: `kits/<slug>/STYLE.md`
 
 | kit | look | carries well | worked example |
 |---|---|---|---|
@@ -83,6 +83,7 @@ Code: each look is one self-contained scene (style + Bible story together) in gi
 | `recipecard` | recipe explainer card (from prompt-motion.com looks by @ror_fly and @sarut0bisasuke): cream paper, one hand-inked vessel dead centre with measurement ticks, "STEP n OF N" card with the big amount, progress rail, checklist that ticks, pours/spoons/drops, steam, flames, timer dial, a phone chat card; one accent for the contents | a process start to finish, ingredients and amounts as they go in, how-to, steps of anything | examples/jjukkumi `cook-recipecard` |
 | `shadowstage` | paper cut-out shadow theatre, portrait (from a prompt-motion.com look by @x4b47x): velvet curtains that part, painted sky that runs dusk → night, black cut-out town/house/lamp posts, windows that light one by one, a door that swings open throwing a warm wedge, silhouette figures with planted walks, a hanging italic plaque | home and welcome, arrival, evening, small warm lights, a story told like a fable | examples/jjukkumi `door-shadowstage` |
 | `diorama` | symmetrical pastel diorama, Grand-Budapest-like (from a prompt-motion.com look by @itsolelehmann): dead-centre one-point set, purple swag curtains and pelmet, pink walls, lace tablecloth, shaded lamps, a swappable window view, frontal pastel figures with 3-D IK arms, hanging cream caption cards | gatherings, a table, a family photo, warmth with a wink, a framed "tableau" ending | examples/jjukkumi `table-diorama` |
+| `webtoon` | Korean vertical-scroll motion webtoon (무빙툰), built from a survey of 21 GitHub comic/manga sources (`kits/webtoon/RESEARCH.md`): a strip of panels read by a scrolling camera with gutters as time, balloons (talk/shout/think/whisper/narration, merged outlines, 어절 line breaks), per-syllable SFX lettering, focus & speed lines, screentone, mood backgrounds, emotion symbols, zoom punch, freeze flash, SD/chibi switch, stone-crumble, cel-shaded IK figure rig | comedy and gags, everyday office/school stories, reactions, escalation from trivial to epic, dialogue-led stories | examples/donut 「마지막 도넛」 |
 
 ## B. Lemo-Opuscar technique styles (66) — brief: `styles/<slug>/STYLE.md`
 
