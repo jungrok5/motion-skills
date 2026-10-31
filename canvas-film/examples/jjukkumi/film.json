@@ -3,24 +3,24 @@
  "source": "ko",
  "scenes": [
   {
-   "id": "sea-ukiyoe",
+   "id": "sea-pixelsea",
    "label": "바다",
    "dur": 22
   },
   {
-   "id": "cook-mograph",
+   "id": "cook-recipecard",
    "label": "부엌",
-   "dur": 22
-  },
-  {
-   "id": "door-hopper",
-   "label": "초대",
-   "dur": 14
-  },
-  {
-   "id": "table-risoline",
-   "label": "식탁",
    "dur": 24
+  },
+  {
+   "id": "door-shadowstage",
+   "label": "초대",
+   "dur": 16
+  },
+  {
+   "id": "table-diorama",
+   "label": "식탁",
+   "dur": 22
   }
  ],
  "fonts": {

@@ -1,65 +1,82 @@
 # 쭈꾸미 한 접시 — storyboard brief (every scene agent reads this)
 
-A ~82 s **portrait** (1080×1920) motion film, all drawn in code with the canvas-film harness, 4 scenes, each in a
-different style kit chosen for what it carries:
+A ~84 s **portrait** (1080×1920) motion film, all drawn in code with the canvas-film harness: 4 scenes, each in a
+**new style kit** built from a look in the prompt-motion.com gallery (owner's choice: styles come from that site, are
+made into new kits and added to `canvas-film/kits/`). **No sound** in this film — no `.sound.json`, no audio.
 
 > 쭈꾸미 낚시 → 손질하고 요리 → 친구 부부 초대 → 넷이 함께 식사
 
-Request (owner, Korean): "prompt-motion.com 을 참고해서 다양한 기법과 적합한 스타일을 골라, 쭈꾸미 낚시를 해서 요리를 하고
-친구 부부를 초대해서 같이 식사를 하는 과정을 영상으로 만들어줘."
+## The four new kits (one agent each)
+| scene id | new kit | prompt-motion.com source (study the frames in `REF/<kit>/`) | why it fits |
+|---|---|---|---|
+| `sea-pixelsea` (22 s) | `pixelsea` — pixel-art sunset sea | prompt-motion.com/pluginplay-3d4006 "Pixel art LLM history" (@pluginplay: pixel cliff, sunset sea with sun stripes, pixel caption box + year tag, KRAKOOM impact word, close-up pixel portrait) + prompt-motion.com/hoyoyoda-3a5c08 "Chuseok pixel night scene" (@hoyoyoda: Korean pixel night, full moon, lanterns) | fishing reads like a fishing mini-game: casting, the "HIT!", a catch counter |
+| `cook-recipecard` (24 s) | `recipecard` — recipe explainer card | prompt-motion.com/ror-fly-9950f1 "Negroni recipe animation" (@ror_fly: cream paper, one vessel in the middle with measurement ticks, "STEP n OF N" card with the big amount + ingredient name, a progress rail of dots, bottles pour in) + prompt-motion.com/sarut0bisasuke-cefa43 "White Russian recipe animation" (@sarut0bisasuke: script title, checklist ticking off) | the site's own lesson: "show the full recipe start to finish, ingredients + measurements as they go in" |
+| `door-shadowstage` (16 s) | `shadowstage` — paper cut-out shadow theatre, 9:16 | prompt-motion.com/x4b47x-9cc84f "Shadow theatre home story" (@x4b47x: velvet curtain proscenium, gradient dusk→night sky, black cut-out house/hills/lamp post/figures, windows that light up warm, a door that opens a light wedge, a hanging dark caption plaque in italic serif) | "what makes a place home" = inviting friends in; the lit door is the turn |
+| `table-diorama` (22 s) | `diorama` — symmetrical pastel diorama (Grand-Budapest-like) | prompt-motion.com/itsolelehmann-e47532 "Four seasons train window" (@itsolelehmann: dead-centre symmetry, purple swag curtains with gold tie-backs, pink walls, two pink table lamps, a white tablecloth with lace edge, flat pastel illustration, soft vignette) | a warm dinner table framed like a stage, everyone facing us |
 
-## Direction borrowed from prompt-motion.com (apply in every scene)
-- **Show a process from start to finish**, and label each step where it happens (e.g. ingredients + amounts *as they go in*).
-- **Every scene grows out of the one before** — no crossfades inside a scene; between scenes a short fade to/from black
-  (~0.5 s) only, and each scene opens on the image the last one closed on (see "hand-offs").
-- **Springs with a tiny overshoot at most**; no bouncy/cartoon easing (except mograph's own chunky-type squash, kept small).
-- **Banned:** decorative glows, particle bursts not tied to an object, lens flares, camera shake (except ukiyoe's one
-  "hit" shake ≤ 0.3 s), RGB split, generic gradients, corner text/readouts, holds > 1 s that are not for reading,
-  `Math.random` (seeded rng only), anything that looks like a template.
-- One beat = one idea; something changes on every beat; the strongest moment sits near the end of the scene.
+Each reference folder has `SHEET-*.jpg` (12 frames), the single frames, and `PROMPT-*.txt` (the creator's prompt).
+**Borrow the craft, write our own renderer; never copy a shot, character, or text from the reference.**
 
-## Characters (keep consistent across styles)
-- **나 (host, fisher, cook):** short dark hair, navy jacket/top, and the identity mark **mustard `#e2a93b`** — a mustard
-  bucket hat when fishing (a straw kasa is fine in ukiyoe if its band/tie is mustard), a mustard apron when cooking/at home.
-- **배우자 (my spouse):** appears from scene 3 on; green-grey top `#6f8a6a`.
-- **친구 부부 (the guests):** two people; one in a cream/white top, one in a dusty-blue top `#5f7fa8`; they bring a small
-  gift (a bottle or a fruit box) — not red.
-- **The one accent everywhere = 쭈꾸미 red** (reddish-orange/beni). Only the octopus (and later its red sauce) carries it.
-  Nothing else on screen is that red. In each kit, set the kit's accent to this red (ukiyoe already uses beni `#b8412f`).
-- All-ages, warm, lightly humorous. No gore: cleaning the octopus = rubbing with flour in a bowl, no cutting of a live animal shown.
+## Direction from prompt-motion.com (every scene)
+- Show the process start to finish, label each step where it happens.
+- Every scene grows out of the one before; inside a scene no crossfades. Between scenes only a short fade to/from black
+  (`Story.fadeBlack(ctx, t, DUR, .5, .5)`).
+- Springs with a tiny overshoot at most; no cartoon bounce. Something changes on every beat; strongest moment near the end.
+- **Banned:** decorative glows not tied to a light source, particle bursts not tied to an object, lens flares, camera shake
+  (pixelsea may shake ≤ 0.25 s on the HIT, pixel-snapped), RGB split, generic gradients (the shadow-theatre sky is a
+  deliberate, banded painted gradient — fine), corner text/readouts, holds > 1 s that are not for reading,
+  `Math.random` (seeded `Pilot.rng` only), anything that looks like a template.
 
-## Facts (keep them right)
-- Autumn (Sept–Nov) is 쭈꾸미 낚시 season; it's done from a small boat with a short rod, a sinker + a lure (에기, bright
-  ochre/green lure, NOT red), jigging the lure up and down on the seabed (고패질); the octopus grabs the lure and feels
-  heavy ("묵직"). 쭈꾸미 is small (palm-sized), 8 arms, roundish head (mantle), reddish-brown, turns redder when cooked.
-- 손질: 밀가루(+굵은소금) 넣고 바락바락 주물러 씻기 → 헹구기. 끓는 물에 살짝 데치기 (~30초).
-- 양념 (쭈꾸미볶음): 고추장 2 · 고춧가루 1 · 간장 1 · 다진마늘 1 · 설탕 1 (큰술) + 양파·대파, 센 불에 볶고 참기름 마무리.
+## Characters (consistent across styles)
+- **나 (host, fisher, cook):** short dark hair, navy top, identity mark **mustard `#e2a93b`** (bucket hat when fishing,
+  apron at home).
+- **배우자 (spouse):** from scene 3 on; green-grey top `#6f8a6a`, hair tied back.
+- **친구 부부 (guests):** one in cream `#efe6d2`, one in dusty blue `#5f7fa8`; they bring a small gift box (not red).
+- **The one accent = 쭈꾸미 red** (`#d9432b`-ish). Only the octopus and its red sauce carry it.
+- All-ages, warm, lightly humorous. No gore (cleaning = rubbing with flour in a bowl).
 
-## Scenes, timings, hand-offs
-| # | id | kit | dur | what happens | opens on | closes on |
-|---|---|---|---|---|---|---|
-| 1 | `sea-ukiyoe` | ukiyoe | 22 s | dawn sea, boat, cast, wait, **the hit**, red 쭈꾸미 lifted out, bucket fills, boat turns home | dawn sea | red 쭈꾸미 in the bucket |
-| 2 | `cook-mograph` | mograph | 22 s | worlds swap on bars: 손질(밀가루) → 데치기 → 양념 (amounts drop in on beats) → 센 불 볶기 → phone chat invite → 완성 | the bucket of red 쭈꾸미 | sent chat bubble / plate done |
-| 3 | `door-hopper` | hopper | 14 s | dusk at home: still hall, warm lamp, the red dish waiting on a side table; doorbell; the door opens; two guest silhouettes in the doorway, their shadows reach in | still hall at dusk | door wide, warm light |
-| 4 | `table-risoline` | risoline | 24 s | top-down table: the red 쭈꾸미볶음 in the middle, four people's hands from four sides, chopsticks, "짠!", face inserts laughing, end card | warm light over the table | end card |
+## Facts
+- Autumn (Sept–Nov) is 쭈꾸미 낚시 season: small boat, short rod, a sinker + lure (에기, ochre/green, NOT red), jigging on
+  the seabed (고패질); a bite feels heavy ("묵직"). 쭈꾸미: palm-sized, 8 arms, round mantle, reddish-brown.
+- 손질: 밀가루(+굵은소금) 넣고 바락바락 → 헹구기 → 끓는 물에 살짝 데치기(약 30초).
+- 양념(쭈꾸미볶음): 고추장 2 · 고춧가루 1 · 간장 1 · 다진마늘 1 · 설탕 1 (큰술) + 양파·대파, 센 불에 볶고 참기름 마무리.
 
-Captions are short Korean, ≤ 13 characters a line where the kit asks for it, ≥ ~2 s each (≥ 3.5 s for a sentence), ≤ 2 lines.
-Suggested lines (adapt freely to the picture; keep them few):
-1. 「시월의 새벽 바다」 → 「줄을 내리고, 기다린다」 → 「툭— 묵직하다!」 → 「한 마리, 또 한 마리」 → 「오늘 저녁은 정했다」
-2. chunky type per world: 「손질 시작!」「밀가루로 박박」「끓는 물 30초」「고추장 2」「고춧가루 1」「간장 1」「마늘 1」「설탕 1」
-   「센 불에 휘리릭」; chat: 「쭈꾸미 잡았어!」「저녁 먹으러 와」 ← reply 「콜! 7시에 갈게」; 「완성!」
-3. 「저녁 일곱 시」 → (doorbell, no caption or a small 「딩동」) → 「어서 와!」
-4. 「잘 먹겠습니다!」 → 「바다에서 온 한 접시」 → 「짠!」 → 「넷이 먹으니 더 맛있다」 → end card
+## Scenes, hand-offs, words
+| # | id | dur | beats | opens on | closes on |
+|---|---|---|---|---|---|
+| 1 | `sea-pixelsea` | 22 | dawn pixel sea, boat, cast (line arcs out), wait (lure jigging under water, cut-away), **HIT!**, red 쭈꾸미 lifted, catch counter ×1 → ×2 → ×7, sun up, head home | pixel dawn | the bucket of red 쭈꾸미 |
+| 2 | `cook-recipecard` | 24 | title card 「쭈꾸미볶음」 → STEP 1 손질 (밀가루 박박) → STEP 2 데치기 30초 → STEP 3 양념 (each spoon drops in with its amount) → STEP 4 센 불 볶기 → STEP 5 참기름 → STEP 6 초대 (a phone card: 「쭈꾸미 잡았어! 저녁 먹으러 와」 → reply 「콜! 7시에 갈게」) → 「완성!」 | the bucket of red 쭈꾸미 | the plate + sent message |
+| 3 | `door-shadowstage` | 16 | curtain, dusk sky → night, our cut-out house, windows light up one by one, two guest silhouettes walk in from the left with a gift, door opens a warm wedge, 「어서 와!」 | the house at dusk | the warm open door |
+| 4 | `table-diorama` | 22 | symmetric dining room, curtains open, the four seated behind the table facing us (hosts left, guests right), the red 쭈꾸미볶음 steaming in the centre, chopsticks reach, glasses meet 「짠!」, laughter, end card | warm light | end card |
+
+Captions: short Korean, ≤ 2 lines, ≥ 2 s each (≥ 3.5 s for a sentence). Suggested (adapt to the picture, keep few):
+1. 「시월, 새벽 바다」 → 「고패질… 톡, 톡」 → 「HIT!」/「묵직하다!」 → 「한 마리, 또 한 마리」 → 「오늘 저녁은 정했다」
+2. card text per step as above; title 「쭈꾸미볶음」 small line 「바다에서 바로 온」
+3. 「저녁 일곱 시」 → 「친구 부부가 왔다」 → 「어서 와!」
+4. 「잘 먹겠습니다!」 → 「짠!」 → 「넷이 먹으니 더 맛있다」 → end card
    `{ title: '쭈꾸미 한 접시', passage: '낚시 · 요리 · 초대', by: '2026. 10. 31', compact: true }`
+Portrait safe zones: no words in the bottom 380 px or the right 140 px; nothing important in the top 160 px.
 
-## Files (project root: `canvas-film/examples/jjukkumi/`)
-Each agent owns ONLY: `scenes/<id>.html`, `scenes/script-<kit>.js`, `scenes/<id>.sound.json`, and any helper
-`scenes/<id>-*.js` it adds. Do NOT edit `lib.js`, `story.js`, `kit-*.js` (if a kit primitive is missing, write your own
-in your helper file), `film.json` or another scene's files. Set `SCRIPT.DUR` to the scene's duration above.
-Fonts are installed (Noto Serif KR, Noto Sans KR, Do Hyeon). Render stills from the project root:
-`node ../../scripts/render.mjs v --scene <id> --stills 1,3,5,…` → `out/still-<id>-v-<t>.png` (portrait only; this film is
-portrait-only). LOOK at every still you render. Don't render videos.
-Sound spec `<id>.sound.json` per `../../references/SOUND.md`: 1 music cue for the whole scene (+ a fade), ≤ 6 SFX that carry
-the story (e.g. waves, reel, splash; flour rub, sizzle, phone ping; doorbell, door; clink, laughter murmur). The music
-across the four scenes should feel like one family: warm acoustic (guitar, light percussion, a little accordion or
-whistle), cheerful, unhurried; scene 2 more rhythmic (120 BPM), scene 3 quiet, scene 4 warm and full.
+## What each agent delivers
+1. **The kit** in `canvas-film/kits/<kit>/`, same shape as the existing kits (read `canvas-film/kits/README.md` and one
+   existing kit end to end, e.g. `kits/bass/` — `kit.js`, `STYLE.md`, `template.html`, `script.example.js`):
+   - `kit.js`: one global (`Pixelsea`, `RecipeCard`, `ShadowStage`, `Diorama`), every export commented; the medium only
+     (palette, textures, frame/stage pieces, figure rig, captions, end card, fades) — never this film's story.
+   - `STYLE.md`: title line, **provenance** (the prompt-motion.com URL(s) + creator handle(s), "borrowed craft, own
+     renderer"), What it looks like, Meanings it carries (well / badly), Palette, Fonts and words, API with a usage
+     example, Motion grammar, Performance (measure ms per frame), Pitfalls, What a scene author still draws.
+   - `template.html` + `script.example.js`: the shared seed story every 2026-10 kit template tells (walk in, kneel,
+     plant, wait, sprout with the accent at 14 s, stand at 18 s, end card at 26 s, DUR 30) — so it compares with the
+     other kits. Pages load `lib.js`, `story.js`, `script.js`, `kit-<kit>.js` from `scenes/` (see `scripts/from-kit.py`).
+2. **The film scene** in this project: copy the kit to `scenes/kit-<kit>.js` (vendored, as from-kit.py does), write
+   `scenes/<id>.html` and `scenes/script-<kit>.js` (the film's beats/lines; `DUR` as above). Film-specific drawing
+   (the octopus, the boat, the four people, the dish) stays in the scene or a `scenes/<id>-*.js` helper, not the kit.
+3. **Checks**: render stills of the scene AND the template (`node ../../scripts/render.mjs v --scene <id> --stills …`
+   from this project root; for the template, make a scratch project with `python3 ../../scripts/from-kit.py <scratch> --kit <kit>`
+   in the scratchpad) and LOOK at every PNG; iterate until it looks finished. Bodies: follow `references/BODY-CHECK.md`
+   (2-bone IK, hands at the grip, run `scripts/body-check.py` where figures act). Fonts installed: Noto Serif KR,
+   Noto Sans KR, Do Hyeon (in film.json). If the kit needs another Google font, tell the lead instead of adding it.
+
+Own only: `kits/<your kit>/`, `scenes/kit-<your kit>.js`, `scenes/<your id>.html`, `scenes/script-<your kit>.js`,
+`scenes/<your id>-*.js`. Do not edit `lib.js`, `story.js`, `film.json`, `kits/README.md`, STYLE-INDEX, other kits or
+other scenes. Don't commit. Don't render videos.
