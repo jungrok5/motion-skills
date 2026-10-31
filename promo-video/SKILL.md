@@ -23,7 +23,7 @@ The samples page shows all nine as live pages: https://jungrok5.github.io/motion
 | `scripts/synth.py` | numpy instrument + SFX kit (pluck, marimba, e-piano, pad, bass, drums, pop, swoosh, chime, shutter, buzz, tick, reverb, Track) — no samples, deterministic |
 | `scripts/pick-music.py` | compare ElevenLabs Music variations against the scene cuts (loudness strips + spectrogram sheet) and cut the pick to length |
 | `references/STORYBOARD.md` | from a website/blog to a 6–7 scene ad: research rules (facts only), the hook→problem→solution→proof→CTA arc, how to propose styles |
-| `references/STYLES.md` | the 9 proven looks (what each is, who it suits, how it is built, timings) |
+| `references/STYLES.md` | the 9 proven looks (what each is, who it suits, how it is built, timings) + looks borrowed from canvas-film kits (e.g. the recipe/step card) |
 | `references/SOUND.md` | ElevenLabs flow: voices that worked, one-take narration, SFX prompts, Music (instrumental flag, +2 s, 4 variations, picking), mixing levels |
 | `references/PROMPT.md` | the one-shot prompt format (PART 1 video for Claude Code, PART 2 ElevenLabs) with a filled example |
 | `references/song-recipes.py` | five composed songs (paper, chat, editorial, whiteboard, premium promo) to copy into a `sound.py` |

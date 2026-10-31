@@ -1,5 +1,11 @@
 # 웹툰 (Korean colour webtoon, vertical-scroll motion-toon)
 
+> **Making a whole webtoon / 무빙툰 / motion-manga film? Use the `motion-webtoon` skill** (`motion-webtoon/SKILL.md`), not
+> this kit alone. It vendors this kit and adds what a webtoon film needs: a cast rig defined as data (risograph
+> construction, 3-D IK with fixed bones, wrist clamp, bone debug overlay), the premium mono-manga print (`Manga.grade`),
+> the body-check + fresh-reviewer loop, comedy pacing, and the narrator/music/SFX flow. Use this kit directly only for
+> one webtoon-look scene inside a canvas-film film. If you improve the kit here, copy it to `motion-webtoon/lib/webtoon.js`.
+
 Slug `webtoon` · kit `kit.js` → vendored as `scenes/kit-webtoon.js` · global `window.Webtoon` · knowledge base `RESEARCH.md`
 (21 GitHub sources + a 38-technique playbook, kept as is) · worked example: `motion-webtoon/examples/donut` 「마지막 도넛」 in the `motion-webtoon` skill, which packages this kit with a cast rig and a mono-manga finish (cast file
 `scenes/donut-cast.js`, reference page `scenes/cast-sheet.html`).

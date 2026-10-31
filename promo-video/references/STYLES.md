@@ -69,6 +69,15 @@ the "inspection photos" dropping with a bounce, a parcel arriving, tape pulled o
 (`perspective` + `rotateY` up to 165°, the inside face showing past 90°), the product glowing, a handwritten honest note, end card. Warm acoustic lo-fi
 (90 bpm).
 
+## Borrowed looks from canvas-film
+Some canvas-film kits suit a promo too. They are drawn with canvas-film's harness (`Pilot`), not with this skill's
+`render(t)` pages, so build that video as a canvas-film scene and mux this skill's sound onto it (or vendor
+`canvas-film/harness/lib.js` + the kit into the promo page and call the kit from `render(t)` on a full-frame canvas).
+
+| look | kit | suits | how it reads |
+|---|---|---|---|
+| **Recipe / step card** | `canvas-film/kits/recipecard` (STYLE.md there) | food & drink, cafés, cooking classes, any service with a short process ("3 steps to …"), how-to promos | cream paper, one hand-inked vessel in the middle that fills as things go in, a "STEP n OF N" card with the big amount, a progress rail, a checklist that ticks, a phone chat card for "book / order now" as the last step. Worked example: `canvas-film/examples/jjukkumi/scenes/cook-recipecard.html` (24 s, a recipe start to finish ending on an invitation chat). After prompt-motion.com looks by @ror_fly and @sarut0bisasuke. |
+
 ## Making a new style
 Start from `examples/minimal/index.html`: keep the scaffolding (stage W×H by `?f`, `prog/clamp/ease` helpers, `up()`
 word reveal, the preview loop) and replace the scenes. Write scene times as constants at the top and use them in both the

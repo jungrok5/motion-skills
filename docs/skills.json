@@ -9,7 +9,7 @@
       "posterAlt": "canvas-film으로 만든 영상의 장면 네 개: 빛의 탄생, 수묵화의 나무, 갈라진 바다 사이를 걷는 사람들, 흑백 필름의 십자가",
       "poster": "canvas-film/poster.jpg",
       "tags": ["16:9 · 9:16", "MP4", "라이브 플레이어", "사운드", "다국어"],
-      "stats": ["21 화풍", "11개 언어"],
+      "stats": ["21 화풍 + 35 키트", "11개 언어"],
       "page": "canvas-film/",
       "source": "canvas-film/",
       "absorbedFrom": { "repo": "https://github.com/jungrok5/one-scroll-bible", "path": "motion/" },
