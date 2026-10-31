@@ -26,10 +26,10 @@ const tod = t => .55 + 1.05 * ss(0, 24, t);                       // blue-hour e
 const CLOUDS4 = [[20, 70, 34, 1], [150, 112, 44, 2], [60, 168, 26, 3], [196, 40, 30, 4]];
 
 // ---------------- the two set-ups (each composed in its own buffer pixels) ----------------
-// WIDE (4×, 270×480): horizon 268, cliff top 318 from the left edge to x 150, the spot at x 92.
-// CLOSE (6×, 180×320): horizon 172, cliff top 236 to x 128, the spot at x 80.
-const WIDE = { K: 4, hz: 268, top: 318, x1: 150, h: 14, spot: 92, sun: [206, 30], kneelX: 80 };
-const CLOSE = { K: 6, hz: 172, top: 236, x1: 128, h: 22, spot: 80, sun: [150, 46], kneelX: 62 };
+// WIDE (4×, 270×480): horizon 286, cliff top 388 from the left edge to x 168, the spot at x 104.
+// CLOSE (6×, 180×320): horizon 170, cliff top 240 to x 140, the spot at x 92.
+const WIDE = { K: 4, hz: 286, top: 388, x1: 168, h: 20, spot: 104, sun: [204, 30], kneelX: 88 };
+const CLOSE = { K: 6, hz: 170, top: 240, x1: 140, h: 28, spot: 92, sun: [126, 34], kneelX: 66 };
 
 function shotAt(t) {
   if (t < B.kneel) return { ...WIDE, walk: true };

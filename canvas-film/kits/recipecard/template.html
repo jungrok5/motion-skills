@@ -25,7 +25,7 @@ const TAU = Math.PI * 2;
 const mixc = (a, b, k) => Pilot.rgb(Pilot.mix(R.rgbOf(a), R.rgbOf(b), clamp(k)));
 
 // ✎ the vessel and the band
-const POT = R.vessel({ kind: 'planter', x: 540, y: 790, w: 360, h: 300, clear: true, seed: 33 });
+const POT = R.vessel({ kind: 'planter', x: 540, y: 836, w: 380, h: 280, clear: true, seed: 33 });
 const BAND = 624;                                      // top of the picture band (under the rail): drops enter here
 const SCOOPS = [.55, 1.55, 2.55], SOIL = .72;          // three scoops of soil, landing ≈ .55 s after each
 const DRY = '#8f6d55', WET = '#6b4e3d';
@@ -53,13 +53,13 @@ function leaf(c, x, y, ang, L, W, sd) {
 }
 function sprout(c, t, bx, by) {
   const g1 = R.spring(R.k(t, B.sprout, .7), .8), g2 = R.spring(R.k(t, B.rise, .8), .8); if (g1 <= 0) return;
-  const H = 120 * g1 + 120 * g2, bend = 1 - g2, sway = .05 * Math.sin(t * 1.4) * g2, N = 22, P = [[bx, by]];
+  const H = 96 * g1 + 84 * g2, bend = 1 - g2, sway = .05 * Math.sin(t * 1.4) * g2, N = 22, P = [[bx, by]];
   let a = -Math.PI / 2, x = bx, y = by;
   for (let i = 1; i <= N; i++) { const u = i / N; a = -Math.PI / 2 + bend * 2.7 * u * u + sway * u; x += Math.cos(a) * H / N; y += Math.sin(a) * H / N; P.push([x, y]); }
   c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
   R.path(c, P); c.strokeStyle = C.ink; c.lineWidth = 12; c.stroke();
   R.path(c, P); c.strokeStyle = R.ACCENT; c.lineWidth = 6.5; c.stroke(); c.restore();
-  const open = .12 + .88 * g2, L = 30 + 26 * g1 + 18 * g2;
+  const open = .12 + .88 * g2, L = 28 + 22 * g1 + 14 * g2;
   leaf(c, x, y, a - .15 - .95 * open, L, 13 + 5 * g2, 501);                 // the first pair, at the tip
   leaf(c, x, y, a + .15 + .95 * open, L, 13 + 5 * g2, 503);
   const g3 = R.spring(R.k(t, B.leaves, .6), .8);                          // a second, smaller pair halfway up
@@ -159,10 +159,10 @@ function draw(ctx, t) {
   // the checklist beside the planter while we wait
   const ko = R.eo4(R.k(t, B.wait[1] + .4, .35));
   if (t >= B.wait[0] && ko < 1) { ctx.save(); ctx.translate(600 * ko, 0);
-    R.checklist(ctx, t, { x: 640, y: 790, lh: 72, col: 108, size: 32, appear: B.wait[0] + .3,
+    R.checklist(ctx, t, { x: 650, y: 820, lh: 72, col: 108, size: 32, appear: B.wait[0] + .3,
       items: S.checklist.map(([amount, name], i) => ({ amount, name, at: [B.wait[0] + 2.0, B.wait[0] + 3.3, B.wait[1]][i] })) });
     ctx.restore(); }
-  R.deck(ctx, t, cards(t));
+  R.deck(ctx, t, cards(t), { until: B.end });
   R.endCard(ctx, t, S.endCard, B.end, { y: 660 });
 }
 

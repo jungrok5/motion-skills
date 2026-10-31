@@ -364,16 +364,16 @@
   // stands on. Draw it AFTER whatever stands near the lamp (people, wall) so the light falls on them.
   K.lampGlow = function (ctx, x, y, s = 1, on = 1) {
     if (on <= 0) return; const sy = y - 150 * s - 35 * s;
-    K.glow(ctx, x, sy, 260 * s, .8 * on); K.glow(ctx, x, sy, 110 * s, .7 * on);
+    K.glow(ctx, x, sy, 300 * s, .9 * on); K.glow(ctx, x, sy, 120 * s, .8 * on);
     ctx.save(); ctx.globalCompositeOperation = 'screen'; const g = ctx.createRadialGradient(x, y, 0, x, y, 120 * s);
     g.addColorStop(0, K.rgba(K.C.bulb, .35 * on)); g.addColorStop(1, K.rgba(K.C.bulb, 0));
     ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y, 120 * s, 34 * s, 0, 0, 7); ctx.fill(); ctx.restore();
   };
 
   // ---------------- furniture ----------------
-  // table(ctx, r, { flare = 14, folds = 6, lace = 15 }): a table under a white cloth; r = { x, y, w, d, h }: the top's far
+  // table(ctx, r, { flare = 14, folds = 6, lace = 15, band = pink | false }): a table under a white cloth; r = { x, y, w, d, h }: the top's far
   // edge at y (px), its depth d (px down to the near edge), the front drop h (px), flared `flare` px at the near edge.
-  // Returns { top: [y, y + d], front: [y + d, y + d + h] }. Lace scallops with small holes finish the hem.
+  // Returns { top: [y, y + d], front: [y + d, y + d + h] }. An embroidered band and lace scallops finish the hem.
   K.table = function (ctx, r, o = {}) {
     const C = K.C, f = o.flare ?? 14, y0 = r.y, y1 = r.y + r.d, y2 = y1 + r.h, x0 = r.x, x1 = r.x + r.w, L = o.lace ?? 15;
     ctx.fillStyle = 'rgba(50,20,50,.22)'; ctx.beginPath(); ctx.ellipse((x0 + x1) / 2, y2 + 30, r.w * .56, 40, 0, 0, 7); ctx.fill();   // on the floor
@@ -382,6 +382,11 @@
     const nf = o.folds ?? 6; ctx.fillStyle = 'rgba(120,80,110,.08)';   // soft vertical folds in the drop
     for (let i = 0; i < nf; i++) { const x = x0 - f + (r.w + 2 * f) * (i + .5) / nf; ctx.fillRect(x - 10, y1 + 4, 20, r.h - 4); }
     ctx.fillStyle = 'rgba(80,40,70,.12)'; ctx.fillRect(x0 - f, y1, r.w + 2 * f, 6);   // the near edge's shade line
+    if (o.band !== false) {   // an embroidered band above the hem: two thin lines and a row of small dots
+      const by = y2 - 30, bc = o.band || '#e6a9b8'; ctx.strokeStyle = bc; ctx.lineWidth = 2;
+      for (const yy of [by - 9, by + 9]) { ctx.beginPath(); ctx.moveTo(x0 - f + 10, yy); ctx.lineTo(x1 + f - 10, yy); ctx.stroke(); }
+      ctx.fillStyle = bc; for (let x = x0 - f + 24; x < x1 + f - 16; x += 26) { ctx.beginPath(); ctx.moveTo(x, by - 4); ctx.lineTo(x + 4, by); ctx.lineTo(x, by + 4); ctx.lineTo(x - 4, by); ctx.fill(); }
+    }
     // lace: scallops along the hem
     const w = r.w + 2 * f, m = Math.max(4, Math.round(w / (L * 2))), sw = w / m;
     K.flat(ctx, c => { c.moveTo(x0 - f, y2 - 2); for (let i = 0; i < m; i++) { const a = x0 - f + i * sw; c.arc(a + sw / 2, y2 - 2, sw / 2, Math.PI, 0, true); } c.closePath(); }, C.lace, { lw: 1.6, line: '#cbbcc4' });
@@ -437,7 +442,7 @@
   //   mouth       'smile' | 'open' (laugh) | 'o' | 'chew' | 'flat';  open 0..1 (how wide 'open'/'chew' is)
   //   hands       [screenLeft, screenRight]: null (hangs at the side) or a target [x, y, z?] (z toward the camera; leave it
   //               out for "auto": the hand comes forward just enough for a relaxed bend — use it for things on a table)
-  //   elbows      [hint, hint] optional 3-D bend hints (default out, down and a little back)
+  //   elbows      [hint, hint] optional 3-D bend hints (default a little out, down and back)
   //   legs        null (hidden: seated behind something) or { floor, feet: [x, x], lift: [px, px], kneel 0..1, dir }
   // }  G = { F, L, s, hip, sh: [[x,y],[x,y]], neck, head: [x, y] (centre), mouth: [x, y], arms: [{ sh, el, hand, ok, ang }], legs }
   K.pose = function (F) {
@@ -457,7 +462,7 @@
       let tg = F.hands && F.hands[i];
       if (!tg) tg = [a[0] + side * 12 * s + up[0] * -(l1 + l2) * .95, a[1] + (l1 + l2) * .95 * -up[1], 8 * s];
       else if (tg[2] == null) { const d2 = Math.hypot(tg[0] - a[0], tg[1] - a[1]), rch = (l1 + l2) * .86; tg = [tg[0], tg[1], Math.sqrt(Math.max(0, rch * rch - d2 * d2))]; }
-      const hint = (F.elbows && F.elbows[i]) || [side * .75, .8, -.35];
+      const hint = (F.elbows && F.elbows[i]) || [side * .5, .85, -.45];
       const r = K.ik3(a, tg, l1, l2, hint);
       return { side, sh: a, el: r.el, hand: r.end, ok: r.ok, ang: Math.atan2(r.end[1] - r.el[1], r.end[0] - r.el[0]) };
     });
@@ -631,6 +636,9 @@
     if (grain && (o.grain ?? 1) > 0) { ctx.save(); ctx.globalAlpha = o.grain ?? 1; ctx.globalCompositeOperation = 'multiply'; ctx.drawImage(grain, 0, 0, K.W, K.H); ctx.restore(); }
     if (vig && (o.vignette ?? 1) > 0) { ctx.save(); ctx.globalAlpha = o.vignette ?? 1; ctx.drawImage(vig, 0, 0, K.W, K.H); ctx.restore(); }
   };
+  // night(ctx, a = .5, color = '#c9b6d6'): evening in the room — a cool lavender multiplied over everything drawn so far
+  // (draw lampGlow AFTER it, so the lamps warm the table back up). a = 0 is day.
+  K.night = function (ctx, a = .5, col = '#c9b6d6') { if (a <= 0) return; ctx.save(); ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = clamp(a); ctx.fillStyle = col; ctx.fillRect(-200, -200, K.W + 400, K.H + 400); ctx.restore(); };
   // dim(ctx, a): lay a plum dusk over the frame (0..1 → 0..~.62) — for the end card.
   K.dim = function (ctx, a) { if (a <= 0) return; ctx.fillStyle = `rgba(34,14,40,${.62 * clamp(a)})`; ctx.fillRect(0, 0, K.W, K.H); };
   // fade(ctx, t, dur, fi = .5, fo = .5): from black at the start and to black at the end (films join cleanly).
@@ -665,18 +673,18 @@
       K.card(ctx, s, (o.y ?? 455) + dy, al, o);
     }
   };
-  // endCard(ctx, t, card, at, { y = 700, dim = true }): the room dims, a framed cream plaque drops in (hung from the
+  // endCard(ctx, t, card, at, { y = 640, dim = true, hang = 262 }): the room dims, a framed cream plaque drops in (hung from the
   // pelmet) and the shared Story.endCard (title · passage · by) is set on it in Serif/Sans plum.
   K.endCard = function (ctx, t, card, at, o = {}) {
     const a = ss(at, at + (card.compact ? .5 : .9), t); if (a <= 0) return;
     if (o.dim !== false) K.dim(ctx, ss(at - .4, at + .4, t));
-    const C = K.C, y = o.y ?? 700, dy = -22 * (1 - eo((t - at) / .55)), x0 = 150, w = 780, y0 = y - 130, h = 520;
+    const C = K.C, y = o.y ?? 640, dy = -22 * (1 - eo((t - at) / .55)), x0 = 170, w = 740, y0 = y - 118, h = 470;
     ctx.save(); ctx.translate(0, dy); ctx.globalAlpha = a;
-    ctx.strokeStyle = C.goldDk; ctx.lineWidth = 2; for (const d of [-300, 300]) { ctx.beginPath(); ctx.moveTo(CX + d, 270 - dy); ctx.lineTo(CX + d, y0 + 4); ctx.stroke(); }
+    ctx.strokeStyle = C.goldDk; ctx.lineWidth = 2; for (const d of [-290, 290]) { ctx.beginPath(); ctx.moveTo(CX + d, (o.hang ?? 262) - dy); ctx.lineTo(CX + d, y0 + 4); ctx.stroke(); }
     ctx.fillStyle = 'rgba(20,6,24,.35)'; ctx.fillRect(x0 + 9, y0 + 11, w, h);
     K.flat(ctx, c => c.rect(x0, y0, w, h), C.cream, { y0, y1: y0 + h, light: .3, dark: .04, line: C.ink, lw: 3 });
     ctx.strokeStyle = C.gold; ctx.lineWidth = 2; ctx.strokeRect(x0 + 12, y0 + 12, w - 24, h - 24); ctx.lineWidth = 1; ctx.strokeRect(x0 + 18, y0 + 18, w - 36, h - 36);
-    ctx.fillStyle = C.gold; for (const d of [-300, 300]) { ctx.beginPath(); ctx.arc(CX + d, y0 + 4, 4.5, 0, 7); ctx.fill(); }
+    ctx.fillStyle = C.gold; for (const d of [-290, 290]) { ctx.beginPath(); ctx.arc(CX + d, y0 + 4, 4.5, 0, 7); ctx.fill(); }
     // an ornament between title and the small lines: a rule with a diamond
     ctx.strokeStyle = C.gold; ctx.lineWidth = 1.6; const oy = y + 118; ctx.beginPath(); ctx.moveTo(CX - 120, oy); ctx.lineTo(CX - 14, oy); ctx.moveTo(CX + 14, oy); ctx.lineTo(CX + 120, oy); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(CX, oy - 8); ctx.lineTo(CX + 8, oy); ctx.lineTo(CX, oy + 8); ctx.lineTo(CX - 8, oy); ctx.fill();

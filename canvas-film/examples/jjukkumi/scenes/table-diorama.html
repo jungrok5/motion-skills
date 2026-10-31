@@ -147,7 +147,7 @@ function person(i, t) {
     if (k > .15) { F.eyes = 'smile'; F.mouth = 'open'; F.open = .45 + .45 * Math.abs(Math.sin((t - lst) * 9)); }
     if (i === 1) {   // 배우자 laughs behind a hand
       const hk = ss(lst + .05, lst + .45, t) * (1 - ss(lst + 2.1, lst + 2.6, t)); const pm = D.pose(F).mouth;
-      F.hands[0] = [lerp(rest[0][0], pm[0] - 4, hk), lerp(rest[0][1], pm[1] + 16, hk), lerp(0, 34, hk)];
+      F.hands[0] = [lerp(rest[0][0], pm[0] - 2, hk), lerp(rest[0][1], pm[1] + 3, hk), lerp(0, 40, hk)];
       if (hk > .3) F.elbows = [[-.6, .8, 0], null];
     }
   }
@@ -185,9 +185,10 @@ function draw(ctx, t) {
   Food.pan(ctx, t, picked);
   // arms over the table: inner pair first, outer pair over them
   for (const i of [1, 2, 0, 3]) D.arms(ctx, ps[i].G, { held: ps[i].held });
+  D.night(ctx, .55);
   D.lampGlow(ctx, 196, 1300, 1, 1); D.lampGlow(ctx, 884, 1300, 1, 1);
   D.steam(ctx, 540, 1350, 150, 260, t, 1);
-  D.clink(ctx, 540, 1150, (t - B.clink) / .55, 1.1);
+  D.clink(ctx, 540, 1118, (t - B.clink) / .6, 1.7);
   D.curtains(ctx, D.slide(t, B.open, 2.4), { top: 240, tieY: 1000 });
   D.pelmet(ctx, { y: 250 });
   ctx.restore();
@@ -195,7 +196,7 @@ function draw(ctx, t) {
   ctx.save(); D.cam(ctx, ...CAM);
   D.captions(ctx, t, S.lines, { y: 470, hang: 262 });
   ctx.restore();
-  D.endCard(ctx, t, S.endCard, B.end, { y: 690 });
+  D.endCard(ctx, t, S.endCard, B.end, { y: 640 });
   D.fade(ctx, t, S.DUR);
 }
 

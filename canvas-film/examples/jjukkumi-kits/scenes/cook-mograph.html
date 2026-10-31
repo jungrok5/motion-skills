@@ -282,8 +282,8 @@ function spoonFly(ctx, t, bc) {
 function seasonTags(ctx, t) {
   S.season.forEach(([tb, label], i) => { if (t < tb) return;
     const g = MG.chunky(T(label), TAG_SIZE), v = eo(ss(tb + .12, tb + .42, t)), [sx, sy] = MG.popScale(t - tb, .35);
-    const from = [620, 960], to = [TAG_X + g.w / 2, TAG_Y0 + i * TAG_DY], sc = lerp(1.3, 1, v);
-    MG.glyph(ctx, g, lerp(from[0], to[0], v), lerp(from[1], to[1], v) - 50 * Math.sin(Math.PI * v), sx * sc, sy * sc, 0, 1); });
+    const from = [620, 1000], to = [TAG_X + g.w / 2, TAG_Y0 + i * TAG_DY], sc = lerp(1.3, 1, v);
+    MG.glyph(ctx, g, lerp(from[0], to[0], v), lerp(from[1], to[1], v), sx * sc, sy * sc, 0, 1); });
 }
 function sceneSeason(ctx, t, u) {
   ctx.drawImage(MG.keyboardBG(), 0, 0);

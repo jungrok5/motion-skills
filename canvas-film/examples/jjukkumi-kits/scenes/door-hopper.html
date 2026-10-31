@@ -35,8 +35,8 @@ const LAMP = Hopper.lamp({ x: .7, y: 2.05, z: 3.0 }), CONE = 12;             // 
 const TABLE = [.38, 1.02, .725, .76, 2.72, 3.28], DISH = [.72, .762, 3.0];
 const HOST = { x: -.92, z: 4.85 };
 const GUESTS = [
-  { id: 'cream', x: -.5, z: 6.15, h: 1.63, skirt: true, w: .18,
-    col: { body: '#e8decb', legs: '#3c3a38', skin: '#caa387', hair: '#2b211c' } },
+  { id: 'cream', x: -.5, z: 6.15, h: 1.63, skirt: false, w: .18,
+    col: { body: '#dccfb4', legs: '#3a3633', skin: '#caa387', hair: '#2b211c' } },
   { id: 'blue', x: -.05, z: 6.35, h: 1.72, skirt: false, w: .19, box: true,
     col: { body: '#5f7fa8', legs: '#30333a', skin: '#b98f72', hair: '#1f1b18' } },
 ];
@@ -51,7 +51,7 @@ const tone = (c, m, k = 1) => rgb(toneA(c, m, k));
 const toneHex = (c, m, k = 1) => '#' + toneA(c, m, k).map(v => v.toString(16).padStart(2, '0')).join('');
 const mixHex = (a, b, k) => '#' + mix(hex(a), hex(b), k).map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
 // the bulb's falloff, baked into the lit layers as a radial multiply around the lamp's foot (and sampled for moving things)
-const FC = cam.P(LAMP.x, 0, LAMP.z), FR = 1500, FSTOPS = [[0, 1], [.3, .93], [1, .52]];
+const FC = cam.P(LAMP.x, 0, LAMP.z), FR = 1500, FSTOPS = [[0, 1], [.22, .9], [.6, .6], [1, .4]];
 function FALL(sx, sy) { const r = clamp(Math.hypot(sx - FC[0], sy - FC[1]) / FR); let i = 0; while (i < FSTOPS.length - 2 && r > FSTOPS[i + 1][0]) i++;
   const a = FSTOPS[i], b = FSTOPS[i + 1]; return lerp(a[1], b[1], (r - a[0]) / (b[0] - a[0])); }
 const fallAt = p => FALL(...cam.P(...p));
@@ -60,8 +60,8 @@ const fallAt = p => FALL(...cam.P(...p));
 function look(m) {
   const c = x => tone(x, m);
   return { bg: c('#2a2a2a'), ceiling: tone('#8a8478', 'amb', .8), left: c('#8e8574'), right: c('#a09886'), back: [c('#9f9686'), c('#a99e8b'), c('#b0a48e')],
-    st: { back: { n: 300, seed: 11, len: [.12, .35], slant: .12, w: .035, a: .045 }, left: { n: 120, seed: 12, len: [.12, .3], slant: .12, w: .04, a: .04 },
-          right: { n: 120, seed: 13, len: [.12, .3], slant: .12, w: .04, a: .04 } }, corner: { px: 120, a: .22 } };
+    st: { back: { n: 300, seed: 11, len: [.12, .35], slant: .12, w: .035, a: .028 }, left: { n: 120, seed: 12, len: [.12, .3], slant: .12, w: .04, a: .026 },
+          right: { n: 120, seed: 13, len: [.12, .3], slant: .12, w: .04, a: .026 } }, corner: { px: 120, a: .22 } };
 }
 function boards(m) {
   const A = toneA('#8e6c4c', m), Bc = toneA('#7a5a3f', m);
@@ -265,7 +265,7 @@ function drawArm(ctx, A, sleeve, skin) {
 }
 
 // ---------------- timing ----------------
-const lampI = t => .88 + .12 * ss(B.warm, B.warm + 3, t);
+const lampI = t => .8 + .2 * ss(B.warm, B.warm + 3, t);
 const warmK = t => ss(B.warm, B.warm + 3.8, t);
 const redK = t => ss(B.colour, B.colour + 1.6, t);                          // colour arrives
 const PUSHC = cam.P(-.15, 1.0, ZO);
@@ -330,7 +330,7 @@ function draw(ctx, t) {
   ctx.drawImage(base, 0, 0);
   // 2. the bulb: every surface it reaches, clipped to the shade's hard cut-off; shadows of 나 and the table inside it
   const arm = ik(SH, handAt(t));
-  const armQuad = (pl) => { const a = arm.S, b = arm.E, c = arm.Hd, o = [.04, 0, 0];
+  const armQuad = (pl) => { const a = arm.S, b = arm.E, c = arm.Hd, o = [.03, .03, 0];
     return [LAMP.onto(v3.sub(a, o), pl), LAMP.onto(v3.add(a, o), pl), LAMP.onto(v3.add(b, o), pl), LAMP.onto(v3.add(c, o), pl), LAMP.onto(v3.sub(c, o), pl), LAMP.onto(v3.sub(b, o), pl)]; };
   const hostSh = pl => [LAMP.cast(HOSTF.sil, { x: HOST.x, z: HOST.z, clip: [-5, 5, 0, 1.95], plane: pl })].filter(Boolean);
   const unlit = c => c.drawImage(base, 0, 0);

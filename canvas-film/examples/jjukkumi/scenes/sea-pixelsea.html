@@ -63,11 +63,11 @@ function catchAt(t) {   // which quick catch (−1 = the first, big one) and the
 function rodAt(t) {
   if (t < B.release) {                                       // ready → backswing
     const k = eio(clamp((t - B.cast - .2) / .35));
-    return { ang: lerp(-.9, -2.2, k), bend: -3 * k, raise: .8 * k, lean: -.06 * k, line: 'dangle' };
+    return { ang: lerp(-.9, -2.2, k), bend: -3 * k, raise: .45 * k, lean: -.06 * k, line: 'dangle' };
   }
   if (t < B.under) {                                         // the whip forward, follow-through, line settles
     const k = clamp((t - B.release) / .1), f = clamp((t - B.release - .1) / 1.2);
-    return { ang: lerp(lerp(-2.2, -.5, k), -.82, eio(f)), bend: lerp(5, 0, f), raise: lerp(.8, .1, k), lean: lerp(.28, .05, eio(f)), line: t < B.land ? 'flight' : 'slack' };
+    return { ang: lerp(lerp(-2.2, -.5, k), -.82, eio(f)), bend: lerp(5, 0, f), raise: lerp(.45, .1, k), lean: lerp(.28, .05, eio(f)), line: t < B.land ? 'flight' : 'slack' };
   }
   if (t < B.lift) {                                          // HIT: braced, rod bent hard, tugging on 10 fps
     const tug = (Math.floor(st(t) * 10) % 3) - 1;

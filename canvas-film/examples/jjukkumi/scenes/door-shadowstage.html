@@ -69,10 +69,11 @@ function guestB(t) {
 function host(t) {
   const tp = K.on2(t), F = Object.assign(K.stand(HX, G, SH, -1, { spread: 10 }), { head: 'short', dress: 'apron' });
   const lw = D.w * Math.cos(openK(tp) * Math.PI * .46);
-  K.reach(F, 0, [D.x + lw + 4, G - 128 * SH]);                    // the far hand on the door's edge as it swings
-  const wv = ss(B.wave, B.wave + .35, tp) * (1 - ss(B.beckon, B.beckon + .4, tp));
-  K.wave(F, 1, t, wv);
-  if (tp >= B.beckon) K.beckon(F, 1, ss(B.beckon, B.beckon + .6, tp));
+  const ex = D.x + lw + 4, hold = clamp((HX - 10 - ex) / 40);     // once the door's edge has swung past him, his far hand takes it
+  if (hold > 0) { const sh = K.shoulder(F, 0); K.reach(F, 0, [lerp(sh[0] + 4 * SH, ex, hold), lerp(sh[1] + 70 * SH, G - 128 * SH, hold)]); }
+  // the near hand: swings up and waves, then comes down to an open "come in" (one arc angle, so it never jumps)
+  const up = eio(ss(B.wave, B.wave + .4, tp)) * (2.5 + .16 * Math.sin(t * 8) * (1 - ss(B.beckon - .3, B.beckon, tp)));
+  K.armTo(F, 1, lerp(up, 1.35, eio((tp - B.beckon) / .7)));
   return K.lookAt(F, [AX1, G - 200], .2);
 }
 

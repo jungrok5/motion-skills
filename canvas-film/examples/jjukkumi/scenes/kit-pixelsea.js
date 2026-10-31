@@ -560,7 +560,9 @@
         K.pxPoly(s, [[cx - U(8.6), top + U(2.6)], [cx - U(6.8), top + U(.8)], [cx + U(6.8), top + U(.8)], [cx + U(8.6), top + U(2.6)]], pal.hatS || pal.hat);
         R(s, cx - U(6.4), top + U(.2), U(12.8), Math.max(1, U(.6)), pal.hatS || pal.hat);
         R(s, cx - f * U(4.5), top - U(3), Math.max(1, U(.8)), U(2.6), mixHex(pal.hat, '#ffffff', .35)); }
-      else if (hs === 'cap') { R(s, cx - hw, top - U(1.5), U(13), U(3), pal.hat); R(s, f > 0 ? cx + hw - U(1) : cx - hw - U(4), top + U(1), U(5), U(1), pal.hatS || pal.hat); }
+      else if (hs === 'cap') { K.pxPoly(s, [[cx - hw - U(.3), top + U(1.6)], [cx - hw + U(.8), top - U(2.2)], [cx - U(2), top - U(3.4)], [cx + U(2), top - U(3.4)], [cx + hw - U(.8), top - U(2.2)], [cx + hw + U(.3), top + U(1.6)]], pal.hat);
+        K.pxPoly(s, [[cx + f * U(1), top + U(.6)], [cx + f * (hw + U(4.5)), top + U(1.2)], [cx + f * (hw + U(4)), top + U(2.4)], [cx + f * U(1), top + U(2)]], pal.hatS || pal.hat);
+        R(s, cx - f * U(3.5), top - U(2.2), Math.max(1, U(.8)), U(2.4), mixHex(pal.hat, '#ffffff', .3)); }
       if (o.sweat) { const sx = cx + f * (hw + U(1.6)), sy = top + U(3.2); R(s, sx, sy, U(1), U(1), '#bfe4ff'); R(s, sx - U(.5), sy + U(1), U(2), U(1.6), '#bfe4ff'); R(s, sx, sy + U(1), Math.max(1, U(.5)), U(.6), '#ffffff'); }
     }, K.INK);
   };
