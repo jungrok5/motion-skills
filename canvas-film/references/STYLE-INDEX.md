@@ -46,7 +46,7 @@ Code: each look is one self-contained scene (style + Bible story together) in gi
 | ship | **18th-century sea-chart copperplate (after *Mutiny on the Bounty*)** | changing ships, not scrubbing decks | `motion/pilot/ship.html` |
 | invite | **the gold line returns** | a prayer written in light | `motion/pilot/invite.html` |
 
-## A2. Style kits (34) — packaged, start a scene with `scripts/from-kit.py --kit <slug>`; brief: `kits/<slug>/STYLE.md`
+## A2. Style kits (35) — packaged, start a scene with `scripts/from-kit.py --kit <slug>`; brief: `kits/<slug>/STYLE.md`
 
 | kit | look | carries well | worked example |
 |---|---|---|---|
@@ -84,6 +84,7 @@ Code: each look is one self-contained scene (style + Bible story together) in gi
 | `shadowstage` | paper cut-out shadow theatre, portrait (from a prompt-motion.com look by @x4b47x): velvet curtains that part, painted sky that runs dusk → night, black cut-out town/house/lamp posts, windows that light one by one, a door that swings open throwing a warm wedge, silhouette figures with planted walks, a hanging italic plaque | home and welcome, arrival, evening, small warm lights, a story told like a fable | examples/jjukkumi `door-shadowstage` |
 | `diorama` | symmetrical pastel diorama, Grand-Budapest-like (from a prompt-motion.com look by @itsolelehmann): dead-centre one-point set, purple swag curtains and pelmet, pink walls, lace tablecloth, shaded lamps, a swappable window view, frontal pastel figures with 3-D IK arms, hanging cream caption cards | gatherings, a table, a family photo, warmth with a wink, a framed "tableau" ending | examples/jjukkumi `table-diorama` |
 | `webtoon` | Korean vertical-scroll motion webtoon (무빙툰), built from a survey of 21 GitHub comic/manga sources (`kits/webtoon/RESEARCH.md`): a strip of panels read by a scrolling camera with gutters as time, balloons (talk/shout/think/whisper/narration, merged outlines, 어절 line breaks), per-syllable SFX lettering, focus & speed lines, screentone, mood backgrounds, emotion symbols, zoom punch, freeze flash, SD/chibi switch, stone-crumble, cel-shaded IK figure rig | comedy and gags, everyday office/school stories, reactions, escalation from trivial to epic, dialogue-led stories | motion-webtoon/examples/donut 「마지막 도넛」 (the film moved to the `motion-webtoon` skill) |
+| `sketchanime` | light anime-studio promotional sketch (from an illustration the owner shared; feel borrowed, own renderer): lots of white paper, a thin grey-brown pressure line that overshoots and boils on twos, offset pastel marker washes with stroke texture and paper gaps, one flat shadow tone, grey ink wash on machines, chrome as white with black reflections, big soft cumulus dust clouds, loose pencil speed lines, wind-blown hair/ties/sleeves, a side-view IK figure rig with expressive faces (laugh/panic/smug), hand-lettered pastel titles with a wobbly outline and struck-out countdown numbers | light comedy and slice-of-life, speed and wind (riding, running), a countdown or promo beat, vehicles and gadgets, expressive acting, outdoor air | examples/sketchride 「도넛 가게 마감까지 3분」 |
 
 ## B. Lemo-Opuscar technique styles (66) — brief: `styles/<slug>/STYLE.md`
 
