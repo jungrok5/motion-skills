@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>잉크 지도 · 새 장면</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@400;600&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-inkmap.js"></script>
+<script>
+/* Template scene — house style "inkmap" (see kits/inkmap/STYLE.md). A placeholder 30 s journey on ONE map shot, a
+   different subject from the worked example: the camera starts close on the first place; a dashed ink trail with a red
+   head sets out and the camera travels with it; each stop is named and its lamp lights as the trail reaches it; at the
+   end light runs back along the whole route and the camera pulls back to the region. End card.
+   To make your film: keep draw()'s skeleton (begin → routes and lamps in map pixels → end → bands and words); replace
+   the SCRIPT (route, stops, places, camera keys). Line widths are divided by z so they stay the same on screen. */
+const { clamp, lerp, ss, eo, eio } = Pilot;
+const W = Pilot.W, H = Pilot.H, V = Pilot.ori === 'v', S = window.SCRIPT, B = S.beat, DUR = S.DUR, M = InkMap;
+const KEYS = S.cam[V ? 'v' : 'h'];
+let pts, stopAt;
+
+function init() {
+  M.build(M.MED, { labels: [{ text: Pilot.tr(S.places.sea), at: [18, 34.6], size: 64, ls: 22, c: '#4a3a30' }] });
+  pts = M.route(S.route, 10);
+  stopAt = Object.fromEntries(S.stops.map(c => [c, M.atPlace(S.route, pts, c, 10)]));   // where (by length) each stop lies
+}
+
+function draw(ctx, t) {
+  const z = M.begin(ctx, M.camAt(KEYS, t));
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const p = ss(B.go, B.arrive, t);
+  M.trail(ctx, pts, p, z);
+  // each stop: its name and its lamp appear when the trail gets there; at the end they all burn brighter
+  for (const [i, c] of S.stops.entries()) { const k = stopAt[c] === 0 ? ss(B.map + .4, B.map + 1.4, t) : ss(stopAt[c] - .03, stopAt[c], p);   // named as the trail arrives (the start from the first second)
+    M.cityLamp(ctx, c, k * (1 + .4 * ss(B.light, B.light + 2, t)), z, t, i);
+    M.label(ctx, Pilot.tr(S.places[c]), c, k, { size: 40 / Math.sqrt(z), dx: 14, dy: i % 2 ? 34 : -30, al: 'left' }); }   // alternate above/below so near stops don't collide
+  // light runs back along the route from the first place to the last
+  const run = ss(B.light, B.light + 3.4, t); if (run > 0) { M.dim(ctx, .6 * run * (1 - ss(B.end - 1, B.end, t))); M.lightRun(ctx, pts, run, z); }
+  M.end(ctx);
+  // words: dark bands top and bottom over the light parchment, captions, end card
+  M.bands(ctx, V ? 520 : 260, V ? H * .78 : H - 200);
+  { const k = ss(B.end - .2, B.end + .9, t); if (k > 0) { ctx.fillStyle = `rgba(16,10,5,${.78 * k})`; ctx.fillRect(0, 0, W, H); } }
+  Story.captions(ctx, t, S.lines, { y: V ? 300 : 120, size: V ? 54 : 50, color: '#f3ece0' });
+  Story.endCard(ctx, t, S.endCard, B.end, { color: '#f3ece0', srcColor: '#e3d6bd', ctaColor: '#e9c77a' });
+  Story.fadeBlack(ctx, t, DUR);
+}
+Pilot.run({ W, H, dur: DUR, fonts: ["600 40px 'Noto Serif KR'", "700 40px 'Noto Serif KR'", "400 28px 'Noto Sans KR'", "600 30px 'Noto Sans KR'"],
+  init: async () => { init(); }, draw });
+</script>
+</body>
+</html>

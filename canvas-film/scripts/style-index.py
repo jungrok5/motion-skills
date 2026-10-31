@@ -65,6 +65,13 @@ for l in own:
     c = [x.strip() for x in l.strip().strip("|").split("|")]
     out.append(f"| {c[0]} | {c[1]} | {c[2]} | `motion/pilot/{c[0]}.html` |")
 
+# packaged kits (kits/README.md table): ready to use with from-kit.py — check these first
+kits = [l for l in open(f"{here}/kits/README.md", encoding="utf-8") if l.startswith("| `")]
+out += ["", f"## A2. Style kits ({len(kits)}) — packaged, start a scene with `scripts/from-kit.py --kit <slug>`; brief: `kits/<slug>/STYLE.md`", "",
+        "| kit | look | carries well | worked example |", "|---|---|---|---|"]
+for l in kits:
+    out.append(l.rstrip("\n"))
+
 out += ["", f"## B. Lemo-Opuscar technique styles ({len(styles)}) — brief: `styles/<slug>/STYLE.md`", "",
         "| slug | style | category | its demo, in one line | good for |", "|---|---|---|---|---|"]
 for s in styles:
@@ -81,4 +88,4 @@ for f in films:
 
 path = f"{here}/references/STYLE-INDEX.md"
 open(path, "w", encoding="utf-8").write("\n".join(out) + "\n")
-print(f"wrote {path}: {len(own)} + {len(styles)} + {len(films)} looks")
+print(f"wrote {path}: {len(own)} + {len(kits)} kits + {len(styles)} + {len(films)} looks")
