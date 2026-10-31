@@ -512,7 +512,7 @@ function world(t) {
   U.splash(t, { x: LX + 22, y: bedY(LX) - 16, t0: B.hit, sea: bedY(LX) - 8, size: .55 });
   // surface splashes as each one breaks the water
   U.splash(t, { x: rigAt(B.surface + .05).Sp[0], y: SEA - 2, t0: B.surface, sea: SEA + 4, size: .38 });
-  for (const c of CY) U.splash(t, { x: rigAt(c + .4).Sp[0], y: SEA - 2, t0: c + .4, sea: SEA + 4, size: .26 });
+  for (const c of CY) if (t < c + 1.1) U.splash(t, { x: rigAt(c + .4).Sp[0], y: SEA - 2, t0: c + .4, sea: SEA + 4, size: .26 });   // cut short: the next beat is already on
   // boat (back half), 나, bucket, boat (front half)
   boatBack(b);
   drawBucket(b, t);
