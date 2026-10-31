@@ -68,23 +68,23 @@
 </section>
 <section id="ch02">
 <h2><span class="n">02</span>파괴 준비</h2>
-<p class="sub">유리는 조각내고, 패널은 접착 제약으로 · <a class="scene" href="index.html#ch02">▶ 이 장면 보기</a></p>
-<p>유리는 <code>RBD Material Fracture</code>의 Glass 타입으로 조각냅니다. 금속 패널은 잘게 부수지 않고 통째로 두되, <code>RBD Constraint Properties</code>로 이웃 파트와 접착(glue) 제약을 걸어 붙여 둡니다. 뷰포트의 무작위 색은 조각 하나하나를 구분해 보여 주는 색이고, 잠깐 벌려 보여 준 것은 잘린 면을 확인하기 위해서입니다.</p>
+<p class="sub">유리는 조각내고, 패널은 접착 제약으로 연결 · <a class="scene" href="index.html#ch02">▶ 이 장면 보기</a></p>
+<p>유리는 <code>RBD Material Fracture</code>의 Glass 타입으로 조각냅니다. 금속 패널은 잘게 부수지 않고 통째로 두되, <code>RBD Constraints From Rules</code>로 이웃 파트 사이에 제약 연결선을 만들고 <code>RBD Constraint Properties</code>로 접착(glue) 타입과 세기를 줍니다. 뷰포트의 무작위 색은 조각 하나하나를 구분해 보여 주는 색이고, 잠깐 벌려 보여 준 것은 잘린 면을 확인하기 위해서입니다.</p>
 </section>
 <section id="ch03">
 <h2><span class="n">03</span>리지드 바디</h2>
-<p class="sub">폭발 속도 → 제약이 끊기며 날아감 · <a class="scene" href="index.html#ch03">▶ 이 장면 보기</a></p>
-<p><code>RBD Bullet Solver</code>로 시뮬레이션합니다. 폭발 순간 중심에서 바깥으로 속도(v)를 주면 제약 세기를 넘는 곳부터 접착이 끊기고, 패널과 유리 조각이 날아갔다가 중력과 지면 충돌로 떨어져 튑니다. 무거운 차체는 조금 들렸다 내려앉습니다. 타임라인의 RBD 막대는 시뮬레이션 결과를 캐시로 저장하는 진행을 뜻합니다.</p>
+<p class="sub">폭발 반경 접착을 풀고 바깥으로 속도 · <a class="scene" href="index.html#ch03">▶ 이 장면 보기</a></p>
+<p><code>RBD Bullet Solver</code>로 시뮬레이션합니다. 폭발 순간 폭발 반경 안의 접착을 풀거나 세기를 낮추고 중심에서 바깥으로 속도(v)를 줍니다. 서로 붙은 조각에 속도만 주면 덩어리째 날아가기 쉬우므로 이 처리가 필요합니다. 나머지 접착은 충돌 충격이 세기를 넘으면 끊기고, 패널과 유리 조각이 날아갔다가 중력과 지면 충돌로 떨어져 튑니다. 무거운 차체는 조금 들렸다 내려앉습니다. 타임라인의 RBD 막대는 시뮬레이션 결과를 캐시로 저장하는 진행을 뜻합니다.</p>
 </section>
 <section id="ch04">
 <h2><span class="n">04</span>불과 연기</h2>
-<p class="sub">Pyro Burst Source → Pyro Solver · <a class="scene" href="index.html#ch04">▶ 이 장면 보기</a></p>
-<p>불과 연기는 Pyro로 만듭니다. <code>Pyro Burst Source</code>로 폭발 모양의 소스(밀도 · 온도 · 불꽃 · 속도)를 만들고 <code>Pyro Solver</code>로 풉니다. 온도가 높은 곳은 흰색 · 노란색, 식으면서 주황 · 빨강을 거쳐 연기로 바뀝니다. 복셀 크기가 작을수록 디테일이 늘지만 계산 시간과 용량이 크게 늘어납니다. Disturbance · Turbulence 같은 값으로 불의 결을 만듭니다(영상의 값은 예시).</p>
+<p class="sub">Burst Source → 래스터화 → Pyro Solver · <a class="scene" href="index.html#ch04">▶ 이 장면 보기</a></p>
+<p>불과 연기는 Pyro로 만듭니다. <code>Pyro Burst Source</code>로 폭발 모양의 소스 점(밀도 · 온도 · 불꽃 · 속도 속성)을 만들고, <code>Volume Rasterize Attributes</code>로 볼륨으로 바꾼 뒤 <code>Pyro Solver</code>에 소스로 넣어 풉니다. 온도가 높은 곳은 흰색 · 노란색, 식으면서 주황 · 빨강을 거쳐 연기로 바뀝니다. 복셀 크기가 작을수록 디테일이 늘지만 계산 시간과 용량이 크게 늘어납니다. Disturbance · Turbulence 같은 값으로 불의 결을 만듭니다(영상의 값은 예시).</p>
 </section>
 <section id="ch05">
 <h2><span class="n">05</span>파편과 불티</h2>
-<p class="sub">Debris Source → POP, 불의 속도장을 따라 · <a class="scene" href="index.html#ch05">▶ 이 장면 보기</a></p>
-<p><code>Debris Source</code>로 조각 가장자리에서 작은 파편이 떨어질 점을 만들고, POP으로 파편과 불티를 날립니다. <code>POP Advect by Volumes</code>로 Pyro의 속도장을 따라가게 하면 불티가 불길과 같은 흐름으로 움직입니다. 파편은 중력을 크게, 불티는 가볍게 두어 오래 떠다니게 합니다.</p>
+<p class="sub">RBD 결과 → Debris Source → POP · <a class="scene" href="index.html#ch05">▶ 이 장면 보기</a></p>
+<p><code>Debris Source</code>로 RBD 시뮬레이션 결과에서 조각이 벌어지는 면을 따라 작은 파편이 떨어질 점을 만들고, POP으로 파편과 불티를 날립니다. Pyro 쪽에서는 속도장만 POP으로 넘겨, <code>POP Advect by Volumes</code>로 불티가 불길과 같은 흐름으로 움직이게 합니다. 중력은 같게 두고, 파편은 Advect 영향을 작게 · 불티는 크게 하고 drag와 수명을 달리해 불티가 오래 떠다니게 합니다.</p>
 </section>
 <section id="ch06">
 <h2><span class="n">06</span>렌더와 합성</h2>
