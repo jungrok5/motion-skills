@@ -52,7 +52,7 @@
   const WT = window.Webtoon, MG = window.Manga, R = WT.Rig, { clamp, lerp, ss, eo, eio, rng } = Pilot, TAU = Math.PI * 2, PINK = WT.ACCENT;
   const C = {};
   C.style = 'manga';
-  C.debugBones = false;
+  C.debugBones = /[?&]bones=1/.test(location.search);   // ?bones=1 on any scene page turns the joint overlay on
   C.boneLog = [];
   const INK = () => MG.C.ink, PAPER = () => MG.C.paper, PAPERL = () => MG.C.paperL;
 
@@ -62,27 +62,27 @@
     park: { name: '박대리', seed: 11, h: 1.0, head: 1.0, expr: 'tired', build: { sh: 60, waist: 42, hip: 46, neck: 12.5 },
       pal: { skin: '#ffe1cf', hair: '#2a2631', hairL: '#55516a', eye: '#3a2e36', brow: '#24212a', shirt: '#bcd6f1', pants: '#3b4050', shoes: '#2a2528', tie: '#2c3a66' },
       shirt: { collar: 'shirt', open: true, roll: true }, tie: { loose: true }, glasses: { r: .3 }, bags: true, outer: null,
-      look: { hair: { ink: 1 }, shirt: { tone: 0, sh: .12, white: 1 }, tie: { ink: 1 }, pants: { tone: .62, sh: .16 }, shoes: { ink: 1 }, skin: {} },
+      look: { hair: { ink: 1 }, shirt: { tone: 0, sh: .28, white: 1 }, tie: { ink: 1 }, pants: { ink: 1 }, shoes: { ink: 1 }, skin: {} },
       hairStyle: 'park' },
     kim: { name: '김과장', seed: 23, h: 1.02, expr: 'smile', build: { sh: 64, waist: 50, hip: 52, belly: 12, neck: 14 },
       pal: { skin: '#fbdcc6', hair: '#3b312d', hairL: '#6b5d56', eye: '#2f2a28', brow: '#2e2724', shirt: '#f7f6f1', outer: '#8b929d', pants: '#474c58', shoes: '#2c2626', tie: '#5b4b6f', grey: '#a7a19b' },
       shirt: { collar: 'shirt' }, outer: { kind: 'vest' }, tie: {}, moustache: { w: .6 }, browW: 1.2,
-      look: { hair: { ink: 1 }, grey: { tone: .22, pal: 'grey' }, shirt: { tone: 0, sh: .12, white: 1 }, outer: { tone: .3 }, tie: { tone: .78 }, pants: { tone: .45 }, shoes: { ink: 1 }, skin: {} },
+      look: { hair: { ink: 1 }, grey: { tone: .22, pal: 'grey' }, shirt: { tone: 0, sh: .28, white: 1 }, outer: { tone: .3, sh: .3 }, tie: { ink: 1 }, pants: { tone: 0, sh: .3 }, shoes: { ink: 1 }, skin: {} },
       hairStyle: 'kim' },
     choi: { name: '최주임', seed: 37, h: 1.04, expr: 'neutral', build: { sh: 68, waist: 46, hip: 48, neck: 14 },
       pal: { skin: '#f6d3b9', hair: '#5a3926', hairL: '#8c6248', eye: '#3a2a20', brow: '#3a2418', shirt: '#a3e1cf', outer: '#3e4659', pants: '#2f3442', shoes: '#f0f0ec', band: '#ef6a5a' },
       shirt: { collar: 'hood' }, hood: true, outer: { kind: 'jacket', open: 40 }, band: true, browW: 1.3,
-      look: { hair: { tone: .4 }, shirt: { tone: .12 }, outer: { tone: .76, sh: .14 }, pants: { tone: .5 }, shoes: { tone: 0, white: 1, sh: .14 }, band: { ink: 1 }, skin: {} },
+      look: { hair: { tone: .34, sh: .3 }, shirt: { tone: 0, sh: .28, white: 1 }, outer: { ink: 1 }, pants: { tone: .3, sh: .3 }, shoes: { tone: 0, white: 1, sh: .28 }, band: { ink: 1 }, skin: {} },
       hairStyle: 'choi' },
     haneul: { name: '하늘', seed: 41, h: .93, head: 1.0, expr: 'neutral', build: { sh: 52, waist: 37, hip: 43, neck: 11, arm: .95 },
       pal: { skin: '#ffe7da', hair: '#3c2824', hairL: '#6e5048', eye: '#5b3a2c', brow: '#3c2824', shirt: '#fbf8f1', outer: '#e9d6b6', skirt: '#6f7d92', shoes: '#8a5a44', sock: '#ffe7da', lanyard: '#4b7bd0', clip: '#ffd23f' },
       shirt: { collar: 'round' }, outer: { kind: 'cardigan', open: 30 }, skirt: { len: 150 }, lanyard: {}, browW: .85, lashes: true,
-      look: { hair: { ink: 1 }, shirt: { tone: 0, white: 1 }, outer: { tone: .12, sh: .14 }, skirt: { tone: .42 }, shoes: { tone: .7 }, sock: { tone: 0, sh: .1, white: 1 }, lanyard: { ink: 1 }, clip: { tone: 0, white: 1 }, skin: {} },
+      look: { hair: { ink: 1 }, shirt: { tone: 0, white: 1, sh: .28 }, outer: { tone: 0, sh: .28 }, skirt: { tone: .3, sh: .3 }, shoes: { ink: 1 }, sock: { tone: 0, sh: 0, white: 1 }, lanyard: { ink: 1 }, clip: { tone: 0, white: 1 }, skin: {} },
       hairStyle: 'haneul' },
     boss: { name: '사장님', seed: 53, h: .92, expr: 'happy', build: { sh: 68, waist: 58, hip: 56, belly: 24, neck: 16 },
       pal: { skin: '#f9d8c0', hair: '#c3bfba', hairL: '#e4e1dc', eye: '#3a3030', brow: '#aaa5a0', shirt: '#f5f3ee', outer: '#8b2f45', pants: '#4a4440', shoes: '#2c2523', tie: '#8b2f45' },
       shirt: { collar: 'shirt' }, outer: { kind: 'cardigan', open: 38 }, browW: 1.9, wrinkles: true,
-      look: { hair: { tone: .2 }, brow: { tone: .2 }, shirt: { tone: 0, white: 1, sh: .12 }, outer: { tone: .74, sh: .14 }, pants: { tone: .42 }, shoes: { ink: 1 }, skin: {} },
+      look: { hair: { tone: .2, sh: .2 }, brow: { tone: .2 }, shirt: { tone: 0, white: 1, sh: .28 }, outer: { ink: 1 }, pants: { tone: .3, sh: .3 }, shoes: { ink: 1 }, skin: {} },
       hairStyle: 'boss' },
   };
   C.WHO = ['park', 'kim', 'choi', 'haneul', 'boss'];
@@ -96,8 +96,8 @@
     if (riso) { let col = S.pal[m.pal || key] || S.pal.shirt; if (key === 'skin') col = S.pal.skin; if (st) col = WT.stoneCol(col, st);
       return { fill: col, shade: key === 'skin' ? null : { tone: .2, dx, dy } }; }
     if (st > .5) return { fill: PAPER(), tone: m.ink ? .62 : .3, shade: { tone: m.ink ? .8 : .5, dx, dy } };
-    if (m.ink) return { fill: INK() };
-    const tn = m.tone || 0; return { fill: m.white || key === 'skin' ? PAPERL() : PAPER(), tone: tn, shade: key === 'skin' ? null : { tone: Math.min(.92, tn + (m.sh ?? .18)), dx, dy } };
+    if (m.ink) return { fill: INK(), rim: { dx: -dx * .35, dy: -dy * .35, w: .5 } };
+    const tn = m.tone || 0, sh = key === 'skin' ? 0 : (m.sh ?? .25); return { fill: m.white || key === 'skin' ? PAPERL() : PAPER(), tone: tn, shade: sh > 0 ? { tone: Math.min(.92, tn + sh), dx, dy } : null };
   }
   const isInk = (S, key, o) => C.style !== 'riso' && !(o.stone > .5) && (S.look[key] || {}).ink;
   const skinP = (S, o) => paint(S, 'skin', o);
@@ -204,7 +204,7 @@
     const rx = .105 * sc * wf, ry = .14 * sc, lx = look[0] * .035 * sc, ly = look[1] * .03 * sc, P = INK(), W = PAPERL();
     const dot = (rr = 1) => { MG.ink(ctx, MG.ell(x + lx, y + ly, rx * rr, ry * rr, 14), { fill: P, lw: .5, single: true });
       ctx.fillStyle = W; ctx.beginPath(); ctx.arc(x + lx + rx * .35, y + ly - ry * .38, rx * .34 * rr, 0, TAU); ctx.fill(); };
-    const line = (pts, w = 1) => MG.ink(ctx, pts, { closed: false, lw: w, single: true });
+    const line = (pts, w = 1) => MG.ink(ctx, pts, { closed: false, lw: w * .78, single: true });
     if (kind === 'happy') return line([[x - .16 * sc * wf, y + .06 * sc], [x, y - .1 * sc], [x + .16 * sc * wf, y + .06 * sc]], 1.05);
     if (kind === 'content') return line([[x - .15 * sc * wf, y - .02 * sc], [x, y + .08 * sc], [x + .15 * sc * wf, y - .02 * sc]], 1);
     if (kind === 'squeeze') { const s = -side; return line([[x - s * .14 * sc * wf, y - .1 * sc], [x + s * .1 * sc * wf, y], [x - s * .14 * sc * wf, y + .1 * sc]], 1.05); }
@@ -213,7 +213,7 @@
     if (kind === 'shock' || kind === 'blank') { MG.ink(ctx, MG.ell(x, y, .15 * sc * wf, .17 * sc, 16), { fill: W, lw: .8, single: true }); if (kind === 'shock') { ctx.fillStyle = P; ctx.beginPath(); ctx.arc(x + lx, y + ly, .035 * sc, 0, TAU); ctx.fill(); } return; }
     if (kind === 'dead') { MG.ink(ctx, MG.ell(x, y + .01, .13 * sc * wf, .13 * sc, 14), { fill: W, lw: .75, single: true }); ctx.fillStyle = P; ctx.beginPath(); ctx.arc(x, y + .01, .025 * sc, 0, TAU); ctx.fill();
       line([[x - .17 * sc * wf, y - .1 * sc], [x + .17 * sc * wf, y - .11 * sc]], .9); return; }
-    if (kind === 'sparkle') { MG.ink(ctx, MG.ell(x, y, rx * 1.3, ry * 1.25, 16), { fill: P, lw: .5, single: true }); WT.star4(ctx, x - rx * .1, y - ry * .15, rx * 1.15 * (1 + .12 * Math.sin((o.t || 0) * 8)), .2, W, .2); return; }
+    if (kind === 'sparkle') { MG.ink(ctx, MG.ell(x, y, rx * 1.12, ry * 1.12, 16), { fill: P, lw: .5, single: true }); WT.star4(ctx, x - rx * .05, y - ry * .1, rx * .95 * (1 + .12 * Math.sin((o.t || 0) * 8)), .2, W, .22); ctx.fillStyle = W; ctx.beginPath(); ctx.arc(x + rx * .55, y + ry * .55, rx * .2, 0, TAU); ctx.fill(); return; }
     ctx.save(); ctx.translate(0, y + ry * .5); ctx.scale(1, Math.max(.2, open)); ctx.translate(0, -y - ry * .5);
     if (kind === 'sharp' || kind === 'focus' || kind === 'tired') {   // a lowered lid: the top of the eye cut by a slanted line
       const s = -side, inr = kind === 'focus' ? .07 : kind === 'sharp' ? .03 : -.02, out = kind === 'focus' ? -.05 : kind === 'sharp' ? -.06 : -.02, top = kind === 'tired' ? .0 : -.03;
@@ -235,7 +235,7 @@
   // the mouth at (mx, my), width factor mw. talk (0…1) opens the open kinds.
   function mouth(ctx, kind, mx, my, mw, o, sd) {
     const P = INK(), W = PAPERL(), t = o.t || 0, k = sd ? 1.15 : 1;
-    const line = (pts, w = 1) => MG.ink(ctx, pts.map(([x, y]) => [mx + x * mw * k, my + y * k]), { closed: false, lw: w, single: true });
+    const line = (pts, w = 1) => MG.ink(ctx, pts.map(([x, y]) => [mx + x * mw * k, my + y * k]), { closed: false, lw: w * .78, single: true });
     const open = (w, h, teeth = true, tongue = true) => { const pts = [[-w, 0], [-w * .5, -.02], [w * .5, -.02], [w, 0], [w * .72, h * .78], [0, h], [-w * .72, h * .78]].map(([x, y]) => [mx + x * mw * k, my + y * k]);
       const p = MG.ink(ctx, pts, { fill: P, lw: .9 }); ctx.save(); ctx.clip(p);
       if (teeth) { ctx.fillStyle = W; ctx.fillRect(mx - w * k, my - .1 * k, w * 2 * k, .1 * k + h * .2 * k); }
@@ -339,10 +339,11 @@
       MG.ink(ctx, pts, Object.assign({ lw: .85, step: 4 }, sk)); for (let i = 1; i < n; i++) { const yy = lerp(y0, y1, i / n); MG.ink(ctx, [[x1 - .2, yy], [x1 + .03, yy]], { closed: false, lw: .45, single: true }); } };
     const thumb = (pts, w = .13) => F(pts, w, w * .9);
     if (pose === 'mitt') { MG.ink(ctx, MG.ell(.5, 0, .55, .46, 16), Object.assign({ lw: .9 }, sk)); MG.ink(ctx, MG.ell(.4, -.44, .19, .14, 12, -.5), Object.assign({ lw: .8 }, sk)); }
-    else if (pose === 'open' || pose === 'cup') {   // a mitten (riso hand): palm + fingers as one rounded shape, finger lines at the tip, a thumb
-      const c = pose === 'cup' ? -.22 : .1; thumb([[.18, -.3], [.46, -.52], [.7, -.56]], .14);
-      const m = MG.ink(ctx, [[-.06, -.28], [.4, -.38], [.95, -.36], [1.35, -.3 + c * .4], [1.55, -.12 + c], [1.56, .08 + c], [1.38, .28 + c * .6], [.95, .38], [.4, .38], [-.06, .28]], Object.assign({ lw: .95, step: 5 }, sk));
-      for (const y of [-.14, .04, .2]) MG.ink(ctx, [[1.14, y + c * .5], [1.44, y + c * .9]], { closed: false, lw: .5, single: true }); }
+    else if (pose === 'open' || pose === 'cup') {   // relaxed: four fingers grouped (index→pinky, slightly curled), a clear thumb on its own
+      const c = pose === 'cup' ? -.5 : .35;
+      const c2 = pose === 'cup' ? c : .16;
+      for (const [y0, L, a] of [[.24, .52, .06], [.08, .64, .02], [-.08, .68, 0], [-.23, .6, -.02]]) F(fingerPts(.84, y0, a, L, c2), .125, .115);
+      palm(.92, .38); thumb([[.14, -.32], [.42, -.58], [.68, -.66]], .15); }
     else if (pose === 'paper' || pose === 'wave') {
       for (const [y0, L, a] of [[.24, .52, .42], [.08, .64, .14], [-.08, .68, -.12], [-.24, .6, -.4]]) F(fingerPts(.84, y0, a, L, 0), .13, .115);
       palm(); thumb([[.2, -.28], [.32, -.6], [.4, -.88]], .14); }
@@ -376,7 +377,7 @@
   const toDeg = a => a * 180 / Math.PI;
   const angDiff = (a, b) => ((a - b + 3 * Math.PI) % TAU) - Math.PI;
   // the arm solver shared by person() and chibi(): shoulder S (rig-local 2D) + depth, target (rig-local 2D) or null, → arm
-  function solveArm(A, side, S2, Sz, L1, L2, hsz, rest, depthOf, pose, defHand) {
+  function solveArm(A, side, S2, Sz, L1, L2, hsz, rest, depthOf, pose, defHand, yaw = [0, 1]) {
     const pose2 = A.hand || defHand; let target = A.to ? A.toL : rest, ang, flip = A.thumb ?? 1, sol = null, wrist = target, z = 0;
     const wantAng = A.ang != null ? A.ang - (A.rot || 0) : null, S3 = [S2[0], S2[1], Sz];
     for (let it = 0; it < 3; it++) {
@@ -387,10 +388,14 @@
       z = A.to ? depthOf(wrist, S2) : 0;
       let pole;
       if (A.bend != null) { const dx = wrist[0] - S2[0], dy = wrist[1] - S2[1]; pole = [-dy * A.bend, dx * A.bend, -Math.hypot(dx, dy) * .15]; }
-      else pole = [side * .55, 1, -.45];                                                       // elbows down, out and a little back
+      else { const bx = side * .55, bz = -.45 + clamp(z / 110, 0, 1) * .75; pole = [bx * yaw[1] + bz * yaw[0], 1, -bx * yaw[0] + bz * yaw[1]]; }   // elbows down, out and a little back in the BODY frame (forward as the hand comes forward)
       sol = ik3(S3, [wrist[0], wrist[1], z + Sz], L1, L2, pole);
     }
-    const fa = Math.atan2(sol.w[1] - sol.e[1], sol.w[0] - sol.e[0]), wristDev = Math.abs(angDiff(ang, fa));
+    // the hard limit: the hand never bends more than 80° off the solved forearm (it gives up a little reach instead)
+    let fa = Math.atan2(sol.w[1] - sol.e[1], sol.w[0] - sol.e[0]); const fl = Math.hypot(sol.w[0] - sol.e[0], sol.w[1] - sol.e[1]);
+    if (fl < L2 * .3) fa = ang;   // a forearm pointing at the camera: its screen direction says nothing — the hand keeps its angle
+    if (Math.abs(angDiff(ang, fa)) > 1.4) ang = fa + Math.sign(angDiff(ang, fa)) * 1.4;
+    const wristDev = Math.abs(angDiff(ang, fa));
     return { side, S: S3, e: sol.e, w: sol.w, ang, flip, pose: pose2, A, reach: sol.reach, z: sol.w[2] - Sz, L1, L2, hsz, wristDev };
   }
 
@@ -426,13 +431,15 @@
     // ---- arms (rig-local, 3D IK)
     const Lu = 98 * h * armK, Lf = 90 * h * armK, hsz = 33 * h * armK, inv = Mr.inverse(), arms = o.arms || {}, rotW = Math.atan2(Mr.b, Mr.a);
     const shJ = [-1, 1].map(side => { const x = side * (shW - 14), p = P3([x, 0, 0]); return { p2: toW(Mb, [p[0], shY + 12]), z: p[2] }; });
-    const depthOf = (w, S2) => { const yb = w[1]; if (yb < shY - 40 || yb > hipY + 70) return 0; const [c, hw] = silAt(clamp(yb, shY, hipY)), inside = 1 - ss(hw - 6, hw + 30, Math.abs(w[0] - c)), vert = ss(shY - 40, shY + 10, yb) * (1 - ss(hipY + 10, hipY + 70, yb));
+    const faceTop = neckTop - 2.3 * HU;
+    const depthOf = (w, S2) => { const yb = w[1]; if (yb < faceTop || yb > hipY + 70) return 0; const [c0, hw0] = silAt(clamp(yb, shY, hipY)), up = 1 - ss(shY - 30, shY + 10, yb), c = lerp(c0, cxN, up), hw = lerp(hw0, HU * 1.15, up);
+      const inside = 1 - ss(hw - 6, hw + 30, Math.abs(w[0] - c)), vert = ss(faceTop, faceTop + 40, yb) * (1 - ss(hipY + 10, hipY + 70, yb));
       const d2 = Math.hypot(w[0] - S2[0], w[1] - S2[1]), want = clamp(Math.sqrt(Math.max(0, (.84 * (Lu + Lf)) ** 2 - d2 * d2)), 34, 120); return inside * vert * want; };
     const armSol = ['L', 'R'].map((k, i) => { const side = i ? 1 : -1, A = Object.assign({}, arms[k] || {}), S0 = shJ[i];
       if (A.to) { const q = inv.transformPoint({ x: A.to[0], y: A.to[1] }); A.toL = [q.x, q.y]; } A.rot = rotW;
       const swing = pose === 'walk' ? Math.sin(TAU * ph + (i ? 0 : Math.PI)) * .3 * (fwd || 0) : 0, a = Math.PI / 2 - side * .05 - swing;
       const rest = [S0.p2[0] + Math.cos(a) * (Lu + Lf) * .985 + side * 2, S0.p2[1] + Math.sin(a) * (Lu + Lf) * .985];
-      return solveArm(A, side, S0.p2, S0.z, Lu, Lf, hsz, rest, depthOf, pose, 'open'); });
+      return solveArm(A, side, S0.p2, S0.z, Lu, Lf, hsz, rest, depthOf, pose, 'open', [sn, cs]); });
     // ---- legs (3D IK, knees forward + a little out)
     const fwdV = [sn, 0, cs];
     const legSol = [0, 1].map(i => { const side = i ? 1 : -1, a = P3([side * hipJ, hipY + 10, 0]), b = P3(ank[i]);
@@ -448,8 +455,8 @@
     if (!ctx) return Gout;
 
     // ================= draw
-    const base = ctx.getTransform(), oldLW = MG.figure(4 * Math.pow(s, .55)); MG.boil(t); ctx.save(); if (o.alpha != null) ctx.globalAlpha *= o.alpha;
-    const setM = M => ctx.setTransform(base.multiply(M)), L = { dx: -10, dy: -8 };
+    const base = ctx.getTransform(), oldLW = MG.figure(5.2 * Math.pow(s, .5)); MG.boil(t); ctx.save(); if (o.alpha != null) ctx.globalAlpha *= o.alpha;
+    const setM = M => ctx.setTransform(base.multiply(M)), L = { dx: -8, dy: -6 };
     const pnt = (key, k = 1) => paint(S, key, o, L.dx * k, L.dy * k);
     const sleeveKey = S.outer && S.outer.kind !== 'vest' ? 'outer' : 'shirt', roll = S.shirt && S.shirt.roll && sleeveKey === 'shirt';
     const R1 = 18.5 * armK * h, R2 = 16.5 * armK * h, R3 = 13.5 * armK * h;
@@ -474,9 +481,8 @@
         else MG.ink(ctx, MG.tube([E, mid(E, Wr), Wr], [R2, R2 * .94, R2 * .9]), Object.assign({ lw: 1 }, pnt(sleeveKey)));
         if (lo) { const c0 = mid(E, Wr, .84), c1 = mid(E, Wr, 1.0), d = [Wr[0] - E[0], Wr[1] - E[1]], dl = Math.hypot(d[0], d[1]) || 1, n = [-d[1] / dl, d[0] / dl], cw = R2 * .98;
           const band = (p0, p1, w, key, k = 1) => MG.ink(ctx, [[p0[0] + n[0] * w, p0[1] + n[1] * w], [p1[0] + n[0] * w, p1[1] + n[1] * w], [p1[0] - n[0] * w, p1[1] - n[1] * w], [p0[0] - n[0] * w, p0[1] - n[1] * w]], Object.assign({ lw: .8, smooth: false }, paint(S, key, o, L.dx * .4, L.dy * .4)));
-          if (S.outer && S.outer.kind !== 'vest') band(mid(E, Wr, .95), mid(E, Wr, 1.05), cw * .9, 'shirt');
-          band(c0, c1, cw, sleeveKey);
-          if (S.outer && S.outer.kind === 'cardigan') for (let j = 1; j < 4; j++) { const q = mid(c0, c1, j / 4); MG.ink(ctx, [[q[0] + n[0] * cw * .8, q[1] + n[1] * cw * .8], [q[0] - n[0] * cw * .8, q[1] - n[1] * cw * .8]], { closed: false, lw: .35, single: true }); }
+          if (S.outer && S.outer.kind === 'jacket') band(mid(E, Wr, .93), mid(E, Wr, 1.03), cw * .86, 'shirt');
+          else if (sleeveKey === 'shirt' || (S.outer && S.outer.kind === 'cardigan')) MG.ink(ctx, [[c0[0] + n[0] * cw, c0[1] + n[1] * cw], [c0[0] - n[0] * cw, c0[1] - n[1] * cw]], { closed: false, lw: .5, single: true });
           if (S.band && a.side < 0) { const b0 = mid(E, Wr, .7), b1 = mid(E, Wr, .8); band(b0, b1, cw * 1.04, 'band'); ctx.fillStyle = PAPERL(); const bm = mid(b0, b1); ctx.beginPath(); ctx.arc(bm[0], bm[1], 2.6, 0, TAU); ctx.fill(); } }
         if (up && lo) { const u1 = [Sx[0] - E[0], Sx[1] - E[1]], u2 = [Wr[0] - E[0], Wr[1] - E[1]], l1 = Math.hypot(...u1) || 1, l2 = Math.hypot(...u2) || 1, cosA = (u1[0] * u2[0] + u1[1] * u2[1]) / (l1 * l2);
           if (cosA > -.7) { let b = [u1[0] / l1 + u2[0] / l2, u1[1] / l1 + u2[1] / l2]; const bl = Math.hypot(...b) || 1; b = [b[0] / bl, b[1] / bl];   // the crease inside a bent elbow
@@ -496,7 +502,7 @@
       // 4. legs (far first) + shoes
       setM(Mr); const order = legSol.slice().sort((p, q) => p.k[2] - q.k[2]);
       for (const lg of order) { const a = lg.a, k = lg.k, b = lg.b, mid1 = [lerp(a[0], k[0], .5), lerp(a[1], k[1], .5)], mid2 = [lerp(k[0], b[0], .5), lerp(k[1], b[1], .5)];
-        MG.ink(ctx, MG.tube([[a[0], a[1] - 14], mid1, [k[0], k[1]], mid2, [b[0], b[1]]], [27 * h, 25 * h, 21 * h, 18.5 * h, 16 * h]), Object.assign({ lw: 1 }, pnt(legCol)));
+        MG.ink(ctx, MG.tube([[a[0], a[1] - 14], mid1, [k[0], k[1]], mid2, [b[0], b[1]]], [27 * h, 25 * h, 21 * h, 18.5 * h, 16 * h]), Object.assign({ lw: 1.1 }, pnt(legCol, .7)));
         const toe = fwd || (lg.side * .35), bx = b[0], by = b[1] + 4;
         const sp = [[bx - 16 + Math.min(0, toe) * 16, by - 12], [bx + toe * 30, by - 16], [bx + toe * 42 + (toe > 0 ? 6 : -6) * Math.abs(toe), by + 2], [bx + toe * 30, by + 14], [bx - Math.max(0, toe) * 4, by + 14], [bx - 19 + Math.min(0, toe) * 6, by + 2]];
         const shp = MG.ink(ctx, sp, Object.assign({ lw: 1 }, pnt('shoes')));
@@ -511,7 +517,8 @@
     }
     // 6. neck (with the chin's shadow)
     setM(MbW);
-    { const np = MG.ink(ctx, [[cxN - nw, neckTop - 10], [cxN + nw, neckTop - 10], [cxN + nw * 1.05, neckY + 10], [cxN - nw * 1.05, neckY + 10]], Object.assign({ lw: 1, smooth: false }, skinP(S, o)));
+    { const nb = o.only === 'head' && !o.bust ? neckY + 4 : neckY + 10, np = MG.ink(ctx, [[cxN - nw, neckTop - 10], [cxN + nw, neckTop - 10], [cxN + nw * 1.08, nb], [cxN - nw * 1.08, nb]], Object.assign({ lw: o.only === 'head' && !o.bust ? 0 : 1, smooth: false }, skinP(S, o)));
+      if (o.only === 'head' && !o.bust) for (const sg of [-1, 1]) MG.taper(ctx, [[cxN + sg * nw, neckTop - 6], [cxN + sg * nw * 1.06, nb - 10], [cxN + sg * nw * 1.1, nb]], 1.1, .1);
       if (C.style !== 'riso' && !o.stone) { ctx.save(); ctx.clip(np); ctx.fillStyle = MG.tone(ctx, .22); ctx.beginPath(); ctx.ellipse(cxN + 4 * sn, neckTop - 2, nw * 1.6, 13 * h, 0, 0, TAU); ctx.fill(); ctx.restore(); } }
     // 7. torso + clothes
     if (o.only !== 'head' || o.bust) {
@@ -538,6 +545,7 @@
         if (kd === 'cardigan') { for (const sg of [-1, 1]) MG.ink(ctx, [[fx(vy) + sg * (op * .6 + 7), vy], [fx(hipY) + sg * (op + 8), (outerHem || hipY) - 8]], { closed: false, lw: .45, single: true });
           MG.ink(ctx, [[Lp[3][0] + 2, (outerHem || hipY) - 14], [fx(hipY) - op, (outerHem || hipY) - 14]], { closed: false, lw: .45, single: true }); MG.ink(ctx, [[Rp[3][0] - 2, (outerHem || hipY) - 14], [fx(hipY) + op, (outerHem || hipY) - 14]], { closed: false, lw: .45, single: true }); }
         const nb = kd === 'vest' ? 3 : kd === 'cardigan' ? 4 : 1; for (let b = 0; b < nb; b++) { const y = vy + 20 + b * (kd === 'vest' ? 30 : 28), x = fx(y) - (kd === 'vest' ? 2 : op * .6 + 6) - (y - vy) / ((outerHem || hipY) - vy) * op * .4;
+          const [sc, sw2] = silAt(y); if (Math.abs(x - sc) > sw2 - 6) continue;   // a button never floats off the body in 3/4
           MG.ink(ctx, MG.ell(x, y, 3.6, 3.6, 8), { fill: C.style === 'riso' ? WT.shadeOf(S.pal.outer, 1.6) : PAPERL(), lw: .55, single: true }); } }
       // collar
       const col = S.shirt && S.shirt.collar || 'shirt';
@@ -560,38 +568,43 @@
     // 8. head
     setM(MhW);
     const E = Object.assign({}, EXPR[o.expr || 'neutral'] || EXPR.neutral); if (o.eyes) E.eyes = o.eyes; if (o.brows) E.brows = o.brows; if (o.mouth) E.mouth = o.mouth; if (o.glint != null) E.glint = o.glint;
-    MG.figure(4 * Math.pow(s, .55) * (o.only === 'head' ? 1.08 : 1));
+    MG.figure(5.2 * Math.pow(s, .5) * (o.only === 'head' ? 1.05 : 1));
     const hd = drawHead(ctx, t, S, Object.assign({}, o, { back: false }), E, thH, false);
     Gout.eyes = hd.eyes.map(p => toW(MhW, p)); Gout.mouth = toW(MhW, hd.mouth);
-    MG.figure(4 * Math.pow(s, .55));
+    MG.figure(5.2 * Math.pow(s, .5));
     // 9. arms in front: the far arm's forearm (hand in front of the chest), then the near arm(s)
     setM(Mr);
     if (o.only !== 'head') { if (!far) { drawArm(armSol[0]); drawArm(armSol[1]); } else { if (far.A.front) drawArm(far); else if (farFront) drawArm(far, 'lower'); drawArm(armSol[1 - farI]); } }
-    if (C.debugBones && o.only !== 'head') debugOverlay(ctx, Mr, base, armSol, legSol, S, t, { shY, hipY, silAt });
+    if (C.debugBones && o.only !== 'head') debugOverlay(ctx, Mr, base, armSol, legSol, S, t, { shY, hipY, silAt, sn, cs, ringAt: y => { for (let i = 1; i < rings.length; i++) if (y <= rings[i][0] || i === rings.length - 1) { const k = clamp((y - rings[i - 1][0]) / (rings[i][0] - rings[i - 1][0])); const v = [1, 2, 3].map(j => lerp(rings[i - 1][j], rings[i][j], k)); v[0] -= 16; return v; } } });
     ctx.restore(); ctx.setTransform(base); MG.figure(oldLW);
-    if (o.laugh) { MG.figure(4 * Math.pow(s, .55)); MG.laugh(ctx, t, Gout, o.laugh); MG.figure(oldLW); }
+    if (o.laugh) { MG.figure(5.2 * Math.pow(s, .5)); MG.laugh(ctx, t, Gout, o.laugh); MG.figure(oldLW); }
     if (E.tears && o.tears !== false) WT.tears(ctx, t, Gout.eyes, E.tears, { r: HU * s * .9, at: o.tearAt });
     return Gout;
   }
 
   /* ---------------------------------------------------------------- debug overlay (Cast.debugBones = true) */
-  function debugOverlay(ctx, Mr, base, arms, legs, S, t, body) {
+  C.debugQueue = [];
+  C.flushDebug = ctx => { const q = C.debugQueue; C.debugQueue = []; for (const f of q) f(ctx, true); };
+  function debugOverlay(ctx, Mr, base, arms, legs, S, t, body, again) {
+    if (!again) C.debugQueue.push((c, a) => debugOverlay(c, Mr, base, arms, legs, S, t, body, true));
     ctx.save(); ctx.setTransform(base.multiply(Mr)); const sc = MG.scaleOf(ctx), px = v => v / sc;
     ctx.lineWidth = px(2.2); ctx.font = `600 ${px(15)}px monospace`; ctx.textAlign = 'center';
     const seg = (a, b, col) => { ctx.strokeStyle = col; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); };
     const dot = (p, col, r = 5) => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(p[0], p[1], px(r), 0, TAU); ctx.fill(); };
     const lab = (p, s, col) => { ctx.fillStyle = 'rgba(255,255,255,.85)'; const w = ctx.measureText(s).width; ctx.fillRect(p[0] - w / 2 - px(3), p[1] - px(13), w + px(6), px(17)); ctx.fillStyle = col; ctx.fillText(s, p[0], p[1]); };
     const L3 = (a, b) => Math.hypot(b[0] - a[0], b[1] - a[1], (b[2] || 0) - (a[2] || 0)), L2 = (a, b) => Math.hypot(b[0] - a[0], b[1] - a[1]);
-    for (const a of arms) { const bad = a.wristDev > 1.41 || (() => { const [c, hw] = body.silAt(clamp(a.e[1], body.shY, body.hipY)); return Math.abs(a.e[0] - c) < hw - 12 && a.e[2] - a.S[2] < 8 && a.e[1] > body.shY && a.e[1] < body.hipY; })();
+    for (const a of arms) { const bad = a.wristDev > 1.41 || (() => {   // the elbow inside the torso's volume (body frame: the ring ellipse at that height)
+        if (!body.ringAt || a.e[1] < body.shY + 20 || a.e[1] > body.hipY) return false; const [rx, rz, cz] = body.ringAt(a.e[1]), bx = a.e[0] * body.cs - a.e[2] * body.sn, bz = a.e[0] * body.sn + a.e[2] * body.cs - cz;
+        return (bx / Math.max(1, rx - 8)) ** 2 + (bz / Math.max(1, rz - 6)) ** 2 < 1; })();
       const col = bad ? '#e0261b' : '#0a8fbf'; seg(a.S, a.e, col); seg(a.e, a.w, col); dot(a.S, col); dot(a.e, col, 6); dot(a.w, col);
       lab([lerp(a.S[0], a.e[0], .5), lerp(a.S[1], a.e[1], .5)], `${L3(a.S, a.e).toFixed(0)}|${L2(a.S, a.e).toFixed(0)}`, col);
       lab([lerp(a.e[0], a.w[0], .5), lerp(a.e[1], a.w[1], .5)], `${L3(a.e, a.w).toFixed(0)}|${L2(a.e, a.w).toFixed(0)}`, col);
       lab([a.w[0], a.w[1] + px(22)], `wr ${(a.wristDev * 180 / Math.PI).toFixed(0)}° z${a.z.toFixed(0)}`, col);
       const cr = Math.sign((a.w[0] - a.S[0]) * (a.e[1] - a.S[1]) - (a.w[1] - a.S[1]) * (a.e[0] - a.S[0]));
-      C.boneLog.push({ who: S.name, t, limb: a.side < 0 ? 'armL' : 'armR', l1: +L3(a.S, a.e).toFixed(2), l2: +L3(a.e, a.w).toFixed(2), side: cr, wrist: +(a.wristDev * 180 / Math.PI).toFixed(1), bad }); }
+      if (!again) C.boneLog.push({ who: S.name + (body.sd ? '(SD)' : ''), t, e: a.e.map(v => +v.toFixed(1)), w: a.w.map(v => +v.toFixed(1)), limb: a.side < 0 ? 'armL' : 'armR', l1: +L3(a.S, a.e).toFixed(2), l2: +L3(a.e, a.w).toFixed(2), side: cr, bend: +(180 - Math.acos(clamp(((a.S[0] - a.e[0]) * (a.w[0] - a.e[0]) + (a.S[1] - a.e[1]) * (a.w[1] - a.e[1]) + (a.S[2] - a.e[2]) * (a.w[2] - a.e[2])) / (L3(a.S, a.e) * L3(a.e, a.w)), -1, 1)) * 180 / Math.PI).toFixed(1), wrist: +(a.wristDev * 180 / Math.PI).toFixed(1), bad }); }
     for (const g of legs) { const col = '#1c9a4a'; seg(g.a, g.k, col); seg(g.k, g.b, col); dot(g.a, col); dot(g.k, col, 6); dot(g.b, col);
       lab([lerp(g.a[0], g.k[0], .5), lerp(g.a[1], g.k[1], .5)], `${L3(g.a, g.k).toFixed(0)}|${L2(g.a, g.k).toFixed(0)}`, col); lab([lerp(g.k[0], g.b[0], .5), lerp(g.k[1], g.b[1], .5)], `${L3(g.k, g.b).toFixed(0)}|${L2(g.k, g.b).toFixed(0)}`, col);
-      C.boneLog.push({ who: S.name, t, limb: g.side < 0 ? 'legL' : 'legR', l1: +L3(g.a, g.k).toFixed(2), l2: +L3(g.k, g.b).toFixed(2) }); }
+      if (!again) C.boneLog.push({ who: S.name + (body.sd ? '(SD)' : ''), t, e: g.k.map(v => +v.toFixed(1)), w: g.b.map(v => +v.toFixed(1)), limb: g.side < 0 ? 'legL' : 'legR', l1: +L3(g.a, g.k).toFixed(2), l2: +L3(g.k, g.b).toFixed(2) }); }
     if (C.boneLog.length > 4000) C.boneLog.splice(0, C.boneLog.length - 4000);
     ctx.restore();
   }
@@ -619,10 +632,10 @@
       if (A.to) { const q = inv.transformPoint({ x: A.to[0], y: A.to[1] }); A.toL = [q.x, q.y]; } A.rot = rotW;
       let a; if (pose === 'flail') a = -Math.PI / 2 + side * (.7 + .4 * Math.sin(t * 14 + i)); else if (pose === 'run') a = Math.PI / 2 + Math.sin(TAU * ph + i * Math.PI) * .9 * (fwd || 1) - side * .2; else a = Math.PI / 2 - side * .3;
       const rest = [S0.p2[0] + Math.cos(a) * (Lu + Lf) * .97, S0.p2[1] + Math.sin(a) * (Lu + Lf) * .97];
-      const sol = solveArm(A, side, S0.p2, S0.z, Lu, Lf, A.hand && A.hand !== 'mitt' ? 17 : 22, rest, depthOf, pose, 'mitt'); return sol; });
+      const sol = solveArm(A, side, S0.p2, S0.z, Lu, Lf, A.hand && A.hand !== 'mitt' ? 17 : 22, rest, depthOf, pose, 'mitt', [sn, cs]); return sol; });
     const fwdV = [sn, 0, cs];
     const legSol = [0, 1].map(i => { const side = i ? 1 : -1, a = P3([side * 16 * wide, hipY, 0]); let b;
-      if (pose === 'run') { const q = Math.sin(TAU * ph + i * Math.PI); b = P3([side * 16 * wide, -8 - Math.max(0, Math.cos(TAU * ph + i * Math.PI)) * 18, q * 26]); }
+      if (pose === 'run') { const q = Math.sin(TAU * ph + i * Math.PI); b = P3([side * 14 * wide, -8 - Math.max(0, Math.cos(TAU * ph + i * Math.PI)) * 24, q * 40]); }
       else if (pose === 'sit' || pose === 'slump') b = P3([side * 18 * wide, -8, 40]);
       else if (pose === 'kneel') b = P3([side * 16 * wide, -6, i ? 30 : -34]);
       else if (pose === 'flail') b = P3([side * (16 * wide + 12) + Math.sin(t * 16 + i * 2) * 10, -6 - Math.abs(Math.sin(t * 16 + i * 2)) * 12, 0]);
@@ -635,7 +648,7 @@
     G.eyes = [toW(MhW, [wrapX(-.42, .2, th), .2]), toW(MhW, [wrapX(.42, .2, th), .2])]; G.mouth = toW(MhW, [wrapX(0, .66, th), .66]);
     G.bones = { arms: armSol, legs: legSol };
     if (!ctx) return G;
-    const base = ctx.getTransform(), oldLW = MG.figure(4.2 * Math.pow(s, .55)); MG.boil(t); ctx.save(); if (o.alpha != null) ctx.globalAlpha *= o.alpha;
+    const base = ctx.getTransform(), oldLW = MG.figure(5.2 * Math.pow(s, .5)); MG.boil(t); ctx.save(); if (o.alpha != null) ctx.globalAlpha *= o.alpha;
     const setM = M => ctx.setTransform(base.multiply(M)), pnt = key => paint(S, key, o, -6, -5);
     const sleeveKey = S.outer && S.outer.kind !== 'vest' ? 'outer' : 'shirt', roll = S.shirt && S.shirt.roll && sleeveKey === 'shirt';
     const drawArm = a => { const pz = a.pose, Sx = [a.S[0], a.S[1]], E = [a.e[0], a.e[1]], Wr = [a.w[0], a.w[1]], H = { x: Wr[0], y: Wr[1], ang: a.ang, sz: a.hsz, grip: Wr };
@@ -675,7 +688,7 @@
     if (!far) { drawArm(armSol[0]); drawArm(armSol[1]); } else { if (far.A.front || far.z > 10) drawArm(far); drawArm(armSol[1 - farI]); }
     if (o.stone && o.crack) { setM(MbW); const r = rng(WT.hash(S.name, 'sdcrack')); ctx.save(); ctx.globalAlpha *= clamp(o.crack);
       for (let i = 0; i < 3; i++) { let x = (r() - .5) * torW * 1.4, y = shY + 6; const pts = [[x, y]]; for (let j = 0; j < 4; j++) { x += (r() - .5) * 18; y += 18 + r() * 10; pts.push([x, y]); } MG.ink(ctx, pts, { closed: false, lw: .8, single: true, smooth: false }); } ctx.restore(); }
-    if (C.debugBones) debugOverlay(ctx, Mr, base, armSol, legSol, S, t, { shY, hipY, silAt: () => [cx, torW] });
+    if (C.debugBones) debugOverlay(ctx, Mr, base, armSol, legSol, S, t, { shY, hipY, silAt: () => [cx, torW], sn, cs, ringAt: () => [torW - 10, 18, 0], sd: 1 });
     ctx.restore(); ctx.setTransform(base); MG.figure(oldLW);
     if (o.laugh) MG.laugh(ctx, t, G, o.laugh);
     const tk = o.tears || E.tears && (E.tears === 'stream' ? 'fall' : E.tears);
@@ -701,7 +714,7 @@
   // a close-up hand with the sleeve this person wears: (x, y) = wrist, ang = hand direction, sz = palm length
   C.hand = function (ctx, who, pose, x, y, ang, sz, o = {}) {
     const S = SPEC[who], flip = o.flip ?? 1, c = Math.cos(ang), s = Math.sin(ang), back = k => [x - c * sz * k, y - s * sz * k], oo = o;
-    const old = MG.figure(o.lw ? o.lw * 1.25 : 4 * Math.pow(sz / 33, .55)); MG.boil(o.t ?? 0);
+    const old = MG.figure(o.lw ? o.lw * 1.25 : 5.2 * Math.pow(sz / 33, .5)); MG.boil(o.t ?? 0);
     const sleeveKey = S.outer && S.outer.kind !== 'vest' ? 'outer' : 'shirt', roll = S.shirt.roll && sleeveKey === 'shirt', len = o.len || 3.2;
     const tubeP = (k0, k1, w0, w1) => MG.tube([back(k0), back((k0 + k1) / 2), back(k1)], [sz * w0, sz * (w0 + w1) / 2, sz * w1]);
     const band = (k0, k1, w, key) => { const n = [-s, c]; const a = back(k0), b = back(k1); return MG.ink(ctx, [[a[0] + n[0] * sz * w, a[1] + n[1] * sz * w], [b[0] + n[0] * sz * w, b[1] + n[1] * sz * w], [b[0] - n[0] * sz * w, b[1] - n[1] * sz * w], [a[0] - n[0] * sz * w, a[1] - n[1] * sz * w]], Object.assign({ lw: .9, smooth: false }, paint(S, key, oo, -sz * .05, -sz * .05))); };

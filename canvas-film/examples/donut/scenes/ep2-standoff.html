@@ -9,6 +9,7 @@
 <body>
 <script src="lib.js"></script>
 <script src="kit-webtoon.js"></script>
+<script src="donut-manga.js"></script>
 <script src="donut-cast.js"></script>
 <script src="script-ep2-standoff.js"></script>
 <script src="ep2-standoff-fx.js"></script>
@@ -246,6 +247,7 @@ function draw(ctx, t) {
   WT.drawStrip(ctx, t, STRIP, y, { shake: [sh[0] + sh2[0] + sh3[0], sh[1] + sh2[1] + sh3[1]] });
   WT.flash(ctx, t, B.rps1[2], { hold: .04, dur: .22 });
   WT.flash(ctx, t, B.rps2Reveal, { hold: .03, dur: .18 });
+  if (window.Manga && !/[?&]grade=0/.test(location.search)) Manga.grade(ctx);   // the manga print finish (?grade=0 = raw colour)
   WT.fade(ctx, t, S.DUR, .4, .4);
 }
 Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: WT.FONTS, draw });

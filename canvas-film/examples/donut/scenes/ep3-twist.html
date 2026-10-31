@@ -9,6 +9,7 @@
 <body>
 <script src="lib.js"></script>
 <script src="kit-webtoon.js"></script>
+<script src="donut-manga.js"></script>
 <script src="donut-cast.js"></script>
 <script src="ep3-twist-fx.js"></script>
 <script src="script-ep3-twist.js"></script>
@@ -279,6 +280,7 @@ function draw(ctx, t) {
   WT.flash(ctx, t, B.stone, { hold: .04, dur: .2 });
   if (t >= B.end) { WT.endCard(ctx, t, B.end, { title: S.endCard.title, end: S.endCard.end });
     const dk = WT.pop(t, B.end + .3, .35, .4, 2.4); if (dk > 0) { ctx.save(); ctx.translate(540, 455); ctx.scale(dk, dk); C.donut(ctx, 0, 0, 78, { t, seed: 7, glow: .8, alpha: ss(B.end + .3, B.end + .5, t) }); ctx.restore(); } X.nextLine(ctx, t, B.end + .55, S.endCard.next, { y: 1360 }); }
+  if (window.Manga && !/[?&]grade=0/.test(location.search)) Manga.grade(ctx);   // the manga print finish (?grade=0 = raw colour)
   WT.fade(ctx, t, S.DUR, .4, .4);
 }
 Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: WT.FONTS, draw });

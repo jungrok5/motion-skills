@@ -1,7 +1,7 @@
 /* donut-manga.js — the premium monochrome-manga finish for 「마지막 도넛」 + the line/tone primitives the cast is drawn with.
    Global: window.Manga. Load after lib.js (Pilot) and BEFORE donut-cast.js (the cast draws through Manga.ink / Manga.paint).
 
-   LOOK: warm cream paper, one pure black ink, round-dot screentone on a 45° grid (pitch ≈ 7.1 px at 1080 wide, the same grid
+   LOOK: warm cream paper, one pure black ink, round-dot screentone on a 45° grid (pitch ≈ 5.7 px at 1080 wide, the same grid
    everywhere so drawn tones and graded tones line up), bold tapered focus / speed lines, halftone dust puffs, a ✱ caption tag,
    chunky white SFX with a thick black outline — and ONE colour: the donut pink #ff6fa3 (kept through the grade).
    Character construction follows the risograph dinner scene the owner liked (table-risoline face(): round head, dot/arc eyes,
@@ -12,15 +12,18 @@
      Manga.boil(t)                   set the boil frame (on twos, 12 fps) — the cast calls it; call it yourself before raw ink()
      Manga.figure(lwScreen)          set the line weight (screen px) for the figure being drawn (the cast sets it per figure)
      Manga.ink(ctx, pts, o)          THE line primitive: a boiling inked shape → Path2D. o { fill, tone (0…1 coverage), shade: { tone, dx, dy }
-                                       (a cel band of darker dots where the shape is shifted away from the light), lw (× figure weight, 1),
+                                       (a cel band of darker dots where the shape is shifted away from the light), rim: { dx, dy, w } (a white
+                                       highlight line just inside the lit edge of a black shape), lw (× figure weight, 1),
                                        closed (true), smooth (true), raw, amp (screen px, .7), single, col }
      Manga.taper(ctx, pts, w0, w1, o) a tapered open stroke (thick → thin, × figure weight), boiling — brows, strands, folds, marks
      Manga.ell(cx, cy, rx, ry, n, rot) · Manga.tube(line, widths) · Manga.resample · Manga.chaikin · Manga.pathOf
      Manga.tone(ctx, c)              the dot-screen fill style for coverage c (0…1), anchored to the canvas pixel grid
      Manga.grade(ctx, o)             full-frame post pass: luminance → paper / light dots / mid dots / dark dots / ink, the accent pink kept.
-                                       o { white .80, black .30, levels [.14, .38, .62, .86] (darkness cut points), cover [.16, .34, .58]
+                                       o { white .80, black .30, levels [.14, .40, .62, .74] (darkness cut points), cover [.14, .30, .50]
                                        (dot coverage per band), smooth (false: continuous AM halftone instead of bands), accent (true),
-                                       paper, ink, grain (.35), rect [x, y, w, h] (canvas px; default the whole canvas) } → ms
+                                       paper, ink, grain (.35), edge (38: a pixel this much darker / lighter than its 8-px neighbourhood is
+                                       line art → solid ink / paper, so thin lines never break into dots), rect [x, y, w, h] } → ms.
+                                       Calls Cast.flushDebug(ctx) afterwards (the joint overlay stays in colour on top).
      Manga.focus(ctx, t, o)          bold tapered focus lines (black wedges) round a clear oval. o { x, y, w, h (rect), cx, cy, rx, ry, n, wMax,
                                        col, seed, fps (10), inner (0…1 jitter of the inner end) }
      Manga.speed(ctx, t, o)          thick tapered speed lines across a rect, sliding. o { x, y, w, h, ang (0 = horizontal), n, wMax, col, seed,
@@ -39,10 +42,10 @@
   M.C = { paper: '#efe9dd', paperL: '#f7f3ea', ink: '#17151a', pink: '#ff6fa3', pinkD: '#d94a85' };
 
   /* ---------------------------------------------------------------- the dot screen (one 45° grid for everything)
-     A 10×10 px tile holds two dot centres — (0,0) and (5,5) — so the dot pitch is 10/√2 ≈ 7.07 px along the 45° rows.
-     coverage c ≤ .5: ink dots of radius √(50c/π) round those centres; c > .5: paper holes round the other two lattice points
-     ((5,0), (0,5)) of radius √(50(1−c)/π). Anti-aliased by distance. Drawn tones and the grade share this function. */
-  const TS = 10, HT = TS / 2, CA = TS * TS / 2, D1 = new Float32Array(TS * TS), D2 = new Float32Array(TS * TS);
+     An 8×8 px tile holds two dot centres — (0,0) and (4,4) — so the dot pitch is 8/√2 ≈ 5.66 px along the 45° rows.
+     coverage c ≤ .5: ink dots of radius √(32c/π) round those centres; c > .5: paper holes round the other two lattice points
+     ((4,0), (0,4)) of radius √(32(1−c)/π). Anti-aliased by distance. Drawn tones and the grade share this function. */
+  const TS = 8, HT = TS / 2, CA = TS * TS / 2, D1 = new Float32Array(TS * TS), D2 = new Float32Array(TS * TS);
   for (let y = 0; y < TS; y++) for (let x = 0; x < TS; x++) {
     const px = x + .5, py = y + .5; let a = 1e9, b = 1e9;
     for (const [cx, cy] of [[0, 0], [TS, 0], [0, TS], [TS, TS], [HT, HT]]) a = Math.min(a, Math.hypot(px - cx, py - cy));
@@ -119,6 +122,7 @@
       if (o.shade && o.shade.tone > .01) { const sh = o.shade; ctx.save(); ctx.clip(path);
         const cut = new Path2D(); cut.rect(-1e5, -1e5, 2e5, 2e5); const m = new DOMMatrix().translate(sh.dx || 0, sh.dy || 0); cut.addPath(path, m);
         ctx.fillStyle = M.tone(ctx, sh.tone); ctx.fill(cut, 'evenodd'); ctx.restore(); }
+      if (o.rim) { const r = o.rim; ctx.save(); ctx.clip(path); ctx.translate(r.dx, r.dy); ctx.strokeStyle = r.col || M.C.paperL; ctx.lineWidth = (r.w ?? .55) * LW / S; ctx.lineJoin = 'round'; ctx.stroke(path); ctx.restore(); }
     }
     if (o.lw !== 0) { const lw = (o.lw ?? 1) * LW / S; ctx.strokeStyle = o.col || M.C.ink; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
       ctx.lineWidth = lw * .82; ctx.stroke(path);
@@ -134,10 +138,10 @@
   };
 
   /* ---------------------------------------------------------------- the grade (full-frame manga print) */
-  let OUT = null, OUTKEY = '';
+  let OUT = null, OUTKEY = '', SM = null, SMX = null;
   M.grade = function (ctx, o = {}) {
     const t0 = performance.now(), cv = ctx.canvas, [rx, ry, rw, rh] = o.rect || [0, 0, cv.width, cv.height];
-    const wp = o.white ?? .80, bp = o.black ?? .30, cuts = o.levels || [.14, .38, .62, .86], cover = o.cover || [.16, .34, .58];
+    const wp = o.white ?? .80, bp = o.black ?? .30, cuts = o.levels || [.14, .4, .62, .74], cover = o.cover || [.14, .3, .5];
     const paper = Pilot.hex(o.paper || M.C.paper), ink = Pilot.hex(o.ink || M.C.ink), smooth = !!o.smooth, keep = o.accent !== false;
     // per (darkness band, tile px) packed output colours, rebuilt only when the options change
     const key = [wp, bp, cuts, cover, paper, ink, smooth].join('|');
@@ -149,20 +153,35 @@
       for (let v = 0; v < 256; v++) { const d = 1 - clamp((v / 255 - bp) / (wp - bp)); let l;
         if (smooth) l = Math.round(d * 32); else { l = 0; while (l < cuts.length && d >= cuts[l]) l++; }
         OUT.lut[v] = l; } }
-    const img = ctx.getImageData(rx, ry, rw, rh), d8 = img.data, d32 = new Uint32Array(d8.buffer), { px, lut } = OUT, T2 = TS * TS;
+    const tA = performance.now(), img = ctx.getImageData(rx, ry, rw, rh), tB = performance.now(), d8 = img.data, d32 = new Uint32Array(d8.buffer), { px, lut } = OUT, T2 = TS * TS, NL1 = OUT.NL - 1;
+    // edge-aware: a local mean (8 px blocks, bilinear) tells line art from flat areas. A pixel clearly darker than its surroundings is a
+    // line → solid ink; clearly lighter → paper (white lines on black); only flat areas get screened. Drawn dots pass through unchanged.
+    const E = o.edge ?? 38, bw = (rw + 7) >> 3, bh = (rh + 7) >> 3, sum = new Float32Array(bw * bh);
+    // the 8-px local mean comes from a GPU downscale of the frame (one small readback) instead of a CPU pass over every pixel
+    if (!SM || SM.width !== bw || SM.height !== bh) { SM = Pilot.canvas(bw, bh); SMX = SM.getContext('2d', { willReadFrequently: true }); }
+    SMX.imageSmoothingEnabled = true; SMX.imageSmoothingQuality = 'high'; SMX.clearRect(0, 0, bw, bh); SMX.drawImage(cv, rx, ry, rw, rh, 0, 0, bw, bh);
+    { const sd = SMX.getImageData(0, 0, bw, bh).data; for (let k = 0; k < bw * bh; k++) sum[k] = (77 * sd[k * 4] + 150 * sd[k * 4 + 1] + 29 * sd[k * 4 + 2]) / 256; }
+    const X0 = new Int32Array(rw), X1 = new Int32Array(rw), WX = new Float32Array(rw), row = new Float32Array(bw);
+    for (let x = 0; x < rw; x++) { const fx = Math.max(0, Math.min(bw - 1.001, (x - 3.5) / 8)); X0[x] = fx | 0; X1[x] = Math.min(bw - 1, X0[x] + 1); WX[x] = fx - X0[x]; }
     let i = 0;
     for (let y = 0; y < rh; y++) { const ty = ((y + ry) % TS) * TS; let tx = (rx % TS);
+      const fy = Math.max(0, Math.min(bh - 1.001, (y - 3.5) / 8)), y0 = fy | 0, wy = fy - y0, r0 = y0 * bw, r1 = Math.min(bh - 1, y0 + 1) * bw;
+      for (let k = 0; k < bw; k++) row[k] = sum[r0 + k] + (sum[r1 + k] - sum[r0 + k]) * wy;
       for (let x = 0; x < rw; x++, i++) {
-        const j = i << 2, r = d8[j], g = d8[j + 1], b = d8[j + 2];
-        if (keep && r > 120 && b > g) { const mx = r, mn = g < b ? g : b, dd = mx - mn;   // the accent: hue ≈ 322–350°, saturated → keep as is
-          if (dd > 40 && mx >= b && dd > mx * .26) { const h = (g - b) / dd; if (h > -.64 && h < -.15) { if (++tx === TS) tx = 0; continue; } } }
-        const L = (77 * r + 150 * g + 29 * b) >> 8;
-        d32[i] = px[lut[L] * T2 + ty + tx];
+        const v = d32[i], r = v & 255, g = (v >> 8) & 255, b = (v >> 16) & 255;
+        if (keep && r > 120 && b > g) { const dd = r - g;   // the accent: hue ≈ 322–350°, saturated → keep as is
+          if (dd > 40 && r >= b && dd > r * .26) { const h = (g - b) / dd; if (h > -.64 && h < -.15) { if (++tx === TS) tx = 0; continue; } } }
+        const L = (77 * r + 150 * g + 29 * b) >> 8, B = row[X0[x]] + (row[X1[x]] - row[X0[x]]) * WX[x];
+        const lv = L + E < B && L < 175 ? NL1 : L > B + E && L > 100 ? 0 : lut[L];
+        d32[i] = px[lv * T2 + ty + tx];
         if (++tx === TS) tx = 0;
       } }
+    const tC = performance.now();
     ctx.putImageData(img, rx, ry);
     if ((o.grain ?? .35) > 0) M.grain(ctx, o.grain ?? .35, [rx, ry, rw, rh]);
-    return performance.now() - t0;
+    const ms = performance.now() - t0; M.lastGradeMs = ms; M.lastGradeProf = { read: tB - tA, loop: tC - tB, rest: performance.now() - tC };
+    if (window.Cast && Cast.flushDebug) Cast.flushDebug(ctx);
+    return ms;
   };
   let GR = null;
   M.grain = function (ctx, a = .35, rect) {
@@ -182,15 +201,16 @@
     const n = o.n || 70, wMax = o.wMax || 22, f = Math.floor(t * (o.fps || 10) + 1e-6), r = rng((o.seed || 1) * 977 + f * 13), R = Math.hypot(w, h);
     ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip(); ctx.fillStyle = o.col || M.C.ink;
     for (let i = 0; i < n; i++) { const a = (i + r() * .8) / n * TAU, ca = Math.cos(a), sa = Math.sin(a), k = .9 + r() * (o.inner ?? .55);
-      const inner = [cx + ca * rx * k, cy + sa * ry * k], outer = [cx + ca * R, cy + sa * R], ww = wMax * (.25 + r() * r() * 1.1);
+      const ex = Math.abs(ca) > 1e-3 ? ((ca > 0 ? x + w : x) - cx) / ca : 1e9, ey = Math.abs(sa) > 1e-3 ? ((sa > 0 ? y + h : y) - cy) / sa : 1e9, Re = Math.min(R, ex, ey) + wMax * 2;
+      const inner = [cx + ca * rx * k, cy + sa * ry * k], outer = [cx + ca * Re, cy + sa * Re], ww = wMax * (.35 + r() * r() * 1.1);
       wedge(ctx, outer, inner, ww); if (r() < .35) { const k2 = k + .25 + r() * .4; wedge(ctx, outer, [cx + ca * rx * k2 + sa * ww, cy + sa * ry * k2 - ca * ww], ww * .45); } }
     ctx.restore();
   };
   M.speed = function (ctx, t, o = {}) {
     const x = o.x || 0, y = o.y || 0, w = o.w || 1080, h = o.h || 600, ang = o.ang || 0, n = o.n || 26, wMax = o.wMax || 12, r = rng(o.seed || 3), v = o.v ?? 900;
-    const c = Math.cos(ang), s = Math.sin(ang), L = Math.hypot(w, h);
+    const c = Math.cos(ang), s = Math.sin(ang), L = Math.abs(w * c) + Math.abs(h * s), Hx = Math.abs(w * s) + Math.abs(h * c);
     ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip(); ctx.fillStyle = o.col || M.C.ink; ctx.translate(x + w / 2, y + h / 2); ctx.rotate(ang);
-    for (let i = 0; i < n; i++) { const yy = (r() - .5) * L, len = L * (.2 + r() * .45), sp = v * (.6 + r() * .8), x0 = ((r() * L + t * sp) % (L * 1.6)) - L * .8, ww = wMax * (.3 + r() * .9);
+    for (let i = 0; i < n; i++) { const yy = (r() - .5) * Hx, len = L * (.25 + r() * .45), sp = v * (.6 + r() * .8), x0 = ((r() * L * 1.8 + t * sp) % (L * 1.8)) - L * .4, ww = wMax * (.3 + r() * .9);
       if (o.gap) { const gx = (o.gap.cx - x - w / 2), gy = (o.gap.cy - y - h / 2), lx = gx * c + gy * s, ly = -gx * s + gy * c; if (Math.abs(yy - ly) < o.gap.ry && x0 - len < lx + o.gap.rx && x0 > lx - o.gap.rx) continue; }
       wedge(ctx, [x0, yy], [x0 - len, yy], ww); }
     ctx.restore();
@@ -241,7 +261,7 @@
   M.sfx = function (ctx, t, o) {
     const at = o.at ?? -1e9; if (t < at) return; const u = t - at, s = Pilot.chars(Pilot.tr(o.text)), size = o.size || 120, font = `400 ${size}px ${o.font || "'Black Han Sans',sans-serif"}`;
     const r = rng(o.seed || 11), [sdx, sdy] = o.shadow || [size * .06, size * .07], lw = o.line ?? size * .16;
-    ctx.save(); ctx.font = font; const ws = s.map(c => ctx.measureText(c).width), gap = (o.gap ?? -.06) * size, W = ws.reduce((a, b) => a + b, 0) + gap * (s.length - 1);
+    ctx.save(); ctx.font = font; const ws = s.map(c => ctx.measureText(c).width), gap = (o.gap ?? .02) * size, W = ws.reduce((a, b) => a + b, 0) + gap * (s.length - 1);
     ctx.translate(o.x, o.y); ctx.rotate(o.rot ?? -.08); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
     let cx = -W / 2; const L = s.map((c, i) => { const p = { c, x: cx + ws[i] / 2, rot: (r() - .5) * .22, dy: (r() - .5) * size * .14, sc: 1 + (r() - .5) * .14 }; cx += ws[i] + gap; return p; });
     for (const pass of [0, 1, 2]) L.forEach((p, i) => { const k = clamp((u - i * .06) / .16); if (k <= 0) return; const pop = k < 1 ? .6 + .55 * eo(k) - .15 * k : 1;
