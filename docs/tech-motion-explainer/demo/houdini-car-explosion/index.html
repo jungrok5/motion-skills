@@ -1,0 +1,856 @@
+<meta charset="utf-8">
+<title>Houdini 자동차 폭파 이펙트</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Layout: one 16:9 stage, a slim transport bar under it, chapter chips below. Single dark look. */
+  :root {
+    --bg: #070a13; --surface: #0e1424; --line: #24304a; --fg: #e8ecf4; --dim: #8b95a7;
+    --accent: #a78bfa; --live: #34d399; --text2: #c3cad8;
+    --sans: Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    color-scheme: dark;
+  }
+  html, body { min-height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding-block: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    box-sizing: border-box; overflow-x: hidden; }
+  .player { width: min(100%, calc((100vh - 170px) * 16 / 9)); min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .stage { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--line); background: var(--bg); cursor: pointer; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .big { position: absolute; inset: auto 0 5% 0; margin: 0 auto; width: clamp(44px, 11%, 84px); height: auto; aspect-ratio: 1; border-radius: 50%; border: 1.5px solid var(--accent);
+    background: rgba(14,20,36,.78); color: var(--fg); display: grid; place-items: center; cursor: pointer; transition: transform .15s, opacity .2s; }
+  .big[hidden] { display: none; }
+  .big:hover { transform: scale(1.06); }
+  .big svg { width: 36%; height: 36%; margin-left: 6%; }
+  .big.replay svg { margin-left: 0; }
+  .bar { display: flex; align-items: center; gap: 14px; }
+  .btn { flex: none; width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface);
+    color: var(--fg); display: grid; place-items: center; cursor: pointer; }
+  .btn:hover { border-color: var(--accent); }
+  .btn svg { width: 16px; height: 16px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .time { flex: none; font: 500 13px/1 var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
+  .scrub { position: relative; flex: 1; min-width: 0; height: 28px; cursor: pointer; touch-action: none; }
+  .track { position: absolute; left: 0; right: 0; top: 12px; height: 4px; border-radius: 2px; background: var(--line); }
+  .fill { position: absolute; left: 0; top: 12px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--live)); }
+  .tick { position: absolute; top: 8px; width: 2px; height: 12px; background: var(--dim); opacity: .6; }
+  .knob { position: absolute; top: 7px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--fg); box-shadow: 0 0 0 4px rgba(167,139,250,.25); }
+  .chapters { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chapters button { font: 600 13px/1 var(--sans); color: var(--dim); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+  .chapters button span { font-family: var(--mono); color: var(--accent); margin-right: 6px; }
+  .chapters button:hover { color: var(--fg); }
+  .chapters button[aria-current="true"] { color: var(--fg); border-color: var(--accent); background: rgba(167,139,250,.12); }
+  .hint { font-size: 12px; color: var(--dim); margin-left: auto; }
+  @media (max-width: 600px) { .hint { display: none; } .time { font-size: 12px; } }
+  .set { display: flex; flex-wrap: wrap; gap: 8px; }
+  .set a { font: 600 13px/1 var(--sans); color: var(--fg); text-decoration: none; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; background: var(--surface); }
+  .set a:hover { border-color: var(--accent); }
+  body.poster .set { display: none; }
+  .rate { width: auto; min-width: 56px; padding: 0 10px; font: 600 13px/1 var(--mono); }
+  /* Notes under the player: chapter-by-chapter explanation + glossary */
+  .notes { width: min(100%, 860px); margin-top: 56px; padding-bottom: 48px; font-size: 16px; line-height: 1.75; word-break: keep-all; overflow-wrap: anywhere; }
+  .notes h2 { font-size: 22px; line-height: 1.4; margin: 48px 0 16px; text-wrap: balance; }
+  .notes h2:first-child { margin-top: 0; }
+  .notes h2 .more { font: 600 13px/1 var(--sans); color: var(--accent); margin-left: 10px; white-space: nowrap; }
+  .notes .lede { font-size: 18px; color: var(--fg); }
+  .notes p, .notes li { color: var(--text2); }
+  .notes ul { padding-left: 1.2em; }
+  .notes article { border-top: 1px solid var(--line); padding-top: 20px; margin-top: 24px; }
+  .notes h3 { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 18px; line-height: 1.4; margin: 0 0 8px; }
+  .notes h3 .n { font: 600 13px/1 var(--mono); color: var(--accent); }
+  .notes h3 button { margin-left: auto; font: 600 12px/1 var(--sans); color: var(--dim); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 6px 10px; cursor: pointer; }
+  .notes h3 button:hover { color: var(--fg); border-color: var(--accent); }
+  .notes code { font: 500 .88em var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; overflow-wrap: anywhere; }
+  .notes .terms { display: grid; grid-template-columns: minmax(110px, max-content) minmax(0, 1fr); gap: 12px 24px; margin: 0; }
+  .notes dt { font-weight: 700; }
+  .notes dd { margin: 0; color: var(--text2); }
+  @media (max-width: 600px) { .notes .terms { grid-template-columns: minmax(0, 1fr); gap: 2px; } .notes dd { margin-bottom: 14px; } }
+  /* #poster: embed mode for gallery thumbnails — canvas only, loops */
+  body.poster { padding: 0; }
+  body.poster .player { width: 100%; }
+  body.poster .bar, body.poster .chapters, body.poster .big, body.poster .notes { display: none; }
+  body.poster .stage { border: 0; border-radius: 0; }
+</style>
+
+<div class="player">
+  <div class="stage" id="stage">
+    <canvas id="c" width="1920" height="1080" aria-label="Houdini 자동차 폭파 이펙트 모션그래픽"></canvas>
+    <button class="big" id="big" aria-label="재생"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg></button>
+  </div>
+  <div class="bar">
+    <button class="btn" id="play" aria-label="재생"></button>
+    <div class="scrub" id="scrub" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="30" aria-valuenow="0">
+      <div class="track"></div><div class="fill" id="fill"></div><div id="ticks"></div><div class="knob" id="knob"></div>
+    </div>
+    <div class="time" id="time">0:00 / 0:30</div>
+    <button class="btn rate" id="rate" aria-label="재생 속도 1배">1×</button>
+    <button class="btn" id="fs" aria-label="전체 화면"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+  <div class="chapters" id="chapters"></div>
+  <nav class="set" aria-label="같은 주제"><a href="article.html">설명 읽기</a><a href="terms.html">용어집</a></nav>
+</div>
+<!-- Source text for article.html (설명) and terms.html (용어집); scripts/build-articles.mjs builds both. Not shown on this page. -->
+<section class="notes" id="notes" hidden>
+
+<p class="lede">Houdini로 자동차 폭파 장면의 이펙트를 만드는 과정을 6단계로 보여 주는 설명 영상입니다. 책상 위에 놓인 네트워크 · 뷰포트 · 파라미터 · 타임라인 화면을 작은 불씨 캐릭터가 옮겨 다니며 노드를 누르고, 가운데 뷰포트에서는 같은 자동차가 단계마다 모델 → 조각 → 리지드 바디 → 불과 연기 → 파편과 불티 → 렌더로 바뀝니다. 화면은 설명용으로 다시 그린 것이고, 노드 이름 외의 값은 예시입니다.</p>
+<article data-ch="01">
+<p>자동차 모델을 불러와 문 · 후드 · 지붕 · 범퍼 · 바퀴 · 유리처럼 따로 날아갈 단위로 나누고, 각 파트에 <code>name</code> 속성을 붙입니다. 뷰포트의 색은 name별 색입니다. 시뮬레이션의 충돌 계산은 렌더용 모델 대신 단순한 프록시(볼록 껍질 등)로 하면 빠르고 안정적입니다.</p>
+</article>
+<article data-ch="02">
+<p>유리는 <code>RBD Material Fracture</code>의 Glass 타입으로 조각냅니다. 금속 패널은 잘게 부수지 않고 통째로 두되, <code>RBD Constraint Properties</code>로 이웃 파트와 접착(glue) 제약을 걸어 붙여 둡니다. 뷰포트의 무작위 색은 조각 하나하나를 구분해 보여 주는 색이고, 잠깐 벌려 보여 준 것은 잘린 면을 확인하기 위해서입니다.</p>
+</article>
+<article data-ch="03">
+<p><code>RBD Bullet Solver</code>로 시뮬레이션합니다. 폭발 순간 중심에서 바깥으로 속도(v)를 주면 제약 세기를 넘는 곳부터 접착이 끊기고, 패널과 유리 조각이 날아갔다가 중력과 지면 충돌로 떨어져 튑니다. 무거운 차체는 조금 들렸다 내려앉습니다. 타임라인의 RBD 막대는 시뮬레이션 결과를 캐시로 저장하는 진행을 뜻합니다.</p>
+</article>
+<article data-ch="04">
+<p>불과 연기는 Pyro로 만듭니다. <code>Pyro Burst Source</code>로 폭발 모양의 소스(밀도 · 온도 · 불꽃 · 속도)를 만들고 <code>Pyro Solver</code>로 풉니다. 온도가 높은 곳은 흰색 · 노란색, 식으면서 주황 · 빨강을 거쳐 연기로 바뀝니다. 복셀 크기가 작을수록 디테일이 늘지만 계산 시간과 용량이 크게 늘어납니다. Disturbance · Turbulence 같은 값으로 불의 결을 만듭니다(영상의 값은 예시).</p>
+</article>
+<article data-ch="05">
+<p><code>Debris Source</code>로 조각 가장자리에서 작은 파편이 떨어질 점을 만들고, POP으로 파편과 불티를 날립니다. <code>POP Advect by Volumes</code>로 Pyro의 속도장을 따라가게 하면 불티가 불길과 같은 흐름으로 움직입니다. 파편은 중력을 크게, 불티는 가볍게 두어 오래 떠다니게 합니다.</p>
+</article>
+<article data-ch="06">
+<p>Karma로 렌더합니다. 폭발 중심에 광원을 두고 세기를 불 밝기에 맞춰 바꾸면 불빛이 차와 바닥을 비춥니다. 빠르게 날아가는 조각과 불티가 자연스럽게 보이도록 모션 블러를 켜고, 불 · 연기 · 파편을 따로 렌더해(패스 분리) 합성에서 밝기와 색을 조정합니다.</p>
+</article>
+<h2>용어 정리</h2>
+<dl class="terms">
+<dt>SOP</dt><dd>Houdini에서 지오메트리를 만들고 바꾸는 노드. 노드를 연결해 과정을 쌓는다.</dd>
+<dt>name 속성</dt><dd>파트마다 붙이는 이름. RBD에서 같은 name은 한 덩어리로 움직인다.</dd>
+<dt>충돌 프록시</dt><dd>충돌 계산에만 쓰는 단순한 모양. 렌더용 모델보다 빠르고 안정적이다.</dd>
+<dt>RBD</dt><dd>Rigid Body Dynamics. 형태가 변하지 않는 물체의 움직임과 충돌을 계산하는 시뮬레이션.</dd>
+<dt>RBD Material Fracture</dt><dd>재질 타입(콘크리트 · 유리 · 나무)에 맞게 지오메트리를 조각내는 SOP.</dd>
+<dt>접착 제약 (glue)</dt><dd>조각끼리 붙여 두는 제약. 받는 힘이 세기를 넘으면 끊어진다.</dd>
+<dt>RBD Bullet Solver</dt><dd>Bullet 엔진으로 리지드 바디를 시뮬레이션하는 SOP.</dd>
+<dt>Pyro</dt><dd>불과 연기 같은 기체를 복셀 격자 위에서 계산하는 시뮬레이션.</dd>
+<dt>복셀 크기</dt><dd>격자 한 칸의 크기. 작을수록 정밀하지만 계산량이 크게 늘어난다.</dd>
+<dt>Pyro Burst Source</dt><dd>폭발처럼 한 번에 터지는 Pyro 소스를 만드는 SOP.</dd>
+<dt>Debris Source</dt><dd>조각난 지오메트리의 가장자리에서 파편이 떨어질 점을 만드는 SOP.</dd>
+<dt>POP</dt><dd>입자(파티클) 시뮬레이션. 파편과 불티에 쓴다.</dd>
+<dt>Advect by Volumes</dt><dd>입자를 볼륨의 속도장(예: Pyro 속도)을 따라 움직이게 하는 POP 노드.</dd>
+<dt>Karma</dt><dd>Houdini의 렌더러.</dd>
+<dt>패스 분리</dt><dd>불 · 연기 · 파편 등을 따로 렌더해 합성 단계에서 각각 조정하는 방법.</dd>
+</dl>
+</section>
+<script type="importmap">
+{ "imports": { "three": "../assets/vendor/three/build/three.module.min.js", "three/addons/": "../assets/vendor/three/examples/jsm/" } }
+</script>
+<script type="module">
+// ─────────────────────────────────────────────────────────────
+//  Houdini 자동차 폭파 이펙트 — 6단계 설명 (desk-of-screens look)
+//  App windows lie on a dark desk; a small ember mascot hops between them and works the
+//  network, parameters and timeline. The viewport window is a live render of a second scene
+//  (the car), so each step changes what it shows: model → fracture → RBD → pyro → debris → render.
+//  The UI is a drawn re-creation for explanation, not the real Houdini interface. Values are examples.
+//  Every frame is a pure function of t (renderAt), so it bakes to MP4.
+// ─────────────────────────────────────────────────────────────
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const W = 1920, H = 1080, DURATION = 64;
+const RENDER = location.search.includes('render');
+const SANS = 'Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif', MONO = '"JetBrains Mono", Pretendard, monospace';
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const p = (t, s, d) => clamp((t - s) / d);
+const eo = k => 1 - Math.pow(1 - k, 3);
+const eio = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+const eback = k => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2); };
+const win = (t, s, e, f = .4) => Math.min(eo(p(t, s, f)), 1 - eio(p(t, e - f, f)));
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let x = Math.imul(seed ^ seed >>> 15, 1 | seed); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; }; }
+function rgba(h, a) { const n = parseInt(h.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
+const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+
+// ── timeline of the film ─────────────────────────────────────
+// [start, end, number, title, subtitle] — also the player's chapter chips
+const HEAD = [
+  [4.5, 13.0, '01', '모델 준비', '파트별 name 속성 · 충돌용 프록시'],
+  [13.0, 21.5, '02', '파괴 준비', '유리는 조각내고, 패널은 접착 제약으로'],
+  [21.5, 30.0, '03', '리지드 바디', '폭발 속도 → 제약이 끊기며 날아감'],
+  [30.0, 39.0, '04', '불과 연기', 'Pyro Burst Source → Pyro Solver'],
+  [39.0, 46.5, '05', '파편과 불티', 'Debris Source → POP, 불의 속도장을 따라'],
+  [46.5, 56.0, '06', '렌더와 합성', '불빛 · 모션 블러 · 패스 분리'],
+];
+const stepAt = t => { for (let i = HEAD.length - 1; i >= 0; i--) if (t >= HEAD[i][0]) return i; return -1; };
+// explosion time τ seen in the viewport at film time t (each sim step replays it)
+function simTau(t) {
+  if (t < 23.0) return -1;
+  if (t < 30.0) return (t - 23.0);                    // RBD
+  if (t < 31.0) return -1;
+  if (t < 39.0) return (t - 31.0);                    // pyro (with RBD)
+  if (t < 39.8) return -1;
+  if (t < 46.5) return (t - 39.8);                    // + debris & sparks
+  if (t < 50.4) return -1;
+  return (t - 50.4) * .72;                            // the render, a little slower
+}
+function vpMode(t) {
+  if (t < 8.6) return 'clay'; if (t < 13.0) return 'parts'; if (t < 21.5) return 'fracture';
+  if (t < 30.0) return 'sim'; if (t < 39.0) return 'pyro'; if (t < 47.6) return 'debris'; return 'render';
+}
+
+// ═════════════════════════════════════════════════════════════
+//  RENDERER
+// ═════════════════════════════════════════════════════════════
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(1); renderer.setSize(W, H, false);
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+
+// ═════════════════════════════════════════════════════════════
+//  VIEWPORT SCENE — the car
+// ═════════════════════════════════════════════════════════════
+const vp = new THREE.Scene();
+const vpCam = new THREE.PerspectiveCamera(36, 16 / 10, .1, 400);
+const VPW = 1280, VPH = 800;
+const rt = new THREE.WebGLRenderTarget(VPW, VPH, { samples: 4 });
+// backgrounds: grey viewport gradient vs night street
+function gradTex(top, bot) { const c = document.createElement('canvas'); c.width = 4; c.height = 256; const g = c.getContext('2d'); const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, top); gr.addColorStop(1, bot); g.fillStyle = gr; g.fillRect(0, 0, 4, 256); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; }
+const BG_VIEW = gradTex('#5a6068', '#2a2d33'), BG_NIGHT = gradTex('#06070b', '#120c0a');
+const vpHemi = new THREE.HemisphereLight('#dfe6f0', '#3a3530', 1.4); vp.add(vpHemi);
+const vpKey = new THREE.DirectionalLight('#ffffff', 1.6); vpKey.position.set(6, 10, 8); vp.add(vpKey);
+const flash = new THREE.PointLight('#ff8a3c', 0, 60, 1.6); flash.position.set(.2, 1.4, .1); vp.add(flash);
+const street = new THREE.SpotLight('#ffcf9a', 0, 40, .55, .6, 1.2); street.position.set(-4, 9, 5); street.target.position.set(0, 0, 0); vp.add(street); vp.add(street.target);
+const moon = new THREE.DirectionalLight('#7f9cff', 0); moon.position.set(8, 10, -6); vp.add(moon);
+// ground: viewport grid / asphalt
+const gridHelper = new THREE.GridHelper(80, 80, '#7d838c', '#4a4f57'); vp.add(gridHelper);
+const asphalt = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: '#17151a', roughness: .92, metalness: 0 }));
+asphalt.rotation.x = -Math.PI / 2; asphalt.position.y = -.005; vp.add(asphalt);
+// street details for the render: kerb lines
+const kerb = new THREE.Mesh(new THREE.BoxGeometry(80, .15, .3), new THREE.MeshStandardMaterial({ color: '#2a272c', roughness: .9 })); kerb.position.set(0, .07, -5); vp.add(kerb);
+const lane = new THREE.Mesh(new THREE.PlaneGeometry(60, .12), new THREE.MeshBasicMaterial({ color: '#4a4436' })); lane.rotation.x = -Math.PI / 2; lane.position.set(0, .006, 3.4); vp.add(lane);
+
+// car parts: [name, center, size, kind] (metres; x = length, z = width)
+const PARTS = [
+  ['chassis', [0, .45, 0], [4.2, .4, 1.7], 'body'],
+  ['hood', [1.45, .72, 0], [1.3, .12, 1.62], 'panel'],
+  ['trunk', [-1.6, .72, 0], [.95, .12, 1.62], 'panel'],
+  ['roof', [-.2, 1.4, 0], [1.75, .08, 1.5], 'panel'],
+  ['door_fl', [.42, .86, .86], [1.0, .74, .06], 'panel'], ['door_rl', [-.62, .86, .86], [.98, .74, .06], 'panel'],
+  ['door_fr', [.42, .86, -.86], [1.0, .74, .06], 'panel'], ['door_rr', [-.62, .86, -.86], [.98, .74, .06], 'panel'],
+  ['bumper_f', [2.15, .45, 0], [.16, .3, 1.76], 'panel'], ['bumper_r', [-2.15, .45, 0], [.16, .3, 1.76], 'panel'],
+  ['wheel_fl', [1.35, .36, .82], [.72, .26, .72], 'wheel'], ['wheel_rl', [-1.35, .36, .82], [.72, .26, .72], 'wheel'],
+  ['wheel_fr', [1.35, .36, -.82], [.72, .26, .72], 'wheel'], ['wheel_rr', [-1.35, .36, -.82], [.72, .26, .72], 'wheel'],
+  ['glass_front', [.74, 1.08, 0], [.82, .04, 1.42], 'glass', -.62], ['glass_rear', [-1.13, 1.08, 0], [.7, .04, 1.42], 'glass', .62],
+  ['glass_fl', [.35, 1.12, .78], [.84, .42, .03], 'glass'], ['glass_rl', [-.62, 1.12, .78], [.8, .42, .03], 'glass'],
+  ['glass_fr', [.35, 1.12, -.78], [.84, .42, .03], 'glass'], ['glass_rr', [-.62, 1.12, -.78], [.8, .42, .03], 'glass'],
+];
+const PART_COL = ['#8f949c', '#e76f51', '#f4a261', '#e9c46a', '#2a9d8f', '#3a86ff', '#8338ec', '#ff006e', '#06d6a0', '#118ab2', '#555b6e', '#555b6e', '#555b6e', '#555b6e', '#a8dadc', '#a8dadc', '#90e0ef', '#90e0ef', '#90e0ef', '#90e0ef'];
+const R1 = rng(4242);
+const EXC = V3(.25, .55, .15);   // explosion centre (under the front of the cabin)
+const G = 9.8;
+const CHUNKS = [];
+const geoBox = new THREE.BoxGeometry(1, 1, 1), geoWheel = new THREE.CylinderGeometry(.5, .5, 1, 18).rotateX(Math.PI / 2);
+const MAT = {
+  clay: new THREE.MeshStandardMaterial({ color: '#b9bdc4', roughness: .75 }),
+};
+PARTS.forEach(([name, c, s, kind, tilt], pi) => {
+  // split: glass → shards, wide panels → 2 pieces, the rest whole
+  const pieces = [];
+  if (kind === 'glass') {
+    const nu = 4, nv = 3, horiz = s[1] < s[0] && s[1] < s[2];
+    for (let i = 0; i < nu; i++) for (let j = 0; j < nv; j++) {
+      const du = (i + .5) / nu - .5, dv = (j + .5) / nv - .5;
+      const off = horiz ? [du * s[0], 0, dv * s[2]] : [du * s[0], dv * s[1], 0];
+      const sz = horiz ? [s[0] / nu * (.75 + R1() * .35), s[1], s[2] / nv * (.75 + R1() * .35)] : [s[0] / nu * (.75 + R1() * .35), s[1] / nv * (.75 + R1() * .35), s[2]];
+      pieces.push({ off, sz });
+    }
+  } else if (['hood', 'roof', 'bumper_f', 'bumper_r'].includes(name)) {
+    const ax = name.startsWith('bumper') ? 2 : 0;
+    [-.25, .25].forEach(d => { const off = [0, 0, 0], sz = s.slice(); off[ax] = d * s[ax]; sz[ax] = s[ax] / 2 * .98; pieces.push({ off, sz }); });
+  } else pieces.push({ off: [0, 0, 0], sz: s });
+  pieces.forEach(pc => {
+    const mesh = new THREE.Mesh(kind === 'wheel' ? geoWheel : geoBox, MAT.clay);
+    const base = V3(c[0], c[1], c[2]);
+    const q0 = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, tilt || 0));
+    base.add(V3(...pc.off).applyQuaternion(q0));
+    mesh.scale.set(...pc.sz); mesh.position.copy(base); mesh.quaternion.copy(q0); vp.add(mesh);
+    // flight: outward from the explosion centre, with bounces (closed form per segment)
+    const heavy = kind === 'body', light = kind === 'glass';
+    const dir = base.clone().sub(EXC); dir.y = Math.max(.35, dir.y) + .7; dir.normalize();
+    const speed = heavy ? 0 : kind === 'wheel' ? 3 + R1() * 2.5 : light ? 5 + R1() * 5 : 4 + R1() * 4.5;
+    let v = heavy ? V3(0, 3.2, 0) : dir.multiplyScalar(speed), pos = base.clone(), t0 = 0;
+    const floor = Math.min(...pc.sz) / 2, segs = [];
+    for (let b = 0; b < 4; b++) {
+      segs.push({ t0, p: pos.clone(), v: v.clone() });
+      const a = -G / 2, bb = v.y, cc = pos.y - floor, disc = bb * bb - 4 * a * cc;
+      const th = (-bb - Math.sqrt(Math.max(0, disc))) / (2 * a);
+      pos = pos.clone().addScaledVector(v, th); pos.y = floor; t0 += th;
+      const vy = -(v.y - G * th) * (heavy ? .15 : .34); v = V3(v.x * .55, vy, v.z * .55);
+      if (Math.abs(vy) < .8) { segs.push({ t0, p: pos.clone(), v: V3(0, 0, 0), rest: true }); break; }
+    }
+    const axis = V3(R1() - .5, R1() - .5, R1() - .5).normalize(), w = heavy ? .3 : kind === 'wheel' ? 4 + R1() * 4 : 3 + R1() * 9;
+    CHUNKS.push({ mesh, part: pi, kind, base, q0, sz: pc.sz, segs, axis, w, col: new THREE.Color().setHSL(R1(), .55 + R1() * .2, .55 + R1() * .12), delay: heavy ? .04 : .0 + R1() * .05 });
+  });
+});
+const _q = new THREE.Quaternion(), _v = V3(0, 0, 0);
+function chunkAt(c, tau) {
+  if (tau <= c.delay) { c.mesh.position.copy(c.base); c.mesh.quaternion.copy(c.q0); return 0; }
+  const tt = tau - c.delay; let s = c.segs[0];
+  for (const sg of c.segs) if (tt >= sg.t0) s = sg;
+  const dt = tt - s.t0;
+  if (s.rest) c.mesh.position.copy(s.p);
+  else c.mesh.position.set(s.p.x + s.v.x * dt, s.p.y + s.v.y * dt - G / 2 * dt * dt, s.p.z + s.v.z * dt);
+  const restT = c.segs[c.segs.length - 1].rest ? c.segs[c.segs.length - 1].t0 : 99, ang = c.w * Math.min(tt, restT) * (1 - .5 * clamp(tt / 3));
+  _q.setFromAxisAngle(c.axis, ang); c.mesh.quaternion.copy(c.q0).premultiply(_q);
+  return tt;
+}
+// materials per mode
+const matCache = new Map();
+function matFor(key, make) { if (!matCache.has(key)) matCache.set(key, make()); return matCache.get(key); }
+function applyMode(mode, burn) {
+  CHUNKS.forEach((c, i) => {
+    let m;
+    if (mode === 'clay' || mode === 'sim' || mode === 'pyro' || mode === 'debris') m = MAT.clay;
+    else if (mode === 'parts') m = matFor('part' + c.part, () => new THREE.MeshStandardMaterial({ color: PART_COL[c.part], roughness: .6 }));
+    else if (mode === 'fracture') m = matFor('frac' + i, () => new THREE.MeshStandardMaterial({ color: c.col, roughness: .55 }));
+    else {   // render: car paint, glass, tyres; burn darkens over time
+      const k = c.kind === 'glass' ? 'g' : c.kind === 'wheel' ? 'w' : c.kind === 'body' ? 'b' : 'p';
+      m = matFor('r' + k, () => k === 'g' ? new THREE.MeshStandardMaterial({ color: '#9fb4c4', roughness: .05, metalness: .2, transparent: true, opacity: .55 })
+        : k === 'w' ? new THREE.MeshStandardMaterial({ color: '#151515', roughness: .8 })
+        : k === 'b' ? new THREE.MeshStandardMaterial({ color: '#2b2626', roughness: .7, metalness: .3 })
+        : new THREE.MeshStandardMaterial({ color: '#a11d21', roughness: .32, metalness: .55 }));
+      if (k === 'p' || k === 'b') m.color.set(k === 'p' ? '#a11d21' : '#2b2626').lerp(new THREE.Color('#1a1412'), burn * .75);
+    }
+    c.mesh.material = m;
+  });
+}
+
+// ── volumes as billboards: fire (additive) and smoke (alpha), one draw call each ──
+function noiseTex(seed) {
+  const N = 128, c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d'), img = g.createImageData(N, N), r = rng(seed);
+  const grid = Array.from({ length: 17 * 17 }, () => r());
+  const vn = (x, y, f) => { const gx = x * f, gy = y * f, i = Math.floor(gx), j = Math.floor(gy), fx = gx - i, fy = gy - j, s = k => k * k * (3 - 2 * k), at = (a, b) => grid[((b % 16) * 17 + (a % 16))];
+    return lerp(lerp(at(i, j), at(i + 1, j), s(fx)), lerp(at(i, j + 1), at(i + 1, j + 1), s(fx)), s(fy)); };
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const u = x / N, v = y / N, d = Math.hypot(u - .5, v - .5) * 2, n = .55 * vn(u, v, 4) + .3 * vn(u, v, 8) + .15 * vn(u, v, 16);
+    const a = clamp((1 - d) * 1.6) * clamp(n * 1.5 - .15); const k = (y * N + x) * 4; img.data[k] = img.data[k + 1] = img.data[k + 2] = 255; img.data[k + 3] = a * 255;
+  }
+  g.putImageData(img, 0, 0); const t = new THREE.CanvasTexture(c); return t;
+}
+function billboardLayer(n, additive) {
+  const geo = new THREE.InstancedBufferGeometry(); const q = new THREE.PlaneGeometry(1, 1);
+  geo.index = q.index; geo.attributes.position = q.attributes.position; geo.attributes.uv = q.attributes.uv;
+  const iPos = new THREE.InstancedBufferAttribute(new Float32Array(n * 3), 3), iSize = new THREE.InstancedBufferAttribute(new Float32Array(n * 2), 2), iCol = new THREE.InstancedBufferAttribute(new Float32Array(n * 4), 4);
+  [iPos, iSize, iCol].forEach(a => a.setUsage(THREE.DynamicDrawUsage));
+  geo.setAttribute('iPos', iPos); geo.setAttribute('iSize', iSize); geo.setAttribute('iCol', iCol); geo.instanceCount = n;
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { map: { value: noiseTex(additive ? 7 : 11) } }, transparent: true, depthWrite: false,
+    blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+    vertexShader: `attribute vec3 iPos; attribute vec2 iSize; attribute vec4 iCol; varying vec2 vUv; varying vec4 vCol;
+      void main(){ float a = iSize.y; mat2 R = mat2(cos(a), -sin(a), sin(a), cos(a)); vUv = R * (uv - .5) + .5; vCol = iCol;
+        vec4 mv = modelViewMatrix * vec4(iPos, 1.0); mv.xy += position.xy * iSize.x; gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `uniform sampler2D map; varying vec2 vUv; varying vec4 vCol;
+      void main(){ float a = texture2D(map, vUv).a * vCol.a; if (a < .003) discard; gl_FragColor = vec4(vCol.rgb * ${additive ? 'a' : '1.0'}, ${additive ? '1.0' : 'a'}); }`,
+  });
+  const mesh = new THREE.Mesh(geo, mat); mesh.frustumCulled = false; return { mesh, iPos, iSize, iCol, n };
+}
+const FIRE = billboardLayer(320, true), SMOKE = billboardLayer(200, false);
+SMOKE.mesh.renderOrder = 1; FIRE.mesh.renderOrder = 2; vp.add(SMOKE.mesh); vp.add(FIRE.mesh);
+const R2 = rng(99);
+const FIREP = Array.from({ length: 220 }, () => ({ d: V3(R2() - .5, R2() * .8 + .05, R2() - .5).normalize(), r: 1.6 + R2() * 2.2, b: R2() * .22, s: .9 + R2() * 1.3, rot: R2() * 6.28, life: 1.4 + R2() * 1.8, rise: .5 + R2() * .9 }));
+const BURNP = Array.from({ length: 100 }, () => ({ x: (R2() - .5) * 3.2, z: (R2() - .5) * 1.3, y: .7 + R2() * .5, rate: .7 + R2() * .6, ph: R2(), s: .55 + R2() * .6, rot: R2() * 6.28 }));
+const SMOKEP = Array.from({ length: SMOKE.n }, (_, i) => ({ loop: i >= 110, d: V3(R2() - .5, R2() * .6 + .1, R2() - .5).normalize(), r: 1.8 + R2() * 2.6, b: .25 + R2() * .7, s: 1.4 + R2() * 1.6, rot: R2() * 6.28, rise: .9 + R2() * 1.4, sh: .5 + R2() * .5, ph: R2(), x: (R2() - .5) * 2.4, z: (R2() - .5) * 1.2 }));
+const FIRECOL = k => k > .75 ? [1, .95, .8] : k > .5 ? lerpC([1, .62, .18], [1, .95, .8], (k - .5) / .25) : k > .25 ? lerpC([.85, .2, .05], [1, .62, .18], (k - .25) / .25) : lerpC([.25, .05, .02], [.85, .2, .05], k / .25);
+function lerpC(a, b, k) { return [lerp(a[0], b[0], k), lerp(a[1], b[1], k), lerp(a[2], b[2], k)]; }
+function updateVolumes(tau, mode, intensity) {
+  const show = tau > 0 && (mode === 'pyro' || mode === 'debris' || mode === 'render');
+  FIRE.mesh.visible = SMOKE.mesh.visible = show;
+  if (!show) return;
+  FIREP.forEach((f, i) => {
+    const age = tau - f.b, k = age > 0 ? age / f.life : -1;
+    if (k < 0 || k > 1) { FIRE.iCol.setXYZW(i, 0, 0, 0, 0); return; }
+    const R = f.r * (1 - Math.exp(-age * 3.2)), up = f.rise * age * age * .9;
+    FIRE.iPos.setXYZ(i, EXC.x + f.d.x * R, EXC.y + f.d.y * R + up, EXC.z + f.d.z * R);
+    FIRE.iSize.setXY(i, f.s * (1 + age * 2.2), f.rot + age * .6);
+    const temp = clamp(1 - k * 1.05) * (intensity < .6 ? .86 : 1), c = FIRECOL(temp), a = clamp(1 - k) * clamp(age * 10) * intensity * .2;
+    FIRE.iCol.setXYZW(i, c[0], c[1] * .9, c[2] * .8, a);
+  });
+  // the wreck keeps burning: looping flames over the chassis
+  const on = clamp((tau - .5) / 1.2);
+  BURNP.forEach((b, j) => {
+    const i = 220 + j, ph = (tau * b.rate + b.ph) % 1;
+    if (on <= 0) { FIRE.iCol.setXYZW(i, 0, 0, 0, 0); return; }
+    FIRE.iPos.setXYZ(i, b.x * (1 - ph * .3), b.y + ph * 1.7, b.z + Math.sin(tau * 3 + j) * .08);
+    FIRE.iSize.setXY(i, b.s * (1 + ph * .9), b.rot + tau * .8);
+    const c = FIRECOL(clamp(.88 - ph * .85)), a = Math.sin(Math.PI * ph) * on * intensity * .32;
+    FIRE.iCol.setXYZW(i, c[0], c[1] * .9, c[2] * .8, a);
+  });
+  const dark = mode === 'render' ? .07 : .42;
+  SMOKEP.forEach((s, i) => {
+    if (s.loop) {   // smoke column rising from the burning wreck
+      const on = clamp((tau - 1.0) / 1.5), ph = (tau * .17 + s.ph) % 1;
+      if (on <= 0) { SMOKE.iCol.setXYZW(i, 0, 0, 0, 0); return; }
+      SMOKE.iPos.setXYZ(i, s.x + ph * 1.6, 1.8 + ph * 8, s.z + Math.sin(ph * 4 + i) * .5);
+      SMOKE.iSize.setXY(i, 1.2 + ph * 4.2, s.rot + tau * .2);
+      const g = dark * s.sh * (mode === 'render' ? 1 : .9), a = Math.sin(Math.PI * ph) * on * (mode === 'render' ? .55 : .4);
+      SMOKE.iCol.setXYZW(i, g, g * .95, g * .92, a); return;
+    }
+    const age = tau - s.b;
+    if (age < 0) { SMOKE.iCol.setXYZW(i, 0, 0, 0, 0); return; }
+    const R = s.r * (1 - Math.exp(-age * 1.6)), up = s.rise * age * (1 + age * .25);
+    SMOKE.iPos.setXYZ(i, EXC.x + s.d.x * R * 1.1, EXC.y + .6 + s.d.y * R + up, EXC.z + s.d.z * R);
+    SMOKE.iSize.setXY(i, s.s * (1 + age * .9), s.rot + age * .25);
+    const g = dark * s.sh, a = clamp(age * 1.6) * clamp(1.4 - age * .12) * (mode === 'render' ? .7 : .45);
+    SMOKE.iCol.setXYZW(i, g, g * .95, g * .92, a);
+  });
+  [FIRE, SMOKE].forEach(L => { L.iPos.needsUpdate = L.iSize.needsUpdate = L.iCol.needsUpdate = true; });
+}
+// sparks: short streaks
+const NSP = 420, spGeo = new THREE.BufferGeometry(), spPos = new Float32Array(NSP * 6), spCol = new Float32Array(NSP * 6);
+spGeo.setAttribute('position', new THREE.BufferAttribute(spPos, 3).setUsage(THREE.DynamicDrawUsage)); spGeo.setAttribute('color', new THREE.BufferAttribute(spCol, 3).setUsage(THREE.DynamicDrawUsage));
+const sparks = new THREE.LineSegments(spGeo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); sparks.frustumCulled = false; vp.add(sparks);
+const R3 = rng(31);
+const SPP = Array.from({ length: NSP }, () => ({ v: V3(R3() - .5, R3() * .9 + .2, R3() - .5).normalize().multiplyScalar(8 + R3() * 16), b: R3() * .5, life: .8 + R3() * 1.8, debris: R3() < .3 }));
+function updateSparks(tau, mode) {
+  const show = tau > 0 && (mode === 'debris' || mode === 'render'); sparks.visible = show; if (!show) return;
+  SPP.forEach((s, i) => {
+    const age = tau - s.b, k = age / s.life, o = i * 6;
+    if (age < 0 || k > 1) { spPos.fill(0, o, o + 6); spCol.fill(0, o, o + 6); return; }
+    const drag = (1 - Math.exp(-age * 1.4)) / 1.4, x = EXC.x + s.v.x * drag, y = Math.max(.02, EXC.y + s.v.y * drag - G * .5 * age * age * (s.debris ? 1 : .35)), z = EXC.z + s.v.z * drag;
+    const vx = s.v.x * Math.exp(-age * 1.4), vy = s.v.y * Math.exp(-age * 1.4) - G * age * (s.debris ? 1 : .35), vz = s.v.z * Math.exp(-age * 1.4), L = s.debris ? .02 : .045;
+    spPos.set([x, y, z, x - vx * L, y - vy * L, z - vz * L], o);
+    const a = (1 - k) * (s.debris ? .5 : 1.4), c = s.debris ? [.5 * a, .45 * a, .4 * a] : [1.6 * a, .85 * a, .3 * a];
+    spCol.set([...c, ...c.map(v => v * .3)], o);
+  });
+  spGeo.attributes.position.needsUpdate = spGeo.attributes.color.needsUpdate = true;
+}
+const shock = new THREE.Mesh(new THREE.RingGeometry(.9, 1, 64), new THREE.MeshBasicMaterial({ color: '#ffb070', transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+shock.rotation.x = -Math.PI / 2; shock.position.set(EXC.x, .03, EXC.z); vp.add(shock);
+
+function updateViewport(t, mode, vpCamera, aspect) {
+  const tau = simTau(t), render = mode === 'render';
+  vp.background = render ? BG_NIGHT : BG_VIEW;
+  gridHelper.visible = !render; asphalt.material.color.set(render ? '#141217' : '#3a3e45'); kerb.visible = lane.visible = render;
+  vpHemi.intensity = render ? .12 : 1.4; vpKey.intensity = render ? 0 : 1.6; street.intensity = render ? 260 : 0; moon.intensity = render ? .35 : 0;
+  const burn = render ? clamp((tau - .3) / 3) : 0;
+  applyMode(mode, burn);
+  // exploded view in the fracture step: pieces drift apart a little so the cuts read
+  const spread = mode === 'fracture' ? eio(p(t, 17.0, 1.4)) * (1 - eio(p(t, 20.4, .9))) * .35 : 0;
+  CHUNKS.forEach(c => {
+    if (tau >= 0 && (mode === 'sim' || mode === 'pyro' || mode === 'debris' || mode === 'render')) chunkAt(c, tau);
+    else { c.mesh.position.copy(c.base); c.mesh.quaternion.copy(c.q0); if (spread) c.mesh.position.addScaledVector(c.base.clone().sub(V3(0, .6, 0)), spread); }
+  });
+  const fl = tau > 0 ? Math.exp(-tau * 1.6) : 0;
+  const burnL = tau > .5 ? clamp((tau - .5) / 1.2) * (.85 + .15 * Math.sin(tau * 17) * Math.sin(tau * 7)) : 0;
+  flash.intensity = (mode === 'pyro' || mode === 'debris' || render) ? (render ? 160 : 60) * fl + (render ? 55 : 18) * burnL : 0;
+  updateVolumes(tau, mode, render ? .42 : .95); updateSparks(tau, mode);
+  const sk = tau > 0 && mode !== 'clay' && mode !== 'parts' && mode !== 'fracture' ? clamp(tau / 1.2) : 0;
+  shock.visible = sk > 0 && sk < 1; shock.scale.setScalar(.5 + sk * 14); shock.material.opacity = (1 - sk) * (render ? .18 : .6);
+  // camera: slow orbit; wider once things fly; shake on the blast
+  const orbit = .55 + t * .045, dist = render ? (tau > 0 ? 15 + clamp(tau / 2) * 4 : 11) : tau > 0 ? 10.5 + clamp(tau / 2) * 3 : 7.6, h = render ? (tau > 0 ? 4.2 : 3.0) : tau > 0 ? 3.6 : 2.6;
+  const shake = tau > 0 && tau < .8 ? (1 - tau / .8) * .25 : 0;
+  vpCamera.position.set(Math.cos(orbit) * dist + Math.sin(t * 61) * shake, h + Math.sin(t * 47) * shake, Math.sin(orbit) * dist);
+  vpCamera.aspect = aspect; vpCamera.updateProjectionMatrix(); vpCamera.lookAt(0, tau > 0 ? 1.8 : .7, 0);
+}
+
+// ═════════════════════════════════════════════════════════════
+//  DESK SCENE — screens on a desk, the mascot
+// ═════════════════════════════════════════════════════════════
+const desk = new THREE.Scene(); desk.background = new THREE.Color('#0a0706'); desk.fog = new THREE.Fog('#0a0706', 40, 110);
+const cam = new THREE.PerspectiveCamera(38, W / H, .1, 400);
+desk.add(new THREE.AmbientLight('#ffe6cc', .55));
+const sun = new THREE.DirectionalLight('#ffd9b0', 1.2); sun.position.set(-10, 25, 12); desk.add(sun);
+{ // wood-ish desk
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 1024; const g = c.getContext('2d'), r = rng(5);
+  g.fillStyle = '#2a1c15'; g.fillRect(0, 0, 1024, 1024);
+  for (let i = 0; i < 260; i++) { const y = r() * 1024; g.strokeStyle = `rgba(${60 + r() * 30},${36 + r() * 18},${24 + r() * 12},${.25 + r() * .35})`; g.lineWidth = .6 + r() * 2.4; g.beginPath(); g.moveTo(0, y); for (let x = 0; x <= 1024; x += 64) g.lineTo(x, y + Math.sin(x * .01 + i) * 6); g.stroke(); }
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(4, 4);
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(240, 240), new THREE.MeshStandardMaterial({ map: tex, roughness: .5, metalness: .05 }));
+  plane.rotation.x = -Math.PI / 2; desk.add(plane);
+}
+// a screen lying on the desk: bezel + canvas face; coordinates: canvas px → world
+function makeScreen(w, h, pxPerUnit, pos, yaw) {
+  const g = new THREE.Group(); g.position.copy(pos); g.rotation.y = yaw; desk.add(g);
+  const bez = new THREE.Mesh(new THREE.BoxGeometry(w + .5, .18, h + .5), new THREE.MeshStandardMaterial({ color: '#141416', roughness: .35, metalness: .4 })); bez.position.y = .09; g.add(bez);
+  const c = document.createElement('canvas'); c.width = Math.round(w * pxPerUnit); c.height = Math.round(h * pxPerUnit);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, transparent: true, toneMapped: false })); face.rotation.x = -Math.PI / 2; face.position.y = .19; g.add(face);
+  const toWorld = (px, py, y = .2) => g.localToWorld(V3((px / c.width - .5) * w, y, (py / c.height - .5) * h));
+  return { g, c, ctx: c.getContext('2d'), tex, face, w, h, toWorld };
+}
+const VIEW = makeScreen(16, 10, 100, V3(0, 0, 0), 0);
+const vpInner = new THREE.Mesh(new THREE.PlaneGeometry(16 * .9, 10 * .84), new THREE.MeshBasicMaterial({ map: rt.texture, toneMapped: false }));
+vpInner.rotation.x = -Math.PI / 2; vpInner.position.set(.32, .185, .3); VIEW.g.add(vpInner);
+const NET = makeScreen(11, 10.5, 100, V3(-15.5, 0, .8), .22);
+const PARM = makeScreen(9, 10.5, 100, V3(14.8, 0, .8), -.22);
+const TIME = makeScreen(24, 3.4, 100, V3(0, 0, 8.2), 0);
+desk.updateMatrixWorld(true);
+
+// ── 2D UI drawn onto the screens (re-creation, not the real UI) ──
+function T(g, s, x, y, o = {}) {
+  const { size = 24, weight = 500, color = '#e8e8e8', align = 'left', alpha = 1, mono = false, base = 'alphabetic' } = o;
+  if (alpha <= 0) return; g.save(); g.globalAlpha *= alpha; g.font = `${weight} ${size}px ${mono ? MONO : SANS}`; g.fillStyle = color; g.textAlign = align; g.textBaseline = base; g.fillText(s, x, y); g.restore();
+}
+function rr(g, x, y, w, h, r) { g.beginPath(); g.roundRect(x, y, w, h, r); }
+function chrome(g, title, w, h) {
+  g.fillStyle = '#1e1f22'; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#2b2d31'; g.fillRect(0, 0, w, 58); g.fillStyle = '#3a3c41'; g.fillRect(0, 58, w, 2);
+  [['#ff5f57', 26], ['#febc2e', 52], ['#28c840', 78]].forEach(([c, x]) => { g.fillStyle = c; g.beginPath(); g.arc(x, 29, 8, 0, 7); g.fill(); });
+  T(g, title, 106, 38, { size: 24, weight: 600, color: '#c9cbd1' });
+}
+const NODES = [
+  ['file', '자동차 모델 불러오기', 'File', '#6c7a89'],
+  ['name', '파트 나누기 · name', 'Assemble', '#6c7a89'],
+  ['frac', 'RBD Material Fracture', 'Glass', '#c06a3c'],
+  ['cons', 'RBD Constraint Properties', 'Glue', '#c06a3c'],
+  ['bullet', 'RBD Bullet Solver', 'Sim', '#c06a3c'],
+  ['burst', 'Pyro Burst Source', 'Source', '#d9902b'],
+  ['pyro', 'Pyro Solver', 'Sim', '#d9902b'],
+  ['debris', 'Debris Source', 'Points', '#c9b33a'],
+  ['pop', 'POP Solver · 불티', 'Sim', '#c9b33a'],
+  ['karma', 'Karma 렌더', 'ROP', '#8b6cff'],
+];
+const STEP_NODES = [[0, 1], [2, 3], [4], [5, 6], [7, 8], [9]];
+const nodeXY = i => [550, 140 + i * 88];
+function drawNet(t, st) {
+  const g = NET.ctx, w = NET.c.width, h = NET.c.height; chrome(g, '네트워크  /obj/car_explosion', w, h);
+  g.strokeStyle = 'rgba(255,255,255,0.04)'; g.lineWidth = 1; for (let x = 0; x < w; x += 40) { g.beginPath(); g.moveTo(x, 60); g.lineTo(x, h); g.stroke(); } for (let y = 60; y < h; y += 40) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
+  const shown = st < 0 ? -1 : Math.max(...STEP_NODES[st]);
+  NODES.forEach(([id, lab, sub, col], i) => {
+    if (i > shown + (st < 0 ? 0 : 0)) return;
+    const [x, y] = nodeXY(i), cur = st >= 0 && STEP_NODES[st].includes(i), firstOfStep = st >= 0 && STEP_NODES[st][0];
+    const appear = cur ? eo(p(t, HEAD[st][0] + .6 + (i - firstOfStep) * .8, .4)) : 1; if (appear <= 0) return;
+    if (i) { g.strokeStyle = '#8a8d94'; g.lineWidth = 3; g.beginPath(); g.moveTo(x, y - 88 + 30); g.lineTo(x, y - 30); g.stroke(); }
+    g.save(); g.globalAlpha = appear;
+    rr(g, x - 300, y - 28, 600, 56, 10); g.fillStyle = cur ? '#3b3e44' : '#2e3034'; g.fill();
+    g.lineWidth = cur ? 4 : 1.5; g.strokeStyle = cur ? '#ffd166' : '#4a4d53'; g.stroke();
+    g.fillStyle = col; rr(g, x - 300, y - 28, 22, 56, [10, 0, 0, 10]); g.fill();
+    T(g, lab, x - 262, y + 9, { size: 26, weight: 700, color: '#f0f0f0' });
+    T(g, sub, x + 280, y + 8, { size: 20, color: '#9a9da4', align: 'right', mono: true });
+    if (cur) { g.fillStyle = '#4ea3ff'; rr(g, x + 306, y - 20, 14, 40, 4); g.fill(); }
+    g.restore();
+  });
+  NET.tex.needsUpdate = true;
+}
+const PARMS = [
+  ['모델 준비', [['Group by', 'name 속성'], ['파트 수', '20'], ['충돌 프록시', 'Convex Hull']]],
+  ['RBD Material Fracture', [['Material Type', 'Glass (창문)'], ['Fracture Level', '2'], ['패널', '통째로 · Glue']]],
+  ['RBD Bullet Solver', [['폭발 속도', '바깥 방향 v'], ['Glue 세기', '넘으면 끊김'], ['Substeps', '2'], ['Bounce', '0.35']]],
+  ['Pyro Solver', [['Voxel Size', '0.05'], ['Temperature', '1.5'], ['Flame Lifespan', '0.6 s'], ['Disturbance', '1.2'], ['Turbulence', '0.8']]],
+  ['POP Solver', [['Debris 포인트', '8,000'], ['불티', '20,000'], ['Advect by Volumes', 'on'], ['Drag', '0.4']]],
+  ['Karma 렌더', [['Motion Blur', 'on'], ['불빛', '점 광원 · 세기 연동'], ['패스', '불 · 연기 · 파편'], ['해상도', '1920 × 1080']]],
+];
+function drawParms(t, st) {
+  const g = PARM.ctx, w = PARM.c.width, h = PARM.c.height; chrome(g, '파라미터', w, h);
+  if (st < 0) { PARM.tex.needsUpdate = true; return; }
+  const [title, rows] = PARMS[st], k0 = eo(p(t, HEAD[st][0] + .8, .5));
+  g.save(); g.globalAlpha = k0;
+  T(g, title, 40, 128, { size: 34, weight: 800, color: '#ffffff' });
+  rows.forEach(([lab, val], i) => {
+    const y = 200 + i * 132, k = eo(p(t, HEAD[st][0] + 1.1 + i * .35, .4));
+    g.save(); g.globalAlpha *= k;
+    T(g, lab, 40, y + 28, { size: 26, weight: 600, color: '#b8bbc2' });
+    rr(g, 40, y + 46, w - 80, 56, 8); g.fillStyle = '#2b2d31'; g.fill();
+    const f = (i * 37 % 70 + 25) / 100 * eo(p(t, HEAD[st][0] + 1.3 + i * .35, .6));
+    rr(g, 40, y + 46, (w - 80) * f, 56, 8); g.fillStyle = 'rgba(255,170,60,0.22)'; g.fill();
+    T(g, val, 60, y + 84, { size: 28, weight: 700, color: '#ffd166', mono: /^[0-9.,× s]+$/.test(val) });
+    g.restore();
+  });
+  T(g, '* 값은 예시', 40, h - 30, { size: 22, color: '#7f838b' });
+  g.restore(); PARM.tex.needsUpdate = true;
+}
+const CACHES = [['RBD', '#4fd1c5', 2, 23.0, 29.6], ['Pyro', '#ff9a3c', 3, 31.0, 38.4], ['POP', '#ffd166', 4, 39.8, 46.0], ['Render', '#a78bfa', 5, 48.6, 55.5]];
+function frameOf(t) { const tau = simTau(t); return tau < 0 ? 1 : 1 + Math.min(239, Math.floor(tau * 24)); }
+function drawTime(t, st) {
+  const g = TIME.ctx, w = TIME.c.width, h = TIME.c.height; g.fillStyle = '#1b1c1f'; g.fillRect(0, 0, w, h);
+  const x0 = 180, x1 = w - 60, fx = f => x0 + (x1 - x0) * (f - 1) / 239;
+  T(g, '타임라인', 30, 50, { size: 26, weight: 700, color: '#c9cbd1' });
+  for (let f = 1; f <= 240; f += 12) { g.fillStyle = '#4a4d53'; g.fillRect(fx(f), 70, 2, f % 48 === 1 ? 26 : 14); if (f % 48 === 1) T(g, String(f), fx(f) + 6, 92, { size: 18, color: '#8a8d94', mono: true }); }
+  CACHES.forEach(([lab, col, s, a, b], i) => {
+    const y = 120 + i * 50, k = clamp((t - a) / (b - a));
+    T(g, lab, 30, y + 30, { size: 22, weight: 700, color: st >= s || t > a ? col : '#4a4d53', mono: true });
+    rr(g, x0, y + 8, x1 - x0, 30, 6); g.fillStyle = '#26282c'; g.fill();
+    if (k > 0) { rr(g, x0, y + 8, (x1 - x0) * k, 30, 6); g.fillStyle = rgba(col, .75); g.fill(); }
+  });
+  const f = frameOf(t), px = fx(f);
+  g.fillStyle = '#ff5a3c'; g.fillRect(px - 2, 60, 4, h - 70); rr(g, px - 34, 34, 68, 32, 6); g.fill();
+  T(g, String(f), px, 58, { size: 20, weight: 800, color: '#fff', align: 'center', mono: true });
+  TIME.tex.needsUpdate = true;
+}
+const MODE_LAB = { clay: '뷰포트 · 클레이', parts: '뷰포트 · name별 색', fracture: '뷰포트 · 조각별 색', sim: '뷰포트 · RBD', pyro: '뷰포트 · Pyro', debris: '뷰포트 · 파편 · 불티', render: 'Karma 렌더' };
+const PART_LABELS = [['hood', 1], ['door_fl', 4], ['roof', 3], ['wheel_fl', 10], ['glass_front', 14], ['bumper_f', 8]];
+function drawViewFrame(t, mode, st) {
+  const g = VIEW.ctx, w = VIEW.c.width, h = VIEW.c.height; g.clearRect(0, 0, w, h);
+  chrome(g, '씬 뷰  /obj/car_explosion', w, h);
+  // the live render sits in the middle (vpInner); clear a window for it
+  const ix = 0.05 * w + .32 / 16 * w, iy = .08 * h + .3 / 10 * h; g.clearRect(w * .05 + 32, h * .08 + 30, w * .9, h * .84);
+  g.fillStyle = '#26282c'; g.fillRect(0, 60, w * .05 + 32, h - 60);
+  for (let i = 0; i < 9; i++) { rr(g, 20, 90 + i * 70, 44, 44, 8); g.fillStyle = i === 2 ? '#3d6fb6' : '#34363b'; g.fill(); }
+  rr(g, w - 360, 76, 330, 44, 10); g.fillStyle = 'rgba(0,0,0,0.55)'; g.fill();
+  T(g, MODE_LAB[mode], w - 340, 106, { size: 24, weight: 700, color: mode === 'render' ? '#c4b5fd' : '#ffd166' });
+  T(g, `frame ${frameOf(t)} · 24 fps`, w - 40, h - 26, { size: 22, color: '#d0d2d8', align: 'right', mono: true });
+  VIEW.tex.needsUpdate = true;
+}
+
+// ── mascot: a small ember cube with a flame tuft (original design) ──
+const mascot = new THREE.Group(); desk.add(mascot);
+const emberMat = new THREE.MeshStandardMaterial({ color: '#ff6a2b', roughness: .45, emissive: '#5a1a00', emissiveIntensity: .25 });
+const body = new THREE.Mesh(new THREE.BoxGeometry(1, .9, .9), emberMat); body.position.y = .55; mascot.add(body);
+const eyeMat = new THREE.MeshBasicMaterial({ color: '#1a0d08' });
+[-.2, .2].forEach(x => { const e = new THREE.Mesh(new THREE.BoxGeometry(.12, .2, .04), eyeMat); e.position.set(x, .62, .46); mascot.add(e); });
+[-.25, .25].forEach(x => { const l = new THREE.Mesh(new THREE.BoxGeometry(.18, .22, .18), emberMat); l.position.set(x, .08, 0); mascot.add(l); });
+const flameMat = new THREE.MeshBasicMaterial({ color: '#ffb347' });
+const flame = new THREE.Mesh(new THREE.ConeGeometry(.16, .5, 10), flameMat); flame.position.y = 1.25; mascot.add(flame);
+const flame2 = new THREE.Mesh(new THREE.ConeGeometry(.09, .3, 8), new THREE.MeshBasicMaterial({ color: '#fff1c4' })); flame2.position.y = 1.18; mascot.add(flame2);
+const mLight = new THREE.PointLight('#ff8a3c', 4, 5, 2); mLight.position.y = 1.2; mascot.add(mLight);
+mascot.scale.setScalar(1.15);
+// where the mascot stands: [t, kind, ref] — screens' points, hops in between
+const nodeW = i => NET.toWorld(nodeXY(i)[0] + 360, nodeXY(i)[1], .2);
+const SPOTS = [
+  [0, V3(-28, 0, 14)], [2.6, V3(-22, 0, 9)], [4.6, nodeW(0)], [6.6, nodeW(1)], [8.6, VIEW.toWorld(1250, 720)],
+  [13.6, nodeW(2)], [15.2, nodeW(3)], [17.0, VIEW.toWorld(1250, 720)],
+  [22.0, nodeW(4)], [23.6, TIME.toWorld(180, 140)], [30.4, TIME.toWorld(180, 140)],
+  [30.6, nodeW(5)], [31.8, nodeW(6)], [33.0, PARM.toWorld(450, 560)], [34.6, VIEW.toWorld(1250, 720)],
+  [39.6, nodeW(7)], [40.6, nodeW(8)], [41.8, VIEW.toWorld(1250, 720)],
+  [47.0, nodeW(9)], [48.4, VIEW.toWorld(800, 900)], [64, VIEW.toWorld(800, 900)],
+];
+function mascotAt(t) {
+  let i = 0; while (i < SPOTS.length - 1 && t >= SPOTS[i + 1][0]) i++;
+  const [ta, pa] = SPOTS[i], [tb, pb] = SPOTS[Math.min(i + 1, SPOTS.length - 1)];
+  const hopD = Math.min(1.0, (tb - ta) * .6), hs = tb - hopD, k = clamp((t - hs) / hopD);
+  const pos = pa.clone().lerp(pb, eio(k)); const dist = pa.distanceTo(pb);
+  pos.y += Math.sin(Math.PI * k) * (1.2 + dist * .15) + .2;
+  const land = clamp(1 - Math.abs(t - tb) / .18), take = clamp(1 - Math.abs(t - hs) / .18);
+  // tap (bob) while standing on a node
+  const tap = k <= 0 ? Math.max(0, Math.sin((t - ta) * 9)) * .12 * clamp((t - ta) / .3) * clamp((hs - t) / .3) : 0;
+  if (t > 24.4 && t < 30.2) { const f = frameOf(t), px = 180 + (2340 - 180) * (f - 1) / 239; pos.copy(TIME.toWorld(px, 140)); pos.y += .2 + Math.abs(Math.sin(t * 6)) * .25; }
+  mascot.position.copy(pos); mascot.position.y -= tap;
+  const sq = 1 - .22 * Math.max(land, take) * (k <= 0 || k >= 1 ? 1 : 0);
+  mascot.scale.set(1.15 * (2 - sq), 1.15 * sq, 1.15 * (2 - sq));
+  const dir = pb.clone().sub(pa); if (dir.lengthSq() > .01 && k > 0 && k < 1) mascot.rotation.y = Math.atan2(dir.x, dir.z);
+  else mascot.rotation.y = lerp(mascot.rotation.y, 0, .3);
+  flame.scale.set(1, 1 + .25 * Math.sin(t * 23), 1); flame2.scale.set(1, 1 + .3 * Math.sin(t * 31 + 1), 1);
+}
+
+// ── camera path over the desk: [t, pos, target, roll] ──
+const CAM = [
+  [0, V3(-34, 3.2, 26), V3(-4, 0, 0), .1], [4.2, V3(-18, 8.5, 9), V3(-15.2, 0, .8), .03], [7.8, V3(-17, 8, 8.4), V3(-14.6, 0, 1), .02],
+  [8.8, V3(-1.5, 9.5, 9.5), V3(.3, 0, .8), 0], [12.8, V3(-.5, 9, 9), V3(.5, 0, .6), -.01],
+  [13.8, V3(-17.5, 8.5, 8.8), V3(-15, 0, 1), .02], [16.4, V3(-16.5, 8, 8.2), V3(-14.6, 0, 1.2), .02],
+  [17.3, V3(.5, 9.4, 9.2), V3(.4, 0, .6), 0], [21.2, V3(1.2, 9, 9), V3(.6, 0, .6), -.01],
+  [22.2, V3(-16, 8.6, 8.6), V3(-14.6, 0, 1.6), .02], [23.4, V3(0, 13.5, 15.5), V3(0, 0, 3.4), 0], [29.8, V3(-.6, 13, 15), V3(0, 0, 3.2), 0],
+  [30.8, V3(-16, 8.6, 8.6), V3(-14.6, 0, 1.8), .02], [32.8, V3(13.5, 9, 9), V3(13.4, 0, 1.2), -.02], [34.4, V3(3.5, 10.5, 10.5), V3(1.6, 0, .8), -.01], [38.8, V3(4.5, 10.5, 10.5), V3(2, 0, .8), -.01],
+  [39.8, V3(-16, 8.6, 8.6), V3(-14.6, 0, 2.2), .02], [41.6, V3(.2, 9.6, 9.6), V3(.4, 0, .6), 0], [46.4, V3(.8, 9.2, 9.2), V3(.5, 0, .6), 0],
+  [47.4, V3(-16, 8.6, 8.6), V3(-14.6, 0, 2.6), .02], [48.4, V3(0, 15, 8), V3(.32, 0, .4), 0], [49.6, V3(.32, 12.6, .31), V3(.32, 0, .3), 0], [64, V3(.32, 12.6, .31), V3(.32, 0, .3), 0],
+];
+const UPV = V3(0, 1, 0);
+function cameraAt(t, c) {
+  let i = 0; while (i < CAM.length - 1 && t >= CAM[i + 1][0]) i++;
+  const a = CAM[i], b = CAM[Math.min(i + 1, CAM.length - 1)], k = a === b ? 0 : eio(clamp((t - a[0]) / (b[0] - a[0])));
+  c.position.copy(a[1]).lerp(b[1], k); const tg = a[2].clone().lerp(b[2], k);
+  c.up.copy(i >= CAM.length - 3 ? V3(0, 0, -1) : UPV); c.lookAt(tg);
+  c.rotateZ(lerp(a[3], b[3], k)); c.updateMatrixWorld();
+}
+const camSpeed = t => { const a = new THREE.PerspectiveCamera(), b = new THREE.PerspectiveCamera(); cameraAt(t - .02, a); cameraAt(t + .02, b); return a.position.distanceTo(b.position) / .04; };
+
+// ═════════════════════════════════════════════════════════════
+//  COMPOSITE + OVERLAY
+// ═════════════════════════════════════════════════════════════
+const deskComposer = new EffectComposer(renderer);
+deskComposer.addPass(new RenderPass(desk, cam));
+deskComposer.addPass(new UnrealBloomPass(new THREE.Vector2(W / 2, H / 2), .55, .5, .78));
+deskComposer.addPass(new OutputPass());
+const vpFullCam = new THREE.PerspectiveCamera(36, W / H, .1, 400);
+const fullComposer = new EffectComposer(renderer);
+fullComposer.addPass(new RenderPass(vp, vpFullCam));
+fullComposer.addPass(new UnrealBloomPass(new THREE.Vector2(W / 2, H / 2), .6, .5, .72));
+fullComposer.addPass(new OutputPass());
+const out = document.getElementById('c'), x2 = out.getContext('2d');
+function O(s, x, y, o = {}) { T(x2, s, x, y, o); }
+function glass(x, y, w, h, a = 1, r = 18) { x2.save(); x2.globalAlpha *= a; rr(x2, x, y, w, h, r); x2.fillStyle = 'rgba(12,9,8,0.72)'; x2.fill(); x2.lineWidth = 1.5; x2.strokeStyle = 'rgba(255,170,90,0.28)'; x2.stroke(); x2.restore(); }
+const BODY = [
+  ['파트별로 나누고 각 파트에 name 속성을 붙입니다.', '충돌 계산용으로는 단순한 프록시(볼록 껍질)를 따로 둡니다.'],
+  ['유리는 RBD Material Fracture(Glass)로 조각냅니다.', '문 · 후드 같은 패널은 통째로 두고 접착(glue) 제약으로 붙여 둡니다.'],
+  ['폭발 순간, 중심에서 바깥으로 속도를 줍니다.', '제약 세기를 넘는 곳부터 끊기며 패널과 유리 조각이 날아갑니다.'],
+  ['Pyro Burst Source로 폭발 모양의 소스를 만들고', 'Pyro Solver로 불꽃 · 온도 · 연기를 풉니다. 복셀 크기가 해상도와 시간을 정합니다.'],
+  ['조각 가장자리에서 작은 파편을 뿌리고 POP으로 불티를 날립니다.', '불의 속도장을 따라가게(Advect by Volumes) 하면 불과 같이 움직입니다.'],
+  ['Karma로 렌더합니다. 불빛은 폭발 중심의 광원 세기를 불 밝기에 맞춰 표현하고,', '모션 블러를 켜고, 불 · 연기 · 파편을 따로 뽑아 합성에서 조정합니다.'],
+];
+function overlay(t) {
+  const st = stepAt(t);
+  // top bar
+  const ta = eo(p(t, 3.6, .8));
+  x2.save(); x2.globalAlpha = ta;
+  O('HOUDINI · CAR EXPLOSION FX', 48, 58, { size: 18, weight: 700, color: 'rgba(255,214,170,0.85)', mono: true });
+  if (st >= 0 && t < 56) O(`${HEAD[st][2]} / 06`, W - 48, 58, { size: 18, weight: 700, color: 'rgba(255,214,170,0.85)', mono: true, align: 'right' });
+  O('개념 시연 · 화면은 설명용 재구성 · 값은 예시', W - 48, 88, { size: 16, color: 'rgba(255,214,170,0.55)', align: 'right' });
+  x2.restore();
+  // step card
+  if (st >= 0 && t < 56.2) {
+    const [s, e, n, title] = HEAD[st], a = win(t, s + .2, e + .1, .45);
+    if (a > 0) {
+      const [l1, l2] = BODY[st], w = Math.max(TW(l1, 25), TW(l2, 25)) + 80;
+      glass(48, H - 236, w, 180, a);
+      x2.save(); x2.globalAlpha = a;
+      O(n, 80, H - 172, { size: 26, weight: 800, color: '#ff9a3c', mono: true });
+      O(title, 132, H - 172, { size: 40, weight: 800, color: '#fff3e6' });
+      O(l1, 80, H - 120, { size: 25, color: '#e8d9cc' }); O(l2, 80, H - 82, { size: 25, color: '#e8d9cc' });
+      x2.restore();
+    }
+  }
+  // progress
+  x2.fillStyle = 'rgba(255,214,170,0.15)'; x2.fillRect(48, H - 30, W - 96, 3);
+  x2.fillStyle = '#ff9a3c'; x2.fillRect(48, H - 30, (W - 96) * clamp(t / DURATION), 3);
+  // intro title
+  const ia = Math.min(eo(p(t, .3, .8)), 1 - eo(p(t, 3.9, .6)));
+  if (ia > 0) {
+    x2.save(); x2.globalAlpha = ia;
+    O('HOUDINI · VFX', 120, 380, { size: 22, weight: 700, color: '#ff9a3c', mono: true });
+    O('Houdini로 만드는', 116, 480, { size: 84, weight: 800, color: '#fff3e6' });
+    O('자동차 폭파 이펙트', 116, 580, { size: 84, weight: 800, color: '#ffb36b' });
+    O('모델 준비부터 렌더까지 6단계', 120, 640, { size: 30, color: '#e8d9cc' });
+    x2.restore();
+  }
+  // end card
+  const ea = eo(p(t, 56.6, .9));
+  if (ea > 0) {
+    x2.save(); x2.globalAlpha = ea;
+    const g = x2.createLinearGradient(0, 0, 0, H); g.addColorStop(0, 'rgba(8,5,4,0.15)'); g.addColorStop(1, 'rgba(8,5,4,0.85)'); x2.fillStyle = g; x2.fillRect(0, 0, W, H);
+    O('자동차 폭파 이펙트', 120, 640, { size: 80, weight: 800, color: '#fff3e6' });
+    const steps = HEAD.map(h => h[3]);
+    let x = 120; steps.forEach((s, i) => { const k = eo(p(t, 57.2 + i * .15, .4)); x2.save(); x2.globalAlpha *= k; O(`${i + 1}`, x, 726, { size: 22, weight: 800, color: '#ff9a3c', mono: true }); O(s, x + 26, 726, { size: 26, weight: 700, color: '#f0e4d8' }); x2.restore(); x += 52 + TW(s, 26, 700); if (i < 5) { O('→', x - 22, 726, { size: 24, color: '#8a7768', alpha: k, align: 'center' }); } });
+    O('모델 → 파괴 → RBD → Pyro → 파편 · 불티 → 렌더', 120, 784, { size: 22, color: '#bfa999', mono: true });
+    O('* Houdini는 SideFX의 소프트웨어입니다. 화면은 설명용으로 다시 그린 것이고, 노드 이름 외의 값은 예시입니다.', 120, 860, { size: 18, color: '#9a8576' });
+    x2.restore();
+  }
+}
+function TW(s, size, weight = 500) { x2.font = `${weight} ${size}px ${SANS}`; return x2.measureText(s).width; }
+
+// ═════════════════════════════════════════════════════════════
+//  FRAME
+// ═════════════════════════════════════════════════════════════
+function renderAt(t) {
+  const st = stepAt(t), mode = vpMode(t);
+  drawNet(t, st); drawParms(t, st); drawTime(t, st); drawViewFrame(t, mode, st);
+  const full = eio(p(t, 49.0, 1.2));
+  // the viewport window: its own camera, rendered into the screen texture
+  if (full < 1) {
+    updateViewport(t, mode, vpCam, 16 / 10);
+    renderer.setRenderTarget(rt); renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.render(vp, vpCam); renderer.setRenderTarget(null);
+  }
+  x2.setTransform(1, 0, 0, 1, 0, 0); x2.globalAlpha = 1; x2.fillStyle = '#0a0706'; x2.fillRect(0, 0, W, H);
+  if (full < 1) {
+    // motion blur on fast camera moves: average a few sub-frames
+    const sp = camSpeed(t), n = sp > 9 ? 4 : sp > 4 ? 2 : 1;
+    for (let i = 0; i < n; i++) {
+      const ts = t + (i - (n - 1) / 2) * .012 * (sp > 9 ? 1.4 : 1);
+      cameraAt(ts, cam); mascotAt(ts); deskComposer.render();
+      x2.globalAlpha = 1 / (i + 1); x2.drawImage(renderer.domElement, 0, 0, W, H);
+    }
+    x2.globalAlpha = 1;
+  }
+  if (full > 0) {
+    updateViewport(t, mode, vpFullCam, W / H); fullComposer.render();
+    x2.globalAlpha = full; x2.drawImage(renderer.domElement, 0, 0, W, H); x2.globalAlpha = 1;
+  }
+  const v = x2.createRadialGradient(W / 2, H / 2, H * .4, W / 2, H / 2, H * 1.0); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.5)'); x2.fillStyle = v; x2.fillRect(0, 0, W, H);
+  overlay(t);
+  const fo = p(t, DURATION - .6, .6); if (fo > 0) { x2.fillStyle = `rgba(0,0,0,${fo})`; x2.fillRect(0, 0, W, H); }
+}
+window.renderAt = renderAt; window.DURATION = DURATION;
+window.ready = (async () => {
+  const faces = [['Pretendard', 'Pretendard-Variable.woff2', '100 900'], ['JetBrains Mono', 'JetBrainsMono.woff2', '100 800']];
+  for (const [family, file, weight] of faces) for (const base of ['../assets/fonts/', 'assets/fonts/']) {
+    try { document.fonts.add(await new FontFace(family, `url(${base}${file})`, { weight }).load()); break; } catch (e) { /* try next */ }
+  }
+  await document.fonts.ready;
+})();
+// ── player (skipped when ?render) ────────────────────────────
+if (!location.search.includes('render')) {
+  const $ = id => document.getElementById(id);
+  const ICON = {
+    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l15 8-15 8z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>',
+    replay: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"/></svg>',
+  };
+  const CHAPTERS = [[0, '', '인트로'], ...HEAD.map(h => [h[0], h[2], h[3]]), [DURATION - 5.5, '', '정리']];
+  $('scrub').setAttribute('aria-valuemax', Math.round(DURATION));
+  const POSTER = 2.6;
+  let t = 0, playing = false, started = false, last = 0;
+  const mmss = x => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
+
+  CHAPTERS.forEach(([s, n, label], i) => {
+    const b = document.createElement('button');
+    b.innerHTML = (n ? `<span>${n}</span>` : '') + label;
+    b.addEventListener('click', () => { seek(s + .01); play(); });
+    $('chapters').appendChild(b);
+    if (i) { const tk = document.createElement('div'); tk.className = 'tick'; tk.style.left = (s / DURATION * 100) + '%'; $('ticks').appendChild(tk); }
+  });
+
+  function ui() {
+    const k = t / DURATION, ended = t >= DURATION;
+    $('fill').style.width = k * 100 + '%'; $('knob').style.left = k * 100 + '%';
+    $('time').textContent = `${mmss(t)} / ${mmss(DURATION)}`;
+    $('scrub').setAttribute('aria-valuenow', Math.round(t));
+    $('play').innerHTML = playing ? ICON.pause : ended ? ICON.replay : ICON.play;
+    $('play').setAttribute('aria-label', playing ? '일시정지' : '재생');
+    $('big').hidden = playing;
+    $('big').innerHTML = ended ? ICON.replay : ICON.play;
+    $('big').classList.toggle('replay', ended);
+    let cur = 0; CHAPTERS.forEach(([s], i) => { if (t >= s) cur = i; });
+    [...$('chapters').children].forEach((b, i) => b.setAttribute('aria-current', i === cur && started));
+  }
+  function draw() { renderAt(started ? Math.min(t, DURATION - .001) : POSTER); }
+  function play() { if (t >= DURATION) t = 0; started = true; playing = true; last = performance.now(); ui(); }
+  function pause() { playing = false; ui(); }
+  function toggle() { playing ? pause() : play(); }
+  function seek(x) { started = true; t = clamp(x, 0, DURATION); draw(); ui(); }
+
+  function frame(now) {
+    if (playing) {
+      t += (now - last) / 1000 * rate; last = now;
+      if (t >= DURATION) { t = DURATION; playing = false; }
+      draw(); ui();
+    }
+    requestAnimationFrame(frame);
+  }
+
+  const RATES = [1, .75, .5];
+  let rate = 1;
+  try { rate = +localStorage.getItem('mg-rate') || 1; } catch (e) { /* storage unavailable */ }
+  if (!RATES.includes(rate)) rate = 1;
+  function setRate(r) {
+    rate = r; $('rate').textContent = r + '×'; $('rate').setAttribute('aria-label', `재생 속도 ${r}배`);
+    try { localStorage.setItem('mg-rate', String(r)); } catch (e) { /* storage unavailable */ }
+  }
+  setRate(rate);
+  $('rate').addEventListener('click', () => setRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length]));
+  $('stage').addEventListener('click', toggle);
+  $('play').addEventListener('click', toggle);
+  $('fs').addEventListener('click', () => {
+    const el = $('stage');
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    else el.requestFullscreen?.().catch(() => {});
+  });
+  const scrub = $('scrub');
+  const fromEvent = e => { const r = scrub.getBoundingClientRect(); return clamp((e.clientX - r.left) / r.width) * DURATION; };
+  let wasPlaying = false;
+  scrub.addEventListener('pointerdown', e => { scrub.setPointerCapture(e.pointerId); wasPlaying = playing; playing = false; seek(fromEvent(e)); });
+  scrub.addEventListener('pointermove', e => { if (scrub.hasPointerCapture(e.pointerId)) seek(fromEvent(e)); });
+  scrub.addEventListener('pointerup', () => { if (wasPlaying && t < DURATION) play(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key === 'k') { e.preventDefault(); toggle(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); seek(t + 5); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); seek(t - 5); }
+    else if (e.key === 'Home') seek(0);
+    else if (e.key === ',' || e.key === '<') setRate(RATES[Math.min(RATES.length - 1, RATES.indexOf(rate) + 1)]);
+    else if (e.key === '.' || e.key === '>') setRate(RATES[Math.max(0, RATES.indexOf(rate) - 1)]);
+  });
+
+  const posterMode = location.hash === '#poster';
+  if (posterMode) document.body.classList.add('poster');
+  ui();
+  // chapter deep link: index.html#ch03 opens paused at that chapter
+  const deep = /^#ch(\d\d)$/.exec(location.hash), deepHead = deep && HEAD.find(r => r[2] === deep[1]);
+  window.ready.then(() => {
+    draw(); requestAnimationFrame(frame);
+    if (deepHead) seek(deepHead[0] + .01);
+    if (posterMode) { play(); setInterval(() => { if (!playing) { t = 0; play(); } }, 500); }
+  });
+  renderAt(POSTER);
+}
+</script>
