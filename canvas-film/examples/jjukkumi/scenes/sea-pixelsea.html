@@ -14,7 +14,7 @@
 <script src="sea-pixelsea-props.js"></script>
 <script>
 /* sea-pixelsea — 「쭈꾸미 한 접시」 scene 1 (22 s, portrait), Pixelsea kit (kits/pixelsea/STYLE.md).
-   Dawn pixel sea → cut in: 나 casts, the line arcs out → under the water: 고패질 on the seabed, a red 쭈꾸미 creeps up →
+   Dawn pixel sea → cut in: 명현 (the fisher, BRIEF CAST) casts, the line arcs out → under the water: 고패질 on the seabed, a red 쭈꾸미 creeps up →
    HIT! (rod bends, ≤ .25 s pixel shake) → portrait insert → the 쭈꾸미 lifted out, shaken into the bucket (×1) → six quick
    catches (×7) while the sun comes up → wide: heading home → close on the bucket full of red 쭈꾸미.
    Shots are hard cuts between whole-pixel scales; acting on 10 fps; water on 6; camera on whole pixels. */
@@ -118,9 +118,9 @@ function medShot(b, t) {
   SP.bucket(c, bx, rim, 18, 15, { back: true });
   for (let k = 0; k < Math.min(n, 4); k++) SP.octo(c, bx - 5 + k * 3.5, rim + 3 - (k % 2), 7, { mode: 'hang', ph: st(t) * 4 + k, f: k % 2 ? 1 : -1, outline: '#2a0c14' });
   SP.bucket(c, bx, rim, 18, 15);
-  // rod, then 나 (hands at the grips), then the hull over the feet, then the sea over the waterline
+  // rod, then 명현 (hands at the grips), then the hull over the feet, then the sea over the waterline
   drawRod(c, P);
-  PS.figure(c, F, SP.ME);
+  PS.figure(c, F, SP.MH);
   const boat = PS.boat(c, MED.boatX, deckY, 122, { depth: 14, f: 1, cabin: { u: .66, w: 17, h: 12 } });
   PS.seaFront(c, b, t, W.P, MED.hz, 0, deckY + 11, b.w, b.h, { refl: W.refl });
   PS.wake(c, t, MED.boatX + 2, deckY + 11, -1, 6);
@@ -183,14 +183,14 @@ function underShot(b, t) {
   PS.bubbles(c, t, sk[0], sk[1] - 2, { n: 1, h: 26, seed: 2, col: P.bubble });
 }
 
-// ---------------- the portrait insert: 나's face on the HIT ----------------
+// ---------------- the portrait insert: 명현's face on the HIT ----------------
 function faceShot(b, t) {
   const c = b.c, P = PS.tod(todAt(t)), dt = t - B.face[0];
   PS.backdrop(c, b, P, 206);
   PS.clouds(c, t, P, [[6, 34, 40, 2], [92, 70, 30, 3]], 2);
   PS.sun(c, 112, 178, 24, P, 206);
   PS.glints(c, t, P, 206);
-  PS.portrait(c, 58, 116, 4, { pal: SP.ME, f: 1, mouth: dt < .38 ? 'o' : 'grin', brows: dt < .38 ? 1 : .2, look: dt < .38 ? [.8, .6] : [1, .2], sweat: true });
+  PS.portrait(c, 58, 116, 4, { pal: SP.MH, f: 1, lashes: true, jaw: 3, mouth: dt < .38 ? 'o' : 'grin', brows: dt < .38 ? 1 : .2, look: dt < .38 ? [.8, .6] : [1, .2], sweat: true });
   // the bent rod in front of him (his hands are below the frame), its line running off to the right
   const P2 = PS.polePts([88, 246], -1.08, 74, 22); for (let i = 1; i < P2.pts.length; i++) PS.pxLine(c, P2.pts[i - 1][0], P2.pts[i - 1][1], P2.pts[i][0], P2.pts[i][1], i < 6 ? 3 : 2, SP.ROD);
   PS.pxLine(c, P2.tip[0], P2.tip[1], 140, 196, 1, SP.LINE);
@@ -209,7 +209,7 @@ function wideShot(b, t, home) {
   const J = PS.joints(F), P = PS.polePts([F.hip[0] + f * 2, F.hip[1] - 2], home ? -Math.PI + 1.3 : -1.3, 26, 0);
   F.hands = [P.at(.05), P.at(.3)];
   PS.pxPath(c, P.pts, 1, SP.ROD); PS.pxLine(c, P.tip[0], P.tip[1], P.tip[0], P.tip[1] + 4, 1, SP.LINE);
-  PS.figure(c, F, SP.ME);
+  PS.figure(c, F, SP.MH);
   PS.boat(c, sx, deckY, len, { f, depth: 12, cabin: { u: .64, w: 14, h: 10 } });
   PS.seaFront(c, b, t, W.P, WIDE.hz, 0, deckY + 9, b.w, b.h, { refl: W.refl });
   PS.wake(c, t, sx - f * 1, deckY + 9, -f, home ? 30 : 6);
@@ -249,7 +249,7 @@ function draw(ctx, t) {
   else if (sh === 'under') { const b = PS.buf(UND.K); underShot(b, t); PS.present(ctx, b); }
   else if (sh === 'face') { const b = PS.buf(8); faceShot(b, t); PS.present(ctx, b); }
   else { const b = PS.buf(8); bucketShot(b, t); PS.present(ctx, b); }
-  // in-picture game UI: the '!' over the 쭈꾸미 when it sees the lure, HIT!, the catch counter over 나 / the bucket
+  // in-picture game UI: the '!' over the 쭈꾸미 when it sees the lure, HIT!, the catch counter over 명현 / the bucket
   if (sh === 'under' && st(t) >= B.spot && st(t) < B.grab) PS.bitText(ctx, '!', 134 * 5 + 2, (UND.bed - 30) * 5 - 70 - (Math.floor(st(t) * 10) % 2) * 5, { px: 10, bold: true, color: PS.GOLD[0], lo: PS.GOLD[1], outline: PS.INK, align: 'center' });
   if (sh === 'med') PS.impact(ctx, t, 'HIT!', 540, 610, B.hit, { until: B.face[0], px: 20 });
   const n = landed(t);

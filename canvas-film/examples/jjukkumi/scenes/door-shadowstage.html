@@ -14,9 +14,10 @@
 <script>
 /* 쭈꾸미 한 접시 — scene 3 「초대」 in the paper shadow-theatre kit (kits/shadowstage/STYLE.md).
    The curtains part on our house at dusk; the sky goes dusk → night while the lamp and the windows light one by one
-   (in the kitchen window the red dish already waits on the table — the film's one red); the two friends walk in from
-   the left (B carries the gift box) and stop by the door; the door swings open, a wedge of warm light falls on them,
-   the host stands in the doorway and waves; hold on the warm open door. */
+   (in the kitchen window the red dish already waits on the table — the film's one red; 명현 is in the side window); the
+   guests 정록 · 세진 walk in from the left (세진 carries the gift box) and stop by the door; 명현 leaves the window, the door
+   swings open, a wedge of warm light falls on the guests, and the hosts stand in the doorway — 명현 in front (hair tied
+   back, apron) holding the door and waving, 경찬 (short hair) just behind her; hold on the warm open door. */
 const S = window.SCRIPT, B = S.beat, { clamp, lerp, ss, eo, eio } = Pilot;
 const K = ShadowStage, C = K.C, RED = '#d9432b';
 const G = 1420;                                                    // the ground line everything stands on
@@ -24,10 +25,10 @@ const HOUSE = { x: 380, gy: G, w: 520, wallH: 330, roofH: 250, over: 32, seed: 4
   chimney: { x: 370, w: 42, top: 560 }, door: { x: 34, w: 124, h: 262 }, lantern: { x: 172, y: 250 },
   windows: [{ x: 200, y: 262, w: 152, h: 132 }, { x: 236, y: 448, w: 68, h: 68, shape: 'round' }, { x: 398, y: 262, w: 88, h: 132 }] };
 const GEO = K.houseGeo(HOUSE), D = GEO.door;
-const SA = 1.12, SB = 1.06, SH = 1.12;                             // guest A (cap, jacket), guest B (bob, coat), host
+const SA = 1.12, SB = 1.06, SM = 1.06, SK = 1.14;                  // guests 정록 (A: cap, jacket) and 세진 (B: bob, coat); hosts 명현, 경찬
 const AX0 = -30, AX1 = 318, BX0 = -150, BX1 = 196;
 const STA = K.stopStride(AX1 - AX0, 120 * SA), STB = K.stopStride(BX1 - BX0, 120 * SB);
-const HX = D.x + D.w * .6;                                         // the host stands in the doorway
+const MX = D.x + D.w * .45, KX = D.x + D.w * .78;                 // in the doorway: 명현 in front, 경찬 a step behind her
 let LAND = null, NOW = 0;               // NOW: the frame's time, for the steam in the window hook
 
 function buildLand() {
@@ -66,16 +67,22 @@ function guestB(t) {
   if (tp >= B.walkB[1]) K.lookAt(F, [D.x + D.w / 2, D.y + 60], .25 * ss(B.open[0], B.open[0] + .5, tp));
   return F;
 }
-function host(t) {
-  const tp = K.on2(t), F = Object.assign(K.stand(HX, G, SH, -1, { spread: 10 }), { head: 'short', dress: 'apron' });
+function myeonghyeon(t) {                                          // 명현: holds the door, waves, then "come in"
+  const tp = K.on2(t), F = Object.assign(K.stand(MX, G, SM, -1, { spread: 9 }), { head: 'bun', dress: 'apron' });
   const lw = D.w * Math.cos(openK(tp) * Math.PI * .46);
-  const ex = D.x + lw + 4, hold = clamp((HX - 10 - ex) / 40);     // once the door's edge has swung past him, his far hand takes it
-  if (hold > 0) { const sh = K.shoulder(F, 0); K.reach(F, 0, [lerp(sh[0] + 4 * SH, ex, hold), lerp(sh[1] + 70 * SH, G - 128 * SH, hold)]); }
+  const ex = D.x + lw + 4, hold = clamp((MX - 10 - ex) / 40);     // once the door's edge has swung past her, her far hand takes it
+  if (hold > 0) { const sh = K.shoulder(F, 0); K.reach(F, 0, [lerp(sh[0] + 4 * SM, ex, hold), lerp(sh[1] + 70 * SM, G - 120 * SM, hold)]); }
   // the near hand: swings up and waves, then comes down to an open "come in" (one arc angle, so it never jumps)
   const up = eio(ss(B.wave, B.wave + .4, tp)) * (2.5 + .16 * Math.sin(t * 8) * (1 - ss(B.beckon - .3, B.beckon, tp)));
   K.armTo(F, 1, lerp(up, 1.35, eio((tp - B.beckon) / .7)));
   return K.lookAt(F, [AX1, G - 200], .2);
 }
+function gyeongchan(t) {                                           // 경찬: behind her, a hand up over her shoulder
+  const tp = K.on2(t), F = Object.assign(K.stand(KX, G, SK, -1, { spread: 8 }), { head: 'short', dress: 'jacket' });
+  K.wave(F, 1, t + .4, ss(B.wave + .3, B.wave + .8, tp) * (1 - ss(B.beckon + .4, B.beckon + 1, tp)) * .9);
+  return K.lookAt(F, [AX1, G - 200], .15);
+}
+const hosts = t => [gyeongchan(t), myeonghyeon(t)];                 // back to front
 
 // ---------------- inside the windows (warm-brown silhouettes; the one red) ----------------
 function inWindow(ctx, i, w, k) {
@@ -89,8 +96,8 @@ function inWindow(ctx, i, w, k) {
     ctx.fillStyle = RED; ctx.beginPath(); ctx.ellipse(cx, ty - 5, 17, 8, 0, Math.PI, 0); ctx.fill();           // 쭈꾸미볶음
     ctx.strokeStyle = 'rgba(94,53,23,.55)'; ctx.lineWidth = 2; ctx.lineCap = 'round';                          // a little steam
     for (let j = -1; j <= 1; j++) { ctx.beginPath(); for (let q = 0; q <= 8; q++) ctx.lineTo(cx + j * 9 + 3 * Math.sin(q * .9 + j + NOW * 2.2), ty - 16 - q * 3); ctx.stroke(); }
-  } else if (i === 2) {                                            // the side room: the spouse (hair tied back), turning to the door
-    const F = Object.assign(K.stand(w.x + w.w * .55, w.y + w.h + 70, .8, -1), { head: 'bun', dress: 'jacket' });
+  } else if (i === 2) {                                            // the side room: 명현 (hair tied back); she goes to the door
+    const F = Object.assign(K.stand(w.x + w.w * .55 - 90 * eio((NOW - B.open[0] + .7) / .6), w.y + w.h + 70, .8, -1), { head: 'bun', dress: 'jacket' });
     K.lookAt(F, [w.x - 200, w.y + 20], .25);
     K.body(ctx, F, C.prop, C.prop);
   }
@@ -119,7 +126,7 @@ function draw(ctx, t) {
   const lampOn = K.lightOn(t, B.lamp), wins = [winK(t, 0), winK(t, 1), winK(t, 2)], op = openK(t);
   K.lamp(ctx, 110, G, 300, lampOn);
   K.house(ctx, HOUSE, { win: wins, door: op, lantern: K.lightOn(t, B.lantern), doorWin: wins[0] },
-    { window: inWindow, door: (c, d) => K.person(c, host(t)) });
+    { window: inWindow, door: (c, d) => hosts(t).forEach(F => K.person(c, F)) });
   K.smoke(ctx, ...GEO.chimney.mouth, t, { col: Pilot.rgb(Pilot.mix(pal.mid2, [20, 12, 16], .4), .8) });
   K.layer(ctx, LAND.ground, C.ground, { liftA: 0 });
   stones(ctx, t);
@@ -127,7 +134,7 @@ function draw(ctx, t) {
   K.groundPool(ctx, GEO.windows[0].x + 76, G, 260, 60, wins[0] * .55);
   // the door's light on the ground, the three shadows cut out of it
   const A = guestA(t), Bg = guestB(t), lc = K.lightBegin(), L = K.doorLight(lc, D, op, { len: 420, pool: [430, 170] });
-  if (op > 0) { K.castShadow(lc, A, L, { len: .95 }); K.castShadow(lc, Bg, L, { len: .95 }); K.castShadow(lc, host(t), L, { len: .42, a: .6 }); }
+  if (op > 0) { K.castShadow(lc, A, L, { len: .95 }); K.castShadow(lc, Bg, L, { len: .95 }); hosts(t).forEach(F => K.castShadow(lc, F, L, { len: .42, a: .6 })); }
   if (op > 0) K.lightEnd(ctx, G);
   const rim = { x: D.x + D.w / 2, y: G - 130, a: op, reach: 460 };
   K.person(ctx, Bg, { rim });

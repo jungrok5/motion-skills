@@ -1,11 +1,12 @@
 /* sea-pixelsea-props.js — the film's own pixel props for scene sea-pixelsea (쭈꾸미 낚시), drawn with the Pixelsea kit.
-   NOT part of the kit: the 쭈꾸미 (the one red thing), the 에기 lure, the sinker, the bucket, the cast's palettes.
+   NOT part of the kit: the 쭈꾸미 (the one red thing), the 에기 lure, the sinker, the bucket, the fisher's palette.
    Every function draws in BUFFER pixels of the current Pixelsea buffer, whole pixels only. Global: window.SeaProps */
 (function () {
   const PS = Pixelsea, { clamp, lerp } = Pilot, R = PS.R;
   const SP = {};
-  // 나: short dark hair, navy top, mustard bucket hat (identity mark #e2a93b)
-  SP.ME = { skin: '#f0c09a', skinS: '#c98e6a', hair: '#231a22', top: '#26386a', topS: '#18244a', topHi: '#3a5294', pants: '#3b3a4c', shoe: '#1c1820', hat: '#e2a93b', hatS: '#a8761e', hatStyle: 'bucket' };
+  // 명현 (the fisher, scene 1 — see BRIEF.md CAST): a woman, dark hair tied back in a low bun under the mustard bucket hat
+  // (her identity mark #e2a93b), navy top.
+  SP.MH = { skin: '#f2c49e', skinS: '#cc916c', hair: '#231a22', top: '#26386a', topS: '#18244a', topHi: '#3a5294', pants: '#3b3a4c', shoe: '#1c1820', hat: '#e2a93b', hatS: '#a8761e', hatStyle: 'bucket', hairStyle: 'tied', tie: '#a8761e' };
   SP.ROD = '#2a2230'; SP.ROD_TIP = '#d8cce0'; SP.LINE = '#f2ecff';
   // the 쭈꾸미: accent red body, a darker red shade, a warm highlight, pale suckers
   SP.OCTO = { body: PS.ACCENT, shade: '#9a2a20', hi: '#f2805c', sucker: '#f6c0a2', eye: '#fff8ec' };

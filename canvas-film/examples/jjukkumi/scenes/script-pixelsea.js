@@ -4,7 +4,7 @@
 window.SCRIPT = {
   DUR: 22,
   beat: {
-    wide: 0,                 // dawn sea, the boat, 나 waiting with the rod (fade in .5 s)
+    wide: 0,                 // dawn sea, the boat, 명현 waiting with the rod (fade in .5 s)
     cast: 3.2,               // cut in: rod swings back …
     release: 3.75,           // … and forward: the lure flies, the line arcs out
     land: 4.75,              // the lure hits the water (splash)
@@ -25,8 +25,9 @@ window.SCRIPT = {
   lines: [
     [0.45, 3.1, '시월, 새벽 바다', '05:40'],
     [5.8, 9.0, '고패질… 톡, 톡', '06:05'],
-    [9.6, 12.2, '묵직하다!', '06:12'],
-    [13.1, 16.9, '한 마리, 또 한 마리', '06:40'],
+    [9.6, 11.6, '묵직하다!', '06:12'],
+    [11.75, 14.1, '명현님이 낚았다!', '06:14'],
+    [14.25, 17.25, '한 마리, 또 한 마리', '06:40'],
     [17.7, 21.5, '오늘 저녁은 정했다', '07:20'],
   ],
 };

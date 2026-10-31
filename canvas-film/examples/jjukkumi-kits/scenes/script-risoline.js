@@ -4,7 +4,7 @@ window.SCRIPT = {
   DUR: 24,
   beat: {
     light: 0.0,    // fade in from black: the warm lamp comes on over the table, the red pan sizzles and steams
-    sit: 2.7,      // the four sit down, one per side (나 2.7, 배우자 3.05, 크림 손님 3.4, 파랑 손님 3.75)
+    sit: 2.7,      // the four sit down, one per side — hosts 명현 (bottom) 2.7 · 경찬 (left) 3.05, guests 정록 (top) 3.4 · 세진 (right) 3.75
     bow: 5.3,      // 잘 먹겠습니다 — four heads dip
     chop: 6.3,     // chopsticks picked up
     eat: 7.0,      // chopsticks reach into the pan, curly red pieces lifted and eaten; face inserts "맛있다!"
@@ -25,6 +25,6 @@ window.SCRIPT = {
     [8.75, 10.75, 'blue', 'chew', '맛있다!'],
     [10.15, 12.15, 'cream', 'yum', '음~!'],
   ],
-  laughs: [15.4, 15.7, 16.0, 16.3],   // the four round laughter panels pop in (cream, blue, spouse, me) and close at 19.45
-  endCard: { title: '쭈꾸미 한 접시', passage: '낚시 · 요리 · 초대', by: '2026. 10. 31', compact: true },
+  laughs: [15.4, 15.7, 16.0, 16.3],   // the four round laughter panels pop in (정록, 세진, 경찬, 명현) and close at 19.45
+  endCard: { title: '쭈꾸미 한 접시', passage: '명현님이 낚고, 경찬 · 명현 부부가 차린 저녁', by: '정록 · 세진 부부 초대 · 2026. 10. 31', compact: true },
 };

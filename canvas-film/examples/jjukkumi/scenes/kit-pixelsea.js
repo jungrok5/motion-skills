@@ -462,8 +462,9 @@
   // hangHands(F) → [far, near] resting hand points (arms hanging, a little forward).
   K.hangHands = function (F) { const J = K.joints(F); return [[J.shF[0] + F.f * .5, J.shF[1] + J.B.ua + J.B.fa - 1.5], [J.shN[0] + F.f * 1, J.shN[1] + J.B.ua + J.B.fa - 1.5]]; };
   // PERSON: a default palette (any film passes its own): skin, skinS, hair, top, topS (back/far arm), topHi (near arm),
-  // pants, shoe, hat, hatS, hatStyle 'bucket' | 'cap' | 'none'.
-  K.PERSON = { skin: '#f2c49a', skinS: '#cf9672', hair: '#2a1d24', top: '#3b4a7a', topS: '#2a3560', topHi: '#53649a', pants: '#3a3746', shoe: '#1e1a24', hat: null, hatS: null, hatStyle: 'none' };
+  // pants, shoe, hat, hatS, hatStyle 'bucket' | 'cap' | 'none', hairStyle 'short' | 'tied' (a low bun at the nape),
+  // tie (the hair tie's colour; default hatS).
+  K.PERSON = { skin: '#f2c49a', skinS: '#cf9672', hair: '#2a1d24', top: '#3b4a7a', topS: '#2a3560', topHi: '#53649a', pants: '#3a3746', shoe: '#1e1a24', hat: null, hatS: null, hatStyle: 'none', hairStyle: 'short' };
   // figure(c, F, pal, o) → joints: draws the figure on the pixel grid, outlined in K.INK. Order: far arm · legs · torso ·
   // head (hair, face, eye, hat) · o.mid() · near arm · o.front(). Hands are drawn AT their targets (2-bone IK) — put a
   // held object's grip there. o.outline = false to skip the ink line.
@@ -497,6 +498,7 @@
       R(s, hx0, hy0, hw, Math.max(1, Math.round(hd * .3)), pal.hair); R(s, f > 0 ? hx0 : hx0 + hw - Math.max(1, Math.round(hw * .3)), hy0, Math.max(1, Math.round(hw * .3)), Math.round(hd * .6), pal.hair);
       const ey = hy0 + Math.round(hd * .5), ex = f > 0 ? hx0 + hw - 2 : hx0 + 1;
       if (F.eye === 'shut') R(s, ex - (f > 0 ? 0 : 0), ey, 1, 1, pal.skinS); else R(s, ex, ey - (F.eye === 'wide' && hd >= 6 ? 1 : 0), 1, F.eye === 'wide' && hd >= 6 ? 2 : 1, K.INK);
+      if (pal.hairStyle === 'tied') { const bs = Math.max(1, Math.round(hd * .3)), bx = f > 0 ? hx0 - bs : hx0 + hw; R(s, bx, hy0 + Math.round(hd * .5), bs, bs + (hd >= 7 ? 1 : 0), pal.hair); if (hd >= 6) R(s, f > 0 ? bx + bs - 1 : bx, hy0 + Math.round(hd * .5), 1, 1, pal.tie || pal.hatS || pal.hair); }
       if (pal.hatStyle === 'bucket') { const cr = Math.max(2, Math.round(hd * .42)); R(s, hx0, hy0 - 1, hw, cr, pal.hat); R(s, hx0 + 1, hy0 - 2, hw - 2, 1, pal.hat); R(s, hx0 - 1, hy0 - 1 + cr, hw + 2, 1, pal.hatS || pal.hat); }
       else if (pal.hatStyle === 'cap') { R(s, hx0, hy0 - 1, hw, 2, pal.hat); R(s, f > 0 ? hx0 + hw : hx0 - 2, hy0, 2, 1, pal.hatS || pal.hat); }
       if (o.mid) o.mid(s, J);
@@ -520,11 +522,13 @@
   /* ---------------------------------------------------------------- close-up portrait insert */
   // portrait(c, cx, cy, u, o): a big pixel bust (head ≈ 13·u px wide) with an ink outline — the hard-cut insert on a beat.
   // cx, cy = centre of the face. o = { pal (PERSON-like), f (±1 the way the face turns), mouth 'calm' | 'o' | 'grin' |
-  // 'set', brows (0 calm … 1 raised), look [dx, dy] (pupil shift, −1..1), blink (bool), sweat (bool), hatStyle }.
+  // 'set', brows (0 calm … 1 raised), look [dx, dy] (pupil shift, −1..1), blink (bool), sweat (bool), hatStyle, lashes (bool:
+  // an ink pixel at each eye's outer corner), jaw (half-width of the chin in u, default 3.5; 3 = a narrower chin) }.
+  // pal.hairStyle 'tied' draws the hair pulled back into a low bun at the nape (with pal.tie), a side-swept fringe.
   K.portrait = function (c, cx, cy, u, o = {}) {
     const pal = { ...K.PERSON, ...(o.pal || {}) }, f = o.f ?? 1, U = v => Math.round(v * u);
     cx = Math.round(cx); cy = Math.round(cy);
-    const hw = U(6.5), top = cy - U(7), chin = cy + U(7.5);
+    const hw = U(6.5), top = cy - U(7), chin = cy + U(7.5), jw = U(o.jaw ?? 3.5), tied = pal.hairStyle === 'tied';
     K.stamp(c, [cx - U(16), top - U(5), U(32), c.canvas.height - top + U(5)], s => {
       // shoulders and top (to the bottom of the buffer)
       const SH = [[cx - U(15.5), c.canvas.height + 2], [cx - U(14), chin + U(7)], [cx - U(11), chin + U(4)], [cx - U(4.5), chin + U(1.6)], [cx + U(4.5), chin + U(1.6)], [cx + U(11), chin + U(4)], [cx + U(14), chin + U(7)], [cx + U(15.5), c.canvas.height + 2]];
@@ -534,18 +538,24 @@
       R(s, cx - U(2.5), chin - U(1), U(5), U(3), pal.skinS);                                // neck
       K.pxPoly(s, [[cx - U(3.5), chin + U(1)], [cx, chin + U(3.2)], [cx + U(3.5), chin + U(1)]], pal.skinS);
       R(s, cx - U(2), chin + U(3), 1, U(3), pal.topHi); R(s, cx + U(2), chin + U(3), 1, U(3), pal.topHi);   // collar strings
+      // tied hair: the back of the hair and a low bun at the nape, behind the face
+      if (tied) { const bx = cx - f * (hw + U(1.2)); R(s, f > 0 ? cx - hw - U(1) : cx + hw - U(1.5), top + U(1), U(2.5), U(9.5), pal.hair);
+        K.pxEllipse(s, bx, cy + U(3.6), U(2.6), U(2.3), pal.hair); R(s, bx + f * U(1.6) - U(.5), cy + U(2.4), U(1), U(2.4), pal.tie || pal.hatS || pal.hair);
+        R(s, bx - U(1.2), cy + U(2.6), U(1), Math.max(1, U(.6)), mixHex(pal.hair, '#ffffff', .18)); }
       // face: a pixel jaw
-      K.pxPoly(s, [[cx - hw, top + U(2)], [cx + hw, top + U(2)], [cx + hw, cy + U(3)], [cx + U(3.5), chin], [cx - U(3.5), chin], [cx - hw, cy + U(3)]], pal.skin);
-      K.pxPoly(s, [[cx - f * hw, top + U(2)], [cx - f * (hw - U(1.4)), top + U(2)], [cx - f * (hw - U(1.4)), cy + U(3)], [cx - f * U(2.5), chin], [cx - f * U(3.5), chin], [cx - f * hw, cy + U(3)]], pal.skinS);
+      K.pxPoly(s, [[cx - hw, top + U(2)], [cx + hw, top + U(2)], [cx + hw, cy + U(3)], [cx + jw, chin], [cx - jw, chin], [cx - hw, cy + U(3)]], pal.skin);
+      K.pxPoly(s, [[cx - f * hw, top + U(2)], [cx - f * (hw - U(1.4)), top + U(2)], [cx - f * (hw - U(1.4)), cy + U(3)], [cx - f * (jw - U(1)), chin], [cx - f * jw, chin], [cx - f * hw, cy + U(3)]], pal.skinS);
       R(s, f > 0 ? cx - hw - U(1.2) : cx + hw, cy - U(1), U(1.2), U(3), pal.skinS);          // ear
       // hair under the hat
-      R(s, cx - hw, top + U(1), U(13), U(1.6), pal.hair); R(s, f > 0 ? cx - hw : cx + hw - U(2), top + U(1), U(2), U(5), pal.hair);
-      for (let i = 0; i < 4; i++) R(s, cx - hw + U(2.6 + i * 2.6), top + U(2.4), U(1.2), U(.8), pal.hair);
+      R(s, cx - hw, top + U(1), U(13), U(1.6), pal.hair); R(s, f > 0 ? cx - hw : cx + hw - U(2), top + U(1), U(2), U(tied ? 4 : 5), pal.hair);
+      if (tied) K.pxPoly(s, [[cx - f * hw, top + U(1.5)], [cx + f * U(3.5), top + U(1.5)], [cx + f * U(1), top + U(3.2)], [cx - f * U(3), top + U(3)]], pal.hair);   // side-swept fringe
+      else for (let i = 0; i < 4; i++) R(s, cx - hw + U(2.6 + i * 2.6), top + U(2.4), U(1.2), U(.8), pal.hair);
       // eyes, brows, nose, mouth
       const eyY = cy - U(.5), br = (o.brows ?? 0), lk = o.look || [f * .5, 0];
       for (const sx of [-1, 1]) { const ex = cx + sx * U(3) + f * U(.6);
         if (o.blink) R(s, ex - U(1.2), eyY + U(1), U(2.6), 1, K.INK);
         else { R(s, ex - U(1.4), eyY, U(2.8), U(2), '#fbf6ee'); R(s, ex - U(.6) + Math.round(lk[0] * U(.8)), eyY + Math.round(lk[1] * U(.4)), U(1.3), U(2), K.INK); }
+        if (o.lashes) { const lw = Math.max(1, U(.7)); R(s, sx > 0 ? ex + U(1.4) : ex - U(1.4) - lw, eyY - lw + (o.blink ? U(1) : 0), lw, lw, K.INK); R(s, ex - U(1.4), eyY - (o.blink ? -U(1) : 0) - 0, U(2.8), 1, K.INK); }
         R(s, ex - U(1.4) + (sx * f > 0 ? U(.3) : 0), eyY - U(1.3) - Math.round(br * U(.6)), U(2.6), Math.max(1, U(.6)), pal.hair); }
       R(s, cx + f * U(1), cy + U(1.5), Math.max(1, U(.8)), U(1.4), pal.skinS);
       const my = cy + U(4.3), mo = o.mouth || 'calm';
