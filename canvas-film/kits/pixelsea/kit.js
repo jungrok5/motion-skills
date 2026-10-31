@@ -195,7 +195,7 @@
   // what is kept), give it a 1-px outline, then lay it onto c. Use it for characters and props so they read on any ground.
   K.stamp = function (c, box, fn, oc = K.INK) {
     let [x, y, w, h] = box; x = Math.floor(x) - 1; y = Math.floor(y) - 1; w = Math.ceil(w) + 3; h = Math.ceil(h) + 3;
-    if (!SCR || SCR.width < w || SCR.height < h) { SCR = Pilot.canvas(Math.max(w, SCR ? SCR.width : 0, 64), Math.max(h, SCR ? SCR.height : 0, 64)); }
+    if (!SCR || SCR.width < w || SCR.height < h) { SCR = Pilot.canvas(Math.max(w, SCR ? SCR.width : 0, 64), Math.max(h, SCR ? SCR.height : 0, 64)); SCR.getContext('2d', { willReadFrequently: true }); }
     const sc = SCR.getContext('2d'); sc.setTransform(1, 0, 0, 1, 0, 0); sc.clearRect(0, 0, w, h); sc.imageSmoothingEnabled = false;
     sc.setTransform(1, 0, 0, 1, -x, -y); fn(sc); sc.setTransform(1, 0, 0, 1, 0, 0);
     if (oc) K.outline(SCR, oc, 0, 0, w, h);
@@ -574,7 +574,7 @@
   function textBitmap(s, size, tpx, col, weight) {
     const key = [s, size, tpx, col, weight].join('|'); let bm = TX.get(key); if (bm) { TX.delete(key); TX.set(key, bm); return bm; }
     const fs = Math.round(size / tpx), font = `${weight || 400} ${fs}px ${K.FONT}`, m = Pilot.canvas(4, 4).getContext('2d'); m.font = font;
-    const w = Math.max(1, Math.ceil(m.measureText(s).width) + 2), h = Math.ceil(fs * 1.3) + 2, cv = Pilot.canvas(w, h), x = cv.getContext('2d');
+    const w = Math.max(1, Math.ceil(m.measureText(s).width) + 2), h = Math.ceil(fs * 1.3) + 2, cv = Pilot.canvas(w, h), x = cv.getContext('2d', { willReadFrequently: true });
     x.font = font; x.textBaseline = 'alphabetic'; x.fillStyle = '#fff'; x.fillText(s, 1, Math.round(fs * 1.02));
     const d = x.getImageData(0, 0, w, h), a = d.data, [r, g, b] = hx(col);
     for (let i = 0; i < a.length; i += 4) { const on = a[i + 3] >= 115; a[i] = r; a[i + 1] = g; a[i + 2] = b; a[i + 3] = on ? 255 : 0; }

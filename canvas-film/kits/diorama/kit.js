@@ -678,7 +678,8 @@
   K.endCard = function (ctx, t, card, at, o = {}) {
     const a = ss(at, at + (card.compact ? .5 : .9), t); if (a <= 0) return;
     if (o.dim !== false) K.dim(ctx, ss(at - .4, at + .4, t));
-    const C = K.C, y = o.y ?? 640, dy = -22 * (1 - eo((t - at) / .55)), x0 = 170, w = 740, y0 = y - 118, h = 470;
+    const C = K.C, y = o.y ?? 640, dy = -22 * (1 - eo((t - at) / .55)), x0 = 170, w = 740, y0 = y - (card.kicker ? 192 : 118), h = y + 352 - y0;
+    const two = String(Pilot.tr(card.title)).includes('\n');
     ctx.save(); ctx.translate(0, dy); ctx.globalAlpha = a;
     ctx.strokeStyle = C.goldDk; ctx.lineWidth = 2; for (const d of [-290, 290]) { ctx.beginPath(); ctx.moveTo(CX + d, (o.hang ?? 262) - dy); ctx.lineTo(CX + d, y0 + 4); ctx.stroke(); }
     ctx.fillStyle = 'rgba(20,6,24,.35)'; ctx.fillRect(x0 + 9, y0 + 11, w, h);
@@ -686,7 +687,7 @@
     ctx.strokeStyle = C.gold; ctx.lineWidth = 2; ctx.strokeRect(x0 + 12, y0 + 12, w - 24, h - 24); ctx.lineWidth = 1; ctx.strokeRect(x0 + 18, y0 + 18, w - 36, h - 36);
     ctx.fillStyle = C.gold; for (const d of [-290, 290]) { ctx.beginPath(); ctx.arc(CX + d, y0 + 4, 4.5, 0, 7); ctx.fill(); }
     // an ornament between title and the small lines: a rule with a diamond
-    ctx.strokeStyle = C.gold; ctx.lineWidth = 1.6; const oy = y + 118; ctx.beginPath(); ctx.moveTo(CX - 120, oy); ctx.lineTo(CX - 14, oy); ctx.moveTo(CX + 14, oy); ctx.lineTo(CX + 120, oy); ctx.stroke();
+    ctx.strokeStyle = C.gold; ctx.lineWidth = 1.6; const oy = y + (two ? 184 : 118); ctx.beginPath(); ctx.moveTo(CX - 120, oy); ctx.lineTo(CX - 14, oy); ctx.moveTo(CX + 14, oy); ctx.lineTo(CX + 120, oy); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(CX, oy - 8); ctx.lineTo(CX + 8, oy); ctx.lineTo(CX, oy + 8); ctx.lineTo(CX - 8, oy); ctx.fill();
     ctx.restore();
     ctx.save(); ctx.translate(0, dy);
