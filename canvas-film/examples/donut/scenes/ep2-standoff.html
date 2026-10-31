@@ -26,63 +26,65 @@ const say = (k, o = {}) => Object.assign({ at: Ln[k][0], out: Ln[k][1], text: Ln
 const speaking = (t, k) => t > Ln[k][0] && t < Ln[k][0] + Math.min(1.6, Ln[k][1] - Ln[k][0] - .3);   // mouth moves for the first part of the hold
 const mouthOf = (t, k, rest) => speaking(t, k) ? 'talk' : rest;
 
+// ---------------------------------------------------------------- the manga finish: cream paper, one black ink, fine dot tone, pink only on the donut
+const MG = Manga, INK = MG.C.ink, PAP = MG.C.paper, PAPL = MG.C.paperL;
+const BD = { lw: 8, ink: INK };   // thick black panel borders
 // ---------------------------------------------------------------- the strip
 const STRIP = WT.strip({
-  top: 300, side: 48, bottom: 700,
-  bg: [[0, WT.C.paper], ['p4a:end', WT.C.paper], ['p5', BLACK], ['p11:end', BLACK]],
+  top: 300, side: 36, bottom: 700, bg: PAP,
   panels: [
-    { id: 'p0', h: 300, bg: '#1d1a1f', draw: (c, t, P) => eyes(c, t, P) },
-    { id: 'p1', h: 1000, draw: (c, t, P) => pantry(c, t, P), cam: (t, P) => WT.kenBurns(t, 0, 2.9, 1.04, P.w / 2, 560) },
-    { id: 'p2', h: 800, cut: [0, 0, -50, 0], draw: (c, t, P) => kimPanel(c, t, P) },
-    { id: 'p3', h: 880, cut: [0, -50, 0, 0], draw: (c, t, P) => parkChoi(c, t, P) },
-    { id: 'p4a', h: 900, gap: 'action', w: 312, draw: (c, t, P) => inner(c, t, P, 'park', 0) },
-    { id: 'p4b', h: 900, row: true, x: 384, w: 312, draw: (c, t, P) => inner(c, t, P, 'kim', 1) },
-    { id: 'p4c', h: 900, row: true, x: 720, w: 312, draw: (c, t, P) => inner(c, t, P, 'choi', 2) },
-    { id: 'p5', h: 1340, gap: 'beat', border: 'bleed', ink: '#f4f0f6', draw: (c, t, P) => shoutPanel(c, t, P),
-      cam: (t, P) => WT.mixCam({ fx: P.w / 2, fy: 640 }, WT.punch(t, B.shout, { z0: 1.18 }), WT.kenBurns(t, B.shout + .2, 13.15, 1.05, P.w / 2, 640)) },
-    { id: 'p6', h: 1400, gap: 260, border: 'bleed', ink: '#f4f0f6', draw: (c, t, P) => rps(c, t, P, 1), over: (c, t, P) => rpsWords(c, t, P, 1),
-      cam: (t, P) => WT.mixCam({ fx: P.w / 2, fy: P.h * .52 }, WT.punch(t, B.rps1[2], { z0: 1.3, A: 18 })) },
-    { id: 'p7', h: 840, gap: 'action', x: 170, w: 740, ink: '#f4f0f6', draw: (c, t, P) => rps(c, t, P, 2), over: (c, t, P) => rpsWords(c, t, P, 2),
-      cam: (t, P) => WT.mixCam({ fx: P.w / 2, fy: P.h * .52 }, WT.punch(t, B.rps2Reveal, { z0: 1.25 })) },
-    { id: 'p8', h: 640, gap: 'seq', bg: '#dfe6f0', ink: '#f4f0f6', draw: (c, t, P) => deadpan(c, t, P) },
-    { id: 'p9', h: 1100, gap: 'action', border: 'bleed', ink: '#f4f0f6', draw: (c, t, P) => planPanel(c, t, P),
-      cam: (t, P) => WT.kenBurns(t, B.plan, 20.95, 1.07, P.w * .45, 520) },
-    { id: 'p10', h: 560, gap: 'beat', x: 250, w: 580, border: 'thin', ink: '#5b5560', draw: (c, t, P) => silentDonut(c, t, P) },
-    { id: 'p11', h: 1380, gap: 'action', x: 90, w: 900, lw: 8, draw: (c, t, P) => lungeBg(c, t, P), over: (c, t, P) => lungeHands(c, t, P),
-      cam: (t, P) => WT.mixCam({ fx: P.w / 2, fy: P.h - 400 }, WT.kenBurns(t, 23.4, 25.7, 1.07, P.w / 2, P.h - 400), WT.punch(t, B.count[2], { z0: 1.06, A: 10 })) },
+    Object.assign({ id: 'p0', h: 300, bg: PAPL, draw: (c, t, P) => eyes(c, t, P) }, BD),
+    Object.assign({ id: 'p1', h: 1000, draw: (c, t, P) => pantry(c, t, P), cam: (t, P) => WT.kenBurns(t, 0, 2.9, 1.04, P.w / 2, 560) }, BD),
+    Object.assign({ id: 'p2', h: 800, cut: [0, 0, -60, 0], draw: (c, t, P) => kimPanel(c, t, P) }, BD),
+    Object.assign({ id: 'p3', h: 880, cut: [0, -60, 0, 0], draw: (c, t, P) => parkChoi(c, t, P) }, BD),
+    Object.assign({ id: 'p4a', h: 900, gap: 'action', w: 320, draw: (c, t, P) => inner(c, t, P, 'park', 0) }, BD),
+    Object.assign({ id: 'p4b', h: 900, row: true, x: 380, w: 320, draw: (c, t, P) => inner(c, t, P, 'kim', 1) }, BD),
+    Object.assign({ id: 'p4c', h: 900, row: true, x: 724, w: 320, draw: (c, t, P) => inner(c, t, P, 'choi', 2) }, BD),
+    Object.assign({ id: 'p5', h: 1340, gap: 'beat', cut: [0, 0, -80, 0], draw: (c, t, P) => shoutPanel(c, t, P),
+      cam: (t, P) => WT.mixCam({ fx: P.w / 2, fy: 640 }, WT.punch(t, B.shout, { z0: 1.18 }), WT.kenBurns(t, B.shout + .2, 13.15, 1.05, P.w / 2, 640)) }, BD),
+    Object.assign({ id: 'p6', h: 1400, gap: 260, cut: [0, -80, 0, 0], draw: (c, t, P) => rps(c, t, P, 1), over: (c, t, P) => rpsWords(c, t, P, 1),
+      cam: (t, P) => WT.mixCam({ fx: P.w / 2, fy: P.h * .52 }, WT.punch(t, B.rps1[2], { z0: 1.3, A: 18 })) }, BD),
+    Object.assign({ id: 'p7', h: 840, gap: 'action', x: 160, w: 760, draw: (c, t, P) => rps(c, t, P, 2), over: (c, t, P) => rpsWords(c, t, P, 2),
+      cam: (t, P) => WT.mixCam({ fx: P.w / 2, fy: P.h * .52 }, WT.punch(t, B.rps2Reveal, { z0: 1.25 })) }, BD),
+    Object.assign({ id: 'p8', h: 640, gap: 'seq', bg: PAPL, draw: (c, t, P) => deadpan(c, t, P) }, BD),
+    Object.assign({ id: 'p9', h: 1100, gap: 'action', cut: [0, 0, 0, -70], draw: (c, t, P) => planPanel(c, t, P),
+      cam: (t, P) => WT.kenBurns(t, B.plan, 20.95, 1.07, P.w * .45, 520) }, BD),
+    Object.assign({ id: 'p10', h: 560, gap: 'beat', x: 250, w: 580, draw: (c, t, P) => silentDonut(c, t, P) }, BD),
+    Object.assign({ id: 'p11', h: 1380, gap: 'action', x: 90, w: 900, draw: (c, t, P) => lungeBg(c, t, P), over: (c, t, P) => lungeHands(c, t, P),
+      cam: (t, P) => WT.mixCam({ fx: P.w / 2, fy: P.h - 400 }, WT.kenBurns(t, 23.4, 25.7, 1.07, P.w / 2, P.h - 400), WT.punch(t, B.count[2], { z0: 1.06, A: 10 })) }, BD),
   ],
 });
 // the opening stop frames the eye strip + the pantry together (scene 1 ended on the eye strip)
 const P0 = STRIP.P.p0, P1 = STRIP.P.p1;
-const CAM = X.camera(STRIP, S.stops.map(([id, a, l]) => [id === 'p1' ? { at: (P0.y + P1.y + P1.h) / 2 + 30 } : id === 'p4' ? 'p4a' : id === 'p11' ? { panel: 'p11', off: 190 } : id, a, l]));
+const CAM = X.camera(STRIP, S.stops.map(([id, a, l]) => [id === 'p1' ? { at: (P0.y + P1.y + P1.h) / 2 - 20 } : id === 'p4' ? 'p4a' : id === 'p11' ? { panel: 'p11', off: 190 } : id, a, l]));
 
 // readability guard: every balloon holds ≥ readTime
 for (const k in Ln) { const [a, b, s] = Ln[k], need = WT.readTime(s); if (b - a < need) console.warn('balloon too short', k, (b - a).toFixed(2), '<', need.toFixed(2)); }
 // a tail aimed beside the head (toward side), not through the hair into the mouth
 const beside = (G, side = 1, dy = .1) => [G.head.x + side * G.head.r * 1.05, G.head.y + G.head.r * dy];
+const fill = (c, P, col) => { c.fillStyle = col; c.fillRect(-4, -100, P.w + 8, P.h + 200); };
 
 // ---------------------------------------------------------------- panels: the polite standoff
 function eyes(c, t, P) {   // the call-back to scene 1's eye strip: three glints… that snap into polite smiles
   const polite = t >= B.polite, w = (P.w - 24) / 3;
   ['park', 'kim', 'choi'].forEach((who, i) => {
     const x = i * (w + 12), s = 4.1;
-    X.eyeBand(c, t, who, x, 0, w, P.h, s, { bg: '#f3e7dd', dy: -8 * s + 10, face: { expr: polite ? 'smile' : 'glint', turn: [.18, 0, -.18][i], blush: polite ? .6 : 0 } });
-    if (polite) WT.star4(c, x + w * .78, 70, 30 * WT.popPeak(clamp((t - B.polite - i * .06) / .3)), .3, '#fff6c0');
+    X.eyeBand(c, t, who, x, 0, w, P.h, s, { bg: PAPL, dy: -8 * s + 10, face: { expr: polite ? 'smile' : 'glint', turn: [.18, 0, -.18][i], blush: polite ? .6 : 0 } });
+    if (polite) X.spark(c, t, x + w * .82, 64, 30, B.polite + i * .06);
   });
-  c.fillStyle = '#1d1a1f'; c.fillRect(w, 0, 12, P.h); c.fillRect(2 * w + 12, 0, 12, P.h);
-  if (polite) WT.sfx(c, t, { text: S.sfx.polite, x: P.w - 130, y: P.h - 40, size: 60, at: B.polite + .05, fill: '#ffd9e6', rot: -.04, grow: [1, 1], wild: .12 });
+  c.fillStyle = INK; c.fillRect(w, 0, 12, P.h); c.fillRect(2 * w + 12, 0, 12, P.h);
+  if (polite) MG.sfx(c, t, { text: S.sfx.polite, x: P.w - 120, y: P.h - 50, size: 64, at: B.polite + .05, rot: -.06 });
 }
 const BOX = { x: 560, y: 616, w: 230 };
 function pantry(c, t, P) {
   C.room(c, t, 'pantry', P.w, P.h, { horizon: 830 });
   C.fridge(c, 700, 830, .78);
-  // 최주임 behind the counter
   const ex = t < B.polite ? 'glint' : 'smile';
-  C.draw(c, t, 'choi', { x: 530, y: 905, s: 1.04, turn: -.12, expr: ex, nod: .1, hairEv: [.2] });
+  C.draw(c, t, 'choi', { x: 530, y: 905, s: 1.04, turn: -.12, expr: ex, nod: .1, hairEv: [.2] });   // 최주임 behind the counter
   C.counter(c, 210, 600, 640, .7);
   C.coffee(c, 300, 600, .55);
   C.box(c, BOX.x, BOX.y, BOX.w, { n: 1, last: true, seed: 2, lid: .55 });
-  WT.star4(c, BOX.x + 64, BOX.y - 110, 14 * (.6 + .4 * Math.abs(Math.sin(t * 3))), .2, '#fff6c0');   // the last donut twinkles
+  X.spark(c, t, BOX.x + 64, BOX.y - 112, 14 * (.7 + .3 * Math.abs(Math.sin(t * 3))));   // the last donut twinkles
   const off = ss(B.polite, B.polite + .4, t);
   const gp = C.draw(c, t, 'park', { x: 190, y: 990, s: 1.1, turn: .5, expr: ex, mouth: mouthOf(t, 'offer1', 'smile'), lean: .04 * off,
     arms: { L: { to: [lerp(270, 400, off), lerp(700, 560, off)], hand: off > .3 ? 'cup' : 'open', ang: -.25 } } });
@@ -92,124 +94,127 @@ function pantry(c, t, P) {
 }
 function kimPanel(c, t, P) {
   const k = ss(B.aura2, B.aura2 + 1.1, t);
-  C.room(c, t, 'pantry', P.w, P.h, { horizon: 1400 }); c.fillStyle = WT.rgba('#2e1b40', .25 * k); c.fillRect(0, 0, P.w, P.h);
+  C.room(c, t, 'pantry', P.w, P.h, { horizon: 1400 });
   const o = { x: 650, y: 1660, s: 2.3, turn: -.42, expr: 'smile', mouth: mouthOf(t, 'offer2', 'smile'), nod: -.1,
     arms: { R: { to: [600, 760], hand: 'hold', prop: (cc, H) => C.mug(cc, H.grip[0] - 12, H.grip[1] + 66, 1.5, { steam: t < B.aura2 + .6, t }) } } };
   const g0 = C.geom(t, 'kim', o);
-  WT.aura(c, t, { x: g0.head.x + 20, y: g0.head.y + 330, w: 760, h: 980, k, seed: 4 });
+  X.flame(c, t, { x: g0.head.x + 10, y: g0.head.y + 420, w: 820, h: 760, k, seed: 4, n: 8 });
   const G = C.draw(c, t, 'kim', o);
-  X.menace(c, G, k * .6);
-  WT.rumble(c, t, { text: S.sfx.rumble, x: 200, y: 110, size: 76, at: B.rumble2, lines: 2, dx: 50, dy: 96 });
+  X.menace(c, G, k);
+  X.rumble(c, t, { text: S.sfx.rumble, x: 220, y: 120, size: 78, at: B.rumble2, lines: 2, dx: 46, dy: 100 });
   WT.balloon(c, t, say('offer2', { kind: 'talk', x: 240, y: 470, tail: [G.mouth[0] - 50, G.mouth[1] + 4], maxW: 330 }));
 }
 function parkChoi(c, t, P) {
   const ka = ss(B.aura3a, B.aura3a + 1, t), kb = ss(B.aura3b, B.aura3b + 1, t);
-  C.room(c, t, 'pantry', P.w, P.h, { horizon: 1500 }); c.fillStyle = WT.rgba('#2e1b40', .3 * Math.max(ka, kb)); c.fillRect(0, 0, P.w, P.h);
+  C.room(c, t, 'pantry', P.w, P.h, { horizon: 1500 });
   const oc = { x: 800, y: 1600, s: 1.95, turn: -.45, expr: 'smile', nod: -.05 };
   const op = { x: 260, y: 1630, s: 2.0, turn: .45, expr: 'smile', mouth: mouthOf(t, 'offer3', 'smile'),
     arms: { L: { to: [lerp(330, 520, ss(Ln.offer3[0] - .3, Ln.offer3[0], t)), 800], hand: 'cup', ang: -.15 } } };
   const gc0 = C.geom(t, 'choi', oc), gp0 = C.geom(t, 'park', op);
-  WT.aura(c, t, { x: gc0.head.x, y: gc0.head.y + 300, w: 600, h: 900, k: kb, seed: 9 });
-  WT.aura(c, t, { x: gp0.head.x, y: gp0.head.y + 300, w: 620, h: 900, k: ka, seed: 6 });
-  const gc = C.draw(c, t, 'choi', oc); X.menace(c, gc, .6 * kb);
-  const gp = C.draw(c, t, 'park', op); X.menace(c, gp, .6 * ka);
-  WT.rumble(c, t, { text: S.sfx.rumble, x: 700, y: 120, size: 70, at: B.rumble3, lines: 1 });
+  X.flame(c, t, { x: gc0.head.x, y: gc0.head.y + 380, w: 560, h: 640, k: kb, seed: 9, n: 6 });
+  X.flame(c, t, { x: gp0.head.x, y: gp0.head.y + 380, w: 580, h: 660, k: ka, seed: 6, n: 6 });
+  const gc = C.draw(c, t, 'choi', oc); X.menace(c, gc, kb);
+  const gp = C.draw(c, t, 'park', op); X.menace(c, gp, ka);
+  X.rumble(c, t, { text: S.sfx.rumble, x: 700, y: 120, size: 70, at: B.rumble3 });
   WT.balloon(c, t, say('offer3', { kind: 'talk', x: 330, y: 200, tail: beside(gp, 1, -.5), maxW: 420 }));
 }
 function inner(c, t, P, who, i) {
-  // dark split column: the smile stays on, the inner voice says otherwise
-  const g = c.createLinearGradient(0, 0, 0, P.h); g.addColorStop(0, '#24152f'); g.addColorStop(1, '#4a2f63'); c.fillStyle = g; c.fillRect(0, 0, P.w, P.h);
-  WT.tone(c, .18, [0, P.h * .55, P.w, P.h * .45], { pitch: 10, color: '#7b4fae', alpha: .6 });
+  // solid black split column with a white-edged flame: the smile stays on, the inner voice says otherwise
+  fill(c, P, INK);
   const o = { x: 0, y: 0, s: 1.85, turn: [.3, 0, -.3][i], expr: 'smile', sway: 1.4 }, g0 = C.geom(t, who, o);
   o.x = P.w / 2 - g0.head.x + [-6, 0, 6][i]; o.y = 600 - g0.head.y;
-  WT.aura(c, t, { x: P.w / 2, y: 780, w: 300, h: 640, k: 1, seed: 20 + i, col: '#140b1c', edge: '#9a6fd0' });
+  X.flame(c, t, { x: P.w / 2, y: 760, w: 330, h: 420, k: 1, seed: 20 + i, n: 4, edge: true });
   const G = C.draw(c, t, who, o);
-  X.menace(c, G, .85);
-  const tg = B.think[i] + .45;   // the glint: one hard sparkle on the shadowed face
-  if (t > tg) WT.star4(c, G.head.x + G.head.r * .5 * (i === 2 ? -1 : 1), G.head.y - G.head.r * .15, 26 * WT.popPeak(clamp((t - tg) / .3)), .3, '#ffffff');
+  X.menace(c, G, 1);
+  X.spark(c, t, G.head.x + G.head.r * .5 * (i === 2 ? -1 : 1), G.head.y - G.head.r * .1, 24, B.think[i] + .45);   // the glint
   WT.balloon(c, t, { kind: 'think', text: Ln.think[2], x: P.w / 2, y: 190, at: B.think[i], out: Ln.think[1], tail: [G.head.x, G.head.y - G.head.r * 1.6], maxW: 210, size: 54 });
 }
 
 // ---------------------------------------------------------------- the shōnen register
 function shoutPanel(c, t, P) {
-  WT.moodBg(c, t, 'drama', 0, 0, P.w, P.h, { cx: P.w * .52, cy: 640 });
-  WT.speed(c, t, { x: 0, y: 0, w: P.w, h: P.h, ang: -Math.PI / 2, n: 50, color: WT.rgba('#ffffff', .25), gap: { cx: P.w * .55, cy: 700, rx: 300, ry: 460 } });
+  fill(c, P, PAPL);
+  MG.focus(c, t, { x: 0, y: -80, w: P.w, h: P.h + 80, cx: P.w * .55, cy: 700, rx: 330, ry: 470, n: 80, wMax: 26, seed: 5 });
   const up = ss(B.shout - .1, B.shout + .12, t);
   const G = C.draw(c, t, 'choi', { x: 600, y: 2280, s: 2.5, turn: -.2, expr: 'determined', mouth: 'wail', lean: -.03,
     arms: { L: { to: [lerp(330, 290, up), lerp(1300, 760, up)], hand: 'fist', ang: -1.6, front: true } } });
-  if (t > B.shout + .3) WT.emote(c, t, 'vein', G.head, { at: B.shout + .3, side: 1 });
+  if (t > B.shout + .2) MG.ticks(c, G.head.x + G.head.r * 1.1, G.head.y - G.head.r * 1.1, G.head.r * .9, { a0: -1.9, a1: -.2, n: 5 });
   WT.balloon(c, t, say('shout', { kind: 'shout', x: 520, y: 230, tail: beside(G, -1, -.9), maxW: 760, size: 76 }));
 }
-// three big hands round a centre: 박대리 from the lower left, 김과장 from the lower right, 최주임 from the top
-const RPS = [{ who: 'park', dir: -.62, flip: 1 }, { who: 'kim', dir: Math.PI + .62, flip: -1 }, { who: 'choi', dir: Math.PI / 2, flip: 1 }];
+// three big arms round a centre: 박대리 from the lower left, 김과장 from the lower right, 최주임 from the top (shoulders off-panel, fixed)
+const RPS = [{ who: 'park', dir: -.62, flip: 1, pole: [0, 1] }, { who: 'kim', dir: Math.PI + .62, flip: -1, pole: [0, 1] }, { who: 'choi', dir: Math.PI / 2, flip: 1, pole: [1, 0] }];
 function rpsTimes(n) { return n === 1 ? { beats: B.rps1, reveal: B.rps1[2], sweat: B.sweat1 } : { beats: [B.rps2, B.rps2 + .18, B.rps2Reveal], reveal: B.rps2Reveal, sweat: B.sweat2 }; }
 function rps(c, t, P, n) {
-  const T = rpsTimes(n), k = P.w / 1080, cx = P.w / 2, cy = P.h * .52, hit = t >= T.reveal;
-  c.fillStyle = BLACK; c.fillRect(0, 0, P.w, P.h);
-  if (hit) { WT.focus(c, t, { x: 0, y: 0, w: P.w, h: P.h, cx, cy, rx: P.w * .42, ry: P.h * .38, inner: .7, at: T.reveal, color: '#ffffff', seed: 7 + n }); WT.glow(c, cx, cy, 520 * k, '#fff2c8', .35); }
-  else { WT.speed(c, t, { x: 0, y: 0, w: P.w, h: P.h, ang: Math.PI / 2, n: 60, color: WT.rgba('#ffffff', .22), seed: n }); WT.toneGrad(c, 0, 0, P.w, P.h, { from: 0, to: .35, dir: 'r', cx, cy, r0: 200 * k, r1: 700 * k, color: '#3a3346', pitch: 12 }); }
-  // the fists pump on each syllable, then all three throw 보
+  const T = rpsTimes(n), k = P.w / 1080, cx = P.w / 2, cy = P.h * .52, hit = t >= T.reveal, sz = 172 * k;
+  if (hit) { fill(c, P, PAPL); MG.focus(c, t, { x: 0, y: -80, w: P.w, h: P.h + 80, cx, cy, rx: P.w * .36, ry: P.h * .3, n: 84, wMax: 30 * k, seed: 7 + n }); }   // reveal: black wedges on paper
+  else { fill(c, P, INK); MG.speed(c, t, { x: 0, y: -80, w: P.w, h: P.h + 80, ang: Math.PI / 2, n: 30, wMax: 12 * k, col: PAPL, v: 1400, seed: n }); }   // the chant: white streaks on black
+  const Ltot = (3.1 + 2.75) * sz;
   for (const h of RPS) {
     let pump = 0; for (const b of T.beats.slice(0, 2)) { const u = (t - b) / .38; if (u > 0 && u < 1) pump += Math.sin(Math.PI * u); }
     const pre = t < T.beats[0] ? .3 * Math.sin(t * 9) : 0, thrust = hit ? 50 * eo(clamp((t - T.reveal) / .12)) : 0;
-    const d = (450 + 90 * pump + 20 * pre - thrust) * k, ca = Math.cos(h.dir), sa = Math.sin(h.dir);
+    const d = (450 + 110 * pump + 20 * pre - thrust) * k, ca = Math.cos(h.dir), sa = Math.sin(h.dir), dSh = 400 * k + Ltot * .97;
     const [tx, ty] = hit ? [0, 0] : WT.tremble(t, 3, 14, h.who.length);
-    X.arm(c, h.who, hit ? 'paper' : 'rock', [cx - ca * d + tx, cy - sa * d + ty], h.dir, 172 * k, { flip: h.flip, reach: 9 });
+    X.arm(c, t, h.who, hit ? 'paper' : 'rock', { sh: [cx - ca * dSh, cy - sa * dSh], wrist: [cx - ca * d + tx, cy - sa * d + ty], ang: h.dir, sz, flip: h.flip, pole: h.pole, halo: hit ? 0 : 7 });
   }
-  if (hit) { X.drop(c, t, cx - 330 * k, cy - 260 * k, 50 * k, T.sweat, { ang: -.3 }); X.drop(c, t, cx + 330 * k, cy - 240 * k, 44 * k, T.sweat + .12, { ang: .3 }); if (n === 2) X.drop(c, t, cx + 60 * k, cy + 330 * k, 56 * k, T.sweat + .2, { ang: .1 }); }
+  if (hit) { MG.ticks(c, cx, cy, 120 * k, { n: 9, a0: 0, a1: TAU, len: 1.1, seed: n });
+    X.drop(c, t, cx - 330 * k, cy - 260 * k, 50 * k, T.sweat, { ang: -.3 }); X.drop(c, t, cx + 330 * k, cy - 240 * k, 44 * k, T.sweat + .12, { ang: .3 }); if (n === 2) X.drop(c, t, cx + 60 * k, cy + 330 * k, 56 * k, T.sweat + .2, { ang: .1 }); }
 }
 function rpsWords(c, t, P, n) {
   const T = rpsTimes(n);
   if (n === 1) {
     const [a, b, r] = T.beats;
-    WT.sfx(c, t, { text: S.sfx.rps[0], x: 230, y: 170, size: 130, at: a, fill: ['#ffffff', '#ffe08a'], rot: -.12, echo: 1 });
-    WT.sfx(c, t, { text: S.sfx.rps[1], x: 850, y: 190, size: 130, at: b, fill: ['#ffffff', '#ffe08a'], rot: .1, echo: 1 });
-    WT.sfx(c, t, { text: S.sfx.rps[2], x: 540, y: P.h - 150, size: 240, at: r, fill: ['#fff6c0', '#ffb43a'], rot: -.05, echo: 2, grow: [1, 1] });
+    MG.sfx(c, t, { text: S.sfx.rps[0], x: 240, y: 200, size: 140, at: a, rot: -.12, seed: 3 });
+    MG.sfx(c, t, { text: S.sfx.rps[1], x: 840, y: 220, size: 140, at: b, rot: .1, seed: 4 });
+    MG.sfx(c, t, { text: S.sfx.rps[2], x: 540, y: P.h - 170, size: 250, at: r, rot: -.06, seed: 5 });
   } else {
-    WT.sfx(c, t, { text: S.sfx.rps2, x: P.w / 2, y: 100, size: 100, at: T.beats[0], fill: ['#ffffff', '#ffe08a'], rot: -.06, stagger: .06, grow: [.85, 1.15] });
-    WT.sfx(c, t, { text: S.sfx.rps[2], x: P.w / 2, y: P.h - 100, size: 170, at: T.reveal, fill: ['#fff6c0', '#ffb43a'], echo: 1, grow: [1, 1] });
+    MG.sfx(c, t, { text: S.sfx.rps2, x: P.w / 2, y: 110, size: 104, at: T.beats[0], rot: -.06, seed: 6 });
+    MG.sfx(c, t, { text: S.sfx.rps[2], x: P.w / 2, y: P.h - 110, size: 180, at: T.reveal, rot: .05, seed: 7 });
   }
 }
-function deadpan(c, t, P) {   // flat SD aftermath: three blank faces, still holding up 보
-  WT.gloomLines(c, t, 0, 0, P.w, P.h * .5, { col: WT.rgba('#7f8fb0', .5) });
-  const xs = [190, 492, 794];
+function deadpan(c, t, P) {   // flat SD aftermath on bare paper: three blank faces, still holding up 보, gloom lines hanging from the top
+  c.fillStyle = MG.tone(c, .12); c.fillRect(0, 0, P.w, P.h * .45);
+  const old = MG.figure(5); MG.boil(t); const r = Pilot.rng(17);
+  for (let i = 0; i < 16; i++) { const x = 40 + i * (P.w - 80) / 15 + (r() - .5) * 20, L = 120 + r() * 170, sw = Math.sin(t * 2 + i) * 4; MG.taper(c, [[x, 0], [x + sw * .5, L * .5], [x + sw, L]], 1.1, .15); }
+  MG.figure(old);
+  const xs = [190, 504, 818];
   ['park', 'kim', 'choi'].forEach((w, i) => {
-    const x = xs[i], y = 580, s = 1.0, sd = i === 2 ? -1 : 1;
+    const x = xs[i], y = 590, s = 1.0, sd = i === 2 ? -1 : 1;
     const G = C.sd(c, t, w, { x, y, s, expr: 'blank', eyes: 'line', mouth: 'flat', sway: .3,
       arms: { [sd > 0 ? 'R' : 'L']: { to: [x + sd * 100, y - 240], hand: 'paper' } } });
-    WT.emote(c, t, 'dots', G.head, { at: B.dead + i * .15, side: -sd });
+    WT.emote(c, t, 'dots', G.head, { at: B.dead + i * .15, side: -sd, col: INK });
   });
 }
 function planPanel(c, t, P) {
-  c.fillStyle = BLACK; c.fillRect(0, 0, P.w, P.h);
-  WT.focus(c, t, { x: 0, y: 0, w: P.w, h: P.h, cx: P.w * .45, cy: 600, rx: 380, ry: 470, inner: .8, color: '#ffffff', at: B.plan, seed: 31 });
+  fill(c, P, PAPL);
+  if (t >= B.plan) MG.focus(c, t, { x: 0, y: -80, w: P.w, h: P.h + 80, cx: P.w * .45, cy: 640, rx: 360, ry: 470, n: 76, wMax: 24, seed: 31 });
   const raise = ss(B.plan - .05, B.plan + .25, t);
   const G = C.draw(c, t, 'park', { x: 430, y: 2130, s: 2.6, turn: .3, expr: 'glint', mouth: mouthOf(t, 'plan', 'smirk'), nod: .1,
     arms: { R: { to: [lerp(640, 720, raise), lerp(1250, 560, raise)], hand: 'point', ang: -1.5, front: true } } });
-  if (t > B.glint) WT.star4(c, G.eyes[1][0] + 18, G.eyes[1][1] - 26, 46 * WT.popPeak(clamp((t - B.glint) / .3)), .4, '#ffffff');
+  X.spark(c, t, G.eyes[1][0] + 18, G.eyes[1][1] - 26, 44, B.glint);
   WT.balloon(c, t, say('plan', { kind: 'shout', x: 480, y: 210, tail: beside(G, -1, -1), maxW: 600, size: 64 }));
 }
 
 // ---------------------------------------------------------------- the silent beat and the lunge
-function silentDonut(c, t, P) {
-  c.fillStyle = '#120f16'; c.fillRect(0, 0, P.w, P.h);
+function silentDonut(c, t, P) {   // black, the donut alone (the only colour), a heartbeat and two sparks — no words
+  fill(c, P, INK);
+  MG.focus(c, t, { x: 0, y: 0, w: P.w, h: P.h, cx: P.w / 2, cy: P.h * .55, rx: 230, ry: 170, n: 40, wMax: 10, col: PAPL, seed: 12, fps: 4 });
   const beat = 1 + .03 * Math.pow(Math.max(0, Math.sin(TAU * 1.1 * (t - 21.6))), 6);
-  WT.rays(c, t, P.w / 2, P.h * .55, { col: '#fff1c8', alpha: .18, r1: 700, n: 14 });
-  c.save(); c.translate(P.w / 2, P.h * .55); c.scale(beat, beat); C.donut(c, 0, 0, 150, { glow: .8, t, seed: 7 }); c.restore();
+  c.save(); c.translate(P.w / 2, P.h * .55); c.scale(beat, beat); C.donut(c, 0, 0, 150, { t, seed: 7 }); c.restore();
+  X.spark(c, t, P.w / 2 - 170, P.h * .4, 22 * (.7 + .3 * Math.sin(t * 5))); X.spark(c, t, P.w / 2 + 160, P.h * .66, 16 * (.7 + .3 * Math.cos(t * 4)));
 }
 const DON = P => [P.w / 2, P.h - 400], DR = 120;
 function lungeBg(c, t, P) {
   const [dx, dy] = DON(P);
-  c.fillStyle = '#ffffff'; c.fillRect(0, 0, P.w, P.h);
-  WT.toneGrad(c, 0, 0, P.w, P.h, { from: .3, to: 0, dir: 'r', cx: dx, cy: dy, r0: 900, r1: 300, pitch: 12 });
-  WT.focus(c, t, { x: 0, y: 0, w: P.w, h: P.h, cx: dx, cy: dy - 40, rx: 300, ry: 300, inner: .9, at: B.count[2], seed: 41 });
+  fill(c, P, PAPL);
+  if (t >= B.count[2]) MG.focus(c, t, { x: 0, y: -80, w: P.w, h: P.h + 80, cx: dx, cy: dy - 30, rx: 330, ry: 300, n: 90, wMax: 26, seed: 41 });
+  else MG.speed(c, t, { x: 0, y: -80, w: P.w, h: P.h * .55, ang: Math.PI / 2, n: 14, wMax: 9, v: 300, seed: 41 });
   C.box(c, dx, P.h + 10, 900, { n: 0, lid: .01, seed: 3 });
-  C.donut(c, dx, dy, DR, { glow: .5, t, seed: 7 });
+  C.donut(c, dx, dy, DR, { t, seed: 7 });
 }
 // slow motion: a quick start that bleeds into an almost-stop just short of contact
 const lungeK = t => { const [a, b] = B.lunge, u = clamp((t - a) / (b - a)); return 1 - Math.pow(1 - u, 2.8); };
-const LUNGE = [{ who: 'park', ang: .36, flip: 1, hide: 700, ready: 330 }, { who: 'kim', ang: Math.PI - .36, flip: -1, hide: 700, ready: 330 }, { who: 'choi', ang: Math.PI / 2, flip: 1, hide: 1250, ready: 520 }];
-const HSZ = 122, GAPD = 46;
+const LUNGE = [{ who: 'park', ang: .36, flip: 1, hide: 700, ready: 330, pole: [0, 1] }, { who: 'kim', ang: Math.PI - .36, flip: -1, hide: 700, ready: 330, pole: [0, 1] },
+  { who: 'choi', ang: Math.PI / 2, flip: 1, hide: 1250, ready: 520, pole: [1, 0] }];
+const HSZ = 122, GAPD = 46, LT = (3.1 + 2.75) * HSZ;
 function handAt(h, P, back) {   // wrist position for a hand `back` px behind its final pose (fingertips GAPD short of the glaze)
   const [dx, dy] = DON(P), ca = Math.cos(h.ang), sa = Math.sin(h.ang), rd = 1 / Math.hypot(ca / DR, sa / (DR * .62)) + 18 * Math.abs(sa);
   const tip = [dx - ca * (rd + GAPD), dy - 14 - sa * (rd + GAPD)], L = 1.6 * HSZ + back;
@@ -219,13 +224,12 @@ function lungeHands(c, t, P) {
   c.save(); c.beginPath(); c.rect(-500, -158, P.w + 1000, P.h + 700); c.clip();   // may break out of the panel, never into the panel above
   const k = lungeK(t), coil = ss(B.count[0] - .15, B.count[1] + .2, t);
   for (const h of LUNGE) {
-    const back = t < B.lunge[0] ? lerp(h.hide, h.ready, eo(coil)) : lerp(h.ready, 0, k), pose = k > .5 ? 'grab' : 'open', sz = HSZ * lerp(1, 1.08, k);
-    if (t > B.lunge[0] && k < .995) for (let g = 3; g >= 1; g--) {   // after-images trail the hand
-      const bg = lerp(h.ready, 0, lungeK(t - g * .06)); if (bg - back < 8) continue;
-      X.arm(c, h.who, pose, handAt(h, P, bg), h.ang, sz, { flip: h.flip, reach: 11, alpha: .16 * (4 - g) / 3 });
-    }
-    const [tx, ty] = WT.tremble(t, 1.5 + 2 * k, 12, h.ang * 10), w = handAt(h, P, back);
-    X.arm(c, h.who, pose, [w[0] + tx, w[1] + ty], h.ang, sz, { flip: h.flip, reach: 11 });
+    const back = t < B.lunge[0] ? lerp(h.hide, h.ready, eo(coil)) : lerp(h.ready, 0, k), pose = k > .5 ? 'grab' : 'open', sz = HSZ * lerp(1, 1.06, k);
+    const ca = Math.cos(h.ang), sa = Math.sin(h.ang), wf = handAt(h, P, 0), w = handAt(h, P, back);
+    const sh = [wf[0] - ca * (LT * .95 + back * .6), wf[1] - sa * (LT * .95 + back * .6)];   // the body lunges too: the shoulder travels 60 % of the hand's way
+    if (t > B.lunge[0] && k < .97) X.streaks(c, t, w[0], w[1], h.ang, { n: 5, len: 300, spread: 90, w: 12, seed: h.who.length, alpha: 1 - k });
+    const [tx, ty] = WT.tremble(t, 1.5 + 2 * k, 12, h.ang * 10);
+    X.arm(c, t, h.who, pose, { sh, wrist: [w[0] + tx, w[1] + ty], ang: h.ang, sz, flip: h.flip, pole: h.pole });
   }
   c.restore();
   // the border gives way where the arms burst through
@@ -234,19 +238,21 @@ function lungeHands(c, t, P) {
     if (hit[1] < 0) { const s2 = -a[1] / sa; hit[0] = a[0] + ca * s2; hit[1] = 0; }
     X.shards(c, t, hit[0], hit[1], h.ang + Math.PI, B.lunge[0] + .05, { seed: h.who.length * 3 }); }
   const [a, b, r] = B.count;
-  WT.sfx(c, t, { text: S.sfx.count[0], x: 200, y: 300, size: 120, at: a, out: B.lunge[0] + .6, fill: '#ffffff', rot: -.12 });
-  WT.sfx(c, t, { text: S.sfx.count[1], x: P.w - 190, y: 300, size: 120, at: b, out: B.lunge[0] + .6, fill: '#ffffff', rot: .1 });
-  WT.sfx(c, t, { text: S.sfx.count[2], x: 250, y: 560, size: 190, at: r, out: B.lunge[0] + 1.2, fill: ['#fff6c0', '#ffb43a'], rot: -.08, echo: 2, grow: [1, 1] });
+  if (t < B.lunge[0] + .6) { MG.sfx(c, t, { text: S.sfx.count[0], x: 200, y: 300, size: 120, at: a, rot: -.12, seed: 8 }); MG.sfx(c, t, { text: S.sfx.count[1], x: P.w - 190, y: 300, size: 120, at: b, rot: .1, seed: 9 }); }
+  if (t < B.lunge[0] + 1.2) MG.sfx(c, t, { text: S.sfx.count[2], x: 250, y: 560, size: 200, at: r, rot: -.08, seed: 10 });
 }
 
 // ---------------------------------------------------------------- frame
 function draw(ctx, t) {
-  WT.begin(ctx, BLACK);
+  WT.begin(ctx, PAP);
   const y = CAM.y(t);
   const sh = WT.shake(t, B.rps1[2], 16), sh2 = WT.shake(t, B.rps2Reveal, 12), sh3 = WT.shake(t, B.shout, 10);
   WT.drawStrip(ctx, t, STRIP, y, { shake: [sh[0] + sh2[0] + sh3[0], sh[1] + sh2[1] + sh3[1]] });
-  WT.flash(ctx, t, B.rps1[2], { hold: .04, dur: .22 });
-  WT.flash(ctx, t, B.rps2Reveal, { hold: .03, dur: .18 });
+  WT.flash(ctx, t, B.rps1[2], { hold: .04, dur: .22, col: PAPL });
+  WT.flash(ctx, t, B.rps2Reveal, { hold: .03, dur: .18, col: PAPL });
+  // the ✱ caption tag (top-left, under the phone's status bar)
+  const tag = t < 12.9 ? S.tag[0] : S.tag[1], ta = t < 12.9 ? .4 : 12.9;
+  MG.tag(ctx, tag, 40, 160, { size: 38, at: ta, t, alpha: 1 - ss(S.DUR - .8, S.DUR - .4, t) });
   if (window.Manga && !/[?&]grade=0/.test(location.search)) Manga.grade(ctx);   // the manga print finish (?grade=0 = raw colour)
   WT.fade(ctx, t, S.DUR, .4, .4);
 }

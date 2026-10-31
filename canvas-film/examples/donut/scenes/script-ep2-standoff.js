@@ -40,6 +40,7 @@ window.SCRIPT = {
     shout: [11.25, 13.13, '그럼… 가위바위보!', 'choi'],
     plan: [18.85, 20.93, '하나, 둘, 셋 하면 동시에!', 'park'],
   },
+  tag: ['눈치 싸움 중…', '가위바위보 중…'],   // the ✱ caption tag (before / after the shout)
   sfx: {
     rumble: '쿠구구구', polite: '방긋', rps: ['가위!', '바위!', '보!'], rps2: '가위바위보!', dots: '……', count: ['하나', '둘', '셋!'], whoosh: '휘이익',
   },
