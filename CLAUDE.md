@@ -1,7 +1,7 @@
 # motion-skills
 
 A collection of Claude Code skills for making motion graphics. Each top-level folder with a `SKILL.md` is one skill
-(`canvas-film/`, `tech-motion-explainer/`, `promo-video/`); `docs/` is the samples site on GitHub Pages (pushes to `main` deploy it);
+(`canvas-film/`, `tech-motion-explainer/`, `promo-video/`, `motion-webtoon/`); `docs/` is the samples site on GitHub Pages (pushes to `main` deploy it);
 `tools/` holds repo tooling, not skills.
 
 - Adding a skill, or absorbing one from another project repo: follow `CONTRIBUTING.md` step by step (folder layout,

@@ -34,17 +34,21 @@ that was made; `examples/donut/scenes/*.sound.json` are the specs, `scenes/audio
   SOUNDS (genre, instruments, bpm, key, how the energy moves), never the picture.
 - SFX: `node_type: sfx`, `eleven_text_to_sound_v2`, `duration_seconds` 0.5–30, prompt_influence 0.5. One concrete sound per prompt.
 - Narration: `creative_generate_speech` with a voice picked from `creative_list_voices` for "deep, grave, documentary narrator"
-  that reads Korean well (a multilingual model); one line per generation, the exact text, two takes. Write lines with
+  that reads Korean well; one line per generation, the exact text, two takes. The donut film used **Eun-joong | Deep & Calm
+  Korean Narrator** (`36g0LZWoT8jWnUnnCauK`, listed for "history narration, documentaries") on `eleven_v4` with `language: ko`
+  and audio tags `[gravely]` / `[dramatically]`; every cut line was checked word for word with `eleven_scribe_v1`. Write lines with
   `…` and commas where the pause should be — then cut the pauses to length anyway (below).
 - Poll `creative_get_flow_run_status` (≤ 20 session ids per call); let large results land in a file and pull the
   `content_url`s with `jq` (they expire after ~2 h). Keep a map `session id → <scene>__<id>` (and `_b`) as you start each batch.
 - Keep the raw takes locally and gitignore the unused ones (`examples/donut/.gitignore` lists them); commit only what the
   spec uses.
 
-### What the donut film generated (and an estimate of what it cost)
+### What the donut film generated and what it cost
 10 narration lines × 2 takes (114 characters, ~56 s of speech), 5 music cues × 2 takes (~150 s), 17 SFX × 2 takes (~65 s).
 With the rates canvas-film measured (music ≈ 15 credits/s per take, SFX ≈ 3 credits/s) and speech at about 1 credit per
-character, that is roughly **2.3 k (music) + 0.2 k (SFX) + 0.2 k (speech) ≈ 2.7 k credits** for 74 s — music is ~85 % of it.
+character, the estimate was ≈ 2.7 k credits; the charges actually recorded were **music 1,980 + SFX 215 + narration 452 + transcription
+171 ≈ 2.8 k credits** for 74 s (66 generations, none re-run) — music is ~70 % of it. The run estimate shown before the
+music+SFX batch said 4.1 k; per-generation charges came in lower.
 Shorter music takes (10–12 s, re-used across a scene) are the lever.
 
 ## 3. Narration editing: `scripts/audio-cuts.py`
