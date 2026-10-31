@@ -28,7 +28,7 @@ const GEO = K.houseGeo(HOUSE), D = GEO.door;
 const SA = 1.12, SB = 1.06, SM = 1.06, SK = 1.14;                  // guests 정록 (A: cap, jacket) and 세진 (B: bob, coat); hosts 명현, 경찬
 const AX0 = -30, AX1 = 318, BX0 = -150, BX1 = 196;
 const STA = K.stopStride(AX1 - AX0, 120 * SA), STB = K.stopStride(BX1 - BX0, 120 * SB);
-const MX = D.x + D.w * .45, KX = D.x + D.w * .78;                 // in the doorway: 명현 in front, 경찬 a step behind her
+const MX = D.x + D.w * .36, KX = D.x + D.w * .8;                  // in the doorway: 명현 in front, 경찬 a step behind her
 let LAND = null, NOW = 0;               // NOW: the frame's time, for the steam in the window hook
 
 function buildLand() {

@@ -539,9 +539,10 @@
       K.pxPoly(s, [[cx - U(3.5), chin + U(1)], [cx, chin + U(3.2)], [cx + U(3.5), chin + U(1)]], pal.skinS);
       R(s, cx - U(2), chin + U(3), 1, U(3), pal.topHi); R(s, cx + U(2), chin + U(3), 1, U(3), pal.topHi);   // collar strings
       // tied hair: the back of the hair and a low bun at the nape, behind the face
-      if (tied) { const bx = cx - f * (hw + U(1.2)); R(s, f > 0 ? cx - hw - U(1) : cx + hw - U(1.5), top + U(1), U(2.5), U(9.5), pal.hair);
-        K.pxEllipse(s, bx, cy + U(3.6), U(2.6), U(2.3), pal.hair); R(s, bx + f * U(1.6) - U(.5), cy + U(2.4), U(1), U(2.4), pal.tie || pal.hatS || pal.hair);
-        R(s, bx - U(1.2), cy + U(2.6), U(1), Math.max(1, U(.6)), mixHex(pal.hair, '#ffffff', .18)); }
+      if (tied) { const bx = cx - f * (hw + U(.6)), by = cy + U(5.2);
+        K.pxPoly(s, [[cx - f * (hw - U(1)), top + U(1)], [cx - f * (hw + U(1.4)), top + U(2)], [cx - f * (hw + U(1.6)), by], [cx - f * (hw - U(1.5)), by + U(1)], [cx - f * (hw - U(1.5)), top + U(1)]], pal.hair);
+        K.pxEllipse(s, bx - f * U(.6), by + U(.6), U(2.4), U(2.2), pal.hair); R(s, bx + (f > 0 ? U(1) : -U(2)), by - U(1.6), U(1), U(3.4), pal.tie || pal.hatS || pal.hair);
+        R(s, bx - f * U(1.4) - U(.4), by - U(.6), U(1), Math.max(1, U(.6)), mixHex(pal.hair, '#ffffff', .2)); }
       // face: a pixel jaw
       K.pxPoly(s, [[cx - hw, top + U(2)], [cx + hw, top + U(2)], [cx + hw, cy + U(3)], [cx + jw, chin], [cx - jw, chin], [cx - hw, cy + U(3)]], pal.skin);
       K.pxPoly(s, [[cx - f * hw, top + U(2)], [cx - f * (hw - U(1.4)), top + U(2)], [cx - f * (hw - U(1.4)), cy + U(3)], [cx - f * (jw - U(1)), chin], [cx - f * jw, chin], [cx - f * hw, cy + U(3)]], pal.skinS);

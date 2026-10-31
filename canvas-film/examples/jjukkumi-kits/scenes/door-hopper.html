@@ -204,7 +204,8 @@ const HOSTF = (() => {
     const [u, v] = cen(p.poly);
     if ((p.c === 'body' && u > .1 && v < 1.42) || (p.c === 'skin' && u > .1 && v < 1)) continue;   // right arm + hand → IK
     if (p.c === 'skin' && v > 1.5) { out.push({ ...p, c: 'hair' }); continue; }                     // back of the head
-    if (p.c === 'hair') { out.push(p, { poly: sc(loop(0, 1.505, .052, .042)), c: 'hair' }); continue; }   // hair tied back: a low bun
+    if (p.c === 'hair') { out.push(p, { poly: sc(loop(0, 1.43, .058, .047)), c: 'hair' },                // hair tied back: a low bun at the nape
+      { poly: sc([[-.034, 1.468], [.034, 1.468], [.03, 1.482], [-.03, 1.482]]), c: 'apron' }); continue; }  // …with a mustard tie
     out.push(p);
     if (p.c === 'body' && Math.abs(u) < .05) {
       out.push({ poly: Hopper.clipRect(p.poly, -1, 1, -1, .9 * HS), c: 'legs' });
