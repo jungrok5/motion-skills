@@ -153,9 +153,10 @@ function oChoi(c, t, P) {
   c.save(); c.beginPath(); c.rect(0, -320, P.w, P.h + 320); c.clip();
   if (t >= B.choi) {
     const k = WT.backOut(clamp((t - B.choi) / .28), 2.2), hk = ss(B.choi + .02, B.choi + .17, t);
-    P.G = C.draw(c, t, 'choi', { x: lerp(190, 330, k), y: 1110, s: 1.7, turn: -.38, lean: lerp(0, -.3, k), expr: 'happy', hairEv: [B.choi + .26],
-      arms: { R: { to: [lerp(500, 690, hk), lerp(420, -150, hk)], hand: 'paper', ang: -1.45 } } });
-    const hd = P.G.hands.R; if (hk > .9) MG.ticks(c, hd.x, hd.y, 110, { n: 7, a0: -Math.PI * .95, a1: -.05, len: 1, seed: 6 });
+    const o = { x: lerp(190, 330, k), y: 1110, s: 1.7, turn: -.38, lean: lerp(0, -.3, k), expr: 'happy', hairEv: [B.choi + .26],
+      arms: { R: { to: [lerp(500, 690, hk), lerp(420, -150, hk)], hand: 'paper', ang: -1.45 } } };
+    if (hk > .9) { const hd = C.geom(t, 'choi', o).hands.R; MG.ticks(c, hd.x, hd.y - 20, 150, { n: 7, a0: -Math.PI * .95, a1: -.05, len: 1, seed: 6 }); }   // behind the hand
+    P.G = C.draw(c, t, 'choi', o);
   } else P.G = null;
   C.fridge(c, 30, 880, 1.1);
   c.restore();

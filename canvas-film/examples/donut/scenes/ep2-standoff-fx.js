@@ -53,8 +53,9 @@
     const rollAt = lp(el, wr, .3), fore = roll ? tube([rollAt, lp(rollAt, wr, .5), wr], [.44, .4, .35]) : tube([el, lp(el, wr, .5), wr], [.5, .45, .4]);
     ctx.save(); if (o.alpha != null) ctx.globalAlpha *= o.alpha;
     if (o.halo) {   // a paper outline round the sleeve so a black sleeve reads on a black panel
-      ctx.save(); ctx.strokeStyle = PAP(); ctx.fillStyle = PAP(); ctx.lineJoin = 'round'; ctx.lineWidth = o.halo * 2;
-      for (const p of [upper, roll ? tube([el, rollAt], [.5, .48]) : null, fore]) if (p) { const q = MG.pathOf(p, true, true); ctx.stroke(q); ctx.fill(q); } ctx.restore();
+      ctx.save(); ctx.strokeStyle = PAP(); ctx.fillStyle = PAP(); ctx.lineJoin = 'round'; ctx.lineWidth = (o.halo + MG.lwScreen() * .45) * 2;
+      const bk = k => [wr[0] - ux * sz * k, wr[1] - uy * sz * k], outer = sleeveKey === 'outer' ? tube([el, bk(1.45)], [.5, .5]) : null;
+      for (const p of [upper, roll ? tube([el, rollAt], [.5, .48]) : null, outer || fore]) if (p) { const q = MG.pathOf(p, true, true); ctx.stroke(q); ctx.fill(q); } ctx.restore();
     }
     const sp = paintOf(S, sleeveKey, lx, ly);
     if (roll) {
@@ -63,12 +64,18 @@
       const a = lp(el, wr, .22), b = lp(el, wr, .36);   // the rolled cuff band
       MG.ink(ctx, tube([a, b], [.56, .54]), Object.assign({ lw: .9 }, paintOf(S, 'shirt', lx, ly)));
     } else {
-      MG.ink(ctx, upper, Object.assign({ lw: 1 }, sp));
-      MG.ink(ctx, fore, Object.assign({ lw: 1 }, sp));
       const back = k => [wr[0] - ux * sz * k, wr[1] - uy * sz * k];
-      if (sleeveKey === 'outer') MG.ink(ctx, tube([back(.5), back(.08)], [.4, .38]), Object.assign({ lw: .9 }, paintOf(S, 'shirt', lx, ly)));   // hoodie cuff
-      MG.ink(ctx, tube([back(sleeveKey === 'outer' ? 1.0 : .7), back(sleeveKey === 'outer' ? .5 : .16)], [.47, .45]), Object.assign({ lw: .9 }, sp));   // cuff
-      if (S.band) MG.ink(ctx, tube([back(.4), back(.1)], [.44, .43]), Object.assign({ lw: .9 }, paintOf(S, 'band', lx, ly)));
+      MG.ink(ctx, upper, Object.assign({ lw: 1 }, sp));
+      if (sleeveKey === 'outer') {   // blazer sleeve ends short of the wrist: hoodie cuff peeking out, then bare wrist (+ 최주임's wristband)
+        MG.ink(ctx, tube([back(.9), back(.05)], [.36, .34]), Object.assign({ lw: 1 }, paintOf(S, 'skin', 0, 0)));
+        MG.ink(ctx, tube([el, lp(el, back(1.2), .5), back(1.2)], [.5, .47, .45]), Object.assign({ lw: 1 }, sp));
+        MG.ink(ctx, tube([back(1.28), back(.86)], [.42, .4]), Object.assign({ lw: .9 }, paintOf(S, 'shirt', lx, ly)));
+        MG.ink(ctx, tube([back(1.45), back(1.1)], [.5, .49]), Object.assign({ lw: .9 }, sp));
+        if (S.band) MG.ink(ctx, tube([back(.62), back(.3)], [.4, .39]), Object.assign({ lw: .9 }, paintOf(S, 'band', lx, ly)));
+      } else {
+        MG.ink(ctx, fore, Object.assign({ lw: 1 }, sp));
+        MG.ink(ctx, tube([back(.7), back(.16)], [.47, .45]), Object.assign({ lw: .9 }, sp));   // shirt cuff
+      }
     }
     const H = C.drawHand(ctx, pose, wr[0], wr[1], ang, sz, o.flip ?? 1, S, {});
     ctx.restore(); MG.figure(old);
