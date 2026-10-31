@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>우키요에 · 템플릿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@600;700&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script-ukiyoe.js"></script>
+<script src="kit-ukiyoe.js"></script>
+<script>
+/* A new scene in the ukiyo-e house style (styles/ukiyoe/STYLE.md). The kit prints the medium; this file draws the story.
+   PLACEHOLDER STORY (the shared template story — replace it with your film's one image): a pilgrim walks along a field
+   above the sea under Fuji, kneels and plants a beni-red seed, waits while geese cross and the waves roll; at 14 a sprout
+   rises in a fan of bare-paper light; at 18 he stands and looks up at it as its beni bud opens; end card at 26.
+   Keep: init → U.init + build static paths once;  draw → U.begin, world into the ink, U.print, glows, captions, end card.
+   Figures pose on 8 fps (st8), water on 12 (the kit's sea), the camera on ones. */
+const { clamp, lerp, ss, eo, eio, rng } = Pilot;
+const U = Ukiyoe, PAL = U.PAL, KW = U.KW;
+const { LN, add, sub, lp2, seg, st8, poly, smooth, circ, fill, key, both, erase, walkPhase } = U;
+const S = window.SCRIPT, B = S.beat, W = Pilot.W, H = Pilot.H, TAU = Math.PI * 2;
+
+// ---------------------------------------------------------------- the world (world px; one sheet, oblique depth)
+const SX0 = 0, SY0 = -520, SX1 = 1800, SY1 = 2250;   // the printed sheet
+const GY = 1300, ROAD_D = 200, SEA = 1480;           // the field's front edge, its depth, the waterline below the bank
+const FD = 60, FX0 = 1330, FX1 = 850;                // the pilgrim's lane, where he walks in from and stops
+const HOLE = 772, HP = LN(FD, HOLE, GY - 4);         // where the seed goes (world point on the field)
+let SKY, STATIC = [], ROCK, MARKS;
+
+function buildStatic() {
+  const L = STATIC;
+  // Fuji: a concave cone, snow cap cut back to paper with a ragged lower edge
+  const fuji = []; for (let x = -160; x <= 1360; x += 20) { const u = Math.abs(x - 560) / 760; fuji.push([x, 760 + 470 * Math.pow(u, 1.35) + (Math.abs(x - 560) < 46 ? -6 * Math.cos((x - 560) / 46 * Math.PI * 3) : 0)]); }
+  L.push({ p: poly([[-160, 1260], ...fuji, [1360, 1260]]), fill: PAL.mtn2, key: 2, keyCol: PAL.prus });
+  const R = rng(3), FY = x => fuji[Math.round((x + 160) / 20)][1], cap = [], low = [];
+  for (let x = 360; x <= 760; x += 20) cap.push([x, FY(x) - 2]);
+  for (let x = 760, i = 0; x >= 360; x -= 20, i++) low.push([x, FY(x) + (x === 760 || x === 360 ? 0 : (i % 2 ? 22 + R() * 18 : 64 + R() * 70) * (1 - Math.pow(Math.abs(x - 560) / 210, 4)))]);
+  L.push({ snow: smooth([...cap, ...low], true), rim: poly(fuji.filter(([x]) => x >= 300 && x <= 820), false), ridges: (() => { const p = new Path2D(); for (const [x, y] of low.filter((_, i) => i % 2 === 0)) { p.moveTo(x, y); p.quadraticCurveTo(x + (x - 560) * .12, y + 50, x + (x - 560) * .3, y + 120); } return p; })() });
+  L.push({ mist: [[-100, 1130, 1300, 42], [700, 1185, 1200, 34]] });
+  // two green ridges with small pines, down to the field's back edge
+  const h1 = U.ridge(SX0 - 20, SX1 + 20, 1205, 60, 4.2, 20, .0034);
+  L.push({ p: poly([[SX0 - 20, 1320], ...h1, [SX1 + 20, 1320]]), fill: PAL.greenL, key: 2 });
+  for (const [x, hh, ln, sd, sc] of [[1180, 110, .08, 3, .6], [1460, 130, -.06, 5, .66], [300, 96, .1, 8, .56]])
+    L.push({ pine: U.pine(x, h1[Math.round((x + 20) / 20)][1] + 22, hh, ln, sd, sc) });
+  const h2 = U.ridge(SX0 - 20, SX1 + 20, 1232, 26, 9.1, 20, .007);
+  L.push({ p: poly([[SX0 - 20, 1320], ...h2, [SX1 + 20, 1320]]), fill: PAL.green, key: 2.2 });
+  // the field (oblique top) and its bank face down to the sea
+  L.push({ p: U.roadTop(SX0 - 60, SX1 + 60, GY, ROAD_D), fill: PAL.road, key: 2.4, marks: true });
+  const bank = U.jagged(SX1 + 60, GY, SY1, 60, 10, 0, 6);
+  L.push({ p: poly([[SX0 - 60, GY], [SX1 + 60, GY], [SX1 + 60, SY1 + 10], [SX0 - 60, SY1 + 10]]), fill: PAL.rock, key: 2.6, rock: true });
+  // the big foreground pine leaning in from the left (Hiroshige framing)
+  L.push({ pine: U.pine(1240, GY + 60, 560, -.42, 11, 1.2), front: true });
+}
+
+// ---------------------------------------------------------------- the pilgrim (the kit's rig; this story's poses)
+const ME = { robe: '#3f5878', robeD: '#2c4a70', legs: '#25304a' };
+function me(t) {
+  const ta = st8(t), base = { d: FD, s: 1, f: -1, x: FX1, ...ME };
+  if (t < B.walk[1]) { const x = lerp(FX0, FX1, U.trap(seg(t, B.walk[0], B.walk[1]), .12));
+    return { ...base, x, mode: 'walk', ph: walkPhase(FX0 - x, 24), stride: 24, lean: .08, hipH: 134, bow: .06 }; }
+  if (t < B.kneel) return { ...base, mode: 'stand', lean: lerp(.08, .3, seg(ta, B.walk[1], B.kneel)), hipH: 134, bow: .25 };
+  const k = eio(seg(ta, B.kneel, B.kneel + .5)) * (1 - eio(seg(ta, B.rise, B.rise + .6)));
+  if (t < B.rise + .6) {
+    const breathe = .02 * Math.sin(ta * 2.2);
+    let lean = .55, bow = .2;
+    if (t >= B.kneel + .5) lean = lerp(.55, 1.0, eio(seg(ta, B.kneel + .5, B.plant - .2)));   // bend down to the ground
+    if (t >= B.plant + 1.2) lean = lerp(1.0, .4, eio(seg(ta, B.plant + 1.2, B.wait[0]))) + breathe;
+    if (t >= B.sprout) { lean = lerp(.4, .05, eio(seg(ta, B.sprout, B.sprout + .4))); bow = lerp(.2, -.25, eio(seg(ta, B.sprout, B.sprout + .5))); }
+    if (t >= B.rise) { lean = lerp(.05, .02, seg(ta, B.rise, B.rise + .6)); bow = lerp(-.25, -.42, seg(ta, B.rise, B.rise + .6)); }
+    return { ...base, mode: 'kneel', k, lean, hipH: 134, bow };
+  }
+  return { ...base, mode: 'stand', lean: .02 + .015 * Math.sin(ta * 1.7), hipH: 134, bow: -.42 + .06 * ss(B.end - 2, B.end, t) };
+}
+// hand targets for each moment (hands are drawn AT these points; the arms come from the kit's IK)
+function hands(R, st, t) {
+  const ta = st8(t);
+  if (st.mode === 'walk' || (st.mode === 'stand' && t < B.kneel)) return {};
+  const onKnee = add(R.kneeN, [6, -10]), onThigh = lp2(R.hip, R.kneeN, .62);
+  if (t < B.rise + .6) {
+    let near = onThigh, far = onKnee;
+    if (t < B.wait[0]) {
+      const hole = [HP[0], HP[1] - 6], hold = add(R.sh, [R.f * 20, 52]);
+      if (ta < B.plant) near = lp2(hold, hole, eio(seg(ta, B.kneel + .6, B.plant)));
+      else if (ta < B.plant + 1.2) near = add(hole, [R.f * -4, -(Math.abs(Math.sin((ta - B.plant) * Math.PI * 2.5)) * 22)]);   // patting the soil
+      else near = lp2(hole, onThigh, eio(seg(ta, B.plant + 1.2, B.wait[0])));
+      far = onKnee;
+    }
+    return { near: U.reach(R, near), far: U.reach(R, far) };
+  }
+  if (t > 21 && t < 23.6) { const lf = leafTip(t, 1), u = Math.sin(seg(ta, 21, 23.6) * Math.PI); return { near: U.reach(R, lp2(U.hangArm(R, .1)[1], lf, eio(clamp(u * 1.6)))) }; }
+  return {};
+}
+
+// ---------------------------------------------------------------- the sprout (accent: a beni bud that opens)
+const SPH = 300;
+function sproutH(t) { return SPH * eo(seg(st8(t), B.sprout, B.sprout + 3.6)); }
+function stemPt(t, u) { const h = sproutH(t), sw = Math.sin(st8(t) * 1.6) * 6 * u * u; return [HP[0] + Math.sin(u * 2.6) * 14 * u + sw, HP[1] - h * u]; }
+const LEAVES = [[.28, -1, 1.0], [.46, 1, .9], [.64, -1, .75], [.8, 1, .6]];
+function leafTip(t, i) { const [u, sd, sc] = LEAVES[i], b = stemPt(t, u), g = clamp((sproutH(t) / SPH - u) / .25); return add(b, [sd * 62 * sc * g, -26 * sc * g]); }
+function drawSprout(t) {
+  if (t < B.sprout) return;
+  const h = sproutH(t); if (h < 2) return;
+  const pts = []; for (let i = 0; i <= 10; i++) pts.push(stemPt(t, i / 10));
+  key(smooth(pts), 9, PAL.greenD); key(smooth(pts), 5.5, PAL.green);
+  for (let i = 0; i < LEAVES.length; i++) {
+    const [u, sd, sc] = LEAVES[i], g = clamp((h / SPH - u) / .25); if (g <= 0) continue;
+    const b = stemPt(t, u), tip = leafTip(t, i), mid = lp2(b, tip, .5), nv = [-(tip[1] - b[1]), tip[0] - b[0]], k = .32;
+    const leaf = smooth([b, add(mid, nv, k), tip, add(mid, nv, -k)], true);
+    both(leaf, i % 2 ? PAL.green : PAL.greenL, 2);
+    const vein = new Path2D(); vein.moveTo(b[0], b[1]); vein.lineTo(tip[0], tip[1]); key(vein, 1.2, PAL.greenD);
+  }
+  const top = stemPt(t, 1), open = eio(seg(st8(t), B.rise + 1.4, B.rise + 2.4)), r = 7 + 7 * clamp(h / SPH);
+  if (open > 0) for (let i = 0; i < 5; i++) {                       // five petals turning out
+    const a = -Math.PI / 2 + (i - 2) * (.5 + .35 * open), tipP = add(top, [Math.cos(a), Math.sin(a)], r * (1.2 + 1.6 * open)), nv = [-Math.sin(a), Math.cos(a)];
+    both(smooth([top, add(lp2(top, tipP, .6), nv, r * .7 * open + 2), tipP, add(lp2(top, tipP, .6), nv, -r * .7 * open - 2)], true), i % 2 ? PAL.beniT : PAL.beni, 1.8);
+  }
+  both(smooth([add(top, [-r * .8, 2]), add(top, [0, -r * 1.7]), add(top, [r * .8, 2]), add(top, [0, r * .7])], true), PAL.beni, 2);   // the bud
+}
+// the seed in the hand → in the hole → covered by a small mound
+function drawGround(t, R, hN) {
+  const mound = eo(seg(st8(t), B.plant + .2, B.plant + 1.2));
+  if (t >= B.plant && mound < 1) both(circ([HP[0], HP[1] - 3], 6), PAL.beni, 1.6);
+  if (mound > 0) { const w = 34 * mound, hh = 12 * mound; both(smooth([[HP[0] - w, HP[1] + 2], [HP[0], HP[1] - hh], [HP[0] + w, HP[1] + 2], [HP[0], HP[1] + 5]], true), PAL.roadD, 1.8); }
+}
+function drawSeedInHand(t, hN) { if (t >= B.kneel && t < B.plant) both(smooth([add(hN, [-7, -2]), add(hN, [0, -9]), add(hN, [7, -2]), add(hN, [0, 4])], true), PAL.beni, 1.6); }
+
+// ---------------------------------------------------------------- ambient: geese crossing while he waits
+function drawGeese(t) {
+  const u = seg(t, B.wait[0] - .5, B.wait[1] + 1); if (u <= 0 || u >= 1) return;
+  const ta = st8(t), p = new Path2D();
+  for (let i = 0; i < 7; i++) {
+    const x = lerp(1620, -120, u) + i * 46 + (i % 2) * 8, y = 560 + Math.abs(i - 0) * 18 - i * 6 + Math.sin(i * 1.7) * 6, fl = Math.sin(ta * 9 + i * 1.3) * 7, w = 15;
+    p.moveTo(x - w, y + fl); p.quadraticCurveTo(x - w * .4, y - 4, x, y + 2); p.quadraticCurveTo(x + w * .4, y - 4, x + w, y + fl);
+  }
+  key(p, 3, PAL.sumi, .85);
+}
+
+// ---------------------------------------------------------------- camera
+const C0 = U.follow(1.0, 900, 1330, GY), C1 = U.follow(1.55, 812, 1240, GY), C2 = U.follow(1.18, 800, 1360, GY), C3 = U.follow(1.3, 806, 1330, GY);
+function camera(t) {
+  if (t < 4.2) return { ...C0, x: lerp(940, 900, seg(t, 0, 4.2)) };
+  if (t < 13.6) { const c = U.camMix(C0, C1, eio(seg(t, 4.2, 5.4))); return U.camMix(c, { ...C1, z: 1.66 }, ss(5.4, 13.6, t) * eio(seg(t, 4.2, 5.4))); }
+  if (t < 17.8) return U.camMix({ ...C1, z: 1.66 }, C2, eio(seg(t, 13.6, 14.7)));
+  return U.camMix(C2, C3, eio(seg(t, 17.8, 18.9)));
+}
+
+// ---------------------------------------------------------------- frame
+function world(t) {
+  U.drawSky(SKY);
+  const light = ss(B.sprout, B.sprout + .5, t);                     // the sprout's light warms the sky (ochre bokashi)
+  U.pool(stemPt(t, 1), 760, PAL.ochreL, .12 + .3 * light);
+  let front = null;
+  for (const l of STATIC) {
+    if (l.mist) { for (const [x, y, w, h] of l.mist) U.mistBand(x + Math.sin(t * .3 + y) * 18 + t * 6, y, w, h * 1.4, .95); continue; }
+    if (l.snow) { erase(l.snow, .92); key(l.ridges, 1.6, PAL.prusL, .8); key(l.rim, 2, PAL.prus); continue; }   // snow = bare paper
+    if (l.pine) { if (l.front) front = l.pine; else U.drawPine(l.pine); continue; }
+    if (l.fill) fill(l.p, l.fill);
+    if (l.rock) U.drawRock(ROCK);
+    if (l.marks) key(MARKS, 1.6, PAL.roadD);
+    if (l.key) key(l.p, l.key, l.keyCol || PAL.sumi);
+  }
+  drawGeese(t);
+  U.mistBand(-80 + Math.sin(t * .35) * 16, GY + 90, 1300, 30, .6);
+  U.sea(t, { x0: SX0, x1: SX1, y: SEA, bottom: SY1 });
+  // the accent light: a fan of bare-paper rays from the sprout, and paper glowing round the bud
+  if (light > 0) { const top = stemPt(t, 1), fade = 1 - .45 * ss(B.rise, B.end, t);
+    U.rays(HP, { a: .55 * light * fade, r: 300 + sproutH(t) * 1.4, len: 260 + sproutH(t), n: 9, a0: -Math.PI * .16, a1: -Math.PI * .84 });
+    U.paperGlow(top, 70 + 40 * light, .7 * light * fade); }
+  const st = me(t), R = U.pose(st), hd = hands(R, st, t);
+  drawSprout(t);
+  drawGround(t, R);
+  const fig = U.figure(R, ME, { near: hd.near, far: hd.far, st, nearFist: !(t > 21 && t < 23.6) });   // open hand on the leaf
+  drawSeedInHand(t, fig.hN);
+  if (front) U.drawPine(front);
+  U.border();
+}
+function draw(ctx, t) {
+  const c = camera(t);
+  U.begin(ctx, c);
+  world(t);
+  const wash = ss(B.end, B.end + .6, t);
+  U.print(ctx, { wash });
+  const light = ss(B.sprout, B.sprout + .5, t);
+  if (light > 0) U.glow(ctx, stemPt(t, 1), 260 * c.z, .45 * light * (1 - wash));   // warm screen glow over the print
+  U.captions(ctx, t, S.lines);
+  U.endCard(ctx, t, S.endCard, B.end, wash);
+}
+async function init() {
+  U.init({ sheet: [SX0, SY0, SX1, SY1], ground: GY });
+  SKY = U.sky({ top: -60, haze: 560, hazeSoft: 380, hazeA: .7 }); buildStatic();
+  ROCK = U.rockFace(SX0 + 20, SX1 - 20, 21, GY, SEA);
+  MARKS = U.roadMarks(SX0, SX1, 41, GY, ROAD_D);
+}
+Pilot.run({ W, H, dur: S.DUR, fonts: U.FONTS, init, draw });
+</script>
+</body>
+</html>
