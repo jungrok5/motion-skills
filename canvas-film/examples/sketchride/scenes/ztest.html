@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>test</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@700&family=Noto+Sans+KR:wght@400;500&display=swap">
+</head><body>
+<script src="lib.js"></script><script src="story.js"></script><script src="kit-sketchanime.js"></script>
+<script>
+const D = SketchAnime;
+function draw(ctx, t) {
+  D.begin(ctx, t);
+  D.letter(ctx, '도넛 가게 마감까지', 540, 230, { size: 90, fill: D.C.butter });
+  D.letter(ctx, '3분', 540, 360, { size: 130, color: (i) => i === 0 ? D.ACCENT : D.C.butter, seed: 9 });
+  D.cloud(ctx, 760, 820, 260, 170, t, { seed: 3 });
+  const lobes = D.dustLobes(t + 3, te => [400 - te * 200, 1150], { life: 2.4 });
+  D.cloudMass(ctx, lobes, { ground: 1160 });
+  // a standing figure
+  const G = D.pose({ x: 250, y: D.standY(1500, 1.2), s: 1.2, dir: 1, ground: 1500, t, wind: .6, seed: 2,
+    look: { hairStyle: 'bob', hair: D.C.pink, clip: D.C.lemon, top: D.C.cream, topStyle: 'cardigan', bottom: D.C.sage },
+    face: { eyes: 'laugh', mouth: 'laugh' }, hands: [{ at: [380, 1180], ang: -.3, kind: 'open' }, null] });
+  D.figure(ctx, G);
+  const G2 = D.pose({ x: 760, y: D.standY(1500, 1.2), s: 1.2, dir: -1, ground: 1500, t, wind: .8, seed: 5,
+    look: { hairStyle: 'messy', hair: D.C.blue, top: D.C.sky, sleeve: 'rolled', tie: D.C.navy, bottom: D.C.grey, glasses: true, ahoge: true },
+    face: { eyes: 'wide', mouth: 'grit', sweat: 2 }, hands: [{ at: [620, 1160], ang: -1.2, kind: 'flat' }, { at: [600, 1150], ang: -1.4, kind: 'flat' }] });
+  D.figure(ctx, G2);
+  D.wheel(ctx, 300, 1700, 120, t * 4, { blur: .7 });
+  D.chromeTube(ctx, [[480, 1650], [700, 1640], [980, 1660]], 26);
+  D.coil(ctx, [520, 1780], [620, 1700], 14, 7);
+  D.speed(ctx, t, { y0: 1560, y1: 1880, x0: 0, x1: 1080, n: 10 });
+  D.finish(ctx);
+}
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: 5, fonts: D.FONTS, init: async () => D.init(), draw });
+</script></body></html>

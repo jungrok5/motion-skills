@@ -1,0 +1,31 @@
+{
+ "title": "도넛 가게 마감까지 3분",
+ "source": "ko",
+ "scenes": [
+  {
+   "id": "sketchride",
+   "label": "마감 3분 전",
+   "dur": 19
+  }
+ ],
+ "fonts": {
+  "base": [
+   [
+    "Noto Sans KR",
+    400,
+    "NotoSansKRwght.ttf"
+   ],
+   [
+    "Jua",
+    400,
+    "Jua-Regular.ttf"
+   ],
+   [
+    "Gaegu",
+    400,
+    "Gaegu-Bold.ttf"
+   ]
+  ],
+  "local": {}
+ }
+}

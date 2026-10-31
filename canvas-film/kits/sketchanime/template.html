@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>스케치 애니 · 템플릿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@700&family=Noto+Sans+KR:wght@400;500&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-sketchanime.js"></script>
+<script>
+/* A new scene in the sketch-anime house style (kits/sketchanime/STYLE.md). The kit draws the medium (paper, the pressure
+   line, offset pastel washes, cumulus clouds, dust, wind, the side-view figure rig, hand lettering); this file draws the
+   story. PLACEHOLDER STORY (script.js): a figure walks in from the left (little dust puffs at the steps), kneels by a pot,
+   plants a seed, waits (clouds drift, a breeze lifts hair and cardigan), a sprout rises and opens a flower in the accent at
+   14, the figure stands and laughs at it at 18, end card at 26.
+   Keep: D.begin(ctx, t) → cam → world (back → front; knock-out + wash + ink per shape) → figure parts → D.finish →
+         captions → endCard → fade.
+   Replace: pose() (the figure's beats), pot()/sprout() (your one image), the sky, cam(). */
+const S = window.SCRIPT, B = S.beat, D = SketchAnime, { clamp, lerp, ss, eio, eo } = Pilot;
+const GROUND = 1420, SK = 1.45;                    // the ground row; the figure's scale
+const POT = [700, GROUND], SOIL = [700, GROUND - 104], KX = 500, X0 = -160;   // the pot; where the figure kneels; enters
+const LOOK = { hairStyle: 'bob', hair: '#c9a58e', clip: D.C.lemon, top: D.C.cream, topStyle: 'cardigan', sleeve: 'long', collar: '#ffffff', bottom: D.C.sage, shoe: '#b8977f' };
+
+// ---------------------------------------------------------------- the figure's beats (every pose from the kit's rig)
+const walkX = t => lerp(X0, KX, eio(clamp((t - B.walk[0]) / (B.walk[1] - B.walk[0]))));
+const kneelY = GROUND - (8 + D.BODY.leg1 * .97) * SK;
+function pose(t) {
+  const standY = D.standY(GROUND, SK), breeze = ss(B.wait[0], B.wait[0] + 1, t) * (1 - ss(B.sprout - 1, B.sprout, t)) * (.35 + .25 * D.flutter(t, 3, .6)) + .15;
+  const F = { x: KX, y: standY, s: SK, dir: 1, ground: GROUND, look: LOOK, t, seed: 4, wind: breeze, face: { eyes: 'open', mouth: 'smile', blink: blink(t) } };
+  let seedHand = t < B.plant + .2;
+  const seedAt = h => [h[0] + 4, h[1] - 2];
+  if (t < B.walk[1] + .15) {                                          // walk in: planted feet, a small bob, arms swinging
+    const x = walkX(t), w = D.walkFeet(X0, x, 96, 18), ph = Math.PI * (x - X0) / 96;
+    F.x = x; F.y = standY - 5 * Math.abs(Math.sin(ph));
+    F.legs = [{ at: [w.feet[0], GROUND - D.BODY.ankle * SK - w.lift[0]], ang: 0 }, { at: [w.feet[1], GROUND - D.BODY.ankle * SK - w.lift[1]], ang: 0 }];
+    const sw = 26 * Math.sin(ph);
+    F.hands = [{ at: [x + 34 + sw, F.y + 30], ang: 1.2, kind: 'fist' }, { at: [x + 10 - sw, F.y + 34], ang: 1.4, kind: 'relax' }];
+    F.lean = .06; F.face.mouth = 'smile';
+  } else {
+    const k = eio(clamp((t - B.kneel) / .8)), up = t >= B.rise ? eio(clamp((t - B.rise) / 1.1)) : 0, kn = k * (1 - up);
+    F.y = lerp(standY, kneelY, kn); F.kneel = kn;
+    F.legs = [null, { at: [KX + lerp(10, 66, kn) * SK, GROUND - D.BODY.ankle * SK], ang: 0 }];
+    if (kn < .02) F.legs = [{ at: [KX - 4, GROUND - D.BODY.ankle * SK], ang: 0 }, { at: [KX + 12, GROUND - D.BODY.ankle * SK], ang: 0 }];
+    F.lean = .06 + .14 * kn;
+    const lap = [KX + 70 * SK, F.y - 20];
+    F.hands = [{ at: lap, ang: .3, kind: seedHand ? 'fist' : 'relax' }, { at: [lap[0] + 10 * SK, lap[1] + 8 * SK], ang: .5, kind: 'relax' }];
+    if (t < B.plant + 1.6 && t > B.kneel) {                           // reach into the pot, press, pat, sit back
+      const r = ss(B.kneel + .8, B.plant - .1, t) * (1 - ss(B.plant + 1.15, B.plant + 1.6, t));
+      const pat = t < B.plant ? 0 : 10 * Math.abs(Math.sin((t - B.plant) * 9)) * (1 - ss(B.plant + .8, B.plant + 1.2, t));
+      F.hands[0] = { at: [lerp(lap[0], SOIL[0] - 14, r), lerp(lap[1], SOIL[1] - 8 - pat, r)], ang: lerp(.3, 1.3, r), kind: seedHand ? 'fist' : 'flat' };
+      F.lean += .32 * r; F.head = { tilt: -.25 * r };
+    }
+    if (t > B.wait[0]) { F.bob = 2 * Math.sin((t - B.wait[0]) * 2.2) * (1 - ss(B.sprout - .5, B.sprout, t)); F.face.eyes = 'open'; F.face.look = [.4, .6]; }
+    if (t >= B.sprout && t < B.rise) { const s2 = ss(B.sprout, B.sprout + .25, t); F.face = { eyes: s2 > .5 ? 'wide' : 'open', mouth: 'o', brows: 'up', blush: .7, look: [.5, -.4] }; F.head = { tilt: .18 * s2 }; F.lean -= .1 * s2; }
+    if (t >= B.rise) { F.face = { eyes: 'laugh', mouth: 'laugh', blush: .8 }; F.head = { tilt: .12 }; F.bob = (F.bob || 0) + 4 * Math.abs(Math.sin((t - B.rise - 1.2) * 7)) * ss(B.rise + 1.1, B.rise + 1.3, t) * (1 - ss(B.rise + 3, B.rise + 3.4, t));
+      if (up > .5) F.hands = [{ at: [KX + 62 * SK, F.y - 104 * SK], ang: -1.1, kind: 'open' }, null]; }
+  }
+  return { F, seedHand, seedAt };
+}
+function blink(t) { const p = (t + 1.3) % 3.4; return p < .12 ? Math.sin(p / .12 * Math.PI) : 0; }
+
+// ---------------------------------------------------------------- the one image (placeholder): pot, seed, sprout
+const P = D.pen;
+function pot(ctx) {
+  const [x, y] = POT, h = 100;
+  ctx.save(); ctx.fillStyle = 'rgba(110,100,130,.14)'; ctx.beginPath(); ctx.ellipse(x + 10, y + 4, 110, 12, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  const body = P().m(x - 74, y - h).l(x + 74, y - h).l(x + 54, y).q(x, y + 6, x - 54, y).z();
+  D.shape(ctx, body, D.C.peach, { wash: { light: .4, gaps: 1 } });
+  D.shade(ctx, body, P().m(x + 20, y - h).l(x + 90, y - h).l(x + 60, y + 10).l(x + 10, y + 10).z(), D.C.peach, { a: .6 });
+  D.shape(ctx, P().m(x - 84, y - h - 18).l(x + 84, y - h - 18).l(x + 82, y - h + 4).l(x - 82, y - h + 4).z(), D.tone(D.C.peach, .15), { line: { lw: 2 } });
+  D.shape(ctx, P().ell(SOIL[0], SOIL[1] - 8, 70, 8), '#9b7f6e', { line: { lw: 1.6 } });
+}
+const stemH = t => t < B.sprout ? 0 : 170 * D.spring(clamp((t - B.sprout) / 1.2)) + 70 * eio(clamp((t - B.sprout - 1.2) / 7));
+function sprout(ctx, t) {
+  const h = stemH(t); if (h <= 1) return;
+  const [x, y0] = SOIL, y = y0 - 8, sway = 5 * Math.sin(t * 1.3), top = [x + sway, y - h];
+  D.tube(ctx, [[x, y], [x - 8, y - h * .5], top], [9, 7, 5], '#a9c98f', { line: { lw: 1.8 } });
+  const lo = ss(B.sprout + .4, B.sprout + 1.4, t);
+  for (const sd of [-1, 1]) if (lo > .02) { const ly = y - h * .42, lx = x - 5 + sway * .4, L = 46 * lo, a = sd > 0 ? -.45 : Math.PI + .45;
+    const leaf = P().m(lx, ly).q(lx + Math.cos(a - .5 * sd) * L * .7, ly + Math.sin(a - .5 * sd) * L * .7, lx + Math.cos(a) * L, ly + Math.sin(a) * L).q(lx + Math.cos(a + .5 * sd) * L * .6, ly + Math.sin(a + .5 * sd) * L * .6, lx, ly).z();
+    D.shape(ctx, leaf, '#b5d39b', { wash: { light: .4 }, line: { lw: 1.7 } }); D.ink(ctx, [[lx, ly], [lx + Math.cos(a) * L * .8, ly + Math.sin(a) * L * .8]], { lw: .9, heavy: null, a: .6 }); }
+  const bo = ss(B.sprout + .9, B.sprout + 2.2, t);                     // the bud opens into the accent flower
+  if (t > B.sprout + .6) {
+    const r = 14 + 22 * bo, A = D.ACCENT;
+    for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + (i - 2) * (.35 + .5 * bo), px = top[0] + Math.cos(a) * r * .7, py = top[1] + Math.sin(a) * r * .7;
+      D.shape(ctx, P().ell(px, py, r * .62, r * .36, a), A, { wash: { light: .5, mis: .6 }, line: { lw: 1.6 } }); }
+    D.shape(ctx, P().ell(top[0], top[1] - 2, r * .28, r * .24), D.C.lemon, { line: { lw: 1.4 } });
+    if (bo > .9) D.pop(ctx, top[0], top[1] - r * .6, r * 1.2, clamp((t - B.sprout - 2.2) / .5), { n: 5, spread: 1.1 });
+  }
+}
+function seed(ctx, p) { D.shape(ctx, P().ell(p[0], p[1], 7, 5, .4), '#a8825f', { line: { lw: 1.4 } }); }
+
+// ---------------------------------------------------------------- sky, ground, camera
+function world(ctx, t) {
+  const drift = t * 9;
+  D.cloud(ctx, 780 - drift, 600, 230, 120, t, { seed: 5, col: '#eef2f7', sh: '#d8e1ec', n: 10, front: 2, lw: 1.6, shade: .5 });
+  D.cloud(ctx, 230 - drift * .6, 790, 150, 80, t, { seed: 9, col: '#f2f4f8', sh: '#dde4ee', n: 8, front: 1, lw: 1.4, shade: .4 });
+  D.ink(ctx, [[-60, GROUND], [1140, GROUND]], { lw: 2, heavy: null, over: 0 });
+  for (let i = 0; i < 26; i++) { const x = 20 + i * 42 + 10 * Math.sin(i * 2.7), g = 6 + 6 * ((i * 7) % 3);
+    D.ink(ctx, [[x, GROUND], [x + 3 + 2 * Math.sin(t * 2 + i), GROUND - g]], { lw: 1.2, heavy: null, a: .6, over: 0 }); }
+}
+function zoom(t) {
+  let z = 1 + .08 * eio(clamp((t - B.wait[0]) / (B.wait[1] - B.wait[0] + .5)));
+  if (t > B.rise) z = lerp(z, 1.03, eio(clamp((t - B.rise) / 1.5)));
+  if (t > B.end - 1.5) z = lerp(z, 1, eio(clamp((t - B.end + 1.5) / 1.5)));
+  return [z, 600, 1300];
+}
+
+function draw(ctx, t) {
+  D.begin(ctx, t);
+  const cm = zoom(t); ctx.save(); D.cam(ctx, ...cm);
+  world(ctx, t);
+  // dust puffs where the feet land during the walk
+  if (t < B.walk[1] + 1.5) D.cloudMass(ctx, D.dustLobes(t, te => { if (te < B.walk[0] || te > B.walk[1]) return null; const w = D.walkFeet(X0, walkX(te), 96, 18); return w.lift[0] + w.lift[1] < 2 ? [walkX(te) - 30, GROUND] : null; },
+    { dt: .12, life: 1.2, r0: 8, r1: 30, drift: [-30, -18], spread: 20, front: 0 }), { ground: GROUND + 2, lw: 1.4 });
+  pot(ctx);
+  const { F, seedHand, seedAt } = pose(t), G = D.pose(F);
+  if (t > B.plant && t < B.sprout) seed(ctx, [SOIL[0] - 10, SOIL[1] - 10]);
+  sprout(ctx, t);
+  D.figure(ctx, G, { held: [seedHand ? (c, g, a) => seed(c, a.grip) : null, null] });
+  ctx.restore();
+  D.finish(ctx);
+  if (t < B.end) D.captions(ctx, t, S.lines, { y: 330, size: 84 });
+  D.endCard(ctx, t, S.endCard, B.end);
+  D.fade(ctx, t, S.DUR);
+}
+
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: D.FONTS, init: async () => D.init(), draw });
+</script>
+</body>
+</html>

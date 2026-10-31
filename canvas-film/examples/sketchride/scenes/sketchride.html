@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>도넛 가게 마감까지 3분</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@700&family=Noto+Sans+KR:wght@400;500&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-sketchanime.js"></script>
+<script src="sketchride-art.js"></script>
+<script>
+/* 「도넛 가게 마감까지 3분」 — one portrait shot, silent. The camera rides alongside the old delivery bike: 하늘 drives,
+   laughing; 최주임 clings to her waist, panicking; 박대리 on the rack holds the empty donut box up like a flag. The street
+   streams past, the dust cloud grows, the countdown is struck out and re-lettered (3 → 2 → 1), they brake hard in front
+   of the donut shop as its shutter comes down with 「품절」 taped on it — and the dust catches up and swallows them.
+   Kit: sketchanime (kit-sketchanime.js). The film's own things: sketchride-art.js. */
+const S = window.SCRIPT, B = S.beat, W = S.words, D = SketchAnime, Rd = Ride, { clamp, lerp, ss, eio, eo } = Pilot;
+const GY = 1392, CB = 1302;                       // the road row the tyres touch; the curb behind
+const VMAX = 1650;
+
+// ---------------------------------------------------------------- the ride: speed → distance (a table, pure in t)
+const speed = t => t < B.throttle ? 1000 : t < B.brake ? lerp(1000, VMAX, eio((t - B.throttle) / 1.1)) : VMAX * (1 - eio(clamp((t - B.brake) / (B.stop - B.brake))) * 1) * (t < B.stop ? 1 : 0);
+const DT = 1 / 240, NT = Math.ceil((S.DUR + 1) / DT), XT = new Float64Array(NT + 1);
+for (let i = 1; i <= NT; i++) XT[i] = XT[i - 1] - speed((i - .5) * DT) * DT;
+const bikeX = t => { const f = clamp(t, 0, S.DUR) / DT, i = Math.floor(f); return lerp(XT[i], XT[Math.min(NT, i + 1)], f - i); };
+const XSTOP = bikeX(B.stop + .5);
+// camera: where the bike sits on screen (its origin), easing between holds — a surge when it speeds up, an overshoot on the brake
+const offX = t => 62 + 22 * ss(B.throttle, B.throttle + 1.2, t) * (1 - ss(B.throttle + 2, B.throttle + 3.6, t)) - 80 * ss(B.brake, B.stop - .2, t) + 20 * ss(B.stop, B.stop + 1, t);
+const camX = t => bikeX(t) + offX(t);
+const SHOPX = XSTOP + 90;                         // world x of the donut shop's centre (sits behind the stopped bike)
+const scr = (wx, t) => wx - camX(t) + 540;        // world → screen x (before the pull-back zoom)
+
+// ---------------------------------------------------------------- the bike's body: hop, suspension, vibration, pitch
+const moving = t => clamp(speed(t) / VMAX);
+const hop = t => (t > B.bump && t < B.bump + .36) ? 30 * Math.sin(Math.PI * (t - B.bump) / .36) : 0;
+const comp = t => D.bump(t, B.bump + .36, 16, .42) + 9 * ss(B.brake, B.brake + .3, t) * (1 - ss(B.stop - .1, B.stop + .4, t)) - D.bump(t, B.stop, 7, .4);
+const vib = t => moving(t) * (2.2 * Math.sin(t * 31) + 1.3 * Math.sin(t * 47 + 1));
+const pitch = t => .045 * ss(B.brake, B.brake + .35, t) * (1 - ss(B.stop - .15, B.stop + .45, t)) - .03 * D.bump(t, B.bump, 1, .3) - .02 * D.bump(t, B.stop, 1, .5);
+const PIV = [-272, -98];
+function bodyM(t) {   // bike-local (facing right) → world (screen, pre-zoom)
+  const bx = scr(bikeX(t), t), th = pitch(t), dy = comp(t) + vib(t) - hop(t);
+  return new DOMMatrix().translate(bx, GY).scale(-1, 1).translate(0, dy).translate(PIV[0], PIV[1]).rotate(th * 180 / Math.PI).translate(-PIV[0], -PIV[1]);
+}
+const pt = (M, p) => { const q = M.transformPoint(new DOMPoint(p[0], p[1])); return [q.x, q.y]; };
+function wheelsInBody(t, M) {   // the wheels stay on the road (lifted only by the hop); find them in body coordinates
+  const inv = M.inverse(), bx = scr(bikeX(t), t);
+  const w = x => { const q = inv.transformPoint(new DOMPoint(bx - x, GY - Rd.WR - hop(t))); return [q.x, q.y]; };
+  return { RW: w(Rd.RW[0]), FW: w(Rd.FW[0]) };
+}
+const dist = t => -bikeX(t);
+const lockR = t => t > B.brake + .2 && t < B.stop;  // the rear wheel locks in the skid
+function spins(t) {
+  const f = dist(t) / Rd.WR, rl = dist(Math.min(t, B.brake + .2)) / Rd.WR;
+  return { F: f, R: lockR(t) || t >= B.stop ? rl : f };
+}
+
+// ---------------------------------------------------------------- the riders
+const LOOK = {
+  haneul: { hairStyle: 'bob', hair: '#e9bf9f', clip: D.C.lemon, top: D.C.cream, topStyle: 'cardigan', sleeve: 'long', collar: '#ffffff', bottom: D.C.sage, shoe: '#c4a68e' },
+  choi: { hairStyle: 'spiky', hair: '#d9c09a', top: D.C.mint, topStyle: 'hoodie', sleeve: 'long', bottom: D.C.sand, shoe: '#e9e6ea' },
+  park: { hairStyle: 'messy', hair: '#aab3cf', top: D.C.sky, sleeve: 'rolled', collar: '#f4f8fc', tie: D.C.navy, bottom: D.C.grey, shoe: '#8a7270', glasses: true, ahoge: true },
+};
+const RIDER = { haneul: { hip: [38, -318], lean: .2, s: 1.08, seed: 3 }, choi: { hip: [-98, -320], lean: .36, s: 1.1, seed: 7 }, park: { hip: [-268, -318], lean: -.06, s: 1.12, seed: 11 } };
+const blink = (t, sd) => { const p = (t + sd * 1.37) % 3.7; return p < .12 ? Math.sin(p / .12 * Math.PI) : 0; };
+function faces(t) {
+  const sh = t >= B.shop + 1.1 && t < B.shut + .5, after = t >= B.shut + .5;
+  const f = {
+    haneul: { eyes: 'laugh', mouth: 'laugh', blush: .7 },
+    choi: { eyes: 'panic', mouth: 'grit', brows: 'worry', sweat: 2, blush: .2 },
+    park: { eyes: 'laugh', mouth: 'yell', blush: .6 },
+  };
+  if (t > B.throttle + .3) f.park = { eyes: 'wide', mouth: 'grit', brows: 'worry', sweat: 1, blush: .3 };
+  if (t > B.throttle + .3 && t < B.one) f.choi = { eyes: 'panic', mouth: 'yell', brows: 'worry', sweat: 2, blush: .2 };
+  if (sh) { f.haneul = { eyes: 'wide', mouth: 'o', blush: .3 }; f.choi = { eyes: 'wide', mouth: 'o', sweat: 1 }; f.park = { eyes: 'wide', mouth: 'o', sweat: 1 }; }
+  if (after) { f.haneul = { eyes: 'closed', mouth: 'flat', brows: 'worry', blush: .2 }; f.choi = { eyes: 'closed', mouth: 'flat', brows: 'worry', sweat: 1 }; f.park = { eyes: 'closed', mouth: 'flat', brows: 'worry' }; }
+  if (t > B.pull + .4) { f.haneul = { eyes: 'laugh', mouth: 'laugh', blush: .8 }; f.choi = { eyes: 'squint', mouth: 'flat', brows: 'worry', sweat: 1 }; f.park = { eyes: 'closed', mouth: 'smug', blush: .4 }; }
+  for (const k in f) if (!f[k].eyes || f[k].eyes === 'open') f[k].blink = blink(t, RIDER[k].seed);
+  return f;
+}
+function riders(t, M) {
+  const th = pitch(t), wind = t < B.stop ? .25 + .75 * moving(t) : .15 * (1 - ss(B.stop, B.stop + 1, t)) + .5 * ss(B.engulf, B.engulf + .6, t) * (1 - ss(B.pull, B.pull + 1.2, t));
+  const fc = faces(t), G = {}, pegA = (i, d = [-6, -16]) => pt(M, [Rd.PEG[i][0] + d[0], Rd.PEG[i][1] + d[1]]);
+  const lift = k => (k === 'park' ? 1.25 : k === 'choi' ? 1 : .8) * (D.bump(t, B.bump + .05, 14, .5)) + (k === 'park' ? 3 : 2) * Math.sin(t * 9.3 + RIDER[k].seed) * moving(t);
+  const brakeLean = .16 * ss(B.brake, B.brake + .3, t) * (1 - ss(B.stop + .1, B.stop + .7, t)) + .06 * D.bump(t, B.stop, 1, .5);
+  // 하늘: hands on the grips, feet on the front pegs
+  { const R = RIDER.haneul, hp = pt(M, R.hip);
+    G.haneul = D.pose({ x: hp[0], y: hp[1], s: R.s, dir: -1, lean: R.lean + th + brakeLean * .8, bob: lift('haneul'), look: LOOK.haneul, face: fc.haneul, wind, t, seed: R.seed,
+      head: { tilt: .05 + .04 * Math.sin(t * 6) * moving(t) },
+      hands: [{ at: pt(M, Rd.GRIP[0]), ang: Math.PI + .5, kind: 'grip' }, { at: pt(M, Rd.GRIP[1]), ang: Math.PI + .5, kind: 'grip' }],
+      legs: [{ at: pegA(0), ang: Math.PI - .25 }, { at: pegA(0, [4, -20]), ang: Math.PI - .25 }] }); }
+  // 최주임: both arms round 하늘's waist (the far hand hides behind her), feet on the passenger pegs
+  { const R = RIDER.choi, hp = pt(M, R.hip), H = G.haneul, w = (a, b) => H.toW([a * Math.cos(H.lean) - b * Math.sin(H.lean), a * Math.sin(H.lean) + b * Math.cos(H.lean)]);
+    const squash = .14 * ss(B.brake, B.brake + .3, t) * (1 - ss(B.stop + .1, B.stop + .7, t));
+    G.choi = D.pose({ x: hp[0], y: hp[1], s: R.s, dir: -1, lean: R.lean + th + squash + brakeLean, bob: lift('choi'), look: LOOK.choi, face: fc.choi, wind, t, seed: R.seed,
+      head: { tilt: .28 + .05 * Math.sin(t * 11) * moving(t) }, neck: -.25,
+      hands: [{ at: w(20, -56), kind: 'grip', ang: Math.PI - 1.2 }, { at: w(10, -66), kind: 'grip', ang: Math.PI - 1.2 }],
+      legs: [{ at: pegA(1), ang: Math.PI - .35 }, { at: pegA(1, [6, -20]), ang: Math.PI - .35 }] }); }
+  // 박대리: on the rack, the box held up in both hands, feet on the rear pegs
+  const cheer = t < B.throttle ? Math.abs(Math.sin(t * 4.2)) * 26 * (1 - ss(B.throttle - 1, B.throttle, t)) : 0;
+  const fl = D.flutter(t, 4, 1.6), R = RIDER.park, hp = pt(M, R.hip);
+  const boxC = pt(M, [-318 + 8 * fl, -640 + cheer + 10 * D.flutter(t, 9, 1.1) * moving(t) - lift('park') * 1.6]);
+  const boxA = .07 * fl * (.4 + moving(t)) - .08 * D.bump(t, B.bump + .1, 1, .5) + th * .8;
+  const lid = .35 + .95 * moving(t) * (.8 + .25 * D.flutter(t, 2, 2.4)) + .2 * ss(B.engulf, B.engulf + .5, t);
+  const geo = boxGrips(boxC, boxA);
+  G.park = D.pose({ x: hp[0], y: hp[1], s: R.s, dir: -1, lean: R.lean + th + brakeLean * .7, bob: lift('park'), look: LOOK.park, face: fc.park, wind, t, seed: R.seed,
+    head: { tilt: .04 }, hands: [{ at: geo.near, ang: Math.PI + 1.35 + boxA, kind: 'flat', bend: -1 }, { at: geo.far, ang: -.2 + boxA, kind: 'flat', bend: -1 }],   // overhead: elbows out behind the head, not across the face
+    legs: [{ at: pegA(2), ang: Math.PI - .3 }, { at: pegA(2, [8, -22]), ang: Math.PI - .3 }] });
+  return { G, box: { c: boxC, a: boxA, lid } };
+}
+function boxGrips(c, a) { const { w, h } = Rd.BOX, cs = Math.cos(a), sn = Math.sin(a), at = (x, y) => [c[0] + x * cs - y * sn, c[1] + x * sn + y * cs]; return { near: at(-w / 2 + 40, h / 2 + 4), far: at(w / 2 - 36, h / 2 + 2) }; }
+
+// ---------------------------------------------------------------- dust
+function trailLobes(t) {
+  // puffs kicked up at the rear tyre and dragged along behind it (a cartoon dust cloud hugs the bike): each puff keeps
+  // 70 % of the bike's travel since it was kicked up, drifts up and back, grows; heavier in the skid
+  const cx = camX(t), bt = bikeX(t);
+  return D.dustLobes(t, te => { if (speed(te) < 60) return null; const x0 = bikeX(te) - Rd.RW[0] + 40; return [x0 + .8 * (bt - bikeX(te)) - cx + 540, GY - 6]; },
+    { dt: .05, life: 2.6, r0: 40, r1: 250, drift: [40, -80], spread: 110, seed: 5,
+      strength: te => clamp(speed(te) / 1000) * (te > B.brake && te < B.stop ? 1.3 : 1) });
+}
+function engulfLobes(t) {
+  // the cloud that catches up: rolls in from the right, then billows round them up to the shoulders
+  if (t < B.engulf) return [];
+  const k = eio(clamp((t - B.engulf) / 1.4)), bx = scr(bikeX(t), t), lead = lerp(1500, bx - 400, k), r = Pilot.rng(9), out = [];
+  for (let i = 0; i < 9; i++) {   // the base: big puffs sitting on the road (their bottoms below it)
+    const u = i / 8, rr = (130 + 40 * r()) * (.55 + .45 * ss(0, .25, u + .05)) * (1 + .04 * Math.sin(t * 1.3 + i));
+    out.push({ x: lead + u * 1250 + (r() - .5) * 60 + 10 * Math.sin(t * .8 + i), y: GY + 10 - rr * .45, r: rr * (.6 + .4 * k), layer: 0 });
+  }
+  for (let i = 0; i < 8; i++) {   // the middle (fills between the base and the billows)
+    const u = (i + .5) / 8, rr = (115 + 30 * r()) * (.55 + .45 * ss(0, .25, u));
+    out.push({ x: lead + 20 + u * 1200 + (r() - .5) * 60, y: GY - 170 - 30 * r(), r: rr * (.55 + .45 * k), layer: 0 });
+  }
+  for (let i = 0; i < 7; i++) {   // the billows on top, up to the riders' shoulders
+    const u = (i + .4) / 7, rr = (110 + 45 * r()) * (.5 + .5 * ss(0, .25, u)) * (1 + .05 * Math.sin(t * 1.1 + i * 2));
+    out.push({ x: lead + 40 + u * 1150 + (r() - .5) * 80 + 14 * Math.sin(t * .7 + i), y: GY - 310 - 60 * r(), r: rr * (.55 + .45 * k), layer: 0 });
+  }
+  for (let i = 0; i < 5; i++) { const rr = (60 + 50 * r()) * (.55 + .45 * k);   // front puffs: their tops are the lines inside the mass
+    out.push({ x: lead + 100 + i * 250 + (r() - .5) * 120, y: GY - 90 - r() * 170, r: rr, layer: 1 }); }
+  return out;
+}
+
+// ---------------------------------------------------------------- titles (screen space)
+function titles(ctx, t) {
+  const fadeT = 1 - ss(B.stop - .3, B.stop + .3, t);
+  if (fadeT > 0) {
+    D.letter(ctx, W.title, 540, 268, { size: 80, k: clamp((t - B.title) / .9), alpha: fadeT, fill: D.C.butter, seed: 3, maxW: 940 });
+    const idx = t < B.two + .4 ? 0 : t < B.one + .4 ? 1 : 2, swap = idx === 0 ? -1 : idx === 1 ? B.two + .4 : B.one + .4;
+    const pop = swap > 0 ? D.spring(clamp((t - swap) / .45)) : 1, sz = 150 + 14 * (idx === 2 ? 1 : 0);
+    const g = D.letter(ctx, W.count[idx], 540, 448, { size: sz, k: idx === 0 ? clamp((t - B.title - .5) / .5) : 1, alpha: fadeT, seed: 11 + idx,
+      color: i => i === 0 ? D.ACCENT : i === 2 ? D.ACCENT : D.C.butter, scale: i => i === 0 ? pop : 1, shake: idx === 2 ? 2.5 : 0, lw: 4 });
+    // the old number gets struck out before it is replaced
+    const strike = idx === 0 ? clamp((t - B.two) / .35) : idx === 1 ? clamp((t - B.one) / .35) : 0;
+    if (strike > 0 && g.glyphs[0]) { const q = g.glyphs[0]; D.scribble(ctx, q.x + q.w / 2, q.y - sz * .36, q.w * .9, sz * .6, strike, { lw: 6, n: 5 }); }
+  }
+  D.caption(ctx, W.note, 540, 1560, Pilot.win(t, B.note[0], B.note[1], .4, .5) * fadeT, { size: 56, color: D.C.ink });
+  if (t > B.end) {
+    const a = ss(B.end, B.end + .5, t);
+    D.caption(ctx, W.kicker, 540, 250, a, { size: 40, color: D.C.inkSoft });
+    D.letter(ctx, W.close, 540, 390, { size: 104, k: clamp((t - B.end - .2) / .9), fill: D.C.pink, seed: 21, maxW: 940 });
+  }
+}
+
+// ---------------------------------------------------------------- draw
+function zoom(t) { const k = eio(clamp((t - B.pull) / 1.7)); return [lerp(1.06, .72, k), lerp(540, 690, k), lerp(GY - 40, 1160, k)]; }
+function draw(ctx, t) {
+  D.begin(ctx, t);
+  const z = zoom(t); ctx.save(); D.cam(ctx, z[0], z[1], z[2]);
+  const cx = camX(t), mv = moving(t);
+  // the street and the donut shop
+  Rd.street(ctx, cx, t, { ground: GY, curb: CB, skip: [SHOPX - Rd.SHOP_W / 2 - 60, SHOPX + Rd.SHOP_W / 2 + 60] });
+  const shopS = scr(SHOPX, t);
+  if (shopS > -600 && shopS < 1700) {
+    const sk = t < B.shop ? 0 : eio(clamp((t - B.shop) / (B.shut - B.shop))) + .03 * D.bump(t, B.shut, 1, .3);
+    Rd.donutShop(ctx, shopS, CB - 62, Math.min(1, sk), t, { sold: ss(B.shut, B.shut + .15, t), drop: eo(clamp((t - B.shut) / .3)), swing: .35 * D.bump(t, B.shut + .2, 1, .8) });
+  }
+  // speed: loose pencil streaks streaming back
+  if (mv > .05) { ctx.save(); ctx.globalAlpha = mv; D.speed(ctx, t, { y0: 700, y1: 1290, n: 9, v: 2600 * mv, len: [140, 460], a: .45, seed: 4 }); D.speed(ctx, t, { y0: 1420, y1: 1620, n: 6, v: 3200 * mv, len: [200, 520], a: .5, seed: 9 }); ctx.restore(); }
+  // skid mark on the road
+  if (t > B.brake + .2) { const a = scr(bikeX(B.brake + .2) - Rd.RW[0], t), b = scr(bikeX(Math.min(t, B.stop)) - Rd.RW[0], t);
+    D.ink(ctx, [[a, GY + 2], [b, GY + 2]], { lw: 5, col: '#5d5459', a: .55, heavy: null, over: 0, press: .7 }); }
+  // dust behind the bike
+  const trail = trailLobes(t);
+  D.cloudMass(ctx, trail, { ground: GY + 8, lw: 2, seed: 6 });
+  // the bike's shadow on the road
+  const bx = scr(bikeX(t), t);
+  ctx.save(); ctx.fillStyle = 'rgba(110,100,130,.16)'; ctx.beginPath(); ctx.ellipse(bx + 10, GY + 4, 420, 16, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  // the riders and the bike, layered: far limbs → bike → bodies rear to front → arms in front
+  const M = bodyM(t), { G, box } = riders(t, M), wb = wheelsInBody(t, M), sp = spins(t);
+  for (const k of ['park', 'choi', 'haneul']) D.figure(ctx, G[k], { parts: ['farArm', 'farLeg'] });
+  ctx.save(); ctx.setTransform(ctx.getTransform().multiply(M));
+  Rd.bike(ctx, { parts: 'back', RW: wb.RW, FW: wb.FW, spinF: sp.F, spinR: sp.R, blur: mv, shock: comp(t) * .5 });
+  ctx.restore();
+  D.figure(ctx, G.park, { parts: ['hairBack', 'body', 'nearLeg', 'head'] });
+  D.figure(ctx, G.choi, { parts: ['hairBack', 'body', 'nearLeg'] });
+  D.figure(ctx, G.haneul, { parts: ['hairBack', 'body', 'nearLeg', 'head'] });
+  D.figure(ctx, G.choi, { parts: ['head', 'nearArm'] });
+  Rd.box(ctx, box.c, box.a, box.lid);
+  D.figure(ctx, G.park, { parts: ['nearArm'] });
+  ctx.save(); ctx.setTransform(ctx.getTransform().multiply(M));
+  Rd.bike(ctx, { parts: 'front', RW: wb.RW, FW: wb.FW });
+  ctx.restore();
+  D.figure(ctx, G.haneul, { parts: ['nearArm'] });
+  // wheel motion marks
+  if (mv > .2) { const f = pt(M, wb.FW), r = pt(M, wb.RW); D.spinArcs(ctx, f[0], f[1], Rd.WR, t, { a: .5 * mv, dir: -1, a0: -.9, step: .5, len: .55 }); if (!lockR(t)) D.spinArcs(ctx, r[0], r[1], Rd.WR, t, { a: .4 * mv, dir: -1, a0: -.9, step: .5, len: .5 }); }
+  // the cloud catches up and swallows them to the shoulders; heads, the box and 박대리's arms stay above it
+  const eng = engulfLobes(t);
+  if (eng.length) {
+    D.cloudMass(ctx, eng, { ground: GY + 8, lw: 2.2, seed: 8 });
+    const top = ss(B.engulf + .9, B.engulf + 1.3, t);
+    if (top > 0) {
+      D.figure(ctx, G.choi, { parts: ['hairBack', 'head'] });
+      D.figure(ctx, G.haneul, { parts: ['hairBack', 'head'] });
+      D.figure(ctx, G.park, { parts: ['farArm', 'hairBack', 'head'] });
+      Rd.box(ctx, box.c, box.a, box.lid); D.figure(ctx, G.park, { parts: ['nearArm'] });
+    }
+  }
+  ctx.restore();
+  D.finish(ctx);
+  titles(ctx, t);
+  D.fade(ctx, t, S.DUR, .4, .4);
+}
+
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: D.FONTS, init: async () => D.init({ accent: '#ff6fa3' }), draw });
+</script>
+</body>
+</html>
