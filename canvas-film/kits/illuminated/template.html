@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>채색 필사본 · 새 장면</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@400;600&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-illuminated.js"></script>
+<script>
+/* Template scene — house style "illuminated" (see kits/illuminated/STYLE.md). A placeholder 30 s miniature with a
+   different subject from the worked example (Daniel's statue): a manuscript page lies in candlelight; inside its gothic
+   arch a small flock is painted in on a green hill, one sheep apart at the edge; at SCRIPT.beat.found tooled gold rays
+   rise behind that one and a glint sweeps across all the gold; a slow push-in throughout. End card.
+   To make your film: keep draw()'s skeleton (desk → push → page(paint) → words); replace paint()'s figures with your
+   image, drawn with the kit's ink primitives (fillInk, line, gold, face, sheep). */
+const { clamp, lerp, ss, eo, eio } = Pilot;
+const W = Pilot.W, H = Pilot.H, V = Pilot.ori === 'v', S = window.SCRIPT, B = S.beat, DUR = S.DUR, I = Illum;
+
+function draw(ctx, t) {
+  I.desk(ctx, t);
+  ctx.save(); I.push(ctx, t, B.page, .05);
+  const found = ss(B.found, B.found + 1.4, t), [ax, ay, aw, ah] = I.L.arch;
+  const lone = [ax + aw * .78, ay + ah * .84];   // the one sheep, toward the hill's right edge (the rays' centre)
+  I.page(ctx, t, (c, A) => {
+    // the flock, painted in one by one (a painted shape appears whole: miniatures are not drawn stroke by stroke)
+    const s = V ? 1.45 : 1.15, flock = [[.17, -8, 1], [.41, -14, -1], [.29, 10, 1]];   // [x across the arch, y off the hill, facing]
+    flock.forEach(([u, dy, d], i) => { const a = ss(B.paint + i * .8, B.paint + i * .8 + .6, t); if (a <= 0) return; c.save(); c.globalAlpha = a;
+      I.sheep(c, A.ax + A.aw * u, A.gy - 44 * s + dy, s, d); c.restore(); });
+    // the one apart: grazing alone, then it lifts its head (a small turn) as the light finds it
+    const a1 = ss(B.apart, B.apart + .8, t); if (a1 > 0) { c.save(); c.globalAlpha = a1; I.sheep(c, lone[0], A.gy - 44 * s, s, -1, -.12 * found); c.restore(); }
+    // a gold star above, hanging in the lapis ground
+    const st = new Path2D(); for (let k = 0; k < 10; k++) { const r = k % 2 ? 16 : 40, an = k * Math.PI / 5 - Math.PI / 2; st.lineTo(lone[0] + Math.cos(an) * r, A.ay + A.ah * .42 + Math.sin(an) * r); } st.closePath();
+    if (found > 0) { c.save(); c.globalAlpha = found; I.gold(c, st, { lw: 1.6 }); c.restore(); }
+  }, { rays: found > 0 ? { at: lone, k: found } : null, glint: t > B.found + .4 && t < B.found + 3.4 ? (t - B.found - .4) / 3 : null });
+  ctx.restore();
+  { const k = ss(B.end - .2, B.end + .9, t); if (k > 0) { ctx.fillStyle = `rgba(8,5,3,${.8 * k})`; ctx.fillRect(0, 0, W, H); } }
+  const [, py, , ph] = I.L.page;
+  Story.captions(ctx, t, S.lines, { y: V ? py + ph + 110 : py + ph + 110, size: V ? 52 : 46, color: '#f3ece0' });
+  Story.endCard(ctx, t, S.endCard, B.end, { color: '#f3ece0', srcColor: '#e3d6bd', ctaColor: '#e9c77a' });
+  Story.fadeBlack(ctx, t, DUR);
+}
+Pilot.run({ W, H, dur: DUR, fonts: ["600 40px 'Noto Serif KR'", "700 40px 'Noto Serif KR'", "400 28px 'Noto Sans KR'", "600 30px 'Noto Sans KR'"],
+  init: async () => { I.init(); }, draw });
+</script>
+</body>
+</html>

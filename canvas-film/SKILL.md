@@ -30,7 +30,7 @@ Built for and proven on a 13-minute, 21-scene, 11-language Bible film
 | `player/index.html` | the player template (two-iframe preloading, audio as master clock, share sheet, deep links, theatre mode) |
 | `scripts/style-index.py` | rebuild `references/STYLE-INDEX.md` from STYLES.md + a Lemo-Opuscar clone |
 | `references/` | **MESSAGE (the 12-question message check for every storyboard)** · **STYLE-INDEX (every look to choose from, and how to search it)** · **BODY-CHECK (joints/hands/held things — a fresh rigger agent reviews every film with acting figures before anyone sees it)** · review-prompt (native-speaker review brief for a language) · SCENE-RULES (hard rules for scene authors) · STYLES (21 looks and how each was drawn) · SOUND (ElevenLabs flow) · I18N (method + quality gate) · LESSONS (what went wrong and the fixes) |
-| `kits/` | **style kits** — 26 looks packaged for reuse (`charcoal`, `hopper`, `bass`, `puppet`, `storybook`, `ukiyoe`, `glass`, `blueprint`, `mograph`, … — table in kits/README.md): `kit.js` + STYLE.md + a template scene; start with `scripts/from-kit.py` (see kits/README.md) |
+| `kits/` | **style kits** — 29 looks packaged for reuse (`charcoal`, `hopper`, `bass`, `puppet`, `storybook`, `ukiyoe`, `glass`, `blueprint`, `mograph`, `lamplit`, `inkmap`, `illuminated`, … — table in kits/README.md): `kit.js` + STYLE.md + a template scene; start with `scripts/from-kit.py` (see kits/README.md) |
 | `scripts/from-kit.py` | start a project's scenes from one or more kits (vendors harness, story.js, kit, template, script) |
 | `examples/hello/` | a minimal project: `film.json`, one scene, a sound spec, a Korean translation — run everything on it first |
 
@@ -45,15 +45,18 @@ my-film/
   out/                 stills and videos;   site/  the published player
 ```
 All scripts run from the project root: `node <skill>/scripts/render.mjs h --scene <id> --stills 2,8`.
-Requirements: Node + Playwright Chromium, ffmpeg, Python 3 (numpy; fonttools+brotli for publish), the scene fonts
-installed locally (`~/.local/share/fonts`, e.g. Noto Serif/Sans KR) — renders never touch the network.
+Requirements: Node + Playwright Chromium, ffmpeg, Python 3 (numpy; fonttools+brotli for publish), the scene fonts as
+TTFs in `$FONTS_DIR` (default `~/.local/share/fonts`, e.g. Noto Serif/Sans KR, named in film.json `fonts`) — renders never
+touch the network, and render.mjs stops if a `fonts.base` family is missing (instead of drawing in a fallback face).
 
 ## Workflow
 1. **Storyboard first, styles second.** Split the source into scenes (20–60 s each). For each scene pick a *film style that
    carries its meaning* (e.g. a fall into sin as ink spreading over a painting; a covenant as stars in pastel; the cross as
    black-and-white with one red). **Search the whole catalogue every time**, not just the looks you remember:
-   `references/STYLE-INDEX.md` lists all 170 looks (21 proven here + 51 Lemo-Opuscar technique styles + 98 OPUSCAR film
-   looks) and says how to shortlist and where each full brief lives. Pick one motif that threads every scene (a gold line).
+   `references/STYLE-INDEX.md` lists every look (21 proven here + the packaged kits + 66 Lemo-Opuscar technique styles +
+   98 OPUSCAR film looks) and says how to shortlist and where each full brief lives. Order of preference: a kit → one of
+   our proven looks → a Lemo-Opuscar/OPUSCAR brief adapted (borrow the craft, write our own renderer). When a borrowed or
+   new look works in a finished film, package it back here as a kit (`kits/README.md` → Adding a kit). Pick one motif that threads every scene (a gold line).
    Before showing it, answer `references/MESSAGE.md` (12 questions: is the viewer in the picture, who acts, one
    metaphor, the outsider, picture-only and interpretation tests, a curiosity chain, a line to remember…) and change the scene until you can.
    Show the list to the person before building; build 2–3 pilots first and get them approved — they set the quality bar.
