@@ -35,7 +35,7 @@ const STRIP = WT.strip({
   bg: [[0, NIGHT], ['a:end', NIGHT], ['b', WT.C.paper], ['c:end', WT.C.paper], ['d', GLOOM], ['d:end', GLOOM], ['e', WT.C.paper]],
   panels: [
     { id: 'a', h: 1240, border: 'bleed', bg: NIGHT, draw: (c, t, P) => panelA(c, t, P), over: (c, t, P) => overA(c, t, P) },
-    { id: 'b', h: 1180, gap: 'action', x: 0, w: 1080, border: 'fade', feather: 110, draw: (c, t, P) => panelB(c, t, P),
+    { id: 'b', h: 1180, gap: 300, x: 0, w: 1080, border: 'fade', feather: 110, draw: (c, t, P) => panelB(c, t, P),
       cam: (t, P) => WT.kenBurns(t, B.bite - .1, out('offer'), 1.05, 560, 520) },
     { id: 'c', h: 760, gap: 'beat', draw: (c, t, P) => panelC(c, t, P) },
     { id: 'd', h: 1240, gap: 'seq', border: 'bleed', draw: (c, t, P) => panelD(c, t, P), over: (c, t, P) => overD(c, t, P),
@@ -99,7 +99,7 @@ function panelA(c, t, P) {
   }
 }
 function overA(c, t, P) {
-  WT.sfx(c, t, { text: L.sfxFlash, x: 540, y: 205, size: 176, at: .1, out: 1.9, fill: ['#fff6a0', '#ffb43a'], echo: 2, rot: -.08 });
+  WT.sfx(c, t, { text: L.sfxFlash, x: 285, y: 190, size: 168, at: .1, out: 1.9, fill: ['#fff6a0', '#ffb43a'], echo: 2, rot: -.08 });
   const hp = handPath(t);
   WT.sfx(c, t, { text: L.sfxPluck, x: 850, y: 470, size: 130, at: B.hand[1], out: 2.0, fill: '#ffffff', rot: .16, grow: [1, 1] });
   if (t > B.close) for (const [x, y, s] of [[300, 470, -1], [790, 560, 1], [470, 330, -1]]) WT.emote(c, t, 'shock', { x, y, r: 70, dir: s }, { at: B.close + .05 });
@@ -277,7 +277,8 @@ function draw(ctx, t) {
   WT.drawStrip(ctx, t, STRIP, CAM.y(t), { shake });
   WT.flash(ctx, t, 0, { hold: .2, dur: .5 });
   WT.flash(ctx, t, B.stone, { hold: .04, dur: .2 });
-  if (t >= B.end) { WT.endCard(ctx, t, B.end, { title: S.endCard.title, end: S.endCard.end }); X.nextLine(ctx, t, B.end + .55, S.endCard.next, { y: 1360 }); }
+  if (t >= B.end) { WT.endCard(ctx, t, B.end, { title: S.endCard.title, end: S.endCard.end });
+    const dk = WT.pop(t, B.end + .3, .35, .4, 2.4); if (dk > 0) { ctx.save(); ctx.translate(540, 455); ctx.scale(dk, dk); C.donut(ctx, 0, 0, 78, { t, seed: 7, glow: .8, alpha: ss(B.end + .3, B.end + .5, t) }); ctx.restore(); } X.nextLine(ctx, t, B.end + .55, S.endCard.next, { y: 1360 }); }
   WT.fade(ctx, t, S.DUR, .4, .4);
 }
 Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: WT.FONTS, draw });
