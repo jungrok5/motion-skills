@@ -346,7 +346,8 @@
       palm(.92, .38); thumb([[.14, -.32], [.42, -.58], [.68, -.66]], .15); }
     else if (pose === 'paper' || pose === 'wave') {
       for (const [y0, L, a] of [[.24, .52, .42], [.08, .64, .14], [-.08, .68, -.12], [-.24, .6, -.4]]) F(fingerPts(.84, y0, a, L, 0), .13, .115);
-      palm(); thumb([[.2, -.28], [.32, -.6], [.4, -.88]], .14); }
+      if (pose === 'wave') { thumb([[.3, -.22], [.5, -.5], [.7, -.72]], .15); palm(); }   // wave: thumb rooted in the side of the palm, ≈30° off the index
+      else { palm(); thumb([[.2, -.28], [.32, -.6], [.4, -.88]], .14); } }
     else if (pose === 'fist' || pose === 'rock' || pose === 'hold' || pose === 'thumb') { palm(.8, .38); knuckles(.6, 1.12, -.38, .38);
       if (pose === 'thumb') thumb([[.3, -.32], [.36, -.68], [.38, -1.0]], .15); else thumb([[.22, -.38], [.58, -.46], [.92, -.38]], .14); }
     else if (pose === 'point') {   // the INDEX finger out along the hand, the thumb cocked up beside it, three fingers curled — never a lone raised digit
@@ -383,7 +384,8 @@
     for (let it = 0; it < 3; it++) {
       const dir0 = sol ? Math.atan2(sol.w[1] - sol.e[1], sol.w[0] - sol.e[0]) : Math.atan2(target[1] - S2[1], target[0] - S2[0]);
       ang = wantAng == null ? dir0 + (A.to ? 0 : side * -.12) : dir0 + clamp(angDiff(wantAng, dir0), -1.4, 1.4);   // the wrist: ≤ 80° off the forearm
-      if (A.thumb == null) { const c = Math.cos(ang); flip = Math.abs(c) > .35 ? (c > 0 ? 1 : -1) : (side < 0 ? 1 : -1); }
+      if (A.thumb == null) { const c = Math.cos(ang); flip = Math.abs(c) > .35 ? (c > 0 ? 1 : -1) : (side < 0 ? 1 : -1);
+        if (pose2 === 'wave' && Math.abs(c) <= .35 && Math.sin(ang) < 0) flip = -flip; }   // a raised wave is palm-out: thumb on the INNER side (toward the face)
       if (A.to) { const off = R.gripOffset(pose2, ang, hsz, flip); wrist = [target[0] - off[0], target[1] - off[1]]; } else wrist = target;
       z = A.to ? depthOf(wrist, S2) : 0;
       let pole;
