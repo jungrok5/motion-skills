@@ -1,7 +1,7 @@
 # 웹툰 (Korean colour webtoon, vertical-scroll motion-toon)
 
 Slug `webtoon` · kit `kit.js` → vendored as `scenes/kit-webtoon.js` · global `window.Webtoon` · knowledge base `RESEARCH.md`
-(21 GitHub sources + a 38-technique playbook, kept as is) · worked example: `examples/donut` 「마지막 도넛」 (cast file
+(21 GitHub sources + a 38-technique playbook, kept as is) · worked example: `motion-webtoon/examples/donut` 「마지막 도넛」 in the `motion-webtoon` skill, which packages this kit with a cast rig and a mono-manga finish (cast file
 `scenes/donut-cast.js`, reference page `scenes/cast-sheet.html`).
 
 ## Provenance — ideas, numbers and formulas only; own renderer, no code copied

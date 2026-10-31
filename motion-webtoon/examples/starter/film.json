@@ -1,0 +1,15 @@
+{
+ "title": "하이파이브",
+ "source": "ko",
+ "scenes": [
+  { "id": "highfive", "label": "하이파이브", "dur": 10 }
+ ],
+ "fonts": {
+  "base": [
+   ["Jua", 400, "Jua-starter.ttf"],
+   ["Black Han Sans", 400, "BlackHanSans-starter.ttf"],
+   ["Noto Sans KR", 700, "NotoSansKR-starter.ttf"]
+  ],
+  "local": {}
+ }
+}

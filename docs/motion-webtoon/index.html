@@ -1,0 +1,171 @@
+<!doctype html>
+<!--
+  motion-webtoon samples page (from docs/_template/). Live demos: demo/starter/ and demo/donut/ are built with
+  motion-webtoon/scripts/publish.py from examples/starter and examples/donut (scene pages + libs + subset woff2 fonts + m4a).
+  Thumbnails: 640×360 crops of panels from the rendered stills; poster: 2×2 of the same crops.
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>motion-webtoon · motion-skills</title>
+<meta name="description" content="세로로 스크롤되는 무빙툰을 HTML Canvas로 그립니다. 데이터로 정의한 캐릭터, 관절을 검사한 몸, 흑백 망가 인쇄 마감, ElevenLabs 내레이션과 효과음으로 9:16 MP4와 브라우저에서 도는 장면 페이지를 만듭니다.">
+<meta property="og:title" content="motion-webtoon · motion-skills">
+<meta property="og:description" content="세로로 스크롤되는 무빙툰을 HTML Canvas로 그립니다. 데이터로 정의한 캐릭터, 관절을 검사한 몸, 흑백 망가 인쇄 마감, ElevenLabs 내레이션과 효과음으로 9:16 MP4와 브라우저에서 도는 장면 페이지를 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/motion-webtoon/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/motion-webtoon">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / motion-webtoon</nav>
+  <h1>motion-webtoon</h1>
+  <p>세로로 스크롤되는 무빙툰을 HTML Canvas로 그립니다. 데이터로 정의한 캐릭터, 관절을 검사한 몸, 흑백 망가 인쇄 마감, ElevenLabs 내레이션과 효과음으로 9:16 MP4와 브라우저에서 도는 장면 페이지를 만듭니다.</p>
+  <ul class="tags"><li>9:16</li><li>MP4</li><li>라이브 페이지</li><li>내레이션</li><li>흑백 망가</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>짧은 개그 · 일상 이야기와 등장인물 설명</dd>
+      <dt>캐스트</dt><dd>사람마다 <code>Cast.define</code> 데이터 한 덩어리(머리 모양, 옷, 명도)와 캐스트 시트</dd>
+      <dt>장면</dt><dd>장면마다 세로 스트립 한 개. 패널 사이 여백이 시간이고, 카메라가 아래로 읽음. 말풍선 · 효과음 글자 · 집중선 · SD 전환</dd>
+      <dt>몸 검사</dt><dd>뼈 길이 · 팔꿈치 · 손목 수치 검사, 0.2초 간격 스틸 묶음, 처음 보는 리뷰 에이전트</dd>
+      <dt>출력</dt><dd>1080×1920 MP4, 내레이션 · 음악 · 효과음 믹스, 브라우저에서 그리는 장면 페이지</dd>
+    </dl>
+    <pre><code>cd motion-webtoon/examples/starter
+node ../../scripts/render.mjs v --scene highfive --stills 1,4.6,8.5
+node ../../scripts/bone-check.mjs --scene highfive
+python3 ../../scripts/mix.py &amp;&amp; node ../../scripts/render.mjs v --scene highfive</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg, Python 3 (numpy, Pillow). 스타터는 폰트를 함께 담고 있어 네트워크 없이 돕니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/motion-webtoon/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:4/5;--demo-bg:#000">
+    <iframe data-src="demo/starter/highfive.html?o=v" title="motion-webtoon 예제 실시간 재생" allow="fullscreen; autoplay" allowfullscreen></iframe>
+    <noscript><a href="demo/starter/highfive.html?o=v">데모 열기 (examples/starter)</a></noscript>
+    <div class="bar"><span data-cap-target>스타터 <code>examples/starter</code> · 10초 · 소리 있음</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/starter/highfive.html?o=v" data-cap="스타터 &lt;code&gt;examples/starter&lt;/code&gt; · 10초 · 소리 있음" aria-pressed="true">스타터</button>
+        <button class="btn" type="button" data-src="demo/starter/highfive.html?o=v&amp;look=riso" data-cap="같은 스타터를 리소 컬러로 (&lt;code&gt;?look=riso&lt;/code&gt;)" aria-pressed="false">리소 컬러</button>
+        <button class="btn" type="button" data-src="demo/donut/ep1-find.html?o=v" data-cap="「마지막 도넛」 장면 1 · 발견 · 24초" aria-pressed="false">도넛 1</button>
+        <button class="btn" type="button" data-src="demo/donut/ep2-standoff.html?o=v" data-cap="「마지막 도넛」 장면 2 · 눈치 싸움 · 26초" aria-pressed="false">도넛 2</button>
+        <button class="btn" type="button" data-src="demo/donut/ep3-twist.html?o=v" data-cap="「마지막 도넛」 장면 3 · 반전 · 24초" aria-pressed="false">도넛 3</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">「마지막 도넛」 세 장면의 패널과 캐스트 시트, 스타터입니다. 모두 같은 캐릭터 리그와 흑백 망가 마감으로 그렸고, 분홍 한 가지만 색으로 남깁니다. 카드를 누르면 새 탭에서 그 장면 페이지가 열리고, 브라우저가 장면을 직접 그립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"donut":"마지막 도넛","cast":"캐스트 · 스타터"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「마지막 도넛」 <small>3장면 · 74초 · 세로</small></h3>
+      <p>오후 3시 사무실, 마지막 도넛 한 개를 두고 벌어지는 눈치 싸움. 진지한 다큐멘터리 내레이션이 사소한 싸움을 중계합니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="donut" href="demo/donut/ep1-find.html?o=v&amp;t=12.5" target="_blank" rel="noopener">
+          <img src="samples/ep1-donut.jpg" alt="검은 패널 한가운데 흰 집중선에 둘러싸인 분홍 도넛과 효과음 반짝" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">장면 1 · 발견 · 24초</span><b>마지막, 하나</b>
+          <span class="how">검은 패널과 흰 집중선 쐐기, 화면에서 유일한 색인 분홍 도넛, 줌 펀치와 플래시</span></div></a>
+        <a class="tile" data-tags="donut" href="demo/donut/ep1-find.html?o=v&amp;t=18.5" target="_blank" rel="noopener">
+          <img src="samples/ep1-glint.jpg" alt="탕비실 문가에 선 김과장, 말풍선 어? 박대리도 출출했나 봐?, 뒤로 검은 집중선" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">장면 1 · 발견 · 24초</span><b>김과장의 눈빛</b>
+          <span class="how">눈 감은 미소에서 번뜩이는 눈으로, 그 순간 검은 집중선과 펀치 줌</span></div></a>
+        <a class="tile" data-tags="donut" href="demo/donut/ep1-find.html?o=v&amp;t=23" target="_blank" rel="noopener">
+          <img src="samples/ep1-eyes.jpg" alt="검은 바탕 위 가로로 쌓은 눈 클로즈업 패널, 땀방울과 효과음 두근" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">장면 1 · 발견 · 24초</span><b>세 사람의 눈</b>
+          <span class="how">세 사람의 눈만 가로로 쌓은 스트립, 흰 속도선, 눈동자 굴리기와 땀방울</span></div></a>
+        <a class="tile" data-tags="donut" href="demo/donut/ep2-standoff.html?o=v&amp;t=2" target="_blank" rel="noopener">
+          <img src="samples/ep2-polite.jpg" alt="탕비실 조리대 앞 세 사람, 박대리의 말풍선 과장님 드세요~" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">장면 2 · 눈치 싸움 · 26초</span><b>과장님 드세요~</b>
+          <span class="how">겉으로는 양보하는 말풍선 핑퐁, 손은 IK로 상자를 가리킴</span></div></a>
+        <a class="tile" data-tags="donut" href="demo/donut/ep2-standoff.html?o=v&amp;t=9.5" target="_blank" rel="noopener">
+          <img src="samples/ep2-think.jpg" alt="검은 세로 패널 세 칸에 생각 구름 (절대 양보 못 해)와 어두운 얼굴 셋" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">장면 2 · 눈치 싸움 · 26초</span><b>(절대 양보 못 해)</b>
+          <span class="how">한 패널을 셋으로 나눈 속마음, 생각 구름, 어두운 오라</span></div></a>
+        <a class="tile" data-tags="donut" href="demo/donut/ep2-standoff.html?o=v&amp;t=14.6" target="_blank" rel="noopener">
+          <img src="samples/ep2-rps.jpg" alt="집중선 가운데 위와 아래 양쪽에서 들어온 손 세 개가 모두 보를 낸 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">장면 2 · 눈치 싸움 · 26초</span><b>가위! 바위! 보!</b>
+          <span class="how">소년만화 문법으로 전환, 프레임 가장자리에서 들어오는 큰 손 세 개, 소매가 뼈를 따라감</span></div></a>
+        <a class="tile" data-tags="donut" href="demo/donut/ep2-standoff.html?o=v&amp;t=25" target="_blank" rel="noopener">
+          <img src="samples/ep2-lunge.jpg" alt="도넛 상자 위로 세 방향에서 뻗어 오는 손, 가운데 분홍 도넛" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">장면 2 · 눈치 싸움 · 26초</span><b>하나, 둘, 셋!</b>
+          <span class="how">슬로 모션으로 뻗는 세 팔, 닿기 직전에 멈춤. 팔마다 고정 뼈 길이의 3D IK</span></div></a>
+        <a class="tile" data-tags="donut" href="demo/donut/ep3-twist.html?o=v&amp;t=5.5" target="_blank" rel="noopener">
+          <img src="samples/ep3-haneul.jpg" alt="한 입 먹은 도넛을 든 하늘, 말풍선 드실래요?" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">장면 3 · 반전 · 24초</span><b>드실래요?</b>
+          <span class="how">네 번째 손이 도넛을 가져감. 조용한 와이드 패널, 한 입 베어 문 자리까지 그림</span></div></a>
+        <a class="tile" data-tags="donut" href="demo/donut/ep3-twist.html?o=v&amp;t=8.5" target="_blank" rel="noopener">
+          <img src="samples/ep3-stone.jpg" alt="검은 배경에 회색 돌이 된 SD 캐릭터 세 명" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">장면 3 · 반전 · 24초</span><b>석화</b>
+          <span class="how">SD로 바뀐 세 사람이 망점 돌이 되고, 금이 간 뒤 무너짐</span></div></a>
+        <a class="tile" data-tags="donut" href="demo/donut/ep3-twist.html?o=v&amp;t=13" target="_blank" rel="noopener">
+          <img src="samples/ep3-boss.jpg" alt="집중선 타원 안에서 도넛 상자를 안은 사장님, 말풍선 다들 고생 많지? 도넛 사 왔어~" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">장면 3 · 반전 · 24초</span><b>도넛 사 왔어~</b>
+          <span class="how">사장님 등장, 반짝이 배경과 분홍 상자 세 개, 다음 패널에서 회의 시작</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>캐스트 · 스타터 <small>캐릭터 리그 · 몸 검사</small></h3>
+      <p>캐스트 시트는 다섯 사람의 정면 · 3/4 · SD, 표정, 손 모양, 관절 검사를 한 페이지씩 보여 줍니다. 스타터는 새 작품이 시작하는 10초짜리 장면입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="cast" href="demo/donut/cast-sheet.html?o=v&amp;t=1" target="_blank" rel="noopener">
+          <img src="samples/cast-manga.jpg" alt="흑백 망점으로 그린 다섯 사람의 정면 전신: 박대리, 김과장, 최주임, 하늘, 사장님" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 시트 · 흑백 망가</span><b>다섯 사람</b>
+          <span class="how">머리 모양과 옷의 명도(먹 · 진한 망점 · 옅은 망점 · 종이)로 구별</span></div></a>
+        <a class="tile" data-tags="cast" href="demo/donut/cast-sheet.html?o=v&amp;style=riso&amp;grade=0&amp;t=1" target="_blank" rel="noopener">
+          <img src="samples/cast-riso.jpg" alt="같은 다섯 사람을 납작한 리소 색으로 칠한 정면 전신" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 시트 · 리소 컬러</span><b>같은 그림, 다른 인쇄</b>
+          <span class="how"><code>Cast.style = 'riso'</code> 한 줄로 같은 선을 리소 색 면으로</span></div></a>
+        <a class="tile" data-tags="cast" href="demo/donut/cast-sheet.html?o=v&amp;t=6.6" target="_blank" rel="noopener">
+          <img src="samples/cast-bones.jpg" alt="두 사람의 몸 위에 관절과 뼈 길이, 팔꿈치 방향을 표시한 검사 화면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 시트 · 관절 검사</span><b>뼈 오버레이</b>
+          <span class="how"><code>?bones=1</code>: 관절, 고정된 뼈 길이, 팔꿈치 · 무릎 방향, 위반은 빨강</span></div></a>
+        <a class="tile" data-tags="cast" href="demo/starter/highfive.html?o=v&amp;t=5.2" target="_blank" rel="noopener">
+          <img src="samples/starter.jpg" alt="검은 패널 양쪽 가장자리에서 들어오는 펼친 손 두 개와 캡션 완벽한 타이밍." loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">스타터 · 10초</span><b>하이파이브</b>
+          <span class="how">두 사람, 개그 하나, 패널 셋: 준비 → 가짜 비장미 슬로 모션 → 빗나감</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬은 이 레포에서 「마지막 도넛」을 만들며 다듬어졌습니다. 캐릭터 리그, 망가 마감, 몸 검사, 사운드 순서가 모두 이 작품에서 나왔습니다.</p>
+  <div class="works">
+    <a class="work" href="demo/donut/" target="_blank" rel="noopener"><b>「마지막 도넛」 장면 페이지</b><span>3장면 · 74초 · 세로 · 브라우저에서 그리는 라이브 페이지</span><span class="url">motion-webtoon/demo/donut/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/motion-webtoon/examples/donut"><b>원본 · motion-skills → motion-webtoon/examples/donut/</b><span>장면, 캐스트, 대본, 사운드 큐 전체. 스킬의 출처</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/motion-webtoon/SKILL.md">SKILL.md</a> <span>워크플로 · 장면 계약</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/motion-webtoon">폴더</a> <span>lib · scripts · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/motion-webtoon/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/motion-webtoon/references/STYLE.md">references/STYLE.md</a> <span>컬러 웹툰과 흑백 망가, 두 가지 그림체</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/motion-webtoon/references/CAST.md">references/CAST.md</a> <span>캐릭터를 데이터로 정의하기</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/motion-webtoon/references/STORYBOARD.md">references/STORYBOARD.md</a> <span>스트립 · 개그 타이밍</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/motion-webtoon/references/BODY-CHECK.md">references/BODY-CHECK.md</a> <span>관절 · 손 검사</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/motion-webtoon/references/SOUND.md">references/SOUND.md</a> <span>내레이션 · 음악 · 효과음</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/motion-webtoon/references/RESEARCH.md">references/RESEARCH.md</a> <span>웹툰 · 만화 기법 조사 (GitHub 21곳)</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/motion-webtoon/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 샘플 이미지는 「마지막 도넛」과 스타터의 장면입니다. 데모 폰트: Jua, Do Hyeon, Black Han Sans, Nanum Pen Script, Gaegu, Noto Sans KR, Noto Serif KR (SIL OFL 1.1).
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

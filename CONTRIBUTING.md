@@ -136,6 +136,8 @@ docs/
 4. **포스터**: `docs/<skill>/poster.jpg`, 약 1200×675, 200 KB 이하. 기존 두 스킬은 대표 장면 4개를 2×2로 붙였습니다.
 5. **레지스트리**: `docs/skills.json`에 객체를 추가합니다. 필드는 `id, name, tagline, poster, posterAlt, tags (3–5), stats (2개 정도), page, source, absorbedFrom, workedExample`.
    `posterAlt`는 포스터에 보이는 장면을 그대로 적은 대체 텍스트입니다 (허브에서 첫 화면에 보이는 그림).
+   이 레포 안에서 만든 스킬(다른 레포에서 흡수하지 않은 것)은 `absorbedFrom.repo`에 이 레포 주소를, `path`에 실제 작품 폴더를 적습니다
+   (예: motion-webtoon → `motion-webtoon/examples/donut/`). 허브 카드에는 "출처" 대신 "이 레포에서 만듦"으로 표시됩니다.
    그다음 `node tools/build-hub.mjs`로 허브의 정적 카드(JS 없이도 보이는 부분)를 다시 만듭니다. `--check`는 빠진 필드, 없는 파일, 동기화 여부를 검사합니다.
    허브 `index.html`의 카드 블록은 손으로 고치지 않습니다.
 6. **README 표**: 루트 `README.md`의 스킬 표에 한 줄 (폴더 링크 · 만드는 것 · 샘플 페이지 링크).

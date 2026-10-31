@@ -47,6 +47,21 @@
       "workedExample": [
         { "title": "포티무브글로벌 홍보 영상 4편 · 회사 소개 페이지에서", "url": "https://www.fortimoveglobal.com/about" }
       ]
+    },
+    {
+      "id": "motion-webtoon",
+      "name": "motion-webtoon",
+      "tagline": "세로로 스크롤되는 무빙툰을 HTML Canvas로 그립니다. 데이터로 정의한 캐릭터, 관절을 검사한 몸, 흑백 망가 인쇄 마감, ElevenLabs 내레이션과 효과음으로 9:16 MP4와 브라우저에서 도는 장면 페이지를 만듭니다.",
+      "posterAlt": "motion-webtoon으로 만든 「마지막 도넛」의 장면 네 개: 검은 집중선 가운데 분홍 도넛, 세 손이 모두 보를 낸 가위바위보, 한 입 먹은 도넛을 들고 드실래요?라고 묻는 하늘, 흑백 망점으로 그린 다섯 사람의 캐스트",
+      "poster": "motion-webtoon/poster.jpg",
+      "tags": ["9:16", "MP4", "라이브 페이지", "내레이션", "흑백 망가"],
+      "stats": ["3장면 · 74초", "캐릭터 5명"],
+      "page": "motion-webtoon/",
+      "source": "motion-webtoon/",
+      "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "motion-webtoon/examples/donut/" },
+      "workedExample": [
+        { "title": "「마지막 도넛」 · 무빙툰 3장면 · 74초 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/motion-webtoon/demo/donut/" }
+      ]
     }
   ]
 }

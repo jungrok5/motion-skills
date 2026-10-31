@@ -1,0 +1,13 @@
+{
+ "duration": 10,
+ "music": [],
+ "sfx": [
+  { "id": "cheer", "src": "pop", "at": 0.35, "db": -9, "prompt": "cartoon whoosh-pop (reused from the donut film: ep1-find__pop)" },
+  { "id": "offer", "src": "pop", "at": 1.75, "db": -7, "prompt": "the same pop for the raised hand" },
+  { "id": "epic", "src": "impact", "at": 3.45, "db": -6, "prompt": "impact on the register switch (donut ep2-standoff__impact_b)" },
+  { "id": "slowmo", "src": "whoosh", "at": 3.55, "len": 2.1, "db": -6, "fout": 0.3, "prompt": "slow-motion lunge whoosh (donut ep2-standoff__slowmo_b)" },
+  { "id": "swish", "src": "whoosh", "at": 5.85, "len": 0.7, "db": -3, "fin": 0.05, "fout": 0.25, "prompt": "the same whoosh, short: 휙" },
+  { "id": "deadpan", "src": "scratch", "at": 6.95, "db": -5, "prompt": "record scratch → deadpan 「……」 (donut ep2-standoff__scratch)" }
+ ],
+ "ducks": []
+}

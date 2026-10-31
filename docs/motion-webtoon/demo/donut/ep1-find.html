@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>마지막 도넛 · 1 발견</title>
+<link rel="stylesheet" href="fonts.css">
+</head>
+<body>
+<script src="lib.js"></script>
+<script>(function (run) { Pilot.run = c => { let go = false; const d = c.draw, q = new URLSearchParams(location.search), P = q.has("t") ? +q.get("t") : 1.5; c = Object.assign({}, c, { draw: (x, t) => { if (t > 0) go = true; d(x, go ? t : Math.min(P, c.dur - .01)); } }); if (!c.audio) c.audio = "ep1-find.m4a"; return run(c); }; })(Pilot.run);</script>
+<script src="script-ep1-find.js"></script>
+<script src="kit-webtoon.js"></script>
+<script src="donut-manga.js"></script>
+<script src="donut-cast.js"></script>
+<script src="ep1-find-art.js"></script>
+<script>
+/* 「마지막 도넛」 scene 1 · 발견 (24 s), premium black-and-white manga finish (donut-manga.js): cream paper, one ink, 45° dot tone,
+   bold tapered focus / speed wedges, thick panel borders with slanted cuts, solid-black panels with white lines, chunky white SFX,
+   ✱ caption tags — and ONE colour, the donut pink. One vertical strip the camera reads downward (gutters = time):
+   title → office at 3 PM (✱ narration) → 박대리 melted on the desk (꼬르륵, 「…단 거.」) → the zombie walk to the pantry (wide,
+   borderless) → a black gutter pause → SNAP: the last donut in a solid-black panel, white focus wedges (✱ 「마지막, 하나.」)
+   → his hand creeping in (slanted panel; 3D IK arm) … a dot-tone shadow falls (움찔) → 김과장 in the doorway, smile → glint (black
+   focus wedges) → 최주임 pops out from behind the fridge, hand up through the panel border (「저도요!」) → the three-eye strip on black
+   (eye darts, 두근, sweat). Words + beats: script-ep1-find.js. Cast: donut-cast.js. Scene-local drawings: ep1-find-art.js.
+   ?grade=0 shows the raw colour frame before the print pass. */
+const WT = Webtoon, R = WT.Rig, C = Cast, MG = Manga, A = Ep1Art, S = window.SCRIPT, B = S.beat, Wd = S.words, { clamp, lerp, ss, eo, eio } = Pilot;
+const INK = MG.C.ink, PAPER = MG.C.paper, PAPERL = MG.C.paperL, BW = 9;   // BW: panel border weight
+const line = (c, t, [at, out, text], kind, x, y, o = {}) => WT.balloon(c, t, Object.assign({ kind, text, x, y, at, out }, o));
+// a ✱ caption tag shown [at, out] (pops open, fades out), anchored by its top-left
+const tagLine = (c, t, [at, out, text], x, y, size = 42) => { if (t < at || t > out) return; MG.tag(c, text, x, y, { size, at, t, alpha: 1 - ss(out - .15, out, t) }); };
+// a chunky manga SFX shown from o.at (until o.out)
+const sfx = (c, t, o) => { if (o.out != null && t > o.out) return; c.save(); if (o.out != null) c.globalAlpha *= 1 - ss(o.out - .12, o.out, t); MG.sfx(c, t, o); c.restore(); };
+const toneRect = (c, cov, x, y, w, h) => { c.fillStyle = MG.tone(c, cov); c.fillRect(x, y, w, h); };
+
+// ================================================================ panels (panel-local coords)
+// 1 · title card
+function pTitle(c, t, P) {
+  const k = WT.pop(t, B.title + .3, .4, .4, 2.4);
+  if (k > 0) { c.save(); c.translate(P.w / 2, 210 + Math.sin(t * 2.2) * 7); c.scale(k, k);
+    MG.ticks(c, 0, 10, 150, { n: 9, a0: Math.PI + .2, a1: TAU - .2, len: 1, seed: 3 });
+    C.donut(c, 0, 0, 70, { t, rot: Math.sin(t * 1.4) * .08, seed: 7 }); c.restore(); }
+  MG.sfx(c, t, { text: Wd.title, x: P.w / 2, y: 420, size: 150, at: B.title, rot: -.05, seed: 5 });
+  if (t > B.title + .5) MG.tag(c, Wd.sub, P.w / 2 - 170, 520, { size: 38, at: B.title + .5, t });
+}
+const TAU = Math.PI * 2;
+// 2 · the office at 3 PM (establishing, thick border)
+function pOffice(c, t, P) {
+  C.room(c, t, 'office', P.w, P.h, { horizon: 690 });
+  A.wallClock(c, t, 470, 250, 82, { h: 3, m: 0, s0: 52 });
+  C.chair(c, 230, 920, .6, -1); C.desk(c, 30, 702, 380, .6, { t, mx: .5 });
+  C.chair(c, 640, 920, .6, 1);
+  const breath = Math.sin(t * 2.1) * .02;
+  C.draw(c, t, 'park', { x: 664, y: 920, s: .7, pose: 'sit', turn: .55, lean: .32 + breath, nod: .85, expr: 'dead', look: [.4, .5],
+    arms: { L: { to: [770, 690], hand: 'open', ang: .3 }, R: { to: [735, 694], hand: 'open', ang: .2 } } });   // both hands on the desk
+  C.desk(c, 550, 702, 420, .6, { t, mx: .76, plant: false });
+}
+function oOffice(c, t, P) { tagLine(c, t, Wd.narr1, 34, 36, 40); }
+// 3 · melted on the desk (gag register: fine tone + hanging gloom lines)
+function pSlump(c, t, P) {
+  c.fillStyle = PAPER; c.fillRect(0, 0, P.w, P.h); toneRect(c, .26, 0, 0, P.w, 600);
+  MG.boil(t); const old = MG.figure(6);
+  for (let i = 0; i < 17; i++) { const x = 30 + i * 57 + (i % 3) * 9, L = 170 + ((i * 97) % 5) * 70 + Math.sin(t * 1.3 + i) * 8; MG.taper(c, [[x, -10], [x + 2, L]], 2.2, .25); }
+  MG.figure(old);
+  c.fillStyle = PAPERL; c.fillRect(0, 600, P.w, P.h - 600); toneRect(c, .14, 0, 690, P.w, P.h - 690);
+  c.fillStyle = INK; c.fillRect(0, 596, P.w, 7);
+  C.mug(c, 120, 690, 1.15);
+  P.G = A.melt(c, t, 'park', { x: 430, y: 610, s: 3.2, expr: 'dead' });
+}
+function oSlump(c, t, P) {
+  sfx(c, t, { text: Wd.sfx.growl, x: 730, y: 760, size: 120, at: B.growl, rot: -.1, seed: 2 });
+  line(c, t, Wd.mono, 'mono', 250, 175, { size: 104 });
+}
+const slumpCam = (t, P) => WT.mixCam(WT.kenBurns(t, B.slump - .3, 8.4, 1.06, 430, 470), t > B.growl && t < B.growl + .5 ? { dx: WT.tremble(t, 4, 24, 3)[0] } : null);
+// 4 · the zombie walk to the pantry (wide, borderless)
+const WALK = [130, 590];
+const walkX = t => lerp(WALK[0], WALK[1], clamp((t - B.walk[0]) / (B.walk[1] - B.walk[0])));
+function pWalk(c, t, P) {
+  c.fillStyle = PAPER; c.fillRect(0, 0, P.w, P.h);
+  c.save(); c.translate(0, 70); C.room(c, t, 'door', P.w, P.h - 70, { horizon: 600, dx: 700, dw: 250, door: .55, light: 1 }); c.restore();
+  c.fillStyle = PAPER; c.fillRect(0, 0, P.w, 70);
+  MG.boil(t); const old = MG.figure(4);
+  MG.ink(c, [[40, 560], [130, 560], [122, 670], [48, 670]], { fill: PAPER, tone: .3, smooth: false });
+  for (let i = 0; i < 6; i++) { const a = -Math.PI / 2 + (i - 2.5) * .38 + Math.sin(t * 1.1 + i) * .04; MG.ink(c, MG.ell(85 + Math.cos(a) * 60, 520 + Math.sin(a) * 70, 20, 55, 14, a + Math.PI / 2), { fill: PAPERL, shade: { tone: .3, dx: 6, dy: 6 } }); }
+  MG.ink(c, [[250, 210], [510, 210], [510, 380], [250, 380]], { fill: PAPER, tone: .18, smooth: false });
+  for (const [x, y, w, h] of [[270, 228, 90, 70], [380, 236, 110, 60], [300, 312, 120, 54]]) MG.ink(c, [[x, y], [x + w, y], [x + w, y + h], [x, y + h]], { fill: PAPERL, smooth: false, lw: .6 });
+  MG.figure(old);
+  const x = walkX(t), stop = t > B.walk[1];
+  c.fillStyle = MG.tone(c, .4); c.beginPath(); c.ellipse(x + 10, 728, 120, 16, 0, 0, TAU); c.fill();
+  C.draw(c, t, 'park', { x, y: 725, s: .8, turn: .32, pose: stop ? 'stand' : 'walk', ph: (x - WALK[0]) / 150, lean: .2, nod: .5, expr: 'dead', look: [.6, .3], hairEv: [B.walk[1]],
+    arms: { L: { to: [x + 46 + Math.sin((x - WALK[0]) / 150 * TAU) * 10, 532], hand: 'open', ang: 1.65 } } });   // the near arm dangles in front of the thigh (zombie walk)
+}
+function oWalk(c, t, P) {
+  sfx(c, t, { text: Wd.sfx.step, x: 200, y: 560, size: 64, at: 8.9, out: 10.0, rot: .12, seed: 4 });
+  sfx(c, t, { text: Wd.sfx.step, x: 345, y: 590, size: 64, at: 9.7, out: 10.8, rot: -.08, seed: 6 });
+}
+// 5 · THE DONUT: a solid-black panel, white focus wedges, the pink donut the only colour
+const DC = [540, 690];
+function pDonut(c, t, P) {
+  c.fillStyle = INK; c.fillRect(0, 0, P.w, P.h);
+  MG.focus(c, t, { x: 0, y: 0, w: P.w, h: P.h, cx: DC[0], cy: DC[1] + 40, rx: 400, ry: 300, n: 96, wMax: 30, col: PAPERL, seed: 21, inner: .7 });
+  C.donut(c, DC[0], DC[1] + 60, 300, { t, tilt: .58, seed: 7 });
+  A.boxRim(c, -40, 925, 900, 340, { tilt: 30, lw: 9, lip: 26, corner: 260, shadow: 60, logo: [.74, 50], t });
+  for (let i = 0; i < 9; i++) { const a = i * 2.39 + 1, rr = 330 + (i % 3) * 70, x = DC[0] + Math.cos(a) * rr * 1.25, y = DC[1] - 20 + Math.sin(a) * rr * .9, k = Math.max(0, Math.sin(t * 6 + i * 1.7));
+    if (y < 900) { WT.star4(c, x, y, (22 + (i % 3) * 12) * (.4 + .6 * k), .2, INK); WT.star4(c, x, y, (16 + (i % 3) * 10) * (.4 + .6 * k), .2, PAPERL); } }
+  WT.flash(c, t, B.donut, { rect: [0, 0, P.w, P.h], hold: .04, dur: .32, col: PAPERL });
+}
+function oDonut(c, t, P) {
+  sfx(c, t, { text: Wd.sfx.twinkle, x: 850, y: 300, size: 96, at: B.donut + .45, rot: .12, seed: 8 });
+  tagLine(c, t, Wd.narr2, 60, 110, 50);
+}
+const donutCam = (t, P) => WT.mixCam(WT.punch(t, B.donut, { z0: 1.22, A: 12 }), WT.kenBurns(t, B.donut + .2, 14.2, 1.07, DC[0], DC[1]));
+// 6 · the reach (slanted action panel) … a shadow falls. The arm is a 3D two-bone IK (fixed bones) from an off-panel shoulder.
+const BOX = { x: 330, y: 616, w: 520 }, DN = [BOX.x + .2913 * BOX.w, BOX.y - .3176 * BOX.w - 7];
+function pHand(c, t, P) {
+  c.fillStyle = PAPERL; c.fillRect(0, 0, P.w, P.h);
+  c.strokeStyle = INK; c.lineWidth = 2.2;
+  for (let y = 140; y <= 600; y += 52) { c.beginPath(); c.moveTo(0, y); c.lineTo(P.w, y); c.stroke(); }
+  for (let r = 0; r * 52 < 460; r++) for (let x = (r % 2) * 52; x < P.w; x += 104) { c.beginPath(); c.moveTo(x, 140 + r * 52); c.lineTo(x, 192 + r * 52); c.stroke(); }
+  C.counter(c, -10, 600, P.w + 20, 1);
+  C.box(c, BOX.x, BOX.y, BOX.w, { n: 1, last: true, seed: 2 });
+  A.boxRim(c, BOX.x - BOX.w / 2, BOX.y - BOX.w * .2, BOX.w, BOX.w * .2, { lw: 4.5, lip: 9, logo: [.78, 17], t });   // plain board + stamp front wall
+  // the wrist glides in from the top-right, creeps the last bit, flinches back when the shadow lands; the shoulder follows (he leans in)
+  const inK = eo(clamp((t - B.reach) / .75)), creep = eio(clamp((t - B.reach - .75) / (B.shadow - B.reach - .75))), fl = ss(B.shadow, B.shadow + .12, t);
+  if (t > B.reach - .05) {
+    const tr = t > B.reach + .75 ? WT.tremble(t, t > B.shadow ? 4 : 1.5, 14, 5) : [0, 0];
+    const tgt = [DN[0] + 64, DN[1] - 44], dir = [.95, -.31];
+    const pull = lerp(620, 0, inK) + lerp(55, 0, creep) + 12 * fl;
+    const wr = [tgt[0] + dir[0] * pull + tr[0], tgt[1] + dir[1] * pull + tr[1] - 16 * fl];   // the flinch: a small lift, same claw
+    const shp = [wr[0] + 330, wr[1] - 430];   // shoulder above the panel top, up-right of the wrist: 542 px < l1 + l2 = 576, so the hand always reaches
+    A.reachArm(c, t, 'park', shp, wr, { sz: 72, l1: 72 * 4.6, l2: 72 * 3.4, pose: 'grab', aim: Math.PI - .32, pole: [.2, 1, .5] });
+  }
+  A.castShadow(c, clamp((t - B.shadow) / .4), { x: 470, y: 250, s: 1.15, tone: .45 });
+}
+function oHand(c, t, P) { sfx(c, t, { text: Wd.sfx.flinch, x: 800, y: 150, size: 100, at: B.shadow + .08, rot: -.14, seed: 9 }); }
+// 7 · 김과장 in the doorway: closed-eye smile … then the glint (black focus wedges)
+const KIM = t => { const gl = t >= B.kimGlint; return { x: 520, y: 1260, s: 1.62, turn: -.3, expr: gl ? 'glint' : 'smile', nod: gl ? .25 : 0, tilt: gl ? 0 : .06,
+  arms: { R: { to: [462, 760], hand: 'hold', prop: (cc, H) => C.mug(cc, H.grip[0] - 4, H.grip[1] + 34, 1.15, { steam: true, t }) } } }; };
+function pKim(c, t, P) {
+  C.room(c, t, 'door', P.w, P.h, { horizon: 960, dx: 290, dw: 420, door: .85, light: 1 });
+  const o = KIM(t), gl = t >= B.kimGlint;
+  if (gl) { const g = C.geom(t, 'kim', o); MG.focus(c, t, { x: 0, y: 0, w: P.w, h: P.h, cx: g.head.x, cy: g.head.y + 40, rx: 230, ry: 290, n: 80, wMax: 26, seed: 31 }); }
+  const G = C.draw(c, t, 'kim', o); P.G = G;
+  if (gl) { const u = t - B.kimGlint, r = 50 * Math.sin(Math.PI * clamp(u / .5)), e = G.eyes[1]; WT.star4(c, e[0] + 14, e[1] - 10, r * 1.25, u * 2, INK); WT.star4(c, e[0] + 14, e[1] - 10, r, u * 2, PAPERL); }
+}
+function oKim(c, t, P) { const G = P.G; line(c, t, Wd.kim, 'talk', 240, 200, { tail: G ? G.mouth : null, maxW: 400 }); }
+const kimCam = (t, P) => WT.mixCam(WT.kenBurns(t, B.kim - .2, 18.8, 1.06, 520, 420), WT.punch(t, B.kimGlint, { z0: 1.08, A: 6 }));
+// 8 · 최주임 pops out from behind the fridge, hand up through the (slanted) panel border
+function pChoiBg(c, t, P) {
+  C.room(c, t, 'pantry', P.w, P.h + 60, { horizon: 820 });
+  C.counter(c, 470, 560, 560, .78); C.coffee(c, 820, 560, .78);
+  if (t >= B.choi && t < B.choi + .6) MG.speed(c, t, { x: 380, y: 60, w: P.w - 380, h: 500, ang: Math.PI, n: 16, wMax: 10, seed: 5, v: 1600 });
+}
+function oChoi(c, t, P) {
+  c.save(); c.beginPath(); c.rect(0, -320, P.w, P.h + 320); c.clip();
+  if (t >= B.choi) {
+    const k = WT.backOut(clamp((t - B.choi) / .28), 2.2), hk = ss(B.choi + .02, B.choi + .17, t);
+    const o = { x: lerp(190, 330, k), y: 1110, s: 1.7, turn: -.38, lean: lerp(0, -.3, k), expr: 'happy', hairEv: [B.choi + .26],
+      arms: { R: { to: [lerp(560, 840, hk), lerp(430, -70, hk)], hand: 'paper', ang: -1.15 } } };   // up and OUT, clear of the head
+    if (hk > .9) { const hd = C.geom(t, 'choi', o).hands.R; MG.ticks(c, hd.x, hd.y - 20, 150, { n: 7, a0: -Math.PI * .95, a1: -.05, len: 1, seed: 6 }); }   // behind the hand
+    P.G = C.draw(c, t, 'choi', o);
+  } else P.G = null;
+  C.fridge(c, 30, 880, 1.1);
+  c.restore();
+  if (P.G) line(c, t, Wd.choi, 'shout', 790, 470, { tail: P.G.mouth, size: 64 });
+}
+// 9 · the three-eye strip on black (white speed lines)
+const EYES = [
+  { who: 'park', expr: 'determined', look: t => [t < 22.0 ? .9 : t < 22.9 ? -.7 : .9, 0], dir: -1 },
+  { who: 'kim', expr: 'glint', look: t => [t < 22.3 ? -.9 : t < 23.2 ? .9 : -.9, 0], dir: 1 },
+  { who: 'choi', expr: 'determined', look: t => [t < 22.6 ? -.9 : -.2, t < 22.6 ? 0 : -.2], dir: -1 },
+];
+function pEye(i) {
+  const E = EYES[i];
+  return function (c, t, P) {
+    c.fillStyle = INK; c.fillRect(0, 0, P.w, P.h);
+    MG.speed(c, t, { x: 0, y: 0, w: P.w, h: P.h, ang: E.dir > 0 ? Math.PI : 0, n: 22, wMax: 9, col: PAPERL, seed: 11 + i, v: 1300 });
+    const t0 = B.eyes - .35 + i * .2, k = eo(clamp((t - t0) / .28)); if (k <= 0) return;
+    const x = P.w / 2 + E.dir * (1 - k) * 1100 + Math.sin(t * .9 + i) * 6;
+    const G = A.eyeBand(c, t, E.who, x, 190, 6.8, { expr: E.expr, look: E.look(t), sway: .3 });
+    if (i === 0) { const [e0, e1] = G.eyes[0][0] < G.eyes[1][0] ? G.eyes : [G.eyes[1], G.eyes[0]], ed = e1[0] - e0[0], r = ed * .32;   // a drop at the temple, outside the lens
+      WT.emote(c, t, 'sweat', { x: e0[0] - ed * .78 + r, y: e0[1] - ed * .2 + r * .45, r, dir: -1 }, { at: B.sweat, side: -1 }); }
+  };
+}
+function oEyes(c, t, P) {
+  sfx(c, t, { text: Wd.sfx.heart, x: 830, y: 60, size: 116, at: B.heart, rot: .08, seed: 12 });
+  sfx(c, t, { text: Wd.sfx.heart, x: 170, y: 760, size: 100, at: B.heart + .55, rot: -.1, seed: 13 });
+}
+
+// ================================================================ the strip (gutters = time; mood switches hard inside the gutters)
+const STRIP = WT.strip({
+  top: 260, side: 48, bottom: 700,
+  panels: [
+    { id: 'title', h: 640, border: 'none', draw: pTitle },
+    { id: 'office', gap: 100, h: 1000, lw: BW, draw: pOffice, over: oOffice, overCam: false, cam: (t, P) => WT.kenBurns(t, B.office - .5, 5.6, 1.05, 660, 620) },
+    { id: 'slump', gap: 'action', h: 820, lw: BW, draw: pSlump, over: oSlump, overCam: false, cam: slumpCam },
+    { id: 'walk', gap: 'action', h: 760, x: 0, w: 1080, border: 'none', draw: pWalk, over: oWalk },
+    { id: 'donut', gap: 600, h: 1240, border: 'bleed', bg: INK, draw: pDonut, over: oDonut, overCam: false, cam: donutCam },
+    { id: 'hand', gap: 'action', h: 760, cut: [56, 0, -56, 0], lw: BW, draw: pHand, over: oHand },
+    { id: 'kim', gap: 'beat', h: 1040, cut: [0, 0, 50, -50], lw: BW, draw: pKim, over: oKim, overCam: false, cam: kimCam },
+    { id: 'choi', gap: 'action', h: 900, cut: [-50, 50, 0, 0], lw: BW, draw: pChoiBg, over: oChoi },
+    { id: 'eyeA', gap: 'beat', h: 340, lw: 6, ink: PAPERL, draw: pEye(0), over: oEyes, overCam: false },
+    { id: 'eyeB', gap: 'tight', h: 340, lw: 6, ink: PAPERL, draw: pEye(1) },
+    { id: 'eyeC', gap: 'tight', h: 340, lw: 6, ink: PAPERL, draw: pEye(2) },
+  ],
+});
+const PP = STRIP.P, end = id => PP[id].y + PP[id].h;
+STRIP.bg = [[0, PAPER], [end('walk') + 150, PAPER], [end('walk') + 150, INK], [end('donut'), INK], [end('donut'), PAPER], [end('choi') + 160, PAPER], [end('choi') + 160, INK]];
+const WALK_STOP = end('walk') - 1600;
+const CAM = WT.camera(STRIP, [
+  { panel: 'title', hold: 1.9 },                                   // 0 – 1.9
+  { panel: 'office', glide: .7, hold: 2.4, drift: 30 },            // 2.6 – 5.0
+  { panel: 'slump', glide: .6, hold: 2.6, drift: 24 },             // 5.6 – 8.2
+  { panel: 'walk', align: 'bottom', glide: .6, hold: 1.6 },        // 8.8 – 10.4
+  { y: WALK_STOP + 280, glide: .5, hold: .38 },                    // 10.9 – 11.28 the black gutter: silent beat
+  { panel: 'donut', glide: .14, hold: 2.28, ease: 'out' },         // 11.42 – 13.7 SNAP
+  { panel: 'hand', align: 'bottom', glide: .4, hold: 1.55 },       // 14.1 – 15.65
+  { panel: 'kim', glide: .5, hold: 2.45 },                         // 16.15 – 18.6
+  { panel: 'choi', glide: .45, hold: 1.95 },                       // 19.05 – 21.0
+  { panel: 'eyeB', glide: .45, hold: 3.2 },                        // 21.45 – end
+]);
+
+function draw(ctx, t) {
+  WT.begin(ctx, INK);
+  const sh = WT.shake(t, B.donut, 12), s2 = WT.shake(t, B.choi + .05, 7);
+  WT.drawStrip(ctx, t, STRIP, CAM.y(t), { shake: [sh[0] + s2[0], sh[1] + s2[1]] });
+  if (!/[?&]grade=0/.test(location.search)) MG.grade(ctx);   // the manga print finish (?grade=0 = raw colour)
+  WT.fade(ctx, t, S.DUR, .4, .4);
+}
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: WT.FONTS, draw });
+</script>
+</body>
+</html>

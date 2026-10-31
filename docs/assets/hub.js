@@ -14,8 +14,11 @@
 
   function renderCard(s, reg) {
     var repo = reg.repo, branch = reg.branch || 'main', src = (s.source || s.id + '/').replace(/\/?$/, '/');
-    var from = s.absorbedFrom ? '<p class="from">출처: ' + esc(shortRepo(s.absorbedFrom.repo)) +
-      (s.absorbedFrom.path ? '의 <code>' + esc(s.absorbedFrom.path) + '</code>' : '') + '</p>' : '';
+    // absorbedFrom.repo === the registry's own repo: the skill was built here (from a worked example in this repo), not absorbed
+    var here = s.absorbedFrom && s.absorbedFrom.repo === repo;
+    var from = !s.absorbedFrom ? '' : here ? '<p class="from">이 레포에서 만듦' + (s.absorbedFrom.path ? ': <code>' + esc(s.absorbedFrom.path) + '</code>' : '') + '</p>' :
+      '<p class="from">출처: ' + esc(shortRepo(s.absorbedFrom.repo)) +
+      (s.absorbedFrom.path ? '의 <code>' + esc(s.absorbedFrom.path) + '</code>' : '') + '</p>';
     return '<article class="card" id="' + esc(s.id) + '" data-id="' + esc(s.id) + '">\n' +
       '  <a class="img" href="' + esc(s.page) + '" tabindex="-1"><img src="' + esc(s.poster) +
       '" alt="' + esc(s.posterAlt || s.name + ' 포스터') + '" width="1200" height="675"></a>\n' +

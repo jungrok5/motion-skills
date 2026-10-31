@@ -1,0 +1,175 @@
+{
+ "_note": "How the -cut / -tail files here were made from the raw ElevenLabs takes (two per cue; the raw takes stay local, see ../../.gitignore). Rebuild: python3 ../../scripts/audio-cuts.py from examples/donut/. ep3 n1 drops the word 늘 from the take (자연은 늘… → 자연은…).",
+ "target_db": -18,
+ "narration": {
+  "ep1-find__n1-cut": {
+   "take": "ep1-find__n1",
+   "segs": [
+    [
+     0.09,
+     1.1
+    ],
+    [
+     1.75,
+     3.05
+    ]
+   ],
+   "gaps": [
+    0.35
+   ],
+   "tempo": 1.0
+  },
+  "ep1-find__n2-cut": {
+   "take": "ep1-find__n2_b",
+   "segs": [
+    [
+     0.1,
+     2.9
+    ]
+   ],
+   "gaps": [],
+   "tempo": 1.0
+  },
+  "ep1-find__n3-cut": {
+   "take": "ep1-find__n3",
+   "segs": [
+    [
+     0.15,
+     2.02
+    ]
+   ],
+   "gaps": [],
+   "tempo": 1.0
+  },
+  "ep1-find__n4-cut": {
+   "take": "ep1-find__n4_b",
+   "segs": [
+    [
+     0.08,
+     1.49
+    ],
+    [
+     2.11,
+     2.92
+    ]
+   ],
+   "gaps": [
+    0.4
+   ],
+   "tempo": 1.0
+  },
+  "ep2-standoff__n1-cut": {
+   "take": "ep2-standoff__n1",
+   "segs": [
+    [
+     0.09,
+     1.04
+    ],
+    [
+     1.42,
+     2.0
+    ]
+   ],
+   "gaps": [
+    0.25
+   ],
+   "tempo": 1.0
+  },
+  "ep2-standoff__n2-cut": {
+   "take": "ep2-standoff__n2",
+   "segs": [
+    [
+     0.14,
+     1.12
+    ]
+   ],
+   "gaps": [],
+   "tempo": 1.0
+  },
+  "ep2-standoff__n3-cut": {
+   "take": "ep2-standoff__n3",
+   "segs": [
+    [
+     0.11,
+     0.77
+    ],
+    [
+     1.36,
+     2.32
+    ]
+   ],
+   "gaps": [
+    0.3
+   ],
+   "tempo": 1.0
+  },
+  "ep2-standoff__n4-cut": {
+   "take": "ep2-standoff__n4",
+   "segs": [
+    [
+     0.0,
+     0.81
+    ],
+    [
+     1.22,
+     1.84
+    ]
+   ],
+   "gaps": [
+    0.36
+   ],
+   "tempo": 1.0
+  },
+  "ep3-twist__n1-cut": {
+   "take": "ep3-twist__n1",
+   "segs": [
+    [
+     0.1,
+     0.95
+    ],
+    [
+     2.08,
+     3.34
+    ]
+   ],
+   "gaps": [
+    0.28
+   ],
+   "tempo": 1.12
+  },
+  "ep3-twist__n2-cut": {
+   "take": "ep3-twist__n2",
+   "segs": [
+    [
+     0.09,
+     0.71
+    ],
+    [
+     0.79,
+     1.54
+    ],
+    [
+     2.12,
+     2.75
+    ]
+   ],
+   "gaps": [
+    0.08,
+    0.25
+   ],
+   "tempo": 1.15
+  }
+ },
+ "tails": {
+  "ep2-standoff__m2-tail": {
+   "take": "ep2-standoff__m2_b",
+   "at": 6.25,
+   "len": 9.0
+  },
+  "ep3-twist__m1-tail": {
+   "take": "ep3-twist__m1",
+   "at": 14.15,
+   "len": 6.6
+  }
+ }
+}
