@@ -44,6 +44,7 @@ function buildLand() {
 // ---------------- timing helpers ----------------
 const openK = t => eio((t - B.open[0]) / (B.open[1] - B.open[0]));   // the door swing
 const winK = (t, i) => K.lightOn(t, B.win[i]);
+const op0 = t => openK(t);
 
 // ---------------- the three people ----------------
 function guestA(t) {
@@ -124,10 +125,11 @@ function draw(ctx, t) {
   K.layer(ctx, LAND.hills, pal.mid2, { liftA: .18 });
   K.layer(ctx, LAND.trees, pal.mid2, { liftA: .18 });
   ctx.fillStyle = Pilot.rgb(Pilot.mix(pal.mid2, [10, 8, 10], .45)); ctx.fill(LAND.fence);
+  const HO = op0(t) > 0 ? hosts(t) : [];                          // the hosts (posed once per frame)
   const lampOn = K.lightOn(t, B.lamp), wins = [winK(t, 0), winK(t, 1), winK(t, 2)], op = openK(t);
   K.lamp(ctx, 110, G, 300, lampOn);
   K.house(ctx, HOUSE, { win: wins, door: op, lantern: K.lightOn(t, B.lantern), doorWin: wins[0] },
-    { window: inWindow, door: (c, d) => hosts(t).forEach(F => K.person(c, F)) });
+    { window: inWindow, door: (c, d) => HO.forEach(F => K.person(c, F)) });
   K.smoke(ctx, ...GEO.chimney.mouth, t, { col: Pilot.rgb(Pilot.mix(pal.mid2, [20, 12, 16], .4), .8) });
   K.layer(ctx, LAND.ground, C.ground, { liftA: 0 });
   stones(ctx, t);
@@ -135,7 +137,7 @@ function draw(ctx, t) {
   K.groundPool(ctx, GEO.windows[0].x + 76, G, 260, 60, wins[0] * .55);
   // the door's light on the ground, the three shadows cut out of it
   const A = guestA(t), Bg = guestB(t), lc = K.lightBegin(), L = K.doorLight(lc, D, op, { len: 420, pool: [430, 170] });
-  if (op > 0) { K.castShadow(lc, A, L, { len: .95 }); K.castShadow(lc, Bg, L, { len: .95 }); hosts(t).forEach(F => K.castShadow(lc, F, L, { len: .42, a: .6 })); }
+  if (op > 0) { K.castShadow(lc, A, L, { len: .95 }); K.castShadow(lc, Bg, L, { len: .95 }); HO.forEach(F => K.castShadow(lc, F, L, { len: .42, a: .6 })); }
   if (op > 0) K.lightEnd(ctx, G);
   const rim = { x: D.x + D.w / 2, y: G - 130, a: op, reach: 460 };
   K.person(ctx, Bg, { rim });
