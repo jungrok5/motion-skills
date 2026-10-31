@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>마지막 도넛 · 3화 반전</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Gaegu:wght@400;700&family=Jua&family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;700&family=Noto+Serif+KR:wght@600&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="kit-webtoon.js"></script>
+<script src="donut-cast.js"></script>
+<script src="ep3-twist-fx.js"></script>
+<script src="script-ep3-twist.js"></script>
+<script>
+/* 「마지막 도넛」 3화 · 반전 (24 s). One strip read downward (BRIEF row 3):
+   A  freeze flash 번쩍 over the frozen lunge — a fourth hand plucks the donut (쏙), three hands close on air
+   B  calm wide pantry: 하늘 bites (바삭) 「아, 이거 제가 아까 사 온 건데…」「드실래요?」          ← punchline 1 (held)
+   ·  beat gutter (camera pauses mid-gap)
+   C  silent beat 「……」: the three frozen, hands still out (blink, a sweat drop)
+   D  hard cut: SD grey stone → cracks → crumble, 털썩
+   E  끼익 — the door: 사장님 glowing with three full boxes 「다들 고생 많지? 도넛 사 왔어~」
+   F  three SD faces, star eyes + waterfall tears of joy
+   G  「근데 회의 끝나고 먹자.」 → 「지금 회의 시작!」 (register snap: focus lines, zoom punch)  ← punchline 2 (held)
+   H  dragged off by the collars, reaching back at the boxes, waterfall tears (질질)
+   I  the empty pantry: 하늘 waves 「다녀오세요~」 with a fresh donut from the boxes → end card 「마지막 도넛 · 끝」 */
+const WT = Webtoon, C = Cast, X = EP3, S = window.SCRIPT, B = S.beat, L = S.lines, { clamp, lerp, ss, eo, eio } = Pilot;
+const INK = WT.C.ink, NIGHT = '#151216', GLOOM = '#4a5478';
+const at = k => L[k][0], out = k => L[k][1], txt = k => L[k][2];
+const bl = (k, o) => Object.assign({ text: txt(k), at: at(k), out: out(k) }, o);
+
+// ---------------------------------------------------------------- the strip
+const STRIP = WT.strip({
+  top: 0, side: 48, bottom: 700,
+  bg: [[0, NIGHT], ['a:end', NIGHT], ['b', WT.C.paper], ['c:end', WT.C.paper], ['d', GLOOM], ['d:end', GLOOM], ['e', WT.C.paper]],
+  panels: [
+    { id: 'a', h: 1240, border: 'bleed', bg: NIGHT, draw: (c, t, P) => panelA(c, t, P), over: (c, t, P) => overA(c, t, P) },
+    { id: 'b', h: 1180, gap: 'action', x: 0, w: 1080, border: 'fade', feather: 110, draw: (c, t, P) => panelB(c, t, P),
+      cam: (t, P) => WT.kenBurns(t, B.bite - .1, out('offer'), 1.05, 560, 520) },
+    { id: 'c', h: 760, gap: 'beat', draw: (c, t, P) => panelC(c, t, P) },
+    { id: 'd', h: 1240, gap: 'seq', border: 'bleed', draw: (c, t, P) => panelD(c, t, P), over: (c, t, P) => overD(c, t, P),
+      cam: (t, P) => WT.mixCam({ fx: P.w / 2, fy: 700 }, WT.punch(t, B.stone, { z0: 1.18 })) },
+    { id: 'e', h: 1260, gap: 'action', draw: (c, t, P) => panelE(c, t, P), over: (c, t, P) => overE(c, t, P),
+      cam: (t, P) => WT.kenBurns(t, B.door + .4, out('boss'), 1.05, P.w / 2, 420) },
+    { id: 'f', h: 660, gap: 'seq', draw: (c, t, P) => panelF(c, t, P) },
+    { id: 'g', h: 1180, gap: 'action', border: 'bleed', draw: (c, t, P) => panelG(c, t, P),
+      cam: (t, P) => WT.mixCam({ fx: 620, fy: 520 }, t < B.meeting ? WT.kenBurns(t, at('later'), B.meeting, 1.04, 620, 480) : { z: 1.04 }, WT.punch(t, B.meeting)) },
+    { id: 'h', h: 900, gap: 'seq', cut: [70, 0, -20, 50], draw: (c, t, P) => panelH(c, t, P) },
+    { id: 'i', h: 1200, gap: 'beat', x: 0, w: 1080, border: 'fade', feather: 110, draw: (c, t, P) => panelI(c, t, P),
+      cam: (t, P) => WT.kenBurns(t, B.bye - .3, B.end, 1.05, 560, 560) },
+  ],
+});
+const Pn = STRIP.P;
+// the scroll, written as absolute arrive/leave times (glide = the time between); the beat gutter gets its own pause
+const CAM = X.plan(STRIP, [
+  { panel: 'a', arrive: 0, leave: 2.05 },
+  { panel: 'b', arrive: 2.5, leave: out('offer'), drift: 18 },
+  { at: Pn.b.y + Pn.b.h + 170, arrive: out('offer') + .42, leave: out('offer') + .72 },        // the silent gutter before the beat panel
+  { panel: 'c', arrive: B.beat, leave: B.stone - .12 },
+  { panel: 'd', arrive: B.stone, leave: 10.0, ease: 'out' },                                 // ≈ hard cut (.12 s)
+  { panel: 'e', arrive: B.door, leave: out('boss') - .1 },
+  { panel: 'f', arrive: B.joy, leave: 14.65 },
+  { panel: 'g', arrive: at('later'), leave: out('now') },
+  { panel: 'h', arrive: B.drag, leave: 19.85, ease: 'out' },
+  { panel: 'i', arrive: B.bye, leave: S.DUR, drift: 24 },
+]);
+
+// ---------------------------------------------------------------- A · the freeze flash and the fourth hand (black, fake-epic register)
+const DON = [540, 640], DR = 112;                      // the donut in A (panel-local)
+function handPath(t) {   // 하늘's hand: in from the bottom-right, pinches the donut's near rim, leaves with it
+  const [h0, h1, h2] = B.hand, grabAt = [DON[0] + 70, DON[1] + 40];
+  const rest = [870, 1520], ang = -Math.PI / 2 - .55, sz = 92, go = WT.Rig.gripOffset('pinch', ang, sz, -1);
+  const tgt = [grabAt[0] - go[0], grabAt[1] - go[1]];
+  let w;
+  if (t < h0) w = rest; else if (t < h1) w = WT.lerpP(rest, tgt, eo(clamp((t - h0) / (h1 - h0)), 2)); else if (t < h1 + .12) w = tgt;
+  else { const u = clamp((t - h1 - .12) / (h2 - h1 - .12)); w = WT.lerpP(tgt, [980, 1560], u * u); }
+  return { w, ang, sz, held: t >= h1, grab: [w[0] + go[0], w[1] + go[1]], off: [DON[0] - grabAt[0], DON[1] - grabAt[1]] };
+}
+function panelA(c, t, P) {
+  const tf = .37;                                       // the frozen instant: lines and the three hands do not boil
+  c.fillStyle = NIGHT; c.fillRect(0, 0, P.w, P.h);
+  WT.focus(c, tf, { cx: DON[0], cy: DON[1], rx: P.w * .52, ry: P.h * .5, inner: .5, color: '#f4f1f7', seed: 11, bold: .9, fps: 0 });
+  WT.tone(c, .18, [0, 0, P.w, P.h], { alpha: .25 });
+  WT.glow(c, DON[0], DON[1], 620, '#fff1cc', .42);
+  const hp = handPath(t), gone = hp.held;
+  if (!gone) { WT.glow(c, DON[0], DON[1], DR * 2.6, '#fff3c0', .55); C.donut(c, DON[0], DON[1], DR, { glow: 1, t, seed: 7 }); }
+  // the three lunging hands, frozen — they snap shut on nothing at B.close
+  const shut = t >= B.close, j = shut ? WT.shake(t, B.close, 8, .1) : [0, 0], pz = shut ? 'rock' : 'grab', inn = shut ? 26 : 0;
+  C.hand(c, 'park', pz, 175 + inn + j[0], 600 + j[1], .1, 132, { len: 5 });
+  C.hand(c, 'kim', pz, 905 - inn - j[0], 700 + j[1], Math.PI - .12, 132, { len: 5, flip: -1 });
+  C.hand(c, 'choi', pz, 590 + j[0], 285 + inn + j[1], Math.PI / 2 + .1, 132, { len: 5, flip: -1 });
+  // 하늘's hand (beige cardigan cuff) — the donut moves with the pinch
+  if (t >= B.hand[0] - .02) {
+    const k = clamp((t - B.hand[0]) / (B.hand[1] - B.hand[0]));
+    if (k < 1) X.streaks(c, t, [hp.w[0] + 260, hp.w[1] + 380], hp.grab, { alpha: 1 - k * .6, seed: 4, w: 160 });
+    if (gone) C.donut(c, hp.grab[0] + hp.off[0], hp.grab[1] + hp.off[1], DR, { t, seed: 7 });
+    C.hand(c, 'haneul', gone ? 'pinch' : 'open', hp.w[0], hp.w[1], hp.ang, hp.sz, { len: 6, flip: -1 });
+    if (gone) C.donut(c, hp.grab[0] + hp.off[0], hp.grab[1] + hp.off[1], DR, { t, seed: 7, alpha: 0 });
+  }
+}
+function overA(c, t, P) {
+  WT.sfx(c, t, { text: L.sfxFlash, x: 540, y: 205, size: 176, at: .1, out: 1.9, fill: ['#fff6a0', '#ffb43a'], echo: 2, rot: -.08 });
+  const hp = handPath(t);
+  WT.sfx(c, t, { text: L.sfxPluck, x: 850, y: 470, size: 130, at: B.hand[1], out: 2.0, fill: '#ffffff', rot: .16, grow: [1, 1] });
+  if (t > B.close) for (const [x, y, s] of [[300, 470, -1], [790, 560, 1], [470, 330, -1]]) WT.emote(c, t, 'shock', { x, y, r: 70, dir: s }, { at: B.close + .05 });
+}
+
+// ---------------------------------------------------------------- B · 하늘 eats it (calm daylight register)
+const HB = { x: 650, y: 1585, s: 2.05, turn: -.42 };
+function haneulB(t, ctx) {
+  const g0 = C.geom(t, 'haneul', { x: HB.x, y: HB.y, s: HB.s, turn: HB.turn }), hd = g0.head, r = hd.r;
+  // three holds for the far arm (screen-left = the side she faces): at the mouth → at the chest → held out to them
+  const K = [[[hd.x - r * 1.2, hd.y + r * .95], -1.6], [[hd.x - r * .9, hd.y + r * 2.7], -1.15], [[hd.x - 300, hd.y + 250], -.55]];
+  const k1 = eio(ss(B.bite + .35, B.bite + .8, t)), k2 = eo(ss(B.offer - .25, B.offer + .2, t));
+  const to = WT.lerpP(WT.lerpP(K[0][0], K[1][0], k1), K[2][0], k2), ang = lerp(lerp(K[0][1], K[1][1], k1), K[2][1], k2);
+  const talk = (t > at('mine') && t < at('mine') + 1.5) || (t > B.offer && t < B.offer + .7) ? .5 + .5 * Math.sin(t * 22) : 0;
+  const o = { x: HB.x, y: HB.y, s: HB.s, turn: HB.turn, hairEv: [B.bite, B.offer], tilt: k2 * .08 - (1 - k1) * .05, nod: lerp(.12, -.04, k2),
+    expr: t < at('mine') ? 'chew' : t < B.offer - .1 ? 'talk' : 'happy', talk, blush: .5,
+    arms: { L: { to, hand: 'pinch', ang, front: true, propFront: (cc, H) => donutB(cc, t, H, k1, k2) } } };
+  return ctx ? C.draw(ctx, t, 'haneul', o) : C.geom(t, 'haneul', o);
+}
+function donutB(c, t, H, k1, k2) {   // the donut sits on the pinch (rig-local coords), the bitten side toward her mouth
+  const r = 30, dx = lerp(-r * .2, -r * .5, k2), dy = lerp(-r * .75, -r * .5, k1);
+  C.donut(c, H.grip[0] + dx, H.grip[1] + dy, r, { bite: t < B.bite ? 1 : 2, rot: lerp(.25, 0, k2), seed: 7, t, lw: 1.6 });
+}
+function panelB(c, t, P) {
+  C.room(c, t, 'pantry', P.w, P.h, { horizon: 930 });
+  C.fridge(c, 30, 930, .82);
+  C.counter(c, 470, 660, 610, .82); C.coffee(c, 600, 660, .75); C.box(c, 900, 660, 230, { n: 0, seed: 2, t });
+  WT.glow(c, 640, 470, 640, '#fff6dc', .55);
+  WT.sparkles(c, t, { cx: 700, cy: 330, rx: 330, ry: 200, n: 6, r: [10, 22], seed: 21, col: '#fff7cf', alpha: .8 });
+  const G = haneulB(t, c);
+  if (t > B.bite - .05) X.crumbs(c, t, B.bite, G.hands.L.grip[0] + 10, G.hands.L.grip[1] - 50, { n: 12, seed: 5 });
+  WT.sfx(c, t, { text: L.sfxBite, x: 830, y: 300, size: 118, at: B.bite, out: B.bite + 1.4, fill: '#ffe08a', rot: .12, grow: [1, 1.15] });
+  const ta = G.mouth;
+  WT.balloons(c, t, [
+    bl('mine', { x: 330, y: 150, tail: [ta[0] - 30, ta[1] - 10], maxW: 560 }),
+    bl('offer', { x: 255, y: 560, tail: [ta[0] - 50, ta[1] + 10], size: 52 }),
+  ]);
+}
+
+// ---------------------------------------------------------------- C · the silent beat (cool, nobody moves but a blink and one sweat drop)
+const CROW = [['park', 185, -.12], ['kim', 492, 0], ['choi', 800, .12]], CS = 1.5;
+function panelC(c, t, P) {
+  C.room(c, t, 'pantry', P.w, P.h, { horizon: 740 });
+  WT.grade(c, [0, 0, P.w, P.h], 'sad', .55);
+  WT.gloomLines(c, t, 0, 0, P.w, 260, { n: 18, col: '#5b6890', alpha: .5, seed: 4 });
+  for (const [who, x, tn] of CROW) {
+    const g0 = C.geom(t, who, { x, y: 0, s: CS, turn: tn }), y = 330 - g0.head.y, hd = [x + g0.head.x - x, 330];
+    const G = C.draw(c, t, who, { x, y, s: CS, turn: tn, expr: 'dead', sway: .4,
+      arms: { L: { to: [hd[0] - 150, hd[1] + 40], hand: 'grab', ang: -1.75 }, R: { to: [hd[0] + 150, hd[1] + 40], hand: 'grab', ang: -1.4 } } });
+    if (who === 'kim') WT.emote(c, t, 'sweat', G.head, { at: B.beat + .4, side: 1 });
+  }
+  WT.balloon(c, t, bl('dots', { kind: 'whisper', x: 492, y: 92, size: 48 }));
+}
+
+// ---------------------------------------------------------------- D · stone, cracks, crumble (SD gag register, gloom background)
+const DROW = [['park', 220, 0], ['kim', 540, .14], ['choi', 860, .28]], DFLOOR = 1010;
+function panelD(c, t, P) {
+  WT.moodBg(c, t, 'gloom', 0, 0, P.w, P.h, { col: '#4d5a85', col2: '#b3bbd2', seed: 3 });
+  c.fillStyle = 'rgba(40,46,70,.22)'; c.beginPath(); c.ellipse(P.w / 2, DFLOOR + 18, 520, 60, 0, 0, Math.PI * 2); c.fill();
+  for (const [who, x, d] of DROW) {
+    const o = { x, y: DFLOOR, s: 1.45, turn: (x - 540) / -1800, arms: { L: { to: [x - 150, DFLOOR - 420] }, R: { to: [x + 150, DFLOOR - 420] } } };
+    const t0 = B.crumble + d;
+    if (t < t0 - .45) C.stone(c, t, who, Object.assign({ crack: clamp((t - B.stone - .1) / .5) }, o));
+    else C.crumble(c, t, who, o, { t0, dur: .8, crack: .45, floor: DFLOOR + 14 });
+  }
+}
+function overD(c, t, P) {
+  if (t >= B.stone && t < B.stone + .3) for (const [, x] of DROW) WT.poof(c, t, B.stone, x, DFLOOR - 300, 130);
+  WT.sfx(c, t, { text: L.sfxCrumble, x: 560, y: 1135, size: 160, at: B.crumble + .55, out: 10.3, fill: '#d6d6dc', rot: .08, echo: 1 });
+}
+
+// ---------------------------------------------------------------- E · 끼익 — 사장님 and the three glowing boxes
+const EDX = 252, EDW = 480, EHZ = 1080;
+function panelE(c, t, P) {
+  const dk = eo(ss(B.door, B.door + .5, t)), k = eo(ss(B.door + .15, B.door + .6, t));
+  C.room(c, t, 'door', P.w, P.h, { horizon: EHZ, dx: EDX, dw: EDW, door: dk, light: dk * .85 });
+  if (k > 0) {
+    WT.rays(c, t, EDX + EDW / 2, 540, { col: '#fff1b8', alpha: .75 * k, n: 18, r0: 60, r1: 1250, spin: .05, pulse: 1 });
+    WT.glow(c, EDX + EDW / 2, 600, 560, '#fff7d6', .7 * k);
+    const s = lerp(1.62, 1.86, k), y = lerp(1140, 1255, k), x = EDX + EDW / 2, m = c.getTransform();
+    const g = C.geom(t, 'boss', { x, y, s }), sw = 270, sy = g.hip[1] - 20;
+    const G = C.draw(c, t, 'boss', { x, y, s, alpha: clamp(k * 2.5), expr: 'happy', talk: t > at('boss') && t < at('boss') + 1.8 ? .5 + .5 * Math.sin(t * 20) : 0, hairEv: [B.door + .6],
+      arms: { L: { to: [x - sw * .5 + 4, sy - 30], hand: 'hold', ang: .5, prop: cc => { cc.save(); cc.setTransform(m); X.stack(cc, x, sy + 22, sw, 3, { t }); cc.restore(); } },
+              R: { to: [x + sw * .5 - 4, sy - 30], hand: 'hold', ang: Math.PI - .5 } } });
+    WT.sparkles(c, t, { cx: x, cy: sy - 120, rx: 260, ry: 170, n: 10, r: [12, 30], seed: 8, col: '#fff7c2' });
+    P._mouth = G.mouth;
+  }
+}
+function overE(c, t, P) {
+  WT.sfx(c, t, { text: L.sfxDoor, x: EDX + EDW + 110, y: 330, size: 116, at: B.door, out: B.door + 1.5, fill: '#efe7da', rot: .18, tremble: 3, grow: [1, 1.1] });
+  if (P._mouth) WT.balloon(c, t, bl('boss', { x: 300, y: 135, tail: [P._mouth[0] - 20, P._mouth[1] - 30], maxW: 600 }));
+}
+
+// ---------------------------------------------------------------- F · tears of joy (SD, warm joy background)
+function panelF(c, t, P) {
+  WT.moodBg(c, t, 'joy', 0, 0, P.w, P.h, { cx: P.w / 2, cy: 200 });
+  WT.sparkles(c, t, { cx: P.w / 2, cy: 260, rx: 470, ry: 230, n: 16, r: [12, 34], seed: 31, col: '#ffffff' });
+  [['park', 175, -.15], ['kim', 492, 0], ['choi', 810, .15]].forEach(([who, x, tn], i) => {
+    const y = 790, s = 1.32, bob = Math.abs(Math.sin((t - B.joy) * 7 + i)) * -10;
+    C.sd(c, t, who, { x, y: y + bob, s, turn: tn, eyes: 'sparkle', mouth: 'grin', expr: 'joy', tears: 'fall', tearAt: B.joy - .1 + i * .06, tearFloor: P.h - 10,
+      arms: { L: { to: [x - 140, y - 520] }, R: { to: [x + 140, y - 520] } } });
+  });
+  WT.sfx(c, t, { text: L.sfxWow, x: P.w / 2, y: 80, size: 74, at: B.joy + .1, fill: '#ffffff', rot: -.04, grow: [1, 1.1], font: WT.F.talk });
+}
+
+// ---------------------------------------------------------------- G · 「지금 회의 시작!」 (calm → snap)
+function panelG(c, t, P) {
+  const hit = t >= B.meeting;
+  if (!hit) { c.fillStyle = '#fff4dc'; c.fillRect(0, 0, P.w, P.h); WT.rays(c, t, 640, 430, { col: '#ffe9a8', alpha: .6, n: 16, r1: 1300 }); WT.sparkles(c, t, { cx: 640, cy: 430, rx: 420, ry: 300, n: 8, seed: 41, col: '#fff' }); }
+  else { c.fillStyle = '#ffffff'; c.fillRect(0, 0, P.w, P.h); WT.focus(c, t, { cx: 640, cy: 460, rx: P.w * .5, ry: P.h * .48, inner: .55, at: B.meeting, seed: 5 }); }
+  const s = 3.1, g0 = C.geom(t, 'boss', { x: 0, y: 0, s, turn: -.2 }), x = 660, y = 470 - g0.head.y;
+  const up = ss(B.meeting - .12, B.meeting + .02, t), hd = [x + g0.head.x, 470];
+  C.draw(c, t, 'boss', { x, y, s, turn: -.2, expr: hit ? 'happy' : 'smile', talk: (t > at('later') && t < at('later') + 1.4) || (hit && t < B.meeting + .9) ? .5 + .5 * Math.sin(t * 19) : 0,
+    hairEv: [B.meeting], tilt: hit ? -.06 : .04,
+    arms: up > 0 ? { R: { to: [hd[0] + lerp(200, 245, up), hd[1] + lerp(520, 40, up)], hand: 'wave', ang: -Math.PI / 2 + .2 } } : {} });
+  if (hit) WT.emote(c, t, 'sparkle', { x: hd[0], y: hd[1], r: 150, dir: -1 }, { at: B.meeting + .1 });
+  WT.balloons(c, t, [
+    bl('later', { x: 290, y: 150, tail: [hd[0] - 150, hd[1] + 150], maxW: 520 }),
+    bl('now', { kind: 'shout', x: 330, y: 900, tail: [hd[0] - 120, hd[1] + 260], size: 74, maxW: 560 }),
+  ]);
+}
+
+// ---------------------------------------------------------------- H · dragged off by the collar (SD, slanted panel, speed lines)
+function panelH(c, t, P) {
+  const u = clamp((t - B.drag + .3) / 1.9), gx = lerp(70, -170, u), FL = 790;
+  c.fillStyle = WT.C.wall; c.fillRect(0, 0, P.w, FL); c.fillStyle = WT.C.floor; c.fillRect(0, FL, P.w, P.h);
+  c.strokeStyle = WT.rgba(INK, .5); c.lineWidth = 2; c.beginPath(); c.moveTo(0, FL); c.lineTo(P.w, FL); c.stroke();
+  WT.speed(c, t, { x: 0, y: 70, w: P.w, h: FL - 30, ang: Math.PI, n: 46, color: WT.rgba('#8f98b0', .55), seed: 3, v: 2200 });
+  // the boxes, left behind on the counter (glowing), sliding out of reach
+  const kx = 905 + gx * .3;
+  C.counter(c, kx - 110, 520, 330, .8);
+  WT.rays(c, t, kx, 380, { col: '#fff1b8', alpha: .65, n: 12, r0: 40, r1: 460 });
+  X.stack(c, kx, 520, 180, 3, { t });
+  // the boss leads (cheerful), the three slide behind on their seats, collars bunched in his fist
+  const bx = 150 + gx, ph = (t - B.drag) * 2.2, bs = 1.6;
+  const bo = { x: bx, y: FL + 8, s: bs, turn: -.5, pose: 'run', ph, expr: 'happy', arms: { R: { to: [bx + 200, FL - 260], hand: 'fist' } } };
+  const bg = C.sdGeom(t, 'boss', bo), fist = [bg.hands.R.x + 6, bg.hands.R.y];
+  const crew = [['choi', bx + 560, FL - 6, 1.3], ['kim', bx + 410, FL, 1.32], ['park', bx + 265, FL + 8, 1.34]];
+  const geo = crew.map(([who, x, y, s]) => C.sdGeom(t, who, { x, y, s, turn: .5, pose: 'sit', tilt: .1 }));
+  crew.forEach(([who, x, y, s], i) => {
+    X.dust(c, t, x + 50, y + 6, { dir: 1, n: 4, r: 26, rate: 2.6, seed: i * 7 + 1, len: 200 });
+    C.sd(c, t, who, { x, y, s, turn: .5, pose: 'sit', expr: 'cry', tears: 'fall', tearAt: B.drag - .35, tearFloor: y + 4, tilt: .1 + .04 * Math.sin(t * 9 + i),
+      arms: { L: { to: [x + 260, y - 420] }, R: { to: [x + 300, y - 330] } } });
+  });
+  geo.forEach((G, i) => X.collar(c, [G.head.x - 26 * crew[i][3], G.head.y + G.head.r * .95], fist, C.SPEC[crew[i][0]].pal.shirt, 24 - i * 2));
+  C.sd(c, t, 'boss', bo);
+  WT.emote(c, t, 'note', bg.head, { at: B.drag + .1, side: -1 });
+  WT.sfx(c, t, { text: L.sfxDrag, x: 470, y: 175, size: 120, at: B.drag + .05, fill: '#ffffff', rot: -.06, tremble: 2.5 });
+}
+
+// ---------------------------------------------------------------- I · the empty pantry: 하늘 waves goodbye (with a fresh donut)
+function panelI(c, t, P) {
+  C.room(c, t, 'pantry', P.w, P.h, { horizon: 960 });
+  C.fridge(c, 30, 960, .84);
+  C.counter(c, 470, 690, 610, .82); C.coffee(c, 600, 690, .75);
+  C.box(c, 905, 690, 250, { n: 5, seed: 6, t });
+  // what they left behind: three rubble heaps and drag marks to the left
+  c.strokeStyle = WT.rgba('#9b8f80', .55); c.lineWidth = 8; c.lineCap = 'round';
+  for (const y of [1040, 1080, 1120]) { c.beginPath(); c.moveTo(-20, y); c.quadraticCurveTo(200, y - 6, 330, y + 4); c.stroke(); }
+  X.rubble(c, 160, 1110, 150, 3); X.rubble(c, 330, 1150, 140, 5);
+  WT.glow(c, 600, 480, 620, '#fff6dc', .5);
+  const s = 1.86, x = 600, y = 1530, g0 = C.geom(t, 'haneul', { x, y, s, turn: -.18 }), hd = g0.head;
+  const wv = Math.sin((t - B.bye) * 9);
+  const G = C.draw(c, t, 'haneul', { x, y, s, turn: -.18, expr: t < at('bye') + 1.2 ? 'happy' : 'smile', talk: t > at('bye') && t < at('bye') + 1 ? .5 + .5 * Math.sin(t * 20) : 0, blush: .6, tilt: .06 + wv * .02, hairEv: [B.bye],
+    arms: { R: { to: [hd.x + 210 + wv * 22, hd.y - 30], hand: 'wave', ang: -1.45 + wv * .2, bend: 1 },
+            L: { to: [hd.x - 95, hd.y + 330], hand: 'pinch', ang: -1.3, front: true, propFront: (cc, H) => C.donut(cc, H.grip[0] - 8, H.grip[1] - 22, 30, { bite: 1, seed: 12, t, lw: 1.6 }) } } });
+  WT.emote(c, t, 'note', G.head, { at: B.bye + .5, side: 1 });
+  WT.balloon(c, t, bl('bye', { x: 300, y: 220, tail: [G.mouth[0] - 30, G.mouth[1] - 20], size: 54 }));
+}
+
+// ---------------------------------------------------------------- frame
+function draw(ctx, t) {
+  WT.begin(ctx);
+  const shake = [WT.shake(t, B.crumble + .55, 12), WT.shake(t, B.meeting, 14), WT.shake(t, .02, 10)].reduce((a, b) => [a[0] + b[0], a[1] + b[1]], [0, 0]);
+  WT.drawStrip(ctx, t, STRIP, CAM.y(t), { shake });
+  WT.flash(ctx, t, 0, { hold: .2, dur: .5 });
+  WT.flash(ctx, t, B.stone, { hold: .04, dur: .2 });
+  if (t >= B.end) { WT.endCard(ctx, t, B.end, { title: S.endCard.title, end: S.endCard.end }); X.nextLine(ctx, t, B.end + .55, S.endCard.next, { y: 1360 }); }
+  WT.fade(ctx, t, S.DUR, .4, .4);
+}
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: WT.FONTS, draw });
+</script>
+</body>
+</html>
