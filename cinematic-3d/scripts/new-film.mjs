@@ -15,5 +15,5 @@ cpSync(join(skill, 'lib'), join(dir, 'lib'), { recursive: true });
 const tpl = readFileSync(join(skill, 'templates', 'shot.html'), 'utf8');
 for (const id of ids) writeFileSync(join(dir, 'shots', id + '.html'), tpl.replace('<title>shot</title>', `<title>${id}</title>`));
 writeFileSync(join(dir, 'film.json'), JSON.stringify({ title: dir, fps: 30, dissolve: .8, fade: .6, shots: ids.map(id => ({ id, page: `shots/${id}.html` })), audio: 'audio/mix.wav' }, null, 2) + '\n');
-writeFileSync(join(dir, '.gitignore'), 'out/\n');
+writeFileSync(join(dir, '.gitignore'), 'out/\naudio/mix.wav\n');
 console.log(`${dir}/  lib/  shots/${ids.join('.html, shots/')}.html  film.json  audio/`);
