@@ -59,6 +59,13 @@ From making 9 promo videos (5 styles for a tax accountant, 4 for an overseas buy
 - **Music 22 dB under the voice was too quiet** with a dense generated track → `mix.py` now reports the balance; 15 dB.
 - **A 15 MB music WAV in the repo** → keep the picked track as MP3 (256 kbps); mix.py reads any format.
 
+## Hand-drawn marks
+- **Red-pen marks were all slightly off** in a test video made from the short prompt: a circle stretched from a generic path
+  missed the minus sign it was meant to circle, an "O" around a button did not close, and a strike placed inside
+  kinetic-split text was clipped word by word ("아이 탓" struck in two broken pieces) → `assets/pen.js` measures the target
+  (offset box, transform-independent, after fonts) and generates the stroke: a 1.1-turn circle whose end crosses its start,
+  a strike across the full phrase, etc.; for kinetic text pass the word spans. Check each mark on a still after it is drawn.
+
 ## Running on the person's own machine
 - The Claude desktop app's local environment had Node 22, ffmpeg 6, numpy, Playwright 1.63 + Chromium, but no
   outbound network from the shell, and Playwright installed globally (ESM `import` cannot see it) → read sources with

@@ -59,5 +59,7 @@ from `wt(line, word)`, so changing the take only means re-running `caption-timin
 ## Checks before the full render
 - Stills at every scene's busiest moment: nothing under the caption box, nothing in the bottom 18 %, no element
   appearing after its scene has ended (an element timed on a late word can miss its scene).
+- Every hand-drawn mark checked on a still *after* it finishes drawing: circles closed around the whole target, strikes
+  across the whole phrase (use `pen.js`; marks typed as SVG coordinates are always a little off).
 - Contact sheet of 10–12 frames from the final MP4 (ffmpeg `-ss t -frames:v 1`) — the MP4 is what gets uploaded.
 - `mix.py` report: no overlaps; the `levels:` line in range.

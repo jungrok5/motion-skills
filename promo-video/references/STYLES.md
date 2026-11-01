@@ -73,8 +73,8 @@ the "inspection photos" dropping with a bounce, a parcel arriving, tape pulled o
 **10 Study notebook + red pen** (vertical only, `SHORTS.md`). Cream paper (#FBF8F1) with a 48 px blue grid and a red
 margin line; navy ink (#1B2550), one brand blue, a yellow highlighter, and a **teacher's red pen** (#E0393E) as the thread:
 it circles the bad grade in the hook, strikes the wrong criteria, marks the wrong answer and circles "다시 풀기". Big
-Pretendard 900 for claims, Nanum Pen for notes and worked solutions; red-pen strokes are SVG paths with `pathLength="1"`
-and `strokeDashoffset` driven by `t`. Scenes (86 s, 11): report card "4등급" → dotted lecture hall with progress 100 % vs
+Pretendard 900 for claims, Nanum Pen for notes and worked solutions; every red-pen stroke comes from `assets/pen.js`
+(`Pen.circle / strike / underline / cross / check`), which measures the target and draws on `t`. Scenes (86 s, 11): report card "4등급" → dotted lecture hall with progress 100 % vs
 understanding 50 % and a "?" that shrinks → concept chain (factoring → quadratics → functions → calculus) cracking red →
 two struck "teacher?" cards → "the teacher *your child* needs" → logo + round table with 6 seats + credential chips →
 per-child plan with ticks, blank-page concept test + "통과" stamp → red-pen correction of a sign error, 오답노트

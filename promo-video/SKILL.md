@@ -33,7 +33,7 @@ The samples page shows all nine as live pages: https://jungrok5.github.io/motion
 | `references/LESSONS.md` | what went wrong on the real work and the fixes |
 | `examples/minimal/` | 30 s, 7 scenes, monochrome + one accent, iris transitions — page, `sound.py`, `mix.json`, narration take |
 | `examples/pop/` | 18.75 s beat-synced kinetic short (128 bpm, every cut on the beat grid) — page, `sound.py`, `mix.json`, narration take |
-| `examples/assets/` | Pretendard variable font (OFL), a logo, three ElevenLabs SFX takes (stamp, slap, typing) |
+| `examples/assets/` | Pretendard variable font (OFL), a logo, three ElevenLabs SFX takes (stamp, slap, typing), `pen.js` (hand-drawn marks that fit their target) |
 
 ## Project layout (what you create)
 ```
@@ -105,6 +105,9 @@ the person to paste the posts or upload them as PDF / screenshots (results are o
   Korean: `word-break: keep-all`, tight tracking (−0.03…−0.05 em) on big Pretendard.
 - **Truthful**: only facts from the source; example prices labelled; no imitation of a real messenger/app's logo or exact
   UI (draw a generic chat); don't promise what the business doesn't (e.g. "가품 취급 안 함" only if the site says so).
+- **Hand-drawn marks (red pen circles, strikes, underlines, ticks) come from `assets/pen.js`**, never from hand-placed SVG
+  paths: `Pen.circle('#el')`, `Pen.strike(words)`, … measure the real text and draw a closed, fitted stroke. Never put an
+  overlay inside kinetic-split text (each word clips it) — pass the word spans to Pen instead.
 - **One accent colour per video** (+ one functional colour such as KakaoTalk yellow if the CTA needs it).
 - **Sound**: narration peaks clear of music (duck −10 dB), effects short and quiet (gain 0.15–0.35), no effect on every
   word. Final mix −14 LUFS, true peak about −1.5 dB, AAC 192k.
