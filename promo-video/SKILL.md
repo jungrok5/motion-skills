@@ -125,6 +125,8 @@ That is enough. Do not ask them to specify anything the skill already decides; d
 - **Hand-drawn marks (red pen circles, strikes, underlines, ticks) come from `assets/pen.js`**, never from hand-placed SVG
   paths: `Pen.circle('#el')`, `Pen.strike(words)`, … measure the real text and draw a closed, fitted stroke. Never put an
   overlay inside kinetic-split text (each word clips it) — pass the word spans to Pen instead.
+- **No dead air**: each scene's first element appears within ~0.25 s of the cut (check.mjs warns from 0.45 s of an
+  empty screen, fails at 1 s); stagger the rest of the scene from there.
 - **One accent colour per video** (+ one functional colour such as KakaoTalk yellow if the CTA needs it).
 - **Sound**: narration peaks clear of music (duck −10 dB), effects short and quiet (gain 0.15–0.35), no effect on every
   word. Final mix −14 LUFS, true peak about −1.5 dB, AAC 192k.

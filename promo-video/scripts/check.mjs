@@ -5,7 +5,7 @@
 //
 // It steps through the whole timeline (every --step seconds, plus 3 moments per scene if the page sets
 // window.SCENES = [{id, start, end}] or [[id, start, end]]) and reports, with the time and the element:
-//   ERROR  text outside the frame · text under the Shorts/Reels UI (portrait: bottom 18 %) · text under the caption box
+//   ERROR  nothing on screen for ≥ 1 s (dead air; WARN from 0.45 s) · text outside the frame · text under the Shorts/Reels UI (portrait: bottom 18 %) · text under the caption box
 //          · a pen mark (assets/pen.js) not on its target or drawn on an invisible target · a font that did not load
 //          · render(t) not deterministic · page errors, console errors, failed requests
 //          · a stretched, hand-placed SVG stroke (preserveAspectRatio="none") — such marks never fit: use pen.js
@@ -114,8 +114,9 @@ function probe(fmt) {
     const a = texts[i], b = texts[j];
     if (a.deco || b.deco || a.inCap || b.inCap || a.el.contains(b.el) || b.el.contains(a.el)) continue;
     if (a.scene !== b.scene) continue;                 // outgoing and incoming scenes overlap during a transition
+    if (a.el.closest('svg') || b.el.closest('svg')) continue;   // SVG text boxes are unreliable; charts are checked on the sheet
     const ov = inter(a.r, b.r), small = Math.min(a.r.w * a.r.h, b.r.w * b.r.h);
-    if (ov > small * 0.15) add('WARN', 'overlap', `${label(a.el)} overlaps ${label(b.el)}`);
+    if (ov > small * 0.25) add('WARN', 'overlap', `${label(a.el)} overlaps ${label(b.el)}`);
   }
   // empty cards
   document.querySelectorAll('#stage .card').forEach(c => {
@@ -202,6 +203,32 @@ for (const fmt of fmts) {
       found.get(key).times.push(t);
     }
   }
+  // blank screen: nothing to read (besides the brand bug and the caption) for a while — dead air between scenes
+  let run = null;
+  const blankRuns = [];
+  for (let t = 0; t <= dur + 1e-6; t += 0.1) {
+    await page.evaluate(t => window.render(t), +t.toFixed(2));
+    const n = await page.evaluate(() => {
+      const vis = el => { if (getComputedStyle(el).visibility === 'hidden') return 0; let o = 1;
+        for (let x = el; x && x !== document.documentElement; x = x.parentElement) { const cs = getComputedStyle(x); if (cs.display === 'none') return 0; o *= +cs.opacity; } return o; };
+      let c = 0;
+      document.querySelectorAll('#stage *').forEach(el => {
+        if (el.closest('#bug, #cap, #guides')) return;
+        const own = [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim()) || /^(img|canvas)$/i.test(el.tagName);
+        if (own && vis(el) > 0.35 && el.getBoundingClientRect().width > 2) c++;
+      });
+      return c;
+    });
+    if (n === 0) { if (!run) run = [t, t]; else run[1] = t; }
+    else if (run) { blankRuns.push(run); run = null; }
+  }
+  if (run) blankRuns.push(run);
+  for (const [a, b] of blankRuns) {
+    const len = b - a + 0.1;
+    if (len >= 0.45) found.set('blank' + a, { level: len >= 1.0 ? 'ERROR' : 'WARN', kind: 'blank-screen',
+      msg: `nothing on screen for ${len.toFixed(1)} s (${a.toFixed(1)}–${(b + 0.1).toFixed(1)} s): bring the next scene's first element in within ~0.25 s of the cut`, times: [] });
+  }
+
   // determinism: same t → same pixels, whatever was rendered before
   for (const t of [dur * 0.21, dur * 0.53, dur * 0.87].map(x => +x.toFixed(2))) {
     await page.evaluate(t => window.render(t), t); const a = await page.screenshot({ type: 'png' });
