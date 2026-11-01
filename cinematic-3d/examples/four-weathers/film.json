@@ -1,0 +1,13 @@
+{
+  "title": "Four Weathers",
+  "fps": 30,
+  "dissolve": 0.8,
+  "fade": 0.6,
+  "shots": [
+    { "id": "fog", "page": "shots/fog.html" },
+    { "id": "rain", "page": "shots/rain.html" },
+    { "id": "snow", "page": "shots/snow.html" },
+    { "id": "autumn", "page": "shots/autumn.html" }
+  ],
+  "audio": "audio/mix.wav"
+}

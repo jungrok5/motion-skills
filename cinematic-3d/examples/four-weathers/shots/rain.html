@@ -1,0 +1,126 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>rain · four weathers</title>
+<script type="importmap">{ "imports": { "three": "../../../lib/three.module.min.js", "cine/": "../../../lib/" } }</script>
+</head><body>
+<script type="module">
+// Shot: a red tram rounds the corner of an empty square on a rainy night. Low camera on the wet setts, bare trees and a line of
+// lamps going into the fog on the right, a tall pale block on the left with a few lit windows and a wall lamp.
+import { Film, THREE, V, col, rng, ease, noise1, wetMaterial } from 'cine/cine.js';
+import * as K from 'cine/kit.js';
+
+const film = new Film({
+  dur: 7, fov: 50, near: .1, far: 600,
+  atmos: { density: .022, falloff: .05, start: 14, color: col('#283a58', .9), colorUp: col('#141c2c', .35), max: 500, scatter: .3, anisotropy: .82, phaseMix: .93, skyGlow: col('#23262e', .01) },
+  bloom: { strength: .09, radius: 1.1, tint: col('#ffe6c8') },
+  dof: { focus: 18, aperture: 2.6, maxCoc: 30 },
+  look: { exposure: .42, contrast: 1.12, saturation: 1.1, lift: col('#04060a'), shadowTint: col('#c4d2f0'), highTint: col('#fff0dc'), vignette: .45, grain: .045, ca: .7 },
+});
+const S = film.scene, R = rng(21);
+const mu = film.mirror({ y: 0, res: .5, streak: 1.1 });
+
+K.sky(film, { top: col('#06080c', .12), mid: col('#1a2233', .22), horizon: col('#2c3850', .32) });
+S.add(new THREE.HemisphereLight(col('#4a5a7a'), col('#0b0b0c'), .3));
+const moon = new THREE.DirectionalLight(col('#9fb4e0'), .25); moon.position.set(-20, 30, 10); S.add(moon);
+
+// ground: wet stone setts, puddles, rain ripples
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), wetMaterial(film, mu, { color: '#141415', roughness: .24, puddle: .5, puddleScale: .14, ripples: 1, wet: .8, distort: .012, setts: .11, settsAspect: 1.8 }));
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; S.add(film.ground(ground));
+
+// track: from the far left, the tram comes toward us and the rails bend across the foreground, leaving bottom-left
+const pts = [V(-60, 0, -60), V(-30, 0, -42), V(-12, 0, -30), V(-2, 0, -23), V(4, 0, -18.5), V(6.2, 0, -14.6), V(5.2, 0, -10), V(1.6, 0, -6.4), V(-3.5, 0, -3.6), V(-10, 0, -1.6), V(-20, 0, .4)];
+const track = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
+const TL = track.getLength();
+const railSegs = [], NS = 700;
+for (let i = 0; i < NS; i++) {
+  const a = track.getPointAt(i / NS), b = track.getPointAt((i + 1) / NS), t = track.getTangentAt(i / NS), n = V(-t.z, 0, t.x);
+  for (const off of [-.72, .72]) { const pa = a.clone().addScaledVector(n, off), pb = b.clone().addScaledVector(n, off); railSegs.push(pa.x, .01, pa.z, pb.x, .01, pb.z, .03, .03); }
+}
+const rails = new THREE.Mesh(K.tubesGeometry(railSegs, 4), K.std('#a0948a', { metalness: 1, roughness: .16 }));
+rails.scale.y = .6; S.add(film.ground(rails));
+
+// the tram
+const T = K.tram(film, { seed: 4, passengers: 8, interiorPower: 2.2, interior: '#ffb24a', red: '#b3191b' });
+const headL = T.heads.map(() => film.lamp(V(), '#fff1d8', { power: 10, size: .06 }));
+const spot = new THREE.SpotLight(col('#fff0d6'), 220, 40, .45, .75, 2); S.add(spot, spot.target);
+const signL = film.lamp(V(), '#ffc35a', { power: .6, size: .35 });
+const BOGIE = 9;
+let sNose = 0;
+function placeTram(sFront) {
+  const pf = track.getPointAt(Math.min(1, sFront / TL)), pr = track.getPointAt(Math.max(0, (sFront - BOGIE) / TL));
+  const dir = pf.clone().sub(pr).normalize(), c = pf.clone().add(pr).multiplyScalar(.5);
+  T.group.position.set(c.x, 0, c.z); T.group.rotation.y = Math.atan2(-dir.z, dir.x); T.group.updateMatrixWorld(true);
+  T.heads.forEach((h, i) => headL[i].pos.setFromMatrixPosition(h.matrixWorld).addScaledVector(dir, .12));
+  const nose = V(T.noseX, .85, 0).applyMatrix4(T.group.matrixWorld);
+  spot.position.copy(nose); spot.target.position.copy(nose.clone().addScaledVector(dir, 9).setY(0)); spot.target.updateMatrixWorld();
+  signL.pos.copy(V(T.noseX + .2, T.ySign, 0).applyMatrix4(T.group.matrixWorld));
+}
+// arclength of a world point's nearest track sample (to start the nose where we want it)
+function sAt(x, z) { let best = 0, bd = 1e9; for (let i = 0; i <= 2000; i++) { const p = track.getPointAt(i / 2000); const d = (p.x - x) ** 2 + (p.z - z) ** 2; if (d < bd) { bd = d; best = i / 2000; } } return best * TL; }
+const S0 = sAt(-1.2, -24.4);
+
+// the pale block on the left (the hero facade), darker blocks behind, a long low block far right
+const pale = K.facadeMaterial({ wall: '#8a857c', roughness: .85, cell: [2.7, 3.15], win: [.34, .62], lit: .14, cluster: .15, base: 3.6, seed: 3, litColor: col('#ff9a45', 5), litColor2: col('#4f8fff', 4.5), cool: .08, flicker: .6, sill: '#a29c92' });
+const dark = K.facadeMaterial({ wall: '#34322f', cell: [3, 3.2], win: [.4, .55], lit: .1, base: 4, seed: 9, litColor: col('#ffae5c', 3.5) });
+S.add(K.building({ w: 20, d: 16, h: 25, x: -12.5, z: -40, ry: -.08, mat: pale, seed: 1 }));
+S.add(K.building({ w: 18, d: 16, h: 33, x: -33, z: -48, ry: .15, mat: dark, seed: 2 }));
+S.add(K.building({ w: 40, d: 12, h: 11, x: 30, z: -90, mat: dark, seed: 3 }));
+S.add(K.building({ w: 30, d: 14, h: 18, x: -4, z: -120, mat: dark, seed: 4 }));
+film.onFrame(t => { pale.userData.u.fTime.value = t; });
+// a wall lamp on the pale facade: the sharp point of light top-left, lighting the tram roof
+const wallLamp = new THREE.Mesh(new THREE.SphereGeometry(.09, 10, 8), K.glow('#dfe8ff', 80)); wallLamp.position.set(-5.7, 9.2, -31.4); S.add(wallLamp);
+const arm = new THREE.Mesh(new THREE.BoxGeometry(.05, .05, .7), K.std('#101010')); arm.position.set(-5.7, 9.3, -31.75); S.add(arm);
+film.lamp(V(-5.7, 9.2, -31.3), '#dfe8ff', { power: .22, size: .05, light: 100, distance: 34 });
+// an unseen lamp behind-left of camera: keys the red side of the tram
+film.lamp(V(-6, 7.5, -10), '#ffe2b8', { power: .35, size: .3, light: 110, distance: 40 });
+
+// a tram shelter beyond the nose: steel frame, glass, a lit poster panel and a light strip under the roof
+const shelter = new THREE.Group(); shelter.position.set(6.4, 0, -26); shelter.rotation.y = -.55; S.add(shelter);
+const steel = K.std('#141414', { roughness: .4, metalness: .6 });
+for (const [x, z] of [[-1.9, -.6], [1.9, -.6], [-1.9, .6], [1.9, .6]]) { const p = new THREE.Mesh(new THREE.BoxGeometry(.07, 2.5, .07), steel); p.position.set(x, 1.25, z); shelter.add(p); }
+const sroof = new THREE.Mesh(new THREE.BoxGeometry(4.2, .12, 1.7), steel); sroof.position.y = 2.52; shelter.add(sroof);
+const strip = new THREE.Mesh(new THREE.BoxGeometry(3.6, .03, .12), K.glow('#ffe3b8', 6)); strip.position.set(0, 2.44, 0); shelter.add(strip);
+const poster = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.8), new THREE.ShaderMaterial({ vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+  fragmentShader: 'varying vec2 vUv; void main(){ vec3 c = mix(vec3(1.4, .62, .22), vec3(.9, 1.05, 1.3), smoothstep(.2, .9, vUv.y)); c *= .7 + .3 * smoothstep(.0, .3, vUv.x) * smoothstep(1., .7, vUv.x); c = mix(c, vec3(.08), step(.62, vUv.y) * step(vUv.y, .7) * step(.15, vUv.x) * step(vUv.x, .85)); gl_FragColor = vec4(c * 1.6, 1.); }' }));
+poster.position.set(1.25, 1.25, -.6); shelter.add(poster);
+const back = new THREE.Mesh(new THREE.PlaneGeometry(3.8, 2.2), new THREE.MeshStandardMaterial({ color: '#b8c4d0', roughness: .05, transparent: true, opacity: .14, depthWrite: false, side: THREE.DoubleSide })); back.position.set(-.6, 1.25, -.62); shelter.add(back);
+const bench = new THREE.Mesh(new THREE.BoxGeometry(2, .08, .4), steel); bench.position.set(-.5, .5, -.35); shelter.add(bench);
+film.lamp(V(6.4, 2.3, -26), '#ffe3b8', { power: .5, size: .8, light: 14, distance: 10 });
+
+// trees down the right side and behind the square, lamps between them into the fog
+const treeMat = K.std('#0f0c0a', { roughness: .95 });
+// right side of the square: a row of plane trees and lamps receding toward the middle of the frame, a second row behind
+const treeSpots = [[4.8, -21, 17], [5.2, -33, 16], [5.4, -45, 16], [5.6, -58, 15], [5.8, -72, 15], [6, -88, 14], [8.8, -16, 18], [9.4, -28, 17], [9.8, -40, 16], [10, -54, 16], [-1.2, -64, 14], [-4.5, -78, 14], [1.8, -95, 14]];
+treeSpots.forEach(([x, z, h], i) => { const far = z < -55; const tr = K.tree({ seed: 30 + i, height: h * .8 + R() * 2, trunk: .3, depth: far ? 7 : 8, spread: .62, up: .28, twig: far ? 4 : 7, twigR: far ? .03 : .018, minR: far ? .035 : .022, lean: x < 7 ? -.6 : 0, mat: treeMat, view: V(-x, 0, -z) }); tr.position.set(x, 0, z); S.add(tr); });
+const lampSpots = [[3.7, -27], [3.9, -39], [4.1, -51], [4.3, -64], [4.5, -78], [4.7, -94], [4.9, -112], [8, -22], [8.5, -46], [9, -70], [9.4, -98]];
+lampSpots.forEach(([x, z], i) => K.streetLamp(film, { x, z, h: 7.4, style: 'pole', color: '#ffe0aa', power: 1, light: i < 3 ? 40 : 0, distance: 26, bulb: 24, size: .25 }));
+// a near post at the right edge, out of focus
+K.streetLamp(film, { x: 5.1, z: -5.2, h: 9, style: 'pole', color: '#ffe0aa', power: .8, light: 35, distance: 22, bulb: 24 });
+
+// overhead wires: catenary over the track + spans across the sky
+const wm = K.std('#040404', { roughness: .5 });
+const along = []; for (let s = 0; s <= TL; s += 5) { const p = track.getPointAt(s / TL); along.push(V(p.x, 6.5, p.z)); }
+S.add(K.wire(along, { r: .011, sag: .06, mat: wm }));
+S.add(K.wire([V(-9, 15, -31.8), V(9, 9.5, -8)], { r: .014, sag: .9, mat: wm }));
+S.add(K.wire([V(-9, 12.5, -31.8), V(9.5, 8.7, -12)], { r: .013, sag: .8, mat: wm }));
+S.add(K.wire([V(-6, 8.8, -31.8), V(6.5, 7.6, -20)], { r: .011, sag: .4, mat: wm }));
+S.add(K.wire([V(-14, 20, -31.8), V(6, 26, -2)], { r: .012, sag: 1.2, mat: wm }));
+S.add(K.wire([V(-4, 7, -31.8), V(-4, 6.6, -14), V(-1, 6.4, -4)], { r: .009, sag: .3, mat: wm }));
+
+// rain: streaks through the whole view, lit by the lamps
+film.addPrecip({ kind: 'rain', count: 26000, box: [V(-16, 0, -46), V(34, 22, 50)], speed: 9.5, speedVar: .3, size: .0035, wind: V(-.8, 0, .3), shutter: 1 / 26, ambient: col('#8a9ab8', .012), bright: .55, seed: 8 });
+
+// camera: low over the setts, a slow push with a breath of handheld; the tram creeps toward the bend
+film.onFrame((t, f) => {
+  const k = ease.inOut(t / f.dur);
+  placeTram(S0 + t * .9);
+  const cam = f.camera;
+  const shake = V(noise1(t * .7, 1), noise1(t * .6, 2), 0).multiplyScalar(.01);
+  cam.position.set(1.25 - k * .35, .42 + k * .05, -1.6 - k * 1.2).add(shake);
+  const nose = V(T.noseX, 1.6, 0).applyMatrix4(T.group.matrixWorld);
+  // pan gently with the tram's nose so it stays in the frame as it comes round the bend
+  cam.lookAt(-.6 + (nose.x - 1) * .7 + noise1(t * .5, 3) * .02, 3.6 + k * .1, -24);
+  f.dofCfg.focus = cam.position.distanceTo(nose);
+});
+film.start();
+</script>
+</body></html>
