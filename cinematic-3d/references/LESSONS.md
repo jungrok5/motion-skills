@@ -19,6 +19,13 @@
 - **The tram floated / its interior was a flat beige panel.** → A 0.5 m gap under the body showed bright fog; inner walls
   covered the whole window band. → Skirt down to 0.28 m; inner walls only below the sills; the nose is a capped loft with the
   sign *outside* the cap.
+- **Lit windows full of dots (worse on some buildings).** → The building seed reached the fragment shader as an
+  interpolated varying: 89 arrives as 89.00001, and the window hash amplifies that into a different on/off result per pixel
+  (big seeds are worse). → `flat varying` + `floor(seed + .5)` + `mod` to keep hash inputs small. Same trap for any per-object
+  id fed to a hash. (A `floor(N.z + 2.)` face id had the same problem: N.z = 0 ± noise.)
+- **Lanterns showed only their outline.** → A solid cage cylinder around the glowing glass. → Six thin bars and two rings.
+- **Slight blur looked noisy (dots in fine detail).** → The DOF gather spread its 64 samples over the maximum blur radius, so a
+  1–2 px blur used a handful. → Tile-max CoC (8×8 blocks, dilated 3×3) sets the gather radius per pixel.
 - **Window blinds turned into dot patterns.** → 9 slats per window alias at distance. → A blind pulled down to a random height.
 - **Lit office windows formed round blobs.** → Value-noise contours. → Whole floors on/off (`h12(row)`) mixed with a stretched
   cluster noise (`clusterScale` [.09, .55]).

@@ -116,10 +116,10 @@ export function facadeMaterial(o = {}) {
   m.userData.u = U;
   m.onBeforeCompile = sh => {
     Object.assign(sh.uniforms, U);
-    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWP; varying vec3 vWN; attribute float aSeed;\nvarying float vSeed;')
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWP; varying vec3 vWN; attribute float aSeed;\nflat varying float vSeed;')
       .replace('#include <project_vertex>', '#include <project_vertex>\nvWP = (modelMatrix * vec4(transformed, 1.)).xyz; vWN = normalize(mat3(modelMatrix) * objectNormal); vSeed = aSeed;');
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
-      varying vec3 vWP; varying vec3 vWN; varying float vSeed;
+      varying vec3 vWP; varying vec3 vWN; flat varying float vSeed;
       uniform vec2 fCell, fWin; uniform float fLit, fCool, fBase, fTop, fSeed, fCluster, fCurtain, fLedge, fShop, fBlinds, fTime, fFlicker;
       uniform vec3 fLitC, fLitC2, fGlass, fSkyLo, fSkyHi, fShopC, fMull, fSill; uniform vec2 fClS;
       ${GLSL.hash}
@@ -128,10 +128,12 @@ export function facadeMaterial(o = {}) {
       {
         vec3 N = normalize(vWN); fRoof = step(.5, abs(N.y)); fEmis = vec3(0.); fWinM = 0.;
         vec3 T = normalize(vec3(-N.z, 0., N.x) + 1e-5);
-        float faceId = floor(N.x * 1.5 + 2.) * 5. + floor(N.z * 1.5 + 2.);
+        // which face (per-face window seed). Round with a margin: floor(N + 2.) flips per pixel when N is 0 ± float noise
+        float faceId = floor(N.x + 1.5) * 5. + floor(N.z + 1.5);
         vec2 q = vec2(dot(vWP, T), vWP.y - fBase);
         fCellId = floor(q / fCell); fF = fract(q / fCell);
-        float seed = fSeed + vSeed * 17.31 + faceId * 3.7;
+        // the building seed is flat and rounded: an interpolated 89.00001 hashes to a different window every pixel
+        float seed = mod(fSeed + floor(vSeed + .5) * 17.31 + faceId * 3.7, 289.);
         float inRange = step(0., q.y) * step(vWP.y, fTop) * (1. - fRoof);
         vec2 hw = fWin * .5;
         vec2 dd = abs(fF - .5) - hw;
@@ -254,10 +256,15 @@ export function streetLamp(film, { x = 0, z = 0, h = 6, style = 'pole', color = 
   if (style === 'lantern') {
     const post = new THREE.Mesh(new THREE.CylinderGeometry(.06, .1, h, 8), pm); post.position.y = h / 2; g.add(post);
     const base = new THREE.Mesh(new THREE.CylinderGeometry(.16, .2, .6, 8), pm); base.position.y = .3; g.add(base);
-    const cage = new THREE.Mesh(new THREE.CylinderGeometry(.24, .14, .5, 6, 1, true), std('#202020', { roughness: .4, metalness: .5, side: THREE.DoubleSide, wireframe: false }));
-    cage.position.y = h + .25; g.add(cage);
+    // the cage is six thin iron bars and two rings: the glass glows between them (a solid cage hid the light)
+    const bars = [];
+    for (let k = 0; k < 6; k++) { const an = k / 6 * Math.PI * 2 + Math.PI / 6;
+      bars.push(Math.cos(an) * .145, h, Math.sin(an) * .145, Math.cos(an) * .245, h + .5, Math.sin(an) * .245, .012, .012); }
+    for (let k = 0; k < 6; k++) for (const [r, y] of [[.145, h], [.245, h + .5]]) { const a0 = (k / 6 + 1 / 12) * Math.PI * 2, a1 = ((k + 1) / 6 + 1 / 12) * Math.PI * 2;
+      bars.push(Math.cos(a0) * r, y, Math.sin(a0) * r, Math.cos(a1) * r, y, Math.sin(a1) * r, .015, .015); }
+    g.add(new THREE.Mesh(tubesGeometry(bars, 4), pm));
     const cap = new THREE.Mesh(new THREE.ConeGeometry(.3, .25, 6), pm); cap.position.y = h + .62; g.add(cap);
-    const lens = new THREE.Mesh(new THREE.CylinderGeometry(.2, .12, .44, 6), glow(color, bulb)); lens.position.y = h + .25; g.add(lens);
+    const lens = new THREE.Mesh(new THREE.CylinderGeometry(.235, .135, .48, 6), glow(color, bulb)); lens.position.y = h + .25; g.add(lens);
     head = V(x, h + .25, z);
   } else if (style === 'arm') {
     const post = new THREE.Mesh(new THREE.CylinderGeometry(.06, .09, h, 8), pm); post.position.y = h / 2; g.add(post);

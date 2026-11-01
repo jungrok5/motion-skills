@@ -258,16 +258,18 @@ const DOF_PREP = /* glsl */`
     gl_FragColor = vec4(c, coc(z) * .5);                       // half-res pixels
   }`;
 const DOF_GATHER = /* glsl */`
-  varying vec2 vUv; uniform sampler2D tIn; uniform vec2 texel; uniform float maxR, frame;
+  varying vec2 vUv; uniform sampler2D tIn, tTile; uniform vec2 texel; uniform float maxR, frame;
   ${GLSL.hash}
   void main(){
     vec4 C = texture2D(tIn, vUv); float cc = C.a;
+    // sample only as far as the largest blur nearby (tile max, dilated): small blurs get all 64 samples, not a handful
+    float R = clamp(texture2D(tTile, vUv).r + .5, 1., maxR);
     vec3 acc = vec3(0.); float ws = 0., nearW = 0.;
     float rot = h12(gl_FragCoord.xy + frame * 1.7) * 6.2831;
     const int N = 64;
     for (int i = 0; i < N; i++){
       float fi = float(i) + .5;
-      float r = sqrt(fi / float(N)) * maxR;
+      float r = sqrt(fi / float(N)) * R;
       float a = fi * 2.39996323 + rot;
       vec2 off = vec2(cos(a), sin(a)) * r;
       vec4 S = texture2D(tIn, vUv + off * texel);
@@ -283,6 +285,15 @@ const DOF_GATHER = /* glsl */`
     vec3 b = ws > 0. ? acc / ws : C.rgb;
     gl_FragColor = vec4(b, clamp(nearW / float(N) * 3., 0., 1.));
   }`;
+const DOF_TILE = /* glsl */`
+  uniform sampler2D tIn; uniform vec2 srcTexel;
+  void main(){ vec2 base = floor(gl_FragCoord.xy) * 8.; float m = 0.;
+    for (int y = 0; y < 8; y++) for (int x = 0; x < 8; x++) m = max(m, abs(texture2D(tIn, (base + vec2(x, y) + .5) * srcTexel).a));
+    gl_FragColor = vec4(m, 0., 0., 1.); }`;
+const DOF_DILATE = /* glsl */`
+  varying vec2 vUv; uniform sampler2D tIn; uniform vec2 texel;
+  void main(){ float m = 0.; for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) m = max(m, texture2D(tIn, vUv + vec2(x, y) * texel).r);
+    gl_FragColor = vec4(m, 0., 0., 1.); }`;
 const DOF_TENT = /* glsl */`
   varying vec2 vUv; uniform sampler2D tIn; uniform vec2 texel;
   void main(){ vec4 s = vec4(0.);
@@ -529,7 +540,11 @@ export class Film {
     const cocU = () => ({ near: { value: .1 }, far: { value: 1000 }, focus: { value: 10 }, aperture: { value: 10 }, maxCoc: { value: 30 }, cocScale: { value: this.scale } });
     this.dofA = rt(w / 2, h / 2); this.dofB = rt(w / 2, h / 2);
     this.prepPass = new FSPass(DOF_PREP, { tColor: { value: null }, tDepth: { value: null }, texel: { value: new THREE.Vector2(1 / w, 1 / h) }, ...cocU() });
-    this.gatherPass = new FSPass(DOF_GATHER, { tIn: { value: null }, texel: { value: new THREE.Vector2(2 / w, 2 / h) }, maxR: { value: 10 }, frame: { value: 0 } });
+    const tw = Math.ceil(w / 16), th = Math.ceil(h / 16), near = { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter };
+    this.tileA = rt(tw, th, near); this.tileB = rt(tw, th, near);
+    this.tilePass = new FSPass(DOF_TILE, { tIn: { value: null }, srcTexel: { value: new THREE.Vector2(2 / w, 2 / h) } });
+    this.dilatePass = new FSPass(DOF_DILATE, { tIn: { value: null }, texel: { value: new THREE.Vector2(1 / tw, 1 / th) } });
+    this.gatherPass = new FSPass(DOF_GATHER, { tIn: { value: null }, tTile: { value: this.tileB.texture }, texel: { value: new THREE.Vector2(2 / w, 2 / h) }, maxR: { value: 10 }, frame: { value: 0 } });
     this.tentPass = new FSPass(DOF_TENT, { tIn: { value: null }, texel: { value: new THREE.Vector2(2 / w, 2 / h) } });
     // precip target (additive light from drops/flakes)
     this.precipRT = rt(w, h);
@@ -712,6 +727,8 @@ export class Film {
     const F = this.finishPass.u;
     if (this.dofCfg) {
       const P = this.prepPass.u; P.tColor.value = this.atmosRT.texture; P.tDepth.value = depth; this._fillCoc(P, cam); this.prepPass.render(R, this.dofA);
+      this.tilePass.u.tIn.value = this.dofA.texture; this.tilePass.render(R, this.tileA);
+      this.dilatePass.u.tIn.value = this.tileA.texture; this.dilatePass.render(R, this.tileB);
       const G = this.gatherPass.u; G.tIn.value = this.dofA.texture; G.maxR.value = this.dofCfg.maxCoc * this.scale * .5; G.frame.value = this.frame; this.gatherPass.render(R, this.dofB);
       this.tentPass.u.tIn.value = this.dofB.texture; this.tentPass.render(R, this.dofA);
     }
