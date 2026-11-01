@@ -59,10 +59,10 @@ function spins(t) {
 }
 
 // ---------------------------------------------------------------- the riders
-const LOOK = {
-  haneul: { hairStyle: 'bob', hair: '#e9bf9f', clip: D.C.lemon, top: D.C.cream, topStyle: 'cardigan', sleeve: 'long', collar: '#ffffff', bottom: D.C.sage, shoe: '#c4a68e' },
-  choi: { hairStyle: 'spiky', hair: '#d9c09a', top: D.C.mint, topStyle: 'hoodie', sleeve: 'long', bottom: D.C.sand, shoe: '#e9e6ea' },
-  park: { hairStyle: 'messy', hair: '#aab3cf', top: D.C.sky, sleeve: 'rolled', collar: '#f4f8fc', tie: D.C.navy, bottom: D.C.grey, shoe: '#8a7270', glasses: true, ahoge: true },
+const LOOK = {   // the reference's colours: salmon pink is the key (하늘's hair and tights), lavender-grey, pale sage, warm greys
+  haneul: { hairStyle: 'bob', hair: '#eebab6', clip: D.C.lemon, top: '#fbf7f6', topStyle: 'cardigan', sleeve: 'long', collar: '#ffffff', bottom: D.C.key, shoe: '#b8a19a' },
+  choi: { hairStyle: 'spiky', hair: '#d8ccc0', top: D.C.sage, topStyle: 'hoodie', sleeve: 'long', bottom: D.C.warmLt, shoe: '#f4f2f2' },
+  park: { hairStyle: 'messy', hair: '#c3c7d8', top: '#f4f3f5', sleeve: 'rolled', collar: '#ffffff', tie: '#a08e94', bottom: D.C.lavender, shoe: '#9a8a88', glasses: true, ahoge: true },
 };
 const RIDER = { haneul: { hip: [38, -318], lean: .2, s: 1.08, seed: 3 }, choi: { hip: [-98, -320], lean: .36, s: 1.1, seed: 7 }, park: { hip: [-268, -318], lean: -.06, s: 1.12, seed: 11 } };
 const blink = (t, sd) => { const p = (t + sd * 1.37) % 3.7; return p < .12 ? Math.sin(p / .12 * Math.PI) : 0; };
@@ -147,11 +147,11 @@ function engulfLobes(t) {
 function titles(ctx, t) {
   const fadeT = 1 - ss(B.stop - .3, B.stop + .3, t);
   if (fadeT > 0) {
-    D.letter(ctx, W.title, 540, 268, { size: 80, k: clamp((t - B.title) / .9), alpha: fadeT, fill: D.C.butter, seed: 3, maxW: 940 });
+    D.letter(ctx, W.title, 540, 268, { size: 80, k: clamp((t - B.title) / .9), alpha: fadeT, fill: D.C.cream, seed: 3, maxW: 940 });
     const idx = t < B.two + .4 ? 0 : t < B.one + .4 ? 1 : 2, swap = idx === 0 ? -1 : idx === 1 ? B.two + .4 : B.one + .4;
     const pop = swap > 0 ? D.spring(clamp((t - swap) / .45)) : 1, sz = 150 + 14 * (idx === 2 ? 1 : 0);
     const g = D.letter(ctx, W.count[idx], 540, 448, { size: sz, k: idx === 0 ? clamp((t - B.title - .5) / .5) : 1, alpha: fadeT, seed: 11 + idx,
-      color: i => i === 0 ? D.ACCENT : i === 2 ? D.ACCENT : D.C.butter, scale: i => i === 0 ? pop : 1, shake: idx === 2 ? 2.5 : 0, lw: 4 });
+      color: i => i === 0 ? D.ACCENT : i === 2 ? D.ACCENT : D.C.cream, scale: i => i === 0 ? pop : 1, shake: idx === 2 ? 2.5 : 0, lw: 4 });
     // the old number gets struck out before it is replaced
     const strike = idx === 0 ? clamp((t - B.two) / .35) : idx === 1 ? clamp((t - B.one) / .35) : 0;
     if (strike > 0 && g.glyphs[0]) { const q = g.glyphs[0]; D.scribble(ctx, q.x + q.w / 2, q.y - sz * .36, q.w * .9, sz * .6, strike, { lw: 6, n: 5 }); }
@@ -160,7 +160,7 @@ function titles(ctx, t) {
   if (t > B.end) {
     const a = ss(B.end, B.end + .5, t);
     D.caption(ctx, W.kicker, 540, 250, a, { size: 40, color: D.C.inkSoft });
-    D.letter(ctx, W.close, 540, 390, { size: 104, k: clamp((t - B.end - .2) / .9), fill: D.C.pink, seed: 21, maxW: 940 });
+    D.letter(ctx, W.close, 540, 390, { size: 104, k: clamp((t - B.end - .2) / .9), fill: D.C.key, seed: 21, maxW: 940 });
   }
 }
 
@@ -224,7 +224,7 @@ function draw(ctx, t) {
   D.fade(ctx, t, S.DUR, .4, .4);
 }
 
-Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: D.FONTS, init: async () => D.init({ accent: '#ff6fa3' }), draw });
+Pilot.run({ W: Pilot.W, H: Pilot.H, dur: S.DUR, fonts: D.FONTS, init: async () => D.init(), draw });
 </script>
 </body>
 </html>

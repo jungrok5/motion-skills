@@ -6,7 +6,8 @@ Slug `sketchanime` · kit `kit.js` → vendored as `scenes/kit-sketchanime.js` �
 **Provenance:** an anime-studio promotional sketch illustration the owner shared (a countdown drawing: riders on an old
 motorbike kicking up a dust cloud, lettered 「…あと4日」). The feel is borrowed and the renderer is our own. No drawing,
 character, pose or text is copied: the cast, bike, street and words are original, and the line, wash, cloud and lettering
-are drawn by this kit's own code.
+are drawn by this kit's own code. The palette follows the reference's own colours (see Palette); the owner's note was that
+the pink is the key.
 
 ## What it looks like
 **Lots of white paper.** A thin, confident **pencil/brush line** in dark grey-brown (`#3b302e`, never pure black) with
@@ -19,11 +20,11 @@ the other. They carry **stroke texture** (diagonal marker streaks), a soft **pap
 faint pooled edge, and here and there a **streak of bare paper** (hair, tanks, trousers). Shading is minimal: **one flat
 shadow tone** per colour (cooled toward lavender) and a **grey ink wash** on machines. **Chrome is white paper with
 broken black reflection bands**, and metal is **drawn tighter**: spokes, coil springs, fins. **Dust and clouds are big
-soft cumulus**: a pale pink-beige wash, a lighter top, shading under each puff, an outline only on the outer edge, and
+soft cumulus**: a pink-cream wash with salmon-pink shadow lobes, a lighter top, shading under each puff, an outline only on the outer edge, and
 the tops of the front puffs inked inside the mass. **Speed is a few loose pencil hairlines**, not manga wedges.
-**Titles are hand-lettered**: rounded Jua glyphs, each tilted and bobbed a little, a pastel fill printed off the line,
-and a darker outline drawn twice (once thinner and offset). **One accent** (`ACCENT`, coral by default; the sample uses
-the donut pink) belongs to the subject and to the number that matters.
+**Titles are hand-lettered**: rounded Jua glyphs, each tilted and bobbed a little, a peach-cream fill printed off the line,
+and a rose-brown outline drawn twice (once thinner and offset). **One accent** (`ACCENT`, a red) belongs only to the number
+that matters or the subject; the **key pink** is what the picture is made of.
 
 **Carries well:** light comedy and slice-of-life, motion and speed (riding, running, wind), a countdown or promotional
 beat ("D-3"), expressive acting (laughing, panicking, smug), vehicles and gadgets, outdoor air (dust, clouds, breeze),
@@ -32,22 +33,26 @@ a title that should feel hand-made and warm.
 pencil underdrawing), long reading (words are lettered titles, ≤ 2 lines), close-up realism of faces or hands, crowds
 (each figure costs ~3–5 ms), anything that needs a second strong colour.
 
-## Palette (`SketchAnime.C`, `SketchAnime.ACCENT`)
-| token | hex | use |
+## Palette (`SketchAnime.PAL` → `SketchAnime.C`, `SketchAnime.ACCENT`)
+Taken from the reference by area (quantised to 24 colours): about 55 % pure white paper, then warm pink-whites (the dust
+body, a paper tint), and ONE key colour, a **soft salmon pink**. It goes on the hair and tights, the dust's shadow lobes
+and the cheeks; **pink is what makes the look**. Around it sit lavender-grey, pale sage/teal-grey and warm greys.
+Rose-brown carries the shading and the lines on pink, peach-cream fills the lettering, and a stronger red marks only the
+number that matters. Washes are thin (`wash` a = .8, paper-light .45), so the paper keeps showing.
+| `PAL` | hex | use |
 |---|---|---|
-| `paper` | `#fdfbf7` | the ground, and the knock-out under every opaque shape |
-| `ink` / `inkSoft` / `pencil` | `#3b302e` / `#75655f` / `#8a7f7c` | the line; small type; light pencil |
-| `skin` / `skinSh` / `blush` | `#fbe2d2` / `#f0c2ac` / `#f29d98` | skin, its shadow tone, hatched blush |
-| `pink` `rose` `salmon` `peach` | `#f4b8bd` `#eea3a8` `#f2a594` `#f8cfa9` | hair, clothes, awnings |
-| `butter` `lemon` | `#f6d88f` `#f4e08a` | lettering fill, clips, signals |
-| `sage` `mint` `teal` | `#b8ccb2` `#bcdcca` `#a9cbc9` | clothes, the tank |
-| `sky` `blue` `lavender` `lilac` | `#bcd3e8` `#a9b8da` `#bfbcd8` `#d2c3e0` | shirts, trousers, windows, sweat drops |
-| `grey` `slate` `steel` `sand` `cream` `brown` `navy` | … | trousers, metal wash (`steel`), chinos, cardigans, shoes, a tie |
-| `chrome` / `rubber` | `#f7f7f8` / `#3d3536` | chrome bodies (with ink reflections), tyres and grips |
-| `dust` / `dustSh` | `#f3e4dc` / `#e8d3ca` | dust clouds and their shading (sky clouds: pass `col`/`sh` in pale blue) |
-| `ACCENT` | `#ef5a50` | THE subject (`init({ accent })`); nothing else is that hue |
-`tone(c, k)`: k > 0 lightens toward paper, k < 0 darkens toward a cool lavender (`shadeOf(c)` = `tone(c, −.26)`, the
-one shadow tone).
+| `paper` / `tint` | `#ffffff` / `#faf4f4` | the ground and every knock-out / a warm pink-white |
+| `ink` | `#403f3f` | the line, bike metal |
+| `rose` | `#806e6d` | shading direction (`tone(c, k<0)` goes toward it), lettering outlines, lines on pink |
+| `key` / `keyDk` / `keyLt` | `#f0c6c3` / `#e2a9a6` / `#f8e2df` | **the key colour**: hair, tights, sign, glaze / a deeper pink / a pale pink |
+| `lavender` | `#cfd2dd` | trousers, grey-blue hair, a tank |
+| `sage` | `#d2dedf` | a shirt or hoodie (pale sage / teal-grey) |
+| `warm` / `warmLt` / `grey` | `#b4aca8` / `#ded5d3` / `#949493` | warm greys: chinos, shoes, metal wash |
+| `cream` | `#fde2bb` | lettering fill (with a `rose` outline), small lamps |
+| `dust` / `dustSh` | `#faf0ec` / `#f0c6c3` | dust and clouds: pink-cream body, salmon shadow lobes |
+| `accent` (= `ACCENT`) | `#e8524c` | THE number / the subject only (`init({ accent })`) |
+`C` keeps the extra working names (`skin`, `blush`, `mouth`, `tongue`, `lemon` for a clip, `sky`, `mint`, `chrome`,
+`rubber`, `steel`, …) in the same light family. `shadeOf(c)` = `tone(c, −.26)` is the one shadow tone.
 
 ## Fonts and words
 `Jua` for lettered titles (`HAND`), `Gaegu` for small handwritten lines (`PEN`; map the family to `Gaegu-Bold.ttf` in
@@ -84,10 +89,10 @@ const S = window.SCRIPT, D = SketchAnime, GROUND = 1420;
 function draw(ctx, t) {
   D.begin(ctx, t);                                   // paper + the boil frame for this t
   ctx.save(); D.cam(ctx, 1.05, 540, 1300);
-  D.cloud(ctx, 760 - t * 9, 600, 230, 120, t, { col: '#eef2f7', sh: '#d8e1ec', front: 1 });
+  D.cloud(ctx, 760 - t * 9, 600, 230, 120, t, { front: 1 });   // pink-cream with salmon shadow lobes
   D.ink(ctx, [[-60, GROUND], [1140, GROUND]], { lw: 2, heavy: null, over: 0 });
   const G = D.pose({ x: 480, y: D.standY(GROUND, 1.4), s: 1.4, dir: 1, ground: GROUND, t, wind: .4, seed: 3,
-    look: { hairStyle: 'bob', hair: '#c9a58e', top: D.C.cream, topStyle: 'cardigan', sleeve: 'long', bottom: D.C.sage },
+    look: { hairStyle: 'bob', hair: D.C.key, top: '#fbf7f6', topStyle: 'cardigan', sleeve: 'long', bottom: D.C.lavender },
     face: { eyes: 'laugh', mouth: 'laugh' }, hands: [{ at: [600, 1080], ang: -1, kind: 'open' }, null] });
   D.figure(ctx, G);
   ctx.restore(); D.finish(ctx);
@@ -158,8 +163,10 @@ hands, so the elbows go out behind the head. The default sends the near elbow fo
 - **Stroke-seed drift:** strokes are seeded by draw order (`frame()` resets the counter). A stroke that appears
   conditionally re-seeds everything drawn after it on that frame (a one-frame jump in the boil). Pass `seed` to
   strokes that matter, or draw conditional things last.
-- **Busy backgrounds kill it:** the reference has none. Draw streets at ~40 % alpha in pencil and a few washes, and
-  keep the subject and the dust the only full-strength things.
+- **Busy backgrounds kill it:** the reference's ground is white paper. Draw streets as sparse pencil lines at ~30 %
+  alpha with no washes (the sample draws every other shopfront), and keep the subject and the dust the only coloured things.
+- **Pink is the key:** a frame without the salmon pink reads as a different style. Put it on the lead's hair or clothes
+  and in the dust shadow, keep everything else pale (lavender, sage, warm grey), and save the red for one number.
 - **Wash colours are textures:** `pattern(c)` builds a 256-px tile per distinct colour string, so don't make colours
   per frame (`rgba` with a moving alpha). Fade with `globalAlpha` instead.
 - **Fonts:** Gaegu Regular is hairline-thin at caption sizes. Map the `Gaegu` family to `Gaegu-Bold.ttf` in film.json.

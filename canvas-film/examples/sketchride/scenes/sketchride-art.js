@@ -13,7 +13,7 @@
   R.RACK = { x0: -338, x1: -222, y: -298 };    // the carrier rack behind it
   R.PEG = [[64, -146], [-128, -140], [-214, -150]];   // footpegs: driver, passenger, rack rider
   R.FRAME = '#6a6064';                         // the frame's paint (dark, inked)
-  R.TANK = '#a9cdc9';                          // pastel teal tank
+  R.TANK = '#dcdfe8';                          // a pale lavender-grey tank (white with reflections, as drawn)
 
   // ---------------- the motorbike ----------------
   // bike(ctx, o): o = { spinF, spinR (wheel angles), blur (0..1 spokes melt), fork (px compressed), shock (px), lamp (0..1),
@@ -133,57 +133,41 @@
     const pkF = .35, camF = cam * pkF;
     for (let k = Math.floor((camF - 1500) / 300); k <= Math.floor((camF + 1500) / 300); k++) {
       const r = Pilot.rng(k * 7919 + 13), x = k * 300 - camF + 540, h = 120 + 150 * r(), w = 220 + 60 * r();
-      D.ink(ctx, [[x, CB - 560], [x, CB - 560 - h], [x + w, CB - 560 - h], [x + w, CB - 560]], { lw: 1.1, a: .28, heavy: null, over: 4 });
-      if (r() < .5) D.ink(ctx, [[x + w * .3, CB - 560 - h], [x + w * .3, CB - 560 - h - 40], [x + w * .45, CB - 560 - h - 40]], { lw: 1, a: .25, heavy: null, over: 2 });
+      D.ink(ctx, [[x, CB - 560], [x, CB - 560 - h], [x + w, CB - 560 - h], [x + w, CB - 560]], { lw: 1, a: .14, heavy: null, over: 4 });
+      
     }
     // sidewalk + curb (road level, parallax 1)
     D.ink(ctx, [[-900, CB], [1980, CB]], { lw: 1.6, heavy: null, over: 0, a: .8 });
     D.ink(ctx, [[-900, CB + 14], [1980, CB + 14]], { lw: 1.1, heavy: null, over: 0, a: .6 });
-    for (let k = Math.floor((cam - 1500) / 120); k <= Math.floor((cam + 1500) / 120); k++) { const x = k * 120 - cam + 540; D.ink(ctx, [[x, CB - 60], [x - 14, CB]], { lw: .9, heavy: null, a: .35, over: 0 }); }
+    for (let k = Math.floor((cam - 1500) / 120); k <= Math.floor((cam + 1500) / 120); k++) { const x = k * 120 - cam + 540; if (k % 3 === 0) D.ink(ctx, [[x, CB - 60], [x - 14, CB]], { lw: .9, heavy: null, a: .25, over: 0 }); }
     // shopfronts (parallax .92)
     const pk = .92, cm = cam * pk;
     for (let k = Math.floor((cm - 1500) / SEG); k <= Math.floor((cm + 1500) / SEG); k++) {
       const x = k * SEG - cm + 540, wx0 = k * SEG / pk, wx1 = (k + 1) * SEG / pk;
       if (o.skip && wx1 > o.skip[0] && wx0 < o.skip[1]) continue;
-      ctx.save(); ctx.globalAlpha = .42; shopfront(ctx, x, CB - 62, SEG, k, t); ctx.restore();
+      if (k % 2 === 0) { ctx.save(); ctx.globalAlpha = .3; shopfront(ctx, x, CB - 62, SEG, k, t); ctx.restore(); }
     }
     // telephone poles and sagging wires (parallax .97)
     const pp = .97, cp = cam * pp, PS = 760;
     const poles = []; for (let k = Math.floor((cp - 1700) / PS); k <= Math.floor((cp + 1700) / PS); k++) poles.push(k * PS - cp + 540 + 120);
-    for (const x of poles) { D.tube(ctx, [[x, CB - 20], [x - 4, CB - 900]], [16, 12], '#d9d2c8', { line: { lw: 1.6 }, wash: { light: .3 } });
-      D.ink(ctx, [[x - 60, CB - 850], [x + 50, CB - 856]], { lw: 2, heavy: null }); D.ink(ctx, [[x - 44, CB - 800], [x + 36, CB - 804]], { lw: 1.6, heavy: null }); }
+    for (const x of poles) { ctx.save(); ctx.globalAlpha = .45; D.tube(ctx, [[x, CB - 20], [x - 4, CB - 900]], [14, 10], null, { line: { lw: 1.3 }, knock: false }); ctx.restore();
+      D.ink(ctx, [[x - 60, CB - 850], [x + 50, CB - 856]], { lw: 1.6, heavy: null, a: .45 }); D.ink(ctx, [[x - 44, CB - 800], [x + 36, CB - 804]], { lw: 1.3, heavy: null, a: .45 }); }
     for (let i = 0; i < poles.length - 1; i++) for (const [dy, sag] of [[-850, 60], [-800, 46]]) {
       const a = [poles[i] + 40, CB + dy], b = [poles[i + 1] - 50, CB + dy], m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 + sag];
-      D.ink(ctx, [a, m, b], { lw: 1.1, heavy: null, a: .6, smooth: true, over: 0 }); }
+      D.ink(ctx, [a, m, b], { lw: 1, heavy: null, a: .3, smooth: true, over: 0 }); }
     // road: the near edge and lane dashes (parallax 1.0)
     D.ink(ctx, [[-900, G + 150], [1980, G + 150]], { lw: 1.4, heavy: null, a: .5, over: 0 });
     for (let k = Math.floor((cam - 1500) / 260); k <= Math.floor((cam + 1500) / 260); k++) { const x = k * 260 - cam + 540;
-      const dp = P().m(x, G + 196).l(x + 120, G + 196).l(x + 116, G + 206).l(x - 4, G + 206).z(); D.shape(ctx, dp, C.cream, { line: { lw: 1.2, a: .6 } }); }
+      D.ink(ctx, [[x, G + 200], [x + 110, G + 200]], { lw: 1.6, heavy: null, a: .35, over: 0 }); }
   };
-  const AWN = [C.pink, C.sky, C.sage, C.butter, C.lilac, C.peach];
+  // a shopfront as a faint pencil underdrawing: no washes, a few lines (the reference's ground is white paper)
   function shopfront(ctx, x, base, w, k, t) {
-    const r = Pilot.rng(k * 104729 + 7), h = 430 + 120 * r(), top = base - h, aw = AWN[Math.floor(r() * AWN.length)];
-    D.ink(ctx, [[x + 4, base], [x + 4, top]], { lw: 1.5, heavy: null, over: 6, a: .75 });
-    D.ink(ctx, [[x - 10, top], [x + w + 6, top]], { lw: 1.3, heavy: null, over: 6, a: .6 });
-    // upper windows
-    if (r() < .55) for (let i = 0; i < 2; i++) { const wx = x + 50 + i * (w * .45), wy = top + 40, ww = w * .3, wh = 90;
-      const wp = P().m(wx, wy).l(wx + ww, wy).l(wx + ww, wy + wh).l(wx, wy + wh).z(); D.wash(ctx, wp, C.sky, { a: .35, knock: false, edge: 0 }); D.ink(ctx, wp, { lw: 1.2, heavy: null, a: .6, loop: .95 }); }
-    // signboard with a scribble in place of words
-    const sy = base - 300, sb = P().m(x + 30, sy).l(x + w - 30, sy).l(x + w - 30, sy + 56).l(x + 30, sy + 56).z();
-    D.shape(ctx, sb, r() < .5 ? C.cream : '#f4f0ea', { wash: { a: .7 }, line: { lw: 1.4, a: .7 } });
-    const sq = []; for (let i = 0; i < 7; i++) sq.push([x + 70 + i * (w - 140) / 6, sy + 28 + (i % 2 ? -8 : 8) * r()]); D.ink(ctx, sq, { lw: 2, heavy: null, a: .45, smooth: true });
-    // awning: scalloped, striped
-    const ay = base - 230, ap = P().m(x + 16, ay).l(x + w - 16, ay).l(x + w + 6, ay + 60);
-    for (let i = 6; i >= 0; i--) { const sx = x + 6 + (w) * i / 6; ap.q(sx + w / 12, ay + 78, sx, ay + 60); }
-    ap.z(); D.shape(ctx, ap, aw, { wash: { a: .6, light: .5, gaps: 1 }, line: { lw: 1.4, a: .8 } });
-    for (let i = 1; i < 6; i += 2) { const sx = x + 16 + (w - 32) * i / 6; D.ink(ctx, [[sx, ay + 2], [sx + 10, ay + 60]], { lw: 1, heavy: null, a: .5 }); }
-    // the window / door below
-    const wp = P().m(x + 34, ay + 96).l(x + w - 34, ay + 96).l(x + w - 34, base).l(x + 34, base).z();
-    D.wash(ctx, wp, C.sky, { a: .25, knock: false, edge: 0 }); D.ink(ctx, wp, { lw: 1.2, heavy: null, a: .55, loop: .95 });
-    D.ink(ctx, [[x + w * .55, ay + 96], [x + w * .55, base]], { lw: 1, heavy: null, a: .5 });
-    D.ink(ctx, [[x + 60, ay + 130], [x + 110, ay + 180]], { lw: 2.5, col: C.paper, heavy: null, a: .8 });
+    const r = Pilot.rng(k * 104729 + 7), h = 430 + 120 * r(), top = base - h, o = { lw: 1.3, heavy: null, over: 6, a: .8 };
+    D.ink(ctx, [[x + 4, base], [x + 4, top]], o); D.ink(ctx, [[x - 10, top], [x + w * (.5 + .4 * r()), top]], o);
+    const ay = base - 230, ap = []; for (let i = 0; i <= 6; i++) ap.push([x + 16 + (w - 32) * i / 6, ay + (i % 2 ? 22 : 12)]);
+    D.ink(ctx, [[x + 16, ay - 30], [x + w - 16, ay - 30]], o); D.ink(ctx, ap, { ...o, smooth: true });
+    if (r() < .6) D.ink(ctx, [[x + 40, ay + 70], [x + 40, base], [x + w * .6, base]], { ...o, a: .6 });
   }
-
   // donutShop(ctx, x, base, k, t, o): the destination — a cream shopfront with a pink-striped awning, the sign 「도넛」
   //  lettered in the accent with a donut, and a rolling shutter that comes down (k: 0 open → 1 shut) carrying a taped
   //  paper sign 「품절」 (o.sold: its alpha). x = the shop's centre (screen), base = its floor row.
@@ -191,21 +175,21 @@
   R.donutShop = function (ctx, x, base, k, t, o = {}) {
     const w = R.SHOP_W, x0 = x - w / 2, top = base - 640;
     const fac = P().m(x0, base).l(x0, top).l(x0 + w, top).l(x0 + w, base).z();
-    D.shape(ctx, fac, '#f7efe6', { wash: { a: .8, light: .3 }, line: { lw: 2 } });
+    D.shape(ctx, fac, C.tint, { wash: { a: .7, light: .4 }, line: { lw: 2 } });
     D.ink(ctx, [[x0 - 16, top], [x0 + w + 16, top]], { lw: 2.4, heavy: null, over: 4 });
     // sign
     const sy = top + 70, sb = P().m(x0 + 50, sy).l(x0 + w - 50, sy).q(x0 + w - 40, sy + 60, x0 + w - 50, sy + 120).l(x0 + 50, sy + 120).q(x0 + 40, sy + 60, x0 + 50, sy).z();
-    D.shape(ctx, sb, C.cream, { wash: { light: .5 }, line: { lw: 2.2 } });
-    D.letter(ctx, '도넛', x + 40, sy + 92, { size: 84, fill: D.ACCENT, seed: 41, ls: 10 });
+    D.shape(ctx, sb, C.keyLt, { wash: { light: .5 }, line: { lw: 2.2 } });
+    D.letter(ctx, '도넛', x + 40, sy + 92, { size: 84, fill: C.keyDk, ink: C.rose, seed: 41, ls: 10 });
     donut(ctx, x - 140, sy + 60, 38, t);
     // awning
     const ay = top + 230, ap = P().m(x0 + 10, ay).l(x0 + w - 10, ay).l(x0 + w + 20, ay + 80);
     for (let i = 8; i >= 0; i--) { const sx = x0 - 10 + (w + 30) * i / 8; ap.q(sx + (w + 30) / 16, ay + 104, sx, ay + 80); }
     ap.z(); D.shape(ctx, ap, C.pink, { wash: { light: .4, gaps: 2 }, line: { lw: 2 } });
-    for (let i = 1; i < 8; i += 2) { const sx = x0 + 10 + (w - 20) * i / 8; ctx.save(); ctx.clip(ap.path()); D.wash(ctx, P().m(sx - 22, ay).l(sx + 22, ay).l(sx + 30, ay + 110).l(sx - 18, ay + 110).z(), '#fdf4f0', { knock: false, edge: 0 }); ctx.restore(); }
+    for (let i = 1; i < 8; i += 2) { const sx = x0 + 10 + (w - 20) * i / 8; ctx.save(); ctx.clip(ap.path()); D.wash(ctx, P().m(sx - 22, ay).l(sx + 22, ay).l(sx + 30, ay + 110).l(sx - 18, ay + 110).z(), '#ffffff', { knock: false, edge: 0, a: .9 }); ctx.restore(); }
     // window + door behind the shutter
     const wy = ay + 130, wb = base, win = P().m(x0 + 40, wy).l(x0 + w - 40, wy).l(x0 + w - 40, wb).l(x0 + 40, wb).z();
-    D.shape(ctx, win, C.sky, { wash: { a: .45, light: .5 }, line: { lw: 1.8 } });
+    D.shape(ctx, win, C.sky, { wash: { a: .35, light: .6 }, line: { lw: 1.8 } });
     for (let i = 0; i < 3; i++) donut(ctx, x0 + 120 + i * 120, wy + 150, 26, t + i);   // donuts on display (until the shutter hides them)
     D.ink(ctx, [[x0 + 60, wy + 190], [x0 + w - 60, wy + 190]], { lw: 1.6, heavy: null });
     // the rolling shutter: grey-washed slats coming down
@@ -236,7 +220,7 @@
   function donut(ctx, x, y, r, t) {
     const o = P().ell(x, y, r, r * .62); D.shape(ctx, o, C.sand, { wash: { light: .3 }, line: { lw: 1.8 } });
     const g = P().m(x - r * .92, y - r * .05).q(x - r * .9, y - r * .6, x, y - r * .62).q(x + r * .9, y - r * .6, x + r * .92, y - r * .05).q(x + r * .7, y + r * .32, x + r * .4, y + r * .12).q(x, y + r * .4, x - r * .4, y + r * .12).q(x - r * .7, y + r * .32, x - r * .92, y - r * .05).z();
-    D.shape(ctx, g, D.ACCENT, { wash: { light: .45, mis: .4 }, line: { lw: 1.6 } });
+    D.shape(ctx, g, C.keyDk, { wash: { light: .45, mis: .4 }, line: { lw: 1.6 } });
     D.shape(ctx, P().ell(x, y - r * .1, r * .3, r * .14), null, { line: { lw: 1.5 } });
     const sc = [C.lemon, C.sky, C.mint, C.paper]; for (let i = 0; i < 7; i++) { const a = i * 2.3, rr = r * (.5 + .2 * (i % 2)); D.ink(ctx, [[x + Math.cos(a) * rr, y - r * .1 + Math.sin(a) * rr * .45], [x + Math.cos(a) * rr + 5, y - r * .1 + Math.sin(a) * rr * .45 - 3]], { lw: 3, col: sc[i % 4], heavy: null, over: 0, a: 1 }); }
   }
@@ -252,17 +236,17 @@
     // lid (behind when open): hinged at the top-back corner (-w/2, -h/2) — back = +x on screen here (the box faces left with the riders)
     const hx = w / 2, hy = -h / 2;
     ctx.save(); ctx.translate(hx, hy); ctx.rotate(lid);
-    const lp = P().m(0, 0).l(-w, 0).l(-w + 10, -26).l(8, -26).z(); D.shape(ctx, lp, '#fbf3ea', { wash: { light: .4 }, line: { lw: 1.8 } });
+    const lp = P().m(0, 0).l(-w, 0).l(-w + 10, -26).l(8, -26).z(); D.shape(ctx, lp, '#fdf7f3', { wash: { light: .4 }, line: { lw: 1.8 } });
     D.shape(ctx, P().m(0, 0).l(-w, 0).l(-w + 2, 7).l(2, 7).z(), C.cream, { line: { lw: 1.4 } });
     D.ink(ctx, [[-w + 20, -14], [-24, -14]], { lw: 1, heavy: null, a: .5 });
     ctx.restore();
     // body: the open top shows the empty pale inside
     const bp = P().m(-w / 2, -h / 2).l(w / 2, -h / 2).l(w / 2 - 4, h / 2).l(-w / 2 + 4, h / 2).z();
-    D.shape(ctx, bp, '#fbf3ea', { wash: { light: .35 }, line: { lw: 2 } });
+    D.shape(ctx, bp, '#fdf7f3', { wash: { light: .35 }, line: { lw: 2 } });
     D.shape(ctx, P().m(-w / 2 + 6, -h / 2).l(w / 2 - 6, -h / 2).l(w / 2 - 10, -h / 2 + 8).l(-w / 2 + 10, -h / 2 + 8).z(), '#efe2d3', { line: { lw: 1.1 } });
     // the logo: a pink donut ring on the side
-    D.shape(ctx, P().ell(-6, 3, 15, 10), D.ACCENT, { wash: { light: .3 }, line: { lw: 1.4 } }); D.shape(ctx, P().ell(-6, 2, 5, 3), C.paper, { line: { lw: 1.1 } });
-    D.ink(ctx, [[18, -2], [56, -2]], { lw: 2.2, heavy: null, col: D.ACCENT, a: .8 }); D.ink(ctx, [[18, 7], [46, 7]], { lw: 1.6, heavy: null, col: D.ACCENT, a: .6 });
+    D.shape(ctx, P().ell(-6, 3, 15, 10), C.keyDk, { wash: { light: .3 }, line: { lw: 1.4 } }); D.shape(ctx, P().ell(-6, 2, 5, 3), C.paper, { line: { lw: 1.1 } });
+    D.ink(ctx, [[18, -2], [56, -2]], { lw: 2.2, heavy: null, col: C.keyDk, a: .9 }); D.ink(ctx, [[18, 7], [46, 7]], { lw: 1.6, heavy: null, col: C.keyDk, a: .7 });
     ctx.restore();
     const cs = Math.cos(ang), sn = Math.sin(ang), at = (x, y) => [c[0] + x * cs - y * sn, c[1] + x * sn + y * cs];
     return { near: at(-w / 2 + 34, h / 2 + 2), far: at(w / 2 - 30, h / 2 - 2) };

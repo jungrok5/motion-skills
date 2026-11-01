@@ -18,18 +18,27 @@
   const TAU = Math.PI * 2;
 
   // ---------------- palette & type ----------------
-  // White paper, grey-brown ink, soft pastel washes. ONE saturated accent (K.ACCENT) — a coral red, like a countdown
-  // number lettered in red among pastel letters; nothing else is that hue.
-  K.C = {
-    paper: '#fdfbf7', ink: '#3b302e', inkSoft: '#75655f', pencil: '#8a7f7c',
-    skin: '#fbe2d2', skinSh: '#f0c2ac', blush: '#f29d98', lip: '#c9606a', mouth: '#8f4650', tongue: '#f2a0a4',
-    pink: '#f4b8bd', rose: '#eea3a8', salmon: '#f2a594', peach: '#f8cfa9', butter: '#f6d88f', lemon: '#f4e08a',
-    sage: '#b8ccb2', mint: '#bcdcca', teal: '#a9cbc9', sky: '#bcd3e8', blue: '#a9b8da', lavender: '#bfbcd8',
-    lilac: '#d2c3e0', grey: '#b9b6bf', slate: '#8f93a8', sand: '#e6d2b0', cream: '#f5ead6', brown: '#c4a68e',
-    navy: '#7d87ad', chrome: '#f7f7f8', steel: '#9c9aa3', rubber: '#3d3536',
-    dust: '#f3e4dc', dustSh: '#e8d3ca', shadow: '#6e6584',
+  // The reference's own colours (quantised by area): almost all white paper; ONE key colour — a soft salmon pink (hair,
+  // tights, the shadow lobes of the dust, cheeks) — with lavender-grey, pale sage/teal-grey and warm greys around it;
+  // rose-brown for shading and the lines on pink; peach-cream lettering; a stronger red only on THE number (ACCENT).
+  K.PAL = {
+    paper: '#ffffff', tint: '#faf4f4', ink: '#403f3f', rose: '#806e6d',
+    key: '#f0c6c3', keyDk: '#e2a9a6', keyLt: '#f8e2df',
+    lavender: '#cfd2dd', sage: '#d2dedf', warm: '#b4aca8', warmLt: '#ded5d3', grey: '#949493',
+    cream: '#fde2bb', dust: '#faf0ec', dustSh: '#f0c6c3', accent: '#e8524c',
   };
-  K.ACCENT = '#ef5a50';
+  const PL = K.PAL;
+  K.C = {
+    paper: PL.paper, ink: PL.ink, inkSoft: '#6f6464', pencil: '#a29a98', rose: PL.rose,
+    key: PL.key, keyDk: PL.keyDk, keyLt: PL.keyLt, tint: PL.tint,
+    skin: '#fdeee4', skinSh: '#f3d2c8', blush: '#f0a6a2', lip: '#c9706f', mouth: '#9a5458', tongue: '#f2a9ab',
+    pink: PL.key, salmon: '#efb3a8', peach: '#fbe0cc', butter: PL.cream, cream: PL.cream, lemon: '#f6e39a',
+    sage: PL.sage, mint: '#d6e6dc', teal: '#c9dcdc', sky: '#d9e4ef', blue: '#c6cde0', lavender: PL.lavender,
+    lilac: '#dcd3e3', grey: PL.warmLt, warm: PL.warm, warmLt: PL.warmLt, slate: PL.grey, sand: '#eae0d2', brown: '#b8a19a',
+    navy: '#9a96ab', chrome: '#fbfbfb', steel: '#a9a8aa', rubber: '#4a4646',
+    dust: PL.dust, dustSh: PL.dustSh, shadow: PL.rose,
+  };
+  K.ACCENT = PL.accent;
   K.HAND = "'Jua',sans-serif";               // the hand-lettered titles (rounded, chunky)
   K.PEN = "'Gaegu',sans-serif";              // small handwritten words
   K.SANS = "'Noto Sans KR',sans-serif";      // end-card small lines
@@ -39,10 +48,10 @@
   // ---------------- colour ----------------
   const hexA = c => c[0] === '#' ? Pilot.hex(c) : c.match(/[\d.]+/g).slice(0, 3).map(Number);
   const TONE = new Map();
-  // tone(c, k): k > 0 lightens toward paper; k < 0 darkens toward the cool lavender shadow (anime shadow tone, never grey-black).
+  // tone(c, k): k > 0 lightens toward paper; k < 0 darkens toward a rose-brown (the reference's shading on pink; never grey-black).
   K.tone = function (c, k) {
     const key = c + '|' + k; let v = TONE.get(key); if (v) return v;
-    const a = hexA(c), b = k > 0 ? [253, 251, 247] : [96, 84, 118];
+    const a = hexA(c), b = k > 0 ? [255, 255, 255] : [128, 104, 110];
     v = Pilot.rgb(Pilot.mix(a, b, Math.min(1, Math.abs(k)))); TONE.set(key, v); return v;
   };
   // shadeOf(c): the one flat shadow tone of a wash colour.
@@ -165,8 +174,8 @@
     bx.fillStyle = Pilot.rgb(base, .9); bx.fillRect(0, 0, T * 3, T * 3);
     const streak = (x, y, w, len, ang, style) => { for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) {
       bx.save(); bx.translate(T + x + i * T, T + y + j * T); bx.rotate(ang); bx.fillStyle = style; bx.beginPath(); bx.ellipse(0, 0, len / 2, w / 2, 0, 0, TAU); bx.fill(); bx.restore(); } };
-    for (let k = 0; k < 14; k++) streak(r() * T, r() * T, 18 + 30 * r(), 160 + 220 * r(), -.55 + .2 * r(), Pilot.rgb(Pilot.mix(base, [96, 84, 118], .06), .06 + .08 * r()));
-    for (let k = 0; k < 7; k++) streak(r() * T, r() * T, 8 + 14 * r(), 110 + 160 * r(), -.55 + .2 * r(), `rgba(253,251,247,${.08 + .12 * r()})`);
+    for (let k = 0; k < 14; k++) streak(r() * T, r() * T, 18 + 30 * r(), 160 + 220 * r(), -.55 + .2 * r(), Pilot.rgb(Pilot.mix(base, [128, 104, 110], .06), .05 + .07 * r()));
+    for (let k = 0; k < 7; k++) streak(r() * T, r() * T, 8 + 14 * r(), 110 + 160 * r(), -.55 + .2 * r(), `rgba(255,255,255,${.08 + .12 * r()})`);
     for (let k = 0; k < 5; k++) streak(r() * T, r() * T, 30 + 40 * r(), 160 + 160 * r(), -.55 + .3 * r(), Pilot.rgb(base, .18 + .1 * r()));
     const c = canvas(T, T), x = c.getContext('2d'); x.filter = 'blur(3px)'; x.drawImage(big, -T, -T); x.filter = 'none';
     if (!patCtx) patCtx = canvas(2, 2).getContext('2d');
@@ -184,13 +193,13 @@
     const off = o.off || [(h1(seed) - .5) * 6.5 * mis, (h1(seed + 1) - .5) * 5 * mis];
     ctx.save(); ctx.translate(off[0], off[1]);
     const p = pattern(col); p.setTransform(new DOMMatrix([1, 0, 0, 1, h1(seed + 2) * 256, h1(seed + 3) * 256]));
-    ctx.globalAlpha *= (o.a ?? .9); ctx.fillStyle = p; ctx.fill(path);
-    const lt = o.light ?? .35;
+    ctx.globalAlpha *= (o.a ?? .8); ctx.fillStyle = p; ctx.fill(path);
+    const lt = o.light ?? .45;
     if (lt > 0 || (o.edge ?? .22) > 0 || o.gaps) {
       ctx.clip(path);
       if (lt > 0) { const an = o.lightAng ?? -2.3, cx = (bb[0] + bb[2]) / 2, cy = (bb[1] + bb[3]) / 2, R = Math.max(bb[2] - bb[0], bb[3] - bb[1]) * .6 + 1;
         const g = ctx.createLinearGradient(cx + Math.cos(an) * R, cy + Math.sin(an) * R, cx, cy);
-        g.addColorStop(0, `rgba(253,251,247,${lt})`); g.addColorStop(1, 'rgba(253,251,247,0)'); ctx.fillStyle = g; ctx.fill(path); }
+        g.addColorStop(0, `rgba(255,255,255,${lt})`); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.fill(path); }
       const ed = o.edge ?? .22;
       if (ed > 0) { ctx.strokeStyle = K.rgba(K.tone(col, -.12), ed); ctx.lineWidth = 5; ctx.lineJoin = 'round'; ctx.stroke(path); }
       if (o.gaps) gapStrokes(ctx, bb, o.gaps, o.gapAng ?? -.55, o.gapW ?? 5, seed);
@@ -198,7 +207,7 @@
     ctx.restore();
   };
   function gapStrokes(ctx, bb, n, ang, w, seed) {
-    ctx.fillStyle = 'rgba(253,251,247,.88)';
+    ctx.fillStyle = 'rgba(255,255,255,.88)';
     const cx = (bb[0] + bb[2]) / 2, cy = (bb[1] + bb[3]) / 2, R = Math.hypot(bb[2] - bb[0], bb[3] - bb[1]) / 2;
     for (let i = 0; i < n; i++) {
       const u = (i + .5) / n - .5 + (h1(seed + i * 5) - .5) * .25, len = R * (.6 + .8 * h1(seed + i * 5 + 1)), ww = w * (.5 + h1(seed + i * 5 + 2));
@@ -374,12 +383,12 @@
     if ((o.shade ?? .6) > 0 && !o.topOnly) {   // shadow under each puff + the lower part of the mass, clipped to the union
       const bb = pen.bb, sh = o.shade ?? .6, scol = o.sh || K.C.dustSh;
       ctx.save(); ctx.clip(pen.path());
-      const g = ctx.createLinearGradient(0, bb[1] + (bb[3] - bb[1]) * .35, 0, bb[3]); g.addColorStop(0, K.rgba(scol, 0)); g.addColorStop(1, K.rgba(scol, .85 * sh));
+      const g = ctx.createLinearGradient(0, bb[1] + (bb[3] - bb[1]) * .35, 0, bb[3]); g.addColorStop(0, K.rgba(scol, 0)); g.addColorStop(1, K.rgba(scol, .5 * sh));
       ctx.fillStyle = g; ctx.fillRect(bb[0], bb[1], bb[2] - bb[0], bb[3] - bb[1]);
       ctx.lineCap = 'round';
       const midY = (bb[1] + bb[3]) / 2;
-      for (const l of lobes) { if (l.r < 18 || l.y < midY - l.r * .2) continue; ctx.strokeStyle = K.rgba(scol, .4 * sh * (l.a ?? 1)); ctx.lineWidth = l.r * .3;
-        ctx.beginPath(); ctx.ellipse(l.x - l.r * .05, l.y - l.r * .02, l.r * .84, l.r * (l.sq || 1) * .84, 0, Math.PI * .12, Math.PI * .8); ctx.stroke(); }
+      for (const l of lobes) { if (l.r < 18 || l.y < midY - l.r * .2) continue; ctx.strokeStyle = K.rgba(scol, .17 * sh * (l.a ?? 1)); ctx.lineWidth = l.r * .5;
+        ctx.beginPath(); ctx.ellipse(l.x - l.r * .05, l.y - l.r * .02, l.r * .8, l.r * (l.sq || 1) * .8, 0, Math.PI * .15, Math.PI * .78); ctx.stroke(); }
       ctx.restore();
     }
     if (o.line !== false) {
@@ -488,7 +497,7 @@
   // pelvis (F.x, F.y). Bones never change length; knees bend forward, elbows back/down, one way only.
   K.BODY = { torso: 146, neck: 9, headR: 33, arm1: 84, arm2: 78, hand: 24, leg1: 110, leg2: 104, ankle: 11, foot: 40,
     armW: [26, 21, 17], legW: [40, 30, 21] };
-  K.LOOK = { skin: K.C.skin, hair: K.C.pink, hairStyle: 'bob', top: K.C.sage, sleeve: 'short', topStyle: 'shirt', bottom: K.C.lavender,
+  K.LOOK = { skin: K.C.skin, hair: K.C.key, hairStyle: 'bob', top: K.C.sage, sleeve: 'short', topStyle: 'shirt', bottom: K.C.lavender,
     skirt: false, shoe: K.C.brown, tie: null, clip: null, glasses: false, collar: K.C.cream, sock: null, ahoge: false };
   // ik2(a, b, l1, l2, bend) → { j, end, ok }: two-bone IK in 2-D. The joint goes to the side `bend` (+1 / −1) of the a→b
   //   line (in the figure's facing-right frame: elbows +1, knees −1). The end is clamped to reach (ok = false then).
@@ -809,7 +818,7 @@
   // ---------------- words: hand lettering ----------------
   // letter(ctx, s, x, y, o) → { w, h, glyphs: [{ x, y, w }] }: hand-lettered words (translated inside) — Jua glyphs, each
   //   tilted and bobbed a little, a pastel fill printed a hair off the line, a darker wobbly outline drawn twice (one
-  //   thinner offset pass), boiling gently. o = { size = 92, fill = butter, color(i, ch) → fill, ink = C.ink, lw = 3.4,
+  //   thinner offset pass), boiling gently. o = { size = 92, fill = cream (peach-cream), color(i, ch) → fill, ink = C.rose (rose-brown), lw = 3.4,
   //   align 'center'|'left'|'right', k = 1 (reveal: glyphs pop in one after another as k goes 0 → 1), rot = .07, jit = 5,
   //   ls = 4, seed, font = HAND, lh = 1.2, alpha, maxW (shrink to fit), scale(i, ch) → extra per-glyph scale (pop one glyph),
   //   shake (px: jitter every glyph on twos — urgency), mis = 1 (fill offset ×) }
@@ -831,9 +840,9 @@
         if (c.trim() && sc > .01) {
           const sh = 1.4 + 2 * (o.shake || 0), bx = (noise(g * .7, K12 * 1.3 + seed) - .5) * sh, by = (noise(g * .7 + 9, K12 * 1.3 + seed) - .5) * sh;
           ctx.save(); ctx.translate(cx + cw / 2 + bx, yy - size * .36 + (r2 - .5) * (o.jit ?? 5) + by); ctx.rotate((r1 - .5) * 2 * (o.rot ?? .07)); ctx.scale(sc * (1 + (r3 - .5) * .1), sc * (1 + (r3 - .5) * .1));
-          const fill = o.color ? o.color(g, c) : (o.fill || K.C.butter);
+          const fill = o.color ? o.color(g, c) : (o.fill || K.C.cream);
           ctx.fillStyle = fill; ctx.fillText(c, -cw / 2 + 2.6 * (o.mis ?? 1), size * .36 + 2.2 * (o.mis ?? 1));
-          ctx.strokeStyle = o.ink || K.C.ink; ctx.lineWidth = (o.lw ?? 3.4) * size / 92; ctx.strokeText(c, -cw / 2, size * .36);
+          ctx.strokeStyle = o.ink || K.C.rose; ctx.lineWidth = (o.lw ?? 3.4) * size / 92; ctx.strokeText(c, -cw / 2, size * .36);
           ctx.globalAlpha *= .55; ctx.lineWidth = (o.lw ?? 3.4) * .42 * size / 92; ctx.strokeText(c, -cw / 2 + (r2 - .5) * 2.4, size * .36 + (r1 - .5) * 2.4);
           ctx.restore();
         }
@@ -852,7 +861,7 @@
   // caption(ctx, s, x, y, a, o): a small handwritten line (Gaegu — film.json maps the family to Gaegu-Bold.ttf — in ink) with a light paper halo — narration.
   K.caption = function (ctx, s, x, y, a = 1, o = {}) {
     if (a <= 0) return;
-    Pilot.text(ctx, s, x, y, { size: o.size ?? 50, weight: 400, font: K.PEN, color: o.color || K.C.ink, alpha: a, shadow: 'rgba(253,251,247,.95)', shadowBlur: 14, align: o.align, lh: 1.3, maxW: 940 });
+    Pilot.text(ctx, s, x, y, { size: o.size ?? 50, weight: 400, font: K.PEN, color: o.color || K.C.ink, alpha: a, shadow: 'rgba(255,255,255,.95)', shadowBlur: 14, align: o.align, lh: 1.3, maxW: 940 });
   };
   // captions(ctx, t, lines, o): SCRIPT.lines as hand-lettered titles (letters pop in, fade out). o = { y = 330, size = 84, fill, color, small (use the pen caption instead) }
   K.captions = function (ctx, t, lines, o = {}) {
@@ -871,7 +880,7 @@
     const y = o.y ?? 760;
     const tl = String(Pilot.tr(card.title)).split('\n').length;
     if (card.kicker) K.caption(ctx, card.kicker, K.W / 2, y - (tl - 1) * 50 - 120, a, { size: 40, color: K.C.inkSoft });
-    K.letter(ctx, card.title, K.W / 2, y - (tl - 1) * 50, { size: 100, k: clamp((t - at) / .9), alpha: a, fill: o.fill || K.C.pink, color: o.color, seed: 17, maxW: 960 });
+    K.letter(ctx, card.title, K.W / 2, y - (tl - 1) * 50, { size: 100, k: clamp((t - at) / .9), alpha: a, fill: o.fill || K.C.key, color: o.color, seed: 17, maxW: 960 });
     const q = ss(at + .5, at + 1.1, t);
     if (card.passage) Pilot.text(ctx, card.passage, K.W / 2, y + 60 + tl * 60, { size: 40, weight: 400, font: K.PEN, color: K.C.inkSoft, alpha: a * q });
     if (card.by) Pilot.text(ctx, card.by, K.W / 2, y + 116 + tl * 60, { size: 28, weight: 400, font: K.SANS, color: K.C.inkSoft, alpha: a * q * .9 });
@@ -885,8 +894,8 @@
     if (o.accent) K.ACCENT = o.accent;
     const w = 540, h = 960, g = canvas(w, h), x = g.getContext('2d'), d = x.createImageData(w, h), r = rng(o.paperSeed ?? 11);
     for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
-      const m = Pilot.fbm(i * .012, j * .012, 3), v = 255 - 3 * m - 2.5 * r();
-      const p = (j * w + i) * 4; d.data[p] = v; d.data[p + 1] = v - .6; d.data[p + 2] = v - 1.6; d.data[p + 3] = 255;
+      const m = Pilot.fbm(i * .012, j * .012, 3), v = 255 - 1.6 * m - 1.6 * r();
+      const p = (j * w + i) * 4; d.data[p] = v; d.data[p + 1] = v - .3; d.data[p + 2] = v - .5; d.data[p + 3] = 255;
     }
     x.putImageData(d, 0, 0); post = canvas(K.W, K.H); post.getContext('2d').drawImage(g, 0, 0, K.W, K.H);
     for (const c of Object.values(K.C)) if (typeof c === 'string' && c[0] === '#') pattern(c);
