@@ -22,14 +22,16 @@
 - **Window blinds turned into dot patterns.** → 9 slats per window alias at distance. → A blind pulled down to a random height.
 - **Lit office windows formed round blobs.** → Value-noise contours. → Whole floors on/off (`h12(row)`) mixed with a stretched
   cluster noise (`clusterScale` [.09, .55]).
-- **Star-shaped dark wedges on the clock face.** → The hands and ticks (raised off the face to beat z-fighting under the
-  mirror's oblique projection) cast long shadows from a low sun. → Clock details don't cast shadows.
+- **Star-shaped wedges on the clock face (only with the sun on).** → Not shadows: z-fighting between the face (a triangle
+  fan) and the plate behind it. The mirror camera's oblique near plane (which clips everything under the water) leaves very
+  little depth precision, so layers 5 cm apart at 50 m flicker as radial wedges. → Layers ≥ 15 cm apart; clock details also
+  skip shadows. Test such artefacts with `?off=lights` (gone → lighting/precision, still there → geometry).
 - **The puddle shot showed asphalt blobs over the subject.** → Random puddle masks put dry patches in the middle of the
   reflection, and the camera drift exposed the near edge. → An explicit `mask` expression (one big puddle widening away from
   the lens) and a drift that keeps the edges in the corners — checked on a contact sheet at t = 0 / 3.5 / 7.
 - **The 180° flip mirrors left and right.** → The sun meant to light the right side lit the left. → Put the key on the
   camera-left when `look.flip` is on.
-- **A 20-s timeout hid a page error.** → render.mjs waited 180 s for `__ready`. → It now stops at the first page error.
+- **A page error looked like a hang.** → render.mjs waited 180 s for `__ready` after the page had already thrown. → It now stops at the first page error.
 - **ElevenLabs sound effects came back 0.5–2 s long.** → `duration_seconds` unset = auto (short). → Set it on the node
   (`creative_update_node`), ≥ shot + 1.5 s.
 - **CPU-only box.** → SwiftShader: rain 10 s, fog 8 s, snow 6.5 s, autumn 6 s per 1080×1920 frame (trees dominate: 1.4 M

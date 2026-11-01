@@ -336,7 +336,8 @@ export function tram(film, { seed = 4, length = 14, red = '#9c1414', cream = '#e
   const lm = new THREE.Mesh(loft(lowerProf, lowerCol, true), body), um = new THREE.Mesh(loft(upperProf, upperCol, true), body);
   G.add(lm, um);
   // glass all round the window band (sides follow the nose curve; the windshield caps the front)
-  const glassM = new THREE.MeshStandardMaterial({ color: '#d0dae6', roughness: .04, metalness: 0, transparent: true, opacity: .1, depthWrite: false, side: THREE.DoubleSide });
+  // the glass carries a warm haze of the lit interior (what makes tram windows read as glowing panes from outside)
+  const glassM = new THREE.MeshStandardMaterial({ color: '#d0dae6', roughness: .04, metalness: 0, transparent: true, opacity: .12, depthWrite: false, side: THREE.DoubleSide, emissive: col(interior), emissiveIntensity: interiorPower * .55 });
   const glassG = loft(x => { const h = halfW(x) - .015; return [[h, ySill], [h, yHead], [-h, yHead], [-h, ySill]]; }, () => '#ffffff', false);
   // drop the ceiling quad strip (middle segment) — keep only the two sides
   { const idx = glassG.index.array, keep = []; for (let i = 0; i < idx.length; i += 6) { const k = (i / 6) % 3; if (k !== 1) keep.push(...idx.slice(i, i + 6)); } glassG.setIndex(keep); }
@@ -361,7 +362,7 @@ export function tram(film, { seed = 4, length = 14, red = '#9c1414', cream = '#e
   const ceil = new THREE.Mesh(new THREE.BoxGeometry(iL, .03, W - .5), glow(interior, interiorPower)); ceil.position.set(ix, yHead + .12, 0); inner.add(ceil);
   const ceilSide = std('#e8dcc0', { roughness: .8, emissive: col(interior), emissiveIntensity: .35 });
   for (const s of [-1, 1]) { const c = new THREE.Mesh(new THREE.BoxGeometry(iL, .03, .25), ceilSide); c.position.set(ix, yHead + .08, s * (W / 2 - .22)); c.rotation.x = s * .5; inner.add(c); }
-  const wallM = std('#c9b48e', { roughness: .8, emissive: col(interior), emissiveIntensity: .12 });
+  const wallM = std('#c9b48e', { roughness: .8, emissive: col(interior), emissiveIntensity: .6 });
   for (const s of [-1, 1]) { const w = new THREE.Mesh(new THREE.BoxGeometry(iL, ySill - .9, .04), wallM); w.position.set(ix, (ySill + .9) / 2, s * (W / 2 - .12)); inner.add(w); }
   const floor = new THREE.Mesh(new THREE.BoxGeometry(iL + 1.5, .04, W - .26), std('#2b1e16', { emissive: col(interior), emissiveIntensity: .12 })); floor.position.set(ix + .7, .92, 0); inner.add(floor);
   const endWall = new THREE.Mesh(new THREE.BoxGeometry(.04, yHead - .9, W - .3), wallM); endWall.position.set(-L / 2 + .22, (yHead + .9) / 2, 0); inner.add(endWall);
@@ -414,7 +415,7 @@ export function tram(film, { seed = 4, length = 14, red = '#9c1414', cream = '#e
   G.traverse(o => { if (o.isMesh && o.material !== glassM) o.castShadow = true; });
   // interior light that spills through the windows onto the stones
   const lights = [];
-  for (const x of [-L / 4, L / 4 - .5]) { const pl = new THREE.PointLight(col(interior), 8, 13, 2); pl.position.set(x, 2.2, 0); G.add(pl); lights.push(pl); }
+  for (const x of [-L / 4, L / 4 - .5]) { const pl = new THREE.PointLight(col(interior), 8 * interiorPower / 2.6, 13, 2); pl.position.set(x, 2.2, 0); G.add(pl); lights.push(pl); }
   film.scene.add(G);
   return { group: G, length: L, heads, lights, noseX, ySign: sgnY };
 }
@@ -607,16 +608,16 @@ export function clockTower(film, { x = 0, z = 0, h = 46, w = 7, stone = '#c9b48f
   const handM = std('#1b1612', { roughness: .5 });
   for (let f = 0; f < 4; f++) {
     const a = f * Math.PI / 2, fg = new THREE.Group(); fg.rotation.y = a; fg.position.y = cy; g.add(fg);
-    const pl = new THREE.Mesh(new THREE.BoxGeometry(4.2, 4.2, .2), frameM); pl.position.z = cs / 2 + .05; fg.add(pl);
-    const face = new THREE.Mesh(new THREE.CircleGeometry(1.75, 48), faceM); face.position.z = cs / 2 + .2; fg.add(face);
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(1.78, .09, 8, 48), frameM); ring.position.z = cs / 2 + .22; fg.add(ring);
-    for (let k = 0; k < 12; k++) { const tk = new THREE.Mesh(new THREE.BoxGeometry(.07, k % 3 ? .2 : .34, .03), handM); const an = k / 12 * Math.PI * 2; tk.position.set(Math.sin(an) * 1.5, Math.cos(an) * 1.5, cs / 2 + .3); tk.rotation.z = -an; fg.add(tk); }
+    const pl = new THREE.Mesh(new THREE.BoxGeometry(4.2, 4.2, .5), frameM); pl.position.z = cs / 2 + .05;   // layers ≥ .15 m apart: the mirror's oblique projection leaves little depth precision fg.add(pl);
+    const face = new THREE.Mesh(new THREE.CircleGeometry(1.75, 48), faceM); face.position.z = cs / 2 + .45; fg.add(face);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(1.78, .09, 8, 48), frameM); ring.position.z = cs / 2 + .47; fg.add(ring);
+    for (let k = 0; k < 12; k++) { const tk = new THREE.Mesh(new THREE.BoxGeometry(.07, k % 3 ? .2 : .34, .03), handM); const an = k / 12 * Math.PI * 2; tk.position.set(Math.sin(an) * 1.5, Math.cos(an) * 1.5, cs / 2 + .62); tk.rotation.z = -an; fg.add(tk); }
     const hh = new THREE.Mesh(new THREE.BoxGeometry(.11, .9, .04), handM), mh = new THREE.Mesh(new THREE.BoxGeometry(.07, 1.35, .04), handM);
     const ha = -((time[0] % 12) + time[1] / 60) / 12 * Math.PI * 2, ma = -time[1] / 60 * Math.PI * 2;
     hh.geometry.translate(0, .38, 0); mh.geometry.translate(0, .6, 0);
-    hh.position.z = cs / 2 + .38; mh.position.z = cs / 2 + .45; hh.rotation.z = ha; mh.rotation.z = ma; fg.add(hh, mh);
+    hh.position.z = cs / 2 + .8; mh.position.z = cs / 2 + .95; hh.rotation.z = ha; mh.rotation.z = ma; fg.add(hh, mh);
     fg.children.forEach(c => { if (c !== pl) c.userData.noShadow = true; });   // hands and ticks would throw long star-shaped shadows at a low sun
-    const hub = new THREE.Mesh(new THREE.CylinderGeometry(.09, .09, .1, 12), frameM); hub.rotation.x = Math.PI / 2; hub.position.z = cs / 2 + .5; fg.add(hub);
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(.09, .09, .1, 12), frameM); hub.rotation.x = Math.PI / 2; hub.position.z = cs / 2 + 1; fg.add(hub);
   }
   // belfry with open arches, pinnacles, spire
   const by = cy + 3.2, bh = 6;
@@ -641,7 +642,8 @@ export function clockTower(film, { x = 0, z = 0, h = 46, w = 7, stone = '#c9b48f
   for (let k = 1; k < 4; k++) { const band = new THREE.Mesh(new THREE.CylinderGeometry(w * .3 * (1 - k / 4) + .12, w * .3 * (1 - k / 4) + .18, .3, 8), sm); band.position.y = by + bh + .6 + spireH * k / 4; band.rotation.y = Math.PI / 8; g.add(band); }
   const fin = new THREE.Mesh(new THREE.CylinderGeometry(.04, .07, 2.2, 6), frameM); fin.position.y = h + 1; g.add(fin);
   const ball = new THREE.Mesh(new THREE.SphereGeometry(.18, 10, 8), frameM); ball.position.y = h + .2; g.add(ball);
-  g.traverse(o => { if (o.isMesh) { o.castShadow = !o.userData.noShadow; o.receiveShadow = true; } });
+  // clock details neither cast nor receive: the face is a triangle fan, and shadow acne on a fan shows as radial wedges
+  g.traverse(o => { if (o.isMesh) { o.castShadow = !o.userData.noShadow; o.receiveShadow = !o.userData.noShadow; } });
   film.scene.add(g); return g;
 }
 
