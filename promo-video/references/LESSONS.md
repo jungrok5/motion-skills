@@ -77,6 +77,10 @@ From making 9 promo videos (5 styles for a tax accountant, 4 for an overseas buy
 - **A pen mark stayed visible in every later scene**: `visibility: visible` on a child overrides the hidden parent
   scene → pen.js shows/hides marks with `display`; check.mjs judges visibility per element (inherited, overridable)
   and flags marks drawn while their target is invisible.
+- **Test from a two-line prompt** (fresh agent, no ElevenLabs, answered only "OK"): it gathered, asked once (voice,
+  conflicting phone numbers, tools, plan), built from the Shorts starter and passed produce.py — 76 s, 0 check errors,
+  −14.0 LUFS, every pen mark on target. The one thing it could not see was a 0.4 s empty screen at a scene cut
+  → check.mjs now measures blank screens (the hand-made reference video had a 0.6 s one too).
 - **The contact sheet showed duplicate frames** (a 0.04 s time window caught two frames) → select exact frame numbers.
 
 ## Running on the person's own machine
