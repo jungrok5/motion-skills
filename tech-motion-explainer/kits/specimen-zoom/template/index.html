@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Battery Cell Zoom</title>
+<style>
+:root{--bg:#f2f4f6;--fg:#161b20;--mut:#5a6570;--line:#cfd6dc;--acc:#2f7de1}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#04070a;--fg:#dce5ec;--mut:#8796a3;--line:#1d2731;--acc:#5fb0ff}}
+:root[data-theme="dark"]{--bg:#04070a;--fg:#dce5ec;--mut:#8796a3;--line:#1d2731;--acc:#5fb0ff}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px 16px}
+.stage,.bar{width:min(100%,calc((100vh - 84px) * var(--ar,.5625)))}
+.stage{position:relative;aspect-ratio:9/16;border-radius:12px;overflow:hidden;background:#000;cursor:pointer}
+canvas{width:100%;height:100%;display:block}
+.bar{display:flex;align-items:center;gap:12px;font-size:15px}
+.bar button{appearance:none;border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:8px;width:40px;height:34px;cursor:pointer;flex:none}
+.bar input{flex:1;min-width:0;accent-color:var(--acc)}
+.bar span{color:var(--mut);font-variant-numeric:tabular-nums;flex:none}
+#load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#5fb0ff;font:600 15px ui-monospace,monospace;background:#03060a;pointer-events:none;transition:opacity .4s}
+html.render body{padding:0;display:block}
+html.render .stage{width:1080px;border-radius:0}
+html.render .bar,html.render #load{display:none}
+</style>
+</head>
+<body>
+<div class="stage" id="stage"><canvas id="c"></canvas><div id="load">building…</div></div>
+<div class="bar"><button id="pp" aria-label="Play or pause">❚❚</button><input id="seek" type="range" min="0" max="10" step="0.01" value="0" aria-label="Seek"><span id="time">0:00</span></div>
+<script src="../specimen-zoom.js"></script>
+<script>
+'use strict';
+// Template for the specimen-zoom kit on a different subject: inside a cylindrical Li-ion cell (jelly roll).
+// Replace the overview painting, the plates, the shot table and the HUD words. Numbers are typical, labelled as such.
+const { TAU, rng, clamp, lerp, p, eo, wob, hx, rgba, lit, drk, circleP, lineP, sphere, tube, network, dots, fieldBase, blurLayer, layer, TEX } = SZ;
+// DURATION = 10 (5 shots × 2 s; scripts/render-chunked.sh reads this line)
+const AR = new URLSearchParams(location.search).get('ar') === '4:5' ? '4:5' : '9:16', LY = SZ.LAYOUT[AR];
+document.documentElement.style.setProperty('--ar', LY.W / LY.H);
+
+const C = { can: [150, 160, 172], anode: [70, 78, 92], sep: [225, 232, 240], cath: [40, 70, 130], ion: [255, 200, 60] };
+const CEN = [560, 610], RAD = 330;
+function spiral(off) { const pts = []; for (let a = 0; a < TAU * 7; a += .12) { const r = 46 + (a / TAU) * 40 + off; if (r < RAD - 26) pts.push([CEN[0] + Math.cos(a) * r, CEN[1] + Math.sin(a) * r]); } return lineP(pts); }
+function paintOverview(g) {
+  const bg = g.createRadialGradient(CEN[0], CEN[1], 100, CEN[0], CEN[1], 1200); bg.addColorStop(0, '#10161e'); bg.addColorStop(1, '#020305');
+  g.fillStyle = bg; g.fillRect(-150, -420, 1400, 2400);
+  g.save(); g.clip(circleP(CEN[0], CEN[1], RAD - 20)); fieldBase(g, CEN[0] - RAD, CEN[1] - RAD, RAD * 2, RAD * 2, 1, { n: 200, c0: [16, 20, 28], c1: [6, 8, 12] });
+  tube(g, spiral(0), 14, C.anode); tube(g, spiral(13), 5, C.sep); tube(g, spiral(24), 14, C.cath); g.restore();
+  tube(g, circleP(CEN[0], CEN[1], RAD), 40, C.can);                       // steel can
+  sphere(g, CEN[0], CEN[1], 30, C.can, { tex: TEX.fine });               // centre pin
+}
+const PAINT = {
+  anode(g, F) { // graphite sheets with lithium between them
+    fieldBase(g, 0, F.PY0, F.PW, F.PH, 11, { n: 200, c0: [14, 18, 26], c1: [4, 6, 10] });
+    for (let k = 0; k < 16; k++) { const y = -200 + k * 130, pts = []; for (let x = -60; x <= 1300; x += 60) pts.push([x, y + Math.sin(x * .006 + k) * 22]); layer(g, t => tube(t, lineP(pts), 70, C.anode, { hl: .6 }), { tex: TEX.grain, texA: .5, shadow: 16 }); }
+    dots(g, 0, F.PY0, F.PW, F.PH, 90, 12, C.ion, 6, 14);
+  },
+  sep(g, F) {   // porous polymer film
+    fieldBase(g, 0, F.PY0, F.PW, F.PH, 21, { n: 300, c0: [40, 46, 56], c1: [14, 16, 20] });
+    blurLayer(g, 6, t => network(t, 0, F.PY0, F.PW, F.PH, 300, 22, { cols: [[200, 210, 225]], alpha: .5, lw0: 3, lw1: 9, step: 22 }));
+    network(g, 0, F.PY0, F.PW, F.PH, 500, 23, { cols: [[230, 236, 245], [180, 190, 205]], alpha: .9, lw0: 1.5, lw1: 5, step: 16, glow: 4 });
+    dots(g, 300, 300, 640, 900, 24, 24, C.ion, 10, 18);
+  },
+  cath(g, F) {  // clusters of oxide particles in a binder
+    fieldBase(g, 0, F.PY0, F.PW, F.PH, 31, { n: 300, c0: [10, 16, 30], c1: [4, 6, 12] });
+    const R = rng(32); for (let i = 0; i < 70; i++) { const x = R() * 1240, y = F.PY0 + R() * F.PH, r = 40 + R() * 110; (i < 20 ? (fn => blurLayer(g, 8, fn)) : (fn => fn(g)))(t => sphere(t, x, y, r, lit(C.cath, R() * .2), { tex: TEX.grain, texA: .8, texS: r / 200 })); }
+  },
+};
+const SH = [
+  { k: 'can', name: 'JELLY ROLL', sub: 'Electrodes wound in a spiral', b: ['anode · separator · cathode', 'one long sandwich, rolled', 'steel can = − terminal'], zoom: '×3', c: '#9fb4c8', t: [560, 610, 1] },
+  { k: 'anode', name: 'ANODE', sub: 'Graphite layers hold lithium', b: ['Li⁺ slips between sheets', 'on copper foil', 'charged = Li inside'], zoom: '×20 000', c: '#8fa3bf', t: [700, 610, 4] },
+  { k: 'sep', name: 'SEPARATOR', sub: 'Porous polymer film', b: ['ions pass, electrons do not', 'typically ~10–25 µm', 'shuts pores if it overheats'], zoom: '×40 000', c: '#e8eef6', t: [690, 640, 6] },
+  { k: 'cath', name: 'CATHODE', sub: 'Metal-oxide particles', b: ['e.g. NMC or LFP', 'on aluminium foil', 'gives up Li⁺ on charge'], zoom: '×20 000', c: '#5fa0ff', t: [720, 560, 4] },
+  { k: 'xray', name: 'X-RAY', sub: 'Half-section · simulated', b: ['the whole roll at once', 'not to scale'], zoom: '×3', c: '#3ff0c8', t: [560, 610, 1] },
+];
+SH[0].draw = () => {};                                                       // overview only
+SH[4].draw = (g, cam, lt, a, F) => F.drawXray(g, cam, lerp(F.W + 40, F.FX, eo(p(lt, .1, .7))), a);
+let THUMB = null;
+const F = SZ.film({
+  layout: LY, shot: 2,
+  shots: SH.map(s => ({ t: s.t, plate: s.draw ? null : s.k, draw: s.draw, rgb: hx(s.c) })),
+  overview: { x: -150, y: -420, w: 1400, h: 2400, scale: 1.6, paint: paintOverview, xray: true },
+  plates: { designCY: 735, paint: PAINT },
+  built: F => { THUMB = F.thumb(560, 610, 250, 215, 760); },
+  hud: (g, t, F) => hud(g, t, F),
+});
+const U = SZ.ui(F), { T } = U;
+function hud(g, t, F) {
+  const { k, lt } = F.shotAt(t), s = SH[k], V0 = LY.v0, V1 = LY.v1;
+  g.save(); g.translate(0, LY.top - 10);
+  U.glass(g, 16, 10, 1048, 150, 22);
+  T(g, 'INSIDE A', 40, 46, { w: 600, s: 13, ls: 3, c: '#7fa8d6' });
+  T(g, '18650 CELL', 38, 96, { f: SZ.FONT.display, w: 700, s: 50, c: '#e6eef6' });
+  T(g, 'a cylindrical lithium-ion battery · drawn in code', 40, 128, { w: 400, s: 14, c: '#8796a3' });
+  U.head(g, 'STATE OF CHARGE', 716, 46, '%', 1040);
+  const soc = 72 + wob(t * .6, 2) * 6; T(g, soc.toFixed(0), 714, 98, { f: SZ.FONT.display, w: 700, s: 44, c: '#5fb0ff' }); U.segMeter(g, 716, 114, 325, 30, soc / 100, [40, 120, 220], [120, 200, 255]);
+  g.restore();
+  U.corners(g, 30, V0, 1050, V1);
+  U.live(g, 42, V0 + 12, `LIVE · SHOT ${k + 1} / ${SH.length}`, t, '#5fb0ff');
+  U.pill(g, 540, V0 + 12, s.name, s.c);
+  T(g, s.zoom, 1036, V0 + 36, { f: SZ.FONT.display, w: 700, s: 25, a: 'right', c: s.c });
+  U.reticle(g, 545, F.FY - 15, lt, hx(s.c));
+  U.card(g, 45, V1 - 140, 428, 126, s.c, s.name, s.sub, s.b, lt);
+  g.save(); g.translate(0, LY.bot - 985);
+  U.glass(g, 16, 985, 1048, 300, 22);
+  U.head(g, 'LOCATOR', 40, 1013, 'live', 290);
+  U.locator(g, 40, 1025, 250, 215, THUMB, F.camOf(k, lt), V1 - V0, s.c);
+  U.seq(g, 40, 1260, SH.map(q => q.c), k);
+  U.head(g, 'CELL LOG', 330, 1013);
+  U.log(g, 330, 1019, 300, 220, ['V 3.86 V', 'I −1.2 A', 'T 31 °C', 'Li⁺ → anode', 'SEI stable', 'cycle 212'], t, 1.2, 10);
+  g.restore();
+}
+SZ.player(F, document.getElementById('c'), { stage: document.getElementById('stage'), pp: document.getElementById('pp'), seek: document.getElementById('seek'), time: document.getElementById('time'), load: document.getElementById('load') });
+</script>
+</body>
+</html>
