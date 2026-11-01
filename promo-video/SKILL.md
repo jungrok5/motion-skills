@@ -19,6 +19,8 @@ The samples page shows all nine as live pages: https://jungrok5.github.io/motion
 ## What's in this folder
 | path | what |
 |---|---|
+| `scripts/produce.py` | **the pipeline with gates**: check → render → mix/mux → verify (frames, audio, loudness, peaks) → final contact sheet; prints READY / NOT READY |
+| `scripts/check.mjs` | automatic QA before rendering: off-frame text, Shorts safe zones, caption overlap, text overlap, empty cards, pen marks off target or on hidden targets, stretched hand-placed SVG strokes, fonts not loaded, non-deterministic render(t), page errors; contact sheet |
 | `scripts/render.mjs` | record a page to MP4 (landscape + portrait) or PNG stills with Playwright → ffmpeg (libx264 crf 18, yuv420p, faststart) |
 | `scripts/mix.py` | build the soundtrack from a `mix.json`: narration take → lines on cues, `sound.py` sfx/song or a music file, −10 dB ducking, −14 LUFS; `--mux` puts it into the MP4s |
 | `scripts/synth.py` | numpy instrument + SFX kit (pluck, marimba, e-piano, pad, bass, drums, pop, swoosh, chime, shutter, buzz, tick, reverb, Track) — no samples, deterministic |
@@ -31,6 +33,7 @@ The samples page shows all nine as live pages: https://jungrok5.github.io/motion
 | `references/PROMPT.md` | the one-shot prompt format (PART 1 video for Claude Code, PART 2 ElevenLabs) with a filled example |
 | `references/song-recipes.py` | five composed songs (paper, chat, editorial, whiteboard, premium promo) to copy into a `sound.py` |
 | `references/LESSONS.md` | what went wrong on the real work and the fixes |
+| `examples/shorts/` | **starter for vertical Shorts** (fictional sample academy): scenes + transitions, captions from `timing.js`, `wt()` word timing, Pen marks, safe-zone guides (`?guides=1`), brand bug, composed music `sound.py`, `mix.json` — copy it and edit the EDIT blocks; passes check.mjs/produce.py as shipped |
 | `examples/minimal/` | 30 s, 7 scenes, monochrome + one accent, iris transitions — page, `sound.py`, `mix.json`, narration take |
 | `examples/pop/` | 18.75 s beat-synced kinetic short (128 bpm, every cut on the beat grid) — page, `sound.py`, `mix.json`, narration take |
 | `examples/assets/` | Pretendard variable font (OFL), a logo, three ElevenLabs SFX takes (stamp, slap, typing), `pen.js` (hand-drawn marks that fit their target) |
@@ -64,36 +67,50 @@ refused by Claude's web-fetch tool**; only a shell with network (`curl` the RSS 
 `m.blog.naver.com/PostView.naver?blogId=…&logNo=…` with a mobile user agent) can read it. Without that, say so and ask
 the person to paste the posts or upload them as PDF / screenshots (results are often images) — never guess the facts.
 
-## Workflow
-1. **Research → facts sheet.** Read the site/blog/profile (Naver blogs: `curl` the RSS feed / mobile post pages from a shell; web-fetch is refused). Write down only
-   what the source says: services, process steps, promises, contact, credentials. **Never invent numbers** (clients,
-   ratings, years) — mock amounts get an "예시/example" label. See `references/STORYBOARD.md`.
-2. **Format.** Shorts/Reels/"세로"/"3분 이내" → read `references/SHORTS.md`: portrait only, 60–90 s for a considered
-   purchase (parents, clinics) or 15–30 s for an impulse one, captions burned in, narration generated *before* the
-   scenes are timed. Otherwise both orientations as below.
-3. **Propose before building.** Recommend one style and say why it fits the audience; offer 3–4 alternatives
-   (`references/STYLES.md`); give a scene-by-scene storyboard with timings for landscape and portrait. Get a yes.
-4. **Build the page** from the closest example: copy `examples/minimal` (or `pop`) and `examples/assets`. Keep the
-   contract below. Portrait is a re-layout (stack top→bottom, key info in the middle third), never a scaled landscape.
-5. **Check stills, both orientations**: `node <skill>/scripts/render.mjs <video>/index.html --stills 2,6,10,14,…`
-   at every scene's busiest moment. Look at them: overlapping text, a stamp covering the words it stamps, clipped
-   portrait edges, unreadable small text. Fix, re-shoot, then render: `node <skill>/scripts/render.mjs <video>/index.html`.
-6. **Narration** (`references/SOUND.md`): write one line per scene (해요체, short), estimate syllables against scene
-   length, generate ONE take with `[long pause]` between lines (Eleven v4), pick the shortest variation, set cue times
-   (scene start + ~0.2 s) and `splits` in `mix.json`, run `mix.py` and read its report: no overlaps, ends before `dur`.
-   Speed lines up with `atempo` 1.05–1.15 at most; if more is needed, shorten the line. For takes over ~40 s set
-   `splits` from Speech-to-Text word times, and for Shorts generate captions + word times with `caption-timing.py`
-   (`references/SHORTS.md`) and time every animation on a spoken word.
-7. **Sound effects + music.** SFX: synthesize UI sounds in `sound.py` (`synth.pop/swoosh/tick/chime/shutter/buzz`), use
-   ElevenLabs only for physical sounds (stamp, tape, typing) and cut the hit you need with `synth.clip`. Music: compose
-   `song(dur)` with `synth.py` (follows the cuts exactly), or generate with ElevenLabs Music (instrumental on,
-   duration = video + 2 s), compare with `pick-music.py compare … --cuts …`, cut with `pick-music.py cut`, set `"music"`.
-8. **Mix and mux**: `python3 <skill>/scripts/mix.py <video>/mix.json --mux`. Re-run after every re-render (rendering
-   writes a silent MP4). Verify: frame count = `DUR × 30`, audio duration = `DUR`, `ffmpeg -i x.mp4 -af ebur128=peak=true -f null -`
-   ≈ −14 LUFS, peak ≤ −1 dB. If you cannot listen, read mix.py's `levels:` line (music 15–23 dB under the voice).
-9. **Hand over**: both MP4s per video, and a one-shot prompt per video (`references/PROMPT.md`) so the person can
-   re-make or vary it; keep the ElevenLabs part separate (voice, script, cue times, SFX/music prompts and settings).
-   When adding a variant (e.g. a different music), write new files (`-elmusic-`) instead of overwriting the approved ones.
+## Simple requests (most requests look like this)
+People who are not technical will send two lines: a link, "make a promo / Shorts for parents", "use the promo-video skill".
+That is enough. Do not ask them to specify anything the skill already decides; do this:
+1. **Gather silently.** Read the source (Naver: `curl` RSS + mobile posts, images too — results and reviews are often
+   images). Check the tools (`node`, `python3` + numpy, `ffmpeg`, Playwright Chromium); check whether an ElevenLabs
+   connector with music is available.
+2. **Ask ONCE, in one short message, in plain words** (then wait), only what you cannot decide yourself:
+   - ElevenLabs missing → (a) start now without a voice: captions + music composed in code, free, a voice can be added
+     later, or (b) subscribe + connect the full connector (how: `PROMPT.md` → short version), with a rough credit cost.
+   - Contact details to show: the numbers / address you found (and any that disagree between posts) — "use these?".
+   - Missing tools → "may I install Node.js / Python / ffmpeg / Playwright? (one time, ~10–20 min)".
+   - Your plan in 3 lines: length, the style you recommend and why, the scene list. "Reply OK or tell me what to change."
+   If the person cannot answer (headless run, "just do it"), take the recommended defaults: no-voice version, the
+   contact details from the blog's own profile/intro, the recommended style.
+3. **Build from the starter**, not from scratch: Shorts → copy `examples/shorts` + `examples/assets`; landscape/both →
+   `examples/minimal`. Fill `captions.txt` → `caption-timing.py` (`--reading` without a voice, `--words` with one) →
+   scenes on `wt(line, word)` → marks with `Pen` only.
+4. **Gate:** `python3 <skill>/scripts/produce.py <video>/index.html` until it prints READY; then open the final contact
+   sheet and look at every frame. Never hand over a video that has not passed `produce.py`.
+5. **Hand over** the MP4, a facts-and-sources table (scene → source post), and what the person should confirm
+   (contacts, consent for quoted parents/customers, anything dated).
+
+## Workflow (detail)
+1. **Research → facts sheet.** Read the site/blog/profile (Naver blogs: `curl` the RSS feed / mobile post pages from a
+   shell; web-fetch is refused). Write down only what the source says: services, process steps, promises, contact,
+   credentials. **Never invent numbers** (clients, ratings, years) — mock amounts get an "예시/example" label.
+   See `references/STORYBOARD.md`.
+2. **Format.** Shorts/Reels/"세로"/"3분 이내" → `references/SHORTS.md`: portrait only, 60–90 s for a considered
+   purchase (parents, clinics) or 15–30 s for an impulse one, captions burned in, narration (or captions) timed *before*
+   the scenes. Otherwise both orientations.
+3. **Propose before building** (one message, see above): style + why (`references/STYLES.md`), scene list, length.
+4. **Build the page** from the starter (`examples/shorts`, `examples/minimal`, `examples/pop`) + `examples/assets`.
+   Keep the contract below. Portrait is a re-layout, never a scaled landscape. All hand-drawn marks via `Pen`.
+5. **Check** while you build: `node <skill>/scripts/check.mjs <video>/index.html` (layout, safe zones, caption overlap,
+   pen marks on target, fonts, determinism + a contact sheet). Fix every ERROR; look at every WARN on the sheet.
+6. **Narration** (`references/SOUND.md`), when ElevenLabs is available: one line per scene, ONE take with
+   `[long pause]` between lines (Eleven v4), Speech-to-Text word times → `splits` + `caption-timing.py --words`.
+   Without a voice: `caption-timing.py --reading` (reading speed) and the captions carry the message.
+7. **Sound effects + music.** SFX synthesized in `sound.py`; ElevenLabs only for physical sounds. Music: `song(dur)` with
+   `synth.py`, or ElevenLabs Music (instrumental on, video + 2 s, `pick-music.py`).
+8. **Produce**: `python3 <skill>/scripts/produce.py <video>/index.html [--fmt p|l|both]` — check → render → mix/mux →
+   verify (frames, audio length, −14 LUFS ±2, true peak ≤ −1 dB) → final contact sheet. READY or it is not done.
+9. **Hand over**: the MP4(s), sources table, and a one-shot prompt (`references/PROMPT.md`) so it can be re-made;
+   variants under new names (`-elmusic-`), never over the approved files.
 
 ## Rules
 - **Deterministic frames.** `render(t)` sets every element from `t` alone: no `Date.now`, no CSS animations/transitions

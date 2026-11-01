@@ -3,6 +3,8 @@
 Use this when the person asks for a Shorts / Reels / TikTok video ("숏츠에 올릴 수 있게", "세로로", "3분 이내").
 Proven on an 86 s parent-facing promo for a small math academy (vertical only, narration + music + captions).
 
+Start from `examples/shorts` (everything below is already built in) and finish with `scripts/produce.py`.
+
 ## Length
 YouTube Shorts takes up to 3 minutes, but length should follow the decision the viewer makes:
 - impulse / low price (an app, a shop item): 15–30 s, hook in the first second (`examples/pop`).

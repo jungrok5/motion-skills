@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Shorts starter</title>
+<!--
+  STARTER for a vertical Shorts/Reels promo (1080×1920). Copy this folder + ../assets, then change only the parts marked EDIT.
+  Built in: scene list + transitions (window.SCENES), captions + word times from timing.js (caption-timing.py),
+  hand-drawn marks from ../assets/pen.js, safe zones (content 180–1300 px, caption at 1352, bottom 18 % empty),
+  brand bug, deterministic render(t), live preview (open the file; ?guides=1 shows the safe zones).
+  Check with  node <skill>/scripts/check.mjs <this>/index.html   before rendering.
+  The sample content is a FICTIONAL academy ("해봄수학") — replace every fact with facts from the real source.
+-->
+<style>
+@font-face{font-family:P;src:url(../assets/fonts/Pretendard-Variable.woff2) format('woff2');font-weight:100 900}
+:root{--paper:#FBF8F1;--ink:#1B2550;--red:#E0393E;--brand:#2340A8;--mute:#6B7283;--hl:rgba(255,220,60,.78);--line:#E2DED3}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#111}
+body{font-family:P,sans-serif;color:var(--ink);word-break:keep-all;-webkit-font-smoothing:antialiased;letter-spacing:-0.03em}
+#stage{position:absolute;left:0;top:0;width:1080px;height:1920px;overflow:hidden;background:var(--paper)}
+.grid{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(60,110,200,.09) 0 2px,transparent 2px 48px),repeating-linear-gradient(90deg,rgba(60,110,200,.09) 0 2px,transparent 2px 48px)}
+section{position:absolute;inset:0;visibility:hidden}
+section>div{position:absolute;inset:0}
+.title{position:absolute;left:80px;right:140px;top:200px;font-weight:900;font-size:76px;line-height:1.16;letter-spacing:-0.05em}
+.card{position:absolute;left:90px;width:860px;background:#fff;border-radius:28px;box-shadow:0 18px 50px rgba(27,37,80,.13)}
+.w{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.08em;margin-bottom:-.08em}
+.wi{display:inline-block}
+.hl{background:linear-gradient(transparent 55%,var(--hl) 55%) no-repeat;background-size:0% 100%}
+#bug{position:absolute;left:80px;top:72px;display:flex;align-items:center;gap:16px;font-weight:800;font-size:30px;z-index:50}
+#bug b{display:inline-flex;align-items:center;justify-content:center;width:58px;height:58px;border-radius:14px;background:var(--brand);color:#fff;font-size:26px;font-weight:900}
+#bug span{color:var(--mute);font-weight:600;font-size:26px}
+#cap{position:absolute;left:60px;top:1352px;width:860px;z-index:60;display:flex}
+#cap div{background:rgba(27,37,80,.93);color:#fff;font-weight:700;font-size:44px;line-height:1.36;padding:16px 30px 18px;border-radius:20px;letter-spacing:-0.035em}
+#guides{position:absolute;inset:0;z-index:99;pointer-events:none;display:none}
+#guides i{position:absolute;background:rgba(255,0,0,.12);outline:2px dashed rgba(255,0,0,.5)}
+/* EDIT: scene-specific styles */
+.row{display:flex;justify-content:space-between;align-items:center;padding:24px 44px;font-size:38px;font-weight:700;border-bottom:2px solid var(--line)}
+.row b{font-size:44px;font-weight:900}
+.big{font-size:120px;font-weight:900;color:var(--red);letter-spacing:-0.06em}
+.step{display:flex;align-items:center;gap:22px;padding:26px 44px;font-size:44px;font-weight:800;border-bottom:2px solid var(--line)}
+.step em{font-style:normal;display:inline-flex;align-items:center;justify-content:center;width:62px;height:62px;border-radius:50%;background:var(--brand);color:#fff;font-size:34px;flex:none}
+.cta-top{background:var(--brand);color:#fff;padding:34px 46px;border-radius:28px 28px 0 0}
+.cta-top b{display:block;font-size:58px;font-weight:900}
+.cta-top span{font-size:32px;font-weight:700;opacity:.92}
+.ph{padding:26px 46px 0;font-size:54px;font-weight:900;font-variant-numeric:tabular-nums}
+.ph small{font-size:30px;font-weight:800;color:var(--mute);margin-right:20px}
+.ad{padding:20px 46px 34px;font-size:30px;font-weight:700;color:var(--mute)}
+</style>
+<script src="timing.js"></script>
+<script src="../assets/pen.js"></script>
+</head>
+<body>
+<div id="stage">
+  <div class="grid"></div>
+  <div id="bug"><b>HB</b>해봄수학 <span>· 예시 학원</span></div><!-- EDIT: brand -->
+
+  <!-- EDIT: one <section> per scene, ids s1…sN (the order of window.SCENES) -->
+  <section id="s1"><div>
+    <div class="title kt" id="t1">열심히 하는데 왜 <span style="color:var(--red)">수학만?</span></div>
+    <div class="card" id="report" style="top:520px">
+      <div class="row"><span>국어</span><b>2등급</b></div>
+      <div class="row"><span>영어</span><b>2등급</b></div>
+      <div class="row" style="border:0"><span>수학</span><b id="grade" class="big" style="font-size:72px">4등급</b></div>
+    </div>
+  </section>
+
+  <section id="s2"><div>
+    <div class="title kt" id="t2">진도만 빠르면 <span id="t2x">될까요?</span></div>
+    <div class="card" id="c2" style="top:520px;padding:40px 44px">
+      <div style="font-size:40px;font-weight:800;line-height:1.5"><span id="myth">진도 많이 = 실력</span><br><span class="hl" id="truth">이해한 만큼 = 실력</span></div>
+    </div>
+  </section>
+
+  <section id="s3"><div>
+    <div class="title kt" id="t3">이렇게 가르쳐요</div>
+    <div class="card" id="c3" style="top:480px">
+      <div class="step" id="st1"><em>1</em>아이별 진도 계획</div>
+      <div class="step" id="st2"><em>2</em>백지 개념 테스트</div>
+      <div class="step" id="st3" style="border:0"><em>3</em>오답은 다시 풀기</div>
+    </div>
+  </section>
+
+  <section id="s4"><div>
+    <div class="title kt" id="t4">상담부터 받아 보세요</div>
+    <div class="card" id="cta" style="top:500px">
+      <div class="cta-top"><b>상담 예약 · 레벨테스트</b><span>우리 아이 지금 위치부터</span></div>
+      <div class="ph"><small>전화</small>02-000-0000</div>
+      <div class="ad">○○시 ○○동 · 예시 주소</div>
+    </div>
+  </section>
+
+  <div id="cap"><div id="capt"></div></div>
+  <div id="guides"><i style="left:0;right:0;top:1574px;bottom:0"></i><i style="left:940px;right:0;top:960px;bottom:0"></i><i style="left:60px;width:860px;top:1352px;height:150px;background:rgba(0,0,255,.08);outline-color:rgba(0,0,255,.5)"></i></div>
+</div>
+<script>
+const Q = new URLSearchParams(location.search);
+const W = 1080, H = 1920;
+const T = window.TIMING;                                   // from caption-timing.py (narration words or --reading)
+// EDIT: scenes — start each a little before its narration line (T.cues[i]); the last one ends at DUR
+const DUR = 24;
+const SCENES = [['s1', 0, T.cues[1] - 0.3], ['s2', T.cues[1] - 0.3, T.cues[2] - 0.3], ['s3', T.cues[2] - 0.3, T.cues[3] - 0.3], ['s4', T.cues[3] - 0.3, DUR]];
+window.SCENES = SCENES; window.DUR = DUR;
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, s, d) => clamp((t - s) / d);
+const lerp = (a, b, e) => a + (b - a) * e;
+const out3 = x => 1 - Math.pow(1 - x, 3), out5 = x => 1 - Math.pow(1 - x, 5);
+const inOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const back = x => { const c1 = 1.7, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const tf = (el, o, x = 0, y = 0, s = 1) => { el.style.opacity = o; el.style.transform = `translate(${x}px,${y}px) scale(${s})`; };
+const up = (el, t, s, d = 0.55, dy = 46) => { const e = out3(prog(t, s, d)); tf(el, e, 0, (1 - e) * dy); };
+const pop = (el, t, s, d = 0.5, s0 = .7) => { const p = prog(t, s, d); tf(el, clamp(p * 3), 0, 0, lerp(s0, 1, back(p))); };
+const hl = (el, t, s, d = 0.45) => { el.style.backgroundSize = `${out3(prog(t, s, d)) * 100}% 100%`; };
+// time of the first word of narration line `li` containing `sub` (throws if missing, so typos surface in check.mjs)
+const wt = (li, sub) => { const w = T.words[li].find(x => x[0].includes(sub)); if (!w) throw new Error(`no word "${sub}" in line ${li}`); return w[1]; };
+
+/* kinetic words: <div class="kt"> slides in word by word; never put overlays inside (use Pen on el._w) */
+function splitKT(el) {
+  const words = [];
+  const walk = (node, attrs) => [...node.childNodes].forEach(c => {
+    if (c.nodeType === 3) c.textContent.split(/(\s+)/).forEach(tok => {
+      if (!tok) return;
+      if (/^\s+$/.test(tok)) { el.appendChild(document.createTextNode(' ')); return; }
+      const w = document.createElement('span'); w.className = 'w';
+      const wi = document.createElement('span'); wi.className = 'wi';
+      if (attrs) { if (attrs.style) wi.setAttribute('style', attrs.style); if (attrs.id) wi.dataset.src = attrs.id; }
+      wi.textContent = tok; w.appendChild(wi); el.appendChild(w); words.push(wi);
+    });
+    else if (c.nodeName === 'BR') el.appendChild(c.cloneNode());
+    else walk(c, { style: c.getAttribute('style'), id: c.id });
+  });
+  const src = el.cloneNode(true); el.innerHTML = ''; walk(src, null); el._w = words;
+}
+$$('.kt').forEach(splitKT);
+const kt = (el, t, s, gap = 0.07) => el._w.forEach((w, i) => { const e = out5(prog(t, s + i * gap, 0.5)); w.style.transform = `translateY(${(1 - e) * 112}%)`; });
+
+/* EDIT: hand-drawn marks — always pen.js (measured, closed, fitted). Kinetic words: pass el._w (or a filter of it). */
+const M = {
+  grade: Pen.circle('#grade', { seed: 3 }),
+  myth: Pen.strike('#myth', { seed: 5 }),
+  ticks: ['#st1', '#st2', '#st3'].map((s, i) => Pen.check(`${s}`, { seed: 7 + i, size: 40, pad: -120 })),
+};
+
+function scenes(t) {
+  SCENES.forEach(([id, a, b], i) => {
+    const el = $('#' + id), last = i === SCENES.length - 1;
+    const vis = t >= a - 0.001 && (t < b + 0.001 || last);
+    el.style.visibility = vis ? 'visible' : 'hidden';
+    if (!vis) return;
+    const inE = i === 0 ? 1 : out3(prog(t, a, 0.5)), outE = last ? 0 : inOut(prog(t, b - 0.35, 0.35));
+    el.style.opacity = inE * (1 - outE);
+    el.firstElementChild.style.transform = `translate(${(1 - inE) * 90 - outE * 70}px,0)`;
+  });
+}
+
+function render(t) {
+  scenes(t);
+  $('#bug').style.opacity = 1;
+  // EDIT: scene animations, each on a spoken (or captioned) word
+  kt($('#t1'), t, 0.2);
+  up($('#report'), t, 0.1, 0.5, 40);
+  M.grade.draw(t, wt(0, '4등급') + 0.1, 0.6);
+
+  kt($('#t2'), t, SCENES[1][1] + 0.2);
+  up($('#c2'), t, SCENES[1][1] + 0.35);
+  M.myth.draw(t, wt(1, '이해는') - 0.2, 0.35);
+  hl($('#truth'), t, wt(1, '이해는') + 0.3, 0.6);
+
+  kt($('#t3'), t, SCENES[2][1] + 0.2);
+  up($('#c3'), t, SCENES[2][1] + 0.3);
+  M.ticks.forEach((m, i) => m.draw(t, T.cues[2] + 0.6 + i * 0.8, 0.3));
+
+  kt($('#t4'), t, SCENES[3][1] + 0.2);
+  up($('#cta'), t, SCENES[3][1] + 0.35, 0.6, 70);
+
+  // captions (keep): the active chunk from timing.js
+  const cap = T.caps.find(c => t >= c.t0 && t < c.t1), ce = $('#capt');
+  if (cap) { ce.parentElement.style.display = 'flex'; if (ce.textContent !== cap.x) ce.textContent = cap.x; ce.style.opacity = clamp(prog(t, cap.t0, 0.12)); }
+  else ce.parentElement.style.display = 'none';
+}
+window.render = render;
+render(0);
+
+if (!Q.has('render')) {
+  if (Q.has('guides')) $('#guides').style.display = 'block';
+  const fit = () => { const s = Math.min(innerWidth / W, innerHeight / H), st = $('#stage'); st.style.transformOrigin = '0 0'; st.style.transform = `translate(${(innerWidth - W * s) / 2}px,${(innerHeight - H * s) / 2}px) scale(${s})`; };
+  fit(); addEventListener('resize', fit);
+  let t0 = performance.now(); document.addEventListener('click', () => t0 = performance.now());
+  const loop = now => { render(((now - t0) / 1000) % (DUR + 1)); requestAnimationFrame(loop); };
+  document.fonts.ready.then(() => requestAnimationFrame(loop));
+}
+</script>
+</body>
+</html>

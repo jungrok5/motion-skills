@@ -7,6 +7,9 @@ speed) and writes a small JS file the page loads.
 
 Usage (from the project root):
   python3 <skill>/scripts/caption-timing.py <video>/mix.json --words words.json --chunks <video>/captions.txt --out <video>/timing.js
+  python3 <skill>/scripts/caption-timing.py --reading --chunks <video>/captions.txt --out <video>/timing.js [--start 0.6] [--cps 6]
+      no narration (no ElevenLabs): every chunk stays up for its reading time (Korean ~6 syllables/s, min 1.3 s),
+      0.7 s between lines; prints the total so the page's DUR = last line end + 2–4 s for the call to action.
 
   words.json    Scribe output: {"words": [{"text", "start", "end", "type"}, ...]} (bracketed audio tags are skipped)
   captions.txt  one line per narration line (same order as the take), caption chunks separated by " / ", e.g.
@@ -47,9 +50,14 @@ def line_mapper(segs, gap_cap, cue, speed):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('mix'); ap.add_argument('--words', required=True); ap.add_argument('--chunks', required=True)
-    ap.add_argument('--out', required=True)
+    ap.add_argument('mix', nargs='?'); ap.add_argument('--words'); ap.add_argument('--chunks', required=True)
+    ap.add_argument('--out', required=True); ap.add_argument('--reading', action='store_true')
+    ap.add_argument('--start', type=float, default=0.6); ap.add_argument('--cps', type=float, default=6.0)
     a = ap.parse_args()
+    if a.reading:
+        return reading(a)
+    if not (a.mix and a.words):
+        sys.exit('give <mix.json> and --words (narration), or --reading (no narration)')
     base = os.path.dirname(os.path.abspath(a.mix))
     spec = json.load(open(a.mix))['narration']
     x = synth.load(os.path.join(base, spec['take']))
@@ -89,6 +97,28 @@ def main():
         {'cues': [c[0] for c in spec['cues']], 'caps': caps, 'words': out_words}, ensure_ascii=False) + ';\n')
     for c in caps:
         print(f"{c['t0']:7.2f}-{c['t1']:7.2f}  {c['x']}")
+    print('wrote', a.out)
+
+
+def reading(a):
+    lines = [[c.strip() for c in ln.split(' / ') if c.strip()] for ln in open(a.chunks, encoding='utf-8').read().splitlines() if ln.strip()]
+    t, cues, caps, words = a.start, [], [], []
+    for li, chunks in enumerate(lines):
+        cues.append(round(t, 2)); lw = []
+        for text in chunks:
+            n = len(re.sub(r'[^0-9A-Za-z가-힣]', '', text))
+            d = max(1.3, n / a.cps + 0.4)
+            toks = text.split()
+            for i, w in enumerate(toks):
+                lw.append([w, round(t + d * 0.8 * i / max(1, len(toks)), 2)])
+            caps.append({'l': li, 't0': round(t, 2), 't1': round(t + d, 2), 'x': text})
+            t += d
+        words.append(lw); t += 0.7
+    os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
+    open(a.out, 'w', encoding='utf-8').write('window.TIMING = ' + json.dumps({'cues': cues, 'caps': caps, 'words': words}, ensure_ascii=False) + ';\n')
+    for c in caps:
+        print(f"{c['t0']:7.2f}-{c['t1']:7.2f}  {c['x']}")
+    print(f'last caption ends at {caps[-1]["t1"]:.1f}s → set DUR ≈ {caps[-1]["t1"] + 3:.0f}s; line starts (cues): {cues}')
     print('wrote', a.out)
 
 

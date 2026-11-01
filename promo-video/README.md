@@ -12,6 +12,7 @@ node scripts/render.mjs examples/minimal/index.html --stills 2.5,14.5,28 # check
 node scripts/render.mjs examples/minimal/index.html                     # out/minimal-landscape.mp4 + -portrait.mp4
 python3 scripts/mix.py examples/minimal/mix.json --mux                  # narration + sfx + music → into both MP4s
 node scripts/render.mjs examples/pop/index.html && python3 scripts/mix.py examples/pop/mix.json --mux
+python3 scripts/produce.py examples/shorts/index.html                    # Shorts starter: check → render → sound → verify → READY
 ```
 
 Shorts / Reels (vertical, up to 3 min): see `references/SHORTS.md` — burned-in captions from Speech-to-Text word times:

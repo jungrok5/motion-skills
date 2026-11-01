@@ -11,11 +11,12 @@
  *   // in render(t):  m1.draw(t, start, 0.5);  m2.draw(t, start2, 0.3);
  *
  * Kinds: circle (closed, slightly overshooting loop), strike, underline, cross (X over the target), check (tick at its
- * right), box. Options: color (#E0393E), width (7), pad (auto), seed (1), opacity (.92).
+ * right), crack (jagged line through it, at: 0..1), box. Options: color (#E0393E), width (7), pad (auto), seed (1), opacity (.92).
  * The SVG goes into the target's offsetParent (a positioned ancestor), so it moves with that container but is never
  * clipped by a word's overflow:hidden. Do NOT put marks inside kinetic-split text; pass the word spans instead.
  */
 window.Pen = (() => {
+  const REG = [];           // every mark, so scripts/check.mjs can verify it sits on its target
   const NS = 'http://www.w3.org/2000/svg';
   const rnd = seed => { let s = (seed * 9301 + 49297) % 233280 || 1; return () => (s = (s * 9301 + 49297) % 233280) / 233280; };
   const ease = x => (x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
@@ -68,6 +69,12 @@ window.Pen = (() => {
       const s = o.size ?? b.h * 0.9, x = b.x + b.w + (o.pad ?? 14), y = b.y + b.h / 2;
       return `M${f(x)} ${f(y)} L ${f(x + s * 0.35)} ${f(y + s * 0.38)} L ${f(x + s)} ${f(y - s * 0.5)}`;
     },
+    crack(b, o, r) {                                     // a jagged crack running down through the target (at: 0..1 across)
+      const x = b.x + b.w * (o.at ?? 0.8), y0 = b.y - (o.pad ?? 6), y1 = b.y + b.h + (o.pad ?? 6), n = 6;
+      let d = `M${f(x)} ${f(y0)}`;
+      for (let i = 1; i <= n; i++) d += ` L ${f(x + (i % 2 ? 1 : -1) * (6 + r() * 8))} ${f(y0 + (y1 - y0) * i / n)}`;
+      return d;
+    },
     box(b, o) {
       const p = o.pad ?? 10, x0 = b.x - p, y0 = b.y - p, x1 = b.x + b.w + p, y1 = b.y + b.h + p;
       return `M${f(x0)} ${f(y0 + 3)} L ${f(x1)} ${f(y0)} L ${f(x1 + 2)} ${f(y1)} L ${f(x0)} ${f(y1 + 2)} Z`;
@@ -102,17 +109,23 @@ window.Pen = (() => {
       path.setAttribute('d', SHAPES[kind](b, o, rnd(o.seed || 1)));
       path.style.strokeDasharray = '1';
     };
-    return {
+    const m = {
+      kind,
+      targets: () => els(target),
+      svg: () => svg,
+      path: () => path,
       draw(t, start, dur = 0.45) {
         build();
         const p = Math.min(1, Math.max(0, (t - start) / dur));
         path.style.strokeDashoffset = String(1 - ease(p));
-        svg.style.visibility = t >= start ? 'visible' : 'hidden';
+        svg.style.display = t >= start ? '' : 'none';   // not visibility: a child's 'visible' would override a hidden scene
       },
-      hide() { if (svg) svg.style.visibility = 'hidden'; },
+      hide() { if (svg) svg.style.display = 'none'; },
     };
+    REG.push(m);
+    return m;
   }
-  const api = {};
+  const api = { marks: REG };
   Object.keys(SHAPES).forEach(k => { api[k] = (target, o) => mark(k, target, o); });
   return api;
 })();

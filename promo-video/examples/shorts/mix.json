@@ -1,0 +1,8 @@
+{
+  "dur": 24.0,
+  "sound": "sound.py",
+  "music_level": 0.5,
+  "sfx_dir": "../assets/sfx",
+  "out": "../../out/shorts.wav",
+  "videos": ["../../out/shorts-portrait.mp4"]
+}

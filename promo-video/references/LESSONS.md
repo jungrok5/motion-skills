@@ -68,6 +68,17 @@ From making 9 promo videos (5 styles for a tax accountant, 4 for an overseas buy
   (offset box, transform-independent, after fonts) and generates the stroke: a 1.1-turn circle whose end crosses its start,
   a strike across the full phrase, etc.; for kinetic text pass the word spans. Check each mark on a still after it is drawn.
 
+## Pipeline (why produce.py and check.mjs exist)
+- A short prompt from a non-technical person produced a good video, but with small visual defects nobody asked about
+  (marks off target, a blank card for a moment, the MP4 peaking at 0 dB, a stray mark left visible in later scenes) —
+  the person cannot spot or describe these → the skill has to catch them itself: `check.mjs` before rendering
+  (fails on errors), `produce.py` as the only way to make the deliverable (READY / NOT READY), starter templates with the
+  rules built in.
+- **A pen mark stayed visible in every later scene**: `visibility: visible` on a child overrides the hidden parent
+  scene → pen.js shows/hides marks with `display`; check.mjs judges visibility per element (inherited, overridable)
+  and flags marks drawn while their target is invisible.
+- **The contact sheet showed duplicate frames** (a 0.04 s time window caught two frames) → select exact frame numbers.
+
 ## Running on the person's own machine
 - The Claude desktop app's local environment had Node 22, ffmpeg 6, numpy, Playwright 1.63 + Chromium, but no
   outbound network from the shell, and Playwright installed globally (ESM `import` cannot see it) → read sources with

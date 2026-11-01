@@ -19,13 +19,11 @@ When the person passes the job on (to a client, an owner, a colleague), they wan
 holds the method. Give this, filled in, next to the detailed file:
 
 ```
-아래 블로그(사이트)를 보고 우리 ○○ 홍보 영상을 만들어 주세요.
-- 출처: https://…
-- 보는 사람: ○○ (예: 학부모). 보고 나면 믿음이 가고 ○○(예: 상담 예약)을 하고 싶어지도록 전략적으로 설계해 주세요.
-- 형식: 유튜브 숏츠 세로 영상, 3분 이내 (또는 가로 30초 등)
-- 만드는 방법은 https://github.com/jungrok5/motion-skills 의 promo-video 스킬을 참고해 주세요.
-- 내레이션과 배경음악은 연결된 ElevenLabs로 만들어 주세요.
+https://blog.naver.com/○○ 를 보고 ○○(예: 학부모) 대상 홍보 숏츠를 만들어 주세요.
+https://github.com/jungrok5/motion-skills 의 promo-video 스킬대로 해 주세요.
 ```
+Two lines are enough: the skill's "Simple requests" section makes the agent gather everything, ask once (ElevenLabs or
+not, contact details, tools to install, the plan), build from the starter and pass `produce.py` before handing over.
 The ElevenLabs connector that can make music is the full one (custom connector `https://api.elevenlabs.io/v1/mcp`,
 added at claude.ai/customize/connectors); the built-in one is voice/SFX only.
 
