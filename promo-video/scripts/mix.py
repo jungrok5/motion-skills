@@ -23,7 +23,7 @@ mix.json (all paths relative to the mix.json file; every block is optional excep
   "videos": ["out/video-landscape.mp4", "out/video-portrait.mp4"]   # --mux replaces their audio track in place
 }
 """
-import argparse, importlib.util, json, os, subprocess, sys
+import argparse, importlib.util, json, os, re, subprocess, sys
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -154,6 +154,13 @@ def balance(voice, music):
     return f'  levels: music sits {d:.1f} dB under the voice while it speaks (approved mixes: 15–23){hint}'
 
 
+def true_peak(path):
+    r = subprocess.run(['ffmpeg', '-nostats', '-i', path, '-map', '0:a:0', '-af', 'ebur128=peak=true', '-f', 'null', '-'],
+                       capture_output=True, text=True)
+    m = re.findall(r'Peak:\s+(-?[\d.]+|-inf) dBFS', r.stderr)
+    return float(m[-1]) if m and m[-1] != '-inf' else -99.0
+
+
 def load_module(path):
     spec = importlib.util.spec_from_file_location(os.path.splitext(os.path.basename(path))[0], path)
     mod = importlib.util.module_from_spec(spec)
@@ -220,12 +227,25 @@ def build(spec_path, mux=False):
             if not os.path.exists(src):
                 report.append(f'  skip mux, missing {v}')
                 continue
-            dst = src.replace('.mp4', '.tmp.mp4')
-            # no -shortest: it can drop the last video frames; the soundtrack is exactly dur long
-            subprocess.run(['ffmpeg', '-loglevel', 'error', '-y', '-i', src, '-i', out, '-map', '0:v:0', '-map', '1:a:0',
-                            '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', dst], check=True)
+            # AAC can overshoot sharp transients (synthesized clicks/pops) by ~2 dB: measure the encoded file and, if its
+            # true peak is above -1 dB, limit only the peaks harder and mux again (loudness stays ~the same)
+            audio = out
+            for limit in (None, 0.62, 0.5):
+                if limit:
+                    audio = out.replace('.wav', '.lim.wav')
+                    subprocess.run(['ffmpeg', '-loglevel', 'error', '-y', '-i', out, '-af', f'alimiter=limit={limit}:level=false',
+                                    audio], check=True)
+                dst = src.replace('.mp4', '.tmp.mp4')
+                # no -shortest: it can drop the last video frames; the soundtrack is exactly dur long
+                subprocess.run(['ffmpeg', '-loglevel', 'error', '-y', '-i', src, '-i', audio, '-map', '0:v:0', '-map', '1:a:0',
+                                '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', dst], check=True)
+                tp = true_peak(dst)
+                if tp <= -1.0 or limit == 0.5:
+                    break
             os.replace(dst, src)
-            report.append(f'  muxed {v}')
+            if audio != out:
+                os.remove(audio)
+            report.append(f'  muxed {v} (true peak {tp:.1f} dB' + (f', peaks limited to {limit}' if limit else '') + ')')
     print('\n'.join(report))
 
 

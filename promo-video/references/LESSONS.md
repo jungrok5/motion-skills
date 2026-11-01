@@ -38,6 +38,8 @@ From making 9 promo videos (5 styles for a tax accountant, 4 for an overseas buy
 - **Karplus-Strong pluck had a DC offset** that pumped the limiter → subtract the buffer mean; `finish()` also removes
   the stereo mean.
 - **Peaks over target after loudnorm** → `alimiter=limit=0.78` after `loudnorm`.
+- **The MP4 peaked at 0 dB although the WAV was at −1.9 dB**: AAC overshoots sharp synthesized transients by ~2 dB → `mix.py --mux`
+  measures the encoded true peak and, above −1 dB, limits only the peaks harder (0.62, then 0.5) and muxes again (−14.6 LUFS, −2.6 dB).
 - **The restricted ElevenLabs connector refuses music** (voice + SFX only) → compose in code with `synth.py`, or connect
   the full connector for ElevenLabs Music.
 - **ElevenLabs Music sang** although the prompt said "no vocals": the run had `instrumental=false`, `lyrics_type=auto` →
