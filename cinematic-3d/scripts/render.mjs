@@ -4,6 +4,7 @@
 //   node <skill>/scripts/render.mjs shots/rain.html                        → out/rain.mp4 (1080×1920, H.264 high quality, tune grain)
 //   node <skill>/scripts/render.mjs shots/rain.html --q "pass=atmos" --stills 2   (any page query: pass=scene|atmos|mirror|coc, scale=.5)
 // Options: --workers 2  --fps <page FPS>  --from 0 --to <dur>  --crf 15  --out out/  --scale 1 (preview renders: 0.5)
+// Shot chunks are near-lossless (CRF 15, grain makes them ~150 Mbps); film.mjs re-encodes to sane rates.
 // Each worker owns a contiguous run of frames and pipes PNGs into its own ffmpeg; the chunks are joined without re-encoding.
 // WebGL runs wherever Chromium puts it: on a GPU box it is fast, on a CPU box SwiftShader takes ~1–4 s a frame at 1080×1920.
 import { createRequire } from 'node:module';

@@ -1,6 +1,6 @@
 // cinematic-3d · film.mjs — join the shots of film.json into one film: dissolves between shots, a fade from and to black,
 // the soundtrack if there is one. Shots without an MP4 in out/ are rendered first (render.mjs).
-//   node <skill>/scripts/film.mjs                 → out/film.mp4 (master, CRF 16, tune grain) + out/film-share.mp4 (≤ 16 Mbps)
+//   node <skill>/scripts/film.mjs                 → out/film.mp4 (master, CRF 17 ≤ 40 Mbps, tune grain) + out/film-share.mp4 (≤ 12 Mbps)
 //   node <skill>/scripts/film.mjs --rerender rain → render that shot again first
 // film.json: { title, fps, dissolve (s), fade (s), shots: [{ id, page }], audio: "audio/mix.wav" (optional) }
 import { execSync, spawnSync } from 'node:child_process';
@@ -34,6 +34,6 @@ const audio = film.audio && existsSync(film.audio) ? film.audio : null;
 const inputs = files.map(f => `-i "${f}"`).join(' ') + (audio ? ` -i "${audio}"` : '');
 const amap = audio ? `-map ${files.length}:a -c:a aac -b:a 256k -af "afade=t=in:d=${F},afade=t=out:st=${(total - F).toFixed(3)}:d=${F}" -t ${total.toFixed(3)}` : '';
 const common = `-filter_complex "${chain}" -map "[v]" ${amap} -r ${film.fps || 30} -colorspace bt709 -color_primaries bt709 -color_trc bt709 -movflags +faststart`;
-execSync(`ffmpeg -y -loglevel error ${inputs} ${common} -c:v libx264 -preset slow -crf 16 -tune grain out/film.mp4`, { stdio: 'inherit' });
-execSync(`ffmpeg -y -loglevel error -i out/film.mp4 -map 0 -c:v libx264 -preset slow -crf 19 -maxrate 16M -bufsize 32M -tune grain -c:a copy -movflags +faststart out/film-share.mp4`, { stdio: 'inherit' });
+execSync(`ffmpeg -y -loglevel error ${inputs} ${common} -c:v libx264 -preset slow -crf 17 -maxrate 40M -bufsize 80M -tune grain out/film.mp4`, { stdio: 'inherit' });
+execSync(`ffmpeg -y -loglevel error -i out/film.mp4 -map 0 -c:v libx264 -preset slow -crf 20 -maxrate 12M -bufsize 24M -tune grain -c:a copy -movflags +faststart out/film-share.mp4`, { stdio: 'inherit' });
 console.log(`out/film.mp4  out/film-share.mp4  (${total.toFixed(2)} s${audio ? ', with sound' : ', silent'})`);
