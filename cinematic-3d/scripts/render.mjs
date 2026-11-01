@@ -34,7 +34,9 @@ async function open() {
   page.on('pageerror', e => console.error('page error:', e.message));
   page.on('console', m => { if (m.type() === 'error' || m.type() === 'warning') console.error(`console ${m.type()}:`, m.text().slice(0, 400)); });
   let failed = null; page.on('pageerror', e => { failed = failed || e; });
-  await page.goto(url);
+  // heavy shots build their scene before the load event (13 trees + a tram ≈ 40 s on a CPU box with 2 pages): don't let
+  // goto's 30 s default kill them; the __ready loop below has its own 3-minute limit
+  await page.goto(url, { waitUntil: 'commit', timeout: 0 });
   // wait for __ready, but stop at once if the page threw while loading
   for (const t0 = Date.now(); !(await page.evaluate(() => window.__ready === true));) {
     if (failed) throw new Error('shot failed to load: ' + failed.message);

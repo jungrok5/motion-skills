@@ -39,6 +39,9 @@
 - **The 180° flip mirrors left and right.** → The sun meant to light the right side lit the left. → Put the key on the
   camera-left when `look.flip` is on.
 - **A page error looked like a hang.** → render.mjs waited 180 s for `__ready` after the page had already thrown. → It now stops at the first page error.
+- **The heaviest shot never started (page.goto timeout).** → The rain page builds its trees and tram before the load event;
+  two pages building at once on a CPU box took > 30 s, Playwright's default. → `goto(…, { waitUntil: 'commit', timeout: 0 })`
+  and the script's own 3-minute `__ready` limit.
 - **ElevenLabs sound effects came back 0.5–2 s long.** → `duration_seconds` unset = auto (short). → Set it on the node
   (`creative_update_node`), ≥ shot + 1.5 s.
 - **CPU-only box.** → SwiftShader: rain 10 s, fog 8 s, snow 6.5 s, autumn 6 s per 1080×1920 frame (trees dominate: 1.4 M
