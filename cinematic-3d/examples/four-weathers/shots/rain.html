@@ -10,20 +10,20 @@ import * as K from 'cine/kit.js';
 
 const film = new Film({
   dur: 7, fov: 50, near: .1, far: 600,
-  atmos: { density: .022, falloff: .05, start: 14, color: col('#283a58', .9), colorUp: col('#141c2c', .35), max: 500, scatter: .3, anisotropy: .82, phaseMix: .93, skyGlow: col('#23262e', .01) },
+  atmos: { density: .015, falloff: .05, start: 16, color: col('#283a58', .75), colorUp: col('#18264a', .6), max: 500, scatter: .2, anisotropy: .82, phaseMix: .93, skyGlow: col('#23262e', .01) },
   bloom: { strength: .09, radius: 1.1, tint: col('#ffe6c8') },
-  dof: { focus: 18, aperture: 2.6, maxCoc: 30 },
+  dof: { focus: 18, aperture: 1.7, maxCoc: 30 },
   look: { exposure: .42, contrast: 1.12, saturation: 1.1, lift: col('#04060a'), shadowTint: col('#c4d2f0'), highTint: col('#fff0dc'), vignette: .45, grain: .045, ca: .7 },
 });
 const S = film.scene, R = rng(21);
 const mu = film.mirror({ y: 0, res: .5, streak: 1.1 });
 
-K.sky(film, { top: col('#06080c', .12), mid: col('#1a2233', .22), horizon: col('#2c3850', .32) });
+K.sky(film, { top: col('#0c1428', .3), mid: col('#1a2438', .3), horizon: col('#2c3850', .35) });
 S.add(new THREE.HemisphereLight(col('#4a5a7a'), col('#0b0b0c'), .3));
 const moon = new THREE.DirectionalLight(col('#9fb4e0'), .25); moon.position.set(-20, 30, 10); S.add(moon);
 
 // ground: wet stone setts, puddles, rain ripples
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), wetMaterial(film, mu, { color: '#141415', roughness: .24, puddle: .5, puddleScale: .14, ripples: 1, wet: .8, distort: .012, setts: .11, settsAspect: 1.8 }));
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), wetMaterial(film, mu, { color: '#141415', roughness: .24, puddle: .58, puddleScale: .14, ripples: 1, wet: 1.15, distort: .012, setts: .11, settsAspect: 1.8 }));
 ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; S.add(film.ground(ground));
 
 // track: from the far left, the tram comes toward us and the rails bend across the foreground, leaving bottom-left
@@ -35,12 +35,13 @@ for (let i = 0; i < NS; i++) {
   const a = track.getPointAt(i / NS), b = track.getPointAt((i + 1) / NS), t = track.getTangentAt(i / NS), n = V(-t.z, 0, t.x);
   for (const off of [-.72, .72]) { const pa = a.clone().addScaledVector(n, off), pb = b.clone().addScaledVector(n, off); railSegs.push(pa.x, .01, pa.z, pb.x, .01, pb.z, .03, .03); }
 }
-const rails = new THREE.Mesh(K.tubesGeometry(railSegs, 4), K.std('#a0948a', { metalness: 1, roughness: .16 }));
+// rails: polished steel tops that pick up the same reflection as the water (so they gleam with the tram and the lamps)
+const rails = new THREE.Mesh(K.tubesGeometry(railSegs, 4), wetMaterial(film, mu, { color: '#3a3632', roughness: .2, mask: '1.', wet: 1, distort: .002, tint: col('#ffe8cc', 3.2), detail: 0 }));
 rails.scale.y = .6; S.add(film.ground(rails));
 
 // the tram
-const T = K.tram(film, { seed: 4, passengers: 8, interiorPower: 2.2, interior: '#ffb24a', red: '#b3191b' });
-const headL = T.heads.map(() => film.lamp(V(), '#fff1d8', { power: 10, size: .06 }));
+const T = K.tram(film, { seed: 4, passengers: 8, interiorPower: 5, interior: '#ffb03c', red: '#b3191b' });
+const headL = T.heads.map(() => film.lamp(V(), '#fff1d8', { power: 3.5, size: .06 }));
 const spot = new THREE.SpotLight(col('#fff0d6'), 220, 40, .45, .75, 2); S.add(spot, spot.target);
 const signL = film.lamp(V(), '#ffc35a', { power: .6, size: .35 });
 const BOGIE = 9;
@@ -59,7 +60,7 @@ function sAt(x, z) { let best = 0, bd = 1e9; for (let i = 0; i <= 2000; i++) { c
 const S0 = sAt(-1.2, -24.4);
 
 // the pale block on the left (the hero facade), darker blocks behind, a long low block far right
-const pale = K.facadeMaterial({ wall: '#8a857c', roughness: .85, cell: [2.7, 3.15], win: [.34, .62], lit: .14, cluster: .15, base: 3.6, seed: 3, litColor: col('#ff9a45', 5), litColor2: col('#4f8fff', 4.5), cool: .08, flicker: .6, sill: '#a29c92' });
+const pale = K.facadeMaterial({ wall: '#8a857c', roughness: .85, cell: [2.7, 3.15], win: [.34, .62], lit: .2, cluster: .15, base: 3.6, seed: 3, litColor: col('#ff9a45', 8), litColor2: col('#4f8fff', 4.5), cool: .08, flicker: .6, sill: '#a29c92' });
 const dark = K.facadeMaterial({ wall: '#34322f', cell: [3, 3.2], win: [.4, .55], lit: .1, base: 4, seed: 9, litColor: col('#ffae5c', 3.5) });
 S.add(K.building({ w: 20, d: 16, h: 25, x: -12.5, z: -40, ry: -.08, mat: pale, seed: 1 }));
 S.add(K.building({ w: 18, d: 16, h: 33, x: -33, z: -48, ry: .15, mat: dark, seed: 2 }));
@@ -69,7 +70,7 @@ film.onFrame(t => { pale.userData.u.fTime.value = t; });
 // a wall lamp on the pale facade: the sharp point of light top-left, lighting the tram roof
 const wallLamp = new THREE.Mesh(new THREE.SphereGeometry(.09, 10, 8), K.glow('#dfe8ff', 80)); wallLamp.position.set(-5.7, 9.2, -31.4); S.add(wallLamp);
 const arm = new THREE.Mesh(new THREE.BoxGeometry(.05, .05, .7), K.std('#101010')); arm.position.set(-5.7, 9.3, -31.75); S.add(arm);
-film.lamp(V(-5.7, 9.2, -31.3), '#dfe8ff', { power: .22, size: .05, light: 100, distance: 34 });
+film.lamp(V(-5.7, 9.2, -31.3), '#dfe8ff', { power: .22, size: .05, light: 45, distance: 30 });
 // an unseen lamp behind-left of camera: keys the red side of the tram
 film.lamp(V(-6, 7.5, -10), '#ffe2b8', { power: .35, size: .3, light: 110, distance: 40 });
 
@@ -90,7 +91,7 @@ film.lamp(V(6.4, 2.3, -26), '#ffe3b8', { power: .5, size: .8, light: 14, distanc
 const treeMat = K.std('#0f0c0a', { roughness: .95 });
 // right side of the square: a row of plane trees and lamps receding toward the middle of the frame, a second row behind
 const treeSpots = [[4.8, -21, 17], [5.2, -33, 16], [5.4, -45, 16], [5.6, -58, 15], [5.8, -72, 15], [6, -88, 14], [8.8, -16, 18], [9.4, -28, 17], [9.8, -40, 16], [10, -54, 16], [-1.2, -64, 14], [-4.5, -78, 14], [1.8, -95, 14]];
-treeSpots.forEach(([x, z, h], i) => { const far = z < -55; const tr = K.tree({ seed: 30 + i, height: h * .8 + R() * 2, trunk: .3, depth: far ? 7 : 8, spread: .62, up: .28, twig: far ? 4 : 7, twigR: far ? .03 : .018, minR: far ? .035 : .022, lean: x < 7 ? -.6 : 0, mat: treeMat, view: V(-x, 0, -z) }); tr.position.set(x, 0, z); S.add(tr); });
+treeSpots.forEach(([x, z, h], i) => { const far = z < -55; const tr = K.tree({ seed: 30 + i, height: h * .8 + R() * 2, trunk: .3, depth: far ? 7 : 8, spread: .62, up: .28, twig: far ? 5 : 10, twigR: far ? .03 : .016, minR: far ? .035 : .022, lean: x < 7 ? -.6 : 0, mat: treeMat, view: V(-x, 0, -z) }); tr.position.set(x, 0, z); S.add(tr); });
 const lampSpots = [[3.7, -27], [3.9, -39], [4.1, -51], [4.3, -64], [4.5, -78], [4.7, -94], [4.9, -112], [8, -22], [8.5, -46], [9, -70], [9.4, -98]];
 lampSpots.forEach(([x, z], i) => K.streetLamp(film, { x, z, h: 7.4, style: 'pole', color: '#ffe0aa', power: 1, light: i < 3 ? 40 : 0, distance: 26, bulb: 24, size: .25 }));
 // a near post at the right edge, out of focus

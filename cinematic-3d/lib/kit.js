@@ -336,7 +336,8 @@ export function tram(film, { seed = 4, length = 14, red = '#9c1414', cream = '#e
   const lm = new THREE.Mesh(loft(lowerProf, lowerCol, true), body), um = new THREE.Mesh(loft(upperProf, upperCol, true), body);
   G.add(lm, um);
   // glass all round the window band (sides follow the nose curve; the windshield caps the front)
-  const glassM = new THREE.MeshStandardMaterial({ color: '#d0dae6', roughness: .04, metalness: 0, transparent: true, opacity: .1, depthWrite: false, side: THREE.DoubleSide });
+  // the glass carries a warm haze of the lit interior (what makes tram windows read as glowing panes from outside)
+  const glassM = new THREE.MeshStandardMaterial({ color: '#d0dae6', roughness: .04, metalness: 0, transparent: true, opacity: .12, depthWrite: false, side: THREE.DoubleSide, emissive: col(interior), emissiveIntensity: interiorPower * .55 });
   const glassG = loft(x => { const h = halfW(x) - .015; return [[h, ySill], [h, yHead], [-h, yHead], [-h, ySill]]; }, () => '#ffffff', false);
   // drop the ceiling quad strip (middle segment) — keep only the two sides
   { const idx = glassG.index.array, keep = []; for (let i = 0; i < idx.length; i += 6) { const k = (i / 6) % 3; if (k !== 1) keep.push(...idx.slice(i, i + 6)); } glassG.setIndex(keep); }
@@ -361,7 +362,7 @@ export function tram(film, { seed = 4, length = 14, red = '#9c1414', cream = '#e
   const ceil = new THREE.Mesh(new THREE.BoxGeometry(iL, .03, W - .5), glow(interior, interiorPower)); ceil.position.set(ix, yHead + .12, 0); inner.add(ceil);
   const ceilSide = std('#e8dcc0', { roughness: .8, emissive: col(interior), emissiveIntensity: .35 });
   for (const s of [-1, 1]) { const c = new THREE.Mesh(new THREE.BoxGeometry(iL, .03, .25), ceilSide); c.position.set(ix, yHead + .08, s * (W / 2 - .22)); c.rotation.x = s * .5; inner.add(c); }
-  const wallM = std('#c9b48e', { roughness: .8, emissive: col(interior), emissiveIntensity: .12 });
+  const wallM = std('#c9b48e', { roughness: .8, emissive: col(interior), emissiveIntensity: .6 });
   for (const s of [-1, 1]) { const w = new THREE.Mesh(new THREE.BoxGeometry(iL, ySill - .9, .04), wallM); w.position.set(ix, (ySill + .9) / 2, s * (W / 2 - .12)); inner.add(w); }
   const floor = new THREE.Mesh(new THREE.BoxGeometry(iL + 1.5, .04, W - .26), std('#2b1e16', { emissive: col(interior), emissiveIntensity: .12 })); floor.position.set(ix + .7, .92, 0); inner.add(floor);
   const endWall = new THREE.Mesh(new THREE.BoxGeometry(.04, yHead - .9, W - .3), wallM); endWall.position.set(-L / 2 + .22, (yHead + .9) / 2, 0); inner.add(endWall);
@@ -414,7 +415,7 @@ export function tram(film, { seed = 4, length = 14, red = '#9c1414', cream = '#e
   G.traverse(o => { if (o.isMesh && o.material !== glassM) o.castShadow = true; });
   // interior light that spills through the windows onto the stones
   const lights = [];
-  for (const x of [-L / 4, L / 4 - .5]) { const pl = new THREE.PointLight(col(interior), 8, 13, 2); pl.position.set(x, 2.2, 0); G.add(pl); lights.push(pl); }
+  for (const x of [-L / 4, L / 4 - .5]) { const pl = new THREE.PointLight(col(interior), 8 * interiorPower / 2.6, 13, 2); pl.position.set(x, 2.2, 0); G.add(pl); lights.push(pl); }
   film.scene.add(G);
   return { group: G, length: L, heads, lights, noseX, ySign: sgnY };
 }

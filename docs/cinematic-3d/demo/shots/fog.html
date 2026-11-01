@@ -1,0 +1,60 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>fog · four weathers</title>
+<script type="importmap">{ "imports": { "three": "../lib/three.module.min.js", "cine/": "../lib/" } }</script>
+</head><body>
+<script type="module">
+// Shot: blue hour over a downtown sunk in fog. Glass towers rise out of a slow sea of cloud lit orange from the streets below;
+// the tallest one wears a lit crown and a spire with three red lights. A drone drifts forward and up.
+import { Film, THREE, V, col, rng, ease, noise1 } from 'cine/cine.js';
+import * as K from 'cine/kit.js';
+
+const film = new Film({
+  dur: 7, fov: 34, near: 1, far: 6000,
+  atmos: { density: .0011, falloff: .004, start: 120, color: col('#3a5aa8', .5), colorUp: col('#24448e', .4), max: 4000, scatter: .0, anisotropy: .7, phaseMix: .8 },
+  cloud: { bottom: -20, top: 200, density: .1, scale: .0032, cover: .4, steps: 40, wind: V(.012, .0, .004), litTop: col('#9eaae0', .52), litBottom: col('#ff8c3c', .5), shadow: col('#1c2a5c', .08) },
+  bloom: { strength: .07, radius: 1.1, tint: col('#ffe4c4') },
+  dof: { focus: 500, aperture: 2.2, maxCoc: 22 },
+  look: { exposure: .9, contrast: 1.08, saturation: 1.12, lift: col('#040814'), shadowTint: col('#c0ccff'), highTint: col('#fff0dc'), vignette: .4, grain: .075, grainSize: 1.15, ca: .5 },
+});
+const S = film.scene, R = rng(9);
+K.sky(film, { top: col('#0d2266', .55), mid: col('#1f3d93', .75), horizon: col('#4064b0', .85), stars: .0 });
+S.add(new THREE.HemisphereLight(col('#6a86d0'), col('#c08050'), .5));
+
+// curtain-wall glass: a fine mullion grid, blue sky in the glass, offices lit in clusters
+const glass = (seed, lit, cluster = .7) => K.facadeMaterial({ mode: 'curtain', wall: '#141a26', cell: [3, 3.8], win: [.9, .76], lit, cluster, clusterScale: [.09, .55], seed, base: 0, litColor: col('#ffc27a', 4.2), litColor2: col('#fff0d8', 3.5), cool: .15, skyLow: col('#3c5cb0', .55), skyHigh: col('#1c3480', .5), mullion: col('#7f8fb8', .25), blinds: .2 });
+const towers = [
+  // x, z, w, d, h, steps, crown, spire, lit
+  [0, -420, 44, 44, 330, 3, 16, 60, .42],
+  [-150, -330, 58, 50, 255, 0, 0, 0, .3],
+  [-62, -250, 40, 40, 175, 0, 0, 0, .34],
+  [-25, -330, 34, 34, 110, 0, 0, 0, .3],
+  [70, -300, 46, 46, 205, 0, 0, 0, .45],
+  [118, -420, 40, 40, 248, 0, 0, 0, .3],
+  [175, -330, 44, 44, 172, 0, 0, 0, .55],
+  [215, -470, 36, 36, 230, 0, 0, 0, .35],
+  [32, -560, 40, 40, 290, 0, 0, 0, .3],
+  [-95, -560, 36, 36, 200, 0, 0, 0, .3],
+  [-205, -210, 40, 40, 120, 0, 0, 0, .35],
+  [-130, -150, 34, 34, 70, 0, 0, 0, .4],
+  [58, -165, 34, 34, 62, 0, 0, 0, .45],
+  [-280, -480, 50, 50, 210, 0, 0, 0, .3],
+  [300, -380, 50, 50, 160, 0, 0, 0, .35],
+  [-40, -720, 46, 46, 300, 0, 0, 0, .28],
+  [150, -650, 42, 42, 270, 0, 0, 0, .3],
+  [-200, -700, 44, 44, 240, 0, 0, 0, .3],
+  [260, -580, 40, 40, 200, 0, 0, 0, .32],
+  [-330, -330, 44, 44, 150, 0, 0, 0, .3],
+  [95, -230, 30, 30, 140, 0, 0, 0, .4],
+];
+towers.forEach(([x, z, w, d, h, steps, crown, spire, lit], i) => K.skyscraper(film, { x, z, w, d, h, steps, crown, spire, seed: i * 7 + 3, mat: glass(i * 7 + 3, lit), redLights: spire ? 0 : 2 }));
+
+film.onFrame((t, f) => {
+  const k = ease.inOut(t / f.dur);
+  const cam = f.camera;
+  cam.position.set(-10 + k * 6 + noise1(t * .4, 2) * .6, 238 + k * 9 + noise1(t * .35, 3) * .4, 430 - k * 45);
+  cam.lookAt(10, 205 + k * 4, -400);
+  f.dofCfg.focus = cam.position.distanceTo(V(0, 250, -420));
+});
+film.start();
+</script>
+</body></html>

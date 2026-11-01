@@ -62,6 +62,21 @@
       "workedExample": [
         { "title": "「마지막 도넛」 · 무빙툰 3장면 · 74초 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/motion-webtoon/demo/donut/" }
       ]
+    },
+    {
+      "id": "cinematic-3d",
+      "name": "cinematic-3d",
+      "tagline": "비 오는 밤거리, 눈 덮인 골목, 안개에 잠긴 도시, 웅덩이에 비친 시계탑 같은 시네마틱 3D 장면을 three.js로 만듭니다. 젖은 반사, 안개와 가로등 빛, 피사계 심도, 필름 그레인으로 렌더 같은 9:16 MP4와 브라우저에서 도는 샷 페이지를 만듭니다.",
+      "posterAlt": "cinematic-3d로 만든 「Four Weathers」의 네 샷: 구름 바다 위로 솟은 파란 시간의 빌딩들, 비 오는 밤 젖은 돌바닥 위의 빨간 트램, 눈 덮인 골목에서 개와 멀어지는 사람, 웅덩이에 비친 골든 아워의 시계탑",
+      "poster": "cinematic-3d/poster.jpg",
+      "tags": ["9:16", "MP4", "라이브 페이지", "날씨 · 안개", "앰비언스"],
+      "stats": ["4샷 · 25.6초", "날씨 4가지"],
+      "page": "cinematic-3d/",
+      "source": "cinematic-3d/",
+      "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "cinematic-3d/examples/four-weathers/" },
+      "workedExample": [
+        { "title": "「Four Weathers」 · 4샷 · 25.6초 · 샷 페이지", "url": "https://jungrok5.github.io/motion-skills/cinematic-3d/demo/shots/fog.html" }
+      ]
     }
   ]
 }
