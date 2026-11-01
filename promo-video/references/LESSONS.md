@@ -3,8 +3,11 @@
 From making 9 promo videos (5 styles for a tax accountant, 4 for an overseas buying agent).
 
 ## Research and copy
-- **Blog page would not fetch** (Naver blog blocks scrapers) → use the blog's RSS feed (`rss.blog.naver.com/<id>.xml`) for
-  post titles and summaries.
+- **Blog page would not fetch**: Claude's web-fetch tool refuses every Naver host (blog, m.blog, rss.blog) → from a shell,
+  `curl` the RSS feed (`rss.blog.naver.com/<id>.xml`, first ~800 chars per post) and the full posts at
+  `m.blog.naver.com/PostView.naver?blogId=<id>&logNo=<no>` with a mobile user agent (text + image URLs; download images
+  with a `m.blog.naver.com` referer and read them — results and reviews are often images). No shell network → ask
+  the person to paste or upload the posts.
 - **A Q&A line was factually wrong** ("월세 2천만 원 이하 분리과세" applies to housing rent only) → keep a facts sheet with the
   source sentence for every claim; let a domain-literate pass read the script before narration is generated.
 - **Tempting to add numbers** (clients served, ratings) that the site does not state → never; mark mock quote amounts

@@ -57,12 +57,15 @@ Requirements: Node + Playwright Chromium, ffmpeg, Python 3 + numpy. ElevenLabs c
 ~6 Korean syllables per second), music composed with `synth.py` (`references/song-recipes.py`) and synthesized SFX;
 narration can be added later by re-timing scenes on the take; or (b) subscribe, connect the full connector
 (claude.ai/customize/connectors → custom connector `https://api.elevenlabs.io/v1/mcp`) and do the full version.
-**Sandboxed desktop / Cowork environments** may block outbound network from the shell: read the source site and this
-skill's files with the web-fetch tool instead (Naver blogs: the RSS feed), and fall back to locally installed fonts if
-the bundled ones cannot be downloaded (`render.mjs` already finds a globally installed Playwright).
+**Sandboxed desktop / Cowork environments** may block outbound network from the shell: read this skill's files with the
+web-fetch tool instead, and fall back to locally installed fonts if the bundled ones cannot be downloaded (`render.mjs`
+already finds a globally installed Playwright). **Naver (blog.naver.com, m.blog.naver.com, rss.blog.naver.com) is
+refused by Claude's web-fetch tool**; only a shell with network (`curl` the RSS feed and
+`m.blog.naver.com/PostView.naver?blogId=…&logNo=…` with a mobile user agent) can read it. Without that, say so and ask
+the person to paste the posts or upload them as PDF / screenshots (results are often images) — never guess the facts.
 
 ## Workflow
-1. **Research → facts sheet.** Read the site/blog/profile (use the RSS feed if the blog blocks fetching). Write down only
+1. **Research → facts sheet.** Read the site/blog/profile (Naver blogs: `curl` the RSS feed / mobile post pages from a shell; web-fetch is refused). Write down only
    what the source says: services, process steps, promises, contact, credentials. **Never invent numbers** (clients,
    ratings, years) — mock amounts get an "예시/example" label. See `references/STORYBOARD.md`.
 2. **Format.** Shorts/Reels/"세로"/"3분 이내" → read `references/SHORTS.md`: portrait only, 60–90 s for a considered
