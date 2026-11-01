@@ -40,12 +40,3 @@ scroll-embedded résumé pieces (github.com/jungrok5/resume → `public/motion/`
   and diff stills before trusting it.
 - A kit must not carry a topic's look: no default scene, neutral default colours, and a template on a different subject.
   The risk is sameness — every topic still designs its arrangement, palette and camera path.
-
-**Recreating an AI-image reel in code (specimen-zoom, 2026-11)**
-- The source reel's pictures were AI-generated stills with a Ken Burns push; only the HUD and cuts were code. Painting each close-up
-  as a still "plate" once (seeded noise, then bloom) and only moving the camera per frame keeps the look and plays in real time.
-- Flat shapes read as 3D only with one light direction everywhere (top-left), an inner shadow for thickness, and a rim light.
-- Grey noise laid over a colour with `source-atop` washes it out; mask the noise to the painted shape and blend it with `overlay` (`layer({ tex })`).
-- A plain cloud noise looks like sky inside a liquid; ridged noise (`1 − |2n − 1|`, raised to a power, slightly blurred) reads as caustics.
-- A continuous zigzag reads as a neon sign, not cristae; folds that reach in from both walls like fingers, with a cast shadow, read as membrane.
-- `render-chunked.sh` finds the length by matching `DURATION = <number>` in the page text; a page whose DURATION is computed needs that line in a comment.

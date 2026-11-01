@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plant Cell Zoom</title>
+<style>
+:root{--bg:#f2f5f2;--fg:#17201a;--mut:#5b6a60;--line:#cdd6cf;--acc:#3c8a14}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#030805;--fg:#dbe7de;--mut:#8a9a8f;--line:#1f2b23;--acc:#a6ff4a}}
+:root[data-theme="dark"]{--bg:#030805;--fg:#dbe7de;--mut:#8a9a8f;--line:#1f2b23;--acc:#a6ff4a}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px 16px}
+.stage,.bar{width:min(100%,calc((100vh - 84px) * var(--ar,.5625)))}
+.stage{position:relative;aspect-ratio:9/16;border-radius:12px;overflow:hidden;background:#000;cursor:pointer}
+canvas{width:100%;height:100%;display:block}
+.bar{display:flex;align-items:center;gap:12px;font-size:15px}
+.bar button{appearance:none;border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:8px;width:40px;height:34px;font-size:15px;cursor:pointer;flex:none}
+.bar input{flex:1;min-width:0;accent-color:var(--acc)}
+.bar span{color:var(--mut);font-variant-numeric:tabular-nums;flex:none}
+#load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#a6ff4a;font:600 15px/1.2 ui-monospace,monospace;letter-spacing:.06em;background:#020604;pointer-events:none;transition:opacity .4s}
+html.render body{padding:0;display:block}
+html.render .stage{width:1080px;border-radius:0}
+html.render .bar,html.render #load{display:none}
+</style>
+</head>
+<body>
+<div class="stage" id="stage"><canvas id="c"></canvas><div id="load">building…</div></div>
+<div class="bar"><button id="pp" aria-label="Play or pause">❚❚</button><input id="seek" type="range" min="0" max="28" step="0.01" value="0" aria-label="Seek"><span id="time">0:00 / 0:28</span></div>
+<script src="../../kit/specimen-zoom.js"></script>
+<script>
+'use strict';
+// ============================================================================================
+//  Plant cell — a three-dimensional cutaway, 14 shots × 2 s, drawn entirely in Canvas 2D on the
+//  specimen-zoom kit. This page holds only the topic: organelles, the cell, the plates, the shot
+//  table and the HUD's words and numbers. ?ar=4:5 gives the feed cut; default is 9:16 (shorts).
+// ============================================================================================
+const { TAU, mk, TEX, rng, clamp, lerp, p, eo, eio, ss, wob, hx, mix, rgba, WHITE, BLACK, lit, drk,
+  circleP, ellP, lineP, cr, smoothP, blobPts, insetPoly, reflect, noiseTex, texOver, devScale, innerShadow, blurLayer, layer, bloom,
+  sphere, body, tube, fiberBand, network, dots, liquidBody, bubbles, fieldBase } = SZ;
+// DURATION = 28 (14 shots × 2 s; scripts/render-chunked.sh reads this line)
+const AR = new URLSearchParams(location.search).get('ar') === '4:5' ? '4:5' : '9:16', LY = SZ.LAYOUT[AR];
+document.documentElement.style.setProperty('--ar', LY.W / LY.H);
+const OS = 1.6, OX = -150, OY = -420, OWW = 1400, OWH = 2400;   // overview plate: world → plate px = (w - O) * OS
+let PW, PH, PY0;                           // close-up plate frame, set from the film below
+
+// ---------- organelles ----------
+const COL = {
+  wall: [74, 160, 34], cyto: [22, 52, 140], vac: [60, 200, 240], nuc: [140, 62, 215], nucl: [92, 40, 190], er: [52, 112, 230],
+  mito: [238, 104, 32], golgi: [232, 186, 40], ribo: [214, 30, 72], mem: [214, 70, 170], chl: [72, 176, 40], tono: [70, 230, 220]
+};
+function chloroplast(g, x, y, rx, ry, rot, seed, o = {}) {
+  const R = rng(seed); g.save(); g.translate(x, y); g.rotate(rot);
+  const outer = ellP(0, 0, rx, ry);
+  body(g, outer, [-rx, -ry, 2 * rx, 2 * ry], [78, 190, 40], { tex: TEX.fine, texA: .35, texS: Math.max(.15, rx / 260), hiK: .5 });
+  const inner = ellP(0, 0, rx * .88, ry * .9);
+  const ig = g.createRadialGradient(-rx * .2, -ry * .2, 0, 0, 0, Math.max(rx, ry)); ig.addColorStop(0, rgba([70, 150, 40])); ig.addColorStop(1, rgba([22, 72, 18]));
+  g.fillStyle = ig; g.fill(inner); texOver(g, inner, TEX.fine, { alpha: .35, scale: Math.max(.12, rx / 300) });
+  innerShadow(g, inner, 'rgba(4,22,4,.95)', Math.min(rx, ry) * .25, rx * .04, ry * .04);
+  // grana: stacks of thylakoid discs on a jittered grid inside the stroma
+  const s = Math.min(rx, ry) * (o.grid ?? .62), stacks = [];
+  for (let gy = -ry; gy <= ry; gy += s) for (let gx = -rx; gx <= rx; gx += s) {
+    const jx = gx + (R() - .5) * s * .35, jy = gy + (R() - .5) * s * .35;
+    if ((jx / (rx * .72)) ** 2 + (jy / (ry * .74)) ** 2 < 1) stacks.push([jx, jy]);
+  }
+  const gr = s * .36;
+  g.save(); g.strokeStyle = rgba([150, 230, 90], .55); g.lineWidth = Math.max(1, gr * .1);
+  for (let i = 0; i < stacks.length; i++) for (let j = i + 1; j < stacks.length; j++) { const a = stacks[i], b = stacks[j]; if (Math.hypot(a[0] - b[0], a[1] - b[1]) < s * 1.25) { g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); } }
+  g.restore();
+  stacks.sort((a, b) => a[1] - b[1]);
+  for (const [sx, sy] of stacks) { g.save(); g.translate(sx, sy); g.rotate(-rot); granum(g, 0, gr * .9, gr, 4 + (R() * 4 | 0)); g.restore(); }
+  // outer rim light
+  g.save(); g.clip(outer); g.strokeStyle = rgba([200, 255, 140], .45); g.lineWidth = Math.max(1.5, rx * .03); g.translate(-rx * .015, -ry * .02); g.stroke(ellP(0, 0, rx * .97, ry * .97)); g.restore();
+  g.restore();
+}
+function granum(g, x, y, r, n) { // stack of discs, bottom at (x, y)
+  const th = r * .3, ry = r * .42;
+  for (let k = 0; k < n; k++) {
+    const yy = y - k * th * 1.12;
+    g.fillStyle = rgba([10, 50, 10], .9); g.beginPath(); g.ellipse(x, yy + th * .15, r * 1.02, ry, 0, 0, TAU); g.fill();
+    const sg = g.createLinearGradient(x - r, 0, x + r, 0); sg.addColorStop(0, rgba([26, 90, 20])); sg.addColorStop(.35, rgba([120, 220, 60])); sg.addColorStop(1, rgba([20, 70, 16]));
+    g.fillStyle = sg; g.beginPath(); g.ellipse(x, yy, r, ry, 0, 0, Math.PI); g.lineTo(x - r, yy - th); g.ellipse(x, yy - th, r, ry, 0, Math.PI, 0, true); g.closePath(); g.fill();
+    const tg = g.createRadialGradient(x - r * .3, yy - th - ry * .3, 0, x, yy - th, r); tg.addColorStop(0, rgba([210, 255, 140])); tg.addColorStop(1, rgba([80, 180, 40]));
+    g.fillStyle = tg; g.beginPath(); g.ellipse(x, yy - th, r, ry, 0, 0, TAU); g.fill();
+  }
+}
+function mitochondrion(g, x, y, rx, ry, rot, seed) {
+  const R = rng(seed); g.save(); g.translate(x, y); g.rotate(rot);
+  const outer = ellP(0, 0, rx, ry);
+  body(g, outer, [-rx, -ry, 2 * rx, 2 * ry], COL.mito, { tex: TEX.fine, texA: .45, texS: Math.max(.12, rx / 300), hiK: .5 });
+  const inner = ellP(0, 0, rx * .86, ry * .78);
+  g.fillStyle = rgba([92, 22, 8]); g.fill(inner); texOver(g, inner, TEX.fine, { alpha: .3, scale: Math.max(.1, rx / 400) });
+  innerShadow(g, inner, 'rgba(30,4,0,.95)', ry * .3, rx * .02, ry * .05);
+  // cristae: one serpentine fold of the inner membrane
+  // cristae: folds of the inner membrane reaching in from both sides like fingers
+  const folds = Math.max(5, Math.round(rx / ry * 4.2)), L = rx * .8, step = 2 * L / folds, cw = Math.max(2, step * .5), paths = [];
+  paths.push(ellP(0, 0, rx * .84, ry * .76));
+  for (let side of [-1, 1]) for (let i = 0; i < folds; i++) {
+    const xx = -L + step * (i + (side > 0 ? .5 : .1)) + (R() - .5) * step * .2, e = Math.sqrt(Math.max(0, 1 - (xx / (rx * .84)) ** 2)); if (e < .3) continue;
+    const edge = ry * .76 * e * side, depth = ry * .76 * e * (.95 + R() * .5), bend = (R() - .5) * step * .5;
+    const q = new Path2D(); q.moveTo(xx, edge); q.quadraticCurveTo(xx + bend, edge - side * depth * .5, xx + bend * .4, edge - side * depth); paths.push(q);
+  }
+  g.save(); g.clip(inner);
+  for (const q of paths) { g.save(); g.translate(cw * .18, cw * .3); g.strokeStyle = 'rgba(25,2,0,.7)'; g.lineWidth = cw * 1.25; g.lineCap = 'round'; g.stroke(q); g.restore(); }
+  for (const q of paths) tube(g, q, cw, [232, 96, 30], { hl: .45 });
+  g.restore();
+  g.save(); g.clip(outer); g.strokeStyle = rgba([255, 200, 140], .5); g.lineWidth = Math.max(1, ry * .05); g.translate(-rx * .01, -ry * .03); g.stroke(ellP(0, 0, rx * .96, ry * .93)); g.restore();
+  g.restore();
+}
+function golgi(g, x, y, w, seed, o = {}) {
+  const R = rng(seed), n = o.n ?? 5, tw = w * .085, gap = tw * 1.25; g.save(); g.translate(x, y); g.rotate(o.rot || 0);
+  const c = COL.golgi;
+  for (let i = n - 1; i >= 0; i--) {
+    const half = w * .5 * (1 - i * .07), yy = -n * gap / 2 + i * gap, cv = w * .14;
+    const j = () => (R() - .5) * tw * .5, pts = [[-half, yy + cv + j()], [-half * .55, yy - cv * .35 + j()], [0, yy - cv * .6 + j()], [half * .55, yy - cv * .35 + j()], [half, yy + cv + j()]];
+    const tw2 = tw * (.75 + R() * .45);
+    tube(g, lineP(cr(pts, 10)), tw2, c, { hl: .7 });
+    for (const sx of [-1, 1]) { const e = pts[sx < 0 ? 0 : 4]; sphere(g, e[0] + sx * tw2 * .2, e[1], tw2 * (.62 + R() * .25), c, { spec: .7 }); }
+  }
+  for (let i = 0; i < (o.ves ?? 14); i++) { const sx = R() < .5 ? -1 : 1, a = R(); sphere(g, sx * w * (.48 + R() * .22), -n * gap / 2 + (a - .15) * n * gap * 1.6, tw * (.25 + R() * .5), R() < .25 ? lit(c, .2) : c, { spec: .9 }); }
+  g.restore();
+}
+function nucleus(g, x, y, r, seed, o = {}) {
+  const R = rng(seed), c = COL.nuc, P = circleP(x, y, r);
+  sphere(g, x, y, r, c, { tex: TEX.grain, texA: .7, texS: Math.max(.15, r / 220), spec: .5, rimA: .5, rimC: [220, 150, 255] });
+  // nuclear pores
+  for (let i = 0; i < (o.pores ?? 60); i++) {
+    const a = R() * TAU, d = Math.sqrt(R()) * .93, px = x + Math.cos(a) * d * r, py = y + Math.sin(a) * d * r, f = Math.sqrt(1 - d * d), pr = r * .035;
+    g.save(); g.translate(px, py); g.rotate(a); g.scale(Math.max(.25, f), 1);
+    g.fillStyle = rgba([40, 10, 70], .85); g.beginPath(); g.arc(0, 0, pr, 0, TAU); g.fill();
+    g.strokeStyle = rgba([220, 170, 255], .55); g.lineWidth = pr * .45; g.beginPath(); g.arc(0, 0, pr * 1.15, Math.PI * .9, Math.PI * 2.1); g.stroke(); g.restore();
+  }
+  // cut-away opening showing the inside
+  const cx = x + r * (o.cx ?? .1), cy = y + r * (o.cy ?? .02), cr2 = r * (o.cut ?? .64);
+  const hole = circleP(cx, cy, cr2);
+  const hg = g.createRadialGradient(cx + cr2 * .35, cy + cr2 * .35, cr2 * .1, cx, cy, cr2); hg.addColorStop(0, rgba([120, 50, 200])); hg.addColorStop(.7, rgba([58, 16, 110])); hg.addColorStop(1, rgba([26, 6, 52]));
+  g.fillStyle = hg; g.fill(hole); texOver(g, hole, TEX.grain, { alpha: .8, scale: Math.max(.12, r / 300) });
+  innerShadow(g, hole, 'rgba(10,0,25,.95)', cr2 * .35, -cr2 * .1, -cr2 * .12);
+  // chromatin specks
+  g.save(); g.clip(hole); for (let i = 0; i < 80; i++) { const a = R() * TAU, d = Math.sqrt(R()) * cr2; g.fillStyle = rgba([200, 140, 255], .25 + R() * .35); g.beginPath(); g.arc(cx + Math.cos(a) * d, cy + Math.sin(a) * d, cr2 * (.008 + R() * .02), 0, TAU); g.fill(); } g.restore();
+  // rim of the cut (thickness of the double envelope)
+  g.save(); g.lineWidth = r * .07; g.strokeStyle = rgba([175, 105, 245]); g.stroke(hole); g.lineWidth = r * .025; g.strokeStyle = rgba([235, 200, 255], .7); g.translate(-r * .012, -r * .015); g.stroke(hole); g.restore();
+  // nucleolus
+  sphere(g, cx + cr2 * .08, cy + cr2 * .12, cr2 * .42, COL.nucl, { tex: TEX.grain, texA: .8, texS: Math.max(.12, r / 400), spec: .9, rimC: [190, 130, 255] });
+  return P;
+}
+function erSheet(g, pts, w, seed, o = {}) { // folded ER cisterna with ribosomes on the upper edge
+  const R = rng(seed), d = cr(pts, 10);
+  tube(g, lineP(d), w, o.c || COL.er);
+  if (o.ribo !== false) for (let i = 0; i < d.length; i += o.every ?? 3) { const [x, y] = d[i]; sphere(g, x + (R() - .5) * w * .3, y - w * .42, w * (o.rr ?? .13), COL.ribo, { spec: .9, rimA: .2 }); }
+}
+
+// ---------- the cell: overview world (1080-wide frame, cell centred near (560, 610) at zoom 1) ----------
+const HEX = [[300, 280], [700, 215], [872, 425], [848, 905], [520, 1002], [232, 842]];
+const CC = HEX.reduce((a, q) => [a[0] + q[0] / 6, a[1] + q[1] / 6], [0, 0]);
+const INNER = insetPoly(HEX, 22), MEMB = insetPoly(HEX, 25);
+const VAC = [[380, 330], [520, 292], [640, 300], [662, 382], [604, 452], [578, 560], [522, 640], [440, 628], [396, 540], [372, 430]];
+const NUC = [735, 520, 95];
+
+function paintCell(g, xray) {
+  const R = rng(7);
+  // neighbours: reflect the cell across each wall; a second ring further out, blurred
+  const ring1 = HEX.map((a, i) => HEX.map(q => reflect(q, a, HEX[(i + 1) % 6])));
+  const ring2 = []; ring1.forEach((poly, j) => poly.forEach((a, i) => { const b = poly[(i + 1) % 6]; const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]; if (Math.hypot(m[0] - CC[0], m[1] - CC[1]) > 330) ring2.push(poly.map(q => reflect(q, a, b))); }));
+  const neighbour = (t, polys, dim, seed) => polys.forEach((poly, j) => {
+    const c = poly.reduce((a, q) => [a[0] + q[0] / 6, a[1] + q[1] / 6], [0, 0]);
+    const ig = t.createRadialGradient(c[0], c[1], 20, c[0], c[1], 380); ig.addColorStop(0, rgba([8, 34, 14])); ig.addColorStop(.75, rgba([3, 14, 6])); ig.addColorStop(1, rgba([16, 52, 14]));
+    t.fillStyle = ig; t.fill(lineP(poly, true));
+    poly.forEach((a, i) => fiberBand(t, a, poly[(i + 1) % 6], 40, seed + j * 13 + i, { mid: drk(COL.wall, dim), dark: [6, 26, 6], light: drk([170, 240, 100], dim), density: .035 }));
+  });
+  g.fillStyle = '#020905'; g.fillRect(OX, OY, OWW, OWH);
+  blurLayer(g, 7, t => neighbour(t, ring2, .55, 500));
+  blurLayer(g, 2.2, t => neighbour(t, ring1, .3, 300));
+  // interior
+  const inner = lineP(INNER, true);
+  g.save(); g.clip(inner);
+  fieldBase(g, 200, 200, 700, 820, 11, { n: 1100, step: 6, lw: .8, ts: .6 });
+  dots(g, 230, 230, 640, 760, 120, 12, [70, 150, 255], 2, 6, { spec: .8 });
+  // ER around the nucleus
+  for (let k = 0; k < 6; k++) {
+    const rr = NUC[2] + 26 + k * 17, pts = [];
+    for (let a = .15; a <= 3.5; a += .22) pts.push([NUC[0] + Math.cos(a) * rr + Math.sin(a * 5 + k) * 6, NUC[1] + Math.sin(a) * rr * 1.05 + Math.cos(a * 4 + k) * 6]);
+    erSheet(g, pts, 11, 40 + k, { every: 4, rr: .2 });
+  }
+  // vacuole
+  const vac = smoothP(VAC); liquidBody(g, vac, [370, 290, 295, 352], { caus: .22, cs: .35 });
+  bubbles(g, 380, 300, 280, 330, 26, 21, 2, 9, (x, y) => g.isPointInPath(vac, x * OS - OX * OS, y * OS - OY * OS));
+  nucleus(g, NUC[0], NUC[1], NUC[2], 31, { pores: 70 });
+  chloroplast(g, 362, 478, 52, 96, .1, 51);
+  chloroplast(g, 358, 708, 56, 100, -.06, 52);
+  chloroplast(g, 482, 722, 72, 42, -.22, 53, { grid: .72 });
+  mitochondrion(g, 592, 782, 62, 28, -.15, 61);
+  mitochondrion(g, 722, 742, 62, 28, -.1, 62);
+  mitochondrion(g, 790, 640, 40, 20, 1.3, 63);
+  golgi(g, 612, 892, 175, 71, { n: 5, ves: 16 });
+  // polysome cluster + free ribosomes
+  for (let i = 0; i < 9; i++) { const a = i * .75, r = 6 + i * 2.2; sphere(g, 455 + Math.cos(a) * r, 868 + Math.sin(a) * r, 5.5, COL.ribo, { spec: 1 }); }
+  dots(g, 260, 260, 600, 720, 110, 13, COL.ribo, 2, 4.5);
+  dots(g, 260, 600, 560, 380, 18, 14, [130, 60, 220], 4, 9);
+  innerShadow(g, inner, 'rgba(0,10,0,.9)', 26, 4, 6);
+  g.restore();
+  // plasma membrane
+  g.save(); g.strokeStyle = rgba(COL.mem, .9); g.lineWidth = 3; g.stroke(lineP(MEMB, true)); g.strokeStyle = rgba([255, 170, 230], .5); g.lineWidth = 1; g.stroke(lineP(insetPoly(HEX, 27), true)); g.restore();
+  // the wall
+  const band = new Path2D(); band.addPath(lineP(insetPoly(HEX, -22), true)); band.addPath(lineP(INNER, true));
+  g.save(); g.clip(band, 'evenodd');
+  HEX.forEach((a, i) => fiberBand(g, a, HEX[(i + 1) % 6], 46, 200 + i, { density: .07, sc: .8 }));
+  g.restore();
+  // plasmodesmata pits along the wall
+  [[.3, 0], [.7, 1], [.45, 2], [.5, 3], [.35, 4], [.6, 5]].forEach(([f, i]) => { const a = HEX[i], b = HEX[(i + 1) % 6], x = lerp(a[0], b[0], f), y = lerp(a[1], b[1], f); g.fillStyle = 'rgba(8,30,6,.85)'; g.beginPath(); g.arc(x, y, 4, 0, TAU); g.fill(); g.strokeStyle = 'rgba(200,255,140,.5)'; g.lineWidth = 1; g.stroke(); });
+}
+
+
+// the closed cell as a rotating box (shot 1), then it opens into the cutaway
+function drawPrism(g, cam, lt, alpha) {
+  alpha *= 1 - ss(p(lt, 1.15, .4)); if (alpha <= 0) return;
+  const u = clamp(lt / 1.5), yaw = lerp(-1.05, 0, eio(u)), pitch = lerp(.42, 0, eio(u));
+  g.save(); g.globalAlpha = alpha;
+  SZ.prism(g, HEX, CC, 430, yaw, pitch, q => [F.FX + (CC[0] + q[0] - cam.x) * cam.z, F.FY + (CC[1] + q[1] - cam.y) * cam.z], TEX.fiber, { edge: [96, 196, 44], edgeW: 22, scale: cam.z });
+  g.restore();
+}
+
+// ---------- close-up plates: painted in a 1240-wide frame with the subject around (620, 735); PY0..PY0+PH is what the layout shows ----------
+const PAINT = {
+  wall(g) {
+    g.fillStyle = '#020a05'; g.fillRect(0, PY0, PW, PH);
+    const bgG = g.createRadialGradient(250, 700, 50, 250, 700, 900); bgG.addColorStop(0, '#0c2a10'); bgG.addColorStop(1, '#010402'); g.fillStyle = bgG; g.fillRect(0, PY0, PW, PH);
+    // the neighbouring cell, out of focus on the left
+    blurLayer(g, 16, t => { fieldBase(t, -100, PY0, 700, PH, 2, { n: 300, c0: [6, 30, 40], c1: [2, 12, 16], lw: 2 }); chloroplast(t, 180, 420, 150, 230, .4, 6); chloroplast(t, 120, 1250, 170, 240, -.3, 7); fiberBand(t, [-200, 300], [620, -420], 230, 3, { density: .02, sc: 2.2, mid: [40, 100, 24] }); });
+    const A = [1014, -492], B = [226, 2063], T = 330, d = [B[0] - A[0], B[1] - A[1]], l = Math.hypot(...d), nx = d[1] / l, ny = -d[0] / l; // n → right side
+    const strip = (o0, o1) => lineP([[A[0] + nx * o0 - d[0] * .2, A[1] + ny * o0 - d[1] * .2], [B[0] + nx * o0 + d[0] * .2, B[1] + ny * o0 + d[1] * .2], [B[0] + nx * o1 + d[0] * .2, B[1] + ny * o1 + d[1] * .2], [A[0] + nx * o1 - d[0] * .2, A[1] + ny * o1 - d[1] * .2]], true);
+    // right of the wall: membrane, a sliver of cytoplasm, then the vacuole
+    const vac = strip(250, 900); liquidBody(g, vac, [700, PY0, 700, PH], { caus: .25, cs: 1.1 });
+    bubbles(g, 760, PY0, 500, PH, 40, 8, 4, 22, (x, y) => g.isPointInPath(vac, x, y));
+    const cy = strip(178, 250); g.save(); g.clip(cy); fieldBase(g, 400, 0, 900, PH, 9, { n: 500, lw: 1.4, step: 10 }); dots(g, 400, 0, 900, PH, 60, 10, COL.ribo, 3, 8); g.restore();
+    g.save(); g.lineCap = 'butt'; const memLine = (o, c, w) => { g.strokeStyle = rgba(c); g.lineWidth = w; g.beginPath(); g.moveTo(A[0] + nx * o - d[0] * .2, A[1] + ny * o - d[1] * .2); g.lineTo(B[0] + nx * o + d[0] * .2, B[1] + ny * o + d[1] * .2); g.stroke(); };
+    memLine(172, [230, 200, 60], 12); memLine(181, [255, 240, 150], 3); memLine(188, COL.mem, 9); memLine(193, [255, 170, 230], 2); g.restore();
+    fiberBand(g, A, B, T, 5, { density: .045, sc: 1.6, lw: 1.2, ext: 400 });
+    // middle lamella (pectin glue between the two cells' walls)
+    g.save(); g.strokeStyle = 'rgba(190,200,60,.35)'; g.lineWidth = 10; g.filter = 'blur(3px)'; g.beginPath(); g.moveTo(A[0] - nx * 40, A[1] - ny * 40); g.lineTo(B[0] - nx * 40, B[1] - ny * 40); g.stroke(); g.restore();
+    // plasmodesma: a channel through the wall
+    const pit = (x, y, s) => { g.save(); g.translate(x, y); g.rotate(Math.atan2(d[1], d[0])); const P = ellP(0, 0, 70 * s, 48 * s); const pg = g.createRadialGradient(10 * s, 10 * s, 0, 0, 0, 70 * s); pg.addColorStop(0, '#1a1204'); pg.addColorStop(.7, '#3a3010'); pg.addColorStop(1, '#8a8a30'); g.fillStyle = pg; g.fill(P); innerShadow(g, P, 'rgba(0,0,0,.95)', 26 * s, -8 * s, -10 * s); tube(g, lineP([[-30 * s, 0], [30 * s, 0]]), 14 * s, [150, 170, 60]); g.lineWidth = 6 * s; g.strokeStyle = 'rgba(210,255,130,.6)'; g.stroke(P); g.restore(); };
+    pit(668, 520, 1); pit(495, 1090, .7);
+  },
+  cyto(g) {
+    fieldBase(g, 0, PY0, PW, PH, 21, { n: 900, lw: 1.6, step: 14 });
+    blurLayer(g, 6, t => { network(t, 0, PY0, PW, PH, 260, 22, { alpha: .8, lw0: 2, lw1: 7, step: 22 }); dots(t, 0, PY0, PW, PH, 30, 23, [60, 140, 255], 10, 30); });
+    const vac = smoothP([[-200, -420], [200, -400], [300, -60], [380, 300], [330, 760], [250, 1150], [150, 1500], [80, 1900], [-200, 1900]]);
+    liquidBody(g, vac, [-200, -420, 600, 2300], { caus: .25, cs: 1.2 }); bubbles(g, 0, PY0, 340, PH, 30, 24, 4, 20, (x, y) => g.isPointInPath(vac, x, y));
+    network(g, 300, PY0, 940, PH, 260, 25, { alpha: .85, lw0: 1.5, lw1: 5, step: 18, glow: 6 });
+    sphere(g, 520, 250, 80, [120, 70, 230], { tex: TEX.grain, texA: .5 });
+    [[760, 420, 46], [980, 560, 34], [640, 820, 58], [900, 980, 40], [1100, 300, 30], [480, 1150, 36]].forEach(([x, y, r], i) => sphere(g, x, y, r, [50, 140, 250], { tex: TEX.fine, texA: .3, hi: [200, 240, 255] }));
+    dots(g, 300, -200, 940, 2000, 120, 26, COL.ribo, 4, 10);
+    // a peroxisome (green) and a few lipid droplets
+    sphere(g, 820, 720, 36, [80, 200, 70], { tex: TEX.grain, texA: .5 }); sphere(g, 1060, 1180, 26, [240, 170, 60]);
+  },
+  nucleus(g) {
+    fieldBase(g, 0, PY0, PW, PH, 31, { n: 800, lw: 1.5, step: 12 });
+    for (let k = 0; k < 7; k++) { const rr = 470 + k * 34, pts = []; for (let a = .3; a <= 2.9; a += .18) pts.push([700 + Math.cos(a) * rr + Math.sin(a * 6 + k) * 10, 700 + Math.sin(a) * rr + Math.cos(a * 5 + k) * 10]); erSheet(g, pts, 24, 32 + k, { every: 3, rr: .2 }); }
+    const vac = smoothP([[-200, -100], [180, -80], [230, 260], [120, 520], [-200, 600]]); liquidBody(g, vac, [-200, -100, 430, 700], { caus: .22, cs: 1 });
+    nucleus(g, 700, 700, 400, 33, { pores: 180, cut: .58, cx: .14, cy: .05 });
+    dots(g, 0, PY0, PW, PH, 50, 34, COL.ribo, 4, 9, { test: (x, y) => Math.hypot(x - 700, y - 700) > 420 });
+  },
+  nucleolus(g) {
+    const bg = g.createRadialGradient(560, 700, 100, 620, 760, 900); bg.addColorStop(0, rgba([40, 10, 90])); bg.addColorStop(1, rgba([110, 50, 200])); g.fillStyle = bg; g.fillRect(0, PY0, PW, PH);
+    const all = new Path2D(); all.rect(0, PY0, PW, PH); texOver(g, all, TEX.grain, { alpha: .8, scale: 1.2 });
+    // the cavity wall (inside of the envelope)
+    const cav = ellP(640, 760, 520, 600); g.save(); g.fillStyle = rgba([34, 8, 70]); g.fill(cav); texOver(g, cav, TEX.grain, { alpha: .7, scale: .9 }); innerShadow(g, cav, 'rgba(180,110,255,.7)', 50, 14, 18); innerShadow(g, cav, 'rgba(5,0,15,.95)', 120, -30, -40); g.restore();
+    bubbles(g, 0, 0, 260, PH, 18, 41, 10, 34); dots(g, 1000, 0, 240, PH, 14, 42, [160, 90, 255], 10, 28);
+    const R = rng(43); g.save(); g.clip(cav); for (let i = 0; i < 220; i++) { const a = R() * TAU, d = Math.sqrt(R()) * 540; g.fillStyle = rgba([180, 120, 255], .15 + R() * .3); g.beginPath(); g.arc(640 + Math.cos(a) * d, 760 + Math.sin(a) * d * 1.1, 2 + R() * 6, 0, TAU); g.fill(); } g.restore();
+    sphere(g, 640, 790, 240, COL.nucl, { tex: TEX.grain, texA: .9, texS: 1, spec: .9, rimC: [190, 140, 255], rimA: .55 });
+    // granular component: small subunits clinging to the surface
+    for (let i = 0; i < 160; i++) { const a = R() * TAU, d = Math.sqrt(R()) * .95, f = Math.sqrt(1 - d * d); sphere(g, 640 + Math.cos(a) * d * 240, 790 + Math.sin(a) * d * 240, 5 + 7 * f * R(), lit(COL.nucl, .15 + .25 * f), { spec: .7, rimA: .15 }); }
+    // fibrillar centres
+    [[590, 740, 34], [700, 830, 26], [650, 700, 18]].forEach(([x, y, r]) => sphere(g, x, y, r, [70, 20, 150], { spec: .6 }));
+  },
+  er(g) {
+    fieldBase(g, 0, PY0, PW, PH, 51, { n: 600, lw: 1.5 });
+    const env = circleP(620, -820, 1100); sphere(g, 620, -820, 1100, COL.nuc, { tex: TEX.grain, texA: .7, texS: 1.4, spec: 0 });
+    const R = rng(52);
+    for (let k = 0; k < 10; k++) {
+      const y0 = 330 + k * 150, w = 80 + k * 8, amp = 40 + R() * 40, f = .006 + R() * .005, ph = R() * 9;
+      // break each sheet into folded cisternae with gaps
+      let x = -120;
+      while (x < PW + 120) {
+        const seg = 260 + R() * 380, pts = []; for (let xx = x; xx <= x + seg; xx += 45) pts.push([xx, y0 + Math.sin(xx * f + ph) * amp + Math.sin(xx * f * 2.7 + ph) * amp * .35 + (R() - .5) * 10]);
+        const draw = t => { erSheet(t, pts, w, 60 + k * 31 + (x | 0), { every: 2, rr: .13 }); if (R() < .6) { const [ex, ey] = pts[pts.length - 1]; tube(t, smoothP([[ex, ey], [ex + 30, ey + 70], [ex - 10, ey + 150]], false), w * .55, COL.er); } };
+        layer(g, draw, { tex: TEX.fine, texA: .45, texS: .7, blur: k < 2 ? 4 - k * 1.5 : 0, shadow: k < 2 ? 0 : 18 });
+        x += seg + 40 + R() * 80;
+      }
+    }
+    bubbles(g, 0, 300, PW, 1500, 36, 53, 6, 22);
+    mitochondrion(g, 1180, 1700, 260, 140, -.5, 54);
+  },
+  mito(g) {
+    fieldBase(g, 0, PY0, PW, PH, 61, { n: 500 });
+    { const R = rng(64); for (let k = 0; k < 14; k++) { let x = -120; const y0 = -300 + k * 170; while (x < PW + 120) { const seg = 220 + R() * 300, pts = []; for (let xx = x; xx <= x + seg; xx += 45) pts.push([xx, y0 + Math.sin(xx * .008 + k) * 50 + (R() - .5) * 12]); layer(g, t => erSheet(t, pts, 64, 70 + k + (x | 0), { every: 2, rr: .14 }), { tex: TEX.fine, texA: .4, texS: .7, blur: 7 }); x += seg + 60 + R() * 80; } } }
+    layer(g, t => mitochondrion(t, 640, 770, 560, 290, -.42, 62), { tex: TEX.fine, texA: .35, texS: .9, shadow: 30 });
+    blurLayer(g, 5, t => { sphere(t, 140, 1560, 90, [50, 140, 250]); dots(t, 0, 1300, PW, 500, 10, 63, COL.ribo, 8, 16); });
+  },
+  golgi(g) {
+    fieldBase(g, 0, PY0, PW, PH, 71, { n: 700, lw: 1.5 });
+    blurLayer(g, 9, t => { mitochondrion(t, 140, 180, 260, 130, -.35, 72); chloroplast(t, 80, 1380, 220, 300, .6, 73); });
+    layer(g, t => golgi(t, 650, 760, 940, 74, { n: 6, ves: 34, rot: -.12 }), { tex: TEX.fine, texA: .55, texS: .8, shadow: 26 });
+    dots(g, 0, PY0, PW, PH, 40, 75, COL.ribo, 4, 9);
+  },
+  ribo(g) {
+    fieldBase(g, 0, PY0, PW, PH, 81, { n: 1400, lw: 2.2, step: 14, glow: 5 });
+    blurLayer(g, 10, t => { golgi(t, 1180, 140, 420, 82, { n: 4, ves: 8 }); chloroplast(t, 60, 120, 200, 140, .3, 83); sphere(t, 1150, 1100, 60, [240, 150, 40]); });
+    network(g, 0, PY0, PW, PH, 120, 84, { alpha: .9, lw0: 2, lw1: 6, step: 20, glow: 8, cols: [[70, 120, 255], [150, 200, 255], [255, 240, 120]] });
+    const poly = (cx, cy, s, n, seed) => { // polysome: ribosomes (large + small subunit) along one mRNA spiral
+      const R = rng(seed), pts = []; for (let i = 0; i < n; i++) { const a = i * .62, r = s * (.6 + i * .2); pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); }
+      g.save(); g.strokeStyle = 'rgba(255,230,140,.8)'; g.lineWidth = s * .05; g.stroke(lineP(cr(pts, 8))); g.restore();
+      pts.slice().sort((a, b) => a[1] - b[1]).forEach(([x, y]) => { sphere(g, x + s * .12, y - s * .14, s * .2, lit(COL.ribo, .1), { spec: .8 }); sphere(g, x, y, s * .3 * (.9 + R() * .2), COL.ribo, { spec: 1, tex: TEX.fine, texA: .3 }); });
+    };
+    poly(620, 740, 120, 11, 85); poly(260, 420, 60, 7, 86); poly(1000, 1120, 70, 8, 87); poly(330, 1180, 50, 6, 88);
+    sphere(g, 860, 360, 40, [80, 200, 70], { tex: TEX.grain }); sphere(g, 230, 760, 30, [80, 200, 70], { tex: TEX.grain });
+    dots(g, 0, PY0, PW, PH, 60, 89, COL.ribo, 6, 14);
+  },
+  membrane(g) {
+    g.fillStyle = '#020a05'; g.fillRect(0, PY0, PW, PH);
+    const A = [352, -452], B = [828, 2012], T = 420, d = [B[0] - A[0], B[1] - A[1]], l = Math.hypot(...d), nx = d[1] / l * -1, ny = -d[0] / l * -1; // n → right
+    const off = (o) => [[A[0] + nx * o - d[0] * .2, A[1] + ny * o - d[1] * .2], [B[0] + nx * o + d[0] * .2, B[1] + ny * o + d[1] * .2]];
+    const right = lineP([...off(230), ...off(1200).reverse()], true);
+    g.save(); g.clip(right); fieldBase(g, 0, PY0, PW, PH, 91, { n: 800, lw: 1.6, step: 12 }); dots(g, 0, PY0, PW, PH, 40, 92, COL.ribo, 4, 10); g.restore();
+    blurLayer(g, 12, t => fiberBand(t, [-300, 1700], [260, -500], 260, 93, { density: .02, sc: 2.4, mid: [40, 100, 24] }));
+    fiberBand(g, A, B, T, 94, { density: .045, sc: 1.7, lw: 1.2, ext: 400 });
+    // bilayer + transport proteins
+    const [m0, m1] = off(232); g.save(); g.lineCap = 'butt'; g.strokeStyle = rgba([150, 40, 120]); g.lineWidth = 34; g.beginPath(); g.moveTo(...m0); g.lineTo(...m1); g.stroke();
+    g.strokeStyle = rgba([255, 140, 210], .8); g.lineWidth = 4; for (const o of [-12, 12]) { g.beginPath(); g.moveTo(m0[0] + nx * o, m0[1] + ny * o); g.lineTo(m1[0] + nx * o, m1[1] + ny * o); g.stroke(); } g.restore();
+    const ang = Math.atan2(d[1], d[0]);
+    for (let s = .02; s < 1; s += .052) { const x = lerp(m0[0], m1[0], s) + nx * 4, y = lerp(m0[1], m1[1], s) + ny * 4; g.save(); g.translate(x, y); g.rotate(ang + Math.PI / 2); const P = ellP(0, 0, 40, 19); body(g, P, [-40, -19, 80, 38], [220, 50, 150], { tex: TEX.fine, texA: .4, texS: .2 }); g.restore(); }
+    sphere(g, 1150, 520, 34, COL.ribo); sphere(g, 1010, 1180, 26, COL.ribo);
+  },
+  chloro(g) {
+    g.fillStyle = '#031006'; g.fillRect(0, PY0, PW, PH); fieldBase(g, 0, PY0, PW, PH, 101, { n: 500, c0: [10, 40, 70], c1: [4, 20, 30] });
+    const vac = smoothP([[700, -100], [1340, -100], [1340, 620], [1100, 560], [900, 330], [760, 150]]); liquidBody(g, vac, [700, -100, 640, 720], { caus: .25, cs: 1 }); bubbles(g, 760, 0, 500, 560, 26, 102, 5, 20, (x, y) => g.isPointInPath(vac, x, y));
+    blurLayer(g, 3, t => fiberBand(t, [-200, 1150], [420, -150], 300, 103, { density: .04, sc: 1.8, ext: 300 }));
+    blurLayer(g, 9, t => { chloroplast(t, 1180, 1300, 260, 380, .5, 104); chloroplast(t, 560, 1620, 260, 180, .1, 105); });
+    chloroplast(g, 690, 780, 300, 470, .62, 106, { grid: .5 });
+    dots(g, 0, PY0, PW, PH, 30, 107, COL.ribo, 4, 10, { test: (x, y) => Math.hypot((x - 690) / 330, (y - 780) / 480) > 1 });
+  },
+  tono(g) {
+    const bg = g.createLinearGradient(0, PY0, PW, PH); bg.addColorStop(0, rgba([60, 200, 220])); bg.addColorStop(.6, rgba([30, 140, 190])); bg.addColorStop(1, rgba([10, 50, 110])); g.fillStyle = bg; g.fillRect(0, PY0, PW, PH);
+    const all = new Path2D(); all.rect(0, PY0, PW, PH); texOver(g, all, TEX.caus, { mode: 'screen', alpha: .25, scale: 1.6 });
+    // cytoplasm beyond the membrane (right)
+    const cyt = smoothP([[1060, -420], [1340, -420], [1340, 1900], [1240, 1900], [1180, 1100], [1100, 500]], true);
+    g.save(); g.clip(cyt); fieldBase(g, 900, 0, 440, PH, 111, { n: 300, lw: 1.5 }); dots(g, 1000, 0, 340, PH, 20, 112, COL.ribo, 4, 9); g.restore();
+    // sweeping membrane sheets
+    const R = rng(113); g.save(); g.lineCap = 'round';
+    for (let k = 0; k < 14; k++) {
+      const off = k * 26, pts = [[1100 - off * .2, -420], [1000 - off * .8, 300], [880 - off, 760], [620 - off, 1200], [380 - off * .6, 1600], [200 - off * .5, 1950]];
+      const P = smoothP(pts, false), w = 10 + R() * 40;
+      g.strokeStyle = rgba(k === 0 ? [180, 255, 255] : [120 + R() * 100, 240, 250], k === 0 ? .9 : .08 + R() * .16); g.lineWidth = k === 0 ? 10 : w; g.stroke(P);
+    }
+    g.restore();
+    bubbles(g, 0, PY0, 1000, PH, 60, 114, 6, 46);
+    sphere(g, 1060, 1250, 46, [230, 140, 40], { tex: TEX.fine, texA: .35 });
+    // H+ pumps along the tonoplast
+    const mp = cr([[1100, -420], [1000, 300], [880, 760], [620, 1200], [380, 1600], [200, 1950]], 10);
+    for (let i = 4; i < mp.length - 2; i += 5) { const [x, y] = mp[i]; sphere(g, x + 6, y, 14, [255, 120, 200], { spec: .8 }); }
+  },
+  vac(g) {
+    fieldBase(g, 0, PY0, PW, PH, 121, { n: 700, lw: 1.5, c0: [10, 40, 80], c1: [4, 16, 40] });
+    blurLayer(g, 8, t => { chloroplast(t, 1200, 300, 180, 260, .3, 122); mitochondrion(t, 120, 1650, 200, 100, -.3, 123); });
+    const P = smoothP(blobPts(600, 760, 470, 700, 12, 124, .07));
+    liquidBody(g, P, [130, 60, 940, 1400], { caus: .28, cs: 1.4 });
+    bubbles(g, 140, 60, 940, 1400, 100, 125, 3, 26, (x, y) => g.isPointInPath(P, x, y));
+    g.save(); g.clip(P); g.globalCompositeOperation = 'screen'; g.lineCap = 'round';
+    for (let i = 0; i < 6; i++) { g.strokeStyle = `rgba(220,255,255,${.06 + i * .02})`; g.lineWidth = 30 - i * 4; g.beginPath(); g.arc(560, 700, 360 + i * 30, Math.PI * 1.05, Math.PI * 1.45); g.stroke(); }
+    g.restore();
+    // crystals / pigment granules stored in the sap
+    dots(g, 300, 400, 600, 800, 10, 126, [140, 90, 230], 8, 16, { test: (x, y) => g.isPointInPath(P, x, y) });
+  }
+};
+
+// ---------- shot table ----------
+const SH = [
+  { k: 'rear', mode: 'ROTATION', name: 'REAR VIEW', sub: 'Closed hexagonal prism', b: ['cells tile like bricks', 'wall-to-wall contact', 'plasmodesmata channels'], zoom: '×700', bar: '20 µm', c: '#a6ff4a', t: [560, 610, 1] },
+  { k: 'wall', mode: 'CLOSE-UP', name: 'CELL WALL', sub: 'Cellulose-rich structural support', b: ['cellulose microfibrils in pectin', 'plasmodesmata link neighbours', 'resists turgor pressure'], zoom: '×6 000', bar: '2 µm', c: '#b4ff3c', t: [858, 640, 3.2] },
+  { k: 'cyto', mode: 'CLOSE-UP', name: 'CYTOPLASM', sub: 'Cellular reactions and transport', b: ['cytoplasmic streaming', 'cytoskeleton tracks', '~70-80 % water'], zoom: '×5 000', bar: '2 µm', c: '#4fb4ff', t: [650, 640, 3] },
+  { k: 'nucleus', mode: 'CLOSE-UP', name: 'NUCLEUS', sub: 'Contains the genome', b: ['double nuclear envelope', 'nuclear pores ~120 nm', 'DNA → mRNA'], zoom: '×6 000', bar: '2 µm', c: '#b26bff', t: [735, 520, 2.7] },
+  { k: 'nucleolus', mode: 'CLOSE-UP', name: 'NUCLEOLUS', sub: 'Ribosome subunit assembly', b: ['rRNA transcription', 'densest part of the nucleus', 'exports ribosome subunits'], zoom: '×15 000', bar: '500 nm', c: '#9b6bff', t: [748, 524, 5] },
+  { k: 'er', mode: 'CLOSE-UP', name: 'ENDOPLASMIC RETICULUM', sub: 'Protein and lipid synthesis', b: ['rough ER = ribosome-studded', 'continuous with the nucleus', 'folds new proteins'], zoom: '×12 000', bar: '1 µm', c: '#5aa0ff', t: [690, 655, 3.6] },
+  { k: 'mito', mode: 'CLOSE-UP', name: 'MITOCHONDRION', sub: 'ATP production', b: ['cristae fold the inner membrane', 'cellular respiration', '~1-2 µm long'], zoom: '×15 000', bar: '500 nm', c: '#ff7a2e', t: [592, 782, 5] },
+  { k: 'golgi', mode: 'CLOSE-UP', name: 'GOLGI APPARATUS', sub: 'Modifies and sorts cell products', b: ['cis → trans cisternae', 'builds wall polysaccharides', 'ships cargo in vesicles'], zoom: '×20 000', bar: '500 nm', c: '#f5c43a', t: [612, 892, 4.5] },
+  { k: 'ribo', mode: 'CLOSE-UP', name: 'RIBOSOMES', sub: 'Protein synthesis', b: ['~25 nm · rRNA + protein', 'polysomes read one mRNA', 'millions per cell'], zoom: '×80 000', bar: '100 nm', c: '#ff3d6e', t: [455, 868, 7] },
+  { k: 'membrane', mode: 'CLOSE-UP', name: 'PLASMA MEMBRANE', sub: 'Selective transport', b: ['lipid bilayer · ~7 nm thick', 'aquaporins + ion pumps', 'pressed against the wall'], zoom: '×20 000', bar: '500 nm', c: '#ff4fb0', t: [262, 600, 4] },
+  { k: 'chloro', mode: 'CLOSE-UP', name: 'CHLOROPLAST', sub: 'Photosynthesis', b: ['grana = stacked thylakoids', 'chlorophyll captures light', 'own DNA · ~5-10 µm long'], zoom: '×8 000', bar: '1 µm', c: '#7dff4a', t: [358, 708, 3.6] },
+  { k: 'tono', mode: 'CLOSE-UP', name: 'TONOPLAST', sub: 'Vacuole membrane', b: ['H⁺ pumps acidify the sap', 'aquaporins move water', 'separates sap from cytoplasm'], zoom: '×30 000', bar: '200 nm', c: '#4ff0e0', t: [645, 400, 4.2] },
+  { k: 'vac', mode: 'CLOSE-UP', name: 'CENTRAL VACUOLE', sub: 'Water storage and turgor', b: ['up to 90 % of cell volume', 'keeps the plant upright', 'stores ions, sugars, pigments'], zoom: '×2 000', bar: '5 µm', c: '#4fd8ff', t: [515, 460, 2.2] },
+  { k: 'xray', mode: 'X-RAY', name: 'HALF SECTION', title: 'X-RAY SECTION', sub: 'Translucent half-section · simulated', b: ['cut through the middle', 'every organelle in place', 'false-color · not to scale'], zoom: '×800', bar: '20 µm', c: '#3ff0c8', t: [560, 610, 1] },
+];
+SH.forEach(s => { s.rgb = hx(s.c); s.title = s.title || s.name; });
+SH[0].draw = drawPrism;
+SH[13].draw = (g, cam, lt, a, F) => F.drawXray(g, cam, lerp(F.W + 40, F.FX + 20, eo(p(lt, .1, .7))), a);
+
+// ---------- film ----------
+const F = SZ.film({
+  layout: LY, shot: 2,
+  shots: SH.map(s => ({ t: s.t, plate: s.draw ? null : s.k, draw: s.draw, rgb: s.rgb })),
+  overview: { x: OX, y: OY, w: OWW, h: OWH, scale: OS, paint: g => paintCell(g), xray: true },
+  plates: { designCY: 735, paint: PAINT },
+  textures: T => { T.fiber = SZ.fiberTex(4); },
+  built: F => { THUMB = F.thumb(548, 610, 250, 215, 820); },
+  hud: (g, t, F) => hud(g, t, F),
+});
+({ PW, PH, PY0 } = F);
+let THUMB = null;
+
+// ---------- HUD: this topic's words and numbers on the kit's primitives ----------
+const U = SZ.ui(F), { T } = U, FS = SZ.FONT.display, FM = SZ.FONT.mono;
+const SEQ = 'ATGGCTTCCTCAATGCTCTCTTCCGCTACTATGGTTGCCTCTCCGGCTCAGGCCACTATGGTCGCTCCTTTCAACGGACTTAAGTCCTCCGCTGCCTTCCCAGCCACCCGCAAGGCTAACAACGACATTACTTCCATCACAAGCAACGGCGGAAGAGTTAACTGCATGAAGGTGTGGCCTCCGATTGGAAAGAAGAAGTTTGAGACTCTCTCTTACCTTCCTGACCTTACCGATTCCGAATTGGCTAAGGAAGTTGACTACCTTATCCGCAACAAGTGGATTCCTTGTGTTGAATTCGAGTTGGAGCACGGATTTGTGTACCGTGAGCACGGTAACTCACCCGGATACTATGATGGACGGTACTGGACAATGTGGAAGCTTCCCTTGTTCGGTTGCACCGACTCCGCTCAAGTGTTGAAGGAAGTGGAAGAGTGCAAGAAGGAGTACCCCAATGCCTTCATTAGGATCATCGGATTCGACAACACCCGTCAAGTCCAGTGCATCAGTTTCATTGCCTACAAGCCCCCAAGCTTCACCTAA';
+const LOG = ['stomata · CO₂ 410 ppm', 'tonoplast pH 5.4', 'render ok · claude-opus-5.5', 'rubisco · CO₂ fixed +12', 'aquaporin PIP2 · open', 'turgor 0.62 MPa', 'starch granule +1', 'ATP synthase ↑ 108 Hz', 'mRNA export · 42 pores', 'golgi vesicle → wall', 'cellulose synthase · on', 'chlorophyll a/b 3.1', 'plasmodesma · open', 'H⁺-ATPase · pumping', 'ribosome 60S + 40S'];
+function hud(g, t, F) {
+  const { k, lt } = F.shotAt(t), s = SH[k], V0 = LY.v0, V1 = LY.v1;
+  // ---- top panel ----
+  g.save(); g.translate(0, LY.top - 10);
+  U.glass(g, 16, 10, 1048, 212, 22);
+  g.save(); g.strokeStyle = '#ff8a4c'; g.lineWidth = 2; for (let i = 0; i < 4; i++) { const a = i * Math.PI / 4; g.beginPath(); g.moveTo(47 - Math.cos(a) * 7, 40 - Math.sin(a) * 7); g.lineTo(47 + Math.cos(a) * 7, 40 + Math.sin(a) * 7); g.stroke(); } g.restore();
+  T(g, 'POWERED BY', 62, 45, { w: 600, s: 13, ls: 3, c: '#ff8a4c' });
+  let gr = g.createLinearGradient(0, 56, 0, 94); gr.addColorStop(0, '#ffc27c'); gr.addColorStop(1, '#ff7438');
+  T(g, 'CLAUDE OPUS 5.5', 38, 93, { f: FS, w: 700, s: 46, c: gr });
+  g.fillStyle = 'rgba(255,150,90,.35)'; g.fillRect(40, 103, 300, 1.5);
+  gr = g.createLinearGradient(0, 110, 0, 146); gr.addColorStop(0, '#ecff5e'); gr.addColorStop(1, '#78ff4f');
+  T(g, 'PLANT CELL', 38, 146, { f: FS, w: 700, s: 44, c: gr });
+  T(g, 'A THREE-DIMENSIONAL CUTAWAY', 40, 167, { w: 600, s: 14, ls: 3.6, c: '#e7eee9' });
+  T(g, 'false-color · drawn in code', 40, 188, { w: 400, s: 13, c: '#8fa096' });
+  T(g, 'CELL PROFILE', 380, 47, { w: 600, s: 12.5, ls: 2.2 });
+  [['Kingdom', 'Plantae · eukaryote'], ['Cell size', '10 - 100 µm'], ['Wall thickness', '0.1 - 10 µm'], ['Chloroplasts / cell', '~20 - 100', '#8dff5a'], ['Vacuole volume', 'up to 90 %', '#4fc4ff']].forEach(([a, b, c], i) => { T(g, a, 380, 74 + i * 23, { w: 400, s: 14, c: '#9fb0a5' }); T(g, b, 680, 74 + i * 23, { w: 600, s: 14, a: 'right', c: c || '#f2f6f3' }); });
+  T(g, 'jungrok5/motion-skills', 1040, 30, { w: 400, s: 11.5, a: 'right', c: '#71837a' });
+  U.head(g, 'PHOTOSYNTHESIS RATE', 716, 57, 'µmol CO₂ m⁻² s⁻¹', 1040);
+  const rate = 21.6 + wob(t * .9, 1) * 3.6;
+  T(g, rate.toFixed(1), 714, 113, { f: FS, w: 700, s: 46, c: '#b8ff5c' });
+  T(g, 'light-saturated', 816, 92, { w: 400, s: 13.5, c: '#9fb0a5' }); T(g, 'C3 leaf · 25 °C', 816, 111, { w: 400, s: 13.5, c: '#9fb0a5' });
+  U.segMeter(g, 716, 128, 325, 32, rate / 27);
+  T(g, '6CO₂ + 6H₂O + light → C₆H₁₂O₆ + 6O₂', 716, 164, { w: 500, s: 14, c: '#dfe9e2' });
+  g.restore();
+  // ---- viewfinder ----
+  U.corners(g, 30, V0, 1050, V1);
+  U.live(g, 42, V0 + 12, `LIVE · SHOT ${String(k + 1).padStart(2, '0')} / 14`, t);
+  U.pill(g, 540, V0 + 12, `${s.mode} · ${s.name}`, s.c);
+  T(g, s.zoom, 1036, V0 + 36, { f: FS, w: 700, s: 25, a: 'right', c: s.c });
+  U.reticle(g, 545, F.FY - 15, lt, s.rgb);
+  U.scaleBar(g, 926, V1 - 31, 100, s.bar);
+  U.card(g, 45, V1 - 140, 428, 126, s.c, s.title, s.sub, s.b, lt);
+  // ---- bottom panel ----
+  g.save(); g.translate(0, LY.bot - 985);
+  U.glass(g, 16, 985, 1048, AR === '9:16' ? 345 : 350, 22);
+  U.head(g, 'LOCATOR · SECTION', 40, 1013, 'live', 290);
+  U.locator(g, 40, 1025, 250, 215, THUMB, F.camOf(k, lt), V1 - V0, s.c);
+  T(g, `${String(k + 1).padStart(2, '0')} / 14`, 50, 1047, { f: FM, w: 400, s: 13, c: '#eef4f0' });
+  T(g, s.name.length > 16 ? 'ER' : s.name, 281, 1046, { w: 600, s: 11.5, ls: 1, a: 'right', c: s.c });
+  U.head(g, 'SHOT SEQUENCE', 40, 1260, '2.0 s each', 290, '#9fb0a5');
+  U.seq(g, 40, 1272, SH.map(q => q.c), k);
+  T(g, 'equal time per structure', 40, 1315, { w: 400, s: 12.5, c: '#8fa096' });
+  U.head(g, 'LIGHT REACTIONS', 322, 1013, 'flux', 558);
+  [['ATP', '#ffd23f', .7, 3], ['NADPH', '#3fd0ff', .62, 5], ['O₂ release', '#a4ff3f', .67, 7], ['CO₂ uptake', '#5cff5c', .55, 9]].forEach(([n, c, b, sd], i) => {
+    const v = clamp(b + wob(t * .8, sd) * .08), y = 1037 + i * 24; T(g, n, 322, y, { w: 400, s: 13.5, c: '#c9d4cd' }); U.bar(g, 402, y - 9, 88, 9, v, c); T(g, Math.round(v * 100) + '%', 558, y, { w: 500, s: 13.5, a: 'right', c: '#e5ece7' });
+  });
+  U.head(g, 'TURGOR PRESSURE', 322, 1154, 'MPa', 558, '#4fb4ff');
+  const tp = .6 + wob(t * .5, 11) * .05;
+  U.gauge(g, 360, 1210, 27, tp, tp.toFixed(2), 'MPa');
+  T(g, 'vacuole pushes on the wall', 408, 1185, { w: 400, s: 13.5, c: '#e5ece7' }); T(g, 'typical 0.3 - 1.0 MPa', 408, 1203, { w: 400, s: 13, c: '#9fb0a5' });
+  T(g, 'car tyre ≈ 0.2 MPa', 408, 1221, { w: 400, s: 13, c: '#4fb4ff' }); T(g, 'wilting = turgor loss', 408, 1239, { w: 400, s: 13, c: '#ff5a7a' });
+  U.histo(g, 322, 1284, 30, 7.9, t);
+  U.head(g, 'ORGANELLE CENSUS', 590, 1013, 'per cell', 800);
+  [['Chloroplasts', '~50', '#5bd65b', .3, 10], ['Mitochondria', '~300', '#e8742e', .55, 6], ['Golgi stacks', '~100', '#c9a63a', .45, 7], ['Ribosomes', '~10⁶', '#d6305f', 1, 8]].forEach(([n, v, c, f, sk], i) => {
+    const y = 1037 + i * 24, on = k === sk; T(g, n, 590, y, { w: on ? 600 : 400, s: 13.5, c: on ? c : '#c9d4cd' }); U.bar(g, 682, y - 9, 70, 9, f, c); T(g, v, 800, y, { w: 500, s: 13.5, a: 'right', c: '#e5ece7' });
+  });
+  U.head(g, 'FOCUS', 590, 1154, 'zoom', 800, '#ffab4a');
+  T(g, s.zoom, 588, 1199, { f: FS, w: 700, s: 36, c: '#f2f6f3' });
+  T(g, s.name, 590, 1222, { w: 600, s: 13, ls: 2, c: s.c });
+  T(g, 'scale bar ' + s.bar, 590, 1243, { f: FM, w: 400, s: 12, c: '#9fb0a5' });
+  U.wave(g, 590, 1266, 210, t);
+  U.head(g, 'GENOME · DNA STREAM', 830, 1013);
+  U.stream(g, 830, 1038, 220, [[[255, 140, 80], .5, -3.1], [[230, 240, 234], 1, 2.3], [[255, 140, 80], .4, -3.7, true]], t, SEQ, { A: 'T', T: 'A', G: 'C', C: 'G' });
+  T(g, 'Arabidopsis · ~135 Mb · ~27k genes', 830, 1101, { w: 400, s: 12.5, c: '#8fa096' });
+  U.head(g, 'CELL LOG', 830, 1125);
+  U.log(g, 830, 1131, 225, 192, LOG, t);
+  g.restore();
+}
+
+SZ.player(F, document.getElementById('c'), { stage: document.getElementById('stage'), pp: document.getElementById('pp'), seek: document.getElementById('seek'), time: document.getElementById('time'), load: document.getElementById('load') });
+</script>
+</body>
+</html>

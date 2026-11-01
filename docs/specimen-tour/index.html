@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>specimen-tour · motion-skills</title>
+<meta name="description" content="세포, 씨앗, 배터리 같은 표본 하나를 잘라 연 3D 모델로 만들고, 부분마다 카메라가 돌며 들어가는 9:16 쇼츠를 만듭니다. SF 계기판 HUD를 얹어 MP4와 브라우저에서 도는 페이지로 냅니다.">
+<meta property="og:title" content="specimen-tour · motion-skills">
+<meta property="og:description" content="세포, 씨앗, 배터리 같은 표본 하나를 잘라 연 3D 모델로 만들고, 부분마다 카메라가 돌며 들어가는 9:16 쇼츠를 만듭니다. SF 계기판 HUD를 얹어 MP4와 브라우저에서 도는 페이지로 냅니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/specimen-tour/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/specimen-tour">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / specimen-tour</nav>
+  <h1>specimen-tour</h1>
+  <p>세포, 씨앗, 배터리 같은 표본 하나를 잘라 연 3D 모델로 만들고, 부분마다 카메라가 돌며 들어가는 9:16 쇼츠를 만듭니다. SF 계기판 HUD를 얹어 MP4와 브라우저에서 도는 페이지로 냅니다.</p>
+  <ul class="tags"><li>3D · 2D</li><li>9:16 · 4:5</li><li>MP4</li><li>라이브 페이지</li><li>HUD</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>보여 줄 표본과 부분 목록, 또는 따라 만들 참고 영상</dd>
+      <dt>샷 표</dt><dd>부분마다 이름 · 역할 · 사실 세 줄 · 배율 · 카메라 (목표점, 거리, 방위, 고도, 초당 회전)</dd>
+      <dt>모델</dt><dd>다각형에서 세운 벽, 반으로 자른 그릇 모양 몸체, 덩어리, 관, 인스턴스 구슬. 2D 키트로 그린 텍스처와 범프</dd>
+      <dt>검사</dt><dd>샷마다 스틸 한 장과 전환 순간, 카메라가 물체 안에 들어가지 않았는지, 9:16과 4:5 모두</dd>
+      <dt>출력</dt><dd>1080×1920 · 1080×1350 MP4, 휴대폰에서 실시간으로 도는 라이브 페이지</dd>
+    </dl>
+    <pre><code>cd specimen-tour
+node scripts/render.mjs examples/plant-cell/index.html /tmp/st --stills 1.4,7,21 --size 1080x1920
+RENDER_ARGS='--size 1080x1920 --query rs=0.67' bash scripts/render-chunked.sh examples/plant-cell/index.html out/plant-cell.mp4 7 4</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium (헤드리스 WebGL), ffmpeg. three.js와 폰트를 함께 담고 있어 네트워크 없이 돕니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/specimen-tour/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:9/16;--h-phone:640px;--demo-bg:#000">
+    <iframe data-src="demo/examples/plant-cell/" title="specimen-tour 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/plant-cell/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/plant-cell</code> · 3D · 28초</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/plant-cell/" data-cap="예제 &lt;code&gt;examples/plant-cell&lt;/code&gt; · 3D · 28초" aria-pressed="true">3D</button>
+        <button class="btn" type="button" data-src="demo/examples/plant-cell-2d/" data-cap="같은 영상을 Canvas 2D로 &lt;code&gt;examples/plant-cell-2d&lt;/code&gt; · 28초" aria-pressed="false">2D</button>
+        <button class="btn" type="button" data-src="demo/examples/battery-2d/" data-cap="다른 주제 &lt;code&gt;examples/battery-2d&lt;/code&gt; · 2D · 10초" aria-pressed="false">배터리</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">식물 세포를 14개 부분으로 나눠 2초씩 들어가는 28초 영상의 장면입니다. 같은 영상을 3D와 Canvas 2D로 만들었고, 2D 키트로 다른 주제(원통형 배터리)도 만들었습니다. 카드를 누르면 새 탭에서 그 순간부터 라이브 페이지가 재생됩니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"3d":"3D","2d":"2D"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>식물 세포 3D <small>14샷 · 28초 · 세로</small></h3>
+      <p>three.js로 세운 육각 세포와 이웃 세포들. 닫힌 세포가 돌다가 뚜껑이 열리고, 카메라가 세포 소기관마다 돌며 들어갑니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="3d" href="demo/examples/plant-cell/?t=0.3" target="_blank" rel="noopener">
+          <img src="samples/3d-rear.jpg" alt="어두운 바닥 위에 혼자 선 초록 섬유질 육각기둥 세포, 비스듬히 본 모습" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 01 · 회전</span><b>닫힌 육각기둥</b>
+          <span class="how">뚜껑 덮인 세포 하나가 돌며 옆벽을 보여 줌, 이웃 세포는 숨김</span></div></a>
+        <a class="tile" data-tags="3d" href="demo/examples/plant-cell/?t=1.4" target="_blank" rel="noopener">
+          <img src="samples/3d-open.jpg" alt="뚜껑이 열린 육각 세포 안의 하늘색 액포, 보라 핵, 초록 엽록체, 주황 미토콘드리아, 둘레의 이웃 세포 벽" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 01 · 열림</span><b>잘라 연 세포</b>
+          <span class="how">뚜껑이 떠오르며 사라지고 이웃 세포들이 나타남</span></div></a>
+        <a class="tile" data-tags="3d" href="demo/examples/plant-cell/?t=7" target="_blank" rel="noopener">
+          <img src="samples/3d-nucleus.jpg" alt="위가 잘린 보라색 핵 안쪽, 가운데의 짙은 인과 작은 알갱이들" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 04 · 핵</span><b>위를 잘라 낸 핵</b>
+          <span class="how">그릇 모양으로 자른 이중막, 핵공 고리, 안쪽의 인</span></div></a>
+        <a class="tile" data-tags="3d" href="demo/examples/plant-cell/?t=13" target="_blank" rel="noopener">
+          <img src="samples/3d-mito.jpg" alt="반으로 자른 주황 미토콘드리아 안에 양쪽 벽에서 뻗은 크리스타 주름" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 07 · 미토콘드리아</span><b>크리스타</b>
+          <span class="how">양쪽 내막에서 손가락처럼 뻗은 주름, 그 위를 도는 카메라</span></div></a>
+        <a class="tile" data-tags="3d" href="demo/examples/plant-cell/?t=21" target="_blank" rel="noopener">
+          <img src="samples/3d-chloroplast.jpg" alt="반으로 자른 초록 엽록체 안에 원반을 쌓은 그라나 기둥들과 그 사이를 잇는 막" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 11 · 엽록체</span><b>그라나</b>
+          <span class="how">스트로마 바닥에 선 틸라코이드 원반 더미, 원반은 인스턴스 하나</span></div></a>
+        <a class="tile" data-tags="3d" href="demo/examples/plant-cell/?t=26.6" target="_blank" rel="noopener">
+          <img src="samples/3d-xray.jpg" alt="세포의 오른쪽 절반이 검은 바탕 위 청록 윤곽선으로 바뀐 엑스레이 화면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 14 · 엑스레이</span><b>반 단면</b>
+          <span class="how">오른쪽으로 쓸고 지나가는 절단선 너머를 프레넬 청록 재질로 다시 렌더</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>Canvas 2D <small>그린 정지 화면 · 세로</small></h3>
+      <p>참고 영상처럼 부분마다 정지 화면을 한 장씩 그리고, 전체 단면을 거쳐 빠지고 들어가는 전환으로 잇습니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="2d" href="demo/examples/plant-cell-2d/?t=13" target="_blank" rel="noopener">
+          <img src="samples/2d-mito.jpg" alt="Canvas로 그린 주황 미토콘드리아 단면과 손가락 모양 크리스타, 뒤로 흐린 파란 소포체" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">2D · 미토콘드리아</span><b>그린 정지 화면</b>
+          <span class="how">한 방향 조명, 안쪽 그림자, 그림자 진 크리스타, 블룸</span></div></a>
+        <a class="tile" data-tags="2d" href="demo/examples/plant-cell-2d/?t=21" target="_blank" rel="noopener">
+          <img src="samples/2d-chloroplast.jpg" alt="Canvas로 그린 초록 엽록체와 원반 더미, 왼쪽 위의 흐린 세포벽과 하늘색 액포" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">2D · 엽록체</span><b>층을 흐려 깊이 만들기</b>
+          <span class="how">앞뒤 물체를 흐리게 그려 피사계 심도처럼 보이게</span></div></a>
+        <a class="tile" data-tags="2d" href="demo/examples/battery-2d/?t=3" target="_blank" rel="noopener">
+          <img src="samples/2d-battery.jpg" alt="회색 흑연 층 사이에 노란 리튬 알갱이가 박힌 배터리 음극 확대" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">2D · 다른 주제</span><b>18650 배터리 속</b>
+          <span class="how">같은 키트로 젤리롤, 음극, 분리막, 양극, 엑스레이 5샷</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬은 이 레포에서 페이스북 릴스 「Claude Opus 5.5 · Plant cell」(AI로 만든 정지 화면에 HUD를 얹은 영상)을 코드만으로 다시 만들며 다듬어졌습니다.</p>
+  <div class="works">
+    <a class="work" href="demo/examples/plant-cell/" target="_blank" rel="noopener"><b>식물 세포 3D 라이브 페이지</b><span>14샷 · 28초 · 9:16 · ?ar=4:5로 피드용</span><span class="url">specimen-tour/demo/examples/plant-cell/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/specimen-tour/examples/plant-cell"><b>원본 · motion-skills → specimen-tour/examples/plant-cell/</b><span>모델, 샷 표, HUD 전체. 스킬의 출처</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/specimen-tour/SKILL.md">SKILL.md</a> <span>워크플로 · 규칙 · 계약</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/specimen-tour">폴더</a> <span>kit · scripts · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/specimen-tour/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/specimen-tour/references/STYLE-3D.md">references/STYLE-3D.md</a> <span>3D 기법 · API · 샷 설계</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/specimen-tour/references/STYLE-2D.md">references/STYLE-2D.md</a> <span>2D 키트 · 그리는 기법</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/specimen-tour/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 샘플 이미지는 식물 세포 3D · 2D 예제와 배터리 예제의 장면입니다. 데모 폰트: Barlow Condensed, Saira Condensed, JetBrains Mono (SIL OFL 1.1). three.js (MIT).
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

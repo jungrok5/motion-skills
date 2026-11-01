@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plant Cell 3D</title>
+<style>
+:root{--bg:#f2f5f2;--fg:#17201a;--mut:#5b6a60;--line:#cdd6cf;--acc:#3c8a14}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#030805;--fg:#dbe7de;--mut:#8a9a8f;--line:#1f2b23;--acc:#a6ff4a}}
+:root[data-theme="dark"]{--bg:#030805;--fg:#dbe7de;--mut:#8a9a8f;--line:#1f2b23;--acc:#a6ff4a}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px 16px}
+.stage,.bar{width:min(100%,calc((100vh - 84px) * var(--ar,.5625)))}
+.stage{position:relative;aspect-ratio:9/16;border-radius:12px;overflow:hidden;background:#000;cursor:pointer}
+canvas{width:100%;height:100%;display:block}
+.bar{display:flex;align-items:center;gap:12px;font-size:15px}
+.bar button{appearance:none;border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:8px;width:40px;height:34px;font-size:15px;cursor:pointer;flex:none}
+.bar input{flex:1;min-width:0;accent-color:var(--acc)}
+.bar span{color:var(--mut);font-variant-numeric:tabular-nums;flex:none}
+#load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#a6ff4a;font:600 15px/1.2 ui-monospace,monospace;letter-spacing:.06em;background:#020604;pointer-events:none;transition:opacity .4s}
+html.render body{padding:0;display:block}
+html.render .stage{width:1080px;border-radius:0}
+html.render .bar,html.render #load{display:none}
+</style>
+<script type="importmap">{"imports":{"three":"../../kit/vendor/three/build/three.module.min.js","three/addons/":"../../kit/vendor/three/examples/jsm/"}}</script>
+</head>
+<body>
+<div class="stage" id="stage"><canvas id="c"></canvas><div id="load">building…</div></div>
+<div class="bar"><button id="pp" aria-label="Play or pause">❚❚</button><input id="seek" type="range" min="0" max="28" step="0.01" value="0" aria-label="Seek"><span id="time">0:00 / 0:28</span></div>
+<script src="../../kit/specimen-zoom.js"></script>
+<script type="module">
+// ============================================================================================
+//  Plant cell in 3D — a cut-open hexagonal cell among its neighbours, toured in 14 shots × 2 s.
+//  three.js scene (kit/specimen3d.js) + 2D HUD (kit/specimen-zoom.js). ?ar=4:5 for the feed cut.
+//  DURATION = 28 (scripts/render-chunked.sh reads this line)
+// ============================================================================================
+import * as K from '../../kit/specimen3d.js';
+const { THREE } = K;
+const { rng, clamp, lerp, p, eo, eio, ss, wob, hx, rgba, mix, drk, lit, TEX } = SZ;
+const AR = new URLSearchParams(location.search).get('ar') === '4:5' ? '4:5' : '9:16', LY = SZ.LAYOUT[AR];
+document.documentElement.style.setProperty('--ar', LY.W / LY.H);
+
+// ---------- the cell: a hexagon in the x/z plane, walls 4.6 high ----------
+const P2 = (x, y) => [(x - 560) / 60, (y - 610) / 60];
+const HEX = [[300, 280], [700, 215], [872, 425], [848, 905], [520, 1002], [232, 842]].map(q => P2(...q));
+const HC = 4.6, WT = .62, FLOOR = .55;
+const INNER = K.insetPoly(HEX, WT / 2);
+const NUC = [2.92, 2.0, -1.5], NR = 1.5;
+
+// ---------- shots ----------
+const SH = [
+  { k: 'rear', mode: 'ROTATION', name: 'REAR VIEW', sub: 'Closed hexagonal prism', b: ['cells tile like bricks', 'wall-to-wall contact', 'plasmodesmata channels'], zoom: '×700', bar: '20 µm', c: '#a6ff4a', cam: { t: [0, 2.0, .2], d: 34, az: -64, el: 24, orbit: 26, tilt: 10 } },
+  { k: 'wall', mode: 'CLOSE-UP', name: 'CELL WALL', sub: 'Cellulose-rich structural support', b: ['cellulose microfibrils in pectin', 'plasmodesmata link neighbours', 'resists turgor pressure'], zoom: '×6 000', bar: '2 µm', c: '#b4ff3c', cam: { t: [4.4, 2.8, .6], d: 7.2, az: -58, el: 40, orbit: 8 } },
+  { k: 'cyto', mode: 'CLOSE-UP', name: 'CYTOPLASM', sub: 'Cellular reactions and transport', b: ['cytoplasmic streaming', 'cytoskeleton tracks', '~70-80 % water'], zoom: '×5 000', bar: '2 µm', c: '#4fb4ff', cam: { t: [1.2, .8, .4], d: 4.6, az: 25, el: 48, orbit: -9 } },
+  { k: 'nucleus', mode: 'CLOSE-UP', name: 'NUCLEUS', sub: 'Contains the genome', b: ['double nuclear envelope', 'nuclear pores ~120 nm', 'DNA → mRNA'], zoom: '×6 000', bar: '2 µm', c: '#b26bff', cam: { t: [2.92, 2.0, -1.5], d: 7.4, az: 18, el: 48, orbit: 11 } },
+  { k: 'nucleolus', mode: 'CLOSE-UP', name: 'NUCLEOLUS', sub: 'Ribosome subunit assembly', b: ['rRNA transcription', 'densest part of the nucleus', 'exports ribosome subunits'], zoom: '×15 000', bar: '500 nm', c: '#9b6bff', cam: { t: [2.92, 1.75, -1.5], d: 5.4, az: 10, el: 64, orbit: 14 } },
+  { k: 'er', mode: 'CLOSE-UP', name: 'ENDOPLASMIC RETICULUM', sub: 'Protein and lipid synthesis', b: ['rough ER = ribosome-studded', 'continuous with the nucleus', 'folds new proteins'], zoom: '×12 000', bar: '1 µm', c: '#5aa0ff', cam: { t: [2.3, 1.05, .45], d: 4.6, az: -24, el: 36, orbit: 9 } },
+  { k: 'mito', mode: 'CLOSE-UP', name: 'MITOCHONDRION', sub: 'ATP production', b: ['cristae fold the inner membrane', 'cellular respiration', '~1-2 µm long'], zoom: '×15 000', bar: '500 nm', c: '#ff7a2e', cam: { t: [.53, .9, 2.87], d: 5.0, az: 170, el: 54, orbit: -11 } },
+  { k: 'golgi', mode: 'CLOSE-UP', name: 'GOLGI APPARATUS', sub: 'Modifies and sorts cell products', b: ['cis → trans cisternae', 'builds wall polysaccharides', 'ships cargo in vesicles'], zoom: '×20 000', bar: '500 nm', c: '#f5c43a', cam: { t: [.87, 1.0, 4.6], d: 5.2, az: 168, el: 54, orbit: 9 } },
+  { k: 'ribo', mode: 'CLOSE-UP', name: 'RIBOSOMES', sub: 'Protein synthesis', b: ['~25 nm · rRNA + protein', 'polysomes read one mRNA', 'millions per cell'], zoom: '×80 000', bar: '100 nm', c: '#ff3d6e', cam: { t: [-1.75, .85, 4.3], d: 2.9, az: 160, el: 46, orbit: 16 } },
+  { k: 'membrane', mode: 'CLOSE-UP', name: 'PLASMA MEMBRANE', sub: 'Selective transport', b: ['lipid bilayer · ~7 nm thick', 'aquaporins + ion pumps', 'pressed against the wall'], zoom: '×20 000', bar: '500 nm', c: '#ff4fb0', cam: { t: [-4.7, 2.0, 3.0], d: 4.2, az: 72, el: 18, orbit: -7 } },
+  { k: 'chloro', mode: 'CLOSE-UP', name: 'CHLOROPLAST', sub: 'Photosynthesis', b: ['grana = stacked thylakoids', 'chlorophyll captures light', 'own DNA · ~5-10 µm long'], zoom: '×8 000', bar: '1 µm', c: '#7dff4a', cam: { t: [-3.37, 1.15, 1.63], d: 6.0, az: 16, el: 56, orbit: 10 } },
+  { k: 'tono', mode: 'CLOSE-UP', name: 'TONOPLAST', sub: 'Vacuole membrane', b: ['H⁺ pumps acidify the sap', 'aquaporins move water', 'separates sap from cytoplasm'], zoom: '×30 000', bar: '200 nm', c: '#4ff0e0', cam: { t: [-.4, 2.3, .05], d: 3.8, az: 12, el: 34, orbit: 8 } },
+  { k: 'vac', mode: 'CLOSE-UP', name: 'CENTRAL VACUOLE', sub: 'Water storage and turgor', b: ['up to 90 % of cell volume', 'keeps the plant upright', 'stores ions, sugars, pigments'], zoom: '×2 000', bar: '5 µm', c: '#4fd8ff', cam: { t: [-.75, 2.1, -2.5], d: 10, az: 12, el: 44, orbit: 9 } },
+  { k: 'xray', mode: 'X-RAY', name: 'HALF SECTION', title: 'X-RAY SECTION', sub: 'Translucent half-section · simulated', b: ['cut through the middle', 'every organelle in place', 'false-color · not to scale'], zoom: '×800', bar: '20 µm', c: '#3ff0c8', cam: { t: [0, 1.6, .3], d: 19, az: -14, el: 56, orbit: 14 } },
+];
+SH.forEach(s => { s.rgb = hx(s.c); s.title = s.title || s.name; });
+const OVERVIEW = { t: [0, 1.6, .3], d: 18.5, az: 0, el: 60 };
+
+// ---------- stage, tour, film ----------
+const RS = clamp(+(new URLSearchParams(location.search).get('rs') || 1), .25, 1);   // ?rs=0.67 renders the 3D layer at 2/3 size (MP4 bakes)
+const stage = K.createStage({ W: LY.W, H: LY.H, scale: RS, bg: 0x020805, fog: .018, fov: 46, bloom: [.5, .5, .82], exposure: 1.04 });
+const { scene, camera, renderer } = stage;
+const T = K.tour(SH.map(s => s.cam), { shot: 2, transition: .42, base: { d: OVERVIEW.d, el: OVERVIEW.el } });
+const XRAY = K.xrayMaterial(0x3ff0c8, 2.0);
+let cap = null, capMat = null, THUMB = null, thumbCam = null; const FADE = [];   // neighbour materials: hidden while the closed cell turns alone
+
+function std(color, o = {}) { return new THREE.MeshPhysicalMaterial({ color, roughness: o.r ?? .4, metalness: 0, clearcoat: o.cc ?? .7, clearcoatRoughness: o.ccr ?? .25, envMapIntensity: o.env ?? 1.1, ...o.extra }); }
+
+async function build(F, progress) {
+  SZ.baseTextures();
+  const tick = async f => { progress(f); await new Promise(r => setTimeout(r, 0)); };
+  scene.environment = K.studioEnv(renderer, { top: 0x4d8a9a, bot: 0x030806 });
+  // ---- textures painted with the 2D kit ----
+  const fiberC = SZ.fiberTex(4, { size: 1024 }), fiber = K.canvasTex(fiberC), fiberB = K.canvasTex(fiberC, { srgb: false });
+  const grain = K.canvasTex(TEX.grain, { srgb: false }), fine = K.canvasTex(TEX.fine, { srgb: false }), caus = K.canvasTex(TEX.caus, { repeat: [2, 2] });
+  const cyto = K.paintTex(1024, (g, s) => { SZ.fieldBase(g, 0, 0, s, s, 11, { n: 1500, step: 7, lw: 1.1, c0: [14, 34, 104], c1: [8, 20, 70] }); SZ.dots(g, 0, 0, s, s, 260, 12, [214, 30, 72], 2, 5); SZ.dots(g, 0, 0, s, s, 60, 13, [70, 150, 255], 3, 9); });
+  const ground = K.paintTex(1024, (g, s) => SZ.fieldBase(g, 0, 0, s, s, 14, { n: 500, c0: [8, 30, 14], c1: [3, 12, 6], cols: [[40, 120, 60]] }));
+  const stroma = K.paintTex(512, (g, s) => { g.fillStyle = '#2e7a22'; g.fillRect(0, 0, s, s); const P = new Path2D(); P.rect(0, 0, s, s); SZ.texOver(g, P, TEX.grain, { alpha: .6, scale: 1 }); SZ.network(g, 0, 0, s, s, 160, 15, { cols: [[150, 230, 90], [90, 180, 60]], alpha: .5, lw0: .6, lw1: 2 }); });
+  const matrixT = K.paintTex(512, (g, s) => { g.fillStyle = '#5a170a'; g.fillRect(0, 0, s, s); const P = new Path2D(); P.rect(0, 0, s, s); SZ.texOver(g, P, TEX.grain, { alpha: .7, scale: 1 }); });
+  await tick(.25);
+
+  // ---- light ----
+  scene.add(new THREE.HemisphereLight(0x9fd8ff, 0x0a1a0a, .55));
+  const key = new THREE.DirectionalLight(0xfff2dd, 1.9); key.position.set(-7, 14, 9); scene.add(key);
+  const rim = new THREE.DirectionalLight(0x5fc8ff, 1.3); rim.position.set(9, 6, -11); scene.add(rim);
+  const inside = new THREE.PointLight(0x7fffd0, 14, 9, 1.6); inside.position.set(-.5, 3.4, -1.5); scene.add(inside);
+
+  // ---- ground, neighbours, walls ----
+  const gm = new THREE.MeshStandardMaterial({ map: ground, roughness: .9 }); ground.repeat.set(10, 10);
+  const gp = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), gm); gp.rotation.x = -Math.PI / 2; scene.add(gp);
+  const wallMat = new THREE.MeshStandardMaterial({ map: fiber, bumpMap: fiberB, bumpScale: 2.2, roughness: .55, color: 0xcfe8b0, emissive: 0x0b2a06, envMapIntensity: .8 });
+  const nWallMat = wallMat.clone(); nWallMat.color = new THREE.Color(0x6d8f58); nWallMat.emissive = new THREE.Color(0x020a02);
+  const ring1 = HEX.map((_, i) => K.reflectPoly(HEX, i)), ring2 = [];
+  ring1.forEach(poly => poly.forEach((_, i) => { const r = K.reflectPoly(poly, i), c = r.reduce((a, q) => [a[0] + q[0] / 6, a[1] + q[1] / 6], [0, 0]); if (Math.hypot(c[0], c[1]) > 14) ring2.push(r); }));
+  const seen = new Set(), verts = new Map(), key2 = (a, b) => [Math.round((a[0] + b[0]) * 5), Math.round((a[1] + b[1]) * 5)].join(',');
+  const addPoly = (poly, mat, floorMat) => {
+    poly.forEach((a, i) => { const b = poly[(i + 1) % poly.length], kk = key2(a, b); if (seen.has(kk)) return; seen.add(kk); scene.add(K.walls([a, b], HC, WT, mat, { skip: [1], corners: false, texScale: 2.4 })); [a, b].forEach(v => verts.set(Math.round(v[0] * 4) + ',' + Math.round(v[1] * 4), [v, mat])); });
+    if (floorMat) scene.add(K.plate(K.insetPoly(poly, WT / 2), FLOOR * .8, .3, floorMat, { texScale: 7 }));
+  };
+  const darkFloor = new THREE.MeshStandardMaterial({ map: ground, roughness: .9, color: 0x6a8a70, transparent: true });
+  nWallMat.transparent = true; FADE.push(nWallMat, darkFloor);
+  addPoly(HEX, wallMat); ring1.forEach(r => addPoly(r, nWallMat, darkFloor)); ring2.forEach(r => addPoly(r, nWallMat, darkFloor));
+  verts.forEach(([v, mat]) => { const c = new THREE.Mesh(new THREE.CylinderGeometry(WT * .62, WT * .62, HC, 20), mat); c.position.set(v[0], HC / 2, v[1]); scene.add(c); const s = new THREE.Mesh(new THREE.SphereGeometry(WT * .62, 20, 12), mat); s.position.set(v[0], HC, v[1]); scene.add(s); });
+  // closed lids for the opening shot (all cells), faded away when the cell opens
+  capMat = new THREE.MeshStandardMaterial({ map: fiber, bumpMap: fiberB, bumpScale: 3, roughness: .6, color: 0xb8d89a, emissive: 0x0b2a06, transparent: true });
+  cap = new THREE.Group(); cap.add(K.plate(K.insetPoly(HEX, -WT * .3), HC + .4, .42, capMat, { texScale: 3 })); scene.add(cap);
+  await tick(.4);
+
+  // ---- cytoplasm floor, filaments, membrane ----
+  const cytoMat = new THREE.MeshStandardMaterial({ map: cyto, emissiveMap: cyto, emissive: 0x6688ff, emissiveIntensity: .55, roughness: .75, bumpMap: grain, bumpScale: 1.5 });
+  scene.add(K.plate(INNER, FLOOR, .5, cytoMat, { texScale: 5 }));
+  const fil = new THREE.MeshStandardMaterial({ color: 0x3a7cff, emissive: 0x2d6bff, emissiveIntensity: 1.6, roughness: .4 });
+  { const R = rng(21); for (let i = 0; i < 70; i++) { let x = lerp(-4.5, 4.5, R()), z = lerp(-5, 5.5, R()), a = R() * 6.3; const pts = []; for (let s = 0; s < 14; s++) { if (K.inPoly(INNER, x, z)) pts.push([x, FLOOR + .03 + R() * .25, z]); a += (R() - .5) * .8; x += Math.cos(a) * .35; z += Math.sin(a) * .35; } if (pts.length > 3) scene.add(K.tube(pts, .012 + R() * .018, fil, { radial: 6 })); } }
+  const memMat = new THREE.MeshStandardMaterial({ color: 0xff6fc0, emissive: 0x801050, emissiveIntensity: .25, roughness: .35, transparent: true, opacity: .07, side: THREE.DoubleSide, depthWrite: false });
+  const MEM = K.insetPoly(HEX, WT * .62 + .03);
+  MEM.forEach((a, i) => { const b = MEM[(i + 1) % 6], L = Math.hypot(b[0] - a[0], b[1] - a[1]), m = new THREE.Mesh(new THREE.PlaneGeometry(L, HC - FLOOR - .1), memMat); m.position.set((a[0] + b[0]) / 2, (HC + FLOOR) / 2, (a[1] + b[1]) / 2); m.rotation.y = -Math.atan2(b[1] - a[1], b[0] - a[0]); scene.add(m); });
+  scene.add(K.tube([...MEM, MEM[0]].map(([x, z]) => [x, FLOOR + .04, z]), .05, new THREE.MeshStandardMaterial({ color: 0xff6fc0, emissive: 0xff2f9a, emissiveIntensity: 1.2 }), { seg: 240, closed: true }));
+  // transport proteins (aquaporins / pumps) on the membrane along the left wall
+  { const a = MEM[5], b = MEM[0], R = rng(22), L = []; /* left wall, where shot 10 looks */ const ang = -Math.atan2(b[1] - a[1], b[0] - a[0]);
+    for (let i = 0; i < 90; i++) { const f = R(), y = lerp(FLOOR + .25, HC - .4, R()); L.push([lerp(a[0], b[0], f) + .03, y, lerp(a[1], b[1], f), .085, .085, .085, 0, ang, Math.PI / 2 + (R() - .5) * .3]); }
+    scene.add(K.beads(L, std(0xe0369a, { r: .3, cc: 1 }), new THREE.CapsuleGeometry(.5, .5, 6, 12))); }
+  await tick(.5);
+
+  // ---- vacuole ----
+  const vac = new THREE.Mesh(K.blobGeo(31, .14, 128), new THREE.MeshPhysicalMaterial({ color: 0x5cdcf8, roughness: .04, transparent: true, opacity: .8, emissive: 0x0c6f90, emissiveMap: caus, emissiveIntensity: 1.25, clearcoat: 1, clearcoatRoughness: .03, envMapIntensity: 1.8, bumpMap: fine, bumpScale: .4 }));
+  vac.position.set(-.75, 2.15, -2.5); vac.scale.set(2.25, 1.45, 2.7); vac.rotation.y = .25; scene.add(vac);
+  const tono = new THREE.Mesh(vac.geometry, new THREE.MeshPhysicalMaterial({ color: 0xaaf6ff, roughness: .1, transparent: true, opacity: .16, side: THREE.BackSide, emissive: 0x2fd0e0, emissiveIntensity: .3 }));
+  tono.position.copy(vac.position); tono.scale.copy(vac.scale).multiplyScalar(1.03); tono.rotation.copy(vac.rotation); scene.add(tono);
+  { const R = rng(32), pos = vac.geometry.attributes.position, nrm = vac.geometry.attributes.normal, L = [], B = [], v = new THREE.Vector3(), n = new THREE.Vector3(); vac.updateMatrixWorld();
+    for (let i = 0; i < 150; i++) { const j = (R() * pos.count) | 0; v.fromBufferAttribute(pos, j).applyMatrix4(vac.matrixWorld); n.fromBufferAttribute(nrm, j).transformDirection(vac.matrixWorld); if (v.y < FLOOR + .2) continue; L.push([v.x + n.x * .02, v.y + n.y * .02, v.z + n.z * .02, .028 + R() * .02]); }
+    for (let i = 0; i < 60; i++) B.push([-.75 + (R() - .5) * 3, 2.1 + (R() - .5) * 1.8, -2.5 + (R() - .5) * 3.6, .03 + R() * R() * .12]);
+    scene.add(K.beads(L, std(0xff5ac0, { r: .25, cc: 1 })));                                                 // H⁺ pumps on the tonoplast
+    scene.add(K.beads(B, new THREE.MeshPhysicalMaterial({ color: 0xdffcff, roughness: 0, transparent: true, opacity: .35, clearcoat: 1, envMapIntensity: 2 }))); }
+
+  // ---- nucleus: cut open from the top ----
+  const nuc = new THREE.Group(); nuc.position.set(...NUC);
+  const nb = K.bowl(NR, NR, NR, std(0x9a52e6, { r: .45, cc: .6, extra: { bumpMap: grain, bumpScale: 2.5 } }), std(0x3c1478, { r: .8, cc: .2, extra: { bumpMap: grain, bumpScale: 3, side: THREE.BackSide } }), { cut: .42, thick: .1, rimMat: std(0xc08aff, { r: .3 }) });
+  nuc.add(nb);
+  const nucl = new THREE.Mesh(new THREE.SphereGeometry(.55, 64, 48), std(0x5a24b8, { r: .3, cc: 1, extra: { bumpMap: grain, bumpScale: 3 } })); nucl.position.set(.05, -.35, .05); nuc.add(nucl);
+  { const R = rng(41), pores = [], gran = [], chrom = [], q = new THREE.Vector3();
+    for (let i = 0; i < 160; i++) { q.set(R() * 2 - 1, R() * 2 - 1, R() * 2 - 1).normalize(); if (q.y > .38) continue; const s = q.clone().multiplyScalar(NR * 1.003), e = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), q)); pores.push([s.x, s.y, s.z, .06, .06, .06, e.x, e.y, e.z]); }
+    for (let i = 0; i < 220; i++) { q.set(R() * 2 - 1, R() * 2 - 1, R() * 2 - 1).normalize(); if (q.y > .5) continue; gran.push([.05 + q.x * .56, -.35 + q.y * .56, .05 + q.z * .56, .025 + R() * .03]); }
+    for (let i = 0; i < 160; i++) { q.set(R() * 2 - 1, -R(), R() * 2 - 1); if (q.length() > 1) continue; chrom.push([q.x * NR * .8, q.y * NR * .8 + .1, q.z * NR * .8, .012 + R() * .02]); }
+    nuc.add(K.beads(pores, std(0x2a0a50, { r: .5, cc: .3 }), new THREE.TorusGeometry(1, .38, 10, 20)));
+    nuc.add(K.beads(gran, std(0x8a5ae0, { r: .35, cc: .8 })));
+    nuc.add(K.beads(chrom, new THREE.MeshStandardMaterial({ color: 0x8a60d0, emissive: 0x4a2090, emissiveIntensity: .5 }))); }
+  scene.add(nuc);
+
+  // ---- ER around the nucleus, studded with ribosomes ----
+  const erMat = std(0x3f80f2, { r: .35, cc: .8, extra: { emissive: 0x0a2a80, emissiveIntensity: .45, bumpMap: fine, bumpScale: 1.5 } }), riboMat = std(0xd8204c, { r: .22, cc: 1 });
+  { const R = rng(51), studs = [];
+    for (let k = 0; k < 7; k++) { const rr = NR + .35 + k * .2; let a = .2 + R() * .2;
+      while (a < 3.3) { const len = .5 + R() * .8, pts = []; for (let s = a; s < a + len; s += .08) pts.push([NUC[0] + Math.cos(s) * rr * (1 + Math.sin(s * 5 + k) * .03), FLOOR + .25 + k * .05 + Math.sin(s * 7 + k) * .07, NUC[2] + Math.sin(s) * rr * 1.05]);
+        if (pts.length > 2) { scene.add(K.tube(pts, .085, erMat, { flat: .7, radial: 10 })); pts.forEach((q, i) => { if (i % 2 === 0) studs.push([q[0] + (R() - .5) * .08, q[1] + .07, q[2] + (R() - .5) * .08, .028]); }); }
+        a += len + .1 + R() * .15; } }
+    scene.add(K.beads(studs, riboMat)); }
+
+  // ---- chloroplasts: cut in half, grana standing in the stroma ----
+  const chlOut = std(0x56c22c, { r: .35, cc: .9, extra: { bumpMap: fine, bumpScale: 1.5 } }), chlIn = std(0x1f5a12, { r: .7, cc: .2, extra: { side: THREE.BackSide } });
+  const stromaMat = new THREE.MeshStandardMaterial({ map: stroma, roughness: .7, emissive: 0x0a2a05, bumpMap: grain, bumpScale: 1.2 }), granaMat = std(0x7fe443, { r: .28, cc: 1 }), lamMat = new THREE.MeshStandardMaterial({ color: 0xb0f070, emissive: 0x3a7a10, emissiveIntensity: .5 });
+  const chloro = (x, z, rx, rz, rot, seed) => {
+    const R = rng(seed), g = K.bowl(rx, .6, rz, chlOut, chlIn, { floorMat: stromaMat, floor: -.18, thick: .08, rimMat: std(0x8fe85a, { r: .3 }) }); g.position.set(x, 1.25, z); g.rotation.y = rot;
+    const fy = g.userData.floorY, discs = [], stacks = [], s = Math.min(rx, rz) * .5;
+    for (let gx = -rx; gx <= rx; gx += s) for (let gz = -rz; gz <= rz; gz += s) { const jx = gx + (R() - .5) * s * .3, jz = gz + (R() - .5) * s * .3; if ((jx / (rx * .72)) ** 2 + (jz / (rz * .74)) ** 2 < 1) stacks.push([jx, jz]); }
+    const r0 = s * .27, th = r0 * .3;
+    stacks.forEach(([jx, jz]) => { const n = 3 + (R() * 5 | 0); for (let i = 0; i < n; i++) discs.push([jx, fy + th * .6 + i * th * 1.18, jz, r0, th, r0]); });
+    g.add(K.beads(discs, granaMat, new THREE.CylinderGeometry(1, 1, 1, 28)));
+    for (let i = 0; i < stacks.length; i++) for (let j = i + 1; j < stacks.length; j++) { const a = stacks[i], b = stacks[j]; if (Math.hypot(a[0] - b[0], a[1] - b[1]) < s * 1.3) g.add(K.tube([[a[0], fy + th * 2, a[1]], [b[0], fy + th * 2, b[1]]], r0 * .07, lamMat, { seg: 4, radial: 6 })); }
+    scene.add(g);
+  };
+  chloro(-3.3, -2.2, .78, 1.45, .1, 61); chloro(-3.37, 1.63, .85, 1.6, -.06, 62); chloro(-1.3, 1.9, 1.15, .68, .22, 63);
+
+  // ---- mitochondria: cut in half, cristae reaching in from both walls ----
+  const mOut = std(0xf06a20, { r: .35, cc: .9, extra: { bumpMap: fine, bumpScale: 1.5 } }), mIn = std(0x5a1406, { r: .7, extra: { side: THREE.BackSide } });
+  const mMatrix = new THREE.MeshStandardMaterial({ map: matrixT, roughness: .8, bumpMap: grain, bumpScale: 1.5 }), crMat = std(0xff8638, { r: .3, cc: 1 });
+  const mito = (x, z, rx, rz, rot, seed) => {
+    const R = rng(seed), ry = .42, g = K.bowl(rx, ry, rz, mOut, mIn, { floorMat: mMatrix, floor: -.2, thick: .1, rimMat: std(0xffa060, { r: .3 }) }); g.position.set(x, .97, z); g.rotation.y = rot;
+    const fy = g.userData.floorY, folds = Math.round(rx / rz * 4.5), step = 2 * rx * .82 / folds;
+    for (const side of [-1, 1]) for (let i = 0; i < folds; i++) { const xx = -rx * .82 + step * (i + (side > 0 ? .5 : .1)), e = Math.sqrt(Math.max(0, 1 - (xx / (rx * .9)) ** 2)); if (e < .35) continue;
+      const edge = rz * .86 * e * side, depth = rz * .86 * e * (.95 + R() * .5), bend = (R() - .5) * step * .4;
+      g.add(K.tube([[xx, fy + .02, edge], [xx + bend, fy + .05, edge - side * depth * .5], [xx + bend * .4, fy + .04, edge - side * depth]], step * .17, crMat, { seg: 16, radial: 10, flat: 1.4 })); }
+    scene.add(g);
+  };
+  mito(.53, 2.87, 1.0, .46, -.15, 71); mito(2.7, 2.2, 1.0, .46, -.1, 72); mito(3.85, .5, .66, .32, 1.3, 73);
+
+  // ---- golgi: curved, flattened cisternae + vesicles ----
+  const gMat = std(0xf0c030, { r: .3, cc: 1, extra: { bumpMap: fine, bumpScale: 1.2 } });
+  { const R = rng(81), ves = [], C = [.87, 1.0, 4.7];
+    for (let i = 0; i < 6; i++) { const half = 1.25 * (1 - i * .07), zz = C[2] - .5 + i * .2, cv = .3, y = C[1] + (R() - .5) * .08, pts = [];
+      for (let s = -1; s <= 1.001; s += .25) pts.push([C[0] + s * half, y + Math.cos(s * 1.4) * .05, zz - cv * (1 - s * s)]);
+      scene.add(K.tube(pts, .085, gMat, { flat: .55, radial: 14 }));
+      for (const e of [pts[0], pts[pts.length - 1]]) ves.push([e[0], e[1], e[2], .11 + R() * .04]); }
+    for (let i = 0; i < 34; i++) { const sd = R() < .5 ? -1 : 1; ves.push([C[0] + sd * (1.25 + R() * .45), C[1] + (R() - .3) * .5, C[2] - .7 + R() * 1.4, .04 + R() * .08]); }
+    scene.add(K.beads(ves, gMat)); }
+
+  // ---- ribosomes: free ones on the floor + one polysome on an mRNA ----
+  { const R = rng(91), free = [], big = [], small = [], C = [-1.75, .78, 4.3], mrna = [];
+    for (let i = 0; i < 520; i++) { const x = lerp(-4.6, 4.6, R()), z = lerp(-5.5, 6, R()); if (K.inPoly(INNER, x, z)) free.push([x, FLOOR + .03 + R() * .5, z, .025 + R() * .02]); }
+    for (let i = 0; i < 11; i++) { const a = i * .62, r = .1 + i * .035, x = C[0] + Math.cos(a) * r, z = C[2] + Math.sin(a) * r, y = C[1] + Math.sin(i * .9) * .04; mrna.push([x, y - .02, z]); big.push([x, y, z, .07]); small.push([x + .03, y + .07, z - .03, .05]); }
+    scene.add(K.beads(free, riboMat)); scene.add(K.beads(big, riboMat)); scene.add(K.beads(small, std(0xf0507a, { r: .25, cc: 1 })));
+    scene.add(K.tube(mrna, .01, new THREE.MeshStandardMaterial({ color: 0xffe08a, emissive: 0xffc040, emissiveIntensity: 1.2 }), { radial: 6 })); }
+
+  // ---- floating specks for depth (parallax when the camera turns) ----
+  { const R = rng(99), L = []; for (let i = 0; i < 260; i++) { const x = lerp(-4.6, 4.6, R()), z = lerp(-5.5, 6, R()); if (K.inPoly(INNER, x, z)) L.push([x, FLOOR + .3 + R() * 3.2, z, .006 + R() * .012]); }
+    scene.add(K.beads(L, new THREE.MeshBasicMaterial({ color: 0x5f9fe0, transparent: true, opacity: .6 }))); }
+  await tick(.8);
+
+  // ---- locator thumbnail: the open cell from the overview pose ----
+  cap.visible = false; const ov = K.tour([OVERVIEW], {}).at(0); K.aim(camera, ov); stage.composer.render();
+  const k = stage.scale, sw = LY.W, sh = sw * 430 / 500, y0 = (LY.H - sh) / 2 + (LY.focus[1] - LY.H / 2);
+  THUMB = SZ.mk(500, 430); THUMB.getContext('2d').drawImage(stage.glCanvas, 0, y0 * k, sw * k, sh * k, 0, 0, 500, 430);
+  thumbCam = camera.clone(); thumbCam.userData.crop = { y0, sh, sw };
+  cap.visible = true;
+}
+
+// ---------- per frame ----------
+function cutAt(k, lt) { if (k !== 13) return Infinity; const c = lerp(LY.W + 40, LY.W * .5, eo(p(lt, .1, .7))); return lt > 1.55 ? lerp(c, LY.W + 40, ss(p(lt, 1.55, .45))) : c; }
+function frame(t, c, F) {
+  K.aim(camera, c);
+  // lid: closed for the rotating opening shot, lifts off and fades as the cell opens
+  const { k, lt } = T.shotAt(t), open = k === 0 ? ss(p(lt, .95, .55)) : (k === 13 && lt > 1.6 ? 1 - ss(p(lt, 1.6, .4)) : 1);
+  cap.visible = open < 1; capMat.opacity = 1 - open; cap.position.y = open * 1.6;
+  FADE.forEach(m => { m.opacity = open; m.visible = open > .01; m.depthWrite = open > .95; });
+  F.after = (t2, c2) => { const cut = cutAt(k, lt); if (cut < LY.W) K.renderXray(stage, cut * stage.scale, XRAY); F.cut = cut; };
+}
+const F = K.film({ stage, tour: T, build, frame, hud: (g, t, c, F) => hud(g, t, c, F) });
+
+// ---------- HUD ----------
+const U = SZ.ui(F), { T: Tx } = U, FS = SZ.FONT.display, FM = SZ.FONT.mono;
+const SEQ = 'ATGGCTTCCTCAATGCTCTCTTCCGCTACTATGGTTGCCTCTCCGGCTCAGGCCACTATGGTCGCTCCTTTCAACGGACTTAAGTCCTCCGCTGCCTTCCCAGCCACCCGCAAGGCTAACAACGACATTACTTCCATCACAAGCAACGGCGGAAGAGTTAACTGCATGAAGGTGTGGCCTCCGATTGGAAAGAAGAAGTTTGAGACTCTCTCTTACCTTCCTGACCTTACCGATTCCGAATTGGCTAAGGAAGTTGACTACCTTATCCGCAACAAGTGGATTCCTTGTGTTGAATTCGAGTTGGAGCACGGATTTGTGTACCGTGAGCACGG';
+const LOG = ['stomata · CO₂ 410 ppm', 'tonoplast pH 5.4', 'render ok · claude-opus-5.5', 'rubisco · CO₂ fixed +12', 'aquaporin PIP2 · open', 'turgor 0.62 MPa', 'starch granule +1', 'ATP synthase ↑ 108 Hz', 'mRNA export · 42 pores', 'golgi vesicle → wall', 'cellulose synthase · on', 'chlorophyll a/b 3.1', 'plasmodesma · open', 'H⁺-ATPase · pumping', 'ribosome 60S + 40S'];
+function hud(g, t, c, F) {
+  const { k, lt } = T.shotAt(t), s = SH[k], V0 = LY.v0, V1 = LY.v1, W = LY.W;
+  // x-ray side: grid + scan line
+  if (F.cut < W) { g.save(); g.beginPath(); g.rect(F.cut, 0, W - F.cut, LY.H); g.clip(); g.strokeStyle = 'rgba(63,240,200,.13)'; g.lineWidth = 1; for (let x = Math.ceil(F.cut / 48) * 48; x < W; x += 48) { g.beginPath(); g.moveTo(x + .5, 0); g.lineTo(x + .5, LY.H); g.stroke(); } for (let y = 0; y < LY.H; y += 48) { g.beginPath(); g.moveTo(F.cut, y + .5); g.lineTo(W, y + .5); g.stroke(); } g.restore();
+    const lg = g.createLinearGradient(F.cut - 14, 0, F.cut + 14, 0); lg.addColorStop(0, 'rgba(63,240,200,0)'); lg.addColorStop(.5, 'rgba(200,255,240,.9)'); lg.addColorStop(1, 'rgba(63,240,200,0)'); g.fillStyle = lg; g.fillRect(F.cut - 14, 0, 28, LY.H); }
+  // vignette
+  const vg = g.createRadialGradient(W / 2, LY.focus[1], 300, W / 2, LY.focus[1], LY.H * .62); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.5)'); g.fillStyle = vg; g.fillRect(0, 0, W, LY.H);
+  // ---- top panel ----
+  g.save(); g.translate(0, LY.top - 10);
+  U.glass(g, 16, 10, 1048, 212, 22);
+  g.save(); g.strokeStyle = '#ff8a4c'; g.lineWidth = 2; for (let i = 0; i < 4; i++) { const a = i * Math.PI / 4; g.beginPath(); g.moveTo(47 - Math.cos(a) * 7, 40 - Math.sin(a) * 7); g.lineTo(47 + Math.cos(a) * 7, 40 + Math.sin(a) * 7); g.stroke(); } g.restore();
+  Tx(g, 'POWERED BY', 62, 45, { w: 600, s: 13, ls: 3, c: '#ff8a4c' });
+  let gr = g.createLinearGradient(0, 56, 0, 94); gr.addColorStop(0, '#ffc27c'); gr.addColorStop(1, '#ff7438');
+  Tx(g, 'CLAUDE OPUS 5.5', 38, 93, { f: FS, w: 700, s: 46, c: gr });
+  g.fillStyle = 'rgba(255,150,90,.35)'; g.fillRect(40, 103, 300, 1.5);
+  gr = g.createLinearGradient(0, 110, 0, 146); gr.addColorStop(0, '#ecff5e'); gr.addColorStop(1, '#78ff4f');
+  Tx(g, 'PLANT CELL', 38, 146, { f: FS, w: 700, s: 44, c: gr });
+  Tx(g, 'A THREE-DIMENSIONAL CUTAWAY', 40, 167, { w: 600, s: 14, ls: 3.6, c: '#e7eee9' });
+  Tx(g, 'false-color · 3D graphics in code', 40, 188, { w: 400, s: 13, c: '#8fa096' });
+  Tx(g, 'CELL PROFILE', 380, 47, { w: 600, s: 12.5, ls: 2.2 });
+  [['Kingdom', 'Plantae · eukaryote'], ['Cell size', '10 - 100 µm'], ['Wall thickness', '0.1 - 10 µm'], ['Chloroplasts / cell', '~20 - 100', '#8dff5a'], ['Vacuole volume', 'up to 90 %', '#4fc4ff']].forEach(([a, b, cc], i) => { Tx(g, a, 380, 74 + i * 23, { w: 400, s: 14, c: '#9fb0a5' }); Tx(g, b, 680, 74 + i * 23, { w: 600, s: 14, a: 'right', c: cc || '#f2f6f3' }); });
+  Tx(g, 'jungrok5/motion-skills', 1040, 30, { w: 400, s: 11.5, a: 'right', c: '#71837a' });
+  U.head(g, 'PHOTOSYNTHESIS RATE', 716, 57, 'µmol CO₂ m⁻² s⁻¹', 1040);
+  const rate = 21.6 + wob(t * .9, 1) * 3.6;
+  Tx(g, rate.toFixed(1), 714, 113, { f: FS, w: 700, s: 46, c: '#b8ff5c' });
+  Tx(g, 'light-saturated', 816, 92, { w: 400, s: 13.5, c: '#9fb0a5' }); Tx(g, 'C3 leaf · 25 °C', 816, 111, { w: 400, s: 13.5, c: '#9fb0a5' });
+  U.segMeter(g, 716, 128, 325, 32, rate / 27);
+  Tx(g, '6CO₂ + 6H₂O + light → C₆H₁₂O₆ + 6O₂', 716, 164, { w: 500, s: 14, c: '#dfe9e2' });
+  g.restore();
+  // ---- viewfinder ----
+  U.corners(g, 30, V0, 1050, V1);
+  U.live(g, 42, V0 + 12, `LIVE · SHOT ${String(k + 1).padStart(2, '0')} / 14`, t);
+  U.pill(g, 540, V0 + 12, `${s.mode} · ${s.name}`, s.c);
+  Tx(g, s.zoom, 1036, V0 + 36, { f: FS, w: 700, s: 25, a: 'right', c: s.c });
+  U.reticle(g, 545, LY.focus[1] - 15, lt, s.rgb);
+  U.scaleBar(g, 926, V1 - 31, 100, s.bar);
+  U.card(g, 45, V1 - 140, 428, 126, s.c, s.title, s.sub, s.b, lt);
+  // ---- bottom panel ----
+  g.save(); g.translate(0, LY.bot - 985);
+  U.glass(g, 16, 985, 1048, AR === '9:16' ? 345 : 350, 22);
+  U.head(g, 'LOCATOR · SECTION', 40, 1013, 'live', 290);
+  if (THUMB) { g.drawImage(THUMB, 40, 1025, 250, 215); const cr = thumbCam.userData.crop, v = c.target.clone().project(thumbCam), sx = (v.x * .5 + .5) * cr.sw, sy = (-v.y * .5 + .5) * LY.H - cr.y0, bx = 40 + sx / cr.sw * 250, by = 1025 + sy / cr.sh * 215, bw = Math.min(250, Math.max(16, 250 * c.d / OVERVIEW.d * .9)), bh = bw * .62;
+    g.save(); g.beginPath(); g.rect(40, 1025, 250, 215); g.clip(); g.strokeStyle = s.c; g.lineWidth = 2; g.strokeRect(bx - bw / 2, by - bh / 2, bw, bh); g.fillStyle = rgba(s.rgb, .12); g.fillRect(bx - bw / 2, by - bh / 2, bw, bh); g.restore(); }
+  g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = 1; g.strokeRect(40.5, 1025.5, 250, 215);
+  Tx(g, `${String(k + 1).padStart(2, '0')} / 14`, 50, 1047, { f: FM, w: 400, s: 13, c: '#eef4f0' });
+  Tx(g, s.name.length > 16 ? 'ER' : s.name, 281, 1046, { w: 600, s: 11.5, ls: 1, a: 'right', c: s.c });
+  U.head(g, 'SHOT SEQUENCE', 40, 1260, '2.0 s each', 290, '#9fb0a5');
+  U.seq(g, 40, 1272, SH.map(q => q.c), k);
+  Tx(g, 'equal time per structure', 40, 1315, { w: 400, s: 12.5, c: '#8fa096' });
+  U.head(g, 'LIGHT REACTIONS', 322, 1013, 'flux', 558);
+  [['ATP', '#ffd23f', .7, 3], ['NADPH', '#3fd0ff', .62, 5], ['O₂ release', '#a4ff3f', .67, 7], ['CO₂ uptake', '#5cff5c', .55, 9]].forEach(([n, cc, b, sd], i) => {
+    const v = clamp(b + wob(t * .8, sd) * .08), y = 1037 + i * 24; Tx(g, n, 322, y, { w: 400, s: 13.5, c: '#c9d4cd' }); U.bar(g, 402, y - 9, 88, 9, v, cc); Tx(g, Math.round(v * 100) + '%', 558, y, { w: 500, s: 13.5, a: 'right', c: '#e5ece7' });
+  });
+  U.head(g, 'TURGOR PRESSURE', 322, 1154, 'MPa', 558, '#4fb4ff');
+  const tp = .6 + wob(t * .5, 11) * .05;
+  U.gauge(g, 360, 1210, 27, tp, tp.toFixed(2), 'MPa');
+  Tx(g, 'vacuole pushes on the wall', 408, 1185, { w: 400, s: 13.5, c: '#e5ece7' }); Tx(g, 'typical 0.3 - 1.0 MPa', 408, 1203, { w: 400, s: 13, c: '#9fb0a5' });
+  Tx(g, 'car tyre ≈ 0.2 MPa', 408, 1221, { w: 400, s: 13, c: '#4fb4ff' }); Tx(g, 'wilting = turgor loss', 408, 1239, { w: 400, s: 13, c: '#ff5a7a' });
+  U.histo(g, 322, 1284, 30, 7.9, t);
+  U.head(g, 'ORGANELLE CENSUS', 590, 1013, 'per cell', 800);
+  [['Chloroplasts', '~50', '#5bd65b', .3, 10], ['Mitochondria', '~300', '#e8742e', .55, 6], ['Golgi stacks', '~100', '#c9a63a', .45, 7], ['Ribosomes', '~10⁶', '#d6305f', 1, 8]].forEach(([n, v, cc, f, sk], i) => {
+    const y = 1037 + i * 24, on = k === sk; Tx(g, n, 590, y, { w: on ? 600 : 400, s: 13.5, c: on ? cc : '#c9d4cd' }); U.bar(g, 682, y - 9, 70, 9, f, cc); Tx(g, v, 800, y, { w: 500, s: 13.5, a: 'right', c: '#e5ece7' });
+  });
+  U.head(g, 'FOCUS', 590, 1154, 'zoom', 800, '#ffab4a');
+  Tx(g, s.zoom, 588, 1199, { f: FS, w: 700, s: 36, c: '#f2f6f3' });
+  Tx(g, s.name, 590, 1222, { w: 600, s: 13, ls: 2, c: s.c });
+  Tx(g, 'scale bar ' + s.bar, 590, 1243, { f: FM, w: 400, s: 12, c: '#9fb0a5' });
+  U.wave(g, 590, 1266, 210, t);
+  U.head(g, 'GENOME · DNA STREAM', 830, 1013);
+  U.stream(g, 830, 1038, 220, [[[255, 140, 80], .5, -3.1], [[230, 240, 234], 1, 2.3], [[255, 140, 80], .4, -3.7, true]], t, SEQ, { A: 'T', T: 'A', G: 'C', C: 'G' });
+  Tx(g, 'Arabidopsis · ~135 Mb · ~27k genes', 830, 1101, { w: 400, s: 12.5, c: '#8fa096' });
+  U.head(g, 'CELL LOG', 830, 1125);
+  U.log(g, 830, 1131, 225, 192, LOG, t);
+  g.restore();
+}
+
+SZ.player(F, document.getElementById('c'), { stage: document.getElementById('stage'), pp: document.getElementById('pp'), seek: document.getElementById('seek'), time: document.getElementById('time'), load: document.getElementById('load') });
+</script>
+</body>
+</html>

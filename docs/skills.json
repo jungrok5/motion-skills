@@ -62,6 +62,21 @@
       "workedExample": [
         { "title": "「마지막 도넛」 · 무빙툰 3장면 · 74초 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/motion-webtoon/demo/donut/" }
       ]
+    },
+    {
+      "id": "specimen-tour",
+      "name": "specimen-tour",
+      "tagline": "세포, 씨앗, 배터리 같은 표본 하나를 잘라 연 3D 모델로 만들고, 부분마다 카메라가 돌며 들어가는 9:16 쇼츠를 만듭니다. SF 계기판 HUD를 얹어 MP4와 브라우저에서 도는 페이지로 냅니다.",
+      "posterAlt": "specimen-tour로 만든 식물 세포 영상의 장면 네 개: 혼자 선 초록 육각기둥 세포, 뚜껑이 열린 세포 속 액포와 핵, 위를 잘라 낸 보라색 핵, 오른쪽 절반이 청록 윤곽선인 엑스레이 화면",
+      "poster": "specimen-tour/poster.jpg",
+      "tags": ["3D · 2D", "9:16 · 4:5", "MP4", "라이브 페이지", "HUD"],
+      "stats": ["14샷 · 28초", "3D + 2D 키트"],
+      "page": "specimen-tour/",
+      "source": "specimen-tour/",
+      "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "specimen-tour/examples/plant-cell/" },
+      "workedExample": [
+        { "title": "식물 세포 3D · 14샷 · 28초 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/specimen-tour/demo/examples/plant-cell/" }
+      ]
     }
   ]
 }

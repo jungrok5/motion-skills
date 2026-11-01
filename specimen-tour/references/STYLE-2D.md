@@ -1,13 +1,13 @@
-# specimen-zoom — 표본 속으로 들어가기 (Canvas 2D)
+# specimen-zoom (2D) — 표본 속으로 들어가기, painted plates
 
 A short (20–40 s) vertical film that tours the parts of one specimen: a painted **cutaway overview**, one **close-up plate**
 per part, and a camera that pulls back to the overview and pushes into the next part every couple of seconds — under a
 sci-fi **HUD** (frosted panels, live pill, typed caption card, locator, data rows). Everything is drawn in Canvas 2D from
 seeded noise, so no image generator and no photos: the same `t` always gives the same frame.
 
-Worked example: `../../examples/plant-cell/index.html` — a plant cell, 14 shots × 2 s, 9:16 (shorts) and `?ar=4:5` (feed).
+Worked example: `examples/plant-cell-2d/index.html` — a plant cell, 14 shots × 2 s, 9:16 (shorts) and `?ar=4:5` (feed).
 Recreated from a reel whose pictures were AI-generated stills; here every picture is code.
-Template on a different subject: `template/index.html` — a cylindrical battery cell, 5 shots.
+A different subject: `examples/battery-2d/index.html` — a cylindrical battery cell, 5 shots.
 
 ## When to use it
 - **Use it for** "what is inside X" pieces with 4–15 named parts in one place: a cell, an organ, a seed, a battery, a chip
@@ -47,7 +47,7 @@ Fonts: Barlow Condensed (body), Saira Condensed (display), JetBrains Mono — OF
 
 ## Load
 ```html
-<script src="../../kits/specimen-zoom/specimen-zoom.js"></script>   <!-- or a copy in <project>/assets/kits/specimen-zoom/ with its fonts/ -->
+<script src="../kit/specimen-zoom.js"></script>   <!-- fonts load from kit/fonts/ next to it -->
 ```
 Render (from the folder that contains both the page and the kit):
 ```bash

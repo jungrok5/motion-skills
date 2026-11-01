@@ -218,15 +218,15 @@
   }
   // tileable fibre sheet (crossed strands) — map it onto 3D faces or fill shapes with it
   function fiberTex(seed, o = {}) {
-    const F = mk(512, 512), f = F.getContext('2d'), R = rng(seed), dark = o.dark || [16, 60, 12], mid = o.mid || [80, 170, 36], light = o.light || [200, 255, 120];
-    f.fillStyle = rgba(o.base || drk(mid, .35)); f.fillRect(0, 0, 512, 512); f.lineCap = 'round';
-    for (let i = 0; i < (o.n ?? 2600); i++) {
-      const x = R() * 512, y = R() * 512, a = (R() < .6 ? .5 : -.9) + (R() - .5) * .5, len = 20 + R() * 70, sh = R();
+    const Z = o.size || 512, F = mk(Z, Z), f = F.getContext('2d'), R = rng(seed), dark = o.dark || [16, 60, 12], mid = o.mid || [80, 170, 36], light = o.light || [200, 255, 120];
+    f.fillStyle = rgba(o.base || drk(mid, .35)); f.fillRect(0, 0, Z, Z); f.lineCap = 'round';
+    for (let i = 0; i < (o.n ?? 2600) * (Z / 512) ** 2; i++) {
+      const x = R() * Z, y = R() * Z, a = (R() < .6 ? .5 : -.9) + (R() - .5) * .5, len = 20 + R() * 70, sh = R();
       const col = sh < .5 ? mix(dark, mid, sh * 2) : mix(mid, light, (sh - .5) * 2);
       f.strokeStyle = rgba(col, .6); f.lineWidth = .6 + R() * R() * 2.6;
-      for (const ox of [-512, 0, 512]) for (const oy of [-512, 0, 512]) { f.beginPath(); f.moveTo(x + ox, y + oy); f.quadraticCurveTo(x + ox + Math.cos(a) * len / 2 + (R() - .5) * 6, y + oy + Math.sin(a) * len / 2, x + ox + Math.cos(a) * len, y + oy + Math.sin(a) * len); f.stroke(); }
+      for (const ox of [-Z, 0, Z]) for (const oy of [-Z, 0, Z]) { f.beginPath(); f.moveTo(x + ox, y + oy); f.quadraticCurveTo(x + ox + Math.cos(a) * len / 2 + (R() - .5) * 6, y + oy + Math.sin(a) * len / 2, x + ox + Math.cos(a) * len, y + oy + Math.sin(a) * len); f.stroke(); }
     }
-    const all = new Path2D(); all.rect(0, 0, 512, 512); texOver(f, all, TEX.fine, { alpha: .75, scale: 2 }); texOver(f, all, TEX.fine, { alpha: .5, scale: .7, mode: 'multiply' });
+    const all = new Path2D(); all.rect(0, 0, Z, Z); texOver(f, all, TEX.fine, { alpha: .75, scale: 2 }); texOver(f, all, TEX.fine, { alpha: .5, scale: .7, mode: 'multiply' });
     return F;
   }
   // edge-detect a painting into a teal-on-black "x-ray" with a measuring grid
@@ -424,7 +424,7 @@
     if (RENDER) document.documentElement.classList.add('render');
     window.DURATION = F.DURATION; window.renderAt = t => F.renderAt(ctx, t);
     let resolve; window.ready = new Promise(r => resolve = r);
-    let playing = !RENDER, t0 = 0, cur = 0, basic = false;
+    let playing = !RENDER, t0 = 0, cur = +(new URLSearchParams(location.search).get('t') || 0) % F.DURATION || 0, basic = false;   // ?t=12 starts there
     const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
     const set = v => { playing = v; if (el.pp) el.pp.textContent = v ? '❚❚' : '▶'; if (v) t0 = performance.now() / 1000 - cur; };
     if (el.seek) { el.seek.max = F.DURATION; el.seek.oninput = () => { cur = +el.seek.value; if (playing) t0 = performance.now() / 1000 - cur; }; }
@@ -435,7 +435,7 @@
       if (basic) { if (playing) { cur = ((now / 1000 - t0) % F.DURATION + F.DURATION) % F.DURATION; if (el.seek) el.seek.value = cur; } F.renderAt(ctx, cur); if (el.time) el.time.textContent = `${fmt(cur)} / ${fmt(F.DURATION)}`; }
       requestAnimationFrame(frame);
     };
-    F.build(f => { if (el.load) el.load.textContent = `building… ${Math.round(f * 100)}%`; }, () => { basic = true; t0 = performance.now() / 1000; if (el.load) el.load.style.opacity = 0; })
+    F.build(f => { if (el.load) el.load.textContent = `building… ${Math.round(f * 100)}%`; }, () => { basic = true; t0 = performance.now() / 1000 - cur; if (el.load) el.load.style.opacity = 0; })
       .then(() => { if (el.load) el.load.remove(); resolve(); });
     if (!RENDER) requestAnimationFrame(frame);
   }

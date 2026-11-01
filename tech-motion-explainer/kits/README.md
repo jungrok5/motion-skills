@@ -14,12 +14,8 @@ Check before you ship: if a new page's stills could be mistaken for an older top
 | `profiler-lanes` | (with zoom, or alone) timer blocks on lanes | three.js | the same two pages | browser long-task frames |
 | `artifacts-desk` | 실물을 공간에 늘어놓기 | three.js | proto-bot-pipeline-artifacts-wide (+3 copies) | zero-downtime column rename, artifacts on an arc |
 | `game-scene` | 게임 화면 재현 | three.js + 2D HUD | rubber-banding-ingame-wide (+ UE grey test map) | hit registration / lag compensation, shooter HUD |
-| `specimen-zoom` | 표본 속으로 들어가기 (painted cutaway → close-ups, 9:16 shorts / 4:5) | Canvas 2D + 2D HUD | `examples/plant-cell/` (a reel recreated in code) | inside an 18650 battery cell |
 
 Use: copy `kits/<slug>/<slug>.js` into the project's `assets/kits/`; pages load `../assets/kits/<slug>.js` (three.js kits
 are ES modules resolved through the page's importmap). Start from `kits/<slug>/template/index.html` copied to
 `<slug-of-topic>/index.html`. Each kit was verified by re-pointing a copy of its source page and diffing stills (identical).
 Not packaged (bespoke per topic or used once): flow/glow worlds, glass, stack, explore — see STYLES.md and the example pages.
-
-`specimen-zoom` is a classic script (`window.SZ`, no importmap) and carries its own fonts in `kits/specimen-zoom/fonts/`; copy the folder
-whole. Its worked example is `examples/plant-cell/index.html`, which loads the kit in place (`../../kits/specimen-zoom/specimen-zoom.js`).

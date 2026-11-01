@@ -25,8 +25,7 @@ server and network behaviour, their vertical cuts and 3D approach pages, built w
 | `scripts/check-player.mjs` | headless check: page errors, play, chapter jump, speed button, notes, phone-width overflow |
 | `scripts/build-articles.mjs` | builds `<slug>/article.html` (설명) and `<slug>/terms.html` (용어집) from the notes in every video page |
 | `starter/` | a runnable mini project: `assets/` (fonts, three.js), `proto-bot-pipeline/` (the 2D reference, with its generated reading pages), `server-tick-inside-wide/` (the 3D "open it up" reference), `index.html` (gallery with `VIDEOS`) |
-| `kits/` | **reusable engines** for six looks — `whiteboard`, `zoom-levels`, `profiler-lanes`, `artifacts-desk`, `game-scene`, `specimen-zoom` (kits/README.md): machinery only, every topic still designs its own composition, palette and camera |
-| `examples/plant-cell/` | a 28 s 9:16 shorts piece on `kits/specimen-zoom` (`?ar=4:5` for the feed cut): a plant cell toured in 14 close-ups under a sci-fi HUD, every picture painted in Canvas 2D. Use it for "what is inside X" shorts; read `kits/specimen-zoom/STYLE.md` first |
+| `kits/` | **reusable engines** for five looks — `whiteboard`, `zoom-levels`, `profiler-lanes`, `artifacts-desk`, `game-scene` (kits/README.md): machinery only, every topic still designs its own composition, palette and camera |
 | `references/` | STYLES (the 7 ways to explain in 3D, choosing, cuts, engine) · STYLE-ZOOM / STYLE-GLOW / STYLE-GLASS (craft notes) · EXPERT-REVIEW (review prompt) · EMBED (scroll-scrubbed pieces inside another page) · LESSONS (what went wrong and the fixes) |
 
 ## Project layout (what you create)
