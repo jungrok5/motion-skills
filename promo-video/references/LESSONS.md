@@ -45,7 +45,27 @@ From making 9 promo videos (5 styles for a tax accountant, 4 for an overseas buy
 - **Generated music too loud under the voice** at the composed song's level → match RMS to the old track, then −1.5 dB.
 - Background wait loops with `pgrep -f <pattern>` matched themselves and never ended → wait on a PID or a file instead.
 
+## Shorts (vertical, 86 s, captions)
+- **Silence split a 77 s narration take wrongly** (pauses inside lines ≈ pauses between them) → Speech to Text word
+  timings; set `splits` from them and generate captions from the same words (`caption-timing.py`).
+- **Content ran into the caption box** (5 chips wrapped to 4 rows, a CTA card's address under its search box) → fixed
+  zones: content 180–1300 px, caption ≈ 1350, bottom 18 % empty; check stills at the busiest moment of each scene.
+- **An element timed on a late word never showed** (a review card set 1.4 s after the line's last word, after its scene
+  ended) → time elements on words *inside* their scene's line.
+- **A progress bar did not fill**: `width` on an inline `<span>` does nothing → `display:block` on the fill.
+- **Music 22 dB under the voice was too quiet** with a dense generated track → `mix.py` now reports the balance; 15 dB.
+- **A 15 MB music WAV in the repo** → keep the picked track as MP3 (256 kbps); mix.py reads any format.
+
+## Running on the person's own machine
+- The Claude desktop app's local environment had Node 22, ffmpeg 6, numpy, Playwright 1.63 + Chromium, but no
+  outbound network from the shell, and Playwright installed globally (ESM `import` cannot see it) → read sources with
+  web fetch; `render.mjs` loads Playwright through `createRequire` + `npm root -g`.
+- The person being briefed had no ElevenLabs subscription → the prompt asks first: silent version now (text + composed
+  music) or subscribe and connect for narration and generated music.
+
 ## Delivery
 - Keep approved files; write variants under new names (`*-elmusic-*`) so the person can compare.
 - Give a one-shot prompt per video with the ElevenLabs part separate (voice id, model, script, cue times, SFX and music
   prompts + the settings actually used) — that is what lets someone else re-make it.
+- A long, scene-by-scene prompt is not what people send each other. When the skill holds the method, the hand-over
+  prompt can be five lines (source link, audience, goal, format, "use the promo-video skill") — see `PROMPT.md`.

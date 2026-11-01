@@ -138,6 +138,22 @@ def duck_gain(voice, depth_db=-10, att=0.04, rel=0.35):
     return np.repeat(10 ** (depth_db * g / 20), hop)
 
 
+def balance(voice, music):
+    """Voice vs (ducked) music while the voice speaks — the number to tune music_level by when you cannot listen."""
+    hop = int(0.1 * SR)
+    n = min(len(voice), len(music)) // hop
+    if n == 0:
+        return '  levels: n/a'
+    vr = np.sqrt(np.mean(voice[:n * hop].reshape(n, hop) ** 2, 1))
+    mr = np.sqrt(np.mean(music[:n * hop].reshape(n, hop) ** 2, 1))
+    on = vr > 0.02
+    if not on.any() or not (mr > 0).any():
+        return '  levels: no voice or no music'
+    d = 20 * np.log10(np.mean(vr[on]) / (np.mean(mr[on]) + 1e-12))
+    hint = ' (music likely inaudible: raise music_level)' if d > 25 else ' (music may mask the voice: lower music_level)' if d < 11 else ''
+    return f'  levels: music sits {d:.1f} dB under the voice while it speaks (approved mixes: 15–23){hint}'
+
+
 def load_module(path):
     spec = importlib.util.spec_from_file_location(os.path.splitext(os.path.basename(path))[0], path)
     mod = importlib.util.module_from_spec(spec)
@@ -184,6 +200,7 @@ def build(spec_path, mux=False):
     if len(g) < n:
         g = np.concatenate([g, np.ones(n - len(g))])
     mix = mus * (g * spec.get('music_level', 0.36))[:, None]
+    report.append(balance(voice, mix.mean(1)))
     mix += (voice * 0.95)[:, None]
     mix += np.stack([sfx * 0.95, sfx * 0.9], 1)
     t = np.arange(n) / SR

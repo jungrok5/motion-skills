@@ -32,3 +32,25 @@ Build only after a yes; when the person says "all", build all, one page each, sh
 - One message per scene; headline ≤ 2 lines; the brand name appears early as a small bug and big only at the end.
 - Write to the viewer ("사진 한 장만 보내세요"), not about the company. Korean ads: 해요체 narration, short lines.
 - The narration says it, the screen shows it — not the same words twice; screen text can be shorter.
+
+## 5. Long Shorts for considered purchases (60–90 s)
+For services where someone else's future is at stake (a child's school, a clinic, a lawyer), the viewer is cautious;
+a 20 s hook-and-logo does not move them. Answer their questions in the order they come up. Used on an 86 s promo
+for a small academy, aimed at parents:
+
+| # | beat | the parent's question | device |
+|---|---|---|---|
+| 1 | hook | "Is this about my child?" | their worry in their own words, on screen at frame 0 ("열심히 하는데… 왜 수학만 4등급일까요?") |
+| 2 | cause | "Why is it happening?" | blame the *method*, not the child (big lectures: pace 100 %, understanding 50 %, questions feel awkward) — no guilt, so they keep watching |
+| 3 | stakes | "What if I wait?" | loss aversion: a small gap now breaks the chain later (middle-school topic → high-school grade) |
+| 4 | reframe | "How should I choose?" | change the criterion to one the business wins on ("not the best teacher — the teacher your child needs", from the academy's own flyer) |
+| 5 | who | "Who are you?" | authority facts from the source: who teaches, class size, experience |
+| 6–7 | how | "What will actually happen?" | make the method visible, step by step (plan → test → correction → redo); concrete beats "personalised care" |
+| 8 | fit | "Does it work for *my* child's level?" | one line each for top / middle / lower students, so every parent finds their child |
+| 9 | proof | "Has it worked?" | one before→after story as a graph, then results as a list, with a "publicly posted, partial" footnote and year |
+| 10 | others | "What do parents like me say?" | a real parent's words (message / forum excerpt, labelled), not a star rating |
+| 11 | act | "What do I do now?" | a true scarcity fact (class size) + a low-commitment next step (consultation / level test), phone, place, search box |
+
+Rules that keep it honest: every number and quote from the source (results, years, class size), excerpts labelled
+as excerpts, no "only 1 seat left" unless the business says so, no fees if the source's may be outdated. Ask the owner to
+confirm parents agreed to have their messages shown in a public ad.

@@ -14,6 +14,9 @@ python3 scripts/mix.py examples/minimal/mix.json --mux                  # narrat
 node scripts/render.mjs examples/pop/index.html && python3 scripts/mix.py examples/pop/mix.json --mux
 ```
 
+Shorts / Reels (vertical, up to 3 min): see `references/SHORTS.md` — burned-in captions from Speech-to-Text word times:
+`python3 scripts/caption-timing.py <video>/mix.json --words words.json --chunks <video>/captions.txt --out <video>/timing.js`
+
 Requirements: Node + Playwright (Chromium), ffmpeg, Python 3 with numpy; an ElevenLabs connector for new narration/SFX/music.
 Real work: 9 videos for two clients (5 styles for a tax accountant, 4 for fortimoveglobal.com) — samples page:
 https://jungrok5.github.io/motion-skills/promo-video/

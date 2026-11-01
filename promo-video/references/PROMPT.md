@@ -12,7 +12,25 @@ Two parts, always separate:
   with `[long pause]` and emotion tags, cue times, SFX table (purpose · prompt · length), music prompt **and the
   settings actually used** (model, instrumental flag, duration, which variation was picked and why, music level).
 
-Write it in the person's language. Below is the real prompt for `examples/minimal` (Korean).
+Write it in the person's language.
+
+## Short version (what most people will actually send)
+When the person passes the job on (to a client, an owner, a colleague), they want a few lines, not a spec: the skill
+holds the method. Give this, filled in, next to the detailed file:
+
+```
+아래 블로그(사이트)를 보고 우리 ○○ 홍보 영상을 만들어 주세요.
+- 출처: https://…
+- 보는 사람: ○○ (예: 학부모). 보고 나면 믿음이 가고 ○○(예: 상담 예약)을 하고 싶어지도록 전략적으로 설계해 주세요.
+- 형식: 유튜브 숏츠 세로 영상, 3분 이내 (또는 가로 30초 등)
+- 만드는 방법은 https://github.com/jungrok5/motion-skills 의 promo-video 스킬을 참고해 주세요.
+- 내레이션과 배경음악은 연결된 ElevenLabs로 만들어 주세요.
+```
+The ElevenLabs connector that can make music is the full one (custom connector `https://api.elevenlabs.io/v1/mcp`,
+added at claude.ai/customize/connectors); the built-in one is voice/SFX only.
+
+## Detailed version (re-making the same video)
+Below is the real prompt for `examples/minimal` (Korean).
 
 ---
 

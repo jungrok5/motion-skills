@@ -15,6 +15,7 @@ with a reason, plus 3–4 alternatives with a one-line "who it suits". Live vers
 | 7 | Globe journey | 25 s | anything cross-border, logistics, travel — scale, reach | YouTube, site | fortimove · globe |
 | 8 | Pop kinetic short (beat-synced) | 18.75 s | young audience, impulse — hook in 1 s | Shorts, Reels, TikTok | `examples/pop` |
 | 9 | Unboxing story (desk, polaroids, box) | 25 s | e-commerce, delivery, handmade — the moment of receiving | Reels, product pages | fortimove · unbox |
+| 10 | Study notebook + red pen (vertical, captions) | 86 s | academies, tutors, clinics — parents deciding carefully | Shorts, Reels (`SHORTS.md`) | math academy (not public) |
 
 Rule of thumb: **one channel only → chat UI or pop short**; **brand film + steady content → editorial/premium once +
 whiteboard series weekly**; when unsure, minimal mono + accent.
@@ -68,6 +69,20 @@ stickers with thick outlines, a stamp on the downbeat, "끝." on the drop at bea
 the "inspection photos" dropping with a bounce, a parcel arriving, tape pulled off, flaps opening in 3D
 (`perspective` + `rotateY` up to 165°, the inside face showing past 90°), the product glowing, a handwritten honest note, end card. Warm acoustic lo-fi
 (90 bpm).
+
+**10 Study notebook + red pen** (vertical only, `SHORTS.md`). Cream paper (#FBF8F1) with a 48 px blue grid and a red
+margin line; navy ink (#1B2550), one brand blue, a yellow highlighter, and a **teacher's red pen** (#E0393E) as the thread:
+it circles the bad grade in the hook, strikes the wrong criteria, marks the wrong answer and circles "다시 풀기". Big
+Pretendard 900 for claims, Nanum Pen for notes and worked solutions; red-pen strokes are SVG paths with `pathLength="1"`
+and `strokeDashoffset` driven by `t`. Scenes (86 s, 11): report card "4등급" → dotted lecture hall with progress 100 % vs
+understanding 50 % and a "?" that shrinks → concept chain (factoring → quadratics → functions → calculus) cracking red →
+two struck "teacher?" cards → "the teacher *your child* needs" → logo + round table with 6 seats + credential chips →
+per-child plan with ticks, blank-page concept test + "통과" stamp → red-pen correction of a sign error, 오답노트
+"다시 보기" struck / "다시 풀기" circled → top / middle / lower level cards → grade graph 4→2→3→1 + admissions + a
+"public results, partial" footnote → a parent's message bubble + two forum reviews ("excerpt") → seat map + consult /
+level-test card with phone numbers and a search box. Every animation starts on a spoken word (`wt(line, word)`);
+captions burned in. Music: worried felt piano → hopeful at the turn → warm groove → swell on the results → tender on
+the parent's words → confident end.
 
 ## Borrowed looks from canvas-film
 Some canvas-film kits suit a promo too. They are drawn with canvas-film's harness (`Pilot`), not with this skill's

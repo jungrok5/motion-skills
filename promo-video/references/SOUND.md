@@ -15,6 +15,7 @@ Everything goes through `scripts/mix.py <video>/mix.json`. Generation is done wi
    | Sun – Calm Korean Narrator | calm announcer-like female, normal pace | whiteboard, unboxing |
    | Kevin – Deep, Trustworthy & Professional | low, trustworthy male | editorial, globe |
    | Wisdom (corporate female), 복덕누나 (bright friendly female) | — | premium promo, paper collage |
+   | Sori – Warm, Clear & Trustworthy | calm, middle-aged female, trustworthy | parent-facing academy Shorts (86 s) |
    Avoid voices described as learner/slow ("Soo" read a 37 s script in 80 s+); test a 2-line preview first if unsure.
 3. Model **Eleven v4** (`eleven_v4`), emotion tags in brackets, and `[long pause]` between lines — one call for the
    whole script, e.g. `[curious] 이거 어디서 팔아요? [long pause] 판매처도 모르고, 해외 직구는 복잡하고. [long pause] [warmly] …`.
@@ -51,7 +52,8 @@ follow a timeline precisely.
    (`creative_generate_in_flow` starts immediately with default parameters — don't use it for music.)
 2. Prompt: genre, bpm, key, instruments, then the timeline in seconds ("at about 8 seconds bursts into …"), "no vocals",
    and "stays full until N s" — otherwise most takes fade out early. Several nodes on one flow can run in one
-   `creative_run_flow_nodes` call. Default 4 variations; cost scaled with length (≈ 900 credits per 30 s take, ≈ 405 per 27 s, ≈ 315 per 21 s on v2.5).
+   `creative_run_flow_nodes` call. Default 4 variations; cost scaled with length (≈ 900 credits per 30 s take, ≈ 405 per 27 s, ≈ 315 per 21 s,
+   ≈ 1,320 per 88 s instrumental take on v2.5). `estimate_only` can quote much higher than the charge (9,680 quoted vs 5,280 charged for 4 × 88 s).
 3. Compare: `python3 <skill>/scripts/pick-music.py compare take*.mp3 --cuts 4.2,8.2,12.6,… --sheet out/music.png`.
    Choose the take whose drops and lifts sit near the cuts and that does not go quiet before the CTA. Takes tend to
    change section on 4/8-bar boundaries (8 s at 120 bpm), so a requested lift at 10 s may arrive at 16 s; a constant
@@ -61,6 +63,11 @@ follow a timeline precisely.
 5. `pick-music.py cut take.mp3 --dur DUR --delay 0.2 --out <video>/audio/music.wav` (delay so a drop lands on a cut),
    set `"music"` in `mix.json`, and match the level (below).
 
+## Long takes: split with word timings
+A 60–90 s take has pauses inside lines as long as the pauses between them, so silence-only splitting (and even
+`splits` guessed from the silence list) puts words in the wrong line. Transcribe the take (Speech to Text, see
+`SHORTS.md`) and set each split just after the last word of a line; the same word times drive the captions.
+
 ## Mix levels
 `mix.py`: music × `music_level` × duck (−10 dB while the voice is above −38 dBFS, 40 ms attack, 350 ms release) + voice ×
 0.95 + sfx; 0.4 s tail fade; `loudnorm=I=-14:TP=-1.5:LRA=11` then `alimiter=0.78`; AAC 192k into the MP4 (`-c:v copy`, no `-shortest`).
@@ -68,3 +75,5 @@ follow a timeline precisely.
 - A generated track is denser than a composed one at the same RMS. Compute the level that matches the old song's RMS
   (`old_level × rms_old / rms_new`) and go about 1.5 dB under it (× 0.84).
 - After muxing check: `ffprobe` frame count = DUR × 30, audio duration = DUR, `ebur128` integrated ≈ −14 LUFS.
+- `mix.py` prints `levels: music sits N dB under the voice while it speaks`. Approved mixes sat at 15–23 dB (sparse composed
+  songs up to 23, dense generated tracks around 15). A generated 88 s track at 22 dB was too quiet; 15 dB was right.
