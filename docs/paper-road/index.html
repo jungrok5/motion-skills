@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>paper-road · motion-skills</title>
+<meta name="description" content="장난감 자동차가 바로 앞에서 만들어지는 종이 길을 달리는 페이퍼 크래프트 스톱모션 영상을 이미지 파일 없이 코드로 그립니다. 종이 두루마리가 길을 펼치고 만년필이 잉크로 길을 그리는 동안 종이 산이 접혀 올라오고, 1080p MP4와 브라우저에서 도는 페이지를 냅니다.">
+<meta property="og:title" content="paper-road · motion-skills">
+<meta property="og:description" content="종이 두루마리가 펼치고 만년필이 그리는 길을 장난감 자동차가 달리는 페이퍼 크래프트 스톱모션 영상을 코드로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/paper-road/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/paper-road">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / paper-road</nav>
+  <h1>paper-road</h1>
+  <p>장난감 자동차가 바로 앞에서 만들어지는 종이 길을 달리는 페이퍼 크래프트 스톱모션 영상을 이미지 파일 없이 코드로 그립니다. 종이 두루마리가 길을 펼치고 만년필이 잉크로 길을 그리는 동안 종이 산이 접혀 올라오고, 1080p MP4와 브라우저에서 도는 페이지를 냅니다.</p>
+  <ul class="tags"><li>16:9</li><li>MP4</li><li>라이브 페이지</li><li>스톱모션</li><li>페이퍼 크래프트</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>이야기의 박자(길의 끝, 길이 만들어짐, 고리 같은 볼거리, 펜으로 넘어감, 전체를 보는 마무리), 참고 영상이나 프롬프트</dd>
+      <dt>장면</dt><dd>거북이 그래픽처럼 쌓은 3D 길(직진 · 오르내림 · 고리 · 바닥 위 곡선), 자동차 위치와 길 끝을 정하는 두 트랙, 접혀 올라오는 종이 카드, 따라가는 카메라</dd>
+      <dt>확인</dt><dd>단계별 스틸과 구간별 콘택트 시트, 같은 시각 같은 픽셀 · 한 포즈 두 프레임 동일 · 장면 규칙(자동차가 길 끝을 넘지 않음)을 모든 프레임에서 보는 검사</dd>
+      <dt>출력</dt><dd>두 프레임씩 멈추는 24fps 1920×1080 MP4, 사운드트랙 선택, 브라우저에서 도는 장면 페이지</dd>
+    </dl>
+    <pre><code>cd paper-road/examples/draw-a-road
+node ../../scripts/render.mjs index.html --sheet 12
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs index.html
+node ../../scripts/new-scene.mjs ../../../my-trip</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. GPU와 네트워크가 필요 없고, 30초 영상을 CPU로 2분 안팎에 렌더합니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/paper-road/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:calc((100vw - 34px)*.5625);--demo-bg:#1b2b2c">
+    <iframe data-src="demo/draw-a-road.html" title="paper-road 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/draw-a-road.html">데모 열기 (examples/draw-a-road)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/draw-a-road</code> · 30초 · 브라우저가 실시간으로 그림</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/draw-a-road.html" data-cap="예제 &lt;code&gt;examples/draw-a-road&lt;/code&gt; · 30초 · 브라우저가 실시간으로 그림" aria-pressed="true">길을 그리며</button>
+        <button class="btn" type="button" data-src="demo/template.html" data-cap="템플릿 &lt;code&gt;templates/scene.html&lt;/code&gt; · 12초 · 새 장면의 출발점" aria-pressed="false">시작 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제 「Draw a Road」의 박자마다 한 장면과 시작 템플릿입니다. 카드를 누르면 새 탭에서 그 장면이 그 순간에 멈춘 채 열리고, 브라우저가 직접 그립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"paper":"종이 길","ink":"잉크 길"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>Draw a Road <small>16:9 · 30초</small></h3>
+      <p>길이 끝난 곳에서 종이 두루마리가 길을 펼치고, 종이가 다 떨어지면 만년필이 이어서 그립니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="paper" href="demo/draw-a-road.html?t=4.4" target="_blank" rel="noopener">
+          <img src="samples/road-end.jpg" alt="종이 길이 끝나는 곳에 멈춘 주황 장난감 자동차, 창밖으로 손을 흔드는 운전자, 길 끝에 떨어진 종이 두루마리와 노란 표지판" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">길의 끝 · 4.4초</span><b>길이 끝나면</b>
+          <span class="how">찢긴 길 끝에 멈춘 자동차. 위에서 떨어져 튕기는 두루마리, 손 흔드는 운전자</span></div></a>
+        <a class="tile" data-tags="paper" href="demo/draw-a-road.html?t=8.1" target="_blank" rel="noopener">
+          <img src="samples/unroll.jpg" alt="언덕을 넘는 종이 리본 길 위의 자동차, 길 앞쪽 끝에서 작아지며 굴러가는 종이 두루마리, 오른쪽에 접혀 올라온 종이 산" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">종이 길 · 8.1초</span><b>두루마리가 펼치는 길</b>
+          <span class="how">남은 길이만큼 작아지는 두루마리. 위로 굽고 아래로 굽는 리본, 다가가면 접혀 서는 산</span></div></a>
+        <a class="tile" data-tags="paper" href="demo/draw-a-road.html?t=11.4" target="_blank" rel="noopener">
+          <img src="samples/loop.jpg" alt="종이 리본이 크게 한 바퀴 도는 고리 안쪽을 거꾸로 달리는 자동차, 뒤로 눈 덮인 종이 산과 구름" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">볼거리 · 11.4초</span><b>한 바퀴 고리</b>
+          <span class="how">옆으로 비껴 서로 닿지 않는 고리. 보이는 면에 따라 앞면은 크림색, 뒷면은 크라프트색</span></div></a>
+        <a class="tile" data-tags="paper ink" href="demo/draw-a-road.html?t=12.9" target="_blank" rel="noopener">
+          <img src="samples/handoff.jpg" alt="고리를 빠져나온 자동차 뒤로 흩날리는 종이 조각, 종이 길이 끝난 자리에서 만년필이 검은 잉크 길을 이어 그림" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">넘겨받기 · 12.9초</span><b>종이에서 잉크로</b>
+          <span class="how">마지막 두루마리가 풀리는 동안 내려온 펜이 같은 자리에서 잉크 길을 이어감. 고리 출구의 종이 조각</span></div></a>
+        <a class="tile" data-tags="ink" href="demo/draw-a-road.html?t=17" target="_blank" rel="noopener">
+          <img src="samples/pen.jpg" alt="금색 펜촉 바로 뒤를 따라 달리는 자동차, 펜이 그린 검은 길과 흰 점선, 흐려진 종이 산과 주황 해" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">잉크 길 · 17초</span><b>펜촉 바로 뒤</b>
+          <span class="how">장난감보다 큰 만년필. 초점 거리에서 먼 산은 흐리게, 펜의 짧은 그림자</span></div></a>
+        <a class="tile" data-tags="ink" href="demo/draw-a-road.html?t=26" target="_blank" rel="noopener">
+          <img src="samples/curl.jpg" alt="종이 바닥 위에 펜이 잉크 길을 동그랗게 말아 그리고, 자동차가 그 곡선으로 들어가는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">잉크 길 · 26초</span><b>말려 들어가는 길</b>
+          <span class="how">바닥 위에서 300° 도는 곡선. 자동차는 옆모습을 지키며 방향만 바꿈</span></div></a>
+        <a class="tile" data-tags="paper ink" href="demo/draw-a-road.html?t=29.6" target="_blank" rel="noopener">
+          <img src="samples/pullback.jpg" alt="멀리서 본 전체 여정: 왼쪽 종이 리본 길과 고리, 늘어선 종이 산과 주황 해, 오른쪽 끝에서 동그랗게 말린 잉크 길" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">마무리 · 29.6초</span><b>지나온 길 전체</b>
+          <span class="how">카메라가 크게 물러나 한 번에 보는 여정. 펜이 길을 다 그리고 올라감</span></div></a>
+        <a class="tile" data-tags="paper ink" href="demo/template.html?t=4.5" target="_blank" rel="noopener">
+          <img src="samples/template.jpg" alt="파란 장난감 자동차가 종이 길의 낮은 언덕을 지나고, 앞에서 종이 두루마리가 길을 펼치는 단순한 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 12초</span><b>시작 장면</b><span class="en">templates/scene.html</span>
+          <span class="how"><code>new-scene.mjs</code>가 복사하는 출발점. 종이 길, 두루마리, 낮은 언덕, 펜으로 넘어가기</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. X에 공유된 AI 페이퍼 크래프트 영상("길이 끝나면 새로 그리면 된다")에서 생각만 빌려 예제 「Draw a Road」를 만들었고, 자동차와 운전자, 장면 구성, 타이밍, 소품은 모두 이 레포의 코드입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/draw-a-road.html" target="_blank" rel="noopener"><b>「Draw a Road」 · 30초</b><span>종이 길, 고리, 만년필, 라이브 페이지</span><span class="url">paper-road/demo/draw-a-road.html</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/paper-road/examples"><b>예제 폴더 · examples/</b><span>draw-a-road</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/Artedeingenio/status/2117001260205543520" target="_blank" rel="noopener"><b>아이디어 · X 게시물</b><span>@Artedeingenio · 2026년 11월</span><span class="url">x.com/Artedeingenio</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/paper-road/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/paper-road">폴더</a> <span>lib · scripts · templates · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/paper-road/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/paper-road/references/LOOK.md">references/LOOK.md</a> <span>종이 질감, 팔레트, 참고 영상 읽기, 카메라 박자</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/paper-road/references/KIT.md">references/KIT.md</a> <span>엔진과 소품 API, 새 소품 만들기</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/paper-road/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림은 코드로 그림 (이미지 · 폰트 파일 없음)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
