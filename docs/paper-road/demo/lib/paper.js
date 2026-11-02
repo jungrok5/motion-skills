@@ -281,7 +281,8 @@
     // ----- cards: flat paper cut-outs standing in the world, drawn with ordinary 2D code under an affine transform
     // {at: [x,y,z] | t => …, face: 'front' | 'camera' | t => {U, V}, scale, pop: {t, dur, mode: fold|scale|drop|rise},
     //  out: {t, dur}, shape(ctx, t) (silhouette path, for shadow + grain), paint(ctx, t), box: [x0,y0,x1,y1],
-    //  shadow (0–1), texture (0–1), boil (world units), clipFloor (cut below y = 0), mirror: t => bool, from, to}
+    //  shadow (0–1), texture (0–1), boil (world units), clipFloor (cut below y = 0), mirror: t => bool, from, to,
+    //  depth: (t, view) => sort depth (default: the anchor's), zBias}
     let cardId = 0;
     R.card = c => {
       const id = ++cardId, name = c.name || 'card';
@@ -316,7 +317,7 @@
         let a = (pu.x - O.x) / kk * sc, b = (pu.y - O.y) / kk * sc, cx = (pv.x - O.x) / kk * sc, dy = (pv.y - O.y) / kk * sc;
         if (rot) { const cr = Math.cos(rot), sr = Math.sin(rot); [a, b, cx, dy] = [a * cr + cx * sr, b * cr + dy * sr, cx * cr - a * sr, dy * cr - b * sr]; }
         if (c.mirror && c.mirror(t)) { a = -a; b = -b; }
-        const depth = O.z + (c.zBias || 0), k = O.k * sc;
+        const depth = (c.depth ? c.depth(t, view) : O.z) + (c.zBias || 0), k = O.k * sc;
         items.push({ z: depth, name, draw(g) {
           g.save();
           const M = [S * a, S * b, S * cx, S * dy, S * O.x, S * O.y];

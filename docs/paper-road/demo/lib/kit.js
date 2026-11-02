@@ -24,9 +24,12 @@
       return { U, V: a.N };
     };
     const mirror = t => P.at(s(t)).T[0] < 0;
+    // sort the car by the nearest road point under its whole footprint, not its centre: when the camera looks along the
+    // road at an angle, the road under the front wheel is nearer than the car's centre and would be painted over the tyre
+    const depth = (t, view) => { const S = s(t); let d = Infinity; for (let u = -110; u <= 110; u += 20) d = Math.min(d, view.depth(P.at(S + u * sc).P)); return d; };
     const shape = g => { g.beginPath(); bodyPath(g); g.rect(-70, -34, 40, 34); g.rect(30, -34, 40, 34); };
     R.card({
-      name, at: t => pos(t), face, mirror, scale: sc, box: [-100, -120, 100, 6], shadow: 0.55, boil: 0.7, zBias: -6, ...o.card,
+      name, at: t => pos(t), face, mirror, scale: sc, box: [-100, -120, 100, 6], shadow: 0.55, boil: 0.7, depth, zBias: -6, ...o.card,
       shape, paint: (g, t) => {
         const S = s(t), spin = S / 17;
         const bob = Math.sin(S * 0.09) * 0.8;
