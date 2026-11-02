@@ -1,0 +1,60 @@
+<!doctype html>
+<!-- paper-road · a starting scene (12 s): the car drives a short paper road, a roll unrolls more of it over a bump,
+     then a pen inks the rest on the floor. Change the path, the two tracks (carS, lead), the props and the camera. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>scene · paper-road</title>
+<style>html,body{margin:0;height:100%;background:#1b2b2c;overflow:hidden}canvas{display:block}</style>
+</head>
+<body>
+<script src="lib/paper.js"></script>
+<script src="lib/kit.js"></script>
+<script>
+// 1. the film: 1920×1080, 24 fps, poses held on twos (steps: 12). steps: 24 = on ones, 0 = smooth CG motion.
+const R = PR.create({ duration: 12, fps: 24, steps: 12, seed: 3 });
+
+// 2. the road: build it like turtle graphics. go = straight, pitch = bend up/down (360 = loop), yaw = turn on the floor.
+//    Marks name places you time things against; style('ink') switches from paper ribbon to pen-drawn road.
+const road = PR.path({ x: -700 })
+  .go(700).mark('end')
+  .go(300).pitch(18, 400).go(120).pitch(-36, 400).go(120).pitch(18, 400)
+  .go(200).style('ink').mark('ink')
+  .go(300).yaw(-35, 300).yaw(35, 300).go(400)
+  .done();
+const M = road.m;
+
+// 3. timing: where the car is (arc length) and how far ahead the road exists.
+const carS = PR.track([[0, 150], [2.0, M('end') - 200, 'stop'], [3.0, M('end') - 200, 'stop'], [7.0, M('ink')], [11.5, road.length - 120, 'stop']]);
+const lead = PR.track([[2.6, 0], [3.4, 380], [6.0, 380], [6.8, 120], [10.5, 140], [11.0, 400]]);
+const reveal = PR.runMax(t => Math.max(M('end'), t < 2.6 ? 0 : carS(t) + lead(t)), 12);
+
+// 4. the road, the car, the pen. The roll drops in at t = 2.4; the pen comes in before the ink starts.
+R.road(road, { reveal, roll: { t: 2.4, from: M('end') } });
+const car = PK.car(R, { path: road, s: carS, color: '#2f7fd0', driver: { shirt: '#f2c230', hat: false } });
+R.pen({ at: t => road.at(reveal(t)).P, in: 5.6, out: 11.2 });
+
+// 5. scenery: build it back to front; pop: {t, dur, mode} makes a card fold up / drop in / scale in at t.
+PK.hill(R, { x: 200, z: 900, w: 1400, h: 220 });
+PK.range(R, { x0: 600, x1: 1500, z: 520, n: 4, h: [160, 260], seed: 2, pop: { t0: 3.6, step: 0.4, dur: 0.5 } });
+PK.cloud(R, { x: 300, y: 560, z: 1100, w: 170, drift: 6, pop: { t: 4.2, dur: 0.5, mode: 'drop', h: 400 } });
+PK.sign(R, { x: 80, z: 120, symbol: 'end' });
+PK.pine(R, { x: -500, z: 300, h: 150 });
+
+// 6. rules check.mjs runs at every frame
+R.check('the car stays behind the head of the road', t => carS(t) + 95 <= reveal(t) + 1);
+
+// 7. the camera: keys carry over values you leave out. follow() trails the car.
+const follow = (dy, dx = 0) => R.follow(car.pos, 0.5, [dx, dy, 0]);
+R.camera([
+  { t: 0, target: follow(70), dist: 900, yaw: 12, elev: 14, fov: 30 },
+  { t: 3.0, target: follow(60), dist: 700, yaw: 20 },
+  { t: 6.0, target: follow(80, 200), dist: 1100, yaw: 8, elev: 12 },
+  { t: 9.0, target: follow(60), dist: 650, yaw: -6, elev: 10 },
+  { t: 12, target: follow(80), dist: 1400, elev: 16 },
+]);
+R.start();
+</script>
+</body>
+</html>

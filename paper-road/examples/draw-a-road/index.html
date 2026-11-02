@@ -1,0 +1,95 @@
+<!doctype html>
+<!-- paper-road · examples/draw-a-road — 30 s, 1920×1080, 24 fps on twos.
+     "If the road ends, draw a new one": a toy car reaches the torn end of a paper road; a paper roll drops in and
+     unrolls the road ahead of it, over a hill and round a loop while paper mountains fold up and the sun rises;
+     where the paper runs out a fountain pen takes over and inks the road the rest of the way; the camera pulls back
+     on the whole trip. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Draw a Road · paper-road</title>
+<style>html,body{margin:0;height:100%;background:#1b2b2c;overflow:hidden}canvas{display:block}</style>
+</head>
+<body>
+<script src="../../lib/paper.js"></script>
+<script src="../../lib/kit.js"></script>
+<script>
+const R = PR.create({ duration: 30, fps: 24, steps: 12, seed: 7 });
+
+// ---- the road: paper ribbon → hill → loop → ink on the floor → a curl ----
+const road = PR.path({ x: -1500 })
+  .go(1500).mark('end')                 // the torn end where the paper road stops at the start
+  .go(500).mark('hillUp').pitch(22, 500).go(220).pitch(-44, 500).go(220).pitch(22, 500).mark('hillDown')
+  .go(420).mark('loopIn').pitch(360, 230, { dz: 190 }).mark('loopOut')
+  .go(380).style('ink').mark('ink')     // from here on the road is drawn with a pen, flat on the paper floor
+  .go(320).yaw(-40, 380).yaw(80, 380).yaw(-40, 380).go(420).mark('curl')
+  .yaw(-300, 150).go(160)
+  .done();
+const M = road.m;
+
+// ---- the car's arc length over time (stop = arrive / leave at rest) ----
+const carS = PR.track([
+  [0, 520], [3.2, M('end') - 210, 'stop'], [4.7, M('end') - 210, 'stop'],
+  [8.6, M('hillDown')], [9.5, M('loopIn')], [12.3, M('loopOut')], [13.1, M('ink')],
+  [24.0, M('curl') - 180], [26.5, M('curl') + 60], [28.6, M('curl') + 260, 'stop'], [30, M('curl') + 260],
+]);
+// ---- how far the road exists: the roll/pen stays a little ahead of the car; never shrinks ----
+const lead = PR.track([[4.4, 40], [5.4, 460], [11.2, 420], [12.4, 110], [13.0, 130], [23.8, 150], [26.2, 700], [28.4, 1200]]);
+const reveal = PR.runMax(t => Math.max(M('end'), t < 4.4 ? 0 : carS(t) + lead(t)), 30);
+
+R.road(road, { reveal, width: 120, inkWidth: 58, roll: { t: 3.6, r: 46, from: M('end') } });
+const car = PK.car(R, { path: road, s: carS, color: '#ea6a2c', wave: t => PR.smooth(3.7, 4.0, t) * (1 - PR.smooth(4.5, 4.8, t)) });
+R.pen({ at: t => road.at(reveal(t)).P, in: 11.9, out: 28.7, size: 1.05 });
+R.confetti({ at: PR.V.add(road.at(M('loopOut')).P, [0, 40, 60]), t: 12.25, n: 110, speed: 620 });
+
+// ---- rules this scene keeps (scripts/check.mjs runs them over every frame)
+R.check('the car stays behind the head of the road', t => carS(t) + 95 <= reveal(t) + 1);
+R.check('the road is complete before the pen lifts', t => t < 28.7 || reveal(t) >= road.length - 1);
+R.check('the pen is down before ink starts', t => reveal(t) <= M('ink') || t >= 11.9 + 0.7);
+
+// ---- scenery: what is there at the start, and what folds up as the car goes ----
+const whenX = x => { for (let t = 0; t <= 30; t += 0.05) if (car.pos(t)[0] >= x) return t; return 30; };
+PK.hill(R, { x: -900, z: 700, w: 900, h: 160 });
+PK.hill(R, { x: -200, z: 900, w: 1100, h: 210, color: '#d9cba9' });
+PK.pine(R, { x: -1150, z: 260, h: 170 }); PK.pine(R, { x: -980, z: 330, h: 130 }); PK.pine(R, { x: 320, z: 380, h: 190 });
+PK.sign(R, { x: M('end') - 1500 + 70, z: 120, h: 150, symbol: 'end' });
+PK.cloud(R, { x: -700, y: 520, z: 1100, w: 190, drift: 6 });
+PK.cloud(R, { x: 250, y: 600, z: 1200, w: 150, drift: 4 });
+// the paper mountains fold up just before the car gets there
+PK.range(R, { x0: 1700, x1: 3300, z: 520, n: 6, h: [170, 290], seed: 4, pop: { t: x => whenX(x - 650), dur: 0.55 } });
+PK.range(R, { x0: 2100, x1: 5000, z: 1050, n: 7, h: [300, 470], seed: 9, pop: { t: x => whenX(x - 1000), dur: 0.6 } });
+PK.pine(R, { x: 2350, z: 300, h: 150, pop: { t: whenX(1800), dur: 0.5 } });
+PK.sun(R, { x: 4300, z: 1450, r: 290, y: t => PR.lerp(-640, -60, PR.smooth(7.6, 11.5, t)) });
+for (const [x, y, w, k] of [[2000, 640, 170, 0], [2900, 760, 210, 1], [3700, 600, 150, 2], [4900, 720, 190, 3]])
+  PK.cloud(R, { x, y, z: 1150, w, drift: 5, pop: { t: whenX(x - 900), dur: 0.5, mode: 'drop', h: 400 } });
+
+// along the ink: a curve sign and a few trees that fold up beside the pen's road
+const inkAt = d => road.at(M('ink') + d).P;
+PK.sign(R, { x: inkAt(300)[0] + 40, z: inkAt(300)[2] + 140, h: 140, symbol: 'curve', pop: { t: whenX(inkAt(300)[0] - 260), dur: 0.5 } });
+for (const [d, h, dz] of [[700, 150, 190], [980, 120, 260], [1350, 170, 170], [1650, 130, 230]])
+  PK.pine(R, { x: inkAt(d)[0], z: inkAt(d)[2] + dz, h, pop: { t: whenX(inkAt(d)[0] - 280), dur: 0.5 } });
+
+// ---- camera ----
+const follow = (dy, lag = 0.5, dx = 0) => R.follow(car.pos, lag, [dx, dy, 0]);
+const loopC = PR.V.add(road.at(M('loopIn')).P, [60, 230, 95]);
+R.camera([
+  { t: 0, target: follow(70), dist: 980, yaw: 14, elev: 15, fov: 30 },
+  { t: 3.0, target: follow(60), dist: 980 },
+  { t: 4.3, target: follow(60), dist: 680, yaw: 24, elev: 12 },
+  { t: 5.0, target: follow(60), dist: 680 },
+  { t: 6.4, target: follow(90, 0.5, 260), dist: 1150, yaw: 14, elev: 14 },
+  { t: 8.0, target: follow(170, 0.8, 200), dist: 1500, yaw: 12, elev: 13 },
+  { t: 9.4, target: loopC, dist: 1500, yaw: 18, elev: 8 },
+  { t: 12.0, target: loopC, dist: 1400, yaw: 20 },
+  { t: 13.6, target: follow(70), dist: 760, yaw: 10, elev: 12 },
+  { t: 17.0, target: follow(60), dist: 560, yaw: -6, elev: 7 },
+  { t: 21.0, target: follow(60), dist: 600, yaw: -14, elev: 9 },
+  { t: 24.4, target: follow(80), dist: 900, yaw: 0, elev: 16 },
+  { t: 29.0, target: [3000, 60, 300], dist: 5600, yaw: 3, elev: 21, fov: 30 },
+  { t: 30, target: [3000, 60, 300], dist: 5700 },
+]);
+R.start();
+</script>
+</body>
+</html>
