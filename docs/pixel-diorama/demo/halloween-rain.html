@@ -1,0 +1,62 @@
+<!doctype html>
+<!-- pixel-diorama example · "Halloween Rain": a floating island on a cold rainy night with warm pockets of fire and window light.
+     Brief (the prompt this recreates): an animated pixel-art Halloween diorama, built to be the looping cover for a 10-hour lofi
+     video; strong warm/cold contrast — a cold rainy night against firelight and glowing windows; rain, fire sparks, drifting
+     smoke and flickering light; crisp at 1080p; loops smoothly for hours.
+     480×270 canvas × 4 = 1920×1080, 60 s loop at 30 fps. Open the file directly or serve the folder. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Halloween Rain · pixel-diorama</title>
+<style>html,body{margin:0;height:100%;background:#05050c;overflow:hidden}canvas{display:block}</style>
+</head>
+<body>
+<script src="lib/pixel.js"></script>
+<script src="lib/kit.js"></script>
+<script>
+const D = PD.create({ W: 480, H: 270, loop: 60, fps: 30, seed: 7, bg: '#05050c', vignette: 0.4 });
+const P = K.PAL, GROUND = 170;
+
+// --- far: sky, stars, lightning behind the hills, moon, clouds, bats ---
+K.sky(D);
+K.stars(D, { n: 90, seed: 3, area: [0, 0, 480, 150] });
+K.lightning(D, { times: [17.2, 44.6], x: [40, 150], top: 40, bottom: 205, strength: 0.5 });
+K.moon(D, { x: 382, y: 50, r: 17 });
+K.clouds(D, { n: 7, seed: 9, y: [12, 88], w: [60, 130], sway: 12 });
+K.bats(D, { n: 2, seed: 4, y: [40, 100], period: 30, cross: 10 });
+K.hills(D, { y: 214, amp: 22, seed: 5, cols: [P.hill[1], P.hill[2]], freq: 0.012 });
+K.mist(D, { y: 200, h: 34, alpha: 0.32, seed: 6 });
+K.hills(D, { y: 238, amp: 12, seed: 8, cols: [P.hill[0], P.hill[1]], freq: 0.02 });
+
+// --- the island ---
+const isl = K.island(D, { x0: 108, x1: 374, y: GROUND, depth: 84, tip: 0.5, seed: 12 });
+K.crystal(D, { x: 206, y: 214, h: 9, seed: 2 });
+K.crystal(D, { x: 312, y: 196, h: 6, n: 2, seed: 5, r: 16 });
+K.roots(D, isl, { n: 16, seed: 13, glow: 0.45 });
+K.pond(D, { x0: 112, x1: 158, y: GROUND, depth: 7 });
+K.waterfall(D, { x: 109, y0: GROUND + 1, y1: 262, w: 3 });
+K.wisps(D, { area: [112, 136, 60, 28], n: 4, seed: 21 });
+
+// --- on the island, back to front ---
+K.tree(D, { x: 352, y: GROUND, h: 76, seed: 17, lanterns: 3, lean: 0.08 });
+K.grave(D, { x: 366, y: GROUND, h: 8, w: 6 });
+K.grave(D, { x: 339, y: GROUND, h: 10, w: 7 });
+const house = K.house(D, { x: 206, y: GROUND, w: 64, h1: 20, h2: 18, roofH: 22, seed: 4 });
+K.smoke(D, { x: house.chimney.x, y: house.chimney.y, wind: 3.2, rise: 7 });
+K.lampPost(D, { x: 188, y: GROUND, h: 30 });
+K.pumpkin(D, { x: 176, y: GROUND, size: 1, seed: 1 });
+K.pumpkin(D, { x: 281, y: GROUND, size: 1.25, seed: 2 });
+K.pumpkin(D, { x: 289, y: GROUND, size: 0.75, seed: 3, face: false });
+K.campfire(D, { x: 300, y: GROUND, seed: 9 });
+const sk = K.skeleton(D, { x: 318, y: GROUND, facing: -1 });
+
+// --- weather in front ---
+K.rain(D, { n: 120, seed: 31, speed: [170, 220], len: [3, 5], cols: P.rain.slice(0, 2), name: 'rain-far' });
+K.rain(D, { n: 70, seed: 32, speed: [290, 350], len: [6, 9], cols: P.rain.slice(1), shelter: [[sk.umbrella.x0, sk.umbrella.x1, sk.umbrella.y]], name: 'rain' });
+K.splashes(D, { segs: [[160, 202, GROUND], [276, 296, GROUND], [340, 372, GROUND]], n: 22 });
+
+D.start();
+</script>
+</body>
+</html>

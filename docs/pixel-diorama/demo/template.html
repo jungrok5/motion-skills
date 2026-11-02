@@ -1,0 +1,44 @@
+<!doctype html>
+<!-- pixel-diorama scene template: a lamp on a ledge in the rain. Copy it (scripts/new-scene.mjs does), then build back to front:
+     sky → far things → ground → props → weather. Check stills after every step:
+       node <skill>/scripts/render.mjs scene.html --stills 0,10 --scale 2
+     and run node <skill>/scripts/loop-check.mjs scene.html before rendering the MP4. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Scene · pixel-diorama</title>
+<style>html,body{margin:0;height:100%;background:#05050c;overflow:hidden}canvas{display:block}</style>
+</head>
+<body>
+<script src="lib/pixel.js"></script>
+<script src="lib/kit.js"></script>
+<script>
+// 480×270 × 4 = 1920×1080. loop = the length of one seamless cycle (every period inside is snapped to divide it).
+const D = PD.create({ W: 480, H: 270, loop: 30, fps: 30, seed: 1, bg: '#05050c' });
+const P = K.PAL, GROUND = 200;
+
+K.sky(D);
+K.stars(D, { n: 60, seed: 2, area: [0, 0, 480, 140] });
+K.moon(D, { x: 380, y: 52, r: 14 });
+K.clouds(D, { n: 5, seed: 3, y: [20, 90], w: [60, 120] });
+K.hills(D, { y: 210, amp: 18, seed: 4, cols: [P.hill[1], P.hill[2]] });
+
+// the ground: a ledge of grass and rock (an island with a shallow underside)
+const isl = K.island(D, { x0: 120, x1: 360, y: GROUND, depth: 40, tip: 0.5, seed: 5 });
+K.lampPost(D, { x: 240, y: GROUND, h: 34 });
+
+// draw your own prop in place: integers only, through the raster helpers (PD.rect / PD.line / PD.disc / PD.poly / PD.sprite)
+D.add(ctx => {
+  PD.rect(ctx, 210, GROUND - 6, 14, 6, P.wood[3]);          // a bench
+  PD.rect(ctx, 210, GROUND - 6, 14, 1, P.wood[5]);
+}, { static: true, name: 'bench' });
+
+K.rain(D, { n: 110, seed: 6, speed: [180, 230], len: [3, 5], cols: P.rain.slice(0, 2), name: 'rain-far' });
+K.rain(D, { n: 60, seed: 7, speed: [290, 340], len: [6, 9], cols: P.rain.slice(1) });
+K.splashes(D, { segs: [[isl.x0, isl.x1, GROUND]], n: 20 });
+
+D.start();
+</script>
+</body>
+</html>

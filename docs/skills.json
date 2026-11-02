@@ -92,6 +92,21 @@
       "workedExample": [
         { "title": "「Four Weathers」 · 4샷 · 25.6초 · 샷 페이지", "url": "https://jungrok5.github.io/motion-skills/cinematic-3d/demo/shots/fog.html" }
       ]
+    },
+    {
+      "id": "pixel-diorama",
+      "name": "pixel-diorama",
+      "tagline": "비 오는 밤의 떠 있는 섬처럼 아늑한 픽셀아트 장면을 이미지 파일 없이 코드로 그리고, 끊김 없이 반복되는 루프 영상으로 만듭니다. 빗줄기, 번개, 불티, 연기, 깜박이는 창문 불빛으로 1080p MP4 한 바퀴와 10시간 로파이 영상을 냅니다.",
+      "posterAlt": "pixel-diorama로 만든 장면 네 개: 비 오는 밤하늘에 떠 있는 섬과 불 켜진 집, 모닥불 옆 빨간 우산 아래 앉은 해골, 초록 오로라 아래 눈 덮인 섬의 집, 눈 쌓인 지붕의 집과 모닥불 옆 눈사람",
+      "poster": "pixel-diorama/poster.jpg",
+      "tags": ["16:9", "MP4", "라이브 페이지", "심리스 루프", "10시간"],
+      "stats": ["예제 2편 · 60초 · 40초", "소품 28종"],
+      "page": "pixel-diorama/",
+      "source": "pixel-diorama/",
+      "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "pixel-diorama/examples/halloween-rain/" },
+      "workedExample": [
+        { "title": "「Halloween Rain」 · 60초 루프 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/pixel-diorama/demo/halloween-rain.html" }
+      ]
     }
   ]
 }
