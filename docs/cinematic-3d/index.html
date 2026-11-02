@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>cinematic-3d · motion-skills</title>
+<meta name="description" content="비 오는 밤거리, 눈 덮인 골목, 안개에 잠긴 도시, 웅덩이에 비친 시계탑 같은 시네마틱 3D 장면을 three.js로 만듭니다. 젖은 반사, 안개와 가로등 빛, 피사계 심도, 필름 그레인으로 렌더 같은 9:16 MP4와 브라우저에서 도는 샷 페이지를 만듭니다.">
+<meta property="og:title" content="cinematic-3d · motion-skills">
+<meta property="og:description" content="비 오는 밤거리, 눈 덮인 골목, 안개에 잠긴 도시, 웅덩이에 비친 시계탑 같은 시네마틱 3D 장면을 three.js로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/cinematic-3d/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/cinematic-3d">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / cinematic-3d</nav>
+  <h1>cinematic-3d</h1>
+  <p>비 오는 밤거리, 눈 덮인 골목, 안개에 잠긴 도시, 웅덩이에 비친 시계탑 같은 시네마틱 3D 장면을 three.js로 만듭니다. 젖은 반사, 안개와 가로등 빛, 피사계 심도, 필름 그레인으로 렌더 같은 9:16 MP4와 브라우저에서 도는 샷 페이지를 만듭니다.</p>
+  <ul class="tags"><li>9:16</li><li>MP4</li><li>라이브 페이지</li><li>날씨 · 안개</li><li>앰비언스</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>참고 이미지 또는 장면 설명 (시간대, 날씨, 카메라 위치)</dd>
+      <dt>분석</dt><dd>참고 이미지의 카메라 높이 · 렌즈 · 광원 · 안개 깊이 · 초점, 영역별 밝기 수치</dd>
+      <dt>샷</dt><dd>샷마다 HTML 한 장. 단순한 형태(상자, 로프트, 절차적 나무)에 조명 · 안개 · 렌즈를 얹는 고정 파이프라인</dd>
+      <dt>확인</dt><dd>단계별 스틸(<code>?pass=scene</code>), 콘택트 시트, 참고 이미지와 밝기 비교</dd>
+      <dt>출력</dt><dd>1080×1920 MP4, 디졸브로 이은 필름, ElevenLabs 효과음으로 만든 앰비언스 믹스</dd>
+    </dl>
+    <pre><code>cd cinematic-3d/examples/four-weathers
+node ../../scripts/render.mjs shots/rain.html --stills 3 --scale .5
+python3 ../../scripts/contact.py shots/*.html --times 0,3.5,7
+node ../../scripts/film.mjs</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium(WebGL2), ffmpeg, Python 3 + Pillow. GPU가 없으면 1080×1920 한 프레임에 6–12초 걸립니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/cinematic-3d/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:4/5;--demo-bg:#000">
+    <iframe data-src="demo/shots/fog.html" title="cinematic-3d 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/shots/fog.html">데모 열기 (examples/four-weathers)</a></noscript>
+    <div class="bar"><span data-cap-target>「Four Weathers」 안개 · 7초 · 브라우저가 실시간으로 렌더</span>
+      <span class="btns" role="group" aria-label="데모 샷">
+        <button class="btn" type="button" data-src="demo/shots/fog.html" data-cap="「Four Weathers」 안개 · 7초 · 브라우저가 실시간으로 렌더" aria-pressed="true">안개</button>
+        <button class="btn" type="button" data-src="demo/shots/rain.html" data-cap="「Four Weathers」 비 · 7초 · 나무가 많아 무거운 샷" aria-pressed="false">비</button>
+        <button class="btn" type="button" data-src="demo/shots/snow.html" data-cap="「Four Weathers」 눈 · 7초" aria-pressed="false">눈</button>
+        <button class="btn" type="button" data-src="demo/shots/autumn.html" data-cap="「Four Weathers」 가을 · 7초 · 웅덩이에 비친 장면을 180° 돌린 화면" aria-pressed="false">가을</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">「Four Weathers」 네 샷과, 한 프레임이 파이프라인을 지나며 바뀌는 모습입니다. 카드를 누르면 새 탭에서 그 샷 페이지가 그 순간에 멈춘 채 열리고, 브라우저가 장면을 직접 렌더합니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"shot":"네 샷","pass":"파이프라인 단계"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「Four Weathers」 <small>4샷 · 25.6초 · 세로</small></h3>
+      <p>참고 이미지 네 장(비 오는 밤의 트램, 눈 온 뒤의 골목, 안개 위로 솟은 빌딩, 웅덩이에 비친 시계탑)을 움직이는 샷으로 옮겼습니다.</p>
+      <div class="grid tall">
+        <a class="tile" data-tags="shot" href="demo/shots/fog.html?t=3.5" target="_blank" rel="noopener">
+          <img src="samples/fog.jpg" alt="파란 시간의 하늘 아래 구름 바다 위로 솟은 유리 빌딩들, 가운데 첨탑에 빨간 항공 장애등 세 개" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">샷 1 · 안개 · 7초</span><b>구름 바다 위의 도시</b>
+          <span class="how">레이마칭한 구름 층, 층별로 켜진 사무실, 깜박이는 장애등, 위로 떠오르는 드론</span></div></a>
+        <a class="tile" data-tags="shot" href="demo/shots/rain.html?t=3.5" target="_blank" rel="noopener">
+          <img src="samples/rain.jpg" alt="비 오는 밤, 젖은 돌바닥 너머로 실내등이 켜진 빨간 트램, 왼쪽에 창 몇 개가 켜진 건물, 오른쪽에 가로등과 앙상한 나무" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">샷 2 · 비 · 7초</span><b>비 오는 밤의 트램</b>
+          <span class="how">젖은 바닥의 세로 반사, 가로등 빛무리, 빗줄기, 커브를 도는 트램을 따라가는 카메라</span></div></a>
+        <a class="tile" data-tags="shot" href="demo/shots/snow.html?t=3.5" target="_blank" rel="noopener">
+          <img src="samples/snow.jpg" alt="눈 덮인 브라운스톤 골목, 바퀴 자국 사이로 개를 데리고 멀어지는 사람, 눈 쌓인 차와 랜턴 가로등" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">샷 3 · 눈 · 7초</span><b>눈 온 뒤의 골목</b>
+          <span class="how">실제 홈이 파인 바퀴 자국, 걸어간 뒤에 생기는 발자국, 렌즈 앞에서 번지는 눈송이</span></div></a>
+        <a class="tile" data-tags="shot" href="demo/shots/autumn.html?t=4.6" target="_blank" rel="noopener">
+          <img src="samples/autumn.jpg" alt="골든 아워에 빛나는 고딕 시계탑과 박공 지붕 집들, 떨어지는 낙엽, 모서리에 흐린 단풍 가지" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">샷 4 · 가을 · 7초</span><b>웅덩이에 비친 시계탑</b>
+          <span class="how">화면 전체가 반사. 반사된 거리로 초점을 맞추고, 떨어진 잎이 만든 물결이 탑을 휘게 함</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>파이프라인 단계 <small>같은 프레임 · 비 샷 3초</small></h3>
+      <p>단순한 형태가 렌더처럼 보이게 되는 순서입니다. 모든 샷이 같은 단계를 지납니다.</p>
+      <div class="grid tall">
+        <a class="tile" data-tags="pass" href="demo/shots/rain.html?t=3&amp;pass=scene" target="_blank" rel="noopener">
+          <img src="samples/pass-scene.jpg" alt="안개와 렌즈 효과가 없는 원본 장면: 트램, 건물, 나무, 젖은 바닥의 반사가 선명함" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">1 · <code>?pass=scene</code></span><b>원본 장면</b>
+          <span class="how">HDR · MSAA ×4, 재질 안의 높이 안개, 젖은 바닥의 평면 반사</span></div></a>
+        <a class="tile" data-tags="pass" href="demo/shots/rain.html?t=3&amp;pass=atmos" target="_blank" rel="noopener">
+          <img src="samples/pass-atmos.jpg" alt="가로등마다 빛무리가 생긴 장면" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">2 · <code>?pass=atmos</code></span><b>빛무리</b>
+          <span class="how">가로등마다 안개 속 산란을 해석적으로 적분, 전방 산란으로 빛무리를 램프 둘레에</span></div></a>
+        <a class="tile" data-tags="pass" href="demo/shots/rain.html?t=3&amp;pass=coc" target="_blank" rel="noopener">
+          <img src="samples/pass-coc.jpg" alt="초점 지도: 가까운 바닥은 파랑, 먼 배경은 빨강, 트램은 검정" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">3 · <code>?pass=coc</code></span><b>초점 지도</b>
+          <span class="how">깊이에서 계산한 착란원. 파랑은 앞, 빨강은 뒤, 검정은 초점</span></div></a>
+        <a class="tile" data-tags="pass" href="demo/shots/rain.html?t=3" target="_blank" rel="noopener">
+          <img src="samples/pass-final.jpg" alt="완성 프레임: 어둡고 빗줄기가 보이며 가로등과 트램 창이 빛나는 장면" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">4 · 완성</span><b>렌즈와 필름</b>
+          <span class="how">피사계 심도, 블룸, 빗줄기, AgX, 색 보정, 비네팅, 색수차, 필름 그레인</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. 예제 「Four Weathers」가 처음 만든 작품이고, 네 샷 모두 브라우저에서 그대로 돕니다.</p>
+  <div class="works">
+    <a class="work" href="demo/shots/fog.html" target="_blank" rel="noopener"><b>「Four Weathers」 · 4샷 · 25.6초</b><span>안개 · 비 · 눈 · 가을, 샷 페이지</span><span class="url">cinematic-3d/demo/shots/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/cinematic-3d/examples/four-weathers"><b>예제 폴더 · examples/four-weathers</b><span>샷 HTML, film.json, 앰비언스</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cinematic-3d/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/cinematic-3d">폴더</a> <span>lib · scripts · templates · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cinematic-3d/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cinematic-3d/references/LOOK.md">references/LOOK.md</a> <span>렌더처럼 보이게 하는 요소, 참고 이미지 분석과 수치</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cinematic-3d/references/KIT.md">references/KIT.md</a> <span>엔진과 소품 API, 날씨별 설정</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cinematic-3d/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · three.js r170 (MIT) · 앰비언스는 ElevenLabs 효과음
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

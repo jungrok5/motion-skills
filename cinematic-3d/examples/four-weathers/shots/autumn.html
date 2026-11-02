@@ -1,0 +1,97 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>autumn · four weathers</title>
+<script type="importmap">{ "imports": { "three": "../../../lib/three.module.min.js", "cine/": "../../../lib/" } }</script>
+</head><body>
+<script type="module">
+// Shot: the whole picture is a puddle. A gothic clock tower at golden hour, gabled houses, autumn branches overhead, leaves
+// coming down — all seen in still water at our feet and turned the right way up. A leaf lands and rings the surface; a cyclist
+// slides through the reflection. The camera looks down at the water; the finish turns the frame 180°.
+import { Film, THREE, V, col, rng, ease, noise1, smooth, wetMaterial } from 'cine/cine.js';
+import * as K from 'cine/kit.js';
+
+const film = new Film({
+  dur: 7, fov: 54, near: .1, far: 1500,
+  atmos: { density: .006, falloff: .03, start: 6, color: col('#9ab6dc', .5), colorUp: col('#7d9fd2', .45), max: 900, scatter: 0 },
+  bloom: { strength: .06, radius: 1.1, tint: col('#ffe6c4') },
+  dof: { focus: 52, aperture: 3.6, maxCoc: 40 },
+  look: { exposure: .95, contrast: 1.08, saturation: 1.12, lift: col('#060a14'), shadowTint: col('#c4d4ff'), highTint: col('#fff0d8'), vignette: .5, grain: .05, ca: .8, flip: 1 },
+});
+const S = film.scene, R = rng(12);
+const mu = film.mirror({ y: 0, res: 1, streak: .4 });
+
+const sunDir = V(.5, .2, .8).normalize();   // low, from in front and camera-right: the front glows gold, the side facing the flip-right falls into shade
+K.sky(film, { top: col('#3f6fc4', 1.1), mid: col('#7aa2dc', 1.4), horizon: col('#d8c8b4', 1.6), sunDir, sunColor: col('#fff2d6', 30), sunGlow: col('#ffc888', 1.2), clouds: .25, cloudColor: col('#fff4e6', 1.8), cloudShade: col('#a8b4d0', 1.1) });
+S.add(new THREE.HemisphereLight(col('#8fb0ee'), col('#5a4030'), .55));
+const sun = new THREE.DirectionalLight(col('#ffb468'), 9);
+sun.position.copy(sunDir).multiplyScalar(120); sun.target.position.set(0, 0, -30);
+sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -.0004; sun.shadow.normalBias = .03;
+Object.assign(sun.shadow.camera, { left: -45, right: 45, top: 60, bottom: -10, near: 1, far: 300 }); sun.shadow.radius = 2;
+S.add(sun, sun.target);
+
+// the puddle: still water over dark wet asphalt, a ragged edge near our feet
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), wetMaterial(film, mu, { color: '#1b1714', roughness: .7, puddle: .78, puddleScale: .42, ripples: .0, wet: .35, distort: .02, streakMix: .6, virtualDepth: true, detail: 1.6, drops: [[.12, -1.15, 2.3], [-.25, -2.4, 4.6]],
+  // one big puddle that widens away from us; its ragged near edges frame the bottom corners of the camera view
+  mask: 'smoothstep(-.025, .025, min(.24 + .4 * max(-p.y, 0.) + (fbm(p * 2.6) - .5) * .2 - p.x, p.x + .2 + .3 * max(-p.y, 0.) + (fbm(p * 2.6 + 5.) - .5) * .3) - (fbm(p * 7.) - .5) * .04)' }));
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; S.add(film.ground(ground));
+
+// the clock tower and the houses around its foot
+K.clockTower(film, { x: 1.5, z: -52, h: 66, w: 8, stone: '#d2b88c', time: [8, 47], spireShare: .5 });
+const wallC = ['#c9b391', '#b9a07c', '#d2bd9a', '#a8916e'], roofC = ['#5b4a40', '#6a4f3c', '#4e4440'];
+const houseMat = (seed) => K.facadeMaterial({ wall: wallC[seed % 4], roughness: .9, cell: [2.4, 3.2], win: [.38, .55], lit: .18, base: 1.2, seed, litColor: col('#ffcf8a', 2.4), glass: col('#14161c'), cluster: 0, ledge: .2, sill: '#e8dcc4' });
+[[-12, -40, 9, 7, 4.5], [-21, -43, 8, 8.5, 5], [-5.5, -38, 6, 5.5, 3.5], [11, -39, 9, 7.5, 4.5], [20, -42, 8, 7, 4.5], [-15, -62, 10, 11, 5.5], [18, -62, 10, 10, 5.5]].forEach(([x, z, w, h, rh], i) => {
+  const hs = K.gabledHouse({ w, d: 9, h, roofH: rh, roofC: roofC[i % 3], seed: i + 1, mat: houseMat(i + 1) }); hs.position.set(x, 0, z); hs.rotation.y = (i % 2 ? .08 : -.06); S.add(hs);
+});
+
+// autumn branches reaching over the water from both sides (seen high in the reflection), clusters of leaves on the twigs
+const bark = K.std('#2a1c14', { roughness: .9 });
+const leafSpots = [];
+for (const [x, z, h, lean, seed] of [[-9.5, -3, 11, 1.2, 3], [10.5, -4, 12, -1.4, 8]]) {
+  const tr = K.tree({ seed, height: h, trunk: .28, depth: 6, spread: .7, up: .2, twig: 2, twigR: .012, minR: .015, lean, mat: bark, layer: 0, view: V(-x, 6, -z) });
+  tr.position.set(x, 0, z); S.add(tr);
+  // collect twig tips for leaves: walk the ribbon geometry's end vertices
+  const tw = tr.children[2].geometry.attributes.position;
+  for (let i = 0; i < tw.count; i += 4) if (R() < .55) leafSpots.push(V(tw.getX(i + 2) + x, tw.getY(i + 2), tw.getZ(i + 2) + z));
+}
+const canopy = K.leafMesh(leafSpots.length * 2, { seed: 4, size: .1 });
+const dummy = new THREE.Object3D();
+leafSpots.forEach((p, i) => { for (let k = 0; k < 2; k++) { dummy.position.copy(p).add(V(R() - .5, R() - .5, R() - .5).multiplyScalar(.25)); dummy.rotation.set(R() * 6, R() * 6, R() * 6); dummy.scale.setScalar(.8 + R() * .6); dummy.updateMatrix(); canopy.setMatrixAt(i * 2 + k, dummy.matrix); } });
+S.add(canopy);
+
+// leaves: falling through the air (reflected) and floating on the water near us (seen directly, out of focus)
+const NF = 60, falling = K.leafMesh(NF, { seed: 9, size: .32 }); S.add(falling);
+const fall = Array.from({ length: NF }, () => ({ x: (R() - .5) * 26, z: -12 - R() * 30, y0: R(), v: .7 + R() * .6, sw: .4 + R() * .8, ph: R() * 6, sp: 1 + R() * 2 }));
+// floating leaves sit along the puddle's near edges (they end up in the top corners of the turned frame)
+const NW = 10, floating = K.leafMesh(NW, { seed: 2, size: .05 }); S.add(floating);
+const flo = Array.from({ length: NW }, (_, i) => { const side = i % 2 ? 1 : -1, z = -.05 - R() * .9; return { x: side > 0 ? .24 + .4 * -z + .02 + R() * .08 : -(.2 + .3 * -z + .02 + R() * .08), z, r: R() * 6, d: (R() - .5) * .02 }; });
+
+// the cyclist: rider + bicycle, crossing behind the puddle
+const bike = new THREE.Group(); S.add(bike);
+const dark = K.std('#1c1a1a', { roughness: .6 }), steel = K.std('#5a5f66', { metalness: .8, roughness: .35 });
+const wheels = [];
+for (const x of [-.55, .55]) { const w = new THREE.Mesh(new THREE.TorusGeometry(.34, .025, 6, 28), dark); w.position.set(x, .36, 0); bike.add(w); wheels.push(w); }
+bike.add(new THREE.Mesh(K.tubesGeometry([-.55, .36, 0, -.05, .42, 0, .022, .022, -.05, .42, 0, .4, .82, 0, .022, .022, -.05, .42, 0, -.15, .9, 0, .022, .022, -.15, .9, 0, .4, .82, 0, .022, .022, .55, .36, 0, .4, .82, 0, .022, .022, .4, .82, 0, .45, 1.02, 0, .02, .02, .35, 1.02, -.22, .45, 1.02, .22, .015, .015], 5), steel));
+const rider = K.person({ seed: 5, coat: '#3a2a22', height: 1.72 }); rider.position.set(-.12, .3, 0); rider.rotation.z = -.38; bike.add(rider);
+
+film.onFrame((t, f) => {
+  // falling leaves: drift down with a sway and a tumble, wrapping from the top
+  falling.count = NF;
+  fall.forEach((L, i) => {
+    const y = 16 - ((t * L.v + L.y0 * 16) % 16);
+    dummy.position.set(L.x + Math.sin(t * L.sw + L.ph) * .7, y, L.z + Math.cos(t * L.sw * .8 + L.ph) * .4);
+    dummy.rotation.set(t * L.sp + L.ph, t * L.sp * .7, Math.sin(t * 2 + L.ph) * 1.2); dummy.scale.setScalar(1); dummy.updateMatrix(); falling.setMatrixAt(i, dummy.matrix);
+  });
+  falling.instanceMatrix.needsUpdate = true;
+  flo.forEach((L, i) => { dummy.position.set(L.x + t * L.d, .006, L.z + Math.sin(t * .3 + i) * .01); dummy.rotation.set(-Math.PI / 2 + .05, 0, L.r + t * L.d * 2); dummy.scale.setScalar(1.1); dummy.updateMatrix(); floating.setMatrixAt(i, dummy.matrix); });
+  floating.instanceMatrix.needsUpdate = true;
+  // cyclist: right to left (in the turned picture) between 2.4 s and 6 s
+  const bx = 11 - (t - 2.6) * 5; bike.position.set(bx, 0, -13); bike.rotation.y = Math.PI; bike.visible = bx > -14 && bx < 14;
+  wheels.forEach(w => { w.rotation.z = t * 14; }); rider.userData.pedal(t * 7);
+  // camera: looking down at the water, a slow lateral drift and a little lift
+  const k = ease.inOut(t / f.dur), cam = f.camera;
+  cam.position.set(-.1 + k * .12 + noise1(t * .5, 1) * .01, .5 + k * .05, .4 - k * .1);
+  cam.lookAt(-.06 + k * .1, 0, -.62 - k * .1);
+  f.dofCfg.focus = 52;
+});
+film.start();
+</script>
+</body></html>

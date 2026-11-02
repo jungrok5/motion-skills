@@ -1,0 +1,150 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>snow · four weathers</title>
+<script type="importmap">{ "imports": { "three": "../../../lib/three.module.min.js", "cine/": "../../../lib/" } }</script>
+</head><body>
+<script type="module">
+// Shot: a quiet brownstone street after a snowfall, blue hour. The camera lies in the tyre tracks; a man walks his dog away
+// from us under the lanterns; snow still coming down, the nearest flakes drifting past as soft discs.
+import { Film, THREE, V, col, rng, ease, noise1, smooth, GLSL } from 'cine/cine.js';
+import * as K from 'cine/kit.js';
+
+const film = new Film({
+  dur: 7, fov: 60, near: .08, far: 600,
+  atmos: { density: .011, falloff: .06, start: 12, color: col('#2a3c70', .55), colorUp: col('#18264c', .35), max: 400, scatter: .32, anisotropy: .78, phaseMix: .9 },
+  bloom: { strength: .08, radius: 1.1, tint: col('#ffe2b8') },
+  dof: { focus: 24, aperture: 1.4, maxCoc: 9 },
+  look: { exposure: .42, contrast: 1.1, saturation: 1.12, lift: col('#03060f'), shadowTint: col('#b8c8ff'), highTint: col('#fff0d8'), vignette: .45, grain: .05, ca: .6 },
+});
+const S = film.scene, R = rng(5);
+K.sky(film, { top: col('#0c1c4a', .55), mid: col('#1b3478', .8), horizon: col('#2e4a8c', .9) });
+S.add(new THREE.HemisphereLight(col('#5c74c0'), col('#2a3044'), .38));
+
+// ---- the street surface: snow with two tyre tracks (real grooves), sidewalks raised on both sides
+const STREET = 4.2;   // half width of the roadway (curb to curb)
+const trackX = [-.62, .62], trackW = .3;
+function snowH(x, z) {
+  let h = (noise1(x * 1.3 + 7, 1) * .5 + noise1(z * .9, 2) * .5) * .012;
+  for (const tx of trackX) {
+    const c = tx + Math.sin(z * .07) * .12 + Math.sin(z * .23 + tx) * .03;   // tracks wander a little
+    const d = Math.abs(x - c);
+    h -= .15 * (1 - smooth(trackW * .5, trackW * .5 + .035, d));                   // groove
+    h += .03 * Math.exp(-Math.pow((d - trackW * .5 - .07) / .05, 2));              // berm pushed up at the edges
+  }
+  if (Math.abs(x) > STREET) h += .16 + (Math.abs(x) > STREET + .02 ? .02 : 0);    // curb + sidewalk
+  return h;
+}
+{
+  const xs = []; for (let i = 0; i <= 260; i++) xs.push(-8 + 16 * Math.pow(i / 260, 1) );
+  const zs = []; for (let i = 0; i <= 420; i++) { const u = i / 420; zs.push(3 - 160 * Math.pow(u, 1.7)); }
+  const pos = new Float32Array(xs.length * zs.length * 3), idx = [];
+  zs.forEach((z, j) => xs.forEach((x, i) => { const o = (j * xs.length + i) * 3; pos[o] = x; pos[o + 1] = snowH(x, z); pos[o + 2] = z; }));
+  for (let j = 0; j < zs.length - 1; j++) for (let i = 0; i < xs.length - 1; i++) { const a = j * xs.length + i, b = a + xs.length; idx.push(a, a + 1, b, a + 1, b + 1, b); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  // snow: soft white, rough, with glints; tracks: icy and wet (darker, glossy); footprints behind the walker
+  const m = new THREE.MeshStandardMaterial({ color: '#d9e2f2', roughness: .88 });
+  const U = { uWalkZ: { value: -20 }, uTime: { value: 0 }, uTrackX: { value: new THREE.Vector2(...trackX) } };
+  film.onFrame(t => { U.uTime.value = t; });
+  m.onBeforeCompile = sh => {
+    Object.assign(sh.uniforms, U);
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWP2;').replace('#include <project_vertex>', '#include <project_vertex>\nvWP2 = (modelMatrix * vec4(transformed, 1.)).xyz;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+      varying vec3 vWP2; uniform float uWalkZ, uTime; uniform vec2 uTrackX; ${GLSL.hash}
+      float inTrack(vec2 p){ float m = 0.; for (int i = 0; i < 2; i++){ float tx = i == 0 ? uTrackX.x : uTrackX.y; float c = tx + sin(p.y * .07) * .12 + sin(p.y * .23 + tx) * .03; m = max(m, 1. - smoothstep(.13, .155, abs(p.x - c))); } return m; }
+      // boot prints (two staggered rows) and the dog's small prints, only where the walker has already been
+      float prints(vec2 p){
+        if (p.y < uWalkZ + .4) return 0.;
+        float s = .38, row = floor(p.y / s), side = mod(row, 2.) * 2. - 1.;
+        vec2 c = vec2(.06 + side * .11 + (h12(vec2(row, 3.)) - .5) * .05, (row + .5) * s);
+        vec2 d = (p - c) / vec2(.045, .11); float boot = 1. - smoothstep(.75, 1., length(d));
+        float ds = .21, dr = floor(p.y / ds); vec2 dc = vec2(-.38 + (mod(dr, 2.) - .5) * .09 + sin(p.y * .9) * .05, (dr + .5) * ds);
+        float paw = 1. - smoothstep(.6, 1., length((p - dc) / vec2(.035, .04)));
+        return max(boot, paw * .8) * smoothstep(uWalkZ + .4, uWalkZ + 1.5, p.y);
+      }
+      float tk, pr;`)
+      .replace('#include <map_fragment>', `#include <map_fragment>
+        tk = inTrack(vWP2.xz); pr = prints(vWP2.xz);
+        diffuseColor.rgb *= mix(1., .22, tk) * mix(1., .72, pr) * mix(.93, 1.04, vnoise(vWP2.xz * 3.));
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(.55, .58, .62), tk * .3);`)
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, .16, tk * .9);')
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+        { float e = .01; vec2 p = vWP2.xz; float a = prints(p), bx = prints(p + vec2(e, 0.)), bz = prints(p + vec2(0., e));
+          vec3 pn = normalize(vec3(-(bx - a) / e * .025, 1., -(bz - a) / e * .025)); normal = normalize(normal + (mat3(viewMatrix) * pn - mat3(viewMatrix) * vec3(0., 1., 0.)) * 1.); }`)
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+        { vec2 g = floor(vWP2.xz * 140.); float sp = step(.9965, h12(g)) * (1. - tk);   // glints: tiny crystals catching the light
+          vec3 V = normalize(cameraPosition - vWP2); float tw = step(.5, h12(g + floor(dot(V, vec3(37., 11., 23.)) * 3.)));
+          totalEmissiveRadiance += vec3(1., .95, .85) * sp * tw * 1.4 * smoothstep(30., 3., length(cameraPosition - vWP2)); }`);
+  };
+  m.customProgramCacheKey = () => 'snowground';
+  const ground = new THREE.Mesh(g, m); ground.receiveShadow = true; S.add(ground);
+  film.snowU = U;
+}
+
+// ---- brownstones on both sides: brick, tall narrow windows, cornices, stoops
+const brick = (seed, lit) => K.facadeMaterial({ wall: '#3d2a24', roughness: .9, cell: [2.7, 3.8], win: [.36, .66], lit, cluster: .25, base: 3.6, seed, litColor: col('#ffd8a0', 6), litColor2: col('#9ec4ff', 4), cool: .04, blinds: .5, sill: '#6a5a50', ledge: .4, groundShop: .25, shopColor: col('#ffdcae', 7) });
+const leftM = brick(4, .24), rightM = brick(11, .22);
+let zc = 2;
+const fronts = [];
+for (const side of [-1, 1]) {
+  let z = side < 0 ? 4 : 1;
+  for (let i = 0; i < 14; i++) {
+    const w = 7 + R() * 3, h = 15 + R() * 7, d = 12;
+    const b = K.building({ w: d, d: w, h, x: side * (7.2 + d / 2), z: z - w / 2, mat: side < 0 ? leftM : rightM, seed: i * 3 + (side > 0 ? 50 : 0) });
+    S.add(b);
+    const cor = new THREE.Mesh(new THREE.BoxGeometry(.7, .5, w + .1), K.std('#2b1f1b', { roughness: .8 })); cor.position.set(side * 7.35, h - .3, z - w / 2); S.add(cor);
+    fronts.push([side, z - w / 2, w]);
+    z -= w + .02;
+  }
+}
+// stoops: a flight of steps up to the door with iron railings (near ones only)
+const stoneM = K.std('#3a2e2a', { roughness: .85 }), snowM = K.std('#dfe7f4', { roughness: .9 }), ironM = K.std('#0d0d0d', { roughness: .5, metalness: .5 });
+for (const [side, zc0, w] of fronts.slice(0, 5).concat(fronts.slice(14, 18))) {
+  const zc = zc0 + w * .25;
+  for (let s = 0; s < 7; s++) {
+    const st = new THREE.Mesh(new THREE.BoxGeometry(2.4 - s * .32, .2, 1.8), stoneM); st.position.set(side * (7.2 - 1.2 + s * .16) , .25 + s * .2, zc); S.add(st);
+    const sn = new THREE.Mesh(new THREE.BoxGeometry(.3, .05, 1.6), snowM); sn.position.set(side * (7.2 - 2.3 + s * .32), .38 + s * .2, zc); S.add(sn);
+  }
+  for (const dz of [-.9, .9]) { const segs = []; for (let s = 0; s < 8; s++) { const x = side * (7.2 - 2.4 + s * .32), y = .3 + s * .2; segs.push(x, y, zc + dz, x, y + .9, zc + dz, .012, .012); if (s) segs.push(side * (7.2 - 2.4 + (s - 1) * .32), .3 + (s - 1) * .2 + .9, zc + dz, x, y + .9, zc + dz, .018, .018); } S.add(new THREE.Mesh(K.tubesGeometry(segs, 4), ironM)); }
+  const door = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 2.4), K.std('#1b120e', { emissive: col('#ffcc88'), emissiveIntensity: R() < .5 ? .5 : 0 })); door.position.set(side * 7.19, 2.95, zc); door.rotation.y = -side * Math.PI / 2; S.add(door);
+}
+
+// ---- parked cars under snow along both curbs (and one pulled out: the empty space where the tracks start)
+const carCols = ['#2e3238', '#26272b', '#232a33', '#383832', '#1e1e22', '#403b30'];
+const parked = [[-1, -1.5], [-1, -7.2], [-1, -16], [-1, -21.8], [-1, -33], [-1, -40], [1, -4], [1, -9.8], [1, -15.5], [1, -26], [1, -31.8], [1, -44], [1, -50], [-1, -55]];
+parked.forEach(([side, z], i) => { const c = K.car({ seed: i, color: carCols[i % carCols.length], snow: 1 + R() * .4, tail: side < 0 && z > -30 }); c.position.set(side * (STREET - 1.15), snowH(side * 3, z) - .02, z); c.rotation.y = side < 0 ? Math.PI / 2 : -Math.PI / 2; S.add(c); });
+
+// ---- lanterns and trees on the sidewalks
+const lampSpots = [[-1, -11.5, true], [1, -27, true], [-1, -38, false], [1, -53, false], [-1, -66, false], [1, -82, false], [-1, -98, false]];
+lampSpots.forEach(([side, z, real]) => K.streetLamp(film, { x: side * (STREET + .55), z, h: 4.3, style: 'lantern', color: '#ffbf6e', power: 2.2, light: real ? 260 : 70, distance: real ? 34 : 22, bulb: 16, size: .3 }));
+const treeMat = K.std('#120d0a', { roughness: .95 });
+const trees = [[-1, -5, 15], [1, -13, 14], [-1, -24, 14], [1, -37, 13], [-1, -46, 13], [1, -60, 12], [-1, -72, 12], [1, -88, 12]];
+trees.forEach(([side, z, h], i) => { const x = side * (STREET + 1.3); const tr = K.tree({ seed: 70 + i, height: h, trunk: .2, depth: 6, spread: .55, up: .32, twig: 1, twigR: .007, minR: .011, lean: -side * .9, mat: treeMat, view: V(-x, 0, -z) }); tr.position.set(x, .16, z); S.add(tr); });
+
+// ---- the walker and his dog, walking away down the middle of the street
+const man = K.person({ seed: 3, coat: '#0f0d0c', height: 1.8 }); S.add(man);
+const pup = K.dog({ seed: 2, size: .95 }); S.add(pup);
+const leash = new THREE.Mesh(new THREE.CylinderGeometry(.006, .006, 1, 4), ironM); S.add(leash);
+
+// ---- snowfall: a big box of flakes around the view; near ones defocus into discs on their own
+film.addPrecip({ kind: 'snow', count: 34000, box: [V(-9, 0, -60), V(18, 18, 63)], speed: .9, speedVar: .4, size: .014, sway: .45, wind: V(.25, 0, .1), ambient: col('#b4c4ff', .35), bright: 3, seed: 4, far: 30 });
+
+film.onFrame((t, f) => {
+  const k = ease.inOut(t / f.dur);
+  // walker: 1.15 m/s away from us; feet in step with the prints
+  const wz = -24 - t * 1.15, ph = (t * 1.15) / .38 * Math.PI;
+  man.position.set(.06, snowH(.06, wz) + .0, wz); man.rotation.y = Math.PI / 2; man.userData.walk(ph, 1);
+  film.snowU.uWalkZ.value = wz;
+  const dz = wz - .25 + Math.sin(t * 1.7) * .15;
+  pup.position.set(-.42 + Math.sin(t * .9) * .05, snowH(-.4, dz), dz); pup.rotation.y = Math.PI / 2 + Math.sin(t * 1.3) * .08; pup.userData.walk(t * 9.5);
+  // leash from his left hand down to the collar
+  const hand = V(-.12, 1.02, wz + .05), collar = V(pup.position.x, .62, dz - .45);
+  leash.position.copy(hand).add(collar).multiplyScalar(.5); leash.scale.y = hand.distanceTo(collar);
+  leash.quaternion.setFromUnitVectors(V(0, 1, 0), collar.clone().sub(hand).normalize());
+  // camera: low in the right-hand track, a slow push, a breath of handheld
+  const cam = f.camera;
+  cam.position.set(.04 + noise1(t * .6, 4) * .008, .24 + k * .04 + noise1(t * .5, 5) * .006, 1.2 - k * 1.6);
+  cam.lookAt(.03, 2.9 + k * .1, -40);
+  f.dofCfg.focus = cam.position.distanceTo(man.position);
+});
+film.start();
+</script>
+</body></html>

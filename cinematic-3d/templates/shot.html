@@ -1,0 +1,43 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>shot</title>
+<!-- the import map points at the skill's lib/ (new-film.mjs rewrites it to the project's own copy) -->
+<script type="importmap">{ "imports": { "three": "../lib/three.module.min.js", "cine/": "../lib/" } }</script>
+</head><body>
+<script type="module">
+// Shot template: a wet street under one lamp in light rain. Copy it, then build the scene that the brief describes.
+// Order that works: 1) camera + composition with ?pass=scene stills, 2) light and atmosphere, 3) the look (exposure last).
+import { Film, THREE, V, col, rng, ease, noise1, wetMaterial } from 'cine/cine.js';
+import * as K from 'cine/kit.js';
+
+const film = new Film({
+  dur: 6, fov: 45, near: .1, far: 800,
+  // height fog in every material + the glow of every lamp in it; start = metres of clear air in front of the lens
+  atmos: { density: .02, falloff: .05, start: 10, color: col('#26344c', .6), colorUp: col('#141c2c', .3), scatter: .3, anisotropy: .8, phaseMix: .9 },
+  bloom: { strength: .08, radius: 1.1, tint: col('#ffe6c8') },
+  dof: { focus: 12, aperture: 4, maxCoc: 30 },            // aperture = blur in px (at 1080 wide) of things at infinity
+  look: { exposure: 1.1, contrast: 1.1, saturation: 1.08, shadowTint: col('#c4d2f0'), highTint: col('#fff0dc'), vignette: .4, grain: .045, ca: .6 },
+});
+const S = film.scene, R = rng(1);
+const mu = film.mirror({ y: 0, res: .5 });                 // planar reflection for wet ground (res 1 when the puddle is the picture)
+
+K.sky(film, { top: col('#06080c', .12), mid: col('#1a2233', .22), horizon: col('#2c3850', .32) });
+S.add(new THREE.HemisphereLight(col('#4a5a7a'), col('#0b0b0c'), .3));
+
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), wetMaterial(film, mu, { color: '#141415', roughness: .25, puddle: .5, ripples: 1, setts: .11 }));
+ground.rotation.x = -Math.PI / 2; S.add(film.ground(ground));   // film.ground(): the mirror camera skips it
+
+const facade = K.facadeMaterial({ wall: '#3a3633', cell: [3, 3.2], win: [.4, .6], lit: .2, seed: 2 });
+S.add(K.building({ w: 30, d: 12, h: 22, x: -4, z: -30, mat: facade, seed: 1 }));
+K.streetLamp(film, { x: 2.5, z: -10, h: 6, style: 'lantern', color: '#ffc27a', power: 1.5, light: 120, distance: 25 });
+const tr = K.tree({ seed: 3, height: 12, view: V(-6, 0, 16) }); tr.position.set(6, 0, -16); S.add(tr);
+film.addPrecip({ kind: 'rain', count: 16000, box: [V(-12, 0, -40), V(24, 18, 44)], bright: .6 });
+
+film.onFrame((t, f) => {
+  const k = ease.inOut(t / f.dur), cam = f.camera;
+  cam.position.set(.3 - k * .4 + noise1(t * .6, 1) * .01, .7 + k * .1, 4 - k * 1.5);   // slow push + a breath of handheld
+  cam.lookAt(0, 2.5, -20);
+  f.dofCfg.focus = cam.position.distanceTo(V(2.5, 3, -10));
+});
+film.start();
+</script>
+</body></html>
