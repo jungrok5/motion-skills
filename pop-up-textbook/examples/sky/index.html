@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Sky · pop-up textbook</title>
+<link rel="stylesheet" href="../../kit/book.css">
+<script type="importmap">{ "imports": { "three": "../../kit/vendor/three/build/three.module.min.js" } }</script>
+</head>
+<body>
+<script type="module">
+// The Sky — two lessons of an astronomy book on the same kit: seasons (an orrery lit by its own Sun) and the phases of
+// the Moon (sunlight from one side, an inset of what you see from Earth). DURATION = 24
+import { createBook } from '../../kit/book.js';
+
+// a small hand-drawn world map, lon/lat polygons, equirectangular — good enough at this size
+const LAND = [
+  [[-165, 65], [-140, 70], [-95, 72], [-80, 62], [-60, 55], [-65, 45], [-80, 30], [-97, 25], [-105, 20], [-117, 32], [-125, 48], [-140, 60]],
+  [[-80, 10], [-60, 8], [-35, -7], [-40, -22], [-58, -38], [-70, -55], [-75, -40], [-70, -15], [-81, -3]],
+  [[-10, 36], [-9, 44], [-2, 48], [5, 54], [10, 57], [20, 70], [60, 70], [100, 77], [140, 72], [170, 66], [160, 58], [140, 50], [130, 35], [120, 23], [105, 10], [95, 20], [80, 8], [72, 20], [58, 25], [48, 30], [35, 36], [25, 40], [15, 38]],
+  [[-17, 15], [-10, 30], [10, 37], [32, 31], [44, 12], [51, 11], [40, -15], [35, -25], [20, -35], [12, -17], [9, 4], [-8, 5]],
+  [[114, -22], [130, -12], [142, -11], [153, -25], [147, -38], [135, -34], [115, -34]],
+  [[-6, 50], [2, 51], [0, 53], [-3, 58], [-6, 56]],
+  [[-55, 60], [-20, 70], [-25, 82], [-60, 80]],
+  [[-180, -70], [180, -70], [180, -90], [-180, -90]],
+];
+function worldMap(THREE) {
+  const cv = document.createElement('canvas'); cv.width = 1024; cv.height = 512; const c = cv.getContext('2d');
+  c.fillStyle = '#a9c4d6'; c.fillRect(0, 0, 1024, 512); c.fillStyle = '#d9c99c'; c.strokeStyle = '#2a2521'; c.lineWidth = 2;
+  for (const poly of LAND) { c.beginPath(); poly.forEach(([lo, la], i) => { const x = (lo + 180) / 360 * 1024, y = (90 - la) / 180 * 512; i ? c.lineTo(x, y) : c.moveTo(x, y); }); c.closePath(); c.fill(); c.stroke(); }
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+// a point on a three.js SphereGeometry at (lon, lat), matching its uv mapping
+const onSphere = (r, lon, lat) => { const phi = (lon + 180) / 180 * Math.PI, th = (90 - lat) / 180 * Math.PI; return [-r * Math.cos(phi) * Math.sin(th), r * Math.cos(th), r * Math.sin(phi) * Math.sin(th)]; };
+const YEAR = 365.25 * 86400, TILT = 23.44 * Math.PI / 180, UK_LAT = 53;
+
+// ---------------------------------------------------------------- lesson 3: the seasons
+function seasons(D) {
+  const { THREE, U } = D;
+  const white = D.ink('#fbf8f1'), cream = D.ink('#ece3cf'), dark = D.ink('#48433d'), brass = D.ink('#d8b468');
+  const base = D.piece(D.group(), 0);
+  D.cyl(0.34, 0.35, 0.016, white, base, [0, 0.008, 0], { seg: 72 });
+  D.torus(0.25, 0.0022, dark, base, [0, 0.0175, 0], { rot: [Math.PI / 2, 0, 0], seg: 128 });
+  for (const [name, a] of [['June', 0], ['September', Math.PI / 2], ['December', Math.PI], ['March', -Math.PI / 2]])
+    D.text(name, base, [Math.cos(a) * 0.3, 0.0168, Math.sin(a) * 0.3], { hand: true, size: 0.032, rot: [-Math.PI / 2, 0, 0] });
+  // the Sun on a pillar
+  const sunG = D.piece(D.group(D.root, [0, 0.016, 0]), 0.2);
+  D.cyl(0.012, 0.016, 0.07, brass, sunG, [0, 0.035, 0]);
+  const sun = D.sphere(0.06, D.basic('#ffd774'), sunG, [0, 0.12, 0]);
+  const sunGlow = D.glow('#ffcf6a', 0.24, sunG, [0, 0.12, 0]);
+  // Earth on an arm that sweeps round the orbit
+  let theta = Math.PI, decl = 0, dayH = 0;
+  const arm = D.group(D.root, [0, 0.016, 0]);
+  const earthG = D.piece(D.group(arm, [0.25, 0, 0]), 0.45);
+  D.cyl(0.004, 0.004, 0.075, brass, earthG, [0, 0.0375, 0]);
+  const tilt = D.group(earthG, [0, 0.12, 0], [0, 0, TILT]);                  // north pole leans towards −x, always
+  const earthM = D.ink('#ffffff', { map: worldMap(THREE), sun, hatch: 0.9 });
+  const earth = D.sphere(0.045, earthM, tilt);
+  D.cyl(0.0018, 0.0018, 0.13, dark, tilt, [0, 0, 0], { lines: false });
+  const uk = D.sphere(0.0055, D.ink('#cf5a43', { sun }), earth, onSphere(0.046, -2, UK_LAT));
+  // day-length card at the front edge
+  const card = D.piece(D.group(D.root, [0.2, 0.016, 0.3], [-0.35, -0.35, 0]), 0.6);
+  D.box(0.15, 0.085, 0.006, cream, card, [0, 0.0425, 0]);
+  D.screen(0.136, 0.072, (c, s, w, h) => {
+    c.fillStyle = '#f6efdf'; c.fillRect(0, 0, w, h); c.fillStyle = '#2a2521'; c.textAlign = 'center';
+    c.font = `italic 500 ${h * 0.13}px BookSerif`; c.fillText('day length in the UK', w / 2, h * 0.2);
+    const hh = Math.floor(dayH), mm = Math.round((dayH - hh) * 60);
+    c.font = `600 ${h * 0.3}px BookSerif`; c.fillText(`${hh} h ${String(mm).padStart(2, '0')} m`, w / 2, h * 0.56);
+    const month = ['June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May'][Math.floor(((theta / (2 * Math.PI)) % 1 + 1) % 1 * 12 + 0.5) % 12];
+    c.font = `500 ${h * 0.16}px BookHand`; c.fillStyle = '#3f4a5c'; c.fillText(`${month} · Sun ${decl >= 0 ? '+' : ''}${decl.toFixed(1)}°`, w / 2, h * 0.86);
+  }, card, [0, 0.0425, 0.0032], null, { res: 360 });
+  D.click(earthG, 'year'); D.click(sunG, 'year');
+  D.callout(1, sunG, [0.03, 0.17, 0], [0.04, 0.07, 0]);
+  D.callout(2, tilt, [0.03, 0.03, 0], [0.06, 0.04, 0]);
+  D.callout(3, tilt, [0, 0.065, 0], [-0.03, 0.06, 0]);
+  D.callout(4, earth, onSphere(0.046, -2, UK_LAT), [-0.07, 0.03, 0.02]);
+  D.callout(5, base, [0, 0.02, 0.25], [-0.06, 0.03, 0.05]);
+  D.callout(6, card, [0.07, 0.08, 0], [0.04, 0.05, 0]);
+  void uk; void earth;
+  return {
+    update(s) {
+      // Earth runs round only while 'year' is on; the arm starts at December (Earth on −x, north pole leaning away)
+      theta = Math.PI + (s.on('year') ? 2 * Math.PI * s.simSince('year') / YEAR : 0);
+      arm.rotation.y = -theta;
+      tilt.rotation.y = theta;                                               // undo the arm's turn: the axis keeps its direction
+      tilt.rotation.order = 'YXZ';
+      decl = 23.44 * Math.cos(theta);
+      const cosH = -Math.tan(UK_LAT * Math.PI / 180) * Math.tan(decl * Math.PI / 180);
+      dayH = 2 * Math.acos(U.clamp(cosH, -1, 1)) * 180 / Math.PI / 15;
+      sunGlow.set(1);
+    },
+  };
+}
+
+// ---------------------------------------------------------------- lesson 4: phases of the Moon
+function phases(D) {
+  const { THREE, U } = D;
+  const white = D.ink('#fbf8f1'), cream = D.ink('#ece3cf'), dark = D.ink('#48433d'), brass = D.ink('#d8b468');
+  const SUN = [1, 0.25, 0.1];                                                // sunlight comes from the right
+  const base = D.piece(D.group(), 0);
+  D.box(0.74, 0.016, 0.5, white, base, [0, 0.008, 0]);
+  D.torus(0.2, 0.002, dark, base, [-0.06, 0.017, 0.02], { rot: [Math.PI / 2, 0, 0], seg: 128 });
+  // sunlight arrows
+  const rays = D.piece(D.group(D.root, [0.3, 0.016, 0.02]), 0.15);
+  for (let i = 0; i < 4; i++) {
+    const z = -0.15 + i * 0.1;
+    D.box(0.08, 0.006, 0.008, D.ink('#e8c25a'), rays, [0, 0.012, z]);
+    D.prism([[0, 0.012], [0.025, 0], [0, -0.012]], 0.008, D.ink('#e8c25a'), rays, [-0.065, 0.012, z], { rot: [Math.PI / 2, 0, Math.PI] });
+  }
+  D.text('sunlight', rays, [0.0, 0.0165, 0.21], { hand: true, size: 0.034 });
+  // Earth
+  const earthG = D.piece(D.group(D.root, [-0.06, 0.016, 0.02]), 0.3);
+  D.cyl(0.006, 0.008, 0.05, brass, earthG, [0, 0.025, 0]);
+  const earth = D.sphere(0.055, D.ink('#ffffff', { map: worldMap(THREE), sun: SUN, hatch: 0.9 }), earthG, [0, 0.105, 0], { rot: [0, 0, 0.41] });
+  // the Moon on an arm
+  let phase = 0.5;
+  const arm = D.group(D.root, [-0.06, 0.016, 0.02]);
+  const moonG = D.piece(D.group(arm, [0.2, 0, 0]), 0.45);
+  D.cyl(0.003, 0.003, 0.09, brass, moonG, [0, 0.045, 0]);
+  const moon = D.sphere(0.022, D.ink('#e6e2da', { sun: SUN }), moonG, [0, 0.105, 0]);
+  // inset: what you see from Earth
+  const inset = D.piece(D.group(D.root, [-0.27, 0.016, -0.17], [0, 0.45, 0]), 0.6);
+  D.box(0.16, 0.13, 0.008, cream, inset, [0, 0.065, 0]);
+  D.screen(0.144, 0.114, (c, s, w, h) => {
+    c.fillStyle = '#2a2a33'; c.fillRect(0, 0, w, h);
+    const cx = w / 2, cy = h * 0.47, r = h * 0.3, k = Math.cos(phase * 2 * Math.PI);  // k: 1 new … −1 full
+    c.fillStyle = '#4a4a55'; c.beginPath(); c.arc(cx, cy, r, 0, 7); c.fill();
+    c.fillStyle = '#f3ead6'; c.beginPath();
+    const waxing = phase < 0.5;
+    c.arc(cx, cy, r, -Math.PI / 2, Math.PI / 2, !waxing);                    // the lit limb
+    c.ellipse(cx, cy, Math.abs(k) * r, r, 0, Math.PI / 2, -Math.PI / 2, (k > 0) === waxing ? true : false);
+    c.fill();
+    const names = ['new moon', 'waxing crescent', 'first quarter', 'waxing gibbous', 'full moon', 'waning gibbous', 'last quarter', 'waning crescent'];
+    c.fillStyle = '#f3ead6'; c.font = `500 ${h * 0.13}px BookHand`; c.textAlign = 'center';
+    c.fillText(names[Math.round(phase * 8) % 8], cx, h * 0.93);
+  }, inset, [0, 0.065, 0.0045], null, { res: 360 });
+  D.click(moonG, 'month'); D.click(earthG, 'month');
+  D.callout(1, rays, [0, 0.015, -0.15], [0.02, 0.05, -0.04]);
+  D.callout(2, earthG, [-0.04, 0.14, 0], [-0.05, 0.06, 0]);
+  D.callout(3, moonG, [0.016, 0.12, 0], [0.06, 0.07, 0]);
+  D.callout(4, D.root, [-0.06, 0.017, 0.22], [0.0, 0.03, 0.07]);
+  D.callout(5, inset, [0.07, 0.12, 0], [0.04, 0.05, 0]);
+  void earth; void moon;
+  return {
+    update(s) {
+      // phase 0 = new moon (Moon between Earth and Sun, on +x); start at a waxing crescent
+      const MONTH = 29.53 * 86400;
+      phase = (0.12 + (s.on('month') ? s.simSince('month') / MONTH : 0)) % 1;
+      arm.rotation.y = -phase * 2 * Math.PI;
+      void U;
+    },
+  };
+}
+
+const book = createBook({
+  title: 'The Sky', subject: 'Physics · Space', credit: 'motion-skills · pop-up-textbook', icon: 'moon',
+  theme: { cover: '#1f2a44', icon: '#d9a441' }, start: 0, startView: 'lamp', popAt: 1.4,
+  lessons: [
+    {
+      no: 3, title: 'Why we have seasons', page: 10,
+      lead: 'Earth’s axis is tilted, and it keeps pointing the same way all year. In June the north leans towards the Sun: days are long and sunlight arrives steeply.',
+      formula: { text: '23.4°', caption: 'the tilt of Earth’s axis', example: ['UK, 53° N', 'June: 16 h 38 m of day', 'December: 7 h 33 m'] },
+      margin: ['UK 53° N', 'June 16½ h day', 'Dec 7½ h day', 'tilt 23.4°'],
+      terms: [['Axis', 'the line Earth spins around, from pole to pole.'], ['Orbit', 'Earth’s path round the Sun; one lap is a year.'], ['Solstice', 'the longest or shortest day: about 21 June and 21 December.']],
+      predict: { q: 'Is Earth closer to the Sun in the UK’s summer?', options: ['Yes, much closer', 'No, slightly further away', 'Exactly the same distance'], answer: 1,
+        why: 'Earth is closest to the Sun in early January and furthest in early July, only about 3% different. Seasons come from the tilt: in June the north leans in, so the Sun climbs higher and stays up longer.' },
+      challenge: 'Find the longest day.',
+      legend: [[1, 'the Sun'], [2, 'Earth'], [3, 'axis, tilted 23.4°'], [4, 'the UK'], [5, 'orbit, one year'], [6, 'day length in the UK']],
+      fig: 'Fig. 3  An orrery. Sizes and distances not to scale.',
+      action: 'Start the year (2), then watch the day length (6).',
+      speed: { options: ['1 month a second', 'real'], factors: [30 * 86400, 1], start: 0 },
+      diorama: seasons,
+    },
+    {
+      no: 4, title: 'Phases of the Moon', page: 12,
+      lead: 'Half of the Moon is always lit by the Sun. As it goes round Earth we see different amounts of that lit half: from none at new moon to all of it at full moon.',
+      formula: { text: '29.5 days', caption: 'from one new moon to the next', example: ['new → first quarter ≈ 7.4 d', 'new → full ≈ 14.8 d'] },
+      margin: ['29.5 d cycle', '÷ 4', '≈ 7.4 d', 'per quarter'],
+      terms: [['Phase', 'the shape of the lit part of the Moon that we see.'], ['Waxing', 'the lit part is growing, night by night.'], ['Waning', 'the lit part is shrinking again.']],
+      predict: { q: 'What makes the Moon’s phases?', options: ['Earth’s shadow falling on it', 'Seeing different amounts of its lit half', 'Clouds covering part of it'], answer: 1,
+        why: 'The Sun always lights half of the Moon. When the Moon is between us and the Sun we face its dark half: a new moon. A week later we see half of the lit side, then all of it. Earth’s shadow only reaches the Moon during an eclipse.' },
+      challenge: 'Make a full moon.',
+      legend: [[1, 'sunlight'], [2, 'Earth'], [3, 'the Moon'], [4, 'the Moon’s orbit'], [5, 'what you see from Earth']],
+      fig: 'Fig. 4  Sunlight from the right. Not to scale.',
+      action: 'Send the Moon round (3), then watch the inset (5).',
+      speed: { options: ['1 day a second', 'real'], factors: [86400, 1], start: 0 },
+      diorama: phases,
+    },
+  ],
+  tour: [
+    { t: 0.4, view: 'book', dur: 2.8 },
+    { t: 3.2, click: 'part:year' },
+    { t: 6.4, click: 'L:card:predict' },
+    { t: 7.8, click: 'L:opt:1' },
+    { t: 9.0, click: 'L:flap' },
+    { t: 12.0, click: 'hud.next' },
+    { t: 15.2, click: 'part:month' },
+    { t: 16.6, loupe: true, move: 'R:diorama', dur: 1.0 },
+    { t: 18.6, loupe: false, view: 'right', dur: 1.6 },
+    { t: 18.6, hide: true },
+    { t: 21.0, view: 'lamp', dur: 2.6 },
+  ],
+  duration: 24,
+});
+book.start();
+</script>
+</body>
+</html>

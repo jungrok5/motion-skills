@@ -1,0 +1,84 @@
+/* pop-up-textbook — HUD, cards and callouts over the 3D desk. Fonts are bundled (fonts/, SIL OFL). */
+@font-face { font-family: BookSerif; src: url(fonts/SourceSerif4-Variable.woff2) format('woff2'); font-weight: 200 900; font-style: normal; }
+@font-face { font-family: BookSerif; src: url(fonts/SourceSerif4-Italic-Variable.woff2) format('woff2'); font-weight: 200 900; font-style: italic; }
+@font-face { font-family: BookHand; src: url(fonts/Caveat-500.woff2) format('woff2'); font-weight: 500; }
+@font-face { font-family: Inter; src: url(fonts/Inter-500.woff2) format('woff2'); font-weight: 500; }
+@font-face { font-family: Inter; src: url(fonts/Inter-600.woff2) format('woff2'); font-weight: 600; }
+@font-face { font-family: Inter; src: url(fonts/Inter-700.woff2) format('woff2'); font-weight: 700; }
+
+:root {
+  --glass: rgba(236, 232, 226, 0.82); --glass-line: rgba(255, 255, 255, 0.55); --ui-ink: #2a2521; --ui-soft: #7a6e60;
+  --accent: #b4432f; --icon: #e2922f; --ink: #2a2521; --card: #f7f1e4;
+}
+html, body { margin: 0; height: 100%; overflow: hidden; background: #140d08; }
+body.ptb { font-family: Inter, system-ui, sans-serif; color: var(--ui-ink); -webkit-font-smoothing: antialiased; }
+#c { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; touch-action: manipulation; }
+.vignette { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse 75% 70% at 50% 52%, rgba(0,0,0,0) 55%, rgba(10,5,2,0.55) 100%); }
+#callouts { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; overflow: visible; }
+#callouts line { stroke: var(--ink); stroke-width: 1.1; }
+#callouts text { font-family: BookSerif, serif; font-style: italic; font-weight: 500; fill: var(--ink); text-anchor: middle; dominant-baseline: central;
+  paint-order: stroke; stroke: rgba(243, 234, 214, 0.85); stroke-width: 4px; }
+.ui { position: fixed; inset: 0; pointer-events: none; }
+.ui > * { pointer-events: auto; }
+.ui button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+.ui svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ui svg .fill { fill: currentColor; stroke: none; }
+
+.chip, .tools { position: absolute; top: 14px; display: flex; align-items: center; gap: 4px; padding: 6px; border-radius: 22px;
+  background: var(--glass); border: 1px solid var(--glass-line); box-shadow: 0 6px 24px rgba(0,0,0,0.28); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.chip { left: 14px; max-width: calc(100vw - 28px - 220px); }
+.tools { right: 14px; }
+.chip .nav, .tools button { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; transition: background .15s; }
+.chip .nav:hover, .tools button:hover { background: rgba(0,0,0,0.07); }
+.chip .nav:disabled { opacity: 0.3; cursor: default; }
+.tools button.on { background: rgba(0,0,0,0.12); }
+.meta { padding: 2px 8px; min-width: 0; }
+.kick { display: flex; align-items: center; gap: 8px; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+.kick b { font-weight: 700; white-space: nowrap; }
+.icons { display: flex; gap: 2px; }
+.icons svg { width: 12px; height: 12px; stroke: #b9b1a6; stroke-width: 1.2; fill: none; }
+.icons svg.done { fill: var(--icon); stroke: var(--icon); }
+.icons svg.cur { fill: rgba(226,146,47,0.25); stroke: var(--icon); stroke-width: 1.6; }
+.ttl { font-family: BookSerif, serif; font-weight: 600; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+
+.menu { position: absolute; top: 70px; right: 14px; width: 270px; padding: 14px 10px 10px; border-radius: 16px; background: var(--card);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4); display: none; }
+.menu.on { display: block; }
+.menu .k { font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); font-weight: 700; padding: 0 8px; }
+.menu .mt { font-family: BookSerif, serif; font-weight: 700; font-size: 20px; padding: 2px 8px 8px; }
+.menu button { display: flex; gap: 10px; width: 100%; text-align: left; padding: 8px; border-radius: 8px; font-family: BookSerif, serif; font-size: 16px; }
+.menu button span { color: var(--ui-soft); width: 18px; font-variant-numeric: tabular-nums; }
+.menu button:hover, .menu button.cur { background: rgba(0,0,0,0.06); }
+.menu button.cur { font-weight: 600; }
+
+.card { position: absolute; left: 0; top: 0; width: min(380px, calc(100vw - 24px)); box-sizing: border-box; padding: 16px 20px 18px; border-radius: 14px;
+  background: var(--card); box-shadow: 0 14px 44px rgba(0,0,0,0.38); display: none; font-family: BookSerif, serif; font-size: 17px; line-height: 1.38; }
+.card .x { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: var(--ui-soft); }
+.card .x svg { width: 16px; height: 16px; }
+.card .k { font-family: Inter, sans-serif; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 6px; }
+.card .q { font-weight: 600; font-size: 19px; margin-bottom: 8px; padding-right: 20px; }
+.card p { margin: 0; }
+.card dl { margin: 0; }
+.card dt { font-weight: 700; }
+.card dd { margin: 0 0 6px; }
+.card button[data-cmd^=opt] { display: flex; gap: 10px; align-items: center; width: 100%; text-align: left; padding: 5px 4px; border-radius: 6px; font-family: inherit; font-size: 17px; }
+.card button[data-cmd^=opt]:hover { background: rgba(0,0,0,0.05); }
+.card button i { width: 15px; height: 15px; border: 1.6px solid var(--ink); border-radius: 2px; flex: none; position: relative; }
+.card button.on i::after { content: ''; position: absolute; left: 3px; top: -3px; width: 6px; height: 12px; border: solid #3f4a5c; border-width: 0 3px 3px 0; transform: rotate(40deg); }
+.card .f { font-style: italic; font-size: 40px; text-align: center; padding: 4px 0 8px; }
+.card .ex { margin-top: 10px; font-family: BookHand, cursive; font-size: 22px; color: #3f4a5c; line-height: 1.15; }
+.card .verdict { margin-top: 10px; font-family: Inter, sans-serif; font-size: 12.5px; font-weight: 600; color: var(--accent); }
+.card .verdict.ok { color: #2f7a46; }
+
+.credit { position: absolute; right: 16px; bottom: 10px; font-size: 11px; color: rgba(255,255,255,0.45); pointer-events: none; }
+.hint { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); font-size: 12px; color: rgba(255,255,255,0.7); background: rgba(0,0,0,0.35);
+  padding: 6px 12px; border-radius: 14px; white-space: nowrap; transition: opacity .4s; pointer-events: none; }
+.cursor { position: fixed; left: 0; top: 0; display: none; pointer-events: none; z-index: 10; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.35)); }
+.ripple { position: fixed; left: -22px; top: -22px; width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.9); display: none; pointer-events: none; z-index: 9; }
+
+body.portrait .chip { max-width: calc(100vw - 28px); }
+body.portrait .tools { top: auto; bottom: 14px; right: 50%; transform: translateX(50%); }
+body.portrait .menu { top: auto; bottom: 74px; right: 50%; transform: translateX(50%); }
+body.portrait .hint { display: none; }
+body.portrait .credit { bottom: auto; top: 76px; right: 16px; }
+@media (max-width: 520px) { .ttl { font-size: 15px; } .chip .nav { width: 34px; height: 34px; } }
