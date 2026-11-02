@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ST-1 Single-Cylinder Engine · machine-sim</title>
+<link rel="stylesheet" href="../../kit/machine-sim.css">
+<script type="importmap">{ "imports": { "three": "../../kit/vendor/three/build/three.module.min.js", "three/addons/": "../../kit/vendor/three/examples/jsm/" } }</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<svg id="labels"></svg>
+<div id="hud"></div>
+<script type="module">
+// ST-1 — a single-cylinder four-stroke engine, shown at 1/60 speed. One cycle angle (0–720°) drives
+// everything: the crank-slider (piston, rod), the camshaft at half speed and both valves, the spark,
+// and a simple cylinder-pressure model whose p–V loop, torque and power are drawn in the HUD.
+// Model units: 1 unit = 100 mm (the grid is 10 cm).   Tour: DURATION = 26
+import { createSim, THREE, U } from '../../kit/machine-sim.js';
+const { clamp, lerp, smooth, wrap, deg, rad, approach } = U;
+
+// ---------------- engine numbers ----------------
+const R = 0.43, LROD = 1.45, BORE = 0.86, CR = 10.5, SLOW = 60;          // crank radius, rod, bore (units), compression ratio
+const CRANK_Y = 1.6, PIN_TO_CROWN = 0.3;
+const DECK = CRANK_Y + R + LROD + PIN_TO_CROWN + 0.04;                     // cylinder head face
+const A_M2 = Math.PI / 4 * 0.086 ** 2, SWEPT = A_M2 * 0.086, VC = SWEPT / (CR - 1);   // m², m³
+const IVO = -12, IVC = 212, EVO = 508, EVC = 732, LIFT = 0.1, IGN = 342;  // valve timing (cycle °), max lift (units = 10 mm)
+
+const sim = createSim({
+  views: {
+    hero:  { az: 38, el: 14, dist: 14.5, target: [0, 2.55, 0], fov: 30 },
+    front: { az: 0, el: 5, dist: 15, target: [0, 2.5, 0], fov: 30 },
+    side:  { az: 90, el: 5, dist: 15, target: [0, 2.5, 0], fov: 30 },
+    top:   { az: 180, el: 89.5, dist: 15, target: [0, 0, 0], fov: 30 },
+    crank: { az: 56, el: 12, dist: 12.5, target: [-0.2, 2.2, 0], fov: 30 },
+    head:  { az: 30, el: 20, dist: 12.5, target: [0, 3.7, 0], fov: 30 },
+  },
+  display: [['labels', 'Labels'], ['solver', 'Solver'], ['xray', 'X-ray'], ['exploded', 'Exploded'], ['isolate', 'Crank train'], ['orbit', 'Orbit']],
+  isolate: { group: 'train', view: 'crank' },
+  shadowBox: 5,
+  duration: 26,
+});
+const { K, root } = sim;
+const white = K.mat('#ebe8e1', { rough: 0.5 }), white2 = K.mat('#dcd8cf', { rough: 0.55 });
+const dark = K.mat('#2a2a29', { rough: 0.45, metal: 0.35 }), black = K.mat('#151514', { rough: 0.7 });
+const steel = K.mat('#b9b6ad', { rough: 0.32, metal: 0.3 }), red = K.mat('#e4572e', { rough: 0.5 });
+
+// ---------------- static structure ----------------
+const eng = K.group(root);
+const base = K.group(eng);
+for (const z of [-0.85, 0.85]) K.box(2.4, 0.18, 0.3, dark, base, [0, 0.09, z], { bevel: 0.03 });
+K.box(0.3, 0.75, 1.9, white2, base, [-0.55, 0.55, 0], { bevel: 0.04 }); K.box(0.3, 0.75, 1.9, white2, base, [0.55, 0.55, 0], { bevel: 0.04 });
+sim.part(base, { id: 'base', role: 'frame' });
+
+const crankcase = K.group(eng, [0, CRANK_Y, 0]);
+K.mesh(K.prismGeo([[-0.75, -0.7], [0.75, -0.7], [0.82, -0.2], [0.65, 0.7], [-0.65, 0.7], [-0.82, -0.2]], 1.1, 'x', 0.06), white, crankcase);
+K.cyl(0.32, 0.32, 1.3, white2, crankcase, null, { axis: 'x', seg: 28 });
+K.box(0.02, 0.5, 0.9, black, crankcase, [0.56, -0.2, 0], { bevel: 0.005 });
+sim.part(crankcase, { id: 'case', label: 'Crankcase', sub: 'carries the main bearings', anchor: [0.55, -0.4, 0.5], explode: [0, -0.35, 0] });
+
+const block = K.group(eng, [0, DECK - 0.75, 0]);
+K.cyl(0.56, 0.56, 1.5, white, block, null, { seg: 36 });
+for (let i = 0; i < 7; i++) K.box(1.35, 0.045, 1.35, white2, block, [0, -0.6 + i * 0.2, 0], { bevel: 0.015 });
+sim.part(block, { id: 'block', label: 'Cylinder + fins', sub: '86 mm bore, air cooled', anchor: [0.68, 0.3, 0.3], explode: [0, 0.75, 0] });
+
+const head = K.group(eng, [0, DECK, 0]);
+K.box(1.4, 0.5, 1.4, white, head, [0, 0.25, 0], { bevel: 0.07 });
+for (let i = 0; i < 3; i++) K.box(1.5, 0.04, 1.5, white2, head, [0, 0.12 + i * 0.13, 0], { bevel: 0.012 });
+K.box(1.1, 0.3, 0.7, white2, head, [0, 0.62, 0], { bevel: 0.06 });      // cam cover
+sim.part(head, { id: 'head', label: 'Cylinder head', sub: 'two valves, one cam', anchor: [-0.6, 0.6, 0.2], explode: [0, 1.7, 0] });
+const plug = K.group(head, [0, 0.5, 0.48], [0.5, 0, 0]);
+K.cyl(0.05, 0.05, 0.36, white, plug, [0, 0.18, 0], { seg: 12 }); K.cyl(0.075, 0.075, 0.1, dark, plug, [0, 0.02, 0], { axis: 'y', seg: 6 });
+sim.part(plug, { id: 'plug', label: 'Spark plug', sub: 'fires 18° before TDC', anchor: [0, 0.36, 0], explode: [0, 0.6, 0.4] });
+
+// intake (+z) and exhaust (−z)
+const intake = K.group(eng, [0, DECK + 0.25, 0.7]);
+K.mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([[0, 0, 0], [0, 0.05, 0.4], [0, 0.35, 0.8]].map(p => new THREE.Vector3(...p))), 20, 0.13, 14), white2, intake);
+K.box(0.5, 0.5, 0.45, white2, intake, [0, 0.45, 0.95], { bevel: 0.05 }); K.cyl(0.17, 0.17, 0.47, dark, intake, [0, 0.45, 0.95], { axis: 'z', seg: 20 });
+sim.part(intake, { id: 'intake', label: 'Intake + throttle body', sub: 'air in on +z', anchor: [0, 0.6, 0.95], explode: [0, 0.4, 0.8] });
+const exhaust = K.group(eng, [0, DECK + 0.25, -0.7]);
+K.mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([[0, 0, 0], [0, -0.1, -0.5], [0.3, -1.4, -0.8], [0.5, -2.8, -0.7]].map(p => new THREE.Vector3(...p))), 40, 0.12, 14), steel, exhaust);
+sim.part(exhaust, { id: 'exhaust', role: 'frame', explode: [0, 0, -0.8] });
+
+// ---------------- moving parts ----------------
+const crank = K.group(eng, [0, CRANK_Y, 0]);
+K.cyl(0.13, 0.13, 2.3, steel, crank, [-0.25, 0, 0], { axis: 'x', seg: 20 });
+for (const x of [-0.22, 0.22]) {
+  K.box(0.12, 0.62, 0.42, dark, crank, [x, R / 2, 0], { bevel: 0.03 });
+  K.mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.12, 32, 1, false, Math.PI * 0.6, Math.PI * 0.8).rotateZ(Math.PI / 2), dark, crank, [x, 0, 0]);
+}
+K.cyl(0.11, 0.11, 0.42, steel, crank, [0, R, 0], { axis: 'x', seg: 18 });       // crankpin
+sim.part(crank, { id: 'crank', group: 'train', role: 'frame', label: 'Crankshaft', sub: '43 mm throw, counterweighted', anchor: [0.22, -0.35, 0.25] });
+const fly = K.group(crank, [-1.3, 0, 0]);
+K.cyl(1.0, 1.0, 0.16, white, fly, null, { axis: 'x', seg: 48 }); K.cyl(1.03, 1.03, 0.12, dark, fly, null, { axis: 'x', seg: 48 });
+K.cyl(0.25, 0.25, 0.2, dark, fly, null, { axis: 'x', seg: 24 }); K.box(0.04, 0.3, 0.06, red, fly, [-0.09, 0.8, 0], { bevel: 0.005 });
+sim.part(fly, { id: 'fly', group: 'train', role: 'frame', label: 'Flywheel', sub: 'stores the power stroke', anchor: [-0.1, 0.7, 0.5], explode: [-0.9, 0, 0] });
+const sprocketC = K.group(crank, [0.8, 0, 0]); K.cyl(0.17, 0.17, 0.08, dark, sprocketC, null, { axis: 'x', seg: 24 });
+
+const rod = K.group(eng);
+K.box(0.1, LROD - 0.2, 0.16, steel, rod, [0, LROD / 2, 0], { bevel: 0.02 });
+K.mesh(new THREE.TorusGeometry(0.15, 0.05, 10, 24).rotateY(Math.PI / 2), steel, rod);
+K.mesh(new THREE.TorusGeometry(0.09, 0.04, 10, 20).rotateY(Math.PI / 2), steel, rod, [0, LROD, 0]);
+sim.part(rod, { id: 'rod', group: 'train', role: 'frame', label: 'Connecting rod', sub: '145 mm centres', anchor: [0, LROD * 0.55, 0.08], explode: [0, 0.25, 0.9] });
+const piston = K.group(eng);
+K.cyl(BORE / 2 - 0.01, BORE / 2 - 0.01, 0.62, white2, piston, [0, 0.12, 0], { seg: 36 });
+for (const y of [0.32, 0.25, 0.18]) K.cyl(BORE / 2, BORE / 2, 0.025, dark, piston, [0, y, 0], { seg: 36 });
+K.cyl(0.07, 0.07, 0.7, steel, piston, null, { axis: 'x', seg: 12 });
+sim.part(piston, { id: 'piston', group: 'train', role: 'frame', label: 'Piston', sub: '3 rings, wrist pin', anchor: [0.36, 0.3, 0.2], explode: [0, 0.6, 0.9] });
+
+const cam = K.group(eng, [0, DECK + 0.6, 0]);
+K.cyl(0.06, 0.06, 1.3, steel, cam, [0.1, 0, 0], { axis: 'x', seg: 12 });
+const lobeShape = new THREE.Shape(); { const n = 40; for (let i = 0; i <= n; i++) { const a = i / n * Math.PI * 2, r = 0.12 + 0.1 * Math.pow(Math.max(0, Math.cos(a)), 3); lobeShape[i ? 'lineTo' : 'moveTo'](Math.sin(a) * r, -Math.cos(a) * r); } }
+const lobeGeo = new THREE.ExtrudeGeometry(lobeShape, { depth: 0.1, bevelEnabled: false }).translate(0, 0, -0.05).rotateY(Math.PI / 2);
+const lobes = [0.2, -0.2].map(x => K.mesh(lobeGeo, dark, cam, [x, 0, 0]));
+const sprocketK = K.group(cam, [0.8, 0, 0]); K.cyl(0.34, 0.34, 0.08, dark, sprocketK, null, { axis: 'x', seg: 40 });
+sim.part(cam, { id: 'cam', role: 'frame', label: 'Camshaft', sub: 'half crank speed', anchor: [0.3, 0.15, 0], explode: [0, 2.3, 0] });
+const beltH = DECK + 0.6 - CRANK_Y;
+for (const z of [-0.26, 0.26]) K.box(0.05, beltH, 0.025, dark, eng, [0.8, CRANK_Y + beltH / 2, z], { bevel: 0.005 });
+const valves = [[0.2, 'Intake valve', 'opens 12° before TDC'], [-0.2, 'Exhaust valve', 'closes 12° after TDC']].map(([x, lab, sub], i) => {
+  const v = K.group(eng, [x, DECK, 0]);
+  K.cyl(0.025, 0.025, 0.5, steel, v, [0, 0.25, 0], { seg: 8 });
+  K.cyl(0.15, 0.06, 0.05, steel, v, [0, 0, 0], { seg: 24 });
+  K.mesh(new THREE.TorusGeometry(0.07, 0.015, 6, 16).rotateX(Math.PI / 2), dark, v, [0, 0.3, 0]);   // spring cap
+  sim.part(v, { id: 'valve' + i, role: 'frame', label: lab, sub, anchor: [0, 0.02, 0.15], side: i ? 'l' : 'r', explode: [0, 1.95, 0] });
+  return v;
+});
+const glow = new THREE.Mesh(new THREE.SphereGeometry(0.36, 20, 14), new THREE.MeshBasicMaterial({ color: 0xff9a52, transparent: true, depthWrite: false }));
+glow.userData.noGhost = true; glow.position.set(0, DECK - 0.15, 0); glow.scale.y = 0.5; eng.add(glow);
+
+// ---------------- cycle model ----------------
+const pistonY = th => R * Math.cos(th) + Math.sqrt(LROD * LROD - R * R * Math.sin(th) ** 2);   // wrist pin above crank axis
+const volume = c => VC + A_M2 * (R + LROD - pistonY(rad(c))) * 0.1;                             // m³ (units → m: ×0.1)
+const lift = (c, o, cl) => { const u = (wrap(c - o, 720)) / (cl - o); return u < 1 ? LIFT * Math.sin(Math.PI * u) ** 2 : 0; };
+const wiebe = c => { const u = (c - IGN) / 45; return u <= 0 ? 0 : u >= 1 ? 1 : 1 - Math.exp(-5 * Math.pow(u, 3)); };
+function pressure(c, thr) {    // bar, absolute — a teaching model, not a simulation
+  const pin = 0.25 + 0.75 * thr, Vb = volume(180), V = volume(c);
+  if (c < 180) return pin;
+  if (c < 540) { const p = pin * Math.pow(Vb / V, 1.32) * (1 + 2.6 * thr * wiebe(c)); return c < 500 ? p : lerp(p, 1.1, smooth(500, 540, c)); }
+  return 1.1;
+}
+const torque = (c, thr) => {   // N·m on the crank from gas force
+  const th = rad(c), F = (pressure(c, thr) - 1.0) * 1e5 * A_M2, r = R * 0.1;
+  return F * r * Math.sin(th) * (1 + r * Math.cos(th) / Math.sqrt((LROD * 0.1) ** 2 - (r * Math.sin(th)) ** 2));
+};
+const STROKES = ['Intake', 'Compression', 'Power', 'Exhaust'];
+
+function init(S) { return { c: 40, rpm: S.in.rpm, running: true, steps: 0 }; }
+function step(m, dt, inp) {
+  m.rpm = approach(m.rpm, m.running ? inp.rpm : 0, 1800 * dt);
+  m.c = wrap(m.c + m.rpm / 60 * 360 / SLOW * dt, 720);
+  if (m.target != null) { m.c0 = Math.min(m.target, m.c0 + 240 * dt); m.c = wrap(m.c0, 720); if (m.c0 >= m.target) m.target = null; }
+}
+function pose(m, S) {
+  const th = rad(m.c), y = pistonY(th);
+  crank.rotation.x = th;
+  const pin = new THREE.Vector3(0, CRANK_Y + R * Math.cos(th), R * Math.sin(th)), wp = new THREE.Vector3(0, CRANK_Y + y, 0);
+  rod.position.add(pin); rod.rotation.x = Math.atan2(wp.z - pin.z, wp.y - pin.y);
+  piston.position.y += CRANK_Y + y;
+  cam.rotation.x = th / 2;
+  lobes[0].rotation.x = -rad((IVO + IVC) / 4); lobes[1].rotation.x = -rad((EVO + EVC) / 4);
+  const li = lift(m.c, IVO, IVC), le = lift(m.c, EVO, EVC);
+  valves[0].position.y -= li; valves[1].position.y -= le;
+  const b = wiebe(m.c), burn = m.c > IGN && m.c < IGN + 90 ? (1 - smooth(IGN + 20, IGN + 90, m.c)) * smooth(IGN, IGN + 8, m.c) : 0;
+  glow.visible = burn > 0.01 && (S.k.xray > 0.05 || S.k.isolate > 0.05);
+  glow.material.opacity = burn * 0.85 * Math.max(S.k.xray, S.k.isolate); glow.position.y = DECK - 0.2 - (R + LROD - y) * 0.5; glow.scale.set(1, 0.4 + (R + LROD - y) * 0.6, 1);
+  Object.assign(m, { y, li, le, burn, pin, wp });
+}
+
+// ---------------- solver overlay: the crank-slider drawn as lines ----------------
+const circle = K.line(Array.from({ length: 49 }, (_, i) => [0.75, CRANK_Y + R * Math.cos(i / 48 * Math.PI * 2), R * Math.sin(i / 48 * Math.PI * 2)]), 0xe4572e, sim.solverGroup, { depthTest: false });
+const link = K.line([[0, 0, 0], [0, 0, 0], [0, 0, 0]], 0xe4572e, sim.solverGroup, { depthTest: false });
+const tdc = K.line([[0.75, 0, -0.55], [0.75, 0, 0.55]], 0x1c1c1a, sim.solverGroup, { depthTest: false });
+const bdc = K.line([[0.75, 0, -0.55], [0.75, 0, 0.55]], 0x1c1c1a, sim.solverGroup, { depthTest: false });
+function solver(m, S, k) {
+  if (k < 0.01) return;
+  const x = 0.75;
+  K.setLine(link, [[x, CRANK_Y, 0], [x, m.pin.y, m.pin.z], [x, m.wp.y, 0]]);
+  K.setLine(tdc, [[x, CRANK_Y + R + LROD, -0.55], [x, CRANK_Y + R + LROD, 0.55]]);
+  K.setLine(bdc, [[x, CRANK_Y + LROD - R, -0.55], [x, CRANK_Y + LROD - R, 0.55]]);
+  for (const l of [circle, link]) l.material.opacity = k; for (const l of [tdc, bdc]) l.material.opacity = 0.6 * k;
+}
+
+// ---------------- HUD ----------------
+const hud = sim.hud;
+const top = hud.top({ code: 'ST-1', kicker: 'Four-stroke · study model', title: 'ST-1 Single-Cylinder Engine',
+  sub: '86 mm bore · 86 mm stroke · 500 cc · shown at 1/60 speed',
+  logo: '<svg viewBox="0 0 26 18" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><rect x="8" y="1.5" width="10" height="9"/><path d="M13 10.5v3"/><circle cx="13" cy="15" r="2"/></svg>' });
+const cycP = hud.panel('l', 'Cycle', { no: '01' });
+const cycStat = hud.stat(cycP);
+const cycChart = hud.chart(cycP, [
+  { k: 'STK', segs: [[0, 0.25], [0.25, 0.5], [0.5, 0.75], [0.75, 1]] },
+  { k: 'INT', segs: [[0, IVC / 720], [(720 + IVO) / 720, 1]] },
+  { k: 'EXH', segs: [[EVO / 720, 1], [0, (EVC - 720) / 720]] },
+  { k: 'IGN', segs: [[IGN / 720, IGN / 720 + 0.012]] },
+], { caption: '720° cycle · valves open in orange' });
+const pvP = hud.panel('l', 'Pressure', { no: '02' });
+const pvSvg = hud.svg(pvP, 206, 118);
+const pvCap = hud.el('div', 'row cap', '', pvP); pvCap.style.marginTop = '6px';
+const drvP = hud.panel('l', 'Drive', { no: '08', portraitHide: true });
+hud.slider(drvP, { key: 'rpm', label: 'Engine speed', min: 800, max: 6000, step: 50, fmt: v => Math.round(v) + ' rpm' });
+hud.slider(drvP, { key: 'thr', label: 'Throttle', min: 0, max: 1, step: 0.01, fmt: v => Math.round(v * 100) + ' %' });
+const kinP = hud.panel('r', 'Kinematics', { no: '03' });
+const kin = hud.bars(kinP, [{ k: 'POS' }, { k: 'VEL' }, { k: 'INT' }, { k: 'EXH' }, { k: 'TRQ' }], { head: ['Piston · valves · crank', ''], footer: true });
+const cmdP = hud.panel('r', 'Command', { no: '05' });
+hud.buttons(cmdP, [{ id: 'run', label: 'Run' }, { id: 'stop', label: 'Stop' }, { id: 'step', label: '+90°', red: true }], { seg: true, on: (id, S) => (id === 'run') === S.m.running && id !== 'step' });
+hud.standard({ col: 'r', no: [6, 7] });
+hud.foot('1–6 views · L labels · X x-ray · E exploded · grid 10 cm · every readout comes from the one cycle angle that turns the crank');
+
+function hudUpdate(m, S) {
+  const thr = S.in.thr, c = m.c, si = Math.floor(c / 180), w = m.rpm * Math.PI / 30;
+  top.status(m.running ? (m.rpm > 10 ? 'RUNNING' : 'STARTING') : m.rpm > 10 ? 'SPINNING DOWN' : 'STOPPED', `${Math.round(m.rpm)} RPM · ${STROKES[si].toUpperCase()} STROKE`);
+  top.big(String(Math.round(m.rpm)), 'ENGINE SPEED · RPM');
+  cycStat.set(Math.floor(c) + '°', 'Crank angle · of 720°', STROKES[si], `stroke ${si + 1} of 4`);
+  const active = c >= IGN && c < IGN + 9 ? [3, 0] : [0, si];
+  cycChart.set(c / 720, active, c >= IGN - 2 && c < IGN + 40 ? 'Spark · combustion' : m.li > 0.002 && m.le > 0.002 ? 'Valve overlap · both open' : m.li > 0.002 ? 'Intake valve open' : m.le > 0.002 ? 'Exhaust valve open' : 'Both valves shut', c >= IGN - 2 && c < IGN + 40);
+  // p–V loop for the current throttle, dot at the current angle
+  const Vmax = volume(180), px = V => 14 + (V - VC) / (Vmax - VC) * 184, py = p => 108 - p / 70 * 100;
+  let d = ''; for (let i = 0; i <= 180; i++) { const a = i * 4; d += (i ? 'L' : 'M') + px(volume(a)).toFixed(1) + ' ' + py(pressure(a, thr)).toFixed(1); }
+  const p = pressure(c, thr);
+  let peak = 0; for (let a = 340; a < 420; a += 2) peak = Math.max(peak, pressure(a, thr));
+  pvSvg.innerHTML = `<line x1="14" y1="108" x2="200" y2="108" stroke="#c9c6bf"/><line x1="14" y1="6" x2="14" y2="108" stroke="#c9c6bf"/>`
+    + [20, 40, 60].map(b => `<line x1="12" x2="200" y1="${py(b)}" y2="${py(b)}" stroke="#ebe8e2"/><text x="10" y="${py(b) + 2}" text-anchor="end">${b}</text>`).join('')
+    + `<path d="${d}" fill="rgba(228,87,46,.12)" stroke="#e4572e" stroke-width="1.2"/>`
+    + `<circle cx="${px(volume(c))}" cy="${py(p)}" r="3.4" fill="#1c1c1a"/><text x="198" y="116" text-anchor="end">VOLUME →</text><text x="18" y="12">BAR</text>`;
+  pvCap.innerHTML = `<span>Cylinder · peak ${peak.toFixed(0)} bar</span><span class="num">${p.toFixed(1)} bar</span>`;
+  // kinematics
+  const th = rad(c), s = (R + LROD - m.y) * 100, ds = (pistonY(th + 0.001) - pistonY(th)) / 0.001 * w * 0.1;   // mm, m/s
+  const T = torque(c, thr);
+  let Tm = 0; for (let a = 0; a < 720; a += 5) Tm += torque(a, thr) / 144;
+  kin.set(0, s / 86, s.toFixed(0) + ' mm', 'from TDC', null);
+  kin.set(1, Math.abs(ds) / 30, Math.abs(ds).toFixed(1) + ' m/s', ds > 0.05 ? 'up' : ds < -0.05 ? 'down' : '—');
+  kin.set(2, m.li / LIFT, (m.li * 100).toFixed(1) + ' mm', 'lift', null, m.li > 0.002);
+  kin.set(3, m.le / LIFT, (m.le * 100).toFixed(1) + ' mm', 'lift', null, m.le > 0.002);
+  kin.set(4, Math.abs(T) / 400, Math.round(T) + ' N·m', 'gas', null, T > 5);
+  kin.footer('Mean torque · power', `${Tm.toFixed(0)} N·m · ${(Tm * w / 1000).toFixed(1)} kW`);
+}
+
+sim.model({
+  inputs: { rpm: 2400, thr: 0.7 },
+  init, step, pose, solver, hud: hudUpdate,
+  follow: () => [0, 0, 0],
+  commands: {
+    run: m => { m.running = true; m.target = null; },
+    stop: m => { m.running = false; },
+    step: m => { if (m.running || m.rpm > 1) return; m.c0 = m.c; m.target = Math.ceil((m.c + 1) / 90) * 90; },   // turn to the next quarter
+  },
+});
+sim.keys({ l: 'display.labels', x: 'display.xray', e: 'display.exploded', o: 'display.orbit', ' ': 'step', r: 'run', s: 'stop' });
+sim.tour([
+  { t: 1.2, click: 'display.labels' },
+  { t: 4.6, click: 'display.labels' },
+  { t: 5.2, click: 'display.xray' },
+  { t: 7.8, click: 'view.head' },
+  { t: 10.4, click: 'display.xray' },
+  { t: 10.8, click: 'display.isolate' },
+  { t: 12.0, click: 'display.solver' },
+  { t: 14.2, drag: 'thr', to: 1.0, dur: 0.8 },
+  { t: 15.6, click: 'display.solver' },
+  { t: 16.0, click: 'display.isolate' },
+  { t: 16.6, click: 'view.hero' },
+  { t: 17.4, click: 'display.exploded' },
+  { t: 19.2, click: 'display.exploded' },
+  { t: 19.8, click: 'view.side' },
+  { t: 20.6, click: 'stop' },
+  { t: 22.4, click: 'step' },
+  { t: 23.4, click: 'step' },
+  { t: 24.4, click: 'run' },
+]);
+sim.start();
+</script>
+</body>
+</html>

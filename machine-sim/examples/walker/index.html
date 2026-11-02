@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AW-6 Walking Tank · machine-sim</title>
+<link rel="stylesheet" href="../../kit/machine-sim.css">
+<script type="importmap">{ "imports": { "three": "../../kit/vendor/three/build/three.module.min.js", "three/addons/": "../../kit/vendor/three/examples/jsm/" } }</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<svg id="labels"></svg>
+<div id="hud"></div>
+<script type="module">
+// AW-6 Walking Tank — a four-legged armoured walker on a creep gait (one leg in the air at a time).
+// Every readout comes from the same gait model that poses the legs: phase → foot positions → leg IK,
+// support polygon, stability margin and the static load on each planted foot.
+// Tour: DURATION = 27   (?live skips the tour, ?t=12 starts it at 12 s, ?render is for scripts/render.mjs)
+import { createSim, THREE, U } from '../../kit/machine-sim.js';
+const { clamp, lerp, smooth, wrap, deg, rad, approach, angDiff } = U;
+
+// ---------------- machine numbers ----------------
+const H = 2.35;          // hip height of the body origin above ground (m)
+const L1 = 1.75, L2 = 2.55, COXA = 0.5, ANKLE = 0.28;   // femur, tibia, yaw→pitch offset, ankle height above ground
+const STRIDE = 1.3, SW = 0.2, LIFT = 0.42;  // stride per cycle, swing share of the cycle, foot lift
+const MASS_T = 52, WEIGHT = MASS_T * 9.81;  // t, kN
+// swing order RL → FL → RR → FR (lateral sequence: the stable order for a static crawl)
+const LEGS = [
+  { k: 'RL', name: 'REAR LEFT',   sx: +1, sz: -1, s0: 0.00 },
+  { k: 'FL', name: 'FRONT LEFT',  sx: +1, sz: +1, s0: 0.25 },
+  { k: 'RR', name: 'REAR RIGHT',  sx: -1, sz: -1, s0: 0.50 },
+  { k: 'FR', name: 'FRONT RIGHT', sx: -1, sz: +1, s0: 0.75 },
+];
+for (const l of LEGS) {
+  l.J = new THREE.Vector3(l.sx * 1.5, -0.1, l.sz * 1.9);            // hip yaw joint, body frame
+  const a = rad(28);
+  l.nx = l.sx * (1.5 + 2.45 * Math.cos(a)); l.nz = l.sz * (1.9 + 2.45 * Math.sin(a));   // neutral foot, body frame
+}
+
+// ---------------- stage ----------------
+const sim = createSim({
+  views: {
+    hero:   { az: 48,  el: 16, dist: 28, target: [0, 1.9, 0.4], fov: 30 },
+    front:  { az: 0,   el: 7,  dist: 30, target: [0, 1.9, 0], fov: 30 },
+    side:   { az: 90,  el: 6,  dist: 27, target: [0, 1.9, 0], fov: 30 },
+    plan:   { az: 180, el: 89.5, dist: 32, target: [0, 0, 0], fov: 30 },
+    leg:    { az: 66,  el: 11, dist: 19, target: [2.9, 1.9, 2.5], fov: 30 },
+    turret: { az: 208, el: 15, dist: 23, target: [0, 2.7, 0.6], fov: 30 },
+  },
+  display: [['labels', 'Labels'], ['solver', 'Solver'], ['xray', 'X-ray'], ['exploded', 'Exploded'], ['isolate', 'One leg'], ['orbit', 'Orbit']],
+  isolate: { group: 'leg-FL', view: 'leg' },
+  duration: 27,
+});
+const { K, root } = sim;
+
+// ---------------- materials ----------------
+const white = K.mat('#ebe8e1', { rough: 0.5 });
+const white2 = K.mat('#dedad1', { rough: 0.55 });
+const dark = K.mat('#2a2a29', { rough: 0.45, metal: 0.35 });
+const black = K.mat('#151514', { rough: 0.7 });
+const steel = K.mat('#b3b0a7', { rough: 0.32, metal: 0.3 });
+const red = K.mat('#e4572e', { rough: 0.5 });
+const inA = K.mat('#e4572e', { rough: 0.45 }), inB = K.mat('#f0a487', { rough: 0.5 }), inC = K.mat('#3b3a37', { rough: 0.5 });
+
+// ---------------- hull ----------------
+const body = K.group(root);
+const hull = K.prism([[-2.55, -0.55], [1.95, -0.55], [2.6, -0.1], [2.45, 0.3], [-2.35, 0.3], [-2.55, 0.1]], 2.5, white, body, null, { bevel: 0.05 });
+sim.part(hull, { id: 'hull' });
+const deck = K.group(body, [0, 0.42, -0.25]);
+K.box(2.1, 0.25, 3.9, white2, deck);
+for (let i = 0; i < 9; i++) K.box(1.2, 0.03, 0.06, black, deck, [0, 0.13, -1.55 + i * 0.13], { bevel: 0.005 });   // engine grille
+K.box(0.5, 0.06, 0.5, dark, deck, [0.6, 0.14, 1.1], { bevel: 0.02 });
+sim.part(deck, { id: 'deck', explode: [0, 0.55, 0] });
+for (const sx of [1, -1]) {
+  const f = K.group(body, [sx * 1.42, 0.05, -0.05]);
+  K.box(0.34, 0.5, 4.2, white, f, null, { bevel: 0.05 });
+  for (let i = 0; i < 3; i++) K.box(0.02, 0.07, 0.75, black, f, [sx * 0.175, 0.08 - i * 0.12, 0.9 - i * 0.25], { bevel: 0.005 });
+  K.box(0.02, 0.32, 0.12, black, f, [sx * 0.175, 0, -1.4], { bevel: 0.005 });
+  sim.part(f, { id: 'fender' + sx, explode: [sx * 0.6, 0, 0] });
+}
+// front: sensor strip and lamps
+K.box(1.4, 0.08, 0.05, black, hull, [0, 0.12, 2.55], { bevel: 0.01, rot: [-0.9, 0, 0] });
+for (const sx of [1, -1]) K.box(0.22, 0.12, 0.08, black, hull, [sx * 0.85, -0.2, 2.25], { bevel: 0.01, rot: [-0.75, 0, 0] });
+// hip housings at the four corners
+for (const l of LEGS) {
+  const h = K.group(body, [l.sx * 1.35, 0.0, l.sz * 1.9]);
+  K.box(0.8, 0.72, 0.95, white, h, null, { bevel: 0.07 });
+  K.box(0.02, 0.4, 0.5, black, h, [l.sx * 0.405, 0, 0], { bevel: 0.005 });
+  sim.part(h, { id: 'housing-' + l.k, explode: [l.sx * 0.45, 0.1, l.sz * 0.3] });
+}
+
+// ---------------- internals (seen in x-ray) ----------------
+const pp = K.box(1.6, 0.62, 1.15, inA, body, [0, -0.18, -1.75]);
+sim.part(pp, { id: 'power', role: 'internal', label: 'Power pack', sub: '1.1 MW hybrid · rear', anchor: [0.4, 0.3, 0], explode: [0, 0, -0.8] });
+const crew = K.group(body, [0, -0.2, 1.4]);
+K.box(1.3, 0.55, 0.95, inC, crew);
+for (const sx of [1, -1]) K.box(0.36, 0.36, 0.36, inB, crew, [sx * 0.32, 0.25, -0.05]);
+sim.part(crew, { id: 'crew', role: 'internal', label: 'Crew capsule', sub: 'two seats, under the glacis', anchor: [-0.3, 0.3, 0.2], explode: [0, 0, 0.6] });
+const carousel = K.group(body, [0, -0.25, -0.2]);
+for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; K.cyl(0.07, 0.07, 0.6, inB, carousel, [Math.cos(a) * 0.55, 0, Math.sin(a) * 0.55], { seg: 12 }); }
+K.cyl(0.2, 0.2, 0.62, inA, carousel, null, { seg: 20 });
+sim.part(carousel, { id: 'ammo', role: 'internal', label: 'Ammo carousel', sub: '14 rounds under the ring', anchor: [0.55, 0.3, 0] });
+for (const sx of [1, -1]) {
+  const fc = K.box(0.36, 0.5, 2.1, inB, body, [sx * 0.86, -0.2, 0.05]);
+  sim.part(fc, { id: 'fuel' + sx, role: 'internal', label: sx > 0 ? 'Fuel cells' : null, sub: 'both sides of the ring', anchor: [0, 0.25, 0.6], explode: [sx * 0.4, 0, 0] });
+}
+
+// ---------------- turret ----------------
+const turret = K.group(body, [0, 0.55, -0.15]);
+K.cyl(0.95, 1.0, 0.12, dark, turret, [0, 0.05, 0], { seg: 40 });
+const tShell = K.prism([[-0.9, 1.3], [0.9, 1.3], [1.05, -0.4], [0.55, -1.25], [-0.55, -1.25], [-1.05, -0.4]], 0.62, white, turret, [0, 0.42, 0], { axis: 'y', bevel: 0.06 });
+K.box(1.1, 0.02, 0.5, black, turret, [0, 0.74, -0.75], { bevel: 0.005 });
+for (const sx of [1, -1]) for (let i = 0; i < 3; i++) K.cyl(0.06, 0.06, 0.22, dark, turret, [sx * 1.0, 0.5 + i * 0.0, 0.25 + i * 0.16], { axis: 'x', seg: 12 });
+sim.part(turret, { id: 'turret', label: 'Turret', sub: 'full traverse on the ring', anchor: [-0.8, 0.7, 0.3], explode: [0, 1.7, 0] });
+const cupola = K.group(turret, [0.45, 0.74, -0.35]);
+K.cyl(0.3, 0.32, 0.22, white2, cupola, [0, 0.11, 0], { seg: 28 });
+K.cyl(0.33, 0.33, 0.05, dark, cupola, [0, 0.02, 0], { seg: 28 });
+for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; K.box(0.1, 0.06, 0.04, black, cupola, [Math.sin(a) * 0.29, 0.14, Math.cos(a) * 0.29], { bevel: 0.005, rot: [0, a, 0] }); }
+sim.part(cupola, { id: 'cupola', label: "Commander's cupola", sub: 'all-round vision', anchor: [0, 0.22, 0], explode: [0, 0.7, 0] });
+const tail = K.group(turret, [0, 0.4, -1.55]);
+K.box(1.5, 0.48, 0.55, white2, tail, null, { bevel: 0.05 });
+for (let i = 0; i < 6; i++) K.box(1.2, 0.025, 0.03, black, tail, [0, -0.15 + i * 0.06, -0.28], { bevel: 0.004 });
+sim.part(tail, { id: 'tail', label: 'Tail plate', sub: 'ready rack behind it', anchor: [0.6, 0.2, -0.2], explode: [0, 0.2, -0.9] });
+for (const [x, z, h] of [[-0.62, -1.15, 1.7], [-0.78, -1.0, 1.15]]) K.cyl(0.012, 0.018, h, dark, turret, [x, 0.75 + h / 2, z], { seg: 6 });
+// gun: pivot (elevation) → slide (recoil)
+const pivot = K.group(turret, [0, 0.38, 1.3]);
+K.box(0.72, 0.46, 0.4, white2, pivot, [0, 0, 0.05], { bevel: 0.05 });
+const gun = K.group(pivot, [0, 0, 0.2]);
+K.cyl(0.085, 0.095, 4.0, white, gun, [0, 0, 2.0], { axis: 'z', seg: 20 });
+K.cyl(0.13, 0.13, 0.55, white2, gun, [0, 0, 2.3], { axis: 'z', seg: 20 });
+K.box(0.28, 0.2, 0.36, dark, gun, [0, 0, 4.05], { bevel: 0.02 });
+sim.part(gun, { id: 'gun', label: '120 mm main gun', sub: 'recoils 0.55 m on firing', anchor: [0, 0.1, 1.6], explode: [0, 0, 1.4] });
+const flash = new THREE.Mesh(new THREE.SphereGeometry(0.4, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffb36b, transparent: true, depthWrite: false }));
+flash.userData.noGhost = true; flash.position.set(0, 0, 4.5); flash.visible = false; gun.add(flash);
+
+// ---------------- legs ----------------
+const femurGeo = K.prismGeo([[0, -0.3], [L1, -0.2], [L1 + 0.05, 0], [L1, 0.2], [0, 0.32], [-0.1, 0]], 0.44, 'z', 0.05);
+const tibiaGeo = K.prismGeo([[-0.08, -0.26], [L2 - 0.35, -0.17], [L2 - 0.05, -0.11], [L2 - 0.05, 0.11], [L2 - 0.35, 0.17], [-0.08, 0.26]], 0.4, 'z', 0.05);
+for (const l of LEGS) {
+  const grp = 'leg-' + l.k, lab = l.k === 'FL';
+  const yaw = K.group(body, [l.J.x, l.J.y, l.J.z]);
+  const yd = K.group(yaw, [0, -0.36, 0]);
+  K.cyl(0.36, 0.36, 0.3, dark, yd, null, { seg: 32 });
+  K.cyl(0.25, 0.25, 0.34, white2, yd, null, { seg: 24 });
+  K.box(0.6, 0.18, 0.3, white2, yaw, [0.3, -0.45, 0], { bevel: 0.03 });      // ram bracket
+  sim.part(yaw, { id: 'yaw-' + l.k, group: grp, role: 'frame', explode: [l.sx * 0.7, 0, l.sz * 0.35] });
+  sim.part(yd, { id: 'yawdrive-' + l.k, group: grp, role: 'frame', label: lab ? 'Hip yaw drive' : null, sub: 'swings the leg fore and aft', anchor: [0, -0.1, 0.3] });
+  const pitch = K.group(yaw, [COXA, 0, 0]);
+  K.cyl(0.44, 0.44, 0.36, dark, pitch, null, { axis: 'z', seg: 36 });
+  K.cyl(0.31, 0.31, 0.4, white, pitch, null, { axis: 'z', seg: 28 });
+  K.cyl(0.1, 0.1, 0.44, dark, pitch, null, { axis: 'z', seg: 16 });
+  K.mesh(femurGeo, white, pitch);
+  K.box(L1 * 0.55, 0.06, 0.02, black, pitch, [L1 * 0.5, 0.05, 0.225], { bevel: 0.005 });
+  K.box(L1 * 0.55, 0.06, 0.02, black, pitch, [L1 * 0.5, 0.05, -0.225], { bevel: 0.005 });
+  sim.part(pitch, { id: 'femur-' + l.k, group: grp, role: 'frame', explode: [0.45, 0.1, 0] });
+  const knee = K.group(pitch, [L1, 0, 0]);
+  K.cyl(0.25, 0.25, 0.52, dark, knee, null, { axis: 'z', seg: 28 });
+  K.cyl(0.13, 0.13, 0.56, white2, knee, null, { axis: 'z', seg: 16 });
+  K.mesh(tibiaGeo, white, knee);
+  K.box(0.5, 0.36, 0.42, white2, knee, [0.75, 0, 0], { bevel: 0.04 });
+  K.box(0.1, 0.34, 0.44, black, knee, [L2 - 0.6, 0, 0], { bevel: 0.01 });
+  sim.part(knee, { id: 'tibia-' + l.k, group: grp, role: 'frame', label: lab ? 'Knee joint' : null, sub: 'high, outside the hull', anchor: [0, 0.2, 0.28], explode: [0.55, 0, 0] });
+  const foot = K.group(knee, [L2, 0, 0]);
+  K.cyl(0.15, 0.15, 0.42, dark, foot, null, { axis: 'z', seg: 16 });
+  const pad = K.group(foot, [0, -0.2, 0]);
+  K.cyl(0.32, 0.36, 0.12, black, pad, null, { seg: 24 });
+  for (let i = 0; i < 3; i++) { const a = rad(-40 + i * 40); const c = K.box(0.12, 0.1, 0.42, dark, pad, [Math.sin(a) * 0.35, -0.02, Math.cos(a) * 0.35], { bevel: 0.02, rot: [0.25, a, 0] }); }
+  K.box(0.1, 0.1, 0.32, dark, pad, [0, -0.02, -0.38], { bevel: 0.02, rot: [-0.3, 0, 0] });
+  l.pad = pad;
+  sim.part(foot, { id: 'foot-' + l.k, group: grp, role: 'frame', label: lab ? 'Foot, 3 claws + spur' : null, sub: 'planted 80% of the cycle', anchor: [0, -0.25, 0.3], explode: [0.45, 0, 0] });
+  // hip pitch ram: sleeve on the bracket, rod to the femur
+  const sleeve = K.cyl(0.095, 0.095, 1, steel, yaw, null, { seg: 14 });
+  const rod = K.cyl(0.05, 0.05, 1, white2, yaw, null, { seg: 10 });
+  sim.part(sleeve, { id: 'ram-' + l.k, group: grp, role: 'frame', label: lab ? 'Hip pitch ram' : null, sub: 'lifts the femur', anchor: [0, 0, 0] });
+  Object.assign(l, { yaw, pitch, knee, foot, sleeve, rod });
+}
+
+// ---------------- gait model ----------------
+function swingU(phase, l) { const u = wrap(phase - l.s0); return u < SW ? u / SW : -1; }   // 0..1 while in the air, -1 planted
+function init(S) {
+  const m = { z: 0, v: S.in.speed / 3.6, phase: 0.08, mode: 'walk', az: 0, el: 0, fireT: -99, feet: [] };
+  for (const l of LEGS) {   // steady-state footholds for the starting phase
+    const u = wrap(m.phase - l.s0);
+    const off = u < SW ? 0 : 0.4 * STRIDE - (u - SW) / (1 - SW) * 0.8 * STRIDE;
+    m.feet.push({ x: l.nx, z: m.z + l.nz + off, h: 0, lx: 0, lz: 0, air: false });
+  }
+  return m;
+}
+const landing = (m, l, s) => ({ x: l.nx, z: m.z + l.nz + 0.4 * STRIDE + (1 - s) * SW * STRIDE });
+function step(m, dt, inp, S) {
+  const vt = m.mode === 'walk' ? inp.speed / 3.6 : 0;
+  m.v = approach(m.v, vt, 0.9 * dt);
+  const anyAir = LEGS.some(l => swingU(m.phase, l) >= 0);
+  let rate = m.v / STRIDE;
+  if (anyAir) rate = Math.max(rate, 0.22);           // a foot in the air always finishes its step
+  m.phase = wrap(m.phase + rate * dt);
+  m.z += m.v * dt;
+  LEGS.forEach((l, i) => {
+    const f = m.feet[i], s = swingU(m.phase, l);
+    if (s >= 0) {
+      if (!f.air) { f.air = true; f.lx = f.x; f.lz = f.z; }
+      const t = landing(m, l, s), e = smooth(0, 1, s);
+      f.x = lerp(f.lx, t.x, e); f.z = lerp(f.lz, t.z, e); f.h = LIFT * Math.sin(Math.PI * s);
+    } else if (f.air) { const t = landing(m, l, 1); f.air = false; f.x = t.x; f.z = t.z; f.h = 0; }
+  });
+  m.az = m.az + clamp(angDiff(m.az, inp.turret), -32 * dt, 32 * dt);
+  const gt = S.time - m.fireT;
+  m.el = approach(m.el, gt < 3 ? 4.5 : 0, 6 * dt);
+}
+function gunState(m, S) {
+  const t = S.time - m.fireT;
+  if (t < 0.9) return ['RECOIL', t];
+  if (t < 4.2) return [`RELOADING ${(4.2 - t).toFixed(1)} S`, t];
+  return ['READY', t];
+}
+// body sway: lean away from the leg about to lift, so the centre of mass sits inside the other three
+function bodyPose(m, S) {
+  let x = 0, z = 0;
+  for (const l of LEGS) {
+    const u = wrap(m.phase - l.s0 - SW / 2 + 0.5) - 0.5;    // −0.5..0.5, 0 = middle of this leg's swing
+    const w = Math.pow(Math.cos(Math.PI * clamp(u / 0.42, -0.5, 0.5)), 2);
+    x -= l.sx * 0.2 * w; z -= l.sz * 0.12 * w;
+  }
+  const air = m.feet.reduce((a, f) => a + f.h, 0);
+  const t = S.time - m.fireT, kick = t > 0 && t < 1.5 ? Math.exp(-t * 4) * Math.sin(t * 16) : 0;
+  return { x, y: H - 0.05 * air, z: m.z + z, rx: -0.035 * kick + 0.012 * Math.sin(m.phase * Math.PI * 8) * (m.v > 0.05 ? 1 : 0), rz: x * 0.03 };
+}
+
+// leg IK: yaw toward the foot, then a two-link knee-up solve in the leg plane
+const tmp = new THREE.Vector3();
+function solveLeg(l, footBody) {
+  const d = tmp.copy(footBody).sub(l.J);
+  const yaw = Math.atan2(-d.z, d.x), r = Math.hypot(d.x, d.z) - COXA, v = d.y;
+  const D = Math.min(Math.hypot(r, v), L1 + L2 - 0.01), phi = Math.atan2(v, r);
+  const a = Math.acos(clamp((L1 * L1 + D * D - L2 * L2) / (2 * L1 * D), -1, 1));
+  const th1 = phi + a;
+  const kx = L1 * Math.cos(th1), ky = L1 * Math.sin(th1);
+  const th2 = Math.atan2(v - ky, r - kx) - th1;
+  const knee = deg(Math.acos(clamp((L1 * L1 + L2 * L2 - D * D) / (2 * L1 * L2), -1, 1)));
+  return { yaw, th1, th2, knee };
+}
+
+// static loads: least-norm vertical forces on the planted feet that hold the weight and balance the
+// moments about the centre of mass (exact for 3 feet; the least-norm split for 4)
+function loads(feet, cx, cz) {
+  const P = feet.map(f => [f.x - cx, f.z - cz]);
+  const A = [P.map(() => 1), P.map(p => p[0]), P.map(p => p[1])];
+  const M = A.map(r1 => A.map(r2 => r1.reduce((s, v, i) => s + v * r2[i], 0)));
+  const b = [WEIGHT, 0, 0];
+  const lam = solve3(M, b);
+  let f = P.map((_, i) => Math.max(0, lam[0] + lam[1] * P[i][0] + lam[2] * P[i][1]));
+  const sum = f.reduce((a, v) => a + v, 0) || 1; return f.map(v => v * WEIGHT / sum);
+}
+function solve3(M, b) {
+  const det = m => m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+  const D = det(M) || 1e-9;
+  return [0, 1, 2].map(c => det(M.map((r, i) => r.map((v, j) => j === c ? b[i] : v))) / D);
+}
+function hullOf(pts) {   // convex polygon, counter-clockwise
+  const c = pts.reduce((a, p) => [a[0] + p[0] / pts.length, a[1] + p[1] / pts.length], [0, 0]);
+  return [...pts].sort((a, b) => Math.atan2(a[1] - c[1], a[0] - c[0]) - Math.atan2(b[1] - c[1], b[0] - c[0]));
+}
+function margin(poly, p) {
+  let m = Infinity;
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i], b = poly[(i + 1) % poly.length], ex = b[0] - a[0], ez = b[1] - a[1], len = Math.hypot(ex, ez) || 1;
+    m = Math.min(m, ((p[0] - a[0]) * ez - (p[1] - a[1]) * ex) / len * -1);
+  }
+  return m;
+}
+
+// ---------------- pose: state → transforms ----------------
+const fb = new THREE.Vector3();
+function pose(m, S) {
+  const b = bodyPose(m, S);
+  body.position.set(b.x, b.y, b.z); body.rotation.set(b.rx, 0, b.rz);
+  body.updateMatrixWorld(true);
+  m.ik = LEGS.map((l, i) => {
+    const f = m.feet[i];
+    body.worldToLocal(fb.set(f.x, ANKLE + f.h, f.z));
+    const s = solveLeg(l, fb);
+    l.yaw.rotation.y = s.yaw; l.pitch.rotation.z = s.th1; l.knee.rotation.z = s.th2; l.foot.rotation.z = -(s.th1 + s.th2);
+    l.pad.rotation.y = -s.yaw;      // claws keep pointing forward
+    // ram: from the bracket to a lug on the femur
+    const base = new THREE.Vector3(0.48, -0.45, 0), lug = new THREE.Vector3(COXA + 0.8 * Math.cos(s.th1) + 0.22 * Math.sin(s.th1), 0.8 * Math.sin(s.th1) - 0.22 * Math.cos(s.th1), 0);
+    const dir = lug.clone().sub(base).normalize();
+    K.strut(l.sleeve, base, base.clone().addScaledVector(dir, 0.62)); K.strut(l.rod, base, lug);
+    return s;
+  });
+  turret.rotation.y = rad(m.az);
+  pivot.rotation.x = -rad(m.el);
+  const [g, t] = gunState(m, S);
+  const rec = t < 0.06 ? 0.55 * t / 0.06 : t < 0.9 ? 0.55 * (1 - smooth(0.06, 0.9, t)) : 0;
+  gun.position.z -= rec;
+  flash.visible = t >= 0 && t < 0.14; flash.scale.setScalar(0.5 + t * 5); flash.material.opacity = 1 - t / 0.14;
+  m.body = b;
+}
+
+// ---------------- solver overlay (world space) ----------------
+const polyMat = new THREE.MeshBasicMaterial({ color: 0xe4572e, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide });
+const polyGeo = new THREE.BufferGeometry(); polyGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(18), 3));
+const polyMesh = new THREE.Mesh(polyGeo, polyMat); polyMesh.position.y = 0.01; sim.solverGroup.add(polyMesh);
+const polyLine = K.line([[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]], 0xe4572e);
+const ringGeo = new THREE.RingGeometry(0.36, 0.44, 40); ringGeo.rotateX(-Math.PI / 2);
+const ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0xe4572e, transparent: true, depthWrite: false })); sim.solverGroup.add(ring);
+const arc = K.line(Array.from({ length: 24 }, () => [0, 0, 0]), 0xe4572e);
+const comLine = K.line([[0, 0, 0], [0, 0, 0]], 0x1c1c1a);
+const comDot = new THREE.Mesh(new THREE.RingGeometry(0.12, 0.2, 24).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x1c1c1a, transparent: true })); sim.solverGroup.add(comDot);
+const chains = LEGS.map(() => K.line([[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]], 0xe4572e, sim.solverGroup, { depthTest: false }));
+function solver(m, S, k) {
+  if (k < 0.01) return;
+  const planted = m.feet.filter(f => !f.air), poly = hullOf(planted.map(f => [f.x, f.z]));
+  const pa = polyGeo.attributes.position, tri = poly.length === 4 ? [0, 1, 2, 0, 2, 3] : [0, 1, 2, 0, 1, 2];
+  tri.forEach((j, n) => pa.setXYZ(n, poly[j][0], 0, poly[j][1])); pa.needsUpdate = true; polyGeo.computeBoundingSphere();
+  K.setLine(polyLine, [...poly, poly[0]].map(p => [p[0], 0.012, p[1]]));
+  polyMat.opacity = 0.16 * k; polyLine.material.opacity = 0.9 * k;
+  const i = LEGS.findIndex((l, i) => m.feet[i].air);
+  ring.visible = arc.visible = i >= 0;
+  if (i >= 0) {
+    const l = LEGS[i], f = m.feet[i], s = swingU(m.phase, l), t = landing(m, l, 1 + 0 * s);
+    const tl = landing(m, l, s);
+    ring.position.set(tl.x, 0.012, tl.z); ring.material.opacity = k;
+    K.setLine(arc, Array.from({ length: 24 }, (_, j) => { const u = j / 23; return [lerp(f.lx, tl.x, smooth(0, 1, u)), ANKLE + LIFT * Math.sin(Math.PI * u), lerp(f.lz, tl.z, smooth(0, 1, u))]; }));
+    arc.material.opacity = 0.8 * k;
+  }
+  const b = m.body;
+  K.setLine(comLine, [[b.x, b.y, b.z], [b.x, 0.01, b.z]]); comLine.material.opacity = 0.6 * k;
+  comDot.position.set(b.x, 0.012, b.z); comDot.material.opacity = k;
+  LEGS.forEach((l, j) => {
+    const p = [l.yaw, l.pitch, l.knee, l.foot].map(o => o.getWorldPosition(new THREE.Vector3()).toArray());
+    K.setLine(chains[j], p); chains[j].material.opacity = 0.9 * k;
+  });
+}
+
+// ---------------- HUD ----------------
+const hud = sim.hud;
+const top = hud.top({
+  code: 'AW-6', kicker: 'Armoured walker · study model', title: 'AW-6 Walking Tank',
+  sub: 'Creep gait · four-leg static walking · 120 mm main gun',
+  logo: '<svg viewBox="0 0 26 18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h12M9 7 4 3 2 12M17 7l5-4 2 9M10 7 8 16M16 7l2 9"/></svg>',
+});
+const gaitP = hud.panel('l', 'Gait', { no: '01' });
+const gaitStat = hud.stat(gaitP);
+const gaitChart = hud.chart(gaitP, LEGS.map(l => ({ k: l.k, segs: [[l.s0, l.s0 + SW]] })), { caption: 'Footfall · swing in orange' });
+const loadP = hud.panel('l', 'Leg loads', { no: '02' });
+const loadBars = hud.bars(loadP, LEGS.map(l => ({ k: l.k })), { head: ['Foot · vertical load', 'Hip torque'], footer: true });
+const driveP = hud.panel('l', 'Drive', { no: '08', portraitHide: true });
+hud.slider(driveP, { key: 'speed', label: 'Speed command', min: 0, max: 6, step: 0.1, fmt: v => v.toFixed(1) + ' km/h' });
+hud.slider(driveP, { key: 'turret', label: 'Turret command', min: -180, max: 180, step: 1, fmt: v => (Math.round(v) === 0 ? '' : v > 0 ? 'L ' : 'R ') + Math.abs(Math.round(v)) + '°' });
+const polyP = hud.panel('r', 'Support polygon', { no: '03' });
+const polySvg = hud.svg(polyP, 206, 150);
+const polyCap = hud.el('div', 'row cap', '', polyP); polyCap.style.marginTop = '6px';
+const turP = hud.panel('r', 'Turret', { no: '04', portraitHide: true });
+turP.innerHTML = '<div class="row" style="align-items:center"><svg class="svgbox" viewBox="0 0 60 60" style="width:58px"></svg><div class="tr-rows" style="flex:1;display:grid;gap:7px"></div></div>';
+const turSvg = turP.querySelector('svg'), turRows = turP.querySelector('.tr-rows');
+const cmdP = hud.panel('r', 'Command', { no: '05' });
+hud.buttons(cmdP, [{ id: 'walk', label: 'Walk' }, { id: 'halt', label: 'Halt' }, { id: 'fire', label: 'Fire', red: true }], { seg: true, on: (id, S) => id === S.m.mode });
+hud.standard({ col: 'r', no: [6, 7] });
+hud.foot('W/S speed · A/D turret · space fire · 1–6 views · grid 1 m · all readouts computed from the same gait model that poses the legs');
+
+function hudUpdate(m, S) {
+  const v = m.v, T = v > 0.02 ? STRIDE / v : Infinity;
+  top.status(m.mode === 'walk' ? (v > 0.02 ? 'WALKING' : 'STARTING') : (v > 0.02 || m.feet.some(f => f.air) ? 'HALTING' : 'HALTED'), `${v.toFixed(2)} M/S · CREEP GAIT`);
+  top.big((v * 3.6).toFixed(1), 'GROUND SPEED · KM/H');
+  // gait
+  const airI = LEGS.findIndex((l, i) => m.feet[i].air);
+  gaitStat.set(Math.floor(m.phase * 100) + '%', 'Gait phase · of one cycle', isFinite(T) ? T.toFixed(2) + ' s' : '— s', STRIDE.toFixed(2) + ' m stride');
+  gaitChart.set(m.phase, airI >= 0 ? [airI, 0] : null, airI >= 0 ? `${LEGS[airI].name} in swing · 3 feet down` : 'All four feet down · body shift', airI >= 0);
+  // loads
+  const b = m.body, planted = LEGS.map((l, i) => i).filter(i => !m.feet[i].air);
+  const f = loads(planted.map(i => m.feet[i]), b.x, b.z);
+  LEGS.forEach((l, i) => {
+    const j = planted.indexOf(i), fi = j >= 0 ? f[j] : 0, ft = m.feet[i];
+    const hip = l.J.clone().applyEuler(new THREE.Euler(b.rx, 0, b.rz)).add(new THREE.Vector3(b.x, b.y, b.z));
+    const arm = Math.hypot(ft.x - hip.x, ft.z - hip.z);
+    const knee = m.ik ? Math.round(m.ik[i].knee) : 0;
+    loadBars.set(i, fi / (WEIGHT * 0.55), Math.round(fi) + ' kN', Math.round(fi * arm) + ' kN·m',
+      ft.air ? `Swing · ${Math.round(ft.h * 100)} cm up` : `Planted · knee ${knee}°`, ft.air);
+  });
+  loadBars.footer('Weight', `${Math.round(WEIGHT)} kN · ${MASS_T} t`);
+  // support polygon (plan view, forward up, machine's right on the right)
+  const sc = 11.5, cx = 103, cy = 78, X = x => (cx - (x - b.x) * sc).toFixed(1), Y = z => (cy - (z - b.z) * sc).toFixed(1);
+  const poly = hullOf(planted.map(i => [m.feet[i].x, m.feet[i].z]));
+  const mg = margin(poly, [b.x, b.z]);
+  let s = `<rect x="${cx - 1.55 * sc}" y="${cy - 2.6 * sc}" width="${3.1 * sc}" height="${5.2 * sc}" rx="6" fill="#efede8" stroke="#c9c6bf"/>`;
+  s += `<text x="${cx}" y="${cy - 2.6 * sc - 5}" text-anchor="middle">▲ FWD</text>`;
+  s += `<polygon points="${poly.map(p => X(p[0]) + ',' + Y(p[1])).join(' ')}" fill="rgba(228,87,46,.16)" stroke="#e4572e" stroke-width="1.2"/>`;
+  LEGS.forEach((l, i) => {
+    const ft = m.feet[i], hx = X(b.x + l.J.x), hz = Y(b.z + l.J.z);
+    s += `<line x1="${hx}" y1="${hz}" x2="${X(ft.x)}" y2="${Y(ft.z)}" stroke="#c9c6bf" stroke-width="1" ${ft.air ? 'stroke-dasharray="2 2"' : ''}/>`;
+    s += ft.air ? `<circle cx="${X(ft.x)}" cy="${Y(ft.z)}" r="3.4" fill="#fff" stroke="#e4572e" stroke-width="1.3"/>` : `<circle cx="${X(ft.x)}" cy="${Y(ft.z)}" r="3" fill="#1c1c1a"/>`;
+    s += `<text x="${(+X(ft.x) + (l.sx > 0 ? -8 : 8)).toFixed(1)}" y="${(+Y(ft.z) + 2.5).toFixed(1)}" text-anchor="${l.sx > 0 ? 'end' : 'start'}">${l.k}</text>`;
+  });
+  s += `<g stroke="#1c1c1a" stroke-width="1"><circle cx="${cx}" cy="${cy}" r="4.5" fill="none"/><line x1="${cx - 8}" y1="${cy}" x2="${cx + 8}" y2="${cy}"/><line x1="${cx}" y1="${cy - 8}" x2="${cx}" y2="${cy + 8}"/></g>`;
+  polySvg.innerHTML = s;
+  polyCap.innerHTML = `<span>Stability margin</span><span class="num" style="color:${mg < 0.15 ? 'var(--accent)' : 'var(--ink)'}">${mg >= 0 ? '+' : ''}${mg.toFixed(2)} m</span>`;
+  // turret
+  const [g] = gunState(m, S);
+  turSvg.innerHTML = `<circle cx="30" cy="30" r="25" fill="none" stroke="#c9c6bf"/>` +
+    Array.from({ length: 24 }, (_, i) => { const a = i / 24 * Math.PI * 2, r1 = i % 6 ? 23 : 20; return `<line x1="${30 + Math.sin(a) * r1}" y1="${30 - Math.cos(a) * r1}" x2="${30 + Math.sin(a) * 25}" y2="${30 - Math.cos(a) * 25}" stroke="#c9c6bf"/>`; }).join('') +
+    `<rect x="24" y="18" width="12" height="24" rx="2" fill="#efede8" stroke="#96938c"/>` +
+    `<g transform="rotate(${-m.az} 30 30)"><rect x="26" y="25" width="8" height="10" rx="1.5" fill="#1c1c1a"/><line x1="30" y1="25" x2="30" y2="9" stroke="#1c1c1a" stroke-width="2"/></g>`;
+  const az = Math.round(m.az);
+  turRows.innerHTML = `<div class="row"><span class="cap">Azimuth</span><span class="num">${az === 0 ? '' : az > 0 ? 'L ' : 'R '}${Math.abs(az)}°</span></div>` +
+    `<div class="row"><span class="cap">Elevation</span><span class="num">${m.el.toFixed(1)}°</span></div>` +
+    `<div class="row"><span class="cap">Gun</span><span class="num ${g === 'READY' ? '' : 'hot'}">${g}</span></div>`;
+}
+
+sim.model({
+  inputs: { speed: 4.0, turret: 0 },
+  init, step, pose, solver, hud: hudUpdate,
+  follow: m => [0, 0, m.z],
+  commands: {
+    walk: m => { m.mode = 'walk'; },
+    halt: m => { m.mode = 'halt'; },
+    fire: (m, S) => { if (gunState(m, S)[0] === 'READY') m.fireT = S.time; },
+  },
+});
+sim.keys({
+  w: (S, cmd) => { cmd('walk'); cmd('in.speed', clamp(S.in.speed + 0.5, 0, 6)); },
+  s: (S, cmd) => cmd('in.speed', clamp(S.in.speed - 0.5, 0, 6)),
+  a: (S, cmd) => cmd('in.turret', clamp(S.in.turret + 15, -180, 180)),
+  d: (S, cmd) => cmd('in.turret', clamp(S.in.turret - 15, -180, 180)),
+  ' ': 'fire', l: 'display.labels', x: 'display.xray', e: 'display.exploded', o: 'display.orbit', h: 'halt',
+});
+// the tour: what the cursor does in the 27 s film (and on first load)
+sim.tour([
+  { t: 1.4, click: 'display.labels' },
+  { t: 4.8, click: 'display.labels' },
+  { t: 5.6, click: 'display.isolate' },
+  { t: 8.6, click: 'display.isolate' },
+  { t: 9.4, click: 'display.solver' },
+  { t: 10.2, click: 'view.plan' },
+  { t: 12.8, click: 'view.turret' },
+  { t: 13.6, drag: 'turret', to: 38, dur: 1.2 },
+  { t: 15.4, click: 'fire' },
+  { t: 17.0, click: 'view.side' },
+  { t: 17.8, click: 'display.solver' },
+  { t: 18.3, click: 'display.xray' },
+  { t: 20.2, click: 'display.xray' },
+  { t: 20.6, click: 'display.exploded' },
+  { t: 22.2, click: 'display.exploded' },
+  { t: 22.7, click: 'view.hero' },
+  { t: 23.5, drag: 'speed', to: 1.2, dur: 0.9 },
+  { t: 25.0, click: 'halt' },
+]);
+sim.start();
+</script>
+</body>
+</html>
