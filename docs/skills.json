@@ -92,6 +92,22 @@
       "workedExample": [
         { "title": "「Four Weathers」 · 4샷 · 25.6초 · 샷 페이지", "url": "https://jungrok5.github.io/motion-skills/cinematic-3d/demo/shots/fog.html" }
       ]
+    },
+    {
+      "id": "machine-sim",
+      "name": "machine-sim",
+      "tagline": "보행 전차나 엔진 같은 기계를 three.js 코드로 짓고, 부품을 움직이는 같은 모델에서 계산한 계기판과 라벨 · X-ray · 분해도 · 부품 분리 모드를 갖춘 인터랙티브 3D 시뮬레이터 페이지를 만듭니다. 커서가 버튼을 누르는 투어는 16:9 MP4로 굽습니다.",
+      "posterAlt": "machine-sim으로 만든 장면 네 개: 부품 라벨이 붙은 흰 4족 보행 전차, 차체가 투명해져 주황 동력 장치가 보이는 보행 전차, 크랭크 트레인만 남긴 단기통 엔진, 포탑이 떠오른 보행 전차 분해도",
+      "poster": "machine-sim/poster.jpg",
+      "tags": ["3D", "인터랙티브 페이지", "16:9 MP4", "계기판 HUD", "분해도 · X-ray"],
+      "stats": ["예제 2개 · 보행 전차 · 엔진", "표시 모드 6가지"],
+      "page": "machine-sim/",
+      "source": "machine-sim/",
+      "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "machine-sim/examples/walker/" },
+      "workedExample": [
+        { "title": "AW-6 보행 전차 · 크리프 보행 · 27초 투어 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/machine-sim/demo/examples/walker/" },
+        { "title": "ST-1 단기통 엔진 · 4행정 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/machine-sim/demo/examples/engine/" }
+      ]
     }
   ]
 }

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>machine-sim · motion-skills</title>
+<meta name="description" content="보행 전차나 엔진 같은 기계를 three.js 코드로 짓고, 부품을 움직이는 같은 모델에서 계산한 계기판과 라벨 · X-ray · 분해도 · 부품 분리 모드를 갖춘 인터랙티브 3D 시뮬레이터 페이지를 만듭니다. 커서가 버튼을 누르는 투어는 16:9 MP4로 굽습니다.">
+<meta property="og:title" content="machine-sim · motion-skills">
+<meta property="og:description" content="보행 전차나 엔진 같은 기계를 three.js 코드로 짓고, 부품을 움직이는 같은 모델에서 계산한 계기판과 라벨 · X-ray · 분해도 · 부품 분리 모드를 갖춘 인터랙티브 3D 시뮬레이터 페이지를 만듭니다. 커서가 버튼을 누르는 투어는 16:9 MP4로 굽습니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/machine-sim/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/machine-sim">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / machine-sim</nav>
+  <h1>machine-sim</h1>
+  <p>보행 전차나 엔진 같은 기계를 three.js 코드로 짓고, 부품을 움직이는 같은 모델에서 계산한 계기판과 라벨 · X-ray · 분해도 · 부품 분리 모드를 갖춘 인터랙티브 3D 시뮬레이터 페이지를 만듭니다. 커서가 버튼을 누르는 투어는 16:9 MP4로 굽습니다.</p>
+  <ul class="tags"><li>3D</li><li>인터랙티브 페이지</li><li>16:9 MP4</li><li>계기판 HUD</li><li>분해도 · X-ray</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>보여 줄 기계와 부품 목록, 또는 따라 만들 화면 녹화 영상</dd>
+      <dt>모델</dt><dd>기계를 움직이는 작은 모델 하나 (보행 위상과 다리 IK, 크랭크-슬라이더와 캠). 같은 상태에서 자세와 계기판 숫자를 모두 계산</dd>
+      <dt>형상</dt><dd>모따기 상자, 돌출 단면, 원통, 관으로 지은 부품. 관절마다 그룹, 부품마다 라벨 · 분해 방향 · 역할 (외피 · 골격 · 내부)</dd>
+      <dt>화면</dt><dd>밝은 설계도 바닥과 1 m 격자, 흰 패널 계기판, 뷰 버튼, 표시 모드 (라벨 · 솔버 · X-ray · 분해 · 부품 분리 · 오빗)</dd>
+      <dt>출력</dt><dd>마우스 · 키보드로 조작하는 라이브 페이지, 커서 투어를 프레임 단위로 구운 1920×1080 MP4</dd>
+    </dl>
+    <pre><code>cd machine-sim
+python3 -m http.server 8000   # http://localhost:8000/examples/walker/
+node scripts/render.mjs examples/walker/index.html /tmp/st --stills 3,7.5,11.5,19.5
+bash scripts/render-chunked.sh examples/walker/index.html out/walker.mp4 7 3 20</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium (헤드리스 WebGL), ffmpeg. three.js와 폰트를 함께 담고 있어 네트워크 없이 돕니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/machine-sim/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:680px;--demo-bg:#ebeae6">
+    <iframe data-src="demo/examples/walker/" title="machine-sim 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/walker/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/walker</code> · 보행 전차 · 27초 투어 후 직접 조작</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/walker/" data-cap="예제 &lt;code&gt;examples/walker&lt;/code&gt; · 보행 전차 · 27초 투어 후 직접 조작" aria-pressed="true">보행 전차</button>
+        <button class="btn" type="button" data-src="demo/examples/engine/" data-cap="예제 &lt;code&gt;examples/engine&lt;/code&gt; · 단기통 엔진 · 26초 투어 후 직접 조작" aria-pressed="false">엔진</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">두 예제의 투어에서 뽑은 장면입니다. 다리 하나가 공중에 있으면 그 발의 하중은 0 kN이고, 엔진의 p–V 점은 피스톤이 있는 자리를 따라갑니다. 카드를 누르면 새 탭에서 그 순간부터 라이브 페이지가 재생되고, 아무 곳이나 누르면 직접 조작으로 넘어갑니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"walker":"보행 전차","engine":"엔진"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>AW-6 보행 전차 <small>크리프 보행 · 27초 투어</small></h3>
+      <p>네 다리 중 하나만 들고 걷는 정적 보행. 위상에서 발 위치, 다리 IK, 지지 다각형, 안정 여유, 발마다 걸리는 하중을 모두 계산합니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="walker" href="demo/examples/walker/?t=3.6" target="_blank" rel="noopener">
+          <img src="samples/walker-labels.jpg" alt="흰 4족 보행 전차 둘레로 포탑, 120 mm 주포, 무릎 관절, 발톱 세 개 달린 발 같은 부품 라벨이 지시선으로 붙은 화면, 좌우에 보행 위상과 다리 하중 패널" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">라벨</span><b>지시선 라벨</b>
+          <span class="how">모델 화면 영역 바깥 두 열에 정렬, 겹치면 아래로 밀기</span></div></a>
+        <a class="tile" data-tags="walker" href="demo/examples/walker/?t=7.9" target="_blank" rel="noopener">
+          <img src="samples/walker-leg.jpg" alt="앞 왼쪽 다리 하나만 흰색으로 남고 차체와 나머지 다리는 회색 윤곽선으로 비친 화면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">부품 분리</span><b>다리 하나</b>
+          <span class="how">나머지 부품은 투명한 몸체와 모서리선으로, 카메라는 다리 뷰로</span></div></a>
+        <a class="tile" data-tags="walker" href="demo/examples/walker/?t=11.6" target="_blank" rel="noopener">
+          <img src="samples/walker-plan.jpg" alt="위에서 내려다본 보행 전차와 바닥의 주황 지지 삼각형, 공중의 발이 내릴 자리의 주황 고리, 오른쪽 패널의 같은 삼각형" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">솔버 · 평면</span><b>지지 다각형</b>
+          <span class="how">땅에 닿은 발로 만든 다각형, 착지 목표 고리, 다리 사슬 선</span></div></a>
+        <a class="tile" data-tags="walker" href="demo/examples/walker/?t=15.6" target="_blank" rel="noopener">
+          <img src="samples/walker-fire.jpg" alt="뒤에서 본 보행 전차의 포탑이 왼쪽으로 돌아가 있고, 포탑 패널에 RECOIL이 빨갛게 표시된 화면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">명령</span><b>선회와 발사</b>
+          <span class="how">슬라이더 드래그로 포탑 38° 선회, 발사하면 주포가 0.55 m 후퇴</span></div></a>
+        <a class="tile" data-tags="walker" href="demo/examples/walker/?t=19.6" target="_blank" rel="noopener">
+          <img src="samples/walker-xray.jpg" alt="옆에서 본 보행 전차의 차체가 투명해지고 안쪽의 주황 동력 장치와 연료 전지, 탄약 회전대가 보이는 화면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">X-ray</span><b>외피 속 내부</b>
+          <span class="how">외피는 비치고, 평소 숨은 내부 부품이 서서히 나타남</span></div></a>
+        <a class="tile" data-tags="walker" href="demo/examples/walker/?t=21.6" target="_blank" rel="noopener">
+          <img src="samples/walker-exploded.jpg" alt="포탑과 주포가 위와 앞으로 떠오르고 다리 마디가 바깥으로 벌어진 보행 전차의 분해도" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">분해도</span><b>마디마다 벌리기</b>
+          <span class="how">부모 좌표계 기준 분해 방향이라 정강이는 다리 축을 따라 빠짐</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>ST-1 단기통 엔진 <small>4행정 · 1/60 속도 · 26초 투어</small></h3>
+      <p>같은 키트로 만든 다른 기계. 크랭크 각 하나로 피스톤, 커넥팅 로드, 반속 캠, 밸브, 점화, 압력 모델과 토크를 계산합니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="engine" href="demo/examples/engine/?t=3.2" target="_blank" rel="noopener">
+          <img src="samples/engine-labels.jpg" alt="냉각 핀이 달린 흰 단기통 엔진과 플라이휠 둘레의 부품 라벨, 왼쪽에 720도 사이클 표와 p–V 선도" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">라벨</span><b>엔진 부품</b>
+          <span class="how">크랭크실, 실린더, 헤드, 캠축, 밸브 두 개, 점화 플러그</span></div></a>
+        <a class="tile" data-tags="engine" href="demo/examples/engine/?t=9.6" target="_blank" rel="noopener">
+          <img src="samples/engine-xray.jpg" alt="투명해진 실린더와 헤드 안의 캠축, 밸브 두 개, 피스톤이 보이는 헤드 확대" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">X-ray · 헤드</span><b>캠과 밸브</b>
+          <span class="how">캠은 크랭크의 절반 속도, 밸브 양정은 패널 막대와 같은 값</span></div></a>
+        <a class="tile" data-tags="engine" href="demo/examples/engine/?t=13.6" target="_blank" rel="noopener">
+          <img src="samples/engine-crank.jpg" alt="크랭크축, 커넥팅 로드, 피스톤, 플라이휠만 남기고 나머지가 윤곽선이 된 화면과 크랭크 핀 궤적의 주황 원" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">부품 분리 · 솔버</span><b>크랭크 트레인</b>
+          <span class="how">크랭크-슬라이더를 선으로 겹쳐 그림, 폭발 행정의 연소 빛</span></div></a>
+        <a class="tile" data-tags="engine" href="demo/examples/engine/?t=18.6" target="_blank" rel="noopener">
+          <img src="samples/engine-exploded.jpg" alt="헤드와 캠축, 밸브가 위로 떠오르고 플라이휠과 피스톤이 옆으로 빠진 엔진 분해도" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">분해도</span><b>위로 쌓인 엔진</b>
+          <span class="how">헤드, 캠, 밸브, 실린더를 위로, 회전 부품은 옆으로</span></div></a>
+        <a class="tile" data-tags="engine" href="demo/examples/engine/?t=23.2" target="_blank" rel="noopener">
+          <img src="samples/engine-step.jpg" alt="옆에서 본 멈춘 엔진, 상단에 STOPPED, 사이클 패널에 크랭크 각과 행정 이름" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">명령</span><b>멈추고 90°씩</b>
+          <span class="how">정지 후 +90° 버튼으로 행정 경계마다 넘겨 보기</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬은 이 레포에서 X에 올라온 화면 녹화(<a href="https://x.com/studio_oneroom/status/2116823414656618711">studio_oneroom</a>, three.js로만 만든 4족 보행 전차 페이지, 26초)를 코드로 다시 만들며 다듬어졌습니다. 원본 페이지의 코드는 공개되어 있지 않아, 영상에 보이는 패널 · 모드 · 동작을 보고 처음부터 지었습니다.</p>
+  <div class="works">
+    <a class="work" href="demo/examples/walker/" target="_blank" rel="noopener"><b>AW-6 보행 전차 라이브 페이지</b><span>크리프 보행 · 27초 투어 · 직접 조작</span><span class="url">machine-sim/demo/examples/walker/</span></a>
+    <a class="work" href="demo/examples/engine/" target="_blank" rel="noopener"><b>ST-1 단기통 엔진 라이브 페이지</b><span>4행정 · p–V 선도 · 26초 투어</span><span class="url">machine-sim/demo/examples/engine/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/machine-sim/examples/walker"><b>원본 · motion-skills → machine-sim/examples/walker/</b><span>형상, 보행 모델, HUD, 투어 전체. 스킬의 출처</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/machine-sim/SKILL.md">SKILL.md</a> <span>워크플로 · 규칙 · 계약</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/machine-sim">폴더</a> <span>kit · scripts · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/machine-sim/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/machine-sim/references/KIT.md">references/KIT.md</a> <span>키트 API · 부품 역할 · 투어</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/machine-sim/references/MODELS.md">references/MODELS.md</a> <span>보행 · 엔진 · 기어 · 링크 모델</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/machine-sim/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 샘플 이미지는 보행 전차와 엔진 예제 투어의 장면입니다. 데모 폰트: Inter, JetBrains Mono (SIL OFL 1.1). three.js (MIT).
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
