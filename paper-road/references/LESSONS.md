@@ -10,6 +10,9 @@ From building `examples/draw-a-road` and the template.
   pixel past the source rect, and what lay there (clamped edge vs. an older, larger draw) changed with history. Showed only
   on a big card cut by the screen edge (the template's hill). `check.mjs` caught it; bisected with `?off=dof`, then
   `?off=hill`. → Size the scratch exactly per call with a cleared margin, and let blurred regions run past the screen.
+- **The front tyre sank into the road.** → The car was depth-sorted by its centre; with the camera at an angle to the road
+  (yaw 24°) the road chunk under the front wheel was nearer than that centre, so it was painted after the car. → A card can
+  give its own sort depth (`depth: (t, view) => …`); the car uses the nearest road point under its whole footprint.
 - **A beige wall swallowed the top of the frame for a second.** → A big hill card 7000 units to the side ended up just past
   the near plane when the camera yawed: its anchor projected huge, and an affine card does not clip itself. → Cull every
   card that is closer than its own size or wholly off screen before drawing it.
