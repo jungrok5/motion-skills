@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>pop-up-textbook · motion-skills</title>
+<meta name="description" content="책상 위 스탠드 불빛 아래 펼친 책 한 권으로 수업 하나를 펼침면에 담는 인터랙티브 3D 교과서를 three.js로 만듭니다. 왼쪽은 공식 · 핵심어 · 예측 문제 · 들춰 보는 답, 오른쪽은 펜화처럼 빗금 친 팝업 디오라마이고, 커서 투어는 16:9 MP4로 굽습니다.">
+<meta property="og:title" content="pop-up-textbook · motion-skills">
+<meta property="og:description" content="책상 위 스탠드 불빛 아래 펼친 책 한 권으로 수업 하나를 펼침면에 담는 인터랙티브 3D 교과서를 three.js로 만듭니다. 왼쪽은 공식 · 핵심어 · 예측 문제 · 들춰 보는 답, 오른쪽은 펜화처럼 빗금 친 팝업 디오라마이고, 커서 투어는 16:9 MP4로 굽습니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/pop-up-textbook/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/pop-up-textbook">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / pop-up-textbook</nav>
+  <h1>pop-up-textbook</h1>
+  <p>책상 위 스탠드 불빛 아래 펼친 책 한 권으로 수업 하나를 펼침면에 담는 인터랙티브 3D 교과서를 three.js로 만듭니다. 왼쪽은 공식 · 핵심어 · 예측 문제 · 들춰 보는 답, 오른쪽은 펜화처럼 빗금 친 팝업 디오라마이고, 커서 투어는 16:9 MP4로 굽습니다.</p>
+  <ul class="tags"><li>3D</li><li>인터랙티브 페이지</li><li>16:9 MP4</li><li>팝업 디오라마</li><li>펜화 빗금</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>과목과 수업 2–5개, 또는 따라 만들 화면 녹화 영상</dd>
+      <dt>글</dt><dd>수업마다 데이터 한 덩어리: 공식과 여백 손글씨 풀이, 핵심어 3개, 오개념을 겨냥한 예측 문제, 들춰 보는 답, 번호 범례. 넘치는 글은 자동 보고</dd>
+      <dt>디오라마</dt><dd>코드로 지은 팝업 장면 하나. 종이색 재질에 잉크 윤곽선, 빛이 줄어드는 곳마다 빗금. 누를 부품 하나와 같은 모델에서 계산한 계기 숫자</dd>
+      <dt>화면</dt><dd>책장 넘김, 접혔다 다시 서는 디오라마, 돋보기, 핵심어 · 예측 · 정답 카드, 수업 진행 HUD와 목차</dd>
+      <dt>출력</dt><dd>마우스 · 터치로 읽는 라이브 페이지, 커서 투어를 프레임 단위로 구운 1920×1080 MP4</dd>
+    </dl>
+    <pre><code>cd pop-up-textbook
+python3 -m http.server 8000   # http://localhost:8000/examples/electricity/
+node scripts/render.mjs examples/electricity/index.html /tmp/st --stills 3,9.5,13,17,26.5
+bash scripts/render-chunked.sh examples/electricity/index.html out/electricity.mp4 6 4 22</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium (헤드리스 WebGL), ffmpeg. three.js와 폰트를 함께 담고 있어 네트워크 없이 돕니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/pop-up-textbook/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:680px;--demo-bg:#140d08">
+    <iframe data-src="demo/examples/electricity/" title="pop-up-textbook 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/electricity/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/electricity</code> · 전기 수업 3개 · 33초 투어 후 직접 조작</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/electricity/" data-cap="예제 &lt;code&gt;examples/electricity&lt;/code&gt; · 전기 수업 3개 · 33초 투어 후 직접 조작" aria-pressed="true">전기</button>
+        <button class="btn" type="button" data-src="demo/examples/sky/" data-cap="예제 &lt;code&gt;examples/sky&lt;/code&gt; · 계절과 달의 위상 · 24초 투어 후 직접 조작" aria-pressed="false">하늘</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">두 예제 책의 투어에서 뽑은 장면입니다. 계량기의 kWh 숫자와 원판, 요금은 한 에너지 적분에서 나오고, 지구의 밝은 쪽은 책상 스탠드가 아니라 디오라마 속 태양을 향합니다. 카드를 누르면 새 탭에서 그 순간부터 라이브 페이지가 재생되고, 아무 곳이나 누르면 직접 조작으로 넘어갑니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"electricity":"전기","sky":"하늘"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>Electricity <small>수업 3개 · 33초 투어</small></h3>
+      <p>회로와 전하, 전력과 전기 요금, 콘센트와 플러그. 7과 「Mains and the plug」는 참고 영상의 수업을 코드로 다시 만든 것입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="electricity" href="demo/examples/electricity/?t=4.6" target="_blank" rel="noopener">
+          <img src="samples/circuit-switch.jpg" alt="펼친 책 왼쪽에 Current and charge 수업과 Q = I t 공식, 오른쪽에 전지 · 칼날 스위치 · 전구 · 전류계가 빨간 전선으로 이어진 흰 판 디오라마와 번호 1–5" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">5과 · 디오라마</span><b>스위치를 닫으면</b>
+          <span class="how">전구가 바로 켜지고 전선 속 전자가 2000배 빠르게 흐름, 전류계 0.3 A</span></div></a>
+        <a class="tile" data-tags="electricity" href="demo/examples/electricity/?t=9.6" target="_blank" rel="noopener">
+          <img src="samples/circuit-why.jpg" alt="예측 문제에 연필 체크가 된 왼쪽 면 위로 WHY? 카드가 떠 있고 플랩이 들려 아래 인쇄된 답이 보이는 화면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">5과 · 예측과 답</span><b>들춰 보는 답</b>
+          <span class="how">체크한 보기와 정답 비교, 아래 모서리를 축으로 들리는 플랩</span></div></a>
+        <a class="tile" data-tags="electricity" href="demo/examples/electricity/?t=12.9" target="_blank" rel="noopener">
+          <img src="samples/page-turn.jpg" alt="오른쪽 책장이 둥글게 말리며 넘어가고 아래 면에 그림자가 진 화면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">책장 넘김</span><b>말리며 넘어가는 장</b>
+          <span class="how">길이가 변하지 않는 호로 휘는 장, 디오라마는 먼저 접히고 다음 장에서 다시 섬</span></div></a>
+        <a class="tile" data-tags="electricity" href="demo/examples/electricity/?t=16" target="_blank" rel="noopener">
+          <img src="samples/bill-kettle.jpg" alt="계량기 · 주전자 · 시계 · 멀티탭 · 휴대폰 · LED 스탠드가 놓인 디오라마 위에서 돋보기가 주전자를 크게 보여 주는 화면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">6과 · 디오라마</span><b>주전자 3 kW</b>
+          <span class="how">켜면 계량기 원판이 빨라지고 kWh 숫자와 요금이 함께 오름</span></div></a>
+        <a class="tile" data-tags="electricity" href="demo/examples/electricity/?t=17.6" target="_blank" rel="noopener">
+          <img src="samples/bill-loupe.jpg" alt="왼쪽 면의 E = P t 공식 위에 둥근 돋보기가 놓여 글자가 크게 보이는 화면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">6과 · 돋보기</span><b>공식을 크게</b>
+          <span class="how">커서 아래를 다시 렌더한 렌즈, MP4에도 그대로 구워짐</span></div></a>
+        <a class="tile" data-tags="electricity" href="demo/examples/electricity/?t=24.8" target="_blank" rel="noopener">
+          <img src="samples/plug-terms.jpg" alt="벽 콘센트와 덮개를 연 플러그, 오실로스코프가 선 디오라마 옆으로 Alternating current · Fuse · Earth wire 핵심어 카드가 뜬 화면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">7과 · 핵심어</span><b>콘센트와 플러그</b>
+          <span class="how">교류, 퓨즈, 접지선을 카드로, 스탠드 조명은 플러그를 꽂기 전까지 어두움</span></div></a>
+        <a class="tile" data-tags="electricity" href="demo/examples/electricity/?t=27.4" target="_blank" rel="noopener">
+          <img src="samples/plug-close.jpg" alt="가까이 본 디오라마: 콘센트에 꽂힌 플러그 속 갈색 · 파란색 · 초록노랑 전선과 퓨즈, 사인파가 그려진 오실로스코프, 전자 점이 늘어선 전선" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">7과 · 가까이</span><b>제자리에서 떠는 전자</b>
+          <span class="how">초당 50번 앞뒤로 움직일 뿐 이동하지 않는 전자, 25배 느리게</span></div></a>
+        <a class="tile" data-tags="electricity" href="demo/examples/electricity/?t=31.5" target="_blank" rel="noopener">
+          <img src="samples/lamp-end.jpg" alt="초록 갓의 은행원 스탠드가 화면 가운데 서 있고 아래쪽에 책의 디오라마가 살짝 보이는 마지막 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">투어 끝</span><b>고개를 들면</b>
+          <span class="how">플러그를 꽂아 다시 밝아진 스탠드로 카메라가 올라감</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>The Sky <small>수업 2개 · 24초 투어</small></h3>
+      <p>같은 키트로 만든 다른 과목. 디오라마 안에 자기 광원(태양 · 햇빛 방향)이 있어 명암 경계가 그쪽을 따릅니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="sky" href="demo/examples/sky/?t=5.5" target="_blank" rel="noopener">
+          <img src="samples/seasons-orrery.jpg" alt="원판 위 가운데 노란 태양과 궤도를 도는 기울어진 지구, 앞쪽에 영국의 낮 길이를 적은 카드가 선 디오라마" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">3과 · 디오라마</span><b>계절이 생기는 까닭</b>
+          <span class="how">축의 방향은 그대로, 지구 위치에서 태양 적위와 영국 낮 길이 계산</span></div></a>
+        <a class="tile" data-tags="sky" href="demo/examples/sky/?t=10.8" target="_blank" rel="noopener">
+          <img src="samples/seasons-why.jpg" alt="예측 문제의 답 카드가 열려 근일점은 1월 초라는 설명이 보이고, 오른쪽에서 지구가 궤도를 도는 화면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">3과 · 예측과 답</span><b>여름에 더 가까울까</b>
+          <span class="how">오개념을 겨냥한 보기, 거리 차이는 3%뿐이라는 답</span></div></a>
+        <a class="tile" data-tags="sky" href="demo/examples/sky/?t=17.4" target="_blank" rel="noopener">
+          <img src="samples/moon-loupe.jpg" alt="달의 위상 디오라마 위에 돋보기가 놓여 오른쪽 햇빛을 받는 지구의 밝은 반쪽과 빗금 친 어두운 반쪽이 크게 보이는 화면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">4과 · 돋보기</span><b>햇빛 쪽 반구</b>
+          <span class="how">오른쪽 햇빛 방향으로 계산한 명암, 어두운 쪽은 교차 빗금</span></div></a>
+        <a class="tile" data-tags="sky" href="demo/examples/sky/?t=20.6" target="_blank" rel="noopener">
+          <img src="samples/moon-close.jpg" alt="가까이 본 디오라마: 햇빛 화살표, 지구, 궤도를 도는 달, 왼쪽 위에 지구에서 본 달 모양을 보여 주는 작은 액자" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">4과 · 가까이</span><b>지구에서 본 모양</b>
+          <span class="how">달의 위치로 그린 위상 액자, 하루가 1초</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬은 이 레포에서 X에 올라온 화면 녹화(<a href="https://x.com/techartist_/status/2116950641356705928">techartist_</a>, GCSE 물리 전기 단원을 담은 인터랙티브 3D 책의 「Mains and the plug」 수업, 14초)를 코드로 다시 만들며 다듬어졌습니다. 원본 페이지의 코드는 공개되어 있지 않아, 영상에 보이는 책 · 스탠드 · 카드 · 돋보기 · 책장 넘김을 보고 처음부터 지었습니다.</p>
+  <div class="works">
+    <a class="work" href="demo/examples/electricity/" target="_blank" rel="noopener"><b>Electricity 라이브 페이지</b><span>수업 3개 · 33초 투어 · 직접 조작</span><span class="url">pop-up-textbook/demo/examples/electricity/</span></a>
+    <a class="work" href="demo/examples/sky/" target="_blank" rel="noopener"><b>The Sky 라이브 페이지</b><span>계절 · 달의 위상 · 24초 투어</span><span class="url">pop-up-textbook/demo/examples/sky/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/pop-up-textbook/examples/electricity"><b>원본 · motion-skills → pop-up-textbook/examples/electricity/</b><span>수업 글, 디오라마, 투어 전체. 스킬의 출처</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pop-up-textbook/SKILL.md">SKILL.md</a> <span>워크플로 · 규칙 · 계약</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/pop-up-textbook">폴더</a> <span>kit · scripts · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pop-up-textbook/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pop-up-textbook/references/KIT.md">references/KIT.md</a> <span>키트 API · 디오라마 도구 · 투어</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pop-up-textbook/references/WRITING.md">references/WRITING.md</a> <span>수업 글 분량 · 예측 문제 · 디오라마 설계</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pop-up-textbook/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 샘플 이미지는 Electricity와 The Sky 예제 투어의 장면입니다. 데모 폰트: Source Serif 4, Caveat, Inter (SIL OFL 1.1). three.js (MIT).
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

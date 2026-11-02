@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Electricity · pop-up textbook</title>
+<link rel="stylesheet" href="../../kit/book.css">
+<script type="importmap">{ "imports": { "three": "../../kit/vendor/three/build/three.module.min.js" } }</script>
+</head>
+<body>
+<script type="module">
+// Electricity — three lessons of a GCSE-style physics book. Lesson 7 (mains and the plug) recreates the lesson shown in
+// the reference recording; lessons 5 and 6 are new. DURATION = 33 (the tour, for scripts/render-chunked.sh)
+import { createBook } from '../../kit/book.js';
+
+const ELECTRON = '#2f6bd6';
+
+// ---------------------------------------------------------------- lesson 5: a cell, a switch, a bulb, an ammeter
+function circuit(D) {
+  const { U } = D;
+  const white = D.ink('#fbf8f1'), cream = D.ink('#ece3cf'), dark = D.ink('#48433d'), brass = D.ink('#d8b468'), red = D.ink('#cf5a43');
+  const board = D.piece(D.group(), 0);
+  D.box(0.72, 0.02, 0.54, white, board, [0, 0.01, 0]);
+  // one closed loop of wire lying on the board; the electrons ride on it
+  const loop = D.curve([[-0.11, -0.15], [0.02, -0.2], [0.15, -0.17], [0.2, -0.13], [0.27, -0.05], [0.28, 0.06], [0.22, 0.12], [0.1, 0.2],
+    [-0.06, 0.19], [-0.2, 0.15], [-0.32, 0.11], [-0.35, -0.04], [-0.3, -0.15]].map(([x, z]) => [x, 0.027, z]), true);
+  const wire = D.piece(D.group(), 0.1);
+  D.tube(loop, 0.0055, red, wire, { seg: 260 });
+  const lift = D.curve(loop.points.map(p => [p.x, p.y + 0.0062, p.z]), true);
+  const electrons = D.flow(lift, 72, { r: 0.0055, color: ELECTRON, parent: wire });
+  // cell
+  const cell = D.piece(D.group(D.root, [-0.2, 0.02, -0.15]), 0.25);
+  D.box(0.02, 0.03, 0.05, dark, cell, [-0.088, 0.015, 0]); D.box(0.02, 0.03, 0.05, dark, cell, [0.098, 0.015, 0]);
+  D.cyl(0.036, 0.036, 0.15, white, cell, [0, 0.038, 0], { axis: 'x' });
+  D.cyl(0.0366, 0.0366, 0.045, dark, cell, [-0.054, 0.038, 0], { axis: 'x' });
+  D.cyl(0.012, 0.012, 0.014, brass, cell, [0.082, 0.038, 0], { axis: 'x' });
+  D.text('1.5 V', cell, [0.025, 0.0745, 0], { size: 0.024 });
+  D.text('+', cell, [0.062, 0.0745, 0], { size: 0.03 });
+  // knife switch
+  const sw = D.piece(D.group(D.root, [-0.2, 0.02, 0.15]), 0.35);
+  D.box(0.15, 0.012, 0.06, cream, sw, [0, 0.006, 0]);
+  D.box(0.014, 0.03, 0.022, brass, sw, [-0.052, 0.027, 0]); D.box(0.014, 0.03, 0.022, brass, sw, [0.052, 0.027, 0]);
+  const hinge = D.group(sw, [-0.052, 0.04, 0]);
+  D.box(0.108, 0.006, 0.012, brass, hinge, [0.054, 0, 0]);
+  D.cyl(0.009, 0.009, 0.034, dark, hinge, [0.1, 0.017, 0]);
+  D.click(sw, 'switch');
+  // bulb
+  const bulb = D.piece(D.group(D.root, [0.2, 0.02, -0.13]), 0.45);
+  D.cyl(0.042, 0.047, 0.02, cream, bulb, [0, 0.01, 0]);
+  D.cyl(0.019, 0.019, 0.03, brass, bulb, [0, 0.035, 0]);
+  D.lathe([[0.018, 0.05], [0.026, 0.062], [0.04, 0.085], [0.042, 0.1], [0.036, 0.118], [0.022, 0.13], [0.001, 0.134]], D.ink('#ffffff', { opacity: 0.55, hatch: 0.4 }), bulb, [0, 0, 0], { shadow: false });
+  const filament = D.tube([[-0.012, 0.06, 0], [-0.012, 0.09, 0], [-0.006, 0.098, 0], [0, 0.093, 0], [0.006, 0.098, 0], [0.012, 0.09, 0], [0.012, 0.06, 0]], 0.0018, D.basic('#5b4b3b'), bulb);
+  const glow = D.glow('#ffcf6e', 0.42, bulb, [0, 0.095, 0]);
+  // ammeter, tilted back so the dial faces up a little
+  let current = 0;
+  const am = D.piece(D.group(D.root, [0.2, 0.02, 0.14]), 0.55);
+  const amBody = D.group(am, [0, 0, 0], [-0.28, 0, 0]);
+  D.rbox(0.14, 0.105, 0.046, 0.014, cream, amBody, [0, 0.0525, 0]);
+  D.screen(0.112, 0.074, (c, s, w, h) => {
+    c.fillStyle = '#f6efdf'; c.fillRect(0, 0, w, h);
+    const cx = w / 2, cy = h * 0.92, r = h * 0.72;
+    c.strokeStyle = '#2a2521'; c.lineWidth = 2; c.beginPath(); c.arc(cx, cy, r, Math.PI * 1.2, Math.PI * 1.8); c.stroke();
+    c.fillStyle = '#2a2521'; c.font = `500 ${h * 0.12}px BookSerif`; c.textAlign = 'center';
+    for (let i = 0; i <= 10; i++) {
+      const a = Math.PI * (1.2 + 0.6 * i / 10), l = i % 5 ? 0.08 : 0.14;
+      c.beginPath(); c.moveTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); c.lineTo(cx + Math.cos(a) * r * (1 - l), cy + Math.sin(a) * r * (1 - l)); c.stroke();
+      if (i % 5 === 0) c.fillText((i / 10).toFixed(1), cx + Math.cos(a) * r * 1.13, cy + Math.sin(a) * r * 1.13 + h * 0.04);
+    }
+    c.font = `italic 600 ${h * 0.2}px BookSerif`; c.fillText('A', cx, cy - r * 0.35);
+    const a = Math.PI * (1.2 + 0.6 * U.clamp(current / 1, -0.02, 1.02));
+    c.strokeStyle = '#b4432f'; c.lineWidth = 3; c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + Math.cos(a) * r * 0.95, cy + Math.sin(a) * r * 0.95); c.stroke();
+    c.fillStyle = '#2a2521'; c.beginPath(); c.arc(cx, cy, h * 0.06, 0, 7); c.fill();
+  }, amBody, [0, 0.056, 0.0235]);
+  D.callout(1, cell, [-0.02, 0.07, 0], [-0.06, 0.08, 0]);
+  D.callout(2, hinge, [0.1, 0.03, 0], [0.02, 0.1, 0]);
+  D.callout(3, bulb, [0.03, 0.12, 0], [0.08, 0.06, 0]);
+  D.callout(4, amBody, [0.07, 0.09, 0], [0.06, 0.06, 0]);
+  D.callout(5, wire, [0.1, 0.03, 0.2], [0.04, 0.03, 0.09]);
+  return {
+    update(s) {
+      const k = s.k('switch', 0.35);
+      hinge.rotation.z = (1 - k) * 0.95;
+      const closed = s.on('switch') && k > 0.98, since = s.since('switch') - 0.35;
+      current = closed ? 0.3 * (1 - Math.exp(-since * 5) * Math.cos(since * 13)) : current * 0 + (s.on('switch') ? 0 : Math.max(0, 0.3 * Math.exp(-(s.since('switch')) * 9)) * (s.since('switch') >= 0 ? 1 : 0));
+      const lit = closed ? U.ease(since / 0.08) : 0;
+      glow.set(lit); filament.material.color.set(lit > 0.5 ? '#fff0b0' : '#5b4b3b');
+      // drift: ~0.1 mm/s for real (a page is about 21 cm wide), sped up by the speed choice
+      const drift = closed ? s.simSince('switch') * 0.0001 / 0.21 : 0, len = lift.getLength();
+      electrons.place(i => i / 72 - drift / len);
+    },
+  };
+}
+
+// ---------------------------------------------------------------- lesson 6: one meter, four appliances
+function bill(D) {
+  const { U } = D;
+  const white = D.ink('#fbf8f1'), cream = D.ink('#ece3cf'), dark = D.ink('#48433d'), steel = D.ink('#d9dcdf'), brass = D.ink('#d8b468'), flexM = D.ink('#f2eee6');
+  const board = D.piece(D.group(), 0);
+  D.box(0.76, 0.02, 0.56, white, board, [0, 0.01, 0]);
+  let kWh = 0, cost = 0, battery = 20, clockT = 0;
+  // meter
+  const meter = D.piece(D.group(D.root, [-0.25, 0.02, -0.16]), 0.15);
+  D.rbox(0.17, 0.2, 0.07, 0.012, cream, meter, [0, 0.1, 0]);
+  D.screen(0.14, 0.05, (c, s, w, h) => {
+    c.fillStyle = '#f6efdf'; c.fillRect(0, 0, w, h);
+    const digits = (12345.0 + kWh).toFixed(1).padStart(7, '0').replace('.', '');
+    const cw = w / 8.2;
+    for (let i = 0; i < 6; i++) {
+      const x = 4 + i * cw; c.fillStyle = i === 5 ? '#b4432f' : '#2a2521'; c.fillRect(x, 6, cw - 4, h - 12);
+      c.fillStyle = '#f6efdf'; c.font = `600 ${h * 0.6}px BookSerif`; c.textAlign = 'center'; c.fillText(digits[i], x + (cw - 4) / 2, h * 0.72);
+    }
+    c.fillStyle = '#2a2521'; c.font = `italic 500 ${h * 0.34}px BookSerif`; c.textAlign = 'left'; c.fillText('kWh', 6 * cw + 6, h * 0.66);
+  }, meter, [0, 0.16, 0.0355], null, { res: 360 });
+  const discG = D.group(meter, [0, 0.075, 0.036]);
+  D.cyl(0.05, 0.05, 0.006, steel, discG, [0, 0, 0], { axis: 'z' });
+  const disc = D.group(discG, [0, 0, 0.004]);
+  D.box(0.008, 0.045, 0.003, D.ink('#b4432f'), disc, [0, 0.022, 0]);
+  D.screen(0.12, 0.022, (c, s, w, h) => {
+    c.fillStyle = '#f6efdf'; c.fillRect(0, 0, w, h); c.fillStyle = '#2a2521'; c.font = `italic 500 ${h * 0.62}px BookSerif`; c.textAlign = 'center';
+    c.fillText(`cost so far ${cost.toFixed(1)}p`, w / 2, h * 0.72);
+  }, meter, [0, 0.025, 0.0355], null, { res: 300 });
+  D.click(meter, 'meter');
+  // kettle
+  const kettle = D.piece(D.group(D.root, [0.03, 0.02, -0.12]), 0.3);
+  D.cyl(0.07, 0.074, 0.016, dark, kettle, [0, 0.008, 0]);
+  const led = D.box(0.012, 0.006, 0.004, D.basic('#5b4b3b'), kettle, [0.05, 0.01, 0.052]);
+  D.lathe([[0, 0.016], [0.058, 0.016], [0.064, 0.03], [0.066, 0.09], [0.06, 0.13], [0.046, 0.15], [0.02, 0.156], [0, 0.157]], white, kettle, [0, 0, 0]);
+  D.torus(0.052, 0.008, white, kettle, [-0.062, 0.09, 0], { arc: Math.PI, rot: [0, 0, Math.PI / 2] });
+  D.cyl(0.009, 0.02, 0.06, white, kettle, [0.078, 0.112, 0], { rot: [0, 0, -0.95] });
+  D.sphere(0.012, dark, kettle, [0, 0.165, 0]);
+  const steam = [0, 1, 2, 3, 4].map(i => D.sphere(0.012 + i * 0.002, D.basic('#ffffff', {}), kettle, [0.1, 0.14, 0], { lines: false, hull: false }));
+  D.click(kettle, 'kettle');
+  // clock
+  const clock = D.piece(D.group(D.root, [0.27, 0.02, -0.17]), 0.4);
+  D.box(0.07, 0.01, 0.04, dark, clock, [0, 0.005, 0]);
+  D.cyl(0.058, 0.058, 0.022, cream, clock, [0, 0.068, 0], { axis: 'z', rot: [-0.15, 0, 0] });
+  D.screen(0.096, 0.096, (c, s, w, h) => {
+    c.clearRect(0, 0, w, h); c.fillStyle = '#f6efdf'; c.beginPath(); c.arc(w / 2, h / 2, w / 2 - 1, 0, 7); c.fill();
+    c.strokeStyle = '#2a2521'; c.lineWidth = 2;
+    for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; c.beginPath(); c.moveTo(w / 2 + Math.sin(a) * w * 0.4, h / 2 - Math.cos(a) * h * 0.4); c.lineTo(w / 2 + Math.sin(a) * w * 0.46, h / 2 - Math.cos(a) * h * 0.46); c.stroke(); }
+    const hand = (a, l, lw) => { c.lineWidth = lw; c.beginPath(); c.moveTo(w / 2, h / 2); c.lineTo(w / 2 + Math.sin(a) * w * l, h / 2 - Math.cos(a) * h * l); c.stroke(); };
+    hand(clockT / 3600 * Math.PI * 2 / 12 + 0.6, 0.25, 4); hand(clockT / 3600 * Math.PI * 2, 0.36, 3);
+    c.strokeStyle = '#b4432f'; hand(clockT / 60 * Math.PI * 2, 0.4, 1.5);
+  }, clock, [0, 0.068 + 0.0018, 0.0113 + 0.0017], [-0.15, 0, 0]);
+  // socket strip
+  const strip = D.piece(D.group(D.root, [0.05, 0.02, 0.1]), 0.5);
+  D.box(0.32, 0.03, 0.065, white, strip, [0, 0.015, 0]);
+  for (let i = 0; i < 3; i++) {
+    D.box(0.05, 0.004, 0.04, cream, strip, [-0.09 + i * 0.075, 0.032, 0]);
+    D.box(0.008, 0.004, 0.012, dark, strip, [-0.1 + i * 0.075, 0.035, -0.008]); D.box(0.008, 0.004, 0.012, dark, strip, [-0.08 + i * 0.075, 0.035, -0.008]);
+  }
+  D.box(0.02, 0.008, 0.03, D.ink('#cf5a43'), strip, [0.14, 0.034, 0]);
+  // phone on its charger
+  const phone = D.piece(D.group(D.root, [-0.17, 0.02, 0.15], [0, 0.35, 0]), 0.55);
+  D.rbox(0.07, 0.13, 0.009, 0.01, dark, phone, [0, 0.0045, 0], { rot: [-Math.PI / 2, 0, 0] });
+  D.screen(0.058, 0.112, (c, s, w, h) => {
+    c.fillStyle = '#f6efdf'; c.fillRect(0, 0, w, h);
+    c.strokeStyle = '#2a2521'; c.lineWidth = 3; c.strokeRect(w * 0.2, h * 0.35, w * 0.6, h * 0.22); c.fillStyle = '#2f7a46';
+    c.fillRect(w * 0.22, h * 0.37, w * 0.56 * battery / 100, h * 0.18);
+    c.fillStyle = '#2a2521'; c.font = `600 ${w * 0.16}px BookSerif`; c.textAlign = 'center'; c.fillText(Math.floor(battery) + '%', w / 2, h * 0.75);
+  }, phone, [0, 0.0095, 0], [-Math.PI / 2, 0, 0], { res: 160 });
+  // LED lamp, always on
+  const lamp = D.piece(D.group(D.root, [0.3, 0.02, 0.12]), 0.6);
+  D.cyl(0.03, 0.034, 0.012, dark, lamp, [0, 0.006, 0]);
+  D.cyl(0.006, 0.006, 0.06, brass, lamp, [0, 0.042, 0]);
+  D.sphere(0.024, D.ink('#ffffff', { hatch: 0.3 }), lamp, [0, 0.09, 0]);
+  const lampGlow = D.glow('#ffd88a', 0.22, lamp, [0, 0.09, 0]);
+  // flexes: meter → strip carries the dots
+  const feed = D.curve([[-0.18, 0.026, -0.12], [-0.17, 0.026, -0.02], [-0.14, 0.026, 0.07], [-0.11, 0.026, 0.1]]);
+  const flexG = D.piece(D.group(), 0.65);
+  D.tube(feed, 0.006, flexM, flexG);
+  const feedTop = D.curve(feed.points.map(p => [p.x, p.y + 0.0065, p.z]));
+  const dots = D.flow(feedTop, 14, { r: 0.0048, color: '#e2922f', parent: flexG });
+  D.tube([[0.12, 0.035, 0.1], [0.12, 0.026, 0.02], [0.06, 0.026, -0.03], [0.03, 0.03, -0.06]], 0.005, flexM, flexG);
+  D.tube([[-0.035, 0.035, 0.1], [-0.07, 0.026, 0.15], [-0.12, 0.026, 0.17], [-0.14, 0.024, 0.165]], 0.004, flexM, flexG);
+  D.tube([[0.2, 0.026, 0.1], [0.25, 0.026, 0.12], [0.28, 0.026, 0.12]], 0.004, flexM, flexG);
+  D.callout(1, meter, [-0.06, 0.18, 0], [-0.05, 0.08, 0]);
+  D.callout(2, kettle, [0.03, 0.15, 0], [0.04, 0.09, 0]);
+  D.callout(3, phone, [-0.03, 0.01, 0.05], [-0.06, 0.03, 0.06]);
+  D.callout(4, lamp, [0.02, 0.1, 0], [0.07, 0.05, 0]);
+  D.callout(5, strip, [0.1, 0.03, 0.03], [0.06, 0.02, 0.08]);
+  D.callout(6, clock, [0.03, 0.12, 0], [0.05, 0.06, 0]);
+  D.callout(7, flexG, [-0.16, 0.03, 0.03], [-0.08, 0.03, 0.02]);
+  return {
+    update(s) {
+      const kOn = s.on('kettle'), runS = kOn ? s.simSince('kettle') : 0;
+      const P = 10 + 8 + (kOn ? 3000 : 0);                         // phone 10 W, lamp 8 W, kettle 3 kW
+      const J = (10 + 8) * s.simT + 3000 * runS;
+      kWh = J / 3.6e6; cost = kWh * 26; battery = Math.min(100, 20 + s.simT * 10 / 54000 * 100 * 30);
+      clockT = 10 * 3600 + 15 * 60 + s.simT;
+      disc.rotation.z = -J / 3600 * 0.5;                            // 0.5 turn per Wh (shown sped up)
+      led.material.color.set(kOn ? '#ff5a3c' : '#5b4b3b');
+      lampGlow.set(U.clamp(s.pop * 1.4 - 0.4));
+      steam.forEach((m, i) => {
+        const ph = ((s.time * 0.6 + i / 5) % 1), show = kOn && runS > 40;
+        m.visible = show; m.position.set(0.1 + ph * 0.03, 0.15 + ph * 0.12, Math.sin(ph * 6 + i) * 0.01); m.scale.setScalar(0.6 + ph * 1.4); m.material.opacity = (1 - ph) * 0.8;
+      });
+      const len = feedTop.getLength(), flow = J / 3000 * 0.06;     // dots run faster when more power flows
+      dots.place(i => i / 14 + flow / len);
+      void P;
+    },
+  };
+}
+
+// ---------------------------------------------------------------- lesson 7: the wall socket, a cut-away plug, the wave
+function plug(D) {
+  const { THREE, U } = D;
+  const white = D.ink('#fbf8f1'), cream = D.ink('#ece3cf'), dark = D.ink('#3f3a35'), brass = D.ink('#d8b468'), steel = D.ink('#c9ccd0');
+  const brown = D.ink('#8a5a3a'), blue = D.ink('#3f6fc1'), flexM = D.ink('#f2eee6');
+  const stripe = document.createElement('canvas'); stripe.width = 64; stripe.height = 8; const sc = stripe.getContext('2d');
+  sc.fillStyle = '#4f9a4f'; sc.fillRect(0, 0, 64, 8); sc.fillStyle = '#e9c93e'; for (let i = 0; i < 4; i++) sc.fillRect(i * 16 + 4, 0, 8, 8);
+  const stex = new THREE.CanvasTexture(stripe); stex.colorSpace = THREE.SRGBColorSpace; stex.wrapS = THREE.RepeatWrapping; stex.repeat.set(10, 1);
+  const earthM = D.ink('#ffffff', { map: stex });
+  const SOCK = [-0.12, 0.155], S = 1.4;                // socket centre (x, y); socket and plug drawn 1.4× life size
+  // floor and wall
+  const floor = D.piece(D.group(), 0);
+  D.box(0.78, 0.016, 0.44, white, floor, [0, 0.008, -0.02]);
+  const wall = D.piece(D.group(D.root, [0, 0.016, -0.25]), 0.05);
+  D.box(0.78, 0.3, 0.03, white, wall, [0, 0.15, 0]);
+  // wall socket
+  const sock = D.group(wall, [SOCK[0], SOCK[1] - 0.016, 0.015 + 0.008 * S]); sock.scale.setScalar(S);
+  D.rbox(0.22, 0.15, 0.016, 0.014, cream, sock, [0, 0, 0]);
+  D.box(0.026, 0.034, 0.003, dark, sock, [-0.035, 0.03, 0.009]);              // earth (top)
+  D.box(0.018, 0.026, 0.003, dark, sock, [-0.075, -0.025, 0.009]);            // neutral (left)
+  D.box(0.018, 0.026, 0.003, dark, sock, [0.005, -0.025, 0.009]);             // live (right)
+  D.box(0.03, 0.05, 0.012, white, sock, [0.07, 0.0, 0.012]);
+  const rocker = D.box(0.022, 0.02, 0.006, D.ink('#cf5a43'), sock, [0.07, 0.012, 0.02]);
+  D.text('ON', sock, [0.07, -0.018, 0.0185], { size: 0.014, rot: [0, 0, 0] });
+  // oscilloscope on a shelf bracket
+  let wave = [];
+  const scope = D.group(wall, [0.25, 0.15, 0.045]);
+  D.rbox(0.17, 0.14, 0.06, 0.012, cream, scope, [0, 0, 0]);
+  D.screen(0.12, 0.085, (c, s, w, h) => {
+    c.fillStyle = '#f6efdf'; c.fillRect(0, 0, w, h);
+    c.strokeStyle = 'rgba(42,37,33,0.25)'; c.lineWidth = 1;
+    for (let i = 1; i < 8; i++) { c.beginPath(); c.moveTo(i * w / 8, 0); c.lineTo(i * w / 8, h); c.stroke(); }
+    for (let i = 1; i < 6; i++) { c.beginPath(); c.moveTo(0, i * h / 6); c.lineTo(w, i * h / 6); c.stroke(); }
+    c.strokeStyle = '#2a2521'; c.lineWidth = 2.5; c.beginPath();
+    wave.forEach((y, i) => { const x = i / (wave.length - 1) * w, yy = h / 2 - y * h * 0.36; i ? c.lineTo(x, yy) : c.moveTo(x, yy); }); c.stroke();
+  }, scope, [-0.012, 0.004, 0.0305], null, { res: 360 });
+  D.cyl(0.009, 0.009, 0.012, dark, scope, [0.065, 0.02, 0.034], { axis: 'z' });
+  D.cyl(0.009, 0.009, 0.012, dark, scope, [0.065, -0.02, 0.034], { axis: 'z' });
+  D.tube([[0.06, -0.07, 0.0], [0.06, -0.11, 0.02], [0.0, -0.145, 0.06], [-0.1, -0.148, 0.05]], 0.003, dark, scope);
+  // the plug: back plate with pins, side walls, no cover — wires inside
+  const FRONT = -0.25 + 0.015 + 0.016 * S;            // the socket's front face
+  const plugG = D.group(D.root, [SOCK[0] - 0.035 * S, SOCK[1], FRONT]); plugG.scale.setScalar(S);   // centred on the three holes
+  D.piece(plugG, 0.3);
+  const shell = D.group(plugG);
+  D.rbox(0.12, 0.12, 0.012, 0.016, white, shell, [0, 0, 0.006]);
+  D.box(0.008, 0.12, 0.05, white, shell, [-0.056, 0, 0.037]); D.box(0.008, 0.12, 0.05, white, shell, [0.056, 0, 0.037]);
+  D.box(0.12, 0.008, 0.05, white, shell, [0, 0.056, 0.037]);
+  D.box(0.042, 0.008, 0.05, white, shell, [-0.039, -0.056, 0.037]); D.box(0.042, 0.008, 0.05, white, shell, [0.039, -0.056, 0.037]);
+  for (const [x, y, w, h] of [[0, 0.03, 0.012, 0.022], [-0.04, -0.025, 0.012, 0.016], [0.04, -0.025, 0.012, 0.016]])
+    D.box(w, h, 0.04, steel, shell, [x, y, -0.02]);                          // pins line up with the socket's holes
+  const term = p => D.cyl(0.008, 0.008, 0.01, brass, shell, [p[0], p[1], 0.017], { axis: 'z' });
+  const EARTH = [0, 0.03], NEUT = [-0.04, -0.025], LIVE = [0.04, -0.025];
+  term(EARTH); term(NEUT); term(LIVE);
+  const fuse = D.group(shell, [0.04, 0.014, 0.022]);
+  D.cyl(0.008, 0.008, 0.034, D.ink('#e8b9a6'), fuse, [0, 0, 0]);
+  D.cyl(0.0085, 0.0085, 0.007, steel, fuse, [0, 0.018, 0]); D.cyl(0.0085, 0.0085, 0.007, steel, fuse, [0, -0.018, 0]);
+  const grip = D.box(0.05, 0.008, 0.012, dark, shell, [0, -0.04, 0.032]);
+  const IN = [0, -0.05, 0.028];
+  D.tube([IN, [0.02, -0.04, 0.03], [0.04, -0.034, 0.026], [LIVE[0], LIVE[1], 0.024]], 0.0042, brown, shell, { seg: 40 });
+  D.tube([IN, [-0.015, -0.04, 0.03], [-0.03, -0.034, 0.026], [NEUT[0], NEUT[1], 0.024]], 0.0042, blue, shell, { seg: 40 });
+  D.tube([IN, [0.0, -0.03, 0.034], [-0.012, 0.0, 0.032], [EARTH[0], EARTH[1] - 0.006, 0.026]], 0.0042, earthM, shell, { seg: 40 });
+  // flex: down from the plug to the floor, then off the board towards the desk lamp
+  // (written in diorama space, then moved into the plug's scaled frame so it travels with the plug)
+  const P0 = plugG.position, fl = (x, y, z) => [(x - P0.x) / S, (y - P0.y) / S, (z - P0.z) / S], FLOOR = 0.016 + 0.011;
+  const flexPts = [fl(P0.x, P0.y - 0.058 * S, P0.z + 0.028 * S), fl(P0.x, P0.y - 0.12, P0.z + 0.07), fl(P0.x + 0.03, FLOOR + 0.01, P0.z + 0.15),
+    fl(P0.x + 0.15, FLOOR, P0.z + 0.25), fl(P0.x + 0.35, FLOOR, P0.z + 0.31), fl(P0.x + 0.5, FLOOR, P0.z + 0.33), fl(P0.x + 0.58, FLOOR, P0.z + 0.32)];
+  const flex = D.tube(flexPts, 0.011 / S, flexM, plugG, { seg: 120 });
+  const flexTop = D.curve(D.curve(flexPts).getSpacedPoints(80).map(p => [p.x, p.y + 0.0118 / S, p.z]));
+  const electrons = D.flow(flexTop, 40, { r: 0.0042 / S, color: ELECTRON, parent: plugG });
+  D.click(plugG, 'plug');
+  D.callout(1, sock, [-0.1, 0.06, 0.01], [-0.06, 0.05, 0]);
+  D.callout(2, shell, [-0.06, 0.055, 0.05], [-0.06, 0.03, 0.04]);
+  D.callout(3, fuse, [0.008, 0.012, 0.004], [0.08, 0.04, 0.02]);
+  D.callout(4, shell, [0.035, -0.035, 0.03], [0.09, -0.02, 0.04]);
+  D.callout(5, shell, [-0.03, -0.034, 0.03], [-0.08, -0.03, 0.04]);
+  D.callout(6, shell, [-0.008, 0.005, 0.033], [-0.09, 0.0, 0.04]);
+  D.callout(7, scope, [0.07, 0.06, 0.02], [0.05, 0.06, 0]);
+  D.callout(8, plugG, flexPts[4], [0.03, 0.03, 0.04]);
+  void flex; void grip; void rocker;
+  return {
+    update(s) {
+      const k = s.k('plug', 1.0);
+      plugG.position.z = FRONT + 0.1 * (1 - k);
+      const live = s.on('plug') && k > 0.98, f = 50;
+      const ph = live ? s.simSince('plug') : 0;
+      wave = Array.from({ length: 120 }, (_, i) => live ? Math.sin(2 * Math.PI * (f * ph - i / 120 * 2)) : 0);
+      const shake = live ? 0.012 * Math.sin(2 * Math.PI * f * ph) : 0;
+      electrons.place(i => (i + 0.5) / 40 * 0.96 + shake);
+      // the desk lamp is on this flex: it is dim until the plug goes in
+      D.setLamp(U.lerp(1, 0.5, U.ease(s.pop)) + (live ? 0.5 * U.ease(s.since('plug') - 1.0) : 0));
+    },
+  };
+}
+
+const book = createBook({
+  title: 'Electricity', subject: 'Physics · Electricity', credit: 'motion-skills · pop-up-textbook', icon: 'bulb',
+  start: 0, startView: 'lamp', popAt: 1.4,
+  lessons: [
+    {
+      no: 5, title: 'Current and charge', page: 14,
+      lead: 'Current is the flow of charge. The wires are already full of free electrons; the cell pushes all of them at once, round the whole loop.',
+      formula: { text: 'Q = I t', caption: 'charge (C) = current (A) × time (s)', example: ['I = 0.3 A, t = 60 s', 'Q = 0.3 × 60 = 18 C'] },
+      margin: ['I = 0.3 A', 't = 60 s', 'Q = 0.3 × 60', '   = 18 C'],
+      terms: [['Current', 'the rate of flow of charge, in amperes (A).'], ['Charge', 'measured in coulombs (C); in a metal it is carried by electrons.'], ['Ammeter', 'measures current; it goes in series, in the loop.']],
+      predict: { q: 'You close the switch. When does the bulb light?', options: ['Straight away', 'When electrons from the cell reach it', 'After about a minute'], answer: 0,
+        why: 'The wire is already full of free electrons. Closing the switch pushes all of them at once, like water in a full pipe, so the bulb lights straight away. Each electron only drifts about 0.1 mm every second.' },
+      challenge: 'Light the bulb.',
+      legend: [[1, 'cell, 1.5 V'], [2, 'switch'], [3, 'bulb'], [4, 'ammeter'], [5, 'wire, full of electrons']],
+      fig: 'Fig. 5  One loop. Electrons drawn far larger than real.',
+      action: 'Close the switch (2), then watch the electrons (5).',
+      speed: { options: ['2000× faster', 'real'], factors: [2000, 1], start: 0 },
+      diorama: circuit,
+    },
+    {
+      no: 6, title: 'Power and the bill', page: 16,
+      lead: 'Power is how fast energy is transferred: a 3000 W kettle uses 3000 J every second. The meter counts kilowatt-hours, and each one costs about 26p.',
+      formula: { text: 'E = P t', caption: 'energy (J) = power (W) × time (s)', example: ['P = 3 kW, t = 3 min = 0.05 h', 'E = 3 × 0.05 = 0.15 kWh', '0.15 × 26p ≈ 4p a boil'] },
+      margin: ['kettle 3 kW', 't = 0.05 h', 'E = 0.15 kWh', '× 26p', '≈ 4p a boil'],
+      terms: [['Power', 'the rate of energy transfer, in watts: 1 W is 1 J every second.'], ['Kilowatt-hour', 'the energy 1 kW transfers in an hour: 3 600 000 J.'], ['Meter', 'counts the energy a home uses, in kWh.']],
+      predict: { q: 'One kettle boil uses the energy of how many phone charges?', options: ['About 1', 'About 10', 'About 1000'], answer: 1,
+        why: 'A 3 kW kettle running for 3 minutes uses 3 × 0.05 = 0.15 kWh. A phone battery holds about 0.015 kWh. 0.15 ÷ 0.015 = 10.' },
+      challenge: 'Boil the kettle and charge the phone.',
+      legend: [[1, 'electricity meter'], [2, 'kettle, 3 kW'], [3, 'phone on its charger'], [4, 'LED lamp, 8 W'], [5, 'socket strip'], [6, 'clock'], [7, 'flex; dots show energy']],
+      fig: 'Fig. 6  Four things on one meter.',
+      action: 'Switch on the kettle (2), then watch the meter (1).',
+      speed: { options: ['30× faster', 'real'], factors: [30, 1], start: 0 },
+      diorama: bill,
+    },
+    {
+      no: 7, title: 'Mains and the plug', page: 18,
+      lead: 'Mains is alternating: about 230 V that swings back and forth 50 times a second. Live brings the push, neutral completes the loop, earth keeps you safe.',
+      formula: { text: 'T = 1 / f', caption: 'period (s) = 1 ÷ frequency (Hz)', example: ['f = 50 Hz', 'T = 1 ÷ 50 = 0.02 s'] },
+      margin: ['f = 50 Hz', 'T = 1 ÷ 50', '   = 0.02 s', 'peak ≈ 325 V'],
+      terms: [['Alternating current', 'keeps reversing; UK mains makes 50 cycles a second.'], ['Fuse', 'a thin wire in the plug that melts if too much current flows.'], ['Earth wire', 'a safety wire; it only carries a current if there is a fault.']],
+      predict: { q: 'With AC, where are your lamp’s electrons after an hour?', options: ['Right where they started', 'Inside the lamp', 'Back at the power station'], answer: 0,
+        why: 'Mains pushes one way, then the other, 50 times a second. Each electron in the flex shuffles back and forth a tiny distance and ends the hour where it started. The lamp lights because the push arrives all along the wire at once. Energy travels; the electrons stay home.' },
+      challenge: 'Plug in the desk lamp.',
+      legend: [[1, 'wall socket'], [2, 'plug, cover off'], [3, 'fuse, 3 A'], [4, 'live, brown'], [5, 'neutral, blue'], [6, 'earth, green and yellow'], [7, 'oscilloscope: the push'], [8, 'flex to the desk lamp']],
+      fig: 'Fig. 7  A plug, cut away, and the wave in the wall. Electron shuffle drawn far larger than real.',
+      action: 'Push the plug (2) into the socket (1), then look up.',
+      speed: { options: ['25× slower', 'real'], factors: [0.04, 1], start: 0 },
+      diorama: plug,
+    },
+  ],
+  tour: [
+    { t: 0.4, view: 'book', dur: 2.8 },
+    { t: 3.2, click: 'part:switch' },
+    { t: 5.2, click: 'L:card:predict' },
+    { t: 6.8, click: 'L:opt:0' },
+    { t: 8.2, click: 'L:flap' },
+    { t: 11.2, click: 'hud.next' },
+    { t: 14.4, click: 'part:kettle' },
+    { t: 16.0, loupe: true, move: 'L:card:formula', dur: 0.9 },
+    { t: 17.4, move: 'L:card:terms', dur: 1.0 },
+    { t: 18.6, move: 'part:meter', dur: 1.0 },
+    { t: 20.0, loupe: false, click: 'hud.next' },
+    { t: 23.4, click: 'L:card:terms' },
+    { t: 25.2, view: 'right', dur: 1.8 },
+    { t: 25.4, click: 'part:plug', dur: 1.2 },
+    { t: 28.4, hide: true, view: 'lamp', dur: 2.8 },
+  ],
+  duration: 33,
+});
+book.start();
+</script>
+</body>
+</html>

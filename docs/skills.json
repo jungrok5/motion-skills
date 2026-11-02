@@ -138,6 +138,22 @@
       "workedExample": [
         { "title": "「Draw a Road」 · 30초 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/paper-road/demo/draw-a-road.html" }
       ]
+    },
+    {
+      "id": "pop-up-textbook",
+      "name": "pop-up-textbook",
+      "tagline": "책상 위 스탠드 불빛 아래 펼친 책 한 권으로 수업 하나를 펼침면에 담는 인터랙티브 3D 교과서를 three.js로 만듭니다. 왼쪽은 공식 · 핵심어 · 예측 문제 · 들춰 보는 답, 오른쪽은 펜화처럼 빗금 친 팝업 디오라마이고, 커서 투어는 16:9 MP4로 굽습니다.",
+      "posterAlt": "pop-up-textbook으로 만든 장면 네 개: 전지 · 스위치 · 전구 · 전류계 회로 디오라마가 선 펼친 책, 벽 콘센트에 꽂힌 덮개 연 플러그와 오실로스코프, 둥글게 말리며 넘어가는 책장, 햇빛 화살표와 지구 · 달 · 위상 액자가 있는 달의 위상 디오라마",
+      "poster": "pop-up-textbook/poster.jpg",
+      "tags": ["3D", "인터랙티브 페이지", "16:9 MP4", "팝업 디오라마", "펜화 빗금"],
+      "stats": ["예제 2권 · 수업 5개", "책장 넘김 · 돋보기 · 들춰 보는 답"],
+      "page": "pop-up-textbook/",
+      "source": "pop-up-textbook/",
+      "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "pop-up-textbook/examples/electricity/" },
+      "workedExample": [
+        { "title": "Electricity · 수업 3개 · 33초 투어 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/pop-up-textbook/demo/examples/electricity/" },
+        { "title": "The Sky · 계절과 달의 위상 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/pop-up-textbook/demo/examples/sky/" }
+      ]
     }
   ]
 }
