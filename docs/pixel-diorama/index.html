@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>pixel-diorama · motion-skills</title>
+<meta name="description" content="비 오는 밤의 떠 있는 섬처럼 아늑한 픽셀아트 장면을 이미지 파일 없이 코드로 그리고, 끊김 없이 반복되는 루프 영상으로 만듭니다. 빗줄기, 번개, 불티, 연기, 깜박이는 창문 불빛으로 1080p MP4 한 바퀴와 10시간 로파이 영상을 냅니다.">
+<meta property="og:title" content="pixel-diorama · motion-skills">
+<meta property="og:description" content="아늑한 픽셀아트 장면을 코드로 그리고, 끊김 없이 반복되는 1080p 루프와 10시간 로파이 영상으로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/pixel-diorama/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/pixel-diorama">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / pixel-diorama</nav>
+  <h1>pixel-diorama</h1>
+  <p>비 오는 밤의 떠 있는 섬처럼 아늑한 픽셀아트 장면을 이미지 파일 없이 코드로 그리고, 끊김 없이 반복되는 루프 영상으로 만듭니다. 빗줄기, 번개, 불티, 연기, 깜박이는 창문 불빛으로 1080p MP4 한 바퀴와 10시간 로파이 영상을 냅니다.</p>
+  <ul class="tags"><li>16:9</li><li>MP4</li><li>라이브 페이지</li><li>심리스 루프</li><li>10시간</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>장면 설명이나 프롬프트(장소, 인물 하나, 날씨, 따뜻한 불빛과 차가운 밤), 참고 이미지나 영상</dd>
+      <dt>장면</dt><dd>480×270 캔버스에 정수 좌표로만 그리는 HTML 한 장. 하늘부터 앞쪽 날씨까지 소품 키트를 쌓고, 빛은 후처리 한 번</dd>
+      <dt>확인</dt><dd>단계별 스틸(<code>?pass=base</code> · <code>?pass=light</code>), 루프 전체 콘택트 시트, 첫 프레임과 마지막 프레임을 비교하는 루프 검사</dd>
+      <dt>출력</dt><dd>최근접 확대로 선명한 1920×1080 MP4 한 바퀴(×8이면 4K), 재인코딩 없이 이어 붙인 10시간 영상, 음악 트랙 선택</dd>
+    </dl>
+    <pre><code>cd pixel-diorama/examples/halloween-rain
+node ../../scripts/render.mjs index.html --sheet 8
+node ../../scripts/loop-check.mjs index.html
+node ../../scripts/render.mjs index.html
+node ../../scripts/extend.mjs out/halloween-rain.mp4 --hours 10</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. GPU와 네트워크가 필요 없고, 60초 루프 한 바퀴를 CPU로 2분 안팎에 렌더합니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/pixel-diorama/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--demo-bg:#05050c">
+    <iframe data-src="demo/halloween-rain.html" title="pixel-diorama 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/halloween-rain.html">데모 열기 (examples/halloween-rain)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/halloween-rain</code> · 60초 루프 · 브라우저가 실시간으로 그림</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/halloween-rain.html" data-cap="예제 &lt;code&gt;examples/halloween-rain&lt;/code&gt; · 60초 루프 · 브라우저가 실시간으로 그림" aria-pressed="true">할로윈 비</button>
+        <button class="btn" type="button" data-src="demo/first-snow.html" data-cap="예제 &lt;code&gt;examples/first-snow&lt;/code&gt; · 40초 루프 · 같은 키트의 겨울" aria-pressed="false">첫눈</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제 두 편과 시작 템플릿, 그리고 한 프레임이 빛 후처리를 지나는 모습입니다. 카드를 누르면 새 탭에서 그 장면이 그 순간에 멈춘 채 열리고, 브라우저가 직접 그립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"scene":"장면","pass":"빛 단계"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>장면 <small>16:9 · 루프</small></h3>
+      <p>같은 엔진과 소품 키트로 만든 장면입니다. 소품 배치와 팔레트, 날씨만 다릅니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="scene" href="demo/halloween-rain.html?t=3" target="_blank" rel="noopener">
+          <img src="samples/halloween-rain.jpg" alt="비 오는 밤하늘에 떠 있는 섬, 창이 켜진 2층 집과 가로등, 모닥불 옆 빨간 우산 아래 앉은 해골, 랜턴이 걸린 앙상한 나무, 섬 아래의 청록 수정" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">예제 · 60초 루프</span><b>Halloween Rain</b><span class="en">examples/halloween-rain</span>
+          <span class="how">X에 공유된 프롬프트를 옮긴 장면. 차가운 비와 모닥불 · 창문 · 랜턴 · 호박등의 따뜻한 빛</span></div></a>
+        <a class="tile" data-tags="scene" href="demo/halloween-rain.html?t=17.25" target="_blank" rel="noopener">
+          <img src="samples/lightning.jpg" alt="같은 섬 장면에 번개가 쳐서 하늘과 섬이 보랏빛으로 밝아진 순간, 왼쪽 언덕 뒤로 갈라지는 번개" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">예제 · 17.25초</span><b>번개 치는 순간</b>
+          <span class="how">한 루프에 두 번. 깜박이는 두 번의 빛과 감쇠, 언덕 뒤에 그린 번개 줄기</span></div></a>
+        <a class="tile" data-tags="scene" href="demo/first-snow.html?t=8" target="_blank" rel="noopener">
+          <img src="samples/first-snow.jpg" alt="초록 오로라가 드리운 밤, 눈 덮인 섬 위의 지붕에 눈이 쌓인 집, 전나무, 가로등, 모닥불 옆 눈사람, 내리는 눈" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">예제 · 40초 루프</span><b>First Snow</b><span class="en">examples/first-snow</span>
+          <span class="how">같은 키트의 겨울. 루프마다 한 번 굽이치는 오로라, 두 겹의 눈, 눈 쌓인 지붕과 전나무</span></div></a>
+        <a class="tile" data-tags="scene" href="demo/template.html?t=5" target="_blank" rel="noopener">
+          <img src="samples/template.jpg" alt="비 오는 밤, 작은 섬 위에 가로등 하나와 벤치만 있는 단순한 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 30초 루프</span><b>시작 장면</b><span class="en">templates/scene.html</span>
+          <span class="how"><code>new-scene.mjs</code>가 복사하는 출발점. 하늘, 섬, 가로등, 직접 그린 벤치, 비 두 겹</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>빛 단계 <small>같은 프레임 · 3초</small></h3>
+      <p>장면은 차갑고 어둡게 칠하고, 따뜻함은 후처리의 빛으로만 더합니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="pass" href="demo/halloween-rain.html?t=3&amp;pass=base" target="_blank" rel="noopener">
+          <img src="samples/pass-base.jpg" alt="빛 처리 전의 장면: 창과 불꽃만 밝고, 섬과 집 벽은 어두운 보라와 갈색" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">1 · <code>?pass=base</code></span><b>칠한 그대로</b>
+          <span class="how">램프로 칠한 차가운 밤. 창 유리, 불꽃, 랜턴만 스스로 빛나는 색</span></div></a>
+        <a class="tile" data-tags="pass" href="demo/halloween-rain.html?t=3&amp;pass=light" target="_blank" rel="noopener">
+          <img src="samples/pass-light.jpg" alt="빛 버퍼만 보인 화면: 검은 바탕에 주황 빛 웅덩이 여러 개와 청록 빛 몇 개, 달 주위의 푸른 빛" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">2 · <code>?pass=light</code></span><b>빛 버퍼</b>
+          <span class="how">모닥불, 창문, 가로등 원뿔, 랜턴, 호박등, 도깨비불, 수정. 화면 대부분은 검정</span></div></a>
+        <a class="tile" data-tags="pass" href="demo/halloween-rain.html?t=3" target="_blank" rel="noopener">
+          <img src="samples/halloween-rain.jpg" alt="완성 프레임: 불빛 주변의 풀과 벽이 주황으로 물들고 공중에 부드러운 빛 번짐" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">3 · 완성</span><b>빛과 비네팅</b>
+          <span class="how">표면은 계단식으로 밝히고, 공중의 번짐은 부드럽게. 가장자리는 디더링한 비네팅</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. X에 공유된 프롬프트(TypeScript만으로 만든 로파이 영상용 할로윈 픽셀아트 디오라마)를 옮긴 예제 「Halloween Rain」이 처음 만든 작품이고, 장면과 소품은 모두 이 레포의 코드입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/halloween-rain.html" target="_blank" rel="noopener"><b>「Halloween Rain」 · 60초 루프</b><span>떠 있는 섬, 비와 번개, 라이브 페이지</span><span class="url">pixel-diorama/demo/halloween-rain.html</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/pixel-diorama/examples"><b>예제 폴더 · examples/</b><span>halloween-rain, first-snow</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/zer0point_eth/status/2116832762912973220" target="_blank" rel="noopener"><b>원래 프롬프트 · X 게시물</b><span>@zer0point_eth · 2026년 11월</span><span class="url">x.com/zer0point_eth</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pixel-diorama/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/pixel-diorama">폴더</a> <span>lib · scripts · templates · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pixel-diorama/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pixel-diorama/references/LOOK.md">references/LOOK.md</a> <span>따뜻함과 차가움, 팔레트, 빛 수치, 움직임 예산</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pixel-diorama/references/KIT.md">references/KIT.md</a> <span>엔진과 소품 API, 새 소품 만들기</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pixel-diorama/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림은 코드로 그림 (이미지 · 폰트 파일 없음)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
