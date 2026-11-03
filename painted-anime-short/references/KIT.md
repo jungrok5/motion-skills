@@ -13,7 +13,7 @@ F.check('rule name', t => true /* holds */);
 F.start();
 ```
 Inside a shot: `g.put(plate, x, y, z, { a, s, rot, ox, oy, op })` places a plate whose top-left is (x, y) at depth z;
-`g.at(z, c => …)` draws in the space of depth z; `g.screen(c => …)` draws without the camera; `g.lt` local time, `g.t`
+`g.at(z, c => …)` draws in the space of depth z; `g.twos(v = lt, fps = 12)` steps a time to 12 drawings a second (use it for characters, debris, leaves); `g.screen(c => …)` draws without the camera; `g.lt` local time, `g.t`
 global time, `g.u` = lt / dur, `g.cam`. Depth: 0 fixed, 1 focal plane, > 1 foreground; a layer at z moves by cam · z and
 scales by zoom^z. A plate must cover the frame for every camera key: extend it by |cam.x| · z and by (zoom^z − 1) · 960.
 Transitions are the *incoming* shot's `tr`; a shot keeps being drawn past its end during the next shot's dissolve, so
@@ -70,6 +70,10 @@ const heroWide = F.plate(800, 600, c => { c.translate(400, 560); c.scale(.6, .6)
 ```
 Paint it again for each scale it is seen at (`c.scale(2.7, 2.7)` for a close-up), always with the same seed. Draw its
 light (lamp, eyes) per frame at the exported points × the plate's scale.
+
+## Timing
+`P.onTwos(t, fps = 12)` (also `g.twos()` in a shot): hold each drawing for two frames, like hand-drawn animation. Use 8 for
+threes on slow, heavy things. Keep camera keys, light and mist on ones (smooth).
 
 ## Score (`lib/score.js`)
 `renderScore(spec, sampleRate, dur)` → `[L, R]`. Spec fields: `pad`, `strings` (`{ t, d, notes, v }`), `bass` (`{ t, d, n, v }`),

@@ -71,8 +71,7 @@ if (det) console.log(`ok   deterministic at t = ${ts.join(', ')}`);
 // score
 const sc = await page.evaluate(async () => {
   const f = window.film; if (!f.score) return null;
-  const { renderScore } = await import(new URL('./score.js', f.libURL).href);
-  const [L, R] = renderScore(f.score, 22050, f.dur); let peak = 0, nan = 0, rms = 0;
+  const [L, R] = f.renderScore(f.score, 22050, f.dur); let peak = 0, nan = 0, rms = 0;
   for (const ch of [L, R]) for (let i = 0; i < ch.length; i++) { const v = ch[i]; if (!Number.isFinite(v)) nan++; else { peak = Math.max(peak, Math.abs(v)); rms += v * v; } }
   return { peak, nan, rms: Math.sqrt(rms / (L.length * 2)) };
 });

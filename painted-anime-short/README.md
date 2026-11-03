@@ -14,14 +14,19 @@ node ../../scripts/render.mjs index.html --sheet 24 --scale .5          # 24 mom
 node ../../scripts/check.mjs index.html                                 # clean load, every shot draws, deterministic, score
 node ../../scripts/score.mjs score.js --dur 48 --out out/last-tram.wav  # the score → WAV
 node ../../scripts/render.mjs index.html --workers 4 --audio out/last-tram.wav   # 48 s → out/last-tram.mp4
+node ../../scripts/bundle.mjs index.html                                # one self-contained HTML → out/last-tram.single.html
 node ../../scripts/new-film.mjs ../../../my-film                        # start your own (or --from last-tram)
 ```
 
 Requirements: Node + Playwright Chromium, ffmpeg. No network, no npm install, no GPU (~0.2 s a 1080p frame on a CPU).
 To watch a page live, serve its folder (`python3 -m http.server`) — it is an ES module; press ♪ for the score.
 
+Topic in, film out: the topic is first written as a brief in the structure of the reference prompt (scene, quality
+standard, must-not list, review of random stills — `references/PROMPT.md`), then turned into shots.
+
 Example: `examples/last-tram/` 「The Last Tram」 (48 s, 8 shots: dawn over the forest → an overgrown tram in a clearing → a
 bluebird lands on its roof → the headlamp wakes → it shudders and lifts → out through the canopy → over the clouds → the
-clearing, left to the bird). Look after a code-only film posted by Chetaslua on X
-(https://x.com/chetaslua/status/2117169796290916732); everything here is this repo's own code and design.
+clearing, left to the bird). Look and brief after the film and prompt posted by Chetaslua on X
+(https://x.com/chetaslua/status/2117169796290916732, code: https://github.com/ChetasLua/moss-keeper); everything here is
+this repo's own code and design.
 Live pages: https://jungrok5.github.io/motion-skills/painted-anime-short/

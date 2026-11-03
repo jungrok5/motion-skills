@@ -2,6 +2,11 @@
 
 From building `examples/last-tram` and the template against the reference video.
 
+- **The prompt was in the thread, not in the first post.** → The first post only says "it's in the screenshot"; the second
+  post of the thread holds the full prompt and the repo. → Read the whole thread (`api.fxtwitter.com/2/thread/<id>` returns
+  every post by the author with its media) before reverse-engineering a video. The repo then showed the film was an MP4
+  rendered offline and embedded in HTML — the brief and the review loop were the transferable part (references/PROMPT.md).
+
 - **The first canopy looked like stacked pebbles.** → Clumps were 15–20 round dabs; round edges read as vector blobs. →
   `clump` became a dark silhouette plus three passes of small leaf flecks (`flecks`), each pushed toward the light; the
   fleck size is tied to the clump radius (~9 %) so far crowns and close-ups both read as leaves.
@@ -30,5 +35,7 @@ From building `examples/last-tram` and the template against the reference video.
   curled ends — draw machines from how they work, not from a silhouette guess.
 - **`backdrop.mid is not a function`-style mistakes broke a whole shot.** → A typo in one shot only shows at that t. →
   `check.mjs` seeks every 0.25 s and reports any shot that throws, and any blank frame.
+- **Everything moved on ones and looked like web animation.** → Smooth per-frame motion on the bird and the leaves, a sine
+  bob on the flying hero. → Characters, debris and leaves on twos (`g.twos()`), the bob replaced by a slow drift.
 - **Rendering in the background with `&` inside a background task** reported "completed" while the render was still
   running. → Run the render as the background command itself, and read `out/render.log` / wait for the MP4.

@@ -135,7 +135,7 @@ F.shot(6.5, g => {
   g.put(s3back, -340, -20, .3);
   g.at(.4, c => P.rays(c, 1700, -100, { ang: 2.1, spread: .6, n: 5, len: 1500, width: .05, a: .2, t: g.t, seed: 4 }));
   g.put(tramRoof, -40, 20, 1);
-  g.at(1, c => { const b = BIRD3(g.lt); K.bird(c, b.x, b.y, 80, b.pose); P.leaves(c, g.t, { x0: 0, x1: 1920, y0: -40, y1: 1100, n: 8, fall: 45, size: 10, seed: 3 }); P.motes(c, g.t, { x0: 0, x1: 1920, y0: 0, y1: 1080, n: 40, seed: 3 }); });
+  g.at(1, c => { const b = BIRD3(g.twos()); K.bird(c, b.x, b.y, 80, b.pose); P.leaves(c, g.twos(g.t), { x0: 0, x1: 1920, y0: -40, y1: 1100, n: 8, fall: 45, size: 10, seed: 3 }); P.motes(c, g.t, { x0: 0, x1: 1920, y0: 0, y1: 1080, n: 40, seed: 3 }); });
   g.put(s3front, -260, -320, 1.5);
 }, { name: 'roof', cam: [{ t: 0, x: -30, y: 10, zoom: 1 }, { t: 6.5, x: 50, y: 0, zoom: 1.06 }] });
 F.check('the bird is on the roof moss after landing', t => { const s = F.shots[2]; if (t < s.start + 2.2 || t > s.start + s.dur) return true; const b = BIRD3(t - s.start); return b.x > 700 && b.x < 1100; });
@@ -162,21 +162,21 @@ const s5back = forestBack(50, 2), s5floor = floor(51), s5frame = frame(52, { tru
 const tramM = F.plate(1300, 900, c => { c.translate(650, 840); c.scale(1.1, 1.1); tram(c); });      // tram at 1.1, origin (650, 840)
 const LIFT = lt => P.ease.io(P.clamp((lt - 3.2) / 2.6)) * 260;
 F.shot(5.5, g => {
-  const lt = g.lt, lift = LIFT(lt), wob = lt > 1 ? Math.sin(lt * 31) * 2.2 * (1 - P.smooth(3, 4.5, lt)) : 0;
+  const lt = g.lt, tw = g.twos(), lift = LIFT(lt), wob = tw > 1 ? Math.sin(tw * 31) * 2.2 * (1 - P.smooth(3, 4.5, tw)) : 0;   // the shudder is drawn on twos
   g.put(s5back, -340, -60, .3);
   g.at(.5, c => P.rays(c, 1550, -150, { ang: 2.0, spread: .6, n: 6, len: 1600, width: .05, a: .22, t: g.t, seed: 5 }));
   g.put(s5floor, -440, 740, .9);
   g.at(.9, c => P.shadow(c, 960, 740 + 134, 820 * (1 - LIFT(g.lt) / 600), 60, .55 * (1 - LIFT(g.lt) / 300)));
-  g.put(tramM, 960 - 650, 740 + 136 - 840 - 4 - lift + wob, 1, { rot: Math.sin(lt * 23) * .004 * (lt > 1 ? 1 : 0) - lift * .0002, ox: 650, oy: 840 });
+  g.put(tramM, 960 - 650, 740 + 136 - 840 - 4 - lift + wob, 1, { rot: Math.sin(tw * 23) * .004 * (tw > 1 ? 1 : 0) - lift * .0002, ox: 650, oy: 840 });
   g.at(1, c => {
     const tx = 960, ty = 740 + 136 - 4 - lift;
     lampGlow(c, tx + 3.4 * 0 + (330 + 16) * 1.1, ty - 118 * 1.1, 1.3, 1, g.t);
     const R = P.rng(77);
-    for (let i = 0; i < 6; i++) { const t0 = 1.0 + i * .45; K.puff(c, tx + (i % 2 ? -1 : 1) * (150 + R() * 140) * 1.1, 740 + 136 - 10, 70, (lt - t0) / 1.8, P.rng(i + 5)); }
-    P.leaves(c, g.t, { x0: 0, x1: 1920, y0: -40, y1: 1100, n: lt > 1 ? 40 : 10, fall: 120, size: 11, seed: 5, wind: .4 });
-    const k = P.clamp((lt - 1.2) / 2);                                       // the bird leaves
-    if (k > 0 && k < 1) K.bird(c, P.lerp(tx - 130, 2050, P.ease.in(k)), ty - 330 * 1.1 - Math.sin(k * 3) * 180, 46, { flap: lt * 28, tilt: -.25 });
-    else if (k <= 0) K.bird(c, tx - 130, ty - 330 * 1.1 + 12, 40, { look: Math.sin(lt * 3) });
+    for (let i = 0; i < 6; i++) { const t0 = 1.0 + i * .45; K.puff(c, tx + (i % 2 ? -1 : 1) * (150 + R() * 140) * 1.1, 740 + 136 - 10, 70, (tw - t0) / 1.8, P.rng(i + 5)); }
+    P.leaves(c, g.twos(g.t), { x0: 0, x1: 1920, y0: -40, y1: 1100, n: lt > 1 ? 40 : 10, fall: 120, size: 11, seed: 5, wind: .4 });
+    const k = P.clamp((tw - 1.2) / 2);                                       // the bird leaves
+    if (k > 0 && k < 1) K.bird(c, P.lerp(tx - 130, 2050, P.ease.in(k)), ty - 330 * 1.1 - Math.sin(k * 3) * 180, 46, { flap: tw * 28, tilt: -.25 });
+    else if (k <= 0) K.bird(c, tx - 130, ty - 330 * 1.1 + 12, 40, { look: Math.sin(tw * 3) });
   });
   g.put(s5frame, -240, -300, 1.25);
   g.put(s2grass, -340, 900, 1.4);
@@ -204,7 +204,7 @@ F.shot(5.5, g => {
     const s = P.lerp(1.5, .45, k), x = 960 + Math.sin(lt * .8) * 30 - (1 - k) * 200, y = P.lerp(1000, 420, k);
     c.save(); c.translate(x, y); c.rotate(-.12 + Math.sin(lt) * .03); c.scale(s, s); c.filter = 'brightness(.62) saturate(.85)'; c.drawImage(tramUp.c, -380, -300, 760, 560); c.filter = 'none'; c.restore();
     P.glow(c, x + 200 * s, y - 70 * s, 160 * s, '#ffd98a', .8);
-    P.leaves(c, g.t, { x0: 0, x1: 1920, y0: -40, y1: 1100, n: 50, fall: -160, size: 12, seed: 6, sway: 60 });
+    P.leaves(c, g.twos(g.t), { x0: 0, x1: 1920, y0: -40, y1: 1100, n: 50, fall: -160, size: 12, seed: 6, sway: 60 });
     P.glow(c, 960, 380, 700, '#fff3d0', .35 + .3 * k);
   });
 }, { name: 'rise', tr: { type: 'white', d: .8 }, cam: [{ t: 0, x: 0, y: 0, zoom: 1, rot: 0 }, { t: 5.5, x: 0, y: -30, zoom: 1.12, rot: .06 }] });
@@ -225,7 +225,7 @@ F.shot(6.5, g => {
   g.put(s7b1, -300 - slide * .35 % 1200, 420, .6);
   g.put(s7b2, -300 - slide * .6 % 1200, 520, .8);
   g.at(1, c => {
-    const x = 860 + Math.sin(lt * .6) * 40, y = 600 + Math.sin(lt * 1.1) * 14, rot = -.04 + Math.sin(lt * .9) * .025;
+    const x = 860 + Math.sin(lt * .6) * 40, y = 600 + Math.sin(lt * .5) * 6, rot = -.04 + Math.sin(lt * .45) * .015;   // a slow drift, not a bob
     for (const [wx, wy] of [[-205 - 52, -30], [205 + 52, -30]]) {                          // light trails from the wheels
       const sx = x + wx * .82, sy = y + wy * .82; c.save(); c.globalCompositeOperation = 'screen';
       const gr = c.createLinearGradient(sx, sy, sx - 900, sy + 40); gr.addColorStop(0, 'rgba(255,236,190,.55)'); gr.addColorStop(1, 'rgba(255,236,190,0)'); c.fillStyle = gr;
@@ -233,20 +233,20 @@ F.shot(6.5, g => {
     }
     c.save(); c.translate(x, y); c.rotate(rot); c.drawImage(tramF.c, -500, -600, 1000, 700); c.restore();
     lampGlow(c, x + LAMP.x * .82, y + LAMP.y * .82 + LAMP.x * .82 * rot, 1, 1, g.t);
-    P.leaves(c, g.t, { x0: x - 900, x1: x + 100, y0: y - 400, y1: y + 200, n: 16, fall: 30, sway: 50, size: 9, seed: 8, wind: -6 });
+    P.leaves(c, g.twos(g.t), { x0: x - 900, x1: x + 100, y0: y - 400, y1: y + 200, n: 16, fall: 30, sway: 50, size: 9, seed: 8, wind: -6 });
   });
   g.put(s7b3, -300 - slide % 1200, 640, 1.2);
 }, { name: 'sky', tr: { type: 'dissolve', d: 1 }, cam: [{ t: 0, x: -40, y: 20, zoom: 1.04 }, { t: 6.5, x: 40, y: -10, zoom: 1 }] });
 
 // ---------- 8 · the clearing again: only the bird ----------
 F.shot(6, g => {
-  const lt = g.lt;
+  const lt = g.twos();
   g.put(s2back, -340, -40, .3);
   g.at(.5, c => P.rays(c, 1500, -120, { ang: 2.0, spread: .55, n: 6, len: 1500, width: .045, a: .26, t: g.t, seed: 2 }));
   g.put(s2floor, -440, 660, .85);
   g.put(s2mist, -440, 700, .9, { a: .7 });
   g.at(1, c => {
-    P.leaves(c, g.t, { x0: 0, x1: 1920, y0: -40, y1: 1100, n: 22, fall: 50, size: 10, seed: 9 });
+    P.leaves(c, g.twos(g.t), { x0: 0, x1: 1920, y0: -40, y1: 1100, n: 22, fall: 50, size: 10, seed: 9 });
     const k = P.clamp(lt / 2.4), land = { x: 1010, y: 660 + 132 * .85 + 2 };
     if (k < 1) K.bird(c, P.lerp(1980, land.x, P.ease.out(k)), P.lerp(380, land.y, P.ease.out(k)) - Math.sin(k * Math.PI) * 60, 40, { dir: -1, flap: lt * 26 });
     else K.bird(c, land.x, land.y, 40, { dir: -1, look: Math.sin((lt - 2.4) * 1.4) * .8, crouch: Math.max(0, .5 - (lt - 2.4) * 2) });

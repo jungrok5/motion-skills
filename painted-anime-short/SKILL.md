@@ -11,12 +11,14 @@ brushes, every shot is a multiplane camera moving over those painted plates, and
 score. Give it a topic ("an old lighthouse", "a sleeping stone whale", "the last tram") and it writes a 6–9 shot story
 in the genre's grammar and paints it. Every frame is `seek(t)`, so the same page plays live (with sound) and renders to MP4.
 
-Built in this repo on the worked example `examples/last-tram` 「The Last Tram」 (48 s, 8 shots), after a one-shot
-code-only film posted by Chetaslua on X (https://x.com/chetaslua/status/2117169796290916732, Nov 2026: "THIS IS PURE CODE …
-one shotted this video"; 80 s, an overgrown machine wakes in a forest at dawn and flies off over the clouds). Only the look
-and the techniques are borrowed — layered painted plates, leaf-fleck foliage, weathered cel hero, haze by depth, the shot
-grammar, the grade; the code, the tram, its story and the score are this repo's own. Never recreate a specific film's
-character or design (no named robots, spirits or studios' creatures) — design an original hero for each topic.
+Built in this repo on the worked example `examples/last-tram` 「The Last Tram」 (48 s, 8 shots), after the film and the
+prompt Chetaslua posted on X (https://x.com/chetaslua/status/2117169796290916732; prompt in the second post of the thread;
+result: https://github.com/ChetasLua/moss-keeper — an 80 s scene in which an overgrown robot wakes in a forest at dawn and
+flies into the sky). That film was painted frame by frame by offline code and shipped as an MP4 inside an HTML file
+(references/PROMPT.md has the prompt verbatim and how it was made). This skill keeps the prompt's brief structure, quality
+standard and self-review loop, and does the painting with a deterministic Canvas engine of its own; the code, the tram,
+its story and the score are this repo's own. Never recreate a specific film's character or design (no named robots,
+spirits or a studio's creatures) — design an original hero for each topic.
 
 ## What's in this folder
 | path | what |
@@ -25,17 +27,19 @@ character or design (no named robots, spirits or studios' creatures) — design 
 | `lib/kit.js` | `bird` (a bluebird: perched, hopping, looking, flying), `puff` (dust), `sapling`, `mossCap` (moss, tufts, flowers along an edge), `rock` |
 | `lib/film.js` | `Film`: `plate()` (painted once, optional depth-of-field blur), `shot(dur, draw, {cam, shake, tr})`, multiplane `g.put(plate, x, y, z)` / `g.at(z, fn)`, transitions (dissolve, white, black, fades), the grade (bloom, split tone, lifted blacks, vignette, grain), live player with sound, `check()`, the contract |
 | `lib/score.js` | `renderScore(spec, sr, dur)`: pads, strings, bass, music-box bell, wind, sfx (`chirp`, `flutter`, `whoosh`, `rumble`, `flicker`, `chime`, `thump`, `rustle`), reverb — plain JS, same output in the browser and in Node |
-| `templates/film.html` + `score.js` | a commented 12 s, 3-shot starting film (dawn → a mossy stone lantern in a clearing → a bird lands, the lantern lights) |
-| `scripts/new-film.mjs` | start a project: `lib/` + `film.html` + `score.js` (template or `--from last-tram`) + `out/` |
+| `templates/film.html` + `score.js` + `BRIEF.md` | a commented 12 s, 3-shot starting film (dawn → a mossy stone lantern in a clearing → a bird lands, the lantern lights) |
+| `scripts/new-film.mjs` | start a project: `lib/` + `BRIEF.md` + `film.html` + `score.js` (template or `--from last-tram`) + `out/` |
 | `scripts/render.mjs` | stills (`--stills 3,8`), a contact sheet (`--sheet 16`), or the MP4 (workers × ffmpeg chunks; `--audio out/x.wav`) |
 | `scripts/score.mjs` | the score → WAV (`score.js --dur 48 --out out/film.wav`) |
+| `scripts/bundle.mjs` | one self-contained HTML file (engine + film + score inlined, ~120 KB) that paints and plays live |
 | `scripts/check.mjs` | proves the page: loads clean, every shot draws, no blank frames, deterministic, rules, score renders |
-| `references/` | **LOOK** (palette, layer stack, brushes, hero, grade — what makes it read as painted) · **STORY** (topic → shots: the grammar, timing, a shot table) · **KIT** (API) · **LESSONS** (what broke and the fix) |
-| `examples/last-tram/` | the worked example: `index.html` (8 shots), `tram.js` (the hero in side view and a front close-up), `score.js` |
+| `references/` | **PROMPT** (the reference prompt verbatim, how that film was made, the brief template, the review rubric) · **LOOK** (palette, layer stack, brushes, hero, grade — what makes it read as painted) · **STORY** (topic → shots: the grammar, timing, a shot table) · **KIT** (API) · **LESSONS** (what broke and the fix) |
+| `examples/last-tram/` | the worked example: `BRIEF.md` (the topic filled into the prompt's structure), `index.html` (8 shots), `tram.js` (the hero in side view and a front close-up), `score.js` |
 
 ## Project layout (what you create)
 ```
 my-film/
+  BRIEF.md     the topic written out in the reference prompt's structure (references/PROMPT.md) — written first
   film.html    palettes → plates (F.plate) → hero painter → shots (F.shot) → checks (F.check) → F.start()
   hero.js      (optional) the hero painter in local units, painted again at each scale it is seen at
   score.js     export const SCORE = { pad, strings, bass, bell, air, sfx, reverb }
@@ -49,14 +53,14 @@ Requirements: Node + Playwright Chromium, ffmpeg. No network, no npm install, no
 a CPU; a 48 s film renders in ~7 min with 4 workers).
 
 ## Workflow
-1. **Topic → story → shot table** (references/STORY.md). Pick an original hero that can be *overgrown and asleep* and
-   can *wake and leave* (a tram, a lighthouse, a stone whale, a windmill, a diving bell, a bus-stop shrine …), a place
-   (forest, coast, terraced hills, a flooded town), a time of day (dawn is the default; dusk and after-rain also work),
-   one small living witness (the bluebird, a cat, a fox) and one moment of magic (a lamp wakes, a door opens, a bell
-   rings). Write 6–9 shots in the grammar *establish → approach → detail → the witness → the turn → the lift → the big
-   sky → the quiet return*, 3–8 s each, 40–80 s total, as a table: time, framing, camera, what moves, transition, sound.
-   With a reference video, extract stills (`ffmpeg -i ref.mp4 -vf fps=1/2,tile=4x3 sheet.jpg`), list its palette, layers,
-   shot sizes and transitions — then design your own hero and story; never copy a frame or a character.
+1. **Topic → brief → shot table.** Fill the brief template in references/PROMPT.md from the user's topic and save it as
+   `BRIEF.md`: an original hero that can be *overgrown and asleep* and can *wake and leave* (a tram, a lighthouse, a stone
+   whale, a windmill, a diving bell …), a place, a time of day (dawn by default), one small living witness, one moment of
+   magic, and the SCENE paragraph in the prompt's 6–9 beats; keep its QUALITY STANDARD and MUST NOT LOOK LIKE lists. Then
+   turn the SCENE into a shot table (references/STORY.md): *establish → approach → detail → the witness → the turn → the
+   lift → the big sky → the quiet return*, 3–8 s each, 40–80 s total, with time, framing, camera, what moves, transition,
+   sound. If the user gives a reference video, extract stills (`ffmpeg -i ref.mp4 -vf fps=1/2,tile=4x3 sheet.jpg`), list
+   its palette, layers, shot sizes and transitions — then design your own hero and story; never copy a frame or character.
 2. **Start**: `node <skill>/scripts/new-film.mjs my-film` (or `--from last-tram` to start from the 8-shot film).
 3. **Palettes** first (references/LOOK.md): a sky gradient, a cloud palette, 3–4 foliage palettes from far (pale, warm,
    low contrast) to near (deep teal-green), a bark set, the hero's two or three base colours + rust/patina, and the air
@@ -70,10 +74,14 @@ a CPU; a 48 s film renders in ~7 min with 4 workers).
    close-up is its own painter (like `tramFront`).
 6. **Motion** in the shot's `draw(g, lt)`: camera keys (always drifting — push in, truck, tilt), the hero's moves from
    pure functions of `lt` (wobble, lift, bank), the witness (`K.bird` with a path function), leaves, motes, flocks, rays,
-   glows, puffs, a shake at the turn, a white flash into the lift.
-7. **Sheet**: `render.mjs film.html --sheet 24 --scale .5` — every shot reads at a glance, nothing floats (contact
-   shadows, grass over feet/wheels), no plate edge shows when the camera moves, the witness stands *on* things, the light
-   comes from one side in every shot.
+   glows, puffs, a shake at the turn, a white flash into the lift. Characters, debris and leaves move **on twos**
+   (`g.twos()` / `P.onTwos(t)` = 12 drawings a second, like hand-drawn animation); the camera, light and mist stay smooth.
+   Key poses and holds (a crouch after landing, a still beat before the light wakes) — no constant sine bobbing.
+7. **Sheet and review**: `render.mjs film.html --sheet 24 --scale .5`, then render ~12 random moments as full stills
+   (`--stills 3.4,9.1,…`) and score each against the review rubric in references/PROMPT.md (the brief's QUALITY STANDARD
+   and MUST NOT LOOK LIKE): leaf-fleck foliage, 3+ hazed depths, flat cel shadows and varied ink on the hero, one light,
+   nothing floating (contact shadows, grass over feet/wheels, the witness standing *on* things), no plate edge when the
+   camera moves, no empty or muddy frame. Fix and repeat until every still could pass as a frame from a painted film.
 8. **Check**: `node <skill>/scripts/check.mjs film.html` must print only `ok`. Add `F.check(...)` for anything that must
    hold (the bird is on the roof after landing, the hero is in frame).
 9. **Score**: write `score.js` against the shot starts (check.mjs prints them): a chord per 2.5–3.5 s, a music-box
@@ -81,7 +89,8 @@ a CPU; a 48 s film renders in ~7 min with 4 workers).
    take-off, flicker + chime when the light wakes, thump + rumble + rustle at the shudder, whoosh on the lift). Listen on
    the live page (♪ button), then `node <skill>/scripts/score.mjs score.js --dur <DURATION> --out out/film.wav`.
 10. **Render**: `render.mjs film.html --workers 4 --audio out/film.wav` → `out/film.mp4`. Look at stills from the MP4
-    (`ffmpeg -ss 20 -i out/film.mp4 -frames:v 1 x.png`) before handing it over.
+    (`ffmpeg -ss 20 -i out/film.mp4 -frames:v 1 x.png`) before handing it over. If one HTML file is wanted:
+    `node <skill>/scripts/bundle.mjs film.html` → `out/film.single.html` (paints live; say so — it is not a video wrapper).
 
 ## Rules
 - **Pure function of t.** No `Math.random`, no `Date`, no state between frames: `P.rng(seed)` inside plate painters, `hash`,
@@ -98,6 +107,8 @@ a CPU; a 48 s film renders in ~7 min with 4 workers).
   hero face it. Never light from below except a lamp.
 - **Nothing floats.** Contact shadows (`P.shadow`) and a strip of grass in front of anything standing on the ground; the
   witness's feet are on a surface (write a check).
+- **Hand-drawn timing.** Characters and effects on twos (`g.twos()`), strong key poses, holds; massive things move slowly
+  and settle; nothing bobs on a constant sine.
 - **The camera always moves** a little (1–8 % zoom or 40–150 px truck per shot), shots are 3–8 s, cuts are hard except
   into/out of the big moments (dissolve 1–1.4 s; white flash .8 s into the lift; fade in/out at the ends).
 - **The grade is always on** (bloom, cool-top/warm-bottom split, lifted blacks, cream multiply, vignette, grain). Turn

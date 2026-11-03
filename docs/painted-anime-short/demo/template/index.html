@@ -101,7 +101,7 @@ F.shot(4.5, g => {
   g.put(ground, -340, 660, .85);
   g.at(.85, c => P.shadow(c, 960, 760, 260, 30, .5));
   g.put(lanternM, 960 - 200, 760 - 380, .85);
-  g.at(1, c => { P.motes(c, g.t, { x0: 0, x1: 1920, y0: 100, y1: 900, n: 40, seed: 2 }); P.leaves(c, g.t, { x0: 0, x1: 1920, y0: -40, y1: 1100, n: 10, fall: 50, size: 9, seed: 2 }); });
+  g.at(1, c => { P.motes(c, g.t, { x0: 0, x1: 1920, y0: 100, y1: 900, n: 40, seed: 2 }); P.leaves(c, g.twos(g.t), { x0: 0, x1: 1920, y0: -40, y1: 1100, n: 10, fall: 50, size: 9, seed: 2 }); });
   g.put(frame, -190, -300, 1.25);
 }, { name: 'clearing', tr: { type: 'dissolve', d: 1 }, cam: [{ t: 0, x: -60, zoom: 1 }, { t: 4.5, x: 40, zoom: 1.05 }] });
 
@@ -117,7 +117,7 @@ F.shot(3.5, g => {
     const k = LIGHT(g.lt), wx = 960, wy = 1240 - 200 * 3;          // the window of the fire box at scale 3
     c.fillStyle = P.rgba('#ffd27a', k); c.fillRect(wx - 48, wy - 54, 96, 108);
     P.glow(c, wx, wy, 420, '#ffcf7a', .75 * k); P.glow(c, wx, wy, 90, '#fff4d6', k);
-    const b = BIRD(g.lt); K.bird(c, b.x, b.y, 70, b.pose);
+    const b = BIRD(g.twos()); K.bird(c, b.x, b.y, 70, b.pose);           // characters on twos
     P.motes(c, g.t, { x0: 0, x1: 1920, y0: 0, y1: 1080, n: 40, seed: 3, a: .5 + .4 * k });
   });
 }, { name: 'close', cam: [{ t: 0, x: 0, y: 0, zoom: 1 }, { t: 3.5, x: 20, y: -20, zoom: 1.08 }] });

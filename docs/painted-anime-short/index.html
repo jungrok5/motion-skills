@@ -31,16 +31,18 @@
     <h2>작업 흐름</h2>
     <dl>
       <dt>입력</dt><dd>주제 하나(낡은 전차, 등대, 풍차, 돌로 된 고래 …). 레퍼런스 영상이 있으면 그 스틸</dd>
+      <dt>브리프</dt><dd>레퍼런스 프롬프트의 구조(장면 · 품질 기준 · 피해야 할 것 · 무작위 스틸 검토)에 주제를 채운 <code>BRIEF.md</code></dd>
       <dt>이야기</dt><dd>잠든 주인공 · 장소 · 작은 목격자 · 깨어나는 순간으로 바꾼 6–9샷 표(전경 → 접근 → 디테일 → 목격자 → 전환 → 상승 → 하늘 → 고요한 귀환)</dd>
       <dt>그림</dt><dd>빌드 때 한 번 칠하는 배경 판: 그러데이션 하늘과 분홍 구름띠, 잎 터치로 쌓은 숲, 깊이마다 다른 공기, 셀 색 · 녹 · 먹선 · 이끼의 주인공</dd>
-      <dt>확인</dt><dd>절반 크기 스틸과 콘택트 시트, 모든 샷이 그려지는지 · 빈 프레임 · 결정성 · 장면 규칙(새가 지붕 위) · 악보 검사</dd>
-      <dt>출력</dt><dd>30fps 1920×1080 MP4(코드로 합성한 음악 · 효과음 WAV 포함), ♪ 버튼으로 소리까지 재생하는 라이브 페이지</dd>
+      <dt>확인</dt><dd>무작위 스틸을 브리프의 품질 기준으로 채점하는 검토, 콘택트 시트, 모든 샷이 그려지는지 · 빈 프레임 · 결정성 · 장면 규칙(새가 지붕 위) · 악보 검사</dd>
+      <dt>출력</dt><dd>30fps 1920×1080 MP4(코드로 합성한 음악 · 효과음 포함), ♪ 버튼으로 소리까지 재생하는 라이브 페이지, 엔진째 넣은 HTML 한 파일(약 120 KB)</dd>
     </dl>
     <pre><code>cd painted-anime-short/examples/last-tram
 node ../../scripts/render.mjs index.html --sheet 24 --scale .5
 node ../../scripts/check.mjs index.html
 node ../../scripts/score.mjs score.js --dur 48 --out out/last-tram.wav
 node ../../scripts/render.mjs index.html --workers 4 --audio out/last-tram.wav
+node ../../scripts/bundle.mjs index.html
 node ../../scripts/new-film.mjs ../../../my-film</code></pre>
     <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. 네트워크와 GPU가 필요 없습니다(CPU에서 1080p 한 프레임 약 0.2초, 48초 영상을 워커 4개로 약 7분). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/painted-anime-short/SKILL.md">SKILL.md</a>에 있습니다.</p>
   </div>
@@ -107,11 +109,12 @@ node ../../scripts/new-film.mjs ../../../my-film</code></pre>
 
 <section id="works"><div class="wrap">
   <h2>실제 작품</h2>
-  <p class="lead">이 레포에서 만든 스킬입니다. Chetaslua가 X에 올린 코드만으로 만든 80초 단편(숲속에서 이끼 낀 기계가 깨어나 구름 위로 떠나는 영상)에서 화풍과 일반적인 기법(배경 판 겹치기, 잎 터치 숲, 셀 색 주인공, 깊이별 공기, 샷 구성, 필름 색감)만 빌려 예제 「The Last Tram」을 만들었고, 코드와 주인공, 이야기, 음악은 모두 이 레포의 것입니다.</p>
+  <p class="lead">이 레포에서 만든 스킬입니다. Chetaslua가 X에 올린 80초 단편 「The Moss Keeper」(숲속에서 이끼 낀 로봇이 깨어나 하늘로 떠나는 영상)와 스레드에 함께 올린 프롬프트가 출발점입니다. 그 영상은 코드로 한 장씩 칠해 MP4로 만든 뒤 HTML에 통째로 넣은 것이었습니다. 이 스킬은 프롬프트의 구조(장면 · 품질 기준 · 피해야 할 것 · 무작위 스틸 검토)와 화풍만 가져오고, 그림은 직접 만든 캔버스 엔진이 칠합니다. 예제 「The Last Tram」의 코드와 주인공, 이야기, 음악은 모두 이 레포의 것입니다.</p>
   <div class="works">
     <a class="work" href="demo/last-tram/" target="_blank" rel="noopener"><b>「The Last Tram」 · 48초 · 8샷</b><span>숲 빈터의 낡은 전차, 파랑새, 구름 위 비행, 라이브 페이지</span><span class="url">painted-anime-short/demo/last-tram/</span></a>
     <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/painted-anime-short/examples"><b>예제 폴더 · examples/</b><span>last-tram</span><span class="url">github.com/jungrok5/motion-skills</span></a>
-    <a class="work" href="https://x.com/chetaslua/status/2117169796290916732" target="_blank" rel="noopener"><b>화풍 레퍼런스 · X 게시물</b><span>Chetaslua(@chetaslua) · 2026년 11월</span><span class="url">x.com/chetaslua</span></a>
+    <a class="work" href="https://x.com/chetaslua/status/2117169796290916732" target="_blank" rel="noopener"><b>레퍼런스 영상과 프롬프트 · X 스레드</b><span>Chetaslua(@chetaslua) · 2026년 11월</span><span class="url">x.com/chetaslua</span></a>
+    <a class="work" href="https://github.com/ChetasLua/moss-keeper" target="_blank" rel="noopener"><b>레퍼런스 결과물 · The Moss Keeper</b><span>MP4를 품은 HTML 한 파일</span><span class="url">github.com/ChetasLua/moss-keeper</span></a>
   </div>
 </div></section>
 
@@ -121,6 +124,7 @@ node ../../scripts/new-film.mjs ../../../my-film</code></pre>
     <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-anime-short/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
     <li><a href="https://github.com/jungrok5/motion-skills/tree/main/painted-anime-short">폴더</a> <span>lib · scripts · templates · references · examples</span></li>
     <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-anime-short/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-anime-short/references/PROMPT.md">references/PROMPT.md</a> <span>레퍼런스 프롬프트 원문, 그 영상을 만든 방식, 주제를 채우는 브리프 틀, 스틸 검토 기준</span></li>
     <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-anime-short/references/STORY.md">references/STORY.md</a> <span>주제를 샷 표로 바꾸는 법, 샷 문법, 타이밍</span></li>
     <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-anime-short/references/LOOK.md">references/LOOK.md</a> <span>손그림으로 보이게 하는 것, 팔레트, 레이어 순서, 붓 크기, 색감</span></li>
     <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-anime-short/references/KIT.md">references/KIT.md</a> <span>엔진 · 붓 · 페인터 · 악보 API, 주인공 그리기</span></li>

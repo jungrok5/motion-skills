@@ -18,6 +18,9 @@ export const ease = {
   sine: k => .5 - .5 * Math.cos(Math.PI * clamp(k)),
 };
 
+// hand-drawn timing: characters move on twos (12 drawings a second) or threes (8); camera moves stay smooth
+export const onTwos = (t, fps = 12) => Math.floor(t * fps + 1e-6) / fps;
+
 // mulberry32: rng(seed) → () => [0,1)
 export function rng(seed = 1) {
   let s = (seed >>> 0) || 1;

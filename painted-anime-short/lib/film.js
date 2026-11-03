@@ -9,6 +9,7 @@
 // Depth z: 0 = infinitely far (never moves), 1 = the focal plane, > 1 = foreground (moves and scales more). The camera
 // {x, y, zoom, rot} is keyed per shot in focal-plane stage units; a layer at depth z moves by cam·z and scales by zoom^z.
 import { keys, hash, noise2, clamp, ease, rgba, rng } from './paint.js';
+import { renderScore } from './score.js';
 
 const POST = {
   bloom: .28, bloomR: 18,          // soft glow of the bright parts
@@ -25,7 +26,7 @@ export class Film {
     this.off = new Set((q.get('off') || '').split(',').filter(Boolean));
     this.S = +(q.get('scale') || (this.render ? 1 : Math.min(1, Math.max(.5, (innerWidth * devicePixelRatio) / this.W))));
     this.post = { ...POST, ...(o.post || {}) };
-    this.score = o.score || null; this.title = o.title || document.title; this.libURL = import.meta.url;
+    this.score = o.score || null; this.title = o.title || document.title; this.renderScore = renderScore;
     this.shots = []; this.rules = []; this.dur = 0;
     const mk = (w, h) => { const c = document.createElement('canvas'); c.width = Math.round(w); c.height = Math.round(h); return c; };
     this.mk = mk;
@@ -76,6 +77,7 @@ export class Film {
         ctx.restore();
       },
       screen(fn) { ctx.save(); fn(ctx); ctx.restore(); },
+      twos: (v = lt, fps = 12) => Math.floor(v * fps + 1e-6) / fps,   // hand-drawn timing: hold each drawing 2 frames
     };
     sh.draw(g, lt, lt / sh.dur);
     ctx.restore();
@@ -160,7 +162,7 @@ export class Film {
       if (src) { base = now(); stopAudio(); t0 = performance.now(); sb.textContent = '♪ sound'; return; }
       if (loading) return; loading = true; sb.textContent = '♪ …';
       ac = ac || new AudioContext();
-      if (!buffer) { const { renderScore } = await import(new URL('./score.js', this.libURL).href); const sr = ac.sampleRate, [L, R] = renderScore(this.score, sr, this.dur); buffer = ac.createBuffer(2, L.length, sr); buffer.copyToChannel(L, 0); buffer.copyToChannel(R, 1); }
+      if (!buffer) { const sr = ac.sampleRate, [L, R] = renderScore(this.score, sr, this.dur); buffer = ac.createBuffer(2, L.length, sr); buffer.copyToChannel(L, 0); buffer.copyToChannel(R, 1); }
       loading = false; sb.textContent = '♪ on'; const at = now(); paused = false; pb.textContent = '❚❚'; playAudio(at);
     };
     const scrub = e => { const r = bar.getBoundingClientRect(); go(clamp((e.clientX - r.left) / r.width) * this.dur); if (paused) this.frame(base); };

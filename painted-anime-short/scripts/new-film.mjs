@@ -1,6 +1,7 @@
 // painted-anime-short · new-film.mjs — start a project: lib/, film.html + score.js (template or an example), out/.
 //   node <skill>/scripts/new-film.mjs my-film                     → from templates/film.html (12 s, 3 shots)
 //   node <skill>/scripts/new-film.mjs my-film --from last-tram    → from examples/last-tram/ (48 s, 8 shots)
+// BRIEF.md comes along: rewrite it from the user's topic first (references/PROMPT.md), then the shots.
 import { cpSync, mkdirSync, readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,7 +18,7 @@ mkdirSync(join(out, 'out'), { recursive: true });
 cpSync(join(skill, 'lib'), join(out, 'lib'), { recursive: true });
 const fix = s => s.replace(/"pas\/": "[^"]*"/, '"pas/": "./lib/"');
 writeFileSync(join(out, 'film.html'), fix(readFileSync(join(src, from ? 'index.html' : 'film.html'), 'utf8')));
-for (const f of readdirSync(src)) if (f.endsWith('.js')) writeFileSync(join(out, f), readFileSync(join(src, f), 'utf8'));
+for (const f of readdirSync(src)) if (f.endsWith('.js') || f === 'BRIEF.md') writeFileSync(join(out, f), readFileSync(join(src, f), 'utf8'));
 writeFileSync(join(out, '.gitignore'), 'out/\n');
 console.log(`${out}/film.html  (from ${from ? 'examples/' + from : 'templates/film.html'})
 next:  cd ${dir} && node ${join(skill, 'scripts/render.mjs')} film.html --sheet 12 --scale .5`);
