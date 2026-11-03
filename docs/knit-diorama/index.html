@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>knit-diorama · motion-skills</title>
+<meta name="description" content="밭, 바다, 지붕, 나무까지 모두 털실로 뜬 작은 세상을 three.js로 만들고, 그 세상이 털실 공에서 떠져 나오는 영상을 만듭니다. 실 끝을 당기면 공이 떠올라 돌며 바깥으로 세상을 뜨고, 소품이 공에서 튀어나오며, 다시 풀려 공으로 돌아가는 1080p MP4와 브라우저에서 도는 페이지를 냅니다.">
+<meta property="og:title" content="knit-diorama · motion-skills">
+<meta property="og:description" content="밭, 바다, 지붕, 나무까지 모두 털실로 뜬 작은 세상을 three.js로 만들고, 그 세상이 털실 공에서 떠져 나오는 영상을 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/knit-diorama/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/knit-diorama">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / knit-diorama</nav>
+  <h1>knit-diorama</h1>
+  <p>밭, 바다, 지붕, 나무까지 모두 털실로 뜬 작은 세상을 three.js로 만들고, 그 세상이 털실 공에서 떠져 나오는 영상을 만듭니다. 실 끝을 당기면 공이 떠올라 돌며 바깥으로 세상을 뜨고, 소품이 공에서 튀어나오며, 다시 풀려 공으로 돌아가는 1080p MP4와 브라우저에서 도는 페이지를 냅니다.</p>
+  <ul class="tags"><li>3D</li><li>16:9</li><li>MP4</li><li>라이브 페이지</li><li>심리스 루프</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>세상의 주제(항구, 농장, 눈 마을 …), 강조색 하나, 소품 목록, 공 · 뜨기 · 풀기의 박자</dd>
+      <dt>장면</dt><dd>높이 함수와 구역 함수로 짓는 뜨개 땅(구역 경계마다 홈질 솔기), 메리야스 · 고무뜨기 · 가터 · 멍석 · 꽈배기 질감, 털 셸을 입힌 나무와 구름, 앞선이 닿으면 공에서 튀어나오는 소품</dd>
+      <dt>확인</dt><dd>절반 크기 스틸과 콘택트 시트, 같은 시각 같은 픽셀 · 루프 이음매(마지막 프레임 = 첫 프레임) · 장면 규칙(등대는 땅 위)을 모든 프레임에서 보는 검사</dd>
+      <dt>출력</dt><dd>30fps 1920×1080 MP4(사운드 선택), 끌어서 실을 당기듯 앞뒤로 감아 보는 라이브 페이지</dd>
+    </dl>
+    <pre><code>cd knit-diorama/examples/harbour
+node ../../scripts/render.mjs index.html --sheet 16 --scale .5
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs index.html --workers 4
+node ../../scripts/new-scene.mjs ../../../my-world</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium(WebGL2), ffmpeg. 네트워크가 필요 없습니다. GPU가 없으면 1080p 한 프레임에 3–7초가 걸려 20초 영상을 백그라운드로 40–60분에 렌더합니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/knit-diorama/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:calc((100vw - 34px)*.5625);--demo-bg:#efe2cf">
+    <iframe data-src="demo/harbour.html" title="knit-diorama 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/harbour.html">데모 열기 (examples/harbour)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/harbour</code> · 20초 루프 · 옆으로 끌면 실을 당기듯 시간이 감김</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/harbour.html" data-cap="예제 &lt;code&gt;examples/harbour&lt;/code&gt; · 20초 루프 · 옆으로 끌면 실을 당기듯 시간이 감김" aria-pressed="true">뜨개 항구</button>
+        <button class="btn" type="button" data-src="demo/template.html" data-cap="템플릿 &lt;code&gt;templates/scene.html&lt;/code&gt; · 12초 · 새 장면의 출발점" aria-pressed="false">시작 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제 「Knitted Harbour」의 박자마다 한 장면과 시작 템플릿입니다. 카드를 누르면 새 탭에서 그 장면이 그 순간에 멈춘 채 열리고, 브라우저가 직접 그립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"knit":"떠지는 세상","life":"완성된 세상","unravel":"풀리는 세상"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>Knitted Harbour <small>16:9 · 20초 루프</small></h3>
+      <p>담요 위의 털실 공에서 항구 섬 하나가 떠져 나오고, 배가 떠다니다가 다시 풀려 공으로 돌아갑니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="knit" href="demo/harbour.html?t=0.8" target="_blank" rel="noopener">
+          <img src="samples/ball.jpg" alt="조각보 무늬 뜨개 담요 위에 놓인 산호색 털실 공, 공에서 풀려 나온 실 끝에 달린 노란 방울" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">시작 · 0.8초</span><b>털실 공 하나</b>
+          <span class="how">실 가닥을 감은 공과 담요 위에 늘어진 실 끝. 곧 이 끝이 가운데로 당겨짐</span></div></a>
+        <a class="tile" data-tags="knit" href="demo/harbour.html?t=3.4" target="_blank" rel="noopener">
+          <img src="samples/first.jpg" alt="떠오른 털실 공 아래로 처음 떠진 초록 메리야스 조각, 공에서 날아와 내려앉는 분홍 지붕 집과 뜨개바늘 두 개" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">뜨기 · 3.4초</span><b>첫 조각</b>
+          <span class="how">떠오른 공이 돌며 가운데부터 뜸. 앞선을 따라 도는 뜨개바늘, 공에서 날아와 찌그러졌다 펴지는 집</span></div></a>
+        <a class="tile" data-tags="knit" href="demo/harbour.html?t=5.6" target="_blank" rel="noopener">
+          <img src="samples/needles.jpg" alt="절반쯤 떠진 섬: 초록 들판, 분홍 땡땡이 밭, 파란 고무뜨기 바다, 공에서 앞선의 뜨개바늘까지 이어진 실" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">뜨기 · 5.6초</span><b>앞선과 바늘</b>
+          <span class="how">크림색 테두리로 보이는 앞선. 공에서 바늘까지 이어진 실, 솔기로 이어진 밭 조각들</span></div></a>
+        <a class="tile" data-tags="knit" href="demo/harbour.html?t=8.4" target="_blank" rel="noopener">
+          <img src="samples/edge.jpg" alt="가장자리만 남기고 거의 다 떠진 섬, 작아진 털실 공, 오른쪽에 줄무늬 등대와 돛단배들" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">뜨기 · 8.4초</span><b>가장자리까지</b>
+          <span class="how">뜬 만큼 작아진 공. 마지막으로 산호색 끈 테두리와 고무뜨기 옆면이 드러남</span></div></a>
+        <a class="tile" data-tags="life" href="demo/harbour.html?t=12" target="_blank" rel="noopener">
+          <img src="samples/harbour.jpg" alt="완성된 뜨개 항구 섬: 풍차와 소나무가 있는 언덕, 집 네 채와 오솔길, 모래사장과 부두, 파란 바다의 돛단배 세 척, 빨간 줄무늬 등대와 하얀 구름" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">완성 · 12초</span><b>뜨개 항구</b>
+          <span class="how">줄무늬 등대의 불빛, 도는 풍차 날개, 굴뚝 연기, 흔들리는 배. 담요 위에 내려앉은 작은 공</span></div></a>
+        <a class="tile" data-tags="life" href="demo/harbour.html?t=13.2" target="_blank" rel="noopener">
+          <img src="samples/orbit.jpg" alt="옆으로 돈 카메라에서 본 항구 섬, 등대 그림자가 바다 위로 길게 드리움" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">완성 · 13.2초</span><b>반 바퀴 돌기</b>
+          <span class="how">카메라가 천천히 돌며 보는 섬. 털이 보송한 나무 수관과 구름, 무늬를 떠 넣은 집 벽</span></div></a>
+        <a class="tile" data-tags="unravel" href="demo/harbour.html?t=16.6" target="_blank" rel="noopener">
+          <img src="samples/unravel.jpg" alt="가장자리부터 풀리는 섬, 다시 떠오른 털실 공으로 날아 들어가는 나무와 배" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">풀기 · 16.6초</span><b>다시 풀리는 섬</b>
+          <span class="how">바깥부터 줄어드는 앞선. 소품이 한 번 움찔한 뒤 공으로 날아 들어가고 공은 다시 커짐</span></div></a>
+        <a class="tile" data-tags="unravel" href="demo/harbour.html?t=18.2" target="_blank" rel="noopener">
+          <img src="samples/return.jpg" alt="거의 다 풀린 섬의 가운데 집과 나무가 커다란 털실 공으로 빨려 들어가는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">풀기 · 18.2초</span><b>공으로 돌아감</b>
+          <span class="how">마지막 집들이 공으로. 20초에 첫 프레임과 같은 모습으로 이어지는 루프</span></div></a>
+        <a class="tile" data-tags="life" href="demo/template.html?t=10.5" target="_blank" rel="noopener">
+          <img src="samples/template.jpg" alt="연못과 작은 배, 산호색 지붕 집, 노란 나무와 소나무가 있는 작은 뜨개 초원, 왼쪽 담요 위의 노란 털실 공" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 12초</span><b>시작 장면</b><span class="en">templates/scene.html</span>
+          <span class="how"><code>new-scene.mjs</code>가 복사하는 출발점. 연못이 있는 초원, 집 한 채, 나무 몇 그루</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. Kris Yang의 인터랙티브 작품 <i>Yarn World</i>("실을 당기면 세상이 떠지고, 풀린 끝을 당기면 풀린다")에서 생각과 일반적인 기법(뜨개 질감 노멀 맵, 털 셸, 드러나는 앞선, 스프링 팝업)만 빌려 예제 「Knitted Harbour」를 만들었고, 코드와 소품, 장면 구성, 타이밍은 모두 이 레포의 것입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/harbour.html" target="_blank" rel="noopener"><b>「Knitted Harbour」 · 20초 루프</b><span>뜨개 항구 섬, 등대, 풍차, 돛단배, 라이브 페이지</span><span class="url">knit-diorama/demo/harbour.html</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/knit-diorama/examples"><b>예제 폴더 · examples/</b><span>harbour</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://yarn.krisyang.dev/" target="_blank" rel="noopener"><b>아이디어 · Yarn World</b><span>Kris Yang(@krisyangdev) · 2026년 11월</span><span class="url">yarn.krisyang.dev</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/knit-diorama/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/knit-diorama">폴더</a> <span>lib · scripts · templates · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/knit-diorama/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/knit-diorama/references/LOOK.md">references/LOOK.md</a> <span>털실로 보이게 하는 것, 뜨개 질감, 크기, 팔레트, 빛, 움직임</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/knit-diorama/references/KIT.md">references/KIT.md</a> <span>엔진과 소품 API, 새 소품 만들기</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/knit-diorama/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 질감은 코드로 뜸 (이미지 · 폰트 파일 없음) · three.js r170 (MIT)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
