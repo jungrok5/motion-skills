@@ -1,4 +1,4 @@
-// crayon-statechart · new-film.mjs — start a project: lib/ (engine + fonts), film.html (template or an example), out/.
+// crayon-statechart · new-film.mjs — start a project: lib/ (engine + fonts), BRIEF.md, film.html (template or an example), out/.
 //   node <skill>/scripts/new-film.mjs my-film                → from templates/film.html (one chapter, 8 steps)
 //   node <skill>/scripts/new-film.mjs my-film --from kimchi  → from examples/kimchi/ (3 chapters, 20 steps)
 import { cpSync, mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
@@ -16,7 +16,10 @@ if (!existsSync(src)) { console.error(`no such example: ${from}`); process.exit(
 mkdirSync(join(out, 'out'), { recursive: true });
 cpSync(join(skill, 'lib'), join(out, 'lib'), { recursive: true });
 writeFileSync(join(out, 'film.html'), readFileSync(src, 'utf8').replace(/"sc\/": "[^"]*"/, '"sc/": "./lib/"'));
+const brief = from ? join(skill, 'examples', from, 'BRIEF.md') : join(skill, 'templates', 'BRIEF.md');
+if (existsSync(brief)) writeFileSync(join(out, 'BRIEF.md'), readFileSync(brief, 'utf8'));
 writeFileSync(join(out, '.gitignore'), 'out/\n');
 console.log(`${out}/film.html  (from ${from ? 'examples/' + from : 'templates/film.html'})
-next:  cd ${dir} && node ${join(skill, 'scripts/check.mjs')} film.html
+next:  write BRIEF.md from the topic first (references/BRIEF.md), then film.html
+       cd ${dir} && node ${join(skill, 'scripts/check.mjs')} film.html
        node ${join(skill, 'scripts/render.mjs')} film.html --sheet 12 --scale .5`);

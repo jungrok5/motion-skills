@@ -15,10 +15,39 @@
 // Main lines in English, tags in Korean (the second language goes in the small red line). Coordinates: 1350 px wide sheet,
 // x = centre of a state, y = its top. Props stand on their bottom-centre.
 import { Film } from 'sc/film.js';
-import { C } from 'sc/sketch.js';
+import { C, lerp } from 'sc/sketch.js';
+import { defineProp } from 'sc/props.js';
 
 const F = new Film({ title: 'the making of kimchi', W: 1350, H: 1080, step: 1.55 });
 const { chapter, state, init, final, edge, group, region, divider, note, prop } = F;
+// Designed for this topic (the kit has no stuffed cabbage): a halved napa cabbage lying cut side up, pale leaves with the
+// red paste between them, a green leafy end. Built from the same pen (P.shape / P.ink) so it is hatched in the same hand.
+defineProp('stuffed-cabbage', {
+  box: () => [-62, -52, 62, 2],
+  draw(P, o, t) {
+    const L = 120, H = 46, g = P.g, body = [];
+    for (let i = 0; i <= 24; i++) { const a = Math.PI + i / 24 * Math.PI; body.push([Math.cos(a) * L / 2, -4 + Math.sin(a) * H]); }
+    body.push([L / 2 - 4, 0], [-L / 2 + 4, 0]);
+    P.shape(body, { fill: C.cream, base: C.cream, baseA: .95, hatchColor: C.yellow, a: .4, gap: 3, w: 2.1, outline: null });
+    g.save(); g.beginPath(); body.forEach((q, i) => i ? g.lineTo(...q) : g.moveTo(...q)); g.closePath(); g.clip();
+    // the cut face: curved pale leaves, red paste in every gap (thick near the root end on the left, thinning out)
+    for (let i = 1; i < 6; i++) {
+      const y = -4 - H * i / 6, pts = [];
+      for (let k = 0; k <= 10; k++) { const x = lerp(-L / 2, L * .22, k / 10); pts.push([x, y + Math.sin(k / 10 * Math.PI) * -4]); }
+      P.ink(pts, { w: lerp(6, 3, i / 6), color: C.red, amp: .6 });
+      P.ink(pts.map(([x, y]) => [x, y - 3.5]), { w: 1.1, color: C.creamHatch, alpha: .9 });
+    }
+    // the green leafy end, frilled
+    const leaf = [[L * .2, 2]]; for (let i = 0; i <= 8; i++) { const y = lerp(2, -4 - H, i / 8); leaf.push([L * .2 + (i % 2 ? 9 : 0) + Math.sin(i) * 3, y]); }
+    leaf.push([L / 2 + 4, -H - 6], [L / 2 + 4, 4]);
+    P.shape(leaf, { fill: C.green, base: C.green, baseA: .9, hatchColor: C.greenDark, gap: 2.6, a: .55, outline: null });
+    for (let i = 0; i < 10; i++) { const x = lerp(-L * .42, L * .14, P.rnd()), y = -8 - P.rnd() * H * .8; P.ink([[x, y], [x + 2.2, y + 1]], { w: 2, color: C.red }); }
+    g.restore();
+    P.ink(body, { closed: true, w: 2.2, amp: .8 });
+    P.ink([[L * .2, 0], [L * .21, -H + 4]], { w: 1.3, color: C.greenDark, alpha: .6 });
+  },
+});
+
 const grandma = { hat: 'scarf', shirt: C.white, pattern: 'flowers', pants: C.ink, apron: C.pink };
 
 // ── I · Salted ──────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -94,6 +123,8 @@ F.step('every leaf gets its share: stuffed heads', 'stuffed');
 edge('byhand', 'stuffed', { en: -.45 });
 edge('line', 'stuffed', { en: .45 });
 state('stuffed', { x: 700, y: 1480, label: 'stuffed heads', tag: '속 넣은 배추' });
+prop('stuffed-cabbage', { x: 930, y: 1606, s: .95 });
+prop('stuffed-cabbage', { x: 1150, y: 1612, s: 1.1, flip: true });
 
 F.step('a pale leaf? back for more paste', 'paste');
 edge('stuffed', 'paste', { exit: 'r', enter: 'r', via: [[1050, 1512], [1050, 1178]], guard: 'pale leaf', text: 'more paste' });

@@ -4,7 +4,8 @@ A process explained as a hand-drawn statechart that draws itself one step at a t
 cream paper, typewriter lettering, torn-ticket state boxes with small red second-language tags, red `[guards]` on the
 branches, self-loops and back edges, parallel "at the same time" regions, crayon illustrations of the work beside the
 chart, a camera that scrolls down the sheet, and a player bar with a numbered caption. Canvas 2D only; a live page and an
-MP4. Give it a topic ("how kimchi is made", "the business of a boba shop") and it writes the chapters, states and steps.
+MP4. Give it a topic ("how kimchi is made", "the business of a boba shop") and it designs a new chart for it — brief,
+chapters, states, guards, loops, steps and pictures — in the same style.
 
 ```bash
 # from this folder
@@ -14,9 +15,9 @@ node ../../scripts/render.mjs index.html --sheet 16 --scale .5   # out/kimchi-sh
 node ../../scripts/render.mjs index.html --workers 4        # out/kimchi.mp4 (1350×1080, 46 s)
 python3 -m http.server 8000   # then open http://localhost:8000/ (live, the bar's buttons work)
 
-# a new film
-node scripts/new-film.mjs ~/my-film               # template: a parcel's trip, 1 chapter, 8 steps
-node scripts/new-film.mjs ~/my-film --from kimchi # 3 chapters, 20 steps
+# a new film: write BRIEF.md from the topic first (references/BRIEF.md), then film.html
+node scripts/new-film.mjs ~/my-film               # template (a parcel's trip) + an empty BRIEF.md
+node scripts/new-film.mjs ~/my-film --from kimchi # the example and its filled brief
 ```
 
 Requirements: Node + Playwright Chromium, ffmpeg. No network, no npm install.

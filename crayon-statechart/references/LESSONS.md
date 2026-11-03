@@ -30,3 +30,8 @@ From building `examples/kimchi`, the template and the prop kit against the refer
   → Keep the ending; a hanging check looks like a slow page.
 - **Rendering is cheap.** → State boxes are painted once into sprites (per state, active or not, per scale); paper and
   grain are plates. ~10–30 ms a frame; 1,367 frames in ~96 s with 4 workers.
+- **The first version only re-skinned its example.** → Without a brief, a new topic tends to be poured into the kimchi
+  layout. → Brief first (references/BRIEF.md): the topic's own chapters, choices, loops and pictures, scored with the
+  rubric; the example itself was redone that way and gained a prop designed for it (`stuffed-cabbage`, in `index.html`).
+- **The designed prop sat on the back edge.** → It was placed beside "stuffed heads", where the back edge leaves to the
+  right. → `check.mjs` named the collision; props go below the row the edges leave from.
