@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>cartoon-3d-short · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 납작한 2D 만화 캐릭터가 잉크 외곽선을 두른 3D 마을에서 움직이는 1분짜리 세로 애니메이션 쇼츠를 코드만으로 만듭니다.">
+<meta property="og:title" content="cartoon-3d-short · motion-skills">
+<meta property="og:description" content="주제 하나를 주면 납작한 2D 만화 캐릭터가 잉크 외곽선을 두른 3D 마을에서 움직이는 1분짜리 세로 애니메이션 쇼츠를 코드만으로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/cartoon-3d-short/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/cartoon-3d-short">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / cartoon-3d-short</nav>
+  <h1>cartoon-3d-short</h1>
+  <p>주제 하나를 주면 납작한 2D 만화 캐릭터가 잉크 외곽선을 두른 3D 마을에서 움직이는 1분짜리 세로 애니메이션 쇼츠를 코드만으로 만듭니다. 황당한 사실로 시작해 "You see"로 원리를 풀고 반전으로 끝나는 대본, ElevenLabs 내레이션, 단어에 맞춘 샷, 코드로 합성한 음악과 효과음을 붙인 MP4와 브라우저에서 도는 페이지를 냅니다.</p>
+  <ul class="tags"><li>3D + 2D 캐릭터</li><li>9:16</li><li>MP4</li><li>내레이션</li><li>라이브 페이지</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나 (물리적 원인과 결과가 있는 실제 이야기)</dd>
+      <dt>대본</dt><dd>출처를 단 사실, 훅 → 배경 → 고조 → "You see" + 비유 → 반전, 200–240단어</dd>
+      <dt>목소리</dt><dd>ElevenLabs 내레이션, 초당 3.4–3.7단어로 정리, 단어별 시각 words.json</dd>
+      <dt>장면</dt><dd>3D 세트, 단어에 맞춰 시작하는 샷 15–20개, 샷마다 조명 프리셋과 카메라 키</dd>
+      <dt>출력</dt><dd>1080×1920 MP4, 소리 나는 라이브 페이지, SCRIPT.md</dd>
+    </dl>
+    <pre><code>cd cartoon-3d-short/examples/leaning-tower
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs index.html --sheet 20 --scale .35
+node ../../scripts/score.mjs score.js --dur 61.94 \
+  --voice voice/voice.mp3 --words voice/words.json
+node ../../scripts/render.mjs index.html --audio out/mix.wav
+
+node ../../scripts/new-film.mjs ~/my-short   # 새 쇼츠</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg, 내레이션용 ElevenLabs. npm 설치와 GPU는 필요 없습니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/cartoon-3d-short/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:4/5;--h-phone:640px;--demo-bg:#111">
+    <iframe data-src="demo/leaning-tower/?scale=.5" title="cartoon-3d-short 예제 실시간 재생" allow="fullscreen; autoplay" allowfullscreen></iframe>
+    <noscript><a href="demo/leaning-tower/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/leaning-tower</code> · 62초 · 19샷 · ▶로 소리와 함께 재생</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/leaning-tower/?scale=.5" data-cap="예제 &lt;code&gt;examples/leaning-tower&lt;/code&gt; · 62초 · 19샷 · ▶로 소리와 함께 재생" aria-pressed="true">피사의 사탑</button>
+        <button class="btn" type="button" data-src="demo/butter/?scale=.5" data-cap="템플릿 &lt;code&gt;templates/film.html&lt;/code&gt; · 19초 · 5샷 · 목소리 없이 대본으로 추정한 타이밍" aria-pressed="false">템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제와 템플릿의 샷입니다. 카드를 누르면 라이브 데모가 그 장면에서 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"ex":"예제 · 피사의 사탑","tpl":"템플릿 · 토스트"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>The Tower That a War Saved <small>예제 · 62초 · 19샷</small></h3>
+      <p>피사의 사탑이 아직 서 있는 이유: 백 년 가까운 전쟁으로 공사가 멈춘 사이 진흙이 단단해졌다는 실제 이야기입니다.</p>
+      <div class="grid tall">
+        <a class="tile" data-tags="ex" href="demo/leaning-tower/?t=1.5" target="_blank" rel="noopener">
+          <img src="samples/hook.jpg" alt="기울어진 피사의 사탑을 올려다보는 낮은 구도, 앞에서 손가락으로 가리키는 관광객과 사진기를 든 관광객" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">훅 · 1.5초</span><b>전쟁 덕분에 서 있는 탑</b><span class="how">오늘의 탑을 먼저 보여 주는 낮은 와이드, 줌으로 다가감</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/leaning-tower/?t=6" target="_blank" rel="noopener">
+          <img src="samples/site.jpg" alt="높은 곳에서 내려다본 1173년의 광장: 줄무늬 대성당, 비계에 둘러싸인 첫 층, 걸어가는 석공들" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">배경 · 6초</span><b>1173년, 첫 층</b><span class="how">흰 플래시 뒤 높은 설정 샷에서 미끄러지듯 내려옴</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/leaning-tower/?t=12.8" target="_blank" rel="noopener">
+          <img src="samples/tipping.jpg" alt="낮은 기울인 구도로 본 세 층짜리 탑이 기울고, 아래에서 두 석공이 놀라 팔을 듦" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">고조 · 12.8초</span><b>기울기 시작한 탑</b><span class="how">0°에서 4°로 기울고 "over"에 화면이 흔들림</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/leaning-tower/?t=19.5" target="_blank" rel="noopener">
+          <img src="samples/war.jpg" alt="창을 든 빨간 투구 병사들이 행진해 지나가고 뒤에서 석공들이 연장을 내려놓음" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">고조 · 19.5초</span><b>전쟁, 연장을 내려놓다</b><span class="how">옆모습으로 행진하는 병사들, 롤을 준 카메라</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/leaning-tower/?t=23.8" target="_blank" rel="noopener">
+          <img src="samples/century.jpg" alt="노을빛 역광 속 반쯤 지은 탑과 그 앞에 앉아 조는 보초" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">시간 경과 · 23.8초</span><b>백 년 동안 그대로</b><span class="how">골든 아워 프리셋: 낮은 역광, 보랏빛 그늘, 복숭아색 지평선</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/leaning-tower/?t=26.6" target="_blank" rel="noopener">
+          <img src="samples/neighbors.jpg" alt="탑을 가리키며 크게 웃는 이웃 세 사람, 배경은 흐림" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">반응 · 26.6초</span><b>웃는 이웃들</b><span class="how">미디엄 샷, 렌즈 블러, 단어에 맞춘 표정</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/leaning-tower/?t=35.4" target="_blank" rel="noopener">
+          <img src="samples/banana.jpg" alt="바나나를 든 아이 뒤로 휘어진 탑 전체" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">농담 · 35.4초</span><b>바나나처럼 휜 탑</b><span class="how">위층을 반대로 기울여 쌓은 탑, 손에 든 소품</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/leaning-tower/?t=41.6" target="_blank" rel="noopener">
+          <img src="samples/sponge.jpg" alt="부엌에서 아이가 젖은 스펀지를 꽉 짜자 물이 튐" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">You see · 41.6초</span><b>스펀지 비유</b><span class="how">다른 장소의 클로즈업, 실내 프리셋, 물 튀김 효과</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/leaning-tower/?t=47" target="_blank" rel="noopener">
+          <img src="samples/night.jpg" alt="달빛 아래 푸른 밤의 반쯤 지은 탑" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">설명 · 47초</span><b>기다리는 탑</b><span class="how">밤 프리셋: 푸른 키 라이트와 달</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/leaning-tower/?t=50.8" target="_blank" rel="noopener">
+          <img src="samples/topple.jpg" alt="계속 지었다면: 쓰러지는 탑과 놀란 건축가" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">가정 · 50.8초</span><b>계속 지었다면</b><span class="how">반사실을 그대로 보여 주고 충돌에 맞춰 음악을 끊음</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/leaning-tower/?t=54" target="_blank" rel="noopener">
+          <img src="samples/engineers.jpg" alt="1990년, 안전모를 쓴 기술자들과 드릴, 쌓인 흙과 탑에 연결된 강철 케이블" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">결과 · 54초</span><b>1990년의 기술자들</b><span class="how">케이블, 납 추, 높은 쪽 흙을 빼내는 드릴</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/leaning-tower/?t=61" target="_blank" rel="noopener">
+          <img src="samples/payoff.jpg" alt="노을 속에서 탑을 떠받치는 자세를 취한 관광객들" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">반전 · 61초</span><b>똑바른 탑은 그냥 탑</b><span class="how">훅의 그림으로 돌아와 마지막 단어에서 끝남</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>Butter Side Down <small>템플릿 · 19초 · 5샷</small></h3>
+      <p>목소리가 생기기 전에도 도는 시작용 영상입니다. 대본에서 단어 시각을 추정합니다.</p>
+      <div class="grid tall">
+        <a class="tile" data-tags="tpl" href="demo/butter/?t=1.6" target="_blank" rel="noopener">
+          <img src="samples/t-hook.jpg" alt="식탁 위 버터 바른 토스트를 노려보는 아이" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">훅 · 1.6초</span><b>운이 나쁜 토스트?</b><span class="how">실내 프리셋, 클로즈업과 렌즈 블러</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/butter/?t=8.5" target="_blank" rel="noopener">
+          <img src="samples/t-explain.jpg" alt="식탁 옆에서 떨어지는 토스트를 가리키는 아이" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">You see · 8.5초</span><b>반 바퀴만 도는 높이</b><span class="how">와이드 샷과 화살표 효과</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/butter/?t=17.5" target="_blank" rel="noopener">
+          <img src="samples/t-payoff.jpg" alt="키 큰 식탁 옆에서 두 팔을 든 아이" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">반전 · 17.5초</span><b>더 높은 식탁</b><span class="how">미끄러지는 카메라, 반짝임 효과</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬은 mromidev의 Claude 스킬(MIT)을 이 레포의 방식으로 옮긴 것입니다. 원본은 Remotion과 React Three Fiber로 렌더하고, 여기서는 같은 룩을 브라우저 페이지의 three.js로 냅니다.</p>
+  <div class="works">
+    <a class="work" href="https://jungrok5.github.io/motion-skills/cartoon-3d-short/demo/leaning-tower/" target="_blank" rel="noopener"><b>「The Tower That a War Saved」</b><span>예제 · 62초 · 19샷 · 라이브 페이지</span><span class="url">cartoon-3d-short/demo/leaning-tower</span></a>
+    <a class="work" href="https://github.com/mromidev/claude-animated-shorts"><b>원본 레포 · mromidev/claude-animated-shorts</b><span>스킬의 출처 · 「The Bridge That Fell for a Song」 67초</span><span class="url">github.com/mromidev/claude-animated-shorts</span></a>
+    <a class="work" href="https://x.com/DDJCXX/status/2117420560963821868" target="_blank" rel="noopener"><b>소개 게시물 · X</b><span>이 스킬을 알린 게시물</span><span class="url">x.com/DDJCXX/status/2117420560963821868</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cartoon-3d-short/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/cartoon-3d-short">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cartoon-3d-short/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cartoon-3d-short/references/STORY.md">references/STORY.md</a> <span>주제 → 대본 공식 → 샷 문법</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cartoon-3d-short/references/LOOK.md">references/LOOK.md</a> <span>측정한 룩의 수치</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cartoon-3d-short/references/KIT.md">references/KIT.md</a> <span>API</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cartoon-3d-short/references/VOICE.md">references/VOICE.md</a> <span>내레이션과 단어 타이밍</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cartoon-3d-short/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 이미지는 모두 이 스킬로 렌더한 장면입니다 · 내레이션 ElevenLabs
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
