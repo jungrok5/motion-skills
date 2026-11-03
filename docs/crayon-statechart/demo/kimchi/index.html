@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>the making of kimchi · crayon-statechart</title>
+<script type="importmap">{ "imports": { "sc/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// Worked example: 「김장 · the making of kimchi」 — 3 chapters, 20 steps, ~36 s at 1×.
+//   I   Salted     — a straight run, a split ([a few heads] / [a whole kimjang]), a merge, a self-loop ([still crisp])
+//   II  Seasoned   — a straight run, a split, a merge, a back edge ([pale leaf] → more paste)
+//   III Two at once — a parallel state: the jar and the table change at the same time; a guard that reads the other region
+// Main lines in English, tags in Korean (the second language goes in the small red line). Coordinates: 1350 px wide sheet,
+// x = centre of a state, y = its top. Props stand on their bottom-centre.
+import { Film } from 'sc/film.js';
+import { C } from 'sc/sketch.js';
+
+const F = new Film({ title: 'the making of kimchi', W: 1350, H: 1080, step: 1.55 });
+const { chapter, state, init, final, edge, group, region, divider, note, prop } = F;
+const grandma = { hat: 'scarf', shirt: C.white, pattern: 'flowers', pants: C.ink, apron: C.pink };
+
+// ── I · Salted ──────────────────────────────────────────────────────────────────────────────────────────────────────
+F.step('whole cabbages come in from the field', 'cabbage');
+chapter({ x: 56, y: 44, title: 'Salted', sub: 'from a field cabbage to a soft leaf', tag: '배추 절이기 · 천일염 · 소금물' });
+init('i1', { x: 700, y: 66 });
+state('cabbage', { x: 700, y: 104, label: 'whole cabbages', tag: '통배추' });
+edge('i1', 'cabbage');
+prop('pile', { of: 'veg', type: 'cabbage', n: 8, w: 230, each: 1, x: 1140, y: 236 });
+prop('person', { x: 1000, y: 236, pose: 'walk', act: 'carry', hat: 'cap', hatColor: C.green, shirt: C.yellow, pattern: 'plain', item: { name: 'veg', type: 'cabbage', s: .8, dx: 4, dy: 18 } });
+
+F.step('each head is split down the middle', 'halved');
+edge('cabbage', 'halved', { text: 'split down\nthe middle' });
+state('halved', { x: 700, y: 254, label: 'halved heads', tag: '반으로 가르기' });
+
+F.step('a few heads: salt between every leaf', 'hand');
+edge('halved', 'hand', { ex: -.5, guard: 'a few heads', text: 'salt between\nevery leaf', side: 'l' });
+state('hand', { x: 540, y: 420, label: 'salted by hand', tag: '켜켜이 소금 치기' });
+prop('person', { x: 150, y: 612, s: 1.25, ...grandma, pose: 'squat', act: 'sprinkle', speed: 5 });
+prop('tub', { x: 318, y: 612, w: 180, color: C.red, fill: C.cream, items: { name: 'veg', type: 'cabbage', half: true, n: 3, s: .55 } });
+prop('sack', { x: 478, y: 612, w: 74, h: 84, label: '천일염', labelSize: 15 });
+
+F.step('a whole kimjang: a night in salt water', 'brine');
+edge('halved', 'brine', { ex: .5, guard: 'a whole kimjang', text: 'a night in\nsalt water' });
+state('brine', { x: 870, y: 420, label: 'soaked in brine', tag: '소금물 절이기' });
+prop('tub', { x: 1150, y: 612, w: 220, h: 56, color: C.ink, fill: C.sky, items: { name: 'veg', type: 'cabbage', half: true, n: 4, s: .5 } });
+prop('steam', { x: 1150, y: 548, h: 46, n: 3, alpha: .5 });
+
+F.step('then they rest until the leaves go soft', 'resting');
+edge('hand', 'resting', { en: -.45 });
+edge('brine', 'resting', { en: .45 });
+state('resting', { x: 700, y: 600, label: 'resting', tag: '숨 죽이기', minW: 170 });
+
+F.step('still crisp? turn them, a few more hours', 'resting');
+edge('resting', 'resting', { guard: 'still crisp', text: 'turned over,\na few more hours' });
+
+F.step('rinsed three times, drained in a basket', 'rinsed');
+edge('resting', 'rinsed', { text: 'soft enough\nto bend' });
+state('rinsed', { x: 700, y: 760, label: 'rinsed three times', tag: '세 번 헹구기' });
+prop('person', { x: 1010, y: 900, ...grandma, apron: C.yellow, pose: 'bend', act: 'reach', gloves: C.red });
+prop('basket', { x: 1172, y: 900, w: 130, h: 60, heap: C.green });
+
+// ── II · Seasoned ───────────────────────────────────────────────────────────────────────────────────────────────────
+F.step('radish cut into thin matchsticks', 'radish');
+chapter({ x: 56, y: 960, title: 'Seasoned', sub: 'a red paste between every leaf', tag: '김칫소 · 고춧가루 · 무채 · 젓갈' });
+edge('rinsed', 'radish', { text: 'drained, and\nwaiting' });
+state('radish', { x: 700, y: 1000, label: 'radish, cut thin', tag: '무채 썰기' });
+prop('veg', { type: 'radish', x: 96, y: 1270, s: .9 });
+prop('veg', { type: 'garlic', x: 166, y: 1270 });
+prop('bowl', { x: 250, y: 1270, w: 84, h: 32, heap: C.red });
+prop('jar', { x: 352, y: 1270, w: 54, h: 66, color: C.brownLight });
+note('ingredients', { x: 224, y: 1284, text: '무 · 마늘 · 고춧가루 · 젓갈', align: 'center', style: { italic: true, size: 13.5 } });
+
+F.step('chili, garlic, fish sauce and sugar: a red paste', 'paste');
+edge('radish', 'paste', { text: 'chili, garlic,\nfish sauce, sugar' });
+state('paste', { x: 700, y: 1146, label: 'a red paste', tag: '김칫소' });
+prop('person', { x: 1110, y: 1186, ...grandma, apron: C.green, pose: 'stand', act: 'stir', gloves: C.red, speed: 3 });
+prop('tub', { x: 1222, y: 1188, w: 150, h: 46, color: C.red, fill: C.red });
+
+F.step('at home: rubbed in by hand', 'byhand');
+edge('paste', 'byhand', { ex: -.5, guard: 'at home', text: 'leaf by leaf', side: 'l' });
+state('byhand', { x: 540, y: 1312, label: 'rubbed in by hand', tag: '손으로 버무리기' });
+
+F.step('with the neighbours: a kimjang line on the floor', 'line');
+edge('paste', 'line', { ex: .5, guard: 'with the neighbours', text: 'side by side\non the floor' });
+state('line', { x: 880, y: 1312, label: 'a kimjang line', tag: '김장 품앗이' });
+prop('mat', { x: 300, y: 1606, w: 440, h: 26, bg: true });
+prop('person', { x: 150, y: 1596, ...grandma, pose: 'kneel', act: 'rub', gloves: C.red, speed: 6 });
+prop('tub', { x: 300, y: 1598, w: 130, h: 40, color: C.red, fill: C.red, items: { name: 'veg', type: 'cabbage', half: true, n: 2, s: .45 } });
+prop('person', { x: 450, y: 1596, flip: true, hat: 'bun', shirt: C.sky, pattern: 'dots', apron: C.yellow, pose: 'kneel', act: 'rub', gloves: C.red, speed: 6, phase: 1.3 });
+
+F.step('every leaf gets its share: stuffed heads', 'stuffed');
+edge('byhand', 'stuffed', { en: -.45 });
+edge('line', 'stuffed', { en: .45 });
+state('stuffed', { x: 700, y: 1480, label: 'stuffed heads', tag: '속 넣은 배추' });
+
+F.step('a pale leaf? back for more paste', 'paste');
+edge('stuffed', 'paste', { exit: 'r', enter: 'r', via: [[1050, 1512], [1050, 1178]], guard: 'pale leaf', text: 'more paste' });
+
+// ── III · Two at once ───────────────────────────────────────────────────────────────────────────────────────────────
+F.step('two things change at once: the jar, and the table', ['fresh', 'side']);
+chapter({ x: 56, y: 1640, title: 'Two at once', sub: 'the jar and the dinner table', tag: '발효 · 익어 가는 동안' });
+edge('stuffed', 'together', { en: .04, text: 'packed into\nonggi jars' });
+group('together', { x: 40, y: 1850, w: 1270, h: 520, title: 'at the same time' });
+region('jar', { x: 58, y: 1904, w: 590, h: 448, title: 'in the jar', tint: 'sky' });
+divider('div', { x: 675, y: 1904, h: 448 });
+region('table', { x: 702, y: 1904, w: 590, h: 448, title: 'at the table', tint: 'blush' });
+init('ij', { x: 353, y: 1972 }); state('fresh', { x: 353, y: 2006, label: 'fresh', tag: '겉절이' }); edge('ij', 'fresh');
+init('it', { x: 997, y: 1972 }); state('side', { x: 997, y: 2006, label: 'a side dish', tag: '반찬' }); edge('it', 'side');
+prop('jar', { x: 150, y: 2330, w: 96, h: 116, snow: true, overlap: true });
+prop('snow', { x: 150, y: 2230, w: 150, h: 200, overlap: true });
+
+F.step('a week in the cold: it ripens', ['ripe', 'side']);
+edge('fresh', 'ripe', { text: 'a week in\nthe cold' });
+state('ripe', { x: 353, y: 2138, label: 'ripe', tag: '익은 김치' });
+
+F.step('every meal, one more plate', ['ripe', 'side']);
+edge('side', 'side', { guard: 'every meal', text: 'one more\nplate' });
+prop('table', { x: 815, y: 2200, w: 160, h: 40 });
+prop('bowl', { x: 780, y: 2152, w: 52, h: 22, heap: C.red, band: false, overlap: true });
+prop('bowl', { x: 850, y: 2152, w: 44, h: 20, color: C.white, overlap: true });
+
+F.step('spring comes, and the jar turns sour', ['sour', 'side']);
+edge('ripe', 'sour', { guard: 'spring comes', text: 'too ripe' });
+state('sour', { x: 353, y: 2268, label: 'sour', tag: '신 김치' });
+prop('sun', { x: 560, y: 2340, r: 22 });
+
+F.step('when the jar is sour, into the stew pot', ['sour', 'stew']);
+edge('side', 'stew', { guard: 'in jar: sour', text: 'into the pot' });
+state('stew', { x: 997, y: 2268, label: 'kimchi stew', tag: '김치찌개' });
+prop('fire', { x: 1196, y: 2340, w: 80, h: 34 });
+prop('pot', { x: 1196, y: 2310, w: 84, h: 44, fill: C.red, steam: 44 });
+
+F.step('the jars run out', 'empty');
+edge('together', 'empty', { guard: 'the jars run out' });
+state('empty', { x: 675, y: 2462, label: 'an empty jar', tag: '빈 항아리' });
+
+F.step('next november, kimjang again', 'empty');
+edge('empty', 'end', { text: 'next november,\nkimjang again' });
+final('end', { x: 675, y: 2640 });
+prop('person', { x: 260, y: 2690, ...grandma, pose: 'walk', act: 'carry', item: { name: 'jar', w: 44, h: 52, dx: 4, dy: 44 } });
+prop('house', { x: 1100, y: 2690, w: 200, h: 150, roof: C.ink, chimney: true });
+
+F.start();
+</script>
+</body>
+</html>
