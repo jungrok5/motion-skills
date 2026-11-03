@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>택배 한 상자가 오기까지 · crayon-statechart template</title>
+<script type="importmap">{ "imports": { "sc/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// Starting film: one chapter, 8 steps (~16 s) — a parcel from the order to the doorstep. Korean main lines, English tags,
+// to show that either language can lead. Replace the topic; keep the structure:
+//   F.step(caption, activeStateId)  then the elements that appear in that step, in the order they should draw:
+//   chapter → init → edge → state → prop … (an edge is written before the state it points to, so the arrow draws first)
+// Layout: a 1350 px wide sheet; x = centre of a state, y = its top; the chart runs down the middle (x ≈ 640–760), props
+// stand left and right of it on their bottom-centre. Branches: ex −.5 / +.5 out of the parent, children ±170 px either
+// side. check.mjs lists every overlap; fix the coordinates until it prints only "ok".
+// Preview: python3 -m http.server → /templates/film.html
+import { Film } from 'sc/film.js';
+import { C } from 'sc/sketch.js';
+
+const F = new Film({ title: '택배 한 상자', W: 1350, H: 1080, step: 1.5 });
+const { chapter, state, init, final, edge, prop } = F;
+
+F.step('누르는 순간, 주문이 들어간다', 'order');
+chapter({ x: 56, y: 44, kicker: '택배 한 상자 · I', title: '집 앞까지', sub: '주문 버튼에서 현관문까지', tag: 'from a click to the doorstep' });
+init('i1', { x: 700, y: 66 });
+state('order', { x: 700, y: 104, label: '주문 접수', tag: 'order placed' });
+edge('i1', 'order');
+prop('stool', { x: 1050, y: 300, w: 46, h: 54, color: C.red });
+prop('person', { x: 1050, y: 300, pose: 'sit', act: 'reach', hat: 'bun', shirt: C.sky, pattern: 'dots' });
+prop('table', { x: 1185, y: 300, w: 130, h: 64 });
+prop('screen', { x: 1185, y: 228, type: 'laptop', w: 96, h: 62 });
+
+F.step('창고에서 상자에 담는다', 'packed');
+edge('order', 'packed', { text: '창고에서\n꺼내 담기' });
+state('packed', { x: 700, y: 250, label: '포장 완료', tag: 'packed' });
+prop('crate', { x: 200, y: 520, w: 120, h: 76, tape: true });
+prop('crate', { x: 300, y: 520, w: 80, h: 56, tape: true });
+
+F.step('오늘 받아야 하면, 바로 출발', 'express');
+edge('packed', 'express', { ex: -.5, guard: '당일 배송', text: '바로 출발', side: 'l' });
+state('express', { x: 530, y: 420, label: '오토바이 출발', tag: 'same day' });
+
+F.step('아니면, 밤사이 분류 센터로', 'hub');
+edge('packed', 'hub', { ex: .5, guard: '일반 배송', text: '밤사이\n트럭으로' });
+state('hub', { x: 870, y: 420, label: '분류 센터', tag: 'sorting hub' });
+prop('truck', { x: 1150, y: 600, w: 210, h: 92, label: '택배', spin: 4 });
+
+F.step('동네 배송 기사에게', 'route');
+edge('express', 'route', { en: -.45 });
+edge('hub', 'route', { en: .45 });
+state('route', { x: 700, y: 590, label: '배송 중', tag: 'out for delivery', minW: 200 });
+
+F.step('아무도 없으면, 내일 다시', 'route');
+edge('route', 'route', { guard: '부재중', text: '내일 다시\n방문' });
+
+F.step('현관 앞에 도착', 'door');
+edge('route', 'door', { text: '문 앞에\n내려놓기' });
+state('door', { x: 700, y: 760, label: '배송 완료', tag: 'delivered' });
+prop('house', { x: 220, y: 900, w: 210, h: 160, roof: C.ink });
+prop('crate', { x: 360, y: 900, w: 60, h: 40, tape: true });
+
+F.step('상자를 열면 끝', 'door');
+edge('door', 'end', { text: '열어 보기' });
+final('end', { x: 700, y: 900 });
+prop('person', { x: 1060, y: 960, pose: 'stand', act: 'wave', hat: 'none', shirt: C.yellow, pattern: 'stripes', patternColor: C.orange });
+
+F.start();
+</script>
+</body>
+</html>

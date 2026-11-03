@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>prop kit · crayon-statechart</title>
+<script type="importmap">{ "imports": { "sc/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// Every prop in lib/props.js on one sheet, labelled. Look here after changing props.js or before picking props for a topic.
+import { Film } from 'sc/film.js';
+import { C } from 'sc/sketch.js';
+
+const F = new Film({ title: 'prop kit', W: 1350, H: 1080, bar: false, hold: 4 });
+const { prop, note, chapter } = F;
+F.step('');
+chapter({ x: 40, y: 18, kicker: 'crayon-statechart · lib/props.js — every prop in the kit' });
+const rows = [
+  [296, [['person', { pose: 'stand', act: 'wave', hat: 'cone' }, 'person · stand · cone'], ['person', { pose: 'walk', act: 'carry', hat: 'cap', shirt: C.yellow, pattern: 'plain', item: { name: 'crate', w: 44, h: 30, tape: true, dy: 16 } }, 'walk · carry · item'], ['person', { pose: 'bend', act: 'reach', hat: 'scarf', apron: C.pink, gloves: C.red }, 'bend · reach · scarf'], ['person', { pose: 'squat', act: 'sprinkle', hat: 'scarf', apron: C.yellow }, 'squat · sprinkle'], ['person', { pose: 'kneel', act: 'rub', hat: 'bun', shirt: C.sky, pattern: 'dots', gloves: C.red }, 'kneel · rub · bun'], ['person', { pose: 'sit', act: 'stir', hat: 'long', shirt: C.pink, pattern: 'stripes', patternColor: C.red }, 'sit · stir · long'], ['umbrella', { r: 70, h: 150 }, 'umbrella']]],
+  [506, [['sun', {}, 'sun'], ['cloud', {}, 'cloud'], ['rain', { w: 110, h: 120 }, 'rain'], ['snow', { w: 110, h: 120 }, 'snow'], ['steam', {}, 'steam'], ['fire', {}, 'fire'], ['tree', { h: 150 }, 'tree'], ['plant', {}, 'plant'], ['house', { w: 130, h: 120, chimney: true }, 'house · chimney']]],
+  [686, [['pot', { steam: true }, 'pot'], ['tub', { w: 140 }, 'tub'], ['bowl', { heap: C.red }, 'bowl · heap'], ['jar', { w: 70, h: 90 }, 'jar'], ['cup', { straw: true, color: C.pink }, 'cup · straw'], ['sack', { label: 'SALT', labelSize: 14 }, 'sack'], ['basket', { heap: C.orange }, 'basket'], ['crate', { label: 'BOX' }, 'crate'], ['coins', {}, 'coins'], ['books', {}, 'books']]],
+  [870, [['table', { w: 150 }, 'table'], ['stool', {}, 'stool'], ['mat', { w: 150 }, 'mat'], ['shelf', { w: 120, h: 140 }, 'shelf'], ['sign', { text: 'OPEN', post: true, w: 100 }, 'sign'], ['machine', {}, 'machine'], ['truck', { w: 170, h: 80, label: 'GO', spin: 4 }, 'truck'], ['screen', { type: 'laptop' }, 'screen · laptop'], ['screen', { type: 'phone' }, 'phone']]],
+  [1036, [['veg', { type: 'cabbage' }, 'veg · cabbage'], ['veg', { type: 'cabbage', half: true }, 'half'], ['veg', { type: 'radish' }, 'radish'], ['veg', { type: 'garlic' }, 'garlic'], ['veg', { type: 'chili' }, 'chili'], ['veg', { type: 'scallion' }, 'scallion'], ['veg', { type: 'onion' }, 'onion'], ['veg', { type: 'apple' }, 'apple'], ['veg', { type: 'leaf' }, 'leaf'], ['bundle', { tip: C.red, len: 90 }, 'bundle'], ['fan', {}, 'fan'], ['pile', { of: 'veg', type: 'cabbage', n: 5, w: 120, each: .7 }, 'pile']]],
+];
+for (const [y, items] of rows) items.forEach(([name, o, label], i) => {
+  const x = 90 + i * (1150 / (items.length - 1)) * (items.length > 1 ? 1 : 0);
+  prop(name, { x, y, overlap: true, ...o, delay: 0 });
+  note(`n${y}-${i}`, { x, y: y + 4, text: label, align: 'center', delay: 0 });
+});
+F.start();
+</script>
+</body>
+</html>
