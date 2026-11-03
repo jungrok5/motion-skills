@@ -1,0 +1,28 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Creature zoo · ink-summoning</title>
+<script type="importmap">{ "imports": { "ink/": "../../lib/" } }</script></head><body>
+<script type="module">
+// Creature zoo: every preset in one shot each (tiger walking then roaring, tiger head-on, wolf, dragon wide, dragon head,
+// koi, crane, phoenix). Render stills after any change to lib/beasts.js:
+//   node ../../scripts/render.mjs index.html --stills 1.5,4.5,7.5,10.5,13.5,16.5,19.5,22.5 --scale .5
+import { Film } from 'ink/film.js';
+import * as I from 'ink/ink.js';
+import { quadruped, serpent, bird, PRESET } from 'ink/beasts.js';
+const F = new Film({ seed: 3 });
+const cam = (yaw, at=[0,.9,0], dist=4.5, pitch=.08) => [{ t: 0, at, yaw, pitch, dist, fov: 40 }];
+const tiger = quadruped(PRESET.tiger, [{ t: 0, x: -1, z: 0, yaw: Math.PI/2, gait: 1 }, { t: 2, x: 1.2, gait: 1 }, { t: 2.01, roar: 0 }, { t: 3, roar: 1, gait: 0 }]);
+const wolf = quadruped(PRESET.wolf, [{ t: 0, x: -1, z: 0, yaw: Math.PI/2, gait: 1 }, { t: 2, x: 1.2, gait: 1 }]);
+const dpath = I.path([[-6,3,-3],[-2,2,-1],[1,3.2,-2],[3,1.8,0],[5,3,-1]], 120);
+const dragon = serpent(PRESET.dragon, dpath, [{ t: 0, along: 9 }, { t: 3, along: 13, roar: 1 }]);
+const koi = serpent(PRESET.koi, I.path([[-3,1.5,0],[0,1.8,0],[3,1.4,0]], 60), [{ t: 0, along: 2.5 }, { t: 3, along: 4 }]);
+const crane = bird(PRESET.crane, I.path([[-4,2,0],[0,2.2,0],[4,2,0]], 60), [{ t: 0, along: 3 }, { t: 3, along: 5 }]);
+const phoenix = bird(PRESET.phoenix, I.path([[-4,2,0],[0,2.2,0],[4,2,0]], 60), [{ t: 0, along: 3 }, { t: 3, along: 5 }], { phase: .3 });
+F.shot(3, w => w.beast(tiger), { cam: cam(.35), name: 'tiger', mb: 0 });
+F.shot(3, w => w.beast(tiger), { cam: cam(1.3, [0,.8,0], 3.6), name: 'tiger-front', mb: 0 });
+F.shot(3, w => w.beast(wolf), { cam: cam(.4), name: 'wolf', mb: 0 });
+F.shot(3, w => w.beast(dragon), { cam: cam(.2, [0,2.3,-1], 9), name: 'dragon', mb: 0 });
+F.shot(3, w => w.beast(dragon), { cam: cam(.0, [3,2,-.5], 3.5), name: 'dragon-head', mb: 0 });
+F.shot(3, w => w.beast(koi), { cam: cam(.3, [0,1.6,0], 4), name: 'koi', mb: 0 });
+F.shot(3, w => w.beast(crane), { cam: cam(.5, [0,2.1,0], 4.5, .2), name: 'crane', mb: 0 });
+F.shot(3, w => w.beast(phoenix), { cam: cam(.5, [0,2.1,0], 4.5, .2), name: 'phoenix', mb: 0 });
+F.start();
+</script></body></html>

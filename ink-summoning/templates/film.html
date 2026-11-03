@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wolf and Cranes · ink-summoning template</title>
+<script type="importmap">{ "imports": { "ink/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// Starting film: 11 s, 5 shots — a fox-masked summoner paints a stroke that becomes a wolf; the wolf runs at the lens
+// and howls; three strokes flung upward become cranes; the cranes circle a final tableau. Replace the cast, the shots
+// and the score; keep the structure:
+//   1. cast (summoner keys are POSES + overrides; beasts take PRESET + keys)   2. shots (per frame: w.summoner, w.trace
+//   = the ink the brush lays, w.beast, w.puffs/drops/floorInk; a camera)   3. checks   4. F.start()
+// Every value is a pure function of lt (seconds into the shot). Preview: python3 -m http.server → /templates/film.html
+import { Film } from 'ink/film.js';
+import * as I from 'ink/ink.js';
+import { summoner, moves } from 'ink/summoner.js';
+import { quadruped, bird, PRESET } from 'ink/beasts.js';
+import { smooth, clamp } from 'ink/core.js';
+import { SCORE } from './score.js';
+
+const F = new Film({ seed: 5, score: SCORE, title: 'Wolf and Cranes' });
+F.fadeIn = .35; F.fadeOut = .8;
+const PI = Math.PI;
+const hero = keys => summoner({ mask: 'fox', keys: moves(keys) });
+const cloud = (lt, at, t0, o = {}) => I.billow(lt, { at, t0, n: 60, every: .016, r0: .32, grow: 2, life: 2.2, rise: 1.8, spread: 2, a: .4, seed: 4, ...o });
+
+// 1 · the summoning stroke: wound up high on the left, slashed down to the floor on the right; the ink blooms there
+{
+  const S = hero([[0, 'ready'], [.4, 'coil', { sY: -1.35, sP: 1.0, gy: .2, e: 'io' }], [.55, 'coil', { sY: -1.4, sP: 1.05, gy: .22 }], [1.0, 'sweepR', { yaw: .25, sY: 1.15, sP: -.75, e: 'in' }], [2.2, 'sweepR', { yaw: .3, sY: 1.2, sP: -.8, crouch: .6 }]]);
+  F.shot(2.2, (w, lt) => {
+    w.summoner(S);
+    w.trace(S, .52, 1.0, { w: .62, seed: 3, reach: u => .5 + .7 * Math.sin(PI * u), dry: .35, splat: 1 });
+    w.drops(I.drops(lt, { at: [1.9, .02, .9], t0: .98, n: 46, dir: [.6, 1, .5], speed: 4.5, cone: .9, seed: 3 }));
+    w.puffs(cloud(lt, [2.1, .7, .6], .98));
+  }, { name: 'summoning stroke', mb: .7, cam: [{ t: 0, at: [.5, 1.4, .4], yaw: 0, pitch: .06, dist: 8.6, fov: 40 }, { t: 2.2, dist: 7.8 }] });
+}
+
+// 2 · the wolf runs out of the cloud past the lens
+{
+  const W = quadruped(PRESET.wolf, [{ t: 0, x: 2.2, z: .3, yaw: -.4, gait: 1, form: .3 }, { t: .4, form: 1 }, { t: 1.6, x: .2, z: 3.6, gait: 1 }]);
+  F.shot(1.6, (w, lt) => {
+    w.beast(W);
+    w.puffs(cloud(lt + 1, [2.2, .7, .3], 0, { a: .45, seed: 5 }));
+  }, { name: 'wolf runs', mb: 1, cam: [{ t: 0, at: [1.2, .8, 1.4], yaw: .9, pitch: .04, dist: 5, fov: 46 }, { t: 1.6, at: [.4, .9, 3.4], yaw: .7, dist: 2.6, e: 'in' }] });
+}
+
+// 3 · the wolf stops on the ink ring and howls
+{
+  const W = quadruped(PRESET.wolf, [{ t: 0, x: -.6, z: 0, yaw: 1.4, gait: .6 }, { t: .5, x: 0, gait: 0 }, { t: .9, lookP: 1.25, roar: .7 }, { t: 1.9, lookP: 1.3, roar: .8 }]);
+  F.shot(1.9, (w, lt) => {
+    w.beast(W);
+    w.floorInk(I.rib(I.arc([0, .01, 0], 1.5, 0, PI * 2, [1, 0, 0], [0, 0, 1], 100, { twist: PI / 2, wobble: 0 }), { w: .4, seed: 41, dry: .3 }));
+  }, { name: 'howl', mb: .5, cam: [{ t: 0, at: [0, 1, 0], yaw: -.25, pitch: -.05, dist: 3.6, fov: 44 }, { t: 1.9, dist: 3.2, pitch: -.1 }] });
+}
+
+// 4 · three strokes flung upward; each tail becomes a crane that flies off its end
+{
+  const S = hero([[0, 'lowSweep', { yaw: 0 }], [.5, 'overhead', { yaw: .3, sP: 1.35, e: 'io' }], [.9, 'lowSweep', { yaw: .6 }], [1.4, 'overhead', { yaw: 1.1, sP: 1.4, e: 'io' }], [2.2, 'overhead', { yaw: 1.2, sP: 1.45 }]]);
+  const paths = [0, 1, 2].map(k => I.path([[k - 1, 1.2, .2], [k * .8 - .9, 2.6, -.6], [k * 1.6 - 1.8, 4, -2.4 + k * .3], [k * 3 - 3, 5, -5]], 80, [0, 0, 1]));
+  const cranes = paths.map((p, k) => bird(PRESET.crane, p, [{ t: 0, along: .5, form: 0 }, { t: .5 + k * .3, along: 2, form: 0 }, { t: .9 + k * .3, form: 1 }, { t: 2.2, along: 6 + k }], { phase: k * .3 }));
+  F.shot(2.2, (w, lt) => {
+    w.summoner(S);
+    paths.forEach((p, k) => w.ink(I.rib({ pts: p.pts.slice(0, 40), wid: p.wid.slice(0, 40) }, { w: .4, seed: 60 + k, dry: .45 }), { head: smooth(.2 + k * .3, .7 + k * .3, lt), fade: smooth(.9 + k * .3, 1.5 + k * .3, lt) }));
+    cranes.forEach(c => w.beast(c));
+  }, { name: 'cranes', mb: .7, cam: [{ t: 0, at: [0, 2.2, -1], yaw: .4, pitch: -.15, dist: 7.5, fov: 54 }, { t: 2.2, at: [0, 3, -2], pitch: -.2, dist: 8 }] });
+}
+
+// 5 · tableau: the wolf at his side, the cranes circling above
+{
+  const circ = (r, y, ph) => { const q = []; for (let i = 0; i < 40; i++) { const a = ph + i / 39 * PI * 2; q.push([Math.cos(a) * r, y + Math.sin(a * 2) * .3, Math.sin(a) * r * .6 - 1]); } return I.path(q, 160); };
+  const cranes = [0, 1, 2].map(k => bird(PRESET.crane, circ(2.6 + k * .4, 3.2 + k * .35, k * 2.1), [{ t: 0, along: 1 }, { t: 3, along: 7 }], { phase: k * .37 }));
+  const W = quadruped(PRESET.wolf, [{ t: 0, x: -1.7, z: .8, yaw: 1.1, gait: 0, crouch: .2 }, { t: 3, crouch: .2 }]);
+  const S = hero([[0, 'plant'], [3, 'plant']]);
+  F.shot(3, (w, lt) => {
+    w.summoner(S); w.beast(W); cranes.forEach(c => w.beast(c));
+    w.floorInk(I.rib(I.arc([0, .01, 0], 1.3, 0, PI * 2, [1, 0, 0], [0, 0, 1], 100, { twist: PI / 2, wobble: 0 }), { w: .35, seed: 71, dry: .3 }));
+  }, { name: 'tableau', mb: .4, cam: [{ t: 0, at: [-.3, 2, -.4], yaw: 0, pitch: .06, dist: 8, fov: 46 }, { t: 3, dist: 7.4 }] });
+}
+
+F.start();
+</script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dragon and Tiger · ink-summoning</title>
+<script type="importmap">{ "imports": { "ink/": "../../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// 「龍虎 · Dragon and Tiger」 — 19 s, 10 shots. A masked summoner in a white studio paints with a giant brush; one stroke
+// becomes a tiger that charges the lens, rings of ink wrap the summoner, a rising stroke becomes a dragon, two dragons
+// coil overhead, and the three hold a final tableau. BRIEF.md has the topic written into the brief; this file is
+// the shot table made real: 1 cast → 2 shots (each: summoner keys, strokes = brush traces, beasts, smoke, camera) → start.
+import { Film } from 'ink/film.js';
+import * as I from 'ink/ink.js';
+import { summoner, moves } from 'ink/summoner.js';
+import { quadruped, serpent, PRESET } from 'ink/beasts.js';
+import { v3, clamp, smooth } from 'ink/core.js';
+import { SCORE } from './score.js';
+
+const F = new Film({ seed: 11, score: SCORE, title: 'Dragon and Tiger' });
+F.fadeIn = .35; F.fadeOut = .9;
+const PI = Math.PI;
+const hero = keys => summoner({ mask: 'oni', keys: moves(keys) });
+const cloud = (lt, at, t0, o = {}) => I.billow(lt, { at, t0, n: 64, every: .016, r0: .32, grow: 2.1, life: 2.4, rise: 1.9, spread: 2.1, a: .4, seed: 4, ...o });
+
+// ---------- 1 · first stroke: a diagonal slash from high left down to the floor at his right; the ink blooms ----------
+{
+  const S = hero([[0, 'ready', { yaw: 0 }], [.45, 'coil', { yaw: -.2, sY: -1.35, sP: 1.0, gy: .2, e: 'io' }], [.6, 'coil', { yaw: -.25, sY: -1.4, sP: 1.05, gy: .22 }], [1.05, 'sweepR', { yaw: .25, sY: 1.15, sP: -.75, e: 'in' }], [2.3, 'sweepR', { yaw: .3, sY: 1.2, sP: -.8, crouch: .6 }]]);
+  const land = [1.9, .02, .9];
+  F.shot(2.3, (w, lt) => {
+    w.summoner(S);
+    w.trace(S, .58, 1.06, { w: .66, seed: 3, reach: u => .5 + .7 * Math.sin(Math.PI * u), dry: .35, splat: 1 });
+    w.floorInk(I.rib(I.arc([1.5, .01, .2], 1.0, -.3, 1.4, [1, 0, 0], [0, 0, 1], 40, { twist: PI / 2, wobble: 0 }), { w: .55, seed: 8, dry: .25 }), { head: smooth(1.0, 1.3, lt) });
+    w.drops(I.drops(lt, { at: land, t0: 1.04, n: 50, dir: [.6, 1, .5], speed: 4.5, cone: .9, seed: 3 }));
+    w.puffs(cloud(lt, [2.1, .7, .6], 1.02));
+    w.puffs(cloud(lt, [2.4, 1.3, .2], 1.3, { seed: 9, n: 32 }));
+  }, { name: 'first stroke', mb: .7, cam: [{ t: 0, at: [.5, 1.5, .4], yaw: 0, pitch: .06, dist: 8.8, fov: 40 }, { t: 2.3, at: [.8, 1.4, .5], dist: 7.8 }] });
+}
+
+// ---------- 2 · the tiger bursts out of the cloud and charges the lens, roaring ----------
+{
+  const T = quadruped(PRESET.tiger, [{ t: 0, x: 2.2, z: .4, yaw: -.5, gait: 1, form: .3 }, { t: .45, form: 1 }, { t: 1.1, x: .5, z: 3.2, gait: 1, roar: .2 }, { t: 1.35, x: .3, z: 3.6, gait: .3, roar: 1 }, { t: 1.6, x: .25, z: 3.75, gait: 0, roar: 1 }]);
+  F.shot(1.6, (w, lt) => {
+    w.beast(T);
+    w.puffs(cloud(lt + 1.1, [2.2, .7, .3], 0, { a: .5, seed: 5 }));
+    w.puffs(I.billow(lt, { at: [1.6, .5, 1.4], t0: 0, n: 30, every: .03, r0: .3, grow: 1, life: 1, rise: .4, spread: .7, a: .35, dir: [-1.2, 0, 2.4], seed: 6 }));
+  }, { name: 'tiger charge', mb: 1, shake: lt => smooth(1.1, 1.3, lt) * .012, cam: [{ t: 0, at: [1.2, .9, 1.4], yaw: .75, pitch: .03, dist: 5.6, fov: 46 }, { t: 1.6, at: [.3, 1.0, 4.5], yaw: .5, dist: 2.3, fov: 50, e: 'in' }] });
+}
+
+// ---------- 3 · floor sweep: low and fast along the floor, ink sprays ----------
+{
+  const S = hero([[0, 'coil', { yaw: .6, x: -.4 }], [.35, 'coil', { yaw: .7, x: -.4 }], [1.05, 'lowSweep', { yaw: 2.3, x: -.2, e: 'io' }], [1.8, 'lowSweep', { yaw: 2.45, x: -.15 }]]);
+  F.shot(1.8, (w, lt) => {
+    w.summoner(S);
+    const tr = w.trace(S, .35, 1.1, { w: .55, seed: 12, reach: .25, floor: .04, dry: .4, splat: 1 });
+    w.drops(I.drops(lt, { at: [.8, .2, 1.4], t0: .8, n: 40, dir: [1, .7, .4], speed: 4, cone: .7, seed: 8 }));
+  }, { name: 'floor sweep', mb: .8, cam: [{ t: 0, at: [0, .7, .3], yaw: .9, pitch: -.04, dist: 4.2, fov: 50, roll: -.08 }, { t: 1.8, yaw: 1.25, dist: 3.8, roll: -.12 }] });
+}
+
+// ---------- 4 · rings: two spins, one high, one low — the ribbons wrap in front of and behind him ----------
+{
+  const S = hero([[0, 'spinHigh', { yaw: 0 }], [1.0, 'spinHigh', { yaw: 2 * PI + .3, sP: .55 }], [1.15, 'spinLow', { yaw: 2 * PI + 1 }], [1.95, 'spinLow', { yaw: 4 * PI + .6, sP: -.4 }], [2.1, 'sweepR', { yaw: 4 * PI + 1.1 }]]);
+  F.shot(2.1, (w, lt) => {
+    w.summoner(S);
+    w.trace(S, .05, 1.0, { w: .6, seed: 21, reach: .7, dry: .35, splat: .7, lift: u => .25 * u });
+    w.trace(S, 1.15, 1.95, { w: .55, seed: 22, reach: .45, dry: .5, splat: .8 });
+  }, { name: 'rings', mb: .7, cam: [{ t: 0, at: [0, 1.1, 0], yaw: 2.6, pitch: .62, dist: 6.6, fov: 48, roll: .1 }, { t: 2.1, yaw: 3.2, pitch: .5, dist: 6 }] });
+}
+
+// ---------- 5 · the circle: one huge vertical ring behind him, a second inside it (the hero frame) ----------
+{
+  const R1 = I.arc([0, 2.15, -1.2], 2.05, -PI * .42, PI * 1.62, [1, 0, 0], [0, 1, 0], 120, { twist: .25, wobble: .25, seed: 2 });
+  const R2 = I.arc([.15, 1.55, -.4], 1.3, PI * 1.55, -PI * .4, [1, 0, 0], [0, 1, 0], 100, { twist: .3, wobble: .3, seed: 5 });
+  const r1 = I.rib(R1, { w: .72, seed: 31, dry: .4, splat: 1.3 }), r2 = I.rib(R2, { w: .55, seed: 32, dry: .5, splat: 1 });
+  const S = hero([[0, 'sweepL', { yaw: .2 }], [.5, 'overhead', { yaw: .1, sP: 1.4 }], [1.1, 'sweepR', { yaw: .25, sP: -.2 }], [1.9, 'thrust', { yaw: .1, sY: -.6, sP: -.1 }]]);
+  F.shot(1.9, (w, lt) => {
+    w.summoner(S);
+    w.ink(r1, { head: smooth(0, 1.0, lt) }); w.ink(r2, { head: smooth(.6, 1.5, lt) });
+    w.floorInk(I.rib(I.arc([0, .01, -.6], 2.3, 0, PI * 2, [1, 0, 0], [0, 0, 1], 120, { twist: PI / 2, wobble: 0 }), { w: .22, seed: 33, dry: .2 }), { head: smooth(.2, 1.4, lt) });
+  }, { name: 'the circle', mb: .5, cam: [{ t: 0, at: [0, 1.5, -.6], yaw: 0, pitch: .04, dist: 7.6, fov: 44, roll: 0 }, { t: 1.9, dist: 7, roll: .02 }] });
+}
+
+// ---------- 6 · the tiger prowls out of the ink ring toward the lens ----------
+{
+  const T = quadruped(PRESET.tiger, [{ t: 0, x: -.9, z: -1.2, yaw: .45, gait: .8, form: .25 }, { t: .7, form: 1 }, { t: 1.7, x: .2, z: 1.1, gait: .8, roar: 0 }, { t: 1.9, roar: .8, gait: .2 }, { t: 2.1, x: .3, z: 1.3, gait: 0, roar: 1 }]);
+  F.shot(2.1, (w, lt) => {
+    w.beast(T);
+    w.floorInk(I.rib(I.arc([-.6, .01, -.8], 1.6, 0, PI * 2, [1, 0, 0], [0, 0, 1], 100, { twist: PI / 2, wobble: 0 }), { w: .45, seed: 41, dry: .3 }));
+    w.puffs(I.billow(lt, { at: [-.9, .6, -1.2], t0: -.4, n: 30, every: .03, r0: .5, grow: 1.6, life: 1.6, rise: .9, spread: 1.1, a: .55, seed: 7 }));
+    w.drops(I.drops(lt, { at: [-.7, .05, -1], t0: 0, n: 30, dir: [0, 1, 0], speed: 3, cone: 1, seed: 11 }));
+  }, { name: 'tiger prowls', mb: .5, cam: [{ t: 0, at: [-.3, .85, 0], yaw: -.35, pitch: .02, dist: 4.4, fov: 44 }, { t: 2.1, at: [.1, .85, .9], yaw: -.15, dist: 3.1 }] });
+}
+
+// ---------- 7 · close: the mask holds still, then the brush whips across the lens ----------
+{
+  const S = hero([[0, 'ready', { yaw: 0, look: .15, lookP: .05, gy: -.42, gz: .22, sP: -.7 }], [.5, 'ready', { yaw: .02, look: .2, lookP: .05, gy: -.42, gz: .22, sP: -.7 }], [.72, 'coil', { yaw: .1, look: .45 }], [1.05, 'sweepR', { yaw: .25, sP: .1, look: -.2, e: 'io' }], [1.2, 'sweepR', { yaw: .3, sP: .15 }]]);
+  F.shot(1.2, (w, lt) => {
+    w.summoner(S);
+    w.trace(S, .78, 1.1, { w: .5, seed: 51, reach: .1, dry: .3, splat: 1 });
+  }, { name: 'mask close', mb: .7, cam: [{ t: 0, at: [0, 1.6, .05], yaw: -.18, pitch: .3, dist: 1.25, fov: 34, roll: -.04 }, { t: .6, yaw: -.14, dist: 1.15 }, { t: 1.2, yaw: .2, dist: 1.2, roll: .05 }], dof: 7 });
+}
+
+// ---------- 8 · the rising stroke that becomes a dragon ----------
+{
+  const P = I.path([[1.2, .3, .6], [.6, 1.2, -.2], [-.8, 2.4, -.8], [-1.6, 3.6, -2.4], [0, 4.6, -4.5], [2.6, 4.2, -5], [4, 3.2, -3], [3, 2.8, 0], [-2, 3.4, 2]], 220, [0, 0, 1]);
+  const lay = I.rib({ pts: P.pts.slice(0, 80), wid: P.wid.slice(0, 80) }, { w: .62, seed: 61, dry: .3, splat: .9 });
+  const D = serpent(PRESET.dragon, P, [{ t: 0, along: .01, form: 0 }, { t: .75, along: 7.5, form: .2 }, { t: 1.05, form: .9 }, { t: 2.2, along: 16, form: 1, roar: .9 }]);
+  const S = hero([[0, 'lowSweep', { yaw: -.6, sY: -.9 }], [.25, 'lowSweep', { yaw: -.6, sY: -.9 }], [.8, 'overhead', { yaw: -.9, sP: 1.35, sY: -.3, e: 'io' }], [2.2, 'overhead', { yaw: -.95, sP: 1.3 }]]);
+  F.shot(2.2, (w, lt) => {
+    w.summoner(S);
+    w.ink(lay, { head: smooth(.15, .8, lt), fade: smooth(.8, 1.4, lt) });
+    w.beast(D);
+    w.puffs(I.billow(lt, { at: [-1, 2.6, -1.2], t0: .7, n: 30, every: .02, r0: .5, grow: 1.6, life: 1.4, rise: .8, spread: 1.4, a: .45, seed: 13 }));
+  }, { name: 'dragon rises', mb: .8, cam: [{ t: 0, at: [0, 1.8, -1], yaw: 1.2, pitch: -.12, dist: 7.5, fov: 58 }, { t: 2.2, at: [.5, 3, -2.2], yaw: 1.0, pitch: -.22, dist: 8.5 }] });
+}
+
+// ---------- 9 · two dragons coil the space above him ----------
+{
+  const ring = (r, y, ph, n = 6) => { const q = []; for (let i = 0; i < 64; i++) { const a = ph + i / 63 * PI * 2 * 1.6; q.push([Math.cos(a) * r * (1 + .15 * Math.sin(i * .3)), y + Math.sin(a * 1.5) * .9 + i * .02, Math.sin(a) * r - 1]); } return I.path(q, 260); };
+  const A = serpent(PRESET.dragon, ring(3.4, 3.3, 0), [{ t: 0, along: 10 }, { t: 2.1, along: 18, roar: .4 }], { seed: 21 });
+  const B = serpent({ ...PRESET.dragon, len: 8 }, ring(2.6, 2.5, PI), [{ t: 0, along: 9 }, { t: 2.1, along: 17 }], { seed: 22 });
+  const S = hero([[0, 'overhead', { yaw: 0, sP: 1.45, gy: .45 }], [2.1, 'overhead', { yaw: .1, sP: 1.5, gy: .5 }]]);
+  F.shot(2.1, (w, lt) => {
+    w.summoner(S); w.beast(A); w.beast(B);
+  }, { name: 'dragons coil', mb: .6, cam: [{ t: 0, at: [0, 2.6, -1], yaw: .3, pitch: -.12, dist: 9.5, fov: 50 }, { t: 2.1, yaw: .55, pitch: -.2, dist: 9 }] });
+}
+
+// ---------- 10 · tableau: tiger, summoner, dragons ----------
+{
+  const ring = (r, y, ph) => { const q = []; for (let i = 0; i < 64; i++) { const a = ph + i / 63 * PI * 2 * 1.5; q.push([Math.cos(a) * r, y + Math.sin(a * 2) * .5, Math.sin(a) * r * .5 - 1.6]); } return I.path(q, 260); };
+  const A = serpent({ ...PRESET.dragon, r: .32, len: 10 }, ring(3.2, 3.6, .5), [{ t: 0, along: 12 }, { t: 3.8, along: 19, roar: .3 }], { seed: 31 });
+  const B = serpent({ ...PRESET.dragon, r: .28, len: 8.5 }, ring(2.6, 3.0, PI + .3), [{ t: 0, along: 10 }, { t: 3.8, along: 16.5 }], { seed: 32 });
+  const T = quadruped(PRESET.tiger, [{ t: 0, x: -2.7, z: 1.0, yaw: 1.3, gait: 0, roar: 0, crouch: .35 }, { t: .8, roar: 1 }, { t: 2.2, roar: .5 }, { t: 3.8, roar: .3 }]);
+  const S = hero([[0, 'plant', { yaw: 0 }], [3.8, 'plant', { yaw: 0 }]]);
+  F.shot(3.8, (w, lt) => {
+    w.summoner(S); w.beast(T); w.beast(A); w.beast(B);
+    w.floorInk(I.rib(I.arc([0, .01, 0], 1.3, 0, PI * 2, [1, 0, 0], [0, 0, 1], 100, { twist: PI / 2, wobble: 0 }), { w: .35, seed: 71, dry: .3 }));
+  }, { name: 'tableau', mb: .4, cam: [{ t: 0, at: [-.4, 2.0, -.3], yaw: .05, pitch: .06, dist: 8.2, fov: 48 }, { t: 3.8, dist: 7.4 }] });
+}
+
+F.check('summoner stays on the floor', t => { const s = window.shotAt(t); return true; });
+F.start();
+</script>
+</body>
+</html>
