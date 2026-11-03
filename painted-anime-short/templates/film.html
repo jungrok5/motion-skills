@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Lantern · painted-anime-short template</title>
+<script type="importmap">{ "imports": { "pas/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// Starting film: 12 s, 3 shots — dawn over the forest → a mossy stone lantern in a clearing → a bluebird lands, the
+// lantern lights. Replace the hero, the shots and the score; keep the structure:
+//   1. palettes  2. plates (painted ONCE, at build time)  3. shots (per frame: put plates at depths, draw moving things)
+//   4. checks  5. F.start()
+import { Film } from 'pas/film.js';
+import * as P from 'pas/paint.js';
+import * as K from 'pas/kit.js';
+import { SCORE } from './score.js';
+
+const F = new Film({ seed: 3, score: SCORE, title: 'The Lantern' });
+F.fadeIn = .6; F.fadeOut = 1.2;
+
+// ---------- 1 · palettes (see references/LOOK.md) ----------
+const SKY = [[0, '#8db3bd'], [.35, '#dccfb6'], [.6, '#f8d8a0'], [1, '#f6c58f']];
+const FAR = { dark: '#86a07e', mid: '#a9bb88', light: '#cdd496', hi: '#e2e4ae' };
+const MID = { dark: '#3d6146', mid: '#5f8a52', light: '#9ab865', hi: '#d6dc8c' };
+const DEEP = { dark: '#1b3a31', mid: '#2c5442', light: '#4d7650', hi: '#7f9e64' };
+const PALE = '#e9e3c8';
+
+// ---------- 2 · plates ----------
+// shot 1: sky with cloud bands, a hazy far canopy, mist, a dark near treeline
+const sky = F.plate(2200, 1080, (c, w, h) => {
+  const R = P.rng(1); P.sky(c, w, h, SKY, R); P.glow(c, w * .6, 560, 500, '#fff0cc', .7);
+  for (const [x, y, l, hh] of [[80, 160, 680, 64], [900, 120, 600, 56], [1500, 250, 560, 46]]) P.cloud(c, x, y, l, hh, R);
+});
+const far = F.plate(2200, 520, (c, w, h) => {
+  const R = P.rng(2);
+  P.canopy(c, R, { x0: 0, x1: w, y0: 220, y1: 430, size: 52, pal: FAR, rows: 5, darken: .06, detail: .8 });
+  P.haze(c, w, h, '#f6e6c6', [[0, .55], [1, .08]]);
+});
+const near = F.plate(2400, 360, (c, w) => {
+  const R = P.rng(4);
+  P.canopy(c, R, { x0: 0, x1: w, y0: 150, y1: 250, size: 52, pal: MID, rows: 3, darken: .35, spray: 8 });
+  P.conifers(c, 20, w, 210, 170, 70, '#24463a', R, { lit: '#5f8a5c', gap: 1.8 });
+  P.canopy(c, R, { x0: 0, x1: w, y0: 250, y1: 300, size: 44, pal: DEEP, rows: 2, darken: .2 });
+});
+// shots 2–3: a forest backdrop in two depths, each with its own haze (P.layer), optionally blurred (depth of field)
+const backdrop = blur => F.plate(2400, 1200, (c, w, h) => {
+  const R = P.rng(10), gy = 1080 * .78;
+  const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#eedfb8'); g.addColorStop(.55, '#f8e2b4'); g.addColorStop(1, '#e8dcb8');
+  c.fillStyle = g; c.fillRect(0, 0, w, h); P.glow(c, w * .6, h * .4, 760, '#fff4d8', .9);
+  for (const [n, wd, bark, haze] of [[24, 16, { ...P.BARK, bark: '#8f927f', dark: '#777c6c', light: '#c3c0a6' }, .5], [9, 34, { ...P.BARK, bark: '#5f6656', dark: '#444a3f' }, .18]])
+    P.layer(c, w, h, x => { for (let i = 0; i < n; i++) P.trunk(x, R() * w, 0, gy + R() * 40, wd * (.7 + R() * .6), R, bark, { moss: .4, detail: .5, vines: R() < .4 ? 3 : 0 }); }, { haze: [PALE, haze] });
+  P.layer(c, w, h, x => P.mist(x, 0, w, gy + 10, 150, '#fbf2dc', R, { a: .5, n: 36 }), { blur: 16 });
+}, { blur });
+const backMid = backdrop(0), backSoft = backdrop(10);
+const ground = F.plate(2600, 560, (c, w) => {
+  const R = P.rng(11); c.fillStyle = '#7f9a5c'; c.fillRect(0, 60, w, 500);
+  P.grass(c, 0, w, 90, 50, R, ['#4f7040', '#62844a', '#7f9f58', '#9fbb68', '#c8d68a'], { below: 500, density: 1.3 });
+  for (let i = 0; i < 70; i++) P.flower(c, R() * w, 100 + R() * 260, 3 + R() * 3, R() < .75 ? '#f5f2e8' : '#bba9e2', '#e9c44f', R);
+});
+const frame = F.plate(2300, 1380, (c, w) => {     // 300 taller than the frame: put it at y −300
+  const R = P.rng(12);
+  P.canopy(c, R, { x0: -60, x1: w + 60, y0: 40, y1: 260, size: 90, pal: DEEP, rows: 3, spray: 10, light: [0, 1], below: 60 });
+  P.canopy(c, R, { x0: -60, x1: w + 60, y0: 300, y1: 350, size: 80, pal: DEEP, rows: 2, fill: false, spray: 18, light: [0, 1] });   // ragged lower edge
+  for (let i = 0; i < 20; i++) { const vx = R() * w, len = 60 + R() * 220; c.fillStyle = P.vary('#24452f', R, .06); P.ribbon(c, P.curve(vx, 320, vx + (R() - .5) * 30, 320 + len / 2, vx + (R() - .5) * 40, 320 + len, 9), k => 3 * (1 - k * .6) + .5); for (let j = 0; j < len / 10; j++) P.spray(c, vx + (R() - .5) * 10, 320 + j * 10, 2, '#355f39', R, { n: 2, size: 5.5 }); }
+  for (const [x, wd] of [[300, 130], [2020, 160]]) P.trunk(c, x, 0, 1420, wd, R, { bark: '#2f342c', dark: '#1a1e1b', light: '#5d6a52', moss: '#3e6a3a', vine: '#2f5a33' }, { moss: .9, vines: 6, lightSide: x < w / 2 ? 1 : -1 });
+});
+// the hero, painted in its own local units (origin at its foot) so it can be painted again bigger for a close-up
+function lantern(c, s) {
+  const R = P.rng(20); c.save(); c.scale(s, s);
+  const stone = { base: '#9a968c', light: '#bdb7a8', shadow: '#6f6c68', rust: ['#8a8a6a', '#7f8a78', '#a59a80', '#6e7a6a'], scale: 10, amount: .45 };
+  const part = (path, box, lightPath, shadowPath) => { P.weather(c, path, R, { ...stone, box, lightPath, shadowPath }); P.ink(c, path, 1.8, '#3a3540'); };
+  K.rock(c, 0, 10, 220, 70, R, { base: '#7d7b74' });
+  part(x => x.rect(-22, -150, 44, 140), [-22, -150, 44, 140], x => x.rect(-22, -150, 12, 140), x => x.rect(10, -150, 12, 140));              // post
+  part(x => { x.moveTo(-50, -150); x.lineTo(50, -150); x.lineTo(40, -170); x.lineTo(-40, -170); x.closePath(); }, [-50, -170, 100, 20]);   // sill
+  part(x => x.rect(-36, -230, 72, 60), [-36, -230, 72, 60], null, x => x.rect(18, -230, 18, 60));                                            // fire box
+  c.fillStyle = '#2b2a2c'; c.fillRect(-16, -218, 32, 36);                                                                                    // window (lit per frame)
+  part(x => { x.moveTo(-78, -230); x.quadraticCurveTo(0, -262, 78, -230); x.lineTo(46, -268); x.quadraticCurveTo(0, -296, -46, -268); x.closePath(); }, [-78, -296, 156, 66], null, x => x.rect(-80, -240, 160, 10)); // roof
+  part(x => x.arc(0, -300, 12, 0, P.TAU), [-12, -312, 24, 24]);
+  K.mossCap(c, [[-74, -234], [-30, -262], [30, -262], [74, -234]], R, { size: 12, flowers: .3, tufts: .4 });
+  K.mossCap(c, [[-48, -170], [48, -170]], R, { size: 7, flowers: .3, tufts: .3 });
+  c.restore();
+}
+const lanternM = F.plate(400, 420, c => { c.translate(200, 380); lantern(c, 1); });        // origin (200, 380)
+const lanternL = F.plate(1000, 1200, c => { c.translate(500, 1150); lantern(c, 3); });    // origin (500, 1150)
+const LIGHT = lt => P.smooth(1.6, 2.4, lt);           // the lantern lights in shot 3
+
+// ---------- 3 · shots ----------
+// depth z: 0 never moves · 1 the focal plane · >1 foreground. Camera keys are in focal-plane px.
+F.shot(4, g => {
+  g.put(sky, -140, 0, .15);
+  g.at(.2, c => P.flock(c, g.lt, { x: 300, y: 320, vx: 60, vy: -6, n: 12, spread: 220, size: 6, seed: 1 }));
+  g.put(far, -140, 430, .35);
+  g.put(near, -240, 760, 1);
+}, { name: 'dawn', cam: [{ t: 0, x: 0, zoom: 1 }, { t: 4.8, x: 60, y: -10, zoom: 1.06 }] });
+
+F.shot(4.5, g => {
+  g.put(backMid, -240, -40, .3);
+  g.at(.5, c => P.rays(c, 1500, -120, { ang: 2.0, spread: .55, n: 6, len: 1500, width: .045, a: .22, t: g.t, seed: 2 }));
+  g.put(ground, -340, 660, .85);
+  g.at(.85, c => P.shadow(c, 960, 760, 260, 30, .5));
+  g.put(lanternM, 960 - 200, 760 - 380, .85);
+  g.at(1, c => { P.motes(c, g.t, { x0: 0, x1: 1920, y0: 100, y1: 900, n: 40, seed: 2 }); P.leaves(c, g.twos(g.t), { x0: 0, x1: 1920, y0: -40, y1: 1100, n: 10, fall: 50, size: 9, seed: 2 }); });
+  g.put(frame, -190, -300, 1.25);
+}, { name: 'clearing', tr: { type: 'dissolve', d: 1 }, cam: [{ t: 0, x: -60, zoom: 1 }, { t: 4.5, x: 40, zoom: 1.05 }] });
+
+const BIRD = lt => {                               // fly in, land on the roof, look around
+  const k = P.clamp(lt / 1.3), land = { x: 1010, y: 300 };
+  return k < 1 ? { x: P.lerp(-60, land.x, P.ease.out(k)), y: P.lerp(120, land.y, P.ease.out(k)) - Math.sin(k * Math.PI) * 80, pose: { flap: lt * 26 } }
+               : { ...land, pose: { look: Math.sin((lt - 1.3) * 2) * .8, crouch: Math.max(0, .5 - (lt - 1.3) * 2) } };
+};
+F.shot(3.5, g => {
+  g.put(backSoft, -240, -40, .3);
+  g.put(lanternL, 960 - 500, 1240 - 1150, 1);
+  g.at(1, c => {
+    const k = LIGHT(g.lt), wx = 960, wy = 1240 - 200 * 3;          // the window of the fire box at scale 3
+    c.fillStyle = P.rgba('#ffd27a', k); c.fillRect(wx - 48, wy - 54, 96, 108);
+    P.glow(c, wx, wy, 420, '#ffcf7a', .75 * k); P.glow(c, wx, wy, 90, '#fff4d6', k);
+    const b = BIRD(g.twos()); K.bird(c, b.x, b.y, 70, b.pose);           // characters on twos
+    P.motes(c, g.t, { x0: 0, x1: 1920, y0: 0, y1: 1080, n: 40, seed: 3, a: .5 + .4 * k });
+  });
+}, { name: 'close', cam: [{ t: 0, x: 0, y: 0, zoom: 1 }, { t: 3.5, x: 20, y: -20, zoom: 1.08 }] });
+
+// ---------- 4 · checks: anything that must hold, as a rule check.mjs tests at every 0.25 s ----------
+F.check('the bird ends on the lantern roof', t => t < 10 || Math.abs(BIRD(t - F.shots[2].start).x - 1010) < 1);
+
+F.start();
+</script>
+</body>
+</html>

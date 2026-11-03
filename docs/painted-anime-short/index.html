@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>painted-anime-short · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 손그림 애니메이션 배경풍 단편 영화를 코드만으로 만듭니다. 붓 터치로 칠한 새벽 하늘과 안개 숲, 이끼와 녹이 앉은 주인공, 파랑새, 빛줄기와 낙엽을 멀티플레인 카메라로 찍고, 코드로 합성한 음악과 효과음을 붙인 1080p MP4와 브라우저에서 도는 페이지를 냅니다.">
+<meta property="og:title" content="painted-anime-short · motion-skills">
+<meta property="og:description" content="주제 하나를 주면 손그림 애니메이션 배경풍 단편 영화를 코드만으로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/painted-anime-short/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/painted-anime-short">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / painted-anime-short</nav>
+  <h1>painted-anime-short</h1>
+  <p>주제 하나를 주면 손그림 애니메이션 배경풍 단편 영화를 코드만으로 만듭니다. 붓 터치로 칠한 새벽 하늘과 안개 숲, 이끼와 녹이 앉은 주인공, 파랑새, 빛줄기와 낙엽을 멀티플레인 카메라로 찍고, 코드로 합성한 음악과 효과음을 붙인 1080p MP4와 브라우저에서 도는 페이지를 냅니다.</p>
+  <ul class="tags"><li>2D 캔버스</li><li>16:9</li><li>MP4</li><li>라이브 페이지</li><li>합성 사운드</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(낡은 전차, 등대, 풍차, 돌로 된 고래 …). 레퍼런스 영상이 있으면 그 스틸</dd>
+      <dt>브리프</dt><dd>레퍼런스 프롬프트의 구조(장면 · 품질 기준 · 피해야 할 것 · 무작위 스틸 검토)에 주제를 채운 <code>BRIEF.md</code></dd>
+      <dt>이야기</dt><dd>잠든 주인공 · 장소 · 작은 목격자 · 깨어나는 순간으로 바꾼 6–9샷 표(전경 → 접근 → 디테일 → 목격자 → 전환 → 상승 → 하늘 → 고요한 귀환)</dd>
+      <dt>그림</dt><dd>빌드 때 한 번 칠하는 배경 판: 그러데이션 하늘과 분홍 구름띠, 잎 터치로 쌓은 숲, 깊이마다 다른 공기, 셀 색 · 녹 · 먹선 · 이끼의 주인공</dd>
+      <dt>확인</dt><dd>무작위 스틸을 브리프의 품질 기준으로 채점하는 검토, 콘택트 시트, 모든 샷이 그려지는지 · 빈 프레임 · 결정성 · 장면 규칙(새가 지붕 위) · 악보 검사</dd>
+      <dt>출력</dt><dd>30fps 1920×1080 MP4(코드로 합성한 음악 · 효과음 포함), ♪ 버튼으로 소리까지 재생하는 라이브 페이지, 엔진째 넣은 HTML 한 파일(약 120 KB)</dd>
+    </dl>
+    <pre><code>cd painted-anime-short/examples/last-tram
+node ../../scripts/render.mjs index.html --sheet 24 --scale .5
+node ../../scripts/check.mjs index.html
+node ../../scripts/score.mjs score.js --dur 48 --out out/last-tram.wav
+node ../../scripts/render.mjs index.html --workers 4 --audio out/last-tram.wav
+node ../../scripts/bundle.mjs index.html
+node ../../scripts/new-film.mjs ../../../my-film</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. 네트워크와 GPU가 필요 없습니다(CPU에서 1080p 한 프레임 약 0.2초, 48초 영상을 워커 4개로 약 7분). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/painted-anime-short/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:calc((100vw - 34px)*.5625);--demo-bg:#1d2a29">
+    <iframe data-src="demo/last-tram/" title="painted-anime-short 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/last-tram/">데모 열기 (examples/last-tram)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/last-tram</code> · 48초 · 8샷 · ♪ 버튼으로 소리</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/last-tram/" data-cap="예제 &lt;code&gt;examples/last-tram&lt;/code&gt; · 48초 · 8샷 · ♪ 버튼으로 소리" aria-pressed="true">마지막 전차</button>
+        <button class="btn" type="button" data-src="demo/template/" data-cap="템플릿 &lt;code&gt;templates/film.html&lt;/code&gt; · 12초 · 3샷 · 새 영화의 출발점" aria-pressed="false">시작 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제 「The Last Tram」의 여덟 샷과 시작 템플릿입니다. 카드를 누르면 새 탭에서 그 순간에 멈춘 장면이 열리고, 브라우저가 붓 터치부터 직접 칠합니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"world":"세계","hero":"주인공","flight":"비행"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>The Last Tram <small>16:9 · 48초 · 8샷</small></h3>
+      <p>새벽 숲 빈터에서 이끼에 덮여 잠든 낡은 전차에 파랑새가 내려앉고, 전조등이 깨어나 전차가 숲을 뚫고 구름 위로 떠납니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="world" href="demo/last-tram/?t=3" target="_blank" rel="noopener">
+          <img src="samples/dawn.jpg" alt="새벽 하늘에 분홍 구름띠, 멀리 안개 낀 연둣빛 숲과 앞쪽의 짙은 침엽수 줄, 하늘을 건너는 작은 새떼" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">1 · 3초</span><b>새벽의 숲</b>
+          <span class="how">하늘 · 먼 숲 · 안개 · 가까운 숲 네 판을 다른 깊이로 밀어 들어가는 카메라, 날아가는 새떼</span></div></a>
+        <a class="tile" data-tags="world" href="demo/last-tram/?t=10" target="_blank" rel="noopener">
+          <img src="samples/clearing.jpg" alt="안개 낀 숲 빈터, 가운데 이끼와 어린 나무가 자란 낡은 청록 크림색 전차, 양옆의 짙은 나무줄기와 위에서 늘어진 덩굴" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">2 · 10초</span><b>빈터의 전차</b>
+          <span class="how">깊이마다 공기를 다르게 칠한 나무 세 겹, 빛줄기, 앞을 가리는 줄기와 잎 천장, 전차 아래 그림자</span></div></a>
+        <a class="tile" data-tags="hero" href="demo/last-tram/?t=16.5" target="_blank" rel="noopener">
+          <img src="samples/roof.jpg" alt="전차 지붕을 가까이 본 장면: 이끼와 풀, 흰 꽃, 지붕에서 자란 어린 나무와 마름모 집전장치 사이에 앉은 파랑새, 흐린 숲 배경" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">3 · 16.5초</span><b>지붕 위의 파랑새</b>
+          <span class="how">2.7배로 다시 칠한 같은 전차, 날아와 내려앉아 두리번거리는 새, 흐리게 칠한 배경(피사계 심도)</span></div></a>
+        <a class="tile" data-tags="hero" href="demo/last-tram/?t=22.5" target="_blank" rel="noopener">
+          <img src="samples/lamp.jpg" alt="전차 앞면을 가득 채운 근접 장면, 녹과 얼룩이 핀 청록 판 가운데 노랗게 켜진 둥근 놋쇠 전조등" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">4 · 22.5초</span><b>깨어나는 전조등</b>
+          <span class="how">정면 근접용 페인터, 몇 번 깜빡인 뒤 켜지는 불빛과 반짝임, 떠다니는 먼지</span></div></a>
+        <a class="tile" data-tags="hero" href="demo/last-tram/?t=27" target="_blank" rel="noopener">
+          <img src="samples/wake.jpg" alt="몸을 떨며 떠오르기 시작한 전차, 바퀴 아래 흙먼지, 지붕을 떠나 날아가는 파랑새와 떨어지는 잎" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">5 · 27초</span><b>몸을 떠는 전차</b>
+          <span class="how">줄어드는 흔들림, 바퀴에서 피는 먼지, 떠나는 새, 쏟아지는 낙엽, 들리며 옅어지는 그림자</span></div></a>
+        <a class="tile" data-tags="flight" href="demo/last-tram/?t=33" target="_blank" rel="noopener">
+          <img src="samples/rise.jpg" alt="아래에서 올려다본 숲 지붕의 둥근 틈으로 밝은 하늘, 그 틈을 향해 떠오르는 전차" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">6 · 33초</span><b>숲 지붕을 뚫고</b>
+          <span class="how">하얀 섬광으로 넘어간 올려다보기 샷, 빛을 향해 안쪽 가장자리가 밝은 잎 고리, 솟아오르는 잎</span></div></a>
+        <a class="tile" data-tags="flight" href="demo/last-tram/?t=38.5" target="_blank" rel="noopener">
+          <img src="samples/sky.jpg" alt="분홍빛 구름 바다 위를 나는 이끼 낀 전차, 위쪽의 구름띠와 따뜻한 해" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">7 · 38.5초</span><b>구름 위</b>
+          <span class="how">세 겹의 적운 바다가 다른 속도로 흐름, 바퀴의 빛 꼬리, 켜진 전조등, 흩날리는 잎</span></div></a>
+        <a class="tile" data-tags="world" href="demo/last-tram/?t=46" target="_blank" rel="noopener">
+          <img src="samples/coda.jpg" alt="전차가 떠난 빈터, 녹슨 선로 위에 돌아와 앉은 파랑새, 떨어지는 잎" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">8 · 46초</span><b>남은 것은 새 한 마리</b>
+          <span class="how">첫 빈터와 같은 판, 선로에 내려앉는 새에게 천천히 다가가는 카메라, 페이드아웃</span></div></a>
+        <a class="tile" data-tags="world" href="demo/template/?t=10.6" target="_blank" rel="noopener">
+          <img src="samples/template.jpg" alt="흐린 숲 앞의 이끼 낀 석등을 가까이 본 장면, 지붕에 앉은 파랑새와 따뜻하게 켜진 석등 창" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 12초</span><b>석등</b><span class="en">templates/film.html</span>
+          <span class="how"><code>new-film.mjs</code>가 복사하는 출발점. 새벽 숲, 빈터의 석등, 새가 내려앉고 불이 켜지는 3샷</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. Chetaslua가 X에 올린 80초 단편 「The Moss Keeper」(숲속에서 이끼 낀 로봇이 깨어나 하늘로 떠나는 영상)와 스레드에 함께 올린 프롬프트가 출발점입니다. 그 영상은 코드로 한 장씩 칠해 MP4로 만든 뒤 HTML에 통째로 넣은 것이었습니다. 이 스킬은 프롬프트의 구조(장면 · 품질 기준 · 피해야 할 것 · 무작위 스틸 검토)와 화풍만 가져오고, 그림은 직접 만든 캔버스 엔진이 칠합니다. 예제 「The Last Tram」의 코드와 주인공, 이야기, 음악은 모두 이 레포의 것입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/last-tram/" target="_blank" rel="noopener"><b>「The Last Tram」 · 48초 · 8샷</b><span>숲 빈터의 낡은 전차, 파랑새, 구름 위 비행, 라이브 페이지</span><span class="url">painted-anime-short/demo/last-tram/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/painted-anime-short/examples"><b>예제 폴더 · examples/</b><span>last-tram</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/chetaslua/status/2117169796290916732" target="_blank" rel="noopener"><b>레퍼런스 영상과 프롬프트 · X 스레드</b><span>Chetaslua(@chetaslua) · 2026년 11월</span><span class="url">x.com/chetaslua</span></a>
+    <a class="work" href="https://github.com/ChetasLua/moss-keeper" target="_blank" rel="noopener"><b>레퍼런스 결과물 · The Moss Keeper</b><span>MP4를 품은 HTML 한 파일</span><span class="url">github.com/ChetasLua/moss-keeper</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-anime-short/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/painted-anime-short">폴더</a> <span>lib · scripts · templates · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-anime-short/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-anime-short/references/PROMPT.md">references/PROMPT.md</a> <span>레퍼런스 프롬프트 원문, 그 영상을 만든 방식, 주제를 채우는 브리프 틀, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-anime-short/references/STORY.md">references/STORY.md</a> <span>주제를 샷 표로 바꾸는 법, 샷 문법, 타이밍</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-anime-short/references/LOOK.md">references/LOOK.md</a> <span>손그림으로 보이게 하는 것, 팔레트, 레이어 순서, 붓 크기, 색감</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-anime-short/references/KIT.md">references/KIT.md</a> <span>엔진 · 붓 · 페인터 · 악보 API, 주인공 그리기</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-anime-short/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림과 소리는 코드로 만듦 (이미지 · 오디오 · 폰트 파일 없음)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
