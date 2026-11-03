@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ink-summoning · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 가면 쓴 무사가 하얀 스튜디오에서 거대한 붓을 휘두르고, 허공에 남은 먹 획이 호랑이와 용 같은 먹의 짐승으로 살아나는 액션 단편을 코드만으로 만듭니다. 바닥 반사, 마른 붓 결, 먹 연기, 모션 블러, 코드로 합성한 북소리를 붙인 1080p MP4와 브라우저에서 도는 페이지를 냅니다.">
+<meta property="og:title" content="ink-summoning · motion-skills">
+<meta property="og:description" content="주제 하나를 주면 붓으로 그린 먹이 짐승으로 살아나는 수묵 액션 단편을 코드만으로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/ink-summoning/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/ink-summoning">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / ink-summoning</nav>
+  <h1>ink-summoning</h1>
+  <p>주제 하나를 주면 가면 쓴 무사가 하얀 스튜디오에서 거대한 붓을 휘두르고, 허공에 남은 먹 획이 호랑이와 용 같은 먹의 짐승으로 살아나는 액션 단편을 코드만으로 만듭니다. 바닥 반사, 마른 붓 결, 먹 연기, 모션 블러, 코드로 합성한 북소리를 붙인 1080p MP4와 브라우저에서 도는 페이지를 냅니다.</p>
+  <ul class="tags"><li>3D 캔버스</li><li>16:9</li><li>MP4</li><li>라이브 페이지</li><li>합성 사운드</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(용과 호랑이, 늑대와 학, 잉어, 불사조 …). 레퍼런스 영상이 있으면 그 스틸과 소리</dd>
+      <dt>브리프</dt><dd>레퍼런스 프롬프트의 구조에 주제를 채운 <code>BRIEF.md</code>: 소환사의 가면, 땅의 짐승과 하늘의 짐승, 박자, 마지막 구도, 품질 기준과 피해야 할 것</dd>
+      <dt>샷 표</dt><dd>첫 획 → 짐승이 튀어나옴 → 바닥 쓸기 → 고리 → 큰 원 → 짐승의 걸음 → 근접과 휘두름 → 솟는 획이 용이 됨 → 똬리 → 마지막 구도의 8–11샷</dd>
+      <dt>그림</dt><dd>직접 만든 3D 투영 위의 하얀 스튜디오와 바닥 반사, 붓끝이 지나간 길이 곧 먹 획(털 64가닥의 마른 붓 결 · 튀는 먹), 관절과 옷자락과 흰 머리가 따라 움직이는 소환사, 3D 뼈대에 같은 붓으로 칠한 짐승</dd>
+      <dt>확인</dt><dd>무작위 스틸을 브리프 기준으로 채점하는 검토, 콘택트 시트, 모든 샷 · 빈 프레임 · 결정성 · 악보 검사</dd>
+      <dt>출력</dt><dd>30fps 1920×1080 MP4(모션 블러 · 북 · 붓 소리 · 포효 포함), ♪ 버튼으로 소리까지 재생하는 라이브 페이지, 엔진째 넣은 HTML 한 파일</dd>
+    </dl>
+    <pre><code>cd ink-summoning/examples/dragon-tiger
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs index.html --sheet 20 --scale .5 --q mb=1
+node ../../scripts/score.mjs score.js --dur 21.1 --out out/film.wav
+node ../../scripts/render.mjs index.html --workers 4 --audio out/film.wav
+node ../../scripts/new-film.mjs ../../../my-film</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. 네트워크와 GPU가 필요 없습니다(CPU에서 모션 블러를 넣은 1080p 한 프레임이 워커 하나에 약 1.2초, 21초 영상을 워커 4개로 약 3분 반). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/ink-summoning/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:calc((100vw - 34px)*.5625);--demo-bg:#d9dcdf">
+    <iframe data-src="demo/dragon-tiger/?scale=.5" title="ink-summoning 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/dragon-tiger/">데모 열기 (examples/dragon-tiger)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/dragon-tiger</code> · 21초 · 10샷 · ♪ 버튼으로 소리</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/dragon-tiger/?scale=.5" data-cap="예제 &lt;code&gt;examples/dragon-tiger&lt;/code&gt; · 21초 · 10샷 · ♪ 버튼으로 소리" aria-pressed="true">용과 호랑이</button>
+        <button class="btn" type="button" data-src="demo/template/?scale=.5" data-cap="템플릿 &lt;code&gt;templates/film.html&lt;/code&gt; · 11초 · 5샷 · 주제를 바꾼 출발점" aria-pressed="false">늑대와 학</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제 「龍虎 · Dragon and Tiger」의 열 샷과, 같은 엔진으로 주제만 바꾼 시작 템플릿입니다. 카드를 누르면 새 탭에서 그 순간에 멈춘 장면이 열리고, 브라우저가 먹 한 가닥부터 직접 그립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"ink":"먹 획","beast":"짐승","shot":"구도"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>龍虎 · Dragon and Tiger <small>16:9 · 21초 · 10샷</small></h3>
+      <p>도깨비 가면을 쓴 소환사가 붓을 휘두르자 먹이 호랑이가 되어 렌즈로 달려들고, 먹의 고리가 소환사를 감싸고, 솟아오른 획이 용이 되어 머리 위를 돕니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="ink" href="demo/dragon-tiger/?t=1.3" target="_blank" rel="noopener">
+          <img src="samples/stroke.jpg" alt="하얀 스튜디오 가운데 가면 쓴 소환사가 왼쪽 위에서 오른쪽 아래로 그은 굵은 먹 획, 획이 떨어진 바닥에서 피어오르는 먹 연기와 튄 먹 방울" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">1 · 1.3초</span><b>첫 획</b>
+          <span class="how">붓끝이 지나간 길이 곧 먹 리본, 바닥에 떨어진 먹 방울과 자국, 연기가 피는 자리</span></div></a>
+        <a class="tile" data-tags="beast" href="demo/dragon-tiger/?t=3.3" target="_blank" rel="noopener">
+          <img src="samples/charge.jpg" alt="하얀 줄무늬의 검은 먹 호랑이가 연기를 뒤로하고 카메라 쪽으로 달려드는 장면, 광택 바닥에 비친 호랑이" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">2 · 3.3초</span><b>호랑이가 달려듦</b>
+          <span class="how">먹 연기 속에서 형체를 갖추는 호랑이, 이동 거리에 맞춘 걸음, 모션 블러와 충격 흔들림</span></div></a>
+        <a class="tile" data-tags="ink" href="demo/dragon-tiger/?t=5" target="_blank" rel="noopener">
+          <img src="samples/sweep.jpg" alt="낮은 기울어진 앵글, 몸을 숙인 소환사가 붓으로 바닥을 쓸어 남긴 긴 먹 획과 앞쪽에 흩어진 먹 방울" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">3 · 5초</span><b>바닥 쓸기</b>
+          <span class="how">바닥 높이에 묶은 붓 궤적, 더치 앵글, 앞으로 튀는 먹</span></div></a>
+        <a class="tile" data-tags="ink" href="demo/dragon-tiger/?t=7.4" target="_blank" rel="noopener">
+          <img src="samples/rings.jpg" alt="높은 곳에서 내려다본 소환사, 두 번 돌며 남긴 먹 고리 두 개가 몸 앞뒤로 감겨 있고 바닥에 고리가 비침" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">4 · 7.4초</span><b>먹의 고리</b>
+          <span class="how">두 바퀴 회전의 붓 궤적, 깊이로 잘라 그려 몸 앞과 뒤를 지나는 고리</span></div></a>
+        <a class="tile" data-tags="shot ink" href="demo/dragon-tiger/?t=9" target="_blank" rel="noopener">
+          <img src="samples/circle.jpg" alt="정면 대칭 구도, 소환사 뒤로 세로로 선 큰 먹 원과 작은 먹 원, 바닥에 그려진 먹 원과 그 반사" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">5 · 9초</span><b>큰 원</b>
+          <span class="how">레퍼런스의 대표 장면을 이 엔진으로: 세로 원 두 개, 바닥 원, 광택 바닥 반사</span></div></a>
+        <a class="tile" data-tags="beast" href="demo/dragon-tiger/?t=11.6" target="_blank" rel="noopener">
+          <img src="samples/prowl.jpg" alt="바닥의 먹 원을 밟고 나와 입을 벌려 포효하는 먹 호랑이의 옆모습, 흰 송곳니와 흰 줄무늬" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">6 · 11.6초</span><b>걸어 나오는 호랑이</b>
+          <span class="how">비스듬한 아몬드 눈, 흰 송곳니, 옆구리를 감싸는 흰 줄무늬, 마른 붓 털</span></div></a>
+        <a class="tile" data-tags="shot" href="demo/dragon-tiger/?t=12.1" target="_blank" rel="noopener">
+          <img src="samples/mask.jpg" alt="흰 머리 갈기와 긴 뿔이 달린 도깨비 가면을 가까이 본 장면, 치켜 올라간 눈과 송곳니가 드러난 입" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">7 · 12.1초</span><b>가면 근접</b>
+          <span class="how">흐린 배경, 붓으로 칠한 흰 머리, 이어서 렌즈 앞을 지나가는 붓</span></div></a>
+        <a class="tile" data-tags="beast ink" href="demo/dragon-tiger/?t=14.5" target="_blank" rel="noopener">
+          <img src="samples/rise.jpg" alt="붓을 치켜든 소환사, 위로 솟은 먹 획의 끝에서 먹 연기와 함께 빠져나와 날아오르는 용" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">8 · 14.5초</span><b>획이 용이 됨</b>
+          <span class="how">획과 같은 경로를 따라가는 용, 증발하는 획, 형체를 갖추는 비늘과 뿔과 수염</span></div></a>
+        <a class="tile" data-tags="beast" href="demo/dragon-tiger/?t=16.3" target="_blank" rel="noopener">
+          <img src="samples/coil.jpg" alt="소환사 머리 위로 똬리를 틀며 도는 먹 용, 아래에서 올려다본 하얀 천장" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">9 · 16.3초</span><b>똬리</b>
+          <span class="how">고리 경로를 도는 용 두 마리, 스스로 앞뒤를 지나도록 조각내 정렬한 몸</span></div></a>
+        <a class="tile" data-tags="shot beast" href="demo/dragon-tiger/?t=19" target="_blank" rel="noopener">
+          <img src="samples/tableau.jpg" alt="마지막 구도: 왼쪽에 포효하는 먹 호랑이, 가운데 지팡이 붓을 세운 소환사와 바닥의 먹 원, 위에서 도는 용 두 마리" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">10 · 19초</span><b>마지막 구도</b>
+          <span class="how">호랑이 · 소환사 · 용의 정면 대칭 구도, 천천히 다가가는 카메라, 징과 저음</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>Wolf and Cranes <small>템플릿 · 11초 · 5샷</small></h3>
+      <p>같은 엔진으로 주제만 바꾼 출발점입니다. 여우 가면의 소환사가 그은 획이 늑대가 되고, 위로 던진 획 셋이 학이 됩니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="ink" href="demo/template/?t=1.3" target="_blank" rel="noopener">
+          <img src="samples/t-stroke.jpg" alt="여우 가면을 쓴 소환사가 그은 대각선 먹 획과 오른쪽에서 피어오르는 먹 연기" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 1.3초</span><b>소환의 획</b><span class="en">templates/film.html</span>
+          <span class="how"><code>new-film.mjs</code>가 복사하는 출발점의 첫 샷</span></div></a>
+        <a class="tile" data-tags="beast" href="demo/template/?t=4.9" target="_blank" rel="noopener">
+          <img src="samples/t-howl.jpg" alt="바닥의 먹 원 위에서 고개를 들고 우는 먹 늑대의 옆모습" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 4.9초</span><b>늑대의 울음</b>
+          <span class="how">같은 네발 짐승 뼈대에 늑대 프리셋(뾰족한 귀 · 긴 주둥이 · 덥수룩한 꼬리)</span></div></a>
+        <a class="tile" data-tags="shot beast" href="demo/template/?t=9.5" target="_blank" rel="noopener">
+          <img src="samples/t-tableau.jpg" alt="마지막 구도: 소환사 옆의 먹 늑대와 머리 위를 도는 학 세 마리" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 9.5초</span><b>늑대와 학</b>
+          <span class="how">새 프리셋(흰 몸 · 검은 날개 끝)이 원을 그리며 도는 마지막 구도</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. Ayesha가 X에 올린 16초 영상(Seedance 2.5로 만든, 도깨비 가면을 쓴 무사가 거대한 붓으로 그린 먹이 호랑이와 용이 되는 영상)과 함께 올린 프롬프트가 출발점입니다. 그 영상은 AI 영상 모델이 만든 것이라, 이 스킬은 프롬프트와 화면의 문법(하얀 스튜디오, 먹 획, 붓에서 짐승으로, 컷 리듬, 마지막 구도)만 가져오고 그림은 직접 만든 엔진이 그립니다. 예제의 소환사, 짐승, 안무, 음악은 모두 이 레포의 것이고, 용과 호랑이는 오래된 수묵화의 짝(龍虎圖)입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/dragon-tiger/" target="_blank" rel="noopener"><b>「龍虎 · Dragon and Tiger」 · 21초 · 10샷</b><span>호랑이, 먹의 고리, 용 두 마리, 라이브 페이지</span><span class="url">ink-summoning/demo/dragon-tiger/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/ink-summoning/examples"><b>예제 폴더 · examples/</b><span>dragon-tiger · zoo(짐승 프리셋 모음)</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/AyeshaEvie/status/2117456171053596757" target="_blank" rel="noopener"><b>레퍼런스 영상과 프롬프트 · X</b><span>Ayesha(@AyeshaEvie) · Seedance 2.5 · 2026년 11월</span><span class="url">x.com/AyeshaEvie</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ink-summoning/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/ink-summoning">폴더</a> <span>lib · scripts · templates · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ink-summoning/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ink-summoning/references/BRIEF.md">references/BRIEF.md</a> <span>레퍼런스 프롬프트 원문, 영상의 샷 분석, 주제를 채우는 브리프 틀, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ink-summoning/references/STORY.md">references/STORY.md</a> <span>주제별 캐스팅 표, 10박자 샷 문법, 컷 리듬</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ink-summoning/references/LOOK.md">references/LOOK.md</a> <span>레퍼런스처럼 보이게 하는 것: 스튜디오, 먹 획, 연기, 소환사, 짐승, 색감</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ink-summoning/references/KIT.md">references/KIT.md</a> <span>필름 · 먹 · 소환사 · 짐승 · 악보 API</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ink-summoning/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림과 소리는 코드로 만듦 (이미지 · 오디오 · 폰트 파일 없음)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
