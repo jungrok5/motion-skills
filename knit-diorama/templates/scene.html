@@ -1,0 +1,57 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>knit-diorama scene</title>
+<!-- the import map points at the skill's lib/ (new-scene.mjs rewrites it to the project's own copy) -->
+<script type="importmap">{ "imports": { "three": "../lib/three.module.min.js", "knit/": "../lib/" } }</script>
+</head><body>
+<script type="module">
+// Template: a small knitted meadow with a pond, a cottage and a few trees — 12 s, knits once and holds.
+// Order that works: 1) ground (height + regions + materials) with stills, 2) big props, 3) small props, 4) camera, 5) timing.
+import { Diorama, PAL, yarn, sqNorm, hash } from 'knit/knit.js';
+import * as K from 'knit/kit.js';
+
+const D = new Diorama({
+  dur: 12, fps: 30, W: 1920, H: 1080, half: 5,          // world = a rounded square 10 m across
+  knit: [2, 8],                                          // the ball knits the world from 2 s to 8 s
+  unravel: null,                                         // [t2, t3] to take it back (and make a seamless loop)
+  ball: { color: PAL.mustard, r: [.3, .9], home: [-6.2, 3.4], hover: 1.6 },
+});
+
+// ── ground: one height function, one region function, one knitted material per region ──
+const pond = (x, z) => Math.hypot((x - 1.6) / 1.5, (z + .8) / 1.1);       // < 1 inside the pond
+const height = (x, z) => -.12 * Math.max(0, 1 - pond(x, z) ** 2) + .5 * Math.exp(-((x + 2.6) ** 2 + (z + 2.4) ** 2) / 3);
+const region = (x, z) => pond(x, z) < 1 ? 'water' : pond(x, z) < 1.18 ? 'shore'
+  : ['grass', 'clover', 'flowers'][Math.floor(hash(Math.floor((x + 9) / 2.6), Math.floor((z + 9) / 2.2)) * 3)];
+D.ground({
+  height, region,
+  mats: {
+    water: yarn({ color: PAL.sky, stitch: 'rib', repeat: 2.8, flow: [0, .05] }),
+    shore: yarn({ color: PAL.oat, stitch: 'seed', repeat: 2.8 }),
+    grass: yarn({ color: PAL.sage, stitch: 'stockinette', repeat: 2.8 }),
+    clover: yarn({ color: PAL.moss, stitch: 'garter', repeat: 2.8 }),
+    flowers: yarn({ color: PAL.sage, color2: PAL.white, stitch: 'stockinette', repeat: 2.8, pattern: 'dots' }),
+  },
+  seams: { skip: (a, b) => a === 'water' || b === 'water' },
+});
+
+// ── props: built where they stand; each pops out of the ball when the knit front reaches it ──
+K.cottage(D, { at: [-1.4, .4], rot: .3, wall: PAL.cream, roof: PAL.coral });
+K.tree(D, { at: [-2.6, -2.4], crown: PAL.moss, size: 1.1 });
+K.tree(D, { at: [.2, 2.6], crown: PAL.mustard, shape: 'tall' });
+K.pine(D, { at: [-3.4, 2.4] });
+K.bush(D, { at: [2.4, 2.2], color: PAL.sage, berries: PAL.coral });
+K.flowers(D, { at: [-.6, -2.6] });
+K.boat(D, { at: [1.6, -.8], hull: PAL.coral, size: .6, drift: .1 });
+K.cloud(D, { at: [-1, -1.5], y: 3.6, size: .8, rho: 5.5 });
+
+// ── camera: start close on the ball, pull back while the world knits ──
+D.cameraKeys([
+  { t: 0, yaw: -12, elev: 22, dist: 10, target: [0, .2, 0], fov: 30 },
+  { t: 1.6, yaw: -12, elev: 22, dist: 10, target: [0, .2, 0], fov: 30 },
+  { t: 5, yaw: -2, elev: 30, dist: 16, target: [0, .6, 0], fov: 30 },
+  { t: 9, yaw: 10, elev: 34, dist: 19, target: [-.4, .2, 0], fov: 30 },
+  { t: 12, yaw: 20, elev: 32, dist: 18.5, target: [-.4, .2, 0], fov: 30 },
+]);
+D.start();
+</script>
+</body></html>

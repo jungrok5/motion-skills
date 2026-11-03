@@ -154,6 +154,21 @@
         { "title": "Electricity · 수업 3개 · 33초 투어 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/pop-up-textbook/demo/examples/electricity/" },
         { "title": "The Sky · 계절과 달의 위상 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/pop-up-textbook/demo/examples/sky/" }
       ]
+    },
+    {
+      "id": "knit-diorama",
+      "name": "knit-diorama",
+      "tagline": "밭, 바다, 지붕, 나무까지 모두 털실로 뜬 작은 세상을 three.js로 만들고, 그 세상이 털실 공에서 떠져 나오는 영상을 만듭니다. 실 끝을 당기면 공이 떠올라 돌며 바깥으로 세상을 뜨고, 소품이 공에서 튀어나오며, 다시 풀려 공으로 돌아가는 1080p MP4와 브라우저에서 도는 페이지를 냅니다.",
+      "posterAlt": "knit-diorama로 만든 「Knitted Harbour」의 장면 네 개: 조각보 담요 위의 산호색 털실 공, 떠오른 공 아래로 절반쯤 떠진 들판과 집들, 등대와 풍차와 돛단배가 있는 완성된 뜨개 항구 섬, 다시 공으로 빨려 들어가는 집과 나무",
+      "poster": "knit-diorama/poster.jpg",
+      "tags": ["3D", "16:9", "MP4", "라이브 페이지", "심리스 루프"],
+      "stats": ["예제 20초 루프", "뜨개 질감 8가지 · 소품 14종"],
+      "page": "knit-diorama/",
+      "source": "knit-diorama/",
+      "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "knit-diorama/examples/harbour/" },
+      "workedExample": [
+        { "title": "「Knitted Harbour」 · 20초 루프 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/knit-diorama/demo/harbour.html" }
+      ]
     }
   ]
 }

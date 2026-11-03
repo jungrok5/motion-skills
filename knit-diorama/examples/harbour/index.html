@@ -1,0 +1,102 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Knitted Harbour · knit-diorama</title>
+<!-- the import map points at the skill's lib/ (new-scene.mjs rewrites it to the project's own copy) -->
+<script type="importmap">{ "imports": { "three": "../../lib/three.module.min.js", "knit/": "../../lib/" } }</script>
+</head><body>
+<script type="module">
+// 「Knitted Harbour」 — 20 s loop. A coral yarn ball sits on a patchwork blanket; its loose end is tugged, the ball lifts
+// and spins, and a harbour island knits itself outward from the centre — fields, a beach, the sea, a lighthouse, cottages,
+// a windmill, boats — every prop flying out of the ball as the front passes it. Then it all unravels back into the ball.
+import { Diorama, THREE, PAL, yarn, sqNorm, smooth, hash, clamp } from 'knit/knit.js';
+import * as K from 'knit/kit.js';
+
+const D = new Diorama({
+  dur: 20, fps: 30, W: 1920, H: 1080, half: 8,
+  knit: [2.5, 10.5],            // the ball knits the world …
+  unravel: [15.4, 19.0],        // … and takes it back (loop: frame 20 = frame 0)
+  ball: { color: PAL.coral, r: [.34, 1.15], home: [-9.4, 5.4], hover: 1.8, tail: [[0, 0], [1.1, .7], [1.9, 1.9], [2.9, 2.2]] },
+});
+
+// ── the land: a coast with a headland, a hill, a lane to the pier, patchwork fields ──
+const coast = z => 2.7 + 1.1 * Math.sin(z * .42 + .5) + .45 * Math.sin(z * 1.3 + 1) + 2.6 * Math.exp(-(((z + 5.1) / 1.25) ** 2));
+const seaV = (x, z) => x - coast(z);                       // > 0 = sea
+const hill = (x, z) => 1.15 * Math.exp(-(((x + 4.3) ** 2 + (z + 4.1) ** 2) / 5.2));
+const lane = [[-1.0, -.6], [.2, .9], [1.6, 1.8], [3.2, 2.3]];
+const laneD = (x, z) => { let d = 9; for (let i = 1; i < lane.length; i++) { const [ax, az] = lane[i - 1], [bx, bz] = lane[i], dx = bx - ax, dz = bz - az; const u = clamp(((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz)); d = Math.min(d, Math.hypot(x - ax - u * dx, z - az - u * dz)); } return d; };
+const height = (x, z) => -.16 * smooth(-.05, .35, seaV(x, z)) + hill(x, z) - .03 * smooth(.3, 0, laneD(x, z)) + .02 * Math.sin(x * 1.7) * Math.sin(z * 1.9);
+const FIELDS = ['meadow', 'moss', 'lilac', 'mustard', 'check', 'rose', 'cable', 'meadow', 'moss'];
+const region = (x, z) => {
+  const s = seaV(x, z);
+  if (s > 0) return 'sea';
+  if (s > -.65) return 'sand';
+  if (laneD(x, z) < .26) return 'lane';
+  const u = x + .55 * Math.sin(z * .7), v = z + .5 * Math.sin(x * .6 + 1);
+  return FIELDS[Math.floor(hash(Math.floor(u / 3.1), Math.floor(v / 2.6), 4) * FIELDS.length)];
+};
+const T = 2.8;                                             // ground uv is metres: ~2.8 stitch tiles per metre
+D.ground({
+  height, region, seg: 220,
+  mats: {
+    sea: yarn({ color: PAL.sea, stitch: 'rib', repeat: T, flow: [-.06, 0] }),
+    sand: yarn({ color: PAL.sand, stitch: 'seed', repeat: T }),
+    lane: yarn({ color: PAL.oat, stitch: 'garter', repeat: T }),
+    meadow: yarn({ color: PAL.sage, stitch: 'stockinette', repeat: T }),
+    moss: yarn({ color: PAL.moss, stitch: 'rib', repeat: T }),
+    lilac: yarn({ color: PAL.lilac, stitch: 'seed', repeat: T }),
+    mustard: yarn({ color: PAL.butter, stitch: 'garter', repeat: T }),
+    check: yarn({ color: PAL.sage, color2: PAL.cream, stitch: 'stockinette', repeat: T, pattern: { check: 4 } }),
+    rose: yarn({ color: PAL.rose, color2: PAL.white, stitch: 'stockinette', repeat: T, pattern: 'dots' }),
+    cable: yarn({ color: PAL.oat, stitch: 'cable', repeat: T / 2 }),
+  },
+  seams: { skip: (a, b) => a === 'sea' || b === 'sea' },   // the shoreline is a colour change, not a seam
+});
+const land = (x, z, m = .5) => seaV(x, z) < -.65 - m && laneD(x, z) > .5 && sqNorm(x / 8, z / 8) < .9;
+const sea = (x, z, m = .5) => seaV(x, z) > m && sqNorm(x / 8, z / 8) < .9;
+
+// ── props ──
+K.lighthouse(D, { at: [3.6, -5.15] });
+K.cottage(D, { at: [-1.6, -1.7], rot: .25, wall: PAL.cream, roof: PAL.brick });
+K.cottage(D, { at: [-3.1, .6], rot: -.35, wall: PAL.sky, wallPattern: 'zigzag', wall2: PAL.white, roof: PAL.denim, door: PAL.coral, w: 1.1 });
+K.cottage(D, { at: [.5, -.5], rot: .1, wall: PAL.rose, roof: PAL.berry, door: PAL.sage, w: 1.0, d: .9, smoke: false });
+K.cottage(D, { at: [-1.2, 3.4], rot: -.15, wall: PAL.butter, wallPattern: 'diamond', wall2: PAL.cream, roof: PAL.teal, w: 1.2 });
+K.windmill(D, { at: [-4.3, -4.0], rot: .5 });
+K.pier(D, { at: [coast(2.3) - .7, 2.3], to: [coast(2.3) + 1.8, 2.5] });
+for (const [x, z] of [[-6.4, -1.6], [-6.9, -2.9], [-5.7, -.5], [-1.4, -6.3], [-2.6, -6.7], [.2, -6.6], [-6.6, 2.3]]) K.pine(D, { at: [x, z], size: .8 + .4 * hash(x * 10, z * 10) });
+const trees = K.scatter(11, { seed: 4, half: 7.2, gap: 1.3, ok: (x, z) => land(x, z, .3) && Math.hypot(x + 4.3, z + 4.1) > 1.4 && [[-1.6, -1.7], [-3.1, .6], [.5, -.5], [-1.2, 3.4]].every(([a, b]) => Math.hypot(x - a, z - b) > 1.3) });
+const crowns = [PAL.moss, PAL.sage, PAL.mustard, PAL.coral, PAL.moss, PAL.teal];
+trees.forEach(([x, z], i) => K.tree(D, { at: [x, z], crown: crowns[i % crowns.length], size: .75 + .4 * hash(i, 7), shape: ['round', 'tall', 'double'][i % 3] }));
+K.scatter(6, { seed: 9, half: 7, gap: 1, ok: (x, z) => land(x, z, .2) && trees.every(([a, b]) => Math.hypot(x - a, z - b) > .8) })
+  .forEach(([x, z], i) => K.bush(D, { at: [x, z], color: [PAL.sage, PAL.moss, PAL.pine][i % 3], size: .9, seed: i + 1, berries: i % 2 ? PAL.coral : null }));
+K.scatter(10, { seed: 12, half: 7, gap: .9, ok: (x, z) => land(x, z, .1) && trees.every(([a, b]) => Math.hypot(x - a, z - b) > .7) })
+  .forEach(([x, z], i) => K.flowers(D, { at: [x, z], seed: i + 3, n: 8, colors: [[PAL.rose, PAL.white], [PAL.butter, PAL.white], [PAL.lilac, PAL.rose]][i % 3] }));
+K.scatter(5, { seed: 2, half: 7.4, gap: 1.2, ok: (x, z) => { const s = seaV(x, z); return s < -.1 && s > -.6 && sqNorm(x / 8, z / 8) < .92; } })
+  .forEach(([x, z], i) => K.rock(D, { at: [x, z], size: .2 + .1 * hash(i, 1), seed: i + 1 }));
+K.fence(D, { path: [[-5.2, 1.4], [-4.0, 2.6], [-2.7, 3.0]] });
+K.boat(D, { at: [5.7, -1.2], rot: .4, hull: PAL.coral, seed: 1 });
+K.boat(D, { at: [6.3, 3.1], rot: -.6, hull: PAL.mustard, sail2: PAL.coral, seed: 2, size: .85 });
+K.boat(D, { at: [4.4, 6.1], rot: 2.4, hull: PAL.denim, sail2: PAL.mustard, seed: 3, size: .75 });
+K.scatter(11, { seed: 21, half: 7.5, gap: 1.1, ok: (x, z) => sea(x, z, .6) && [[5.7, -1.2], [6.3, 3.1], [4.4, 6.1]].every(([a, b]) => Math.hypot(x - a, z - b) > 1) })
+  .forEach(([x, z], i) => K.wave(D, { at: [x, z], rot: Math.PI / 2 + .3 * (hash(i, 2) - .5), seed: i, len: .55 + .3 * hash(i, 3) }));
+K.cloud(D, { at: [-3.5, -2.8], y: 4.6, seed: 1, rho: 8.2 });
+K.cloud(D, { at: [2.4, -3.6], y: 5.2, seed: 2, size: .8, rho: 8.6 });
+K.cloud(D, { at: [-1.0, 4.4], y: 4.2, seed: 3, size: .7, rho: 9.0 });
+
+// ── camera: close on the ball, pull back while it knits, a slow half-orbit, back home for the loop ──
+D.cameraKeys([
+  { t: 0, yaw: -14, elev: 22, dist: 13, target: [0, .2, 0], fov: 30 },
+  { t: 1.8, yaw: -14, elev: 22, dist: 13, target: [0, .2, 0], fov: 30 },
+  { t: 4.2, yaw: -8, elev: 26, dist: 18, target: [0, 1, 0], fov: 30 },
+  { t: 7.2, yaw: -2, elev: 31, dist: 24, target: [0, .5, 0], fov: 30 },
+  { t: 10.5, yaw: 8, elev: 34, dist: 28, target: [-.4, .2, .4], fov: 30 },
+  { t: 13, yaw: 26, elev: 30, dist: 25, target: [.6, .3, -.6], fov: 30 },
+  { t: 15.4, yaw: 14, elev: 33, dist: 28, target: [-.4, .2, .4], fov: 30 },
+  { t: 16.9, yaw: 4, elev: 30, dist: 22, target: [0, .6, 0], fov: 30 },
+  { t: 18.3, yaw: -10, elev: 24, dist: 16, target: [0, 1, 0], fov: 30 },
+  { t: 19.3, yaw: -14, elev: 22, dist: 13, target: [0, .2, 0], fov: 30 },
+  { t: 20, yaw: -14, elev: 22, dist: 13, target: [0, .2, 0], fov: 30 },
+]);
+D.check('the lighthouse stands on land', () => seaV(3.6, -5.15) < -.65);
+D.start();
+</script>
+</body></html>
