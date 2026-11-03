@@ -1,7 +1,7 @@
-// cartoon-3d-short · new-film.mjs — start a project: lib/, film.html, SCRIPT.md, score.js, voice/, out/.
-//   node <skill>/scripts/new-film.mjs my-short                       → from templates/ (a 6-shot starting film)
+// cartoon-3d-short · new-film.mjs — start a project: lib/, film.html, BRIEF.md, score.js, voice/, out/.
+//   node <skill>/scripts/new-film.mjs my-short                       → from templates/ (a 5-shot starting film)
 //   node <skill>/scripts/new-film.mjs my-short --from leaning-tower  → from examples/leaning-tower/ (the worked example)
-// Write SCRIPT.md from the user's topic first (references/STORY.md), then the voice, then the shots.
+// Write BRIEF.md from the user's topic first (references/BRIEF.md), then the voice, then the shots.
 import { cpSync, mkdirSync, readFileSync, writeFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

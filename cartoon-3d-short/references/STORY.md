@@ -10,7 +10,7 @@ is extremely regular. Follow it; it is why these shorts hold attention.
   a crowded doorway = a traffic jam). No mechanism, no "You see," beat, no short.
 - It needs **stakes and people**: someone did something that sounds dumb or impossible, others reacted.
 - Check every claim and number against a source (Wikipedia is the minimum; follow its citation for the key number).
-  Write them at the top of `SCRIPT.md`. Jokes are researched facts, not invented ones.
+  Write them at the top of `BRIEF.md`. Jokes are researched facts, not invented ones.
 
 ## 2. The script formula (20 of 20 reference videos follow it)
 | beat | what | example (leaning-tower) |
@@ -31,7 +31,7 @@ is extremely regular. Follow it; it is why these shorts hold attention.
 
 ## 3. The shot plan
 One shot per sentence or beat: **15–20 shots a minute, 1.5–5 s each**, every shot starting on a word. Write the table in
-`SCRIPT.md` before any code: `# | first word | set · light | framing · camera | who / what | sound`.
+`BRIEF.md` before any code: `# | first word | set · light | framing · camera | who / what | sound`.
 
 Shot grammar that reads as the reference:
 - **Hook**: the payoff image *first* (a flash-forward: the tower leaning today), low angle, push in; a 4-frame white

@@ -1,7 +1,10 @@
-# <Title> — script
+# BRIEF — <topic>
 
-<!-- Fill this first, from the user's topic (references/STORY.md). Keep the facts and their sources at the top:
-     every joke is a real fact. Then the voice, then the shots. -->
+<!-- Fill this first, from the user's topic (references/BRIEF.md, references/STORY.md), before any code. Keep the facts
+     and their sources at the top: every joke is a real fact. Then the voice, then the shots. -->
+
+**Topic (as the user said it):** "…"
+**Title:** …
 
 ## Facts (with sources)
 - The claim the hook rests on — source
@@ -28,6 +31,18 @@ Want it to land butter side up? Get a taller table.
 
 <!-- (template example: Robert Matthews, "Tumbling toast, Murphy's Law and the fundamental constants",
      European Journal of Physics 16 (1995) 172–176 — table heights of ~75 cm give the toast time for about half a turn) -->
+
+## Designed for this topic
+- **Cast** (one `person({...})` each, a distinct coat colour per role; era-right hats and props; who is the everyman):
+  - …
+- **Props that carry the jokes** (everything a sentence names must be on screen; kit builder or a new piece with
+  `S.Batch` / `S.mesh` / a held-prop draw function):
+  - …
+- **Sets** (1–3 places: what is built, where the cameras stand, which objects the shots move):
+  - …
+- **Light per beat** (day story · golden time passing / payoff · night explanation or pause · interior analogy):
+- **Effect cards** (which beats pop `exclaim`, `question`, `bang`, `puff`, `splash` …):
+- **Sound** (mood per section, the turns where it changes, an SFX on every on-screen hit, a dead-air stop on the big moment):
 
 ## Shot plan
 | # | first word | set · light | framing · camera | who / what | sound |

@@ -1,4 +1,7 @@
-# The Tower That a War Saved — script
+# BRIEF — the Leaning Tower of Pisa
+
+**Topic (as given):** "why the Leaning Tower of Pisa is still standing"
+**Title:** The Tower That a War Saved
 
 Worked example of cartoon-3d-short: why the Leaning Tower of Pisa is still standing. 61.9 s, 211 words, 19 shots.
 
@@ -39,6 +42,23 @@ centimeters, and then they stopped on purpose. Because a straight tower in Pisa 
 ## Voice
 ElevenLabs `eleven_v4`, voice "Leo – The Engaging Narrator & Storyteller", take 1 of 2 (79.5 s) → silences > 0.14 s cut
 to 0.09 s, `atempo` 1.14 → `voice/voice.mp3` 61.8 s (3.4 words/s) → Scribe word times → `voice/words.json`.
+
+## Designed for this topic
+- **Cast**: master builder (stout, beret, beard, wine coat), two masons (cap / hood, earth colours), Pisan soldiers
+  (red coats, helmets, spears drawn as held props), neighbours (four townsfolk), a kid (orange, hair — the everyman of the
+  explanation), 1990 engineers (hi-vis orange, hard hats, glasses), today's tourists (bright modern colours, a camera prop).
+- **Props that carry the jokes**: the tower as eight chained storeys (a lean on the base, a counter-tilt on storeys 4+
+  = the banana, storeys that rise and scale in), a scaffold, the striped cathedral and baptistery, mud around the base,
+  spears and hammers, a banana and a sponge (held-prop draw functions), steel cables, lead weights, a drill rig, a soil pile.
+- **Sets**: `piazza` (lawn, cathedral, town wall, streets, hills, mountains; the tower at the origin leaning toward +x so
+  the lean reads left → right from the usual cameras at +z) and `kitchen` (a room, a table, a bowl) for the analogy.
+- **Light per beat**: day for the story; golden for the hundred years and the payoff; night for "the ground had time to
+  harden"; interior for the sponge.
+- **Effect cards**: `exclaim` on "something", `creak` + `puff` on the tipping, `splash` on "clay", `puff` on the dropped
+  tools, `zzz` on the sleeping guard, `arrow` on "short side", `question` on "why", `splash` / `sparkle` for the sponge,
+  `bang` + `puff` for the what-if fall.
+- **Sound**: bouncy → tense (tipping) → march (war) → wonder (a century) → bouncy → sneaky ("But wait") → explain →
+  tense (what-if, dead air on the crash) → march (1990) → payoff with a button.
 
 ## Shot plan
 | # | first word | set · light | framing · camera | who / what | sound |

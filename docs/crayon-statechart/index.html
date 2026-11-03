@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>crayon-statechart · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 그 과정을 손으로 그린 상태도로 만들어, 크림색 종이 위에 코발트 잉크와 색연필로 한 단계씩 그려 나가는 설명 영상을 코드만으로 만듭니다. 갈래와 되돌아가는 고리, 동시에 바뀌는 두 영역, 옆에서 일하는 사람들의 그림, 재생 바와 자막을 붙인 MP4와 브라우저에서 도는 페이지를 냅니다.">
+<meta property="og:title" content="crayon-statechart · motion-skills">
+<meta property="og:description" content="주제 하나를 손으로 그린 상태도 설명 영상으로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/crayon-statechart/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/crayon-statechart">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / crayon-statechart</nav>
+  <h1>crayon-statechart</h1>
+  <p>주제 하나를 주면 그 과정을 손으로 그린 상태도로 만들어, 크림색 종이 위에 코발트 잉크와 색연필로 한 단계씩 그려 나가는 설명 영상을 코드만으로 만듭니다. 갈래와 되돌아가는 고리, 동시에 바뀌는 두 영역, 옆에서 일하는 사람들의 그림, 재생 바와 자막을 붙인 MP4와 브라우저에서 도는 페이지를 냅니다.</p>
+  <ul class="tags"><li>5:4</li><li>MP4</li><li>라이브 페이지</li><li>상태도</li><li>두 언어 꼬리표</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(김치 담그기, 향 만들기, 버블티 가게의 하루, 택배가 오기까지 …)와 꼬리표에 쓸 두 번째 언어</dd>
+      <dt>브리프</dt><dd>주제마다 새로 쓰는 <code>BRIEF.md</code>: 2–4개의 장, 장마다 상태(지금 무엇인가)와 전이(무엇이 일어나는가), 조건이 붙은 갈래 하나, "아직이면 다시"의 고리 하나, 마지막 장의 동시에 바뀌는 두 영역, 단계표, 그 주제를 위해 새로 그릴 그림, 스틸 검토 기준</dd>
+      <dt>그림</dt><dd>브리프대로 새로 짠 상태도: 찢은 티켓 모양 상자, 빨간 <code>[조건]</code>, 둥근 모서리 화살표, 색연필 빗금, 타자기 글씨, 그 단계의 일을 하는 사람과 도구 그림(키트에 없는 물건은 주제에 맞게 새로 그림), 아래로 따라 내려가는 카메라</dd>
+      <dt>확인</dt><dd>글씨 · 상자 · 그림의 겹침, 상자를 지나는 화살표, 화면 밖 요소, 결정성을 잡는 자동 점검과 콘택트 시트</dd>
+      <dt>출력</dt><dd>30fps 1350×1080 MP4, 재생 바의 버튼이 실제로 동작하는 라이브 페이지</dd>
+    </dl>
+    <pre><code>cd crayon-statechart/examples/kimchi
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs index.html --sheet 16 --scale .5
+node ../../scripts/render.mjs index.html --workers 4
+node ../../scripts/new-film.mjs ../../../my-film   # BRIEF.md부터</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. 네트워크가 필요 없습니다(한 프레임 10–30ms, 46초 예제를 워커 4개로 약 1분 40초). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/crayon-statechart/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:5/4;--h-phone:calc((100vw - 34px)*.8);--demo-bg:#f3eee2">
+    <iframe data-src="demo/kimchi/?loop=1" title="crayon-statechart 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/kimchi/">데모 열기 (examples/kimchi)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/kimchi</code> · 46초 · 3장 20단계 · 아래 버튼으로 앞뒤 이동</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/kimchi/?loop=1" data-cap="예제 &lt;code&gt;examples/kimchi&lt;/code&gt; · 46초 · 3장 20단계 · 아래 버튼으로 앞뒤 이동" aria-pressed="true">김장</button>
+        <button class="btn" type="button" data-src="demo/template/?loop=1" data-cap="템플릿 &lt;code&gt;templates/film.html&lt;/code&gt; · 18초 · 1장 8단계 · 한국어 본문" aria-pressed="false">택배</button>
+        <button class="btn" type="button" data-src="demo/props/" data-cap="&lt;code&gt;examples/props&lt;/code&gt; · 소품 키트 전체" aria-pressed="false">소품</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제 「김장 · the making of kimchi」의 장면들과, 같은 엔진으로 주제와 언어를 바꾼 템플릿, 소품 키트입니다. 카드를 누르면 새 탭에서 그 순간에 멈춘 장면이 열리고, 브라우저가 선 하나부터 직접 그립니다.</p>
+  <div id="gallery">
+    <div class="group">
+      <h3>김장 · the making of kimchi <small>5:4 · 46초 · 3장 20단계</small></h3>
+      <p>레퍼런스(베트남 향 만들기)에 없는 주제를 브리프부터 새로 설계한 예제입니다. 통배추가 절여지고, 김칫소가 버무려지고, 항아리 속 김치와 밥상이 동시에 바뀝니다. 본문은 영어, 빨간 꼬리표는 한국어이고, 속 넣은 배추 그림은 이 주제를 위해 새로 그렸습니다(<a href="https://github.com/jungrok5/motion-skills/blob/main/crayon-statechart/examples/kimchi/BRIEF.md">BRIEF.md</a>).</p>
+      <div class="grid">
+        <a class="tile" href="demo/kimchi/?t=8.8" target="_blank" rel="noopener">
+          <img src="samples/split.jpg" alt="Salted 장: 통배추에서 반으로 가른 배추로, 조건 [a few heads]와 [a whole kimjang]으로 갈라진 두 상자, 빨간 대야 옆에 쪼그려 앉아 소금을 뿌리는 할머니와 천일염 자루" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">I · 8.8초</span><b>갈래</b>
+          <span class="how">한 상태에서 조건 둘로 갈라지는 화살표, 바깥쪽에 붙는 빨간 조건, 지금 상태의 분홍 상자</span></div></a>
+        <a class="tile" href="demo/kimchi/?t=12.3" target="_blank" rel="noopener">
+          <img src="samples/loop.jpg" alt="두 갈래가 resting 상자로 합쳐지고, 오른쪽에 [still crisp] turned over, a few more hours라고 적힌 작은 되돌이 고리" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">I · 12.3초</span><b>합류와 되돌이 고리</b>
+          <span class="how">두 화살표가 한 상자 위로 들어오고, "아직이면 다시"를 말하는 자기 고리</span></div></a>
+        <a class="tile" href="demo/kimchi/?t=24.9" target="_blank" rel="noopener">
+          <img src="samples/seasoned.jpg" alt="Seasoned 장: 무채와 김칫소, at home과 with the neighbours로 갈라진 상자, 돗자리 위에서 빨간 고무장갑을 끼고 마주 앉아 버무리는 두 사람" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">II · 24.9초</span><b>김장 품앗이</b>
+          <span class="how">재료 줄과 밑 글씨, 무릎 꿇고 버무리는 사람 둘, 이 주제를 위해 새로 그린 속 넣은 배추</span></div></a>
+        <a class="tile" href="demo/kimchi/?t=27" target="_blank" rel="noopener">
+          <img src="samples/back-edge.jpg" alt="stuffed heads 상자의 오른쪽에서 위로 올라가 a red paste로 되돌아가는 긴 화살표와 [pale leaf] more paste 라벨" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">II · 27초</span><b>되돌아가는 화살표</b>
+          <span class="how">모든 상자 바깥으로 돌아 위 상태로 돌아가는 경로, 조건과 행동 라벨</span></div></a>
+        <a class="tile" href="demo/kimchi/?t=39.3" target="_blank" rel="noopener">
+          <img src="samples/parallel.jpg" alt="Two at once 장: at the same time 상자 안에 하늘색 in the jar와 분홍색 at the table 두 영역, 눈 덮인 항아리, 해, 밥상, 불 위의 찌개 냄비" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">III · 39.3초</span><b>동시에</b>
+          <span class="how">병렬 상태의 두 영역, 각자의 시작점, 다른 영역을 읽는 조건 <code>[in jar: sour]</code></span></div></a>
+        <a class="tile" href="demo/kimchi/?t=45" target="_blank" rel="noopener">
+          <img src="samples/end.jpg" alt="병렬 상자 아래 an empty jar 상자에서 끝점으로 가는 화살표 next november, kimjang again, 항아리를 들고 걷는 사람과 굴뚝에서 김이 나는 집" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">III · 45초</span><b>다음 김장</b>
+          <span class="how">병렬 상태를 빠져나오는 조건, 끝점, 마지막 그림</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>택배 한 상자가 오기까지 · 템플릿과 소품 <small>18초 · 1장 8단계</small></h3>
+      <p>같은 엔진으로 주제를 바꾸고 본문을 한국어로, 꼬리표를 영어로 쓴 출발점과, 키트의 소품 전부입니다.</p>
+      <div class="grid">
+        <a class="tile" href="demo/template/?t=18" target="_blank" rel="noopener">
+          <img src="samples/parcel.jpg" alt="집 앞까지 장: 주문 접수에서 포장 완료, 당일 배송과 일반 배송으로 갈라져 배송 중으로 합쳐지고 배송 완료와 끝점까지, 노트북 앞에 앉은 사람, 상자, 택배 트럭, 집, 손 흔드는 사람" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 18초</span><b>집 앞까지</b><span class="en">templates/film.html</span>
+          <span class="how"><code>new-film.mjs</code>가 복사하는 출발점, 한국어 본문과 영어 꼬리표</span></div></a>
+        <a class="tile" href="demo/props/" target="_blank" rel="noopener">
+          <img src="samples/kit.jpg" alt="소품 키트 한 장: 여러 자세의 사람 여섯, 우산, 해 · 구름 · 비 · 눈 · 김 · 불, 나무와 집, 냄비 · 대야 · 그릇 · 항아리 · 컵 · 자루 · 바구니 · 상자, 탁자 · 의자 · 책장 · 기계 · 트럭 · 노트북, 채소와 묶음" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">examples/props</span><b>소품 키트</b>
+          <span class="how">사람(자세 6 · 동작 8 · 모자 6), 날씨, 그릇, 가구, 건물, 기계, 채소 — 모두 움직임</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. X에 올라온 두 영상이 출발점입니다: Ann Nguyen이 만든 베트남 향 만드는 과정 다이어그램과, 그 글이 인용한 Kevin Ngo의 버블티 가게 상태도(JavaScript로 그린 다이어그램). 이 스킬은 그 화면의 문법(종이 위 잉크와 색연필, 타자기 글씨, 조건이 붙은 갈래, 고리, 동시에 바뀌는 영역, 단계마다 자라는 그림과 재생 바)만 가져오고, 엔진과 예제의 주제 · 배치 · 그림은 모두 이 레포의 것입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/kimchi/" target="_blank" rel="noopener"><b>「김장 · the making of kimchi」 · 46초 · 3장 20단계</b><span>갈래, 합류, 고리, 되돌아가는 화살표, 병렬 상태, 라이브 페이지</span><span class="url">crayon-statechart/demo/kimchi/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/crayon-statechart/examples"><b>예제 폴더 · examples/</b><span>kimchi(BRIEF.md 포함) · props(소품 키트)</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/ann_nnng/status/2116811409921372642" target="_blank" rel="noopener"><b>레퍼런스 영상 · X</b><span>Ann Nguyen(@ann_nnng) · 베트남 향 만들기 · 2026년 11월</span><span class="url">x.com/ann_nnng</span></a>
+    <a class="work" href="https://x.com/kevin_t_ngo/status/2116270190040416313" target="_blank" rel="noopener"><b>인용된 영상 · X</b><span>Kevin Ngo(@kevin_t_ngo) · 버블티 가게 상태도</span><span class="url">x.com/kevin_t_ngo</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/crayon-statechart/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/crayon-statechart">폴더</a> <span>lib · scripts · templates · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/crayon-statechart/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/crayon-statechart/references/BRIEF.md">references/BRIEF.md</a> <span>고정되는 스타일과 주제마다 새로 설계하는 것, 브리프 틀, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/crayon-statechart/references/LOOK.md">references/LOOK.md</a> <span>레퍼런스처럼 보이게 하는 것: 종이, 잉크, 글씨, 상자, 화살표, 그림, 움직임</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/crayon-statechart/references/STORY.md">references/STORY.md</a> <span>주제 → 장 → 상태 → 단계, 배치 공식</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/crayon-statechart/references/KIT.md">references/KIT.md</a> <span>API와 소품 목록, 직접 만드는 소품</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/crayon-statechart/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림은 코드로 그림 · 폰트 Courier Prime, 나눔고딕코딩 (OFL)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

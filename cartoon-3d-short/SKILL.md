@@ -22,6 +22,13 @@ install, no downloads and no GPU. Worked example: `examples/leaning-tower` "The 
 ElevenLabs voice). The reference channel's videos are not included and are never copied: story, characters, props and
 voice are always original; the look is studied, not traced.
 
+**Fixed (the style):** the 9:16 one-minute format; the script shape (absurd fact → escalation → "You see," + analogy →
+twist) at ~3.7 words/s with one steady narrator; flat bean-head characters as lit cards in a painted, ink-lined 3D world;
+the light presets, grade, ink and lens values; the camera grammar; a ducked bouncy score with cartoon SFX.
+**Designed per topic (in `BRIEF.md`, built in the project):** the facts and the analogy, the cast (outfits, props), the
+sets and the props that carry the jokes, the light per beat, the effect cards, the moods and SFX — the example and the
+template are examples of the style, not a menu (references/BRIEF.md).
+
 ## What's in this folder
 | path | what |
 |---|---|
@@ -35,18 +42,18 @@ voice are always original; the look is studied, not traced.
 | `lib/paint.js` | hand-painted canvas textures: grass, cobbles, stone, planks, beams, roofs, bricks, facades with windows, clouds, water |
 | `lib/score.js` | `renderScore(spec)`: moods (march, bouncy, sneaky, tense, wonder, explain, payoff, silence), 22 cartoon SFX, ducking under the voice |
 | `lib/three.module.min.js` | three.js r170 (MIT, `lib/THREE-LICENSE`) |
-| `templates/` | `film.html` (a 5-shot, 19 s starting film that runs before any voice exists), `score.js`, `SCRIPT.md` (the formula to fill) |
-| `examples/leaning-tower/` | the worked example: `SCRIPT.md` (facts + sources), `voice/` (voice.mp3, words.json), `index.html` (19 shots), `score.js` |
+| `templates/` | `film.html` (a 5-shot, 19 s starting film that runs before any voice exists), `score.js`, `BRIEF.md` (the formula to fill) |
+| `examples/leaning-tower/` | the worked example: `BRIEF.md` (facts + sources), `voice/` (voice.mp3, words.json), `index.html` (19 shots), `score.js` |
 | `scripts/new-film.mjs` | start a project (template or `--from leaning-tower`) |
 | `scripts/check.mjs` | loads clean · every shot draws · deterministic · no gaps · rules · voice inside the picture · prints DURATION and the shot table |
 | `scripts/render.mjs` | stills, a contact sheet, or the MP4 (workers × ffmpeg chunks, `--audio`, `--scale 1.3333` for 1440×2560) |
 | `scripts/score.mjs` | the score → WAV; with `--voice` + `--words`, the final mix (ducked, −14 LUFS, peak −1 dB) |
-| `references/` | **STORY** (topic → facts → script formula → shot plan) · **LOOK** (the measured targets and the final values) · **KIT** (API) · **VOICE** (narration and word timing) · **LESSONS** (what broke and the fix) |
+| `references/` | **BRIEF** (fixed vs per topic, the brief, the stills rubric) · **STORY** (topic → facts → script formula → shot plan) · **LOOK** (the measured targets and the final values) · **KIT** (API) · **VOICE** (narration and word timing) · **LESSONS** (what broke and the fix) |
 
 ## Project layout (what you create)
 ```
 my-short/
-  SCRIPT.md          facts with sources → the script → the shot plan (written first, shown to the user)
+  BRIEF.md          facts with sources → script → cast, sets, props, light, sound → shot plan (written first)
   voice/voice.mp3    the narration (ElevenLabs), tightened to ~3.5 words/s
   voice/words.json   [{ "w": "Seventy-four", "s": 0.14, "e": 0.62 }, …]  word times (speech-to-text)
   film.html          sets → cast → shots (timed by F.at("word")) → F.start()
@@ -64,9 +71,10 @@ No npm install, no GPU. On a 4-core box without a GPU (SwiftShader) the 62 s exa
 `--scale .35` take ~0.7 s a frame. Each worker gets its own browser (pages of one browser share one GPU process).
 
 ## Workflow
-1. **Topic → facts.** Pick (or take the user's) one surprising *true* story with a physical cause and effect, that can
-   be shown literally, plus one everyday analogy that explains it (a swing, a sponge, a crowded doorway). Write the facts
-   with their sources at the top of `SCRIPT.md` (`templates/SCRIPT.md`). Every joke is a real fact.
+1. **Topic → brief.** Pick (or take the user's) one surprising *true* story with a physical cause and effect, that can
+   be shown literally, plus one everyday analogy that explains it (a swing, a sponge, a crowded doorway). Write `BRIEF.md`
+   (`templates/BRIEF.md`, references/BRIEF.md): the facts with their sources (every joke is a real fact), then — after the
+   script — the cast, props, sets, light per beat, effect cards and sound designed for this topic.
 2. **Script** (`references/STORY.md`): ~200–240 words for 55–70 s at ~3.7 words/s. Hook = the absurd fact in sentence one,
    no setup → setting (year, place, pride) → 3–6 escalating beats (others laugh / doubt) → "But wait…?" → **"You see,"**
    the mechanism through the analogy → consequence → a short ironic twist that ends the video on its last word. Never
@@ -86,14 +94,15 @@ No npm install, no GPU. On a 4-core box without a GPU (SwiftShader) the 62 s exa
 7. **Look at it**: `node <skill>/scripts/check.mjs film.html` (must print `check OK`), then
    `render.mjs film.html --stills <two times per shot> --scale .35` and LOOK at every still: is every character the line
    names in frame (portrait frames are only 0.56× as wide as tall), faces readable, nothing cut at the frame edge, the
-   prop that carries the joke visible, no camera inside a wall? Fix and re-render those shots.
+   prop that carries the joke visible, no camera inside a wall? Score the sheet with the rubric in references/BRIEF.md
+   (a fresh reviewer agent works well); fix every area under 7 and re-render those shots.
 8. **Sound**: `score.js` sections per beat (mood changes on the turns: the snap, "You see,", the twist) and an SFX on every
    on-screen hit; `node <skill>/scripts/score.mjs score.js --dur <DURATION> --voice voice/voice.mp3 --words voice/words.json`
    → `out/mix.wav` (voice ~9 LU over the bed, −14 LUFS). Lock the shot times before the sound; re-run it after any change.
 9. **Render** in the background: `node <skill>/scripts/render.mjs film.html --audio out/mix.wav` (`--scale 1.3333` for a
    1440×2560 "2K" final). Then open stills from the MP4's start, middle and end
    (`ffmpeg -ss 30 -i out/film.mp4 -frames:v 1 x.png`) and check the length equals the voice + ~0.3 s.
-10. **Deliver**: the MP4, the live page (`film.html` through a server plays it with sound), and `SCRIPT.md`.
+10. **Deliver**: the MP4, the live page (`film.html` through a server plays it with sound), and `BRIEF.md`.
 
 ## Rules
 - **Deterministic**: every frame is a function of `t` (seeded `rng`, blinks from seeds, no `Math.random`, no state
@@ -107,10 +116,15 @@ No npm install, no GPU. On a 4-core box without a GPU (SwiftShader) the 62 s exa
   light where the shot needs it. Characters are never outlined by the world ink (they carry their own plum ink).
 - **Lens blur on about a third of the screen time**: close-ups and medium shots (`dof` 10–16, focus on the eyes of the
   front character), wides and establishing shots sharp (`dof: 0`).
+- **Design per topic**: every topic gets its own cast, sets, props, light plan and sound from its brief; never drag in
+  the example's tower or the template's kitchen because they are there. New pieces are built in the project (kit
+  builders, `S.Batch`, `person()`, prop draw functions, new FX with the same `Pen`), not by editing the skill's lib/.
+- **One style**: whatever is new keeps the same language — plum-inked flat characters, two-tone painted world materials
+  (`S.col`, `S.paintMat`, never unlit colour except signs and glows), the presets of `look.js`, the camera grammar.
 - **Original everything**: our story, our characters, our voice. Never copy a channel's scripts, characters, shots or
   name; never say the reference channel's name in the voice-over or description.
 - **No captions** unless the user asks (`?captions=1` or `captions: true` adds the reference's one-word white captions).
-- **Facts are checked**: numbers and claims in the voice match the sources in `SCRIPT.md`.
+- **Facts are checked**: numbers and claims in the voice match the sources in `BRIEF.md`.
 
 ## Contract every film page fulfils
 `window.seek(t)` draws frame t synchronously; `window.DURATION`, `window.FPS`, `window.film`; `window.__ready = true`
