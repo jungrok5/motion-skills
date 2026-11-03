@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>유화 · 새 장면</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@400;600&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-oilpaint.js"></script>
+<script>
+/* Template scene — house style "oilpaint" (see kits/oilpaint/STYLE.md), key `rembrandt`. A placeholder 30 s painting with a
+   different subject from the worked example (the stable): an old man reads a scroll at a table by one oil lamp; a dark room,
+   a small blue night window behind him. The plate is value-planned (shapes + light, no texture), OIL.paint() lays the strokes
+   once, the camera moves over the painting: close on the lamp → pull back to the reader → slow push toward the page.
+   To make your film: keep the plate → paint → view → glow → varnish skeleton; replace the plate's room and figure with your
+   image (figures with OIL.relief, the focus drawn again crisp after paint). */
+const { clamp, lerp, ss, eo, eio, rng, canvas } = Pilot;
+const W = Pilot.W, H = Pilot.H, V = Pilot.ori === 'v', S = window.SCRIPT, B = S.beat, DUR = S.DUR, SP = 1.5;
+let art, LAMP, PAGE;
+// the reader, seated, facing right toward the lamp: hood, beard, arms forward to the scroll (units: metres, seat at the origin)
+const READER = p => { p.moveTo(-.36, .02); p.bezierCurveTo(-.4, -.3, -.34, -.62, -.24, -.8); p.bezierCurveTo(-.2, -.98, -.12, -1.1, .0, -1.12); p.bezierCurveTo(.1, -1.12, .16, -1.06, .17, -.98);
+  p.lineTo(.2, -.94); p.bezierCurveTo(.2, -.88, .17, -.84, .14, -.82); p.bezierCurveTo(.2, -.76, .3, -.66, .44, -.6); p.lineTo(.5, -.56); p.bezierCurveTo(.44, -.52, .34, -.5, .24, -.52);
+  p.bezierCurveTo(.22, -.36, .24, -.18, .28, .02); p.closePath(); };
+function plate() {
+  const PW = Math.round(W * SP), PH = Math.round(H * SP), c = canvas(PW, PH), g = c.getContext('2d'); g.scale(SP, SP);
+  const ty = H * (V ? .62 : .66); LAMP = [W * (V ? .62 : .6), ty - (V ? 120 : 100)]; PAGE = [W * (V ? .5 : .5), ty - 6];
+  const radial = (x, y, R, stops) => { const gr = g.createRadialGradient(x, y, 0, x, y, R); stops.forEach(([k, col]) => gr.addColorStop(k, col)); g.fillStyle = gr; g.fillRect(x - R, y - R, 2 * R, 2 * R); };
+  g.fillStyle = '#24150b'; g.fillRect(0, 0, W, H);
+  radial(LAMP[0], LAMP[1], Math.max(W, H) * .6, [[0, 'rgba(210,146,74,1)'], [.25, 'rgba(160,104,48,.9)'], [.6, 'rgba(84,52,24,.7)'], [1, 'rgba(36,21,11,0)']]);
+  { const x0 = W * .16, y0 = H * (V ? .22 : .18), w = W * (V ? .18 : .14), h = H * (V ? .16 : .2), gr = g.createLinearGradient(0, y0, 0, y0 + h); gr.addColorStop(0, '#0e2430'); gr.addColorStop(1, '#23424a'); g.fillStyle = gr; g.fillRect(x0, y0, w, h); g.fillStyle = '#1a0f07'; g.fillRect(x0 + w / 2 - 6, y0, 12, h); g.fillRect(x0, y0 + h / 2 - 6, w, 12); }   // the night window
+  { const gr = g.createLinearGradient(0, ty, 0, H); gr.addColorStop(0, '#7a4e26'); gr.addColorStop(.2, '#4a2c14'); gr.addColorStop(1, '#2a180b'); g.fillStyle = gr; g.fillRect(0, ty, W, H - ty); g.fillStyle = '#e0a860'; g.fillRect(0, ty, W, 4); }   // the table
+  // the scroll on the table, its page lit by the lamp
+  { const sw = W * (V ? .36 : .3), sh = V ? 44 : 40; g.fillStyle = '#f0deb4'; g.fillRect(PAGE[0] - sw / 2, PAGE[1] - sh, sw, sh); g.fillStyle = '#7a5130'; g.fillRect(PAGE[0] - sw / 2 - 14, PAGE[1] - sh - 6, 14, sh + 12); g.fillRect(PAGE[0] + sw / 2, PAGE[1] - sh - 6, 14, sh + 12);
+    g.strokeStyle = 'rgba(60,40,24,.55)'; g.lineWidth = 2; for (let k = 0; k < 4; k++) { g.beginPath(); g.moveTo(PAGE[0] - sw * .4, PAGE[1] - sh * .78 + k * 9); g.lineTo(PAGE[0] + sw * .38, PAGE[1] - sh * .78 + k * 9); g.stroke(); } }
+  // the reader: OIL.relief — lit where he faces the lamp, warm shadow elsewhere; face and hands in soft zones
+  { const s = V ? 420 : 340, x = W * (V ? .3 : .34), y = ty + 8, p = new Path2D(); READER(p); const m = new DOMMatrix().scale(SP, SP).translate(x, y).scale(s, s), hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+    const soft = (u0, v0, rx, ry) => (u, v) => clamp(1.6 - 1.6 * Math.hypot((u - u0) / rx, (v - v0) / ry));
+    OIL.relief(g, p, m, [-.42, -1.14, .52, .04], [{ w: soft(.13, -.95, .06, .09), base: hex('#2c1a12'), lit: hex('#ffdcb0') }, { w: soft(.46, -.57, .06, .05), base: hex('#2c1a12'), lit: hex('#ffdcb0') }, { base: hex('#1f150c'), lit: hex('#e0a868'), k: 1.4 }],
+      { x: LAMP[0] * SP, y: LAMP[1] * SP, z: 45 * SP, R: H * .45 * SP }, { soft: .05, height: 70 * SP, amb: .22, wrap: .12 }); }
+  // the lamp: a clay lamp on the table
+  { g.fillStyle = '#5a3418'; g.beginPath(); g.ellipse(LAMP[0], ty - 14, 40, 16, 0, 0, 6.283); g.fill(); radial(LAMP[0], LAMP[1], 260, [[0, 'rgba(255,240,200,.8)'], [.2, 'rgba(255,200,120,.35)'], [1, 'rgba(255,180,90,0)']]); }
+  const a = OIL.paint(c, { key: 'rembrandt', S: SP, seed: 7 });
+  { const x = a.getContext('2d'); x.save(); x.scale(SP, SP); x.fillStyle = '#fff6dc'; x.beginPath(); x.ellipse(LAMP[0], ty - 34, 7, 16, 0, 0, 6.283); x.fill(); x.restore(); }   // the flame stays crisp
+  return a;
+}
+function draw(ctx, t) {
+  const back = eio(clamp((t - B.light) / 7)), push = eio(clamp((t - B.read) / 16));
+  const fx = lerp(LAMP[0], W / 2, back) + (PAGE[0] - W / 2) * .25 * push, fy = lerp(LAMP[1], H * .5, back) + (PAGE[1] - H * .5) * .2 * push, z = lerp(1.6, 1.0, back) + .12 * push;
+  ctx.fillStyle = '#0a0604'; ctx.fillRect(0, 0, W, H);
+  OIL.view(ctx, art, SP, fx * SP, fy * SP, z);
+  // the flame breathes
+  { const sx = W / 2 + (LAMP[0] - fx) * z, sy = H / 2 + (LAMP[1] + 40 - fx * 0 - fy) * z, f = .9 + .1 * Math.sin(t * 7) * Math.sin(t * 3.1), R = 220 * z, gr = ctx.createRadialGradient(sx, sy, 0, sx, sy, R);
+    gr.addColorStop(0, `rgba(255,226,170,${.35 * f * ss(B.light - .5, B.light + 1, t)})`); gr.addColorStop(1, 'rgba(255,200,120,0)'); ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.fillStyle = gr; ctx.fillRect(sx - R, sy - R, 2 * R, 2 * R); ctx.restore(); }
+  OIL.varnish(ctx, 1);
+  { const k = ss(B.end - .2, B.end + .9, t); if (k > 0) { ctx.fillStyle = `rgba(8,5,3,${.8 * k})`; ctx.fillRect(0, 0, W, H); } }
+  Story.captions(ctx, t, S.lines, { y: V ? H * .78 : H * .84, size: V ? 52 : 46, color: '#f3ece0' });
+  Story.endCard(ctx, t, S.endCard, B.end, { color: '#f3ece0', srcColor: '#e3d6bd', ctaColor: '#e9c77a' });
+  Story.fadeBlack(ctx, t, DUR);
+}
+Pilot.run({ W, H, dur: DUR, fonts: ["600 40px 'Noto Serif KR'", "700 40px 'Noto Serif KR'", "400 28px 'Noto Sans KR'", "600 30px 'Noto Sans KR'"],
+  init: async () => { art = plate(); }, draw });
+</script>
+</body>
+</html>
