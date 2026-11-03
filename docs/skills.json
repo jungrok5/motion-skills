@@ -241,6 +241,10 @@
       "page": "cartoon-3d-short/",
       "source": "cartoon-3d-short/",
       "absorbedFrom": { "repo": "https://github.com/mromidev/claude-animated-shorts", "path": "templates/ · references/" },
+      "sources": [
+        { "title": "mromidev/claude-animated-shorts (원본 스킬, MIT)", "url": "https://github.com/mromidev/claude-animated-shorts" },
+        { "title": "X 게시물 (소개)", "url": "https://x.com/DDJCXX/status/2117420560963821868" }
+      ],
       "workedExample": [
         { "title": "「The Tower That a War Saved」 · 62초 · 19샷 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/cartoon-3d-short/demo/leaning-tower/" }
       ]
