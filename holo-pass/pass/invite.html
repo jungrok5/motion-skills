@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Invitation</title>
+<meta name="description" content="An animated invitation. Open the envelope.">
+<meta name="theme-color" content="#0d0a12">
+<link rel="stylesheet" href="lib/holo.css">
+<style>
+  body.render { overflow: hidden; background: #000; }
+  body.render .guest-panel, body.render .hp-open, body.render .hp-hint { display: none; }
+  .stage-fit { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  .noscript { padding: 40px 16px; text-align: center; color: #b9aebf; }
+</style>
+</head>
+<body>
+<div class="guest-stage" id="wrap"></div>
+<section class="guest-panel" id="panel" aria-live="polite"></section>
+<noscript><p class="noscript">This invitation needs JavaScript.</p></noscript>
+<script src="lib/qrcode.js"></script>
+<script src="lib/core.js"></script>
+<script src="lib/themes.js"></script>
+<script src="lib/art.js"></script>
+<script src="lib/card.js"></script>
+<script src="lib/stage.js"></script>
+<script src="lib/music.js"></script>
+<script src="themes/custom.js"></script>
+<script>
+// local renders only (file://): ?themes=<file URL> adds a theme file that lives next to an invite.json
+{ const x = new URLSearchParams(location.search).get('themes'); if (x && location.protocol === 'file:' && /^file:\/\/[^"'<>]+\.js$/.test(x)) document.write('<script src="' + x + '"><\/script>'); }
+</script>
+<script>
+// holo-pass · invite.html — the page your guests open. The invite lives in the link: invite.html#p=<data>.
+//   live (default)   envelope → tap to open (music starts) → the reveal → tilt / drag / tap to flip, RSVP, calendar
+//   ?render=1        a fixed stage for render.mjs: window.seek(t), DURATION, FPS, SIZE, __ready, renderWav(dur)
+//                    &size=1920x1080 (or 1080x1920 for 9:16) · &t=5 one frozen frame · &theme=birthday to override
+const Q = new URLSearchParams(location.search);
+const DEMO = { theme: 'home-party', title: 'HOME\nPARTY', no: '271114', date: '2026-11-14', time: '18:00', end: '22:00', place: '망원동 우리 집', price: '무료', to: '유키', from: '카나', lang: 'ko' };
+let data = HP.fromLocation() || { ...DEMO };
+for (const k of HP.FIELDS) if (Q.has(k)) data[k] = Q.get(k);
+if (Q.has('theme') && !HP.fromLocation()) { const th = HP.THEMES[Q.get('theme')]; if (th) data = { ...data, theme: th.id, title: th.title, subtitle: '', message: '', music: '' }; }
+const D = HP.normalize(data), TH = HP.THEMES[D.theme];
+document.documentElement.lang = D.lang;
+document.title = D.title.replace(/\n/g, ' ') + (D.to ? ' · ' + D.to : '');
+document.documentElement.style.setProperty('--accent', TH.pal.accent);
+const wrap = document.getElementById('wrap'), panel = document.getElementById('panel');
+const linkOf = () => location.href.split('?')[0].split('#')[0] + '#p=' + HP.encode(data);
+
+if (Q.get('render') === '1') {
+  // ---------- render mode ----------
+  document.body.classList.add('render');
+  const [SW, SH] = (Q.get('size') || '1920x1080').split('x').map(Number), portrait = SH > SW;
+  const W = portrait ? 900 : 1600, H = portrait ? 1600 : 900, k = SW / W;
+  wrap.style.height = SH + 'px'; wrap.style.width = SW + 'px';
+  const fitEl = document.createElement('div'); fitEl.className = 'stage-fit'; fitEl.style.transform = `scale(${k})`; wrap.appendChild(fitEl);
+  const st = HP.stage(fitEl, data, { W, H, q: k, dpr: Math.max(2, k * 1.6), link: () => linkOf(), caption: portrait });
+  window.DURATION = st.DURATION; window.FPS = 30; window.SIZE = { W: SW, H: SH };
+  window.seek = t => st.seek(t);
+  window.renderWav = async dur => { const b = await HP.music.render(D.music, dur || st.DURATION); const u8 = HP.music.wav(b); let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
+  window.invite = D;
+  st.ready.then(() => { st.seek(+(Q.get('t') || 0)); window.__ready = true; });
+} else {
+  // ---------- live ----------
+  const portrait = () => innerWidth < innerHeight * 0.95;
+  let st = null, W = 0, H = 0, fitEl = null, openBtn = null, hint = null;
+  const T = HP.TIMELINE;
+  let state = 'closed', t0 = performance.now(), openAt = 0, raf = 0;
+  const pose = { rx: 0, ry: 0, tx: 0, ty: 0, flip: 0, flipFrom: 0, flipTo: 0, flipAt: -1, lastInput: -10 };
+
+  function build() {
+    wrap.innerHTML = ''; const p = portrait(); W = p ? 900 : 1600; H = p ? 1300 : 900;
+    wrap.style.setProperty('--stage-h', p ? `min(100svh, ${Math.round(innerWidth * H / W)}px)` : '100svh');
+    fitEl = document.createElement('div'); fitEl.className = 'stage-fit'; wrap.appendChild(fitEl);
+    st = HP.stage(fitEl, data, { W, H, q: Math.min(2, (devicePixelRatio || 1)) * 0.75, dpr: Math.min(2.5, (devicePixelRatio || 1) * 1.3), link: () => linkOf() });
+    openBtn = document.createElement('button'); openBtn.className = 'hp-open'; openBtn.textContent = HP.l(D, 'open'); openBtn.style.zIndex = 9; st.el.appendChild(openBtn);
+    hint = document.createElement('div'); hint.className = 'hp-hint'; hint.textContent = HP.l(D, 'hint'); hint.style.opacity = 0; st.el.appendChild(hint);
+    openBtn.addEventListener('click', open);
+    fit(); return st.ready;
+  }
+  function fit() {
+    const r = wrap.getBoundingClientRect(), s = Math.min(r.width / W, r.height / H);
+    fitEl.style.transform = `translate(${(r.width - W * s) / 2}px, ${(r.height - H * s) / 2}px) scale(${s})`; fitEl.dataset.s = s;
+    if (openBtn) { openBtn.style.transform = `translate(calc(${W / 2}px - 50%), ${st.portrait ? H * 0.86 : H * 0.9 - 60}px)`; }
+    if (hint) hint.style.transform = `translateY(${st.cardFinal.y + 280 * st.cardFinal.s + 40}px)`;
+  }
+  async function open() {
+    if (state !== 'closed') return;
+    state = 'opening'; openAt = performance.now(); openBtn.style.display = 'none';
+    try { if (window.DeviceOrientationEvent && DeviceOrientationEvent.requestPermission) DeviceOrientationEvent.requestPermission().catch(() => {}); } catch (e) {}
+    if (D.music !== 'none' && HP.store.get('mute') !== '1') { HP.music.play(D.music); musicBtn && updateMusic(); }
+  }
+  function replay() { state = 'opening'; openAt = performance.now() - 0; t0 = performance.now(); pose.flip = pose.flipTo = 0; pose.flipAt = -1; hint.style.opacity = 0; window.scrollTo({ top: 0, behavior: 'smooth' }); startT = 0; }
+  let startT = 1.45;
+  function loop(now) {
+    raf = requestAnimationFrame(loop);
+    const clock = (now - t0) / 1000;
+    if (state === 'closed') { st.seek(Math.min(clock, 1.45), clock); openBtn.style.opacity = HP.seg(clock, 0.7, 1.1); return; }
+    if (state === 'opening') {
+      const t = startT + (now - openAt) / 1000;
+      if (t < T.sway) { st.seek(t, clock); return; }
+      state = 'open'; startT = 1.45; showPanel(); hint.style.opacity = 1; setTimeout(() => hint && (hint.style.opacity = 0), 5000);
+    }
+    // open: follow the pointer / gyro, ease back to a slow sway when idle
+    const idle = clock - pose.lastInput > 2.2;
+    const tx = idle ? Math.sin(clock * 0.9) * 8 : pose.tx, ty = idle ? Math.sin(clock * 0.7 + 1) * 14 : pose.ty;
+    pose.rx += (tx - pose.rx) * 0.12; pose.ry += (ty - pose.ry) * 0.12;
+    if (pose.flipAt >= 0) { const k = HP.seg((now - pose.flipAt) / 1000, 0, 0.85); pose.flip = HP.lerp(pose.flipFrom, pose.flipTo, HP.ease.inOut(k)); pose.z = Math.sin(k * Math.PI) * 140; if (k >= 1) pose.flipAt = -1; } else pose.z = 0;
+    st.frame(clock, { rx: pose.rx, ry: pose.ry, flip: pose.flip, z: pose.z });
+  }
+  function flipCard() { if (state !== 'open') return; pose.flipFrom = pose.flip; pose.flipTo = Math.round(pose.flip / 180) * 180 + 180; pose.flipAt = performance.now(); }
+
+  // input: pointer over the stage tilts; a tap on the card flips it; the gyro tilts on phones
+  let down = null;
+  wrap.addEventListener('pointermove', e => { if (state !== 'open') return; const r = wrap.getBoundingClientRect(); const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5; pose.tx = -y * 30; pose.ty = x * 44; pose.lastInput = (performance.now() - t0) / 1000; });
+  wrap.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY, at: performance.now() }; });
+  wrap.addEventListener('pointerup', e => { if (!down) return; const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y), quick = performance.now() - down.at < 400; down = null; if (moved < 10 && quick) { if (state === 'closed') open(); else flipCard(); } });
+  let base = null;
+  addEventListener('deviceorientation', e => { if (state !== 'open' || e.beta == null) return; if (!base) base = { b: e.beta, g: e.gamma }; pose.tx = HP.clamp((e.beta - base.b) * -0.9, -20, 20); pose.ty = HP.clamp((e.gamma - base.g) * 1.2, -30, 30); pose.lastInput = (performance.now() - t0) / 1000; });
+  addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); state === 'closed' ? open() : flipCard(); } });
+  let rt = 0; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { const was = state; build().then(() => { if (was === 'open') hint.style.opacity = 0; }); }, 200); });
+
+  // ---------- the panel under the card ----------
+  let musicBtn = null;
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function updateMusic() { if (!musicBtn) return; const on = !!HP.music.playing; musicBtn.textContent = `♪ ${HP.l(D, 'music')} ${HP.l(D, on ? 'off' : 'on')}`; }
+  function showPanel() {
+    if (panel.classList.contains('show')) return;
+    const L = k => HP.l(D, k), maps = s => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(s);
+    const rows = [[L('when'), esc(HP.when(D))], D.place && [L('where'), `<a href="${maps(D.address || D.place)}" target="_blank" rel="noopener">${esc(D.place)}</a>${D.address ? '<br><small>' + esc(D.address) + '</small>' : ''}`],
+      D.price && [L('price'), esc(D.price)], D.from && [L('from'), esc(D.from)], D.url && [L('web'), `<a href="${esc(D.url)}" target="_blank" rel="noopener">${esc(D.url.replace(/^https?:\/\//, ''))}</a>`]].filter(Boolean);
+    const ics = HP.ics(D), gcal = HP.gcal(D);
+    panel.innerHTML = `<div class="gp-kick">${esc(L('invited'))}</div><h1 class="gp-title">${esc(D.title)}</h1>
+      <div class="gp-rows">${rows.map(([k, v]) => `<div class="gp-row"><span>${esc(k)}</span><div>${v}</div></div>`).join('')}</div>
+      <p class="gp-msg">${esc(D.message)}</p>
+      <div class="gp-btns"><button class="btn primary" data-a="yes">${esc(L('yes'))}</button><button class="btn" data-a="no">${esc(L('no'))}</button></div>
+      <div class="gp-note" id="note"></div>
+      <div class="gp-tools">${ics ? `<a class="btn" id="ics" download="invite-${esc(D.no)}.ics">📅 ${esc(L('ics'))}</a><a class="btn" href="${esc(gcal)}" target="_blank" rel="noopener">${esc(L('gcal'))}</a>` : ''}
+        ${D.music !== 'none' ? '<button class="btn" id="music"></button>' : ''}<button class="btn" id="flip">↻ ${esc(L('flip'))}</button><button class="btn" id="replay">✉ ${esc(L('replay'))}</button></div>
+      <div class="gp-foot">HOLO PASS · No. ${esc(D.no)}</div>`;
+    if (ics) panel.querySelector('#ics').href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }));
+    musicBtn = panel.querySelector('#music'); updateMusic();
+    musicBtn && musicBtn.addEventListener('click', () => { if (HP.music.playing) { HP.music.stop(); HP.store.set('mute', '1'); } else { HP.music.play(D.music); HP.store.set('mute', '0'); } setTimeout(updateMusic, 50); });
+    panel.querySelector('#flip').addEventListener('click', flipCard);
+    panel.querySelector('#replay').addEventListener('click', replay);
+    const note = panel.querySelector('#note'), prev = HP.store.get('rsvp:' + D.no);
+    const mark = a => panel.querySelectorAll('[data-a]').forEach(b => b.classList.toggle('on', b.dataset.a === a));
+    if (prev) { mark(prev); note.textContent = '✓ ' + L('sent'); }
+    panel.querySelectorAll('[data-a]').forEach(b => b.addEventListener('click', async () => {
+      const yes = b.dataset.a === 'yes', r = HP.reply(D, yes); mark(b.dataset.a); HP.store.set('rsvp:' + D.no, b.dataset.a);
+      if (r.kind === 'mail' || r.kind === 'url') { window.open(r.href, r.kind === 'url' ? '_blank' : '_self'); note.textContent = '✓ ' + L('sent'); return; }
+      try { if (navigator.share) { await navigator.share({ text: r.text }); note.textContent = '✓ ' + L('sent'); return; } } catch (e) { if (e.name === 'AbortError') return; }
+      try { await navigator.clipboard.writeText(r.text); note.textContent = '✓ ' + L('copied'); } catch (e) { note.textContent = r.text; }
+    }));
+    requestAnimationFrame(() => panel.classList.add('show'));
+  }
+  build().then(() => { t0 = performance.now(); raf = requestAnimationFrame(loop); window.__ready = true; });
+  window.openInvite = open; window.flipCard = flipCard;
+}
+</script>
+</body>
+</html>
