@@ -210,4 +210,6 @@
     c.drawImage(img, (W - w) / 2 + sin(t * 0.3) * 6, (H - h) / 2, w, h);
   };
   HP.ART_SIZE = { W, H };
+  // the kit a new picture is drawn with (references/THEMES.md) — same helpers the built-in pictures use
+  HP.KIT = { W, H, TAU, ol, fill, rr, circle, frac, face, star, rays, sky, glow, confetti, twinkles, cloud };
 })();

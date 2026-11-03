@@ -38,6 +38,9 @@
   };
   for (const k in TRACKS) TRACKS[k].id = k;
   HP.TRACKS = TRACKS;
+  const HELP = { line, midi, chords: chordsOf };
+  // a track composed for one topic: HP.addTrack('march', { name, bpm, bars: 8, build({ line, midi, chords }) { return events } })
+  HP.addTrack = (id, def) => { TRACKS[id] = { ...def, id }; return TRACKS[id]; };
 
   // ---------- instruments ----------
   function kit(ctx) {
@@ -75,7 +78,7 @@
 
   // schedule every event with start time in [from, to) seconds (song time), song time 0 = ctx time t0
   function schedule(ctx, id, t0, from, to) {
-    const tr = TRACKS[id]; if (!tr) return; const k = kit(ctx), spb = 60 / tr.bpm, loop = tr.bars * 4 * spb, ev = tr.__ev || (tr.__ev = tr.build());
+    const tr = TRACKS[id]; if (!tr) return; const k = kit(ctx), spb = 60 / tr.bpm, loop = tr.bars * 4 * spb, ev = tr.__ev || (tr.__ev = tr.build(HELP));
     for (let n = Math.floor(from / loop); n * loop < to; n++) for (const e of ev) { const s = n * loop + e.t * spb; if (s >= from && s < to) VOICE[e.inst](ctx, k, t0 + s, e, spb); }
   }
   let live = null;

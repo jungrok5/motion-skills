@@ -1,4 +1,4 @@
-// holo-pass · new-pass.mjs — start an invitation project: the deployable pass/ folder plus an invite.json to fill in.
+// holo-pass · new-pass.mjs — start an invitation project: the deployable pass/ folder, a BRIEF.md and an invite.json to fill in.
 //   node <skill>/scripts/new-pass.mjs my-party                     → template "home-party"
 //   node <skill>/scripts/new-pass.mjs my-xmas --theme christmas    → any theme id (christmas, new-year, home-party, date-night, birthday, event)
 //   node <skill>/scripts/new-pass.mjs my-party --from home-party   → start from a worked example in examples/
@@ -24,11 +24,15 @@ else {
 }
 writeFileSync(join(out, 'invite.json'), JSON.stringify(invite, null, 2) + '\n');
 writeFileSync(join(out, '.gitignore'), 'out/\n');
+const brief = readFileSync(join(skill, 'references/BRIEF.md'), 'utf8'), tpl = /```markdown\n([\s\S]*?)```/.exec(brief);
+if (tpl && !existsSync(join(out, 'BRIEF.md'))) writeFileSync(join(out, 'BRIEF.md'), tpl[1]);
 console.log(`${out}
+  BRIEF.md      fill this first: the topic designed into a theme (references/BRIEF.md)
   invite.json   the invitation (empty fields take the theme's words)
   pass/         deploy this folder (GitHub Pages, Netlify, any static host); maker.html builds links in the browser
 
 next, from ${dir}:
+  node ${join(skill, 'scripts/new-theme.mjs')} <id>            (a theme for the topic → pass/themes/custom.js)
   node ${join(skill, 'scripts/check.mjs')} invite.json
   node ${join(skill, 'scripts/render.mjs')} invite.json --stills 1.3,4.2,6.5,10
   node ${join(skill, 'scripts/link.mjs')} invite.json --base https://<you>.github.io/<repo>/pass/ --qr out/qr.svg

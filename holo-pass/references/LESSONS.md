@@ -1,5 +1,13 @@
 # LESSONS — what broke while building it, and the fix
 
+- **The first version reused the same six templates.** Asked for an occasion none of them covered, the workflow fell
+  back to the nearest template (the birthday cake for a graduation) — the same thing again, not the style applied to a
+  new topic. Fix: the workflow starts from a brief (references/BRIEF.md); themes are added per topic in
+  `pass/themes/custom.js` with `HP.addTheme` / `HP.KIT` / `HP.addTrack`; `check.mjs` proves a new picture fills its
+  window and moves; `examples/graduation` was made through that flow.
+- **Spotlights turned grey.** A pale beam at 30 % alpha over deep navy averages to grey. Fix: draw light with
+  `globalCompositeOperation = 'lighter'` at low alpha (adds light instead of mixing toward it).
+
 - **Envelope label filled the whole envelope.** `.hp-env > div { inset: 0 }` beat `.hp-env-label { left/bottom }`
   (higher specificity) → the label stretched to full height. Fix: scope the label and stamp as `.hp-env .hp-env-label`.
 - **Dark text turned neon under the foil.** A color-dodge rainbow over the whole face brightened the ink to yellow-green

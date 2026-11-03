@@ -60,4 +60,13 @@
   };
   HP.THEME_ORDER = Object.keys(HP.THEMES);
   for (const id of HP.THEME_ORDER) HP.THEMES[id].id = id;
+  // a theme designed for one topic (pass/themes/custom.js): HP.addTheme({ id, name, title, subtitle, message, bg, music, pal }, art)
+  HP.addTheme = (def, art) => {
+    const id = def.id; if (!id) throw new Error('addTheme: id is required');
+    const th = { art: id, ...def }; th.name = th.name || { ko: id, en: id, ja: id };
+    for (const k of ['subtitle', 'message']) if (typeof th[k] === 'string') th[k] = { ko: th[k], en: th[k], ja: th[k] };
+    if (art) HP.ART[th.art] = art;
+    HP.THEMES[id] = th; if (!HP.THEME_ORDER.includes(id)) HP.THEME_ORDER.push(id);
+    return th;
+  };
 })();

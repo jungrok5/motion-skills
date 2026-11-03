@@ -50,6 +50,7 @@
   BG.dusk = (c, W, H, t, pal) => { radial(c, W, H, pal.bg[0], pal.bg[1], 0.4); stars(c, W, H, t, 120, 7); bokeh(c, W, H, t, 22, [pal.glow, pal.a[4], '#ffffff'], 12, Math.min(W, H) * 0.09, 0.4); vignette(c, W, H, 0.55); };
   BG.confetti = (c, W, H, t, pal) => { radial(c, W, H, pal.bg[0], pal.bg[1], 0.4); bokeh(c, W, H, t, 16, [pal.a[3], pal.a[0], pal.glow], 5, Math.min(W, H) * 0.07); confetti(c, W, H, t, 110, pal.a, 3, 80); vignette(c, W, H, 0.5); };
   HP.BG = BG;
+  HP.BGKIT = { radial, bokeh, stars, flakes, confetti, vignette };
 
   function sparkle(c, x, y, r, a, col = '#fff') { c.globalAlpha = a; c.fillStyle = col; c.beginPath(); for (let i = 0; i < 8; i++) { const ang = i * Math.PI / 4, rr = i % 2 ? r * 0.18 : r; c.lineTo(x + Math.cos(ang) * rr, y + Math.sin(ang) * rr); } c.closePath(); c.fill(); c.globalAlpha = 1; }
 

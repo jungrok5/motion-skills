@@ -25,6 +25,11 @@
 <script src="lib/card.js"></script>
 <script src="lib/stage.js"></script>
 <script src="lib/music.js"></script>
+<script src="themes/custom.js"></script>
+<script>
+// local renders only (file://): ?themes=<file URL> adds a theme file that lives next to an invite.json
+{ const x = new URLSearchParams(location.search).get('themes'); if (x && location.protocol === 'file:' && /^file:\/\/[^"'<>]+\.js$/.test(x)) document.write('<script src="' + x + '"><\/script>'); }
+</script>
 <script>
 // holo-pass · invite.html — the page your guests open. The invite lives in the link: invite.html#p=<data>.
 //   live (default)   envelope → tap to open (music starts) → the reveal → tilt / drag / tap to flip, RSVP, calendar

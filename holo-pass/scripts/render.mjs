@@ -5,7 +5,8 @@
 //   node <skill>/scripts/render.mjs invite.json --size 1080x1920     → 9:16 (title, date and place under the card)
 //   node <skill>/scripts/render.mjs invite.json --stills 2,4.2,6,9.6  → out/<name>-<t>.png
 //   node <skill>/scripts/render.mjs invite.json --sheet 12           → out/<name>-sheet.jpg
-// Options: --page pass/invite.html (default: the skill's) · --workers 3 · --fps 30 · --from/--to · --crf 18 · --mute
+// Options: --page pass/invite.html (default: the project's, else the skill's) · --themes themes.js (default: one next to
+//          the invite.json) · --workers 3 · --fps 30 · --from/--to · --crf 18 · --mute
 //          --out out/ · --name <name> · --scale .5 (preview: half-size frames)
 // The invite can also be a theme id instead of a file (`render.mjs birthday --stills 6`) for a quick look at a template.
 import { createRequire } from 'node:module';
@@ -34,7 +35,10 @@ const scale = +opt('scale', 1); SW = Math.round(SW * scale / 2) * 2; SH = Math.r
 if (SH > SW) name += '-9x16';
 const outDir = resolve(opt('out', 'out')); mkdirSync(outDir, { recursive: true });
 const b64 = Buffer.from(JSON.stringify(invite)).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-const url = pathToFileURL(page$).href + `?render=1&size=${SW}x${SH}` + (src.endsWith('.json') ? '' : `&theme=${src}`) + (src.endsWith('.json') ? '#p=' + b64 : '');
+// a theme designed for this invite: themes.js next to invite.json (or --themes file.js) is loaded into the page
+const themes$ = opt('themes') || (src.endsWith('.json') && existsSync(join(dirname(resolve(src)), 'themes.js')) ? join(dirname(resolve(src)), 'themes.js') : '');
+const url = pathToFileURL(page$).href + `?render=1&size=${SW}x${SH}` + (src.endsWith('.json') ? '' : `&theme=${src}`)
+  + (themes$ ? '&themes=' + encodeURIComponent(pathToFileURL(resolve(themes$)).href) : '') + (src.endsWith('.json') ? '#p=' + b64 : '');
 
 const browser = await chromium.launch({ args: ['--allow-file-access-from-files'] });
 async function open() {

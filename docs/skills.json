@@ -203,16 +203,16 @@
     {
       "id": "holo-pass",
       "name": "holo-pass",
-      "tagline": "링크 하나로 보내는 움직이는 초대장을 만듭니다. 봉투를 열면 홀로그램 티켓이 튀어나와 기울일 때마다 포일이 빛나고, 뒤집으면 받는 사람 이름과 메시지가 적힌 엽서가 나오며, 참석 회신 · 캘린더 추가 · 음악이 붙습니다. 템플릿 6종, 한국어 · 영어 · 일본어, QR 공유 이미지, 16:9 · 9:16 MP4를 냅니다.",
-      "posterAlt": "holo-pass로 만든 초대장 네 장면: 주황 봉투에서 빠져나오는 HOME PARTY 티켓, 트리 그림이 든 MERRY CHRISTMAS 홀로그램 티켓, 산 뒤로 웃는 해가 뜨는 NEW YEAR 2027 티켓, 머그잔 우표와 지은에게로 시작하는 메시지가 적힌 엽서 뒷면",
+      "tagline": "주제를 주면 그 주제에 맞는 움직이는 캐릭터 · 색 · 배경 · 음악 · 문구를 새로 설계해, 링크 하나로 보내는 홀로그램 티켓 초대장을 만듭니다. 봉투를 열면 티켓이 튀어나와 기울일 때마다 포일이 빛나고, 뒤집으면 엽서가 나오며, 참석 회신 · 캘린더 추가 · 음악이 붙습니다. 만들기 페이지, QR 공유 이미지, 16:9 · 9:16 MP4를 냅니다.",
+      "posterAlt": "holo-pass로 만든 초대장 네 장면: 주황 봉투에서 빠져나오는 HOME PARTY 티켓, 학사모를 쓴 졸업장 캐릭터가 든 CLASS OF 2027 티켓과 조명이 비치는 강당, 산 뒤로 웃는 해가 뜨는 NEW YEAR 2027 티켓, 머그잔 우표와 지은에게로 시작하는 메시지가 적힌 엽서 뒷면",
       "poster": "holo-pass/poster.jpg",
-      "tags": ["웹 초대장", "홀로그램 포일", "참석 회신 · 캘린더", "합성 음악", "MP4"],
-      "stats": ["템플릿 6종 · 음악 4곡", "한국어 · 영어 · 일본어"],
+      "tags": ["주제별 설계", "웹 초대장", "홀로그램 포일", "참석 회신 · 캘린더", "MP4"],
+      "stats": ["예제 졸업 초대장 · 새 테마", "기본 테마 6종 · 3개 언어"],
       "page": "holo-pass/",
       "source": "holo-pass/",
-      "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "holo-pass/examples/home-party/" },
+      "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "holo-pass/examples/graduation/" },
       "workedExample": [
-        { "title": "「HOME PARTY」 예제 초대장 · 받는 화면 · 만들기 화면", "url": "https://jungrok5.github.io/motion-skills/holo-pass/demo/maker.html" }
+        { "title": "「CLASS OF 2027」 졸업 초대장 · 브리프로 설계한 테마 · 만들기 화면", "url": "https://jungrok5.github.io/motion-skills/holo-pass/" }
       ]
     }
   ]
