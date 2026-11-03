@@ -18,7 +18,8 @@ import { person } from "toon/toon.js";
 const SCRIPT = `Your toast is not unlucky. It is doing physics. You knock it off the table, and it starts to spin.
 You see, a normal table is only tall enough for half a turn. So the butter lands face down, almost every time.
 Want it to land butter side up? Get a taller table.`;
-const F = new Film({ words: SCRIPT, audio: null });
+const F = new Film({ words: SCRIPT, audio: null,
+  sources: [{ title: "Matthews, Eur. J. Phys. 1995", url: "https://doi.org/10.1088/0143-0807/16/4/005" }] });   // the facts' sources (BRIEF.md)
 const at = (w, n) => F.at(w, n), end = (w, n) => F.end(w, n);
 
 // 2 · sets: a place is built once; shots pick a set, a light preset and cameras

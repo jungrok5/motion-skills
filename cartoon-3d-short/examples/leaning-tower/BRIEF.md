@@ -5,22 +5,22 @@
 
 Worked example of cartoon-3d-short: why the Leaning Tower of Pisa is still standing. 61.9 s, 211 words, 19 shots.
 
-## Facts (with sources)
+## Facts (each with a source link)
 - Construction of the bell tower of Pisa Cathedral began in **1173**; the tower began to sink after construction reached
   the **second floor** (1178), because of a **foundation only ~3 m deep** set in **weak, unstable subsoil** (soft clay
-  and sand). — Wikipedia, "Leaning Tower of Pisa" (Construction)
+  and sand). — [Wikipedia, "Leaning Tower of Pisa" § Construction](https://en.wikipedia.org/wiki/Leaning_Tower_of_Pisa#Construction)
 - Construction then stopped for **almost a century**, because the Republic of Pisa was almost continually at **war with
   Genoa, Lucca and Florence**. This allowed time for the underlying soil to settle; **otherwise the tower would almost
-  certainly have toppled.** — same
+  certainly have toppled.** — [Wikipedia § Construction](https://en.wikipedia.org/wiki/Leaning_Tower_of_Pisa#Construction)
 - When work resumed (1272), the engineers built the upper floors **with one side taller than the other** to compensate for
-  the tilt, so the tower is actually **curved** ("banana"). — same
+  the tilt, so the tower is actually **curved** ("banana"). — [Wikipedia § Construction](https://en.wikipedia.org/wiki/Leaning_Tower_of_Pisa#Construction)
 - The mechanism: soft saturated clay **consolidates** under a slowly applied load — water is squeezed out of the pores
-  and the clay gains strength; a quick load fails it. — Burland, Jamiolkowski & Viggiani, "The stabilisation of the
-  Leaning Tower of Pisa", Soils and Foundations 43(5), 2003
+  and the clay gains strength; a quick load fails it. — [Burland, Jamiolkowski & Viggiani, "The Stabilisation of the
+  Leaning Tower of Pisa", Soils and Foundations 43(5), 2003](https://doi.org/10.3208/sandf.43.5_63)
 - The tower was **closed to the public in January 1990**; from 1993 to 2001 it was stabilised, the final step being
   **soil extraction from under the raised (north) side**; the tilt was reduced by **45 cm**, back to its 1838 position,
-  and it was deliberately not straightened. — Wikipedia (Stabilisation); Burland et al. 2003
-- Steel cables to the third storey and lead counterweights on the north side were used during the works. — same
+  and it was deliberately not straightened. — [Wikipedia § History following construction](https://en.wikipedia.org/wiki/Leaning_Tower_of_Pisa#History_following_construction); [Burland et al. 2003](https://doi.org/10.3208/sandf.43.5_63)
+- Steel cables to the third storey and lead counterweights on the north side were used during the works. — [Burland et al. 2003](https://doi.org/10.3208/sandf.43.5_63)
 
 ## Analogy
 A wet sponge: squeeze fast and it squishes; squeeze slowly and the water seeps out and it firms up.

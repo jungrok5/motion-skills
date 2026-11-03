@@ -12,7 +12,11 @@ import { Film, THREE, glide, smooth, easeOut, lin, clamp01, lerp, rng } from "to
 import { person, INK } from "toon/toon.js";
 import WORDS from "./voice/words.json" with { type: "json" };
 
-const F = new Film({ words: WORDS, audio: "mix.mp3", title: "The Tower That a War Saved" });
+const F = new Film({ words: WORDS, audio: "mix.mp3", title: "The Tower That a War Saved",
+  sources: [   // the facts' sources (BRIEF.md), shown as links under the live player
+    { title: "Wikipedia: Leaning Tower of Pisa", url: "https://en.wikipedia.org/wiki/Leaning_Tower_of_Pisa" },
+    { title: "Burland et al., Soils and Foundations 2003", url: "https://doi.org/10.3208/sandf.43.5_63" },
+  ] });
 const at = (w, n) => F.at(w, n), end = (w, n) => F.end(w, n);
 
 // ---------------- the tower: 8 storeys chained base → bell chamber, so a lean + a counter-tilt bends it ----------------
