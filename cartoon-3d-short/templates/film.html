@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Butter Side Down</title>
+<!-- cartoon-3d-short starting film: "Butter Side Down" (why toast lands butter-down), 5 shots, ~16 s.
+     It runs before any voice exists: the word times are estimated from the script (Film.estimate, ~3.7 words/s).
+     When voice/words.json exists, swap SCRIPT for it (see the commented import) and every shot moves with the voice.
+     Read top to bottom: script → sets → cast → shots → start. -->
+<script type="importmap">{ "imports": { "three": "../lib/three.module.min.js", "toon/": "../lib/" } }</script>
+<body>
+<script type="module">
+import { Film, THREE, clamp01, easeIn, lin } from "toon/film.js";
+import { person } from "toon/toon.js";
+// import WORDS from "./voice/words.json" with { type: "json" };   // ← once the voice exists: new Film({ words: WORDS, audio: "out/mix.wav" })
+
+// 1 · the script (references/STORY.md: hook → setting → escalation → "You see," + analogy → twist)
+const SCRIPT = `Your toast is not unlucky. It is doing physics. You knock it off the table, and it starts to spin.
+You see, a normal table is only tall enough for half a turn. So the butter lands face down, almost every time.
+Want it to land butter side up? Get a taller table.`;
+const F = new Film({ words: SCRIPT, audio: "out/mix.wav" });
+const at = (w, n) => F.at(w, n), end = (w, n) => F.end(w, n);
+
+// 2 · sets: a place is built once; shots pick a set, a light preset and cameras
+F.set("kitchen", (S) => {
+  S.room({ w: 10, d: 9, h: 4.6, floor: "planks", wallCol: "#e8d2a8" });
+  const table = S.table({ x: 0, z: -1, w: 2.4, d: 1.2, h: 0.95 });
+  const tall = S.table({ x: 2.6, z: -2.4, w: 1.4, d: 1.0, h: 2.6, color: "#7a4f33" });
+  S.mesh(new THREE.BoxGeometry(1.2, 2.2, 0.6), S.col("#5d7a3a"), [-3.2, 1.1, -4.1]);
+  // the toast: bread slab + butter on top, pivoting about its own centre
+  const toast = new THREE.Group();
+  toast.add(S.mesh(new THREE.BoxGeometry(0.34, 0.05, 0.34), S.col("#b97a3e")));
+  toast.add(S.mesh(new THREE.BoxGeometry(0.26, 0.02, 0.26), S.col("#f6d33c"), [0, 0.035, 0]));
+  S.add(toast);
+  S.clouds(0);
+  return { toast, tall };
+});
+
+// 3 · cast: outfits are data (toon.person), the same outfit draws the same person in every shot
+const KID = person({ coat: "#3f6fb5", pants: "#3b3f52", hair: "#5a3b2a", build: "kid" });
+const toast = F.sets.kitchen.objects.toast;
+/** toast pose: on the table edge (0) → fallen to the floor having turned half a turn (1) */
+const fall = (k, flip = 180) => {
+  const u = clamp01(k), y = lin([[0, 0.98], [1, 0.03]], easeIn(u));
+  toast.position.set(1.15 + 0.35 * u, y, -0.8); toast.rotation.set(0, 0, -(flip * Math.PI / 180) * u);
+};
+
+// 4 · shots — every shot names its first word; cameras glide, holds creep (push), cuts are new shots
+F.shot({ from: 0, set: "kitchen", light: "interior", push: 0.3, dof: 12,
+  update: () => fall(0),
+  cam: [{ t: 0, pos: [1.5, 1.25, 1.4], look: [0.95, 1.1, -1.2], fov: 38, roll: -3 }],
+  cast: (lt, t) => [{ who: KID, at: [0.75, 0, -1.9], expr: t > at("physics") ? "shock" : "stern", seed: 7 }],
+  fx: (lt, t) => t > at("physics") - 0.05 ? [{ fx: "exclaim", at: [1.05, 1.62, -1.9], size: 0.3, t: (t - at("physics")) * 2 }] : [] });
+F.shot({ from: at("You"), set: "kitchen", light: "interior", push: 0.2, dof: 0, flash: true,
+  update: (lt, s, t) => fall(lin([[at("off"), 0], [end("spin") + 0.4, 1]], t)),
+  cam: [{ t: 0, pos: [3.0, 0.95, 2.2], look: [1.3, 0.65, -0.8], fov: 44 }, { t: 0.8, dur: 30, pos: [2.8, 0.7, 1.8], look: [1.4, 0.45, -0.8], fov: 44, roll: 4 }],
+  cast: (lt, t) => [{ who: KID, at: [0.75, 0, -1.9], expr: t > at("spin") ? "nervous" : "neutral", gesture: t > at("knock") ? "point" : null, seed: 7 }],
+  fx: (lt, t) => t > at("spin") ? [{ fx: "speed", at: [1.3, 0.6, -0.6], size: 0.6, rot: 90, t: lt }] : [] });
+F.shot({ from: at("You", 2), set: "kitchen", light: "interior", push: 0.2, dof: 0, xfade: 6,
+  update: () => fall(0.5, 180),
+  cam: [{ t: 0, pos: [1.4, 0.9, 4.4], look: [0.9, 0.8, -1.0], fov: 46 }],
+  cast: () => [{ who: KID, at: [0.75, 0, -1.9], expr: "smile", gesture: "point", seed: 7 }],
+  fx: (lt, t) => t > at("half") ? [{ fx: "arrow", at: [1.35, 0.55, -0.7], size: 0.7, rot: -90, t: (t - at("half")) * 2 }] : [] });
+F.shot({ from: at("So"), set: "kitchen", light: "interior", push: 0.35, dof: 13, kicks: [at("down")],
+  update: () => fall(1),
+  cam: [{ t: 0, pos: [2.0, 0.45, 0.9], look: [1.5, 0.14, -0.75], fov: 40, roll: -5 }],
+  cast: (lt, t) => [{ who: KID, at: [0.75, 0, -1.9], expr: t > at("down") ? "pained" : "nervous", seed: 7 }],
+  fx: (lt, t) => t > at("down") ? [{ fx: "puff", at: [1.5, 0.15, -0.7], size: 0.7, t: (t - at("down")) * 1.5 }] : [] });
+F.shot({ from: at("Want"), set: "kitchen", light: "interior", push: 0.3, dof: 0, xfade: 6,
+  update: () => fall(1),
+  cam: [{ t: 0, pos: [1.4, 1.6, 5.4], look: [1.8, 1.4, -1.8], fov: 46 }, { t: at("Get") - at("Want"), dur: 20, pos: [2.0, 2.0, 3.6], look: [2.4, 1.9, -2.2], fov: 44 }],
+  cast: (lt, t) => [{ who: KID, at: [1.9, 0, -1.7], expr: t > at("taller") ? "grin" : "smile", gesture: t > at("Get") ? "up" : null, seed: 7 }],
+  fx: (lt, t) => t > at("table", 3) ? [{ fx: "sparkle", at: [2.7, 2.8, -2.2], size: 0.6, t: (t - at("table", 3)) * 2 }] : [] });
+
+F.start();
+</script>
+</body>
+</html>

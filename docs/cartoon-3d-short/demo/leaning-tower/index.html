@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Tower That a War Saved</title>
+<!-- cartoon-3d-short worked example: "The Tower That a War Saved" — why the Leaning Tower of Pisa is still standing.
+     62 s, 19 shots, timed to voice/words.json. Facts and sources: BRIEF.md. Run through a local server or render.mjs. -->
+<script type="importmap">{ "imports": { "three": "../lib/three.module.min.js", "toon/": "../lib/" } }</script>
+<body>
+<script type="module">
+import { Film, THREE, glide, smooth, easeOut, lin, clamp01, lerp, rng } from "toon/film.js";
+import { person, INK } from "toon/toon.js";
+import WORDS from "./voice/words.json" with { type: "json" };
+
+const F = new Film({ words: WORDS, audio: "mix.mp3", title: "The Tower That a War Saved" });
+const at = (w, n) => F.at(w, n), end = (w, n) => F.end(w, n);
+
+// ---------------- the tower: 8 storeys chained base → bell chamber, so a lean + a counter-tilt bends it ----------------
+const MARBLE = "#efe9dc";
+function pisaTower(S) {
+  const arcade = S.paintMat("arcade", 512, 256, (g) => {               // blind arcade on the base storey
+    g.fillStyle = MARBLE; g.fillRect(0, 0, 512, 256);
+    g.strokeStyle = "rgba(120,130,120,0.55)"; g.lineWidth = 5;
+    for (let i = 0; i < 4; i++) { const x = 64 + i * 128; g.beginPath(); g.moveTo(x - 46, 250); g.lineTo(x - 46, 110); g.arc(x, 110, 46, Math.PI, 0); g.lineTo(x + 46, 250); g.stroke(); }
+    g.fillStyle = "rgba(150,140,120,0.18)"; for (let y = 0; y < 256; y += 32) g.fillRect(0, y, 512, 2);
+  }, { repeat: [5, 1] });
+  const inner = S.paintMat("gallery", 256, 256, (g) => {               // shadowed inner wall of a gallery storey
+    g.fillStyle = "#d9d2c2"; g.fillRect(0, 0, 256, 256);
+    g.fillStyle = "#6f6a74"; for (let i = 0; i < 2; i++) { g.beginPath(); g.moveTo(40 + i * 128, 256); g.lineTo(40 + i * 128, 120); g.arc(64 + i * 128, 120, 24, Math.PI, 0); g.lineTo(88 + i * 128, 256); g.fill(); }
+  }, { repeat: [8, 1] });
+  const white = S.col(MARBLE), ledge = S.col("#f6f1e6");
+  const floors = [];
+  let parent = null;
+  for (let i = 0; i < 8; i++) {
+    const base = i === 0, bell = i === 7, h = base ? 6 : bell ? 3.4 : 4, r = bell ? 2.9 : 4.2;
+    const b = new S.Batch();
+    if (base) b.add(new THREE.CylinderGeometry(r, r * 1.02, h, 32, 1, true).translate(0, h / 2, 0), arcade);
+    else {
+      b.add(new THREE.CylinderGeometry(r - 0.7, r - 0.7, h, 24, 1, true).translate(0, h / 2, 0), inner);
+      const n = bell ? 12 : 18;
+      for (let c = 0; c < n; c++) { const a = (c / n) * Math.PI * 2; b.add(new THREE.CylinderGeometry(0.16, 0.18, h - 0.5, 8).translate(Math.cos(a) * (r - 0.2), h / 2, Math.sin(a) * (r - 0.2)), white); }
+      b.add(new THREE.CylinderGeometry(r, r, 0.12, 32, 1, true).translate(0, 0.06, 0), ledge);
+    }
+    b.add(new THREE.CylinderGeometry(r + 0.25, r + 0.25, 0.45, 32).translate(0, h - 0.2, 0), ledge);   // cornice / floor slab
+    if (bell) b.add(new THREE.CylinderGeometry(r * 0.75, r * 0.9, 0.9, 24).translate(0, h + 0.45, 0), ledge);
+    const g = b.build(new THREE.Group());
+    g.userData.h = h;
+    if (parent) { g.position.y = parent.userData.h; parent.add(g); } else S.add(g);
+    floors.push(g); parent = g;
+  }
+  // scaffold + crane pole for the building years
+  const sc = new S.Batch(), wood = S.MAT.wood();
+  for (let c = 0; c < 10; c++) { const a = (c / 10) * Math.PI * 2; sc.add(new THREE.CylinderGeometry(0.09, 0.09, 13, 6).translate(Math.cos(a) * 5.1, 6.5, Math.sin(a) * 5.1), wood); }
+  for (const y of [3, 6, 9, 12]) sc.add(new THREE.TorusGeometry(5.1, 0.07, 4, 24).rotateX(Math.PI / 2).translate(0, y, 0), wood);
+  const scaffold = S.add(sc.build(new THREE.Group()));
+  /** pose: storeys built (0-8, fractional = the top one rising), lean (deg, toward +x), bend (deg of counter-tilt on storeys 4+) */
+  const pose = ({ built = 8, lean = 5.5, bend = 1.2, scaffold: sf = false }) => {
+    floors.forEach((f, i) => {
+      f.visible = i < Math.ceil(built);
+      f.scale.y = i === Math.floor(built) && built % 1 ? Math.max(0.02, built % 1) : 1;
+      f.rotation.z = i === 0 ? -lean * Math.PI / 180 : i >= 3 ? (bend / 5) * Math.PI / 180 : 0;
+    });
+    scaffold.visible = sf; scaffold.rotation.z = floors[0].rotation.z; scaffold.scale.y = Math.max(0.35, Math.min(1, built / 3.2));
+  };
+  /** world position of a point at height y on the tower axis (for cables, effects, focus) */
+  const axis = (y) => { const v = new THREE.Vector3(); let k = 0, node = floors[0]; for (const f of floors) { if (y <= k + f.userData.h || f === floors[7]) { node = f; break; } k += f.userData.h; } floors[0].parent.updateMatrixWorld(true); return v.set(0, y - k, 0).applyMatrix4(node.matrixWorld).toArray(); };
+  return { floors, pose, axis };
+}
+
+// ---------------- sets ----------------
+F.set("piazza", (S) => {
+  S.ground({ kind: "grass", size: 400 });
+  S.path({ from: [-120, 14], to: [60, 14], w: 7 });
+  S.path({ from: [0, 40], to: [0, 8], w: 6 });
+  S.ground({ kind: "cobble", x: 0, z: 0, w: 15, d: 15, y: 0.01 });
+  // the cathedral: white-and-grey striped nave with a gabled front, transept dome; the round baptistery further on
+  const stripes = S.paintMat("duomo", 512, 512, (g) => { g.fillStyle = MARBLE; g.fillRect(0, 0, 512, 512); g.fillStyle = "#b9b8ad"; for (let y = 0; y < 512; y += 48) g.fillRect(0, y, 512, 10); g.strokeStyle = "rgba(110,110,100,0.5)"; g.lineWidth = 6; for (let i = 0; i < 4; i++) { const x = 64 + i * 128; g.beginPath(); g.moveTo(x - 40, 512); g.lineTo(x - 40, 300); g.arc(x, 300, 40, Math.PI, 0); g.lineTo(x + 40, 512); g.stroke(); } }, { repeat: [1, 1] });
+  const duomo = new S.Batch();
+  duomo.add(S.boxGeo(S.V(-62, 0, -26), S.V(-20, 16, -12), 8), stripes);
+  duomo.add(S.boxGeo(S.V(-48, 0, -38), S.V(-38, 15, 0), 8), stripes);
+  for (const [z0, z1] of [[-26, -12]]) { duomo.add(S.tri(S.V(-62, 16, z1), S.V(-62, 16, z0), S.V(-62, 22, (z0 + z1) / 2)), S.col(MARBLE)); }
+  duomo.add(S.quad(S.V(-62.3, 15.6, -26.4), S.V(-19.7, 15.6, -26.4), S.V(-19.7, 22, -19), S.V(-62.3, 22, -19), 6, 2), S.col("#c9775a"));
+  duomo.add(S.quad(S.V(-19.7, 15.6, -11.6), S.V(-62.3, 15.6, -11.6), S.V(-62.3, 22, -19), S.V(-19.7, 22, -19), 6, 2), S.col("#c9775a"));
+  duomo.add(new THREE.CylinderGeometry(4.6, 4.6, 4, 16).translate(-43, 17, -19), S.col(MARBLE));
+  duomo.add(new THREE.SphereGeometry(4.8, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2).translate(-43, 19, -19), S.col("#d2a07a"));
+  duomo.add(new THREE.CylinderGeometry(9, 9, 14, 28).translate(-92, 7, -19), stripes);
+  duomo.add(new THREE.ConeGeometry(9.6, 8, 28).translate(-92, 18, -19), S.col("#c9775a"));
+  S.add(duomo.build(new THREE.Group()));
+  // the town behind a crenellated wall; far hills and mountains
+  S.wall({ from: [-150, -62], to: [90, -62], h: 8 });
+  S.street({ x: -60, z: -78, n: 9, seed: 4 });
+  S.street({ x: 40, z: -80, n: 6, seed: 9 });
+  S.street({ x: 75, z: -10, yaw: -Math.PI / 2, n: 6, seed: 12 });
+  S.street({ x: -20, z: 64, yaw: Math.PI, n: 8, seed: 21 });
+  for (const [x, z, h, k] of [[22, 18, 7, "round"], [28, -12, 9, "tall"], [-14, 30, 6, "fat"], [36, 30, 8, "round"], [-104, 18, 7, "cone"], [16, -40, 8, "fat"]]) S.tree({ x, z, h, kind: k, seed: x + z });
+  S.hill({ x: -160, z: -260, r: 120, h: 30 }); S.hill({ x: 120, z: -300, r: 140, h: 36 });
+  S.mountains({ dist: 520, h: 110 });
+  const tower = pisaTower(S);
+  // building-site props (1173) and the 1990s works
+  const site = new THREE.Group(); S.add(site);
+  for (const [x, z] of [[8, 5], [9.4, 6.2], [7.6, 7], [-7, 6]]) site.add(S.crate({ x, z, s: 1.1 }));
+  site.add(S.cart({ x: 10, z: -5, yaw: 0.6 }));
+  site.add(S.barrel({ x: -8, z: 3 }));
+  const works = new THREE.Group(); S.add(works);
+  const lead = S.col("#5d6470");
+  for (let i = 0; i < 6; i++) works.add(S.mesh(new THREE.BoxGeometry(1.4, 0.45, 0.8), lead, [-7.2 + (i % 3) * 1.5, 0.23 + Math.floor(i / 3) * 0.46, -2 + (i % 2) * 0.3]));
+  const rig = new S.Batch();                                            // the drill rig on the high (north) side
+  rig.box(S.col("#e8b630"), 0, 1.2, 0, 2.4, 1.6, 1.6); rig.box(S.MAT.iron(), 0, 3.4, 0, 0.3, 4.2, 0.3);
+  rig.add(new THREE.CylinderGeometry(0.22, 0.22, 2.4, 10).rotateZ(1.1).translate(1.2, 0.9, 0), S.MAT.iron());
+  const drill = rig.build(new THREE.Group()); drill.position.set(-9.5, 0, 4); drill.rotation.y = 0.5; works.add(drill);
+  const soil = S.mesh(new THREE.ConeGeometry(1.4, 1.0, 12), S.col("#a07a52"), [-11.5, 0.5, 7]); works.add(soil);
+  const cables = [];                                                    // steel safety cables from the third storey
+  for (const [x, z] of [[-26, -8], [-26, 8]]) { const c = S.mesh(new THREE.CylinderGeometry(0.05, 0.05, 1, 6), S.col("#3d414c")); works.add(c); cables.push({ c, a: [x, 0.4, z] }); }
+  for (const [x, z] of [[-26, -8], [-26, 8]]) works.add(S.mesh(new THREE.BoxGeometry(1.2, 0.8, 1.2), S.MAT.cope(), [x, 0.4, z]));
+  const mud = S.water({ shape: "disc", r: 6.5, x: 0, z: 0, y: 0.02 }); mud.material.opacity = 1;
+  return { tower, site, works, cables, soil, mud };
+});
+
+F.set("kitchen", (S) => {
+  S.room({ w: 10, d: 9, h: 4.6, floor: "planks", wallCol: "#e8d2a8" });
+  S.table({ x: 0, z: -1.2, w: 2.6, d: 1.3 });
+  S.mesh(new THREE.CylinderGeometry(0.42, 0.32, 0.28, 20, 1, true), S.col("#3f6fb5"), [0.3, 1.04, -1.2]);   // bowl
+  S.water({ shape: "disc", r: 0.4, x: 0.3, z: -1.2, y: 1.12 });
+  for (const [x, c] of [[-3.2, "#b5653f"], [3.4, "#5d7a3a"]]) S.mesh(new THREE.BoxGeometry(1.2, 2.2, 0.6), S.col(c), [x, 1.1, -4.1]);
+  S.clouds(0);
+  return {};
+});
+
+// ---------------- cast (outfits are data; the same outfit draws the same person everywhere) ----------------
+const MASTER = person({ coat: "#8c3b4a", hat: "beret", hatCol: "#3b5b9a", hair: "#2a201a", beard: "#5a3b2a", build: "stout" });
+const MASON = person({ coat: "#b5653f", hat: "cap", hatCol: "#5a3b2a" });
+const MASON2 = person({ coat: "#5d7a3a", hat: "hood", hatCol: "#7a5a3a" });
+const SOLDIER = person({ coat: "#c0353a", pants: "#3b3f52", hat: "helmet", moustache: "#4a3426" });
+const FOLK = [person({ coat: "#3f6fb5", hair: "#5a3b2a" }), person({ coat: "#7b5ac9", hat: "bonnet", dress: "#d9a441" }), person({ coat: "#2f5f6a", hat: "tophat", moustache: "#2a201a" }), person({ coat: "#c25a7a", hat: "bonnet", dress: "#5a8fc2" })];
+const KID = person({ coat: "#f08a2c", pants: "#3b5b9a", hair: "#c0602a", build: "kid" });
+const ENG = person({ coat: "#e8742c", pants: "#3b3f52", hat: "hardhat", glasses: true });
+const ENG2 = person({ coat: "#e8742c", pants: "#2f3a52", hat: "hardhat", hatCol: "#f4f1ea", moustache: "#4a3426" });
+const TOURISTS = [person({ coat: "#3fa7b5", pants: "#3b5b9a", hat: "cap", hatCol: "#f2c230" }), person({ coat: "#e86e78", hair: "#2a201a" }), person({ coat: "#62ae4c", pants: "#4a3426", hair: "#d9a441", glasses: true })];
+// held props: draw functions at the hand (pen, hand x, hand y, u = 1 % of the head width)
+const spear = (p, x, y, u) => { p.band([[x, y + 60 * u], [x, y - 230 * u]], "#8a5a34", 5 * u, 1.5 * u, "round"); p.poly([[x - 9 * u, y - 226 * u], [x, y - 262 * u], [x + 9 * u, y - 226 * u]], "#c9ccd2", 2 * u); };
+const hammer = (p, x, y, u) => { p.band([[x, y + 20 * u], [x, y - 60 * u]], "#8a5a34", 5 * u, 1.5 * u, "round"); p.poly([[x - 16 * u, y - 72 * u], [x + 18 * u, y - 72 * u], [x + 18 * u, y - 56 * u], [x - 16 * u, y - 56 * u]], "#7d848c", 2 * u); };
+const banana = (p, x, y, u) => { p.poly([[x - 6 * u, y - 4 * u], [x + 6 * u, y - 8 * u], [x + 40 * u, y - 70 * u], [x + 30 * u, y - 96 * u], [x + 24 * u, y - 70 * u]], "#f6d33c", 2.6 * u); p.dot(x + 30 * u, y - 96 * u, 3 * u); };
+const camera = (p, x, y, u) => { p.poly([[x - 22 * u, y - 30 * u], [x + 22 * u, y - 30 * u], [x + 22 * u, y], [x - 22 * u, y]], "#3a3d47", 2.4 * u); p.ell(x, y - 15 * u, 9 * u, 9 * u, "#9fd4ff", 2 * u); };
+const sponge = (sq) => (p, x, y, u) => { const h = 34 * (1 - 0.6 * sq), w = 44 * (1 + 0.25 * sq); p.poly([[x - w * u, y - h * u], [x + w * u, y - h * u], [x + w * u, y + 6 * u], [x - w * u, y + 6 * u]], "#f6d33c", 2.6 * u); for (const [dx, dy] of [[-24, -14], [6, -20], [26, -6], [-6, -4]]) p.ell(x + dx * u * (w / 44), y + dy * u * (h / 34), 4 * u, 3 * u, "#d9a92a", 0); };
+
+const L = { lean: 5.5, bend: 1.2 };
+const piazza = F.sets.piazza.objects;
+/** what the piazza shows: era 1173 (site), 1990 (works) or today */
+const era = (e, tower) => { piazza.site.visible = e === 1173; piazza.works.visible = e === 1990; piazza.mud.visible = !!tower.mud; piazza.tower.pose(tower); if (e === 1990) for (const k of piazza.cables) { const a = new THREE.Vector3(...k.a), b = new THREE.Vector3(...piazza.tower.axis(15)), m = a.clone().add(b).multiplyScalar(0.5); k.c.position.copy(m); k.c.scale.set(1, a.distanceTo(b), 1); k.c.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.sub(a).normalize()); } };
+
+// ---------------- shots ----------------
+// 1 · hook (today): low wide of the leaning tower with tourists; flash into 1173 on "It's"
+F.shot({ from: 0, set: "piazza", light: "day", push: 0.22, dof: 0,
+  update: () => era(0, { built: 8, ...L }),
+  cam: [{ t: 0, pos: [16, 1.4, 34], look: [3, 10.5, 0], fov: 48, roll: -3 }],
+  cast: (lt) => [{ who: TOURISTS[0], at: [12.6, 0, 28.6], expr: "smile", gesture: "point", seed: 3 }, { who: TOURISTS[1], at: [14.4, 0, 29.4], prop: camera, propKey: "cam", expr: "grin", seed: 6 },
+    { who: TOURISTS[2], at: [12 - lt * 0.8, 0, 12], face: [-1, 0], mode: "walk", seed: 8 }] });
+// 2 · 1173: high establishing, the cathedral and the first storey going up
+F.shot({ from: at("It's"), set: "piazza", light: "day", flash: true, push: 0.1, dof: 0,
+  update: (lt) => era(1173, { built: 1 + 0.6 * smooth((lt - 2.5) / 2.4), lean: 0, bend: 0, scaffold: true }),
+  cam: [{ t: 0, pos: [42, 30, 60], look: [-14, 4, -8], fov: 44 }, { t: 1.4, dur: 60, pos: [30, 12, 34], look: [-4, 4, -4], fov: 42 }],
+  cast: (lt) => [{ who: MASON, at: [6 - lt * 1.2, 0, 10], face: [-1, 0], mode: "walk", seed: 2 }, { who: MASON2, at: [-6, 0, 7], expr: "smile", prop: hammer, propKey: "h", seed: 4 },
+    { who: MASTER, at: [2, 0, 8], expr: "grin", gesture: "hips", seed: 5 }] });
+// 3 · "the builders notice something": medium shot at the base, the second storey done
+F.shot({ from: at("By"), set: "piazza", light: "day", push: 0.25, dof: 11, punch: [at("something")],
+  update: () => era(1173, { built: 2, lean: 0.3, bend: 0, scaffold: true }),
+  cam: [{ t: 0, pos: [1.6, 1.7, 13.4], look: [1.25, 1.6, 7.6], fov: 40 }],
+  cast: (lt, t) => [{ who: MASTER, at: [0.6, 0, 8], expr: t > at("notice") - 0.1 ? "nervous" : "neutral", look: t > at("notice") ? -1 : 0, seed: 5, headTilt: t > at("notice") ? -6 : 0 },
+    { who: MASON, at: [1.95, 0, 7.4], expr: t > at("something") - 0.1 ? "shock" : "neutral", seed: 2 }],
+  fx: (lt, t) => t > at("something") - 0.07 ? [{ fx: "exclaim", at: [2.2, 2.6, 7.4], size: 0.5, t: (t - at("something")) * 2 }] : [] });
+// 4 · "the whole thing is tipping over": low angle, three storeys, the lean creeps in, a kick on "over"
+F.shot({ from: at("The", 5), set: "piazza", light: "day", push: 0.3, dof: 0, kicks: [at("over") - 0.03],
+  update: (lt, s, t) => era(1173, { built: 3, lean: lin([[at("tipping"), 0.4], [end("over"), 4.2]], t), bend: 0, scaffold: true }),
+  cam: [{ t: 0, pos: [-6, 0.6, 15], look: [2, 7, 0], fov: 50, roll: 4 }],
+  cast: (lt, t) => [{ who: MASON2, at: [-1.6, 0, 8.4], expr: "shock", gesture: t > at("tipping") ? "up" : null, seed: 4 }, { who: MASON, at: [1.4, 0, 8.6], expr: "shock", seed: 2 }],
+  fx: (lt, t) => [{ fx: "creak", at: [5.5, 9, 2], size: 2.2, t: lt }, ...(t > at("over") ? [{ fx: "puff", at: [4.5, 0.6, 4.6], size: 2.6, t: (t - at("over")) * 1.6 }] : [])] });
+// 5 · "foundation only three meters deep, soft wet clay": low close at the base, the master pokes the mud
+F.shot({ from: at("The", 6), set: "piazza", light: "day", push: 0.2, dof: 13,
+  update: (lt) => era(1173, { built: 3, lean: 4.2, bend: 0, scaffold: true, mud: true }),
+  cam: [{ t: 0, pos: [5.2, 0.7, 11.2], look: [3, 0.9, 7], fov: 40, roll: -2 }, { t: 2.0, dur: 30, pos: [4.6, 0.55, 10.4], look: [2.6, 0.6, 6.6], fov: 38, roll: -4 }],
+  cast: (lt, t) => [{ who: MASTER, at: [2.4, 0, 7], mode: "sit", expr: t > at("soft") ? "pained" : "stern", gesture: "point", seed: 5 }],
+  fx: (lt, t) => [{ fx: "sweat", at: [3.0, 2.3, 7.2], size: 0.35, t: (lt % 1.2) / 1.2 }, ...(t > at("clay") - 0.1 ? [{ fx: "splash", at: [3.4, 0.25, 7.3], size: 0.9, t: (t - at("clay")) * 2.2 }] : [])] });
+// 6 · war: soldiers with Pisa's banner march off, the masons drop their tools
+F.shot({ from: at("Then"), set: "piazza", light: "day", push: 0.15, dof: 0, kicks: [at("drops")], xfade: 6,
+  update: () => era(1173, { built: 3, lean: 4.2, bend: 0, scaffold: true }),
+  cam: [{ t: 0, pos: [14, 2.2, 30], look: [2, 2, 10], fov: 44, roll: 0 }, { t: at("everybody") - at("Then"), dur: 22, pos: [8, 1.6, 20], look: [-1, 1.4, 11], fov: 40, roll: 5 }],
+  cast: (lt, t) => {
+    const out = [];
+    for (let i = 0; i < 6; i++) out.push({ who: SOLDIER, at: [16 - (lt * 1.7) - (i % 3) * 1.6 - Math.floor(i / 3) * 2.2, 0, 13 + (i % 3) * 1.2], face: [-1, 0], mode: "march", phase: lt + (i % 2) * 0.03, prop: spear, propKey: "sp", seed: 10 + i });
+    const dropped = t > at("drops");
+    out.push({ who: MASON, at: [-0.4, 0, 9.6], expr: dropped ? "relief_open" : "neutral", prop: dropped ? null : hammer, propKey: "h", gesture: dropped ? "up" : null, seed: 2 });
+    out.push({ who: MASON2, at: [1.6, 0, 9], expr: dropped ? "grin" : "neutral", gesture: dropped ? "shrug" : null, seed: 4 });
+    return out;
+  },
+  fx: (lt, t) => t > at("drops") ? [{ fx: "puff", at: [-0.2, 0.3, 9.9], size: 1.4, t: (t - at("drops")) * 1.8 }] : [] });
+// 7 · "for almost a hundred years": golden, the half-built tower alone, grass grown, a guard asleep
+F.shot({ from: at("For"), set: "piazza", light: "golden", push: 0.12, dof: 0, xfade: 10, sun: { az: 20, el: 7 },
+  update: () => era(0, { built: 3, lean: 4.4, bend: 0 }),
+  cam: [{ t: 0, pos: [-22, 3, 34], look: [0, 6, 0], fov: 42 }, { t: 1.2, dur: 90, pos: [-15, 2.4, 25], look: [0.5, 6, 0], fov: 40 }],
+  cast: () => [{ who: SOLDIER, at: [-4, 0, 9], mode: "sit", expr: "neutral", blink: true, prop: spear, propKey: "sp", seed: 10 }],
+  fx: (lt) => [{ fx: "zzz", at: [-3.6, 2.6, 9], size: 0.8, t: (lt * 0.4) % 1 }] });
+// 8 · "the neighbors think it's hilarious"
+F.shot({ from: at("The", 8), set: "piazza", light: "day", push: 0.3, dof: 11, xfade: 6,
+  update: () => era(0, { built: 3, lean: 4.4, bend: 0 }),
+  cam: [{ t: 0, pos: [-4.2, 1.6, 21], look: [-1.2, 1.7, 15], fov: 40, roll: -3 }],
+  cast: () => [{ who: FOLK[0], at: [-2.4, 0, 15.2], expr: "laugh", gesture: "point", seed: 21 }, { who: FOLK[1], at: [-0.7, 0, 14.4], expr: "laugh", seed: 22 },
+    { who: FOLK[2], at: [0.9, 0, 15.6], expr: "grin", gesture: "hips", seed: 23 }] });
+// 9 · "the builders come back… make every new floor taller on the short side": storeys rise
+F.shot({ from: at("When"), set: "piazza", light: "day", push: 0.12, dof: 0, xfade: 6,
+  update: (lt, s, t) => era(1173, { built: lin([[at("every"), 3], [end("side"), 6.95]], t), lean: 4.4, bend: lin([[at("taller"), 0], [end("side"), 1.0]], t), scaffold: true }),
+  cam: [{ t: 0, pos: [10, 1.8, 22], look: [1, 3, 6], fov: 42 }, { t: at("They", 2) - at("When"), dur: 30, pos: [22, 6, 34], look: [3, 12, 0], fov: 46 }],
+  cast: (lt, t) => [{ who: MASTER, at: [3.8, 0, 9], expr: t > at("cheat") ? "smile" : "stern", gesture: t > at("cheat") ? "point" : "hips", seed: 5 },
+    { who: MASON, at: [1.2, 0, 9.6], expr: "grin", prop: hammer, propKey: "h", seed: 2 }, { who: MASON2, at: [6.2, 0, 10.2], face: [-1, -0.2], mode: "walk", seed: 4 }],
+  fx: (lt, t) => t > at("short") - 0.1 ? [{ fx: "arrow", at: [-7, 20, 2], size: 4, rot: 90, t: (t - at("short")) * 1.5 }] : [] });
+// 10 · "it bends like a banana": profile of the whole tower, a kid holds up a banana for comparison
+F.shot({ from: at("So"), set: "piazza", light: "day", push: 0.2, dof: 7, punch: [at("banana")],
+  update: () => era(0, { built: 8, lean: 5.5, bend: 1.6 }),
+  cam: [{ t: 0, pos: [-3.6, 1.0, 35], look: [0.5, 9, 0], fov: 50 }, { t: at("bends") - at("So"), dur: 22, pos: [-3.4, 0.95, 34], look: [0.8, 8.5, 0], fov: 50 }],
+  focus: [-3.0, 1.2, 28.2],
+  cast: (lt, t) => [{ who: KID, at: [-3.0, 0, 28.2], expr: t > at("banana") - 0.1 ? "grin" : "smile", prop: t > at("bends") - 0.1 ? banana : null, propKey: "b", seed: 31 }] });
+// 11 · "but wait, why didn't it fall over?": close-up, the kid looks up, a question mark
+F.shot({ from: at("But"), set: "piazza", light: "day", push: 0.35, dof: 14, roll: 0,
+  update: () => era(0, { built: 8, lean: 5.5, bend: 1.6 }),
+  cam: [{ t: 0, pos: [-2.4, 1.15, 30.6], look: [-3.0, 1.2, 28.2], fov: 38, roll: 5 }],
+  cast: () => [{ who: KID, at: [-3.0, 0, 28.2], expr: "nervous", look: 1, headTilt: -8, seed: 31 }],
+  fx: (lt) => [{ fx: "question", at: [-2.55, 1.72, 28.5], size: 0.42, t: lt * 1.5 }] });
+// 12 · "you see, wet clay is like a sponge full of water": the kitchen, a soaked sponge over a bowl
+F.shot({ from: at("You"), set: "kitchen", light: "interior", push: 0.25, dof: 12, xfade: 8,
+  cam: [{ t: 0, pos: [0.6, 1.5, 3.2], look: [0.2, 1.4, -0.4], fov: 36 }],
+  cast: () => [{ who: KID, at: [0.3, 0, 0.2], expr: "smile", prop: sponge(0), propKey: "s0", seed: 31 }],
+  fx: (lt) => [{ fx: "sparkle", at: [0.95, 1.7, 0.4], size: 0.4, t: (lt * 0.8) % 1 }] });
+// 13 · "squeeze it fast and it squishes": a hard squeeze, a splash, a kick
+F.shot({ from: at("Squeeze"), set: "kitchen", light: "interior", push: 0.4, dof: 13, kicks: [at("squishes")],
+  cam: [{ t: 0, pos: [0.9, 1.35, 2.0], look: [0.4, 1.25, 0.2], fov: 34, roll: -4 }],
+  cast: (lt, t) => { const k = clamp01((t - at("fast")) / 0.12); return [{ who: KID, at: [0.3, 0, 0.2], expr: k > 0.5 ? "laugh" : "stern", prop: sponge(k), propKey: "s" + k.toFixed(1), seed: 31 }]; },
+  fx: (lt, t) => t > at("fast") ? [{ fx: "splash", at: [0.85, 0.95, 0.5], size: 1.1, t: (t - at("fast")) * 1.6 }] : [] });
+// 14 · "squeeze it slowly… the water seeps out, the clay gets firm": slow squeeze, drips, a sparkle on "firm"
+F.shot({ from: at("Squeeze", 2), set: "kitchen", light: "interior", push: 0.18, dof: 12,
+  cam: [{ t: 0, pos: [-0.4, 1.45, 2.4], look: [0.4, 1.3, 0.2], fov: 34, roll: 3 }],
+  cast: (lt, t) => { const k = Math.round(clamp01((t - at("slowly")) / 2.6) * 10) / 10; return [{ who: KID, at: [0.3, 0, 0.2], expr: t > at("firm") ? "smile_closed" : "neutral", prop: sponge(k * 0.8), propKey: "s" + k, seed: 31 }]; },
+  fx: (lt, t) => [0, 1, 2].map((i) => ({ fx: "sweat", at: [0.86 + i * 0.07, 1.25 - (((lt + i * 0.37) * 0.9) % 1) * 0.3, 0.45], size: 0.12, t: 0.3 }))
+    .concat(t > at("firm") - 0.05 ? [{ fx: "sparkle", at: [0.9, 1.45, 0.5], size: 0.5, t: (t - at("firm")) * 2 }] : []) });
+// 15 · "the war made everyone wait, so the ground had time to harden": night, the half-built tower waits
+F.shot({ from: at("The", 14), set: "piazza", light: "night", push: 0.15, dof: 0, xfade: 8,
+  update: () => era(0, { built: 3, lean: 4.4, bend: 0 }),
+  cam: [{ t: 0, pos: [14, 1.2, 26], look: [1, 6, 0], fov: 42, roll: 3 }, { t: 1.6, dur: 50, pos: [10, 0.9, 19], look: [1, 5.5, 0], fov: 42, roll: 2 }],
+  cast: () => [{ who: SOLDIER, at: [5, 0, 10], mode: "sit", blink: true, prop: spear, propKey: "sp", seed: 10 }],
+  fx: (lt) => [{ fx: "zzz", at: [5.4, 2.6, 10], size: 0.8, t: (lt * 0.4) % 1 }] });
+// 16 · "if they'd kept building, the tower would have toppled": what-if — it falls, crash and dust
+F.shot({ from: at("If"), set: "piazza", light: "day", push: 0.1, dof: 0, kicks: [at("toppled") + 0.15],
+  update: (lt, s, t) => era(1173, { built: lin([[at("If"), 3], [at("building"), 5]], t), lean: 4.2 + 86 * easeOut(clamp01((t - at("toppled") + 0.35) / 0.55)) ** 2, bend: 0 }),
+  cam: [{ t: 0, pos: [-8, 2, 40], look: [4, 8, 0], fov: 50, roll: -4 }],
+  cast: (lt, t) => [{ who: MASTER, at: [-3, 0, 20], expr: t > at("toppled") ? "shock" : "grin", gesture: t > at("toppled") ? "up" : "hips", seed: 5 }],
+  fx: (lt, t) => t > at("toppled") + 0.15 ? [{ fx: "bang", at: [18, 3, 1], size: 9, t: (t - at("toppled") - 0.15) * 2 }, { fx: "puff", at: [14, 2, 3], size: 10, t: (t - at("toppled") - 0.15) * 1.2 }] : [] });
+// 17 · 1990: engineers, cables, lead weights, a drill pulling soil from the high side
+F.shot({ from: at("In"), set: "piazza", light: "day", push: 0.18, dof: 0, xfade: 8,
+  update: (lt) => { era(1990, { built: 8, ...L }); piazza.soil.scale.setScalar(0.6 + lt * 0.15); },
+  cam: [{ t: 0, pos: [-24, 3, 26], look: [-6, 6, 0], fov: 48 }, { t: at("pulled") - at("In"), dur: 30, pos: [-19, 1.7, 15], look: [-9, 1.4, 4], fov: 42 }],
+  cast: (lt) => [{ who: ENG, at: [-12, 0, 8.5], expr: "neutral", gesture: "point", seed: 41 }, { who: ENG2, at: [-9.6, 0, 9.2], expr: "smile", prop: hammer, propKey: "h", seed: 42 }],
+  fx: (lt) => [{ fx: "puff", at: [-11.4, 0.8, 7.2], size: 1.4, t: (lt * 1.3) % 1 }] });
+// 18 · "it straightened by forty-five centimeters, and then they stopped on purpose"
+F.shot({ from: at("It", 7), set: "piazza", light: "day", push: 0.22, dof: 0, punch: [at("purpose")],
+  update: (lt, s, t) => era(1990, { built: 8, lean: lin([[at("straightened"), 5.5], [end("centimeters"), 4.0]], t), bend: L.bend }),
+  cam: [{ t: 0, pos: [-10, 1.8, 30], look: [1, 13, 0], fov: 50 }, { t: at("then", 2) - at("It", 7), dur: 26, pos: [-11.6, 1.6, 16.2], look: [-10.5, 1.5, 9], fov: 40 }],
+  focus: (lt) => lt > at("then", 2) - at("It", 7) ? [-10.5, 1.5, 9] : [0, 10, 0],
+  dof: (lt) => (lt > at("then", 2) - at("It", 7) + 0.6 ? 11 : 0),
+  cast: (lt, t) => [{ who: ENG, at: [-11.15, 0, 8.8], expr: t > at("stopped") ? "stern" : "grin", gesture: t > at("stopped") ? "hips" : "up", seed: 41 },
+    { who: ENG2, at: [-9.85, 0, 9.3], expr: t > at("stopped") ? "nervous" : "laugh", gesture: t > at("stopped") ? "shrug" : "up", seed: 42 }],
+  fx: (lt, t) => t > at("straightened") && t < at("then", 2) ? [{ fx: "sparkle", at: [3, 30, 0], size: 3, t: (t - at("straightened")) % 1 }] : [] });
+// 19 · payoff (golden, today): tourists push the tower up; end on the last word
+F.shot({ from: at("because"), to: end("tower", 7) + 0.3, set: "piazza", light: "golden", push: 0.3, dof: 9, xfade: 8, sun: { az: -35, el: 9 },
+  update: () => era(0, { built: 8, lean: 4.0, bend: L.bend }),
+  cam: [{ t: 0, pos: [-5, 1.5, 33], look: [1.5, 6, 0], fov: 46 }],
+  focus: [-1.5, 1.4, 22],
+  cast: () => [{ who: TOURISTS[0], at: [0.9, 0, 23], view: "side", face: [-1, 0], mode: "push", pose: 1, expr: "grin", seed: 3 },
+    { who: TOURISTS[1], at: [-4.1, 0, 25.5], prop: camera, propKey: "cam", expr: "smile", seed: 6 }, { who: TOURISTS[2], at: [-2.2, 0, 21], view: "side", face: [1, 0], mode: "push", pose: 1, expr: "laugh", seed: 8 }] });
+
+F.start();
+</script>
+</body>
+</html>
