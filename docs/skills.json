@@ -199,6 +199,21 @@
       "workedExample": [
         { "title": "「龍虎 · Dragon and Tiger」 · 21초 · 10샷 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/ink-summoning/demo/dragon-tiger/" }
       ]
+    },
+    {
+      "id": "holo-pass",
+      "name": "holo-pass",
+      "tagline": "링크 하나로 보내는 움직이는 초대장을 만듭니다. 봉투를 열면 홀로그램 티켓이 튀어나와 기울일 때마다 포일이 빛나고, 뒤집으면 받는 사람 이름과 메시지가 적힌 엽서가 나오며, 참석 회신 · 캘린더 추가 · 음악이 붙습니다. 템플릿 6종, 한국어 · 영어 · 일본어, QR 공유 이미지, 16:9 · 9:16 MP4를 냅니다.",
+      "posterAlt": "holo-pass로 만든 초대장 네 장면: 주황 봉투에서 빠져나오는 HOME PARTY 티켓, 트리 그림이 든 MERRY CHRISTMAS 홀로그램 티켓, 산 뒤로 웃는 해가 뜨는 NEW YEAR 2027 티켓, 머그잔 우표와 지은에게로 시작하는 메시지가 적힌 엽서 뒷면",
+      "poster": "holo-pass/poster.jpg",
+      "tags": ["웹 초대장", "홀로그램 포일", "참석 회신 · 캘린더", "합성 음악", "MP4"],
+      "stats": ["템플릿 6종 · 음악 4곡", "한국어 · 영어 · 일본어"],
+      "page": "holo-pass/",
+      "source": "holo-pass/",
+      "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "holo-pass/examples/home-party/" },
+      "workedExample": [
+        { "title": "「HOME PARTY」 예제 초대장 · 받는 화면 · 만들기 화면", "url": "https://jungrok5.github.io/motion-skills/holo-pass/demo/maker.html" }
+      ]
     }
   ]
 }

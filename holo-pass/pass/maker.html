@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Holo Pass Maker</title>
+<meta name="description" content="Make an animated holographic invitation and send it as a link.">
+<meta name="theme-color" content="#0d0a12">
+<link rel="stylesheet" href="lib/holo.css">
+<style>
+  body { min-height: 100vh; }
+  .mk { display: grid; grid-template-columns: minmax(320px, 440px) 1fr; gap: 0; min-height: 100vh; }
+  .mk-form { padding: 22px 20px 80px; border-right: 1px solid var(--line); }
+  .mk-view { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; }
+  .mk-stage { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+  .mk-stage .stage-fit { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  .mk-bar { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--line); background: #0b0810; }
+  .mk-bar .btn { flex: 0 1 auto; padding: 10px 14px; min-height: 40px; font-size: 14px; }
+  h1 { font: 800 22px/1.2 var(--sans); margin: 0 0 4px; } h1 small { display: block; font: 600 11px/1.6 var(--mono); letter-spacing: .2em; color: var(--accent); margin-bottom: 6px; }
+  .lead { color: var(--mut); font-size: 14px; line-height: 1.5; margin: 0 0 18px; }
+  fieldset { border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin: 0 0 14px; background: var(--chip); min-width: 0; }
+  legend { font: 700 13px/1 var(--sans); padding: 0 6px; } legend b { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; background: var(--accent); color: #fff; font-size: 12px; margin-right: 6px; }
+  label { display: block; font: 600 12px/1.3 var(--sans); color: var(--mut); margin: 10px 0 5px; } label:first-of-type { margin-top: 2px; }
+  input, textarea, select { width: 100%; background: rgba(0,0,0,.35); border: 1px solid var(--line); color: var(--fg); border-radius: 10px; padding: 10px 11px; font: 500 15px/1.35 var(--sans); }
+  textarea { resize: vertical; min-height: 64px; }
+  input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } .row3 { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 10px; }
+  .row > div, .row3 > div { min-width: 0; }
+  .themes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .themes button { appearance: none; border: 1px solid var(--line); background: rgba(0,0,0,.3); color: var(--fg); border-radius: 12px; padding: 6px 6px 8px; cursor: pointer; font: 600 12px/1.2 var(--sans); }
+  .themes button[aria-pressed=true] { outline: 2px solid var(--accent); border-color: transparent; }
+  .themes canvas { display: block; width: 100%; aspect-ratio: 480/380; border-radius: 8px; margin-bottom: 6px; }
+  .hint { font-size: 12px; color: var(--mut); line-height: 1.5; margin-top: 6px; }
+  .link { display: flex; gap: 8px; } .link input { font: 500 12px/1.3 var(--mono); }
+  .langs { display: flex; gap: 6px; } .langs button { flex: 1; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); background: #fffdf8; color: #2a2230; padding: 10px 16px; border-radius: 999px; font: 600 14px/1.2 var(--sans); opacity: 0; transition: .3s; pointer-events: none; z-index: 20; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  @media (max-width: 860px) {
+    .mk { grid-template-columns: 1fr; }
+    .mk-view { position: sticky; top: 0; height: auto; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); order: -1; }
+    .mk-stage { height: 46vw; min-height: 180px; flex: none; }
+    .mk-bar { padding: 8px 12px; } .mk-bar .btn { flex: 1 1 auto; padding: 8px 10px; font-size: 13px; }
+    .mk-form { border-right: 0; padding: 18px 16px 80px; }
+  }
+</style>
+</head>
+<body>
+<div class="mk">
+  <form class="mk-form" id="form" autocomplete="off" onsubmit="return false">
+    <h1><small>HOLO PASS · MAKER</small><span data-i="h">움직이는 초대장 만들기</span></h1>
+    <p class="lead" data-i="lead">템플릿을 고르고 내용을 채우면 링크 하나로 보낼 수 있습니다. 초대장 내용은 링크 안에만 들어 있고 어디에도 저장되지 않습니다.</p>
+    <fieldset><legend><b>1</b><span data-i="s1">템플릿</span></legend><div class="themes" id="themes"></div></fieldset>
+    <fieldset><legend><b>2</b><span data-i="s2">문구</span></legend>
+      <label for="title" data-i="title">큰 제목 (줄바꿈 = 세로 줄)</label><textarea id="title" rows="2"></textarea>
+      <label for="subtitle" data-i="subtitle">작은 한 줄</label><input id="subtitle">
+      <label for="message" data-i="message">뒷면 메시지</label><textarea id="message" rows="3"></textarea>
+    </fieldset>
+    <fieldset><legend><b>3</b><span data-i="s3">일시 · 장소</span></legend>
+      <div class="row3"><div><label for="date" data-i="date">날짜</label><input id="date" type="date"></div><div><label for="time" data-i="time">시작</label><input id="time" type="time"></div><div><label for="end" data-i="end">끝</label><input id="end" type="time"></div></div>
+      <label for="place" data-i="place">장소</label><input id="place">
+      <label for="address" data-i="address">주소 (지도 링크용, 선택)</label><input id="address">
+      <div class="row"><div><label for="price" data-i="price">참가비</label><input id="price"></div><div><label for="no" data-i="no">티켓 번호</label><input id="no" inputmode="numeric"></div></div>
+    </fieldset>
+    <fieldset><legend><b>4</b><span data-i="s4">받는 사람 · 보내는 사람</span></legend>
+      <div class="row"><div><label for="to" data-i="to">받는 사람</label><input id="to"></div><div><label for="from" data-i="from">보내는 사람</label><input id="from"></div></div>
+    </fieldset>
+    <fieldset><legend><b>5</b><span data-i="s5">음악 · 언어</span></legend>
+      <div class="row"><div><label for="music" data-i="music">음악</label><select id="music"></select></div><div><label data-i="lang">초대장 언어</label><div class="langs" id="langs"></div></div></div>
+      <button type="button" class="btn" id="listen" style="margin-top:10px;width:100%">♪ <span data-i="listen">미리 듣기</span></button>
+    </fieldset>
+    <fieldset><legend><b>6</b><span data-i="s6">답장 · 더보기 (선택)</span></legend>
+      <label for="rsvp" data-i="rsvp">답장 받을 곳</label><input id="rsvp" placeholder="me@example.com · https://forms.gle/…">
+      <div class="hint" data-i="rsvpHint">비워 두면 손님이 고른 답장(참석/불참)이 공유 창이나 복사로 나와, 초대를 받은 대화방에 바로 보낼 수 있습니다. 이메일을 넣으면 메일이, 주소(https://…)를 넣으면 ?answer=yes&amp;name=… 이 붙은 링크가 열립니다.</div>
+      <label for="url" data-i="url">행사 웹사이트</label><input id="url" type="url" placeholder="https://">
+      <label for="image" data-i="image">그림 대신 쓸 이미지 주소</label><input id="image" type="url" placeholder="https://…/photo.jpg">
+      <div class="hint" data-i="imageHint">CORS를 허용하는 https 이미지만 쓸 수 있습니다. 비워 두면 템플릿 그림이 움직입니다.</div>
+    </fieldset>
+    <fieldset><legend><b>7</b><span data-i="s7">보내기</span></legend>
+      <label for="link" data-i="link">초대장 링크</label>
+      <div class="link"><input id="link" readonly><button type="button" class="btn primary" id="copy" data-i="copy">복사</button></div>
+      <div class="gp-tools" style="margin-top:10px">
+        <button type="button" class="btn" id="copyMsg" data-i="copyMsg">메시지와 함께 복사</button>
+        <button type="button" class="btn" id="png" data-i="png">QR 공유 이미지</button>
+        <a class="btn" id="open" target="_blank" rel="noopener" data-i="open">받는 화면 보기 ↗</a>
+      </div>
+      <div class="hint" data-i="videoHint">MP4 영상은 스킬의 scripts/render.mjs로 만듭니다 (가로 16:9, 세로 9:16).</div>
+    </fieldset>
+  </form>
+  <div class="mk-view">
+    <div class="mk-stage" id="stage"></div>
+    <div class="mk-bar"><button type="button" class="btn" id="flip">↻ <span data-i="flip">뒤집기</span></button><button type="button" class="btn" id="reset" data-i="reset">처음부터</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="lib/qrcode.js"></script>
+<script src="lib/core.js"></script>
+<script src="lib/themes.js"></script>
+<script src="lib/art.js"></script>
+<script src="lib/card.js"></script>
+<script src="lib/stage.js"></script>
+<script src="lib/music.js"></script>
+<script>
+// holo-pass · maker.html — the form that writes the link. The invite page is the sibling invite.html; deploy both.
+const UI = {
+  ko: {}, // Korean is in the HTML
+  en: { h: 'Make a moving invitation', lead: 'Pick a template, fill it in, and send it as one link. The invitation lives only inside the link — nothing is stored anywhere.', s1: 'Template', s2: 'Words', title: 'Big title (new line = new column)', subtitle: 'Small line', message: 'Message on the back', s3: 'When · where', date: 'Date', time: 'Starts', end: 'Ends', place: 'Place', address: 'Address (for the map link, optional)', price: 'Entry', no: 'Ticket number', s4: 'To · from', to: 'To', from: 'From', s5: 'Music · language', music: 'Music', lang: 'Invite language', listen: 'Preview', s6: 'Replies · extras (optional)', rsvp: 'Where replies go', rsvpHint: 'Empty: the guest’s answer (yes / no) opens the share sheet or is copied, ready to paste into the chat the invite came from. An email opens a mail; an https:// address opens with ?answer=yes&name=… added.', url: 'Event website', image: 'Image URL instead of the picture', imageHint: 'https images that allow CORS only. Empty: the template’s picture moves.', s7: 'Send', link: 'Invitation link', copy: 'Copy', copyMsg: 'Copy with a message', png: 'QR share image', open: 'Open as a guest ↗', videoHint: 'MP4 video: the skill’s scripts/render.mjs (16:9 or 9:16).', flip: 'Flip', reset: 'From the start', copied: 'Copied', none: 'No music', msg: (to, link) => `${to ? to + ', y' : 'Y'}ou have an invitation 🎫\n${link}` },
+};
+const uiLang = new URLSearchParams(location.search).get('ui') === 'en' ? 'en' : 'ko';
+const tr = k => (UI[uiLang][k]) || ({ copied: '복사했어요', none: '음악 없음', msg: (to, link) => `${to ? to + '님, ' : ''}초대장이 왔어요 🎫\n${link}` })[k];
+if (uiLang === 'en') { document.documentElement.lang = 'en'; document.querySelectorAll('[data-i]').forEach(n => { const v = UI.en[n.dataset.i]; if (typeof v === 'string') n.textContent = v; }); }
+
+const $ = s => document.querySelector(s);
+const FIELDS = ['title', 'subtitle', 'message', 'date', 'time', 'end', 'place', 'address', 'price', 'no', 'to', 'from', 'music', 'rsvp', 'url', 'image'];
+const START = { theme: 'home-party', no: String(100000 + Math.floor(Math.random() * 900000)), lang: uiLang === 'en' ? 'en' : 'ko', date: new Date(Date.now() + 12 * 864e5).toISOString().slice(0, 10), time: '18:00', place: '', to: '', from: '' };
+let data = HP.fromLocation();        // editing a link you received/sent wins over the saved draft
+if (!data) try { data = JSON.parse(localStorage.getItem('holo-pass:draft')); } catch (e) {}
+data = data || { ...START };
+const invitePage = new URL('invite.html', location.href).href;
+const link = () => HP.link(invitePage, data);
+
+// themes grid with moving thumbnails
+const themesEl = $('#themes'), thumbs = [];
+for (const id of HP.THEME_ORDER) {
+  const th = HP.THEMES[id], b = document.createElement('button'); b.type = 'button'; b.dataset.id = id;
+  const cv = document.createElement('canvas'); cv.width = 240; cv.height = 190; b.append(cv, th.name[uiLang === 'en' ? 'en' : 'ko']); themesEl.appendChild(b); thumbs.push([cv, th]);
+  b.addEventListener('click', () => {
+    const old = HP.THEMES[data.theme] || {};
+    for (const k of ['title', 'subtitle', 'message', 'music']) if (!data[k] || data[k] === (old[k] && (typeof old[k] === 'string' ? old[k] : old[k][data.lang]))) data[k] = '';
+    if (data.music === old.music) data.music = '';
+    data.theme = id; fill(); changed();
+  });
+}
+// music + language
+$('#music').innerHTML = Object.values(HP.TRACKS).map(t => `<option value="${t.id}">${t.name} · ${t.id}</option>`).join('') + `<option value="none">${tr('none')}</option>`;
+$('#langs').innerHTML = ['ko', 'en', 'ja'].map(l => `<button type="button" class="btn" data-l="${l}">${{ ko: '한국어', en: 'EN', ja: '日本語' }[l]}</button>`).join('');
+$('#langs').addEventListener('click', e => { const l = e.target.dataset.l; if (!l) return; const th = HP.THEMES[data.theme]; for (const k of ['subtitle', 'message']) if (data[k] === th[k][data.lang]) data[k] = ''; data.lang = l; fill(); changed(); });
+
+function fill() {   // form ← data (placeholders show the theme's defaults)
+  const n = HP.normalize(data), th = HP.THEMES[n.theme];
+  for (const k of FIELDS) { const el = $('#' + k); if (!el) continue; el.value = data[k] || (k === 'music' ? n.music : ''); }
+  $('#title').placeholder = th.title; $('#subtitle').placeholder = th.subtitle[n.lang]; $('#message').placeholder = th.message[n.lang];
+  themesEl.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.id === n.theme));
+  document.querySelectorAll('#langs button').forEach(b => b.classList.toggle('on', b.dataset.l === n.lang));
+  document.documentElement.style.setProperty('--accent', th.pal.accent);
+}
+$('#form').addEventListener('input', e => { const k = e.target.id; if (!FIELDS.includes(k)) return; data[k] = e.target.value; changed(); });
+
+// preview: the stage without the envelope, tilting with the pointer
+const host = $('#stage'); let st = null, fitEl = null, W = 1600, H = 900;
+function build() { host.innerHTML = ''; fitEl = document.createElement('div'); fitEl.className = 'stage-fit'; host.appendChild(fitEl); st = HP.stage(fitEl, data, { W, H, q: Math.min(1.5, devicePixelRatio || 1) * 0.6, dpr: Math.min(2, (devicePixelRatio || 1) * 1.1), link: () => link() }); fit(); }
+function fit() { const r = host.getBoundingClientRect(), s = Math.min(r.width / W, r.height / H) * 1.06; fitEl.style.transform = `translate(${(r.width - W * s) / 2}px, ${(r.height - H * s) / 2}px) scale(${s})`; }
+addEventListener('resize', fit);
+let timer = 0;
+function changed() {
+  $('#link').value = link(); $('#open').href = link();
+  try { localStorage.setItem('holo-pass:draft', JSON.stringify(data)); } catch (e) {}
+  clearTimeout(timer); timer = setTimeout(() => st.setData(data), 180);
+  if (HP.music.playing) HP.music.play(HP.normalize(data).music);
+}
+const pose = { rx: 0, ry: 0, tx: 0, ty: 0, flip: 0, from: 0, to: 0, at: -1, last: -9 }, t0 = performance.now();
+host.addEventListener('pointermove', e => { const r = host.getBoundingClientRect(); pose.tx = -((e.clientY - r.top) / r.height - 0.5) * 26; pose.ty = ((e.clientX - r.left) / r.width - 0.5) * 40; pose.last = (performance.now() - t0) / 1000; });
+const flip = () => { pose.from = pose.flip; pose.to = Math.round(pose.flip / 180) * 180 + 180; pose.at = performance.now(); };
+host.addEventListener('click', flip); $('#flip').addEventListener('click', flip);
+$('#reset').addEventListener('click', () => { if (!confirm(uiLang === 'en' ? 'Clear the form?' : '입력한 내용을 지울까요?')) return; data = { ...START, no: String(100000 + Math.floor(Math.random() * 900000)) }; fill(); changed(); });
+function loop(now) {
+  requestAnimationFrame(loop); const clock = (now - t0) / 1000, idle = clock - pose.last > 2;
+  pose.rx += ((idle ? Math.sin(clock * 0.9) * 7 : pose.tx) - pose.rx) * 0.1; pose.ry += ((idle ? Math.sin(clock * 0.7) * 12 : pose.ty) - pose.ry) * 0.1;
+  let z = 0; if (pose.at >= 0) { const k = HP.seg((now - pose.at) / 1000, 0, 0.85); pose.flip = HP.lerp(pose.from, pose.to, HP.ease.inOut(k)); z = Math.sin(k * Math.PI) * 140; if (k >= 1) pose.at = -1; }
+  st.frame(clock, { rx: pose.rx, ry: pose.ry, flip: pose.flip, z });
+  if (Math.floor(clock * 30) % 2 === 0) for (const [cv, th] of thumbs) { const c = cv.getContext('2d'); c.setTransform(0.5, 0, 0, 0.5, 0, 0); HP.ART[th.art](c, clock, th.pal); }
+}
+
+// sending
+const toast = m => { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1600); };
+const copy = async s => { try { await navigator.clipboard.writeText(s); } catch (e) { const ta = document.createElement('textarea'); ta.value = s; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); } toast(tr('copied')); };
+$('#copy').addEventListener('click', () => copy(link()));
+$('#copyMsg').addEventListener('click', () => copy(tr('msg')(HP.normalize(data).to, link())));
+$('#listen').addEventListener('click', () => { if (HP.music.playing) HP.music.stop(); else { const m = HP.normalize(data).music; if (m !== 'none') HP.music.play(m); } });
+$('#png').addEventListener('click', async () => {        // 1080 × 1350: the card, the words, a QR to the link
+  const n = HP.normalize(data), th = HP.THEMES[n.theme], cv = document.createElement('canvas'); cv.width = 1080; cv.height = 1350; const c = cv.getContext('2d');
+  HP.BG[th.bg](c, 1080, 1350, 2.0, th.pal);
+  st.card.draw(1.6); const fc = st.card.frontCanvas, w = 980, h = w * fc.height / fc.width;
+  c.save(); c.translate(540, 120 + h / 2); c.rotate(-0.03); c.shadowColor = 'rgba(0,0,0,.5)'; c.shadowBlur = 40; c.shadowOffsetY = 20; c.drawImage(fc, -w / 2, -h / 2, w, h); c.restore();
+  const F = HP.FONTS; c.fillStyle = '#fff'; c.textAlign = 'center'; c.font = `800 56px ${F.SANS}`;
+  n.title.split('\n').forEach((s, i) => c.fillText(s, 540, 680 + i * 62));
+  const y2 = 680 + n.title.split('\n').length * 62 + 10; c.font = `600 32px ${F.SANS}`; c.fillStyle = 'rgba(255,255,255,.85)'; c.fillText(HP.when(n), 540, y2); if (n.place) c.fillText(n.place, 540, y2 + 46);
+  const qs = 230, qx = 540 - qs / 2, qy = 1350 - qs - 110; c.fillStyle = '#fff'; c.beginPath(); c.roundRect(qx - 18, qy - 18, qs + 36, qs + 36, 18); c.fill(); HP.drawQR(c, link(), qx, qy, qs, '#111');
+  c.fillStyle = th.pal.glow; c.font = `600 22px ${F.MONO}`; c.fillText(n.lang === 'en' ? 'SCAN TO OPEN' : n.lang === 'ja' ? 'スキャンして開く' : '스캔해서 열기', 540, 1350 - 50);
+  try { cv.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `invite-${n.no}.png`; a.click(); }, 'image/png'); }
+  catch (e) { alert(uiLang === 'en' ? 'This image URL does not allow CORS, so the share image cannot be saved. Remove the image or use another host.' : '이미지 주소가 CORS를 허용하지 않아 공유 이미지를 저장할 수 없습니다. 이미지를 지우거나 다른 주소를 쓰세요.'); }
+});
+
+fill(); build(); changed(); st.ready.then(() => requestAnimationFrame(loop));
+window.__ready = true;
+</script>
+</body>
+</html>

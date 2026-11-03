@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>holo-pass · motion-skills</title>
+<meta name="description" content="링크 하나로 보내는 움직이는 초대장을 만듭니다. 봉투를 열면 홀로그램 티켓이 튀어나와 기울일 때마다 무지개 포일이 빛나고, 뒤집으면 받는 사람 이름과 메시지가 적힌 엽서가 나오며, 참석 회신 · 캘린더 추가 · 음악이 붙습니다. 템플릿 6종, 한국어 · 영어 · 일본어, 만들기 페이지, QR 공유 이미지, 16:9 · 9:16 MP4까지 냅니다.">
+<meta property="og:title" content="holo-pass · motion-skills">
+<meta property="og:description" content="봉투에서 홀로그램 티켓이 튀어나오는, 링크 하나로 보내는 움직이는 초대장을 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/holo-pass/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/holo-pass">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / holo-pass</nav>
+  <h1>holo-pass</h1>
+  <p>링크 하나로 보내는 움직이는 초대장을 만듭니다. 봉투를 열면 홀로그램 티켓이 튀어나와 기울일 때마다 무지개 포일이 빛나고, 뒤집으면 받는 사람 이름과 메시지가 적힌 엽서가 나오며, 참석 회신 · 캘린더 추가 · 음악이 붙습니다. 템플릿 6종, 한국어 · 영어 · 일본어, 만들기 페이지, QR 공유 이미지, 16:9 · 9:16 MP4까지 냅니다.</p>
+  <ul class="tags"><li>웹 초대장</li><li>홀로그램 포일</li><li>참석 회신 · 캘린더</li><li>합성 음악</li><li>16:9 · 9:16 MP4</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>행사 종류, 날짜와 시간, 장소, 참가비, 받는 사람과 보내는 사람, 한두 줄 메시지, 손님의 언어, 답장 받을 곳(없으면 받은 대화방으로 회신)</dd>
+      <dt>초대장</dt><dd>템플릿 6종 중 하나를 고르고 빈칸은 템플릿 문구로 채운 <code>invite.json</code>. 내용은 링크의 <code>#p=</code> 뒤에만 들어가고 서버에 저장되지 않음</dd>
+      <dt>그림</dt><dd>우표 창 안에서 도는 캔버스 그림(깜빡이는 얼굴, 2–4초 반복 동작), 세로 제목과 절취선 너머 정보 · QR, 기울기를 따라가는 무지개 포일 · 반짝이 · 반사광, 엽서 뒷면</dd>
+      <dt>확인</dt><dd>빈 프레임 · 결정성 · 링크 왕복 · QR 크기 · 캘린더 · 음악 검사와 글자가 넘치는지 경고, 봉투 · 꺼내기 · 앞면 · 뒷면 스틸</dd>
+      <dt>출력</dt><dd>정적 호스팅에 올리는 <code>pass/</code>(받는 페이지 · 만들기 페이지), 초대장 링크와 QR, 1080×1350 QR 공유 이미지, 음악을 넣은 14초 1080p MP4(16:9 · 9:16)</dd>
+    </dl>
+    <pre><code>cd holo-pass
+node scripts/check.mjs examples/home-party/invite.json
+node scripts/render.mjs examples/home-party/invite.json --stills 1.3,3.3,6.5,10
+node scripts/render.mjs examples/home-party/invite.json --size 1080x1920
+node scripts/new-pass.mjs ~/my-party --theme birthday
+node scripts/link.mjs ~/my-party/invite.json --base https://you.github.io/party/pass/ --qr out/qr.svg</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg(MP4만). 페이지는 정적 호스팅만 있으면 됩니다. 1080p 한 프레임이 약 0.15초, 14초 영상을 워커 4개로 약 4분. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/holo-pass/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10.6;--h-phone:150vw;--demo-bg:#0d0a12">
+    <iframe data-src="demo/invite.html#p=eyJ0aGVtZSI6ImhvbWUtcGFydHkiLCJ0aXRsZSI6IkhPTUVcblBBUlRZIiwic3VidGl0bGUiOiLsmrDrpqwg7KeR7JeQIOuGgOufrCDsmKzrnpjsmpQ_Iiwibm8iOiIyNzExMTQiLCJkYXRlIjoiMjAyNi0xMS0xNCIsInRpbWUiOiIxODowMCIsImVuZCI6IjIyOjAwIiwicGxhY2UiOiLrp53sm5Drj5kg7Jqw66asIOynkSIsInByaWNlIjoi66y066OMIiwidG8iOiLsnKDtgqQiLCJmcm9tIjoi7Lm064KYIiwibWVzc2FnZSI6IuyjvOunkOyXkCDsmrDrpqwg7KeR7JeQ7IScIOuGgOyVhOyalC4g7ZS87J6Q656RIOuztOuTnOqyjOyehCDspIDruYTtlbQg65GY6rKM7JqUIVxu66q466eMIOyYpOuptCDrj7zsmpQuIiwibXVzaWMiOiJwYXJ0eSIsImxhbmciOiJrbyJ9" title="holo-pass 예제 초대장 실시간 재생" allow="fullscreen; autoplay" allowfullscreen></iframe>
+    <noscript><a href="demo/invite.html#p=eyJ0aGVtZSI6ImhvbWUtcGFydHkiLCJ0aXRsZSI6IkhPTUVcblBBUlRZIiwic3VidGl0bGUiOiLsmrDrpqwg7KeR7JeQIOuGgOufrCDsmKzrnpjsmpQ_Iiwibm8iOiIyNzExMTQiLCJkYXRlIjoiMjAyNi0xMS0xNCIsInRpbWUiOiIxODowMCIsImVuZCI6IjIyOjAwIiwicGxhY2UiOiLrp53sm5Drj5kg7Jqw66asIOynkSIsInByaWNlIjoi66y066OMIiwidG8iOiLsnKDtgqQiLCJmcm9tIjoi7Lm064KYIiwibWVzc2FnZSI6IuyjvOunkOyXkCDsmrDrpqwg7KeR7JeQ7IScIOuGgOyVhOyalC4g7ZS87J6Q656RIOuztOuTnOqyjOyehCDspIDruYTtlbQg65GY6rKM7JqUIVxu66q466eMIOyYpOuptCDrj7zsmpQuIiwibXVzaWMiOiJwYXJ0eSIsImxhbmciOiJrbyJ9">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/home-party</code> · 봉투 열기를 누르면 음악과 함께 재생</span>
+      <span class="btns" role="group" aria-label="데모">
+        <button class="btn" type="button" data-src="demo/invite.html#p=eyJ0aGVtZSI6ImhvbWUtcGFydHkiLCJ0aXRsZSI6IkhPTUVcblBBUlRZIiwic3VidGl0bGUiOiLsmrDrpqwg7KeR7JeQIOuGgOufrCDsmKzrnpjsmpQ_Iiwibm8iOiIyNzExMTQiLCJkYXRlIjoiMjAyNi0xMS0xNCIsInRpbWUiOiIxODowMCIsImVuZCI6IjIyOjAwIiwicGxhY2UiOiLrp53sm5Drj5kg7Jqw66asIOynkSIsInByaWNlIjoi66y066OMIiwidG8iOiLsnKDtgqQiLCJmcm9tIjoi7Lm064KYIiwibWVzc2FnZSI6IuyjvOunkOyXkCDsmrDrpqwg7KeR7JeQ7IScIOuGgOyVhOyalC4g7ZS87J6Q656RIOuztOuTnOqyjOyehCDspIDruYTtlbQg65GY6rKM7JqUIVxu66q466eMIOyYpOuptCDrj7zsmpQuIiwibXVzaWMiOiJwYXJ0eSIsImxhbmciOiJrbyJ9" data-cap="예제 &lt;code&gt;examples/home-party&lt;/code&gt; · 봉투 열기를 누르면 음악과 함께 재생" aria-pressed="true">받는 화면</button>
+        <button class="btn" type="button" data-src="demo/maker.html" data-cap="&lt;code&gt;pass/maker.html&lt;/code&gt; · 템플릿을 고르고 채우면 링크와 QR 이미지가 나옴" aria-pressed="false">만들기 화면</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제 홈파티 초대장이 열리는 순서와, 같은 엔진의 다른 템플릿 다섯 가지입니다. 카드를 누르면 새 탭에서 그 초대장이 받는 사람 화면 그대로 열립니다(봉투 열기 → 기울이기 · 탭해서 뒤집기 → 참석 회신).</p>
+  <div class="chips" data-for="gallery" data-labels='{"reveal":"열리는 순서","template":"템플릿"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>HOME PARTY <small>예제 · 한국어 · 14초</small></h3>
+      <p>유키에게 보내는 홈파티 초대장입니다. 봉투가 도착하고, 봉인이 튀고, 티켓이 날아와 기울고, 엽서 뒷면으로 뒤집힙니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="reveal" href="demo/invite.html#p=eyJ0aGVtZSI6ImhvbWUtcGFydHkiLCJ0aXRsZSI6IkhPTUVcblBBUlRZIiwic3VidGl0bGUiOiLsmrDrpqwg7KeR7JeQIOuGgOufrCDsmKzrnpjsmpQ_Iiwibm8iOiIyNzExMTQiLCJkYXRlIjoiMjAyNi0xMS0xNCIsInRpbWUiOiIxODowMCIsImVuZCI6IjIyOjAwIiwicGxhY2UiOiLrp53sm5Drj5kg7Jqw66asIOynkSIsInByaWNlIjoi66y066OMIiwidG8iOiLsnKDtgqQiLCJmcm9tIjoi7Lm064KYIiwibWVzc2FnZSI6IuyjvOunkOyXkCDsmrDrpqwg7KeR7JeQ7IScIOuGgOyVhOyalC4g7ZS87J6Q656RIOuztOuTnOqyjOyehCDspIDruYTtlbQg65GY6rKM7JqUIVxu66q466eMIOyYpOuptCDrj7zsmpQuIiwibXVzaWMiOiJwYXJ0eSIsImxhbmciOiJrbyJ9" target="_blank" rel="noopener">
+          <img src="samples/envelope.jpg" alt="주황색 봉투 위에 받는 사람 유키 님 라벨과 집 그림 우표, 봉투 위에 YOU'RE INVITED와 유키님에게 초대장이 왔어요 문구" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">열기 전 · 1.3초</span><b>봉투</b>
+          <span class="how">받는 사람 이름이 적힌 라벨, 그림 우표, 별 모양 봉인. 탭하면 봉인이 튀고 음악이 시작</span></div></a>
+        <a class="tile" data-tags="reveal" href="demo/invite.html#p=eyJ0aGVtZSI6ImhvbWUtcGFydHkiLCJ0aXRsZSI6IkhPTUVcblBBUlRZIiwic3VidGl0bGUiOiLsmrDrpqwg7KeR7JeQIOuGgOufrCDsmKzrnpjsmpQ_Iiwibm8iOiIyNzExMTQiLCJkYXRlIjoiMjAyNi0xMS0xNCIsInRpbWUiOiIxODowMCIsImVuZCI6IjIyOjAwIiwicGxhY2UiOiLrp53sm5Drj5kg7Jqw66asIOynkSIsInByaWNlIjoi66y066OMIiwidG8iOiLsnKDtgqQiLCJmcm9tIjoi7Lm064KYIiwibWVzc2FnZSI6IuyjvOunkOyXkCDsmrDrpqwg7KeR7JeQ7IScIOuGgOyVhOyalC4g7ZS87J6Q656RIOuztOuTnOqyjOyehCDspIDruYTtlbQg65GY6rKM7JqUIVxu66q466eMIOyYpOuptCDrj7zsmpQuIiwibXVzaWMiOiJwYXJ0eSIsImxhbmciOiJrbyJ9" target="_blank" rel="noopener">
+          <img src="samples/rise.jpg" alt="열린 봉투의 줄무늬 안감 앞으로 반쯤 빠져나온 홈파티 티켓" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">꺼내기 · 3.3초</span><b>봉투에서 나오는 티켓</b>
+          <span class="how">뒤로 넘어가는 덮개, 앞 주머니 뒤에서 올라오는 티켓, 이어서 가운데로 날아옴</span></div></a>
+        <a class="tile" data-tags="reveal" href="demo/invite.html#p=eyJ0aGVtZSI6ImhvbWUtcGFydHkiLCJ0aXRsZSI6IkhPTUVcblBBUlRZIiwic3VidGl0bGUiOiLsmrDrpqwg7KeR7JeQIOuGgOufrCDsmKzrnpjsmpQ_Iiwibm8iOiIyNzExMTQiLCJkYXRlIjoiMjAyNi0xMS0xNCIsInRpbWUiOiIxODowMCIsImVuZCI6IjIyOjAwIiwicGxhY2UiOiLrp53sm5Drj5kg7Jqw66asIOynkSIsInByaWNlIjoi66y066OMIiwidG8iOiLsnKDtgqQiLCJmcm9tIjoi7Lm064KYIiwibWVzc2FnZSI6IuyjvOunkOyXkCDsmrDrpqwg7KeR7JeQ7IScIOuGgOyVhOyalC4g7ZS87J6Q656RIOuztOuTnOqyjOyehCDspIDruYTtlbQg65GY6rKM7JqUIVxu66q466eMIOyYpOuptCDrj7zsmpQuIiwibXVzaWMiOiJwYXJ0eSIsImxhbmciOiJrbyJ9" target="_blank" rel="noopener">
+          <img src="samples/front.jpg" alt="HOME PARTY 홀로그램 티켓 앞면: 우표 틀 안의 웃는 집 그림, 세로 제목, 날짜 시간 장소 참가비 QR 받는 사람 보내는 사람이 적힌 오른쪽 그루터기" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">앞면 · 6.5초</span><b>티켓 앞면</b>
+          <span class="how">우표 창 안에서 움직이는 그림, 세로 제목, 절취선 너머 날짜 · 장소 · QR, 기울기를 따라가는 포일</span></div></a>
+        <a class="tile" data-tags="reveal" href="demo/invite.html#p=eyJ0aGVtZSI6ImhvbWUtcGFydHkiLCJ0aXRsZSI6IkhPTUVcblBBUlRZIiwic3VidGl0bGUiOiLsmrDrpqwg7KeR7JeQIOuGgOufrCDsmKzrnpjsmpQ_Iiwibm8iOiIyNzExMTQiLCJkYXRlIjoiMjAyNi0xMS0xNCIsInRpbWUiOiIxODowMCIsImVuZCI6IjIyOjAwIiwicGxhY2UiOiLrp53sm5Drj5kg7Jqw66asIOynkSIsInByaWNlIjoi66y066OMIiwidG8iOiLsnKDtgqQiLCJmcm9tIjoi7Lm064KYIiwibWVzc2FnZSI6IuyjvOunkOyXkCDsmrDrpqwg7KeR7JeQ7IScIOuGgOyVhOyalC4g7ZS87J6Q656RIOuztOuTnOqyjOyehCDspIDruYTtlbQg65GY6rKM7JqUIVxu66q466eMIOyYpOuptCDrj7zsmpQuIiwibXVzaWMiOiJwYXJ0eSIsImxhbmciOiJrbyJ9" target="_blank" rel="noopener">
+          <img src="samples/back.jpg" alt="티켓 뒷면 엽서: 왼쪽에 기울어진 우표와 소인과 바코드, 오른쪽에 유키에게로 시작하는 손글씨 메시지와 카나 서명" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">뒷면 · 10초</span><b>엽서 뒷면</b>
+          <span class="how">받는 사람 인사, 줄 위의 메시지와 서명, 우표 · 소인 · 바코드</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>템플릿 <small>5종 · 한국어 · 영어 · 일본어</small></h3>
+      <p>템플릿마다 그림, 배경, 색, 음악, 기본 문구(3개 언어)가 다릅니다. 빈칸은 템플릿 문구로 채워집니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="template" href="demo/invite.html#p=eyJ0aGVtZSI6ImNocmlzdG1hcyIsInRpdGxlIjoiTUVSUllcbkNIUklTVE1BUyIsInN1YnRpdGxlIjoiTWVycnkgQ2hyaXN0bWFzIGFuZCBhIGhhcHB5IG5ldyB5ZWFyIiwibm8iOiIyNDEyMjQiLCJkYXRlIjoiMjAyNi0xMi0yNCIsInRpbWUiOiIxOTowMCIsImVuZCI6IjIzOjAwIiwicGxhY2UiOiJUaGUgTGFudGVybiBSb29tIiwiYWRkcmVzcyI6IjEyIEhvbGx5IExhbmUiLCJwcmljZSI6IkJyaW5nIGEgc21hbGwgZ2lmdCIsInRvIjoiQWxleCIsImZyb20iOiJTYW0gJiBKbyIsIm1lc3NhZ2UiOiJNdWxsZWQgd2luZSwgYSB0cmVlIHRoYXQgaXMgZmFyIHRvbyBiaWcsIGFuZCBhIHNlY3JldC1zYW50YSBzd2FwLlxuQ29tZSBhcyB5b3UgYXJlISIsIm11c2ljIjoiYmVsbHMiLCJsYW5nIjoiZW4ifQ" target="_blank" rel="noopener">
+          <img src="samples/christmas.jpg" alt="밤하늘 배경의 MERRY CHRISTMAS 티켓, 별이 빛나는 웃는 트리와 초승달" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">크리스마스 · 영어</span><b>MERRY CHRISTMAS</b><span class="en">examples/christmas</span>
+          <span class="how">깜빡이는 장식이 차례로 켜지는 트리, 전구 줄과 눈 내리는 배경, 방울 소리 음악</span></div></a>
+        <a class="tile" data-tags="template" href="demo/invite.html#p=eyJ0aGVtZSI6Im5ldy15ZWFyIiwidGl0bGUiOiJORVcgWUVBUlxuMjAyNyIsIm5vIjoiMjcwMTAxIiwiZGF0ZSI6IjIwMjctMDEtMDEiLCJ0aW1lIjoiMTE6MDAiLCJwbGFjZSI6Iu2VoOuouOuLiCDrjIEiLCJwcmljZSI6IuyEuOuwsOuKlCDtlYTsiJgiLCJ0byI6Iu2VoOuouOuLiCIsImZyb20iOiLshpDso7wg66-87KSAIiwibWVzc2FnZSI6IuyDiO2VtCDrs7Ug66eO7J20IOuwm-ycvOyEuOyalCFcbuyEpOuCoOyXkCDrlqHqta0g66i57Jy865-sIOqwiOqyjOyalC4iLCJtdXNpYyI6ImtvdG8iLCJsYW5nIjoia28ifQ" target="_blank" rel="noopener">
+          <img src="samples/new-year.jpg" alt="붉은 햇살 배경의 NEW YEAR 2027 티켓, 눈 덮인 산 뒤로 웃는 해와 물결 무늬" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">새해 인사 · 한국어</span><b>NEW YEAR 2027</b>
+          <span class="how">산 뒤에서 떠오르는 해, 흐르는 물결, 날아가는 새, 현을 뜯는 5음 음계 음악</span></div></a>
+        <a class="tile" data-tags="template" href="demo/invite.html#p=eyJ0aGVtZSI6ImRhdGUtbmlnaHQiLCJubyI6IjI2MTIwNSIsImRhdGUiOiIyMDI2LTEyLTA1IiwidGltZSI6IjE5OjMwIiwicGxhY2UiOiLtlZzrgqjrj5kg7J6R7J2AIOu5hOyKpO2KuOuhnCIsInByaWNlIjoi64K06rCAIOyPoOqyjOyalCIsInRvIjoi7KeA7J2AIiwiZnJvbSI6Iu2YhOyasCIsIm11c2ljIjoiY2FmZSIsImxhbmciOiJrbyJ9" target="_blank" rel="noopener">
+          <img src="samples/date-night.jpg" alt="보랏빛 배경의 DATE NIGHT 티켓, 분홍과 보라 머그잔 두 개 위로 하트" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">데이트 · 한국어</span><b>DATE NIGHT</b>
+          <span class="how">4초마다 건배하는 머그잔, 김이 모여 생기는 하트, 로파이 전자 피아노</span></div></a>
+        <a class="tile" data-tags="template" href="demo/invite.html#p=eyJ0aGVtZSI6ImJpcnRoZGF5IiwidGl0bGUiOiJCSVJUSERBWVxuUEFSVFkiLCJzdWJ0aXRsZSI6IuiqleeUn-aXpeODkeODvOODhuOCo-ODvOOBuOOBruOBlOaLm-W-hSIsIm5vIjoiMzAwODE1IiwiZGF0ZSI6IjIwMjYtMDgtMTUiLCJ0aW1lIjoiMTM6MDAiLCJlbmQiOiIxNjowMCIsInBsYWNlIjoi5Luj44CF5pyo5YWs5ZySIOWZtOawtOWJjSIsInByaWNlIjoi54Sh5paZIiwidG8iOiLjgobjgY0iLCJmcm9tIjoi44Gv44KLIiwibWVzc2FnZSI6IuOCseODvOOCreOBr-eUqOaEj-OBl-OBpuOBiuOBj-OCiOOAguaJi-OBtuOCieOBp-adpeOBpuOBrSFcbumbqOOBquOCiei_keOBj-OBruOCq-ODleOCp-OBq-WkieabtOOBl-OBvuOBmeOAgiIsIm11c2ljIjoicGFydHkiLCJsYW5nIjoiamEifQ" target="_blank" rel="noopener">
+          <img src="samples/birthday.jpg" alt="남색 배경의 BIRTHDAY PARTY 티켓, 초가 꽂힌 2단 케이크와 일본어 세로 부제" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">생일 · 일본어</span><b>BIRTHDAY PARTY</b><span class="en">examples/birthday</span>
+          <span class="how">촛불이 일렁이는 케이크, 쏟아지는 색종이, 4박 댄스 비트</span></div></a>
+        <a class="tile" data-tags="template" href="demo/invite.html#p=eyJ0aGVtZSI6ImV2ZW50IiwidGl0bGUiOiJNQVJLRVRcbkRBWSIsInN1YnRpdGxlIjoi67aA7IqkIE5vLjcw7JeQ7IScIOunjOuCmOyalCIsIm5vIjoiMTEyMTcwIiwiZGF0ZSI6IjIwMjYtMTEtMjEiLCJ0aW1lIjoiMTE6MDAiLCJlbmQiOiIxODowMCIsInBsYWNlIjoi7ISx7IiYIOyVhO2KuO2ZgCAyRiDCtyDrtoDsiqQgNzAiLCJwcmljZSI6IuustOujjCDsnoXsnqUiLCJ0byI6Iu2MlOuhnOybjCDsl6zrn6zrtoQiLCJmcm9tIjoi7Yag64G86rO167CpIiwibWVzc2FnZSI6IuyDiCDsl73shJwg7IS47Yq47JmAIOyKpO2LsOy7pOulvCDsspjsnYwg7ISg67O07Jes7JqULiDrk6Trn6zshJwg7J247IKs7ZW07JqUISIsIm11c2ljIjoiY2FmZSIsImxhbmciOiJrbyJ9" target="_blank" rel="noopener">
+          <img src="samples/event.jpg" alt="어두운 배경의 MARKET DAY 티켓, 줄무늬 천막과 깃발과 웃는 노란 별" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">행사 · 부스 · 한국어</span><b>MARKET DAY</b>
+          <span class="how">깃발이 나부끼는 천막 앞에서 뛰는 별, 부스 번호와 운영 시간</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. KANA(@KanaWorks_AI)가 X에 소개한 무료 움직이는 초대장 서비스 「しあわせパス」의 형식(홀로그램 티켓, 봉투에서 꺼내는 연출, 엽서 뒷면, 음악, 참석 회신과 캘린더, 링크 · QR 공유)이 출발점입니다. 코드는 처음부터 새로 썼고, 템플릿 · 캐릭터 · 음악 · 문구는 모두 이 레포의 것입니다. 원본의 그림, 마스코트, 이름은 쓰지 않았습니다.</p>
+  <div class="works">
+    <a class="work" href="demo/invite.html#p=eyJ0aGVtZSI6ImhvbWUtcGFydHkiLCJ0aXRsZSI6IkhPTUVcblBBUlRZIiwic3VidGl0bGUiOiLsmrDrpqwg7KeR7JeQIOuGgOufrCDsmKzrnpjsmpQ_Iiwibm8iOiIyNzExMTQiLCJkYXRlIjoiMjAyNi0xMS0xNCIsInRpbWUiOiIxODowMCIsImVuZCI6IjIyOjAwIiwicGxhY2UiOiLrp53sm5Drj5kg7Jqw66asIOynkSIsInByaWNlIjoi66y066OMIiwidG8iOiLsnKDtgqQiLCJmcm9tIjoi7Lm064KYIiwibWVzc2FnZSI6IuyjvOunkOyXkCDsmrDrpqwg7KeR7JeQ7IScIOuGgOyVhOyalC4g7ZS87J6Q656RIOuztOuTnOqyjOyehCDspIDruYTtlbQg65GY6rKM7JqUIVxu66q466eMIOyYpOuptCDrj7zsmpQuIiwibXVzaWMiOiJwYXJ0eSIsImxhbmciOiJrbyJ9" target="_blank" rel="noopener"><b>「HOME PARTY」 예제 초대장 · 받는 화면</b><span>봉투 → 티켓 → 엽서 뒷면 → 참석 회신 · 캘린더 · 음악</span><span class="url">holo-pass/demo/invite.html</span></a>
+    <a class="work" href="demo/maker.html" target="_blank" rel="noopener"><b>만들기 화면 · maker.html</b><span>템플릿 6종, 링크 복사, QR 공유 이미지</span><span class="url">holo-pass/demo/maker.html</span></a>
+    <a class="work" href="https://x.com/KanaWorks_AI/status/2117430343934599675" target="_blank" rel="noopener"><b>출발점이 된 게시물 · X</b><span>KANA(@KanaWorks_AI) · 「しあわせパス」 소개 영상 · 2026년 11월</span><span class="url">x.com/KanaWorks_AI</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/holo-pass/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/holo-pass">폴더</a> <span>pass · scripts · examples · references</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/holo-pass/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/holo-pass/references/SOURCE.md">references/SOURCE.md</a> <span>출발점이 된 게시물, 가져온 것과 가져오지 않은 것</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/holo-pass/references/LOOK.md">references/LOOK.md</a> <span>티켓의 구조, 포일 레이어, 봉투, 14초 타임라인</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/holo-pass/references/THEMES.md">references/THEMES.md</a> <span>템플릿 · 그림 · 배경 · 음악 추가하기</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/holo-pass/references/KIT.md">references/KIT.md</a> <span>초대장 필드, 페이지 계약, API</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/holo-pass/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 그림 · 음악 · 글꼴 조합은 이 레포에서 만듦 · 글꼴 Pretendard, Barlow Condensed, JetBrains Mono, Caveat (OFL)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
