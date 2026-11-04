@@ -288,6 +288,24 @@
       "workedExample": [
         { "title": "「The Tower That a War Saved」 · 62초 · 19샷 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/cartoon-3d-short/demo/leaning-tower/" }
       ]
+    },
+    {
+      "id": "aesthetics-film",
+      "name": "aesthetics-film",
+      "tagline": "문화 · 공예 · 생각 하나를 주제로 주면, 안개 속 수묵 산수와 처마 · 창살 · 그릇을 코드로 지은 3D 세트 사이를 천천히 지나가는 장(章) 구성의 16:9 미학 에세이 영상을 만듭니다. 장 배지, 한 글자씩 쓰이는 두 언어 자막, 설명 라벨, 합성한 음악, 낙관을 찍은 제목 카드까지 3D 에셋 없이 그려 MP4와 브라우저에서 도는 페이지로 냅니다.",
+      "posterAlt": "aesthetics-film으로 만든 「비움의 미학 · 한국의 미」의 장면 네 개: 안개 바다 위 수묵 산봉우리와 소나무 섬, 돌 기단 위 팔작지붕 한옥과 장독대, 띠살문 그림자가 마루에 드리운 방의 달항아리, 푸른 밤 산 너머로 떠오르는 보름달",
+      "poster": "aesthetics-film/poster.jpg",
+      "tags": ["three.js", "16:9", "MP4", "두 언어 자막", "라이브 페이지"],
+      "stats": ["예제 58초 · 4장", "조명 프리셋 7종"],
+      "page": "aesthetics-film/",
+      "source": "aesthetics-film/",
+      "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "aesthetics-film/examples/korean-beauty/" },
+      "sources": [
+        { "title": "LanFeng의 X 게시물 《中国美学》 (순수 코드 · 3D 에셋 없음)", "url": "https://x.com/YFeng2022/status/2117924044439712156" }
+      ],
+      "workedExample": [
+        { "title": "「비움의 미학 · 한국의 미」 · 58초 · 4장 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/aesthetics-film/demo/korean-beauty/" }
+      ]
     }
   ]
 }

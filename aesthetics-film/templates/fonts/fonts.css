@@ -1,0 +1,113 @@
+/* subset fonts for this film (scripts/fonts.mjs). Noto Serif SC + EB Garamond, SIL Open Font License 1.1, via Google Fonts. */
+@font-face {
+  font-family: 'Essay Serif';
+  font-style: normal;
+  font-weight: 500;
+  
+  src: url(EssaySerif-500-0.woff2) format('woff2');
+  unicode-range: U+20-36, U+41-42, U+4c, U+4e, U+53, U+61-69, U+6b-70, U+72-74, U+76-77, U+79, U+b7, U+2014, U+3002, U+4e00, U+4e03, U+4e0b, U+4e0e, U+505a, U+5149, U+53ea, U+5728, U+591c, U+5b83, U+5c71, U+5f62, U+5f97, U+6210, U+624d, U+628a, U+6536, U+6c34, U+6e56, U+706b, U+706f, U+70b9, U+72b6, U+7559, U+7684, U+76ae, U+76cf, U+770b, U+7af9, U+7b14, U+7eb8, U+8272, U+89c1, U+9053, U+91cc, U+9762, U+9aa8, U+ff0c;
+}
+@font-face {
+  font-family: 'Essay Serif';
+  font-style: normal;
+  font-weight: 600;
+  
+  src: url(EssaySerif-600-1.woff2) format('woff2');
+  unicode-range: U+20-36, U+41-42, U+4c, U+4e, U+53, U+61-69, U+6b-70, U+72-74, U+76-77, U+79, U+b7, U+2014, U+3002, U+4e00, U+4e03, U+4e0b, U+4e0e, U+505a, U+5149, U+53ea, U+5728, U+591c, U+5b83, U+5c71, U+5f62, U+5f97, U+6210, U+624d, U+628a, U+6536, U+6c34, U+6e56, U+706b, U+706f, U+70b9, U+72b6, U+7559, U+7684, U+76ae, U+76cf, U+770b, U+7af9, U+7b14, U+7eb8, U+8272, U+89c1, U+9053, U+91cc, U+9762, U+9aa8, U+ff0c;
+}
+@font-face {
+  font-family: 'Essay Serif';
+  font-style: normal;
+  font-weight: 700;
+  
+  src: url(EssaySerif-700-2.woff2) format('woff2');
+  unicode-range: U+20-36, U+41-42, U+4c, U+4e, U+53, U+61-69, U+6b-70, U+72-74, U+76-77, U+79, U+b7, U+2014, U+3002, U+4e00, U+4e03, U+4e0b, U+4e0e, U+505a, U+5149, U+53ea, U+5728, U+591c, U+5b83, U+5c71, U+5f62, U+5f97, U+6210, U+624d, U+628a, U+6536, U+6c34, U+6e56, U+706b, U+706f, U+70b9, U+72b6, U+7559, U+7684, U+76ae, U+76cf, U+770b, U+7af9, U+7b14, U+7eb8, U+8272, U+89c1, U+9053, U+91cc, U+9762, U+9aa8, U+ff0c;
+}
+@font-face {
+  font-family: 'Essay Serif';
+  font-style: normal;
+  font-weight: 500;
+  
+  src: url(EssaySerif-500-3.woff2) format('woff2');
+  unicode-range: U+37-40, U+43-4b, U+4d, U+4f-52, U+54-60, U+6a, U+71, U+75, U+78, U+7a-7e, U+2013, U+2018-2019, U+201c-201d, U+2026;
+}
+@font-face {
+  font-family: 'Essay Serif';
+  font-style: normal;
+  font-weight: 600;
+  
+  src: url(EssaySerif-600-4.woff2) format('woff2');
+  unicode-range: U+37-40, U+43-4b, U+4d, U+4f-52, U+54-60, U+6a, U+71, U+75, U+78, U+7a-7e, U+2013, U+2018-2019, U+201c-201d, U+2026;
+}
+@font-face {
+  font-family: 'Essay Serif';
+  font-style: normal;
+  font-weight: 700;
+  
+  src: url(EssaySerif-700-5.woff2) format('woff2');
+  unicode-range: U+37-40, U+43-4b, U+4d, U+4f-52, U+54-60, U+6a, U+71, U+75, U+78, U+7a-7e, U+2013, U+2018-2019, U+201c-201d, U+2026;
+}
+@font-face {
+  font-family: 'Essay Latin';
+  font-style: italic;
+  font-weight: 400;
+  
+  src: url(EssayLatin-400i-6.woff2) format('woff2');
+  unicode-range: U+20-74, U+76-77, U+79, U+b7, U+2014;
+}
+@font-face {
+  font-family: 'Essay Latin';
+  font-style: normal;
+  font-weight: 400;
+  
+  src: url(EssayLatin-400-7.woff2) format('woff2');
+  unicode-range: U+20-74, U+76-77, U+79, U+b7, U+2014;
+}
+@font-face {
+  font-family: 'Essay Latin';
+  font-style: normal;
+  font-weight: 500;
+  
+  src: url(EssayLatin-500-8.woff2) format('woff2');
+  unicode-range: U+20-74, U+76-77, U+79, U+b7, U+2014;
+}
+@font-face {
+  font-family: 'Essay Latin';
+  font-style: normal;
+  font-weight: 600;
+  
+  src: url(EssayLatin-600-9.woff2) format('woff2');
+  unicode-range: U+20-74, U+76-77, U+79, U+b7, U+2014;
+}
+@font-face {
+  font-family: 'Essay Latin';
+  font-style: italic;
+  font-weight: 400;
+  
+  src: url(EssayLatin-400i-10.woff2) format('woff2');
+  unicode-range: U+75, U+78, U+7a-7e, U+2013, U+2018-2019, U+201c-201d, U+2026;
+}
+@font-face {
+  font-family: 'Essay Latin';
+  font-style: normal;
+  font-weight: 400;
+  
+  src: url(EssayLatin-400-11.woff2) format('woff2');
+  unicode-range: U+75, U+78, U+7a-7e, U+2013, U+2018-2019, U+201c-201d, U+2026;
+}
+@font-face {
+  font-family: 'Essay Latin';
+  font-style: normal;
+  font-weight: 500;
+  
+  src: url(EssayLatin-500-12.woff2) format('woff2');
+  unicode-range: U+75, U+78, U+7a-7e, U+2013, U+2018-2019, U+201c-201d, U+2026;
+}
+@font-face {
+  font-family: 'Essay Latin';
+  font-style: normal;
+  font-weight: 600;
+  
+  src: url(EssayLatin-600-13.woff2) format('woff2');
+  unicode-range: U+75, U+78, U+7a-7e, U+2013, U+2018-2019, U+201c-201d, U+2026;
+}
