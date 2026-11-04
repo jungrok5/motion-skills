@@ -75,3 +75,8 @@ Topic from the user: "<their words>"
    no text but signs and the title.
 9. **Rhythm:** the act lands within a beat of the cut's middle; the button leaves ~0.8 s before the cut.
 10. **Escalation:** each gag is bigger than the last; the last gag is the biggest stretch.
+11. **Bodies that can exist** (score the cast sheet first, then every still): head, chest, hips and toes face the same
+    way (a deliberate twist stays within 90° at the neck, 45° at the waist); the near shoulder and hip are on the far
+    side from the face; coat fronts, buttons, pockets and toe caps are at the front; knees bend back, elbows forward;
+    feet are on the ground; people move the way they face. A still that makes you ask "did the neck turn or the body?"
+    fails — fix the pose or the rig there and note it in LESSONS.md.

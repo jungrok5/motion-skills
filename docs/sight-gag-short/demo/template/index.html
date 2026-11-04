@@ -24,6 +24,7 @@ import * as KIT from "gag/kit.js";
 import { K, lerp, lerpA, clamp, wob, win, add, sub, mul, norm, arc } from "gag/core.js";
 import { renderScore } from "gag/score.js";
 import { SCORE } from "./score.js";
+import { CAST, GLOVE } from "./cast.js";
 
 const F = await new Film({ title: "Handle With Care", bpm: 120 }).load();
 const S = F.S;
@@ -39,12 +40,10 @@ for (const x of [-7.6, 12.6, 21]) S.lamp({ at: [x, 0, 3.0] });
 S.bin({ at: [6.2, 0, 0.75] }); S.planter({ at: [15.2, 0, 0.45], flower: "#e85d75" });
 
 // 2 · the cast: Rosa (round, apron, chef's toque, a copper tank), the mitt, the pie thief, the delivery man
-const rosa = person(F, { build: "round", skin: "#e0a77f", top: { kind: "tee", color: "#f6f3ec" }, bottom: { color: "#2a2a30", pattern: "plaid", b: "#f2efe8" }, shoes: { kind: "slipper", color: "#1d1d20" },
-  hair: { style: "bun", color: "#5a3a26" }, hat: { kind: "chef", color: "#f7f5f0" }, face: { nose: "bulb", cheeks: "#e9907a", shape: "pear" }, extras: ["apron", "contraption"], apron: "#f2efe8", brass: "#b87333", seed: 21 });
-const mitt = gadget(F, { style: "oven", color: "#c8322b", size: 1.1, hose: { color: "#e8e2d4", r: 0.085 }, thread: "#f2efe8",
-  from: () => rosa.socket("hose"), fromDir: () => norm(add(add(mul(rosa.axis("right"), 0.8), [0, 0.55, 0]), mul(rosa.axis("fwd"), -0.15))) });
-const thief = person(F, { build: "teen", skin: "#f0c8a6", top: { kind: "sweater", color: "#2b2b30", pattern: "stripe", b: "#e9e6df" }, bottom: { color: "#2f3a52" }, shoes: { kind: "sneaker", color: "#2b2b30", sole: "#f2f0ea" }, hat: { kind: "beanie", color: "#2b2b30" }, face: { nose: "long" }, extras: ["shades"], seed: 22 });
-const courier = person(F, { build: "stocky", skin: "#a8714c", top: { kind: "shirt", color: "#7a5a3a" }, bottom: { kind: "shorts", color: "#5a4632" }, shoes: { kind: "boot", color: "#3a2a1c" }, socks: { color: "#f0ede6" }, hat: { kind: "cap", color: "#7a5a3a", brim: "#5a4632" }, beard: { kind: "goatee", color: "#2a1d14" }, seed: 23 });
+const rosa = person(F, { ...CAST.rosa, name: "rosa" });
+const mitt = gadget(F, { ...GLOVE, from: () => rosa.socket("hose"), fromDir: () => norm(add(add(mul(rosa.axis("right"), 0.8), [0, 0.55, 0]), mul(rosa.axis("fwd"), -0.15))) });
+const thief = person(F, { ...CAST.thief, name: "thief" });
+const courier = person(F, { ...CAST.courier, name: "courier" });
 const pie = F.prop(KIT.pie());
 const boxes = [0.34, 0.3, 0.36, 0.28, 0.32].map((h, i) => F.prop(KIT.parcel({ w: 0.56 - i * 0.03, h, d: 0.42, label: i === 2 ? "FRAGILE" : "" })));
 

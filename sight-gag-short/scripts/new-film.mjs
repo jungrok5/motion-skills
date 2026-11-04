@@ -1,4 +1,5 @@
-// sight-gag-short · new-film.mjs — start a project: lib/ + fonts/ (copies), film.html + score.js + BRIEF.md, out/.
+// sight-gag-short · new-film.mjs — start a project: lib/ + fonts/ (copies), film.html + cast.js + cast.html (the cast
+// sheet) + score.js + BRIEF.md, out/.
 //   node <skill>/scripts/new-film.mjs my-film                          → from templates/ (a 2-gag starting film)
 //   node <skill>/scripts/new-film.mjs my-film --from crossing-guard    → from examples/crossing-guard/ (the worked example)
 // Rewrite BRIEF.md from the user's topic first (references/BRIEF.md), then the cast, the set and the gags.
@@ -20,6 +21,7 @@ cpSync(join(skill, 'fonts'), join(out, 'fonts'), { recursive: true });
 const fix = s => s.replace(/"three":\s*"[^"]*"/, '"three": "./lib/three.module.min.js"').replace(/"gag\/":\s*"[^"]*"/, '"gag/": "./lib/"');
 writeFileSync(join(out, 'film.html'), fix(readFileSync(join(src, from ? 'index.html' : 'film.html'), 'utf8')));
 for (const f of readdirSync(src)) if (f.endsWith('.js') || f === 'BRIEF.md') writeFileSync(join(out, f), readFileSync(join(src, f), 'utf8'));
+if (existsSync(join(src, 'cast.html'))) writeFileSync(join(out, 'cast.html'), fix(readFileSync(join(src, 'cast.html'), 'utf8')));
 writeFileSync(join(out, '.gitignore'), 'out/\n');
 console.log(`${out}/film.html  (from ${from ? 'examples/' + from : 'templates/'})
 next:  cd ${dir} && node ${join(skill, 'scripts/check.mjs')} film.html

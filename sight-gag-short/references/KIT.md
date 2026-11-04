@@ -31,6 +31,8 @@ const hero = person(F, { build: "lanky" | {…numbers}, skin, top: { kind, color
 hero.place([x, y | null, z], yaw).pose(P.stand | walk(phase, { strut, stride, arms }) | run(phase) | KP(t, track) | mixPose(a, b, k) | over(a, b))
     .face("deadpan", { t, look: [x, y, z], gaze: [yaw°, pitch°], over: { lid: .6 } });
 hero.socket("head" | "top" | "nose" | "chest" | "collar" | "belt" | "back" | "hips" | "handL" | "handR" | "footL" | "footR" | "hose" | "vent");
+hero.place(p, yaw, { air })   // p[1] null → grounded: pose() plants the lowest foot; an explicit y (or air) for jumps / rides
+LIM, limits(pose) → ["kneeL −12° (range 0…155)", …]   // joint ranges; check.mjs reports them as body: …
 hero.pin("collar", worldPoint); hero.plant(); hero.squash(k); hero.axis("fwd" | "right" | "left"); hero.hold(obj, "R", pos, rot°);
 stroll(t, t0, t1, x0, x1, strideLen) → { x, phase, moving };  steps(t0, t1, x0, x1, strideLen, { gain, pitch }) → sfx cues
 ```
@@ -53,6 +55,11 @@ Glove.scold(t, t0, at, toward) → { at, aim, palm }   // the safe telling-off (
 `at` is the wrist; `aim` the way the fingers point; `palm` the way the palm faces. Shapes: `open, relaxed, flat, stop,
 cup, fist, point, pointUp, beckon, flickReady, flick, pinch, grab, claw, thumbsUp, ok, peace, gun, horns, hold, shoo,
 spin` (`pointUp`/`beckon` only in profile — see STORY.md, safe gestures).
+
+## The cast sheet (`lib/castsheet.js`)
+`castSheet(F, CAST, { glove })` → shots: two per person (`VIEWS`: front, 3/4 right, side right, back, side left · 3/4
+left, walk, run, action — each with a different face) and rows of every `SHAPES` hand shape. `cast.html` is
+`castSheet(F, CAST, { glove: GLOVE }); F.start();` — render with `--sheet <shots>`, check with `check.mjs cast.html`.
 
 ## The set (`lib/kit.js`) — every builder returns an Object3D; use `S.x({ …, at, ry })` to add it
 `street({ from, to, walk, road, crosswalk: [x…], far })` · `building({ x, w, floors, ground, upper, depth, wall:

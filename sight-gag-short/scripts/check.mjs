@@ -1,7 +1,8 @@
 // sight-gag-short · check.mjs — prove a film page before rendering it:
 //   node <skill>/scripts/check.mjs film.html [--scale .3]
 // loads without errors · every shot draws a non-blank frame at its setup, act and button marks · the same t gives the
-// same pixels (deterministic) · every glove/figure stays above the ground · the format's rules (Film.check: 4–7 gags of
+// same pixels (deterministic) · every glove/figure stays above the ground · body rules ("body: …": a joint outside its
+// range in figure.js LIM, a figure moving sideways/backwards to where it faces) · the format's rules (Film.check: 4–7 gags of
 // 3.5–5 s with notice / act / button marks, cuts on the beat, 25–45 s) · every sfx kind exists · prints DURATION, the
 // shot table and the cue list.
 import { existsSync } from 'node:fs';
@@ -24,15 +25,33 @@ const info = await page.evaluate(async () => {
     const n = d.length / 4, m = s / n; return { mean: m, sd: Math.sqrt(Math.max(0, s2 / n - m * m)), hash: h };
   };
   // anything posed below the ground: gloves (wrist) and figures (feet)
-  const under = [];
-  const probe = (t) => { F.pose(t); for (const a of F.actors) { if (!a.root?.visible) continue; if (a.fingers && a.root.position.y < -0.2) under.push(`${t.toFixed(2)} s glove wrist at y ${a.root.position.y.toFixed(2)}`); if (a.footY && a.root.visible && a.footY() < a.groundY - 0.12) under.push(`${t.toFixed(2)} s a figure's foot ${(a.groundY - a.footY()).toFixed(2)} m under the ground`); } };
+  // body rules: anything under the ground; joints outside their range (figure.js LIM); a figure that slides sideways
+  // or backwards (moving > 0.6 m/s not in the direction it faces) unless something holds it
+  const under = [], body = [], prev = new Map();
+  const probe = (t, sid) => {
+    F.pose(t);
+    F.actors.forEach((a, i) => {
+      if (!a.root?.visible) { prev.delete(i); return; }
+      if (a.fingers && a.root.position.y < -0.2) under.push(`${t.toFixed(2)} s glove wrist at y ${a.root.position.y.toFixed(2)}`);
+      if (!a.footY) return;
+      const who = a.o?.name || `figure ${i}`;
+      if (a.footY() < a.groundY - 0.12) under.push(`${t.toFixed(2)} s ${who}'s foot ${(a.groundY - a.footY()).toFixed(2)} m under the ground`);
+      for (const b of a.bodyIssues || []) body.push(`${t.toFixed(2)} s ${who}: ${b}`);
+      const p = a.root.position, q = prev.get(i);
+      if (q && q.sid === sid && !a.pinned && !q.pinned) {
+        const dx = p.x - q.x, dz = p.z - q.z, d = Math.hypot(dx, dz);
+        if (d > 0.12) { const f = a.axis("fwd"), c = (dx * f[0] + dz * f[2]) / d; if (c < 0.5) body.push(`${t.toFixed(2)} s ${who} moves ${c < 0 ? "backwards" : "sideways"} (heading vs facing ${Math.round(Math.acos(Math.max(-1, Math.min(1, c))) * 57.3)}°)`); }
+      }
+      prev.set(i, { x: p.x, z: p.z, sid, pinned: a.pinned });
+    });
+  };
   const shots = F.shots.map((s) => {
     const ts = [s.from + 0.15, ...Object.values(s.marks).map((m) => s.from + m), s.to - 0.1].filter((t) => t < s.to);
     const st = ts.map(stat), again = stat(ts[1] ?? ts[0]);
-    for (let t = s.from; t < s.to; t += 0.2) probe(t);
+    for (let t = s.from; t < s.to; t += 0.2) probe(t, s.id);
     return { id: s.id, kind: s.kind, from: s.from, to: s.to, marks: s.marks, sfx: s.sfx.length, minSd: Math.min(...st.map((x) => x.sd)), mean: st.reduce((a, x) => a + x.mean, 0) / st.length, det: again.hash === st[1 < st.length ? 1 : 0].hash };
   });
-  return { dur: F.duration, fps: F.fps, bpm: F.bpm, shots, rules: F.check(), cues: F.cues(), under: under.slice(0, 12), nUnder: under.length };
+  return { dur: F.duration, fps: F.fps, bpm: F.bpm, shots, rules: F.check(), cues: F.cues(), under: under.slice(0, 12), nUnder: under.length, body: [...new Set(body)].slice(0, 12), nBody: body.length };
 });
 await browser.close();
 const lib = existsSync(join(dirname(film), 'lib', 'score.js')) ? join(dirname(film), 'lib', 'score.js') : join(dirname(fileURLToPath(import.meta.url)), '..', 'lib', 'score.js');
@@ -50,6 +69,8 @@ for (const s of info.shots) {
 for (const r of info.rules) (r.startsWith('FAIL') ? fail : warn).push(r.replace(/^FAIL /, ''));
 if (info.kinds) { const bad = [...new Set(info.cues.filter((c) => !info.kinds.includes(c.kind)).map((c) => c.kind))]; if (bad.length) fail.push('unknown sfx kinds: ' + bad.join(', ')); }
 if (info.nUnder) fail.push(`${info.nUnder} poses below the ground, e.g. ${info.under.slice(0, 3).join('; ')}`);
+for (const b of info.body) fail.push('body: ' + b);
+if (info.nBody > info.body.length) fail.push(`body: … ${info.nBody - info.body.length} more`);
 console.log(`cues (${info.cues.length}): ` + info.cues.map((c) => `${c.t.toFixed(2)} ${c.kind}`).join(' · '));
 for (const w of warn) console.log('warn:', w);
 for (const f of fail) console.log('FAIL:', f);

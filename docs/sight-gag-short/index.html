@@ -34,7 +34,7 @@
       <dt>입력</dt><dd>주제 하나(직업 · 주인공 · 장소: 건널목 지킴이, 제빵사, 사서, 인명 구조원 …). 레퍼런스 영상이 있으면 그 스틸과 컷 시간</dd>
       <dt>브리프</dt><dd>주인공과 등의 기계, 주제에서 나온 도구와 말장난, 거리, 도움과 응징이 번갈아 커지는 개그 4–7개의 표(설정 → 알아챔 → 행동 → 결과 → 마무리)를 담은 <code>BRIEF.md</code></dd>
       <dt>그림</dt><dd>창문이 실제로 뚫린 벽돌 · 흰 칠 · 회벽 건물과 줄무늬 차양의 three.js 거리, 눈꺼풀과 눈썹이 움직이는 바이닐 인형 같은 캐릭터, 손가락 마디와 손 모양 22가지의 장갑, 매 프레임 다시 만드는 고무호스, 움직임이 빠른 프레임에만 거는 모션 블러</dd>
-      <dt>확인</dt><dd>행동 · 마무리 순간의 스틸을 채점하는 기준, 콘택트 시트, 결정성 · 땅 밑으로 꺼짐 · 형식 · 효과음 검사</dd>
+      <dt>확인</dt><dd>인물마다 앞뒤좌우 · 걷기 · 달리기를 그린 캐스트 시트, 행동 · 마무리 순간의 스틸을 채점하는 기준, 결정성 · 관절 범위 · 이동 방향 · 땅 밑으로 꺼짐 · 형식 · 효과음 검사</dd>
       <dt>출력</dt><dd>30fps 1920×1080 MP4(그루브 · 효과음 포함), ♪ 버튼으로 소리까지 재생하는 라이브 페이지</dd>
     </dl>
     <pre><code>cd sight-gag-short/examples/crossing-guard
@@ -58,7 +58,7 @@ node ../../scripts/new-film.mjs ../../../my-short</code></pre>
 
 <section id="samples"><div class="wrap">
   <h2>샘플</h2>
-  <p class="lead">예제 「Hands Down」의 개그 다섯 개와, 같은 엔진으로 주인공 · 도구 · 개그를 모두 바꾼 시작 템플릿입니다. 카드를 누르면 새 탭에서 그 순간에 멈춘 장면이 열리고, 브라우저가 벽돌 한 장부터 직접 그립니다.</p>
+  <p class="lead">예제 「Hands Down」의 개그 다섯 개, 그 인물들의 캐스트 시트, 같은 엔진으로 주인공 · 도구 · 개그를 모두 바꾼 시작 템플릿입니다. 카드를 누르면 새 탭에서 그 순간에 멈춘 장면이 열리고, 브라우저가 벽돌 한 장부터 직접 그립니다.</p>
   <div class="chips" data-for="gallery" data-labels='{"help":"도움","comeuppance":"응징","shot":"시작 · 끝"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
   <div id="gallery">
     <div class="group">
@@ -101,6 +101,24 @@ node ../../scripts/new-film.mjs ../../../my-short</code></pre>
           <img src="samples/title.jpg" alt="학교 건물 앞에서 모자챙을 짚는 건널목 지킴이와 손을 흔드는 장갑, 오른쪽 아래 'HANDS DOWN.' 제목" loading="lazy" width="640" height="360">
           <div class="cap"><span class="no">끝 · 4초</span><b>HANDS DOWN.</b>
           <span class="how">처음으로 웃는 주인공, 탱크로 쏙 들어가는 장갑, 말장난 제목</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>캐스트 시트 <small>예제의 인물 6명 · 손 모양 22가지</small></h3>
+      <p>개그를 쓰기 전에 렌더해서 채점하는 페이지입니다. 인물마다 정면 · 좌우 3/4 · 좌우 옆모습 · 뒷모습 · 걷기 · 달리기 · 큰 동작을 서로 다른 표정으로 그리고, 관절 범위와 이동 방향 검사가 같은 페이지에서 돕니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="shot" href="demo/hands-down/cast.html?t=0.5" target="_blank" rel="noopener">
+          <img src="samples/cast-front.jpg" alt="흰 벽 앞에 선 건널목 지킴이 다섯 명: 정면, 오른쪽 3/4, 오른쪽 옆모습, 뒷모습, 왼쪽 옆모습, 위에 각 방향의 이름표" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 시트 · 1/2</span><b>앞뒤좌우</b><span class="en">examples/crossing-guard/cast.html</span>
+          <span class="how">머리 · 가슴 · 골반 · 발끝이 한 방향, 등의 탱크는 언제나 등 쪽</span></div></a>
+        <a class="tile" data-tags="shot" href="demo/hands-down/cast.html?t=1.5" target="_blank" rel="noopener">
+          <img src="samples/cast-moves.jpg" alt="건널목 지킴이의 왼쪽 3/4, 걷기, 달리기, 두 팔을 든 큰 동작" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 시트 · 2/2</span><b>걷기 · 달리기 · 큰 동작</b>
+          <span class="how">무릎은 뒤로, 팔꿈치는 앞으로만, 디딘 발은 땅에</span></div></a>
+        <a class="tile" data-tags="shot" href="demo/hands-down/cast.html?t=12.5" target="_blank" rel="noopener">
+          <img src="samples/cast-hands.jpg" alt="흰 벽 앞에 늘어선 하얀 장갑 여섯 개: 펼침, 느슨함, 납작, 멈춤, 오므림, 주먹, 아래에 이름표" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 시트 · 손</span><b>손 모양 22가지</b>
+          <span class="how">펼침부터 엄지척까지, 정면으로 세운 손가락 하나가 왜 위험한지도 여기서 보임</span></div></a>
       </div>
     </div>
     <div class="group">

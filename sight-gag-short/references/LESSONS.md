@@ -39,5 +39,13 @@ Problem → cause → fix, one or two lines each.
   the camera side when he walks +x.
 - **Motion blur made every frame 5× slower** → 5 sub-frames everywhere → adaptive: measure on-screen motion of
   actors, glove tip and camera across the shutter, render 1 sample when < 2.5 px, up to 5 when fast.
+- **A frame depended on the frame before** (check: "crossing is not deterministic") → Walt looked at Granny's head and
+  the bag sat on the glove's fingertip *before* those were posed this frame, so they read last frame's values →
+  `Film.pose` runs every shot function twice; the second pass reads this frame's values whatever the code order.
+- **Feet floated or sank by a few centimetres in walk cycles and crouches** → the pelvis height was a formula, not
+  a contact → a figure placed with `y = null` is `grounded` and `pose()` plants its lowest foot on the ground.
+- **Nothing stopped an impossible body** (a knee bent forwards, a moonwalk) → `LIM` joint ranges in figure.js,
+  `limits(pose)` per frame, and a heading-vs-facing test in `check.mjs` (`body: …` fails), proven with a
+  deliberately backwards walker; the cast sheet (`castSheet`) shows every person both ways round.
 - **Render timing on a CPU** → SwiftShader: ~3 s for a 1080p frame (MSAA ×4 ≈ 0.7 s of it, shadows little);
   previews at `--scale .5 --q mb=1`.

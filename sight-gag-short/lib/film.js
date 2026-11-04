@@ -196,16 +196,20 @@ export class Film {
   // ------------------------------------------------------------ a frame
   pose(t) {
     t = clamp(t, 0, Math.max(0, this.duration - 1e-4));
-    for (const a of this.actors) a.reset();
-    for (const m of this.mirrors) m.mesh.visible = false;
-    this.fx.begin();
     const s = this.shotAt(t), lt = t - s.from;
     const cam = this.camera; let roll = 0;
     const ctx = { dur: s.dur, m: s.marks, u: lt / s.dur, T: t, fx: this.fx, id: s.id, film: this,
       cam: (pos, at, fov = 30, rl = 0) => { cam.position.set(...pos); cam.up.set(0, 1, 0); cam.lookAt(...at); cam.fov = fov; roll = rl; cam.updateProjectionMatrix(); ctx._at = at; },
       shake: (amp, t0, decay = 7, hz = 19) => { const a = lt - t0; if (a < 0) return; const k = amp * Math.exp(-decay * a); cam.position.x += noise1(a * hz, 3) * k; cam.position.y += noise1(a * hz, 7) * k; },
       mirror: (m) => { m.mesh.visible = true; } };
-    s.fn(lt, ctx);
+    // two passes: anything a shot reads from another actor (a gaze at a head, a prop on a fingertip) is this frame's
+    // value in the second pass whatever the order of the code — so a frame never depends on the previous one
+    for (let pass = 0; pass < 2; pass++) {
+      for (const a of this.actors) a.reset();
+      for (const m of this.mirrors) m.mesh.visible = false;
+      this.fx.begin(); roll = 0;
+      s.fn(lt, ctx);
+    }
     if (roll) cam.rotateZ(roll);
     cam.updateMatrixWorld();
     // the sun follows the framing so its shadow map always covers what the camera sees

@@ -19,6 +19,7 @@ import * as KIT from "gag/kit.js";
 import { K, lerp, lerpA, clamp, wob, win, add, sub, mul, norm, arc, noise1 } from "gag/core.js";
 import { renderScore } from "gag/score.js";
 import { SCORE } from "./score.js";
+import { CAST, GLOVE } from "./cast.js";
 
 const F = await new Film({ title: "Hands Down", bpm: 120 }).load();
 const S = F.S;
@@ -53,18 +54,14 @@ S.pipe({ at: [-4.2, 0, 0] }); S.pipe({ at: [28.8, 0, 0] });
 // ---------------------------------------------------------------- 2 · the cast
 // Walt: lanky, deadpan, white walrus moustache, guard cap, hi-vis vest, orange rain boots, a brass tank with an amber
 // beacon on his back. His gadget: a white cartoon glove on a red-and-white striped hose (a crossing pole).
-const walt = person(F, { build: { ...{ H: 1.94 }, ...{} , head: 0.142, tw: 0.4, td: 0.28, hw: 0.32, limb: 0.055, leg: 0.96, arm: 0.78, neck: 0.1, shoe: 1.3, hunch: 8, chest: 1, belly: 0.05 },
-  skin: "#eab48f", top: { kind: "sweater", color: "#2b3a5c" }, bottom: { color: "#2b3a5c" }, shoes: { kind: "rain", color: "#e8742a" },
-  hair: { style: "short", color: "#dedede" }, hat: { kind: "guard", color: "#1f2b45", brim: "#16161a", band: "#e3c35a" }, beard: { kind: "walrus", color: "#efefef" },
-  face: { nose: "bulb", shape: "long", brows: "#eeeeee", thick: 1.7, eye: 0.95 }, extras: ["vest-hivis", "contraption", "beacon"], vest: "#d6ef3a", brass: "#c33b2c", seed: 3 });
-const glove = gadget(F, { style: "cartoon", color: "#f7f5f0", size: 1.15, hose: { stripes: ["#d8452f", "#f4f1ea"], r: 0.08 }, thread: "#9a978f",
-  from: () => walt.socket("hose"), fromDir: () => norm(add(add(mul(walt.axis("right"), 0.8), [0, 0.55, 0]), mul(walt.axis("fwd"), -0.15))) });
+const walt = person(F, { ...CAST.walt, name: "walt" });
+const glove = gadget(F, { ...GLOVE, from: () => walt.socket("hose"), fromDir: () => norm(add(add(mul(walt.axis("right"), 0.8), [0, 0.55, 0]), mul(walt.axis("fwd"), -0.15))) });
 const paddle = F.prop(KIT.paddle());
-const teen = person(F, { build: "teen", skin: "#c99272", top: { kind: "hoodie", color: "#3f7d5a" }, bottom: { color: "#2f3a52", pattern: "denim" }, shoes: { kind: "sneaker", color: "#f2f0ea", stripe: "#e8462e" }, hat: { kind: "cap-back", color: "#d8452f" }, hair: { style: "short", color: "#1d1512" }, face: { nose: "button", shape: "egg" }, seed: 11 });
-const kid = person(F, { build: "kid", skin: "#8a5a3c", top: { kind: "tee", color: "#f06d8f" }, bottom: { kind: "shorts", color: "#2f5e9e" }, shoes: { kind: "sneaker", color: "#ffffff", stripe: "#f4d21f" }, socks: { color: "#ffffff" }, hair: { style: "puffs", color: "#1d1512" }, face: { cheeks: "#e07a6a", shape: "round", eye: 1.08 }, seed: 12 });
-const rider = person(F, { build: "boss", skin: "#e9b896", top: { kind: "suit", color: "#5a6070" }, bottom: { color: "#5a6070" }, shoes: { kind: "dress", color: "#141414" }, hair: { style: "slick", color: "#2a211b" }, face: { shape: "jaw", nose: "bulb" }, extras: ["shades"], tie: "#c0392b", seed: 13 });
-const granny = person(F, { build: "elder", skin: "#f3d2bd", top: { kind: "sweater", color: "#b46a8a" }, bottom: { kind: "skirt", color: "#6a6f8a" }, shoes: { kind: "slipper", color: "#7a5a8a" }, hair: { style: "bun", color: "#ececf0" }, face: { cheeks: "#e9a0a0", nose: "button" }, extras: ["glasses"], seed: 14 });
-const boy = person(F, { build: { ...{}, H: 1.12, head: 0.15, tw: 0.31, td: 0.25, hw: 0.27, limb: 0.046, leg: 0.44, arm: 0.42, belly: 0.03, neck: 0.03, shoe: 1.1, hunch: 0, chest: 0.95 }, skin: "#f1c6a3", top: { kind: "tee", color: "#f39a2b" }, bottom: { kind: "shorts", color: "#3b6e5a" }, shoes: { kind: "sneaker", color: "#2f5e9e", stripe: "#ffffff" }, socks: { stripe: ["#ffffff", "#d8452f"] }, hat: { kind: "cap", color: "#2f5e9e", brim: "#24487a" }, hair: { style: "short", color: "#a0522d" }, face: { cheeks: "#f08a7a", shape: "round", nose: "button", eye: 1.1 }, seed: 15 });
+const teen = person(F, { ...CAST.teen, name: "teen" });
+const kid = person(F, { ...CAST.kid, name: "kid" });
+const rider = person(F, { ...CAST.rider, name: "rider" });
+const granny = person(F, { ...CAST.granny, name: "granny" });
+const boy = person(F, { ...CAST.boy, name: "boy" });
 // props that fly, get caught and handed back
 const chips = F.prop(KIT.snack({ color: "#e8462e", text: "CHIPS" }));
 const cone = F.prop(KIT.cone()), scoopLow = F.prop(KIT.scoop({ color: "#f4a6c0", seed: 2 })), scoopTop = F.prop(KIT.scoop({ color: "#9fe0c4", seed: 5 }));

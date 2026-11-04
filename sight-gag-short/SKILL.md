@@ -44,13 +44,14 @@ examples of the style, not a menu (references/BRIEF.md).
 | `lib/kit.js` | the set: `street` (sidewalk, curb, road, zebra), `building` (brick · painted · plaster, real window openings, shopfronts, awnings, fascia signs, blade signs, cornices, non-repeating chip / flake decals), `awning`, `blade`, `sign` (text or icons), `lamp`, `bin`, `hydrant`, `bench`, `ladder`, `car`, `scooter`, `tree`, `planter`, `pipe`, `bollard`, `skyline`, `park`, `hedge`, `pond`; hand props `paddle`, `scoop`, `cone`, `snack`, `balloon`, `handbag`, `pie`, `parcel`; `mat`, `rbox`, `lathe`, `merge` for custom pieces |
 | `lib/paint.js` | hand-painted canvas textures: `brick` (per-brick colour, dry-brush streaks, white-painted variant), `chip`, `flake`, `plaster`, `concrete`, `asphalt`, `stripes`, `leather`, `cloth` (plaid, denim, knit, stripe), `wood`, `grass`, `glass`, `label`, `cloud`, puffs |
 | `lib/score.js` | `renderScore(spec)`: the groove (moods intro · groove · tiptoe · break · hit · outro · silence; swung drums, finger bass, Rhodes, brass stabs, whistled hook, stops) + 35 foley kinds (`SFX_KINDS`: stretch, retract, snap, flick, thwack, clang, boing, splash, squeak, honk, skid …), reverb, BS.1770 master to −14 LUFS |
+| `lib/castsheet.js` | `castSheet(F, CAST, { glove })`: every person front, 3/4 and side both ways, back, walk, run, an action pose (each a different face), and every hand shape — the body-rules review page |
 | `lib/core.js` | `K` keyframe tracks with named eases (snap, back, elastic, bounce …), `wob` springs, `win`, `arc`, seeded `rng`, noise, vector helpers |
 | `lib/three.module.min.js` | three.js r170 (MIT, `lib/THREE-LICENSE`) |
 | `fonts/` | Barlow Condensed Bold (OFL) for signs and the title; how to add a Hangul font |
-| `templates/` | `film.html` (a 12 s, 2-gag starting film), `score.js`, `BRIEF.md` |
-| `examples/crossing-guard/` | the worked example: `BRIEF.md`, `index.html` (7 shots), `score.js` |
+| `templates/` | `film.html` (a 12 s, 2-gag starting film), `cast.js` (its people), `cast.html` (their cast sheet), `score.js`, `BRIEF.md` |
+| `examples/crossing-guard/` | the worked example: `BRIEF.md`, `cast.js` + `cast.html` (the cast sheet), `index.html` (7 shots), `score.js` |
 | `scripts/new-film.mjs` | start a project (template or `--from crossing-guard`) |
-| `scripts/check.mjs` | loads clean · every shot draws at its marks · deterministic · nothing under the ground · format rules · sfx kinds exist · prints the shot table and cues |
+| `scripts/check.mjs` | loads clean · every shot draws at its marks · deterministic · nothing under the ground · body rules (`body: …` — a joint outside `LIM`, a figure moving sideways or backwards to where it faces) · format rules · sfx kinds exist · prints the shot table and cues |
 | `scripts/render.mjs` | stills, a contact sheet, or the MP4 (workers × ffmpeg chunks, `--audio`) |
 | `scripts/score.mjs` | the film's sound (its `SCORE` + every shot's sfx cue) → WAV, read from the page itself |
 | `references/` | **BRIEF** (fixed vs per topic, the brief template, the stills rubric) · **STORY** (topic → hero → gadget → gags; the gag grammar and timing) · **LOOK** (the measured reference and the values that match it) · **KIT** (API) · **LESSONS** (what broke and the fix) |
@@ -59,6 +60,8 @@ examples of the style, not a menu (references/BRIEF.md).
 ```
 my-short/
   BRIEF.md     the topic written into the brief (references/BRIEF.md) — written first
+  cast.js      export const CAST = { name: person() options }, GLOVE = gadget() options — shared by both pages
+  cast.html    the cast sheet (castSheet) — rendered and scored before any gag
   film.html    set → cast + gadget + props → helpers → one F.shot per gag → F.title → F.start(SCORE, renderScore)
   score.js     export const SCORE = { bpm, key, swing, sections, stops }
   lib/ fonts/  copies of the skill's (new-film.mjs); imported through an import map ("three", "gag/")
@@ -84,9 +87,13 @@ the 27.5 s example (825 frames) takes about an hour on a 4-core machine whatever
 3. **Build the set** along +x: one building per 8–10 m, a gag station every ~10–12 m, signs and props each gag needs
    (a bin for the litter gag, a sign to point at, a crosswalk). Keep lamp posts and trees out of the punchline's line
    of sight.
-4. **Cast**: the hero with `extras: ["contraption"]` (+ `"beacon"`) and the gadget `gadget(F, { from: () =>
-   hero.socket("hose"), fromDir })`; one nuisance (or helped person) per gag, each a different build and palette;
-   props as `F.prop(KIT.…)` so they can fly, be caught and handed back.
+4. **Cast** in `cast.js`: the hero with `extras: ["contraption"]` (+ `"beacon"`) and the gadget options; one nuisance
+   (or helped person) per gag, each a different build and palette. **Cast sheet first:** `render.mjs cast.html
+   --sheet <shots> --scale .5 --q mb=1` and `check.mjs cast.html`, then score every view with the body rules
+   (references/BRIEF.md 11): head, chest, hips and toes the same way, the near shoulder and hip on the far side from
+   the face, coat fronts, buttons and toe caps at the front, knees bending back and elbows forward only, feet on the
+   ground — "did the neck turn or the body?" is a fail. In the film: `person(F, { ...CAST.x, name })`, the gadget with
+   `from: () => hero.socket("hose"), fromDir`, props as `F.prop(KIT.…)` so they can fly, be caught and handed back.
 5. **One shot per gag** (references/STORY.md): `F.shot({ id, dur, marks: { notice, act, button, … }, sfx: [[kind,
    mark, offset, opts] …], fn(t, s) })`. In `fn`: `s.cam` (locked wide, slow push), the hero (stroll in, stop, deadpan,
    look at what matters, glance at the camera on the button), the other actors (poses keyed with `KP`, faces with
@@ -119,8 +126,12 @@ the 27.5 s example (825 frames) takes about an hour on a 4-core machine whatever
 - **The gadget acts, the hero doesn't.** The hero walks, stops, looks; only the last beat earns a smile.
 - **No lone raised finger palm-on or back-on to the camera** — from the front it reads as the middle finger. Scold by
   pointing (`Glove.scold`), spin things on a loose `spin` hand, say "wait" with an open `stop` palm.
-- **Nothing floats or sinks.** Contact shadows are automatic for figures; `check` fails when a foot or the glove's wrist
-  goes under the ground. Things that are held follow the hand (`socket`, `align`).
+- **Nothing floats or sinks.** `place([x, null, z])` stands a figure on the ground and every `pose()` plants its lowest
+  foot on it; give an explicit y only for jumps, rides and flights. `check` fails when a foot or the glove's wrist goes
+  under the ground. Things that are held follow the hand (`socket`, `align`).
+- **Bodies that can exist.** Joints stay inside `LIM` (knees bend back only, elbows forward only, hips back ≤ 75°, the
+  neck ≤ 90°, wrists ≤ 80°) and a figure moves the way it faces, unless something holds it (`pin`) — `check` fails
+  with `body: …` otherwise. Score the cast sheet before the gags.
 - **Original casts, no brands, no real people.**
 
 ## Contract every film page fulfils

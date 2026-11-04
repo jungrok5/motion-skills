@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cast sheet · Hands Down · sight-gag-short</title>
+<script type="importmap">{ "imports": { "three": "../lib/three.module.min.js", "gag/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// The cast sheet for 「Hands Down」: every person in cast.js front, 3/4 and side both ways, back, walking, running and in an
+// action pose (each with a different face), and every hand shape of the gadget. Render it and score it before the gags:
+//   node <skill>/scripts/render.mjs cast.html --sheet <shots> --scale .5 --q mb=1     (check.mjs cast.html runs the body rules)
+import { Film } from "gag/film.js";
+import { castSheet } from "gag/castsheet.js";
+import { CAST, GLOVE } from "./cast.js";
+const F = await new Film({ title: "Cast sheet · Hands Down", bpm: 120 }).load();
+castSheet(F, CAST, { glove: GLOVE });
+F.start();
+</script>
+</body>
+</html>

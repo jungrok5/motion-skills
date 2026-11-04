@@ -354,6 +354,8 @@ export class Figure {
     const y = p[1] ?? this.film.ground(p[0], p[2]);
     this.root.visible = true; this.root.position.set(p[0], y, p[2]); this.root.rotation.set(0, yaw * DEG, 0);
     this.root.scale.set(1, 1, 1); this.lift = o.lift || 0; this.groundY = this.film.ground(p[0], p[2]); this.yaw = yaw;
+    // y omitted = standing on the ground: pose() then plants the lowest foot exactly on it (no floating, no sinking)
+    this.grounded = p[1] == null && !o.air; this.pinned = false;
     this.updateContact(); return this;
   }
   /** a world direction of the figure's body: "fwd" (where it faces), "right", "left", "up" */
@@ -369,6 +371,7 @@ export class Figure {
   /** pose(p) — p from P.* (angles in degrees); missing keys stay at rest */
   pose(p = {}) {
     const d = DEG, A = (v, i, def = 0) => (v ? v[i] ?? def : def);
+    this.bodyIssues = limits(p);
     this.pelvis.position.y = this.B.hipY + (p.bob || 0) - (p.crouch || 0);
     this.pelvis.position.z = p.shift || 0; this.pelvis.rotation.set(0, (p.hipYaw || 0) * d, (p.sway || 0) * d);
     this.spine.rotation.set((this.B.hunch * 0.4 + (p.lean || 0)) * d, (p.twist || 0) * d, (p.side || 0) * d);
@@ -389,6 +392,7 @@ export class Figure {
       lg.an.rotation.set((p["foot" + k] || 0) * d - (-l[0] + (l[2] || 0)) * d * 0.0, 0, 0);
     }
     this._pose = p;
+    if (this.grounded && this.root.visible) this.plant();
     return this;
   }
 
@@ -450,13 +454,35 @@ export class Figure {
   handObj(side = "R") { return this.arm[side].wr; }
   /** pin(socket, worldPoint) — move the whole figure so that socket lands on worldPoint (held by the collar, sat on a palm …) */
   pin(name, p) {
-    const s = this.socket(name); this.root.position.x += p[0] - s[0]; this.root.position.y += p[1] - s[1]; this.root.position.z += p[2] - s[2];
+    const s = this.socket(name); this.root.position.x += p[0] - s[0]; this.root.position.y += p[1] - s[1]; this.root.position.z += p[2] - s[2]; this.pinned = true; this.grounded = false;
     this.updateContact(); return this;
   }
   /** lowest foot height above the figure's origin (for keeping feet on the ground) */
   footY() { const a = this.socket("footL")[1], b = this.socket("footR")[1]; return Math.min(a, b); }
   /** drop the figure so its lowest foot touches the ground (call after pose for sits, kneels, leaps) */
   plant() { const d = this.footY() - this.groundY; this.root.position.y -= d; this.updateContact(); return this; }
+}
+
+// ---------------------------------------------------------------- joint limits (degrees) — what a body can do
+// armX [forward, out, twist, elbow], legX [forward, out, knee]; elbows and knees bend one way only (≥ 0 = forward for
+// elbows, backward for knees); hips go back ≤ 75°, the neck turns ≤ 90°, wrists ≤ 80°. check.mjs fails on any breach.
+export const LIM = {
+  arm: [[-70, 185], [-25, 185], [-95, 100], [0, 160]], leg: [[-75, 125], [-25, 70], [0, 155]], foot: [-45, 60],
+  wrist: [-80, 80], head: [[-50, 50], [-90, 90], [-45, 45]], lean: [-35, 70], twist: [-50, 50], chestYaw: [-45, 45], side: [-35, 35], chest: [-30, 40],
+};
+const ARM = ["forward", "out", "twist", "elbow"], LEG = ["forward", "out", "knee"];
+/** limits(pose) → ["armR elbow −12° (bends 0…160)", …] — every joint outside its range */
+export function limits(p) {
+  const out = [], chk = (name, v, [a, b]) => { if (v == null || Number.isNaN(v)) return; if (v < a - 0.5 || v > b + 0.5) out.push(`${name} ${v.toFixed(0)}° (range ${a}…${b})`); };
+  for (const k of ["L", "R"]) {
+    (p["arm" + k] || []).forEach((v, i) => i < 4 && chk(`arm${k} ${ARM[i]}`, v, LIM.arm[i]));
+    (p["leg" + k] || []).forEach((v, i) => i < 3 && chk(`leg${k} ${LEG[i]}`, v, LIM.leg[i]));
+    chk(`foot${k}`, p["foot" + k], LIM.foot);
+    (p["wrist" + k] || []).forEach((v, i) => chk(`wrist${k}[${i}]`, v, LIM.wrist));
+  }
+  (p.head || []).forEach((v, i) => chk(`head ${["nod", "turn", "tilt"][i]}`, v, LIM.head[i]));
+  for (const k of ["lean", "twist", "chestYaw", "side", "chest"]) chk(k, p[k], LIM[k]);
+  return out;
 }
 
 // ---------------------------------------------------------------- expressions
