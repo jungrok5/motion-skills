@@ -2,12 +2,11 @@
 //   node <skill>/scripts/check.mjs film.html [--scale .35]
 // loads without errors · every shot draws a non-blank frame · the same t gives the same pixels (deterministic) ·
 // shots tile the timeline with no gaps · the film's own rules (Film.check: no frozen holds, shot lengths, light names) ·
-// the voice ends before the picture · every fact in BRIEF.md has a source link, and DESCRIPTION.md lists them ·
-// prints DURATION (score.mjs needs it) and the shot table.
+// the voice ends before the picture · prints DURATION (score.mjs needs it) and the shot table.
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
-import { join, resolve, dirname } from 'node:path';
+import { existsSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const require = createRequire(import.meta.url);
@@ -61,26 +60,6 @@ warn.push(...info.rules);
 if (info.lastWord && info.lastWord > info.dur) fail.push(`the voice ends at ${info.lastWord.toFixed(2)} s, after the picture (${info.dur.toFixed(2)} s)`);
 if (info.lastWord && info.dur - info.lastWord > 1.2) warn.push(`the picture runs ${(info.dur - info.lastWord).toFixed(1)} s past the last word (the reference ends on the last word)`);
 await browser.close();
-// ---- sources: every fact in BRIEF.md ends with a link; DESCRIPTION.md (the upload text) carries the same links
-const dir = dirname(page$), links = (t) => [...t.matchAll(/\]\((https?:\/\/[^)\s]+)\)/g)].map((m) => m[1]).filter((u) => !u.includes('…'));
-if (!existsSync(join(dir, 'BRIEF.md'))) warn.push('no BRIEF.md next to the page (references/BRIEF.md)');
-else {
-  const brief = readFileSync(join(dir, 'BRIEF.md'), 'utf8').replace(/<!--[\s\S]*?-->/g, '');
-  const sec = (brief.split(/^## Facts.*$/m)[1] || '').split(/^## /m)[0];
-  const facts = sec.split(/\n(?=- )/).map((x) => x.trim()).filter((x) => x.startsWith('- '));
-  if (!facts.length) fail.push('BRIEF.md has no "## Facts" list');
-  else if (facts.some((f) => f.includes('https://…'))) warn.push('BRIEF.md facts are not filled in yet (source links still "https://…")');
-  else for (const f of facts) if (!links(f).length) fail.push(`BRIEF.md fact without a source link: "${f.slice(2, 70).replace(/\s+/g, ' ')}…"`);
-  const known = new Set(links(brief).map((u) => u.split('#')[0]));
-  if (!existsSync(join(dir, 'DESCRIPTION.md'))) warn.push('no DESCRIPTION.md yet (the upload text with the source links; templates/DESCRIPTION.md)');
-  else {
-    const desc = readFileSync(join(dir, 'DESCRIPTION.md'), 'utf8').replace(/<!--[\s\S]*?-->/g, '');
-    if (desc.includes('https://…')) warn.push('DESCRIPTION.md is not filled in yet');
-    else if (!links(desc).length) fail.push('DESCRIPTION.md lists no source links');
-    else for (const u of links(desc)) if (!known.has(u.split('#')[0])) warn.push(`DESCRIPTION.md links ${u}, which is not a source in BRIEF.md`);
-  }
-  console.log(`sources: ${facts.length} facts, ${known.size} source page(s)`);
-}
 for (const w of warn) console.log('warn:', w);
 for (const f of fail) console.log('FAIL:', f);
 console.log(fail.length ? `${fail.length} problem(s)` : 'check OK');

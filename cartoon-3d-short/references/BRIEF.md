@@ -17,7 +17,7 @@ and fill it from the user's words. The example (`examples/leaning-tower/BRIEF.md
 ## What is designed per topic
 | | designed in BRIEF.md, built in the project (never by editing the skill's lib/) |
 |---|---|
-| facts + source links | the claim, the numbers said out loud, the mechanism, the consequence — each with a link; the same links in DESCRIPTION.md |
+| facts + sources | the claim, the numbers said out loud, the mechanism, the consequence |
 | analogy | one everyday thing that works the same way, shown literally (a sponge, a swing, a doorway) |
 | cast | one `person({...})` per role: era-right coat colours, hats, beards, glasses; held props as draw functions |
 | props | every noun a sentence uses that the eye must see: kit builders, or new pieces with `S.Batch`, `S.mesh`, `S.paintMat` |
@@ -37,7 +37,7 @@ Render two stills per shot (`render.mjs film.html --stills … --scale .35`) and
 | colour + light | day median luma ~.5–.6, saturated but not lemon; golden = violet shade + peach horizon; night = blue key + warm practicals |
 | ink + depth | silhouettes and creases inked, no ink on characters, lens blur on close shots only, focus on the front faces |
 | motion | no frozen holds, glides not jerks, kicks on hits, reactions 0–3 frames before the word |
-| story | hook in sentence one, the "You see," beat in another place / light, the twist on the last word, facts match the linked sources |
+| story | hook in sentence one, the "You see," beat in another place / light, the twist on the last word, facts match the sources |
 | sound (by numbers) | voice 8–10 LU over the bed, mix −14 LUFS, peak ≤ −1 dB, a sound on every on-screen hit |
 The example scored itself this way through three still passes (framing was the weak area: characters cut at the frame
 edge, a camera that pushed past its subject; see LESSONS.md).

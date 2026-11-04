@@ -124,7 +124,7 @@ export class World {
 // ---------------- the film ----------------
 export class Film {
   /** o: { W, H, fps, words (array of {w,s,e} | script text to estimate at 3.7 words/s), audio (mix for the live player),
-   *       captions (one-word captions, off by default), shadowSize, title, sources ([{ title, url }] under the player) } */
+   *       captions (one-word captions, off by default), shadowSize, title } */
   constructor(o = {}) {
     this.fps = o.fps ?? 30; this.scale = +(Q.get("scale") ?? o.scale ?? 1);
     this.W = Math.round((o.W ?? 1080) * this.scale); this.H = Math.round((o.H ?? 1920) * this.scale);
@@ -132,7 +132,6 @@ export class Film {
     this.words = Array.isArray(o.words) ? o.words : typeof o.words === "string" ? Film.estimate(o.words) : [];
     this.captions = Q.has("captions") ? Q.get("captions") !== "0" : !!o.captions;
     this.audio = o.audio ?? null; this.title = o.title ?? "cartoon short";
-    this.sources = o.sources ?? [];   // [{ title, url }] — shown as links under the live player (the facts' sources)
     this.sets = {}; this.shots = []; this.duration = o.duration ?? 0;
     const post = (Q.get("post") ?? "").split(",");
     this.canvas = document.createElement("canvas"); this.canvas.width = this.W; this.canvas.height = this.H;
@@ -296,7 +295,7 @@ export class Film {
     this.seek(Q.has("t") ? +Q.get("t") : 0);
     const render = Q.get("render") === "1";
     document.body.style.cssText = "margin:0;background:#111;display:grid;place-items:center;min-height:100vh;font:14px system-ui;color:#ddd";
-    this.canvas.style.cssText = render ? "" : `height:min(calc(100vh - ${this.sources.length ? 112 : 64}px),177.7vw);width:auto;display:block`;   // room for the bar (+ sources)
+    this.canvas.style.cssText = render ? "" : "height:min(92vh,177.7vw);width:auto;display:block";
     document.body.append(this.canvas);
     if (!render) this.player();
     window.__ready = true;
@@ -308,13 +307,6 @@ export class Film {
     const pos = document.createElement("input"); pos.type = "range"; pos.min = 0; pos.max = this.duration; pos.step = 1 / this.fps; pos.value = 0; pos.style.width = "min(60vw,420px)";
     const lab = document.createElement("span");
     bar.append(btn, pos, lab); document.body.append(bar);
-    if (this.sources.length) {                        // the facts' sources, as links under the player
-      const src = document.createElement("div");
-      src.style.cssText = "max-width:min(92vw,520px);margin:6px auto 10px;font-size:12px;line-height:1.5;color:#aaa";
-      src.append("Sources: ");
-      this.sources.forEach((x, i) => { const a = document.createElement("a"); a.href = x.url; a.textContent = x.title; a.target = "_blank"; a.rel = "noopener"; a.style.color = "#f2c230"; src.append(...(i ? [" · ", a] : [a])); });
-      document.body.append(src);
-    }
     document.body.style.gridTemplateRows = "1fr auto";
     const audio = this.audio ? new Audio(this.audio) : null;
     let playing = false, t0 = 0, w0 = 0;

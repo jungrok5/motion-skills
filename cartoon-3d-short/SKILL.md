@@ -42,10 +42,10 @@ template are examples of the style, not a menu (references/BRIEF.md).
 | `lib/paint.js` | hand-painted canvas textures: grass, cobbles, stone, planks, beams, roofs, bricks, facades with windows, clouds, water |
 | `lib/score.js` | `renderScore(spec)`: moods (march, bouncy, sneaky, tense, wonder, explain, payoff, silence), 22 cartoon SFX, ducking under the voice |
 | `lib/three.module.min.js` | three.js r170 (MIT, `lib/THREE-LICENSE`) |
-| `templates/` | `film.html` (a 5-shot, 19 s starting film that runs before any voice exists), `score.js`, `BRIEF.md` (the formula to fill), `DESCRIPTION.md` (the upload text with the source links) |
-| `examples/leaning-tower/` | the worked example: `BRIEF.md` (facts + source links), `DESCRIPTION.md`, `voice/` (voice.mp3, words.json), `index.html` (19 shots), `score.js` |
+| `templates/` | `film.html` (a 5-shot, 19 s starting film that runs before any voice exists), `score.js`, `BRIEF.md` (the formula to fill) |
+| `examples/leaning-tower/` | the worked example: `BRIEF.md` (facts + sources), `voice/` (voice.mp3, words.json), `index.html` (19 shots), `score.js` |
 | `scripts/new-film.mjs` | start a project (template or `--from leaning-tower`) |
-| `scripts/check.mjs` | loads clean · every shot draws · deterministic · no gaps · rules · voice inside the picture · every fact has a source link and DESCRIPTION.md carries them · prints DURATION and the shot table |
+| `scripts/check.mjs` | loads clean · every shot draws · deterministic · no gaps · rules · voice inside the picture · prints DURATION and the shot table |
 | `scripts/render.mjs` | stills, a contact sheet, or the MP4 (workers × ffmpeg chunks, `--audio`, `--scale 1.3333` for 1440×2560) |
 | `scripts/score.mjs` | the score → WAV; with `--voice` + `--words`, the final mix (ducked, −14 LUFS, peak −1 dB) |
 | `references/` | **BRIEF** (fixed vs per topic, the brief, the stills rubric) · **STORY** (topic → facts → script formula → shot plan) · **LOOK** (the measured targets and the final values) · **KIT** (API) · **VOICE** (narration and word timing) · **LESSONS** (what broke and the fix) |
@@ -53,8 +53,7 @@ template are examples of the style, not a menu (references/BRIEF.md).
 ## Project layout (what you create)
 ```
 my-short/
-  BRIEF.md          facts with source links → script → cast, sets, props, light, sound → shot plan (written first)
-  DESCRIPTION.md    the upload text: one or two sentences + "Sources:" with the same links (written last)
+  BRIEF.md          facts with sources → script → cast, sets, props, light, sound → shot plan (written first)
   voice/voice.mp3    the narration (ElevenLabs), tightened to ~3.5 words/s
   voice/words.json   [{ "w": "Seventy-four", "s": 0.14, "e": 0.62 }, …]  word times (speech-to-text)
   film.html          sets → cast → shots (timed by F.at("word")) → F.start()
@@ -74,7 +73,7 @@ No npm install, no GPU. On a 4-core box without a GPU (SwiftShader) the 62 s exa
 ## Workflow
 1. **Topic → brief.** Pick (or take the user's) one surprising *true* story with a physical cause and effect, that can
    be shown literally, plus one everyday analogy that explains it (a swing, a sponge, a crowded doorway). Write `BRIEF.md`
-   (`templates/BRIEF.md`, references/BRIEF.md): the facts, each ending with a markdown link to its source — the page (with a section anchor), a DOI or an archive; every joke is a real fact, then — after the
+   (`templates/BRIEF.md`, references/BRIEF.md): the facts with their sources (every joke is a real fact), then — after the
    script — the cast, props, sets, light per beat, effect cards and sound designed for this topic.
 2. **Script** (`references/STORY.md`): ~200–240 words for 55–70 s at ~3.7 words/s. Hook = the absurd fact in sentence one,
    no setup → setting (year, place, pride) → 3–6 escalating beats (others laugh / doubt) → "But wait…?" → **"You see,"**
@@ -103,9 +102,7 @@ No npm install, no GPU. On a 4-core box without a GPU (SwiftShader) the 62 s exa
 9. **Render** in the background: `node <skill>/scripts/render.mjs film.html --audio out/mix.wav` (`--scale 1.3333` for a
    1440×2560 "2K" final). Then open stills from the MP4's start, middle and end
    (`ffmpeg -ss 30 -i out/film.mp4 -frames:v 1 x.png`) and check the length equals the voice + ~0.3 s.
-10. **Deliver**: the MP4, `DESCRIPTION.md` (the upload text: the hook in a sentence or two, then "Sources:" with the
-    brief's links — paste it under the video), the live page (`film.html` through a server plays it with sound; pass
-    `sources: [{ title, url }]` to `new Film` and the links show under the player) and `BRIEF.md`.
+10. **Deliver**: the MP4, the live page (`film.html` through a server plays it with sound), and `BRIEF.md`.
 
 ## Rules
 - **Deterministic**: every frame is a function of `t` (seeded `rng`, blinks from seeds, no `Math.random`, no state
@@ -127,9 +124,7 @@ No npm install, no GPU. On a 4-core box without a GPU (SwiftShader) the 62 s exa
 - **Original everything**: our story, our characters, our voice. Never copy a channel's scripts, characters, shots or
   name; never say the reference channel's name in the voice-over or description.
 - **No captions** unless the user asks (`?captions=1` or `captions: true` adds the reference's one-word white captions).
-- **Facts are checked and linked**: numbers and claims in the voice match the sources in `BRIEF.md`; every fact links
-  its source, and the same links go out with the video (`DESCRIPTION.md`, the live page). No on-screen source card (the
-  reference ends on the last word); the links live in the description. check.mjs fails a fact without a link.
+- **Facts are checked**: numbers and claims in the voice match the sources in `BRIEF.md`.
 
 ## Contract every film page fulfils
 `window.seek(t)` draws frame t synchronously; `window.DURATION`, `window.FPS`, `window.film`; `window.__ready = true`

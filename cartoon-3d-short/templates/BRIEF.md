@@ -6,13 +6,11 @@
 **Topic (as the user said it):** "…"
 **Title:** …
 
-## Facts (each with a source link)
-<!-- every fact ends with a markdown link to where it is written: the page (section anchor if it has one), a DOI, an
-     archive. check.mjs fails a fact without a link; the same links go into DESCRIPTION.md. -->
-- The claim the hook rests on — [source title](https://…)
-- The numbers you say out loud (years, metres, counts) — [source title](https://…)
-- The mechanism ("You see, …") — [source title](https://…)
-- The twist / consequence — [source title](https://…)
+## Facts (with sources)
+- The claim the hook rests on — source
+- The numbers you say out loud (years, metres, counts) — source
+- The mechanism ("You see, …") — source
+- The twist / consequence — source
 
 ## Analogy
 One everyday thing that works the same way (a swing, a sponge, a crowded doorway …), shown on screen literally.
@@ -31,9 +29,8 @@ Your toast is not unlucky. It is doing physics. You knock it off the table, and 
 You see, a normal table is only tall enough for half a turn. So the butter lands face down, almost every time.
 Want it to land butter side up? Get a taller table.
 
-<!-- (template example: [Robert Matthews, "Tumbling toast, Murphy's Law and the fundamental constants", European Journal
-     of Physics 16 (1995) 172–176](https://doi.org/10.1088/0143-0807/16/4/005) — table heights of ~75 cm give the toast
-     time for about half a turn) -->
+<!-- (template example: Robert Matthews, "Tumbling toast, Murphy's Law and the fundamental constants",
+     European Journal of Physics 16 (1995) 172–176 — table heights of ~75 cm give the toast time for about half a turn) -->
 
 ## Designed for this topic
 - **Cast** (one `person({...})` each, a distinct coat colour per role; era-right hats and props; who is the everyman):
