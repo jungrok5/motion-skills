@@ -108,7 +108,8 @@ export class Chrome {
     g.restore();
   }
   /** a dry-brush stroke along a wave, drawn up to fraction k (deterministic) */
-  brush(cx, cy, len, k, seed = 5, color = INK, amp = 0.06) {
+  brush(cx, cy, len, k, seed = 5, color = INK, amp = 0.06, alpha = 1) {
+    if (alpha <= 0 || k <= 0) return;
     const g = this.g, s = this.s, r = rng(seed), N = 220, n = Math.floor(N * clamp01(k)), bristles = 26;
     const P = (u) => [cx - len / 2 + len * u, cy + Math.sin(u * Math.PI * 2.1 + 0.4) * len * amp * (1 - 0.4 * u) - Math.sin(u * Math.PI) * len * 0.015];
     const offs = Array.from({ length: bristles }, () => [r() * 2 - 1, 0.35 + r() * 0.65, r()]);
@@ -121,7 +122,7 @@ export class Chrome {
         if (u > 0.55 + dry * 0.45 && dry > 0.45) { g.moveTo(nx, ny); continue; }  // dry brush: bristles run out of ink
         if (i === 0) g.moveTo(nx, ny); else g.lineTo(nx, ny);
       }
-      g.strokeStyle = color; g.globalAlpha = 0.18 + 0.5 * wgt; g.lineWidth = Math.max(1, 2.2 * s * wgt); g.stroke();
+      g.strokeStyle = color; g.globalAlpha = (0.18 + 0.5 * wgt) * alpha; g.lineWidth = Math.max(1, 2.2 * s * wgt); g.stroke();
     }
     g.restore();
   }
@@ -139,7 +140,7 @@ export class Chrome {
   card(c, lt) {
     const g = this.g, s = this.s, W = this.W, H = this.H, a = smooth(lt / 0.8) * (1 - smooth((lt - c.dur + 0.6) / 0.6) * (c.fadeOut ? 1 : 0));
     g.save(); g.globalAlpha = a; g.fillStyle = c.bg ?? PAPER; g.fillRect(0, 0, W, H); g.restore();
-    if (c.stroke !== false) { g.save(); g.globalAlpha = a * (1 - smooth((lt - 2.0) / 0.9)); this.brush(W * 0.5, H * 0.47, W * 0.32, (lt - 0.3) / 1.5, c.seed ?? 5); g.restore(); }
+    if (c.stroke !== false) this.brush(W * 0.5, H * 0.47, W * 0.32, (lt - 0.3) / 1.5, c.seed ?? 5, INK, 0.06, a * (1 - smooth((lt - 2.0) / 0.9)));
     const kt = smooth((lt - 2.7) / 1.0);
     if (kt > 0) {
       g.save(); g.globalAlpha = kt; g.textAlign = "center"; g.textBaseline = "alphabetic"; g.fillStyle = INK;

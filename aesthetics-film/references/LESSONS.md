@@ -31,8 +31,10 @@ Problem → cause → fix, one or two lines each.
 - **Hangul / Han fell back to a sans system font (or tofu) in headless Chromium.** → No serif CJK fonts on the render
   box. → `scripts/fonts.mjs` fetches subset WOFF2s (only the film's characters, ~150–300 KB) once; `F.start()` waits
   for them; check.mjs fails if a character is missing from `fonts/chars.txt`.
-- **The card's brush stroke ran through the title.** → Both on screen together. → Stroke 0.3–1.8 s, fades 2.0–2.9 s;
-  title from 2.7 s, seal 3.2 s, line 3.6 s, footer 4.2 s.
+- **The card's brush stroke ran through the title — and never faded.** → Both on screen together, and `brush()` set
+  its own `globalAlpha` per bristle, overriding the card's fade. → `brush(…, alpha)` multiplies every bristle; stroke
+  0.3–1.8 s, fades 2.0–2.9 s; title from 2.7 s, seal 3.2 s, line 3.6 s, footer 4.2 s. Look at a full-size still of
+  the card's last second, not only the sheet.
 - **Callout on a moving orbit pointed at air.** → A fixed anchor on a round object while the camera circles. → `at` can
   be a function of `lt`: put the anchor on the surface facing the camera (example: the moon jar's seam).
 
