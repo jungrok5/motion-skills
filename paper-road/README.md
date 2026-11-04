@@ -21,3 +21,5 @@ a CPU.
 Example: `examples/draw-a-road/` (30 s — "if the road ends, draw a new one": road's end, a paper roll, a hill, a loop, a
 pen, a pull-back). Idea from an AI papercraft clip shared on X by @Artedeingenio; everything here is this repo's own code.
 Live pages: https://jungrok5.github.io/motion-skills/paper-road/
+
+Source (what this skill was made from): https://x.com/Artedeingenio/status/2117001260205543520

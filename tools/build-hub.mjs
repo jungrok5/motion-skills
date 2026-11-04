@@ -14,9 +14,9 @@ const { renderCards } = createRequire(import.meta.url)(path.join(docs, 'assets',
 const reg = JSON.parse(fs.readFileSync(path.join(docs, 'skills.json'), 'utf8'));
 const problems = [];
 const required = ['id', 'name', 'tagline', 'poster', 'tags', 'stats', 'page', 'source', 'absorbedFrom', 'workedExample'];
-// skills registered before "sources" became required (2026-11): checked only if they have the field
-const LEGACY = new Set(['canvas-film', 'tech-motion-explainer', 'promo-video', 'motion-webtoon', 'specimen-tour', 'cinematic-3d', 'machine-sim',
-  'pixel-diorama', 'paper-road', 'pop-up-textbook', 'knit-diorama', 'painted-anime-short', 'ink-summoning', 'holo-pass', 'crayon-statechart']);
+// skills with no recorded source link anywhere in the repo (built here from a description, a reel or renders whose links were
+// never written down): checked only if they get a "sources" field
+const LEGACY = new Set(['motion-webtoon', 'specimen-tour', 'cinematic-3d']);
 for (const s of reg.skills) {
   for (const k of required) if (s[k] == null) problems.push(`${s.id || '?'}: missing "${k}"`);
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(s.id || '')) problems.push(`${s.id}: id must be kebab-case`);

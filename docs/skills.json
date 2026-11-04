@@ -13,6 +13,10 @@
       "page": "canvas-film/",
       "source": "canvas-film/",
       "absorbedFrom": { "repo": "https://github.com/jungrok5/one-scroll-bible", "path": "motion/" },
+      "sources": [
+        { "title": "jungrok5/one-scroll-bible (원본 작품 레포)", "url": "https://github.com/jungrok5/one-scroll-bible" },
+        { "title": "한눈에 보는 성경 이야기 (라이브)", "url": "https://one-scroll-bible.com/film/" }
+      ],
       "workedExample": [
         { "title": "한눈에 보는 성경 이야기 · 13분 · 21장면 · 11개 언어", "url": "https://one-scroll-bible.com/film/" }
       ]
@@ -28,6 +32,10 @@
       "page": "tech-motion-explainer/",
       "source": "tech-motion-explainer/",
       "absorbedFrom": { "repo": "https://github.com/jungrok5/mmo-server-explained", "path": ".claude/skills/tech-motion-explainer/" },
+      "sources": [
+        { "title": "jungrok5/mmo-server-explained (원본 작품 레포)", "url": "https://github.com/jungrok5/mmo-server-explained" },
+        { "title": "MMO 서버 설명 영상 (라이브)", "url": "https://jungrok5.github.io/mmo-server-explained/" }
+      ],
       "workedExample": [
         { "title": "MMO 서버 · 네트워크 설명 영상 12편", "url": "https://jungrok5.github.io/mmo-server-explained/" },
         { "title": "인터랙티브 이력서 · 스크롤 재생 12조각", "url": "https://jungrok5.github.io/resume/interactive.html" }
@@ -44,6 +52,9 @@
       "page": "promo-video/",
       "source": "promo-video/",
       "absorbedFrom": { "repo": "https://github.com/jungrok5/ysw-tax", "path": "video/ · fortimove/ · audio/" },
+      "sources": [
+        { "title": "jungrok5/ysw-tax (원본 작품 레포, 비공개)", "url": "https://github.com/jungrok5/ysw-tax" }
+      ],
       "workedExample": [
         { "title": "포티무브글로벌 홍보 영상 4편 · 회사 소개 페이지에서", "url": "https://www.fortimoveglobal.com/about" }
       ]
@@ -104,6 +115,9 @@
       "page": "machine-sim/",
       "source": "machine-sim/",
       "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "machine-sim/examples/walker/" },
+      "sources": [
+        { "title": "studio_oneroom의 X 게시물 (MT-4 Quadruped Tank)", "url": "https://x.com/studio_oneroom/status/2116823414656618711" }
+      ],
       "workedExample": [
         { "title": "AW-6 보행 전차 · 크리프 보행 · 27초 투어 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/machine-sim/demo/examples/walker/" },
         { "title": "ST-1 단기통 엔진 · 4행정 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/machine-sim/demo/examples/engine/" }
@@ -120,6 +134,9 @@
       "page": "pixel-diorama/",
       "source": "pixel-diorama/",
       "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "pixel-diorama/examples/halloween-rain/" },
+      "sources": [
+        { "title": "zer0point_eth의 X 게시물 (픽셀 핼러윈 디오라마)", "url": "https://x.com/zer0point_eth/status/2116832762912973220" }
+      ],
       "workedExample": [
         { "title": "「Halloween Rain」 · 60초 루프 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/pixel-diorama/demo/halloween-rain.html" }
       ]
@@ -135,6 +152,9 @@
       "page": "paper-road/",
       "source": "paper-road/",
       "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "paper-road/examples/draw-a-road/" },
+      "sources": [
+        { "title": "Artedeingenio의 X 게시물 (종이 길 클립)", "url": "https://x.com/Artedeingenio/status/2117001260205543520" }
+      ],
       "workedExample": [
         { "title": "「Draw a Road」 · 30초 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/paper-road/demo/draw-a-road.html" }
       ]
@@ -150,6 +170,9 @@
       "page": "pop-up-textbook/",
       "source": "pop-up-textbook/",
       "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "pop-up-textbook/examples/electricity/" },
+      "sources": [
+        { "title": "techartist_의 X 게시물 (인터랙티브 3D 교과서)", "url": "https://x.com/techartist_/status/2116950641356705928" }
+      ],
       "workedExample": [
         { "title": "Electricity · 수업 3개 · 33초 투어 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/pop-up-textbook/demo/examples/electricity/" },
         { "title": "The Sky · 계절과 달의 위상 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/pop-up-textbook/demo/examples/sky/" }
@@ -166,6 +189,9 @@
       "page": "knit-diorama/",
       "source": "knit-diorama/",
       "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "knit-diorama/examples/harbour/" },
+      "sources": [
+        { "title": "Kris Yang, yarn.krisyang.dev (뜨개 디오라마)", "url": "https://yarn.krisyang.dev/" }
+      ],
       "workedExample": [
         { "title": "「Knitted Harbour」 · 20초 루프 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/knit-diorama/demo/harbour.html" }
       ]
@@ -181,6 +207,10 @@
       "page": "painted-anime-short/",
       "source": "painted-anime-short/",
       "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "painted-anime-short/examples/last-tram/" },
+      "sources": [
+        { "title": "chetaslua의 X 게시물 (영상과 프롬프트)", "url": "https://x.com/chetaslua/status/2117169796290916732" },
+        { "title": "ChetasLua/moss-keeper (그 결과물)", "url": "https://github.com/ChetasLua/moss-keeper" }
+      ],
       "workedExample": [
         { "title": "「The Last Tram」 · 48초 · 8샷 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/painted-anime-short/demo/last-tram/" }
       ]
@@ -196,6 +226,9 @@
       "page": "ink-summoning/",
       "source": "ink-summoning/",
       "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "ink-summoning/examples/dragon-tiger/" },
+      "sources": [
+        { "title": "AyeshaEvie의 X 게시물 (Seedance 클립과 프롬프트)", "url": "https://x.com/AyeshaEvie/status/2117456171053596757" }
+      ],
       "workedExample": [
         { "title": "「龍虎 · Dragon and Tiger」 · 21초 · 10샷 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/ink-summoning/demo/dragon-tiger/" }
       ]
@@ -211,6 +244,9 @@
       "page": "holo-pass/",
       "source": "holo-pass/",
       "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "holo-pass/examples/graduation/" },
+      "sources": [
+        { "title": "KanaWorks_AI의 X 게시물 (しあわせパス)", "url": "https://x.com/KanaWorks_AI/status/2117430343934599675" }
+      ],
       "workedExample": [
         { "title": "「CLASS OF 2027」 졸업 초대장 · 브리프로 설계한 테마 · 만들기 화면", "url": "https://jungrok5.github.io/motion-skills/holo-pass/" }
       ]
@@ -226,6 +262,10 @@
       "page": "crayon-statechart/",
       "source": "crayon-statechart/",
       "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "crayon-statechart/examples/kimchi/" },
+      "sources": [
+        { "title": "ann_nnng의 X 게시물 (향 만드는 과정 상태도)", "url": "https://x.com/ann_nnng/status/2116811409921372642" },
+        { "title": "kevin_t_ngo의 X 게시물 (버블티 가게 상태도)", "url": "https://x.com/kevin_t_ngo/status/2116270190040416313" }
+      ],
       "workedExample": [
         { "title": "「김장 · the making of kimchi」 · 46초 · 3장 20단계 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/crayon-statechart/demo/kimchi/" }
       ]

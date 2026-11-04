@@ -21,3 +21,5 @@ Shorts / Reels (vertical, up to 3 min): see `references/SHORTS.md` — burned-in
 Requirements: Node + Playwright (Chromium), ffmpeg, Python 3 with numpy; an ElevenLabs connector for new narration/SFX/music.
 Real work: 9 videos for two clients (5 styles for a tax accountant, 4 for fortimoveglobal.com) — samples page:
 https://jungrok5.github.io/motion-skills/promo-video/
+
+Source (what this skill was made from): https://github.com/jungrok5/ysw-tax

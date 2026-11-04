@@ -128,7 +128,7 @@ description: 무엇을 만드는지 한두 문장 + 언제 쓰는지. 트리거 
    - `README.md` 출처 줄, 샘플 페이지의 머리말 한 줄("원본: … 을 보고 만들었습니다")과 "실제 작품" 섹션.
    - `absorbedFrom` (`{ "repo": "https://github.com/jungrok5/<project>", "path": "<원본 경로>/" }`)과 `workedExample`도 그대로 채웁니다.
    `node tools/build-hub.mjs --check`가 `sources`의 링크가 하나라도 description · README · 샘플 페이지에 없으면 실패합니다
-   (2026-11 이전에 등록된 스킬은 `sources`가 있을 때만 검사).
+   (출처 링크가 레포에 남아 있지 않은 motion-webtoon · specimen-tour · cinematic-3d만 `sources` 없이 통과).
 4. **교훈은 `references/LESSONS.md`로.** 원본에서 겪은 문제와 해결(렌더가 느렸다 → 청크 렌더, 텍스트가 겹쳤다 → 스틸로 확인 등)을
    "문제 → 원인 → 해결" 한두 줄씩. 다음 사람이 같은 실수를 하지 않게 하는 것이 흡수의 목적입니다.
 5. **새 주제로 한 번 끝까지.** 원본에 없는 주제를 하나 골라 브리프부터 결과물까지 만들어 봅니다 ([주제를 받아 새로 만든다](#주제를-받아-새로-만든다) 6).

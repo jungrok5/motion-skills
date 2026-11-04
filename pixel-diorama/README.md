@@ -21,3 +21,5 @@ minutes on a CPU. Size: ~3 Mbps at 1080p with heavy rain (60 s ≈ 24 MB, 10 h �
 Examples: `examples/halloween-rain/` (60 s — the prompt from an X post: a pixel-art Halloween diorama as the looping cover of a
 10-hour lofi video) and `examples/first-snow/` (40 s — the same kit in winter: aurora, pines, snowman, snowfall).
 Live pages: https://jungrok5.github.io/motion-skills/pixel-diorama/
+
+Source (what this skill was made from): https://x.com/zer0point_eth/status/2116832762912973220
