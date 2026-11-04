@@ -18,3 +18,5 @@ Requirements: Node 18+, Playwright + Chromium, ffmpeg.
 Reference: `examples/electricity/` recreates in code the "Mains and the plug" lesson of an interactive 3D physics book
 shown in a screen recording on X, plus two new lessons; `examples/sky/` (seasons, phases of the Moon) is a different
 subject on the same kit.
+
+Source (what this skill was made from): https://x.com/techartist_/status/2116950641356705928

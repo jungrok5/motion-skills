@@ -120,11 +120,15 @@ description: 무엇을 만드는지 한두 문장 + 언제 쓰는지. 트리거 
    | 원본 전체 작품 | starter/examples엔 최소 1–2개, 나머지는 "실제 작품" 링크로 |
    | 원본 작품의 주제 (그 이야기 · 캐릭터 · 장면 · 문구) | 스타일의 예시로만. 주제를 바꾸면 새로 설계되는 흐름(브리프 틀 · 도구 · 검토 기준)을 만들고, 원본에 없는 주제로 한 번 증명 |
 
-3. **출처 남기기.** 세 곳에 같은 정보를:
-   - `SKILL.md` 본문 위쪽 한 줄: 원본 레포 → 경로, 라이브 주소.
-   - `docs/skills.json`의 `absorbedFrom` (`{ "repo": "https://github.com/jungrok5/<project>", "path": "<원본 경로>/" }`)과
-     `workedExample` (`[{ "title": "…", "url": "…" }]`).
-   - 샘플 페이지의 "실제 작품" 섹션.
+3. **출처 남기기.** 이 스킬을 무엇을 보고 만들었는지, 스킬을 쓰는 사람이 바로 알 수 있게 합니다. 사용자가 스킬로 만들어 달라며 준
+   링크(원본 레포, X · Threads 게시물, 영상, 글, 라이브 사이트)는 하나도 빠짐없이, 받은 그대로의 주소로:
+   - `docs/skills.json`의 `sources` (`[{ "title": "…", "url": "…" }]`): 그 링크 전부. 허브 카드에 "만든 출처" 링크로 보입니다.
+   - `SKILL.md` 프론트매터 `description` 끝: `Source — made from <url>, shared at <url>.` (에이전트와 사람이 스킬을 고를 때 읽는 글)
+     그리고 본문 위쪽 출처 문단 (원본 레포 → 경로, 라이브 주소).
+   - `README.md` 출처 줄, 샘플 페이지의 머리말 한 줄("원본: … 을 보고 만들었습니다")과 "실제 작품" 섹션.
+   - `absorbedFrom` (`{ "repo": "https://github.com/jungrok5/<project>", "path": "<원본 경로>/" }`)과 `workedExample`도 그대로 채웁니다.
+   `node tools/build-hub.mjs --check`가 `sources`의 링크가 하나라도 description · README · 샘플 페이지에 없으면 실패합니다
+   (출처 링크가 레포에 남아 있지 않은 motion-webtoon · specimen-tour · cinematic-3d만 `sources` 없이 통과).
 4. **교훈은 `references/LESSONS.md`로.** 원본에서 겪은 문제와 해결(렌더가 느렸다 → 청크 렌더, 텍스트가 겹쳤다 → 스틸로 확인 등)을
    "문제 → 원인 → 해결" 한두 줄씩. 다음 사람이 같은 실수를 하지 않게 하는 것이 흡수의 목적입니다.
 5. **새 주제로 한 번 끝까지.** 원본에 없는 주제를 하나 골라 브리프부터 결과물까지 만들어 봅니다 ([주제를 받아 새로 만든다](#주제를-받아-새로-만든다) 6).
@@ -165,11 +169,12 @@ docs/
      (타일에 `data-tags="key"`, `.chips`의 `data-labels`에 key → 이름). 끝없이 이어지는 페이지는 만들지 않습니다.
    - 썸네일: 640 px 폭 JPEG, 품질 ~80, `docs/<skill>/samples/`. 동영상 페이지라면 영상 중간(예: 길이의 40%) 스틸을 렌더해서 씁니다.
 4. **포스터**: `docs/<skill>/poster.jpg`, 약 1200×675, 200 KB 이하. 기존 두 스킬은 대표 장면 4개를 2×2로 붙였습니다.
-5. **레지스트리**: `docs/skills.json`에 객체를 추가합니다. 필드는 `id, name, tagline, poster, posterAlt, tags (3–5), stats (2개 정도), page, source, absorbedFrom, workedExample`.
+5. **레지스트리**: `docs/skills.json`에 객체를 추가합니다. 필드는 `id, name, tagline, poster, posterAlt, tags (3–5), stats (2개 정도), page, source, absorbedFrom, workedExample, sources`.
+   `sources`는 스킬을 만든 출처 링크 전부입니다 ([출처 남기기](#2-다른-레포에서-흡수하기) 3).
    `posterAlt`는 포스터에 보이는 장면을 그대로 적은 대체 텍스트입니다 (허브에서 첫 화면에 보이는 그림).
    이 레포 안에서 만든 스킬(다른 레포에서 흡수하지 않은 것)은 `absorbedFrom.repo`에 이 레포 주소를, `path`에 실제 작품 폴더를 적습니다
    (예: motion-webtoon → `motion-webtoon/examples/donut/`). 허브 카드에는 "출처" 대신 "이 레포에서 만듦"으로 표시됩니다.
-   그다음 `node tools/build-hub.mjs`로 허브의 정적 카드(JS 없이도 보이는 부분)를 다시 만듭니다. `--check`는 빠진 필드, 없는 파일, 동기화 여부를 검사합니다.
+   그다음 `node tools/build-hub.mjs`로 허브의 정적 카드(JS 없이도 보이는 부분)를 다시 만듭니다. `--check`는 빠진 필드, 없는 파일, 동기화 여부, `sources`의 링크가 description · README · 샘플 페이지에 다 있는지를 검사합니다.
    허브 `index.html`의 카드 블록은 손으로 고치지 않습니다.
 6. **README 표**: 루트 `README.md`의 스킬 표에 한 줄 (폴더 링크 · 만드는 것 · 샘플 페이지 링크).
 7. **크기**: `docs/`에 MP4를 넣지 않습니다 (MP4는 원본 레포나 실제 작품 사이트에). 스킬마다 추가하는 이미지는 합쳐서 2 MB 안쪽.

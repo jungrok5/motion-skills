@@ -1,6 +1,6 @@
 ---
 name: tech-motion-explainer
-description: Turn a technical process (architecture, pipeline, dev workflow, protocol, infra flow) into a 60–110s code-driven motion-graphic explainer — a set of three pages per topic (video player · written explanation · topic glossary), plus an MP4. Use when the user gives technical content and asks for a 모션그래픽 / 설명 영상 / 기술 설명 영상 / explainer video / animated walkthrough / motion graphic of how something works. Also covers a 9:16 vertical cut (세로 영상 / 모바일), 3D ways to explain a topic (분해해 들어가기, 흐름과 관계를 빛으로, 실물을 공간에 늘어놓기, …), and pieces scroll-scrubbed inside another page (scroll-embed, e.g. a résumé or landing page).
+description: Turn a technical process (architecture, pipeline, dev workflow, protocol, infra flow) into a 60–110s code-driven motion-graphic explainer — a set of three pages per topic (video player · written explanation · topic glossary), plus an MP4. Use when the user gives technical content and asks for a 모션그래픽 / 설명 영상 / 기술 설명 영상 / explainer video / animated walkthrough / motion graphic of how something works. Also covers a 9:16 vertical cut (세로 영상 / 모바일), 3D ways to explain a topic (분해해 들어가기, 흐름과 관계를 빛으로, 실물을 공간에 늘어놓기, …), and pieces scroll-scrubbed inside another page (scroll-embed, e.g. a résumé or landing page). Source — made from https://github.com/jungrok5/mmo-server-explained, https://jungrok5.github.io/mmo-server-explained/.
 ---
 
 # Tech Motion Explainer

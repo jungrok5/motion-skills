@@ -10,9 +10,7 @@ is extremely regular. Follow it; it is why these shorts hold attention.
   a crowded doorway = a traffic jam). No mechanism, no "You see," beat, no short.
 - It needs **stakes and people**: someone did something that sounds dumb or impossible, others reacted.
 - Check every claim and number against a source (Wikipedia is the minimum; follow its citation for the key number).
-  Write them at the top of `BRIEF.md`, each ending with a markdown link (`— [Wikipedia § Construction](https://…#Construction)`,
-  a DOI as `https://doi.org/…`); open every link once to make sure it resolves and says what you claim. The same links go
-  into `DESCRIPTION.md`, the text posted under the video. Jokes are researched facts, not invented ones.
+  Write them at the top of `BRIEF.md`. Jokes are researched facts, not invented ones.
 
 ## 2. The script formula (20 of 20 reference videos follow it)
 | beat | what | example (leaning-tower) |

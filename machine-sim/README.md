@@ -17,3 +17,5 @@ Requirements: Node 18+, Playwright + Chromium, ffmpeg.
 
 Reference: `examples/walker/` recreates in code a screen recording of a three.js "quadruped tank" page posted on X;
 `examples/engine/` is a single-cylinder four-stroke engine on the same kit.
+
+Source (what this skill was made from): https://x.com/studio_oneroom/status/2116823414656618711

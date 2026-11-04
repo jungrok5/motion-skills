@@ -48,3 +48,5 @@ A request that gets the same kind of result from a plain agent, without installi
 - 영상 · 설명(챕터별 글, 장면 바로가기) · 용어집(이 주제의 용어만) 세 페이지를 한 세트로.
 - 챕터마다 스틸을 뽑아 겹침 · 잘림을 고치고, 별도 에이전트로 시니어 전문가 검수를 거친 뒤 보여줘.
 ````
+
+Source (what this skill was made from): https://github.com/jungrok5/mmo-server-explained · https://jungrok5.github.io/mmo-server-explained/

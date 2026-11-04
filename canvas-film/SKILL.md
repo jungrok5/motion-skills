@@ -1,6 +1,6 @@
 ---
 name: canvas-film
-description: Make a dramatic, multi-scene motion-graphics film drawn entirely in code (HTML Canvas), in landscape and portrait, with AI music/SFX (ElevenLabs), rendered to MP4 frame by frame AND published as a live web player that draws the scenes in the browser — in many languages from one set of scenes. Use when asked to turn a story, site, sermon, explainer or script into a cinematic motion film / motion graphics ("모션그래픽", "영상으로 만들어줘", "film", "animated explainer"), especially when it must exist in several languages or play on a website.
+description: Make a dramatic, multi-scene motion-graphics film drawn entirely in code (HTML Canvas), in landscape and portrait, with AI music/SFX (ElevenLabs), rendered to MP4 frame by frame AND published as a live web player that draws the scenes in the browser — in many languages from one set of scenes. Use when asked to turn a story, site, sermon, explainer or script into a cinematic motion film / motion graphics ("모션그래픽", "영상으로 만들어줘", "film", "animated explainer"), especially when it must exist in several languages or play on a website. Source — made from https://github.com/jungrok5/one-scroll-bible, https://one-scroll-bible.com/film/.
 ---
 
 # canvas-film

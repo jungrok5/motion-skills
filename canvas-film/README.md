@@ -11,3 +11,5 @@ node ../../scripts/i18n-merge.mjs ko && node ../../scripts/render.mjs h --scene 
 python3 ../../scripts/publish.py && (cd site && python3 -m http.server 8000)   # open http://localhost:8000/
 ```
 Full production example (21 scenes, 11 languages): github.com/jungrok5/one-scroll-bible → `motion/` · one-scroll-bible.com/film/
+
+Source (what this skill was made from): https://github.com/jungrok5/one-scroll-bible · https://one-scroll-bible.com/film/
