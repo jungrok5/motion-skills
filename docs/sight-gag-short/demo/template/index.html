@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Handle With Care · sight-gag-short template</title>
+<script type="importmap">{ "imports": { "three": "../lib/three.module.min.js", "gag/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// The starting film (12 s, 3 shots, 2 gags): Rosa, a deadpan baker, walks her block with a red knitted oven mitt on a
+// quilted hose. Gag 1: a hand sneaks toward the pie cooling on her sill — the mitt slaps it. Gag 2: a delivery man's
+// tower of parcels tips — the mitt pushes it straight. Then the pun. It is an example of the STYLE, not a menu:
+// for a new topic, write BRIEF.md first (references/BRIEF.md), then replace the hero, the gadget, the set, every gag
+// and the title. Keep the structure:
+//   1. film + set (S.street, S.building …)   2. cast (person) + gadget + props (F.prop)   3. helpers (hero walk, the
+//   gadget's rest spot)   4. one F.shot per gag: marks (setup → notice → act → result → button) drive the motion AND
+//   the sfx   5. F.title (the pun) + F.start(SCORE, renderScore)
+// Every value is a pure function of the shot's local time t. Preview: python3 -m http.server → /templates/film.html
+import { Film } from "gag/film.js";
+import { person, P, walk, stroll, steps, mixPose, over, KP, run } from "gag/figure.js";
+import { gadget, KS, Glove } from "gag/gadget.js";
+import * as KIT from "gag/kit.js";
+import { K, lerp, lerpA, clamp, wob, win, add, sub, mul, norm, arc } from "gag/core.js";
+import { renderScore } from "gag/score.js";
+import { SCORE } from "./score.js";
+
+const F = await new Film({ title: "Handle With Care", bpm: 120 }).load();
+const S = F.S;
+
+// 1 · the set: a short block — the bakery (with a pie on the sill), a grocer, a post office
+S.street({ from: -20, to: 40 });
+S.building({ x: -9, w: 8, floors: 2, wall: "brick", brick: "#b8503f", patches: 2, seed: 3, door: "left", blade: { text: "BAKERY", bg: "#c8322b", at: 0.4 } });
+S.building({ x: -1, w: 9, floors: 3, wall: "painted", brick: "#b44a3e", patches: 3, seed: 5, shop: {}, sign: { text: "GROCER", bg: "#4d8a46" }, awning: { a: "#4d8a46", b: "#f6f1e6" } });
+S.building({ x: 8, w: 9, floors: 2, wall: "plaster", plaster: "#efe2c6", seed: 7, shop: {}, sign: { text: "POST OFFICE", bg: "#2b3a5c" }, awning: { a: "#2b3a5c", b: "#f1ece0" } });
+S.building({ x: 17, w: 9, floors: 3, wall: "brick", brick: "#a9473d", patches: 2, seed: 9, door: "centre" });
+S.skyline({ from: -30, to: 50, z: -24 }); F.cloudBand({ from: -30, to: 50, n: 6 });
+for (const x of [-7.6, 12.6, 21]) S.lamp({ at: [x, 0, 3.0] });
+S.bin({ at: [6.2, 0, 0.75] }); S.planter({ at: [15.2, 0, 0.45], flower: "#e85d75" });
+
+// 2 · the cast: Rosa (round, apron, chef's toque, a copper tank), the mitt, the pie thief, the delivery man
+const rosa = person(F, { build: "round", skin: "#e0a77f", top: { kind: "tee", color: "#f6f3ec" }, bottom: { color: "#2a2a30", pattern: "plaid", b: "#f2efe8" }, shoes: { kind: "slipper", color: "#1d1d20" },
+  hair: { style: "bun", color: "#5a3a26" }, hat: { kind: "chef", color: "#f7f5f0" }, face: { nose: "bulb", cheeks: "#e9907a", shape: "pear" }, extras: ["apron", "contraption"], apron: "#f2efe8", brass: "#b87333", seed: 21 });
+const mitt = gadget(F, { style: "oven", color: "#c8322b", size: 1.1, hose: { color: "#e8e2d4", r: 0.085 }, thread: "#f2efe8",
+  from: () => rosa.socket("hose"), fromDir: () => norm(add(add(mul(rosa.axis("right"), 0.8), [0, 0.55, 0]), mul(rosa.axis("fwd"), -0.15))) });
+const thief = person(F, { build: "teen", skin: "#f0c8a6", top: { kind: "sweater", color: "#2b2b30", pattern: "stripe", b: "#e9e6df" }, bottom: { color: "#2f3a52" }, shoes: { kind: "sneaker", color: "#2b2b30", sole: "#f2f0ea" }, hat: { kind: "beanie", color: "#2b2b30" }, face: { nose: "long" }, extras: ["shades"], seed: 22 });
+const courier = person(F, { build: "stocky", skin: "#a8714c", top: { kind: "shirt", color: "#7a5a3a" }, bottom: { kind: "shorts", color: "#5a4632" }, shoes: { kind: "boot", color: "#3a2a1c" }, socks: { color: "#f0ede6" }, hat: { kind: "cap", color: "#7a5a3a", brim: "#5a4632" }, beard: { kind: "goatee", color: "#2a1d14" }, seed: 23 });
+const pie = F.prop(KIT.pie());
+const boxes = [0.34, 0.3, 0.36, 0.28, 0.32].map((h, i) => F.prop(KIT.parcel({ w: 0.56 - i * 0.03, h, d: 0.42, label: i === 2 ? "FRAGILE" : "" })));
+
+// 3 · helpers
+function rosaAt(t, t0, t1, x0, x1, z = 1.9, o = {}) {
+  const w = stroll(t, t0, t1, x0, x1, 1.0), moving = t > t0 && t < t1;
+  rosa.place([w.x, null, z], o.yaw ?? 90).pose(over(moving ? walk(w.phase, { strut: 0.2, arms: 0.7 }) : P.hips, o.pose || {})).face(o.face || "deadpan", { t, look: o.look, gaze: o.gaze });
+}
+function restOf(t) { const s = rosa.socket("hose"), r = rosa.axis("right"), f = rosa.axis("fwd"); return { at: add(add(add(s, mul(r, 0.7)), mul(f, 0.3)), [0, 0.7 + 0.05 * Math.sin(t * 3.1), 0]), aim: norm(add([0, 1, 0], mul(f, 0.3))), palm: norm(add(f, [0, -0.2, 0])) }; }
+function mittTo(t, target, k, shape, extra = {}) { const R = restOf(t); mitt.set({ at: lerpA(R.at, target.at, k), aim: norm(lerpA(R.aim, target.aim || R.aim, k)), palm: norm(lerpA(R.palm, target.palm || R.palm, k)), shape, ...extra }); }
+const steam = (t, s) => s.fx.steam(t, () => rosa.socket("vent"), { rate: 2, size: 0.22, seed: 7 });
+const cam = (s, x, t, o = {}) => s.cam([x, 1.2, (o.z ?? 8.4) - 0.35 * (t / s.dur)], [x, o.ly ?? 1.75, 1.2], 33);
+
+// 4 · GAG 1 · the pie. A hand creeps toward the pie cooling on the sill; the mitt slaps it; he shakes it; a scold.
+{
+  const x0 = -3.5, sill = [x0 + 1.15, 1.08, 0.16];
+  F.shot({ id: "pie", dur: 4.0, marks: { sneak: 0.3, reach: 1.05, notice: 1.1, act: 1.3, slap: 1.55, shake: 1.7, button: 2.55, leave: 3.1 },
+    sfx: [["tick", 0.4, 0, { gain: 0.4 }], ["tick", 0.75, 0, { gain: 0.4, pitch: 1.2 }], ["stretch", "act", 0, { dur: 0.6 }], ["thwack", "slap", 0, { pitch: 1.3 }], ["slide-up", "shake", 0, { dur: 0.4, pitch: 1.6 }], ["squeak", "button"], ["whoosh", "leave", 0, { gain: 0.5 }], ...steps(0, 0.9, x0 - 4, x0 - 1.6, 1.0)],
+    fn: (t, s) => {
+      const m = s.m; cam(s, x0 + 0.2, t);
+      rosaAt(t, 0, 0.9, x0 - 4, x0 - 1.6, 1.95, { look: t > m.notice ? thief.socket("handR") : null, gaze: t > m.button + 0.6 ? [-30, -4] : null });
+      pie.at(sill); s.fx.steam(t, add(sill, [0, 0.15, 0]), { rate: 1.6, size: 0.14, rise: 0.4, seed: 3, dir: [0, 0, 0.05] });
+      const tx = K(t, [[m.sneak, x0 + 3.6], [m.reach, x0 + 2.1, "o"], [m.leave, x0 + 2.1], [s.dur, x0 + 5.5, "i2"]]);
+      const sneaking = t > m.sneak && t < m.reach, leaving = t > m.leave;
+      const reach = over(P.sneak, { armR: [70, 18, 0, 10], handR: 0.1, lean: 22, head: [-10, -20, 0] });
+      const shake = over(P.stand, { armR: [40, 20, 0, 60 + Math.sin(t * 40) * 30], handR: 0, head: [10, 30, 0] });
+      const tp = leaving ? over(run((tx - x0) / 1.4, { k: 0.7 }), {}) : sneaking ? over(walk((tx - x0) / 0.9, { stride: 0.6 }), P.sneak) : KP(t, [[m.reach, P.sneak], [m.reach + 0.2, reach], [m.slap, reach], [m.slap + 0.1, shake, "snap"], [m.button + 0.4, over(shake, { head: [14, 0, 0] })]]);
+      thief.place([tx, null, 1.0], leaving ? 90 : -90).pose(tp).face(t < m.slap ? "sly" : t < m.button ? "yell" : "sheepish", { t, look: t > m.button && !leaving ? mitt.point("tip") : null });
+      if (t > m.slap && t < m.button) s.fx.stars(t, m.slap, add(thief.socket("handR"), [0, 0.12, 0]), { n: 3, r: 0.15, dur: 0.9, size: 0.12 });
+      const hand = thief.socket("handR");
+      const slapG = { at: add(hand, [0.05, 0.85, 0.25]), aim: [0, -1, 0.15], palm: [0, -1, 0] };
+      const slap = { at: lerpA(add(slapG.at, [0, 0.35, 0]), add(hand, [0, 0.55, 0.2]), win(t, m.slap - 0.08, m.slap, "i")), aim: [0.1, 0.2, 1], palm: [0, -1, 0] };
+      const scold = Glove.scold(t, m.button, add(thief.socket("head"), [-1.1, 0.05, 0.35]), [1, 0, -0.3]);
+      const tg = t < m.slap - 0.08 ? { at: add(slapG.at, [0, 0.35, 0]), aim: [0.1, 0.2, 1], palm: [0, -1, 0] } : t < m.button - 0.1 ? slap : { at: lerpA(slap.at, scold.at, win(t, m.button - 0.1, m.button + 0.15, "o")), aim: scold.aim, palm: scold.palm };
+      const k = K(t, [[m.act, 0], [m.slap - 0.1, 1, "snap"], [m.leave + 0.3, 1], [s.dur, 0.2]]);
+      mittTo(t, tg, k, KS(t, [[m.act, "relaxed"], [m.slap - 0.15, "flat"], [m.button - 0.1, "flat"], [m.button + 0.05, "point"], [m.leave + 0.3, "point"], [s.dur, "relaxed"]]), { squash: 1 + wob(t, m.slap, -0.15, 5, 8), slack: 0.2 });
+      steam(t, s);
+    } });
+}
+
+// GAG 2 · the parcels. A courier's tower of boxes leans further and further; the mitt pushes it straight. Thumbs up.
+{
+  const x0 = 6.5;
+  F.shot({ id: "parcels", dur: 4.5, marks: { stop: 0.9, lean: 1.0, notice: 1.15, act: 1.45, push: 1.8, button: 2.7 },
+    sfx: [...steps(0, 0.9, x0 + 4.5, x0 + 1.4, 1.1, { pitch: 0.85 }), ["wobble", "lean", 0, { pitch: 0.7, dur: 1.4 }], ["stretch", "act", 0, { pitch: 1.2 }], ["pop", "push"], ["boing", 1.95, 0, { pitch: 0.7, gain: 0.5 }], ["ding", "button"], ["tada", 3.2, 0, { gain: 0.5 }]],
+    fn: (t, s) => {
+      const m = s.m; cam(s, x0 + 0.2, t, { ly: 1.95 });
+      rosaAt(t, 0, 0, x0 - 1.7, x0 - 1.7, 1.95, { look: t > m.notice ? boxes[4].root.position.toArray() : null, gaze: t > m.button + 0.5 ? [-30, -4] : null });
+      const cx = K(t, [[0, x0 + 4.5], [m.stop, x0 + 1.4, "o"]]), walking = t < m.stop;
+      const carry = over(P.carry, { armL: [60, 14, 40, 60], armR: [60, 14, 40, 60], head: [-12, 0, 0] });
+      const cp = walking ? over(walk((x0 + 4.5 - cx) / 2.2, { stride: 0.8 }), carry) : KP(t, [[m.stop, carry], [m.push, over(carry, { lean: -8 })], [m.button, over(carry, { head: [-25, 0, 0] })]]);
+      courier.place([cx, null, 2.1], -90).pose(cp).face(t < m.lean + 0.2 ? "neutral" : t < m.push + 0.3 ? "scared" : "happy", { t, look: t > m.lean && t < m.button ? boxes[4].root.position.toArray() : t > m.button ? mitt.point("center") : null });
+      // the tower leans over his head (about its base on his arms), wobbles back when pushed
+      const lean = K(t, [[m.lean, 0], [m.push, 0.42, "i2"]]) * (1 - win(t, m.push, m.push + 0.25, "o")) + wob(t, m.push + 0.25, -0.12, 2.5, 4);
+      const base = add(courier.socket("chest"), [-0.45, 0.05, 0]);
+      let y = 0; boxes.forEach((b, i) => { const h = [0.34, 0.3, 0.36, 0.28, 0.32][i]; const c = y + h / 2; b.at([base[0] - Math.sin(lean) * c, base[1] + Math.cos(lean) * c, base[2]], [0, (i % 2 ? 0.08 : -0.06), lean]); y += h; });
+      const top = boxes[4].root.position.toArray();
+      const pushG = { at: add(top, [-0.75, 0.05, 0.2]), aim: [1, 0.25, 0], palm: [1, 0, 0.1] };
+      const thumbs = { at: add(top, [-0.4, 0.55, 0.45]), aim: [0.1, 1, 0], palm: [1, 0, 0.3] };
+      const tg = t < m.button - 0.1 ? pushG : { at: lerpA(pushG.at, thumbs.at, win(t, m.button - 0.1, m.button + 0.1, "back")), aim: thumbs.aim, palm: thumbs.palm };
+      const k = K(t, [[m.act, 0], [m.push, 1, "snap"], [s.dur - 0.3, 1], [s.dur, 0.6]]);
+      mittTo(t, tg, k, KS(t, [[m.act, "relaxed"], [m.push - 0.1, "stop"], [m.button - 0.1, "stop"], [m.button + 0.05, "thumbsUp", "back"]]), { squash: 1 + wob(t, m.push, -0.12, 4, 7), slack: 0.2 });
+      steam(t, s);
+    } });
+}
+
+// OUTRO · Rosa turns to us; the mitt gives a little wave and tucks itself away. The pun.
+{
+  const x0 = 13.5;
+  F.shot({ id: "outro", kind: "outro", dur: 3.5, marks: { turn: 0.3, wave: 0.7, zip: 2.4 },
+    sfx: [["swish", "turn"], ["tada", 0.9, 0, { gain: 0.6 }], ["retract", "zip", 0, { dur: 0.8 }], ["pop", 2.85, 0, { pitch: 0.8 }]],
+    fn: (t, s) => {
+      const m = s.m; s.cam([x0 + 1.6, 1.2, 7.6 - 0.4 * (t / s.dur)], [x0 + 1.6, 1.8, 1.2], 33);
+      rosaAt(t, 0, 0, x0, x0, 1.9, { yaw: K(t, [[m.turn, 90], [m.turn + 0.35, 15, "back"]]), face: t > m.wave ? "smug" : "deadpan", gaze: [0, 0] });
+      const home = win(t, m.zip + 0.25, m.zip + 0.45, "i");
+      const wave = { at: add(rosa.socket("hose"), [1.3, 0.35, 0.45]), aim: norm([Math.sin((t - m.wave) * 12) * 0.35, 1, 0.1]), palm: [0.1, 0, 1] };
+      mittTo(t, wave, K(t, [[0.2, 0], [m.wave, 1, "back"], [m.zip, 1], [m.zip + 0.35, 0, "i"]]), "open", { size: 1 - 0.98 * home, hoseScale: 1 - 0.9 * home });
+      if (home > 0.98) mitt.reset();
+      steam(t, s);
+    } });
+}
+
+// 5 · the pun, then start
+F.title({ at: 9.4, dur: 2.6, text: "HANDLE WITH CARE.", sub: "FRESH FROM THE OVEN", size: 130, color: "#fdf8ec", ink: "#7a1f1a", pos: "low", x: 0.66 });
+F.start(SCORE, renderScore);
+</script>
+</body>
+</html>

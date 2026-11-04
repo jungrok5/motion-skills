@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hands Down · sight-gag-short example</title>
+<script type="importmap">{ "imports": { "three": "../lib/three.module.min.js", "gag/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// 「Hands Down」 — the worked example (27.5 s, 7 shots, 5 gags). Walt, a deadpan school crossing guard, strolls down
+// Maple Street; the giant white glove on his striped hose does the job for him. BRIEF.md has the brief; score.js the
+// groove. Structure: 1. the film + set  2. the cast and props  3. helpers (the glove's rest spot, held props)
+// 4. one shot per gag — every value a pure function of the shot's local time t  5. title + start.
+import { Film } from "gag/film.js";
+import { person, P, walk, stroll, steps, mixPose, over, KP } from "gag/figure.js";
+import { gadget, KS, mixShape, reach, Glove } from "gag/gadget.js";
+import * as KIT from "gag/kit.js";
+import { K, lerp, lerpA, clamp, wob, win, add, sub, mul, norm, arc, noise1 } from "gag/core.js";
+import { renderScore } from "gag/score.js";
+import { SCORE } from "./score.js";
+
+const F = await new Film({ title: "Hands Down", bpm: 120 }).load();
+const S = F.S;
+
+// ---------------------------------------------------------------- 1 · Maple Street (a school block, morning sun)
+S.street({ from: -30, to: 75, crosswalk: [33] });
+const B = (o) => S.building(o);
+B({ x: -22, w: 9.5, floors: 3, wall: "brick", brick: "#b44a3e", patches: 3, seed: 2, shop: {}, sign: { text: "BAKERY", bg: "#2f5e9e" }, awning: { a: "#2f5e9e" } });
+B({ x: -12.5, w: 9, floors: 2, wall: "painted", brick: "#b44a3e", patches: 3, seed: 4, door: "left", blade: { text: "LAUNDRY", bg: "#2b5aa0", at: 8.4 } });
+B({ x: -3.5, w: 8.5, floors: 3, wall: "brick", brick: "#c0574a", patches: 2, seed: 6, shop: {}, sign: { text: "BOOKS", bg: "#7a2e2a" }, awning: { a: "#7a2e2a", b: "#efe6d4" } });
+B({ x: 5, w: 7.5, floors: 1, ground: 4.3, wall: "plaster", plaster: "#f0dcae", seed: 8, door: "right", windows: { cols: 2 } });
+B({ x: 12.5, w: 9, floors: 3, wall: "plaster", plaster: "#f2e6d2", seed: 9, shop: {}, sign: { text: "ICE CREAM", bg: "#d9567a" }, awning: { a: "#e86f93", b: "#fbf3ea" } });
+B({ x: 21.5, w: 8, floors: 2, wall: "painted", brick: "#a8463b", patches: 3, seed: 12, door: "centre", windows: { cols: 3 } });
+B({ x: 29.5, w: 9, floors: 3, wall: "brick", brick: "#b8503f", patches: 2, seed: 14, shop: {}, sign: { text: "CAFE", bg: "#2f6b4e" }, awning: { a: "#2f6b4e", b: "#f1ece0" } });
+B({ x: 38.5, w: 9, floors: 2, wall: "painted", brick: "#b44a3e", patches: 3, seed: 16, shop: {}, sign: { text: "TOYS", bg: "#e3a12a", fg: "#2a2a30" }, awning: { a: "#e3a12a", b: "#fbf3ea" }, blade: { text: "TOYS", bg: "#2b5aa0", at: 0.4 } });
+B({ x: 47.5, w: 10, floors: 3, wall: "brick", brick: "#a9473d", patches: 2, seed: 18, door: "centre", windows: { cols: 4, arch: true } });
+B({ x: 57.5, w: 9, floors: 2, wall: "plaster", plaster: "#e7eef0", seed: 20, shop: {}, sign: { text: "FLOWERS", bg: "#4d8a46" }, awning: { a: "#4d8a46", b: "#f6f1e6" } });
+S.skyline({ from: -40, to: 85, z: -24 });
+F.cloudBand({ from: -40, to: 85, n: 9 });
+// school name over the arched building, street furniture
+S.sign({ at: [52.5, 3.15, 0.02], text: "MAPLE ST. SCHOOL", w: 4.2, h: 0.55, fg: "#f6f1e6", bg: "#2b3a5c", border: 6 });
+S.sign({ at: [25.4, 1.75, 0.02], text: "NO SCOOTERS\nON THE SIDEWALK", w: 0.9, h: 0.5, fg: "#ffffff", bg: "#2f5e9e", border: 4 });
+S.sign({ at: [30.4, 0, 3.05], icon: "school", w: 0.75, h: 0.75, bg: "#f4d21f", post: 2.1 });
+for (const x of [-15, -6, 4.2, 11, 19.5, 27.5, 37.5, 46.5, 61.5, 68]) S.lamp({ at: [x, 0, 3.0] });
+S.bin({ at: [3.6, 0, 0.75] }); S.bin({ at: [20.6, 0, 0.75] }); S.bin({ at: [45.6, 0, 0.75] });
+S.hydrant({ at: [9.4, 0, 3.0] }); S.hydrant({ at: [40.5, 0, 3.0] });
+S.planter({ at: [16.8, 0, 0.45] }); S.planter({ at: [-9, 0, 0.45], flower: "#e85d75" }); S.planter({ at: [59.5, 0, 0.45], flower: "#f4d21f" });
+S.tree({ at: [7.5, 0, 3.0], seed: 3 }); S.tree({ at: [35.2, 0, 3.0], seed: 5, h: 5 }); S.tree({ at: [50, 0, 3.0], seed: 7 });
+S.bench({ at: [-1.5, 0, 0.55] });
+S.pipe({ at: [-4.2, 0, 0] }); S.pipe({ at: [28.8, 0, 0] });
+
+// ---------------------------------------------------------------- 2 · the cast
+// Walt: lanky, deadpan, white walrus moustache, guard cap, hi-vis vest, orange rain boots, a brass tank with an amber
+// beacon on his back. His gadget: a white cartoon glove on a red-and-white striped hose (a crossing pole).
+const walt = person(F, { build: { ...{ H: 1.94 }, ...{} , head: 0.142, tw: 0.4, td: 0.28, hw: 0.32, limb: 0.055, leg: 0.96, arm: 0.78, neck: 0.1, shoe: 1.3, hunch: 8, chest: 1, belly: 0.05 },
+  skin: "#eab48f", top: { kind: "sweater", color: "#2b3a5c" }, bottom: { color: "#2b3a5c" }, shoes: { kind: "rain", color: "#e8742a" },
+  hair: { style: "short", color: "#dedede" }, hat: { kind: "guard", color: "#1f2b45", brim: "#16161a", band: "#e3c35a" }, beard: { kind: "walrus", color: "#efefef" },
+  face: { nose: "bulb", shape: "long", brows: "#eeeeee", thick: 1.7, eye: 0.95 }, extras: ["vest-hivis", "contraption", "beacon"], vest: "#d6ef3a", brass: "#c33b2c", seed: 3 });
+const glove = gadget(F, { style: "cartoon", color: "#f7f5f0", size: 1.15, hose: { stripes: ["#d8452f", "#f4f1ea"], r: 0.08 }, thread: "#9a978f",
+  from: () => walt.socket("hose"), fromDir: () => norm(add(add(mul(walt.axis("right"), 0.8), [0, 0.55, 0]), mul(walt.axis("fwd"), -0.15))) });
+const paddle = F.prop(KIT.paddle());
+const teen = person(F, { build: "teen", skin: "#c99272", top: { kind: "hoodie", color: "#3f7d5a" }, bottom: { color: "#2f3a52", pattern: "denim" }, shoes: { kind: "sneaker", color: "#f2f0ea", stripe: "#e8462e" }, hat: { kind: "cap-back", color: "#d8452f" }, hair: { style: "short", color: "#1d1512" }, face: { nose: "button", shape: "egg" }, seed: 11 });
+const kid = person(F, { build: "kid", skin: "#8a5a3c", top: { kind: "tee", color: "#f06d8f" }, bottom: { kind: "shorts", color: "#2f5e9e" }, shoes: { kind: "sneaker", color: "#ffffff", stripe: "#f4d21f" }, socks: { color: "#ffffff" }, hair: { style: "puffs", color: "#1d1512" }, face: { cheeks: "#e07a6a", shape: "round", eye: 1.08 }, seed: 12 });
+const rider = person(F, { build: "boss", skin: "#e9b896", top: { kind: "suit", color: "#5a6070" }, bottom: { color: "#5a6070" }, shoes: { kind: "dress", color: "#141414" }, hair: { style: "slick", color: "#2a211b" }, face: { shape: "jaw", nose: "bulb" }, extras: ["shades"], tie: "#c0392b", seed: 13 });
+const granny = person(F, { build: "elder", skin: "#f3d2bd", top: { kind: "sweater", color: "#b46a8a" }, bottom: { kind: "skirt", color: "#6a6f8a" }, shoes: { kind: "slipper", color: "#7a5a8a" }, hair: { style: "bun", color: "#ececf0" }, face: { cheeks: "#e9a0a0", nose: "button" }, extras: ["glasses"], seed: 14 });
+const boy = person(F, { build: { ...{}, H: 1.12, head: 0.15, tw: 0.31, td: 0.25, hw: 0.27, limb: 0.046, leg: 0.44, arm: 0.42, belly: 0.03, neck: 0.03, shoe: 1.1, hunch: 0, chest: 0.95 }, skin: "#f1c6a3", top: { kind: "tee", color: "#f39a2b" }, bottom: { kind: "shorts", color: "#3b6e5a" }, shoes: { kind: "sneaker", color: "#2f5e9e", stripe: "#ffffff" }, socks: { stripe: ["#ffffff", "#d8452f"] }, hat: { kind: "cap", color: "#2f5e9e", brim: "#24487a" }, hair: { style: "short", color: "#a0522d" }, face: { cheeks: "#f08a7a", shape: "round", nose: "button", eye: 1.1 }, seed: 15 });
+// props that fly, get caught and handed back
+const chips = F.prop(KIT.snack({ color: "#e8462e", text: "CHIPS" }));
+const cone = F.prop(KIT.cone()), scoopLow = F.prop(KIT.scoop({ color: "#f4a6c0", seed: 2 })), scoopTop = F.prop(KIT.scoop({ color: "#9fe0c4", seed: 5 }));
+const scooter = F.prop(KIT.scooter({ accent: "#3fb6a8" }));
+const carA = F.prop(KIT.car({ color: "#3fa7a0" })), carB = F.prop(KIT.car({ color: "#e0a42c" }));
+const bag = F.prop(KIT.handbag({ color: "#8a3b2e" }));
+const balloon = F.prop(KIT.balloon({ color: "#e23b3b", string: 1.05, r: 0.3 }));
+const puddleless = null; // (this street is dry; a puddle would be F.mirror({ at, w, d }))
+
+// ---------------------------------------------------------------- 3 · helpers
+const Y = (yaw) => yaw; // degrees: 90 faces +x (walking right), 0 faces the camera
+/** Walt walking from x0 to x1 between t0 and t1 (feet don't slide), then standing; his left hand holds the paddle up */
+function waltAt(t, t0, t1, x0, x1, z = 1.9, o = {}) {
+  const w = stroll(t, t0, t1, x0, x1, 1.25), moving = t > t0 && t < t1;
+  const pose = moving ? walk(w.phase, { strut: 0.35, arms: 0.8 }) : P.stand;
+  const p = over(pose, { armL: [28, 12, 35, 72], handL: 0.95, ...(o.pose || {}) });
+  walt.place([w.x, null, z], o.yaw ?? 90).pose(p).face(o.face || "deadpan", { t: t + (o.T || 0), look: o.look, gaze: o.gaze });
+  // the paddle sits in the left fist, pole up
+  const h = walt.socket("handL"); paddle.at([h[0], h[1] - 0.08, h[2]], [0, (walt.yaw - 90) * Math.PI / 180, 0]);
+  return w;
+}
+/** where the glove floats when it isn't busy: up beside Walt's right shoulder, bobbing a little */
+function restOf(t) {
+  const s = walt.socket("hose"), r = walt.axis("right"), f = walt.axis("fwd");
+  return { at: add(add(add(s, mul(r, 0.75)), mul(f, 0.35)), [0, 0.78 + 0.05 * Math.sin(t * 3.1), 0]), aim: norm(add([0, 1, 0], mul(f, 0.3))), palm: norm(add(f, [0, -0.2, 0])) };
+}
+/** glove keyed between its rest spot (k = 0) and a target (k = 1) */
+function gloveTo(t, target, k, shape, extra = {}) {
+  const R = restOf(t), at = lerpA(R.at, target.at, k), aim = norm(lerpA(R.aim, target.aim || R.aim, k)), palm = norm(lerpA(R.palm, target.palm || R.palm, k));
+  glove.set({ at, aim, palm, shape: typeof shape === "string" || shape.f ? shape : "relaxed", ...extra });
+}
+const steam = (t, s) => s.fx.steam(t, () => walt.socket("vent"), { rate: 2.4, size: 0.24, seed: 5 });
+const camLock = (s, x, t, o = {}) => { const push = (o.push ?? 0.35) * (t / s.dur); s.cam([x + (o.dx || 0), o.y ?? 1.2, (o.z ?? 8.6) - push], [x + (o.lx ?? o.dx ?? 0), o.ly ?? 1.8, o.lz ?? 1.2], o.fov ?? 33); };
+
+// ---------------------------------------------------------------- 4 · the shots
+// INTRO · the glove peeks round the bakery, "one moment" — then Walt strolls in, beacon blinking.
+F.shot({ id: "intro", kind: "intro", dur: 2.0, marks: { peek: 0.25, walk: 0.7 },
+  sfx: [["squeak", "peek"], ["pop", 0.55], ...steps(0.7, 2.0, -12.2, -9.2, 1.25)],
+  fn: (t, s) => {
+    camLock(s, -10.2, t, { z: 8.2, ly: 2.0, push: 0.25 });
+    waltAt(t, 0.7, 2.0, -12.2, -9.2, 1.9, { gaze: [10, 0] });
+    const k = K(t, [[0.1, 0], [0.5, 1, "back"], [1.3, 1], [1.9, 0.2]]);
+    const hello = Math.sin(t * 13) * 0.3 * win(t, 0.4, 0.55) * (1 - win(t, 1.0, 1.15));
+    const peek = t < 1.1 ? { at: [lerp(-13.4, -11.6, k), 2.4, 2.3], aim: norm([hello, 1, 0.1]), palm: [0.15, 0, 1] } : { at: [lerp(-13.4, -11.6, k), 2.2, 2.3], aim: [1, 0.05, 0.1], palm: [0, -1, 0] };
+    gloveTo(t, peek, clamp(K(t, [[0.7, 1], [1.8, 0.35]])), KS(t, [[0, "relaxed"], [0.45, "open", "back"], [1.0, "open"], [1.25, "point"], [1.8, "relaxed"]]), { slack: 0.4 });
+    steam(t, s);
+  } });
+
+// GAG 1 · the litterbug. A teen tosses his empty chips bag over his shoulder; the glove plucks it off the pavement,
+// flicks it off his head and into the bin, then wags a finger. (comeuppance, small)
+{
+  const x0 = 0, teenAt = [x0 + 1.75, 0, 2.05], land = [x0 + 2.6, 0.06, 2.55], binTop = [x0 + 3.6, 1.0, 0.75];
+  F.shot({ id: "litter", dur: 4.0, marks: { toss: 0.62, landed: 1.05, notice: 1.2, act: 1.45, pinch: 1.85, lift: 2.2, flick: 2.45, bonk: 2.58, bin: 3.05, button: 3.25 },
+    sfx: [["crinkle", "toss"], ["tick", "landed", 0, { gain: 0.6 }], ["stretch", "act"], ["crinkle", "pinch", 0, { dur: 0.6 }], ["snap", "flick"], ["pop", "bonk", 0, { pitch: 0.8 }], ["boing", "bonk", 0.03, { pitch: 1.3, gain: 0.5 }], ["clang", "bin", 0, { gain: 0.55, pitch: 1.2 }], ["squeak", "button"], ["squeak", 3.55, 0, { pitch: 1.15 }], ...steps(0, 1.4, x0 - 5.2, x0 - 1.45, 1.25)],
+    fn: (t, s) => {
+      const m = s.m; camLock(s, x0 + 0.5, t, { z: 8.2, ly: 1.85 });
+      waltAt(t, 0, 1.4, x0 - 5.2, x0 - 1.45, 1.9, { look: t > m.notice ? (t < m.bin ? chips.root.position.toArray() : teen.socket("head")) : null });
+      // the teen: munching, the toss over his shoulder, the bonk, then sheepish
+      const munch = over(P.lick, { head: [-6 + Math.sin(t * 14) * 4, 0, 0] });
+      const toss = over(P.toss, { head: [0, 25, 0] });
+      const tp = KP(t, [[0, munch], [m.toss - 0.15, munch], [m.toss, toss, "snap"], [m.toss + 0.35, over(P.hips, { head: [-4, 0, 0] })], [m.bonk, over(P.hips, { head: [8, 0, 0] })], [m.bonk + 0.12, over(P.shrug, { head: [-14, 0, 6], crouch: 0.05 }), "snap"], [m.button + 0.2, over(P.shrug, { head: [10, 0, -6] })]]);
+      teen.place(teenAt, -62).pose(tp).face(t < m.bonk ? (t < m.notice + 0.6 ? "smug" : "neutral") : t < m.bin + 0.15 ? "shock" : "sheepish", { t, look: t > m.bonk && t < m.button ? binTop : t > m.button ? glove.point("tip") : null });
+      const hand = teen.socket("handR"), head = add(teen.socket("top"), [0, 0.1, 0]);
+      // the glove: rest → reach down to the bag → lift over his head → flick → wag a finger in his face
+      const pick = { at: add(land, [-0.05, 0.55, 0.1]), aim: [0.1, -1, 0.15], palm: [0, 0, 1] };
+      const over_ = { at: add(head, [-0.55, 0.75, 0.25]), aim: [0.55, -0.6, 0.2], palm: [0.4, 0.3, 1] };
+      const wag = Glove.scold(t, m.button + 0.12, add(teen.socket("head"), [-1.15, 0.0, 0.35]), [1, 0, -0.3]);
+      const k = K(t, [[m.act, 0], [m.pinch, 1, "snap"], [m.button + 0.6, 1], [s.dur, 0.5]]);
+      const tgt = t < m.pinch + 0.1 ? pick : t < m.button - 0.05 ? { at: lerpA(pick.at, over_.at, win(t, m.pinch + 0.05, m.lift, "o")), aim: norm(lerpA(pick.aim, over_.aim, win(t, m.pinch, m.lift))), palm: over_.palm } : wag;
+      const tg2 = t >= m.button - 0.05 ? { at: lerpA(over_.at, wag.at, win(t, m.button - 0.05, m.button + 0.2, "o")), aim: norm(lerpA(over_.aim, wag.aim, win(t, m.button - 0.05, m.button + 0.2))), palm: wag.palm } : tgt;
+      const shape = KS(t, [[m.act, "relaxed"], [m.pinch - 0.12, "open"], [m.pinch, "pinch", "snap"], [m.lift, "pinch"], [m.lift + 0.12, "flickReady"], [m.flick - 0.02, "flickReady"], [m.flick + 0.04, "flick", "snap"], [m.button - 0.05, "flick"], [m.button + 0.1, "point"]]);
+      gloveTo(t, tg2, k, shape, { slack: 0.15, lag: t > m.act && t < m.pinch ? [-0.4, 0.5, 0] : null });
+      // the bag: in his hand → over his shoulder → on the pavement → pinched → flicked off his head → into the bin
+      let bp, rot = [0, 0, t * 2];
+      if (t < m.toss) bp = add(hand, [0, 0.05, 0.05]);
+      else if (t < m.landed) { const u = win(t, m.toss, m.landed, "lin"); bp = arc(add(teen.socket("handR"), [0, 0, 0]), land, 0.7, u); rot = [u * 6, u * 3, 0]; }
+      else if (t < m.pinch) { bp = land; rot = [Math.PI / 2, 0, 0.4]; }
+      else if (t < m.flick) bp = add(glove.point("tip"), [0.05, -0.06, 0.06]);
+      else if (t < m.bonk) bp = lerpA(add(glove.point("tip"), [0, -0.05, 0]), head, win(t, m.flick, m.bonk, "i2"));
+      else { const u = win(t, m.bonk, m.bin, "lin"); bp = arc(head, add(binTop, [0, -0.15, 0]), 0.9, u); rot = [u * 9, 0, u * 5]; }
+      chips.at(t > m.bin + 0.05 ? [0, -9, 0] : bp, rot, 1);
+      steam(t, s);
+    } });
+}
+
+// GAG 2 · the ice cream save. The top scoop topples off a kid's cone; the glove dives, catches it on one fingertip,
+// spins it like a basketball and plops it back on. Thumbs up. (help)
+{
+  const x0 = 14, kidAt = [x0 + 1.15, 0, 2.15];
+  F.shot({ id: "icecream", dur: 4.0, marks: { wobble: 0.45, fall: 0.95, notice: 0.95, act: 1.02, catch: 1.3, toss: 1.62, spin: 1.86, back: 2.5, button: 2.8 },
+    sfx: [["wobble", "wobble", 0, { pitch: 1.2 }], ["slide-down", "fall", 0, { dur: 0.7 }], ["whoosh", "act"], ["plop", "catch", 0, { pitch: 1.3 }], ["slide-up", "toss", 0, { dur: 0.35, pitch: 1.4 }], ["pop", "spin", 0, { pitch: 1.5 }], ["sparkle", "spin", 0.05], ["swish", 2.25], ["plop", "back"], ["ding", "button", 0.05], ...steps(0, 1.15, x0 - 4.8, x0 - 1.7, 1.25)],
+    fn: (t, s) => {
+      const m = s.m; camLock(s, x0 + 0.1, t, { z: 7.8, ly: 1.6 });
+      waltAt(t, 0, 1.15, x0 - 4.8, x0 - 1.7, 1.95, { look: t > m.notice && t < m.button ? scoopTop.root.position.toArray() : null, gaze: t > m.button + 0.4 ? [-30, -5] : null });
+      const holdUp = { armR: [42, 14, 35, 100], handR: 0.9, armL: [6, 12, 20, 14], head: [10, 0, 0] };
+      const kp = KP(t, [[0, holdUp], [m.fall, holdUp], [m.fall + 0.12, over(holdUp, { armL: [40, 40, -60, 90], handL: 0, head: [25, 0, 0], crouch: 0.03 }), "snap"], [m.catch + 0.2, over(holdUp, { armL: [30, 30, -60, 90], head: [-5, -20, 0] })], [m.back + 0.15, over(holdUp, { head: [0, 0, 0] })], [m.back + 0.4, over(holdUp, { armL: [10, 70, 0, 30], handL: 0, head: [-8, 0, 0], bob: 0.06 }), "back"], [s.dur, over(holdUp, { armL: [10, 60, 0, 30], handL: 0 })]]);
+      kid.place(kidAt, -38).pose(kp).face(t < m.fall ? "happy" : t < m.catch ? "shock" : t < m.back + 0.1 ? "wonder" : "joy", { t, look: t > m.fall && t < m.back + 0.1 ? scoopTop.root.position.toArray() : t > m.button ? glove.point("center") : null });
+      const hand = kid.socket("handR"), rim = add(hand, [0, 0.1, 0.02]);
+      cone.at(rim, [0, 0, 0.15]); scoopLow.at(add(rim, [0, 0.055, 0]), [0, 0.5, 0]);
+      const seat = add(rim, [0, 0.16, 0]);
+      const fallAt = (tt) => { const a = tt - m.fall; return add(seat, [-0.55 * a, 0.5 * a - 4.9 * a * a, 0.25 * a]); };
+      // the glove: rest → swoop in flat, palm up, under the falling scoop (snap) → rise → toss it up and turn to one
+      // finger → spin it on the fingertip → over the cone, drop it on → thumbs up beside the kid
+      const caught = fallAt(m.catch);
+      const cup = { at: add(caught, [-0.55, -0.32, -0.05]), aim: [1, 0.05, 0.1], palm: [0, 1, 0] };
+      const lifted = { at: [x0 - 0.1, 1.6, 2.5], aim: [1, 0.12, 0.05], palm: [0, 1, 0] };
+      const up = { at: [x0 + 0.05, 1.05, 2.55], aim: [0, 1, 0.05], palm: [0.35, 0, 1] };
+      const drop = { at: add(seat, [-0.1, -1.05, 0.02]), aim: [0, 1, 0], palm: [0.35, 0, 1] };
+      const thumbs = { at: add(kid.socket("head"), [-0.75, 0.15, 0.45]), aim: [0.2, 1, 0], palm: [1, 0, 0.3] };
+      let tg;
+      if (t < m.catch) tg = cup;
+      else if (t < m.toss) tg = { at: lerpA(cup.at, lifted.at, win(t, m.catch, m.toss, "io")), aim: cup.aim, palm: cup.palm };
+      else if (t < m.spin) { const u = win(t, m.toss, m.spin, "io"); tg = { at: lerpA(lifted.at, up.at, u), aim: norm(lerpA(lifted.aim, up.aim, u)), palm: norm(lerpA(lifted.palm, up.palm, u)) }; }
+      else if (t < m.back) tg = { at: lerpA(up.at, drop.at, win(t, m.spin + 0.35, m.back, "io")), aim: up.aim, palm: up.palm };
+      else tg = { at: lerpA(drop.at, thumbs.at, win(t, m.back + 0.05, m.button, "back")), aim: norm(lerpA(up.aim, thumbs.aim, win(t, m.back, m.button))), palm: thumbs.palm };
+      const k = K(t, [[m.act, 0], [m.catch, 1, "snap"], [s.dur - 0.3, 1], [s.dur, 0.8]]);
+      const shape = KS(t, [[m.act, "relaxed"], [m.catch - 0.12, "cup"], [m.toss, "cup"], [m.toss + 0.12, "flat", "snap"], [m.spin - 0.12, "spin"], [m.back + 0.1, "spin"], [m.button - 0.1, "relaxed"], [m.button + 0.02, "thumbsUp", "back"]]);
+      gloveTo(t, tg, k, shape, { squash: 1 + wob(t, m.catch, -0.12, 4, 7) + wob(t, m.button, 0.1, 4, 6), slack: 0.2 });
+      // the top scoop: wobble → topple (ballistic) → in the palm → tossed up → spinning on the fingertip → back on the cone
+      let sp, srot = [0, 0, 0];
+      if (t < m.fall) { sp = seat; srot = [0, 0, wob(t, m.wobble, 0.35, 3, 2)]; }
+      else if (t < m.catch) { sp = fallAt(t); srot = [(t - m.fall) * 4, 0, (t - m.fall) * 7]; }
+      else if (t < m.toss) sp = glove.point("top", [0, 0, 0.1]);
+      else if (t < m.spin) { const tp = add(lifted.at, [0.55, 0.12, 0.1]); sp = arc(tp, add(glove.point("tip"), [0, 0.085, 0]), 0.55, win(t, m.toss, m.spin, "lin")); srot = [t * 9, 0, t * 5]; }
+      else if (t < m.back) { sp = add(glove.point("tip"), [0, 0.085, 0]); srot = [0, (t - m.spin) * 24 * (1 - win(t, m.back - 0.4, m.back)), 0]; }
+      else sp = seat;
+      scoopTop.at(sp, srot);
+      steam(t, s);
+    } });
+}
+
+// GAG 3 · the sidewalk scooter. A man on an e-scooter, eyes on his phone, zips down the sidewalk at Walt. STOP palm;
+// the scooter stops dead, he doesn't — the glove plucks him out of the air by his collar, turns him round, sets him on
+// his feet and points at the sign. (comeuppance, the biggest so far)
+{
+  const x0 = 24, Xp = x0 + 0.7, zr = 2.05, V = 7;
+  const scX = (t) => (t < 1.2 ? Xp + 0.62 + V * (1.2 - t) : Xp + 0.62 + 0.12 * Math.max(0, Math.sin((t - 1.2) * 9)) * Math.exp(-(t - 1.2) * 6));
+  F.shot({ id: "scooter", dur: 4.5, marks: { zoom: 0.05, notice: 0.45, stop: 0.95, act: 0.95, hit: 1.2, catch: 1.5, setdown: 2.85, sign: 3.05, button: 3.55 },
+    sfx: [["zoom", "zoom", 0, { dur: 1.4 }], ["stretch", "stop", 0, { pitch: 1.1 }], ["thwack", "hit"], ["skid", "hit", -0.08, { dur: 0.4 }], ["whoosh", 1.22, 0, { dur: 0.7 }], ["snap", "catch"], ["crash", 1.55, 0, { gain: 0.5 }], ["wobble", 1.9, 0, { gain: 0.6 }], ["thud", "setdown", 0, { gain: 0.6 }], ["tick", "sign"], ["tick", 3.25], ["squeak", "button"]],
+    fn: (t, s) => {
+      const m = s.m; camLock(s, x0 + 0.1, t, { z: 9.0, ly: 1.95 });
+      waltAt(t, 0, 0, x0 - 1.9, x0 - 1.9, 1.85, { yaw: 90, look: t > m.notice ? rider.socket("head") : null, gaze: t > m.button + 0.3 ? [-35, -4] : null });
+      // scooter: rolling at V until it meets the palm, then dead-stop with a little rebound; it tips over after he leaves
+      const sx = scX(t), tip = K(t, [[1.35, 0], [1.75, 1.35, "bounce"]]);
+      scooter.at([sx, 0, zr], [tip, Math.PI, 0]);
+      // the rider: riding (phone at his ear) → launched off the deck → caught by the collar and dangled, legs pedalling
+      // → set down on his feet facing Walt → looks round at the sign, sheepish. The glove follows his collar while it
+      // holds him (rider leads, glove aligns), so the grip never slips.
+      const ride = over(P.scooter, { armL: [25, 22, 40, 150], handL: 0.7, head: [8, 0, 10] });
+      const catchRoot = [Xp - 0.55, 0.75, zr];
+      const held = t >= m.catch && t < m.setdown + 0.12;
+      if (t < m.hit) rider.place([sx, 0.17, zr], -90).pose(ride).face("smug", { t });
+      else if (t < m.catch) {
+        const u = win(t, m.hit, m.catch, "lin"), p = arc([sx, 0.17, zr], catchRoot, 0.45, u);
+        rider.place(p, -90).pose(mixPose(ride, P.flail, win(t, m.hit, m.hit + 0.12))).face("shock", { t }); rider.root.rotation.z = -0.35 * Math.sin(u * Math.PI);
+      } else {
+        const hy = K(t, [[m.catch, 0.75], [m.catch + 0.3, 0.92, "o"], [m.setdown - 0.4, 0.86], [m.setdown, 0, "i2"]]);
+        const sway = held ? Math.sin((t - m.catch) * 5.5) * 0.12 * (1 - win(t, m.setdown - 0.5, m.setdown)) : 0;
+        const kick = 1 - win(t, m.setdown - 0.35, m.setdown);
+        const dang = over(P.dangle, { legL: [10 + Math.sin(t * 13) * 28 * kick, 8, 30 * kick], legR: [-10 - Math.sin(t * 13) * 28 * kick, 8, 40 * kick], armL: [20, 45 + Math.sin(t * 11) * 25 * kick, 0, 30], armR: [20, 45 - Math.sin(t * 11) * 25 * kick, 0, 30] });
+        const pose = t < m.setdown - 0.1 ? dang : KP(t, [[m.setdown - 0.1, over(P.stand, { armL: [20, 40, 0, 30], armR: [20, 40, 0, 30] })], [m.setdown + 0.05, over(P.stand, { crouch: 0.1, legL: [18, 4, 36], legR: [18, 4, 36] }), "o"], [m.setdown + 0.3, over(P.shrug, { head: [12, 0, -6] })], [m.sign + 0.1, over(P.stand, { head: [0, -70, 0], chestYaw: -15 })], [s.dur, over(P.stand, { head: [14, -20, 0], armL: [30, 15, 70, 120], handL: 0.5 })]]);
+        rider.place([catchRoot[0] + sway, hy, zr], -90).pose(pose).face(t < m.setdown ? "scared" : t < m.sign ? "sheepish" : "sad", { t, look: t > m.sign && t < m.button ? [x0 + 1.4, 1.75, 0.1] : null });
+        rider.root.rotation.z = sway * 0.6;
+        if (t < m.setdown) s.fx.sweat(t, m.catch + 0.1, rider.socket("top"), { side: -1 });
+      }
+      // the glove: rest → STOP palm on the sidewalk (3/4 to camera so it reads) → kick back on the hit → flip over and
+      // grab the collar → hold him (aligned to his collar) → let go → point at the sign → wag the finger at him (profile)
+      const stopG = { at: [Xp, 0.5, zr], aim: [0.1, 1, 0], palm: [0.75, 0, 0.6] };
+      const collarAt = () => add(rider.socket("collar"), [0.0, 0.03, 0]);
+      const signP = { at: [x0 + 0.25, 2.05, 1.45], aim: [0.8, 0.05, -0.6], palm: [0, -1, 0] };
+      const wagP = Glove.scold(t, m.button + 0.1, add(rider.socket("head"), [1.2, 0.02, 0.3]), [-1, 0, -0.25]);
+      const k = K(t, [[m.stop, 0], [m.hit - 0.18, 1, "snap"], [s.dur - 0.2, 1], [s.dur, 0.85]]);
+      const shape = KS(t, [[m.stop, "relaxed"], [m.hit - 0.2, "stop"], [m.hit + 0.05, "stop"], [m.catch - 0.08, "open"], [m.catch, "grab", "snap"], [m.setdown + 0.08, "grab"], [m.setdown + 0.2, "open"], [m.sign - 0.1, "point"], [m.button, "point"]]);
+      if (held) {
+        // fingers down over his shoulders, palm toward his back; the glove sits wherever his collar is
+        gloveTo(t, { at: add(collarAt(), [0.3, 0.5, 0]), aim: [0.12, -1, 0], palm: [-1, 0, 0.1] }, 1, shape, { slack: 0.12, from: false });
+        glove.align("grip", collarAt(), { slack: 0.12 });
+      } else {
+        let tg;
+        if (t < m.hit) tg = stopG;
+        else if (t < m.catch) {
+          // the reach to the collar: from the palm stop to where his collar will be at the catch
+          const u = win(t, m.hit + 0.06, m.catch, "o");
+          tg = { at: lerpA(add(stopG.at, [-0.12 * Math.exp(-(t - m.hit) * 20), 0, 0]), add(collarAt(), [0.25, 0.85, 0]), u), aim: norm(lerpA(stopG.aim, [0.12, -1, 0], u)), palm: norm(lerpA(stopG.palm, [-1, 0, 0.1], u)) };
+        } else if (t < m.button) { const from = add(collarAt(), [0.4, 0.6, 0]); tg = { at: lerpA(from, signP.at, win(t, m.setdown + 0.12, m.sign, "back")), aim: norm(lerpA([0.1, -1, 0], signP.aim, win(t, m.setdown + 0.1, m.sign - 0.1))), palm: signP.palm }; }
+        else tg = { at: lerpA(signP.at, wagP.at, win(t, m.button - 0.05, m.button + 0.2, "o")), aim: wagP.aim, palm: wagP.palm };
+        gloveTo(t, tg, k, shape, { squash: 1 + wob(t, m.hit, -0.18, 5, 7), slack: 0.12, lag: t > m.hit && t < m.catch ? [0.6, -0.4, 0] : null });
+      }
+      steam(t, s);
+    } });
+}
+
+// GAG 4 · the crossing (Walt's actual job). The paddle doesn't stop a speeding car — the glove's palm does. The car
+// squashes against it, honks; Granny shuffles across in front of its bumper at her own pace, and waves. (help)
+{
+  const x0 = 33, laneN = 5.9, laneF = 10.6, palmX = x0 - 1.25, carLen = 4.3;
+  const carX = (t) => (t < 1.6 ? palmX - 0.18 - carLen / 2 - 12 * (1.6 - t) : palmX - 0.18 - carLen / 2 - 0.06 * Math.sin((t - 1.6) * 14) * Math.exp(-(t - 1.6) * 5));
+  F.shot({ id: "crossing", dur: 5.0, marks: { pass: 0.15, notice: 0.85, act: 1.0, hit: 1.6, honk: 2.1, cross: 2.0, button: 4.25, knock: 4.5 },
+    sfx: [["zoom", "pass", 0, { dur: 1.0, pan: 0.3 }], ["stretch", "act", 0, { pitch: 0.9 }], ["zoom", 1.0, 0, { dur: 0.6, gain: 0.8, pan: -0.5 }], ["skid", 1.38, 0, { dur: 0.3 }], ["thwack", "hit", 0, { pitch: 0.8 }], ["wobble", 1.68, 0, { pitch: 0.6 }], ["honk", "honk"], ["honk", 3.05, 0, { dur: 0.6 }], ["swish", "button", 0, { gain: 0.5 }], ["knock", "knock"], ["knock", 4.68, 0, { pitch: 1.05 }], ...steps(2.0, 5.0, 0, 3.1, 0.42, { gain: 0.35, pitch: 1.3 })],
+    fn: (t, s) => {
+      const m = s.m, push = 0.5 * (t / s.dur);
+      s.cam([x0 - 0.3, 1.45, 15.2 - push], [x0 - 0.9, 1.25, 4.6], 34);
+      // Walt on the corner, facing the road, paddle up; he raises it as the car comes (it doesn't help)
+      const raise = win(t, 0.9, 1.2, "back");
+      waltAt(t, 0, 0, x0 - 2.3, x0 - 2.3, 3.0, { yaw: 25, pose: { armL: [lerp(28, 75, raise), lerp(12, 25, raise), 35, lerp(72, 40, raise)], handL: 0.95 }, look: t > m.notice && t < m.hit + 0.6 ? [carX(t), 1.2, laneN] : t < 3.5 ? granny.socket("head") : null, gaze: t >= 3.5 ? [0, -3] : null });
+      // car A passes on the far lane (right to left); car B comes on the near lane and meets the palm
+      carA.at([x0 + 22 - 50 * win(t, m.pass, m.pass + 1.6, "lin"), -KIT.STREET.curb, laneF], [0, Math.PI, 0]);
+      const sq = 1 + wob(t, m.hit, -0.12, 3.5, 4);
+      carB.at([carX(t), -KIT.STREET.curb, laneN], [0, 0, t > m.hit ? 0.02 * Math.sin((t - m.hit) * 10) * Math.exp(-(t - m.hit) * 4) : 0], [sq, 1 / Math.sqrt(sq), 1 / Math.sqrt(sq)]);
+      // Granny: waits, looks left and right, then shuffles across in front of the car; stops mid-lane to wave
+      const gz = K(t, [[m.cross, 3.1], [4.15, 6.4, "lin"]]), walking = t > m.cross && t < 4.15;
+      const gp = walking ? over(walk((gz - 3.1) / 0.84, { stride: 0.45, arms: 0.3, bounce: 0.5 }), P.holdBag) : t < m.cross ? over(P.holdBag, { head: [0, 40 * Math.sin(t * 2.6), 0] }) : KP(t, [[4.15, P.holdBag], [m.button + 0.1, over(P.holdBag, { armL: [10, 150, 0, 30], handL: 0, head: [0, -35, 0] }), "back"], [s.dur, over(P.holdBag, { armL: [10, 140 + Math.sin(t * 16) * 12, 0, 30], handL: 0, head: [0, -35, 0] })]]);
+      granny.place([x0 - 0.35, null, gz], t > 4.15 ? -25 : 0).pose(gp).face(t < m.hit ? "neutral" : t < 4.15 ? "happy" : "joy", { t, look: t > 4.2 ? [carX(t) + 1.5, 1.3, laneN] : null });
+      const h = granny.socket("handR"); bag.at(add(h, [0, 0.02, 0]), [0, 0, 0]);
+      // the glove: rest → out into the lane, STOP palm toward the car → hold (squash on the hit) → knock-knock on the bonnet
+      const stopG = { at: [palmX, 0.7, laneN + 0.1], aim: [0, 1, 0.05], palm: [-1, 0, 0.1] };
+      const knockG = { at: [palmX - 0.95, 1.05 + 0.08 * Math.max(0, Math.sin((t - m.knock) * 20)), laneN + 0.05], aim: [0, -0.15, 1], palm: [0, -1, 0] };
+      const tg = t < m.knock - 0.15 ? stopG : { at: lerpA(stopG.at, knockG.at, win(t, m.knock - 0.15, m.knock, "o")), aim: norm(lerpA(stopG.aim, [-0.3, -0.2, 1], win(t, m.knock - 0.15, m.knock))), palm: [0, -1, 0] };
+      const k = K(t, [[m.act, 0], [1.42, 1, "snap"], [s.dur, 1]]);
+      gloveTo(t, tg, k, KS(t, [[m.act, "relaxed"], [1.3, "stop"], [m.knock - 0.15, "stop"], [m.knock, "fist"]]), { squash: 1 + wob(t, m.hit, -0.22, 4, 6), slack: 0.3 });
+      steam(t, s);
+    } });
+}
+
+// GAG 5 · the balloon. A boy lets go of his balloon; the glove stretches three storeys up, catches the string, brings it
+// back and ties it round his wrist. Pat on the head. (help, the biggest stretch — the camera tilts with it)
+{
+  const x0 = 43, boyAt = [x0 + 1.0, 0, 2.15];
+  const rise = (t, t0) => { const a = Math.max(0, t - t0); return [0.25 * a + 0.12 * Math.sin(a * 3), 2.7 * a + 0.4 * a * a, -0.08 * a]; };
+  F.shot({ id: "balloon", dur: 4.0, marks: { let: 0.5, notice: 0.7, act: 0.95, catch: 1.85, down: 2.7, tie: 2.75, button: 3.25 },
+    sfx: [["pop", "let", 0, { pitch: 1.4, gain: 0.5 }], ["slide-up", "let", 0.05, { dur: 1.4 }], ["stretch", "act", 0, { dur: 2.2, pitch: 0.85 }], ["snap", "catch", 0, { pitch: 1.2 }], ["retract", 2.0, 0, { dur: 2.2 }], ["sparkle", "tie"], ["knock", "button", 0, { pitch: 1.6, gain: 0.6 }], ["knock", 3.45, 0, { pitch: 1.7, gain: 0.6 }], ...steps(0, 0.7, x0 - 3.4, x0 - 1.6, 1.25)],
+    fn: (t, s) => {
+      const m = s.m, tilt = K(t, [[0.8, 0], [1.75, 1, "io"], [2.15, 1], [2.85, 0, "io"]]);
+      s.cam([x0 + 0.1, lerp(1.2, 2.4, tilt), 8.6 - 0.3 * (t / s.dur)], [x0 + 0.3, lerp(1.7, 7.4, tilt), 1.0], lerp(33, 42, tilt));
+      waltAt(t, 0, 0.7, x0 - 3.4, x0 - 1.6, 1.95, { look: t > m.notice && t < m.down ? balloon.root.position.toArray().map((v, i) => (i === 1 ? v + 1.2 : v)) : null, pose: t > m.notice && t < m.down ? { head: [-35, 0, 0] } : {}, gaze: t > m.button + 0.3 ? [-30, -4] : null });
+      const holding = over(P.stand, { armR: [55, 18, 0, 25], handR: 0.9 });
+      const bp = KP(t, [[0, holding], [m.let, holding], [m.let + 0.1, over(P.stand, { armR: [80, 25, 0, 10], handR: 0, head: [-40, 0, 0] }), "snap"], [m.down, over(P.stand, { armR: [90, 30, 0, 10], handR: 0, head: [-45, 0, 0] })], [m.down + 0.2, over(P.stand, { armR: [40, 25, 0, 40], handR: 0.6, head: [-10, 0, 0] })], [m.button + 0.2, over(P.stand, { armR: [40, 25, 0, 40], armL: [10, 50, 0, 30], handL: 0, head: [-20, -10, 0], bob: 0.04 }), "back"]]);
+      boy.place(boyAt, -35).pose(bp).face(t < m.let ? "happy" : t < m.catch ? "shock" : t < m.tie ? "wonder" : "joy", { t, look: t > m.let && t < m.down ? add(balloon.root.position.toArray(), [0, 1.2, 0]) : null });
+      const hand = boy.socket("handR");
+      // the glove: rest → straight up after the string (a long stretch, slack hose) → pinch → haul down → loop the wrist → pat pat
+      const catchAt = add(boy.socket("handR"), rise(m.catch, m.let));
+      const upG = { at: add(catchAt, [-0.05, -0.6, 0.0]), aim: [0.05, 1, 0.1], palm: [0.3, 0, 1] };
+      const side = t < m.catch ? [0.55 * (1 - win(t, m.catch - 0.35, m.catch)), 0, 0.5 * (1 - win(t, m.catch - 0.35, m.catch))] : [0, 0, 0];
+      const tieC = add(hand, [0, -0.62, 0]);
+      const tieG = { at: add(tieC, [0.22 * Math.cos((t - m.tie) * 18), 0, 0.22 * Math.sin((t - m.tie) * 18)]), aim: [0, 1, 0], palm: [0.3, 0, 1] };
+      const patG = { at: add(boy.socket("top"), [0, 0.12 + 0.12 * Math.max(0, Math.sin((t - m.button) * 21)), 0.05]), aim: [0.1, 0.05, 1], palm: [0, -1, 0] };
+      let tg;
+      if (t < m.catch) tg = { ...upG, at: add(upG.at, side) };
+      else if (t < m.down) tg = { at: lerpA(upG.at, tieC, win(t, m.catch + 0.05, m.down, "io")), aim: upG.aim, palm: upG.palm };
+      else if (t < m.button - 0.15) tg = tieG;
+      else tg = { at: lerpA(tieG.at, patG.at, win(t, m.button - 0.15, m.button, "o")), aim: patG.aim, palm: patG.palm };
+      const k = K(t, [[m.act, 0], [m.catch, 1, "o"], [s.dur - 0.25, 1], [s.dur, 0.7]]);
+      gloveTo(t, tg, k, KS(t, [[m.act, "relaxed"], [m.catch - 0.3, "open"], [m.catch, "pinch", "snap"], [m.down + 0.1, "pinch"], [m.button - 0.15, "flat"]]), { slack: lerp(0.15, 0.55, win(t, m.act, m.catch)), lag: t > m.act && t < m.catch ? [0.8, -1.2, 0.3] : null });
+      // balloon: held → rising and swaying → caught by its string end → hauled down → tied to his wrist
+      let held;
+      if (t < m.let) held = hand;
+      else if (t < m.catch) held = add(boy.socket("handR"), rise(t, m.let));
+      else if (t < m.down) held = add(glove.point("tip"), [0, -0.02, 0.05]);
+      else held = add(hand, [0, 0.02, 0]);
+      const sway = Math.sin(t * 2.2) * 0.12;
+      balloon.at(held, [sway, 0, sway * 0.6]);
+      steam(t, s);
+    } });
+}
+
+// OUTRO · Walt stops, turns to us and tips his cap; the glove waves bye-bye and zips back into the tank. Title.
+{
+  const x0 = 54.5;
+  F.shot({ id: "outro", kind: "outro", dur: 4.0, marks: { stop: 0.8, tip: 1.05, wave: 1.3, zip: 2.75 },
+    sfx: [...steps(0, 0.8, x0 - 2.6, x0, 1.25), ["swish", "tip"], ["tada", 1.4, 0, { gain: 0.7 }], ["squeak", "wave"], ["retract", "zip", 0, { dur: 0.9 }], ["pop", 3.15, 0, { pitch: 0.8 }]],
+    fn: (t, s) => {
+      const m = s.m; camLock(s, x0 + 1.7, t, { z: 7.8, ly: 1.95, push: 0.5 });
+      const yaw = K(t, [[m.stop, 90], [m.stop + 0.35, 15, "back"]]);
+      const tip = KP(t, [[m.tip - 0.05, over(P.stand, {})], [m.tip + 0.25, over(P.tipCap, {}), "back"], [m.tip + 1.4, over(P.tipCap, {})], [m.tip + 1.8, over(P.stand, {})]]);
+      waltAt(t, 0, m.stop, x0 - 2.6, x0, 1.9, { yaw, pose: t > m.stop ? tip : {}, gaze: [0, 0], face: t > m.tip && t < m.tip + 1.6 ? "smug" : "deadpan" });
+      const wave = { at: add(walt.socket("hose"), [1.45, 0.3, 0.45]), aim: norm([Math.sin((t - m.wave) * 12) * 0.35, 1, 0.1]), palm: [0.1, 0, 1] };
+      const k = K(t, [[0.6, 0], [m.wave, 1, "back"], [m.zip, 1], [m.zip + 0.35, 0, "i"]]);
+      const home = win(t, m.zip + 0.25, m.zip + 0.45, "i");
+      gloveTo(t, wave, k, t < m.wave ? "relaxed" : "open", { size: 1 - 0.98 * home, hoseScale: 1 - 0.9 * home, slack: 0.3 });
+      if (home > 0.98) glove.reset();
+      steam(t, s);
+      if (t > m.zip + 0.4) s.fx.puff(t, m.zip + 0.4, { at: walt.socket("hose"), n: 6, size: 0.45, dur: 0.8, rise: 0.4, spread: 0.3, seed: 8 });
+    } });
+}
+
+// ---------------------------------------------------------------- 5 · title + start
+F.title({ at: 24.9, dur: 2.6, text: "HANDS DOWN.", sub: "THE SAFEST STREET IN TOWN", size: 150, color: "#fdf8ec", ink: "#1f2b45", pos: "low", x: 0.7 });
+F.start(SCORE, renderScore);
+</script>
+</body>
+</html>

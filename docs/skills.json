@@ -288,6 +288,24 @@
       "workedExample": [
         { "title": "「The Tower That a War Saved」 · 62초 · 19샷 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/cartoon-3d-short/demo/leaning-tower/" }
       ]
+    },
+    {
+      "id": "sight-gag-short",
+      "name": "sight-gag-short",
+      "tagline": "주제 하나를 주면 무표정한 주인공이 햇살 좋은 거리를 걷는 동안 고무호스 팔 끝의 거대한 장갑이 동네의 작은 골칫거리를 하나씩 해결하는 대사 없는 개그 단편을 코드만으로 만듭니다. 칠한 벽돌 거리, 관절이 있는 장갑, 표정이 있는 캐릭터, 코드로 합성한 그루브와 효과음, 말장난 제목을 붙인 1080p MP4와 브라우저에서 도는 페이지를 냅니다.",
+      "posterAlt": "sight-gag-short로 만든 「Hands Down」의 장면 네 개: 빵집 앞에서 줄무늬 호스 끝의 하얀 장갑이 10대의 머리 위로 과자 봉지를 튕겨 내는 순간, 장갑이 킥보드에서 날아간 양복 남자의 뒷덜미를 잡아 매단 장면, 건널목에서 달려오던 노란 차가 장갑의 손바닥에 막히고 할머니가 건너는 장면, 3층 지붕 높이까지 뻗은 장갑이 빨간 풍선의 줄을 잡는 순간",
+      "poster": "sight-gag-short/poster.jpg",
+      "tags": ["three.js", "16:9", "MP4", "라이브 페이지", "합성 사운드"],
+      "stats": ["예제 27.5초 · 개그 5개", "손 모양 22가지"],
+      "page": "sight-gag-short/",
+      "source": "sight-gag-short/",
+      "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "sight-gag-short/examples/crossing-guard/" },
+      "sources": [
+        { "title": "Min Story Lab의 X 게시물 (Seedance 클립)", "url": "https://x.com/minstorylab01/status/2117637253015183423" }
+      ],
+      "workedExample": [
+        { "title": "「Hands Down」 · 27.5초 · 개그 5개 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/sight-gag-short/demo/hands-down/" }
+      ]
     }
   ]
 }

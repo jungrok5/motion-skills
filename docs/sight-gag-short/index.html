@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>sight-gag-short · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 무표정한 주인공이 햇살 좋은 거리를 걷는 동안 고무호스 팔 끝의 거대한 장갑이 동네의 작은 골칫거리를 하나씩 해결하는 대사 없는 개그 단편을 코드만으로 만듭니다.">
+<meta property="og:title" content="sight-gag-short · motion-skills">
+<meta property="og:description" content="주제 하나를 주면 무표정한 주인공이 햇살 좋은 거리를 걷는 동안 고무호스 팔 끝의 거대한 장갑이 동네의 작은 골칫거리를 하나씩 해결하는 대사 없는 개그 단편을 코드만으로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/sight-gag-short/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/sight-gag-short">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / sight-gag-short</nav>
+  <h1>sight-gag-short</h1>
+  <p>주제 하나를 주면 무표정한 주인공이 햇살 좋은 거리를 걷는 동안 고무호스 팔 끝의 거대한 장갑이 동네의 작은 골칫거리를 하나씩 해결하는 대사 없는 개그 단편을 코드만으로 만듭니다. 칠한 벽돌 거리, 관절이 있는 장갑, 표정이 있는 캐릭터, 코드로 합성한 그루브와 효과음, 말장난 제목을 붙인 1080p MP4와 브라우저에서 도는 페이지를 냅니다.
+  보고 만든 원본: <a href="https://x.com/minstorylab01/status/2117637253015183423" target="_blank" rel="noopener">Min Story Lab의 X 게시물 (Seedance 클립)</a>.</p>
+  <ul class="tags"><li>three.js</li><li>16:9</li><li>MP4</li><li>라이브 페이지</li><li>합성 사운드</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(직업 · 주인공 · 장소: 건널목 지킴이, 제빵사, 사서, 인명 구조원 …). 레퍼런스 영상이 있으면 그 스틸과 컷 시간</dd>
+      <dt>브리프</dt><dd>주인공과 등의 기계, 주제에서 나온 도구와 말장난, 거리, 도움과 응징이 번갈아 커지는 개그 4–7개의 표(설정 → 알아챔 → 행동 → 결과 → 마무리)를 담은 <code>BRIEF.md</code></dd>
+      <dt>그림</dt><dd>창문이 실제로 뚫린 벽돌 · 흰 칠 · 회벽 건물과 줄무늬 차양의 three.js 거리, 눈꺼풀과 눈썹이 움직이는 바이닐 인형 같은 캐릭터, 손가락 마디와 손 모양 22가지의 장갑, 매 프레임 다시 만드는 고무호스, 움직임이 빠른 프레임에만 거는 모션 블러</dd>
+      <dt>확인</dt><dd>행동 · 마무리 순간의 스틸을 채점하는 기준, 콘택트 시트, 결정성 · 땅 밑으로 꺼짐 · 형식 · 효과음 검사</dd>
+      <dt>출력</dt><dd>30fps 1920×1080 MP4(그루브 · 효과음 포함), ♪ 버튼으로 소리까지 재생하는 라이브 페이지</dd>
+    </dl>
+    <pre><code>cd sight-gag-short/examples/crossing-guard
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs index.html --sheet 24 --scale .5 --q mb=1
+node ../../scripts/score.mjs index.html
+node ../../scripts/render.mjs index.html --workers 3 --q mb=3 --audio out/film.wav
+node ../../scripts/new-film.mjs ../../../my-short</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. 네트워크와 GPU가 필요 없습니다(CPU에서 1080p 한 프레임이 약 3초, 모션 블러가 걸리는 프레임은 6–9초). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/sight-gag-short/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:calc((100vw - 34px)*.5625);--demo-bg:#cfe0f0">
+    <iframe data-src="demo/hands-down/?scale=.5" title="sight-gag-short 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/hands-down/">데모 열기 (examples/crossing-guard)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/crossing-guard</code> · 27.5초 · 개그 5개 · ♪ 버튼으로 소리</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/hands-down/?scale=.5" data-cap="예제 &lt;code&gt;examples/crossing-guard&lt;/code&gt; · 27.5초 · 개그 5개 · ♪ 버튼으로 소리" aria-pressed="true">건널목 지킴이</button>
+        <button class="btn" type="button" data-src="demo/template/?scale=.5" data-cap="템플릿 &lt;code&gt;templates/film.html&lt;/code&gt; · 12초 · 개그 2개 · 주제를 바꾼 출발점" aria-pressed="false">제빵사</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제 「Hands Down」의 개그 다섯 개와, 같은 엔진으로 주인공 · 도구 · 개그를 모두 바꾼 시작 템플릿입니다. 카드를 누르면 새 탭에서 그 순간에 멈춘 장면이 열리고, 브라우저가 벽돌 한 장부터 직접 그립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"help":"도움","comeuppance":"응징","shot":"시작 · 끝"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>Hands Down <small>16:9 · 27.5초 · 7샷 · 개그 5개</small></h3>
+      <p>무표정한 학교 앞 건널목 지킴이 월트가 메이플 거리를 걷습니다. 일은 빨강 · 흰 줄무늬 호스 끝의 하얀 장갑이 다 합니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="shot" href="demo/hands-down/?t=0.75" target="_blank" rel="noopener">
+          <img src="samples/intro.jpg" alt="흰 칠 벽돌 건물 앞, 형광 조끼에 하얀 바다코끼리 콧수염의 건널목 지킴이 등 뒤 빨간 탱크에서 줄무늬 호스가 올라가 거대한 하얀 장갑이 손을 흔드는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">시작 · 0.8초</span><b>장갑의 인사</b>
+          <span class="how">모퉁이에서 먼저 나와 손을 흔드는 장갑, 경광등이 깜박이는 탱크와 김</span></div></a>
+        <a class="tile" data-tags="comeuppance" href="demo/hands-down/?t=4.55" target="_blank" rel="noopener">
+          <img src="samples/litter.jpg" alt="빵집 차양 아래, 호스를 길게 뻗은 장갑이 초록 후드티 10대의 머리 위에서 과자 봉지를 튕겨 내는 순간" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">응징 · 4초</span><b>과자 봉지</b>
+          <span class="how">어깨 너머로 버린 봉지를 집어 머리에 튕기면 쓰레기통으로</span></div></a>
+        <a class="tile" data-tags="help" href="demo/hands-down/?t=8" target="_blank" rel="noopener">
+          <img src="samples/icecream.jpg" alt="분홍 줄무늬 차양의 아이스크림 가게 앞, 거대한 장갑의 검지 끝에서 민트 아이스크림 한 덩이가 돌고 콘을 든 아이가 올려다보는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">도움 · 4초</span><b>떨어진 아이스크림</b>
+          <span class="how">손바닥으로 받아 위로 띄운 뒤 손가락 끝에서 농구공처럼 돌리고 다시 콘 위로</span></div></a>
+        <a class="tile" data-tags="comeuppance" href="demo/hands-down/?t=11.2" target="_blank" rel="noopener">
+          <img src="samples/stop.jpg" alt="인도 위로 달려온 전동 킥보드의 앞바퀴가 장갑의 펼친 손바닥에 막히는 순간, 휴대폰을 보던 양복 차림 남자" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">응징 · 4.5초</span><b>인도 위 킥보드</b>
+          <span class="how">멈춤 손바닥에 킥보드는 서고 사람은 계속 날아감</span></div></a>
+        <a class="tile" data-tags="comeuppance" href="demo/hands-down/?t=12" target="_blank" rel="noopener">
+          <img src="samples/dangle.jpg" alt="장갑이 양복 남자의 뒷덜미를 잡아 공중에 매단 장면, 버둥거리는 다리와 옆으로 쓰러진 킥보드, 벽의 '인도 킥보드 금지' 표지" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">응징 · 4.5초</span><b>뒷덜미 잡기</b>
+          <span class="how">공중에서 잡아 매달았다가 내려놓고 표지판을 가리킴</span></div></a>
+        <a class="tile" data-tags="help" href="demo/hands-down/?t=16.7" target="_blank" rel="noopener">
+          <img src="samples/crossing.jpg" alt="길 건너편에서 본 건널목, 달려오던 노란 차가 장갑의 손바닥에 막혀 멈추고 핸드백을 든 할머니가 차 앞을 천천히 건너는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">도움 · 5초</span><b>할머니의 건널목</b>
+          <span class="how">표지판으로는 안 서는 차를 손바닥이 세움, 경적과 느긋한 걸음</span></div></a>
+        <a class="tile" data-tags="help" href="demo/hands-down/?t=21.5" target="_blank" rel="noopener">
+          <img src="samples/balloon.jpg" alt="카메라가 위로 기울어진 하늘, 3층 지붕 높이까지 뻗어 오른 장갑이 날아가던 빨간 풍선의 줄을 잡는 순간" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">도움 · 4초</span><b>날아간 풍선</b>
+          <span class="how">가장 긴 늘이기, 카메라가 장갑을 따라 하늘로 기울어짐</span></div></a>
+        <a class="tile" data-tags="help" href="demo/hands-down/?t=22.8" target="_blank" rel="noopener">
+          <img src="samples/tie.jpg" alt="노란 줄무늬 차양 앞, 장갑이 풍선 줄을 소년의 손목에 묶어 주고 소년이 웃는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">도움 · 4초</span><b>손목에 묶어 주기</b>
+          <span class="how">끌어 내린 풍선을 손목에 감고 머리를 토닥임</span></div></a>
+        <a class="tile" data-tags="shot" href="demo/hands-down/?t=26.1" target="_blank" rel="noopener">
+          <img src="samples/title.jpg" alt="학교 건물 앞에서 모자챙을 짚는 건널목 지킴이와 손을 흔드는 장갑, 오른쪽 아래 'HANDS DOWN.' 제목" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">끝 · 4초</span><b>HANDS DOWN.</b>
+          <span class="how">처음으로 웃는 주인공, 탱크로 쏙 들어가는 장갑, 말장난 제목</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>Handle With Care <small>템플릿 · 12초 · 개그 2개</small></h3>
+      <p>같은 엔진으로 주제를 바꾼 출발점입니다. 무표정한 제빵사 로사의 빨간 뜨개 오븐 장갑이 파이 도둑의 손을 때리고 넘어가는 상자 탑을 세웁니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="comeuppance" href="demo/template/?t=1.6" target="_blank" rel="noopener">
+          <img src="samples/t-pie.jpg" alt="빵집 창턱에서 식던 파이로 손을 뻗은 줄무늬 스웨터 남자의 손등을 빨간 오븐 장갑이 내려치는 순간" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 응징</span><b>창턱의 파이</b><span class="en">templates/film.html</span>
+          <span class="how"><code>new-film.mjs</code>가 복사하는 출발점의 첫 개그</span></div></a>
+        <a class="tile" data-tags="help" href="demo/template/?t=6" target="_blank" rel="noopener">
+          <img src="samples/t-parcels.jpg" alt="택배 기사가 든 상자 탑이 기울자 빨간 오븐 장갑이 맨 위 상자를 밀어 바로 세우는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 도움</span><b>기우는 상자 탑</b>
+          <span class="how">기울기와 되튐을 계산한 상자 다섯 개, 밀어 세운 뒤 엄지척</span></div></a>
+        <a class="tile" data-tags="shot" href="demo/template/?t=10.5" target="_blank" rel="noopener">
+          <img src="samples/t-title.jpg" alt="흰 모자의 제빵사 옆에서 손을 흔드는 빨간 오븐 장갑과 'HANDLE WITH CARE.' 제목" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 끝</span><b>HANDLE WITH CARE.</b>
+          <span class="how">주제에서 나온 도구와 말장난 제목</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. Min Story Lab이 X에 올린 31초 영상(Seedance 2.5로 만든, 실험복 차림 주인공의 거대한 가죽 장갑이 흡연자, 사다리, 물웅덩이, 낙서, 소매치기를 차례로 해결하는 영상)이 출발점입니다. 그 영상은 AI 영상 모델이 만든 것이라, 이 스킬은 형식과 화면의 문법(무표정한 주인공, 등의 기계에서 늘어나는 장갑, 한 거리, 고정된 와이드샷 하나에 개그 하나, 이어지는 그루브, 말장난)만 가져오고 그림과 소리는 직접 만든 엔진이 만듭니다. 예제의 주인공, 장갑, 개그, 음악은 모두 이 레포의 것입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/hands-down/" target="_blank" rel="noopener"><b>「Hands Down」 · 27.5초 · 개그 5개</b><span>건널목 지킴이와 하얀 장갑, 라이브 페이지</span><span class="url">sight-gag-short/demo/hands-down/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/sight-gag-short/examples/crossing-guard"><b>예제 폴더 · examples/crossing-guard</b><span>BRIEF.md · index.html · score.js</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/minstorylab01/status/2117637253015183423" target="_blank" rel="noopener"><b>레퍼런스 영상 · X</b><span>Min Story Lab(@minstorylab01) · Seedance 2.5 · 2026년 11월</span><span class="url">x.com/minstorylab01</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sight-gag-short/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/sight-gag-short">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sight-gag-short/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sight-gag-short/references/BRIEF.md">references/BRIEF.md</a> <span>고정되는 것과 주제마다 설계하는 것, 브리프 틀, 스틸 채점 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sight-gag-short/references/STORY.md">references/STORY.md</a> <span>주제 → 주인공 → 도구 → 개그, 개그의 문법과 타이밍</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sight-gag-short/references/LOOK.md">references/LOOK.md</a> <span>레퍼런스를 잰 값과 맞춘 값</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sight-gag-short/references/KIT.md">references/KIT.md</a> <span>API</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sight-gag-short/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 이미지는 이 스킬이 코드로 그린 것입니다. 글꼴 Barlow Condensed (OFL), three.js (MIT)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
