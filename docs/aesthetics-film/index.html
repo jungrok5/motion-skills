@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>aesthetics-film · motion-skills</title>
+<meta name="description" content="문화 · 공예 · 생각 하나를 주제로 주면, 안개 속 수묵 산수와 처마 · 창살 · 그릇을 코드로 지은 3D 세트 사이를 천천히 지나가는 장(章) 구성의 16:9 미학 에세이 영상을 만듭니다.">
+<meta property="og:title" content="aesthetics-film · motion-skills">
+<meta property="og:description" content="문화 · 공예 · 생각 하나를 주제로 주면, 안개 속 수묵 산수와 처마 · 창살 · 그릇을 코드로 지은 3D 세트 사이를 천천히 지나가는 장(章) 구성의 16:9 미학 에세이 영상을 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/aesthetics-film/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/aesthetics-film">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / aesthetics-film</nav>
+  <h1>aesthetics-film</h1>
+  <p>문화 · 공예 · 생각 하나를 주제로 주면, 안개 속 수묵 산수와 처마 · 창살 · 그릇을 코드로 지은 3D 세트 사이를 천천히 지나가는 장(章) 구성의 16:9 미학 에세이 영상을 만듭니다. 번호 붙은 장 배지, 한 글자씩 쓰이는 두 언어 자막, 사물에 붙는 설명 라벨, 코드로 합성한 음악, 낙관을 찍은 마지막 제목 카드까지 3D 에셋과 이미지 파일 없이 three.js로 그려 MP4와 브라우저에서 도는 페이지로 냅니다.
+  보고 만든 원본: <a href="https://x.com/YFeng2022/status/2117924044439712156" target="_blank" rel="noopener">LanFeng의 X 게시물 《中国美学》</a>.</p>
+  <ul class="tags"><li>three.js</li><li>16:9</li><li>MP4</li><li>두 언어 자막</li><li>라이브 페이지</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나 (한 문화의 미감, 공예, 재료, 건축, 생각)</dd>
+      <dt>브리프</dt><dd>한 줄 논지, 출처를 단 사실, 3–6개의 장과 장마다 두세 줄의 자막, 주제에 맞춰 새로 설계한 세트 · 사물 · 색 · 음계</dd>
+      <dt>장면</dt><dd>코드로 지은 3D 세트, 장마다 천천히 움직이는 샷 한두 개, 장 사이 종이로 번지는 전환, 사물에 붙는 설명 라벨</dd>
+      <dt>소리</dt><dd>현을 뜯는 소리 · 피리 · 저음 · 종으로 합성한 음악, 장마다 분위기</dd>
+      <dt>출력</dt><dd>1920×1080 MP4, 소리 나는 라이브 페이지, BRIEF.md</dd>
+    </dl>
+    <pre><code>cd aesthetics-film/examples/korean-beauty
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs index.html --sheet 16 --scale .5
+node ../../scripts/score.mjs index.html
+node ../../scripts/render.mjs index.html --audio out/score.wav
+
+node ../../scripts/new-film.mjs ~/my-film    # 새 영상
+node ../../scripts/fonts.mjs ~/my-film/film.html</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg, 글꼴을 받을 때 한 번 네트워크. npm 설치 · GPU · API 키는 필요 없습니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/aesthetics-film/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9.8;--h-phone:calc((100vw - 34px) * 9 / 16 + 46px);--demo-bg:#16130f">
+    <iframe data-src="demo/korean-beauty/?scale=.5&amp;t=7" title="aesthetics-film 예제 실시간 재생" allow="fullscreen; autoplay" allowfullscreen></iframe>
+    <noscript><a href="demo/korean-beauty/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/korean-beauty</code> · 58초 · 4장 · ▶로 소리와 함께 재생</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/korean-beauty/?scale=.5&amp;t=7" data-cap="예제 &lt;code&gt;examples/korean-beauty&lt;/code&gt; · 58초 · 4장 · ▶로 소리와 함께 재생" aria-pressed="true">한국의 미</button>
+        <button class="btn" type="button" data-src="demo/lantern/?scale=.5&amp;t=7" data-cap="템플릿 &lt;code&gt;templates/film.html&lt;/code&gt; · 28초 · 2장 · 중국어 + 영어" aria-pressed="false">템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제와 템플릿의 장면입니다. 카드를 누르면 라이브 데모가 그 장면에서 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"ex":"예제 · 한국의 미","tpl":"템플릿 · 一盏灯"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>비움의 미학 · 한국의 미 <small>예제 · 58초 · 4장</small></h3>
+      <p>원본은 중국의 미학을 다뤘습니다. 이 예제는 다른 문화를 주제로 브리프부터 세트 · 사물 · 색 · 음악을 새로 설계했습니다: 수묵화의 여백, 들어 올린 처마, 빛을 거르는 한지, 두 반쪽을 붙인 달항아리.</p>
+      <div class="grid">
+        <a class="tile" data-tags="ex" href="demo/korean-beauty/?t=3" target="_blank" rel="noopener">
+          <img src="samples/ink.jpg" alt="종이 빛 안개 바다 위로 능선이 짙고 비탈이 옅은 수묵 산봉우리들, 앞쪽에 소나무가 선 작은 섬" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">01 여백 · 3초</span><b>산을 다 그리지 않는다</b><span class="how">종이 프리셋: 산자락이 안개 바다로 녹아듦</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/korean-beauty/?t=8" target="_blank" rel="noopener">
+          <img src="samples/islet.jpg" alt="먹빛 소나무 세 그루가 선 섬을 옆으로 지나가는 카메라, 뒤로 겹겹의 산" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">01 여백 · 8초</span><b>비워 둔 자리</b><span class="how">강조어 "비워"는 낙관 빨강</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/korean-beauty/?t=13" target="_blank" rel="noopener">
+          <img src="samples/court.jpg" alt="흙 마당 너머 돌 기단 위의 한옥: 팔작지붕, 백목 기둥, 띠살문, 오른쪽 장독대의 옹기들" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">02 처마 · 13초</span><b>한옥 마당</b><span class="how">팔작지붕(hip .55), 장독대, 담장 — 모두 이 주제를 위해 지음</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/korean-beauty/?t=18" target="_blank" rel="noopener">
+          <img src="samples/eave.jpg" alt="아래에서 올려다본 들린 처마 끝과 '안허리곡 · 앙곡' 설명 라벨" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">02 처마 · 18초</span><b>안허리곡 · 앙곡</b><span class="how">처마 모서리를 따라 오르는 카메라와 설명 라벨</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/korean-beauty/?t=28" target="_blank" rel="noopener">
+          <img src="samples/doors.jpg" alt="방 안에서 본 띠살문 여섯 짝, 한지가 안쪽에서 밝아지고 '띠살문 · 한지' 라벨" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">03 창호 · 28초</span><b>빛을 거르는 한지</b><span class="how">해가 오르며 한지의 빛이 번짐</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/korean-beauty/?t=33" target="_blank" rel="noopener">
+          <img src="samples/shadows.jpg" alt="낮은 해가 띠살문 창살 그림자를 마루 바닥에 길게 드리우고, 그 위에 놓인 달항아리" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">03 창호 · 33초</span><b>마루에 번진 창살</b><span class="how">창살만 그림자를 드리우고 한지는 빛을 통과시킴</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/korean-beauty/?t=39" target="_blank" rel="noopener">
+          <img src="samples/jar.jpg" alt="한지 문 앞 낮은 상 위의 하얀 달항아리, 허리의 이음에 붙은 라벨" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">04 달항아리 · 39초</span><b>두 반쪽의 이음</b><span class="how">둘레를 도는 카메라를 따라 이음 위에 머무는 라벨</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/korean-beauty/?t=49" target="_blank" rel="noopener">
+          <img src="samples/moon.jpg" alt="푸른 밤, 둥근 먹빛 산 너머로 떠오르는 보름달" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">04 달항아리 · 49초</span><b>채우지 않아서 넉넉하다</b><span class="how">항아리에서 달로 겹쳐 넘어가는 전환, 밤 프리셋</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/korean-beauty/?t=56" target="_blank" rel="noopener">
+          <img src="samples/card.jpg" alt="종이 위의 제목 '비움의 미학'과 붉은 낙관 '美', 아래에 '여백 · 처마 · 창호 · 달항아리'" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">카드 · 56초</span><b>비움의 미학</b><span class="how">붓 획 → 제목과 낙관 → 한 줄</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>一盏灯 · A Lantern <small>템플릿 · 28초 · 2장</small></h3>
+      <p>새 영상의 시작점입니다. 장 배지, 자막, 설명 라벨, 종이 전환, 제목 카드를 한 번씩 보여 줍니다. 주제가 등불이 아니면 그대로 쓰지 않습니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="tpl" href="demo/lantern/?t=7" target="_blank" rel="noopener">
+          <img src="samples/t-lake.jpg" alt="달 뜬 밤 호수, 먹빛 산 아래 등불을 단 작은 배" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">01 夜湖 · 7초</span><b>한 점의 빛</b><span class="how">밤 프리셋, 물 위의 등불</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/lantern/?t=17" target="_blank" rel="noopener">
+          <img src="samples/t-lantern.jpg" alt="탁자 위에서 안쪽부터 밝아지는 종이 등불과 '竹骨 · 七道' 라벨, 찻잔에서 오르는 김" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">02 竹骨与纸 · 17초</span><b>불이 들어오는 등</b><span class="how">update로 종이의 빛과 등 안의 조명을 함께 올림</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/lantern/?t=26.5" target="_blank" rel="noopener">
+          <img src="samples/t-card.jpg" alt="종이 위의 제목 '一盏灯'과 붉은 낙관 '灯'" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">카드 · 26.5초</span><b>一盏灯</b><span class="how">같은 카드 문법, 다른 제목과 낙관</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬은 X 게시물로 공유된 영상 한 편을 보고 만들었습니다. 원본 레포는 없고, 스틸을 보며 장 구성 · 화면 문법 · 색 · 카메라를 읽어 코드로 다시 세웠습니다. 원본의 글 · 장면 · 이름은 가져오지 않았습니다.</p>
+  <div class="works">
+    <a class="work" href="https://jungrok5.github.io/motion-skills/aesthetics-film/demo/korean-beauty/" target="_blank" rel="noopener"><b>「비움의 미학 · 한국의 미」</b><span>예제 · 58초 · 4장 · 라이브 페이지</span><span class="url">aesthetics-film/demo/korean-beauty</span></a>
+    <a class="work" href="https://x.com/YFeng2022/status/2117924044439712156" target="_blank" rel="noopener"><b>원본 · LanFeng의 X 게시물 《中国美学》</b><span>스킬의 출처 · 3분 28초 · 순수 코드, 3D 에셋 없음 (Three.js + TypeScript + Vite, Python 합성 음악)</span><span class="url">x.com/YFeng2022/status/2117924044439712156</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/aesthetics-film/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/aesthetics-film">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/aesthetics-film/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/aesthetics-film/references/BRIEF.md">references/BRIEF.md</a> <span>고정되는 것과 주제마다 설계하는 것, 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/aesthetics-film/references/ESSAY.md">references/ESSAY.md</a> <span>논지 → 장 → 자막 → 샷</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/aesthetics-film/references/LOOK.md">references/LOOK.md</a> <span>원본에서 읽은 화면 문법과 값</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/aesthetics-film/references/KIT.md">references/KIT.md</a> <span>세트 · 사물 · 음악 API</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/aesthetics-film/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림은 코드로 렌더했습니다. 글꼴: Noto Serif KR · Noto Serif SC · EB Garamond (SIL OFL 1.1)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

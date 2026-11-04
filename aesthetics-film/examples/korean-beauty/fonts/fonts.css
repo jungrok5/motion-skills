@@ -1,0 +1,137 @@
+/* subset fonts for this film (scripts/fonts.mjs). Noto Serif KR + EB Garamond, SIL Open Font License 1.1, via Google Fonts. */
+@font-face {
+  font-family: 'Essay Serif';
+  font-style: normal;
+  font-weight: 500;
+  
+  src: url(EssaySerif-500-0.woff2) format('woff2');
+  unicode-range: U+20, U+2c, U+2e, U+30-34, U+41, U+4b-4d, U+50, U+54, U+61-70, U+72-77, U+79, U+ac00, U+ac1c, U+ac70, U+ac8c, U+ace7, U+ad6d, U+adf8, U+b05d, U+b294, U+b298, U+b2e4, U+b2ec, U+b454, U+b4e4, U+b824, U+b85c, U+b978, U+b9ac, U+b9c8-b9c9, U+bb34, U+bbf8, U+bc31, U+bd95, U+be44, U+be5b, U+bed7, U+c0b0, U+c0b4, U+c544, U+c548-c54a, U+c591, U+c5b4, U+c5d0, U+c5ec, U+c624, U+c62c, U+c6b4, U+c6cc, U+c744, U+c758, U+c774, U+c790, U+c9c0, U+c9dd, U+cc3d, U+cc98, U+d558, U+d55c, U+d56d, U+d638;
+}
+@font-face {
+  font-family: 'Essay Serif';
+  font-style: normal;
+  font-weight: 600;
+  
+  src: url(EssaySerif-600-1.woff2) format('woff2');
+  unicode-range: U+20, U+2c, U+2e, U+30-34, U+41, U+4b-4d, U+50, U+54, U+61-70, U+72-77, U+79, U+ac00, U+ac1c, U+ac70, U+ac8c, U+ace7, U+ad6d, U+adf8, U+b05d, U+b294, U+b298, U+b2e4, U+b2ec, U+b454, U+b4e4, U+b824, U+b85c, U+b978, U+b9ac, U+b9c8-b9c9, U+bb34, U+bbf8, U+bc31, U+bd95, U+be44, U+be5b, U+bed7, U+c0b0, U+c0b4, U+c544, U+c548-c54a, U+c591, U+c5b4, U+c5d0, U+c5ec, U+c624, U+c62c, U+c6b4, U+c6cc, U+c744, U+c758, U+c774, U+c790, U+c9c0, U+c9dd, U+cc3d, U+cc98, U+d558, U+d55c, U+d56d, U+d638;
+}
+@font-face {
+  font-family: 'Essay Serif';
+  font-style: normal;
+  font-weight: 700;
+  
+  src: url(EssaySerif-700-2.woff2) format('woff2');
+  unicode-range: U+20, U+2c, U+2e, U+30-34, U+41, U+4b-4d, U+50, U+54, U+61-70, U+72-77, U+79, U+ac00, U+ac1c, U+ac70, U+ac8c, U+ace7, U+ad6d, U+adf8, U+b05d, U+b294, U+b298, U+b2e4, U+b2ec, U+b454, U+b4e4, U+b824, U+b85c, U+b978, U+b9ac, U+b9c8-b9c9, U+bb34, U+bbf8, U+bc31, U+bd95, U+be44, U+be5b, U+bed7, U+c0b0, U+c0b4, U+c544, U+c548-c54a, U+c591, U+c5b4, U+c5d0, U+c5ec, U+c624, U+c62c, U+c6b4, U+c6cc, U+c744, U+c758, U+c774, U+c790, U+c9c0, U+c9dd, U+cc3d, U+cc98, U+d558, U+d55c, U+d56d, U+d638;
+}
+@font-face {
+  font-family: 'Essay Serif';
+  font-style: normal;
+  font-weight: 500;
+  
+  src: url(EssaySerif-500-3.woff2) format('woff2');
+  unicode-range: U+21-2b, U+2d, U+2f, U+35-40, U+42-4a, U+4e-4f, U+51-53, U+55-5e, U+b7, U+2014, U+7f8e, U+ace0-ace1, U+ae00, U+ae08, U+ae30, U+b109, U+b300, U+b3c4, U+b450, U+b465, U+b530, U+b760, U+b798, U+b97c, U+b9bc, U+bb38, U+bc18, U+bc1d, U+bc29, U+bc88, U+bd99, U+be5a, U+c11c, U+c2e0, U+c559, U+c640, U+c6b0, U+c6b8, U+c6c0, U+c704, U+c74c, U+c778, U+c870, U+c9c4, U+cabd, U+cc44, U+d559, U+d5c8;
+}
+@font-face {
+  font-family: 'Essay Serif';
+  font-style: normal;
+  font-weight: 600;
+  
+  src: url(EssaySerif-600-4.woff2) format('woff2');
+  unicode-range: U+21-2b, U+2d, U+2f, U+35-40, U+42-4a, U+4e-4f, U+51-53, U+55-5e, U+b7, U+2014, U+7f8e, U+ace0-ace1, U+ae00, U+ae08, U+ae30, U+b109, U+b300, U+b3c4, U+b450, U+b465, U+b530, U+b760, U+b798, U+b97c, U+b9bc, U+bb38, U+bc18, U+bc1d, U+bc29, U+bc88, U+bd99, U+be5a, U+c11c, U+c2e0, U+c559, U+c640, U+c6b0, U+c6b8, U+c6c0, U+c704, U+c74c, U+c778, U+c870, U+c9c4, U+cabd, U+cc44, U+d559, U+d5c8;
+}
+@font-face {
+  font-family: 'Essay Serif';
+  font-style: normal;
+  font-weight: 700;
+  
+  src: url(EssaySerif-700-5.woff2) format('woff2');
+  unicode-range: U+21-2b, U+2d, U+2f, U+35-40, U+42-4a, U+4e-4f, U+51-53, U+55-5e, U+b7, U+2014, U+7f8e, U+ace0-ace1, U+ae00, U+ae08, U+ae30, U+b109, U+b300, U+b3c4, U+b450, U+b465, U+b530, U+b760, U+b798, U+b97c, U+b9bc, U+bb38, U+bc18, U+bc1d, U+bc29, U+bc88, U+bd99, U+be5a, U+c11c, U+c2e0, U+c559, U+c640, U+c6b0, U+c6b8, U+c6c0, U+c704, U+c74c, U+c778, U+c870, U+c9c4, U+cabd, U+cc44, U+d559, U+d5c8;
+}
+@font-face {
+  font-family: 'Essay Serif';
+  font-style: normal;
+  font-weight: 500;
+  
+  src: url(EssaySerif-500-6.woff2) format('woff2');
+  unicode-range: U+5f-60, U+71, U+78, U+7a-7e, U+2013, U+2018-2019, U+201c-201d, U+2026;
+}
+@font-face {
+  font-family: 'Essay Serif';
+  font-style: normal;
+  font-weight: 600;
+  
+  src: url(EssaySerif-600-7.woff2) format('woff2');
+  unicode-range: U+5f-60, U+71, U+78, U+7a-7e, U+2013, U+2018-2019, U+201c-201d, U+2026;
+}
+@font-face {
+  font-family: 'Essay Serif';
+  font-style: normal;
+  font-weight: 700;
+  
+  src: url(EssaySerif-700-8.woff2) format('woff2');
+  unicode-range: U+5f-60, U+71, U+78, U+7a-7e, U+2013, U+2018-2019, U+201c-201d, U+2026;
+}
+@font-face {
+  font-family: 'Essay Latin';
+  font-style: italic;
+  font-weight: 400;
+  
+  src: url(EssayLatin-400i-9.woff2) format('woff2');
+  unicode-range: U+20-70, U+72-77, U+79, U+b7, U+2014;
+}
+@font-face {
+  font-family: 'Essay Latin';
+  font-style: normal;
+  font-weight: 400;
+  
+  src: url(EssayLatin-400-10.woff2) format('woff2');
+  unicode-range: U+20-70, U+72-77, U+79, U+b7, U+2014;
+}
+@font-face {
+  font-family: 'Essay Latin';
+  font-style: normal;
+  font-weight: 500;
+  
+  src: url(EssayLatin-500-11.woff2) format('woff2');
+  unicode-range: U+20-70, U+72-77, U+79, U+b7, U+2014;
+}
+@font-face {
+  font-family: 'Essay Latin';
+  font-style: normal;
+  font-weight: 600;
+  
+  src: url(EssayLatin-600-12.woff2) format('woff2');
+  unicode-range: U+20-70, U+72-77, U+79, U+b7, U+2014;
+}
+@font-face {
+  font-family: 'Essay Latin';
+  font-style: italic;
+  font-weight: 400;
+  
+  src: url(EssayLatin-400i-13.woff2) format('woff2');
+  unicode-range: U+71, U+78, U+7a-7e, U+2013, U+2018-2019, U+201c-201d, U+2026;
+}
+@font-face {
+  font-family: 'Essay Latin';
+  font-style: normal;
+  font-weight: 400;
+  
+  src: url(EssayLatin-400-14.woff2) format('woff2');
+  unicode-range: U+71, U+78, U+7a-7e, U+2013, U+2018-2019, U+201c-201d, U+2026;
+}
+@font-face {
+  font-family: 'Essay Latin';
+  font-style: normal;
+  font-weight: 500;
+  
+  src: url(EssayLatin-500-15.woff2) format('woff2');
+  unicode-range: U+71, U+78, U+7a-7e, U+2013, U+2018-2019, U+201c-201d, U+2026;
+}
+@font-face {
+  font-family: 'Essay Latin';
+  font-style: normal;
+  font-weight: 600;
+  
+  src: url(EssayLatin-600-16.woff2) format('woff2');
+  unicode-range: U+71, U+78, U+7a-7e, U+2013, U+2018-2019, U+201c-201d, U+2026;
+}

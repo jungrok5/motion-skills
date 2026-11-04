@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>一盏灯 · A Lantern</title>
+<!-- aesthetics-film starting film: "一盏灯 · A Lantern", 2 chapters + the closing card, ~34 s. It shows every part of the
+     grammar once — chapter badges, typed bilingual lines with an accent word, a slow camera through two sets, a callout,
+     a dip through paper, the seal title card — on a topic that is NOT the worked example's. It is an example of the
+     style, not a menu: a new topic gets its own sets, objects, light and score from its BRIEF.md.
+     Read top to bottom: film → essay (chapters + lines) → sets → shots → callouts + card → start. -->
+<link rel="stylesheet" href="fonts/fonts.css">
+<script type="importmap">{ "imports": { "three": "../lib/three.module.min.js", "essay/": "../lib/" } }</script>
+<body>
+<script type="module">
+import { Film, THREE, lin, smooth } from "essay/film.js";
+import { score } from "./score.js";
+
+const F = new Film({ brand: { title: "一盏灯", sub: "A Lantern" }, score });
+
+// 1 · the essay: chapters and lines (references/ESSAY.md). Lines run back to back; everything else is timed from them.
+F.chapter({ from: 0, n: 1, title: "夜湖", en: "Night lake" });
+const A = F.say([
+  { text: "夜色把山水收成一笔，", en: "Night folds the hills and the water into one stroke," },
+  { text: "只留下一点光。", en: "and leaves a single point of light.", accent: ["光"] },
+], { from: 1.2 });
+const ch2 = A[1].to + 1.4;
+F.chapter({ from: ch2, n: 2, title: "竹骨与纸", en: "Bamboo and paper" });
+const B = F.say([
+  { text: "竹做骨，纸做皮，", en: "Bamboo for the bones, paper for the skin —", accent: ["竹", "纸"] },
+  { text: "火在里面，才看得见它的形状。", en: "only with a flame inside does its shape appear.", accent: ["形状"] },
+], { from: ch2 + 1.0 });
+const cardAt = B[1].to + 0.8;
+
+// 2 · sets: each place is built once with the kit (references/KIT.md) and returns what the shots move
+F.set("lake", (S) => {
+  S.water({ w: 900, d: 900, color: "#1c2836", at: [0, 0, 0] });
+  S.inkMountains({ n: 14, x: [-260, 260], z: [-90, -420], h: [28, 90], ink: "#121925", wash: "#3e4c60", mist: "#26354a", mistY: 2, mistSoft: 14, seed: 4, base: -4, round: 0.6, aspect: 1.6 });
+  S.mistBanks({ n: 9, x: [-160, 160], z: [-70, -260], y: [2, 10], color: "#3a4a5e", opacity: 0.55, size: 110 });
+  S.moon({ at: [-70, 95, -400], r: 9, color: "#f3eedc" });
+  const boat = S.boat({ at: [6, 0.05, -24], len: 3.2, drift: -0.25, color: "#0e1218" });
+  const lamp = S.lantern({ r: 0.16, h: 0.3, at: [0, 1.15, 0], glow: 2.2, lightPower: 6, range: 14 });
+  boat.add(lamp);
+  return { boat };
+}, { shadow: false, fogFar: 1100, fogNear: 60 });
+
+F.set("lantern", (S) => {
+  S.floor({ w: 30, d: 30, kind: "wood", color: "#3a2a20" });
+  S.wall({ len: 14, h: 4, at: [0, 0, -3.2], color: "#c9c0ae", cap: false, openings: [{ shape: "rect", x: 3.4, y: 1.0, w: 1.6, h: 1.8, lattice: "ice", paper: true, seed: 5, glow: 0.5, glowColor: "#9fb4d8" }] });
+  const tb = S.table({ w: 2.2, d: 0.9, h: 0.78, at: [0, 0, 0], color: "#4a3022" });
+  const lamp = S.lantern({ r: 0.32, h: 0.58, at: [-0.2, 0.78, 0], glow: 0, lightPower: 0, range: 6 });
+  S.vessel({ shape: "cup", h: 0.08, glaze: "black", at: [0.55, 0.78, 0.12] });
+  S.smoke({ at: [0.55, 0.86, 0.12], h: 0.5, w: 0.06, opacity: 0.35, seed: 3 });
+  return { lamp, tb };
+});
+
+// 3 · shots: a slow camera path through a set under one light preset; tiles the timeline
+F.shot({ from: 0, set: "lake", light: "night",
+  cam: { path: [[0, 9, 40], [2, 6, 22]], look: [[0, 8, -200], [4, 2.5, -40]], fov: [38, 34] } });
+F.shot({ from: A[1].from - 0.4, set: "lake", light: "night", xfade: 1.2,
+  cam: { path: [[14, 1.6, -14], [10, 1.4, -18.5]], look: [4, 1.0, -24], fov: 30 } });
+F.shot({ from: ch2, set: "lantern", light: "night", dip: 1.2, exposure: 1.1,
+  update: (lt, o) => { // the flame catches: the paper lights up from inside
+    const k = smooth((lt - 1.2) / 2.5);
+    o.lamp.userData.paper.emissiveIntensity = 2.4 * k;
+    o.lamp.children.find((c) => c.isPointLight).intensity = 5 * k;
+  },
+  cam: { path: [[2.2, 1.5, 2.6], [1.1, 1.25, 1.55], [0.2, 1.15, 1.35]], look: [[-0.2, 1.0, 0], [-0.2, 1.05, 0]], fov: [36, 30] } });
+const lit = (o) => { o.lamp.userData.paper.emissiveIntensity = 2.4; o.lamp.children.find((c) => c.isPointLight).intensity = 5; };
+F.shot({ from: B[1].from - 0.5, set: "lantern", light: "night", xfade: 1.4, exposure: 1.1, update: (lt, o) => lit(o),
+  cam: { path: [[-1.7, 1.25, 1.6], [-1.2, 1.2, 1.1]], look: [[-0.2, 1.0, 0], [-0.15, 1.05, 0]], fov: 34 } });
+
+// 4 · callouts and the closing card
+F.callout({ set: "lantern", from: B[0].from + 0.6, to: B[0].to + 0.2, at: [-0.48, 1.1, 0.06], text: "竹骨 · 七道", en: "Seven bamboo ribs", dx: -90, dy: -70 });
+F.card({ from: cardAt, to: cardAt + 6.5, title: "一盏灯", seal: "灯", en: "A Lantern", sub: "光 在 纸 里", footer: "made with aesthetics-film" });
+
+F.start();
+</script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Water Cycle · sketchnote-explainer template</title>
+<script type="importmap">{ "imports": { "sk/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// Starting film: the water cycle in 5 beats and a finale, on a 3:4 sheet (1080×1440, the Xiaohongshu / Instagram shape).
+// Replace the topic; keep the structure:
+//   F.beat(main line, second line)  then what the pencil draws in that beat, in order (sketch · label · arrow · line …)
+//   F.finale(…)                     the camera pulls back to the whole sheet; draw the title (and a note card) after it
+// Layout: x, y are sheet coordinates (0…W, 0…H). Plan the WHOLE sheet first — it is the infographic the film ends on —
+// then cut it into beats. check.mjs names every overlap, anything off the sheet, and a subtitle card over a drawing.
+// Your topic's own drawings: defineSketch('name', (o, K) => [K.line(…), K.wash(…), K.text(…), K.anim(…)]) — see `river`.
+// Preview: python3 -m http.server → /templates/film.html
+import { Board, defineSketch } from 'sk/board.js';
+import { C, curve } from 'sk/hand.js';
+
+// a drawing designed for this topic: a river running from (x0, y0) down to (x1, y1), a band of blue between two banks
+defineSketch('river', (o, K) => {
+  const mid = (a, b, d) => [(a[0] + b[0]) / 2 + d, (a[1] + b[1]) / 2], A = [o.x0, o.y0], B = [o.x1, o.y1];
+  const left = curve([A, mid(A, B, -30), B]), right = curve([[A[0] + 14, A[1]], mid(A, B, -4), [B[0] + 40, B[1]]]);
+  return [K.line(left, { w: 2.2 }), K.line(right, { w: 2.2 }), K.wash([...left, ...right.reverse()], C.blue, { off: [2, 2] })];
+});
+
+const F = new Board({ title: 'The Water Cycle', W: 1080, H: 1440, music: { key: 'G', bpm: 80 } });
+const { beat, finale, sketch, label, arrow, title } = F;
+
+beat('모든 것은 햇볕에서 시작해요.', 'It all starts with the sun.');
+sketch('sun', { id: 'sun', x: 880, y: 300, r: 50 });
+
+beat('바닷물이 데워져 수증기로 올라가요.', 'Warm sea water rises as vapour.');
+sketch('waves', { id: 'sea', x: 330, y: 1050, w: 560, rows: 3 });
+sketch('steam', { id: 'vapour', x: 330, y: 1020, w: 260, h: 230, n: 4 });
+label('evaporation', 40, 880, { sub: '증발', id: 'evap-label' });
+
+beat('높은 곳에서 식어 구름이 돼요.', 'Up high, it cools into clouds.');
+sketch('cloud', { id: 'cloud', x: 380, y: 520, w: 320, h: 140 });
+label('condensation', 380, 612, { sub: '응결', align: 'center', id: 'cloud-label' });
+
+beat('바람에 실려 가다 비로 내려요.', 'The wind carries it; it falls as rain.');
+arrow([585, 470], [668, 476], { bend: -.4, label: 'wind', id: 'wind' });
+sketch('cloud', { id: 'rain-cloud', x: 850, y: 560, w: 300, h: 130, rain: true, rainH: 170, seed: 8, color: '#d5dde2' });
+sketch('mountain', { id: 'mountain', x: 830, y: 1010, w: 400, h: 230 });
+label('precipitation', 655, 652, { sub: '강수', align: 'right', id: 'rain-label' });
+
+beat('빗물은 강을 따라 다시 바다로.', 'Rivers carry it back to the sea.');
+sketch('river', { id: 'river', x0: 700, y0: 990, x1: 590, y1: 1060, overlap: true });
+label('runoff', 770, 1040, { sub: '다시 바다로', id: 'river-label' });
+
+finale('그리고 다시, 처음부터.', 'And round it goes again.');
+title('The Water Cycle', 60, 50, { size: 76, marks: ['Water'], sub: '물은 돌고 돈다' });
+
+F.start();
+</script>
+</body>
+</html>

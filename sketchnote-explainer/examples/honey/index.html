@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>From Flower to Honey · sketchnote-explainer</title>
+<script type="importmap">{ "imports": { "sk/": "../../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// 「From Flower to Honey · 꽃에서 꿀까지」 — the worked example, made brief-first (BRIEF.md): 10 beats and a finale on one
+// 1920×1080 sheet. Three drawings were designed for this topic with defineSketch (bee, sugar, caps); the rest is the kit.
+// Preview: python3 -m http.server → /examples/honey/   ·   check: node ../../scripts/check.mjs index.html
+import { Board, defineSketch } from 'sk/board.js';
+import { C, ellipse, circle, curve, lens, polygon, pencil, wash, clamp } from 'sk/hand.js';
+
+// ── drawings designed for this topic ──
+// a honey bee facing right (≈ 130 × 110): striped abdomen, fuzzy thorax, head, antennae, legs, two wings.
+// fan: true → the wings beat (a blur of three ghost wings), for the bees that dry the honey.
+const wingA = lens(26, -14, -4, -72, 34, .2), wingB = lens(36, -14, 42, -66, 28, -.2);
+defineSketch('bee', (o, K) => [
+  K.guide(ellipse(4, 4, 74, 40)),
+  K.line(ellipse(-12, 10, 42, 28), { closed: true }),
+  K.wash(ellipse(-12, 10, 42, 28), C.yellow),
+  K.curve([[-22, -15], [-27, 10], [-22, 35]], { w: 6, color: C.brown }),
+  K.curve([[-2, -16], [-6, 10], [-2, 36]], { w: 6, color: C.brown }),
+  K.line([[-54, 10], [-66, 13], [-53, 17]], { dur: .1 }),
+  K.line(circle(34, 2, 19), { closed: true }), K.wash(circle(34, 2, 19), C.cinnamon),
+  K.line(circle(58, -2, 13), { closed: true }), K.wash(circle(58, -2, 13), C.brown),
+  K.dot(63, -5, 3, C.coffee),
+  K.curve([[60, -14], [66, -32], [78, -38]], { w: 1.8 }), K.curve([[54, -14], [54, -34], [62, -44]], { w: 1.8 }),
+  ...[22, 34, 46].map(x => K.curve([[x, 18], [x - 4, 32], [x - 10, 40]], { w: 1.8, dur: .08 })),
+  ...(o.fan ? [K.anim([-30, -80, 70, -8], (g, lt, k) => {
+    for (const [j, a] of [[0, -.5], [1, 0], [2, .5]]) {                     // three ghost positions, the middle one solid
+      const ang = a * .6 + Math.sin(lt * 38) * .25;
+      g.save(); g.translate(30, -14); g.rotate(ang); g.translate(-30, 14);
+      wash(g, wingA, { color: C.sky, k, seed: 3 + j, alpha: j === 1 ? .6 : .22 });
+      pencil(g, wingA, { closed: true, k, seed: 5 + j, w: 1.8, alpha: j === 1 ? 1 : .3 });
+      g.restore();
+    }
+    wash(g, wingB, { color: C.sky, k, seed: 8, alpha: .5 }); pencil(g, wingB, { closed: true, k, seed: 9, w: 1.8 });
+  }, { reveal: .5, with: false })] : [
+    K.line(wingA, { closed: true, w: 2 }), K.line(wingB, { closed: true, w: 2 }),
+    K.wash(wingA, C.sky, { alpha: .55 }), K.wash(wingB, C.sky, { alpha: .55 }),
+  ]),
+]);
+// sucrose drawn the way chemistry books do: a glucose hexagon joined to a fructose pentagon. split: true → the two apart.
+defineSketch('sugar', (o, K) => {
+  const hex = polygon(0, 0, 36, 6, 0), pent = o.split ? polygon(118, 16, 32, 5) : polygon(86, 16, 32, 5);
+  return [
+    K.line(hex, { closed: true }), K.line(pent, { closed: true }),
+    o.split ? K.text('+', 58, -12, { size: 44, align: 'center', color: C.red }) : K.line([[34, 6], [58, 12]], { w: 2.4, dur: .12 }),
+    K.wash(hex, C.cream), K.wash(pent, C.peach),
+  ];
+});
+// wax caps on chosen cells of a hexgrid placed at the same x, y with the same r (cells: [[col, row] …])
+defineSketch('caps', (o, K) => {
+  const r = o.r || 40, out = [];
+  for (const [i, j] of o.cells) {
+    const x = i * r * Math.sqrt(3) + (j % 2) * r * Math.sqrt(3) / 2, y = j * r * 1.5;
+    out.push(K.wash(polygon(x, y, r * .84, 6), C.cream, { off: [1, 1], dur: .16, alpha: .97 }));
+    out.push(K.curve([[x - r * .42, y + r * .1], [x, y - r * .22], [x + r * .42, y + r * .1]], { w: 1.6, color: C.cinnamon, dur: .12 }));
+  }
+  return out;
+});
+
+// ── the film ──
+const F = new Board({ title: 'From Flower to Honey', W: 1920, H: 1080, music: { key: 'F', bpm: 74 } });
+const { beat, finale, sketch, label, arrow, title, note, line, draw } = F;
+const comb = { x: 920, y: 600, r: 40 }, full = [[0, 0], [1, 0], [3, 0], [0, 1], [1, 1], [2, 1], [4, 1], [1, 2], [2, 2], [3, 2]];
+
+beat('꿀은 꽃에서 시작됩니다.', 'Honey begins in a flower.');
+sketch('flower', { id: 'flower', x: 250, y: 560, r: 105, stem: 210, color: C.pink });
+
+beat('꽃 깊은 곳에 고인 단물, 꽃꿀.', 'Deep inside: nectar.');
+sketch('drop', { id: 'nectar', x: 250, y: 566, r: 13, color: C.amber, overlap: true });
+arrow([392, 506], [276, 552], { bend: -.25 });
+label('nectar', 400, 466, { sub: '꽃꿀', id: 'nectar-label' });
+
+beat('일벌이 날아와 꽃꿀을 빨아들여요.', 'A forager sips it up.');
+line(curve([[820, 250], [700, 236], [600, 300], [560, 340]]), { id: 'flight', dash: 12, w: 2, color: C.soft });
+sketch('bee', { id: 'bee', x: 480, y: 380, flip: true });
+
+beat('꿀주머니에 담아 집으로 날아가요.', 'Into the honey stomach, and home.');
+sketch('callout', { id: 'stomach', x: 690, y: 640, r: 105, to: [-150, -190], inner: [] , ring: null });
+draw((o, K) => [
+  K.line(ellipse(0, 6, 74, 48), { closed: true }), K.wash(ellipse(0, 6, 74, 48), C.yellow, { alpha: .45 }),
+  K.curve([[-30, -38], [-36, 6], [-30, 50]], { w: 5, color: C.brown, alpha: .6 }), K.curve([[18, -40], [12, 6], [18, 50]], { w: 5, color: C.brown, alpha: .6 }),
+  K.curve([[74, 0], [40, -4], [22, 0]], { w: 2 }),
+  K.line(ellipse(-4, 4, 30, 22), { closed: true }), K.wash(ellipse(-4, 4, 30, 22), C.honey),
+], { id: 'crop', x: 690, y: 640, overlap: true, focus: false });
+label('honey stomach', 690, 760, { sub: '꿀주머니', align: 'center', id: 'stomach-label' });
+
+beat('그 사이 효소가 설탕을 쪼개요.', 'On the way, an enzyme splits the sugar.');
+sketch('sugar', { id: 'sucrose', x: 880, y: 320 });
+label('sucrose', 920, 380, { sub: '설탕', align: 'center', id: 'sucrose-label', size: 32 });
+arrow([1010, 330], [1130, 330], { bend: -.3, label: 'invertase', id: 'enzyme' });
+sketch('sugar', { id: 'split', x: 1190, y: 310, split: true });
+label('glucose + fructose', 1255, 380, { sub: '포도당 + 과당', align: 'center', id: 'split-label', size: 32 });
+
+beat('벌집 방마다 차곡차곡 채웁니다.', 'Cell by cell, into the comb.');
+arrow([800, 640], [872, 640], { bend: .35, id: 'home' });
+sketch('hexgrid', { id: 'comb', ...comb, cols: 5, rows: 3, fills: Object.fromEntries(full.map(c => [c.join(','), C.honey])) });
+label('honeycomb', 960, 788, { sub: '벌집', align: 'center', id: 'comb-label' });
+
+beat('하지만 아직은 물이 너무 많아요.', 'But it is still far too watery.');
+sketch('gauge', { id: 'gauge', x: 1430, y: 930, h: 190, w: 56, from: .8, to: .18, delay: 5.4, dur: 3.2, hold: 1.2, color: C.sky });
+label('water', 1380, 800, { sub: '수분', align: 'right', id: 'gauge-label' });
+
+beat('날갯짓으로 바람을 일으켜 물을 날려요.', 'Wings fan the water away.', { focus: ['fanner', 'steam', 'gauge', 'fan-label'], hold: 1.6 });
+sketch('steam', { id: 'steam', x: 1100, y: 552, w: 220, h: 66, n: 4, overlap: true });
+sketch('bee', { id: 'fanner', x: 1430, y: 600, s: .9, fan: true });
+label('fanning', 1530, 600, { sub: '부채질', id: 'fan-label' });
+
+beat('물이 약 18%가 되면 밀랍으로 덮어요.', 'At about 18% water, a wax cap goes on.');
+sketch('caps', { id: 'caps', ...comb, cells: full, overlap: true });
+label('wax cap', 1200, 788, { sub: '밀랍 뚜껑', align: 'center', id: 'caps-label' });
+
+beat('일벌 한 마리가 평생 모으는 꿀은 약 1/12 티스푼.', "One bee's whole life: about 1/12 teaspoon.");
+sketch('jar', { id: 'jar', x: 1760, y: 640, s: .8, fill: C.honey, level: .75, tag: '꿀' });
+sketch('spoon', { id: 'spoon', x: 1745, y: 900, s: .7, fill: C.honey, amount: .35 });
+label('≈ 1/12 tsp', 1745, 942, { sub: '일벌 한 마리의 평생', align: 'center', color: C.red, subSize: 26, id: 'tsp' });
+
+finale('꽃 한 송이에서, 꿀 한 숟가락까지.', 'From a flower to a spoonful.');
+title('From Flower to Honey', 80, 40, { size: 80, marks: ['Flower', 'Honey'], sub: '꽃 한 송이에서 꿀 한 숟가락까지' });
+note(1500, 46, 370, 136, ['Sketchnote Explainer', '스케치로 보는 꿀', 'how honey is made'], { size: 30 });
+
+F.start();
+</script>
+</body>
+</html>
