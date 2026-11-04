@@ -1,0 +1,89 @@
+// sketchnote-explainer · check.mjs — proves a film page before you render it. Prints `ok` lines, or what failed.
+//   node <skill>/scripts/check.mjs film.html [--step .25] [--scale .25] [--beats]
+// 1. loads with no page errors, console errors or failed requests
+// 2. every beat draws without throwing, at every sampled t (your own sketches and their moving parts included)
+// 3. deterministic: the same t gives the same pixels, also after seeking elsewhere (no state between frames)
+// 4. no frame is blank: from the first stroke on, something is on the paper
+// 5. the layout holds (no drawings on top of each other, no arrow through a label, all on the sheet, every beat's drawing in
+//    the frame and clear of the subtitle card, labels big enough to read on the whole sheet) and every F.check rule
+// 6. the soundtrack renders (finite, not silent, not clipped)
+// 7. reports the beats (subtitle, start, length) with --beats
+import { createRequire } from 'node:module';
+import { execSync } from 'node:child_process';
+import { join, resolve } from 'node:path';
+import { existsSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
+
+const require = createRequire(import.meta.url);
+let chromium;
+try { ({ chromium } = require('playwright')); }
+catch { ({ chromium } = require(join(execSync('npm root -g').toString().trim(), 'playwright'))); }
+
+const args = process.argv.slice(2);
+const opt = (k, d) => { const i = args.indexOf('--' + k); return i > -1 ? args[i + 1] : d; };
+const page$ = resolve(args.find(a => a.endsWith('.html')) || '');
+if (!existsSync(page$)) { console.error('usage: check.mjs <film.html> [--step .25] [--beats]'); process.exit(1); }
+const step = +opt('step', .25), scale = opt('scale', '.25');
+
+const browser = await chromium.launch({ args: ['--allow-file-access-from-files'] });
+const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
+const errors = [];
+page.on('pageerror', e => errors.push('page error: ' + e.message));
+page.on('console', m => { if (m.type() === 'error') errors.push('console error: ' + m.text().slice(0, 300)); });
+page.on('requestfailed', r => errors.push('failed to load: ' + r.url()));
+await page.goto(pathToFileURL(page$).href + `?render=1&scale=${scale}`, { waitUntil: 'commit', timeout: 0 });
+for (const t0 = Date.now(); !(await page.evaluate(() => window.__ready === true));) {
+  if (errors.length || Date.now() - t0 > 120000) { console.error(errors.join('\n') || 'never ready'); process.exit(1); }
+  await new Promise(r => setTimeout(r, 100));
+}
+let bad = 0;
+const fail = m => { bad++; console.log('FAIL ' + m); };
+const pix = t => page.evaluate(t => { window.seek(t); const c = document.querySelector('canvas'); return Array.from(c.getContext('2d').getImageData(0, 0, c.width, c.height).data); }, t);
+const diff = (a, b) => { let n = 0, mx = 0; for (let i = 0; i < a.length; i++) { const d = Math.abs(a[i] - b[i]); if (d > 2) n++; if (d > mx) mx = d; } return { n, mx }; };
+
+if (errors.length) fail('loading: ' + errors.join(' | ')); else console.log('ok   loads with no errors');
+const DUR = await page.evaluate(() => window.DURATION), fades = await page.evaluate(() => [Math.min(...window.film.cues.map(c => c.t)) + .3, 0]);
+const shots = await page.evaluate(() => window.film.shots.map(s => ({ name: s.name, start: s.start, dur: s.dur })));
+console.log(`     ${shots.length} beats, ${DUR} s (--beats lists them)`);
+
+// draws, blank frames, rules
+const thrown = new Map(), blank = [], broken = new Map();
+for (let t = 0; t < DUR; t += step) {
+  const r = await page.evaluate(t => {
+    try { window.seek(t); } catch (e) { return { err: e.message }; }
+    const c = document.querySelector('canvas'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    let mn = 255, mx = 0; for (let i = 0; i < d.length; i += 4 * 97) { const v = d[i] + d[i + 1] + d[i + 2]; mn = Math.min(mn, v); mx = Math.max(mx, v); }
+    return { range: mx - mn, rules: window.runChecks(t), shot: window.shotAt(t).name };
+  }, +t.toFixed(3));
+  if (r.err) { if (!thrown.has(r.err)) thrown.set(r.err, +t.toFixed(2)); continue; }
+  if (r.range < 12 && t > fades[0] && t < DUR - fades[1]) blank.push(`${t.toFixed(2)} (${r.shot})`);
+  for (const n of r.rules) if (!broken.has(n)) broken.set(n, +t.toFixed(2));
+}
+if (thrown.size) for (const [m, t] of thrown) fail(`a beat throws at t=${t}: ${m}`); else console.log(`ok   every beat draws (every ${step} s)`);
+if (blank.length) fail(`blank frames at t = ${blank.slice(0, 6).join(', ')}${blank.length > 6 ? ' …' : ''}`); else console.log('ok   no blank frames after the first stroke');
+if (broken.size) for (const [n, t] of broken) fail(n.startsWith('layout · ') ? n : `rule "${n}" first broken at t=${t}`); else console.log(`ok   layout holds: no overlaps, all on the sheet, every beat in frame and clear of its subtitle card`);
+
+// determinism
+const ts = [DUR * .13, DUR * .41, DUR * .66, DUR * .88].map(t => +t.toFixed(2)), first = [];
+for (const t of ts) first.push(await pix(t));
+let det = true;
+for (let i = ts.length - 1; i >= 0; i--) { const d = diff(first[i], await pix(ts[i])); if (d.n) { det = false; fail(`t=${ts[i]} renders differently the second time (${d.n} values differ, max ${d.mx}) — Math.random, Date or state between frames?`); } }
+if (det) console.log(`ok   deterministic at t = ${ts.join(', ')}`);
+
+// the soundtrack: render it in the page (the same code the live page uses) and look at it
+const snd = await page.evaluate(() => {
+  const [L, R] = window.film.score(16000);
+  let pk = 0, sq = 0, bad = 0, clip = 0; for (const A of [L, R]) for (const v of A) { if (!Number.isFinite(v)) bad++; pk = Math.max(pk, Math.abs(v)); sq += v * v; if (Math.abs(v) > .999) clip++; }
+  return { pk, rms: Math.sqrt(sq / (L.length * 2)), bad, clip };
+});
+if (snd.bad) fail(`the soundtrack has ${snd.bad} non-finite samples`);
+else if (snd.rms < .005) fail(`the soundtrack is (nearly) silent (rms ${snd.rms.toFixed(4)})`);
+else if (snd.clip > 10) fail(`the soundtrack clips (${snd.clip} samples)`);
+else console.log(`ok   soundtrack renders (peak ${snd.pk.toFixed(2)}, rms ${snd.rms.toFixed(3)})`);
+
+// beats, for timing a narration or your own music to them
+if (args.includes('--beats')) for (const s of shots) console.log(`     ${s.start.toFixed(2).padStart(6)}  ${s.dur.toFixed(2)}  ${s.name}`);
+if (errors.length && !bad) fail('errors during the run: ' + errors.join(' | '));
+await browser.close();
+console.log(bad ? `${bad} problem(s)` : 'ok');
+process.exit(bad ? 1 : 0);

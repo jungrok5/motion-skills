@@ -1,0 +1,113 @@
+// sketchnote-explainer · render.mjs — stills, a contact sheet, or the MP4 of one film page, frame by frame (every frame is seek(t)).
+// Run from the project root:
+//   node <skill>/scripts/render.mjs film.html --stills 2,7,12         → out/film-2.png …   (look at these a lot)
+//   node <skill>/scripts/render.mjs film.html --sheet 12              → out/film-sheet.jpg  (12 moments, 4 × 3)
+//   node <skill>/scripts/render.mjs film.html --sheet 8 --from 2 --to 6    (a closer look at one stretch)
+//   node <skill>/scripts/render.mjs film.html                         → out/film.mp4 (the film size, H.264, with its soundtrack)
+//   node <skill>/scripts/render.mjs film.html --wav                   → out/film.wav only (the soundtrack: piano bed + pencil)
+// Options: --scale .5 (preview size) · --q "off=grain,bloom" (any page query) · --workers 3 · --fps 30 · --from/--to
+//          --crf 20 · --audio music.wav (your own track instead; muxed, trimmed, faded) · --mute (no sound) · --out out/
+// Canvas 2D: ~0.1–0.2 s a frame at 1920×1080 on a CPU box (PNG encoding included). --scale .5 for quick looks.
+import { createRequire } from 'node:module';
+import { spawn, execSync } from 'node:child_process';
+import { mkdirSync, writeFileSync, rmSync, existsSync, readFileSync } from 'node:fs';
+import { join, resolve, basename, dirname } from 'node:path';
+import { pathToFileURL, fileURLToPath } from 'node:url';
+
+const require = createRequire(import.meta.url);
+let chromium;
+try { ({ chromium } = require('playwright')); }
+catch { ({ chromium } = require(join(execSync('npm root -g').toString().trim(), 'playwright'))); }
+
+const args = process.argv.slice(2);
+const opt = (k, d) => { const i = args.indexOf('--' + k); return i > -1 ? args[i + 1] : d; };
+const page$ = resolve(args.find(a => a.endsWith('.html')) || '');
+if (!existsSync(page$)) { console.error('usage: render.mjs <film.html> [--stills 2,7] [--sheet 12] [--workers 3]'); process.exit(1); }
+const name = opt('name', basename(page$) === 'index.html' ? basename(resolve(page$, '..')) : basename(page$).replace(/\.html$/, ''));
+const outDir = resolve(opt('out', 'out')); mkdirSync(outDir, { recursive: true });
+const scale = opt('scale', ''), extra = opt('q', '');
+const url = pathToFileURL(page$).href + '?render=1' + (scale ? '&scale=' + scale : '') + (extra ? '&' + extra : '');
+
+const browser = await chromium.launch({ args: ['--allow-file-access-from-files'] });
+async function open() {
+  const page = await browser.newPage({ viewport: { width: 960, height: 540 }, deviceScaleFactor: 1 });
+  let failed = null;
+  page.on('pageerror', e => { failed = failed || e; console.error('page error:', e.message); });
+  page.on('console', m => { if ((m.type() === 'error' || m.type() === 'warning') && !/GPU stall|GL Driver Message/.test(m.text())) console.error(`console ${m.type()}:`, m.text().slice(0, 400)); });
+  await page.goto(url, { waitUntil: 'commit', timeout: 0 });
+  for (const t0 = Date.now(); !(await page.evaluate(() => window.__ready === true));) {
+    if (failed) throw new Error('film failed to load: ' + failed.message);
+    if (Date.now() - t0 > 240000) throw new Error('film never set window.__ready');
+    await new Promise(r => setTimeout(r, 100));
+  }
+  return page;
+}
+const grab = (page, t) => page.evaluate(t => { window.seek(t); return document.querySelector('canvas').toDataURL('image/png'); }, t);
+const png = d => Buffer.from(d.split(',')[1], 'base64');
+
+const probe = await open();
+const DUR = await probe.evaluate(() => window.DURATION), FPS = +opt('fps', await probe.evaluate(() => window.FPS || 30));
+const from = +opt('from', 0), to = +opt('to', DUR);
+
+// the soundtrack: the film's own score (lib/sound.js of the page's import map), written next to the MP4
+async function soundtrack() {
+  const spec = await probe.evaluate(() => ({ cues: window.film.cues, dur: window.DURATION, finaleAt: window.film.finaleAt, beats: window.film.shots, music: window.film.music }));
+  const html = readFileSync(page$, 'utf8'), m = html.match(/"sk\/":\s*"([^"]+)"/);
+  const lib = m ? resolve(dirname(page$), m[1]) : resolve(dirname(fileURLToPath(import.meta.url)), '..', 'lib');
+  const { renderScore } = await import(pathToFileURL(join(lib, 'sound.js')).href);
+  const sr = 48000, [L, R] = renderScore(spec, sr), n = L.length, buf = Buffer.alloc(44 + n * 4);
+  buf.write('RIFF', 0); buf.writeUInt32LE(36 + n * 4, 4); buf.write('WAVE', 8); buf.write('fmt ', 12); buf.writeUInt32LE(16, 16);
+  buf.writeUInt16LE(1, 20); buf.writeUInt16LE(2, 22); buf.writeUInt32LE(sr, 24); buf.writeUInt32LE(sr * 4, 28); buf.writeUInt16LE(4, 32); buf.writeUInt16LE(16, 34);
+  buf.write('data', 36); buf.writeUInt32LE(n * 4, 40);
+  for (let i = 0; i < n; i++) { buf.writeInt16LE(Math.round(Math.max(-1, Math.min(1, L[i])) * 32767), 44 + i * 4); buf.writeInt16LE(Math.round(Math.max(-1, Math.min(1, R[i])) * 32767), 46 + i * 4); }
+  const f = join(outDir, `${name}.wav`); writeFileSync(f, buf); console.log(`${f}  (${spec.dur} s soundtrack)`); return f;
+}
+if (args.includes('--wav')) { await soundtrack(); await browser.close(); process.exit(0); }
+
+const stills = opt('stills');
+if (stills) {
+  for (const s of stills.split(',').map(Number)) {
+    const t0 = Date.now(), f = join(outDir, `${name}-${s}.png`);
+    writeFileSync(f, png(await grab(probe, s))); console.log(`${f}  (${Date.now() - t0} ms)`);
+  }
+  await browser.close(); process.exit(0);
+}
+const sheet = opt('sheet');
+if (sheet) {
+  const n = +sheet, cols = n <= 6 ? 3 : 4, tmp = join(outDir, `.sheet-${name}`); rmSync(tmp, { recursive: true, force: true }); mkdirSync(tmp);
+  for (let i = 0; i < n; i++) { const t = from + (to - from) * (n === 1 ? 0 : i / (n - 1)) * (to === DUR && from === 0 ? (DUR - 1 / FPS) / DUR : 1); writeFileSync(join(tmp, `${String(i).padStart(3, '0')}.png`), png(await grab(probe, +t.toFixed(3)))); process.stdout.write(`  ${i + 1}/${n} t=${t.toFixed(2)}\r`); }
+  const f = join(outDir, `${name}-sheet.jpg`), rows = Math.ceil(n / cols);
+  execSync(`ffmpeg -y -loglevel error -framerate 1 -i "${join(tmp, '%03d.png')}" -vf "scale=640:-1,drawtext=text='%{eif\\:n*${((to - from) / Math.max(1, n - 1)).toFixed(4)}+${from}\\:d}s':x=12:y=10:fontsize=22:fontcolor=white:box=1:boxcolor=black@0.45,tile=${cols}x${rows}:padding=4:color=white" -frames:v 1 -q:v 3 "${f}"`);
+  rmSync(tmp, { recursive: true, force: true }); console.log(`\n${f}`);
+  await browser.close(); process.exit(0);
+}
+const wav = args.includes('--mute') || opt('audio') ? null : await soundtrack();
+await probe.close();
+
+// the MP4: each worker owns a contiguous run of frames and pipes PNGs into its own ffmpeg; chunks are joined losslessly
+const workers = +opt('workers', 3), crf = opt('crf', '20');
+const n = Math.round((to - from) * FPS), per = Math.ceil(n / workers);
+const tmp = join(outDir, `.chunks-${name}`); rmSync(tmp, { recursive: true, force: true }); mkdirSync(tmp, { recursive: true });
+console.log(`${name}: ${n} frames @ ${FPS} fps, ${workers} workers`);
+const t0 = Date.now(); let done = 0;
+await Promise.all(Array.from({ length: workers }, async (_, w) => {
+  const a = w * per, b = Math.min(n, a + per); if (a >= b) return;
+  const page = await open();
+  const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'png', '-i', '-',
+    '-c:v', 'libx264', '-preset', 'slow', '-crf', crf, '-pix_fmt', 'yuv420p', '-g', String(FPS * 2),
+    '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', join(tmp, `${String(w).padStart(2, '0')}.mp4`)], { stdio: ['pipe', 'inherit', 'inherit'] });
+  const closed = new Promise(r => ff.on('close', r));
+  for (let f = a; f < b; f++) {
+    if (!ff.stdin.write(png(await grab(page, from + f / FPS)))) await new Promise(r => ff.stdin.once('drain', r));
+    if (++done % 15 === 0) { const s = (Date.now() - t0) / 1000; console.log(`  ${done}/${n}  ${(s / done).toFixed(2)} s/frame  eta ${Math.round(s / done * (n - done))} s`); }
+  }
+  ff.stdin.end(); await closed; await page.close();
+}));
+await browser.close();
+const list = join(tmp, 'list.txt');
+writeFileSync(list, Array.from({ length: workers }, (_, w) => join(tmp, `${String(w).padStart(2, '0')}.mp4`)).filter(existsSync).map(f => `file '${f}'`).join('\n'));
+const out = join(outDir, `${name}.mp4`), audio = opt('audio') || wav;
+if (audio) execSync(`ffmpeg -y -loglevel error -f concat -safe 0 -i "${list}" ${from ? `-ss ${from} ` : ''}-i "${resolve(audio)}" -map 0:v -map 1:a -c:v copy -c:a aac -b:a 192k -af "afade=t=out:st=${(to - from - .6).toFixed(2)}:d=0.6" -t ${to - from} -movflags +faststart "${out}"`);
+else execSync(`ffmpeg -y -loglevel error -f concat -safe 0 -i "${list}" -c copy -movflags +faststart "${out}"`);
+rmSync(tmp, { recursive: true, force: true });
+console.log(`${out}  (${((Date.now() - t0) / 1000).toFixed(0)} s)`);
