@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>sketchnote-explainer · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 아이패드에 스케치하듯 그림 하나씩 그려 가며 설명하는 지식 영상을 코드만으로 만듭니다. 크림색 종이 위의 연필선과 살짝 어긋난 수채 채색, 손글씨 라벨, 두 줄 자막, 그림 사이를 미끄러지는 카메라, 마지막에 한 장의 인포그래픽으로 물러나는 화면, 연필 소리와 피아노를 붙인 MP4와 브라우저에서 도는 페이지를 냅니다.">
+<meta property="og:title" content="sketchnote-explainer · motion-skills">
+<meta property="og:description" content="주제 하나를 아이패드 스케치 설명 영상으로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/sketchnote-explainer/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/sketchnote-explainer">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / sketchnote-explainer</nav>
+  <h1>sketchnote-explainer</h1>
+  <p>주제 하나를 주면 아이패드에 스케치하듯 그림 하나씩 그려 가며 설명하는 지식 영상을 코드만으로 만듭니다. 크림색 종이 위의 연필선과 살짝 어긋난 수채 채색, 손글씨 라벨, 두 줄 자막, 그림 사이를 미끄러지는 카메라, 마지막에 한 장의 인포그래픽으로 물러나는 화면, 연필 소리와 피아노를 붙인 MP4와 브라우저에서 도는 페이지를 냅니다.
+  보고 만든 원본: <a href="https://x.com/EianLu/status/2117672988678209948" target="_blank" rel="noopener">EianLu의 X 게시물 (샤오홍슈에 맞는 지식 설명 스타일)</a> · <a href="https://x.com/lemomo_ai/status/2117670248275186162" target="_blank" rel="noopener">lemomo_ai의 X 게시물 (iPad Sketch Explainer 원본 영상)</a>.</p>
+  <ul class="tags"><li>16:9 · 3:4 · 9:16</li><li>MP4</li><li>라이브 페이지</li><li>연필 소리 · 피아노</li><li>두 언어 자막</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(꿀이 만들어지는 과정, 물의 순환, 커피 한 잔이 오기까지 …)와 자막 · 라벨에 쓸 두 언어</dd>
+      <dt>브리프</dt><dd>주제마다 새로 쓰는 <code>BRIEF.md</code>: 남길 한 문장, 출처를 확인한 숫자, 비트 6–12개(그림 하나와 두 줄 자막씩), 마지막 한 장의 배치도, 키트에 없어 새로 그릴 그림, 스틸 검토 기준</dd>
+      <dt>그림</dt><dd>비트마다 흐린 보조선 → 연필선 → 살짝 어긋난 수채 → 손글씨 라벨과 빨간 화살표 · 숫자를 그리는 흰 스타일러스, 그 그림으로 미끄러지며 다가가는 카메라, 주제에 맞게 새로 그린 그림(예제의 꿀벌, 설탕 분자, 밀랍 뚜껑)</dd>
+      <dt>확인</dt><dd>그림 겹침, 시트 밖 요소, 자막 카드에 가린 그림, 전체 화면에서 읽히는 글씨 크기, 결정성, 사운드트랙을 잡는 자동 점검과 콘택트 시트</dd>
+      <dt>출력</dt><dd>30fps MP4(1920×1080, 1080×1440, 1080×1920)와 사운드트랙 WAV, 클릭하면 소리가 나는 라이브 페이지</dd>
+    </dl>
+    <pre><code>cd sketchnote-explainer/examples/honey
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs index.html --sheet 16 --scale .5
+node ../../scripts/render.mjs index.html --workers 4
+node ../../scripts/new-film.mjs ../../../my-film   # BRIEF.md부터</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. 네트워크가 필요 없습니다(1920×1080 한 프레임 약 0.1초, 69초 예제를 워커 4개로 약 3분 20초). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/sketchnote-explainer/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10.6;--demo-bg:#f1ebe0">
+    <iframe data-src="demo/honey/?loop=1" title="sketchnote-explainer 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/honey/">데모 열기 (examples/honey)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/honey</code> · 69초 · 10비트 + 마무리 · 한 번 누르면 소리</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/honey/?loop=1" data-cap="예제 &lt;code&gt;examples/honey&lt;/code&gt; · 69초 · 10비트 + 마무리 · 한 번 누르면 소리" aria-pressed="true">꿀</button>
+        <button class="btn" type="button" data-src="demo/template/?loop=1" data-cap="템플릿 &lt;code&gt;templates/film.html&lt;/code&gt; · 28초 · 3:4 세로 · 한 번 누르면 소리" aria-pressed="false">물의 순환</button>
+        <button class="btn" type="button" data-src="demo/kit/?mute=1" data-cap="&lt;code&gt;examples/kit&lt;/code&gt; · 그림 키트 전체" aria-pressed="false">키트</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제 「From Flower to Honey · 꽃에서 꿀까지」의 비트들과, 같은 엔진으로 주제와 화면비를 바꾼 템플릿, 그림 키트입니다. 카드를 누르면 새 탭에서 그 순간에 멈춘 장면이 열리고, 브라우저가 선 하나부터 직접 그립니다.</p>
+  <div id="gallery">
+    <div class="group">
+      <h3>From Flower to Honey · 꽃에서 꿀까지 <small>16:9 · 69초 · 10비트 + 마무리</small></h3>
+      <p>레퍼런스(커피 열매에서 한 잔까지)에 없는 주제를 브리프부터 새로 설계한 예제입니다. 숫자(꽃꿀의 물 80%, 꿀의 물 약 18%, 일벌 한 마리 평생 약 1/12 티스푼)는 출처를 확인해 <a href="https://github.com/jungrok5/motion-skills/blob/main/sketchnote-explainer/examples/honey/BRIEF.md">BRIEF.md</a>에 적었고, 꿀벌 · 설탕 분자 · 밀랍 뚜껑은 이 주제를 위해 새로 그렸습니다.</p>
+      <div class="grid">
+        <a class="tile" href="demo/honey/?t=4.2" target="_blank" rel="noopener">
+          <img src="samples/flower.jpg" alt="흐린 원과 십자 보조선 안에 연필로 그린 여섯 장의 꽃잎, 분홍 수채가 칠해지는 중이고 흰 스타일러스가 꽃 옆에 있음, 왼쪽 아래 자막 꿀은 꽃에서 시작됩니다" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">비트 1 · 4초</span><b>꽃 한 송이</b>
+          <span class="how">보조선 → 연필선 → 꽃잎마다 살짝 어긋나게 들어오는 수채</span></div></a>
+        <a class="tile" href="demo/honey/?t=12.5" target="_blank" rel="noopener">
+          <img src="samples/bee.jpg" alt="점선 비행 경로 끝에 그려지는 줄무늬 꿀벌, 아래로 꽃과 nectar 꽃꿀 라벨, 자막 일벌이 날아와 꽃꿀을 빨아들여요" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">비트 3 · 12초</span><b>일벌</b>
+          <span class="how">점선 비행 경로와, 이 주제를 위해 새로 그린 꿀벌</span></div></a>
+        <a class="tile" href="demo/honey/?t=18.5" target="_blank" rel="noopener">
+          <img src="samples/stomach.jpg" alt="원형 단면 확대 안에 꿀벌 배와 주황빛으로 찬 꿀주머니, 꿀벌까지 이어지는 지시선, honey stomach 꿀주머니 라벨" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">비트 4 · 18초</span><b>꿀주머니 단면</b>
+          <span class="how">십자 보조선이 지나는 확대 원과 지시선, 안쪽 단면</span></div></a>
+        <a class="tile" href="demo/honey/?t=25.5" target="_blank" rel="noopener">
+          <img src="samples/sugar.jpg" alt="육각형과 오각형이 이어진 설탕 분자에서 빨간 화살표 invertase를 지나 떨어진 포도당 육각형과 과당 오각형으로, sucrose 설탕 라벨" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">비트 5 · 26초</span><b>효소가 설탕을 쪼갬</b>
+          <span class="how">설탕 → 포도당 + 과당, 빨간 화살표 위의 손글씨</span></div></a>
+        <a class="tile" href="demo/honey/?t=31.5" target="_blank" rel="noopener">
+          <img src="samples/comb.jpg" alt="빨간 화살표 끝에 그려진 육각형 벌집, 방 열 개가 꿀색으로 칠해짐, honeycomb 벌집 라벨" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">비트 6 · 32초</span><b>벌집</b>
+          <span class="how">육각 격자와 방마다 하나씩 들어오는 꿀색</span></div></a>
+        <a class="tile" href="demo/honey/?t=41.5" target="_blank" rel="noopener">
+          <img src="samples/fanning.jpg" alt="벌집 위로 피어오르는 김, 날개가 겹쳐 보이게 부채질하는 꿀벌, 물 눈금관이 34퍼센트로 내려가는 중" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">비트 8 · 42초</span><b>부채질</b>
+          <span class="how">날개가 떨리는 꿀벌, 김, 80%에서 18%로 내려가는 눈금관</span></div></a>
+        <a class="tile" href="demo/honey/?t=48.5" target="_blank" rel="noopener">
+          <img src="samples/caps.jpg" alt="벌집의 꿀 찬 방마다 연한 크림색 밀랍 뚜껑이 덮이는 중, wax cap 밀랍 뚜껑 라벨, 오른쪽 18퍼센트 눈금관" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">비트 9 · 49초</span><b>밀랍 뚜껑</b>
+          <span class="how">같은 격자 위에 새로 그린 뚜껑, 방마다 하나씩</span></div></a>
+        <a class="tile" href="demo/honey/?t=55" target="_blank" rel="noopener">
+          <img src="samples/spoon.jpg" alt="빨간 뚜껑에 꿀 라벨을 붙인 꿀병과 꿀이 조금 담긴 숟가락, 빨간 손글씨 약 1/12 tsp와 일벌 한 마리의 평생" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">비트 10 · 55초</span><b>평생 1/12 티스푼</b>
+          <span class="how">꿀병, 숟가락, 빨간 숫자</span></div></a>
+        <a class="tile" href="demo/honey/?t=69.2" target="_blank" rel="noopener">
+          <img src="samples/sheet.jpg" alt="마지막 한 장: 왼쪽 위 노란 형광펜이 칠해진 제목 From Flower to Honey, 오른쪽 위 연두색 메모 카드, 꽃 · 꿀벌 · 꿀주머니 · 설탕 분자 · 벌집 · 부채질하는 벌 · 눈금관 · 꿀병 · 숟가락이 읽는 순서대로 놓인 인포그래픽" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">마무리 · 69초</span><b>한 장의 인포그래픽</b>
+          <span class="how">카메라가 물러나 전체가 보이고, 제목과 메모 카드가 마지막에 쓰임</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>The Water Cycle · 템플릿과 그림 키트 <small>3:4 · 28초 · 5비트 + 마무리</small></h3>
+      <p>같은 엔진으로 주제와 화면비(세로 3:4)를 바꾼 출발점과, 키트의 그림 전부입니다. 템플릿의 강은 페이지 안에서 <code>defineSketch</code>로 새로 그렸습니다.</p>
+      <div class="grid">
+        <a class="tile" href="demo/template/?t=15" target="_blank" rel="noopener">
+          <img src="samples/water-rain.jpg" alt="세로 화면: wind 화살표 뒤 비구름에서 떨어지는 빗줄기, 아래 초록 산, precipitation 강수 라벨이 쓰이는 중" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 15초</span><b>비</b><span class="en">templates/film.html</span>
+          <span class="how">구름에서 계속 떨어지는 빗줄기, 세로 화면의 카메라</span></div></a>
+        <a class="tile" href="demo/template/?t=27.5" target="_blank" rel="noopener">
+          <img src="samples/water-sheet.jpg" alt="세로 한 장: 형광펜 제목 The Water Cycle, 해, 두 구름과 바람 화살표, 비, 산, 강, 김이 오르는 바다, 라벨 evaporation · condensation · precipitation · runoff" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 28초</span><b>물의 순환 한 장</b><span class="en">1080×1440</span>
+          <span class="how"><code>new-film.mjs</code>가 복사하는 출발점, 세로 인포그래픽으로 끝남</span></div></a>
+        <a class="tile" href="demo/kit/?t=56&amp;mute=1" target="_blank" rel="noopener">
+          <img src="samples/kit.jpg" alt="그림 키트 한 장: 컵, 꿀병, 숟가락, 잎, 꽃, 해, 비구름, 물방울, 산, 물결, 열선, 확대 원, 색 견본, 눈금관, 터짐, 괄호, 육각 격자, 김, 화살표가 이름과 함께 놓임" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">examples/kit</span><b>그림 키트</b>
+          <span class="how">컵 · 병 · 잎 · 꽃 · 구름 · 산 · 단면 · 견본 · 눈금관 · 육각 격자 등 19가지</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. Eian이 X에 "샤오홍슈에 딱 맞는 지식 설명 스타일"이라며 공유한 Lemomo의 「iPad Sketch Explainer」 영상(커피 열매에서 한 잔까지, 51초)이 출발점입니다. 이 스킬은 그 화면의 문법(종이 위 연필선과 어긋난 수채, 손글씨 라벨, 두 줄 자막, 그림 사이를 오가는 카메라, 한 장으로 물러나는 마무리)만 가져오고, 엔진과 예제의 주제 · 배치 · 그림 · 소리는 모두 이 레포의 것입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/honey/" target="_blank" rel="noopener"><b>「From Flower to Honey · 꽃에서 꿀까지」 · 69초 · 10비트 + 마무리</b><span>새로 그린 꿀벌 · 설탕 분자 · 밀랍 뚜껑, 움직이는 눈금관, 라이브 페이지</span><span class="url">sketchnote-explainer/demo/honey/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/sketchnote-explainer/examples"><b>예제 폴더 · examples/</b><span>honey(BRIEF.md 포함) · kit(그림 키트)</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/EianLu/status/2117672988678209948" target="_blank" rel="noopener"><b>공유된 게시물 · X</b><span>Eian(@EianLu) · "샤오홍슈에 맞춘 듯한 스타일" · 2026년 11월</span><span class="url">x.com/EianLu</span></a>
+    <a class="work" href="https://x.com/lemomo_ai/status/2117670248275186162" target="_blank" rel="noopener"><b>레퍼런스 영상 · X</b><span>Lemomo(@lemomo_ai) · iPad Sketch Explainer · From Cherry to Cup</span><span class="url">x.com/lemomo_ai</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sketchnote-explainer/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/sketchnote-explainer">폴더</a> <span>lib · scripts · templates · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sketchnote-explainer/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sketchnote-explainer/references/BRIEF.md">references/BRIEF.md</a> <span>고정되는 스타일과 주제마다 새로 설계하는 것, 브리프 틀, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sketchnote-explainer/references/LOOK.md">references/LOOK.md</a> <span>레퍼런스처럼 보이게 하는 것: 종이, 연필, 수채, 글씨, 스타일러스, 카메라, 자막</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sketchnote-explainer/references/BEATS.md">references/BEATS.md</a> <span>주제 → 비트 → 마지막 한 장, 배치 공식</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sketchnote-explainer/references/KIT.md">references/KIT.md</a> <span>API와 그림 목록, 직접 그리는 그림</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sketchnote-explainer/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림과 소리는 코드로 만듦 · 폰트 Caveat, Gaegu, Noto Sans KR (OFL)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

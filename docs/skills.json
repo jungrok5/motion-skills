@@ -288,6 +288,25 @@
       "workedExample": [
         { "title": "「The Tower That a War Saved」 · 62초 · 19샷 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/cartoon-3d-short/demo/leaning-tower/" }
       ]
+    },
+    {
+      "id": "sketchnote-explainer",
+      "name": "sketchnote-explainer",
+      "tagline": "주제 하나를 주면 아이패드에 스케치하듯 그림 하나씩 그려 가며 설명하는 지식 영상을 코드만으로 만듭니다. 크림색 종이 위의 연필선과 살짝 어긋난 수채 채색, 손글씨 라벨, 두 줄 자막, 그림 사이를 미끄러지는 카메라, 마지막에 한 장의 인포그래픽으로 물러나는 화면, 연필 소리와 피아노를 붙인 MP4와 브라우저에서 도는 페이지를 냅니다.",
+      "posterAlt": "sketchnote-explainer로 만든 「From Flower to Honey」의 장면 네 개: 꽃잎에 분홍 수채가 칠해진 꽃과 nectar 꽃꿀 라벨, 꿀색 벌집과 부채질하는 꿀벌 옆에서 내려가는 물 눈금관, 설탕 분자가 invertase 화살표를 지나 포도당과 과당으로 갈라지는 장면, 형광펜 제목 아래 모든 그림이 놓인 마지막 인포그래픽",
+      "poster": "sketchnote-explainer/poster.jpg",
+      "tags": ["16:9 · 3:4 · 9:16", "MP4", "라이브 페이지", "연필 소리 · 피아노", "두 언어 자막"],
+      "stats": ["예제 69초 · 10비트", "그림 키트 19종"],
+      "page": "sketchnote-explainer/",
+      "source": "sketchnote-explainer/",
+      "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "sketchnote-explainer/examples/honey/" },
+      "sources": [
+        { "title": "EianLu의 X 게시물 (샤오홍슈에 맞는 지식 설명 스타일)", "url": "https://x.com/EianLu/status/2117672988678209948" },
+        { "title": "lemomo_ai의 X 게시물 (iPad Sketch Explainer 원본 영상)", "url": "https://x.com/lemomo_ai/status/2117670248275186162" }
+      ],
+      "workedExample": [
+        { "title": "「From Flower to Honey · 꽃에서 꿀까지」 · 69초 · 10비트 + 마무리 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/sketchnote-explainer/demo/honey/" }
+      ]
     }
   ]
 }

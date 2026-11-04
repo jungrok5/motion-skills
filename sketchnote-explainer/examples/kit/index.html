@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>the kit · sketchnote-explainer</title>
+<script type="importmap">{ "imports": { "sk/": "../../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// Every drawing in lib/kit.js on one sheet, with its name — look here before picking drawings, and after changing kit.js.
+// (Not a film to copy: a real film is one topic's story, designed from a brief.)
+import { Board } from 'sk/board.js';
+import { C } from 'sk/hand.js';
+
+const F = new Board({ title: 'the kit', zoom: 1.6, music: false });
+const { beat, finale, sketch, label, arrow, title, note } = F;
+const name = (n, x, y) => label(n, x, y, { size: 30, align: 'center', color: C.soft, id: 'name-' + n });
+
+beat('컵, 병, 숟가락', 'cup · jar · spoon');
+sketch('cup', { x: 230, y: 390, s: .8, band: C.redSoft, steam: true }); name('cup', 230, 500);
+sketch('jar', { x: 500, y: 390, s: .8, tag: '꿀' }); name('jar', 500, 500);
+sketch('spoon', { x: 760, y: 400, s: .8, fill: C.honey }); name('spoon', 760, 460);
+
+beat('잎, 꽃, 해, 구름', 'leaf · flower · sun · cloud');
+sketch('leaf', { x: 940, y: 330, rot: -.5 }); name('leaf', 1010, 380);
+sketch('flower', { x: 1210, y: 250, s: .7, stem: 120 }); name('flower', 1300, 400);
+sketch('sun', { x: 1480, y: 250 }); name('sun', 1480, 320);
+sketch('cloud', { x: 1720, y: 250, w: 220, h: 100, rain: true, rainH: 110 }); name('cloud', 1720, 400);
+
+beat('물방울, 산, 물결, 열', 'drop · mountain · waves · heat');
+sketch('drop', { x: 180, y: 610 }); name('drop', 180, 670);
+sketch('mountain', { x: 430, y: 690, w: 300, h: 135 }); name('mountain', 430, 700);
+sketch('waves', { x: 830, y: 600, w: 340 }); name('waves', 830, 700);
+sketch('heat', { x: 1110, y: 620 }); name('heat', 1110, 680);
+
+beat('단면, 견본, 눈금관', 'callout · swatches · gauge');
+sketch('callout', { x: 1370, y: 640, r: 80, ring: C.peach, to: [-110, 70], inner: [] }); name('callout', 1400, 740);
+sketch('swatches', { x: 1560, y: 560, s: .8, labels: ['green', 'yellow', 'cinnamon', 'brown'], size: 52, gap: 38 }); name('swatches', 1700, 700);
+sketch('gauge', { x: 1590, y: 1010, h: 200, w: 56, from: .8, to: .2, size: 36 }); name('gauge', 1780, 920);
+
+beat('터짐, 괄호, 육각 격자, 김', 'burst · bracket · hexgrid · steam');
+sketch('burst', { x: 200, y: 810, r: 60 }); name('burst', 200, 890);
+sketch('bracket', { x: 470, y: 820, w: 200, h: 90 }); name('bracket', 470, 890);
+sketch('hexgrid', { x: 660, y: 790, r: 32, cols: 4, rows: 2, fills: { '1,0': C.honey, '2,1': C.honey, '0,1': C.amber } }); name('hexgrid', 760, 890);
+sketch('steam', { x: 1010, y: 880, w: 100, h: 110 }); name('steam', 1010, 890);
+arrow([1130, 880], [1280, 860], { label: 'arrow', bend: .4 });
+
+finale('도구 한 벌, 한 손으로.', 'One kit, one hand.');
+title('the kit', 80, 40, { marks: ['kit'], sub: 'lib/kit.js 의 모든 그림', size: 72 });
+note(1480, 40, 380, 120, ['sketchnote-explainer', 'F.sketch(name, { x, y, s })'], { size: 30 });
+F.start();
+</script>
+</body>
+</html>
