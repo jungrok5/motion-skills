@@ -23,15 +23,20 @@ for (const s of reg.skills) {
   for (const f of [s.poster, path.join(s.page || '', 'index.html')]) if (f && !fs.existsSync(path.join(docs, f))) problems.push(`${s.id}: docs/${f} not found`);
   if (s.source && !fs.existsSync(path.join(root, s.source, 'SKILL.md'))) problems.push(`${s.id}: ${s.source}SKILL.md not found`);
   if (s.poster && fs.existsSync(path.join(docs, s.poster)) && fs.statSync(path.join(docs, s.poster)).size > 220_000) problems.push(`${s.id}: poster over 200 KB`);
-  // sources: every link the user gave for this skill (repo, post, video, article), each written in SKILL.md and on the page
+  // sources: the links the skill was made from (what the user gave: repo, post, video, article), each in the SKILL.md
+  // description, the README and the samples page; the hub card shows them
   if (s.sources == null) { if (!LEGACY.has(s.id)) problems.push(`${s.id}: missing "sources" (every link the user gave — CONTRIBUTING.md, 출처 남기기)`); }
   else if (!Array.isArray(s.sources) || !s.sources.length) problems.push(`${s.id}: "sources" must be a non-empty list of { title, url }`);
   else for (const x of s.sources) {
     if (!x || !x.title || !/^https?:\/\/\S+$/.test(x.url || '')) { problems.push(`${s.id}: bad source ${JSON.stringify(x)}`); continue; }
     const u = x.url.replace(/\/$/, '');
-    const skillMd = s.source && fs.existsSync(path.join(root, s.source, 'SKILL.md')) ? fs.readFileSync(path.join(root, s.source, 'SKILL.md'), 'utf8') : '';
-    const page = s.page && fs.existsSync(path.join(docs, s.page, 'index.html')) ? fs.readFileSync(path.join(docs, s.page, 'index.html'), 'utf8') : '';
-    if (!skillMd.includes(u)) problems.push(`${s.id}: source ${x.url} is not written in ${s.source}SKILL.md`);
+    const read = (f) => (fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : '');
+    const skillMd = s.source ? read(path.join(root, s.source, 'SKILL.md')) : '';
+    const description = (skillMd.match(/^---\n[\s\S]*?\ndescription:([\s\S]*?)\n(?:[a-z_]+:|---)/) || [])[1] || '';
+    const readme = s.source ? read(path.join(root, s.source, 'README.md')) : '';
+    const page = s.page ? read(path.join(docs, s.page, 'index.html')) : '';
+    if (!description.includes(u)) problems.push(`${s.id}: source ${x.url} is not in the description of ${s.source}SKILL.md`);
+    if (!readme.includes(u)) problems.push(`${s.id}: source ${x.url} is not in ${s.source}README.md`);
     if (!page.includes(u)) problems.push(`${s.id}: source ${x.url} is not linked on docs/${s.page}index.html`);
   }
 }

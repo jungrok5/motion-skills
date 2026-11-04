@@ -16,7 +16,11 @@
     var repo = reg.repo, branch = reg.branch || 'main', src = (s.source || s.id + '/').replace(/\/?$/, '/');
     // absorbedFrom.repo === the registry's own repo: the skill was built here (from a worked example in this repo), not absorbed
     var here = s.absorbedFrom && s.absorbedFrom.repo === repo;
-    var from = !s.absorbedFrom ? '' : here ? '<p class="from">이 레포에서 만듦' + (s.absorbedFrom.path ? ': <code>' + esc(s.absorbedFrom.path) + '</code>' : '') + '</p>' :
+    // sources (the links the skill was made from) win: shown as links, so a reader sees what it was made from
+    var links = (s.sources || []).filter(function (x) { return x && x.url; });
+    var from = links.length ? '<p class="from">만든 출처: ' + links.map(function (x) {
+        return '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.title || x.url) + '</a>'; }).join(' · ') + '</p>' :
+      !s.absorbedFrom ? '' : here ? '<p class="from">이 레포에서 만듦' + (s.absorbedFrom.path ? ': <code>' + esc(s.absorbedFrom.path) + '</code>' : '') + '</p>' :
       '<p class="from">출처: ' + esc(shortRepo(s.absorbedFrom.repo)) +
       (s.absorbedFrom.path ? '의 <code>' + esc(s.absorbedFrom.path) + '</code>' : '') + '</p>';
     return '<article class="card" id="' + esc(s.id) + '" data-id="' + esc(s.id) + '">\n' +

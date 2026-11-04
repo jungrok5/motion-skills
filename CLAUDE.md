@@ -7,9 +7,9 @@ A collection of Claude Code skills for making motion graphics. Each top-level fo
 - Adding a skill, or absorbing one from another project repo: follow `CONTRIBUTING.md` step by step (a skill takes a topic and designs a new piece in its style — not a
   re-render of its example or a fill-in template; folder layout,
   provenance in `SKILL.md` + `docs/skills.json`, `references/LESSONS.md`, verify from a clean copy, samples page from `docs/_template/`).
-  Every link the user gave (repo, X / Threads post, video, article, site) is a source: list it in `docs/skills.json`
-  `sources`, write it in `SKILL.md`'s provenance paragraph and link it under "실제 작품" on the samples page —
-  `node tools/build-hub.mjs --check` fails if one is missing.
+  Every link the user gave to make the skill from (repo, X / Threads post, video, article, site) is its source, so users
+  can see what it was made from: list it in `docs/skills.json` `sources` (shown on the hub card), end the `SKILL.md`
+  `description` with it, and put it in the README and the samples page — `node tools/build-hub.mjs --check` fails if one is missing.
   Leave the source repo untouched unless asked.
 - The hub (`docs/index.html`) is registry-driven: edit `docs/skills.json`, then run `node tools/build-hub.mjs`
   (`--check` to verify). Never hand-edit the block between `<!-- skills:start -->` and `<!-- skills:end -->`, and never
