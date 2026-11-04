@@ -1,0 +1,2 @@
+Noto Serif KR and EB Garamond: SIL Open Font License 1.1 (https://openfontlicense.org).
+Subsets fetched from Google Fonts by aesthetics-film/scripts/fonts.mjs for the characters in chars.txt.

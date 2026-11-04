@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>비움의 미학 · The Beauty of Emptiness</title>
+<!-- aesthetics-film worked example: "비움의 미학 · 한국의 미" — Korean aesthetics in 4 chapters + the card (~80 s).
+     Made from BRIEF.md: every set, object, colour and the score were designed for this topic (the source film was about
+     Chinese aesthetics; nothing here is taken from it but the grammar). Read top to bottom: essay → sets → shots →
+     callouts + card → start. -->
+<link rel="stylesheet" href="fonts/fonts.css">
+<script type="importmap">{ "imports": { "three": "../../lib/three.module.min.js", "essay/": "../../lib/" } }</script>
+<body>
+<script type="module">
+import { Film, THREE, lin, smooth, clamp01 } from "essay/film.js";
+import { score } from "./score.js";
+
+const F = new Film({ brand: { title: "한국의 미", sub: "Korean Aesthetics" }, score });
+
+// ---------------- 1 · the essay ----------------
+F.chapter({ from: 0, n: 1, title: "여백", en: "The empty space" });
+const L1 = F.say([
+  { text: "산을 다 그리지 않는다.", en: "The mountain is never painted whole." },
+  { text: "비워 둔 자리에 안개가 앉는다.", en: "Mist settles where the paper is left empty.", accent: ["비워"] },
+], { from: 1.4 });
+const C2 = L1[1].to + 1.0;
+F.chapter({ from: C2, n: 2, title: "처마", en: "The eave line" });
+const L2 = F.say([
+  { text: "처마는 곧게 뻗지 않는다.", en: "The eave never runs straight." },
+  { text: "양 끝을 살짝 들어 올려,", en: "Lifted just slightly at both ends,", accent: ["들어 올려"] },
+  { text: "무거운 지붕이 하늘로 오른다.", en: "a heavy roof rises into the sky.", accent: ["하늘"] },
+], { from: C2 + 1.0 });
+const C3 = L2[2].to + 1.0;
+F.chapter({ from: C3, n: 3, title: "창호", en: "Paper windows" });
+const L3 = F.say([
+  { text: "한지는 빛을 막지 않고 거른다.", en: "Hanji does not block the light — it filters it.", accent: ["거른다"] },
+  { text: "방 안에는 그림자 대신 밝음이 번진다.", en: "Inside, brightness spreads instead of shadow.", accent: ["밝음"] },
+], { from: C3 + 1.0 });
+const C4 = L3[1].to + 1.0;
+F.chapter({ from: C4, n: 4, title: "달항아리", en: "The moon jar" });
+const L4 = F.say([
+  { text: "위와 아래를 따로 빚어 붙인 항아리.", en: "A jar thrown in two halves, then joined." },
+  { text: "조금 기울어도, 둥글다.", en: "A little lopsided — and still round.", accent: ["둥글다"] },
+  { text: "채우지 않아서 넉넉하다.", en: "Ample, because it was never filled.", accent: ["넉넉하다"], pause: 1.2 },
+], { from: C4 + 1.0 });
+const CARD = L4[2].to + 0.6;
+
+// ---------------- 2 · sets ----------------
+// 01 · ink on paper: peaks melting into a mist sea, a pine islet
+F.set("ink", (S) => {
+  S.mistSea({ y: 0, color: "#f3f0e8" });
+  S.inkMountains({ n: 18, x: [-320, 320], z: [-70, -520], h: [30, 125], seed: 11, mistY: 1, mistSoft: 16, base: -8, sharp: 1.5, round: 0.55, aspect: 1.3 });
+  S.mistBanks({ n: 12, x: [-220, 220], z: [-60, -330], y: [1, 14], size: 120, opacity: 0.8 });
+  S.islet({ r: 9, at: [-16, 0.05, -42], seed: 4 });
+  S.pine({ h: 5.5, at: [-18, 0.3, -43], seed: 3, lean: 0.4 });
+  S.pine({ h: 4.2, at: [-13.5, 0.3, -40], seed: 8, lean: -0.3 });
+  S.pine({ h: 3.4, at: [-20, 0.3, -38.5], seed: 12, lean: 0.6 });
+  S.islet({ r: 5, at: [22, 0.05, -70], seed: 9, rocks: 4 });
+  S.pine({ h: 3.8, at: [22, 0.2, -70], seed: 5 });
+}, { fogNear: 60, fogFar: 900, shadow: false });
+
+// 02 · a hanok court: packed-earth yard, hall with a paljak roof on a stone base, tiled wall, jangdokdae, pines
+const HALL = { w: 11, d: 5.6, h: 2.9, base: 0.75, ov: 1.4, lift: 0.95 };
+F.set("court", (S) => {
+  S.floor({ w: 140, d: 140, kind: "earth", color: "#b5a68a", tile: 7 });
+  S.inkMountains({ n: 12, x: [-260, 260], z: [-90, -360], h: [22, 60], ink: "#55604f", wash: "#aab0a2", mist: "#d4d7d0", mistY: -2, mistSoft: 18, seed: 21, base: -6, sharp: 1.1, aspect: 1.9, round: 0.8 });
+  const hall = S.hall({ w: HALL.w, d: HALL.d, h: HALL.h, bays: [5, 2], base: HALL.base, steps: 2, overhang: HALL.ov, lift: HALL.lift, hip: 0.55, sag: 1.7, rise: 2.5,
+    colColor: "#8a6a4a", beamColor: "#6a4e36", roofColor: "#45484c", under: "#7a5c40", floor: "wood", floorColor: "#9a7650",
+    sides: { front: ["open", "lattice", "lattice", "lattice", "open"], back: "wall", left: "wall", right: "wall" }, pattern: "tti", cell: 0.075, wallColor: "#ebe5d6", latticeColor: "#6a4e36" });
+  S.wall({ len: 26, h: 2.3, at: [-12.5, 0, 6], rotY: 90, color: "#e6dfcf", capColor: "#45484c" });
+  S.wall({ len: 9, h: 2.3, at: [12.5, 0, -2.5], rotY: 90, color: "#e6dfcf", capColor: "#45484c" });
+  // jangdokdae: a low stone stand with onggi jars of different sizes
+  S.platform({ w: 3.6, d: 1.8, h: 0.35, at: [8.2, 0, 6.5], color: "#9c978c", top: "stone", topColor: "#a39e92" });
+  const jars = [[-1.2, 0.45, 0.62], [-0.4, -0.35, 0.78], [0.45, 0.4, 0.55], [1.25, -0.3, 0.7], [-1.25, -0.45, 0.42], [0.5, -0.5, 0.4], [1.4, 0.5, 0.38]];
+  for (const [x, z, h] of jars) S.vessel({ shape: "jar", h, glaze: "onggi", rough: 0.35, at: [8.2 + x, 0.35, 6.5 + z], wobble: 0.015, seed: Math.round(x * 10) });
+  S.pine({ h: 9, at: [-8, 0, -6], seed: 31, lean: 0.25, needles: "#33402f", trunk: "#5a4a3c" });
+  S.pine({ h: 7, at: [10.5, 0, -6.5], seed: 33, lean: -0.35, needles: "#33402f", trunk: "#5a4a3c" });
+  S.tree({ kind: "bare", h: 4.5, at: [-9, 0, 9], seed: 7, trunk: "#4a3d33" });
+  S.rock({ kind: "boulder", size: 0.5, at: [5.5, 0, 9], seed: 4 });
+  return { hall };
+}, { shadowR: 22 });
+
+// 03 + 04 · inside the hall: maru floor, a row of tti-sal doors, the moon jar
+const JAR = { at: [0.55, 0.16, 0.5], h: 0.46 };
+F.set("room", (S) => {
+  S.floor({ w: 12, d: 9, kind: "wood", color: "#a07a52", tile: 3.5 });
+  const doors = [];
+  for (let i = 0; i < 6; i++) doors.push(S.lattice({ w: 0.98, h: 2.1, pattern: "tti", cell: 0.075, at: [-2.7 + i * 1.08, 0.04, -2], color: "#6a4e36", glow: 0.2 }));
+  const posts = []; for (let i = 0; i <= 6; i++) posts.push(S.bar([-3.24 + i * 1.08, 0, -2], [-3.24 + i * 1.08, 2.2, -2], 0.09));
+  posts.push(S.bar([-3.4, 2.18, -2], [3.4, 2.18, -2], 0.12, 0.12), S.bar([-3.4, 0.03, -2], [3.4, 0.03, -2], 0.1, 0.06));
+  S.mesh(S.merge(posts), S.MAT.wood("#6a4e36"));
+  S.mesh(new THREE.BoxGeometry(12, 0.75, 0.16), S.MAT.plaster("#ebe5d6"), [0, 2.6, -2.05]);                // wall above the doors
+  for (const x of [-3.9, 3.9]) S.mesh(new THREE.BoxGeometry(1.0, 3, 0.16), S.MAT.plaster("#ebe5d6"), [x, 1.5, -2.05]);
+  for (const x of [-4.4, 4.4]) S.mesh(new THREE.BoxGeometry(0.16, 3, 9), S.MAT.plaster("#e3dccb"), [x, 1.5, 2.4]);
+  S.mesh(new THREE.BoxGeometry(9, 0.1, 9), S.MAT.wood("#5d4430", [3, 3]), [0, 3.0, 2.4]);                   // ceiling
+  for (let i = 0; i < 8; i++) S.mesh(new THREE.BoxGeometry(0.12, 0.14, 9), S.MAT.wood("#5a4130"), [-3.85 + i * 1.1, 2.9, 2.4]);
+  S.mesh(new THREE.BoxGeometry(12, 0.05, 6), S.mat("#f6efe0", { emissive: "#fff5e0", glow: 1 }), [0, 1.2, -6]); // bright yard behind the doors
+  S.table({ kind: "low", w: 0.62, d: 0.62, h: JAR.at[1], at: [JAR.at[0], 0, JAR.at[2]], color: "#6a4630", leg: 0.05 });
+  const jar = S.vessel({ shape: "moonjar", h: JAR.h, width: 1.04, glaze: "white", crackle: 0, speck: 0.35, wobble: 0.028, seam: true, seed: 5, rough: 0.28, at: JAR.at });
+  S.panel({ w: 0.5, h: 1.15, at: [-4.3, 0.9, 0.6], rotY: 90, scroll: true, key: "orchid", draw: (g, w, h) => { // a hanging scroll: one orchid stroke
+    g.strokeStyle = "#2a2a28"; g.lineCap = "round";
+    for (const [x0, y0, cx, cy, x1, y1, lw] of [[0.5, 0.9, 0.3, 0.5, 0.75, 0.2, 6], [0.5, 0.9, 0.55, 0.55, 0.25, 0.3, 4], [0.5, 0.9, 0.7, 0.65, 0.85, 0.45, 3]]) { g.lineWidth = lw; g.beginPath(); g.moveTo(x0 * w, y0 * h); g.quadraticCurveTo(cx * w, cy * h, x1 * w, y1 * h); g.stroke(); }
+    g.fillStyle = "#a3302b"; g.fillRect(w * 0.7, h * 0.08, w * 0.08, w * 0.08);
+  } });
+  return { doors, jar };
+}, { shadowR: 6, sun: { az: 195, el: 24 } });
+
+// 04 · night: ink hills under a rising moon
+F.set("moon", (S) => {
+  S.mistSea({ y: 0, color: "#2c3a4e" });
+  S.inkMountains({ n: 14, x: [-300, 300], z: [-90, -480], h: [26, 80], ink: "#111823", wash: "#4f5f74", mist: "#2c3a4e", mistY: 1, mistSoft: 16, seed: 41, base: -6, sharp: 1.2, aspect: 1.8, round: 0.75 });
+  S.mistBanks({ n: 10, x: [-200, 200], z: [-70, -300], y: [1, 10], color: "#46566c", opacity: 0.5, size: 120 });
+  const moon = S.moon({ at: [-40, 120, -1000], r: 40, color: "#fbf6e8", haloOpacity: 0.3 });
+  return { moon };
+}, { fogNear: 60, fogFar: 1100, shadow: false });
+
+// ---------------- 3 · shots ----------------
+const corner = [ (HALL.w / 2 + HALL.ov) * 1.08, HALL.base + HALL.h + HALL.lift, (HALL.d / 2 + HALL.ov) * 1.08 ];
+F.shot({ from: 0, set: "ink", light: "paper",
+  cam: { path: [[4, 16, 70], [0, 11, 34], [-3, 8, 12]], look: [[0, 20, -260], [-6, 10, -150]], fov: [42, 38] } });
+F.shot({ from: L1[1].from - 0.6, set: "ink", light: "paper", xfade: 1.6,
+  cam: { path: [[-36, 5, -14], [-22, 3.6, -21]], look: [[-16, 2.4, -42], [-14, 2.8, -44]], fov: 34 } });
+F.shot({ from: C2, set: "court", light: "garden", dip: 1.4,
+  cam: { path: [[-2, 1.6, 24], [-0.5, 1.7, 17]], look: [[0, 2.6, 0], [0, 3.0, 0]], fov: 40 } });
+F.shot({ from: L2[1].from - 0.4, set: "court", light: "garden", xfade: 1.2,
+  cam: { path: [[9.5, 1.3, 14], [11.5, 1.6, 12]], look: [[4.0, 3.9, 4.2], [5.2, 4.2, 4.2]], fov: 42 } });
+F.shot({ from: L2[2].from - 0.5, set: "court", light: "garden", xfade: 1.4,
+  cam: { path: [[-16, 1.8, 15], [-12, 4.2, 17], [-7, 7.5, 18]], look: [[0, 3.6, 0], [1, 4.4, 0]], fov: 38 } });
+F.shot({ from: C3, set: "room", light: "interior", dip: 1.4,
+  update: (lt, o) => { const k = 0.15 + 2.2 * smooth((lt - 0.6) / 5); o.doors.forEach((d, i) => d.userData.setGlow(k * (0.9 + 0.1 * Math.sin(i * 1.7)))); },
+  cam: { path: [[-2.6, 1.25, 2.6], [-0.6, 1.3, 2.4], [1.6, 1.35, 2.2]], look: [[-1.8, 1.2, -2], [1.6, 1.2, -2]], fov: 42 } });
+F.shot({ from: L3[1].from - 0.5, set: "room", light: "interior", xfade: 1.2,
+  update: (lt, o) => o.doors.forEach((d) => d.userData.setGlow(2.4)),
+  cam: { path: [[2.6, 1.8, 3.2], [1.6, 1.55, 3.4]], look: [[-0.4, 0.2, -0.4], [-0.8, 0.5, -1.1]], fov: 44 } });
+// the jar: a slow orbit; the callout sits on the seam on the side that faces the camera
+const orbit = (lt) => -0.75 + 0.07 * lt, JC = [JAR.at[0], JAR.at[1] + JAR.h * 0.5, JAR.at[2]];
+F.shot({ from: C4, set: "room", light: "interior", xfade: 1.4,
+  update: (lt, o) => o.doors.forEach((d) => d.userData.setGlow(2.4)),
+  cam: (lt) => { const a = orbit(lt), R = 1.55 - 0.03 * lt; return { pos: [JC[0] + Math.sin(a) * R, 0.72 - 0.008 * lt, JC[2] + Math.cos(a) * R], look: [JC[0], JC[1] + 0.03, JC[2]], fov: 34 }; } });
+F.shot({ from: L4[2].from - 1.6, set: "moon", light: "night", xfade: 2.2,
+  update: (lt, o) => { o.moon.position.y = 95 + 11 * lt; },
+  cam: { path: [[0, 8, 40], [0, 9, 22]], look: [[0, 30, -300], [-6, 44, -300]], fov: 34 } });
+
+// ---------------- 4 · callouts and the card ----------------
+F.callout({ set: "court", from: L2[1].from + 0.6, to: L2[1].to, at: [corner[0], corner[1], -corner[2]], text: "안허리곡 · 앙곡", en: "Eave curve · corner lift", dx: -60, dy: -110 });
+F.callout({ set: "room", from: L3[0].from + 0.8, to: L3[0].to, at: [-0.54, 1.62, -1.98], text: "띠살문 · 한지", en: "Tti-sal door · mulberry paper", dx: 90, dy: -60 });
+F.callout({ set: "room", from: L4[0].from + 0.6, to: L4[1].to - 0.4, text: "이음 · 두 반쪽", en: "The seam of two halves", dx: -150, dy: -40,
+  at: (lt) => { const a = orbit(lt + (L4[0].from + 0.6 - C4)), r = JAR.h * 0.52 * 1.04; return [JAR.at[0] + Math.sin(a) * r, JAR.at[1] + JAR.h * 0.48, JAR.at[2] + Math.cos(a) * r]; } });
+F.card({ from: CARD, to: CARD + 7, title: "비움의 미학", seal: "美", en: "The beauty of emptiness", sub: "여백 · 처마 · 창호 · 달항아리", footer: "made with aesthetics-film" });
+
+F.start();
+</script>
+</body>
+</html>
