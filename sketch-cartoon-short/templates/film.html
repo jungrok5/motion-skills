@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>my sketch short</title>
+<!-- A starting film: 3 shots, 10 s. It is an EXAMPLE of the style, not a form to fill in — rewrite every shot from BRIEF.md.
+     The page draws a girl and her pet (draw-on) → they walk down a one-point street drawn in pencil → back on the blank page a
+     door is drawn and opens. Everything here is reused by any topic: the paper, the draw-on, the plates with boil variants,
+     the cast from cast.js, contact shadows, the checks. -->
+<script type="importmap">{ "imports": { "scs/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+import * as S from 'scs/sketch.js';      // the pencil: line, loop, fill, shape, hatch, scribble, paper; span/ease/lerp; tone/mix
+import * as R from 'scs/rig.js';         // person(), critter(), where(); poses: stand, walk, run, leap, crouch, reach, fall; pose(), blend()
+import * as K from 'scs/kit.js';         // facade, street, avenue, skyline, bridge, roofs, lamp, door, shadow, ground; fx
+import { Film } from 'scs/film.js';
+import { HERO, PAL, CAST } from './cast.js';
+import { SCORE } from './score.js';
+const { span, ease, lerp } = S;
+
+const F = new Film({ seed: 5, paper: CAST.paper, score: SCORE });
+const last = { boy: null, ground: null };
+
+// plates: painted once, in 2 boil variants (the backgrounds breathe too). Here: a one-point street.
+const street = F.plate(1920, 1080, c => K.avenue(c, { vp: [960, 430], seed: 6, pal: ['#c9c8a9', '#bfc4a6', '#cdc6ad'], awning: '#c39385', depth: 6 }), { boil: 2 });
+
+// 1 · the page draws them (3.5 s)
+F.shot(3.5, g => {
+  g.paper();
+  const k = span(g.lt, .2, 2.8, ease.lin);
+  g.at(1, c => g.drawOn(k, () => {
+    K.shadow(c, 860, 902, 140); K.shadow(c, 1120, 902, 80);
+    R.critter(c, PAL, { x: 1120, y: 900, face: -1, gait: 'sit', flow: g.twos() });
+    last.boy = R.person(c, HERO, { x: 840, y: 900, s: 1, face: 1, turn: .45, ...R.stand(g.lt), expr: g.lt > 3 ? 'smile' : 'neutral', flow: g.twos() });
+    K.ground(c, 420, 1500, 904);
+  }));
+  last.ground = 900;
+}, { name: 'drawn', cam: [{ t: 0, zoom: 1 }, { t: 3.5, zoom: 1.04 }] });
+
+// 2 · down the street, toward us (3.5 s): the street plate scales up, they walk on twos
+F.shot(3.5, g => {
+  g.paper(); g.put(street, 0, 0, 1);
+  const tw = g.twos();
+  g.at(1, c => {
+    K.shadow(c, 1010, 1002, 70); K.shadow(c, 860, 1002, 110);
+    R.critter(c, PAL, { x: 1010, y: 1000, s: .7, face: -1, gait: 'walk', ph: tw * 1.6, flow: tw });
+    last.boy = R.person(c, HERO, { x: 860, y: 1000, s: .72, face: 1, turn: .25, ...R.walk(tw * .9), expr: 'smile', wind: [-30, 0], flow: tw });
+    K.gust(c, 200, 380, 400, span(g.lt, 1.2, 2.6, ease.lin));
+  });
+  last.ground = 1000;
+}, { name: 'street', cam: [{ t: 0, zoom: 1 }, { t: 3.5, zoom: 1.12, y: -30 }] });
+
+// 3 · back on the page: a door is drawn and opens (3 s)
+F.shot(3, g => {
+  g.paper();
+  const tw = g.twos();
+  g.at(1, c => {
+    g.drawOn(span(g.lt, 0, 1.0, ease.lin), () => K.door(c, 1240, 900, 170, 330, span(g.lt, 1.2, 2.2, ease.back), { light: '#efe7c6' }));
+    K.shadow(c, 760, 902, 140);
+    last.boy = R.person(c, HERO, { x: 740, y: 900, s: 1, face: 1, turn: .55, ...R.pose(R.stand(g.lt), g.lt > 1.6 ? R.reach(1.6) : {}), expr: g.lt > 1.4 ? 'awe' : 'smile', look: [1, 0], flow: tw });
+    R.critter(c, PAL, { x: 960, y: 900, face: 1, gait: 'sit', look: [1, 0], expr: g.lt > 1.4 ? 'alarm' : 'calm', flow: tw });
+  });
+  last.ground = 900;
+}, { name: 'door', tr: { type: 'paper', d: .8 }, cam: [{ t: 0, zoom: 1 }, { t: 3, zoom: 1.03, x: 40 }] });
+
+F.check('feet on the ground', () => last.ground == null || Math.abs(last.boy.ground - last.ground) < 3);
+F.start();
+</script>
+</body>
+</html>

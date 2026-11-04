@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>cast sheet</title>
+<!-- The cast sheet: every person in cast.js in three turns and the poses and faces the film will use; every critter in its gaits.
+     Render it after each design change and score it (references/BRIEF.md → cast review) BEFORE writing shots:
+       node <skill>/scripts/render.mjs cast.html --stills 0 --scale .5      → out/cast-0.png  (person 1; ?who=1 for the next) -->
+<script type="importmap">{ "imports": { "scs/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+import * as S from 'scs/sketch.js'; import * as R from 'scs/rig.js'; import * as K from 'scs/kit.js'; import { Film } from 'scs/film.js';
+import { CAST } from './cast.js';
+const F = new Film({ seed: 2, paper: CAST.paper, fadeIn: 0, fadeOut: 0 });
+const people = Object.entries(CAST.people), crit = Object.entries(CAST.critters || {}), who = +(F.q.get('who') || 0);
+const [name, P] = people[who % people.length];
+F.shot(1, g => {
+  g.paper();
+  g.at(1, c => {
+    // row 1: front, three-quarter, profile, walking, running
+    const y1 = 560, s = 360 / (P.h || 600);
+    [[0, R.stand(0)], [.5, R.stand(0)], [1, R.stand(0)], [.6, R.walk(.15)], [.85, R.run(.2)]].forEach(([turn, pose], i) => {
+      const x = 150 + i * 280; K.shadow(c, x + 10, y1 + 2, 70);
+      R.person(c, P, { x, y: pose.plant === false ? y1 - 60 : y1, s, face: 1, turn, ...pose, expr: 'neutral', flow: 0 });
+    });
+    // row 2: faces
+    const faces = ['neutral', 'smile', 'joy', 'shock', 'scared', 'determined', 'sad', 'wink'];
+    faces.forEach((e, i) => R.person(c, P, { x: 130 + i * 228, y: 1250, s: s * 1.5, face: 1, turn: .45, ...R.stand(0), expr: e }));
+    // critters in a column at the right: sit, stand, run (one column per critter)
+    crit.forEach(([n, C], j) => ['sit', 'stand', 'run'].forEach((gait, i) => { const x = 1560 + j * 200, y = 230 + i * 165; K.shadow(c, x + 10, y + 2, 50); R.critter(c, C, { x, y, s: .6, face: 1, gait, ph: .2 }); }));
+  });
+}, { name, cam: [{ t: 0, zoom: 1 }] });
+F.start();
+</script>
+</body>
+</html>

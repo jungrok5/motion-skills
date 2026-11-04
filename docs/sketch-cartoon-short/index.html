@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>sketch-cartoon-short · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 거친 연필 선과 탁한 색, 미완성 느낌의 스케치 카툰 단편을 코드만으로 만듭니다. 빈 종이에 그려지며 시작해 다시 빈 종이로 돌아오는 이야기, 끓는 선, 선에서 살짝 비껴 칠한 색, 다리가 긴 캐릭터, 코드로 합성한 음악과 효과음을 붙인 1080p MP4와 브라우저에서 도는 페이지를 냅니다.">
+<meta property="og:title" content="sketch-cartoon-short · motion-skills">
+<meta property="og:description" content="주제 하나를 주면 거친 연필 선과 탁한 색, 미완성 느낌의 스케치 카툰 단편을 코드만으로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/sketch-cartoon-short/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/sketch-cartoon-short">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / sketch-cartoon-short</nav>
+  <h1>sketch-cartoon-short</h1>
+  <p>주제 하나를 주면 거친 연필 선과 탁한 색, 미완성 느낌의 스케치 카툰 단편을 코드만으로 만듭니다. 빈 종이에 그려지며 시작해 다시 빈 종이로 돌아오는 이야기, 끓는 선, 선에서 살짝 비껴 칠한 색, 다리가 긴 캐릭터, 코드로 합성한 음악과 효과음을 붙인 1080p MP4와 브라우저에서 도는 페이지를 냅니다.
+  보고 만든 원본: <a href="https://x.com/Artedeingenio/status/2117622425873736092" target="_blank" rel="noopener">OscarAI의 X 게시물 (30초 영상)</a> · <a href="https://x.com/Artedeingenio/status/2117254123653321201" target="_blank" rel="noopener">그 게시물이 인용한 스타일 원본 (스틸 4장)</a>.</p>
+  <ul class="tags"><li>2D 캔버스</li><li>16:9 · 24fps</li><li>MP4</li><li>라이브 페이지</li><li>합성 사운드</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(도망간 우산, 달에 보내는 편지, 막차 …). 레퍼런스 영상이나 그림이 있으면 그 스틸</dd>
+      <dt>브리프</dt><dd>주인공 · 동반자 · 맞서는 힘 · 장소 · 따뜻한 강조색 하나 · 큰 동작 하나 · 5–9박자 장면을 적은 <code>BRIEF.md</code></dd>
+      <dt>캐스트</dt><dd>주제에 맞게 새로 설계한 사람과 동물 데이터(<code>cast.js</code>), 돌려 보기 · 걸음 · 표정 시트로 채점</dd>
+      <dt>그림</dt><dd>겹치고 삐져나가는 연필 선이 초당 8번 끓고, 색은 선에서 비껴 평평하게, 배경은 가장자리로 갈수록 선만 남는 거리 · 지붕 · 다리 · 낙서 덩어리</dd>
+      <dt>확인</dt><dd>무작위 스틸 채점, 콘택트 시트, 모든 샷 그리기 · 빈 프레임 · 결정성 · 발이 땅에 닿는지 · 색이 탁한지 · 선이 끓는지 · 악보 검사</dd>
+      <dt>출력</dt><dd>24fps 1920×1080 MP4(코드로 합성한 음악 · 연필 · 종이 효과음 포함), ♪ 버튼으로 소리까지 재생하는 라이브 페이지</dd>
+    </dl>
+    <pre><code>cd sketch-cartoon-short/examples/umbrella
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs cast.html --stills 0 --scale .5
+node ../../scripts/render.mjs index.html --sheet 24 --scale .5
+node ../../scripts/score.mjs score.js --dur 35.5 --out out/umbrella.wav
+node ../../scripts/render.mjs index.html --workers 4 --audio out/umbrella.wav
+node ../../scripts/new-film.mjs ../../../my-film</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. 네트워크와 GPU가 필요 없습니다(CPU에서 1080p 한 프레임 약 0.2초, 35.5초 영상을 워커 4개로 약 3분). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/sketch-cartoon-short/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:calc((100vw - 34px)*.5625);--demo-bg:#20221f">
+    <iframe data-src="demo/examples/umbrella/" title="sketch-cartoon-short 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/umbrella/">데모 열기 (examples/umbrella)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/umbrella</code> · 35.5초 · 8샷 · ♪ 버튼으로 소리</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/umbrella/" data-cap="예제 &lt;code&gt;examples/umbrella&lt;/code&gt; · 35.5초 · 8샷 · ♪ 버튼으로 소리" aria-pressed="true">도망간 우산</button>
+        <button class="btn" type="button" data-src="demo/examples/umbrella/cast.html" data-cap="캐스트 시트 &lt;code&gt;examples/umbrella/cast.html&lt;/code&gt; · 돌려 보기 · 걸음 · 표정" aria-pressed="false">캐스트 시트</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/film.html&lt;/code&gt; · 10초 · 3샷 · 새 영화의 출발점" aria-pressed="false">시작 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제 「The Runaway Umbrella」의 여덟 샷, 그 캐스트 시트, 시작 템플릿입니다. 카드를 누르면 새 탭에서 그 순간에 멈춘 장면이 열리고, 브라우저가 연필 선부터 직접 그립니다.</p>
+  <div id="gallery">
+    <div class="group">
+      <h3>The Runaway Umbrella <small>16:9 · 35.5초 · 8샷</small></h3>
+      <p>비 오는 날 바람이 소년의 빨간 우산을 채 가고, 소년과 개가 거리와 지붕을 지나 쫓아가다 다리에서 뛰어올라 낙서 먹구름 속에서 우산을 잡습니다. 레퍼런스에 없는 주제로 브리프부터 끝까지 만든 예제입니다.</p>
+      <div class="grid">
+        <a class="tile" href="demo/examples/umbrella/?t=3.6" target="_blank" rel="noopener">
+          <img src="samples/drawn.jpg" alt="빈 세이지색 종이 위에 막 그려진 소년과 앉은 개, 소년이 어깨 높이로 든 빨간 우산, 발밑의 연필 선" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">1 · 3.6초</span><b>종이가 그린다</b>
+          <span class="how">그리는 순서대로 획을 드러내는 <code>drawOn</code>, 그 위를 지나가는 연필, 다 그린 뒤 시작되는 비</span></div></a>
+        <a class="tile" href="demo/examples/umbrella/?t=5.6" target="_blank" rel="noopener">
+          <img src="samples/gust.jpg" alt="길모퉁이 건물과 가로등 사이에서 우산을 놓친 손을 위로 뻗은 채 놀란 소년, 일어선 개, 위로 날아가는 우산" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">2 · 5.6초</span><b>바람이 채 간다</b>
+          <span class="how">말려 오는 바람 선, 뒤집히는 우산, 놀란 얼굴에서 다문 입으로, 낚아채는 순간의 흔들림</span></div></a>
+        <a class="tile" href="demo/examples/umbrella/?t=10.5" target="_blank" rel="noopener">
+          <img src="samples/chase.jpg" alt="선으로 그린 건물이 늘어선 거리를 달리는 소년과 뒤따르는 개, 앞쪽 하늘에서 구르는 빨간 우산, 멀리 청록 건물 실루엣" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">3 · 10.5초</span><b>거리 추격</b>
+          <span class="how">옆으로 따라가는 카메라, 다른 속도로 흐르는 먼 스카이라인, 두 장씩 끊어 그린 큰 보폭, 물 튀김</span></div></a>
+        <a class="tile" href="demo/examples/umbrella/?t=15.2" target="_blank" rel="noopener">
+          <img src="samples/leap.jpg" alt="지붕과 지붕 사이 틈 위로 뛰어오른 소년, 뒤따라 뛰는 개, 아래로 보이는 먼 거리와 청록 스카이라인" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">4 · 15.2초</span><b>지붕 사이를 뛴다</b>
+          <span class="how">가장자리에서 웅크림 → 포물선 → 찌그러지며 착지, 0.5초 늦게 같은 길을 뛰는 개</span></div></a>
+        <a class="tile" href="demo/examples/umbrella/?t=20.1" target="_blank" rel="noopener">
+          <img src="samples/cloud.jpg" alt="다리 위에서 올려다보는 소년과 개, 하늘을 덮은 검은 연필 낙서 먹구름, 굵은 빗줄기" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">5 · 20.1초</span><b>낙서 먹구름</b>
+          <span class="how">매 프레임 다시 긁히는 낙서 덩어리가 우산을 삼키고, 번개와 섬광, 낮은 각도에서 밀어 들어가는 카메라</span></div></a>
+        <a class="tile" href="demo/examples/umbrella/?t=24.6" target="_blank" rel="noopener">
+          <img src="samples/catch.jpg" alt="공중에서 펼친 빨간 우산에 매달린 소년, 우산 둘레의 금빛 고리, 흩어지는 종이 낱장 사이로 작아지는 먹구름" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">6 · 24.6초</span><b>잡는다</b>
+          <span class="how">손이 닿을 자리를 <code>R.where</code>로 미리 계산해 떨어지는 우산을 맞춤, 펼쳐지는 우산, 종이로 터지는 구름</span></div></a>
+        <a class="tile" href="demo/examples/umbrella/?t=29.5" target="_blank" rel="noopener">
+          <img src="samples/float.jpg" alt="빨간 우산에 매달려 도시 위로 천천히 내려오는 소년, 주위를 떠도는 종이 낱장, 아래의 지붕들" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">7 · 29.5초</span><b>내려온다</b>
+          <span class="how">디졸브로 넘어간 아주 넓은 샷, 떠도는 종이, 따뜻해지는 빛, 펠트 피아노 왈츠</span></div></a>
+        <a class="tile" href="demo/examples/umbrella/?t=34.6" target="_blank" rel="noopener">
+          <img src="samples/page.jpg" alt="빈 종이 위에 우산을 든 채 윙크하는 소년과 옆에 앉은 개, 연필이 발밑에 땅 선을 긋는 중" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">8 · 34.6초</span><b>다시 빈 종이</b>
+          <span class="how">종이 전환으로 돌아온 첫 화면, 뛰어 들어와 앉는 개, 마지막 빗방울, 윙크, 연필이 긋는 땅 선</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>출발점 <small>캐스트 시트 · 템플릿</small></h3>
+      <p>새 주제를 시작할 때 쓰는 두 페이지입니다. 캐스트는 데이터로 설계하고 시트로 채점한 뒤에 샷을 씁니다.</p>
+      <div class="grid">
+        <a class="tile" href="demo/examples/umbrella/cast.html" target="_blank" rel="noopener">
+          <img src="samples/cast.jpg" alt="같은 소년을 정면 · 3/4 · 옆 · 걷기 · 달리기로 그린 줄, 여덟 가지 표정 줄, 오른쪽에 앉기 · 서기 · 달리기 하는 개" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 시트</span><b>Juno와 Biscuit</b><span class="en">examples/umbrella/cast.html</span>
+          <span class="how">돌려 보기 · 걸음 · 표정 8종 · 동물 걸음을 한 장에, 실루엣 · 비율 · 머리카락 · 표정을 채점</span></div></a>
+        <a class="tile" href="demo/templates/?t=8.5" target="_blank" rel="noopener">
+          <img src="samples/template.jpg" alt="빈 종이 위에 손을 뻗는 긴 머리 소녀와 귀가 긴 동물, 막 그려져 열린 문" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 10초</span><b>종이 위의 문</b><span class="en">templates/film.html</span>
+          <span class="how"><code>new-film.mjs</code>가 복사하는 출발점. 그려지는 두 인물, 1점 투시 거리, 그려지고 열리는 문의 3샷</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. OscarAI(@Artedeingenio)가 X에 올린 30초 영상이 출발점입니다. 긴 머리 소녀와 귀가 긴 동물이 연필로 그린 도시에서 낙서 괴물에게 쫓기다 다시 빈 종이로 돌아오는 영상으로, Midjourney 스타일 레퍼런스로 만든 스틸을 영상 생성 모델로 움직인 것입니다. 이 스킬은 그 그림체(거친 선, 탁한 색, 과장된 표정, 미완성 느낌)와 이야기 문법만 가져오고, 그림은 직접 만든 캔버스 엔진이 그립니다. 예제 「The Runaway Umbrella」의 코드와 인물, 이야기, 음악은 모두 이 레포의 것입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/examples/umbrella/" target="_blank" rel="noopener"><b>「The Runaway Umbrella」 · 35.5초 · 8샷</b><span>비 오는 마을, 도망간 우산, 지붕 점프, 낙서 먹구름, 라이브 페이지</span><span class="url">sketch-cartoon-short/demo/examples/umbrella/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/sketch-cartoon-short/examples"><b>예제 폴더 · examples/</b><span>umbrella</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/Artedeingenio/status/2117622425873736092" target="_blank" rel="noopener"><b>레퍼런스 영상 · X 게시물</b><span>OscarAI(@Artedeingenio) · 2026년 11월 · 30초</span><span class="url">x.com/Artedeingenio</span></a>
+    <a class="work" href="https://x.com/Artedeingenio/status/2117254123653321201" target="_blank" rel="noopener"><b>스타일 원본 · 인용된 게시물</b><span>같은 그림체의 스틸 4장</span><span class="url">x.com/Artedeingenio</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sketch-cartoon-short/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/sketch-cartoon-short">폴더</a> <span>lib · scripts · templates · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sketch-cartoon-short/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sketch-cartoon-short/references/BRIEF.md">references/BRIEF.md</a> <span>주제를 브리프로, 캐스트 검토 기준, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sketch-cartoon-short/references/LOOK.md">references/LOOK.md</a> <span>레퍼런스에서 관찰한 것과 코드 규칙, 팔레트, 캐스트, 움직임</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sketch-cartoon-short/references/STORY.md">references/STORY.md</a> <span>샷 문법, 타이밍, 샷 쓰는 법, 샷 표</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sketch-cartoon-short/references/KIT.md">references/KIT.md</a> <span>연필 · 리그 · 장소 · 효과 · 엔진 · 악보 API</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sketch-cartoon-short/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림과 소리는 코드로 만듦 (이미지 · 오디오 · 폰트 파일 없음)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

@@ -288,6 +288,25 @@
       "workedExample": [
         { "title": "「The Tower That a War Saved」 · 62초 · 19샷 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/cartoon-3d-short/demo/leaning-tower/" }
       ]
+    },
+    {
+      "id": "sketch-cartoon-short",
+      "name": "sketch-cartoon-short",
+      "tagline": "주제 하나를 주면 거친 연필 선과 탁한 색, 미완성 느낌의 스케치 카툰 단편을 코드만으로 만듭니다. 빈 종이에 그려지며 시작해 다시 빈 종이로 돌아오는 이야기, 끓는 선, 선에서 살짝 비껴 칠한 색, 다리가 긴 캐릭터, 코드로 합성한 음악과 효과음을 붙인 1080p MP4와 브라우저에서 도는 페이지를 냅니다.",
+      "posterAlt": "sketch-cartoon-short로 만든 「The Runaway Umbrella」의 장면 네 개: 연필로 그린 거리를 달리는 소년과 개 앞 하늘에서 구르는 빨간 우산, 지붕 사이를 뛰어오른 소년, 펼친 우산에 매달린 채 종이로 터지는 낙서 먹구름 옆의 소년, 빈 종이 위에서 우산을 든 소년과 앉은 개",
+      "poster": "sketch-cartoon-short/poster.jpg",
+      "tags": ["2D 캔버스", "16:9 · 24fps", "MP4", "라이브 페이지", "합성 사운드"],
+      "stats": ["예제 35.5초 · 8샷", "표정 13종"],
+      "page": "sketch-cartoon-short/",
+      "source": "sketch-cartoon-short/",
+      "absorbedFrom": { "repo": "https://github.com/jungrok5/motion-skills", "path": "sketch-cartoon-short/examples/umbrella/" },
+      "sources": [
+        { "title": "OscarAI의 X 게시물 (30초 영상)", "url": "https://x.com/Artedeingenio/status/2117622425873736092" },
+        { "title": "그 게시물이 인용한 스타일 원본 (스틸 4장)", "url": "https://x.com/Artedeingenio/status/2117254123653321201" }
+      ],
+      "workedExample": [
+        { "title": "「The Runaway Umbrella」 · 35.5초 · 8샷 · 라이브 페이지", "url": "https://jungrok5.github.io/motion-skills/sketch-cartoon-short/demo/examples/umbrella/" }
+      ]
     }
   ]
 }
