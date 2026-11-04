@@ -45,6 +45,9 @@ its characters, its creature or its frames.
 - Companions (`R.critter`): a bean body, a head with a snout, ears (`long` floppy / `point` / `round`), a tail (`thin` /
   `fluffy`), gaits sit · stand · walk · run · leap · crouch; ears stream back in a run.
 - Line weight thins a little with scale (`lw / s^.45`), so far figures stay pencil, not hairline.
+- Sides: facing right, a figure shows its right side — the near (in-front) arm and leg hang from the shoulder and hip on the
+  screen side behind the face; the open coat's fronts meet a centre-front line that moves toward the facing side as it turns;
+  the far eye (on the facing side) is the narrower one.
 - One light from the upper left for every shadow side in the film.
 
 ## Motion

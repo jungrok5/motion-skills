@@ -28,9 +28,11 @@ const F = new Film({ seed: 11, paper: PAPER, score: SCORE, title: 'The Runaway U
 import { JUNO, BISCUIT } from './cast.js';
 
 const HOLD = { arm: { near: [1.0, 1.9] }, grip: { near: 'fist' } };   // the umbrella hold: hand at shoulder height, shaft up past the head
-const last = { boy: null, ground: null, cam: null, offOK: false };   // read by the checks below
+const last = { boy: null, ground: null, cam: null, offOK: false, travel: [] };   // read by the checks below; travel = [[face, moving x-direction]…]
 const toScreen = (p, cam, z = 1) => { const sc = Math.pow(cam.zoom, z); return [(p.x - cam.x * z - 960) * sc + 960, (p.y - cam.y * z - 540) * sc + 540]; };
 const rainOn = (g, a, o = {}) => { if (a > 0) g.screen(c => { c.globalAlpha = a; K.rain(c, 1920, 1080, g.t, { slant: -.18, ...o }); }); };
+
+const shot = (d, draw, o) => F.shot(d, (g, lt, u) => { last.travel = []; draw(g, lt, u); }, o);
 
 // ── plates (painted once; 2 boil variants so even the backgrounds breathe) ──
 const corner = F.plate(1920, 1080, c => {
@@ -68,7 +70,7 @@ const city = F.plate(2400, 1200, c => {
 
 // ── shot 1 · drawn: the blank page draws a boy, his dog, his umbrella; then it starts to rain ──
 const S1 = { x: 860, y: 950 };
-F.shot(4, g => {
+shot(4, g => {
   g.paper();
   const k = span(g.lt, .2, 3.0, ease.lin), blink = g.lt > 3.35 && g.lt < 3.47 ? 1 : 0;
   const pose = { x: S1.x, y: S1.y, s: .95, face: 1, turn: .45, ...R.pose(R.stand(g.lt), HOLD), expr: 'smile', blink, flow: g.twos(), look: g.lt > 3.4 ? [.6, -.8] : [0, 0] };
@@ -94,10 +96,10 @@ const YANK = 1.25;
 const s2pose = lt => {
   if (lt < YANK) return { x: 760, y: 1010, s: 1.25, face: 1, turn: .5, ...R.pose(R.stand(lt), { arm: { near: R.blend([1.0, 1.9], [2.6, .25], span(lt, .55, YANK)), far: [.9 * span(lt, .7, YANK), 1.2] }, grip: { near: 'fist' } }), lean: -.07 * span(lt, .5, YANK), expr: lt > .9 ? 'scared' : 'smile' };
   const c = span(lt, 3.2, 4.0);
-  return { x: 760, y: 1010, s: 1.25, face: 1, turn: .5, ...R.blend(R.pose(R.stand(lt), { arm: { near: [2.95, .05], far: [.4, .9] }, grip: { near: 'open' } }), R.pose(R.crouch(.45), { arm: { near: [-.6, 1.2], far: [.6, 1.3] }, grip: { near: 'fist', far: 'fist' } }), c), lean: .06 * span(lt, YANK, YANK + .4) - .02, expr: lt < 2.6 ? 'shock' : 'determined', head: lt < 2.6 ? -.25 : -.05, look: lt < 2.6 ? [.8, -1] : [1, 0] };
+  return { x: 760, y: 1010, s: 1.25, face: 1, turn: .5, ...R.blend(R.pose(R.stand(lt), { arm: { near: [.45, .9], far: [2.75, .1] }, grip: { near: 'fist', far: 'open' } })   /* reach with the far arm: a raised near arm would cover the face */, R.pose(R.crouch(.45), { arm: { near: [-.6, 1.2], far: [.6, 1.3] }, grip: { near: 'fist', far: 'fist' } }), c), lean: .06 * span(lt, YANK, YANK + .4) - .02, expr: lt < 2.6 ? 'shock' : 'determined', head: lt < 2.6 ? -.25 : -.05, look: lt < 2.6 ? [.8, -1] : [1, 0] };
 };
 const s2hand = R.where(JUNO, s2pose(YANK - .001)).hands.near;
-F.shot(4, g => {
+shot(4, g => {
   const lt = g.lt, tw = g.twos();
   g.paper(); g.put(corner, 0, 0, 1);
   g.at(1, c => {
@@ -115,7 +117,7 @@ F.shot(4, g => {
 }, { name: 'gust', cam: [{ t: 0, zoom: 1.02 }, { t: 4, zoom: 1.0, x: 20 }], shake: lt => lt > YANK && lt < YANK + .45 ? 9 * (1 - (lt - YANK) / .45) : 0 });
 
 // ── shot 3 · chase: along the street, the umbrella tumbling ahead ──
-F.shot(5, g => {
+shot(5, g => {
   const lt = g.lt, tw = g.twos(), cx = g.cam.x;
   g.paper(); g.put(sky1, -200, 0, .35); g.put(town, -100, 0, 1);
   g.at(1, c => {
@@ -126,7 +128,7 @@ F.shot(5, g => {
     K.shadow(c, dx + 20, 1002, 90); K.shadow(c, bx + 20, 1002, 120);
     R.critter(c, BISCUIT, { x: dx, y: 1000, s: .95, face: 1, gait: 'run', ph: tw * 2.3, flow: tw, ears: 1 });
     const G = R.person(c, JUNO, { x: bx, y: 1000, s: .95, face: 1, turn: .85, ...R.run(ph), expr: 'determined', wind: [-110, 0], flow: tw });
-    last.boy = G;
+    last.boy = G; last.travel = [[1, 1], [1, 1]];   // boy and dog run right, facing right
     umbrella(c, bx + 640 + 120 * Math.sin(tw * 1.3), 420 + 70 * Math.sin(tw * 2.1), { ang: tw * 3.1, open: 1, inv: .35 + .3 * Math.sin(tw * 4), col: UMB, s: .72, flutter: tw * 3 });
   });
   rainOn(g, .5, { slant: -.1 });
@@ -136,7 +138,7 @@ F.shot(5, g => {
 // ── shot 4 · leap: across the gap between two roofs, the dog right behind ──
 const roofY = x => x < 905 ? 820 : 860;
 const boyX4 = lt => lt < 1.0 ? lerp(160, 870, lt / 1.0) : lt < 2.5 ? lerp(870, 1440, clamp((lt - 1.0 - .55) / .95)) : lt < 3.1 ? 1440 + (lt - 2.5) * 120 : 1512 + (lt - 3.1) * 520;
-F.shot(5, g => {
+shot(5, g => {
   const lt = g.lt, tw = g.twos();
   g.paper(); g.put(sky4, -120, 0, .3);
   g.at(.5, c => K.mass(c, 2200 + lt * 30, 150, 150 * span(lt, 2.0, 5), 90 * span(lt, 2.0, 5), { col: '#3a3d39', core: '#4a4d48', n: 40 }));
@@ -162,7 +164,7 @@ F.shot(5, g => {
     const bx = boyX4(lt);
     if (ground != null) K.shadow(c, bx + 20, ground + 2, 120);
     last.boy = R.person(c, JUNO, { x: bx, s: .9, face: 1, turn: .85, ...P, expr: lt > 1.0 && lt < 2.5 ? 'yell' : 'determined', wind: [-100, 0], flow: tw });
-    last.ground = ground;
+    last.ground = ground; last.travel = [[1, 1], [1, 1]];
   });
   rainOn(g, .45, { slant: -.1, n: 110 });
   last.cam = g.cam; last.offOK = lt > 4.2;
@@ -170,7 +172,7 @@ F.shot(5, g => {
 
 // ── shot 5 · cloud: on the bridge; a scribble storm cloud swallows the umbrella; thunder ──
 const THUNDER = 1.75;
-F.shot(4, g => {
+shot(4, g => {
   const lt = g.lt, tw = g.twos(), k = span(lt, 0, 1.6, ease.out);
   g.paper(); g.put(sky2, -300, 40, .4);
   g.at(1, c => {
@@ -203,7 +205,7 @@ const s6pose = lt => {
 const s6catch = R.where(JUNO, { s: .85, face: 1, turn: .6, ...s6pose(CATCH - .001) }).hands.near;
 const hangOff = (() => { const P = { x: 0, y: 0, s: .85, face: 1, turn: .45, ...R.fall(0) }; const H = R.where(JUNO, P).hands.near; return [H.x, H.y]; })();
 const grip6 = lt => ({ x: s6catch.x + (lt - CATCH) * 70, y: s6catch.y - 30 * span(lt, CATCH, CATCH + .7, ease.out) + 12 * Math.sin((lt - CATCH) * 2.4) });
-F.shot(5, g => {
+shot(5, g => {
   const lt = g.lt, tw = g.twos(), burst = span(lt, 2.2, 2.9, ease.in);
   g.paper(); g.put(sky2, -300, 40, .4);
   g.at(1, c => {
@@ -218,7 +220,7 @@ F.shot(5, g => {
     K.shadow(c, 560, 907, 90);
     R.critter(c, BISCUIT, { x: 560, y: 905, s: .85, face: 1, gait: lt < 3 ? 'stand' : 'sit', expr: lt < 2.4 ? 'alarm' : 'happy', look: [.5, -1], flow: tw, ears: .2 });
     let P = s6pose(tw);
-    if (P) { if (lt < .95) K.shadow(c, P.x + 20, 907, 110); last.boy = R.person(c, JUNO, { s: .85, face: 1, turn: .6, ...P, expr: 'yell', wind: [-30, 40], flow: tw }); last.ground = lt < .95 ? 905 : null; }
+    if (P) { if (lt < .7) last.travel = [[1, 1]]; if (lt < .95) K.shadow(c, P.x + 20, 907, 110); last.boy = R.person(c, JUNO, { s: .85, face: 1, turn: .6, ...P, expr: 'yell', wind: [-30, 40], flow: tw }); last.ground = lt < .95 ? 905 : null; }
     else {
       const gp = grip6(tw), FP = { s: .85, face: 1, turn: .45, ...R.fall(tw), x: gp.x - hangOff[0], y: gp.y - hangOff[1], expr: lt < 2.5 ? 'shock' : 'joy', wind: [0, 30], flow: tw };
       last.boy = R.person(c, JUNO, FP); last.ground = null;
@@ -233,12 +235,13 @@ F.shot(5, g => {
 
 // ── shot 7 · float: down over the town under the open umbrella, the sheets drifting with him ──
 const hang7 = (() => { const P = { x: 0, y: 0, s: .55, face: 1, turn: .45, ...R.fall(0) }; const H = R.where(JUNO, P).hands.near; return [H.x, H.y]; })();
-F.shot(4.5, g => {
+shot(4.5, g => {
   const lt = g.lt, tw = g.twos();
   g.paper(); g.put(city, -240, -60, .6);
   g.at(1, c => {
     for (let i = 0; i < 11; i++) { const u = (tw * .35 + i * .093) % 1; K.sheet(c, lerp(-120, 2100, (u + i * .17) % 1), 120 + (i * 97) % 640 + Math.sin(tw * 1.3 + i) * 40 + u * 120, 46 + (i % 4) * 10, tw * (1 + i % 3) + i, { flap: Math.sin(tw * 4 + i), seed: i + 3 }); }
     const gx = lerp(420, 1160, ease.sine(lt / 4.5)), gy = lerp(260, 470, ease.sine(lt / 4.5)) + Math.sin(tw * 2.2) * 18;
+    last.travel = [[1, 1]];
     last.boy = R.person(c, JUNO, { s: .55, face: 1, turn: .45, ...R.fall(tw * .6), x: gx - hang7[0], y: gy - hang7[1], expr: 'joy', wind: [0, 25], flow: tw });
     umbrella(c, gx, gy, { ang: -.08 + Math.sin(tw * 1.6) * .06, open: 1, col: UMB, s: .42, flutter: tw * 2 });
   });
@@ -249,12 +252,12 @@ F.shot(4.5, g => {
 // ── shot 8 · page: back on the blank sheet; he lands, the dog runs in; one last drop; the pencil draws the ground ──
 const LAND = .9, BX = 820;
 const hang8 = (() => { const P = { x: 0, y: 0, s: 1, face: 1, turn: .45, ...R.fall(0), plant: false }; const H = R.where(JUNO, P).hands.near; return [H.x, H.y]; })();
-F.shot(4, g => {
+shot(4, g => {
   const lt = g.lt, tw = g.twos();
   g.paper();
   g.at(1, c => {
     const dk = span(lt, .5, 1.8, ease.out), dxp = lerp(-220, 1210, dk);
-    if (lt > .5) { K.shadow(c, dxp + 20, 932, 95); R.critter(c, BISCUIT, { x: dxp, y: 930, s: 1, face: lt < 1.9 ? 1 : -1, gait: lt < 1.8 ? 'run' : 'sit', ph: tw * 2.3, expr: lt < 1.8 ? 'calm' : 'happy', flow: tw }); }
+    if (lt > .5) { if (lt < 1.8) last.travel = [[lt < 1.9 ? 1 : -1, 1]]; K.shadow(c, dxp + 20, 932, 95); R.critter(c, BISCUIT, { x: dxp, y: 930, s: 1, face: lt < 1.9 ? 1 : -1, gait: lt < 1.8 ? 'run' : 'sit', ph: tw * 2.3, expr: lt < 1.8 ? 'calm' : 'happy', flow: tw }); }
     let G;
     if (lt < LAND) {
       const u = span(lt, 0, LAND, ease.out), gx = BX + 40, gy = lerp(-120, 930 - 640 * .0, 0) ;
@@ -283,6 +286,7 @@ F.shot(4, g => {
 
 // ── checks: rules that must hold at every sampled moment ──
 F.check('feet on the ground when standing or running', () => last.ground == null || Math.abs(last.boy.ground - last.ground) < 3);
+F.check('everyone faces the way they travel (no running backwards)', () => last.travel.every(([f, m]) => !m || f === Math.sign(m)));
 F.check('the hero stays in frame', () => { if (last.offOK || !last.boy || !last.cam) return true; const [x, y] = toScreen(last.boy.head, last.cam); return x > -60 && x < 1980 && y > -60 && y < 1100; });
 F.start();
 </script>

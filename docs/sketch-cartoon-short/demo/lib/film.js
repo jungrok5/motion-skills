@@ -102,6 +102,7 @@ export class Film {
     t = clamp(t, 0, this.dur - 1e-4);
     const ctx = this.ctx, i = this.locate(t), sh = this.shots[i], lt = t - sh.start, W = this.W, H = this.H, Sc = this.S;
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.filter = 'none';
+    S.audit.length = 0;
     this.drawShot(ctx, i, lt, t);
     const tr = sh.tr, nx = this.shots[i + 1];
     if (tr && i > 0 && tr.type === 'dissolve' && lt < tr.d) {
@@ -159,7 +160,7 @@ export class Film {
     const W = this.W, H = this.H;
     window.DURATION = +this.dur.toFixed(3); window.FPS = this.FPS; window.SIZE = { W, H }; window.film = this;
     window.seek = t => this.frame(t);
-    window.runChecks = t => this.rules.filter(r => { try { return !r.fn(t); } catch { return true; } }).map(r => r.name);
+    window.runChecks = t => [...this.rules.filter(r => { try { return !r.fn(t); } catch { return true; } }).map(r => r.name), ...new Set(S.audit)];   // + body rules the rig found in this frame
     window.shotAt = t => { const i = this.locate(t); return { i, name: this.shots[i].name, lt: t - this.shots[i].start }; };
     const st = document.createElement('style');
     st.textContent = `html,body{margin:0;height:100%;background:#20221f;overflow:hidden}canvas{display:block;width:100vw;height:100vh;object-fit:contain}

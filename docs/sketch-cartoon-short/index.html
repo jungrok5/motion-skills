@@ -33,9 +33,9 @@
     <dl>
       <dt>입력</dt><dd>주제 하나(도망간 우산, 달에 보내는 편지, 막차 …). 레퍼런스 영상이나 그림이 있으면 그 스틸</dd>
       <dt>브리프</dt><dd>주인공 · 동반자 · 맞서는 힘 · 장소 · 따뜻한 강조색 하나 · 큰 동작 하나 · 5–9박자 장면을 적은 <code>BRIEF.md</code></dd>
-      <dt>캐스트</dt><dd>주제에 맞게 새로 설계한 사람과 동물 데이터(<code>cast.js</code>), 돌려 보기 · 걸음 · 표정 시트로 채점</dd>
+      <dt>캐스트</dt><dd>주제에 맞게 새로 설계한 사람과 동물 데이터(<code>cast.js</code>), 양쪽 방향 돌려 보기 · 걸음 · 표정 시트로 채점(앞뒤좌우가 한 몸으로 맞는지, 관절이 가능한 쪽으로 꺾이는지)</dd>
       <dt>그림</dt><dd>겹치고 삐져나가는 연필 선이 초당 8번 끓고, 색은 선에서 비껴 평평하게, 배경은 가장자리로 갈수록 선만 남는 거리 · 지붕 · 다리 · 낙서 덩어리</dd>
-      <dt>확인</dt><dd>무작위 스틸 채점, 콘택트 시트, 모든 샷 그리기 · 빈 프레임 · 결정성 · 발이 땅에 닿는지 · 색이 탁한지 · 선이 끓는지 · 악보 검사</dd>
+      <dt>확인</dt><dd>무작위 스틸 채점, 콘택트 시트, 모든 샷 그리기 · 빈 프레임 · 결정성 · 관절 범위 · 발이 땅에 닿는지 · 이동 방향과 보는 방향 · 색이 탁한지 · 선이 끓는지 · 악보 검사</dd>
       <dt>출력</dt><dd>24fps 1920×1080 MP4(코드로 합성한 음악 · 연필 · 종이 효과음 포함), ♪ 버튼으로 소리까지 재생하는 라이브 페이지</dd>
     </dl>
     <pre><code>cd sketch-cartoon-short/examples/umbrella
@@ -106,9 +106,9 @@ node ../../scripts/new-film.mjs ../../../my-film</code></pre>
       <p>새 주제를 시작할 때 쓰는 두 페이지입니다. 캐스트는 데이터로 설계하고 시트로 채점한 뒤에 샷을 씁니다.</p>
       <div class="grid">
         <a class="tile" href="demo/examples/umbrella/cast.html" target="_blank" rel="noopener">
-          <img src="samples/cast.jpg" alt="같은 소년을 정면 · 3/4 · 옆 · 걷기 · 달리기로 그린 줄, 여덟 가지 표정 줄, 오른쪽에 앉기 · 서기 · 달리기 하는 개" loading="lazy" width="640" height="360">
+          <img src="samples/cast.jpg" alt="같은 소년을 정면, 오른쪽과 왼쪽을 보는 3/4 · 옆모습, 걷기 · 달리기로 그린 줄, 여덟 가지 표정 줄, 오른쪽에 앉기 · 서기 · 달리기 하는 개" loading="lazy" width="640" height="360">
           <div class="cap"><span class="no">캐스트 시트</span><b>Juno와 Biscuit</b><span class="en">examples/umbrella/cast.html</span>
-          <span class="how">돌려 보기 · 걸음 · 표정 8종 · 동물 걸음을 한 장에, 실루엣 · 비율 · 머리카락 · 표정을 채점</span></div></a>
+          <span class="how">양쪽 방향 돌려 보기 · 걸음 · 표정 8종 · 동물 걸음을 한 장에, 실루엣 · 비율 · 표정과 몸의 앞뒤좌우 · 관절을 채점</span></div></a>
         <a class="tile" href="demo/templates/?t=8.5" target="_blank" rel="noopener">
           <img src="samples/template.jpg" alt="빈 종이 위에 손을 뻗는 긴 머리 소녀와 귀가 긴 동물, 막 그려져 열린 문" loading="lazy" width="640" height="360">
           <div class="cap"><span class="no">템플릿 · 10초</span><b>종이 위의 문</b><span class="en">templates/film.html</span>

@@ -38,6 +38,11 @@ Score each person and critter 0–2 on each; fix anything under 2 before writing
 6. Faces act: the 8 expressions on the sheet are distinct (brows and lids do the work, not just the mouth).
 7. Turns hold together: front, three-quarter and profile look like the same person.
 8. Critter gaits (sit, stand, run) read; ears and tail carry the mood.
+9. **Front and back agree** in every turn, facing right and facing left: chest, coat opening, buttons and toes on the side
+   the face points to; the narrower (far) eye on that side; the ear and the arm and leg drawn in front on the side behind it.
+   If you have to ask "did the neck turn or the body?", it scores 0.
+10. **Joints bend the possible way**: knees back, elbows forward, no limb longer in one pose than another; a critter's
+   front paws fold back and hind paws forward.
 
 ## Still review (step 7 — on ~12 random full stills)
 Each still must pass all of these; note the time and the fix for any that fail.
@@ -46,7 +51,8 @@ Each still must pass all of these; note the time and the fix for any that fail.
    of the edges in backgrounds; the paper tone is visible somewhere in the frame.
 3. **Palette**: muted (sage, olive, khaki, dusty teal, cream, graphite) with the one accent; nothing loud.
 4. **Cast**: faces readable at this size; the pose says the action without the motion (key pose, not in-between mush);
-   hands and props connect.
+   hands and props connect; the body is one body (head, chest, hips, toes the same way; joints bending the possible way;
+   facing the way it moves; no raised near arm across the face).
 5. **Ground**: everyone standing has a contact shadow and stands on the line (no floating, no sinking).
 6. **Frame**: the subject is clear; the hero's head and the story prop are not cut off when they matter; no plate
    edge visible; no empty frame outside the opening and closing page.

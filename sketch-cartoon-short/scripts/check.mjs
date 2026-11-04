@@ -4,7 +4,8 @@
 // 2. every shot draws without throwing, at every sampled t (a broken shot otherwise shows up as a blank frame in the MP4)
 // 3. deterministic: the same t gives the same pixels, also after seeking elsewhere (no state between frames)
 // 4. no frame is blank (one flat colour) except inside the opening fade-in / closing fade-out
-// 5. every rule (F.check(...)) holds at every sampled t — the film's own rules (feet on the ground, hero in frame …)
+// 5. every rule (F.check(...)) holds at every sampled t — the film's own rules (feet on the ground, hero in frame …) — and
+//    the body rules the rig reports ("body: …": a joint out of its range, a critter leg folding the wrong way)
 // 6. the style: colours stay muted (mean saturation and the share of loud pixels), the paper shows (not a frame of solid fill),
 //    and the lines boil (two boil frames differ — a film whose lines never move reads as a slideshow, not as drawn animation)
 // 7. the score (if any) renders: no NaN, not silent, peak ≤ 1

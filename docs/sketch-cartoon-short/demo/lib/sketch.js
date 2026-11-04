@@ -54,6 +54,9 @@ export const rgba = (c, a) => { const [r, g, b] = hex(c); return `rgba(${r},${g}
 /** k < 0 darker (toward a cool graphite), k > 0 lighter (toward cream) */
 export const tone = (c, k) => k < 0 ? mix(c, '#2a2e2c', -k) : mix(c, '#f4f0e2', k);
 
+// ── audit: broken body rules found while drawing this frame (rig.js pushes, film.js clears per frame, runChecks reports) ──
+export const audit = [];
+
 // ── the pen ──
 export const pen = {
   boil: 0, n: 0, seed: 1,                     // boil frame, stroke counter (reset each frame), film seed

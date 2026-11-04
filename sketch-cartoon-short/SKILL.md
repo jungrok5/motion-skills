@@ -37,7 +37,7 @@ tune and the effects. The template and the example are examples of the style, no
 | path | what |
 |---|---|
 | `lib/sketch.js` | the pencil: `line`, `loop`, `strokes`, `fill` (misregistered, textured), `shadeSide`, `shape` (fill + shade + outline; `sharp` for architecture), `hatch`, `scribble`, `wash`, `paper`, `construction`; the pen (`pen.boil`, reveal budget, `countStrokes`); points (`rect`, `ellipse`, `arc`, `curve`, `sub` …); `span`, `ease`, `keys`, `rng`, `n1`; colour `mix`, `tone`, `rgba` |
-| `lib/rig.js` | `person(ctx, spec, pose)` (people from data: proportions, hair styles, garments, faces, 13 expressions) and `critter(ctx, spec, pose)` (four-legged companions: sit, stand, walk, run, leap, crouch); `where()` (geometry without drawing); poses `stand`, `walk`, `run`, `leap`, `crouch`, `reach`, `fall`; `pose()` merge, `blend()`. Feet are planted on the ground line by the rig |
+| `lib/rig.js` | `person(ctx, spec, pose)` (people from data: proportions, hair styles, garments, faces, 13 expressions) and `critter(ctx, spec, pose)` (four-legged companions: sit, stand, walk, run, leap, crouch); `where()` (geometry without drawing); poses `stand`, `walk`, `run`, `leap`, `crouch`, `reach`, `fall`; `pose()` merge, `blend()`. Feet are planted on the ground line by the rig; joint ranges (`LIM`) are audited on every draw (`body: …` in the checks) |
 | `lib/kit.js` | places: `facade`, `street`, `avenue` (one-point perspective street), `skyline`, `bridge`, `roofs`, `lamp`, `door`, `ground`, `shadow`; effects: `speed`, `puff`, `sheet`, `pencil`, `ring`, `rain`, `gust`, `mass` (a scribble mass with optional eyes), `trail` |
 | `lib/film.js` | `Film`: `plate()` (painted once per boil variant), `shot(dur, draw, {cam, shake, tr})`, multiplane `g.put / g.at`, `g.paper()`, `g.twos()`, `g.drawOn(k, fn)`; transitions `dissolve`, `scribble`, `paper`, `white`, `black`; the paper grade; live player with sound; `check()`; the contract |
 | `lib/score.js` | `renderScore(spec, sr, dur)`: pluck, felt keys, upright bass, reed lead, harmonium pad, brushes, air / rain beds, sfx (`pencil`, `erase`, `paper`, `flip`, `whoosh`, `pop`, `boing`, `step`, `thump`, `thunder`, `fwump`, `chime`, `scribble`, `splash`), reverb; helpers `oompah`, `tune`, `beat` |
@@ -45,7 +45,7 @@ tune and the effects. The template and the example are examples of the style, no
 | `scripts/new-film.mjs` | start a project: `lib/` + the template (or `--from umbrella`) + `out/` |
 | `scripts/render.mjs` | stills (`--stills 3,8`), a contact sheet (`--sheet 24`), or the MP4 (workers × ffmpeg chunks, `--audio out/x.wav`) |
 | `scripts/score.mjs` | the score → WAV (`score.js --dur 35.5 --out out/film.wav`) |
-| `scripts/check.mjs` | proves the page: loads clean, every shot draws, no blank frames, deterministic, the film's rules, colours muted, lines boil, the score renders |
+| `scripts/check.mjs` | proves the page: loads clean, every shot draws, no blank frames, deterministic, the film's rules and the body rules (joints in range), colours muted, lines boil, the score renders |
 | `references/` | **BRIEF** (topic → brief, the cast and still reviews) · **LOOK** (what makes it read as this style, observed from the reference) · **STORY** (shot grammar, timing, a shot table) · **KIT** (API) · **LESSONS** (what broke and the fix) |
 | `examples/umbrella/` | the worked example: `BRIEF.md`, `cast.js` + `cast.html`, `umbrella.js` (a prop designed for the topic), `index.html` (8 shots), `score.js` |
 
@@ -77,7 +77,10 @@ Requirements: Node + Playwright Chromium, ffmpeg. No network, no npm install, no
 3. **Cast.** Write `cast.js` from the brief — every person and animal designed for this topic (references/LOOK.md → the
    cast; the spec fields are listed at the top of `templates/cast.js`). Render `cast.html --stills 0 --scale .5` and score
    it against the cast review in references/BRIEF.md: readable silhouette at 30 % size, long legs, hair as a mass, two
-   people never in the same values, muted colours, faces that act. Fix and re-render until it passes.
+   people never in the same values, muted colours, faces that act — and the body: the sheet turns each person both ways, so
+   check that chest, coat opening, toes and the narrower eye are on the side the face points to, the ear and the in-front
+   arm and leg on the side behind it, knees fold back, elbows forward, a critter's front paws fold back and hind paws
+   forward. If a pose makes you ask "did the neck turn or the body?", it fails. Fix and re-render until it passes.
 4. **Props and places.** Anything the topic needs that the kit lacks (an umbrella, a bicycle, a moon, a kitchen, a
    whale) is drawn in a `props.js` / in the page with `S.shape`, `S.line`, `S.hatch` in the same pencil — closed shapes
    with `sharp: true` for anything built, smooth for anything soft. Places come from the kit with your palette; paint each
@@ -95,8 +98,9 @@ Requirements: Node + Playwright Chromium, ffmpeg. No network, no npm install, no
    each against the still review in references/BRIEF.md: lines rough and boiling, colour off the line and stopping short,
    paper visible, muted with one accent, faces readable, nothing floating, nothing cut off that matters (a held prop's
    top, a head), no empty or muddy frame. Fix and repeat.
-8. **Check**: `node <skill>/scripts/check.mjs film.html` must print only `ok`. Add `F.check(...)` for the film's own
-   rules (feet on the ground while running, the hero in frame, the prop in the hand after the catch).
+8. **Check**: `node <skill>/scripts/check.mjs film.html` must print only `ok`. It fails any pose outside the joint ranges
+   (`body: Juno near knee out of range …` — give every spec a `name`). Add `F.check(...)` for the film's own rules: feet on
+   the ground while running, everyone facing the way they travel, the hero in frame, the prop in the hand after the catch.
 9. **Score**: write `score.js` against the shot starts (check.mjs prints them): pencil while the page draws, a light
    oom-pah or tiptoe pizzicato under the comedy, a reed or felt-piano tune for the hero, everything drops out for the
    threat, a swell and a chime at the turn, a small button at the end; effects on the beats (steps on the footfalls,
@@ -121,8 +125,14 @@ Requirements: Node + Playwright Chromium, ffmpeg. No network, no npm install, no
 - **Unfinished on purpose.** Backgrounds wash only part of each wall and fade to bare line toward the frame edges;
   the paper shows in every frame; construction marks and open line ends are welcome. But characters are always fully
   coloured and readable.
-- **Nothing floats.** A contact shadow under everything standing; the rig plants the lowest sole on the ground line;
-  write a check for it.
+- **Nothing floats.** A contact shadow under everything standing; the rig plants the lowest sole on the ground line
+  (and leans on it); write a check for it.
+- **Bodies that can exist.** Head, chest, hips and toes face one way; in a 3/4 or profile view the near shoulder and hip
+  are on the screen side behind the face (a figure facing right shows its right side) — the rig builds this, so never
+  fake a turn by mirroring parts. Knees fold back, elbows forward, wrists and necks within range (`R.LIM`; the check fails
+  outside it); a critter's lower front leg folds back, the lower hind leg forward. Characters face the way they move. A raised
+  near arm covers the face — reach with the far arm or turn the body. Every new pose and every new character is looked at
+  facing both ways on the cast sheet before it goes into a shot.
 - **Paint once, move many.** Backgrounds go into plates (2 boil variants); per frame only the cast, props and effects
   are drawn fresh.
 - **Readable at a glance.** The hero's head and the story prop are never cut by the frame when they matter (aim the

@@ -43,42 +43,65 @@ const add = (a, b, k = 1) => [a[0] + b[0] * k, a[1] + b[1] * k];
 const rotV = (v, a) => [v[0] * Math.cos(a) - v[1] * Math.sin(a), v[0] * Math.sin(a) + v[1] * Math.cos(a)];
 const L2 = (a, b, u) => [lerp(a[0], b[0], u), lerp(a[1], b[1], u)];
 
+// ── what a body can do: joint ranges (radians, in the pose's own terms). person() reports a pose outside them to S.audit,
+// which check.mjs fails on ("body: …"). Knees only fold back, elbows only fold forward, necks and spines turn so far. ──
+export const LIM = {
+  hip: [-1.3, 2.4],        // thigh: ~75° back … well past horizontal forward
+  knee: [-2.7, .12],       // shin folds BACK only (a forward bend is a broken knee)
+  shoulder: [-1.5, 3.35],  // arm: ~85° back … straight up overhead
+  elbow: [-.12, 2.8],      // forearm folds FORWARD/up only
+  wrist: [-1.3, 1.3], spine: [-.6, 1.15], head: [-.75, .75], neck: [-.6, .6],
+};
+function audit(who, joint, v, [a, b]) { if (v < a - 1e-6 || v > b + 1e-6) S.audit.push(`body: ${who} ${joint} out of range (${v < a ? 'below' : 'above'} ${v < a ? a : b})`); }
+
 /** the solved skeleton in figure-local units (origin = the ground under the figure, y down) */
 export function personGeom(spec, P = {}) {
-  const sp = withDef(spec), h = sp.h, f = P.face || 1, turn = clamp(P.turn ?? .55), dir = a => [Math.sin(a) * f, Math.cos(a)];
+  const sp = withDef(spec), h = sp.h, f = P.face || 1, turn = clamp(P.turn ?? .55), dir = a => [Math.sin(a) * f, Math.cos(a)], who = sp.name || 'person';
   const legL = h * sp.legs, thigh = legL * .49, shin = legL * .45, ankleH = legL * .06, R = h * sp.head;
   const torsoL = h * sp.torso, neckL = h * sp.neck, upper = h * sp.arm * .5, fore = h * sp.arm * .44, footL = h * sp.foot;
   const hip = P.hip || [0, 0], spn = (P.spine ?? 0), pelvis = [hip[0] * f, -legL + hip[1]];
   const chest = add(pelvis, rotV([0, -torsoL], spn * f));
   const spread = sp.shoulders * h / 2 * (1 - .7 * turn), hsp = sp.hips * h / 2 * (1 - .65 * turn) * .62;
-  const sN = add(chest, rotV([f * spread, torsoL * .05], spn * f)), sF = add(chest, rotV([-f * spread, torsoL * .03], spn * f));
+  // Which side is near. A figure facing screen-right (face 1) and turned toward us shows its RIGHT side: that shoulder and hip
+  // sit on the screen side BEHIND the way it faces (−f) and are drawn in front; the far ones sit on the facing side (+f),
+  // half hidden by the chest. (Putting the near limbs on the facing side turns the body around under the head.)
+  const sFr = add(chest, rotV([f * spread, torsoL * .04], spn * f)), sBk = add(chest, rotV([-f * spread, torsoL * .05], spn * f));
   const neckTop = add(chest, rotV([f * turn * R * .12, -neckL], (spn + (P.neck ?? 0)) * f));
   const hr = (spn * .35 + (P.head ?? 0)) * f, head = add(neckTop, rotV([0, -R * .92], hr));
-  const hN = add(pelvis, [f * hsp, 0]), hF = add(pelvis, [-f * hsp, 0]);
+  const hFr = add(pelvis, [f * hsp, 0]), hBk = add(pelvis, [-f * hsp, 0]);
+  const splay = (1 - turn);                       // seen from the front, arms and legs hang a little outward
   const legs = {}, arms = {};
   for (const side of ['near', 'far']) {
-    const [l1, l2] = (P.leg && P.leg[side]) || [side === 'near' ? .04 : -.03, -.04];
-    const H = side === 'near' ? hN : hF, K = add(H, dir(l1), thigh), A = add(K, dir(l1 + l2), shin);
+    const out = side === 'near' ? -1 : 1;
+    let [l1, l2] = (P.leg && P.leg[side]) || [side === 'near' ? .04 : -.03, -.04];
+    audit(who, `${side} hip`, l1, LIM.hip); audit(who, `${side} knee`, l2, LIM.knee);
+    l1 += out * splay * .04;
+    const H = side === 'near' ? hBk : hFr, K = add(H, dir(l1), thigh), A = add(K, dir(l1 + l2), shin);
     const fa = P.foot && P.foot[side] != null ? P.foot[side] : clamp((l1 + l2) * .75, -1.25, .55);
     const heel = add(A, [0, ankleH]), toe = add(heel, [f * Math.cos(fa) * footL, -Math.sin(fa) * footL]);
     legs[side] = { H, K, A, heel, toe, fa };
-    const [a1, a2] = (P.arm && P.arm[side]) || [side === 'near' ? .1 : -.08, .18];
-    const Sh = side === 'near' ? sN : sF, E = add(Sh, dir(a1), upper), W = add(E, dir(a1 + a2), fore);
+    let [a1, a2] = (P.arm && P.arm[side]) || [side === 'near' ? .1 : -.08, .18];
+    audit(who, `${side} shoulder`, a1, LIM.shoulder); audit(who, `${side} elbow`, a2, LIM.elbow); audit(who, `${side} wrist`, P.wrist?.[side] ?? 0, LIM.wrist);
+    a1 += out * splay * .18;
+    const Sh = side === 'near' ? sBk : sFr, E = add(Sh, dir(a1), upper), W = add(E, dir(a1 + a2), fore);
     arms[side] = { S: Sh, E, W, ang: a1 + a2 + (P.wrist?.[side] ?? 0) };
   }
+  audit(who, 'spine', spn, LIM.spine); audit(who, 'head', P.head ?? 0, LIM.head); audit(who, 'neck', P.neck ?? 0, LIM.neck);
   // plant: the lowest sole stands on the ground line
   let dy = 0;
   if (P.plant !== false) { dy = -Math.max(legs.near.heel[1], legs.near.toe[1], legs.far.heel[1], legs.far.toe[1]); }
   const sh = p => [p[0], p[1] + dy];
-  const J = { pelvis: sh(pelvis), chest: sh(chest), sN: sh(sN), sF: sh(sF), neckTop: sh(neckTop), head: sh(head), hN: sh(hN), hF: sh(hF) };
+  const J = { pelvis: sh(pelvis), chest: sh(chest), sFr: sh(sFr), sBk: sh(sBk), neckTop: sh(neckTop), head: sh(head), hFr: sh(hFr), hBk: sh(hBk) };
   for (const s of ['near', 'far']) { for (const k of ['H', 'K', 'A', 'heel', 'toe']) legs[s][k] = sh(legs[s][k]); for (const k of ['S', 'E', 'W']) arms[s][k] = sh(arms[s][k]); }
-  return { sp, f, turn, R, hr, legs, arms, J, dims: { thigh, shin, upper, fore, footL, torsoL, ankleH, legL } };
+  // lean pivots on the lowest point of the soles, so a leaning figure keeps its foot on the ground
+  const soles = [legs.near.heel, legs.near.toe, legs.far.heel, legs.far.toe], low = soles.reduce((a, b) => b[1] > a[1] ? b : a);
+  return { sp, f, turn, R, hr, legs, arms, J, pivot: low[0], dims: { thigh, shin, upper, fore, footL, torsoL, ankleH, legL } };
 }
 
 /** local → stage (x, y, s, lean, squash) */
-function toStage(P) {
-  const s = P.s ?? 1, f = P.face || 1, a = (P.lean ?? 0) * f, sq = P.squash ?? 1, c = Math.cos(a), sn = Math.sin(a), x = P.x ?? 0, y = P.y ?? 0;
-  return p => { const px = p[0] / Math.sqrt(sq), py = p[1] * sq; return [x + s * (px * c - py * sn), y + s * (px * sn + py * c)]; };
+function toStage(P, pivot = 0) {
+  const s = P.s ?? 1, f = P.face || 1, a = (P.lean ?? 0) * f, sq = P.squash ?? 1, c = Math.cos(a), sn = Math.sin(a), x = P.x ?? 0, y = P.y ?? 0, pv = pivot / Math.sqrt(sq);
+  return p => { const px = p[0] / Math.sqrt(sq) - pv, py = p[1] * sq; return [x + s * (pv + px * c - py * sn), y + s * (px * sn + py * c)]; };
 }
 
 // ── drawing helpers ──
@@ -121,7 +144,7 @@ function face(ctx, sp, G, P, w) {
   const fx = f * turn * R * .34, ey = R * .1, sep = R * .36 * (1 - .4 * turn), sz = sp.eyes.size;
   const open = (E.open) * (1 - clamp(P.blink ?? 0)), look = P.look || [0, 0];
   for (const side of ['far', 'near']) {
-    const k = side === 'near' ? 1 : -1, ex = fx + f * k * sep, ew = R * .19 * sz * (side === 'far' ? 1 - .38 * turn : 1), eh = R * .25 * sz;
+    const k = side === 'near' ? -1 : 1, ex = fx + f * k * sep * (side === 'far' ? 1 - .2 * turn : 1), ew = R * .19 * sz * (side === 'far' ? 1 - .38 * turn : 1), eh = R * .25 * sz;   // near eye: the one away from the way the face points
     const wink = E.wink && side === 'near';
     if (E.eye === 'happy' || wink || open < .12) { S.line(ctx, S.arc(ex, ey + eh * .1, ew, eh * .55, Math.PI * 1.1, Math.PI * 1.9, 8).map(p => E.eye === 'happy' ? p : [p[0], ey + (ey - p[1]) * .25 + eh * .1]), { w: w * 1.15, over: 2 }); }
     else {
@@ -230,8 +253,8 @@ function hairLocks(sp, R, f, turn, P) {
 export function person(ctx, spec, P = {}) {
   const G = personGeom(spec, P), sp = G.sp, f = G.f, R = G.R, { legs, arms, J, dims } = G, s = P.s ?? 1;
   const w = (P.lw ?? sp.lw) / Math.pow(s, .45), wind = P.wind || [0, 0], flow = P.flow ?? 0;
-  const ST = toStage(P);
-  ctx.save(); ctx.translate(P.x ?? 0, P.y ?? 0); ctx.rotate((P.lean ?? 0) * f); const sq = P.squash ?? 1; ctx.scale(s / Math.sqrt(sq), s * sq);
+  const ST = toStage(P, G.pivot), sq = P.squash ?? 1, pvs = G.pivot * s / Math.sqrt(sq);
+  ctx.save(); ctx.translate((P.x ?? 0) + pvs, P.y ?? 0); ctx.rotate((P.lean ?? 0) * f); ctx.translate(-pvs, 0); ctx.scale(s / Math.sqrt(sq), s * sq);
   const hairL = hairLocks(sp, R, f, G.turn, P), hcol = sp.hair.col, headPts = headShape(R, f, G.turn);
   const inHead = fn => { ctx.save(); ctx.translate(J.head[0], J.head[1]); ctx.rotate(G.hr); fn(); ctx.restore(); };
   const windL = rotV(wind, -G.hr);
@@ -257,27 +280,30 @@ export function person(ctx, spec, P = {}) {
   // 2 far arm (behind), far leg
   if (!P.farFront) drawArm('far');
   drawLeg('far');
-  // 3 jacket back panel
   const jk = sp.jacket, jl = jk ? (jk.len ?? .5) * sp.h * .5 : 0, flap = [wind[0] * .25 + S.n1(flow * 3, 3) * R * .1, wind[1] * .1];
-  if (jk) { const a = J.sF, b = add(L2(J.sF, J.hF, 1.0), [0, jl * .45]); S.shape(ctx, [add(a, [-f * R * .1, 0]), add(J.neckTop, [-f * R * .1, R * .3]), add(L2(J.neckTop, J.pelvis, .5), [-f * R * .05, 0]), add(b, flap)], { fill: tone(jk.col, -.12), w, sharp: true }); }
-  // 4 torso: skin under, top over
-  const wN = add(J.pelvis, rotV([f * sp.hips * sp.h * .45 * (1 - .45 * G.turn), -R * .2], (P.spine ?? 0) * f)), wF = add(J.pelvis, rotV([-f * sp.hips * sp.h * .42 * (1 - .55 * G.turn), -R * .2], (P.spine ?? 0) * f));
-  const torso = [J.sF, add(L2(J.sF, J.sN, .5), [0, -R * .12]), J.sN, add(L2(J.sN, wN, .45), [f * R * .12, 0]), wN, wF, add(L2(J.sF, wF, .5), [-f * R * .06, 0])];
+  // 3 torso (skin under, top over). Front = the side the figure faces (+f): the chest swells there, the back is flatter.
+  const wFr = add(J.pelvis, rotV([f * sp.hips * sp.h * .45 * (1 - .45 * G.turn), -R * .2], (P.spine ?? 0) * f)), wBk = add(J.pelvis, rotV([-f * sp.hips * sp.h * .42 * (1 - .55 * G.turn), -R * .2], (P.spine ?? 0) * f));
+  const torso = [J.sBk, add(L2(J.sBk, J.sFr, .5), [0, -R * .12]), J.sFr, add(L2(J.sFr, wFr, .45), [f * R * .12, 0]), wFr, wBk, add(L2(J.sBk, wBk, .5), [-f * R * .06, 0])];
   S.shape(ctx, torso, { fill: sp.skin, shade: true, w });
   if (sp.top) {
-    const k = clamp(sp.top.len ?? 1), bN = L2(J.sN, wN, k), bF = L2(J.sF, wF, k);
-    S.shape(ctx, [J.sF, add(L2(J.sF, J.sN, .5), [0, -R * .14]), J.sN, add(L2(J.sN, bN, .5), [f * R * .1, 0]), add(bN, [0, R * .05]), add(L2(bN, bF, .5), [0, R * .12]), add(bF, [0, R * .05])], { fill: sp.top.col, shade: true, w });
+    const k = clamp(sp.top.len ?? 1), bFr = L2(J.sFr, wFr, k), bBk = L2(J.sBk, wBk, k);
+    S.shape(ctx, [J.sBk, add(L2(J.sBk, J.sFr, .5), [0, -R * .14]), J.sFr, add(L2(J.sFr, bFr, .5), [f * R * .1, 0]), add(bFr, [0, R * .05]), add(L2(bFr, bBk, .5), [0, R * .12]), add(bBk, [0, R * .05])], { fill: sp.top.col, shade: true, w });
   }
-  // 5 pants block (hips) + near leg
-  if (!sp.pants.skirt) S.shape(ctx, [add(wF, [0, -R * .05]), add(wN, [0, -R * .05]), add(legs.near.H, [f * R * .35, R * .5]), add(J.pelvis, [0, R * 1.1]), add(legs.far.H, [-f * R * .3, R * .45])], { fill: sp.pants.col, w, shade: false, line: false });
-  else S.shape(ctx, [add(wF, [0, -R * .05]), add(wN, [0, -R * .05]), add(legs.near.H, [f * R * 1.1 + flap[0] * .3, dims.thigh * .8]), add(legs.far.H, [-f * R * 1.0 + flap[0] * .3, dims.thigh * .85])], { fill: sp.pants.col, w, shade: true, tex: .6 });
+  // 4 pants block (hips) + near leg
+  if (!sp.pants.skirt) S.shape(ctx, [add(wBk, [0, -R * .05]), add(wFr, [0, -R * .05]), add(J.hFr, [f * R * .35, R * .5]), add(J.pelvis, [0, R * 1.1]), add(J.hBk, [-f * R * .3, R * .45])], { fill: sp.pants.col, w, shade: false, line: false });
+  else S.shape(ctx, [add(wBk, [0, -R * .05]), add(wFr, [0, -R * .05]), add(J.hFr, [f * R * 1.1 + flap[0] * .3, dims.thigh * .8]), add(J.hBk, [-f * R * 1.0 + flap[0] * .3, dims.thigh * .85])], { fill: sp.pants.col, w, shade: true, tex: .6 });
   drawLeg('near');
-  if (!sp.pants.skirt) S.line(ctx, [add(wF, [0, R * .05]), add(wN, [0, R * .05])], { w: w * .8, over: 4, passes: 1 });   // waistband
-  // 6 jacket front panel (open overshirt): hangs from the near shoulder, its hem swings with wind and motion
+  if (!sp.pants.skirt) S.line(ctx, [add(wBk, [0, R * .05]), add(wFr, [0, R * .05])], { w: w * .8, over: 4, passes: 1 });   // waistband
+  // 5 open coat: two fronts that meet the centre-front line, which moves toward the facing side as the figure turns. The
+  //   near front covers the near half (and the whole side in profile); the far front narrows to a strip; the shirt shows
+  //   between them — on the chest, never at the back.
   if (jk) {
-    const hem = add(L2(J.sN, wN, 1.05), [f * R * .35, jl * .55]), close = G.turn * .85, inner = add(L2(L2(J.neckTop, J.pelvis, .55), L2(J.sF, wF, .6), close), [f * R * .2 * (1 - close), 0]);
-    S.shape(ctx, [add(J.neckTop, [f * R * .05, R * .25]), add(J.sN, [f * R * .25, -R * .05]), add(add(hem, [f * R * .7, 0]), flap), add(add(L2(hem, add(L2(J.sF, wF, 1.05), [0, jl * .55]), .35 + close * .5), [0, R * .05]), flap), inner], { fill: jk.col, shade: true, w, tex: .5, sharp: true });
-    S.line(ctx, [add(J.neckTop, [f * R * .05, R * .25]), add(J.neckTop, [f * R * .45, R * .55]), add(J.sN, [f * R * .05, R * .3])], { w: w * .8, over: 3, passes: 1 });   // collar
+    const cf = .5 + .45 * G.turn, gap = R * .24 * (1 - .6 * G.turn);
+    const hemBk = add(L2(J.sBk, wBk, 1.05), [-f * R * .35, jl * .55]), hemFr = add(L2(J.sFr, wFr, 1.05), [f * R * .3, jl * .55]);
+    const cfT = add(L2(J.sBk, J.sFr, cf), [0, R * .55]), cfB = L2(hemBk, hemFr, cf), nk = add(J.neckTop, [0, R * .3]);
+    S.shape(ctx, [add(nk, [f * R * .15, -R * .05]), add(J.sFr, [f * R * .2, -R * .05]), add(hemFr, flap), add(add(cfB, [f * gap, 0]), flap), add(cfT, [f * gap * .7, 0])], { fill: tone(jk.col, -.04), shade: true, w, tex: .5, sharp: true });
+    S.shape(ctx, [add(nk, [-f * R * .2, -R * .05]), add(J.sBk, [-f * R * .25, -R * .05]), add(hemBk, flap), add(add(cfB, [-f * gap, 0]), flap), add(cfT, [-f * gap * .7, 0])], { fill: jk.col, shade: true, w, tex: .5, sharp: true });
+    S.line(ctx, [add(nk, [-f * R * .2, -R * .05]), add(cfT, [-f * gap * .7, -R * .1]), add(J.sBk, [f * R * .05, R * .35])], { w: w * .8, over: 3, passes: 1 });   // lapel
   }
   // 7 neck, head, face, hair crown and fringe
   tube(ctx, [add(J.chest, [f * G.turn * R * .1, R * .05]), J.neckTop, add(J.head, [0, R * .5])], [R * .34, R * .32, R * .3], sp.skin, { w, shade: false });
@@ -290,7 +316,7 @@ export function person(ctx, spec, P = {}) {
       for (const L of hairL.front) drawLock(ctx, lockPath(L.root, L.ang, L.len, L.wd, L.curl, windL, L.seed, flow, L.grav), L.wd, hcol, w * .85);
       if (sp.hair.style === 'wild' || sp.hair.style === 'mop') S.strokes(ctx, [0, 1, 2].map(i => S.arc(f * R * .1, -R * .15, R * (.5 + i * .18), R * (.55 + i * .15), Math.PI * 1.15 + i * .1, Math.PI * 1.6 + i * .1, 5)), { w: w * .6, col: tone(hcol, .35), a: .5 });
     }
-    if (sp.glasses) for (const k of [-1, 1]) S.loop(ctx, S.ellipse(f * G.turn * R * .34 + f * k * R * .36 * (1 - .4 * G.turn), R * .1, R * .26 * (k < 0 ? 1 - .35 * G.turn : 1), R * .24, 14), { w: w * .9, col: sp.glasses });
+    if (sp.glasses) for (const k of [-1, 1]) S.loop(ctx, S.ellipse(f * G.turn * R * .34 + f * k * R * .36 * (1 - .4 * G.turn), R * .1, R * .26 * (k > 0 ? 1 - .35 * G.turn : 1), R * .24, 14), { w: w * .9, col: sp.glasses });
   });
   // 8 near arm in front
   if (P.farFront) drawArm('far');
@@ -299,7 +325,7 @@ export function person(ctx, spec, P = {}) {
   // geometry in stage coordinates
   const pts = [legs.near.heel, legs.near.toe, legs.far.heel, legs.far.toe].map(ST), hd = ST(J.head);
   const handOut = side => { const A = arms[side], hp = ST(A.hand ? [A.hand.x, A.hand.y] : A.W); return { x: hp[0], y: hp[1], ang: A.ang, wrist: ST(A.W) }; };
-  const all = [...pts, hd, ST(J.sN), ST(J.sF), ST(arms.near.W), ST(arms.far.W)];
+  const all = [...pts, hd, ST(J.sFr), ST(J.sBk), ST(arms.near.W), ST(arms.far.W)];
   const bx = S.bbox(all);
   return { feet: pts.map(p => ({ x: p[0], y: p[1] })), ground: Math.max(...pts.map(p => p[1])), hands: { near: handOut('near'), far: handOut('far') }, head: { x: hd[0], y: hd[1], r: R * s }, box: { x0: bx[0], y0: hd[1] - R * s * 1.4, x1: bx[2], y1: bx[3] }, chest: ST(J.chest), pelvis: ST(J.pelvis) };
 }
@@ -377,13 +403,15 @@ export function critter(ctx, spec, P = {}) {
   if (gait === 'run' || gait === 'leap') {   // gallop: front and back pairs swing together, the body stretches and bunches
     const g = gait === 'leap' ? (P.k ?? .5) * Math.PI * 1.6 - .8 : ph;
     stretch = 1 + .18 * sn(g); body = -.12 * cs(g); bob = -Math.max(0, sn(g)) * H * .12;
-    legs = { fN: [.9 * sn(g) + .3, .5], fF: [.9 * sn(g + .5) + .3, .5], bN: [-.9 * sn(g) - .2, -.6], bF: [-.9 * sn(g + .5) - .2, -.6] };
+    // front legs: the lower leg (wrist → paw) folds BACK as it lifts; hind legs: the lower leg (hock → paw) folds FORWARD
+    legs = { fN: [.9 * sn(g) + .3, -(.15 + .9 * Math.max(0, cs(g)))], fF: [.9 * sn(g + .5) + .3, -(.15 + .9 * Math.max(0, cs(g + .5)))], bN: [-.9 * sn(g) - .2, .15 + .8 * Math.max(0, -cs(g))], bF: [-.9 * sn(g + .5) - .2, .15 + .8 * Math.max(0, -cs(g + .5))] };
   } else if (gait === 'walk') {
-    legs = { fN: [.35 * sn(ph), .25 * Math.max(0, cs(ph))], fF: [.35 * sn(ph + Math.PI), .25 * Math.max(0, cs(ph + Math.PI))], bN: [.35 * sn(ph + Math.PI * .5), -.3 * Math.max(0, cs(ph + .5 * Math.PI))], bF: [.35 * sn(ph + Math.PI * 1.5), -.3 * Math.max(0, cs(ph + 1.5 * Math.PI))] };
+    legs = { fN: [.35 * sn(ph), -.35 * Math.max(0, cs(ph))], fF: [.35 * sn(ph + Math.PI), -.35 * Math.max(0, cs(ph + Math.PI))], bN: [.35 * sn(ph + Math.PI * .5) - .12, .2 + .35 * Math.max(0, cs(ph + .5 * Math.PI))], bF: [.35 * sn(ph + Math.PI * 1.5) - .12, .2 + .35 * Math.max(0, cs(ph + 1.5 * Math.PI))] };
     bob = -Math.abs(sn(ph)) * 3;
   } else if (gait === 'sit') { body = -1.0; legs = { fN: [.05, 0], fF: [-.05, 0], bN: [1.3, -2.4], bF: [1.2, -2.3] }; headUp = .1; }
-  else if (gait === 'crouch') { body = .12; legs = { fN: [.6, -.9], fF: [.5, -.8], bN: [.9, -1.8], bF: [.8, -1.7] }; }
-  else legs = { fN: [.05, 0], fF: [-.06, 0], bN: [-.05, 0], bF: [.06, 0] };
+  else if (gait === 'crouch') { body = .12; legs = { fN: [.6, -.9], fF: [.5, -.8], bN: [-.55, 1.5], bF: [-.45, 1.4] }; }
+  else legs = { fN: [.05, 0], fF: [-.06, 0], bN: [-.2, .3], bF: [-.12, .25] };
+  if (gait !== 'sit') for (const k in legs) { const v = legs[k][1]; if (k[0] === 'f' ? v > .15 : v < -.15) S.audit.push(`body: ${sp.name || 'critter'} ${k[0] === 'f' ? 'front' : 'hind'} lower leg folds the wrong way`); }   // sitting folds the haunch: exempt
   const half = L * .5 * stretch, hipY = -legL;
   const C = [0, hipY - H * .12 + bob], shoulder = add(C, rotV([f * half * .8, 0], body * f)), hip = add(C, rotV([-f * half * .8, 0], body * f));
   // legs: 2 segments; sitting back legs fold into a haunch
@@ -440,7 +468,8 @@ export function critter(ctx, spec, P = {}) {
 
 /** where(spec, pose) — the same geometry person() returns (hands, head, feet, ground), without drawing: aim props and paths at it */
 export function where(spec, P = {}) {
-  const G = personGeom(spec, P), ST = toStage(P), { legs, arms, J } = G, R = G.R * (P.s ?? 1);
+  const n0 = S.audit.length, G = personGeom(spec, P); S.audit.length = n0;
+  const ST = toStage(P, G.pivot), { legs, arms, J } = G, R = G.R * (P.s ?? 1);
   const hand = side => { const A = arms[side], d = [Math.sin(A.ang) * G.f, Math.cos(A.ang)], c = add(A.W, d, G.R * .62 * .45), p = ST(c); return { x: p[0], y: p[1], ang: A.ang, wrist: ST(A.W) }; };
   const pts = [legs.near.heel, legs.near.toe, legs.far.heel, legs.far.toe].map(ST), hd = ST(J.head);
   return { hands: { near: hand('near'), far: hand('far') }, head: { x: hd[0], y: hd[1], r: R }, feet: pts.map(p => ({ x: p[0], y: p[1] })), ground: Math.max(...pts.map(p => p[1])) };

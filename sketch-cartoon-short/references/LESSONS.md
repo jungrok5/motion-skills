@@ -1,5 +1,20 @@
 # LESSONS — what broke while building this, and the fix
 
+- **The body faced backwards under the head.** In 3/4 the figure's head looked right but the arm and leg drawn in front
+  hung from the shoulder and hip on the facing side, so the torso read as turned the other way ("did the neck turn or the
+  body?"), the open coat showed the shirt at the back, and the larger eye was on the wrong side. → A figure facing right
+  shows its RIGHT side: the near shoulder and hip sit on the screen side behind the face (−f), the far ones on the facing
+  side (+f). The coat's two fronts meet a centre-front line that moves toward the facing side as the figure turns; the
+  narrower eye is the one on the facing side. The cast sheet now turns every person both ways so a mirror error shows.
+- **Impossible joints went unnoticed.** Nothing stopped a knee bending forward or an elbow backward, and the dog's lower
+  front leg folded forward (hind backward) in its walk and run. → `R.LIM` joint ranges, audited on every draw into
+  `S.audit`; `runChecks` reports them as `body: …` rules so `check.mjs` fails; critter gaits fold front paws back and hind
+  paws forward and are audited too.
+- **A leaning figure lifted a foot.** Lean rotated around the point between the feet, so a planted sole rose a few px. →
+  lean pivots on the lowest sole.
+- **The raised near arm covered the face** when he reached after the umbrella. → reach with the far arm (it is on the
+  facing side and is drawn behind the head); the rule is in SKILL.md.
+
 - **Buildings came out as soap bubbles.** Every closed shape went through a Catmull-Rom curve, so a rectangle became an
   oval. → `shape` / `fill` / `shadeSide` / `hatch` take `sharp: true`; the kit uses it for everything built; bodies stay smooth.
 - **The hair crown covered the face.** The crown arc was traced through the bottom of the head (angles decreasing from π

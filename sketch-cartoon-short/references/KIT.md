@@ -24,7 +24,14 @@ counts as one stroke for the draw-on reveal.
 | colour | `mix(a, b, k)`, `tone(c, k)` (k < 0 darker toward graphite, > 0 lighter toward cream), `rgba(c, a)` |
 
 ## rig.js — the cast
-`person(ctx, spec, pose) → G` · `where(spec, pose) → G without drawing` · `critter(ctx, spec, pose) → { head, back, ground, box }`
+`person(ctx, spec, pose) → G` · `where(spec, pose) → G without drawing (and without auditing)` · `critter(ctx, spec, pose) → { head, back, ground, box }`
+
+Sides: a figure facing +x (face 1) turned toward us shows its right side; its **near** arm and leg (drawn in front) hang from
+the shoulder and hip on the screen side behind it (−f), the **far** ones from the facing side (+f). Body rules: `R.LIM`
+(`hip, knee, shoulder, elbow, wrist, spine, head, neck` as [min, max] radians in pose terms); a pose outside them is pushed
+to `S.audit` as `body: <spec.name> <joint> out of range …`, which `window.runChecks` returns and `check.mjs` fails. Critters
+are audited for lower legs folding the wrong way (front must fold back, hind forward; `sit` is exempt). Lean pivots on the
+lowest sole.
 
 Pose: `x, y` (ground under the figure), `s`, `face` (1 right / −1 left), `turn` (0 front … 1 profile), `lean`, `squash`,
 `hip [dx, dy]`, `spine`, `neck`, `head`, `arm: { near: [shoulder, elbow], far }` (0 = hanging; + forward; elbow + folds up),
