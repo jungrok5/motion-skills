@@ -1,0 +1,12 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>lane · bethlehem</title>
+<script type="importmap">{ "imports": { "three": "../../../lib/three.module.min.js" } }</script>
+</head><body>
+<script type="module">
+// The shot as a standalone page (the page contract: seek, DURATION, __ready). In the film it is drawn into a canvas-film
+// frame instead — see README and references/KIT.md "Inside a canvas film".
+import { build } from './lane.js';
+const W = 1080, H = 1920, r = build(/[?&]o=h/.test(location.search) ? H : W, /[?&]o=h/.test(location.search) ? W : H);
+r.film.canvas.style.display = ''; r.film.start();
+</script>
+</body></html>

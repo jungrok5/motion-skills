@@ -53,3 +53,15 @@ Keep ≤ 24 lamps (shader array) and ≤ ~6 real lights (`light > 0`): every rea
   the post pass against scene depth, so buildings cut it correctly. Lit by `litTop` from above and `litBottom` from below.
 - **The puddle is the picture**: `mirror({ res: 1 })`, `wetMaterial({ virtualDepth: true, mask: … })`, `look.flip: 1`,
   focus = distance of the reflected subject. Things on the water (leaves) are seen directly and blur as near objects.
+- **Old stone town at night** (`examples/bethlehem-lane`): `stoneMaterial` boxes with parapets, set back and forth along a
+  rising lane; lamps by small windows with a little real light (3 cd) so the lane under them warms; no mirror (dry ground);
+  fog density .02 / start 5 m. Props that say people live here (jars, a bench, doors) matter more than wall detail.
+
+## Inside a canvas film (canvas-film / one-scroll-bible Pilot pages)
+A shot can be one scene of a 2D canvas film instead of its own page: export `build(W, H)` that makes the `Film` and returns
+`draw(ctx, u)` = `film.render(u)` then `ctx.drawImage(film.canvas, 0, 0, W, H)` (the renderer keeps
+`preserveDrawingBuffer`). Do not call `film.start()` (it would take over `window.seek`); hide `film.canvas` — recorders
+read the first canvas. The film page needs an import map for `three` and loads the shot with `await import()` in its async
+init. Render headless Chromium with `--use-angle=d3d11` on Windows (or a GPU flag on your platform): without it WebGL runs
+in SwiftShader — 276 frames at 1080×1920 took 8 min on 6 workers, with the GPU 24 s.
+
