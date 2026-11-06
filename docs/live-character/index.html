@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>live-character · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 숨 쉬고, 깜빡이고, 포인터를 눈으로 먼저 따라가고, 머리카락·귀·꼬리가 스프링으로 흔들리는 2.5D 캐릭터(사람 또는 동물)를 코드로 설계해 라이브 페이지와 MP4로 만듭니다.">
+<meta property="og:title" content="live-character · motion-skills">
+<meta property="og:description" content="주제 하나를 주면 살아 있는 듯 움직이는 2.5D 캐릭터(사람 또는 동물)를 코드로 설계해 라이브 페이지와 MP4로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/live-character/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/live-character">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / live-character</nav>
+  <h1>live-character</h1>
+  <p>주제 하나를 주면 숨 쉬고, 깜빡이고, 포인터를 눈으로 먼저 따라가고, 머리카락·귀·꼬리가 스프링으로 흔들리는 2.5D 캐릭터를 사람이든 동물이든 코드로 새로 설계해 라이브 페이지와 MP4로 만듭니다.
+    원본: <a href="https://x.com/yeko_L/status/2118290984924856713">yeko의 X 게시물</a>이 소개한 <a href="https://github.com/livliv-dev/player">LivLiv Player</a>(Apache-2.0)의 움직임 코드를 연구해 만들었습니다.</p>
+  <ul class="tags"><li>Canvas 2D</li><li>4:5</li><li>라이브 페이지</li><li>MP4</li><li>사람 · 동물</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나 (예: "수줍은 바리스타", "우리 집 고양이 나비", "빵집 여우 마스코트")</dd>
+      <dt>브리프</dt><dd>종 · 구도 · 실루엣 · 색 · 흔들리는 부위 · 팔다리 자세 · 성격 · idle 동작 · 액션 · 표정 · 데모 순서</dd>
+      <dt>설계와 검사</dt><dd>character.js에 새 캐릭터, 결정성 · 관절 한계 · 디딘 발 · 화면 안 검사, 좌우 끝까지 돌린 캐스트 시트</dd>
+      <dt>출력</dt><dd>포인터 · 터치 · 표정 · 동작 · 말하기가 되는 라이브 페이지, 한 파일 HTML, 캐스트 시트 PNG, 데모 MP4</dd>
+    </dl>
+    <pre><code>node live-character/scripts/new-character.mjs my-cat --from bori
+node live-character/scripts/check.mjs my-cat
+node live-character/scripts/sheet.mjs my-cat     # out/sheet.png
+node live-character/scripts/render.mjs my-cat    # out/demo.mp4</code></pre>
+    <p class="mute">요구 사항: Node 18+, Playwright(Chromium), ffmpeg. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/live-character/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:4/5;--h-phone:560px">
+    <iframe data-src="demo/examples/haru/?bare&amp;demo" title="live-character 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/haru/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/haru</code> · 사람 · 허리 위</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/haru/?bare&amp;demo" data-cap="예제 &lt;code&gt;examples/haru&lt;/code&gt; · 사람 · 허리 위" aria-pressed="true">하루</button>
+        <button class="btn" type="button" data-src="demo/examples/bori/?bare&amp;demo" data-cap="예제 &lt;code&gt;examples/bori&lt;/code&gt; · 진돗개 강아지 · 앉은 전신">보리</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">사람 예제 하루와, 브리프에서 새로 설계한 동물 예제 보리입니다. 카드를 누르면 라이브 페이지(조작 가능)나 캐스트 시트가 열립니다.</p>
+  <div id="gallery">
+    <div class="grid">
+      <a class="tile" href="demo/examples/haru/" target="_blank" rel="noopener">
+        <img src="samples/haru-live.jpg" alt="노란 우비를 입은 갈색 단발머리 소녀 하루가 화면 오른쪽 포인터를 눈으로 바라보는 모습" loading="lazy" width="640" height="360">
+        <div class="cap"><span class="no">사람 · 라이브 페이지</span><b>하루</b><span class="how">포인터 따라보기 · 표정 5 · 동작 10 · 한글 립싱크</span></div></a>
+      <a class="tile" href="demo/examples/haru/?demo" target="_blank" rel="noopener">
+        <img src="samples/haru-demo.jpg" alt="하루가 오른손을 들어 손을 흔드는 장면" loading="lazy" width="640" height="360">
+        <div class="cap"><span class="no">사람 · 데모 19초</span><b>하루 데모</b><span class="how">따라보기 → 손 흔들며 인사 → 웃음 → 생각 → 만세 → 수줍</span></div></a>
+      <a class="tile" href="samples/haru-sheet-full.jpg" target="_blank" rel="noopener">
+        <img src="samples/haru-sheet.jpg" alt="하루의 캐스트 시트: 정면, 좌우 끝, 위아래 끝, 기울기, 대각 끝을 나란히 그린 타일들" loading="lazy" width="640" height="360">
+        <div class="cap"><span class="no">사람 · 캐스트 시트</span><b>하루 32컷</b><span class="how">좌우 끝 · 기울기 · 표정 · 자세 6 · 동작 10</span></div></a>
+      <a class="tile" href="demo/examples/bori/" target="_blank" rel="noopener">
+        <img src="samples/bori-live.jpg" alt="빨간 목걸이를 한 황구 진돗개 강아지 보리가 앉아서 고개를 돌리는 모습" loading="lazy" width="640" height="360">
+        <div class="cap"><span class="no">동물 · 라이브 페이지</span><b>보리</b><span class="how">귀 · 말린 꼬리 · 이름표가 체인으로, 앞발은 땅에 고정</span></div></a>
+      <a class="tile" href="demo/examples/bori/?demo" target="_blank" rel="noopener">
+        <img src="samples/bori-demo.jpg" alt="보리가 오른쪽 앞발을 들어 손을 주는 장면" loading="lazy" width="640" height="360">
+        <div class="cap"><span class="no">동물 · 데모 18초</span><b>보리 데모</b><span class="how">따라보기 → 갸웃 → 멍멍 → 손! → 신남 → 쓰담 → 졸림</span></div></a>
+      <a class="tile" href="samples/bori-sheet-full.jpg" target="_blank" rel="noopener">
+        <img src="samples/bori-sheet.jpg" alt="보리의 캐스트 시트: 정면, 좌우 끝, 위아래 끝, 기울기와 대각 끝" loading="lazy" width="640" height="360">
+        <div class="cap"><span class="no">동물 · 캐스트 시트</span><b>보리 25컷</b><span class="how">좌우 끝 · 기울기 · 표정 · 손! · 동작 8</span></div></a>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬은 이 레포에서 만들었습니다. 움직임의 원리는 아래 원본 레포를 연구한 것이고, 캐릭터 그림은 쓰지 않았습니다.</p>
+  <div class="works">
+    <a class="work" href="demo/examples/bori/" target="_blank" rel="noopener"><b>「보리」 · 진돗개 강아지</b><span>브리프에서 새로 설계한 예제 · 라이브 페이지</span><span class="url">live-character/examples/bori</span></a>
+    <a class="work" href="https://github.com/livliv-dev/player"><b>원본 레포 · livliv-dev/player</b><span>스킬의 출처 (Apache-2.0)</span><span class="url">github.com/livliv-dev/player</span></a>
+    <a class="work" href="https://x.com/yeko_L/status/2118290984924856713"><b>공유된 게시물 · yeko (@yeko_L)</b><span>LivLiv Player 공개 소식 · 22초 영상</span><span class="url">x.com/yeko_L/status/2118290984924856713</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/live-character/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/live-character">폴더</a> <span>lib · scripts · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/live-character/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/live-character/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 스틸 검토</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/live-character/references/CHARACTER.md">references/CHARACTER.md</a> <span>캐릭터 계약과 부품 키트</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/live-character/references/MOTION.md">references/MOTION.md</a> <span>움직임 레시피와 수치, 성격</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/live-character/references/BODY-CHECK.md">references/BODY-CHECK.md</a> <span>방향 · 관절 · 캐스트 시트</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/live-character/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 캐릭터 하루와 보리는 이 스킬로 코드로 그렸습니다. 움직임 원리: LivLiv Player (Apache-2.0)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
