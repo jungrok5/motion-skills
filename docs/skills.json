@@ -787,6 +787,46 @@
           "url": "https://jungrok5.github.io/motion-skills/live-character/demo/examples/haru/"
         }
       ]
+    },
+    {
+      "id": "parallax-facade",
+      "name": "parallax-facade",
+      "tagline": "주제 하나를 주면 망원 렌즈로 보면 한 장의 평면 그림 같은 3D 거리를 만들고, 돌리 줌으로 그 틈을 열어 숨은 골목과 먼 랜드마크를 드러냈다가 매 박자 다시 평면으로 돌아오는 8초 루프 영상을 코드만으로 만듭니다. 파스텔과 잉크 외곽선 두 가지 마감, 모션 블러, 카메라 움직임에 맞춘 휙 소리와 비트를 붙인 MP4와 라이브 페이지를 냅니다.",
+      "posterAlt": "parallax-facade로 만든 장면 네 개: 기와 한옥 두 채 사이 나무 대문 위로 언덕의 방송탑이 바로 뒤에 붙은 듯 보이는 평면 정면, 같은 자리에서 돌리 줌으로 열린 전깃줄과 감나무의 긴 골목, 파스텔 상점 줄 사이 문 위로 시계탑이 겹친 평면 정면, 같은 자리에서 열린 가로수 길 끝의 작은 시계탑",
+      "poster": "parallax-facade/poster.jpg",
+      "tags": [
+        "three.js",
+        "16:9 · 9:16",
+        "8초 루프",
+        "MP4",
+        "라이브 페이지"
+      ],
+      "stats": [
+        "예제 · 템플릿 2개",
+        "시점 7가지 · 마감 2가지"
+      ],
+      "page": "parallax-facade/",
+      "source": "parallax-facade/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "parallax-facade/examples/hanok-alley/"
+      },
+      "sources": [
+        {
+          "title": "lemomo_ai의 X 게시물 (시각차 영상 두 편)",
+          "url": "https://x.com/lemomo_ai/status/2118516216180740585"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「Hanok Alley」 · 잉크 · 8초 루프 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/parallax-facade/demo/hanok-alley/"
+        },
+        {
+          "title": "「Clock Square」 · 파스텔 · 8초 루프 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/parallax-facade/demo/clock-square/"
+        }
+      ]
     }
   ]
 }
