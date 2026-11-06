@@ -1,0 +1,49 @@
+/* subset font for this film (map-dive/scripts/fonts.mjs): Noto Sans KR, SIL Open Font License 1.1, via Google Fonts. */
+@font-face {
+  font-family: 'Map Sans';
+  font-style: normal;
+  font-weight: 500;
+  
+  src: url(MapSans-500-0.woff2) format('woff2');
+  unicode-range: U+20-78, U+b7;
+}
+@font-face {
+  font-family: 'Map Sans';
+  font-style: normal;
+  font-weight: 700;
+  
+  src: url(MapSans-700-1.woff2) format('woff2');
+  unicode-range: U+20-78, U+b7;
+}
+@font-face {
+  font-family: 'Map Sans';
+  font-style: normal;
+  font-weight: 800;
+  
+  src: url(MapSans-800-2.woff2) format('woff2');
+  unicode-range: U+20-78, U+b7;
+}
+@font-face {
+  font-family: 'Map Sans';
+  font-style: normal;
+  font-weight: 500;
+  
+  src: url(MapSans-500-3.woff2) format('woff2');
+  unicode-range: U+79-7e, U+b0, U+b2, U+2013-2014, U+2018-2019, U+201c-201d, U+2026;
+}
+@font-face {
+  font-family: 'Map Sans';
+  font-style: normal;
+  font-weight: 700;
+  
+  src: url(MapSans-700-4.woff2) format('woff2');
+  unicode-range: U+79-7e, U+b0, U+b2, U+2013-2014, U+2018-2019, U+201c-201d, U+2026;
+}
+@font-face {
+  font-family: 'Map Sans';
+  font-style: normal;
+  font-weight: 800;
+  
+  src: url(MapSans-800-5.woff2) format('woff2');
+  unicode-range: U+79-7e, U+b0, U+b2, U+2013-2014, U+2018-2019, U+201c-201d, U+2026;
+}

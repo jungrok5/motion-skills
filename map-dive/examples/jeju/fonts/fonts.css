@@ -1,0 +1,49 @@
+/* subset font for this film (map-dive/scripts/fonts.mjs): Noto Sans KR, SIL Open Font License 1.1, via Google Fonts. */
+@font-face {
+  font-family: 'Map Sans';
+  font-style: normal;
+  font-weight: 500;
+  
+  src: url(MapSans-500-0.woff2) format('woff2');
+  unicode-range: U+20-3d, U+49-4a, U+61, U+64-65, U+69-70, U+73-76, U+b2, U+b7, U+acf5, U+ad00, U+ad6c-ad6d, U+adc0, U+b0a8, U+b300, U+b355, U+b3c4, U+b77c, U+b85c, U+b9bc, U+bb38, U+bc24, U+bd09, U+c0b0, U+c11c, U+c120, U+c131, U+c2dc, U+c560, U+c5f0, U+c6b0, U+c6d0, U+c6d4, U+c758, U+c77c, U+c815, U+c81c, U+c870, U+c88c, U+c8fc, U+c911, U+c9c0, U+cc9c, U+cd9c, U+d3ec-d3ed, U+d45c, U+d55c, U+d56d;
+}
+@font-face {
+  font-family: 'Map Sans';
+  font-style: normal;
+  font-weight: 700;
+  
+  src: url(MapSans-700-1.woff2) format('woff2');
+  unicode-range: U+20-3d, U+49-4a, U+61, U+64-65, U+69-70, U+73-76, U+b2, U+b7, U+acf5, U+ad00, U+ad6c-ad6d, U+adc0, U+b0a8, U+b300, U+b355, U+b3c4, U+b77c, U+b85c, U+b9bc, U+bb38, U+bc24, U+bd09, U+c0b0, U+c11c, U+c120, U+c131, U+c2dc, U+c560, U+c5f0, U+c6b0, U+c6d0, U+c6d4, U+c758, U+c77c, U+c815, U+c81c, U+c870, U+c88c, U+c8fc, U+c911, U+c9c0, U+cc9c, U+cd9c, U+d3ec-d3ed, U+d45c, U+d55c, U+d56d;
+}
+@font-face {
+  font-family: 'Map Sans';
+  font-style: normal;
+  font-weight: 800;
+  
+  src: url(MapSans-800-2.woff2) format('woff2');
+  unicode-range: U+20-3d, U+49-4a, U+61, U+64-65, U+69-70, U+73-76, U+b2, U+b7, U+acf5, U+ad00, U+ad6c-ad6d, U+adc0, U+b0a8, U+b300, U+b355, U+b3c4, U+b77c, U+b85c, U+b9bc, U+bb38, U+bc24, U+bd09, U+c0b0, U+c11c, U+c120, U+c131, U+c2dc, U+c560, U+c5f0, U+c6b0, U+c6d0, U+c6d4, U+c758, U+c77c, U+c815, U+c81c, U+c870, U+c88c, U+c8fc, U+c911, U+c9c0, U+cc9c, U+cd9c, U+d3ec-d3ed, U+d45c, U+d55c, U+d56d;
+}
+@font-face {
+  font-family: 'Map Sans';
+  font-style: normal;
+  font-weight: 500;
+  
+  src: url(MapSans-500-3.woff2) format('woff2');
+  unicode-range: U+3e-48, U+4b-60, U+62-63, U+66-68, U+71-72, U+77-7e, U+b0, U+2013-2014, U+2018-2019, U+201c-201d, U+2026;
+}
+@font-face {
+  font-family: 'Map Sans';
+  font-style: normal;
+  font-weight: 700;
+  
+  src: url(MapSans-700-4.woff2) format('woff2');
+  unicode-range: U+3e-48, U+4b-60, U+62-63, U+66-68, U+71-72, U+77-7e, U+b0, U+2013-2014, U+2018-2019, U+201c-201d, U+2026;
+}
+@font-face {
+  font-family: 'Map Sans';
+  font-style: normal;
+  font-weight: 800;
+  
+  src: url(MapSans-800-5.woff2) format('woff2');
+  unicode-range: U+3e-48, U+4b-60, U+62-63, U+66-68, U+71-72, U+77-7e, U+b0, U+2013-2014, U+2018-2019, U+201c-201d, U+2026;
+}

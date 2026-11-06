@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>map-dive · motion-skills</title>
+<meta name="description" content="장소 하나를 주면 그 지역을 하늘에 뜬 두툼한 장난감 지도로 만들고, 카메라가 지도 속으로 다이브해 해안 · 폭포 · 도시 같은 근접 장면을 보여 주다 밤이 내리는 3D 지도 영상을 three.js로 만듭니다.">
+<meta property="og:title" content="map-dive · motion-skills">
+<meta property="og:description" content="장소 하나를 주면 그 지역을 하늘에 뜬 두툼한 장난감 지도로 만들고, 카메라가 지도 속으로 다이브해 근접 장면을 보여 주는 3D 지도 영상을 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/map-dive/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/map-dive">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / map-dive</nav>
+  <h1>map-dive</h1>
+  <p>장소 하나를 주면 그 지역을 하늘에 뜬 두툼한 장난감 지도로 만들고, 카메라가 지도 속으로 다이브해 해안 · 폭포 · 도시 같은 근접 장면을 보여 준 뒤 다시 떠오르는 3D 지도 영상을 three.js로 만듭니다. 지도 위에 누운 지명, 큼직한 랜드마크 미니어처, 핀 라벨, 밤이 내린 도시까지 담은 1080p MP4와 브라우저에서 도는 페이지를 냅니다.
+  보고 만든 원본: <a href="https://x.com/brunoclz/status/2118516873969156343?a=w1T37TSovDciCAuqSPU&s=19" target="_blank" rel="noopener">Bruno César의 X 게시물 (#30DayMapChallenge, 파라나주 3D 지도)</a>.</p>
+  <ul class="tags"><li>three.js</li><li>16:9</li><li>MP4</li><li>라이브 페이지</li><li>합성 사운드</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>장소 하나(나라, 주, 섬, 도시, 캠퍼스, 가상의 땅)와 보여 줄 명소</dd>
+      <dt>브리프</dt><dd>지도에서 딴 경위도 윤곽, 땅의 색 흐름, 강 · 길 · 지명, 장난감 랜드마크, 다이브할 1–3곳의 축척과 내용, 시간표, 모든 글자</dd>
+      <dt>장면</dt><dd>흙 단면이 보이는 떠 있는 지도, 높이 함수로 그린 해안 · 계곡, 거리 격자와 건물이 있는 도시, 같은 방향 줌과 크로스페이드로 잇는 다이브, 밤의 도로 불빛과 창문</dd>
+      <dt>확인</dt><dd>절반 크기 스틸, 전환 구간 콘택트 시트, 글꼴 · 결정성 · 빈 프레임 · 라벨 위치 · 장면 규칙 검사, 검토 기준 채점</dd>
+      <dt>출력</dt><dd>30fps 1920×1080 MP4(장면 신호로 만든 음악 포함), 끌어서 시간을 감아 보는 라이브 페이지</dd>
+    </dl>
+    <pre><code>cd map-dive/examples/jeju
+node ../../scripts/render.mjs index.html --stills 2,9,19.5 --scale .5
+node ../../scripts/check.mjs index.html
+node ../../scripts/score.mjs index.html
+node ../../scripts/render.mjs index.html --workers 4 --audio out/score.wav
+node ../../scripts/new-film.mjs ../../../my-place</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium(WebGL2), ffmpeg, 글꼴을 받을 때 한 번의 네트워크. GPU가 없으면 1080p 한 프레임에 약 2초가 걸려 30초 영상을 백그라운드로 30분쯤에 렌더합니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/map-dive/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:calc((100vw - 34px)*.5625);--demo-bg:#cfe6f3">
+    <iframe data-src="demo/jeju/" title="map-dive 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/jeju/">데모 열기 (examples/jeju)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/jeju</code> · 30초 · 옆으로 끌면 시간이 감김</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/jeju/" data-cap="예제 &lt;code&gt;examples/jeju&lt;/code&gt; · 30초 · 옆으로 끌면 시간이 감김" aria-pressed="true">제주</button>
+        <button class="btn" type="button" data-src="demo/template/" data-cap="템플릿 &lt;code&gt;templates/film.html&lt;/code&gt; · 14초 · 가상의 지역과 폭포" aria-pressed="false">시작 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본 영상에 없던 주제인 제주도로 만든 예제 「제주」의 장면들과 시작 템플릿입니다. 카드를 누르면 새 탭에서 그 장면이 그 순간에 멈춘 채 열리고, 브라우저가 직접 그립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"map":"떠 있는 지도","dive":"다이브와 근접 장면","night":"밤"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>제주 <small>16:9 · 30초</small></h3>
+      <p>떠 있는 제주 섬에서 성산일출봉으로 다이브했다가 떠올라, 관덕정이 있는 원도심으로 내려가 밤을 맞고 밤의 섬으로 돌아갑니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="map" href="demo/jeju/?t=2" target="_blank" rel="noopener">
+          <img src="samples/island.jpg" alt="파스텔 하늘에 뜬 제주 섬 지도: 가운데 호수가 있는 한라산, 해안 순환도로, 지명, 풍력발전기, 등대, 분홍 구름, 위쪽에 제목 제주" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">지도 · 2초</span><b>떠 있는 섬</b>
+          <span class="how">바다 판 위에 선 섬, 지도에 누운 지명, 한라산 · 성산일출봉 · 산방산 · 천지연폭포 미니어처</span></div></a>
+        <a class="tile" data-tags="dive" href="demo/jeju/?t=6.2" target="_blank" rel="noopener">
+          <img src="samples/dive.jpg" alt="성산일출봉 미니어처를 향해 내려가던 화면이 줌 블러와 함께 위에서 본 실제 축척의 해안으로 겹쳐 바뀌는 순간" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">다이브 · 6.2초</span><b>지도 속으로</b>
+          <span class="how">같은 방향으로 줌하는 두 장면을 0.6초 크로스페이드와 줌 블러로 이음</span></div></a>
+        <a class="tile" data-tags="dive" href="demo/jeju/?t=9" target="_blank" rel="noopener">
+          <img src="samples/seongsan.jpg" alt="바다로 튀어나온 분화구 언덕 성산일출봉과 핀 라벨, 좁은 목으로 이어진 마을, 돌담 밭, 숲, 모래사장" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">근접 · 9초</span><b>성산일출봉</b>
+          <span class="how">높이 함수로 깎은 분화구와 절벽, 경사가 급하면 바위색, 돌담 밭 조각과 3D 수관</span></div></a>
+        <a class="tile" data-tags="map" href="demo/jeju/?t=14.5" target="_blank" rel="noopener">
+          <img src="samples/glide.jpg" alt="섬 위로 다시 떠올라 북쪽 해안을 따라 제주시 쪽으로 미끄러지는 시점, 오름과 말, 순환도로" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">지도 · 14.5초</span><b>다시 섬 위로</b>
+          <span class="how">떠오른 뒤 북쪽 해안을 따라 제주시로. 작은 오름들, 중산간의 말, 동쪽 풍력발전기</span></div></a>
+        <a class="tile" data-tags="dive" href="demo/jeju/?t=19.5" target="_blank" rel="noopener">
+          <img src="samples/town.jpg" alt="격자 거리와 색색 지붕의 제주 원도심, 가운데 광장의 관덕정과 핀 라벨, 오른쪽의 산지천과 공원 숲" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">근접 · 19.5초</span><b>관덕정과 원도심</b>
+          <span class="how">8° 기운 거리 격자, 큰길 옆이 더 높은 건물, 산지천과 항구, 경계 없이 이어지는 먼 도시</span></div></a>
+        <a class="tile" data-tags="night" href="demo/jeju/?t=21.6" target="_blank" rel="noopener">
+          <img src="samples/dusk.jpg" alt="해가 지며 푸르스름해지는 원도심, 도로에 불이 들어오기 시작하고 창문이 하나둘 켜짐" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">밤 · 21.6초</span><b>해 질 녘</b>
+          <span class="how">장면의 밤 값이 0에서 1로. 빛과 하늘이 바뀌고 도로 · 가로등 · 창문이 함께 켜짐</span></div></a>
+        <a class="tile" data-tags="night" href="demo/jeju/?t=23.8" target="_blank" rel="noopener">
+          <img src="samples/night.jpg" alt="밤의 원도심: 주황빛으로 빛나는 도로망과 가로등 점, 창문이 켜진 남색 건물들, 관덕정 핀 라벨" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">밤 · 23.8초</span><b>밤의 도시</b>
+          <span class="how">도로 빛 레이어, 셰이더로 켜는 창문, 가로등 점, 바깥 도시에 칠한 불빛</span></div></a>
+        <a class="tile" data-tags="night" href="demo/jeju/?t=28" target="_blank" rel="noopener">
+          <img src="samples/island-night.jpg" alt="남색 밤하늘에 뜬 제주 섬, 불이 들어온 해안 순환도로와 마을 불빛, 아래쪽 글자 제주의 밤" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">밤 · 28초</span><b>밤의 섬</b>
+          <span class="how">디졸브로 돌아온 섬. 낮에 칠해 둔 도로와 마을 불빛이 밤에만 빛남</span></div></a>
+        <a class="tile" data-tags="map" href="demo/template/?t=2" target="_blank" rel="noopener">
+          <img src="samples/template.jpg" alt="가상의 지역 Ula Basin의 떠 있는 지도: 테라코타 흙 단면, 호수와 강, 폭포, 보라색 산, 마을과 등대" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 14초</span><b>시작 템플릿</b><span class="en">templates/film.html</span>
+          <span class="how">바다 없는 내륙 지역이라 흙 단면이 사방으로 보임. 폭포 계곡으로 다이브했다 돌아옴</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. Bruno César가 #30DayMapChallenge로 올린 파라나주 3D 지도 영상에서 형식(떠 있는 장난감 지도, 지도에 누운 지명, 랜드마크 미니어처, 축척을 넘나드는 다이브, 도시에 내리는 밤)만 빌렸고, 코드와 소품, 제주 예제의 장소와 구성은 모두 이 레포의 것입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/jeju/" target="_blank" rel="noopener"><b>「제주」 · 30초</b><span>떠 있는 섬, 성산일출봉, 관덕정과 원도심, 밤의 섬, 라이브 페이지</span><span class="url">map-dive/demo/jeju/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/map-dive/examples/jeju"><b>예제 폴더 · examples/jeju</b><span>BRIEF.md와 페이지</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/brunoclz/status/2118516873969156343?a=w1T37TSovDciCAuqSPU&s=19" target="_blank" rel="noopener"><b>원본 · Bruno César의 X 게시물</b><span>파라나주 3D 지도, 33초 · 2026년 11월</span><span class="url">x.com/brunoclz</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/map-dive/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/map-dive">폴더</a> <span>lib · scripts · templates · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/map-dive/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/map-dive/references/BRIEF.md">references/BRIEF.md</a> <span>장소에서 브리프로, 고정되는 것과 장소마다 설계하는 것, 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/map-dive/references/LOOK.md">references/LOOK.md</a> <span>장난감 지도로 보이게 하는 수치, 빛, 근접 장면, 움직임</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/map-dive/references/KIT.md">references/KIT.md</a> <span>엔진 · 땅 · 소품 API, 새 소품 만들기</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/map-dive/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림은 코드로 그림 (지도 타일 · 사진 없음) · 지명 글꼴 Noto Sans KR 부분 집합 (SIL OFL 1.1) · three.js r170 (MIT)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

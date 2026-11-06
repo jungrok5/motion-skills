@@ -787,6 +787,42 @@
           "url": "https://jungrok5.github.io/motion-skills/live-character/demo/examples/haru/"
         }
       ]
+    },
+    {
+      "id": "map-dive",
+      "name": "map-dive",
+      "tagline": "장소 하나를 주면 그 지역을 하늘에 뜬 두툼한 장난감 지도로 만들고, 카메라가 지도 속으로 다이브해 해안 · 폭포 · 도시 같은 근접 장면을 보여 준 뒤 다시 떠오르는 3D 지도 영상을 three.js로 만듭니다. 지도 위에 누운 지명, 큼직한 랜드마크 미니어처, 핀 라벨, 밤이 내린 도시까지 담은 1080p MP4와 브라우저에서 도는 페이지를 냅니다.",
+      "posterAlt": "map-dive로 만든 「제주」의 장면 네 개: 파스텔 하늘에 뜬 제주 섬 지도와 한라산 미니어처, 핀 라벨이 붙은 성산일출봉 분화구 근접 장면, 관덕정이 있는 제주 원도심의 격자 거리, 도로에 불이 들어온 밤의 원도심",
+      "poster": "map-dive/poster.jpg",
+      "tags": [
+        "three.js",
+        "16:9",
+        "MP4",
+        "라이브 페이지",
+        "합성 사운드"
+      ],
+      "stats": [
+        "예제 30초 · 장면 3개",
+        "소품 19종"
+      ],
+      "page": "map-dive/",
+      "source": "map-dive/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "map-dive/examples/jeju/"
+      },
+      "sources": [
+        {
+          "title": "Bruno César의 X 게시물 (#30DayMapChallenge, 파라나주 3D 지도)",
+          "url": "https://x.com/brunoclz/status/2118516873969156343?a=w1T37TSovDciCAuqSPU&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「제주」 · 30초 · 장면 3개 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/map-dive/demo/jeju/"
+        }
+      ]
     }
   ]
 }
