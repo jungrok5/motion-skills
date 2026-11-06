@@ -10,10 +10,14 @@ import { Build, defineArt, pixelText, rrect, alpha, mix, rng } from 'cs/build.js
 | `title` | | the site's name (tab title, seeds) |
 | `url` | `my-site.dev` | shown in the HUD; green at the end |
 | `prompt` | `build a website for …` | typed into the HUD pill at the start (≤ ~60 characters) |
-| `page` | `{ w: 860, bg: '#121217' }` | `h` (auto = lowest block + 56), `name` (`index.html`) |
+| `doc` | `'web'` | `'slides'`, `'book'`, `'poster'` — sets the frame and the default board (CHOREO.md) |
+| `board` | per doc | default for every board: `{ w, h, bg }` |
+| `cols`, `gap` | per doc | boards (book: units) per row, space between them |
+| `cover` | true for books | the first book page stands alone |
+| `page` | `{ w: 860, bg: '#121217' }` | web only: `h` (auto = lowest block + 56), `name` (`index.html`) |
 | `agents` | 24 | how many cursors |
 | `names` | `agent-01…` | name tags (cycled) |
-| `W`, `H`, `fps` | 1080, 1350, 30 | frame size |
+| `W`, `H`, `fps` | per doc, 30 | frame size (web / poster 1080 × 1350, slides / book 1920 × 1080) |
 | `finale` | `'zoom'` | `'top'` (scroll back up) or `'none'` |
 | `hold`, `zoomDur`, `end` | 0.9, 2.6, 2.4 | seconds |
 | `zoom` | auto (≤ 1.3) | page → screen scale while building |
@@ -22,16 +26,17 @@ import { Build, defineArt, pixelText, rrect, alpha, mix, rng } from 'cs/build.js
 
 ## Ops — `B.kind(id, { …props, …timing })`
 Timing on any op: `at` (seconds), `after: id` (+ `delay`), `with: id` (+ `delay`), `dur`, `next`.
-Coordinates are page px (0…page.w); `y` grows downward.
+Coordinates are px on the current board (0,0 = its top-left); `y` grows downward. `overlap: true` lets a text / image
+sit over another solid block on purpose (a label inside a chart).
 
 - **`rect`** `x y w h` · `fill` (colour or `{ stops: [...], angle }`) · `r` · `line` (border colour) · `lw` · `shadow`
   (true or a colour) · `alpha`
 - **`text`** `x y` · `text` (`\n` breaks) · `w` (wrap width; the box for `align: 'center' | 'right'`) · `font`
   (`sans` `serif` `mono` `hand` `kr` `pixel`) · `size` · `weight` · `italic` · `color` · `lh` (× size) · `track`
   (letter spacing × size) · `cps` · `h` (check: must fit)
-- **`image`** `x y w h` · `art` (name) · `args` · `r` · `reveal` (`mosaic` | `scan` | `fade`) · `file` (card label) ·
-  `from` (`left` | `right`)
-- **`paint`** `x y w h` · `art` · `args` · `px` (cell size, 10) · `inset` · `by` (max agents)
+- **`image`** `x y w h` · `art` (name) + `args`, **or** `src` (a file, relative to the page) + `fit` (`cover` | `contain`) +
+  `bg` · `r` · `reveal` (`mosaic` | `scan` | `fade`) · `file` (card label) · `from` (`left` | `right`)
+- **`paint`** `x y w h` · `art` + `args` or `src` (served over http) · `px` (cell size, 10) · `inset` · `by` (max agents)
 - **`cells`** `x y cols rows cell gap r` · `color(i, j, R)` → colour | null, or `values` (2D or flat, 0…1) + `ramp` ·
   `empty` (slot colour) · `by`
 - **`chips`** `x y w` · `items` (`'text'` or `{ text, dot, bg, fg, line }`) · `font size weight h pad gap r` · `bg fg line
@@ -39,7 +44,7 @@ Coordinates are page px (0…page.w); `y` grows downward.
 - **`line`** `x1 y1 x2 y2` · `color` · `width` · `dash`
 - **`button`** `x y w h` · `label` · `fill` · `color` · `r` · `font size weight` · `line` (a `rect` `id-box` + a `text` `id`)
 
-Structure: `B.section(name, { scroll })` · `B.wait(s)` · `B.sync(extra)` · `B.check(name, t => ok)` · `B.get(id)` ·
+Structure: `B.board(id, { name, w, h, bg })` · `B.section(name, { scroll })` · `B.wait(s)` · `B.sync(extra)` · `B.check(name, t => ok)` · `B.get(id)` ·
 `B.start()` (async; sets the contract).
 
 ## Pictures — `defineArt(name, (g, w, h, a, R) => { … })`

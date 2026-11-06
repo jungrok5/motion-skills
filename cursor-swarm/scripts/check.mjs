@@ -1,5 +1,5 @@
 // cursor-swarm · check.mjs — proves a build page before you render it. Prints `ok` lines, or what failed.
-//   node <skill>/scripts/check.mjs site.html [--step .25] [--scale .5] [--steps]
+//   node <skill>/scripts/check.mjs build.html [--step .25] [--scale .5] [--steps]
 // 1. loads with no page errors, console errors or failed requests (fonts, your defineArt pictures)
 // 2. every moment draws without throwing, at every sampled t
 // 3. deterministic: the same t gives the same pixels, also after seeking elsewhere (no state between frames)
@@ -21,7 +21,7 @@ catch { ({ chromium } = require(join(execSync('npm root -g').toString().trim(), 
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i > -1 ? args[i + 1] : d; };
 const page$ = resolve(args.find(a => a.endsWith('.html')) || '');
-if (!existsSync(page$)) { console.error('usage: check.mjs <site.html> [--step .25] [--steps]'); process.exit(1); }
+if (!existsSync(page$)) { console.error('usage: check.mjs <build.html> [--step .25] [--steps]'); process.exit(1); }
 const step = +opt('step', .25), scale = opt('scale', '.5');
 
 const browser = await chromium.launch({ args: ['--allow-file-access-from-files'] });

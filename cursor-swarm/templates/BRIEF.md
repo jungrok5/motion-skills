@@ -2,7 +2,7 @@
 
 **Topic (as given):** <the user's words, unchanged>
 
-## 1. The site (what gets built)
+## 1. The document (what gets built: web · slides · book · poster)
 - **Who it is for:** <one line>
 - **Voice:** <how the copy talks; which language for headings, body, small labels>
 - **Page:** <width (860)>, background, ink, accent(s), card, hairline — 5–8 colours.

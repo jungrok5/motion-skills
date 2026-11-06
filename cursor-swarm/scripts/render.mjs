@@ -1,12 +1,12 @@
 // cursor-swarm · render.mjs — stills, a contact sheet, or the MP4 of one build page, frame by frame (every frame is seek(t)).
 // Run from the project root:
-//   node <skill>/scripts/render.mjs site.html --stills 7,12.5,21        → out/site-7.png …   (look at these a lot)
-//   node <skill>/scripts/render.mjs site.html --sheet 16 --scale .5      → out/site-sheet.jpg (16 moments, 4 × 4)
-//   node <skill>/scripts/render.mjs site.html --sheet 8 --from 5 --to 12 (a closer look at one stretch)
-//   node <skill>/scripts/render.mjs site.html --sfx                      → out/site.mp4 with the build's own sound
-//   node <skill>/scripts/render.mjs site.html --audio music.wav          → out/site.mp4 with your track
+//   node <skill>/scripts/render.mjs build.html --stills 7,12.5,21        → out/build-7.png …   (look at these a lot)
+//   node <skill>/scripts/render.mjs build.html --sheet 16 --scale .5      → out/build-sheet.jpg (16 moments, 4 × 4)
+//   node <skill>/scripts/render.mjs build.html --sheet 8 --from 5 --to 12 (a closer look at one stretch)
+//   node <skill>/scripts/render.mjs build.html --sfx                      → out/build.mp4 with the build's own sound
+//   node <skill>/scripts/render.mjs build.html --audio music.wav          → out/build.mp4 with your track
 // Options: --scale .5 · --workers 4 · --fps 30 · --from/--to · --crf 20 · --sfx (clicks, typing, drops, ticks, a soft
-//          pad and the publish chime, synthesised from window.film.events) · --sfx-only (just out/site-sfx.wav) · --out out/
+//          pad and the publish chime, synthesised from window.film.events) · --sfx-only (just out/build-sfx.wav) · --out out/
 import { createRequire } from 'node:module';
 import { spawn, execSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
@@ -21,7 +21,7 @@ catch { ({ chromium } = require(join(execSync('npm root -g').toString().trim(), 
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i > -1 && args[i + 1] && !args[i + 1].startsWith('--') ? args[i + 1] : d; };
 const page$ = resolve(args.find(a => a.endsWith('.html')) || '');
-if (!existsSync(page$)) { console.error('usage: render.mjs <site.html> [--stills 7,12] [--sheet 16] [--sfx] [--workers 4]'); process.exit(1); }
+if (!existsSync(page$)) { console.error('usage: render.mjs <build.html> [--stills 7,12] [--sheet 16] [--sfx] [--workers 4]'); process.exit(1); }
 const name = opt('name', basename(page$) === 'index.html' ? basename(resolve(page$, '..')) : basename(page$).replace(/\.html$/, ''));
 const outDir = resolve(opt('out', 'out')); mkdirSync(outDir, { recursive: true });
 const scale = opt('scale', ''), extra = opt('q', '');

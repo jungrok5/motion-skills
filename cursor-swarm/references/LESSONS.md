@@ -23,3 +23,15 @@ Problem → cause → fix, one or two lines each. Add yours.
   bundled fonts cover (lib/fonts/README.md).
 - **The soundtrack was quiet** (RMS −28 dB) because 3,000 painted cells were thinned to ~70 ticks a second and normalised
   only when clipping. → Always normalise the peak to −1 dB; ticks closer than 14 ms are dropped.
+- **A footer rule was drawn 1 px long.** → `line` kept its end points in `x1`/`y1`, the same fields every op uses for its
+  bounding box, so measuring overwrote the start point. → End points live in `p1x p1y p2x p2y`; the API still takes
+  `x1 y1 x2 y2`.
+- **The camera left each slide before its last line was typed** (look-ahead 0.75 s + lag). → Between boards the camera
+  moves only after every op on the current one has ended (+ 0.1 s), and pans a little faster than it scrolls.
+- **A slide fading in over the dark editor looked like a grey slab.** → Fixed-size boards are dragged out as a frame
+  (selection + size tag) just before their first op, like everything else in the editor.
+- **Idle cursors piled into a column at the edge of the view while the camera panned.** → An agent the camera leaves
+  behind is carried along and spread inward by its own seeded amount (40–300 px), so the crowd follows loosely.
+- **An imported deck had text boxes hanging off the slide** (PowerPoint allows it). → import-doc.py clamps text widths to
+  the board; check.mjs reports anything still outside its board.
+- **A Korean-only title gave an empty URL** (`.deck`). → import-doc.py falls back to `my-deck.deck`; set `--title` / `url`.

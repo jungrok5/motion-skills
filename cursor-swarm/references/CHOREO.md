@@ -1,4 +1,12 @@
-# CHOREO — topic → sections → ops, timing and layout recipes
+# CHOREO — topic → boards → sections → ops, timing and layout recipes
+
+## Documents and boards
+`new Build({ doc })` sets the frame and the default board: `web` 1080 × 1350 frame, one board 860 wide that grows downward;
+`slides` 1920 × 1080, boards 1280 × 720 in a grid of `cols` (3); `book` 1920 × 1080, pages 520 × 720 paired into spreads
+(`cover: true` keeps the first page alone), units in a row of `cols`; `poster` 1080 × 1350, one 900 × 1200 board.
+`B.board(id, { name, w, h, bg })` starts a board (and a section); ops after it use **its** coordinates (0,0 = its top-left).
+The camera fits a slide or a spread whole and pans to the next once the current one is done; a growing web board is
+fit to its width and scrolled. `board: { w, h, bg }` in the constructor changes the default for every board.
 
 ## The timeline model
 `B.t` is a time cursor. Every op starts at `B.t` (or `at:`, `after: id`, `with: id` + `delay:`) and then moves `B.t` on by a
@@ -15,6 +23,9 @@ the end of everything queued so far: use it between sections. `B.wait(s)` adds a
 | `chips` | (n − 1) × stagger + 0.7 | 0.45 | one per chip |
 | `line` | 0.6 | 0.2 | 1 |
 | `button` | a `rect` then its label (at 75 % of the box) | 0.3 | 2 |
+
+Image files: `B.image(id, { …, src: 'assets/photo.jpg', fit: 'cover' | 'contain' })` — loaded before the build starts.
+`paint` of a `src` image reads its pixels, which needs the page served over http (code-drawn `art` always works).
 
 Each job goes to the nearest agent that can get there in time (travel 0.3–1.05 s by distance). If none can, the op
 waits and check.mjs says `waited 0.8 s for a free agent` — add agents or start it later.
@@ -50,7 +61,21 @@ B.sync(.1);                                                                     
 - Intro: grows to fit the prompt (~0.03 s per character + 2.1 s); keep prompts under ~60 characters.
 - Section: 2–5 s. Swarm op: 2.5–3.6 s (shorter feels like a wipe, longer drags).
 - Finale: hold 0.9 s → swarm returns (0.6 s) → zoom-out 2.6 s → end hold 2.4 s.
-- Total 25–45 s. The bakery: 7 sections, 58 ops, 35 s.
+- Total 20–45 s. The bakery: 7 sections, 58 ops, 35 s · the deck: 6 slides, 55 ops, 32 s · the book: cover + 2 spreads, 33 ops, 22 s.
+- Decks: 3.5–5 s a slide (a chart slide 6 s). Long decks: render chapters (`--from / --to`) or fewer, fuller slides.
+
+## Deck recipes (board 1280 × 720)
+- Margins 80–90; title serif 48–56 at y 75; body 22–28; a stat card 352 × 280 (three across at x 80 / 464 / 848).
+- Per slide: title first, then everything else `with:` the title (`delay` .3–1.3) so 3–6 cursors work at once.
+- A chart: one `cells` op, bars = runs of cells, gaps = `null` columns, `by` ≈ ¾ of the agents so labels have hands free;
+  value labels `overlap: true` (they sit inside the chart's box), `after:` the bars with a negative `delay`.
+- A timeline: `line` (dur .9) → dots (`rect` r = h/2) `with:` the line, staggered → month / step / note `with:` each dot.
+
+## Book recipes (pages 520 × 720)
+- Margins 44; kicker mono 13 at y 56, title serif 44 at y 80; body 16 with `lh` 1.55–1.7; page numbers mono 13 at y 676,
+  outside edge (left page left, right page right).
+- A full-bleed picture: `image` at 0,0 with the page size — the other page's text goes `with:` it.
+- The cover: a `paint` of a `defineArt` (it becomes pixel art at `px` 10–14) + the title typed `with:` it.
 
 ## Wide or tall frames
 `W: 1920, H: 1080` (16:9) keeps the page at ≤ 1.3 × and shows less of it at once — use fewer, wider sections.

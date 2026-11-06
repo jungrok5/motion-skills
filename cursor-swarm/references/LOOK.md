@@ -1,4 +1,4 @@
-# LOOK — what makes it read as "a swarm of cursors building a website"
+# LOOK — what makes it read as "a swarm of cursors building a website (or a deck, a book …)"
 
 From the reference (SOURCE.md) and from making the bakery. Keep these; they are the style.
 
@@ -6,8 +6,9 @@ From the reference (SOURCE.md) and from making the bakery. Keep these; they are 
 - **Dark, quiet, technical.** Near-black `#0b0b11` with a faint dot grid that scrolls with the page, a thin ruler on the top
   and the left with page coordinates, a small tool rail on the right whose icon lights up for what is being done (box,
   text, image, line, grid). None of it competes with the page.
-- **The artboard is visible before anything exists.** A dashed outline and a grey label `▢ index.html   860 × 406` whose
-  height grows as the page does. The page background is revealed downward as sections are built.
+- **The artboards are visible before anything exists.** Dashed outlines with grey labels (`▢ index.html   860 × 406`,
+  `▢ 03 · 제안   1280 × 720`, `p. 2–3`). A web page's background is revealed downward as sections are built; a slide or a
+  page is dragged out like a frame (selection + size tag) just before its first op. Book spreads get a spine shade.
 - **The HUD pill is the narrator.** It starts as a prompt box (the request typed with a caret, then `generating…`), the
   agents burst out of it, it counts `28 agents · 41/58 layers` with a progress bar and a blue `building` chip, then
   `publishing` (amber) and `● live` (green) with the URL. It is where the swarm returns at the end.
@@ -35,9 +36,11 @@ From the reference (SOURCE.md) and from making the bakery. Keep these; they are 
 - **Chips pop** one by one with a little overshoot.
 
 ## The camera
-- **Follows the newest work, only downward**, with a soft lag (two-stage smoothing), looking ahead 0.75 s so the camera is
+- **Frames the board being built.** A slide or a spread is shown whole (fit), centred; the camera pans to the next one only
+  after the last op on this one ends, so every board is seen finished. Idle cursors ride along as a loose crowd.
+- **On a long web page it follows the newest work, only downward**, with a soft lag (two-stage smoothing), looking ahead 0.75 s so the camera is
   there when an agent arrives. A section's work starts after `sync()`, so each section has its own "arrival".
-- **The finale zooms out** to the whole page with a drop shadow on the artboard, editor overlays gone, the HUD green.
+- **The finale zooms out** to everything — the whole page, the grid of slides, the row of spreads — with a drop shadow on the artboard, editor overlays gone, the HUD green.
   Hold it long enough to read the site's shape (2.4 s default).
 
 ## Avoid

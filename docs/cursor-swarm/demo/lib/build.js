@@ -1,6 +1,9 @@
-// cursor-swarm · build.js — a web page built in front of you by a swarm of agent cursors, in a dark design editor.
+// cursor-swarm · build.js — a web page, a slide deck, a book, a poster … built in front of you by a swarm of agent cursors,
+// in a dark design editor. The document is a set of boards (artboards): one tall web page, 16:9 slides, book pages paired
+// into spreads, a poster. Ops are placed in board coordinates; the camera pans and zooms from board to board.
 //
-//   const B = new Build({ title, url, prompt, page: { w: 860, bg: '#f5ede0' }, agents: 28 });
+//   const B = new Build({ doc: 'web', title, url, prompt, page: { w: 860, bg: '#f5ede0' }, agents: 28 });
+//   const D = new Build({ doc: 'slides', board: { w: 1280, h: 720, bg: '#fff' } });  D.board('cover'); D.text(…); D.board('problem'); …
 //   B.section('hero');
 //   B.rect('hero-bg', { x: 0, y: 64, w: 860, h: 320, fill: '#2b1d12', r: 18 });
 //   B.text('headline', { x: 48, y: 420, w: 640, text: 'Fresh at five', font: 'serif', size: 48, color: '#2b1d12' });
@@ -33,13 +36,18 @@ export class Build {
    */
   constructor(o = {}) {
     Object.assign(this, {
-      title: o.title || 'cursor swarm', url: o.url || 'my-site.dev', prompt: o.prompt || `build a website for ${o.title || 'my project'}`,
-      W: o.W || 1080, H: o.H || 1350, fps: o.fps || 30, N: o.agents || 24, names: o.names || null,
+      title: o.title || 'cursor swarm', url: o.url || 'my-site.dev', prompt: o.prompt || `${{ slides: 'make a slide deck about', book: 'lay out a book:', poster: 'design a poster for' }[o.doc] || 'build a website for'} ${o.title || 'my project'}`,
+      doc: o.doc || 'web', fps: o.fps || 30, N: o.agents || 24, names: o.names || null,
       finale: o.finale || 'zoom', holdDur: o.hold ?? .9, endHold: o.end ?? 2.4, zoomDur: o.zoomDur ?? 2.6, zoomOpt: o.zoom, tagsOn: o.tags !== false,
       labels: { agents: 'agents', layers: 'layers', building: 'building', publishing: 'publishing', live: 'live', generating: 'generating', ...(o.labels || {}) },
     });
+    const FR = { web: [1080, 1350], slides: [1920, 1080], book: [1920, 1080], poster: [1080, 1350] }[this.doc] || [1080, 1350];
+    this.W = o.W || FR[0]; this.H = o.H || FR[1];
     const p = o.page || {};
-    Object.assign(this, { PW: p.w || 860, pageBg: p.bg || '#121217', pageH0: p.h, pageName: p.name || 'index.html' });
+    this.boardDef = { ...({ web: { w: p.w || 860, h: p.h, bg: p.bg || '#121217', grow: !p.h, name: p.name || 'index.html' },
+      slides: { w: 1280, h: 720, bg: '#ffffff' }, book: { w: 520, h: 720, bg: '#fbf8f1' }, poster: { w: 900, h: 1200, bg: '#ffffff' } }[this.doc] || {}), ...(o.board || {}) };
+    Object.assign(this, { cols: o.cols, gap: o.gap, cover: o.cover ?? this.doc === 'book' });
+    this.boards = [];
     this.u = Math.min(this.W, this.H) / 1080;
     this.promptEnd = .45 + this.prompt.length / 34;
     this.introDur = Math.max(o.intro ?? 3.4, this.promptEnd + 2.1);
@@ -54,12 +62,20 @@ export class Build {
     let at = o.at ?? this.t;
     if (o.after) { const a = this.get(o.after); at = a.start + a.dur + (o.delay ?? 0); }
     if (o.with) { const a = this.get(o.with); at = a.start + (o.delay ?? 0); }
-    const op = { ...o, kind, id, start: at, dur: o.dur ?? dur, i: this.ops.length, sec: Math.max(0, this.sections.length - 1) };
+    if (!this.boards.length) this.boards.push({ id: 'page', ...this.boardDef, i: 0 });
+    const op = { ...o, kind, id, start: at, dur: o.dur ?? dur, i: this.ops.length, sec: Math.max(0, this.sections.length - 1), board: this.boards.length - 1 };
     this.ops.push(op); this.t = at + (o.next ?? next); return op;
   }
   get(id) { const o = this.ops.find(p => p.id === id); if (!o) throw new Error(`no op "${id}"`); return o; }
   /** start a named section (used for checks, the step list and sound cues). o.scroll = a page y the camera must reach */
-  section(name, o = {}) { this.sections.push({ name, t: this.t, scroll: o.scroll }); return this; }
+  section(name, o = {}) { this.sections.push({ name, t: this.t, scroll: o.scroll, board: Math.max(0, this.boards.length - 1) }); return this; }
+  /** start a new board (a slide, a book page, another web page, a poster); the ops after it are placed on it, in its own
+   *  coordinates. o: name (label above it), w, h, bg, grow (a web page that grows downward). Also starts a section. */
+  board(id, o = {}) {
+    if (this.boards.some(b => b.id === id)) throw new Error(`duplicate board "${id}"`);
+    this.boards.push({ id, ...this.boardDef, name: o.name || id, ...o, i: this.boards.length });
+    return this.section(o.section || o.name || id);
+  }
   wait(s) { this.t += s; return this; }
   /** wait until everything queued so far is finished (+ extra seconds) */
   sync(extra = 0) { this.t = Math.max(this.t, ...this.ops.map(o => o.start + o.dur)) + extra; return this; }
@@ -82,7 +98,7 @@ export class Build {
   /** a row of pills placed one by one (wraps inside w). items: ['text' | { text, dot, bg, fg }] · font · size · h · pad · gap · bg · fg · line · dot */
   chips(id, o) { if (typeof id === 'object') [o, id] = [id, id.id]; const n = o.items.length, st = o.stagger ?? .17; return this._op('chips', id, { stagger: st, ...o }, (n - 1) * st + .7, .45); }
   /** a straight line drawn from (x1, y1) to (x2, y2). color · width · dash */
-  line(id, o) { if (typeof id === 'object') [o, id] = [id, id.id]; return this._op('line', id, o, .6, .2); }
+  line(id, o) { if (typeof id === 'object') [o, id] = [id, id.id]; const { x1, y1, x2, y2, ...r } = o; return this._op('line', id, { ...r, p1x: x1, p1y: y1, p2x: x2, p2y: y2 }, .6, .2); }
   /** a button: a box, then its label. label · fill · color · r · font · size · weight · line */
   button(id, o) {
     if (typeof id === 'object') [o, id] = [id, id.id];
@@ -98,20 +114,59 @@ export class Build {
     const u = this.u;
     this.RH = Math.round(26 * u); this.RW = Math.round(26 * u);
     this.VT = this.RH; this.VB = this.H - Math.round(108 * u); this.VHs = this.VB - this.VT;
-    this.z0 = this.zoomOpt ?? Math.min((this.W - 2 * 76 * u) / this.PW, 1.3 * u * (this.W > this.H ? 1 : 1.2));
-    this.VHp = this.VHs / this.z0; this.camMin = -48 * u / this.z0;
+    this.zcap = 1.3 * u * (this.W > this.H ? 1 : 1.2);
     this.hud = { x: this.W / 2, y: this.H - 52 * u, h: 42 * u };
   }
-  ox(z) { return (this.W - this.PW * z) / 2; }
-  toScreen(p, cam) { return [this.ox(cam.z) + p[0] * cam.z, this.VT + (p[1] - cam.y) * cam.z]; }
-  toPage(s, cam) { return [(s[0] - this.ox(cam.z)) / cam.z, cam.y + (s[1] - this.VT) / cam.z]; }
+  toScreen(p, c) { return [(p[0] - c.x) * c.z, this.VT + (p[1] - c.y) * c.z]; }
+  toPage(s, c) { return [c.x + s[0] / c.z, c.y + (s[1] - this.VT) / c.z]; }
+  /** the view that frames board group gi: 'fit' shows the whole group; a group with a growing web page fits its width and scrolls */
+  _fit(gi) {
+    const G = this.groups[gi], u = this.u, gw = G.x1 - G.x0, gh = G.y1 - G.y0, cap = this.zoomOpt ?? this.zcap;
+    const zw = (this.W - 2 * 76 * u) / gw, zh = (this.VHs - 96 * u) / gh, cx = (G.x0 + G.x1) / 2;
+    if (G.grow) { const z = Math.min(cap, zw), y = G.y0 - 48 * u / z; return { scroll: true, z, x: cx - this.W / (2 * z), y, cx, cy: y + this.VHs / (2 * z), maxY: Math.max(y, G.y1 + 36 - this.VHs / z) }; }
+    const z = this.zoomOpt ?? Math.min(cap, zw, zh), cy = (G.y0 + G.y1) / 2 + 10 * u / z;
+    return { scroll: false, z, cx, cy, x: cx - this.W / (2 * z), y: cy - this.VHs / (2 * z) };
+  }
+  /** boards → positions: grow boards get their height; book pages pair into spreads (a cover stands alone); units in a grid */
+  _layout() {
+    const bs = this.boards;
+    for (const b of bs) if (b.grow || !b.h) { const ops = this.ops.filter(o => o.board === b.i); b.h = Math.ceil(Math.max(400, ...ops.map(o => o.y1)) + 56); }
+    const units = [];
+    if (this.doc === 'book') { let i = 0; if (this.cover) units.push([bs[i++]]); while (i < bs.length) units.push(bs.slice(i, i += 2)); }
+    else bs.forEach(b => units.push([b]));
+    const cols = this.cols || (this.doc === 'slides' ? 3 : this.doc === 'book' ? 2 : units.length), gap = this.gap ?? (this.doc === 'book' ? 160 : 140);
+    this.groups = []; let y = 0;
+    for (let r = 0; r < units.length; r += cols) {
+      let x = 0, rh = 0;
+      for (const un of units.slice(r, r + cols)) {
+        let bx = x; un.forEach((b, k) => { b.x = bx; b.y = y; bx += b.w; b.group = this.groups.length; b.side = un.length === 2 ? (k ? 'R' : 'L') : this.doc === 'book' ? 'R' : null; });
+        const h = Math.max(...un.map(b => b.h));
+        this.groups.push({ i: this.groups.length, boards: un, x0: x, y0: y, x1: bx, y1: y + h, grow: un.some(b => b.grow) });
+        x = bx + gap; rh = Math.max(rh, h);
+      }
+      y += rh + gap;
+    }
+    this.world = [0, 0, Math.max(...this.groups.map(g => g.x1)), Math.max(...this.groups.map(g => g.y1))];
+    for (const b of bs) { b.ops = this.ops.filter(o => o.board === b.i); b.first = b.ops.length ? Math.min(...b.ops.map(o => o.start)) : Infinity; }
+  }
+  _shift(op, dx, dy) {
+    op.rbox = [...op.box];
+    if (!dx && !dy) return;
+    for (const k of ['x', 'p1x', 'p2x']) if (typeof op[k] === 'number') op[k] += dx;
+    for (const k of ['y', 'p1y', 'p2y']) if (typeof op[k] === 'number') op[k] += dy;
+    op.box = [op.box[0] + dx, op.box[1] + dy, op.box[2] + dx, op.box[3] + dy]; op.x0 += dx; op.x1 += dx; op.y0 += dy; op.y1 += dy;
+    if (op.lx) op.lx = op.lx.map(v => v + dx);
+    if (op.chips) for (const c of op.chips) { c.x += dx; c.y += dy; }
+  }
 
   // ── build: measure, schedule agents, camera ──
   _build(g) {
     this._geom();
-    const R = rng('layout:' + this.title);
+    if (!this.boards.length) this.boards.push({ id: 'page', ...this.boardDef, i: 0 });
     for (const op of this.ops) this._measure(g, op);
-    this.pageH = this.pageH0 || Math.ceil(Math.max(400, ...this.ops.map(o => o.box[3])) + 56);
+    this._layout();
+    for (const op of this.ops) { const b = this.boards[op.board]; this._shift(op, b.x, b.y); }
+    for (const s of this.sections) if (s.scroll != null) s.scrollW = s.scroll + this.boards[s.board].y;
     this._schedule();
     this._camera();
     this._paths();
@@ -134,7 +189,7 @@ export class Build {
     else if (op.kind === 'cells') { op.cw = op.cols * (op.cell + op.gap) - op.gap; op.ch = op.rows * (op.cell + op.gap) - op.gap; op.box = [op.x, op.y, op.x + op.cw, op.y + op.ch]; }
     else if (op.kind === 'chips') {
       const st = op.st = { font: op.font || 'sans', size: op.size || 14, weight: op.weight || 600 };
-      const h = op.h || Math.round(st.size * 2.1), pad = op.pad ?? st.size * .9, gap = op.gap ?? 8, W = op.w || this.PW - op.x;
+      const h = op.h || Math.round(st.size * 2.1), pad = op.pad ?? st.size * .9, gap = op.gap ?? 8, W = op.w || this.boards[op.board].w - op.x;
       let x = op.x, y = op.y; op.items = op.items.map(it => typeof it === 'string' ? { text: it } : it);
       op.chips = op.items.map(it => {
         const dot = it.dot ?? op.dot, w = measure(g, it.text, st) + pad * 2 + (dot ? st.size * .9 : 0);
@@ -142,18 +197,19 @@ export class Build {
         const c = { ...it, x, y, w, h, dot }; x += w + gap; return c;
       });
       op.box = [op.x, op.y, Math.max(...op.chips.map(c => c.x + c.w)), y + h];
-    } else if (op.kind === 'line') { const w = (op.width || 2) / 2; op.box = [Math.min(op.x1, op.x2) - w, Math.min(op.y1, op.y2) - w, Math.max(op.x1, op.x2) + w, Math.max(op.y1, op.y2) + w]; }
+    } else if (op.kind === 'line') { const w = (op.width || 2) / 2; op.box = [Math.min(op.p1x, op.p2x) - w, Math.min(op.p1y, op.p2y) - w, Math.max(op.p1x, op.p2x) + w, Math.max(op.p1y, op.p2y) + w]; }
     op.x0 = op.box[0]; op.y0 = op.box[1]; op.x1 = op.box[2]; op.y1 = op.box[3];
   }
 
   /** every op becomes jobs; each job goes to the nearest agent that can get there in time */
   _schedule() {
-    const N = this.N, cam0 = { y: this.camMin, z: this.z0 };
+    const N = this.N, first = [...this.ops].sort((a, b) => a.start - b.start)[0];
+    const v0 = this.view0 = this._fit(this.boards[first ? first.board : 0].group);
     this.events = []; this.clicks = [];
-    const hudP = this.toPage([this.hud.x, this.hud.y], cam0), R = rng('spawn:' + this.title);
+    const hudP = this.toPage([this.hud.x, this.hud.y], v0), R = rng('spawn:' + this.title);
     this.agents = Array.from({ length: N }, (_, a) => {
-      const ang = R() * Math.PI * 2, rad = (.25 + R() * .75) * Math.min(this.PW * .32, this.VHp * .26);
-      const rest = [this.PW / 2 + Math.cos(ang) * rad * 1.25, this.camMin + this.VHp * .42 + Math.sin(ang) * rad];
+      const ang = R() * Math.PI * 2, rad = (.25 + R() * .75) * Math.min(this.W * .27, this.VHs * .26) / v0.z;
+      const rest = [v0.x + this.W / (2 * v0.z) + Math.cos(ang) * rad * 1.25, v0.y + this.VHs * .42 / v0.z + Math.sin(ang) * rad];
       const spawn = this.introDur - 1.05 + a * (.6 / N);
       this.events.push({ t: spawn, k: 'spawn', a });
       return { i: a, color: AGENT_COLORS[a % AGENT_COLORS.length], name: this.names ? this.names[a % this.names.length] : `agent-${String(a + 1).padStart(2, '0')}`,
@@ -175,10 +231,10 @@ export class Build {
       else if (op.kind === 'text') {
         const L = op.lines.length - 1; op.jobs.push(assign({ op, t0: op.start, t1: op.start + op.dur, from: [op.lx[0] - 3, op.y + op.lhp / 2], to: [op.lx[L] + op.lw[L] + 4, op.y + L * op.lhp + op.lhp / 2], beam: true }));
       } else if (op.kind === 'image') {
-        const side = op.from === 'right' ? 1 : -1, sx = side < 0 ? (-60 * this.u - this.ox(this.z0)) / this.z0 : (this.W + 60 * this.u - this.ox(this.z0)) / this.z0;
-        op.src = [sx, clamp(op.y + op.h * .5, op.y, op.y + op.h)];
-        op.jobs.push(assign({ op, t0: op.start, t1: op.start + op.dur, from: op.src, to: [op.x + op.w * .9, op.y + op.h * .9] }));
-      } else if (op.kind === 'line') op.jobs.push(assign({ op, t0: op.start, t1: op.start + op.dur, from: [op.x1, op.y1], to: [op.x2, op.y2] }));
+        const v = this._fit(this.boards[op.board].group), sx = op.from === 'right' ? v.x + (this.W + 60 * this.u) / v.z : v.x - 60 * this.u / v.z;
+        op.srcPt = [sx, op.y + op.h * .5];
+        op.jobs.push(assign({ op, t0: op.start, t1: op.start + op.dur, from: op.srcPt, to: [op.x + op.w * .9, op.y + op.h * .9] }));
+      } else if (op.kind === 'line') op.jobs.push(assign({ op, t0: op.start, t1: op.start + op.dur, from: [op.p1x, op.p1y], to: [op.p2x, op.p2y] }));
       else if (op.kind === 'chips') op.chips.forEach((c, i) => { const t0 = op.start + i * op.stagger; c.job = assign({ op, t0, t1: t0 + .55, from: [c.x + c.w * .5, c.y + c.h * .55], to: [c.x + c.w * .7, c.y + c.h + 6], chip: c }); op.jobs.push(c.job); });
       else if (op.kind === 'paint' || op.kind === 'cells') this._swarm(op, assign, travel, dist);
       op.s = Math.min(...op.jobs.map(j => j.t0)); op.e = Math.max(...op.jobs.map(j => j.t1)); op.delay = Math.max(...op.jobs.map(j => j.delay));
@@ -193,7 +249,8 @@ export class Build {
     let cells = [];
     if (op.kind === 'paint') {
       const cols = Math.floor(op.w / op.px), rows = Math.floor(op.h / op.px);
-      const src = renderArt(op.art, op.args, op.w, op.h, 1, hash(op.id)), d = src.getContext('2d').getImageData(0, 0, src.width, src.height).data;
+      const src = this._art(op, 1); let d;
+      try { d = src.getContext('2d').getImageData(0, 0, src.width, src.height).data; } catch (e) { throw new Error(`paint "${op.id}": cannot read the pixels of ${op.src} (${e.name}) — serve the page over http (python3 -m http.server), or use image instead of paint`); }
       for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
         const sx = Math.min(src.width - 1, Math.floor((i + .5) * op.px)), sy = Math.min(src.height - 1, Math.floor((j + .5) * op.px)), k = (sy * src.width + sx) * 4;
         if (d[k + 3] < 40) continue;
@@ -234,33 +291,55 @@ export class Build {
     });
   }
 
-  /** the camera follows the newest work (it only moves down), then the finale */
+  /** the camera frames the board being worked on (newest op first); on a tall web page it follows the work down. Then the finale. */
   _camera() {
-    const hz = 60, T = this.Z0, n = Math.ceil(T * hz) + 2, ys = new Float32Array(n), bg = new Float32Array(n);
-    const maxY = Math.max(this.camMin, this.pageH + 36 - this.VHp);
-    const foc = this.ops.map(o => ({ t: o.s - .75, f: Math.min(o.y1 + 54 - this.VHp, o.y0 - 70), b: o.y1 + 28, s: o.s }));
-    const floors = this.sections.filter(s => s.scroll != null).map(s => ({ t: s.t, f: s.scroll }));
-    let y1 = this.camMin, y2 = this.camMin, b1 = 0;
-    for (let i = 0; i < n; i++) {
-      const t = i / hz; let tgt = this.camMin, bt = 0;
-      for (const f of foc) { if (f.t <= t && f.f > tgt) tgt = f.f; if (f.s <= t && f.b > bt) bt = f.b; }
-      for (const f of floors) if (f.t <= t && f.f > tgt) tgt = f.f;
-      tgt = clamp(tgt, this.camMin, maxY);
-      const k = 1 - Math.exp(-3.1 / hz); y1 += (tgt - y1) * k; y2 += (y1 - y2) * k; ys[i] = y2;
-      b1 += (Math.min(this.pageH, bt) - b1) * (1 - Math.exp(-5 / hz)); bg[i] = b1;
+    const hz = 60, n = Math.ceil(this.Z0 * hz) + 2, X = new Float32Array(n), Y = new Float32Array(n), Z = new Float32Array(n);
+    const foc = [...this.ops].sort((a, b) => a.s - b.s).map(o => ({ t: o.s - .75, s: o.s, g: this.boards[o.board].group, b: this.boards[o.board], o }));
+    const floors = this.sections.filter(s => s.scrollW != null);
+    for (const b of this.boards) b.first = b.ops.length ? Math.min(...b.ops.map(o => o.s)) : Infinity;
+    const grow = this.boards.filter(b => b.grow); for (const b of grow) { b._bg = new Float32Array(n); b._b1 = 0; }
+    // when to move to another board group: shortly before its first op, but not before the group we are on is finished
+    const sw = []; let cur = foc.length ? foc[0].g : 0, curEnd = -Infinity;
+    for (const f of foc) {
+      if (f.g !== cur) { sw.push({ t: Math.max(f.s - .6, curEnd + .1), g: f.g }); cur = f.g; curEnd = -Infinity; }
+      curEnd = Math.max(curEnd, f.o.e);
     }
-    this._cy = ys; this._bg = bg; this._hz = hz;
+    const v0 = this.view0; let x1 = v0.cx, y1 = v0.cy, l1 = Math.log(v0.z), x2 = x1, y2 = y1, l2 = l1;
+    for (let i = 0; i < n; i++) {
+      const t = i / hz; let g = foc.length ? foc[0].g : 0;
+      for (const w of sw) { if (w.t > t) break; g = w.g; }
+      const v = this._fit(g); let ty = v.cy;
+      if (v.scroll) {
+        let top = v.y; const VHp = this.VHs / v.z;
+        for (const f of foc) { if (f.t > t) break; if (f.g === g) top = Math.max(top, Math.min(f.o.y1 + 54 - VHp, f.o.y0 - 70)); }
+        for (const f of floors) if (f.t <= t && this.boards[f.board].group === g) top = Math.max(top, f.scrollW);
+        ty = clamp(top, v.y, v.maxY) + VHp / 2;
+      }
+      const k = 1 - Math.exp(-(v.scroll ? 3.1 : 4.2) / hz);
+      x1 += (v.cx - x1) * k; y1 += (ty - y1) * k; l1 += (Math.log(v.z) - l1) * k;
+      x2 += (x1 - x2) * k; y2 += (y1 - y2) * k; l2 += (l1 - l2) * k;
+      X[i] = x2; Y[i] = y2; Z[i] = Math.exp(l2);
+      for (const b of grow) { let bt = 0; for (const o of b.ops) if (o.s <= t && o.y1 - b.y + 28 > bt) bt = o.y1 - b.y + 28; b._b1 += (Math.min(b.h, bt) - b._b1) * (1 - Math.exp(-5 / hz)); b._bg[i] = b._b1; }
+    }
+    this._cx = X; this._cy = Y; this._cz = Z; this._hz = hz;
   }
   cam(t) {
     const hz = this._hz, at = a => { const i = clamp(t * hz, 0, a.length - 1), i0 = Math.floor(i), i1 = Math.min(a.length - 1, i0 + 1); return lerp(a[i0], a[i1], i - i0); };
-    if (t <= this.Z0 || this.finale === 'none') return { y: at(this._cy), z: this.z0 };
-    const y0 = this._cy[this._cy.length - 1], k = easeInOut((t - this.Z0) / this.zoomDur);
-    if (this.finale === 'top') return { y: lerp(y0, this.camMin, k), z: this.z0 };
-    const zf = Math.min(this.z0, this.VHs / (this.pageH + 110 * this.u)), z = Math.exp(lerp(Math.log(this.z0), Math.log(zf), k));
-    const c0 = y0 + this.VHs / (2 * this.z0), c = lerp(c0, this.pageH / 2, k);
-    return { y: c - this.VHs / (2 * z), z };
+    const view = (cx, cy, z) => ({ x: cx - this.W / (2 * z), y: cy - this.VHs / (2 * z), z });
+    if (t <= this.Z0 || this.finale === 'none') return view(at(this._cx), at(this._cy), at(this._cz));
+    const L = this._cx.length - 1, cx0 = this._cx[L], cy0 = this._cy[L], z0 = this._cz[L], k = easeInOut((t - this.Z0) / this.zoomDur);
+    let cx, cy, zf;
+    if (this.finale === 'top') ({ cx, cy, z: zf } = this.view0);
+    else { const [a, b, c, d] = this.world; zf = Math.min(z0, (this.W - 2 * 70 * this.u) / (c - a), (this.VHs - 110 * this.u) / (d - b)); cx = (a + c) / 2; cy = (b + d) / 2 + 12 * this.u / zf; }
+    return view(lerp(cx0, cx, k), lerp(cy0, cy, k), Math.exp(lerp(Math.log(z0), Math.log(zf), k)));
   }
-  bgBottom(t) { if (t > this.F0) return lerp(this._bg[this._bg.length - 1], this.pageH, smooth(this.F0, this.F0 + .6, t)); const i = clamp(Math.round(t * this._hz), 0, this._bg.length - 1); return this._bg[i]; }
+  /** how much of board b is revealed: { h (rows of a growing page), a (opacity of a fixed board) } */
+  reveal(b, t) {
+    const fin = smooth(this.F0, this.F0 + .6, t);
+    if (b.grow) { const i = clamp(Math.round(t * this._hz), 0, b._bg.length - 1); return { h: lerp(b._bg[Math.min(i, b._bg.length - 1)], b.h, fin), a: 1 }; }
+    const k = Math.max(easeInOut((t - b.first + .55) / .5), fin);                 // a fixed board is dragged out like a frame
+    return { h: b.h * k, w: b.w * k, a: k > 0 ? 1 : 0 };
+  }
 
   /** per agent: spawn → (idle → travel → job)* → idle → into the HUD */
   _paths() {
@@ -280,17 +359,23 @@ export class Build {
       ag.segs = segs;
     }
   }
-  _clampView(p, t) {
-    const c = this.cam(t), z = c.z, top = c.y + 26 / z, bot = c.y + (this.VHs - 70 * this.u) / z;
-    const left = -this.ox(z) / z + 34 * this.u / z, right = (this.W - this.ox(z)) / z - 40 * this.u / z;
-    return [clamp(p[0], left, right), clamp(p[1], top, bot)];
+  /** keep an idle agent on screen; one left behind by the camera is carried along, spread inward by its own amount */
+  _clampView(p, t, ag) {
+    const c = this.cam(t), z = c.z, u = this.u, top = c.y + 26 / z, bot = c.y + (this.VHs - 70 * u) / z;
+    const left = c.x + 34 * u / z, right = c.x + (this.W - 40 * u) / z;
+    const f = ag ? ((ag.seed >>> 8) % 1000) / 1000 : 0, g2 = ag ? ((ag.seed >>> 18) % 1000) / 1000 : 0;
+    const inX = (40 + 260 * f) * u / z, inY = (30 + 200 * g2) * u / z, ramp = d => smooth(0, 160 * u / z, d);
+    let x = clamp(p[0], left, right), y = clamp(p[1], top, bot);
+    if (p[0] < left) x += inX * ramp(left - p[0]); else if (p[0] > right) x -= inX * ramp(p[0] - right);
+    if (p[1] < top) y += inY * ramp(top - p[1]); else if (p[1] > bot) y -= inY * ramp(p[1] - bot);
+    return [x, y];
   }
   /** where agent `ag` is at t: { x, y (screen px), mode: 'arrow'|'beam'|'grab', a (alpha), job } or null */
   agentAt(ag, t) {
     if (t < ag.spawn) return null;
     const c = this.cam(Math.min(t, this.F0)), scr = p => this.toScreen(p, c);
     if (t < ag.spawn + .75) { // burst out of the HUD
-      const k = easeOut((t - ag.spawn) / .75), h = [this.hud.x, this.hud.y], r = this.toScreen(ag.rest, { y: this.camMin, z: this.z0 });
+      const k = easeOut((t - ag.spawn) / .75), h = [this.hud.x, this.hud.y], r = this.toScreen(ag.rest, this.view0);
       const mid = [lerp(h[0], r[0], .5) + (r[0] - h[0]) * .25, Math.min(h[1], r[1]) - 60 * this.u];
       const q = (a, b, cc) => (1 - k) * (1 - k) * a + 2 * (1 - k) * k * cc + k * k * b;
       return { x: q(h[0], r[0], mid[0]), y: q(h[1], r[1], mid[1]), mode: 'arrow', a: smooth(0, .15, k) };
@@ -319,7 +404,7 @@ export class Build {
   _idle(ag, s, t) {
     const e = smooth(s.t0, s.t0 + .7, t) * (1 - smooth(s.t1 - .45, s.t1, t)), A = 12;
     const p = [s.p[0] + (n1(t * .55, ag.seed) - .5) * 2 * A * e, s.p[1] + (n1(t * .55 + 40, ag.seed) - .5) * 2 * A * e];
-    return this._clampView(p, t);
+    return this._clampView(p, t, ag);
   }
   _jobPos(job, t) {
     const op = job.op;
@@ -330,11 +415,11 @@ export class Build {
     if (op.kind === 'text') { const c = this._caret(op, t); return { p: [c[0] + 2, c[1]], mode: 'beam' }; }
     if (op.kind === 'image') {
       const carry = .7, k = easeInOut((t - job.t0) / carry), tgt = [op.x + op.w * .5, op.y + op.h * .5];
-      if (t < job.t0 + carry) return { p: [lerp(op.src[0], tgt[0], k), lerp(op.src[1], tgt[1], k) - Math.sin(k * Math.PI) * 40], mode: 'grab' };
+      if (t < job.t0 + carry) return { p: [lerp(op.srcPt[0], tgt[0], k), lerp(op.srcPt[1], tgt[1], k) - Math.sin(k * Math.PI) * 40], mode: 'grab' };
       const a = smooth(job.t0 + carry + .1, job.t0 + carry + .6, t);
       return { p: [lerp(tgt[0], job.to[0], a), lerp(tgt[1], job.to[1], a)], mode: 'arrow' };
     }
-    if (op.kind === 'line') { const k = easeInOut((t - job.t0 - .08) / (op.dur * .8)); return { p: [lerp(op.x1, op.x2, k), lerp(op.y1, op.y2, k)], mode: 'arrow' }; }
+    if (op.kind === 'line') { const k = easeInOut((t - job.t0 - .08) / (op.dur * .8)); return { p: [lerp(op.p1x, op.p2x, k), lerp(op.p1y, op.p2y, k)], mode: 'arrow' }; }
     if (op.kind === 'chips') { const c = job.chip, k = smooth(job.t0 + .2, job.t0 + .55, t); return { p: [lerp(c.x + c.w * .5, job.to[0], k), lerp(c.y + c.h * .55, job.to[1], k)], mode: 'arrow' }; }
     // paint / cells: hop from cell to cell, arriving at each one's time
     const tile = job.tile; let n = 0, lo = 0, hi = tile.length - 1;
@@ -355,7 +440,7 @@ export class Build {
 
   // ── drawing ──
   draw(t, sc = 1) {
-    const g = this.ctx, W = this.W, H = this.H, u = this.u, c = this.cam(t), z = c.z, ox = this.ox(z);
+    const g = this.ctx, W = this.W, H = this.H, u = this.u, c = this.cam(t), z = c.z, ox = -c.x * z;
     g.setTransform(sc, 0, 0, sc, 0, 0); g.globalAlpha = 1;
     g.fillStyle = ED.bg; g.fillRect(0, 0, W, H);
     // dot grid in page space (it scrolls with the page)
@@ -365,25 +450,40 @@ export class Build {
     }
     const P = () => g.setTransform(sc * z, 0, 0, sc * z, sc * ox, sc * (this.VT - c.y * z));
     P();
-    // the artboard: label, outline, shadow, and the page background revealed as the build grows
+    // the boards: label, dashed outline, then the background (a web page is revealed downward as it grows; others fade in)
     const a0 = .35 + .65 * smooth(.1, .8, t), fin = smooth(this.F0, this.F0 + .5, t);
-    g.save(); g.globalAlpha = a0;
-    setFont(g, { font: 'mono', size: 11 * u / z, weight: 500 }); g.fillStyle = ED.frameText; g.textBaseline = 'bottom';
-    g.fillText(`▢ ${this.pageName}`, 0, -9 * u / z);
-    g.textAlign = 'right'; g.fillText(`${this.PW} × ${Math.round(t > this.F0 ? this.pageH : Math.max(0, this.bgBottom(t)))}`, this.PW, -9 * u / z); g.textAlign = 'left';
-    g.setLineDash([5 / z, 5 / z]); g.strokeStyle = 'rgba(255,255,255,.16)'; g.lineWidth = 1 / z; g.strokeRect(0, 0, this.PW, this.pageH); g.setLineDash([]);
-    g.restore();
-    const bb = this.bgBottom(t);
-    if (bb > 1) {
-      g.save(); g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowBlur = 40 * z * sc * fin; g.fillStyle = this.pageBg; g.fillRect(0, 0, this.PW, bb); g.restore();
+    for (const b of this.boards) {
+      const rv = this.reveal(b, t);
+      g.save(); g.globalAlpha = a0;
+      setFont(g, { font: 'mono', size: 11 * u / z, weight: 500 }); g.fillStyle = ED.frameText; g.textBaseline = 'bottom';
+      if (b.side !== 'R' || this.doc !== 'book' || b === this.boards[0]) g.fillText(`▢ ${b.name}`, b.x, b.y - 9 * u / z);
+      else g.fillText(b.name, b.x + 8 * u / z, b.y - 9 * u / z);
+      g.textAlign = 'right'; g.fillText(`${b.w} × ${Math.round(b.grow ? (t > this.F0 ? b.h : Math.max(0, rv.h)) : b.h)}`, b.x + b.w, b.y - 9 * u / z); g.textAlign = 'left';
+      g.setLineDash([5 / z, 5 / z]); g.strokeStyle = 'rgba(255,255,255,.16)'; g.lineWidth = 1 / z; g.strokeRect(b.x, b.y, b.w, b.h); g.setLineDash([]);
+      g.restore();
+      if (rv.h > 1 && rv.a > 0) { g.save(); g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowBlur = 40 * z * sc * fin; g.fillStyle = b.bg; g.fillRect(b.x, b.y, rv.w ?? b.w, rv.h); g.restore(); }
     }
-    // the page content, in definition order
-    g.save(); g.beginPath(); g.rect(-2, -2, this.PW + 4, this.pageH + 4); g.clip();
-    for (const op of this.ops) if (t >= op.s) this._drawOp(g, op, t, z, sc);
-    g.restore();
+    // the content, board by board (clipped to its board), in definition order
+    for (const b of this.boards) {
+      g.save(); g.beginPath(); g.rect(b.x - 1, b.y - 1, b.w + 2, b.h + 2); g.clip();
+      for (const op of b.ops) if (t >= op.s) this._drawOp(g, op, t, z, sc);
+      if (b.side && this.doc === 'book') { // the spine: a soft shade where the page bends into the gutter
+        const rv = this.reveal(b, t), x = b.side === 'L' ? b.x + b.w : b.x, gr = g.createLinearGradient(x, 0, x + (b.side === 'L' ? -1 : 1) * b.w * .12, 0);
+        gr.addColorStop(0, 'rgba(60,40,20,.16)'); gr.addColorStop(1, 'rgba(60,40,20,0)'); g.globalAlpha = clamp((rv.h / b.h - .9) * 10); g.fillStyle = gr; g.fillRect(b.x, b.y, b.w, b.h);
+      }
+      g.restore();
+    }
     // editor overlays: selections, size tags, guides, click marks
     const over = 1 - fin;
-    if (over > 0) { g.save(); g.globalAlpha = over; for (const op of this.ops) if (t >= op.s && t <= op.e + .8) this._overlay(g, op, t, c); this._marks(g, t, z); g.restore(); }
+    if (over > 0) {
+      g.save(); g.globalAlpha = over;
+      for (const b of this.boards) if (!b.grow && t > b.first - .6 && t < b.first + .25) { // the board's own frame being dragged out
+        const rv = this.reveal(b, t), a = 1 - smooth(b.first - .05, b.first + .25, t); g.save(); g.globalAlpha *= a; g.strokeStyle = ED.sel; g.lineWidth = 1.5 / z; g.strokeRect(b.x, b.y, rv.w, rv.h);
+        this._sizeTag(g, `${Math.round(rv.w)} × ${Math.round(rv.h)}`, b.x + rv.w / 2, b.y + rv.h + 9 / z, z); g.restore();
+      }
+      for (const op of this.ops) if (t >= op.s && t <= op.e + .8) this._overlay(g, op, t, c);
+      this._marks(g, t, z); g.restore();
+    }
     // screen space: rulers, tool rail, agents, HUD
     g.setTransform(sc, 0, 0, sc, 0, 0);
     this._rulers(g, t, c);
@@ -461,7 +561,7 @@ export class Build {
     } else if (k === 'line') {
       const q = easeInOut((t - op.s - .08) / (op.dur * .8)); if (q <= 0) return;
       g.save(); g.strokeStyle = op.color || '#222'; g.lineWidth = op.width || 2; g.lineCap = 'round'; if (op.dash) g.setLineDash(op.dash);
-      g.beginPath(); g.moveTo(op.x1, op.y1); g.lineTo(lerp(op.x1, op.x2, q), lerp(op.y1, op.y2, q)); g.stroke(); g.restore();
+      g.beginPath(); g.moveTo(op.p1x, op.p1y); g.lineTo(lerp(op.p1x, op.p2x, q), lerp(op.p1y, op.p2y, q)); g.stroke(); g.restore();
     }
   }
   _fill(g, f, op) {
@@ -473,8 +573,17 @@ export class Build {
   _art(op, res) {
     const r = Math.max(.5, Math.ceil(Math.min(3, res) * 4) / 4), key = op.id + '@' + r;
     this._arts = this._arts || new Map();
-    if (!this._arts.has(key)) this._arts.set(key, renderArt(op.art, op.args, op.w, op.h, r, hash(op.id)));
+    if (!this._arts.has(key)) this._arts.set(key, op.src ? this._srcArt(op, r) : renderArt(op.art, op.args, op.w, op.h, r, hash(op.id)));
     return this._arts.get(key);
+  }
+
+  /** an image file drawn into the op's box: fit 'cover' (crop, default) or 'contain' (letterbox on op.bg) */
+  _srcArt(op, res) {
+    const img = this.images.get(op.src), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(op.w * res)); c.height = Math.max(1, Math.round(op.h * res));
+    const g = c.getContext('2d'); if (!img) return c;
+    const iw = img.naturalWidth, ih = img.naturalHeight, k = (op.fit === 'contain' ? Math.min : Math.max)(c.width / iw, c.height / ih);
+    if (op.bg) { g.fillStyle = op.bg; g.fillRect(0, 0, c.width, c.height); }
+    g.imageSmoothingQuality = 'high'; g.drawImage(img, (c.width - iw * k) / 2, (c.height - ih * k) / 2, iw * k, ih * k); return c;
   }
 
   _overlay(g, op, t, c) {
@@ -507,7 +616,7 @@ export class Build {
   }
   _guides(g, x0, y0, x1, y1, t, at, c) {
     const a = smooth(at - .25, at - .05, t) * (1 - smooth(at + .2, at + .55, t)); if (a <= 0) return;
-    const z = c.z, L = -this.ox(z) / z, Rr = (this.W - this.ox(z)) / z, T = c.y, B = c.y + this.VHs / z;
+    const z = c.z, L = c.x, Rr = c.x + this.W / z, T = c.y, B = c.y + this.VHs / z;
     g.save(); g.globalAlpha *= a * .85; g.strokeStyle = ED.guide; g.lineWidth = 1 / z; g.beginPath();
     for (const y of [y0, y1]) { g.moveTo(L, y); g.lineTo(Rr, y); }
     for (const x of [x0, x1]) { g.moveTo(x, T); g.lineTo(x, B); }
@@ -531,7 +640,7 @@ export class Build {
   }
 
   _rulers(g, t, c) {
-    const u = this.u, z = c.z, ox = this.ox(z), RH = this.RH, RW = this.RW, W = this.W, VT = this.VT, VB = this.VB;
+    const u = this.u, z = c.z, ox = -c.x * z, RH = this.RH, RW = this.RW, W = this.W, VT = this.VT, VB = this.VB;
     const majors = [50, 100, 200, 500, 1000, 2000], major = majors.find(m => m * z >= 72 * u) || 2000, minor = major / 10 * z >= 5 * u ? major / 10 : major / 5;
     const active = this.ops.filter(o => SEL_KINDS.has(o.kind) && t >= o.s && t <= o.e + .2).pop();
     const fin = 1 - smooth(this.F0, this.F0 + .5, t);
@@ -635,18 +744,20 @@ export class Build {
     const solid = this.ops.filter(o => ['text', 'image', 'chips', 'cells', 'paint'].includes(o.kind) && !o.overlap);
     for (let a = 0; a < solid.length; a++) for (let b = a + 1; b < solid.length; b++) if (ix(solid[a].box, solid[b].box, 1)) out.push(`overlap: ${solid[a].id} × ${solid[b].id}`);
     for (const o of this.ops) {
-      if (o.x0 < -.5 || o.x1 > this.PW + .5) out.push(`${o.id} sticks out of the page (x ${Math.round(o.x0)}…${Math.round(o.x1)}, page 0…${this.PW})`);
+      const bd = this.boards[o.board], rb = o.rbox, zb = this._fit(bd.group).z;
+      if (rb[0] < -.5 || rb[2] > bd.w + .5 || (!bd.grow && (rb[1] < -.5 || rb[3] > bd.h + .5))) out.push(`${o.id} sticks out of board ${bd.id} (x ${Math.round(rb[0])}…${Math.round(rb[2])}, y ${Math.round(rb[1])}…${Math.round(rb[3])}; board ${bd.w} × ${bd.grow ? 'auto' : bd.h})`);
       if (o.kind === 'text') {
-        if (o.st.size * this.z0 < 12) out.push(`${o.id}: ${o.st.size}px text is ${(o.st.size * this.z0).toFixed(1)} px on screen — too small to read (12+)`);
+        if (o.st.size * zb < 12) out.push(`${o.id}: ${o.st.size}px text is ${(o.st.size * zb).toFixed(1)} px on screen — too small to read (12+)`);
         if (o.h && o.bh > o.h + 1) out.push(`${o.id}: text needs ${Math.round(o.bh)} px but has h ${o.h}`);
         if (o.w && Math.max(...o.lw) > o.w + 1) out.push(`${o.id}: a line is wider than w ${o.w}`);
         if (/[가-힣]/.test(o.text)) { const miss = [...new Set(Array.from(o.text).filter(ch => /[가-힣]/.test(ch) && !KS.has(ch)))]; if (miss.length) out.push(`${o.id}: ${miss.join('')} not in the bundled Korean font (falls back to a system font) — reword`); }
         if (o.font === 'pixel' && /[^A-Za-z0-9 .,!?:\-+'/&#*%()♥·×$"=<>\n]/.test(o.text)) out.push(`${o.id}: the pixel font has no glyph for some characters`);
       }
       if (o.delay > .45) out.push(`${o.id} waited ${o.delay.toFixed(2)} s for a free agent — add agents, or start it later`);
-      const mid = (o.s + o.e) / 2, c = this.cam(mid), top = c.y, bot = c.y + this.VHp - 30;
-      const vis = (Math.min(o.y1, bot) - Math.max(o.y0, top)) / Math.max(1, Math.min(o.y1 - o.y0, this.VHp - 60));
-      if (o.y0 < top - 2 || vis < .8) out.push(`${o.id} is off screen while it is built (t ${mid.toFixed(1)}, y ${Math.round(o.y0)}…${Math.round(o.y1)}, view ${Math.round(top)}…${Math.round(bot)}) — build top-down, or sync() before a new section`);
+      const mid = (o.s + o.e) / 2, c = this.cam(mid), VHp = this.VHs / c.z, top = c.y, bot = c.y + VHp - 30, left = c.x, right = c.x + this.W / c.z;
+      const vis = (Math.min(o.y1, bot) - Math.max(o.y0, top)) / Math.max(1, Math.min(o.y1 - o.y0, VHp - 60));
+      const hv = (Math.min(o.x1, right) - Math.max(o.x0, left)) / Math.max(1, Math.min(o.x1 - o.x0, this.W / c.z - 60));
+      if (o.y0 < top - 2 || vis < .8 || hv < .8) out.push(`${o.id} is off screen while it is built (t ${mid.toFixed(1)}) — build top-down, sync() before a new section or board, or add a board`);
     }
     const idle = this.agents.filter(a => !a.jobs.length).length;
     if (idle > this.N * .4) out.push(`${idle} of ${this.N} agents never work — use fewer agents or more swarm ops`);
@@ -662,6 +773,10 @@ export class Build {
     const cv = document.createElement('canvas'); cv.width = Math.round(this.W * sc); cv.height = Math.round(this.H * sc);
     document.body.style.cssText = `margin:0;background:${ED.bg};overflow:hidden;height:100vh;display:grid;place-items:center`;
     document.body.appendChild(cv); this.ctx = cv.getContext('2d'); this.canvas = cv;
+    this.images = new Map();
+    await Promise.all([...new Set(this.ops.filter(o => o.src).map(o => o.src))].map(src => new Promise(res => {
+      const im = new Image(); im.onload = () => { this.images.set(src, im); res(); }; im.onerror = () => { console.error('image failed: ' + src); res(); }; im.src = new URL(src, location.href).href;
+    })));
     this._build(this.ctx);
     for (const op of this.ops) { // sound + click marks
       const add = (t, k, x, y, ag, extra) => { this.events.push({ t, k, ...extra }); if (x != null) this.clicks.push({ t, x, y, color: ag.color }); };
@@ -671,7 +786,7 @@ export class Build {
         else if (op.kind === 'text') { add(j.t0 + .2, 'click', j.from[0], j.from[1], ag); for (let n = 0; n < op.nChars; n++) this.events.push({ t: op.s + .3 + n / op.cps, k: 'key' }); }
         else if (op.kind === 'image') { this.events.push({ t: j.t0, k: 'whoosh' }); add(j.t0 + .7, 'drop', op.x + op.w / 2, op.y + op.h / 2, ag); }
         else if (op.kind === 'chips') add(j.t0 + .14, 'pop', j.chip.x + j.chip.w / 2, j.chip.y + j.chip.h / 2, ag);
-        else if (op.kind === 'line') add(j.t0 + .08, 'click', op.x1, op.y1, ag);
+        else if (op.kind === 'line') add(j.t0 + .08, 'click', op.p1x, op.p1y, ag);
         else for (const c of j.tile) this.events.push({ t: c.ta, k: 'tick', a: ag.i });
       }
     }
