@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>새벽빵 · Dawn Bakery — cursor swarm</title>
+<script type="importmap">{ "imports": { "cs/": "../../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// 새벽빵 · Dawn Bakery — the worked example of cursor-swarm. Written from BRIEF.md (read it first).
+import { Build, defineArt, pixelText, rrect, alpha } from 'cs/build.js';
+
+// ── palette (BRIEF §1) ──
+const K = { paper: '#f6eee1', ink: '#2b1d14', crust: '#c8742f', oven: '#e85d2a', wheat: '#e9c46a', card: '#fffaf2', line: '#e6d8c2', soft: '#efe3cf', mute: '#7a6553' };
+
+// ── pictures designed for this topic (BRIEF §2) ──
+// the hero: a dawn street, drawn on a 10 px grid so the swarm's 10 px cells reproduce it exactly
+defineArt('dawn-street', (g, w, h, a, R) => {
+  const P = 10, c = (x, y, col, cw = 1, ch = 1) => { g.fillStyle = col; g.fillRect(x * P, y * P, cw * P, ch * P); };
+  const sky = [['#1d2b53', 5], ['#33356e', 4], ['#5b3f86', 3], ['#a24f86', 3], ['#e0687a', 2], ['#f48d5c', 3], ['#f9b866', 10]];
+  let y = 0; for (const [col, n] of sky) { c(0, y, col, 81, n); y += n; }
+  y = 0; for (let b = 0; b < sky.length - 1; b++) { y += sky[b][1]; for (let x = (b % 2); x < 81; x += 2) c(x, y, sky[b][0]); } // dithered seams
+  for (let i = 0; i < 22; i++) { const x = Math.floor(R() * 81), y = i % 2 ? Math.floor(R() * 2) : 10 + Math.floor(R() * 3); c(x, y, i % 3 ? '#cfd6ff' : '#fff3c4'); } // stars clear of the lettering
+  for (let yy = -6; yy <= 0; yy++) for (let xx = -7; xx <= 7; xx++) if (xx * xx + yy * yy * 1.1 <= 46) c(62 + xx, 21 + yy, yy > -2 ? '#ffd27a' : '#ffe9a8');
+  pixelText(g, 'BAKED AT 5AM', 6 * P, 3 * P, P, '#141c3a'); pixelText(g, 'BAKED AT 5AM', 5 * P, 2 * P, P, '#fff3c4');
+  // houses left and right: dark roofs, a few lit windows
+  const house = (x0, wd, top, roof) => { c(x0, top, roof, wd, 30 - top); for (let r = top + 2; r < 27; r += 3) for (let q = x0 + 1; q < x0 + wd - 1; q += 3) if (R() < .45) c(q, r, '#ffd27a'); };
+  house(0, 9, 16, '#2a2140'); house(9, 7, 19, '#352a4e'); house(16, 10, 14, '#2a2140'); house(53, 8, 18, '#352a4e'); house(61, 11, 15, '#2a2140'); house(72, 9, 17, '#352a4e');
+  // the bakery: brick wall, sign plank, striped awning, a big lit window with loaves, a door
+  c(27, 15, '#8a4b2e', 25, 15); for (let r = 16; r < 28; r += 2) for (let q = 27 + (r % 4 ? 1 : 0); q < 52; q += 4) c(q, r, '#7a3f26', 2, 1);
+  c(44, 12, '#5a3424', 3, 4); c(29, 16, '#3a2618', 21, 3); for (let q = 31; q < 48; q += 2) c(q, 17, '#ffcf6b');
+  for (let q = 26; q < 53; q++) c(q, 19, Math.floor((q - 26) / 2) % 2 ? '#fff3e0' : K.oven, 1, 2); for (let q = 26; q < 53; q += 2) c(q, 21, K.oven);
+  c(29, 22, '#ffcf6b', 13, 6); c(29, 22, '#ffe39e', 13, 1);
+  for (const [x, yy] of [[30, 25], [34, 24], [38, 25]]) { c(x, yy, K.crust, 3, 2); c(x, yy, '#e0a458', 3, 1); }
+  c(44, 22, '#3a2618', 5, 8); c(47, 25, '#ffcf6b');
+  // steam from the chimney, drifting up and right
+  for (const [x, yy] of [[45, 11], [44, 11], [46, 10], [47, 10], [48, 10], [49, 11]]) c(x, yy, '#efe3f5');
+  c(0, 28, '#2b2236', 81, 2); for (let q = 0; q < 81; q += 6) c(q, 28, '#4a3b55', 3, 1);
+});
+const linen = (g, w, h, base = '#efe2cc') => { g.fillStyle = base; g.fillRect(0, 0, w, h); const gr = g.createRadialGradient(w * .35, h * .3, 0, w * .5, h * .5, w * .8); gr.addColorStop(0, 'rgba(255,250,240,.75)'); gr.addColorStop(1, 'rgba(120,80,40,.12)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); };
+const shadow = (g, x, y, rx, ry) => { g.fillStyle = 'rgba(70,40,15,.22)'; g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, 7); g.fill(); };
+const bun = (g, x, y, rx, ry, rot, light, mid, dark) => {
+  g.save(); g.translate(x, y); g.rotate(rot); const gr = g.createRadialGradient(-rx * .35, -ry * .45, 0, 0, 0, Math.max(rx, ry) * 1.1);
+  gr.addColorStop(0, light); gr.addColorStop(.55, mid); gr.addColorStop(1, dark); g.fillStyle = gr; g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, 7); g.fill(); g.restore();
+};
+defineArt('croissant', (g, w, h) => {
+  linen(g, w, h); shadow(g, w * .5, h * .74, w * .36, h * .07);
+  const cx = w * .5, cy = h * .5;
+  for (const i of [-3, 3, -2, 2, -1, 1, 0]) {
+    const k = Math.abs(i), x = cx + i * w * .085, y = cy + k * k * h * .022 - (k ? 0 : h * .02);
+    bun(g, x, y, w * (.1 - k * .014), h * (.2 - k * .03), i * .32, '#f8c97e', '#d98b3a', '#8f4614');
+    if (k) { g.strokeStyle = 'rgba(110,50,15,.55)'; g.lineWidth = 1.6; g.beginPath(); g.ellipse(x - Math.sign(i) * w * .035, y, w * .02, h * (.16 - k * .03), i * .32, -1.2, 1.2); g.stroke(); }
+  }
+  g.fillStyle = 'rgba(255,240,200,.55)'; g.beginPath(); g.ellipse(cx - w * .03, cy - h * .12, w * .04, h * .025, -.3, 0, 7); g.fill();
+});
+defineArt('campagne', (g, w, h, a, R) => {
+  linen(g, w, h, '#e9dcc4');
+  g.fillStyle = '#a8754a'; rrect(g, w * .1, h * .7, w * .8, h * .14, 8); g.fill(); g.fillStyle = '#8c5d36'; g.fillRect(w * .1, h * .8, w * .8, h * .04);
+  shadow(g, w * .5, h * .7, w * .34, h * .06);
+  bun(g, w * .5, h * .48, w * .33, h * .27, 0, '#d9a066', '#a8622c', '#5e3014');
+  g.strokeStyle = '#efcf9a'; g.lineWidth = 3; g.lineCap = 'round';
+  for (const s of [-1, 1]) { g.beginPath(); g.moveTo(w * .5 + s * w * .2, h * .3); g.quadraticCurveTo(w * .5 + s * w * .02, h * .48, w * .5 + s * w * .2, h * .66); g.stroke(); }
+  g.beginPath(); g.moveTo(w * .32, h * .48); g.quadraticCurveTo(w * .5, h * .4, w * .68, h * .48); g.stroke();
+  g.fillStyle = 'rgba(255,255,255,.7)'; for (let i = 0; i < 160; i++) { const x = w * (.22 + R() * .56), y = h * (.25 + R() * .2); g.fillRect(x, y, 1.3, 1.3); }
+});
+defineArt('saltbread', (g, w, h, a, R) => {
+  linen(g, w, h, '#ece0ca');
+  for (const [x, y, s] of [[.32, .56, .8], [.66, .5, 1]]) {
+    shadow(g, w * x, h * (y + .17 * s), w * .2 * s, h * .05);
+    bun(g, w * x, h * y, w * .2 * s, h * .19 * s, -.1, '#f4cf8e', '#d7934a', '#9a5320');
+    g.strokeStyle = 'rgba(120,60,20,.5)'; g.lineWidth = 1.8;
+    for (const o of [-.45, 0, .45]) { g.beginPath(); g.ellipse(w * (x + o * .2 * s), h * y, w * .03 * s, h * .16 * s, .25, -1.3, 1.3); g.stroke(); }
+    g.fillStyle = '#ffffff'; for (let i = 0; i < 14; i++) g.fillRect(w * (x - .12 * s + R() * .24 * s), h * (y - .14 * s + R() * .08 * s), 2.2, 2.2);
+  }
+});
+defineArt('oven', (g, w, h, a, R) => {
+  g.fillStyle = '#3a2a24'; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#2c1f1a'; for (let y = 0; y < h; y += 16) { g.fillRect(0, y, w, 2); for (let x = (y / 16) % 2 ? 0 : 20; x < w; x += 40) g.fillRect(x, y, 2, 16); }
+  const cx = w * .5, cy = h * .62, r = w * .34;
+  g.fillStyle = '#7a4a34'; g.beginPath(); g.arc(cx, cy, r + 14, Math.PI, 0); g.lineTo(cx + r + 14, cy + 20); g.lineTo(cx - r - 14, cy + 20); g.fill();
+  g.fillStyle = '#140b07'; g.beginPath(); g.arc(cx, cy, r, Math.PI, 0); g.lineTo(cx + r, cy + 14); g.lineTo(cx - r, cy + 14); g.fill();
+  const gl = g.createRadialGradient(cx - r * .3, cy + 6, 0, cx - r * .3, cy + 6, r * 1.1); gl.addColorStop(0, 'rgba(255,190,90,.95)'); gl.addColorStop(.35, 'rgba(232,93,42,.6)'); gl.addColorStop(1, 'rgba(232,93,42,0)');
+  g.fillStyle = gl; g.beginPath(); g.arc(cx, cy, r, Math.PI, 0); g.lineTo(cx + r, cy + 14); g.lineTo(cx - r, cy + 14); g.fill();
+  for (let i = 0; i < 5; i++) { const x = cx - r * .62 + i * r * .13, s = 1 - Math.abs(i - 2) * .22; g.fillStyle = i % 2 ? '#ffd27a' : '#ff9a3d'; g.beginPath(); g.moveTo(x, cy + 12); g.quadraticCurveTo(x - 10 * s, cy - 4, x + 2, cy - 34 * s); g.quadraticCurveTo(x + 12 * s, cy - 6, x + 6, cy + 12); g.fill(); }
+  g.fillStyle = '#b07a48'; g.save(); g.translate(cx + r * .2, cy + 4); g.rotate(-.08); rrect(g, -r * .2, -6, r * .95, 12, 6); g.fill(); g.fillRect(r * .7, -4, w, 8); g.restore();
+  bun(g, cx + r * .08, cy - 6, r * .16, r * .1, 0, '#e0a458', '#b06a2a', '#6d3916'); bun(g, cx + r * .48, cy - 6, r * .16, r * .1, 0, '#e0a458', '#b06a2a', '#6d3916');
+  g.fillStyle = 'rgba(255,170,80,.18)'; g.fillRect(0, cy + 20, w, h);
+});
+
+// ── the build (BRIEF §1, §3) ──
+const B = new Build({
+  title: '새벽빵 · Dawn Bakery', url: 'saebyeokppang.kr', prompt: '망원동 새벽빵집 홈페이지 만들어줘 — 따뜻하고, 빵 냄새 나게',
+  page: { w: 860, bg: K.paper }, agents: 28,
+  names: ['flour', 'yeast', 'salt', 'levain', 'crumb', 'crust', 'butter', 'proof', 'knead', 'rye', 'oven', 'glaze', 'steam', 'sugar'],
+});
+
+B.section('nav');
+B.rect('nav-bar', { x: 0, y: 0, w: 860, h: 72, fill: '#fbf6ee', line: K.line });
+B.text('logo', { x: 36, y: 18, text: '새벽빵', font: 'serif', size: 28, weight: 700, color: K.ink });
+B.text('logo-en', { x: 128, y: 30, text: 'DAWN BAKERY', font: 'mono', size: 12, weight: 600, color: K.crust, track: .12 });
+['빵', '굽는 시간', '오시는 길'].forEach((s, i) => B.text('nav-' + i, { x: [452, 506, 608][i], y: 25, text: s, size: 16, color: K.ink, next: .12 }));
+B.button('nav-cta', { x: 728, y: 17, w: 96, h: 38, label: '예약', fill: K.oven, color: '#fff', size: 15 });
+B.sync(.15);
+
+B.section('hero');
+B.paint('hero', { x: 25, y: 96, w: 810, h: 300, art: 'dawn-street', px: 10, dur: 3.6 });
+B.sync(.1);
+
+B.section('intro');
+B.text('kicker', { x: 36, y: 428, text: 'SINCE 2019 · MANGWON-DONG', font: 'mono', size: 13, weight: 600, color: K.crust, track: .08 });
+B.text('headline', { x: 36, y: 452, w: 500, text: '새벽 다섯 시,\n첫 판이 나옵니다.', font: 'serif', size: 44, weight: 700, color: K.ink, lh: 1.25, next: .5 });
+B.image('oven', { x: 556, y: 428, w: 268, h: 278, r: 16, art: 'oven', file: 'oven.jpg', with: 'headline', delay: .2 });
+B.text('para', { x: 36, y: 580, w: 480, text: '밀가루와 물, 소금, 그리고 열여섯 시간. 매일 새벽 두 명의 제빵사가 천연 발효종으로 반죽을 깨우고, 문을 열기 전 마지막 빵을 오븐에서 꺼냅니다.', size: 16, color: K.mute, lh: 1.6 });
+B.chips('promise', { x: 36, y: 676, w: 480, items: ['천연 발효종', '국산 밀 70%', '하루 120개 한정'], size: 14, bg: K.soft, fg: K.ink, dot: K.oven, h: 32 });
+B.sync(.1);
+
+B.section('menu');
+B.text('menu-h', { x: 36, y: 760, text: '오늘의 빵', font: 'serif', size: 32, weight: 700, color: K.ink });
+B.text('menu-date', { x: 600, y: 776, w: 224, align: 'right', text: "TODAY'S BAKE · 3 / 12", font: 'mono', size: 12, weight: 600, color: K.crust, with: 'menu-h', delay: .2 });
+const menu = [['croissant', '크루아상', '버터 스물일곱 겹, 바삭한 결', '4,200원', '06:30'], ['campagne', '캄파뉴', '열여섯 시간 발효한 시골빵', '7,500원', '07:00'], ['saltbread', '소금빵', '버터 한 조각과 굵은 소금', '3,000원', '07:30']];
+menu.forEach(([art], i) => B.rect('card-' + i, { x: 36 + i * 276, y: 826, w: 236, h: 316, r: 16, fill: K.card, line: K.line, shadow: 'rgba(90,60,30,.12)', next: .15 }));
+menu.forEach(([art], i) => B.image('img-' + i, { x: 48 + i * 276, y: 838, w: 212, h: 156, r: 10, art, file: art + '.jpg', with: 'card-' + i, delay: .75, next: .1 }));
+B.wait(.5);
+menu.forEach(([, name, note, price, time], i) => {
+  const x = 54 + i * 276;
+  B.text('name-' + i, { x, y: 1010, text: name, font: 'serif', size: 22, weight: 700, color: K.ink, next: .12 });
+  B.text('note-' + i, { x, y: 1046, w: 200, text: note, size: 14, color: K.mute, next: .12 });
+  B.text('price-' + i, { x, y: 1094, text: price, font: 'mono', size: 16, weight: 700, color: K.ink, next: .1 });
+  B.text('time-' + i, { x: x + 100, y: 1096, w: 100, align: 'right', text: time, font: 'mono', size: 13, weight: 600, color: K.oven, next: .12 });
+});
+B.sync(.1);
+
+B.section('oven hours');
+B.text('hours-h', { x: 36, y: 1220, text: '굽는 시간표', font: 'serif', size: 32, weight: 700, color: K.ink });
+B.text('hours-sub', { x: 36, y: 1268, text: '오븐이 가장 바쁜 시간 — 색이 진할수록 갓 나온 빵이 많아요.', size: 15, color: K.mute, with: 'hours-h', delay: .3 });
+[5, 8, 11, 14, 17, 20].forEach((hr, i) => B.text('hr-' + hr, { x: 104 + i * 3 * 38, y: 1298, text: String(hr).padStart(2, '0') + ':00', font: 'mono', size: 12, color: K.mute, next: .06 }));
+B.text('days', { x: 44, y: 1320, text: '월\n화\n수\n목\n금\n토\n일', size: 14, weight: 600, color: K.ink, lh: 38 / 14, cps: 20, with: 'hr-5' });
+const heat = [.95, .85, .7, .45, .35, .3, .75, .7, .4, .3, .65, .55, .25, .2, .15, .08];
+B.cells('oven-grid', {
+  x: 104, y: 1322, cols: 16, rows: 7, cell: 32, gap: 6, r: 6, empty: K.soft, dur: 2.8,
+  color: (i, j, R) => j === 0 ? null : ['#f3dcc0', '#eeb98a', '#e48a4f', '#d0612a', '#9c3d14'][Math.max(0, Math.min(4, Math.round((heat[i] + (j >= 5 ? .1 : 0) + (R() - .5) * .22) * 4)))],
+});
+B.text('legend', { x: 104, y: 1596, text: '월요일은 오븐도 쉬어요 · 화–일 05:00 – 20:00', font: 'mono', size: 12, color: K.mute });
+B.sync(.1);
+
+B.section('visit');
+B.text('visit-h', { x: 36, y: 1670, text: '오시는 길', font: 'serif', size: 32, weight: 700, color: K.ink });
+B.image('map', { x: 36, y: 1732, w: 480, h: 270, r: 14, art: 'map', args: { land: '#efe6d6', water: '#b9d7e6', park: '#c7dfb0', pin: K.oven, px: .55, py: .45 }, file: 'map.png', reveal: 'scan' });
+B.text('addr-l', { x: 548, y: 1736, text: 'ADDRESS', font: 'mono', size: 12, weight: 700, color: K.crust, track: .1, with: 'map', delay: .3 });
+B.text('addr', { x: 548, y: 1758, w: 276, text: '서울 마포구 망원로 새벽길 5, 1층 (망원역 2번 출구에서 6분)', size: 16, color: K.ink, lh: 1.5 });
+B.text('time-l', { x: 548, y: 1836, text: 'HOURS', font: 'mono', size: 12, weight: 700, color: K.crust, track: .1 });
+B.text('times', { x: 548, y: 1856, text: '화–일   05:00 – 20:00\n월      쉬어요', font: 'mono', size: 15, color: K.ink, lh: 1.6 });
+B.text('first', { x: 548, y: 1914, w: 276, text: '첫 판은 5시 30분, 소금빵은 7시 30분에 나와요.', size: 14, color: K.mute, lh: 1.5 });
+B.button('book', { x: 548, y: 1958, w: 200, h: 46, label: '예약하기 →', fill: K.oven, color: '#fff', size: 16 });
+B.sync(.1);
+
+B.section('footer');
+B.line('rule', { x1: 36, y1: 2060, x2: 824, y2: 2060, color: K.line, width: 1.5 });
+B.text('signoff', { x: 36, y: 2090, w: 788, align: 'center', text: '여기까지 내려오셨다면, 내일 새벽에 만나요.', font: 'serif', size: 26, weight: 600, italic: true, color: K.ink });
+B.text('pixel-bye', { x: 36, y: 2140, w: 788, align: 'center', text: 'SEE YOU AT 5AM', font: 'pixel', size: 28, color: K.oven, cps: 12 });
+B.text('credit', { x: 36, y: 2200, w: 788, align: 'center', text: '© 2026 새벽빵 · built live by 28 agents', font: 'mono', size: 12, color: K.mute });
+
+B.start();
+</script>
+</body>
+</html>

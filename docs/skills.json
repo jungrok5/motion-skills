@@ -787,6 +787,46 @@
           "url": "https://jungrok5.github.io/motion-skills/live-character/demo/examples/haru/"
         }
       ]
+    },
+    {
+      "id": "cursor-swarm",
+      "name": "cursor-swarm",
+      "tagline": "주제 하나를 주면 그 주제의 웹사이트를 새로 설계하고, 어두운 디자인 에디터에서 색색의 커서 수십 개가 박스를 끌어 그리고, 글을 타이핑하고, 사진 파일을 끌어다 놓고, 픽셀 배너와 히트맵을 한 칸씩 칠해 페이지를 함께 완성하는 영상을 코드만으로 만듭니다. 마지막엔 게시되며 전체 페이지로 줌아웃하고, 효과음을 합성한 MP4와 라이브 페이지를 냅니다.",
+      "posterAlt": "cursor-swarm으로 만든 장면 네 개: 커서들이 BAKED AT 5AM 픽셀 배너가 걸린 빵집 페이지에서 제목을 타이핑하고 오븐 사진을 놓는 모습, 같은 화면의 다른 순간, 커서 군단이 요일 × 시간 오븐 히트맵을 한 칸씩 채우는 모습, 완성된 새벽빵 홈페이지 전체와 초록색 live 상태 창",
+      "poster": "cursor-swarm/poster.jpg",
+      "tags": [
+        "Canvas 2D",
+        "4:5",
+        "라이브 페이지",
+        "MP4 · 효과음",
+        "커서 군단"
+      ],
+      "stats": [
+        "예제 35초 · 7섹션 · 커서 28개",
+        "작업 58개 → 일감 99개"
+      ],
+      "page": "cursor-swarm/",
+      "source": "cursor-swarm/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "cursor-swarm/examples/bakery/"
+      },
+      "sources": [
+        {
+          "title": "AlexZ의 X 게시물 (\"Computer use 需要进化到鼠标集群\")",
+          "url": "https://x.com/blackanger/status/2118043007413104810"
+        },
+        {
+          "title": "harshit의 X 게시물 (Craziest Website Reveal ever, 원본 영상)",
+          "url": "https://x.com/hrstwt/status/2117947212936392958"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「새벽빵 · Dawn Bakery」 · 35초 · 7섹션 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/cursor-swarm/demo/bakery/"
+        }
+      ]
     }
   ]
 }

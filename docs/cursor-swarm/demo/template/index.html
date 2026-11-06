@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Small Hours Fest — cursor swarm</title>
+<script type="importmap">{ "imports": { "cs/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// TEMPLATE — a small 3-section page (a one-night indie music festival, dark page) to show the API and the topic swap.
+// It is an example of the style, not a form to fill: write BRIEF.md for YOUR topic first (references/BRIEF.md),
+// then replace every block, word, colour and picture below with what the brief says. Keep only the structure:
+//   new Build({...}) → per section: B.section(name), ops, B.sync() → B.start()
+import { Build, defineArt } from 'cs/build.js';
+
+const K = { bg: '#0f0d1a', ink: '#f4f0ff', mute: '#a59cc4', neon: '#ff4fd8', lime: '#c6ff4a', panel: '#1b1730', line: '#2d2650' };
+
+// a picture designed for the topic: a moon over a stage, drawn in code (see references/KIT.md · defineArt)
+defineArt('moon-stage', (g, w, h, a, R) => {
+  const sky = g.createLinearGradient(0, 0, 0, h); sky.addColorStop(0, '#1a1240'); sky.addColorStop(1, '#3a1a5c'); g.fillStyle = sky; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 60; i++) { g.fillStyle = `rgba(255,255,255,${.3 + R() * .6})`; g.fillRect(R() * w, R() * h * .6, 1.6, 1.6); }
+  g.fillStyle = '#ffe9b0'; g.beginPath(); g.arc(w * .72, h * .3, h * .14, 0, 7); g.fill();
+  g.fillStyle = '#0b0918'; g.fillRect(0, h * .78, w, h * .22);
+  for (let i = 0; i < 4; i++) { const x = w * (.18 + i * .2); const gr = g.createLinearGradient(x, h * .78, x, 0); gr.addColorStop(0, 'rgba(255,79,216,.55)'); gr.addColorStop(1, 'rgba(255,79,216,0)'); g.fillStyle = gr; g.beginPath(); g.moveTo(x - 6, h * .78); g.lineTo(x + 6, h * .78); g.lineTo(x + 60 * (i - 1.5), 0); g.lineTo(x + 60 * (i - 1.5) - 40, 0); g.fill(); }
+});
+
+const B = new Build({
+  title: 'Small Hours Fest', url: 'smallhours.fest', prompt: 'make a one-page site for a midnight indie music festival',
+  page: { w: 860, bg: K.bg }, agents: 20,
+});
+
+B.section('hero');
+B.rect('hero-bg', { x: 0, y: 0, w: 860, h: 300, fill: { stops: ['#2a1356', '#0f0d1a'], angle: 90 } });
+B.paint('title', { x: 40, y: 40, w: 780, h: 112, art: 'pixel-text', args: { text: 'SMALL HOURS', fg: K.neon, cell: 8 }, px: 8, dur: 2.6 });
+B.text('date', { x: 40, y: 180, text: 'SAT 08.15 · 23:00 – 05:00 · 문래 창작촌', font: 'mono', size: 15, weight: 600, color: K.lime, track: .06 });
+B.text('lead', { x: 40, y: 214, w: 520, text: 'Six bands, one rooftop, no sleep. 새벽까지 이어지는 옥상 공연.', size: 18, color: K.ink, lh: 1.45 });
+B.sync(.1);
+
+B.section('lineup');
+B.text('lineup-h', { x: 40, y: 340, text: 'Lineup', font: 'serif', size: 36, weight: 700, color: K.ink });
+B.image('poster', { x: 500, y: 340, w: 320, h: 220, r: 14, art: 'moon-stage', file: 'stage.png', with: 'lineup-h', delay: .2 });
+B.chips('bands', { x: 40, y: 400, w: 430, items: ['Neon Gulls', 'Paper Moon Club', '새벽배송', 'Low Tide', 'Static Bloom', 'Kite Radio'], size: 15, bg: K.panel, fg: K.ink, line: K.line, dot: K.neon, h: 36 });
+B.text('note', { x: 40, y: 512, w: 430, text: 'Doors at 22:30. Last train home is at 23:40 — we run shuttles at 05:10.', size: 15, color: K.mute, lh: 1.5 });
+B.sync(.1);
+
+B.section('tickets');
+B.line('rule', { x1: 40, y1: 600, x2: 820, y2: 600, color: K.line, width: 1.5 });
+B.text('price', { x: 40, y: 630, text: '39,000원', font: 'mono', size: 34, weight: 700, color: K.ink });
+B.button('buy', { x: 600, y: 630, w: 220, h: 50, label: 'Get tickets →', fill: K.neon, color: '#14061a', size: 17, weight: 700 });
+B.text('fine', { x: 40, y: 680, text: 'incl. a drink and the 05:10 shuttle', size: 14, color: K.mute });
+
+B.start();
+</script>
+</body>
+</html>
