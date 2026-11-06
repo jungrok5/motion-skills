@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>parallax-facade · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 망원 렌즈로 보면 한 장의 평면 그림 같은 3D 거리를 만들고, 돌리 줌으로 그 틈을 열어 숨은 골목과 먼 랜드마크를 드러냈다가 다시 평면으로 돌아오는 8초 루프 영상을 코드만으로 만듭니다.">
+<meta property="og:title" content="parallax-facade · motion-skills">
+<meta property="og:description" content="주제 하나를 주면 망원 렌즈로 보면 한 장의 평면 그림 같은 3D 거리를 만들고, 돌리 줌으로 그 틈을 열어 숨은 골목과 먼 랜드마크를 드러냈다가 다시 평면으로 돌아오는 8초 루프 영상을 코드만으로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/parallax-facade/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/parallax-facade">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / parallax-facade</nav>
+  <h1>parallax-facade</h1>
+  <p>주제 하나를 주면 망원 렌즈로 보면 한 장의 평면 그림 같은 3D 거리를 만들고, 돌리 줌으로 그 틈을 열어 숨은 골목과 먼 랜드마크를 드러냈다가 매 박자 다시 평면으로 돌아오는 8초 루프 영상을 코드만으로 만듭니다. 파스텔과 잉크 외곽선 두 가지 마감, 움직일 때마다 모션 블러, 카메라 움직임에 맞춘 휙 소리와 비트를 붙인 MP4와 브라우저에서 도는 페이지를 냅니다.
+  보고 만든 원본: <a href="https://x.com/lemomo_ai/status/2118516216180740585" target="_blank" rel="noopener">lemomo_ai의 X 게시물 (시각차 영상 두 편)</a>, 게시물이 밝힌 원래 디자인은 <a href="https://x.com/garments__" target="_blank" rel="noopener">@garments__</a>.</p>
+  <ul class="tags"><li>three.js</li><li>16:9 · 9:16</li><li>8초 루프</li><li>MP4</li><li>라이브 페이지</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나 (동네, 거리, 항구, 캠퍼스, 상상의 마을 …)</dd>
+      <dt>브리프</dt><dd>장소와 건물 말투, 앞줄, 틈, 평면에서 틈을 메우는 것, 지붕선 위로 보이는 랜드마크, 팔레트, 움직이는 것, 박자, 소리</dd>
+      <dt>장면</dt><dd>부품 키트로 짓는 3D 마을, 지붕선 아래로 숨긴 뒤쪽 마을(F.hide), 1초마다 평면 ↔ 돌리 줌 · 크레인 · 궤도</dd>
+      <dt>검사</dt><dd>이음매 없는 루프, 평면 화면을 채우는지, 랜드마크가 보이고 3배 이상 작아지는지, 벽에 붙은 카메라</dd>
+      <dt>출력</dt><dd>1920×1080 MP4(반복 횟수 선택), 소리 나는 라이브 페이지, BRIEF.md</dd>
+    </dl>
+    <pre><code>cd parallax-facade/examples/hanok-alley
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs index.html --sheet 9 --scale .4 --q blur=1
+node ../../scripts/score.mjs --mp3
+node ../../scripts/render.mjs index.html --audio out/loop.wav
+
+node ../../scripts/new-film.mjs ~/my-loop   # 새 루프</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. npm 설치, GPU, API 키는 필요 없습니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/parallax-facade/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10.2;--h-phone:300px;--demo-bg:#0d0d14">
+    <iframe data-src="demo/hanok-alley/?scale=.5&amp;autoplay=1" title="parallax-facade 예제 실시간 재생" allow="fullscreen; autoplay" allowfullscreen></iframe>
+    <noscript><a href="demo/hanok-alley/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/hanok-alley</code> · 잉크 · 8초 루프 · "sound on"으로 소리</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/hanok-alley/?scale=.5&amp;autoplay=1" data-cap="예제 &lt;code&gt;examples/hanok-alley&lt;/code&gt; · 잉크 · 8초 루프 · &quot;sound on&quot;으로 소리" aria-pressed="true">한옥 골목</button>
+        <button class="btn" type="button" data-src="demo/clock-square/?scale=.5&amp;autoplay=1" data-cap="템플릿 &lt;code&gt;templates/film.html&lt;/code&gt; · 파스텔 · 8초 루프 · &quot;sound on&quot;으로 소리" aria-pressed="false">시계탑 광장</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제와 템플릿의 박자별 장면입니다. 카드를 누르면 라이브 데모가 그 순간에서 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"ex":"예제 · 한옥 골목","tpl":"템플릿 · 시계탑 광장"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>Hanok Alley <small>예제 · 잉크 · 8초</small></h3>
+      <p>원본에 없는 주제로 만든 예제입니다. 기와 한옥 앞줄, 틈을 메운 나무 대문, 지붕선 위의 방송탑이 한 장의 그림처럼 보이다가 감나무와 전깃줄이 늘어선 골목으로 열립니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="ex" href="demo/hanok-alley/?t=0.29" target="_blank" rel="noopener">
+          <img src="samples/h-flat.jpg" alt="평면처럼 보이는 정면: 기와 한옥 두 채 사이 나무 대문, 그 위로 언덕의 흰 방송탑과 구름, 전봇대와 감나무" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">평면 · 0.3초</span><b>한 장의 그림</b><span class="how">화각 6°, 눈높이를 지붕선에, 틈은 대문이 메움</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/hanok-alley/?t=0.79" target="_blank" rel="noopener">
+          <img src="samples/h-dolly.jpg" alt="돌리 줌 도중의 모션 블러: 앞줄은 그대로이고 골목 안쪽이 뒤로 빨려 들어감" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">이동 · 0.8초</span><b>돌리 줌</b><span class="how">화각을 넓히며 다가가 앞줄 크기는 고정, 서브프레임 모션 블러</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/hanok-alley/?t=1.29" target="_blank" rel="noopener">
+          <img src="samples/h-deep.jpg" alt="골목 정면: 전깃줄과 감나무가 늘어선 긴 돌길 끝의 대문, 멀리 작게 보이는 방송탑" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">깊이 · 1.3초</span><b>틈은 골목이었다</b><span class="how">대문은 26 m 뒤, 방송탑은 150 m 뒤에서 6배 작아짐</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/hanok-alley/?t=2.29" target="_blank" rel="noopener">
+          <img src="samples/h-high.jpg" alt="높은 곳에서 내려다본 골목: 홍등이 걸린 전깃줄, 감나무, 대문, 끝없이 이어지는 기와지붕" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">조감 · 2.3초</span><b>지붕 아래 숨은 동네</b><span class="how">뒤쪽 집은 모두 평면 화면의 지붕선 아래 높이(F.hide)</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/hanok-alley/?t=3.29" target="_blank" rel="noopener">
+          <img src="samples/h-rise.jpg" alt="조금 올라간 시점으로 본 골목 입구: 전봇대, 감나무, 홍등" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">크레인 · 3.3초</span><b>골목 위로</b><span class="how">피벗을 골목 안 0.4H로, 16° 내려다봄</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/hanok-alley/?t=5.29" target="_blank" rel="noopener">
+          <img src="samples/h-right.jpg" alt="오른쪽으로 돈 시점: 비스듬히 보이는 한옥 줄과 길 위의 작은 차" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">궤도 · 5.3초</span><b>오른쪽으로</b><span class="how">낮은 마을에 맞춰 줌 1.3, 18°로 덮어씀</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/hanok-alley/?t=7.29" target="_blank" rel="noopener">
+          <img src="samples/h-left.jpg" alt="왼쪽으로 돈 시점: 한옥 지붕 너머 골목과 카페 건물" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">궤도 · 7.3초</span><b>왼쪽으로, 그리고 평면</b><span class="how">0.42초 만에 처음 그림으로 돌아와 이음매 없이 반복</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>Clock Square <small>템플릿 · 파스텔 · 8초</small></h3>
+      <p>새 루프의 출발점입니다. 파스텔 상점 줄, 30 m 뒤의 문, 82 m 뒤의 시계탑이 한 장의 그림으로 겹칩니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="tpl" href="demo/clock-square/?t=0.29" target="_blank" rel="noopener">
+          <img src="samples/c-flat.jpg" alt="평면처럼 보이는 파스텔 상점 줄, 가운데 문과 그 위 시계탑" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">평면 · 0.3초</span><b>상점 줄과 시계탑</b><span class="how">soft 마감: 외곽선 없이 라벤더 그늘과 그림자</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/clock-square/?t=1.29" target="_blank" rel="noopener">
+          <img src="samples/c-deep.jpg" alt="가로수 길 끝의 문과 작은 시계탑, 구름" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">깊이 · 1.3초</span><b>가로수 길</b><span class="how">시계탑이 4배 작아지는 돌리 줌</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/clock-square/?t=2.29" target="_blank" rel="noopener">
+          <img src="samples/c-right.jpg" alt="오른쪽에서 비스듬히 본 상점 줄과 도로의 차들" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">궤도 · 2.3초</span><b>비스듬히 본 상점 줄</b><span class="how">32° 궤도, 루프마다 정확히 한 바퀴 도는 차들</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/clock-square/?t=6.29" target="_blank" rel="noopener">
+          <img src="samples/c-high.jpg" alt="위에서 내려다본 가로수 길과 문, 뒤로 이어지는 박공지붕 마을" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">조감 · 6.3초</span><b>숨은 마을</b><span class="how">평면에서는 지붕선 아래로 숨었던 집들</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬은 X에 올라온 시각차 영상 두 편을 보고 기법(평면 화면, 돌리 줌, 박자, 소리)을 측정해 만들었습니다. 원본 영상은 담지 않았고, 장면은 모두 주제마다 새로 설계합니다.</p>
+  <div class="works">
+    <a class="work" href="https://jungrok5.github.io/motion-skills/parallax-facade/demo/hanok-alley/" target="_blank" rel="noopener"><b>「Hanok Alley」</b><span>예제 · 잉크 · 8초 루프 · 라이브 페이지</span><span class="url">parallax-facade/demo/hanok-alley</span></a>
+    <a class="work" href="https://x.com/lemomo_ai/status/2118516216180740585" target="_blank" rel="noopener"><b>원본 · lemomo_ai의 X 게시물</b><span>스킬의 출처 · 8초 영상 두 편 (파스텔 해변 거리, 운하 마을)</span><span class="url">x.com/lemomo_ai/status/2118516216180740585</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/parallax-facade"><b>이 레포에서 만듦 · parallax-facade/</b><span>엔진, 키트, 예제, 스크립트</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/parallax-facade/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/parallax-facade">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/parallax-facade/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/parallax-facade/references/BRIEF.md">references/BRIEF.md</a> <span>고정되는 것과 주제마다 설계하는 것, 브리프, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/parallax-facade/references/MOVES.md">references/MOVES.md</a> <span>평면으로 보이는 이유, 돌리 줌 수식, 시점과 박자</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/parallax-facade/references/LOOK.md">references/LOOK.md</a> <span>원본에서 측정한 값과 두 가지 마감</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/parallax-facade/references/KIT.md">references/KIT.md</a> <span>API</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/parallax-facade/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 장면은 three.js로 렌더한 코드 결과물입니다
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

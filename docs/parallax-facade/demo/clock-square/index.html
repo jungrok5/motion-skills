@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clock Square</title>
+<!-- parallax-facade starting film: "Clock Square" — a row of pastel shops that reads as one flat drawing until the camera
+     dolly-zooms through the gap and finds a long street, a clock tower 80 m away, and a town behind. 8 s, loops.
+     It is an example of the style, not a menu: design your own town, gap, landmark and beats from BRIEF.md.
+     Read top to bottom: film → front row → the street behind the gap → plug + landmark → town → moving things → beats → start. -->
+<script type="importmap">{ "imports": { "three": "../lib/three.module.min.js", "facade/": "../lib/" } }</script>
+<body>
+<script type="module">
+import { Film } from "facade/facade.js";
+import * as K from "facade/kit.js";
+
+// 1 · the film: the flat frame (facade), the gap the reveal looks through (focus), the finish and the sun
+const F = new Film({
+  facade: { x: 0, y: 6.4, h: 13 },        // the flat frame: 13 m tall on the plane z = 0 (16:9 → 23 m wide)
+  focus: { x: 3, y: 5.5 },                // the gap between the shops: every reveal pivots here
+  eye: 7.2,                               // the flat camera's height: the lowest roofline of the front row
+  finish: "soft",                         // soft (pastel, no outlines) | ink (cel + outlines)
+  sun: { az: -40, el: 40 },               // from the upper left: shadows fall right and back
+  audio: "audio/loop.mp3",                // optional: the live player loops it (scripts/score.mjs makes it)
+  sound: { mood: "citypop", key: "F", chords: ["Fmaj7", "Em7", "Dm7", "Cmaj7"], ambience: ["city", "birds"] },
+});
+K.ground(F);
+
+// 2 · the front row: the facade the flat view shows. Leave a gap at the focus; vary heights, keep one palette
+const PAL = { wall: ["#f6f2f7", "#fbe9ef", "#eef0fb", "#f7f3ea"], glass: "#5872d8", awn: ["#f39ab6", "#f7d75e", "#8fc7f2"] };
+F.part((B) => {
+  K.road(B, { z0: 1.2, z1: 40, walk: { z0: 0, z1: 1.2 } });
+  K.row(B, {
+    x0: -70, x1: 70, z: 0, seed: 4, gaps: [[0.4, 5.6]],
+    width: (r) => 6 + r() * 3,
+    make: (r, i, x) => ({
+      h: 7.5 + r() * 3, d: 9, wall: PAL.wall[i % 4], trim: "#d9d4e6",
+      win: { rows: 2, cols: 2 + Math.floor(r() * 2), color: PAL.glass, frame: "#ffffff", y0: 3.6, sill: "#d9d4e6", faces: ["front", "left", "right"] },
+      shop: { h: 2.6, w: 4.5, glass: "#4f69cf", frame: "#ffffff" },
+      awning: r() < 0.7 ? { color: PAL.awn[i % 3], y: 2.9, w: 4.6 } : null,
+      roof: { kind: "flat", color: "#e3dff0", rail: r() < 0.4 ? "#ffffff" : null, box: r() < 0.5 ? { w: 2.5, h: 1.4, color: "#ece8f4" } : null },
+    }),
+  });
+  // a few props in front so the flat view has a near layer too
+  K.tree(B, 7.2, 0.7, { kind: "round", h: 6.5, r: 2.2, color: "#46a85e", dark: "#36884c", seed: 2 });
+  K.lamp(B, -4.5, 0.6, { h: 5, arm: 1.1 });
+  K.bench(B, -8, 0.6);
+  K.bush(B, -1.5, 0.5, { w: 2.2, planter: { h: 0.5 }, flowers: "#f7a6c4" });
+  K.postbox(B, 10.5, 0.7);
+}, { name: "front" });
+
+// 3 · the street behind the gap: what the reveal finds (long, straight, lined with trees and lamps)
+F.part((B) => {
+  B.box(3, -0.04, -45, 5.2, 0.06, 90, F.look.road, { ink: false });
+  for (let z = -6; z > -86; z -= 8) { K.tree(B, 0.2, z, { h: 4.8, r: 1.6, seed: z }); K.lamp(B, 5.8, z - 4, { h: 4, arm: 0.8, dir: -1 }); }
+}, { name: "street" });
+
+// 4 · the plug and the landmark. In the flat view the gap must not read as a gap: a gate 30 m down the street fills
+//     it from the ground up, and the clock tower 80 m away fills it above the roofs. The reveal pulls them apart.
+F.part((B) => {
+  K.bridge(B, { x: 3, z: -30, span: 9, w: 3, h: 7.2, r: 2.4, base: 0, color: "#f1e6dd", deck: "#e2cbbd", rail: "#f1e6dd" });
+  B.box(3, 7.4, -30, 9.4, 0.5, 3.4, "#e8a2a8");
+}, { name: "gate" });
+const tower = F.part((B) => {
+  K.tower(B.at(3, -82), {
+    tiers: [
+      { w: 5, h: 9, color: "#f5ece4", band: { color: "#e2cbbd", h: 0.5 }, win: { rows: 2, cols: 1, color: "#5872d8" } },
+      { w: 5.6, h: 0.8, color: "#e2cbbd" },
+      { w: 4.6, h: 4.6, color: "#f5ece4", clock: { r: 1.6 } },
+      { w: 5.2, h: 0.5, color: "#e2cbbd" },
+    ],
+    spire: { h: 4, r: 3, color: "#5c78d8" },
+  });
+}, { name: "tower" });
+F.landmark(tower, "clock tower");
+
+// 5 · the town behind: rows to the horizon, nearer ones with windows on the sides the reveal sees
+F.part((B) => {
+  K.field(B, {
+    x0: -90, x1: 90, z0: -170, z1: -12, cell: [8, 10], seed: 7,
+    avoid: [[0, 6, -90, 0], [-3, 9, -95, -76], [-2, 8, -33, -27]],
+    // every house behind stays under the front roofline in the flat view (F.hide); the reveal shows a whole town
+    make: (r, c) => ({
+      h: Math.max(4, Math.min(5 + r() * 9, F.hide(c.z, 7.5) - 0.2)), wall: PAL.wall[Math.floor(r() * 4)], trim: "#d9d4e6",
+      win: { rows: 2, cols: 2, color: PAL.glass, frame: "#ffffff", faces: ["front", "left", "right"] },
+      roof: r() < 0.35 ? { kind: "gable", color: "#e8a2a8" } : { kind: "flat", color: "#e3dff0" },
+    }),
+  });
+  for (const [x, y, z, w] of [[-34, 19, -240, 22], [24, 23, -260, 28], [60, 17, -230, 18]]) K.cloud(B, x, y, z, { w, color: "#ffffff" });
+}, { name: "town", cast: true });
+
+// 6 · moving things: every motion completes whole cycles per loop (F.lap), so the loop is seamless
+K.traffic(F, { lanes: [{ z: 4, dir: 1, n: 5 }, { z: 7.5, dir: -1, n: 5 }], x0: -40, x1: 40 });
+K.birds(F, { n: 5, y: 26, z: -120, x0: -60, x1: 60 });
+
+// 7 · the beats: hold, snap, hold … back to flat. 1 s each → 8 s (references/MOVES.md)
+F.beats(["flat", "deep", "right", "deep", "flat", "rise", "high", "left", "flat"], { beat: 1.0, move: 0.42 });
+F.start();
+</script>
