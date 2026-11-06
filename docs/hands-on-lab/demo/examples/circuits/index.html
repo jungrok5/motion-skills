@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Circuits 101 · hands-on-lab</title>
+<meta name="description" content="Five hands-on circuit lessons: switch the bench on, change the parts, and watch the current, the diagram, the chart and the maths agree.">
+<link rel="stylesheet" href="../../lib/lab.css">
+<script type="importmap">{ "imports": { "three": "../../lib/vendor/three.module.min.js" } }</script>
+<style>html, body { margin: 0; background: #f3ead8; }</style>
+</head>
+<body>
+<div id="lab"></div>
+<!-- DURATION = 64 -->
+<script type="module">
+import { mountLab } from '../../lib/lab.js';
+import course from './course.js';
+mountLab(course);
+</script>
+</body>
+</html>

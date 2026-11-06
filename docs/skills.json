@@ -827,6 +827,46 @@
           "url": "https://jungrok5.github.io/motion-skills/parallax-facade/demo/clock-square/"
         }
       ]
+    },
+    {
+      "id": "hands-on-lab",
+      "name": "hands-on-lab",
+      "tagline": "주제 하나를 주면 장난감 같은 3D 실험대를 켜고 부품을 하나씩 바꿔 보는 실습 레슨 앱을 새로 설계합니다. 실험대와 늘 같은 값을 보여 주는 회로도 · 힘 그림, 실시간 그래프, 지금 숫자가 들어간 수식, 해 보기 목표, 여러 언어를 갖추고, 커서 투어는 1080p MP4로 굽습니다.",
+      "posterAlt": "hands-on-lab으로 만든 실험대 네 개: 전구 두 개가 빛나는 병렬 회로, 브레드보드 위 전압 분배 회로와 노란 계기 두 대, 놋쇠 추 쪽으로 기운 지레, 맞물린 주황과 파란 톱니바퀴",
+      "poster": "hands-on-lab/poster.jpg",
+      "tags": [
+        "three.js 3D",
+        "인터랙티브 레슨 앱",
+        "회로도 · 그래프 · 수식",
+        "다국어",
+        "16:9 MP4"
+      ],
+      "stats": [
+        "예제 2개 · 회로 101 · 기계 101",
+        "레슨 9개 · 영어 · 한국어"
+      ],
+      "page": "hands-on-lab/",
+      "source": "hands-on-lab/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "hands-on-lab/examples/simple-machines/"
+      },
+      "sources": [
+        {
+          "title": "Dilum Sanjaya의 X 게시물 (Electronics 101 앱 화면 녹화)",
+          "url": "https://x.com/DilumSanjaya/status/2118386789169938562"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「기계 101」 지레 · 빗면 · 도르래 · 톱니바퀴 · 라이브 앱",
+          "url": "https://jungrok5.github.io/motion-skills/hands-on-lab/demo/examples/simple-machines/"
+        },
+        {
+          "title": "「회로 101」 레슨 5개 · 라이브 앱",
+          "url": "https://jungrok5.github.io/motion-skills/hands-on-lab/demo/examples/circuits/"
+        }
+      ]
     }
   ]
 }
