@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>겨울 국물 한 그릇 — cursor swarm</title>
+<script type="importmap">{ "imports": { "cs/": "../../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// 겨울 국물 한 그릇 — a recipe booklet (cover + two spreads) built by the swarm. Written from BRIEF.md.
+import { Build, defineArt, rrect } from 'cs/build.js';
+
+const K = { paper: '#fbf8f1', ink: '#2a2622', red: '#c8452f', green: '#5f8f4e', broth: '#f3e6c8', mute: '#7a6f66', line: '#e4dccd' };
+
+// ── pictures designed for this topic ──
+const steam = (g, x, y, h, a = .55) => { g.strokeStyle = `rgba(255,255,255,${a})`; g.lineWidth = h * .05; g.lineCap = 'round'; g.beginPath(); g.moveTo(x, y); g.bezierCurveTo(x - h * .15, y - h * .3, x + h * .15, y - h * .55, x, y - h); g.stroke(); };
+defineArt('bowl', (g, w, h, a, R) => {
+  const wood = a.wood ?? '#b98a5c';
+  g.fillStyle = wood; g.fillRect(0, 0, w, h);
+  if (a.grain !== false) for (let i = 0; i < 26; i++) { g.strokeStyle = `rgba(90,55,25,${.08 + R() * .1})`; g.lineWidth = 1 + R() * 2; const y = R() * h; g.beginPath(); g.moveTo(0, y); g.bezierCurveTo(w * .3, y + 8, w * .6, y - 8, w, y + 4); g.stroke(); }
+  const cx = w / 2, cy = h * (a.cy ?? .52), r = Math.min(w, h) * (a.r ?? .36);
+  g.fillStyle = 'rgba(60,35,15,.28)'; g.beginPath(); g.arc(cx + r * .06, cy + r * .08, r * 1.05, 0, 7); g.fill();
+  g.fillStyle = '#dfe9df'; g.beginPath(); g.arc(cx, cy, r, 0, 7); g.fill();
+  g.fillStyle = '#c7d6c8'; g.beginPath(); g.arc(cx, cy, r * .92, 0, 7); g.fill();
+  g.fillStyle = K.broth; g.beginPath(); g.arc(cx, cy, r * .84, 0, 7); g.fill();
+  for (let i = 0; i < 16; i++) { const an = R() * 7, d = R() * r * .62, x = cx + Math.cos(an) * d, y = cy + Math.sin(an) * d;
+    g.save(); g.translate(x, y); g.rotate(R() * 3); g.fillStyle = 'rgba(160,140,110,.25)'; g.beginPath(); g.ellipse(2, 3, r * .13, r * .075, 0, 0, 7); g.fill();
+    g.fillStyle = '#fdfbf3'; g.beginPath(); g.ellipse(0, 0, r * .13, r * .075, 0, 0, 7); g.fill(); g.restore(); }
+  for (let i = 0; i < 9; i++) { const x = cx - r * .5 + R() * r, y = cy - r * .35 + R() * r * .5; g.save(); g.translate(x, y); g.rotate(R() * 3); g.fillStyle = i % 3 ? '#f6c945' : '#fffaf0'; g.fillRect(-r * .12, -r * .018, r * .24, r * .036); g.restore(); }
+  g.save(); g.translate(cx + r * .12, cy - r * .08); g.rotate(-.5); g.fillStyle = '#26301f'; for (let i = 0; i < 7; i++) g.fillRect(-r * .2 + i * r * .05, -r * .16, r * .03, r * .32); g.restore();
+  for (let i = 0; i < 11; i++) { const an = R() * 7, d = R() * r * .55; g.strokeStyle = '#6fae4b'; g.lineWidth = r * .03; g.beginPath(); g.arc(cx + Math.cos(an) * d, cy + Math.sin(an) * d, r * .035, 0, 7); g.stroke(); }
+  for (let i = 0; i < 7; i++) { const an = R() * 7, d = R() * r * .5; g.fillStyle = '#7b4a32'; g.fillRect(cx + Math.cos(an) * d, cy + Math.sin(an) * d, r * .06, r * .04); }
+  if (a.steam !== false) for (let i = 0; i < 3; i++) steam(g, cx - r * .3 + i * r * .3, cy - r * .2, r * .6, .35);
+  if (a.spoon !== false) { g.fillStyle = '#d9d4c8'; g.save(); g.translate(cx + r * 1.15, cy + r * .1); g.rotate(.25); rrect(g, -r * .035, -r * .7, r * .07, r * 1.1, r * .03); g.fill(); g.beginPath(); g.ellipse(0, -r * .75, r * .12, r * .16, 0, 0, 7); g.fill(); g.restore(); }
+});
+defineArt('pot', (g, w, h, a, R) => {
+  g.fillStyle = '#efe6d6'; g.fillRect(0, 0, w, h);
+  for (let y = 0; y < h; y += 6) { g.fillStyle = 'rgba(150,120,90,.06)'; g.fillRect(0, y, w, 2); }
+  const cx = w / 2, by = h * .78, pw = w * .62, ph = h * .34;
+  g.fillStyle = 'rgba(60,35,15,.22)'; g.beginPath(); g.ellipse(cx, by + 8, pw * .58, ph * .14, 0, 0, 7); g.fill();
+  g.fillStyle = '#3a2e29'; g.beginPath(); g.moveTo(cx - pw / 2, by - ph); g.quadraticCurveTo(cx - pw * .56, by, cx - pw * .3, by); g.lineTo(cx + pw * .3, by); g.quadraticCurveTo(cx + pw * .56, by, cx + pw / 2, by - ph); g.closePath(); g.fill();
+  g.fillStyle = '#2a201c'; g.beginPath(); g.ellipse(cx, by - ph, pw / 2, ph * .2, 0, 0, 7); g.fill();
+  g.fillStyle = '#f0dfb8'; g.beginPath(); g.ellipse(cx, by - ph, pw * .44, ph * .16, 0, 0, 7); g.fill();
+  for (let i = 0; i < 5; i++) { const x = cx - pw * .3 + i * pw * .15, y = by - ph - ph * .02 + (i % 2) * ph * .05; g.fillStyle = '#fbf6ea'; g.beginPath(); g.ellipse(x, y, pw * .08, ph * .07, (i - 2) * .2, 0, 7); g.fill(); g.strokeStyle = 'rgba(170,150,120,.6)'; g.lineWidth = 1.5; g.beginPath(); g.arc(x, y + ph * .02, pw * .05, Math.PI * 1.1, Math.PI * 1.9); g.stroke(); }
+  for (let i = 0; i < 8; i++) { g.fillStyle = '#6fae4b'; g.fillRect(cx - pw * .35 + R() * pw * .7, by - ph - ph * .08 + R() * ph * .14, 5, 3); }
+  g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(cx - pw * .4, by - ph * .8, pw * .06, ph * .6);
+  for (let i = 0; i < 3; i++) steam(g, cx - pw * .2 + i * pw * .2, by - ph * 1.25, h * .3, .8);
+});
+
+// ── the build ──
+const B = new Build({
+  doc: 'book', cols: 3, title: '겨울 국물 한 그릇', url: 'soup-zine.pdf', prompt: '겨울 국물 레시피 소책자 만들어줘 — 표지 하나, 펼침면 둘',
+  agents: 26, names: ['국자', '도마', '파', '간장', '소금', '달걀', '떡', '김', '양지', '마늘'],
+  board: { w: 520, h: 720, bg: K.paper },
+});
+const pageNo = (id, n, side) => B.text(id, { x: side === 'L' ? 44 : 420, y: 676, w: 56, align: side === 'L' ? 'left' : 'right', text: String(n), font: 'mono', size: 13, color: K.mute, next: .1 });
+
+// cover: the swarm paints the bowl in 12 px cells
+B.board('cover', { name: '표지', bg: K.red });
+B.paint('c-bowl', { x: 44, y: 236, w: 432, h: 432, px: 12, art: 'bowl', args: { wood: K.red, grain: false, spoon: false, steam: false, r: .44, cy: .5 }, dur: 3.4 });
+B.text('c-title', { x: 44, y: 60, w: 432, text: '겨울 국물\n한 그릇', font: 'serif', size: 54, weight: 700, color: '#fff8ee', lh: 1.15, with: 'c-bowl', delay: .3 });
+B.text('c-sub', { x: 44, y: 196, text: '떡국 · 만둣국 · 국물 이야기', size: 16, color: '#ffd9cf', with: 'c-bowl', delay: 1.6 });
+B.text('c-credit', { x: 44, y: 680, w: 432, align: 'right', text: 'SOUP ZINE · NO. 1', font: 'mono', size: 12, weight: 600, color: '#ffd9cf', after: 'c-bowl', delay: -.4 });
+B.sync(.2);
+
+// spread 1: the photo on the left, the recipe on the right
+B.board('p2', { name: 'p. 2–3' });
+B.image('s1-photo', { x: 0, y: 0, w: 520, h: 720, art: 'bowl', file: 'tteokguk.jpg' });
+B.board('p3', { name: '' });
+B.text('r1-kick', { x: 44, y: 56, text: 'RECIPE 01', font: 'mono', size: 13, weight: 700, color: K.red, track: .12, with: 's1-photo', delay: .2 });
+B.text('r1-title', { x: 44, y: 80, text: '떡국', font: 'serif', size: 44, weight: 700, color: K.ink, with: 's1-photo', delay: .35 });
+B.text('r1-sub', { x: 44, y: 142, text: '새해 아침의 흰 국물 · 2인분 · 50분', size: 15, color: K.mute, with: 'r1-title', delay: .3 });
+B.chips('r1-ing', { x: 44, y: 184, w: 432, items: ['떡국떡 400g', '양지 150g', '달걀 2개', '대파 ½대', '김 1장', '국간장 1큰술'], size: 14, h: 32, bg: '#f1eadc', fg: K.ink, dot: K.green, stagger: .12, with: 'r1-sub', delay: .2 });
+B.line('r1-rule', { x1: 44, y1: 280, x2: 476, y2: 280, color: K.line, width: 1.5, with: 'r1-ing', delay: .2 });
+['양지를 찬물에 30분 담가 핏물을 뺍니다.', '물 1.5L에 양지를 넣고 40분 끓여 육수를 냅니다.', '불린 떡을 넣고, 떡이 떠오르면 국간장과 소금으로 간합니다.', '그릇에 담고 달걀지단, 김, 대파를 올립니다.'].forEach((s, i) => {
+  B.text('r1-n' + i, { x: 44, y: 304 + i * 86, text: String(i + 1).padStart(2, '0'), font: 'serif', size: 26, weight: 700, color: K.red, with: 'r1-rule', delay: .2 + i * .15 });
+  B.text('r1-s' + i, { x: 96, y: 308 + i * 86, w: 380, text: s, size: 16, color: K.ink, lh: 1.55, with: 'r1-rule', delay: .3 + i * .15 });
+});
+pageNo('n2', 2, 'L'); pageNo('n3', 3, 'R');
+B.sync(.2);
+
+// spread 2: a recipe in prose with the heat bar, the pot on the right
+B.board('p4', { name: 'p. 4–5' });
+B.text('r2-kick', { x: 44, y: 56, text: 'RECIPE 02', font: 'mono', size: 13, weight: 700, color: K.red, track: .12 });
+B.text('r2-title', { x: 44, y: 80, text: '만둣국', font: 'serif', size: 44, weight: 700, color: K.ink, with: 'r2-kick', delay: .15 });
+B.text('r2-body', { x: 44, y: 150, w: 432, text: '떡국 육수가 남았다면 만두만 넣으면 됩니다. 국물이 끓으면 만두를 넣고, 만두가 떠오른 뒤 2분 더 끓입니다. 만두피가 터지지 않게 처음엔 센 불, 떠오르면 중불, 마지막엔 약불로 줄여 간을 봅니다.', size: 16, color: K.ink, lh: 1.7, with: 'r2-title', delay: .3 });
+B.text('r2-heat-l', { x: 44, y: 400, text: '불 세기', font: 'mono', size: 13, weight: 700, color: K.mute, with: 'r2-body', delay: .6 });
+B.cells('r2-heat', { x: 44, y: 424, cols: 12, rows: 1, cell: 30, gap: 6, r: 6, dur: 1.6, by: 12, empty: '#efe7d8', color: i => i < 4 ? K.red : i < 9 ? '#e8833a' : '#f2c14e', with: 'r2-body', delay: .7 });
+[['센 불', 0], ['중불', 4], ['약불', 9]].forEach(([s, i]) => B.text('r2-h' + i, { x: 44 + i * 36, y: 462, text: s, size: 14, color: K.mute, after: 'r2-heat', delay: -.5 + i * .03 }));
+B.text('r2-note', { x: 44, y: 520, w: 432, text: '만두는 냉동 그대로 넣어도 됩니다. 끓는 시간만 3분 늘리세요.', font: 'serif', size: 17, italic: true, weight: 500, color: K.mute, lh: 1.5, after: 'r2-heat' });
+B.board('p5', { name: '' });
+B.image('s2-pot', { x: 44, y: 56, w: 432, h: 480, r: 6, art: 'pot', file: 'mandutguk.jpg', from: 'right', with: 'r2-title' });
+B.text('s2-cap', { x: 44, y: 556, w: 432, text: '뚝배기에 끓이면 마지막 한 숟가락까지 따뜻합니다.', font: 'serif', size: 17, italic: true, weight: 500, color: K.ink, lh: 1.5, after: 's2-pot', delay: -.2 });
+pageNo('n4', 4, 'L'); pageNo('n5', 5, 'R');
+
+B.start();
+</script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>밤의 도서관 — cursor swarm</title>
+<script type="importmap">{ "imports": { "cs/": "../../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// 밤의 도서관 — a slide deck rebuilt by the swarm. Started from import-doc.py's draft of source/night-library.pptx
+// (same boards, words, positions and pictures); the build — order, overlaps, the chart as cells — is designed in BRIEF.md.
+import { Build } from 'cs/build.js';
+
+const K = { navy: '#1b2440', cream: '#f7f2e8', amber: '#f2a93b', ink: '#1d1d24', mute: '#6b6f80', moon: '#fbe7b0', line: '#c9c3b5' };
+const B = new Build({
+  doc: 'slides', title: '밤의 도서관', url: 'night-library.deck', prompt: '이 제안서 장표 다시 만들어줘 — night-library.pptx',
+  agents: 30, names: ['shelf', 'spine', 'folio', 'index', 'margin', 'lamp', 'card', 'quiet', 'ink', 'page'],
+  board: { w: 1280, h: 720 },
+});
+const title = (id, text, o = {}) => B.text(id, { x: 90, y: 75, w: 1000, text, font: 'serif', size: 51, weight: 700, color: K.ink, lh: 1.25, ...o });
+
+// 1 · cover
+B.board('cover', { name: '01 · 밤의 도서관', bg: K.navy });
+B.text('c-title', { x: 90, y: 155, text: '밤의 도서관', font: 'serif', size: 88, weight: 700, color: K.moon, lh: 1.25, cps: 6 });
+B.image('c-pic', { x: 660, y: 110, w: 540, h: 384, r: 8, src: 'assets/s01-00.png', file: 'library-night.png', from: 'right', with: 'c-title', delay: .1 });
+B.text('c-sub', { x: 90, y: 275, w: 521, text: '금요일 밤, 동네 도서관을\n자정까지 열자는 제안', size: 32, color: '#e8e6f0', lh: 1.25 });
+B.rect('c-rule', { x: 80, y: 400, w: 56, h: 4, fill: K.amber });
+B.text('c-foot', { x: 90, y: 595, text: '망원동 주민 모임 · 2026. 11', size: 21, color: '#9aa0bd' });
+B.sync(.25);
+
+// 2 · the problem: three cards dragged at once, six lines typed in parallel
+B.board('problem', { name: '02 · 문제', bg: K.cream });
+title('p-title', '도서관이 닫는 시간에 우리는 퇴근합니다');
+B.text('p-q', { x: 90, y: 145, text: '평일 이용이 어려운 이유를 동네 주민 214명에게 물었습니다.', size: 24, color: K.mute, with: 'p-title', delay: .4 });
+[['18:00', '평일 폐관 시간'], ['71%', '직장인 이용자 "평일엔 못 가요"'], ['0곳', '동네에 밤에 열린 열람실']].forEach(([big, small], i) => {
+  const x = 80 + i * 384;
+  B.rect('p-card' + i, { x, y: 250, w: 352, h: 280, r: 28, fill: '#ffffff', shadow: 'rgba(40,30,10,.08)', with: 'p-title', delay: .5 + i * .12 });
+  B.text('p-big' + i, { x: x + 42, y: 295, text: big, font: 'serif', size: 75, weight: 700, color: K.navy, lh: 1.25, with: 'p-card' + i, delay: 1.1 });
+  B.text('p-small' + i, { x: x + 42, y: 405, w: 271, text: small, size: 24, color: K.mute, lh: 1.25, with: 'p-card' + i, delay: 1.3 });
+});
+B.sync(.25);
+
+// 3 · the idea: four bullets typed by four agents at once
+B.board('idea', { name: '03 · 제안', bg: K.cream });
+title('i-title', '금요일 18시부터 24시까지, 1층 열람실만');
+B.rect('i-rule', { x: 80, y: 180, w: 6, h: 300, fill: K.amber, with: 'i-title', delay: .3 });
+['사서 1명, 자원봉사 2명이 교대로 지킵니다', '대출·반납은 무인 기기로만 받습니다', '조용한 열람과 작은 낭독회만 엽니다', '석 달 시범 운영 후 계속할지 정합니다']
+  .forEach((s, i) => B.text('i-b' + i, { x: 122, y: 192 + i * 64, w: 640, text: '• ' + s, size: 28, color: K.ink, with: 'i-title', delay: .7 + i * .18 }));
+B.image('i-lamp', { x: 860, y: 170, w: 340, h: 340, r: 170, src: 'assets/s03-03.png', file: 'reading-lamp.png', from: 'right', with: 'i-title', delay: .5 });
+B.sync(.25);
+
+// 4 · the pilot: the swarm fills the bar chart cell by cell
+B.board('pilot', { name: '04 · 시범 운영', bg: '#ffffff' });
+title('d-title', '시범 운영 넉 달, 시간대별 평균 방문자');
+const visits = [34, 52, 61, 58, 44, 27], ROWS = 16, cell = 18, gap = 2, pitch = 8;   // a bar = 5 cells, then 3 empty
+const rows = v => Math.round(v * 5.2 / (cell + gap));
+B.rect('d-base', { x: 120, y: 562, w: 1040, h: 3, fill: K.line, with: 'd-title', delay: .3 });
+B.cells('d-bars', {
+  x: 160, y: 562 - ROWS * (cell + gap), cols: 6 * pitch - 3, rows: ROWS, cell, gap, r: 3, dur: 3.2, by: 22, with: 'd-title', delay: .6,
+  color: (i, j) => { const b = Math.floor(i / pitch); if (i % pitch >= 5 || b > 5) return null; return j >= ROWS - rows(visits[b]) ? (visits[b] === 61 ? K.amber : K.navy) : null; },
+});
+visits.forEach((v, b) => {
+  const x = 160 + b * pitch * (cell + gap) - 2, top = 562 - rows(v) * (cell + gap);
+  B.text('d-v' + b, { x, y: top - 36, w: 100, align: 'center', text: v + '명', size: 24, weight: 700, color: K.ink, overlap: true, after: 'd-bars', delay: -.6 + b * .08 });
+  B.text('d-h' + b, { x, y: 575, w: 100, align: 'center', text: 18 + b + '시', size: 24, color: K.mute, with: 'd-bars', delay: .2 + b * .1 });
+});
+B.text('d-take', { x: 90, y: 635, text: '가장 붐빈 시간은 20시, 하룻밤 평균 276명이 다녀갔습니다.', size: 24, color: K.mute, after: 'd-bars', delay: -.2 });
+B.sync(.25);
+
+// 5 · the plan: a timeline drawn, three columns side by side
+B.board('plan', { name: '05 · 계획', bg: K.cream });
+title('t-title', '이렇게 시작합니다');
+B.line('t-line', { x1: 160, y1: 332, x2: 1120, y2: 332, color: K.line, width: 4, with: 't-title', delay: .3, dur: .9 });
+[['12월', '구청에 제안서 제출', '주민 서명 500명과 함께'], ['1월', '자원봉사자 모집', '하루 두 명, 석 달 교대'], ['3월', '첫 금요일 밤 개관', '낭독회로 문을 엽니다']].forEach(([m, s, n], i) => {
+  const x = 160 + i * 440;
+  B.rect('t-dot' + i, { x: x - 18, y: 314, w: 36, h: 36, r: 18, fill: K.amber, with: 't-line', delay: .5 + i * .2 });
+  B.text('t-m' + i, { x: x - 30, y: 225, text: m, font: 'serif', size: 40, weight: 700, color: K.navy, with: 't-dot' + i, delay: .3 });
+  B.text('t-s' + i, { x: x - 30, y: 385, w: 250, text: s, size: 29, weight: 700, color: K.ink, with: 't-dot' + i, delay: .5 });
+  B.text('t-n' + i, { x: x - 30, y: 425, w: 250, text: n, size: 24, color: K.mute, with: 't-s' + i, delay: .4 });
+});
+B.sync(.25);
+
+// 6 · close
+B.board('close', { name: '06 · 맺음', bg: K.navy });
+B.text('e-line', { x: 90, y: 255, w: 1100, align: 'center', text: '금요일 밤, 도서관에서 만나요', font: 'serif', size: 72, weight: 700, color: K.moon, lh: 1.25, cps: 10 });
+B.text('e-mail', { x: 90, y: 375, w: 1100, align: 'center', text: '서명과 문의 · night-library@mangwon.example', size: 27, color: '#c9cbe0' });
+
+B.start();
+</script>
+</body>
+</html>

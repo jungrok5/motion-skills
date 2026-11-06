@@ -903,6 +903,54 @@
           "url": "https://jungrok5.github.io/motion-skills/map-dive/demo/jeju/"
         }
       ]
+    },
+    {
+      "id": "cursor-swarm",
+      "name": "cursor-swarm",
+      "tagline": "주제 하나나 기존 파일(PPTX · PDF)을 주면 웹사이트, 발표 장표, 책, 포스터 무엇이든 새로 설계하고, 어두운 디자인 에디터에서 색색의 커서 수십 개가 박스를 끌어 그리고, 글을 타이핑하고, 사진 파일을 끌어다 놓고, 픽셀 표지와 차트를 한 칸씩 칠해 함께 완성하는 영상을 코드만으로 만듭니다. 긴 페이지는 스크롤하고 장표와 펼침면은 한 장씩 패닝하며, 마지막엔 게시되며 전체로 줌아웃합니다. 효과음을 합성한 MP4와 라이브 페이지를 냅니다.",
+      "posterAlt": "cursor-swarm으로 만든 장면 네 개: 빵집 웹사이트에서 커서들이 BAKED AT 5AM 픽셀 배너 아래 제목을 타이핑하고 오븐 사진을 놓는 모습, 발표 장표에서 18:00 · 71% · 0곳 숫자 카드 세 장을 여러 커서가 동시에 채우는 모습, 레시피 책 펼침면에 떡국 그림과 재료 칩이 채워지는 모습, 완성된 슬라이드 여섯 장이 격자로 보이는 마지막 장면",
+      "poster": "cursor-swarm/poster.jpg",
+      "tags": [
+        "Canvas 2D",
+        "웹 · 장표 · 책 · 포스터",
+        "PPTX · PDF 가져오기",
+        "MP4 · 효과음",
+        "라이브 페이지"
+      ],
+      "stats": [
+        "예제 3개 · 웹 · 장표 · 책",
+        "PPTX · PDF → 초안 빌드"
+      ],
+      "page": "cursor-swarm/",
+      "source": "cursor-swarm/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "cursor-swarm/examples/bakery/"
+      },
+      "sources": [
+        {
+          "title": "AlexZ의 X 게시물 (\"Computer use 需要进化到鼠标集群\")",
+          "url": "https://x.com/blackanger/status/2118043007413104810"
+        },
+        {
+          "title": "harshit의 X 게시물 (Craziest Website Reveal ever, 원본 영상)",
+          "url": "https://x.com/hrstwt/status/2117947212936392958"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「새벽빵 · Dawn Bakery」 웹사이트 · 35초 · 7섹션 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/cursor-swarm/demo/bakery/"
+        },
+        {
+          "title": "「밤의 도서관」 발표 장표 6장 · PPTX에서 가져옴 · 32초 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/cursor-swarm/demo/deck/"
+        },
+        {
+          "title": "「겨울 국물 한 그릇」 책 · 표지 + 펼침면 2 · 22초 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/cursor-swarm/demo/book/"
+        }
+      ]
     }
   ]
 }
