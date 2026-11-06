@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>hands-on-lab · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 장난감 같은 3D 실험대를 켜고 부품을 바꿔 보는 실습 레슨 앱을 새로 설계합니다. 3D와 늘 같은 값을 보여 주는 회로도 · 힘 그림, 실시간 그래프, 숫자가 들어간 수식, 여러 언어를 갖추고, 커서 투어는 1080p MP4로 굽습니다.">
+<meta property="og:title" content="hands-on-lab · motion-skills">
+<meta property="og:description" content="주제 하나를 주면 장난감 같은 3D 실험대를 켜고 부품을 바꿔 보는 실습 레슨 앱을 새로 설계합니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/hands-on-lab/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/hands-on-lab">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / hands-on-lab</nav>
+  <h1>hands-on-lab</h1>
+  <p>주제 하나를 주면 장난감 같은 3D 실험대를 켜고 부품을 하나씩 바꿔 보는 실습 레슨 앱을 새로 설계합니다. 실험대와 늘 같은 값을 보여 주는 회로도 · 힘 그림, 실시간 그래프, 지금 숫자가 들어간 수식, 여러 언어를 갖추고, 커서가 앱을 둘러보는 투어는 1080p MP4로 굽습니다.
+  보고 만든 원본: <a href="https://x.com/DilumSanjaya/status/2118386789169938562" target="_blank" rel="noopener">Dilum Sanjaya의 X 게시물 (Electronics 101 앱 화면 녹화)</a>.</p>
+  <ul class="tags"><li>three.js 3D</li><li>인터랙티브 레슨 앱</li><li>회로도 · 그래프 · 수식</li><li>다국어</li><li>16:9 MP4</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>배울 주제와 배우는 사람 (예: 간단한 기계, 렌즈와 빛, 냉장고의 원리)</dd>
+      <dt>브리프</dt><dd>단원과 레슨 4–9개, 레슨마다 하나의 생각 · 실험대 부품 · 조작 · 모델과 단위 · 그림 방식 · 그래프 · 수식 · 해 보기 목표 세 개</dd>
+      <dt>설계</dt><dd>주제에 맞는 부품 키트, 레슨마다 모델 하나 (값 → 3D · 그림 · 그래프 · 수식이 모두 같은 숫자), 모든 글의 언어별 문구, 커서 투어</dd>
+      <dt>검사</dt><dd>언어 누락, 아무것도 바꾸지 않는 조작, NaN 문구, 화면 밖 실험대, 겹친 이름표, 그림과 실험대의 불일치, 허공을 누르는 투어, 휴대폰 가로 스크롤</dd>
+      <dt>출력</dt><dd>데스크톱과 휴대폰에서 도는 라이브 앱, 레슨별 스틸, 1920×1080 투어 MP4</dd>
+    </dl>
+    <pre><code>cd hands-on-lab
+node scripts/check.mjs examples/circuits
+node scripts/render.mjs examples/circuits out/lessons --lessons --on
+node scripts/render.mjs examples/simple-machines out/machines.mp4
+node scripts/new-course.mjs ../my-course --from simple-machines</code></pre>
+    <p class="mute">요구 사항: Node 18+, Playwright Chromium (헤드리스 WebGL), ffmpeg. three.js와 폰트를 함께 담고 있어 앱은 네트워크 없이 돕니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/hands-on-lab/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:760px;--demo-bg:#f3ead8">
+    <iframe data-src="demo/examples/circuits/?tour&amp;fit" title="hands-on-lab 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/circuits/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/circuits</code> · 회로 101 · 64초 투어, 아무 곳이나 누르면 직접 조작</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/circuits/?tour&amp;fit" data-cap="예제 &lt;code&gt;examples/circuits&lt;/code&gt; · 회로 101 · 64초 투어, 아무 곳이나 누르면 직접 조작" aria-pressed="true">회로</button>
+        <button class="btn" type="button" data-src="demo/examples/simple-machines/?tour&amp;fit" data-cap="예제 &lt;code&gt;examples/simple-machines&lt;/code&gt; · 기계 101 · 브리프에서 새로 설계 · 56초 투어" aria-pressed="false">간단한 기계</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">두 코스의 투어에서 뽑은 장면입니다. 계기 화면, 그림의 숫자, 그래프의 점, 수식이 한 프레임 안에서 모두 같은 값을 가리킵니다. 카드를 누르면 새 탭에서 그 순간부터 투어가 재생되고, 아무 곳이나 누르면 직접 조작으로 넘어갑니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"circuits":"회로 101","machines":"기계 101"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>회로 101 <small>스타일 기준 예제 · 레슨 5개 · 64초 투어</small></h3>
+      <p>원본 영상에서 읽은 모습과 앱 구성을 우리 코스로 다시 만든 예제입니다. 전류가 흐르는 전선에만 노란 줄무늬가 움직이고, 회로도의 부품을 눌러도 3D 부품을 눌러도 같은 카드가 열립니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="circuits" href="demo/examples/circuits/?tour&amp;fit&amp;t=4" target="_blank" rel="noopener">
+          <img src="samples/c-switch.jpg" alt="초록 전지와 스위치, 빛나는 전구가 굵은 외곽선으로 그려진 실험대, 오른쪽 패널에 닫힌 스위치 회로도와 4.5 V 전지 카드, 아래 그래프에 전압에 따른 전류 직선" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">기초 · 레슨 1</span><b>열린 회로, 닫힌 회로</b>
+          <span class="how">스위치를 닫고 전지를 4.5 V로, 450 mA가 전선 위 값 표와 회로도에 같이</span></div></a>
+        <a class="tile" data-tags="circuits" href="demo/examples/circuits/?tour&amp;fit&amp;t=12.6" target="_blank" rel="noopener">
+          <img src="samples/c-parallel.jpg" alt="전구 두 개가 모두 밝게 빛나는 병렬 회로 실험대와 병렬 회로도, 직렬(점선)과 병렬(실선) 밝기 곡선" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">기초 · 레슨 2</span><b>직렬과 병렬</b>
+          <span class="how">연결을 바꾸면 전선 배치가 다시 지어짐, 전구 B를 빼 보는 토글</span></div></a>
+        <a class="tile" data-tags="circuits" href="demo/examples/circuits/?tour&amp;fit&amp;t=26" target="_blank" rel="noopener">
+          <img src="samples/c-divider.jpg" alt="노란 계기 두 대가 2.46과 0.54를 가리키는 전압 분배 실험대, 패널 회로도의 같은 값, R2에 따른 가운데 전압 곡선" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">부품 · 레슨 3</span><b>전압 분배</b>
+          <span class="how">R2 슬라이더를 끌면 계기 · 회로도 · 그래프 점이 함께 움직임</span></div></a>
+        <a class="tile" data-tags="circuits" href="demo/examples/circuits/?tour&amp;fit&amp;t=31.5" target="_blank" rel="noopener">
+          <img src="samples/c-breadboard.jpg" alt="같은 전압 분배 회로를 브레드보드 위에 꽂은 모습, 검은 전원 팩과 점퍼선, 저항 두 개와 계기 두 대" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">만드는 방법</span><b>브레드보드에</b>
+          <span class="how">같은 레슨, 다른 배치: 큰 부품 / 실제로 꽂는 모습</span></div></a>
+        <a class="tile" data-tags="circuits" href="demo/examples/circuits/?tour&amp;fit&amp;t=33.6" target="_blank" rel="noopener">
+          <img src="samples/c-diagram.jpg" alt="회로도를 크게 띄운 창, 3 V 전지와 R1 10 kΩ, R2 2.2 kΩ, 두 전압계 2.46 V와 0.54 V, 전류 246 µA" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">회로도</span><b>크게 보기</b>
+          <span class="how">전류가 흐르는 길에 움직이는 점선, 고를 수 있는 부품은 점선 상자</span></div></a>
+        <a class="tile" data-tags="circuits" href="demo/examples/circuits/?tour&amp;fit&amp;t=42" target="_blank" rel="noopener">
+          <img src="samples/c-led.jpg" alt="검은 전원 장치와 220 Ω 저항, 파랗게 빛나는 LED, 공급 전압에 따른 전류 그래프의 꺾인 곡선" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">부품 · 레슨 4</span><b>LED: 한쪽으로만</b>
+          <span class="how">순방향 전압 아래에선 0 A, 뒤집어 꽂으면 꺼짐</span></div></a>
+        <a class="tile" data-tags="circuits" href="demo/examples/circuits/?tour&amp;fit&amp;t=52.5" target="_blank" rel="noopener">
+          <img src="samples/c-rc.jpg" alt="선택 스위치와 저항, 파란 축전기, 2.51 V를 가리키는 계기, 시간에 따라 차오르는 축전기 전압 곡선" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">부품 · 레슨 5</span><b>축전기 충전</b>
+          <span class="how">시간에 따라 변하는 상태, 지난 10초 그래프와 τ = R × C</span></div></a>
+        <a class="tile" data-tags="circuits" href="demo/examples/circuits/?tour&amp;fit&amp;t=62" target="_blank" rel="noopener">
+          <img src="samples/c-korean.jpg" alt="한국어로 바뀐 앱, 개요 탭에 축전기 충전 설명과 해 보기 목록, 하나에 체크 표시" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">다국어</span><b>한국어로</b>
+          <span class="how">이름표 · 패널 · 그래프 · 수식이 모두 언어별 문구로</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>기계 101 <small>새 주제 · 브리프에서 설계 · 레슨 4개 · 56초 투어</small></h3>
+      <p>원본에 없는 주제를 <a href="https://github.com/jungrok5/motion-skills/blob/main/hands-on-lab/examples/simple-machines/BRIEF.md">BRIEF.md</a>부터 끝까지 만든 예제입니다. 부품, 모델, 힘 그림, 흐르는 것(줄)까지 모두 이 주제에 맞게 새로 지었습니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="machines" href="demo/examples/simple-machines/?tour&amp;fit&amp;t=11.2" target="_blank" rel="noopener">
+          <img src="samples/m-lever.jpg" alt="빨간 받침점 위 널빤지가 놋쇠 추 쪽으로 기운 지레, 양쪽 모멘트 값 표, 패널의 기울어진 힘 그림" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">지레와 빗면 · 레슨 1</span><b>지레</b>
+          <span class="how">모멘트가 큰 쪽으로 기움, 받침점 위치에 따라 필요한 힘 곡선</span></div></a>
+        <a class="tile" data-tags="machines" href="demo/examples/simple-machines/?tour&amp;fit&amp;t=19.2" target="_blank" rel="noopener">
+          <img src="samples/m-ramp.jpg" alt="나무 빗면 위 상자를 노란 용수철저울과 줄로 윈치가 끌어 올리는 모습, 패널의 빗면 삼각형 그림" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">지레와 빗면 · 레슨 2</span><b>빗면</b>
+          <span class="how">누르고 있으면 윈치가 감김, 기울기를 바꾸면 빗면이 늘고 줄어듦</span></div></a>
+        <a class="tile" data-tags="machines" href="demo/examples/simple-machines/?tour&amp;fit&amp;t=36.5" target="_blank" rel="noopener">
+          <img src="samples/m-pulleys.jpg" alt="나무 틀에 도르래 네 개와 줄 다섯 가닥, 상자가 들려 올라가고 윈치 옆에 F = 10 N 표" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">바퀴 · 레슨 3</span><b>도르래</b>
+          <span class="how">받치는 줄 1 · 2 · 4가닥, 가닥마다 다른 속도로 줄무늬가 움직임</span></div></a>
+        <a class="tile" data-tags="machines" href="demo/examples/simple-machines/?tour&amp;fit&amp;t=47.5" target="_blank" rel="noopener">
+          <img src="samples/m-gears.jpg" alt="나무판 위 주황 톱니바퀴 24개짜리와 파란 48개짜리가 맞물린 모습, 40 rpm과 20 rpm 값 표" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">바퀴 · 레슨 4</span><b>톱니바퀴</b>
+          <span class="how">톱니가 실제로 맞물려 반대로 돔, 톱니 수 비로 속도와 힘을 바꿈</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬은 X에 올라온 화면 녹화(<a href="https://x.com/DilumSanjaya/status/2118386789169938562">Dilum Sanjaya</a>, 48개 레슨 · 13개 언어의 Electronics 101 앱, 2분 35초)를 5초마다 뽑은 프레임으로 읽고, 이 레포에서 처음부터 지었습니다. 원본 앱의 코드 · 그림 · 문구 · 이름은 쓰지 않았고, 모습과 앱 구성만 가져왔습니다.</p>
+  <div class="works">
+    <a class="work" href="demo/examples/circuits/" target="_blank" rel="noopener"><b>회로 101 라이브 앱</b><span>레슨 5개 · 영어 · 한국어 · 브레드보드 배치</span><span class="url">hands-on-lab/demo/examples/circuits/</span></a>
+    <a class="work" href="demo/examples/simple-machines/" target="_blank" rel="noopener"><b>기계 101 라이브 앱</b><span>레슨 4개 · 브리프에서 새로 설계</span><span class="url">hands-on-lab/demo/examples/simple-machines/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/hands-on-lab/examples"><b>원본 · motion-skills → hands-on-lab/examples/</b><span>두 코스의 부품 · 모델 · 그림 · 투어 전체. 스킬의 출처</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/hands-on-lab/SKILL.md">SKILL.md</a> <span>워크플로 · 규칙 · 계약</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/hands-on-lab">폴더</a> <span>lib · scripts · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/hands-on-lab/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/hands-on-lab/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 코스 브리프, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/hands-on-lab/references/LESSON.md">references/LESSON.md</a> <span>코스 · 레슨 계약, 키트 API, 투어</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/hands-on-lab/references/STYLE.md">references/STYLE.md</a> <span>모습을 숫자로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/hands-on-lab/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 폰트: Barlow Condensed, Inter, JetBrains Mono, Noto Sans KR (OFL) · three.js (MIT)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
