@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>제주 · map-dive</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<script type="importmap">{ "imports": { "three": "../lib/three.module.min.js", "dive/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// 「제주」 — a 30 s map-dive (see BRIEF.md). Stages: the island (a floating toy map) → Seongsan Ilchulbong (a close coast)
+// → back up over the island → Jeju old town around Gwandeokjeong (a city that falls into night) → the island at night.
+import { Film, projector, smoothLoop, offsetLoop, hex, mixc, fbm, noise, smooth, ramp, clamp, lerp, inside, sdLoop, distToLine } from 'dive/dive.js';
+import * as L from 'dive/land.js';
+import * as K from 'dive/kit.js';
+
+const F = await Film.create({ duration: 30, seed: 7 });
+const geo = projector({ center: [126.55, 33.38], km: 6 });            // 1 unit = 6 km on the island
+
+// ---------------------------------------------------------------- the island (traced by hand from a map, clockwise from the west tip)
+const COAST = [[126.163, 33.295], [126.17, 33.33], [126.225, 33.39], [126.265, 33.415], [126.305, 33.45], [126.33, 33.465], [126.385, 33.485],
+  [126.455, 33.5], [126.48, 33.51], [126.515, 33.517], [126.545, 33.52], [126.585, 33.527], [126.635, 33.545], [126.67, 33.545], [126.755, 33.56],
+  [126.795, 33.56], [126.855, 33.525], [126.9, 33.505], [126.928, 33.48], [126.945, 33.462], [126.925, 33.435], [126.905, 33.41], [126.84, 33.325],
+  [126.76, 33.275], [126.7, 33.27], [126.61, 33.245], [126.565, 33.24], [126.515, 33.235], [126.48, 33.225], [126.41, 33.24], [126.345, 33.23],
+  [126.315, 33.225], [126.29, 33.2], [126.255, 33.21], [126.2, 33.245], [126.165, 33.27]];
+const jeju = smoothLoop(COAST.map(p => geo(p)), 420);
+const udoC = geo(126.953, 33.506), udo = smoothLoop([[0, -.42], [.3, -.25], [.34, .12], [.12, .38], [-.2, .3], [-.3, 0], [-.22, -.3]].map(([x, z]) => [udoC[0] + x, udoC[1] + z]), 80);
+const sea = smoothLoop(offsetLoop(smoothLoop(COAST.map(p => geo(p)), 40), .9), 260);
+const P = {
+  hallasan: geo(126.533, 33.362), ilchul: geo(126.942, 33.458), cheonji: geo(126.554, 33.247), airport: geo(126.493, 33.507), sanbang: geo(126.312, 33.236),
+  jejusi: geo(126.522, 33.506), seogwipo: geo(126.56, 33.253), hallim: geo(126.27, 33.41), aewol: geo(126.33, 33.46), seongsan: geo(126.915, 33.44),
+  pyoseon: geo(126.83, 33.33), jungmun: geo(126.42, 33.255), daejeong: geo(126.25, 33.225), jocheon: geo(126.64, 33.53), namwon: geo(126.7, 33.285), gujwa: geo(126.8, 33.535),
+};
+const night = t => t > 24 ? 1 : 0;                                   // the island is only seen at night after the city
+const I = F.stage('island', { night });
+const toHalla = (x, z) => Math.hypot((x - P.hallasan[0]) / 6.4, (z - P.hallasan[1]) / 3.0);   // 0 at the summit, ~1 at the coast
+L.island(I, {
+  land: [jeju, udo], sea: [sea],
+  base: (x, z) => {
+    const e = clamp(1 - toHalla(x, z)), n = fbm(x * .45, z * .45, 4), n2 = fbm(x * 1.3 + 7, z * 1.3, 3);
+    let c = mixc(hex('#c4dc7c'), hex('#93c45c'), smooth(.05, .4, e + (n - .5) * .3));            // coast fields → green slopes
+    c = mixc(c, hex('#4f9845'), smooth(.45, .62, e + (n2 - .5) * .25));                          // forest belt
+    c = mixc(c, hex('#a79878'), smooth(.86, .95, e));                                            // bare summit
+    c = mixc(c, hex('#e3cf86'), .45 * smooth(.62, .8, n) * (1 - smooth(.2, .4, e)));             // dry grass patches
+    c = mixc(c, hex('#6fae4c'), .5 * smooth(.6, .72, n2) * (1 - smooth(.5, .7, e)));             // darker groves
+    return c;
+  },
+  paint: P2 => {
+    const ring = offsetLoop(jeju, -.32);
+    P2.road(ring, .045, { color: '#fbf8f0', edge: '#c8bfae', glow: .55 });                    // the coastal ring road
+    P2.road(smoothLoop([P.jejusi, [P.hallasan[0] + .5, P.hallasan[1] - .4], P.seogwipo], 30, false), .04, { color: '#fbf8f0', edge: '#c8bfae', glow: .4 });
+    P2.road(smoothLoop([P.jejusi, [P.hallasan[0] - .9, P.hallasan[1] - .2], P.jungmun], 30, false), .035, { color: '#fbf8f0', edge: '#c8bfae', glow: .35 });
+    P2.river(smoothLoop([[P.hallasan[0] - .2, P.hallasan[1] - .5], [P.jejusi[0] - .15, P.jejusi[1] + .7], [P.jejusi[0] - .1, P.jejusi[1] + .08]], 20, false), .05);
+    P2.river(smoothLoop([[P.hallasan[0] + .2, P.hallasan[1] + .5], [P.cheonji[0] - .05, P.cheonji[1] - .5], P.cheonji], 20, false), .045);
+    P2.fields(offsetLoop(jeju, -.05), { cell: .36, angle: 14, alpha: .45, colors: ['#bcd679', '#d6d58a', '#a6cc6a', '#cfe08c'], keep: (x, z) => toHalla(x, z) > .6 && hash2(x, z) > .42 });
+    for (const [k, w] of [['jejusi', .55], ['seogwipo', .45], ['hallim', .25], ['aewol', .2], ['seongsan', .22], ['pyoseon', .2], ['jungmun', .25], ['daejeong', .2], ['jocheon', .2], ['namwon', .2], ['gujwa', .18]]) {
+      P2.fill(smoothLoop([[-1, -.6], [1, -.7], [1.1, .5], [-.8, .7]].map(([a, b]) => [P[k][0] + a * w * .5, P[k][1] + b * w * .4]), 24), '#e9d6c2', { alpha: .8, blur: .03 });
+      P2.light(P[k], w * 1.4, .9);
+    }
+    const T = (s, p, o = {}) => P2.text(s, p, { size: .19, weight: 700, color: '#2f3238', ...o });
+    T('제주시', [P.jejusi[0] + .1, P.jejusi[1] + .32], { size: .28, weight: 800 }); T('서귀포', [P.seogwipo[0] + .3, P.seogwipo[1] - .32], { size: .26, weight: 800 });
+    T('한림', [P.hallim[0] + .25, P.hallim[1] + .12]); T('애월', [P.aewol[0] + .2, P.aewol[1] + .22]); T('조천', [P.jocheon[0], P.jocheon[1] + .22]);
+    T('구좌', [P.gujwa[0], P.gujwa[1] + .25]); T('성산', [P.seongsan[0] - .45, P.seongsan[1] + .2]); T('표선', [P.pyoseon[0] - .2, P.pyoseon[1] - .1]);
+    T('남원', [P.namwon[0], P.namwon[1] - .2]); T('중문', [P.jungmun[0], P.jungmun[1] - .22]); T('대정', [P.daejeong[0] + .1, P.daejeong[1] - .2]);
+    T('한라산', [P.hallasan[0], P.hallasan[1] + 1.25], { size: .24, weight: 800, color: '#3d3a33' });
+    T('우도', [udoC[0] - .02, udoC[1] + .5], { size: .15 }); T('성산일출봉', [P.ilchul[0] - .2, P.ilchul[1] - .48], { size: .15, weight: 600 });
+    T('천지연폭포', [P.cheonji[0] + .05, P.cheonji[1] + .42], { size: .14, weight: 600 }); T('제주국제공항', [P.airport[0] - .45, P.airport[1] + .3], { size: .14, weight: 600 });
+  },
+});
+function hash2(x, z) { return noise(x * 2.1, z * 2.1, 41); }
+// landmarks, oversized like toys
+K.crater(I, { at: P.hallasan, s: 2.6, h: .3, color: '#5c9f48', rim: '#8f8268', inner: '#6a8f4a', lake: true });
+K.crater(I, { at: P.ilchul, s: .62, h: .62, color: '#7fb553', rim: '#9a8a62', inner: '#6f9c45', rot: 20 });
+K.mountain(I, { at: P.sanbang, s: .42, peaks: 1, color: '#9d8fd8', snow: '#cfc6f2', seed: 4 });
+K.waterfall(I, { at: [P.cheonji[0], P.cheonji[1] - .05], s: .5, w: 1, h: .5, rot: 0 });
+K.lighthouse(I, { at: [udoC[0] + .18, udoC[1] - .3], s: .32 });
+K.statue(I, { at: [P.jejusi[0] + .5, P.jejusi[1] + .45], s: .34, rot: -15 });
+for (let i = 0; i < 5; i++) K.turbine(I, { at: [geo(126.172, 33.33)[0] + .25 + i * .05, geo(126.172, 33.33)[1] - .55 + i * .27], s: .42, phase: i * .21 });
+for (let i = 0; i < 4; i++) K.turbine(I, { at: [geo(126.79, 33.553)[0] - .5 + i * .32, geo(126.79, 33.553)[1] + .18 + (i % 2) * .07], s: .4, phase: i * .37 });
+for (const [lon, lat, s] of [[126.72, 33.43, .3], [126.78, 33.46, .24], [126.66, 33.4, .26], [126.83, 33.42, .22], [126.37, 33.36, .24], [126.62, 33.46, .22], [126.86, 33.47, .2]])
+  K.crater(I, { at: geo(lon, lat), s, h: .5, color: '#8bbd5a', rim: '#7aa64c', inner: '#7aa64c' });     // oreum, the small volcanic cones
+K.houses(I, { at: P.jejusi, n: 14, spread: .45, size: .1, roofs: ['#e2603f', '#3f74c0', '#f0a040', '#58a05a'] });
+K.skyline(I, { at: [P.jejusi[0] - .25, P.jejusi[1] + .05], n: 6, spread: .2, height: .38 });
+K.houses(I, { at: P.seogwipo, n: 10, spread: .35, size: .1, seed: 5, roofs: ['#e2603f', '#3f74c0', '#f0a040'] });
+for (const k of ['hallim', 'aewol', 'pyoseon', 'jungmun', 'daejeong', 'jocheon', 'namwon', 'gujwa', 'seongsan']) K.houses(I, { at: P[k], n: 5, spread: .18, size: .085, seed: k.length });
+K.trees(I, { at: [P.seogwipo[0] + .6, P.seogwipo[1] - .3], n: 9, spread: .35, kind: 'orange', size: .13 });
+K.trees(I, { at: [P.namwon[0] - .2, P.namwon[1] - .25], n: 8, spread: .3, kind: 'orange', size: .12, seed: 9 });
+K.animals(I, { at: geo(126.7, 33.39), n: 5, spread: .35, kind: 'horse', size: .09 });
+for (const [lon, lat, n] of [[126.45, 33.4, 9], [126.62, 33.33, 9], [126.53, 33.42, 7], [126.4, 33.31, 7], [126.68, 33.37, 6]]) K.trees(I, { at: geo(lon, lat), n, spread: .45, kind: 'pine', size: .17, seed: n + lon * 10 | 0 });
+K.plane(I, { path: t => { const a = t * .16 + .6; return [P.airport[0] + Math.cos(a) * 3.2 - 1, 1.2 + .15 * Math.sin(t * .4), P.airport[1] - 1.2 + Math.sin(a) * 1.6]; }, s: .38 });
+K.boat(I, { path: t => [udoC[0] - .55 + Math.sin(t * .15) * .2, udoC[1] + .5 + t * .01], s: .22, y: -.04 });
+K.boat(I, { path: t => [P.seogwipo[0] + .3 - t * .02, P.seogwipo[1] + .75], s: .2, y: -.04, hull: '#3f74c0' });
+const clouds = [[-8.6, -3.4, 3, 1], [6.2, -5.4, 2.6, .8], [-5.4, 5.2, 2.2, .9], [8.6, 3.6, 2.4, .8], [.5, -7.2, 3.4, .9], [-10.5, 2.2, 1.8, .7]];
+clouds.forEach(([x, z, y, s], i) => K.cloud(I, { at: [x, z], y, s, drift: [.05 + i * .01, 0], seed: i + 3 }));
+I.check('the landmarks stand on the island', () => [P.hallasan, P.ilchul, P.cheonji, P.sanbang].every(p => inside(p, jeju)));
+
+// ---------------------------------------------------------------- Seongsan Ilchulbong close up (1 unit = 50 m)
+const C = F.stage('seongsan', { shadowHalf: 30 });
+const main = smoothLoop([[-90, -30], [-26, -14], [-18, -8], [-12, 2], [-9, 6], [-14, 14], [-30, 20], [-60, 34], [-90, 60]], 160, false).concat([[-200, 60], [-200, -30]]);
+const land = (x, z) => {                                     // signed distance to land (negative on land)
+  const r = Math.hypot(x, z), cone = r - 9.6 - 1.2 * (noise(Math.atan2(z, x) * 3, 0, 5) - .5);
+  const neck = distToLine([x, z], [[-3, 6], [-8, 9], [-13, 10]]) - 2.6;
+  return Math.min(cone, neck, sdLoop([x, z], main));
+};
+const height = (x, z) => {
+  const d = land(x, z), r = Math.hypot(x, z), a = Math.atan2(z, x);
+  let h = d > 0 ? -.7 * smooth(0, 4, d) : .25 + .35 * smooth(0, 6, -d) * fbm(x * .08, z * .08, 3);
+  const rim = 5.6 + .5 * (noise(a * 4, 1, 9) - .5);
+  const outer = 4.3 * Math.pow(1 - smooth(rim, 10.2, r), 1.25), inner = 4.3 - 2.5 * smooth(rim - .3, 2.2, r);
+  const cone = r > rim ? outer : inner, jag = .55 * smooth(rim - 1.2, rim, r) * (1 - smooth(rim, rim + 1.4, r)) * (noise(a * 9, 2, 3) - .3);
+  const c = cone + jag;                                   // the cone sinks into the sea floor instead of flooring it at 0
+  return r > rim ? Math.max(h, c + Math.min(h, 0) * smooth(rim + 1, 10.2, r)) : Math.max(h, c);
+};
+const coastBase = (x, z) => {
+  const d = land(x, z), h = height(x, z);
+  if (d > 0 && h < .1) return mixc(hex('#63c4d8'), hex('#2a7fb6'), smooth(0, 9, d) * .8 + .2 * fbm(x * .05, z * .05, 3));
+  const gx = height(x + .3, z) - height(x - .3, z), gz = height(x, z + .3) - height(x, z - .3), slope = Math.hypot(gx, gz) / .6;
+  let c = mixc(hex('#a9cf6e'), hex('#7db457'), fbm(x * .12, z * .12, 4));
+  c = mixc(c, hex('#5f9a46'), smooth(.55, .75, fbm(x * .3 + 4, z * .3, 3)));
+  c = mixc(c, hex('#9c8462'), smooth(.9, 1.6, slope));                                    // cliffs show rock
+  c = mixc(c, hex('#e9dcb5'), smooth(-.2, .4, d + 1.2) * (h < 1.2 ? 1 : 0));               // sand at the waterline
+  return c;
+};
+L.terrain(C, {
+  size: 100, seg: 260, height, base: coastBase,
+  water: { level: 0, color: '#3aa7cf', opacity: .38 },
+  paint: Q => {
+    Q.fields(main.slice(0, 160).concat([[-60, 80], [-60, -40]]), { cell: 3.4, angle: 20, colors: ['#b7d47a', '#cddb86', '#9fc66a', '#d9d08a', '#8fbf62'], border: 'rgba(80,70,55,.55)', borderWidth: .22, keep: (x, z) => land(x, z) < -2.5 && Math.hypot(x, z) > 13 });
+    Q.road(smoothLoop([[-50, 26], [-24, 12], [-13, 10], [-8, 9], [-5, 7.5]], 40, false), .9, { color: '#f2eee4', edge: '#b9b09c' });
+    Q.road(smoothLoop([[-24, 12], [-26, -6], [-40, -20]], 30, false), .7, { color: '#f2eee4', edge: '#b9b09c' });
+    Q.line(smoothLoop([[-6, 7.4], [-3, 4.5], [-1.5, 2], [-.2, 6.6 - 1.4]], 30, false), .25, '#d8c9a4', { dash: [.6, .35] });   // the trail up
+  },
+  trees: { where: (x, z) => { const d = land(x, z), r = Math.hypot(x, z); return d < -1.5 ? (r < 10.5 && r > 8.2 ? .35 : r < 11 ? 0 : .04 + .4 * smooth(.62, .75, fbm(x * .1, z * .1, 3))) : 0; }, n: 2200, size: [.45, .9], colors: ['#3f8a3a', '#2f7434', '#4f9a3f', '#5ea547'], shadowHalf: 30 },
+  apron: { size: 900, base: (x, z) => sdLoop([x, z], main) < 0 ? mixc(hex('#a5cc6c'), hex('#86b85a'), fbm(x * .02, z * .02, 3)) : mixc(hex('#3a96c4'), hex('#2a78b0'), fbm(x * .01, z * .01, 2)) },
+});
+for (const [x, z, n, s] of [[-24, 16, 12, 2.2], [-17, 11, 8, 3], [-34, 6, 10, 4], [-28, 24, 9, 1]]) K.houses(C, { at: [x, z], n, spread: 4, size: 1, seed: s | 0, roofs: ['#e2603f', '#3f74c0', '#f0a040', '#5aa35a', '#e2603f'] });
+K.boat(C, { path: t => [12 + t * .9, 22 - t * .25], s: 1.6, hull: '#f2f2f2', sail: false });
+K.boat(C, { path: t => [-6 - t * .6, -20 + t * .2], s: 1.3, hull: '#3f74c0' });
+C.label('성산일출봉', [-.5, 4.7, -3.4], { from: 7.4, to: 11.6, size: 36 });
+C.check('the crater rim stands high above the sea', () => Math.min(...[0, 1, 2, 3, 4, 5].map(i => height(5.6 * Math.cos(i), 5.6 * Math.sin(i)))) > 3 && height(0, 18) < 0);
+
+// ---------------------------------------------------------------- Jeju old town, Gwandeokjeong (1 unit = 20 m), falls into night
+const cityNight = ramp(20.2, 22.8);
+const T = F.stage('city', { night: cityNight, shadowHalf: 26 });
+const harbour = [[-200, -200], [200, -200], [200, -22], [40, -22], [24, -19.5], [10, -21], [-6, -19], [-30, -21.5], [-200, -22]];
+const stream = smoothLoop([[6.2, -22], [5, -12], [6.8, -2], [5.4, 8], [7, 26]], 60, false);
+const streamL = stream.map(([x, z]) => [x - .7, z]).concat(stream.slice().reverse().map(([x, z]) => [x + .7, z]));
+const plaza = smoothLoop([[-4, -3], [4, -3.2], [4.3, 2.8], [-4.2, 3]], 40);
+const park = smoothLoop([[10, 6], [18, 5], [20, 13], [12, 15]], 40);
+const avenues = [[[-30, 4.3], [30, 3.8]], smoothLoop([[-7.5, -20], [-7, 0], [-8, 30]], 30, false), smoothLoop([[-30, -14], [-12, -15.5], [20, -14.5], [30, -15]], 30, false)];
+const city = L.city(T, {
+  size: 64, angle: 8, block: [2.4, 1.8], street: .42, avenues, avenueWidth: .9,
+  parks: [plaza, park], waters: [harbour.slice(), streamL],
+  keep: (x, z) => z > -18.6,
+  floors: (x, z, r) => { const near = Math.min(...avenues.map(a => distToLine([x, z], a))); return r < .1 ? 7 + r * 60 : (near < 2.5 ? 3 + r * 5 : 1 + r * 3.2); },
+  paint: Q => {
+    Q.fill(plaza, '#d9cdb7', { stroke: '#bfae92', strokeWidth: .15 }); Q.fill(park, '#6fb150', { stroke: '#5c9b44', strokeWidth: .2 });
+    Q.line([[-30, -21.6], [-6, -19.1], [10, -21.1], [24, -19.6], [40, -22.1], [200, -22.1]], .5, '#e2f2f6');
+    Q.road([[18, -22], [26, -26], [34, -27]], .9, { color: '#d9d4c8', edge: '#a8a196' });               // breakwater
+    Q.text('관덕로', [-15, 4.2], { size: .55, weight: 700, color: '#6b6658', halo: 'rgba(240,236,228,.9)' });
+    Q.text('산지천', [6.2, -6], { size: .5, weight: 700, color: '#2e6f8f', rotate: -80, halo: 'rgba(220,240,246,.8)' });
+  },
+  trees: { where: (x, z) => inside([x, z], park) ? .9 : (inside([x, z], plaza) ? 0 : (distToLine([x, z], avenues[0]) < .9 ? .0 : 0)), n: 380, size: [.45, .75], shadowHalf: 30 },
+});
+K.pavilion(T, { at: [0, -.6], s: 4.2, bays: [5, 2] });
+K.trees(T, { at: [-3.2, 1.8], n: 3, spread: .6, size: .7, kind: 'round', seed: 3 }); K.trees(T, { at: [3.3, 1.9], n: 3, spread: .6, size: .7, seed: 7 });
+K.statue(T, { at: [-1.6, 2.6], s: .7 }); K.statue(T, { at: [1.6, 2.6], s: .7 });
+K.boat(T, { at: [16, -26], s: 1.1, hull: '#f2f2f2', sail: false }); K.boat(T, { path: t => [-10 - t * .4, -27], s: 1.1, hull: '#3f74c0', sail: false });
+T.glow([[-3.9, .3, 2.7], [3.9, .3, 2.7], [-3.9, .3, -3], [3.9, .3, -3]], { size: 2.2, color: '#ffd28a', strength: .9 });
+T.label('관덕정', [0, 2.6, -.6], { from: 18.9, to: 24.6, size: 36 });
+
+// ---------------------------------------------------------------- shots
+const Pj = [P.jejusi[0] + .03, 0, P.jejusi[1] - .02], Pi = [P.ilchul[0], .1, P.ilchul[1]];
+F.shot('island', { from: 0, to: 6.5, keys: [
+  { t: 0, at: [.1, 0, .35], dist: 15.2, yaw: -9, elev: 40, fov: 34 },
+  { t: 4.6, at: [.5, 0, .1], dist: 13.6, yaw: 3, elev: 38 },
+  { t: 5.7, at: [Pi[0] * .82, .05, Pi[2] * .82], dist: 6.2, yaw: 14, elev: 46 },
+  { t: 6.5, at: Pi, dist: .9, yaw: 20, elev: 60 }] });
+F.shot('seongsan', { from: 5.9, to: 12.3, keys: [
+  { t: 5.9, at: [0, 1.2, -1], dist: 190, yaw: 20, elev: 60, fov: 34 },
+  { t: 7.6, at: [-2, 1.4, 0], dist: 44, yaw: 28, elev: 37 },
+  { t: 11.1, at: [-3, 1.4, 1], dist: 39, yaw: 56, elev: 33 },
+  { t: 11.7, at: [-2, 1.2, 0], dist: 52, yaw: 58, elev: 42 },
+  { t: 12.3, at: [0, 1, 0], dist: 200, yaw: 60, elev: 58 }] });
+F.shot('island', { from: 11.7, to: 17.5, keys: [
+  { t: 11.7, at: Pi, dist: .95, yaw: 60, elev: 58, fov: 34 },
+  { t: 13.3, at: [3.4, 0, -.6], dist: 8.6, yaw: 30, elev: 42 },
+  { t: 15.6, at: [Pj[0] + .3, 0, Pj[2] + .5], dist: 6.2, yaw: 2, elev: 44 },
+  { t: 16.7, at: Pj, dist: 2.2, yaw: -4, elev: 54 },
+  { t: 17.5, at: Pj, dist: .75, yaw: -6, elev: 62 }] });
+F.shot('city', { from: 16.9, to: 26, keys: [
+  { t: 16.9, at: [0, 0, 0], dist: 240, yaw: -6, elev: 62, fov: 34 },
+  { t: 18.8, at: [0, 1, 0], dist: 34, yaw: -14, elev: 40 },
+  { t: 21.2, at: [0, 1, -.5], dist: 29, yaw: 4, elev: 35 },
+  { t: 24.4, at: [0, 1, -.5], dist: 31, yaw: 30, elev: 39 },
+  { t: 26, at: [0, 1, 0], dist: 70, yaw: 40, elev: 52 }] });
+F.shot('island', { from: 25, to: 30, keys: [
+  { t: 25, at: [.1, 0, .35], dist: 16.2, yaw: -16, elev: 41, fov: 34 },
+  { t: 30, at: [.1, 0, .35], dist: 15.2, yaw: -5, elev: 38 }] });
+F.title('제주', { from: .35, to: 5.2, sub: 'Jeju Island · 1,850 km²' });
+F.credit('map-dive · motion-skills', { from: 26.4, to: 30 });
+F.title('제주의 밤', { from: 26.2, to: 30, pos: 'bottom', size: 46, weight: 700, color: '#ffffff', shadow: true });
+F.start();
+</script>
+</body>
+</html>
