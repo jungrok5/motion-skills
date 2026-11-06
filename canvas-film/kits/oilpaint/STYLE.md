@@ -1,10 +1,11 @@
-# 유화 (oil painting — Rembrandt · Remington · palette knife)
+# 유화 (oil painting — Rembrandt · Vermeer · Remington · palette knife)
 
 Kit: `kit.js` → vendored as `scenes/kit-oilpaint.js`, global `window.OIL`. Source: one-scroll-bible
 `motion/films/messiah/` (「메시아 예언과 성탄」, 2026-11-03). In that film it paints three scenes:
 - the stable after Rembrandt's *Adoration of the Shepherds* (`oil-stable.js`, key `rembrandt`, figures with `OIL.relief`);
 - the journey to Bethlehem after Remington's sunsets and nocturnes (`oil-journey.js`, key `remington`, two plates cross-faded from sunset to night);
-- the dawn after the cross, repainted from grey with the palette knife (`impasto-dawn.js`, key `impasto`, revealed stroke by stroke).
+- the dawn after the cross, repainted from grey with the palette knife (`impasto-dawn.js`, key `impasto`, revealed stroke by stroke);
+- (3rd script, 2026-11-07) Mary in her room at Nazareth by a window, after Vermeer (`oil-nazareth.js`, key `vermeer`) — chosen over a Hopper room, which the owner read as "a little horror-like".
 
 The film vendors this exact file. Before and after stills were identical (max difference 0). Template: `template.html` is
 a different subject, an old man reading a scroll by a lamp, in the `rembrandt` key.
@@ -21,13 +22,14 @@ then lays loaded strokes over it.
 
 **Keys**
 - **`rembrandt`:** readable warm umber darks and one light. Figures are mostly dark, lit on the planes that face the light. Draw them with `OIL.relief()`: a silhouette blurred into a height field and lit per pixel, with soft zones for faces and hands. Draw the focus (a child's face) again, crisp, after painting.
+- **`vermeer`:** daylight from one window on the left: a lime-plaster wall bright near the window and falling to warm shadow across the room, a lit patch on the floor, small soft blended strokes with almost no ridges, pearly highlight dots on what the light catches (jars, bread, the veil's edge). Figures are drawn part by part on the plate (profile face, veil framing it, sleeve and hand, a fold or two), lit from the window side with a skimming rim; `relief` alone gives a faceless blob here. Draw the face and hands again, crisp, after painting. Warm and still — waiting, an intimate household moment, a holy quiet.
 - **`remington`:** a red-gold sunset in long horizontal strokes (`dirAt` returning 0 above the horizon). Land and figures are dark warm silhouettes with a thin warm rim. Paint the same land again as a blue-green nocturne with warm windows, and cross-fade the two as the sun goes.
 - **`impasto`:** broad, short, thick slabs with ridges on everything lit. Best revealed: grey first, then the colour painting shown through a mask of growing knife strokes, outward from the light.
 
 ## Meanings it carries
 **Well:**
 - One light in the dark: a child, a lamp, a face. Rembrandt is the "light comes from Him" image.
-- An intimate holy moment: kneeling, reading, waiting.
+- An intimate holy moment: kneeling, reading, waiting (Vermeer: by daylight, at a window).
 - A long road at the end of the day, arriving at night (Remington).
 - A grey world repainted in colour: resurrection, restoration (impasto).
 
@@ -41,6 +43,7 @@ then lays loaded strokes over it.
 | key | darks | mids | lights | accent |
 |---|---|---|---|---|
 | rembrandt | umber `#24150B` (70 % of the frame, readable), near-black only in corners | amber `#8F5D2A` | `#E2B673`, the focus `#FFFAF0` | one red `#9C1A1A`, one cool opening (a blue-green night door) |
+| vermeer | plaster shadow `#4E4434` | wall `#CDBF9C`, floor `#8A7A5E` | window wall `#F2E8CC`, sky `#D9E4EA` | ultramarine `#18264E` → `#7D9AD6`, one red `#7A2A24`, clay `#A8643C` |
 | remington | `#1e0f10` warm silhouettes | sky `#9a2a22` → `#e2682a` → `#ffd27a` | sun `#fff1c8` | night `#17333A`, moonlit edge `#9CC4BC`, windows `#FFCC6A` |
 | impasto | deep green `#30502a` | `#6e9640` grass, sky blue `#2e5caa` | `#ffde96` dawn | flowers `#c84030` `#e8c050` |
 
@@ -58,9 +61,11 @@ then lays loaded strokes over it.
   - `light` is `{ x, y, z, R }` in plate px (a low `z` lights only the edges that face it).
   - `o` is `{ soft, height, amb, wrap }`.
 - `OIL.varnish(ctx, k = 1, col)` adds amber multiply and canvas weave over the frame.
-- `OIL.KEYS` holds the three keys' numbers.
+- `OIL.KEYS` holds the four keys' numbers.
 
 ## Checks (what went wrong on the way)
+- `vermeer` (round 1): one `relief` silhouette for a standing woman, big in the frame, read as a faceless blue ghost. Draw her part by part, smaller in the room, and repaint the face crisp. Hard dark fold lines read as stripes — blur them and keep them faint.
+- `vermeer`: in landscape the strokes (`wid` × frame width) look blobby on flat walls — lower `wid` or `cell` for 16:9.
 - Figures drawn as flat silhouettes plus shifted copies came out in **visible bands** ("contour steps"). Use `relief`.
 - A rectangle zone for a face shows as a box. Use a soft ellipse weight (`w`).
 - With the light high (`z` large), whole figures turn pale grey ("ghosts"). Keep it low so only the faces toward the light glow.
