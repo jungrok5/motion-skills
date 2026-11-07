@@ -27,3 +27,15 @@ Problem → cause → fix. Engine first, then the hands.
   English names; the Korean names are in `styles.mjs list` and on the samples page.
 - **A house style that only the first piece used** → baking the style into each `piece.js` at creation meant changing
   the house style changed nothing → the page reads `../house-style.json` at load; `piece.style` is only an override.
+- **A living frame cost a quarter second before any mark** → the value plate mixed every pixel's colour through hex
+  strings → numeric colour triples per region; the plate is built once per frame and only when a hand asks for tone.
+- **The table edge floated across the back persimmon** → the piece's zoom moved the edge line with the fruit → whole-frame
+  items (wall, table, its edge) stay outside the zoom.
+
+## Hands
+- **Chalkboard took 1.8 s** → one offscreen layer with a cut per shape, and each layer is a full-canvas pass → batch
+  one layer per stage and find hidden outline runs with `S.regionAt` instead of cutting layers (`_tone.js visibleRuns`).
+- **Charcoal could not erase only charcoal** → layers do not persist across passes → lifts paint paper colour, and the
+  paper tooth multiplied on top makes them read as lifted.
+- **Engraving loses light lines on light ground** (the window bars over the glow) → one line's width is the only tone it
+  has → accepted: pick another hand when thin light lines carry the picture.

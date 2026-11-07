@@ -58,6 +58,6 @@ export default {
     out.push({ line: [[196, 1000], [180, 1006], [164, 1004]], color: '#5a4320', w: 3, name: 'leaf stalk' })
     // frame it closer: everything on the table grows about the front edge, so the fruit fills the picture
     const Z = (pts) => pts.map(([x, y]) => [560 + (x - 560) * 1.24, 1010 + (y - 1010) * 1.24])
-    return out.map((it) => (['wall', 'table', 'window light'].includes(it.name) ? it : it.region ? { ...it, region: Z(it.region) } : { ...it, line: Z(it.line) }))
+    return out.map((it) => (['wall', 'table', 'window light', 'table edge'].includes(it.name) ? it : it.region ? { ...it, region: Z(it.region) } : { ...it, line: Z(it.line) }))
   },
 }

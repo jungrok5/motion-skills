@@ -57,7 +57,7 @@ export function prepare(piece, K, t = 0, env = {}) {
   S.colorAt = (x, y) => getPlate().at(x, y)
   /** the value of the picture at (x, y): 0 = darkest, 1 = lightest (light, shape, cast shadows, glows) */
   S.tone = (x, y) => getPlate().tone(x, y)
-  /** the topmost solid region at (x, y), or null */
+  /** the topmost region at (x, y) — solid or glow (a light source is a place too); null on bare background */
   S.regionAt = (x, y) => getPlate().region(x, y)
   /** the raw value plate (an offscreen canvas at plate resolution) and its scale */
   S.plate = () => getPlate()
@@ -95,10 +95,17 @@ function buildPlate(S, env) {
   const cnv = canvas(w, h), x2 = cnv.getContext('2d'), img = x2.createImageData(w, h), d = img.data
   const bg = rgb(S.bg)
   const cache = S.regions.map(() => null)
+  // numeric copies of each region's shade / local / lit colours: the per-pixel mix must not go through hex strings
+  const tri = S.regions.map((r) => [rgb(r.shade), rgb(r.color), rgb(r.lit)])
+  const toneRgb = (ri, t) => {
+    const [sh, lo, li] = tri[ri]
+    if (t >= 0.6) { const f = (t - 0.6) / 0.4; return [Math.round(lo[0] + (li[0] - lo[0]) * f), Math.round(lo[1] + (li[1] - lo[1]) * f), Math.round(lo[2] + (li[2] - lo[2]) * f)] }
+    const f = t / 0.6; return [Math.round(sh[0] + (lo[0] - sh[0]) * f), Math.round(sh[1] + (lo[1] - sh[1]) * f), Math.round(sh[2] + (lo[2] - sh[2]) * f)]
+  }
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const k = y * w + x, ri = id[k], X = (x + 0.5) / res, Y = (y + 0.5) / res
     let c = bg
-    if (ri >= 0) { const r = S.regions[ri]; c = rgb(r.role === 'glow' ? r.lit : colourAtTone(r, r.toneAt(X, Y))) }
+    if (ri >= 0) { const r = S.regions[ri]; c = r.role === 'glow' ? tri[ri][2] : toneRgb(ri, r.toneAt(X, Y)) }
     if (shadow[k] > 0) { const sr = S.regions[sid[k]], sc = cache[sid[k]] ||= rgb(sr.color), a = shadow[k]; c = c.map((v, j) => v * (1 - a) + v * (sc[j] / 255) * a * 0.75) }
     if (glow[k] > 0 && ri >= 0 && S.regions[ri].role !== 'glow') c = c.map((v) => v + (255 - v) * 0.25 * glow[k])
     d[k * 4] = c[0]; d[k * 4 + 1] = c[1]; d[k * 4 + 2] = c[2]; d[k * 4 + 3] = 255

@@ -35,7 +35,7 @@ const data = await v.page.evaluate(async ({ tiles, w, h, cols }) => {
     x.imageSmoothingQuality = 'high'; x.drawImage(window.doodle.canvas, cx, cy, w, h)
     x.fillStyle = '#2b2522'; x.font = '600 14px system-ui, sans-serif'; x.textBaseline = 'top'
     x.fillText(t.label || `${window.doodle.style.name}`, cx + 2, cy + h + 6)
-    if (!t.label) { x.fillStyle = '#8a7f72'; x.font = '12px ui-monospace, monospace'; const id = t.style; x.fillText(id, cx + w - x.measureText(id).width - 2, cy + h + 8) }
+    if (!t.label) { x.font = '600 14px system-ui, sans-serif'; const nw = x.measureText(window.doodle.style.name).width; x.fillStyle = '#8a7f72'; x.font = '12px ui-monospace, monospace'; const id = t.style, iw = x.measureText(id).width; if (nw + iw + 12 < w) x.fillText(id, cx + w - iw - 2, cy + h + 8) }
   }
   return { url: sheet.toDataURL('image/jpeg', 0.86).split(',')[1], missing }
 }, { tiles, w, h, cols })
