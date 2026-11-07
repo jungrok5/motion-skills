@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>valley-line · swarm-world</title>
+<meta name="description" content="A crew of sixteen agent cursors builds a low-poly world just ahead of a little steam train: sunflower and lavender fields with windmills, a harbour town, a pine forest and a summit station.">
+<script type="importmap">{ "imports": { "sw/": "../../lib/" } }</script>
+</head>
+<body>
+<!-- valley-line — the style's reference world, ported from swarm-build's examples/3d.html (MIT © Harnoor Singh):
+     fields and windmills → a pastel harbour town → a pine forest up to a snowy summit station, built 20 s ahead of a train.
+     Everything topic-specific lives in this file; lib/world.js is the engine (see references/KIT.md). -->
+<script type="module">
+import { World, kit, cl, sm, lerp, noise, fbm } from 'sw/world.js';
+const { part, merge, Box, Cyl, Cone, Ico, Dome, Gable, Sail, jitter, props, C } = kit;
+
+const CORAL = '#ff5b3a', CREAM = '#fff6e8', INK = '#16181d';
+const W = new World({
+  title: 'valley-line', build: 20, seed: 20261106,
+  alt: 'A little steam train crosses a world built in front of it: sunflower and lavender fields with windmills, a pastel harbour town with a lighthouse and sailboats, then pine forest up to a snowy summit station at golden hour.',
+  crew: {
+    renderer: '#b49bff', conductor: CORAL, tracklayer: INK, terraformer: CREAM, surveyor: CORAL, gardener: INK, planter: CREAM, painter: CORAL,
+    carpenter: INK, roofer: CREAM, mason: CORAL, rigger: INK, shipwright: CREAM, cloudsmith: CORAL, lamplighter: INK, stonecutter: CREAM,
+  },
+});
+const { rnd, rr, pick } = W;
+
+// ── the line: fields and windmills → along the harbour → the climb → the summit station ──
+W.line([
+  [-24, 1.2, 198], [-12, 1.3, 168], [2, 1.4, 142], [-9, 1.6, 116], [6, 1.6, 92], [18, 1.8, 68],
+  [25, 2.0, 46], [27, 2.2, 22], [22, 2.6, 0],
+  [8, 5, -18], [-14, 9.5, -32], [-20, 14.5, -52], [-4, 20.5, -66], [16, 26.5, -80],
+  [12, 32.5, -100], [-6, 37.5, -112], [-14, 41.5, -128], [-6, 43.5, -144],
+]);
+const LEN = W.LEN;
+
+// ── the land: rolling fields, a hill above the harbour, a valley that climbs with the line between snowy peaks ──
+const coastX = (z) => 37 + 6 * Math.sin(z * 0.06) + Math.max(0, z - 82) * 0.95 + Math.max(0, -z - 26) * 0.75;
+const ISLE = [coastX(-8) + 15, -8];
+const PEAKS = [[-72, -150, 44, 26], [42, -176, 52, 30], [-104, -82, 30, 26], [72, -122, 34, 26], [0, -228, 62, 36], [-122, -182, 52, 34], [102, -192, 40, 30], [-40, -206, 46, 26], [-62, -20, 14, 26]];
+function land(x, z, nr) {
+  const n1 = fbm(x * 0.018 + 3.1, z * 0.018 - 1.7), n2 = noise(x * 0.07, z * 0.07);
+  const wM = sm(38, 72, z), wA = sm(-10, -46, z), wT = Math.max(0, 1 - wM - wA), cx = coastX(z);
+  let h = (1.4 + (n1 - 0.45) * 7 + (n2 - 0.5) * 1.1) * wM + (1.4 + Math.max(0, cx - x - 9) * 0.2 + (n1 - 0.45) * 4) * wT;
+  if (wA > 0) {
+    const ridge = 1 - Math.abs(2 * noise(x * 0.03 + 7, z * 0.03 + 2) - 1), rise = Math.max(0, nr.d - 7);
+    h += wA * (nr.yb - 1.0 + Math.pow(rise, 1.15) * (0.1 + 0.14 * n1) + ridge * 3 * sm(14, 40, nr.d) + (n2 - 0.5) * 1.2);
+  }
+  for (const [px, pz, ph, pr] of PEAKS) h += ph * Math.exp(-((x - px) ** 2 + (z - pz) ** 2) / (pr * pr)) * (0.85 + 0.3 * n2);
+  h += Math.max(0, -x - 46) * 0.32 * (0.6 + n1);
+  const dc = cx - x;
+  if (dc < 12) h = Math.min(h, (dc - 2) * 0.34 + (n2 - 0.5) * 0.5);
+  const di = Math.hypot(x - ISLE[0], z - ISLE[1]);
+  if (di < 11) h = Math.max(h, 4.6 - di * di * 0.055 + (n2 - 0.5) * 0.8);
+  return Math.max(h, -5.5);
+}
+// fields beside the line in the first stretch: [path length, side, offset, length, width, crop]
+const FIELDS = [[56, -1, 17, 30, 20, 'sun'], [78, 1, 16, 26, 18, 'lav'], [98, -1, 17, 28, 20, 'wheat'], [120, 1, 16, 30, 18, 'sun'],
+                [138, -1, 16, 22, 16, 'lav'], [68, 1, 40, 26, 22, 'green'], [108, -1, 42, 24, 22, 'wheat'], [146, 1, 36, 22, 18, 'green']]
+  .map(([s, side, off, len, wid, crop]) => { const a = W.at(s); return { c: [a.p[0] + a.r[0] * side * off, a.p[2] + a.r[2] * side * off], u: [a.t[0], a.t[2]], len, wid, crop, s }; });
+const inField = (x, z) => {
+  for (const f of FIELDS) {
+    const dx = x - f.c[0], dz = z - f.c[1], u = dx * f.u[0] + dz * f.u[1], v = -dx * f.u[1] + dz * f.u[0];
+    if (Math.abs(u) < f.len / 2 && Math.abs(v) < f.wid / 2) return { f, u, v };
+  }
+  return null;
+};
+const COL = Object.fromEntries(Object.entries({
+  grass: '#8cc650', grass2: '#76b444', town: '#88c255', alp: '#6aa84a', dry: '#93a85c', forest: '#5e9440', sand: '#ecd8a2', bed: '#d6c28e', deep: '#4f9a93',
+  rock: '#958d86', rock2: '#7d7670', snow: '#f2f6fa', ballast: '#a39380', soil: '#8f6c47', rowG: '#6eae3d', lavG: '#7f9a4c', wheat: '#e6c45e', wheat2: '#d8b14a', field: '#9bcc4f', field2: '#86bd44',
+}).map(([k, v]) => [k, C(v)]));
+W.land({
+  height: land, bounds: [-160, 175, -260, 225], res: [134, 194], lead: 84,
+  color(x, y, z, ny, nr, out) {
+    const n = fbm(x * 0.08, z * 0.08), dc = coastX(z) - x;
+    if (nr.d < 1.9 && y > -0.2) return out.copy(COL.ballast).multiplyScalar(0.95 + n * 0.1);
+    if (y < -0.25) return out.copy(COL.bed).lerp(COL.deep, cl(-y / 4.5));
+    if (y < 0.85 && dc < 14) return out.copy(COL.sand);
+    const fi = inField(x, z);
+    if (fi) {
+      const row = Math.floor((fi.v + 50) / ({ sun: 1.1, lav: 1.25, wheat: 2.2, green: 2.0 })[fi.f.crop]) % 2;
+      return out.copy({ sun: [COL.soil, COL.rowG], lav: [COL.soil, COL.lavG], wheat: [COL.wheat, COL.wheat2], green: [COL.field, COL.field2] }[fi.f.crop][row]);
+    }
+    if (y > 58 + n * 10 && ny > 0.45) return out.copy(COL.snow);
+    if (ny < 0.72 || y > 52 + n * 8) return out.copy(n > 0.5 ? COL.rock : COL.rock2).lerp(COL.snow, cl((y - 60) / 14));
+    out.copy(z > 50 ? (n > 0.48 ? COL.grass : COL.grass2) : z > -12 ? COL.town : COL.alp).lerp(COL.dry, cl((y - 30) / 22) * 0.7);
+    if (z < -12 && fbm(x * 0.05, z * 0.05) > 0.42) out.lerp(COL.forest, 0.6);
+    return out.multiplyScalar(0.94 + n * 0.12);
+  },
+});
+W.sea({ level: 0, bounds: [8, 260, -260, 225], res: [56, 100], color: '#2cb6c0' });
+W.track({ by: 'tracklayer', lead: 24 });
+const height = (x, z, nr) => W.ground(x, z, nr);
+
+// ── the kinds: [label, half width, height, half depth] and what the crew says doing them ──
+W.kind('sunflower', { label: 'Sunflower', size: [0.3, 1.4, 0.3], words: ['sowing', 'sowed', 'sunflowers'], geo: merge([part(Cyl(0.045, 0.05, 1.15, 5), '#4c8a2c'), part(Box(0.34, 0.03, 0.14), '#5c9c34', { y: 0.55, ry: 0.6 }),
+  part(Cyl(0.3, 0.3, 0.07, 10), '#f6c21a', { y: 1.2, rx: Math.PI / 2.4 }), part(Cyl(0.14, 0.14, 0.09, 8), '#6a4224', { y: 1.21, z: 0.02, rx: Math.PI / 2.4 })]) });
+W.kind('lavender', { label: 'Lavender', size: [0.45, 0.9, 0.45], words: ['sowing', 'sowed', 'lavender'], one: 'lavender', geo: merge([part(Ico(0.42, 1), '#6f8f4a', { y: 0.22, sy: 0.55 }), part(Ico(0.36, 1), '#9b7fd9', { y: 0.36, sy: 0.6 }),
+  ...[[0.16, 0.1], [-0.15, 0.08], [0.02, -0.17], [-0.05, 0.18]].map(([x, z], k) => part(Cone(0.07, 0.42, 5), k % 2 ? '#b9a2ee' : '#8d6fd0', { x, z, y: 0.45 }))]) });
+W.kind('hay', { label: 'Hay bale', size: [0.7, 1.2, 0.7], words: ['rolling', 'rolled', 'hay bales'], geo: merge([part(Cyl(0.62, 0.62, 1.1, 12), '#e8c45a', { rz: Math.PI / 2, x: 0.55, y: 0.62 }), part(Cyl(0.5, 0.5, 1.12, 12), '#f3d88a', { rz: Math.PI / 2, x: 0.56, y: 0.62 })]) });
+W.kind('fence', { label: 'Fence', size: [1.2, 1, 0.2], words: ['setting', 'set', 'fence posts'], geo: props.fence() });
+W.kind('windmill', { label: 'Windmill', size: [3.6, 11, 3.6], words: ['raising', 'raised', 'windmills'], geo: merge([part(Cyl(1.0, 1.6, 7.4, 10), '#f6f0e4'), part(Cone(1.3, 1.6, 10), '#c84a3a', { y: 7.4 }), part(Box(0.6, 1.1, 0.1), '#5b3a2a', { z: 1.45 }),
+  part(Box(0.4, 0.5, 0.08), '#3b5370', { z: 1.2, y: 3.6 }), part(Cyl(0.18, 0.18, 0.9, 8), '#3a3a3e', { y: 6.8, z: 1.0, rx: Math.PI / 2 })]) });
+W.kind('blades', { label: 'Windmill', size: [2.3, 2.3, 0.3], quiet: true, geo: merge([0, 1, 2, 3].flatMap((k) => [part(Box(0.5, 4.4, 0.07), '#fff8ee', { y: 0.35, rz: k * Math.PI / 2 }), part(Box(0.12, 4.6, 0.12), '#c84a3a', { y: 0.1, rz: k * Math.PI / 2 })])
+  .concat([part(Cyl(0.32, 0.32, 0.3, 10), '#c84a3a', { rx: Math.PI / 2 })])) });
+W.kind('barn', { label: 'Barn', size: [3.4, 5.6, 2.6], words: ['framing', 'framed', 'barns'], geo: merge([part(Box(6.4, 3.4, 4.4), '#c4452f'), part(Gable(6.9, 5.0, 2.2), '#5d4a44', { y: 3.4 }), part(Box(1.8, 2.2, 0.08), '#f4ede2', { z: 2.22 }),
+  part(Box(1.5, 1.9, 0.1), '#9d3524', { z: 2.24 }), part(Box(0.7, 0.7, 0.08), '#f4ede2', { z: 2.22, y: 2.9 })]) });
+W.kind('silo', { label: 'Silo', size: [1.3, 7.6, 1.3], words: ['raising', 'raised', 'silos'], geo: merge([part(Cyl(1.25, 1.25, 6.2, 14), '#dcd6ca'), part(Dome(1.27), '#a9b4bd', { y: 6.2 }),
+  ...[1.5, 3, 4.5].map((y) => part(Cyl(1.29, 1.29, 0.12, 14), '#b9b2a6', { y }))]) });
+W.kind('house', { label: 'House', size: [0.55, 1.5, 0.55], words: ['building', 'built', 'houses'], geo: props.house() });
+W.kind('roof', { label: 'Roof', size: [0.58, 0.45, 0.6], words: ['roofing', 'roofed', 'houses'], geo: props.roof() });
+W.kind('church', { label: 'Church', size: [4, 13, 5], words: ['raising', 'raised', 'churches'], geo: merge([part(Box(4.4, 4.6, 7.4), '#f2e8d6', { z: -1.5 }), part(Gable(4.8, 7.8, 2.6), '#5b6b7a', { y: 4.6, z: -1.5, ry: Math.PI / 2 }),
+  part(Box(2.6, 9.4, 2.6), '#efe3cf', { z: 2.4 }), part(Cone(2.0, 3.8, 4), '#4f6278', { y: 9.4, z: 2.4, ry: Math.PI / 4 }),
+  part(Cyl(0.7, 0.7, 0.1, 16), '#fffaf0', { y: 7.6, z: 3.72, rx: Math.PI / 2 }), part(Box(0.07, 0.5, 0.04), '#2b2f36', { y: 7.8, z: 3.79 }),
+  part(Box(0.8, 1.5, 0.06), '#6a4630', { z: 3.72 }), part(Box(0.4, 1.1, 0.05), '#43566e', { y: 5.4, z: 3.72 })]) });
+W.kind('pier', { label: 'Pier', size: [1.4, 1, 8], words: ['laying', 'laid', 'piers'], geo: merge([part(Box(2.4, 0.22, 16), '#a07650', { z: 8 }), ...[2, 6, 10, 14].flatMap((z) => [part(Cyl(0.16, 0.16, 2.6, 6), '#6e4f36', { x: 1.0, y: -2.2, z }), part(Cyl(0.16, 0.16, 2.6, 6), '#6e4f36', { x: -1.0, y: -2.2, z })])]) });
+W.kind('boat', { label: 'Sailboat', size: [1, 5.2, 1.8], words: ['mooring', 'moored', 'sailboats'], geo: merge([part(Box(1.3, 0.55, 3.2), '#ffffff', { y: 0.05 }), part(Cone(0.65, 1.0, 4), '#ffffff', { rx: Math.PI / 2, ry: Math.PI / 4, y: 0.33, z: 1.6 }),
+  part(Box(1.34, 0.12, 3.24), '#2f6ea8', { y: 0.32 }), part(Box(1.0, 0.1, 2.6), '#c9a37a', { y: 0.6 }),
+  part(Cyl(0.05, 0.06, 4.6, 6), '#e9e4da', { y: 0.6, z: 0.3 }), part(Sail(4.0, 2.2), '#fffaf0', { y: 0.95, z: 0.32 }), part(Sail(3.0, 1.2), '#ffd28c', { y: 0.95, z: 0.28, ry: Math.PI })]) });
+W.kind('lighthouse', { label: 'Lighthouse', size: [1.6, 11.5, 1.6], words: ['raising', 'raised', 'lighthouses'], geo: merge([part(Cyl(1.9, 2.3, 1.1, 12), '#9a948d'), ...[0, 1, 2, 3, 4, 5].map((k) => part(Cyl(1.25 - (k + 1) * 0.07, 1.25 - k * 0.07, 1.5, 12), k % 2 ? '#f7f2ea' : '#d6453b', { y: 1.1 + k * 1.5 })),
+  part(Cyl(1.25, 1.25, 0.22, 12), '#2f3338', { y: 10.1 }), part(Cyl(0.62, 0.62, 1.1, 10), '#fff1b5', { y: 10.3 }), part(Cone(0.85, 1.0, 10), '#b83a31', { y: 11.4 })]) });
+W.kind('lamp', { label: 'Lamp', size: [0.3, 2.6, 0.3], words: ['lighting', 'lit', 'lamps'], geo: props.lamp() });
+W.kind('tree', { label: 'Tree', size: [1.6, 3.8, 1.6], words: ['planting', 'planted', 'trees'], geo: props.tree() });
+W.kind('pine', { label: 'Pine', size: [1.3, 4.6, 1.3], words: ['planting', 'planted', 'pines'], geo: props.pine() });
+W.kind('pineSnow', { label: 'Pine', size: [1.3, 4.6, 1.3], words: ['planting', 'planted', 'pines'], geo: props.pine({ snow: true }) });
+W.kind('rock', { label: 'Rock', size: [1, 1.2, 1], words: ['placing', 'placed', 'rocks'], geo: props.rock() });
+W.kind('station', { label: 'Station', size: [5, 4.6, 2.4], words: ['raising', 'raised', 'stations'], geo: merge([part(Box(10, 0.6, 3.4), '#cfc6b6'), part(Box(4.6, 3.0, 2.8), '#f3e6cc', { y: 0.6, x: 0.8 }), part(Gable(5.2, 3.4, 1.6), '#b5473a', { y: 3.6, x: 0.8 }),
+  part(Box(8.6, 0.14, 2.0), '#6a4a36', { y: 3.0, z: -0.9 }), ...[-3.6, -1, 3.6].map((x) => part(Cyl(0.08, 0.08, 2.4, 6), '#5a4030', { x, y: 0.6, z: -1.6 })),
+  part(Box(0.9, 1.5, 0.06), '#6a4630', { y: 0.6, z: -1.42, x: 0.2 }), ...[-0.9, 1.6].map((x) => part(Box(0.7, 0.8, 0.05), '#43566e', { y: 1.5, z: -1.42, x })),
+  part(Cyl(0.36, 0.36, 0.08, 14), '#fffaf0', { y: 2.5, z: -1.5, x: 2.4, rx: Math.PI / 2 }), part(Cyl(0.05, 0.05, 3.6, 6), '#d8d2c8', { x: -4.6, y: 0.6, z: 1.2 }),
+  part(Box(1.1, 0.7, 0.04), CORAL, { x: -4.05, y: 3.6, z: 1.2 })]) });
+W.kind('cloud', { label: 'Cloud', size: [7, 5, 4], quiet: true, shadow: false, say: { doing: 'shaping a cloud' }, geo: props.cloud() });
+
+// ── what stands where, and when it is built (its default: when the build front, `lead` metres ahead of the train, reaches it) ──
+for (const f of FIELDS) {
+  if (f.crop === 'sun' || f.crop === 'lav') {
+    const du = f.crop === 'sun' ? 0.95 : 1.05, dv = f.crop === 'sun' ? 1.1 : 1.25;
+    for (let v = -f.wid / 2 + 0.8; v < f.wid / 2 - 0.5; v += dv) for (let u = -f.len / 2 + 0.7; u < f.len / 2 - 0.5; u += du) {
+      const x = f.c[0] + f.u[0] * u - f.u[1] * v + rr(-0.15, 0.15), z = f.c[1] + f.u[1] * u + f.u[0] * v + rr(-0.15, 0.15), nr = W.nearest(x, z);
+      if (nr.d < 7) continue;
+      W.add(f.crop === 'sun' ? 'sunflower' : 'lavender', { x, y: height(x, z, nr), z, ry: f.crop === 'sun' ? rr(-0.45, 0.45) : rr(0, 6.28), sx: f.crop === 'sun' ? rr(0.7, 0.9) : rr(0.8, 1.1), field: f, b: W.buildAt(nr.s + (u + f.len / 2) * 0.35, 36) });
+    }
+  } else if (f.crop === 'wheat') {
+    for (let k = 0; k < 7; k++) {
+      const u = rr(-f.len / 2 + 3, f.len / 2 - 3), v = rr(-f.wid / 2 + 3, f.wid / 2 - 3);
+      const x = f.c[0] + f.u[0] * u - f.u[1] * v, z = f.c[1] + f.u[1] * u + f.u[0] * v;
+      W.add('hay', { x, z, ry: rr(0, 6.28), field: f, lead: 36 });
+    }
+  }
+  W.claim(f.c[0], f.c[1], Math.min(f.len, f.wid) / 2);
+}
+for (const [s, side, off] of [[64, -1, 42], [92, 1, 36], [130, -1, 44], [152, 1, 46]]) {
+  const [x, z] = W.beside(s, side, off);
+  const it = W.add('windmill', { x, y: W.ground(x, z) - 0.2, z, ry: 0.6, lead: 50 });
+  W.add('blades', { x: x + Math.sin(0.6) * 1.15, y: it.y + 6.8, z: z + Math.cos(0.6) * 1.15, ry: 0.6, b: it.b + 0.012, mill: it });
+  W.claim(x, z, 4);
+}
+{
+  const a = W.at(86), x = a.p[0] - a.r[0] * 30, z = a.p[2] - a.r[2] * 30, ry = Math.atan2(a.t[0], a.t[2]);
+  W.add('barn', { x, y: W.ground(x, z) - 0.1, z, ry, lead: 42 });
+  W.add('silo', { x: x + a.t[0] * 5.4, y: W.ground(x + a.t[0] * 5.4, z + a.t[2] * 5.4) - 0.1, z: z + a.t[2] * 5.4, ry, lead: 42 });
+  W.claim(x, z, 7);
+}
+for (let s = 26; s < 150; s += 2.4) for (const side of [-1, 1]) {
+  const [x, z] = W.beside(s, side, 4.2);
+  W.add('fence', { x, z, ry: W.heading(s), s, b: W.buildAt(s, 26) + 0.002 });
+}
+const WALLS = ['#f7d9c4', '#f6e7a8', '#c3e4d8', '#f5b9a8', '#cdd9f1', '#fff1df', '#e9d3ef', '#d6ecb5'];
+const ROOFS = ['#c8553d', '#c8553d', '#b4472f', '#5b6b7a', '#d4693f', '#8b5a44'];
+{
+  let tries = 0, n = 0;
+  while (n < 62 && tries++ < 3000) {
+    const s = rr(148, 234), a = W.at(s), side = rnd() < 0.82 ? -1 : 1, off = side < 0 ? rr(8.5, 36) : rr(5, 9);
+    const x = a.p[0] + a.r[0] * side * off + rr(-2, 2), z = a.p[2] + a.r[2] * side * off + rr(-2, 2), nr = W.nearest(x, z);
+    const w = rr(2.4, 3.8), d = rr(2.3, 3.2), hh = rr(2.2, 4.4), y = height(x, z, nr);
+    if (nr.d < 4.6 || y < 0.9 || !W.free(x, z, Math.max(w, d) * 0.62) || coastX(z) - x < 4) continue;
+    const ry = Math.atan2(a.r[0], a.r[2]) + (side < 0 ? 0 : Math.PI) + rr(-0.15, 0.15);
+    const b = W.buildAt(nr.s + Math.max(0, nr.d - 8) * 0.3, 38);
+    W.add('house', { x, y: y - 0.25, z, ry, sx: w, sy: hh, sz: d, b, color: pick(WALLS) });
+    W.add('roof', { x, y: y - 0.25 + hh, z, ry, sx: w, sy: rr(2.0, 3.0), sz: d, b: b + 0.012, color: pick(ROOFS) });
+    W.claim(x, z, Math.max(w, d) * 0.62);
+    n++;
+  }
+  const a = W.at(192), x = a.p[0] - a.r[0] * 24, z = a.p[2] - a.r[2] * 24;
+  if (W.free(x, z, 3)) { W.add('church', { x, y: W.ground(x, z) - 0.3, z, ry: Math.atan2(a.r[0], a.r[2]), lead: 46 }); W.claim(x, z, 5); }
+  const pz = 30, px0 = coastX(pz) - 3;
+  W.add('pier', { x: px0, y: 0.35, z: pz, ry: Math.PI / 2, lead: 44 });
+  for (let k = 0; k < 7; k++) { const z2 = rr(-6, 62); W.add('boat', { x: coastX(z2) + rr(10, 34), y: 0, z: z2, ry: rr(0, 6.28), lead: 48, seed: rnd() * 10, color: pick(['#ffffff', '#fff2d6', '#ffd9c9']) }); }
+  W.add('lighthouse', { x: ISLE[0], y: land(ISLE[0], ISLE[1], W.nearest(ISLE[0], ISLE[1])) - 0.3, z: ISLE[1], lead: 62 });
+  for (let s = 150; s < 234; s += 9) { const [x2, z2] = W.beside(s, 1, 3.6); W.add('lamp', { x: x2, z: z2, s, b: W.buildAt(s, 22) + 0.006 }); }
+}
+{
+  let tries = 0, n = 0;
+  while (n < 150 && tries++ < 5000) {
+    const s = rr(0, 238), a = W.at(s), side = rnd() < 0.5 ? -1 : 1, off = rr(5, 60);
+    const x = a.p[0] + a.r[0] * side * off + rr(-3, 3), z = a.p[2] + a.r[2] * side * off + rr(-3, 3), nr = W.nearest(x, z), y = height(x, z, nr);
+    if (nr.d < 4.5 || y < 1.0 || inField(x, z) || !W.free(x, z, 1.4) || coastX(z) - x < 5) continue;
+    W.add('tree', { x, y: y - 0.1, z, ry: rr(0, 6.28), sx: rr(0.8, 1.3), b: W.buildAt(nr.s + Math.max(0, nr.d - 10) * 0.3, 36) });
+    W.claim(x, z, 1.4); n++;
+  }
+}
+{
+  let tries = 0, n = 0;
+  while (n < 400 && tries++ < 14000) {
+    const s = rr(230, LEN), a = W.at(s), side = rnd() < 0.5 ? -1 : 1, off = rr(4, 70);
+    const x = a.p[0] + a.r[0] * side * off + rr(-4, 4), z = a.p[2] + a.r[2] * side * off + rr(-4, 4), nr = W.nearest(x, z);
+    if (nr.d < 5.5 || fbm(x * 0.05, z * 0.05) < 0.4) continue;
+    const y = height(x, z, nr), e = 1.2, slope = Math.abs(height(x + e, z) - height(x - e, z)) + Math.abs(height(x, z + e) - height(x, z - e));
+    if (y < 2 || y > 58 || slope > 3.6 || !W.free(x, z, 0.9)) continue;
+    W.add(y > 44 ? 'pineSnow' : 'pine', { x, y: y - 0.15, z, ry: rr(0, 6.28), sx: rr(0.75, 1.35), b: W.buildAt(nr.s + Math.max(0, nr.d - 10) * 0.25, 34) });
+    W.claim(x, z, 0.9); n++;
+  }
+  tries = 0; n = 0;
+  while (n < 80 && tries++ < 4000) {
+    const s = rr(184, LEN), side = rnd() < 0.5 ? -1 : 1, [x, z] = W.beside(s, side, rr(4, 50)), nr = W.nearest(x, z);
+    if (nr.d < 3.6 || !W.free(x, z, 1)) continue;
+    W.add('rock', { x, y: height(x, z, nr) - 0.3, z, ry: rr(0, 6.28), sx: rr(0.6, 1.8), sy: rr(0.5, 1.2), sz: rr(0.6, 1.6), lead: 32 }); n++;
+  }
+  const a = W.at(LEN - 7), x = a.p[0] + a.r[0] * 3.3, z = a.p[2] + a.r[2] * 3.3;
+  W.add('station', { x, y: a.p[1] - 0.3, z, ry: Math.atan2(a.t[0], a.t[2]), s: LEN - 7, b: W.buildAt(LEN - 7, 32) });
+  for (const k of [-1, 1]) W.add('lamp', { x: x + a.t[0] * k * 4.6 + a.r[0] * 0.9, y: a.p[1] - 0.2, z: z + a.t[2] * k * 4.6 + a.r[2] * 0.9, s: LEN - 7, b: W.buildAt(LEN - 7, 32) + 0.01 });
+}
+const lastStop = W.at(LEN - 7).p;
+for (let k = 0; k < 15; k++) {
+  const s = LEN * (k + 0.4) / 15, a = W.at(s), side = k % 2 ? 1 : -1, off = rr(18, 60);
+  const x = a.p[0] + a.r[0] * side * off, y = Math.max(48, a.p[1] + 34) + rr(-6, 10), z = a.p[2] + a.r[2] * side * off;
+  if (Math.hypot(x - lastStop[0], z - lastStop[2]) < 60) continue;   // keep the summit view clear
+  W.add('cloud', { x, y, z, ry: rr(0, 6.28), sx: rr(0.9, 1.6), s, b: W.buildAt(s, 70) });
+}
+
+// ── the crew's jobs: every job is one cursor building something; each thing is built when its cursor reaches it ──
+const T = (k) => W.list(k);
+const EVERYONE = ['gardener', 'planter', 'stonecutter', 'mason', 'carpenter', 'rigger', 'roofer', 'shipwright', 'painter', 'lamplighter', 'cloudsmith'];
+for (const f of FIELDS) {
+  const plants = T(f.crop === 'sun' ? 'sunflower' : 'lavender').filter((it) => it.field === f);
+  if (f.crop === 'sun' || f.crop === 'lav') for (const half of [0, 1]) {
+    const items = plants.filter((it) => { const u = (it.x - f.c[0]) * f.u[0] + (it.z - f.c[1]) * f.u[1]; return (u >= 0) === (half === 1); });
+    W.sweep(items, f.crop === 'sun' ? ['painter', 'planter', 'gardener'] : ['planter', 'painter', 'gardener'], { field: f, lanes: 4, u0: half ? 0 : -f.len / 2, u1: half ? f.len / 2 : 0 });
+  }
+  W.hop(T('hay').filter((it) => it.field === f).sort((a, b) => a.s - b.s), ['carpenter', 'shipwright', 'rigger']);
+}
+for (const it of T('windmill')) W.raise(it, ['rigger', 'mason', 'carpenter']);
+for (const k of ['barn', 'silo', 'station', 'pier']) for (const it of T(k)) W.raise(it, ['carpenter', 'mason', 'shipwright']);
+for (const it of T('church')) W.raise(it, ['mason', 'roofer']);
+for (const it of T('lighthouse')) W.raise(it, ['mason', 'lamplighter', 'renderer']);
+for (const it of T('cloud')) W.raise(it, ['cloudsmith', 'renderer'], { across: true, glyph: 'pen' });
+for (const side of [-1, 1]) for (const run of W.chunk(T('fence').filter((it) => W.side(it) === side).sort((a, b) => a.s - b.s), 9)) W.lay(run, ['carpenter', 'lamplighter', 'shipwright', 'roofer']);
+const houses = T('house').map((h, i) => [h, T('roof')[i]]).filter(([h]) => h.d < 34).sort((a, b) => W.side(a[0]) - W.side(b[0]) || a[0].s - b[0].s);
+for (const grp of W.chunk(houses, 3)) {   // one cursor pulls up three houses, then drops their roofs on
+  W.hop([...grp.map(([h]) => h), ...grp.map(([, r]) => r)], EVERYONE, { doing: 'building houses {k}/{n}', did: 'built {n} houses {where}', then: { n: grp.length, label: 'Roof', doing: 'roofing {k}/{n}' } });
+}
+for (const grp of W.chunk(W.lined(T('boat')), 4)) W.hop(grp, ['shipwright', 'rigger']);
+for (const grp of W.chunk(W.lined(T('lamp')), 4)) W.hop(grp, ['lamplighter', 'carpenter', 'shipwright']);
+for (const grp of W.chunk(W.lined(T('tree').filter((it) => it.d < 32)), 4)) W.hop(grp, ['gardener', 'planter', 'painter', 'carpenter']);
+for (const grp of W.chunk(W.lined([...T('pine'), ...T('pineSnow')].filter((it) => it.d < 30)), 5)) W.hop(grp, EVERYONE);
+for (const grp of W.chunk(W.lined(T('rock').filter((it) => it.d < 30)), 4)) W.hop(grp, ['stonecutter', 'mason', 'rigger', 'gardener']);
+
+// fronts: two cursors draw the ground far ahead, the renderer paints the sea while its front runs over open water
+const groundDoing = ({ p }) => { const y = W.groundAt(W.frontS(p, 84), 0)[1]; return y > 16 ? 'raising the peaks' : y > 5 ? 'shaping the hills' : y < 1 ? 'shaping the shore' : 'grading the valley'; };
+W.terrainFront({ by: 'terraformer', phase: 0, doing: groundDoing });
+W.terrainFront({ by: 'surveyor', phase: 0.5, doing: groundDoing });
+{
+  const seaFront = (p) => { const L = 34 + 9 * Math.sin(Math.PI * 2 * p * 5); return W.groundAt(W.frontS(p, 84) - Math.max(0, L - 20) * 0.3, L); };
+  let a = -1, best = [0, 0];
+  for (let p = 0.006; p < 0.95; p += 0.002) {
+    const q = seaFront(p), wet = coastX(q[2]) - q[0] < -3;
+    if (wet && a < 0) a = p;
+    if ((!wet || p >= 0.948) && a >= 0) { if (p - a > best[1] - best[0]) best = [a, p]; a = -1; }
+  }
+  if (best[1] - best[0] > 0.05) W.front({ by: 'renderer', label: 'Sea', count: 'sea', p0: best[0], p1: best[1], at: (p) => { const q = seaFront(p); return [q[0], 0.35, q[2]]; }, doing: 'painting the sea', did: 'painted the sea' });
+}
+
+// ── the train: a red engine and two coaches, put on the line first by the conductor ──
+const wheels = (z0, n, r, col) => [-0.82, 0.82].flatMap((x) => Array.from({ length: n }, (_, k) => [Cyl(r, r, 0.16, 12), col, { x, y: r, z: z0 + k * r * 2.3, rz: Math.PI / 2 }]));
+const loco = [
+  [Box(1.6, 0.4, 5.4), '#2a2a2f', { y: 0.32, z: 0.2 }], ...wheels(-1.4, 3, 0.46, '#c4382a'),
+  [Cyl(0.78, 0.78, 3.3, 16), '#d23f2c', { rx: Math.PI / 2, y: 1.42, z: -0.7 }], ...[0.0, 1.0, 2.0].map((z) => [Cyl(0.81, 0.81, 0.12, 16), '#e2b04a', { rx: Math.PI / 2, y: 1.42, z: z + 0.1 }]),
+  [Cyl(0.8, 0.8, 0.5, 16), '#26262b', { rx: Math.PI / 2, y: 1.42, z: 2.62 }], [Cyl(0.3, 0.22, 1.0, 10), '#26262b', { y: 2.0, z: 2.25 }], [Cyl(0.33, 0.33, 0.14, 10), '#e2b04a', { y: 2.95, z: 2.25 }],
+  [Dome(0.36, 12, 6), '#e2b04a', { y: 2.15, z: 0.9 }],
+  [Box(1.75, 1.8, 1.6), '#c63a29', { y: 0.55, z: -1.45 }], [Box(1.95, 0.16, 1.9), '#26262b', { y: 2.35, z: -1.45 }], [Box(1.78, 0.5, 0.6), '#2f3f50', { y: 1.65, z: -1.45 }],
+  [Box(1.5, 0.34, 0.5), '#e2b04a', { y: 0.1, z: 2.95 }], [Cyl(0.16, 0.16, 0.25, 10), '#fff2b8', { rx: Math.PI / 2, y: 1.42, z: 2.95 }],
+];
+const coach = (body) => [
+  [Box(1.6, 0.36, 4.6), '#2a2a2f', { y: 0.3 }], ...wheels(-1.6, 2, 0.32, '#3a3a40'), ...wheels(0.9, 2, 0.32, '#3a3a40'),
+  [Box(1.8, 1.5, 4.4), body, { y: 0.66 }], [Box(1.83, 0.42, 3.8), '#33475a', { y: 1.38 }], [Box(1.86, 0.08, 4.42), '#e2b04a', { y: 1.15 }],
+  [Box(1.95, 0.22, 4.6), '#f3ead8', { y: 2.16 }], [Box(1.5, 0.12, 4.3), '#e6dbc6', { y: 2.36 }],
+];
+W.vehicle([loco, coach('#2f9c95'), coach('#e2a53b')], { by: 'conductor', offsets: [0, -5.5, -10.6] });
+
+// things that move: windmill blades turn, boats bob, clouds drift
+W.animate('blades', (it, i, t) => ({ rz: t * 1.3 + i }));
+W.animate('boat', (it, i, t) => ({ y: Math.sin(t * 1.4 + it.seed) * 0.14 - 0.05, rx: Math.sin(t * 1.1 + it.seed) * 0.05, rz: Math.cos(t * 0.9 + it.seed) * 0.06 }));
+W.animate('cloud', (it, i, t) => ({ x: it.x + Math.sin(t * 0.03 + i) * 4, z: it.z + Math.sin(t * 0.02 + i * 2) * 8 }));
+W.glow([...T('lamp').map((it) => [it.x, it.y + 2.48, it.z]), [ISLE[0], T('lighthouse')[0].y + 10.8, ISLE[1]]]);
+
+// where the log says the work was done
+for (const [k, words] of [['windmill', ['by the windmill', 'under the windmill']], ['barn', ['by the barn', 'at the farm']], ['church', ['in town', 'by the church', 'on the square']],
+  ['lighthouse', ['out on the point', 'by the lighthouse']], ['pier', ['down by the harbour', 'on the quay', 'along the harbour road']], ['station', ['up at the station', 'by the station']]]) for (const it of T(k)) W.landmark(it.x, it.z, words);
+W.places((x, y) => (y > 12 ? ['up on the ridge', 'below the summit'] : y > 5 ? ['in the hills', 'on the slope'] : y < 1.6 ? ['along the shore'] : ['beside the line', 'along the track']));
+
+// the camera rides behind the train (zones by path length), then rises behind the station and looks back over the valley
+const end = W.at(LEN - 7);
+W.camera({
+  zones: [[0, { h: 6.2, back: 13, side: -1.6, look: 0.4 }], [128, { h: 6.2, back: 13, side: -1.6, look: 0.4 }], [162, { h: 7.2, back: 14, side: -3.6, look: 4.5 }],
+    [222, { h: 7.2, back: 14, side: -3.6, look: 4.5 }], [256, { h: 8.6, back: 15, side: 2.6, look: -1.5 }]],
+  reveal: { pos: [end.p[0] - 4, end.p[1] + 36, end.p[2] - 44], tgt: [10, 6, 6], turn: 1 },
+});
+W.check('the train stays on screen', (t, p, w) => { const q = w.project([...w.at(w.travS(p)).p]); return p < 0.02 || w.rv > 0.02 || (q && q.a > 0.9); });
+await W.start();
+</script>
+</body>
+</html>

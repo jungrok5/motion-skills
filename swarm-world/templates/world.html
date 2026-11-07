@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>orchard-line · swarm-world</title>
+<script type="importmap">{ "imports": { "sw/": "../lib/" } }</script>
+</head>
+<body>
+<!-- The starter: a 12-second world, commented. A little tram runs from a meadow through an orchard and a village up to a
+     hilltop observatory while a crew of eight builds everything just ahead of it. It is an EXAMPLE of the style — for a new
+     topic, write BRIEF.md first and design your own line, land, kinds, crew and words (references/BRIEF.md, KIT.md). -->
+<script type="module">
+import { World, kit, cl, sm, noise, fbm } from 'sw/world.js';
+const { part, merge, Box, Cyl, Cone, Ico, Dome, Gable, jitter, props, C } = kit;
+
+// 1 · the world: title (HUD), build length in seconds, a seed, the crew { name: colour } (5–16 agents)
+const W = new World({
+  title: 'orchard-line', build: 12, seed: 7,
+  alt: 'A little tram crosses a meadow, an orchard and a village to a hilltop observatory, all built just ahead of it by a crew of cursors.',
+  crew: { driver: '#ff5b3a', tracklayer: '#16181d', surveyor: '#fff6e8', gardener: '#ff5b3a', planter: '#16181d', builder: '#fff6e8', roofer: '#ff5b3a', astronomer: '#b49bff' },
+});
+const { rnd, rr, pick } = W;   // seeded: the same world every time
+
+// 2 · the line (the route) through control points [x, y, z]; y is the height of the track bed
+W.line([[0, 1, 120], [10, 1.2, 90], [4, 1.4, 60], [-8, 1.6, 30], [-4, 2.2, 0], [8, 4.5, -26], [4, 8, -50], [-6, 10.5, -70], [-2, 11, -86]]);
+const LEN = W.LEN;
+
+// 3 · the land: height(x, z, nr) where nr is the nearest point of the line ({ d, s, y, yn, yb }); colour by what it is
+const HILL = W.at(LEN - 6).p;
+W.land({
+  bounds: [-110, 110, -150, 170], res: [90, 128], lead: 70,
+  height: (x, z, nr) => 1 + (fbm(x * 0.03, z * 0.03) - 0.45) * 5 + 10 * Math.exp(-((x - HILL[0]) ** 2 + (z - HILL[2]) ** 2) / 1600) + Math.max(0, Math.abs(x) - 60) * 0.25,
+  color: (x, y, z, ny, nr, out) => {
+    const n = noise(x * 0.1, z * 0.1);
+    if (nr.d < 1.9) return out.set('#a39380');
+    if (ny < 0.8) return out.set('#958d86');
+    return out.set(n > 0.5 ? '#8cc650' : '#7cb847').lerp(C('#6aa84a'), cl((y - 4) / 8));
+  },
+});
+W.track({ by: 'tracklayer', lead: 20 });   // sleepers and rails, laid just ahead, with their own front
+
+// 4 · kinds: a geometry (kit primitives merged), a label, a size [half width, height, half depth], words [doing, done, plural]
+W.kind('apple', { label: 'Apple tree', size: [1.3, 3.2, 1.3], words: ['planting', 'planted', 'apple trees'],
+  geo: merge([part(Cyl(0.14, 0.2, 1.3, 6), '#7a5134'), part(jitter(Ico(1.1, 1), 0.2, 3), '#5fae45', { y: 2.0 }), ...[[0.6, 2.1, 0.5], [-0.5, 2.4, 0.4], [0.1, 1.8, -0.8]].map(([x, y, z]) => part(Ico(0.16, 0), '#e0452f', { x, y, z }))]) });
+W.kind('house', { label: 'House', size: [0.55, 1.5, 0.55], words: ['building', 'built', 'houses'], geo: props.house() });
+W.kind('roof', { label: 'Roof', size: [0.58, 0.45, 0.6], words: ['roofing', 'roofed', 'houses'], geo: props.roof() });
+W.kind('fence', { label: 'Fence', size: [1.2, 1, 0.2], words: ['setting', 'set', 'fence posts'], geo: props.fence() });
+W.kind('tree', { label: 'Tree', size: [1.6, 3.8, 1.6], words: ['planting', 'planted', 'trees'], geo: props.tree() });
+W.kind('lamp', { label: 'Lamp', size: [0.3, 2.6, 0.3], words: ['lighting', 'lit', 'lamps'], geo: props.lamp() });
+W.kind('observatory', { label: 'Observatory', size: [3.4, 7, 3.4], say: { doing: 'raising the observatory', did: 'raised the observatory' },
+  geo: merge([part(Cyl(3.2, 3.4, 4, 16), '#f2ece0'), part(Dome(3.3, 18, 8), '#cfd6de', { y: 4 }), part(Box(0.9, 3.6, 0.2), '#2f3f50', { y: 4.4, z: 2.9, rx: -0.5 }), part(Box(1, 1.8, 0.1), '#7a5038', { z: 3.3 })]) });
+
+// 5 · what stands where. add() puts it on the ground and times it: built when the front (`lead` m ahead of the tram) gets there
+const field = (() => { const a = W.at(48); return { c: W.beside(48, -1, 16), u: [a.t[0], a.t[2]], len: 26, wid: 14 }; })();
+for (let v = -field.wid / 2 + 1.2; v < field.wid / 2; v += 2.6) for (let u = -field.len / 2 + 1.2; u < field.len / 2; u += 2.6) {
+  W.add('apple', { x: field.c[0] + field.u[0] * u - field.u[1] * v, z: field.c[1] + field.u[1] * u + field.u[0] * v, ry: rr(0, 6.28), sx: rr(0.85, 1.1), field });
+}
+W.claim(field.c[0], field.c[1], 14);
+for (let s = 30; s < 70; s += 2.4) { const [x, z] = W.beside(s, 1, 4); W.add('fence', { x, z, ry: W.heading(s), s, b: W.buildAt(s, 22) }); }
+const WALLS = ['#f7d9c4', '#f6e7a8', '#c3e4d8', '#cdd9f1', '#fff1df'], ROOFS = ['#c8553d', '#b4472f', '#5b6b7a'];
+for (let n = 0, tries = 0; n < 14 && tries < 600; tries++) {
+  const s = rr(80, 120), side = rnd() < 0.5 ? -1 : 1, [x, z] = W.beside(s, side, rr(6, 20)), w = rr(2.4, 3.4), h = rr(2.2, 3.6);
+  if (!W.free(x, z, w * 0.7)) continue;
+  const ry = W.heading(s) + Math.PI / 2 * side, y = W.ground(x, z) - 0.2;
+  const house = W.add('house', { x, y, z, ry, sx: w, sy: h, sz: rr(2.3, 3), color: pick(WALLS), lead: 30 });
+  W.add('roof', { x, y: y + h, z, ry, sx: w, sy: rr(2, 2.8), sz: house.sz, color: pick(ROOFS), b: house.b + 0.012 });
+  W.claim(x, z, w * 0.7); n++;
+}
+for (let n = 0, tries = 0; n < 50 && tries < 2000; tries++) {
+  const [x, z] = W.beside(rr(0, LEN), rnd() < 0.5 ? -1 : 1, rr(5, 40));
+  if (!W.free(x, z, 1.5)) continue;
+  W.add('tree', { x, z, ry: rr(0, 6.28), sx: rr(0.8, 1.2) }); W.claim(x, z, 1.5); n++;
+}
+for (let s = 80; s < LEN; s += 10) { const [x, z] = W.beside(s, -1, 3.4); W.add('lamp', { x, z, s, b: W.buildAt(s, 18) + 0.006 }); }
+{ const [x, z] = W.beside(LEN - 6, 1, 9); W.add('observatory', { x, z, ry: W.heading(LEN - 6) + Math.PI, lead: 28 }); W.landmark(x, z, ['up by the observatory', 'on the hill']); }
+W.landmark(field.c[0], field.c[1], ['in the orchard']);
+W.places((x, y) => (y > 6 ? ['on the hill'] : ['in the meadow', 'beside the line']));
+
+// 6 · the jobs: raise (one big thing, crosshair) · hop (a cursor hops thing to thing) · lay (along a stroke) · sweep (a field, row by row)
+for (const half of [0, 1]) W.sweep(W.list('apple').filter((it) => ((it.x - field.c[0]) * field.u[0] + (it.z - field.c[1]) * field.u[1] >= 0) === !!half), ['gardener', 'planter'],
+  { field, lanes: 3, u0: half ? 0 : -field.len / 2, u1: half ? field.len / 2 : 0 });
+for (const run of W.chunk(W.list('fence').sort((a, b) => a.s - b.s), 8)) W.lay(run, ['builder', 'planter', 'roofer']);
+const houses = W.list('house').map((h, i) => [h, W.list('roof')[i]]).sort((a, b) => W.side(a[0]) - W.side(b[0]) || a[0].s - b[0].s);
+for (const grp of W.chunk(houses, 2)) W.hop([...grp.map(([h]) => h), ...grp.map(([, r]) => r)], ['builder', 'roofer', 'planter'], { doing: 'building houses {k}/{n}', did: 'built {n} houses {where}', then: { n: grp.length, label: 'Roof', doing: 'roofing {k}/{n}' } });
+for (const grp of W.chunk(W.lined(W.list('tree').filter((it) => it.d < 28)), 4)) W.hop(grp, ['gardener', 'planter', 'builder']);
+for (const grp of W.chunk(W.lined(W.list('lamp')), 4)) W.hop(grp, ['roofer', 'builder']);
+for (const it of W.list('observatory')) W.raise(it, ['astronomer', 'builder']);
+W.terrainFront({ by: 'surveyor', lead: 70, doing: 'shaping the meadow' });   // a cursor drawing the ground far ahead
+W.terrainFront({ by: 'astronomer', phase: 0.5, lead: 70, doing: 'shaping the hill', did: '' });
+
+// 7 · the traveller: cars of parts [geometry, colour, { x, y, z, rx … }], put on the line first by its driver
+const wheels = (z0, r) => [-0.8, 0.8].flatMap((x) => [0, 1].map((k) => [Cyl(r, r, 0.16, 12), '#3a3a40', { x, y: r, z: z0 + k * 1.6, rz: Math.PI / 2 }]));
+const tram = [[Box(1.6, 0.36, 5), '#2a2a2f', { y: 0.3 }], ...wheels(-1.8, 0.34), ...wheels(1.0, 0.34), [Box(1.8, 1.6, 4.8), '#2f9c95', { y: 0.66 }], [Box(1.84, 0.5, 4.2), '#33475a', { y: 1.5 }],
+  [Box(1.86, 0.08, 4.82), '#e2b04a', { y: 1.2 }], [Box(1.9, 0.2, 5), '#f3ead8', { y: 2.26 }], [Cyl(0.15, 0.15, 0.2, 10), '#fff2b8', { rx: Math.PI / 2, y: 1.1, z: 2.5 }]];
+W.vehicle([tram], { by: 'driver', smoke: false, sound: 'hum', say: { place: 'placing the tram', drive: 'driving the tram', arrive: 'pulling up the hill', arrived: 'arrived at the observatory' } });
+
+// 8 · light, glows, camera (zones by path length; the reveal rises behind the last stop and looks back)
+W.glow(W.list('lamp').map((it) => [it.x, it.y + 2.48, it.z]));
+const end = W.at(LEN - 6);
+W.camera({ zones: [[0, { h: 6, back: 12, side: -1.6, look: 0.4 }], [70, { h: 6.8, back: 13, side: 2.4, look: -1 }]],
+  reveal: { pos: [end.p[0] + end.t[0] * 26 - 14, end.p[1] + 16, end.p[2] + end.t[2] * 26], tgt: W.at(LEN * 0.45).p } });
+W.check('the tram stays on screen', (t, p, w) => { const q = w.project(w.at(w.travS(p)).p); return p < 0.02 || w.rv > 0.02 || (q && q.a > 0.9); });
+await W.start();
+</script>
+</body>
+</html>
