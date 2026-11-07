@@ -1,4 +1,4 @@
-# 유화 (oil painting — Rembrandt · Vermeer · Remington · palette knife)
+# 유화 (oil painting — Rembrandt · Vermeer · Caravaggio · Remington · palette knife)
 
 Kit: `kit.js` → vendored as `scenes/kit-oilpaint.js`, global `window.OIL`. Source: one-scroll-bible
 `motion/films/messiah/` (「메시아 예언과 성탄」, 2026-11-03). In that film it paints three scenes:
@@ -6,6 +6,7 @@ Kit: `kit.js` → vendored as `scenes/kit-oilpaint.js`, global `window.OIL`. Sou
 - the journey to Bethlehem after Remington's sunsets and nocturnes (`oil-journey.js`, key `remington`, two plates cross-faded from sunset to night);
 - the dawn after the cross, repainted from grey with the palette knife (`impasto-dawn.js`, key `impasto`, revealed stroke by stroke);
 - (3rd script, 2026-11-07) Mary in her room at Nazareth by a window, after Vermeer (`oil-nazareth.js`, key `vermeer`) — chosen over a Hopper room, which the owner read as "a little horror-like".
+- (3rd script, 2026-11-07) Herod's palace by firelight after Caravaggio (`oil-herod.js` → `example.caravaggio.js`, key `caravaggio`): a throne hall with the magi in a pool of brazier light and the king's crowned shadow on a red curtain; then a plaster wall where his long shadow blesses with one hand while the other closes on a dagger hilt, and the torch gutters.
 
 The film vendors this exact file. Before and after stills were identical (max difference 0). Template: `template.html` is
 a different subject, an old man reading a scroll by a lamp, in the `rembrandt` key.
@@ -22,6 +23,7 @@ then lays loaded strokes over it.
 
 **Keys**
 - **`rembrandt`:** readable warm umber darks and one light. Figures are mostly dark, lit on the planes that face the light. Draw them with `OIL.relief()`: a silhouette blurred into a height field and lit per pixel, with soft zones for faces and hands. Draw the focus (a child's face) again, crisp, after painting.
+- **`caravaggio`:** tenebrism — one fire raking in, black-brown glazed darks eating half the frame, loaded strokes and ridges only where the fire touches (ochre stone, vermilion cloth). For a flat wall pass `{ dir: angle }` so the strokes do not swirl round the lamp. Thin iron (brazier legs, a torch) breaks into stripes when painted — draw it over the finished painting. Menace by firelight: a king's shadow, a held breath, a question with no answer.
 - **`vermeer`:** daylight from one window on the left: a lime-plaster wall bright near the window and falling to warm shadow across the room, a lit patch on the floor, small soft blended strokes with almost no ridges, pearly highlight dots on what the light catches (jars, bread, the veil's edge). Figures are drawn part by part on the plate (profile face, veil framing it, sleeve and hand, a fold or two), lit from the window side with a skimming rim; `relief` alone gives a faceless blob here. Draw the face and hands again, crisp, after painting. Warm and still — waiting, an intimate household moment, a holy quiet.
   **A living figure** (`example.vermeer.js`, the motion recipe of `live-character/references/MOTION.md`): paint each part into its own copy of the room (so the brush meets the right neighbours at its edges) and keep it by its silhouette — the body (cut just below the neck, with throat skin under the chin for when it lifts), the head (veil + face, its lower edge faded between chin and cut, and faded off the back of the shoulder so the turn never pushes the veil past the body), the room without her. Each frame: the body breathes from the feet (in 40 % · out 48 % · rest, ~4.6 s), the head turns on the neck (the eyes move first, the head follows on a spring step with a small overshoot, a blink on each shift, calm-adult blinks every 2.2–7 s), the hand and eye are drawn as vectors. Use closed-form motion (a spring's step response, value noise), never a running spring — renders seek frames out of order.
 - **`remington`:** a red-gold sunset in long horizontal strokes (`dirAt` returning 0 above the horizon). Land and figures are dark warm silhouettes with a thin warm rim. Paint the same land again as a blue-green nocturne with warm windows, and cross-fade the two as the sun goes.
@@ -45,6 +47,7 @@ then lays loaded strokes over it.
 |---|---|---|---|---|
 | rembrandt | umber `#24150B` (70 % of the frame, readable), near-black only in corners | amber `#8F5D2A` | `#E2B673`, the focus `#FFFAF0` | one red `#9C1A1A`, one cool opening (a blue-green night door) |
 | vermeer | plaster shadow `#4E4434` | wall `#CDBF9C`, floor `#8A7A5E` | window wall `#F2E8CC`, sky `#D9E4EA` | ultramarine `#18264E` → `#7D9AD6`, one red `#7A2A24`, clay `#A8643C` |
+| caravaggio | black-brown `#0E0805` | umber stone `#4A3420` | fire `#F2B45A` → `#FFE6A8` | vermilion `#9A2414`, ochre `#B07A32` |
 | remington | `#1e0f10` warm silhouettes | sky `#9a2a22` → `#e2682a` → `#ffd27a` | sun `#fff1c8` | night `#17333A`, moonlit edge `#9CC4BC`, windows `#FFCC6A` |
 | impasto | deep green `#30502a` | `#6e9640` grass, sky blue `#2e5caa` | `#ffde96` dawn | flowers `#c84030` `#e8c050` |
 
