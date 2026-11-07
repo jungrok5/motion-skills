@@ -1,0 +1,29 @@
+# Lessons
+
+Problem → cause → fix. Engine first, then the hands.
+
+## Engine
+- **The table and the window frame came out as rounded blobs** → strokes and washes ran every outline through a
+  Catmull-Rom smoother, which turns a 4-corner rectangle into a pillow → keep corners: `K.densify` subdivides edges;
+  smoothing only when the author asks (`smooth: true`). Authors draw curves as curves.
+- **Vertical seams every 256 px in the paper** → the tiles' noise had a non-whole number of cells per tile → snap every
+  octave to a whole number of cells (`fbm(…, period)`), stretch streak tiles by whole factors only.
+- **Paper looked like clouds** → a low-frequency cold-press tile multiplied at full strength → finer cold-press, lower
+  floor; big flat washes use the `fine` tooth instead of `gran`.
+- **Steam and white window bars were drawn as dark graphite** → every line went through the line pen → light lines
+  (`K.isLight(colour)`) are drawn as light: lifted paper, chalk, a scratch, white thread — each hand in its own way.
+- **The back persimmon's outline showed through the front one; the table edge ran across the fruit** → line work was
+  drawn last over everything → each item's layer is cut by what is painted after it (`S.occluders(item)`): a hand never
+  draws what it cannot see. Opaque media get this free from painter's order; transparent ones need the cut.
+- **A huge dark blob on the table** → the "form toward the light" wash was applied to the ground plane too → round-form
+  shading only for subjects; grounds and walls get at most a gentle graded wash.
+- **Broad strokes for the wall's texture spilled over the table top** → wide strokes were not clipped → `D.clip(region)`.
+- **A drawing film that changes its mind**: a stroke's width profile was recomputed from the part drawn so far, so the
+  early part of the line shimmered as it grew → the profile belongs to the whole stroke (`ribbon(…, { k })`); only the
+  travelling tip is pointed.
+- **The template pear was cut flat at the bottom** → a spine-with-widths body ends square → round things are lathe
+  profiles (half outline, mirrored), spines are for limbs, stems and fish.
+- **Hangul labels on contact sheets showed as boxes** → the render container has no Hangul font → sheet labels use the
+  English names; the Korean names are in `styles.mjs list` and on the samples page.
+- **A house style that only the first piece used** → baking the style into each `piece.js` at creation meant changing
+  the house style changed nothing → the page reads `../house-style.json` at load; `piece.style` is only an override.
