@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>doodle-styles · motion-skills</title>
+<meta name="description" content="anidoodle의 32가지 손그림 화풍 가운데 하나를 골라 계속 재사용합니다. 주제를 화풍 없는 장면으로 한 번 적으면, 고른 화풍이 그 재료와 순서로 스틸과 그려지는 과정 영상을 만들고, 고른 화풍은 하우스 스타일로 저장해 다음 그림에도 씁니다.">
+<meta property="og:title" content="doodle-styles · motion-skills">
+<meta property="og:description" content="32가지 손그림 화풍 가운데 하나를 골라, 주제만 바꿔 같은 화풍으로 계속 그립니다. 스틸과 그려지는 과정 영상.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/doodle-styles/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/doodle-styles">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / doodle-styles</nav>
+  <h1>doodle-styles</h1>
+  <p>32가지 손그림 화풍 가운데 하나를 골라 계속 재사용합니다. 주제를 화풍 없는 장면으로 한 번 적으면, 고른 화풍이 자기 재료와 순서로 스틸과 그려지는 과정 영상을 만들고, 고른 화풍은 하우스 스타일로 저장해 다음 그림도 같은 손으로 그립니다.
+    원본: <a href="https://github.com/alexgreensh/anidoodle">alexgreensh/anidoodle</a>(Apache-2.0)의 화풍 레시피를 보고 만들었습니다. 코드는 가져오지 않고 화풍마다 새로 구현했습니다.</p>
+  <ul class="tags"><li>Canvas 2D</li><li>32 화풍</li><li>PNG · MP4</li><li>그려지는 과정</li><li>하우스 스타일</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 한 줄 (예: "찻집 겨울 카드에 쓸 끓는 주전자"), 원하는 화풍 또는 쓰임새</dd>
+      <dt>브리프와 장면</dt><dd>핵심 한 문장 · 주인공 · 빛 하나 · 크기 · 움직임, 화풍 없이 적은 피사체(영역 · 선 · 깊이 · 그림자)</dd>
+      <dt>화풍 고르기</dt><dd>내 주제를 여러 화풍으로 그린 비교 시트, 고른 화풍을 <code>house-style.json</code>에 저장</dd>
+      <dt>출력</dt><dd>스틸 PNG, 그 화풍의 순서로 그려지는 과정 MP4(김 · 불꽃 같은 움직임 선택), 비교 시트, 화풍을 바꿔 보는 라이브 페이지</dd>
+    </dl>
+    <pre><code>node doodle-styles/scripts/sheet.mjs doodle-styles/examples/persimmons --all
+node doodle-styles/scripts/new-piece.mjs my-studio/pear --format 4x5
+node doodle-styles/scripts/styles.mjs pick woodblock --studio my-studio
+node doodle-styles/scripts/render.mjs my-studio/pear --still --film
+node doodle-styles/scripts/new-piece.mjs my-studio/kettle   # 같은 화풍 그대로</code></pre>
+    <p class="mute">요구 사항: Node 18+, Playwright(Chromium), ffmpeg(MP4). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/doodle-styles/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:1/1.12;--h-phone:560px">
+    <iframe data-src="demo/examples/persimmons/" title="doodle-styles 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/persimmons/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/persimmons</code> · 아래 목록에서 화풍을 바꿔 보세요</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/persimmons/" data-cap="예제 &lt;code&gt;examples/persimmons&lt;/code&gt; · 아래 목록에서 화풍을 바꿔 보세요" aria-pressed="true">감 세 알</button>
+        <button class="btn" type="button" data-src="demo/examples/kettle/" data-cap="예제 &lt;code&gt;examples/kettle&lt;/code&gt; · 우키요에 목판화 · 완성 뒤 김이 계속 오름">저녁 주전자</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">같은 주제 「감 세 알」을 32가지 화풍으로 그린 완성 스틸입니다. 팔레트만 바꾼 것이 아니라 재료, 붓질, 가장자리, 그리는 순서가 모두 다릅니다. 카드를 누르면 그 화풍으로 그림이 그려지는 라이브 데모가 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"pencil":"연필 · 펜","ink":"잉크 · 붓","paint":"물감","print":"인쇄 · 판화","craft":"종이 · 실 · 블록","digital":"디지털","kettle":"저녁 주전자"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <!-- gallery:start -->
+    <div class="group">
+      <h3>연필 · 펜 · 마른 재료 <small>8가지</small></h3>
+      <div class="grid">
+        <a class="tile" data-tags="pencil" href="demo/examples/persimmons/?style=watercolour" target="_blank" rel="noopener">
+          <img src="samples/watercolour.jpg" alt="감 세 알을 연필 수채화 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">연필 · 펜 · 마른 재료 · <code>watercolour</code></span><b>연필 수채화</b><span class="en">Pencil &amp; watercolour</span>
+          <span class="how">따뜻하고 사람 냄새 나는 그림 · 음식, 식물, 물건 · 웃는 브랜드</span></div></a>
+        <a class="tile" data-tags="pencil" href="demo/examples/persimmons/?style=storybook" target="_blank" rel="noopener">
+          <img src="samples/storybook.jpg" alt="감 세 알을 그림책 연필 수채 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">연필 · 펜 · 마른 재료 · <code>storybook</code></span><b>그림책 연필 수채</b><span class="en">Storybook pencil + watercolour</span>
+          <span class="how">그림책 · 캐릭터와 다정한 장면 · 아이와 가족 · 따뜻한 이야기</span></div></a>
+        <a class="tile" data-tags="pencil" href="demo/examples/persimmons/?style=coloured-pencil" target="_blank" rel="noopener">
+          <img src="samples/coloured-pencil.jpg" alt="감 세 알을 색연필 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">연필 · 펜 · 마른 재료 · <code>coloured-pencil</code></span><b>색연필</b><span class="en">Coloured pencil</span>
+          <span class="how">그림책 · 아이와 집 · 손으로 만든 다정한 설명 · 따뜻한 물건 그림</span></div></a>
+        <a class="tile" data-tags="pencil" href="demo/examples/persimmons/?style=ballpoint" target="_blank" rel="noopener">
+          <img src="samples/ballpoint.jpg" alt="감 세 알을 볼펜 스케치 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">연필 · 펜 · 마른 재료 · <code>ballpoint</code></span><b>볼펜 스케치</b><span class="en">Ballpoint sketch</span>
+          <span class="how">진지한 주제 · 리포트, 에세이 · 설명 스케치 · 물건의 구조</span></div></a>
+        <a class="tile" data-tags="pencil" href="demo/examples/persimmons/?style=crayon" target="_blank" rel="noopener">
+          <img src="samples/crayon.jpg" alt="감 세 알을 크레용 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">연필 · 펜 · 마른 재료 · <code>crayon</code></span><b>크레용</b><span class="en">Wax crayon</span>
+          <span class="how">아이 같은 따뜻함 · 동화, 교육 · 웃는 브랜드 · 단순한 사물</span></div></a>
+        <a class="tile" data-tags="pencil" href="demo/examples/persimmons/?style=charcoal" target="_blank" rel="noopener">
+          <img src="samples/charcoal.jpg" alt="감 세 알을 목탄 · 지우고 다시 그리기 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">연필 · 펜 · 마른 재료 · <code>charcoal</code></span><b>목탄 · 지우고 다시 그리기</b><span class="en">Charcoal, erased and redrawn</span>
+          <span class="how">진지하고 묵직한 그림 · 인물, 정물, 풍경 · 과정과 시간이 남는 그림</span></div></a>
+        <a class="tile" data-tags="pencil" href="demo/examples/persimmons/?style=chalkboard" target="_blank" rel="noopener">
+          <img src="samples/chalkboard.jpg" alt="감 세 알을 칠판 분필 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">연필 · 펜 · 마른 재료 · <code>chalkboard</code></span><b>칠판 분필</b><span class="en">Chalkboard</span>
+          <span class="how">설명하고 가르치는 그림 · 원리, 과정, 수업 · 밤 장면, 빛나는 것</span></div></a>
+        <a class="tile" data-tags="pencil" href="demo/examples/persimmons/?style=stipple" target="_blank" rel="noopener">
+          <img src="samples/stipple.jpg" alt="감 세 알을 펜 점묘 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">연필 · 펜 · 마른 재료 · <code>stipple</code></span><b>펜 점묘</b><span class="en">Pen-and-ink stipple</span>
+          <span class="how">정밀하고 차분한 그림 · 표본, 도감, 사물 · 과학 일러스트</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>잉크 · 붓 <small>6가지</small></h3>
+      <div class="grid">
+        <a class="tile" data-tags="ink" href="demo/examples/persimmons/?style=line-wash" target="_blank" rel="noopener">
+          <img src="samples/line-wash.jpg" alt="감 세 알을 펜 담채 (잉크 라인 워시) 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">잉크 · 붓 · <code>line-wash</code></span><b>펜 담채 (잉크 라인 워시)</b><span class="en">Ink &amp; line-wash</span>
+          <span class="how">여행 스케치 · 어반 스케치 · 가볍고 경쾌한 일러스트 · 새, 식물, 거리 풍경</span></div></a>
+        <a class="tile" data-tags="ink" href="demo/examples/persimmons/?style=sumi-e" target="_blank" rel="noopener">
+          <img src="samples/sumi-e.jpg" alt="감 세 알을 수묵화 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">잉크 · 붓 · <code>sumi-e</code></span><b>수묵화</b><span class="en">Sumi-e ink painting</span>
+          <span class="how">여백이 있는 그림 · 정물, 식물, 새, 산수 · 동양적이고 고요한 분위기</span></div></a>
+        <a class="tile" data-tags="ink" href="demo/examples/persimmons/?style=marker-comic" target="_blank" rel="noopener">
+          <img src="samples/marker-comic.jpg" alt="감 세 알을 마커 코믹 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">잉크 · 붓 · <code>marker-comic</code></span><b>마커 코믹</b><span class="en">Marker comic</span>
+          <span class="how">만화 · 웹툰 컷 · 캐릭터, 음식, 제품 · 경쾌하고 또렷한 홍보 그림</span></div></a>
+        <a class="tile" data-tags="ink" href="demo/examples/persimmons/?style=rubber-hose" target="_blank" rel="noopener">
+          <img src="samples/rubber-hose.jpg" alt="감 세 알을 1930년대 고무호스 만화 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">잉크 · 붓 · <code>rubber-hose</code></span><b>1930년대 고무호스 만화</b><span class="en">Rubber hose</span>
+          <span class="how">복고풍 만화 · 흑백 무성영화 느낌 · 익살스러운 캐릭터, 물건이 춤추는 장면</span></div></a>
+        <a class="tile" data-tags="ink" href="demo/examples/persimmons/?style=scratchboard" target="_blank" rel="noopener">
+          <img src="samples/scratchboard.jpg" alt="감 세 알을 스크래치보드 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">잉크 · 붓 · <code>scratchboard</code></span><b>스크래치보드</b><span class="en">Scratchboard</span>
+          <span class="how">극적인 밤 장면 · 동물 털, 나무결, 금속 · 흑백 판화 같은 포스터</span></div></a>
+        <a class="tile" data-tags="ink" href="demo/examples/persimmons/?style=engraving" target="_blank" rel="noopener">
+          <img src="samples/engraving.jpg" alt="감 세 알을 한 줄 동판화 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">잉크 · 붓 · <code>engraving</code></span><b>한 줄 동판화</b><span class="en">Single-line engraving</span>
+          <span class="how">오래 남는 한 장 · 포스터, 표지, 초상 · 진지한 주제</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>물감 <small>5가지</small></h3>
+      <div class="grid">
+        <a class="tile" data-tags="paint" href="demo/examples/persimmons/?style=oil" target="_blank" rel="noopener">
+          <img src="samples/oil.jpg" alt="감 세 알을 유화 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">물감 · <code>oil</code></span><b>유화</b><span class="en">Oil on canvas</span>
+          <span class="how">묵직하고 고전적인 정물 · 음식, 그릇, 초상 · 클래식한 브랜드</span></div></a>
+        <a class="tile" data-tags="paint" href="demo/examples/persimmons/?style=broken-colour" target="_blank" rel="noopener">
+          <img src="samples/broken-colour.jpg" alt="감 세 알을 인상파 브로큰 컬러 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">물감 · <code>broken-colour</code></span><b>인상파 브로큰 컬러</b><span class="en">Broken colour</span>
+          <span class="how">빛과 공기가 주인공인 그림 · 풍경, 정원, 햇살 든 실내 · 밝고 경쾌한 장면</span></div></a>
+        <a class="tile" data-tags="paint" href="demo/examples/persimmons/?style=dream-glaze" target="_blank" rel="noopener">
+          <img src="samples/dream-glaze.jpg" alt="감 세 알을 초현실 글레이즈 유화 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">물감 · <code>dream-glaze</code></span><b>초현실 글레이즈 유화</b><span class="en">Dream glaze</span>
+          <span class="how">초현실적이고 고요한 장면 · 이상한 물건, 꿈 같은 풍경, 커버 아트 · 사색적인 브랜드</span></div></a>
+        <a class="tile" data-tags="paint" href="demo/examples/persimmons/?style=mid-century" target="_blank" rel="noopener">
+          <img src="samples/mid-century.jpg" alt="감 세 알을 미드센추리 과슈 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">물감 · <code>mid-century</code></span><b>미드센추리 과슈</b><span class="en">Mid-century gouache</span>
+          <span class="how">복고풍 그림책 같은 그림 · 동화, 포스터, 도시와 마을 · 따뜻하고 위트 있는 브랜드</span></div></a>
+        <a class="tile" data-tags="paint" href="demo/examples/persimmons/?style=folk-tale" target="_blank" rel="noopener">
+          <img src="samples/folk-tale.jpg" alt="감 세 알을 옛이야기 그림책 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">물감 · <code>folk-tale</code></span><b>옛이야기 그림책</b><span class="en">Folk-tale storybook</span>
+          <span class="how">동화 · 옛이야기 · 마을과 들판 · 앞뒤 거리감이 있는 장면</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>인쇄 · 판화 <small>5가지</small></h3>
+      <div class="grid">
+        <a class="tile" data-tags="print" href="demo/examples/persimmons/?style=woodblock" target="_blank" rel="noopener">
+          <img src="samples/woodblock.jpg" alt="감 세 알을 우키요에 목판화 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">인쇄 · 판화 · <code>woodblock</code></span><b>우키요에 목판화</b><span class="en">Ukiyo-e woodblock</span>
+          <span class="how">풍경과 정물 · 일본풍 · 평평한 색면이 시원한 포스터</span></div></a>
+        <a class="tile" data-tags="print" href="demo/examples/persimmons/?style=risograph" target="_blank" rel="noopener">
+          <img src="samples/risograph.jpg" alt="감 세 알을 리소그래프 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">인쇄 · 판화 · <code>risograph</code></span><b>리소그래프</b><span class="en">Risograph</span>
+          <span class="how">포스터 · 굿즈 · 잡지 표지 · 경쾌하고 큰 형태</span></div></a>
+        <a class="tile" data-tags="print" href="demo/examples/persimmons/?style=halftone" target="_blank" rel="noopener">
+          <img src="samples/halftone.jpg" alt="감 세 알을 신문 망점 인쇄 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">인쇄 · 판화 · <code>halftone</code></span><b>신문 망점 인쇄</b><span class="en">Newsprint halftone</span>
+          <span class="how">레트로 신문 · 잡지 포스터 · 사진 같은 장면, 굵직한 명암</span></div></a>
+        <a class="tile" data-tags="print" href="demo/examples/persimmons/?style=blueprint" target="_blank" rel="noopener">
+          <img src="samples/blueprint.jpg" alt="감 세 알을 청사진 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">인쇄 · 판화 · <code>blueprint</code></span><b>청사진</b><span class="en">Cyanotype blueprint</span>
+          <span class="how">기계, 건물, 가구 같은 사물 · 설계도 느낌 · 공학/제품 소개</span></div></a>
+        <a class="tile" data-tags="print" href="demo/examples/persimmons/?style=scrapbook" target="_blank" rel="noopener">
+          <img src="samples/scrapbook.jpg" alt="감 세 알을 오래된 스크랩북 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">인쇄 · 판화 · <code>scrapbook</code></span><b>오래된 스크랩북</b><span class="en">Archival scrapbook</span>
+          <span class="how">기록 · 아카이브 · 박물지 · 회상 · 설명이 붙는 그림</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>종이 · 실 · 블록 <small>4가지</small></h3>
+      <div class="grid">
+        <a class="tile" data-tags="craft" href="demo/examples/persimmons/?style=cut-paper" target="_blank" rel="noopener">
+          <img src="samples/cut-paper.jpg" alt="감 세 알을 종이 콜라주 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">종이 · 실 · 블록 · <code>cut-paper</code></span><b>종이 콜라주</b><span class="en">Cut-paper collage</span>
+          <span class="how">따뜻하고 손맛 나는 포스터 · 동물, 풍경, 그림책 · 표지</span></div></a>
+        <a class="tile" data-tags="craft" href="demo/examples/persimmons/?style=toy-theatre" target="_blank" rel="noopener">
+          <img src="samples/toy-theatre.jpg" alt="감 세 알을 종이 인형극 무대 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">종이 · 실 · 블록 · <code>toy-theatre</code></span><b>종이 인형극 무대</b><span class="en">Toy-theatre paper collage</span>
+          <span class="how">동화, 무대, 계절 인사 · 아기자기한 장면 · 이야기의 한 장면</span></div></a>
+        <a class="tile" data-tags="craft" href="demo/examples/persimmons/?style=embroidery" target="_blank" rel="noopener">
+          <img src="samples/embroidery.jpg" alt="감 세 알을 자수 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">종이 · 실 · 블록 · <code>embroidery</code></span><b>자수</b><span class="en">Hand embroidery</span>
+          <span class="how">포근하고 정성스러운 느낌 · 식물, 꽃, 소품, 동물 · 수공예 브랜드</span></div></a>
+        <a class="tile" data-tags="craft" href="demo/examples/persimmons/?style=toy-brick" target="_blank" rel="noopener">
+          <img src="samples/toy-brick.jpg" alt="감 세 알을 장난감 블록 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">종이 · 실 · 블록 · <code>toy-brick</code></span><b>장난감 블록</b><span class="en">Toy brick mosaic</span>
+          <span class="how">장난감처럼 귀엽고 단단한 느낌 · 아이콘, 캐릭터, 사물 · 게임과 교육</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>디지털 · 기하 <small>4가지</small></h3>
+      <div class="grid">
+        <a class="tile" data-tags="digital" href="demo/examples/persimmons/?style=flat-vector" target="_blank" rel="noopener">
+          <img src="samples/flat-vector.jpg" alt="감 세 알을 플랫 벡터 일러스트 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">디지털 · 기하 · <code>flat-vector</code></span><b>플랫 벡터 일러스트</b><span class="en">Flat vector</span>
+          <span class="how">깔끔한 브랜드 그림 · 앱/웹 일러스트 · 인포그래픽 · 정물과 풍경</span></div></a>
+        <a class="tile" data-tags="digital" href="demo/examples/persimmons/?style=isometric" target="_blank" rel="noopener">
+          <img src="samples/isometric.jpg" alt="감 세 알을 아이소메트릭 컷어웨이 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">디지털 · 기하 · <code>isometric</code></span><b>아이소메트릭 컷어웨이</b><span class="en">Isometric cutaway</span>
+          <span class="how">공간/구조 설명 · 미니어처 방/가게 · 테크/게임 일러스트 · 인포그래픽</span></div></a>
+        <a class="tile" data-tags="digital" href="demo/examples/persimmons/?style=low-poly" target="_blank" rel="noopener">
+          <img src="samples/low-poly.jpg" alt="감 세 알을 로우폴리 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">디지털 · 기하 · <code>low-poly</code></span><b>로우폴리</b><span class="en">Low-poly</span>
+          <span class="how">게임/테크 느낌 · 풍경, 과일, 동물 · 기하학적인 포스터</span></div></a>
+        <a class="tile" data-tags="digital" href="demo/examples/persimmons/?style=pixel-art" target="_blank" rel="noopener">
+          <img src="samples/pixel-art.jpg" alt="감 세 알을 픽셀 아트 화풍으로 그린 그림" loading="lazy" width="640" height="640">
+          <div class="cap"><span class="no">디지털 · 기하 · <code>pixel-art</code></span><b>픽셀 아트</b><span class="en">Pixel art</span>
+          <span class="how">레트로 게임 느낌 · 아이콘/캐릭터 · 작은 장면 · 루프 애니메이션</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>다른 주제, 같은 방식 <small>저녁 주전자 · 4:5</small></h3>
+      <p>브리프에서 새로 설계한 두 번째 주제입니다. 오른쪽 창에서 빛이 들고, 그림이 완성된 뒤에도 김이 계속 피어오릅니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="kettle" href="demo/examples/kettle/?style=woodblock" target="_blank" rel="noopener">
+          <img src="samples/kettle-woodblock.jpg" alt="저녁 주전자를 우키요에 목판화 화풍으로 그린 그림" loading="lazy" width="640" height="800">
+          <div class="cap"><span class="no">저녁 주전자 · <code>woodblock</code></span><b>우키요에 목판화</b><span class="en">Ukiyo-e woodblock</span>
+          <span class="how">그려지는 과정 7초 + 김 4초 루프</span></div></a>
+        <a class="tile" data-tags="kettle" href="demo/examples/kettle/?style=watercolour" target="_blank" rel="noopener">
+          <img src="samples/kettle-watercolour.jpg" alt="저녁 주전자를 연필 수채화 화풍으로 그린 그림" loading="lazy" width="640" height="800">
+          <div class="cap"><span class="no">저녁 주전자 · <code>watercolour</code></span><b>연필 수채화</b><span class="en">Pencil &amp; watercolour</span>
+          <span class="how">그려지는 과정 7초 + 김 4초 루프</span></div></a>
+        <a class="tile" data-tags="kettle" href="demo/examples/kettle/?style=risograph" target="_blank" rel="noopener">
+          <img src="samples/kettle-risograph.jpg" alt="저녁 주전자를 리소그래프 화풍으로 그린 그림" loading="lazy" width="640" height="800">
+          <div class="cap"><span class="no">저녁 주전자 · <code>risograph</code></span><b>리소그래프</b><span class="en">Risograph</span>
+          <span class="how">그려지는 과정 7초 + 김 4초 루프</span></div></a>
+        <a class="tile" data-tags="kettle" href="demo/examples/kettle/?style=pixel-art" target="_blank" rel="noopener">
+          <img src="samples/kettle-pixel-art.jpg" alt="저녁 주전자를 픽셀 아트 화풍으로 그린 그림" loading="lazy" width="640" height="800">
+          <div class="cap"><span class="no">저녁 주전자 · <code>pixel-art</code></span><b>픽셀 아트</b><span class="en">Pixel art</span>
+          <span class="how">그려지는 과정 7초 + 김 4초 루프</span></div></a>
+      </div>
+    </div>
+    <!-- gallery:end -->
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬의 예제 두 편과, 화풍 레시피를 연구한 원본 레포입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/examples/persimmons/"><b>「감 세 알」 · 32가지 화풍</b><span>정물 · 1:1 · 왼쪽 위 창빛 · 그려지는 과정 7초</span><span class="url">doodle-styles/demo/examples/persimmons</span></a>
+    <a class="work" href="demo/examples/kettle/"><b>「저녁 주전자」 · 브리프에서 새로 설계</b><span>4:5 · 오른쪽 창빛 · 그려지는 과정 7초 + 김 4초 루프</span><span class="url">doodle-styles/demo/examples/kettle</span></a>
+    <a class="work" href="https://github.com/alexgreensh/anidoodle"><b>원본 레포 · alexgreensh/anidoodle</b><span>32가지 화풍 레시피의 출처 (Apache-2.0)</span><span class="url">github.com/alexgreensh/anidoodle</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/doodle-styles/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/doodle-styles">폴더</a> <span>lib · scripts · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/doodle-styles/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/doodle-styles/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 화풍 고르기, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/doodle-styles/references/STYLES.md">references/STYLES.md</a> <span>32가지 화풍의 재료 · 마크 · 순서 · 설정</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/doodle-styles/references/STYLE-API.md">references/STYLE-API.md</a> <span>장면 · 그리기 표면 · 키트 · 화풍 계약</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/doodle-styles/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림은 이 스킬의 코드로 그렸습니다. 화풍 레시피: anidoodle (Alex Greenshpun, Apache-2.0)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

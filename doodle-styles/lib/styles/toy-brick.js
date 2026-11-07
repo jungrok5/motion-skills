@@ -23,12 +23,12 @@ export default {
   palette: 'a fixed table of real toy-brick colours; every cell is the nearest one',
   bestFor: '장난감처럼 귀엽고 단단한 느낌 · 아이콘, 캐릭터, 사물 · 게임과 교육',
   source: 'anidoodle toyBrick.ts · toyBrickKit.ts · styles/toyBrick.md',
-  // studs: how many studs across the picture (the mosaic's resolution) · palette: the brick colour table (hex list)
+  // studs: studs across per 1080 px of width (the mosaic's resolution; scales with the picture) · palette: the brick colour table (hex list)
   // backdrop: the studio colour behind · outline: the booklet's step outline colour · shadow: ground shadow strength (0..1)
-  defaults: { studs: 44, palette: Object.values(BRICK), backdrop: '#E7E4DE', outline: '#FAC80A', shadow: 0.5 },
+  defaults: { studs: 64, palette: Object.values(BRICK), backdrop: '#E7E4DE', outline: '#FAC80A', shadow: 0.5 },
   draw(D, S, K, o) {
     const W = S.W, H = S.H, L = S.light, env = D.env
-    const cols = Math.max(8, Math.round(o.studs)), u = W / cols, ph = u * 0.4, rows = Math.ceil(H / ph)
+    const cols = Math.max(8, Math.round((o.studs * W) / 1080)), u = W / cols, ph = u * 0.4, rows = Math.ceil(H / ph)
     const yOf = (r) => H - (r + 1) * ph // top of plate row r (r = 0 is the bottom row)
     const shade = (h, t) => { const c = K.rgb(h); return K.hex(c.map((v) => (t >= 0 ? v + (255 - v) * t : v * (1 + t)))) }
     // nearest brick colour by CIE Lab distance, hue weighted over lightness, the way a builder picks (a red kettle finds the
@@ -36,6 +36,23 @@ export default {
     const lab = (h) => { const c = K.rgb(h).map((v) => { v /= 255; return v > 0.04045 ? ((v + 0.055) / 1.055) ** 2.4 : v / 12.92 }), X = (c[0] * 0.4124 + c[1] * 0.3576 + c[2] * 0.1805) / 0.95047, Y = c[0] * 0.2126 + c[1] * 0.7152 + c[2] * 0.0722, Z = (c[0] * 0.0193 + c[1] * 0.1192 + c[2] * 0.9505) / 1.08883, f = (t) => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116); return [116 * f(Y) - 16, 500 * (f(X) - f(Y)), 200 * (f(Y) - f(Z))] }
     const PL = o.palette.map((h) => [h, lab(h)])
     const near = new Map(), pick = (rgb, wl = 0.75) => { const key = rgb.map((v) => v >> 2).join(',') + wl; let c = near.get(key); if (!c) { const q = lab(rgb); let bd = Infinity; for (const [h, p] of PL) { const d = wl * (q[0] - p[0]) ** 2 + (q[1] - p[1]) ** 2 + (q[2] - p[2]) ** 2; if (d < bd) { bd = d; c = h } } near.set(key, c) } return c }
+    // each material is built from ONE family of bricks: its lit, local and shade cells pick only bricks of its own hue
+    // (orange: orange / reddish orange / dark orange; red: red / dark red), chosen by lightness
+    const hueD = (a, b) => { const d = Math.abs(Math.atan2(a[2], a[1]) - Math.atan2(b[2], b[1])) * 180 / Math.PI; return Math.min(d, 360 - d) }, chroma = (p) => Math.hypot(p[1], p[2])
+    const ramps = new Map(), rampOf = (r) => {
+      let rp = ramps.get(r.i); if (rp) return rp
+      const b = lab(r.color), bc = chroma(b), bp = pick(K.rgb(r.color)), m = []
+      for (const e of PL) { const c = chroma(e[1]); if (Math.abs(e[1][0] - b[0]) > 32) continue; if (bc < 20 ? c < 20 && (c < 6 || bc < 6 || hueD(e[1], b) < 45) : hueD(e[1], b) < 12 && c >= 0.7 * bc) m.push(e) }
+      if (!m.length) m.push(PL.find((e) => e[0] === bp))
+      if (bc >= 20) {
+        const ext = (lighter) => { let best = null, bd = Infinity; for (const e of PL) { if (m.includes(e)) continue; const c = chroma(e[1]), h = hueD(e[1], b); if (h > (lighter ? 10 : 20) || c < (lighter ? 0.7 : 0.35) * bc) continue; if (lighter ? e[1][0] <= Math.max(b[0] + 5, ...m.map((q) => q[1][0])) : e[1][0] >= Math.min(b[0] - 5, ...m.map((q) => q[1][0]))) continue; if (h < bd) { bd = h; best = e } } if (best) m.push(best) }
+        if (!m.some((e) => e[1][0] > b[0] + 12)) ext(true)
+        if (!m.some((e) => e[1][0] < b[0] - 15)) ext(false)
+      }
+      rp = m.sort((p, q) => p[1][0] - q[1][0]); ramps.set(r.i, rp); return rp
+    }
+    const rampPick = (r, rgb) => { const q = lab(rgb), rp = rampOf(r); let c = rp[0][0], bd = Infinity; for (const [h, p] of rp) { const d = (q[0] - p[0]) ** 2 + 0.15 * ((q[1] - p[1]) ** 2 + (q[2] - p[2]) ** 2); if (d < bd) { bd = d; c = h } } return c }
+    const darker = (r, h) => { const rp = rampOf(r), i = rp.findIndex((e) => e[0] === h); return i > 0 ? rp[i - 1][0] : pick(K.rgb(K.darken(h, 0.4))) }
     // a wall or a floor is built in its own colour (no posterised banding from a gentle gradient); cast shadows and
     // light falling on it still change the brick
     const shadows = S.regions.filter((q) => q.role === 'shadow'), lights = S.regions.filter((q) => q.role === 'highlight' || q.role === 'glow')
@@ -62,19 +79,25 @@ export default {
       let best = null, bn = 0
       for (const [fx, fy] of [[0.3, 0.3], [0.7, 0.3], [0.3, 0.7], [0.7, 0.7], [0.5, 0.5]]) {
         const x = (c + fx) * u, yy = Math.min(H - 1, Math.max(0, y + fy * ph)), q = S.regionAt(x, yy)
-        const flat = q && (q.role === 'bg' || q.role === 'ground') && q.form < 0.4, p = flat ? pickFlat(q, x, yy) : pick(S.colorAt(x, yy)), n = (votes.get(p) || 0) + 1 + (fx === 0.5 ? 0.5 : 0)
+        const flat = q && (q.role === 'bg' || q.role === 'ground') && q.form < 0.4, p = flat ? pickFlat(q, x, yy) : q && planeOf(q) === 2 ? rampPick(q, S.colorAt(x, yy)) : pick(S.colorAt(x, yy)), n = (votes.get(p) || 0) + 1 + (fx === 0.5 ? 0.5 : 0)
         votes.set(p, n); if (n > bn) { bn = n; best = p }
       }
       const k = r * cols + c, q = S.regionAt((c + 0.5) * u, Math.max(0, y + ph * 0.5)); col[k] = best; pl[k] = planeOf(q); rid[k] = q ? q.i : -1
     }
-    // where two things of the model meet, the far one's edge is built a shade darker so they part (three fruits stay three)
+    // where a nearer thing overlaps a farther one of the same family, the nearer one's outline facing it is built one
+    // brick darker in its own ramp, so three fruits stay three
+    const byI = new Map(S.regions.map((q) => [q.i, q])), part = []
     for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
       const k = r * cols + c; if (pl[k] < 2 || rid[k] < 0) continue
+      const me = byI.get(rid[k]), mine = rampOf(me).map((e) => e[0])
       for (const n of [k + cols, k - cols, k - 1, k + 1]) {
         if (n < 0 || n >= N || (n === k - 1 && c === 0) || (n === k + 1 && c === cols - 1)) continue
-        if (pl[n] === 2 && rid[n] > rid[k] && !lineCell[n]) { const reg = S.regions.find((q) => q.i === rid[k]); col[k] = pick(K.rgb(K.mix(reg.color, reg.shade, 0.85))); if (col[k] === col[n]) col[k] = pick(K.rgb(K.darken(col[n], 0.35))); break }
+        if (pl[n] !== 2 || rid[n] < 0 || rid[n] >= rid[k]) continue
+        const far = byI.get(rid[n]); if (!far || !rampOf(far).some((e) => mine.includes(e[0]))) continue
+        part.push(k); break
       }
     }
+    for (const k of part) col[k] = darker(byI.get(rid[k]), col[k])
     // lines are stamped in so a wisp of steam or a window bar survives the coarse grid
     for (const l of S.lines) {
       const p = pick(K.rgb(l.color)), lp = l.depth >= 0.8 ? 0 : 2, s = K.resample(l.pts, Math.max(2, Math.ceil(K.length(l.pts) / (ph * 0.5))))

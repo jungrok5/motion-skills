@@ -86,14 +86,8 @@ export default {
     const shadeAndLight = (pc) => {
       const r = pc.r, b = r.bbox, small = Math.min(b.w, b.h)
       if (['shadow', 'highlight', 'glow'].includes(r.role) || small < 26) return
-      const flat = r.role === 'bg' || r.role === 'ground'
-      if (flat) {
-        // a big sheet: a second paper a shade darker torn across the half away from the light
-        if (r.area < W * H * 0.08) return
-        const d = 0.55 * Math.max(b.w, b.h), base = K.translate(r.pts, L[0] * d, L[1] * d)
-        scrap(pc, tear(base, 5 * o.tear, pc.seed + 7), tear(base, 4 * o.tear, pc.seed + 8, -3), K.mix(r.color, r.shade, 0.22))
-        return
-      }
+      // a big sheet (wall, floor) stays one paper: a torn shade band across it read as a stray white line, not light
+      if (r.role === 'bg' || r.role === 'ground') return
       if (r.form < 0.3) return
       const d = small * (0.07 + 0.09 * r.form), amp = K.clamp(small / 70, 1.2, 3) * o.tear
       const b1 = K.translate(r.pts, L[0] * d, L[1] * d)

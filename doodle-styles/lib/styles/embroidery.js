@@ -133,12 +133,16 @@ export default {
       if (!out.length) { const [x, y] = r.centre; out.push({ k: 1, a: [x, y], w: rad, c: floss(colAt(r, x, y), x, y) }) }
       return out
     }
-    const seedFill = (r, step, cover) => {
+    // seed stitch: on a wall close to the linen the cloth shows between the seeds; the further the wall's colour is from
+    // the linen (a mid or dark wall), the closer, longer and fuller the seeds, so the wall reads as its own colour
+    const seedFill = (r, step0, cover) => {
+      const dc = K.rgb(r.color).reduce((a, v, i) => a + (v - K.rgb(o.linen)[i]) ** 2, 0) ** 0.5 / 441, kk = K.clamp((dc - 0.06) / 0.18)
+      const step = step0 * (1 - 0.22 * kk), len0 = 4.4 + 2.4 * kk, sw = (2.3 + 0.6 * kk) * tw, sep = 1.7 + 0.5 * kk
       const out = [], rr = K.rng(r.i * 13 + 1)
       for (const [x, y] of K.gridIn(r.pts, step, 0.8, r.i + 7)) {
         if (cover.some((q) => x > q.b.x0 && x < q.b.x1 && y > q.b.y0 && y < q.b.y1 && K.inside(q.pts, x, y))) continue
-        const a = rr() * Math.PI, l = 4.4 + rr() * 2.8, dx = Math.cos(a) * l / 2, dy = Math.sin(a) * l / 2, c = floss(colAt(r, x, y), x, y), ox = -Math.sin(a) * 1.7, oy = Math.cos(a) * 1.7
-        out.push(st([x - dx - ox, y - dy - oy], [x + dx - ox, y + dy - oy], 2.3 * tw, c), st([x - dx + ox, y - dy + oy], [x + dx + ox, y + dy + oy], 2.3 * tw, c))
+        const a = rr() * Math.PI, l = len0 + rr() * 2.8, dx = Math.cos(a) * l / 2, dy = Math.sin(a) * l / 2, c = floss(colAt(r, x, y), x, y), ox = -Math.sin(a) * sep, oy = Math.cos(a) * sep
+        out.push(st([x - dx - ox, y - dy - oy], [x + dx - ox, y + dy - oy], sw, c), st([x - dx + ox, y - dy + oy], [x + dx + ox, y + dy + oy], sw, c))
       }
       return out
     }
