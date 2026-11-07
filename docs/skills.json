@@ -987,6 +987,46 @@
           "url": "https://harnoordev.github.io/swarm-build/skills/swarm-build/examples/3d.html"
         }
       ]
+    },
+    {
+      "id": "doodle-styles",
+      "name": "doodle-styles",
+      "tagline": "32가지 손그림 화풍(연필 수채화, 우키요에 목판화, 리소그래프, 수묵화, 자수, 장난감 블록, 픽셀 아트…) 가운데 하나를 골라 계속 재사용합니다. 주제를 화풍 없는 장면으로 한 번 적으면 고른 화풍이 자기 재료와 순서로 스틸과 그려지는 과정 영상을 만들고, 고른 화풍은 하우스 스타일로 저장돼 다음 그림도 같은 손으로 그립니다.",
+      "posterAlt": "같은 감 세 알을 여덟 가지 화풍으로 그린 그림: 연필 수채화, 우키요에 목판화, 리소그래프, 픽셀 아트, 수묵화, 자수, 마커 만화, 로우폴리",
+      "poster": "doodle-styles/poster.jpg",
+      "tags": [
+        "Canvas 2D",
+        "32 화풍",
+        "PNG · MP4",
+        "그려지는 과정",
+        "하우스 스타일"
+      ],
+      "stats": [
+        "32 화풍 · 6계열",
+        "예제 2개 · 감 · 주전자"
+      ],
+      "page": "doodle-styles/",
+      "source": "doodle-styles/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "doodle-styles/examples/kettle/"
+      },
+      "sources": [
+        {
+          "title": "alexgreensh/anidoodle (32가지 화풍 레시피, Apache-2.0)",
+          "url": "https://github.com/alexgreensh/anidoodle"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「감 세 알」 · 32가지 화풍 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/doodle-styles/demo/examples/persimmons/"
+        },
+        {
+          "title": "「저녁 주전자」 · 목판화 · 김이 오르는 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/doodle-styles/demo/examples/kettle/"
+        }
+      ]
     }
   ]
 }
