@@ -137,7 +137,7 @@ export default {
       const out = [], rr = K.rng(r.i * 13 + 1)
       for (const [x, y] of K.gridIn(r.pts, step, 0.8, r.i + 7)) {
         if (cover.some((q) => x > q.b.x0 && x < q.b.x1 && y > q.b.y0 && y < q.b.y1 && K.inside(q.pts, x, y))) continue
-        const a = rr() * Math.PI, l = 3.6 + rr() * 2.4, dx = Math.cos(a) * l / 2, dy = Math.sin(a) * l / 2, c = floss(colAt(r, x, y), x, y), ox = -Math.sin(a) * 1.7, oy = Math.cos(a) * 1.7
+        const a = rr() * Math.PI, l = 4.4 + rr() * 2.8, dx = Math.cos(a) * l / 2, dy = Math.sin(a) * l / 2, c = floss(colAt(r, x, y), x, y), ox = -Math.sin(a) * 1.7, oy = Math.cos(a) * 1.7
         out.push(st([x - dx - ox, y - dy - oy], [x + dx - ox, y + dy - oy], 2.3 * tw, c), st([x - dx + ox, y - dy + oy], [x + dx + ox, y + dy + oy], 2.3 * tw, c))
       }
       return out

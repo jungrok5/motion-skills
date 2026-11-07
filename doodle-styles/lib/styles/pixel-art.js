@@ -89,8 +89,10 @@ export default {
         const q = y * cols + x, d = Math.hypot(dx, dy); if (d < gd[q]) gd[q] = d
       }
     }
-    const quant = (rp, c, x, y) => {
-      const l = K.lum(c), ix = rp.idx
+    let dq = 0 // set by quant: 1 when the cell is part of a checker half tint
+    const quant = (rp, l, x, y) => {
+      const ix = rp.idx
+      dq = 0
       if (l <= PL[ix[0]]) return ix[0]
       if (l >= PL[ix[ix.length - 1]]) return ix[ix.length - 1]
       for (let j = 0; j + 1 < ix.length; j++) {
@@ -99,6 +101,7 @@ export default {
           const t = (l - a) / (b - a || 1)
           if (!o.dither || t < 0.36) return ix[j]
           if (t > 0.64) return ix[j + 1]
+          dq = 1
           return (BAYER[y & 1][x & 1] < 2) ? ix[j + 1] : ix[j] // the checker half tint
         }
       }
@@ -109,9 +112,8 @@ export default {
       let c = r ? K.rgb(r.role === 'glow' ? K.mix(r.color, r.lit, 0.3) : r.colorAt(X, Y)) : K.rgb(S.bg)
       if (shadow[k] > 0) { const sc = K.rgb(R[sid[k]].color), a = shadow[k]; c = c.map((v, j) => v * (1 - a) + v * (sc[j] / 255) * a * 0.75) }
       if (hl[k] > 0) c = c.map((v) => v + (255 - v) * 0.3 * hl[k])
-      let v = quant(rp, K.hex(c), x, y)
-      const t = K.lum(K.hex(c))
-      dith[k] = (t > PL[rp.idx[0]] && t < PL[rp.idx[rp.idx.length - 1]] && v !== near(K.hex(c))) ? 1 : 0
+      let v = quant(rp, (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255, x, y)
+      dith[k] = dq
       cat[k] = v === rp.mid ? 0 : PL[v] < PL[rp.mid] ? 1 : 2
       if (r && r.role === 'glow') { cat[k] = 4 }
       else if (o.dither && gd[k] <= GR) {
