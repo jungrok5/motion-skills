@@ -71,7 +71,8 @@ export default {
             const sx = -L[0] * b.w * 0.2, sy = -L[1] * b.h * 0.2
             D.layer({ soften: 9 * u, mask: shape }, () => D.wash(K.blob(b.cx + sx * 1.3, b.cy + sy * 1.3, Math.min(b.w, b.h) * 0.42, { n: 40, wob: 0.25, seed: r.i + 2, sx: Math.max(1, b.w / b.h), sy: Math.max(1, b.h / b.w) }), r.shade, { alpha: 0.26 + 0.14 * r.form, seed: r.i + 23, shrink: 0.9, edge: 30, dx: 0, dy: 0, rim: false, from: [b.cx - L[0] * b.w * 0.4, b.cy - L[1] * b.h * 0.4] }))
           }
-          if (o.blooms && r.role !== 'shadow' && r.role !== 'glow' && r.area > S.W * S.H * (B ? 0.05 : 0.015)) {
+          // backruns only inside things: on a wall or a table one reads as a stain floating in space
+          if (o.blooms && !B && r.role !== 'shadow' && r.role !== 'glow' && r.area > S.W * S.H * 0.015) {
             const rr = K.rng(r.i * 7 + 1), rad = Math.min(b.w, b.h) * (B ? 0.07 : 0.15) * (0.8 + rr() * 0.4)
             const x = B ? b.x0 + b.w * (0.2 + rr() * 0.6) : b.cx - L[0] * b.w * 0.12 + (rr() - 0.5) * b.w * 0.2
             const y = B ? b.y0 + b.h * (0.25 + rr() * 0.5) : b.cy - L[1] * b.h * 0.12 + (rr() - 0.5) * b.h * 0.15

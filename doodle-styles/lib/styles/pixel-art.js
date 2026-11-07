@@ -220,9 +220,12 @@ export default {
       lay(fix)
     })
     const byCat = (want) => { const out = []; for (let k = 0; k < N; k++) if (cat[k] === want && cur[k] !== fin[k]) out.push(k); return out }
-    D.pass('shading clusters', 2.2, () => lay(byCat(1)))
-    D.pass('highlights', 1.3, () => lay(byCat(2)))
-    D.pass('light sources', 1.4, () => {
+    // a pass with little to lay takes little time (a still life with no lamp has no light-source pass to wait through)
+    const count = (want) => { let n = 0; for (let k = 0; k < N; k++) if (cat[k] === want) n++; return n }
+    const share = (n, w) => w * K.clamp(n / (N * 0.03), 0.05, 1)
+    D.pass('shading clusters', share(count(1), 2.2), () => lay(byCat(1)))
+    D.pass('highlights', share(count(2), 1.3), () => lay(byCat(2)))
+    D.pass('light sources', share(count(4) + lightLineCells.length * 4, 1.4), () => {
       // the source itself, its glow dither, then the light lines (steam, a white bar) — LAST
       const src = [], halo = []
       for (let k = 0; k < N; k++) if (cat[k] === 4 && cur[k] !== fin[k]) (glowCell(k) ? src : halo).push(k)

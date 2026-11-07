@@ -70,11 +70,11 @@ export default {
     const Dmax = Math.max(40, ...slabs.map((s) => s.d1))
 
     // ---- the projection, fitted to the canvas (light from the right mirrors it)
-    const platH = Math.max(18, ch * 0.05), front = Dmax + 46, back = -18
+    const platH = Math.max(18, ch * 0.05), front = Dmax + 34, back = -14
     const std = (x, z, d) => [x - d, (x + d) / 2 - z * ZK]
     const corners = []
     for (const x of [0, cw]) for (const z of [-platH, ch]) for (const d of [back, front]) corners.push(std(x, z, d))
-    const cb = K.bbox(corners), u = Math.min((W * 0.9) / cb.w, (H * 0.9) / cb.h)
+    const cb = K.bbox(corners), u = Math.min((W * 0.94) / cb.w, (H * 0.94) / cb.h)
     const ox = W / 2 - u * cb.cx, oy = H / 2 - u * cb.cy
     const PL = (x, z, d) => { const [a, b] = std(x, z, d), sx = ox + u * a; return [flip ? W - sx : sx, oy + u * b] }
     const P = (X, Y, d) => PL(flip ? cx1 - X : X - cx0, cy1 - Y, d)
@@ -192,7 +192,8 @@ export default {
       // a light source pours one flat warm tint, stepped in three distance bands, on the faces around it
       for (const s of slabs.filter((q) => q.r.role === 'glow')) {
         const base = K.densify(s.poly, 12, true), cut = [s.front, ...slabs.filter((q) => q.k > s.k && q.r.i > s.r.i && q.d0 < s.d1 + 1 && boxHit(q.sb, s.sb)).map((q) => q.front)]
-        D.layer({ cut }, () => { for (const [dd, a] of [[220, 0.1], [130, 0.1], [60, 0.12]]) flat(proj(K.offset(base, dd), s.d1), o.warm, { alpha: a }) })
+        const panel = [P(cx0, cy0, s.d1), P(cx1, cy0, s.d1), P(cx1, cy1, s.d1), P(cx0, cy1, s.d1)]
+        D.layer({ cut, mask: panel }, () => { for (const [dd, a] of [[220, 0.1], [130, 0.1], [60, 0.12]]) flat(proj(K.offset(base, dd), s.d1), o.warm, { alpha: a }) })
       }
       // light lines (steam) float in front as flat pale shapes
       for (const l of S.lines) {

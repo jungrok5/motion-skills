@@ -51,8 +51,9 @@ export default {
 
     // ---- one vector shape: the pen traces its anchors, the flat fill lands when the path closes
     const shape = (pts, color, { alpha = 1, cost = 1, closed = true } = {}) => {
-      const idx = anchors(pts, 12, closed), per = K.length(pts, true)
-      D.mark(cost * (0.4 + per / 260), (ctx, k) => {
+      // the pen's time goes into placing anchors, not into the length of the path
+      const idx = anchors(pts, 12, closed)
+      D.mark(cost * (0.35 + idx.length * 0.09), (ctx, k) => {
         if (k < 1) { penUI(ctx, pts, idx, k, { color: o.pen }); return }
         ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = color; K.path(ctx, pts); ctx.fill(); ctx.restore()
       })

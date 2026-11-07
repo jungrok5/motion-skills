@@ -24,7 +24,8 @@ export function ribbonW(pts, ws) {
   return [...L, ...R.reverse()]
 }
 /** add a closed polygon to the current path (no beginPath) */
-export function sub(ctx, pts) { if (pts.length < 3) return; ctx.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]); ctx.closePath() }
+// (no closePath: fill closes every subpath itself, and closePath on a path of thousands of subpaths is very slow in Chromium)
+export function sub(ctx, pts) { if (pts.length < 3) return; ctx.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]) }
 
 /** the regions printed after r that overlap it, glows and highlights included (a block is carved away under them) */
 export function knockouts(S, r, { highlight = true, glow = true } = {}) {

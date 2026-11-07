@@ -81,7 +81,6 @@ export default {
           const r = r0 + grow; if (r < 0.35 * u) continue
           const h = hash(px, py, seed) * 1000, a0 = (h % 1) * 6.283
           for (let q = 0; q <= 7; q++) { const a = a0 + (q / 7) * 6.283, w = 1 + 0.14 * Math.sin(a * 2 + h) + 0.08 * Math.sin(a * 3 + h * 1.7), X = px + Math.cos(a) * r * w, Y = py + Math.sin(a) * r * w; q ? x.lineTo(X, Y) : x.moveTo(X, Y) }
-          x.closePath()
         }
         x.fill()
       }

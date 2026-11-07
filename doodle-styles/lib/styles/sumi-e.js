@@ -43,6 +43,10 @@ export default {
       return K.clamp(v * (1 - 0.45 * K.clamp(r.depth - 0.4) / 0.6), QING * 0.6, JIAO)
     }
     const solid = solidOf(S), big = (r) => r.role === 'bg' || r.role === 'ground'
+    // a wall or a table is never the darkest thing: a few lighter side-brush strokes; the dark ink is kept for the things
+    // standing on it, and the darkest of all for the accents (knob, handle, calyx)
+    const groundV = (r) => Math.min(0.42, dilution(r) * (r.role === 'bg' ? 0.5 : 0.6))
+    const groundMax = Math.max(0, ...S.regions.filter((r) => r.role === 'ground').map(groundV))
     const isWhite = (r) => K.lum(r.color) > 0.72
 
     // ------------------------------------------------------------ the brush (a hair model)
@@ -157,12 +161,12 @@ export default {
       }
       return chunks.filter((run) => run.length > 1 && K.length(run) > 14 * u).map((run, j) => stroke(run, { w: K.clamp(m * 0.05, 4 * u, 13 * u), v, load: 0.9, dry: 0.22, seed: seed * 7 + j, split: 0.7, bleed: 0.45, hairs: 12 }))
     }
-    const thingStrokes = (r, v) => {
+    const thingStrokes = (r, v, { dry = 0.1, cover = 1 } = {}) => {
       const b = r.bbox, T = thickness(r), m = Math.min(b.w, b.h)
       if (isWhite(r)) return boneStrokes(r, K.clamp(v + 0.45, ZHONG, NONG), r.i + 1)
       if (T < 0.24 * Math.max(b.w, b.h) && T < 60 * u) return thinStrokes(r, v, r.i + 1)
       const angle = r.grain ?? (b.w > b.h * 1.4 ? 0 : b.h > b.w * 1.4 ? Math.PI / 2 : Math.atan2(L[1], L[0]) + Math.PI / 2)
-      return massStrokes(r.pts, r, v, { W: K.clamp(m * 0.56, 9 * u, 150 * u), angle, seed: r.i + 1, dry: 0.1, bow: 0.06 + 0.12 * r.form })
+      return massStrokes(r.pts, r, v, { W: K.clamp(m * 0.56, 9 * u, 150 * u), angle, seed: r.i + 1, dry, cover, ragged: cover < 1 ? 0.25 : 0, bow: 0.06 + 0.12 * r.form })
     }
 
     D.ground(() => {
@@ -185,19 +189,24 @@ export default {
       for (const r of things) {
         const mass = !isWhite(r) && thickness(r) >= 0.24 * Math.max(r.bbox.w, r.bbox.h)
         const edge = mass ? K.displace(K.offset(K.densify(r.pts, 8, true), 3 * u), 9 * u, 0.04, r.i + 5) : undefined
-        paint(thingStrokes(r, K.clamp(dilution(r) + (K.rng(r.i * 5 + S.seed)() - 0.5) * 0.4, QING, JIAO)), S.occluders(r, { light: false }), { mask: edge })
+        let v = dilution(r) + (K.rng(r.i * 5 + S.seed)() - 0.5) * 0.24
+        // a flat dark thing lying on the ground (a grate, a mat) is ground-like: dry and light; a standing thing stays
+        // darker than the ground so it separates, but short of the scorched accents
+        const lying = r.form < 0.4 && r.bbox.w > r.bbox.h * 2
+        v = lying ? Math.min(v, groundMax + 0.08) : isWhite(r) ? v : K.clamp(v, groundMax + 0.15, 0.74)
+        paint(thingStrokes(r, v, lying ? { dry: 0.3, cover: 0.75 } : {}), S.occluders(r, { light: false }), { mask: lying ? undefined : edge })
       }
     })
 
     // ------------------------------------------------------------ 2. ground and distance: broad side-brush strokes, mist, cast shadows
     D.pass('ground and distance', 1.6, () => {
       for (const r of S.regions.filter(big).sort((a, b) => a.i - b.i)) {
-        const v = dilution(r) * (r.role === 'bg' ? 0.5 : 0.85)
+        const v = groundV(r)
         if (v < 0.16) continue // a pale wall stays paper
         const b = r.bbox, cut = [...S.occluders(r), ...S.regions.filter((q) => q.role === 'glow').map((q) => q.pts)]
-        const cover = K.clamp((v - 0.1) * 2) * (1 - o.empty * 0.5)
+        const cover = K.clamp((v - 0.1) * 1.6) * (1 - o.empty * 0.5)
         const W = K.clamp(Math.min(b.w, b.h) * 0.16, 30 * u, 90 * u)
-        const list = massStrokes(r.pts, r, v, { W, angle: r.grain ?? 0, seed: r.i + 51, dry: r.role === 'bg' ? 0.1 : 0.16, cover, ragged: 0.35 * o.empty + 0.1, bow: 0.01 })
+        const list = massStrokes(r.pts, r, v, { W, angle: r.grain ?? 0, seed: r.i + 51, dry: r.role === 'bg' ? 0.1 : 0.3, cover, ragged: 0.35 * o.empty + 0.1, bow: 0.01 })
         paint(list, cut, { wet: r.role === 'bg' ? 1 : 0 })
       }
       // a light source is paper; a pale wet mist is laid round it so the paper glows (烘托)
@@ -207,7 +216,7 @@ export default {
       }
       // cast shadows: one wet stroke of clear ink laid into damp paper
       for (const r of S.regions.filter((q) => q.role === 'shadow')) {
-        const b = r.bbox, v = QING * 0.8 + 0.3 * r.strength
+        const b = r.bbox, v = QING * 0.6 + 0.2 * r.strength
         paint(massStrokes(r.pts, r, v, { W: K.clamp(b.h * 0.7, 12 * u, 60 * u), angle: Math.abs(b.w) > b.h ? 0 : Math.PI / 2, seed: r.i + 71, dry: 0.08, bow: 0.02 }), S.occluders(r, { light: false }), { wet: 1 })
       }
     })
@@ -261,7 +270,7 @@ export default {
       const s = Math.round(Math.min(S.W, S.H) * 0.06), m = Math.min(S.W, S.H) * 0.06
       const spots = [[S.W - m - s, S.H - m - s * 1.4], [m, S.H - m - s * 1.4], [S.W - m - s, m + s * 0.4], [m, m + s * 0.4]]
       // how much ink lies under a spot: a thing is all ink; a wall or a table only as much as its strokes cover
-      const inkAt = (rg) => (!rg ? 0 : !big(rg) ? 1 : K.clamp((dilution(rg) * (rg.role === 'bg' ? 0.5 : 0.85) - 0.1) * 2) * (1 - o.empty * 0.5))
+      const inkAt = (rg) => (!rg ? 0 : !big(rg) ? 1 : K.clamp((groundV(rg) - 0.1) * 1.6) * (1 - o.empty * 0.5))
       const ink = ([x, y]) => { let t = 0; for (let i = 0; i <= 2; i++) for (let j = 0; j <= 2; j++) t += inkAt(S.regionAt(x + (s * i) / 2, y + (s * j) / 2)); return t }
       const [x, y] = spots.reduce((a, b) => (ink(b) < ink(a) - 0.5 ? b : a))
       const rr = K.rng(S.seed * 3 + 11), glyph = []
