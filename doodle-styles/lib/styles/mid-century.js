@@ -13,7 +13,7 @@
 //   line      the ink line's weight (px at 1080)  shine    the light flat on round things
 import { clipTo, rowsClip, hides, rgbOf, css, mixA, trace } from './_paint.js'
 
-const PALETTE = ['#f1e1b8', '#f5e8c8', '#f7efdc', '#f0c866', '#e9ae34', '#e07a32', '#d2462a', '#e8a296', '#eab28c', '#a8683a', '#56aba2', '#98c1ad', '#4f8f86', '#a6a340', '#6f6d2c', '#4c8c52', '#356a3e', '#244e4a', '#7a4a33', '#5a6670', '#2b2724']
+const PALETTE = ['#f1e1b8', '#f5e8c8', '#f7efdc', '#f0c866', '#e9ae34', '#e07a32', '#d2462a', '#e8a296', '#eab28c', '#a8683a', '#56aba2', '#98c1ad', '#4f8f86', '#a6a340', '#6f6d2c', '#4c8c52', '#356a3e', '#244e4a', '#7a4a33', '#5a6670', '#28324f', '#2b2724']
 
 export default {
   id: 'mid-century', name: 'Mid-century gouache', ko: '미드센추리 과슈',
@@ -22,7 +22,7 @@ export default {
   edge: 'a brushed, slightly ragged colour edge; the ink line floats off it (off register) and leaves edges open where the light is',
   order: ['flats, big to small', 'dry brush', 'the line plate, off register'],
   paper: 'warm cream illustration board, its tooth showing through the dry brush',
-  palette: 'limited and bold, one key: warm board, mustard, tomato, orange, turquoise, olive, deep green-black, pink, cream',
+  palette: 'limited and bold, one key: warm board, mustard, tomato, orange, cinnamon, turquoise, olive, deep green-black, navy, pink, cream',
   bestFor: '복고풍 그림책 같은 그림 · 동화, 포스터, 도시와 마을 · 따뜻하고 위트 있는 브랜드',
   source: 'anidoodle midCentury.ts · koiDrawKit.ts (streaks) · styles/midCentury.md',
   defaults: { board: '#f1e1b8', ink: '#1d1a17', register: [5, -4], palette: PALETTE, dry: 1, line: 2.1, shine: '#fbf4e2' },
@@ -100,7 +100,7 @@ export default {
         const bb = r.bbox, base = flatOf.get(r)
         if (r.role === 'bg') {
           const n = Math.round(7 * amt * Math.sqrt(r.area) / 900)
-          for (let i = 0; i < n; i++) { const y = bb.y0 + (0.08 + 0.84 * r0()) * bb.h, x = bb.x0 + r0() * bb.w * 0.6, len = (220 + r0() * 360) * sc; add(r, [x, y], [x + len, y + (r0() - 0.5) * 30 * sc], (30 + r0() * 40) * sc, K.mix(base, i % 2 ? '#f7efdc' : shadeOf(r), 0.35), 700 + i) }
+          for (let i = 0; i < n; i++) { const y = bb.y0 + (0.08 + 0.84 * r0()) * bb.h, x = bb.x0 + r0() * bb.w * 0.6, len = (220 + r0() * 360) * sc; add(r, [x, y], [x + len, y + (r0() - 0.5) * 30 * sc], (30 + r0() * 40) * sc, K.mix(base, i % 2 ? '#f7efdc' : shadeOf(r), K.lum(base) < 0.3 ? 0.18 : 0.35), 700 + i) }
         } else if (r.role === 'ground') {
           const n = Math.round(6 * amt * Math.sqrt(r.area) / 700), g = r.grain ?? 0
           for (let i = 0; i < n; i++) { const y = bb.y0 + (0.1 + 0.85 * r0()) * bb.h, x = bb.x0 + r0() * bb.w * 0.7, len = (200 + r0() * 300) * sc; add(r, [x, y], [x + Math.cos(g) * len, y + Math.sin(g) * len], (20 + r0() * 28) * sc, K.mix(base, shadeOf(r), 0.6), 760 + i) }

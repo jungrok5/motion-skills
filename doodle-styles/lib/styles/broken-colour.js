@@ -14,7 +14,7 @@
 //   warm       the colour light leans toward       cool          the colour shadow leans toward
 //   accentsWarm / accentsCool   the complementary accents          key   0..1 how high-key (toward white) the picture is
 //   dab        1 = the plate's dab size            weave         the linen's weave over the finished paint
-import { field, batches, formDir, rgbOf, css, mixA, hslA, fromHslA, memo, sceneKey } from './_paint.js'
+import { field, batches, formDir, rgbOf, css, mixA, lumA as lumOf, hslA, fromHslA, memo, sceneKey } from './_paint.js'
 
 const flat = (t) => (t < 0.1 ? 0.78 + 2.2 * t : t > 0.6 ? 1 - 0.62 * Math.pow((t - 0.6) / 0.4, 1.5) : 1) // blunt landing, dragged lift
 const liner = (t) => Math.pow(Math.sin(Math.PI * Math.min(1, Math.max(0, t * 0.92 + 0.04))), 0.6)
@@ -82,7 +82,7 @@ export default {
     const broken = (c, r, hj, lj, s0, s1) => { const [h, s, l] = hslA(c); return fromHslA(h + (r() - 0.5) * 2 * hj, Math.min(1, s * (s0 + r() * (s1 - s0))), Math.max(0.1, Math.min(0.97, l + (r() - 0.5) * 2 * lj))) }
     const mk = (x, y, ang, len, w, c, alpha, seed, kind = 0, bend = 0) => {
       const cx = Math.cos(ang) * len / 2, cy = Math.sin(ang) * len / 2
-      return { a: [x - cx, y - cy], b: [x + cx, y + cy], bend, w, alpha, seed, kind, col: css(c), ridge: css(mixA(c, [255, 250, 238], 0.22)), groove: css(mixA(c, [20, 18, 40], 0.16)), col2: css(mixA(c, [255, 244, 228], 0.2)) }
+      return { a: [x - cx, y - cy], b: [x + cx, y + cy], bend, w, alpha, seed, kind, col: css(c), ridge: css(mixA(c, [255, 250, 238], 0.08 + 0.16 * Math.min(1, lumOf(c) * 1.6))), groove: css(mixA(c, [20, 18, 40], 0.16)), col2: css(mixA(c, [255, 244, 228], 0.2)) }
     }
     const big = (r) => r && (r.role === 'bg' || r.role === 'ground')
     const dirs = new Map(S.regions.map((r) => [r, formDir(K, r, L)]))
@@ -118,12 +118,12 @@ export default {
         m.a = back ? [x1, yb] : [x0, ya]; m.b = back ? [x0, ya] : [x1, yb]; m.bend = (r() - 0.5) * 40; return m
       })
       // (3) the big masses: large dabs, colour averaged over a wide neighbourhood, little breaking yet
-      out.mass = sweep(24 * sc, 300, 220 * sc).map(({ x, y, h }, i) => {
+      out.mass = sweep(21 * sc, 300, 220 * sc).map(({ x, y, h }, i) => {
         let acc = [0, 0, 0]
         for (const [dx, dy] of [[0, 0], [-22, 0], [22, 0], [0, -14], [0, 14]]) { const q = F.pic(K.clamp(x + dx * sc, 0, S.W - 1), K.clamp(y + dy * sc, 0, S.H - 1)).c; acc = [acc[0] + q[0] / 5, acc[1] + q[1] / 5, acc[2] + q[2] / 5] }
         if (h.r && !big(h.r) && h.r.role !== 'glow') acc = mixA(acc, h.c, 0.6)
         const flatPlane = h.r && h.r.role === 'ground', kk = h.r && !big(h.r) ? Math.max(0.35, Math.min(1, Math.min(h.r.bbox.w, h.r.bbox.h) / (160 * sc))) : 1
-        return mk(x, y, angAt(h.r, x, y, r), (flatPlane ? 64 : 50) * sc * kk * (0.8 + r() * 0.4), (flatPlane ? 17 : 22) * sc * kk * (0.8 + r() * 0.4), broken(acc, r, 0.01, 0.025, 0.9, 1.05), 0.92, 1000 + i, 0, (r() - 0.5) * 6)
+        return mk(x, y, angAt(h.r, x, y, r), (flatPlane ? 64 : 50) * sc * kk * (0.8 + r() * 0.4), (flatPlane ? 20 : 25) * sc * kk * (0.8 + r() * 0.4), broken(acc, r, 0.01, 0.025, 0.9, 1.05), 0.92, 1000 + i, 0, (r() - 0.5) * 6)
       })
       // (4) broken colour: small dabs everywhere, hue and value broken, the eye does the mixing
       out.brk = []
@@ -167,7 +167,8 @@ export default {
       for (let k = 0, got = 0, want = Math.round((S.W * S.H) / 9000); k < want * 30 && got < want; k++) {
         const x = r() * S.W, y = r() * S.H, h = F.pic(x, y); let c = null
         const [, , l] = hslA(h.c), warmish = h.c[0] > h.c[2] + 25
-        if (h.tone < 0.42 || h.shadow > 0.2) { if (r() < 0.5) c = AW[Math.floor(r() * 3)] }
+        if (h.shadow > 0.2 || (h.r && !big(h.r) && h.tone < 0.42)) { if (r() < 0.5) c = AW[Math.floor(r() * 3)] }
+        else if (h.tone < 0.42 && r() < 0.08) c = AW[Math.floor(r() * 3)]
         else if (warmish && l > 0.55 && h.tone > 0.66 && r() < 0.3) c = AC[Math.floor(r() * 3)]
         if (!c) continue
         got++; c = mixA(c, h.c, 0.25)

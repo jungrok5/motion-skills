@@ -34,7 +34,8 @@ export default {
     const L = S.light, u = unit(S), INK = o.ink, W = S.W, H = S.H
     const solid = solidOf(S), big = (r) => r.role === 'bg' || r.role === 'ground'
     const greys = [...o.greys].sort((a, b) => K.lum(b) - K.lum(a)), gl = greys.map((g) => K.lum(g))
-    const idxOf = (c) => { const l = K.lum(c); let bi = 0; gl.forEach((g, i) => { if (Math.abs(g - l) < Math.abs(gl[bi] - l)) bi = i }); return bi }
+    // the cel painter's greys are chosen for the film: contrast pushed apart so things separate on the print
+    const idxOf = (c) => { const l = K.clamp((K.lum(c) - 0.5) * 1.4 + 0.55); let bi = 0; gl.forEach((g, i) => { if (Math.abs(g - l) < Math.abs(gl[bi] - l)) bi = i }); return bi }
     // each thing gets one flat grey; a thing never takes the same grey as what it stands in front of
     const greyIdx = new Map()
     for (const r of S.regions) {
@@ -47,7 +48,7 @@ export default {
       greyIdx.set(r, k)
     }
     const greyOf = (r) => greys[greyIdx.get(r)]
-    const lw = (r) => (r.role === 'detail' ? 2.8 : big(r) ? 3 : 3.4) * u * o.line
+    const lw = (r) => (r.role === 'detail' ? 3.2 : big(r) ? 3.4 : 3.9) * u * o.line
     const cut = (it) => S.occluders(it, { light: false })
     const shineOf = (r) => { const b = r.bbox, m = Math.min(b.w, b.h); return K.blob(b.cx + L[0] * b.w * 0.27, b.cy + L[1] * b.h * 0.3, m * 0.085, { sx: 1.6, sy: 0.7, rot: Math.atan2(L[1], L[0]) + Math.PI / 2, seed: r.i, wob: 0.05 }) }
     const isShiny = (r) => !big(r) && r.form > 0.75 && r.area > 3000 * u * u && r.role !== 'glow'
@@ -72,8 +73,8 @@ export default {
       for (const r of S.regions.filter((q) => q.role === 'glow')) paintRegion(X, r, blend)
       for (const r of S.regions.filter((q) => q.role === 'shadow' || q.role === 'highlight')) paintRegion(X, r, r.role === 'shadow' ? 'multiply' : undefined)
       for (const r of character.filter(isShiny)) shine(X, r)
-      for (const l of S.lines.filter((q) => lightLine(K, q))) paintCore(X, l)
     }
+    const coresAll = (X) => { for (const l of S.lines.filter((q) => lightLine(K, q))) paintCore(X, l) }
     const inkAll = (X) => {
       for (const r of character) if (r.contour) inkRegion(X, r, r.i * 13 + 1)
       for (const r of set) if (r.contour) inkRegion(X, r, r.i * 13 + 1)
@@ -98,11 +99,11 @@ export default {
     D.pass('ink on the cel', 2.2, () => inkAll(D))
 
     // ------------------------------------------------------------ 3. paint on the back of the cel: under the ink (darken), character first
-    D.pass('paint on the back of the cel', 1.8, () => paintAll(D, 'darken'))
+    D.pass('paint on the back of the cel', 1.8, () => { paintAll(D, 'darken'); coresAll(D) })
 
     // ------------------------------------------------------------ 4. the print: the cel photographed, pulled down through the gate
     const P = new Draw(D.env); P.frame = D.frame
-    P.pass('print', 1, () => { P.sheet(o.paper); paintAll(P); inkAll(P) })
+    P.pass('print', 1, () => { P.sheet(o.paper); paintAll(P); inkAll(P); coresAll(P) })
     D.pass('the print pulled through the gate', 0.7, () => D.mark(3, (ctx, k) => {
       const y = (H + 30) * (k >= 1 ? 1 : k) - 15
       ctx.save(); ctx.beginPath(); ctx.rect(-4, -4, W + 8, y + 4); ctx.clip()
@@ -143,7 +144,7 @@ export default {
         if (r() < 0.55) { const x = r() * W, y = r() * H, a = r() * 6; ctx.strokeStyle = 'rgba(20,14,8,0.55)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + Math.cos(a) * 30 * u, y + Math.sin(a) * 30 * u + 12 * u, x + Math.cos(a + 1) * 44 * u, y + Math.sin(a + 1) * 40 * u); ctx.stroke() }
         const sx = W * (0.62 + r() * 0.3); ctx.strokeStyle = 'rgba(255,250,236,0.35)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx + (r() - 0.5) * 6, H); ctx.stroke()
         if (o.gate) {
-          const vg = ctx.createRadialGradient(W * 0.48, H * 0.44, Math.min(W, H) * 0.2, W / 2, H / 2, Math.max(W, H) * 0.72); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(22,14,6,0.55)'); ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H)
+          const vg = ctx.createRadialGradient(W * 0.48, H * 0.44, Math.min(W, H) * 0.2, W / 2, H / 2, Math.max(W, H) * 0.72); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(22,14,6,0.42)'); ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H)
           const m = 16 * u, R = 46 * u
           ctx.fillStyle = '#0b0907'; ctx.beginPath(); ctx.rect(-4, -4, W + 8, H + 8)
           ctx.moveTo(m + R, m); ctx.arcTo(m, m, m, m + R, R); ctx.arcTo(m, H - m, m + R, H - m, R); ctx.arcTo(W - m, H - m, W - m, H - m - R, R); ctx.arcTo(W - m, m, W - m - R, m, R); ctx.closePath(); ctx.fill('evenodd') // the projector's gate

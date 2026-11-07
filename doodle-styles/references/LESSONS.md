@@ -39,3 +39,9 @@ Problem → cause → fix. Engine first, then the hands.
   paper tooth multiplied on top makes them read as lifted.
 - **Engraving loses light lines on light ground** (the window bars over the glow) → one line's width is the only tone it
   has → accepted: pick another hand when thin light lines carry the picture.
+- **The table edge showed through the persimmons in tone-driven hands** → the value plate stroked every line over every
+  region → each line on the plate is cut by its occluders, like line work on paper.
+- **Riso colours came out as nearest-ink guesses** → nearest colour ignores overprints → fit ink densities per colour
+  (paper × Π(1 − d·(1 − ink)), a few Gauss–Newton steps, cached): orange is yellow under pink, near-black is all three.
+- **A wash touching the frame edge left a bare strip** → `wash` shrinks toward its centre → washes that meet the frame
+  use `shrink: 1` and no offset.

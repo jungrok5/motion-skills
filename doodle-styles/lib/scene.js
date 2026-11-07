@@ -111,9 +111,18 @@ function buildPlate(S, env) {
     d[k * 4] = c[0]; d[k * 4 + 1] = c[1]; d[k * 4 + 2] = c[2]; d[k * 4 + 3] = 255
   }
   x2.putImageData(img, 0, 0)
-  // lines on the plate, so line work shows in the tone too
-  x2.setTransform(res, 0, 0, res, 0, 0); x2.lineCap = 'round'; x2.lineJoin = 'round'
-  for (const l of S.lines) { x2.strokeStyle = l.color; x2.lineWidth = l.w; path(x2, l.pts, l.closed); x2.stroke() }
+  // lines on the plate, so line work shows in the tone too — each cut by what is painted in front of it
+  if (S.lines.length) {
+    const lc = canvas(w, h), lx = lc.getContext('2d')
+    for (const l of S.lines) {
+      lx.setTransform(1, 0, 0, 1, 0, 0); lx.globalCompositeOperation = 'source-over'; lx.clearRect(0, 0, w, h)
+      lx.setTransform(res, 0, 0, res, 0, 0); lx.lineCap = 'round'; lx.lineJoin = 'round'
+      lx.strokeStyle = l.color; lx.lineWidth = l.w; path(lx, l.pts, l.closed); lx.stroke()
+      lx.globalCompositeOperation = 'destination-out'; lx.fillStyle = '#000'
+      for (const q of S.occluders(l, { light: false })) { path(lx, q); lx.fill() }
+      x2.drawImage(lc, 0, 0)
+    }
+  }
   const px = x2.getImageData(0, 0, w, h).data
   const at = (X, Y) => { const x = clamp(Math.floor(X * res), 0, w - 1), y = clamp(Math.floor(Y * res), 0, h - 1), k = (y * w + x) * 4; return [px[k], px[k + 1], px[k + 2]] }
   const tone = (X, Y) => { const [r, g, b] = at(X, Y); return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 }
