@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>고요의 바다 기지 · swarm-world</title>
+<meta name="description" content="열두 명의 커서 크루가 달 탐사 로버 바로 앞에서 착륙장, 태양광 밭, 채굴장, 분화구 가장자리의 기지를 지어 나갑니다.">
+<script type="importmap">{ "imports": { "sw/": "../lib/" } }</script>
+</head>
+<body>
+<!-- 고요의 바다 기지 — a topic the source does not have, designed from BRIEF.md: the Moon, a rover, a Korean crew. -->
+<script type="module">
+import { World, THREE, kit, cl, sm, lerp, noise, fbm, h2 } from 'sw/world.js';
+const { part, merge, Box, Cyl, Cone, Ico, Dome, Ball, Ring, Gable, jitter, props, C } = kit;
+
+const CORAL = '#ff5b3a', CREAM = '#fff6e8', CYAN = '#4ee9f5', GOLD = '#ffc94a', LILAC = '#b49bff';
+const W = new World({
+  title: '고요의 바다 기지', build: 18, seed: 1969,
+  alt: '달 탐사 로버가 착륙장에서 출발해 태양광 밭과 채굴장을 지나 분화구 가장자리의 기지로 가는 동안, 커서 크루가 로버 바로 앞에서 길과 시설을 짓습니다. 마지막에 카메라가 떠올라 지평선 위의 지구를 봅니다.',
+  againLabel: '다시 짓기',
+  ui: { theme: 'dark', objects: '{n}개', agents: '{n}명', builtIn: '{t} 만에 완성' },
+  crew: {
+    운전사: CORAL, 포장공: CREAM, 측량사: CYAN, 지형사: GOLD, 조립공: CORAL, 용접공: CYAN,
+    전기공: GOLD, 설치공: CREAM, 굴착공: LILAC, 정원사: CYAN, 통신사: LILAC, 조명공: GOLD,
+  },
+});
+const { rnd, rr, pick } = W;
+
+// ── the line: landing field → solar farm → mining ground → up the ramp onto the crater rim → the hub ──
+W.line([
+  [-6, 0.8, 166], [0, 0.8, 136], [8, 0.8, 106], [4, 0.9, 76], [-6, 0.9, 46], [-8, 1.0, 16], [0, 1.1, -14],
+  [10, 1.4, -44], [9, 2.8, -70], [0, 5.6, -90], [-8, 7.6, -108], [-5, 8.0, -126], [2, 8.0, -138],
+]);
+const LEN = W.LEN;
+
+// ── the land: mare plain, craters, a raised rim for the base, highlands on both sides ──
+const BASE = W.at(LEN - 26).p;
+const CRATERS = [];
+for (let tries = 0; CRATERS.length < 26 && tries < 2000; tries++) {
+  const x = rr(-140, 140), z = rr(-210, 190), r = rr(4, 16) * (rnd() < 0.15 ? 1.8 : 1), nr = W.nearest(x, z);
+  if (nr.d < r * 1.5 + 8 || Math.hypot(x - BASE[0], z - BASE[2]) < r + 50) continue;
+  if (CRATERS.some(([a, b, c]) => Math.hypot(x - a, z - b) < (r + c) * 1.1)) continue;
+  CRATERS.push([x, z, r, r * rr(0.22, 0.32)]);
+}
+const crater = (x, z) => { let best = null; for (const c of CRATERS) { const d = Math.hypot(x - c[0], z - c[1]) / c[2]; if (d < 1.7 && (!best || d < best.d)) best = { d, c }; } return best; };
+function land(x, z) {
+  const n1 = fbm(x * 0.02 + 4, z * 0.02 - 2), n2 = noise(x * 0.09, z * 0.09);
+  let h = 0.6 + (n1 - 0.5) * 3.2 + (n2 - 0.5) * 0.6;
+  h += sm(62, 150, Math.abs(x - 0.15 * z)) * 22 * (0.55 + fbm(x * 0.012 + 3, z * 0.012));   // highlands on both sides
+  h += 7.2 * sm(-66, -98, z) * (1 - sm(70, 110, Math.abs(x)));                                // the crater rim the base sits on
+  h += sm(-190, -230, z) * 30 * (0.6 + n1);                                                   // far mountains behind the base
+  for (const [cx, cz, r, dp] of CRATERS) {
+    const d = Math.hypot(x - cx, z - cz) / r;
+    if (d < 1.7) h += (d < 1 ? -dp * (1 - d * d) : 0) + dp * 0.38 * Math.exp(-(((d - 1) / 0.24) ** 2));
+  }
+  return h;
+}
+const SOLAR = [[96, -1, 19], [120, 1, 19]].map(([s, side, off]) => { const a = W.at(s); return { c: [a.p[0] + a.r[0] * side * off, a.p[2] + a.r[2] * side * off], u: [a.t[0], a.t[2]], len: 30, wid: 20, s }; });
+const inSolar = (x, z) => SOLAR.some((f) => { const dx = x - f.c[0], dz = z - f.c[1]; return Math.abs(dx * f.u[0] + dz * f.u[1]) < f.len / 2 + 1 && Math.abs(-dx * f.u[1] + dz * f.u[0]) < f.wid / 2 + 1; });
+const COL = Object.fromEntries(Object.entries({ mare: '#7b7872', mare2: '#706d68', ejecta: '#aaa69d', floor: '#5c5955', slope: '#67645f', high: '#a39f96', bed: '#8f8b83', pad: '#86837c' }).map(([k, v]) => [k, C(v)]));
+W.land({
+  height: land, bounds: [-160, 160, -240, 210], res: [120, 168], lead: 80,
+  color(x, y, z, ny, nr, out) {
+    const n = fbm(x * 0.07, z * 0.07);
+    if (nr.d < 2.6) return out.copy(COL.bed).multiplyScalar(0.94 + n * 0.1);
+    if (inSolar(x, z)) return out.copy(COL.pad).multiplyScalar(0.95 + n * 0.08);
+    const cr = crater(x, z);
+    if (cr && cr.d < 0.8) return out.copy(COL.floor).multiplyScalar(0.92 + n * 0.12);
+    if (cr && cr.d < 1.45) return out.copy(COL.ejecta).lerp(COL.mare, cl((cr.d - 0.95) / 0.5)).multiplyScalar(0.95 + n * 0.08);
+    if (ny < 0.8) return out.copy(COL.slope);
+    if (y > 9) return out.copy(COL.high).lerp(COL.mare, cl((16 - y) / 7) * 0.4).multiplyScalar(0.94 + n * 0.1);
+    return out.copy(n > 0.5 ? COL.mare : COL.mare2).multiplyScalar(0.94 + n * 0.12);
+  },
+});
+const height = (x, z, nr) => W.ground(x, z, nr);
+
+// the road: hexagonal sintered-regolith tiles, laid just ahead of the wheels
+W.track({
+  by: '포장공', lead: 22, spacing: 1.9, drop: 0.08, rail: false,
+  sleeper: merge([part(Cyl(1.25, 1.25, 0.12, 6), '#c9c5bb', { ry: Math.PI / 6 }), part(Cyl(1.05, 1.05, 0.14, 6), '#b6b2a8', { ry: Math.PI / 6 })]),
+  label: '도로', doing: '도로 포장 중', did: '도로 타일 {n}장 깔음',
+});
+
+// ── the kinds (label, [half width, height, half depth]) and what the crew says ──
+const FOIL = '#d9a441', WHITE = '#f1f0ec', GREY = '#9ea3ab', DARK = '#2b2f36';
+W.kind('beacon', { label: '표지등', size: [0.3, 1.9, 0.3], say: { doing: '표지등 세우는 중 {k}/{n}', did: '표지등 {n}개 세움 {where}' },
+  geo: merge([part(Cyl(0.07, 0.09, 1.6, 6), DARK), part(Box(0.22, 0.28, 0.22), '#ff8a3c', { y: 1.6 }), part(Cyl(0.18, 0.22, 0.12, 6), DARK)]) });
+W.kind('pad', { label: '착륙 패드', size: [5, 0.6, 5], shadow: false, say: { doing: '착륙 패드 까는 중', did: '착륙 패드 완성 {where}' },
+  geo: merge([part(Cyl(5, 5.2, 0.3, 18), '#b9b5ab'), part(Ring(3.6, 0.22, 24, 4), '#ffc94a', { rx: Math.PI / 2, y: 0.32 }), part(Box(0.4, 0.04, 3.2), '#ffc94a', { y: 0.32 }), part(Box(3.2, 0.04, 0.4), '#ffc94a', { y: 0.32 })]) });
+W.kind('lander', { label: '착륙선', size: [3, 6.2, 3], say: { doing: '착륙선 조립 중', did: '착륙선 조립 완료' },
+  geo: merge([part(Cyl(1.7, 1.7, 1.5, 8), FOIL, { y: 1.3 }), part(Box(2.4, 1.6, 2.2), GREY, { y: 2.8 }), part(Box(0.6, 0.5, 0.06), '#1d2633', { y: 3.5, z: 1.12 }),
+    part(Cone(1.3, 1.0, 8), WHITE, { y: 4.4 }), part(Cyl(0.04, 0.04, 1.2, 4), DARK, { y: 4.4, x: 0.8 }), part(Cone(0.45, 0.2, 10), WHITE, { y: 5.6, x: 0.8, rx: Math.PI }),
+    ...[0, 1, 2, 3].flatMap((k) => { const a = k * Math.PI / 2 + Math.PI / 4; return [part(Cyl(0.08, 0.08, 2.4, 5), GREY, { x: Math.sin(a) * 1.9, z: Math.cos(a) * 1.9, y: 0.2, rx: Math.cos(a) * 0.5, rz: -Math.sin(a) * 0.5 }), part(Cyl(0.4, 0.45, 0.12, 8), GREY, { x: Math.sin(a) * 2.6, z: Math.cos(a) * 2.6 })]; })]) });
+W.kind('tank', { label: '연료 탱크', size: [1.3, 2.9, 1.3], say: { doing: '연료 탱크 놓는 중 {k}/{n}', did: '연료 탱크 {n}기 설치 {where}' },
+  geo: merge([part(Ball(1.15, 14, 10), WHITE, { y: 1.75 }), part(Ring(1.16, 0.06, 20, 4), FOIL, { rx: Math.PI / 2, y: 1.75 }), ...[0, 1, 2].map((k) => part(Cyl(0.07, 0.07, 1.0, 5), GREY, { x: Math.sin(k * 2.1) * 0.8, z: Math.cos(k * 2.1) * 0.8 }))]) });
+W.kind('crate', { label: '화물', size: [0.8, 1.2, 0.8], say: { doing: '화물 내리는 중 {k}/{n}', did: '화물 {n}개 내림 {where}' },
+  geo: merge([part(Box(1.4, 1.1, 1.4), '#e8e4da'), part(Box(1.44, 0.16, 1.44), CORAL, { y: 0.8 }), part(Box(0.5, 0.5, 0.02), DARK, { y: 0.35, z: 0.71 })]) });
+W.kind('panel', { label: '태양광 패널', size: [1.2, 1.7, 0.8], say: { sweep: '태양광 패널 까는 중, {row}/{rows}열', did: '태양광 패널 {n}장 설치' },
+  geo: merge([part(Cyl(0.06, 0.06, 1.0, 5), GREY), part(Box(2.2, 0.06, 1.3), '#cfd3da', { y: 1.05, rx: -0.55 }), part(Box(2.05, 0.08, 1.15), '#1f3a6b', { y: 1.08, rx: -0.55 }),
+    part(Box(0.04, 0.09, 1.15), '#9fb4d8', { y: 1.09, rx: -0.55 })]) });
+W.kind('battery', { label: '배터리', size: [1, 1.5, 0.7], say: { doing: '배터리 놓는 중 {k}/{n}', did: '배터리 {n}기 연결 {where}' },
+  geo: merge([part(Box(1.8, 1.3, 1.2), '#dcdad3'), ...[-0.5, 0, 0.5].map((x) => part(Box(0.3, 0.1, 1.22), '#3a8f5e', { x, y: 1.0 })), part(Box(1.84, 0.1, 1.24), DARK, { y: 0.1 })]) });
+W.kind('pole', { label: '송전선', size: [0.3, 3.2, 0.3], say: { doing: '송전선 잇는 중 {k}/{n}', did: '송전선 {n}칸 연결 {where}' },
+  geo: merge([part(Cyl(0.08, 0.1, 3.0, 6), GREY), part(Box(1.1, 0.08, 0.08), DARK, { y: 2.8 }), part(Box(0.12, 0.16, 0.12), FOIL, { y: 2.88, x: 0.48 }), part(Box(0.12, 0.16, 0.12), FOIL, { y: 2.88, x: -0.48 })]) });
+W.kind('rig', { label: '채굴 장비', size: [2.6, 9, 2.6], say: { doing: '채굴 장비 세우는 중', did: '채굴 장비 가동 {where}' },
+  geo: merge([part(Box(4.2, 1.2, 3.2), '#e6b23a'), part(Box(1.6, 1.4, 1.6), DARK, { y: 1.2, x: -1.0 }), part(Box(0.12, 0.6, 1.0), '#1d2633', { y: 1.6, x: -1.82 }),
+    ...[[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]].map(([x, z]) => part(Cyl(0.08, 0.08, 7.2, 4), GREY, { x: x + 1.0, z, y: 1.2 })), ...[2.8, 4.8, 6.8].map((y) => part(Box(1.16, 0.08, 1.16), GREY, { x: 1.0, y })),
+    part(Cyl(0.14, 0.14, 7.6, 6), '#c9ccd2', { x: 1.0, y: 0.4 }), part(Cone(0.5, 0.6, 6), CORAL, { x: 1.0, y: 8.3 })]) });
+W.kind('ore', { label: '광석 더미', size: [1.6, 1.6, 1.6], say: { doing: '광석 쌓는 중 {k}/{n}', did: '광석 더미 {n}개 {where}' }, geo: merge([part(jitter(Cone(1.7, 1.5, 7), 0.3, 5), '#8a7f72'), part(jitter(Ico(0.55, 0), 0.3, 2), '#a58f6f', { x: 0.9, y: 0.25 })]) });
+W.kind('boulder', { label: '바위', size: [1, 1.2, 1], say: { doing: '바위 옮기는 중 {k}/{n}', did: '바위 {n}개 정리 {where}' }, geo: props.rock('#8c8983', 7) });
+W.kind('dome', { label: '거주 돔', size: [4.6, 5, 4.6], say: { doing: '거주 돔 올리는 중', did: '거주 돔 완성 {where}' },
+  geo: merge([part(Cyl(4.6, 4.7, 0.8, 20), '#c9c6be'), part(Dome(4.4, 20, 8), WHITE, { y: 0.8, sy: 0.92 }), part(Ring(4.42, 0.1, 24, 4), FOIL, { rx: Math.PI / 2, y: 0.9 }),
+    part(Box(1.6, 1.8, 2.4), '#e2e0da', { z: 4.6 }), part(Box(0.9, 1.3, 0.06), '#1d2633', { z: 5.82, y: 0.1 }), ...[0.6, 1.9].map((y) => part(Ring(4.0 - y * 0.6, 0.08, 24, 3), '#d2d0ca', { rx: Math.PI / 2, y: 0.8 + y * 1.2 }))]) });
+W.kind('hub', { label: '중앙 돔', size: [6.4, 7.2, 6.4], say: { doing: '중앙 돔 올리는 중', did: '중앙 돔 완성' },
+  geo: merge([part(Cyl(6.4, 6.5, 1.0, 24), '#c9c6be'), part(Dome(6.2, 24, 10), WHITE, { y: 1.0 }), part(Ring(6.22, 0.12, 28, 4), FOIL, { rx: Math.PI / 2, y: 1.1 }),
+    part(Cyl(1.2, 1.2, 1.0, 12), '#d8d6d0', { y: 6.9 }), part(Cyl(0.08, 0.08, 2.4, 4), DARK, { y: 7.9 }), part(Box(1.4, 1.6, 0.06), '#1d2633', { z: 6.42, y: 0.2 })]) });
+W.kind('module', { label: '거주 모듈', size: [1.7, 3.5, 3.6], say: { doing: '모듈 잇는 중 {k}/{n}', did: '거주 모듈 {n}동 연결 {where}' },
+  geo: merge([part(Cyl(1.6, 1.6, 7, 14), '#eeeae2', { rx: Math.PI / 2, y: 1.7, z: -3.5 }), ...[-2.5, 0, 2.5].map((z) => part(Cyl(1.66, 1.66, 0.25, 14), FOIL, { rx: Math.PI / 2, y: 1.7, z: z - 0.12 })),
+    part(Box(3.2, 0.3, 6.4), GREY), ...[-2.2, 2.2].map((z) => part(Box(0.5, 0.3, 0.06), '#1d2633', { y: 2.2, z, x: 1.55, ry: Math.PI / 2 }))]) });
+W.kind('greenhouse', { label: '온실', size: [3.4, 4.2, 3.4], say: { doing: '온실 돔 올리는 중', did: '온실 완성 {where}' },
+  geo: merge([part(Cyl(3.4, 3.5, 0.6, 16), '#c9c6be'), part(Dome(3.2, 16, 6), '#8fe0a6', { y: 0.6 }), ...[0, 1, 2, 3].map((k) => part(Ring(3.21, 0.06, 20, 3), '#e6e3dc', { y: 0.6, ry: k * Math.PI / 4 })),
+    ...[[-1, 0.4], [1.1, -0.5], [0, 1.4], [0.2, -1.6]].map(([x, z], k) => part(jitter(Ico(0.7, 1), 0.2, k), '#3f9b52', { x, z, y: 1.1 }))]) });
+W.kind('dish', { label: '안테나', size: [2.8, 6.4, 2.8], say: { doing: '안테나 접시 세우는 중', did: '안테나 정렬 완료' },
+  geo: merge([part(Box(1.6, 0.5, 1.6), GREY), part(Cyl(0.25, 0.3, 3.4, 8), '#c9ccd2', { y: 0.5 }), part(Cone(2.6, 1.0, 16), WHITE, { y: 4.2, rx: Math.PI - 0.7, z: 0.3 }), part(Cyl(0.05, 0.05, 1.8, 4), DARK, { y: 4.3, z: 0.6, rx: 0.7 }), part(Ball(0.18, 8, 6), FOIL, { y: 5.0, z: 1.2 })]) });
+W.kind('mast', { label: '통신탑', size: [0.9, 14, 0.9], say: { doing: '통신탑 세우는 중', did: '통신탑 완성 {where}' },
+  geo: merge([...[[-0.45, -0.45], [0.45, -0.45], [-0.45, 0.45], [0.45, 0.45]].map(([x, z]) => part(Cyl(0.06, 0.08, 12.5, 4), '#c9ccd2', { x: x * 0.7, z: z * 0.7 })),
+    ...[2, 4.5, 7, 9.5, 12].map((y) => part(Box(0.8, 0.06, 0.8), GREY, { y })), part(Cyl(0.04, 0.04, 1.6, 4), DARK, { y: 12.5 }), part(Box(0.25, 0.25, 0.25), CORAL, { y: 14 })]) });
+W.kind('lamp', { label: '조명', size: [0.3, 3, 0.3], say: { doing: '조명 켜는 중 {k}/{n}', did: '조명 {n}개 켬 {where}' }, geo: props.lamp('#3a3f47', '#fff0c8') });
+
+// ── what stands where ──
+// beacons along the road, alternating sides
+for (let s = 20, k = 0; s < LEN - 4; s += 7.5, k++) { const side = k % 2 ? 1 : -1, [x, z] = W.beside(s, side, 2.9); W.add('beacon', { x, z, s, b: W.buildAt(s, 22) + 0.004 }); }
+// the landing field
+for (const [s, side, off] of [[28, 1, 16], [44, -1, 20], [62, 1, 24]]) { const [x, z] = W.beside(s, side, off); W.add('pad', { x, y: W.ground(x, z) - 0.15, z, lead: 44 }); W.claim(x, z, 6); }
+{ const [x, z] = W.beside(44, -1, 20); W.add('lander', { x, y: W.ground(x, z) + 0.15, z, ry: 0.4, lead: 44 }); W.landmark(x, z, ['착륙장 옆', '착륙선 옆'], 30); }
+for (let k = 0; k < 6; k++) { const [x, z] = W.beside(52 + k * 3.2, 1, 10 + (k % 2) * 3); if (W.free(x, z, 1.4)) { W.add('tank', { x, z, lead: 38 }); W.claim(x, z, 1.4); } }
+for (let k = 0; k < 10; k++) { const [x, z] = W.beside(rr(12, 70), rnd() < 0.5 ? -1 : 1, rr(6, 14)); if (W.free(x, z, 1.1)) { W.add('crate', { x, z, ry: rr(0, 6.28), lead: 36 }); W.claim(x, z, 1.1); } }
+// the solar farm: panels in rows facing the sun, batteries at the corners, poles carrying the cable to the base
+for (const f of SOLAR) {
+  for (let v = -f.wid / 2 + 1.2; v < f.wid / 2 - 0.6; v += 2.5) for (let u = -f.len / 2 + 1.3; u < f.len / 2 - 0.6; u += 2.6) {
+    const x = f.c[0] + f.u[0] * u - f.u[1] * v, z = f.c[1] + f.u[1] * u + f.u[0] * v;
+    W.add('panel', { x, z, ry: 2.2, field: f });
+  }
+  W.claim(f.c[0], f.c[1], Math.min(f.len, f.wid) / 2);
+  for (const k of [-1, 1]) { const x = f.c[0] + f.u[0] * k * (f.len / 2 + 2.2), z = f.c[1] + f.u[1] * k * (f.len / 2 + 2.2); W.add('battery', { x, z, ry: Math.atan2(f.u[0], f.u[1]), lead: 36 }); }
+  W.landmark(f.c[0], f.c[1], ['태양광 밭에서', '태양광 밭 옆'], 30);
+}
+for (let s = 140; s < LEN - 30; s += 6.5) { const [x, z] = W.beside(s, -1, 6.5); W.add('pole', { x, z, ry: W.heading(s) + Math.PI / 2, s, b: W.buildAt(s, 30) }); }
+// the mining ground
+for (const [s, side, off] of [[164, 1, 22], [186, -1, 26], [204, 1, 18]]) {
+  const [x, z] = W.beside(s, side, off); W.add('rig', { x, z, ry: W.heading(s) + (side > 0 ? 0 : Math.PI), lead: 46 }); W.claim(x, z, 4);
+  W.landmark(x, z, ['채굴장에서', '채굴 장비 옆'], 30);
+  for (let k = 0; k < 3; k++) { const a = rr(0, 6.28), x2 = x + Math.cos(a) * rr(5, 9), z2 = z + Math.sin(a) * rr(5, 9); if (W.free(x2, z2, 1.8)) { W.add('ore', { x: x2, z: z2, ry: rr(0, 6.28), sx: rr(0.8, 1.2), lead: 40 }); W.claim(x2, z2, 1.8); } }
+}
+for (let n = 0, tries = 0; n < 60 && tries < 3000; tries++) {
+  const s = rr(10, LEN - 30), side = rnd() < 0.5 ? -1 : 1, [x, z] = W.beside(s, side, rr(5, 36)), nr = W.nearest(x, z);
+  if (nr.d < 4.5 || inSolar(x, z) || !W.free(x, z, 1.2)) continue;
+  W.add('boulder', { x, y: height(x, z, nr) - 0.25, z, ry: rr(0, 6.28), sx: rr(0.5, 1.5), sy: rr(0.4, 1.0), sz: rr(0.5, 1.3), lead: 32 }); W.claim(x, z, 1.2); n++;
+}
+// the base on the rim: the hub by the last stop, domes round it, modules between, the greenhouse, the dish and the mast
+const stop = W.at(LEN - 8);
+{
+  const [hx, hz] = W.beside(LEN - 8, 1, 10.5);
+  W.add('hub', { x: hx, z: hz, ry: Math.atan2(-stop.r[0], -stop.r[2]), s: LEN - 8, b: W.buildAt(LEN - 8, 30) }); W.claim(hx, hz, 7);
+  W.landmark(hx, hz, ['기지에서', '중앙 돔 옆'], 45);
+  const spots = [[LEN - 30, 1, 14, 'dome'], [LEN - 44, -1, 15, 'dome'], [LEN - 22, -1, 13, 'greenhouse'], [LEN - 56, 1, 17, 'dome'], [LEN - 10, -1, 12, 'dish'], [LEN - 40, 1, 26, 'mast']];
+  for (const [s, side, off, k] of spots) { const [x, z] = W.beside(s, side, off); W.add(k, { x, z, ry: Math.atan2(-W.at(s).r[0] * side, -W.at(s).r[2] * side), s, lead: 34 }); W.claim(x, z, k === 'mast' ? 1.5 : 5); }
+  for (const [s, side, off] of [[LEN - 19, 1, 14], [LEN - 37, 1, 15], [LEN - 33, -1, 15], [LEN - 50, 1, 16]]) { const [x, z] = W.beside(s, side, off); if (W.free(x, z, 2.5)) { W.add('module', { x, z, ry: W.heading(s), s, lead: 30 }); W.claim(x, z, 3.6); } }
+  for (let s = LEN - 64; s < LEN - 2; s += 9) for (const side of [-1, 1]) { const [x, z] = W.beside(s, side, 5.2); W.add('lamp', { x, z, s, b: W.buildAt(s, 22) + 0.006 }); }
+}
+W.places((x, y) => (y > 5 ? ['분화구 가장자리에서', '기지 아래에서'] : ['평원에서', '고요의 바다에서']));
+
+// ── the crew's jobs ──
+const T = (k) => W.list(k);
+for (const grp of W.chunk(W.lined(T('beacon')), 5)) W.hop(grp, ['조명공', '설치공']);
+for (const it of T('pad')) W.raise(it, ['조립공', '설치공']);
+for (const it of T('lander')) W.raise(it, ['조립공', '용접공']);
+for (const grp of W.chunk(W.lined(T('tank')), 3)) W.hop(grp, ['설치공', '용접공']);
+for (const grp of W.chunk(W.lined(T('crate')), 4)) W.hop(grp, ['설치공', '굴착공', '조명공']);
+for (const f of SOLAR) for (const half of [0, 1]) {
+  const items = T('panel').filter((it) => it.field === f && ((it.x - f.c[0]) * f.u[0] + (it.z - f.c[1]) * f.u[1] >= 0) === (half === 1));
+  W.sweep(items, ['전기공', '설치공'], { field: f, lanes: 4, u0: half ? 0 : -f.len / 2, u1: half ? f.len / 2 : 0 });
+}
+for (const grp of W.chunk(W.lined(T('battery')), 2)) W.hop(grp, ['전기공', '설치공']);
+for (const run of W.chunk(T('pole').sort((a, b) => a.s - b.s), 6)) W.lay(run, ['전기공', '용접공', '조명공']);
+for (const it of T('rig')) W.raise(it, ['용접공', '조립공']);
+for (const grp of W.chunk(W.lined(T('ore')), 3)) W.hop(grp, ['굴착공', '설치공']);
+for (const grp of W.chunk(W.lined(T('boulder').filter((it) => it.d < 30)), 4)) W.hop(grp, ['굴착공', '정원사', '설치공']);
+for (const it of [...T('dome'), ...T('hub')]) W.raise(it, ['조립공', '용접공', '설치공']);
+for (const grp of W.chunk(W.lined(T('module')), 2)) W.hop(grp, ['용접공', '조립공', '설치공']);
+for (const it of T('greenhouse')) W.raise(it, ['정원사', '조립공']);
+for (const it of [...T('dish'), ...T('mast')]) W.raise(it, ['통신사', '용접공']);
+for (const grp of W.chunk(W.lined(T('lamp')), 4)) W.hop(grp, ['조명공', '전기공', '통신사']);
+
+// fronts: two cursors shape the ground far ahead
+const groundDoing = ({ p }) => { const q = W.groundAt(W.frontS(p, 80), 0), cr = crater(q[0], q[2]); return q[1] > 5 ? '가장자리 올리는 중' : cr && cr.d < 1.4 ? '분화구 파는 중' : '평원 다지는 중'; };
+W.terrainFront({ by: '측량사', phase: 0, lead: 80, doing: groundDoing, did: '지형 완성', label: '지형' });
+W.terrainFront({ by: '지형사', phase: 0.5, lead: 80, doing: groundDoing, did: '분화구 정리 완료', label: '지형' });
+
+// ── the rover: six gold wheels, a white cab, a mast and a dish; a cargo trailer behind ──
+const wheels = (zs, r) => [-1.15, 1.15].flatMap((x) => zs.map((z) => [Cyl(r, r, 0.42, 12), FOIL, { x, y: r, z, rz: Math.PI / 2 }]));
+const rover = [
+  [Box(2.0, 0.4, 4.8), DARK, { y: 0.55 }], ...wheels([-1.6, 0, 1.6], 0.48),
+  [Box(2.1, 1.5, 3.0), WHITE, { y: 0.95, z: -0.4 }], [Box(2.12, 0.7, 1.2), WHITE, { y: 0.95, z: 1.6 }], [Box(2.14, 0.55, 0.9), '#1d2633', { y: 1.75, z: 0.95 }],
+  [Box(2.16, 0.14, 3.2), FOIL, { y: 1.05, z: -0.4 }], [Box(1.9, 0.12, 2.8), '#d8d6d0', { y: 2.45, z: -0.4 }],
+  [Cyl(0.04, 0.04, 1.4, 4), DARK, { y: 2.5, z: -1.3, x: 0.6 }], [Cone(0.42, 0.18, 10), WHITE, { y: 3.9, z: -1.3, x: 0.6, rx: Math.PI }], [Box(0.3, 0.2, 0.06), '#fff2b8', { y: 1.1, z: 2.22 }],
+];
+const trailer = [[Box(1.9, 0.3, 3.4), DARK, { y: 0.5 }], ...wheels([-0.8, 0.8], 0.4), [Box(1.5, 1.0, 1.4), '#e8e4da', { y: 0.8, z: -0.7 }], [Box(1.5, 0.16, 1.44), CORAL, { y: 1.5, z: -0.7 }], [Box(1.5, 0.7, 1.2), '#dcdad3', { y: 0.8, z: 0.9 }]];
+W.vehicle([rover, trailer], { by: '운전사', offsets: [0, -5.2], lift: 0.05, top: 3.6, sound: 'hum',
+  smoke: { color: '#9a968e', emissive: '#1a1a1c', y: 0.15, fwd: -7.6, rise: 0.45, size: 0.7, opacity: 0.7 },
+  say: { place: '로버 내려놓는 중', drive: '로버 운전 중', arrive: '기지 진입 중', arrived: '기지 도착' } });
+
+// the greenhouse breathes, the dish sweeps a little
+W.animate('dish', (it, i, t) => ({ ry: it.ry + Math.sin(t * 0.25) * 0.35 }));
+W.glow([...T('lamp').map((it) => [it.x, it.y + 2.48, it.z]), ...T('beacon').map((it) => [it.x, it.y + 1.75, it.z]), ...T('greenhouse').map((it) => [it.x, it.y + 2.4, it.z])],
+  { from: 0.7, color: '#ffb46a', size: [2.0, 4.5] });
+
+// ── the sky: black, stars, a hard low sun that sinks lower; the Earth on the horizon behind the line ──
+W.sky({ zen: ['#010208', '#010208'], hzn: ['#0b0d14', '#0d0d12'], sun: ['#ffffff', '#fff2e0'], glow: [0.25, 0.3], light: ['#ffffff', '#fff4e6'], lightI: [3.4, 3.6],
+  hemi: ['#8d98b8', '#8a93b0'], ground: ['#34343a', '#2c2c30'], hemiI: [0.75, 0.6], elev: [0.55, 0.2], az: [-1.1, -1.35], golden: [0.3, 1], exposure: 1.0, stars: 1 });
+W.camera({ fog: [[180, 700], [300, 1100]], reveal: { pos: [stop.p[0] + stop.t[0] * 24 + 8, stop.p[1] + 24, stop.p[2] + stop.t[2] * 24], tgt: [0, 2, -40] } });
+{
+  const g = new THREE.SphereGeometry(30, 40, 24).toNonIndexed(), pos = g.attributes.position, col = new Float32Array(pos.count * 3), c = new THREE.Color();
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i) / 30, y = pos.getY(i) / 30, z = pos.getZ(i) / 30;
+    const landN = fbm(x * 2.2 + 5, z * 2.2 + y * 1.7), cloud = noise(x * 6 + y * 3, z * 6 - y * 2);
+    c.set(landN > 0.55 ? '#5f8f4a' : '#2a64c8');
+    if (Math.abs(y) > 0.82) c.set('#f4f7fb');
+    if (cloud > 0.62 || Math.abs(Math.sin(y * 9 + x * 2)) > 0.93) c.lerp(new THREE.Color('#ffffff'), 0.85);
+    c.toArray(col, i * 3);
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeVertexNormals();
+  const earth = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true, fog: false, emissive: '#0a1428' }));
+  earth.renderOrder = -1; W.scene.add(earth);
+  const dir = new THREE.Vector3(-0.2, 0.085, 1).normalize();
+  W.onFrame((t, p, rv, w) => { earth.position.copy(w.camera.position).addScaledVector(dir, 820); earth.rotation.y = t * 0.02; });
+}
+W.text('지구');
+W.check('the rover stays on screen', (t, p, w) => { const q = w.project([...w.at(w.travS(p)).p]); return p < 0.02 || w.rv > 0.02 || (q && q.a > 0.9); });
+await W.start();
+</script>
+</body>
+</html>
