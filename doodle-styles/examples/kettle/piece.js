@@ -16,9 +16,10 @@ export default {
     out.push({ region: [[640, 470], [700, 430], [760, 455], [830, 410], [900, 445], [970, 420], [970, 580], [640, 580]], color: '#8a6f73', name: 'far roofs', depth: 1, form: 0, contour: false })
     out.push({ line: [[805, 110], [805, 580]], color: '#e9e1cf', w: 12, name: 'mullion', depth: 0.85 })
     out.push({ line: [[640, 345], [970, 345]], color: '#e9e1cf', w: 12, name: 'transom', depth: 0.85 })
-    out.push({ region: [[560, 920], [1060, 920], [1000, 760], [620, 760]].map(([x, y]) => [x, y]), color: '#f0c46e', role: 'highlight', name: 'window light on the wall', depth: 0.9 })
     out.push({ region: [[-10, 900], [1090, 900], [1090, 1360], [-10, 1360]], color: '#4f555c', role: 'ground', name: 'stove top', depth: 0.3, grain: 0 })
     out.push({ line: [[-10, 901], [1090, 901]], color: '#2f3338', w: 4, name: 'stove edge' })
+    // the window's light lands on the stove top in front of it, a skewed patch (the window's shape thrown down and left)
+    out.push({ region: K.displace([[600, 912], [1010, 912], [930, 1010], [470, 1010]], 8, 0.01, 9), color: '#8a8270', role: 'highlight', name: 'window light on the stove', depth: 0.3 })
     out.push({ region: K.ellipse(500, 1080, 300, 72), color: '#24272b', name: 'burner grate', form: 0.2, depth: 0.3 })
 
     // the kettle: a lathe profile (wide belly, sloping shoulder, lid), spout to the left, bail handle above

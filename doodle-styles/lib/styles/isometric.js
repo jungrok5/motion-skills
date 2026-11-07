@@ -172,18 +172,11 @@ export default {
         const [d, u0] = onTop(r), pts = proj(poly, d)
         D.layer({ cut: cutAfter(u0 ? u0.k : -1, K.bbox(pts)) }, () => flat(pts, K.mix('#ffffff', K.mix(r.color, '#2a2f55', 0.5), 0.35 + 0.35 * r.strength), { blend: 'multiply' }))
       }
-      // every standing slab throws its shape onto what is behind it, away from the light
-      for (const s of slabs) {
-        if (isStruct(s) || s.line || s.r.role === 'glow' || s.d0 <= 0) continue
-        const t = s.d1 - s.d0, sh = proj(K.translate(s.poly, -L[0] * t * 1.3, -L[1] * t * 1.3), s.d0)
-        const panel = [P(cx0, cy0, s.d0), P(cx1, cy0, s.d0), P(cx1, cy1, s.d0), P(cx0, cy1, s.d0)]
-        D.layer({ cut: [...s.sil, ...cutAfter(s.k, K.bbox(sh))], mask: panel }, () => flat(sh, '#b9bccf', { blend: 'multiply', alpha: 0.8 }))
-      }
       // round things keep the cube rule: the face split into three flat zones
       for (const s of slabs) {
         const r = s.r; if (isStruct(s) || s.line || r.role === 'glow' || r.form < 0.45 || r.area < 1500) continue
         const b = r.bbox, hw = b.w / 2 || 1, hh = b.h / 2 || 1, c0 = L[0] * b.cx / hw + L[1] * b.cy / hh
-        const dark = clipHalf(s.poly, -L[0] / hw, -L[1] / hh, 0.12 - c0), lit = clipHalf(s.poly, L[0] / hw, L[1] / hh, 0.42 + c0)
+        const dark = clipHalf(s.poly, -L[0] / hw, -L[1] / hh, 0.28 - c0), lit = clipHalf(s.poly, L[0] / hw, L[1] / hh, 0.62 + c0)
         const cut = cutAfter(s.k, s.sb)
         D.layer({ cut, mask: s.front }, () => {
           if (dark.length > 2) flat(proj(dark, s.d1), s.t.side)
@@ -204,9 +197,14 @@ export default {
       // light lines (steam) float in front as flat pale shapes
       for (const l of S.lines) {
         if (!K.isLight(l.color) || (l.w >= 6 && l.role !== 'steam')) continue
-        const lb = K.bbox(l.pts); let d = 0
-        for (const s of slabs) if (!s.line && boxHit(s.r.bbox, lb)) d = Math.max(d, s.d1)
-        const pts = proj(K.tube(l.pts, Math.max(2.5, l.w / 2), Math.max(1.2, l.w / 5), false), d + 8)
+        // it rises from the nearest standing thing (a spout, a cup), at that thing's depth
+        const [x0, y0] = l.pts[0]; let d = 0, best = Infinity
+        for (const s of slabs) {
+          if (s.line || isStruct(s)) continue
+          const b = s.r.bbox, dd = Math.hypot(Math.max(b.x0 - x0, 0, x0 - b.x1), Math.max(b.y0 - y0, 0, y0 - b.y1))
+          if (dd < best - 1 || (Math.abs(dd - best) <= 1 && s.d1 > d)) { best = dd; d = s.d1 }
+        }
+        const pts = proj(K.tube(l.pts, Math.max(2.5, l.w / 2), Math.max(1.2, l.w / 5), false), d)
         flat(pts, K.mix(l.color, '#ffffff', 0.3), { alpha: 0.95 })
       }
     })

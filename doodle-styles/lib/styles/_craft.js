@@ -87,13 +87,13 @@ export const FLOSS = [
   '#ececec', '#d3d3d6', '#abacae', '#8c8c8c', '#6c6c6c', '#565656', '#424242', // greys
   '#f8e4c8', '#ecc285', '#cb9051', '#b87748', '#985e33', '#7a451f', '#653919', '#4b2a15', '#361f0e', // tans and browns
   '#fff1af', '#fdd755', '#ffc840', '#f3b13f', '#ce9124', '#a8781c', // yellows, golds
-  '#f7a777', '#f7976f', '#f27842', '#eb6307', '#d15807', '#ac5414', '#8a3d12', // oranges, rust
+  '#f7a777', '#f2af68', '#f29746', '#f7976f', '#ff836f', '#f27842', '#e8762e', '#e55c1f', '#eb6307', '#d15807', '#cf7339', '#ac5414', '#8a3d12', // oranges, rust
   '#fed7cc', '#fd9c97', '#e96a67', '#e04848', '#c72b3b', '#a7132b', '#7b0f22', // corals and reds
   '#e3bccb', '#c86d8f', '#956f7c', '#814952', '#5e2b3a', // pinks and plums
   '#d6cbe4', '#a38bbf', '#785b9e', '#4e3a6e', // lavenders
   '#c0ccde', '#a2b5c6', '#748eb6', '#4667a6', '#13477d', '#0e365c', '#384c5e', // blues
   '#bdcbcb', '#98aeae', '#657f7f', '#46605e', // grey-teal
-  '#c4dece', '#7bac94', '#5b9071', '#396f52', '#20503a', // sage and jade
+  '#c4dece', '#a3b5ab', '#99c3aa', '#7bac94', '#7f978d', '#65a57d', '#5b9071', '#477759', '#396f52', '#20503a', // sage and jade
   '#ccd9b1', '#a7c08a', '#71935c', '#4f7a3b', '#406a2e', '#2a4a1f', // leaf greens
   '#e4e3a5', '#bcb34c', '#948c36', '#6f6a2c', '#4c4a22', // olives, moss
   '#d2bca6', '#b69b7e', '#9a7c5c', '#675541', '#4a3a2c', // beige browns

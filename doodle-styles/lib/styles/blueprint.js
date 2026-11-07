@@ -256,10 +256,19 @@ export default {
       if (o.balloons) {
         const seen = new Set(), parts = []
         for (const r of [...big].sort((a, b) => b.area - a.area)) { const nm = r.name.replace(/[^a-z0-9 ]/gi, '').trim(); if (!nm || seen.has(nm) || /^region\d+$/.test(nm)) continue; seen.add(nm); parts.push(r); if (parts.length >= 5) break }
+        const placed = []
         parts.forEach((r, i) => {
           const b = r.bbox, c0 = r.centre, dx = b.cx - W / 2, dy = b.cy - H / 2, dl = Math.hypot(dx, dy) || 1, d = dl < 20 ? [-0.7, -0.7] : [dx / dl, dy / dl]
           // the leader starts on the part (the topmost point of it near its centre) and runs out past its edge
-          const R = 13 * u, reach = Math.hypot(b.w, b.h) * 0.36 + 30 * u, bx = K.clamp(c0[0] + d[0] * reach, 60 * u, W - 60 * u), by = K.clamp(c0[1] + d[1] * reach, 60 * u, H - 60 * u)
+          const R = 13 * u, reach = Math.hypot(b.w, b.h) * 0.36 + 30 * u, a0 = Math.atan2(d[1], d[0])
+          // swing the balloon round until it is clear of the others, the sheet edge and the title block
+          let bx = 0, by = 0
+          for (const da of [0, 0.5, -0.5, 1, -1, 1.5, -1.5, 2.2, -2.2, Math.PI]) {
+            bx = K.clamp(c0[0] + Math.cos(a0 + da) * reach, 60 * u, W - 60 * u); by = K.clamp(c0[1] + Math.sin(a0 + da) * reach, 60 * u, H - 60 * u)
+            const inTb = tb && bx > tb.x0 - R * 2 && bx < tb.x1 + R && by > tb.y0 - R * 2 && by < tb.y1 + R
+            if (!inTb && placed.every(([px, py]) => Math.hypot(px - bx, py - by) > R * 3.2)) break
+          }
+          placed.push([bx, by])
           const anchor = S.regionAt(c0[0], c0[1]) === r ? c0 : K.scatter(r.pts, 1, r.i)[0] || c0, la = Math.atan2(anchor[1] - by, anchor[0] - bx)
           circle(bx, by, R, 1.2 * u, WH)
           lettering(String(i + 1), bx, by - 5 * u, 10 * u, WH, { align: 'center' })

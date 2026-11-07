@@ -8,7 +8,7 @@ any hand path.
 - **Idea in one sentence**: on a cold evening the kettle is about to boil, and the tea is already poured — warmth is coming.
 - **Focal subject**: the red enamel kettle, steam leaving its spout.
 - **The light**: the evening window on the RIGHT (warm sky, the only source); the kettle and mug turn toward it; shadows
-  fall left on the steel stove top. The window is a `glow`; its light lands on the wall below it as a `highlight`.
+  fall left on the steel stove top. The window is a `glow`; its light lands on the stove top in front of it as a `highlight` (not on its own wall — a window cannot light the wall it is in).
 
 ## The hand
 - **Style**: `woodblock` *(mine)* — a winter card wants a keepsake print; flat blocks carry a red kettle against a sage

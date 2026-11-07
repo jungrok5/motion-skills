@@ -32,7 +32,7 @@ export default {
     D.ground(() => D.sheet(paper))
 
     // ------------------------------------------------------------ 1. washes: a bead pulled down each shape, pooling at its foot
-    const pool = (pts, color, alpha, seed) => {
+    const pool = (pts, color, alpha) => {
       const b = K.bbox(pts)
       D.mark(0.25, (ctx, k) => {
         // the band of settled pigment sinks and deepens as the wash dries
@@ -41,7 +41,6 @@ export default {
         g.addColorStop(0, K.rgba(color, 0)); g.addColorStop(0.7, K.rgba(color, alpha * 0.45 * k)); g.addColorStop(1, K.rgba(color, Math.min(1, alpha * 1.15 * k)))
         ctx.save(); K.path(ctx, pts); ctx.clip(); ctx.fillStyle = g; ctx.fillRect(b.x0 - 4, y0, b.w + 8, y1 - y0 + 4); ctx.restore()
       })
-      void seed
     }
     const bloom = (x, y, rad, color, seed) => {
       const bl = K.displace(K.blob(x, y, rad, { n: 44, wob: 0.32, seed, sx: 1.15, sy: 0.85 }), rad * 0.22, 0.09, seed + 3, 2)
@@ -66,7 +65,7 @@ export default {
         maybeLayer(D, cut, { soften: 0.6 }, () => {
           D.wash(r.pts, col, { alpha, seed: r.i + 11, shrink: flood, edge: B ? 8 : 14, dx, dy, from: top, rimW: 2.2 })
           if (K.lum(r.color) < 0.42 && r.role !== 'shadow') D.wash(r.pts, r.color, { alpha: 0.5, seed: r.i + 17, shrink: flood, edge: B ? 8 : 12, dx, dy, from: top, rim: false })
-          if (r.role !== 'glow') pool(shape, r.role === 'shadow' ? col : K.mix(r.color, r.shade, 0.5), o.pool * (B ? 0.55 : 0.8), r.i)
+          if (r.role !== 'glow') pool(shape, r.role === 'shadow' ? col : K.mix(r.color, r.shade, 0.5), o.pool * (B ? 0.55 : 0.8))
           // a second, wetter drop charged into the damp shape on the side away from the light: form, and a backrun
           if (!B && r.form > 0.5 && r.role !== 'shadow' && r.role !== 'glow') {
             const sx = -L[0] * b.w * 0.2, sy = -L[1] * b.h * 0.2

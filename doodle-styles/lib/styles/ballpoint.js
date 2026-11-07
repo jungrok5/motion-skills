@@ -46,8 +46,12 @@ export default {
         const lv = [l1, l2, l3, l4], gaps = [gap, gap * 1.02, gap * 0.92, gap * 0.36]
         lv.forEach((th, j) => {
           const big = ri < 0 || back[ri], f = big ? 0.012 : 0.03
-          const keep = (x, y) => F.top(x, y) === ri && tone(x, y) + ragged(5 + j, x, y, j === 3 ? 0.05 : 0.14, f) < th
-          h[j].push(...hatch(box, angs[j], gaps[j], keep, { len: j === 3 ? 26 : 34 + 30 * sc, seed: 101 + ri * 13 + j, over: j === 3 ? 0.5 : 1.8, bow: j === 3 ? 0.4 : 1.1, strip: 130, st: j === 3 ? 2 : 3, jit: 0.04, alpha: (x, y, rr) => 0.66 + 0.3 * rr() }))
+          // a wall or a table gets one even, light layer everywhere, its strokes thinning where the light falls
+          // (no threshold, so no stray islands); only cast shadows and real darks build further layers on it
+          const even = big && j === 0
+          const keep = even ? (x, y) => F.top(x, y) === ri : (x, y) => F.top(x, y) === ri && tone(x, y) + ragged(5 + j, x, y, j === 3 ? 0.05 : big ? 0.06 : 0.14, f) < th
+          const alpha = even ? (x, y, rr) => { const d = K.clamp((1 - tone(x, y)) / 0.32); return rr() < 0.25 + 0.75 * d ? 0.4 + 0.5 * d * (0.7 + 0.3 * rr()) : 0 } : (x, y, rr) => 0.66 + 0.3 * rr()
+          h[j].push(...hatch(box, angs[j], gaps[j] * (even ? 1.15 : 1), keep, { len: j === 3 ? 26 : 34 + 30 * sc, seed: 101 + ri * 13 + j, over: j === 3 ? 0.5 : 1.8, bow: j === 3 ? 0.4 : 1.1, strip: 130, st: j === 3 ? 2 : 3, jit: 0.04, alpha }))
         })
       }
       // contours: every visible edge of every solid thing, a chain of firm strokes; the shade side gone over twice

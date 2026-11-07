@@ -12,6 +12,8 @@
 //   blush      the rosy accent              pastel     0..1 how far colours are softened toward the warm paper
 //   lilac      the cool of shadows          margin     the bare-paper margin the painting stops short of (fraction of the short side)
 //   vignette   the warm darkening at the corners      spatter   paint flicked off the brush (true / false)
+import { lineRuns } from './_pencil.js'
+
 export default {
   id: 'storybook', name: 'Storybook pencil + watercolour', ko: '그림책 연필 수채',
   medium: 'soft graphite and gentle pan watercolour on warm cold-press, the way a picture-book page is made',
@@ -35,6 +37,9 @@ export default {
     const m = Math.min(W, H) * o.margin
     const page = K.displace(K.densify([[m, m], [W - m, m], [W - m, H - m], [m, H - m]], 10, true), m * 0.9, 0.012, 7)
 
+    // pencil lines run a little past the paint, but not off across the bare margin
+    const pageLine = K.offset(page, m * 0.35)
+
     D.ground(() => D.sheet(paper))
 
     D.pass('construction', 0.6, () => {
@@ -47,7 +52,8 @@ export default {
         D.stroke([[b.cx - lean, b.y0 - b.h * 0.1], [b.cx + lean, b.y1 + b.h * 0.08]], { w: 1.3, color: c, alpha: 0.42, taper: 0.6, seed: r.i + 2, cost: 0.5 })
         D.stroke([[b.x0 - b.w * 0.06, b.cy - b.h * 0.12], [b.x1 + b.w * 0.06, b.cy - b.h * 0.14]], { w: 1.2, color: c, alpha: 0.38, taper: 0.6, seed: r.i + 3, cost: 0.5 })
       }
-      for (const r of S.regions) if (r.role === 'ground') D.stroke(K.segment([m * 0.6, r.bbox.y0 + 2], [W - m * 0.6, r.bbox.y0 - 1], 3, 10), { w: 1.4, color: c, alpha: 0.4, taper: 0.5, seed: r.i + 9, cost: 0.4 })
+      // the line the ground stands on, stopping where something in front of it stands
+      for (const r of S.regions) if (r.role === 'ground') for (const run of lineRuns(S, { pts: K.segment([m * 0.6, r.bbox.y0 + 2], [W - m * 0.6, r.bbox.y0 - 1], 3, 10), i: r.i })) D.stroke(run, { w: 1.4, color: c, alpha: 0.4, taper: 0.5, seed: r.i + 9 + run.length, cost: 0.4 })
     })
 
     // a contour in soft graphite, cut where something in front hides it
@@ -57,7 +63,7 @@ export default {
 
     D.pass('pencil drawing', 1.2, () => {
       for (const r of topFirst) if (r.contour) outline(r, 1.5 * sc, 0.36, 1, 1.2)
-      for (const l of dark) D.layer({ tooth: 'fine', cut: S.occluders(l, { light: false }) }, () => D.stroke(l.pts, { w: Math.max(1.2, l.w * 0.4), color: gr, alpha: 0.36, taper: 0.6, wobble: 1, seed: l.i + 3, cost: 0.6 }))
+      for (const l of dark) D.layer({ tooth: 'fine', cut: S.occluders(l, { light: false }), mask: pageLine }, () => { for (const run of lineRuns(S, l)) D.stroke(run, { w: Math.max(1.2, l.w * 0.4), color: gr, alpha: 0.36, taper: 0.6, wobble: 0.6, seed: l.i + 3 + run.length, cost: 0.6 }) })
     })
 
     D.pass('washes', 3.6, () => {
@@ -137,7 +143,7 @@ export default {
           for (const [a, b] of K.hatchLines(r.pts, -0.5, 13 * sc, { seed: r.i, jitter: 4 })) if (K.dist(a, b) > 8) D.stroke([a, b], { w: 1.5 * sc, color: gr, alpha: 0.22 + 0.15 * r.strength, taper: 0.8, wobble: 0.5, seed: r.i + a[1], cost: 0.4 })
         })
       }
-      for (const l of dark) D.layer({ tooth: 'fine', cut: S.occluders(l, { light: false }) }, () => D.stroke(l.pts, { w: Math.max(1.6, Math.min(4, l.w * 0.8)) * sc, color: gr, alpha: 0.85, taper: 0.6, wobble: 0.8, seed: l.i * 5, cost: 0.7 }))
+      for (const l of dark) D.layer({ tooth: 'fine', cut: S.occluders(l, { light: false }), mask: pageLine }, () => { for (const run of lineRuns(S, l)) D.stroke(run, { w: Math.max(1.6, Math.min(4, l.w * 0.8)) * sc, color: gr, alpha: 0.85, taper: 0.6, wobble: 0.5, seed: l.i * 5 + run.length, cost: 0.7 }) })
       // light lines: soft white gouache over the paint, a breath of pencil along one side (steam drifts and boils)
       for (const l of light) {
         const cut = S.occluders(l, { light: false }), steam = l.role === 'steam'

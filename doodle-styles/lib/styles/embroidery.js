@@ -11,7 +11,7 @@
 // for small round parts and a glint on round things. Tone is thread colour: every colour is a floss on the card.
 // FRAME: the picture is worked inside a hoop that is a little larger than the frame, so the ring and the slack cloth
 // beyond it show only in the corners and nothing of the scene is lost.
-// ORDER: outlines, fills (back to front), stem stitch, knots, then the background worked round the motif last.
+// ORDER: outlines, fills (back to front), the background worked round the motif, then stem stitch and knots on top.
 import { FLOSS } from './_craft.js'
 
 export default {
@@ -19,7 +19,7 @@ export default {
   medium: 'stranded cotton floss stitched through natural plain-weave linen in a beech hoop',
   mark: 'the stitch: satin and long-and-short across the form, split-stitch outlines, stem stitch, seed stitch, French knots',
   edge: 'the ends of the stitches: a row of pinches into the cloth; outlines are thread too, never ink',
-  order: ['split-stitch outlines', 'satin and long-and-short fills', 'stem stitch', 'french knots', 'background worked round the motif'],
+  order: ['split-stitch outlines', 'satin and long-and-short fills', 'background worked round the motif', 'stem stitch', 'french knots'],
   paper: 'oatmeal linen, plain weave you can count, drum-tight in a beech hoop; slack cloth in the corners',
   palette: 'a floss card: every colour is the nearest stranded cotton; shading is a change of thread',
   bestFor: '포근하고 정성스러운 느낌 · 식물, 꽃, 소품, 동물 · 수공예 브랜드',
@@ -34,7 +34,7 @@ export default {
     // ---------------------------------------------------------------- floss colour (nearest on the card, cached)
     const fcache = new Map()
     const floss = (rgb, x, y) => {
-      const h = (Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1, j = (h - 0.5) * 18 // a dither: neighbouring stitches pick neighbouring threads
+      const h = (Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) % 1, j = (h - 0.5) * 10 // a dither: neighbouring stitches pick neighbouring threads
       const q = rgb.map((v) => K.clamp(Math.round((v + j) / 6) * 6, 0, 255)), key = q.join(',')
       let c = fcache.get(key); if (!c) { c = K.nearest(K.hex(q), o.floss); fcache.set(key, c) } return c
     }
@@ -88,12 +88,26 @@ export default {
     // SATIN / LONG-AND-SHORT across the form: from every point of the edge a run of stitches goes in along the (smoothed)
     // inward normal to the middle of the shape, split long-and-short; where runs crowd together (a round shape) the inner
     // stitches are thinned the way an embroiderer drops them. With a grain, the runs slant toward it (fishbone).
+    // convex hull area / own area: a round or box-like shape is stitched toward one pole, a band across its middle
+    const hullRatio = (P) => {
+      const p = P.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]), cr = (o2, a, b) => (a[0] - o2[0]) * (b[1] - o2[1]) - (a[1] - o2[1]) * (b[0] - o2[0]), lo = [], up = []
+      for (const q of p) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q) }
+      for (let i = p.length - 1; i >= 0; i--) { const q = p[i]; while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q) }
+      const hull = lo.slice(0, -1).concat(up.slice(0, -1)); return Math.abs(K.area(P)) / (Math.abs(K.area(hull)) || 1)
+    }
+    // SATIN / LONG-AND-SHORT across the form: from every point of the edge a run of stitches goes in, split long-and-short.
+    // A round (convex, not long) shape is worked toward one pole, the way a fruit is shaded; any other shape along the
+    // smoothed inward normal to its middle (a band gets satin across it, split at the axis). With a grain the runs slant
+    // toward it (fishbone). Where runs crowd together the inner stitches are dropped, every other one, then every fourth.
     const across = (r, inset, w) => {
       const P = r.pts, per = K.length(P, true), n = Math.max(10, Math.round(per / GAP)), e = K.resample(P, n, true), nn = K.outward(e)
       const sn = nn.map((_, i) => { let x = 0, y = 0; for (let j = -3; j <= 3; j++) { const q = nn[(i + j + n) % n]; x += q[0]; y += q[1] } const l = Math.hypot(x, y) || 1; return [x / l, y / l] })
-      const g = r.grain != null ? [Math.cos(r.grain), Math.sin(r.grain)] : null
+      const g = r.grain != null ? [Math.cos(r.grain), Math.sin(r.grain)] : null, b = r.bbox
+      const radial = !g && hullRatio(P) > 0.9 && Math.max(b.w, b.h) / (Math.min(b.w, b.h) || 1) < 2.1
+      const pole = K.centroid(e)
       const ch = e.map((p, i) => {
         let d = [-sn[i][0], -sn[i][1]]
+        if (radial) { const s = [p[0] + d[0] * inset, p[1] + d[1] * inset], dx = pole[0] - s[0], dy = pole[1] - s[1], l = Math.hypot(dx, dy) || 1, dd = [dx / l, dy / l]; return { s, d: dd, D: Math.min(l, rayExit(P, s, dd) || l), m: pole } }
         if (g) { const t = Math.sign(d[0] * g[0] + d[1] * g[1]) || 1, gx = g[0] * t, gy = g[1] * t; if (Math.abs(d[0] * g[0] + d[1] * g[1]) < 0.8) { const x = d[0] * 0.82 + gx * 0.57, y = d[1] * 0.82 + gy * 0.57, l = Math.hypot(x, y); d = [x / l, y / l] } }
         const s = [p[0] + d[0] * inset, p[1] + d[1] * inset], D = rayExit(P, s, d) / 2
         return { s, d, D, m: [s[0] + d[0] * D, s[1] + d[1] * D] }
@@ -101,14 +115,14 @@ export default {
       const rows = []
       ch.forEach((c, i) => {
         if (c.D < 1) return
-        const nb = ch[(i + 1) % n], rho = K.clamp(Math.hypot(nb.m[0] - c.m[0], nb.m[1] - c.m[1]) / (Math.hypot(nb.s[0] - c.s[0], nb.s[1] - c.s[1]) || 1), 0, 1)
+        const nb = ch[(i + 1) % n], rho = radial ? 0 : K.clamp(Math.hypot(nb.m[0] - c.m[0], nb.m[1] - c.m[1]) / (Math.hypot(nb.s[0] - c.s[0], nb.s[1] - c.s[1]) || 1), 0, 1)
         const cuts = [0]; for (let j = 1; ; j++) { const v = (j - (i % 2 ? 0.45 : 0)) * MAXLEN * (0.92 + 0.16 * (((i * 7 + j * 3) % 5) / 5)); if (v >= c.D - 3) break; cuts.push(v) } cuts.push(c.D)
         for (let j = 0; j + 1 < cuts.length; j++) {
-          const f = (cuts[j] + cuts[j + 1]) / 2 / c.D, keep = 1 - f * (1 - rho) * 0.92, hh = ((i * 9301 + j * 49297) % 233280) / 233280
-          if (j > 0 && hh > keep) continue
-          const a = [c.s[0] + c.d[0] * cuts[j], c.s[1] + c.d[1] * cuts[j]], b = [c.s[0] + c.d[0] * cuts[j + 1], c.s[1] + c.d[1] * cuts[j + 1]], mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2
+          const f = (cuts[j] + cuts[j + 1]) / 2 / c.D, q = Math.max(0.03, 1 - f * (1 - rho)), lvl = Math.min(5, Math.floor(Math.log2(1 / q)))
+          if (j > 0 && i % (1 << lvl) !== 0) continue
+          const a = [c.s[0] + c.d[0] * cuts[j], c.s[1] + c.d[1] * cuts[j]], bb = [c.s[0] + c.d[0] * cuts[j + 1], c.s[1] + c.d[1] * cuts[j + 1]], mx = (a[0] + bb[0]) / 2, my = (a[1] + bb[1]) / 2
           if (hidden(r, mx, my)) continue
-          ;(rows[j] ||= []).push(st(a, b, w, floss(colAt(r, mx, my), mx, my)))
+          ;(rows[j] ||= []).push(st(a, bb, w, floss(colAt(r, mx, my), mx, my)))
         }
       })
       return rows.flat()
@@ -259,7 +273,7 @@ export default {
         if (r.role === 'bg' || r.role === 'ground') {
           const cover = solidish.filter((q) => q.i > r.i && q.bbox.x0 < b.x1 && q.bbox.x1 > b.x0 && q.bbox.y0 < b.y1 && q.bbox.y1 > b.y0)
           if (r.role === 'bg' && o.background === 'bare') continue
-          if (r.role === 'bg' && o.background !== 'laid') plan.ground.push({ r, sts: seedFill(r, 10.5 * tw, cover.map((q) => ({ pts: q.pts, b: q.bbox }))) })
+          if (r.role === 'bg' && o.background !== 'laid') plan.ground.push({ r, sts: seedFill(r, 8.2 * tw, cover.map((q) => ({ pts: q.pts, b: q.bbox }))) })
           else plan.ground.push({ r, sts: laid(r, r.grain ?? (r.role === 'bg' ? Math.PI / 2 : 0), GAP * 1.08, 36 * tw, FW, cover.map((q) => q.pts)) })
           continue
         }
@@ -272,7 +286,11 @@ export default {
         if (r.role === 'detail' && r.area < 3200 && roundish) { plan.knots.push(knotFill(r, 2.5 * tw)); continue }
         if (small < 5) { plan.fills.push(stem(K.resample(r.pts, 12, true).slice(0, 7), 8, FW * 0.8, floss(colAt(r, r.centre[0], r.centre[1]), 0, 0), r)); continue }
         if (r.contour) plan.outlines.push(splitStitch(r.pts, 8, 2.3 * tw, floss(K.rgb(K.mix(r.shade, '#000000', 0.25)), r.centre[0], r.centre[1]), r))
-        plan.fills.push(across(r, r.contour ? 1.8 : 0.3, FW))
+        const boxy = r.area / (b.w * b.h || 1) > 0.89, cover = () => solidish.filter((q) => q.i > r.i && q.bbox.x0 < b.x1 && q.bbox.x1 > b.x0 && q.bbox.y0 < b.y1 && q.bbox.y1 > b.y0).map((q) => q.pts)
+        // a flat thing is laid along its grain; a box-like thing in satin across its short side; anything else across its form
+        if (r.form < 0.3 && r.role !== 'detail') plan.fills.push(laid(r, r.grain ?? 0, GAP, MAXLEN, FW, cover()))
+        else if (boxy && r.grain == null) plan.fills.push(laid(r, b.w < b.h ? 0 : Math.PI / 2, GAP, MAXLEN, FW, cover()))
+        else plan.fills.push(across(r, r.contour ? 1.8 : 0.3, FW))
         // a glint on a round thing: a few French knots in the palest thread where the light lands
         if (r.form > 0.8 && small > 70) {
           const gx = b.cx + L[0] * b.w * 0.24, gy = b.cy + L[1] * b.h * 0.27, kk = []
@@ -295,9 +313,9 @@ export default {
     const clipHoop = (fn) => (hasHoop ? D.clip(K.ellipse(hx, hy, RX, RY, 160), fn) : fn())
     D.pass('split-stitch outlines', 1.2, () => clipHoop(() => { for (const s of plan.outlines) sew(s, 0.01) }))
     D.pass('satin and long-and-short fills', 4, () => clipHoop(() => { for (const s of plan.fills) sew(s, 0.006) }))
+    D.pass('background worked round the motif', 2, () => clipHoop(() => { for (const g of plan.ground) sew(g.sts, 0.004) }))
     D.pass('stem stitch', 0.8, () => clipHoop(() => { for (const s of lineSts) sew(s, 0.02) }))
     D.pass('french knots', 0.6, () => clipHoop(() => { for (const s of plan.knots) sew(s, 0.04) }))
-    D.pass('background worked round the motif', 2, () => clipHoop(() => { for (const g of plan.ground) sew(g.sts, 0.004) }))
 
     // ---------------------------------------------------------------- the beech hoop, over everything: its shadows on the cloth, the ring
     D.top(() => {
