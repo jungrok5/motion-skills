@@ -93,14 +93,14 @@ export default {
 
     // ------------------------------------------------------------ 2. the pen: the subject first, then the set
     const order = [...solid].sort((a, b) => (big(a) - big(b)) || (a.role === 'detail') - (b.role === 'detail') || b.area - a.area)
-    const press = (r) => (r.role === 'detail' ? 2.1 : big(r) ? 2.4 : 2.3 + Math.min(2.4, Math.sqrt(r.area) / 120)) * u
+    const press = (r) => (r.role === 'detail' ? 2.4 : big(r) ? 2.6 : 2.8 + Math.min(3, Math.sqrt(r.area) / 100)) * u
     D.pass('the pen: subject first, then the set', 2.6, () => {
       for (const r of order) {
         if (!r.contour) continue
         const cut = cutOf(S, r), base = press(r), b = r.bbox
         maybeLayer(D, cut, null, () => {
           // lost edges: the line breaks where the outline faces the light; it swells where the nib is pressed (shade side)
-          const runs = K.runs(r.pts, (i, n) => K.facing(n, L) < 0.66)
+          const runs = K.runs(r.pts, (i, n) => K.facing(n, L) < 0.72)
           runs.forEach((run, j) => nib(D, K, run, {
             width: (t, n) => { const away = K.clamp(-(n[0] * L[0] + n[1] * L[1])); return base * (0.22 + 1.5 * Math.pow(away, 1.2)) },
             color: INK, alpha: 0.94, seed: r.i * 13 + j, wobble: 0.9 * u, boil: true, rough: 0.3, tip: [10 * u, 30 * u], cost: 0.9,

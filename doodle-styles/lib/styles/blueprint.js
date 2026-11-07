@@ -101,7 +101,7 @@ export default {
     const subj = [...big].filter((r) => r.role === 'subject').sort((a, b) => b.area - a.area), main = subj.find((r) => r.form >= 0.5) || subj[0] // the main part: the biggest real body
     const tb = o.titleBlock ? (() => { const w = Math.min(340 * u, W * 0.42), h = 86 * u, x1 = W - 34 * u, y1 = H - 34 * u; return { x0: x1 - w, y0: y1 - h, x1, y1, w, h, pts: [[x1 - w, y1 - h], [x1, y1 - h], [x1, y1], [x1 - w, y1]] } })() : null
     const keepOut = tb ? [tb.pts] : []
-    const sheetLayer = (fn) => D.layer({ tooth: 'tooth', toothScale: 1.4, cut: keepOut }, fn)
+    const sheetLayer = (fn) => D.layer({ tooth: 'fine', cut: keepOut }, fn)
 
     // ---------------------------------------------------------------- the stock (frame 0)
     D.ground(() => D.mark(0.001, (ctx) => {
@@ -131,7 +131,7 @@ export default {
     }))
 
     // ---------------------------------------------------------------- 1 border, zones, title-block box
-    D.pass('border and title block', 0.7, () => D.layer({ tooth: 'tooth', toothScale: 1.4 }, () => {
+    D.pass('border and title block', 0.7, () => D.layer({ tooth: 'fine' }, () => {
       for (const [m, w] of [[22 * u, 2.6 * u], [34 * u, 1.2 * u]]) {
         const c = [[m, m], [W - m, m], [W - m, H - m], [m, H - m]]
         c.forEach((a, i) => pen([a, c[(i + 1) % 4]], w, WH, { wob: 0.4, seed: 900 + i + m }))
@@ -213,9 +213,9 @@ export default {
           for (const m of keys) {
             if (m < next) continue
             const s0 = byOff.get(m), mid = s0.reduce((acc, [a, bb]) => [acc[0] + (a[0] + bb[0]) / 2 / s0.length, acc[1] + (a[1] + bb[1]) / 2 / s0.length], [0, 0])
-            const t = TP.tone(mid[0], mid[1]) * 0.6 + r.toneAt(mid[0], mid[1]) * 0.4, dark = 1 - lum
-            next = m + K.lerp(2.6, 16, K.clamp(t * 1.15 - dark * 0.25))
-            if (t > 0.86) continue
+            const t = K.clamp(r.toneAt(mid[0], mid[1]) * 0.75 + TP.tone(mid[0], mid[1]) * 0.25 + (lum - 0.5) * 0.2)
+            next = m + K.lerp(2.4, 20, t ** 1.6)
+            if (t > 0.88) continue
             for (const [a, bb] of s0) { const d = Math.hypot(bb[0] - a[0], bb[1] - a[1]); if (d > 3 * u) segs.push([K.lerpP(a, bb, 1.2 * u / d), K.lerpP(a, bb, 1 - 1.2 * u / d)]) }
           }
           D.layer({ cut: occ }, () => strokes(segs, 0.85 * u, CY, { alpha: 0.85 }))
@@ -270,7 +270,7 @@ export default {
     }))
 
     // ---------------------------------------------------------------- 7 the title block lettered, the title the very last stroke
-    D.pass('lettering', 0.8, () => D.layer({ tooth: 'tooth', toothScale: 1.4 }, () => {
+    D.pass('lettering', 0.8, () => D.layer({ tooth: 'fine' }, () => {
       if (!tb) return
       const title = (o.title || (main ? main.name : '') || 'GENERAL ARRANGEMENT').toUpperCase().replace(/[^A-Z0-9 .:/-]/g, '').trim() || 'GENERAL ARRANGEMENT'
       const capS = 8 * u, rowY = tb.y0 + tb.h * 0.56 + (tb.h * 0.44 - capS) / 2
