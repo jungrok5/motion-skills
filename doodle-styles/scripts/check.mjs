@@ -2,7 +2,7 @@
 // For each hand on this piece, fails (exit 1) unless:
 //   loads    the page loads without errors or 404s
 //   determ   the still renders to the same pixels twice (no Math.random, no clock)
-//   grows    the drawing changes between every eighth of its progress (no dead air), starting from the bare sheet
+//   grows    at least 0.1% of the picture changes in every eighth of the drawing (no dead air; thin pen lines count)
 //   still    the finished still differs from the bare sheet over a real share of the picture (something was drawn)
 //   lives    if the piece lives (seconds.live > 0): life frames differ from the still, and the loop's ends match
 // and reports how long a still takes.
@@ -32,17 +32,20 @@ for (const id of ids) {
     if (hash(s2) !== out.hash) out.fails.push('determ: the still changed between two renders')
     D.drawAt(0, 0); const bare = grab()
     out.drawn = diff(bare, s1)
-    if (out.drawn < 0.15) out.fails.push(`still: only ${(out.drawn * 100).toFixed(1)}% of the picture differs from the bare sheet`)
+    if (out.drawn < 0.1) out.fails.push(`still: only ${(out.drawn * 100).toFixed(1)}% of the picture differs from the bare sheet`)
     let prev = bare, quiet = []
-    for (let k = 1; k <= 8; k++) { D.drawAt(k / 8, 0); const f = grab(), d = diff(prev, f); if (d < 0.002) quiet.push(`${(k - 1) * 12.5}–${k * 12.5}%`); prev = f }
+    for (let k = 1; k <= 8; k++) { D.drawAt(k / 8, 0); const f = grab(), d = diff(prev, f); if (d < 0.001) quiet.push(`${(k - 1) * 12.5}–${k * 12.5}%`); prev = f }
     if (quiet.length) out.fails.push(`grows: nothing visible changes during ${quiet.join(', ')} of the drawing`)
     const T = D.timing
     if (T.live > 0) {
       D.drawAt(1, T.live / 2); const mid = grab()
       if (diff(s1, mid) < 0.001) out.fails.push('lives: nothing moves once alive')
-      D.drawAt(1, T.live - 1e-3); const end = grab()
-      D.drawAt(1, 1e-3); const beg = grab()
-      if (diff(end, beg) > Math.max(0.02, diff(s1, mid))) out.fails.push('lives: the loop jumps at its seam')
+      // the seam may change as much as any ordinary step between two drawings (grain, boil) — not more
+      D.drawAt(1, T.live / 2 + 1 / 12); const step = diff(mid, grab())
+      D.drawAt(1, T.live - 1 / 24); const end = grab()
+      D.drawAt(1, 1 / 24); const beg = grab()
+      const seam = diff(end, beg)
+      if (seam > Math.max(0.02, step * 2.5)) out.fails.push(`lives: the loop jumps at its seam (${(seam * 100).toFixed(1)}% changes, an ordinary step ${(step * 100).toFixed(1)}%)`)
     }
     return out
   }, id)

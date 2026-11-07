@@ -45,3 +45,11 @@ Problem → cause → fix. Engine first, then the hands.
   (paper × Π(1 − d·(1 − ink)), a few Gauss–Newton steps, cached): orange is yellow under pink, near-black is all three.
 - **A wash touching the frame edge left a bare strip** → `wash` shrinks toward its centre → washes that meet the frame
   use `shrink: 1` and no offset.
+- **A drawing film that sat still for a second near the end** (mid-century, line-wash) → strokes along a table's outer
+  edges ran off the sheet but still took time → a stroke's time is its length ON the sheet only.
+- **folk-tale's film stalled on a still life** → its "middle-distance washes" pass had nothing to wash but kept its share
+  of the time → a pass with no marks takes no time.
+- **The loop check failed hands with film grain** → grain and boil change every drawing, so the seam always differed →
+  the seam may change as much as an ordinary step between two drawings, not more.
+- **Bulk `closePath()` on paths with thousands of subpaths took 7–8 s in Chromium** → `fill()` closes subpaths anyway →
+  leave `closePath` out of big batched paths.

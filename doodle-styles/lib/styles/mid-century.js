@@ -147,7 +147,9 @@ export default {
         if (!r.contour || r.role === 'glow') continue
         const rr3 = K.rng(r.i + 900)
         D.layer({ off, cut: S.occluders(r, { light: false }) }, () => {
-          for (const run of K.runs(r.pts, (i, n) => K.facing(n, L) < 0.72)) {
+          // no ink (and no drawing time) along stretches that run off the sheet, e.g. a table's outer edges
+          const onSheet = (p) => p[0] > 2 && p[0] < S.W - 2 && p[1] > 2 && p[1] < S.H - 2
+          for (const run of K.runs(r.pts, (i, n) => K.facing(n, L) < 0.72 && onSheet(r.pts[i]))) {
             // break long runs: the brush lifts and comes down again
             const len = K.length(run), pieces = Math.max(1, Math.round(len / (260 * sc)))
             for (let p = 0; p < pieces; p++) {

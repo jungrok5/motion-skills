@@ -12,6 +12,8 @@
 import { clamp, dist, length, smooth, densify, wobble, upTo, ribbon, path, tile, soften, bbox, area, displace, scale } from './kit.js'
 
 const sum = (nodes) => nodes.reduce((a, n) => a + n.cost, 0)
+/** length of a polyline that lies on the sheet: a hand spends no time drawing past the paper's edge */
+const onSheet = (c, W, H) => { let L = 0; for (let i = 1; i < c.length; i++) { const a = c[i - 1], b = c[i], mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2; if (mx > -2 && mx < W + 2 && my > -2 && my < H + 2) L += dist(a, b) } return L }
 
 export class Draw {
   constructor(env) {
@@ -45,7 +47,7 @@ export class Draw {
     if (o.wobble) c = wobble(c, o.wobble, (o.seed || 1) * 31 + (o.boil ? this.frame * 7 : 0))
     const opts = { w: o.w ?? 3, taper: o.taper ?? 0.8, pressure: o.pressure ?? 0.4, rough: o.rough ?? 0.15, seed: o.seed ?? 1 }
     const color = o.color || '#2b2522', alpha = o.alpha ?? 1, blend = o.blend
-    this.mark(((o.cost ?? 1) * length(c)) / 100, (ctx, k) => {
+    this.mark(((o.cost ?? 1) * onSheet(c, this.W, this.H)) / 100, (ctx, k) => {
       const r = ribbon(c, { ...opts, k })
       if (r.length < 3) return
       ctx.save(); if (blend) ctx.globalCompositeOperation = blend; ctx.globalAlpha = alpha; ctx.fillStyle = color; path(ctx, r); ctx.fill(); ctx.restore()
@@ -55,7 +57,7 @@ export class Draw {
   line(pts, o = {}) {
     if (!pts || pts.length < 2) return
     const c = o.smooth ? smooth(pts, false, 5) : pts, color = o.color || '#2b2522', w = o.w ?? 2, alpha = o.alpha ?? 1, blend = o.blend, cap = o.cap || 'round', dash = o.dash
-    this.mark(((o.cost ?? 1) * length(c)) / 120, (ctx, k) => {
+    this.mark(((o.cost ?? 1) * onSheet(c, this.W, this.H)) / 120, (ctx, k) => {
       const s = upTo(c, k); if (s.length < 2) return
       ctx.save(); if (blend) ctx.globalCompositeOperation = blend; ctx.globalAlpha = alpha; ctx.strokeStyle = color; ctx.lineWidth = w; ctx.lineCap = cap; ctx.lineJoin = 'round'
       if (dash) ctx.setLineDash(dash)
@@ -154,11 +156,13 @@ function growClip(ctx, b, grow, from, dir, k) {
 
 // ------------------------------------------------------------------ player
 /** draw a recorded program at progress P (0 = blank sheet, 1 = the finished still) */
+/** the passes that take time: a pass with nothing in it (no middle distance to wash, no solid blacks) is skipped */
+const timed = (prog) => prog.passes.filter((p) => p.cost > 1e-4)
 export function play(prog, ctx, P, env) {
   playNodes(prog.ground, ctx, Infinity, env)
-  const W = prog.passes.reduce((a, p) => a + p.weight, 0) || 1
+  const passes = timed(prog), W = passes.reduce((a, p) => a + p.weight, 0) || 1
   let acc = 0
-  for (const p of prog.passes) {
+  for (const p of passes) {
     const a = acc / W, b = (acc + p.weight) / W; acc += p.weight
     const k = P >= 1 ? 1 : clamp((P - a) / (b - a || 1))
     if (k <= 0) break
@@ -169,10 +173,10 @@ export function play(prog, ctx, P, env) {
 }
 /** which pass is being drawn at progress P (for captions and checks) */
 export function passAt(prog, P) {
-  const W = prog.passes.reduce((a, p) => a + p.weight, 0) || 1
+  const passes = timed(prog), W = passes.reduce((a, p) => a + p.weight, 0) || 1
   let acc = 0
-  for (const p of prog.passes) { acc += p.weight; if (P <= acc / W) return p.name }
-  return prog.passes.length ? prog.passes[prog.passes.length - 1].name : ''
+  for (const p of passes) { acc += p.weight; if (P <= acc / W) return p.name }
+  return passes.length ? passes[passes.length - 1].name : ''
 }
 
 function playNodes(nodes, ctx, budget, env) {

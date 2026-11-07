@@ -171,7 +171,9 @@ export default {
     let split = S.items.findIndex((it) => it.kind === 'region' && !room.has(it.role) && it.depth < 0.8)
     if (split < 0) split = S.items.length
     const back = S.items.slice(0, split).filter((it) => it.kind === 'region'), front = S.items.slice(split).filter((it) => it.kind === 'region')
-    D.pass('backdrop flown in', 1.6, () => D.clip(OPEN, () => { for (const r of back) place(r) }))
+    // a scene with no wall of its own still gets a plain sugar-paper drop of its background colour
+    const drop = S.regions.some((r) => r.role === 'bg') ? null : { i: -1, role: 'bg', pts: [[-10, -10], [W + 10, -10], [W + 10, H + 10], [-10, H + 10]], color: S.bg, lit: K.litOf(S.bg), shade: K.shadeOf(S.bg), depth: 1, form: 0, contour: false, area: W * H, bbox: { x0: -10, y0: -10, x1: W + 10, y1: H + 10, w: W + 20, h: H + 20, cx: W / 2, cy: H / 2 }, centre: [W / 2, H / 2], toneAt: () => 0.6 }
+    D.pass('backdrop flown in', 1.6, () => D.clip(OPEN, () => { if (drop) place(drop); for (const r of back) place(r) }))
     D.pass('flats stood up, back to front', 4, () => D.clip(OPEN, () => { D.pause(0.4); for (const r of front) place(r) }))
 
     // ---- lines: strips of card (dark) and white painted card curls (light: steam, a window bar), jittering on twos when alive

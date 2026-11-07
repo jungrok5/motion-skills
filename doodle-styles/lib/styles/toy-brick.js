@@ -42,29 +42,37 @@ export default {
     const flatAt = (r, x, y) => {
       let c = K.rgb(r.color)
       for (const s of shadows) if (s.i > r.i && K.inside(s.pts, x, y)) { const sc = K.rgb(s.color), a = s.strength; c = c.map((v, i) => v * (1 - a) + v * (sc[i] / 255) * a * 0.75) }
-      for (const g of lights) if (g.i > r.i && K.inside(g.pts, x, y)) { const gc = K.rgb(g.color); c = c.map((v, i) => v + (gc[i] - v) * 0.35 + (255 - v) * 0.1) }
+      for (const g of lights) if (g.i > r.i && K.inside(g.pts, x, y)) { const gc = K.rgb(g.color); c = c.map((v, i) => v + (gc[i] - v) * 0.5 + (255 - v) * 0.12) }
       return c
+    }
+    // light falling on a wall or floor must change the brick, even when the nearest colour would not: one step lighter
+    const LAB = new Map(PL), pickFlat = (r, x, y) => {
+      const base = pick(K.rgb(r.color), 0.3), p = pick(flatAt(r, x, y), 0.3)
+      if (p !== base || !lights.some((g) => g.i > r.i && K.inside(g.pts, x, y))) return p
+      const b = LAB.get(base); let best = p, bd = Infinity
+      for (const [h, q] of PL) { if (q[0] < b[0] + 6) continue; const d = 0.3 * (q[0] - b[0] - 12) ** 2 + (q[1] - b[1]) ** 2 + (q[2] - b[2]) ** 2; if (d < bd) { bd = d; best = h } }
+      return best
     }
     const planeOf = (q) => (!q ? 0 : q.role === 'bg' || q.role === 'glow' || q.role === 'highlight' || q.depth >= 0.8 ? 0 : q.role === 'ground' ? 1 : 2)
 
     // ---------------------------------------------------------------- the mosaic: a colour and a depth per cell
-    const N = cols * rows, col = new Array(N), pl = new Int8Array(N), rid = new Int16Array(N)
+    const N = cols * rows, col = new Array(N), pl = new Int8Array(N), rid = new Int16Array(N), lineCell = new Uint8Array(N)
     for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
       const y = yOf(r), votes = new Map()
       let best = null, bn = 0
       for (const [fx, fy] of [[0.3, 0.3], [0.7, 0.3], [0.3, 0.7], [0.7, 0.7], [0.5, 0.5]]) {
         const x = (c + fx) * u, yy = Math.min(H - 1, Math.max(0, y + fy * ph)), q = S.regionAt(x, yy)
-        const flat = q && (q.role === 'bg' || q.role === 'ground') && q.form < 0.4, p = flat ? pick(flatAt(q, x, yy), 0.3) : pick(S.colorAt(x, yy)), n = (votes.get(p) || 0) + 1 + (fx === 0.5 ? 0.5 : 0)
+        const flat = q && (q.role === 'bg' || q.role === 'ground') && q.form < 0.4, p = flat ? pickFlat(q, x, yy) : pick(S.colorAt(x, yy)), n = (votes.get(p) || 0) + 1 + (fx === 0.5 ? 0.5 : 0)
         votes.set(p, n); if (n > bn) { bn = n; best = p }
       }
       const k = r * cols + c, q = S.regionAt((c + 0.5) * u, Math.max(0, y + ph * 0.5)); col[k] = best; pl[k] = planeOf(q); rid[k] = q ? q.i : -1
     }
-    // where two things of the model meet in the same brick colour, the far one's edge is built a shade darker so they part
+    // where two things of the model meet, the far one's edge is built a shade darker so they part (three fruits stay three)
     for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
       const k = r * cols + c; if (pl[k] < 2 || rid[k] < 0) continue
-      for (const n of [k + cols, k - 1, k + 1]) {
+      for (const n of [k + cols, k - cols, k - 1, k + 1]) {
         if (n < 0 || n >= N || (n === k - 1 && c === 0) || (n === k + 1 && c === cols - 1)) continue
-        if (pl[n] === 2 && rid[n] > rid[k] && col[n] === col[k]) { const reg = S.regions.find((q) => q.i === rid[k]); col[k] = pick(K.rgb(K.mix(reg.color, reg.shade, 0.85))); if (col[k] === col[n]) col[k] = pick(K.rgb(K.darken(col[n], 0.35))); break }
+        if (pl[n] === 2 && rid[n] > rid[k] && !lineCell[n]) { const reg = S.regions.find((q) => q.i === rid[k]); col[k] = pick(K.rgb(K.mix(reg.color, reg.shade, 0.85))); if (col[k] === col[n]) col[k] = pick(K.rgb(K.darken(col[n], 0.35))); break }
       }
     }
     // lines are stamped in so a wisp of steam or a window bar survives the coarse grid
@@ -73,7 +81,7 @@ export default {
       for (const [x, y] of s) {
         const c = Math.floor(x / u), r = Math.floor((H - y) / ph); if (c < 0 || c >= cols || r < 0 || r >= rows) continue
         const q = S.regionAt(x, y); if (q && q.i > l.i) continue
-        const k = r * cols + c; col[k] = p; pl[k] = Math.max(lp, q ? planeOf(q) : 0)
+        const k = r * cols + c; col[k] = p; pl[k] = Math.max(lp, q ? planeOf(q) : 0); lineCell[k] = 1
       }
     }
 

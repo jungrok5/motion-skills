@@ -90,6 +90,7 @@ export default {
       }
     }
     let dq = 0 // set by quant: 1 when the cell is part of a checker half tint
+    let wide = false // set per cell: the material is a big flat (bg / ground)
     const quant = (rp, l, x, y) => {
       const ix = rp.idx
       dq = 0
@@ -99,6 +100,7 @@ export default {
         const a = PL[ix[j]], b = PL[ix[j + 1]]
         if (l <= b) {
           const t = (l - a) / (b - a || 1)
+          if (wide) return t < 0.5 ? ix[j] : ix[j + 1] // big flats: clean bands, no dither stripe
           if (!o.dither || t < 0.36) return ix[j]
           if (t > 0.64) return ix[j + 1]
           dq = 1
@@ -109,11 +111,14 @@ export default {
     }
     for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
       const k = y * cols + x, r = id[k] >= 0 ? R[id[k]] : null, X = (x + 0.5) * cp, Y = (y + 0.5) * cp, rp = ramp(r)
-      let c = r ? K.rgb(r.role === 'glow' ? K.mix(r.color, r.lit, 0.3) : r.colorAt(X, Y)) : K.rgb(S.bg)
+      // a big flat keeps most of its local colour (a wall in pixel art is one flat colour, its light a patch, its shadows clusters)
+      let c = r ? K.rgb(r.role === 'glow' ? K.mix(r.color, r.lit, 0.3) : r.role === 'bg' || r.role === 'ground' ? K.mix(r.color, r.colorAt(X, Y), 0.35) : r.colorAt(X, Y)) : K.rgb(S.bg)
       if (shadow[k] > 0) { const sc = K.rgb(R[sid[k]].color), a = shadow[k]; c = c.map((v, j) => v * (1 - a) + v * (sc[j] / 255) * a * 0.75) }
       if (hl[k] > 0) c = c.map((v) => v + (255 - v) * 0.3 * hl[k])
+      wide = !r || r.role === 'bg' || r.role === 'ground'
       let v = quant(rp, (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255, x, y)
       dith[k] = dq
+      if (wide && hl[k] > 0) { const up = rp.idx.filter((i) => PL[i] > PL[v]); if (up.length) v = up[0] } // light on a wall: one clean step up
       cat[k] = v === rp.mid ? 0 : PL[v] < PL[rp.mid] ? 1 : 2
       if (r && r.role === 'glow') { cat[k] = 4 }
       else if (o.dither && gd[k] <= GR) {
