@@ -98,7 +98,7 @@ export default {
 
     // ---------------------------------------------------------------- what to draw
     const big = S.regions.filter((r) => ['subject', 'detail'].includes(r.role) && r.area > W * H * 0.004)
-    const main = [...big].filter((r) => r.role === 'subject').sort((a, b) => b.area - a.area)[0]
+    const subj = [...big].filter((r) => r.role === 'subject').sort((a, b) => b.area - a.area), main = subj.find((r) => r.form >= 0.5) || subj[0] // the main part: the biggest real body
     const tb = o.titleBlock ? (() => { const w = Math.min(340 * u, W * 0.42), h = 86 * u, x1 = W - 34 * u, y1 = H - 34 * u; return { x0: x1 - w, y0: y1 - h, x1, y1, w, h, pts: [[x1 - w, y1 - h], [x1, y1 - h], [x1, y1], [x1 - w, y1]] } })() : null
     const keepOut = tb ? [tb.pts] : []
     const sheetLayer = (fn) => D.layer({ tooth: 'tooth', toothScale: 1.4, cut: keepOut }, fn)
@@ -116,7 +116,7 @@ export default {
         const q = 4, mw = Math.ceil(W / q), mh = Math.ceil(H / q), m = K.canvas(mw, mh), mx = m.getContext('2d'), img = mx.createImageData(mw, mh)
         for (let j = 0; j < mh; j++) for (let i = 0; i < mw; i++) {
           const v = K.fbm(41, i * q, j * q, 0.006, 4) - 0.5, f = K.fbm(43, i * q, j * q, 0.05, 2) - 0.5, p = (j * mw + i) * 4, lift = v * 1.4 + f * 0.35
-          img.data[p] = lift > 0 ? 120 : 0; img.data[p + 1] = lift > 0 ? 190 : 8; img.data[p + 2] = lift > 0 ? 235 : 30; img.data[p + 3] = 255 * Math.min(0.32, Math.abs(lift) * 0.55)
+          img.data[p] = lift > 0 ? 120 : 0; img.data[p + 1] = lift > 0 ? 190 : 8; img.data[p + 2] = lift > 0 ? 235 : 30; img.data[p + 3] = 255 * Math.min(0.2, Math.abs(lift) * 0.32)
         }
         mx.putImageData(img, 0, 0); x.imageSmoothingEnabled = true; x.drawImage(m, 0, 0, W, H)
         for (const [x0, y0, x1, y1] of [[W * 0.5 + 3, 0, W * 0.5 - 2, H], [0, H * 0.5 - 4, W, H * 0.5 + 2]]) { // two old fold lines
@@ -259,7 +259,7 @@ export default {
         parts.forEach((r, i) => {
           const b = r.bbox, c0 = r.centre, dx = b.cx - W / 2, dy = b.cy - H / 2, dl = Math.hypot(dx, dy) || 1, d = dl < 20 ? [-0.7, -0.7] : [dx / dl, dy / dl]
           // the leader starts on the part (the topmost point of it near its centre) and runs out past its edge
-          const R = 13 * u, reach = Math.hypot(b.w, b.h) / 2 + 34 * u, bx = K.clamp(c0[0] + d[0] * reach, 60 * u, W - 60 * u), by = K.clamp(c0[1] + d[1] * reach, 60 * u, H - 60 * u)
+          const R = 13 * u, reach = Math.hypot(b.w, b.h) * 0.36 + 30 * u, bx = K.clamp(c0[0] + d[0] * reach, 60 * u, W - 60 * u), by = K.clamp(c0[1] + d[1] * reach, 60 * u, H - 60 * u)
           const anchor = S.regionAt(c0[0], c0[1]) === r ? c0 : K.scatter(r.pts, 1, r.i)[0] || c0, la = Math.atan2(anchor[1] - by, anchor[0] - bx)
           circle(bx, by, R, 1.2 * u, WH)
           lettering(String(i + 1), bx, by - 5 * u, 10 * u, WH, { align: 'center' })
