@@ -108,7 +108,15 @@ export default {
       ctx.drawImage(T, Math.round(off[0] * sc), Math.round(off[1] * sc)); ctx.restore()
     }
     // one sheet thrown onto the delivery pile: it slides in from its head and lands, its shadow on the sheet below
+    // A landed sheet hides every sheet under it, so a landed sheet is only put down when something comes after it (the
+    // next sheet sliding in, or the top of the pile): a still draws one sheet, not the whole pile.
+    const pile = { pending: null }
+    const flush = (ctx) => { const p = pile.pending; pile.pending = null; if (p) put(ctx, p, 1) }
     const sheet = (spot, black) => D.mark(1, (ctx, k) => {
+      if (k >= 1) { pile.pending = { spot, black }; return }
+      flush(ctx); put(ctx, { spot, black }, k)
+    })
+    const put = (ctx, { spot, black }, k) => {
       const e = 1 - (1 - k) ** 3, dy = -(1 - e) * H * 1.04
       ctx.save()
       if (k < 1) { const g = ctx.createLinearGradient(0, dy + H, 0, dy + H + 26 * u); g.addColorStop(0, 'rgba(30,24,16,0.35)'); g.addColorStop(1, 'rgba(30,24,16,0)'); ctx.fillStyle = g; ctx.fillRect(0, dy + H, W, 26 * u) }
@@ -118,10 +126,10 @@ export default {
       if (spot) inked(ctx, plate('spot', dotsS, o.spot, 3), spot.starve, spot.off, spot.seed)
       if (black) inked(ctx, plate('black', dotsK, o.black, 7), black.starve, [0, 0], black.seed)
       ctx.restore(); ctx.restore()
-    })
+    }
     const n = Math.max(1, Math.round(o.sheets)), mr = o.misregister.map((v) => v * u), far = [mr[0] + 9 * u, mr[1] - 6 * u]
 
-    D.ground(() => D.sheet(o.paper))
+    D.ground(() => { D.mark(0.001, () => { pile.pending = null }); D.sheet(o.paper) })
     D.pass('spot unit comes up to colour', 2, () => { for (let j = 0; j < n; j++) sheet({ starve: 0.95 * (1 - (j + 1) / (n + 0.6)) + 0.05, off: far, seed: j + 1 }, null) })
     D.pass('black unit comes up over it', 3, () => { for (let j = 0; j < n; j++) sheet({ starve: 0, off: far, seed: 0 }, { starve: j === n - 1 ? 0.12 : 0.95 * (1 - (j + 1) / n) + 0.12, seed: j + 11 }) })
     D.pass('spot nudged into register', 1, () => {
@@ -129,6 +137,7 @@ export default {
     })
 
     D.top(() => {
+      D.mark(0.001, (ctx) => flush(ctx))
       D.texture('newsprint', { opacity: 0.5 })
       D.texture('paper', { opacity: 0.4 })
       D.mark(0.001, (ctx) => { // groundwood: short dark fibres, pale surface fibres, the odd bark shive (built once per size)

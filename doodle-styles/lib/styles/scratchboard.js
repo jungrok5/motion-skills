@@ -120,12 +120,12 @@ export default {
     }
     const field = (fn) => D.layer({ tooth: 'fine', cut: keep }, fn)
 
-    D.pass('contour highlights', 1.2, () => {
+    D.pass('contour highlights', 1.2, () => field(() => {
       for (const r of solid) {
         if (!r.contour || r.role === 'bg' || r.role === 'ground') continue
-        D.layer({ tooth: 'fine', cut: [...keep, ...S.occluders(r)] }, () => {
         const inset = K.offset(K.densify(r.pts, 4 * u, true), -2.6 * u), lumK = 0.55 + 0.6 * K.lum(r.color), rr = K.rng(r.i + 91)
-        for (const run of K.runs(inset, (i, n) => K.facing(n, r.light) > 0.18)) {
+        // lit and not hidden by anything in front (one layer for all: the occlusion is decided point by point)
+        for (const run of K.runs(inset, (i, n) => K.facing(n, r.light) > 0.18 && (S.regionAt(inset[i][0], inset[i][1]) || r).i <= r.i)) {
           // a row of short knife lines, not one wire: each 6–14 points, overlapping a little
           for (let i = 0; i < run.length - 2;) {
             const m = Math.min(run.length - i, 5 + Math.floor(rr() * 9)), seg = run.slice(i, i + m)
@@ -133,9 +133,8 @@ export default {
             i += Math.max(2, m - 1)
           }
         }
-        })
       }
-    })
+    }))
     D.pass('lay of the form', 1.6, () => field(() => batch(dir, 2 + dir.length * 0.004)))
     D.pass('mid tones and crossing cuts', 2, () => field(() => { batch(mids, 2 + mids.length * 0.004); batch(cross, 1 + cross.length * 0.003) }))
     D.pass('lights cut until they close', 1.6, () => field(() => batch(lights, 2 + lights.length * 0.004)))
@@ -155,7 +154,8 @@ export default {
           const b = r.bbox, R = Math.min(b.w, b.h) * 0.06, cx = b.cx + r.light[0] * b.w * 0.26, cy = b.cy + r.light[1] * b.h * 0.28
           if (S.regionAt(cx, cy) !== r) continue
           const blade = K.blob(cx, cy, R, { sx: 1.35, sy: 0.75, rot: Math.atan2(r.light[1], r.light[0]) + Math.PI / 2, seed: r.i, wob: 0.25 })
-          D.layer({ cut: S.occluders(r) }, () => D.fill(blade, clay, { alpha: 0.96, grow: 'wipe', dir: Math.atan2(-r.light[1], -r.light[0]) }))
+          if (blade.some(([x, y]) => (S.regionAt(x, y) || r).i > r.i)) continue // a catchlight is never half hidden
+          D.fill(blade, clay, { alpha: 0.96, grow: 'wipe', dir: Math.atan2(-r.light[1], -r.light[0]) })
         }
       })
     })
