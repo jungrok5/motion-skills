@@ -103,8 +103,8 @@ export const FLOSS = [
 
 /** moulded toy-brick colours (no trademark: a working table of real brick colours) */
 export const BRICK = {
-  white: '#F4F4F4', lightGrey: '#A0A5A9', darkGrey: '#6C6E68', black: '#1B2A34', red: '#B40000', darkRed: '#720E0F',
-  orange: '#D67923', brightLightOrange: '#F8BB3D', yellow: '#FAC80A', brightLightYellow: '#FFF03A', tan: '#E4CD9E', darkTan: '#958A73',
+  white: '#F4F4F4', veryLightGrey: '#E6E3E0', lightGrey: '#A0A5A9', darkGrey: '#6C6E68', black: '#1B2A34', red: '#C91A09', darkRed: '#720E0F',
+  orange: '#FE8A18', brightLightOrange: '#F8BB3D', yellow: '#F2CD37', lightYellow: '#FBE696', brightLightYellow: '#FFF03A', tan: '#E4CD9E', darkTan: '#958A73',
   reddishBrown: '#582A12', darkBrown: '#352100', mediumNougat: '#AA7D55', nougat: '#D09168', lightNougat: '#F6D7B3',
   sandGreen: '#A0BCAC', oliveGreen: '#9B9A5A', green: '#237841', darkGreen: '#184632', brightGreen: '#4B9F4A', lime: '#BBE90B', yellowishGreen: '#DFEEA5',
   mediumAzure: '#36AEBF', darkAzure: '#078BC9', mediumBlue: '#5A93DB', blue: '#0055BF', darkBlue: '#0A3463', sandBlue: '#6074A1', lightAqua: '#ADC3C0',

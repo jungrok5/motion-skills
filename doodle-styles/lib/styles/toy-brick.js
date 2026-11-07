@@ -31,19 +31,41 @@ export default {
     const cols = Math.max(8, Math.round(o.studs)), u = W / cols, ph = u * 0.4, rows = Math.ceil(H / ph)
     const yOf = (r) => H - (r + 1) * ph // top of plate row r (r = 0 is the bottom row)
     const shade = (h, t) => { const c = K.rgb(h); return K.hex(c.map((v) => (t >= 0 ? v + (255 - v) * t : v * (1 + t)))) }
-    const near = new Map(), pick = (rgb) => { const key = rgb.map((v) => v >> 3).join(','); let c = near.get(key); if (!c) { c = K.nearest(K.hex(rgb), o.palette); near.set(key, c) } return c }
+    // nearest brick colour by CIE Lab distance, hue weighted over lightness, the way a builder picks (a red kettle finds the
+    // red brick, not the orange one; a sage wall the sand green, not a grey)
+    const lab = (h) => { const c = K.rgb(h).map((v) => { v /= 255; return v > 0.04045 ? ((v + 0.055) / 1.055) ** 2.4 : v / 12.92 }), X = (c[0] * 0.4124 + c[1] * 0.3576 + c[2] * 0.1805) / 0.95047, Y = c[0] * 0.2126 + c[1] * 0.7152 + c[2] * 0.0722, Z = (c[0] * 0.0193 + c[1] * 0.1192 + c[2] * 0.9505) / 1.08883, f = (t) => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116); return [116 * f(Y) - 16, 500 * (f(X) - f(Y)), 200 * (f(Y) - f(Z))] }
+    const PL = o.palette.map((h) => [h, lab(h)])
+    const near = new Map(), pick = (rgb, wl = 0.75) => { const key = rgb.map((v) => v >> 2).join(',') + wl; let c = near.get(key); if (!c) { const q = lab(rgb); let bd = Infinity; for (const [h, p] of PL) { const d = wl * (q[0] - p[0]) ** 2 + (q[1] - p[1]) ** 2 + (q[2] - p[2]) ** 2; if (d < bd) { bd = d; c = h } } near.set(key, c) } return c }
+    // a wall or a floor is built in its own colour (no posterised banding from a gentle gradient); cast shadows and
+    // light falling on it still change the brick
+    const shadows = S.regions.filter((q) => q.role === 'shadow'), lights = S.regions.filter((q) => q.role === 'highlight' || q.role === 'glow')
+    const flatAt = (r, x, y) => {
+      let c = K.rgb(r.color)
+      for (const s of shadows) if (s.i > r.i && K.inside(s.pts, x, y)) { const sc = K.rgb(s.color), a = s.strength; c = c.map((v, i) => v * (1 - a) + v * (sc[i] / 255) * a * 0.75) }
+      for (const g of lights) if (g.i > r.i && K.inside(g.pts, x, y)) { const gc = K.rgb(g.color); c = c.map((v, i) => v + (gc[i] - v) * 0.35 + (255 - v) * 0.1) }
+      return c
+    }
     const planeOf = (q) => (!q ? 0 : q.role === 'bg' || q.role === 'glow' || q.role === 'highlight' || q.depth >= 0.8 ? 0 : q.role === 'ground' ? 1 : 2)
 
     // ---------------------------------------------------------------- the mosaic: a colour and a depth per cell
-    const N = cols * rows, col = new Array(N), pl = new Int8Array(N)
+    const N = cols * rows, col = new Array(N), pl = new Int8Array(N), rid = new Int16Array(N)
     for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
       const y = yOf(r), votes = new Map()
       let best = null, bn = 0
       for (const [fx, fy] of [[0.3, 0.3], [0.7, 0.3], [0.3, 0.7], [0.7, 0.7], [0.5, 0.5]]) {
-        const x = (c + fx) * u, yy = y + fy * ph, p = pick(S.colorAt(x, Math.min(H - 1, Math.max(0, yy)))), n = (votes.get(p) || 0) + 1 + (fx === 0.5 ? 0.5 : 0)
+        const x = (c + fx) * u, yy = Math.min(H - 1, Math.max(0, y + fy * ph)), q = S.regionAt(x, yy)
+        const flat = q && (q.role === 'bg' || q.role === 'ground') && q.form < 0.4, p = flat ? pick(flatAt(q, x, yy), 0.3) : pick(S.colorAt(x, yy)), n = (votes.get(p) || 0) + 1 + (fx === 0.5 ? 0.5 : 0)
         votes.set(p, n); if (n > bn) { bn = n; best = p }
       }
-      const k = r * cols + c; col[k] = best; pl[k] = planeOf(S.regionAt((c + 0.5) * u, Math.max(0, y + ph * 0.5)))
+      const k = r * cols + c, q = S.regionAt((c + 0.5) * u, Math.max(0, y + ph * 0.5)); col[k] = best; pl[k] = planeOf(q); rid[k] = q ? q.i : -1
+    }
+    // where two things of the model meet in the same brick colour, the far one's edge is built a shade darker so they part
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      const k = r * cols + c; if (pl[k] < 2 || rid[k] < 0) continue
+      for (const n of [k + cols, k - 1, k + 1]) {
+        if (n < 0 || n >= N || (n === k - 1 && c === 0) || (n === k + 1 && c === cols - 1)) continue
+        if (pl[n] === 2 && rid[n] > rid[k] && col[n] === col[k]) { const reg = S.regions.find((q) => q.i === rid[k]); col[k] = pick(K.rgb(K.mix(reg.color, reg.shade, 0.85))); if (col[k] === col[n]) col[k] = pick(K.rgb(K.darken(col[n], 0.35))); break }
+      }
     }
     // lines are stamped in so a wisp of steam or a window bar survives the coarse grid
     for (const l of S.lines) {
