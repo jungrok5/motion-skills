@@ -953,6 +953,42 @@
       ]
     },
     {
+      "id": "swarm-world",
+      "name": "swarm-world",
+      "tagline": "주제 하나를 주면 이름표를 단 커서 크루가 기차나 로버 바로 앞에서 로우폴리 3D 세계를 지어 나가는 영상을 three.js 코드만으로 만듭니다. 물건마다 산호색 와이어프레임으로 솟았다가 커서가 닿으면 완성되고, 태그는 하는 일을, 로그는 끝낸 일을 적으며, 마지막엔 카메라가 떠올라 완성된 세계를 봅니다. 라이브 페이지와 효과음을 합성한 MP4를 냅니다.",
+      "posterAlt": "swarm-world로 만든 장면 네 개: 기차 옆 라벤더 밭과 풍차를 커서들이 짓는 계곡, 달 표면 로버 앞에 타일 도로와 태양광 패널이 깔리는 모습, 완성된 계곡을 위에서 내려다본 마지막 장면, 지평선 위 지구 아래 불 켜진 달 기지",
+      "poster": "swarm-world/poster.jpg",
+      "tags": [
+        "three.js 로우폴리",
+        "커서 크루",
+        "16:9 · 9:16 MP4",
+        "효과음 합성",
+        "라이브 페이지"
+      ],
+      "stats": [
+        "예제 2개 + 템플릿",
+        "한국어 크루 · 로그"
+      ],
+      "page": "swarm-world/",
+      "source": "swarm-world/",
+      "absorbedFrom": {
+        "repo": "https://github.com/harnoorDev/swarm-build",
+        "path": "skills/swarm-build/examples/3d.html"
+      },
+      "sources": [
+        {
+          "title": "harnoorDev/swarm-build (원본 레포, 3D 부분)",
+          "url": "https://github.com/harnoorDev/swarm-build"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "swarm-build · 3D world (크루 16명, 증기 기차, 라이브)",
+          "url": "https://harnoordev.github.io/swarm-build/skills/swarm-build/examples/3d.html"
+        }
+      ]
+    },
+    {
       "id": "doodle-styles",
       "name": "doodle-styles",
       "tagline": "32가지 손그림 화풍(연필 수채화, 우키요에 목판화, 리소그래프, 수묵화, 자수, 장난감 블록, 픽셀 아트…) 가운데 하나를 골라 계속 재사용합니다. 주제를 화풍 없는 장면으로 한 번 적으면 고른 화풍이 자기 재료와 순서로 스틸과 그려지는 과정 영상을 만들고, 고른 화풍은 하우스 스타일로 저장돼 다음 그림도 같은 손으로 그립니다.",
