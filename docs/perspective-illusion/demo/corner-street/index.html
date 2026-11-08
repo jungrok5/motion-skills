@@ -1,0 +1,142 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Corner Street · perspective-illusion</title>
+<!-- perspective-illusion template: a quiet back street on a late afternoon. A long street runs away from the camera (-z)
+     to a bookshop on the corner; a cross street with a zebra crossing runs along x near the camera. Through the 2° lens
+     the whole street is one flat elevation: the poles down each side merge into one pole, and five cones sit in a row on
+     the kerb — until the camera opens it up and the row turns out to be a diagonal across the crossing.
+     This scene is an EXAMPLE of the style, not a menu: a new topic gets its own place, objects and palette (BRIEF.md).
+     Sections: look → kit → layout → buildings → street → swap objects → detail → shots → keys → start. -->
+<script type="importmap">{ "imports": { "three": "../lib/three.module.min.js", "illusion/": "../lib/" } }</script>
+<script type="module">
+import { Illusion, THREE } from "illusion/illusion.js";
+import { kit } from "illusion/kit.js";
+
+// ---------- look ----------
+const F = new Illusion({
+  shadowReach: 42, shadowCenter: [0, 0, -24],   // shadows where the camera looks: crisper edges that do not stair-step
+  sun: { az: -26, el: 30 },                  // low, from the camera's left: long shadows across the road, the hero lit
+  look: { sky: { zenith: "#3f6fd0", horizon: "#f6c49a", low: "#f6c49a", cloud: "#fff3e6", clouds: 0.45 } },
+});
+const C = {                                  // 8 flat colours + one accent (the bookshop yellow)
+  road: "#5b5d68", walk: "#c9c6bd", kerb: "#e3e0d8", line: "#f1efe9",
+  cream: "#e2d6bf", grey: "#a9a7a8", mint: "#a9c8b6", brick: "#b86f58", slate: "#7e8597",
+  trim: "#efebe2", glass: "#36435f", accent: "#f2be2a", cone: "#ef5a2a", ink: "#17141f",
+};
+
+// ---------- kit ----------
+const K = kit(F, { seed: 7 });
+await K.fonts();
+
+// ---------- layout ----------
+// long street: road |x| < 3.2 from z = -3 to the bookshop at z = -50; pavements 3.2 < |x| < 5.8
+// cross street: road -3 < z < 3.4 along x; pavements beyond
+const RW = 3.2, PW = 2.6, END = -50, XS = [-3, 3.4];
+K.ground({ x0: -40, x1: 40, z0: END - 2, z1: XS[1] + 3, ppm: 40, base: C.road, paint: (g, P, r) => {
+  K.asphalt(g, P, r, { n: 2400 });
+  g.fillStyle = C.line;
+  for (let x = -2.6; x <= 2.6 + 1e-6; x += 0.9) g.fillRect(P.x(x - 0.22), P.z(XS[0] + 0.5), P.s(0.44), P.s(XS[1] - XS[0] - 1));   // zebra
+  g.fillRect(P.x(-RW + 0.2), P.z(-3.8), P.s(RW - 0.2), P.s(0.3));                                                          // stop line
+  for (let z = -7; z > END + 4; z -= 5) g.fillRect(P.x(-0.07), P.z(z), P.s(0.14), P.s(2.4));                              // centre dashes
+  for (let x = -38; x < 38; x += 5) if (Math.abs(x) > 5) g.fillRect(P.x(x), P.z(0.12), P.s(2.4), P.s(0.14));                // cross street dashes
+  for (const [x, z] of [[1.4, -14], [-1.1, -27], [9, 1.2], [-12, -0.6]]) {                                                  // manholes
+    g.fillStyle = "#43444f"; g.beginPath(); g.arc(P.x(x), P.z(z), P.s(0.34), 0, 7); g.fill();
+    g.strokeStyle = "#5f616c"; g.lineWidth = P.s(0.03); for (let k = -0.24; k <= 0.24; k += 0.08) { g.beginPath(); g.moveTo(P.x(x + k), P.z(z - 0.24)); g.lineTo(P.x(x + k), P.z(z + 0.24)); g.stroke(); }
+  }
+  g.fillStyle = "#3d3e48"; for (let z = -6; z > END + 3; z -= 9) for (const s of [-1, 1]) g.fillRect(P.x(s * (RW - 0.25) - 0.2), P.z(z), P.s(0.4), P.s(0.9));   // drains
+} });
+const tiles = K.tex(256, 256, (g, w, h) => { g.fillStyle = C.walk; g.fillRect(0, 0, w, h); g.strokeStyle = "#9d9a93"; g.lineWidth = 5; for (let i = 0; i <= 4; i++) { g.beginPath(); g.moveTo(i * 64, 0); g.lineTo(i * 64, h); g.stroke(); g.beginPath(); g.moveTo(0, i * 64); g.lineTo(w, i * 64); g.stroke(); } });
+const walk = (x0, x1, z0, z1) => {
+  K.box(x1 - x0, 0.15, z1 - z0, C.kerb, (x0 + x1) / 2, 0, (z0 + z1) / 2);
+  const t = tiles.clone(); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set((x1 - x0) / 2, (z1 - z0) / 2); t.needsUpdate = true;
+  K.slab(x0 + 0.12, x1 - 0.12, z0 + 0.12, z1 - 0.12, "#ffffff", 0.153, { map: t, ink: 0.5 });
+};
+walk(-RW - PW, -RW, END, XS[0]); walk(RW, RW + PW, END, XS[0]);                  // along the long street
+walk(-40, -RW - PW, XS[0] - PW, XS[0]); walk(RW + PW, 40, XS[0] - PW, XS[0]);    // far side of the cross street
+walk(-40, 40, XS[1], XS[1] + 3);                                                 // near side of the cross street
+// the plaza in front of the camera: the flat view's lowest rays land up to ~60 m in front of the focus, so keep ground there
+K.ground({ x0: -60, x1: 60, z0: XS[1] + 2.9, z1: 90, y: 0.153, ppm: 12, base: C.walk, ink: 0.5, paint: (g, P) => {
+  g.strokeStyle = "#a9a59d"; g.lineWidth = P.s(0.04);
+  for (let x = -60; x <= 60; x += 1) { g.beginPath(); g.moveTo(P.x(x), 0); g.lineTo(P.x(x), P.z(90)); g.stroke(); }
+  for (let z = XS[1] + 3; z <= 90; z += 1) { g.beginPath(); g.moveTo(0, P.z(z)); g.lineTo(P.x(60), P.z(z)); g.stroke(); }
+} });
+
+// ---------- buildings ----------
+// left row faces +x (ry 90), right row faces -x (ry -90); fronts sit on the pavement's outer edge
+const left = [[-8, 8, C.cream, 3], [-17.5, 9, C.slate, 4], [-27, 8, C.mint, 3], [-36, 8, C.grey, 4], [-44.5, 7, C.brick, 3]];
+const right = [[-8.5, 9, C.brick, 4], [-18, 8, C.cream, 3], [-27, 8, C.grey, 4], [-35.5, 7, C.mint, 3], [-44, 8, C.slate, 4]];
+const row = (list, side) => list.forEach(([z, w, c, fl], i) => K.building({
+  x: side * (RW + PW + 4.5), z, ry: side < 0 ? 90 : -90, w, d: 9, floors: fl, color: c, trim: C.trim, glass: C.glass,
+  ac: 3, roof: { parapet: true, tank: i % 2 === 0, antenna: i === 2, rail: i % 3 === 1 },
+  shop: i === 0 ? { color: side < 0 ? C.accent : "#e9e4d8", sign: side < 0 ? "COFFEE · TOAST" : "DRY CLEANING", awning: side < 0 ? "#3b6e5c" : "#8a3b33" } : undefined,
+}));
+row(left, -1); row(right, 1);
+// the corner bookshop at the far end of the street, square on to the camera: the hero of the flat view
+K.building({ x: 0, z: END - 5, w: 16, d: 10, floors: 4, color: "#d9cdb4", trim: C.trim, glass: C.glass, ac: 4, win: { cols: 5, side: 2 },
+  shop: { color: C.accent, sign: "KOMORI BOOKS", signBg: C.accent, signFg: "#1d1a24", awning: "#2f5a8a" }, roof: { parapet: true, tank: "#c9d2d6", rail: true } });
+// corner buildings across the cross street, fronts to the crossing (they frame the flat view)
+for (const s of [-1, 1]) K.building({ x: s * (RW + PW + 6), z: XS[0] - PW - 5, w: 12, d: 9, floors: s < 0 ? 3 : 4, color: s < 0 ? C.grey : C.cream, trim: C.trim, ac: 2,
+  shop: { color: "#e9e4d8", sign: s < 0 ? "SUZU PHARMACY" : "TAKE-OUT SUSHI", awning: s < 0 ? "#3b6e5c" : "#2f5a8a" }, win: { cols: 4 }, roof: { parapet: true, tank: s > 0 } });
+
+// blade signs stick out from the walls: flat in the telephoto, they turn into boards in the corner views
+const blade = (x, y, z, text, bg, fg, side) => K.sign({ x, z, y, w: 0.5, h: 1.6, ry: side < 0 ? 0 : 180, d: 0.12, px: 160, lines: text.split(""), bg, fg, frame: "#e6e2d8", both: true, size: 0.8 });
+blade(-RW - PW + 0.3, 3.4, -10.2, "BAR", "#26323f", "#f2be2a", -1); blade(-RW - PW + 0.3, 4.2, -19.5, "HAIR", "#f4f1e6", "#b33a2e", -1);
+blade(RW + PW - 0.3, 3.6, -21, "RAMEN", "#b33a2e", "#fff6e8", 1); blade(RW + PW - 0.3, 4.4, -33, "CLINIC", "#f4f1e6", "#2f5a8a", 1);
+// posters on the pole bases and walls (code-drawn text, made-up names)
+const poster = (x, y, z, ry, t, bg, fg) => K.quad(0.42, 0.6, "#ffffff", x, y, z, { ry, map: K.label(t, { w: 168, h: 240, bg, fg, lines: t.split(" "), size: 0.62 }), ink: 0.5 });
+poster(-RW - PW - 0.01 + 0.0, 1.0, -14, 90, "LOST CAT CALL", "#f7f2e2", "#2a2733"); poster(RW + PW + 0.0, 1.1, -26, -90, "SUMMER FAIR SAT", "#f2be2a", "#2a2733");
+poster(-RW - PW, 1.2, -31, 90, "PIANO LESSONS", "#e6eff4", "#2f5a8a");
+
+// ---------- street ----------
+const poles = { L: [], R: [] };
+for (const z of [-6, -18, -30, -42]) {
+  poles.L.push(K.pole({ x: -RW - 0.45, z, h: 9, ry: 90, transformer: z === -18, lamp: z === -30, plate: z === -6 ? "KOMORI 3" : null }));
+  poles.R.push(K.pole({ x: RW + 0.45, z, h: 9, ry: -90, transformer: z === -30, lamp: z === -6 }));
+}
+K.wires(poles.L, { pick: [0, 1] }); K.wires(poles.R, { pick: [2, 3] });
+for (let i = 0; i < 4; i += 2) K.wire(poles.L[i].tops[2], poles.R[i].tops[1], { sag: 0.5 });       // wires across the street
+K.mirror({ x: -RW - 0.6, z: XS[0] - 0.5, ry: 35 });
+K.roadSign({ x: RW + 0.5, z: XS[0] - 0.4, shape: "tri", size: 0.7, face: (g, w) => { g.fillStyle = "#d8312b"; g.beginPath(); g.moveTo(8, 8); g.lineTo(w - 8, 8); g.lineTo(w / 2, w - 30); g.fill(); g.fillStyle = "#fff"; g.font = "bold 58px 'PI Barlow'"; g.textAlign = "center"; g.fillText("STOP", w / 2, 92); } });
+K.roadSign({ x: -RW - 0.5, z: -12, ry: 90, shape: "round", size: 0.6, face: (g, w) => { g.fillStyle = "#2a5fb8"; g.beginPath(); g.arc(w / 2, w / 2, w / 2 - 4, 0, 7); g.fill(); g.lineWidth = 18; g.strokeStyle = "#d8312b"; g.stroke(); g.beginPath(); g.moveTo(40, 40); g.lineTo(w - 40, w - 40); g.stroke(); } });
+K.vending({ x: -RW - PW + 0.6, z: XS[0] - 0.75, ry: 0, c: "#d9433b", label: "COLD DRINKS" });
+K.vending({ x: -RW - PW + 1.7, z: XS[0] - 0.75, ry: 0, c: "#2f6fbf", label: "TEA · WATER" });
+K.bin({ x: RW + 1.4, z: -9 }); K.bin({ x: RW + 1.9, z: -9.1, c: "#5c6a8a" });
+K.bike({ x: RW + 1.9, z: -22, ry: 90 });
+K.planter({ x: -RW - 2.0, z: -24, ry: 90 }); K.planter({ x: RW + 2.1, z: -36, ry: -90, leaf: "#6e9a55" });
+K.tree({ x: -RW - 1.6, z: -38, h: 5.2, r: 1.6 });
+K.guard({ x0: -12, x1: -RW - 0.3, z: XS[1] + 0.3 }); K.guard({ x0: RW + 0.3, x1: 12, z: XS[1] + 0.3 });
+// the hero object: a parked kei van on the right kerb — the first corner view turns away from it
+K.car({ x: 1.95, z: -13, ry: 180, kind: "van", c: "#e9e6de", plate: "48-12" });
+
+// ---------- swap objects: five cones, a neat row on the kerb (lay 0) or a diagonal across the crossing (lay 1) ----------
+for (let k = 0; k < 5; k++) {
+  const x = -2.2 + k * 1.1, cone = K.cone({ x, z: XS[1] - 0.4, c: C.cone });
+  F.swap(cone, { x, z: XS[1] - 0.4 }, { x, z: XS[1] - 0.4 - k * 1.55 });
+}
+
+// ---------- shots ----------
+// solved by eye on stills: x, y camera; zf focus plane; W framed width there; fov lens; H horizon; el down-look; yaw swing
+F.shots({
+  flat:  { x: 0, y: 3.8, zf: -18, W: 15.5, fov: 1.5, H: 0, lay: 0, cs: 1.8 },          // the whole street squashed flat
+  worm:  { x: 0.3, y: 0.7, zf: 3.2, W: 16, fov: 88, H: -0.68, lay: 0, cs: 1.4 },       // knee height, horizon low
+  cornA: { x: -1.2, y: 1.6, zf: 1.5, W: 13.5, fov: 4, H: -0.1, el: 10, yaw: 22, lay: 0, cs: 1.4 },   // swung right → sees the left row
+  cornAw:{ x: -1.2, y: 1.6, zf: 1.5, W: 11.5, fov: 30, H: -0.1, el: 10, yaw: 22, lay: 0, cs: 1.4 },
+  high:  { x: 0, y: 8, zf: 2.5, W: 12.5, fov: 36, H: 1.6, lay: 1, cs: 1.4 },          // up high, horizon above the frame
+  cornB: { x: 0.4, y: 0.6, zf: -1, W: 19, fov: 4, H: -0.3, el: 20, yaw: -32, lay: 1, cs: 1.4 },
+  cornBw:{ x: 0.4, y: 0.6, zf: -1, W: 14.5, fov: 44, H: -0.3, el: 20, yaw: -32, lay: 1, cs: 1.4 },
+  low:   { x: 0.2, y: 2.8, zf: 3.2, W: 10.8, fov: 74, H: 0.15, lay: 1, cs: 1.4 },
+});
+F.shots({
+  flat2: F.drift("flat", { W: 0.965 }), flatD: F.drift("flat", { W: 0.985, lay: 1 }), flat2D: F.drift("flat", { W: 0.965, lay: 1 }),
+  worm2: F.drift("worm", { x: -0.2, W: 0.95 }), cornA2: F.drift("cornA", { W: 0.96, yaw: 2 }), cornB2: F.drift("cornB", { W: 0.96, yaw: -2 }),
+  high2: F.drift("high", { x: -0.3, W: 0.95 }), low2: F.drift("low", { x: -0.25, W: 0.95 }),
+});
+// ---------- keys (10 s) ----------
+// flat → worm's eye → corner A (flat, then opens) → flat (the cones swap here) → high → corner B (flat, then opens) →
+// low → flat (they swap back) — and the loop ends on the shot it starts on
+F.keys([[0, "flat2"], [600, "flat"], [1150, "worm"], [1850, "worm2"], [2250, "cornA"], [2700, "cornA2"], [3350, "cornAw"],
+  [3750, "flat"], [4250, "flatD"], [4750, "flat2D"], [5250, "high"], [6000, "high2"], [6400, "cornB"], [6850, "cornB2"],
+  [7500, "cornBw"], [7900, "low"], [8900, "low2"], [9350, "flat2D"], [9850, "flat2"], [10000, "flat2"]]);
+
+F.start();
+</script>

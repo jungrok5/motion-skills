@@ -829,6 +829,46 @@
       ]
     },
     {
+      "id": "perspective-illusion",
+      "name": "perspective-illusion",
+      "tagline": "주제 하나를 주면 거리 · 승강장 · 통로처럼 긴 축이 있는 장소를 선화 일러스트 3D로 짓고, 망원 렌즈로 한 장의 평면 그림처럼 보이게 했다가 돌리 줌과 코너 시점으로 입체를 드러내는 10초 루프를 코드만으로 만듭니다. 평면일 때 몰래 깊이를 바꾼 물건이 줄에서 대각선으로 드러나고, 잉크 선 · 두 단계 음영 · 그림자 해칭 · 모션 블러를 갖춘 MP4와 라이브 페이지를 냅니다.",
+      "posterAlt": "perspective-illusion으로 만든 장면 네 개: 육교 아래 지붕과 열차 앞면, 한 줄로 선 노란 주의판이 한 장의 정면도처럼 보이는 시골 역, 같은 역을 위에서 내려다보니 주의판이 승강장을 따라 비스듬히 놓인 모습, 노란 간판의 서점 앞에 꼬깔 다섯 개가 한 줄로 선 평면 같은 골목, 같은 골목을 내려다보니 꼬깔이 횡단보도를 비스듬히 가로지르는 모습",
+      "poster": "perspective-illusion/poster.jpg",
+      "tags": [
+        "three.js",
+        "선화 일러스트",
+        "10초 루프",
+        "MP4",
+        "라이브 페이지"
+      ],
+      "stats": [
+        "예제 · 템플릿 2개",
+        "샷 8가지 · 패스 3개"
+      ],
+      "page": "perspective-illusion/",
+      "source": "perspective-illusion/",
+      "absorbedFrom": {
+        "repo": "https://github.com/dotslashsimran/simcraft",
+        "path": "skills/video/perspective-illusion/"
+      },
+      "sources": [
+        {
+          "title": "dotslashsimran/simcraft의 perspective-illusion 스킬 (SKILL.md)",
+          "url": "https://github.com/dotslashsimran/simcraft/blob/main/skills/video/perspective-illusion/SKILL.md"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「Country Platform」 · 솔내역 · 10초 루프 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/perspective-illusion/demo/country-platform/"
+        },
+        {
+          "title": "「Corner Street」 · 템플릿 · 오후의 뒷골목 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/perspective-illusion/demo/corner-street/"
+        }
+      ]
+    },
+    {
       "id": "hands-on-lab",
       "name": "hands-on-lab",
       "tagline": "주제 하나를 주면 장난감 같은 3D 실험대를 켜고 부품을 하나씩 바꿔 보는 실습 레슨 앱을 새로 설계합니다. 실험대와 늘 같은 값을 보여 주는 회로도 · 힘 그림, 실시간 그래프, 지금 숫자가 들어간 수식, 해 보기 목표, 여러 언어를 갖추고, 커서 투어는 1080p MP4로 굽습니다.",
