@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>paper-cutout-short · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 종이를 오리고 찢어 만든 무대에서 컷아웃 인형이 작은 심부름을 하는 단편 애니메이션을 만듭니다. 종이 부품은 이미지 생성 모델(GPT 이미지)로 그려 잘라 쓰거나 코드로 오려 만들고, 움직임은 늘 코드라서 원하는 대로 고치고 다시 만들 수 있습니다. 초당 12장으로 끊기는 움직임, 실에 매달린 해와 막대에 꽂힌 달, 종이 제목표, 코드로 합성한 오르골 음악을 붙인 1080p MP4와 브라우저에서 도는 페이지를 냅니다.">
+<meta property="og:title" content="paper-cutout-short · motion-skills">
+<meta property="og:description" content="주제 하나를 주면 종이를 오리고 찢어 만든 무대에서 컷아웃 인형이 작은 심부름을 하는 단편 애니메이션을 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/paper-cutout-short/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/paper-cutout-short">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / paper-cutout-short</nav>
+  <h1>paper-cutout-short</h1>
+  <p>주제 하나를 주면 종이를 오리고 찢어 만든 무대에서 컷아웃 인형이 작은 심부름을 하는 단편 애니메이션을 만듭니다. 종이 부품은 이미지 생성 모델(GPT 이미지)로 그려 잘라 쓰거나 코드로 오려 만들고, 움직임은 늘 코드라서 원하는 대로 고치고 다시 만들 수 있습니다. 초당 12장으로 끊기는 움직임, 실에 매달린 해와 막대에 꽂힌 달, 종이 제목표, 코드로 합성한 오르골 음악을 붙인 1080p MP4와 브라우저에서 도는 페이지를 냅니다.
+  보고 만든 원본: <a href="https://x.com/lemomo_ai/status/2119327014041842157" target="_blank" rel="noopener">Lemomo의 X 게시물 (GPT 이미지로 만든 컷아웃 애니메이션 10.8초)</a>.</p>
+  <ul class="tags"><li>2D 캔버스</li><li>12fps 스톱모션</li><li>이미지 생성 부품</li><li>MP4</li><li>합성 사운드</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(항구의 가로등을 켜는 여우, 배로 빵을 나르는 두더지 …). 레퍼런스 영상이 있으면 그 스틸</dd>
+      <dt>브리프</dt><dd>심부름 · 종이 인형으로 설계한 주인공 · 무대 한 곳과 레이어 · 실과 막대에 매단 것 · 빛의 변화 · 반전 하나 · 3–6박자를 적은 <code>BRIEF.md</code></dd>
+      <dt>부품</dt><dd>이미지 모델로 부품 시트를 받아(<code>gen-parts.mjs</code>) PNG 부품으로 자르기(<code>cut-parts.mjs</code>), 또는 코드로 찢은 종이 조각으로 오리기 — 둘 다 같은 리그에 핀으로 고정</dd>
+      <dt>확인</dt><dd>양쪽 방향 캐스트 시트(관절이 가능한 쪽으로 꺾이는지, 앞뒤가 맞는지), 무작위 스틸 채점, 모든 샷 그리기 · 빈 프레임 · 결정성 · 한 장을 2프레임씩 유지하는지 · 관절 범위 · 작품 규칙 · 악보 검사</dd>
+      <dt>출력</dt><dd>24fps 1920×1080 MP4(한 장을 2프레임씩, 오르골 · 종이 · 불꽃 효과음 포함), ♪ 버튼으로 소리까지 재생하는 라이브 페이지</dd>
+    </dl>
+    <pre><code>cd paper-cutout-short/examples/lamplighter
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs cast.html --stills 0 --scale .5
+node ../../scripts/score.mjs score.js --dur 20.2 --out out/lamplighter.wav
+node ../../scripts/render.mjs index.html --workers 4 --audio out/lamplighter.wav
+cd ../parts-route
+node ../../scripts/cut-parts.mjs sheet.png --names head,torso,tail,armN,foreN,thighN,shinN,footN --out parts/ember
+node ../../scripts/new-film.mjs ../../../my-film</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. GPU와 npm 설치가 필요 없습니다(CPU에서 1080p 한 프레임 약 0.17초, 20초 영상을 워커 4개로 약 1분 30초). 이미지 경로는 이미지 모델이 더 필요합니다(<code>gen-parts.mjs</code>는 <code>OPENAI_API_KEY</code>, 또는 PNG를 저장하는 아무 도구). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/paper-cutout-short/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:calc((100vw - 34px)*.5625);--demo-bg:#1c1418">
+    <iframe data-src="demo/examples/lamplighter/" title="paper-cutout-short 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/lamplighter/">데모 열기 (examples/lamplighter)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/lamplighter</code> · 20.2초 · 3샷 · ♪ 버튼으로 소리</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/lamplighter/" data-cap="예제 &lt;code&gt;examples/lamplighter&lt;/code&gt; · 20.2초 · 3샷 · ♪ 버튼으로 소리" aria-pressed="true">점등원 여우</button>
+        <button class="btn" type="button" data-src="demo/examples/lamplighter/cast.html" data-cap="캐스트 시트 &lt;code&gt;examples/lamplighter/cast.html&lt;/code&gt; · 오른쪽 · 왼쪽 · 걷기 · 장대 들기 · 뒤집기" aria-pressed="false">캐스트 시트</button>
+        <button class="btn" type="button" data-src="demo/examples/parts-route/" data-cap="이미지 경로 &lt;code&gt;examples/parts-route&lt;/code&gt; · 시트에서 자른 PNG 부품을 리그에 고정 · 6초" aria-pressed="false">자른 부품</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/film.html&lt;/code&gt; · 8초 · 2샷 · 새 영화의 출발점" aria-pressed="false">시작 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본 영상에 없는 주제로 브리프부터 새로 설계해 만든 예제의 장면, 캐스트 시트, 이미지 부품 경로, 시작 템플릿입니다. 카드를 누르면 그 장면이 라이브 페이지에서 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"film":"점등원 여우","sheet":"캐스트 · 부품","tpl":"템플릿"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「The Lamplighter」 <small>20.2초 · 3샷 · 코드로 오린 종이</small></h3>
+      <p>해 질 녘 종이 항구에서 여우 점등원이 장대로 가로등을 켜고, 실에 매단 등불이 등대를 올라가 불이 들어오기까지</p>
+      <div class="grid">
+        <a class="tile" data-tags="film" href="demo/examples/lamplighter/?t=1.6" target="_blank" rel="noopener">
+          <img src="samples/quay.jpg" alt="해 질 녘 종이 항구, 비늘 지붕 집들 앞을 장대를 멘 여우가 걷고 실에 매달린 해가 바다 위에 걸린 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 1 · 부두</span><b>걸어 들어오기</b><span class="how">실에 매단 해, 미끄러지는 파도 띠, 카메라가 부두를 따라 이동</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/lamplighter/?t=4.3" target="_blank" rel="noopener">
+          <img src="samples/lamp.jpg" alt="여우가 장대 끝 불꽃을 가로등 유리에 대어 불이 켜진 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 1 · 4.3초</span><b>첫 가로등</b><span class="how">장대 끝이 유리에 닿는 위치를 리그로 계산, 닿는 순간 불이 켜지고 창문이 하나씩</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/lamplighter/?t=8.9" target="_blank" rel="noopener">
+          <img src="samples/moon.jpg" alt="막대에 꽂힌 초승달이 바다 뒤에서 올라오고 여우가 두 번째 가로등을 켜는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 1 · 8.9초</span><b>달이 올라옴</b><span class="how">막대에 꽂힌 달, 실로 내려오는 별, 저녁 하늘 종이가 밤 종이로</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/lamplighter/?t=11.8" target="_blank" rel="noopener">
+          <img src="samples/lantern.jpg" alt="가까이 본 등대 아래, 실에 매단 작은 등불이 등대를 타고 올라가는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 2 · 등대</span><b>실을 타고 오르는 등불</b><span class="how">무대의 실을 드러내는 반전, 카메라가 등불을 따라 위로</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/lamplighter/?t=17.4" target="_blank" rel="noopener">
+          <img src="samples/night.jpg" alt="밤의 항구, 종이 제목표가 붙고 등대 빛줄기가 돌며 배가 돌아오는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 3 · 밤</span><b>제목표와 빛줄기</b><span class="how">반투명 종이 빛줄기가 돌고, 여우가 장대로 신호한 뒤 뒤집어 돌아섬</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>캐스트 시트와 이미지 부품 경로 <small>양쪽 방향 · 자른 PNG</small></h3>
+      <p>장면을 쓰기 전에 인형을 양쪽 방향으로 돌려 보고, 이미지 모델이 그린 시트를 부품으로 잘라 같은 리그에 고정합니다</p>
+      <div class="grid">
+        <a class="tile" data-tags="sheet" href="demo/examples/lamplighter/cast.html" target="_blank" rel="noopener">
+          <img src="samples/cast.jpg" alt="여우 인형을 오른쪽과 왼쪽 방향으로 서기 · 걷기 · 장대 들기 · 신호 · 눈 감기 · 옆으로 뒤집기 포즈로 늘어놓은 시트" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 시트</span><b>Ember, 양쪽 방향</b><span class="how">관절 핀 표시, 무릎은 뒤로 · 팔꿈치는 앞으로, 얼굴을 가리는 팔 확인</span></div></a>
+        <a class="tile" data-tags="sheet" href="https://github.com/jungrok5/motion-skills/tree/main/paper-cutout-short/examples/parts-route" target="_blank" rel="noopener">
+          <img src="samples/parts-cut.jpg" alt="초록 바탕 부품 시트에서 머리 · 몸통 · 꼬리 · 팔 · 다리 · 발을 찾아 상자와 이름을 붙인 미리보기" loading="lazy" width="640" height="427">
+          <div class="cap"><span class="no">cut-parts.mjs</span><b>시트를 부품으로</b><span class="how">투명 배경이나 단색 배경에서 조각을 찾아 읽는 순서대로 이름 붙인 PNG로</span></div></a>
+        <a class="tile" data-tags="sheet" href="demo/examples/parts-route/?t=4.5" target="_blank" rel="noopener">
+          <img src="samples/parts-walk.jpg" alt="자른 PNG 부품으로 다시 조립한 여우가 종이 언덕 앞 자갈길을 걷는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">bipedParts</span><b>자른 부품으로 걷기</b><span class="how">이미지 부품을 같은 관절 · 관절 범위 · 걷기 주기에 고정</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>시작 템플릿 <small>8초 · 2샷</small></h3>
+      <p>새 프로젝트의 출발점입니다. 주제에 맞게 인형과 무대를 새로 설계해 바꿉니다</p>
+      <div class="grid">
+        <a class="tile" data-tags="tpl" href="demo/templates/?t=6.6" target="_blank" rel="noopener">
+          <img src="samples/template.jpg" alt="하늘색 종이 하늘 아래 언덕에서 아이가 연을 날리고 종이 제목표가 붙은 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿</span><b>Kite Day</b><span class="how">아이 인형 하나, 실에 매단 해, 줄에 달린 연, 흐린 앞풀</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬을 만든 출처와, 이 레포에서 새 주제로 만든 예제입니다.</p>
+  <div class="works">
+    <a class="work" href="https://x.com/lemomo_ai/status/2119327014041842157" target="_blank" rel="noopener"><b>원본 · Lemomo의 X 게시물</b><span>GPT 이미지 생성 + 컷아웃 애니메이션 · 10.8초 · 고슴도치 집배원</span><span class="url">x.com/lemomo_ai/status/2119327014041842157</span></a>
+    <a class="work" href="demo/examples/lamplighter/" target="_blank" rel="noopener"><b>「The Lamplighter」</b><span>20.2초 · 3샷 · 라이브 페이지</span><span class="url">paper-cutout-short/examples/lamplighter</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/paper-cutout-short/examples/lamplighter"><b>원본 레포 · motion-skills</b><span>이 레포에서 만듦</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/paper-cutout-short/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/paper-cutout-short">폴더</a> <span>lib · scripts · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/paper-cutout-short/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/paper-cutout-short/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 캐스트 · 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/paper-cutout-short/references/LOOK.md">references/LOOK.md</a> <span>원본에서 관찰한 화면 문법</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/paper-cutout-short/references/PARTS.md">references/PARTS.md</a> <span>이미지 모델 부품 시트: 규칙 · 스타일 프롬프트 · 자르기 · 핀 고정</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/paper-cutout-short/references/KIT.md">references/KIT.md</a> <span>API와 페이지 계약</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/paper-cutout-short/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림은 코드로 오린 종이입니다. 제목표 글꼴 Source Serif 4 (SIL OFL)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

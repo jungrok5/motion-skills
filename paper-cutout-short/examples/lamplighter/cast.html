@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Lamplighter · cast sheet</title>
+<script type="importmap">{ "imports": { "pcs/": "../../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// The cast sheet: every puppet facing right AND left, in the poses the film uses, pins marked in gold. Render it and score it
+// against references/BRIEF.md → "Cast review" before writing shots:
+//   node ../../scripts/render.mjs cast.html --stills 0 --scale .5
+import * as P from 'pcs/paper.js';
+import * as Pup from 'pcs/puppet.js';
+import * as K from 'pcs/kit.js';
+import { Stage } from 'pcs/stage.js';
+const F = new Stage({ seed: 11, fadeIn: 0, fadeOut: 0, jitter: 0 });
+await F.ready();
+const { cast, PAL } = await import('./cast.js');
+const { EMBER, pole } = cast();
+const sheet = F.layer([0, 0, 1920, 1080], c => P.piece(c, P.rect(-20, -20, 1960, 1120), '#e8dcc6', { edge: 'cut', tex: .6, light: .2 }), { shadow: 0 });
+const holdPole = ang => ({ foreN: c => { c.save(); c.translate(3, 46); c.rotate(ang * Math.PI / 180); P.put(c, pole, { lift: 6 }); c.restore(); } });
+const POSES = [
+  ['stand', Pup.stand(), {}],
+  ['walk 0', Pup.walk(0), {}], ['walk .25', Pup.walk(.25), {}], ['walk .5', Pup.walk(.5), {}],
+  ['reach (pole up)', { ...Pup.stand({ lean: -4, nod: -8 }), armN: -72, foreN: -24 }, {}, { extra: holdPole(-60 + 100) }],
+  ['signal (pole high)', { ...Pup.stand({ lean: -4, nod: -8 }), armN: -72, foreN: -24, tail: 20 }, {}, { extra: holdPole(-92 + 100) }],
+  ['blink, tail up', { ...Pup.stand(), tail: -30, head: 6 }, { swap: { head: 'blink' } }],
+  ['turning (edge-on)', Pup.stand(), { facing: .3 }],
+];
+F.shot(1, g => {
+  g.put(sheet, 0, 0, 0);
+  g.at(0, c => {
+    Pup.sheet(c, EMBER, POSES, { cw: 236, x0: 16, gy: 450, rowH: 500, cols: 8, pins: true });
+    c.save(); c.font = `600 22px ${K.FONT}`; c.fillStyle = '#4a3a40'; c.fillText('Ember — fox lamplighter · facing right / left · pins in gold', 24, 40); c.restore();
+  });
+});
+F.start();
+</script>
+</body>
+</html>
