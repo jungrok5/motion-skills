@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>perspective-illusion · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 긴 축이 있는 장소를 선화 일러스트 3D로 짓고, 망원 렌즈로 한 장의 평면 그림처럼 보이게 했다가 돌리 줌과 코너 시점으로 입체를 드러내는 10초 루프 영상을 코드만으로 만듭니다.">
+<meta property="og:title" content="perspective-illusion · motion-skills">
+<meta property="og:description" content="주제 하나를 주면 긴 축이 있는 장소를 선화 일러스트 3D로 짓고, 망원 렌즈로 한 장의 평면 그림처럼 보이게 했다가 돌리 줌과 코너 시점으로 입체를 드러내는 10초 루프 영상을 코드만으로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/perspective-illusion/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/perspective-illusion">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / perspective-illusion</nav>
+  <h1>perspective-illusion</h1>
+  <p>주제 하나를 주면 거리 · 승강장 · 통로처럼 긴 축이 있는 장소를 선화 일러스트 3D로 짓고, 망원 렌즈로 한 장의 평면 그림처럼 보이게 했다가 돌리 줌과 코너 시점으로 입체를 드러내는 10초 루프 영상을 코드만으로 만듭니다. 평면일 때 몰래 깊이를 바꾼 물건이 줄에서 대각선으로 드러나고, 잉크 선 · 두 단계 음영 · 그림자 해칭 · 모션 블러를 갖춘 MP4와 브라우저에서 도는 페이지를 냅니다.
+  보고 만든 원본: <a href="https://github.com/dotslashsimran/simcraft/blob/main/skills/video/perspective-illusion/SKILL.md" target="_blank" rel="noopener">dotslashsimran/simcraft의 perspective-illusion 스킬</a> (원본 레포에 라이선스가 없어 코드는 가져오지 않고 기법을 새 코드로 다시 만들었습니다).</p>
+  <ul class="tags"><li>three.js</li><li>16:9</li><li>10초 루프</li><li>MP4</li><li>라이브 페이지</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나 (동네 골목, 시골 역, 상점 통로, 부두, 복도 …)</dd>
+      <dt>브리프</dt><dd>장소와 긴 축, 축 끝의 주인공, 평면에서 하나로 겹치는 반복물, 히어로 오브젝트, 깊이를 바꿀 물건 3–6개, 햇빛, 팔레트</dd>
+      <dt>장면</dt><dd>미터 단위 부품 키트로 짓는 3D 장소, 샷 키 { x, y, zf, W, fov, H, el, yaw, lay, cs }와 하나의 단조 3차 곡선 타임라인</dd>
+      <dt>검사</dt><dd>평면으로 시작, 평면일 때만 바뀌는 배치, 망원 → 광각 짝의 코너 시점, 이음매, 결정성, 평면 화면 밀도, 깜빡임 지도</dd>
+      <dt>출력</dt><dd>1920×1080 MP4(30 · 60 fps), 스크럽되는 라이브 페이지, BRIEF.md</dd>
+    </dl>
+    <pre><code>cd perspective-illusion/examples/country-platform
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs index.html --sheet --scale .4
+node ../../scripts/render.mjs index.html --preview
+node ../../scripts/render.mjs index.html
+node ../../scripts/blink.mjs out/scene.mp4
+node ../../scripts/new-scene.mjs ~/my-loop   # 새 루프</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. npm 설치, GPU, API 키는 필요 없습니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/perspective-illusion/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10.2;--h-phone:300px;--demo-bg:#101018">
+    <iframe data-src="demo/country-platform/?scale=.5&amp;autoplay=1" title="perspective-illusion 예제 실시간 재생" allow="fullscreen; autoplay" allowfullscreen></iframe>
+    <noscript><a href="demo/country-platform/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/country-platform</code> · 솔내역 · 10초 루프</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/country-platform/?scale=.5&amp;autoplay=1" data-cap="예제 &lt;code&gt;examples/country-platform&lt;/code&gt; · 솔내역 · 10초 루프" aria-pressed="true">시골 역</button>
+        <button class="btn" type="button" data-src="demo/corner-street/?scale=.5&amp;autoplay=1" data-cap="템플릿 &lt;code&gt;templates/scene.html&lt;/code&gt; · 오후의 뒷골목 · 10초 루프" aria-pressed="false">뒷골목</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제와 템플릿의 샷별 장면입니다. 같은 장소가 평면 그림에서 입체로 열리는 순서대로 놓았습니다. 카드를 누르면 라이브 데모가 그 순간에서 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"ex":"예제 · 시골 역","tpl":"템플릿 · 뒷골목"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>Country Platform <small>예제 · 솔내역 · 10초</small></h3>
+      <p>원본에 없는 주제로 만든 예제입니다. 섬식 승강장, 지붕 기둥, 전차선 철주, 기다리는 열차, 육교가 한 장의 정면도처럼 보이다가, 승강장 끝에 한 줄로 서 있던 노란 “발밑 주의” 판 네 개가 사실은 승강장을 따라 비스듬히 놓여 있었음을 드러냅니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="ex" href="demo/country-platform/?t=0.3" target="_blank" rel="noopener">
+          <img src="samples/cp-flat.jpg" alt="평면처럼 보이는 정면: 솔내역 육교 아래 지붕 하나, 왼쪽에 열차 앞면, 양옆에 겹친 철주, 승강장 끝에 한 줄로 선 노란 주의판 네 개" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">평면 · 0.3초</span><b>한 장의 정면도</b><span class="how">화각 1.5°, 약 650 m 거리: 기둥과 철주가 하나로 겹침</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/country-platform/?t=1.6" target="_blank" rel="noopener">
+          <img src="samples/cp-worm.jpg" alt="승강장 무릎 높이에서 본 장면: 앞의 노란 주의판, 지붕과 철주가 이어지는 승강장, 파란 하늘과 구름, 낮은 언덕" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">무릎 높이 · 1.6초</span><b>돌리 줌으로 열린 깊이</b><span class="how">화각 86°, 지평선을 낮게 둔 렌즈 시프트</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/country-platform/?t=3.4" target="_blank" rel="noopener">
+          <img src="samples/cp-cornerA.jpg" alt="오른쪽에서 비스듬히 내려다본 승강장: 앞쪽의 노란 주의판 네 개, 지붕과 역 이름판, 건너편 선로의 열차, 철주" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">코너 A · 3.4초</span><b>열차 반대쪽으로</b><span class="how">yaw 26°, 망원으로 평면처럼 보인 뒤 광각으로 열림</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/country-platform/?t=5.6" target="_blank" rel="noopener">
+          <img src="samples/cp-high.jpg" alt="높은 곳에서 내려다본 승강장: 초록 지붕, 비스듬히 흩어진 주의판, 양쪽 선로와 열차" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">조감 · 5.6초</span><b>줄은 대각선이었다</b><span class="how">평면일 때 lay 0 → 1: x는 그대로, z만 3.2 m씩 뒤로</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/country-platform/?t=7.55" target="_blank" rel="noopener">
+          <img src="samples/cp-cornerB.jpg" alt="열차 쪽에서 비스듬히 내려다본 장면: 선로 위 열차 앞면, 승강장 지붕, 승강장을 따라 늘어선 노란 주의판" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">코너 B · 7.6초</span><b>열차 너머로</b><span class="how">yaw −34°, 22° 내려다봄</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/country-platform/?t=8.4" target="_blank" rel="noopener">
+          <img src="samples/cp-low.jpg" alt="오른쪽 선로 위 낮은 시점: 지평선까지 이어지는 레일과 침목, 왼쪽 승강장 벽" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">낮은 시점 · 8.4초</span><b>선로 위에서</b><span class="how">이 장소에 맞춰 더한 샷, 다시 평면으로 돌아가 이음매 없이 반복</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>Corner Street <small>템플릿 · 오후의 뒷골목 · 10초</small></h3>
+      <p>새 루프의 출발점입니다. 전봇대와 전선, 횡단보도, 끝의 서점, 오른쪽에 선 밴, 연석에 한 줄로 놓인 꼬깔 다섯 개.</p>
+      <div class="grid">
+        <a class="tile" data-tags="tpl" href="demo/corner-street/?t=0.3" target="_blank" rel="noopener">
+          <img src="samples/cs-flat.jpg" alt="평면처럼 보이는 골목 정면: 노란 간판의 서점, 양옆의 전봇대 묶음, 세로 간판, 자판기 두 대, 한 줄로 선 주황 꼬깔 다섯 개" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">평면 · 0.3초</span><b>서점이 있는 정면도</b><span class="how">60 m 깊이의 골목이 한 장의 그림으로</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/corner-street/?t=1.6" target="_blank" rel="noopener">
+          <img src="samples/cs-worm.jpg" alt="무릎 높이에서 본 골목: 양쪽 건물이 소실점으로 모이고 끝에 작은 서점, 파란 하늘과 구름" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">무릎 높이 · 1.6초</span><b>서점은 50 m 뒤</b><span class="how">돌리 줌: 앞은 그대로, 뒤가 늘어남</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/corner-street/?t=3.35" target="_blank" rel="noopener">
+          <img src="samples/cs-cornerA.jpg" alt="비스듬히 내려다본 모퉁이: 카페 간판과 차양, 자판기, 전봇대, 횡단보도 앞 꼬깔" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">코너 A · 3.4초</span><b>밴 반대쪽 모퉁이</b><span class="how">yaw 22°, 건물 옆면 · 에어컨 실외기 · 세로 간판</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/corner-street/?t=5.6" target="_blank" rel="noopener">
+          <img src="samples/cs-high.jpg" alt="위에서 내려다본 교차로: 횡단보도를 비스듬히 가로지르는 꼬깔 다섯 개, 골목 안쪽의 밴" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">조감 · 5.6초</span><b>꼬깔은 대각선이었다</b><span class="how">그림자 속에만 세계에 고정된 해칭</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/corner-street/?t=7.5" target="_blank" rel="noopener">
+          <img src="samples/cs-cornerB.jpg" alt="반대쪽에서 내려다본 교차로: 밴, 세탁소 차양, 횡단보도와 꼬깔" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">코너 B · 7.5초</span><b>밴 쪽 모퉁이</b><span class="how">yaw −32°, 20° 내려다봄</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/corner-street/?t=8.4" target="_blank" rel="noopener">
+          <img src="samples/cs-low.jpg" alt="낮은 시점에서 본 횡단보도와 꼬깔, 골목 양쪽 건물과 서점" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">낮은 시점 · 8.4초</span><b>다시 평면으로</b><span class="how">평면 유지 중 꼬깔이 줄로 돌아가고 루프가 이어짐</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬은 simcraft의 perspective-illusion 스킬을 보고 만들었습니다. 원본 레포에 라이선스가 없어 코드와 그림은 가져오지 않았고, 샷 키 · 타임라인 · 선화 패스 · 렌더 계약 · 깜빡임 검사 같은 기법을 새 코드로 다시 짓고 장면은 모두 새로 설계했습니다. 같은 착시를 파스텔 장난감 마을로 만드는 자매 스킬은 <a href="../parallax-facade/">parallax-facade</a>입니다.</p>
+  <div class="works">
+    <a class="work" href="https://jungrok5.github.io/motion-skills/perspective-illusion/demo/country-platform/" target="_blank" rel="noopener"><b>「Country Platform」</b><span>예제 · 솔내역 · 10초 루프 · 라이브 페이지</span><span class="url">perspective-illusion/demo/country-platform</span></a>
+    <a class="work" href="https://github.com/dotslashsimran/simcraft/blob/main/skills/video/perspective-illusion/SKILL.md" target="_blank" rel="noopener"><b>원본 · simcraft perspective-illusion</b><span>스킬의 출처 · 뒷골목, 슈퍼마켓 통로, 비 오는 밤의 교차로 템플릿</span><span class="url">github.com/dotslashsimran/simcraft</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/perspective-illusion"><b>이 레포에서 만듦 · perspective-illusion/</b><span>엔진, 키트, 템플릿, 예제, 스크립트</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/perspective-illusion/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/perspective-illusion">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/perspective-illusion/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/perspective-illusion/references/BRIEF.md">references/BRIEF.md</a> <span>고정되는 것과 주제마다 설계하는 것, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/perspective-illusion/references/CAMERA.md">references/CAMERA.md</a> <span>샷 키, 샷 어휘, 루프, 타이밍, 평면일 때의 속임수</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/perspective-illusion/references/LOOK.md">references/LOOK.md</a> <span>패스, 잉크 선, 두 단계 음영, 해칭, 하늘</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/perspective-illusion/references/KIT.md">references/KIT.md</a> <span>엔진과 키트 API, 페이지 계약</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/perspective-illusion/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 이미지는 모두 이 스킬로 렌더한 장면입니다. 글꼴: Barlow Condensed, Noto Sans KR (OFL)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
