@@ -2,8 +2,12 @@
 
 A collection of Claude Code skills for making motion graphics. Each top-level folder with a `SKILL.md` is one skill
 (`canvas-film/`, `tech-motion-explainer/`, `promo-video/`, `motion-webtoon/`, `specimen-tour/`, `cinematic-3d/`, `machine-sim/`, `pixel-diorama/`, `paper-road/`, `pop-up-textbook/`, `knit-diorama/`, `painted-anime-short/`, `ink-summoning/`, `holo-pass/`, `crayon-statechart/`, `cartoon-3d-short/`, `sketchnote-explainer/`, `aesthetics-film/`, `sketch-cartoon-short/`, `sight-gag-short/`, `live-character/`, `parallax-facade/`, `hands-on-lab/`, `map-dive/`, `cursor-swarm/`, `swarm-world/`, `doodle-styles/`, `cinecode/`); `docs/` is the samples site on GitHub Pages (pushes to `main` deploy it);
-`tools/` holds repo tooling, not skills.
+`tools/` holds repo tooling, not skills; `references/` holds notes shared by all skills.
 
+- A piece that needs a ready-made 3D model (a skill using three.js, when its style allows outside models): read
+  `references/3D-MODELS.md` first — free Polyfork models, commercial use OK, but never commit their `.mjs` source,
+  and committed GLBs need their CC BY credit line. Skills that say code-only (`machine-sim`, `swarm-world`,
+  `aesthetics-film`) stay code-only.
 - Adding a skill, or absorbing one from another project repo: follow `CONTRIBUTING.md` step by step (a skill takes a topic and designs a new piece in its style — not a
   re-render of its example or a fill-in template; folder layout,
   provenance in `SKILL.md` + `docs/skills.json`, `references/LESSONS.md`, verify from a clean copy, samples page from `docs/_template/`;
