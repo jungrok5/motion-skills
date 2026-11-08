@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>cinecode · motion-skills</title>
+<meta name="description" content="아이디어 · 제품 · 노래 · 참고 영상을 주면 질문 몇 개, 제작 카드, 스틸, 절반 크기 초안, 두 번의 수정을 거쳐 코드로만 만든 단편 영화 · 애니메이션 · 광고 · 뮤직비디오 MP4를 내놓습니다.">
+<meta property="og:title" content="cinecode · motion-skills">
+<meta property="og:description" content="아이디어 · 제품 · 노래 · 참고 영상을 주면 코드로만 만든 단편 영화 · 애니메이션 · 광고 · 뮤직비디오 MP4를 함께 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/cinecode/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/cinecode">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / cinecode</nav>
+  <h1>cinecode</h1>
+  <p>아이디어 · 제품 · 노래 · 참고 영상을 주면 사용자와 함께 질문 몇 개, 제작 카드, 스틸, 절반 크기 초안, 두 번의 수정을 거쳐 코드로만 만든 단편 영화 · 애니메이션 · 광고 · 뮤직비디오를 −14 LUFS MP4로 내놓습니다. 원본: <a href="https://github.com/sarpstar/cinecode">https://github.com/sarpstar/cinecode</a> (MIT, Sarp Yıldız)를 보고 만들었습니다.</p>
+  <ul class="tags"><li>Canvas 2D · three.js</li><li>Web Audio</li><li>Quick · Film 모드</li><li>MP4 · −14 LUFS</li><li>사용자와 함께</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>한 줄 아이디어, 제품 · 브랜드, 노래 파일, 참고 영상, 직접 찍은 영상 중 하나</dd>
+      <dt>질문 · 카드</dt><dd>모드(Quick · Film)와 목적, 해석 2–3개, 매체와 룩 선택, 초 단위 비트와 디렉터 카드</dd>
+      <dt>스틸 · 초안</dt><dd>핵심 장면 스틸 채점, 절반 크기 초안, 최대 두 번의 수정, 자동 점검(훅, 장면별 동작, 음량)</dd>
+      <dt>출력</dt><dd><code>&lt;title&gt;.mp4</code> (−14 LUFS), 출처가 있으면 <code>&lt;title&gt;-credits.txt</code>, 저장해 다시 쓰는 형식</dd>
+    </dl>
+    <pre><code># Claude Code에 설치
+cp -r cinecode ~/.claude/skills/cinecode
+
+# 예제 재생 (클릭하면 소리와 함께 재생)
+open cinecode/examples/first-sprout/film.html
+
+# 빈 폴더에서 Claude Code를 열고
+#   "단편 영화 만들어줘" · "make a short film about …"</code></pre>
+    <p class="mute">요구 사항: Node 22+, Python 3, ffmpeg, Chrome 또는 Chromium. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/cinecode/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:4/5;--h-phone:640px;--demo-bg:#000">
+    <iframe data-src="demo/first-sprout/" title="cinecode 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/first-sprout/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/first-sprout</code> · 12초 · 9:16 · 클릭하면 소리와 함께 재생</span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">새 주제로 만든 예제 한 편과 원본 저장소에 실린 영화들입니다. 예제 카드를 누르면 라이브 데모가, 원본 카드를 누르면 원본 저장소의 소개가 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"new":"새 주제 예제","film":"단편 · 애니메이션","ad":"광고 · 홍보","doc":"다큐 · 설명"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「First Sprout」 <small>브리프에서 새로 설계 · Quick 모드</small></h3>
+      <p>원본 영화들에 없는 주제(씨앗의 발아)를 브리프 → 제작 카드 → 스틸 채점 → 초안 순서로 만든 12초 무언 종이 콜라주 영화입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="new" href="demo/first-sprout/" target="_blank" rel="noopener">
+          <img src="samples/sprout-drop.jpg" alt="새벽 푸른 벽 앞, 화분 흙 위로 물방울 하나가 떨어지는 종이 콜라주 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">새 주제 · 0–3초</span><b>물방울</b><span class="how">첫 프레임부터 떨어지는 물방울, 0.75초에 착지해 흙으로 스밈</span></div></a>
+        <a class="tile" data-tags="new" href="demo/first-sprout/" target="_blank" rel="noopener">
+          <img src="samples/sprout-root.jpg" alt="흙 단면 속 녹두 한 알이 갈라지고 흰 뿌리가 아래로 뻗는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">새 주제 · 3–6초</span><b>뿌리</b><span class="how">불어난 녹두가 3.75초에 갈라지고, 카메라가 뿌리 끝을 따라 내려감</span></div></a>
+        <a class="tile" data-tags="new" href="demo/first-sprout/" target="_blank" rel="noopener">
+          <img src="samples/sprout-crust.jpg" alt="갈고리 모양 줄기가 흙 표면의 딱지를 밀어 올리는 단면 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">새 주제 · 6–9초</span><b>흙 딱지</b><span class="how">갈고리 줄기가 떡잎을 끌고 올라와 8.25초에 흙 딱지를 깸</span></div></a>
+        <a class="tile" data-tags="new" href="demo/first-sprout/" target="_blank" rel="noopener">
+          <img src="samples/sprout-leaves.jpg" alt="따뜻한 아침빛 속에서 떡잎 두 장이 열리고 잎 끝에 이슬이 맺힌 새싹" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">새 주제 · 9–12초</span><b>아침</b><span class="how">줄기가 펴지고 껍질이 떨어진 뒤 떡잎이 열림, 이슬이 11.25초에 빛을 받음</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>원본에서 만든 영화 <small>sarpstar/cinecode</small></h3>
+      <p>원본 저장소 README에 실린 작품의 스틸입니다(MIT). 장르와 길이가 다른 영화를 같은 킷으로 만들었습니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="film" href="https://github.com/sarpstar/cinecode#made-with-cinecode" target="_blank" rel="noopener">
+          <img src="samples/motor.jpg" alt="노을 아래 부서지는 순간에 멈춘 파도" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">단편 · 90초</span><b>Motor</b><span class="how">멈춘 순간들</span></div></a>
+        <a class="tile" data-tags="film" href="https://github.com/sarpstar/cinecode#made-with-cinecode" target="_blank" rel="noopener">
+          <img src="samples/tren.jpg" alt="리노컷 설경 속 빨간 우편 열차" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">단편 · 25초</span><b>The Mail Train</b><span class="how">리노컷 여행</span></div></a>
+        <a class="tile" data-tags="ad" href="https://github.com/sarpstar/cinecode#made-with-cinecode" target="_blank" rel="noopener">
+          <img src="samples/ilktik.jpg" alt="금빛 시계 무브먼트에 새긴 도시 스카이라인" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">광고 · 50초</span><b>İlk Tik</b><span class="how">시계 광고</span></div></a>
+        <a class="tile" data-tags="film" href="https://github.com/sarpstar/cinecode#made-with-cinecode" target="_blank" rel="noopener">
+          <img src="samples/atlama.jpg" alt="초록 코드가 쏟아지는 종이 도시" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">단편 · 50초</span><b>Atlama Programı</b><span class="how">미니어처 오마주</span></div></a>
+        <a class="tile" data-tags="film" href="https://github.com/sarpstar/cinecode#made-with-cinecode" target="_blank" rel="noopener">
+          <img src="samples/koltuk.jpg" alt="빈 들판의 레일 위 필름 카메라" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">단편 · 80초</span><b>Boş Koltuk</b><span class="how">스스로 지어지는 촬영장</span></div></a>
+        <a class="tile" data-tags="doc" href="https://github.com/sarpstar/cinecode#made-with-cinecode" target="_blank" rel="noopener">
+          <img src="samples/kopek.jpg" alt="빛기둥 아래 빛의 점으로 그린 개들" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">데이터 다큐 · 90초</span><b>Yüz Köpek</b><span class="how">개 백 마리의 데이터 다큐멘터리</span></div></a>
+        <a class="tile" data-tags="doc" href="https://github.com/sarpstar/cinecode#made-with-cinecode" target="_blank" rel="noopener">
+          <img src="samples/titanik.jpg" alt="어두운 바다로 가라앉는 배" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">다큐 · 5분</span><b>Titanik, Son Saatler</b><span class="how">마지막 몇 시간의 다큐멘터리</span></div></a>
+        <a class="tile" data-tags="ad" href="https://github.com/sarpstar/cinecode#made-with-cinecode" target="_blank" rel="noopener">
+          <img src="samples/cinecode.jpg" alt="색색의 창이 있는 팝아트 탑" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">홍보 · 60초</span><b>cinecode</b><span class="how">팝아트 홍보 영상</span></div></a>
+        <a class="tile" data-tags="film" href="https://github.com/sarpstar/cinecode#made-with-cinecode" target="_blank" rel="noopener">
+          <img src="samples/fener.jpg" alt="달 아래 소녀와 나무 정령" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">애니메이션 · 60초</span><b>Fener</b><span class="how">애니메이션 동화</span></div></a>
+        <a class="tile" data-tags="doc" href="https://github.com/sarpstar/cinecode#made-with-cinecode" target="_blank" rel="noopener">
+          <img src="samples/gokyuzu.jpg" alt="빛을 나누는 프리즘과 큰 노란 글자" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">설명 · 45초 · 9:16</span><b>Gökyüzü neden mavi?</b><span class="how">하늘은 왜 파란가 설명 영상</span></div></a>
+        <a class="tile" data-tags="ad" href="https://github.com/sarpstar/cinecode#made-with-cinecode" target="_blank" rel="noopener">
+          <img src="samples/firin.jpg" alt="오븐 옆 조명 아래 갓 구운 시미트" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">광고 · 15초 · 9:16</span><b>Kuzguncuk Fırın</b><span class="how">동네 빵집 광고</span></div></a>
+        <a class="tile" data-tags="film" href="https://github.com/sarpstar/cinecode#made-with-cinecode" target="_blank" rel="noopener">
+          <img src="samples/kibrit.jpg" alt="구릿빛으로 빛나는 판화 도시" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">그래픽 단편 · 63초 · 9:16</span><b>Tek Kibrit</b><span class="how">성냥 한 개비의 그래픽 단편</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">새 주제로 증명한 예제와, 이 스킬의 출처인 원본 저장소입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/first-sprout/"><b>「First Sprout」 · 브리프에서 새로 설계</b><span>12초 · 9:16 · 종이 콜라주 · 코드로 쓴 음악 · 무언</span><span class="url">cinecode/demo/first-sprout</span></a>
+    <a class="work" href="https://github.com/sarpstar/cinecode"><b>원본 레포 · sarpstar/cinecode</b><span>스킬의 출처 (MIT) · 영화 12편의 스틸과 30초 릴</span><span class="url">github.com/sarpstar/cinecode</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cinecode/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/cinecode">폴더</a> <span>scripts · references · templates · starter · styles · tests</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cinecode/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cinecode/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 제작 카드, 스틸 채점 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cinecode/references/quick-mode.md">references/quick-mode.md</a> <span>Quick 모드</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cinecode/references/film-mode.md">references/film-mode.md</a> <span>Film 모드</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cinecode/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 원본 영화 스틸: sarpstar/cinecode (MIT)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

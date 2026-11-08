@@ -1,7 +1,7 @@
 # motion-skills
 
 A collection of Claude Code skills for making motion graphics. Each top-level folder with a `SKILL.md` is one skill
-(`canvas-film/`, `tech-motion-explainer/`, `promo-video/`, `motion-webtoon/`, `specimen-tour/`, `cinematic-3d/`, `machine-sim/`, `pixel-diorama/`, `paper-road/`, `pop-up-textbook/`, `knit-diorama/`, `painted-anime-short/`, `ink-summoning/`, `holo-pass/`, `crayon-statechart/`, `cartoon-3d-short/`, `sketchnote-explainer/`, `aesthetics-film/`, `sketch-cartoon-short/`, `sight-gag-short/`, `live-character/`, `parallax-facade/`, `hands-on-lab/`, `map-dive/`, `cursor-swarm/`, `swarm-world/`, `doodle-styles/`); `docs/` is the samples site on GitHub Pages (pushes to `main` deploy it);
+(`canvas-film/`, `tech-motion-explainer/`, `promo-video/`, `motion-webtoon/`, `specimen-tour/`, `cinematic-3d/`, `machine-sim/`, `pixel-diorama/`, `paper-road/`, `pop-up-textbook/`, `knit-diorama/`, `painted-anime-short/`, `ink-summoning/`, `holo-pass/`, `crayon-statechart/`, `cartoon-3d-short/`, `sketchnote-explainer/`, `aesthetics-film/`, `sketch-cartoon-short/`, `sight-gag-short/`, `live-character/`, `parallax-facade/`, `hands-on-lab/`, `map-dive/`, `cursor-swarm/`, `swarm-world/`, `doodle-styles/`, `cinecode/`); `docs/` is the samples site on GitHub Pages (pushes to `main` deploy it);
 `tools/` holds repo tooling, not skills.
 
 - Adding a skill, or absorbing one from another project repo: follow `CONTRIBUTING.md` step by step (a skill takes a topic and designs a new piece in its style — not a

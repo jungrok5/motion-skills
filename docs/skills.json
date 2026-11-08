@@ -1027,6 +1027,46 @@
           "url": "https://jungrok5.github.io/motion-skills/doodle-styles/demo/examples/kettle/"
         }
       ]
+    },
+    {
+      "id": "cinecode",
+      "name": "cinecode",
+      "tagline": "아이디어 · 제품 · 노래 · 참고 영상을 주면 사용자와 함께 질문, 제작 카드, 스틸, 절반 크기 초안, 두 번의 수정을 거쳐 코드로만 만든 단편 영화 · 애니메이션 · 광고 · 뮤직비디오를 −14 LUFS MP4로 내놓습니다. Quick 모드는 HTML 한 파일에 그림과 소리를, Film 모드는 여섯 단계 승인과 three.js 렌더를 씁니다.",
+      "posterAlt": "코드로 만든 영화 네 장면: 아침빛 속 떡잎 두 장이 열린 종이 콜라주 새싹, 리노컷 설경의 빨간 우편 열차, 노을 아래 멈춘 파도, 초록 코드가 쏟아지는 종이 도시",
+      "poster": "cinecode/poster.jpg",
+      "tags": [
+        "Canvas 2D · three.js",
+        "Web Audio",
+        "Quick · Film 모드",
+        "MP4 · −14 LUFS",
+        "사용자와 함께"
+      ],
+      "stats": [
+        "2 모드 · 58 스타일 레시피",
+        "예제 · First Sprout 12초"
+      ],
+      "page": "cinecode/",
+      "source": "cinecode/",
+      "absorbedFrom": {
+        "repo": "https://github.com/sarpstar/cinecode",
+        "path": "/"
+      },
+      "sources": [
+        {
+          "title": "sarpstar/cinecode (코드로 만드는 영화 킷, MIT)",
+          "url": "https://github.com/sarpstar/cinecode"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「First Sprout」 · 브리프에서 새로 설계 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/cinecode/demo/first-sprout/"
+        },
+        {
+          "title": "원본 저장소의 영화 12편 (Motor, The Mail Train, İlk Tik …)",
+          "url": "https://github.com/sarpstar/cinecode#made-with-cinecode"
+        }
+      ]
     }
   ]
 }
