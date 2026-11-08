@@ -121,6 +121,15 @@ No npm install, no GPU. On a 4-core box without a GPU (SwiftShader) the 62 s exa
   builders, `S.Batch`, `person()`, prop draw functions, new FX with the same `Pen`), not by editing the skill's lib/.
 - **One style**: whatever is new keeps the same language — plum-inked flat characters, two-tone painted world materials
   (`S.col`, `S.paintMat`, never unlit colour except signs and glows), the presets of `look.js`, the camera grammar.
+- **Ready-made props, when code sells one badly** (a fridge, a car, a bicycle, a cat): props are built in code so the
+  skill needs no downloads, but a free Polyfork low-poly GLB may stand in, much like the reference's downloaded models.
+  Find one at `https://polyfork.dev/api/assets?q=…` (real metres, like the sets). Load it with three r170's own loader,
+  `import { GLTFLoader } from "https://unpkg.com/three@0.170.0/examples/jsm/loaders/GLTFLoader.js"`, with a top-level
+  `await` before the `F.set(…)` that uses it. Inside the set, add a `.clone()` with every mesh on
+  `S.lam("pf", () => ({ vertexColors: true }))`, so it takes the world's two-tone paint; the world ink outlines it.
+  People stay the flat drawn cast, never a 3D model. Commercial use is fine; never copy a model's `.mjs` source into
+  the project, and a GLB kept in the project keeps its credit line (the asset's `credit` field). More:
+  https://github.com/jungrok5/motion-skills/blob/main/references/3D-MODELS.md
 - **Original everything**: our story, our characters, our voice. Never copy a channel's scripts, characters, shots or
   name; never say the reference channel's name in the voice-over or description.
 - **No captions** unless the user asks (`?captions=1` or `captions: true` adds the reference's one-word white captions).

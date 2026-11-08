@@ -107,6 +107,14 @@ Requirements: Node + Playwright Chromium, ffmpeg. No npm install, no GPU, no API
 - **One style**: whatever is new keeps the same language — toy scale, two-tone toon shading with the finish's shade
   colour, one finish for the whole film (ink everywhere or nowhere), the cobalt sky, flat clouds, the palette rules in
   references/LOOK.md.
+- **Ready-made models, when boxes sell a thing badly** (a camper van, a bus, a bicycle, a dog): a free Polyfork low-poly
+  GLB may stand in. Find one at `https://polyfork.dev/api/assets?q=…` (sizes are real metres, like the town). Load it with
+  three r170's own loader, `import { GLTFLoader } from "https://unpkg.com/three@0.170.0/examples/jsm/loaders/GLTFLoader.js"`
+  (it finds `three` through the page's import map), `await` it before `F.start()`, and give every mesh `F.mat.lit`, the
+  town's vertex-coloured toon, so it shades like the rest. It gets no ink hull or haze tint, so in the ink finish keep it
+  small or build it instead. Commercial use is fine; never copy a model's `.mjs` source into the project, and a GLB kept
+  in the project keeps its credit line (the asset's `credit` field). More:
+  https://github.com/jungrok5/motion-skills/blob/main/references/3D-MODELS.md
 - **Original**: never recreate the reference clips' streets, buildings or compositions; never copy another artist's
   design. Real landmarks may appear as simple toy forms, without logos or brand names.
 

@@ -54,9 +54,20 @@ Respect the skill first. A skill's fixed style wins over this note:
 - **Do not use** in skills that say code-only: `machine-sim` (no downloaded models), `swarm-world` (primitives, no
   assets), `aesthetics-film` (zero 3D assets). The same goes for any look built from its own pipeline (ink, knit,
   paper, painted) unless the model is fully restyled to match.
-- **Good fits:** filler and props in toy / low-poly worlds (`parallax-facade`, `map-dive` landmarks, `hands-on-lab`
-  benches, a `cartoon-3d-short` street, a `tech-motion-explainer` 3D approach), a vehicle or animal a piece needs once,
-  and stand-ins while blocking a layout before the code-drawn version exists.
+- **Good fits:** filler and props in toy / low-poly worlds, a vehicle or animal a piece needs once, and stand-ins while
+  blocking a layout before the code-drawn version exists.
+- **Skills with a recipe in their `SKILL.md`** (each tried in the skill's own template on 2026-11-08, no console errors):
+
+  | Skill | Load | Material | Notes |
+  |---|---|---|---|
+  | `parallax-facade` | r170 loader, `await` before `F.start()` | `F.mat.lit` (the town's vertex-coloured toon) | no ink hull or haze tint |
+  | `map-dive` | r170 loader, top-level `await` | `K.mat('#ffffff', { vertexColors: true })` | place with `K.group(stage, { at, s })`, `s` ≈ 0.06–0.12 on the region map |
+  | `cartoon-3d-short` | r170 loader, `await` before `F.set` | `S.lam("pf", () => ({ vertexColors: true }))` | the world ink outlines it; people stay the drawn cast |
+  | `cinecode` (Film mode) | `three/addons/loaders/GLTFLoader.js`, before `READY` | `makeMaterial(look, '#ffffff', { vertexColors: true })` | one `LICENSES.csv` row per model |
+
+  Skills that vendor `lib/three.module.min.js` (r170) have no addons, so they import the loader for that same version:
+  `https://unpkg.com/three@0.170.0/examples/jsm/loaders/GLTFLoader.js`. It finds `three` through the page's import map.
+  Serve the page over HTTP (as the render scripts do); a `file://` page cannot import the local module.
 - If the user asks for a 3D object in a skill that allows models, check Polyfork before modelling it from primitives.
 - **Characters** still go through the repo's body check (cast sheet front / back / left / right, joint limits) —
   a downloaded rig is not exempt.
