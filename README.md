@@ -40,6 +40,10 @@ with a live demo that runs in the browser and a gallery of work made with the sk
 To use a skill with Claude Code, copy (or symlink) its folder into `.claude/skills/` of your project, or point the agent at
 its `SKILL.md`.
 
+Need a ready-made 3D model in a three.js piece? [`references/3D-MODELS.md`](references/3D-MODELS.md) covers the free
+Polyfork low-poly catalogue (https://github.com/lucas-martinic/polyfork-catalog): what its licence allows (commercial use
+yes; no redistributing the `.mjs` source; committed GLBs keep their CC BY credit), which skills stay code-only, and how to load one.
+
 ## Adding a skill
 
 Skills usually arrive from another project repo where they were proven on real work. To add or absorb one so it lands
