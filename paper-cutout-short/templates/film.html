@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kite Day · paper-cutout-short template</title>
+<script type="importmap">{ "imports": { "pcs/": "../lib/" } }</script></head>
+<body>
+<script type="module">
+// The template: 8 s, 2 shots — a child walks up a paper hill and lets a kite go up on its string; the title label is pinned on.
+// It shows the page's order (palette → layers → props → the hero's timeline → shots → checks → start) and the style's grammar:
+// a backdrop sheet, layers that stand off each other (lift → soft shadows), a sun hanging on a thread, a puppet on a ground
+// line, a prop on a string, a blurred foreground, stepped 12 fps time. It is an example — replace the topic, cast, set and shots.
+import * as P from '../lib/paper.js';
+import * as Pup from '../lib/puppet.js';
+import * as K from '../lib/kit.js';
+import { Stage } from '../lib/stage.js';
+const { span, ease, clamp } = P;
+const F = new Stage({ seed: 4 });
+const { SCORE } = await import('./score.js'); F.score = SCORE;
+await F.ready();
+const { cast } = await import('./cast.js');
+const { KID, kite } = cast();
+
+// ── the set, painted once (layer px; the camera moves layers by depth z) ──
+const GROUND = 880;
+const sky = F.layer([0, 0, 2200, 1080], c => K.backdrop(c, 2200, 1080, { stops: ['#8ec5d6', '#bfe0d8', '#f6e3b4'] }), { shadow: 0 });
+const sun = F.prop([-80, -520, 80, 80], c => { K.string(c, 0, -520, -56); K.sun(c, 56, { col: '#f2a33c', ray: '#f6c45a' }); });
+const clouds = F.layer([0, 0, 2200, 600], c => { K.cloud(c, 260, 260, 300, 90, '#f4efe6'); K.cloud(c, 1300, 200, 260, 80, '#f4efe6'); });
+const far = F.layer([0, 0, 2400, 1080], c => K.hills(c, -40, 2440, 700, { col: '#8fb27a', amp: 60, wave: 700 }));
+const near = F.layer([0, 0, 2400, 1080], c => { K.hills(c, -40, 2440, GROUND, { col: '#6f9a58', amp: 18, wave: 1200, depth: 300 }); c.save(); c.translate(1500, GROUND - 6); K.tree(c, { h: 300, r: 100 }); c.restore(); });
+const grass = F.layer([0, 0, 2600, 300], c => K.grass(c, -40, 2640, 120, { flowers: 18 }), { blur: 4 });
+const label = F.prop([-10, -20, 360, 130], c => K.label(c, 'Kite Day', 'paper meadow · 12 fps', { w: 340, h: 110, size: 44 }));
+
+// ── the hero's timeline (stage px at z 1) ──
+const SPC = Pup.walkSpeed(KID), WALK_END = 3.2, X_END = 820;
+function kid(t) {
+  if (t < WALK_END) { const x = X_END - SPC * (WALK_END - t) * 1.1; return { x, facing: 1, angles: Pup.walk((x - X_END) / SPC + 10), moving: 1 }; }
+  const up = span(t, WALK_END, WALK_END + .6, ease.io);
+  return { x: X_END, facing: 1, angles: Pup.blend(Pup.stand(), { ...Pup.stand(), armF: -118, foreF: -42, head: -12 }, up), swap: Math.floor(t * 12) % 30 === 0 ? { head: 'blink' } : {} };
+}
+const HAND_F = [0, 46];   // the far hand on the far forearm (fore length + a little)
+function drawKid(g, t) { const k = kid(t); g.puppet(KID, { x: k.x, ground: GROUND, facing: k.facing, angles: k.angles, swap: k.swap }, 1); return k; }
+function drawKite(g, t) {
+  const k = kid(t), [hx, hy] = Pup.where(KID, { x: k.x, ground: GROUND, facing: k.facing, angles: k.angles }, 'foreF', HAND_F);
+  const rise = span(t, 3.4, 7, ease.out), kx = hx + 60 + 520 * rise, ky = hy - 40 - 420 * rise + Math.sin(t * 3) * 14;
+  g.at(1, c => P.ink(c, [[hx, hy], [(hx + kx) / 2, (hy + ky) / 2 + 40 * (1 - rise)], [kx, ky]], { col: '#efe2c8', w: 1.6 }));
+  g.put(kite, kx, ky, 1, { rot: Math.sin(t * 2.4) * .18, lift: 14, id: 'kite' });
+}
+
+// ── shots ──
+F.shot(4, (g, lt) => {
+  g.put(sky, -100, 0, .05, { jit: 0 }); g.put(sun, 1400, 260, .15, { lift: 12 }); g.put(clouds, -100, 0, .25, { lift: 10 });
+  g.put(far, -100, 0, .5, { lift: 10 }); g.put(near, -100, 0, 1, { lift: 8 });
+  drawKid(g, lt); if (lt > 3.4) drawKite(g, lt);
+  g.put(grass, -200, GROUND + 60, 1.3, { lift: 8 });
+}, { name: 'up the hill', cam: [{ t: 0, x: 0 }, { t: 4, x: 160 }] });
+F.shot(4, (g, lt) => {
+  const t = 4 + lt;
+  g.put(sky, -100, 0, .05, { jit: 0 }); g.put(sun, 1400, 260 - 30 * span(lt, 0, 4), .15, { lift: 12 }); g.put(clouds, -100, 0, .25, { lift: 10 });
+  g.put(far, -100, 0, .5, { lift: 10 }); g.put(near, -100, 0, 1, { lift: 8 });
+  drawKid(g, t); drawKite(g, t);
+  g.put(grass, -200, GROUND + 60, 1.3, { lift: 8 });
+  const d = span(lt, 1.5, 2.1, ease.back); if (lt > 1.5) g.put(label, 70, -180 + 240 * d, 0, { rot: -.02, lift: 14, id: 'label' });
+}, { name: 'the kite goes up', tr: { type: 'dissolve', d: .5 }, cam: [{ t: 0, x: 260, y: -40, zoom: 1.05 }, { t: 4, x: 340, y: -120, zoom: 1.05 }] });
+
+// ── the film's own rules ──
+F.check('the kid faces the way they walk', t => { const k = kid(t); return !k.moving || Math.sign(k.moving) === Math.sign(k.facing); });
+F.check('the kite stays in frame', t => { if (t < 3.4) return true; const i = F.locate(t), sh = F.shots[i], c = F.camAt(sh, t - sh.start), k = kid(t), [hx] = Pup.where(KID, { x: k.x, ground: GROUND, angles: k.angles }, 'foreF', HAND_F), kx = hx + 60 + 520 * span(t, 3.4, 7, ease.out); return F.W / 2 + (kx - F.W / 2 - c.x) * c.zoom < F.W - 60; });
+F.start();
+</script>
+</body>
+</html>

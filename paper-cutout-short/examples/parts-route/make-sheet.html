@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>stand-in parts sheet</title>
+<script type="importmap">{ "imports": { "pcs/": "../../lib/" } }</script></head>
+<body style="margin:0;background:#222">
+<script type="module">
+// A stand-in for a generated parts sheet, so the image route (cut-parts.mjs → P.parts → Pup.bipedParts) runs offline and is checked.
+// It lays out Ember's code-cut near parts on a flat green, spaced apart like an image model is asked to (references/PARTS.md).
+// Make it:  node ../../scripts/render.mjs make-sheet.html --stills 0 --name sheet --out .   (then rename sheet-0.png → sheet.png)
+// With an image model, replace sheet.png with gen-parts.mjs output and re-run cut-parts.mjs; nothing else changes.
+import * as P from 'pcs/paper.js';
+import { Stage } from 'pcs/stage.js';
+const F = new Stage({ W: 1536, H: 1024, fadeIn: 0, fadeOut: 0, jitter: 0, grade: { keyA: 0, fillA: 0, vignette: 0, grain: 0, flicker: 0, lift: null }, bg: '#00b140' });
+await F.ready();
+const { cast } = await import('../lamplighter/cast.js');
+const { EMBER } = cast();
+const LAYOUT = [['head', 250, 300], ['torso', 600, 300], ['tail', 950, 260], ['armN', 1250, 140], ['foreN', 1400, 140],
+                ['thighN', 300, 640], ['shinN', 520, 640], ['footN', 760, 760]];
+F.shot(1, g => g.at(0, c => {
+  for (const [id, x, y] of LAYOUT) { c.save(); c.translate(x, y); c.scale(1.6, 1.6); P.put(c, EMBER.byId[id].s); c.restore(); }
+}));
+F.start();
+</script>
+</body>
+</html>
