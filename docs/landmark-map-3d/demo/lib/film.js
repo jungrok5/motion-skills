@@ -128,7 +128,7 @@ export class Film {
     const chains = joinChains(segs.map(s => s.p));
     let best = chains.sort((a, b) => plen(b) - plen(a))[0];
     if (o.near) best = chains.sort((a, b) => dmin(a, o.near) - dmin(b, o.near))[0];
-    return this.labels.street({ text: o.text ?? this.name(segs[0].n), path: best, y: segs[0].bridge ? .4 : .1, ...o });
+    return this.labels.street({ text: o.text ?? this.name(segs[0].n), path: best, y: segs[0].bridge ? .46 : .16, ...o });
   }
   title(o) { this.labels.title(o); this.cueList.push({ t: o.from ?? 0, kind: 'title' }); }
   clock(o) { this.labels.clock(o); }
@@ -142,7 +142,10 @@ export class Film {
     t = clamp(t, 0, this.duration);
     const L = this.lookAt(t), Wt = this.weatherTrack(t), Fo = this.focusTrack(t), C = this.cameraAt(t);
     const cam = this.cam;
-    cam.fov = C.fov; cam.aspect = this.W / this.H; cam.position.copy(C.pos); cam.up.set(0, 1, 0); cam.lookAt(C.target); cam.updateProjectionMatrix(); cam.updateMatrixWorld();
+    cam.fov = C.fov; cam.aspect = this.W / this.H;
+    // near plane scaled to the camera distance: from 2 km a fixed 2 m near plane leaves ~10 cm of depth precision and the
+    // road / curb / marking layers (cm apart) z-fight; at dist × 0.06 it is a few millimetres
+    cam.near = clamp(C.dist * .06, 2, 200); cam.far = Math.max(14000, C.dist * 12); cam.position.copy(C.pos); cam.up.set(0, 1, 0); cam.lookAt(C.target); cam.updateProjectionMatrix(); cam.updateMatrixWorld();
     this.pointScale = this.H / (2 * Math.tan(C.fov * Math.PI / 360));
     // light
     const rainK = clamp(Wt.rain ?? 0);

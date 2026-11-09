@@ -59,11 +59,11 @@ F.landmark('Eiffel Tower', (K, g) => {
   // first floor: a hollow square deck wrapped in its lattice frieze, glass pavilions on top
   for (let k = 0; k < 4; k++) {
     const a = K.group(g, { rot: k * 90 });
-    K.box(a, 68, 4.2, 17, deck, { at: [0, 52.6, -25.5] });
+    K.box(a, k % 2 ? 34 : 68, 4.2, 17, deck, { at: [0, 52.6, -25.5] });          // two long sides + two short fills: no overlapping tops
     K.box(a, 30, 5, 7, glass, { at: [0, 56.8, -27] });                            // glass pavilions
   }
   K.band(g, 70, 4.6, 70, frieze, { at: [0, 52.4, 0] });
-  K.band(g, 34, 4.6, 34, frieze, { at: [0, 52.4, 0] });
+  K.band(g, 33.4, 4.6, 33.4, frieze, { at: [0, 52.4, 0] });
   K.band(g, 70.4, 1.6, 70.4, K.lattice(K.shade(BRONZE, 1.1), { cell: 1.6, bar: .14, pattern: 'grid', emissive: NIGHT, glow: .6 }), { at: [0, 56.8, 0] });   // railing
   // second floor and the upper shaft (one lattice tube narrowing to the top platform)
   K.box(g, 40, 4.2, 40, deck, { at: [0, 112, 0] });
