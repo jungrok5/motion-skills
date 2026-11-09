@@ -38,3 +38,8 @@ Problem → cause → fix, one or two lines each.
   reverse), fade a pin whose box leaves the frame.
 - **Rendering crawled on CPU** → 11,000 trees × 2,200 triangles drawn three times a frame (shadow, reflection, main)
   with no culling → canopies of ~560 triangles, trees and buildings in 240 m tiles so off-screen tiles are culled.
+- **Black blocks on the samples page (on real GPUs, never in the CPU renders)** → 672 vertices of degenerate triangles
+  (zero-area roof / wall / road pieces) had zero-length normals; on a GPU `normalize(0)` is NaN, and every NaN pixel was
+  spread into a square by the bloom and tilt-shift downsampling. SwiftShader returns 0 there, so the stills looked fine
+  → `Geo.tri` drops triangles with no area, the post chain replaces NaN / Inf with 0 at every downsample, and
+  `check.mjs` fails on any zero normal or NaN position.
