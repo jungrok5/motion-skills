@@ -95,8 +95,9 @@ export class Post {
       uniforms: { src: { value: null }, px: { value: new THREE.Vector2() }, thr: { value: -1 } }, vertexShader: FS,
       fragmentShader: `uniform sampler2D src; uniform vec2 px; uniform float thr; varying vec2 vUv;
         vec3 k(vec3 c){ if (thr < 0.) return c; float b = max(c.r, max(c.g, c.b)); float s = clamp(b - thr + .25, 0., .5); s = s * s * 2.; return c * max(s, b - thr) / max(b, 1e-4); }
-        void main(){ vec3 c = texture2D(src, vUv).rgb * 4.;
-          c += texture2D(src, vUv + px * vec2(-1., -1.)).rgb + texture2D(src, vUv + px * vec2(1., -1.)).rgb + texture2D(src, vUv + px * vec2(-1., 1.)).rgb + texture2D(src, vUv + px * vec2(1., 1.)).rgb;
+        vec3 ok(vec3 c){ return (any(isnan(c)) || any(isinf(c))) ? vec3(0.) : min(c, vec3(64.)); }   // one bad pixel must not spread into a block
+        void main(){ vec3 c = ok(texture2D(src, vUv).rgb) * 4.;
+          c += ok(texture2D(src, vUv + px * vec2(-1., -1.)).rgb) + ok(texture2D(src, vUv + px * vec2(1., -1.)).rgb) + ok(texture2D(src, vUv + px * vec2(-1., 1.)).rgb) + ok(texture2D(src, vUv + px * vec2(1., 1.)).rgb);
           gl_FragColor = vec4(k(c / 8.), 1.); }`,
     });
     this.mUp = new THREE.ShaderMaterial({
@@ -126,7 +127,7 @@ export class Post {
           float r = h(c + seed); float x = abs(f.x - (.2 + .6 * h(c + seed + 7.)));
           return step(.72, r) * smoothstep(.05, .0, x) * smoothstep(0., .25, f.y) * smoothstep(.6, .25, f.y); }
         void main(){
-          vec2 uv = vUv; vec3 c = texture2D(tScene, uv).rgb;
+          vec2 uv = vUv; vec3 c = texture2D(tScene, uv).rgb; if (any(isnan(c)) || any(isinf(c))) c = tent(tD1, uv, 1. / res * 2.);
           // tilt-shift: sharp in a band around focus.x (screen height), blurring toward top and bottom
           float d = max(abs(uv.y - focus.x) - focus.y, 0.) / focus.z; float b = clamp(d, 0., 1.) * focus.w;
           if (b > .001) {

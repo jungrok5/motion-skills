@@ -25,7 +25,9 @@ class Geo {
   v(x, y, z, nx, ny, nz, c, ex = {}) { this.p.push(x, y, z); this.n.push(nx, ny, nz); this.c.push(c.r, c.g, c.b); for (const [k, o] of Object.entries(this.ex)) { const v = ex[k] ?? new Array(o.s).fill(0); o.a.push(...v); } }
   tri(a, b, c, color, ex, nIn) {                   // a, b, c = [x, y, z]; faces toward nIn when given
     let ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
-    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const L = Math.hypot(nx, ny, nz) || 1; nx /= L; ny /= L; nz /= L;
+    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const L = Math.hypot(nx, ny, nz);
+    if (!(L > 1e-8)) return;                        // degenerate: a zero normal turns into NaN pixels on GPUs
+    nx /= L; ny /= L; nz /= L;
     if (nIn && nx * nIn[0] + ny * nIn[1] + nz * nIn[2] < 0) { [b, c] = [c, b]; nx = -nx; ny = -ny; nz = -nz; }
     const e = Array.isArray(ex) ? ex : [ex, ex, ex];
     this.v(...a, nx, ny, nz, color, e[0]); this.v(...b, nx, ny, nz, color, e[1]); this.v(...c, nx, ny, nz, color, e[2]);
@@ -34,7 +36,9 @@ class Geo {
   colorQuad(a, b, c, d, ca, cb, cc, cd, nIn) {     // per-vertex colours (gradients)
     for (const [p, q, r, cp, cq, cr] of [[a, b, c, ca, cb, cc], [a, c, d, ca, cc, cd]]) {
       let ux = q[0] - p[0], uy = q[1] - p[1], uz = q[2] - p[2], vx = r[0] - p[0], vy = r[1] - p[1], vz = r[2] - p[2];
-      let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const L = Math.hypot(nx, ny, nz) || 1; nx /= L; ny /= L; nz /= L;
+      let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const L = Math.hypot(nx, ny, nz);
+      if (!(L > 1e-8)) continue;
+      nx /= L; ny /= L; nz /= L;
       let Q = q, R = r, CQ = cq, CR = cr;
       if (nIn && nx * nIn[0] + ny * nIn[1] + nz * nIn[2] < 0) { Q = r; R = q; CQ = cr; CR = cq; nx = -nx; ny = -ny; nz = -nz; }
       this.v(...p, nx, ny, nz, cp); this.v(...Q, nx, ny, nz, CQ); this.v(...R, nx, ny, nz, CR);

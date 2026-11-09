@@ -2,6 +2,7 @@
 //   node <skill>/scripts/check.mjs film.html [--step .5] [--scale .25]
 // 1. loads with no page errors, console errors or missing files (place.json, fonts)
 // 2. the text has its fonts: every character the film writes is in fonts/chars.txt (run fonts.mjs after changing text)
+// 2b. no degenerate geometry (zero normals → NaN pixels → black blocks on GPUs)
 // 3. deterministic: the same t gives the same pixels, also after seeking elsewhere (no state between frames)
 // 4. no blank frames, nothing blown out: every sampled frame has detail and is not one flat colour
 // 5. pins never pile up: two pins drawn mostly opaque never overlap
@@ -41,6 +42,11 @@ try {
   }
   if (errors.length) fail('loading: ' + errors.join(' | ')); else console.log('ok   loads with no errors or missing files');
   const logs = await page.evaluate(() => window.FILM.logs); for (const l of logs) console.log('     ' + l);
+
+  // geometry: a zero-length normal or a NaN position renders as NaN on real GPUs (SwiftShader hides it), and the blur
+  // and bloom passes spread each such pixel into a black block
+  const badGeo = await page.evaluate(() => { let n = 0; window.FILM.scene.traverse(o => { const a = o.isMesh && o.geometry.attributes; if (!a || !a.normal) return; const N = a.normal.array, P = a.position.array; for (let i = 0; i < N.length; i += 3) if (!(Math.hypot(N[i], N[i + 1], N[i + 2]) > .5) || !isFinite(P[i] + P[i + 1] + P[i + 2])) n++; }); return n; });
+  if (badGeo) fail(`${badGeo} vertices with a zero normal or NaN position — they show as black blocks on GPUs (skip degenerate triangles)`); else console.log('ok   no degenerate geometry');
 
   const text = await page.evaluate(() => window.FILM.allText());
   const charsF = join(dirname(page$), 'fonts', 'chars.txt');
