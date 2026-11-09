@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>landmark-map-3d · film</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<script type="importmap">{ "imports": { "three": "./lib/three.module.min.js", "lm/": "./lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// landmark-map-3d template — a first look at any place.json: the real neighbourhood, a slow orbit, pins picked from the
+// data, the big street names, day → golden → night. It runs as soon as fetch-place.mjs has written place.json.
+// It is a skeleton, not the film: write BRIEF.md, then replace the PLACEHOLDER below with the landmark built by hand
+// (references/LANDMARKS.md), give the city its palette, design the camera path and the words for this place.
+import { Film } from 'lm/film.js';
+
+const F = await Film.create({ place: './place.json', duration: 16, lang: 'local' });
+const HERO = [0, 0];                       // where the landmark stands (place-map.mjs prints coordinates)
+
+F.world({
+  seed: 1,
+  levels: [3, 6],                          // storeys for buildings without a mapped height — set for the city
+  roofs: { flat: 3, hip: 1 },              // roof styles by weight: flat, mansard, gable, hip
+  palette: {},                             // walls, roofs, ground, trees … (lib/world.js DEFAULT_PALETTE); design one per city
+  clear: [{ at: HERO, r: 30 }],            // remove the OSM buildings where the hand-built landmark goes
+});
+F.life({ cars: 1, people: 600, boats: { n: 4 } });
+
+// PLACEHOLDER — replace with the landmark itself (kit: box, cyl, lathe, extrude, column + lattice, arch, dome, lights, beacon)
+F.landmark('placeholder', (K, g) => {
+  const stone = K.mat('#efe6d6', { emissive: '#ffd7a0', glow: .5 }), roof = K.mat('#7f8fb8');
+  K.box(g, 26, 34, 26, stone, { round: 1.2 });
+  K.cyl(g, 9, 12, 14, roof, { at: [0, 34, 0], seg: 8 });
+  K.lights(g, K.sample([[-13, 34.5, -13], [13, 34.5, -13], [13, 34.5, 13], [-13, 34.5, 13], [-13, 34.5, -13]], 2), '#ffd59a', { size: 2.5 });
+}, { at: HERO, top: 50 });
+
+F.time([{ t: 0, sky: 'day' }, { t: 7, sky: 'golden' }, { t: 11.5, sky: 'dusk' }, { t: 13.5, sky: 'night' }]);
+F.camera([
+  { t: 0, at: HERO, h: 10, yaw: -20, pitch: 58, dist: 1300 },
+  { t: 6, at: HERO, h: 20, yaw: -70, pitch: 46, dist: 800 },
+  { t: 11, at: HERO, h: 20, yaw: -130, pitch: 38, dist: 640 },
+  { t: 16, at: HERO, h: 25, yaw: -175, pitch: 40, dist: 900 },
+]);
+F.title({ kicker: 'City · Country', text: F.place.name || 'The Place', sub: '', coords: `${F.place.center?.lat?.toFixed(4)}° · ${F.place.center?.lon?.toFixed(4)}°`, from: .4, to: 5 });
+F.label({ text: F.place.name || 'Landmark', at: HERO, y: 54, icon: 'star', big: true, from: 3, to: 13.5 });
+F.autoPois({ near: HERO, r: 450, n: 9, label: { from: 4, to: 13 }, each: (p, i) => ({ from: 3 + i * .6 }) });
+// the longest named roads near the landmark, painted on the ground
+const named = [...new Set(F.place.roads.filter(r => r.n?.name && /primary|secondary|tertiary|trunk/.test(r.k) && r.p.some(([x, z]) => Math.hypot(x - HERO[0], z - HERO[1]) < 300)).map(r => r.n.name))].slice(0, 3);
+named.forEach((n, i) => F.street(n, { size: 7, from: i * 2, to: 16 }));
+F.end({ kicker: 'landmark-map-3d', text: F.place.name || 'The Place', sub: '', from: 13.8 });
+F.start();
+</script>
+</body>
+</html>
