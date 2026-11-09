@@ -1089,7 +1089,7 @@
       "source": "cinecode/",
       "absorbedFrom": {
         "repo": "https://github.com/sarpstar/cinecode",
-        "path": "/"
+        "path": "SKILL.md · assets/ · scripts/ · references/"
       },
       "sources": [
         {
@@ -1141,6 +1141,46 @@
         {
           "title": "「The Lamplighter」 · 20.2초 · 3샷 · 라이브 페이지",
           "url": "https://jungrok5.github.io/motion-skills/paper-cutout-short/demo/examples/lamplighter/"
+        }
+      ]
+    },
+    {
+      "id": "heritage-blueprint",
+      "name": "heritage-blueprint",
+      "tagline": "문화유산 하나를 주면 실사진·실측 도면·기록을 조사해 근거 장부를 쓰고, 그 건축물만의 부재를 새로 설계해 청사진 종이 위에서 돌려 보고 부재별로 펼쳐 보는 3D 모형을 만듭니다. 모든 형태와 치수에 실측·보도·사진 추정·미상 표시를 붙이고, 한국어(또는 중국어)와 영어 주석, 모서리 입면도, 근거 장부를 담은 오프라인 HTML 파일 하나를 냅니다.",
+      "posterAlt": "heritage-blueprint로 만든 경주 첨성대 모형 네 장면: 청사진 종이 위에 합쳐 놓은 첨성대와 높이 자, 정자석·장대석 구간·남쪽 창·흙 채움·기단으로 펼치고 주석을 단 모습, 정남쪽 수평 입면, 위에서 내려다본 펼친 상태",
+      "poster": "heritage-blueprint/poster.jpg",
+      "tags": [
+        "WebGL 3D",
+        "분해도 애니메이션",
+        "근거 장부",
+        "오프라인 HTML 한 파일",
+        "한·중·영 주석"
+      ],
+      "stats": [
+        "예제 경주 첨성대 · 6개 부분 · 근거 15항목",
+        "한국어 페이지 약 0.47 MB"
+      ],
+      "page": "heritage-blueprint/",
+      "source": "heritage-blueprint/",
+      "absorbedFrom": {
+        "repo": "https://github.com/tanglele110-hash/heritage-blueprint-skill",
+        "path": "SKILL.md · assets/ · scripts/ · references/"
+      },
+      "sources": [
+        {
+          "title": "tanglele110-hash/heritage-blueprint-skill (원본 스킬 레포, @木渡川 · MIT)",
+          "url": "https://github.com/tanglele110-hash/heritage-blueprint-skill"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「경주 첨성대」 · 새 주제 예제 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/heritage-blueprint/demo/"
+        },
+        {
+          "title": "원본 작품 · 杭州地标 (항저우 랜드마크 여섯 모형)",
+          "url": "https://hangzhou-landmarks.pages.dev/"
         }
       ]
     },

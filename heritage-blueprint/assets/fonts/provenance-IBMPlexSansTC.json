@@ -1,0 +1,9 @@
+{
+  "source": "https://github.com/IBM/plex",
+  "package": "@ibm/plex-sans-tc",
+  "version": "1.1.1",
+  "member": "fonts/complete/woff2/hinted/IBMPlexSansTC-Bold.woff2",
+  "modified": false,
+  "sha256": "bf1191100a9afd77732ad9d780f9dcff30b62e6abf785b5d0420bb2bb5a001a6",
+  "license": "SIL Open Font License 1.1"
+}

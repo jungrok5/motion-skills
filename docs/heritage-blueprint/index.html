@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>heritage-blueprint · motion-skills</title>
+<meta name="description" content="문화유산 하나를 주면 실사진·실측 도면·기록을 조사해 근거 장부를 쓰고, 그 건축물만의 부재를 새로 설계해 청사진 종이 위에서 회전·확대하고 부재별로 펼쳐 보는 3D 모형을 오프라인 HTML 파일 하나로 만듭니다.">
+<meta property="og:title" content="heritage-blueprint · motion-skills">
+<meta property="og:description" content="문화유산 하나를 주면 근거를 조사해 부재별로 펼쳐 보는 청사진 3D 모형을 오프라인 HTML 파일 하나로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/heritage-blueprint/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/heritage-blueprint">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / heritage-blueprint</nav>
+  <h1>heritage-blueprint</h1>
+  <p>문화유산 하나를 주면 실사진·실측 도면·기록을 조사해 근거 장부를 쓰고, 그 건축물만의 부재를 새로 설계해 청사진 종이 위에서 돌려 보고 부재별로 펼쳐 보는 3D 모형을 만듭니다. 모든 형태와 치수에 실측·보도·사진 추정·미상 표시를 붙이고, 한국어(또는 중국어)와 영어 주석, 모서리 입면도, 근거 장부를 담은 오프라인 HTML 파일 하나를 냅니다.
+  보고 만든 원본: <a href="https://github.com/tanglele110-hash/heritage-blueprint-skill" target="_blank" rel="noopener">tanglele110-hash/heritage-blueprint-skill (@木渡川, MIT)</a>.</p>
+  <ul class="tags"><li>WebGL 3D</li><li>분해도 애니메이션</li><li>근거 장부</li><li>오프라인 HTML 한 파일</li><li>한·중·영 주석</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>문화유산 하나 (탑, 문루, 다리, 석등, 천문대 …)</dd>
+      <dt>조사</dt><dd>실사진·실측 도면·문헌, 출처와 상태를 적은 근거 장부, 형태표</dd>
+      <dt>설계</dt><dd>그 대상만의 부재·연결·펼침 순서·주석 위치, 모형과 입면도가 함께 쓰는 매개변수</dd>
+      <dt>검사</dt><dd>Node 불변식 검사, Chromium 스틸(데스크톱·휴대폰), 사진 각도 비교, 주석 겹침 검사</dd>
+      <dt>출력</dt><dd>폰트까지 넣은 오프라인 HTML 한 파일 (한국어 약 0.47 MB)</dd>
+    </dl>
+    <pre><code>cd heritage-blueprint/examples/cheomseongdae
+node make-inset.mjs
+python3 ../../scripts/build.py scene.json out/cheomseongdae.html --force
+node ../../scripts/verify.cjs out/cheomseongdae.html
+node ../../scripts/check.mjs out/cheomseongdae.html --angles ne:45:3,s:-90:0</code></pre>
+    <p class="mute">요구 사항: Python 3.9+, Node 18+, Playwright + Chromium(검사용). 결과 페이지는 WebGL 브라우저만 있으면 됩니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/heritage-blueprint/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:4/5;--h-phone:640px;--demo-bg:#eceef5">
+    <iframe data-src="demo/" title="heritage-blueprint 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/cheomseongdae</code> · 경주 첨성대 · 누르면 펼쳐지고 끌면 돕니다</span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본에 없던 새 주제 「경주 첨성대」를 브리프 → 근거 장부 → 새 형상 → 검사 순서로 만든 모형의 스틸입니다. 카드를 누르면 라이브 데모가 열립니다.</p>
+  <div id="gallery">
+    <div class="group">
+      <h3>경주 첨성대 <small>국보 · 27단 · 약 8.8 m (보도)</small></h3>
+      <p>ICOMOS–IAU 천문유산 주제 연구에 실린 국립문화재연구원 남쪽 입면도의 외곽선을 읽어 몸통 곡선을 만들고, 평면도의 3 m 축척 막대로 크기를 맞췄습니다.</p>
+      <div class="grid">
+        <a class="tile" href="demo/" target="_blank" rel="noopener">
+          <img src="samples/closed.jpg" alt="청사진 종이 위의 첨성대 모형: 2단 기단, 병 모양 27단 몸통, 남쪽 창, 장대석 끝, 井자 정자석, 왼쪽의 높이 자" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">합친 상태 · 기본 시점</span><b>27단 몸통과 정자석</b>
+          <span class="how">높이 자에는 보도값임을 적은 「약 8.8 m」</span></div></a>
+        <a class="tile" href="demo/" target="_blank" rel="noopener">
+          <img src="samples/open.jpg" alt="펼친 첨성대: 위에서부터 정자석, 25–26단 장대석 구간, 19–20단 장대석 구간, 남쪽 창 구간, 흙을 채운 1–12단, 기단과 여섯 개 주석" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">펼친 상태 · 2.85초</span><b>속을 여섯 부분으로</b>
+          <span class="how">흙 채움 → 창 → 빈 몸통의 장대석 → 정자석 순서로 오르는 구조</span></div></a>
+        <a class="tile" href="demo/" target="_blank" rel="noopener">
+          <img src="samples/sw.jpg" alt="남서쪽 낮은 시점에서 본 펼친 첨성대, 남쪽 창의 문설주와 벽 두께가 보임" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">펼친 상태 · 남서쪽</span><b>뚫린 남쪽 창</b>
+          <span class="how">칠한 구멍이 아니라 문설주·벽 두께가 있는 실제 개구부</span></div></a>
+        <a class="tile" href="demo/" target="_blank" rel="noopener">
+          <img src="samples/top.jpg" alt="위에서 내려다본 펼친 첨성대, 비어 있는 몸통 안의 井자 장대석과 몸통 축에서 약간 돌아간 정자석" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">펼친 상태 · 위에서</span><b>속의 井자 장대석</b>
+          <span class="how">평면도대로 몸통 축에서 약 4.5° 돌아간 정자석</span></div></a>
+        <a class="tile" href="demo/" target="_blank" rel="noopener">
+          <img src="samples/south.jpg" alt="정남쪽 수평 시점의 첨성대 모형, 남쪽 입면도와 비교하는 각도" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">사진 각도 비교 · 남쪽</span><b>입면도와 같은 방향</b>
+          <span class="how"><code>check.mjs --angles s:-90:0</code>으로 찍어 실측 입면도 외곽선과 대조</span></div></a>
+        <a class="tile" href="demo/" target="_blank" rel="noopener">
+          <img src="samples/ne.jpg" alt="북동쪽 낮은 시점의 첨성대 모형, 공개 사진과 같은 방향" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">사진 각도 비교 · 북동쪽</span><b>공개 사진과 같은 방향</b>
+          <span class="how">정자석이 몸통보다 넓게 나온 정도와 몸통의 좁아짐을 대조</span></div></a>
+        <a class="tile" href="demo/" target="_blank" rel="noopener">
+          <img src="samples/phone.jpg" alt="휴대폰 390 px 화면의 펼친 첨성대, 오른쪽 주석 열과 아래 제목·접기 버튼" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">휴대폰 · 390×844</span><b>좁은 화면</b>
+          <span class="how">가장 긴 주석 너비를 재서 주석 열을 화면 안으로 당김</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬을 만든 출처와, 이 레포에서 새 주제로 만든 예제입니다. 원본의 「삼담인월」 예제와 녹화 영상은 저작권이 따로 있어 옮기지 않았습니다.</p>
+  <div class="works">
+    <a class="work" href="https://hangzhou-landmarks.pages.dev/" target="_blank" rel="noopener"><b>원본 작품 · 杭州地标 (항저우 랜드마크)</b><span>삼담인월·공신교·단교·보숙탑·뇌봉탑·육화탑 여섯 모형을 한 페이지에</span><span class="url">hangzhou-landmarks.pages.dev</span></a>
+    <a class="work" href="demo/" target="_blank" rel="noopener"><b>「경주 첨성대」</b><span>새 주제 예제 · 6개 부분 · 근거 15항목 · 라이브 페이지</span><span class="url">heritage-blueprint/examples/cheomseongdae</span></a>
+    <a class="work" href="https://github.com/tanglele110-hash/heritage-blueprint-skill"><b>원본 레포 · tanglele110-hash/heritage-blueprint-skill</b><span>스킬의 출처 · MIT · @木渡川 (tanglele)</span><span class="url">github.com/tanglele110-hash/heritage-blueprint-skill</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/heritage-blueprint/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/heritage-blueprint">폴더</a> <span>scripts · references · assets · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/heritage-blueprint/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/heritage-blueprint/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/heritage-blueprint/references/EVIDENCE.md">references/EVIDENCE.md</a> <span>조사 순서, 근거 상태, 치수 대조표</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/heritage-blueprint/references/RUNTIME.md">references/RUNTIME.md</a> <span>scene.json, geometry.js 계약, 언어 팩</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/heritage-blueprint/references/GEOMETRY-QA.md">references/GEOMETRY-QA.md</a> <span>접합부와 개구부 검사</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/heritage-blueprint/references/VISUAL-QA.md">references/VISUAL-QA.md</a> <span>고정 스타일, 조작, 검수</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/heritage-blueprint/references/GALLERY.md">references/GALLERY.md</a> <span>여러 모형을 한 페이지로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/heritage-blueprint/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/heritage-blueprint/examples/cheomseongdae/evidence.json">examples/cheomseongdae/evidence.json</a> <span>첨성대 근거 장부</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 스틸은 모두 이 스킬로 렌더한 모형입니다. 첨성대 형태 근거: ICOMOS–IAU Thematic Study on Astronomical Heritage, Case Study 5.4 (도면 © 국립문화재연구원, 이 사이트에 싣지 않음). 폰트: Noto Sans KR (SIL OFL 1.1).
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
