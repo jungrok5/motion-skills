@@ -1183,6 +1183,42 @@
           "url": "https://hangzhou-landmarks.pages.dev/"
         }
       ]
+    },
+    {
+      "id": "point-cloud-morph",
+      "name": "point-cloud-morph",
+      "tagline": "주제 하나를 주면 수십만 개의 빛나는 점이 3D 형태(건물, 배, 지형, 동물, 워드마크)를 이루고, 성운처럼 흩어졌다가 다음 형태로 다시 모이는 영상을 만듭니다. 형태는 선 · 면 · 건물 · 지형 · 회전체 · three.js 메시 · GLB · 글자로 코드에서 설계하고, 그 위에 YAW / PITCH 판독값, 3D 지점에 붙는 콜아웃, 헤드라인과 통계가 있는 사이트 화면을 얹습니다. 드래그로 돌려 보는 라이브 페이지, 합성 사운드, 1080p MP4를 냅니다.",
+      "posterAlt": "point-cloud-morph로 만든 「Haldane Deep」의 장면 네 개: 점으로 된 조사선이 해저로 청록색 음파 부채꼴을 쏘는 사이트 화면, 점의 줄로 그린 해구와 해산 지형과 눈금 링, 긴 가슴지느러미의 점 혹등고래와 'Listening before we sound.' 헤드라인, 청록색 측선이 놓인 점의 지구",
+      "poster": "point-cloud-morph/poster.jpg",
+      "tags": [
+        "three.js 포인트",
+        "형태 모핑",
+        "HUD · 사이트 화면",
+        "MP4 · 라이브 페이지",
+        "합성 사운드"
+      ],
+      "stats": [
+        "예제 27.9초 · 형태 5개",
+        "점 16만 개"
+      ],
+      "page": "point-cloud-morph/",
+      "source": "point-cloud-morph/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "point-cloud-morph/examples/deep-survey/"
+      },
+      "sources": [
+        {
+          "title": "kartikey singh의 X 게시물 (AI로 만든 랜딩 페이지 모음, 앞 8초의 포인트 클라우드 섹션)",
+          "url": "https://x.com/askwhykartik/status/2119452450583097368"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「Haldane Deep」 · 27.9초 · 형태 5개 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/point-cloud-morph/demo/examples/deep-survey/"
+        }
+      ]
     }
   ]
 }
