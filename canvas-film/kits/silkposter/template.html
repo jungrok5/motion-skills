@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>실크스크린 포스터 · 새 장면</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@400;600;700&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-silkposter.js"></script>
+<script>
+/* Template scene — house style "silkposter" (see kits/silkposter/STYLE.md). A placeholder 30 s print with a different subject
+   from the worked example (Nazareth, the emperor's decree, the road to Bethlehem): a mountain lake at sunrise in the manner of
+   a 1930s national-park poster. Six inks, each pulled once with the squeegee — the near ink first (the ground the words stand
+   on), then light to dark: sky bands, sun, rings, far peaks and snow, hills, lake, reflection, the near shore with its pines.
+   Then a small sail crosses the lake with its wake stamped dash by dash, birds cross, the sun's ink catches the light, and a
+   last pull lays the end-card plate. The layers drift a little by depth (a slow camera through a flat print).
+   To make your film: keep the skeleton (paper → one Silk.ink per ink with its own pull time and register → the moving thing
+   stamped over → words on the solid near ink); replace the lake, peaks and boat with your image. Use ≤ 6 inks. */
+const { clamp, lerp, ss, eo, eio, win, rng } = Pilot;
+const W = Pilot.W, H = Pilot.H, V = Pilot.ori === 'v', S = window.SCRIPT, B = S.beat, DUR = S.DUR;
+const INK = { cream: '#F5E4BC', peach: '#F2BE7C', gold: '#E2922F', far: '#7FA3A0', hill: '#3F6E74', near: '#1E3446' };   // the six inks
+const hz = H * (V ? .42 : .5), shore = H * (V ? .63 : .74), SUN = [W * (V ? .52 : .56), hz - (V ? 70 : 60)], SR = V ? 112 : 96;
+let PAPER = null;
+const far = x => hz - (V ? 50 : 40) - (V ? 230 : 190) * Math.pow(Math.abs(Math.sin(x * (V ? .0042 : .0028) + .5)), 1.7) - 40 * Math.abs(Math.sin(x * .011 + 1.3));
+const hill = x => hz + 10 - (V ? 70 : 60) * Math.pow(Math.sin(x * (V ? .0052 : .0034) + 2.2), 2) - 18 * Math.sin(x * .017);
+const near = x => shore - 26 * Math.sin(x * .004 + .8) - 12 * Math.sin(x * .013);
+const ridge = (f, bottom) => { const p = new Path2D(); p.moveTo(-200, bottom); for (let x = -200; x <= W + 200; x += 10) p.lineTo(x, f(x)); p.lineTo(W + 200, bottom); p.closePath(); return p; };
+let T = 0;                                                    // the frame's time, for pull()
+const pull = (t0, d = .55) => eo(clamp((T - t0) / d));       // a squeegee pull starting at t0, d seconds long
+function pines(p, x0, base, h, n, seed) {   // tiered pines standing on the shore line (one path, one ink)
+  const r = rng(seed); for (let i = 0; i < n; i++) { const x = x0 + (i - (n - 1) / 2) * h * .34 + (r() - .5) * h * .1, hh = h * (.65 + .45 * r()), y = near(x) + 6, tiers = 4;
+    for (let k = 0; k < tiers; k++) { const ty = y - hh * (k / tiers) * .92, tw = hh * .3 * (1 - k / tiers * .7); p.moveTo(x - tw, ty); p.lineTo(x, ty - hh * .36); p.lineTo(x + tw, ty); p.closePath(); }
+    p.rect(x - hh * .025, y - hh * .12, hh * .05, hh * .14); }
+}
+function draw(ctx, t) {
+  T = t; if (!PAPER) PAPER = Silk.paper(W, H, 5);
+  ctx.drawImage(PAPER, 0, 0);
+  const drift = eio(clamp(t / DUR)), lay = d => { ctx.save(); ctx.translate(-d * (V ? 70 : 90) * drift, 0); };   // depth 0 (sky) … 1 (near)
+  // the near ink first: the ground the words stand on (pulled up from the bottom)
+  { const p = new Path2D(); p.rect(0, shore + 40, W, H); Silk.ink(ctx, p, INK.near, { k: pull(.15, .6), dir: 'up', reg: [1, 0] }); }
+  // sky: stepped bands, no gradient (the far ink high up → peach → cream at the horizon), the sun and two broken rings
+  // (drawn bottom-up so each band's thinning stripes print over the band below it — Silk.bands draws top-down, so its stripes
+  //  are covered by the next band and the steps print hard; use it when a hard step is what you want)
+  { const cols = [INK.far, INK.peach, INK.cream], n = cols.length, bh = (hz + 40) / n;
+    for (let i = n - 1; i >= 0; i--) { const p = new Path2D(); p.rect(-12, i * bh, W + 24, bh + 1);
+      if (i < n - 1) for (let k = 0; k < 4; k++) p.rect(-12, (i + 1) * bh + k * bh * .11, W + 24, (4 - k) * bh * .035);
+      Silk.ink(ctx, p, cols[i], { k: pull(B.inks + (n - 1 - i) * .12, .6), reg: [(i % 2) * 1.5, (i % 3)], rim: false }); } }
+  lay(.08); { const y = SUN[1] - 60 * eo(clamp(t / DUR)), p = new Path2D(); p.arc(SUN[0], y, SR, 0, 6.283); Silk.ink(ctx, p, INK.gold, { k: pull(B.inks + .7, .45), reg: [2, -1], sheen: win(t, B.shine, B.shine + 4, 1.2, 2) });
+    const rings = new Path2D(); for (const r of [SR + 26, SR + 54]) for (let a = 0; a < 6.283; a += .5) { rings.moveTo(SUN[0] + Math.cos(a) * (r + 8), y + Math.sin(a) * (r + 8)); rings.arc(SUN[0], y, r + 8, a, a + .32); rings.arc(SUN[0], y, r, a + .32, a, true); rings.closePath(); }
+    Silk.ink(ctx, rings, INK.cream, { k: pull(B.inks + 1.1, .4), rim: false }); } ctx.restore();
+  // far peaks, then their snow (the cream again, printed only inside the peaks), then the hills
+  lay(.2); { const fp = ridge(far, hz + 60); Silk.ink(ctx, fp, INK.far, { k: pull(B.inks + 1.6, .5), dir: 'right', reg: [-2, 1] });
+    const snow = new Path2D(); snow.moveTo(-200, -10); for (let x = -200; x <= W + 200; x += 14) snow.lineTo(x, hz - (V ? 232 : 178) + 14 * Math.sin(x * .07) + 8 * Math.sin(x * .19)); snow.lineTo(W + 200, -10); snow.closePath();
+    ctx.save(); ctx.clip(fp); Silk.ink(ctx, snow, INK.cream, { k: pull(B.inks + 2.1, .4), dir: 'right', rim: false }); ctx.restore(); } ctx.restore();
+  lay(.4); Silk.ink(ctx, ridge(hill, hz + 60), INK.hill, { k: pull(B.inks + 2.6, .5), dir: 'left', reg: [1, 2] }); ctx.restore();
+  // the lake (the far ink again) and the sun's reflection in short stepped strokes (gold, then cream)
+  { const lake = new Path2D(); lake.rect(-10, hz + 22, W + 20, shore - hz + 30); Silk.ink(ctx, lake, INK.far, { k: pull(B.inks + 3.2, .5), dir: 'up', reg: [0, 1], rim: false });
+    const lines = new Path2D(), hi = new Path2D(); for (let i = 0; i < 12; i++) { const y = hz + 40 + i * (V ? 20 : 16), hw = SR * (1.05 - i * .07) * (1 + .15 * Math.sin(i * 2.1)); if (hw < 8) break; (i % 2 ? hi : lines).rect(SUN[0] - hw + 9 * Math.sin(i * 1.7), y, hw * 2, V ? 9 : 7); }
+    Silk.ink(ctx, lines, INK.gold, { k: pull(B.inks + 3.7, .4), rim: false }); Silk.ink(ctx, hi, INK.cream, { k: pull(B.inks + 3.9, .4), rim: false }); }
+  // the sail: crossing the lake, its wake stamped dash by dash (cream); the hull and mast in the near ink
+  { const u = clamp((t - B.sail) / 15), by = hz + (V ? 190 : 150), bx = lerp(W * .12, W * .74, eio(u)), s = V ? 1.25 : 1, a = ss(B.sail - .6, B.sail, t);
+    if (a > 0) { ctx.save(); ctx.globalAlpha = a;
+      if (u > 0) Silk.dashes(ctx, [[Math.max(W * .12 - 30, bx - 300 * s), by + 6 * s], [bx - 40 * s, by + 6 * s]], 1, { color: INK.cream, w: V ? 5 : 4, step: V ? 30 : 24, dash: V ? 16 : 12 });
+      const hull = new Path2D(); hull.moveTo(bx - 46 * s, by - 6 * s); hull.lineTo(bx + 50 * s, by - 6 * s); hull.lineTo(bx + 34 * s, by + 8 * s); hull.lineTo(bx - 36 * s, by + 8 * s); hull.closePath(); hull.rect(bx - 2 * s, by - 112 * s, 4 * s, 108 * s);
+      const sail = new Path2D(); sail.moveTo(bx + 4 * s, by - 108 * s); sail.lineTo(bx + 4 * s, by - 14 * s); sail.lineTo(bx + 52 * s, by - 14 * s); sail.closePath(); sail.moveTo(bx - 4 * s, by - 96 * s); sail.lineTo(bx - 4 * s, by - 16 * s); sail.lineTo(bx - 38 * s, by - 16 * s); sail.closePath();
+      Silk.ink(ctx, sail, INK.cream, { reg: [1, 0] }); Silk.ink(ctx, hull, INK.near, { reg: [0, 1] }); ctx.restore(); } }
+  // birds: three small marks of the near ink, wings beating, crossing above the peaks
+  if (t > B.birds) { const p = new Path2D(); for (let i = 0; i < 3; i++) { const u = (t - B.birds - i * .5) / 10; if (u < 0 || u > 1) continue; const x = lerp(W * 1.05, -W * .05, u) + i * 40, y = hz - (V ? 380 : 300) + i * 26 + 18 * Math.sin(u * 7 + i), f = Math.sin((t - i) * 9) * 9, sz = V ? 18 : 15;
+      p.moveTo(x - sz, y - f); p.quadraticCurveTo(x - sz * .4, y - 4 - f * .4, x, y + 3); p.quadraticCurveTo(x + sz * .4, y - 4 - f * .4, x + sz, y - f); p.quadraticCurveTo(x + sz * .4, y + 1 - f * .2, x, y + 7); p.quadraticCurveTo(x - sz * .4, y + 1 - f * .2, x - sz, y - f); p.closePath(); }
+    Silk.ink(ctx, p, INK.near, { rim: false }); }
+  // the near shore and its pines (same near ink as the ground: one screen, so they print together with it at the end of the run)
+  lay(1); { const p = ridge(near, H + 40); pines(p, W * (V ? .08 : .07), 0, V ? 360 : 300, V ? 3 : 4, 3); pines(p, W * (V ? .93 : .94), 0, V ? 300 : 260, V ? 2 : 3, 9); Silk.ink(ctx, p, INK.near, { k: pull(B.inks + 4.4, .6), dir: 'up', reg: [1, 0], rim: false }); } ctx.restore();   // rim off: overlapping tiers would show their edges
+  // the last pull: the end-card plate
+  { const p = new Path2D(); p.rect(0, 0, W, H); Silk.ink(ctx, p, INK.near, { k: pull(B.end - .3, .9), dir: 'down', rim: false }); }
+  Story.captions(ctx, t, S.lines, { y: V ? H * .715 : H * .86, size: V ? 54 : 46, font: "'Noto Sans KR',sans-serif", weight: 700, color: INK.cream, shadow: 'rgba(0,0,0,0)' });
+  Story.endCard(ctx, t, S.endCard, B.end, { font: "'Noto Sans KR',sans-serif", color: INK.cream, srcColor: '#d9c8a0', ctaColor: INK.peach, titleShadow: '' });
+  Story.fadeBlack(ctx, t, DUR);
+}
+Pilot.run({ W, H, dur: DUR, fonts: ["700 54px 'Noto Sans KR'", "600 30px 'Noto Sans KR'", "400 28px 'Noto Sans KR'", "600 40px 'Noto Serif KR'"], draw });
+</script>
+</body>
+</html>
