@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>First Snow — luminous-score template</title>
+<!-- the template (BRIEF.md): an original 14-bar piece for solo violin, strings and harpsichord, 38.8 s.
+     An example of the style — replace the title, voices, notes, look and shots with the ones your piece needs. -->
+<script type="importmap">{ "imports": { "three": "../lib/three.module.min.js", "ls/": "../lib/" } }</script>
+<style>html,body{margin:0;background:#07090e}</style>
+</head>
+<body>
+<canvas id="frame"></canvas>
+<script type="module">
+import { Piece } from 'ls/stage.js';
+
+const P = new Piece({
+  title: { text: 'First Snow', sub: 'for solo violin, strings and harpsichord', by: 'luminous-score · template', byBeat: 14 },
+  meter: '4/4', key: 'd minor', tempo: [[0, 112], [52, 56]], intro: 3.2, outro: 3.5,   // the held last chord: half speed
+  // one staff per voice, top to bottom; a colour per voice (the light), a synth per voice (the sound)
+  voices: [
+    { id: 'solo', name: 'Solo Violin', clef: 'treble', color: '#ff5547', synth: 'strings', range: 'violin', pan: 0.05, gain: 1.15 },
+    { id: 'vln1', name: 'Violin I', clef: 'treble', color: '#55d2ff', synth: 'strings', range: 'violin', pan: -0.45, section: true, gain: 0.7 },
+    { id: 'vln2', name: 'Violin II', clef: 'treble', color: '#d36bff', synth: 'strings', range: 'violin', pan: 0.45, section: true, gain: 0.7 },
+    { id: 'vla', name: 'Viola', clef: 'alto', color: '#eef2ff', synth: 'strings', range: 'viola', pan: -0.2, section: true, gain: 0.7 },
+    { id: 'vc', name: 'Violoncello', clef: 'bass', color: '#8ef57a', synth: 'strings', range: 'cello', pan: 0.25, section: true, gain: 0.8 },
+    { id: 'cemb', name: 'Cembalo', clef: 'bass', color: '#ffb04a', synth: 'pluck', range: 'harpsichord', pan: 0.1, gain: 0.9 },
+  ],
+  look: 'winter',
+  // a shot frames the playhead's stretch of staves `z`; `dist` is the closest the camera comes, it backs off to fit (`fit`)
+  shots: [
+    { at: 0, x: 'title', z: 'title', yaw: 14, pitch: 26, dist: 3.4, fov: 30 },
+    { at: 2.0, blend: 2.8, z: ['vc', 'cemb'], yaw: 38, pitch: 13, dist: 2.6, lead: 0.2, focus: 'vc' },            // the cello alone
+    { bar: 3, blend: 4, z: ['vln2', 'cemb'], yaw: 30, pitch: 17, dist: 3, lead: 0.2 },                           // the chord stacks up
+    { bar: 5, blend: 2.5, z: ['solo', 'vln1'], yaw: 44, pitch: 13, dist: 2.6, lead: 0.3, focus: 'solo' },        // the solo enters, low and close
+    { bar: 9, blend: 3, z: 'all', yaw: 24, pitch: 22, dist: 3, lead: 0.2, focus: 'solo' },                       // everything, higher
+    { bar: 13, blend: 1.6, z: 'all', yaw: 50, pitch: 13, dist: 3, lead: 0.3 },                                   // the run, raking
+    { bar: 14, blend: 3.5, z: 'all', yaw: 28, pitch: 32, dist: 5, lead: -2.5, fit: 0.6 },                           // pull up on the last chord
+  ],
+});
+
+P.voice('solo', `(R |)*4
+  !mf d5:16 f5 a5 d6 a5 f5 d5 a4 d5 f5 a5 d6 f6:8 e6 |
+  g5:16 bb5 d6 g6 d6 bb5 g5 d5 bb5:8 a5 g5 f5 |
+  e5:16 a5 c#6 e6 g6 e6 c#6 a5 e6:4^tr d6:8 c#6 |
+  d6:4 a5:8 f5 d5:2 |
+  !f f5:16 bb5 d6 f6 d6 bb5 f5 d5 f5 bb5 d6 f6 bb6:4^ac |
+  g6:16 f6 eb6 d6 c6 bb5 a5 g5 a5:8 bb5 c6 d6 |
+  e6:16 c#6 a5 g5 e5 g5 a5 c#6 e6:4^tr r:4 |
+  d6:8 f6 a6 f6 d6 a5 f5 d5 |
+  !ff a5:16 g5 f5 e5 d5 c#5 d5 e5 f5 e5 d5 c#5 d5 e5 c#5 a4 |
+  d6:1^fe |`);
+P.voice('vln1', `(R |)*3
+  !p (a4:8)*8 | (d4:8)*8 | (g4)*8 | (g4)*8 | (d5)*8 | !f (bb4)*8 | (g4)*8 | (a4)*8 | (d5)*8 |
+  !ff a5:16 g5 f5 e5 d5 c#5 d5 e5 f5 e5 d5 c#5 d5 e5 c#5 a4 | <f4 a4 d5>:1^fe |`);
+P.voice('vln2', `(R |)*2
+  !p (a3:8)*8 | (g3)*8 | (a3)*8 | (d4)*8 | (e4)*8 | (f4)*8 | !f (d4)*8 | (d4)*8 | (e4)*8 | (f4)*8 |
+  !ff a4:16 g4 f4 e4 d4 c#4 d4 e4 f4 e4 d4 c#4 d4 e4 c#4 a3 | a4:1^fe |`);
+P.voice('vla', `R |
+  !p (f3:8)*8 | (f3)*8 | (e3)*8 | (f3)*8 | (bb3)*8 | (c#4)*8 | (a3)*8 | !f (f3)*8 | (bb3)*8 | (c#4)*8 | (a3)*8 |
+  !ff (a3:16)*16 | f4:1^fe |`);
+P.voice('vc', `!p (d3:8)*8 | (d3)*8 | !cresc. (d3)*8 | (c#3)*8 |
+  (d3)*8 | (g2)*8 | (a2)*8 | (d3)*8 | !f (bb2)*8 | (g2)*8 | (a2)*8 | (d3)*8 |
+  !ff (a2:16)*16 | d3:1^fe |`);
+P.voice('cemb', `(R |)*4
+  !mf d2:4 d3 d2 d3 | g2 g3 g2 g3 | a2 a3 a2 a3 | d2 d3 a2 d3 | !f bb1 bb2 bb1 bb2 | g1 g2 g1 g2 | a1 a2 a1 a2 | d2 d3 d2 d3 |
+  !ff (a2:8)*8 | <d2 d3>:1^fe |`);
+
+await P.start();
+</script>
+</body>
+</html>

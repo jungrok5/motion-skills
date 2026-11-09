@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prelude in C by candlelight — luminous-score worked example</title>
+<!-- the worked example (BRIEF.md): J. S. Bach, Prelude in C major, BWV 846, bars 1–19, on one piano grand staff, 72 s -->
+<script type="importmap">{ "imports": { "three": "../../lib/three.module.min.js", "ls/": "../../lib/" } }</script>
+<style>html,body{margin:0;background:#0b0704}</style>
+</head>
+<body>
+<canvas id="frame"></canvas>
+<script type="module">
+import { Piece } from 'ls/stage.js';
+
+const P = new Piece({
+  title: { text: 'Prelude in C', sub: 'The Well-Tempered Clavier I · BWV 846 · bars 1–19', by: 'J. S. Bach', byBeat: 7.5, size: 5.4 },
+  meter: '4/4', key: 'c major', tempo: [[0, 70], [64, 64], [70, 56]], intro: 4.2, outro: 4.5,
+  // one instrument, three lights: the arpeggio on the right hand, the held tenor and the bass on the left
+  staves: [
+    { id: 'rh', name: 'Clavier', clef: 'treble', gap: 6.5 },
+    { id: 'lh', clef: 'bass' },
+  ],
+  voices: [
+    { id: 'arp', staff: 'rh', color: '#ffe2a0', synth: 'piano', range: 'piano', pan: 0.2, gain: 0.85, ring: 0.5 },
+    { id: 'tenor', staff: 'lh', stem: 'up', color: '#ff7a9c', synth: 'piano', range: 'piano', pan: -0.05, gain: 0.8 },
+    { id: 'bass', staff: 'lh', stem: 'down', color: '#ff9d2e', synth: 'piano', range: 'piano', pan: -0.25, gain: 0.95 },
+  ],
+  look: { base: 'candle', trail: 3.2, afterglow: 0.5, pool: 0.55, poolStrength: 0.6, bloom: { strength: 0.95, radius: 0.6, threshold: 0.9 } },
+  layout: { barNumbers: 1 },
+  audio: { reverb: { mix: 0.3, size: 0.86, damp: 0.45 } },
+  shots: [
+    { at: 0, x: 'title', z: 'title', yaw: 8, pitch: 52, dist: 4.6, fov: 30, drift: 0.015 },                  // looking down at the page
+    { at: 2.4, x: 'title', z: 'title', blend: 1.8, yaw: 12, pitch: 34, dist: 4 },                           // settle onto the title
+    { bar: 1, blend: 3.2, z: 'all', yaw: 20, pitch: 34, dist: 5.4, lead: 0.3, focus: 'arp' },                 // the first chords, read from above
+    { bar: 5, blend: 4, z: 'all', yaw: 50, pitch: 13, dist: 4.4, lead: 0.6 },                                   // low and long, down the system
+    { bar: 9, blend: 3.5, z: 'rh', yaw: 24, pitch: 26, dist: 3.4, lead: 0, focus: 'arp' },                      // closer on the arpeggio
+    { bar: 12, blend: 3.5, z: 'lh', yaw: 62, pitch: 12, dist: 3.8, lead: -0.3, focus: ['bass', 'tenor'] },      // the bass begins to fall chromatically
+    { bar: 16, blend: 4, z: 'all', yaw: 12, pitch: 44, dist: 6, lead: 0, fit: 0.7 },                            // rise as it settles home
+    { bar: 19, blend: 4, z: 'all', yaw: 2, pitch: 62, dist: 7, lead: -2.5, fit: 0.55 },                         // look down on the last chord
+  ],
+});
+
+// Each bar is one chord of five notes, played as written: the bass holds a half note, the tenor enters a sixteenth
+// later and holds, the right hand plays the upper three notes twice — and the whole half bar repeats.
+const CHORDS = [
+  'c4 e4 g4 c5 e5', 'c4 d4 a4 d5 f5', 'b3 d4 g4 d5 f5', 'c4 e4 g4 c5 e5', 'c4 e4 a4 e5 a5',
+  'c4 d4 f#4 a4 d5', 'b3 d4 g4 d5 g5', 'b3 c4 e4 g4 c5', 'a3 c4 e4 g4 c5', 'd3 a3 d4 f#4 c5',
+  'g3 b3 d4 g4 b4', 'g3 bb3 e4 g4 c#5', 'f3 a3 d4 a4 d5', 'f3 ab3 d4 f4 b4', 'e3 g3 c4 g4 c5',
+  'e3 f3 a3 c4 f4', 'd3 f3 a3 c4 f4', 'g2 d3 g3 b3 f4', 'c3 e3 g3 c4 e4',
+];
+const dyn = { 0: 'p', 4: 'mp', 9: 'mf', 13: 'mp', 17: 'p' };
+CHORDS.forEach((c, bar) => {
+  const [n1, n2, n3, n4, n5] = c.split(' ');
+  for (const half of [0, 2]) {
+    const b = bar * 4 + half, d = half === 0 ? dyn[bar] : null;
+    P.add('bass', b, 2, n1, { dyn: d });
+    P.add('tenor', b, 0.25, null); P.add('tenor', b + 0.25, 1.75, n2);
+    P.add('arp', b, 0.5, null, { dyn: d, words: bar === 17 && half === 0 ? 'rit.' : null });
+    [n3, n4, n5, n3, n4, n5].forEach((n, i) => P.add('arp', b + 0.5 + i * 0.25, 0.25, n));
+  }
+});
+// the tenor's last note is the bar's lowest when the bass drops below it (bar 18: g2 under d3) — the same pattern holds
+P.check('nineteen bars', (p) => p.score.bars === 19 || `expected 19 bars, got ${p.score.bars}`);
+
+await P.start();
+</script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>luminous-score · motion-skills</title>
+<meta name="description" content="곡 하나를 주면 어두운 방에 놓인 악보 위로 카메라가 낮게 미끄러지고, 음이 울리는 순간 그 음표가 성부의 색으로 빛나 종이에 빛을 드리웠다가 잔광으로 사라지는 영상을 만듭니다. 소리도 같은 음표에서 합성합니다.">
+<meta property="og:title" content="luminous-score · motion-skills">
+<meta property="og:description" content="곡 하나를 주면 어두운 방에 놓인 악보의 음표가 울리는 순간 성부의 색으로 빛나는 영상을 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/luminous-score/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/luminous-score">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / luminous-score</nav>
+  <h1>luminous-score</h1>
+  <p>곡 하나를 주면 어둡고 안개 낀 방에 놓인 악보 위로 카메라가 낮게 미끄러지고, 음이 울리는 순간 그 음표가 성부의 색으로 빛나 종이에 빛을 드리웠다가 잔광으로 사라지는 영상을 만듭니다. 오선 · 성부 색 · 방 · 샷을 곡에 맞게 설계하고, 소리도 같은 음표에서 합성해 화면과 소리가 한 시계로 갑니다.
+  보고 만든 원본: <a href="https://x.com/ThoNg676733/status/2119610929654469035?a=CTncbvpeXqVgLMNZlp0&s=19" target="_blank" rel="noopener">🎼🌺Music Love♥️의 X 게시물 (비발디 「겨울」을 악보가 빛나는 영상으로 시각화)</a>.</p>
+  <ul class="tags"><li>three.js 악보</li><li>음표 조명</li><li>기보 엔진</li><li>합성 사운드</li><li>MP4 · 라이브 페이지</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>곡 하나(퍼블릭 도메인 곡의 마디 범위, MIDI 파일, 영상용으로 새로 쓴 곡). 레퍼런스 영상이 있으면 그 스틸</dd>
+      <dt>브리프</dt><dd>어느 마디를 어디서 가져오는지와 권리, 한 줄 느낌, 오선과 성부(주인공 빛), 성부마다의 색과 이유, 종이 · 안개 · 빛 · 눈이나 먼지, 템포 지도, 음악 사건마다의 샷, 성부마다의 소리를 적은 <code>BRIEF.md</code></dd>
+      <dt>악보</dt><dd>텍스트 성부(마디 검사 포함), 반복 패턴은 <code>P.add</code> 루프, MIDI는 <code>midi2score.mjs</code>. 끝없는 한 줄 총보로 기보: 음자리표 · 조표 · 박자표 · 빔 · 쉼표 · 임시표 · 붙임줄 · 셈여림</dd>
+      <dt>확인</dt><dd>마디 · 음역 · 색 검사, 울리는 음과 주인공 성부가 화면 안에 있는지, 음이 울릴 때 무언가 빛나는지, 검거나 하얗게 날아간 프레임, 결정성, 소리의 무음 · NaN · 늦은 시작</dd>
+      <dt>출력</dt><dd>30fps 1920×1080 MP4와 WAV, 브라우저에서 바로 재생되고 ♪ 버튼으로 소리를 합성하는 라이브 페이지</dd>
+    </dl>
+    <pre><code>cd luminous-score/examples/candle-prelude
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs index.html --sheet --scale .5
+node ../../scripts/render.mjs index.html --preview
+node ../../scripts/render.mjs index.html
+node ../../scripts/new-piece.mjs ~/my-piece
+node ../../scripts/midi2score.mjs piece.mid</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. GPU · npm 설치 · API 키가 필요 없습니다(CPU WebGL에서 960×540 한 프레임 약 0.23초, 38.8초 템플릿 미리보기를 워커 4개로 약 4분). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/luminous-score/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:calc((100vw - 34px)*.5625);--demo-bg:#0b0704">
+    <iframe data-src="demo/examples/candle-prelude/" title="luminous-score 예제 실시간 재생" allow="fullscreen; autoplay" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/candle-prelude/">데모 열기 (examples/candle-prelude)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/candle-prelude</code> · 바흐 C장조 전주곡 1–19마디 · 75.3초 · ♪ 버튼으로 소리</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/candle-prelude/" data-cap="예제 &lt;code&gt;examples/candle-prelude&lt;/code&gt; · 바흐 C장조 전주곡 1–19마디 · 75.3초 · ♪ 버튼으로 소리" aria-pressed="true">촛불 전주곡</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/piece.html&lt;/code&gt; · 「First Snow」 14마디 · 38.8초 · 새 곡의 출발점" aria-pressed="false">First Snow</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본 영상에 없는 곡으로 브리프부터 새로 설계한 예제의 장면, 원본의 겨울 분위기로 쓴 시작 템플릿, 검토용 이미지입니다. 카드를 누르면 그 순간이 라이브 페이지에서 멈춘 채 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"prelude":"촛불 전주곡","snow":"First Snow","tool":"검토"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「Prelude in C」 촛불 아래 <small>바흐 BWV 846 · 1–19마디 · 75.3초</small></h3>
+      <p>피아노 한 대, 오선 두 줄, 세 성부의 빛: 오른손 아르페지오는 촛불 금색, 왼손의 테너는 장밋빛, 베이스는 호박색. 따뜻한 양피지 · 먼지 · 책상 위에서 읽는 높은 카메라</p>
+      <div class="grid">
+        <a class="tile" data-tags="prelude" href="demo/examples/candle-prelude/?t=2.8" target="_blank" rel="noopener">
+          <img src="samples/prelude-title.jpg" alt="호박색 종이에 도드라진 검은 글자 'Prelude in C'와 그 아래 기울어진 부제, 높은음자리표와 4/4 박자표, 첫 마디의 음표들" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">시작 · 2.8초</span><b>도드라진 제목</b><span class="how">책상 위 악보를 내려다보다가 제목에 내려앉음</span></div></a>
+        <a class="tile" data-tags="prelude" href="demo/examples/candle-prelude/?t=9.2" target="_blank" rel="noopener">
+          <img src="samples/prelude-chords.jpg" alt="오른손 오선의 16분음표 아르페지오가 금색으로 빛나고 아래 오선에 장밋빛 테너 음 하나가 켜진 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">2마디</span><b>첫 화음들</b><span class="how">읽는 각도의 카메라, 주인공 빛은 아르페지오</span></div></a>
+        <a class="tile" data-tags="prelude" href="demo/examples/candle-prelude/?t=22" target="_blank" rel="noopener">
+          <img src="samples/prelude-long.jpg" alt="낮은 각도에서 길게 뻗은 두 줄 오선, 금색 아르페지오 두 음과 장밋빛 · 호박색 왼손 음이 빛나는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">6마디</span><b>시스템을 따라 낮게</b><span class="how">패턴이 자리 잡으면 오선이 멀리 모이는 낮은 샷</span></div></a>
+        <a class="tile" data-tags="prelude" href="demo/examples/candle-prelude/?t=37.8" target="_blank" rel="noopener">
+          <img src="samples/prelude-arp.jpg" alt="가까이서 본 오른손 오선, 빔으로 묶인 16분음표 셋이 금색으로 빛나고 아래에 왼손의 음표" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">10마디</span><b>아르페지오 가까이</b><span class="how">오른손만 담는 샷, 빛나는 음표 옆에 아직 꺼진 음표</span></div></a>
+        <a class="tile" data-tags="prelude" href="demo/examples/candle-prelude/?t=47.5" target="_blank" rel="noopener">
+          <img src="samples/prelude-bass.jpg" alt="옆에서 낮게 본 오선, 호박색 베이스 음과 장밋빛 테너 음이 나란히 빛나고 멀리 금색 아르페지오" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">13마디</span><b>반음씩 내려가는 베이스</b><span class="how">왼손에 맞춘 측면 샷, 지나온 음을 돌아봄</span></div></a>
+        <a class="tile" data-tags="prelude" href="demo/examples/candle-prelude/?t=72.5" target="_blank" rel="noopener">
+          <img src="samples/prelude-end.jpg" alt="위에서 내려다본 마지막 두 마디, 끝 세로줄 앞에 금색 · 장밋빛 · 호박색 잔광이 남은 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">19마디 · 끝</span><b>마지막 C 화음</b><span class="how">리타르단도에 맞춰 올라가 내려다봄, 잔광이 사라짐</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>「First Snow」 시작 템플릿 <small>독주 바이올린 · 현 · 쳄발로 · 14마디 · 38.8초</small></h3>
+      <p>원본의 겨울 분위기로 새로 쓴 짧은 알레그로입니다. 성부가 하나씩 들어오며 빛이 늘고, 독주의 빨간 빛이 아르페지오를 그립니다. 새 곡은 여기서 시작해 곡에 맞게 바꿉니다</p>
+      <div class="grid">
+        <a class="tile" data-tags="snow" href="demo/templates/?t=5.3" target="_blank" rel="noopener">
+          <img src="samples/snow-cello.jpg" alt="차가운 회색 종이 위 첼로 오선의 8분음표가 초록으로 빛나기 시작하는 낮은 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">1마디</span><b>첼로 혼자</b><span class="how">아래 두 오선에 맞춘 낮은 샷</span></div></a>
+        <a class="tile" data-tags="snow" href="demo/templates/?t=13.6" target="_blank" rel="noopener">
+          <img src="samples/snow-solo.jpg" alt="위쪽 독주 오선의 빨간 음표들과 청록 · 보라 · 흰색으로 빛나는 반주 성부의 8분음표" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">5마디</span><b>독주 등장</b><span class="how">빨간 독주 빛이 16분음표 아르페지오로 들어옴</span></div></a>
+        <a class="tile" data-tags="snow" href="demo/templates/?t=23.2" target="_blank" rel="noopener">
+          <img src="samples/snow-tutti.jpg" alt="여섯 오선이 모두 보이는 장면, 빨강 · 청록 · 보라 · 흰색 · 초록 · 주황 음표가 각자의 오선에서 빛남" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">10마디</span><b>모두, 포르테</b><span class="how">총보 전체를 담는 높은 샷</span></div></a>
+        <a class="tile" data-tags="snow" href="demo/templates/?t=30.4" target="_blank" rel="noopener">
+          <img src="samples/snow-run.jpg" alt="비스듬히 낮게 본 총보, 바이올린들의 16분음표 질주가 빛의 줄이 되고 아래로 초록 · 주황 음표가 이어짐" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">13마디</span><b>유니즌 질주</b><span class="how">빠른 음이 빛의 꼬리를 남김</span></div></a>
+        <a class="tile" data-tags="snow" href="demo/templates/?t=33.6" target="_blank" rel="noopener">
+          <img src="samples/snow-end.jpg" alt="위로 올라가 본 마지막 마디, 온음표 고리들이 빛나고 끝 세로줄 너머로 빈 오선이 이어짐" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">14마디</span><b>길게 끄는 마지막 화음</b><span class="how">페르마타를 템포 단계로, 지나온 질주를 돌아봄</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>검토 <small>기보 · 시트</small></h3>
+      <p>샷을 쓰기 전에 악보를 위에서 내려다보고, 샷마다 시작 · 정착 순간을 한 장에 모아 검토 기준으로 채점합니다</p>
+      <div class="grid">
+        <a class="tile" data-tags="tool" href="https://github.com/jungrok5/motion-skills/blob/main/luminous-score/references/NOTATION.md" target="_blank" rel="noopener">
+          <img src="samples/engraving.jpg" alt="위에서 똑바로 내려다본 바흐 전주곡의 두 오선, 빔으로 묶인 16분음표, 붙임줄로 이은 테너, 아래로 꼬리 단 베이스 2분음표" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">pitch 89°</span><b>위에서 본 기보</b><span class="how">음자리 · 빔 · 붙임줄 · 한 오선의 두 성부 확인</span></div></a>
+        <a class="tile" data-tags="tool" href="https://github.com/jungrok5/motion-skills/blob/main/luminous-score/references/BRIEF.md" target="_blank" rel="noopener">
+          <img src="samples/sheet.jpg" alt="촛불 전주곡의 샷 시트 일부, 제목 장면 네 칸이 번호와 함께 나란히" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">render.mjs --sheet</span><b>샷 시트</b><span class="how">샷마다 시작과 정착 순간을 스틸 검토 기준으로 채점</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬을 만든 출처와, 이 레포에서 새 곡으로 만든 예제입니다.</p>
+  <div class="works">
+    <a class="work" href="https://x.com/ThoNg676733/status/2119610929654469035?a=CTncbvpeXqVgLMNZlp0&s=19" target="_blank" rel="noopener"><b>원본 · 🎼🌺Music Love♥️의 X 게시물</b><span>비발디 「겨울」 1악장 3분 38초 · 어두운 방의 총보, 오선마다 다른 색으로 켜지는 음표</span><span class="url">x.com/ThoNg676733/status/2119610929654469035</span></a>
+    <a class="work" href="demo/examples/candle-prelude/" target="_blank" rel="noopener"><b>「Prelude in C」 촛불 아래</b><span>바흐 BWV 846 · 1–19마디 · 75.3초 · 라이브 페이지</span><span class="url">luminous-score/examples/candle-prelude</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/luminous-score/examples/candle-prelude"><b>원본 레포 · motion-skills</b><span>이 레포에서 만듦</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/luminous-score/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/luminous-score">폴더</a> <span>lib · scripts · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/luminous-score/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/luminous-score/references/BRIEF.md">references/BRIEF.md</a> <span>곡 → 브리프, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/luminous-score/references/LOOK.md">references/LOOK.md</a> <span>원본에서 관찰한 화면 문법</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/luminous-score/references/NOTATION.md">references/NOTATION.md</a> <span>음표 쓰는 법 · MIDI 가져오기 · 기보 범위</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/luminous-score/references/ENGINE.md">references/ENGINE.md</a> <span>옵션 · 빛 · 샷과 화면 맞춤 · 페이지 계약</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/luminous-score/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 장면과 소리는 코드로 만들었습니다. 바흐 BWV 846은 퍼블릭 도메인, 「First Snow」는 이 레포의 창작곡. 글꼴 Noto Music · Source Serif 4 · Noto Sans KR (SIL OFL), three.js (MIT)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
