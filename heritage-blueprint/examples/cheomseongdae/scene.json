@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "lang": "ko",
+  "titleLocal": "경주 첨성대",
+  "titleEn": "CHEOMSEONGDAE, GYEONGJU",
+  "edition": "01",
+  "geometry": "geometry.js",
+  "evidence": "evidence.json",
+  "inset": "inset.html",
+  "durationMs": 2850
+}

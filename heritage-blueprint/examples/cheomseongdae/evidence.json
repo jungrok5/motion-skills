@@ -1,0 +1,33 @@
+{
+  "scope": {
+    "object": "경주 첨성대 (국보), 현존 석조 구조물 단일 개체",
+    "era": "현존 형태. 선덕여왕대(632–647) 건립 기록이 있으나 원형 복원이 아님",
+    "representation": "공개 실측 도면 비례와 보도값으로 만든 구조 설명 모형. 측량 성과·CAD·디지털 트윈이 아님",
+    "units": "metres",
+    "datum": "Z=0은 지대석 아래 지면선. 몸통 비례는 남쪽 입면도에서, 크기는 평면도의 3 m 축척 막대로 맞춤",
+    "review": "2026-11-09 작성. 공개·재사용 전 링크와 권리를 다시 확인할 것. 원본 도면 이미지는 이 저장소에 넣지 않음"
+  },
+  "sources": [
+    {"id": "icomos-iau", "title": "ICOMOS–IAU Thematic Study on Astronomical Heritage, Case Study 5.4: Cheomseongdae Observatory (Park Jeong Eun)", "url": "https://web.astronomicalheritage.org/images/astronomicalheritage.org/thematic-study/ch05cs4.pdf", "type": "thematic-study-with-survey-drawings", "date": "2010", "use": "9.17 m, 27단, 13–15단 정남(약간 동쪽) 창, 창 아래 내부 채움, 19–20·25–26단 돌출 장대석, 정자석; Fig. 5.4.1 북동쪽 사진; Fig. 5.4.2 남쪽 입면도와 정자석 평면도(국립문화재연구원, 3 m 축척 막대)"},
+    {"id": "khan-2022", "title": "주간경향 이기환의 Hi-story (54) 22.58㎝나 기운 첨성대, 진짜 천문대였을까", "url": "https://weekly.khan.co.kr/article/202210141451451", "type": "news-citing-survey-report", "date": "2022-10-14", "use": "국립문화재연구원 2009 실측 보고서 인용 높이 8,770 mm, 창 높이까지 흙 채움, 몸통 밑지름 : 정자석 한 변 ≈ 5 : 3"},
+    {"id": "kowiki", "title": "위키백과: 경주 첨성대", "url": "https://ko.wikipedia.org/wiki/경주_첨성대", "type": "encyclopedia-secondary", "date": "accessed 2026-11-09", "use": "높이 9.4 m, 지대석 한 변 5.35 m, 362매, 12단까지 흙, 19–20·25–26단 장대석, 홍사준(1963) 실측 석재 수(지대석 8, 기단석 12, 상부 정자석 2단 8, 중간 정자석 8, 문주석 2)"},
+    {"id": "report-diameters", "title": "통용 설명문(높이 9.17 m, 밑지름 4.93 m, 윗지름 2.85 m, 남쪽 창 한 변 약 1 m)", "url": "https://m.cafe.daum.net/4702km/Brrf/206", "type": "secondary-copy-of-guide-text", "date": "unknown", "use": "밑지름·윗지름·창 크기 비교용. 출처 불명 2차 인용"}
+  ],
+  "claims": [
+    {"parameter": "총높이", "status": "reported", "sources": ["khan-2022", "icomos-iau", "kowiki"], "basis": "보도값이 8.77 m(2009 실측 보고서 인용), 9.17 m, 9.4 m로 갈림. 모형은 도면 비례 + 축척으로 8.73 m가 되어 8.77 m와 맞음. 표기는 '약 8.8 m (보도)'"},
+    {"parameter": "몸통 밑지름", "status": "photo-estimate", "sources": ["icomos-iau", "report-diameters"], "basis": "평면도 축척 막대로 약 5.0 m 측정(모형 4.98 m). 통용 설명문 4.93 m와 비슷하고 다른 보도 5.17 m와는 다름"},
+    {"parameter": "몸통 윗지름", "status": "photo-estimate", "sources": ["icomos-iau", "report-diameters"], "basis": "입면도 비례로 약 2.9 m(모형 2.88 m). 통용 설명문 2.85 m"},
+    {"parameter": "몸통 곡선(병 모양)", "status": "photo-estimate", "sources": ["icomos-iau"], "basis": "남쪽 입면도 외곽선을 높이 0.5 m 간격으로 읽어 C2 곡선으로 보간. 아래는 거의 곧고 중간에서 빨리 좁아지며 위 5단쯤은 원통. 북동쪽 사진과 대조"},
+    {"parameter": "몸통 단 수 · 단 높이", "status": "reported", "sources": ["icomos-iau", "kowiki"], "basis": "27단. 단 높이는 몸통 높이 / 27 = 0.285 m로 고르게 나눔(실제 단마다 다름)"},
+    {"parameter": "석재 수와 세로 줄눈", "status": "reported", "sources": ["kowiki", "icomos-iau"], "basis": "362매(위키, 세는 법에 따라 다름)와 365매(ICOMOS)가 갈림. 세로 줄눈 위치는 그림용이며, 단별 개수만 둘레 비례로 합이 약 362가 되게 함"},
+    {"parameter": "남쪽 창 위치", "status": "reported", "sources": ["icomos-iau", "kowiki"], "basis": "13–15단, 정남에서 약간 동쪽. 동쪽으로 돌아간 각도는 자료가 없어 정남으로 둠"},
+    {"parameter": "남쪽 창 폭", "status": "reported", "sources": ["report-diameters", "icomos-iau"], "basis": "약 0.95–1 m 보도. 입면도의 문주석 사이도 약 1 m. 모형 0.95 m. 높이는 13–15단 세 단"},
+    {"parameter": "내부 흙 채움", "status": "reported", "sources": ["icomos-iau", "khan-2022", "kowiki"], "basis": "창 아래(12단 윗면)까지 채움. 채운 시기는 미상"},
+    {"parameter": "중간 장대석 배치", "status": "reported", "sources": ["icomos-iau", "kowiki"], "basis": "19–20단과 25–26단에 장대석, 끝이 밖으로 돌출. 홍사준 실측 중간 정자석 8매를 두 단 × 2매 × 2층의 井 짜임으로 해석"},
+    {"parameter": "중간 장대석 크기 · 간격 · 방향", "status": "unknown", "sources": [], "basis": "치수와 방향 자료 없음. 폭 0.28 m, 중심 간격 1.1 m, 돌출 0.06 m, 아래층 동서 · 위층 남북으로 단순화하고 라벨에 단 번호만 표기"},
+    {"parameter": "정자석", "status": "photo-estimate", "sources": ["icomos-iau", "khan-2022", "kowiki"], "basis": "2단, 각 단 4매 井 짜임(2단 8매). 한 변 약 3.07 m는 입면도 비례이며 5:3 비율 보도와 맞음. 부재 폭 0.26 m는 평면도 측정. 평면도에서 몸통 축보다 약 4.5° 돌아가 있어 반영"},
+    {"parameter": "기단", "status": "reported", "sources": ["kowiki", "icomos-iau"], "basis": "지대석 한 변 5.35 m(보도). 윗단 5.15 m와 두 단 높이 0.22 · 0.24 m는 입면도 비례 추정"},
+    {"parameter": "벽 두께", "status": "unknown", "sources": [], "basis": "내부는 돌 뒷부분이 튀어나와 거칠다(ICOMOS)고만 함. 읽기 쉽게 0.30 m 균일 두께로 그림. 측정값 아님"},
+    {"parameter": "기울기", "status": "reported", "sources": ["khan-2022"], "basis": "2009년 북 20 cm · 서 0.7 cm, 2014–2021 누적 22.58 cm. 설명 모형이라 반영하지 않음"}
+  ]
+}
