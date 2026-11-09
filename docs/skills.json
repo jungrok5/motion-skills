@@ -1219,6 +1219,42 @@
           "url": "https://jungrok5.github.io/motion-skills/point-cloud-morph/demo/examples/deep-survey/"
         }
       ]
+    },
+    {
+      "id": "ultimate-move-short",
+      "name": "ultimate-move-short",
+      "tagline": "주제 하나를 주면 흑백과 붉은색 하나로 된 전투 애니메이션의 필살기 영상을 코드만으로 만듭니다. 먹물 잔상과 붉은 실선, 충격 프레임과 멈춤, 갑작스러운 정적, 하늘에 천 개가 열리는 영역, 세계를 한 줄로 베어 미끄러뜨리는 마지막 일격, 하얀 정적까지 30초 문법으로 연출한 1080p MP4와 브라우저에서 도는 페이지를 냅니다.",
+      "posterAlt": "ultimate-move-short로 만든 「月蝕 · Thousand-Moon Eclipse」의 장면 네 개: 붉게 깨어난 눈동자의 동심원이 유리처럼 갈라지는 창잡이의 얼굴, 흰 윤곽선만 남은 창잡이 위로 붉은 테를 두른 거대한 일식과 먹의 소용돌이, 세 획이 조여든 자리에서 사방으로 터지는 검은 먹과 붉은 실선, 초승달과 반달의 벽 앞에 떠오른 거대한 보름달 셋과 맨 아래의 아주 작은 인물",
+      "poster": "ultimate-move-short/poster.jpg",
+      "tags": [
+        "3D 캔버스",
+        "16:9",
+        "MP4",
+        "라이브 페이지",
+        "합성 사운드"
+      ],
+      "stats": [
+        "예제 30초 · 16샷",
+        "모티프 4종 · 무기 4종"
+      ],
+      "page": "ultimate-move-short/",
+      "source": "ultimate-move-short/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "ultimate-move-short/examples/thousand-moons/"
+      },
+      "sources": [
+        {
+          "title": "澜森(@lansenai)의 X 게시물 (AI 영상과 프롬프트)",
+          "url": "https://x.com/lansenai/status/2119397520833126441?a=IR20TU3t9a9k-Ql4AIg&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「月蝕 · Thousand-Moon Eclipse」 · 30초 · 16샷 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/ultimate-move-short/demo/thousand-moons/"
+        }
+      ]
     }
   ]
 }

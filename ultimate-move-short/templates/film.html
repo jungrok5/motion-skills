@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mirror Step · template</title>
+<script type="importmap">{ "imports": { "um/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// The starting film (11.5 s, 8 shots): the whole grammar of the style, compressed. Every value here is a STYLE EXAMPLE —
+// rewrite the fighter, the powers, the motif, the shots and the score from your BRIEF.md (references/STORY.md).
+//   burst → slash → plunge → stillness → domain → collapse → the cut → silence
+// Topic of this template: "a swordsman whose domain is a hall of a thousand mirrors" (not the reference's eyes).
+import { Film } from 'um/film.js';
+import { fighter, run } from 'um/fighter.js';
+import { domain, drawDomain } from 'um/domain.js';
+import { slash, shardList, shards, spaceCrack, cutLine } from 'um/fx.js';
+import { brush, splash, fleckList, INK } from 'um/ink.js';
+import { groundCrack, groundRing } from 'um/world.js';
+import { clamp, lerp, ease, hash, v3, TAU } from 'um/core.js';
+import { SCORE } from './score.js';
+
+const RED = '#e0142d';                      // ONE accent colour; only for hairlines, eyes, the blade edge, the cut
+// 1. the fighter — design it per topic (lib/fighter.js DESIGN lists every knob)
+const HERO = {
+  hair: { style: 'cropped', seed: 21 },
+  coat: { len: .6, back: 1.15, collar: .12, panels: 6, rag: .5 },
+  sash: { col: '#f1eee8', tails: 1, len: .6 },
+  weapon: { kind: 'katana', len: .8, curve: .04 },
+  face: { brow: 1, jaw: .8 },
+  accent: RED,
+};
+// 2. the domain — a motif from lib/domain.js MOTIFS (eye · moon · mirror · seal) or your own (ctx, s) => …
+const D = domain({ motif: 'mirror', seed: 4, accent: RED, fogDist: 150 })
+  .giant({ p: [0, 12, -40], size: 9 })
+  .wall({ z: -80, rows: 16, cols: 34, size: 3.4, curve: .3, phases: false })
+  .swarm({ n: 40, r0: 20, r1: 60, size: [.3, 2.2], phases: false });
+const F = new Film({ seed: 4, score: SCORE, accent: RED, env: { seed: 2, far: 'pillars' } });
+const R90 = Math.PI / 2;
+
+// 3. the shots. Each: F.shot(seconds, (w, t) => { what is in the frame at shot time t }, { camera, hits, holds, mb })
+// burst: already moving on the first frame, the ink shadow behind her/him, a stamp that cracks the ground
+const A = fighter(HERO, [{ t: -.6, pose: 'dash', x: -4, yaw: R90 }, { t: 0, pose: 'crouch', x: .3, yaw: R90, e: 'out' }, { t: .5, pose: 'crouch', x: .5, yaw: R90 }, { t: .62, pose: 'ready', x: .6, yaw: R90 }, { t: .8, pose: 'slashEnd', x: 1.4, yaw: R90, e: 'whip' }, { t: 2, pose: 'slashEnd', x: 1.5, yaw: R90 }]);
+F.env.cracks.push({ crack: groundCrack(2, [.7, 0], .3, 3, { w: .04 }), t0: .1, d: .3, until: 2 });
+F.shot(2, (w, t) => {
+  w.ink(A, { span: .5, red: true, from: -.6 });
+  w.fighter(A);
+  const c = v3.add(A.rig(.7).chest, [0, -.05, 0]);
+  w.inked(c, (ctx, v) => slash(ctx, v, { c, r: 1.4, a0: 2.4, a1: -.6, axis: [0, .25, 1], w: .4, head: ease.out(clamp((t - .64) / .14)), fade: clamp((t - 1.2) / .6), red: { col: RED }, seed: 3 }), -.3);
+}, { cam: [{ t: 0, at: [0, .85, 0], yaw: -.1, dist: 5, fov: 38 }, { t: 2, at: [1, .9, 0], yaw: .1, dist: 4.4 }], hits: [{ t: .8, a: 16 }], holds: [[.8, .08]], mb: .7, name: 'burst · slash' });
+F.impact(.8, .05, 'invert');                  // a light hit: a 0.05 s negative frame
+
+// plunge: up, a held beat, down; an ink drop on paper where the blade lands (a heavy hit: a black frame)
+const B = fighter(HERO, [{ t: 0, pose: 'raise', x: 1.5, y: .2, yaw: R90 }, { t: .35, pose: 'raise', x: 1.6, y: 2.4, yaw: R90, e: 'out' }, { t: .55, pose: 'raise', x: 1.6, y: 2.4, yaw: R90 }, { t: .8, pose: 'plunge', x: 1.6, y: 0, yaw: R90, e: 'in' }, { t: 1.8, pose: 'plunge', x: 1.6, yaw: R90 }]);
+const land = [1.95, 0, 0], sh = shardList(5, 30, { center: [land[0], .2, 0], speed: 6, size: .12, flat: true, tb: .8 });
+F.shot(1.8, (w, t) => {
+  w.fighter(B);
+  if (t > .8) { const k = t - .8;
+    w.add(1e5, (ctx, v) => groundRing(ctx, v, land, .3 + 1.8 * ease.out(clamp(k / .4)), .22 * (1 - clamp(k / 1.2) * .6), { seed: 4 }));
+    w.inked([land[0], .05, 0], (ctx, v) => { const p = v.p([land[0], .05, 0]); if (p) splash(ctx, p[0], p[1], v.k(p[2]) * .9, { seed: 5, grow: ease.out(clamp(k / .18)), sy: .35, spikes: .45 }); }, .5);
+    w.add(1e4, (ctx, v) => shards(ctx, v, sh, t)); }
+}, { cam: t => ({ at: [1.6, lerp(1.8, 1, ease.in(clamp((t - .5) / .3))), 0], yaw: lerp(-.5, .9, ease.io(clamp(t / .7))), pitch: .02, dist: 5.6, fov: 46 }), hits: [{ t: .8, a: 24, d: .5 }], holds: [[.8, .1]], mb: .6, name: 'plunge' });
+F.impact(2 + .8, .1, 'black');
+
+// stillness: the debris hangs, the sound drops, the blade comes up; red runs along its edge; the eyes wake
+const C = fighter(HERO, [{ t: 0, pose: 'plunge', x: 0, yaw: .2 }, { t: .3, pose: 'plunge', yaw: .2, gy: 1.0, py: .6, e: 'io' }, { t: .8, pose: 'standUp', yaw: .2, e: 'io' }, { t: 1.2, pose: 'standUp', yaw: .2, edge: 1, glow: 1 }, { t: 1.6, pose: 'standUp', yaw: .2, edge: 1, glow: 1 }]);
+const hang = shardList(7, 40, { center: [0, 1.6, -1], speed: 2, size: .18, r0: 1.2, tb: -1 });
+F.shot(1.6, (w, t) => { w.fighter(C); w.add(1e4, (ctx, v) => shards(ctx, v, hang, t, { freeze: [-.2, 9] })); },
+  { cam: [{ t: 0, at: [0, 1.3, 0], yaw: 1.6, dist: 3, fov: 40 }, { t: 1.6, at: [0, 1.45, 0], yaw: .3, dist: 2.1 }], mb: .2, name: 'stillness' });
+
+// domain: one giant watcher opens behind the tiny figure, then hundreds; threads tie them to the blade
+const Dm = fighter(HERO, [{ t: 0, pose: 'standUp', yaw: Math.PI, edge: 1, glow: 1 }]);
+F.shot(2, (w, t) => {
+  w.add(1e6, (ctx, v) => drawDomain(ctx, v, D, { open: lerp(.05, 1.05, ease.io(clamp(t / 1.6))), look: [0, 1.5, 0], threads: clamp((t - 1.2) / .6) }));
+  w.fighter(Dm); w.env({ dark: t * .15 });
+}, { cam: t => ({ at: [0, lerp(3.2, 8, ease.io(t / 2)), -8], yaw: 0, pitch: -.04, dist: lerp(13, 28, ease.io(t / 2)), fov: 52 }), mb: .3, name: 'domain' });
+
+// collapse: they crack and fall away; the world goes black; only a white outline and the red edge remain
+const E = fighter(HERO, [{ t: 0, pose: 'guard', yaw: Math.PI, edge: 1, glow: 1 }, { t: .8, pose: 'drawBack', yaw: Math.PI, edge: 1, glow: 1, e: 'io' }, { t: 1.4, pose: 'drawBack', yaw: Math.PI, edge: 1, glow: 1, py: .62 }]);
+F.shot(1.4, (w, t) => {
+  const black = ease.io(clamp((t - .6) / .4));
+  w.add(1e6, (ctx, v) => drawDomain(ctx, v, D, { open: 1, crack: clamp(t / .6), gone: clamp(t / 1) * .99, look: [0, 1.5, 0] }));
+  w.env({ dark: .3 + black * .7 });
+  w.fighter(E, black > .5 ? { outline: '#f2f0eb', flat: true, tone: '#050506', edge: 1 } : {});
+}, { cam: t => ({ at: [0, 1.3, 0], yaw: Math.PI - .3 + t * 1.2, pitch: .05, dist: 4.4, fov: 42 }), mb: .25, name: 'collapse' });
+
+// the cut: one horizontal stroke; invert, white, a red hairline across the world, which slides apart along it
+const G = fighter(HERO, [{ t: 0, pose: 'drawBack', yaw: Math.PI, edge: 1, glow: 1, py: .62 }, { t: .14, pose: 'finalCut', x: -.3, yaw: Math.PI, edge: 1, glow: 1, e: 'whip' }, { t: 1.5, pose: 'finalCut', x: -.32, yaw: Math.PI, edge: .5 }]);
+F.shot(1.5, (w, t) => {
+  const k = ease.out(clamp((t - .3) / 1));
+  if (t < .14) w.env({ bg: '#0c0c0e' });
+  w.add(1e6, (ctx, v) => drawDomain(ctx, v, D, { open: 1, crack: 1, gone: .6, look: [0, 1.5, 0], alpha: .6 }));
+  w.fighter(G, t < .14 ? { outline: '#f2f0eb', flat: true, tone: '#050506', edge: 1 } : {});
+  if (t > .3) w.shear({ y: 1080 * .5, dx: 120 * k });
+  if (t > .12) w.top((ctx, v) => cutLine(ctx, [0, v.H * .5], [v.W * ease.out(clamp((t - .12) / .06)), v.H * .5], { col: RED, w: 3 }));
+}, { cam: t => t < .14 ? { at: [0, 1.3, 0], yaw: Math.PI - .2, dist: 4.4, fov: 42 } : { at: [0, 4, -4], yaw: 0, pitch: -.05, dist: lerp(8, 30, ease.out(clamp((t - .2) / 1))), fov: 50 }, hits: [{ t: .14, a: 30, d: .6 }], holds: [[.14, .1]], mb: t => t < .3 ? .8 : .2, name: 'the cut' });
+F.impact(8.8 + .14, .05, 'invert'); F.impact(8.8 + .19, .08, 'white', { keepA: .5 });
+
+// silence: white again, the back of the fighter, the blade lowered, the red seam closing
+const Hs = fighter(HERO, [{ t: -.5, pose: 'finalCut', x: -.32, yaw: Math.PI }, { t: .8, pose: 'endStand', x: -.32, yaw: Math.PI, e: 'io' }]);
+F.shot(1.6, (w, t) => {
+  w.fighter(Hs);
+  w.top((ctx, v) => { const k = 1 - ease.io(clamp(t / 1.3)); if (k > 0) cutLine(ctx, [v.W / 2 - v.W * .5 * k, v.H * .32], [v.W / 2 + v.W * .5 * k, v.H * .32], { col: RED, w: 1.5 }); });
+}, { cam: [{ t: 0, at: [-.3, 1.4, 0], yaw: .5, pitch: .12, dist: 8, fov: 36 }], mb: .2, name: 'silence', tr: { type: 'white', d: .3 } });
+
+F.start();
+</script>
+</body>
+</html>
