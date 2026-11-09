@@ -132,6 +132,8 @@ def main():
                     warn(f'{sid} f{f}: aperture {lens / fst:.0f} mm across at {dist * 1000:.0f} mm focus distance — depth of field '
                          f'is under a millimetre; stop down (macro at real scale wants f/8-f/16)')
         if a.no_render or FAIL and any(m.startswith(sid) for m in FAIL):
+            if a.no_render and not any(m.startswith(sid) for m in FAIL):
+                ok(f'{sid}: builds, has a camera, light and materials')
             continue
         frames = sorted({1, (s['frames'] + 1) // 2, s['frames']})
         imgs = {}

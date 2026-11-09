@@ -35,7 +35,7 @@ def lighthouse(s, at=(0.0, 0.0, 0.0)):
 
 def build(s):
     # the sea: a spectral ocean near the camera, a flat sheet out to the horizon
-    sea = mat.water('sea', '#02161d', rough=0.035, depth_tint=0.0)
+    sea = mat.water('sea', '#02161d', rough=0.03, depth_tint=0.0, ripple=0.35, ripple_scale=2.5)
     oc = geo.plane('ocean', 2.0, mat=sea)
     m = oc.modifiers.new('ocean', 'OCEAN')
     m.geometry_mode = 'GENERATE'
@@ -64,7 +64,7 @@ def build(s):
                  * hgt * (0.8 + 0.4 * geo.fbm2(X / 120, Y / 120, i + 20, 5)) - 1.0, mat=mat.matte('isle', '#0e1418'), loc=(x, y, 0))
     lighthouse(s, (-118, 300, cape(np.array([22.0]), np.array([-30.0]))[0] - 0.5))
 
-    light.sky(s.scene, elev=3.2, azim=14, strength=0.085, sun_strength=0.6, dust=3.0, air=1.2, ozone=1.6)
+    light.sky(s.scene, elev=3.2, azim=0.5, strength=0.085, sun_strength=0.6, dust=3.0, air=1.2, ozone=1.6)
     light.haze('mist', ((-700, 60, 0), (500, 900, 90)), density=0.0011, color='#ffd9b8', aniso=0.6)
 
     s.camera(lens=38, fstop=8, clip=(0.5, 80000))

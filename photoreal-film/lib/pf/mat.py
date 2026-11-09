@@ -330,11 +330,17 @@ def rock(name, light='#6b5a4c', dark='#2a2420', rough=0.85, scale=1.0, seed=0.0,
     return g.m
 
 
-def water(name, color='#04121a', rough=0.02, ior=1.33, depth_tint=0.9):
-    """Open water seen from above the surface: a dark dielectric. The sky and the sun do the rest."""
+def water(name, color='#04121a', rough=0.02, ior=1.33, depth_tint=0.9, ripple=0.0, ripple_scale=3.0):
+    """Open water seen from above the surface: a dark dielectric. The sky and the sun do the rest.
+    ripple > 0 adds wind ripples as a bump (ripple_scale = ripples per metre): the small scale that tells the eye
+    how big the swell is."""
     g = G(name)
-    g.principled(Base_Color=rgba(color), Roughness=rough, IOR=ior, Transmission_Weight=depth_tint,
-                 Specular_IOR_Level=0.5)
+    p = g.principled(Base_Color=rgba(color), Roughness=rough, IOR=ior, Transmission_Weight=depth_tint,
+                     Specular_IOR_Level=0.5)
+    if ripple:
+        v = g.coords('Object', scale=(ripple_scale, ripple_scale * 2.2, ripple_scale))
+        n = g.noise(v, 1.0, 5.0, 0.6, 0.8)
+        g.link(g.bump(n, ripple, 0.05 / ripple_scale), p.inputs['Normal'])
     return g.m
 
 
@@ -361,6 +367,7 @@ def engraved(name, base, mask, wrap, fill=None, depth=0.5, fill_rough=0.5, metal
              brushed='radial', grain=0.4, wear=0.3, scale=1.0, flip=False, tarnish=None):
     """A turned part with engraved, paint-filled markings (scales, numerals, a name ring). `mask` is an image drawn
     in Python (pf.draw): black = bare metal, anything else = marking, painted in the image's own colour (or `fill`).
+    For dark paint draw the marks white and pass fill='#0c0a08': the mask is the image's brightness.
     wrap places the strip on the part, in the part's own coordinates:
       ('cyl', z0, z1)   round the Z axis, the strip's height spanning z0..z1 (reads left→right seen from outside)
       ('disc', r0, r1)  on a flat face round the axis, the strip's height spanning r0..r1, tops of letters outward

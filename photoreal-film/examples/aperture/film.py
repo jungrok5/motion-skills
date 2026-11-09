@@ -19,7 +19,7 @@ FILM = dict(
         dict(id='s03_elements', frames=60),
         dict(id='s04_body', frames=54),
         dict(id='s05_shutter', frames=20, fade_out=('white', 6)),
-        dict(id='s06_coast', frames=60, fade_in=('white', 10), fade_out=('white', 3), look=dict(shadows='#0c1c2a', split=0.18, bloom=0.2, halation=0.45)),
+        dict(id='s06_coast', frames=60, fade_in=('white', 10), fade_out=('white', 3), look=dict(exposure=-0.45, contrast=1.2, shadows='#0c1c2a', split=0.18, bloom=0.22, halation=0.5)),
         dict(id='s07_print', frames=54, plates=PLATES, fade_in=('white', 5)),
         dict(id='s08_dive', frames=36, plates=PLATES, fade_out=('black', 5)),
         dict(id='s09_title', frames=50, fade_in=('black', 6), fade_out=('black', 12)),

@@ -16,6 +16,19 @@ import sys
 SKILL = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
+SCORE = '''"""The sound of the film, placed on its timeline in seconds. `score.py --list` prints the cut times."""
+from pf import sound
+
+
+def score(sc, film):
+    sound.auto(film, sc)        # a bed, a whoosh into every cut, a hit on the last shot: replace with cues for this film
+    # t = {s['id'].split('_')[0]: s['start'] / film.fps for s in film.shots}
+    # sc.ticks(t['s01'] + 0.3, t['s02'] - 0.2, rate=6, gain=0.2)       # something turning
+    # sc.clunk(t['s03'] + 1.1, 0.6)                                    # a part seating
+    # sc.swell(t['s04'], t['s05'], (146.83, 220.0, 329.63), 0.3)       # the open air of the wide shot
+'''
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('dir')
@@ -51,6 +64,7 @@ def main():
         film = film.replace("title='STARTER'", f'title={title!r}')
         film = re.sub(r"    shots=\[\n.*?\n    \],", f"    shots=[\n{rows}\n    ],", film, flags=re.S)
         open(os.path.join(root, 'film.py'), 'w').write(film)
+        open(os.path.join(root, 'score.py'), 'w').write(SCORE)
     if a.copy_lib:
         shutil.copytree(os.path.join(SKILL, 'lib', 'pf'), os.path.join(root, 'pf'), ignore=shutil.ignore_patterns('__pycache__'))
     rel = os.path.relpath(os.path.join(SKILL, 'scripts'), root)

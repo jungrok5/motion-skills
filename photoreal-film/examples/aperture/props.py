@@ -133,8 +133,8 @@ def set_iris(s, blades, radius_fn):
 def materials():
     """The metals of the lens. scale=45: the detail is sized for parts a few centimetres across, seen in macro."""
     return dict(
-        blade=mat.metal('blade', '#17181c', rough=0.24, brushed='linear', grain=1.2, wear=0.25, scale=45,
-                        tarnish='#1c2028'),
+        blade=mat.metal('blade', '#1b1c20', rough=0.26, brushed='linear', grain=2.2, wear=0.2, scale=45,
+                        tarnish='#20242c'),
         brass=mat.metal('brass', '#c9a25a', rough=0.24, brushed='radial', grain=0.9, wear=0.12, scale=45),
         steel=mat.metal('steel', '#c2c5c9', rough=0.22, brushed='radial', grain=0.4, wear=0.3, scale=45),
         black=mat.metal('black_anod', '#0c0c0e', rough=0.45, brushed='radial', grain=0.8, wear=0.4, scale=45),

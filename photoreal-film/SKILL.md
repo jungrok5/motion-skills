@@ -45,7 +45,9 @@ is python, no 3D assets were used"); `references/LOOK.md` is the analysis. Built
 | `scripts/contact.py` | contact sheet of every shot with luminance numbers |
 | `scripts/check.py` | structure, build, picture, determinism, deliverables |
 | `scripts/finish.py` · `score.py` · `encode.py` | EXR → frames · `out/score.wav` · `out/film.mp4` + `film-share.mp4` |
-| `templates/shot.py` | the commented skeleton `new_film.py` writes for each shot |
+| `scripts/flipbook.py` | the film as a web page that plays a WebP frame sequence with the score (`out/flipbook/`), for sites that take no video |
+| `scripts/kit_sheet.py` | one picture of every material recipe and builder: a self-test after installing Blender, a swatch card when choosing materials |
+| `templates/shot.py` · `flipbook.html` | the commented skeleton `new_film.py` writes for each shot · the frame-sequence player |
 | `starter/` | the smallest film (a brass dial, a title): runs as it is |
 | `examples/aperture/` | the worked example: `BRIEF.md`, `film.py`, `props.py` (iris, lens, camera body), nine shots, `score.py` |
 | `references/` | **LOOK** (reference analysis, target numbers) · **SHOTS** (scales, shot types, cuts, light recipes) · **BRIEF** (topic → brief, the rubric) · **KIT** (library reference) · **LESSONS** (what broke and the fix) |
