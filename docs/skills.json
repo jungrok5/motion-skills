@@ -1327,6 +1327,42 @@
           "url": "https://jungrok5.github.io/motion-skills/luminous-score/demo/examples/candle-prelude/"
         }
       ]
+    },
+    {
+      "id": "photoreal-film",
+      "name": "photoreal-film",
+      "tagline": "주제 하나를 주면 실사처럼 보이는 짧은 시네마틱 영상을 만듭니다. 모든 물체를 파이썬 코드로 모델링하고(3D 에셋 · 텍스처 파일 없음), 촬영 세트처럼 조명을 놓고, 실제 렌즈의 심도 · 보케 · 모션 블러로 Blender Cycles 패스 트레이싱을 한 뒤, 헐레이션 · 그레인 · 2.39:1 레터박스의 필름 룩으로 마감합니다. 매크로 속 메커니즘 → 스튜디오에서 조립되는 물체 → 그것이 쓰이는 세계 → 책상 위의 사진 → 다시 메커니즘 → 타이틀로 이어지는 스케일의 사슬을 주제마다 새로 설계하고, 합성한 사운드와 함께 1080p MP4로 냅니다.",
+      "posterAlt": "photoreal-film으로 만든 「APERTURE」의 장면 네 개: 어두운 스튜디오에서 광축을 따라 떠 있는 렌즈 부품의 분해도, 검은 유리 바닥에 선 레인지파인더 카메라와 50mm 렌즈, 해 질 녘 바다의 등대, 금색 글자 APERTURE와 보케의 타이틀",
+      "poster": "photoreal-film/poster.jpg",
+      "tags": [
+        "파이썬 절차적 모델링",
+        "Cycles 패스 트레이싱",
+        "실제 렌즈 심도 · 모션 블러",
+        "필름 룩 마감",
+        "MP4 · 합성 사운드"
+      ],
+      "stats": [
+        "예제 18초 · 9샷 · 432프레임",
+        "3D 에셋 0개 · CPU 4코어 프레임당 14–45초"
+      ],
+      "page": "photoreal-film/",
+      "source": "photoreal-film/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "photoreal-film/examples/aperture/"
+      },
+      "sources": [
+        {
+          "title": "Leon Lin의 X 게시물 (「ESCAPEMENT」, \"every frame is python, no 3D assets were used\")",
+          "url": "https://x.com/LexnLin/status/2119558994352304202?a=cxbG0xl325NxMxhz9eQ&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「APERTURE」 · 카메라 렌즈 · 18초 · 9샷 · 프레임 시퀀스 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/photoreal-film/demo/aperture/"
+        }
+      ]
     }
   ]
 }

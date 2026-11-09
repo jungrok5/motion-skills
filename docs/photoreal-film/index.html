@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>photoreal-film · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 실사처럼 보이는 짧은 시네마틱 영상을 만듭니다. 모든 물체를 파이썬 코드로 모델링하고(3D 에셋 없음) Blender Cycles로 패스 트레이싱한 뒤 필름 룩으로 마감합니다.">
+<meta property="og:title" content="photoreal-film · motion-skills">
+<meta property="og:description" content="주제 하나를 주면 모든 프레임을 파이썬으로 만든 실사 느낌의 시네마틱 영상을 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/photoreal-film/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/photoreal-film">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / photoreal-film</nav>
+  <h1>photoreal-film</h1>
+  <p>주제 하나를 주면 실사처럼 보이는 짧은 시네마틱 영상을 만듭니다. 모든 물체를 파이썬 코드로 모델링하고(3D 에셋 · 텍스처 파일 없음), 촬영 세트처럼 조명을 놓고, 실제 렌즈의 심도 · 보케 · 모션 블러로 Blender Cycles 패스 트레이싱을 한 뒤, 헐레이션 · 색수차 · 그레인 · 2.39:1 레터박스의 필름 룩으로 마감합니다. 매크로 속 메커니즘 → 스튜디오에서 조립되는 물체 → 그것이 쓰이는 세계 → 책상 위의 사진 → 다시 메커니즘 → 타이틀로 이어지는 스케일의 사슬을 주제마다 새로 설계하고, 합성한 사운드와 함께 1080p MP4로 냅니다.
+  보고 만든 원본: <a href="https://x.com/LexnLin/status/2119558994352304202?a=cxbG0xl325NxMxhz9eQ&s=19" target="_blank" rel="noopener">Leon Lin의 X 게시물 (「ESCAPEMENT」, "every frame is python, no 3D assets were used")</a>.</p>
+  <ul class="tags"><li>파이썬 절차적 모델링</li><li>Cycles 패스 트레이싱</li><li>실제 렌즈 심도 · 모션 블러</li><li>필름 룩 마감</li><li>MP4 · 합성 사운드</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(시계, 렌즈, 엔진, 악기, 제품 …). 레퍼런스 영상이 있으면 그 스틸과 측정값</dd>
+      <dt>브리프</dt><dd>가장 작은 메커니즘, 그것이 속한 물체와 부품 목록(실제 치수), 쓰이는 세계, 책상 위의 사진, 돌아가는 길, 한 단어 제목. 샷마다의 스케일 · 렌즈 · 움직임 · 컷, 팔레트 · 재질 · 조명 · 소리를 적은 <code>BRIEF.md</code></dd>
+      <dt>모델 · 샷</dt><dd><code>lathe</code> · <code>prism</code> · <code>tube</code>로 실제 크기의 부품, 닳고 결이 있는 재질, 코드로 그린 각인. 샷 하나가 파일 하나: 세트와 조명 → 피사체 → 움직임 → 렌즈, 단계마다 미리보기 스틸</dd>
+      <dt>확인</dt><dd>샷마다 처음 · 중간 · 끝을 모은 콘택트 시트와 밝기 수치, 스틸 검토 기준 채점, 자동 검사(빌드 · 조명 · 초점 · 검거나 날아간 프레임 · 움직임 · 같은 프레임을 두 번 렌더한 결과의 일치)</dd>
+      <dt>출력</dt><dd>리니어 EXR 프레임 → 필름 룩을 입힌 PNG → 24fps 1920×1080(화면 2.39:1) MP4, 합성 사운드 WAV, MP4 없이 웹에서 도는 프레임 시퀀스 페이지</dd>
+    </dl>
+    <pre><code>pip install bpy pillow numpy
+cp -r photoreal-film/starter my-film &amp;&amp; cd my-film
+python3 ../photoreal-film/scripts/render.py --still s01:0.5,s02:0.5
+python3 ../photoreal-film/scripts/contact.py --q preview
+python3 ../photoreal-film/scripts/check.py
+python3 ../photoreal-film/scripts/render.py --all --q final
+python3 ../photoreal-film/scripts/finish.py
+python3 ../photoreal-film/scripts/score.py
+python3 ../photoreal-film/scripts/encode.py
+python3 ../photoreal-film/scripts/new_film.py ~/my-topic --title "WORD" --shots macro,parts,hero,world,print,title</code></pre>
+    <p class="mute">요구 사항: Python 3.13 + <code>bpy</code> 5.x(Blender의 파이썬 모듈), numpy, Pillow, ffmpeg. GPU가 없어도 됩니다(CPU 4코어에서 미리보기 스틸 5–10초, 본편 프레임 14–45초). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/photoreal-film/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:1920/804;--h-phone:calc((100vw - 34px)*.42);--demo-bg:#000">
+    <iframe data-src="demo/aperture/" title="photoreal-film 예제 APERTURE 프레임 시퀀스 재생" allow="fullscreen; autoplay" allowfullscreen></iframe>
+    <noscript><a href="demo/aperture/">데모 열기 (examples/aperture)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/aperture</code> · 「APERTURE」 18초 · 9샷 · 12fps 프레임 시퀀스 · ♪ 버튼으로 소리</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/aperture/" data-cap="예제 &lt;code&gt;examples/aperture&lt;/code&gt; · 「APERTURE」 18초 · 9샷 · 12fps 프레임 시퀀스 · ♪ 버튼으로 소리" aria-pressed="true">APERTURE</button>
+        <button class="btn" type="button" data-src="demo/starter/" data-cap="시작 프로젝트 &lt;code&gt;starter&lt;/code&gt; · 황동 다이얼과 타이틀 · 3.5초 · 2샷" aria-pressed="false">STARTER</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본 영상에 없는 주제(카메라 렌즈)로 브리프부터 새로 설계한 예제의 아홉 샷, 바로 돌려 볼 수 있는 시작 프로젝트, 검토용 이미지입니다. 영상은 화질과 용량 때문에 12fps 프레임 시퀀스로 올렸고, 카드를 누르면 그 샷이 멈춘 채 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"aperture":"APERTURE","starter":"STARTER","tool":"검토"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「APERTURE」 <small>주제: 카메라 렌즈 · 18초 · 9샷 · 432프레임</small></h3>
+      <p>조리개가 열리고, 눈금 링이 돌고, 열다섯 부품이 한 렌즈가 되어 카메라에 물리고, 그 카메라가 찍은 바다가 책상 위 인화지였다는 것이 드러난 뒤 다시 렌즈 안으로 들어갑니다. 텅스텐 호박색과 강철 파랑, 황동과 빨간 페인트만 채도가 있는 팔레트</p>
+      <div class="grid">
+        <a class="tile" data-tags="aperture" href="demo/aperture/#s01" target="_blank" rel="noopener">
+          <img src="samples/ap-iris.jpg" alt="각인이 새겨진 황동 링 안에서 결이 보이는 강철 조리개 날 아홉 장이 열리고, 구멍 너머로 따뜻한 빛의 원반이 보이는 매크로 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 01 · 매크로 3cm</span><b>조리개가 열림</b><span class="how">100mm f/16, 축에서 비껴 밀고 들어가는 카메라. 날마다 다른 톤은 빛을 비추는 상자 하나에서</span></div></a>
+        <a class="tile" data-tags="aperture" href="demo/aperture/#s02" target="_blank" rel="noopener">
+          <img src="samples/ap-ring.jpg" alt="검은 렌즈 경통을 가까이서 본 장면, 흰색 미터와 주황색 피트 거리 눈금 숫자, 은색 링의 빨간 삼각형 지표, 세로 홈이 난 초점 링" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 02 · 매크로 3cm</span><b>눈금 링</b><span class="how">경통을 따라 올라가는 크레인, 초점 링이 돌고 조리개 링이 두 번 딸깍. 각인은 코드로 그린 띠 이미지</span></div></a>
+        <a class="tile" data-tags="aperture" href="demo/aperture/#s03" target="_blank" rel="noopener">
+          <img src="samples/ap-elements.jpg" alt="어두운 스튜디오에서 따뜻한 띠 조명을 등지고 광축을 따라 한 줄로 떠 있는 렌즈 부품들: 마운트, 유리알, 황동 헬리코이드, 초점 링, 앞 경통" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 03 · 25cm</span><b>열다섯 부품이 한 렌즈로</b><span class="how">분해도에서 시작해 가운데부터 차례로 제자리에. 나사산이 있는 링은 돌면서 들어감</span></div></a>
+        <a class="tile" data-tags="aperture" href="demo/aperture/#s04" target="_blank" rel="noopener">
+          <img src="samples/ap-body.jpg" alt="검은 유리 바닥에 선 레인지파인더 카메라와 장착된 50mm 렌즈, 렌즈 앞 유리에 비친 조명과 바닥의 반사" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 04 · 40cm</span><b>바디에 물림</b><span class="how">렌즈가 날아와 55° 돌아 잠김. 낮은 3/4 앵글, 형태를 그리는 긴 조명 상자 두 개</span></div></a>
+        <a class="tile" data-tags="aperture" href="demo/aperture/#s05" target="_blank" rel="noopener">
+          <img src="samples/ap-shutter.jpg" alt="정면에서 본 렌즈, 이름 링의 흰 글자 APERTURE 1:1.4/50과 코팅된 유리 안쪽에 비친 조명" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 05 · 15cm</span><b>노출</b><span class="how">유리 정면. 조리개가 조여지고 화면이 하얗게 타 버림 — 다음 샷으로 넘어가는 컷</span></div></a>
+        <a class="tile" data-tags="aperture" href="demo/aperture/#s06" target="_blank" rel="noopener">
+          <img src="samples/ap-coast.jpg" alt="해 질 녘의 바다, 곶 위의 빨간 띠 등대에 불이 켜져 있고 수평선의 섬들이 금빛 안개 속에 겹쳐 보이는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 06 · 3km</span><b>렌즈가 보는 세계</b><span class="how">물리 기반 하늘(해 고도 3.2°), 스펙트럼 해양, 수면 가까이 떠가는 38mm</span></div></a>
+        <a class="tile" data-tags="aperture" href="demo/aperture/#s07" target="_blank" rel="noopener">
+          <img src="samples/ap-print.jpg" alt="책상 위에 놓인 흰 테두리의 바다 사진 인화지와 그 아래 다른 두 장의 사진, 뒤쪽에 놓인 카메라" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 07 · 60cm</span><b>그것은 사진이었음</b><span class="how">앞 샷의 프레임이 인화지로. 사진이 화면을 꽉 채운 높이에서 시작해 들어 올리는 카메라</span></div></a>
+        <a class="tile" data-tags="aperture" href="demo/aperture/#s08" target="_blank" rel="noopener">
+          <img src="samples/ap-dive.jpg" alt="가죽 매트와 참나무 책상 위의 카메라로 빠르게 다가가는 장면, 앞쪽에 사진과 필름 통" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 08 · 60cm → 1cm</span><b>다시 안으로</b><span class="how">천천히 시작해 렌즈 앞 유리로 돌진, 조리개가 닫히며 암전</span></div></a>
+        <a class="tile" data-tags="aperture" href="demo/aperture/#s09" target="_blank" rel="noopener">
+          <img src="samples/ap-title.jpg" alt="어두운 화면 가운데 금색 대문자 APERTURE와 그 아래 가는 선, 뒤로 흐릿한 조리개 구멍의 푸른 빛과 아홉 모 난 보케" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 09 · 타이틀</span><b>APERTURE</b><span class="how">글자도 장면 속의 물체: 황동 재질, 초점면, 같은 그레인. 뒤에서 조리개가 천천히 돎</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>「STARTER」 시작 프로젝트 <small>2샷 · 3.5초</small></h3>
+      <p>복사해서 바로 렌더되는 가장 작은 영화입니다. 널링과 각인 눈금이 있는 황동 다이얼 한 개, 그리고 타이틀. 새 주제는 여기서 시작해 전부 바꿉니다</p>
+      <div class="grid">
+        <a class="tile" data-tags="starter" href="demo/starter/#s01" target="_blank" rel="noopener">
+          <img src="samples/st-dial.jpg" alt="검은 유리 바닥 위의 황동 다이얼, 테두리의 널링과 윗면의 눈금, 가운데 강철 허브와 빨간 바늘" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 01</span><b>황동 다이얼</b><span class="how">lathe + rmod 널링, 코드로 그린 눈금, 띠 조명과 바닥 반사</span></div></a>
+        <a class="tile" data-tags="starter" href="demo/starter/#s02" target="_blank" rel="noopener">
+          <img src="samples/st-title.jpg" alt="어두운 배경의 금색 대문자 STARTER와 가는 선, 주변의 따뜻한 보케" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 02</span><b>타이틀</b><span class="how">geo.text, 뒤쪽의 작은 발광체가 보케로</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>검토 <small>콘택트 시트 · 원본 분석</small></h3>
+      <p>렌더 전에 모든 샷의 처음 · 중간 · 끝을 한 장에서 보고, 밝기 수치를 원본에서 잰 범위와 비교합니다</p>
+      <div class="grid">
+        <a class="tile" data-tags="tool" href="https://github.com/jungrok5/motion-skills/blob/main/photoreal-film/references/BRIEF.md" target="_blank" rel="noopener">
+          <img src="samples/contact.jpg" alt="APERTURE의 콘택트 시트 일부, 샷마다 세 프레임이 샷 이름 · 시간 · 중간 밝기 수치와 함께 나란히" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">contact.py</span><b>콘택트 시트</b><span class="how">구도 · 초점 · 노출 · 컷의 연속성을 검토 기준으로 채점</span></div></a>
+        <a class="tile" data-tags="tool" href="https://github.com/jungrok5/motion-skills/blob/main/photoreal-film/examples/aperture/props.py" target="_blank" rel="noopener">
+          <img src="samples/parts.jpg" alt="렌즈 분해도를 가까이서 본 스틸, 황동 헬리코이드의 나사산과 코팅된 유리알, 세로 홈이 난 초점 링" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">props.py</span><b>숫자로 만든 부품</b><span class="how">프로파일을 돌린 경통, 박막 코팅 유리, 틈새를 수치로 검사한 조리개</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬을 만든 출처와, 이 레포에서 새 주제로 만든 예제입니다.</p>
+  <div class="works">
+    <a class="work" href="https://x.com/LexnLin/status/2119558994352304202?a=cxbG0xl325NxMxhz9eQ&s=19" target="_blank" rel="noopener"><b>원본 · Leon Lin의 X 게시물</b><span>「ESCAPEMENT」 36.5초 · 시계 탈진기 → 자동차 → 시계 사원 → 책상 위 엽서 → 회중시계. "every frame is python, no 3D assets were used"</span><span class="url">x.com/LexnLin/status/2119558994352304202</span></a>
+    <a class="work" href="demo/aperture/" target="_blank" rel="noopener"><b>「APERTURE」</b><span>카메라 렌즈 · 18초 · 9샷 · 프레임 시퀀스 페이지</span><span class="url">photoreal-film/examples/aperture</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/photoreal-film/examples/aperture"><b>원본 레포 · motion-skills</b><span>이 레포에서 만듦</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/photoreal-film/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/photoreal-film">폴더</a> <span>lib · scripts · templates · starter · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/photoreal-film/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/photoreal-film/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/photoreal-film/references/LOOK.md">references/LOOK.md</a> <span>원본 분석과 목표 수치</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/photoreal-film/references/SHOTS.md">references/SHOTS.md</a> <span>스케일의 사슬 · 샷 종류 · 컷 · 조명 레시피</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/photoreal-film/references/KIT.md">references/KIT.md</a> <span>pf 라이브러리: 모델링 · 재질 · 조명 · 카메라 · 룩 · 사운드</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/photoreal-film/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/photoreal-film/examples/aperture/BRIEF.md">examples/aperture/BRIEF.md</a> <span>예제의 브리프와 채점표</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 장면과 소리는 코드로 만들었습니다(모델 · 텍스처 · 음원 파일 없음). 렌더 Blender Cycles (GPL), 글꼴 Inter (SIL OFL)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
