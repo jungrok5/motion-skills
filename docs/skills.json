@@ -1291,6 +1291,42 @@
           "url": "https://jungrok5.github.io/motion-skills/ultimate-move-short/demo/thousand-moons/"
         }
       ]
+    },
+    {
+      "id": "luminous-score",
+      "name": "luminous-score",
+      "tagline": "곡 하나를 주면 어둡고 안개 낀 방에 놓인 악보 위로 카메라가 낮게 미끄러지고, 음이 울리는 순간 그 음표가 성부의 색으로 빛나 종이에 빛을 드리웠다가 잔광으로 사라지는 영상을 만듭니다. 퍼블릭 도메인 곡 · MIDI · 새로 쓴 곡을 끝없는 한 줄 총보로 기보하고, 성부마다의 색 · 방의 분위기 · 음악 사건에 맞춘 샷을 설계합니다. 같은 음표에서 소리를 합성해 라이브 페이지, WAV, 1080p MP4를 냅니다.",
+      "posterAlt": "luminous-score로 만든 장면 네 개: 차가운 회색 종이의 여섯 오선에서 빨강 · 청록 · 보라 · 흰색 · 초록 · 주황 음표가 빛나는 「First Snow」의 총보와 16분음표 질주, 호박색 종이에서 금색으로 빛나는 바흐 전주곡의 아르페지오 클로즈업과 위에서 내려다본 마지막 두 마디",
+      "poster": "luminous-score/poster.jpg",
+      "tags": [
+        "three.js 악보",
+        "음표 조명",
+        "기보 엔진",
+        "합성 사운드",
+        "MP4 · 라이브 페이지"
+      ],
+      "stats": [
+        "예제 75.3초 · 바흐 1–19마디",
+        "템플릿 38.8초 · 오선 6줄"
+      ],
+      "page": "luminous-score/",
+      "source": "luminous-score/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "luminous-score/examples/candle-prelude/"
+      },
+      "sources": [
+        {
+          "title": "🎼🌺Music Love♥️의 X 게시물 (비발디 「겨울」을 악보가 빛나는 영상으로 시각화)",
+          "url": "https://x.com/ThoNg676733/status/2119610929654469035?a=CTncbvpeXqVgLMNZlp0&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「Prelude in C」 촛불 아래 · 바흐 BWV 846 1–19마디 · 75.3초 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/luminous-score/demo/examples/candle-prelude/"
+        }
+      ]
     }
   ]
 }
