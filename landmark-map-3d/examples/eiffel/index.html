@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>landmark-map-3d · 에펠탑</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<script type="importmap">{ "imports": { "three": "../../lib/three.module.min.js", "lm/": "../../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// 「에펠탑」 — the worked example (BRIEF.md). An afternoon over the Champ de Mars that turns gold, then blue, then night:
+// the tower lights up and sparkles at 21:00. The city is the real one from OpenStreetMap (place.json); the tower is
+// built by hand from its real dimensions (base 125 m, platforms at 57.6 m / 115.7 m / 276 m, mast to 330 m).
+import { Film } from 'lm/film.js';
+
+const F = await Film.create({ place: './place.json', duration: 18, lang: 'ko', haze: 1, fadeIn: .3 });
+
+// ---------------------------------------------------------------- the city (Haussmann Paris: cream stone, zinc mansards)
+F.world({
+  seed: 3,
+  levels: [6, 7],                         // buildings without a mapped height: 6–7 storeys, the Haussmann block
+  roofs: { mansard: 7, flat: 2 },
+  palette: {
+    ground: '#eee6d8', plaza: '#ebdfc9', path: '#f4ead6', road: '#8d87a4', curb: '#f6f0e4',
+    grass: '#9fcd7a', park: '#95c86f', wood: '#78ae5c',
+    walls: ['#f3e9d6', '#efe0c4', '#f5ecdc', '#ead7b8', '#f1d9c0', '#e9c9b4'], wallW: [5, 4, 3, 2, 1, .6],
+    roofs: ['#d4d6e6', '#cdd0e2', '#dcdbe6'], mansard: '#8d98b8', chimney: '#e7b79a', trim: '#fffaf0',
+    quay: '#e3d6bf', bridge: '#e7dccb', deck: '#e4d8c4',
+    trees: ['#5f9e48', '#6aa94f', '#56933f', '#76b356'],
+  },
+  clearIds: [4114842, 308021389, 69034135, 69034179, 69034180, 69034127, 308145259, 308145239, 308145258],
+  clear: [{ at: [9, 1], r: 24 }],
+  trees: { scale: 1.05 },
+});
+F.life({ cars: 1.1, people: 900, boats: { n: 7, lane: 14, len: 28 }, crowds: [{ at: [-40, -60], r: 26, n: 70 }, { at: [70, 80], r: 30, n: 60 }, { at: [-250, -160], r: 18, n: 30 }] });
+
+// ---------------------------------------------------------------- the tower (metres, origin at its centre, square on its axes)
+const BRONZE = '#b38f73', NIGHT = '#ffad4a';
+F.landmark('Eiffel Tower', (K, g) => {
+  const skin = K.lattice(BRONZE, { cell: 7, bar: .11, emissive: NIGHT, glow: .55, day: .05, metal: 0, rough: .8 });
+  const solid = K.mat(K.shade(BRONZE, .88), { emissive: NIGHT, glow: .6, day: .04, metal: 0, rough: .78 });
+  const deck = K.mat(K.shade(BRONZE, .82), { emissive: NIGHT, glow: .5, metal: 0, rough: .8 });
+  const glass = K.mat('#a9bdd0', { emissive: '#ffe2a8', glow: 1.1, rough: .25, metal: .15 });
+  const frieze = K.lattice(K.shade(BRONZE, 1.08), { cell: 2.6, bar: .16, pattern: 'xx', emissive: NIGHT, glow: .7 });
+  // outer half-width of the tower and of one leg, by height (from the real drawings)
+  const sec = [[0, 62.5, 25], [14, 54.5, 22.5], [30, 46.5, 20], [45, 39.5, 18], [57.6, 34, 16], [72, 29, 14.5], [88, 24.5, 13.5], [102, 21, 13], [115.7, 18.6, 18.6]];
+  // four legs: lofted lattice columns leaning in, each sitting on its stone pier
+  for (const [sx, sz] of [[1, 1], [-1, 1], [-1, -1], [1, -1]]) {
+    const sections = sec.map(([y, hw, s]) => ({ c: [sx * (hw - s / 2), y, sz * (hw - s / 2)], hx: s / 2, hz: s / 2 }));
+    K.column(g, sections, skin, { edges: .75, edgeMat: solid });
+    K.box(g, 27, 2.4, 27, '#e7dccb', { at: [sx * 50, 0, sz * 50], round: .6 });
+  }
+  // the decorative arches between the legs, under the first floor
+  for (let k = 0; k < 4; k++) {
+    const a = K.group(g, { rot: k * 90 });
+    const arc = K.arch(a, 74, 31, 2.2, 1.6, solid, { seg: 40 }); arc.position.set(0, 15.5, -37.5);
+  }
+  // first floor: a hollow square deck wrapped in its lattice frieze, glass pavilions on top
+  for (let k = 0; k < 4; k++) {
+    const a = K.group(g, { rot: k * 90 });
+    K.box(a, 68, 4.2, 17, deck, { at: [0, 52.6, -25.5] });
+    K.box(a, 30, 5, 7, glass, { at: [0, 56.8, -27] });                            // glass pavilions
+  }
+  K.band(g, 70, 4.6, 70, frieze, { at: [0, 52.4, 0] });
+  K.band(g, 34, 4.6, 34, frieze, { at: [0, 52.4, 0] });
+  K.band(g, 70.4, 1.6, 70.4, K.lattice(K.shade(BRONZE, 1.1), { cell: 1.6, bar: .14, pattern: 'grid', emissive: NIGHT, glow: .6 }), { at: [0, 56.8, 0] });   // railing
+  // second floor and the upper shaft (one lattice tube narrowing to the top platform)
+  K.box(g, 40, 4.2, 40, deck, { at: [0, 112, 0] });
+  K.band(g, 40.6, 4, 40.6, frieze, { at: [0, 111.8, 0] });
+  K.box(g, 26, 5, 26, glass, { at: [0, 116.2, 0] });
+  const upper = [[116, 17.5], [140, 14.6], [165, 12.6], [195, 11], [225, 9.9], [255, 9.1], [276, 8.6]];
+  K.column(g, upper.map(([y, hw]) => ({ c: [0, y, 0], hx: hw, hz: hw })), skin, { edges: .7, edgeMat: solid });
+  // top: platform, cabin, lantern, mast
+  K.box(g, 19, 2.6, 19, deck, { at: [0, 274, 0] });
+  K.box(g, 12, 8, 12, glass, { at: [0, 276.6, 0] });
+  K.box(g, 13.5, 1.2, 13.5, solid, { at: [0, 284.6, 0] });
+  K.box(g, 6.5, 9, 6.5, solid, { at: [0, 285.8, 0] });
+  K.cyl(g, .45, 1.3, 36, '#e9e3da', { at: [0, 294.8, 0] });
+  for (let k = 0; k < 4; k++) K.cyl(g, 1.25 - k * .2, 1.3 - k * .2, 2.2, '#e8534a', { at: [0, 300 + k * 7, 0] });
+  // night: gold bulbs along every edge, the 21:00 sparkle, the beacon
+  const edgePts = [];
+  for (const [sx, sz] of [[1, 1], [-1, 1], [-1, -1], [1, -1]]) {
+    for (const k of [0, 1, 2, 3]) {
+      const path = sec.map(([y, hw, s]) => { const cx = sx * (hw - s / 2), cz = sz * (hw - s / 2); return [cx + [-1, 1, 1, -1][k] * s / 2, y, cz + [-1, -1, 1, 1][k] * s / 2]; });
+      edgePts.push(...K.sample(path, 3.2));
+    }
+    edgePts.push(...K.sample(upper.map(([y, hw]) => [sx * hw, y, sz * hw]), 3.2));
+  }
+  K.lights(g, edgePts, '#ffc76b', { size: 2.6, k: .8 });
+  const r = K.rng(9), sparkle = [];
+  const hwAt = y => { const all = [...sec.map(([yy, hw]) => [yy, hw]), ...upper.slice(1), [300, 4]]; let k = 0; while (k < all.length - 2 && all[k + 1][0] < y) k++; const [y0, h0] = all[k], [y1, h1] = all[k + 1]; return h0 + (h1 - h0) * Math.min(1, Math.max(0, (y - y0) / (y1 - y0))); };
+  for (let i = 0; i < 900; i++) { const y = r() ** 1.35 * 300, hw = hwAt(y), side = Math.floor(r() * 4), u = (r() * 2 - 1) * hw; sparkle.push(side === 0 ? [u, y, hw] : side === 1 ? [u, y, -hw] : side === 2 ? [hw, y, u] : [-hw, y, u]); }
+  K.lights(g, sparkle, '#ffffff', { size: 4.2, twinkle: { from: 15, to: 18.5, rate: 5, only: true } });
+  K.beacon(g, [0, 291, 0], { len: 520, spread: 9, speed: .6, k: .32 });
+}, { at: [9, 1], rot: -39.5, top: 330 });
+
+// ---------------------------------------------------------------- time of day: 16:40 → golden → blue hour → 21:00
+F.time([
+  { t: 0, sky: 'day', sunAz: 228, sunEl: 34 },
+  { t: 5.5, sky: 'golden', sunAz: 262 },
+  { t: 10, sky: 'golden', sunAz: 272, sunEl: 4, mix: { dusk: .3 } },
+  { t: 12.6, sky: 'dusk' },
+  { t: 14.6, sky: 'night' },
+]);
+F.clock({ keys: [{ t: 0, time: '16:40', icon: 'sun' }, { t: 10, time: '19:35', icon: 'sunset' }, { t: 15, time: '21:00', icon: 'moon' }, { t: 18, time: '21:02', icon: 'moon' }], from: .6, to: 15.8 });
+
+// ---------------------------------------------------------------- camera: in over the Champ de Mars, around the tower, down to the Seine, up to the Trocadéro view
+F.camera([
+  { t: 0, at: [270, 270], yaw: -45, pitch: 60, dist: 2050, fov: 30 },
+  { t: 4.6, at: [70, 70], h: 40, yaw: -62, pitch: 50, dist: 1400 },
+  { t: 8.2, at: [0, 0], h: 120, yaw: -112, pitch: 38, dist: 1150 },
+  { t: 9.9, at: [-30, -20], h: 125, yaw: -141, pitch: 38, dist: 1060 },
+  { t: 11.6, at: [-50, -50], h: 125, yaw: -170, pitch: 31, dist: 960 },
+  { t: 15, at: [-20, -20], h: 135, yaw: -214, pitch: 25, dist: 1100 },
+  { t: 18, at: [-10, -10], h: 140, yaw: -223, pitch: 24, dist: 1160 },
+]);
+F.focus([{ t: 0, tilt: .6, focusY: .52, band: .2 }, { t: 8, tilt: .75, focusY: .55, band: .16 }, { t: 11.6, tilt: .85, focusY: .55, band: .14 }, { t: 15, tilt: .7, focusY: .55, band: .18 }]);
+
+// ---------------------------------------------------------------- words
+F.title({ kicker: 'Paris · France', text: '에펠탑', sub: 'Tour Eiffel', coords: '48.8584° N · 2.2945° E', from: .5, to: 5.2 });
+F.label({ text: '에펠탑', at: [9, 1], y: 338, icon: 'star', big: true, from: 3.2, to: 15.3, priority: 100 });
+F.area({ text: '샹 드 마르스', at: [330, 300], color: '#3f8f3c', from: 1, to: 8 });
+F.poi(/^École Militaire$/, { text: '사관학교', icon: 'museum', from: 1.2, to: 6 });
+F.poi(/^Champ de Mars - Tour Eiffel$/, { text: '샹 드 마르스-투르 에펠', from: 1.4, to: 7.5 });
+F.poi('Musée du quai Branly', { text: '케 브랑리 박물관', from: 5.4, to: 10.5 });
+F.poi(/^Maison de la Culture du Japon/, { text: '파리 일본문화회관', from: 5, to: 10 });
+F.poi(/^Le Carrousel de la Tour Eiffel$/, { text: '회전목마', icon: 'sight', from: 7, to: 12.5 });
+F.label({ text: '이에나 다리', at: [-100, -98], y: 4, icon: 'sight', from: 8.5, to: 14.5 });
+F.poi(/^Bateaux parisiens$/, { text: '바토 파리지앵', icon: 'ferry', from: 9.4, to: 14 });
+F.area({ text: '센강', at: [-210, -190], y: -2, color: '#2f6fc0', from: 9.6, to: 14.5 });
+F.poi(/^Trocadéro$/, { text: '트로카데로', from: 10.5, to: 15 });
+F.area({ text: '트로카데로 정원', at: [-500, -390], color: '#3f8f3c', from: 10.8, to: 15 });
+// the neighbourhood's own cafés, restaurants and hotels along the Champ de Mars, from the data
+F.autoPois({ near: [260, 160], r: 420, n: 7, gap: 70, cats: ['cafe', 'food', 'hotel', 'bar', 'shop'], each: (p, i) => ({ from: .9 + i * .45, to: 6.8 + i * .2 }) });
+F.street('Avenue Gustave Eiffel', { text: 'Av. Gustave Eiffel', size: 6, from: 2, to: 10 });
+F.street(/^Quai Branly$/, { size: 8, from: 4, to: 16 });
+F.street(/^Avenue Anatole France$/, { size: 8, from: 0, to: 8 });
+F.street(/^Avenue de la Bourdonnais$/, { size: 9, from: 0, to: 8 });
+F.street(/^Avenue de New York$/, { size: 8, from: 9, to: 17 });
+F.end({ kicker: 'Paris · 21:00', text: '에펠탑', sub: '매시 정각, 5분 동안 반짝입니다', from: 15.8 });
+
+F.cue(15, 'sparkle', { len: 3 });
+F.check('the whole tower is in frame from 3 s', t => { if (t < 3) return true; return [0, 330].every(y => { const v = new F.THREE.Vector3(9, y, 1).project(F.cam); return Math.abs(v.x) < .92 && Math.abs(v.y) < .94; }); });
+F.start();
+</script>
+</body>
+</html>
