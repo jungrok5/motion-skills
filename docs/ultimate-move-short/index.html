@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ultimate-move-short · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 흑백과 붉은색 하나로 된 전투 애니메이션의 필살기 영상을 코드만으로 만듭니다. 먹물 잔상과 붉은 실선, 충격 프레임과 멈춤, 갑작스러운 정적, 하늘에 천 개가 열리는 영역, 세계를 한 줄로 베어 미끄러뜨리는 마지막 일격, 하얀 정적까지 30초 문법으로 연출한 1080p MP4와 브라우저에서 도는 페이지를 냅니다.">
+<meta property="og:title" content="ultimate-move-short · motion-skills">
+<meta property="og:description" content="주제 하나를 주면 흑백과 붉은색 하나로 된 전투 애니메이션의 필살기 영상을 코드만으로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/ultimate-move-short/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/ultimate-move-short">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / ultimate-move-short</nav>
+  <h1>ultimate-move-short</h1>
+  <p>주제 하나를 주면 흑백과 붉은색 하나로 된 전투 애니메이션의 필살기 영상을 코드만으로 만듭니다. 먹물 잔상과 붉은 실선, 충격 프레임과 멈춤, 갑작스러운 정적, 하늘에 천 개가 열리는 영역, 세계를 한 줄로 베어 미끄러뜨리는 마지막 일격, 하얀 정적까지 30초 문법으로 연출한 1080p MP4와 브라우저에서 도는 페이지를 냅니다.
+  보고 만든 원본: <a href="https://x.com/lansenai/status/2119397520833126441?a=IR20TU3t9a9k-Ql4AIg&s=19" target="_blank" rel="noopener">澜森(@lansenai)의 X 게시물 (AI 영상과 프롬프트)</a>.</p>
+  <ul class="tags"><li>3D 캔버스</li><li>16:9</li><li>MP4</li><li>라이브 페이지</li><li>합성 사운드</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(달의 창잡이, 거울의 검객, 종을 울리는 승려 …). 레퍼런스 영상이 있으면 그 스틸과 소리</dd>
+      <dt>브리프</dt><dd>레퍼런스 프롬프트의 문법에 주제를 채운 <code>BRIEF.md</code>: 전투원의 실루엣과 무기, 이름 붙인 세 능력(이동 · 타격 · 필살기), 영역의 모티프, 30초 박자표, 소리, 품질 기준과 피해야 할 것</dd>
+      <dt>설계</dt><dd>주제마다 새로 설계하는 전투원(관절 범위 검사를 통과하는 3D 뼈대, 따라오는 옷자락 · 머리 · 띠, 셀 질감의 얼굴)과 영역 모티프(눈 · 달 · 거울 · 인장 또는 새 모티프), 양쪽 방향의 캐스트 시트</dd>
+      <dt>연출</dt><dd>첫 프레임부터 움직이는 공격 → 정적 → 영역 전개 → 붕괴와 검은 공허 → 세계를 베는 일격 → 하얀 정적, 몸의 지난 경로로 그리는 먹물 잔상, 반전 · 검정 · 하양 · 붉은 충격 프레임, 멈춤과 흔들림, 세계를 미끄러뜨리는 절단</dd>
+      <dt>확인</dt><dd>콘택트 시트와 무작위 스틸을 브리프 기준(색 · 먹 · 몸 · 문법 · 구도)으로 채점, 모든 샷 · 빈 프레임 · 관절 범위 · 결정성 · 악보 검사</dd>
+      <dt>출력</dt><dd>30fps 1920×1080 MP4(모션 블러 · 176BPM 타악 · 베기 · 충격음 포함), ♪ 버튼으로 소리까지 재생하는 라이브 페이지, 엔진째 넣은 HTML 한 파일</dd>
+    </dl>
+    <pre><code>cd ultimate-move-short
+node scripts/check.mjs examples/thousand-moons/index.html
+node scripts/render.mjs examples/thousand-moons/index.html --sheet 32 --scale .5 --q mb=1
+node scripts/score.mjs examples/thousand-moons/score.js --dur 30 --out out/film.wav
+node scripts/render.mjs examples/thousand-moons/index.html --workers 4 --audio out/film.wav
+node scripts/new-film.mjs ../my-film</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. 네트워크와 GPU가 필요 없습니다(CPU에서 모션 블러를 넣은 1080p 한 프레임이 약 0.25–0.3초, 30초 영상을 워커 4개로 약 4분 반). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/ultimate-move-short/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:calc((100vw - 34px)*.5625);--demo-bg:#d6d8da">
+    <iframe data-src="demo/thousand-moons/?scale=.5" title="ultimate-move-short 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/thousand-moons/">데모 열기 (examples/thousand-moons)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/thousand-moons</code> · 30초 · 16샷 · ♪ 버튼으로 소리</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/thousand-moons/?scale=.5" data-cap="예제 &lt;code&gt;examples/thousand-moons&lt;/code&gt; · 30초 · 16샷 · ♪ 버튼으로 소리" aria-pressed="true">천 개의 달</button>
+        <button class="btn" type="button" data-src="demo/template/?scale=.5" data-cap="템플릿 &lt;code&gt;templates/film.html&lt;/code&gt; · 11.9초 · 8샷 · 주제를 바꾼 출발점" aria-pressed="false">거울의 검객</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제 「月蝕 · Thousand-Moon Eclipse」의 열두 장면, 같은 문법을 줄인 시작 템플릿, 전투원과 모티프를 돌려 보는 캐스트 시트입니다. 카드를 누르면 새 탭에서 그 순간에 멈춘 장면이 열리고, 브라우저가 먹 한 가닥부터 직접 그립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"attack":"공격","still":"정적","domain":"영역","cut":"일격","sheet":"캐스트 시트"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>月蝕 · Thousand-Moon Eclipse <small>16:9 · 30초 · 16샷</small></h3>
+      <p>포니테일의 창잡이가 달그림자 걸음으로 먹물 잔상을 끌며 세 번 베고 내리꽂은 뒤, 하늘 가득 천 개의 달이 차올라 그녀를 바라봅니다. 달들은 핏빛으로 일식하며 깨져 창끝으로 빨려 들고, 한 번의 가로 베기가 세계를 붉은 실선으로 갈라 미끄러뜨립니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="attack" href="demo/thousand-moons/?t=0.3" target="_blank" rel="noopener">
+          <img src="samples/burst.jpg" alt="몸을 낮춰 미끄러지며 멈춘 창잡이 뒤로 왼쪽까지 길게 끌린 먹물 잔상, 그 안을 지나는 가는 붉은 선과 흩날리는 먹 조각" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">공격 · 0.3초</span><b>달그림자 걸음</b>
+          <span class="how">첫 프레임부터 움직임, 몸의 지난 경로로 그린 먹물 잔상, 발 구름에 갈라지는 땅</span></div></a>
+        <a class="tile" data-tags="attack" href="demo/thousand-moons/?t=1.8" target="_blank" rel="noopener">
+          <img src="samples/sweep.jpg" alt="왼쪽 앞에 다시 나타난 창잡이가 크게 휘둘러 남긴 넓은 먹 초승달, 안쪽을 흐르는 붉은 실선" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">공격 · 1.8초</span><b>다시 나타나 베기</b>
+          <span class="how">붓 결이 흐름을 따라 갈라지는 베기 자국, 반전 충격 프레임 직후, 지평선까지 뻗는 균열</span></div></a>
+        <a class="tile" data-tags="attack" href="demo/thousand-moons/?t=4.55" target="_blank" rel="noopener">
+          <img src="samples/spin.jpg" alt="위에서 내려다본 공중 회전, 창잡이를 둘러싼 먹의 고리와 붉은 실선" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">공격 · 4.6초</span><b>공중 회전</b>
+          <span class="how">머리 위에서 본 회전 베기, 회전하는 만큼 자라는 먹 고리</span></div></a>
+        <a class="tile" data-tags="attack" href="demo/thousand-moons/?t=6.25" target="_blank" rel="noopener">
+          <img src="samples/plunge.jpg" alt="공중에서 내리꽂은 창이 땅에 박힌 자리에서 종이에 떨어진 먹물처럼 터지는 먹 자국과 사방으로 튀는 검은 조각" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">공격 · 6.3초</span><b>멈춤과 내리꽂기</b>
+          <span class="how">공중에서 멈춘 사이 반 바퀴 도는 카메라, 착지의 검은 충격 프레임, 번지는 먹 고리와 균열</span></div></a>
+        <a class="tile" data-tags="attack domain" href="demo/thousand-moons/?t=10" target="_blank" rel="noopener">
+          <img src="samples/omen.jpg" alt="어깨 너머로 올려다본 하늘에 엇갈린 두 먹 획, 그 교차점에 아주 작은 보름달이 떠오른 첫 징조" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">공격 · 10초</span><b>첫 징조</b>
+          <span class="how">엇갈린 두 베기의 교차점에서 0.3초 차올랐다 꺼지는 작은 달, 하늘의 첫 균열</span></div></a>
+        <a class="tile" data-tags="attack" href="demo/thousand-moons/?t=13.7" target="_blank" rel="noopener">
+          <img src="samples/first-burst.jpg" alt="공중에 걸린 세 획이 조여든 자리에서 사방으로 터지는 검은 먹과 붉은 실선, 날아가는 검은 사각 조각" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">공격 · 13.7초</span><b>첫 폭발</b>
+          <span class="how">검정 → 붉은 충격 프레임 뒤의 먹 폭발, 사방으로 뻗는 붓 획과 조각</span></div></a>
+        <a class="tile" data-tags="still" href="demo/thousand-moons/?t=16.8" target="_blank" rel="noopener">
+          <img src="samples/stillness.jpg" alt="공중에 멈춘 검은 조각들 사이에서 창을 곧게 세우고 선 창잡이, 하늘의 균열에 켜지는 붉은 점" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">정적 · 16.8초</span><b>모든 것이 멈춤</b>
+          <span class="how">시간이 4%로 늦어진 파편, 천천히 도는 카메라, 창끝으로 흐르는 붉은 실선</span></div></a>
+        <a class="tile" data-tags="still" href="demo/thousand-moons/?t=17.75" target="_blank" rel="noopener">
+          <img src="samples/eye.jpg" alt="창잡이의 얼굴을 아주 가까이 본 장면, 붉게 깨어난 눈동자 안의 동심원이 유리처럼 갈라짐" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">정적 · 17.8초</span><b>눈의 균열</b>
+          <span class="how">셀 질감의 얼굴, 앞머리가 드리운 그림자, 붉은 동심원이 깨지는 극근접</span></div></a>
+        <a class="tile" data-tags="domain" href="demo/thousand-moons/?t=20.6" target="_blank" rel="noopener">
+          <img src="samples/domain.jpg" alt="하늘을 가득 채운 초승달과 반달의 벽 앞에 떠오른 거대한 보름달 셋, 붉은 실이 맨 아래의 아주 작은 인물로 모임" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">영역 · 20.6초</span><b>천 개의 달</b>
+          <span class="how">하나 → 셋 → 천, 각자의 위상까지 차오르는 달의 벽, 인물을 향한 붉은 실, 아주 작아지는 인물</span></div></a>
+        <a class="tile" data-tags="domain" href="demo/thousand-moons/?t=24.25" target="_blank" rel="noopener">
+          <img src="samples/eclipse.jpg" alt="어두워진 세계, 흰 윤곽선만 남은 창잡이 위로 붉은 테를 두른 거대한 일식, 주위를 도는 먹의 소용돌이와 붉은 테의 조각들" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">영역 · 24.3초</span><b>핏빛 일식</b>
+          <span class="how">깨진 달 조각이 창끝으로 빨려 들고, 마지막 달이 일식하며 세계가 검은 공허로</span></div></a>
+        <a class="tile" data-tags="cut" href="demo/thousand-moons/?t=25.9" target="_blank" rel="noopener">
+          <img src="samples/cut.jpg" alt="화면을 가로지르는 붉은 실선을 따라 위아래로 어긋나 미끄러지는 달의 세계, 가운데에서 세로로 찢어지는 흰 틈과 뿜어지는 먹" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">일격 · 25.9초</span><b>무광일섬</b>
+          <span class="how">반전 → 하양 프레임 뒤 세계를 가르는 붉은 실선, 띠마다 다르게 미끄러지는 세계, 찢어지는 흰 틈</span></div></a>
+        <a class="tile" data-tags="cut still" href="demo/thousand-moons/?t=29.4" target="_blank" rel="noopener">
+          <img src="samples/silence.jpg" alt="다시 하얘진 세계, 등을 보이고 창을 내린 채 선 창잡이와 옷자락에서 흩어지는 마지막 먹 한 줄기" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">정적 · 29.4초</span><b>하얀 정적</b>
+          <span class="how">닫히는 하늘의 붉은 틈, 천천히 내려앉는 옷자락, 마지막 먹 한 줄기</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>Mirror Step <small>템플릿 · 11.9초 · 8샷</small></h3>
+      <p>같은 문법을 줄여 담은 출발점입니다. 짧은 머리의 검객이 베고 내리꽂고 멈춘 뒤, 거울 천 개가 열려 그를 비추고 깨지며, 한 번의 베기로 세계를 가릅니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="attack" href="demo/template/?t=0.9" target="_blank" rel="noopener">
+          <img src="samples/t-slash.jpg" alt="먹물 잔상을 끌고 들어와 위로 크게 벤 검객, 붉은 실선이 든 먹 초승달" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 0.9초</span><b>잔상과 베기</b><span class="en">templates/film.html</span>
+          <span class="how"><code>new-film.mjs</code>가 복사하는 출발점의 첫 샷</span></div></a>
+        <a class="tile" data-tags="domain" href="demo/template/?t=6.6" target="_blank" rel="noopener">
+          <img src="samples/t-domain.jpg" alt="둥근 청동 거울 수백 개의 벽 앞에 열린 거대한 거울, 거울마다 비친 작은 인물" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 6.6초</span><b>거울의 영역</b>
+          <span class="how">같은 영역 문법에 거울 모티프: 열리면 맑아지고 인물을 비춤</span></div></a>
+        <a class="tile" data-tags="cut" href="demo/template/?t=8.5" target="_blank" rel="noopener">
+          <img src="samples/t-outline.jpg" alt="검은 공허 속 흰 윤곽선만 남은 검객이 칼을 뒤로 당긴 마지막 자세" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 8.5초</span><b>검은 공허</b>
+          <span class="how">세계가 꺼지고 흰 윤곽선과 칼날의 붉은 선만 남는 직전의 정지</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>캐스트 시트 <small>examples/cast</small></h3>
+      <p>전투원을 여덟 방향(정면 · 4분의 3 · 옆 · 등, 왼쪽과 오른쪽 모두)과 세 자세로 돌려 보고, 영역 모티프 넷이 열리고 깨지는 모습을 한 장에 그립니다. 관절 범위 검사가 이 페이지의 모든 인물에도 돕니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="sheet" href="demo/cast/?t=3" target="_blank" rel="noopener">
+          <img src="samples/cast.jpg" alt="포니테일 창잡이를 여덟 방향과 세 자세로 그린 캐스트 시트" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 · 8방향 × 3자세</span><b>전투원 돌려 보기</b>
+          <span class="how">가까운 어깨가 앞, 옷의 앞섶이 얼굴 쪽, 무릎은 앞으로 — 양쪽 방향 모두</span></div></a>
+        <a class="tile" data-tags="sheet" href="demo/cast/?t=6.5" target="_blank" rel="noopener">
+          <img src="samples/motifs.jpg" alt="눈 · 달 · 거울 · 인장 네 모티프의 크게 연 모습과 작은 크기로 열려 가는 네 단계" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 · 모티프 4종</span><b>영역 모티프</b>
+          <span class="how">눈 · 달(일식) · 거울 · 인장, 큰 크기와 스프라이트 크기, 새 모티프를 그리는 규칙은 STORY.md</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. 澜森(@lansenai)이 X에 올린 30초 영상(검은 옷의 검객, 천 개의 눈, 둘로 갈라지는 세계)과 첫 댓글에 올린 프롬프트가 출발점입니다. 그 영상은 AI 영상 모델이 만든 것이라, 이 스킬은 프롬프트와 화면의 문법(색의 절제, 먹물 잔상, 충격 프레임, 공격 → 정적 → 영역 → 일격 → 정적의 리듬)만 가져오고 그림은 직접 만든 엔진이 그립니다. 예제의 창잡이, 달의 영역, 안무, 음악은 모두 브리프에서 새로 설계했습니다.</p>
+  <div class="works">
+    <a class="work" href="demo/thousand-moons/" target="_blank" rel="noopener"><b>「月蝕 · Thousand-Moon Eclipse」 · 30초 · 16샷</b><span>창잡이, 천 개의 달, 핏빛 일식, 세계를 가르는 일격, 라이브 페이지</span><span class="url">ultimate-move-short/demo/thousand-moons/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/ultimate-move-short/examples"><b>예제 폴더 · examples/</b><span>thousand-moons(브리프 포함) · cast(캐스트 시트)</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/lansenai/status/2119397520833126441?a=IR20TU3t9a9k-Ql4AIg&s=19" target="_blank" rel="noopener"><b>레퍼런스 영상과 프롬프트 · X</b><span>澜森(@lansenai) · 「千瞳觉醒，万象崩塌」 · 2026년 11월</span><span class="url">x.com/lansenai</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ultimate-move-short/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/ultimate-move-short">폴더</a> <span>lib · scripts · templates · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ultimate-move-short/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ultimate-move-short/references/BRIEF.md">references/BRIEF.md</a> <span>레퍼런스 프롬프트 원문, 주제를 채우는 브리프 틀, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ultimate-move-short/references/STORY.md">references/STORY.md</a> <span>주제 → 전투원과 세 능력, 30초 문법, 샷 표, 새 모티프 만들기</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ultimate-move-short/references/LOOK.md">references/LOOK.md</a> <span>레퍼런스처럼 보이게 하는 것: 색, 전투원, 먹, 충격 프레임, 영역, 카메라, 리듬</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ultimate-move-short/references/KIT.md">references/KIT.md</a> <span>API: Film, fighter, domain, fx, ink, world, score</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ultimate-move-short/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림과 소리는 코드로 만들었습니다 · 레퍼런스: 澜森(@lansenai)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
