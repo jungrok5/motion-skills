@@ -72,7 +72,7 @@ export class Labels {
     const cam = F.cameraAt(tRead), [, , dx, dz] = along(p, c, (s0 + s1) / 2);
     const right = [Math.cos(cam.yawR), Math.sin(cam.yawR)];           // camera's screen-right on the ground
     const flip = dx * right[0] + dz * right[1] < 0;
-    const pos = [], uv = [], idx = [], N = Math.max(2, Math.ceil((s1 - s0) / 1.5)), hw = size * .5, y = (o.y ?? .1) + .02;
+    const pos = [], uv = [], idx = [], N = Math.max(2, Math.ceil((s1 - s0) / 1.5)), hw = size * .5, y = (o.y ?? .16) + .02;
     for (let i = 0; i <= N; i++) {
       const s = s0 + (s1 - s0) * i / N, [qx, qz, tx, tz] = along(p, c, s), nx = -tz, nz = tx, off = o.offset ?? 0;
       const u = flip ? 1 - i / N : i / N;
