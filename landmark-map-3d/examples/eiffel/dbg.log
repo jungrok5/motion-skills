@@ -1,0 +1,16 @@
+0.0 error Failed to load resource: the server responded with a status of 404 (Not Found)
+0.1 log [film]   indexRoads: 7 ms
+0.3 log [film]   groundAtlas: 174 ms
+0.3 log [film]   water: 13 ms
+1.2 log [film]   roads: 866 ms
+1.6 log [film] buildings: 3139 (92752 tris)
+1.6 log [film]   buildings: 471 ms
+1.7 log [film]   trees: 77 ms
+1.7 log [film]   lamps: 24 ms
+1.8 log [film] world built in 1632 ms
+1.8 log [film] cars: 1429 on 295 routes
+1.8 log [film] people: 1464
+1.8 warning THREE.Color: Unknown color day
+1.8 warning THREE.Color: Unknown color day
+3.4 warning THREE.Color: Unknown color day
+3.4 warning THREE.Color: Unknown color day

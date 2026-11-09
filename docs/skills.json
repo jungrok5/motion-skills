@@ -1221,6 +1221,42 @@
       ]
     },
     {
+      "id": "landmark-map-3d",
+      "name": "landmark-map-3d",
+      "tagline": "유명한 장소 하나를 주면 OpenStreetMap에서 그 동네의 실제 건물 · 길 · 강 · 공원 · 나무를 받아 귀여운 3D 지도 도시로 짓고, 랜드마크는 실제 치수로 코드에서 직접 만들어, 자동차 · 사람 · 배가 움직이고 지도 핀과 길 이름이 붙은 채 낮에서 보랏빛 밤으로 넘어가는 1080×1920 세로 영상을 만듭니다.",
+      "posterAlt": "landmark-map-3d로 만든 「에펠탑」의 장면 네 개: 높은 곳에서 본 낮의 샹 드 마르스와 작은 에펠탑, 해 질 녘 동쪽에서 본 격자 탑과 센강, 창문 불빛이 켜진 황혼의 도시 위 금빛 탑, 서치라이트가 도는 보랏빛 밤의 탑",
+      "poster": "landmark-map-3d/poster.jpg",
+      "tags": [
+        "three.js · OpenStreetMap",
+        "귀여운 3D 지도",
+        "손으로 만드는 랜드마크",
+        "낮 → 밤 · 틸트시프트",
+        "세로 MP4 · 합성 사운드"
+      ],
+      "stats": [
+        "예제 18초 · 1080×1920",
+        "건물 6,533채 · 나무 11,375그루"
+      ],
+      "page": "landmark-map-3d/",
+      "source": "landmark-map-3d/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "landmark-map-3d/examples/eiffel/"
+      },
+      "sources": [
+        {
+          "title": "Charly Delaroche의 X 게시물 (Anywhere 지도 앱: 비 오는 밤의 시부야 교차로 · 롬바드 거리 · 금문교)",
+          "url": "https://x.com/Nal_uh/status/2119508762298040469?a=AifzriFhkxBwD85fPCI&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「에펠탑」 · 18초 · 1080×1920 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/landmark-map-3d/demo/examples/eiffel/?scale=.5"
+        }
+      ]
+    },
+    {
       "id": "luminous-score",
       "name": "luminous-score",
       "tagline": "곡 하나를 주면 어둡고 안개 낀 방에 놓인 악보 위로 카메라가 낮게 미끄러지고, 음이 울리는 순간 그 음표가 성부의 색으로 빛나 종이에 빛을 드리웠다가 잔광으로 사라지는 영상을 만듭니다. 퍼블릭 도메인 곡 · MIDI · 새로 쓴 곡을 끝없는 한 줄 총보로 기보하고, 성부마다의 색 · 방의 분위기 · 음악 사건에 맞춘 샷을 설계합니다. 같은 음표에서 소리를 합성해 라이브 페이지, WAV, 1080p MP4를 냅니다.",
