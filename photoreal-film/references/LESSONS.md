@@ -58,8 +58,8 @@ Problem → cause → fix. All of these happened on the worked example (`example
 
 ## Time
 - 4 CPU cores, no GPU: 1920×804 at 64 samples took 47 s a frame; previews at half size and 24 samples take 5-10 s.
-  The 432-frame example was rendered at 0.75 scale and 26 samples (14-40 s a frame, about 2.5 hours) and enlarged in
-  `finish.py`; grain is added after the enlargement so it stays fine. With a GPU render at `--q final`.
+  The 432-frame example was rendered at 0.75 scale and 26 samples (median 15-36 s a frame depending on the shot, about
+  2 h 50 min in all) and enlarged in `finish.py`; grain is added after the enlargement so it stays fine. With a GPU render at `--q final`.
 - Glass close-ups and volumes are the expensive shots (2-3× the rest). Keep them short.
 - The look is not baked into the render: changing grade, grain, bars or fades means `finish.py` (seconds per frame),
   not `render.py`.

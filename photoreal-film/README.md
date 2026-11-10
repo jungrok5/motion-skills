@@ -21,7 +21,7 @@ A new project for your own topic: `python3 photoreal-film/scripts/new_film.py my
 then fill in `BRIEF.md` first.
 
 Requirements: Python 3.13 with `bpy` 5.x (or Blender 5.x itself: `blender -b -P script.py -- args`), numpy, Pillow,
-ffmpeg. No GPU needed (a 4-core CPU renders a preview still in 5-10 s and a final frame in 15-45 s); a GPU Blender can
+ffmpeg. No GPU needed (a 4-core CPU renders a preview still in 5-10 s and a film frame in 15-36 s at the example's settings); a GPU Blender can
 see is used automatically. Nothing is downloaded at render time.
 
 Worked example: [`examples/aperture`](examples/aperture) — 「APERTURE」, 18 s, nine shots from a topic that is not in
