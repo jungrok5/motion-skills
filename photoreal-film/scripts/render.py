@@ -98,6 +98,23 @@ def main():
     if not ids:
         ap.error('nothing to do: give --still, --shots or --all')
     q = a.q or 'final'
+    if len(ids) > 1:
+        # one process per shot: a shot that fails does not take the rest with it, memory is returned between shots,
+        # and each shot starts from the code as it is on disk
+        failed = []
+        for sid in ids:
+            cmd = [sys.executable, os.path.abspath(__file__), '--project', film.root, '--shots', sid, '--q', q, '--every', str(a.every)]
+            for k, v in (('--spp', a.spp), ('--scale', a.scale), ('--threads', a.threads)):
+                if v:
+                    cmd += [k, str(v)]
+            if a.force:
+                cmd.append('--force')
+            if subprocess.run(cmd).returncode:
+                failed.append(sid)
+                print(f'[fail] {sid}: see the traceback above; the other shots continue', flush=True)
+        if failed:
+            sys.exit(f'{len(failed)} shot(s) failed: {", ".join(failed)}')
+        return
     log = open(film.out('render.log'), 'a')
     for sid in ids:
         s = film.shot(sid)

@@ -60,6 +60,10 @@ Problem → cause → fix. All of these happened on the worked example (`example
   not `render.py`.
 - Start the full render in the background and write everything else while it runs; `render.py` resumes, so a killed
   render loses one frame.
+- **The render died silently at the sixth shot** → a library function gained an argument while the render was running;
+  the long-lived process still held the old library, the next shot's script was read fresh from disk and called the new
+  signature → `render.py` now runs **one process per shot** (a failing shot is reported and the others continue), and
+  the rule is: watch `out/render.log` reach each new shot, do not assume.
 
 ## Story
 - The print on the desk carried the grade twice (a finished frame, photographed again) → light it mostly by the desk
