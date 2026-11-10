@@ -87,8 +87,11 @@ Pillow, ffmpeg. CPU is enough; a GPU Blender can see is used automatically.
 7. **Check.** `check.py` must pass: every shot builds, has a camera and light, no bare meshes, focus inside the clip
    range, not blank / black / burnt out, something sharp, something moving, the same frame twice gives the same pixels.
 8. **Render** in the background: `render.py --all --q final` (add `--scale 0.75 --spp 26` on a CPU-only machine; the
-   finish enlarges it). It resumes. Meanwhile write `score.py` against `score.py --list`.
-9. **Finish and join.** `finish.py` → `score.py` → `encode.py`. Pull stills from the MP4 at the first, middle and last
+   finish enlarges it). One process per shot; it resumes, and a shot that fails is reported while the rest go on, so read
+   the log when it reaches each new shot. Do not change `pf` function signatures while it runs. Meanwhile write
+   `score.py` against `score.py --list`.
+9. **Finish and join.** `finish.py` → `score.py` → `encode.py` (and `flipbook.py` when the film has to play on a page
+   that takes no video). Pull stills from the MP4 at the first, middle and last
    second of each shot and look at them; watch for flicker in defocused areas and for cuts that land a frame late.
    To change the look afterwards edit `look=` in `film.py` and re-run `finish.py` only.
 
