@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Frames + score → out/film.mp4 (H.264, high quality) and out/film-share.mp4 (smaller, for posting).
 
-  encode.py [--crf 15] [--no-audio] [--name film]
+  encode.py [--crf 17] [--no-audio] [--name film]
 """
 import os
 import subprocess
@@ -13,7 +13,7 @@ import _boot  # noqa: E402
 
 def main():
     ap = _boot.parser(__doc__)
-    ap.add_argument('--crf', type=int, default=15)
+    ap.add_argument('--crf', type=int, default=17)
     ap.add_argument('--no-audio', action='store_true')
     ap.add_argument('--name', default='film')
     a = ap.parse_args(_boot.argv())
@@ -35,7 +35,7 @@ def main():
         cmd += ['-af', 'loudnorm=I=-15:TP=-1.5:LRA=11', '-c:a', 'aac', '-b:a', '256k', '-ar', '48000', '-shortest']
     subprocess.run(cmd + [out], check=True)
     share = film.out(a.name + '-share.mp4')
-    subprocess.run(['ffmpeg', '-y', '-v', 'error', '-i', out, '-c:v', 'libx264', '-preset', 'slow', '-crf', '21', '-pix_fmt', 'yuv420p',
+    subprocess.run(['ffmpeg', '-y', '-v', 'error', '-i', out, '-c:v', 'libx264', '-preset', 'slow', '-crf', '23', '-pix_fmt', 'yuv420p',
                     '-movflags', '+faststart'] + (['-c:a', 'aac', '-b:a', '160k'] if audio else ['-an']) + [share], check=True)
     for p in (out, share):
         print(f'{os.path.relpath(p, film.root)}  {os.path.getsize(p) / 1e6:.1f} MB')
