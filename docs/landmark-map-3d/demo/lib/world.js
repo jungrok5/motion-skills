@@ -25,7 +25,9 @@ class Geo {
   v(x, y, z, nx, ny, nz, c, ex = {}) { this.p.push(x, y, z); this.n.push(nx, ny, nz); this.c.push(c.r, c.g, c.b); for (const [k, o] of Object.entries(this.ex)) { const v = ex[k] ?? new Array(o.s).fill(0); o.a.push(...v); } }
   tri(a, b, c, color, ex, nIn) {                   // a, b, c = [x, y, z]; faces toward nIn when given
     let ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
-    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const L = Math.hypot(nx, ny, nz) || 1; nx /= L; ny /= L; nz /= L;
+    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const L = Math.hypot(nx, ny, nz);
+    if (!(L > 1e-8)) return;                        // degenerate: a zero normal turns into NaN pixels on GPUs
+    nx /= L; ny /= L; nz /= L;
     if (nIn && nx * nIn[0] + ny * nIn[1] + nz * nIn[2] < 0) { [b, c] = [c, b]; nx = -nx; ny = -ny; nz = -nz; }
     const e = Array.isArray(ex) ? ex : [ex, ex, ex];
     this.v(...a, nx, ny, nz, color, e[0]); this.v(...b, nx, ny, nz, color, e[1]); this.v(...c, nx, ny, nz, color, e[2]);
@@ -34,7 +36,9 @@ class Geo {
   colorQuad(a, b, c, d, ca, cb, cc, cd, nIn) {     // per-vertex colours (gradients)
     for (const [p, q, r, cp, cq, cr] of [[a, b, c, ca, cb, cc], [a, c, d, ca, cc, cd]]) {
       let ux = q[0] - p[0], uy = q[1] - p[1], uz = q[2] - p[2], vx = r[0] - p[0], vy = r[1] - p[1], vz = r[2] - p[2];
-      let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const L = Math.hypot(nx, ny, nz) || 1; nx /= L; ny /= L; nz /= L;
+      let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const L = Math.hypot(nx, ny, nz);
+      if (!(L > 1e-8)) continue;
+      nx /= L; ny /= L; nz /= L;
       let Q = q, R = r, CQ = cq, CR = cr;
       if (nIn && nx * nIn[0] + ny * nIn[1] + nz * nIn[2] < 0) { Q = r; R = q; CQ = cr; CR = cq; nx = -nx; ny = -ny; nz = -nz; }
       this.v(...p, nx, ny, nz, cp); this.v(...Q, nx, ny, nz, CQ); this.v(...R, nx, ny, nz, CR);
@@ -407,8 +411,8 @@ export class World {
     const { P } = this, G = new Geo(), M = new Geo(), B = new Geo();
     const road = col(P.road), curb = col(P.curb), mark = col(P.marking), brg = col(P.bridge), brgLow = shade(P.bridge, .7);
     for (const { r, w } of this.drive) {
-      const y = r.bridge ? .34 : .06;
-      ribbonInto(G, r.p, w + 1.2, y - .015, curb);
+      const y = r.bridge ? .4 : .1;                 // ground layers ≥ 2.5 cm apart (with the camera-scaled near plane)
+      ribbonInto(G, r.p, w + 1.2, y - .03, curb);
       ribbonInto(G, r.p, w, y, road);
       if (r.bridge) this.bridge(B, r, w, brg, brgLow);
       // markings: a dashed centre line on two-way roads of 9 m+, lane dashes on wide one-ways
@@ -418,8 +422,8 @@ export class World {
         for (let s = gap / 2; s < L - dl; s += dl + gap) {
           const [x0, z0, dx, dz] = along(r.p, c, s), [x1, z1] = along(r.p, c, s + dl);
           const nx = -dz, nz = dx;
-          const a = [x0 + nx * (off - wd / 2), y + .012, z0 + nz * (off - wd / 2)], b = [x0 + nx * (off + wd / 2), y + .012, z0 + nz * (off + wd / 2)];
-          const e = [x1 + nx * (off + wd / 2), y + .012, z1 + nz * (off + wd / 2)], d = [x1 + nx * (off - wd / 2), y + .012, z1 + nz * (off - wd / 2)];
+          const a = [x0 + nx * (off - wd / 2), y + .025, z0 + nz * (off - wd / 2)], b = [x0 + nx * (off + wd / 2), y + .025, z0 + nz * (off + wd / 2)];
+          const e = [x1 + nx * (off + wd / 2), y + .025, z1 + nz * (off + wd / 2)], d = [x1 + nx * (off - wd / 2), y + .025, z1 + nz * (off - wd / 2)];
           M.quad(a, b, e, d, mark, undefined, [0, 1, 0]);
         }
       };
@@ -433,7 +437,7 @@ export class World {
       const u = clamp(((x - ax) * dx + (z - az) * dz), 2, L - 2), cx = ax + dx * u, cz = az + dz * u, nx = -dz, nz = dx;
       const across = s.w - .6, depth = 3.2, n = Math.max(3, Math.floor(across / 1.1));
       for (let k = 0; k < n; k++) {
-        const o0 = -across / 2 + (k + .2) * across / n, o1 = o0 + across / n * .55, y = .072;
+        const o0 = -across / 2 + (k + .2) * across / n, o1 = o0 + across / n * .55, y = .125;
         M.quad([cx + nx * o0 - dx * depth / 2, y, cz + nz * o0 - dz * depth / 2], [cx + nx * o1 - dx * depth / 2, y, cz + nz * o1 - dz * depth / 2], [cx + nx * o1 + dx * depth / 2, y, cz + nz * o1 + dz * depth / 2], [cx + nx * o0 + dx * depth / 2, y, cz + nz * o0 + dz * depth / 2], mark, undefined, [0, 1, 0]);
       }
     }
@@ -452,7 +456,7 @@ export class World {
   }
   bridge(B, r, w, brg, brgLow) {
     // a deck body with railings, and arches between piers where it crosses water
-    const c = cumLen(r.p), L = c.at(-1), y = .34, wy = this.waterY, step = 1.5;
+    const c = cumLen(r.p), L = c.at(-1), y = .4, wy = this.waterY, step = 1.5;
     const pts = []; for (let s = 0; s <= L + 1e-6; s += step) pts.push(along(r.p, c, Math.min(s, L)));
     const overW = pts.map(([x, z]) => this.isWater(x, z));
     const span = 26, hw = w / 2 + .8;
@@ -498,7 +502,22 @@ export class World {
       let y0 = b.kind === 'roof' ? h - .6 : b.mh ?? (b.mlv ? b.mlv * levelH : 0);
       if (this.isWater(...centroid(b.p))) { const d = -this.waterY + .3; h = Math.min(h, 4.5) - d; y0 -= d; }
       const it = { b, h: Math.max(h, y0 + 2.5), y0, r };
-      info.push(it); this.bldGrid.add(...bbox(b.p), { p: b.p, h: it.h, id: b.id });
+      info.push(it);
+    }
+    // a footprint inside a bigger one (OSM maps courtyard blocks, wings and duplicates that way): hidden → dropped;
+    // poking out → its roof kept at least 60 cm off the other's, so the two never share a plane and z-fight
+    const ig = new Grid(60), areaOf = it => it.area ??= Math.abs(polyArea(it.b.p));
+    for (const it of info) ig.add(...bbox(it.b.p), it);
+    for (const it of info) {
+      const c = centroid(it.b.p);
+      for (const o of ig.near(c[0], c[1], 0)) {
+        if (o === it || o.skip || areaOf(o) <= areaOf(it) || !inPoly(c, o.b.p)) continue;
+        if (it.h <= o.h + .4 && it.y0 <= o.y0 + .3) { it.skip = true; break; }
+        if (Math.abs(it.h - o.h) < .6) it.h = o.h + .6;
+      }
+    }
+    for (const it of info.filter(i => !i.skip)) {
+      const b = it.b; this.bldGrid.add(...bbox(b.p), { p: b.p, h: it.h, id: b.id });
       b.p.forEach((a, i) => { const q = b.p[(i + 1) % b.p.length]; const mx = (a[0] + q[0]) / 2, mz = (a[1] + q[1]) / 2; eg.add(mx, mz, mx, mz, { it, a, q, mx, mz }); });
     }
     const party = (it, a, q) => {
@@ -515,6 +534,7 @@ export class World {
       return best;
     };
     for (const it of info) {
+      if (it.skip) continue;
       const { b, h, y0, r } = it, p = b.p, { G, D } = tileOf(p);
       const paint = o.paint ? o.paint(b, { h, r, P }) || {} : {};
       const wallC = col(paint.wall ?? (o.useOSMColours && b.c ? safeCol(b.c, null) : null) ?? pick(r, P.walls, P.wallW));
@@ -605,7 +625,7 @@ export class World {
       if (D.count) { const dm = new THREE.Mesh(D.geometry(), detailMat); dm.castShadow = dm.receiveShadow = true; this.group.add(dm); tris += D.count / 3; }
     }
     this.buildingInfo = info;
-    this.F.log(`buildings: ${info.length} (${tris | 0} tris in ${tiles.size} tiles)`);
+    this.F.log(`buildings: ${info.length - info.filter(i => i.skip).length} (${info.filter(i => i.skip).length} hidden inside others dropped, ${tris | 0} tris in ${tiles.size} tiles)`);
   }
   heightAt(x, z) { let h = 0; for (const b of this.bldGrid.near(x, z, 0)) if (inPoly([x, z], b.p)) h = Math.max(h, b.h); return h; }
 
@@ -713,7 +733,7 @@ export class World {
       fragmentShader: `uniform vec3 c; uniform float k; varying vec2 vP; void main(){ float d = length(vP); float a = pow(max(1. - d, 0.), 1.8); gl_FragColor = vec4(c * a * k, 1.); }`,
     });
     const pl = new THREE.InstancedMesh(pool, poolMat, list.length);
-    list.forEach(([x, z], i) => { m.makeScale(9, 1, 9).setPosition(x, .11, z); pl.setMatrixAt(i, m); });
+    list.forEach(([x, z], i) => { m.makeScale(9, 1, 9).setPosition(x, .17, z); pl.setMatrixAt(i, m); });
     pl.renderOrder = 2; pl.layers.set(1); this.group.add(pl); this.poolMat = poolMat;
     const pts = new THREE.BufferGeometry(); pts.setAttribute('position', new THREE.Float32BufferAttribute(list.flatMap(([x, z]) => [x, poleH + .25, z]), 3));
     this.glowMat = glowMaterial(col(P.lampLight), 7);

@@ -38,3 +38,14 @@ Problem → cause → fix, one or two lines each.
   reverse), fade a pin whose box leaves the frame.
 - **Rendering crawled on CPU** → 11,000 trees × 2,200 triangles drawn three times a frame (shadow, reflection, main)
   with no culling → canopies of ~560 triangles, trees and buildings in 240 m tiles so off-screen tiles are culled.
+- **Black blocks on the samples page (on real GPUs, never in the CPU renders)** → 672 vertices of degenerate triangles
+  (zero-area roof / wall / road pieces) had zero-length normals; on a GPU `normalize(0)` is NaN, and every NaN pixel was
+  spread into a square by the bloom and tilt-shift downsampling. SwiftShader returns 0 there, so the stills looked fine
+  → `Geo.tri` drops triangles with no area, the post chain replaces NaN / Inf with 0 at every downsample, and
+  `check.mjs` fails on any zero normal or NaN position.
+- **Z-fighting in the day shots (roads, curbs, roofs flickering)** → three causes: a fixed 2 m near plane left ~10 cm
+  of depth precision at 2 km while the road / curb / marking layers were 1–6 cm apart; OSM footprints nested inside
+  others (courtyard blocks, wings, duplicates) got the same height and shared a roof plane; the tower's four deck boxes
+  overlapped at the corners with equal tops → the near plane follows the camera (`dist × 0.06`), ground layers sit
+  ≥ 2.5 cm apart, a building hidden inside a bigger one is dropped and one poking out keeps its roof ≥ 60 cm off, and
+  hand-built parts never overlap with coplanar faces (split boxes, inset bands).

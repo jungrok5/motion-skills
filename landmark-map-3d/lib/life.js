@@ -90,7 +90,7 @@ export class Life {
   }
   buildCars(density) {
     const W = this.W, drive = o => o;
-    const items = W.drive.filter(({ r }) => r.k !== 'service' || r.n).map(({ r, w }) => ({ p: r.p, w, oneway: r.oneway, k: r.k, y: r.bridge ? .34 : .06 }));
+    const items = W.drive.filter(({ r }) => r.k !== 'service' || r.n).map(({ r, w }) => ({ p: r.p, w, oneway: r.oneway, k: r.k, y: r.bridge ? .4 : .1 }));
     this.carRoutes = routes(items.map(drive));
     const R = rng(this.o.seed ?? 21), side = this.o.drive === 'left' ? -1 : 1, colours = this.o.carColours ?? CAR_COLOURS;
     for (const rt of this.carRoutes) {
@@ -197,7 +197,7 @@ export class Life {
       let bi = 0;
       const doList = (list, im, beamLen) => list.forEach((c, i) => {
         const p = this.carPose(c, t); put(im, i, p.x, p.y, p.z, p.a, p.k);
-        put(this.beams, bi++, p.x + Math.cos(p.a) * beamLen, p.y + .04, p.z + Math.sin(p.a) * beamLen, p.a, p.k, 13, 1, 5);
+        put(this.beams, bi++, p.x + Math.cos(p.a) * beamLen, p.y + .08, p.z + Math.sin(p.a) * beamLen, p.a, p.k, 13, 1, 5);
       });
       doList(this.carList, this.carMesh, 2); doList(this.busList, this.busMesh, 5.4);
       this.beams.count = bi;
