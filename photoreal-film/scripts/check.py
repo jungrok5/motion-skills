@@ -135,7 +135,11 @@ def main():
             if a.no_render and not any(m.startswith(sid) for m in FAIL):
                 ok(f'{sid}: builds, has a camera, light and materials')
             continue
-        frames = sorted({1, (s['frames'] + 1) // 2, s['frames']})
+        fi, fo = (s.get('fade_in') or (0, 0))[1], (s.get('fade_out') or (0, 0))[1]
+        lo, hi = min(1 + fi, s['frames']), max(1, s['frames'] - fo)        # judge the picture outside its fades
+        if lo >= hi:
+            lo, hi = 1, s['frames']
+        frames = sorted({lo, (lo + hi) // 2, hi})
         imgs = {}
         for f in frames:
             base = film.out('check', f'{sid}_{f:04d}')

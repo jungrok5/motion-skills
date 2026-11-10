@@ -123,6 +123,16 @@ def boolean(ob, cutter, op='DIFFERENCE', keep_cutter=False):
     m.object = cutter
     m.solver = 'EXACT'
     apply(ob)
+    me = ob.data
+    slots = list(me.materials)
+    if any(x is None for x in slots):                     # the cut faces arrive on the cutter's (empty) slot:
+        keep = [i for i, x in enumerate(slots) if x is not None]     # give them the part's own material
+        remap = {old: new for new, old in enumerate(keep)}
+        for poly in me.polygons:
+            poly.material_index = remap.get(poly.material_index, 0)
+        me.materials.clear()
+        for i in keep:
+            me.materials.append(slots[i])
     if not keep_cutter:
         remove(cutter)
     return ob

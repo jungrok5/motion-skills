@@ -39,6 +39,11 @@ Problem → cause → fix. All of these happened on the worked example (`example
   sample the opening numerically (does every point inside the housing lie under some blade?), widen the blades, and
   clamp the smallest opening (`R_MIN`). A mechanism has to work, not only look right open.
 
+- **Grey faces inside every notch and screw slot** → a boolean gives the cut faces the *cutter's* material slot, and the
+  cutter had none; in a dark macro nobody saw it, `check.py` did ("meshes without a material") — after the film was
+  rendered → `geo.boolean` now hands cut faces the part's own material. **Run `check.py` on the real project before
+  the long render, not only on the starter.**
+
 ## Blender 5.x from Python
 - `pip install bpy` gives Blender as a module, one wheel per Python version (bpy 5.2 → Python 3.13, ~400 MB). When pip
   crawls, fetch the wheel with ranged `curl` requests and `pip install` the file.
