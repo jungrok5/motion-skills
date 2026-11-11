@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>pencil-dream-short · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 연필 낙서 캐릭터가 연필을 잡고 자기 세계를 그려 나가는 원테이크 단편을 코드만으로 만듭니다. 한 가지 강조색, 저절로 퍼져 나가는 세계, 거대한 생물, 강조색 무리, 크레용 노을, 책상 위 스케치북으로 빠지는 마지막 장면까지 1080p MP4와 브라우저 페이지로 냅니다.">
+<meta property="og:title" content="pencil-dream-short · motion-skills">
+<meta property="og:description" content="연필 낙서가 연필로 자기 세계를 그리는 원테이크 단편을 주제만 주면 코드로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/pencil-dream-short/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/pencil-dream-short">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / pencil-dream-short</nav>
+  <h1>pencil-dream-short</h1>
+  <p>주제 하나를 주면 연필 낙서 캐릭터가 연필을 잡고 자기 세계를 그려 나가는 원테이크 단편을 코드만으로 만듭니다. 흑연 선과 한 가지 강조색, 손이 닿는 곳에서 시작해 저절로 퍼지는 세계, 큰 획 몇 번으로 그려지는 거대한 생물, 강조색 무리, 크레용 노을, 책상 위 스케치북으로 빠지는 마지막 장면까지 1080p MP4와 브라우저에서 도는 페이지로 냅니다.
+  보고 만든 원본: <a href="https://x.com/Artedeingenio/status/2119895981403894112?a=_9q1hjQOFazzyl1wwv0&s=19" target="_blank" rel="noopener">OscarAI의 X 게시물 (30초 영상)</a>.</p>
+  <ul class="tags"><li>2D 캔버스</li><li>원테이크 · 16:9 · 24fps</li><li>MP4</li><li>라이브 페이지</li><li>합성 사운드</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 한 줄 (예: 등대지기와 고래, 소년과 밤 부엉이)</dd>
+      <dt>브리프</dt><dd>주인공과 강조색 소품, 첫 그림, 퍼질 세계, 거대한 생물, 무리, 노을, 책상 소품, 시간표</dd>
+      <dt>설계</dt><dd>데이터로 만든 주인공(여덟 방향 캐스트 시트와 관절 검사), 주제에 맞춰 새로 그린 거대한 생물</dd>
+      <dt>검사</dt><dd>결정성, 손이 닿는 그림만 주인공이 그리기, 강조색 하나, 종이가 보이는지, 선이 끓는지</dd>
+      <dt>출력</dt><dd>1920×1080 MP4(24fps, 소리 포함)와 라이브 페이지</dd>
+    </dl>
+    <pre><code>node pencil-dream-short/scripts/new-film.mjs my-film --from keeper
+cd my-film
+node ../pencil-dream-short/scripts/check.mjs film.html
+node ../pencil-dream-short/scripts/score.mjs film.html --out out/film.wav
+node ../pencil-dream-short/scripts/render.mjs film.html --workers 4 --audio out/film.wav</code></pre>
+    <p class="mute">요구 사항: Node, Playwright Chromium, ffmpeg. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/pencil-dream-short/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:calc((100vw - 34px)*.5625);--demo-bg:#16130f">
+    <iframe data-src="demo/examples/keeper/" title="pencil-dream-short 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/keeper/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/keeper</code> · 32초 원테이크 · ♪ 버튼으로 소리</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/keeper/" data-cap="예제 &lt;code&gt;examples/keeper&lt;/code&gt; · 32초 원테이크 · ♪ 버튼으로 소리" aria-pressed="true">등대지기와 고래</button>
+        <button class="btn" type="button" data-src="demo/examples/keeper/cast.html" data-cap="캐스트 시트 &lt;code&gt;examples/keeper/cast.html&lt;/code&gt; · 여덟 방향 · 양쪽으로 그리기 · 표정" aria-pressed="false">캐스트 시트</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/film.html&lt;/code&gt; · 16초 · 새 영화의 출발점" aria-pressed="false">시작 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본에 없는 새 주제 두 편을 이 스킬로 만든 장면입니다. 카드를 누르면 그 장면부터 브라우저에서 재생됩니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"keeper":"등대지기와 고래","owl":"밤 부엉이 (템플릿)","cast":"캐스트 시트"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「The Keeper's Whale」 <small>32초 · 원테이크 · 강조색 산호색</small></h3>
+      <p>늙은 등대지기가 날아온 연필을 잡아 작은 배를 그리면, 그 물금에서 바다가 퍼지고 수평선 너머로 혹등고래가 솟아오릅니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="keeper" href="demo/examples/keeper/?t=1.8" target="_blank" rel="noopener"><img src="samples/wake.jpg" alt="빈 종이 위 연필 낙서 등대지기, 산호색 털모자만 색이 있음" loading="lazy" width="640" height="360"><div class="cap"><span class="no">깨어남 · 0초</span><b>빈 종이의 등대지기</b><span class="how">그려지며 나타나 두리번거리는 주인공</span></div></a>
+        <a class="tile" data-tags="keeper" href="demo/examples/keeper/?t=4.6" target="_blank" rel="noopener"><img src="samples/pencil.jpg" alt="연필이 고리 모양 선을 그리며 날아오고 등대지기가 올려다보는 장면" loading="lazy" width="640" height="360"><div class="cap"><span class="no">연필 · 3초</span><b>날아온 연필</b><span class="how">선을 그리며 날아와 손에 잡히는 연필</span></div></a>
+        <a class="tile" data-tags="keeper" href="demo/examples/keeper/?t=8.3" target="_blank" rel="noopener"><img src="samples/boat.jpg" alt="등대지기가 가슴 높이에서 산호색 작은 돛배를 그리는 장면" loading="lazy" width="640" height="360"><div class="cap"><span class="no">첫 그림 · 6초</span><b>산호색 돛배</b><span class="how">손이 닿는 곳에, 연필 끝이 선을 따라가며</span></div></a>
+        <a class="tile" data-tags="keeper" href="demo/examples/keeper/?t=13.6" target="_blank" rel="noopener"><img src="samples/spread.jpg" alt="수평선과 물결, 바위, 줄무늬 등대, 반쯤 걸린 해가 퍼져 나간 바다" loading="lazy" width="640" height="360"><div class="cap"><span class="no">퍼짐 · 9초</span><b>저절로 퍼지는 바다</b><span class="how">물금에서 시작해 수평선, 물결, 등대, 갈매기</span></div></a>
+        <a class="tile" data-tags="keeper" href="demo/examples/keeper/?t=17.2" target="_blank" rel="noopener"><img src="samples/whale.jpg" alt="큰 획 몇 번으로 그려지는 혹등고래의 등과 머리" loading="lazy" width="640" height="360"><div class="cap"><span class="no">거대한 생물 · 15초</span><b>큰 획으로 솟는 고래</b><span class="how">등의 긴 곡선 하나부터, 수평선 뒤에서</span></div></a>
+        <a class="tile" data-tags="keeper" href="demo/examples/keeper/?t=20.6" target="_blank" rel="noopener"><img src="samples/eye.jpg" alt="고래의 산호색 눈이 칠해지고 지느러미를 흔드는 장면" loading="lazy" width="640" height="360"><div class="cap"><span class="no">눈 · 19초</span><b>칠해지는 눈</b><span class="how">눈을 뜨고 깜박이고 지느러미를 흔드는 고래</span></div></a>
+        <a class="tile" data-tags="keeper" href="demo/examples/keeper/?t=23.6" target="_blank" rel="noopener"><img src="samples/swarm.jpg" alt="고래의 물줄기에서 산호색 물고기 떼가 솟아 고래 둘레를 도는 장면" loading="lazy" width="640" height="360"><div class="cap"><span class="no">무리 · 21초</span><b>물고기가 된 물줄기</b><span class="how">고래 앞뒤로 도는 강조색 물고기 떼</span></div></a>
+        <a class="tile" data-tags="keeper" href="demo/examples/keeper/?t=26.8" target="_blank" rel="noopener"><img src="samples/wash.jpg" alt="해에서 번져 나가는 크레용 노을이 하늘과 바다를 덮는 장면" loading="lazy" width="640" height="360"><div class="cap"><span class="no">노을 · 24초</span><b>크레용 노을</b><span class="how">해에서 번지는 금색과 산호색, 종이 결이 보이는 색</span></div></a>
+        <a class="tile" data-tags="keeper" href="demo/examples/keeper/?t=30.4" target="_blank" rel="noopener"><img src="samples/desk.jpg" alt="나무 책상 위에 펼쳐진 스케치북과 색연필, 지우개" loading="lazy" width="640" height="360"><div class="cap"><span class="no">책상 · 27초</span><b>스케치북이었던 세계</b><span class="how">진짜 색연필과 그림자가 있는 책상으로 빠지는 카메라</span></div></a>
+        <a class="tile" data-tags="cast" href="demo/examples/keeper/cast.html" target="_blank" rel="noopener"><img src="samples/cast.jpg" alt="등대지기를 여덟 방향으로 돌린 모습과 양쪽으로 그리는 자세, 표정" loading="lazy" width="640" height="360"><div class="cap"><span class="no">캐스트 시트</span><b>여덟 방향과 표정</b><span class="how">앞뒤좌우와 팔이 닿는 범위를 먼저 검사</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>「Night Owl」 <small>16초 · 시작 템플릿 · 강조색 코발트</small></h3>
+      <p>목도리를 두른 소년이 허공에 별을 그리면 밤 마을이 퍼지고 언덕 뒤에서 거대한 부엉이가 눈을 뜹니다. 같은 문법을 짧게 담은 출발점입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="owl" href="demo/templates/?t=4.6" target="_blank" rel="noopener"><img src="samples/owl-stars.jpg" alt="코발트 목도리를 한 소년이 허공에 파란 별을 그리는 장면" loading="lazy" width="640" height="360"><div class="cap"><span class="no">첫 그림 · 3초</span><b>허공의 별</b><span class="how">먼 쪽 팔로 그려 얼굴을 가리지 않는 손</span></div></a>
+        <a class="tile" data-tags="owl" href="demo/templates/?t=12.4" target="_blank" rel="noopener"><img src="samples/owl.jpg" alt="언덕 뒤 거대한 부엉이의 파란 눈과 그 둘레를 도는 별들" loading="lazy" width="640" height="360"><div class="cap"><span class="no">거대한 생물 · 9초</span><b>언덕 뒤의 부엉이</b><span class="how">파란 눈, 둘레를 도는 별 무리</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. OscarAI(@Artedeingenio)가 X에 올린 30초 영상이 출발점입니다. 주황 안경을 쓴 연필 그림 소녀가 연필을 잡아 꽃과 마을, 용을 그리고, 용 둘레로 주황 나비가 날다가 책상 위 스케치북으로 빠지는 영상으로, 이미지·영상 생성 모델로 만든 것입니다. 이 스킬은 그 문법(깨어남 → 연필 → 첫 그림 → 퍼짐 → 거대한 생물 → 무리 → 노을 → 책상)과 매체(흑연 선, 한 가지 강조색, 크레용)만 가져오고, 그림은 직접 만든 캔버스 엔진이 그립니다. 예제 「The Keeper's Whale」의 코드와 인물, 고래, 이야기, 음악은 모두 이 레포의 것입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/examples/keeper/" target="_blank" rel="noopener"><b>「The Keeper's Whale」 · 32초 · 원테이크</b><span>등대지기, 산호색 돛배, 퍼지는 바다, 혹등고래, 물고기 떼, 크레용 노을, 책상, 라이브 페이지</span><span class="url">pencil-dream-short/demo/examples/keeper/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/pencil-dream-short/examples"><b>예제 폴더 · examples/</b><span>keeper</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/Artedeingenio/status/2119895981403894112?a=_9q1hjQOFazzyl1wwv0&s=19" target="_blank" rel="noopener"><b>레퍼런스 영상 · X 게시물</b><span>OscarAI(@Artedeingenio) · 2026년 11월 · 30초</span><span class="url">x.com/Artedeingenio</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pencil-dream-short/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/pencil-dream-short">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pencil-dream-short/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pencil-dream-short/references/BRIEF.md">references/BRIEF.md</a> <span>주제에서 브리프로, 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pencil-dream-short/references/LOOK.md">references/LOOK.md</a> <span>원본에서 관찰한 그림체와 문법</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pencil-dream-short/references/GRAMMAR.md">references/GRAMMAR.md</a> <span>원테이크의 박자, 시간, 카메라</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pencil-dream-short/references/API.md">references/API.md</a> <span>라이브러리</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pencil-dream-short/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림은 코드로 그렸습니다 (외부 이미지 없음)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

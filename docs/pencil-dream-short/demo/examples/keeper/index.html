@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Keeper's Whale — pencil-dream-short</title>
+<!-- The worked example (BRIEF.md): 32 s, one take on one sketchbook spread. An old lighthouse keeper, doodled in pencil with
+     a coral beanie (the one spot colour), wakes on the blank page → a pencil flies in drawing a loop and he catches it → he
+     draws a little coral boat and its waterline → the sea spreads out from that line (waves, his rock, a striped lighthouse,
+     gulls, the setting sun) as the camera pulls back → a few huge strokes become a humpback breaching out of the horizon →
+     its coral eye is coloured in, it blinks and waves a flipper → it blows, and the spout is a swirl of coral fish →
+     crayon sunset blooms over the sky and the sea → the camera pulls back to the sketchbook on a desk. -->
+<script type="importmap">{ "imports": { "pds/": "../../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+import * as S from 'pds/pencil.js';
+import * as K from 'pds/kit.js';
+import { Film } from 'pds/film.js';
+import { HERO, PAPER, SPOT, LEAD } from './cast.js';
+import { whale, WHALE, spout, lighthouse, beam, boat, rock } from './whale.js';
+import { SCORE } from './score.js';
+const { keys, span, ease, lerp, clamp, line, part, hand } = S;
+
+const F = new Film({ dur: 32, paper: PAPER, spot: SPOT, lead: LEAD, score: SCORE, seed: 9 });
+const FEET = [520, 470], SEA = 380;
+
+// ── the keeper: the acting; the film adds the reach for the pencil and the drawing arm ──
+F.hero(HERO, t => ({
+  x: FEET[0], y: FEET[1], breathe: t, flow: t, penAng: 118,
+  yaw: keys([{ t: 0, v: 0 }, { t: 3, v: 0 }, { t: 4.4, v: -15 }, { t: 5.6, v: -20 }, { t: 6.5, v: -42 }, { t: 9.6, v: -42 }, { t: 11, v: -10 }, { t: 15, v: -10 }, { t: 16.2, v: -55 }], t, 'v'),
+  head: {
+    yaw: keys([{ t: 0, v: 0 }, { t: 1.6, v: -28 }, { t: 2.5, v: 26 }, { t: 3.3, v: -30 }, { t: 4.1, v: 20 }, { t: 4.9, v: 30 }, { t: 5.6, v: 10 }, { t: 6.4, v: 0 }, { t: 9.6, v: 0 }, { t: 11, v: -20 }, { t: 13, v: 25 }, { t: 15, v: 0 }], t, 'v'),
+    pitch: keys([{ t: 0, v: 0 }, { t: 3.2, v: 0 }, { t: 3.7, v: 20 }, { t: 4.6, v: 12 }, { t: 5.6, v: 8 }, { t: 6.4, v: -8 }, { t: 9.4, v: -8 }, { t: 10.4, v: 4 }, { t: 15.4, v: 4 }, { t: 16.6, v: 34 }, { t: 22, v: 34 }, { t: 24, v: 26 }], t, 'v'),
+    roll: keys([{ t: 0, v: 0 }, { t: 2, v: -9 }, { t: 2.8, v: 6 }, { t: 3.4, v: 0 }, { t: 8, v: -6 }, { t: 9.4, v: 0 }], t, 'v'),
+  },
+  look: keys([{ t: 0, v: [0, 0] }, { t: 1.6, v: [-.9, 0] }, { t: 2.5, v: [.9, -.2] }, { t: 3.3, v: [-.8, -.8] }, { t: 4.1, v: [.6, -.7] }, { t: 4.9, v: [.8, -.2] }, { t: 5.6, v: [-.3, .2] }, { t: 6.4, v: [-.7, .7] }, { t: 9.4, v: [-.7, .6] }, { t: 10.4, v: [-.9, 0] }, { t: 13, v: [.8, 0] }, { t: 15, v: [0, 0] }, { t: 16.6, v: [-.6, -1] }], t, 'v'),
+  mouth: t < 2.5 ? 'flat' : t < 3.2 ? 'smirk' : t < 5.9 ? 'o' : t < 15.6 ? 'smile' : t < 19.6 ? 'o' : 'grin',
+  brows: t < 1.4 ? 'flat' : t < 3.2 ? 'knit' : t < 5.9 ? 'up' : t < 15.6 ? 'soft' : 'up',
+  arms: { L: { a: 10, b: 18 } },
+}), { z: 10, drawOn: [.05, 1.4] });
+
+// ── 1 · wake (0–3) ──
+F.beat('wake', 0);
+F.draw(K.glyph('!', 588, 196, 30), { at: 2.5, dur: .35, z: 12, out: [3.3, 3.7], name: '!' });
+
+// ── 2 · the pencil (3–6): it flies in drawing a loop; he follows it and catches it ──
+F.beat('the pencil', 3);
+const loop = S.curve([[330, 150], [400, 118], [470, 150], [470, 205], [420, 210], [418, 172], [470, 160], [560, 175], [590, 230], [540, 262], [490, 252]], 10);
+const trail = F.draw([part([line(hand(loop, 1.2, 5, 0), { w: 1.6, a: .75, passes: 1 })])], { at: 3.2, dur: 2.1, z: 11, out: [6.0, 6.8], name: 'loop' });
+F.pencil({ intro: trail, catchAt: 5.9, meet: [466, 266], tilt: 58, arc: 30 });
+
+// ── 3 · the first mark (6.4–9.4): a little coral boat and its waterline ──
+F.beat('first mark', 6.2);
+F.draw(boat(463, SEA, .75), { at: 6.5, dur: 2.2, by: 'hero', z: 9, name: 'boat' });
+F.draw([part([line(hand([[440, SEA + 2], [486, SEA + 1]], 1, 7, 2), { w: 2.2 })])], { at: 8.85, dur: .4, by: 'hero', z: 9, name: 'waterline' });
+
+// ── 4 · the sea spreads (9.3–15) ──
+F.beat('spread', 9.3);
+const half = (x0, x1, seed) => [part([line(hand([[x0, SEA + 1], [x1, SEA - 1]], 2, seed, 6), { w: 2.4 })], [[x0, SEA - 2], [x1, SEA - 2], [x1, SEA + 2000], [x0, SEA + 2000]])];
+F.draw(half(486, 1700, 3), { at: 9.3, dur: 1.4, z: 0, name: 'horizon →' });
+F.draw(half(440, -1700, 4), { at: 9.3, dur: 2.0, z: 0, name: 'horizon ←' });
+const waves = [];
+for (let r = 0; r < 9; r++) { const y = SEA + 44 + r * r * 9 + r * 40, amp = 7 + r * 3.5; for (let x = -1700 + (r % 2) * 180; x < 1700; x += 680) waves.push({ at: [x + 340, y], parts: K.wave(x, x + 640, y, amp, { seed: r * 31 + x, len: 5, w: 1.3 + r * .08 }), z: .5 }); }
+F.spread(waves, { at: 9.8, origin: [463, SEA], speed: 700, rate: 1500, name: 'waves' });
+F.draw(rock(FEET[0], FEET[1], 230), { at: 10.0, dur: 1.0, z: 2, name: 'rock' });
+const far = [
+  { at: [1420, SEA], parts: lighthouse(1420, SEA, 560), name: 'lighthouse' },
+  { at: [1420, SEA + 30], parts: rock(1420, SEA + 6, 320), name: 'island' },
+  { at: [-1350, SEA], parts: K.hill(-1700, -1000, SEA, 90, { seed: 5, bumps: 2, rows: 1, bottom: SEA }), name: 'far island' },
+  { at: [900, SEA], parts: K.sun(900, SEA, 190, { rays: false, seed: 6 }), z: -6, name: 'sun' },
+  { at: [1150, -620], parts: K.cloud(1150, -620, 160, { seed: 7 }), name: 'cloud' },
+  { at: [-1300, -760], parts: K.cloud(-1300, -760, 130, { seed: 8 }), name: 'cloud 2' },
+  { at: [200, -500], parts: K.cloud(200, -520, 110, { seed: 9 }), name: 'cloud 3' },
+];
+F.spread(far, { at: 10.6, origin: [463, SEA], speed: 900, rate: 1700, name: 'far' });
+F.draw(t => beam(1420, SEA - 560 - 52, Math.PI + .25 + .12 * Math.sin(t * .9)), { at: 13.4, dur: .6, z: 1, name: 'beam' });
+[[700, 40, 26, 0], [800, -60, 22, 1.3], [-200, -150, 24, 2.1], [1000, -260, 20, .7]].forEach(([x, y, s, ph], i) =>
+  F.draw(t => K.bird(x + Math.sin(t * .4 + ph) * 40 - (t - 12) * 12, y + Math.sin(t * .7 + ph) * 12, s, { flap: Math.sin(t * 5 + ph), seed: 50 + i }), { at: 11.6 + i * .5, dur: .4, z: 3, name: `gull ${i + 1}` }));
+
+// ── 5 · the giant (15.2–21): a few huge strokes become a humpback breaching out of the horizon ──
+F.beat('giant', 15.2);
+const eyeK = t => span(t, 19.5, 20.1), blink = t => clamp(1 - Math.abs(t - 21.2) / .12) + clamp(1 - Math.abs(t - 24.6) / .9) * .9 * (t > 23.9 ? 1 : 0);
+const W = t => whale({ eye: eyeK(t), blink: t > 24.2 ? Math.min(1, (t - 24.2) / .4) : blink(t), flip: Math.sin(Math.max(0, t - 20.4) * 2.2) * .22 * span(t, 20.2, 20.8), smile: span(t, 22, 23) * .8 + .2 });
+F.draw(W, { at: 15.4, dur: 3.9, by: 'self', z: -5, name: 'whale', move: t => ({ y: -10 * Math.sin(Math.max(0, t - 19.3) * 1.1), ox: -620, oy: 352 }) });
+
+// ── 6 · the spout and the swarm (21.8–26): coral fish rise out of the spout and swirl around the whale ──
+F.beat('swarm', 21.6);
+F.draw(spout(), { at: 21.7, dur: .5, z: -4.8, out: [23.4, 24.4], name: 'spout' });
+F.swarm({ n: 120, at: 21.9, spawn: 2.4, from: i => [WHALE.spout[0] + (i % 5 - 2) * 30, WHALE.spout[1] - 40], centre: t => [WHALE.centre[0] + 80, WHALE.centre[1] - 120], radius: [980, 700], spin: .5, rise: 4, size: 44, shape: 'fish', flap: 2.4, blend: 2.6, zBack: -5.5, zFront: 14, seed: 12 });
+
+// ── 7 · the wash (24.6–28): crayon sunset blooms from the sun over the sky and the sea ──
+F.beat('wash', 24.6);
+F.wash([
+  { poly: [[-1800, -1200], [1800, -1200], [1800, SEA], [-1800, SEA]], at: 24.6, dur: 2.6, gap: 22, angle: -.25, a: .62, reach: 3600,
+    grad: { c: [900, SEA], r: [60, 3000], stops: [[0, '#fff0b8'], [.07, '#f7c75a'], [.2, '#ee9a4c'], [.42, '#e5735a'], [.75, '#e9a99a'], [1, 'rgba(240,200,190,.4)']] } },
+  { poly: [[-1800, SEA + 6], [1800, SEA + 6], [1800, 1200], [-1800, 1200]], at: 25.4, dur: 2.2, gap: 26, angle: .15, a: .45, reach: 2600,
+    grad: { c: [900, SEA], r: [40, 2200], stops: [[0, '#f8d27a'], [.15, '#ef9d5a'], [.5, '#e6b0a0'], [1, 'rgba(230,200,190,0)']] } },
+]);
+
+// ── 8 · the desk (27.4–32) ──
+F.beat('desk', 27.4);
+F.desk({ wood: '#5e3d29', cover: '#2c3530', light: [-2600, -2000],
+  pencils: [{ x: 1500, y: 1360, ang: -9, len: 1500, col: SPOT }, { x: -1250, y: 1420, ang: 6, len: 1350, col: '#e6a83d' }, { x: -2200, y: -150, ang: 84, len: 1300, col: '#3a3a3f', lead: '#222226' }],
+  eraser: { x: 2200, y: -700, ang: 18, col: '#ece4d4', sleeve: '#2f4f6a' } });
+
+// ── the camera: close on his face → the loop → the boat → pulls back as the sea spreads → the whale → the spread → the desk ──
+F.camera([
+  { t: 0, x: 505, y: 292, w: 500, r: 0 }, { t: 2.8, x: 500, y: 288, w: 520 },
+  { t: 3.6, x: 470, y: 250, w: 640 }, { t: 5.9, x: 480, y: 270, w: 600 },
+  { t: 7.4, x: 480, y: 320, w: 560 }, { t: 9.3, x: 470, y: 330, w: 640 },
+  { t: 12.4, x: 250, y: 150, w: 1700 }, { t: 15.2, x: -60, y: -40, w: 3000 },
+  { t: 19.6, x: -230, y: -170, w: 3250 }, { t: 24.6, x: -120, y: -140, w: 3500 },
+  { t: 27.4, x: 0, y: -50, w: 3700, r: 0 }, { t: 32, x: 0, y: 80, w: 6900, r: -.03 },
+]);
+
+// ── the film's own rules ──
+F.check('the keeper stays in frame while he acts (0–15 s)', t => { if (t > 15) return true; const c = F.camAt(t), h = c.w * 9 / 16; return Math.abs(FEET[0] - c.x) < c.w / 2 - 40 && FEET[1] - 260 > c.y - h / 2 - 40; });
+F.check('the boat is drawn before the sea spreads', () => true);
+F.start();
+</script>
+</body>
+</html>
