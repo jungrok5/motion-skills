@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>커피 먼저 — kinetic-type-collage template</title>
+<!-- the template: 10 shots, 16 beats at 120 bpm (8 s). A style example (a first coffee on a Monday) — replace the words, props,
+     pictures and shots with the topic's own. Keep the calls: new Film → F.prop → F.shot → F.check → F.start. -->
+<script type="importmap">{ "imports": { "three": "../lib/three.module.min.js", "ktc/": "../lib/" } }</script>
+</head>
+<body>
+<canvas id="frame"></canvas>
+<script type="module">
+import { Film, tw, seq, seqb, on } from 'ktc/film.js';
+
+// ---- 1. the film: the grid (bpm), the frame, paper and ink, ≤ 3 accents for type and grounds, tints for props, the beat
+const F = new Film({
+  bpm: 120, size: [1350, 1080],
+  paper: '#e8e8e6', ink: '#0b0b0b',
+  colors: { red: '#d81e3a', blue: '#2343e0' },
+  tints: { coffee: '#3d2314', bean: '#5a3520', sky: '#bcd8d2', haze: '#eaf2f0' },
+  score: { root: 49, k: 'x.....x.x.......', s: '....x.......x...', h: 'x.x.x.x.x.x.x.x.', bass: '0.....0.3.....5.', swing: 0.14 },
+});
+
+// ---- 2. props: objects designed for this topic from the kit's parts (references/KIT.md). Rest on y = 0, centred on x / z.
+F.prop('mug', (K) => {
+  const c = K.mat('paper', { rough: 0.22, clear: 0.6 });
+  const body = K.lathe([[0, 0], [0.74, 0], [0.8, 0.06], [0.8, 1.5], [0.76, 1.56], [0.7, 1.5], [0.7, 0.14], [0, 0.14]], c);
+  const band = K.at(K.cyl(0.806, 0.3, K.mat('red', { rough: 0.3 }), { open: true }), [0, 0.52, 0]);
+  const ear = K.at(K.torus(0.42, 0.09, c, { arc: 180 }), [0.78, 0.78, 0], [0, 0, -90]);
+  const coffee = K.at(K.cyl(0.71, 0.02, K.mat('coffee', { rough: 0.15 })), [0, 1.36, 0]);
+  return K.group(body, band, ear, coffee);
+});
+F.prop('bean', (K) => {
+  const b = K.sphere(0.5, K.mat('bean', { rough: 0.45 }), { s: [0.72, 0.5, 1] }), groove = K.tube([[0.02, 0.0, -0.5], [-0.05, 0.2, -0.2], [0.05, 0.2, 0.2], [-0.02, 0.0, 0.5]], 0.04, K.mat('coffee', { rough: 0.6 }));
+  return K.at(K.group(b, groove), [0, 0.25, 0]);
+});
+F.prop('cube', (K) => K.at(K.rbox(0.7, 0.7, 0.7, 0.06, K.mat('paper', { rough: 0.85 })), [0, 0.35, 0]));
+
+// ---- 3. shots. beats = length on the grid; every value may be a function of (p, lt, b) — tw / seq / seqb / on build them.
+// the words are the room: the camera whips through two of them
+F.shot('monday', { beats: 2, accent: true, cam: { yaw: tw(52, -18), pitch: tw(8, 2), dist: tw(20, 14), fov: 60, target: [0, 2.6, -3], roll: tw(9, -2) }, ground: -1 }, (S) => {
+  S.type('MON', { font: 'italic', size: 7.5, at: [-4.5, 4.4, -6], rot: [0, 24, 0] });
+  S.type('DAY', { font: 'italic', size: 7.5, at: [5, 1.6, -1], rot: [0, -48, 0] });
+  S.obj('mug', { at: [-1.2, -1, 1.5], spin: [0, -120, 0], scale: 1.5 });
+  S.type('오전 7:10', { font: 'sans', size: 0.9, at: [2.2, 5.6, -2], rot: [0, -20, 4], box: 'red' });
+});
+// one word on black, squeezed
+F.shot('no', { beats: 1, bg: 'ink' }, (S) => {
+  S.under.type('NOPE', { font: 'cond', chars: true, w: 2.2, color: 'paper', each: (i, n, p) => ({ sx: tw(i % 2 ? 0.4 : 1.8, i % 2 ? 1.8 : 0.4, 'io5')(p) }) });
+  S.over.type('말 걸지 마', { font: 'sans', size: 0.14, at: [0.55, -0.7, 0], rot: [0, 0, -4], box: 'red', read: true });
+});
+// the thing, small, alone
+F.shot('mug', { beats: 1, cam: { yaw: tw(-50, -24), pitch: 16, dist: tw(18, 16), fov: 22, target: [0, 0.8, 0] }, ground: 0 }, (S) => {
+  S.obj('mug', {});
+  S.over.type('(컵)', { font: 'serif', size: 0.2, color: 'red', at: [0, 0.52, 0], read: true });
+  S.over.type('ONE CUP', { font: 'text', size: 0.05, at: [0, -0.56, 0], track: 0.3 });
+});
+// a black band, white letters squeezed through it, beans falling across
+F.shot('coffee', { beats: 2, cam: { dist: 12, fov: 30 } }, (S) => {
+  S.under.rect({ w: 2.6, h: 0.8, color: 'ink' });
+  S.under.type('COFFEE', { font: 'cond', chars: true, w: 2.36, color: 'paper', at: [0, 0, 1], each: (i, n, p, lt, b) => ({ sx: seqb([0, i < 3 ? 2 : 0.45], [0.6, i < 3 ? 0.45 : 2, 'out5'], [1, i < 3 ? 0.45 : 2], [1.6, 1, 'out5'], [2, 1])(p, lt, b) }) });
+  const r = S.K.rng(3);
+  for (let i = 0; i < 9; i++) { const x = (r() - 0.5) * 8, z = 1 + r() * 3, d = r(), s = 0.7 + r() * 0.7, sp = [300 * (r() - 0.5), 200 * (r() - 0.5), 0]; S.obj('bean', { at: (p) => [x, 6 - (p * 1.2 + d) * 9, z], spin: sp, scale: s, cast: false }); }
+  S.over.type('먼저', { font: 'sans', size: 0.16, at: [-0.8, -0.66, 0], rot: [0, 0, 3], box: 'red', read: true });
+});
+// too close, on a red ground
+F.shot('bean', { beats: 1, bg: 'red', cam: { yaw: tw(40, 10), pitch: 30, dist: tw(2.6, 2.2), fov: 36, target: [0, 0.25, 0] } }, (S) => {
+  S.obj('bean', { rot: tw([0, 0, -10], [0, 40, 6]) });
+  S.over.type('원두', { font: 'han', size: 0.5, color: 'paper', at: [-0.66, 0.5, 0], rot: [0, 0, 5] });
+});
+// a window: one word behind it, one in front
+F.shot('first', { beats: 2, mix: 'hats', sfx: 'riser', frame: [0, -0.02, 1.3, 0.78], frameBg: ['sky', 'haze'], cam: { yaw: tw(-30, -10), pitch: 20, dist: 6.4, fov: 30, target: [0, 0.9, 0] }, ground: 0 }, (S) => {
+  S.under.type('커피', { font: 'han', size: 0.66, at: [0, 0.52, 0] });
+  S.obj('mug', { spin: [0, 30, 0] });
+  S.obj('bean', { at: [1.5, 0, 0.6], rot: [0, 40, 0] }); S.obj('bean', { at: [-1.4, 0, 0.9], rot: [0, -70, 0] });
+  S.over.type('FIRST', { font: 'italic', size: 0.7, at: tw([-0.5, -0.48, 0], [0, -0.48, 0]) });
+});
+// bitmap letters, cubes tumbling through
+F.shot('sugar', { beats: 1, accent: true, cam: { dist: tw(13, 11.5), fov: 30, roll: tw(4, 0) }, ground: -3 }, (S) => {
+  S.type('설탕?', { font: 'sans', w: 8.4, pixel: 12, at: [0, 0.2, -2] });
+  for (const [x, y, z, s] of [[-2.8, 1.6, 2, 1.3], [2.4, -1.4, 3, 1.6], [0.6, 2.2, 1, 0.9]]) S.obj('cube', { at: tw([x * 0.3, y + 3, z], [x, y, z]), rot: [20, 30, 10], spin: [160, 110, 0], scale: s });
+});
+// straight down into the cup
+F.shot('sip', { beats: 1, cam: { yaw: tw(0, 40, 'lin'), pitch: 89, dist: tw(3.3, 2.9, 'lin'), fov: 40, target: [0, 1.4, 0] } }, (S) => {
+  S.obj('mug', {});
+  S.over.type('후—', { font: 'sans', w: 1.5, color: 'paper', at: [0, 0, 0], rot: tw([0, 0, -8], [0, 0, -3]) });
+});
+// the answer, with a tag
+F.shot('ok', { beats: 2, cam: { yaw: tw(30, 12), pitch: tw(24, 18), dist: tw(9.5, 8.2), fov: 30, target: [0.2, 0.8, 0] }, ground: 0 }, (S) => {
+  S.obj('mug', { spin: [0, -20, 0], scale: 1.2 });
+  S.obj('cube', { at: [-1.9, 0, 0.8], rot: [0, 25, 0], scale: 0.7 }); S.obj('bean', { at: [1.9, 0, 1.1], rot: [0, 60, 0] });
+  S.over.type('NOW YOU MAY SPEAK', { font: 'text', size: 0.055, color: 'paper', box: 'ink', pad: [0.8, 0.6], track: 0.26, at: [0.1, 0.66, 0], rot: [0, 0, -3], read: true });
+  S.over.type('이제 말해', { font: 'sans', size: 0.15, at: [-0.78, -0.62, 0], rot: [0, 0, 4], box: 'red', show: [1] });
+});
+// end card: something small turning, the credits small
+F.shot('end', { beats: 3, hold: true, mix: 'out', cam: { yaw: 20, pitch: 18, dist: 22, fov: 20, target: [0, -1, 0] }, ground: 0 }, (S) => {
+  S.obj('cube', { rot: [0, 0, 0], spin: [0, 80, 0], scale: 1.3 });
+  S.over.type('커피 먼저', { font: 'sans', size: 0.09, at: [-0.5, -0.16, 0], align: 'left', read: true });
+  S.over.type('Coffee first: a Monday, set as a lyric\n\nType: Inter, Anton, Black Han Sans, Noto Sans KR,\nNanum Myeongjo (SIL OFL)\nProps: every object is code', { font: 'text', size: 0.04, at: [-0.5, -0.27, 0], align: 'left', anchor: [0, 1], lh: 1.25 });
+});
+
+// ---- 4. the film's own rules (check.mjs runs them)
+F.check('two accents', (f) => Object.keys(f.o.colors).length <= 3);
+await F.start();
+</script>
+</body>
+</html>

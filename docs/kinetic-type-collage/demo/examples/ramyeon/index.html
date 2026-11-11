@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>라면 4분 30초 — kinetic-type-collage</title>
+<!-- the worked example: a new topic designed from BRIEF.md (a ramyeon recipe as a 14 s lyric). 20 shots, 30 beats at 128 bpm. -->
+<script type="importmap">{ "imports": { "three": "../../lib/three.module.min.js", "ktc/": "../../lib/" } }</script>
+</head>
+<body>
+<canvas id="frame"></canvas>
+<script type="module">
+import { Film, tw, tb, seq, seqb, on } from 'ktc/film.js';
+import { props } from './props.js';
+
+// ---- 1. the film: grid, grounds, the accents type may use, the tints props may use, the beat
+const F = new Film({
+  bpm: 128, size: [1350, 1080],
+  paper: '#e8e8e6', ink: '#0b0b0b',
+  colors: { red: '#d81e3a', blue: '#2343e0', yellow: '#f4b81c' },
+  tints: { steel: '#dcdee2', water: '#cfe0ea', broth: '#a82d12', noodle: '#ecc768', shell: '#ecdcc8', leek: '#3f9b46', leekpale: '#dbe9b6', sky: '#b9d8d1', haze: '#eaf2f0' },
+  score: { root: 41.2, k: 'x..x..x...x..x..', s: '....x.......x..x', h: 'x.xxx.xxx.xxx.xx', oh: '......x.......x.', bass: '0..0..0...3..5..', swing: 0.1 },
+});
+props(F);
+
+// pictures: flat signs, die-cut like stickers (drawn here, for this topic)
+const arrow = (g, w, h) => { g.beginPath(); g.moveTo(w * 0.18, h * 0.5); g.lineTo(w * 0.52, h * 0.2); g.lineTo(w * 0.52, h * 0.4); g.lineTo(w * 0.84, h * 0.4); g.lineTo(w * 0.84, h * 0.6); g.lineTo(w * 0.52, h * 0.6); g.lineTo(w * 0.52, h * 0.8); g.closePath(); g.fill(); };
+const signFirst = (g, w, h, K) => { g.fillStyle = K.css('blue'); g.beginPath(); g.arc(w / 2, h / 2, w / 2, 0, 7); g.fill(); g.fillStyle = K.css('paper'); g.save(); g.translate(w / 2, h / 2); g.rotate(Math.PI / 2); g.translate(-w / 2, -h / 2); arrow(g, w, h); g.restore(); };
+const signNo = (g, w, h, K) => { g.fillStyle = K.css('paper'); g.beginPath(); g.arc(w / 2, h / 2, w / 2, 0, 7); g.fill(); g.strokeStyle = K.css('ink'); g.lineWidth = w * 0.05; g.lineCap = 'round'; g.beginPath(); g.moveTo(w * 0.3, h * 0.7); g.lineTo(w * 0.62, h * 0.38); g.stroke(); g.beginPath(); g.ellipse(w * 0.68, h * 0.32, w * 0.1, w * 0.07, -0.78, 0, 7); g.stroke(); g.strokeStyle = K.css('red'); g.lineWidth = w * 0.11; g.beginPath(); g.arc(w / 2, h / 2, w * 0.44, 0, 7); g.stroke(); g.beginPath(); g.moveTo(w * 0.2, h * 0.2); g.lineTo(w * 0.8, h * 0.8); g.stroke(); };
+const signHot = (g, w, h, K) => { g.save(); g.translate(w / 2, h / 2); g.rotate(Math.PI / 4); g.fillStyle = K.css('yellow'); g.beginPath(); g.roundRect(-w * 0.35, -w * 0.35, w * 0.7, w * 0.7, w * 0.05); g.fill(); g.strokeStyle = K.css('ink'); g.lineWidth = w * 0.035; g.beginPath(); g.roundRect(-w * 0.3, -w * 0.3, w * 0.6, w * 0.6, w * 0.03); g.stroke(); g.restore(); g.strokeStyle = K.css('ink'); g.lineWidth = w * 0.045; g.lineCap = 'round'; for (const x of [0.38, 0.5, 0.62]) { g.beginPath(); for (let i = 0; i <= 20; i++) { const y = h * (0.66 - 0.32 * (i / 20)); g.lineTo(w * (x + 0.035 * Math.sin(i * 0.75)), y); } g.stroke(); } };
+const signLeft = (g, w, h, K) => { g.fillStyle = K.css('paper'); g.beginPath(); g.roundRect(0, 0, w, h, h * 0.16); g.fill(); g.strokeStyle = K.css('ink'); g.lineWidth = h * 0.05; g.beginPath(); g.roundRect(h * 0.06, h * 0.06, w - h * 0.12, h * 0.88, h * 0.12); g.stroke(); g.fillStyle = K.css('ink'); arrow(g, w, h); };
+const layers = (g, w, h, K) => K.tex.bands(g, w, h, [
+  (g, w, h) => K.tex.speckle(g, w, h, { bg: 'paper', color: 'shell', n: 260, size: [0.01, 0.05], seed: 3 }),
+  (g, w, h) => K.tex.waves(g, w, h, { bg: 'noodle', color: 'paper', n: 22, amp: 0.42, freq: 2.2, lw: 0.34 }),
+  (g, w, h) => K.tex.halftone(g, w, h, { bg: 'red', color: 'broth', n: 9, angle: 90, from: 0.2, to: 0.7 }),
+  (g, w, h) => K.tex.dots(g, w, h, { bg: 'leek', color: 'leekpale', n: 5, r: 0.34 }),
+  (g, w, h) => K.tex.speckle(g, w, h, { bg: 'yellow', color: 'paper', n: 60, size: [0.02, 0.07], seed: 9 }),
+]);
+
+// ---- 2. shots. beats = length on the grid; every value may be a function of (p, lt, b). references/ENGINE.md
+// 배고파: the words are the room — the camera whips through three letters
+F.shot('hungry', { beats: 2, accent: true, cam: { yaw: tw(-58, 24), pitch: tw(10, 3), dist: tw(22, 15), fov: 62, target: [0.5, 3, -4], roll: tw(-10, 2) }, ground: -1.4 }, (S) => {
+  S.type('배', { font: 'han', size: 10, at: [-8, 3.2, -3], rot: [0, 38, 0] });
+  S.type('고', { font: 'han', size: 11, at: [0.5, 3.2, -10], rot: [0, -8, 0] });
+  S.type('파', { font: 'han', size: 10, at: [9, 3.4, -2], rot: [0, -52, 0] });
+  S.obj('pot', { at: [1.5, -1.4, 0.5], spin: [0, 140, 0], scale: 1.5 });
+  S.type('밤 11:47', { font: 'sans', size: 0.95, at: [-3.2, 0.2, 2.5], rot: [0, 20, 0], box: 'red' });
+  S.type('(hungry)', { font: 'note', size: 0.9, at: [3.4, 7.6, -6], rot: [0, -12, 0] });
+});
+// 23:47 — one number, too big for the frame, sliding
+F.shot('clock', { beats: 1 }, (S) => {
+  S.under.type('23:47', { font: 'cond', h: 1.5, at: tw([0.55, 0.05, 0], [-0.3, 0.05, 0], 'lin') });
+  S.over.type('야식 시간', { font: 'sans', size: 0.15, at: [0.6, -0.72, 1], rot: [0, 0, -4], box: 'red', read: true });
+  S.over.type('LATE. AGAIN.', { font: 'note', size: 0.075, at: [-0.82, 0.86, 1], align: 'left' });
+});
+// the pot, small, alone
+F.shot('pot', { beats: 1, cam: { yaw: tw(20, 48), pitch: 17, dist: tw(19, 17), fov: 22, target: [0, 0.7, 0] }, ground: 0 }, (S) => {
+  S.obj('pot', { spin: [0, -30, 0] });
+  S.over.type('(냄비)', { font: 'serif', size: 0.2, color: 'red', at: [0, 0.52, 0], read: true });
+  S.over.type('ONE POT', { font: 'text', size: 0.05, at: [0, -0.56, 0], track: 0.3 });
+});
+// the pot, too close, and 물 behind it
+F.shot('water', { beats: 1, cam: { yaw: tw(-28, -14), pitch: tw(26, 20), dist: 4.6, fov: 48, target: [0.3, 1.0, 0] }, light: { az: -50, el: 40 } }, (S) => {
+  S.type('물', { font: 'sans', size: 6, at: [3.3, 1.8, -5], rot: [0, -8, 0] });
+  S.obj('pot', { at: [0, 0, 0], spin: [0, 30, 0] });
+  S.over.type('WATER', { font: 'text', size: 0.055, at: [-1.08, -0.86, 0], align: 'left', track: 0.3, color: 'paper', box: 'ink', pad: [0.7, 0.55] });
+});
+// 550ML squeezed through a black band; drops fall across it
+F.shot('550', { beats: 2, cam: { dist: 12, fov: 30 } }, (S) => {
+  S.under.rect({ w: 2.6, h: 0.86, color: 'ink' });
+  S.under.type('550ML', { font: 'cond', chars: true, h: 0.7, color: 'paper', at: [0, 0, 1], w: 2.36, each: (i, n, p, lt, b) => ({ sx: i < 3 ? seqb([0, 2.2], [0.5, 0.45, 'out5'], [1, 0.45], [1.5, 1.7, 'out5'], [2, 1.9, 'lin'])(p, lt, b) : seqb([0, 0.4], [0.5, 1.9, 'out5'], [1, 1.9], [1.5, 0.5, 'out5'], [2, 0.42, 'lin'])(p, lt, b) }) });
+  for (const [x, z, r, d] of [[-2.6, 2, 0.5, 0], [0.4, 1, 0.36, 0.3], [2.5, 3, 0.62, 0.55], [-1.0, 4, 0.3, 0.8], [1.5, 2, 0.42, -0.25], [-2.0, 3, 0.34, 0.42]]) S.obj((K) => K.sphere(r, K.mat('blue', { rough: 0.08, clear: 1 }), { s: [1, 1.25, 1] }), { at: (p) => [x, 6 - (p + d) * 11, z], cast: false });
+  S.over.type('물 550ml', { font: 'sans', size: 0.13, at: [-0.72, -0.66, 0], rot: [0, 0, 3], box: 'red', read: true });
+  S.over.type('COLD WATER,\nNOT A DROP MORE', { font: 'note', size: 0.07, at: [1.14, 0.72, 0], align: 'right', lh: 0.95 });
+});
+// 끓어: bitmap letters, the burner turning in front
+F.shot('boil', { beats: 1, sfx: 'whoosh', cam: { yaw: tw(14, -6), dist: tw(13.5, 12), fov: 30, target: [0, 0.2, 0], roll: tw(5, -2) } }, (S) => {
+  S.type('끓어', { font: 'sans', w: 7.6, pixel: 13, at: [0, 0.7, -2] });
+  S.obj('flame', { at: [0.3, -1.9, 2.6], rot: [24, 0, -8], spin: [0, 200, 0], scale: 1.3 });
+});
+// 보글보글 on black: letters bob, bubbles rise
+F.shot('bubble', { beats: 2, bg: 'ink', mix: 'half', cam: { dist: 11, fov: 30 } }, (S) => {
+  S.under.type('보글보글', { font: 'han', chars: true, w: 2.1, color: 'paper', at: [0, 0.05, 0], each: (i, n, p, lt) => ({ at: [0, 0.11 * Math.sin(lt * 15 + i * 1.7), 0], rot: [0, 0, 9 * Math.sin(lt * 15 + i * 1.7 + 1)], scale: 1 + 0.12 * Math.sin(lt * 15 + i * 1.7) }) });
+  const r = S.K.rng(11);
+  for (let i = 0; i < 16; i++) { const x = (r() - 0.5) * 9, z = (r() - 0.5) * 5, s = 0.14 + r() * 0.34, v = 4 + r() * 6, o = r() * 8; S.obj((K) => K.sphere(s, K.mat('paper', { rough: 0.1, clear: 1 })), { at: (p, lt) => [x + 0.2 * Math.sin(lt * 6 + i), -4 + ((lt * v + o) % 8), z], cast: false }); }
+  S.over.type('BOIL', { font: 'sans', size: 0.11, at: [0.86, -0.72, 0], rot: [0, 0, -5], box: 'red' });
+});
+// 면: the block drops in front of one brushed word
+F.shot('noodle', { beats: 1, accent: true, cam: { yaw: tw(-16, 6), pitch: 14, dist: 9.5, fov: 30, target: [0, 0.3, 0] }, ground: -1.6 }, (S) => {
+  S.type('면', { font: 'brush', size: 7, color: 'red', at: [-1.5, 0.9, -3.2] });
+  S.obj('noodle', { at: tw([1.2, 5, 0.5], [1.2, -1.1, 0.5], 'out5', 0, 0.45), rot: tw([60, -80, 30], [18, 28, -10], 'out5', 0, 0.6), scale: 1.3 });
+  S.over.type('NOODLES IN', { font: 'text', size: 0.05, at: [-1.08, 0.86, 0], align: 'left', track: 0.3 });
+});
+// the layers: a small upright swatch slams to a full-bleed diagonal
+F.shot('layers', { beats: 2 }, (S) => {
+  S.under.img(layers, { w: 2.2, h: 2.6, res: 1400, at: [0, 0, 0], rot: seqb([0, [0, 0, 0]], [0.5, [0, 0, 0]], [0.9, [0, 0, -24], 'out5'], [2, [0, 0, -27], 'lin']), scale: seqb([0, 0.2], [0.5, 0.22, 'lin'], [0.9, 1.5, 'out5'], [2, 1.62, 'lin']) });
+  S.over.type('면 · 스프 · 파 · 계란', { font: 'sans', size: 0.1, color: 'paper', box: 'ink', pad: [0.5, 0.4], at: [0, -0.74, 0], show: [0.5], read: true });
+  S.over.type('(layers)', { font: 'serif', size: 0.14, color: 'red', at: [0, 0.42, 0], show: [0, 0.5] });
+});
+// 스프: the packet turns, signs come at the camera
+F.shot('soup', { beats: 2, cam: { yaw: tw(26, -8), pitch: 6, dist: tw(14, 12), fov: 42, target: [0, 1, 0], roll: tw(6, 0) }, ground: -1.2 }, (S) => {
+  S.type('스프', { font: 'han', size: 7.5, at: [-1, 1.6, -5], rot: [0, 12, 0] });
+  S.obj('packet', { at: [1.4, -1.2, 1], rot: tw([0, -70, -8], [0, 30, -8], 'lin'), scale: 1.5 });
+  S.img(signFirst, { w: 2.6, cut: 0.07, at: tw([-5.5, 3.6, -9], [-3.6, 2.6, 3]), rot: tw([0, 60, 30], [0, 18, -8]) });
+  S.img(signHot, { w: 3, cut: 0.07, at: tw([6, -1, -12], [4.4, 2.9, 2]), rot: tw([0, -70, -20], [0, -24, 10]) });
+  S.img(signLeft, { w: 3.4, h: 1.7, cut: 0.07, at: tw([-3, -4, -6], [-2.9, -1.2, 4.2]), rot: tw([30, 40, 10], [-8, 14, 4]) });
+  S.type('먼저?', { font: 'sans', size: 0.8, at: [-2.7, 0.75, 3.2], rot: [0, 18, -8], box: 'red', show: [1] });
+});
+// 4분 30초: the words are printed on the thing
+F.shot('timer', { beats: 2, bg: 'blue', cam: { yaw: tw(-44, -22), pitch: tw(-4, 4), dist: tw(5.8, 5), fov: 44, target: [1.2, 1.25, 0] }, light: { az: -12, el: 30, key: 2.5 } }, (S) => {
+  S.obj('timer', {});
+  S.type('4분\n30초', { font: 'han', size: 0.95, color: 'paper', at: [1.55, 1.3, 0.3], rot: [0, -26, 0], lh: 0.98, align: 'left' });
+  S.over.type('NOT 4. NOT 5.', { font: 'note', size: 0.075, color: 'paper', at: [-1.1, -0.84, 0], align: 'left' });
+});
+// DON'T / STIR — a window: one word behind it, one in front
+F.shot('stir', { beats: 2, mix: 'hats', sfx: 'riser', frame: [0, 0.04, 1.36, 0.86], frameBg: ['sky', 'haze'], cam: { yaw: tw(34, 20), pitch: 22, dist: 8.5, fov: 30, target: [0, 1.3, 0] }, ground: 0 }, (S) => {
+  S.under.type("DON'T", { font: 'italic', size: 0.6, at: [0, 0.5, 0] });
+  S.obj('pot', { spin: [0, 20, 0] });
+  S.obj('noodle', { at: [0, 0.82, 0], rot: [0, 30, 0], scale: 0.95 });
+  S.obj('sticks', { at: seq([0, [0.2, 1.2, 0.2]], [0.5, [0.25, 2.4, 0.2], 'out5'], [1, [0.3, 2.6, 0.2], 'lin']), rot: [0, 0, -24] });
+  S.over.type('STIR', { font: 'sans', size: 0.74, at: tw([0.5, -0.46, 0], [0, -0.46, 0]) });
+  S.over.img(signNo, { w: 0.5, cut: 0.05, at: [0.92, 0.5, 1], rot: tw([0, 0, 40], [0, 0, 0]), show: [1] });
+});
+// the egg: far, then near, then open
+F.shot('egg', { beats: 0.5, mix: 'break', cam: { yaw: 10, pitch: 10, dist: tw(30, 20, 'lin'), fov: 22, target: [0, 0.6, 0] }, ground: 0 }, (S) => { S.obj('egg', {}); S.over.type('(계란)', { font: 'serif', size: 0.14, color: 'red', at: [0, 0.34, 0] }); });
+F.shot('egg-near', { beats: 0.5, bg: 'ink', mix: 'break', cam: { yaw: 10, pitch: 4, dist: tw(2.5, 2.2, 'lin'), fov: 30, target: [0.1, 0.62, 0] }, light: { az: -55, el: 35 } }, (S) => { S.obj('egg', { rot: tw([0, 0, -4], [0, 0, 8], 'lin') }); });
+F.shot('crack', { beats: 1, bg: 'yellow', accent: true, cam: { yaw: tw(-20, 0), pitch: tw(50, 38), dist: tw(8, 6.4), fov: 34, target: [0, 0.1, 0] }, ground: 0, shadow: 0.16 }, (S) => {
+  S.under.type('탁', { font: 'han', h: 1.75, at: tw([0, 0, 0], [-0.3, 0, 0]), rot: [0, 0, 6] });
+  S.obj('yolk', { at: tw([3.5, 0, 0.5], [1.1, 0, 0.6]), spin: [0, 50, 0], scale: 1.5 });
+  S.over.type('CRACK', { font: 'text', size: 0.055, at: [1.08, -0.86, 0], align: 'right', track: 0.3, color: 'paper', box: 'ink', pad: [0.7, 0.55] });
+});
+// 파 송송: bitmap letters, rings flung outward
+F.shot('leek', { beats: 1, cam: { dist: tw(13, 11.5), fov: 30, roll: tw(-4, 0) } }, (S) => {
+  S.type('파송송', { font: 'sans', w: 8.6, pixel: 12, at: [0, 0, -2] });
+  const r = S.K.rng(5);
+  for (let i = 0; i < 11; i++) { const a = r() * 6.28, d = 2 + r() * 3.4, z = r() * 2.5, s = 0.7 + r() * 0.9, sp = [200 * (r() - 0.5), 300 * (r() - 0.5), 0], r0 = [r() * 180, r() * 180, 0]; S.obj('leek', { at: tw([0, 0, z], [Math.cos(a) * d, Math.sin(a) * d * 0.8, z]), rot: r0, spin: sp, scale: s, cast: false }); }
+});
+// 후루룩: the word stretches like a noodle while the sticks lift
+F.shot('slurp', { beats: 2, cam: { yaw: -12, pitch: 8, dist: 9, fov: 32, target: [0, 1.6, 0] }, ground: -0.4 }, (S) => {
+  S.under.type('후루룩', { font: 'sans', chars: true, w: 2.3, at: [0, 0.2, 0], each: (i, n, p, lt, b) => ({ sx: 1 + 0.9 * Math.sin(b * Math.PI - i * 1.2) ** 2, scale: [1, 1 + 0.25 * Math.sin(b * Math.PI - i * 1.2) ** 2] }) });
+  S.obj('sticks', { at: tw([0.6, -1.5, 1], [0.6, 0.9, 1], 'out5', 0, 0.5), rot: [0, 0, -18] });
+  for (let i = 0; i < 5; i++) S.obj((K) => { const pts = []; for (let j = 0; j <= 30; j++) pts.push([0.12 * Math.sin(j * 0.8 + i * 2), -j * 0.13, 0.1 * Math.cos(j * 0.6 + i)]); return K.tube(pts, 0.055, K.mat('noodle', { rough: 0.6 }), { seg: 60 }); }, { at: tw([0.25 + i * 0.09, 0.2, 1 + (i % 2) * 0.1], [0.25 + i * 0.09, 2.6, 1 + (i % 2) * 0.1], 'out5', 0, 0.5), rot: (p, lt) => [0, 0, 4 * Math.sin(lt * 9 + i)] });
+  S.over.type('SLURP', { font: 'sans', size: 0.12, at: [-0.84, -0.74, 0], rot: [0, 0, 4], box: 'red', read: true });
+});
+// the bowl, finished, and a question
+F.shot('bowl', { beats: 2, accent: true, cam: { yaw: tw(-40, -18), pitch: tw(34, 28), dist: tw(11.5, 9.6), fov: 30, target: [0, 0.7, 0] }, ground: 0 }, (S) => {
+  S.obj('bowl', { spin: [0, 24, 0], scale: 1.25 });
+  S.obj('sticks', { at: [2.6, 0.06, 0.6], rot: [88, 0, 62] });
+  S.over.type('ONE MORE?', { font: 'text', size: 0.06, color: 'paper', box: 'ink', pad: [0.8, 0.6], track: 0.28, at: [0.2, 0.64, 0], rot: [0, 0, -3], read: true });
+  S.over.type('완성', { font: 'sans', size: 0.14, at: [-0.9, -0.3, 0], rot: [0, 0, 5], box: 'red' });
+  S.over.type('4 MIN 30 SEC,\nEXACTLY', { font: 'note', size: 0.07, at: [1.12, -0.74, 0], align: 'right', lh: 0.95 });
+});
+// 국물까지: straight down into the bowl, the words across it
+F.shot('broth', { beats: 1, cam: { yaw: tw(0, 30, 'lin'), pitch: 89, dist: tw(4.6, 4.1, 'lin'), fov: 40, target: [0, 1, 0] } }, (S) => {
+  S.obj('bowl', { scale: 1.25 });
+  S.over.type('국물까지', { font: 'han', w: 2.2, at: [0, 0, 0], rot: tw([0, 0, 7], [0, 0, 3]) });
+});
+// end card: something small turning, the credits small
+F.shot('end', { beats: 3, hold: true, mix: 'out', cam: { yaw: 20, pitch: 16, dist: 24, fov: 20, target: [0, -1.1, 0] }, ground: 0 }, (S) => {
+  S.obj('noodle', { at: [0, 0.6, 0], rot: [24, 0, 12], spin: [0, 70, 0], scale: 0.9 });
+  S.over.type('라면 — 4분 30초', { font: 'sans', size: 0.09, at: [-0.56, -0.16, 0], align: 'left', read: true });
+  S.over.type('A recipe, set as a lyric\n\nType: Inter, Anton, Black Han Sans, Noto Sans KR,\nNanum Myeongjo, Nanum Brush Script (SIL OFL)\nProps: every object is code\n\nMade with kinetic-type-collage', { font: 'text', size: 0.04, at: [-0.56, -0.27, 0], align: 'left', anchor: [0, 1], lh: 1.25 });
+});
+
+// ---- 3. this film's own rules (check.mjs runs them)
+F.check('accents stay three', (f) => Object.keys(f.o.colors).length === 3);
+await F.start();
+</script>
+</body>
+</html>

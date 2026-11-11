@@ -1435,6 +1435,42 @@
           "url": "https://jungrok5.github.io/motion-skills/pencil-dream-short/demo/examples/keeper/"
         }
       ]
+    },
+    {
+      "id": "kinetic-type-collage",
+      "name": "kinetic-type-collage",
+      "tagline": "주제 하나를 주면 비트마다 컷이 바뀌는 키네틱 타이포그래피 콜라주 영상을 만듭니다. 건물만 한 검은 글자(한글 · 라틴)가 3D 공간에 서 있고 카메라가 그 사이를 휙 지나가며, 3D 오브젝트가 글자 앞뒤로 구르고, 스티커처럼 오려 낸 표지판과 줄무늬 그림이 겹칩니다. 종이색 바탕에 검정, 원색 포인트는 세 가지까지. 글자는 거리장으로 잘라 어떤 크기에서도 또렷하고, 소품은 주제에 맞춰 코드로 설계합니다. 반복 재생 라이브 페이지, 합성 비트, MP4를 냅니다.",
+      "posterAlt": "kinetic-type-collage로 만든 「라면 4분 30초」의 장면 여섯 개: 건물만 한 글자 배 · 고 · 파 앞의 냄비, 검은 띠 안의 550ML과 파란 물방울, 큰 글자 스프 앞의 빨간 스프 봉지와 날아오는 표지판, 파란 바탕의 4:30 타이머 다이얼, 창 뒤의 DON'T와 창 앞의 STIR, 완성된 라면 한 그릇과 ONE MORE? 꼬리표",
+      "poster": "kinetic-type-collage/poster.jpg",
+      "tags": [
+        "키네틱 타이포그래피",
+        "three.js · 거리장 글자",
+        "코드로 만든 3D 소품",
+        "비트 컷 · 합성 사운드",
+        "MP4 · 라이브 페이지"
+      ],
+      "stats": [
+        "예제 14.1초 · 20샷 · 128bpm",
+        "소품 10개 · 사진 · 3D 에셋 0개"
+      ],
+      "page": "kinetic-type-collage/",
+      "source": "kinetic-type-collage/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "kinetic-type-collage/examples/ramyeon/"
+      },
+      "sources": [
+        {
+          "title": "만원만의 X 게시물 (@mosyenboy의 키네틱 타이포그래피, 애프터 이펙트 화면 녹화 14.4초)",
+          "url": "https://x.com/manwon_man/status/2120126792552075760?a=3V9KnKatoYSIYnqo_y4&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「라면 4분 30초」 · 14.1초 · 20샷 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/kinetic-type-collage/demo/examples/ramyeon/"
+        }
+      ]
     }
   ]
 }
