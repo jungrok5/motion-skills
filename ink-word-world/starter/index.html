@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>연못 · ink-word-world</title>
+<script type="importmap">{ "imports": { "inkworld/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// The page only starts the world. Everything about it — its words, what they become, how they affect each other and
+// the performance it plays by itself — is in world.js; the people and animals in it are shown on cast.html.
+import { world } from './world.js';
+world.start();
+</script>
+</body>
+</html>
