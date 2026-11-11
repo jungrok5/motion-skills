@@ -1,0 +1,63 @@
+<!doctype html>
+<!-- aphorism-film · the starting film (12 s, 2 shots, 2 quotes). new-film.mjs copies it; replace everything topic-shaped:
+     the quotes, the scenes, the cast (cast.js), the palette accents, the score. Keep the grammar:
+       one quote per shot · type stacked at the left third, white, over a darkened corner of the picture · a scene that
+       BELONGS to the line (designed for it, not reused) · a character small in a big space or big in a close-up ·
+       the style's transitions between shots · the last shot echoes the first so the film loops.
+     Topic of this template: beginnings (Plato) and knowledge (Bacon). -->
+<html><head><meta charset="utf-8"><title>aphorism-film · template</title>
+<script type="importmap">{ "imports": { "af/": "../lib/" } }</script></head>
+<body><script type="module">
+import { Film } from 'af/film.js';
+import * as K from 'af/kit.js';
+import * as P from 'af/figure.js';
+import { hash, lerp, ease, clamp, rgba, TAU } from 'af/core.js';
+import { CAST } from './cast.js';
+import { SCORE } from './score.js';
+
+const F = new Film({ seed: 3, score: SCORE });
+const C = K.PALETTES.pop, lead = CAST.lead;
+
+// 1 · plates: painted once, after the fonts load. Make them wider than the frame by the camera's travel × depth.
+const wallpaper = F.plate(2100, 1180, (c, w, h) => {
+  K.pattern(c, 'botanical', 0, 0, w, h, { seed: 2, pal: ['#0f4f33', '#1f7a45', '#3f9a4f', '#f2b51d'], s: 130 });
+  K.window(c, 1350, 120, 520, 620, { sky: '#8fd0e0', frame: '#fbf7ee', inside: (cc, x, y, ww, hh) => { K.sun(cc, x + ww * .7, y + hh * .35, 70, { cols: ['#f2b51d', '#fbf7ee'], ringA: .4 }); } });
+  K.books(c, 1250, 900, 760, 160, { seed: 3 }); c.fillStyle = '#7a3b1d'; c.fillRect(1230, 900, 800, 26);
+  // the quote's corner: darken the left third so white type reads (check.mjs measures it)
+  const g = c.createLinearGradient(0, 0, 1000, 0); g.addColorStop(0, rgba('#0a1f16', .85)); g.addColorStop(1, rgba('#0a1f16', 0)); c.fillStyle = g; c.fillRect(0, 0, 1000, h);
+});
+const library = F.plate(1920, 1080, (c, w, h) => {
+  K.room(c, w, h, { seed: 4, back: [860, 380, 1060, 600], deep: 8, walls: ['#5a3a9a', '#4a2f80'], ceiling: '#efe2c2', floor: 'checker', floorPal: ['#f1e6cc', '#d8322a'], tilesX: 6, tilesZ: 16, lights: 6, panels: 6,
+    panel: (cc, q, side, i) => {             // a bookcase in every bay: dark case, coloured spines as strips across the quad
+      if (side < 0 && i < 2) { K.shape(cc, q, '#1d1236', 2.5); return; }   // keep the quote's side dark
+      K.shape(cc, q, '#3a1f12', 2.5); const cols = [C.red, C.blue, C.yellow, C.green, '#fbf7ee', C.purple];
+      for (let r = 0; r < 4; r++) for (let j = 0; j < 9; j++) {
+        const L = (a, b, u) => [lerp(a[0], b[0], u), lerp(a[1], b[1], u)], v0 = .08 + r * .23, v1 = v0 + .19, u0 = j / 9 + .01, u1 = (j + 1) / 9 - .01;
+        const P2 = (u, v) => L(L(q[0], q[1], u), L(q[3], q[2], u), v);
+        K.shape(cc, [P2(u0, 1 - v0), P2(u1, 1 - v0), P2(u1, 1 - v1), P2(u0, 1 - v1)], cols[(i * 7 + r * 3 + j) % cols.length], 1);
+      }
+    }, panelV: [.05, .8] });
+  K.door(c, 925, 600, 70, 140, { col: C.yellow, open: 1, inside: '#fbf1d6' });
+});
+
+// 2 · shots. draw(g, lt): place plates at a depth (g.put), draw per-frame things in g.at(depth, ctx => …).
+F.shot(6, (g, lt) => {
+  g.put(wallpaper, -90, -50, .4);
+  const lk = g.twos(lt);
+  g.at(1, c => P.bust(c, lead, { x: 1200, y: 430, s: 360, turn: -.18, look: [lk < 3 ? -.5 : .2, 0], blink: lk > 2.4 && lk < 2.55 ? 1 : 0, mouth: 'flat', sway: Math.sin(lt) * .3 }));
+}, { name: 'the beginning', cam: [{ t: 0, zoom: 1 }, { t: 6, zoom: 1.06, x: 20 }] });
+
+F.shot(6, (g, lt) => {
+  g.put(library, 0, 0, 1);
+  // she walks away down the aisle (back view, getting smaller): depth from the room's floor
+  g.at(1, c => { const k = ease.io(lt / 6), y = lerp(900, 700, k), hh = lerp(330, 190, k); P.body(c, lead, { x: 960, y, h: hh, view: 'back' }); });
+}, { name: 'the library', cam: [{ t: 0, zoom: 1 }, { t: 6, zoom: 1.12 }], tr: { type: 'papers', d: 1.2 } });
+
+// 3 · quotes on the type timeline. Lines: role:text (k kicker · D display · i italic · g grotesk · P poster …).
+F.quote({ t0: .4, t1: 5.7, x: 140, y: 250, size: 165, lines: ['k:Arche hemisu pantos', 'i:The', 'D:beginning', 'i:is half of', 'D:the whole.'], by: 'Plato, quoting a proverb', src: 'Laws VI, 753e' });
+F.quote({ t0: 7.0, t1: 11.9, x: 140, y: 300, size: 200, lines: ['k:Ipsa scientia potestas est', 'g:Knowledge', 'i:itself is', 'D:power.'], by: 'Francis Bacon', src: 'Meditationes Sacrae, 1597', out: 'fade' });
+
+// 4 · rules the film must keep (check.mjs runs them on every sampled frame)
+F.check('the reader stays on the floor', t => { const s = window.shotAt(t); return s.name !== 'the library' || lerp(900, 700, ease.io(s.lt / 6)) > 600; });
+F.start();
+</script></body></html>
