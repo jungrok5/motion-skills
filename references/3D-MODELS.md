@@ -56,7 +56,7 @@ Respect the skill first. A skill's fixed style wins over this note:
   paper, painted) unless the model is fully restyled to match.
 - **Good fits:** filler and props in toy / low-poly worlds, a vehicle or animal a piece needs once, and stand-ins while
   blocking a layout before the code-drawn version exists.
-- **Skills with a recipe in their `SKILL.md`** (each tried in the skill's own template on 2026-11-08, no console errors):
+- **Skills with a recipe in their `SKILL.md`** or references (each tried in the skill's own template, no console errors; 2026-11-08 unless the row says otherwise):
 
   | Skill | Load | Material | Notes |
   |---|---|---|---|
@@ -64,6 +64,7 @@ Respect the skill first. A skill's fixed style wins over this note:
   | `map-dive` | r170 loader, top-level `await` | `K.mat('#ffffff', { vertexColors: true })` | place with `K.group(stage, { at, s })`, `s` ≈ 0.06–0.12 on the region map |
   | `cartoon-3d-short` | r170 loader, `await` before `F.set` | `S.lam("pf", () => ({ vertexColors: true }))` | the world ink outlines it; people stay the drawn cast |
   | `cinecode` (Film mode) | `three/addons/loaders/GLTFLoader.js`, before `READY` | `makeMaterial(look, '#ffffff', { vertexColors: true })` | one `LICENSES.csv` row per model |
+  | `kinetic-type-collage` | r170 loader, `await` before `F.start()` | as loaded (vertex colours under the studio light) | `F.prop('fox', () => gltf.scene.clone())`; a still or turning prop, credited on the end card (tried 2026-11-11) |
 
   Skills that vendor `lib/three.module.min.js` (r170) have no addons, so they import the loader for that same version:
   `https://unpkg.com/three@0.170.0/examples/jsm/loaders/GLTFLoader.js`. It finds `three` through the page's import map.
