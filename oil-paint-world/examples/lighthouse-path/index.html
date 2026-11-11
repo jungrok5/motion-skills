@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Lighthouse Path — oil-paint-world</title>
+<!-- The worked example, made brief-first (BRIEF.md): a sea cliff at golden hour, a walker, a lighthouse. 20 s, 6 shots. -->
+<script type="importmap">{ "imports": { "three": "../../lib/three.module.min.js", "opw/": "../../lib/" } }</script>
+<script type="module">
+import { World, THREE, pal, mix3, noise, fbm, sm, lerp } from 'opw/world.js';
+import * as kit from 'opw/kit.js';
+import { Figure } from 'opw/figure.js';
+
+const W = new World({
+  name: 'The Lighthouse Path', seed: 23, extent: 112,
+  sun: { az: 292, el: 13 }, wind: { az: 70, strength: 1.3 },
+  air: { haze: '#b3a3b4', sun: '#ffd6a0', glow: '#241505', density: 0.0052 },
+  glaze: { mul: '#77607c', add: '#070410' }, bounce: '#1c1000',
+  finish: { shafts: 0.22, glow: '#ffd9a0', varnish: 0.26 },
+  ui: { film: 'Film', walk: 'Walk', hint: 'W A S D walk · Shift run · drag to look · F film' },
+});
+
+// the way: inland, to the edge, along it, up to the tower
+W.way([[16, 52], [10, 40], [-2, 28], [-11, 14], [-13, 0], [-10, -14], [-12, -28], [-9, -42], [-6, -54], [-8, -62]]);
+
+// the land: a clifftop, an edge that wanders, a band of cliff, the sea bed
+const TOWER = [-15, -70];
+const edge = (z) => -24 + 6 * Math.sin(z / 21 + 1) + 5 * noise(z / 13, 3, 4) - 10 * sm(-40, -75, z);
+const top = (x, z) => 20 + 4 * fbm(x / 60, z / 60, 3, 2) + 0.3 * noise(x / 7, z / 7, 6) + 3 * sm(34, 4, Math.hypot(x - TOWER[0], z - TOWER[1]));
+W.land({
+  height: (x, z) => { const t = sm(-9, 2, x - edge(z)); return lerp(-3, top(x, z), t * t); },
+  cover: (x, z) => {
+    const d = x - edge(z), lip = sm(5, -1, d);
+    return [1 - sm(0.45, 1.3, W.wayDist(x, z)), sm(0.64, 0.8, noise(x / 15, z / 15, 8) + 0.22 * sm(20, 4, d)) * (1 - lip), Math.max(lip, sm(0.72, 0.85, noise(x / 6, z / 6, 12)) * sm(12, 3, d)), 0];
+  },
+});
+
+W.add(kit.sky(W, { zenith: '#4f74a6', horizon: '#f4c391', glow: '#ffe7ad', glowSize: 1.3, clouds: { pal: pal('#ffe2bd', '#dba59b', '#7d7896'), amount: 0.56, scale: 0.8 }, disc: { colour: '#fff3c8', size: 2.4 } }));
+W.add(kit.ranges(W, { rows: [
+  { dist: 1300, height: 120, base: -6, pal: pal('#c7a9b4', '#9d8aa6', '#75709a'), haze: 0.62, seed: 5, arc: [205, 300] },  // the far headland across the bay
+  { dist: 800, height: 80, base: 8, pal: pal('#c9b98a', '#9a9478', '#6c6f78'), haze: 0.45, seed: 9, arc: [330, 520] },     // low hills inland
+] }));
+W.add(kit.water(W, { level: 0, deep: '#1f4a63', sky: '#f1c69c', shallow: '#5d9a94', glint: '#fff3cf', flow: [0.3, 1], speed: 0.5 }));
+W.add(kit.ground(W, { sunny: 4.2, patch: 16, covers: [
+  { pals: [pal('#f0cf6e', '#b79f4b', '#5a4a55'), pal('#e6c160', '#ad9046', '#55455a'), pal('#d9c877', '#a09a55', '#4f4c58')] },  // dry grass
+  { pals: [pal('#f3e3c0', '#bfa98a', '#6f6170'), pal('#e9d3a8', '#b09679', '#665a6c')] },                                        // r: chalk way
+  { pals: [pal('#c890b4', '#93668f', '#4a3a60'), pal('#b98aa6', '#86608a', '#45375c'), pal('#d9c877', '#a09a55', '#4f4c58')] },  // g: heather, grass coming through
+  { pals: [pal('#d9c2a2', '#958474', '#4c4458'), pal('#cdb89c', '#857a70', '#443f55')] },                                        // b: rock
+] }));
+W.add(kit.growth(W, { density: 0.78, kinds: [
+  { pal: pal('#f6dc82', '#bfa650', '#5d4d52'), tall: [0.45, 0.95], wide: 0.04, fan: 0.28, share: 6, mask: '!b' },                                            // tall dry grass
+  { pal: pal('#ead28a', '#b29a56', '#5a4c54'), tall: [0.55, 1.05], wide: 0.03, fan: 0.2, share: 2, mask: '!b', head: { pal: pal('#fff3d2', '#e2cf9f', '#8f7f7a'), size: 0.1 } },   // bleached seed heads
+  { pal: pal('#9fb060', '#6f8448', '#3a4a45'), tall: [0.16, 0.3], wide: 0.03, fan: 0.5, share: 2.5, mask: 'g', head: { pal: pal('#ff9fc6', '#d9689f', '#7a3f73'), size: 0.085 } }, // sea pinks
+  { pal: pal('#a9b862', '#72894a', '#394a44'), tall: [0.2, 0.4], wide: 0.09, fan: 1.1, mark: 'frond', share: 1.5 },                                          // low green tufts
+] }));
+
+// the lighthouse, the keeper's cottage, the wall, the stones — all from kit.shape, painted by kit.solid
+const g = (x, z) => W.groundAt(x, z), S = kit.shape, built = [];
+const [tx, tz] = TOWER, ty = g(tx, tz) - 0.3;
+built.push(S.cyl(2.1, 2.9, 9, { pal: 0, at: [tx, ty, tz], sides: 18 }), S.cyl(1.95, 2.1, 2.2, { pal: 1, at: [tx, ty + 9, tz], sides: 18 }),      // white tower, red band
+  S.cyl(1.7, 1.95, 4.3, { pal: 0, at: [tx, ty + 11.2, tz], sides: 18 }), S.cyl(2.5, 2.3, 0.45, { pal: 2, at: [tx, ty + 15.5, tz], sides: 18, grain: 'across' }), // upper tower, gallery
+  S.cyl(1.25, 1.25, 1.9, { pal: 3, at: [tx, ty + 15.95, tz], sides: 12, size: [0.2, 0.34] }), S.cone(1.75, 1.5, { pal: 1, at: [tx, ty + 17.85, tz], sides: 12 }));  // lantern, cap
+const cx = tx + 9, cz = tz + 3, cy = g(cx, cz) - 0.2;
+built.push(S.box(6.5, 2.9, 4.6, { pal: 0, at: [cx, cy, cz], ry: 0.5 }), S.gable(5.2, 2.1, 7, { pal: 2, at: [cx, cy + 2.9, cz], ry: 0.5 + Math.PI / 2, grain: [0, -1, 0] }),
+  S.box(0.7, 1.5, 0.7, { pal: 4, at: [cx - 1.6, cy + 3.6, cz - 1.0], ry: 0.5 }));
+// a dry-stone wall on the land side of the last of the way
+for (let s = 70; s < 108; s += 1.7) { const w = W.wayAt(s), x = w.x - w.hz * -3.4, z = w.z + w.hx * -3.4; built.push(S.box(1.9, 0.75 + 0.2 * noise(s, 1, 3), 0.5, { pal: 4, at: [x, g(x, z) - 0.1, z], ry: Math.atan2(w.hx, w.hz) + Math.PI / 2 + (noise(s, 4, 2) - 0.5) * 0.2, grain: 'across', size: [0.16, 0.34] })); }
+// stones on the lip of the cliff
+for (let i = 0; i < 16; i++) { const z = 40 - i * 6.3 + 3 * noise(i, 2, 9), x = edge(z) + 2.5 + 3 * noise(i, 7, 1), r = 0.35 + 0.6 * noise(i, 5, 5); built.push(S.boulder(r, { pal: 4, at: [x, g(x, z) + r * 0.2, z], seed: i + 1, size: [0.2, 0.36], grain: 'across' })); }
+W.add(kit.solid(W, built, {
+  name: 'built', density: 13, size: [0.2, 0.55],
+  pals: [pal('#fff4e0', '#d8c3b8', '#7c7397'), pal('#e05a3c', '#a83d35', '#5a2c45'), pal('#6c6f86', '#4a4c66', '#2a2a42'), pal('#ffe9a0', '#f2b24c', '#a86a35', '#fff0b0'), pal('#dcc8a8', '#9d8c7c', '#62587a')],
+  collide: [{ x: tx, z: tz, r: 3.3 }, { x: cx, z: cz, r: 4.6 }],
+}));
+W.add(kit.flecks(W, { n: 260, pals: [pal('#fff6dc', '#f0dca8', '#a8948c')], size: [0.035, 0.05], box: [40, 9, 40], fall: 0.12, drift: 3.2, sway: 0.5, spin: 1.2 })); // seed-down
+
+W.figure(new Figure({
+  height: 1.7, hair: 'short', hat: { kind: 'beanie' }, coat: { length: 0.44, flare: 0.2 }, scarf: { length: 0.62 }, pack: true, carry: { kind: 'staff', side: 'right' },
+  palettes: { coat: pal('#3aa0a2', '#2a787f', '#243f5e'), top: pal('#3aa0a2', '#2a787f', '#243f5e'), legs: mix3('#3c4a6c'), shoes: mix3('#6a4632'), hat: pal('#e0623a', '#a8432f', '#5a2c40'), scarf: mix3('#f3ead2'), pack: pal('#cfa064', '#94703f', '#56402f'), prop: mix3('#8a6844') },
+}));
+
+const sea = (s) => { const w = W.wayAt(s); return [w.x - 60, 14, w.z - 30]; };
+W.shots([
+  { name: 'the path', dur: 4, walk: [8, 13.8], cam: { from: { back: 6.2, up: 2.0, side: -1.3, yaw: -8, look: [0.6, 1.5, 6] }, to: { back: 5.0, up: 1.8, side: -0.9, yaw: -3, look: [0.6, 1.5, 6] } } },
+  { name: 'in the grass', dur: 3, walk: [13.8, 18.2], cam: { from: { way: [21.5, -1.9, 0.45], look: [0, 1.0, 0], fov: 40 }, to: { way: [21.5, -1.9, 0.5], look: [0, 1.1, 0], fov: 40 } } },
+  { name: 'along the edge', dur: 3.5, walk: [42, 47.1], cam: { from: { back: 5.6, up: 1.45, yaw: -84, look: [0, 1.2, 0.5], fov: 44 }, to: { back: 5.2, up: 1.4, yaw: -97, look: [0, 1.2, 0.5], fov: 44 } } },
+  { name: 'the run', dur: 3, walk: [60, 72.9], cam: { from: { back: 4.6, up: 1.05, side: 0.8, yaw: 4, look: [0, 1.5, 5] }, to: { back: 6.4, up: 1.2, side: 0.6, yaw: 8, look: [0, 1.7, 6] } } },
+  { name: 'the tower', dur: 3.5, walk: [88, 93.1], cam: { from: { way: [84.5, -2.3, 0.8], lookAt: [tx, ty + 9, tz], fov: 46 }, to: { way: [84.5, -2.3, 0.95], lookAt: [tx, ty + 11.5, tz], fov: 46 } } },
+  { name: 'the sea', dur: 3, walk: [96, 98], ease: 'out', look: sea(98), cam: { from: { back: 3.6, up: 1.5, yaw: -40, look: [-0.9, 1.5, 2], fov: 44 }, to: { back: 4.8, up: 2.1, yaw: -26, look: [-1.2, 1.7, 3], fov: 44 } } },
+]);
+
+W.check('the tower stands', () => W.groundAt(tx, tz) < 15 && 'the lighthouse is not on the clifftop');
+W.check('the way keeps to the top', () => { for (let s = 0; s < W.wayLen; s += 2) { const w = W.wayAt(s); if (W.groundAt(w.x, w.z) < 16) return `the way falls off the cliff at ${s} m`; } });
+W.start();
+</script>
+</html>

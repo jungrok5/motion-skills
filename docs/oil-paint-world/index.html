@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>oil-paint-world · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 두꺼운 유화로 그려진 3D 세계와 그 안을 걷는 사람의 영상을 만듭니다. 풀잎 · 나뭇잎 · 돌 · 벽 · 물결 · 옷자락 하나하나가 세계에 고정된 붓 자국이라 시점이 움직여도 물감이 사물에 붙어 있습니다. 모두 코드로 만들고(모델 · 텍스처 없음), 영상이 반복 재생되다가 W A S D로 직접 걸어 볼 수 있는 라이브 페이지와 1080p MP4를 냅니다.">
+<meta property="og:title" content="oil-paint-world · motion-skills">
+<meta property="og:description" content="주제 하나를 주면 두꺼운 유화로 그려진 3D 세계와 그 안을 걷는 사람의 영상을 만듭니다. 모든 것이 세계에 고정된 붓 자국입니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/oil-paint-world/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/oil-paint-world">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / oil-paint-world</nav>
+  <h1>oil-paint-world</h1>
+  <p>주제 하나를 주면 두꺼운 유화로 그려진 3D 세계와 그 안을 걷는 사람의 영상을 만듭니다. 화면을 나중에 필터로 바꾸는 것이 아니라, 풀잎 · 나뭇잎 · 돌 · 벽 · 물결 · 옷자락 하나하나가 세계의 한 지점에 고정된 붓 자국이어서 시점이 움직여도 물감이 사물에 붙어 있습니다. 색은 사물마다 미리 섞어 둔 세 가지(밝은 색 · 중간 색 · 그늘 색)에서 붓 자국마다 하나를 고르고, 그늘은 붓 자국 단위로 지고, 걷는 사람의 그림자는 물감 위를 미끄러지는 글레이즈로 얹힙니다. 모델 · 텍스처 없이 모두 코드로 만들며, 영상이 반복 재생되다가 W A S D로 직접 걸어 볼 수 있는 라이브 페이지와 1080p MP4를 냅니다.
+  보고 만든 원본: <a href="https://x.com/BlendiByl/status/2120341251178594532?a=KltytYZPeeW0-pPdgsw&s=19" target="_blank" rel="noopener">Blendi의 X 게시물 (「손으로 그린」 게임, 프레임마다 붓 자국 약 150만 개)</a>과 그가 공개한 <a href="https://patch.gg/blendi/oil-paint" target="_blank" rel="noopener">Oil paint 프로젝트 (patch.gg, 코드 MIT)</a>.</p>
+  <ul class="tags"><li>three.js 붓 자국</li><li>걸어 다니는 유화</li><li>코드로 만든 인물</li><li>16:9 MP4</li><li>라이브 페이지</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(해 질 녘 바닷가 절벽과 등대, 봄 과수원, 비 오는 밤 시장, 할머니 댁 가는 길 …). 레퍼런스 그림 · 영상이 있으면 그 스틸</dd>
+      <dt>브리프</dt><dd>한 줄로 쓴 그림, 시간과 공기(해의 방향과 높이, 안개 색과 농도, 바람), 길과 땅, 세계를 이루는 것들과 각각의 세 가지 색, 걷는 사람(옷 · 모자 · 든 물건과 손), 샷 3–7개를 적은 <code>BRIEF.md</code></dd>
+      <dt>세계</dt><dd>하늘 · 먼 산 · 물 · 땅 · 풀과 꽃 · 나무 · 건물 같은 고체 · 흩날리는 것을 키트로 놓기. 새로운 것은 도형을 조합해 칠하거나 붓 자국을 직접 작성</dd>
+      <dt>인물</dt><dd>모델 · 클립 없이 코드로 만든 몸. 발은 길 위에 심고, 다리는 IK, 옷자락은 규칙으로 흔들림. 앞 · 옆 · 뒤 · 걷기 · 달리기 22포즈 캐스트 시트로 방향과 관절 확인</dd>
+      <dt>확인</dt><dd>샷마다 시작 · 중간 · 끝 시트, 맨 캔버스 없음 · 하얗게 날아감 · 움직임 · 결정성, 영상과 캐스트의 모든 포즈가 관절 범위 안인지 검사</dd>
+      <dt>출력</dt><dd>30fps 1920×1080 MP4(소리 없음), 영상 반복 재생 · W A S D 걷기 · 드래그 둘러보기 라이브 페이지</dd>
+    </dl>
+    <pre><code>cd oil-paint-world/examples/lighthouse-path
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs index.html --cast --scale .5
+node ../../scripts/render.mjs index.html --sheet --scale .5
+node ../../scripts/render.mjs index.html --preview
+node ../../scripts/render.mjs index.html
+node ../../scripts/new-world.mjs ~/my-world</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. npm 설치 · API 키가 필요 없습니다. 영상은 GPU 없이 CPU WebGL로 렌더합니다(1080p 한 프레임 약 4–6초, 20초 예제를 워커 3개로 약 30분). 라이브 페이지는 GPU가 있어야 매끄럽게 움직입니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/oil-paint-world/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:calc((100vw - 34px)*.5625);--demo-bg:#16130f">
+    <iframe data-src="demo/examples/lighthouse-path/" title="oil-paint-world 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/lighthouse-path/">데모 열기 (examples/lighthouse-path)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/lighthouse-path</code> · 20초 · 6샷 · 화면을 누른 뒤 W A S D로 걷기, 드래그로 둘러보기</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/lighthouse-path/" data-cap="예제 &lt;code&gt;examples/lighthouse-path&lt;/code&gt; · 20초 · 6샷 · 화면을 누른 뒤 W A S D로 걷기, 드래그로 둘러보기" aria-pressed="true">등대 가는 길</button>
+        <button class="btn" type="button" data-src="demo/templates/world.html" data-cap="템플릿 &lt;code&gt;templates/world.html&lt;/code&gt; · 12초 · 3샷 · 새 세계의 출발점" aria-pressed="false">시작 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본의 두 장면(가을 숲, 오로라 설원)에 없는 주제로 브리프부터 새로 설계해 만든 예제의 여섯 샷, 인물과 붓 자국 검토, 시작 템플릿입니다. 카드를 누르면 그 순간이 라이브 페이지에서 멈춘 채 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"film":"등대 가는 길","check":"검토","tpl":"시작 템플릿"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「The Lighthouse Path」 <small>20초 · 6샷 · 붓 자국 약 83만 개</small></h3>
+      <p>해 질 녘 바닷가 절벽: 청록 아노락을 입은 사람이 마른 금빛 풀밭의 흰 길을 따라 걷다가, 길 끝의 등대를 향해 뛰어갑니다</p>
+      <div class="grid">
+        <a class="tile" data-tags="film" href="demo/examples/lighthouse-path/?t=2" target="_blank" rel="noopener">
+          <img src="samples/path.jpg" alt="금빛 풀밭 사이 흰 길을 걷는 청록 옷의 사람을 뒤에서 본 유화풍 장면, 멀리 흰 등대와 왼쪽의 바다, 길 위로 긴 그림자" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 1 · 길</span><b>뒤에서 따라가기</b><span class="how">누워 있는 땅 붓 자국, 길 가리개로 깐 백악 길, 인물 그림자 글레이즈</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/lighthouse-path/?t=5.5" target="_blank" rel="noopener">
+          <img src="samples/grass.jpg" alt="풀숲 낮은 곳에서 올려다본 장면, 키 큰 마른 풀 사이로 지팡이를 든 사람이 다가오고 씨앗 솜털이 날린다" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 2 · 풀숲</span><b>낮은 삼각대</b><span class="how">발끝에 고정된 풀 붓 자국, 바람에 기우는 방향, 흩날리는 솜털</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/lighthouse-path/?t=9" target="_blank" rel="noopener">
+          <img src="samples/edge.jpg" alt="바다를 배경으로 옆모습으로 걷는 사람, 수면에 햇빛이 반짝이는 길과 멀리 연보라 곶" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 3 · 절벽 가장자리</span><b>옆에서 나란히</b><span class="how">하늘을 되비추는 물 붓 자국, 해 쪽 반짝임, 멀리서 가까이 순서로 깐 곶</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/lighthouse-path/?t=11.8" target="_blank" rel="noopener">
+          <img src="samples/run.jpg" alt="돌담 옆길을 등대 쪽으로 뛰어가는 사람을 낮은 뒤쪽에서 본 장면, 옷자락과 목도리가 뒤로 날린다" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 4 · 달리기</span><b>초속 4.3 m</b><span class="how">달리기 보폭과 접지, 속도에 끌리는 옷자락, 관절 범위 검사 통과</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/lighthouse-path/?t=15.5" target="_blank" rel="noopener">
+          <img src="samples/tower.jpg" alt="돌담 너머로 올려다본 흰 등대와 붉은 띠, 등대지기 집, 그 앞을 지나가는 사람, 위쪽에 붓 자국 구름" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 5 · 등대</span><b>올려다보기</b><span class="how">원기둥 · 원뿔 · 상자 · 박공으로 지어 결 따라 칠한 고체, 돌담</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/lighthouse-path/?t=18.8" target="_blank" rel="noopener">
+          <img src="samples/sea.jpg" alt="멈춰 서서 바다 쪽으로 고개를 돌린 사람을 뒤 오른쪽에서 본 장면, 앞에 등대와 집" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 6 · 바다</span><b>멈춰 서서 바라보기</b><span class="how">걸음을 늦춰 서기, 범위 안에서 돌리는 고개, 바람에 날리는 목도리</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>인물과 붓 자국 검토 <small>캐스트 시트 · 확대</small></h3>
+      <p>샷을 쓰기 전에 인물을 모든 방향과 걸음으로 보고, 스틸은 원래 크기로 확대해 붓 자국을 확인합니다</p>
+      <div class="grid">
+        <a class="tile" data-tags="check" href="https://github.com/jungrok5/motion-skills/blob/main/oil-paint-world/references/FIGURE.md" target="_blank" rel="noopener">
+          <img src="samples/cast.jpg" alt="같은 인물을 앞, 3/4, 옆, 뒤에서 본 서 있는 포즈와 걷기 · 달리기 포즈를 나란히 놓은 캐스트 시트" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">render.mjs --cast</span><b>캐스트 시트, 22포즈</b><span class="how">앞뒤좌우가 한 몸인지, 지팡이가 오른손인지, 무릎은 뒤로 팔꿈치는 앞으로 접히는지</span></div></a>
+        <a class="tile" data-tags="check" href="demo/examples/lighthouse-path/?t=2" target="_blank" rel="noopener">
+          <img src="samples/detail.jpg" alt="인물과 주변 풀밭을 원래 크기로 확대한 장면, 낱낱의 붓 자국과 물감 두께의 밝은 가장자리가 보인다" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">확대 · 1080p 원본</span><b>붓 자국 하나하나</b><span class="how">여덟 가지 붓 모양, 왼쪽 위에서 비스듬히 비춘 물감 두께, 캔버스 결</span></div></a>
+        <a class="tile" data-tags="check" href="https://github.com/jungrok5/motion-skills/blob/main/oil-paint-world/references/BRIEF.md" target="_blank" rel="noopener">
+          <img src="samples/sheet.jpg" alt="여섯 샷의 시작 · 중간 · 끝을 한 장에 모은 컨택트 시트" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">render.mjs --sheet</span><b>컨택트 시트</b><span class="how">빛의 방향, 색, 깊이, 인물, 주제가 읽히는지 채점하는 기준은 BRIEF.md</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>시작 템플릿 「Orchard Morning」 <small>12초 · 3샷</small></h3>
+      <p>봄 아침의 과수원. 새 세계는 이 페이지의 ①–⑧을 주제에 맞게 바꿔서 시작합니다</p>
+      <div class="grid">
+        <a class="tile" data-tags="tpl" href="demo/templates/world.html?t=2.5" target="_blank" rel="noopener">
+          <img src="samples/orchard-rows.jpg" alt="분홍 꽃이 핀 과수원 사이 풀길을 걷는 노란 케이프의 사람을 뒤에서 본 장면, 풀밭에 나무 그늘이 얼룩진다" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 샷 1</span><b>나무 사이로</b><span class="how">둥근 수관의 꽃 붓 자국, 붓 자국 단위로 지는 나무 그늘</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/templates/world.html?t=6.8" target="_blank" rel="noopener">
+          <img src="samples/orchard-grass.jpg" alt="풀밭 낮은 곳에서 본 장면, 바구니를 든 사람이 꽃나무 앞을 지나간다" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 샷 2</span><b>풀밭에서</b><span class="how">풀 · 민들레 · 데이지 꽃머리, 왼손에 든 바구니</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/templates/world.html?t=10.5" target="_blank" rel="noopener">
+          <img src="samples/orchard-blossom.jpg" alt="꽃 핀 가지 아래를 걸어오는 사람을 앞쪽 아래에서 올려다본 장면, 꽃잎이 떨어진다" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 샷 3</span><b>꽃 아래</b><span class="how">앞에서 올려다보는 시점, 떨어지는 꽃잎</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬을 만든 출처와, 이 레포에서 새 주제로 만든 예제입니다.</p>
+  <div class="works">
+    <a class="work" href="https://x.com/BlendiByl/status/2120341251178594532?a=KltytYZPeeW0-pPdgsw&s=19" target="_blank" rel="noopener"><b>원본 · Blendi의 X 게시물</b><span>「손으로 그린」 게임 16초 · 프레임마다 붓 자국 약 150만 개 · 브라우저에서 실시간</span><span class="url">x.com/BlendiByl/status/2120341251178594532</span></a>
+    <a class="work" href="https://patch.gg/blendi/oil-paint" target="_blank" rel="noopener"><b>원본 프로젝트 · Oil paint</b><span>가을 숲과 오로라 설원 두 장면 · 코드 MIT © 2026 Patch · 붓 렌더러를 여기서 가져와 고침</span><span class="url">patch.gg/blendi/oil-paint</span></a>
+    <a class="work" href="demo/examples/lighthouse-path/" target="_blank" rel="noopener"><b>「The Lighthouse Path」</b><span>20초 · 6샷 · 라이브 페이지 · 걷기 모드</span><span class="url">oil-paint-world/examples/lighthouse-path</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/oil-paint-world/examples/lighthouse-path"><b>원본 레포 · motion-skills</b><span>이 레포에서 만듦</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/oil-paint-world/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/oil-paint-world">폴더</a> <span>lib · scripts · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/oil-paint-world/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/oil-paint-world/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 캐스트 시트 · 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/oil-paint-world/references/LOOK.md">references/LOOK.md</a> <span>유화로 읽히게 하는 아홉 가지</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/oil-paint-world/references/KIT.md">references/KIT.md</a> <span>세계 설정, 키트의 모든 것과 옵션, 샷과 카메라</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/oil-paint-world/references/PAINT.md">references/PAINT.md</a> <span>붓 자국 직접 쓰기, 프레임이 만들어지는 순서</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/oil-paint-world/references/FIGURE.md">references/FIGURE.md</a> <span>인물의 몸, 관절 범위, 캐스트 시트</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/oil-paint-world/references/SOURCE.md">references/SOURCE.md</a> <span>원본에서 가져온 것과 바꾼 것</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/oil-paint-world/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 붓 자국은 코드로 놓았습니다. 붓 렌더러는 Oil paint (MIT © 2026 Patch)에서 가져와 고쳤고, three.js (MIT)를 씁니다
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
