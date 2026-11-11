@@ -288,7 +288,7 @@ export class World {
       if (s.speed > 6.5) fail.push(`${s.name}: ${s.speed.toFixed(1)} m/s is faster than anyone runs`);
     }
     for (const p of this.wayPts || []) if (Math.abs(p.x) > e * 0.92 || Math.abs(p.z) > e * 0.92) { fail.push(`the way leaves the land (±${e} m) at ${p.x.toFixed(0)}, ${p.z.toFixed(0)}`); break; }
-    const body = new Map(), eyeIn = new Set(), lost = new Map();
+    const body = new Map(), eyeIn = new Set(), lost = new Map(), cut = new Map();
     const v = new THREE.Vector3(), cam = new THREE.PerspectiveCamera(50, this.W / this.H, 0.1, 3000);
     for (let t = 0; t < this.DURATION; t += 1 / 10) {
       const st = this.walkAt(t), c = this.camAt(t, st), sn = st.shot.name;
@@ -300,7 +300,8 @@ export class World {
         this.fig.pose({ t, x: st.x, y, z: st.z, hx: st.hx, hz: st.hz, phase: st.phase, stride: st.stride, speed: st.speed, at: st.at, ground: g });
         for (const m of this.fig.audit()) body.set(`${sn}: ${m.replace(/-?\d+(\.\d+)?/g, '#')}`, `${sn} @${t.toFixed(1)}: ${m}`);
         cam.fov = c.fov; cam.position.copy(c.eye); cam.lookAt(c.look); cam.updateProjectionMatrix(); cam.updateMatrixWorld(true);
-        const on = [0.15, 0.9].some((h) => { v.set(st.x, y + this.fig.height * h, st.z).project(cam); return v.z < 1 && Math.abs(v.x) < 1.02 && Math.abs(v.y) < 1.02; });
+        const ins = [0.02, 0.98].map((h) => { v.set(st.x, y + this.fig.height * h, st.z).project(cam); return v.z < 1 && Math.abs(v.x) < 1.02 && Math.abs(v.y) < 1.02; }), on = ins[0] || ins[1];
+        if (on && !(ins[0] && ins[1]) && st.shot.figure !== 'off-screen') cut.set(sn, `${sn} @${t.toFixed(1)}: the wanderer is cut by the frame's edge (their ${ins[0] ? 'head' : 'feet'} are out of the picture) — step the eye back or look lower`);
         if (!on && st.shot.figure !== 'off-screen') lost.set(sn, `${sn} @${t.toFixed(1)}: the wanderer is out of the picture (figure: 'off-screen' if that is the shot, figure: false to leave them out)`);
         if (c.eye.distanceTo(v.set(st.x, y + this.fig.height * 0.6, st.z)) < 0.7) fail.push(`${sn} @${t.toFixed(1)}: the eye is inside the wanderer`);
       }
@@ -314,7 +315,7 @@ export class World {
       }
       info.push(`the wanderer: ${this.fig.count.toLocaleString('en')} dabs · ${this.fig.cast().length} cast poses and ${Math.round(this.DURATION * 10)} film poses audited against the joint ranges`);
     }
-    fail.push(...body.values(), ...eyeIn, ...lost.values());
+    fail.push(...body.values(), ...eyeIn, ...lost.values()); warn.push(...cut.values());
     for (const r of this.rules) { try { const m = r.fn(this); if (m) fail.push(`${r.name}: ${m}`); } catch (err) { fail.push(`${r.name}: threw ${err.message}`); } }
     if (this.now) this.renderAt(this.now.t);
     return { fail, warn, info };

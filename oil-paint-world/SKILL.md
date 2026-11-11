@@ -67,7 +67,8 @@ modules: view them through a local server (`python3 -m http.server`); the script
 
 Requirements: Node + Playwright Chromium, ffmpeg. No npm install, no GPU, no API keys. With a GPU the live page runs in
 real time; a film is rendered on the CPU (SwiftShader) at about 4–6 s a 1080p frame for ~300,000 dabs in view — the
-20 s example takes about 25 minutes with 3 workers on 4 cores. Previews (`--preview`: half size, half the paint) are ~4× faster.
+20 s example took 28 minutes with 3 workers on 4 cores (2.8 s a frame of wall time). Previews (`--preview`: half size,
+half the paint) are 2–3× faster. The MP4 is large (fine detail everywhere): 28 Mb/s at CRF 18, 13 Mb/s at CRF 23.
 
 ## Workflow
 1. **Topic → brief.** Copy `templates/BRIEF.md` (new-world.mjs does) and fill it from the user's topic before any code

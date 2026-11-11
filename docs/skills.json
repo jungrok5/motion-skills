@@ -1363,6 +1363,46 @@
           "url": "https://jungrok5.github.io/motion-skills/photoreal-film/demo/aperture/"
         }
       ]
+    },
+    {
+      "id": "oil-paint-world",
+      "name": "oil-paint-world",
+      "tagline": "주제 하나를 주면 두꺼운 유화로 그려진 3D 세계와 그 안을 걷는 사람의 영상을 만듭니다. 풀잎 · 나뭇잎 · 돌 · 벽 · 물결 · 옷자락 하나하나가 세계에 고정된 붓 자국이라 시점이 움직여도 물감이 사물에 붙어 있고, 색은 사물마다 섞어 둔 세 가지(밝은 색 · 중간 색 · 그늘 색)에서 붓 자국마다 고릅니다. 해와 공기, 길과 땅, 세계를 이루는 것들, 걷는 사람과 샷을 주제마다 새로 설계하며, 모델 · 텍스처 없이 코드로만 만들고, W A S D로 직접 걸어 볼 수 있는 라이브 페이지와 1080p MP4를 냅니다.",
+      "posterAlt": "oil-paint-world로 만든 유화풍 장면 네 개: 금빛 풀밭의 흰 길을 걸어 등대로 가는 청록 옷의 사람, 바다를 배경으로 한 옆모습, 돌담 너머로 올려다본 흰 등대와 붉은 띠, 분홍 꽃이 핀 과수원 사이를 걷는 노란 케이프의 사람",
+      "poster": "oil-paint-world/poster.jpg",
+      "tags": [
+        "three.js 붓 자국",
+        "걸어 다니는 유화",
+        "코드로 만든 인물",
+        "16:9 MP4",
+        "라이브 페이지"
+      ],
+      "stats": [
+        "예제 20초 · 6샷 · 붓 자국 약 83만 개",
+        "키트 8종 · 인물 캐스트 22포즈"
+      ],
+      "page": "oil-paint-world/",
+      "source": "oil-paint-world/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "oil-paint-world/examples/lighthouse-path/"
+      },
+      "sources": [
+        {
+          "title": "Blendi의 X 게시물 (「손으로 그린」 게임, 프레임마다 붓 자국 약 150만 개)",
+          "url": "https://x.com/BlendiByl/status/2120341251178594532?a=KltytYZPeeW0-pPdgsw&s=19"
+        },
+        {
+          "title": "Oil paint 프로젝트 (patch.gg, 코드 MIT © 2026 Patch)",
+          "url": "https://patch.gg/blendi/oil-paint"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「The Lighthouse Path」 · 바닷가 절벽과 등대 · 20초 · 6샷 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/oil-paint-world/demo/examples/lighthouse-path/"
+        }
+      ]
     }
   ]
 }

@@ -5,9 +5,9 @@
 //   node <skill>/scripts/render.mjs world.html --cast --scale .5         → out/world-cast.jpg (the wanderer from every side, in every gait)
 //   node <skill>/scripts/render.mjs world.html --preview                 → out/world-preview.mp4 (960 × 540, less paint, fast)
 //   node <skill>/scripts/render.mjs world.html                           → out/world.mp4 (1920 × 1080, 30 fps)
-// Options: --fps 24  --workers 3  --from 0 --to <s>  --crf 18  --scale .5  --out out/  --name world  --q "q=.6&off=shafts"  --audio x.wav
+// Options: --fps 24  --workers 3  --from 0 --to <s>  --crf 20  --scale .5  --out out/  --name world  --q "q=.6&off=shafts"  --audio x.wav
 // Without a GPU, WebGL runs on the CPU (SwiftShader): about 4–6 s a 1080p frame for 300,000 dabs in view; three workers
-// on four cores roughly halve the wall time. A preview (half size, q=.5) is about 1 s a frame.
+// on four cores bring that to about 2.8 s a frame of wall time. A preview (half size, q=.5) is 2–3× faster.
 import { createRequire } from 'node:module';
 import { spawn, execSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
@@ -85,7 +85,7 @@ if (stills || sheet) {
 }
 await probe.close();
 
-const from = +opt('from', 0), to = +opt('to', DUR), workers = +opt('workers', 3), crf = opt('crf', PREVIEW ? '23' : '18');
+const from = +opt('from', 0), to = +opt('to', DUR), workers = +opt('workers', 3), crf = opt('crf', PREVIEW ? '24' : '20');
 const n = Math.round((to - from) * FPS), per = Math.ceil(n / workers);
 const tmp = join(outDir, `.chunks-${name}${PREVIEW ? '-p' : ''}`); rmSync(tmp, { recursive: true, force: true }); mkdirSync(tmp, { recursive: true });
 console.log(`${name}: ${n} frames @ ${FPS} fps, ${workers} workers${PREVIEW ? ' (preview)' : ''}`);
@@ -93,7 +93,8 @@ const t0 = Date.now(); let done = 0;
 await Promise.all(Array.from({ length: workers }, async (_, w) => {
   const a = w * per, b = Math.min(n, a + per); if (a >= b) return;
   const page = await open();
-  // broken colour and brush relief are fine detail: CRF 18 keeps the strokes crisp (about 6–9 Mb/s at 1080p); --crf 22 for the web
+  // broken colour, brush relief and canvas weave are fine detail everywhere, so the file is large: measured on the 20 s
+  // example, CRF 18 is 28 Mb/s (71 MB) and CRF 23 is 13 Mb/s (32 MB). --crf 24–26 for the web
   const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-i', '-', '-c:v', 'libx264', '-preset', PREVIEW ? 'veryfast' : 'slow', '-crf', crf, '-pix_fmt', 'yuv420p', '-g', String(FPS * 2), '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', join(tmp, `${String(w).padStart(2, '0')}.mp4`)], { stdio: ['pipe', 'inherit', 'inherit'] });
   const closed = new Promise((r) => ff.on('close', r));
   for (let f = a; f < b; f++) {

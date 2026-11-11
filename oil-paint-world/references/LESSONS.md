@@ -29,6 +29,12 @@
 - Boulders read as black lumps against a low sun → their shade mix was too dark and they were too big; shades stay
   colours (a slate violet), sizes stay under the wanderer's knee unless they are the subject.
 
+- The MP4 of the 20 s example was 71 MB → broken colour, relief and weave are detail in every pixel, which x264 cannot
+  throw away: 28 Mb/s at CRF 18, 13 Mb/s at CRF 23. The default is CRF 20; use `--crf 24` or higher for the web, and
+  never commit an MP4.
+- A shot looking up at a blossom crown cut the walker off at the knees and nothing complained → the check now warns
+  when head or feet leave the frame; a shot that is about something else says so (`figure: 'off-screen'`).
+
 **The wanderer**
 - The face was hidden from the front: the hair cap came down over it → the cap is tilted back; hats are larger than hair.
 - A pale shirt between an open coat read as a long white beard → a longer neck, a narrower collar, and a top that is

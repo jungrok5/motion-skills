@@ -60,4 +60,18 @@ lying across the grass and the sea glinting under it.
 - Cast sheet: the staff is in the right hand in every view (screen-left seen from the front, the near hand facing right);
   the pack is on the back; the scarf trails behind in both directions; knees fold back and elbows forward in walk and run;
   run stance fixed after the first check (hip was 43° behind, limit 40°). PASS.
-- Contact sheet: see the bottom of this file once rendered.
+- Contact sheet, first pass: FAIL on colour and depth — heather (the g mask) covered most of the land in pink, the
+  boulders on the lip were near-black lumps taller than the walker, sky strokes showed in rows, and the last shot looked
+  back down the path so the tower was not in it. Fixed: the mask's threshold raised so heather lies in drifts, a third
+  heather palette of grass coming through, stones under knee height with a slate-violet shade, sky directions nudged,
+  shot 6 moved behind and to the walker's right.
+- Stills, second pass (2 s, 9 s, 15.5 s, 18.5 s at full size) and the frames of the MP4:
+  - Is it a painting? PASS — strokes everywhere on land, figure, tower and cloud; the open sky is the quietest passage.
+  - Light: PASS — the sun is ahead-left in shot 1 (long shadow toward the eye), a road of glints under it in shot 3.
+  - Colour: PASS — straw-gold lights, plum shades shared by wall, stones, tower and coat; teal and one red band as accents.
+  - Depth: PASS — the tower pales with distance in shot 1; the far headland is two values lighter than the wall.
+  - The wanderer: PASS — found at a glance, whole in the frame in shots 1–4 and 6; shot 5 is the tower's shot
+    (`figure: 'off-screen'`: they pass along the bottom edge).
+  - The topic: PASS — cliff, sea, lighthouse, evening. Not the source: no wood, no aurora, no cloak.
+- `check.mjs`: check OK (6 shots, 200 film poses and 22 cast poses inside the joint ranges, no bare canvas, deterministic).
+- Render: 600 frames in 1,671 s with 3 workers on 4 CPU cores (2.8 s a frame of wall time); 71 MB at CRF 18.
