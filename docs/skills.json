@@ -1399,6 +1399,42 @@
           "url": "https://jungrok5.github.io/motion-skills/aphorism-film/demo/time/"
         }
       ]
+    },
+    {
+      "id": "pencil-dream-short",
+      "name": "pencil-dream-short",
+      "tagline": "주제 하나를 주면 연필 낙서 캐릭터가 연필을 잡고 자기 세계를 그려 나가는 원테이크 단편을 코드만으로 만듭니다. 흑연 선과 한 가지 강조색, 손이 닿는 곳에서 시작해 저절로 퍼지는 세계, 큰 획 몇 번으로 그려지는 거대한 생물, 강조색 무리, 크레용 노을, 책상 위 스케치북으로 빠지는 마지막 장면까지 1080p MP4와 브라우저에서 도는 페이지로 냅니다.",
+      "posterAlt": "pencil-dream-short로 만든 「The Keeper's Whale」의 장면 네 개: 산호색 털모자를 쓴 연필 낙서 등대지기가 작은 돛배를 그리는 모습, 수평선 너머로 큰 획으로 솟은 혹등고래, 고래 둘레를 도는 산호색 물고기 떼와 크레용 노을, 나무 책상 위에 펼쳐진 스케치북과 색연필",
+      "poster": "pencil-dream-short/poster.jpg",
+      "tags": [
+        "2D 캔버스",
+        "원테이크 · 16:9 · 24fps",
+        "MP4",
+        "라이브 페이지",
+        "합성 사운드"
+      ],
+      "stats": [
+        "예제 32초 · 원테이크",
+        "8방향 캐스트 시트"
+      ],
+      "page": "pencil-dream-short/",
+      "source": "pencil-dream-short/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "pencil-dream-short/examples/keeper/"
+      },
+      "sources": [
+        {
+          "title": "OscarAI의 X 게시물 (30초 영상)",
+          "url": "https://x.com/Artedeingenio/status/2119895981403894112?a=_9q1hjQOFazzyl1wwv0&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「The Keeper's Whale」 · 32초 · 원테이크 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/pencil-dream-short/demo/examples/keeper/"
+        }
+      ]
     }
   ]
 }
