@@ -1,0 +1,52 @@
+<!doctype html>
+<!-- lineage-glow · starter film (16 s): 「한 통의 전화」 — one person tells two, each tells two more: 33 steps reach more
+     people than live on Earth. An example of the style (a doubling tree, the counter, the horizon), not a menu: for your
+     topic, design your own beats in BRIEF.md and replace everything below the palette. -->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>한 통의 전화 · lineage-glow</title>
+<script type="importmap">{ "imports": { "lg/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+import { Film, keys, win, env, clamp } from 'lg/film.js';
+import { binaryTree, stack } from 'lg/lineage.js';
+import { SCORE } from './score.js';
+
+const F = new Film({ dur: 16, title: '한 통의 전화', score: SCORE });
+
+// ── the shape: a doubling tree. Near steps are wide apart; far steps pack into bands under the horizon ──────────────
+const y = stack({ first: 250, ratio: .8, min: 7 });
+const T = binaryTree({ y, slope: .56, explicit: 8, fibres: 380, seed: 5 });
+const LAST = 33, top = y(LAST);
+
+// growth: generations reached over time (fast at first, then the count races)
+const grown = keys([[1.2, 0], [3.2, 2, 'out'], [5.0, 5], [8.6, 14, 'inOut'], [11.0, LAST, 'inOut']]);
+// camera: start close on the root, pull back as the tree climbs, settle with the whole cone in frame
+F.camera([[0, { y: -120, zoom: 1.15 }], [3.2, { y: -300, zoom: 1 }], [5.4, { y: -560, zoom: .78 }, 'inOut'], [9, { y: (top) / 2 + 140, zoom: .62 }, 'inOut'], [16, { y: top / 2 + 120, zoom: .6 }, 'linear']]);
+
+F.world((g, t) => {
+  const G = grown(t);
+  g.flare(0, 0, 260, .5 + .2 * Math.sin(t * 1.4), 'soft');                      // warm pool under the root
+  T.draw(g, { grown: G, nodes: 6, labels: { '1,0': '친구', '1,1': '동료' }, labelA: 1 - win(t, 4.5, 5.5) });
+  g.node(0, 0, { r: 9, flare: .55 + .25 * win(t, 0, 1.2, 'out') });             // the root
+  g.label(0, 0, '나', { dy: 46, size: 30, a: win(t, .6, 1.4) });
+  const h = win(t, 9.6, 11, 'out'); g.horizon(top, { a: h * (.8 + .2 * win(t, 11, 12)), haze: 160 });
+});
+
+// ── type ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+F.caption(.8, 4.4, '내가 두 사람에게 전하고,\n그 둘이 또 두 사람에게 전하면?');
+// the counter steps exactly when each step's row is reached (solve grown(t) = k)
+const reach = k => { let lo = 0, hi = F.dur; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (grown(m) < k) lo = m; else hi = m; } return +hi.toFixed(3); };
+F.counter({ t0: 4.6, t1: 15.6, steps: Array.from({ length: LAST }, (_, i) => [reach(i + 1), 2 ** (i + 1), `${i + 1}단계 · 전해 들은 사람`]), gold: 11.2 });
+F.caption(11.6, 15.6, '서른세 번 만에\n*지구 전체*보다 많아져요.', { y: 430 });
+F.axis(5, 12, Array.from({ length: LAST }, (_, k) => [y(k + 1), `${k + 1}`]), { top: 520 });
+
+F.beat('질문', 0, 4.4).beat('두 배씩', 4.4, 11).beat('지구 전체', 11, 16);
+F.check('counter and caption never overlap', t => !(env(t, 4.6, 15.6) > 0 && env(t, .8, 4.4) > .05));
+F.start();
+</script>
+</body>
+</html>
