@@ -22,7 +22,8 @@ half-suspected it had traced the original). This skill takes the *format*: the p
 looks and moves, the stylus. It does not take the portrait or its character (references/SOURCE.md). Worked example:
 `examples/rainy-window` 「비 오는 창가」 (47 s: a girl with a black bob by a rainy window at dusk, cool window light, warm
 lamp rim). Starter: `templates/` 「아침 커피」 (28 s, a mug in morning light). Reference mode: `examples/reference-mode` 「벚꽃 노을」
-(51 s: the replay draws toward a given picture, here an image generated with ElevenLabs). Live: https://jungrok5.github.io/motion-skills/speedpaint-replay/
+(51 s: the replay draws toward a given picture, here an image generated with ElevenLabs) and `examples/reference-ginkgo`
+「은행잎 저녁」 (51 s, a 2048 px reference with clear line art). Live: https://jungrok5.github.io/motion-skills/speedpaint-replay/
 
 **Fixed by the style** (every piece): the 1080×1220 page; beige UI, the title, the note, the six chips (orange = now),
 the rounded white card with a soft shadow; the stylus that follows the tip of whatever is being drawn, glides between
@@ -52,8 +53,9 @@ language if the audience needs it.
 | `lib/fonts/` | Pretendard SemiBold + Bold (KS X 1001 subset: all 2,350 common Hangul + Latin), OFL licence beside them |
 | `templates/` | 「아침 커피」 starter: `index.html`, `art.js`, `BRIEF.md`. This is what `new-piece.mjs` copies |
 | `examples/rainy-window/` | the worked example: `BRIEF.md` (design + review log), `index.html`, `art.js` |
+| `examples/reference-ginkgo/` | reference mode, second sample: a 2048 px picture with clear line art (dark hair, glasses, night light); same files |
 | `examples/reference-mode/` | reference mode: `reference.jpg` (the picture it draws toward), `plan.json` (what the agent saw in it: construction, material lassos, order of work), `ref.js` (measured), `art.js`, `BRIEF.md` |
-| `scripts/from-image.mjs` | reference mode: picture (+ `plan.json`) → `ref.js`: ink strokes with widths, materials from rough lassos snapped by colour, tone shapes with edge softness, airbrush dabs, detail strokes, order of work; `--debug` writes grid / lines / materials / tones / predicted-finish sheets |
+| `scripts/from-image.mjs` | reference mode: picture (+ `plan.json`) → `ref.js`: ink strokes with widths, contour strokes where materials meet without a drawn line, materials from rough lassos snapped by colour, tone shapes with edge softness, airbrush dabs, detail strokes, order of work; `--debug` writes grid / lines / materials / tones / predicted-finish sheets |
 | `scripts/new-piece.mjs` | start a piece (starter, or `--from rainy-window`) |
 | `scripts/render.mjs` | stills, `--stages` (end of each stage + finished), contact sheets, the MP4 (workers × ffmpeg) |
 | `scripts/check.mjs` | loads clean; every stage has items and time; every item leaves a mark; no fill pops in; stylus on the card; covered, not black or blown out; glyphs; deterministic; body check + body sheet |

@@ -2,10 +2,11 @@
 // replay can draw toward it in a painter's order. Not pixels: construction → inked lines → flats inside the lines →
 // shadow shapes → light shapes → airbrush blending → drawn-in detail → line colour.
 //   node <skill>/scripts/from-image.mjs picture.png --out ref.js [--plan plan.json] [--debug out/ref]
-//        [--materials 8] [--lines 450] [--details 1200] [--fit cover|contain]
+//        [--materials 8] [--lines 450] [--contours 200] [--details 1200] [--fit cover|contain]
 // What it measures (all in art units, 1000 × 1000):
 //   lines      thin dark line work (morphological black top-hat) → skeleton → strokes joined through junctions, each
 //              with its measured width along its length (thick lashes, hairlines that taper) and its own colour
+//   contours   outlines where two materials meet without a drawn line (dark hair against the sky): inked too
 //   materials  a few regions that are one thing each (skin, hair, cloth, background …): the plan's rough lassos, with
 //              the exact edge found by colour; each gets ONE base colour: its flat
 //   tones      inside each material, the few colours it is shaded with: darker ones are shadow shapes, lighter ones
@@ -26,7 +27,7 @@ import { resolve, basename, join as pjoin } from 'node:path';
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i > -1 ? args[i + 1] : d; };
 const img = args.find((a, i) => !a.startsWith('--') && !(args[i - 1] || '').startsWith('--'));
-if (!img || !existsSync(img)) { console.error('usage: from-image.mjs <image> --out ref.js [--plan plan.json] [--debug dir] [--materials 8] [--lines 450] [--details 1200]'); process.exit(1); }
+if (!img || !existsSync(img)) { console.error('usage: from-image.mjs <image> --out ref.js [--plan plan.json] [--debug dir] [--materials 8] [--lines 450] [--contours 200] [--details 1200]'); process.exit(1); }
 const N = 1000, P = N * N, KM = +opt('materials', 8), MAXL = +opt('lines', 450), MAXD = +opt('details', 1200), fit = opt('fit', 'cover');
 const out = resolve(opt('out', 'ref.js')), dbg = opt('debug') ? resolve(opt('debug')) : null;
 const plan = opt('plan') && existsSync(opt('plan')) ? JSON.parse(readFileSync(opt('plan'), 'utf8')) : {};
@@ -213,6 +214,7 @@ function joinChains(ls, gap = 10, minDot = .72) {
   }
   return ls;
 }
+const extent = pts => { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const [x, y] of pts) { if (x < x0) x0 = x; if (y < y0) y0 = y; if (x > x1) x1 = x; if (y > y1) y1 = y; } return Math.hypot(x1 - x0, y1 - y0); };
 const sm = (arr, fixedEnds = true, passes = 2) => { let a = arr; for (let p = 0; p < passes; p++) { const b = a.slice(); for (let i = 1; i < a.length - 1; i++) b[i] = (a[i - 1] + 2 * a[i] + a[i + 1]) / 4; if (!fixedEnds && a.length > 1) { b[0] = (3 * a[0] + a[1]) / 4; b[a.length - 1] = (3 * a[a.length - 1] + a[a.length - 2]) / 4; } a = b; } return a; };
 let strokes = joinChains(trace(thin(M))).filter(l => l.length >= 7).map(l => {
   const n = l.length; let r = 0, g = 0, b = 0, dk = 0; for (const [, , i] of l) dk += Math.max(bh4[i], bh9[i]);
@@ -223,9 +225,14 @@ let strokes = joinChains(trace(thin(M))).filter(l => l.length >= 7).map(l => {
   let wm = 0; for (const w of ws) wm += w; wm /= n;
   return { p: idx.map(i => pts[i]), w: idx.map(i => ws[i]), len: n, wm, dark: dk / n, col: [r / n, g / n, b / n] };
 });
-strokes = strokes.filter(s => s.len >= 14 || s.wm > 3.2);   // specks are not strokes (thick short marks are: lashes, pupils)
+strokes = strokes.filter(s => (s.len >= 14 || s.wm > 3.2) && extent(s.p) >= 3);   // specks are not strokes (thick short marks are: lashes, pupils)
 // which strokes are inked: the long, dark, wide ones, and what lies in an early focus box (a nose is a short faint line that matters)
-const rank = s => { const m = s.p[s.p.length >> 1], g = groupOf(m[0], m[1]); return s.len * s.wm * s.dark * (1 + 3 * (focus.length - g) / Math.max(1, focus.length)); };
+// … and not what lies outside every lasso: nobody inks a blurred background
+const subject = (() => { const polys = (plan.materials || []).flatMap(m => m.poly || []); if (!polys.length) return null; const m = new Uint8Array(P);
+  for (const poly of polys) { const n = poly.length / 2; for (let y = 0; y < N; y++) { const yc = y + .5, xs = []; for (let k = 0; k < n; k++) { const x1 = poly[k * 2], y1 = poly[k * 2 + 1], x2 = poly[((k + 1) % n) * 2], y2 = poly[((k + 1) % n) * 2 + 1]; if ((y1 <= yc && y2 > yc) || (y2 <= yc && y1 > yc)) xs.push(x1 + (yc - y1) / (y2 - y1) * (x2 - x1)); } xs.sort((a, b) => a - b); for (let k = 0; k + 1 < xs.length; k += 2) for (let x = Math.max(0, Math.round(xs[k]) - 12); x <= Math.min(N - 1, Math.round(xs[k + 1]) + 12); x++) m[y * N + x] = 1; } }
+  return m; })();
+const rank = s => { const m = s.p[s.p.length >> 1], g = groupOf(m[0], m[1]), inSubject = !subject || subject[Math.min(N - 1, Math.max(0, Math.round(m[1]))) * N + Math.min(N - 1, Math.max(0, Math.round(m[0])))];
+  return s.len * s.wm * s.dark * (1 + 3 * (focus.length - g) / Math.max(1, focus.length)) * (inSubject ? 1 : .12); };
 strokes.sort((a, b) => rank(b) - rank(a));
 const dropped = strokes.length - Math.min(strokes.length, MAXL); strokes = strokes.slice(0, MAXL);
 // the kept line art as a mask (what the ink layer will cover), and the picture with it painted out
@@ -316,6 +323,24 @@ const order = mats.map((m, k) => k).filter(k => mats[k].n > 0).sort((a, b) => {
   const A = mats[a], B = mats[b]; if (!A.auto) return (A.rest ? 1 : 0) - (B.rest ? 1 : 0) || a - b;
   const sc = m => Math.hypot(m.cx - N / 2, m.cy - N / 2) / N + m.border / (4 * N) * 3; return sc(A) - sc(B); });
 log(`materials: ${order.map(k => `${mats[k].name} ${(mats[k].n / P * 100).toFixed(1)} %`).join(' · ')}`);
+
+// contours: where two materials meet and the picture has no drawn line (black hair against the sky, a jaw against a
+// scarf), a painter still draws the outline. They are inked like the rest and take the darker side's colour in the trace.
+{ const nearLine = distTo(i => M[i]), B = new Uint8Array(P);
+  for (let y = 3; y < N - 3; y++) for (let x = 3; x < N - 3; x++) { const i = y * N + x; if (mat[i] !== mat[i + 1] || mat[i] !== mat[i + N]) B[i] = 1; }
+  for (let i = 0; i < P; i++) if (B[i]) { if (!B[i + 1] && !B[i - 1] && !B[i + N] && !B[i - N] && !B[i + N + 1] && !B[i - N - 1] && !B[i + N - 1] && !B[i - N + 1]) B[i] = 0; }
+  // an outline is kept whole unless a drawn line already runs along most of it (then the line is the outline)
+  const cont = joinChains(trace(thin(B)), 14, .6).filter(l => { if (l.length < 20) return false; let on = 0; for (const p of l) if (nearLine[p[2]] <= 4) on++; return on < l.length * .8; }).map(l => {
+    const n = l.length, xs = sm(l.map(p => p[0] + .5), true, 12), ys = sm(l.map(p => p[1] + .5), true, 12), pts = xs.map((x, i) => [x, ys[i]]), idx = dp(pts, .5, true);
+    // the darker side, sampled a few pixels off the boundary on both sides
+    let r = 0, g = 0, b = 0, c = 0; for (let k = 2; k < n - 2; k += 3) { const [x, y] = l[k], dx = l[k + 2][0] - l[k - 2][0], dy = l[k + 2][1] - l[k - 2][1], L = Math.hypot(dx, dy) || 1; let best = null, bl = 9;
+      for (const sg of [4, -4]) { const xx = Math.round(x - dy / L * sg), yy = Math.round(y + dx / L * sg); if (xx < 0 || yy < 0 || xx >= N || yy >= N) continue; const j = yy * N + xx, ll = .2126 * Us[0][j] + .7152 * Us[1][j] + .0722 * Us[2][j]; if (ll < bl) { bl = ll; best = j; } }
+      if (best !== null) { r += Us[0][best]; g += Us[1][best]; b += Us[2][best]; c++; } }
+    c = c || 1; const col = [r / c * .9, g / c * .9, b / c * .9];   // after the trace an outline all but melts into its darker side
+    return { p: idx.map(i => pts[i]), w: idx.map(() => 2.3), len: n, wm: 2.3, dark: .12, col, contour: true };
+  }).sort((a, b) => b.len - a.len).slice(0, +opt('contours', 200));
+  for (let k = cont.length - 1; k >= 0; k--) if (extent(cont[k].p) < 12) cont.splice(k, 1);   // a tiny closed loop smooths to a point
+  strokes.push(...cont); log(`contours: ${cont.length} outline strokes where materials meet without a drawn line`); }
 
 // ───────── 3. tones: the few colours each material is shaded with ─────────
 const Ut = U.map(c => gauss(c, 1.6)), tone = new Int16Array(P).fill(-1), S = [new Float32Array(P), new Float32Array(P), new Float32Array(P)];

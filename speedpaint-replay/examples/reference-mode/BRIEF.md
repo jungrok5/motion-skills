@@ -23,8 +23,8 @@ The replay paints the picture the way a person would: a silver-haired girl in go
 
 ## Measuring
 `node ../../scripts/from-image.mjs reference.jpg --plan plan.json --out ref.js --debug out/ref`
-Result: 15 construction lines, 450 ink strokes (406 fainter ones left to the detail pass), 8 flats, 21 shadow and
-22 light shapes (crisp and soft-brush), 1,587 airbrush dabs, 1,200 detail strokes. Predicted finish: mean error 4.4 %.
+Result: 15 construction lines, 608 ink strokes (450 drawn lines + 158 contour strokes; 406 fainter lines left to the
+detail pass), 8 flats, 42 tone shapes (crisp and soft-brush), 1,565 airbrush dabs, 1,200 detail strokes. Predicted finish: mean error 4.4 %.
 
 ## Body marks (read off the picture, art units)
 eyes L (424, 271, 132 × 63) and R (646, 322, 97 × 63): she faces right, so R is the far, narrower eye; nose (597, 389);

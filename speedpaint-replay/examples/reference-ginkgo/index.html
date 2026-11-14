@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>은행잎 저녁 · speedpaint-replay</title>
+<script type="importmap">{ "imports": { "sp/": "../../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+import { Replay } from 'sp/replay.js';
+import { art } from './art.js';
+// seconds per stage — set them from BRIEF.md (where should the viewer linger?)
+const R = new Replay(art(), { stages: { rough: 5, line: 16, flat: 5, shadow: 6, highlight: 5, finish: 10 }, hold: 3, labels: 'ko' });
+R.start();
+</script>
+</body>
+</html>

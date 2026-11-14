@@ -32,7 +32,8 @@ Reference mode: `examples/reference-mode/` 「벚꽃 노을」 (51 s): the repla
 would make it. The agent writes `plan.json` after looking at the picture (construction, a rough lasso per material,
 the order of work); `from-image.mjs` measures the ink strokes and their widths, the exact material edges, the shadow
 and light shapes (hard or soft), the blending and the detail strokes. Here the picture is an image generated with
-ElevenLabs (prompt in its BRIEF.md).
+ElevenLabs (prompt in its BRIEF.md). `examples/reference-ginkgo/` 「은행잎 저녁」 (51 s) is a second one from a
+2048 px picture with clear line art: larger sources ink into longer, cleaner strokes.
 
 Format after an X post by 余白とインク (@yohakutoink): https://x.com/yohakutoink/status/2120824797215310208?a=-D3pDsiFMNVDxo3e18k&s=19
 Its portrait and character are not used; the code, drawings and designs here are this repo's own.

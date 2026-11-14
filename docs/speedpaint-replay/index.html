@@ -53,6 +53,7 @@ node ../../scripts/from-image.mjs picture.png --plan plan.json --out ref.js</cod
       <span class="btns" role="group" aria-label="데모 예제">
         <button class="btn" type="button" data-src="demo/rainy-window/" data-cap="예제 &lt;code&gt;examples/rainy-window&lt;/code&gt; · 47초 · 칩을 누르면 그 단계로" aria-pressed="true">비 오는 창가</button>
         <button class="btn" type="button" data-src="demo/reference-mode/" data-cap="레퍼런스 모드 &lt;code&gt;examples/reference-mode&lt;/code&gt; · 51초 · 일레븐랩스로 만든 그림을 사람이 그리는 순서로" aria-pressed="false">벚꽃 노을</button>
+        <button class="btn" type="button" data-src="demo/reference-ginkgo/" data-cap="레퍼런스 모드 &lt;code&gt;examples/reference-ginkgo&lt;/code&gt; · 51초 · 2048 px 그림을 사람이 그리는 순서로" aria-pressed="false">은행잎 저녁</button>
         <button class="btn" type="button" data-src="demo/starter/" data-cap="시작 그림 &lt;code&gt;templates/&lt;/code&gt; · 28초 · 새 그림의 출발점" aria-pressed="false">아침 커피</button>
       </span></div>
   </div>
@@ -60,8 +61,8 @@ node ../../scripts/from-image.mjs picture.png --plan plan.json --out ref.js</cod
 
 <section id="samples"><div class="wrap">
   <h2>샘플</h2>
-  <p class="lead">예제 「비 오는 창가」의 여섯 단계, 레퍼런스 모드 「벚꽃 노을」, 시작 그림 「아침 커피」입니다. 카드를 누르면 새 탭에서 그 순간부터 메이킹이 재생되고, 브라우저가 선과 색을 직접 그립니다.</p>
-  <div class="chips" data-for="gallery" data-labels='{"rain":"비 오는 창가","ref":"레퍼런스 모드","start":"출발점"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <p class="lead">예제 「비 오는 창가」의 여섯 단계, 레퍼런스 모드 「벚꽃 노을」과 「은행잎 저녁」, 시작 그림 「아침 커피」입니다. 카드를 누르면 새 탭에서 그 순간부터 메이킹이 재생되고, 브라우저가 선과 색을 직접 그립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"rain":"비 오는 창가","ref":"레퍼런스 · 벚꽃 노을","ginkgo":"레퍼런스 · 은행잎 저녁","start":"출발점"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
   <div id="gallery">
     <div class="group">
       <h3>비 오는 창가 <small>1080×1220 · 47초 · 원본에 없는 주제</small></h3>
@@ -91,7 +92,7 @@ node ../../scripts/from-image.mjs picture.png --plan plan.json --out ref.js</cod
       </div>
     </div>
     <div class="group">
-      <h3>레퍼런스 모드 <small>1080×1220 · 51초 · 그림 한 장을 사람이 그리는 순서로</small></h3>
+      <h3>레퍼런스 모드 · 벚꽃 노을 <small>1080×1220 · 51초 · 그림 한 장을 사람이 그리는 순서로</small></h3>
       <p>그림 한 장을 주면, 그 그림이 그려지는 과정을 사람이 디지털 페인팅을 하는 순서대로 보여 줍니다. 에이전트가 그림을 보고 구조(머리 원 · 중심선 · 눈높이선), 재질별 올가미(피부 · 머리 · 옷 · 배경), 그리는 순서(눈 → 얼굴 → 머리 → 옷)를 <code>plan.json</code>에 적고, <code>from-image.mjs</code>가 선의 위치와 굵기, 재질의 정확한 경계, 명암 덩어리와 그 가장자리의 부드러움, 블렌딩, 세부 묘사를 잽니다. 여기서는 일레븐랩스(gpt-image-2.5-sunburst)로 만든 그림을 썼고, 프롬프트는 예제의 <code>BRIEF.md</code>에 있습니다.</p>
       <div class="grid">
         <a class="tile" data-tags="ref" href="https://github.com/jungrok5/motion-skills/blob/main/speedpaint-replay/examples/reference-mode/reference.jpg" target="_blank" rel="noopener">
@@ -102,7 +103,7 @@ node ../../scripts/from-image.mjs picture.png --plan plan.json --out ref.js</cod
           <div class="cap"><span class="no">러프 · 4.5초</span><b>구조 잡기</b><span class="how">머리 원, 중심선, 눈높이선, 턱, 목과 어깨</span></div></a>
         <a class="tile" data-tags="ref" href="demo/reference-mode/?t=14" target="_blank" rel="noopener">
           <img src="samples/ref-line.jpg" alt="두 눈과 얼굴 윤곽이 먼저 그려지고 머리카락 선이 이어서 그려지는 펜 선화" loading="lazy" width="640" height="723">
-          <div class="cap"><span class="no">선화 · 14초</span><b>눈부터, 그다음 얼굴과 머리</b><span class="how">굵기가 변하는 펜 획 450개, 눈 → 얼굴 → 머리 → 옷</span></div></a>
+          <div class="cap"><span class="no">선화 · 14초</span><b>눈부터, 그다음 얼굴과 머리</b><span class="how">굵기가 변하는 펜 획 608개, 눈 → 얼굴 → 머리 → 옷</span></div></a>
         <a class="tile" data-tags="ref" href="demo/reference-mode/?t=25" target="_blank" rel="noopener">
           <img src="samples/ref-flats.jpg" alt="선화 위에 피부, 머리, 리본에 한 색씩 밑색이 들어가고 붓이 다음 재질을 칠해 가는 장면" loading="lazy" width="640" height="723">
           <div class="cap"><span class="no">밑색 · 25초</span><b>재질마다 한 색</b><span class="how">피부 · 눈 · 머리 · 리본 · 셔츠 · 재킷 · 꽃잎 · 배경</span></div></a>
@@ -114,10 +115,43 @@ node ../../scripts/from-image.mjs picture.png --plan plan.json --out ref.js</cod
           <div class="cap"><span class="no">하이라이트 · 37.4초</span><b>빛 덩어리</b><span class="how">역광을 받은 머리카락과 얼굴의 빛</span></div></a>
         <a class="tile" data-tags="ref" href="demo/reference-mode/?t=43" target="_blank" rel="noopener">
           <img src="samples/ref-blend.jpg" alt="에어브러시로 색이 부드럽게 풀리고 가는 머리카락이 그려지는 마무리 도중 장면" loading="lazy" width="640" height="723">
-          <div class="cap"><span class="no">마무리 · 43초</span><b>블렌딩과 세부 묘사</b><span class="how">재질 안에서 에어브러시 1,587번, 세부 붓질 1,200개</span></div></a>
+          <div class="cap"><span class="no">마무리 · 43초</span><b>블렌딩과 세부 묘사</b><span class="how">재질 안에서 에어브러시 1,565번, 세부 붓질 1,200개</span></div></a>
         <a class="tile" data-tags="ref" href="demo/reference-mode/?t=50" target="_blank" rel="noopener">
           <img src="samples/ref-finish.jpg" alt="선 색까지 그림에 맞춰진 완성 장면: 벚꽃 노을 속 은발 소녀" loading="lazy" width="640" height="723">
           <div class="cap"><span class="no">마무리 · 50초</span><b>선 색 맞추기</b><span class="how">먹색 선을 각 선의 제 색으로 바꾸는 색 트레스</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>레퍼런스 모드 · 은행잎 저녁 <small>1080×1220 · 51초 · 2048 px 레퍼런스</small></h3>
+      <p>레퍼런스 모드의 두 번째 샘플입니다. 일레븐랩스로 2048×2048로 만든, 선이 또렷한 그림(가로등 아래 안경 쓴 소년)을 썼습니다. 그림에 선이 없는 경계(하늘을 배경으로 한 검은 머리, 목도리, 코트)는 재질이 만나는 자리를 따라 윤곽선으로 그립니다. 해상도가 높은 그림에서는 코트와 안경, 얼굴 선이 길고 깨끗하게 나옵니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="ginkgo" href="https://github.com/jungrok5/motion-skills/blob/main/speedpaint-replay/examples/reference-ginkgo/reference.jpg" target="_blank" rel="noopener">
+          <img src="samples/ginkgo-source.jpg" alt="레퍼런스로 쓴 그림: 가로등 불빛 아래 둥근 안경을 쓰고 겨자색 목도리와 짙은 녹색 코트를 입은 검은 머리 소년, 떨어지는 은행잎과 저녁 거리" loading="lazy" width="640" height="723">
+          <div class="cap"><span class="no">레퍼런스 · 생성 이미지 2048 px</span><b>향해 그릴 그림</b><span class="how">일레븐랩스로 만든 그림</span></div></a>
+        <a class="tile" data-tags="ginkgo" href="demo/reference-ginkgo/?t=4.5" target="_blank" rel="noopener">
+          <img src="samples/ginkgo-rough.jpg" alt="파란 선으로 그린 머리 원, 왼쪽으로 휜 중심선, 눈높이선, 안경 원 두 개, 귀, 턱선, 목도리와 어깨선, 가로등" loading="lazy" width="640" height="723">
+          <div class="cap"><span class="no">러프 · 4.5초</span><b>구조 잡기</b><span class="how">머리 원, 중심선, 안경 원, 턱, 목도리와 어깨, 가로등</span></div></a>
+        <a class="tile" data-tags="ginkgo" href="demo/reference-ginkgo/?t=14" target="_blank" rel="noopener">
+          <img src="samples/ginkgo-line-face.jpg" alt="두 눈과 둥근 안경, 코와 입, 턱선이 먼저 그려진 펜 선화" loading="lazy" width="640" height="723">
+          <div class="cap"><span class="no">선화 · 14초</span><b>눈과 안경부터</b><span class="how">눈 → 안경 · 코 · 입 · 턱 → 머리 → 옷</span></div></a>
+        <a class="tile" data-tags="ginkgo" href="demo/reference-ginkgo/?t=21.4" target="_blank" rel="noopener">
+          <img src="samples/ginkgo-line.jpg" alt="얼굴, 머리 윤곽, 목도리 결, 코트의 긴 선, 은행잎 윤곽까지 다 그려진 선화" loading="lazy" width="640" height="723">
+          <div class="cap"><span class="no">선화 · 21.4초</span><b>윤곽선과 긴 획</b><span class="how">그림에 선이 없는 경계는 재질이 만나는 자리를 따라</span></div></a>
+        <a class="tile" data-tags="ginkgo" href="demo/reference-ginkgo/?t=25" target="_blank" rel="noopener">
+          <img src="samples/ginkgo-flats.jpg" alt="피부, 눈, 검은 머리, 겨자색 목도리에 한 색씩 밑색이 들어가는 장면" loading="lazy" width="640" height="723">
+          <div class="cap"><span class="no">밑색 · 25초</span><b>재질마다 한 색</b><span class="how">피부 · 눈 · 머리 · 목도리 · 코트 · 가로등 · 은행잎 · 배경</span></div></a>
+        <a class="tile" data-tags="ginkgo" href="demo/reference-ginkgo/?t=32.4" target="_blank" rel="noopener">
+          <img src="samples/ginkgo-shadow.jpg" alt="밑색 위에 얼굴 옆면과 목, 목도리 주름, 배경에 그림자 덩어리가 올라간 장면" loading="lazy" width="640" height="723">
+          <div class="cap"><span class="no">그림자 · 32.4초</span><b>그림자 덩어리</b><span class="how">얼굴 옆면, 목, 목도리 주름</span></div></a>
+        <a class="tile" data-tags="ginkgo" href="demo/reference-ginkgo/?t=37.4" target="_blank" rel="noopener">
+          <img src="samples/ginkgo-light.jpg" alt="가로등 불빛, 머리카락 가장자리의 역광, 거리의 불빛이 올라간 장면" loading="lazy" width="640" height="723">
+          <div class="cap"><span class="no">하이라이트 · 37.4초</span><b>가로등 빛</b><span class="how">등불, 머리 가장자리 역광, 거리 불빛</span></div></a>
+        <a class="tile" data-tags="ginkgo" href="demo/reference-ginkgo/?t=43" target="_blank" rel="noopener">
+          <img src="samples/ginkgo-blend.jpg" alt="에어브러시로 색이 풀리고 목도리 결과 머리카락이 그려지는 마무리 도중 장면" loading="lazy" width="640" height="723">
+          <div class="cap"><span class="no">마무리 · 43초</span><b>블렌딩과 세부 묘사</b><span class="how">에어브러시 1,425번, 세부 붓질 1,200개</span></div></a>
+        <a class="tile" data-tags="ginkgo" href="demo/reference-ginkgo/?t=50" target="_blank" rel="noopener">
+          <img src="samples/ginkgo-finish.jpg" alt="선 색까지 그림에 맞춰진 완성 장면: 가로등 아래 안경 쓴 소년과 은행잎" loading="lazy" width="640" height="723">
+          <div class="cap"><span class="no">마무리 · 50초</span><b>완성</b><span class="how">먹색 선을 각 선의 제 색으로</span></div></a>
       </div>
     </div>
     <div class="group">
@@ -144,7 +178,8 @@ node ../../scripts/from-image.mjs picture.png --plan plan.json --out ref.js</cod
   <div class="works">
     <a class="work" href="demo/rainy-window/" target="_blank" rel="noopener"><b>「비 오는 창가」 · 47초</b><span>검은 단발머리 소녀, 차가운 창빛과 따뜻한 램프, 비와 보케, 라이브 페이지</span><span class="url">speedpaint-replay/demo/rainy-window/</span></a>
     <a class="work" href="demo/reference-mode/" target="_blank" rel="noopener"><b>「벚꽃 노을」 · 51초 · 레퍼런스 모드</b><span>일레븐랩스로 만든 그림을 사람이 그리는 순서로 그리는 메이킹, 라이브 페이지</span><span class="url">speedpaint-replay/demo/reference-mode/</span></a>
-    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/speedpaint-replay/examples"><b>예제 폴더 · examples/</b><span>rainy-window, reference-mode (브리프, 프롬프트, 스틸 검토 기록 포함)</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="demo/reference-ginkgo/" target="_blank" rel="noopener"><b>「은행잎 저녁」 · 51초 · 레퍼런스 모드</b><span>2048 px로 만든 그림, 윤곽선과 긴 펜 획, 라이브 페이지</span><span class="url">speedpaint-replay/demo/reference-ginkgo/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/speedpaint-replay/examples"><b>예제 폴더 · examples/</b><span>rainy-window, reference-mode, reference-ginkgo (브리프, 프롬프트, 스틸 검토 기록 포함)</span><span class="url">github.com/jungrok5/motion-skills</span></a>
     <a class="work" href="https://x.com/yohakutoink/status/2120824797215310208?a=-D3pDsiFMNVDxo3e18k&amp;s=19" target="_blank" rel="noopener"><b>레퍼런스 영상 · X 게시물</b><span>余白とインク(@yohakutoink) · 47초 · 1080×1220</span><span class="url">x.com/yohakutoink/status/2120824797215310208</span></a>
   </div>
 </div></section>

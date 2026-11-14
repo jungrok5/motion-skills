@@ -57,14 +57,15 @@ stages will look like a painter's, but nothing will be *about* anything. Write t
 | step | how | becomes |
 |---|---|---|
 | lines | thin dark structures (black top-hat on luminance, hysteresis) → skeleton → chains joined through junctions and across short gaps when they run straight on; width = full width at half the line's own darkness; colour = its darker half | ink strokes with a width that changes along them, drawn in the ink colour; `color2` = their own colour |
-| which lines | the longest, darkest, widest `--lines` (450), boosted inside early focus boxes (a nose is short and faint and matters) | the rest are left to the detail pass |
+| which lines | the longest, darkest, widest `--lines` (450), boosted inside early focus boxes (a nose is short and faint and matters), demoted outside every lasso (nobody inks a blurred background) | the rest are left to the detail pass |
+| contours | where two materials meet and the picture has no drawn line (black hair against the sky, a jaw against a scarf): the boundary, unless a drawn line already covers 80 % of it; `--contours` (200) | ink strokes of even width; in the trace they take the darker side's colour and all but disappear |
 | materials | per pixel: the nearest material by colour (its samples, or what lies in its lasso alone), with a penalty that grows outside the lasso; majority filter; stray islands joined to their surroundings | one compound region per material, filled with its base colour |
 | tones | k-means in Lab inside the material: as few colours as describe it; the largest is the base; darker = shadow, lighter = light; shapes smoothed; each shape's edge measured (colour step ÷ gradient) | crisp shapes for hard edges, soft-brush shapes (blurred, clipped to the material) for soft ones: a cast shadow and a blush of the same colour are told apart |
 | airbrush | what the tones still miss at low frequency: soft dabs in rows, coarse then fine, inside the material | one blending pass per material |
 | details | where the picture (lines included) still differs outside the ink: strokes traced along the picture's own direction, widest error first | fine hairs, lashes the pen left thin, iris and lip accents |
 | order | focus boxes, then nearest-next, each stroke entered from its nearer end | the stylus moves like a hand, not a scanner |
 
-Options: `--lines 450`, `--details 1200`, `--detail-thr .075`, `--materials 8` (clusters without a plan),
+Options: `--lines 450`, `--contours 200`, `--details 1200`, `--detail-thr .075`, `--materials 8` (clusters without a plan),
 `--line-weak .024 --line-strong .06` (line detection), `--fit cover|contain`. About 10 s; deterministic.
 
 ## In art.js
@@ -87,6 +88,7 @@ rough 5 · line 16 · flat 5 · shadow 6 · highlight 5 · finish 10.
 
 ## Limits
 - A picture without line art gets few ink strokes; its edges are then carried by the flats and tones.
-- The source's resolution limits the line art: at 720 px lines are 1–2 px wide and break up more.
+- The source's resolution limits the line art: at 720 px lines are 1–2 px wide and break up more. Prefer 2K and
+  ask for "clean dark line art, clear continuous outlines" when generating a reference (compare the two samples).
 - The plan's lassos are the agent's judgement: where two materials have the same colour and the lasso is loose, the
   edge follows the lasso.

@@ -80,3 +80,11 @@
 - **A blush was painted as a hard patch.** One tone colour held a crisp cast shadow and a soft blush. → Tone shapes are
   split by connected shape and each shape's edge width is measured (colour step ÷ gradient at 3 px blur): hard shapes
   stay crisp, soft ones are laid with a blurred brush clipped to the material.
+- **A light-against-dark edge is not a line.** The line detector finds thin dark structures, so a jaw against a scarf,
+  black hair against the sky and a coat's silhouette had no outline at all. → Contour strokes: the boundary between
+  two materials becomes an ink stroke unless a drawn line already covers 80 % of it; in the colour trace it takes
+  the darker side's colour.
+- **A third of the ink went into a blurred background.** Lamp, foliage and bokeh are full of thin dark specks. →
+  Strokes whose middle lies outside every lasso rank at 12 %.
+- **Does a larger reference ink better? Yes.** The 2048 px sample (reference-ginkgo) gives long clean strokes on the
+  coat, glasses and face where the 720 px one broke into dashes. Lit, wispy edges still break up.
