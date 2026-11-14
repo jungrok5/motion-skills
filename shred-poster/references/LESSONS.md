@@ -21,3 +21,5 @@
 - **A filter sweep clicked** when a biquad was re-created each block. Retune one filter in place (`.set()` keeps state).
 - **CPU rendering**: SwiftShader takes ~0.4 s per half-size sub-frame and 1–2 s per full-size one; the cascade costs
   most (the pile is rebuilt every sub-frame). Use `--stills` with `--mb 1 --scale 0.5` while composing.
+- **Final render cost** for 「퇴고」 on a 4-core CPU without a GPU: 480 frames × 4 sub-frames in 38 min with 3 workers
+  (4.7 s a frame on average; the cascade shot about twice the others).

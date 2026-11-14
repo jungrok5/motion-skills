@@ -84,8 +84,8 @@ Extra sources (`src/20_picture.js`, `src/30_marks.js` …) are fine: files are j
 
 ## Requirements
 Node 18+, Playwright with Chromium, ffmpeg; npm access once per font family. A GPU is optional: without one WebGL runs
-on the CPU (SwiftShader): the final 480 frames (1080×1920, 4 sub-frames each) took about 55 min on 4 cores with 3
-workers for 「퇴고」, the cascade being the slowest shot; a draft takes 3–4 min, a contact sheet under a minute.
+on the CPU (SwiftShader): the final 480 frames (1080×1920, 4 sub-frames each) took 38 min (4.7 s a frame) on 4 cores with
+3 workers for 「퇴고」, the cascade being the slowest shot; a draft takes 3–4 min, a contact sheet under a minute.
 
 ## Workflow
 Run scripts from anywhere; paths are `<skill>/scripts/…` and the project folder.

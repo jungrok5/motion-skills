@@ -43,7 +43,7 @@ node shred-poster/scripts/render.mjs shred-poster/examples/toego           # out
 
 node shred-poster/scripts/new-film.mjs my-poster                           # 새 주제
 node shred-poster/scripts/font.mjs add my-poster "Space Grotesk" 700</code></pre>
-    <p class="mute">요구 사항: Node 18+, Playwright Chromium, ffmpeg, 서체마다 npm 한 번. GPU 없이도 렌더됩니다(4코어 CPU에서 최종 480프레임에 약 55분, 초안은 3–4분). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/shred-poster/SKILL.md">SKILL.md</a>에 있습니다.</p>
+    <p class="mute">요구 사항: Node 18+, Playwright Chromium, ffmpeg, 서체마다 npm 한 번. GPU 없이도 렌더됩니다(4코어 CPU에서 최종 480프레임에 약 40분, 초안은 3–4분). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/shred-poster/SKILL.md">SKILL.md</a>에 있습니다.</p>
   </div>
   <div class="demo" style="--ar:4/5;--h-phone:640px;--demo-bg:#171512">
     <iframe data-src="demo/toego/" title="shred-poster 예제 실시간 재생" allow="fullscreen; autoplay" allowfullscreen></iframe>
@@ -73,7 +73,7 @@ node shred-poster/scripts/font.mjs add my-poster "Space Grotesk" 700</code></pre
           <div class="cap"><span class="no">캐스케이드 · 1.4초</span><b>히어로 리본</b><span class="how">히어로 줄을 길게 자른 주홍 리본, 높이 맵 더미로 서로 뚫지 않는 리본</span></div></a>
         <a class="tile" data-tags="film" href="demo/toego/?t=3.1" target="_blank" rel="noopener"><img src="samples/toego-bite.jpg" alt="크림색 바탕 위 인셋 안에서 원고지 본문이 파쇄기 칼날 사이로 들어가는 장면" loading="lazy" width="360" height="640">
           <div class="cap"><span class="no">파쇄기 · 3.1초</span><b>물림</b><span class="how">아래부터 들어가는 포스터, 칼날 원판, 포스터 종이색 바탕의 인셋</span></div></a>
-        <a class="tile" data-tags="film" href="demo/toego/?t=4.0" target="_blank" rel="noopener"><img src="samples/toego-curtain.jpg" alt="칼날 아래에서 올려다본 종이 띠의 커튼, 잘린 다시 쓰기 글자" loading="lazy" width="360" height="640">
+        <a class="tile" data-tags="film" href="demo/toego/?t=4.0" target="_blank" rel="noopener"><img src="samples/toego-curtain.jpg" alt="칼날 아래에서 올려다본 종이 띠의 커튼, 띠마다 잘린 글자 조각" loading="lazy" width="360" height="640">
           <div class="cap"><span class="no">파쇄기 · 4.0초</span><b>띠의 커튼</b><span class="how">칼날 밑으로 들어가 올려다본 커튼, 잘려 나오는 아래 줄</span></div></a>
         <a class="tile" data-tags="film" href="demo/toego/?t=5.6" target="_blank" rel="noopener"><img src="samples/toego-rebuild.jpg" alt="가운데 줄부터 제자리에 맞춰지고 위아래 띠들이 아직 좌우로 어긋난 포스터" loading="lazy" width="360" height="640">
           <div class="cap"><span class="no">다시 맞춤 · 5.6초</span><b>가운데부터</b><span class="how">가운데 문장부터 바깥으로 착지하는 파도, 착지마다 딸깍</span></div></a>
