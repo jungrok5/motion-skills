@@ -20,7 +20,7 @@ const Weather = {};
     DR.weather.glow = (t) => { const p = Yong.pearlAt(t); if (!p[3]) return null; return [p[0], p[1], p[2], p[3] * (t < B.SEIZE ? 1.6 : 0.9) * (1 + 0.12 * Math.sin(t * 5.1))]; };
     DR.camKick = (t) => 2.4 * pulse(t, B.BURST, B.BURST + 1.6, 0.05, 1.2) + 1.6 * pulse(t, B.ROAR, B.ROAR + 2.2, 0.15, 0.8) + 1.2 * (pulse(t, B.BOLT1, B.BOLT1 + 0.5, 0.03, 0.4) + pulse(t, B.BOLT2, B.BOLT2 + 0.5, 0.03, 0.4) + pulse(t, B.BOLT3, B.BOLT3 + 0.6, 0.03, 0.5)) + 1.3 * pulse(t, 62.7, 63.6, 0.2, 0.6) + 1.2 * pulse(t, 67.6, 68.4, 0.2, 0.5);
     // the pearl's halo and the shaft of light it comes down in
-    FX.glow({ color: '#fff0c0', at: (t) => { const p = Yong.pearlAt(t); if (!p[3]) return null; const s = seize(t); return [p[0], p[1], p[2], (t < B.SEIZE ? 40 : 7) + s * 12, p[3] * (t < B.SEIZE ? 0.8 : 0.4) + s * 0.5]; } });
+    FX.glow({ color: '#fff0c0', at: (t) => { const p = Yong.pearlAt(t); if (!p[3]) return null; const s = seize(t); return [p[0], p[1], p[2], (t < B.SEIZE ? 40 : 4 + 9 * smooth(B.ROAR, B.ROAR + 2, t)) + s * 12, p[3] * (t < B.SEIZE ? 0.8 : 0.4) + s * 0.5]; } });
     FX.beam({ color: '#ffe9c0', at: (t) => { const k = pulse(t, B.PEARL - 0.3, B.SEIZE + 1.5, 2.5, 2); if (k <= 0) return null; const p = Yong.pearlAt(t); return { a: [p[0] - 14, -2, p[2] + 30], b: [p[0] + 6, 560, p[2] - 10], width: 20, k: 0.07 * k }; } });
     FX.rain({ count: 9000 });
     // the lake: the long shape under the surface, the head coming up, the eruption, the skim
