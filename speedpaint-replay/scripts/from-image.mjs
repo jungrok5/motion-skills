@@ -1,5 +1,5 @@
-// speedpaint-replay · from-image.mjs — REFERENCE MODE: turn an image the user owns (their own illustration, or one they
-// have the rights to) into the six stages of a replay, so the replay draws toward that picture.
+// speedpaint-replay · from-image.mjs — REFERENCE MODE: turn an image into the six stages of a replay, so the replay draws
+// toward that picture.
 //   node <skill>/scripts/from-image.mjs my-drawing.png --out ref.js [--colors 18] [--lines 1600] [--dabs 7000] [--fit cover|contain] [--res 720]
 // Writes ref.js (export const REF = { … }) that lib/reference.js turns into Sketch items:
 //   rough      long contours of the big forms (heavy blur → edges → traced), blue pencil
@@ -9,7 +9,6 @@
 //   highlight  where it is lighter → screen regions with the measured screen colour
 //   finish     detail dabs (small oriented ellipses in the picture's colours) where the stages above still miss
 // Needs only Node and ffmpeg (ffmpeg decodes the image). Deterministic: same image + options → same ref.js.
-// Only for images the user may use: their own work, or with permission. Never someone else's art or a known character.
 import { execFileSync } from 'node:child_process';
 import { writeFileSync, existsSync } from 'node:fs';
 import { resolve, basename } from 'node:path';
@@ -303,7 +302,7 @@ for (const [step, rad, thr] of [[5, 3.4, .045], [3, 1.9, .06], [2, 1.2, .09]]) {
 log(`finish: ${dab.length} detail dabs`);
 
 writeFileSync(out, `// made by speedpaint-replay/scripts/from-image.mjs from ${basename(img)} (${N}×${N} analysis, ${K} colours)
-// Reference mode: only for an image the user owns or may use. Load with lib/reference.js → addReference(s, REF).
+// Reference mode. Load with lib/reference.js → addReference(s, REF).
 export const REF = ${JSON.stringify({ source: basename(img), rough, line, flats: flats.map(({ p, c, z, o }) => ({ p, c, z, o: Math.round(o) })), shadow, light, dab })};
 `);
 log(`wrote ${out}`);

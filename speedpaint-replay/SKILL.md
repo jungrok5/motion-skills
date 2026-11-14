@@ -21,8 +21,8 @@ anime portrait in code, and the replay page shows it go from a blue head circle 
 half-suspected it had traced the original). This skill takes the *format*: the page, the six stages and how each one
 looks and moves, the stylus. It does not take the portrait or its character (references/SOURCE.md). Worked example:
 `examples/rainy-window` 「비 오는 창가」 (47 s: a girl with a black bob by a rainy window at dusk, cool window light, warm
-lamp rim). Starter: `templates/` 「아침 커피」 (28 s, a mug in morning light). Reference mode: `examples/reference-mode` 「다시 그리기」
-(41 s: the replay draws toward a picture the user owns, here this repo's own 「비 오는 창가」). Live: https://jungrok5.github.io/motion-skills/speedpaint-replay/
+lamp rim). Starter: `templates/` 「아침 커피」 (28 s, a mug in morning light). Reference mode: `examples/reference-mode` 「벚꽃 노을」
+(43 s: the replay draws toward a given picture, here an image generated with ElevenLabs). Live: https://jungrok5.github.io/motion-skills/speedpaint-replay/
 
 **Fixed by the style** (every piece): the 1080×1220 page; beige UI, the title, the note, the six chips (orange = now),
 the rounded white card with a soft shadow; the stylus that follows the tip of whatever is being drawn, glides between
@@ -82,11 +82,10 @@ Requirements: Node + Playwright Chromium, ffmpeg. No network, no npm install, no
    - the FINISH: what the last stage adds that says the mood (rain on glass, sun rays, steam, petals, a neon sign).
    - the TIMINGS: seconds per stage. Line art is the longest stage; the finish is short and sure.
 
-   If the user brings a reference video of someone else's work, extract stills (`ffmpeg -i ref.mp4 -vf fps=1/2,scale=360:-1,tile=6x4
+   If the user brings a reference video, extract stills (`ffmpeg -i ref.mp4 -vf fps=1/2,scale=360:-1,tile=6x4
    sheet.jpg`), note what the stages do, then design your own picture.
-   **Reference mode** (the user gives their own drawing, or one they may use, and wants the replay to draw *that*):
-   write who made the image and on what terms in BRIEF.md, then
-   `node <skill>/scripts/from-image.mjs drawing.png --out ref.js` and start from `--from reference-mode`. The
+   **Reference mode** (the user gives a picture and wants the replay to draw *that*): note where the image came from
+   in BRIEF.md, then `node <skill>/scripts/from-image.mjs drawing.png --out ref.js` and start from `--from reference-mode`. The
    rough, line art, flats, shadows, highlights and a finish detail brush are measured from the picture
    (references/REFERENCE.md). You still own the timings, the finish, and the body marks. Then continue at step 8.
 2. **Start**: `node <skill>/scripts/new-piece.mjs my-piece` (or `--from rainy-window`, or `--from reference-mode`).
@@ -125,10 +124,8 @@ Requirements: Node + Playwright Chromium, ffmpeg. No network, no npm install, no
 - **Every stage is shown, in order.** All six have items and time. The rough appears first and fades. Lines are drawn,
   not faded in. Flats and shadows are brushed in, not switched on (check.mjs fails a fill that pops). The finish is the
   only stage that may fade.
-- **Draw your own, or the user's own.** A designed piece is drawn from its brief. Reference mode only takes an image
-  the user made, or may use (their commission, a licence, CC0), and BRIEF.md says which. Never someone else's art, an
-  existing character, a logo or brand art, in either mode. Either way every mark is a code item (no bitmap is pasted
-  or faded in), so the note on the page stays true.
+- **Every mark is a code item.** A designed piece is drawn from its brief; reference mode draws toward the given
+  picture. Either way nothing is a pasted or faded-in bitmap, so the note on the page stays true.
 - **Bodies are possible.** A character turns one way as a whole: the far eye is narrower, and the nose and chin point
   the way the face turns. The ear sits on the back of the head. The neck stays within 90° of turn and 45° of tilt from
   the torso, and the shoulders within 30° of level. `s.setPose` + `s.mark` + `s.eye` let check.mjs prove it.

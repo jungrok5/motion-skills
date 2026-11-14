@@ -15,7 +15,7 @@ node ../../scripts/render.mjs index.html --sheet 24 --scale .5      # 24 moments
 node ../../scripts/check.mjs index.html                             # stages, items, no pops, stylus, determinism, body → out/rainy-window-body.png
 node ../../scripts/render.mjs index.html --workers 4                # 47 s → out/rainy-window.mp4
 node ../../scripts/new-piece.mjs ../../../my-piece                  # start your own (or --from rainy-window)
-# reference mode: the replay draws toward YOUR picture (your own drawing, or one you may use)
+# reference mode: the replay draws toward a picture you give it
 node ../../scripts/new-piece.mjs ../../../my-ref --from reference-mode
 node ../../scripts/from-image.mjs my-drawing.png --out ../../../my-ref/ref.js
 ```
@@ -26,9 +26,9 @@ To watch a page live, serve its folder (`python3 -m http.server`); it is an ES m
 Example: `examples/rainy-window/` 「비 오는 창가」 (47 s): a girl with a black bob by a rainy window at dusk, cool window
 light from the side she faces, a warm lamp rim from behind, city bokeh and rain on the glass in the finish.
 Starter: `templates/` 「아침 커피」 (28 s): a mug on a saucer in morning light with window-frame shadows and steam.
-Reference mode: `examples/reference-mode/` 「다시 그리기」 (41 s): `from-image.mjs` measures a picture the user owns into
-rough, line art, flats, shadows, highlights and finish dabs, and the replay draws toward it (here the repo's own
-「비 오는 창가」). Only for images you made or may use: never someone else's art or a known character.
+Reference mode: `examples/reference-mode/` 「벚꽃 노을」 (43 s): `from-image.mjs` measures a picture into rough, line
+art, flats, shadows, highlights and finish dabs, and the replay draws toward it (here an image generated with
+ElevenLabs; prompt in its BRIEF.md).
 
 Format after an X post by 余白とインク (@yohakutoink): https://x.com/yohakutoink/status/2120824797215310208?a=-D3pDsiFMNVDxo3e18k&s=19
 Its portrait and character are not used; the code, drawings and designs here are this repo's own.

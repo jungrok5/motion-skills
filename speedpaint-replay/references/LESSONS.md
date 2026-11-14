@@ -49,3 +49,9 @@
   Grow outward by 1.8 units with the sign from the polygon's signed area, and check a stage still with the seams in mind.
 - **Reference mode: the line art was dashes.** Thinning splits lines at every junction. → Join fragments whose ends
   meet within 3 px and continue straight on, and drop weak lines (darkness under 22 % of the strongest).
+- **Reference mode with 633 regions: big flats switched on in a frame or two.** Every fill had a 0.12 s base time, so
+  hundreds of tiny regions ate the stage and the big ones got 1–2 frames. → Fill time ∝ brush travel + area with a tiny
+  constant, and every region over 3 % of the picture gets at least 5 frames (taken from the items above their floor).
+- **The pop check cried wolf on dense pieces.** It compared whole frames, so many tiny fills finishing in one frame
+  looked like one region popping. → Each fill over 4 % of the picture is drawn alone at the progress it has on its
+  first frame; more than half of it showing is a pop.

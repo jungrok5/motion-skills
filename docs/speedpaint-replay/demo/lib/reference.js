@@ -1,5 +1,5 @@
 // speedpaint-replay · reference.js — REFERENCE MODE: add the stages measured from an image (scripts/from-image.mjs →
-// ref.js) to a Sketch, so the replay draws toward that picture. Only for an image the user owns or may use.
+// ref.js) to a Sketch, so the replay draws toward that picture.
 //
 //   import { REF } from './ref.js';
 //   const s = new Sketch({ … }); addReference(s, REF, { lines: 1, dabs: 1 }); /* + your own finish */ return s;

@@ -7,7 +7,7 @@ Keep the review log at the bottom: every round of stills adds a line.
 # <title> — speedpaint-replay brief
 
 ## Reference (reference mode only)
-image file · who made it · on what terms (mine / commissioned / licence) — never someone else's art or a known character
+image file · where it came from (a drawing, a generated image + tool + prompt, a photo)
 
 ## One line
 <who / what>, <doing what>, <in what light>.            e.g. "A girl with a black bob by a rainy window at dusk."
@@ -20,7 +20,7 @@ image file · who made it · on what terms (mine / commissioned / licence) — n
 
 ## Design
 - character: hair (shape, length, parting, colour), eyes (shape, iris colours), face (age, mood), clothes, one detail
-  that makes them theirs.   Never an existing character.
+  that makes them theirs.
 - object / scene: the parts, the materials, what makes it this one
 
 ## Palette (per material: base / shadow / highlight) and light

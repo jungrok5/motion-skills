@@ -75,18 +75,8 @@ if (thrown.size) for (const [m, t] of thrown) fail(`a frame throws at t=${t}: ${
 if (off.length) fail(`the stylus draws off the card at t = ${off.slice(0, 5).join(', ')} — an item lies outside the 1000 × 1000 picture`); else ok('the stylus stays on the card while drawing');
 if (broken.size) for (const [n, t] of broken) fail(`rule "${n}" first broken at t=${t}`); else ok('every rule holds');
 
-// no pops: where each fill starts, the frame must not jump (a region painted in, not switched on)
-const pops = await page.evaluate(() => {
-  const R = window.replay, F = window.FPS, a = R.art, out = [];
-  const shot = t => { R.render(t); return a.getContext('2d').getImageData(0, 0, a.width, a.height).data; };
-  for (const it of R.s.items) {
-    if (it.kind !== 'fill' || it.reveal === 'fade') continue;
-    const f1 = Math.ceil(it.t0 * F + 1e-6) / F, A = shot(f1 - 1 / F), B = shot(f1);
-    let n = 0; for (let i = 0; i < A.length; i += 16) if (Math.abs(A[i] - B[i]) + Math.abs(A[i + 1] - B[i + 1]) + Math.abs(A[i + 2] - B[i + 2]) > 30) n++;
-    const frac = n / (A.length / 16); if (frac > .05) out.push(`${it.id} (${it.stage}${it.name ? ' ' + it.name : ''}) at t=${f1.toFixed(2)}: ${(frac * 100).toFixed(0)} %`);
-  }
-  return out;
-});
+// no pops: each big fill is brushed in, not switched on (drawn alone at its first frame's progress vs whole)
+const pops = await page.evaluate(() => window.popCheck());
 if (pops.length) fail(`fills that pop in instead of being painted: ${pops.slice(0, 5).join(', ')}`); else ok('no fill pops in (each one is painted in by the brush)');
 const fin = await page.evaluate(d => {
   window.seek(d); const R = window.replay, a = R.art, g = a.getContext('2d'), px = g.getImageData(0, 0, a.width, a.height).data;

@@ -37,7 +37,9 @@ export class Replay {
     const w = it.weight ?? 1;
     if (it.kind === 'pencil') return (.14 + it.L / 900) * w;
     if (it.kind === 'pen') return (.05 + it.L / 1500) * w;
-    if (it.kind === 'fill') return it.reveal === 'fade' ? .5 * w : (.12 + it.sweepL / 9000) * w;
+    // fills: time ∝ how far the brush travels (a small constant only, or hundreds of tiny regions starve the big ones)
+    // and a share by area, so a big region always gets a few frames to be brushed in
+    if (it.kind === 'fill') return it.reveal === 'fade' ? .5 * w : (.015 + it.sweepL / 6000 + (it.areaFrac ??= area(it.pts) / 1e6) * 2.5) * w;
     return .8 * w;
   }
   _schedule() {
@@ -50,8 +52,17 @@ export class Replay {
     for (const st of STAGES) {
       const list = s.items.filter(i => i.stage === st).sort((a, b) => (a.order ?? a.id) - (b.order ?? b.id)), D = this.stageDur[st];
       const nat = list.map(i => this._natural(i)), sum = nat.reduce((a, b) => a + b, 0) || 1;
+      // share the stage's seconds by drawing amount, but give every big region at least 5 frames to be brushed in
+      // (taken from the items above their floor), so nothing large is switched on in a frame or two
+      const floor = list.map(it => it.kind === 'fill' && it.reveal !== 'fade' && (it.areaFrac ??= area(it.pts) / 1e6) > .03 ? 5 / this.fps / .86 : 0);
+      let dur = nat.map(n => n / sum * D);
+      for (let pass = 0; pass < 4; pass++) {
+        const need = dur.reduce((a, d, i) => a + Math.max(0, floor[i] - d), 0); if (need <= 1e-9) break;
+        const free = dur.reduce((a, d, i) => a + (d > floor[i] ? d - floor[i] : 0), 0); if (free <= need) break;
+        dur = dur.map((d, i) => d < floor[i] ? floor[i] : d - (d - floor[i]) / free * need);
+      }
       const start = t;
-      list.forEach((it, i) => { const d = nat[i] / sum * D; it.t0 = t; it.t1 = t + d * (it.kind === 'fx' ? 1 : .86); t += d; });
+      list.forEach((it, i) => { const d = dur[i]; it.t0 = t; it.t1 = t + d * (it.kind === 'fx' ? 1 : .86); t += d; });
       if (!list.length) t += D;
       this.stages.push({ name: st, start, end: t, n: list.length });
     }
@@ -228,6 +239,28 @@ export class Replay {
     }
     return bad;
   }
+  // fills that appear (mostly) all at once in their first frame: each fill drawn alone at the progress it has on the
+  // first frame it shows, compared with the whole fill. Only fills bigger than `minFrac` (4 %) of the picture count: a
+  // smaller region brushed in over two frames reads as a quick stroke; a big one switched on reads as a pop.
+  popCheck(fps = this.fps, minFrac = .04, maxShown = .5) {
+    const aw = this.art.width, ah = this.art.height, c = document.createElement('canvas'); c.width = aw; c.height = ah;
+    const g = c.getContext('2d', { willReadFrequently: true }), out = [];
+    const count = (it, u) => {
+      g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, aw, ah); g.setTransform(this.ak, 0, 0, this.ak, 0, 0);
+      const keep = { mode: it.mode, alpha: it.alpha, fill: it.fill }; Object.assign(it, { mode: 'source-over', alpha: 1, fill: '#000' });
+      if (u >= 1 && !it.clip) fillWhole(g, it); else fillVia(g, this.tmp, it, u, it.clip ? this._mask(it.clip) : null);
+      Object.assign(it, keep);
+      const d = g.getImageData(0, 0, aw, ah).data; let n = 0; for (let i = 3; i < d.length; i += 8) if (d[i] > 60) n++; return n * 2;
+    };
+    for (const it of this.s.items) {
+      if (it.kind !== 'fill' || it.reveal === 'fade') continue;
+      const full = count(it, 1); if (full < aw * ah * minFrac) continue;
+      const f1 = Math.ceil(it.t0 * fps + 1e-6) / fps, u = it.t1 > it.t0 ? clamp((f1 - it.t0) / (it.t1 - it.t0)) : 1;
+      const shown = count(it, u) / full;
+      if (shown > maxShown) out.push(`${it.id} (${it.stage}${it.name ? ' ' + it.name : ''}) shows ${(shown * 100).toFixed(0)} % in its first frame (t=${f1.toFixed(2)})`);
+    }
+    return out;
+  }
   glyphCheck() {
     const c = this.ctx, miss = new Set(), L = this.labels;
     for (const s of [L.title, L.note, ...L.chips]) for (const ch of s) {
@@ -291,7 +324,7 @@ export class Replay {
     for (const [w, f] of [[600, 'Pretendard-SemiBold.subset.woff2'], [800, 'Pretendard-Bold.subset.woff2']]) { const face = new FontFace(FONT, `url(${base}${f})`, { weight: String(w) }); await face.load(); document.fonts.add(face); }
     this._setupCanvases(render ? scale : Math.min(1, scale * Math.max(.5, Math.min(1.5, (innerHeight * devicePixelRatio) / this.H))));
     Object.assign(window, { replay: this, DURATION: this.dur, FPS: this.fps, SIZE: { W: this.W, H: this.H }, seek: t => this.render(t),
-      runChecks: t => this.runChecks(t), stageAt: t => this.stageAt(t).name, itemCheck: () => this.itemCheck(), glyphCheck: () => this.glyphCheck(), replayInfo: () => this.info() });
+      runChecks: t => this.runChecks(t), stageAt: t => this.stageAt(t).name, itemCheck: () => this.itemCheck(), popCheck: () => this.popCheck(), glyphCheck: () => this.glyphCheck(), replayInfo: () => this.info() });
     if (Q.get('sheet') === 'body') { this.bodySheet(); window.__ready = true; return; }
     if (render) { this.canvas.style.width = Math.min(innerWidth, innerHeight * this.W / this.H) + 'px'; this.render(+(Q.get('t') || 0)); }
     else this._player(+(Q.get('t') || 0));

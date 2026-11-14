@@ -21,7 +21,7 @@
 <header class="hero"><div class="wrap">
   <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / speedpaint-replay</nav>
   <h1>speedpaint-replay</h1>
-  <p>주제 하나를 주면 새 일러스트를 설계하고, 그 그림을 코드로 그리는 과정을 메이킹 영상으로 보여 줍니다. 베이지색 페이지 위쪽에 단계 칩 여섯 개(러프 · 선화 · 밑색 · 그림자 · 하이라이트 · 마무리)가 있고, 하얀 펜이 캔버스 위에서 파란 밑그림부터 빛과 색이 다 들어간 완성 그림까지 그려 갑니다. 사용자가 직접 그린 그림을 주면 그 그림을 향해 그려 가는 레퍼런스 모드도 있습니다. 어느 쪽이든 선과 색을 모두 코드로 그리고, 1080×1220 MP4와 라이브 페이지로 냅니다.
+  <p>주제 하나를 주면 새 일러스트를 설계하고, 그 그림을 코드로 그리는 과정을 메이킹 영상으로 보여 줍니다. 베이지색 페이지 위쪽에 단계 칩 여섯 개(러프 · 선화 · 밑색 · 그림자 · 하이라이트 · 마무리)가 있고, 하얀 펜이 캔버스 위에서 파란 밑그림부터 빛과 색이 다 들어간 완성 그림까지 그려 갑니다. 그림 한 장을 주면 그 그림을 향해 그려 가는 레퍼런스 모드도 있습니다. 어느 쪽이든 선과 색을 모두 코드로 그리고, 1080×1220 MP4와 라이브 페이지로 냅니다.
   보고 만든 원본: <a href="https://x.com/yohakutoink/status/2120824797215310208?a=-D3pDsiFMNVDxo3e18k&amp;s=19" target="_blank" rel="noopener">余白とインク(@yohakutoink)의 X 게시물 (「メイキング再生」, 코드로 그린 애니풍 초상화의 메이킹 영상)</a>.</p>
   <ul class="tags"><li>2D 캔버스</li><li>메이킹 · 스피드페인팅</li><li>MP4</li><li>애니풍 일러스트</li><li>이미지 파일 0개</li></ul>
 </div></header>
@@ -31,7 +31,7 @@
   <div class="how">
     <h2>작업 흐름</h2>
     <dl>
-      <dt>입력</dt><dd>그릴 주제 하나(비 오는 창가의 소녀, 아침 커피, 벚꽃 아래 고양이 …), 또는 레퍼런스 모드라면 사용자가 그렸거나 쓸 권리가 있는 그림 한 장</dd>
+      <dt>입력</dt><dd>그릴 주제 하나(비 오는 창가의 소녀, 아침 커피, 벚꽃 아래 고양이 …), 또는 레퍼런스 모드라면 향해 그릴 그림 한 장</dd>
       <dt>브리프</dt><dd>한 줄 요약, 구도, 캐릭터나 물건의 디자인, 재질별 기본색 · 그림자색 · 하이라이트색, 주광과 림 라이트의 색과 방향, 마무리 단계에서 더할 분위기, 단계별 시간을 적은 <code>BRIEF.md</code></dd>
       <dt>그리기</dt><dd>파란 러프, 두께가 변하고 덧그어지는 펜 선화(머리카락 다발과 결 · 애니풍 눈 · 해칭 헬퍼), 붓으로 칠하는 밑색, 보이는 영역에만 칠해지는 곱하기 그림자와 광원 방향 그라데이션, 스크린 하이라이트와 림 라이트, 빛 · 색보정 · 보케 · 종이 결 같은 마무리. 레퍼런스 모드에서는 그림에서 잰 러프 · 선화 · 밑색 · 그림자 · 하이라이트 · 세부 붓질</dd>
       <dt>확인</dt><dd>단계 끝 스틸 채점 기준, 모든 항목이 자국을 남기는지, 칠이 갑자기 나타나지 않는지, 펜이 캔버스 안에 있는지, 결정성, 캐릭터의 얼굴 방향과 목 · 어깨 한계 검사와 바디 시트(선화 + 표시점 · 완성 · 좌우 반전)</dd>
@@ -52,7 +52,7 @@ node ../../scripts/from-image.mjs my-drawing.png --out ref.js</code></pre>
     <div class="bar"><span data-cap-target>예제 <code>examples/rainy-window</code> · 47초 · 칩을 누르면 그 단계로</span>
       <span class="btns" role="group" aria-label="데모 예제">
         <button class="btn" type="button" data-src="demo/rainy-window/" data-cap="예제 &lt;code&gt;examples/rainy-window&lt;/code&gt; · 47초 · 칩을 누르면 그 단계로" aria-pressed="true">비 오는 창가</button>
-        <button class="btn" type="button" data-src="demo/reference-mode/" data-cap="레퍼런스 모드 &lt;code&gt;examples/reference-mode&lt;/code&gt; · 41초 · 사용자 그림을 향해 그리기" aria-pressed="false">다시 그리기</button>
+        <button class="btn" type="button" data-src="demo/reference-mode/" data-cap="레퍼런스 모드 &lt;code&gt;examples/reference-mode&lt;/code&gt; · 43초 · 일레븐랩스로 만든 그림을 향해 그리기" aria-pressed="false">벚꽃 노을</button>
         <button class="btn" type="button" data-src="demo/starter/" data-cap="시작 그림 &lt;code&gt;templates/&lt;/code&gt; · 28초 · 새 그림의 출발점" aria-pressed="false">아침 커피</button>
       </span></div>
   </div>
@@ -60,7 +60,7 @@ node ../../scripts/from-image.mjs my-drawing.png --out ref.js</code></pre>
 
 <section id="samples"><div class="wrap">
   <h2>샘플</h2>
-  <p class="lead">예제 「비 오는 창가」의 여섯 단계, 레퍼런스 모드 「다시 그리기」, 시작 그림 「아침 커피」입니다. 카드를 누르면 새 탭에서 그 순간부터 메이킹이 재생되고, 브라우저가 선과 색을 직접 그립니다.</p>
+  <p class="lead">예제 「비 오는 창가」의 여섯 단계, 레퍼런스 모드 「벚꽃 노을」, 시작 그림 「아침 커피」입니다. 카드를 누르면 새 탭에서 그 순간부터 메이킹이 재생되고, 브라우저가 선과 색을 직접 그립니다.</p>
   <div class="chips" data-for="gallery" data-labels='{"rain":"비 오는 창가","ref":"레퍼런스 모드","start":"출발점"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
   <div id="gallery">
     <div class="group">
@@ -91,21 +91,21 @@ node ../../scripts/from-image.mjs my-drawing.png --out ref.js</code></pre>
       </div>
     </div>
     <div class="group">
-      <h3>레퍼런스 모드 <small>1080×1220 · 41초 · 사용자 그림을 향해 그리기</small></h3>
-      <p>사용자가 직접 그렸거나 쓸 권리가 있는 그림 한 장을 주면, <code>from-image.mjs</code>가 그림에서 러프 윤곽, 선화, 밑색 면, 그림자와 하이라이트, 세부 붓질을 재고 메이킹이 그 그림을 향해 그려 갑니다. 여기서는 이 레포의 「비 오는 창가」 완성 그림을 레퍼런스로 썼습니다. 남의 그림이나 기존 캐릭터에는 쓰지 않습니다.</p>
+      <h3>레퍼런스 모드 <small>1080×1220 · 43초 · 그림 한 장을 향해 그리기</small></h3>
+      <p>그림 한 장을 주면 <code>from-image.mjs</code>가 그림에서 러프 윤곽, 선화, 밑색 면, 그림자와 하이라이트, 세부 붓질을 재고, 메이킹이 그 그림을 향해 그려 갑니다. 여기서는 일레븐랩스(gpt-image-2.5-sunburst)로 만든 벚꽃 노을 속 은발 소녀 그림을 레퍼런스로 썼습니다. 프롬프트는 예제의 <code>BRIEF.md</code>에 있습니다.</p>
       <div class="grid">
         <a class="tile" data-tags="ref" href="https://github.com/jungrok5/motion-skills/blob/main/speedpaint-replay/examples/reference-mode/reference.jpg" target="_blank" rel="noopener">
-          <img src="samples/ref-source.jpg" alt="레퍼런스로 쓴 그림: 비 오는 창가의 검은 단발머리 소녀 완성 그림" loading="lazy" width="640" height="723">
-          <div class="cap"><span class="no">레퍼런스 · 그림 한 장</span><b>향해 그릴 그림</b><span class="how">사용자 본인 그림 또는 쓸 권리가 있는 그림</span></div></a>
-        <a class="tile" data-tags="ref" href="demo/reference-mode/?t=10" target="_blank" rel="noopener">
-          <img src="samples/ref-line.jpg" alt="파란 러프 위에 그림에서 찾은 어두운 선을 따라 그려지는 선화" loading="lazy" width="640" height="723">
-          <div class="cap"><span class="no">선화 · 10초</span><b>그림에서 찾은 선</b><span class="how">어두운 선을 가늘게 깎아 이은 펜 획, 위에서부터 가까운 순서로</span></div></a>
-        <a class="tile" data-tags="ref" href="demo/reference-mode/?t=19" target="_blank" rel="noopener">
-          <img src="samples/ref-flats.jpg" alt="그림의 색을 18색으로 나눈 면이 붓으로 칠해지는 밑색 단계" loading="lazy" width="640" height="723">
-          <div class="cap"><span class="no">밑색 · 19초</span><b>나눈 색 면</b><span class="how">18색으로 나눈 면, 인물 먼저 배경은 마지막</span></div></a>
-        <a class="tile" data-tags="ref" href="demo/reference-mode/?t=40.5" target="_blank" rel="noopener">
-          <img src="samples/ref-finish.jpg" alt="그림자 · 하이라이트 · 세부 붓질까지 들어가 레퍼런스에 가까워진 완성 장면" loading="lazy" width="640" height="723">
-          <div class="cap"><span class="no">마무리 · 40.5초</span><b>세부 붓질</b><span class="how">잰 그림자 · 하이라이트와 모자란 곳을 채우는 붓 자국</span></div></a>
+          <img src="samples/ref-source.jpg" alt="레퍼런스로 쓴 그림: 벚꽃 아래 노을빛을 받으며 오른쪽을 보고 미소 짓는 빨간 리본의 은발 소녀, 남색 블레이저" loading="lazy" width="640" height="723">
+          <div class="cap"><span class="no">레퍼런스 · 생성 이미지</span><b>향해 그릴 그림</b><span class="how">일레븐랩스로 만든 그림, 가운데를 정사각형으로</span></div></a>
+        <a class="tile" data-tags="ref" href="demo/reference-mode/?t=12" target="_blank" rel="noopener">
+          <img src="samples/ref-line.jpg" alt="흰 캔버스 위에 은발 소녀의 머리카락과 얼굴 선이 그림에서 찾은 펜 획으로 그려지는 선화" loading="lazy" width="640" height="723">
+          <div class="cap"><span class="no">선화 · 12초</span><b>그림에서 찾은 선</b><span class="how">어두운 선을 가늘게 깎아 이은 펜 획, 위에서부터 가까운 순서로</span></div></a>
+        <a class="tile" data-tags="ref" href="demo/reference-mode/?t=21" target="_blank" rel="noopener">
+          <img src="samples/ref-flats.jpg" alt="그림의 색을 22색으로 나눈 면이 붓으로 칠해지며 은발 소녀와 벚꽃 배경이 나타나는 밑색 단계" loading="lazy" width="640" height="723">
+          <div class="cap"><span class="no">밑색 · 21초</span><b>나눈 색 면</b><span class="how">22색으로 나눈 633개의 면, 인물 먼저 배경은 마지막</span></div></a>
+        <a class="tile" data-tags="ref" href="demo/reference-mode/?t=42" target="_blank" rel="noopener">
+          <img src="samples/ref-finish.jpg" alt="그림자 · 하이라이트 · 세부 붓질까지 들어가 레퍼런스에 가까워진 은발 소녀 완성 장면" loading="lazy" width="640" height="723">
+          <div class="cap"><span class="no">마무리 · 42초</span><b>세부 붓질</b><span class="how">잰 그림자 · 하이라이트와 모자란 곳을 채우는 붓 자국</span></div></a>
       </div>
     </div>
     <div class="group">
@@ -131,7 +131,8 @@ node ../../scripts/from-image.mjs my-drawing.png --out ref.js</code></pre>
   <p class="lead">이 레포에서 만든 스킬입니다. 余白とインク(@yohakutoink)가 X에 올린 47초 영상(코드로 그리게 한 애니풍 초상화가 「メイキング再生」 페이지에서 파란 머리 원부터 빛이 든 완성 그림까지 단계별로 그려지는 영상)이 출발점입니다. 이 스킬은 그 형식(단계 칩이 있는 페이지, 여섯 단계 각각의 모양과 움직임, 그리는 펜)만 가져오고, 직접 만든 캔버스 엔진으로 그립니다. 원본의 초상화와 인물은 쓰지 않았고, 예제와 시작 그림의 디자인과 그림은 모두 이 레포의 것입니다.</p>
   <div class="works">
     <a class="work" href="demo/rainy-window/" target="_blank" rel="noopener"><b>「비 오는 창가」 · 47초</b><span>검은 단발머리 소녀, 차가운 창빛과 따뜻한 램프, 비와 보케, 라이브 페이지</span><span class="url">speedpaint-replay/demo/rainy-window/</span></a>
-    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/speedpaint-replay/examples"><b>예제 폴더 · examples/</b><span>rainy-window, reference-mode (브리프, 스틸 검토 기록 포함)</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="demo/reference-mode/" target="_blank" rel="noopener"><b>「벚꽃 노을」 · 43초 · 레퍼런스 모드</b><span>일레븐랩스로 만든 그림을 향해 그리는 메이킹, 라이브 페이지</span><span class="url">speedpaint-replay/demo/reference-mode/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/speedpaint-replay/examples"><b>예제 폴더 · examples/</b><span>rainy-window, reference-mode (브리프, 프롬프트, 스틸 검토 기록 포함)</span><span class="url">github.com/jungrok5/motion-skills</span></a>
     <a class="work" href="https://x.com/yohakutoink/status/2120824797215310208?a=-D3pDsiFMNVDxo3e18k&amp;s=19" target="_blank" rel="noopener"><b>레퍼런스 영상 · X 게시물</b><span>余白とインク(@yohakutoink) · 47초 · 1080×1220</span><span class="url">x.com/yohakutoink/status/2120824797215310208</span></a>
   </div>
 </div></section>

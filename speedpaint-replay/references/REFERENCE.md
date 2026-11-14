@@ -1,16 +1,13 @@
 # REFERENCE — reference mode: the replay draws toward the user's own picture
 
 The source post ends with a question: did the model secretly trace the original image? Reference mode does draw
-toward a target image, openly. It is for the user's own drawing, or one they may use. The replay shows that picture
-being made: blue rough, line art, brushed flats, shadows, highlights, finish.
+toward a target image, openly. Give it any picture, and the replay shows that picture being made: blue rough, line
+art, brushed flats, shadows, highlights, finish.
 
-## What may be used
-- The user's own illustration, a commission they own, or an image under a licence that allows it (CC0, CC BY with
-  credit). Write in BRIEF.md who made it and on what terms.
-- Not: someone else's art, fan art of an existing character, logos, brand art, screenshots of shows or games.
-  "It's only a test" does not change this.
-- Every mark is still a code item: regions, strokes, dabs. No bitmap is pasted or faded in, so the note on the page
-  (「선도 색도 코드로 그리고 있습니다」) stays true.
+## Every mark is a code item
+Regions, strokes and dabs, nothing else. No bitmap is pasted or faded in, so the note on the page
+(「선도 색도 코드로 그리고 있습니다」) stays true. BRIEF.md notes where the picture came from (a drawing, a generated
+image with its tool and prompt, a photo).
 
 ## How it measures (scripts/from-image.mjs)
 | stage | measured from | becomes |
