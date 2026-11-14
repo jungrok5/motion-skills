@@ -1,0 +1,91 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>film</title>
+<script type="importmap">{ "imports": { "bds/": "../lib/" } }</script></head>
+<body><script type="module">
+// templates · film.html — a commented 11.5 s, 3-shot film: the page draws on → the thing gets away → the chase → the catch.
+// It is an EXAMPLE of the grammar (topic: "a kitten and a runaway ball of yarn"), not a form to fill: write your own
+// world, cast, props and shots from BRIEF.md. Order of a page: world (the line) → cast → shots → rules → F.start().
+import { Film } from 'bds/film.js';
+import * as P from 'bds/pen.js';
+import * as R from 'bds/rig.js';
+import * as K from 'bds/kit.js';
+import { HERO, yarn, YARN_R } from './cast.js';
+import { SCORE } from './score.js';
+const { span, lerp, clamp, ease, arcAt, hash, CRAYON } = P;
+
+const F = new Film({ seed: 5, score: SCORE });
+
+// ── the world: one red line, left → right (two points with the same x would make a cliff; { water: [[x0, x1]] } a pond)
+const L = K.track([[-600, 760], [700, 760], [900, 790], [1900, 990], [3200, 990]]);
+const gy = x => L.y(x);
+const decor = (c, g) => {
+  for (let x = -500; x < 3200; x += 160) { const xx = x + hash(x, 1) * 80; if (xx > g.view.x0 - 100 && xx < g.view.x1 + 100) K.grass(c, xx, gy(xx)); }
+  K.flower(c, 260, gy(260), 1, CRAYON.lilac); K.rock(c, 1400, gy(1400) + 3, 70, 34); K.fern(c, 2350, gy(2350), 260);
+};
+// positions along the line run on ones (smooth against the camera); poses and faces on twos (t2 = g.twos(lt))
+const kit = (c, pose) => { K.shadow(c, pose.x, gy(pose.x), 110, clamp(1 - (pose.lift || 0) / 220)); return R.critter(c, HERO, { y: gy(pose.x), ...pose }); };
+const run = t2 => ({ yaw: 72, walk: t2 * 4.6, stride: 1.15, tilt: .22, armR: { a: .3, f: 1.1 + .5 * Math.sin(t2 * 4.6 * Math.PI) }, armL: { a: .3, f: -.45 - .45 * Math.sin(t2 * 4.6 * Math.PI) }, brow: 'worried', mouth: 'open' });
+
+// each shot: where the camera looks (cam), where the hero is (hero(lt, t2) — the rules below use it), what is drawn
+const SHOTS = [];
+const shot = (name, dur, d, o = {}) => { d.name = name; SHOTS.push(d); F.shot(dur, (g, lt) => {
+  const t2 = g.twos(lt);
+  g.paper();
+  g.screen(c => K.sun(c, 900, 150, 42, g.t));
+  const world = c => { L.draw(c, g.view.x0, g.view.x1); decor(c, g); d.draw(g, lt, t2, c); };
+  d.drawOn ? g.world(c => g.drawOn(d.drawOn(lt), () => world(c))) : g.world(world);
+}, { name, cam: d.cam, tr: o.tr }); };
+
+// 1 · nap — the page draws itself; Kit dozes by the yarn; a nudge of wind and it rolls away; "!"
+const yarn1 = lt => { const x = lt < 2.6 ? 560 : 560 + (lt - 2.6) ** 2 * 260; return { x, rot: (x - 560) / YARN_R }; };
+shot('nap', 3.5, {
+  cam: () => ({ x: 520, y: 545, zoom: 1.2 }),
+  drawOn: lt => span(lt, 0, 1.1),
+  hero: (lt, t2) => ({ x: 420, yaw: lt > 2.9 ? 60 : 20, eyes: lt > 2.9 ? 'wide' : 'shut', mouth: lt > 2.9 ? 'o' : 'w', squash: lt < 2.9 ? .04 * Math.sin(t2 * 3) : 0 }),
+  draw(g, lt, t2, c) {
+    const y = yarn1(lt); yarn(c, y.x, gy(y.x) - YARN_R, y.rot); K.shadow(c, y.x, gy(y.x), 50);
+    kit(c, this.hero(lt, t2));
+    if (lt < 2.9) K.zzz(c, 470, 520, lt);
+    if (lt > 2.0 && lt < 3.2) K.gust(c, 250 + span(lt, 2.0, 3.2) * 400, 650, span(lt, 2.0, 3.2) * 1.3);
+    if (lt > 2.9) K.mark(c, '!', 450, 520, 1);
+  },
+});
+
+// 2 · chase — down the hill after it; both hop the rock
+const yx = lt => 760 + 300 * lt, kx = lt => 520 + 330 * lt;
+const hopAt = (x, x0, x1, h) => x > x0 && x < x1 ? h * 4 * ((x - x0) / (x1 - x0)) * (1 - (x - x0) / (x1 - x0)) : 0;
+shot('chase', 5, {
+  cam: lt => { const x = (yx(lt) + kx(lt)) / 2 + 40; return { x, y: gy(x) - 250, zoom: 1.15 }; },
+  hero: (lt, t2) => { const x = kx(lt), lift = hopAt(x, 1330, 1480, 70); return { x, ...run(t2), lift, air: lift > 0 }; },
+  draw(g, lt, t2, c) {
+    const x = yx(lt); yarn(c, x, gy(x) - YARN_R - hopAt(x, 1340, 1470, 60), (x - 560) / YARN_R);
+    const p = this.hero(lt, t2), w = kit(c, p);
+    K.speed(c, p.x - 70, gy(p.x) - 110 - p.lift, 120, 1, 90);
+    K.drop(c, w.top[0] - 60, w.top[1] + 40 + (t2 * 60 % 30), .9);
+  },
+});
+
+// 3 · catch — the yarn stops against the fern; Kit pounces and hugs it
+const STOP = 2290;
+shot('catch', 3, {
+  cam: () => ({ x: 2230, y: 740, zoom: 1.3 }),
+  hero: (lt, t2) => {
+    if (lt < .6) return { x: 2020 + lt * 120, ...run(t2) };
+    if (lt < 1.3) { const k = span(lt, .6, 1.3); return { x: lerp(2092, 2215, k), yaw: 70, lift: 110 * 4 * k * (1 - k), air: true, squash: -.15, armR: { a: .4, f: 2.2 }, armL: { a: .4, f: 2.2 }, eyes: 'squeeze', mouth: 'open' }; }
+    return { x: 2215, yaw: 60, squash: .25 * (1 - span(lt, 1.3, 1.6)), armR: { a: .2, f: 1.5 }, eyes: 'happy', mouth: 'w' };
+  },
+  draw(g, lt, t2, c) {
+    const x = lt < .5 ? lerp(2200, STOP, ease.out(lt / .5)) : STOP; yarn(c, x, gy(x) - YARN_R, x / YARN_R);
+    const w = kit(c, this.hero(lt, t2));
+    K.puff(c, 2215, gy(2215), span(lt, 1.3, 1.8));
+    if (lt > 1.8) K.heart(c, w.top[0] + 30, w.top[1] - 20 - span(lt, 1.8, 3) * 40, .9);
+  },
+}, { tr: { type: 'wipe', d: .6 } });
+
+// ── the film's rules: check.mjs fails if one breaks at any sampled t (write one for every promise of the brief)
+const at = t => { const i = F.locate(t); return { d: SHOTS[i], lt: t - F.shots[i].start, i }; };
+F.check('the hero stands on the line unless jumping', t => { const { d, lt } = at(t), p = d.hero(lt, lt); return p.air || !(p.lift > 1); });
+F.check('the hero faces the way it moves', t => { const { d, lt } = at(t), a = d.hero(Math.max(0, lt - .08), lt).x, b = d.hero(lt + .08, lt).x, p = d.hero(lt, lt), v = (b - a) / .16; return Math.abs(v) < 40 || Math.sign(Math.sin(p.yaw * Math.PI / 180)) === Math.sign(v); });
+F.check('the hero is in frame', t => { const { d, lt, i } = at(t), cam = F.camAt(F.shots[i], lt); return Math.abs(d.hero(lt, lt).x - cam.x) < F.W / 2 / cam.zoom - 40; });
+F.start();
+</script></body></html>
