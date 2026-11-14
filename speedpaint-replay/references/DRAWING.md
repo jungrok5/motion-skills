@@ -42,6 +42,11 @@ s.ink(pts, { passes: 2, jitter: 1.6 });       // a hand that goes over the line 
 s.lock(ctrl, { strands: 5, fly: 1, passes: 2 });   // denser hair: strands of uneven length, flyaways, over-drawn edges
 s.lens(a, b, w, { abs: true });               // points already in picture space (e.g. a lock's returned line)
 s.markEye(side, x, y, w, h);                  // an eye box for the body check without drawing an eye (reference mode)
+s.region(stage, [loop, loop, …], { fill, name, edge, blur, clip });   // a compound region (holes by even-odd), brushed in as one
+s.paint(pts, { w, color });                   // a brush stroke on the paint layer, under the line art (finish stage)
+s.airbrush([x, y, r, colour, alpha, …], { clip: regionItem });        // soft dabs laid in order: a blending pass
+s.inkTrace();                                 // finish: the lines cross-fade from the ink colour to each line's `color2`
+s.ink(pts, { ws: [w, w, …], color2 });        // measured widths along the stroke; its own colour for the trace
 
 // body check (characters)
 s.setPose({ facing: 'left' | 'right' | 'front', head: { yaw, roll, pitch }, torso: { yaw, roll } });

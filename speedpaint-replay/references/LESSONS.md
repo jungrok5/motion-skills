@@ -55,3 +55,28 @@
 - **The pop check cried wolf on dense pieces.** It compared whole frames, so many tiny fills finishing in one frame
   looked like one region popping. → Each fill over 4 % of the picture is drawn alone at the progress it has on its
   first frame; more than half of it showing is a pop.
+- **A 43 s reference piece took 46 minutes to render.** Every frame redrew every item (2.15 s a frame). → Layer caches:
+  PAINT, INK and ROUGH each keep a canvas of their finished items and a frame draws only what is in progress. A cache
+  is extended when the new items sit above everything in it and rebuilt in paint order otherwise, so a frame never
+  depends on the frames before it. The page chrome is cached per stage, a live fill keeps its blurred, masked image,
+  static frames are skipped, frames go to the encoder as JPEG q97. 47 s film: 120 s → 30 s; reference piece: 46 min → 33 s.
+- **A live item under finished ones forced a full redraw every frame.** The eye helper gives its lid shadow z 50, so
+  during the whole shadow stage "everything on top" was false (116 ms a frame). → Bake only the finished items below
+  the lowest live one; draw the live item and the few finished ones above it.
+- **Owner's verdict on reference mode v1: "it just stamps pixels; the source draws like a person".** It posterised the
+  picture into 633 patches, 906 tone patches and 4,246 dabs and drew 721 dashes in nearest order. → Rebuilt around the
+  painter's process (REFERENCE.md): construction from the agent's plan, ink strokes with measured widths in focus
+  order, one flat per material, tone shapes, airbrush blending, detail strokes, colour trace. When a mode imitates a
+  process, check the *process* against the source, not the final frame.
+- **"Bucket fill inside the lines" found one cell covering 99 % of the picture.** Soft, open line art encloses
+  nothing. → Materials come from the agent's rough lassos; the tool snaps the edge by colour (nearest material palette
+  plus a penalty outside the lasso). The agent supplies meaning, the tool supplies precision.
+- **A lasso that contains other materials poisoned its own colour model.** The hair lasso holds the face, shirt and
+  blazer. → A material's palette comes from the plan's sample points, or from what lies in its lasso and no other.
+- **Ink strokes came out fat.** The detection mask is a generous net around a soft line. → Width = distance to where
+  the line falls under half its own local darkness (full width at half maximum), smoothed along the stroke.
+- **Closed-loop outlines with holes.** Outlines now run along pixel edges (crack following, region on the left), so
+  holes come out as loops of opposite winding and neighbours share exactly the same boundary.
+- **A blush was painted as a hard patch.** One tone colour held a crisp cast shadow and a soft blush. → Tone shapes are
+  split by connected shape and each shape's edge width is measured (colour step ÷ gradient at 3 px blur): hard shapes
+  stay crisp, soft ones are laid with a blurred brush clipped to the material.

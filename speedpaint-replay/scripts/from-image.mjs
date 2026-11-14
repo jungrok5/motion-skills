@@ -1,308 +1,481 @@
-// speedpaint-replay · from-image.mjs — REFERENCE MODE: turn an image into the six stages of a replay, so the replay draws
-// toward that picture.
-//   node <skill>/scripts/from-image.mjs my-drawing.png --out ref.js [--colors 18] [--lines 1600] [--dabs 7000] [--fit cover|contain] [--res 720]
-// Writes ref.js (export const REF = { … }) that lib/reference.js turns into Sketch items:
-//   rough      long contours of the big forms (heavy blur → edges → traced), blue pencil
-//   line       dark line work (difference of Gaussians → thinned → traced into strokes, width from darkness, tinted ink)
-//   flats      the picture posterised (k-means in Lab) → connected regions → outlines, filled with their mean colour
-//   shadow     where the picture is darker than its flats, in two levels → multiply regions with the measured ratio
-//   highlight  where it is lighter → screen regions with the measured screen colour
-//   finish     detail dabs (small oriented ellipses in the picture's colours) where the stages above still miss
-// Needs only Node and ffmpeg (ffmpeg decodes the image). Deterministic: same image + options → same ref.js.
+// speedpaint-replay · from-image.mjs — REFERENCE MODE: read a picture the way a digital painter would make it, so the
+// replay can draw toward it in a painter's order. Not pixels: construction → inked lines → flats inside the lines →
+// shadow shapes → light shapes → airbrush blending → drawn-in detail → line colour.
+//   node <skill>/scripts/from-image.mjs picture.png --out ref.js [--plan plan.json] [--debug out/ref]
+//        [--materials 8] [--lines 450] [--details 1200] [--fit cover|contain]
+// What it measures (all in art units, 1000 × 1000):
+//   lines      thin dark line work (morphological black top-hat) → skeleton → strokes joined through junctions, each
+//              with its measured width along its length (thick lashes, hairlines that taper) and its own colour
+//   materials  a few regions that are one thing each (skin, hair, cloth, background …): the plan's rough lassos, with
+//              the exact edge found by colour; each gets ONE base colour: its flat
+//   tones      inside each material, the few colours it is shaded with: darker ones are shadow shapes, lighter ones
+//              are light shapes (smooth outlines with holes)
+//   air        what flat tones cannot say (soft gradients): rows of soft airbrush dabs per material, coarse then fine
+//   details    where the picture still differs: short strokes drawn along the picture's own directions
+//   rough      the construction from plan.json (head circle, centre line, eye line …) + the big silhouettes
+// plan.json is how the agent, who can SEE the picture, tells the tool what is what (references/REFERENCE.md):
+//   { "construct": [["ellipse", cx, cy, rx, ry, rotDeg], ["line", x, y, x, y, …]],
+//     "materials": [{ "name": "skin", "poly": [[x, y, x, y, …], …], "base": "#f4d0b4", "tones": 4 }, { "name": "background", "rest": true }],
+//     "focus": [["eyes", x, y, w, h], ["face", …], …] }
+// --debug writes grid.png (coordinates to read), lines.png, materials.png, tones.png, sim.png (the predicted finish).
+// Needs only Node and ffmpeg. Deterministic: same picture + options + plan → same ref.js.
 import { execFileSync } from 'node:child_process';
-import { writeFileSync, existsSync } from 'node:fs';
-import { resolve, basename } from 'node:path';
+import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs';
+import { resolve, basename, join as pjoin } from 'node:path';
 
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i > -1 ? args[i + 1] : d; };
-const img = args.find(a => !a.startsWith('--') && args[args.indexOf(a) - 1]?.startsWith('--') !== true);
-if (!img || !existsSync(img)) { console.error('usage: from-image.mjs <image> --out ref.js [--colors 18] [--lines 1600] [--dabs 7000] [--fit cover|contain]'); process.exit(1); }
-const N = +opt('res', 720), SC = 1000 / N, K = +opt('colors', 18), MAXL = +opt('lines', 1600), MAXD = +opt('dabs', 7000), fit = opt('fit', 'cover');
-const out = resolve(opt('out', 'ref.js'));
+const img = args.find((a, i) => !a.startsWith('--') && !(args[i - 1] || '').startsWith('--'));
+if (!img || !existsSync(img)) { console.error('usage: from-image.mjs <image> --out ref.js [--plan plan.json] [--debug dir] [--materials 8] [--lines 450] [--details 1200]'); process.exit(1); }
+const N = 1000, P = N * N, KM = +opt('materials', 8), MAXL = +opt('lines', 450), MAXD = +opt('details', 1200), fit = opt('fit', 'cover');
+const out = resolve(opt('out', 'ref.js')), dbg = opt('debug') ? resolve(opt('debug')) : null;
+const plan = opt('plan') && existsSync(opt('plan')) ? JSON.parse(readFileSync(opt('plan'), 'utf8')) : {};
+if (dbg) mkdirSync(dbg, { recursive: true });
+// the order of work: the plan's focus boxes, first match wins (eyes → face → hair → body …); the rest comes last
+const focus = (plan.focus || []).map(f => ({ name: f[0], x: f[1], y: f[2], w: f[3], h: f[4] }));
+const groupOf = (x, y) => { const g = focus.findIndex(f => x >= f.x && x <= f.x + f.w && y >= f.y && y <= f.y + f.h); return g < 0 ? focus.length : g; };
+const t0 = Date.now(), log = m => console.log(`  ${m}  (${((Date.now() - t0) / 1000).toFixed(1)} s)`);
+console.log(`${basename(img)} → ${out}${opt('plan') ? ' with ' + basename(opt('plan')) : ''}`);
 
-// ---------- decode ----------
-const vf = fit === 'contain' ? `scale=${N}:${N}:force_original_aspect_ratio=decrease,pad=${N}:${N}:(ow-iw)/2:(oh-ih)/2:color=white`
-  : `scale=${N}:${N}:force_original_aspect_ratio=increase,crop=${N}:${N}`;
-const raw = execFileSync('ffmpeg', ['-loglevel', 'error', '-i', img, '-vf', vf, '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'], { maxBuffer: 1 << 26 });
-const P = N * N, R = new Float32Array(P), G = new Float32Array(P), B = new Float32Array(P);
-for (let i = 0; i < P; i++) { R[i] = raw[i * 3] / 255; G[i] = raw[i * 3 + 1] / 255; B[i] = raw[i * 3 + 2] / 255; }
-const Y = a => { const y = new Float32Array(P); for (let i = 0; i < P; i++) y[i] = .2126 * a[0][i] + .7152 * a[1][i] + .0722 * a[2][i]; return y; };
-
-// ---------- helpers ----------
+// ───────── basics ─────────
+const vf = fit === 'contain' ? `scale=${N}:${N}:force_original_aspect_ratio=decrease:flags=lanczos,pad=${N}:${N}:(ow-iw)/2:(oh-ih)/2:color=white`
+  : `scale=${N}:${N}:force_original_aspect_ratio=increase:flags=lanczos,crop=${N}:${N}`;
+const raw = execFileSync('ffmpeg', ['-loglevel', 'error', '-i', img, '-vf', vf, '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'], { maxBuffer: 1 << 27 });
+const T = [new Float32Array(P), new Float32Array(P), new Float32Array(P)];
+for (let i = 0; i < P; i++) { T[0][i] = raw[i * 3] / 255; T[1][i] = raw[i * 3 + 1] / 255; T[2][i] = raw[i * 3 + 2] / 255; }
+const lum = a => { const y = new Float32Array(P); for (let i = 0; i < P; i++) y[i] = .2126 * a[0][i] + .7152 * a[1][i] + .0722 * a[2][i]; return y; };
 function rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6d2b79f5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 function boxBlur(src, r) {
-  if (r < 1) return src.slice();
+  if (r < 1) return Float32Array.from(src);
   const tmp = new Float32Array(P), dst = new Float32Array(P), w = 2 * r + 1;
-  for (let y = 0; y < N; y++) { let acc = 0; for (let x = -r; x <= r; x++) acc += src[y * N + Math.min(N - 1, Math.max(0, x))]; for (let x = 0; x < N; x++) { tmp[y * N + x] = acc / w; acc += src[y * N + Math.min(N - 1, x + r + 1)] - src[y * N + Math.max(0, x - r)]; } }
+  for (let y = 0; y < N; y++) { let acc = 0; const o = y * N; for (let x = -r; x <= r; x++) acc += src[o + Math.min(N - 1, Math.max(0, x))]; for (let x = 0; x < N; x++) { tmp[o + x] = acc / w; acc += src[o + Math.min(N - 1, x + r + 1)] - src[o + Math.max(0, x - r)]; } }
   for (let x = 0; x < N; x++) { let acc = 0; for (let y = -r; y <= r; y++) acc += tmp[Math.min(N - 1, Math.max(0, y)) * N + x]; for (let y = 0; y < N; y++) { dst[y * N + x] = acc / w; acc += tmp[Math.min(N - 1, y + r + 1) * N + x] - tmp[Math.max(0, y - r) * N + x]; } }
   return dst;
 }
-const gauss = (a, s) => { let r = a; const rr = Math.max(1, Math.round(s * .9)); for (let k = 0; k < 3; k++) r = boxBlur(r, rr); return r; };   // ≈ Gaussian
-const lin = c => c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4;
+const gauss = (a, s) => { let r = a; const rr = Math.max(1, Math.round(s * .9)); for (let k = 0; k < 3; k++) r = boxBlur(r, rr); return r; };
+function minmax(src, r, max) {   // separable square min / max filter
+  const tmp = new Float32Array(P), dst = new Float32Array(P), f = max ? Math.max : Math.min;
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { let v = src[y * N + x]; for (let d = 1; d <= r; d++) { if (x - d >= 0) v = f(v, src[y * N + x - d]); if (x + d < N) v = f(v, src[y * N + x + d]); } tmp[y * N + x] = v; }
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { let v = tmp[y * N + x]; for (let d = 1; d <= r; d++) { if (y - d >= 0) v = f(v, tmp[(y - d) * N + x]); if (y + d < N) v = f(v, tmp[(y + d) * N + x]); } dst[y * N + x] = v; }
+  return dst;
+}
+const linc = c => c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4;
 function lab(r, g, b) {
-  const R_ = lin(r), G_ = lin(g), B_ = lin(b);
-  const f = t => t > .008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116;
+  const R_ = linc(r), G_ = linc(g), B_ = linc(b), f = t => t > .008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116;
   const x = f((R_ * .4124 + G_ * .3576 + B_ * .1805) / .95047), y = f(R_ * .2126 + G_ * .7152 + B_ * .0722), z = f((R_ * .0193 + G_ * .1192 + B_ * .9505) / 1.08883);
   return [116 * y - 16, 500 * (x - y), 200 * (y - z)];
 }
 const hex = (r, g, b) => '#' + [r, g, b].map(v => Math.round(Math.min(1, Math.max(0, v)) * 255).toString(16).padStart(2, '0')).join('');
-
-// connected components of a boolean/label grid (4-connectivity); returns comp id per pixel and the list
-function components(test) {
-  const id = new Int32Array(P).fill(-1), comps = [], stack = [];
+const unhex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
+const r1 = v => Math.round(v * 10) / 10;
+const D4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+// connected components (4-connected) of pixels where same(k, from) holds; returns id per pixel (-1 = not in any) + sizes
+function components(inSet, same) {
+  const id = new Int32Array(P).fill(-1), size = [], stack = [];
   for (let i = 0; i < P; i++) {
-    if (id[i] !== -1 || !test(i)) continue;
-    const c = { idx: comps.length, px: [] }; comps.push(c); id[i] = c.idx; stack.push(i);
+    if (id[i] !== -1 || !inSet(i)) continue;
+    const c = size.length; let n = 0; id[i] = c; stack.push(i);
     while (stack.length) {
-      const j = stack.pop(); c.px.push(j); const x = j % N, y = (j / N) | 0;
-      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= N || ny >= N) continue; const k = ny * N + nx; if (id[k] === -1 && test(k, i)) { id[k] = c.idx; stack.push(k); } }
+      const j = stack.pop(); n++; const x = j % N, y = (j / N) | 0;
+      if (x + 1 < N && id[j + 1] === -1 && inSet(j + 1) && (!same || same(j + 1, j))) { id[j + 1] = c; stack.push(j + 1); }
+      if (x > 0 && id[j - 1] === -1 && inSet(j - 1) && (!same || same(j - 1, j))) { id[j - 1] = c; stack.push(j - 1); }
+      if (y + 1 < N && id[j + N] === -1 && inSet(j + N) && (!same || same(j + N, j))) { id[j + N] = c; stack.push(j + N); }
+      if (y > 0 && id[j - N] === -1 && inSet(j - N) && (!same || same(j - N, j))) { id[j - N] = c; stack.push(j - N); }
     }
+    size.push(n);
   }
-  return { id, comps };
+  return { id, size };
 }
-// outer boundary of a component (Moore-neighbour tracing on pixel centres), simplified
-function outline(c, id) {
-  const inC = (x, y) => x >= 0 && y >= 0 && x < N && y < N && id[y * N + x] === c.idx;
-  let start = c.px[0]; for (const p of c.px) if (p < start) start = p;   // top-most, then left-most
-  const sx = start % N, sy = (start / N) | 0, dirs = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
-  const pts = [[sx, sy]]; let x = sx, y = sy, d = 7, guard = 0;
-  do {
-    let found = false;
-    for (let k = 0; k < 8; k++) { const nd = (d + 6 + k) % 8, nx = x + dirs[nd][0], ny = y + dirs[nd][1]; if (inC(nx, ny)) { x = nx; y = ny; d = nd; found = true; break; } }
-    if (!found) break;
-    pts.push([x, y]);
-  } while ((x !== sx || y !== sy) && ++guard < 40000);
-  return dpClosed(pts, .9);
+// spread labels into unlabelled (-1) pixels from their nearest labelled neighbours (multi-source BFS)
+function spread(label) {
+  let q = []; for (let i = 0; i < P; i++) if (label[i] >= 0) q.push(i);
+  while (q.length) {
+    const nq = [];
+    for (const j of q) { const x = j % N, y = (j / N) | 0, l = label[j];
+      if (x + 1 < N && label[j + 1] < 0) { label[j + 1] = l; nq.push(j + 1); } if (x > 0 && label[j - 1] < 0) { label[j - 1] = l; nq.push(j - 1); }
+      if (y + 1 < N && label[j + N] < 0) { label[j + N] = l; nq.push(j + N); } if (y > 0 && label[j - N] < 0) { label[j - N] = l; nq.push(j - N); } }
+    q = nq;
+  }
+  return label;
 }
-// a closed loop: split at the point farthest from the start, simplify both halves (DP needs distinct endpoints)
-function dpClosed(pts, eps) {
-  if (pts.length < 5) return pts;
-  let m = 0, md = -1; for (let i = 0; i < pts.length; i++) { const d = (pts[i][0] - pts[0][0]) ** 2 + (pts[i][1] - pts[0][1]) ** 2; if (d > md) { md = d; m = i; } }
-  const a = dp(pts.slice(0, m + 1), eps), b = dp(pts.slice(m), eps);
-  return a.concat(b.slice(1, -1));
-}
-function dp(pts, eps) {   // Douglas–Peucker
-  if (pts.length < 4) return pts;
-  const keep = new Uint8Array(pts.length); keep[0] = keep[pts.length - 1] = 1; const st = [[0, pts.length - 1]];
+function dp(pts, eps, keepIdx) {   // Douglas–Peucker on an open polyline; returns kept indices when keepIdx
+  const n = pts.length, keep = new Uint8Array(n); keep[0] = keep[n - 1] = 1; const st = [[0, n - 1]];
   while (st.length) {
-    const [a, b] = st.pop(); let mx = 0, mi = -1; const [x1, y1] = pts[a], [x2, y2] = pts[b], L = Math.hypot(x2 - x1, y2 - y1) || 1;
+    const [a, b] = st.pop(); if (b - a < 2) continue; let mx = 0, mi = -1; const x1 = pts[a][0], y1 = pts[a][1], x2 = pts[b][0], y2 = pts[b][1], L = Math.hypot(x2 - x1, y2 - y1) || 1;
     for (let i = a + 1; i < b; i++) { const d = Math.abs((x2 - x1) * (y1 - pts[i][1]) - (x1 - pts[i][0]) * (y2 - y1)) / L; if (d > mx) { mx = d; mi = i; } }
     if (mx > eps) { keep[mi] = 1; st.push([a, mi], [mi, b]); }
   }
-  return pts.filter((_, i) => keep[i]);
+  const idx = []; for (let i = 0; i < n; i++) if (keep[i]) idx.push(i);
+  return keepIdx ? idx : idx.map(i => pts[i]);
 }
-const toArt = pts => pts.map(([x, y]) => [+(x * SC + SC / 2).toFixed(1), +(y * SC + SC / 2).toFixed(1)]);
-// regions are traced through pixel centres, so neighbours leave a half-pixel seam of paper between them: grow every
-// region outline outward by `g` art units (overlaps are fine — smaller regions are painted on top)
-function grow(pts, g) {
-  if (pts.length < 3) return pts;
-  let A = 0; for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; A += p[0] * q[1] - q[0] * p[1]; }
-  const sg = A > 0 ? 1 : -1, n = pts.length;
-  return pts.map((p, i) => { const a = pts[(i - 1 + n) % n], b = pts[(i + 1) % n], dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1; return [+(p[0] + sg * dy / L * g).toFixed(1), +(p[1] - sg * dx / L * g).toFixed(1)]; });
+function kmeans(feat, dim, w, k, seed, iters = 14) {   // weighted k-means++ on rows of `feat`
+  const n = feat.length / dim, rd = rng(seed), C = [], d2 = (i, c) => { let s = 0; for (let d = 0; d < dim; d++) s += (feat[i * dim + d] - c[d]) ** 2; return s; };
+  const row = i => Array.from(feat.subarray(i * dim, i * dim + dim));
+  let tw = 0; for (let i = 0; i < n; i++) tw += w ? w[i] : 1;
+  let r = rd() * tw, f = 0; for (; f < n - 1; f++) { r -= w ? w[f] : 1; if (r <= 0) break; } C.push(row(f));
+  const best = new Float64Array(n).fill(Infinity);
+  while (C.length < k) { let sum = 0; for (let i = 0; i < n; i++) { best[i] = Math.min(best[i], d2(i, C[C.length - 1])); sum += best[i] * (w ? w[i] : 1); } let q = rd() * sum, j = 0; for (; j < n - 1; j++) { q -= best[j] * (w ? w[j] : 1); if (q <= 0) break; } C.push(row(j)); }
+  const asg = new Int32Array(n);
+  for (let it = 0; it < iters; it++) {
+    const acc = C.map(() => new Float64Array(dim + 1));
+    for (let i = 0; i < n; i++) { let b = 0, bd = Infinity; for (let c = 0; c < C.length; c++) { const d = d2(i, C[c]); if (d < bd) { bd = d; b = c; } } asg[i] = b; const ww = w ? w[i] : 1, a = acc[b]; for (let d = 0; d < dim; d++) a[d] += feat[i * dim + d] * ww; a[dim] += ww; }
+    for (let c = 0; c < C.length; c++) if (acc[c][dim] > 0) for (let d = 0; d < dim; d++) C[c][d] = acc[c][d] / acc[c][dim];
+  }
+  return { C, asg };
 }
-const flat2 = pts => pts.flat();
+function savePng(name, buf, extra = '') {
+  if (!dbg) return;
+  execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', `${N}x${N}`, '-i', '-', ...(extra ? ['-vf', extra] : []), '-frames:v', '1', pjoin(dbg, name)], { input: buf, maxBuffer: 1 << 27 });
+}
+const toBuf = A => { const b = Buffer.alloc(P * 3); for (let i = 0; i < P; i++) { b[i * 3] = Math.round(Math.min(1, Math.max(0, A[0][i])) * 255); b[i * 3 + 1] = Math.round(Math.min(1, Math.max(0, A[1][i])) * 255); b[i * 3 + 2] = Math.round(Math.min(1, Math.max(0, A[2][i])) * 255); } return b; };
+const label = (txt, x, y, size = 20) => `drawtext=text='${txt}':x=${Math.round(x)}:y=${Math.round(y)}:fontsize=${size}:fontcolor=white:box=1:boxcolor=black@0.6:boxborderw=3`;
 
-// thin a binary mask (Zhang–Suen) and trace it into polylines split at junctions
-function thin(m) {
-  const a = Uint8Array.from(m); let changed = true;
-  const nb = (i) => { const x = i % N, y = (i / N) | 0; if (x < 1 || y < 1 || x > N - 2 || y > N - 2) return null; return [a[i - N], a[i - N + 1], a[i + 1], a[i + N + 1], a[i + N], a[i + N - 1], a[i - 1], a[i - N - 1]]; };
+if (dbg) {   // the picture with a coordinate grid, for reading positions off it
+  const G = T.map(c => Float32Array.from(c));
+  for (let v = 100; v < N; v += 100) for (let i = 0; i < N; i++) for (const j of [v * N + i, i * N + v]) for (let ch = 0; ch < 3; ch++) G[ch][j] = G[ch][j] * .45 + (v % 500 === 0 ? .55 : .3);
+  const labs = []; for (let v = 100; v < N; v += 100) labs.push(label(v, v + 3, 3, 18), label(v, 3, v + 3, 18));
+  savePng('grid.png', toBuf(G), labs.join(','));
+}
+
+// ───────── 1. line art: thin dark structures ─────────
+const Y = gauss(lum(T), .6);
+const bh = (r => { const c = minmax(minmax(Y, r, true), r, false), o = new Float32Array(P); for (let i = 0; i < P; i++) o[i] = c[i] - Y[i]; return o; });
+const bh4 = bh(4), bh9 = bh(9);
+let M = new Uint8Array(P);
+const LW = +opt('line-weak', .024), LS = +opt('line-strong', .06);
+{ // hysteresis: weak line pixels count when their component holds a strong one; plus thick very dark marks (lashes, pupils)
+  const weak = i => bh4[i] > LW || (bh9[i] > .2 && Y[i] < .38), cc = components(weak), strong = new Uint8Array(cc.size.length);
+  for (let i = 0; i < P; i++) if (cc.id[i] >= 0 && (bh4[i] > LS || (bh9[i] > .3 && Y[i] < .3))) strong[cc.id[i]] = 1;
+  for (let i = 0; i < P; i++) if (cc.id[i] >= 0 && strong[cc.id[i]] && cc.size[cc.id[i]] >= 18) M[i] = 1;
+}
+// how wide a line really is: the mask is a generous net around a soft line, so measure the width at half the line's
+// own darkness (full width at half maximum), as the distance to the nearest pixel that is under half the local peak
+const pk4 = minmax(bh4, 3, true), pk9 = minmax(bh9, 4, true);
+const DT = (() => { const core = i => M[i] && (bh4[i] > pk4[i] * .5 || (bh9[i] > .2 && bh9[i] > pk9[i] * .6));
+  const D = new Float32Array(P), a = 1, b = Math.SQRT2; for (let i = 0; i < P; i++) D[i] = core(i) ? 1e9 : 0;
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const i = y * N + x; if (!D[i]) continue; let v = D[i]; if (x > 0) v = Math.min(v, D[i - 1] + a); if (y > 0) { v = Math.min(v, D[i - N] + a); if (x > 0) v = Math.min(v, D[i - N - 1] + b); if (x + 1 < N) v = Math.min(v, D[i - N + 1] + b); } D[i] = v; }
+  for (let y = N - 1; y >= 0; y--) for (let x = N - 1; x >= 0; x--) { const i = y * N + x; if (!D[i]) continue; let v = D[i]; if (x + 1 < N) v = Math.min(v, D[i + 1] + a); if (y + 1 < N) { v = Math.min(v, D[i + N] + a); if (x + 1 < N) v = Math.min(v, D[i + N + 1] + b); if (x > 0) v = Math.min(v, D[i + N - 1] + b); } D[i] = v; }
+  return D; })();
+function thin(m) {   // Zhang–Suen
+  const a = Uint8Array.from(m); let changed = true, live = []; for (let i = 0; i < P; i++) if (a[i]) live.push(i);
   while (changed) {
     changed = false;
     for (const step of [0, 1]) {
       const del = [];
-      for (let i = 0; i < P; i++) {
-        if (!a[i]) continue; const p = nb(i); if (!p) continue;
-        const b = p.reduce((s, v) => s + v, 0); if (b < 2 || b > 6) continue;
+      for (const i of live) {
+        if (!a[i]) continue; const x = i % N, y = (i / N) | 0; if (x < 1 || y < 1 || x > N - 2 || y > N - 2) { del.push(i); continue; }
+        const p = [a[i - N], a[i - N + 1], a[i + 1], a[i + N + 1], a[i + N], a[i + N - 1], a[i - 1], a[i - N - 1]];
+        const b = p[0] + p[1] + p[2] + p[3] + p[4] + p[5] + p[6] + p[7]; if (b < 2 || b > 6) continue;
         let t = 0; for (let k = 0; k < 8; k++) if (!p[k] && p[(k + 1) % 8]) t++; if (t !== 1) continue;
         if (step === 0 ? (p[0] * p[2] * p[4] || p[2] * p[4] * p[6]) : (p[0] * p[2] * p[6] || p[0] * p[4] * p[6])) continue;
         del.push(i);
       }
       for (const i of del) a[i] = 0; if (del.length) changed = true;
     }
+    live = live.filter(i => a[i]);
   }
   return a;
 }
-function trace(sk, minLen) {
+function trace(sk) {   // skeleton → pixel chains that end at endpoints or junctions
   const deg = new Uint8Array(P), seen = new Uint8Array(P), lines = [], D8 = [-N - 1, -N, -N + 1, -1, 1, N - 1, N, N + 1];
-  const ok = (i, j) => { const xi = i % N, xj = j % N; return Math.abs(xi - xj) <= 1 && j >= 0 && j < P; };
+  const ok = (i, j) => j >= 0 && j < P && Math.abs((i % N) - (j % N)) <= 1;
   for (let i = 0; i < P; i++) if (sk[i]) for (const d of D8) { const j = i + d; if (ok(i, j) && sk[j]) deg[i]++; }
-  const walk = s => {
-    const line = [s]; seen[s] = 1; let cur = s;
-    for (;;) {
-      let next = -1; for (const d of D8) { const j = cur + d; if (ok(cur, j) && sk[j] && !seen[j]) { next = j; break; } }
-      if (next < 0) break; seen[next] = 1; line.push(next); cur = next; if (deg[next] > 2) break;
-    }
-    return line;
-  };
+  const walk = s => { const line = [s]; seen[s] = 1; let cur = s; for (;;) { let next = -1; for (const d of D8) { const j = cur + d; if (ok(cur, j) && sk[j] && !seen[j]) { next = j; break; } } if (next < 0) break; seen[next] = 1; line.push(next); cur = next; if (deg[next] > 2) break; } return line; };
   for (const pass of [1, 2, 3]) for (let i = 0; i < P; i++) {
-    if (!sk[i] || seen[i]) continue;
+    if (!sk[i] || (seen[i] && pass !== 2)) continue;
     if (pass === 1 && deg[i] !== 1) continue; if (pass === 2 && deg[i] <= 2) continue;
-    if (pass === 2) { seen[i] = 0; for (const d of D8) { const j = i + d; if (ok(i, j) && sk[j] && !seen[j]) { const l = walk(j); l.unshift(i); if (l.length >= minLen) lines.push(l); } } seen[i] = 1; continue; }
-    const l = walk(i); if (l.length >= minLen) lines.push(l);
+    if (pass === 2) { seen[i] = 1; for (const d of D8) { const j = i + d; if (ok(i, j) && sk[j] && !seen[j]) { const l = walk(j); l.unshift(i); lines.push(l); } } continue; }
+    lines.push(walk(i));
   }
-  return lines.map(l => l.map(i => [i % N, (i / N) | 0]));
+  return lines.map(l => l.map(i => [i % N, (i / N) | 0, i]));
 }
-
-// join traced fragments whose ends meet (within `gap` px) and run on in the same direction: fewer, longer strokes
-function join(ls, gap) {
-  const dir = (l, end) => { const a = end ? l[l.length - 1] : l[0], b = end ? l[Math.max(0, l.length - 4)] : l[Math.min(l.length - 1, 3)]; const dx = a[0] - b[0], dy = a[1] - b[1], L = Math.hypot(dx, dy) || 1; return [dx / L, dy / L]; };
-  let merged = true, pass = 0;
-  while (merged && pass++ < 6) {
-    merged = false;
-    const alive = ls.map(() => true);
-    for (let i = 0; i < ls.length; i++) {
-      if (!alive[i]) continue;
-      for (let j = 0; j < ls.length; j++) {
-        if (i === j || !alive[j]) continue;
-        const a = ls[i], b = ls[j], ae = a[a.length - 1];
-        for (const flip of [false, true]) {
-          const bb = flip ? b.slice().reverse() : b, bs = bb[0];
-          if (Math.hypot(ae[0] - bs[0], ae[1] - bs[1]) > gap) continue;
-          const da = dir(a, true), db = dir(bb, false);
-          if (da[0] * -db[0] + da[1] * -db[1] < .55) continue;      // must continue roughly straight on
-          ls[i] = a.concat(bb); alive[j] = false; merged = true; break;
-        }
-        if (!alive[j]) break;
-      }
-    }
-    ls = ls.filter((_, k) => alive[k]);
+// join chains whose ends meet and run straight on (the best partner by direction, mutually): long confident strokes
+function joinChains(ls, gap = 10, minDot = .72) {
+  const dir = (l, end) => { const n = l.length, a = end ? l[n - 1] : l[0], b = end ? l[Math.max(0, n - 6)] : l[Math.min(n - 1, 5)], dx = a[0] - b[0], dy = a[1] - b[1], L = Math.hypot(dx, dy) || 1; return [dx / L, dy / L]; };
+  for (let pass = 0; pass < 8; pass++) {
+    const ends = []; ls.forEach((l, i) => { if (l.length < 2) return; ends.push({ i, end: 0, p: l[0], d: dir(l, 0) }, { i, end: 1, p: l[l.length - 1], d: dir(l, 1) }); });
+    const grid = new Map(), key = (x, y) => ((x >> 4) << 12) | (y >> 4); ends.forEach((e, k) => { const g = key(e.p[0], e.p[1]); (grid.get(g) || grid.set(g, []).get(g)).push(k); });
+    const best = new Int32Array(ends.length).fill(-1), score = new Float32Array(ends.length).fill(-2);
+    ends.forEach((e, k) => { for (let gx = -1; gx <= 1; gx++) for (let gy = -1; gy <= 1; gy++) for (const m of grid.get(key(e.p[0] + gx * 16, e.p[1] + gy * 16)) || []) {
+      const f = ends[m]; if (f.i === e.i) continue; const vx = f.p[0] - e.p[0], vy = f.p[1] - e.p[1], dist = Math.hypot(vx, vy); if (dist > gap) continue;
+      let dot = -(e.d[0] * f.d[0] + e.d[1] * f.d[1]);
+      // across a gap (a faint stretch the mask missed) both ends must also point at each other
+      if (dist > 3.5) { const a = (e.d[0] * vx + e.d[1] * vy) / dist, b = -(f.d[0] * vx + f.d[1] * vy) / dist; if (a < .9 || b < .9 || dot < .85) continue; }
+      dot -= dist * .02; if (dot > score[k]) { score[k] = dot; best[k] = m; } } });
+    const dead = new Uint8Array(ls.length), used = new Uint8Array(ls.length); let merged = 0;
+    ends.forEach((e, k) => {
+      const m = best[k]; if (m < 0 || best[m] !== k || score[k] < minDot || k > m) return; const f = ends[m];
+      if (used[e.i] || used[f.i]) return; used[e.i] = used[f.i] = 1;
+      const A = e.end ? ls[e.i] : ls[e.i].slice().reverse(), B = f.end ? ls[f.i].slice().reverse() : ls[f.i];
+      ls[e.i] = A.concat(B); dead[f.i] = 1; merged++;
+    });
+    ls = ls.filter((_, i) => !dead[i]); if (!merged) break;
   }
   return ls;
 }
-const t0 = Date.now(), log = m => console.log(`  ${m}  (${((Date.now() - t0) / 1000).toFixed(1)} s)`);
-console.log(`${basename(img)} → ${out}`);
-const Yo = Y([R, G, B]);
+const sm = (arr, fixedEnds = true, passes = 2) => { let a = arr; for (let p = 0; p < passes; p++) { const b = a.slice(); for (let i = 1; i < a.length - 1; i++) b[i] = (a[i - 1] + 2 * a[i] + a[i + 1]) / 4; if (!fixedEnds && a.length > 1) { b[0] = (3 * a[0] + a[1]) / 4; b[a.length - 1] = (3 * a[a.length - 1] + a[a.length - 2]) / 4; } a = b; } return a; };
+let strokes = joinChains(trace(thin(M))).filter(l => l.length >= 7).map(l => {
+  const n = l.length; let r = 0, g = 0, b = 0, dk = 0; for (const [, , i] of l) dk += Math.max(bh4[i], bh9[i]);
+  // the line's colour: its darker half (the skeleton wanders off the darkest pixel here and there)
+  { const srt = l.map(p => p[2]).sort((a, b) => Y[a] - Y[b]).slice(0, Math.max(1, n >> 1)); for (const i of srt) { r += T[0][i]; g += T[1][i]; b += T[2][i]; } r *= n / srt.length; g *= n / srt.length; b *= n / srt.length; }
+  const xs = sm(l.map(p => p[0] + .5), true, 10), ys = sm(l.map(p => p[1] + .5), true, 10), ws = sm(l.map(p => { let d = DT[p[2]]; if (!d) for (const q of [1, -1, N, -N]) d = Math.max(d, DT[p[2] + q] || 0); return Math.min(14, Math.max(1, 2 * d - .5)); }), false, 14);   // a pen's width changes slowly along a stroke
+  const pts = xs.map((x, i) => [x, ys[i]]), idx = dp(pts, .45, true);
+  let wm = 0; for (const w of ws) wm += w; wm /= n;
+  return { p: idx.map(i => pts[i]), w: idx.map(i => ws[i]), len: n, wm, dark: dk / n, col: [r / n, g / n, b / n] };
+});
+strokes = strokes.filter(s => s.len >= 14 || s.wm > 3.2);   // specks are not strokes (thick short marks are: lashes, pupils)
+// which strokes are inked: the long, dark, wide ones, and what lies in an early focus box (a nose is a short faint line that matters)
+const rank = s => { const m = s.p[s.p.length >> 1], g = groupOf(m[0], m[1]); return s.len * s.wm * s.dark * (1 + 3 * (focus.length - g) / Math.max(1, focus.length)); };
+strokes.sort((a, b) => rank(b) - rank(a));
+const dropped = strokes.length - Math.min(strokes.length, MAXL); strokes = strokes.slice(0, MAXL);
+// the kept line art as a mask (what the ink layer will cover), and the picture with it painted out
+const MK = new Uint8Array(P);
+for (const s of strokes) for (let k = 0; k + 1 < s.p.length; k++) {
+  const [x1, y1] = s.p[k], [x2, y2] = s.p[k + 1], L = Math.ceil(Math.hypot(x2 - x1, y2 - y1)) || 1;
+  for (let j = 0; j <= L; j++) { const u = j / L, x = x1 + (x2 - x1) * u, y = y1 + (y2 - y1) * u, r = (s.w[k] + (s.w[k + 1] - s.w[k]) * u) / 2 + 1.2, R = Math.ceil(r);
+    for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) { if (dx * dx + dy * dy > r * r) continue; const xx = Math.round(x + dx), yy = Math.round(y + dy); if (xx >= 0 && yy >= 0 && xx < N && yy < N) MK[yy * N + xx] = 1; } }
+}
+const U = T.map(c => Float32Array.from(c));   // "under the lines": the picture as paint only
+{ const known = new Uint8Array(P); for (let i = 0; i < P; i++) known[i] = MK[i] ? 0 : 1; let q = [];
+  for (let i = 0; i < P; i++) if (!known[i]) { const x = i % N, y = (i / N) | 0; if ((x > 0 && known[i - 1]) || (x + 1 < N && known[i + 1]) || (y > 0 && known[i - N]) || (y + 1 < N && known[i + N])) q.push(i); }
+  while (q.length) { const fill = [];
+    for (const i of q) { const x = i % N, y = (i / N) | 0; let r = 0, g = 0, b = 0, n = 0; for (const [dx, dy] of D4) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= N || yy >= N) continue; const j = yy * N + xx; if (known[j]) { r += U[0][j]; g += U[1][j]; b += U[2][j]; n++; } } if (n) fill.push([i, r / n, g / n, b / n]); }
+    const nq = []; for (const [i, r, g, b] of fill) { U[0][i] = r; U[1][i] = g; U[2][i] = b; known[i] = 1; }
+    for (const [i] of fill) { const x = i % N, y = (i / N) | 0; for (const [dx, dy] of D4) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= N || yy >= N) continue; const j = yy * N + xx; if (!known[j] && MK[j] !== 2) { MK[j] = 2; nq.push(j); } } }
+    q = nq; if (!fill.length) break; }
+  for (let i = 0; i < P; i++) if (MK[i] === 2) MK[i] = 1; }
+const inkDark = (() => { const s = strokes.slice().sort((a, b) => lum3(a.col) - lum3(b.col)).slice(0, Math.max(3, strokes.length >> 2)); const m = k => { const v = s.map(q => q.col[k]).sort((a, b) => a - b); return v[v.length >> 1] || .15; }; return [m(0), m(1), m(2)]; })();
+function lum3(c) { return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; }
+log(`line art: ${strokes.length} strokes (${dropped} weaker ones left to the detail pass)`);
+if (dbg) { const L = [new Float32Array(P).fill(1), new Float32Array(P).fill(1), new Float32Array(P).fill(1)]; for (let i = 0; i < P; i++) if (M[i]) L[0][i] = L[1][i] = L[2][i] = .1; savePng('lines.png', toBuf(L)); }
 
-// ---------- flats: k-means in Lab on a softened picture ----------
-const Rs = gauss(R, 1.6), Gs = gauss(G, 1.6), Bs = gauss(B, 1.6);
-const L3 = new Float32Array(P * 3); for (let i = 0; i < P; i++) { const l = lab(Rs[i], Gs[i], Bs[i]); L3[i * 3] = l[0]; L3[i * 3 + 1] = l[1]; L3[i * 3 + 2] = l[2]; }
-const rnd = rng(7), cent = [], samp = []; for (let i = 0; i < P; i += 7) samp.push(i);
-cent.push(samp[Math.floor(rnd() * samp.length)]);
-const d2 = (i, c) => (L3[i * 3] - c[0]) ** 2 + (L3[i * 3 + 1] - c[1]) ** 2 + (L3[i * 3 + 2] - c[2]) ** 2;
-let C = [[L3[cent[0] * 3], L3[cent[0] * 3 + 1], L3[cent[0] * 3 + 2]]];
-while (C.length < K) {   // k-means++
-  const ds = samp.map(i => Math.min(...C.map(c => d2(i, c)))), sum = ds.reduce((a, b) => a + b, 0); let r = rnd() * sum, k = 0;
-  while (r > ds[k] && k < ds.length - 1) r -= ds[k++];
-  const i = samp[k]; C.push([L3[i * 3], L3[i * 3 + 1], L3[i * 3 + 2]]);
+// ───────── 2. materials: what is skin, hair, cloth, background ─────────
+// With a plan: each material is a rough lasso (polygons drawn by the agent, who can see the picture); the exact edge
+// is then found by colour, inside a band around the lasso — select loosely, let the colours decide the boundary.
+// Without one: colour clusters (no meaning, but still a few big flats).
+const Us = U.map(c => gauss(c, 1.3)), LAB = new Float32Array(P * 3);
+for (let i = 0; i < P; i++) { const l = lab(Us[0][i], Us[1][i], Us[2][i]); LAB[i * 3] = l[0]; LAB[i * 3 + 1] = l[1]; LAB[i * 3 + 2] = l[2]; }
+function distTo(isZero) {   // chamfer distance to the nearest pixel where isZero
+  const D = new Float32Array(P), a = 1, b = Math.SQRT2; for (let i = 0; i < P; i++) D[i] = isZero(i) ? 0 : 1e9;
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const i = y * N + x; if (!D[i]) continue; let v = D[i]; if (x > 0) v = Math.min(v, D[i - 1] + a); if (y > 0) { v = Math.min(v, D[i - N] + a); if (x > 0) v = Math.min(v, D[i - N - 1] + b); if (x + 1 < N) v = Math.min(v, D[i - N + 1] + b); } D[i] = v; }
+  for (let y = N - 1; y >= 0; y--) for (let x = N - 1; x >= 0; x--) { const i = y * N + x; if (!D[i]) continue; let v = D[i]; if (x + 1 < N) v = Math.min(v, D[i + 1] + a); if (y + 1 < N) { v = Math.min(v, D[i + N] + a); if (x + 1 < N) v = Math.min(v, D[i + N + 1] + b); if (x > 0) v = Math.min(v, D[i + N - 1] + b); } D[i] = v; }
+  return D;
 }
-for (let it = 0; it < 12; it++) {
-  const acc = C.map(() => [0, 0, 0, 0]);
-  for (const i of samp) { let b = 0, bd = Infinity; C.forEach((c, k) => { const d = d2(i, c); if (d < bd) { bd = d; b = k; } }); const a = acc[b]; a[0] += L3[i * 3]; a[1] += L3[i * 3 + 1]; a[2] += L3[i * 3 + 2]; a[3]++; }
-  C = C.map((c, k) => acc[k][3] ? [acc[k][0] / acc[k][3], acc[k][1] / acc[k][3], acc[k][2] / acc[k][3]] : c);
+function rasterPolys(polys) {   // even-odd scanline fill of polygons given as flat [x, y, …] arrays
+  const m = new Uint8Array(P);
+  for (const poly of polys) { const n = poly.length / 2;
+    for (let y = 0; y < N; y++) { const yc = y + .5, xs = []; for (let k = 0; k < n; k++) { const x1 = poly[k * 2], y1 = poly[k * 2 + 1], x2 = poly[((k + 1) % n) * 2], y2 = poly[((k + 1) % n) * 2 + 1]; if ((y1 <= yc && y2 > yc) || (y2 <= yc && y1 > yc)) xs.push(x1 + (yc - y1) / (y2 - y1) * (x2 - x1)); }
+      xs.sort((a, b) => a - b); for (let k = 0; k + 1 < xs.length; k += 2) for (let x = Math.max(0, Math.ceil(xs[k] - .5)); x <= Math.min(N - 1, Math.floor(xs[k + 1] - .5)); x++) m[y * N + x] ^= 1; } }
+  return m;
 }
-let lab_ = new Int16Array(P); for (let i = 0; i < P; i++) { let b = 0, bd = Infinity; C.forEach((c, k) => { const d = d2(i, c); if (d < bd) { bd = d; b = k; } }); lab_[i] = b; }
-for (let pass = 0; pass < 2; pass++) {   // majority filter: no speckle
-  const nx = new Int16Array(lab_);
-  for (let y = 1; y < N - 1; y++) for (let x = 1; x < N - 1; x++) { const cnt = new Map(); for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const v = lab_[(y + dy) * N + x + dx]; cnt.set(v, (cnt.get(v) || 0) + 1); } let bv = lab_[y * N + x], bc = 0; for (const [v, c] of cnt) if (c > bc) { bc = c; bv = v; } nx[y * N + x] = bv; }
-  lab_ = nx;
+const palette = (px, k, seed) => { const step = Math.max(1, Math.floor(px.length / 8000)), f = []; for (let j = 0; j < px.length; j += step) f.push(LAB[px[j] * 3], LAB[px[j] * 3 + 1], LAB[px[j] * 3 + 2]); return f.length >= 3 ? kmeans(Float32Array.from(f), 3, null, Math.min(k, f.length / 3), seed).C : []; };
+const dEmin = (i, pal) => { let b = 1e9; for (const c of pal) { const d = (LAB[i * 3] - c[0]) ** 2 + (LAB[i * 3 + 1] - c[1]) ** 2 + (LAB[i * 3 + 2] - c[2]) ** 2; if (d < b) b = d; } return Math.sqrt(b); };
+const mat = new Int16Array(P).fill(-1), mats = [];
+const lasso = (plan.materials || []).filter(m => m.poly);
+if (lasso.length) {
+  const BAND = +(plan.band ?? 26), BETA = 16;
+  for (const pm of plan.materials) mats.push({ name: pm.name, base: pm.base || null, tones: pm.tones, rest: !!pm.rest, poly: pm.poly });
+  if (!mats.some(m => m.rest)) mats.push({ name: 'background', rest: true });
+  const far = new Uint8Array(P).fill(1), cover = new Uint8Array(P);
+  for (const m of mats) { if (!m.poly) continue;
+    m.mk = rasterPolys(m.poly); const din = distTo(i => !m.mk[i]), dout = distTo(i => m.mk[i]); m.sd = new Float32Array(P); let n = 0;
+    for (let i = 0; i < P; i++) { const d = m.mk[i] ? din[i] : -dout[i]; m.sd[i] = d; if (d > -BAND * .5) far[i] = 0; if (d > 0) { n++; cover[i]++; } }
+    m.band = Math.min(BAND, Math.max(6, Math.sqrt(n) * .25)); }
+  // each material's colours: the plan's sample points if given, else what lies inside its lasso and no other
+  const sampleAt = ([x, y]) => { const v = [[], [], []]; for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) { const i = Math.min(N - 1, Math.max(0, Math.round(y) + dy)) * N + Math.min(N - 1, Math.max(0, Math.round(x) + dx)); for (let c = 0; c < 3; c++) v[c].push(LAB[i * 3 + c]); } return v.map(a => a.sort((p, q) => p - q)[a.length >> 1]); };
+  for (const m of mats) { if (!m.poly) continue; const pm = plan.materials.find(q => q.name === m.name);
+    if (pm.samples) { m.pal = pm.samples.map(sampleAt); continue; }
+    const own = [], inside = []; for (let i = 0; i < P; i++) if (m.sd[i] > 0) { inside.push(i); if (m.sd[i] >= 5 && cover[i] === 1) own.push(i); }
+    m.pal = palette(own.length > 200 ? own : inside, 5, 3 + mats.indexOf(m)); }
+  const restPx = []; for (let i = 0; i < P; i++) if (far[i]) restPx.push(i);
+  for (const m of mats) if (m.rest) m.pal = palette(restPx, 7, 99);
+  for (let i = 0; i < P; i++) { let best = 1e9, bk = -1;
+    for (let k = 0; k < mats.length; k++) { const m = mats[k]; let c;
+      if (m.rest) c = (m.pal.length ? dEmin(i, m.pal) : 20) + BETA * .5;
+      else { const sd = m.sd[i]; if (sd <= -m.band) continue; c = dEmin(i, m.pal) + BETA * (1 - Math.min(1, (sd + m.band) / (2 * m.band))); }
+      if (c < best) { best = c; bk = k; } }
+    mat[i] = bk; }
+  for (const m of mats) { delete m.sd; delete m.mk; }
+} else {
+  const sub = []; for (let i = 0; i < P; i += 11) sub.push(i);
+  const f = new Float32Array(sub.length * 3); sub.forEach((i, j) => { f[j * 3] = LAB[i * 3] * .5; f[j * 3 + 1] = LAB[i * 3 + 1]; f[j * 3 + 2] = LAB[i * 3 + 2]; });
+  const km = kmeans(f, 3, null, KM, 7);
+  for (let i = 0; i < P; i++) { let b = 0, bd = 1e9; for (let c = 0; c < km.C.length; c++) { const q = km.C[c], d = (LAB[i * 3] * .5 - q[0]) ** 2 + (LAB[i * 3 + 1] - q[1]) ** 2 + (LAB[i * 3 + 2] - q[2]) ** 2; if (d < bd) { bd = d; b = c; } } mat[i] = b; }
+  for (let c = 0; c < km.C.length; c++) mats.push({ name: 'm' + c, auto: true });
 }
-// merge small regions into their most common neighbour
-const MINA = Math.round(P * .00012) + 8;
-for (let pass = 0; pass < 3; pass++) {
-  const { id, comps } = components((k, i) => i === undefined ? true : lab_[k] === lab_[i]);
-  let merged = 0;
-  for (const c of comps) {
-    if (c.px.length >= MINA) continue; const cnt = new Map();
-    for (const j of c.px) { const x = j % N, y = (j / N) | 0; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= N || ny >= N) continue; const k = ny * N + nx; if (id[k] !== c.idx) cnt.set(lab_[k], (cnt.get(lab_[k]) || 0) + 1); } }
-    let bv = -1, bc = 0; for (const [v, n] of cnt) if (n > bc) { bc = n; bv = v; } if (bv >= 0) { for (const j of c.px) lab_[j] = bv; merged++; }
+// clean the selection: majority filter, then hand stray islands to their surroundings
+for (let pass = 0; pass < 2; pass++) { const nx = Int16Array.from(mat), cnt = new Int32Array(mats.length);
+  for (let y = 2; y < N - 2; y++) for (let x = 2; x < N - 2; x++) { const i = y * N + x; cnt.fill(0); for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) cnt[mat[i + dy * N + dx]]++; let b = mat[i], bc = cnt[b]; for (let c = 0; c < mats.length; c++) if (cnt[c] > bc) { bc = cnt[c]; b = c; } nx[i] = b; }
+  mat.set(nx); }
+{ const cc = components(() => true, (a, b) => mat[a] === mat[b]), lb = new Int32Array(P); let any = 0; for (let i = 0; i < P; i++) { if (cc.size[cc.id[i]] < (lasso.length ? 140 : 400)) { lb[i] = -1; any++; } else lb[i] = mat[i]; } if (any) { spread(lb); for (let i = 0; i < P; i++) mat[i] = lb[i]; } }
+for (const m of mats) { m.n = 0; m.cx = 0; m.cy = 0; m.border = 0; }
+for (let i = 0; i < P; i++) { const m = mats[mat[i]], x = i % N, y = (i / N) | 0; m.n++; m.cx += x; m.cy += y; if (x === 0 || y === 0 || x === N - 1 || y === N - 1) m.border++; }
+for (const m of mats) if (m.n) { m.cx /= m.n; m.cy /= m.n; }
+// paint order: the plan's order (the rest last); without a plan subject-first (near the centre), most border last
+const order = mats.map((m, k) => k).filter(k => mats[k].n > 0).sort((a, b) => {
+  const A = mats[a], B = mats[b]; if (!A.auto) return (A.rest ? 1 : 0) - (B.rest ? 1 : 0) || a - b;
+  const sc = m => Math.hypot(m.cx - N / 2, m.cy - N / 2) / N + m.border / (4 * N) * 3; return sc(A) - sc(B); });
+log(`materials: ${order.map(k => `${mats[k].name} ${(mats[k].n / P * 100).toFixed(1)} %`).join(' · ')}`);
+
+// ───────── 3. tones: the few colours each material is shaded with ─────────
+const Ut = U.map(c => gauss(c, 1.6)), tone = new Int16Array(P).fill(-1), S = [new Float32Array(P), new Float32Array(P), new Float32Array(P)];
+for (const k of order) {
+  const m = mats[k], px = []; for (let i = 0; i < P; i++) if (mat[i] === k) px.push(i);
+  const step = Math.max(1, Math.floor(px.length / 30000)), sub = []; for (let j = 0; j < px.length; j += step) sub.push(px[j]);
+  const f = new Float32Array(sub.length * 3); sub.forEach((i, j) => { const l = lab(Ut[0][i], Ut[1][i], Ut[2][i]); f[j * 3] = l[0]; f[j * 3 + 1] = l[1]; f[j * 3 + 2] = l[2]; });
+  // as few tones as describe it: stop adding when the mean error is small or the gain is
+  let res = null, kMax = m.tones || (m.n > P * .12 ? 6 : 5);
+  for (let kt = 1; kt <= kMax; kt++) {
+    const r = kmeans(f, 3, null, Math.min(kt, sub.length), 11 + kt); let e = 0; for (let j = 0; j < sub.length; j++) { const c = r.C[r.asg[j]]; e += Math.hypot(f[j * 3] - c[0], f[j * 3 + 1] - c[1], f[j * 3 + 2] - c[2]); } e /= sub.length;
+    res = r; res.e = e; if (!m.tones && e < 4.2) break;
   }
-  if (!merged) break;
+  const C = res.C, asg = new Int16Array(px.length);
+  px.forEach((i, j) => { const l = lab(Ut[0][i], Ut[1][i], Ut[2][i]); let b = 0, bd = Infinity; for (let c = 0; c < C.length; c++) { const d = (l[0] - C[c][0]) ** 2 + (l[1] - C[c][1]) ** 2 + (l[2] - C[c][2]) ** 2; if (d < bd) { bd = d; b = c; } } asg[j] = b; });
+  const cnt = new Float64Array(C.length), col = C.map(() => [0, 0, 0]);
+  px.forEach((i, j) => { const c = asg[j]; cnt[c]++; col[c][0] += U[0][i]; col[c][1] += U[1][i]; col[c][2] += U[2][i]; });
+  col.forEach((c, j) => { if (cnt[j]) { c[0] /= cnt[j]; c[1] /= cnt[j]; c[2] /= cnt[j]; } });
+  // the base is the flat: the plan's colour if given (nearest tone), else the tone that covers most
+  let base = 0; if (m.base) { const b = unhex(m.base); let bd = Infinity; col.forEach((c, j) => { const d = Math.hypot(c[0] - b[0], c[1] - b[1], c[2] - b[2]); if (cnt[j] && d < bd) { bd = d; base = j; } }); } else for (let j = 1; j < C.length; j++) if (cnt[j] > cnt[base]) base = j;
+  m.baseCol = col[base]; m.toneCols = col; m.baseTone = base; m.toneCnt = cnt;
+  px.forEach((i, j) => { tone[i] = asg[j]; });
 }
-const reg = components((k, i) => i === undefined ? true : lab_[k] === lab_[i]);
-const F = [new Float32Array(P), new Float32Array(P), new Float32Array(P)], flats = [];
-for (const c of reg.comps) {
-  let r = 0, g = 0, b = 0; for (const j of c.px) { r += R[j]; g += G[j]; b += B[j]; } r /= c.px.length; g /= c.px.length; b /= c.px.length;
-  for (const j of c.px) { F[0][j] = r; F[1][j] = g; F[2][j] = b; }
-  if (c.px.length < 4) continue;
-  let border = false, cx = 0, cy = 0; for (const j of c.px) { const x = j % N, y = (j / N) | 0; cx += x; cy += y; if (x === 0 || y === 0 || x === N - 1 || y === N - 1) border = true; }
-  const pts = outline(c, reg.id); if (pts.length < 3) continue;
-  flats.push({ p: flat2(grow(toArt(pts), 1.8)), c: hex(r, g, b), a: c.px.length, bg: border && c.px.length > P * .06, cx: cx / c.px.length, cy: cy / c.px.length });
+// smooth the tone shapes (a painter's shapes are not speckle): majority filter inside the material, then drop specks
+for (let pass = 0; pass < 2; pass++) {
+  const nx = Int16Array.from(tone), cnt = new Int32Array(8);
+  for (let y = 2; y < N - 2; y++) for (let x = 2; x < N - 2; x++) { const i = y * N + x, k = mat[i]; cnt.fill(0); for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const j = i + dy * N + dx; if (mat[j] === k) cnt[tone[j]]++; } let b = tone[i], bc = cnt[b]; for (let c = 0; c < 8; c++) if (cnt[c] > bc) { bc = cnt[c]; b = c; } nx[i] = b; }
+  tone.set(nx);
 }
-flats.sort((a, b) => b.a - a.a); flats.forEach((f, i) => f.z = i);
-// time order: the subject first (nearest the centre, biggest), the big border-touching background last
-flats.forEach(f => f.o = (f.bg ? 1e6 : 0) + Math.hypot(f.cx - N / 2, f.cy - N / 2) * 40 - Math.sqrt(f.a));
-log(`flats: ${K} colours → ${flats.length} regions`);
+{ const cc = components(() => true, (a, b) => mat[a] === mat[b] && tone[a] === tone[b]);
+  const fix = new Int32Array(P).fill(-1); let any = 0; for (let i = 0; i < P; i++) if (cc.size[cc.id[i]] < 60 && tone[i] !== mats[mat[i]].baseTone) { fix[i] = 1; any++; }
+  if (any) { const lab2 = new Int32Array(P); for (let i = 0; i < P; i++) lab2[i] = fix[i] === 1 ? -1 : mat[i] * 16 + tone[i]; spread(lab2); for (let i = 0; i < P; i++) if (fix[i] === 1) tone[i] = (lab2[i] >> 4) === mat[i] ? lab2[i] & 15 : mats[mat[i]].baseTone; } }
 
-// ---------- shadow / highlight: what the flats miss in value ----------
-const Ob = [gauss(R, .8), gauss(G, .8), gauss(B, .8)], Yb = Y(Ob), Yf = Y(F), dv = new Float32Array(P);
-for (let i = 0; i < P; i++) dv[i] = Yb[i] - Yf[i];
-const shadow = [], light = [], S1 = new Float32Array(P).fill(1), L1 = new Float32Array(P);
-function layer(mask, kind, prev) {
-  const cc = components((k, i) => mask[k] && (i === undefined || true));
-  let n = 0;
-  for (const c of cc.comps) {
-    if (c.px.length < 14) continue;
-    let r = 0, g = 0, b = 0;
-    for (const j of c.px) for (let ch = 0; ch < 3; ch++) {
-      const o = Ob[ch][j], f = F[ch][j] * (kind === 'shadow' ? prev[j] : 1);
-      const v = kind === 'shadow' ? Math.min(1, o / Math.max(.02, f)) : Math.max(0, 1 - (1 - o) / Math.max(.02, 1 - (F[ch][j] + (1 - F[ch][j]) * prev[j])));
-      if (ch === 0) r += v; else if (ch === 1) g += v; else b += v;
+// outlines of a mask as closed loops running along pixel edges (holes included), smoothed and simplified
+function loops(inMask) {
+  const V = N + 1, out = new Uint8Array(V * V), DX = [1, 0, -1, 0], DY = [0, 1, 0, -1];   // bit d = an edge leaves this vertex in direction d
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    if (!inMask(y * N + x)) continue;
+    if (y === 0 || !inMask((y - 1) * N + x)) out[y * V + x + 1] |= 4;          // top side, going left
+    if (x === N - 1 || !inMask(y * N + x + 1)) out[(y + 1) * V + x + 1] |= 8;  // right side, going up
+    if (y === N - 1 || !inMask((y + 1) * N + x)) out[(y + 1) * V + x] |= 1;    // bottom side, going right
+    if (x === 0 || !inMask(y * N + x - 1)) out[y * V + x] |= 2;                // left side, going down
+  }
+  const res = [];
+  for (let v0 = 0; v0 < V * V; v0++) while (out[v0]) {
+    let d = out[v0] & 1 ? 0 : out[v0] & 2 ? 1 : out[v0] & 4 ? 2 : 3, v = v0; const pts = [];
+    do { out[v] &= ~(1 << d); pts.push([v % V, (v / V) | 0]); v += DX[d] + DY[d] * V;
+      const pref = [(d + 3) % 4, d, (d + 1) % 4]; let nd = -1; for (const q of pref) if (out[v] & (1 << q)) { nd = q; break; } if (nd < 0) break; d = nd; } while (v !== v0 || (out[v0] & (1 << d)));
+    if (pts.length < 8) continue;
+    let A = 0; for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; A += p[0] * q[1] - q[0] * p[1]; } if (Math.abs(A) / 2 < 12) continue;
+    // smooth the pixel stairs (closed moving average), then simplify each half
+    const n = pts.length, sx = new Float32Array(n), sy = new Float32Array(n);
+    for (let i = 0; i < n; i++) { let ax = 0, ay = 0; for (let k = -3; k <= 3; k++) { const p = pts[(i + k + n) % n], w = 4 - Math.abs(k); ax += p[0] * w; ay += p[1] * w; } sx[i] = ax / 16; sy[i] = ay / 16; }
+    const sp = Array.from({ length: n }, (_, i) => [sx[i], sy[i]]); let far = 0, fd = -1; for (let i = 0; i < n; i++) { const dd = (sp[i][0] - sp[0][0]) ** 2 + (sp[i][1] - sp[0][1]) ** 2; if (dd > fd) { fd = dd; far = i; } }
+    const a = dp(sp.slice(0, far + 1), .6), b = dp(sp.slice(far).concat([sp[0]]), .6), loop = a.concat(b.slice(1, -1));
+    if (loop.length >= 3) res.push({ p: loop.flat().map(r1), area: A / 2 });
+  }
+  return res;
+}
+const materials = [], Uw = U.map(c => gauss(c, 3));
+for (const k of order) {
+  const m = mats[k], bb = [N, N, 0, 0]; for (let i = 0; i < P; i++) if (mat[i] === k) { const x = i % N, y = (i / N) | 0; if (x < bb[0]) bb[0] = x; if (y < bb[1]) bb[1] = y; if (x > bb[2]) bb[2] = x; if (y > bb[3]) bb[3] = y; }
+  const L = loops(i => mat[i] === k), Lb = lum3(m.baseCol), tones = [];
+  m.toneCols.forEach((c, j) => { if (j === m.baseTone || !m.toneCnt[j]) return; let n = 0; for (let i = 0; i < P; i++) if (mat[i] === k && tone[i] === j) n++; if (n < 40) return;
+    // hard or soft brush? how wide the picture's own transition is along each shape's edge (colour step ÷ gradient).
+    // One tone can hold both: a crisp cast shadow and a soft blush of the same colour. They are split by shape.
+    const cc = components(i => mat[i] === k && tone[i] === j), ws = cc.size.map(() => []);
+    for (let y = 5; y < N - 5; y += 2) for (let x = 5; x < N - 5; x += 2) { const i = y * N + x; if (cc.id[i] < 0) continue;
+      for (const q of [i + 1, i - 1, i + N, i - N]) { if (mat[q] !== k || tone[q] === j) continue; const c2 = m.toneCols[tone[q]]; const d = Math.hypot(c[0] - c2[0], c[1] - c2[1], c[2] - c2[2]); if (d < .02) continue;
+        let gm = 0; for (let ch = 0; ch < 3; ch++) { const gx = (Uw[ch][i + 4] - Uw[ch][i - 4]) / 8, gy = (Uw[ch][i + 4 * N] - Uw[ch][i - 4 * N]) / 8; gm += gx * gx + gy * gy; } ws[cc.id[i]].push(d / Math.max(1e-4, Math.sqrt(gm))); } }
+    const soft = ws.map(a => { if (a.length < 6) return 0; a.sort((p, q) => p - q); const w = a[a.length >> 1]; return w >= 13 ? w : 0; });
+    for (const cls of [0, 1]) { const inC = i => cc.id[i] >= 0 && (soft[cc.id[i]] > 0) === !!cls; let nn = 0, wsum = 0; for (let i = 0; i < P; i++) if (inC(i)) { nn++; wsum += soft[cc.id[i]]; } if (nn < 40) continue;
+      const tl = loops(inC); if (!tl.length) continue; const blur = cls ? Math.round(Math.min(12, Math.max(1.5, (wsum / nn - 9) * .6)) * 2) / 2 : 0;
+      const mk = new Uint8Array(P); for (let i = 0; i < P; i++) if (inC(i)) mk[i] = 1;
+      tones.push({ j, mk, c: hex(...c), rgb: c, st: lum3(c) < Lb - .012 ? 's' : 'h', l: lum3(c), n: nn, blur, loops: tl.map(q => q.p) }); } });
+  tones.sort((a, b) => (a.st === b.st ? (a.st === 's' ? b.l - a.l : a.l - b.l) || a.blur - b.blur : a.st === 's' ? -1 : 1));
+  materials.push({ k, name: m.name, base: hex(...m.baseCol), n: m.n, box: bb, loops: L.map(q => q.p), tones, outer: L.filter(q => Math.abs(q.area) > P * .04).sort((a, b) => Math.abs(b.area) - Math.abs(a.area)).map(q => q.p) });
+  // the canvas as it will stand after the tone stages: base, then each tone in paint order (soft ones with a soft edge)
+  for (let i = 0; i < P; i++) if (mat[i] === k) { S[0][i] = m.baseCol[0]; S[1][i] = m.baseCol[1]; S[2][i] = m.baseCol[2]; }
+  for (const t of tones) { let al = Float32Array.from(t.mk); if (t.blur) al = gauss(al, t.blur); delete t.mk;
+    for (let i = 0; i < P; i++) if (mat[i] === k && al[i] > .003) { S[0][i] += (t.rgb[0] - S[0][i]) * al[i]; S[1][i] += (t.rgb[1] - S[1][i]) * al[i]; S[2][i] += (t.rgb[2] - S[2][i]) * al[i]; } }
+}
+log(`tones: ${materials.map(m => `${m.name} ${1 + m.tones.length}${m.tones.some(t => t.blur) ? ' (soft ' + m.tones.filter(t => t.blur).map(t => t.blur).join(',') + ')' : ''}`).join(' · ')}`);
+if (dbg) { const A = [new Float32Array(P), new Float32Array(P), new Float32Array(P)]; for (let i = 0; i < P; i++) { const c = mats[mat[i]].baseCol; A[0][i] = c[0]; A[1][i] = c[1]; A[2][i] = c[2]; if (M[i]) { A[0][i] *= .4; A[1][i] *= .4; A[2][i] *= .4; } }
+  savePng('materials.png', toBuf(A), order.map(k => label(mats[k].name, mats[k].cx - 20, mats[k].cy - 10, 22)).join(',')); savePng('tones.png', toBuf(S)); }
+
+// ───────── 4. airbrush: soft gradients the tones cannot say ─────────
+const dabInto = (x, y, r, c, a, k) => { const R = Math.ceil(r), x0 = Math.max(0, Math.floor(x - R)), x1 = Math.min(N - 1, Math.ceil(x + R)), y0 = Math.max(0, Math.floor(y - R)), y1 = Math.min(N - 1, Math.ceil(y + R));
+  for (let yy = y0; yy <= y1; yy++) for (let xx = x0; xx <= x1; xx++) { const i = yy * N + xx; if (mat[i] !== k) continue; const d = Math.hypot(xx + .5 - x, yy + .5 - y) / r; if (d >= 1) continue; const al = a * (1 - d); S[0][i] += (c[0] - S[0][i]) * al; S[1][i] += (c[1] - S[1][i]) * al; S[2][i] += (c[2] - S[2][i]) * al; } };
+for (const m of materials) {
+  const k = m.k, mk = new Float32Array(P); for (let i = 0; i < P; i++) mk[i] = mat[i] === k ? 1 : 0;
+  m.air = []; const w = m.box[2] - m.box[0] + 1, h = m.box[3] - m.box[1] + 1;
+  for (const [pass, R] of [[0, Math.min(64, Math.max(20, Math.sqrt(m.n) / 5))], [1, Math.min(26, Math.max(9, Math.sqrt(m.n) / 12))]]) {
+    const sig = R / 2.4, bm = gauss(mk, sig), tb = [0, 1, 2].map(c => { const a = new Float32Array(P); for (let i = 0; i < P; i++) a[i] = U[c][i] * mk[i]; return gauss(a, sig); });
+    const sp = R * .72; let row = 0;
+    for (let y = m.box[1] + sp * .3; y <= m.box[3]; y += sp, row++) {
+      const xs = []; for (let x = m.box[0] + sp * (row % 2 ? .65 : .15); x <= m.box[2]; x += sp) xs.push(x); if (row % 2) xs.reverse();
+      for (const x of xs) { const i = Math.round(y) * N + Math.round(x); if (i < 0 || i >= P || bm[i] < .35) continue;
+        const c = [tb[0][i] / bm[i], tb[1][i] / bm[i], tb[2][i] / bm[i]], err = (Math.abs(c[0] - S[0][i]) + Math.abs(c[1] - S[1][i]) + Math.abs(c[2] - S[2][i])) / 3;
+        if (err < (pass ? .03 : .02)) continue;
+        const a = pass ? .6 : .45; m.air.push(r1(x), r1(y), r1(R), hex(...c), a); dabInto(x, y, R, c, a, k); }
     }
-    r /= c.px.length; g /= c.px.length; b /= c.px.length;
-    const pts = outline(c, cc.id); if (pts.length < 3) continue;
-    (kind === 'shadow' ? shadow : light).push({ p: flat2(grow(toArt(pts), .9)), c: hex(r, g, b), a: c.px.length });
-    for (const j of c.px) { if (kind === 'shadow') prev[j] *= (r + g + b) / 3; else prev[j] = 1 - (1 - prev[j]) * (1 - (r + g + b) / 3); }
-    n++;
   }
-  return n;
 }
-const dS = gauss(dv, 1.2);
-layer(Uint8Array.from(dS, v => v < -.035), 'shadow', S1);
-layer(Uint8Array.from(dS, v => v < -.12), 'shadow', S1);
-layer(Uint8Array.from(dS, v => v > .035), 'light', L1);
-layer(Uint8Array.from(dS, v => v > .12), 'light', L1);
-log(`shadow ${shadow.length} · highlight ${light.length} regions`);
+log(`airbrush: ${materials.reduce((a, m) => a + m.air.length / 5, 0)} soft dabs`);
 
-// ---------- line art: dark lines (difference of Gaussians), thinned and traced ----------
-const g1 = gauss(Yo, .7), g2 = gauss(Yo, 2.2), E = new Float32Array(P);
-for (let i = 0; i < P; i++) E[i] = g1[i] - g2[i];
-const lm = Uint8Array.from(E, v => v < -.022 ? 1 : 0);
-const lines0 = join(trace(thin(lm), 3), 3.2).filter(l => l.length >= 5).map(l => {
-  let dark = 0, r = 0, g = 0, b = 0; for (const [x, y] of l) { const i = y * N + x; dark += -E[i]; r += R[i]; g += G[i]; b += B[i]; }
-  const n = l.length; dark /= n; r /= n; g /= n; b /= n;
-  return { pts: dp(l, .7), len: n, dark, col: hex(r * .55, g * .5, b * .55) };
-}).filter(l => l.pts.length >= 2);
-const darkMax = Math.max(...lines0.map(l => l.dark), .05);
-const lines = lines0.filter(l => l.dark > darkMax * .22).sort((a, b) => b.len * b.dark - a.len * a.dark).slice(0, MAXL);
-// drawing order: greedy nearest-next from the top centre, each stroke drawn from its nearer end
-const order = [], used = new Uint8Array(lines.length); let at = [N / 2, 0];
-for (let k = 0; k < lines.length; k++) {
-  let bi = -1, bd = Infinity, rev = false;
-  for (let i = 0; i < lines.length; i++) { if (used[i]) continue; const p = lines[i].pts, a = p[0], z = p[p.length - 1], da = (a[0] - at[0]) ** 2 + (a[1] - at[1]) ** 2 - lines[i].len * 2, dz = (z[0] - at[0]) ** 2 + (z[1] - at[1]) ** 2 - lines[i].len * 2; if (da < bd) { bd = da; bi = i; rev = false; } if (dz < bd) { bd = dz; bi = i; rev = true; } }
-  used[bi] = 1; const l = lines[bi]; if (rev) l.pts.reverse(); order.push(l); at = l.pts[l.pts.length - 1];
+// ───────── 5. details: strokes drawn where the picture still differs ─────────
+// The target is now the picture itself (lines and all), wherever the ink strokes will not cover it: detail strokes
+// thicken a lash the pen left thin, draw the fine hairs that were too faint to ink, sharpen an iris.
+const INK = new Uint8Array(P);
+for (const s of strokes) for (let k = 0; k + 1 < s.p.length; k++) { const [x1, y1] = s.p[k], [x2, y2] = s.p[k + 1], L = Math.ceil(Math.hypot(x2 - x1, y2 - y1)) || 1;
+  for (let j = 0; j <= L; j++) { const u = j / L, x = x1 + (x2 - x1) * u, y = y1 + (y2 - y1) * u, r = (s.w[k] + (s.w[k + 1] - s.w[k]) * u) / 2, R = Math.ceil(r); for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) { if (dx * dx + dy * dy > r * r + .3) continue; const xx = Math.round(x + dx - .5), yy = Math.round(y + dy - .5); if (xx >= 0 && yy >= 0 && xx < N && yy < N) INK[yy * N + xx] = 1; } } }
+const Yu = gauss(lum(T), 1.2), E = new Float32Array(P), errAt = i => INK[i] ? 0 : Math.max(Math.abs(T[0][i] - S[0][i]), Math.abs(T[1][i] - S[1][i]), Math.abs(T[2][i] - S[2][i]));
+for (let i = 0; i < P; i++) E[i] = errAt(i);
+const tang = i => { const x = i % N, y = (i / N) | 0; if (x < 2 || y < 2 || x > N - 3 || y > N - 3) return [1, 0]; const gx = Yu[i + 2] - Yu[i - 2], gy = Yu[i + 2 * N] - Yu[i - 2 * N], L = Math.hypot(gx, gy); return L < 1e-4 ? [1, 0] : [-gy / L, gx / L]; };
+const details = [], THR = +opt('detail-thr', .075), buckets = Array.from({ length: 40 }, () => []);
+for (let i = 0; i < P; i++) if (E[i] > THR) buckets[Math.min(39, Math.floor(E[i] * 40))].push(i);
+outer: for (let b = 39; b >= 0; b--) for (const i0 of buckets[b]) {
+  if (E[i0] <= THR) continue; if (details.length >= MAXD) break outer;
+  const c0 = [T[0][i0], T[1][i0], T[2][i0]], k0 = mat[i0], path = [[i0 % N + .5, ((i0 / N) | 0) + .5]];
+  for (const dirSign of [1, -1]) { let x = i0 % N + .5, y = ((i0 / N) | 0) + .5, pd = null;
+    for (let s = 0; s < 45; s++) { const i = Math.floor(y) * N + Math.floor(x); let [tx, ty] = tang(i); if (pd ? tx * pd[0] + ty * pd[1] < 0 : dirSign < 0) { tx = -tx; ty = -ty; } pd = [tx, ty]; x += tx; y += ty;
+      if (x < 1 || y < 1 || x > N - 1 || y > N - 1) break; const j = Math.floor(y) * N + Math.floor(x);
+      if (E[j] < THR * .55 || Math.abs(T[0][j] - c0[0]) + Math.abs(T[1][j] - c0[1]) + Math.abs(T[2][j] - c0[2]) > .22) break;
+      dirSign > 0 ? path.push([x, y]) : path.unshift([x, y]); } }
+  if (path.length < 6) { E[i0] = 0; continue; }
+  // width: how far across the stroke the same colour is still missing
+  const mid = path[path.length >> 1], mi = Math.floor(mid[1]) * N + Math.floor(mid[0]), [tx, ty] = tang(mi); let wd = 1;
+  for (const sg of [1, -1]) for (let s = 1; s <= 4; s++) { const xx = Math.floor(mid[0] - ty * s * sg), yy = Math.floor(mid[1] + tx * s * sg); if (xx < 0 || yy < 0 || xx >= N || yy >= N) break; const j = yy * N + xx; if (E[j] < THR * .55 || Math.abs(T[0][j] - c0[0]) + Math.abs(T[1][j] - c0[1]) + Math.abs(T[2][j] - c0[2]) > .22) break; wd++; }
+  let r = 0, g = 0, bb = 0; for (const [x, y] of path) { const j = Math.floor(y) * N + Math.floor(x); r += T[0][j]; g += T[1][j]; bb += T[2][j]; } const col = [r / path.length, g / path.length, bb / path.length];
+  const wv = Math.min(8, Math.max(1.6, wd * .95)), R = Math.ceil(wv / 2 + .5);
+  for (const [x, y] of path) for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) { if (dx * dx + dy * dy > (wv / 2 + .5) ** 2) continue; const xx = Math.floor(x + dx), yy = Math.floor(y + dy); if (xx < 0 || yy < 0 || xx >= N || yy >= N) continue; const j = yy * N + xx; S[0][j] += (col[0] - S[0][j]) * .9; S[1][j] += (col[1] - S[1][j]) * .9; S[2][j] += (col[2] - S[2][j]) * .9; E[j] = errAt(j); }
+  const pp = dp(path, .5); details.push({ p: pp.flat().map(r1), w: r1(wv), c: hex(...col), x: mid[0], y: mid[1], len: path.length });
 }
-const maxDark = Math.max(...order.map(l => l.dark), .05);
-const line = order.map(l => ({ p: flat2(toArt(l.pts)), w: +(1.1 + 2.6 * Math.min(1, l.dark / maxDark)).toFixed(2), c: l.col, a: +(.55 + .45 * Math.min(1, l.dark / maxDark)).toFixed(2) }));
-log(`line art: ${line.length} strokes`);
+log(`details: ${details.length} strokes`);
+if (dbg) { const A = S.map(c => Float32Array.from(c)); for (const s of strokes) for (let k = 0; k + 1 < s.p.length; k++) { const [x1, y1] = s.p[k], [x2, y2] = s.p[k + 1], L = Math.ceil(Math.hypot(x2 - x1, y2 - y1)) || 1; for (let j = 0; j <= L; j++) { const u = j / L, x = x1 + (x2 - x1) * u, y = y1 + (y2 - y1) * u, r = (s.w[k] + (s.w[k + 1] - s.w[k]) * u) / 2, R = Math.ceil(r); for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) { if (dx * dx + dy * dy > r * r) continue; const xx = Math.round(x + dx), yy = Math.round(y + dy); if (xx >= 0 && yy >= 0 && xx < N && yy < N) { const i = yy * N + xx; A[0][i] = s.col[0]; A[1][i] = s.col[1]; A[2][i] = s.col[2]; } } } }
+  savePng('sim.png', toBuf(A)); let e = 0; for (let i = 0; i < P; i++) e += Math.abs(A[0][i] - T[0][i]) + Math.abs(A[1][i] - T[1][i]) + Math.abs(A[2][i] - T[2][i]); console.log(`     predicted finish vs picture: mean abs error ${(e / P / 3 * 100).toFixed(2)} %`); }
 
-// ---------- rough: long contours of the big forms ----------
-const h1 = gauss(Yo, 3.5), h2 = gauss(Yo, 8), Hm = new Uint8Array(P);
-for (let i = 0; i < P; i++) Hm[i] = Math.abs(h1[i] - h2[i]) > .035 ? 1 : 0;
-const rough = trace(thin(Hm), 18).sort((a, b) => b.length - a.length).slice(0, 46).map(l => flat2(toArt(dp(l, 2.2))));
-log(`rough: ${rough.length} contours`);
-
-// ---------- finish: detail dabs where the stages still miss ----------
-const A = [new Float32Array(P), new Float32Array(P), new Float32Array(P)];
-for (let i = 0; i < P; i++) for (let ch = 0; ch < 3; ch++) { const f = F[ch][i] * S1[i]; A[ch][i] = f + (1 - f) * L1[i]; }
-const gx = new Float32Array(P), gy = new Float32Array(P), Ys = gauss(Yo, 1.2);
-for (let y = 1; y < N - 1; y++) for (let x = 1; x < N - 1; x++) { const i = y * N + x; gx[i] = Ys[i + 1] - Ys[i - 1]; gy[i] = Ys[i + N] - Ys[i - N]; }
-const dab = [], rd = rng(11), Oc = [gauss(R, 1), gauss(G, 1), gauss(B, 1)];
-for (const [step, rad, thr] of [[5, 3.4, .045], [3, 1.9, .06], [2, 1.2, .09]]) {
-  for (let y = 0; y < N; y += step) for (let x = 0; x < N; x += step) {
-    const xx = Math.min(N - 1, Math.round(x + (rd() - .5) * step)), yy = Math.min(N - 1, Math.round(y + (rd() - .5) * step)), i = yy * N + xx;
-    const err = (Math.abs(Oc[0][i] - A[0][i]) + Math.abs(Oc[1][i] - A[1][i]) + Math.abs(Oc[2][i] - A[2][i])) / 3;
-    if (err < thr) continue;
-    const ang = Math.atan2(gy[i], gx[i]) + Math.PI / 2;
-    dab.push([+(xx * SC + SC / 2).toFixed(1), +(yy * SC + SC / 2).toFixed(1), +(rad * SC).toFixed(1), +(rad * SC * .5).toFixed(1), +ang.toFixed(2), hex(Oc[0][i], Oc[1][i], Oc[2][i])]);
-    for (let ch = 0; ch < 3; ch++) for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const j = Math.min(P - 1, Math.max(0, i + dy * N + dx)); A[ch][j] += (Oc[ch][j] - A[ch][j]) * .6; }
-    if (dab.length >= MAXD) break;
-  }
-  if (dab.length >= MAXD) break;
+// ───────── 6. order of work: what a painter draws first ─────────
+function walkOrder(items, ends) {   // nearest-next inside each focus group, each stroke entered from its nearer end
+  const groups = new Map(); for (const it of items) { const g = it.g; (groups.get(g) || groups.set(g, []).get(g)).push(it); }
+  const res = []; let at = [N / 2, 0];
+  for (const g of [...groups.keys()].sort((a, b) => a - b)) { const list = groups.get(g), used = new Uint8Array(list.length); if (focus[g]) at = [focus[g].x, focus[g].y];
+    for (let n = 0; n < list.length; n++) { let bi = -1, bd = Infinity, rev = false; for (let i = 0; i < list.length; i++) { if (used[i]) continue; const [a, z] = ends(list[i]), da = (a[0] - at[0]) ** 2 + (a[1] - at[1]) ** 2, dz = (z[0] - at[0]) ** 2 + (z[1] - at[1]) ** 2; if (da < bd) { bd = da; bi = i; rev = false; } if (dz < bd) { bd = dz; bi = i; rev = true; } }
+      used[bi] = 1; const it = list[bi]; if (rev) it.rev = true; res.push(it); const [a, z] = ends(it); at = rev ? a : z; } }
+  return res;
 }
-log(`finish: ${dab.length} detail dabs`);
+for (const s of strokes) { const m = s.p[s.p.length >> 1]; s.g = groupOf(m[0], m[1]); }
+const lineOut = walkOrder(strokes, s => [s.p[0], s.p[s.p.length - 1]]).map(s => { const p = s.rev ? s.p.slice().reverse() : s.p, w = s.rev ? s.w.slice().reverse() : s.w; return { p: p.flat().map(r1), w: w.map(r1), c: hex(...s.col), g: s.g }; });
+for (const d of details) d.g = groupOf(d.x, d.y);
+const detOut = walkOrder(details, d => [[d.p[0], d.p[1]], [d.p[d.p.length - 2], d.p[d.p.length - 1]]]).map(d => { let p = d.p; if (d.rev) { const q = []; for (let i = p.length - 2; i >= 0; i -= 2) q.push(p[i], p[i + 1]); p = q; } return { p, w: d.w, c: d.c }; });
+// the rough: the plan's construction, then the big silhouettes blocked in loosely
+const sil = []; for (const m of materials) for (const lp of m.outer.slice(0, 2)) { const pts = []; for (let i = 0; i < lp.length; i += 2) pts.push([lp[i], lp[i + 1]]); if (m.n > P * .5 && m === materials[materials.length - 1]) continue; let far = 0, fd = -1; pts.forEach((p, i) => { const d = (p[0] - pts[0][0]) ** 2 + (p[1] - pts[0][1]) ** 2; if (d > fd) { fd = d; far = i; } });   // a closed loop: simplify each half
+  const q = dp(pts.slice(0, far + 1), 24).concat(dp(pts.slice(far).concat([pts[0]]), 24).slice(1)); if (q.length >= 5) sil.push({ p: q.flat().map(Math.round), a: m.n }); }
+sil.sort((a, b) => b.a - a.a);
+const nSil = plan.silhouettes ?? (plan.construct ? 0 : 6);   // with a construction the rough is the construction
 
-writeFileSync(out, `// made by speedpaint-replay/scripts/from-image.mjs from ${basename(img)} (${N}×${N} analysis, ${K} colours)
-// Reference mode. Load with lib/reference.js → addReference(s, REF).
-export const REF = ${JSON.stringify({ source: basename(img), rough, line, flats: flats.map(({ p, c, z, o }) => ({ p, c, z, o: Math.round(o) })), shadow, light, dab })};
-`);
-log(`wrote ${out}`);
+const ref = { v: 2, source: basename(img), ink: plan.ink || hex(...inkDark.map(v => v * .8)), focus: focus.map(f => f.name),
+  rough: { construct: plan.construct || [], sil: sil.slice(0, nSil).map(s => s.p) }, lines: lineOut,
+  materials: materials.map(m => ({ name: m.name, base: m.base, area: +(m.n / P).toFixed(4), box: m.box, loops: m.loops, tones: m.tones.map(t => ({ c: t.c, st: t.st, blur: t.blur, area: +(t.n / P).toFixed(4), loops: t.loops })), air: m.air })),
+  details: detOut };
+writeFileSync(out, `// made by speedpaint-replay/scripts/from-image.mjs from ${basename(img)} — reference mode (v2). Load with lib/reference.js → addReference(s, REF).\nexport const REF = ${JSON.stringify(ref)};\n`);
+log(`wrote ${out} (${(JSON.stringify(ref).length / 1024).toFixed(0)} KB): ${ref.rough.construct.length} construction + ${ref.rough.sil.length} silhouette lines · ${lineOut.length} ink strokes · ${materials.length} flats · ${materials.reduce((a, m) => a + m.tones.filter(t => t.st === 's').length, 0)} shadow + ${materials.reduce((a, m) => a + m.tones.filter(t => t.st === 'h').length, 0)} light shapes · ${detOut.length} detail strokes`);

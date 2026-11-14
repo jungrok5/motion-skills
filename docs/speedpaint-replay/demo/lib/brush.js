@@ -19,16 +19,17 @@ export function prepStroke(it) {
 export function prepFill(it) {
   const pts = it.pts; it.box = bbox(pts);
   const a = it.angle ?? -0.5, c = Math.cos(a), s = Math.sin(a);
-  const rot = pts.map(([x, y]) => [x * c + y * s, -x * s + y * c]);          // into brush space (u along the stroke)
+  const loops = it.loops || [pts];                                             // a compound region: several outlines, holes included
+  const rots = loops.map(l => l.map(([x, y]) => [x * c + y * s, -x * s + y * c])), rot = rots.flat();   // into brush space (u along the stroke)
   const b = bbox(rot);
-  const bw = it.brush ?? clamp(Math.min(it.box.w, it.box.h) * .28, 10, 60);   // brush width in art units
+  const bw = it.brush ?? clamp(Math.min(it.box.w, it.box.h) * .28, 10, it.loops ? 84 : 60);   // brush width in art units
   it.brush = bw;
   const sp = bw * .72, path = [];
   let dir = 1;
   for (let v = b.y + sp * .4; v < b.y + b.h + sp * .4; v += sp) {
     let lo = Infinity, hi = -Infinity;
-    for (let i = 0; i < rot.length; i++) {
-      const p = rot[i], q = rot[(i + 1) % rot.length];
+    for (const r of rots) for (let i = 0; i < r.length; i++) {
+      const p = r[i], q = r[(i + 1) % r.length];
       if ((p[1] <= v && q[1] > v) || (q[1] <= v && p[1] > v)) { const u = p[0] + (v - p[1]) / (q[1] - p[1]) * (q[0] - p[0]); lo = Math.min(lo, u); hi = Math.max(hi, u); }
     }
     const vv = clamp(v, b.y + 1, b.y + b.h - 1);
@@ -49,7 +50,7 @@ export function prepFill(it) {
     for (let j = 1; j <= k; j++) { const u = j / k, b = back([lerp(p[0], q[0], u), lerp(p[1], q[1], u) + noise1((i * 31 + j) * .35, it.seed || 3) * bw * .12]); dense.push([clamp(b[0], 0, 1000), clamp(b[1], 0, 1000)]); }
   }
   it.sweep = dense; it.sweepCum = lengths(dense); it.sweepL = it.sweepCum[it.sweepCum.length - 1] || 1;
-  it.path = toPath(pts, true);
+  if (it.loops) { it.path = new Path2D(); for (const l of it.loops) it.path.addPath(toPath(l, true)); it.rule = 'evenodd'; } else it.path = toPath(pts, true);
   return it;
 }
 
@@ -60,6 +61,10 @@ export function toPath(pts, closed) {
 // ---------- drawing ----------
 // pressure profile along the stroke: thin in, full, thin out (taper = [in, out] as fractions of the length)
 function width(it, s) {
+  if (it.ws) {   // measured widths along the stroke (reference mode): interpolate, with a short lead-in and lead-out
+    const n = it.ws.length, f = clamp(s / it.L) * (n - 1), i = Math.min(n - 2, Math.floor(f)), w = n > 1 ? lerp(it.ws[i], it.ws[i + 1], f - i) : it.ws[0];
+    const e = Math.min(it.L * .3, 20); return w * (.3 + .7 * Math.sqrt(clamp(s / e) * clamp((it.L - s) / e))) * (1 + .06 * noise1(s / 14, it.seed || 1));
+  }
   const L = it.L, [ti, to] = it.taper || [.18, .3], floor = it.floor ?? .12;
   const a = ti > 0 ? clamp(s / (ti * L)) : 1, b = to > 0 ? clamp((L - s) / (to * L)) : 1;
   const p = floor + (1 - floor) * Math.pow(a, .7) * Math.pow(b, .8);
@@ -129,7 +134,8 @@ export function fillWhole(ctx, it, alphaMul = 1) {
   ctx.globalAlpha = (it.alpha ?? 1) * alphaMul;
   if (it.blur) ctx.filter = `blur(${it.blur * ctx.getTransform().a}px)`;
   ctx.fillStyle = paintStyle(ctx, it.fill);
-  ctx.fill(it.path);
+  ctx.fill(it.path, it.rule || 'nonzero');
+  if (it.edge) { ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = it.edge; ctx.lineJoin = 'round'; ctx.stroke(it.path); }   // covers the paper seam between neighbours
   ctx.restore();
 }
 
@@ -147,7 +153,8 @@ export function fillVia(ctx, tmp, it, u, mask, alphaMul = 1) {
   g.save(); g.beginPath(); g.rect(bx, by, bw, bh); g.clip();
   g.setTransform(T);
   if (it.blur) g.filter = `blur(${it.blur * k}px)`;
-  g.fillStyle = paintStyle(g, it.fill); g.fill(it.path);
+  g.fillStyle = paintStyle(g, it.fill); g.fill(it.path, it.rule || 'nonzero');
+  if (it.edge) { g.strokeStyle = g.fillStyle; g.lineWidth = it.edge; g.lineJoin = 'round'; g.stroke(it.path); }
   g.filter = 'none';
   if (sweeping) {
     g.globalCompositeOperation = 'destination-in';
@@ -164,6 +171,41 @@ export function fillVia(ctx, tmp, it, u, mask, alphaMul = 1) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalCompositeOperation = it.mode || 'source-over';
   ctx.globalAlpha = (it.alpha ?? 1) * alphaMul;
+  ctx.drawImage(tmp, bx, by, bw, bh, bx, by, bw, bh);
+  ctx.restore();
+  return tip;
+}
+
+// the whole region as it will finally look (its blur, its clip mask) on a small canvas of its own: made once while
+// the item is being painted, so each frame only has to cut the brush's path out of it
+export function fillImage(it, k, W, H, mask) {
+  const box = devBox(it, k, W, H); if (!box) return null;
+  const [bx, by, bw, bh] = box, cv = document.createElement('canvas'); cv.width = bw; cv.height = bh;
+  const g = cv.getContext('2d'); g.setTransform(k, 0, 0, k, -bx, -by);
+  if (it.blur) g.filter = `blur(${it.blur * k}px)`;
+  g.fillStyle = paintStyle(g, it.fill); g.fill(it.path, it.rule || 'nonzero');
+  if (it.edge) { g.strokeStyle = g.fillStyle; g.lineWidth = it.edge; g.lineJoin = 'round'; g.stroke(it.path); }
+  g.filter = 'none';
+  if (mask) { g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'destination-in'; g.drawImage(mask, bx, by, bw, bh, 0, 0, bw, bh); }
+  return { cv, box };
+}
+// a fill in progress: the part of its image the sweeping brush has covered up to u. Returns the brush tip.
+export function fillReveal(ctx, tmp, it, u, img, alphaMul = 1) {
+  const sCut = it.sweepL * clamp(u), tip = at(it.sweep, it.sweepCum, sCut);
+  if (!img || sCut < .5) return tip;   // nothing painted yet
+  const [bx, by, bw, bh] = img.box, k = ctx.getTransform().a, g = tmp.getContext('2d');
+  g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.filter = 'none';
+  g.clearRect(bx, by, bw, bh);
+  g.save(); g.beginPath(); g.rect(bx, by, bw, bh); g.clip();
+  g.drawImage(img.cv, bx, by);
+  g.setTransform(k, 0, 0, k, 0, 0); g.globalCompositeOperation = 'destination-in';
+  g.beginPath();
+  for (let i = 0; i < it.sweep.length && it.sweepCum[i] <= sCut; i++) i ? g.lineTo(it.sweep[i][0], it.sweep[i][1]) : g.moveTo(it.sweep[i][0], it.sweep[i][1]);
+  g.lineTo(tip[0], tip[1]);
+  g.lineWidth = it.brush * 1.25; g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = '#000'; g.stroke();
+  g.restore();
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalCompositeOperation = it.mode || 'source-over'; ctx.globalAlpha = (it.alpha ?? 1) * alphaMul;
   ctx.drawImage(tmp, bx, by, bw, bh, bx, by, bw, bh);
   ctx.restore();
   return tip;

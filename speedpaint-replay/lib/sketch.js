@@ -58,9 +58,35 @@ export class Sketch {
   // ---- line art: tapered pen ----
   ink(pts, o = {}) {
     const it = { kind: 'pen', pts: this._line(pts, o), w: o.w ?? 3, taper: o.taper ?? [.18, .32], floor: o.floor, wobble: o.wobble,
-      color: o.color ?? this.inkColor, alpha: o.alpha ?? 1, z: o.z, dur: o.dur, weight: o.weight ?? 1, passes: o.passes, jitter: o.jitter };
+      color: o.color ?? this.inkColor, color2: o.color2, alpha: o.alpha ?? 1, z: o.z, dur: o.dur, weight: o.weight ?? 1, passes: o.passes, jitter: o.jitter, ws: o.ws };
     if (it.pts.length < 2) return null;
-    return this._add('line', prepStroke(it));
+    return this._add(o.stage ?? 'line', prepStroke(it));
+  }
+
+  // a brush stroke on the PAINT layer (under the line art): hair shine, a lip line, detail drawn into the colours
+  paint(pts, o = {}) { return this.ink(pts, { stage: 'finish', taper: [.25, .35], ...o }); }
+  // colour trace (色トレス): in the finish, the line art cross-fades from the ink colour to each line's own `color2`
+  inkTrace(o = {}) { const it = this.fx(() => { }, { box: { x: 150, y: 150, w: 700, h: 700 }, ...o, name: 'ink trace' }); it.trace = true; return it; }
+  // a compound region (several outlines; holes cut by even-odd), brushed in as one: every part of one material
+  region(stage, loops, o = {}) {
+    const ls = loops.map(l => this.tf(l)).filter(l => l.length >= 3), pts = ls.flat();
+    const it = { kind: 'fill', pts, loops: ls, fill: o.fill ?? '#ddd', mode: o.mode, alpha: o.alpha ?? 1, blur: o.blur ?? 0, clip: o.clip ?? null, angle: o.angle ?? -.45, brush: o.brush,
+      reveal: o.reveal ?? 'sweep', z: o.z, dur: o.dur, weight: o.weight ?? 1, over: !!o.over, name: o.name, order: o.order, edge: o.edge, areaFrac: o.area };
+    prepFill(it); this._add(stage, it);
+    if (stage === 'flat' && o.name) (this.regions[o.name] ||= []).push(it);
+    return it;
+  }
+  // soft airbrush dabs [x, y, r, colour, alpha, …] laid in order, kept inside `clip` (a region item): the blending pass
+  airbrush(dabs, o = {}) {
+    const n = dabs.length / 5, clip = o.clip, it = this.fx((c, u) => {
+      if (clip) c.clip(clip.path, clip.rule || 'nonzero');
+      const m = Math.round(n * u);
+      for (let i = 0; i < m; i++) { const x = dabs[i * 5], y = dabs[i * 5 + 1], r = dabs[i * 5 + 2], col = dabs[i * 5 + 3], g = c.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, col); g.addColorStop(1, col + '00'); c.globalAlpha = dabs[i * 5 + 4]; c.fillStyle = g; c.fillRect(x - r, y - r, r * 2, r * 2); }
+      c.globalAlpha = 1;
+    }, { name: o.name ?? 'airbrush', weight: o.weight ?? Math.max(.3, n / 140), linear: true, ...o, clip: undefined });
+    if (n) it.sweep = Array.from({ length: n }, (_, i) => [dabs[i * 5], dabs[i * 5 + 1]]);
+    return it;
   }
 
   // ---- regions (flat / shadow / highlight / finish) ----
@@ -83,10 +109,10 @@ export class Sketch {
   // a custom finish effect: draw(ctx, u, env) paints the effect at progress u (0 → 1); env = { t, art: Sketch, k }
   fx(draw, o = {}) {
     const box = o.box ?? { x: 100, y: 100, w: 800, h: 800 };
-    const it = { kind: 'fx', draw, box: { ...box, cx: box.x + box.w / 2, cy: box.y + box.h / 2 }, over: !!o.over, z: o.z, dur: o.dur, weight: o.weight ?? 1, name: o.name };
+    const it = { kind: 'fx', draw, box: { ...box, cx: box.x + box.w / 2, cy: box.y + box.h / 2 }, over: !!o.over, z: o.z, dur: o.dur, weight: o.weight ?? 1, name: o.name, linear: !!o.linear };
     const sweep = []; for (let i = 0; i <= 6; i++) sweep.push([box.x + box.w * (i % 2 ? .85 : .15), box.y + box.h * i / 6]);
     it.sweep = resample(sweep, 8);
-    return this._add('finish', it);
+    return this._add(o.stage ?? 'finish', it);
   }
   // recolour the line art during the finish (lines warm up / pick up the light): u-driven, `amount` 0…1
   inkTint(color, amount = .5, o = {}) { const it = this.fx(() => { }, { box: { x: 200, y: 200, w: 600, h: 600 }, ...o, name: 'inkTint' }); it.tint = { color, amount }; return it; }

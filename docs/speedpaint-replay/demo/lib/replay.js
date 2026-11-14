@@ -5,7 +5,7 @@
 //   const R = new Replay(sketch, { stages: { rough: 5, line: 14, flat: 6, shadow: 6, highlight: 5, finish: 5 }, hold: 3 });
 //   R.start();
 import { clamp, lerp, smooth, easeInOut, span, mix, rgba, area, hash } from './core.js';
-import { pen, pencil, fillWhole, fillVia, toPath } from './brush.js';
+import { pen, pencil, fillWhole, fillVia, fillImage, fillReveal } from './brush.js';
 import { STAGES } from './sketch.js';
 
 const FONT = 'SPR Pretendard';
@@ -70,6 +70,12 @@ export class Replay {
     this.order = s.items.slice().sort((a, b) => a.t0 - b.t0);  // timeline order
     this.byStage = Object.fromEntries(STAGES.map(st => [st, s.items.filter(i => i.stage === st).sort((a, b) => a.z - b.z || a.id - b.id)]));
     this.tints = s.items.filter(i => i.tint);
+    this.traces = s.items.filter(i => i.trace);
+    // paint order: flats → shadows → highlights → finish (the ones under the line art), each by z
+    this.paintList = [...this.byStage.flat, ...this.byStage.shadow, ...this.byStage.highlight, ...this.byStage.finish.filter(i => !i.over && !i.tint && !i.trace)];
+    this.overList = this.byStage.finish.filter(i => i.over && !i.tint && !i.trace);
+    // the line art again in its traced colours (for the colour-trace cross-fade)
+    this.byStage.line2 = this.byStage.line.map(i => ({ ...i, color: i.color2 ?? i.color, t0: -1, t1: -1 }));
   }
   stageAt(t) { return this.stages.find(g => t >= g.start && t < g.end) || (t < this.intro ? this.stages[0] : this.stages[this.stages.length - 1]); }
 
@@ -79,7 +85,7 @@ export class Replay {
     this.ctx = cv.getContext('2d', { alpha: false });
     const aw = Math.round(this.card.w * scale), ah = Math.round(this.card.h * scale);
     const mk = () => { const c = document.createElement('canvas'); c.width = aw; c.height = ah; return c; };
-    this.art = mk(); this.ink = mk(); this.tmp = mk(); this._masks = {};
+    this.art = mk(); this.ink = mk(); this.tmp = mk(); this.tmp2 = mk(); this._masks = {}; this._L = {}; this._liveImg = new Map(); this._frame = 0;
     this.scale = scale; this.ak = this.k * scale;   // art units → art-canvas pixels
   }
   _item(ctx, it, t, tmp) {
@@ -90,10 +96,15 @@ export class Replay {
       const mask = it.clip ? this._mask(it.clip) : null, fade = it.reveal === 'fade' ? smooth(u) : 1;
       if (u >= 1 && !mask) { fillWhole(ctx, it); return null; }
       if (it.reveal === 'fade' && !mask) { fillWhole(ctx, it, fade); return it.sweep[Math.floor(u * (it.sweep.length - 1))]; }
+      if (u < 1 && it.reveal !== 'fade') {   // being brushed in: its finished image is kept while it is live
+        let L = this._liveImg.get(it.id); if (!L) this._liveImg.set(it.id, L = { img: fillImage(it, this.ak, this.art.width, this.art.height, mask) });
+        L.used = this._frame;
+        return fillReveal(ctx, tmp || this.tmp, it, u, L.img);
+      }
       const tip = fillVia(ctx, tmp || this.tmp, it, u, mask, fade);
       return u >= 1 ? null : tip || it.sweep[Math.floor(u * (it.sweep.length - 1))];
     }
-    if (it.kind === 'fx') { ctx.save(); it.draw(ctx, smooth(u), { t, k: this.ak, art: this.s, replay: this }); ctx.restore(); return it.sweep[Math.floor(u * (it.sweep.length - 1))]; }
+    if (it.kind === 'fx') { ctx.save(); it.draw(ctx, it.linear ? u : smooth(u), { t, k: this.ak, art: this.s, replay: this }); ctx.restore(); return it.sweep[Math.floor(u * (it.sweep.length - 1))]; }
   }
   // the VISIBLE part of the named flat region(s): their shapes minus every flat painted above them. A shadow clipped to
   // 'neck' must not darken the face that covers the top of the neck — like a clipping layer in a paint program.
@@ -115,33 +126,73 @@ export class Replay {
   }
   _clipPath(c) { const p = new Path2D(); for (const n of [].concat(c)) p.addPath(this.clips[n]); return p; }
 
+  // ---- layers and their caches ----
+  // The picture is three layers, like a paint program's: PAINT (flats → shadows → highlights → finish, in paint order),
+  // INK (the line art) and ROUGH. Each keeps a cache canvas holding the items that are finished at the frame's time, so
+  // a frame only draws what is in progress. A cache is extended when the newly finished items sit above everything
+  // already in it, and rebuilt in paint order otherwise (a seek backwards, or an item painted under earlier ones), so
+  // a frame's pixels never depend on which frames were drawn before it.
+  _layer(name, list, t, blank) {
+    const isNew = !this._L[name], L = (this._L[name] ||= { cv: this._mk(), done: new Set(), max: -1 }), g = L.cv.getContext('2d'), k = this.ak;
+    const reset = () => { g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.filter = 'none'; if (blank) { g.fillStyle = blank; g.fillRect(0, 0, L.cv.width, L.cv.height); } else g.clearRect(0, 0, L.cv.width, L.cv.height); L.done.clear(); L.max = -1; };
+    if (isNew) reset();
+    // bake the finished items that lie under every item still in progress; the rest are drawn over the cache each frame
+    let minLive = Infinity; const done = [];
+    list.forEach((it, i) => { if (it.t0 > t) return; if (t >= it.t1) done.push(i); else if (i < minLive) minLive = i; });
+    const want = done.filter(i => i < minLive);
+    let ok = want.length >= L.done.size, fresh = [];
+    if (ok) { let seen = 0; for (const i of want) { if (L.done.has(i)) seen++; else { fresh.push(i); if (i < L.max) ok = false; } } if (seen !== L.done.size) ok = false; }
+    if (!ok) { reset(); fresh = want; }
+    if (fresh.length) { g.setTransform(k, 0, 0, k, 0, 0); for (const i of fresh) { this._item(g, list[i], Infinity, this.tmp); L.done.add(i); if (i > L.max) L.max = i; } }
+    const rest = []; for (let i = Math.min(minLive, list.length); i < list.length; i++) if (list[i].t0 <= t) rest.push(list[i]);
+    return { cv: L.cv, rest };
+  }
+  _mk() { const c = document.createElement('canvas'); c.width = this.art.width; c.height = this.art.height; return c; }
+
   drawArt(t) {
-    const a = this.art.getContext('2d'), k = this.ak, s = this.s;
-    a.setTransform(1, 0, 0, 1, 0, 0); a.globalCompositeOperation = 'source-over'; a.globalAlpha = 1; a.filter = 'none';
-    a.fillStyle = s.paper; a.fillRect(0, 0, this.art.width, this.art.height);
-    a.setTransform(k, 0, 0, k, 0, 0);
-    let tip = null;
-    const run = (ctx, list, pred = () => true) => { for (const it of list) if (it.t0 <= t && pred(it)) { const p = this._item(ctx, it, t, this.tmp); if (p && t < it.t1) tip = p; } };
-    run(a, this.byStage.flat); run(a, this.byStage.shadow); run(a, this.byStage.highlight);
-    run(a, this.byStage.finish, it => !it.over && !it.tint);
-    // line art on its own layer, so the finish can recolour it
-    const g = this.ink.getContext('2d');
-    g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.clearRect(0, 0, this.ink.width, this.ink.height);
-    g.setTransform(k, 0, 0, k, 0, 0);
-    run(g, this.byStage.line);
-    for (const it of this.tints) if (it.t0 <= t) {
+    const a = this.art.getContext('2d'), k = this.ak, s = this.s, W = this.art.width, H = this.art.height;
+    const clean = g => { g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.filter = 'none'; };
+    let tip = null; this._frame++;
+    // nothing in progress and nothing changed since the last frame drawn: the picture is already on the canvas
+    const cnt = l => { let d = 0, v = 0; for (const it of l) if (it.t0 <= t) (t >= it.t1 ? d++ : v++); return d + ':' + v; };
+    const Ls0 = this.stages[1], F0 = this.stages[2], roughGone = t >= F0.start + (F0.end - F0.start) * .6;
+    const sig = [this.paintList, this.byStage.line, this.traces, this.tints, this.overList].map(cnt).join('|') + (roughGone ? '' : '|r' + t);
+    if (sig === this._sig && !/:[1-9]/.test(sig) && roughGone) return null;
+    this._sig = sig;
+    const drawLive = (ctx, it) => { const p = this._item(ctx, it, t, this.tmp); if (p && t < it.t1) tip = p; };
+    // PAINT
+    clean(a);
+    const P = this._layer('paint', this.paintList, t, s.paper);
+    a.drawImage(P.cv, 0, 0); a.setTransform(k, 0, 0, k, 0, 0); for (const it of P.rest) drawLive(a, it);
+    // INK: the line art on its own layer, so the finish can recolour it
+    const g = this.ink.getContext('2d'); clean(g); g.clearRect(0, 0, W, H);
+    const I = this._layer('ink', this.byStage.line, t, null);
+    g.drawImage(I.cv, 0, 0); g.setTransform(k, 0, 0, k, 0, 0); for (const it of I.rest) drawLive(g, it);
+    // colour trace: the same lines in their own colours (color2), cross-faded over the ink
+    for (const it of this.traces) if (it.t0 <= t) {
       const u = smooth((t - it.t0) / (it.t1 - it.t0));
-      g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-atop'; g.globalAlpha = it.tint.amount * u; g.fillStyle = it.tint.color; g.fillRect(0, 0, this.ink.width, this.ink.height);
-      g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
+      const B = this._layer('ink2', this.byStage.line2, Infinity, null);
+      clean(g); g.globalCompositeOperation = 'source-atop'; g.globalAlpha = u; g.drawImage(B.cv, 0, 0);
       if (t < it.t1) tip = it.sweep[Math.floor(u * (it.sweep.length - 1))];
     }
-    a.setTransform(1, 0, 0, 1, 0, 0); a.globalAlpha = s.inkAlpha ?? 1; a.drawImage(this.ink, 0, 0); a.globalAlpha = 1;
+    for (const it of this.tints) if (it.t0 <= t) {
+      const u = smooth((t - it.t0) / (it.t1 - it.t0));
+      clean(g); g.globalCompositeOperation = 'source-atop'; g.globalAlpha = it.tint.amount * u; g.fillStyle = it.tint.color; g.fillRect(0, 0, W, H);
+      if (t < it.t1) tip = it.sweep[Math.floor(u * (it.sweep.length - 1))];
+    }
+    clean(a); a.globalAlpha = s.inkAlpha ?? 1; a.drawImage(this.ink, 0, 0); a.globalAlpha = 1;
     a.setTransform(k, 0, 0, k, 0, 0);
-    run(a, this.byStage.finish, it => it.over && !it.tint);
-    // the rough stays on top, fading out under the line art and flats
-    const L = this.stages[1], F = this.stages[2];
-    const ra = t < L.start ? 1 : t < L.end ? lerp(1, .45, span(t, L.start, L.end)) : lerp(.45, 0, span(t, F.start, F.start + (F.end - F.start) * .6));
-    if (ra > 0.003) { a.globalAlpha = 1; const saved = this.byStage.rough; for (const it of saved) if (it.t0 <= t) { const ia = it.alpha; it.alpha = (ia ?? .8) * ra; const p = this._item(a, it, t); it.alpha = ia; if (p && t < it.t1) tip = p; } }
+    for (const it of this.overList) if (it.t0 <= t) drawLive(a, it);
+    // ROUGH: stays on top, fading out under the line art and flats
+    const Ls = this.stages[1], F = this.stages[2];
+    const ra = t < Ls.start ? 1 : t < Ls.end ? lerp(1, .45, span(t, Ls.start, Ls.end)) : lerp(.45, 0, span(t, F.start, F.start + (F.end - F.start) * .6));
+    if (ra > 0.003) {
+      const R = this._layer('rough', this.byStage.rough, t, null), r = this.tmp2.getContext('2d');
+      clean(r); r.clearRect(0, 0, W, H); r.drawImage(R.cv, 0, 0); r.setTransform(k, 0, 0, k, 0, 0);
+      for (const it of R.rest) drawLive(r, it);
+      clean(a); a.globalAlpha = ra; a.drawImage(this.tmp2, 0, 0); a.globalAlpha = 1;
+    }
+    for (const [id, L] of this._liveImg) if (L.used !== this._frame) this._liveImg.delete(id);
     return tip;
   }
 
@@ -162,34 +213,44 @@ export class Replay {
     t = clamp(t, 0, this.dur); this.t = t;
     const c = this.ctx, S = this.scale, W = this.W, H = this.H, th = this.theme, L = this.labels, cd = this.card;
     const tip = this.drawArt(t);
-    c.setTransform(S, 0, 0, S, 0, 0); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; c.filter = 'none';
-    const bg = c.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, th.bg); bg.addColorStop(1, th.bg2); c.fillStyle = bg; c.fillRect(0, 0, W, H);
-    // header
-    c.fillStyle = th.title; c.font = `800 37px "${FONT}"`; c.textBaseline = 'alphabetic'; c.textAlign = 'left';
-    if (c.letterSpacing !== undefined) c.letterSpacing = '3px';
-    c.fillText(L.title, cd.x, 63);
-    if (c.letterSpacing !== undefined) c.letterSpacing = '0px';
-    c.fillStyle = th.note; c.font = `600 17px "${FONT}"`; c.textAlign = 'right'; c.fillText(L.note, cd.x + cd.w, 56); c.textAlign = 'left';
-    // stage chips
+    // the page around the picture (background, title, chips, card shadow) changes only with the stage: cached per stage
     const cur = this.stageAt(t), ci = STAGES.indexOf(cur.name);
-    c.font = `600 20px "${FONT}"`;
-    let x = cd.x; const cy = 102, hh = 40;
-    this._chips = [];
-    L.chips.forEach((txt, i) => {
-      const tw = c.measureText(txt).width, w = tw + 54;
-      const on = i === ci, done = i < ci;
-      c.beginPath(); c.roundRect(x, cy - hh / 2, w, hh, hh / 2);
-      c.fillStyle = on ? th.accent : th.chip; c.fill();
-      if (!on) { c.strokeStyle = th.chipLine; c.lineWidth = 1.5; c.stroke(); }
-      c.fillStyle = on ? '#fff' : done ? th.chipDone : th.chipTodo;
-      c.beginPath(); c.arc(x + 19, cy, 4.2, 0, 7); c.fill();
-      c.fillText(txt, x + 31, cy + 7);
-      this._chips.push({ x, y: cy - hh / 2, w, h: hh });
-      x += w + 9;
-    });
-    // card
-    c.save(); c.shadowColor = th.shadow; c.shadowBlur = 22; c.shadowOffsetY = 5; c.fillStyle = this.s.paper;
-    c.beginPath(); c.roundRect(cd.x, cd.y, cd.w, cd.h, cd.r); c.fill(); c.restore();
+    const main = c; this._chrome ||= {};
+    if (!this._chrome[ci]) {
+      const cv = document.createElement('canvas'); cv.width = this.canvas.width; cv.height = this.canvas.height; const c = cv.getContext('2d');
+    c.setTransform(S, 0, 0, S, 0, 0); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; c.filter = 'none';
+      const bg = c.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, th.bg); bg.addColorStop(1, th.bg2); c.fillStyle = bg; c.fillRect(0, 0, W, H);
+      // header
+      c.fillStyle = th.title; c.font = `800 37px "${FONT}"`; c.textBaseline = 'alphabetic'; c.textAlign = 'left';
+      if (c.letterSpacing !== undefined) c.letterSpacing = '3px';
+      c.fillText(L.title, cd.x, 63);
+      if (c.letterSpacing !== undefined) c.letterSpacing = '0px';
+      c.fillStyle = th.note; c.font = `600 17px "${FONT}"`; c.textAlign = 'right'; c.fillText(L.note, cd.x + cd.w, 56); c.textAlign = 'left';
+      // stage chips
+      c.font = `600 20px "${FONT}"`;
+      let x = cd.x; const cy = 102, hh = 40;
+      this._chips = [];
+      L.chips.forEach((txt, i) => {
+        const tw = c.measureText(txt).width, w = tw + 54;
+        const on = i === ci, done = i < ci;
+        c.beginPath(); c.roundRect(x, cy - hh / 2, w, hh, hh / 2);
+        c.fillStyle = on ? th.accent : th.chip; c.fill();
+        if (!on) { c.strokeStyle = th.chipLine; c.lineWidth = 1.5; c.stroke(); }
+        c.fillStyle = on ? '#fff' : done ? th.chipDone : th.chipTodo;
+        c.beginPath(); c.arc(x + 19, cy, 4.2, 0, 7); c.fill();
+        c.fillText(txt, x + 31, cy + 7);
+        this._chips.push({ x, y: cy - hh / 2, w, h: hh });
+        x += w + 9;
+      });
+      // card
+      c.save(); c.shadowColor = th.shadow; c.shadowBlur = 22; c.shadowOffsetY = 5; c.fillStyle = this.s.paper;
+      c.beginPath(); c.roundRect(cd.x, cd.y, cd.w, cd.h, cd.r); c.fill(); c.restore();
+      this._chrome[ci] = { cv, chips: this._chips };
+    }
+    this._chips = this._chrome[ci].chips;
+    c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; c.filter = 'none';
+    c.drawImage(this._chrome[ci].cv, 0, 0);
+    c.setTransform(S, 0, 0, S, 0, 0);
     c.save(); c.beginPath(); c.roundRect(cd.x, cd.y, cd.w, cd.h, cd.r); c.clip();
     c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(this.art, Math.round(cd.x * S), Math.round(cd.y * S)); c.restore();
     // stylus

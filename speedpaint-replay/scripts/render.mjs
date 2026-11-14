@@ -6,8 +6,9 @@
 //   node <skill>/scripts/render.mjs piece.html --sheet 8 --from 2 --to 6    (a closer look at one stretch)
 //   node <skill>/scripts/render.mjs piece.html                         → out/piece.mp4 (1080×1220, H.264)
 // Options: --scale .5 (preview size) · --q "off=stylus" (any page query) · --workers 3 · --fps 30 · --from/--to
-//          --crf 20 · --audio music.wav (optional; muxed, trimmed, faded) · --out out/
-// Canvas 2D: ~0.1–0.3 s a frame on a CPU (PNG encoding included).
+//          --crf 20 · --preset medium · --png (lossless PNG frames into the encoder; default JPEG q97, 4× faster)
+//          --audio music.wav (optional; muxed, trimmed, faded) · --out out/
+// Finished items are cached in layers, so a frame costs ~40 ms whatever the piece holds: ~45 s for a 47 s film on 4 cores.
 import { createRequire } from 'node:module';
 import { spawn, execSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
@@ -42,7 +43,7 @@ async function open() {
   }
   return page;
 }
-const grab = (page, t) => page.evaluate(t => { window.seek(t); return document.querySelector('canvas').toDataURL('image/png'); }, t);
+const grab = (page, t, type = 'image/png') => page.evaluate(([t, type]) => { window.seek(t); return document.querySelector('canvas').toDataURL(type, .97); }, [t, type]);
 const png = d => Buffer.from(d.split(',')[1], 'base64');
 
 const probe = await open();
@@ -75,7 +76,7 @@ if (sheet) {
 await probe.close();
 
 // the MP4: each worker owns a contiguous run of frames and pipes PNGs into its own ffmpeg; chunks are joined losslessly
-const workers = +opt('workers', 3), crf = opt('crf', '20');
+const workers = +opt('workers', 4), crf = opt('crf', '20'), lossless = args.includes('--png'), preset = opt('preset', 'medium');
 const n = Math.round((to - from) * FPS), per = Math.ceil(n / workers);
 const tmp = join(outDir, `.chunks-${name}`); rmSync(tmp, { recursive: true, force: true }); mkdirSync(tmp, { recursive: true });
 console.log(`${name}: ${n} frames @ ${FPS} fps, ${workers} workers`);
@@ -83,12 +84,12 @@ const t0 = Date.now(); let done = 0;
 await Promise.all(Array.from({ length: workers }, async (_, w) => {
   const a = w * per, b = Math.min(n, a + per); if (a >= b) return;
   const page = await open();
-  const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'png', '-i', '-',
-    '-c:v', 'libx264', '-preset', 'slow', '-crf', crf, '-pix_fmt', 'yuv420p', '-g', String(FPS * 2),
+  const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', lossless ? 'png' : 'mjpeg', '-i', '-',
+    '-c:v', 'libx264', '-preset', preset, '-threads', '2', '-crf', crf, '-pix_fmt', 'yuv420p', '-g', String(FPS * 2),
     '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', join(tmp, `${String(w).padStart(2, '0')}.mp4`)], { stdio: ['pipe', 'inherit', 'inherit'] });
   const closed = new Promise(r => ff.on('close', r));
   for (let f = a; f < b; f++) {
-    if (!ff.stdin.write(png(await grab(page, from + f / FPS)))) await new Promise(r => ff.stdin.once('drain', r));
+    if (!ff.stdin.write(png(await grab(page, from + f / FPS, lossless ? 'image/png' : 'image/jpeg')))) await new Promise(r => ff.stdin.once('drain', r));
     if (++done % 15 === 0) { const s = (Date.now() - t0) / 1000; console.log(`  ${done}/${n}  ${(s / done).toFixed(2)} s/frame  eta ${Math.round(s / done * (n - done))} s`); }
   }
   ff.stdin.end(); await closed; await page.close();

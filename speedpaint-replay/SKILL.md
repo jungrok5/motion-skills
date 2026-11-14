@@ -1,6 +1,6 @@
 ---
 name: speedpaint-replay
-description: Make a "making replay" (メイキング再生 / 메이킹 영상 / speedpaint) of one illustration drawn entirely in code. A warm beige page shows a title, six stage chips — rough · line art · flats · shadow · highlight · finish — and a canvas card. A white stylus draws the piece in front of you. Blue construction lines (head circle, centre line, eye line) come first, then tapered pen strokes one by one, then base colours brushed in with a ragged sweeping edge, multiply shadows on clipping layers, screen highlights (hair sheen, rim light, catchlights), and a finish of light, colour grade, bokeh and warmed lines. HTML Canvas, a bundled Korean font, no image files; outputs a live page and a 1080×1220 MP4 (~30–60 s). Give it a subject (a character, a scene, an object) and it designs a new illustration — composition, character, palette, light — and draws it stage by stage; or give it the user's own drawing (reference mode) and the replay draws toward that picture. Use for speedpaint / timelapse / drawing-process videos, "AI drew this in code" reveals, anime-style portrait making-of, illustration process explainers, or to remake this reference style on a new subject ("메이킹 영상", "그리는 과정 영상", "스피드페인팅", "코드로 그림 그리는 영상", "러프부터 채색까지", "선화 채색 과정", "이 영상처럼 주제만 바꿔서", "이 스타일로 ○○ 그려줘", "내 그림으로 메이킹 영상", "making video", "speedpaint replay", "drawing timelapse in code", "draw it stroke by stroke"). Source — made from https://x.com/yohakutoink/status/2120824797215310208?a=-D3pDsiFMNVDxo3e18k&s=19
+description: Make a "making replay" (メイキング再生 / 메이킹 영상 / speedpaint) of one illustration drawn entirely in code. A warm beige page shows a title, six stage chips — rough · line art · flats · shadow · highlight · finish — and a canvas card. A white stylus draws the piece in front of you. Blue construction lines (head circle, centre line, eye line) come first, then tapered pen strokes one by one, then base colours brushed in with a ragged sweeping edge, multiply shadows on clipping layers, screen highlights (hair sheen, rim light, catchlights), and a finish of light, colour grade, bokeh and warmed lines. HTML Canvas, a bundled Korean font, no image files; outputs a live page and a 1080×1220 MP4 (~30–60 s). Give it a subject (a character, a scene, an object) and it designs a new illustration — composition, character, palette, light — and draws it stage by stage; or give it a picture (reference mode) and the replay draws toward it the way a painter would make it: construction, inked lines, one flat per material, shadow and light shapes, blending, detail. Use for speedpaint / timelapse / drawing-process videos, "AI drew this in code" reveals, anime-style portrait making-of, illustration process explainers, or to remake this reference style on a new subject ("메이킹 영상", "그리는 과정 영상", "스피드페인팅", "코드로 그림 그리는 영상", "러프부터 채색까지", "선화 채색 과정", "이 영상처럼 주제만 바꿔서", "이 스타일로 ○○ 그려줘", "내 그림으로 메이킹 영상", "making video", "speedpaint replay", "drawing timelapse in code", "draw it stroke by stroke"). Source — made from https://x.com/yohakutoink/status/2120824797215310208?a=-D3pDsiFMNVDxo3e18k&s=19
 ---
 
 # speedpaint-replay
@@ -22,7 +22,7 @@ half-suspected it had traced the original). This skill takes the *format*: the p
 looks and moves, the stylus. It does not take the portrait or its character (references/SOURCE.md). Worked example:
 `examples/rainy-window` 「비 오는 창가」 (47 s: a girl with a black bob by a rainy window at dusk, cool window light, warm
 lamp rim). Starter: `templates/` 「아침 커피」 (28 s, a mug in morning light). Reference mode: `examples/reference-mode` 「벚꽃 노을」
-(43 s: the replay draws toward a given picture, here an image generated with ElevenLabs). Live: https://jungrok5.github.io/motion-skills/speedpaint-replay/
+(51 s: the replay draws toward a given picture, here an image generated with ElevenLabs). Live: https://jungrok5.github.io/motion-skills/speedpaint-replay/
 
 **Fixed by the style** (every piece): the 1080×1220 page; beige UI, the title, the note, the six chips (orange = now),
 the rounded white card with a soft shadow; the stylus that follows the tip of whatever is being drawn, glides between
@@ -45,15 +45,15 @@ language if the audience needs it.
 |---|---|
 | `lib/sketch.js` | `Sketch`: how you author a piece, item by item, stage by stage. `rough` / `ellipse`, `ink` (tapered pen), `flat` (named region), `shadow`, `light`, `glow`, `fx` (custom finish), `inkTint`; helpers `lock` (hair lock: ribbon + edge lines + strands + shade), `eye` (anime eye: white, iris, pupil, lids, lashes, lid shadow, catchlights), `edge` (rim / edge strip), `lens` (sheen strand, glint), `bloom`; `push`/`pop` transforms; `setPose` / `mark` for the body check |
 | `lib/sketch.js` (more) | `hatch` (pen hatching inside a region), `shade` (light-direction gradient over a whole region), `dapple` (scattered soft specks), `grain` (paper grain), `markEye` (an eye box for the body check without drawing one); `ink({ passes })` sketchy over-drawn lines; `lock({ strands, fly, passes })` denser hair |
-| `lib/reference.js` | reference mode: `addReference(s, REF)` turns a measured image (ref.js) into rough, line, flat, shadow, highlight and a finish "detail brush" |
+| `lib/reference.js` | reference mode: `addReference(s, REF)` turns what `from-image.mjs` measured into a painter's six stages (construction rough → ink strokes with measured widths → one flat per material → shadow and light shapes, hard or soft → airbrush blending → detail strokes → colour trace of the lines). Uses `s.region` (compound regions with holes), `s.paint` (strokes on the paint layer), `s.airbrush`, `s.inkTrace` |
 | `lib/replay.js` | `Replay`: times every item (stage seconds shared by how much drawing each item is), draws the page (header, chips, card, stylus), visible-area clipping masks, the line art layer and its tint, the rough fade, the live player (click a chip to jump), the body sheet, the contract |
 | `lib/brush.js` | the marks: `pen` (pressure-tapered filled outline), `pencil`, `fillWhole`, `fillVia` (sweeping-brush reveal through a mask, blend mode, blur) |
 | `lib/core.js` | seeded random, easing, Catmull-Rom spline, resample, arc, bbox, normals, transforms, colour |
 | `lib/fonts/` | Pretendard SemiBold + Bold (KS X 1001 subset: all 2,350 common Hangul + Latin), OFL licence beside them |
 | `templates/` | 「아침 커피」 starter: `index.html`, `art.js`, `BRIEF.md`. This is what `new-piece.mjs` copies |
 | `examples/rainy-window/` | the worked example: `BRIEF.md` (design + review log), `index.html`, `art.js` |
-| `examples/reference-mode/` | reference mode: `reference.jpg` (the picture it draws toward), `ref.js` (measured), `art.js`, `BRIEF.md` |
-| `scripts/from-image.mjs` | reference mode: image → `ref.js` (posterised flats, measured shadows and highlights, traced line art, rough contours, detail dabs) |
+| `examples/reference-mode/` | reference mode: `reference.jpg` (the picture it draws toward), `plan.json` (what the agent saw in it: construction, material lassos, order of work), `ref.js` (measured), `art.js`, `BRIEF.md` |
+| `scripts/from-image.mjs` | reference mode: picture (+ `plan.json`) → `ref.js`: ink strokes with widths, materials from rough lassos snapped by colour, tone shapes with edge softness, airbrush dabs, detail strokes, order of work; `--debug` writes grid / lines / materials / tones / predicted-finish sheets |
 | `scripts/new-piece.mjs` | start a piece (starter, or `--from rainy-window`) |
 | `scripts/render.mjs` | stills, `--stages` (end of each stage + finished), contact sheets, the MP4 (workers × ffmpeg) |
 | `scripts/check.mjs` | loads clean; every stage has items and time; every item leaves a mark; no fill pops in; stylus on the card; covered, not black or blown out; glyphs; deterministic; body check + body sheet |
@@ -71,8 +71,8 @@ my-piece/
 Run scripts from the project root: `node <skill>/scripts/render.mjs piece.html --stages --scale .5`. Pages are ES
 modules: view them through a local server (`python3 -m http.server`); the scripts pass Chromium the file:// flag.
 
-Requirements: Node + Playwright Chromium, ffmpeg. No network, no npm install, no GPU (~0.3 s a frame on a CPU for a
-designed piece; reference mode with thousands of items ~2 s a frame).
+Requirements: Node + Playwright Chromium, ffmpeg. No network, no npm install, no GPU. Finished items are cached in
+layers, so a frame costs about 25 ms whatever the piece holds: a 50 s film renders in about 35 s on 4 cores.
 
 ## Workflow
 1. **Subject → brief.** Write `BRIEF.md` from references/BRIEF.md before any code. Fill in:
@@ -85,10 +85,12 @@ designed piece; reference mode with thousands of items ~2 s a frame).
 
    If the user brings a reference video, extract stills (`ffmpeg -i ref.mp4 -vf fps=1/2,scale=360:-1,tile=6x4
    sheet.jpg`), note what the stages do, then design your own picture.
-   **Reference mode** (the user gives a picture and wants the replay to draw *that*): note where the image came from
-   in BRIEF.md, then `node <skill>/scripts/from-image.mjs drawing.png --out ref.js` and start from `--from reference-mode`. The
-   rough, line art, flats, shadows, highlights and a finish detail brush are measured from the picture
-   (references/REFERENCE.md). You still own the timings, the finish, and the body marks. Then continue at step 8.
+   **Reference mode** (the user gives a picture and wants the replay to draw *that*): follow references/REFERENCE.md.
+   Start from `--from reference-mode`, run `from-image.mjs --debug`, LOOK at the gridded picture, and write
+   `plan.json`: the construction a painter would block in (head circle, centre line, eye line, jaw, shoulders), one
+   rough lasso per material (skin, hair, cloth …) with sample points, and the order of work (eyes → face → hair →
+   body). The tool measures the rest. Judge the flats sheet first: a handful of colours, one per material. You still
+   own the stage timings and the body marks. Then continue at step 8.
 2. **Start**: `node <skill>/scripts/new-piece.mjs my-piece` (or `--from rainy-window`, or `--from reference-mode`).
 3. **Rough**: blue construction in the order a painter would make it. For a figure: head circle, jaw, centre line
    (curved by the turn), eye / nose / mouth lines, eye ellipses, neck, shoulder line, hair silhouette. For an object:
@@ -112,7 +114,7 @@ designed piece; reference mode with thousands of items ~2 s a frame).
    references/BRIEF.md. Look at the face at full size (crop it). Log what failed in BRIEF.md, fix it, render again.
 9. **Check**: `node <skill>/scripts/check.mjs piece.html` must end with `all checks passed`. For a character, open
    `out/<name>-body.png` and answer its question for each panel (references/BODY.md).
-10. **Render**: `render.mjs piece.html --workers 4` → `out/piece.mp4`. Look at stills pulled from the MP4. The source
+10. **Render**: `render.mjs piece.html` → `out/piece.mp4` (about 35 s for a 50 s film). Look at stills pulled from the MP4. The source
     is silent; add music only if the user asks (`--audio music.wav`).
 
 ## Rules
