@@ -169,6 +169,7 @@
           vec3 leaf = mix(${c('canopy')}, mix(${c('canopy2')}, ${c('canopy3')}, smoothstep(0.35, 0.7, c2.g)), smoothstep(0.50, 0.66, c2.r * 0.7 + cw.g * 0.3));
           leaf *= 0.45 + 0.9 * smoothstep(0.75, 0.2, cw.a) * (0.7 + 0.6 * cw.b);
           col = mix(col, leaf, fK); N = normalize(N + vec3(cw.r - 0.5, 0.0, cw.g - 0.5) * 1.6 * fK); }
+        col = mix(col, mix(${c('canopy')}, ${c('rock2')}, 0.25) * 0.9, smoothstep(380.0, 1000.0, dist) * 0.8);     // the far range is one quiet colour: the air does the rest
         float shore = smoothstep(0.35, 0.75, mk.b + (dt.b - 0.5) * 0.3);
         col = mix(col, ${c('gravel')} * (0.6 + 0.6 * d2.b), shore);
         float under = smoothstep(uWaterY + 0.15, uWaterY - 1.2, vWPos.y);

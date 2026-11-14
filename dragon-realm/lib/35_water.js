@@ -110,7 +110,7 @@
     const S = { lip: [0, 40, 0], dir: [0, 1], width: 6, drop: 40, speed: 2.4, sheets: 3, seed: 1, ...spec }, T = Math.sqrt((2 * S.drop) / 9.8), nx = 10, ny = 26, P = [], UV = [], A = [], I = [], r = DR.rng(S.seed * 91);
     const dl = Math.hypot(S.dir[0], S.dir[1]) || 1, dx = S.dir[0] / dl, dz = S.dir[1] / dl, sx = -dz, sz = dx;
     for (let s = 0; s < S.sheets; s++) { const off = (s - (S.sheets - 1) / 2) * 0.5, w = S.width * (1 - s * 0.16), v0 = S.speed * (1 + s * 0.22), base = P.length / 3, sd = r() * 10;
-      for (let j = 0; j <= ny; j++) for (let i = 0; i <= nx; i++) { const uu = i / nx, tau = (j / ny) * T, side = (uu - 0.5) * w * (1 + 0.25 * (j / ny)), fwd = v0 * tau + off;
+      for (let j = 0; j <= ny; j++) for (let i = 0; i <= nx; i++) { const uu = i / nx, tau = (j / ny) * T, side = (uu - 0.5) * w * (0.62 + 0.55 * Math.sqrt(j / ny)) + Math.sin(uu * 9 + s * 2 + j * 0.35) * 0.18 * (j / ny) * w * 0.2, fwd = v0 * tau + off + Math.sin(uu * 6.3 + s) * 0.35;
         P.push(S.lip[0] + sx * side + dx * fwd, S.lip[1] - 4.9 * tau * tau, S.lip[2] + sz * side + dz * fwd); UV.push(uu, tau); A.push(sd, w, s, T); }
       for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const a = base + j * (nx + 1) + i, b = a + 1, c = a + nx + 1, d = c + 1; I.push(a, c, b, b, c, d); } }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(UV, 2)); g.setAttribute('aF', new THREE.Float32BufferAttribute(A, 4)); g.setIndex(I); g.computeVertexNormals();
@@ -122,9 +122,13 @@
       float cover = smoothstep(0.0, 0.42, side + (st - 0.5) * (0.5 + 0.7 * fall) - vF.z * 0.07) * (1.0 - smoothstep(0.80, 1.0, fall + (st - 0.5) * 0.35));
       if (cover < 0.5) discard;`;
     const mat = DR.mat({ base: 'lambert', color: '#ffffff', side: THREE.DoubleSide, depth: true, vHead: 'attribute vec4 aF; varying vec4 vF;', vBody: 'vF = aF;', fHead: 'varying vec4 vF;', alpha: cut,
-      fBody: `float fine = drN4(vec2(vUv0.x * vF.y * 1.9 + vF.x, dep * 1.5 + tau * 0.5)).b; diffuseColor.rgb = mix(vec3(0.60, 0.70, 0.78), vec3(0.96, 0.98, 1.0), smoothstep(0.25, 0.75, st * 0.65 + fine * 0.35)) * (0.86 + 0.14 * fall); N = normalize(mix(N, vec3(0.0, 1.0, 0.0), 0.7)); drThrough = vec3(0.45, 0.5, 0.55); drAO = 0.9;` });
+      fBody: `float fine = drN4(vec2(vUv0.x * vF.y * 1.9 + vF.x, dep * 1.5 + tau * 0.5)).b; float rib = 0.5 + 0.5 * sin(vUv0.x * vF.y * 2.6 + vF.x * 7.0 + st * 5.0); diffuseColor.rgb = mix(vec3(0.42, 0.55, 0.66), vec3(0.97, 0.99, 1.0), smoothstep(0.2, 0.8, st * 0.5 + fine * 0.3 + rib * 0.2)) * (0.82 + 0.18 * fall); N = normalize(mix(N, vec3(0.0, 1.0, 0.0), 0.7)); drThrough = vec3(0.45, 0.5, 0.55); drAO = 0.9;` });
     const mesh = DR.shadowed(new THREE.Mesh(g, mat), false, false); mesh.name = 'falls';
     const foot = [S.lip[0] + dx * S.speed * T, S.lip[1] - S.drop, S.lip[2] + dz * S.speed * T];
+    // spray that falls with the sheet (so its edges are soft and it has thickness) and boils at the foot
+    if (S.mist !== false && DR.fx) { const life = T * 1.05, lp = life + 0.4;
+      DR.fx.sprites({ count: Math.round(26 * S.width), seed: S.seed + 40, kind: 'puff', gravity: 8.2, drag: 0.12, cover: 0.55, soft: 3, loop: lp, lit: 1, init: (i, r) => { const k = r.range(-0.5, 0.5); return { p: [S.lip[0] + sx * k * S.width * 0.7, S.lip[1] - 0.5, S.lip[2] + sz * k * S.width * 0.7], v: [dx * S.speed * 1.2 + r.gauss() * 0.3, -r.range(0, 2.5), dz * S.speed * 1.2 + r.gauss() * 0.3], t0: -r() * lp, life, size: r.range(1.2, 2.6), grow: 2.6, a: r.range(0.25, 0.5), col: [0.92, 0.96, 1] }; } });
+      DR.fx.sprites({ count: Math.round(12 * S.width), seed: S.seed + 41, kind: 'puff', gravity: -0.5, drag: 0.7, cover: 0.6, wind: 0.3, soft: 5, loop: 5.5, init: (i, r) => ({ p: [foot[0] + r.gauss() * S.width * 0.45, S.lip[1] - S.drop + 0.4 + r() * 3, foot[2] + r.gauss() * 2.2], v: [r.gauss() * 2, r.range(1, 4.5), r.range(0.5, 3.5)], t0: -r() * 5.5, life: r.range(3, 5.5), size: r.range(3.5, 8), grow: 2.3, a: r.range(0.2, 0.42), col: [0.92, 0.96, 1] }) }); }
     return { mesh, foot, T, spec: S };
   };
 }
