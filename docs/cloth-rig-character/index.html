@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>cloth-rig-character · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 머리가 크고 몸이 작은 3D 캐릭터를 블렌더에서 부품별로 만들고 옷을 차례로 입힌 뒤, 몸뿐 아니라 치마 · 리본 · 머리채에도 뼈를 넣어 대기와 눈 깜박임 → 돌아서기 → 걷기를 한 동작씩 만듭니다. 돌아설 때 치마가 퍼지고 리본이 늦게 따라옵니다.">
+<meta property="og:title" content="cloth-rig-character · motion-skills">
+<meta property="og:description" content="블렌더에서 부품별로 만든 3D 캐릭터의 옷에 뼈를 넣어, 치마가 퍼지고 리본이 늦게 따라오는 걷기 애니메이션을 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/cloth-rig-character/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/cloth-rig-character">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / cloth-rig-character</nav>
+  <h1>cloth-rig-character</h1>
+  <p>주제 하나를 주면 머리가 크고 몸이 작은 3D 캐릭터를 블렌더에서 부품별로 만들고 옷을 차례로 입힌 뒤, 몸뿐 아니라 치마 · 리본 · 목도리 · 머리채에도 뼈를 넣어 대기와 눈 깜박임 → 돌아서기 → 걷기를 한 동작씩 만듭니다. 돌아설 때 치마가 퍼지고 리본이 늦게 따라오며, 회색 바닥 · 고정 카메라 · 구석의 뒷모습 설정화로 검토합니다.
+  보고 만든 원본: <a href="https://x.com/ClaudeCode_love/status/2121385622325903666?a=TAb3nXMsi15QbOVger8&amp;s=19" target="_blank" rel="noopener">Claude Code Studio(@ClaudeCode_love)의 X 게시물 (「服に骨を入れるかが9割」, 블렌더 + Claude로 만든 캐릭터의 작업 순서)</a>, 그 작가의 원 게시물 <a href="https://x.com/rewind02/status/2120846734901367105" target="_blank" rel="noopener">rewind(@rewind02)</a>.</p>
+  <ul class="tags"><li>블렌더 · bpy</li><li>3D 캐릭터 리깅</li><li>옷에 뼈 · 2차 동작</li><li>glTF + three.js</li><li>MP4</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 한 줄 (선택: 앞 · 옆 · 뒤 설정화)</dd>
+      <dt>브리프</dt><dd>입는 순서대로 적은 부품, 흔들릴 옷과 뼈 줄 수, 동작 목록, 검토 기록 — <code>character.json</code></dd>
+      <dt>만들기</dt><dd>블록아웃 → 부품 → 겹쳐 입기 → 몸 뼈 + 옷 뼈 줄 → 대기 · 돌아서기 · 걷기를 한 동작씩 → 스프링으로 치마 · 리본의 따라오는 움직임을 키로 굽기</dd>
+      <dt>검사</dt><dd>스키닝, 앞뒤좌우, 관절 범위(무릎은 뒤로 · 팔꿈치는 앞으로), 발 고정, 진행 방향, 옷 움직임, 결정성 — 11개 + 턴어라운드 · 캐스트 시트(양쪽 방향)</dd>
+      <dt>출력</dt><dd><code>.blend</code>, 애니메이션 든 <code>.glb</code> + three.js 검토 플레이어, 검토 MP4(Cycles), 스틸 · 시트</dd>
+    </dl>
+    <pre><code>python3 -m venv ~/.venv-bpy
+~/.venv-bpy/bin/pip install bpy
+S=path/to/cloth-rig-character; PY=~/.venv-bpy/bin/python
+$PY $S/scripts/hero.py new my-hero --from hanbok-girl
+cd my-hero          # BRIEF.md → character.json
+$PY $S/scripts/hero.py check
+$PY $S/scripts/hero.py sheet
+$PY $S/scripts/hero.py stills --clip walk
+$PY $S/scripts/hero.py render
+$PY $S/scripts/hero.py player</code></pre>
+    <p class="mute">요구 사항: 블렌더의 파이썬(<code>pip install bpy</code> 또는 블렌더 본체), ffmpeg. GPU 없이 동작합니다. 블렌더 MCP로 한 단계씩 실행하는 방법과 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/cloth-rig-character/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10.6;--demo-bg:#8c8ea0">
+    <iframe data-src="demo/?src=hanbok-girl" title="cloth-rig-character 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/?src=hanbok-girl">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/hanbok-girl</code> · 7.7초 · 대기 → 한 바퀴 → 돌아서기 → 걷기</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/?src=hanbok-girl" data-cap="예제 &lt;code&gt;examples/hanbok-girl&lt;/code&gt; · 7.7초 · 대기 → 한 바퀴 → 돌아서기 → 걷기" aria-pressed="true">설빔 소녀</button>
+        <button class="btn" type="button" data-src="demo/?src=raincoat-kid" data-cap="시작 예제 &lt;code&gt;starter&lt;/code&gt; · 6.1초 · 대기 → 돌아서기 → 걷기" aria-pressed="false">비옷 아이</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본에 없는 주제 두 가지로 만든 캐릭터입니다. 스틸은 블렌더 Cycles로 렌더한 검토 화면이고, 카드를 누르면 같은 캐릭터의 <code>.glb</code>가 three.js 검토 플레이어에서 재생됩니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"hanbok":"설빔 소녀","rain":"비옷 아이","sheet":"턴어라운드 · 캐스트 시트"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>설빔 소녀 <small>examples/hanbok-girl · 새 주제로 만든 예제</small></h3>
+      <p>색동 소매 저고리, 가슴에서 묶은 진분홍 치마(뼈 12줄 × 4마디), 앞고름, 댕기 땋은머리, 프로젝트에서 새로 만든 노리개 부품.</p>
+      <div class="grid">
+        <a class="tile" data-tags="hanbok" href="demo/?src=hanbok-girl" target="_blank" rel="noopener">
+          <img src="samples/hanbok-idle.jpg" alt="회색 바닥 위에 선 설빔 소녀: 색동 소매 저고리, 진분홍 치마, 빨간 앞고름과 초록 구슬 노리개" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">대기 · 눈 깜박임</span><b>숨쉬기와 무게 이동</b><span class="how">가슴이 오르내리고 엉덩이가 좌우로 옮겨 가며, 0.9초에 눈을 깜박입니다.</span></div></a>
+        <a class="tile" data-tags="hanbok" href="demo/?src=hanbok-girl" target="_blank" rel="noopener">
+          <img src="samples/hanbok-twirl.jpg" alt="한 바퀴 도는 설빔 소녀: 치마가 바깥으로 활짝 퍼지고 땋은머리가 몸 뒤로 날림" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">한 바퀴 · 1.7초</span><b>치마가 피어나는 회전</b><span class="how">치마 뼈 줄이 늦게 따라오며 바깥으로 퍼지고, 옆으로 꼬이거나 안으로 접히는 각도는 제한해 다리에 감기지 않습니다.</span></div></a>
+        <a class="tile" data-tags="hanbok" href="demo/?src=hanbok-girl" target="_blank" rel="noopener">
+          <img src="samples/hanbok-walk.jpg" alt="오른쪽 앞으로 걷는 설빔 소녀를 옆에서 본 모습, 땋은머리와 댕기, 앞고름이 흔들림" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">걷기 · 2.8초</span><b>고름과 댕기가 흔들리는 걸음</b><span class="how">디딘 발은 미끄러지지 않고, 엉덩이가 오르내리며 치맛단이 다리를 따라 흔들립니다.</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>비옷 아이 <small>starter · 시작 예제</small></h3>
+      <p>노란 비옷(밑단 뼈 8줄), 빨강 · 흰 줄무늬 목도리(꼬리 2줄 × 5마디), 파란 장화. 라이브러리 부품만으로 만든 시작 캐릭터입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="rain" href="demo/?src=raincoat-kid" target="_blank" rel="noopener">
+          <img src="samples/rain-idle.jpg" alt="회색 바닥 위에 선 노란 비옷 아이, 빨강 흰 줄무늬 목도리와 파란 장화" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">대기 · 눈 깜박임</span><b>비 오는 날 기다리기</b><span class="how">짧은 단발, 큰 눈, 볼터치. 몸은 3.8등신입니다.</span></div></a>
+        <a class="tile" data-tags="rain" href="demo/?src=raincoat-kid" target="_blank" rel="noopener">
+          <img src="samples/rain-turn.jpg" alt="몸을 오른쪽으로 돌리는 비옷 아이, 머리가 먼저 돌고 목도리 꼬리가 늦게 따라옴" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">돌아서기 · 1.3초</span><b>머리가 먼저, 목도리는 나중에</b><span class="how">반대쪽으로 살짝 감았다가 돌고, 작은 걸음 두 번으로 방향을 바꿉니다.</span></div></a>
+        <a class="tile" data-tags="rain" href="demo/?src=raincoat-kid" target="_blank" rel="noopener">
+          <img src="samples/rain-walk.jpg" alt="오른쪽으로 걸어가는 비옷 아이를 옆에서 본 모습, 장화를 든 발과 흔들리는 비옷 밑단" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">걷기 · 2.8초</span><b>빠른 짧은 걸음</b><span class="how">보폭 0.44, 두 걸음 0.72초. 고무 비옷이라 치마보다 단단하게 흔들립니다.</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>몸 검사 <small>hero.py sheet</small></h3>
+      <p>앞 · 3/4 · 옆 · 뒤를 양쪽 방향으로 렌더한 턴어라운드와, 동작 포즈를 양쪽 옆에서 본 캐스트 시트입니다. 뒷모습은 검토 영상 구석의 설정화가 됩니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="sheet" href="samples/hanbok-turnaround.jpg" target="_blank" rel="noopener">
+          <img src="samples/hanbok-turnaround-thumb.jpg" alt="설빔 소녀 턴어라운드: 앞, 왼쪽 3/4, 왼쪽, 뒤, 오른쪽, 오른쪽 3/4" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">턴어라운드</span><b>설빔 소녀, 여섯 방향</b><span class="how">고름과 노리개는 앞, 땋은머리와 댕기는 뒤에 있는지 봅니다.</span></div></a>
+        <a class="tile" data-tags="sheet" href="samples/hanbok-cast.jpg" target="_blank" rel="noopener">
+          <img src="samples/hanbok-cast-thumb.jpg" alt="설빔 소녀 캐스트 시트: 대기, 회전 중간, 돌아서기 중간, 걷기 두 포즈를 오른쪽과 왼쪽 옆에서 본 그림" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 시트</span><b>동작 포즈, 양쪽 옆</b><span class="how">무릎은 뒤로, 팔꿈치는 앞으로만 접히는지 봅니다. 자동 검사가 모든 프레임을 같은 기준으로 잽니다.</span></div></a>
+        <a class="tile" data-tags="sheet" href="samples/rain-turnaround.jpg" target="_blank" rel="noopener">
+          <img src="samples/rain-turnaround-thumb.jpg" alt="비옷 아이 턴어라운드: 앞, 왼쪽 3/4, 왼쪽, 뒤, 오른쪽, 오른쪽 3/4" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">턴어라운드</span><b>비옷 아이, 여섯 방향</b><span class="how">단추와 목도리는 앞, 후드는 뒤에 있습니다.</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. 출발점은 Claude Code Studio(@ClaudeCode_love)가 X에 정리한 작업 순서와, 그 작가 rewind(@rewind02)가 올린 4초 영상(검은 꽃무늬 원피스에 흰 챙 넓은 모자를 쓴 소녀가 회색 바닥에서 대기 → 돌아서기 → 걷기를 하고, 구석에 뒷모습 설정화가 있는 검토 화면)입니다. 이 스킬은 그 방법(부품 → 겹쳐 입기 → 옷에 뼈 → 한 동작씩 → 따라오는 움직임 → 검토 화면)과 검토 화면의 모양만 가져오고, 원본의 소녀는 쓰지 않았습니다. 두 캐릭터의 디자인과 코드는 모두 이 레포의 것입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/?src=hanbok-girl" target="_blank" rel="noopener"><b>설빔 소녀 · 7.7초 · 검토 플레이어</b><span>대기 → 한 바퀴 → 돌아서기 → 걷기, 뼈 90개 중 옷 · 머리채 뼈 70개</span><span class="url">cloth-rig-character/demo/?src=hanbok-girl</span></a>
+    <a class="work" href="demo/?src=raincoat-kid" target="_blank" rel="noopener"><b>비옷 아이 · 6.1초 · 검토 플레이어</b><span>대기 → 돌아서기 → 걷기, 비옷 밑단 8줄 · 목도리 꼬리 2줄</span><span class="url">cloth-rig-character/demo/?src=raincoat-kid</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/cloth-rig-character/examples/hanbok-girl"><b>예제 폴더 · examples/hanbok-girl</b><span>브리프, character.json, 노리개 부품(parts.py), 검토 기록</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/ClaudeCode_love/status/2121385622325903666?a=TAb3nXMsi15QbOVger8&amp;s=19" target="_blank" rel="noopener"><b>원본 게시물 · X</b><span>Claude Code Studio(@ClaudeCode_love) · 작업 순서 정리</span><span class="url">x.com/ClaudeCode_love/status/2121385622325903666</span></a>
+    <a class="work" href="https://x.com/rewind02/status/2120846734901367105" target="_blank" rel="noopener"><b>작가 게시물 · X</b><span>rewind(@rewind02) · 4초 영상 · 블렌더 + Claude</span><span class="url">x.com/rewind02/status/2120846734901367105</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cloth-rig-character/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/cloth-rig-character">폴더</a> <span>crc · scripts · player · starter · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cloth-rig-character/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cloth-rig-character/references/SOURCE.md">references/SOURCE.md</a> <span>원본 게시물의 단계와 이 스킬의 대응</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cloth-rig-character/references/BRIEF.md">references/BRIEF.md</a> <span>브리프 틀과 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cloth-rig-character/references/PARTS.md">references/PARTS.md</a> <span>character.json과 부품, 새 부품 만들기</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cloth-rig-character/references/RIG.md">references/RIG.md</a> <span>옷 뼈 줄과 스프링 매개변수</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cloth-rig-character/references/MOTION.md">references/MOTION.md</a> <span>동작, 이어 붙이기, 고정 카메라</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cloth-rig-character/references/BODY.md">references/BODY.md</a> <span>앞뒤좌우와 관절 검사</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cloth-rig-character/references/BLENDER-MCP.md">references/BLENDER-MCP.md</a> <span>블렌더 MCP로 한 단계씩</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/cloth-rig-character/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 캐릭터는 모두 코드로 만들었습니다(외부 모델 0개) · 검토 플레이어 three.js r170 (MIT) · HUD 폰트 Inter (SIL OFL)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

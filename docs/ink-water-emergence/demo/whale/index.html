@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>「鯨の息 · Whale Breath」 — ink-water-emergence example</title>
+<script type="importmap">{ "imports": { "inkwater/": "../lib/" } }</script>
+</head><body>
+<script type="module">
+// 「鯨の息 · Whale Breath」 — a humpback condenses out of a long drift of ink in open water, glides, sweeps a fin, turns
+// upward and rises out of frame, dissolving back into the ink it came from. Brief: BRIEF.md. 6 shots, 12.6 s.
+// A topic the reference never had: no floor, a swimmer body (spine wave, fins, flukes), a slow tempo, and the emergence
+// run backwards at the end.
+import { Film } from 'inkwater/film.js';
+import { WHALE } from './whale.js';
+import { SCORE } from './score.js';
+
+const cast = {
+  whale: {
+    ...WHALE, at: [-4.2, 0], heading: 0,
+    track: [
+      { t: 0, e: 0 }, { t: .6, e: .06 }, { t: 1.4, e: .16 }, { t: 2.4, e: .3 }, { t: 4.4, e: .58 }, { t: 6.8, e: .86 }, { t: 8.2, e: .97 },
+      { t: 10.4, e: 1 }, { t: 11.4, e: .8 }, { t: 12.6, e: .45 },          // …and back into ink
+      { t: 0, s: 0 }, { t: 12.6, s: 7.6 },                                  // gliding forward the whole film (m)
+      { t: 0, y: 1.6 }, { t: 8.4, y: 1.6 }, { t: 12.6, y: 5.4 },            // then rising toward the surface
+      { t: 0, pitch: -3 }, { t: 8.2, pitch: 0 }, { t: 9.6, pitch: 28 }, { t: 12.6, pitch: 38 },
+      { t: 0, beat: .6 }, { t: 8.2, beat: 1.2 }, { t: 10, beat: 1.6 },
+      { t: 6.8, finFlap: 0 }, { t: 7.5, finFlap: .7 }, { t: 8.3, finFlap: .1 },
+      { t: 0, roll: 0 }, { t: 7.2, roll: -10 }, { t: 8.6, roll: 0 },
+    ],
+  },
+};
+const shots = [
+  { name: 'drift', d: 2.4, cam: [{ t: 0, on: 'whale.body', off: [.4, 0, 0], yaw: 10, pitch: 2, dist: 12, fov: 34 }, { t: 2.4, dist: 10.5 }],
+    water: [{ t: 0, fluid: 1 }] },
+  { name: 'the head', d: 2.0, cam: [{ t: 0, on: 'whale.head', off: [-1.1, -.1, 0], yaw: 42, pitch: 4, dist: 5.2, fov: 34 }, { t: 2, yaw: 34, dist: 4.6 }],
+    water: [{ t: 0, fluid: .85 }] },
+  { name: 'glide', d: 2.4, cam: [{ t: 0, on: 'whale.body', yaw: 4, pitch: 0, dist: 10, fov: 34 }, { t: 2.4, yaw: -4, dist: 9.4 }],
+    water: [{ t: 0, fluid: .65 }] },
+  { name: 'fin', d: 1.4, cam: [{ t: .7, on: 'whale.body', off: [.4, -.7, 0], yaw: 30, pitch: -16, dist: 5.2, fov: 34 }, { t: 1.4, yaw: 22 }],
+    water: [{ t: 0, fluid: .6 }] },
+  { name: 'rise', d: 2.2, cam: [{ t: 1.1, on: 'whale.body', off: [0, -.4, 0], yaw: 24, pitch: -22, dist: 9.5, fov: 34 }, { t: 2.2, dist: 9 }],
+    water: [{ t: 0, fluid: .55 }] },
+  { name: 'breath', d: 2.2, cam: [{ t: 0, on: 'whale.body', off: [.6, 1.2, 0], yaw: 12, pitch: -6, dist: 12, fov: 34 }, { t: 2.2, dist: 12.5 }],
+    water: [{ t: 0, fluid: .7 }, { t: 2.2, fluid: 1 }] },
+];
+Film({ W: 1920, H: 1080, fps: 24, seed: 21, cast, shots, score: SCORE, ground: false,
+  // open water: no floor, eddies sized for a 5 m animal, a cooler paper, a stronger buoyant rise
+  water: { floorAmt: 0, scale: .5, speed: .16, rise: .07, detail: .38, paper: [.9, .908, .915], vignette: .3 } }).start();
+</script>
+</body></html>

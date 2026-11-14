@@ -1,0 +1,9 @@
+<!doctype html><meta charset="utf-8"><title>whale · cast sheet</title>
+<script type="importmap">{ "imports": { "inkwater/": "../../lib/" } }</script>
+<script type="module">
+// Cast sheet for 「鯨の息 · Whale Breath」: the whale from every side, both directions, and its key poses.
+import { CastSheet } from 'inkwater/cast.js';
+import { WHALE } from './whale.js';
+CastSheet({ cast: { whale: WHALE }, water: { floorAmt: 0, detail: .38 },
+  poses: [{ name: 'glide', st: { t: 0 } }, { name: 'beat up', st: { t: .6 } }, { name: 'beat down', st: { t: 1.85 } }, { name: 'fin sweep', st: { t: 1, finFlap: 1 } }, { name: 'rise', st: { t: 1, pitch: 30 }, yaw: 20 }] });
+</script>
