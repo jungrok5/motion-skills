@@ -27,7 +27,7 @@ const Yong = {};
       grow: [smooth(B.SEIZE + 0.2, B.SEIZE + 2.6, t), smooth(B.SEIZE, B.SEIZE + 3.4, t), smooth(B.SEIZE + 1.0, B.SEIZE + 4.2, t)],
       lid: Math.max(1 - smooth(B.EYE, B.EYE + 0.7, t), blink),
       eyeGlow: lerp(0.7, 1.7, dragon) + 1.5 * pulse(t, B.EYE, B.EYE + 2.5, 0.5, 1.5),
-      jaw: 0.1 + 0.75 * pulse(t, B.BURST - 0.1, B.BURST + 1.6, 0.25, 0.7) + 0.5 * pulse(t, B.SEIZE - 0.7, B.SEIZE + 0.05, 0.4, 0.1) + 0.85 * pulse(t, B.ROAR - 0.1, B.ROAR + 2.2, 0.25, 0.6) + 0.35 * pulse(t, 62.4, 63.6, 0.3) + 0.12 * pulse(t, 40.5, 50, 1),
+      jaw: 0.1 + 0.75 * pulse(t, B.BURST - 0.1, B.BURST + 1.6, 0.25, 0.7) + 0.6 * pulse(t, B.SEIZE - 0.7, B.SEIZE + 0.05, 0.4, 0.1) + 0.3 * pulse(t, B.SEIZE, B.ROAR - 0.05, 0.15, 0.2) + 0.85 * pulse(t, B.ROAR - 0.1, B.ROAR + 2.2, 0.25, 0.6) + 0.35 * pulse(t, 62.4, 63.6, 0.3) + 0.12 * pulse(t, 40.5, 50, 1),
       wet: t < 57 ? (t < B.BURST ? 1 : 0.85) : lerp(0.6, 0.12, smooth(57, 66, t)) + 0.5 * pulse(t, 66, 69, 0.4, 1.5),
       glow: 2.2 * pulse(t, B.SEIZE, B.DAWN + 1.5, 0.3, 2.5) + 0.35 * dragon,
       wave: t < B.BURST ? 0.75 : 1, reach: pulse(t, B.SEIZE - 0.6, B.SEIZE + 0.4, 0.3, 0.6),
@@ -44,12 +44,19 @@ const Yong = {};
     // the yeouiju: it comes down through the torn cloud, waits, and after the seizing rides under the dragon's chin
     const pm = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 24), DR.mat({ base: 'basic', color: '#000000', air: false, fBody: 'vec3 Vp = normalize(cameraPosition - vWPos); float f = pow(1.0 - max(dot(normalize(vONrm), Vp), 0.0), 1.5); drEmit = mix(vec3(9.0, 7.6, 4.6), vec3(4.0, 6.5, 9.0), f) * (0.8 + 0.2 * sin(uTime * 3.0 + vWPos.y));' }));
     scene.add(pm); Yong.pearlMesh = pm;
-    const tmp = [0, 0, 0];
+    // Where the pearl is.  It comes down through the tear and waits; the imugi takes it in its jaws (SEIZE) and holds it
+    // while it changes; with the roar it leaves the open mouth, and from then on it goes before the dragon — a few
+    // lengths of the head ahead on the dragon's own road, circling a little, the way the pearl leads the dragon in a 운룡도.
+    const tmp = [0, 0, 0], tmp2 = [0, 0, 0], lead = [0, 0, 0];
+    const ahead = (t, o) => { const s = C.sOf(t) + 14, p = C.rail.at(s, tmp), d = C.rail.dir(s, tmp2, 3), sx = d[2], sz = -d[0], sl = Math.hypot(sx, sz) || 1, a = t * 0.8;
+      o[0] = p[0] + (sx / sl) * Math.cos(a) * 2.2; o[1] = p[1] + 2.4 + Math.sin(a * 1.3) * 1.3; o[2] = p[2] + (sz / sl) * Math.cos(a) * 2.2; return o; };
     Yong.pearlAt = (t, o = [0, 0, 0]) => {
-      if (t < B.PEARL - 0.5) { o[0] = Yong.PEARL0[0]; o[1] = 900; o[2] = Yong.PEARL0[2]; o[3] = 0; return o; }
-      if (t < B.SEIZE) { const d = 1 - DR.ease.out3(sat((t - B.PEARL) / 5.5)); o[0] = Yong.PEARL0[0] + Math.sin(t * 0.7) * 1.2; o[1] = Yong.PEARL0[1] + d * 190 + Math.sin(t * 1.3) * 0.8; o[2] = Yong.PEARL0[2] + Math.cos(t * 0.6) * 1.2; o[3] = smooth(B.PEARL - 0.5, B.PEARL + 1.5, t); return o; }
-      const P = Yong.parts; P.point(0, -1.25, P.sn * 0.62, tmp); o[0] = tmp[0]; o[1] = tmp[1]; o[2] = tmp[2]; o[3] = 1; return o; };
-    DR.onFrame((t) => { const p = Yong.pearlAt(t, Yong._p || (Yong._p = [0, 0, 0, 0])); pm.position.set(p[0], p[1], p[2]); const s = (t < B.SEIZE ? 2.2 : 0.9) * p[3]; pm.scale.setScalar(Math.max(s, 1e-3)); pm.visible = p[3] > 0.01; }, 20);
+      if (t < B.PEARL - 0.5) { o[0] = Yong.PEARL0[0]; o[1] = 900; o[2] = Yong.PEARL0[2]; o[3] = 0; o[4] = 2.2; return o; }
+      if (t < B.SEIZE) { const d = 1 - DR.ease.out3(sat((t - B.PEARL) / 5.5)); o[0] = Yong.PEARL0[0] + Math.sin(t * 0.7) * 1.2; o[1] = Yong.PEARL0[1] + d * 190 + Math.sin(t * 1.3) * 0.8; o[2] = Yong.PEARL0[2] + Math.cos(t * 0.6) * 1.2; o[3] = smooth(B.PEARL - 0.5, B.PEARL + 1.5, t); o[4] = 2.2; return o; }
+      const P = Yong.parts, k = DR.ease.io3(smooth(B.ROAR - 0.1, B.ROAR + 1.7, t)); P.point(0, -0.47, P.sn * 0.80, o);     // between the front teeth
+      if (k > 0) { ahead(t, lead); o[0] = lerp(o[0], lead[0], k); o[1] = lerp(o[1], lead[1], k) + Math.sin(k * Math.PI) * 3; o[2] = lerp(o[2], lead[2], k); }
+      o[3] = 1; o[4] = lerp(0.62, 1.05, k); return o; };
+    DR.onFrame((t) => { const p = Yong.pearlAt(t, Yong._p || (Yong._p = [0, 0, 0, 0, 1])); pm.position.set(p[0], p[1], p[2]); pm.scale.setScalar(Math.max(p[4] * p[3], 1e-3)); pm.visible = p[3] > 0.01; }, 20);
     return C;
   };
 }
