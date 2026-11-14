@@ -1583,6 +1583,46 @@
           "url": "https://jungrok5.github.io/motion-skills/lineage-glow/demo/jesus-genealogy/"
         }
       ]
+    },
+    {
+      "id": "dragon-realm",
+      "name": "dragon-realm",
+      "tagline": "주제 하나를 주면 전설 속 긴 몸의 생물(용 · 이무기 · 바다뱀)이 살아 있는 풍경 속을 나는 시네마틱 단편을 만듭니다. 절리 진 암봉, 세계를 비추는 호수와 폭포, 화면의 깊이를 아는 레이마칭 구름과 안개, 레일 하나를 따라 영화 전체를 나는 몸과 비늘 격자, SDF로 빚은 머리 · 뿔 · 갈기, 그 문화의 건물과 나무, 번개 · 물보라 · 불티, 그 문화의 악기로 합성한 음악까지 모두 페이지가 열릴 때 코드로 만들어집니다. three.js 외에 에셋이 하나도 없는 HTML 한 파일이 브라우저에서 반복 재생되고, 모든 프레임이 시간의 함수여서 그대로 1080p MP4가 됩니다.",
+      "posterAlt": "dragon-realm으로 만든 「청룡 · 여의주」의 장면 네 개: 달 아래 화강암 다섯 봉우리와 안개 낀 호수, 한지 창호에 불빛이 비치는 단청 누각, 뿔과 금빛 갈기가 돋은 청룡의 포효, 붉은 해와 흰 달이 뜬 다섯 봉우리 앞을 가로지르는 청룡",
+      "poster": "dragon-realm/poster.jpg",
+      "tags": [
+        "three.js 한 파일",
+        "에셋 0개",
+        "볼류메트릭 구름 · 호수 반사",
+        "합성 사운드",
+        "MP4 · 라이브 페이지"
+      ],
+      "stats": [
+        "예제 84초 · 17샷 · 룩 8개",
+        "이미지 · 모델 · 폰트 · 소리 파일 0개"
+      ],
+      "page": "dragon-realm/",
+      "source": "dragon-realm/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "dragon-realm/examples/cheongryong/"
+      },
+      "sources": [
+        {
+          "title": "ChetasLua/crimson-loong (赤龍 · Crimson Loong — three.js만으로 만든 90초 용 영화, 에셋 없음)",
+          "url": "https://github.com/ChetasLua/crimson-loong"
+        },
+        {
+          "title": "Chetaslua의 X 게시물 (\"Fable 5.2 can achieve this with @threejs — no external assets at all\", 영상 85초)",
+          "url": "https://x.com/chetaslua/status/2121176151234330707?a=fPtJuQnZ47fP-u87Nkc&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「청룡 · 여의주」 · 이무기가 여의주를 얻어 청룡이 되는 84초 · 17샷 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/dragon-realm/demo/cheongryong/"
+        }
+      ]
     }
   ]
 }
