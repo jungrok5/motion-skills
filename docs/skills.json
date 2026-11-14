@@ -1663,6 +1663,46 @@
           "url": "https://jungrok5.github.io/motion-skills/speedpaint-replay/demo/reference-mode/"
         }
       ]
+    },
+    {
+      "id": "ink-water-emergence",
+      "name": "ink-water-emergence",
+      "tagline": "주제 하나를 주면 고요한 물속에 번진 먹이 흘러 모여 생물이 되는 단편을 코드만으로 만듭니다. 몇 가닥 먹 연기에서 형체가 나타나기 직전의 반투명한 상태를 거쳐 옅은 몸, 짙은 먹의 완성까지 가되 가장자리는 계속 연기로 흘러가고, 형태 일관성과 유동성을 두 개의 다이얼로 함께 잡습니다. 코드로 합성한 물소리와 음악을 붙인 1080p MP4와 브라우저에서 도는 페이지를 냅니다.",
+      "poster": "ink-water-emergence/poster.jpg",
+      "posterAlt": "ink-water-emergence로 만든 장면 네 개: 연한 회색 물속에서 위로 피어오르는 먹 연기, 갈기에서 먹 연기를 흘리며 걷는 옅은 먹빛 수호 사자, 흰 송곳니를 드러내고 포효하는 짙은 먹의 사자 머리, 머리를 들고 위로 떠오르는 먹빛 혹등고래",
+      "tags": [
+        "WebGL2",
+        "16:9",
+        "MP4",
+        "라이브 페이지",
+        "합성 사운드"
+      ],
+      "stats": [
+        "예제 13초 · 7샷",
+        "새 주제 예제 12.6초 · 6샷"
+      ],
+      "page": "ink-water-emergence/",
+      "source": "ink-water-emergence/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "ink-water-emergence/starter/"
+      },
+      "sources": [
+        {
+          "title": "taziku의 X 게시물 (유동성을 남기는 실험 영상)",
+          "url": "https://x.com/taziku_co/status/2121541102700564482?s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「狛獅子 · Guardian Lion」 · 13초 · 7샷 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/ink-water-emergence/demo/starter/"
+        },
+        {
+          "title": "「鯨の息 · Whale Breath」 · 12.6초 · 6샷 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/ink-water-emergence/demo/whale/"
+        }
+      ]
     }
   ]
 }
