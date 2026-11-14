@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>비 오는 창가 · speedpaint-replay</title>
+<script type="importmap">{ "imports": { "sp/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+import { Replay } from 'sp/replay.js';
+import { art } from './art.js';
+// seconds per stage — set them from BRIEF.md (where should the viewer linger?)
+const R = new Replay(art(), { stages: { rough: 5, line: 15, flat: 6, shadow: 6.5, highlight: 5.5, finish: 5 }, hold: 3, labels: 'ko' });
+R.start();
+</script>
+</body>
+</html>

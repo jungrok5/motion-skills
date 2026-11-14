@@ -1583,6 +1583,42 @@
           "url": "https://jungrok5.github.io/motion-skills/lineage-glow/demo/jesus-genealogy/"
         }
       ]
+    },
+    {
+      "id": "speedpaint-replay",
+      "name": "speedpaint-replay",
+      "tagline": "주제 하나를 주면 새 일러스트를 설계하고, 그 그림을 코드로 그리는 과정을 메이킹 영상으로 보여 줍니다. 베이지색 페이지에 단계 칩 여섯 개(러프 · 선화 · 밑색 · 그림자 · 하이라이트 · 마무리)가 있고, 하얀 펜이 파란 밑그림, 두께가 변하는 펜 선, 붓으로 칠하는 밑색, 클리핑 레이어 그림자, 림 라이트와 머리 윤기, 빛과 보케의 마무리까지 차례로 그립니다. 이미지 파일 없이 1080×1220 MP4와 라이브 페이지로 냅니다.",
+      "posterAlt": "speedpaint-replay로 만든 「비 오는 창가」의 네 단계를 나란히 놓은 그림: 파란 러프 선으로 그린 머리 원과 눈 타원 위의 하얀 펜, 검은 펜으로 그린 단발머리 소녀의 선화, 밑색과 그림자가 들어간 얼굴과 머리, 머리 윤기와 하이라이트가 들어간 완성 단계",
+      "poster": "speedpaint-replay/poster.jpg",
+      "tags": [
+        "2D 캔버스",
+        "메이킹 · 스피드페인팅",
+        "MP4",
+        "애니풍 일러스트",
+        "이미지 파일 0개"
+      ],
+      "stats": [
+        "예제 47초 · 항목 200개",
+        "6단계 · 이미지 파일 0개"
+      ],
+      "page": "speedpaint-replay/",
+      "source": "speedpaint-replay/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "speedpaint-replay/examples/rainy-window/"
+      },
+      "sources": [
+        {
+          "title": "余白とインク(@yohakutoink)의 X 게시물 (「メイキング再生」, 코드로 그린 애니풍 초상화가 러프부터 마무리까지 단계별로 그려지는 47초 영상)",
+          "url": "https://x.com/yohakutoink/status/2120824797215310208?a=-D3pDsiFMNVDxo3e18k&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「비 오는 창가」 · 검은 단발머리 소녀, 차가운 창빛과 따뜻한 램프 · 47초 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/speedpaint-replay/demo/rainy-window/"
+        }
+      ]
     }
   ]
 }
