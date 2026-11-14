@@ -146,7 +146,8 @@
         inner.add(lm, cm); inner.scale.setScalar(LS * (fore ? 1 : 1.12)); g.add(inner); out.legs.push(g);
         C.ride(g, L * la, (obj, t, st, sp) => { const r = sp.rad[Math.round((la * C.rings))], gr = (st.grow || [1, 1, 1])[2]; inner.visible = gr > 0.02;
           inner.position.set(s * r * 0.72, -r * 0.42, 0); const sw = smooth(10, 40, sp.vel), pad = Math.sin(t * 1.5 + la * 9 + s) * 0.25 * (1 - sw);
-          inner.rotation.set(-0.25 - 1.0 * sw + pad + (st.reach ?? 0) * (fore ? 0.9 : 0.2), 0, s * (0.5 + 0.25 * sw)); inner.scale.setScalar(LS * (fore ? 1 : 1.12) * Math.max(gr, 1e-3)); });
+          // fore legs reach a little forward, hind legs trail back with speed; `reach` throws the fore claws out (x < 0 = forward)
+          inner.rotation.set((fore ? -0.35 - 0.25 * sw : 0.15 + 0.75 * sw) + pad - (st.reach ?? 0) * (fore ? 0.7 : 0.1), 0, s * (0.5 + 0.25 * sw)); inner.scale.setScalar(LS * (fore ? 1 : 1.12) * Math.max(gr, 1e-3)); });
       }
     }
     return out;

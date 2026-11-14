@@ -6,7 +6,7 @@
   const cool = { lift: [0.0, 0.003, 0.010], gain: [0.97, 1.0, 1.06], sat: 0.96, contrast: 1.12 };
   DR.light({
     blue: { key: 'moon', moon: MOON, sun: [150, -9], keyCol: '#b4c8ff', keyK: 2.6, moonCol: '#eef2ff', moonK: 1.6, sunK: 0, zen: '#0d1c40', hor: '#4a629a', gnd: '#182030', warm: '#6a4f66', skyK: 1.25, amb: 1.25, stars: 0.75,
-      air: 0.0004, mist: 0.0034, mistH: 14, fogCol: '#c8d4ff', cover: 0.16, shadowK: 0.7, cloud: [330, 640, 1 / 900, 0.045], haze: [0, 26, 0.010, 1 / 95], wind: [0.9, 0.3, 0.3], exposure: 2.0, bloom: 0.1, rays: 0, vignette: 0.38, grade: cool },
+      air: 0.0006, mist: 0.0034, mistH: 14, fogCol: '#c8d4ff', cover: 0.2, shadowK: 0.7, cloud: [330, 640, 1 / 900, 0.045], haze: [0, 26, 0.010, 1 / 95], wind: [0.9, 0.3, 0.3], exposure: 2.0, bloom: 0.1, rays: 0, vignette: 0.38, grade: cool },
     omen: { key: 'moon', moon: MOON, sun: [150, -4], keyCol: '#a9c2ff', keyK: 0.35, moonCol: '#e6eeff', moonK: 0.25, sunK: 0, zen: '#111a28', hor: '#42536a', gnd: '#161c24', skyK: 1.4, amb: 1.2, stars: 0.05,
       air: 0.0006, mist: 0.005, mistH: 20, fogCol: '#b6c2dc', cover: 0.86, shadowK: 0.9, cloud: [210, 560, 1 / 820, 0.06], cloudDark: 0.35, cloudSpeed: 2.2, haze: [0, 36, 0.008, 1 / 95], wind: [0.9, 0.3, 1.9], exposure: 2.1, bloom: 0.09, rays: 0, vignette: 0.4, grade: { ...cool, sat: 0.92 } },
     storm: { key: 'sun', sun: [150, 30], moon: MOON, keyCol: '#d9e2f0', keyK: 3.4, sunK: 0, moonK: 0, zen: '#141c26', hor: '#46535f', gnd: '#161b20', skyK: 1.7, amb: 1.25, stars: 0,
@@ -25,7 +25,7 @@
       air: 0.0004, mist: 0.0015, mistH: 14, fogCol: '#fff0e0', cover: 0.36, shadowK: 0.82, cloud: [300, 640, 1 / 900, 0.05], haze: [0, 22, 0.0035, 1 / 95], wind: [0.9, 0.3, 0.6], wet: 0.3, rain: 0.06, rainbow: 1, exposure: 1.02, bloom: 0.09, rays: 0.6, vignette: 0.3,
       grade: { lift: [0.008, 0.003, 0], gain: [1.07, 1.0, 0.93], sat: 1.14, contrast: 1.1 } },
     tableau: { key: 'sun', keyDir: [112, 27], sun: [165, 30], moon: MOON, keyCol: '#fff0d6', keyK: 5.6, sunCol: '#ff9a62', sunK: 0.25, sunSize: 2.5, sunDisc: '#ff4a22', sunDiscK: 4, moonSize: 2.3, moonCol: '#f6f2ea', moonK: 0.8, zen: '#2456ac', hor: '#c6d6ee', gnd: '#3a3834', warm: '#000000', skyK: 1, amb: 1.05,
-      air: 0.0004, mist: 0.0018, mistH: 9, fogCol: '#ffffff', cover: 0.3, shadowK: 0.8, cloud: [310, 640, 1 / 900, 0.045], haze: [0, 13, 0.006, 1 / 95], wind: [0.9, 0.3, 0.4], wet: 0.15, rain: 0, rainbow: 0.35, exposure: 1.04, bloom: 0.07, rays: 0.2, vignette: 0.3,
+      air: 0.0006, mist: 0.0018, mistH: 9, fogCol: '#ffffff', cover: 0.3, shadowK: 0.8, cloud: [310, 640, 1 / 900, 0.045], haze: [0, 13, 0.006, 1 / 95], wind: [0.9, 0.3, 0.4], wet: 0.15, rain: 0, rainbow: 0.35, exposure: 1.04, bloom: 0.07, rays: 0.2, vignette: 0.3,
       grade: { lift: [0.004, 0.003, 0.002], gain: [1.03, 1.0, 0.98], sat: 1.14, contrast: 1.1 } },
   }, [[0, 'blue'], [B.EYE + 3, 'blue'], [B.THUNDER1 + 0.5, 'omen', 'io2'], [B.PEARL + 2.5, 'storm'], [B.SEIZE, 'storm'], [B.SEIZE + 1.4, 'gilt', 'out3'], [B.ROAR + 1.5, 'gilt'], [B.DAWN + 0.5, 'turn', 'io2'], [B.DAWN + 3.5, 'dawn'], [B.SKIM + 1, 'dawn'], [B.RAINBOW + 0.5, 'bow'], [B.TABLEAU - 2, 'bow'], [B.TABLEAU + 2, 'tableau', 'lin'], [B.END, 'tableau']]);
 

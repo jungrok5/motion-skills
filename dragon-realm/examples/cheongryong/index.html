@@ -1047,14 +1047,15 @@ const DR = { P: new URLSearchParams(typeof location !== 'undefined' ? location.s
         P.push(S.lip[0] + sx * side + dx * fwd, S.lip[1] - 4.9 * tau * tau, S.lip[2] + sz * side + dz * fwd); UV.push(uu, tau); A.push(sd, w, s, T); }
       for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const a = base + j * (nx + 1) + i, b = a + 1, c = a + nx + 1, d = c + 1; I.push(a, c, b, b, c, d); } }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(UV, 2)); g.setAttribute('aF', new THREE.Float32BufferAttribute(A, 4)); g.setIndex(I); g.computeVertexNormals();
+    // a sheet of white water: solid in the middle, torn at its sides and its foot; long streaks that keep the time they left the lip
     const cut = /* glsl */`
-      float tau = vUv0.y, dep = uTime - tau;
-      float st = drN4(vec2(vUv0.x * vF.y * 0.22 + vF.x, dep * 0.33)).r * 0.6 + drN4(vec2(vUv0.x * vF.y * 0.71 + vF.x * 2.0, dep * 0.9 + tau * 0.6)).g * 0.4;
-      float edge = smoothstep(0.0, 0.16, vUv0.x) * smoothstep(1.0, 0.84, vUv0.x);
-      float cover = smoothstep(0.34 + 0.2 * vF.z * 0.3, 0.62, st + 0.22 * edge - 0.18 + 0.25 * smoothstep(vF.w * 0.6, vF.w, tau)) * edge;
-      if (cover < 0.05) discard;`;
-    const mat = DR.mat({ base: 'lambert', color: '#ffffff', side: THREE.DoubleSide, alphaToCoverage: true, depth: true, vHead: 'attribute vec4 aF; varying vec4 vF;', vBody: 'vF = aF;', fHead: 'varying vec4 vF;', alpha: cut,
-      fBody: `diffuseColor.rgb = vec3(0.86, 0.92, 0.95) * (0.72 + 0.4 * st); diffuseColor.a = cover; N = normalize(mix(N, vec3(0.0, 1.0, 0.0), 0.6)); drThrough = vec3(0.5, 0.56, 0.6);` });
+      float tau = vUv0.y, dep = uTime - tau, fall = tau / vF.w;
+      float st = drN4(vec2(vUv0.x * vF.y * 0.16 + vF.x, dep * 0.22)).r * 0.6 + drN4(vec2(vUv0.x * vF.y * 0.55 + vF.x * 2.0, dep * 0.6 + tau * 0.3)).g * 0.4;
+      float side = min(vUv0.x, 1.0 - vUv0.x) * 2.0;
+      float cover = smoothstep(0.0, 0.42, side + (st - 0.5) * (0.5 + 0.7 * fall) - vF.z * 0.07) * (1.0 - smoothstep(0.80, 1.0, fall + (st - 0.5) * 0.35));
+      if (cover < 0.5) discard;`;
+    const mat = DR.mat({ base: 'lambert', color: '#ffffff', side: THREE.DoubleSide, depth: true, vHead: 'attribute vec4 aF; varying vec4 vF;', vBody: 'vF = aF;', fHead: 'varying vec4 vF;', alpha: cut,
+      fBody: `float fine = drN4(vec2(vUv0.x * vF.y * 1.9 + vF.x, dep * 1.5 + tau * 0.5)).b; diffuseColor.rgb = mix(vec3(0.60, 0.70, 0.78), vec3(0.96, 0.98, 1.0), smoothstep(0.25, 0.75, st * 0.65 + fine * 0.35)) * (0.86 + 0.14 * fall); N = normalize(mix(N, vec3(0.0, 1.0, 0.0), 0.7)); drThrough = vec3(0.45, 0.5, 0.55); drAO = 0.9;` });
     const mesh = DR.shadowed(new THREE.Mesh(g, mat), false, false); mesh.name = 'falls';
     const foot = [S.lip[0] + dx * S.speed * T, S.lip[1] - S.drop, S.lip[2] + dz * S.speed * T];
     return { mesh, foot, T, spec: S };
@@ -2710,7 +2711,8 @@ const DR = { P: new URLSearchParams(typeof location !== 'undefined' ? location.s
         inner.add(lm, cm); inner.scale.setScalar(LS * (fore ? 1 : 1.12)); g.add(inner); out.legs.push(g);
         C.ride(g, L * la, (obj, t, st, sp) => { const r = sp.rad[Math.round((la * C.rings))], gr = (st.grow || [1, 1, 1])[2]; inner.visible = gr > 0.02;
           inner.position.set(s * r * 0.72, -r * 0.42, 0); const sw = smooth(10, 40, sp.vel), pad = Math.sin(t * 1.5 + la * 9 + s) * 0.25 * (1 - sw);
-          inner.rotation.set(-0.25 - 1.0 * sw + pad + (st.reach ?? 0) * (fore ? 0.9 : 0.2), 0, s * (0.5 + 0.25 * sw)); inner.scale.setScalar(LS * (fore ? 1 : 1.12) * Math.max(gr, 1e-3)); });
+          // fore legs reach a little forward, hind legs trail back with speed; `reach` throws the fore claws out (x < 0 = forward)
+          inner.rotation.set((fore ? -0.35 - 0.25 * sw : 0.15 + 0.75 * sw) + pad - (st.reach ?? 0) * (fore ? 0.7 : 0.1), 0, s * (0.5 + 0.25 * sw)); inner.scale.setScalar(LS * (fore ? 1 : 1.12) * Math.max(gr, 1e-3)); });
       }
     }
     return out;
@@ -3756,7 +3758,7 @@ const World = {};
     // the lake and the two falls
     const water = (World.water = DR.water({ level: 0, bounds: [-140, -140, 140, 60], height: World.height, palette: { shallow: '#4a7a68', deep: '#0a2a31', scatter: '#2f6a5c' } }));
     scene.add(water.mesh);
-    World.falls = World.FALLS.map((f, i) => { const fl = DR.falls({ lip: [f.x, f.top, f.z], dir: [f.x * -0.1, 1], width: 7, drop: f.top, speed: 2.6, seed: i + 1 }); scene.add(fl.mesh); return fl; });
+    World.falls = World.FALLS.map((f, i) => { const fl = DR.falls({ lip: [f.x, f.top, f.z], dir: [f.x * -0.1, 1], width: 9, drop: f.top, speed: 2.6, sheets: 3, seed: i + 1 }); scene.add(fl.mesh); return fl; });
   };
 }
 
@@ -4399,7 +4401,7 @@ const Weather = {};
     FX.sprites({ count: 900, seed: 51, kind: 'leaf', gravity: 1.6, drag: 0.7, cover: 1, wind: 0.6, soft: 0.6, init: (i, r) => { const t0 = 62.2 + r() * 1.6, p = C.bodyAt(t0, r() * 30); return { p: [p[0] + r.gauss() * 12 - 8, Math.max(1, p[1] + r.gauss() * 6), p[2] + r.gauss() * 12], v: [r.gauss() * 5 + 6, r.range(1, 9), r.gauss() * 5 - 14], t0, life: r.range(3, 6.5), size: r.range(0.16, 0.32), grow: 1, a: 1, col: leafCol(r), spin: r.range(3, 9) }; } });
     FX.sprites({ count: 380, seed: 52, kind: 'leaf', gravity: 0.7, drag: 0.3, cover: 1, wind: 0.5, loop: 14, soft: 0.6, init: (i, r) => ({ p: [r.range(-110, 110), r.range(12, 46), r.range(-70, 110)], v: [r.gauss() * 0.6, -r.range(0.3, 1.2), r.gauss() * 0.6], t0: -r() * 14, life: r.range(9, 14), size: r.range(0.12, 0.24), grow: 1, a: 1, col: leafCol(r), spin: r.range(1.5, 5) }) });
     // mist at the foot of the two falls
-    World.falls.forEach((f, k) => FX.sprites({ count: 70, seed: 61 + k, kind: 'puff', gravity: -0.4, drag: 0.6, cover: 0.5, wind: 0.25, loop: 6, soft: 5, init: (i, r) => ({ p: [f.foot[0] + r.gauss() * 3, 0.6 + r() * 2, f.foot[2] + r.gauss() * 2.5], v: [r.gauss() * 1.6, r.range(0.6, 2.6), r.range(0.5, 3)], t0: -r() * 6, life: r.range(3.5, 6), size: r.range(3, 7), grow: 2.4, a: r.range(0.18, 0.4), col: [0.9, 0.94, 1] }) }));
+    World.falls.forEach((f, k) => FX.sprites({ count: 110, seed: 61 + k, kind: 'puff', gravity: -0.4, drag: 0.6, cover: 0.6, wind: 0.25, loop: 6, soft: 5, init: (i, r) => ({ p: [f.foot[0] + r.gauss() * 4, 0.6 + r() * 5, f.foot[2] + r.gauss() * 3], v: [r.gauss() * 1.8, r.range(0.6, 3.2), r.range(0.5, 3)], t0: -r() * 6, life: r.range(3.5, 6), size: r.range(4, 9), grow: 2.4, a: r.range(0.22, 0.48), col: [0.9, 0.94, 1] }) }));
   };
 }
 
@@ -4430,7 +4432,7 @@ const Stage = {};
     for (const s of DR.F.shots) { const t1 = s.t1 ?? DR.F.shots[DR.F.shots.indexOf(s) + 1]?.t0 ?? DR.F.duration; for (let k = 0; k <= 8; k++) { const t = lerp(s.t0, t1 - 0.02, k / 8), c = s.cam(k / 8, t); if (c.p[1] < 60) cams.push(c.p); } }
     const near = (p) => { let d = 1e9; for (const c of cams) d = Math.min(d, Math.hypot(p[0] - c[0], p[1] - c[1], p[2] - c[2])); return d; };
     const low = []; for (let s = 0; s < C.rail.length; s += 4) { const p = C.rail.at(s); if (p[1] > 0.5 && p[1] < 26) low.push(p); }
-    const builds = [[S.nugak[0], S.nugak[2], 15], [S.jeongja[0], S.jeongja[2], 6], [S.pagoda[0], S.pagoda[2], 5], [27, 73, 3], [-59.5, -15.5, 2], [-59.5, -28.5, 2], [-80.5, -1, 2]];
+    const builds = [...World.falls.map((f) => [f.spec.lip[0], f.spec.lip[2] + 5, 9]), [S.nugak[0], S.nugak[2], 15], [S.jeongja[0], S.jeongja[2], 6], [S.pagoda[0], S.pagoda[2], 5], [27, 73, 3], [-59.5, -15.5, 2], [-59.5, -28.5, 2], [-80.5, -1, 2]];
     const clear = (x, z, r, tall) => { for (const b of builds) if (Math.hypot(x - b[0], z - b[1]) < b[2] + r) return false; for (const c of cams) if (Math.hypot(x - c[0], z - c[2]) < (tall ? 7 : 2.2)) return false;
       if (tall) for (const p of low) if (Math.hypot(x - p[0], z - p[2]) < 10) return false; return true; };
     // sight lines that must stay open: from the home lens to the lake, from the pavilion shot to the water
@@ -4445,7 +4447,7 @@ const Stage = {};
     // ── trees ──
     const pines = finish(land.scatter({ count: 270, seed: 11, bounds: [-300, -330, 300, 150], minDist: 9, filter: (x, z, h, ny) => (h > 1.6 && h < 175 && ny > 0.72 && clear(x, z, 3, true) && !lane(x, z) ? 0.25 + 0.75 * smooth(4, 40, shoreD(x, z)) * (1 - 0.6 * smooth(260, 330, Math.hypot(x, z + 60))) : 0) }), R(1), 0.85, 1.3);
     // the framing pines of the home view, placed by hand
-    for (const [x, z, v, s, r] of [[-30, 82, 3, 1.25, 0.4], [-42, 74, 0, 1.1, 2.1], [-22, 96, 1, 1.0, 4.0], [-52, 92, 2, 0.9, 1.0], [36, 86, 3, 1.3, 3.4], [47, 76, 1, 1.1, 5.2], [30, 100, 0, 1.05, 0.9], [58, 94, 2, 0.95, 2.5], [-84, -44, 0, 1.0, 1.2], [-92, -12, 1, 1.05, 3.0], [-60, 4, 2, 0.8, 0.3]]) pines.push({ p: [x, H(x, z), z], s, r, seed: Math.round(x * 31 + z * 7 + 500), variant: v });
+    for (const [x, z, v, s, r] of [[-38, 78, 3, 1.25, 0.4], [-48, 66, 0, 1.1, 2.1], [-56, 90, 2, 0.9, 1.0], [40, 82, 3, 1.3, 3.4], [50, 70, 1, 1.1, 5.2], [60, 92, 2, 0.95, 2.5], [-84, -44, 0, 1.0, 1.2], [-92, -12, 1, 1.05, 3.0], [-60, 4, 2, 0.8, 0.3]]) pines.push({ p: [x, H(x, z), z], s, r, seed: Math.round(x * 31 + z * 7 + 500), variant: v });
     plant(Flora.pine, pines);
     const maples = finish(land.scatter({ count: 200, seed: 12, bounds: [-200, -180, 200, 130], minDist: 6, filter: (x, z, h, ny) => (h > 1.3 && h < 80 && ny > 0.74 && clear(x, z, 2.5, true) && !lane(x, z) ? smooth(70, 6, shoreD(x, z)) * 0.9 + 0.1 : 0) }), R(2), 0.8, 1.35);
     for (const [x, z, t] of [[-56, -40, 0.1], [-52, 0, 0.35], [-84, 14, 0.55], [-96, -30, 0.2], [18, 60, 0.15], [-14, 62, 0.5], [60, 66, 0.3], [74, -30, 0.25], [80, -64, 0.6]]) maples.push({ p: [x, H(x, z), z], s: 1.25, r: x, seed: Math.round(900 + x * 3 + z), tint: t });
@@ -4453,7 +4455,8 @@ const Stage = {};
     plant(Flora.oak, finish(land.scatter({ count: 170, seed: 13, bounds: [-300, -330, 300, 150], minDist: 9, filter: (x, z, h, ny) => (h > 4 && h < 150 && ny > 0.7 && clear(x, z, 3, true) && !lane(x, z) ? 0.3 + 0.7 * smooth(20, 90, shoreD(x, z)) : 0) }), R(3), 0.8, 1.3));
     // pines on the rock: on ledges, and out of the faces
     const ledge = [], face = [], r4 = R(4);
-    World.peaks.forEach((pk, i) => { const top = pk.spec.at[1] + pk.spec.height; for (const s of pk.sites) { if (s.p[1] < 4 || s.p[1] > top - 3) continue;
+    const byFalls = (p) => World.falls.some((f) => Math.hypot(p[0] - f.spec.lip[0], p[2] - (f.spec.lip[2] + 4)) < 10);   // nothing grows in front of the white water
+    World.peaks.forEach((pk, i) => { const top = pk.spec.at[1] + pk.spec.height; for (const s of pk.sites) { if (s.p[1] < 4 || s.p[1] > top - 3 || byFalls(s.p)) continue;
       if (s.n[1] > 0.8 && s.r < 0.10 && ledge.length < 190) ledge.push({ p: [s.p[0], s.p[1] - 0.3, s.p[2]], s: r4.range(0.5, 0.95), r: s.r * 60, seed: ledge.length + 1, variant: 2 + (s.r * 100 < 3 ? 1 : 0) - 0 });
       else if (s.n[1] > 0.12 && s.n[1] < 0.62 && s.r < 0.05 && face.length < 150) face.push({ p: [s.p[0] - s.n[0] * 0.5, s.p[1], s.p[2] - s.n[2] * 0.5], n: s.n, s: r4.range(0.7, 1.2), r: 0, seed: face.length + 1 }); } });
     plant(Flora.pine, ledge.map((s) => ({ ...s, variant: [0, 1, 2][s.seed % 3] })));
@@ -4654,7 +4657,7 @@ DR.score(function (K, B, o) {
   const cool = { lift: [0.0, 0.003, 0.010], gain: [0.97, 1.0, 1.06], sat: 0.96, contrast: 1.12 };
   DR.light({
     blue: { key: 'moon', moon: MOON, sun: [150, -9], keyCol: '#b4c8ff', keyK: 2.6, moonCol: '#eef2ff', moonK: 1.6, sunK: 0, zen: '#0d1c40', hor: '#4a629a', gnd: '#182030', warm: '#6a4f66', skyK: 1.25, amb: 1.25, stars: 0.75,
-      air: 0.0004, mist: 0.0034, mistH: 14, fogCol: '#c8d4ff', cover: 0.16, shadowK: 0.7, cloud: [330, 640, 1 / 900, 0.045], haze: [0, 26, 0.010, 1 / 95], wind: [0.9, 0.3, 0.3], exposure: 2.0, bloom: 0.1, rays: 0, vignette: 0.38, grade: cool },
+      air: 0.0006, mist: 0.0034, mistH: 14, fogCol: '#c8d4ff', cover: 0.2, shadowK: 0.7, cloud: [330, 640, 1 / 900, 0.045], haze: [0, 26, 0.010, 1 / 95], wind: [0.9, 0.3, 0.3], exposure: 2.0, bloom: 0.1, rays: 0, vignette: 0.38, grade: cool },
     omen: { key: 'moon', moon: MOON, sun: [150, -4], keyCol: '#a9c2ff', keyK: 0.35, moonCol: '#e6eeff', moonK: 0.25, sunK: 0, zen: '#111a28', hor: '#42536a', gnd: '#161c24', skyK: 1.4, amb: 1.2, stars: 0.05,
       air: 0.0006, mist: 0.005, mistH: 20, fogCol: '#b6c2dc', cover: 0.86, shadowK: 0.9, cloud: [210, 560, 1 / 820, 0.06], cloudDark: 0.35, cloudSpeed: 2.2, haze: [0, 36, 0.008, 1 / 95], wind: [0.9, 0.3, 1.9], exposure: 2.1, bloom: 0.09, rays: 0, vignette: 0.4, grade: { ...cool, sat: 0.92 } },
     storm: { key: 'sun', sun: [150, 30], moon: MOON, keyCol: '#d9e2f0', keyK: 3.4, sunK: 0, moonK: 0, zen: '#141c26', hor: '#46535f', gnd: '#161b20', skyK: 1.7, amb: 1.25, stars: 0,
@@ -4673,7 +4676,7 @@ DR.score(function (K, B, o) {
       air: 0.0004, mist: 0.0015, mistH: 14, fogCol: '#fff0e0', cover: 0.36, shadowK: 0.82, cloud: [300, 640, 1 / 900, 0.05], haze: [0, 22, 0.0035, 1 / 95], wind: [0.9, 0.3, 0.6], wet: 0.3, rain: 0.06, rainbow: 1, exposure: 1.02, bloom: 0.09, rays: 0.6, vignette: 0.3,
       grade: { lift: [0.008, 0.003, 0], gain: [1.07, 1.0, 0.93], sat: 1.14, contrast: 1.1 } },
     tableau: { key: 'sun', keyDir: [112, 27], sun: [165, 30], moon: MOON, keyCol: '#fff0d6', keyK: 5.6, sunCol: '#ff9a62', sunK: 0.25, sunSize: 2.5, sunDisc: '#ff4a22', sunDiscK: 4, moonSize: 2.3, moonCol: '#f6f2ea', moonK: 0.8, zen: '#2456ac', hor: '#c6d6ee', gnd: '#3a3834', warm: '#000000', skyK: 1, amb: 1.05,
-      air: 0.0004, mist: 0.0018, mistH: 9, fogCol: '#ffffff', cover: 0.3, shadowK: 0.8, cloud: [310, 640, 1 / 900, 0.045], haze: [0, 13, 0.006, 1 / 95], wind: [0.9, 0.3, 0.4], wet: 0.15, rain: 0, rainbow: 0.35, exposure: 1.04, bloom: 0.07, rays: 0.2, vignette: 0.3,
+      air: 0.0006, mist: 0.0018, mistH: 9, fogCol: '#ffffff', cover: 0.3, shadowK: 0.8, cloud: [310, 640, 1 / 900, 0.045], haze: [0, 13, 0.006, 1 / 95], wind: [0.9, 0.3, 0.4], wet: 0.15, rain: 0, rainbow: 0.35, exposure: 1.04, bloom: 0.07, rays: 0.2, vignette: 0.3,
       grade: { lift: [0.004, 0.003, 0.002], gain: [1.03, 1.0, 0.98], sat: 1.14, contrast: 1.1 } },
   }, [[0, 'blue'], [B.EYE + 3, 'blue'], [B.THUNDER1 + 0.5, 'omen', 'io2'], [B.PEARL + 2.5, 'storm'], [B.SEIZE, 'storm'], [B.SEIZE + 1.4, 'gilt', 'out3'], [B.ROAR + 1.5, 'gilt'], [B.DAWN + 0.5, 'turn', 'io2'], [B.DAWN + 3.5, 'dawn'], [B.SKIM + 1, 'dawn'], [B.RAINBOW + 0.5, 'bow'], [B.TABLEAU - 2, 'bow'], [B.TABLEAU + 2, 'tableau', 'lin'], [B.END, 'tableau']]);
 

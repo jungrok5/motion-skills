@@ -70,6 +70,6 @@ const World = {};
     // the lake and the two falls
     const water = (World.water = DR.water({ level: 0, bounds: [-140, -140, 140, 60], height: World.height, palette: { shallow: '#4a7a68', deep: '#0a2a31', scatter: '#2f6a5c' } }));
     scene.add(water.mesh);
-    World.falls = World.FALLS.map((f, i) => { const fl = DR.falls({ lip: [f.x, f.top, f.z], dir: [f.x * -0.1, 1], width: 7, drop: f.top, speed: 2.6, seed: i + 1 }); scene.add(fl.mesh); return fl; });
+    World.falls = World.FALLS.map((f, i) => { const fl = DR.falls({ lip: [f.x, f.top, f.z], dir: [f.x * -0.1, 1], width: 9, drop: f.top, speed: 2.6, sheets: 3, seed: i + 1 }); scene.add(fl.mesh); return fl; });
   };
 }

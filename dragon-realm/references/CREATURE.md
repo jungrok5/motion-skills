@@ -31,7 +31,7 @@ shot, so the body is audited by `check.mjs` and looked at from every side on the
 | roll between rings | ≤ 9° (`roll`) | a flip of the back |
 | speed | never negative | it would slide tail-first: the way it moves must be the way it faces |
 | change of speed | ≤ 95 m/s² (`accel`, warning) | two keys too close in time: a teleport |
-| jaw 0..1 (0.62 rad), head pitch/yaw ±0.5 rad, legs swing −1.25..+0.9 rad | by construction | set in `62_dragon.js`; keep `state` inside them |
+| jaw 0..1 (0.62 rad), head pitch/yaw ±0.5 rad, fore legs −1.3..−0.1 rad (reaching forward), hind legs −0.1..+0.9 rad (trailing back) | by construction | set in `62_dragon.js`; keep `state` inside them |
 The audit prints where the worst bend is (time, metres behind the head, world position) so the control point can be found.
 Fixes: move control points apart (≥ 4 × radius), widen the turn, add a point to round a corner, spread two keys in time.
 

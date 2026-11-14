@@ -114,14 +114,15 @@
         P.push(S.lip[0] + sx * side + dx * fwd, S.lip[1] - 4.9 * tau * tau, S.lip[2] + sz * side + dz * fwd); UV.push(uu, tau); A.push(sd, w, s, T); }
       for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const a = base + j * (nx + 1) + i, b = a + 1, c = a + nx + 1, d = c + 1; I.push(a, c, b, b, c, d); } }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(UV, 2)); g.setAttribute('aF', new THREE.Float32BufferAttribute(A, 4)); g.setIndex(I); g.computeVertexNormals();
+    // a sheet of white water: solid in the middle, torn at its sides and its foot; long streaks that keep the time they left the lip
     const cut = /* glsl */`
-      float tau = vUv0.y, dep = uTime - tau;
-      float st = drN4(vec2(vUv0.x * vF.y * 0.22 + vF.x, dep * 0.33)).r * 0.6 + drN4(vec2(vUv0.x * vF.y * 0.71 + vF.x * 2.0, dep * 0.9 + tau * 0.6)).g * 0.4;
-      float edge = smoothstep(0.0, 0.16, vUv0.x) * smoothstep(1.0, 0.84, vUv0.x);
-      float cover = smoothstep(0.34 + 0.2 * vF.z * 0.3, 0.62, st + 0.22 * edge - 0.18 + 0.25 * smoothstep(vF.w * 0.6, vF.w, tau)) * edge;
-      if (cover < 0.05) discard;`;
-    const mat = DR.mat({ base: 'lambert', color: '#ffffff', side: THREE.DoubleSide, alphaToCoverage: true, depth: true, vHead: 'attribute vec4 aF; varying vec4 vF;', vBody: 'vF = aF;', fHead: 'varying vec4 vF;', alpha: cut,
-      fBody: `diffuseColor.rgb = vec3(0.86, 0.92, 0.95) * (0.72 + 0.4 * st); diffuseColor.a = cover; N = normalize(mix(N, vec3(0.0, 1.0, 0.0), 0.6)); drThrough = vec3(0.5, 0.56, 0.6);` });
+      float tau = vUv0.y, dep = uTime - tau, fall = tau / vF.w;
+      float st = drN4(vec2(vUv0.x * vF.y * 0.16 + vF.x, dep * 0.22)).r * 0.6 + drN4(vec2(vUv0.x * vF.y * 0.55 + vF.x * 2.0, dep * 0.6 + tau * 0.3)).g * 0.4;
+      float side = min(vUv0.x, 1.0 - vUv0.x) * 2.0;
+      float cover = smoothstep(0.0, 0.42, side + (st - 0.5) * (0.5 + 0.7 * fall) - vF.z * 0.07) * (1.0 - smoothstep(0.80, 1.0, fall + (st - 0.5) * 0.35));
+      if (cover < 0.5) discard;`;
+    const mat = DR.mat({ base: 'lambert', color: '#ffffff', side: THREE.DoubleSide, depth: true, vHead: 'attribute vec4 aF; varying vec4 vF;', vBody: 'vF = aF;', fHead: 'varying vec4 vF;', alpha: cut,
+      fBody: `float fine = drN4(vec2(vUv0.x * vF.y * 1.9 + vF.x, dep * 1.5 + tau * 0.5)).b; diffuseColor.rgb = mix(vec3(0.60, 0.70, 0.78), vec3(0.96, 0.98, 1.0), smoothstep(0.25, 0.75, st * 0.65 + fine * 0.35)) * (0.86 + 0.14 * fall); N = normalize(mix(N, vec3(0.0, 1.0, 0.0), 0.7)); drThrough = vec3(0.45, 0.5, 0.55); drAO = 0.9;` });
     const mesh = DR.shadowed(new THREE.Mesh(g, mat), false, false); mesh.name = 'falls';
     const foot = [S.lip[0] + dx * S.speed * T, S.lip[1] - S.drop, S.lip[2] + dz * S.speed * T];
     return { mesh, foot, T, spec: S };
