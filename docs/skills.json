@@ -1745,6 +1745,50 @@
       ]
     },
     {
+      "id": "cloth-rig-character",
+      "name": "cloth-rig-character",
+      "tagline": "주제 하나를 주면 머리가 크고 몸이 작은 3D 캐릭터를 블렌더에서 부품별로 만들고 옷을 입는 순서대로 겹쳐 입힌 뒤, 몸뿐 아니라 치마 · 리본 · 목도리 · 머리채에도 뼈 줄을 넣어 대기와 눈 깜박임 → 돌아서기 → 걷기를 한 동작씩 만듭니다. 스프링 계산이 돌아설 때 치마를 퍼지게 하고 리본을 늦게 따라오게 해 키로 굽고, 회색 바닥 · 고정 카메라 · 구석의 뒷모습 설정화로 검토합니다. 관절 범위 · 발 고정 · 앞뒤좌우 · 옷 움직임을 검사하고 .blend, 애니메이션 든 .glb와 three.js 검토 플레이어, 검토 MP4로 냅니다.",
+      "posterAlt": "cloth-rig-character로 만든 두 캐릭터의 검토 화면 네 장: 회색 바닥 위에 선 색동 저고리와 진분홍 치마의 설빔 소녀, 한 바퀴 돌며 치마가 활짝 퍼진 설빔 소녀, 노란 비옷에 줄무늬 목도리를 한 아이, 오른쪽으로 걸어가는 비옷 아이",
+      "poster": "cloth-rig-character/poster.jpg",
+      "tags": [
+        "블렌더 · bpy",
+        "3D 캐릭터 리깅",
+        "옷에 뼈 · 2차 동작",
+        "glTF + three.js",
+        "MP4"
+      ],
+      "stats": [
+        "예제 2명 · 6.1초 · 7.7초",
+        "검사 11개 · 양쪽 캐스트 시트"
+      ],
+      "page": "cloth-rig-character/",
+      "source": "cloth-rig-character/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "cloth-rig-character/examples/hanbok-girl/"
+      },
+      "sources": [
+        {
+          "title": "Claude Code Studio(@ClaudeCode_love)의 X 게시물 (「服に骨を入れるかが9割」, 블렌더 + Claude로 만든 3D 캐릭터를 부품 → 겹쳐 입기 → 옷에 뼈 → 동작 순서로 만드는 법)",
+          "url": "https://x.com/ClaudeCode_love/status/2121385622325903666?a=TAb3nXMsi15QbOVger8&s=19"
+        },
+        {
+          "title": "작가 rewind(@rewind02)의 X 게시물 (4초 영상: 블렌더 + Claude로 만든 캐릭터의 검토 화면, \"the trick is rigging the cloth\")",
+          "url": "https://x.com/rewind02/status/2120846734901367105"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "설빔 소녀 · 7.7초 · 대기 → 한 바퀴 → 돌아서기 → 걷기 · 검토 플레이어",
+          "url": "https://jungrok5.github.io/motion-skills/cloth-rig-character/demo/?src=hanbok-girl"
+        },
+        {
+          "title": "비옷 아이 · 6.1초 · 시작 예제 · 검토 플레이어",
+          "url": "https://jungrok5.github.io/motion-skills/cloth-rig-character/demo/?src=raincoat-kid"
+        }
+      ]
+    },
+    {
       "id": "ink-water-emergence",
       "name": "ink-water-emergence",
       "tagline": "주제 하나를 주면 고요한 물속에 번진 먹이 흘러 모여 생물이 되는 단편을 코드만으로 만듭니다. 몇 가닥 먹 연기에서 형체가 나타나기 직전의 반투명한 상태를 거쳐 옅은 몸, 짙은 먹의 완성까지 가되 가장자리는 계속 연기로 흘러가고, 형태 일관성과 유동성을 두 개의 다이얼로 함께 잡습니다. 코드로 합성한 물소리와 음악을 붙인 1080p MP4와 브라우저에서 도는 페이지를 냅니다.",
