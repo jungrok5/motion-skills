@@ -1,0 +1,32 @@
+{
+  "name": "hanbok-girl",
+  "title": "New Year hanbok girl",
+  "body": { "height": 1.12, "heads": 4.0, "build": 0.95, "skin": "#f4d6c4" },
+  "face": { "eyes": "#1f1411", "iris": "#5a382b", "brows": "#2a1c16", "mouth": "#b0474d", "blush": "#f3a2a6" },
+  "bodyPart": { "legs": { "color": "#f6f1e8" } },
+  "parts": [
+    { "type": "hair_bob", "color": "#1d1613", "length": 0.0, "bangs": 0.12, "volume": 0.8, "faceWidth": 1.05 },
+    { "type": "hair_tail", "style": "braid", "from": "nape", "length": 0.36, "thick": 0.04, "color": "#1d1613",
+      "tie": "#1d1613", "ribbon": { "color": "#c8203a", "width": 0.05, "length": 0.13 } },
+    { "type": "top", "to": "chest", "color": "#f7e7a6", "sleeves": "wide", "rough": 0.55, "sheen": 0.6,
+      "sleevePattern": { "kind": "stripes", "colors": ["#e8473f", "#f4b63a", "#f7e7a6", "#4fa36b", "#3e6fc2", "#8a4fb5", "#f06f9a"], "repeat": 2, "axis": "v", "base": "#f7e7a6" },
+      "cuff": "#c8203a", "collar": "#ffffff" },
+    { "type": "skirt", "from": "chest", "length": 0.12, "flare": 2.9, "bell": 0.45, "folds": 12, "foldDepth": 0.06,
+      "color": "#d6365a", "rough": 0.5, "sheen": 0.7, "chains": 12, "segments": 4, "stiff": 0.06,
+      "pattern": { "kind": "band", "base": "#d6365a", "ink": "#e9b949", "ink2": "#f6dc8a", "at": 0.9, "width": 0.07, "repeat_uv": [1, 1] } },
+    { "type": "bow", "at": "front", "height": "chest", "x": 0.012, "color": "#c8203a", "width": 0.028, "tail": 0.36, "spread": 0.12, "size": 0.85, "stiff": 0.05 },
+    { "type": "norigae", "color": "#c8203a", "bead": "#3fae8f", "length": 0.2 },
+    { "type": "boots", "height": 0.0, "upturn": true, "color": "#e65a7a", "sole": "#f6f1e8" }
+  ],
+  "motion": {
+    "fps": 24,
+    "start": { "x": -0.3, "y": 0.12, "yaw": -15 },
+    "clips": [
+      { "type": "idle", "dur": 2.0, "blinks": [0.9] },
+      { "type": "spin", "dur": 1.7, "by": 360, "label": "twirl" },
+      { "type": "turn", "dur": 1.2, "to": 62 },
+      { "type": "walk", "dur": 2.8, "stride": 0.4, "cycle": 0.8 }
+    ]
+  },
+  "review": { "title": "HERO / ANIMATION REVIEW", "bg": "#8c8ea0", "floor": "#77798a" }
+}

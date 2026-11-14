@@ -1,0 +1,25 @@
+{
+  "name": "raincoat-kid",
+  "title": "Rainy-day kid",
+  "body": { "height": 1.05, "heads": 3.8, "build": 1.05, "skin": "#f1cdb0" },
+  "face": { "eyes": "#231711", "iris": "#5d3e2c", "brows": "#3b2618", "mouth": "#a24a43", "blush": "#f0a08f", "eyeSize": 1.05 },
+  "bodyPart": { "legs": { "color": "#3b4a6b", "rough": 0.8 } },
+  "parts": [
+    { "type": "hair_bob", "color": "#4a2f1f", "length": 0.1, "bangs": 0.14, "volume": 1.1 },
+    { "type": "coat", "color": "#f4c430", "rough": 0.35, "sheen": 0.1, "length": 0.45, "flare": 1.9,
+      "sleeves": "long", "cuff": "#e0ac1c", "buttons": "#2f6fb0", "buttonCount": 3, "hood": true, "collar": "#e0ac1c" },
+    { "type": "scarf", "width": 0.05, "length": 0.32, "tails": "front",
+      "pattern": { "kind": "stripes", "colors": ["#d8402f", "#f6efe2"], "repeat": 5, "axis": "v", "repeat_uv": [1, 1] }, "color": "#d8402f" },
+    { "type": "boots", "color": "#2f6fb0", "height": 0.45, "rough": 0.3, "sheen": 0.0, "sole": "#1f4f86" }
+  ],
+  "motion": {
+    "fps": 24,
+    "start": { "x": -0.3, "y": 0.1, "yaw": -20 },
+    "clips": [
+      { "type": "idle", "dur": 2.0, "blinks": [0.8] },
+      { "type": "turn", "dur": 1.3, "to": 62 },
+      { "type": "walk", "dur": 2.8, "stride": 0.44, "cycle": 0.72 }
+    ]
+  },
+  "review": { "title": "HERO / ANIMATION REVIEW", "bg": "#8c8ea0", "floor": "#77798a" }
+}
