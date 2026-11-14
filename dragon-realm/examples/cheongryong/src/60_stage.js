@@ -38,11 +38,11 @@ const Stage = {};
     // ── trees ──
     const pines = finish(land.scatter({ count: 270, seed: 11, bounds: [-300, -330, 300, 150], minDist: 9, filter: (x, z, h, ny) => (h > 1.6 && h < 175 && ny > 0.72 && clear(x, z, 3, true) && !lane(x, z) ? 0.25 + 0.75 * smooth(4, 40, shoreD(x, z)) * (1 - 0.6 * smooth(260, 330, Math.hypot(x, z + 60))) : 0) }), R(1), 0.85, 1.3);
     // the framing pines of the home view, placed by hand
-    for (const [x, z, v, s, r] of [[-38, 78, 3, 1.25, 0.4], [-48, 66, 0, 1.1, 2.1], [-56, 90, 2, 0.9, 1.0], [40, 82, 3, 1.3, 3.4], [50, 70, 1, 1.1, 5.2], [60, 92, 2, 0.95, 2.5], [-84, -44, 0, 1.0, 1.2], [-92, -12, 1, 1.05, 3.0], [-60, 4, 2, 0.8, 0.3]]) pines.push({ p: [x, H(x, z), z], s, r, seed: Math.round(x * 31 + z * 7 + 500), variant: v });
-    plant(Flora.pine, pines);
+    const heroP = []; for (const [x, z, v, s, r] of [[-26, 50, 3, 1.3, 0.4], [-38, 63, 0, 1.15, 2.1], [-50, 82, 2, 0.9, 1.0], [32, 48, 3, 1.35, 3.4], [45, 62, 1, 1.15, 5.2], [56, 84, 2, 0.95, 2.5], [-84, -44, 0, 1.0, 1.2], [-92, -12, 1, 1.05, 3.0], [-60, 4, 2, 0.8, 0.3]]) heroP.push({ p: [x, H(x, z), z], s, r, seed: Math.round(x * 31 + z * 7 + 500), variant: v });
+    plant(Flora.pine, pines); plant(Flora.pine, heroP, 1.6);      // the hand-placed ones keep every needle spray out to ~90 m
     const maples = finish(land.scatter({ count: 200, seed: 12, bounds: [-200, -180, 200, 130], minDist: 6, filter: (x, z, h, ny) => (h > 1.3 && h < 80 && ny > 0.74 && clear(x, z, 2.5, true) && !lane(x, z) ? smooth(70, 6, shoreD(x, z)) * 0.9 + 0.1 : 0) }), R(2), 0.8, 1.35);
-    for (const [x, z, t] of [[-56, -40, 0.1], [-52, 0, 0.35], [-84, 14, 0.55], [-96, -30, 0.2], [18, 60, 0.15], [-14, 62, 0.5], [60, 66, 0.3], [74, -30, 0.25], [80, -64, 0.6]]) maples.push({ p: [x, H(x, z), z], s: 1.25, r: x, seed: Math.round(900 + x * 3 + z), tint: t });
-    plant(Flora.maple, maples, 0.4);
+    const heroM = []; for (const [x, z, t] of [[-56, -40, 0.1], [-52, 0, 0.35], [-84, 14, 0.55], [-96, -30, 0.2], [18, 60, 0.15], [-14, 62, 0.5], [60, 66, 0.3], [74, -30, 0.25], [80, -64, 0.6]]) heroM.push({ p: [x, H(x, z), z], s: 1.25, r: x, seed: Math.round(900 + x * 3 + z), tint: t });
+    plant(Flora.maple, maples, 0.4); plant(Flora.maple, heroM, 1.5);
     plant(Flora.oak, finish(land.scatter({ count: 170, seed: 13, bounds: [-300, -330, 300, 150], minDist: 9, filter: (x, z, h, ny) => (h > 4 && h < 150 && ny > 0.7 && clear(x, z, 3, true) && !lane(x, z) ? 0.3 + 0.7 * smooth(20, 90, shoreD(x, z)) : 0) }), R(3), 0.8, 1.3));
     // pines on the rock: on ledges, and out of the faces
     const ledge = [], face = [], r4 = R(4);

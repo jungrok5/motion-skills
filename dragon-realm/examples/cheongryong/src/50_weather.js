@@ -15,6 +15,8 @@ const Weather = {};
     FX.bolt({ t0: B.BOLT2, from: [150, 340, -160], to: [118, 221, -220], seed: 9, k: 10 });
     FX.bolt({ t0: B.BOLT3, from: [40, 360, -290], to: [4, 284, -246], seed: 13, k: 12, width: 1.4 });
     FX.bolt({ t0: B.BOLT3 + 0.22, from: [-60, 350, -220], to: [-10, 262, -180], seed: 17, k: 6 });
+    // sheet lightning inside the deck all through the storm: the clouds are lit from within, somewhere near the dragon
+    { const r = DR.rng(77); for (let t = B.PEARL + 1.5; t < B.SEIZE - 0.6; t += r.range(0.7, 1.6)) { const h = t > B.BURST ? C.headAt(t) : [0, 0, -120], a = r() * DR.TAU, d = r.range(70, 190); FX.flash({ t0: t, at: [h[0] + Math.cos(a) * d, r.range(210, 330), h[2] + Math.sin(a) * d], k: r.range(2.2, 4.6), life: r.range(0.3, 0.55) }); } }
     const seize = (t) => { const a = t - B.SEIZE; return a < 0 || a > 2.5 ? 0 : 10 * Math.exp(-a * 3.0); };
     DR.weather.flash = (t) => { const f = FX.flashAt(t), s = seize(t); if (s > (f ? f[3] : 0)) { const p = Yong.pearlAt(t); return [p[0], p[1], p[2], s]; } return f; };
     DR.weather.glow = (t) => { const p = Yong.pearlAt(t); if (!p[3]) return null; return [p[0], p[1], p[2], p[3] * (t < B.SEIZE ? 1.6 : 0.9) * (1 + 0.12 * Math.sin(t * 5.1))]; };

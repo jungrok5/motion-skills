@@ -703,7 +703,8 @@ const DR = { P: new URLSearchParams(typeof location !== 'undefined' ? location.s
               for (int j = 0; j < 4; j++) { lp += kd * ls; od += cloudDen(lp, cov, 0.0) * ls; ls *= 1.9; }
               float beer = exp(-od * 1.0) * 0.82 + exp(-od * 0.22) * 0.34 + exp(-od * 0.05) * 0.10;
               float powder = 1.0 - exp(-d * 60.0 - od * 2.0) * 0.55;
-              vec3 c = keyC * beer * powder * phase * 0.62 + mix(ambLo, ambHi, smoothstep(0.0, 0.9, h)) * (0.55 + 0.45 * exp(-od * 0.6));
+              float shade = mix(0.55 + 0.45 * exp(-od * 0.6), 0.22 + 0.78 * exp(-od * 1.6) * (0.35 + 0.65 * smoothstep(0.0, 0.5, h)), uCloudB.y);   // a storm deck is dark underneath and in its folds
+              vec3 c = keyC * beer * powder * phase * 0.62 + mix(ambLo, ambHi, smoothstep(0.0, 0.9, h)) * shade * (1.0 + 0.5 * uCloudB.y);
               vec3 fl = uFlash.xyz - p; float fd2 = dot(fl, fl); c += uFlashCol * uFlash.w * (0.9 / (1.0 + fd2 * 6.0e-5));
               vec3 gl = uGlow.xyz - p; c += uGlowCol * uGlow.w * (0.5 / (1.0 + dot(gl, gl) * 0.0035));
               float a = 1.0 - exp(-d * dt);
@@ -906,6 +907,7 @@ const DR = { P: new URLSearchParams(typeof location !== 'undefined' ? location.s
           vec3 leaf = mix(${c('canopy')}, mix(${c('canopy2')}, ${c('canopy3')}, smoothstep(0.35, 0.7, c2.g)), smoothstep(0.50, 0.66, c2.r * 0.7 + cw.g * 0.3));
           leaf *= 0.45 + 0.9 * smoothstep(0.75, 0.2, cw.a) * (0.7 + 0.6 * cw.b);
           col = mix(col, leaf, fK); N = normalize(N + vec3(cw.r - 0.5, 0.0, cw.g - 0.5) * 1.6 * fK); }
+        col = mix(col, mix(${c('canopy')}, ${c('rock2')}, 0.25) * 0.9, smoothstep(380.0, 1000.0, dist) * 0.8);     // the far range is one quiet colour: the air does the rest
         float shore = smoothstep(0.35, 0.75, mk.b + (dt.b - 0.5) * 0.3);
         col = mix(col, ${c('gravel')} * (0.6 + 0.6 * d2.b), shore);
         float under = smoothstep(uWaterY + 0.15, uWaterY - 1.2, vWPos.y);
@@ -1043,7 +1045,7 @@ const DR = { P: new URLSearchParams(typeof location !== 'undefined' ? location.s
     const S = { lip: [0, 40, 0], dir: [0, 1], width: 6, drop: 40, speed: 2.4, sheets: 3, seed: 1, ...spec }, T = Math.sqrt((2 * S.drop) / 9.8), nx = 10, ny = 26, P = [], UV = [], A = [], I = [], r = DR.rng(S.seed * 91);
     const dl = Math.hypot(S.dir[0], S.dir[1]) || 1, dx = S.dir[0] / dl, dz = S.dir[1] / dl, sx = -dz, sz = dx;
     for (let s = 0; s < S.sheets; s++) { const off = (s - (S.sheets - 1) / 2) * 0.5, w = S.width * (1 - s * 0.16), v0 = S.speed * (1 + s * 0.22), base = P.length / 3, sd = r() * 10;
-      for (let j = 0; j <= ny; j++) for (let i = 0; i <= nx; i++) { const uu = i / nx, tau = (j / ny) * T, side = (uu - 0.5) * w * (1 + 0.25 * (j / ny)), fwd = v0 * tau + off;
+      for (let j = 0; j <= ny; j++) for (let i = 0; i <= nx; i++) { const uu = i / nx, tau = (j / ny) * T, side = (uu - 0.5) * w * (0.62 + 0.55 * Math.sqrt(j / ny)) + Math.sin(uu * 9 + s * 2 + j * 0.35) * 0.18 * (j / ny) * w * 0.2, fwd = v0 * tau + off + Math.sin(uu * 6.3 + s) * 0.35;
         P.push(S.lip[0] + sx * side + dx * fwd, S.lip[1] - 4.9 * tau * tau, S.lip[2] + sz * side + dz * fwd); UV.push(uu, tau); A.push(sd, w, s, T); }
       for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const a = base + j * (nx + 1) + i, b = a + 1, c = a + nx + 1, d = c + 1; I.push(a, c, b, b, c, d); } }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(UV, 2)); g.setAttribute('aF', new THREE.Float32BufferAttribute(A, 4)); g.setIndex(I); g.computeVertexNormals();
@@ -1055,9 +1057,13 @@ const DR = { P: new URLSearchParams(typeof location !== 'undefined' ? location.s
       float cover = smoothstep(0.0, 0.42, side + (st - 0.5) * (0.5 + 0.7 * fall) - vF.z * 0.07) * (1.0 - smoothstep(0.80, 1.0, fall + (st - 0.5) * 0.35));
       if (cover < 0.5) discard;`;
     const mat = DR.mat({ base: 'lambert', color: '#ffffff', side: THREE.DoubleSide, depth: true, vHead: 'attribute vec4 aF; varying vec4 vF;', vBody: 'vF = aF;', fHead: 'varying vec4 vF;', alpha: cut,
-      fBody: `float fine = drN4(vec2(vUv0.x * vF.y * 1.9 + vF.x, dep * 1.5 + tau * 0.5)).b; diffuseColor.rgb = mix(vec3(0.60, 0.70, 0.78), vec3(0.96, 0.98, 1.0), smoothstep(0.25, 0.75, st * 0.65 + fine * 0.35)) * (0.86 + 0.14 * fall); N = normalize(mix(N, vec3(0.0, 1.0, 0.0), 0.7)); drThrough = vec3(0.45, 0.5, 0.55); drAO = 0.9;` });
+      fBody: `float fine = drN4(vec2(vUv0.x * vF.y * 1.9 + vF.x, dep * 1.5 + tau * 0.5)).b; float rib = 0.5 + 0.5 * sin(vUv0.x * vF.y * 2.6 + vF.x * 7.0 + st * 5.0); diffuseColor.rgb = mix(vec3(0.42, 0.55, 0.66), vec3(0.97, 0.99, 1.0), smoothstep(0.2, 0.8, st * 0.5 + fine * 0.3 + rib * 0.2)) * (0.82 + 0.18 * fall); N = normalize(mix(N, vec3(0.0, 1.0, 0.0), 0.7)); drThrough = vec3(0.45, 0.5, 0.55); drAO = 0.9;` });
     const mesh = DR.shadowed(new THREE.Mesh(g, mat), false, false); mesh.name = 'falls';
     const foot = [S.lip[0] + dx * S.speed * T, S.lip[1] - S.drop, S.lip[2] + dz * S.speed * T];
+    // spray that falls with the sheet (so its edges are soft and it has thickness) and boils at the foot
+    if (S.mist !== false && DR.fx) { const life = T * 1.05, lp = life + 0.4;
+      DR.fx.sprites({ count: Math.round(26 * S.width), seed: S.seed + 40, kind: 'puff', gravity: 8.2, drag: 0.12, cover: 0.55, soft: 3, loop: lp, lit: 1, init: (i, r) => { const k = r.range(-0.5, 0.5); return { p: [S.lip[0] + sx * k * S.width * 0.7, S.lip[1] - 0.5, S.lip[2] + sz * k * S.width * 0.7], v: [dx * S.speed * 1.2 + r.gauss() * 0.3, -r.range(0, 2.5), dz * S.speed * 1.2 + r.gauss() * 0.3], t0: -r() * lp, life, size: r.range(1.2, 2.6), grow: 2.6, a: r.range(0.25, 0.5), col: [0.92, 0.96, 1] }; } });
+      DR.fx.sprites({ count: Math.round(12 * S.width), seed: S.seed + 41, kind: 'puff', gravity: -0.5, drag: 0.7, cover: 0.6, wind: 0.3, soft: 5, loop: 5.5, init: (i, r) => ({ p: [foot[0] + r.gauss() * S.width * 0.45, S.lip[1] - S.drop + 0.4 + r() * 3, foot[2] + r.gauss() * 2.2], v: [r.gauss() * 2, r.range(1, 4.5), r.range(0.5, 3.5)], t0: -r() * 5.5, life: r.range(3, 5.5), size: r.range(3.5, 8), grow: 2.3, a: r.range(0.2, 0.42), col: [0.92, 0.96, 1] }) }); }
     return { mesh, foot, T, spec: S };
   };
 }
@@ -2591,6 +2597,12 @@ const DR = { P: new URLSearchParams(typeof location !== 'undefined' ? location.s
       SD.chain([[0, 0.86, -0.1, 0.2], [0, 0.72, 1.2, 0.17], [0, 0.42, 2.4, 0.13], [0, 0.34, sn, 0.1]], 0.12),   // crest down the midline
       SD.chain([[0.5, 0.2, sn * 0.72, 0.16], [0.56, 0.12, sn * 0.95, 0.2]], 0.1),          // whisker pads
       SD.sphere([0.98, 0.3, 0.0], 0.42),                                                    // jaw hinge boss
+      ...[0.52, 0.68, 0.84].map((f) => SD.chain([[0, 0.40 - f * 0.06, sn * f + 0.6, 0.075], [0.3, 0.33 - f * 0.06, sn * f + 0.55, 0.07], [0.56, 0.10, sn * f + 0.45, 0.05]], 0.05)),   // wrinkles across the snout
+      SD.chain([[0.60, 0.92 * H.brow, 1.55, 0.13], [0.72, 1.22 * H.brow, 1.25, 0.07], [0.78, 1.42 * H.brow, 0.95, 0.015]], 0.06),   // brow spikes
+      SD.chain([[0.90, 0.95 * H.brow, 0.95, 0.14], [1.06, 1.25 * H.brow, 0.55, 0.07], [1.12, 1.40 * H.brow, 0.15, 0.015]], 0.06),
+      SD.chain([[1.02, 0.12, 0.55, 0.17], [1.36, 0.22, -0.05, 0.09], [1.58, 0.30, -0.6, 0.015]], 0.07),                              // cheek spikes
+      SD.chain([[0.98, -0.22, 0.65, 0.15], [1.28, -0.34, 0.1, 0.08], [1.44, -0.40, -0.45, 0.015]], 0.07),
+      SD.ellipsoid([0.50, -0.20, sn * 0.62], [0.26, 0.10, sn * 0.36]),                                                              // the lip's roll
     ], 0.16));
     const skullCut = SD.mirrorX(SD.union([
       SD.sphere([0.80, 0.46, 1.36], 0.30),                                                  // eye socket
@@ -2598,9 +2610,13 @@ const DR = { P: new URLSearchParams(typeof location !== 'undefined' ? location.s
       SD.ellipsoid([0, -0.50, 1.9], [0.50, 0.26, 1.9]),                                     // the roof of the mouth
     ], 0.04));
     const skullSDF = SD.cut(skullF, skullCut, 0.07);
-    const paintHead = (x, y, z, nx, ny, nz) => { const cav = sat(0.72 + ny * 0.22 + 0.1 * Math.sin(z * 9) * 0.3); return [cav, cav, cav]; };
-    const maskHead = (jaw) => (x, y, z) => { const inMouth = jaw ? sat((y + 0.52) * 9) * sat((0.42 - Math.abs(x)) * 6) * sat((z - 0.5) * 3) : sat((-0.36 - y) * 9) * sat((0.5 - Math.abs(x)) * 6) * sat((z - 0.4) * 3);
-      const skin = jaw ? 1 : 1 - Math.max(smooth(sn - 0.1, sn + 0.35, z), 0); return [skin * (1 - inMouth), inMouth]; };
+    // vertex paint = shade in the hollows (eye sockets, nostrils, under the brow and the lip, between the wrinkles)
+    const paintHead = (x, y, z, nx, ny, nz) => { const ax = Math.abs(x), eye = Math.hypot(ax - 0.80, y - 0.46, z - 1.36), nos = Math.hypot(ax - 0.40 * H.nose, y - 0.36, z - sn - 0.74);
+      const cav = sat(0.80 + ny * 0.20) * (0.45 + 0.55 * smooth(0.26, 0.55, eye)) * (0.35 + 0.65 * smooth(0.06, 0.22, nos)) * (0.72 + 0.28 * smooth(-0.34, -0.18, y + (ax > 0.3 ? 0 : 1))); return [cav, cav, cav]; };
+    // aMask: x = how much scale pattern (bare skin on the nose), y = flesh — everything that faces into the mouth
+    const maskHead = (jaw) => (x, y, z, nx, ny, nz) => { const ax = Math.abs(x);
+      const inMouth = jaw ? sat(ny * 3 + 0.2) * sat((y + 0.70) * 8) * sat((0.66 - ax) * 8) * sat((z - 0.35) * 3) * sat((jl + 0.25 - z) * 6) : sat(-ny * 3 + 0.1) * sat((-0.26 - y) * 8) * sat((0.74 - ax) * 8) * sat((z - 0.3) * 3) * sat((sn + 0.5 - z) * 5);
+      const skin = jaw ? 1 - 0.6 * smooth(jl - 0.3, jl + 0.3, z) : 1 - smooth(sn - 0.1, sn + 0.35, z); return [skin * (1 - inMouth), inMouth]; };
     const cell = S.cell || 0.055;
     const skullG = DR.meshSDF(skullSDF, [-1.5, -0.9, -0.75], [1.5, 1.35, sn + 1.05], cell, { paint: paintHead, attr: maskHead(false) });
     // ── jaw (its own mesh, hinged at the back) ──
@@ -2613,9 +2629,9 @@ const DR = { P: new URLSearchParams(typeof location !== 'undefined' ? location.s
     ], 0.14));
     const jawSDF = SD.cut(jawF, SD.ellipsoid([0, -0.42, 1.75], [0.42, 0.2, 1.5]), 0.08);
     const jawG = DR.meshSDF(jawSDF, [-1.2, -1.25, -0.2], [1.2, 0.2, jl + 0.6], cell, { paint: paintHead, attr: maskHead(true) });
-    const headMat = C.partMat(0, HS, 34), head = new THREE.Group(), jaw = new THREE.Group();
+    const headMat = C.partMat(0, HS, 34, 0), jawMat = C.partMat(0, HS, 34, 1), head = new THREE.Group(), jaw = new THREE.Group();   // only the jaw has a pale underside
     head.scale.setScalar(HS);
-    const skull = DR.shadowed(new THREE.Mesh(skullG, headMat)), jawM = DR.shadowed(new THREE.Mesh(jawG, headMat));
+    const skull = DR.shadowed(new THREE.Mesh(skullG, headMat)), jawM = DR.shadowed(new THREE.Mesh(jawG, jawMat));
     const hinge = [0, -0.08, 0.2]; jaw.position.set(...hinge); jawM.position.set(-hinge[0], -hinge[1], -hinge[2]); jaw.add(jawM); head.add(skull, jaw);
 
     // ── teeth, tongue ──
@@ -2635,17 +2651,17 @@ const DR = { P: new URLSearchParams(typeof location !== 'undefined' ? location.s
     const eyeMat = DR.mat({ color: '#ffffff', roughness: 0.06, metalness: 0, uniforms: eyeU, vHead: 'varying vec3 vEye;', vBody: 'vEye = position;',
       fHead: 'uniform float uLid, uEyeGlow; uniform vec3 uIris, uIris2; varying vec3 vEye;',
       fBody: /* glsl */`
-        vec3 e = normalize(vEye); float r = length(e.xy) / max(e.z + 0.35, 0.05) * 1.25;                 // looking down +z of the eye
+        vec3 e = normalize(vEye); float r = length(e.xy) / max(e.z + 0.35, 0.05) * 1.02;                 // looking down +z of the eye
         float a = atan(e.y, e.x);
         float fib = 0.6 + 0.4 * sin(a * 34.0 + sin(a * 9.0) * 2.0) * (0.5 + 0.5 * drN4(vec2(a * 0.6, r * 2.0)).r);
         vec3 iris = mix(uIris, uIris2, smoothstep(0.25, 0.92, r) + 0.25 * (1.0 - fib)) * fib;
         float pup = smoothstep(0.075, 0.045, abs(e.x) / max(e.z + 0.35, 0.05) * (1.0 + 2.4 * r * r)) * smoothstep(0.86, 0.7, r);
         float white = smoothstep(0.90, 1.02, r);
-        vec3 col = mix(iris, vec3(0.012), pup); col = mix(col, vec3(0.03, 0.02, 0.02), smoothstep(0.84, 0.92, r) * (1.0 - white)); col = mix(col, vec3(0.42, 0.32, 0.22), white);
+        vec3 col = mix(iris, vec3(0.012), pup); col = mix(col, vec3(0.03, 0.02, 0.02), smoothstep(0.84, 0.92, r) * (1.0 - white)); col = mix(col, vec3(0.10, 0.045, 0.02), white);
         float lid = smoothstep(uLid * 2.3 - 1.2, uLid * 2.3 - 1.05, -e.y);                                  // the lid comes down from above
         diffuseColor.rgb = mix(col, vec3(0.03, 0.035, 0.03), 1.0 - lid);
         drEmit += iris * (1.0 - pup) * (1.0 - white) * lid * uEyeGlow * 1.3; roughnessFactor = mix(0.06, 0.6, 1.0 - lid); drAO = 0.75;` });
-    for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.27, 28, 20), eyeMat); e.position.set(s * 0.76, 0.46, 1.36); e.lookAt(s * 0.76 + s * 0.85, 0.46 + 0.12, 1.36 + 0.5); e.updateMatrix(); skull.add(e); }
+    for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.255, 28, 20), eyeMat); e.position.set(s * 0.715, 0.45, 1.36); e.lookAt(s * 0.715 + s * 0.85, 0.45 + 0.12, 1.36 + 0.5); e.updateMatrix(); skull.add(e); }
 
     // ── antlers: branching tubes that grow (group scale) ──
     const horn = DR.mat({ color: S.hornColor || '#d9b56a', roughness: 0.4, metalness: 0.2, fBody: 'float ring = 0.82 + 0.18 * sin(vUv0.y * 46.0 + sin(vUv0.x * 6.28) * 1.2); diffuseColor.rgb *= ring * mix(0.55, 1.15, smoothstep(0.0, 1.0, vUv0.y * 0.22)); drAO = 0.7;' });
@@ -2670,6 +2686,18 @@ const DR = { P: new URLSearchParams(typeof location !== 'undefined' ? location.s
       wh.push(DR.tube(pts, { sides: 6, steps: 34, uvLen: 1e9 })); }
     const whG = DR.merge(wh); { const uv = whG.attributes.uv, pos = whG.attributes.position; let mx = 0; for (let i = 0; i < pos.count; i++) mx = Math.max(mx, Math.abs(pos.getX(i))); for (let i = 0; i < uv.count; i++) uv.setY(i, sat((Math.abs(pos.getX(i)) - 0.55) / (mx - 0.55))); }
     const whM = DR.shadowed(new THREE.Mesh(whG, whMat), true, false); whM.frustumCulled = false; out.whiskers = whM; skull.add(whM);
+
+    // ── brow flames, ear fins and cheek tufts: flat blades that stream back from the face (they grow with the mane) ──
+    if (S.flames !== false) { const blades = [], bl = (root, dir, len, w) => { const P = [], UV = [], I = [], n = 9; for (let i = 0; i <= n; i++) { const f = i / n, c = [root[0] + dir[0] * len * f, root[1] + dir[1] * len * f + Math.sin(f * 2.4) * len * 0.16, root[2] + dir[2] * len * f - f * f * len * 0.35];
+          const ww = w * Math.sin(Math.min(1, f * 1.4 + 0.25) * Math.PI) * (1 - f * 0.6), wx = Math.sign(root[0]) * 0.25, wy = 0.95; P.push(c[0] - wx * ww, c[1] - wy * ww, c[2], c[0] + wx * ww, c[1] + wy * ww, c[2]); UV.push(0, f, 1, f); if (i < n) { const q = i * 2; I.push(q, q + 1, q + 2, q + 1, q + 3, q + 2); } }
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(UV, 2)); g.setIndex(I); g.computeVertexNormals(); blades.push(g); };
+      for (const s of [-1, 1]) { for (let i = 0; i < 5; i++) bl([s * (0.5 + i * 0.12), 0.92 + i * 0.03, 1.7 - i * 0.28], [s * (0.35 + i * 0.1), 0.55, -0.75], 1.5 + i * 0.28, 0.2);                     // brows
+        for (let i = 0; i < 4; i++) bl([s * 1.02, 0.5 - i * 0.2, 0.25 - i * 0.05], [s * 0.6, 0.3 - i * 0.18, -0.75], 2.3 - i * 0.25, 0.3);                                                                // ear fins
+        for (let i = 0; i < 4; i++) bl([s * (0.74 + i * 0.05), -0.32 - i * 0.03, 1.25 - i * 0.28], [s * 0.7, -0.35, -0.6], 1.3 + i * 0.2, 0.14); }                                                       // cheeks
+      const hc = { rootB: '#b8862d', tipB: '#ffe9a8', ...S.hairColors }, fm = new THREE.Mesh(DR.merge(blades), DR.mat({ base: 'lambert', color: '#ffffff', side: THREE.DoubleSide, depth: true, uniforms: { uG: C.growU, uFa: u(new THREE.Vector3(...DR.rgb(hc.rootB))), uFb: u(new THREE.Vector3(...DR.rgb(hc.tipB))) }, vHead: 'uniform vec4 uG;',
+        vBody: 'float fv = uv.y; drPos = mix(vec3(position.x * 0.92, position.y * 0.9, position.z + fv * 0.6), position, uG.y); drPos.y += sin(uTime * 3.1 + position.x * 5.0 - fv * 4.0) * 0.10 * fv * fv; drPos.x += sin(uTime * 2.3 + position.y * 4.0 - fv * 3.0) * 0.08 * fv * fv; drPos = mix(vec3(position.x, position.y, position.z + fv * 0.2) * vec3(0.5, 0.5, 1.0) + vec3(position.x * 0.5, position.y * 0.5, 0.0), drPos, smoothstep(0.0, 0.25, uG.y));',
+        fHead: 'uniform vec3 uFa, uFb; uniform vec4 uG;', fBody: 'if (uG.y < 0.03) discard; vec3 fc = mix(uFa, uFb, smoothstep(0.1, 0.95, vUv0.y)) * (0.8 + 0.2 * sin(vUv0.x * 26.0)); diffuseColor.rgb = fc; drThrough = fc * 1.5; drAO = 0.6 + 0.4 * vUv0.y;' }));
+      DR.shadowed(fm, true, false); fm.frustumCulled = false; skull.add(fm); out.flames = fm; }
 
     // ── mount the head on ring 0 ──
     const lookM = new THREE.Matrix4(), sclM = new THREE.Matrix4().makeScale(HS, HS, HS), rotM = new THREE.Matrix4();
@@ -2819,6 +2847,8 @@ const DR = { P: new URLSearchParams(typeof location !== 'undefined' ? location.s
   // ── lightning: a jagged ribbon with forks, lit for a few frames; flashes are summed for the scene light ──
   const flashes = [];
   FX.flashAt = (t) => { let best = null, k = 0; for (const f of flashes) { const a = t - f.t0; if (a < 0 || a > f.life) continue; const fl = Math.floor(a * 30), v = (a < 0.07 ? 1 : (0.25 + 0.75 * DR.hash2(fl, f.seed)) * Math.exp(-a * 5.5)) * f.k; if (v > k) { k = v; best = f; } } return best ? [best.at[0], best.at[1], best.at[2], k] : null; };
+  // light inside the clouds with no bolt to see (sheet lightning): { t0, at: [x,y,z], k, life, seed }
+  FX.flash = (o) => { flashes.push({ life: 0.45, seed: flashes.length + 3, k: 4, ...o }); };
   FX.bolt = (o) => {
     const S = { t0: 0, from: [0, 300, 0], to: [0, 0, 0], seed: 1, life: 0.55, width: 1.1, forks: 4, k: 9, ...o }, r = DR.rng(S.seed * 17 + 3), segs = [];
     const walk = (a, b, w, depth) => { const n = Math.max(6, Math.round(DR.vec.dist(a, b) / 14)), pts = [a]; for (let i = 1; i < n; i++) { const f = i / n, p = DR.vec.lerp(a, b, f), j = DR.vec.dist(a, b) * 0.07 * Math.sin(f * Math.PI) + 3; pts.push([p[0] + r.gauss() * j, p[1] + r.gauss() * j * 0.4, p[2] + r.gauss() * j]); } pts.push(b);
@@ -2874,10 +2904,14 @@ const DR = { P: new URLSearchParams(typeof location !== 'undefined' ? location.s
 
   // ── a body breaking the water: a column, a crown of thrown beads, lingering mist ──
   FX.splash = (o) => {
-    const S = { t0: 0, at: [0, 0, 0], power: 1, dir: [0, 1, 0], seed: 1, white: [0.9, 0.95, 1.0], ...o }, P = S.power, at = S.at, w = S.white;
-    FX.sprites({ count: Math.round(800 * P), seed: S.seed, kind: 'puff', gravity: 8.5, drag: 0.8, cover: 0.85, soft: 3, init: (i, r) => { const a = r() * DR.TAU, q = Math.sqrt(r()), sp = r.range(8, 38) * P ** 0.5; return { p: [at[0] + Math.cos(a) * q * 5 * P, at[1], at[2] + Math.sin(a) * q * 5 * P], v: [Math.cos(a) * q * 7 + S.dir[0] * sp * 0.4, sp * (1.15 - q * 0.6), Math.sin(a) * q * 7 + S.dir[2] * sp * 0.4], t0: S.t0 + r() * 0.5, life: r.range(1.4, 3.2), size: r.range(1.0, 3.2) * P ** 0.5, grow: 2.4, a: r.range(0.3, 0.75), col: w }; } });
-    FX.sprites({ count: Math.round(1500 * P), seed: S.seed + 1, kind: 'drop', gravity: 9.8, drag: 0.25, cover: 0.7, stretch: 1.6, soft: 1.5, bright: 1.5, init: (i, r) => { const a = r() * DR.TAU, ring = r() < 0.65, sp = ring ? r.range(12, 26) : r.range(6, 34), el = ring ? r.range(0.75, 1.25) : r.range(1.2, 1.55); return { p: [at[0] + Math.cos(a) * 4 * P, at[1] + 0.2, at[2] + Math.sin(a) * 4 * P], v: [Math.cos(a) * Math.cos(el) * sp, Math.sin(el) * sp * P ** 0.5, Math.sin(a) * Math.cos(el) * sp], t0: S.t0 + r() * 0.3, life: r.range(1.5, 3.6), size: r.range(0.1, 0.34), grow: 0.6, a: 0.9, col: w }; } });
-    FX.sprites({ count: Math.round(140 * P), seed: S.seed + 2, kind: 'puff', gravity: -0.25, drag: 0.5, cover: 0.55, wind: 0.5, soft: 5, init: (i, r) => { const a = r() * DR.TAU, q = Math.sqrt(r()) * 16 * P; return { p: [at[0] + Math.cos(a) * q, at[1] + r.range(0.5, 5), at[2] + Math.sin(a) * q], v: [Math.cos(a) * 4, r.range(0.5, 3.5), Math.sin(a) * 4], t0: S.t0 + 0.4 + r() * 1.4, life: r.range(4, 8), size: r.range(5, 11), grow: 2.2, a: r.range(0.16, 0.34), col: w }; } });
+    const S = { t0: 0, at: [0, 0, 0], power: 1, dir: [0, 1, 0], seed: 1, white: [0.9, 0.95, 1.0], ...o }, P = S.power, at = S.at, w = S.white, q = P ** 0.5;
+    // thrown water is ropes: each jet leaves the surface in one direction over a quarter of a second, so its beads string out
+    const jets = [], rj = DR.rng(S.seed * 7 + 1); for (let i = 0; i < Math.round(46 * P); i++) { const crown = i % 3 !== 0; jets.push({ az: rj() * DR.TAU, el: crown ? rj.range(0.85, 1.25) : rj.range(1.3, 1.52), sp: (crown ? rj.range(13, 25) : rj.range(22, 40)) * q, r: crown ? rj.range(3, 5.5) * q : rj.range(0, 2.5) * q, len: rj.range(0.18, 0.4) }); }
+    FX.sprites({ count: jets.length * 64, seed: S.seed + 1, kind: 'drop', gravity: 9.8, drag: 0.22, cover: 0.8, stretch: 2.6, soft: 1.5, bright: 1.7, init: (i, r) => { const j = jets[i % jets.length], f = r(), sp = j.sp * (1 - 0.35 * f) * r.range(0.96, 1.04), a = j.az + r.gauss() * 0.035, el = j.el + r.gauss() * 0.03;
+      return { p: [at[0] + Math.cos(j.az) * j.r, at[1] + 0.2, at[2] + Math.sin(j.az) * j.r], v: [Math.cos(a) * Math.cos(el) * sp + S.dir[0] * 3, Math.sin(el) * sp, Math.sin(a) * Math.cos(el) * sp + S.dir[2] * 3], t0: S.t0 + f * j.len, life: r.range(1.8, 3.8), size: r.range(0.3, 0.85) * q * (1.2 - 0.5 * f), grow: 0.5, a: 0.95, col: w }; } });
+    // the white core where the body comes through, and the mist it leaves
+    FX.sprites({ count: Math.round(150 * P), seed: S.seed, kind: 'puff', gravity: 9, drag: 1.1, cover: 0.7, soft: 2.5, init: (i, r) => { const a = r() * DR.TAU, k = Math.sqrt(r()), sp = r.range(8, 26) * q; return { p: [at[0] + Math.cos(a) * k * 4 * q, at[1], at[2] + Math.sin(a) * k * 4 * q], v: [Math.cos(a) * k * 5, sp * (1.1 - k * 0.5), Math.sin(a) * k * 5], t0: S.t0 + r() * 0.35, life: r.range(0.8, 1.6), size: r.range(0.8, 2.0) * q, grow: 1.8, a: r.range(0.22, 0.45), col: w }; } });
+    FX.sprites({ count: Math.round(110 * P), seed: S.seed + 2, kind: 'puff', gravity: -0.25, drag: 0.5, cover: 0.5, wind: 0.5, soft: 5, init: (i, r) => { const a = r() * DR.TAU, k = Math.sqrt(r()) * 15 * q; return { p: [at[0] + Math.cos(a) * k, at[1] + r.range(0.5, 4), at[2] + Math.sin(a) * k], v: [Math.cos(a) * 4, r.range(0.4, 2.5), Math.sin(a) * 4], t0: S.t0 + 0.5 + r() * 1.4, life: r.range(4, 8), size: r.range(5, 10), grow: 2.0, a: r.range(0.1, 0.22), col: w }; } });
   };
 }
 
@@ -4305,7 +4339,7 @@ const Yong = {};
   // the route: [x, y, z] then the film time at which the HEAD is there (null = let the speed settle between keys)
   const ROUTE = [
     [30, -10, -96, 0], [44, -7, -72], [30, -4, -48, B.STIR], [-10, -2.3, -34], [-44, -2.0, -12, 16.5], [-30, -1.8, 8], [0, -1.2, 13, 20.5],
-    [16, -0.5, 9, 22], [36, -1.7, -8], [40, -5, -34, 26], [18, -9, -58], [-6, -11, -66, 31], [-14, -12, -52], [-2, -12, -44, 36], [6, -10, -52, 38.3],
+    [16, -0.5, 9, 22], [36, -1.7, -8], [40, -5, -34, 26], [18, -9, -58], [-10, -11, -68, 31], [-30, -12, -50], [-12, -12, -30, 36], [12, -11, -40, 38.3],
     [4, 6, -56, B.BURST], [0, 48, -64, 40.2], [-22, 92, -92], [-34, 128, -136, 42.4], [-8, 160, -176, 43.6], [36, 188, -196], [64, 214, -168, 46],
     [48, 236, -128], [4, 246, -116, 48.4], [-30, 252, -140], [-16, 256, -172, 50.3], [8, 258, -164, B.SEIZE],
     [30, 276, -136], [22, 300, -100, 53.4], [-8, 318, -76, 54.6], [-40, 326, -44], [-78, 300, 6, 57.2], [-118, 236, 50], [-124, 150, 76, 59.6],
@@ -4378,6 +4412,8 @@ const Weather = {};
     FX.bolt({ t0: B.BOLT2, from: [150, 340, -160], to: [118, 221, -220], seed: 9, k: 10 });
     FX.bolt({ t0: B.BOLT3, from: [40, 360, -290], to: [4, 284, -246], seed: 13, k: 12, width: 1.4 });
     FX.bolt({ t0: B.BOLT3 + 0.22, from: [-60, 350, -220], to: [-10, 262, -180], seed: 17, k: 6 });
+    // sheet lightning inside the deck all through the storm: the clouds are lit from within, somewhere near the dragon
+    { const r = DR.rng(77); for (let t = B.PEARL + 1.5; t < B.SEIZE - 0.6; t += r.range(0.7, 1.6)) { const h = t > B.BURST ? C.headAt(t) : [0, 0, -120], a = r() * DR.TAU, d = r.range(70, 190); FX.flash({ t0: t, at: [h[0] + Math.cos(a) * d, r.range(210, 330), h[2] + Math.sin(a) * d], k: r.range(2.2, 4.6), life: r.range(0.3, 0.55) }); } }
     const seize = (t) => { const a = t - B.SEIZE; return a < 0 || a > 2.5 ? 0 : 10 * Math.exp(-a * 3.0); };
     DR.weather.flash = (t) => { const f = FX.flashAt(t), s = seize(t); if (s > (f ? f[3] : 0)) { const p = Yong.pearlAt(t); return [p[0], p[1], p[2], s]; } return f; };
     DR.weather.glow = (t) => { const p = Yong.pearlAt(t); if (!p[3]) return null; return [p[0], p[1], p[2], p[3] * (t < B.SEIZE ? 1.6 : 0.9) * (1 + 0.12 * Math.sin(t * 5.1))]; };
@@ -4456,11 +4492,11 @@ const Stage = {};
     // ── trees ──
     const pines = finish(land.scatter({ count: 270, seed: 11, bounds: [-300, -330, 300, 150], minDist: 9, filter: (x, z, h, ny) => (h > 1.6 && h < 175 && ny > 0.72 && clear(x, z, 3, true) && !lane(x, z) ? 0.25 + 0.75 * smooth(4, 40, shoreD(x, z)) * (1 - 0.6 * smooth(260, 330, Math.hypot(x, z + 60))) : 0) }), R(1), 0.85, 1.3);
     // the framing pines of the home view, placed by hand
-    for (const [x, z, v, s, r] of [[-38, 78, 3, 1.25, 0.4], [-48, 66, 0, 1.1, 2.1], [-56, 90, 2, 0.9, 1.0], [40, 82, 3, 1.3, 3.4], [50, 70, 1, 1.1, 5.2], [60, 92, 2, 0.95, 2.5], [-84, -44, 0, 1.0, 1.2], [-92, -12, 1, 1.05, 3.0], [-60, 4, 2, 0.8, 0.3]]) pines.push({ p: [x, H(x, z), z], s, r, seed: Math.round(x * 31 + z * 7 + 500), variant: v });
-    plant(Flora.pine, pines);
+    const heroP = []; for (const [x, z, v, s, r] of [[-26, 50, 3, 1.3, 0.4], [-38, 63, 0, 1.15, 2.1], [-50, 82, 2, 0.9, 1.0], [32, 48, 3, 1.35, 3.4], [45, 62, 1, 1.15, 5.2], [56, 84, 2, 0.95, 2.5], [-84, -44, 0, 1.0, 1.2], [-92, -12, 1, 1.05, 3.0], [-60, 4, 2, 0.8, 0.3]]) heroP.push({ p: [x, H(x, z), z], s, r, seed: Math.round(x * 31 + z * 7 + 500), variant: v });
+    plant(Flora.pine, pines); plant(Flora.pine, heroP, 1.6);      // the hand-placed ones keep every needle spray out to ~90 m
     const maples = finish(land.scatter({ count: 200, seed: 12, bounds: [-200, -180, 200, 130], minDist: 6, filter: (x, z, h, ny) => (h > 1.3 && h < 80 && ny > 0.74 && clear(x, z, 2.5, true) && !lane(x, z) ? smooth(70, 6, shoreD(x, z)) * 0.9 + 0.1 : 0) }), R(2), 0.8, 1.35);
-    for (const [x, z, t] of [[-56, -40, 0.1], [-52, 0, 0.35], [-84, 14, 0.55], [-96, -30, 0.2], [18, 60, 0.15], [-14, 62, 0.5], [60, 66, 0.3], [74, -30, 0.25], [80, -64, 0.6]]) maples.push({ p: [x, H(x, z), z], s: 1.25, r: x, seed: Math.round(900 + x * 3 + z), tint: t });
-    plant(Flora.maple, maples, 0.4);
+    const heroM = []; for (const [x, z, t] of [[-56, -40, 0.1], [-52, 0, 0.35], [-84, 14, 0.55], [-96, -30, 0.2], [18, 60, 0.15], [-14, 62, 0.5], [60, 66, 0.3], [74, -30, 0.25], [80, -64, 0.6]]) heroM.push({ p: [x, H(x, z), z], s: 1.25, r: x, seed: Math.round(900 + x * 3 + z), tint: t });
+    plant(Flora.maple, maples, 0.4); plant(Flora.maple, heroM, 1.5);
     plant(Flora.oak, finish(land.scatter({ count: 170, seed: 13, bounds: [-300, -330, 300, 150], minDist: 9, filter: (x, z, h, ny) => (h > 4 && h < 150 && ny > 0.7 && clear(x, z, 3, true) && !lane(x, z) ? 0.3 + 0.7 * smooth(20, 90, shoreD(x, z)) : 0) }), R(3), 0.8, 1.3));
     // pines on the rock: on ledges, and out of the faces
     const ledge = [], face = [], r4 = R(4);
@@ -4668,12 +4704,12 @@ DR.score(function (K, B, o) {
     blue: { key: 'moon', moon: MOON, sun: [150, -9], keyCol: '#b4c8ff', keyK: 2.6, moonCol: '#eef2ff', moonK: 1.6, sunK: 0, zen: '#0d1c40', hor: '#4a629a', gnd: '#182030', warm: '#6a4f66', skyK: 1.25, amb: 1.25, stars: 0.75,
       air: 0.0006, mist: 0.0034, mistH: 14, fogCol: '#c8d4ff', cover: 0.2, shadowK: 0.7, cloud: [330, 640, 1 / 900, 0.045], haze: [0, 26, 0.010, 1 / 95], wind: [0.9, 0.3, 0.3], exposure: 2.0, bloom: 0.1, rays: 0, vignette: 0.38, grade: cool },
     omen: { key: 'moon', moon: MOON, sun: [150, -4], keyCol: '#a9c2ff', keyK: 0.35, moonCol: '#e6eeff', moonK: 0.25, sunK: 0, zen: '#111a28', hor: '#42536a', gnd: '#161c24', skyK: 1.4, amb: 1.2, stars: 0.05,
-      air: 0.0006, mist: 0.005, mistH: 20, fogCol: '#b6c2dc', cover: 0.86, shadowK: 0.9, cloud: [210, 560, 1 / 820, 0.06], cloudDark: 0.35, cloudSpeed: 2.2, haze: [0, 36, 0.008, 1 / 95], wind: [0.9, 0.3, 1.9], exposure: 2.1, bloom: 0.09, rays: 0, vignette: 0.4, grade: { ...cool, sat: 0.92 } },
+      air: 0.0006, mist: 0.005, mistH: 20, fogCol: '#b6c2dc', cover: 0.86, shadowK: 0.9, cloud: [280, 620, 1 / 820, 0.06], cloudDark: 0.35, cloudSpeed: 2.2, haze: [0, 36, 0.008, 1 / 95], wind: [0.9, 0.3, 1.9], exposure: 2.1, bloom: 0.09, rays: 0, vignette: 0.4, grade: { ...cool, sat: 0.92 } },
     storm: { key: 'sun', sun: [150, 30], moon: MOON, keyCol: '#d9e2f0', keyK: 3.4, sunK: 0, moonK: 0, zen: '#141c26', hor: '#46535f', gnd: '#161b20', skyK: 1.7, amb: 1.25, stars: 0,
-      air: 0.0007, mist: 0.004, mistH: 24, fogCol: '#aab6c8', cover: 0.97, shadowK: 0.92, cloud: [150, 540, 1 / 800, 0.075], cloudDark: 0.5, cloudSpeed: 3.2, haze: [0, 40, 0.006, 1 / 95], wind: [0.9, 0.3, 2.5], wet: 1, rain: 0.95, exposure: 1.95, bloom: 0.1, rays: 0, vignette: 0.42,
+      air: 0.0007, mist: 0.004, mistH: 24, fogCol: '#aab6c8', cover: 0.97, shadowK: 0.92, cloud: [272, 640, 1 / 800, 0.075], cloudDark: 0.5, cloudSpeed: 3.2, haze: [0, 40, 0.006, 1 / 95], wind: [0.9, 0.3, 2.5], wet: 1, rain: 0.95, exposure: 1.95, bloom: 0.1, rays: 0, vignette: 0.42,
       grade: { lift: [0, 0.003, 0.008], gain: [0.92, 1.0, 1.08], sat: 0.9, contrast: 1.16 } },
     gilt: { key: 'sun', sun: [150, 30], moon: MOON, keyCol: '#ffd9a0', keyK: 3.4, sunK: 0, moonK: 0, zen: '#1a222c', hor: '#6a6258', gnd: '#24201c', skyK: 1.5, amb: 1.5, stars: 0,
-      air: 0.0007, mist: 0.004, mistH: 24, fogCol: '#d8c8b0', cover: 0.95, shadowK: 0.9, cloud: [150, 540, 1 / 800, 0.075], cloudDark: 0.6, cloudSpeed: 3.0, haze: [0, 40, 0.006, 1 / 95], wind: [0.9, 0.3, 2.2], wet: 1, rain: 0.8, exposure: 1.5, bloom: 0.12, rays: 0, vignette: 0.42,
+      air: 0.0007, mist: 0.004, mistH: 24, fogCol: '#d8c8b0', cover: 0.95, shadowK: 0.9, cloud: [272, 640, 1 / 800, 0.075], cloudDark: 0.6, cloudSpeed: 3.0, haze: [0, 40, 0.006, 1 / 95], wind: [0.9, 0.3, 2.2], wet: 1, rain: 0.8, exposure: 1.5, bloom: 0.12, rays: 0, vignette: 0.42,
       grade: { lift: [0.004, 0.002, 0.002], gain: [1.03, 1.0, 0.98], sat: 1.0, contrast: 1.14 } },
     turn: { key: 'sun', sun: [150, 12], moon: MOON, keyCol: '#ffc08a', keyK: 3.2, sunCol: '#ffc890', sunK: 1.4, moonK: 0.2, zen: '#1d3058', hor: '#8f9ab0', gnd: '#201e1e', warm: '#ff9048', skyK: 1, amb: 1.0, stars: 0,
       air: 0.0006, mist: 0.004, mistH: 22, fogCol: '#ffe2c4', cover: 0.7, shadowK: 0.85, cloud: [230, 600, 1 / 850, 0.06], cloudDark: 0.25, cloudSpeed: 2.2, haze: [0, 38, 0.010, 1 / 95], wind: [0.9, 0.3, 1.4], wet: 0.8, rain: 0.4, exposure: 1.25, bloom: 0.12, rays: 0.8, vignette: 0.34,

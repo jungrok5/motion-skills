@@ -49,7 +49,8 @@ them the five peaks (285, 222, 205, 165, 150 m), each with 4–6 lower spires; v
 ## Creature — `src/40_dragon.js`
 112 m long, 2.35 m radius. Imugi: near-black olive scales with an oily sheen, no antlers, no mane, no legs, amber eyes
 that open at EYE. Blue Dragon: cobalt back, azure sides, gold rims, cream belly plates, branching antlers, a gold mane
-and dorsal fins, four clawed legs, long whiskers; the yeouiju rides under its chin. Wet until it dries after dawn.
+and dorsal fins, brow flames and ear fins, four clawed legs, long whiskers. The yeouiju: held in its jaws from SEIZE,
+released with the roar, and from then on going before the dragon on its road. Wet until it dries after dawn.
 The route: under the lake (ripples, the eye) → straight up at BURST → a spiral past the far-shore crags into the clouds
 → the pearl at (8, 258, −164) → a slow S above the clouds while it changes → down the west wall, past the pavilion's
 eaves at 14 m, a skim over the lake at the lens → up through the rain → a ring in front of the peaks, then up between

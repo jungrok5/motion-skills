@@ -37,12 +37,32 @@
   behind `#if`; `DR.mat` hooks `begin_vertex` for `base: 'basic'` and for depth materials.
 
 **The creature**
+- The pearl looked glued under the dragon's chin → it was a ball at a fixed point of the head. A carried thing needs a
+  way of being carried: held between the front teeth from the seizing to the roar, then let go, then leading the dragon
+  a few head-lengths ahead on its own rail (`rail.at(sOf(t) + 14)`), circling. Its halo shrinks so it never covers the face.
+- The eye read as a ball stuck on the head → the sphere stood proud of its socket and had a pale "white"; set it back
+  (only the iris shows), dark surround.
+- Scales ran into the mouth and the roof of the mouth was belly-coloured → flesh is masked by the *normal* (whatever
+  faces into the mouth), and only the jaw's underside takes the belly colour.
+- The face was smooth like a toy → wrinkles across the snout, brow and cheek spikes in the sculpt, a rolled lip, and
+  flat blades for brow flames, ear fins and cheek tufts that grow with the mane.
 - The frame matrix for riders was left-handed and "forward" pointed at the tail → forward = normal × binormal; test with
   the cast sheet (head from the front must show a face).
 - The summit circle creased the body (turn radius 2.4 m for a 2.35 m body) → one control point carried a 115° turn;
   rings need points every 40–60° of arc. The audit prints the place and time of the worst bend.
 - Top speed 146 m/s between two keys → keys too close in time for their distance; the audit prints top speed and the
   hardest pull.
+
+- The storm was a grey void: the chase flew *inside* the deck → the storm's ceiling sits above the action (base 272 m),
+  dark underneath and in its folds, lit from within by sheet lightning; the tear and its rim light are seen from below.
+- The eruption looked like smoke → thrown water is ropes: each jet leaves in one direction over a quarter of a second,
+  so its beads string out; puffs only for the white core and the mist that lingers.
+- Waterfalls looked like paper → sheets that widen as they fall, ribbed streaks keyed to departure time, spray that
+  falls with the sheet (soft edges, thickness) and boils at the foot; nothing planted in front of them.
+- A pine's flat needle pads seen edge-on at lens height are green slabs → framing trees stand where the lens looks up
+  into them or far enough to be silhouettes, and hand-placed trees keep full detail (`lodBias` 1.6).
+- A patch script put a `//` comment in the middle of a one-line statement and commented out its end ("Unexpected end
+  of input" only when the page loads) → `node --check` every source after an edit; comments go on their own line.
 
 **Time (four CPU cores, no GPU)**
 - A 1080p frame took 10.8 s → 7.8 million triangles a frame over three passes. In order of what helped: one mesh per

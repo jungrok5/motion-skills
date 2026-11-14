@@ -168,7 +168,8 @@
               for (int j = 0; j < 4; j++) { lp += kd * ls; od += cloudDen(lp, cov, 0.0) * ls; ls *= 1.9; }
               float beer = exp(-od * 1.0) * 0.82 + exp(-od * 0.22) * 0.34 + exp(-od * 0.05) * 0.10;
               float powder = 1.0 - exp(-d * 60.0 - od * 2.0) * 0.55;
-              vec3 c = keyC * beer * powder * phase * 0.62 + mix(ambLo, ambHi, smoothstep(0.0, 0.9, h)) * (0.55 + 0.45 * exp(-od * 0.6));
+              float shade = mix(0.55 + 0.45 * exp(-od * 0.6), 0.22 + 0.78 * exp(-od * 1.6) * (0.35 + 0.65 * smoothstep(0.0, 0.5, h)), uCloudB.y);   // a storm deck is dark underneath and in its folds
+              vec3 c = keyC * beer * powder * phase * 0.62 + mix(ambLo, ambHi, smoothstep(0.0, 0.9, h)) * shade * (1.0 + 0.5 * uCloudB.y);
               vec3 fl = uFlash.xyz - p; float fd2 = dot(fl, fl); c += uFlashCol * uFlash.w * (0.9 / (1.0 + fd2 * 6.0e-5));
               vec3 gl = uGlow.xyz - p; c += uGlowCol * uGlow.w * (0.5 / (1.0 + dot(gl, gl) * 0.0035));
               float a = 1.0 - exp(-d * dt);

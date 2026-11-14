@@ -26,6 +26,12 @@
       SD.chain([[0, 0.86, -0.1, 0.2], [0, 0.72, 1.2, 0.17], [0, 0.42, 2.4, 0.13], [0, 0.34, sn, 0.1]], 0.12),   // crest down the midline
       SD.chain([[0.5, 0.2, sn * 0.72, 0.16], [0.56, 0.12, sn * 0.95, 0.2]], 0.1),          // whisker pads
       SD.sphere([0.98, 0.3, 0.0], 0.42),                                                    // jaw hinge boss
+      ...[0.52, 0.68, 0.84].map((f) => SD.chain([[0, 0.40 - f * 0.06, sn * f + 0.6, 0.075], [0.3, 0.33 - f * 0.06, sn * f + 0.55, 0.07], [0.56, 0.10, sn * f + 0.45, 0.05]], 0.05)),   // wrinkles across the snout
+      SD.chain([[0.60, 0.92 * H.brow, 1.55, 0.13], [0.72, 1.22 * H.brow, 1.25, 0.07], [0.78, 1.42 * H.brow, 0.95, 0.015]], 0.06),   // brow spikes
+      SD.chain([[0.90, 0.95 * H.brow, 0.95, 0.14], [1.06, 1.25 * H.brow, 0.55, 0.07], [1.12, 1.40 * H.brow, 0.15, 0.015]], 0.06),
+      SD.chain([[1.02, 0.12, 0.55, 0.17], [1.36, 0.22, -0.05, 0.09], [1.58, 0.30, -0.6, 0.015]], 0.07),                              // cheek spikes
+      SD.chain([[0.98, -0.22, 0.65, 0.15], [1.28, -0.34, 0.1, 0.08], [1.44, -0.40, -0.45, 0.015]], 0.07),
+      SD.ellipsoid([0.50, -0.20, sn * 0.62], [0.26, 0.10, sn * 0.36]),                                                              // the lip's roll
     ], 0.16));
     const skullCut = SD.mirrorX(SD.union([
       SD.sphere([0.80, 0.46, 1.36], 0.30),                                                  // eye socket
@@ -33,9 +39,13 @@
       SD.ellipsoid([0, -0.50, 1.9], [0.50, 0.26, 1.9]),                                     // the roof of the mouth
     ], 0.04));
     const skullSDF = SD.cut(skullF, skullCut, 0.07);
-    const paintHead = (x, y, z, nx, ny, nz) => { const cav = sat(0.72 + ny * 0.22 + 0.1 * Math.sin(z * 9) * 0.3); return [cav, cav, cav]; };
-    const maskHead = (jaw) => (x, y, z) => { const inMouth = jaw ? sat((y + 0.52) * 9) * sat((0.42 - Math.abs(x)) * 6) * sat((z - 0.5) * 3) : sat((-0.36 - y) * 9) * sat((0.5 - Math.abs(x)) * 6) * sat((z - 0.4) * 3);
-      const skin = jaw ? 1 : 1 - Math.max(smooth(sn - 0.1, sn + 0.35, z), 0); return [skin * (1 - inMouth), inMouth]; };
+    // vertex paint = shade in the hollows (eye sockets, nostrils, under the brow and the lip, between the wrinkles)
+    const paintHead = (x, y, z, nx, ny, nz) => { const ax = Math.abs(x), eye = Math.hypot(ax - 0.80, y - 0.46, z - 1.36), nos = Math.hypot(ax - 0.40 * H.nose, y - 0.36, z - sn - 0.74);
+      const cav = sat(0.80 + ny * 0.20) * (0.45 + 0.55 * smooth(0.26, 0.55, eye)) * (0.35 + 0.65 * smooth(0.06, 0.22, nos)) * (0.72 + 0.28 * smooth(-0.34, -0.18, y + (ax > 0.3 ? 0 : 1))); return [cav, cav, cav]; };
+    // aMask: x = how much scale pattern (bare skin on the nose), y = flesh — everything that faces into the mouth
+    const maskHead = (jaw) => (x, y, z, nx, ny, nz) => { const ax = Math.abs(x);
+      const inMouth = jaw ? sat(ny * 3 + 0.2) * sat((y + 0.70) * 8) * sat((0.66 - ax) * 8) * sat((z - 0.35) * 3) * sat((jl + 0.25 - z) * 6) : sat(-ny * 3 + 0.1) * sat((-0.26 - y) * 8) * sat((0.74 - ax) * 8) * sat((z - 0.3) * 3) * sat((sn + 0.5 - z) * 5);
+      const skin = jaw ? 1 - 0.6 * smooth(jl - 0.3, jl + 0.3, z) : 1 - smooth(sn - 0.1, sn + 0.35, z); return [skin * (1 - inMouth), inMouth]; };
     const cell = S.cell || 0.055;
     const skullG = DR.meshSDF(skullSDF, [-1.5, -0.9, -0.75], [1.5, 1.35, sn + 1.05], cell, { paint: paintHead, attr: maskHead(false) });
     // ── jaw (its own mesh, hinged at the back) ──
@@ -48,9 +58,9 @@
     ], 0.14));
     const jawSDF = SD.cut(jawF, SD.ellipsoid([0, -0.42, 1.75], [0.42, 0.2, 1.5]), 0.08);
     const jawG = DR.meshSDF(jawSDF, [-1.2, -1.25, -0.2], [1.2, 0.2, jl + 0.6], cell, { paint: paintHead, attr: maskHead(true) });
-    const headMat = C.partMat(0, HS, 34), head = new THREE.Group(), jaw = new THREE.Group();
+    const headMat = C.partMat(0, HS, 34, 0), jawMat = C.partMat(0, HS, 34, 1), head = new THREE.Group(), jaw = new THREE.Group();   // only the jaw has a pale underside
     head.scale.setScalar(HS);
-    const skull = DR.shadowed(new THREE.Mesh(skullG, headMat)), jawM = DR.shadowed(new THREE.Mesh(jawG, headMat));
+    const skull = DR.shadowed(new THREE.Mesh(skullG, headMat)), jawM = DR.shadowed(new THREE.Mesh(jawG, jawMat));
     const hinge = [0, -0.08, 0.2]; jaw.position.set(...hinge); jawM.position.set(-hinge[0], -hinge[1], -hinge[2]); jaw.add(jawM); head.add(skull, jaw);
 
     // ── teeth, tongue ──
@@ -70,17 +80,17 @@
     const eyeMat = DR.mat({ color: '#ffffff', roughness: 0.06, metalness: 0, uniforms: eyeU, vHead: 'varying vec3 vEye;', vBody: 'vEye = position;',
       fHead: 'uniform float uLid, uEyeGlow; uniform vec3 uIris, uIris2; varying vec3 vEye;',
       fBody: /* glsl */`
-        vec3 e = normalize(vEye); float r = length(e.xy) / max(e.z + 0.35, 0.05) * 1.25;                 // looking down +z of the eye
+        vec3 e = normalize(vEye); float r = length(e.xy) / max(e.z + 0.35, 0.05) * 1.02;                 // looking down +z of the eye
         float a = atan(e.y, e.x);
         float fib = 0.6 + 0.4 * sin(a * 34.0 + sin(a * 9.0) * 2.0) * (0.5 + 0.5 * drN4(vec2(a * 0.6, r * 2.0)).r);
         vec3 iris = mix(uIris, uIris2, smoothstep(0.25, 0.92, r) + 0.25 * (1.0 - fib)) * fib;
         float pup = smoothstep(0.075, 0.045, abs(e.x) / max(e.z + 0.35, 0.05) * (1.0 + 2.4 * r * r)) * smoothstep(0.86, 0.7, r);
         float white = smoothstep(0.90, 1.02, r);
-        vec3 col = mix(iris, vec3(0.012), pup); col = mix(col, vec3(0.03, 0.02, 0.02), smoothstep(0.84, 0.92, r) * (1.0 - white)); col = mix(col, vec3(0.42, 0.32, 0.22), white);
+        vec3 col = mix(iris, vec3(0.012), pup); col = mix(col, vec3(0.03, 0.02, 0.02), smoothstep(0.84, 0.92, r) * (1.0 - white)); col = mix(col, vec3(0.10, 0.045, 0.02), white);
         float lid = smoothstep(uLid * 2.3 - 1.2, uLid * 2.3 - 1.05, -e.y);                                  // the lid comes down from above
         diffuseColor.rgb = mix(col, vec3(0.03, 0.035, 0.03), 1.0 - lid);
         drEmit += iris * (1.0 - pup) * (1.0 - white) * lid * uEyeGlow * 1.3; roughnessFactor = mix(0.06, 0.6, 1.0 - lid); drAO = 0.75;` });
-    for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.27, 28, 20), eyeMat); e.position.set(s * 0.76, 0.46, 1.36); e.lookAt(s * 0.76 + s * 0.85, 0.46 + 0.12, 1.36 + 0.5); e.updateMatrix(); skull.add(e); }
+    for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.255, 28, 20), eyeMat); e.position.set(s * 0.715, 0.45, 1.36); e.lookAt(s * 0.715 + s * 0.85, 0.45 + 0.12, 1.36 + 0.5); e.updateMatrix(); skull.add(e); }
 
     // ── antlers: branching tubes that grow (group scale) ──
     const horn = DR.mat({ color: S.hornColor || '#d9b56a', roughness: 0.4, metalness: 0.2, fBody: 'float ring = 0.82 + 0.18 * sin(vUv0.y * 46.0 + sin(vUv0.x * 6.28) * 1.2); diffuseColor.rgb *= ring * mix(0.55, 1.15, smoothstep(0.0, 1.0, vUv0.y * 0.22)); drAO = 0.7;' });
@@ -105,6 +115,18 @@
       wh.push(DR.tube(pts, { sides: 6, steps: 34, uvLen: 1e9 })); }
     const whG = DR.merge(wh); { const uv = whG.attributes.uv, pos = whG.attributes.position; let mx = 0; for (let i = 0; i < pos.count; i++) mx = Math.max(mx, Math.abs(pos.getX(i))); for (let i = 0; i < uv.count; i++) uv.setY(i, sat((Math.abs(pos.getX(i)) - 0.55) / (mx - 0.55))); }
     const whM = DR.shadowed(new THREE.Mesh(whG, whMat), true, false); whM.frustumCulled = false; out.whiskers = whM; skull.add(whM);
+
+    // ── brow flames, ear fins and cheek tufts: flat blades that stream back from the face (they grow with the mane) ──
+    if (S.flames !== false) { const blades = [], bl = (root, dir, len, w) => { const P = [], UV = [], I = [], n = 9; for (let i = 0; i <= n; i++) { const f = i / n, c = [root[0] + dir[0] * len * f, root[1] + dir[1] * len * f + Math.sin(f * 2.4) * len * 0.16, root[2] + dir[2] * len * f - f * f * len * 0.35];
+          const ww = w * Math.sin(Math.min(1, f * 1.4 + 0.25) * Math.PI) * (1 - f * 0.6), wx = Math.sign(root[0]) * 0.25, wy = 0.95; P.push(c[0] - wx * ww, c[1] - wy * ww, c[2], c[0] + wx * ww, c[1] + wy * ww, c[2]); UV.push(0, f, 1, f); if (i < n) { const q = i * 2; I.push(q, q + 1, q + 2, q + 1, q + 3, q + 2); } }
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(UV, 2)); g.setIndex(I); g.computeVertexNormals(); blades.push(g); };
+      for (const s of [-1, 1]) { for (let i = 0; i < 5; i++) bl([s * (0.5 + i * 0.12), 0.92 + i * 0.03, 1.7 - i * 0.28], [s * (0.35 + i * 0.1), 0.55, -0.75], 1.5 + i * 0.28, 0.2);                     // brows
+        for (let i = 0; i < 4; i++) bl([s * 1.02, 0.5 - i * 0.2, 0.25 - i * 0.05], [s * 0.6, 0.3 - i * 0.18, -0.75], 2.3 - i * 0.25, 0.3);                                                                // ear fins
+        for (let i = 0; i < 4; i++) bl([s * (0.74 + i * 0.05), -0.32 - i * 0.03, 1.25 - i * 0.28], [s * 0.7, -0.35, -0.6], 1.3 + i * 0.2, 0.14); }                                                       // cheeks
+      const hc = { rootB: '#b8862d', tipB: '#ffe9a8', ...S.hairColors }, fm = new THREE.Mesh(DR.merge(blades), DR.mat({ base: 'lambert', color: '#ffffff', side: THREE.DoubleSide, depth: true, uniforms: { uG: C.growU, uFa: u(new THREE.Vector3(...DR.rgb(hc.rootB))), uFb: u(new THREE.Vector3(...DR.rgb(hc.tipB))) }, vHead: 'uniform vec4 uG;',
+        vBody: 'float fv = uv.y; drPos = mix(vec3(position.x * 0.92, position.y * 0.9, position.z + fv * 0.6), position, uG.y); drPos.y += sin(uTime * 3.1 + position.x * 5.0 - fv * 4.0) * 0.10 * fv * fv; drPos.x += sin(uTime * 2.3 + position.y * 4.0 - fv * 3.0) * 0.08 * fv * fv; drPos = mix(vec3(position.x, position.y, position.z + fv * 0.2) * vec3(0.5, 0.5, 1.0) + vec3(position.x * 0.5, position.y * 0.5, 0.0), drPos, smoothstep(0.0, 0.25, uG.y));',
+        fHead: 'uniform vec3 uFa, uFb; uniform vec4 uG;', fBody: 'if (uG.y < 0.03) discard; vec3 fc = mix(uFa, uFb, smoothstep(0.1, 0.95, vUv0.y)) * (0.8 + 0.2 * sin(vUv0.x * 26.0)); diffuseColor.rgb = fc; drThrough = fc * 1.5; drAO = 0.6 + 0.4 * vUv0.y;' }));
+      DR.shadowed(fm, true, false); fm.frustumCulled = false; skull.add(fm); out.flames = fm; }
 
     // ── mount the head on ring 0 ──
     const lookM = new THREE.Matrix4(), sclM = new THREE.Matrix4().makeScale(HS, HS, HS), rotM = new THREE.Matrix4();
