@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canal in October — colored-pencil-world</title>
+<!-- The worked example (BRIEF.md beside it): 20 s, 5 shots. A canal between tall brick and painted houses on an October
+     afternoon; a young man in a mustard coat and a long red scarf walks the west quay under the turning limes, crosses
+     the stone bridge with a bunch of flowers, stops on the crest to look down the water to the church, and comes down
+     onto the far quay. -->
+<script type="importmap">{ "imports": { "three": "../../lib/three.module.min.js", "cpw/": "../../lib/" } }</script>
+<script type="module">
+import { World, noise, fbm, sm, tone } from 'cpw/world.js';
+import * as kit from 'cpw/kit.js';
+import { Figure } from 'cpw/figure.js';
+
+// ① light: a low afternoon sun from the west-south-west — the east bank's fronts face it, the west bank's are in shade
+const W = new World({
+  name: 'Canal in October', seed: 10, extent: 80,
+  sun: { az: 250, el: 27, strength: 1.35 }, skyStrength: 0.3,
+  pencil: { px: 4.6, warm: '#ffd98a', shadow: '#4a3a9e', press: [1.25, 1, 1, 1] },
+  caption: 'the canal, october', wind: { az: 300, strength: 0.7 },
+  shadow: { box: [110, 110], centre: [0, -6] },
+});
+
+// ② the way: down the west quay, over the bridge, onto the east quay
+W.way([[-6.5, 17], [-6.5, 5], [-6.8, 1.6], [-6.1, 0.1], [-4.6, 0], [4.6, 0], [6.1, -0.1], [6.8, -1.6], [6.5, -5], [6.5, -16]]);
+
+// ③ the land: level quays, the canal cut 2.6 m down between them, and the ground rising a little behind the church
+const CANAL = 4.2, LEVEL = -1.2, END = -48;
+W.land({ height: (x, z) => (Math.abs(x) < CANAL && z > END ? -2.6 : 0.04 * noise(x / 3, z / 3)) });
+
+// ④ the world
+W.add(kit.sky(W, { horizon: '#b9d6ec', zenith: '#7aa6dc', cloud: 0.5, cloudShade: '#c9bfe0', warm: '#ffd9a0', scale: 1.0 }));
+W.add(kit.ranges(W, { rows: [{ dist: 420, height: 34, colour: '#a7b0d6', haze: 0.4, from: 0, to: 360, seed: 5, jag: 0.2 }] }));
+W.add(kit.ground(W, { colour: (x, z) => (Math.abs(x) < CANAL + 0.6 && z > END ? '#8a8f86' : '#cfc3a6') }));
+W.add(kit.water(W, { level: LEVEL, near: '#4a9a9a', far: '#4d74b8', dark: '#2a3a8a', glints: 0.8 }));
+// the canal walls: stone courses from the bed up to the quay, a coping along the top (the water mirrors them)
+for (const s of [-1, 1]) W.add(kit.wall(W, { name: `wall ${s < 0 ? 'west' : 'east'}`, points: [[s * (CANAL + 0.12), 78], [s * (CANAL + 0.12), END]], base: -2.75, h: 2.45, w: 0.4, stones: true, colours: ['#d9c9a8', '#cbb995', '#e3d5b6', '#c2ae8a'], coping: '#ece2cb' }));
+W.add(kit.wall(W, { name: 'wall end', points: [[-CANAL, END], [CANAL, END]], base: -2.75, h: 2.45, w: 0.5, stones: true, colours: ['#d9c9a8', '#cbb995', '#e3d5b6'], coping: '#ece2cb' }));
+// the quays: flagstones from the wall to the housefronts
+for (const s of [-1, 1]) W.add(kit.paving(W, { name: `quay ${s < 0 ? 'west' : 'east'}`, rect: s < 0 ? [-10, -46, -CANAL - 0.3, 40] : [CANAL + 0.3, -46, 10, 40], size: [0.75, 0.5], colours: ['#e6dcc6', '#d9cdb3', '#efe6d2', '#d1c3a6', '#e0d2b4'], seed: s < 0 ? 3 : 8 }));
+// the houses: tall and narrow, each its own colour, the west row facing east across the water and the east row facing west
+const BRICK = ['#b5533c', '#c9663f', '#a84a3a'], SLATE = ['#7b8194', '#8a8fa0', '#6f7588'], TILE = ['#c9663f', '#b5533c', '#d67a4a', '#bf5c3a'];
+const west = [
+  { w: 4.2, storeys: 3, wall: '#c7573f', roof: { kind: 'gable', colours: SLATE }, windows: { shutters: null, glass: '#7385ab' }, door: { colour: '#2f5a4a' } },
+  { w: 3.6, storeys: 4, wall: '#e9c46a', roof: { kind: 'gable', colours: TILE, smoke: true }, windows: { shutters: '#3f6f9a', boxes: 0.5 }, door: { colour: '#3f6f9a', arched: true } },
+  { w: 4.6, storeys: 3, wall: '#f0e6d2', roof: { kind: 'eaves', colours: SLATE }, windows: { shutters: '#2f5a4a' }, shop: { awning: '#2f7a5a', stripes: '#f3efe6' }, door: { colour: '#2f5a4a', at: -0.7 }, sign: { board: '#2f7a5a', icon: '#f3e9d6' } },
+  { w: 3.4, storeys: 4, wall: '#a84a3a', roof: { kind: 'gable', colours: SLATE }, windows: { shutters: null, arched: true }, door: { colour: '#f3efe6' }, pipe: true },
+  { w: 4.0, storeys: 3, wall: '#8fb3c9', roof: { kind: 'gable', colours: TILE }, windows: { shutters: '#f3efe6', boxes: 0.7, blooms: ['#e8554e', '#f2c12b'] }, door: { colour: '#c2473d' }, pots: 2 },
+  { w: 4.4, storeys: 3, wall: '#d6874a', roof: { kind: 'eaves', colours: TILE, smoke: true }, windows: { shutters: '#5a3f6a' }, balcony: 2, door: { colour: '#5a3f6a', at: 0.5 } },
+  { w: 3.6, storeys: 4, wall: '#efe0c4', roof: { kind: 'gable', colours: SLATE }, windows: { shutters: '#a84a3a' }, door: { colour: '#a84a3a', arched: true }, vine: { leaves: ['#d9533f', '#c9663f', '#e8862e'], flowers: [] } },
+  { w: 4.0, storeys: 3, wall: '#b5533c', roof: { kind: 'gable', colours: TILE }, windows: { shutters: null }, shop: { awning: '#e9c46a', stripes: '#b5533c' }, door: { colour: '#3f4f7a', at: 0.6 } },
+  { w: 3.8, storeys: 4, wall: '#c9b6d8', roof: { kind: 'gable', colours: SLATE }, windows: { shutters: '#4a3f6a', boxes: 0.4 }, door: { colour: '#4a3f6a' } },
+  { w: 4.4, storeys: 3, wall: '#e3b04b', roof: { kind: 'eaves', colours: TILE }, windows: { shutters: '#2f5a4a' }, door: { colour: '#2f5a4a' }, pipe: true },
+  { w: 3.6, storeys: 4, wall: '#a84a3a', roof: { kind: 'gable', colours: SLATE, smoke: true }, windows: { shutters: null, arched: true }, door: { colour: '#e9c46a' } },
+  { w: 4.2, storeys: 3, wall: '#f0e6d2', roof: { kind: 'gable', colours: TILE }, windows: { shutters: '#3f6f9a' }, door: { colour: '#3f6f9a' } },
+  { w: 4.0, storeys: 3, wall: '#9ec29a', roof: { kind: 'gable', colours: SLATE }, windows: { shutters: '#f3efe6' }, door: { colour: '#c2473d' } },
+  { w: 4.6, storeys: 4, wall: '#c7573f', roof: { kind: 'eaves', colours: TILE }, windows: { shutters: null }, door: { colour: '#2f5a4a' } },
+  { w: 4.0, storeys: 3, wall: '#e9c46a', roof: { kind: 'gable', colours: TILE }, windows: { shutters: '#a84a3a' }, door: { colour: '#a84a3a' } },
+  { w: 4.2, storeys: 3, wall: '#b5533c', roof: { kind: 'gable', colours: SLATE }, windows: { shutters: null }, door: { colour: '#f3efe6' } },
+];
+const east = [
+  { w: 4.4, storeys: 3, wall: '#f0e6d2', roof: { kind: 'gable', colours: TILE }, windows: { shutters: '#2f5a4a', boxes: 0.5 }, door: { colour: '#2f5a4a' } },
+  { w: 3.8, storeys: 4, wall: '#b5533c', roof: { kind: 'gable', colours: SLATE, smoke: true }, windows: { shutters: null, arched: true }, door: { colour: '#e9c46a', arched: true } },
+  { w: 4.2, storeys: 3, wall: '#7fa7c4', roof: { kind: 'eaves', colours: TILE }, windows: { shutters: '#f3efe6' }, shop: { awning: '#c2473d', stripes: '#f3efe6' }, door: { colour: '#c2473d', at: 0.7 } },
+  { w: 3.6, storeys: 4, wall: '#e3b04b', roof: { kind: 'gable', colours: TILE }, windows: { shutters: '#3f4f7a', boxes: 0.6 }, door: { colour: '#3f4f7a' }, pipe: true },
+  { w: 4.6, storeys: 3, wall: '#c7573f', roof: { kind: 'gable', colours: SLATE }, windows: { shutters: null }, balcony: 2, door: { colour: '#2f5a4a' } },
+  { w: 3.6, storeys: 4, wall: '#efe0c4', roof: { kind: 'gable', colours: TILE }, windows: { shutters: '#c2473d' }, door: { colour: '#c2473d' }, vine: { leaves: ['#d9533f', '#e8862e', '#c9663f'], flowers: [] } },
+  { w: 4.0, storeys: 3, wall: '#d6874a', roof: { kind: 'eaves', colours: SLATE, smoke: true }, windows: { shutters: '#2f5a4a' }, door: { colour: '#2f5a4a', arched: true }, pots: 2 },
+  { w: 3.8, storeys: 4, wall: '#a84a3a', roof: { kind: 'gable', colours: SLATE }, windows: { shutters: null, arched: true }, shop: { awning: '#2f7a5a', stripes: '#f3efe6' }, door: { colour: '#f3efe6', at: -0.6 } },
+  { w: 4.2, storeys: 3, wall: '#c9b6d8', roof: { kind: 'gable', colours: TILE }, windows: { shutters: '#4a3f6a' }, door: { colour: '#4a3f6a' } },
+  { w: 4.0, storeys: 3, wall: '#e9c46a', roof: { kind: 'gable', colours: SLATE }, windows: { shutters: '#3f6f9a', boxes: 0.5 }, door: { colour: '#3f6f9a' } },
+  { w: 4.4, storeys: 4, wall: '#b5533c', roof: { kind: 'eaves', colours: TILE }, windows: { shutters: null }, door: { colour: '#2f5a4a' } },
+  { w: 3.6, storeys: 3, wall: '#f0e6d2', roof: { kind: 'gable', colours: TILE }, windows: { shutters: '#a84a3a' }, door: { colour: '#a84a3a' } },
+  { w: 4.2, storeys: 4, wall: '#9ec29a', roof: { kind: 'gable', colours: SLATE }, windows: { shutters: '#f3efe6' }, door: { colour: '#c2473d' } },
+  { w: 4.0, storeys: 3, wall: '#c7573f', roof: { kind: 'gable', colours: TILE }, windows: { shutters: null }, door: { colour: '#e9c46a' } },
+  { w: 4.6, storeys: 3, wall: '#d6874a', roof: { kind: 'eaves', colours: SLATE }, windows: { shutters: '#3f4f7a' }, door: { colour: '#3f4f7a' } },
+  { w: 3.8, storeys: 4, wall: '#efe0c4', roof: { kind: 'gable', colours: TILE }, windows: { shutters: '#2f5a4a' }, door: { colour: '#2f5a4a' } },
+];
+// (four more each, the first four again in new colours, so both rows run the whole 80 m of the canal)
+const more = (list, walls) => list.concat(list.slice(0, 4).map((h, i) => ({ ...h, wall: walls[i], storeys: 7 - h.storeys })));
+W.add(kit.row(W, { name: 'west row', from: [-10, 34], dir: 90, face: 90, d: 5, houses: more(west, ['#e3b04b', '#a84a3a', '#8fb3c9', '#efe0c4']), seed: 2 }));
+W.add(kit.row(W, { name: 'east row', from: [10, -46], dir: -90, face: -90, d: 5, houses: more(east, ['#c9b6d8', '#e9c46a', '#b5533c', '#9ec29a']), seed: 5 }));
+// the church at the canal's end, its tower and clock the far mark the eye goes to
+W.add(kit.house(W, { name: 'church tower', at: [0, -56], turn: 0, w: 5.2, d: 5.2, storeys: 8, storey: 2.8, wall: '#e9dfc8', trim: '#f8f4ea', roof: { kind: 'hip', pitch: 1.3, colours: ['#4f8f7a', '#5fa08a', '#457f6c'], chimney: false }, windows: { cols: 1, shutters: null, arched: true, glass: '#5d6f9a' }, door: { colour: '#7a4f2c', arched: true }, clock: true, band: false }));
+W.add(kit.house(W, { name: 'church', at: [0, -66], turn: 0, w: 9, d: 15, storeys: 3, storey: 3.2, wall: '#e9dfc8', roof: { kind: 'gable', pitch: 1.1, colours: SLATE, chimney: false }, windows: { cols: 3, shutters: null, arched: true, glass: '#5d6f9a' }, door: { colour: '#7a4f2c', arched: true } }));
+// the bridge: a humpback of stone, the walker's way across
+W.add(kit.deck(W, { name: 'bridge', from: [-CANAL - 1.4, 0], to: [CANAL + 1.4, 0], width: 2.8, y: 0.02, arch: 1.15, stone: true, colour: '#e3d5b6' }));
+// limes along both quays, turning, and their leaves coming down
+const LEAVES = ['#e8862e', '#f2b33a', '#d9533f', '#e9a23b', '#c9663f'];
+const limes = [];
+for (const s of [-1, 1]) for (let z = 36; z > -44; z -= 7.5) if (Math.abs(z - (s < 0 ? 1.5 : -1.5)) > 5) limes.push({ at: [s * 5.1, z + (s < 0 ? 0 : 3.7)], kind: 'round', h: 7 + ((z * 7) % 3 + 3) % 2, r: 1.85, leaves: LEAVES, trunk: '#8a6a52' });
+W.add(kit.trees(W, { name: 'limes', list: limes }));
+W.add(kit.flecks(W, { name: 'leaves', n: 160, centre: [0, 2], radius: 16, top: 8, colours: LEAVES, size: 0.11, fall: 0.6, sway: 0.7 }));
+// lamps, benches, a crate of apples; boats tied along the walls
+W.add(kit.props(W, [
+  ...[26, 11, -19, -34].map((z) => ({ kind: 'lamp', at: [-4.75, z] })), ...[19, 7.5, -11, -26].map((z) => ({ kind: 'lamp', at: [4.75, z] })),
+  { kind: 'bench', at: [-4.9, 14.5], turn: 90, colour: '#3f6f5a' }, { kind: 'bench', at: [4.9, -8], turn: -90, colour: '#3f6f5a' },
+  { kind: 'crate', at: [-8.6, 9.5], fill: ['#d9533f', '#e8862e', '#9cc85a'] }, { kind: 'barrel', at: [-8.9, 10.6] }, { kind: 'pot', at: [8.7, -12.5], bloom: '#e8862e' },
+  { kind: 'cafe', at: [-8.1, 21], colour: '#f3efe6', stripes: '#2f7a5a', chair: '#2f7a5a' }, { kind: 'post', at: [-4.6, 7.5], h: 0.6 }, { kind: 'post', at: [4.6, -5], h: 0.6 },
+]));
+W.add(kit.boats(W, { level: LEVEL, list: [
+  { at: [-2.9, 9], turn: 2, hull: '#2f5a7a', trim: '#f3efe6', len: 3.6 }, { at: [-3, 20], turn: -3, hull: '#c2473d', trim: '#f3efe6', len: 3.2 },
+  { at: [2.9, -9], turn: 178, hull: '#2f7a5a', trim: '#e9c46a', len: 3.4 }, { at: [3, -22], turn: 182, hull: '#f3efe6', trim: '#3f6f9a', len: 3.8 },
+] }));
+W.add(kit.birds(W, { name: 'pigeons', n: 6, centre: [0, 16, -12], radius: 10, colour: '#8f8ca4', wing: '#a9a6bc', size: 0.4, flap: 3.2 }));
+
+// ⑤ the walker
+W.figure(new Figure({
+  height: 1.76, hair: 'short', hat: { kind: 'beanie' }, coat: { length: 0.62, flare: 0.3, open: true }, scarf: { length: 0.62 }, bag: 'left',
+  carry: { kind: 'flowers', side: 'right', fill: ['#f3efe6', '#f08ab0', '#f2c12b'] },
+  colours: { skin: '#f3c7a2', hair: '#4a3020', top: '#e9e2cf', legs: '#3f4f7a', shoes: '#6a4030', hat: '#3f5f7a', coat: '#d9a441', scarf: '#c8433a', bag: '#9a6a3c' },
+}));
+
+// ⑥ the shots
+W.shots([
+  { name: 'along the quay', dur: 5, walk: [2, 9], cam: { from: { back: 5.2, up: 2.3, side: 0.2, yaw: 4, look: [1.4, 1.2, 6] }, to: { back: 4.6, up: 2.1, side: 0.1, yaw: -2, look: [1.4, 1.2, 6] } } },
+  { name: 'across the water', dur: 4, walk: [9, 14.5], cam: { from: { way: [12.5, 11.5, 1.65], look: [0, 1.6, 0], fov: 40 }, to: { way: [12.5, 11.5, 1.65], look: [0, 1.6, 0], fov: 38 } } },
+  { name: 'from the water', dur: 5.5, walk: [14.5, 23.2], cam: { from: { at: [1.6, 2.15, 8.5], lookAt: [-2.2, 0.4, 0], fov: 46 }, to: { at: [1.2, 2.15, 8.0], lookAt: [0.2, 1.1, 0], fov: 46 } } },
+  { name: 'on the crest', dur: 2.5, look: [0, -2, -60], cam: { from: { at: [3.4, 5.9, 4.6], lookAt: [-3.5, 0.0, -24], fov: 48 }, to: { at: [3.1, 5.95, 4.2], lookAt: [-3.2, 0.0, -24], fov: 46 } } },
+  { name: 'down to the far quay', dur: 3, walk: [23.2, 28], cam: { from: { at: [7.9, 1.6, -4.2], look: [0, 1.45, 0], fov: 44 }, to: { at: [7.9, 1.6, -4.2], look: [0, 1.4, 0], fov: 40 } } },
+]);
+
+// ⑦ the piece's own rules
+W.check('the walker crosses on the bridge', (W) => { const s = 23.2, w = W.wayAt(s); return W.standAt(w.x, w.z) < 0.5 && `${s} m along the way (mid-canal) they stand at ${W.standAt(w.x, w.z).toFixed(2)} m — not on the bridge`; });
+W.check('the water mirrors the fronts', (W) => W.fronts.length < 30 && `only ${W.fronts.length} fronts for the water to mirror`);
+
+// ⑧ go
+W.start();
+</script>
+</html>
