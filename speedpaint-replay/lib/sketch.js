@@ -58,7 +58,7 @@ export class Sketch {
   // ---- line art: tapered pen ----
   ink(pts, o = {}) {
     const it = { kind: 'pen', pts: this._line(pts, o), w: o.w ?? 3, taper: o.taper ?? [.18, .32], floor: o.floor, wobble: o.wobble,
-      color: o.color ?? this.inkColor, alpha: o.alpha ?? 1, z: o.z, dur: o.dur, weight: o.weight ?? 1 };
+      color: o.color ?? this.inkColor, alpha: o.alpha ?? 1, z: o.z, dur: o.dur, weight: o.weight ?? 1, passes: o.passes, jitter: o.jitter };
     if (it.pts.length < 2) return null;
     return this._add('line', prepStroke(it));
   }
@@ -94,6 +94,8 @@ export class Sketch {
   // ---- body marks (for the pose / body check, see references/BODY.md) ----
   mark(name, x, y) { this.marks[name] = this.pt(x, y); return this; }
   setPose(p) { this.pose = p; return this; }
+  // an eye box without drawing an eye (reference mode: the eyes come from the image) — side, centre, size in art units
+  markEye(side, x, y, w, h) { this.eyes.push({ side, id: 'eye' + side, c: this.pt(x, y), w: w * this._scale(), h: h * this._scale() }); return this; }
 
   // ======== helpers that make many items at once ========
 
@@ -112,14 +114,21 @@ export class Sketch {
       const it = this.flat(name, [...L, ...R.slice().reverse()], { fill: o.fill, raw: true, z: zc, angle: o.angle, dur: o.flatDur, weight: o.flatWeight ?? .5, order: o.flatOrder });
       it.lock = true;
     }
-    const e = o.edges ?? 'both';
-    if (e === 'both' || e === 'l') this.ink(L, { raw: true, w: iw, taper: o.taper ?? [.12, .5], dur: o.inkDur, weight: o.inkWeight });
-    if (e === 'both' || e === 'r') this.ink(R, { raw: true, w: iw * (o.rw ?? .9), taper: o.taper ?? [.12, .5], dur: o.inkDur, weight: o.inkWeight });
+    const e = o.edges ?? 'both', ps = o.passes;
+    if (e === 'both' || e === 'l') this.ink(L, { raw: true, w: iw, taper: o.taper ?? [.12, .5], dur: o.inkDur, weight: o.inkWeight, passes: ps });
+    if (e === 'both' || e === 'r') this.ink(R, { raw: true, w: iw * (o.rw ?? .9), taper: o.taper ?? [.12, .5], dur: o.inkDur, weight: o.inkWeight, passes: ps });
     const r = rng(this.seed * 7 + this.items.length);
+    // strands: inner lines that follow the lock, of uneven length, some starting at the root
     for (let k = 0; k < (o.strands ?? 1); k++) {
-      const f = r.range(-.55, .55), u0 = r.range(.02, .3), u1 = r.range(.45, .85), pts = [];
-      for (let i = Math.floor(u0 * (n - 1)); i <= Math.floor(u1 * (n - 1)); i++) { const u = i / (n - 1), h = w * prof(u) / 2 * f; pts.push([line[i][0] + nrm[i][0] * h, line[i][1] + nrm[i][1] * h]); }
-      if (pts.length > 3) this.ink(pts, { raw: true, w: iw * .62, taper: [.3, .5], weight: .6 });
+      const f = r.range(-.62, .62), u0 = r() < .4 ? r.range(0, .08) : r.range(.05, .35), u1 = r.range(.45, .95), pts = [];
+      for (let i = Math.floor(u0 * (n - 1)); i <= Math.floor(u1 * (n - 1)); i++) { const u = i / (n - 1), h = w * prof(u) / 2 * (f * (1 - u * .3)); pts.push([line[i][0] + nrm[i][0] * h, line[i][1] + nrm[i][1] * h]); }
+      if (pts.length > 3) this.ink(pts, { raw: true, w: iw * r.range(.4, .7), taper: [.25, .55], weight: .45, alpha: r.range(.7, 1) });
+    }
+    // flyaways: a few hairs that leave the lock near its tip and curl out past its edge
+    for (let k = 0; k < (o.fly ?? 0); k++) {
+      const sg = r() < .5 ? 1 : -1, u0 = r.range(.35, .7), i0 = Math.floor(u0 * (n - 1)), len = r.range(.25, .5) * n, pts = [];
+      for (let j = 0; j < len && i0 + j < n; j++) { const i = i0 + j, u = i / (n - 1), h = w * prof(u) / 2 * sg * (1 + j / len * 1.4) + sg * j * .35; pts.push([line[i][0] + nrm[i][0] * h, line[i][1] + nrm[i][1] * h]); }
+      if (pts.length > 4) this.ink(pts, { raw: true, w: iw * .38, taper: [.3, .7], weight: .3, alpha: .85 });
     }
     if (o.shade) {
       const sg = o.shade === 'l' ? 1 : -1, edge = sg > 0 ? L : R, inner = line.map((p, i) => { const u = i / (n - 1), h = w * prof(u) / 2 * sg * (o.shadeIn ?? .1); return [p[0] + nrm[i][0] * h, p[1] + nrm[i][1] * h]; });
@@ -128,6 +137,66 @@ export class Sketch {
     }
     this.stack = saved;
     return { L, R, line };
+  }
+
+  // Hatching: parallel pen strokes inside a region (line-art shading, like a pen artist's shadow on a neck or cloth).
+  //   angle (radians), gap between strokes, w, len: [min, max] fraction of the span each stroke covers, curve: bow
+  hatch(pts, o = {}) {
+    const poly = o.raw ? this.tf(pts) : spline(this.tf(pts), true, 4), a = o.angle ?? -.9, c = Math.cos(a), sn = Math.sin(a);
+    const rot = poly.map(([x, y]) => [x * c + y * sn, -x * sn + y * c]), b = bbox(rot), gap = o.gap ?? 7, r = rng(this.seed * 13 + this.items.length);
+    const back = ([u, v]) => [u * c - v * sn, u * sn + v * c], saved = this.stack; this.stack = []; const made = [];
+    for (let v = b.y + gap / 2; v < b.y + b.h; v += gap) {
+      const xs = [];
+      for (let i = 0; i < rot.length; i++) { const p = rot[i], q = rot[(i + 1) % rot.length]; if ((p[1] <= v && q[1] > v) || (q[1] <= v && p[1] > v)) xs.push(p[0] + (v - p[1]) / (q[1] - p[1]) * (q[0] - p[0])); }
+      xs.sort((m, n) => m - n);
+      for (let i = 0; i + 1 < xs.length; i += 2) {
+        const [lo, hi] = [xs[i], xs[i + 1]], span = hi - lo; if (span < 4) continue;
+        const [l0, l1] = o.len ?? [.55, 1], L = span * r.range(l0, l1), st = o.from === 'end' ? hi - L : o.from === 'start' ? lo : lo + r() * (span - L), vv = v + r.pm(gap * .15), bow = o.curve ?? 0;
+        made.push(this.ink([back([st, vv]), back([st + L / 2, vv + bow]), back([st + L, vv])], { w: o.w ?? 1.4, taper: [.2, .6], alpha: o.alpha ?? .7, color: o.color, weight: o.weight ?? .25 }));
+      }
+    }
+    this.stack = saved; return made;
+  }
+
+  // A light-direction gradient over a whole named region, clipped to it: the cheap way to give a flat form volume.
+  //   from → to: art points; colour at `to` (multiply in 'shadow', screen in 'highlight'); amount: opacity at `to`
+  shade(name, o = {}) {
+    const rs = this.regions[name]; if (!rs) throw new Error(`shade: no flat named "${name}" yet`);
+    const box = bbox(rs.flatMap(i => i.pts)), pad = 4, ring = [[box.x - pad, box.y - pad], [box.x + box.w + pad, box.y - pad], [box.x + box.w + pad, box.y + box.h + pad], [box.x - pad, box.y + box.h + pad]];
+    const [f, t] = this.tf([o.from ?? [box.x, box.cy], o.to ?? [box.x + box.w, box.cy]]), col = o.color ?? '#9a8fb0';
+    const hx = col.replace('#', ''), rgb = [0, 2, 4].map(i => parseInt(hx.slice(i, i + 2), 16)).join(',');
+    const fill = { linear: [...f, ...t], stops: [[0, `rgba(${rgb},0)`], [o.mid ?? .5, `rgba(${rgb},${(o.amount ?? .8) * .35})`], [1, `rgba(${rgb},${o.amount ?? .8})`]] };
+    const saved = this.stack; this.stack = [];
+    const it = o.stage === 'highlight' ? this.light(ring, { raw: true, fill, clip: name, mode: o.mode ?? 'screen', weight: o.weight ?? .5 }) : this.shadow(ring, { raw: true, fill, clip: name, mode: o.mode ?? 'multiply', weight: o.weight ?? .5 });
+    this.stack = saved; return it;
+  }
+
+  // Dappled light or speckled shade: soft blobs scattered over an area, clipped to regions (sun through leaves, light
+  // through a rainy window: each drop throws a dark speck with a bright edge). Highlight stage unless stage: 'shadow'.
+  dapple(area, o = {}) {
+    const [x, y, w, h] = area, r = rng(this.seed * 17 + this.items.length), out = [], n = o.count ?? 24, saved = this.stack;
+    for (let i = 0; i < n; i++) {
+      const c = this.tf([[x + r() * w, y + r() * h]])[0], rx = r.range(...(o.r ?? [4, 12])) * this._scale(), ry = rx * r.range(.6, 1.3), rot = r() * 3.14, m = 14;
+      const ring = Array.from({ length: m }, (_, k) => { const a = k / m * 6.283, px = Math.cos(a) * rx, py = Math.sin(a) * ry; return [c[0] + px * Math.cos(rot) - py * Math.sin(rot), c[1] + px * Math.sin(rot) + py * Math.cos(rot)]; });
+      this.stack = [];
+      const opt = { raw: true, fill: o.fill ?? '#ffffff', clip: o.clip, blur: o.blur ?? 2, alpha: o.alpha ?? .6, mode: o.mode, weight: .12 };
+      out.push(o.stage === 'shadow' ? this.shadow(ring, opt) : this.light(ring, opt));
+      this.stack = saved;
+    }
+    return out;
+  }
+
+  // Paper / brush grain over the whole picture in the finish (soft, seeded): amount 0…1
+  grain(amount = .12, o = {}) {
+    let tile = null;
+    return this.fx((c, u) => {
+      if (!tile) {
+        tile = document.createElement('canvas'); tile.width = tile.height = 256; const g = tile.getContext('2d'), d = g.createImageData(256, 256), r = rng(this.seed * 31 + 7);
+        for (let i = 0; i < d.data.length; i += 4) { const v = 128 + (r() - .5) * 120; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; }
+        g.putImageData(d, 0, 0);
+      }
+      c.save(); c.globalCompositeOperation = o.mode ?? 'soft-light'; c.globalAlpha = amount * u; c.fillStyle = c.createPattern(tile, 'repeat'); c.fillRect(0, 0, 1000, 1000); c.restore();
+    }, { over: true, name: 'grain', box: { x: 100, y: 100, w: 800, h: 800 }, weight: .3, ...o });
   }
 
   // A strip along one side of a line, widest in the middle and tapering to both ends: rim light, an edge shadow, the
@@ -143,11 +212,11 @@ export class Sketch {
     this.stack = saved; return it;
   }
 
-  // A lens (pointed at both ends, bulging by w in the middle) from a to b, bowed sideways by `bow`: a strand of hair
+  // A lens (pointed at both ends, { abs: true } = points already in picture space, like a lock's returned line; bulging by w in the middle) from a to b, bowed sideways by `bow`: a strand of hair
   // sheen, a glint on a lip, a crease. stage 'highlight' (default), 'shadow' or 'flat' (then o.name is required).
   lens(a, b, w, o = {}) {
-    const [p, q] = this.tf([a, b]), dx = q[0] - p[0], dy = q[1] - p[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L, n = 14, bow = o.bow ?? 0;
-    const side = sg => Array.from({ length: n + 1 }, (_, i) => { const u = i / n, h = Math.sin(Math.PI * u) * (w / 2 * sg + bow * this._scale()); return [p[0] + dx * u + nx * h, p[1] + dy * u + ny * h]; });
+    const [p, q] = o.abs ? [a, b] : this.tf([a, b]), dx = q[0] - p[0], dy = q[1] - p[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L, n = 14, bow = o.bow ?? 0;
+    const sc = o.abs ? 1 : this._scale(), side = sg => Array.from({ length: n + 1 }, (_, i) => { const u = i / n, h = Math.sin(Math.PI * u) * (w / 2 * sg + bow * sc); return [p[0] + dx * u + nx * h, p[1] + dy * u + ny * h]; });
     const ring = [...side(1), ...side(-1).reverse().slice(1, -1)], saved = this.stack; this.stack = [];
     const opt = { ...o, raw: true };
     const it = o.stage === 'shadow' ? this.shadow(ring, opt) : o.stage === 'flat' ? this.flat(o.name, ring, opt) : this.light(ring, opt);

@@ -6,6 +6,9 @@ Keep the review log at the bottom: every round of stills adds a line.
 ```markdown
 # <title> — speedpaint-replay brief
 
+## Reference (reference mode only)
+image file · who made it · on what terms (mine / commissioned / licence) — never someone else's art or a known character
+
 ## One line
 <who / what>, <doing what>, <in what light>.            e.g. "A girl with a black bob by a rainy window at dusk."
 

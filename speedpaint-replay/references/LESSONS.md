@@ -33,3 +33,19 @@
   take `flatOrder`, and the background takes `order: 2000` (painted last).
 - **Thin rib strokes were reported as leaving no mark.** The item check sampled every 4th pixel at quarter scale. →
   Sample every pixel with a low alpha threshold.
+- **Self-review against the source: "the format matches, the picture does not".** Side by side with the post, the
+  first example had ~90 clean lines against the source's dense, broken, hatched ink, flat cel colour against painted
+  light, and a small centred figure against a tight dramatic crop. → Denser hair (`strands`, `fly`, `passes`),
+  `hatch`, light-direction `shade` per material, a crisp terminator across the face, a 1.5× crop, and reference mode
+  for when the user has a picture of their own.
+- **Raindrop specks on the face read as a rash, on the sweater as stains.** Light through wet glass is a lovely idea,
+  but at this size dark specks on skin look like blemishes. → Keep specks off faces and plain cloth; put rain on the
+  glass.
+- **Reference mode: every region came out empty.** Douglas–Peucker on a closed loop has identical endpoints, so every
+  distance was zero and only two points survived. → Split the loop at the point farthest from the start, simplify
+  each half (`dpClosed`).
+- **Reference mode: white seams between all regions, then fat white outlines.** Outlines traced through pixel centres
+  leave half a pixel of paper between neighbours. Growing them with the wrong winding sign shrank them instead. →
+  Grow outward by 1.8 units with the sign from the polygon's signed area, and check a stage still with the seams in mind.
+- **Reference mode: the line art was dashes.** Thinning splits lines at every junction. → Join fragments whose ends
+  meet within 3 px and continue straight on, and drop weak lines (darkness under 22 % of the strongest).

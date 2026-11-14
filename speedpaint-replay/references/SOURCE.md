@@ -32,4 +32,6 @@ and a white card with rounded corners and a soft shadow.
 | the rough fading under the line art; the long line stage and the short finish | the post's text, and the claim about tracing |
 
 The engine, the drawings (the mug, the rainy-window girl) and the designs are this repo's own. Everything is drawn
-from a brief. The skill's rule "draw it, don't copy it" answers the question in the post: no reference image is traced.
+from a brief, except in reference mode. That mode answers the post's question: it does draw toward a target image,
+but only one the user owns or may use. It says so in the brief, and it still makes every mark as a code item
+(references/REFERENCE.md).

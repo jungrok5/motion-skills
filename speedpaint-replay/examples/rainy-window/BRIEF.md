@@ -8,7 +8,7 @@ new piece rather than re-rendering one.
 A girl with a black bob by a rainy window at dusk, looking out; cool window light on her face, a warm lamp behind her.
 
 ## Composition
-- crop: bust, head in the upper middle; the whole picture framed 1.22× about her face (`FRAME`)
+- crop: a tight bust, the face filling the card; the whole picture framed 1.5× about her face (`FRAME`)
 - head: cranium centre ≈ (525, 355) before framing; chin (466, 606); the head leans 4° (`HEAD.rot = -0.07`)
 - facing: left (toward the window). Head yaw −30°, roll −4°, pitch −6°; torso yaw −12°, roll 2°
 - background: a window on the left (glass, frame, mullion), a dark warm wall on the right; her soft shadow on the wall
@@ -54,3 +54,6 @@ rough 5 · line 15 · flat 6 · shadow 6.5 · highlight 5.5 · finish 5 · hold 
 | 4 | 8: the hair flashed in for one frame | engine: no paint before the brush moves; check.mjs "no pops" |
 | 5 | check: stylus off the card on window and arm lines | lines start and end at the picture's edge |
 | 5 | 7: body sheet — the face turns left as one, far eye .71 of the near; the mirror reads | pass |
+| 6 | self-review against the source: thin, sparse line art; flat colour; small centred figure; eyes mostly white | 1.5× crop; hair `strands` 5, `fly`, `passes` 2; crisp terminator across the face; `shade` gradients on hair, neck, knit; sheen strands along each lock; iris .33 × .78, eyes .86 open; colour grade + grain in the finish |
+| 6 | 4: raindrop specks on the face read as a rash, on the sweater as stains | removed: rain stays on the glass |
+| 6 | 2: the bangs base showed as a straight line | its lower edge raised under the lock bodies |

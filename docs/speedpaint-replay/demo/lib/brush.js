@@ -68,21 +68,28 @@ function width(it, s) {
 
 export function pen(ctx, it, u = 1) {
   const sCut = it.L * clamp(u); if (sCut <= .3) return null;
-  const left = [], right = [];
-  for (let i = 0; i < it.pts.length; i++) {
-    const s = it.cum[i];
-    if (s > sCut) break;
-    const w = width(it, s) / 2, [x, y] = it.pts[i], [nx, ny] = it.nrm[i];
-    left.push([x + nx * w, y + ny * w]); right.push([x - nx * w, y - ny * w]);
-  }
   const tip = at(it.pts, it.cum, sCut);
-  ctx.beginPath();
-  left.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
-  ctx.lineTo(tip[0], tip[1]);
-  for (let i = right.length - 1; i >= 0; i--) ctx.lineTo(right[i][0], right[i][1]);
-  ctx.closePath();
-  ctx.fillStyle = it.color; ctx.globalAlpha = it.alpha ?? 1;
-  ctx.fill();
+  ctx.fillStyle = it.color;
+  // passes > 1: a hand that goes over the line again — extra thinner, lighter strokes drifting off it (sketchy ink)
+  const passes = it.passes ?? 1;
+  for (let k = 0; k < passes; k++) {
+    const off = k ? (it.jitter ?? 1.6) : 0, wk = k ? .55 : 1, sd = (it.seed || 1) + k * 101;
+    const left = [], right = [];
+    for (let i = 0; i < it.pts.length; i++) {
+      const s = it.cum[i];
+      if (s > sCut) break;
+      const w = width(it, s) / 2 * wk, d = off * noise1(s / 37 + k * 7, sd), [x, y] = it.pts[i], [nx, ny] = it.nrm[i];
+      left.push([x + nx * (w + d), y + ny * (w + d)]); right.push([x - nx * (w - d), y - ny * (w - d)]);
+    }
+    if (!left.length) continue;
+    ctx.beginPath();
+    left.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+    if (!k) ctx.lineTo(tip[0], tip[1]);
+    for (let i = right.length - 1; i >= 0; i--) ctx.lineTo(right[i][0], right[i][1]);
+    ctx.closePath();
+    ctx.globalAlpha = (it.alpha ?? 1) * (k ? .45 : 1);
+    ctx.fill();
+  }
   ctx.globalAlpha = 1;
   return tip;
 }

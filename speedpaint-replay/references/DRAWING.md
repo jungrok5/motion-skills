@@ -34,6 +34,14 @@ s.eye({ side: 'L' | 'R', x, y, w, h, tilt, look: [dx, dy], iris: [top, bottom], 
 s.edge(pts, { w, side: 'l' | 'r', stage: 'highlight' | 'shadow', fill, clip, blur, taper });
 s.lens(a, b, w, { bow, stage, fill, clip, blur });
 s.bloom(x, y, r, { color, over, clip });
+s.hatch(pts, { angle, gap, w, len: [min, max], from: 'start' | 'end', curve, alpha });   // pen hatching inside a region
+s.shade(name, { from: [x,y], to: [x,y], color, amount, stage: 'shadow' | 'highlight' });  // light-direction gradient, clipped
+s.dapple([x, y, w, h], { count, r: [min, max], fill, clip, blur, alpha, stage });         // scattered soft specks
+s.grain(amount);                                                                           // finish: paper / brush grain
+s.ink(pts, { passes: 2, jitter: 1.6 });       // a hand that goes over the line again (sketchy ink)
+s.lock(ctrl, { strands: 5, fly: 1, passes: 2 });   // denser hair: strands of uneven length, flyaways, over-drawn edges
+s.lens(a, b, w, { abs: true });               // points already in picture space (e.g. a lock's returned line)
+s.markEye(side, x, y, w, h);                  // an eye box for the body check without drawing an eye (reference mode)
 
 // body check (characters)
 s.setPose({ facing: 'left' | 'right' | 'front', head: { yaw, roll, pitch }, torso: { yaw, roll } });
@@ -86,8 +94,9 @@ Author the head upright inside `s.push({ rot, ox, oy })`. For a face turned to t
   width. Mix big locks (w 50–80) with thin ones (w 30–35, `edges: 'l'`, `strands: 0`) between them.
 - Shade: `shade: 'l' | 'r'` puts a strip on the side away from the key. Add big soft shadows inside the mass, clipped to
   `'hair'`.
-- Sheen: many short `s.lens` strands of light along the head's curve (radial from about the crown), brighter on the
-  key side, over a soft `s.edge` band. One continuous zig-zag polygon looks like a crown.
+- Sheen: short `s.lens` strands *along each lock* (take `lock(...).line` / `.L` and pass `abs: true`), brighter on the
+  key side, over a soft `s.edge` band and an `s.shade('hair', { stage: 'highlight' })` from the key side. One zig-zag
+  polygon looks like a crown; radial strands look like a porcupine.
 - Rim: `s.edge` along the silhouette on the rim light's side, w 8–14, blur ~1.
 
 ## Objects
