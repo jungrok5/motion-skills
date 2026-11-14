@@ -1,0 +1,12 @@
+<!doctype html><meta charset="utf-8"><title>shishi · cast sheet</title>
+<script type="importmap">{ "imports": { "inkwater/": "../lib/" } }</script>
+<script type="module">
+// Cast sheet for 「狛獅子 · Guardian Lion」: 7 sides (front, 3/4 and side turned both ways, back) + the key poses.
+// Keep the body spec identical to index.html (or move it into a shared module, as examples/whale/whale.js does).
+import { CastSheet } from 'inkwater/cast.js';
+import { quadruped } from 'inkwater/body.js';
+const shishi = quadruped({ name: 'shishi', mane: 1.05, tail: { n: 7, len: .95, up: 40, curl: 85, r: .05 } });
+CastSheet({ cast: { shishi: { body: shishi, seed: 7 } },
+  poses: [{ name: 'stand', st: {} }, { name: 'walk', st: { s: .5, speed: 1 } }, { name: 'walk b', st: { s: 1.0, speed: 1 } },
+    { name: 'crouch', st: { crouch: 1, nod: .5 } }, { name: 'roar', st: { roar: 1, look: .4, crouch: .35 } }] });
+</script>
