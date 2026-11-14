@@ -31,6 +31,6 @@ and a white card with rounded corners and a soft shadow.
 | the stylus that follows the drawing tip | the Japanese UI text (this skill uses Korean or English labels; a translation of the same idea) |
 | the rough fading under the line art; the long line stage and the short finish | the post's text, and the claim about tracing |
 
-The engine, the drawings (the mug, the rainy-window girl) and the designs are this repo's own. Everything is drawn
+The engine, the starter drawing (the mug) and the designs are this repo's own. Everything is drawn
 from a brief, except in reference mode. That mode answers the post's question openly: it does draw toward a target
 image, and it still makes every mark as a code item (references/REFERENCE.md).

@@ -1,6 +1,6 @@
 // speedpaint-replay · new-piece.mjs — start a piece: copies the starter (or an example) and the skill's lib/.
 //   node <skill>/scripts/new-piece.mjs my-piece                        → my-piece/{BRIEF.md, piece.html, art.js, lib/}
-//   node <skill>/scripts/new-piece.mjs my-piece --from rainy-window    (start from the worked example instead)
+//   node <skill>/scripts/new-piece.mjs my-piece --from reference-ginkgo   (start from a reference-mode example instead)
 // Then: write BRIEF.md for YOUR subject first (references/BRIEF.md) and draw it — the starter is an example of the
 // style, not a template to fill in.
 import { cpSync, existsSync, mkdirSync, readdirSync, renameSync, readFileSync, writeFileSync } from 'node:fs';

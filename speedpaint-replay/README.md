@@ -9,12 +9,12 @@ and the replay draws toward it (reference mode). HTML Canvas with a bundled
 Korean font (Pretendard, OFL) and no image files: one page plays live and renders to a 1080×1220 MP4.
 
 ```bash
-cd examples/rainy-window
-node ../../scripts/render.mjs index.html --stages --scale .5        # end of each stage + finished → out/rainy-window-stage-*.png
-node ../../scripts/render.mjs index.html --sheet 24 --scale .5      # 24 moments → out/rainy-window-sheet.jpg
-node ../../scripts/check.mjs index.html                             # stages, items, no pops, stylus, determinism, body → out/rainy-window-body.png
-node ../../scripts/render.mjs index.html                            # 47 s film → out/rainy-window.mp4 in ~30 s
-node ../../scripts/new-piece.mjs ../../../my-piece                  # start your own (or --from rainy-window)
+cd examples/reference-ginkgo
+node ../../scripts/render.mjs index.html --stages --scale .5        # end of each stage + finished → out/reference-ginkgo-stage-*.png
+node ../../scripts/render.mjs index.html --sheet 24 --scale .5      # 24 moments → out/reference-ginkgo-sheet.jpg
+node ../../scripts/check.mjs index.html                             # stages, items, no pops, stylus, determinism, body → out/reference-ginkgo-body.png
+node ../../scripts/render.mjs index.html                            # 51 s film → out/reference-ginkgo.mp4 in ~30 s
+node ../../scripts/new-piece.mjs ../../../my-piece                  # start your own from the starter (a piece drawn from a brief)
 # reference mode: the replay draws toward a picture you give it
 node ../../scripts/new-piece.mjs ../../../my-ref --from reference-mode
 cd ../../../my-ref && node <skill>/scripts/from-image.mjs picture.png --out ref.js --debug out/ref   # look at out/ref/grid.png, write plan.json
@@ -25,8 +25,6 @@ Requirements: Node + Playwright Chromium, ffmpeg. No network, no npm install, no
 layers: about 25 ms a frame).
 To watch a page live, serve its folder (`python3 -m http.server`); it is an ES module. Click a stage chip to jump to it.
 
-Example: `examples/rainy-window/` 「비 오는 창가」 (47 s): a girl with a black bob by a rainy window at dusk, cool window
-light from the side she faces, a warm lamp rim from behind, city bokeh and rain on the glass in the finish.
 Starter: `templates/` 「아침 커피」 (28 s): a mug on a saucer in morning light with window-frame shadows and steam.
 Reference mode: `examples/reference-mode/` 「벚꽃 노을」 (51 s): the replay draws toward a picture the way a painter
 would make it. The agent writes `plan.json` after looking at the picture (construction, a rough lasso per material,

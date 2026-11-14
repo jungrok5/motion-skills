@@ -19,11 +19,11 @@ Made in this repo after an X post by 余白とインク (@yohakutoink) —
 https://x.com/yohakutoink/status/2120824797215310208?a=-D3pDsiFMNVDxo3e18k&s=19 (47 s: a model was asked to draw an
 anime portrait in code, and the replay page shows it go from a blue head circle to a finished, lit painting; the author
 half-suspected it had traced the original). This skill takes the *format*: the page, the six stages and how each one
-looks and moves, the stylus. It does not take the portrait or its character (references/SOURCE.md). Worked example:
-`examples/rainy-window` 「비 오는 창가」 (47 s: a girl with a black bob by a rainy window at dusk, cool window light, warm
-lamp rim). Starter: `templates/` 「아침 커피」 (28 s, a mug in morning light). Reference mode: `examples/reference-mode` 「벚꽃 노을」
-(51 s: the replay draws toward a given picture, here an image generated with ElevenLabs) and `examples/reference-ginkgo`
-「은행잎 저녁」 (51 s, a 2048 px reference with clear line art). Live: https://jungrok5.github.io/motion-skills/speedpaint-replay/
+looks and moves, the stylus. It does not take the portrait or its character (references/SOURCE.md). Worked examples
+(reference mode): `examples/reference-ginkgo` 「은행잎 저녁」 (51 s: a boy in glasses under a street lamp, from a 2048 px
+picture with clear line art) and `examples/reference-mode` 「벚꽃 노을」 (51 s: a silver-haired girl at sunset); both
+pictures were generated with ElevenLabs. Starter (drawn from a brief): `templates/` 「아침 커피」 (28 s, a mug in
+morning light). Live: https://jungrok5.github.io/motion-skills/speedpaint-replay/
 
 **Fixed by the style** (every piece): the 1080×1220 page; beige UI, the title, the note, the six chips (orange = now),
 the rounded white card with a soft shadow; the stylus that follows the tip of whatever is being drawn, glides between
@@ -52,11 +52,10 @@ language if the audience needs it.
 | `lib/core.js` | seeded random, easing, Catmull-Rom spline, resample, arc, bbox, normals, transforms, colour |
 | `lib/fonts/` | Pretendard SemiBold + Bold (KS X 1001 subset: all 2,350 common Hangul + Latin), OFL licence beside them |
 | `templates/` | 「아침 커피」 starter: `index.html`, `art.js`, `BRIEF.md`. This is what `new-piece.mjs` copies |
-| `examples/rainy-window/` | the worked example: `BRIEF.md` (design + review log), `index.html`, `art.js` |
 | `examples/reference-ginkgo/` | reference mode, second sample: a 2048 px picture with clear line art (dark hair, glasses, night light); same files |
 | `examples/reference-mode/` | reference mode: `reference.jpg` (the picture it draws toward), `plan.json` (what the agent saw in it: construction, material lassos, order of work), `ref.js` (measured), `art.js`, `BRIEF.md` |
 | `scripts/from-image.mjs` | reference mode: picture (+ `plan.json`) → `ref.js`: ink strokes with widths, contour strokes where materials meet without a drawn line, materials from rough lassos snapped by colour, tone shapes with edge softness, airbrush dabs, detail strokes, order of work; `--debug` writes grid / lines / materials / tones / predicted-finish sheets |
-| `scripts/new-piece.mjs` | start a piece (starter, or `--from rainy-window`) |
+| `scripts/new-piece.mjs` | start a piece (starter, or `--from reference-ginkgo` / `--from reference-mode`) |
 | `scripts/render.mjs` | stills, `--stages` (end of each stage + finished), contact sheets, the MP4 (workers × ffmpeg) |
 | `scripts/check.mjs` | loads clean; every stage has items and time; every item leaves a mark; no fill pops in; stylus on the card; covered, not black or blown out; glyphs; deterministic; body check + body sheet |
 | `references/` | **SOURCE** (the post, beat by beat; what is / is not taken) · **BRIEF** (template + still rubric) · **LOOK** (the page, stages, timing, colour) · **DRAWING** (how to draw a piece in items: API, order, layering, faces, hair) · **REFERENCE** (reference mode: what may be used, how it measures, how to tune) · **BODY** (pose and body check) · **LESSONS** |
@@ -85,6 +84,9 @@ layers, so a frame costs about 25 ms whatever the piece holds: a 50 s film rende
    - the FINISH: what the last stage adds that says the mood (rain on glass, sun rays, steam, petals, a neon sign).
    - the TIMINGS: seconds per stage. Line art is the longest stage; the finish is short and sure.
 
+   Which mode? Drawing from a brief (coordinates written by hand) suits objects and simple scenes. For a detailed
+   character illustration, get a picture first (the user's, or a generated one) and use reference mode: a
+   hand-authored portrait of a few hundred items does not reach an illustrator's level (LESSONS.md).
    If the user brings a reference video, extract stills (`ffmpeg -i ref.mp4 -vf fps=1/2,scale=360:-1,tile=6x4
    sheet.jpg`), note what the stages do, then design your own picture.
    **Reference mode** (the user gives a picture and wants the replay to draw *that*): follow references/REFERENCE.md.
@@ -93,7 +95,7 @@ layers, so a frame costs about 25 ms whatever the piece holds: a 50 s film rende
    rough lasso per material (skin, hair, cloth …) with sample points, and the order of work (eyes → face → hair →
    body). The tool measures the rest. Judge the flats sheet first: a handful of colours, one per material. You still
    own the stage timings and the body marks. Then continue at step 8.
-2. **Start**: `node <skill>/scripts/new-piece.mjs my-piece` (or `--from rainy-window`, or `--from reference-mode`).
+2. **Start**: `node <skill>/scripts/new-piece.mjs my-piece` (or `--from reference-ginkgo` for reference mode).
 3. **Rough**: blue construction in the order a painter would make it. For a figure: head circle, jaw, centre line
    (curved by the turn), eye / nose / mouth lines, eye ellipses, neck, shoulder line, hair silhouette. For an object:
    axis, ellipses, boxes. Render `--stills 4` and fix the proportions *here*. Everything after is laid on it.
@@ -120,7 +122,7 @@ layers, so a frame costs about 25 ms whatever the piece holds: a 50 s film rende
     is silent; add music only if the user asks (`--audio music.wav`).
 
 ## Rules
-- **Design per subject.** The mug and the rainy-window girl are examples of the style, not menus. A new subject gets
+- **Design per subject.** The mug and the two reference pieces are examples of the style, not menus. A new subject gets
   its own composition, design, palette, light and finish. Reuse the *helpers* (`lock`, `eye`, `edge`, `lens`), never
   another piece's coordinates.
 - **One style.** Every piece goes through the same six stages with the same marks. New things you draw use the same

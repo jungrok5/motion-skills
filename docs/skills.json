@@ -1628,7 +1628,7 @@
       "id": "speedpaint-replay",
       "name": "speedpaint-replay",
       "tagline": "주제 하나를 주면 새 일러스트를 설계하고, 그 그림을 코드로 그리는 과정을 메이킹 영상으로 보여 줍니다. 베이지색 페이지에 단계 칩 여섯 개(러프 · 선화 · 밑색 · 그림자 · 하이라이트 · 마무리)가 있고, 하얀 펜이 파란 밑그림, 덧그어지는 펜 선, 붓으로 칠하는 밑색, 클리핑 레이어 그림자, 림 라이트와 머리 윤기, 빛과 보케의 마무리까지 차례로 그립니다. 그림 한 장을 주면 사람이 그리는 순서(구조 → 선화 → 재질별 밑색 → 명암 → 블렌딩 → 세부 묘사)대로 그 그림을 그려 가는 레퍼런스 모드도 있고, 이미지 파일 없이 1080×1220 MP4와 라이브 페이지로 냅니다.",
-      "posterAlt": "speedpaint-replay로 만든 「비 오는 창가」의 네 단계를 나란히 놓은 그림: 파란 러프 선으로 그린 머리 원과 눈 타원 위의 하얀 펜, 검은 펜으로 그린 단발머리 소녀의 선화, 밑색과 그림자가 들어간 얼굴과 머리, 머리 윤기와 하이라이트가 들어간 완성 단계",
+      "posterAlt": "speedpaint-replay로 만든 「은행잎 저녁」의 네 단계를 나란히 놓은 그림: 파란 선으로 잡은 머리 원과 안경 원의 러프, 검은 펜으로 그린 안경 쓴 소년의 선화, 피부 · 검은 머리 · 겨자색 목도리에 밑색과 그림자가 들어간 단계, 가로등 빛까지 들어간 완성 단계",
       "poster": "speedpaint-replay/poster.jpg",
       "tags": [
         "2D 캔버스",
@@ -1638,14 +1638,14 @@
         "이미지 파일 0개"
       ],
       "stats": [
-        "예제 3편 · 47–51초",
+        "예제 2편 · 51초",
         "6단계 · 레퍼런스 모드"
       ],
       "page": "speedpaint-replay/",
       "source": "speedpaint-replay/",
       "absorbedFrom": {
         "repo": "https://github.com/jungrok5/motion-skills",
-        "path": "speedpaint-replay/examples/rainy-window/"
+        "path": "speedpaint-replay/examples/reference-ginkgo/"
       },
       "sources": [
         {
@@ -1655,16 +1655,12 @@
       ],
       "workedExample": [
         {
-          "title": "「비 오는 창가」 · 검은 단발머리 소녀, 차가운 창빛과 따뜻한 램프 · 47초 · 라이브 페이지",
-          "url": "https://jungrok5.github.io/motion-skills/speedpaint-replay/demo/rainy-window/"
+          "title": "「은행잎 저녁」 · 레퍼런스 모드, 2048 px 그림 · 51초 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/speedpaint-replay/demo/reference-ginkgo/"
         },
         {
           "title": "「벚꽃 노을」 · 레퍼런스 모드, 일레븐랩스로 만든 그림을 사람이 그리는 순서로 · 51초 · 라이브 페이지",
           "url": "https://jungrok5.github.io/motion-skills/speedpaint-replay/demo/reference-mode/"
-        },
-        {
-          "title": "「은행잎 저녁」 · 레퍼런스 모드, 2048 px 그림 · 51초 · 라이브 페이지",
-          "url": "https://jungrok5.github.io/motion-skills/speedpaint-replay/demo/reference-ginkgo/"
         }
       ]
     }

@@ -88,3 +88,8 @@
   Strokes whose middle lies outside every lasso rank at 12 %.
 - **Does a larger reference ink better? Yes.** The 2048 px sample (reference-ginkgo) gives long clean strokes on the
   coat, glasses and face where the 720 px one broke into dashes. Lit, wispy edges still break up.
+- **The hand-authored portrait was removed.** The first worked example (「비 오는 창가」, a girl by a rainy window, about
+  240 items with coordinates written by hand) stayed well below the source's level after several rounds: flat cel
+  shapes, toy-like proportions. The owner had it deleted. → Draw from a brief for objects and simple scenes (the mug);
+  for a detailed character, get a picture first and use reference mode. The problems above that name that example
+  are kept because the fixes live in the engine.
