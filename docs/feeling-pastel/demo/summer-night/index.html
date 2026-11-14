@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>feeling-pastel</title>
+<!-- "fp/" → the drawing library. A project made by new-piece.mjs has its own lib/ copy beside this page. -->
+<script type="importmap">{ "imports": { "fp/": "../lib/" } }</script>
+<style>
+  :root { color-scheme: dark; --bg: #16141c; --ink: #e9e2d6; --mute: #9c94a6; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 14px/1.4 system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; }
+  main { min-height: 100%; display: grid; place-items: center; padding: 10px; }
+  figure { margin: 0; width: min(100%, calc((100vh - 84px) * 16 / 9)); }
+  canvas { display: block; width: 100%; aspect-ratio: 16 / 9; background: #e7ddcc; border-radius: 2px; box-shadow: 0 10px 40px #0008; }
+  figcaption { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; justify-content: space-between; margin-top: 8px; color: var(--mute); font-size: 12px; }
+  figcaption b { color: var(--ink); font-weight: 600; }
+  .bar { flex: 1 1 120px; height: 3px; background: #ffffff1a; border-radius: 2px; overflow: hidden; min-width: 80px; }
+  .bar i { display: block; height: 100%; width: 0; background: #f1b98f; }
+  button { font: inherit; color: var(--ink); background: #ffffff12; border: 1px solid #ffffff22; border-radius: 6px; padding: 3px 8px; cursor: pointer; }
+  button:hover { background: #ffffff22; }
+</style>
+</head>
+<body>
+<main><figure>
+  <canvas aria-label="파스텔로 그려지는 그림"></canvas>
+  <figcaption>
+    <span><b id="title"></b> · <span id="stage"></span></span>
+    <span class="bar"><i id="prog"></i></span>
+    <span><button id="again" type="button">다시 그리기</button> <button id="skip" type="button">바로 완성</button> <button id="save" type="button">PNG</button></span>
+  </figcaption>
+</figure></main>
+<script type="module">
+  import { play } from 'fp/live.js';
+  import { art } from './art.js';
+  const q = new URLSearchParams(location.search);
+  const canvas = document.querySelector('canvas');
+  let run;
+  const start = () => {
+    run?.stop();
+    run = play(canvas, art, {
+      seconds: +(q.get('s') || 30),
+      onProgress: (s) => { document.getElementById('title').textContent = s.title; document.getElementById('stage').textContent = s.done ? '완성' : s.stage; document.getElementById('prog').style.width = (s.progress * 100).toFixed(1) + '%'; },
+    });
+    if (q.has('done')) run.finish();
+    else if (q.has('stage')) run.finish(+q.get('stage'));
+  };
+  document.getElementById('again').onclick = start;
+  document.getElementById('skip').onclick = () => run.finish();
+  document.getElementById('save').onclick = () => canvas.toBlob((b) => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'piece.png'; a.click(); });
+  start();
+</script>
+</body>
+</html>
