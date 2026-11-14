@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hero animation review</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #8c8ea0; overflow: hidden; font: 500 13px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  #stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; }
+  .hud { position: fixed; left: 18px; top: 14px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.25); pointer-events: none; letter-spacing: .02em; }
+  .hud b { font-weight: 600; font-size: 14px; display: block; margin-bottom: 2px; }
+  .inset { position: fixed; right: 18px; top: 14px; width: 19vw; min-width: 96px; max-width: 260px; aspect-ratio: 8 / 9; border: 2px solid rgba(255,255,255,.85); background: #5c5e6a; overflow: hidden; }
+  .inset img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .bar { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: center; max-width: calc(100% - 24px); }
+  .bar button { font: inherit; color: #fff; background: rgba(30,32,44,.55); border: 1px solid rgba(255,255,255,.35); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+  .bar button.on { background: rgba(255,255,255,.9); color: #23242c; }
+  .bar input { width: min(260px, 40vw); accent-color: #fff; }
+  body.capture .bar { display: none; }
+</style>
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
+</head>
+<body>
+<div id="stage"></div>
+<div class="hud"><b id="title">HERO / ANIMATION REVIEW</b><span id="clip">–</span><br><span id="frame">–</span></div>
+<div class="inset" id="inset" hidden><img id="back" alt="back-view concept"></div>
+<div class="bar" id="bar"><button id="play" class="on">❚❚</button><input id="scrub" type="range" min="0" max="1000" value="0"></div>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from './vendor/jsm/loaders/GLTFLoader.js';
+
+// The review scene from the source workflow: grey floor, fixed camera, back-view concept in the corner.
+// Blender is Z-up; glTF / three.js is Y-up: (x, y, z)_blender -> (x, z, -y).
+const q = new URLSearchParams(location.search);
+const base = q.get('src') || '.';
+const meta = await (await fetch(`${base}/meta.json`)).json();
+const B = (v) => new THREE.Vector3(v[0], v[2], -v[1]);
+
+document.body.style.background = meta.review.bg;
+document.getElementById('title').textContent = meta.review.title || 'HERO / ANIMATION REVIEW';
+if (q.has('capture')) document.body.classList.add('capture');
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.NoToneMapping;
+document.getElementById('stage').appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(meta.review.bg);
+scene.fog = new THREE.Fog(meta.review.bg, 6, 16);
+const cam = new THREE.PerspectiveCamera(20, 16 / 9, 0.05, 60);
+cam.position.copy(B(meta.camera.loc));
+const target = B(meta.camera.target);
+cam.lookAt(target);
+const lensV = (lens, aspect) => 2 * Math.atan(36 / Math.max(aspect, 1) / 2 / lens) * 180 / Math.PI;
+
+// floor + grid (0.25 m)
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshStandardMaterial({ color: meta.review.floor, roughness: .9 }));
+floor.rotation.x = -Math.PI / 2;
+floor.receiveShadow = true;
+scene.add(floor);
+const grid = new THREE.GridHelper(40, 160, meta.review.grid || '#6d6f80', meta.review.grid || '#6d6f80');
+grid.position.y = 0.001;
+grid.material.transparent = true; grid.material.opacity = .55;
+scene.add(grid);
+
+scene.add(new THREE.HemisphereLight(0xdfe3f0, 0x55576a, 1.4));
+const key = new THREE.DirectionalLight(0xfff6ec, 2.2);
+key.position.copy(target).add(new THREE.Vector3(-2.2, 3.2, 2.6));
+key.target.position.copy(target);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+Object.assign(key.shadow.camera, { left: -2.5, right: 2.5, top: 2.5, bottom: -2.5, near: .5, far: 12 });
+key.shadow.radius = 6;
+key.shadow.bias = -0.0005;
+scene.add(key, key.target);
+const fill = new THREE.DirectionalLight(0xe8edff, 0.9);
+fill.position.copy(cam.position).add(new THREE.Vector3(1.5, 0.5, 0));
+scene.add(fill);
+const rim = new THREE.DirectionalLight(0xffffff, 1.2);
+rim.position.copy(target).add(new THREE.Vector3(1.2, 2.6, -3.0));
+scene.add(rim);
+
+const gltf = await new GLTFLoader().loadAsync(`${base}/character.glb`);
+const hero = gltf.scene;
+hero.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
+scene.add(hero);
+const mixer = new THREE.AnimationMixer(hero);
+const clip = gltf.animations[0];
+const action = mixer.clipAction(clip);
+action.play();
+const DURATION = meta.duration ?? clip.duration;
+const N = meta.n ?? Math.round(DURATION * (meta.fps || 24)) + 1;
+
+if (meta.back) {
+  document.getElementById('back').src = `${base}/${meta.back}`;
+  document.getElementById('inset').hidden = false;
+}
+
+function label(t) {
+  let c = meta.clips[0];
+  for (const k of meta.clips) if (t >= k.t0 - 1e-6) c = k;
+  const kind = ['walk', 'turn', 'spin'].includes(c.type) ? 'locomotion' : 'in place';
+  return `${c.label[0].toUpperCase() + c.label.slice(1)} [${kind}]  ${(t - c.t0).toFixed(2)} s`;
+}
+
+function size() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false);
+  cam.aspect = w / h;
+  // keep the Blender framing: same vertical field when wide, widen when tall (phones)
+  const v = lensV(meta.camera.lens, 16 / 9);
+  cam.fov = cam.aspect >= 16 / 9 ? v : 2 * Math.atan(Math.tan(v * Math.PI / 360) * (16 / 9) / cam.aspect) * 180 / Math.PI;
+  cam.updateProjectionMatrix();
+}
+addEventListener('resize', size);
+size();
+
+let t = 0, playing = !q.has('capture'), last = performance.now();
+function draw() {
+  mixer.setTime(Math.min(t, clip.duration - 1e-4));
+  renderer.render(scene, cam);
+  const f = Math.min(N, Math.floor(t * (meta.fps || 24) + 1e-6) + 1);
+  document.getElementById('clip').textContent = label(t);
+  document.getElementById('frame').textContent = `${f} / ${N}`;
+  document.getElementById('scrub').value = Math.round(t / DURATION * 1000);
+}
+function loop(now) {
+  const dt = Math.min(0.1, (now - last) / 1000);
+  last = now;
+  if (playing) { t += dt; if (t > DURATION) t = 0; }
+  draw();
+  requestAnimationFrame(loop);
+}
+document.getElementById('play').onclick = (e) => { playing = !playing; e.target.textContent = playing ? '❚❚' : '▶'; e.target.classList.toggle('on', playing); };
+document.getElementById('scrub').oninput = (e) => { t = e.target.value / 1000 * DURATION; playing = false; document.getElementById('play').textContent = '▶'; document.getElementById('play').classList.remove('on'); };
+for (const c of meta.clips) {
+  const b = document.createElement('button');
+  b.textContent = c.label;
+  b.onclick = () => { t = c.t0; };
+  document.getElementById('bar').appendChild(b);
+}
+
+// contract: seek(t) renders that instant; DURATION; __ready
+window.DURATION = DURATION;
+window.seek = (s) => { t = Math.max(0, Math.min(DURATION, s)); draw(); };
+window.__ready = true;
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

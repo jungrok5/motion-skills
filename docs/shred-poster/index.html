@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>shred-poster · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 그 주제만의 타이포 포스터를 새로 디자인하고, 그 포스터가 찢어지고 리본으로 쏟아지고 파쇄기를 지나 한 줄씩 다시 맞춰지는 8초 세로 루프 영상을 만듭니다.">
+<meta property="og:title" content="shred-poster · motion-skills">
+<meta property="og:description" content="주제 하나를 주면 그 주제만의 타이포 포스터를 새로 디자인하고, 그 포스터가 찢어지고 리본으로 쏟아지고 파쇄기를 지나 한 줄씩 다시 맞춰지는 8초 세로 루프 영상을 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/shred-poster/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/shred-poster">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / shred-poster</nav>
+  <h1>shred-poster</h1>
+  <p>주제 하나를 주면 그 주제만의 타이포 포스터(문구와 위계, 그리드, 서체, 강조색 하나, 코드로 그린 하프톤 그림, 주제의 표식)를 새로 디자인하고, 그 포스터가 띠로 찢어지고, 종이 리본으로 쏟아지고, 파쇄기 칼날을 지나, 한 줄씩 다시 맞춰지는 8초 세로 루프 영상(1080×1920, 60fps)을 만듭니다. 종이 질감과 파쇄기는 three.js로, 소리는 화면의 타이밍에서 합성해 −14 LUFS로 맞춥니다. HTML 한 파일이 브라우저에서 반복 재생되고 프레임 단위로 MP4가 됩니다. 원본: Amir Mušić의 <a href="https://github.com/amirmushichge/shred-kit">amirmushichge/shred-kit</a>(Blender 템플릿)과 그 영상을 올린 <a href="https://x.com/AmirMushich/status/2121339167800213934?a=knMN6C_A1VHmWGGzS4c&s=19">X 게시물</a>을 보고 만들었습니다. 원본은 GPL-3.0이라 코드는 가져오지 않았고, 방법만 분석해 엔진을 새로 썼습니다.</p>
+  <ul class="tags"><li>타이포 포스터 · 주제마다 새 디자인</li><li>9:16 · 8초 루프</li><li>three.js 종이 · 파쇄기</li><li>합성 사운드 −14 LUFS</li><li>MP4 · 라이브 페이지</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 한 줄 (행사 · 브랜드 · 모임 · 책 · 단어)과 올릴 곳</dd>
+      <dt>브리프</dt><dd>히어로 문구와 나머지 문구의 길이, 그리드 스케치, 서체, 종이 · 잉크 · 강조색, 그림, 주제의 표식, 띠 수와 착지 순서, 바닥 · 파쇄기 색 · 그레이드 · 소리 성격</dd>
+      <dt>포스터</dt><dd>레이아웃 키트(<code>P.fit</code> · <code>P.crop</code> · <code>P.columns</code> · <code>P.halftone</code> · <code>P.band</code> · <code>P.mark</code>)와 캔버스로 직접 그리는 포스터, 몇 초 만에 나오는 <code>poster.png</code></dd>
+      <dt>네 샷</dt><dd>훅(읽히는 첫 프레임 → 찢김 → 돌진) · 리본 캐스케이드 · 파쇄기 인셋 · 착지 파도와 이음매 없는 루프, 스틸 채점과 자동 점검</dd>
+      <dt>출력</dt><dd>HTML 한 파일(라이브 재생, 누르면 소리), 1080×1920 60fps MP4, 사운드 WAV, 프레임 단위 큐 시트</dd>
+    </dl>
+    <pre><code>node shred-poster/scripts/render.mjs shred-poster/examples/toego --poster  # out/poster.png
+node shred-poster/scripts/render.mjs shred-poster/examples/toego --sheet   # out/sheet.jpg
+node shred-poster/scripts/check.mjs  shred-poster/examples/toego           # 자동 점검
+node shred-poster/scripts/render.mjs shred-poster/examples/toego           # out/film.mp4
+
+node shred-poster/scripts/new-film.mjs my-poster                           # 새 주제
+node shred-poster/scripts/font.mjs add my-poster "Space Grotesk" 700</code></pre>
+    <p class="mute">요구 사항: Node 18+, Playwright Chromium, ffmpeg, 서체마다 npm 한 번. GPU 없이도 렌더됩니다(4코어 CPU에서 최종 480프레임에 약 40분, 초안은 3–4분). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/shred-poster/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:4/5;--h-phone:640px;--demo-bg:#171512">
+    <iframe data-src="demo/toego/" title="shred-poster 예제 실시간 재생" allow="fullscreen; autoplay" allowfullscreen></iframe>
+    <noscript><a href="demo/toego/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/toego</code> · 「퇴고」 8초 루프 · 화면을 누르면 소리</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/toego/" data-cap="예제 &lt;code&gt;examples/toego&lt;/code&gt; · 「퇴고」 8초 루프 · 화면을 누르면 소리" aria-pressed="true">퇴고</button>
+        <button class="btn" type="button" data-src="demo/starter/" data-cap="스타터 &lt;code&gt;starter&lt;/code&gt; · 「SWIM at first light」 · 다른 주제로 만든 최소 포스터" aria-pressed="false">스타터</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본은 한 가지 레이아웃(일곱 줄의 문구 칸)에 단어와 색만 바꿔 넣는 템플릿입니다. 이 스킬은 주제마다 포스터를 새로 디자인합니다. 예제 「퇴고」는 초고를 들고 와 함께 고쳐 쓰는 토요일 글쓰기 모임의 포스터로, 원고지 칸에 한 글자씩 앉힌 본문과 빨간 펜의 교정부호(자리바꿈 · 지움 · 끼움)를 그렸고, 다시 맞춰지는 순서도 가운데 문장부터 바깥으로 정했습니다. 카드를 누르면 라이브 페이지가 그 순간부터 재생됩니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"film":"퇴고","new":"다른 주제"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>퇴고 <small>8초 · 네 샷 · 원고지와 교정부호</small></h3>
+      <p>Noto Serif KR 900/400, 원고지 크림 · 먹 · 주홍 하나. 28개 띠, 나무 책상, 짙은 녹색 파쇄기, 가벼운 원고지 소리.</p>
+      <div class="grid tall">
+        <a class="tile" data-tags="film" href="demo/toego/?t=0" target="_blank" rel="noopener"><img src="samples/toego-poster.jpg" alt="책상 위의 퇴고 포스터: 주홍 띠 위 큰 글씨 퇴고와 推敲, 고쳐 쓰는 동안, 원고지 칸의 본문과 연필 하프톤, 아래에 다시 쓰기" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">훅 · 0초</span><b>첫 프레임</b><span class="how">완성된 포스터가 그대로 읽히는 첫 장면</span></div></a>
+        <a class="tile" data-tags="film" href="demo/toego/?t=0.3" target="_blank" rel="noopener"><img src="samples/toego-rip.jpg" alt="포스터의 띠들이 위에서부터 옆으로 찢겨 나가고 카메라가 퇴고 글자로 다가가는 장면" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">훅 · 0.3초</span><b>찢김과 돌진</b><span class="how">위에서부터 10ms 간격으로 찢기는 띠, 히어로 줄로 다가가는 카메라</span></div></a>
+        <a class="tile" data-tags="film" href="demo/toego/?t=1.4" target="_blank" rel="noopener"><img src="samples/toego-ribbon.jpg" alt="비스듬히 쌓인 종이 리본들 사이로 주홍색 리본에 퇴고 推敲가 길게 이어지는 장면" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">캐스케이드 · 1.4초</span><b>히어로 리본</b><span class="how">히어로 줄을 길게 자른 주홍 리본, 높이 맵 더미로 서로 뚫지 않는 리본</span></div></a>
+        <a class="tile" data-tags="film" href="demo/toego/?t=3.1" target="_blank" rel="noopener"><img src="samples/toego-bite.jpg" alt="크림색 바탕 위 인셋 안에서 원고지 본문이 파쇄기 칼날 사이로 들어가는 장면" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">파쇄기 · 3.1초</span><b>물림</b><span class="how">아래부터 들어가는 포스터, 칼날 원판, 포스터 종이색 바탕의 인셋</span></div></a>
+        <a class="tile" data-tags="film" href="demo/toego/?t=4.0" target="_blank" rel="noopener"><img src="samples/toego-curtain.jpg" alt="칼날 아래에서 올려다본 종이 띠의 커튼, 띠마다 잘린 글자 조각" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">파쇄기 · 4.0초</span><b>띠의 커튼</b><span class="how">칼날 밑으로 들어가 올려다본 커튼, 잘려 나오는 아래 줄</span></div></a>
+        <a class="tile" data-tags="film" href="demo/toego/?t=5.6" target="_blank" rel="noopener"><img src="samples/toego-rebuild.jpg" alt="가운데 줄부터 제자리에 맞춰지고 위아래 띠들이 아직 좌우로 어긋난 포스터" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">다시 맞춤 · 5.6초</span><b>가운데부터</b><span class="how">가운데 문장부터 바깥으로 착지하는 파도, 착지마다 딸깍</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>다른 주제 <small>스타터</small></h3>
+      <p>같은 엔진으로 전혀 다른 주제(새벽 바다 수영 모임)를 디자인한 최소 포스터입니다. 새 포스터는 이 폴더를 복사해 시작합니다.</p>
+      <div class="grid tall">
+        <a class="tile" data-tags="new" href="demo/starter/?t=0" target="_blank" rel="noopener"><img src="samples/starter-poster.jpg" alt="회색 콘크리트 위의 포스터: 노란 띠 위 SWIM, at first light, 해와 물결 하프톤, 아래에 SWIM" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">훅 · 0초</span><b>SWIM at first light</b><span class="how">Archivo Black, 시그널 노랑, 차가운 항구 콘크리트</span></div></a>
+        <a class="tile" data-tags="new" href="demo/starter/?t=1.3" target="_blank" rel="noopener"><img src="samples/starter-ribbon.jpg" alt="노란 리본에 SWIM이 이어지고 하프톤과 본문이 인쇄된 리본들이 쌓인 장면" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">캐스케이드 · 1.3초</span><b>노란 리본</b><span class="how">같은 문법, 다른 포스터</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 이 스킬로 처음 만든 예제와, 스킬을 만든 출처입니다.</p>
+  <div class="works">
+    <a class="work" href="https://jungrok5.github.io/motion-skills/shred-poster/demo/toego/" target="_blank" rel="noopener"><b>「퇴고」 · 토요 퇴고 모임</b><span>8초 · 1080×1920 · 60fps · 라이브 페이지</span><span class="url">shred-poster/demo/toego</span></a>
+    <a class="work" href="https://github.com/amirmushichge/shred-kit"><b>원본 레포 · amirmushichge/shred-kit</b><span>스킬의 출처 · Blender 템플릿 (GPL-3.0, 코드는 가져오지 않음)</span><span class="url">github.com/amirmushichge/shred-kit</span></a>
+    <a class="work" href="https://x.com/AmirMushich/status/2121339167800213934?a=knMN6C_A1VHmWGGzS4c&s=19"><b>Amir Mušić의 X 게시물</b><span>스킬로 만들어 달라며 받은 링크 · 세로 릴 8초</span><span class="url">x.com/AmirMushich</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shred-poster/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/shred-poster">폴더</a> <span>lib · scripts · references · starter · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shred-poster/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shred-poster/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 포스터와 스틸 채점 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shred-poster/references/LOOK.md">references/LOOK.md</a> <span>스타일을 만드는 것 (네 샷의 시계, 편집, 종이, 빛, 소리)</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shred-poster/references/KIT.md">references/KIT.md</a> <span>레이아웃 키트와 모든 옵션</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shred-poster/references/SOURCE.md">references/SOURCE.md</a> <span>원본에서 배운 것, 가져오지 않은 것</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shred-poster/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 서체: Noto Serif KR, Archivo (SIL OFL) · 그림과 소리는 모두 코드로 만듦
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

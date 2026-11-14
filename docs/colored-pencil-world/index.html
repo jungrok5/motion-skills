@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>colored-pencil-world · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 스케치북에 색연필로 그린 3D 세계와 그 안을 걷는 사람의 영상을 만듭니다. 사물마다 자기 결을 따라 칠한 색연필 선이 사물에 붙어 있어 시점이 움직여도 흐르지 않고, 빛은 노란 색연필, 그늘은 보라 색연필로 겹쳐 칠합니다. 모두 코드로 만들고, W A S D로 걸어 볼 수 있는 라이브 페이지와 1080p MP4를 냅니다.">
+<meta property="og:title" content="colored-pencil-world · motion-skills">
+<meta property="og:description" content="주제 하나를 주면 스케치북에 색연필로 그린 3D 세계와 그 안을 걷는 사람의 영상을 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/colored-pencil-world/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/colored-pencil-world">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / colored-pencil-world</nav>
+  <h1>colored-pencil-world</h1>
+  <p>주제 하나를 주면 스케치북 한 장에 색연필로 그린 3D 세계와 그 안을 걷는 사람의 영상을 만듭니다. 완성된 화면에 필터를 씌우는 것이 아니라, 벽 · 지붕 기와 · 물 · 나뭇잎 · 옷자락마다 선이 흐르는 방향을 갖고 있어 색연필 선이 사물에 붙어 있고 시점이 움직여도 흐르지 않습니다. 색은 흰 종이 위에 겹쳐 칠합니다: 햇빛이 닿는 곳에 옅은 노랑, 사물의 색을 가볍게 한 번, 그늘 쪽으로 더 세게 누른 선, 그 위로 가로지르는 보라 그늘 색연필. 종이 결이 모든 층을 끊어 하얀 점으로 남기고, 깊이에서 찾은 연필 윤곽선이 사물을 두르며, 물은 집 앞면을 물결에 끊어 비추고, 화면 가장자리는 덜 그린 종이로 사라지고 구석에 손글씨 캡션이 적힙니다. 모델 · 텍스처 없이 모두 코드로 만들며, 영상이 반복 재생되다가 W A S D로 직접 걸어 볼 수 있는 라이브 페이지와 1080p MP4를 냅니다.
+  보고 만든 원본: <a href="https://x.com/BlendiByl/status/2121130385723789637?a=s7WiEBvN2S0iOCmb8w4&s=19" target="_blank" rel="noopener">Blendi의 X 게시물 (「색연필」 게임 한 장면, 모든 면의 음영과 마을 전체가 코드)</a>과 그가 공개한 <a href="https://patch.gg/blendi/coloured-pencil" target="_blank" rel="noopener">Coloured pencil 프로젝트 (patch.gg, 코드 MIT)</a>.</p>
+  <ul class="tags"><li>three.js 색연필 셰이더</li><li>스케치북 속을 걷기</li><li>물에 비친 마을</li><li>코드로 만든 인물</li><li>16:9 MP4 · 라이브 페이지</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(시월의 운하 마을, 한낮의 해바라기 밭길, 눈 온 뒤의 산골 마을, 학교 가는 길 …). 레퍼런스 그림 · 영상이 있으면 그 스틸</dd>
+      <dt>브리프</dt><dd>한 줄로 쓴 그림, 시간과 빛(해의 방향과 높이, 햇빛 색연필 · 그늘 색연필), 장소와 길, 집 · 나무 · 물 · 작은 것들과 각각의 색연필, 걷는 사람, 샷 3–7개, 캡션을 적은 <code>BRIEF.md</code></dd>
+      <dt>세계</dt><dd>하늘 · 먼 산 · 땅 · 포석 · 물 · 집과 집의 줄 · 다리 · 나무 · 가로등과 벤치 · 깃발 줄 · 배 · 새 · 떨어지는 잎을 키트로 놓기. 새로운 것은 둥근 덩어리 도형을 조합해 직접 작성</dd>
+      <dt>인물</dt><dd>모델 · 클립 없이 코드로 만든 몸. 발은 길 위에 심고(다리 아치도 오름), 다리는 IK, 코트와 목도리는 규칙으로 흔들림. 앞 · 옆 · 뒤 · 걷기 · 달리기 22포즈 캐스트 시트로 방향과 관절 확인</dd>
+      <dt>확인</dt><dd>그리지 않은 곳 · 검정 · 색 부족 · 움직임 · 결정성, 시점과 인물이 벽 · 나무 · 물에 들어가지 않는지, 모든 포즈가 관절 범위 안인지 검사</dd>
+      <dt>출력</dt><dd>30fps 1920×1080 MP4(소리 없음), 영상 반복 재생 · W A S D 걷기 · 드래그 둘러보기 라이브 페이지</dd>
+    </dl>
+    <pre><code>cd colored-pencil-world/examples/canal-october
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs index.html --cast --scale .5
+node ../../scripts/render.mjs index.html --sheet --scale .5
+node ../../scripts/render.mjs index.html --preview
+node ../../scripts/render.mjs index.html
+node ../../scripts/new-world.mjs ~/my-world</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. npm 설치 · API 키가 필요 없습니다. 영상은 GPU 없이 CPU WebGL로 렌더합니다(1080p 한 프레임 약 2–4초). 라이브 페이지는 GPU가 있어야 매끄럽게 움직입니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/colored-pencil-world/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:calc((100vw - 34px)*.5625);--demo-bg:#f4efe4">
+    <iframe data-src="demo/examples/canal-october/" title="colored-pencil-world 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/canal-october/">데모 열기 (examples/canal-october)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/canal-october</code> · 20초 · 5샷 · 화면을 누른 뒤 W A S D로 걷기, 드래그로 둘러보기</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/canal-october/" data-cap="예제 &lt;code&gt;examples/canal-october&lt;/code&gt; · 20초 · 5샷 · 화면을 누른 뒤 W A S D로 걷기, 드래그로 둘러보기" aria-pressed="true">시월의 운하</button>
+        <button class="btn" type="button" data-src="demo/templates/world.html" data-cap="템플릿 &lt;code&gt;templates/world.html&lt;/code&gt; · 12초 · 3샷 · 새 세계의 출발점" aria-pressed="false">시작 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본의 항구 마을에 없는 주제로 브리프부터 새로 설계해 만든 예제의 다섯 샷, 인물과 선 검토, 시작 템플릿입니다. 카드를 누르면 그 순간이 라이브 페이지에서 멈춘 채 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"film":"시월의 운하","check":"검토","tpl":"시작 템플릿"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「Canal in October」 <small>20초 · 5샷</small></h3>
+      <p>시월 오후의 운하 마을: 겨자색 코트에 긴 빨간 목도리를 한 사람이 단풍 든 보리수 아래 서쪽 부두를 걷다가, 꽃다발을 들고 돌다리를 건너 다리 꼭대기에서 운하 끝의 교회탑을 바라보고, 건너편 부두로 내려옵니다</p>
+      <div class="grid">
+        <a class="tile" data-tags="film" href="demo/examples/canal-october/?t=2.5" target="_blank" rel="noopener">
+          <img src="samples/quay.jpg" alt="색연필로 그린 운하 옆 부두를 걸어가는 겨자색 코트의 사람을 뒤에서 본 장면, 왼쪽에 벽돌집들, 오른쪽에 집을 비춘 운하와 돌다리, 멀리 시계탑" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 1 · 부두</span><b>뒤에서 따라가기</b><span class="how">벽 · 기와 · 포석마다 자기 방향의 선, 물에 끊어져 비친 건너편 집들</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/canal-october/?t=7" target="_blank" rel="noopener">
+          <img src="samples/across.jpg" alt="운하 건너편에서 본 그늘진 집들의 앞면, 돌 축대 위 부두를 옆모습으로 걸어가는 사람" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 2 · 건너편</span><b>지나가는 사람</b><span class="how">그늘 쪽 벽에 겹친 보라 그늘 색연필, 돌 축대의 층</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/canal-october/?t=13.5" target="_blank" rel="noopener">
+          <img src="samples/water.jpg" alt="수면 가까이에서 올려다본 돌 아치 다리, 다리 꼭대기에 작은 사람, 아치 너머 운하 끝의 교회, 물에 비친 색" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 3 · 물 위에서</span><b>올려다보기</b><span class="how">물결에 끊긴 반사, 맨 종이로 남긴 반짝임과 구름</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/canal-october/?t=15.8" target="_blank" rel="noopener">
+          <img src="samples/crest.jpg" alt="다리 꼭대기에 서서 운하 아래쪽을 바라보는 사람, 양쪽에 붉고 주황빛 보리수 줄과 가로등, 끝에 교회탑" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 4 · 다리 꼭대기</span><b>멈춰 서서 바라보기</b><span class="how">다리 아치 위에 심은 발, 범위 안에서 돌린 고개, 떨어지는 잎</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/canal-october/?t=18.5" target="_blank" rel="noopener">
+          <img src="samples/bridge.jpg" alt="꽃다발을 든 사람이 돌다리를 내려오며 이쪽을 보는 장면, 뒤로 벽돌 · 크림 · 연보라 집들과 단풍 든 나무" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 5 · 건너편 부두로</span><b>앞에서 맞이하기</b><span class="how">오른손의 꽃다발, 왼쪽 엉덩이의 가방, 바람에 날리는 목도리</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>인물과 선 검토 <small>캐스트 시트 · 확대</small></h3>
+      <p>샷을 쓰기 전에 인물을 모든 방향과 걸음으로 보고, 스틸은 원래 크기로 확대해 선과 종이 결을 확인합니다</p>
+      <div class="grid">
+        <a class="tile" data-tags="check" href="https://github.com/jungrok5/motion-skills/blob/main/colored-pencil-world/references/FIGURE.md" target="_blank" rel="noopener">
+          <img src="samples/cast.jpg" alt="같은 인물을 앞, 3/4, 옆, 뒤에서 본 서 있는 포즈와 걷기 · 달리기 포즈를 나란히 놓은 캐스트 시트" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">render.mjs --cast</span><b>캐스트 시트, 22포즈</b><span class="how">앞뒤좌우가 한 몸인지, 얼굴이 모자에 가리지 않는지, 꽃다발이 오른손인지</span></div></a>
+        <a class="tile" data-tags="check" href="demo/examples/canal-october/?t=18.5" target="_blank" rel="noopener">
+          <img src="samples/detail.jpg" alt="집 앞면과 창문을 원래 크기로 확대한 장면, 벽의 사선 색연필 선과 창의 세로 선, 하얀 종이 결 점, 부드러운 연필 윤곽선" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">확대 · 1080p 원본</span><b>선 하나하나</b><span class="how">네 겹의 색, 종이 결, 깊이에서 찾은 윤곽선, 일정한 선 간격</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>시작 템플릿 「Sunflower Track」 <small>12초 · 3샷</small></h3>
+      <p>한낮의 해바라기 밭길과 빨간 헛간. 새 세계는 이 페이지의 ①–⑧을 주제에 맞게 바꿔서 시작합니다</p>
+      <div class="grid">
+        <a class="tile" data-tags="tpl" href="demo/templates/world.html?t=2.3" target="_blank" rel="noopener">
+          <img src="samples/track.jpg" alt="해바라기 밭과 밀밭 사이 흙길을 걷는 밀짚모자 쓴 사람을 뒤에서 본 장면, 멀리 빨간 헛간과 농가, 포플러" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 샷 1</span><b>밭길</b><span class="how">kit.make로 직접 만든 해바라기 줄, 해를 향한 꽃머리</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/templates/world.html?t=10.3" target="_blank" rel="noopener">
+          <img src="samples/farm.jpg" alt="바구니를 든 밀짚모자 쓴 사람이 앞에서 걸어오는 장면, 나무 울타리와 해바라기 줄 사이 흙길" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 샷 3</span><b>농가 쪽으로</b><span class="how">오른손 바구니, 치마, 울타리와 이정표</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬을 만든 출처와, 이 레포에서 새 주제로 만든 예제입니다.</p>
+  <div class="works">
+    <a class="work" href="https://x.com/BlendiByl/status/2121130385723789637?a=s7WiEBvN2S0iOCmb8w4&s=19" target="_blank" rel="noopener"><b>원본 · Blendi의 X 게시물</b><span>「색연필」 게임 한 장면 14초 · 항구 마을 · 모든 면의 음영과 마을이 코드</span><span class="url">x.com/BlendiByl/status/2121130385723789637</span></a>
+    <a class="work" href="https://patch.gg/blendi/coloured-pencil" target="_blank" rel="noopener"><b>원본 프로젝트 · Coloured pencil</b><span>항구 마을과 선원 · 코드 MIT © 2026 Patch · 색연필 셰이더와 종이 패스를 여기서 가져와 고침</span><span class="url">patch.gg/blendi/coloured-pencil</span></a>
+    <a class="work" href="demo/examples/canal-october/" target="_blank" rel="noopener"><b>「Canal in October」</b><span>20초 · 5샷 · 라이브 페이지 · 걷기 모드</span><span class="url">colored-pencil-world/examples/canal-october</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/colored-pencil-world/examples/canal-october"><b>원본 레포 · motion-skills</b><span>이 레포에서 만듦</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/colored-pencil-world/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/colored-pencil-world">폴더</a> <span>lib · scripts · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/colored-pencil-world/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/colored-pencil-world/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 캐스트 시트 · 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/colored-pencil-world/references/LOOK.md">references/LOOK.md</a> <span>색연필로 읽히게 하는 열 가지</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/colored-pencil-world/references/KIT.md">references/KIT.md</a> <span>세계 설정, 키트의 모든 것과 옵션, 샷과 카메라</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/colored-pencil-world/references/FIGURE.md">references/FIGURE.md</a> <span>인물의 몸, 관절 범위, 캐스트 시트</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/colored-pencil-world/references/SOURCE.md">references/SOURCE.md</a> <span>원본에서 가져온 것과 바꾼 것</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/colored-pencil-world/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 것을 코드로 그렸습니다. 색연필 셰이더 · 종이 패스 · 부드러운 도형은 Coloured pencil (MIT © 2026 Patch)에서 가져와 고쳤고, three.js (MIT)와 Caveat 글꼴 (OFL)을 씁니다
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

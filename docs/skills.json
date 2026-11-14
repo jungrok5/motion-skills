@@ -1665,6 +1665,170 @@
       ]
     },
     {
+      "id": "shred-poster",
+      "name": "shred-poster",
+      "tagline": "주제 하나를 주면 그 주제만의 타이포 포스터(문구와 위계, 그리드, 서체, 강조색 하나, 코드로 그린 하프톤 그림, 주제의 표식)를 새로 디자인하고, 그 포스터가 띠로 찢어지고 종이 리본으로 쏟아지고 파쇄기 칼날을 지나 한 줄씩 다시 맞춰지는 8초 세로 루프 영상을 만듭니다. 섬유와 반광 잉크, 빛이 비치는 얇은 종이, 서로 뚫지 않는 리본 더미, 서브프레임 모션 블러까지 three.js로 그리고, 소리는 화면의 타이밍에서 합성해 −14 LUFS로 맞춥니다. HTML 한 파일이 브라우저에서 반복 재생되고 프레임 단위로 1080×1920 60fps MP4가 됩니다.",
+      "posterAlt": "shred-poster로 만든 「퇴고」의 장면 네 개: 책상 위에 놓인 주홍 띠의 퇴고 포스터, 퇴고 推敲가 인쇄된 주홍 리본이 종이 리본 더미 위를 가로지르는 장면, 크림색 바탕 인셋 안에서 원고지 본문이 파쇄기 칼날로 들어가는 장면, 가운데 줄부터 다시 맞춰지는 포스터",
+      "poster": "shred-poster/poster.jpg",
+      "tags": [
+        "타이포 포스터",
+        "9:16 · 8초 루프",
+        "three.js 종이 · 파쇄기",
+        "합성 사운드",
+        "MP4 · 라이브 페이지"
+      ],
+      "stats": [
+        "예제 8초 · 네 샷 · 60fps",
+        "주제마다 새 포스터"
+      ],
+      "page": "shred-poster/",
+      "source": "shred-poster/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "shred-poster/examples/toego/"
+      },
+      "sources": [
+        {
+          "title": "amirmushichge/shred-kit (Amir Mušić의 Shred — 포스터를 찢고 파쇄하고 다시 맞추는 Blender 세로 릴 템플릿, GPL-3.0 · 코드는 가져오지 않음)",
+          "url": "https://github.com/amirmushichge/shred-kit"
+        },
+        {
+          "title": "Amir Mušić의 X 게시물 (\"Claude can now act as a motion designer\", Fable 5.2와 Blender로 만든 8초 세로 릴)",
+          "url": "https://x.com/AmirMushich/status/2121339167800213934?a=knMN6C_A1VHmWGGzS4c&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「퇴고」 · 토요 퇴고 모임 포스터, 원고지와 교정부호 · 8초 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/shred-poster/demo/toego/"
+        }
+      ]
+    },
+    {
+      "id": "colored-pencil-world",
+      "name": "colored-pencil-world",
+      "tagline": "주제 하나를 주면 스케치북에 색연필로 그린 3D 세계와 그 안을 걷는 사람의 영상을 만듭니다. 벽 · 기와 · 물 · 나뭇잎 · 옷자락마다 선이 흐르는 방향을 갖고 있어 색연필 선이 사물에 붙어 있고 시점이 움직여도 흐르지 않으며, 흰 종이 위에 노란 햇빛 색연필 · 사물의 색 · 보라 그늘 색연필을 겹쳐 칠하고 종이 결 · 연필 윤곽선 · 덜 그린 가장자리 · 손글씨 캡션으로 마무리합니다. 빛과 장소, 집 · 나무 · 물 · 다리, 걷는 사람과 샷을 주제마다 새로 설계하며, 모델 · 텍스처 없이 코드로만 만들고, W A S D로 직접 걸어 볼 수 있는 라이브 페이지와 1080p MP4를 냅니다.",
+      "posterAlt": "colored-pencil-world로 만든 색연필 장면 네 개: 운하 옆 부두를 걸어가는 겨자색 코트의 사람, 수면에서 올려다본 돌 아치 다리, 다리 꼭대기에서 단풍 든 보리수 줄과 교회탑을 바라보는 사람, 꽃다발을 들고 다리를 내려오는 사람",
+      "poster": "colored-pencil-world/poster.jpg",
+      "tags": [
+        "three.js 색연필 셰이더",
+        "스케치북 속을 걷기",
+        "물에 비친 마을",
+        "코드로 만든 인물",
+        "16:9 MP4 · 라이브 페이지"
+      ],
+      "stats": [
+        "예제 20초 · 5샷 · 건물 42채",
+        "키트 18종 · 인물 캐스트 22포즈"
+      ],
+      "page": "colored-pencil-world/",
+      "source": "colored-pencil-world/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "colored-pencil-world/examples/canal-october/"
+      },
+      "sources": [
+        {
+          "title": "Blendi의 X 게시물 (「색연필」 게임 한 장면, 모든 면의 음영과 마을 전체가 코드)",
+          "url": "https://x.com/BlendiByl/status/2121130385723789637?a=s7WiEBvN2S0iOCmb8w4&s=19"
+        },
+        {
+          "title": "Coloured pencil 프로젝트 (patch.gg, 코드 MIT © 2026 Patch)",
+          "url": "https://patch.gg/blendi/coloured-pencil"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「Canal in October」 · 시월의 운하 마을과 돌다리 · 20초 · 5샷 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/colored-pencil-world/demo/examples/canal-october/"
+        }
+      ]
+    },
+    {
+      "id": "cloth-rig-character",
+      "name": "cloth-rig-character",
+      "tagline": "주제 하나를 주면 머리가 크고 몸이 작은 3D 캐릭터를 블렌더에서 부품별로 만들고 옷을 입는 순서대로 겹쳐 입힌 뒤, 몸뿐 아니라 치마 · 리본 · 목도리 · 머리채에도 뼈 줄을 넣어 대기와 눈 깜박임 → 돌아서기 → 걷기를 한 동작씩 만듭니다. 스프링 계산이 돌아설 때 치마를 퍼지게 하고 리본을 늦게 따라오게 해 키로 굽고, 회색 바닥 · 고정 카메라 · 구석의 뒷모습 설정화로 검토합니다. 관절 범위 · 발 고정 · 앞뒤좌우 · 옷 움직임을 검사하고 .blend, 애니메이션 든 .glb와 three.js 검토 플레이어, 검토 MP4로 냅니다.",
+      "posterAlt": "cloth-rig-character로 만든 두 캐릭터의 검토 화면 네 장: 회색 바닥 위에 선 색동 저고리와 진분홍 치마의 설빔 소녀, 한 바퀴 돌며 치마가 활짝 퍼진 설빔 소녀, 노란 비옷에 줄무늬 목도리를 한 아이, 오른쪽으로 걸어가는 비옷 아이",
+      "poster": "cloth-rig-character/poster.jpg",
+      "tags": [
+        "블렌더 · bpy",
+        "3D 캐릭터 리깅",
+        "옷에 뼈 · 2차 동작",
+        "glTF + three.js",
+        "MP4"
+      ],
+      "stats": [
+        "예제 2명 · 6.1초 · 7.7초",
+        "검사 11개 · 양쪽 캐스트 시트"
+      ],
+      "page": "cloth-rig-character/",
+      "source": "cloth-rig-character/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "cloth-rig-character/examples/hanbok-girl/"
+      },
+      "sources": [
+        {
+          "title": "Claude Code Studio(@ClaudeCode_love)의 X 게시물 (「服に骨を入れるかが9割」, 블렌더 + Claude로 만든 3D 캐릭터를 부품 → 겹쳐 입기 → 옷에 뼈 → 동작 순서로 만드는 법)",
+          "url": "https://x.com/ClaudeCode_love/status/2121385622325903666?a=TAb3nXMsi15QbOVger8&s=19"
+        },
+        {
+          "title": "작가 rewind(@rewind02)의 X 게시물 (4초 영상: 블렌더 + Claude로 만든 캐릭터의 검토 화면, \"the trick is rigging the cloth\")",
+          "url": "https://x.com/rewind02/status/2120846734901367105"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "설빔 소녀 · 7.7초 · 대기 → 한 바퀴 → 돌아서기 → 걷기 · 검토 플레이어",
+          "url": "https://jungrok5.github.io/motion-skills/cloth-rig-character/demo/?src=hanbok-girl"
+        },
+        {
+          "title": "비옷 아이 · 6.1초 · 시작 예제 · 검토 플레이어",
+          "url": "https://jungrok5.github.io/motion-skills/cloth-rig-character/demo/?src=raincoat-kid"
+        }
+      ]
+    },
+    {
+      "id": "ink-water-emergence",
+      "name": "ink-water-emergence",
+      "tagline": "주제 하나를 주면 고요한 물속에 번진 먹이 흘러 모여 생물이 되는 단편을 코드만으로 만듭니다. 몇 가닥 먹 연기에서 형체가 나타나기 직전의 반투명한 상태를 거쳐 옅은 몸, 짙은 먹의 완성까지 가되 가장자리는 계속 연기로 흘러가고, 형태 일관성과 유동성을 두 개의 다이얼로 함께 잡습니다. 코드로 합성한 물소리와 음악을 붙인 1080p MP4와 브라우저에서 도는 페이지를 냅니다.",
+      "poster": "ink-water-emergence/poster.jpg",
+      "posterAlt": "ink-water-emergence로 만든 장면 네 개: 연한 회색 물속에서 위로 피어오르는 먹 연기, 갈기에서 먹 연기를 흘리며 걷는 옅은 먹빛 수호 사자, 흰 송곳니를 드러내고 포효하는 짙은 먹의 사자 머리, 머리를 들고 위로 떠오르는 먹빛 혹등고래",
+      "tags": [
+        "WebGL2",
+        "16:9",
+        "MP4",
+        "라이브 페이지",
+        "합성 사운드"
+      ],
+      "stats": [
+        "예제 13초 · 7샷",
+        "새 주제 예제 12.6초 · 6샷"
+      ],
+      "page": "ink-water-emergence/",
+      "source": "ink-water-emergence/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "ink-water-emergence/starter/"
+      },
+      "sources": [
+        {
+          "title": "taziku의 X 게시물 (유동성을 남기는 실험 영상)",
+          "url": "https://x.com/taziku_co/status/2121541102700564482?s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「狛獅子 · Guardian Lion」 · 13초 · 7샷 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/ink-water-emergence/demo/starter/"
+        },
+        {
+          "title": "「鯨の息 · Whale Breath」 · 12.6초 · 6샷 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/ink-water-emergence/demo/whale/"
+        }
+      ]
+    },
+    {
       "id": "ballpoint-doodle-short",
       "name": "ballpoint-doodle-short",
       "tagline": "주제 하나를 주면 크림색 종이에 볼펜으로 선을 긋고 색연필로 빗금 칠한 말 없는 낙서 카툰을 코드만으로 만듭니다. 동그란 캐릭터, 언덕 · 연못 · 절벽으로 모양을 바꾸는 빨간 땅 선 하나, 손글씨 표지판 하나, 처음으로 돌아오는 심부름 추격 이야기에 코드로 합성한 음악과 효과음을 붙여 정사각 MP4와 라이브 페이지를 냅니다.",
