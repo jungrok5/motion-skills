@@ -1829,6 +1829,42 @@
       ]
     },
     {
+      "id": "ballpoint-doodle-short",
+      "name": "ballpoint-doodle-short",
+      "tagline": "주제 하나를 주면 크림색 종이에 볼펜으로 선을 긋고 색연필로 빗금 칠한 말 없는 낙서 카툰을 코드만으로 만듭니다. 동그란 캐릭터, 언덕 · 연못 · 절벽으로 모양을 바꾸는 빨간 땅 선 하나, 손글씨 표지판 하나, 처음으로 돌아오는 심부름 추격 이야기에 코드로 합성한 음악과 효과음을 붙여 정사각 MP4와 라이브 페이지를 냅니다.",
+      "posterAlt": "ballpoint-doodle-short로 만든 「Water the Seed」의 장면 네 개: water the seed 표지판 옆에서 느낌표를 띄우고 놀란 갈색 두더지, 파란 선 연못의 연잎 위로 뛰어오른 두더지와 앞서 튀는 씨앗, 그루터기 위 까마귀에게 물뿌리개로 물을 쏟는 두더지, 절벽 아래에서 활짝 핀 해바라기 옆의 두더지",
+      "poster": "ballpoint-doodle-short/poster.jpg",
+      "tags": [
+        "2D 캔버스",
+        "1:1 · 24fps",
+        "MP4",
+        "라이브 페이지",
+        "합성 사운드"
+      ],
+      "stats": [
+        "예제 46.5초 · 9샷",
+        "표정 8종 · 6방향"
+      ],
+      "page": "ballpoint-doodle-short/",
+      "source": "ballpoint-doodle-short/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "ballpoint-doodle-short/examples/seed/"
+      },
+      "sources": [
+        {
+          "title": "Kevin Ngo의 X 게시물 (80초 영상)",
+          "url": "https://x.com/kevin_t_ngo/status/2121261917016903748?a=bVC63lRPjOI0jxwuEOg&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「Water the Seed」 · 46.5초 · 9샷 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/ballpoint-doodle-short/demo/examples/seed/"
+        }
+      ]
+    },
+    {
       "id": "feeling-pastel",
       "name": "feeling-pastel",
       "tagline": "이야기나 감정을 주면, 이야기 속 사람과 물건은 하나도 그리지 않고 감정만 날씨 · 빛 · 장소 · 색으로 옮긴 16:9 그림 한 장을 자바스크립트로 그립니다. 오일파스텔 · 소프트파스텔 · 색연필 · 콩테 같은 건식 재료 3–5개가 결이 있는 종이 위에 획을 하나씩 올려 손으로 그린 것처럼 보이고, 화면 전체를 빈 곳 없이 90년대 애니메이션 배경의 색감으로 채웁니다. 헤드리스 브라우저 없이 Node만으로 4K PNG와 그리는 과정 MP4를 만들고, 같은 획이 라이브 페이지에서 그려집니다.",

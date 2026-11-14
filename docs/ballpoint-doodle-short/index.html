@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ballpoint-doodle-short · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 크림색 종이에 볼펜으로 선을 긋고 색연필로 빗금 칠한 말 없는 낙서 카툰을 코드만으로 만듭니다. 동그란 캐릭터, 언덕 · 연못 · 절벽으로 모양을 바꾸는 빨간 땅 선 하나, 손글씨 표지판 하나, 처음으로 돌아오는 심부름 추격 이야기에 코드로 합성한 음악과 효과음을 붙여 정사각 MP4와 라이브 페이지를 냅니다.">
+<meta property="og:title" content="ballpoint-doodle-short · motion-skills">
+<meta property="og:description" content="주제 하나를 주면 볼펜 선과 색연필 빗금으로 그린 말 없는 낙서 카툰을 코드만으로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/ballpoint-doodle-short/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/ballpoint-doodle-short">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / ballpoint-doodle-short</nav>
+  <h1>ballpoint-doodle-short</h1>
+  <p>주제 하나를 주면 크림색 종이에 볼펜으로 선을 긋고 색연필로 빗금 칠한 말 없는 낙서 카툰을 코드만으로 만듭니다. 동그란 캐릭터, 언덕 · 연못 · 절벽으로 모양을 바꾸는 빨간 땅 선 하나, 손글씨 표지판 하나, 처음으로 돌아오는 심부름 추격 이야기에 코드로 합성한 음악과 효과음을 붙여 정사각 MP4와 라이브 페이지를 냅니다.
+  보고 만든 원본: <a href="https://x.com/kevin_t_ngo/status/2121261917016903748?a=bVC63lRPjOI0jxwuEOg&amp;s=19" target="_blank" rel="noopener">Kevin Ngo의 X 게시물 (80초 영상)</a>.</p>
+  <ul class="tags"><li>2D 캔버스</li><li>1:1 · 24fps</li><li>MP4</li><li>라이브 페이지</li><li>합성 사운드</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(씨앗을 맡은 두더지, 빗속의 편지 배달 달팽이, 목도리를 잃은 펭귄 …). 레퍼런스 영상이 있으면 그 스틸</dd>
+      <dt>브리프</dt><dd>지켜야 할 작은 것과 그것이 마지막에 되는 것, 주인공과 소품, 일을 맡기는 표지판 문구, 모양이 다른 장소 3–5곳, 6–10박자, 처음으로 돌아오는 끝을 적은 <code>BRIEF.md</code></dd>
+      <dt>캐스트</dt><dd>주제에 맞게 새로 설계한 동그란 캐릭터 데이터(<code>cast.js</code>). 공 위에 놓인 눈 · 코 · 팔 · 꼬리가 각도 하나로 함께 돌고, 양쪽 방향 돌려 보기 · 걸음 · 표정 시트로 채점</dd>
+      <dt>그림</dt><dd>두 번 그은 듯 흔들리는 볼펜 선(초당 8번 숨 쉼), 종이가 비치는 색연필 빗금(앞의 것이 뒤의 것을 가림), 카메라가 따라가는 땅 선 하나, 놀람 선 · 땀 · 음표 · 물보라 같은 펜 효과</dd>
+      <dt>확인</dt><dd>무작위 스틸 채점, 콘택트 시트, 모든 샷 그리기 · 빈 프레임 · 결정성 · 관절 범위 · 선 위에 서는지 · 물 위에 서지 않는지 · 이동 방향과 보는 방향 · 화면 안 · 종이가 보이는지 · 악보 검사</dd>
+      <dt>출력</dt><dd>24fps 1080×1080 MP4(피치카토 · 마림바 · 휘파람과 효과음 포함), ♪ 버튼으로 소리까지 재생하는 라이브 페이지</dd>
+    </dl>
+    <pre><code>cd ballpoint-doodle-short/examples/seed
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs cast.html --stills 0 --scale .5
+node ../../scripts/render.mjs index.html --sheet 24 --scale .5
+node ../../scripts/score.mjs score.js --dur 46.5 --out out/seed.wav
+node ../../scripts/render.mjs index.html --workers 4 --audio out/seed.wav
+node ../../scripts/new-film.mjs ../../../my-film</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. 네트워크와 GPU가 필요 없습니다(46.5초 예제를 워커 4개로 약 1분 30초). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/ballpoint-doodle-short/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:1/1;--h-phone:calc(100vw - 34px);--demo-bg:#2a2723">
+    <iframe data-src="demo/examples/seed/" title="ballpoint-doodle-short 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/seed/">데모 열기 (examples/seed)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/seed</code> · 46.5초 · 9샷 · ♪ 버튼으로 소리</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/seed/" data-cap="예제 &lt;code&gt;examples/seed&lt;/code&gt; · 46.5초 · 9샷 · ♪ 버튼으로 소리" aria-pressed="true">씨앗에 물 주기</button>
+        <button class="btn" type="button" data-src="demo/examples/seed/cast.html" data-cap="캐스트 시트 &lt;code&gt;examples/seed/cast.html&lt;/code&gt; · 돌려 보기 · 걸음 · 표정" aria-pressed="false">캐스트 시트</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/film.html&lt;/code&gt; · 11.5초 · 3샷 · 새 영화의 출발점" aria-pressed="false">시작 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제 「Water the Seed」의 아홉 샷, 그 캐스트 시트, 시작 템플릿입니다. 카드를 누르면 새 탭에서 그 순간에 멈춘 장면이 열리고, 브라우저가 볼펜 선부터 직접 그립니다.</p>
+  <div id="gallery">
+    <div class="group">
+      <h3>Water the Seed <small>1:1 · 46.5초 · 9샷</small></h3>
+      <p>할머니가 씨앗을 심고 "water the seed" 표지판을 세웁니다. 두더지 모모가 물을 주다 한눈판 사이 바람이 씨앗을 굴려 가고, 언덕과 연못, 까마귀와 절벽을 지나 씨앗은 해바라기가 됩니다. 원본 영상에 없는 주제와 캐릭터로 브리프부터 끝까지 만든 예제입니다.</p>
+      <div class="grid">
+        <a class="tile" href="demo/examples/seed/?t=3.6" target="_blank" rel="noopener">
+          <img src="samples/home.jpg" alt="빨간 땅 선 위에 물뿌리개를 든 갈색 두더지, 흙더미 위의 줄무늬 씨앗, water the seed라고 쓴 표지판, 빨간 물방울 무늬 두건과 동그란 안경을 쓴 할머니 두더지" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">1 · 3.6초</span><b>표지판이 일을 맡긴다</b>
+          <span class="how">빈 종이에 땅 선 · 흙더미 · 인물이 그려지는 <code>drawOn</code>, 이어서 손글씨로 써지는 표지판, 경례</span></div></a>
+        <a class="tile" href="demo/examples/seed/?t=9.7" target="_blank" rel="noopener">
+          <img src="samples/gust.jpg" alt="눈을 크게 뜬 두더지 머리 위의 느낌표와 놀람 선, 비어 있는 흙더미, 표지판 옆으로 지나가는 바람 선" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">2 · 9.7초</span><b>바람이 굴려 간다</b>
+          <span class="how">눈 감고 흥얼거리며 물 주기 → 돌아선 사이 말려 오는 바람 선 → 튀어 오른 씨앗 → 느낌표</span></div></a>
+        <a class="tile" href="demo/examples/seed/?t=13.6" target="_blank" rel="noopener">
+          <img src="samples/hill.jpg" alt="비탈진 빨간 선을 따라 땀을 흘리며 달려 내려가는 두더지, 그 앞에서 바위 쪽으로 구르는 씨앗, 빨간 버섯과 고사리" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">3 · 13.6초</span><b>언덕 추격</b>
+          <span class="how">기울어진 땅 선, 둘 사이를 따라가는 카메라, 바위를 넘는 깡충, 속도선과 땀방울</span></div></a>
+        <a class="tile" href="demo/examples/seed/?t=17.4" target="_blank" rel="noopener">
+          <img src="samples/pond.jpg" alt="파란 선으로 바뀐 연못 위 연잎 사이를 뛰어오른 두더지와 앞서 튀어 가는 씨앗, 연잎 둘레의 물방울" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">4 · 17.4초</span><b>연잎을 건넌다</b>
+          <span class="how">파랗게 바뀌는 땅 선과 물결 표시, 연잎에서 연잎으로 튀는 씨앗과 그 뒤를 뛰는 두더지, 착지마다 물보라</span></div></a>
+        <a class="tile" href="demo/examples/seed/?t=24.6" target="_blank" rel="noopener">
+          <img src="samples/crow.jpg" alt="그루터기 위에서 씨앗을 발밑에 두고 눈을 반쯤 감은 까마귀, 고사리 옆에서 놀란 두더지" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">5 · 24.6초</span><b>까마귀가 채 간다</b>
+          <span class="how">급강하해 부리로 집어 그루터기에 앉는 까마귀, 뒤로 젖힌 날개, 반쯤 감은 눈의 능청</span></div></a>
+        <a class="tile" href="demo/examples/seed/?t=28.8" target="_blank" rel="noopener">
+          <img src="samples/splash.jpg" alt="물뿌리개를 들어 그루터기 위 까마귀에게 물을 쏟는 웃는 두더지, 물을 뒤집어쓰고 눈을 질끈 감은 까마귀" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">6 · 28.8초</span><b>물뿌리개 한 방</b>
+          <span class="how">손 위치를 <code>R.where</code>로 구해 물줄기를 까마귀 머리에 맞춤, 흠뻑 젖어 떠는 까마귀, 날갯바람에 떨어지는 씨앗</span></div></a>
+        <a class="tile" href="demo/examples/seed/?t=32.4" target="_blank" rel="noopener">
+          <img src="samples/cliff.jpg" alt="절벽 끝까지 달려온 두더지 앞으로 떨어지는 씨앗, 아래로 꺾인 빨간 선과 빗금 친 절벽 면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">7 · 32.4초</span><b>절벽</b>
+          <span class="how">수직으로 떨어지는 땅 선, 씨앗을 따라 아래로 내려가는 카메라, 음악이 끊기고 미끄럼 휘파람과 쿵</span></div></a>
+        <a class="tile" href="demo/examples/seed/?t=40.3" target="_blank" rel="noopener">
+          <img src="samples/sprout.jpg" alt="절벽 아래 흙에서 자라 활짝 핀 해바라기를 올려다보는 두더지, 오른쪽의 고사리" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">8 · 40.3초</span><b>해바라기가 된다</b>
+          <span class="how">눈물 한 방울과 물뿌리개의 마지막 한 방울 → 흙이 들썩 → 줄기 · 잎 · 꽃잎이 차례로 펼쳐짐, 반짝이는 소리와 차임</span></div></a>
+        <a class="tile" href="demo/examples/seed/?t=45.4" target="_blank" rel="noopener">
+          <img src="samples/loop.jpg" alt="해바라기 모자를 쓴 두더지가 놀라 느낌표를 띄우고, 흙더미 위 씨앗 다섯 개, water the seeds로 바뀐 표지판, 웃는 할머니" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">9 · 45.4초</span><b>다시 처음으로</b>
+          <span class="how">첫 샷과 같은 구도, 씨앗 다섯 개, 표지판에 써지는 s, 해바라기 모자, 다시 불어오는 바람과 느낌표</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>출발점 <small>캐스트 시트 · 템플릿</small></h3>
+      <p>새 주제를 시작할 때 쓰는 두 페이지입니다. 캐릭터는 데이터로 설계하고 양쪽 방향 시트로 채점한 뒤에 샷을 씁니다.</p>
+      <div class="grid">
+        <a class="tile" href="demo/examples/seed/cast.html" target="_blank" rel="noopener">
+          <img src="samples/cast.jpg" alt="같은 두더지를 왼쪽 옆 · 왼쪽 3/4 · 정면 · 오른쪽 3/4 · 오른쪽 옆 · 뒤에서 그린 줄, 걷기 · 달리기 · 점프 · 물뿌리개 들기 줄" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 시트</span><b>모모 · 할머니 · 까마귀</b><span class="en">examples/seed/cast.html</span>
+          <span class="how">−90°부터 180°까지 돌려 보기, 양쪽 방향 걸음 · 달리기, 표정 8종, 할머니와 까마귀의 돌려 보기</span></div></a>
+        <a class="tile" href="demo/templates/?t=9.9" target="_blank" rel="noopener">
+          <img src="samples/template.jpg" alt="고사리 앞에서 빨간 털실 뭉치를 껴안고 눈을 감고 웃는 주황색 새끼 고양이" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 11.5초</span><b>도망간 털실</b><span class="en">templates/film.html</span>
+          <span class="how"><code>new-film.mjs</code>가 복사하는 출발점. 낮잠 → 굴러가는 털실 → 언덕 추격 → 덮쳐서 잡기의 3샷</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. Kevin Ngo가 X에 올린 80초 영상이 출발점입니다. "watch the egg" 표지판 앞에서 알을 맡은 파란 새가 굴러가는 알을 쫓아 언덕과 폭포, 뱀을 지나고, 알이 깨어나 이야기가 처음으로 돌아가는 영상으로, 모든 프레임을 자바스크립트로 그렸다고 소개되어 있습니다. 이 스킬은 그 그림체(볼펜 선, 색연필 빗금, 크림색 종이, 동그란 캐릭터, 땅 선 하나)와 이야기 문법만 가져오고, 그림은 이 레포의 캔버스 엔진이 그립니다. 예제 「Water the Seed」의 코드와 캐릭터, 이야기, 음악은 모두 이 레포의 것입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/examples/seed/" target="_blank" rel="noopener"><b>「Water the Seed」 · 46.5초 · 9샷</b><span>두더지와 씨앗, 언덕 · 연못 · 까마귀 · 절벽, 해바라기, 라이브 페이지</span><span class="url">ballpoint-doodle-short/demo/examples/seed/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/ballpoint-doodle-short/examples"><b>예제 폴더 · examples/</b><span>seed</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/kevin_t_ngo/status/2121261917016903748?a=bVC63lRPjOI0jxwuEOg&amp;s=19" target="_blank" rel="noopener"><b>레퍼런스 영상 · X 게시물</b><span>Kevin Ngo(@kevin_t_ngo) · 2026년 11월 · 80초 · 1080×1080</span><span class="url">x.com/kevin_t_ngo</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ballpoint-doodle-short/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/ballpoint-doodle-short">폴더</a> <span>lib · scripts · templates · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ballpoint-doodle-short/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ballpoint-doodle-short/references/BRIEF.md">references/BRIEF.md</a> <span>주제를 브리프로, 캐스트 검토 기준, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ballpoint-doodle-short/references/LOOK.md">references/LOOK.md</a> <span>원본에서 관찰한 종이 · 두 가지 손 · 땅 선 · 캐릭터 · 움직임 · 소리</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ballpoint-doodle-short/references/STORY.md">references/STORY.md</a> <span>심부름 추격 문법, 샷, 타이밍, 샷 표</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ballpoint-doodle-short/references/KIT.md">references/KIT.md</a> <span>펜 · 리그 · 땅 선과 소품 · 엔진 · 악보 API</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ballpoint-doodle-short/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림과 소리는 코드로 만듦 (손글씨 폰트 Caveat, SIL OFL 1.1)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

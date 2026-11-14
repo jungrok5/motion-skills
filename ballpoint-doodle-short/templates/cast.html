@@ -1,0 +1,37 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>cast sheet</title>
+<script type="importmap">{ "imports": { "bds/": "../lib/" } }</script></head>
+<body><script type="module">
+// the cast sheet: every creature turned through −90, −45, 0, 45, 90, 180; its gaits and big poses facing BOTH ways; its faces.
+// Render it (render.mjs cast.html --stills 0 --scale .5) and score it with the cast review in references/BRIEF.md.
+import { Film } from 'bds/film.js';
+import * as P from 'bds/pen.js';
+import * as R from 'bds/rig.js';
+import * as K from 'bds/kit.js';
+import { HERO } from './cast.js';
+const CAST = [HERO];   // add every creature of the film here
+const F = new Film({ seed: 3, fadeIn: 0, fadeOut: 0 });
+const label = (c, s, x, y) => P.hand(c, s, x, y, { size: 26, col: P.INK.grey });
+F.shot(1, g => {
+  g.paper();
+  g.screen(c => {
+    CAST.forEach((spec, row) => {
+      const y0 = 230 + row * 820, s = .78;
+      P.hand(c, spec.name, 18, y0 - 190, { size: 34 });
+      R.TURNS.forEach((yaw, i) => { const x = 95 + i * 178; K.shadow(c, x, y0, 80 * s); R.critter(c, spec, { x, y: y0, s, yaw, mouth: yaw === 180 ? 'none' : 'smile' }); label(c, yaw + '°', x - 18, y0 + 34); });
+      const y2 = y0 + 240, poses = [
+        ['walk →', { yaw: 90, walk: .5, stride: 1, armR: { a: .2, f: .7 }, armL: { a: .2, f: -.5 } }],
+        ['walk ←', { yaw: -90, walk: .5, stride: 1, armR: { a: .2, f: -.5 }, armL: { a: .2, f: .7 } }],
+        ['run →', { yaw: 75, walk: .5, stride: 1.2, tilt: .25, armR: { a: .3, f: 1.4 }, armL: { a: .3, f: -.8 }, brow: 'worried', mouth: 'open' }],
+        ['run ←', { yaw: -75, walk: .5, stride: 1.2, tilt: -.25, armR: { a: .3, f: -.8 }, armL: { a: .3, f: 1.4 }, brow: 'worried', mouth: 'open' }],
+        ['jump', { yaw: 30, lift: 40, squash: -.2, armR: 2.6, armL: 2.6, eyes: 'happy', mouth: 'open' }],
+        ['back', { yaw: 160, armR: { a: 1.2, f: .3 } }],
+      ];
+      poses.forEach(([n, p], i) => { const x = 95 + i * 178; K.shadow(c, x, y2, 70); R.critter(c, spec, { x, y: y2, s: .72, ...p }); label(c, n, x - 30, y2 + 34); });
+      const y3 = y2 + 190, faces = [['open', 'none', 'smile'], ['half', 'angry', 'frown'], ['happy', 'none', 'open'], ['squeeze', 'angry', 'open'], ['wide', 'up', 'o'], ['sad', 'worried', 'frown'], ['dizzy', 'none', 'tongue'], ['shut', 'none', 'w']];
+      faces.forEach(([e, b, m], i) => { const x = 70 + i * 134; R.critter(c, spec, { x, y: y3, s: .55, yaw: i % 2 ? 20 : -20, eyes: e, brow: b, mouth: m }); label(c, e, x - 22, y3 + 30); });
+    });
+  });
+}, { name: 'cast' });
+F.start();
+</script></body></html>

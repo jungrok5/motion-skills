@@ -1,0 +1,304 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Water the Seed</title>
+<script type="importmap">{ "imports": { "bds/": "../../lib/" } }</script></head>
+<body><script type="module">
+// 「Water the Seed」 — the worked example of ballpoint-doodle-short (BRIEF.md). 9 shots, 46.5 s, 1080×1080 at 24 fps.
+// One world on one red line; each shot says where the camera looks and where everyone is at local time lt.
+// Positions along the line run on ones (smooth against the moving camera); poses, faces and effects run on twos (t2).
+import { Film } from 'bds/film.js';
+import * as P from 'bds/pen.js';
+import * as R from 'bds/rig.js';
+import * as K from 'bds/kit.js';
+import { MOMO, GRAN, CROW, can } from './cast.js';
+import { seed, SEED_R, mound, sunflower, sunHat } from './props.js';
+import { SCORE } from './score.js';
+const { span, lerp, clamp, ease, arcAt, hash, INK, CRAYON } = P;
+
+const F = new Film({ seed: 11, score: SCORE, title: 'Water the Seed' });
+
+// ── the world ──
+const L = K.track([[-700, 760], [1150, 760], [1350, 792], [2350, 1000], [4400, 1000], [4400, 1900], [6200, 1900]], { water: [[2500, 3300]] });
+const gy = x => L.y(x);
+const PADS = [2650, 2860, 3070], MOUND = 560, SIGN = 690, STUMP = [3900, 130], SOIL = 4610;
+const MOMO_HAT = { ...MOMO, wear: sunHat };
+const decor = (c, g, o = {}) => {
+  const v = g.view, inV = (x, m = 200) => x > v.x0 - m && x < v.x1 + m;
+  for (let x = -600; x < 6200; x += 150) { const xx = x + hash(x, 1) * 90; if (inV(xx) && !L.isWater(xx) && Math.abs(xx - 4400) > 60 && Math.abs(xx - MOUND) > 140) K.grass(c, xx, gy(xx), .8 + hash(x, 2) * .5); }
+  if (inV(980)) K.flower(c, 980, gy(980), 1, CRAYON.pink);
+  if (inV(160)) K.flower(c, 160, gy(160), .9, CRAYON.lilac);
+  if (inV(-250)) K.fern(c, -250, gy(-250), 280);
+  if (inV(1500)) K.mushroom(c, 1500, gy(1500) + 2, 1);
+  if (inV(1740)) K.rock(c, 1740, gy(1740) + 3, 80, 40);
+  if (inV(2200)) K.fern(c, 2200, gy(2200), 250, { lean: -.05 });
+  for (const p of PADS) if (inV(p)) K.lilypad(c, p, gy(p) + (o.dip?.[p] || 0), 110);
+  if (inV(3600)) K.fern(c, 3600, gy(3600), 300);
+  if (inV(STUMP[0])) K.stump(c, STUMP[0], gy(STUMP[0]), 110, STUMP[1]);
+  if (inV(4300)) K.rock(c, 4300, gy(4300) + 3, 60, 30, CRAYON.stone);
+  if (inV(4900)) K.fern(c, 4950, gy(4950), 260);
+  if (inV(4250, 0) && o.soil !== false) { /* the soft soil at the cliff foot */ }
+  if (inV(SOIL)) { P.crayon(c, P.ellipse(SOIL, gy(SOIL) + 6, 90, 14, 18), { knock: false, col: CRAYON.brown, gap: 4, a: .6, base: .25 }); }
+};
+const shadowOf = (c, x, lift = 0, w = 120) => K.shadow(c, x, gy(x), w, clamp(1 - lift / 220));
+const hops = (list, t, h = 100) => {   // [[t0, t1, x0, x1], …] → { x, lift } along the line
+  for (const [t0, t1, x0, x1] of list) if (t >= t0 && t <= t1) { const k = (t - t0) / (t1 - t0), x = lerp(x0, x1, k), base = lerp(gy(x0), gy(x1), k); return { x, lift: h * 4 * k * (1 - k) + (base - gy(x)), air: true, k }; }
+  return null;
+};
+const runPose = (t2, o = {}) => ({ yaw: o.yaw ?? 72, walk: t2 * 4.6, stride: 1.15, tilt: o.tilt ?? .2, armR: { a: .3, f: 1.1 + .5 * Math.sin(t2 * 4.6 * Math.PI) }, armL: { a: .3, f: -.45 - .45 * Math.sin(t2 * 4.6 * Math.PI) }, eyes: 'open', brow: 'worried', mouth: 'open' });
+const carry = (dir = 1, tilt = 0) => ({ arm: dir > 0 ? 'R' : 'L', draw: c => can(c, dir, tilt) });
+
+// shots: { name, dur, cam(lt), momo(lt, t2) → pose (x on the line; air: true while jumping), draw(g, lt, t2, c) for the rest }
+const SHOTS = [];
+const shot = (name, dur, d, o = {}) => { d.name = name; d.dur = dur; SHOTS.push(d); F.shot(dur, (g, lt) => render(g, lt, d), { name, cam: d.cam, tr: o.tr }); };
+function render(g, lt, d) {
+  const t2 = g.twos(lt);
+  g.paper();
+  if (d.sun !== false) g.screen(c => K.sun(c, d.sun?.[0] ?? 900, d.sun?.[1] ?? 150, 42, g.t));   // the sun is pinned to the page, not the world
+  const world = c => {
+    L.draw(c, g.view.x0, g.view.x1);
+    decor(c, g, d.decor ? d.decor(lt) : {});
+    d.draw && d.draw(g, lt, t2, c);
+  };
+  if (d.drawOn) g.world(c => g.drawOn(d.drawOn(lt), () => world(c))); else g.world(world);
+  d.screen && d.screen(g, lt, t2);
+}
+const momo = (c, pose, spec = MOMO) => { shadowOf(c, pose.x, pose.lift || 0, 120 * (pose.s ?? 1)); return R.critter(c, spec, { y: gy(pose.x), ...pose }); };
+
+// 1 · home — the page draws on; Gran puts up the sign; Momo salutes; Gran waddles off
+const GRAN1 = (lt, t2) => lt < 4.2
+  ? { x: 905, yaw: -40, armL: lt > 2.2 && lt < 3.6 ? { a: .35, f: 1.5 } : undefined, mouth: lt > 2.3 && lt < 3.4 && Math.floor(t2 * 6) % 2 ? 'open' : 'smile', eyes: lt > 3.6 ? 'happy' : 'open' }
+  : { x: 905 + (lt - 4.2) * 260, yaw: 90, walk: t2 * 3.2, stride: .9, mouth: 'smile' };
+shot('home', 5.5, {
+  cam: () => ({ x: 650, y: 545, zoom: 1.2 }),
+  drawOn: lt => span(lt, 0, 1.3),
+  momo: (lt, t2) => ({ x: 420, yaw: 45, eyes: lt > 3.4 && lt < 4.6 ? 'happy' : 'open', mouth: 'smile', armR: lt > 3.4 && lt < 4.4 ? { a: .45, f: 2.45 } : undefined, hold: carry(-1) && { arm: 'L', draw: c => can(c, 1) } }),
+  draw(g, lt, t2, c) {
+    mound(c, MOUND, gy(MOUND)); seed(c, MOUND, gy(MOUND) - 30 - 10, -.2);
+    g.drawOn(span(lt, 1.3, 2.3), () => K.sign(c, SIGN, gy(SIGN), 'water\nthe seed', { layout: 'water\nthe seeds' }));
+    const gp = GRAN1(lt, t2); shadowOf(c, gp.x, 0, 150); R.critter(c, GRAN, { y: gy(gp.x), ...gp });
+    momo(c, this.momo(lt, t2));
+  },
+});
+
+// 2 · water — close: pouring, humming, turning away; a gust; the seed rolls off; "!"
+const seed2 = lt => lt < 3.15 ? { x: MOUND, y: gy(MOUND) - 40, rot: -.2 }
+  : lt < 3.6 ? (() => { const k = span(lt, 3.15, 3.6), [x, y] = arcAt([MOUND, gy(MOUND) - 40], [740, gy(740) - SEED_R], 70, k); return { x, y, rot: -.2 + k * 4 }; })()
+  : (() => { const x = 740 + (lt - 3.6) * 400; return { x, y: gy(x) - SEED_R, rot: 3.8 + (x - 740) / SEED_R }; })();
+shot('water', 5, {
+  cam: () => ({ x: 560, y: 573, zoom: 1.55 }),
+  momo: (lt, t2) => {
+    const pour = span(lt, .1, .45) * (1 - span(lt, 2.0, 2.3)), away = lt > 2.35 && lt < 4.0, look = lt >= 4.0;
+    const p = { x: lt < 4.6 ? 440 : 440 + (lt - 4.6) * 300, yaw: away ? -25 : 55, eyes: look ? 'wide' : 'shut', mouth: look ? 'o' : 'smile',
+      armR: { a: .2, f: 1.05 + pour * .25 }, hold: { arm: 'R', draw: c => can(c, 1, pour * .75) } };
+    if (lt > 2.2 && lt < 2.35) p.yaw = 15;
+    if (lt >= 4.6) Object.assign(p, runPose(t2), { eyes: 'wide', brow: 'worried', hold: carry(1, .2) });
+    if (away) p.away = true;
+    return p;
+  },
+  draw(g, lt, t2, c) {
+    mound(c, MOUND, gy(MOUND));
+    K.sign(c, SIGN, gy(SIGN), 'water\nthe seed', { layout: 'water\nthe seeds' });
+    const s = seed2(lt); seed(c, s.x, s.y, s.rot);
+    const pose = this.momo(lt, t2), w = momo(c, pose);
+    // water from the spout: a dotted arc of drops onto the mound while pouring
+    const pour = span(lt, .25, .5) * (1 - span(lt, 1.9, 2.15));
+    if (pour > 0) { const [hx, hy] = w.hand.R, tip = [hx + 80, hy - 4]; for (let i = 0; i < 7; i++) { const k = ((t2 * 2.2 + i / 7) % 1), [x, y] = arcAt(tip, [MOUND - 10 + i * 4, gy(MOUND) - 26], -20, k); K.drop(c, x, y, .55 * pour); } }
+    if (lt < 4.0 && lt > .6) K.notes(c, pose.x + 70, gy(pose.x) - 230, lt);
+    if (lt > 2.8 && lt < 4.2) K.gust(c, 300 + span(lt, 2.8, 4.2) * 520, 640, span(lt, 2.8, 4.2) * 1.4, 1, 240);
+    if (lt > 4.0 && lt < 4.9) { const top = gy(440) - 205; K.rays(c, 440, top + 40, 95, span(lt, 4.0, 4.15)); K.mark(c, '!', 470, top - 28, 1.1); }
+  },
+});
+
+// 3 · hill — the chase down the slope; the seed hops off the rock, so does Momo
+const seed3 = lt => { const x = 1000 + 290 * lt, h = hops([[2.4, 2.95, 1696, 1856]], lt, 80); return { x, y: gy(x) - SEED_R - (h ? h.lift : 0), rot: (x - 1000) / SEED_R }; };
+const momo3x = lt => 700 + 312 * lt;
+shot('hill', 5, {
+  cam: lt => { const x = seed3(lt).x * .5 + momo3x(lt) * .5 + 40; return { x, y: gy(x) - 250, zoom: 1.15 }; },
+  momo: (lt, t2) => { const x = momo3x(lt), h = hops([[3.0, 3.5, 1636, 1792]], lt, 75); return { x, ...runPose(t2, { tilt: .25 }), lift: h ? h.lift : 0, air: !!h, hold: carry(1, .25) }; },
+  draw(g, lt, t2, c) {
+    const s = seed3(lt); seed(c, s.x, s.y, s.rot); K.shadow(c, s.x, gy(s.x), 40, 1);
+    const pose = this.momo(lt, t2), w = momo(c, pose);
+    K.speed(c, pose.x - 70, gy(pose.x) - 110 - (pose.lift || 0), 130, 1, 90);
+    K.drop(c, w.top[0] - 60, w.top[1] + 40 + (t2 * 60 % 30), .9);
+  },
+});
+
+// 4 · pond — the seed skips pad, pad, pad to the far bank; Momo hops after it
+const SH4 = [[.3, .9, 2470, PADS[0]], [.9, 1.5, PADS[0], PADS[1]], [1.5, 2.1, PADS[1], PADS[2]], [2.1, 2.9, PADS[2], 3380]];
+const seed4 = lt => {
+  if (lt < .3) { const x = 2450 + lt * 66; return { x, y: gy(x) - SEED_R, rot: x / SEED_R }; }
+  const h = hops(SH4, lt, 95); if (h) return { x: h.x, y: gy(h.x) - SEED_R - h.lift, rot: lt * 9 };
+  const x = 3380 + 180 * ease.out(span(lt, 2.9, 4.0)); return { x, y: gy(x) - SEED_R, rot: 2.9 * 9 + (x - 3380) / SEED_R };
+};
+const MH4 = [[.8, 1.6, 2470, PADS[0]], [1.8, 2.6, PADS[0], PADS[1]], [2.8, 3.6, PADS[1], PADS[2]], [3.8, 4.6, PADS[2], 3370]];
+const momo4 = (lt, t2) => {
+  const h = hops(MH4, lt, 120);
+  if (h) return { x: h.x, yaw: 70, lift: h.lift, air: true, squash: h.k < .15 ? .18 - h.k : -.12, armR: { a: 2.3, f: .4 }, armL: { a: 2.3, f: .4 }, eyes: 'squeeze', brow: 'angry', mouth: 'open', hold: carry(1, -.3) };
+  if (lt < .8) return { x: 2260 + lt * 262, ...runPose(t2), hold: carry(1, .2) };
+  if (lt > 4.6) return { x: 3370 + (lt - 4.6) * 60, yaw: 70, walk: t2 * 2.4, stride: .7, eyes: 'half', mouth: 'tongue', hold: carry(1, .1) };
+  const land = MH4.find(([, t1]) => lt > t1 && lt < t1 + .2); const x = land ? land[3] : MH4.reduce((a, [t0, t1, x0, x1]) => lt > t1 ? x1 : a, 2470);
+  return { x, yaw: 70, squash: land ? .2 * (1 - (lt - land[1]) / .2) : 0, armR: { a: .5, f: .6 }, eyes: 'open', brow: 'angry', mouth: 'frown', hold: carry(1, 0) };
+};
+shot('pond', 5.5, {
+  cam: lt => { const x = clamp((seed4(lt).x + momo4(lt, lt).x) / 2, 2380, 3480); return { x, y: 730, zoom: 1.1 }; },
+  momo: momo4,
+  decor: lt => { const dip = {}; for (const p of PADS) { const a = [...SH4, ...MH4].filter(([, t1, , x1]) => x1 === p && lt > t1 && lt < t1 + .35).length; dip[p] = a ? 7 : 0; } return { dip }; },
+  draw(g, lt, t2, c) {
+    const s = seed4(lt); seed(c, s.x, s.y, s.rot); if (!L.isWater(s.x)) K.shadow(c, s.x, gy(s.x), 40, 1);
+    for (const [, t1, , x1] of SH4) if (lt > t1 && lt < t1 + .5 && PADS.includes(x1)) K.splash(c, x1, gy(x1), span(lt, t1, t1 + .5), .6);
+    const pose = momo4(lt, t2); momo(c, pose);
+    for (const [, t1, , x1] of MH4) if (lt > t1 && lt < t1 + .5) K.splash(c, x1, gy(x1), span(lt, t1, t1 + .5), .9);
+  },
+});
+
+// 5 · crow — it swoops, takes the seed, lands on the stump
+const crow5 = (lt, t2) => {
+  const flap = { armR: { a: 1.25 + .9 * Math.sin(t2 * 22), f: .2 }, armL: { a: 1.25 + .9 * Math.sin(t2 * 22), f: .2 } };
+  if (lt < .6) return null;
+  if (lt < 1.8) { const k = ease.in(span(lt, .6, 1.8)), x = lerp(4320, 3600, k), y = lerp(380, gy(3600), ease.out(k)); return { x, y: gy(x), lift: gy(x) - y, yaw: -80, s: .95, ...flap, eyes: 'open', brow: 'angry' }; }
+  if (lt < 2.05) return { x: 3600, y: gy(3600), yaw: -70, s: .95, squash: .15, eyes: 'half', armR: { a: .9, f: .2 }, armL: { a: .9, f: .2 } };
+  if (lt < 3.0) { const k = span(lt, 2.05, 3.0), [x, y] = arcAt([3600, gy(3600)], [STUMP[0], gy(STUMP[0]) - STUMP[1]], 160, ease.io(k)); return { x, y, yaw: 80 - k * 140, s: .95, ...flap, eyes: 'happy' }; }
+  return { x: STUMP[0], y: gy(STUMP[0]) - STUMP[1], yaw: -55, s: .95, squash: Math.sin(span(lt, 3.0, 3.3) * Math.PI) * .2, eyes: 'half', brow: 'none' };
+};
+const beakOf = (spec, pose) => { const w = R.where(spec, pose), yaw = (pose.yaw || 0) * Math.PI / 180, s = pose.s ?? 1; return [w.head[0] + Math.sin(yaw) * spec.body.rx * s * 1.12, w.head[1] + spec.body.ry * s * .22 - (pose.lift || 0) * 0]; };
+shot('crow', 4.5, {
+  cam: () => ({ x: 3700, y: 720, zoom: 1.15 }),
+  momo: (lt, t2) => lt < 1.2 ? { x: 3420 + lt * 50, yaw: 70, walk: t2 * 2.4, stride: .7, eyes: 'half', mouth: 'tongue', hold: carry(1, .1) }
+    : { x: 3480, yaw: 70, eyes: lt > 1.75 ? 'wide' : 'half', brow: lt > 1.75 ? 'up' : 'none', mouth: lt > 1.75 ? 'o' : 'tongue', hold: carry(1, 0) },
+  draw(g, lt, t2, c) {
+    const cp = crow5(lt, t2);
+    let sp = { x: 3560, y: gy(3560) - SEED_R, rot: .6 };
+    if (cp && lt >= 1.8 && lt < 3.0) { const [bx, by] = beakOf(CROW, cp); sp = { x: bx, y: by - (cp.lift || 0), rot: .3, s: .8 }; }
+    if (lt >= 3.0) sp = { x: STUMP[0] + 38, y: gy(STUMP[0]) - STUMP[1] - SEED_R + 2, rot: .1 };
+    if (!cp || lt < 1.8) K.shadow(c, sp.x, gy(sp.x), 40, 1);
+    const mp = this.momo(lt, t2); momo(c, mp);
+    if (lt < 1.8) seed(c, sp.x, sp.y, sp.rot);
+    if (cp) { if (cp.lift != null && lt < 3.0) shadowOf(c, cp.x, cp.lift, 90); R.critter(c, CROW, cp); }
+    if (lt >= 1.8) seed(c, sp.x, sp.y, sp.rot, sp.s);
+    if (cp && lt < 1.8) K.speed(c, cp.x + 60, cp.y - cp.lift - 60, 100, -1, 90, 3);
+    if (lt > 1.75 && lt < 2.6) { const tp = gy(3480) - 200; K.mark(c, '!', 3500, tp - 20, 1); }
+  },
+});
+
+// 6 · splash — Momo marches up, the crow caws, the can comes up, the crow gets soaked and flaps off; the seed falls
+const crow6 = (lt, t2) => {
+  const top = gy(STUMP[0]) - STUMP[1];
+  if (lt < 1.6) return { x: STUMP[0], y: top, yaw: -55, s: .95, eyes: 'half' };
+  if (lt < 2.6) { const caw = Math.floor(t2 * 6) % 2; return { x: STUMP[0], y: top, yaw: -65, s: .95, tilt: -.18 * caw, eyes: 'half', brow: 'angry', mouth: caw ? 'open' : 'none', armR: { a: caw ? 1.4 : .5, f: .2 }, armL: { a: caw ? 1.4 : .5, f: .2 } }; }
+  if (lt < 3.8) return { x: STUMP[0] + K.tremble(lt, lt > 3.0 ? 3 : 0), y: top, yaw: -50, s: .95, eyes: lt > 2.95 ? 'squeeze' : 'wide', mouth: lt > 2.95 ? 'frown' : 'o', armR: { a: .2, f: -.4 }, armL: { a: .2, f: -.4 } };
+  const k = span(lt, 3.8, 4.9), x = lerp(STUMP[0], 3280, ease.in(k)), y = lerp(top, 200, ease.in(k));
+  return { x, y: gy(x), lift: gy(x) - y, yaw: -85, s: .95, armR: { a: 1.25 + .95 * Math.sin(t2 * 24), f: .2 }, armL: { a: 1.25 + .95 * Math.sin(t2 * 24), f: .2 }, eyes: 'squeeze', mouth: 'frown' };
+};
+const seed6 = lt => {
+  const top = gy(STUMP[0]) - STUMP[1] - SEED_R + 2;
+  if (lt < 4.1) return { x: STUMP[0] + 38 + (lt > 3.85 ? Math.sin(lt * 40) * 2 : 0), y: top, rot: .1 };
+  if (lt < 4.35) { const x = lerp(STUMP[0] + 38, STUMP[0] + 56, span(lt, 4.1, 4.35)); return { x, y: top, rot: .1 + (x - STUMP[0] - 38) / SEED_R }; }
+  if (lt < 4.8) { const k = span(lt, 4.35, 4.8), x = lerp(STUMP[0] + 56, 4030, k), y = lerp(top, gy(4030) - SEED_R, ease.in(k)) - Math.sin(k * Math.PI) * 30; return { x, y, rot: 1.6 + k * 4 }; }
+  const x = 4030 + (lt - 4.8) * 330; return { x, y: gy(x) - SEED_R, rot: 5.6 + (x - 4030) / SEED_R };
+};
+shot('splash', 5.5, {
+  cam: () => ({ x: 3770, y: 744, zoom: 1.25 }),
+  momo: (lt, t2) => {
+    if (lt < 1.6) return { x: 3480 + lt * 172, yaw: 70, walk: t2 * 2.8, stride: 1, eyes: 'half', brow: 'angry', mouth: 'frown', hold: carry(1, 0) };
+    const up = span(lt, 2.35, 2.75), pour = span(lt, 2.7, 2.9) * (1 - span(lt, 3.5, 3.8));
+    return { x: 3755, yaw: lt > 4.3 ? 80 : 65, eyes: lt > 4.3 ? 'wide' : lt > 2.9 && lt < 3.8 ? 'happy' : 'half', brow: lt > 4.3 ? 'up' : 'angry', mouth: lt > 4.3 ? 'o' : lt > 2.9 && lt < 3.8 ? 'grin' : 'frown',
+      armR: { a: .3 + up * .25, f: 1.0 + up * 1.25 }, hold: { arm: 'R', draw: c => can(c, 1, -.2 + up * .9 + pour * .5) } };
+  },
+  draw(g, lt, t2, c) {
+    const s = seed6(lt); if (lt > 4.8) K.shadow(c, s.x, gy(s.x), 40, 1);
+    const mp = this.momo(lt, t2), w = momo(c, mp), cp = crow6(lt, t2);
+    if (cp.lift) shadowOf(c, cp.x, cp.lift, 90);
+    const cw = R.critter(c, CROW, cp);
+    seed(c, s.x, s.y, s.rot);
+    if (lt > 2.7 && lt < 3.6) {   // the can empties in one arc onto the crow
+      const [hx, hy] = w.hand.R, tip = [hx + 62, hy - 70], tgt = [cw.head[0] - 10, cw.head[1] - 20];
+      for (let i = 0; i < 12; i++) { const k = (t2 * 2.5 + i / 12) % 1, [x, y] = arcAt(tip, tgt, 70, k); K.drop(c, x, y, .7); }
+      K.splash(c, tgt[0], tgt[1] + 10, (t2 * 2) % 1, .6);
+    }
+    if (lt > 3.0 && lt < 4.4) for (let i = 0; i < 4; i++) K.drop(c, cw.mid[0] + (i - 1.5) * 34, cw.mid[1] + 40 + ((t2 * 140 + i * 37) % 90), .7);
+    if (lt > 3.8 && lt < 4.6) K.gust(c, STUMP[0] - 20, gy(STUMP[0]) - STUMP[1] - 40, span(lt, 3.8, 4.6), 1, 160);
+    if (lt > 4.3 && lt < 5.2) K.mark(c, '!', 3770, gy(3755) - 230, 1);
+  },
+});
+
+// 7 · cliff — the seed rolls off the edge; the camera follows it all the way down
+const seed7 = lt => {
+  if (lt < 1.1) { const x = 4060 + lt * 310; return { x, y: gy(x) - SEED_R, rot: x / SEED_R }; }
+  if (lt < 2.3) { const k = span(lt, 1.1, 2.3), x = lerp(4402, 4440, k), y = lerp(gy(4399) - SEED_R, 1900 - SEED_R, ease.in(k)); return { x, y, rot: 4400 / SEED_R + k * 9 }; }
+  if (lt < 2.8) { const [x, y] = arcAt([4440, 1900 - SEED_R], [SOIL, 1900 - SEED_R], 50, span(lt, 2.3, 2.8)); return { x, y, rot: 9 + lt }; }
+  return { x: SOIL, y: 1900 - SEED_R + 9 * span(lt, 2.8, 3.4), rot: .4 };
+};
+shot('cliff', 4, {
+  sun: false,
+  cam: [{ t: 0, x: 4200, y: 770, zoom: 1.1 }, { t: 1.2, x: 4230, y: 790 }, { t: 2.7, x: 4440, y: 1620, e: 'io' }, { t: 4, x: 4460, y: 1640 }],
+  momoInFrame: lt => lt < 1.7,
+  momo: (lt, t2) => lt < 1.45 ? { x: 3790 + lt * 380, ...runPose(t2), hold: carry(1, .2) }
+    : { x: 4343, yaw: 80, tilt: .32, eyes: 'wide', brow: 'worried', mouth: 'o', armR: { a: .4, f: .9 }, armL: { a: .9, f: 1.4 }, hold: carry(1, .3) },
+  draw(g, lt, t2, c) {
+    const s = seed7(lt); seed(c, s.x, s.y, s.rot); if (lt < 1.1 || lt > 2.3) K.shadow(c, s.x, gy(s.x), 40, 1);
+    if (lt > 1.2 && lt < 2.3) K.speed(c, s.x - 20, s.y - 60, 40, 1, 0, 0);
+    if (lt > 1.2 && lt < 2.3) for (let i = 0; i < 3; i++) P.ink(c, [[s.x - 18 + i * 18, s.y - 40], [s.x - 18 + i * 18, s.y - 110]], { col: INK.grey, w: 1.6, second: 0, over: 0 });
+    momo(c, this.momo(lt, t2));
+    K.puff(c, 4440, 1900, span(lt, 2.3, 2.9), 1);
+    if (lt > 2.8) K.rays(c, SOIL, 1880, 60, span(lt, 2.8, 2.95), { n: 6 });
+  },
+});
+
+// 8 · sprout — Momo slides down; a tear and one drip; it comes up a sunflower
+const SPR = [4.0, 5.4];
+shot('sprout', 6, {
+  sun: false,
+  cam: () => ({ x: 4590, y: 1680, zoom: 1.25 }),
+  momo: (lt, t2) => {
+    if (lt < .9) { const k = ease.in(span(lt, 0, .9)), y = lerp(1330, 1900, k); return { x: 4432, yaw: 70, lift: 1900 - y, air: true, squash: .12, armR: { a: 2.5, f: .3 }, armL: { a: 2.5, f: .3 }, eyes: 'squeeze', mouth: 'open', hold: carry(1, -.4) }; }
+    if (lt < 1.3) return { x: 4432, yaw: 70, squash: .32 * (1 - span(lt, .9, 1.3)), eyes: 'dizzy', mouth: 'tongue', hold: carry(1, 0) };
+    if (lt < 2.1) return { x: 4432 + (lt - 1.3) * 72, yaw: 70, walk: t2 * 2.2, stride: .6, eyes: 'sad', brow: 'worried', mouth: 'frown', hold: carry(1, 0) };
+    const tip = span(lt, 3.0, 3.3) * (1 - span(lt, 3.6, 3.9)), sur = lt > SPR[0], joy = lt > SPR[1];
+    const p = { x: 4490, yaw: 70, eyes: joy ? 'happy' : sur ? 'wide' : 'sad', brow: joy ? 'none' : sur ? 'up' : 'worried', mouth: joy ? 'open' : sur ? 'o' : 'frown', look: [.4, .6], tilt: sur && !joy ? -.15 : 0,
+      armR: { a: .2, f: .9 + tip * .5 }, hold: { arm: 'R', draw: c => can(c, 1, tip * 1.1) } };
+    if (joy) { const k = span(lt, 5.45, 5.95); Object.assign(p, { lift: 70 * Math.sin(Math.PI * k), air: k > 0 && k < 1, armR: { a: 2.6, f: .3 }, armL: { a: 2.6, f: .3 }, hold: { arm: 'R', draw: c => can(c, 1, -.3) } }); }
+    return p;
+  },
+  draw(g, lt, t2, c) {
+    const k = span(lt, SPR[0], SPR[1]);
+    if (lt > 3.85 && lt < 4.1) K.rays(c, SOIL, 1885, 50, 1, { n: 5 });
+    if (k < .15) seed(c, SOIL + (lt > 3.85 ? Math.sin(lt * 50) * 2 : 0), 1900 - SEED_R + 9, .4);
+    sunflower(c, SOIL, 1900, k, lt, 330);
+    const mp = this.momo(lt, t2), w = momo(c, mp);
+    if (lt > .9 && lt < 1.5) { K.puff(c, 4432, 1900, span(lt, .9, 1.5), 1.2); K.stars(c, w.top[0], w.top[1] - 10, lt, 46); }
+    if (lt > 2.55 && lt < 3.05) { const kk = span(lt, 2.55, 3.05); K.drop(c, lerp(w.head[0] + 50, SOIL - 10, kk), lerp(w.head[1] + 10, 1890, ease.in(kk)), .8); }
+    if (lt > 3.3 && lt < 3.65) { const kk = span(lt, 3.3, 3.65), [hx, hy] = w.hand.R; K.drop(c, hx + 66, lerp(hy - 10, 1890, ease.in(kk)), .7); }
+    if (lt > 5.3 && lt < 6) K.heart(c, w.top[0] + 40, w.top[1] - 30 - span(lt, 5.3, 6) * 40, .9);
+  },
+});
+
+// 9 · home again — five seeds, an "s" on the sign, the sunflower hat; another gust… "!"
+const SEEDS9 = [-64, -32, 0, 32, 64];
+shot('home again', 5.5, {
+  momoInFrame: lt => lt > .6,   // he walks in from the left edge
+  cam: () => ({ x: 650, y: 545, zoom: 1.2 }),
+  momo: (lt, t2) => lt < 1.6 ? { x: 150 + lt * 170, yaw: 80, walk: t2 * 2.6, stride: .8, eyes: 'happy', mouth: 'smile', hold: { arm: 'L', draw: c => can(c, 1) } }
+    : { x: 422, yaw: 45, eyes: lt > 4.25 ? 'wide' : lt > 2.4 ? 'half' : 'happy', brow: lt > 4.25 ? 'up' : 'none', mouth: lt > 4.25 ? 'o' : lt > 2.4 ? 'frown' : 'smile', hold: { arm: 'L', draw: c => can(c, 1) } },
+  draw(g, lt, t2, c) {
+    mound(c, MOUND, gy(MOUND), 220, 34);
+    const wob = lt > 3.9 ? Math.sin(lt * 30) * .25 * span(lt, 3.9, 4.2) : 0;
+    SEEDS9.forEach((dx, i) => seed(c, MOUND + dx, gy(MOUND) - 34 - 4 + Math.abs(dx) * .12, -1.35 + wob * (i % 2 ? 1 : -1), .62));
+    const sg = K.sign(c, SIGN, gy(SIGN), 'water\nthe seed', { layout: 'water\nthe seeds' });
+    g.drawOn(span(lt, 1.7, 2.3), () => P.hand(c, 's', sg.endX, sg.endY, { size: sg.size }));
+    const gp = { x: 905, yaw: -40, armL: lt > 1.6 && lt < 2.8 ? { a: .35, f: 1.5 } : undefined, eyes: lt > 2.4 ? 'happy' : 'open', mouth: 'smile' };
+    shadowOf(c, gp.x, 0, 150); R.critter(c, GRAN, { y: gy(gp.x), ...gp });
+    if (lt > 3.7 && lt < 5.0) K.gust(c, 150 + span(lt, 3.7, 5.0) * 600, 600, span(lt, 3.7, 5.0) * 1.4, 1, 240);   // behind Momo: the wind passes him
+    const w = momo(c, this.momo(lt, t2), MOMO_HAT);
+    if (lt > 2.7 && lt < 3.8) K.drop(c, w.top[0] + 70, w.top[1] + 50 + span(lt, 2.7, 3.8) * 40, 1);
+    if (lt > 4.25) K.mark(c, '!', 450, gy(422) - 270, 1.1);
+  },
+}, { tr: { type: 'wipe', d: .8 } });
+
+// ── the film's own rules (check.mjs runs them at every sampled t) ──
+const at = t => { const i = F.locate(t), d = SHOTS[i]; return { d, lt: t - F.shots[i].start, i }; };
+F.check('Momo stands on the line unless he is jumping or falling', t => { const { d, lt } = at(t), p = d.momo?.(lt, lt); return !p || p.air || !(p.lift > 1); });
+F.check('Momo never stands on open water (only on a lily pad)', t => { const { d, lt } = at(t), p = d.momo?.(lt, lt); return !p || p.air || (p.lift || 0) > 1 || !L.isWater(p.x) || PADS.some(x => Math.abs(x - p.x) < 45); });
+F.check('Momo faces the way he moves', t => { const { d, lt } = at(t); if (!d.momo) return true; const a = d.momo(Math.max(0, lt - .08), lt), b = d.momo(Math.min(d.dur, lt + .08), lt), v = (b.x - a.x) / .16; const p = d.momo(lt, lt); return Math.abs(v) < 40 || p.away || Math.sign(Math.sin((p.yaw || 0) * Math.PI / 180)) === Math.sign(v); });
+F.check('Momo is in frame', t => { const { d, lt, i } = at(t); if (!d.momo || (d.momoInFrame && !d.momoInFrame(lt))) return true; const cam = F.camAt(F.shots[i], lt), p = d.momo(lt, lt), half = F.W / 2 / cam.zoom; return Math.abs(p.x - cam.x) < half - 40; });
+F.check('the seed is in frame during the chase', t => { const { d, lt, i } = at(t); const s = d.name === 'hill' ? seed3(lt) : d.name === 'pond' ? seed4(lt) : null; if (!s) return true; const cam = F.camAt(F.shots[i], lt); return Math.abs(s.x - cam.x) < F.W / 2 / cam.zoom - 20; });
+F.start();
+</script></body></html>
