@@ -23,11 +23,11 @@
       const scaleQ = DR.num('scale', 1), BW = F.width || 1920, BH = F.height || 1080;
       if (DR.RENDER) document.body.classList.add('render');
       const renderer = (DR.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: DR.RENDER }));
-      renderer.outputColorSpace = THREE.LinearSRGBColorSpace; renderer.toneMapping = THREE.NoToneMapping; renderer.autoClear = false; renderer.setPixelRatio(1);
+      renderer.outputColorSpace = THREE.LinearSRGBColorSpace; renderer.toneMapping = THREE.NoToneMapping; renderer.autoClear = false; renderer.info.autoReset = false; renderer.setPixelRatio(1);
       renderer.shadowMap.enabled = DR.on('shadow'); renderer.shadowMap.type = DR.P.get('pcf') === 'soft' ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap; renderer.shadowMap.autoUpdate = true;
       const gl = renderer.getContext(), dbg = gl.getExtension('WEBGL_debug_renderer_info');
       DR.gpu = dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : 'WebGL'; DR.soft = /SwiftShader|llvmpipe|Software/i.test(DR.gpu);
-      const Q = (DR.Q = { scale: scaleQ, airDiv: DR.num('air', 3), steps: DR.num('steps', DR.soft ? 44 : 64), shadow: DR.num('shadow', DR.soft ? 2048 : 4096), mirror: DR.num('mirror', 0.5), dens: DR.num('q', 1) });
+      const Q = (DR.Q = { scale: scaleQ, airDiv: DR.num('air', 3), steps: DR.num('steps', DR.soft ? 44 : 64), shadow: DR.num('shadow', DR.soft ? 2048 : 4096), mirror: DR.num('mirror', DR.soft ? 0.42 : 0.5), dens: DR.num('q', 1), msaa: DR.num('msaa', DR.soft ? 0 : 4) });   // on a CPU rasteriser multisampling costs a third of the frame; FXAA carries it
       DR.U.uNoise.value = DR.makeNoiseTex(); DR.U.uNoise3.value = DR.makeNoise3(64);
       DR.progress(0.05, 'noise');
       const scene = (DR.scene = new THREE.Scene()), fx = (DR.fxScene = new THREE.Scene());
@@ -35,7 +35,7 @@
       const sun = (DR.sun = new THREE.DirectionalLight(0xffffff, 1)); sun.castShadow = true; sun.shadow.mapSize.set(Q.shadow, Q.shadow); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.2; sun.shadow.radius = 2.2;
       scene.add(sun, sun.target); scene.add(DR.makeSky());
       let W = 0, H = 0, view, post;
-      const resize = (w, h) => { w = Math.round(w); h = Math.round(h); if (w === W && h === H) return; W = w; H = h; renderer.setSize(w, h, false); if (view) { view.size(w, h); post.size(w, h); } else { view = DR.view = new DR.View(w, h, { airDiv: Q.airDiv, steps: Q.steps }); post = DR.post = new DR.Post(w, h); } DR.U.uRes.value.set(w, h); };
+      const resize = (w, h) => { w = Math.round(w); h = Math.round(h); if (w === W && h === H) return; W = w; H = h; renderer.setSize(w, h, false); if (view) { view.size(w, h); post.size(w, h); } else { view = DR.view = new DR.View(w, h, { airDiv: Q.airDiv, steps: Q.steps, samples: Q.msaa }); post = DR.post = new DR.Post(w, h); } DR.U.uRes.value.set(w, h); };
       resize(BW * Q.scale, BH * Q.scale);
 
       // ── the film builds its world ──
@@ -51,6 +51,7 @@
         const s = shotAt(t), uu = DR.sat((t - s.t0) / Math.max(1e-6, s.t1 - s.t0)), c = DR.camOverride ? DR.camOverride(t) : s.cam(uu, t);
         const sh = DR.camOverride ? 0 : s.shake ?? 0.25; // hand-held drift, metres at the lens / fraction of the view at the target
         tp.set(c.p[0] + DR.wobble(t * 0.33, 11 + s.i) * sh * 0.5, c.p[1] + DR.wobble(t * 0.29, 12 + s.i) * sh * 0.35, c.p[2] + DR.wobble(t * 0.31, 13 + s.i) * sh * 0.5);
+        if (F.ground) { const gy = F.ground(tp.x, tp.z) + (F.groundClear ?? 0.5); if (tp.y < gy) { DR.camUnder = Math.max(DR.camUnder || 0, gy - tp.y); tp.y = gy; } }   // the lens never goes under the land or the water
         const dist = Math.hypot(c.l[0] - c.p[0], c.l[1] - c.p[1], c.l[2] - c.p[2]), k = dist * 0.004 * (sh / 0.25);
         tl.set(c.l[0] + DR.wobble(t * 0.47, 14 + s.i) * k, c.l[1] + DR.wobble(t * 0.41, 15 + s.i) * k, c.l[2] + DR.wobble(t * 0.44, 16 + s.i) * k);
         const kick = DR.camKick ? DR.camKick(t) : 0; if (kick) { tl.x += DR.noise1(t * 31, 5) * kick * dist * 0.01; tl.y += DR.noise1(t * 37, 6) * kick * dist * 0.01; }
@@ -73,7 +74,7 @@
       const fadeOf = (t) => { const f = F.fade ? F.fade(t) : null; return f && f[3] > 0 ? f : null; };
       let frames = 0;
       const renderAt = (DR.renderAt = (t) => {
-        t = DR.clamp(t, 0, F.duration - 1e-4); DR.t = t;
+        t = DR.clamp(t, 0, F.duration - 1e-4); DR.t = t; renderer.info.reset();
         for (const f of DR.frameFns) if (f.order < 50) f.fn(t);       // creatures pose first: the light may follow them (a glow, a flash)
         DR.applyLight(t);
         const s = setCamera(t); DR.shot = s;

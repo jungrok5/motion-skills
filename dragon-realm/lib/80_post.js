@@ -13,7 +13,7 @@
 
   // ── a view: scene (+depth) → air → joined ──
   DR.View = class {
-    constructor(w, h, { airDiv = 3, steps = 48 } = {}) { this.airDiv = airDiv; this.steps = steps; this.size(w, h);
+    constructor(w, h, { airDiv = 3, steps = 48, samples = 0 } = {}) { this.airDiv = airDiv; this.steps = steps; this.samples = samples; this.size(w, h);
       this.airMat = new THREE.ShaderMaterial({ uniforms: { ...DR.U, ...DR.cloudU, tDepth: u(null), uNoise3: DR.U.uNoise3, uInvProj: u(new THREE.Matrix4()), uCamW: u(new THREE.Matrix4()), uNF: u(new THREE.Vector2()), uEye: u(new THREE.Vector3()) },
         vertexShader: VS, fragmentShader: `${DR.GLSL.uniforms}\n${DR.GLSL.common}\n${DR.airFrag}`, depthTest: false, depthWrite: false });
       this.joinMat = pass(/* glsl */`
@@ -31,7 +31,7 @@
         }`, { tScene: u(null), tAir: u(null), tDepth: u(null), uAirRes: u(new THREE.Vector2()) });
     }
     size(w, h) { if (this.w === w && this.h === h) return; this.w = w; this.h = h; for (const k of ['scene', 'air', 'out']) this[k] && this[k].dispose();
-      this.scene = rt(w, h, { depthBuffer: true, samples: DR.num('msaa', 4) }); this.scene.depthTexture = new THREE.DepthTexture(w, h, THREE.UnsignedIntType); this.scene.depthTexture.minFilter = this.scene.depthTexture.magFilter = THREE.NearestFilter;
+      this.scene = rt(w, h, { depthBuffer: true, samples: this.samples }); this.scene.depthTexture = new THREE.DepthTexture(w, h, THREE.UnsignedIntType); this.scene.depthTexture.minFilter = this.scene.depthTexture.magFilter = THREE.NearestFilter;
       this.air = rt(w / this.airDiv, h / this.airDiv); this.out = rt(w, h); }
     render(renderer, scene, cam, air = true) {
       renderer.setRenderTarget(this.scene); renderer.clear();

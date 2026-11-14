@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>dragon-realm · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 전설 속 긴 몸의 생물(용 · 이무기 · 바다뱀)이 살아 있는 풍경 속을 나는 시네마틱 단편을 만듭니다. three.js만으로, 에셋 없이, HTML 한 파일로 재생되고 1080p MP4로 렌더됩니다.">
+<meta property="og:title" content="dragon-realm · motion-skills">
+<meta property="og:description" content="주제 하나를 주면 전설 속 긴 몸의 생물(용 · 이무기 · 바다뱀)이 살아 있는 풍경 속을 나는 시네마틱 단편을 만듭니다. three.js만으로, 에셋 없이, HTML 한 파일로 재생되고 1080p MP4로 렌더됩니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/dragon-realm/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/dragon-realm">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / dragon-realm</nav>
+  <h1>dragon-realm</h1>
+  <p>주제 하나를 주면 전설 속 긴 몸의 생물(용 · 이무기 · 바다뱀 · 웜)이 살아 있는 풍경 속을 나는 시네마틱 단편을 만듭니다. 바위 · 물 · 구름 · 나무 · 건물 · 비늘 · 음악까지 모두 페이지가 열릴 때 코드로 만들어지며, three.js 외에는 이미지 · 모델 · 폰트 · 소리 파일이 하나도 없습니다. 모든 프레임이 영화 시간의 함수여서 같은 HTML 한 파일이 브라우저에서 반복 재생되고, 프레임 단위로 1080p MP4가 됩니다. 원본: <a href="https://github.com/ChetasLua/crimson-loong">ChetasLua/crimson-loong</a>(赤龍 · Crimson Loong)과 그 영상을 올린 <a href="https://x.com/chetaslua/status/2121176151234330707?a=fPtJuQnZ47fP-u87Nkc&s=19">Chetaslua의 X 게시물</a>을 보고 만들었습니다. 원본 레포에는 라이선스가 없어 코드는 가져오지 않았고, 방법만 분석해 엔진을 새로 썼습니다.</p>
+  <ul class="tags"><li>three.js 한 파일</li><li>에셋 0개</li><li>볼류메트릭 구름 · 호수 반사</li><li>합성 사운드</li><li>MP4 · 라이브 페이지</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 한 줄 (어느 문화의 어떤 생물에게 무슨 일이 일어나는가)</dd>
+      <dt>브리프</dt><dd>문화 시트(바위 · 나무 · 건물 · 문양 · 악기 · 장단), 박자표, 빛의 변화, 생물 시트, 샷 목록</dd>
+      <dt>세계와 빛</dt><dd>높이 함수와 암봉, 호수와 폭포, 시간에 따라 바뀌는 룩(새벽 · 폭풍 · 일출), 깊이를 아는 구름과 안개</dd>
+      <dt>생물</dt><dd>영화 전체를 잇는 레일 하나, 비늘 격자, SDF로 빚은 머리 · 뿔 · 갈기 · 다리, 캐스트 시트와 몸 검사</dd>
+      <dt>출력</dt><dd>HTML 한 파일(라이브 재생, 클릭하면 소리), 합성 사운드가 들어간 1920×1080 MP4</dd>
+    </dl>
+    <pre><code>cd dragon-realm
+node scripts/check.mjs examples/cheongryong                      # check OK
+node scripts/render.mjs examples/cheongryong --cast --scale .5   # out/cast.jpg
+node scripts/render.mjs examples/cheongryong --sheet --scale .33 # out/sheet.jpg
+node scripts/score.mjs examples/cheongryong                      # out/score.wav
+node scripts/render.mjs examples/cheongryong                     # out/film.mp4
+
+node scripts/new-film.mjs ~/my-film                              # 새 영화 폴더</code></pre>
+    <p class="mute">요구 사항: Node 18+, Playwright Chromium, ffmpeg. GPU 없이도 렌더됩니다(4코어 CPU에서 1080p 한 프레임 3–6초). 라이브 재생에는 GPU가 필요합니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/dragon-realm/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10.6;--demo-bg:#05070b">
+    <iframe data-src="demo/cheongryong/" title="dragon-realm 예제 실시간 재생" allow="fullscreen; autoplay" allowfullscreen></iframe>
+    <noscript><a href="demo/cheongryong/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/cheongryong</code> · 「청룡 · 여의주」 84초 · 화면을 누르면 소리</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/cheongryong/" data-cap="예제 &lt;code&gt;examples/cheongryong&lt;/code&gt; · 「청룡 · 여의주」 84초 · 화면을 누르면 소리" aria-pressed="true">청룡 · 여의주</button>
+        <button class="btn" type="button" data-src="demo/starter/" data-cap="스타터 &lt;code&gt;starter&lt;/code&gt; · 「Tarn Wyrm」 14초 · 다른 주제로 만든 최소 영화" aria-pressed="false">스타터</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본은 중국풍(카르스트 봉우리 · 붉은 전각 · 붉은 용과 흰 용의 싸움)입니다. 예제는 같은 스타일을 한국의 이야기로 새로 설계했습니다. 천 년을 기다린 이무기가 폭풍 속에서 여의주를 얻어 청룡으로 승천하고, 화면은 일월오봉도(해 · 달 · 다섯 봉우리 · 두 폭포 · 양옆의 소나무)에서 시작해 일월오봉도로 끝납니다. 카드를 누르면 라이브 페이지가 그 장면부터 재생됩니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"film":"청룡 · 여의주","new":"다른 주제","proof":"검증"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>청룡 · 여의주 <small>84초 · 17샷 · 80bpm 12/8</small></h3>
+      <p>화강암 오봉과 호수, 단청 누각, 소나무와 단풍, 대금 · 해금 · 가야금 · 장구 · 징. 새벽 → 폭풍 → 일출로 빛이 바뀝니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="film" href="demo/cheongryong/?t=4" target="_blank" rel="noopener"><img src="samples/open.jpg" alt="푸른 새벽, 달 아래 화강암 다섯 봉우리와 두 폭포, 안개 낀 호수, 앞쪽의 단풍" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">0초 · 여명</span><b>다섯 봉우리</b><span class="how">달이 뜬 일월오봉도 구도. 크레인으로 내려오는 첫 샷</span></div></a>
+        <a class="tile" data-tags="film" href="demo/cheongryong/?t=17" target="_blank" rel="noopener"><img src="samples/pavilion.jpg" alt="호숫가의 2층 누각, 한지 창호에 불빛이 비치고 처마 밑 단청과 계자난간이 보이는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">16.5초 · 누각</span><b>호수의 누각</b><span class="how">팔작지붕 · 겹처마 · 단청 · 한지 창호의 불빛. 물밑으로 긴 것이 지나감</span></div></a>
+        <a class="tile" data-tags="film" href="demo/cheongryong/?t=21" target="_blank" rel="noopener"><img src="samples/eye.jpg" alt="수면 위로 떠오른 검은 이무기의 머리와 호박색 눈" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">21초 · 눈</span><b>이무기의 눈</b><span class="how">수면 높이 10 m 거리. 눈꺼풀이 열리고 물결이 번짐</span></div></a>
+        <a class="tile" data-tags="film" href="demo/cheongryong/?t=33" target="_blank" rel="noopener"><img src="samples/pearl.jpg" alt="비 내리는 어두운 하늘, 찢어진 구름 사이로 빛기둥과 함께 내려오는 여의주" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">33초 · 여의주</span><b>구름이 찢어지다</b><span class="how">레이마칭 구름의 틈, 빛기둥, 호수 위에 떨어지는 빛</span></div></a>
+        <a class="tile" data-tags="film" href="demo/cheongryong/?t=38.6" target="_blank" rel="noopener"><img src="samples/burst.jpg" alt="폭풍우 속 호수에서 물기둥을 일으키며 솟구치는 이무기" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">39초 · 솟구침</span><b>호수를 뚫고</b><span class="how">닫힌 식으로 나는 물방울 수천 개, 파문, 카메라 흔들림</span></div></a>
+        <a class="tile" data-tags="film" href="demo/cheongryong/?t=51.5" target="_blank" rel="noopener"><img src="samples/becoming.jpg" alt="검은 비늘 위로 금빛 파동이 지나가며 푸른 비늘로 바뀌고 불티가 흩어지는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">51초 · 변신</span><b>푸른빛과 금빛</b><span class="how">머리에서 꼬리로 달리는 변신 전선, 등지느러미가 자라남</span></div></a>
+        <a class="tile" data-tags="film" href="demo/cheongryong/?t=53.8" target="_blank" rel="noopener"><img src="samples/roar.jpg" alt="뿔과 금빛 갈기가 돋은 청룡이 턱 밑에 여의주를 달고 포효하는 얼굴" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">54초 · 포효</span><b>청룡</b><span class="how">SDF로 빚은 머리, 사슴뿔, 수염, 갈기. 여의주의 빛</span></div></a>
+        <a class="tile" data-tags="film" href="demo/cheongryong/?t=57.2" target="_blank" rel="noopener"><img src="samples/dawn.jpg" alt="구름이 걷히는 새벽 하늘, 금빛 구름과 달, 멀리 내려오는 청룡" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">57초 · 일출</span><b>구름이 열리다</b><span class="how">폭풍 룩에서 일출 룩으로. 주제 선율이 평조로 열림</span></div></a>
+        <a class="tile" data-tags="film" href="demo/cheongryong/?t=61.8" target="_blank" rel="noopener"><img src="samples/pass.jpg" alt="단풍 든 호숫가 누각 옆을 여의주를 물고 정면으로 날아오는 청룡" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">63초 · 누각 앞</span><b>처마를 스치다</b><span class="how">풍경과 청사초롱이 흔들리고 단풍잎이 날림</span></div></a>
+        <a class="tile" data-tags="film" href="demo/cheongryong/?t=65" target="_blank" rel="noopener"><img src="samples/skim.jpg" alt="역광의 호수 위를 물보라 장막을 일으키며 낮게 나는 청룡과 수면의 햇빛 반짝임" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">66초 · 수면</span><b>물보라</b><span class="how">역광 물보라, 평면 반사 호수, 해 반짝임</span></div></a>
+        <a class="tile" data-tags="film" href="demo/cheongryong/?t=69" target="_blank" rel="noopener"><img src="samples/rainbow.jpg" alt="비 갠 하늘의 무지개와 구름 사이로 솟아오르는 청룡" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">69초 · 무지개</span><b>비 갠 골짜기</b><span class="how">해 반대편의 무지개, 솟아오르는 용</span></div></a>
+        <a class="tile" data-tags="film" href="demo/cheongryong/?t=74" target="_blank" rel="noopener"><img src="samples/tableau.jpg" alt="붉은 해와 흰 달이 뜬 다섯 봉우리 앞을 가로질러 나는 청룡, 폭포와 호수, 단풍과 소나무" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">72초 · 일월오봉도</span><b>해 · 달 · 다섯 봉우리 · 용</b><span class="how">처음 화면에 용이 더해진 마지막 화면. 징 한 번</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>다른 주제 <small>스타터</small></h3>
+      <p>같은 엔진으로 전혀 다른 주제를 브리프부터 만든 최소 영화입니다. 새 영화는 이 폴더를 복사해 시작합니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="new" href="demo/starter/" target="_blank" rel="noopener"><img src="samples/starter.jpg" alt="해 질 녘 산중 호수 위로 솟아 바위 봉우리를 도는 흰 뿔 달린 웜" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">14초 · 3샷</span><b>Tarn Wyrm</b><span class="how">해 질 녘 산중 호수, 다리 없는 흰 웜. 지형 · 생물 · 음악을 새로 설계</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>검증 <small>캐스트 시트 · 몸 검사</small></h3>
+      <p>생물은 모든 방향에서 한 마리로 보여야 합니다. 캐스트 시트로 앞 · 좌우 3/4 · 좌우 옆 · 위 · 아래 · 뒤를 확인하고, <code>check.mjs</code>가 영화 전체에서 몸의 꺾임 · 뒤집힘 · 뒷걸음과 프레임 결정성을 검사합니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="proof" href="samples/cast-full.jpg" target="_blank" rel="noopener"><img src="samples/cast.jpg" alt="청룡 캐스트 시트: 머리 정면, 좌우 3/4, 좌우 옆모습, 위, 목과 어깨 좌우, 배 아래, 뒷다리, 꼬리, 전체 뒷모습 열두 장" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 시트</span><b>열두 방향의 청룡</b><span class="how">좌우가 거울상인지, 배가 아래인지, 앞이 앞인지 채점</span></div></a>
+        <a class="tile" data-tags="proof" href="samples/sheet-full.jpg" target="_blank" rel="noopener"><img src="samples/sheet.jpg" alt="영화 17샷의 시작 · 중간 · 끝을 나란히 놓은 콘택트 시트" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">콘택트 시트</span><b>17샷 × 시작 · 중간 · 끝</b><span class="how">브리프의 검토 기준으로 샷마다 채점하는 표</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬은 이 레포에서 예제 「청룡 · 여의주」를 만들며 다듬었습니다. 출처는 Chetaslua의 赤龍 · Crimson Loong입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/cheongryong/" target="_blank" rel="noopener"><b>「청룡 · 여의주」 · 라이브 페이지</b><span>84초 · 17샷 · HTML 한 파일 · 클릭하면 소리, 스페이스로 일시정지</span><span class="url">jungrok5.github.io/motion-skills/dragon-realm/demo/cheongryong/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/dragon-realm/examples/cheongryong"><b>예제 소스 · examples/cheongryong</b><span>브리프, 박자표, 세계, 식생, 한옥, 용, 날씨, 무대, 음악, 샷</span><span class="url">github.com/jungrok5/motion-skills/…/dragon-realm/examples/cheongryong</span></a>
+    <a class="work" href="https://github.com/ChetasLua/crimson-loong"><b>출처 레포 · ChetasLua/crimson-loong</b><span>赤龍 · Crimson Loong — three.js만으로 만든 90초 용 영화 (라이선스 없음: 코드는 가져오지 않음)</span><span class="url">github.com/ChetasLua/crimson-loong</span></a>
+    <a class="work" href="https://x.com/chetaslua/status/2121176151234330707?a=fPtJuQnZ47fP-u87Nkc&s=19"><b>출처 게시물 · Chetaslua (X)</b><span>"Fable 5.2 can achieve this with @threejs — no external assets at all" · 영상 85초</span><span class="url">x.com/chetaslua/status/2121176151234330707</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/dragon-realm/SKILL.md">SKILL.md</a> <span>워크플로 · 규칙 · 계약</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/dragon-realm">폴더</a> <span>lib · scripts · references · starter · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/dragon-realm/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/dragon-realm/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/dragon-realm/references/LOOK.md">references/LOOK.md</a> <span>이 스타일을 이루는 것</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/dragon-realm/references/KIT.md">references/KIT.md</a> <span>모든 빌더와 옵션</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/dragon-realm/references/CREATURE.md">references/CREATURE.md</a> <span>몸 설계 · 검사 · 캐스트 시트</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/dragon-realm/references/SOURCE.md">references/SOURCE.md</a> <span>출처에서 배운 것과 가져오지 않은 것</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/dragon-realm/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 이미지는 모두 이 스킬의 예제에서 렌더한 프레임입니다. three.js r170 (MIT).
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

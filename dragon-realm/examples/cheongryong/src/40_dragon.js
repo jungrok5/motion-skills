@@ -12,8 +12,9 @@ const Yong = {};
     [48, 236, -128], [4, 246, -116, 48.4], [-30, 252, -140], [-16, 256, -172, 50.3], [8, 258, -164, B.SEIZE],
     [30, 276, -136], [22, 300, -100, 53.4], [-8, 318, -76, 54.6], [-40, 326, -44], [-78, 300, 6, 57.2], [-118, 236, 50], [-124, 150, 76, 59.6],
     [-98, 74, 70], [-70, 28, 34, 61.9], [-56, 13.5, -8, 62.8], [-44, 9, -52], [-10, 6, -84, 64.6], [30, 4.2, -80], [44, 3.3, -52, 65.8],
-    [26, 3.0, -20], [6, 3.6, 14, 67.3], [2, 16, 60, 68.0], [12, 60, 118], [60, 128, 110, 70.2], [104, 190, 40], [96, 238, -60, 72.6],
-    [60, 268, -150], [40, 290, -230, 75.0], [0, 300, -300], [-50, 296, -262, 77.6], [-52, 292, -214], [-8, 288, -186, 80.4], [44, 292, -204], [58, 298, -250, 83.4], [20, 304, -296], [-30, 302, -290, 86.4],
+    [26, 3.0, -20], [6, 3.6, 14, 67.3], [2, 16, 60, 68.0], [12, 60, 118], [60, 128, 110, 70.2], [104, 180, 40], [96, 196, -60, 72.6],
+    // the last picture: a slow ring in front of the five peaks, then up between the sun and the moon
+    [44, 152, -150, 74.6], [-36, 112, -164], [-82, 92, -104, 78.0], [-44, 82, -52], [30, 88, -58, 81.4], [72, 112, -108], [44, 150, -160, 84.8], [-8, 190, -190], [-40, 230, -220, 88.0],
   ];
   Yong.PEARL0 = [8, 258, -164];
   const LEN = 112;
@@ -37,7 +38,7 @@ const Yong = {};
     const C = (Yong.C = DR.creature({ name: 'yong', length: LEN, radius: 2.35, rings: 290, sides: 28,
       rail: { points: ROUTE.map((p) => p.slice(0, 3)), keys: ROUTE.map((p, i) => [p[3], i]).filter((k) => k[0] != null) }, wave: { length: 33, amp: 1.0, speed: 5.5 }, scale: { around: 44, row: 0.5 },
       palette: { a: { back: '#0c120e', side: '#182019', belly: '#4f4c34', rim: '#2b3226' }, b: { back: '#0a3690', side: '#1470b8', belly: '#ead9a2', rim: '#f0c050' }, edge: '#ffd98a', sheen: '#86d8ff' },
-      state: Yong.state }));
+      state: Yong.state, castTime: 70.4 }));
     Yong.parts = DR.dragon(C, { headScale: 1.3, antlers: { len: 3.6, tines: 3, spread: 0.6 }, hairColors: { root: '#141812', tip: '#3c3a2a', rootB: '#b9852b', tipB: '#fff0b4' }, iris: '#ffb400', iris2: '#c23a00', hair: { mane: 1.1, fins: 1, beard: 1, plume: 1.2 } });
     scene.add(C.group);
     // the yeouiju: it comes down through the torn cloud, waits, and after the seizing rides under the dragon's chin

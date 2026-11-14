@@ -6,14 +6,14 @@ const Weather = {};
   Weather.build = () => {
     const C = Yong.C, W = World.water, P0 = Yong.PEARL0;
     // the clouds tear open over the pearl; after the seizing the tear spreads until the whole sky is open
-    DR.weather.rift = (t) => [P0[0], P0[2], lerp(75, 900, DR.ease.in2(smooth(B.SEIZE + 2.5, B.DAWN + 3, t))), pulse(t, B.PEARL - 0.6, B.TABLEAU, 2.2, 6)];
+    DR.weather.rift = (t) => [P0[0], P0[2], lerp(75, 460, DR.ease.in2(smooth(B.SEIZE + 2.5, B.DAWN + 6, t))), pulse(t, B.PEARL - 0.6, B.TABLEAU + 2, 2.2, 8)];
     // lightning
     FX.bolt({ t0: B.THUNDER1, from: [-380, 420, -700], to: [-330, 200, -760], seed: 3, k: 2.2, width: 2.2 });
     FX.bolt({ t0: B.BOLT1, from: [-150, 330, -230], to: [-112, 204, -214], seed: 5, k: 9 });
     FX.bolt({ t0: B.BOLT2, from: [150, 340, -160], to: [118, 221, -220], seed: 9, k: 10 });
     FX.bolt({ t0: B.BOLT3, from: [40, 360, -290], to: [4, 284, -246], seed: 13, k: 12, width: 1.4 });
     FX.bolt({ t0: B.BOLT3 + 0.22, from: [-60, 350, -220], to: [-10, 262, -180], seed: 17, k: 6 });
-    const seize = (t) => { const a = t - B.SEIZE; return a < 0 || a > 2.5 ? 0 : 16 * Math.exp(-a * 2.2); };
+    const seize = (t) => { const a = t - B.SEIZE; return a < 0 || a > 2.5 ? 0 : 10 * Math.exp(-a * 3.0); };
     DR.weather.flash = (t) => { const f = FX.flashAt(t), s = seize(t); if (s > (f ? f[3] : 0)) { const p = Yong.pearlAt(t); return [p[0], p[1], p[2], s]; } return f; };
     DR.weather.glow = (t) => { const p = Yong.pearlAt(t); if (!p[3]) return null; return [p[0], p[1], p[2], p[3] * (t < B.SEIZE ? 1.6 : 0.9) * (1 + 0.12 * Math.sin(t * 5.1))]; };
     DR.camKick = (t) => 2.4 * pulse(t, B.BURST, B.BURST + 1.6, 0.05, 1.2) + 1.6 * pulse(t, B.ROAR, B.ROAR + 2.2, 0.15, 0.8) + 1.2 * (pulse(t, B.BOLT1, B.BOLT1 + 0.5, 0.03, 0.4) + pulse(t, B.BOLT2, B.BOLT2 + 0.5, 0.03, 0.4) + pulse(t, B.BOLT3, B.BOLT3 + 0.6, 0.03, 0.5)) + 1.3 * pulse(t, 62.7, 63.6, 0.2, 0.6) + 1.2 * pulse(t, 67.6, 68.4, 0.2, 0.5);

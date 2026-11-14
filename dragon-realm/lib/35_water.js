@@ -90,7 +90,7 @@
       let mv = null;
       DR.mirrorPass = (renderer, scene, cam) => {
         const on = DR.on('mirror') && (DR.shot?.mirror ?? true) && cam.position.y > S.level + 0.05; U.uMirrorK.value = on ? 1 : 0; if (!on) return;
-        const w = Math.round(DR.view.w * DR.Q.mirror), h = Math.round(DR.view.h * DR.Q.mirror); if (!mv) mv = new DR.View(w, h, { airDiv: 2, steps: 20 }); else mv.size(w, h);
+        const w = Math.round(DR.view.w * DR.Q.mirror), h = Math.round(DR.view.h * DR.Q.mirror); if (!mv) mv = new DR.View(w, h, { airDiv: 2, steps: 20, samples: 0 }); else mv.size(w, h);
         view.subVectors(P0, cam.position).reflect(n).negate().add(P0); rot.extractRotation(cam.matrixWorld); look.set(0, 0, -1).applyMatrix4(rot).add(cam.position); tgt.subVectors(P0, look).reflect(n).negate().add(P0);
         vcam.position.copy(view); vcam.up.set(0, 1, 0).applyMatrix4(rot).reflect(n); vcam.lookAt(tgt); vcam.near = cam.near; vcam.far = cam.far; vcam.updateMatrixWorld(); vcam.projectionMatrix.copy(cam.projectionMatrix); vcam.layers.mask = cam.layers.mask;
         U.uMirrorM.value.set(0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1).multiply(vcam.projectionMatrix).multiply(vcam.matrixWorldInverse);

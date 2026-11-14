@@ -161,7 +161,7 @@
         grass *= 0.72 + 0.5 * mid.b + 0.25 * (d2.b - 0.5) * kF;
         vec3 litter = mix(${c('litter')}, ${c('soil')}, mid.r) * (0.75 + 0.5 * d2.b * kF + 0.25 * dt.b);
         vec3 soft = mix(grass, litter, smoothstep(0.42, 0.62, mk.g * -1.0 + 1.0 + (big.g - 0.5) * 0.7));
-        vec3 rock = mix(${c('rock')}, ${c('rock2')}, big.b) * (0.6 + 0.5 * dt.a);
+        vec3 rock = mix(${c('rock')}, ${c('rock2')}, big.b) * (0.78 + 0.28 * dt.a) * (0.85 + 0.3 * mid.g);
         vec3 col = mix(soft, rock, rockK);
         // far slopes carry their forest as paint: crowns from the cell noise, three leaf colours in drifts
         float fK = smoothstep(uForest.x, uForest.y, dist) * (1.0 - rockK) * smoothstep(0.30, 0.42, mk.g) * step(uWaterY + 1.0, vWPos.y);
@@ -175,10 +175,10 @@
         col = mix(col, ${c('bed')} * (0.6 + 0.6 * dt.b), under);
         float wetBand = 1.0 - smoothstep(uWaterY + 0.05, uWaterY + 0.7 + big.r * 0.5, vWPos.y);
         col *= 1.0 - 0.4 * wetBand;
-        vec2 s = (dt.rg - 0.5) * (0.5 + 1.2 * max(rockK, shore)) * kB + (d2.rg - 0.5) * 0.9 * kF;
+        vec2 s = (dt.rg - 0.5) * (0.25 + 0.8 * max(rockK, shore)) * kB + (d2.rg - 0.5) * 0.9 * kF;
         N = normalize(N - vec3(s.x, 0.0, s.y));
         diffuseColor.rgb = col; roughnessFactor = mix(0.96, 0.86, rockK) - 0.5 * wetBand;
-        drAO = mix(0.55, 1.0, smoothstep(0.2, 0.7, dt.a)) * mix(1.0, 0.8, (1.0 - rockK) * (1.0 - mid.b));
+        drAO = mix(1.0, mix(0.6, 1.0, smoothstep(0.2, 0.7, dt.a)), 0.15 + 0.55 * max(rockK, shore)) * mix(1.0, 0.8, (1.0 - rockK) * (1.0 - mid.b));
       ` });
     const mesh = new THREE.Mesh(g, mat); mesh.receiveShadow = true; mesh.castShadow = true; mesh.name = 'terrain';
     // scatter planting sites by rejection: filter(x, z, h, ny, r) → probability 0..1

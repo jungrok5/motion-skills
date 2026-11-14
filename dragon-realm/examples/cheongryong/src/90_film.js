@@ -12,6 +12,9 @@
     storm: { key: 'sun', sun: [150, 30], moon: MOON, keyCol: '#d9e2f0', keyK: 3.4, sunK: 0, moonK: 0, zen: '#141c26', hor: '#46535f', gnd: '#161b20', skyK: 1.7, amb: 1.25, stars: 0,
       air: 0.0007, mist: 0.004, mistH: 24, fogCol: '#aab6c8', cover: 0.97, shadowK: 0.92, cloud: [150, 540, 1 / 800, 0.075], cloudDark: 0.5, cloudSpeed: 3.2, haze: [0, 40, 0.006, 1 / 95], wind: [0.9, 0.3, 2.5], wet: 1, rain: 0.95, exposure: 1.95, bloom: 0.1, rays: 0, vignette: 0.42,
       grade: { lift: [0, 0.003, 0.008], gain: [0.92, 1.0, 1.08], sat: 0.9, contrast: 1.16 } },
+    gilt: { key: 'sun', sun: [150, 30], moon: MOON, keyCol: '#ffd9a0', keyK: 2.4, sunK: 0, moonK: 0, zen: '#141a22', hor: '#5a5248', gnd: '#1a1816', skyK: 1.3, amb: 1.1, stars: 0,
+      air: 0.0007, mist: 0.004, mistH: 24, fogCol: '#d8c8b0', cover: 0.95, shadowK: 0.9, cloud: [150, 540, 1 / 800, 0.075], cloudDark: 0.6, cloudSpeed: 3.0, haze: [0, 40, 0.006, 1 / 95], wind: [0.9, 0.3, 2.2], wet: 1, rain: 0.8, exposure: 1.2, bloom: 0.12, rays: 0, vignette: 0.42,
+      grade: { lift: [0.004, 0.002, 0.002], gain: [1.03, 1.0, 0.98], sat: 1.0, contrast: 1.14 } },
     turn: { key: 'sun', sun: [150, 12], moon: MOON, keyCol: '#ffc08a', keyK: 3.2, sunCol: '#ffc890', sunK: 1.4, moonK: 0.2, zen: '#1d3058', hor: '#8f9ab0', gnd: '#201e1e', warm: '#ff9048', skyK: 1, amb: 1.0, stars: 0,
       air: 0.0006, mist: 0.004, mistH: 22, fogCol: '#ffe2c4', cover: 0.7, shadowK: 0.85, cloud: [230, 600, 1 / 850, 0.06], cloudDark: 0.25, cloudSpeed: 2.2, haze: [0, 38, 0.010, 1 / 95], wind: [0.9, 0.3, 1.4], wet: 0.8, rain: 0.4, exposure: 1.25, bloom: 0.12, rays: 0.8, vignette: 0.34,
       grade: { lift: [0.006, 0.002, 0], gain: [1.05, 1.0, 0.96], sat: 1.06, contrast: 1.1 } },
@@ -21,20 +24,20 @@
     bow: { key: 'sun', sun: SUN, moon: MOON, keyCol: '#ffc08c', keyK: 6.4, sunCol: '#ffc48a', sunK: 1.2, moonCol: '#f4f0e6', moonK: 0.5, zen: '#2a57a4', hor: '#b7c6de', gnd: '#34302c', warm: '#ff9a52', skyK: 1, amb: 1.0,
       air: 0.0004, mist: 0.0015, mistH: 14, fogCol: '#fff0e0', cover: 0.36, shadowK: 0.82, cloud: [300, 640, 1 / 900, 0.05], haze: [0, 22, 0.0035, 1 / 95], wind: [0.9, 0.3, 0.6], wet: 0.3, rain: 0.06, rainbow: 1, exposure: 1.02, bloom: 0.09, rays: 0.6, vignette: 0.3,
       grade: { lift: [0.008, 0.003, 0], gain: [1.07, 1.0, 0.93], sat: 1.14, contrast: 1.1 } },
-    tableau: { key: 'sun', keyDir: [112, 27], sun: [165, 30], moon: MOON, keyCol: '#fff0d6', keyK: 5.6, sunCol: '#ff9a62', sunK: 0.35, sunSize: 2.5, sunDisc: '#ff4a22', sunDiscK: 9, moonSize: 2.3, moonCol: '#f6f2ea', moonK: 0.8, zen: '#2456ac', hor: '#c6d6ee', gnd: '#3a3834', warm: '#000000', skyK: 1, amb: 1.05,
-      air: 0.0004, mist: 0.0024, mistH: 14, fogCol: '#ffffff', cover: 0.3, shadowK: 0.8, cloud: [310, 640, 1 / 900, 0.045], haze: [0, 24, 0.009, 1 / 95], wind: [0.9, 0.3, 0.4], wet: 0.15, rain: 0, rainbow: 0.35, exposure: 1.04, bloom: 0.09, rays: 0.25, vignette: 0.3,
+    tableau: { key: 'sun', keyDir: [112, 27], sun: [165, 30], moon: MOON, keyCol: '#fff0d6', keyK: 5.6, sunCol: '#ff9a62', sunK: 0.25, sunSize: 2.5, sunDisc: '#ff4a22', sunDiscK: 4, moonSize: 2.3, moonCol: '#f6f2ea', moonK: 0.8, zen: '#2456ac', hor: '#c6d6ee', gnd: '#3a3834', warm: '#000000', skyK: 1, amb: 1.05,
+      air: 0.0004, mist: 0.0018, mistH: 9, fogCol: '#ffffff', cover: 0.3, shadowK: 0.8, cloud: [310, 640, 1 / 900, 0.045], haze: [0, 13, 0.006, 1 / 95], wind: [0.9, 0.3, 0.4], wet: 0.15, rain: 0, rainbow: 0.35, exposure: 1.04, bloom: 0.07, rays: 0.2, vignette: 0.3,
       grade: { lift: [0.004, 0.003, 0.002], gain: [1.03, 1.0, 0.98], sat: 1.14, contrast: 1.1 } },
-  }, [[0, 'blue'], [B.EYE + 3, 'blue'], [B.THUNDER1 + 0.5, 'omen', 'io2'], [B.PEARL + 2.5, 'storm'], [B.SEIZE + 2, 'storm'], [B.DAWN - 0.5, 'turn', 'io2'], [B.DAWN + 3.5, 'dawn'], [B.SKIM + 1, 'dawn'], [B.RAINBOW + 0.5, 'bow'], [B.TABLEAU - 2, 'bow'], [B.TABLEAU + 2, 'tableau', 'lin'], [B.END, 'tableau']]);
+  }, [[0, 'blue'], [B.EYE + 3, 'blue'], [B.THUNDER1 + 0.5, 'omen', 'io2'], [B.PEARL + 2.5, 'storm'], [B.SEIZE, 'storm'], [B.SEIZE + 1.4, 'gilt', 'out3'], [B.ROAR + 1.5, 'gilt'], [B.DAWN + 0.5, 'turn', 'io2'], [B.DAWN + 3.5, 'dawn'], [B.SKIM + 1, 'dawn'], [B.RAINBOW + 0.5, 'bow'], [B.TABLEAU - 2, 'bow'], [B.TABLEAU + 2, 'tableau', 'lin'], [B.END, 'tableau']]);
 
   // ── cameras ──
   const C = () => Yong.C, head = (t) => C().headAt(t), body = (a) => (t) => C().bodyAt(t, a);
   const beside = (a, side, up, back = 0) => (t) => { const p = C().bodyAt(t, a), q = C().bodyAt(t, a - 6), d = V.norm(V.sub(q, p)), s = V.norm(V.cross(d, [0, 1, 0])); return [p[0] + s[0] * side + d[0] * back, p[1] + up, p[2] + s[2] * side + d[2] * back]; };
   const smoothHead = (t) => { const o = [0, 0, 0]; for (let k = -2; k <= 2; k++) V.mad(o, head(t + k * 0.07), 0.2, o); return o; };
   const pearl = (t) => Yong.pearlAt(t);
-  const HOME = [4, 8, 98], PEAKS = [0, 92, -230];
+  const HOME = [4, 10, 97], PEAKS = [0, 104, -230];
   const SHOTS = [
     { name: 'open — five peaks at blue hour', t0: B.OPEN, shadow: { span: 620, at: [0, 0, -90] }, shake: 0.12,
-      cam: DR.rail([[0, [10, 46, 176], [0, 104, -230], 44], [1, HOME, PEAKS, 46]], 'out3') },
+      cam: DR.rail([[0, [10, 52, 180], [0, 112, -230], 46], [1, HOME, PEAKS, 48]], 'out3') },
     { name: 'stir — something long under the lake', t0: B.STIR, shadow: { span: 300, at: [0, 0, -40] }, shake: 0.2,
       cam: DR.rail([[0, [74, 17, -22], (t) => { const p = C().bodyAt(t, 18); return [p[0], 0, p[2]]; }, 34], [1, [70, 15, -30], (t) => { const p = C().bodyAt(t, 18); return [p[0], 0, p[2]]; }, 30]], 'lin') },
     { name: 'pavilion — the wake passes the shore', t0: 16.5, shadow: { span: 150, at: [-66, 4, -18] }, shake: 0.18,
@@ -51,7 +54,7 @@
     { name: 'climb — up the crags into the storm', t0: 42.6, shadow: { span: 420, at: (t) => head(t) }, shake: 0.5, mirror: false,
       cam: (u, t) => { const h = smoothHead(t), b2 = C().bodyAt(t, 34); return { p: [-128 + 30 * u, 96 + 60 * u, -40 - 40 * u], l: V.lerp(h, b2, 0.4), fov: lerp(40, 34, u) }; } },
     { name: 'chase — through the clouds after the light', t0: 46.1, shadow: { span: 200, at: (t) => head(t) }, shake: 0.7, mirror: false,
-      cam: (u, t) => { const p = beside(40 - 14 * u, 13 - 5 * u, 5 + 2 * u)(t), h = smoothHead(t), pe = pearl(t); return { p, l: V.lerp(h, pe, 0.22 + 0.2 * u), fov: 46, roll: 8 * Math.sin(u * 4) }; } },
+      cam: (u, t) => { const p = beside(36 - 8 * u, 11 - 3 * u, 7)(t), pe = pearl(t); return { p, l: V.lerp(C().bodyAt(t, 8), pe, 0.1 + 0.08 * u), fov: 50, roll: 7 * Math.sin(u * 4) }; } },
     { name: 'seize — it takes the pearl', t0: 50.25, shadow: { span: 120, at: (t) => head(t) }, shake: 0.5, mirror: false,
       cam: (u, t) => { const pe = pearl(Math.min(t, B.SEIZE - 0.02)), h = smoothHead(t); return { p: [pe[0] + 13 - 3 * u, pe[1] + 1.5, pe[2] - 15 + 2 * u], l: V.lerp(pe, h, 0.3), fov: lerp(40, 30, u) }; } },
     { name: 'becoming — blue and gold run down the body', t0: 51.7, shadow: { span: 110, at: (t) => C().bodyAt(t, Math.max(8, Yong.front(t))) }, shake: 0.35, mirror: false,
@@ -64,11 +67,11 @@
     { name: 'pass — past the pavilion eaves', t0: 61.6, shadow: { span: 150, at: [-60, 6, -20] }, shake: 0.4,
       cam: (u, t) => { const h = smoothHead(t), b2 = C().bodyAt(t, 22), k = smooth(0.35, 0.8, u); return { p: [-37 - 2 * u, 5.2 + 1.2 * u, -66 + 3 * u], l: V.lerp(V.lerp([-66, 12, -20], h, 0.6), b2, k * 0.7), fov: lerp(34, 40, u) }; } },
     { name: 'skim — over the lake at the lens', t0: 64.7, shadow: { span: 220, at: (t) => head(t) }, shake: 0.35,
-      cam: (u, t) => { const h = smoothHead(t), k = smooth(0.72, 0.95, u); return { p: [10, 2.0 + 0.6 * u, 46 + 2 * u], l: [h[0], Math.max(h[1], 2.2) + 1 + 0 * k, h[2]], fov: lerp(28, 44, smooth(0.3, 0.95, u)) }; } },
-    { name: 'rainbow — the valley after the rain', t0: 68.35, shadow: { span: 640, at: [0, 0, -40] }, shake: 0.25,
-      cam: (u, t) => { const h = smoothHead(t); return { p: [-176 + 16 * u, 78 + 8 * u, 64 - 10 * u], l: V.lerp([30, 110, -120], h, 0.5), fov: lerp(46, 42, u) }; } },
+      cam: (u, t) => { const h = smoothHead(t); return { p: [9, 1.5 + 0.5 * u, 27 + 2 * u], l: [h[0], Math.max(h[1], 2.2) + 1, h[2]], fov: lerp(28, 44, smooth(0.3, 0.95, u)) }; } },
+    { name: 'rainbow — the valley after the rain', t0: 68.35, shadow: { span: 420, at: [-30, 0, -20] }, shake: 0.25,
+      cam: (u, t) => { const h = smoothHead(t); return { p: [-14 - 10 * u, 5 + 5 * u, -66 - 6 * u], l: V.lerp([-20, 42, 60], h, 0.42), fov: lerp(52, 48, u) }; } },
     { name: 'tableau — sun, moon, five peaks, the dragon', t0: B.TABLEAU, shadow: { span: 640, at: [0, 0, -90] }, shake: 0.1,
-      cam: DR.rail([[0, [4, 7.4, 96], [0, 96, -230], 45], [1, [4, 15, 122], [0, 106, -230], 47]], 'io2') },
+      cam: DR.rail([[0, [4, 10, 97], [0, 100, -230], 47], [1, [4, 24, 124], [0, 104, -230], 49]], 'io2') },
   ];
 
   DR.film({
@@ -80,7 +83,7 @@
       if (typeof Stage !== 'undefined') { T('stage', () => Stage.build(scene)); await DR.breathe(); }
       T('weather', () => Weather.build());
     },
-    shots: SHOTS,
+    shots: SHOTS, ground: (x, z) => Math.max(World.height(x, z), 0),
     // white at the seizing, mist at the very end and beginning so the loop closes
     fade: (t) => { const w = 0.92 * Math.exp(-Math.max(0, t - B.SEIZE) * 3.2) * (t >= B.SEIZE - 0.02 ? 1 : 0); if (w > 0.004) return [1, 0.97, 0.9, w];
       const m = Math.max(1 - smooth(0, 1.6, t), smooth(B.OUT, B.END - 0.15, t)); return m > 0.002 ? [0.62, 0.68, 0.82, m] : null; },

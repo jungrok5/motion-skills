@@ -22,7 +22,7 @@
         if (d < 1.0 && f.y > 0.0) {
           float h = smoothstep(0.0, 1.5, f.y) * (0.55 + 0.45 * (1.0 - d * d)) + 0.14 * exp(-f.x * f.x * 60.0);
           if (h + float(1 - k) * 0.35 > bestH) { bestH = h + float(1 - k) * 0.35;
-            float e = smoothstep(0.66, 0.9, d);
+            float e = smoothstep(0.76, 0.92, d);
             res = vec4(h, f.x * 3.0 * e + sign(f.x) * 0.25 * exp(-abs(f.x) * 18.0) - f.x * 40.0 * 0.14 * exp(-f.x * f.x * 60.0) * 0.2, (f.y - 0.62) * 1.3 * e - 0.34, fract(sin(dot(vec2(ci, row), vec2(127.1, 311.7))) * 43758.5453));
             rim = e * (1.0 - smoothstep(0.93, 1.0, d)) * smoothstep(0.35, 0.9, f.y); crev = smoothstep(0.88, 1.0, d); }
         }
@@ -90,7 +90,7 @@
         base = mix(base, mix(back, side, 1.0 - topK * 0.5), (sc.w - 0.5) * 0.9 * kPat);          // every scale its own place between the two colours
         vec3 col = base * mix(1.0, 0.62 + 0.7 * sc.w, kPat);
         col *= mix(1.0, 0.40 + 0.60 * smoothstep(0.0, 0.6, sc.x), kPat);         // shade under the overlap
-        col = mix(col, rimC, rim * 0.8 * kPat);
+        col = mix(col, rimC, rim * 0.55 * kPat);
         col *= 1.0 - 0.75 * crev * kPat;
         vec3 bcol = bel * (0.8 + 0.3 * plateH) * (1.0 - 0.45 * plateEdge * kRel);
         col = mix(col, bcol, belly);
@@ -246,7 +246,7 @@
       return { fail, warn, info }; });
     // the cast sheet: the creature from every side at one moment (render.mjs --cast).  Views look AT the body, so
     // "left" shows its left flank with the head pointing left on the page — check that front, back and both sides agree.
-    const ct = S.castTime ?? DR.DURATION * 0.75, view = (label, a, az, el, dist, fov = 30) => DR.castViews.push({ label: `${C.group.name}: ${label}`, t: ct, cam: (t) => { const p = C.bodyAt(t, a), q = C.bodyAt(t, Math.max(0, a - 5)), f = V.norm([q[0] - p[0], 0, q[2] - p[2]]), s = [f[2], 0, -f[0]], ca = Math.cos(az * DR.DEG), sa = Math.sin(az * DR.DEG), ce = Math.cos(el * DR.DEG);
+    const ct = S.castTime ?? DR.DURATION * 0.75, view = (label, a, az, el, dist, fov = 30) => DR.castViews.push({ label: `${C.group.name}: ${label}`, t: ct, cam: (t) => { const p = C.bodyAt(t, a), q = C.bodyAt(t, a + 6), f = V.norm([p[0] - q[0], 0, p[2] - q[2]]), s = [f[2], 0, -f[0]], ca = Math.cos(az * DR.DEG), sa = Math.sin(az * DR.DEG), ce = Math.cos(el * DR.DEG);
         return { p: [p[0] + (f[0] * ca + s[0] * sa) * ce * dist, p[1] + Math.sin(el * DR.DEG) * dist, p[2] + (f[2] * ca + s[2] * sa) * ce * dist], l: p, fov }; } });
     view('head, front', 0, 0, 4, 26); view('head, 3/4 from its left', 0, 42, 8, 24); view('head, its left side', 0, 90, 3, 22); view('head, 3/4 from its right', 0, -42, 8, 24); view('head, its right side', 0, -90, 3, 22); view('head, from above', 3, 20, 72, 30);
     view('neck and shoulders, left', S.length * 0.17, 100, 10, 34, 38); view('neck and shoulders, right', S.length * 0.17, -100, 10, 34, 38); view('mid body, from below', S.length * 0.5, 60, -50, 30, 38); view('hind legs, left', S.length * 0.52, 95, 5, 30, 38); view('tail, right', S.length * 0.9, -90, 10, 34, 38); view('whole, from behind and above', S.length * 0.5, 160, 30, 150, 40);

@@ -63,11 +63,11 @@ const Flora = {};
     sk.branches.push({ id: sk.branches.length, lv: 2, pts: [a.p, V.mad(a.p, d, L * 0.5), V.mad(V.mad(a.p, d, L), [0, 1, 0], -0.06)], rad: [r, r * 0.8, r * 0.5], loose: [0, 0, 0], dirs: [d, d, d], len: L }); } };
   const pineWood = { full: { sides: [10, 6, 4], tile: [0.62, 1.9], twist: 0.1 }, mid: { maxLevel: 1, sides: [6, 4], skip: 2, tile: [0.62, 1.9] } };
   Flora.pine = F.species({ name: 'pine', variants: 4, seed: 21, atlas: pineAtlas, leaf: pineLeaf, bark: pineBarkM, wood: pineWood,
-    lod: { mid: 55, far: 150, keep: 0.36, grow: 1.32, px: 256, gain: 1.7 }, hue: (r) => r.range(0.34, 0.52), bright: [0.85, 1.1], slope: 0.1,
+    lod: { mid: 55, far: 150, keep: 0.36, grow: 1.32, px: 256, gain: 1.7, farShadow: false }, hue: (r) => r.range(0.34, 0.52), bright: [0.85, 1.1], slope: 0.1,
     build: (rng, v) => { const sk = pineSkel(rng, PINES[v]); stubs(sk, rng, v === 2 ? 2 : 4); return { wood: sk, foliage: pinePads(sk.anchors, rng) }; } });
   // out of the wall (+z = the wall's normal), then up: a short trunk with a strong pull to the light
   Flora.cliffPine = F.species({ name: 'cliffPine', variants: 3, seed: 33, atlas: pineAtlas, leaf: pineLeaf, bark: () => ({ ...pineBarkM(), grade: [0.05, 0.5] }), wood: pineWood, orient: 'wall',
-    lod: { mid: 60, far: 160, keep: 0.4, grow: 1.32, px: 256, gain: 1.7 }, hue: (r) => r.range(0.34, 0.52),
+    lod: { mid: 60, far: 160, keep: 0.4, grow: 1.32, px: 256, gain: 1.7, farShadow: false }, hue: (r) => r.range(0.34, 0.52),
     build: (rng, v) => { const q = { H: [[5.5, 6.5], [4.2, 5], [6.5, 7.5]][v], r: [0.2, 0.16, 0.23][v], lean: [0, 0], wander: 0.34, limbs: [[5, 6], [4, 5], [6, 7]][v], from: 0.42, len: [[3.2, 1.7], [2.6, 1.4], [3.6, 1.8]][v], lee: 0.55 };
       const sk = pineSkel(rng, q, { base: [0, 0, -0.5], dir: [rng.range(-0.3, 0.3), rng.range(-0.15, 0.2), 1], up: (s) => 0.12 + 0.75 * s * (1 - 0.45 * s), seg: 12 });
       return { wood: sk, foliage: pinePads(sk.anchors, rng, 1.1) }; } });
@@ -90,7 +90,7 @@ const Flora = {};
   Flora.maple = F.species({ name: 'maple', variants: 3, seed: 51, atlas: mapleAtlas, wood: { full: { sides: [8, 6, 4, 3], tile: [0.5, 1.0] }, mid: { maxLevel: 2, minRad: 0.02, sides: [5, 4, 3], skip: 2, tile: [0.5, 1.0] } },
     leaf: () => ({ ramp: mapleRamp(), wood: '#3a332c', hueSpread: 0.34, sprayHue: 0.16, shade: [0.5, 1.1], through: [1.05, 1.7], scatter: 0.34, cardMix: 0.32, far: [0.3, 40, 240], wind: { flex: 0.5, bough: 0.6, bob: 0.07, flutter: 0.016 } }),
     bark: () => ({ tex: mapleBark(), low: ['#26221f', '#7b746b'], high: ['#2a2420', '#6f655a'], bump: 0.6, moss: ['#66704a', 0.35], wind: { flex: 0.5, bough: 0.6, bob: 0.07 } }),
-    lod: { mid: 50, far: 130, keep: 0.36, grow: 1.35, px: 256, gain: 1.5 }, bright: [0.88, 1.12],
+    lod: { mid: 50, far: 130, keep: 0.36, grow: 1.35, px: 256, gain: 1.5, farShadow: false }, bright: [0.88, 1.12],
     hue: (r) => { const q = r(); return q < 0.6 ? r.range(0.14, 0.42) : q < 0.86 ? r.range(0.45, 0.7) : r.range(0.74, 0.95); },
     build: (rng, v) => { const q = MAPLES[v];
       const sk = F.skeleton({ group: 2, levels: [
@@ -116,7 +116,7 @@ const Flora = {};
   Flora.oak = F.species({ name: 'oak', variants: 2, seed: 71, atlas: oakAtlas, wood: { full: { sides: [9, 6, 4], tile: [0.7, 1.4] }, mid: { maxLevel: 1, sides: [6, 4], skip: 2, tile: [0.7, 1.4] } },
     leaf: () => ({ ramp: F.ramp([[0, '#3f2613'], [0.25, '#6e3a16'], [0.5, '#a8621e'], [0.7, '#c28f2c'], [0.86, '#c7ad3c'], [1, '#6f7f30']]), wood: '#33291f', hueSpread: 0.4, sprayHue: 0.18, shade: [0.5, 1.1], through: [0.8, 1.3], scatter: 0.26, cardMix: 0.3, wind: { flex: 0.4, bough: 0.5, bob: 0.06, flutter: 0.014 } }),
     bark: () => ({ tex: F.bark({ kind: 'furrows', size: 256, seed: 6, cols: 5 }), low: ['#14110e', '#5e554b'], high: ['#191512', '#62584c'], bump: 1.6, moss: ['#5f6a42', 0.4], wind: { flex: 0.4, bough: 0.5, bob: 0.06 } }),
-    lod: { mid: 50, far: 130, keep: 0.36, grow: 1.35, px: 256 }, hue: (r) => r.range(0.25, 0.75),
+    lod: { mid: 50, far: 130, keep: 0.36, grow: 1.35, px: 256, farShadow: false }, hue: (r) => r.range(0.25, 0.75),
     build: (rng) => { const sk = F.skeleton({ group: 1, levels: [
         { len: [9, 11], r: [0.24, 0.3], end: 0.25, flare: 0.5, seg: 10, wander: 0.12, up: 0.04, leaf: { from: 0.9, step: 0.8 } },
         { n: [7, 9], from: 0.32, to: 0.97, angle: (c, r) => lerp(1.35, 0.6, c.u) + r.gauss() * 0.15, len: [2.8, 4.6], lenBy: (u) => 1.25 - 0.7 * Math.abs(u - 0.5) * 2 * 0.6, r: 0.45, end: 0.2, seg: 6, wander: 0.3, up: 0.07, kink: { every: 2, angle: [0.2, 0.45] }, loose: 0.4, leaf: { from: 0.4, step: 0.85 } },
@@ -148,8 +148,8 @@ const Flora = {};
         P.twig(ctx, [[x0, h * 0.99], [x1, y1]], 3.4 * lw, 2.2 * lw, ink);
         if (k % 3 !== 2) { P.needles(ctx, x1, y1 + h * 0.01, h * 0.11, rng.gauss() * 0.3 + 0.4, 1.3, 22, rng, { shade: [0.5, 0.85], hue: 0.9, w: 5 * lw, core: 0.35, alpha: 0.8, curve: 0.6 }); } } }
   } }));
-  const groundRamp = once(() => F.ramp([[0, '#27441f'], [0.3, '#56732f'], [0.55, '#99924c'], [0.75, '#c8b47a'], [1, '#e2dac6']]));
-  const tuft = (name, o) => F.tufts({ name, atlas: groundAtlas, seed: 90 + name.length, ...o, leaf: { ramp: groundRamp(), wood: '#6b5a44', wood2: '#8a7654', hueSpread: 1, sprayHue: 0.1, shade: [0.5, 1.1], far: [0.3, 20, 120], ...o.leaf } });
+  const groundRamp = once(() => F.ramp([[0, '#1f3518'], [0.3, '#445c27'], [0.55, '#77753c'], [0.75, '#a08e5a'], [1, '#c9bfa2']]));
+  const tuft = (name, o) => F.tufts({ name, atlas: groundAtlas, seed: 90 + name.length, ...o, leaf: { ramp: groundRamp(), wood: '#6b5a44', wood2: '#8a7654', hueSpread: 1, sprayHue: 0.1, shade: [0.4, 0.92], far: [0.3, 20, 120], ...o.leaf } });
   Flora.grass = tuft('grass', { n: [6, 8], w: [1.0, 1.4], h: [1.5, 2.0], cells: [0, 2, 3, 1, 2, 3], radius: 0.22, lean: [0.08, 0.38], hue: (r) => r.range(0.46, 0.56),
     leaf: { through: [1.2, 2.2], scatter: 0.45, wind: { flex: 1.3, bough: 0.1, bob: 0.02, flutter: 0.02 } }, lod: { mid: 35, far: 90, cull: 260, keep: 0.6 } });
   Flora.turf = tuft('turf', { n: [4, 5], w: [0.6, 0.9], h: [0.3, 0.5], cells: [4], radius: 0.25, lean: [0.1, 0.5], hue: (r) => r.range(0.3, 0.55),
