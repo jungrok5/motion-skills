@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>feeling-pastel · motion-skills</title>
+<meta name="description" content="이야기나 감정을 주면, 그 이야기 속 사람과 물건은 하나도 그리지 않고 감정만 날씨 · 빛 · 장소 · 색으로 옮긴 16:9 그림 한 장을 자바스크립트로 그립니다. 오일파스텔 · 소프트파스텔 · 색연필 · 콩테 같은 건식 재료 3–5개가 종이 결 위에 획을 하나씩 올려, 손으로 그린 것처럼 보입니다.">
+<meta property="og:title" content="feeling-pastel · motion-skills">
+<meta property="og:description" content="이야기 속 감정만 날씨 · 빛 · 장소 · 색으로 옮겨, 건식 재료 3–5개로 손으로 그린 것 같은 16:9 그림을 자바스크립트로 그립니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/feeling-pastel/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/feeling-pastel">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / feeling-pastel</nav>
+  <h1>feeling-pastel</h1>
+  <p>이야기나 기억, 감정 목록을 주면 그 이야기 속 사람과 물건은 하나도 그리지 않고, 감정만 날씨 · 빛 · 장소 · 색으로 옮긴 16:9 그림 한 장을 자바스크립트로 그립니다. 오일파스텔 · 소프트파스텔 · 색연필 · 콩테 같은 건식 재료 3–5개(직접 만든 재료도 됩니다)가 결이 있는 종이 위에 획을 하나씩 올립니다. 약하게 누른 곳은 종이 결이 비치고, 오일파스텔은 결을 따라 줄무늬를 남기며 어두운 색 위에 밝은 색을 덮습니다. 빈 곳 없이 화면 전체를 그리고, 색은 90년대 애니메이션 배경의 색감을 기본으로 씁니다. 헤드리스 브라우저 없이 Node만으로 4K PNG와 그리는 과정 MP4를 만들고, 같은 획이 라이브 페이지에서 그려집니다.
+  보고 만든 원본: <a href="https://x.com/kevin_t_ngo/status/2121303379196662115?a=kjK3494e60EqYhancfQ&amp;s=19" target="_blank" rel="noopener">Kevin Ngo(@kevin_t_ngo)의 X 게시물 (자바스크립트로 그린 그림의 프롬프트: 건식 재료 3–5개, 손그림처럼, 화면 전체, 이야기 속 물건 없이 감정만)</a>.</p>
+  <ul class="tags"><li>자바스크립트 그림</li><li>오일파스텔 · 색연필</li><li>감정 → 풍경</li><li>4K PNG · MP4</li><li>브라우저 없이 렌더</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>이야기 · 기억 · 감정 목록 하나(둘도 가능), 원하면 팔레트와 붓질을 배울 참고 그림 폴더</dd>
+      <dt>브리프</dt><dd>장면별 감정표(무게 · 온도 · 움직임 · 빛), 절대 그리지 않을 것 목록, 감정 → 날씨 · 빛 · 장소 · 색 번역표, 한 장면 한 줄, 16:9 구도, 팔레트 램프와 종이 색, 재료 3–5개와 각자의 역할</dd>
+      <dt>그리기</dt><dd>스틱 옆면으로 화면 전체 밑칠 → 큰 덩어리의 끊긴 색 해칭과 지그재그 → 덩어리 하나로 빛을 받는 구름 · 눈 둔덕의 형태 해칭 → 어두운 색 위에 밝은 오일파스텔, 지우개로 빛 걷어내기, 손가락 블렌딩 → 시선이 머무는 곳의 작은 색연필 자국 → 마지막 어두운 강조</dd>
+      <dt>확인</dt><dd>16:9, 재료 3–5개, 빈 종이 없음, 고르게 평평한 디지털 면 없음, 명도 범위, 날아가거나 뭉개진 곳 없음, 그리지 않을 것 목록의 단어가 코드에 없음, 결정성, 스틸 채점 기준 10개</dd>
+      <dt>출력</dt><dd>1920×1080 또는 3840×2160 PNG, 단계별 스틸과 100 % 확대 크롭, 그리는 과정 MP4, 획이 하나씩 그려지는 라이브 페이지</dd>
+    </dl>
+    <pre><code>node feeling-pastel/scripts/new-piece.mjs my-piece
+node feeling-pastel/scripts/render.mjs my-piece/art.js --stages --scale .5
+node feeling-pastel/scripts/check.mjs my-piece/art.js
+node feeling-pastel/scripts/render.mjs my-piece/art.js --scale 2 --crops
+node feeling-pastel/scripts/render.mjs my-piece/art.js --film --seconds 30
+node feeling-pastel/scripts/palette.mjs refs/</code></pre>
+    <p class="mute">요구 사항: Node 18+, 그리는 과정 MP4와 참고 그림 팔레트에만 ffmpeg. 브라우저 · GPU · npm 설치가 필요 없습니다(획 11만 개짜리 1920×1080 그림이 약 20초, 3840×2160이 약 70초). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/feeling-pastel/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10.6;--h-phone:300px;--demo-bg:#16141c">
+    <iframe data-src="demo/held-breath/" title="feeling-pastel 예제가 그려지는 라이브 페이지" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/held-breath/">데모 열기 (examples/held-breath)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/held-breath</code> · 획 11만 개 · 30초 동안 그려짐</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/held-breath/" data-cap="예제 &lt;code&gt;examples/held-breath&lt;/code&gt; · 획 11만 개 · 30초 동안 그려짐" aria-pressed="true">참았던 숨</button>
+        <button class="btn" type="button" data-src="demo/summer-night/" data-cap="시작 그림 &lt;code&gt;templates/&lt;/code&gt; · 재료 3개 · 어두운 색지" aria-pressed="false">여름방학 마지막 밤</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본에 없는 이야기 두 개를 브리프부터 그린 그림입니다. 카드를 누르면 새 탭에서 그 단계까지 그린 종이가 열리고, 브라우저가 같은 획을 직접 그립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"held":"참았던 숨","summer":"여름방학 마지막 밤"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>참았던 숨 <small>예제 · 재료 5개 · 8단계 · 획 11만 개</small></h3>
+      <p>몇 달을 기다린 합격 소식, 조용한 버스에서 소리를 참은 일, 언덕을 뛰어오른 겨울 공기, 집 계단의 찌개 냄새, 먼저 우는 엄마. 이야기 속 버스 · 휴대폰 · 사람 · 계단 · 음식은 하나도 그리지 않고, 기다림은 낮게 깔린 구름 천장으로, 합격은 그 천장이 찢어진 금빛으로, 참았던 기쁨은 빛 속에서 한 몸으로 도는 새 떼로, 돌봄은 건너편 강가의 작은 불빛 창들로 옮겼습니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="held" href="demo/held-breath/?stage=1" target="_blank" rel="noopener">
+          <img src="samples/held-block-in.jpg" alt="크림색 종이 위에 스틱 옆면으로 넓게 칠한 밑칠: 보랏빛 하늘, 오른쪽 위의 살구색 빛, 강과 눈밭, 종이 결이 군데군데 비침" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">1단계 · 밑칠</span><b>화면 전체를 먼저</b><span class="how">소프트파스텔 옆면, 빈 종이 없이</span></div></a>
+        <a class="tile" data-tags="held" href="demo/held-breath/?stage=2" target="_blank" rel="noopener">
+          <img src="samples/held-ceiling.jpg" alt="낮게 깔린 남보라색 구름 천장과 그 아래 원근으로 작아지는 작은 구름들, 오른쪽 위에 열린 금빛 하늘" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">2단계 · 구름 천장</span><b>기다림의 무게</b><span class="how">덩어리 하나로 빛을 받는 구름, 바닥이 평평한 작은 구름</span></div></a>
+        <a class="tile" data-tags="held" href="demo/held-breath/?stage=3" target="_blank" rel="noopener">
+          <img src="samples/held-light.jpg" alt="구름 사이로 찢어진 듯 열린 크림 · 살구 · 장밋빛 하늘과 그 앞을 가로지르는 가는 구름, 아래로 퍼지는 빛줄기" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">3단계 · 빛</span><b>찢어진 틈</b><span class="how">가장 센 압력, 지우개로 걷어낸 빛줄기</span></div></a>
+        <a class="tile" data-tags="held" href="demo/held-breath/?stage=6" target="_blank" rel="noopener">
+          <img src="samples/held-flock.jpg" alt="금빛 틈 안에서 굵어졌다 가늘어지며 도는 보랏빛 새 떼, 아래에는 불 켜진 창이 있는 강 건너 마을과 언 강의 금빛 반사" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">6단계 · 새 떼</span><b>참았던 기쁨</b><span class="how">빛 속에서는 어둡게, 구름 앞에서는 금빛으로</span></div></a>
+        <a class="tile" data-tags="held" href="demo/held-breath/?done" target="_blank" rel="noopener">
+          <img src="samples/held-finish.jpg" alt="완성 그림: 겨울 해 질 녘 구름 천장이 찢어진 금빛 틈, 그 안의 새 떼, 강 건너 불빛 마을, 금빛이 비친 언 강, 앞쪽의 눈 둔덕과 끝이 빛나는 갈대" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">8단계 · 완성</span><b>참았던 숨</b><span class="how">재료 5개: 소프트 · 오일파스텔, 색연필, 콩테, 지우개</span></div></a>
+        <a class="tile" data-tags="held" href="https://github.com/jungrok5/motion-skills/blob/main/feeling-pastel/examples/held-breath/BRIEF.md" target="_blank" rel="noopener">
+          <img src="samples/held-detail.jpg" alt="3840×2160 렌더의 100 % 확대: 살구색 하늘의 오일파스텔 자국, 보랏빛 새 떼의 작은 점들, 눈 덮인 지붕과 노란 창, 비치는 종이 결" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">3840×2160 · 확대</span><b>자국 하나하나</b><span class="how">브리프: 감정표, 그리지 않을 것, 번역표, 검토 기록</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>여름방학 마지막 밤 <small>시작 그림 · 재료 3개 · 4단계</small></h3>
+      <p><code>new-piece.mjs</code>가 복사하는 시작 그림입니다. 숙제를 남긴 채 평상에 누운 방학 마지막 밤(수박 · 모기향 · 개구리는 그리지 않음)을, 어두운 남색 색지 위에 속에서 희미하게 빛나는 큰 구름, 거울 같은 논, 반딧불로 그렸습니다. 밤 그림을 밝은 종이에 그리면 종이 결이 눈처럼 보여서 어두운 색지를 썼습니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="summer" href="demo/summer-night/?stage=1" target="_blank" rel="noopener">
+          <img src="samples/summer-block-in.jpg" alt="남색 색지 위에 남색에서 청록으로 내려가는 밤하늘과 아래쪽 땅을 스틱 옆면으로 칠한 밑칠" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">1단계 · 밑칠</span><b>어두운 색지 위에</b><span class="how">비치는 결이 밤의 색이 되도록</span></div></a>
+        <a class="tile" data-tags="summer" href="demo/summer-night/?stage=3" target="_blank" rel="noopener">
+          <img src="samples/summer-paddies.jpg" alt="왼쪽 위 큰 밤 구름, 어두운 산 능선, 하늘을 비추며 앞으로 넓어지는 논의 띠와 둑" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">3단계 · 논</span><b>거울 같은 논</b><span class="how">원근으로 넓어지는 띠, 구름빛의 반사</span></div></a>
+        <a class="tile" data-tags="summer" href="demo/summer-night/?done" target="_blank" rel="noopener">
+          <img src="samples/summer-finish.jpg" alt="완성 그림: 속에서 희미하게 빛나는 큰 밤 구름, 논에 비친 빛, 양쪽 아래의 풀, 흩어진 연둣빛 반딧불" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">4단계 · 완성</span><b>여름방학 마지막 밤</b><span class="how">재료 3개: 소프트 · 오일파스텔, 파스텔 연필</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. Kevin Ngo(@kevin_t_ngo)가 X에 공개한, 자바스크립트로 그린 그림의 프롬프트가 출발점입니다. 건식 재료 3–5개를 고르거나 지어낼 것, 디지털이 아니라 사람이 그린 것처럼, 16:9, 화면의 모든 픽셀을 쓸 것, 90년대 애니메이션의 색감, 그리고 긴 개인적인 이야기 두 개의 감정을 담되 그 이야기 속 어떤 것도 그리지 말 것. 이 스킬은 그 방법을 가져와 어떤 이야기에도 다시 쓸 수 있게 만들었고, 원본 그림(바닷가 마을과 연 수백 개)은 쓰지 않았습니다. 예제와 시작 그림의 이야기와 그림은 모두 이 레포의 것입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/held-breath/" target="_blank" rel="noopener"><b>「참았던 숨」 · 라이브 페이지</b><span>예제: 구름 천장의 금빛 틈, 새 떼, 언 강 · 획 11만 개가 30초 동안</span><span class="url">feeling-pastel/demo/held-breath/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/feeling-pastel/examples/held-breath"><b>예제 폴더 · examples/held-breath</b><span>BRIEF.md(감정표 · 그리지 않을 것 · 번역표 · 검토 기록), art.js, piece.html</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/kevin_t_ngo/status/2121303379196662115?a=kjK3494e60EqYhancfQ&amp;s=19" target="_blank" rel="noopener"><b>원본 · X 게시물</b><span>Kevin Ngo(@kevin_t_ngo) · 그림의 프롬프트 공개</span><span class="url">x.com/kevin_t_ngo/status/2121303379196662115</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/feeling-pastel/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/feeling-pastel">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/feeling-pastel/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/feeling-pastel/references/SOURCE.md">references/SOURCE.md</a> <span>원본 프롬프트의 구성, 가져온 것과 가져오지 않은 것</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/feeling-pastel/references/BRIEF.md">references/BRIEF.md</a> <span>브리프 틀과 스틸 채점 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/feeling-pastel/references/FEELINGS.md">references/FEELINGS.md</a> <span>감정을 이야기 없이 그림으로 옮기는 법</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/feeling-pastel/references/TOOLS.md">references/TOOLS.md</a> <span>건식 재료의 수치, 3–5개 고르기, 직접 만들기, 종이</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/feeling-pastel/references/LOOK.md">references/LOOK.md</a> <span>손그림처럼 보이는 이유, 화면 전체, 90년대 애니 배경 색감</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/feeling-pastel/references/DRAWING.md">references/DRAWING.md</a> <span>API와 그리는 순서</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/feeling-pastel/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림은 코드로 그렸습니다 · 이미지 파일 없이 획만으로
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
