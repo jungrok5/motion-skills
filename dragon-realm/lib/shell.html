@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="__LANG__">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__TITLE__</title>
+<style>
+  html,body{margin:0;height:100%;background:__BG__;overflow:hidden;color:#e9e4d8;font:14px/1.4 system-ui,sans-serif}
+  #stage{position:fixed;inset:0;display:grid;place-items:center}
+  #frame{display:block;max-width:100vw;max-height:100vh;aspect-ratio:16/9;width:min(100vw,177.78vh);height:auto;background:#000}
+  body.render #stage{position:static;display:block} body.render #frame{max-width:none;max-height:none;width:auto}
+  #veil{position:fixed;inset:0;display:grid;place-items:center;background:__BG__;transition:opacity 1.2s;z-index:2;text-align:center}
+  #veil.gone{opacity:0;pointer-events:none}
+  #veil b{display:block;font:600 15px/1.2 system-ui;letter-spacing:.35em;text-transform:uppercase;opacity:.85}
+  #bar{width:220px;height:2px;background:#ffffff22;margin:18px auto 0;overflow:hidden} #bar i{display:block;height:100%;width:0;background:#d8c9a0;transition:width .2s}
+  #hint{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);padding:7px 14px;border-radius:99px;background:#0008;font-size:12px;letter-spacing:.08em;opacity:0;transition:opacity .6s;z-index:1;pointer-events:none}
+  #hint.on{opacity:.9}
+  #err{position:fixed;left:12px;top:12px;right:12px;white-space:pre-wrap;color:#ffb4a8;font:12px/1.4 ui-monospace,monospace;z-index:3}
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="frame"></canvas></div>
+<div id="veil"><div><b>__TITLE__</b><div id="bar"><i></i></div></div></div>
+<div id="hint">click for sound · space pauses</div>
+<div id="err"></div>
+<script type="module">
+/*__FILM__*/
+</script>
+</body>
+</html>
