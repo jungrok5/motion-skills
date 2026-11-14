@@ -1663,6 +1663,46 @@
           "url": "https://jungrok5.github.io/motion-skills/speedpaint-replay/demo/reference-mode/"
         }
       ]
+    },
+    {
+      "id": "shred-poster",
+      "name": "shred-poster",
+      "tagline": "주제 하나를 주면 그 주제만의 타이포 포스터(문구와 위계, 그리드, 서체, 강조색 하나, 코드로 그린 하프톤 그림, 주제의 표식)를 새로 디자인하고, 그 포스터가 띠로 찢어지고 종이 리본으로 쏟아지고 파쇄기 칼날을 지나 한 줄씩 다시 맞춰지는 8초 세로 루프 영상을 만듭니다. 섬유와 반광 잉크, 빛이 비치는 얇은 종이, 서로 뚫지 않는 리본 더미, 서브프레임 모션 블러까지 three.js로 그리고, 소리는 화면의 타이밍에서 합성해 −14 LUFS로 맞춥니다. HTML 한 파일이 브라우저에서 반복 재생되고 프레임 단위로 1080×1920 60fps MP4가 됩니다.",
+      "posterAlt": "shred-poster로 만든 「퇴고」의 장면 네 개: 책상 위에 놓인 주홍 띠의 퇴고 포스터, 퇴고 推敲가 인쇄된 주홍 리본이 종이 리본 더미 위를 가로지르는 장면, 크림색 바탕 인셋 안에서 원고지 본문이 파쇄기 칼날로 들어가는 장면, 가운데 줄부터 다시 맞춰지는 포스터",
+      "poster": "shred-poster/poster.jpg",
+      "tags": [
+        "타이포 포스터",
+        "9:16 · 8초 루프",
+        "three.js 종이 · 파쇄기",
+        "합성 사운드",
+        "MP4 · 라이브 페이지"
+      ],
+      "stats": [
+        "예제 8초 · 네 샷 · 60fps",
+        "주제마다 새 포스터"
+      ],
+      "page": "shred-poster/",
+      "source": "shred-poster/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "shred-poster/examples/toego/"
+      },
+      "sources": [
+        {
+          "title": "amirmushichge/shred-kit (Amir Mušić의 Shred — 포스터를 찢고 파쇄하고 다시 맞추는 Blender 세로 릴 템플릿, GPL-3.0 · 코드는 가져오지 않음)",
+          "url": "https://github.com/amirmushichge/shred-kit"
+        },
+        {
+          "title": "Amir Mušić의 X 게시물 (\"Claude can now act as a motion designer\", Fable 5.2와 Blender로 만든 8초 세로 릴)",
+          "url": "https://x.com/AmirMushich/status/2121339167800213934?a=knMN6C_A1VHmWGGzS4c&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「퇴고」 · 토요 퇴고 모임 포스터, 원고지와 교정부호 · 8초 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/shred-poster/demo/toego/"
+        }
+      ]
     }
   ]
 }
