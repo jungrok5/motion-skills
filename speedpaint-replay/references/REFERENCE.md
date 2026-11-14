@@ -42,5 +42,8 @@ vignette) and the body marks. For a character, read the eye boxes and marks off 
   making reads (line 10–14 s, flats 5–6 s).
 
 ## Limits
+Rendering is slow: every frame redraws thousands of items. 「벚꽃 노을」 (about 2,300 items plus 4,246 dabs) took
+2.15 s a frame on 4 CPU workers, so 42.6 s took 46 min, against about 0.1 s a frame for the designed pieces. Preview
+with `--stages` and `--sheet`, then render the MP4 once (allow an hour), or lower `--colors` / `--lines` / `--dabs`.
 The result is a painterly re-making of the picture, not a copy: thin details (single hairs, eyelashes, text) soften,
 and line art is found from dark lines, so a picture without line art gets edge lines instead.

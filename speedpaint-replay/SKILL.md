@@ -71,7 +71,8 @@ my-piece/
 Run scripts from the project root: `node <skill>/scripts/render.mjs piece.html --stages --scale .5`. Pages are ES
 modules: view them through a local server (`python3 -m http.server`); the scripts pass Chromium the file:// flag.
 
-Requirements: Node + Playwright Chromium, ffmpeg. No network, no npm install, no GPU (~0.3 s a frame on a CPU).
+Requirements: Node + Playwright Chromium, ffmpeg. No network, no npm install, no GPU (~0.3 s a frame on a CPU for a
+designed piece; reference mode with thousands of items ~2 s a frame).
 
 ## Workflow
 1. **Subject → brief.** Write `BRIEF.md` from references/BRIEF.md before any code. Fill in:
