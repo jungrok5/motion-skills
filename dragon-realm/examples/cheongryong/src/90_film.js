@@ -61,7 +61,7 @@
       cam: (u, t) => { const a = Math.min(100, Math.max(10, Yong.front(t) + 4)); return { p: beside(a + 10, 15, 4.5)(t), l: C().bodyAt(t, a - 6), fov: 40 }; } },
     { name: 'roar — the Blue Dragon', t0: B.ROAR - 0.35, shadow: { span: 70, at: (t) => head(t) }, shake: 0.3, mirror: false, near: 0.3,
       cam: (u, t) => { const h = smoothHead(t), f = V.norm(V.sub(head(t + 0.4), head(t - 0.4))), s = V.norm(V.cross(f, [0, 1, 0])); const d = lerp(21, 15, DR.ease.out3(u));
-        return { p: [h[0] + f[0] * d + s[0] * 8, h[1] - 3.5 + 2 * u, h[2] + f[2] * d + s[2] * 8], l: [h[0] + f[0] * 4, h[1] + 1.2, h[2] + f[2] * 4], fov: 36 }; } },
+        return { p: [h[0] + f[0] * d + s[0] * 9, h[1] + 3.2 + 1.5 * u, h[2] + f[2] * d + s[2] * 9], l: [h[0] + f[0] * 4, h[1] + 0.6, h[2] + f[2] * 4], fov: 36 }; } },
     { name: 'dawn — the clouds open', t0: B.DAWN, shadow: { span: 640, at: [0, 0, -60] }, shake: 0.25,
       cam: (u, t) => { const h = smoothHead(t); return { p: [-10 + 30 * u, 20 + 10 * u, 150 - 16 * u], l: V.lerp([40, 150, -160], h, 0.55 + 0.25 * u), fov: lerp(50, 44, u) }; } },
     { name: 'pass — past the pavilion eaves', t0: 61.6, shadow: { span: 150, at: [-60, 6, -20] }, shake: 0.4,

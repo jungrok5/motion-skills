@@ -49,7 +49,7 @@ const Yong = {};
       if (t < B.PEARL - 0.5) { o[0] = Yong.PEARL0[0]; o[1] = 900; o[2] = Yong.PEARL0[2]; o[3] = 0; return o; }
       if (t < B.SEIZE) { const d = 1 - DR.ease.out3(sat((t - B.PEARL) / 5.5)); o[0] = Yong.PEARL0[0] + Math.sin(t * 0.7) * 1.2; o[1] = Yong.PEARL0[1] + d * 190 + Math.sin(t * 1.3) * 0.8; o[2] = Yong.PEARL0[2] + Math.cos(t * 0.6) * 1.2; o[3] = smooth(B.PEARL - 0.5, B.PEARL + 1.5, t); return o; }
       const P = Yong.parts; P.point(0, -1.25, P.sn * 0.62, tmp); o[0] = tmp[0]; o[1] = tmp[1]; o[2] = tmp[2]; o[3] = 1; return o; };
-    DR.onFrame((t) => { const p = Yong.pearlAt(t, Yong._p || (Yong._p = [0, 0, 0, 0])); pm.position.set(p[0], p[1], p[2]); const s = (t < B.SEIZE ? 2.2 : 1.15) * p[3]; pm.scale.setScalar(Math.max(s, 1e-3)); pm.visible = p[3] > 0.01; }, 20);
+    DR.onFrame((t) => { const p = Yong.pearlAt(t, Yong._p || (Yong._p = [0, 0, 0, 0])); pm.position.set(p[0], p[1], p[2]); const s = (t < B.SEIZE ? 2.2 : 0.9) * p[3]; pm.scale.setScalar(Math.max(s, 1e-3)); pm.visible = p[3] > 0.01; }, 20);
     return C;
   };
 }
