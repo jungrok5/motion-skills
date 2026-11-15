@@ -4,13 +4,14 @@
 {
   const U = LR.U;
   const W = (LR.wx = {
+    key: 0.15, punch: 1.2, colour: 1.27, fill: 0.85, bounce: 1.3, shafts: 1.0,          // the picture's key, contrast, colour, and how much sky fills the shade
     tod: 16.4, season: 0, cloud: 0.35, rain: 0, snowfall: 0, wet: 0, puddle: 0, snow: 0, wind: 0.25, flash: 0,
     want: { tod: null, weather: 'clear', todSpeed: 0 }, flow: 0.012, auto: false, autoT: 0, time: 0, frame: 0,
     lampsOn: 0, exposure: 0.25, baseY: 0, listeners: [],
   });
   // the looks a project can override: W.looks.rain.fog = …
   W.looks = {
-    clear: { cloud: 0.34, dark: 0.0, rain: 0, snowfall: 0, season: 0, wind: 0.24, fog: 0.0024, fogH: 0.050, turb: 1.0 },
+    clear: { cloud: 0.34, dark: 0.0, rain: 0, snowfall: 0, season: 0, wind: 0.24, fog: 0.0011, fogH: 0.050, turb: 1.0 },
     rain:  { cloud: 1.0,  dark: 0.85, rain: 1, snowfall: 0, season: 0, wind: 0.8,  fog: 0.0085, fogH: 0.012, turb: 2.4 },
     snow:  { cloud: 0.96, dark: 0.25, rain: 0, snowfall: 1, season: 1, wind: 0.38, fog: 0.0105, fogH: 0.010, turb: 2.0 },
     winter:{ cloud: 0.30, dark: 0.0, rain: 0, snowfall: 0, season: 1, wind: 0.2,  fog: 0.0026, fogH: 0.040, turb: 1.2 },
@@ -72,17 +73,20 @@
     W.lampsOn = Math.max(LR.sm(0.10, -0.04, sunY), c.dark * LR.sm(0.75, 1.0, W.cloud) * 0.35 * LR.sm(0.5, 1, W.rain));
     U.uWx.value.set(W.wet, W.puddle, W.snow, W.season); U.uWx2.value.set(W.rain, W.snowfall, W.lampsOn, W.flash);
     // air: mist at dawn and dusk and after dark, thick in rain and snow
-    const low = LR.sm(0.42, 0.02, Math.abs(sunY)) * (1 - LR.sat(W.rain + W.snowfall)), dawn = W.tod > 4 && W.tod < 9 ? 1.6 : 1;
-    const fog = c.fog * (1 + low * 2.6 * dawn) + night * 0.0012;
+    // morning mist lies thick and burns off by nine; an evening only goes a little golden
+    const low = LR.sm(0.42, 0.02, Math.abs(sunY)) * (1 - LR.sat(W.rain + W.snowfall)), dawn = LR.sm(4.2, 5.4, W.tod) * LR.sm(9.2, 7.4, W.tod);
+    const fog = c.fog * (1 + low * (0.6 + 4.6 * dawn)) + night * 0.0012;
     U.uFog.value.set(fog, LR.lerp(c.fogH, 0.02, low * 0.5), W.baseY, 0);
     // woods hold damp air: thick at dawn and toward evening, so the sun shows as shafts between the trunks
     if (LR.canopy) { const lowS = LR.sm(0.66, 0.14, sunY) * day; LR.render.U.uCanopy.value.set(LR.canopy.shade, LR.canopy.mist * (0.004 + 0.017 * lowS) * (1 - 0.75 * LR.sat(W.rain + W.snowfall)), 0, 0); }
     // exposure: what a camera would need for this light
-    const ev = LR.lerp(LR.lerp(3.0, 2.1, LR.sm(-0.24, 0.0, sunY)), 0.40, LR.sm(-0.02, 0.42, sunY));
+    const ev = LR.lerp(LR.lerp(1.9, 1.2, LR.sm(-0.24, 0.0, sunY)), 0.36, Math.pow(LR.sm(0.0, 0.36, sunY), 0.6));       // night is dark: lamps and windows carry it
     W.exposure = ev * (1 + 0.55 * LR.sat(W.cloud * 1.3 - 0.4) * day * (1 - 0.6 * W.snow)) * (1 - 0.32 * W.snow * day) * (1 + 0.6 * night * LR.sat(W.cloud * 1.5 - 0.6));
-    const P = LR.render.U; P.uExposure.value = W.exposure; P.uKey.value = LR.lerp(0.19, 0.045, night) * (1 + 0.45 * W.snow * day);
+    const P = LR.render.U; P.uExposure.value = W.exposure; P.uKey.value = LR.lerp(W.key, 0.036, night) * (1 + 0.45 * W.snow * day);
     const golden = LR.sm(0.36, 0.05, sunY) * LR.sm(-0.12, 0.02, sunY) * (1 - LR.sat(W.cloud * 1.4 - 0.5));
-    const sat = 1.04 - 0.14 * W.rain - 0.1 * W.snow * (1 - golden) - 0.06 * night, con = 1.06 + 0.03 * golden;
+    // the look: W.punch = contrast (AgX power), W.colour = saturation; rain and snow take colour out, night a little
+    const sat = W.colour * (1 - 0.13 * W.rain - 0.09 * W.snow * (1 - golden) - 0.05 * night), con = W.punch + 0.03 * golden - 0.05 * LR.sat(W.rain + W.snowfall);
+    P.uFill.value = W.fill * (1 + 0.5 * LR.sat(W.cloud * 1.4 - 0.5)); P.uBounce.value = W.bounce; P.uShaft.value = W.shafts;
     P.uGrade.value.set(con, sat, 0.26, 0.022);
     P.uTintG.value.set(1 + 0.05 * golden - 0.05 * night - 0.03 * W.rain, 1 + 0.01 * golden - 0.005 * night, 1 - 0.07 * golden + 0.1 * night + 0.03 * W.rain + 0.03 * W.snow);
     P.uLiftG.value.set(0.004 + 0.004 * night, 0.006 + 0.008 * night, 0.012 + 0.022 * night);

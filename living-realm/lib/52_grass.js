@@ -126,7 +126,7 @@ void main(){
   tint *= mix(0.78, 1.18, textureLod(uNoise, xz * 0.0031, 0.0).g * 0.6 + textureLod(uNoise, xz * 0.031, 0.0).b * 0.4);
 #endif
   tint *= (0.82 + 0.36 * h2.x) * mix(0.8, 1.12, clump); tint = mix(tint, vec3(0.26, 0.23, 0.085), step(0.88, h3.z) * 0.55 * (1.0 - late) * (1.0 - under));
-  vec3 col = tint * mix(0.40, 1.15, pow(t, 0.75)); col = mix(col, col * vec3(1.18, 1.10, 0.62), t * t * 0.45); col *= 1.0 - 0.18 * under;
+  vec3 col = tint * mix(0.17, 1.24, pow(t, 0.9));                                      // deep at the root: a meadow has depth because its roots are dark col = mix(col, col * vec3(1.18, 1.10, 0.62), t * t * 0.45); col *= 1.0 - 0.18 * under;
   col = mix(col, mix(tint * 2.2, vec3(0.30, 0.25, 0.10), 0.6) * (0.8 + 0.4 * h2.x), stalk * smoothstep(0.5, 0.67, t));
   col = mix(col, vec3(0.44, 0.34, 0.15) * (0.7 + 0.5 * h2.x), sn * 0.85);                     // what still stands above the snow is straw
   col *= 1.0 - 0.22 * uWx.x; col = mix(col, vec3(0.86, 0.89, 0.93), sn * smoothstep(0.45, 1.0, t) * 0.7);

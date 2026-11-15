@@ -3,7 +3,9 @@
 // shell that also throws its shadow on the land, stars, and an environment map the world is lit and mirrored by.
 {
   const T = THREE, U = LR.U;
-  const S = (LR.sky = { lat: 47, E_SUN: 22, moonBoost: 1 });
+  // skyGain: the sky's own brightness against the sun's.  A clear zenith is darker than a sunlit grey card; the stand-in for
+  // multiple scattering overshoots it, and a darker sky is what gives the land its contrast.
+  const S = (LR.sky = { lat: 47, E_SUN: 22, moonBoost: 1, skyGain: 0.62 });
   const v = (value) => ({ value });
   const SU = (S.U = {
     uSkyLUT: v(null), uEnv: v(null),
@@ -109,9 +111,12 @@ vec3 starsAt(vec3 rd){
     vec3 tint = mix(vec3(1., .82, .65), vec3(.72, .84, 1.), h.z);
     col += tint * mag * tw * smoothstep(k == 0 ? 0.06 : 0.10, 0.0, dd) * 0.5;
   }
-  float band = exp(-pow(dot(d, normalize(vec3(0.35, 0.2, 0.9))) * 3.2, 2.));
-  float mw = textureLod(uNoise, d.xy * 1.7 + d.z * 0.6, 0.).r * textureLod(uNoise, d.zy * 5.1, 0.).g;
-  col += vec3(0.55, 0.62, 0.85) * band * (0.002 + mw * 0.012);
+  // the Milky Way: a band of unresolved stars with bright clouds and dark lanes of dust, and more faint stars along it
+  float gl = dot(d, normalize(vec3(0.35, 0.2, 0.9))), band = exp(-gl * gl * 11.0), core = exp(-gl * gl * 60.0);
+  float m1 = textureLod(uNoise, d.xy * 1.7 + d.z * 0.6, 0.).r, m2 = textureLod(uNoise, d.zy * 5.1 + 0.3, 0.).g, m3 = textureLod(uNoise, d.xz * 11.0 + d.y * 3.0, 0.).b;
+  float cloud = m1 * (0.45 + 0.9 * m2), dust = smoothstep(0.42, 0.72, m3 * 0.6 + m2 * 0.4) * core;
+  col += mix(vec3(0.50, 0.58, 0.86), vec3(0.95, 0.80, 0.62), core * m1) * band * (0.004 + cloud * cloud * 0.085) * (1.0 - 0.75 * dust);
+  { vec3 p = d * 320., c = floor(p), f = fract(p) - .5; vec3 h = hash33(c + 51.); col += vec3(0.85, 0.9, 1.0) * pow(h.x, 9.) * 0.55 * band * smoothstep(0.09, 0.0, length(f - (h - .5) * .7)); }
   return col;
 }
 vec3 moonAt(vec3 rd, out float disc){
@@ -176,13 +181,16 @@ void main(){
     const sun = S.sunDir(w.tod, w.season, tmpS), moon = S.moonDir(w.tod, w.season, tmpM);
     SU.uSunDirT.value.copy(sun); SU.uMoonDir.value.copy(moon);
     const E = S.E_SUN, EM = E * 0.0085 * S.moonBoost;
-    SU.uSunE.value.set(E, E, E); SU.uMoonE.value.set(EM * 0.72, EM * 0.86, EM * 1.12); SU.uTurb.value = w.turb;
+    const Es = E * S.skyGain;
+    SU.uSunE.value.set(Es, Es, Es); SU.uMoonE.value.set(EM * 0.72, EM * 0.86, EM * 1.12); SU.uTurb.value = w.turb;
     const ts = S.transmit(sun.y, 200, w.turb), tm = S.transmit(moon.y, 200, w.turb), tc = S.transmit(sun.y, 1800, w.turb), tcm = S.transmit(moon.y, 1800, w.turb);
     const sunVis = LR.sm(-0.045, 0.06, sun.y), moonFade = LR.sm(-0.03, -0.16, sun.y) * LR.sm(-0.02, 0.1, moon.y);
     const night = (S.night = LR.sm(-0.02, -0.2, sun.y)); SU.uNight.value = night * (1 - 0.92 * LR.sat(w.cloud * 1.3 - 0.15));
     const useSun = sunVis > 0.004; S.keyIsSun = useSun;
     const through = 1 - LR.sat(w.cloud * 1.25 - 0.2) * (0.55 + 0.4 * w.dark);          // what an overcast lets through as a beam
     const warm = [1.0, 0.955, 0.87];                                                       // the sun as a film sees it: a touch warmer than the sky's blue fill
+    // a low sun through real air is redder than clean-air extinction makes it: deepen its colour as it sinks
+    { const mx = Math.max(ts[0], ts[1], ts[2], 1e-6), deep = 1 + 0.7 * LR.sm(0.5, 0.05, sun.y); for (let k = 0; k < 3; k++) ts[k] = mx * Math.pow(ts[k] / mx, deep); }
     const key = useSun ? ts.map((t, k) => (E * t / Math.PI) * sunVis * through * warm[k]) : [EM * 0.72 * tm[0], EM * 0.86 * tm[1], EM * 1.12 * tm[2]].map((t) => (t / Math.PI) * moonFade * through * 3.2);
     U.uSunDir.value.copy(useSun ? sun : moon); if (U.uSunDir.value.y < 0.03) { U.uSunDir.value.y = 0.03; U.uSunDir.value.normalize(); }
     U.uSunCol.value.set(key[0], key[1], key[2]);

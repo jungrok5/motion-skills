@@ -38,11 +38,17 @@ void main(){
   mat3 tbn = cotFrame(Ng, vWorld, vUv);
   vec2 uv = vUv; vec4 P = uMatP[li], Q = uMatQ[li];
 #ifdef POM
-  if (P.w > 0.0) { vec3 V = normalize(uCamPos - vWorld); vec3 vt = vec3(dot(V, tbn[0]), dot(V, tbn[1]), dot(V, tbn[2])); float fade = smoothstep(26.0, 10.0, distance(uCamPos, vWorld));
-    if (fade > 0.0) { vec2 dir = vt.xy / max(vt.z, 0.32) * P.w * fade; float h = texture(uMatA, vec3(uv, layer)).a; uv += dir * (h - 0.62); h = texture(uMatA, vec3(uv, layer)).a; uv += dir * (h - 0.62) * 0.5; } }
+  // relief: walk the eye's ray down through the height field (eight layers, then one interpolation) so stones stand
+  // out of their joints and slide against each other as you pass
+  if (P.w > 0.0) { vec3 V = normalize(uCamPos - vWorld); vec3 vt = vec3(dot(V, tbn[0]), dot(V, tbn[1]), dot(V, tbn[2])); float fade = smoothstep(24.0, 9.0, distance(uCamPos, vWorld));
+    if (fade > 0.0 && vt.z > 0.02) { vec2 gx = dFdx(vUv), gy = dFdy(vUv), shift = vt.xy / max(vt.z, 0.3) * P.w * fade * 1.6, st = shift / 8.0, cu = uv + shift * 0.38;
+      float cur = 0.0, dep = 1.0 - textureGrad(uMatA, vec3(cu, layer), gx, gy).a, prevDep = dep;
+      for (int i = 0; i < 8; i++) { if (cur >= dep) break; cu -= st; cur += 0.125; prevDep = dep; dep = 1.0 - textureGrad(uMatA, vec3(cu, layer), gx, gy).a; }
+      float after = dep - cur, before = prevDep - cur + 0.125; uv = mix(cu, cu + st, sat(after / min(after - before, -1e-4))); } }
 #endif
   vec4 a = texture(uMatA, vec3(uv, layer)), b = texture(uMatB, vec3(uv, layer));
   vec3 tint = vCol.rgb * 2.0; tint *= tint;
+  if (Q.z > 0.0) tint = mix(vec3(1.0), tint, smoothstep(0.36, 0.47, a.a));               // where the paint has flaked the wood is its own colour
   vec3 albedo = a.rgb * a.rgb * tint;
   vec3 N = normalize(tbn * nrmDec(b.xy));
   float rough = b.z, ao = b.w * vCol.a, emis = 0.0, metal = Q.x, snow = 0.0, h = a.a;
@@ -51,11 +57,23 @@ void main(){
     float grime = smoothstep(1.0, 0.5, vCol.a) * (0.55 + 0.45 * st2.g);
     albedo *= mix(vec3(1.0), vec3(0.62, 0.57, 0.50), grime * 0.6 * (1.0 - metal));
     albedo *= 0.86 + 0.26 * st.r; rough = min(1.0, rough + grime * 0.1); }
+  // old plaster lets go: where it is low, creased or simply unlucky a patch has fallen and the brick behind shows
+  if (li == PLASTER_LAYER) {
+    vec2 wq = vec2(vWorld.x * -Ng.z + vWorld.z * Ng.x, vWorld.y);                           // along the wall, up the wall
+    float big = texture(uNoise, wq * 0.043 + 0.13).b, mid = texture(uNoise, wq * 0.21 + 0.4).r, fine = texture(uNoise, wq * 1.1).g;
+    float lost = smoothstep(0.405, 0.45, big * 0.62 + mid * 0.30 + fine * 0.07 + (1.0 - vCol.a) * 0.22 - 0.26);
+    if (lost > 0.0) {
+      vec2 bu = wq * 0.72; vec4 ba = texture(uMatA, vec3(bu, float(BRICK_LAYER))), bb = texture(uMatB, vec3(bu, float(BRICK_LAYER)));
+      float rim = lost * (1.0 - lost) * 4.0;
+      albedo = mix(albedo, ba.rgb * ba.rgb * (0.78 + 0.3 * mid), lost) * (1.0 - 0.45 * rim);
+      N = normalize(mix(N, tbn * nrmDec(bb.xy), lost)); rough = mix(rough, bb.z, lost); ao *= mix(1.0, 0.86 * bb.w, lost); h = mix(h, ba.a * 0.6, lost);
+    }
+  }
   // moss and damp where things face north-ish, sit low, or hold water
   if (Q.y > 0.0) {
     vec4 nz = texture(uNoise, vWorld.xz * 0.13 + vWorld.y * 0.09), nz2 = texture(uNoise, vWorld.xz * 0.021 + vWorld.y * 0.013 + 0.4);
     float shade = sat(0.5 - Ng.z * 0.5) * 0.5 + sat(Ng.y) * 0.25;                           // north faces and tops keep damp
-    float m = Q.y * (nz2.r * 1.1 + shade * 0.5 - 1.02) + (nz.g - 0.5) * 0.5 - (h - 0.4) * 0.7 + (1.0 - vCol.a) * 0.55 + uWx.x * 0.08;
+    float m = Q.y * (nz2.r * 1.1 + shade * 0.5 - 1.02) + (nz.g - 0.5) * 0.5 - (h - 0.42) * 1.15 + (1.0 - vCol.a) * 0.75 + uWx.x * 0.08;
     m = smoothstep(0.0, 0.2, m) * (1.0 - uWx.w * 0.5);
     if (m > 0.0) { vec4 ma = texture(uMatA, vec3(vWorld.xz * 0.9 + vWorld.y * 0.7, float(MOSS_LAYER))); albedo = mix(albedo, ma.rgb * ma.rgb * 0.7, m * 0.8); rough = mix(rough, 0.95, m); }
   }
@@ -73,8 +91,8 @@ void main(){
   if ((flags & 2) == 0) snow = applyWeather(albedo, N, rough, ao, h, vWorld, Ng, P.x, P.y, P.z);
   writeG(albedo, ao, N, rough, metal, 0.0, emis, snow);
 }`;
-  const matParams = () => { const P = LR.mat.params, Q = []; for (let i = 0; i < 48; i++) { const d = LR.mat.defs[i]; Q.push(new T.Vector4(d ? d.metal || 0 : 0, d ? d.moss || 0 : 0, 0, 0)); } return { uMatP: { value: P }, uMatQ: { value: Q } }; };
-  const defs = () => ({ SNOW_LAYER: LR.mat.L('snow'), MOSS_LAYER: LR.mat.L('moss') });
+  const matParams = () => { const P = LR.mat.params, Q = []; for (let i = 0; i < 48; i++) { const d = LR.mat.defs[i]; Q.push(new T.Vector4(d ? d.metal || 0 : 0, d ? d.moss || 0 : 0, d ? d.paint || 0 : 0, 0)); } return { uMatP: { value: P }, uMatQ: { value: Q } }; };
+  const defs = () => ({ SNOW_LAYER: LR.mat.L('snow'), MOSS_LAYER: LR.mat.L('moss'), PLASTER_LAYER: LR.mat.L('plaster'), BRICK_LAYER: LR.mat.L('brick') });
   const cache = {};
   R.matWorld = (o = {}) => {
     const key = 'w' + (o.double ? 'd' : 's') + (o.kinetic ? 'k' : ''); if (cache[key]) return cache[key];
@@ -152,8 +170,14 @@ void main(){
   float grassy = mix(1.0, sp.a, inner);
   vec3 gcol = grassTint(xz, cv.g) * clamp(detail, 0.35, 2.2);
   gcol = mix(vec3(0.085, 0.066, 0.045) * (0.7 + 0.6 * ta.a), gcol, smoothstep(0.02, 0.5, grassy));       // bare soil where nothing grows
+  // under standing grass the ground is dark earth and old thatch: the blades carry the green and the gaps give it depth;
+  // beyond the reach of the blades the ground takes the meadow's colour again
+  { float blades = smoothstep(0.22, 0.7, grassy) * (1.0 - smoothstep(uTiles2.z * 0.22, uTiles2.z * 0.8, dist)) * step(1.0, uTiles2.z) * (1.0 - uWx.z);
+    gcol = mix(gcol, mix(vec3(0.026, 0.028, 0.014), gcol, 0.22) * (0.7 + 0.6 * ta.a), blades * 0.9); }
   gAlb = gcol; gNt = nrmDec(tb.xy); gRough = tb.z; gAo = mix(tb.w, 1.0, smoothstep(8.0, 40.0, dist)); gH = ta.a; gPor = 0.6; gPud = 0.5 * (1.0 - smoothstep(0.1, 0.6, grassy));
   float wLit = sp.b * inner, wDirt = sp.r * inner, wPav = sp.g * inner, wShore = cv.b * inner;
+  { float rag = texture(uNoise, xz * 0.83).r * 0.6 + texture(uNoise, xz * 0.21 + 0.3).b * 0.4 - 0.5;        // nothing trodden has a ruled edge
+    wDirt = sat(wDirt + rag * 1.5 * wDirt * (1.0 - wDirt) * 4.0); wPav = sat(wPav + rag * 0.8 * wPav * (1.0 - wPav) * 4.0); }
   { float worn = texture(uNoise, xz * 0.017 + 0.61).g * 0.65 + nz.a * 0.35; float gap = smoothstep(0.60, 0.78, worn) * wPav; wPav *= 1.0 - gap * 0.55; wDirt = max(wDirt, gap * 0.8); }   // worn paving: earth shows through
   float wRock = smoothstep(0.30, 0.52, slope + (nz.r - 0.5) * 0.16) * mix(1.0, 0.0, wPav);
   if (wLit > 0.004) lay(float(L_LITTER), wLit, xz * uTiles.w, dx * uTiles.w, dy * uTiles.w);
@@ -189,7 +213,7 @@ void main(){
     const d = Object.assign(defs(), { L_TURF: M.L('turf'), L_DIRT: M.L('dirt'), L_COBBLE: M.L('cobble'), L_LITTER: M.L('litter'), L_ROCK: M.L('rock'), L_GRAVEL: M.L('gravel') });
     return (cache.land = LR.material({ vertexShader: landVS, fragmentShader: landFS, defines: d,
       uniforms: Object.assign(LR.uni(FRAME + ' uMatA uMatB uTopo uTopoRect'), matParams(), Ld.U, {
-        uTiles: { value: new T.Vector4(1 / M.tile('turf'), 1 / M.tile('dirt'), 1 / M.tile('cobble'), 1 / M.tile('litter')) }, uTiles2: { value: new T.Vector4(1 / M.tile('rock'), 1 / M.tile('gravel'), 0, 0) } }) }));
+        uTiles: { value: new T.Vector4(1 / M.tile('turf'), 1 / M.tile('dirt'), 1 / M.tile('cobble'), 1 / M.tile('litter')) }, uTiles2: { value: new T.Vector4(1 / M.tile('rock'), 1 / M.tile('gravel'), LR.off.has('grass') ? 0 : LR.gpu.tier.grassDist, 0) } }) }));
   };
 
   // ── the rain map: looking straight down, the height of the highest built surface ────────────────────────────────

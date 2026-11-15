@@ -31,6 +31,10 @@ without one, stills render on the CPU at 10–60 s each. three.js r170 is vendor
 
 Source — made from the post by Rez (@RezAIT00) on X:
 <https://x.com/RezAIT00/status/2120498246426706176?a=CUYTAAEWhBIL6PS4ZPk&s=19> (a clip of an Unreal Engine forest and
-meadow; no code or assets were published — the look was read off its frames, see `references/SOURCE.md`). The
+meadow; no code or assets were published — the look was read off its frames, see `references/SOURCE.md`). A second
+reference, given to raise the look: 「Larkhollow」 by @lucian__03, a farm generated from code —
+<https://claude.ai/artifact/D8t6NHbpDJXtCovZU6KADP> (rendered side by side with the village and measured; none of its
+code is here, see `references/SOURCE.md`). A third, for its low key and its rain-wet ground: 「Saltline」,
+<https://claude.ai/artifact/BGY1SztrAYcJQHSsnHHGmp>. The
 workflow is in [SKILL.md](SKILL.md); what the look is made of and where it stops is in `references/LOOK.md`; how the
 frame is budgeted is in `references/PERF.md`.

@@ -60,7 +60,7 @@ node living-realm/scripts/new-realm.mjs ~/my-realm                   # 새 장�
 
 <section id="samples"><div class="wrap">
   <h2>샘플</h2>
-  <p class="lead">원본 영상은 건물이 없는 숲과 초원입니다. 예제 「은여울 마을」은 같은 화면 요소로 요청받은 주제(MMORPG 마을, 낮밤 · 비 · 겨울, 키보드로 걷기)를 브리프부터 새로 설계했습니다. 카드를 누르면 라이브 페이지가 그 자리 · 그 시간 · 그 날씨로 열립니다. 스틸은 GPU가 없는 환경에서 CPU로 렌더한 것입니다.</p>
+  <p class="lead">원본 영상은 건물이 없는 숲과 초원입니다. 예제 「은여울 마을」은 같은 화면 요소로 요청받은 주제(MMORPG 마을, 낮밤 · 비 · 겨울, 키보드로 걷기)를 브리프부터 새로 설계했습니다. 카드를 누르면 라이브 페이지가 그 자리 · 그 시간 · 그 날씨로 열립니다. 두 번째 레퍼런스 <a href="https://claude.ai/artifact/D8t6NHbpDJXtCovZU6KADP">「Larkhollow」</a>와 같은 시각으로 나란히 렌더해 견준 뒤 톤과 대기, 풀의 깊이, 벽의 낡음을 다시 잡았습니다. 스틸은 GPU가 없는 환경에서 CPU로 렌더한 것입니다.</p>
   <div class="chips" data-for="gallery" data-labels='{"day":"마을과 숲","wx":"시간 · 날씨","new":"다른 주제","proof":"검증"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
   <div id="gallery">
     <div class="group">
@@ -89,6 +89,10 @@ node living-realm/scripts/new-realm.mjs ~/my-realm                   # 새 장�
           <div class="cap"><span class="no">숲길 · 07:42</span><b>숲길에서 본 초원</b><span class="how">숲에서 초원으로 나가는 길. 고사리와 이끼 바위</span></div></a>
         <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=41,50,84&amp;tod=10.5" target="_blank" rel="noopener"><img src="samples/pond.jpg" alt="방앗간 연못: 잔교와 건너편 나무가 비친 수면, 자갈 물가, 건너편 숲" loading="lazy" width="640" height="360">
           <div class="cap"><span class="no">연못 · 10:30</span><b>방앗간 연못</b><span class="how">건너편 나무와 잔교가 비치는 물(화면 공간 반사), 밤에는 반딧불이</span></div></a>
+        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=-6.6,35.4,-62&amp;tod=15" target="_blank" rel="noopener"><img src="samples/wall.jpg" alt="돌벽과 덧문 가까이: 줄눈이 깊은 막돌 벽, 모서리가 닳은 다듬은 돌, 칠이 벗겨져 회색 나무가 드러난 파란 덧문과 녹슨 띠쇠" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">골목 집 · 15:00</span><b>한 걸음 앞의 벽</b><span class="how">돌이 줄눈 밖으로 나오는 8겹 시차 매핑, 벗겨지는 칠, 틈새 이끼</span></div></a>
+        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=-33.5,19,205&amp;tod=15.5" target="_blank" rel="noopener"><img src="samples/track.jpg" alt="농장 가는 흙길: 나무 그림자가 드리운 흙길의 자갈과 잔가지, 들쭉날쭉한 풀 가장자리, 울타리와 초가 헛간" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">농장 길 · 15:30</span><b>나무 그늘의 흙길</b><span class="how">깊은 그늘과 햇빛의 대비, 길 가장자리로 번지는 풀</span></div></a>
       </div>
     </div>
     <div class="group">
@@ -103,6 +107,8 @@ node living-realm/scripts/new-realm.mjs ~/my-realm                   # 새 장�
           <div class="cap"><span class="no">골목 · 비</span><b>비</b><span class="how">돌은 젖어 빛나고 낮은 곳에 웅덩이. 처마 밑은 마른 채</span></div></a>
         <a class="tile" data-tags="wx" href="demo/village/?tour=0&amp;at=6,10,-20&amp;tod=21.5&amp;wx=rain" target="_blank" rel="noopener"><img src="samples/rain-night.jpg" alt="비 오는 밤의 광장: 젖은 자갈에 번지는 가로등 빛과 분수, 불 켜진 여관" loading="lazy" width="640" height="360">
           <div class="cap"><span class="no">광장 · 비 오는 밤</span><b>비 오는 밤</b><span class="how">젖은 돌에 맺히는 등불, 등불 둘레의 빛무리</span></div></a>
+        <a class="tile" data-tags="wx" href="demo/village/?tour=0&amp;at=6,10,-20&amp;tod=21.8&amp;wet=1&amp;puddle=1" target="_blank" rel="noopener"><img src="samples/after-rain.jpg" alt="비 갠 밤의 광장: 젖은 자갈과 웅덩이에 비치는 가로등과 불 켜진 창, 분수" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">광장 · 비 갠 밤</span><b>비 갠 뒤</b><span class="how">젖은 돌과 웅덩이가 등불과 창을 비춤 (화면 공간 반사, high 이상)</span></div></a>
         <a class="tile" data-tags="wx" href="demo/village/?tour=0&amp;at=0.5,60,0&amp;tod=11&amp;wx=snow" target="_blank" rel="noopener"><img src="samples/snow.jpg" alt="눈 오는 골목: 지붕과 길에 쌓인 눈, 내리는 눈송이, 흐린 하늘" loading="lazy" width="640" height="360">
           <div class="cap"><span class="no">골목 · 눈</span><b>눈</b><span class="how">위를 보는 면에만, 하늘이 열린 곳에만 쌓이는 눈</span></div></a>
         <a class="tile" data-tags="wx" href="demo/village/?tour=0&amp;at=3,17.5,-6&amp;tod=9.5&amp;wx=winter" target="_blank" rel="noopener"><img src="samples/winter.jpg" alt="맑은 겨울 아침 광장: 눈 덮인 지붕과 긴 아침 그림자, 곧게 오르는 굴뚝 연기, 잎이 진 나무" loading="lazy" width="640" height="360">
@@ -144,11 +150,13 @@ node living-realm/scripts/new-realm.mjs ~/my-realm                   # 새 장�
 
 <section id="works"><div class="wrap">
   <h2>실제 작품</h2>
-  <p class="lead">이 스킬은 이 레포에서 예제 「은여울 마을」을 만들며 다듬었습니다. 출처는 Rez의 X 게시물입니다.</p>
+  <p class="lead">이 스킬은 이 레포에서 예제 「은여울 마을」을 만들며 다듬었습니다. 출처는 Rez의 X 게시물과, 화면을 견준 레퍼런스 「Larkhollow」 · <a href="https://claude.ai/artifact/BGY1SztrAYcJQHSsnHHGmp">「Saltline」</a>입니다.</p>
   <div class="works">
     <a class="work" href="demo/village/" target="_blank" rel="noopener"><b>「은여울 마을」 · 라이브 페이지</b><span>걸어 다니는 마을 · 낮밤 · 비 · 겨울 · HTML 한 파일 · 누르면 소리</span><span class="url">jungrok5.github.io/motion-skills/living-realm/demo/village/</span></a>
     <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/living-realm/examples/village"><b>예제 소스 · examples/village</b><span>브리프, 땅, 지명, 건물 배치, 살림, 식생, 산책 경로</span><span class="url">github.com/jungrok5/motion-skills/…/living-realm/examples/village</span></a>
     <a class="work" href="https://x.com/RezAIT00/status/2120498246426706176?a=CUYTAAEWhBIL6PS4ZPk&amp;s=19"><b>출처 게시물 · Rez (X)</b><span>"This is fable 5.2 with blender and unreal" · 언리얼 엔진 숲과 초원 영상 48초 (코드 · 에셋 없음: 화면만 참고)</span><span class="url">x.com/RezAIT00/status/2120498246426706176</span></a>
+    <a class="work" href="https://claude.ai/artifact/D8t6NHbpDJXtCovZU6KADP"><b>두 번째 레퍼런스 · 「Larkhollow」 (@lucian__03)</b><span>코드로 생성하는 농장. 같은 시각으로 나란히 렌더해 밝기 · 채도 · 그늘 깊이를 재고 톤 · 대기 · 풀 · 벽의 낡음을 고침 (코드는 가져오지 않음)</span><span class="url">claude.ai/artifact/D8t6NHbpDJXtCovZU6KADP</span></a>
+    <a class="work" href="https://claude.ai/artifact/BGY1SztrAYcJQHSsnHHGmp"><b>세 번째 레퍼런스 · 「Saltline」</b><span>코드로 생성하는 비 오는 항구 게임. 낮은 키의 톤과 젖은 바닥을 견줌. 함께 받은 목표 이미지에서 젖은 바닥의 반사 · 해 쪽 빛줄기 · 은하수를 가져옴 (코드는 가져오지 않음)</span><span class="url">claude.ai/artifact/BGY1SztrAYcJQHSsnHHGmp</span></a>
   </div>
 </div></section>
 

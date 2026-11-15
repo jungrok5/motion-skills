@@ -75,6 +75,68 @@
   whole of it is in view, and never walks into a dead end to turn. (The same strip showed that stills taken on the
   bridge stood on the land under it — still mode now stands on decks and ice like the walker.)
 
+**Judged against a second reference, measured — "too flat"**
+The owner's verdict on the first delivery was "too flat", with a link to a farm generated the same way (`SOURCE.md`).
+It ran in the same headless browser, so both were rendered at the same hours and reduced to numbers (mean luma,
+saturation, 5th-percentile luma). The village was a third brighter and far less saturated: flat was tone.
+- The sky was brighter than sunlit paving → the shade was filled by it and the sky itself pale. The sky's radiance
+  is scaled against the sun (`LR.sky.skyGain` 0.62) and the fill is one number (`LR.wx.fill`). A clear zenith is
+  darker than a sunlit grey card: check that in a still before anything else.
+- Mist came with every low sun, so every evening was a white-out toward the light (in-scatter was ten times the lit
+  ground) → thick mist belongs to dawn and burns off by nine; an evening only goes golden. Clear-day fog was halved twice.
+- Exposure rose three-fold by late afternoon and the meter was not allowed to pull it back → a gentler curve, a wider
+  meter (0.5–2.2), a lower key (0.15).
+- The ACES fit left colours chalky at this key → AgX with a look applied in its log space (power 1.2, saturation 1.27).
+- The sun at 15° was white → its colour is deepened as it sinks (clean-air extinction alone is too pale).
+- Grass was green to the root on green ground: a carpet → dark earth under standing grass (fading out where the blades
+  end) and blades that start at 0.17 of their colour. Depth in a meadow is its dark roots.
+- Walls were clean → plaster loses patches in world space (not in the tiling texture) and the brick behind shows.
+- Small things floated → contact shadows: eight steps toward the sun through the depth buffer, on `high` and above.
+Rule: when a picture is called flat, measure it against the reference before touching geometry.
+
+**A second opinion on one close-up (the owner asked another model what it lacked)**
+Four findings, each true of the still it was shown — a stone wall with blue shutters, from an arm's length:
+- "Flat stone, angular corner blocks" → the relief was two parallax steps and joints as wide and pale as drawn outlines.
+  Now: tight dark joints, each stone its own value, eight-layer parallax through the height field (explicit
+  gradients, so nothing implicit sits in the loop), deeper normals; dressed blocks get knocked-off corners, tool
+  rows, lichen and rain streaks; moss keeps to the joints and the foot of the wall.
+- "Shutters one clean colour" → paint flakes from the board edges and along the grain to bare grey wood, crackles,
+  streaks; iron straps rust. The trick that makes any paint colour work: a material flagged `paint: 1` takes the
+  vertex tint only where its height says paint is still there. (First try: moss grew in the flaked wood, because moss
+  likes low height — a painted material is given no moss.)
+- "Hazy, weak shadow edges" → the tone pass above, plus contact shadows.
+- "Lawn cut along the path with scissors, bare earth" → way edges are broken up by noise before the height blend,
+  the track has stones in dark sockets, twigs and chaff (keep stones close to the earth's colour: bright ones read
+  as broken glass — the second time that lesson was learned).
+Rule: judge materials from an arm's length as well as from the view; a walker stands next to walls.
+
+**"Is it the GI?" — the bounce, and what it did not change**
+The owner asked whether missing global illumination was why it looked cheap. Half: the model was physically based
+from the start; what was wrong was the numbers on top of it (above). But indirect light was only sky + occlusion.
+- Added a screen-space bounce: half size, 3–5 cosine-spread rays of eight growing steps (reach ≈ 8 m) through the
+  depth buffer; a hit that faces back returns last frame's lit picture there, so light goes round more than once;
+  a depth-aware blur, then the temporal resolve cleans the rest.
+- It is subtle outdoors (mean change under one grey level in an open lane) because an open sky is most of the
+  indirect light and grass and stone are dark; it shows in shaded lanes, under eaves and by lamplight. Say so: the
+  jump in quality came from tone and wear, not from this.
+- Do not judge it in a debug view that replaces the picture: the history it reads then holds the debug view. Compare
+  two stills, `?off=gi` and not, and subtract.
+- First attempt reached 2–3 m and did nothing visible: light bounces across a lane, not across a doorstep.
+
+**A picture of the target (the same four views, at a film still's finish)**
+Read it as a list of what is in it that the engine lacks, not as a style to imitate; take what a frame budget allows:
+- Wet paving that mirrors → smooth pixels (wet stone, puddles, ice, glass) march their reflected ray through the depth
+  buffer and take last frame's picture; rough ones keep the sky. Wet cobbles were made glossier (porosity 0.55).
+  It reads at grazing angles and in puddles; a lamp is small, so its mirror image is small — streaks need a lamp
+  that is large or close.
+- Rays from the sun → the air pass walks across the screen to the sun and counts open sky. First try painted a bright
+  column on the grass under the sun: a ray shows in the air it crosses, so it is weighted by how much air the line of
+  sight holds, and the glow is kept within a few degrees of the sun.
+- Stars → a wider, cloudier Milky Way with dust lanes; it only shows when the moon is down and the sky is clear.
+- The shot list carried state from one still to the next (a wet meadow, an autumn map) → every still that follows a
+  weather still names its own weather.
+What that picture has and this does not is said in `SOURCE.md` and `LOOK.md`; do not promise it.
+
 **The engine**
 - `flat` is a reserved word in GLSL ES 3.00 (a local variable named `flat` failed every surface shader at once).
 - A `RawShaderMaterial` with its own `#version` line fails: three.js writes defines above it → use `glslVersion: GLSL3`.

@@ -27,14 +27,16 @@ dirt, gravel, cobbles and rock by height-blended masks; far country is forest pa
 and the walker can cross it; brooks half-freeze.
 
 ## Materials — `LR.mat` (lib/15_materials.js, 16_matlib.js)
-`LR.mat.define(name, { glsl, tile, bump, ao, por, pud, stick, moss, metal, pom })` before the bake (top level of a
+`LR.mat.define(name, { glsl, tile, bump, ao, por, pud, stick, moss, metal, pom, paint })` before the bake (top level of a
 source file, or `materials(LR)` in `LR.start`).
 - `glsl`: `void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal)` — `uv` in 0..1, and the
   result **must tile**: use the periodic helpers `pn(p, per)`, `pn2(uv, vec2 per)`, `pg`, `fbm(uv, freq, oct)`,
   `fbmv`, `ridged`, `vor(uv, vec2 cells, jitter)` (x = distance to the cell's border, y / w = cell ids, z = distance
   to its centre), `bond(uv, vec2 n, shift)` (running bond), `box2`, `S(r, g, b)` (sRGB → linear).
 - `tile` metres per repeat · `bump` relief depth in metres (drives the normal) · `por` porosity: how much rain darkens
-  it · `pud` holds puddles · `stick` how much snow stays · `moss` how readily moss takes · `metal` · `pom` parallax depth.
+  it · `pud` holds puddles · `stick` how much snow stays · `moss` how readily moss takes · `metal` · `pom` parallax depth (m; walked in eight
+  layers on `high`) · `paint: 1` the tint given where the thing is built colours only what stands above height 0.45, so
+  a painted material writes its bare wood low and grey and any paint colour flakes correctly (`boards`).
 - Stock: `plaster timber planks boards rubble ashlar brick cobble dirt turf litter gravel rock moss slate tiles thatch
   bark birch pinebark barkoak barksmooth barkpine iron cloth glass snow waves`. `boards` and `cloth` are pale so a
   tint is the paint. See them with `?view=mats`. The engine carries 48.
@@ -111,7 +113,10 @@ flowerDensity, fernDensity, fernSize }`, `LR.grass.enabled = false` for none.
 ## Weather and the hour — `LR.wx` (lib/25_weather.js)
 `LR.wx.looks.clear | rain | snow | winter | autumn = { cloud, dark, rain, snowfall, season, wind, fog, fogH, turb }` may be
 edited or added to; `LR.wx.round` is the automatic round (a list of `{ t, tod, weather }`); `LR.wx.flow` is how fast
-the hour runs by itself. `LR.sky.lat` sets the latitude. Everything else follows from the state.
+the hour runs by itself. `LR.sky.lat` sets the latitude. The look is four numbers on the state: `LR.wx.key` (how
+bright the meter keeps the picture, 0.15), `punch` (contrast, 1.2), `colour` (1.27), `fill` (how much sky fills the
+shade, 0.85), `bounce` (the screen-space bounce, 1.3; 0 switches it off), `shafts` (rays toward the sun, 1), and `LR.sky.skyGain` (the sky's brightness against the sun's, 0.62) — a ruin at noon may want less fill, a
+snowfield less punch. Everything else follows from the state.
 
 ## The walk and the glass
 `LR.start({ tour: [{ x, z, look: [x, z], pull: 0..1, pitch }] })` — a closed loop walked at 1.55 m/s; `look` is what

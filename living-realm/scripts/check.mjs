@@ -9,6 +9,7 @@
 //    trunk or deep water), named places are inside the world, counts are within the engine's limits
 // 3. every view (or the first --views of them) in day, dusk, night, rain and snow: not blank, not black, not blown;
 //    night is darker than day, rain and snow change the picture, something moves in half a second
+//    a clear day is not washed out or grey (warnings, with the numbers)
 // 4. budgets: draw calls and triangles per view (warnings)
 // Exit code 1 on FAIL.  Needs Playwright Chromium; on a machine without a GPU it runs on the CPU and takes minutes.
 import { resolve, join } from 'node:path';
@@ -85,15 +86,18 @@ if (args.includes('--walk') || rules.hits.some((h) => !h.soft)) {
   if (opt('at')) { const [ax, az, ar = 15] = opt('at').split(',').map(Number); console.log(`  (${ax}, ${az}) → ` + await saveMap('walk-at.png', { x0: ax - ar, z0: az - ar, x1: ax + ar, z1: az + ar, s: 300 / ar, hits: [] })); }
   let k = 0; for (const h of rules.hits.slice(0, 12)) console.log(`  (${h.x.toFixed(1)}, ${h.z.toFixed(1)}) → ` + await saveMap(`walk-${++k}.png`, { x0: h.x - 15, z0: h.z - 15, x1: h.x + 15, z1: h.z + 15, s: 20, hits: [h] }));
 }
-const stat = (url) => page.evaluate(async (url) => { const im = new Image(); im.src = url; await im.decode(); const W = 96, H = 54, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(im, 0, 0, W, H); const d = g.getImageData(0, 0, W, H).data; let s = 0, s2 = 0, blown = 0, murk = 0; const n = d.length / 4, px = []; for (let i = 0; i < d.length; i += 4) { const l = (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255; s += l; s2 += l * l; if (l > 0.97) blown++; if (l < 0.025) murk++; px.push(d[i], d[i + 1], d[i + 2]); } return { mean: s / n, sd: Math.sqrt(Math.max(0, s2 / n - (s / n) ** 2)), blown: blown / n, murk: murk / n, px }; }, url);
+const stat = (url) => page.evaluate(async (url) => { const im = new Image(); im.src = url; await im.decode(); const W = 96, H = 54, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(im, 0, 0, W, H); const d = g.getImageData(0, 0, W, H).data; let s = 0, s2 = 0, blown = 0, murk = 0, sat = 0; const n = d.length / 4, px = []; for (let i = 0; i < d.length; i += 4) { const l = (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255; s += l; s2 += l * l; if (l > 0.97) blown++; if (l < 0.025) murk++; const mx = Math.max(d[i], d[i + 1], d[i + 2]), mn = Math.min(d[i], d[i + 1], d[i + 2]); sat += mx ? (mx - mn) / mx : 0; px.push(d[i], d[i + 1], d[i + 2]); } return { mean: s / n, sd: Math.sqrt(Math.max(0, s2 / n - (s / n) ** 2)), blown: blown / n, murk: murk / n, sat: sat / n, px }; }, url);
 const diff = (a, b) => { let s = 0; for (let i = 0; i < a.px.length; i++) s += Math.abs(a.px[i] - b.px[i]); return s / a.px.length; };
 const nv = args.includes('--walk') ? 0 : Math.min(rules.views.length, +opt('views', '3'));
 if (!rules.views.length) warn.push('no views: LR.start({ views: [{ name, cam }] }) lets check.mjs and render.mjs look at the realm');
 for (let i = 0; i < nv; i++) {
   const v = rules.views[i], S = {};
   for (const [sn, st] of STATES) { const r = await shoot(page, Object.assign({ cam: v.cam, frames: 6 }, st), 'image/jpeg'); S[sn] = Object.assign(await stat(r.url), { info: r.info }); const x = S[sn];
-    console.log(`  ${(v.name + ' · ' + sn).padEnd(22)} light ${x.mean.toFixed(2)} ± ${x.sd.toFixed(2)}  blown ${(x.blown * 100).toFixed(1)}%  black ${(x.murk * 100).toFixed(0)}%  ${r.info.calls} calls  ${(r.info.tris / 1e6).toFixed(2)} M tris`);
+    console.log(`  ${(v.name + ' · ' + sn).padEnd(22)} light ${x.mean.toFixed(2)} ± ${x.sd.toFixed(2)}  sat ${x.sat.toFixed(2)}  blown ${(x.blown * 100).toFixed(1)}%  black ${(x.murk * 100).toFixed(0)}%  ${r.info.calls} calls  ${(r.info.tris / 1e6).toFixed(2)} M tris`);
     if (x.sd < 0.02) fail.push(`${v.name} · ${sn}: a blank picture`); else if (x.sd < 0.045) warn.push(`${v.name} · ${sn}: flat (light ± ${x.sd.toFixed(2)}) — fog too thick, or nothing lit against shade`);
+    // flat is a number: a clear day that is bright all over, or grey all over, has lost its shade or its air (references/LOOK.md)
+    if (sn === 'day' && x.mean > 0.56) warn.push(`${v.name} · day: washed out (mean light ${x.mean.toFixed(2)}, the look wants 0.40–0.46) — the sky fills the shade or the air is thick: LR.wx.key, fill, the look's fog`);
+    if (sn === 'day' && x.sat < 0.13) warn.push(`${v.name} · day: grey (saturation ${x.sat.toFixed(2)}) — LR.wx.colour, or haze over everything`);
     if (x.blown > 0.2) warn.push(`${v.name} · ${sn}: ${(x.blown * 100).toFixed(0)}% blown white`); if (x.murk > 0.6) warn.push(`${v.name} · ${sn}: ${(x.murk * 100).toFixed(0)}% near black — a night still needs a readable sky and lit windows`);
     if (r.info.calls > 520) warn.push(`${v.name} · ${sn}: ${r.info.calls} draw calls into the G-buffer`); if (r.info.tris > 4.2e6) warn.push(`${v.name} · ${sn}: ${(r.info.tris / 1e6).toFixed(1)} M triangles`); }
   if (S.night.mean > S.day.mean * 0.75) fail.push(`${v.name}: night (${S.night.mean.toFixed(2)}) is not darker than day (${S.day.mean.toFixed(2)})`);

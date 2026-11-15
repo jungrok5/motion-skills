@@ -52,46 +52,61 @@ void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
   rough = 0.84; metal = 0.;
 }` });
 
-  D('boards', { moss: 0.2, tile: 1.2, bump: 0.01, por: 0.6, glsl: `
+  // painted boards (shutters, doors, stalls).  paint: 1 — the vertex tint colours only what is still painted (h ≥ 0.45);
+  // where the paint has gone the wood is bare and grey whatever the colour of the paint was
+  D('boards', { moss: 0, tile: 1.2, bump: 0.016, por: 0.6, paint: 1, glsl: `
 void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
-  float N = 8.; float row = floor(uv.y * N), fy = fract(uv.y * N); float id = hash11(row + 5.0);
+  float N = 8.; float row = floor(uv.y * N), fy = fract(uv.y * N); float id = hash11(row + 5.0), id2 = hash11(row * 2.3 + 1.0);
   float gap = min(smoothstep(0.0, 0.05, fy), smoothstep(1.0, 0.95, fy));
-  float grain = pn2(uv + id, vec2(4., 64.)) * 0.55 + pn2(uv + 0.2 + id, vec2(12., 128.)) * 0.45;
-  float worn = smoothstep(0.5, 0.78, fbm(uv + id * 3.0, 6., 4) * 0.7 + grain * 0.3);
-  h = (0.6 + (grain - 0.5) * 0.25 + (id - 0.5) * 0.1 - worn * 0.1) * gap;
-  vec3 paint = S(0.84, 0.83, 0.80) * (0.9 + 0.14 * id) * (0.94 + 0.1 * grain), wood = S(0.50, 0.42, 0.34) * (0.8 + 0.4 * grain);
-  col = mix(paint, wood, worn * 0.85); col *= 0.3 + 0.7 * gap; rough = mix(0.62, 0.86, worn); metal = 0.;
+  float grain = pn2(uv + id, vec2(4., 64.)) * 0.55 + pn2(uv + 0.2 + id, vec2(12., 128.)) * 0.45, fine = fbmv(uv, 90., 3);
+  float edge = 1.0 - min(smoothstep(0.0, 0.3, fy), smoothstep(1.0, 0.7, fy));                 // paint lets go at the board's edges first
+  float f1 = fbm(uv * vec2(1.0, 0.35) + id * 3.0, 7., 4), f2 = fbmv(uv + id2, 34., 3);
+  float flake = smoothstep(0.545, 0.58, f1 * 0.62 + f2 * 0.2 + grain * 0.16 + edge * 0.17 + (id2 - 0.5) * 0.16);
+  float crackle = (1.0 - smoothstep(0.0, 0.035, vor(uv * vec2(1.0, 0.5) + id, vec2(22., 30.), 1.0).x)) * smoothstep(0.35, 0.6, f1) * (1.0 - flake);
+  float streak = pn2(uv + 0.31, vec2(46., 2.)) * smoothstep(0.35, 0.75, fbm(uv + 0.7, 2., 3));
+  vec3 paint = S(0.84, 0.83, 0.80) * (0.86 + 0.20 * id) * (0.92 + 0.12 * grain); paint *= 1.0 - streak * 0.22; paint *= 1.0 - crackle * 0.35; paint = mix(paint, paint * S(0.78, 0.76, 0.70), smoothstep(0.45, 0.8, fbm(uv + 0.2, 3., 4)) * 0.5);
+  vec3 wood = mix(S(0.36, 0.33, 0.30), S(0.52, 0.48, 0.43), grain) * (0.82 + 0.3 * fine); wood = mix(wood, S(0.30, 0.24, 0.18), smoothstep(0.6, 0.9, f2) * 0.5);
+  col = mix(paint, wood, flake); col *= 0.3 + 0.7 * gap;
+  h = mix(0.56 + (grain - 0.5) * 0.10 + (id - 0.5) * 0.08 - crackle * 0.06, 0.26 + (grain - 0.5) * 0.16, flake) * gap;
+  rough = mix(0.58, 0.9, flake); metal = 0.;
 }` });
 
-  D('rubble', { moss: 0.9, tile: 2.0, bump: 0.032, ao: 0.5, por: 0.65, pom: 0.03, glsl: `
+  D('rubble', { moss: 1.0, tile: 2.0, bump: 0.046, ao: 0.5, por: 0.65, pom: 0.055, glsl: `
 void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
   vec2 w = uv + (vec2(fbm(uv, 4., 3), fbm(uv + 0.5, 4., 3)) - 0.5) * 0.06;
   vec4 c = vor(w * vec2(1., 1.), vec2(7., 10.), 0.82);
-  float stone = smoothstep(0.022, 0.085, c.x);
+  float stone = smoothstep(0.012, 0.052, c.x);                                         // tight joints: wide pale ones read as drawn outlines
   float dome = pow(sat(c.x * 4.6), 0.5);
   float surfn = fbm(uv + c.y * 3.0, 14., 4), fine = fbmv(uv, 90., 3), pit = smoothstep(0.7, 0.8, fbmv(uv + 0.3, 46., 2));
   float tilt = (c.w - 0.5) * 0.2;
   h = mix(0.24 + fine * 0.1, 0.5 + dome * 0.34 + tilt + (surfn - 0.5) * 0.22 - pit * 0.08, stone);
-  vec3 base = S(0.56, 0.53, 0.48);
-  vec3 sc = base * (0.80 + 0.36 * c.y); sc = mix(sc, sc * vec3(1.10, 1.0, 0.86), smoothstep(0.5, 0.9, c.w)); sc = mix(sc, sc * vec3(0.90, 0.96, 1.06), smoothstep(0.5, 0.1, c.w) * 0.8);
-  sc *= 0.80 + 0.38 * surfn; sc *= 1.0 - pit * 0.18;
-  sc = mix(sc, sc * S(0.80, 0.82, 0.70), smoothstep(0.55, 0.8, fbm(uv + 0.9, 5., 4)) * 0.3);
-  vec3 mortar = S(0.60, 0.57, 0.50) * (0.82 + 0.26 * fine);
-  col = mix(mortar, sc, stone); col *= 0.94 + 0.06 * smoothstep(0.0, 0.1, c.x);
+  vec3 base = S(0.55, 0.52, 0.47);
+  // field stone: each its own value more than its own hue, a few rusty, a few dark; speckled, pitted, lichen in blotches
+  vec3 sc = base * (0.66 + 0.60 * c.y); sc = mix(sc, sc * vec3(1.12, 1.0, 0.80), smoothstep(0.62, 0.95, c.w) * 0.8); sc = mix(sc, sc * vec3(0.95, 0.98, 1.03), smoothstep(0.4, 0.1, c.w) * 0.6);
+  sc = mix(sc, S(0.34, 0.31, 0.28) * (0.8 + 0.4 * surfn), step(0.86, hash12(floor(c.yw * 61.0) + 3.0)) * 0.7);
+  sc *= 0.74 + 0.5 * surfn; sc *= 0.90 + 0.2 * fine; sc *= 1.0 - pit * 0.3;
+  sc = mix(sc, sc * S(0.80, 0.82, 0.66), smoothstep(0.55, 0.8, fbm(uv + 0.9, 5., 4)) * 0.35);
+  sc = mix(sc, S(0.62, 0.63, 0.50), smoothstep(0.74, 0.79, fbm(uv + 0.37, 9., 4)) * 0.5);
+  vec3 mortar = S(0.33, 0.30, 0.25) * (0.7 + 0.5 * fine);                                // old lime, dirt in it, and it sits in shadow
+  col = mix(mortar, sc, stone); col *= 0.78 + 0.22 * smoothstep(0.0, 0.16, c.x);
   rough = mix(0.95, 0.82 + 0.1 * surfn, stone); metal = 0.;
 }` });
 
-  D('ashlar', { moss: 0.7, tile: 2.4, bump: 0.03, por: 0.6, pom: 0.015, glsl: `
+  D('ashlar', { moss: 0.8, tile: 2.4, bump: 0.042, por: 0.6, pom: 0.028, glsl: `
 void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
   vec4 b = bond(uv, vec2(3., 8.), 0.5);
   float id = hash12(b.zw + 3.0), id2 = hash12(b.zw * 1.9 + 11.0);
   float e = box2(b.xy, vec2(0.035, 0.07));
   float chisel = fbm(uv + id, 18., 4), fine = fbmv(uv, 90., 3), pit = smoothstep(0.72, 0.8, fbmv(uv + 0.4, 40., 2));
-  h = mix(0.18, 0.62 + (id - 0.5) * 0.12 + (chisel - 0.5) * 0.22 - pit * 0.2, smoothstep(0.0, 0.55, e)) + fine * 0.04;
-  vec3 sc = mix(S(0.60, 0.57, 0.50), S(0.70, 0.66, 0.57), id); sc = mix(sc, S(0.50, 0.49, 0.47), step(0.8, id2) * 0.6);
-  sc *= 0.82 + 0.3 * chisel; sc *= 1.0 - pit * 0.25;
+  float arris = 1.0 - smoothstep(0.0, 0.5, e), chip = smoothstep(0.52, 0.60, fbm(uv + id * 7.0, 15., 4) * 0.7 + arris * 0.42) * smoothstep(0.02, 0.2, e);   // corners knocked off
+  float tool = pn2(uv + id, vec2(70., 6.)) * 0.5 + pn2(uv + id2, vec2(110., 9.)) * 0.5;                                 // the mason's point, in rows
+  h = mix(0.16, 0.62 + (id - 0.5) * 0.14 + (chisel - 0.5) * 0.24 + (tool - 0.5) * 0.07 - pit * 0.22 - chip * 0.26, smoothstep(0.0, 0.5, e)) + fine * 0.04;
+  vec3 sc = mix(S(0.56, 0.53, 0.47), S(0.70, 0.66, 0.57), id); sc = mix(sc, S(0.47, 0.46, 0.44), step(0.78, id2) * 0.7); sc = mix(sc, sc * vec3(1.10, 1.0, 0.84), step(0.9, hash12(b.zw * 3.7 + 5.0)) * 0.7);
+  sc *= 0.78 + 0.36 * chisel; sc *= 0.94 + 0.12 * tool; sc *= 1.0 - pit * 0.3; sc *= 1.0 - chip * 0.28;
+  sc = mix(sc, S(0.60, 0.61, 0.47), smoothstep(0.72, 0.78, fbm(uv + 0.61, 8., 4)) * 0.45);                             // lichen
+  sc *= 1.0 - 0.22 * pn2(uv + 0.5, vec2(30., 1.5)) * smoothstep(0.4, 0.8, fbm(uv + 0.15, 2., 3));                      // what the rain has run down
   float stain = smoothstep(0.5, 0.8, fbm(uv * vec2(1., 1.) + 0.3, 3., 4)); sc = mix(sc, sc * S(0.72, 0.74, 0.62), stain * 0.4);
-  col = mix(S(0.48, 0.45, 0.39) * (0.7 + 0.3 * fine), sc, smoothstep(0.0, 0.4, e));
+  col = mix(S(0.34, 0.31, 0.26) * (0.7 + 0.4 * fine), sc, smoothstep(0.0, 0.34, e)); col *= 0.82 + 0.18 * smoothstep(0.0, 0.3, e);
   rough = 0.86 - 0.08 * chisel; metal = 0.;
 }` });
 
@@ -108,7 +123,7 @@ void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
 }` });
 
   // ── ground ─────────────────────────────────────────────────────────────────────────────────────────────────────
-  D('cobble', { tile: 2.4, bump: 0.032, ao: 0.5, por: 0.7, pud: 1, pom: 0.03, glsl: `
+  D('cobble', { tile: 2.4, bump: 0.04, ao: 0.5, por: 0.55, pud: 1, pom: 0.042, glsl: `
 void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
   vec2 w = uv + (vec2(fbm(uv, 5., 3), fbm(uv + 0.5, 5., 3)) - 0.5) * 0.03;
   vec4 c = vor(w, vec2(19., 19.), 0.64);
@@ -132,8 +147,13 @@ void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
   h = 0.4 + (big - 0.5) * 0.5 + (mid - 0.5) * 0.2 + (fine - 0.5) * 0.08 + (grit - 0.5) * 0.1 + peb * 0.10 + peb2 * 0.2 - crk * 0.15;
   vec3 e1 = S(0.40, 0.33, 0.25), e2 = S(0.50, 0.43, 0.33), e3 = S(0.31, 0.26, 0.20);
   col = mix(e3, e1, rut); col = mix(col, e2, smoothstep(0.5, 0.8, mid) * 0.6); col *= 0.86 + 0.28 * fine; col *= 0.92 + 0.16 * grit; col *= 1.0 - crk * 0.3;
-  vec3 pc = mix(S(0.46, 0.43, 0.38), S(0.52, 0.46, 0.38), p1.w) * (0.8 + 0.3 * mid);
-  col = mix(col, pc, max(peb, peb2) * 0.7);
+  vec3 pc = mix(S(0.42, 0.39, 0.34), S(0.50, 0.44, 0.36), p1.w) * (0.74 + 0.36 * mid);
+  col = mix(col, pc, max(peb, peb2) * 0.6); col *= 1.0 - 0.3 * (smoothstep(0.36, 0.20, p1.x) * step(0.80, p1.y)) * (1.0 - peb);       // each stone sits in a dark socket
+  { vec2 gp = uv * 9.0 + 0.5, ci = mod(floor(gp), 9.0), q = fract(gp) - 0.5, hh = hash22(ci + 17.0); float ang = hh.x * 6.2832; vec2 dr = vec2(cos(ang), sin(ang));
+    float along = dot(q, dr), across = dot(q, vec2(-dr.y, dr.x)) + sin(along * 14.0 + hh.y * 9.0) * 0.012;
+    float twig = smoothstep(0.016, 0.006, abs(across)) * smoothstep(0.34, 0.26, abs(along)) * step(0.72, hh.y);                    // a twig in about one cell in four
+    col = mix(col, S(0.24, 0.18, 0.13) * (0.8 + 0.5 * fine), twig * 0.9); h += twig * 0.09; }
+  { float chaff = smoothstep(0.80, 0.86, fbmv(uv + 0.9, 150., 2)) * smoothstep(0.45, 0.7, mid); col = mix(col, S(0.60, 0.52, 0.34), chaff * 0.5); }
   rough = 0.94 - max(peb, peb2) * 0.12; metal = 0.;
 }` });
 
@@ -299,7 +319,7 @@ void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
   D('iron', { metal: 1, tile: 1.0, bump: 0.004, por: 0.2, stick: 0.8, glsl: `
 void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
   float n = fbm(uv, 8., 5), fine = fbmv(uv, 90., 3); vec4 d = vor(uv, vec2(14., 14.), 1.0); float dent = smoothstep(0.35, 0.0, d.z);
-  float rust = smoothstep(0.56, 0.72, fbm(uv + 0.3, 5., 5));
+  float rust = smoothstep(0.47, 0.64, fbm(uv + 0.3, 5., 5));
   h = 0.5 + dent * 0.3 * (d.y - 0.3) + (n - 0.5) * 0.3 + rust * (fine - 0.3) * 0.3;
   col = mix(S(0.20, 0.20, 0.22) * (0.8 + 0.4 * n), S(0.36, 0.19, 0.10) * (0.7 + 0.6 * fine), rust);
   rough = mix(0.42 + 0.2 * n, 0.9, rust); metal = 1.0 - rust * 0.85;

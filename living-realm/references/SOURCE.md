@@ -31,6 +31,42 @@ changing; walk round it with the keyboard; fast — with Blender, Rust/WebAssemb
   a browser page that must also run on a phone. It aims at the same *ingredients*, not at parity: see
   `references/LOOK.md` for where it falls short.
 
+## A second reference — 「Larkhollow」
+<https://claude.ai/artifact/D8t6NHbpDJXtCovZU6KADP> — by @lucian__03: a farm (a barn, a well, a field, a pond, an
+orchard) generated from code in one page, on three.js. It came with the second request: "raise the quality a lot, it
+is too flat — and look at this." It runs here too, so it was rendered at the same hours as the village and the two
+were measured, not just looked at (192 × 108 pixels, luma and saturation):
+
+| picture | mean luma | saturation | shade (5th percentile) |
+|---|---|---|---|
+| Larkhollow, 13:00 | 0.42 | 0.36 | 0.23 |
+| Larkhollow, 18:24 | 0.41 | 0.46 | 0.14 |
+| the village before, 16:00–17:00 | 0.55–0.59 | 0.21–0.26 | 0.20–0.26 |
+| the village after, 13:00 | 0.43 | 0.26 | 0.19 |
+
+What that showed: the flatness was tone, not triangles. The sky was brighter than the sunlit ground, so the shade was
+filled and the sky pale; the air was thick at every hour, so distance went white; the exposure sat a third too high;
+the grass was green to the root on green ground; the walls were clean.
+
+**Taken** (as targets and ideas, written here from scratch): a lower key and more contrast and colour; a sky darker
+than a sunlit grey card; clear air by day and thick mist only at dawn; a redder low sun; dark earth under standing
+grass and dark roots; walls that have lost plaster; contact shadows; an AgX display transform in place of the ACES
+fit (the constants are those of three.js, MIT, which is vendored here).
+
+**Not taken:** its code, shaders, names, layout, farm, animals or game. It is a farm you work; this is a village you
+walk through.
+
+## A third reference and a picture of the target
+<https://claude.ai/artifact/BGY1SztrAYcJQHSsnHHGmp> — 「Saltline」: a container port at dusk in the rain, generated
+from code in one page (three.js); a game. Its title scene was rendered here: a low key, a brown grade, rain, ground
+that shines. With it came a picture — the village's own four stills (lane, meadow, wood, night square) pushed to a
+film-still finish — as the look wanted. Read as a list, the picture asked for: paving wet enough to mirror lamps and
+windows, rays from the sun through crowns, moss and small flowers on the wood's floor, a night sky thick with stars,
+more things at the foot of every wall. **Taken:** wet smooth surfaces mirror what stands over them (the reflected ray
+through the depth buffer, last frame's picture), shafts toward the sun in the air pass, a denser Milky Way.
+**Not reached, and said so:** that picture is not something a browser draws at sixty frames a second from generated
+geometry — its foliage, its micro-detail and its light transport are an offline render's. **Not taken:** any code.
+
 ## Why not Blender, Rust/WebAssembly or WebGPU
 - **Blender** would only run generator code and bake textures; the page does both itself when it loads (materials are
   baked on the GPU in well under a second on a real GPU), so there are no asset files to ship, fetch or keep in step.

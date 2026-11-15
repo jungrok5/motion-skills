@@ -24,7 +24,9 @@ follows is the design that keeps those in hand, and the knobs to turn if a devic
 - **Tiers** (`lib/10_gpu.js`): `low` (phones), `medium` (integrated GPUs), `high`, `ultra` set material size, shadow
   size and cascades, occlusion quality, fog steps, grass density and reach, tree detail distances, particle counts,
   lamp count, the steps of the water's reflection march (`ssr`: 0 on `low`, 12 / 18 / 26 above — only water pixels pay
-  for it), device-pixel-ratio cap. The tier is guessed from the device and can be forced with `?q=` or the gear
+  for it), contact shadows (`contact`: 8 steps on `high`, 12 on `ultra`, off below), the screen-space bounce (`gi`: 3 rays of
+  8 steps per half-size pixel on `high`, 5 on `ultra`, off below), the mirror on wet ground (14–20 steps, only on
+  smooth pixels, `high` and above), rays toward the sun (20–36 depth taps at half size, `medium` and above), device-pixel-ratio cap. The tier is guessed from the device and can be forced with `?q=` or the gear
   button (reloads at the same spot); a device far below its tier is stepped down once automatically.
 - **Materials are two texture arrays.** Every built thing is drawn by one shader with a layer index per vertex, so a
   whole house — stone, plaster, timber, tiles, glass, iron — is **one draw call**.
@@ -39,6 +41,10 @@ follows is the design that keeps those in hand, and the knobs to turn if a devic
   only extra texture is the top-down rain map, rendered once at load.
 
 ## If it is slow
+0. What the look costs on `high` and above, all per pixel and all switchable: relief on stone and paving within 24 m
+   (eight height taps, `?off=` has no switch — lower the tier), contact shadows (`?off=contact`, 8–12 depth taps on lit
+   pixels), the bounce (`?off=gi`, half size: ~24 depth taps and a blur), the mirror on wet
+   ground (`?off=mirror`; it costs in rain, when most of the ground is smooth), rays toward the sun (`?off=shafts`), the water's reflection march (`?off=ssr`). `medium` has none of the three except the reflection.
 1. Look at the numbers: `P` on the page, or `realm.info()` in the console: fps, internal size, draw calls, triangles.
 2. `?off=` switches parts off to find the cost: `ao`, `shadow`, `bloom`, `taa`, `grass`, `fx`, `water`, `audio`
    (and whatever the plant kits honour). `?scale=0.5` pins the internal scale; `?q=low|medium|high|ultra` pins the tier.

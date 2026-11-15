@@ -6,7 +6,7 @@ const LR = { VERSION: '1.0', THREE };
   LR.q = (k, d) => (q.has(k) ? q.get(k) : d);
   LR.qn = (k, d) => (q.has(k) && q.get(k) !== '' && isFinite(+q.get(k)) ? +q.get(k) : d);
   LR.RENDER = q.get('render') === '1';                                   // still mode: no clock, frames on request
-  LR.off = new Set((q.get('off') || '').split(',').filter(Boolean));     // ?off=ao,vol,taa,bloom,grass,shadow,fx,water,ssr,audio
+  LR.off = new Set((q.get('off') || '').split(',').filter(Boolean));     // ?off=ao,gi,vol,shafts,taa,bloom,grass,shadow,contact,mirror,fx,water,ssr,audio
 
   LR.TAU = Math.PI * 2;
   LR.clamp = (x, a = 0, b = 1) => (x < a ? a : x > b ? b : x);

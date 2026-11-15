@@ -57,7 +57,7 @@
       const at = (LR.q('at', '') || '').split(',').map(Number);
       if (at.length >= 2 && !isNaN(at[0])) P.place(at[0], at[1], at[2] || 0); else P.place(sp.x, sp.z, sp.yaw || 0);
       const wx0 = cfg.weather || {};
-      LR.wx.snap({ weather: LR.q('wx', wx0.weather || 'clear'), tod: LR.qn('tod', wx0.tod !== undefined ? wx0.tod : LR.wx.tod) });
+      LR.wx.snap({ weather: LR.q('wx', wx0.weather || 'clear'), tod: LR.qn('tod', wx0.tod !== undefined ? wx0.tod : LR.wx.tod), wet: LR.qn('wet', undefined), puddle: LR.qn('puddle', undefined) });   /* ?wet=1&puddle=1: just after rain (it dries as you watch) */
       if (LR.q('auto', wx0.auto === false ? '0' : '1') !== '0' && LR.q('wx') === undefined && LR.q('tod') === undefined) LR.wx.set({ auto: true });
       P.bind(canvas); if (P.tour && LR.q('tour', '1') !== '0') P.startTour();
       let last = performance.now();

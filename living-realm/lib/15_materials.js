@@ -6,7 +6,7 @@
   const M = (LR.mat = { defs: [], id: {}, size: 512 });
   // def: glsl — `void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal)`, uv in 0..1, MUST tile
   //      tile — metres one repeat covers · bump — relief depth in metres (drives the normal map) · ao — cavity strength
-  //      por — porosity: how much rain darkens it · pud — can hold puddles · stick — how much snow stays · pom — parallax depth (m)
+  //      por — porosity: how much rain darkens it · pud — can hold puddles · stick — how much snow stays · pom — parallax depth (m) · paint — 1: the vertex tint colours only what stands above height 0.45 (paint over bare wood)
   M.define = (name, def) => {
     if (name in M.id) { M.defs[M.id[name]] = Object.assign({ name }, M.defaults, def); return M.id[name]; }
     M.id[name] = M.defs.length; M.defs.push(Object.assign({ name }, M.defaults, def)); return M.id[name];
