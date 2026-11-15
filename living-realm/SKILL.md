@@ -19,7 +19,7 @@ assets, so **nothing of it is here**: the look was read off its frames (`referen
 and this engine was written for the browser to carry the same ingredients — and what the request asked for on top of
 it: a town, the hour, rain, winter, walking, and speed. Built and proven in this repo on `examples/village`
 「은여울 마을」 (Silverford: a square with a fountain, an inn, a smithy with a lit forge, a chapel on a knoll, a mill on
-the brook, a windmill, a stone bridge to a flower meadow, a palisade gate, a farm, a pond that freezes; 150 m across,
+the brook, a windmill, a stone bridge to a flower meadow, a palisade gate, a farm, a pond that freezes; 300 m across,
 woods and mountains beyond). `starter/` (Tarn Cabin: a forester's cabin by a mountain lake) is a second, unrelated topic.
 
 **Fixed by the skill (the style)**
@@ -48,9 +48,9 @@ woods and mountains beyond). `starter/` (Tarn Cabin: a forester's cabin by a mou
 | `lib/00_core.js` | `LR`: numbers, seeded randomness, CPU noise, tracks, hooks (`LR.on`), URL options |
 | `lib/05_glsl.js` | shared uniforms (`LR.U`) and shader chunks: hashing, G-buffer packing, wind, **weather on a surface** (`applyWeather`: damp, puddles with rings, snow — through the rain map), cascaded shadow look-up, cloud shadow, height fog |
 | `lib/10_gpu.js` | the renderer, render targets, full-screen passes, the **quality tiers**, runtime noise |
-| `lib/15_materials.js` · `16_matlib.js` | the material baker (a tileable GLSL function → two texture arrays with normals and cavity occlusion) and 27 stock materials: plaster, timber, planks, painted boards, rubble, ashlar, brick, cobble, dirt, turf, leaf litter, gravel, rock, moss, slate, clay tiles, thatch, barks, iron, cloth, leaded glass, snow, water waves |
+| `lib/15_materials.js` · `16_matlib.js` | the material baker (a tileable GLSL function → two texture arrays with normals and cavity occlusion) and 28 stock materials: plaster, timber, planks, painted boards, rubble, ashlar, brick, cobble, dirt, turf, leaf litter, gravel, rock, moss, slate, clay tiles, thatch, barks, iron, cloth, leaded glass, snow, water waves |
 | `lib/20_sky.js` | sun and moon from hour, season and latitude; the sky-view scattering table; clouds; stars; the environment map |
-| `lib/25_weather.js` | `LR.wx`: the hour, season and weather as one easing state; looks (`clear`, `rain`, `snow`, `winter`); the automatic round; exposure and grade per hour |
+| `lib/25_weather.js` | `LR.wx`: the hour, season and weather as one easing state; looks (`clear`, `rain`, `snow`, `winter`, `autumn`); the automatic round; exposure and grade per hour |
 | `lib/30_geo.js` | `LR.Geo` — a geometry writer in metres (poly, box, beam, tube, lathe, blob, a transform stack, per-vertex material layer, tint, flags, occlusion) and `LR.world` — meshes, solids, decks, lights, smoke points, sounds, places |
 | `lib/35_terrain.js` | `LR.land`: height function → an editable grid (level a site, lay a road, carve a brook, dig a pond), cover maps painted by strokes, ring-of-detail mesh |
 | `lib/40_arch.js` | building **parts**: `wall` (stone / half-timber / boards, with real openings), `window`, `door`, `lantern`, `gableRoof` (thickness, rafters, sag, gable walls), `chimney`, `dormer` — and `house()` that combines them |
@@ -146,7 +146,7 @@ and wants a real GPU; without one (CI, containers) stills render on the CPU at 1
 - `LR.start({ build(LR) (may be async), weather: { tod, weather }, tour: [{ x, z, look: [x, z], pull, pitch }], views:
   [{ name, cam: [x, z, compass yaw°, pitch°, y?] }], strings, materials(LR) })`; `window.READY` when the page can draw.
 - Page options: `?q=low|medium|high|ultra`, `?scale=`, `?mat=512`, `?off=ao,shadow,bloom,taa,grass,fx,water,audio`,
-  `?tod=`, `?wx=clear|rain|snow|winter`, `?tour=0`, `?auto=0`, `?at=x,z,yaw`, `?stats=1`, `?hud=0`, `?view=mats`.
+  `?tod=`, `?wx=clear|rain|snow|winter|autumn`, `?tour=0`, `?auto=0`, `?at=x,z,yaw`, `?stats=1`, `?hud=0`, `?view=mats`.
 - Still mode `?render=1&w=&h=`: `window.realm = { canvas, shot({ cam, tod, weather, season, snow, wet, frames, t }) →
   info, info(), place(), filmStart(fps), filmFrame(), LR }`. `info()` reports tier, sizes, draw calls, triangles, lamps.
 - Hooks: `LR.on('built' | 'init' | 'input' | 'frame' | 'after' | 'key' | 'thunder' | 'tour', fn, order)`.

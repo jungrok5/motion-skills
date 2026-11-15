@@ -78,7 +78,7 @@
     const wob = o.wobble || 0.18;
     const edge = (wx, wz) => { const a = Math.atan2(wz - z, wx - x); return r * (1 + wob * (LR.fbm(Math.cos(a) * 1.3 + 5, Math.sin(a) * 1.3 + 9, 3) - 0.5) * 2); };
     eachH(x, z, r * 1.4 + 6, (k, wx, wz) => { const d = Math.hypot(wx - x, wz - z), e = edge(wx, wz); const w = LR.sm(e + 5, e - 1.5, d) * rim(wx, wz); const bowl = level + 0.35 - (depth + 0.35) * LR.sm(e + 0.6, e * 0.35, d); L.H[k] = LR.lerp(L.H[k], Math.min(L.H[k], bowl) * 0.999 + 0.001 * bowl, w); if (d < e + 1.2) L.H[k] = Math.min(L.H[k], bowl); else if (d < e + 10) L.H[k] = Math.max(L.H[k], level + 0.55 * LR.sm(e + 1.0, e + 3.0, d) * LR.sm(e + 10, e + 5.5, d) * rim(wx, wz)); });
-    eachC(x - r * 1.4 - 6, z - r * 1.4 - 6, x + r * 1.4 + 6, z + r * 1.4 + 6, (k, wx, wz) => { const d = Math.hypot(wx - x, wz - z), e = edge(wx, wz) + (LR.fbm(wx * 0.5, wz * 0.5, 2) - 0.5) * 1.2; const w = LR.sm(e + 2.4, e + 0.3, d); if (w <= 0) return; setC('shore', k, w, 'max'); setC('grass', k, 1 - w, 'min'); setC('flowers', k, 1 - w, 'min'); });
+    eachC(x - r * 1.4 - 6, z - r * 1.4 - 6, x + r * 1.4 + 6, z + r * 1.4 + 6, (k, wx, wz) => { const d = Math.hypot(wx - x, wz - z), e = edge(wx, wz) + (LR.fbm(wx * 0.5, wz * 0.5, 2) - 0.5) * 1.2; const w = LR.sm(e + 2.4, e * 0.86 - 0.5, d); if (w <= 0) return; setC('shore', k, w, 'max'); setC('grass', k, 1 - w, 'min'); setC('flowers', k, 1 - w, 'min'); });
     L.pondEdge = edge;
   };
   // paint a cover channel from a function of (x, z) → 0..1 over the whole middle.  mode: 'set' | 'max' | 'min' | 'mul'

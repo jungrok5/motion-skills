@@ -1903,6 +1903,46 @@
           "url": "https://jungrok5.github.io/motion-skills/feeling-pastel/demo/summer-night/"
         }
       ]
+    },
+    {
+      "id": "living-realm",
+      "name": "living-realm",
+      "tagline": "장소 하나를 주면(MMORPG 마을 · 항구 · 산사 · 야영지) 브라우저에서 걸어 다니는 3D 세계를 게임 엔진 같은 화면으로 만듭니다. 돌담 · 목골 벽 · 기와 · 나무 · 풀 · 구름 · 소리까지 모두 페이지가 열릴 때 코드로 만들어지는 에셋 0개의 HTML 한 파일이고, WebGL 2 디퍼드 렌더러가 GPU에서 구운 PBR 재질, 계산한 대기, 캐스케이드 그림자, AO, 빛줄기가 보이는 안개, 업스케일하는 TAA, 블룸으로 그립니다. 시간은 새벽에서 밤까지 흐르고, 비가 오면 돌이 젖고 웅덩이에 파문이 일며, 겨울에는 잎이 지고 지붕과 열린 땅에 눈이 쌓이고 연못이 업니다. W A S D · 방향키와 터치로 걷거나 자동 산책에 맡기고, 품질 4단계와 해상도 조절기가 프레임을 지킵니다.",
+      "posterAlt": "living-realm으로 만든 「은여울 마을」의 장면 네 개: 낮은 해를 등지고 금빛으로 빛나는 초원과 안개 낀 숲, 목골 집들 사이로 깃발과 빨래가 걸린 한낮의 자갈길 골목, 달빛 아래 창과 가로등에 불이 켜진 밤의 분수 광장, 지붕과 땅에 눈이 쌓이고 굴뚝 연기가 오르는 맑은 겨울 아침의 광장",
+      "poster": "living-realm/poster.jpg",
+      "tags": [
+        "WebGL 2 디퍼드",
+        "에셋 0개 · HTML 한 파일",
+        "낮밤 · 비 · 겨울",
+        "키보드 · 터치로 걷기",
+        "품질 4단계"
+      ],
+      "stats": [
+        "예제 「은여울 마을」 · 건물 25동 · 지름 300 m",
+        "이미지 · 모델 · 소리 파일 0개"
+      ],
+      "page": "living-realm/",
+      "source": "living-realm/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "living-realm/examples/village/"
+      },
+      "sources": [
+        {
+          "title": "Rez(@RezAIT00)의 X 게시물 (\"This is fable 5.2 with blender and unreal\" — 언리얼 엔진으로 렌더한 숲과 초원 48초 영상)",
+          "url": "https://x.com/RezAIT00/status/2120498246426706176?a=CUYTAAEWhBIL6PS4ZPk&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「은여울 마을」 · 걸어 다니는 MMORPG풍 마을 · 낮밤 · 비 · 겨울 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/living-realm/demo/village/"
+        },
+        {
+          "title": "「Tarn Cabin」 · 스타터, 산속 호숫가 오두막 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/living-realm/demo/starter/"
+        }
+      ]
     }
   ]
 }

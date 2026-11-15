@@ -109,7 +109,7 @@ size, height, share, petals }…]` (up to four kinds, growing in drifts), `LR.gr
 flowerDensity, fernDensity, fernSize }`, `LR.grass.enabled = false` for none.
 
 ## Weather and the hour — `LR.wx` (lib/25_weather.js)
-`LR.wx.looks.clear | rain | snow | winter = { cloud, dark, rain, snowfall, season, wind, fog, fogH, turb }` may be
+`LR.wx.looks.clear | rain | snow | winter | autumn = { cloud, dark, rain, snowfall, season, wind, fog, fogH, turb }` may be
 edited or added to; `LR.wx.round` is the automatic round (a list of `{ t, tod, weather }`); `LR.wx.flow` is how fast
 the hour runs by itself. `LR.sky.lat` sets the latitude. Everything else follows from the state.
 

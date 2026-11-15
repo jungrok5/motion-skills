@@ -14,6 +14,7 @@
     rain:  { cloud: 1.0,  dark: 0.85, rain: 1, snowfall: 0, season: 0, wind: 0.8,  fog: 0.0085, fogH: 0.012, turb: 2.4 },
     snow:  { cloud: 0.96, dark: 0.25, rain: 0, snowfall: 1, season: 1, wind: 0.38, fog: 0.0105, fogH: 0.010, turb: 2.0 },
     winter:{ cloud: 0.30, dark: 0.0, rain: 0, snowfall: 0, season: 1, wind: 0.2,  fog: 0.0026, fogH: 0.040, turb: 1.2 },
+    autumn:{ cloud: 0.42, dark: 0.0, rain: 0, snowfall: 0, season: 0.45, wind: 0.34, fog: 0.0032, fogH: 0.042, turb: 1.4 },
   };
   W.cur = Object.assign({}, W.looks.clear);
   W.set = (o) => {

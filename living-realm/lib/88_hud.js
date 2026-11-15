@@ -79,7 +79,7 @@
     const KEY = { Digit1: 'dawn', Digit2: 'day', Digit3: 'dusk', Digit4: 'night', Digit5: 'clear', Digit6: 'rain', Digit7: 'snow', KeyT: 'auto', KeyC: 'walk', KeyG: 'gear', KeyM: 'sound', KeyF: 'full' };
     LR.on('key', (code) => { if (KEY[code]) act(KEY[code]); else if (code === 'KeyH') { H.show = !H.show; root.classList.toggle('off', !H.show); } else if (code === 'KeyP') E.num.style.display = E.num.style.display === 'none' ? '' : 'none'; else if (code === 'Slash' || code === 'F1') E.help.classList.toggle('on'); else if (code === 'Escape') E.help.classList.remove('on'); });
     const sync = () => { const q = (k) => E.bar.querySelector(`[data-k="${k}"]`), w = wx.want.weather;
-      q('clear').setAttribute('aria-pressed', w === 'clear' || w === 'winter'); q('rain').setAttribute('aria-pressed', w === 'rain'); q('snow').setAttribute('aria-pressed', w === 'snow');
+      q('clear').setAttribute('aria-pressed', w === 'clear' || w === 'winter' || w === 'autumn'); q('rain').setAttribute('aria-pressed', w === 'rain'); q('snow').setAttribute('aria-pressed', w === 'snow');
       q('auto').setAttribute('aria-pressed', !!wx.auto); q('walk').setAttribute('aria-pressed', !!LR.player.touring);
       const sb = E.top.querySelector('[data-k="sound"]'), on = LR.audio && LR.audio.ready && !LR.audio.muted; sb.innerHTML = svg(on ? 'sound' : 'mute'); sb.setAttribute('aria-pressed', !!on);
       E.top.querySelector('[data-k="gear"]').title = t.quality + ': ' + (LR.gpu.auto ? t.tiers.auto + ' (' + t.tiers[LR.gpu.tierName] + ')' : t.tiers[LR.gpu.tierName]); };

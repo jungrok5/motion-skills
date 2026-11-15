@@ -4,7 +4,7 @@
 //   node <skill>/scripts/render.mjs <realm-dir> --views                    → out/<view>.jpg for each of the realm's views
 //   node <skill>/scripts/render.mjs <realm-dir> --sheet [--scale .5]       → out/sheet.jpg: every view × day, dusk, night, rain, snow
 //   node <skill>/scripts/render.mjs <realm-dir> --film [--seconds 60] [--fps 30]   → out/film.mp4: the tour with the automatic round
-// A shot is `key=value;…`: cam=x,z,yaw°,pitch°[,y]  tod=hours  wx=clear|rain|snow|winter  season=0..1  snow=0..1  wet=0..1  frames=n  t=seconds
+// A shot is `key=value;…`: cam=x,z,yaw°,pitch°[,y]  tod=hours  wx=clear|rain|snow|winter|autumn  season=0..1  snow=0..1  wet=0..1  frames=n  t=seconds
 // Options: --size 1280x720  --q "q=high&mat=1024" (page options)  --frames 12  --out out  --name <file stem>  --no-build  --png
 // Without a GPU WebGL runs on the CPU (SwiftShader): expect 10–40 s per 720p still.  On a machine with a GPU add --gpu.
 import { createRequire } from 'node:module';
