@@ -9,8 +9,8 @@
     const y0 = V.y0;
     A.fountain({ x: 0, z: 0, r: 2.8, y: y0 });
     // ── the inn: a long three-storey house with a cross wing ──
-    const inn = A.house({ x: -2, z: -25.5, yaw: 0.03, w: 16, d: 8.6, floors: 3, floorH: 2.85, ground: 'stone', seed: 'inn', plaster: '#f4ecd8', timber: '#e6dac8', shutters: '#a24a3c', roof: { mat: 'tiles', pitch: 52 }, door: { side: '+z', at: 0.42, w: 1.3, tint: '#8a4a3a' }, windows: { '+z': 0.9, '-z': 0.6, '+x': 0.5, '-x': 0.5 }, chimneys: [[-0.32, 0.12, 1.6], [0.3, -0.1, 1.2]], dormers: 2, name: 'inn' });
-    A.house({ x: 8.6, z: -19.6, yaw: 0.03 + PI / 2, w: 9.5, d: 6.4, floors: 2, floorH: 2.85, ground: 'stone', seed: 'innwing', plaster: '#f4ecd8', timber: '#e6dac8', shutters: '#a24a3c', roof: { mat: 'tiles', pitch: 52 }, door: { side: '-x', at: 0.5 }, windows: { '+z': 0.7, '-z': 0.3, '+x': 0.6, '-x': 0.0 }, chimneys: [], dormers: 0, y: inn.y, name: 'inn-wing' });
+    const inn = A.house({ x: -12.5, z: -25.5, yaw: 0.03, w: 16, d: 8.6, floors: 3, floorH: 2.85, ground: 'stone', seed: 'inn', plaster: '#f4ecd8', timber: '#e6dac8', shutters: '#a24a3c', roof: { mat: 'tiles', pitch: 52 }, door: { side: '+z', at: 0.62, w: 1.3, tint: '#8a4a3a' }, windows: { '+z': 0.9, '-z': 0.6, '+x': 0.5, '-x': 0.5 }, chimneys: [[-0.32, 0.12, 1.6], [0.3, -0.1, 1.2]], dormers: 2, name: 'inn' });
+    A.house({ x: -17.4, z: -19.6, yaw: 0.03 + PI / 2, w: 9.5, d: 6.4, floors: 2, floorH: 2.85, ground: 'stone', seed: 'innwing', plaster: '#f4ecd8', timber: '#e6dac8', shutters: '#a24a3c', roof: { mat: 'tiles', pitch: 52 }, door: { side: '-x', at: 0.5 }, windows: { '+z': 0.7, '-z': 0.3, '+x': 0.6, '-x': 0.0 }, chimneys: [], dormers: 0, y: inn.y, name: 'inn-wing' });
     V.inn = inn;
     // ── the smithy on the east side, its open shed toward the square's north-east ──
     V.smithy = A.smithy({ x: 27, z: -4, yaw: FACE.west, seed: 'smith', stone: '#e8e2da' });
@@ -29,7 +29,7 @@
       H(-40, -8, FACE.south + 0.1, { w: 8.4, d: 6.2, floors: 2, roof: { mat: 'tiles' } }), H(-41, 15.5, FACE.north - 0.05, { w: 7.8, d: 6, floors: 2, ground: 'timber', roof: { mat: 'slate' } }),
       H(38, -9.5, FACE.south - 0.12, { w: 7.6, d: 6, floors: 2, roof: { mat: 'tiles' } }), H(41, 26, toward(41, 26, 34, 12), { w: 7.2, d: 5.8, floors: 1, floorH: 2.7, roof: { mat: 'thatch', pitch: 46, eave: 0.7 } }),
       H(-27, 30, toward(-27, 30, -34, 18), { w: 7.4, d: 5.8, floors: 2, roof: { mat: 'tiles' } }), H(27, -28, toward(27, -28, 18, -18), { w: 7, d: 5.8, floors: 2, upper: 'boards', boardTint: '#cfc0aa', roof: { mat: 'slate' } }),
-      H(-22, -28, toward(-22, -28, -12, -18), { w: 7.2, d: 5.8, floors: 2, roof: { mat: 'tiles' } }),
+      H(-33, -30, toward(-33, -30, -22, -16), { w: 7.2, d: 5.8, floors: 2, roof: { mat: 'tiles' } }),
     ];
     // ── the farm: a boarded barn and a cottage ──
     V.barn = A.house({ x: -58, z: 52, yaw: toward(-58, 52, -48, 46), w: 11, d: 7.5, floors: 1, floorH: 3.6, ground: 'boards', boardTint: '#c8b8a2', seed: 'barn', roof: { mat: 'thatch', pitch: 50, eave: 0.8 }, door: { side: '+z', at: 0.5, w: 2.2, h: 2.8 }, windows: { '+z': 0.15, '-z': 0.1, '+x': 0.1, '-x': 0.1 }, chimneys: [], dormers: 0, plinth: 0.25 });
@@ -51,8 +51,8 @@
     A.well({ x: -33.5, z: 7.5, y: LR.land.h(-33.5, 7.5) });
     // places the walker is told about
     const T = V.T;
-    W.places.push({ x: 0, z: 0, r: 13, name: T.plaza, sub: T.plazaSub }, { x: -2, z: -17, r: 6, name: T.inn, sub: T.innSub }, { x: 30, z: -4, r: 7, name: T.smithy, sub: T.smithySub }, { x: V.chapel.x + 9, z: V.chapel.z + 1, r: 9, name: T.chapel, sub: T.chapelSub },
+    W.places.push({ x: 0, z: 0, r: 13, name: T.plaza, sub: T.plazaSub }, { x: -10, z: -17.5, r: 6, name: T.inn, sub: T.innSub }, { x: 30, z: -4, r: 7, name: T.smithy, sub: T.smithySub }, { x: V.chapel.x + 9, z: V.chapel.z + 1, r: 9, name: T.chapel, sub: T.chapelSub },
       { x: 56, z: 15, r: 7, name: T.mill, sub: T.millSub }, { x: V.mill.x, z: V.mill.z, r: 12, name: T.windmill, sub: T.windmillSub }, { x: V.bridge.x, z: V.bridge.z, r: 6, name: T.bridge, sub: T.bridgeSub }, { x: V.meadow.x, z: V.meadow.z, r: 24, name: T.meadow, sub: T.meadowSub },
-      { x: V.gate.x, z: V.gate.z - 2, r: 8, name: T.gate, sub: T.gateSub }, { x: V.pond.x - 12, z: V.pond.z, r: 10, name: T.pond, sub: T.pondSub }, { x: V.farm.x + 6, z: V.farm.z - 4, r: 14, name: T.farm, sub: T.farmSub });
+      { x: V.gate.x, z: V.gate.z - 2, r: 8, name: T.gate, sub: T.gateSub }, { x: V.pond.x - 12, z: V.pond.z, r: 10, name: T.pond, sub: T.pondSub }, { x: V.farm.x + 6, z: V.farm.z - 4, r: 14, name: T.farm, sub: T.farmSub }, { x: V.glade.x, z: V.glade.z, r: 9, name: T.glade, sub: T.gladeSub });
   };
 }

@@ -14,6 +14,7 @@ south, `Math.PI / 2` east, `Math.PI` north, `-Math.PI / 2` west. Everything is s
 | `patch(x, z, r, { kind, box: [hx, hz], wobble })` | a square or yard |
 | `carve(points [[x, z, waterLevel]…], width, depth, { bank })` | a brook's bed under the given water levels, gravel on its shores |
 | `pond(x, z, r, level, depth, { wobble })` | a bowl with a rim; pair it with `LR.water.pond(level, rect)` |
+| `apron(x, z, hx, hz, yaw, { width, strength })` · `border(x, z, hx, hz, yaw, { width, flowers, weeds })` | worn earth round a building's foot · a strip outside it where weeds and flowers are left (`house()` does both; `apron: false`, `garden: false` to opt out) |
 | `paint(name, fn(x, z, index) → 0..1, mode: 'set' | 'max' | 'min' | 'mul')` | cover maps at 0.5 m: `dirt`, `paved`, `litter` (forest floor), `grass` (density), `tall` (blade height), `flowers`, `fern`, `shore` |
 
 The mesh is built for you after `build()` returns: 1 m cells inside ±128 m, 2 m to ±256, 8 m to ±1024, 64 m to ±4096.
@@ -96,6 +97,11 @@ for that part of the world — write into it.
 - `plant(name, x, z, { scale, yaw, variant, hero })` · `scatter({ species: [[name, weight]…], density(x, z), area, spacing, seed, avoid(x, z), scale })` ·
   `far({ density, inner, outer, spacing, species })` (billboards only). The app calls `build()` after the realm's build.
 - Trunks register solids; leaves turn with `season`, fall by winter (twigs stay), carry snow; three levels of detail.
+
+## Crown cover — `LR.canopy` (lib/72_canopy.js)
+Built by itself from the planted trees: a 1 m map of how much of the sky the crowns hide. `LR.canopy.shade` (0.56: how
+much sky light a closed canopy takes), `LR.canopy.mist` (1: the woods' own haze; 0 for dry woods), `LR.canopy.at(x, z)`.
+Plant woods with a density that varies so the sun has gaps to come through.
 
 ## Ground cover — `LR.grass` (lib/52_grass.js)
 Reads the land's cover maps: `grass` density, `tall` height, `flowers`, `fern`. `LR.grass.flowers = [{ color, center,

@@ -30,6 +30,36 @@
 - A thin dark line crossed the grass 12 m ahead → skirts hung under terrain chunk edges won single pixels along the
   seam and were (correctly) in shadow → no skirts: on a ring's outer edge the finer mesh takes the coarser ring's line.
 
+**Judged against the reference, and what closed the gap**
+- The first complete village read as a tidy indie game, not as the reference: bright flat woods, no shafts, toy
+  paving, neon lawn. Scoring it frame against frame gave the order of work — air and light first, then plants, then
+  surfaces — and each step was judged again from stills before the next.
+- Woods were as bright as a lawn and sun shafts had nothing to stand against → every place under the sky got the same
+  sky light → a 1 m map of crown cover built from the planted trees (`lib/72_canopy.js`): under crowns the sky's light
+  drops to under half, a little green comes back from the leaves, and reflections dim with it.
+- No shafts between trunks even with fog → clear-day fog is too thin for the few lit metres under a canopy, and what
+  the fog scattered was mostly sky light → woods hold their own damp air (a density added under crowns, thick at dawn
+  and toward evening, thin at noon), the sky's share of the scatter is cut under crowns, and a little of the sunlight
+  is scattered every way so shafts read from the side too. A dense stand closes completely and has no shafts at all:
+  plant woods with a density that varies (noise) so the sun has holes to come through.
+- A forest interior was nearly black → the eye-adaptation range was a camera's, not an eye's → it may now open 2.5 ×.
+- Back-lit crowns were black slabs → leaves were shadowed like walls → part of the sun passes through foliage, and the
+  back-light term no longer needs an unshadowed leaf.
+- Ferns and leaves shone like plastic → roughness 0.36 on ferns, 0.6 on leaves, and a normal tilt per pinna that
+  striped the fronds white → rougher, gentler tilt, less light through.
+- Sunlit and shaded sides had the same temperature → the key light is warmed a little after the atmosphere, the film
+  grade cools the shade and warms the light and adds a soft S-curve.
+- A view sat in flat light for no visible reason → the sun was behind a fair-weather cloud's shadow → cloud shadow
+  strength follows cover: slight on a clear day, full under overcast.
+- Paving was one sheet to the horizon and houses stood on mown lawn → paving wears through to earth in patches, every
+  house gets a ragged apron of earth and a border where weeds and flowers are left, bushes at some corners; walls get
+  grime where they are creased or low and broad stains across them.
+- The lawn was neon → the grass colour law was pulled toward olive; blades and ground share it, so one edit moved both.
+- Rain put white rings on everything → ring strength and puddle level halved; snow lay as a flat white sheet → drift
+  normals at two scales and a slight tone variation.
+- The tour walked through the inn (it stood on the road to the bridge) → found by `check.mjs`, which walks the whole
+  tour against every solid; the inn moved off the road.
+
 **The engine**
 - `flat` is a reserved word in GLSL ES 3.00 (a local variable named `flat` failed every surface shader at once).
 - A `RawShaderMaterial` with its own `#version` line fails: three.js writes defines above it → use `glslVersion: GLSL3`.

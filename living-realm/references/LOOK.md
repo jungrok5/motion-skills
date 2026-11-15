@@ -9,6 +9,7 @@
    ambient occlusion — so shade is blue by day and never black.
 3. **Air.** Height fog marched through the shadow cascades: shafts between trunks and roofs, a glow toward the sun,
    distance that fades into the colour of the sky behind it. Mist at dawn and dusk, thick air in rain and snow.
+   Woods hold damp air of their own and see less sky (a map of crown cover), so a wood is dim, hazy and shot with light.
 4. **Materials with relief.** Every surface is a baked function: height, colour, roughness → normal and cavity. Stone
    has stones, plaster has trowel marks and cracks, timber has grain and checks, roofs have courses. Tints change the
    colour of a wall, never its nature.
@@ -22,13 +23,17 @@
    of paved and earth ground with ringed puddles — but only where the sky is open above (a top-down map of roofs).
    Snow lies on what faces up and is open; walls under eaves stay bare. Trees turn, drop their leaves, keep twigs.
 9. **A filmic frame.** Temporal anti-aliasing, bloom from real brightness, an eye that adapts, an ACES curve, a
-   grade that follows the hour (warm at dusk, blue at night, quieter in rain).
+   grade that follows the hour (warm at dusk, blue at night, quieter in rain), cool shade against warm light.
 10. **Life.** Smoke, flags, a turning mill, lit windows that differ from each other, fireflies, birds, falling leaves.
+
+## The views that show it best
+Into the light: a meadow toward a low sun, a wood with the sun behind the trunks, a lane with long shadows across it.
+Front-lit noon is the flattest hour of any engine; open the page late in the afternoon.
 
 ## Where it stops (say so when showing it)
 - It is a stylised-realistic game look built from generated geometry — not scanned assets, not Lumen/Nanite. Up close,
   walls are flat planes with good normal maps; there is no displacement and no global illumination beyond sky, one
-  bounce colour and screen-space occlusion.
+  bounce colour and screen-space occlusion. Foliage is painted sprays on cards: right at a distance, brushy at arm's length.
 - Reflections are the sky only (no screen-space or planar reflections): puddles and the pond mirror clouds, not houses.
 - Lamps do not cast shadows; interiors do not exist (windows are lit glass).
 - No characters. A walker's body, villagers or animals would need a rig, clips and the body checks in CONTRIBUTING.md.

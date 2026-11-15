@@ -22,10 +22,11 @@ but an MMORPG village; day and night, rain and winter changing; walk round it wi
 ## Plan (metres; +x east, +z south; the fountain is 0, 0)
 - The middle and why here: the ford — now a stone bridge — and the square just south of it.
 - Landmarks: 샘터 광장 the square, fountain · 0, 0 · everywhere — 붉은 지붕 여관 the inn, three storeys with a cross wing ·
-  −2, −25 · the square — 모루 대장간 the smithy with its open forge · 27, −4 — 언덕 예배당 the chapel and tower on a knoll ·
+  −12, −25 · the square — 모루 대장간 the smithy with its open forge · 27, −4 — 언덕 예배당 the chapel and tower on a knoll ·
   −60, 6 · the skyline from everywhere — 여울 물레방아 the mill and wheel · 53, 13 — 바람 언덕 풍차 the windmill on its
   hill · 80, −62 · the skyline north-east — 돌다리 the bridge · 3, −41 — 꽃 초원 the meadow and its lone oak · −6, −82 —
-  남문 the south gate in its palisade · 0, 100 — 방앗간 연못 the pond and pier · 62, 50 — 보리밭 농장 the farm · −56, 58.
+  남문 the south gate in its palisade · 0, 100 — 방앗간 연못 the pond and pier · 62, 50 — 보리밭 농장 the farm · −56, 58 —
+  숲속 빈터 a glade at the end of a path through the north-west woods · −110, −82.
 - Ways: the paved lane from the gate north to the square; paved arms west to the chapel and east to the mill; a path
   over the bridge into the meadow; tracks to the farm, the pond and the windmill.
 - Edges: palisade along the south; woods too thick to pass on every other side (the walker is held at 150 m).
@@ -44,8 +45,9 @@ Everything here is the kit's stock (this example is where the stock came from). 
 
 ## The walk
 - Spawn 0.5, 88 facing north: the lane, washing and bunting across it, the inn's red roof closing the view.
-- Tour: lane → square → inn front → smithy → mill → back and over the bridge → the meadow oak → back → chapel → farm → gate.
-- Views: gate, lane, square, inn, smithy, mill, bridge, meadow, chapel, farm, pond, woods.
+- Tour: lane → square → inn front → smithy → mill → back and over the bridge → the meadow oak → the path into the
+  woods to the glade and back → chapel → farm → gate.
+- Views: gate, lane, square, inn, smithy, mill, bridge, meadow, chapel, farm, pond, woods, glade.
 
 ## Words
 Korean on the glass; place names as above; the title card reads 은여울 마을.

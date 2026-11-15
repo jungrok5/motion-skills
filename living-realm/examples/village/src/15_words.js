@@ -2,7 +2,7 @@
 V.T = {
   plaza: '샘터 광장', plazaSub: '은여울 마을 한가운데', inn: '붉은 지붕 여관', innSub: '따뜻한 수프와 잠자리', smithy: '모루 대장간', smithySub: '쇠와 불',
   chapel: '언덕 예배당', chapelSub: '종이 울리는 곳', mill: '여울 물레방아', millSub: '밀가루와 물소리', windmill: '바람 언덕 풍차', windmillSub: '마을에서 가장 높은 곳',
-  bridge: '돌다리', bridgeSub: '초원으로 가는 길', meadow: '꽃 초원', meadowSub: '바람이 지나가는 자리', gate: '남문', gateSub: '은여울 마을', pond: '방앗간 연못', pondSub: '겨울이면 얼음이 언다', farm: '보리밭 농장', farmSub: '마을의 곳간',
+  bridge: '돌다리', bridgeSub: '초원으로 가는 길', meadow: '꽃 초원', meadowSub: '바람이 지나가는 자리', gate: '남문', gateSub: '은여울 마을', pond: '방앗간 연못', pondSub: '겨울이면 얼음이 언다', farm: '보리밭 농장', farmSub: '마을의 곳간', glade: '숲속 빈터', gladeSub: '빛이 내려앉는 자리',
 };
 V.strings = {
   dawn: '새벽', day: '낮', dusk: '노을', night: '밤', clear: '맑음', rain: '비', snow: '겨울', auto: '자동', walk: '산책',

@@ -28,7 +28,7 @@ void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
   float r1 = 1. - abs(a * 2. - 1.), r2 = 1. - abs(b * 2. - 1.), r3 = 1. - abs(c * 2. - 1.);
   float ridge = pow(r1, 0.8) * 0.58 + r2 * 0.28 + r3 * 0.14;
   float cross_ = smoothstep(0.80, 0.9, pn2(uv + 0.2, vec2(6., 34.))) * smoothstep(0.45, 0.7, ridge);
-  h = sat(0.08 + smoothstep(0.34, 0.78, ridge) * 0.72 - cross_ * 0.3 + (fine - 0.5) * 0.14 + (mid - 0.5) * 0.1);
+  h = sat(0.12 + smoothstep(0.30, 0.80, ridge) * 0.68 - cross_ * 0.09 + (fine - 0.5) * 0.14 + (mid - 0.5) * 0.1);
   vec3 deep = S(0.20, 0.17, 0.14), body = S(0.38, 0.33, 0.28), top = S(0.50, 0.47, 0.42);
   col = mix(deep, body, smoothstep(0.12, 0.5, h)); col = mix(col, top, smoothstep(0.55, 0.9, h) * (0.5 + 0.5 * mid));
   col *= 0.82 + 0.36 * fine;
@@ -45,7 +45,7 @@ void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
   h = sat(0.55 + (streak - 0.5) * 0.25 + (mid - 0.5) * 0.2 - wr * 0.3 - scar * 0.35 + (fine - 0.5) * 0.1);
   vec3 a = S(0.40, 0.39, 0.36), b = S(0.30, 0.29, 0.27), c = S(0.50, 0.49, 0.45);
   col = mix(a, b, smoothstep(0.35, 0.7, big)); col = mix(col, c, smoothstep(0.5, 0.85, mid) * 0.5); col *= 0.86 + 0.26 * streak; col *= 1. - wr * 0.4 - scar * 0.55;
-  vec4 lc = vor(uv + 0.21, vec2(7., 7.), 1.0); float lichen = smoothstep(0.34, 0.2, lc.z) * step(0.62, lc.y) * (0.6 + 0.4 * fine); col = mix(col, lc.w < 0.5 ? S(0.62, 0.64, 0.58) : S(0.42, 0.50, 0.33), lichen * 0.55);
+  vec4 lc = vor(uv + 0.21, vec2(7., 7.), 1.0); float lichen = smoothstep(0.34, 0.2, lc.z) * step(0.8, lc.y) * (0.6 + 0.4 * fine); col = mix(col, lc.w < 0.5 ? S(0.46, 0.48, 0.43) : S(0.42, 0.50, 0.33), lichen * 0.55);
   float algae = smoothstep(0.55, 0.8, fbm(uv + 0.6, 3., 3)); col = mix(col, S(0.26, 0.33, 0.16), algae * 0.3);
   rough = 0.84; metal = 0.;
 }` });

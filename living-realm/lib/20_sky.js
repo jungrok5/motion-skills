@@ -68,7 +68,7 @@ void main(){
     col += E[j] * (sR[j] * BR + sM[j] * bm) * (0.55 / (4. * PI));                     // a stand-in for light scattered more than once
     if (ground) { vec3 gp = ro + rd * tmax, gn = normalize(gp); vec3 odl = odTo(gp, Ld[j]); if (odl.x < 1e8) { vec3 tv = exp(-(BR * odv.x + bm * 1.1 * odv.y + BO * odv.z)), tl = exp(-(BR * odl.x + bm * 1.1 * odl.y + BO * odl.z)); col += E[j] * tl * max(dot(gn, Ld[j]), 0.) / PI * vec3(0.10, 0.12, 0.07) * tv; } }
   }
-  o = vec4(col * 1.85 + vec3(0.0006, 0.0009, 0.0018), 1.);
+  o = vec4(col * 1.6 + vec3(0.0006, 0.0009, 0.0018), 1.);
 }`;
 
   // ── what a direction of sky looks like (shared by the picture and the environment map) ───────────────────────────
@@ -182,7 +182,8 @@ void main(){
     const night = (S.night = LR.sm(-0.02, -0.2, sun.y)); SU.uNight.value = night * (1 - 0.92 * LR.sat(w.cloud * 1.3 - 0.15));
     const useSun = sunVis > 0.004; S.keyIsSun = useSun;
     const through = 1 - LR.sat(w.cloud * 1.25 - 0.2) * (0.55 + 0.4 * w.dark);          // what an overcast lets through as a beam
-    const key = useSun ? ts.map((t) => (E * t / Math.PI) * sunVis * through) : [EM * 0.72 * tm[0], EM * 0.86 * tm[1], EM * 1.12 * tm[2]].map((t) => (t / Math.PI) * moonFade * through * 3.2);
+    const warm = [1.0, 0.955, 0.87];                                                       // the sun as a film sees it: a touch warmer than the sky's blue fill
+    const key = useSun ? ts.map((t, k) => (E * t / Math.PI) * sunVis * through * warm[k]) : [EM * 0.72 * tm[0], EM * 0.86 * tm[1], EM * 1.12 * tm[2]].map((t) => (t / Math.PI) * moonFade * through * 3.2);
     U.uSunDir.value.copy(useSun ? sun : moon); if (U.uSunDir.value.y < 0.03) { U.uSunDir.value.y = 0.03; U.uSunDir.value.normalize(); }
     U.uSunCol.value.set(key[0], key[1], key[2]);
     S.keyPower = Math.max(key[0], key[1], key[2]);
@@ -191,7 +192,7 @@ void main(){
     const cs = LR.sm(-0.075, 0.02, sun.y), cl = cs > 0.01 ? tc.map((t) => (E * t / Math.PI) * cs) : [EM * 0.72 * tcm[0], EM * 0.86 * tcm[1], EM * 1.12 * tcm[2]].map((t) => (t / Math.PI) * moonFade * 3.2);
     SU.uCloudSun.value.set(cl[0], cl[1], cl[2]); SU.uCloudDir.value.copy(cs > 0.01 ? sun : moon); if (SU.uCloudDir.value.y < 0.06) { SU.uCloudDir.value.y = 0.06; SU.uCloudDir.value.normalize(); }
     SU.uCloudDark.value = w.dark;
-    U.uCloud.value.set(w.cloud, 0.55 + 0.45 * w.cloud, 0, LR.sat(0.25 + w.cloud * 0.9) * (useSun ? 0.9 : 0.75));
+    U.uCloud.value.set(w.cloud, 0.55 + 0.45 * w.cloud, 0, LR.sat(w.cloud * 1.25 - 0.2) * (useSun ? 0.9 : 0.75));       // fair-weather clouds dim the sun only a little
     const wt = w.time * 0.0016; U.uCloudOff.value.set(wt * U.uWind.value.x, wt * U.uWind.value.y, wt * 1.7 * U.uWind.value.x + 0.31, wt * 1.7 * U.uWind.value.y + 0.57);
     // stars turn with the hour
     const a = (w.tod / 24) * LR.TAU, lat = S.lat * rad, cl_ = Math.cos(lat), sl = Math.sin(lat), ca = Math.cos(a), sa = Math.sin(a);

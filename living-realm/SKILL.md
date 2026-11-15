@@ -60,6 +60,7 @@ woods and mountains beyond). `starter/` (Tarn Cabin: a forester's cabin by a mou
 | `lib/52_grass.js` | grass, meadow flowers, ferns and weeds placed in the vertex shader from the land's cover maps (nothing stored), in view-culled tiles |
 | `lib/55_water.js` | brooks, ponds and basins: refraction, depth colour, sky mirror, sun glint, foam, rain rings, ice |
 | `lib/60_fx.js` | rain and splashes, snow, chimney smoke, flames, lamp halos, fireflies, birds, falling leaves, motes in sunlight, fountain water — each one draw, all closed forms of time |
+| `lib/72_canopy.js` | crown cover from the planted trees: woods see less sky and hold their own haze, so the sun shows as shafts |
 | `lib/70_render.js` · `75_post.js` | the frame: world and land shaders, the rain map, staggered shadow cascades; occlusion, air, lighting, temporal resolve, bloom, adaptation, grade |
 | `lib/80_player.js` | the walker: keyboard, mouse, touch; collision, decks, water and ice; the tour |
 | `lib/85_audio.js` | the soundscape, synthesised: wind, birds by the hour, crickets, rain, thunder, brook, fountain, forge, bell, footsteps per surface |
@@ -108,10 +109,13 @@ and wants a real GPU; without one (CI, containers) stills render on the CPU at 1
    and define the materials it needs with `LR.mat.define` (`references/KIT.md`). Check each new building alone in a
    still before placing twenty. Look at `?view=mats` after adding materials.
 5. **Details and plants.** Props where people would leave them; lamps where people walk at night; named trees, then
-   scatter by the woods function with an `avoid` that keeps trunks off ways, water and walls; flowers and ferns on the
-   cover maps.
+   scatter by the woods function with an `avoid` that keeps trunks off ways, water and walls — with a density that
+   varies, so the canopy has gaps for the sun; flowers and ferns on the cover maps.
 6. **The walk.** Spawn, tour way-points (each with what that stretch looks at), 8–12 views, named places, sounds.
-7. **Verify.** `node living-realm/scripts/check.mjs my-realm` must print `check OK` (it walks the whole tour against
+7. **Judge it against what was asked for, then verify.** Put the stills beside the reference (or the brief's own
+   words) and list where they fall short, worst first — air and light before plants before surfaces — fix the top of
+   the list, render again, repeat (`references/LESSONS.md` has the list this skill's own example went through).
+   `node living-realm/scripts/check.mjs my-realm` must print `check OK` (it walks the whole tour against
    every solid and the water, and renders views in day, dusk, night, rain and snow). Then `render.mjs --sheet` and score
    it with the review in `references/BRIEF.md`; then stand at the spawn point and render four stills 90° apart. Fix and
    repeat. Open `index.html` in a browser with a GPU and walk it; press `P` for the numbers.

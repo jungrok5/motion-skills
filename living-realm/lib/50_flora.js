@@ -508,7 +508,7 @@ void main(){
     if (V.length > 16) throw new Error('flora: at most 16 tree variants in use (have ' + V.length + ')');
     const mkU = (v, own) => Object.assign(own || LR.uni(FRAME() + ' uMatA uMatB uTopo uTopoRect'), leafU, {
       uMatP: { value: LR.mat.params }, uTree: { value: new T.Vector4(v.top, v.def.wind.trunk, v.def.wind.branch, v.def.wind.flutter) }, uTwig: { value: new T.Vector3(...hex(v.def.leaf.twig)) },
-      uAut: { value: v.def.leaf.autumn.map((c) => new T.Vector3(...hex(c))) }, uLeafP: { value: new T.Vector4(v.def.evergreen ? 1 : 0, v.def.leaf.trans, v.def.leaf.snow, v.def.leaf.gloss || 0.6) } });
+      uAut: { value: v.def.leaf.autumn.map((c) => new T.Vector3(...hex(c))) }, uLeafP: { value: new T.Vector4(v.def.evergreen ? 1 : 0, v.def.leaf.trans, v.def.leaf.snow, v.def.leaf.gloss || 0.74) } });
     const defsG = { SNOW_LAYER: LR.mat.L('snow'), LEAF_BIAS: LR.qn('leafbias', 0.5).toFixed(3), LEAF_HASH: LR.qn('leafhash', 0.06).toFixed(3) };
     const geo = (buf, max) => { const g = new T.InstancedBufferGeometry(), a = buf.attrs(); for (const k of ['position', 'normal', 'uv', 'aux', 'meta']) g.setAttribute(k, a[k]); g.setIndex(a.index);
       const ib = new T.InstancedInterleavedBuffer(new Float32Array(Math.max(1, max) * 8), 8, 1); ib.setUsage(T.DynamicDrawUsage); g.setAttribute('iPos', new T.InterleavedBufferAttribute(ib, 4, 0)); g.setAttribute('iRot', new T.InterleavedBufferAttribute(ib, 4, 4)); g.instanceCount = 0; g.userData.ib = ib; g.userData.attrs = a; return g; };

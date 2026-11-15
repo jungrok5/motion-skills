@@ -257,7 +257,7 @@ void main(){
   vN = normalize(nrm - side * position.x * 0.25); vT = vec3(o.x * sin(al), cos(al), o.y * sin(al));
   vUv = vec2((0.5 + 0.48 * position.x) * 0.5 + 0.5 * kind, t * 0.98 + 0.01);
   vCol = vec3((0.62 + 0.5 * h3.z) * mix(1.0, 1.25, inner) * mix(0.8, 1.1, t), late + 0.22 * step(0.86, fh) * (1.0 - kind), sn);
-  vP = vec4(mix(0.22, 1.0, smoothstep(0.0, 0.6, t)), 0.6, mix(0.36, 0.2, uWx.x), 0.0);
+  vP = vec4(mix(0.22, 1.0, smoothstep(0.0, 0.6, t)), 0.42, mix(0.7, 0.36, uWx.x), 0.0);
   gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
 }`;
   const fernFS = `//#include head
@@ -270,11 +270,11 @@ in vec2 vUv; in vec3 vN; in vec3 vT; in vec3 vCol; in vec4 vP;
 void main(){
   vec4 tx = texture(tFern, vUv);
   if (tx.a < mix(0.15, 0.85, ign(gl_FragCoord.xy + mod(uFrame, 16.0) * vec2(3.17, 5.91)))) discard;      // hashed: soft edges once the frames add up
-  vec3 alb = tx.rgb * tx.rgb * vCol.x; float l = dot(alb, vec3(0.3, 0.6, 0.1));
+  vec3 alb = tx.rgb * tx.rgb * vCol.x * 0.78; float l = dot(alb, vec3(0.3, 0.6, 0.1));
   alb = mix(alb, l * vec3(2.1, 1.05, 0.38), vCol.y) * (1.0 - 0.2 * uWx.x);                               // bracken brown late in the year
   vec3 N = normalize(vN); if (!gl_FrontFacing) N = -N;
   float rib = sin(vUv.y * 46.0 * TAU) * step(vUv.x, 0.5) * smoothstep(0.6, 0.15, fwidth(vUv.y) * 46.0);  // each pinna tilts its own way: they catch the light one by one
-  N = normalize(N + normalize(vT) * rib * 0.3);
+  N = normalize(N + normalize(vT) * rib * 0.12);
   float snow = vCol.z * smoothstep(0.35, 0.85, N.y) * smoothstep(0.25, 0.6, tx.a + vUv.y * 0.3); alb = mix(alb, vec3(0.86, 0.89, 0.93), snow * 0.8);
   writeG(alb, vP.x, N, mix(vP.z, 0.6, snow), 0.0, vP.y * (1.0 - snow), 0.0, snow);
 }`;

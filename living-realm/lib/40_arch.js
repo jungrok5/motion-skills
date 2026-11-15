@@ -217,6 +217,8 @@
   A.house = (o) => {
     const r = LR.rng(o.seed || 'house' + o.x + ':' + o.z), g = o.geo || new LR.Geo(8192), w = o.w || 8, d = o.d || 6.5, floors = o.floors || 2, fh = o.floorH || 2.75, pl = o.plinth === undefined ? 0.45 : o.plinth, jet = o.jetty === undefined ? 0.3 : o.jetty;
     const y0 = o.y !== undefined ? o.y : LR.land.level(o.x, o.z, w / 2 + 1.2, d / 2 + 1.2, o.yaw || 0);
+    if (o.apron !== false) LR.land.apron(o.x, o.z, w / 2, d / 2 + (o.jetty === undefined ? 0.3 : o.jetty), o.yaw || 0);
+    if (o.garden !== false) LR.land.border(o.x, o.z, w / 2 + 1.2, d / 2 + 1.5, o.yaw || 0, { width: 2.4, flowers: o.garden === undefined ? 0.5 : o.garden });
     const plaster = o.plaster || r.pick(['#ffffff', '#f6efdf', '#f2e6cf', '#efe9dc', '#ecdcc0', '#f4e4d2']), timber = o.timber || r.pick(['#ffffff', '#e2d6c8', '#d2c4b4', '#f0e2d0', '#c2b6aa']), shut = o.shutters === undefined ? r.pick(['#5f8a58', '#5f7f9e', '#a24a3c', '#8a7446', '#4f7a7c', '#b08a3c']) : o.shutters;
     const roof = Object.assign({ mat: 'tiles', pitch: 50 + r() * 6 }, o.roof || {});
     g.at(o.x, y0, o.z, o.yaw || 0);

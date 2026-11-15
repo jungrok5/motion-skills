@@ -3,7 +3,7 @@
 // windmill, woods all round, mountains beyond.  V is this realm's shared sheet: places other sources build on.
 const V = {
   plaza: { x: 0, z: 0, r: 15.5 }, chapel: { x: -60, z: 6 }, mill: { x: 80, z: -62 }, pond: { x: 62, z: 50, r: 18 }, gate: { x: 0, z: 100 },
-  bridge: { x: 3, z: -41.5 }, meadow: { x: -6, z: -82, rx: 52, rz: 30 }, farm: { x: -56, z: 58 },
+  bridge: { x: 3, z: -41.5 }, meadow: { x: -6, z: -82, rx: 52, rz: 30 }, farm: { x: -56, z: 58 }, glade: { x: -110, z: -82, r: 8 },
   brook: [[-175, -70], [-140, -66], [-108, -58], [-78, -50], [-48, -45], [-18, -42], [12, -40], [36, -31], [51, -12], [59, 9], [62, 26]],
   out: [[62, 66], [72, 84], [92, 104], [124, 132], [160, 170]],
 };
@@ -25,7 +25,7 @@ const V = {
     f *= LR.sm(0.85, 1.25, ell(x, z, V.meadow, V.meadow.rx, V.meadow.rz));                  // the flower meadow north of the brook
     f *= LR.sm(0.8, 1.2, ell(x, z, V.farm, 40, 34));                                        // the fields
     if (z > 60) f *= LR.sm(7, 18, Math.abs(x));                                             // the road out of the gate
-    f *= LR.sm(24, 40, Math.hypot(x - V.pond.x, z - V.pond.z)); f *= LR.sm(30, 46, Math.hypot(x - V.mill.x, z - V.mill.z));
+    f *= LR.sm(24, 40, Math.hypot(x - V.pond.x, z - V.pond.z)); f *= LR.sm(30, 46, Math.hypot(x - V.mill.x, z - V.mill.z)); f *= LR.sm(V.glade.r - 2, V.glade.r + 5, Math.hypot(x - V.glade.x, z - V.glade.z));
     return LR.sat(f);
   };
   V.land = () => {
@@ -46,12 +46,12 @@ const V = {
       south: [[0, 14], [0.5, 34], [-0.5, 56], [0.8, 78], [0, 100], [0, 124], [3, 150]],
       north: [[1, -14], [2.4, -28], [3, -36]], beyond: [[3, -47], [2, -56], [-4, -66], [-14, -76], [-30, -84]],
       west: [[-14, -1], [-28, 1], [-42, 3], [-52, 5]], east: [[14, 2], [28, 6], [40, 12], [50, 16]],
-      farm: [[-28, 1], [-34, 18], [-40, 34], [-50, 46]], millhill: [[14, -3], [30, -16], [50, -38], [70, -54]], pond: [[40, 12], [46, 30], [50, 44]],
+      farm: [[-28, 1], [-34, 18], [-40, 34], [-50, 46]], woods: [[-30, -84], [-52, -97], [-76, -103], [-97, -95], [-109, -84]], millhill: [[14, -3], [30, -16], [50, -38], [70, -54]], pond: [[40, 12], [46, 30], [50, 44]],
     };
     L.road(V.roads.south.slice(0, 5), 4.4, { kind: 'paved', wobble: 0.5, soft: 1.2 }); L.road(V.roads.south.slice(4), 4.2, { kind: 'dirt' });
     L.road(V.roads.north, 3.8, { kind: 'paved', wobble: 0.5 }); L.road(V.roads.beyond, 2.4, { kind: 'dirt', strength: 0.85 });
     L.road(V.roads.west, 3.6, { kind: 'paved', wobble: 0.6 }); L.road(V.roads.east, 3.6, { kind: 'paved', wobble: 0.6 });
-    L.road(V.roads.farm, 2.6, { kind: 'dirt' }); L.road(V.roads.millhill, 2.4, { kind: 'dirt', strength: 0.9 }); L.road(V.roads.pond, 2.2, { kind: 'dirt', strength: 0.85 });
+    L.road(V.roads.farm, 2.6, { kind: 'dirt' }); L.road(V.roads.woods, 1.7, { kind: 'dirt', strength: 0.8, wobble: 1.1 }); L.patch(V.glade.x, V.glade.z, V.glade.r - 3, { kind: 'dirt', strength: 0.5, wobble: 1.6 }); L.road(V.roads.millhill, 2.4, { kind: 'dirt', strength: 0.9 }); L.road(V.roads.pond, 2.2, { kind: 'dirt', strength: 0.85 });
     // what grows where
     L.paint('litter', (x, z) => LR.sm(0.3, 0.75, V.woods(x, z)) * (0.55 + 0.45 * LR.fbm(x * 0.06, z * 0.06, 3)), 'max');
     L.paint('grass', (x, z) => 1 - 0.55 * LR.sm(0.4, 0.9, V.woods(x, z)), 'min');

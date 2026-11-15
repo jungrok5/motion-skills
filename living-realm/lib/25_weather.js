@@ -10,10 +10,10 @@
   });
   // the looks a project can override: W.looks.rain.fog = …
   W.looks = {
-    clear: { cloud: 0.34, dark: 0.0, rain: 0, snowfall: 0, season: 0, wind: 0.24, fog: 0.0011, fogH: 0.040, turb: 1.0 },
+    clear: { cloud: 0.34, dark: 0.0, rain: 0, snowfall: 0, season: 0, wind: 0.24, fog: 0.0024, fogH: 0.050, turb: 1.0 },
     rain:  { cloud: 1.0,  dark: 0.85, rain: 1, snowfall: 0, season: 0, wind: 0.8,  fog: 0.0085, fogH: 0.012, turb: 2.4 },
     snow:  { cloud: 0.96, dark: 0.25, rain: 0, snowfall: 1, season: 1, wind: 0.38, fog: 0.0105, fogH: 0.010, turb: 2.0 },
-    winter:{ cloud: 0.30, dark: 0.0, rain: 0, snowfall: 0, season: 1, wind: 0.2,  fog: 0.0016, fogH: 0.030, turb: 1.2 },
+    winter:{ cloud: 0.30, dark: 0.0, rain: 0, snowfall: 0, season: 1, wind: 0.2,  fog: 0.0026, fogH: 0.040, turb: 1.2 },
   };
   W.cur = Object.assign({}, W.looks.clear);
   W.set = (o) => {
@@ -74,8 +74,10 @@
     const low = LR.sm(0.42, 0.02, Math.abs(sunY)) * (1 - LR.sat(W.rain + W.snowfall)), dawn = W.tod > 4 && W.tod < 9 ? 1.6 : 1;
     const fog = c.fog * (1 + low * 2.6 * dawn) + night * 0.0012;
     U.uFog.value.set(fog, LR.lerp(c.fogH, 0.02, low * 0.5), W.baseY, 0);
+    // woods hold damp air: thick at dawn and toward evening, so the sun shows as shafts between the trunks
+    if (LR.canopy) { const lowS = LR.sm(0.66, 0.14, sunY) * day; LR.render.U.uCanopy.value.set(LR.canopy.shade, LR.canopy.mist * (0.004 + 0.017 * lowS) * (1 - 0.75 * LR.sat(W.rain + W.snowfall)), 0, 0); }
     // exposure: what a camera would need for this light
-    const ev = LR.lerp(LR.lerp(3.0, 1.5, LR.sm(-0.24, 0.0, sunY)), 0.40, LR.sm(-0.02, 0.42, sunY));
+    const ev = LR.lerp(LR.lerp(3.0, 2.1, LR.sm(-0.24, 0.0, sunY)), 0.40, LR.sm(-0.02, 0.42, sunY));
     W.exposure = ev * (1 + 0.55 * LR.sat(W.cloud * 1.3 - 0.4) * day * (1 - 0.6 * W.snow)) * (1 - 0.32 * W.snow * day);
     const P = LR.render.U; P.uExposure.value = W.exposure; P.uKey.value = LR.lerp(0.19, 0.045, night) * (1 + 0.45 * W.snow * day);
     const golden = LR.sm(0.36, 0.05, sunY) * LR.sm(-0.12, 0.02, sunY) * (1 - LR.sat(W.cloud * 1.4 - 0.5));

@@ -118,11 +118,11 @@ float applyWeather(inout vec3 albedo, inout vec3 N, inout float rough, inout flo
     albedo *= mix(1.0, 0.52, soak);
     rough = mix(rough, max(0.08, rough * mix(0.34, 0.74, por * por)), w);
     if (pud > 0.01 && Ng.y > 0.85 && uWx.y > 0.01) {
-      float lvl = uWx.y * 0.66 - h * 0.55 - nz.r * 0.72 + (nz.g - 0.5) * 0.2;
+      float lvl = uWx.y * 0.56 - h * 0.55 - nz.r * 0.72 + (nz.g - 0.5) * 0.2;
       float p = smoothstep(0.0, 0.05, lvl) * pud * open * smoothstep(0.85, 0.97, Ng.y);
       if (p > 0.0) {
         vec2 rp = vec2(0.0);
-        if (uWx2.x > 0.02) rp = (rippleLayer(wp.xz * 3.1, uTime * 1.1) + rippleLayer(wp.xz * 5.3 + 7.7, uTime * 1.35)) * 0.16 * uWx2.x * open;
+        if (uWx2.x > 0.02) rp = (rippleLayer(wp.xz * 2.3, uTime * 1.1) + rippleLayer(wp.xz * 4.1 + 7.7, uTime * 1.35) * 0.6) * 0.07 * uWx2.x * open;
         vec3 flatN = normalize(vec3(rp.x, 1.0, rp.y));
         N = normalize(mix(N, flatN, p)); rough = mix(rough, 0.035, p); albedo *= mix(1.0, 0.45, p); ao = mix(ao, 1.0, p * 0.7);
       }
@@ -137,8 +137,9 @@ float applyWeather(inout vec3 albedo, inout vec3 N, inout float rough, inout flo
       vec4 sa = texture(uMatA, vec3(wp.xz * 0.61 + wp.y * 0.37, float(SNOW_LAYER)));
       vec4 sb = texture(uMatB, vec3(wp.xz * 0.61 + wp.y * 0.37, float(SNOW_LAYER)));
       vec3 sn = nrmDec(sb.xy);
-      vec3 Ns = normalize(mix(Ng, vec3(0.0, 1.0, 0.0), 0.35) + vec3(sn.x, 0.0, sn.y) * 0.55);
-      albedo = mix(albedo, sa.rgb * sa.rgb, snow); N = normalize(mix(N, Ns, snow * 0.9));
+      vec4 dr = texture(uNoise, wp.xz * 0.19 + 0.3), dr2 = texture(uNoise, wp.xz * 0.045 + 0.7);                  // drifts: snow is never a flat sheet
+      vec3 Ns = normalize(mix(Ng, vec3(0.0, 1.0, 0.0), 0.35) + vec3(sn.x, 0.0, sn.y) * 0.9 + vec3(dr.r - 0.5, 0.0, dr.g - 0.5) * 0.5 + vec3(dr2.b - 0.5, 0.0, dr2.a - 0.5) * 0.35);
+      albedo = mix(albedo, sa.rgb * sa.rgb * (0.90 + 0.12 * dr2.r), snow); N = normalize(mix(N, Ns, snow * 0.9));
       rough = mix(rough, sb.z, snow); ao = mix(ao, max(ao, 0.92), snow);
     }
   }

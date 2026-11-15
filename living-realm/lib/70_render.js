@@ -46,13 +46,18 @@ void main(){
   vec3 albedo = a.rgb * a.rgb * tint;
   vec3 N = normalize(tbn * nrmDec(b.xy));
   float rough = b.z, ao = b.w * vCol.a, emis = 0.0, metal = Q.x, snow = 0.0, h = a.a;
+  // nothing built is clean: grime where it is creased or low, and broad stains so no wall is one flat colour
+  { vec4 st = texture(uNoise, vWorld.xz * 0.063 + vWorld.y * 0.097), st2 = texture(uNoise, vec2(vWorld.x + vWorld.z, vWorld.y) * 0.31);
+    float grime = smoothstep(1.0, 0.5, vCol.a) * (0.55 + 0.45 * st2.g);
+    albedo *= mix(vec3(1.0), vec3(0.62, 0.57, 0.50), grime * 0.6 * (1.0 - metal));
+    albedo *= 0.86 + 0.26 * st.r; rough = min(1.0, rough + grime * 0.1); }
   // moss and damp where things face north-ish, sit low, or hold water
   if (Q.y > 0.0) {
     vec4 nz = texture(uNoise, vWorld.xz * 0.13 + vWorld.y * 0.09), nz2 = texture(uNoise, vWorld.xz * 0.021 + vWorld.y * 0.013 + 0.4);
     float shade = sat(0.5 - Ng.z * 0.5) * 0.5 + sat(Ng.y) * 0.25;                           // north faces and tops keep damp
-    float m = Q.y * (nz2.r * 1.1 + shade * 0.5 - 0.92) + (nz.g - 0.5) * 0.5 - (h - 0.4) * 0.7 + (1.0 - vCol.a) * 0.9 + uWx.x * 0.08;
-    m = smoothstep(0.0, 0.16, m) * (1.0 - uWx.w * 0.5);
-    if (m > 0.0) { vec4 ma = texture(uMatA, vec3(vWorld.xz * 0.9 + vWorld.y * 0.7, float(MOSS_LAYER))); albedo = mix(albedo, ma.rgb * ma.rgb * 0.85, m * 0.85); rough = mix(rough, 0.95, m); }
+    float m = Q.y * (nz2.r * 1.1 + shade * 0.5 - 1.02) + (nz.g - 0.5) * 0.5 - (h - 0.4) * 0.7 + (1.0 - vCol.a) * 0.55 + uWx.x * 0.08;
+    m = smoothstep(0.0, 0.2, m) * (1.0 - uWx.w * 0.5);
+    if (m > 0.0) { vec4 ma = texture(uMatA, vec3(vWorld.xz * 0.9 + vWorld.y * 0.7, float(MOSS_LAYER))); albedo = mix(albedo, ma.rgb * ma.rgb * 0.7, m * 0.8); rough = mix(rough, 0.95, m); }
   }
   if ((flags & 1) != 0) {                                                   // a window: dark glass by day, lit from inside at night
     float seed = vMeta.z, on = step(hash11(seed * 7.13 + 2.0), uWx2.z * 1.25 - 0.12);
@@ -105,7 +110,7 @@ void main(){ vec3 p = position;
   LR.chunk.grasscol = `
 vec3 grassTint(vec2 xz, float tall){
   float a = texture(uNoise, xz * 0.0041).r, b = texture(uNoise, xz * 0.019 + 0.3).g, c = texture(uNoise, xz * 0.083 + 0.7).b;
-  vec3 lush = vec3(0.075, 0.170, 0.030), mid = vec3(0.125, 0.205, 0.040), dry = vec3(0.250, 0.250, 0.075), deep = vec3(0.040, 0.105, 0.028);
+  vec3 lush = vec3(0.070, 0.132, 0.034), mid = vec3(0.110, 0.158, 0.046), dry = vec3(0.215, 0.200, 0.078), deep = vec3(0.040, 0.088, 0.030);
   vec3 col = mix(lush, mid, smoothstep(0.3, 0.7, a)); col = mix(col, dry, smoothstep(0.52, 0.9, b * 0.6 + a * 0.4) * (0.35 + 0.5 * tall)); col = mix(col, deep, smoothstep(0.6, 0.95, c) * 0.5);
   float s = uWx.w;                                                          // toward winter: straw, then grey-brown
   col = mix(col, vec3(0.22, 0.19, 0.07), smoothstep(0.15, 0.6, s + (a - 0.5) * 0.3)); col = mix(col, vec3(0.13, 0.11, 0.07), smoothstep(0.6, 1.0, s) * 0.7);
@@ -149,6 +154,7 @@ void main(){
   gcol = mix(vec3(0.085, 0.066, 0.045) * (0.7 + 0.6 * ta.a), gcol, smoothstep(0.02, 0.5, grassy));       // bare soil where nothing grows
   gAlb = gcol; gNt = nrmDec(tb.xy); gRough = tb.z; gAo = mix(tb.w, 1.0, smoothstep(8.0, 40.0, dist)); gH = ta.a; gPor = 0.6; gPud = 0.5 * (1.0 - smoothstep(0.1, 0.6, grassy));
   float wLit = sp.b * inner, wDirt = sp.r * inner, wPav = sp.g * inner, wShore = cv.b * inner;
+  { float worn = texture(uNoise, xz * 0.017 + 0.61).g * 0.65 + nz.a * 0.35; float gap = smoothstep(0.60, 0.78, worn) * wPav; wPav *= 1.0 - gap * 0.55; wDirt = max(wDirt, gap * 0.8); }   // worn paving: earth shows through
   float wRock = smoothstep(0.30, 0.52, slope + (nz.r - 0.5) * 0.16) * mix(1.0, 0.0, wPav);
   if (wLit > 0.004) lay(float(L_LITTER), wLit, xz * uTiles.w, dx * uTiles.w, dy * uTiles.w);
   if (wDirt > 0.004) lay(float(L_DIRT), wDirt, xz * uTiles.y, dx * uTiles.y, dy * uTiles.y);

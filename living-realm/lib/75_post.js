@@ -7,6 +7,7 @@
   const PU = (R.U = {
     tG0: v(null), tG1: v(null), tG2: v(null), tDepth: v(null), tAO: v(null), tAir: v(null), tHDR: v(null), tHist: v(null), tCopy: v(null), tBloom: v(null), tAdapt: v(null),
     uHalf: v(new T.Vector4(1, 1, 1, 1)), uOut: v(new T.Vector4(1, 1, 1, 1)), uJit: v(new T.Vector2()), uEnvMips: v(7),
+    tCanopy: v(null), uCanopyRect: v(new T.Vector4(-256, -256, 1 / 512, 1 / 512)), uCanopy: v(new T.Vector4(0, 0, 0, 0)), uSplit: v(new T.Vector4(0.3, 0.5, 0.5, 0)),
     uLightPos: v(Array.from({ length: MAXL }, () => new T.Vector4())), uLightCol: v(Array.from({ length: MAXL }, () => new T.Vector4())), uLightN: v(0),
     uExposure: v(0.3), uKey: v(0.18), uGrade: v(new T.Vector4(1, 1, 0.3, 0.02)), uTintG: v(new T.Vector3(1, 1, 1)), uLiftG: v(new T.Vector3(0, 0, 0)), uBloomMix: v(0.06), uSharp: v(0.4), uBlend: v(0.1), uDt: v(0.016),
   });
@@ -20,6 +21,10 @@ float shadowFast(vec3 wp){
   for (int i = 0; i < 3; i++) { if (i >= n) break; vec3 sc = (uShadowMat[i] * vec4(wp, 1.0)).xyz; vec2 e = min(sc.xy, 1.0 - sc.xy); if (min(e.x, e.y) > 0.01 && sc.z < 1.0 && sc.z > 0.0) return shadowTap(sc, float(i)); }
   return 1.0;
 }`;
+  LR.chunk.canopy = `
+uniform sampler2D tCanopy; uniform vec4 uCanopyRect; uniform vec4 uCanopy;         // shade under crowns, extra mist under crowns
+float canopyAt(vec3 p){ return textureLod(tCanopy, (p.xz - uCanopyRect.xy) * uCanopyRect.zw, 0.0).r * (1.0 - smoothstep(5.0, 13.0, p.y - uFog.z)); }
+`;
   LR.chunk.half = `
 uniform vec4 uHalf;
 float halfDepth(sampler2D tD, vec2 c){ return textureLod(tD, c + uRes.zw * 0.25, 0.0).r; }
@@ -75,22 +80,24 @@ void main(){ float z = viewZ(halfDepth(tDepth, vUv)), s = 0.0, w = 0.0;
 //#include air
 //#include sky
 //#include half
+//#include canopy
 in vec2 vUv; out vec4 o; uniform sampler2D tDepth; uniform float uEnvMips;
 float hg(float mu, float g){ float g2 = g * g; return (1.0 - g2) / (4.0 * PI * pow(1.0 + g2 - 2.0 * g * mu, 1.5)); }
 void main(){
   float d = halfDepth(tDepth, vUv); vec2 uvd = vUv + uRes.zw * 0.25;
   vec3 wp = worldAt(uvd, min(d, 0.99999)); vec3 rd = wp - uCamPos; float dist = length(rd); rd /= dist; if (d >= 0.999999) dist = 60000.0;
-  float mu = dot(rd, uSunDir), ph = min(mix(hg(mu, 0.74), hg(mu, -0.18), 0.22), 0.9);
+  float mu = dot(rd, uSunDir), ph = min(mix(hg(mu, 0.74), hg(mu, -0.18), 0.22), 0.9) * 0.7 + 0.024;      // a little of the light goes every way: shafts read from the side too
   vec3 keyIn = uSunCol * PI * ph, amb = envAt(vec3(0.0, 1.0, 0.0), uEnvMips - 1.0) * 0.9;
   float tMax = min(dist, AIR_REACH), jit = ign(gl_FragCoord.xy + mod(uFrame, 32.0) * vec2(5.588, 3.371));
   vec3 ins = vec3(0.0); float Tr = 1.0, tPrev = 0.0, cs = cloudShadow(uCamPos + rd * min(tMax, 45.0));     // clouds are large: once per ray
   for (int i = 0; i < AIR_STEPS; i++) {
     float u = (float(i) + jit) / float(AIR_STEPS), t = tMax * u * u * (0.35 + 0.65 * u), ds = t - tPrev; tPrev = t;
     vec3 p = uCamPos + rd * t;
-    float dens = uFog.x * exp(-uFog.y * max(p.y - uFog.z, -12.0));
+    float cv = canopyAt(p);
+    float dens = uFog.x * exp(-uFog.y * max(p.y - uFog.z, -12.0)) + uCanopy.y * cv;                 // damp air under the trees
     float sh = shadowFast(p) * cs;
     float a = 1.0 - exp(-dens * ds);
-    ins += Tr * a * (keyIn * sh + amb + uWx2.w * vec3(0.5, 0.6, 0.9) * 6.0);
+    ins += Tr * a * (keyIn * sh + amb * (1.0 - 0.7 * cv) + uWx2.w * vec3(0.5, 0.6, 0.9) * 6.0);
     Tr *= 1.0 - a;
   }
   // the rest of the way: no shadow detail, the haze takes the colour of the sky it is seen against
@@ -111,6 +118,7 @@ void main(){
 //#include air
 //#include sky
 //#include half
+//#include canopy
 in vec2 vUv; out vec4 o;
 uniform sampler2D tG0, tG1, tG2, tDepth, tAO, tAir; uniform float uEnvMips;
 uniform vec4 uLightPos[${MAXL}]; uniform vec4 uLightCol[${MAXL}]; uniform int uLightN;
@@ -136,17 +144,18 @@ void main(){
   else {
     vec4 g0 = texture(tG0, vUv), g1 = texture(tG1, vUv), g2 = texture(tG2, vUv);
     vec3 albedo = g0.rgb * g0.rgb, N = nrmUnpack(g1.rgb); float rough = max(g1.a, 0.04), metal = g2.r, trans = g2.g, emis = g2.b * g2.b * 64.0, snow = g2.a;
-    float ao = min(g0.a, ssao), NoV = max(dot(N, V), 1e-3);
+    float ao = min(g0.a, ssao * sqrt(ssao)), NoV = max(dot(N, V), 1e-3);
     vec3 f0 = mix(vec3(0.04), albedo, metal), diff = albedo * (1.0 - metal);
     vec3 L = uSunDir, H = normalize(L + V); float NoLr = dot(N, L), NoL = sat(NoLr), a2 = rough * rough; a2 *= a2;
     // the key light
     float shNoL = trans > 0.0 ? max(NoLr, 0.35) : NoLr;
     float sh = (NoLr > -0.2 || trans > 0.0) ? shadowAt(wp, N, shNoL, rnd, SHADOW_TAPS) : 0.0;
     sh *= cloudShadow(wp);
+    float shT = trans > 0.0 ? mix(sh, 1.0, 0.22 + 0.2 * trans) : sh;                      // light filters down through leaves
     float micro = sat(NoL * 6.0 + ao * ao * 2.0 - 1.0);                              // light does not reach into tight creases
     vec3 dl = diff * (trans > 0.0 ? sat((NoLr + 0.45) / 1.45) : NoL) + specGGX(f0, a2, sat(dot(N, H)), NoV, NoL, sat(dot(V, H))) * NoL;
-    col = dl * uSunCol * sh * mix(1.0, micro, 0.6);
-    if (trans > 0.0) { float back = pow(sat(dot(V, -L)), 3.0) * 0.9 + sat(-NoLr) * 0.35; col += diff * vec3(1.0, 1.05, 0.55) * uSunCol * back * trans * sh; }
+    col = dl * uSunCol * (trans > 0.0 ? mix(sh, shT, 0.5) : sh) * mix(1.0, micro, 0.6);
+    if (trans > 0.0) { float back = pow(sat(dot(V, -L)), 2.0) * 1.1 + sat(-NoLr) * 0.5; col += diff * vec3(1.0, 1.08, 0.5) * uSunCol * back * trans * shT; }
     if (snow > 0.0) {                                                               // snow: glints on the lit side, light bleeding into the shade
       vec3 cell = floor(wp * 55.0); vec3 hr = hash33(cell) * 2.0 - 1.0; float sp = pow(sat(dot(normalize(N + hr * 0.55), H)), 260.0);
       col += uSunCol * sp * snow * sh * 3.0 * smoothstep(60.0, 8.0, dist); col += uSunCol * vec3(0.5, 0.75, 1.0) * 0.045 * snow * sat(0.6 - NoL) * (0.3 + 0.7 * sh);
@@ -154,11 +163,13 @@ void main(){
     // the sky's light and what the land throws back, through the occlusion (lighter surfaces lose less)
     vec3 aoc = max(vec3(ao), ((ao * (2.0404 * albedo - 0.3324) + (-4.7951 * albedo + 0.6417)) * ao + (2.7552 * albedo + 0.6903)) * ao);
     vec3 irr = envAt(N, uEnvMips - 2.0) * 0.6 + envAt(normalize(N + vec3(0.0, 0.6, 0.0)), uEnvMips - 1.0) * 0.4;
-    col += diff * (irr + vec3(0.012, 0.014, 0.018) * (0.4 + uSunCol.g)) * aoc;
+    float cv = canopyAt(wp), skyVis = 1.0 - uCanopy.x * cv;                                // under the crowns only part of the sky is seen
+    irr = irr * skyVis + vec3(0.34, 0.42, 0.18) * uSunCol * (0.25 + max(uSunDir.y, 0.0)) * cv * 0.085;   // and what comes through the leaves is green
+    col += diff * (irr * 0.92 + vec3(0.012, 0.014, 0.018) * (0.4 + uSunCol.g)) * aoc;
     if (trans > 0.0) col += diff * envAt(-N, uEnvMips - 1.5) * trans * 0.35 * ao;
     vec3 Rr = reflect(-V, N); Rr.y = abs(Rr.y) * 0.9 + 0.1 * Rr.y;
     float so = sat(pow(NoV + ao, exp2(-16.0 * rough - 1.0)) - 1.0 + ao);
-    col += envAt(normalize(Rr), rough * (uEnvMips - 1.5)) * envBRDF(f0, rough, NoV) * so;
+    col += envAt(normalize(Rr), rough * (uEnvMips - 1.5)) * envBRDF(f0, rough, NoV) * so * mix(1.0, skyVis, 0.85);
     // lamps, hearths, torches
     for (int i = 0; i < ${MAXL}; i++) { if (i >= uLightN) break; vec4 lp = uLightPos[i]; vec3 Lv = lp.xyz - wp; float d2 = dot(Lv, Lv), r2 = lp.w * lp.w; if (d2 > r2) continue;
       float dl2 = sqrt(d2); vec3 Lp = Lv / dl2; float win = 1.0 - d2 * d2 / (r2 * r2); float att = win * win / (d2 + 0.5);
@@ -216,12 +227,12 @@ void main(){ vec2 h = uT.xy * 0.5; vec3 s = texture(tSrc, vUv + vec2(-h.x * 2.0,
 in vec2 vUv; out vec4 o; uniform sampler2D tSrc, tPrev; uniform float uExposure, uKey, uDt;
 void main(){ float s = 0.0, ws = 0.0;
   for (int j = 0; j < 4; j++) for (int i = 0; i < 4; i++) { vec2 p = vec2(float(i), float(j)); vec3 c = textureLod(tSrc, (p + 0.5) / 4.0, 0.0).rgb; float w = 1.0 - 0.4 * length(p - 1.5) / 2.12; s += log(max(dot(c, vec3(0.2126, 0.7152, 0.0722)), 1e-4)) * w; ws += w; }
-  float avg = exp(s / ws), target = clamp(uKey / max(avg * uExposure, 1e-4), 0.6, 1.75);
+  float avg = exp(s / ws), target = clamp(uKey / max(avg * uExposure, 1e-4), 0.6, 2.5);
   float prev = texture(tPrev, vec2(0.5)).r; if (prev <= 0.0) prev = target;
   o = vec4(mix(prev, target, sat(1.0 - exp(-uDt * 1.6))), 0.0, 0.0, 1.0); }`;
   const finalFS = `//#include head
 //#include hash
-in vec2 vUv; out vec4 o; uniform sampler2D tColor, tBloom, tAdapt; uniform vec4 uOut; uniform float uExposure, uBloomMix, uSharp, uTime; uniform vec4 uGrade; uniform vec3 uTintG, uLiftG;
+in vec2 vUv; out vec4 o; uniform sampler2D tColor, tBloom, tAdapt; uniform vec4 uOut; uniform float uExposure, uBloomMix, uSharp, uTime; uniform vec4 uGrade, uSplit; uniform vec3 uTintG, uLiftG;
 vec3 aces(vec3 x){
   const mat3 m1 = mat3(0.59719, 0.07600, 0.02840, 0.35458, 0.90834, 0.13383, 0.04823, 0.01566, 0.83777), m2 = mat3(1.60475, -0.10208, -0.00327, -0.53108, 1.10813, -0.07276, -0.07367, -0.00605, 1.07602);
   vec3 v = m1 * x, a = v * (v + 0.0245786) - 0.000090537, b = v * (0.983729 * v + 0.4329510) + 0.238081; return clamp(m2 * (a / b), 0.0, 1.0);
@@ -236,6 +247,8 @@ void main(){
   vec2 q = vUv - 0.5; c *= 1.0 - dot(q, q) * uGrade.z * 1.6;
   c = aces(c);
   float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); c = mix(vec3(l), c, uGrade.y); c = mix(vec3(0.5), c, uGrade.x) ; c = max(c + uLiftG * (1.0 - c), 0.0);
+  c = mix(c, c * c * (3.0 - 2.0 * c), uSplit.x);                                           // a little more shoulder and toe
+  float l2 = dot(c, vec3(0.2126, 0.7152, 0.0722)); c *= mix(vec3(1.0 - 0.07 * uSplit.y, 1.0, 1.0 + 0.10 * uSplit.y), vec3(1.0 + 0.05 * uSplit.z, 1.0, 1.0 - 0.07 * uSplit.z), smoothstep(0.12, 0.75, l2));   // cool shade, warm light
   c = pow(c, vec3(1.0 / 2.2));
   float g = hash13(vec3(gl_FragCoord.xy, mod(uTime * 60.0, 1000.0))) - 0.5; c += g * uGrade.w + (hash12(gl_FragCoord.xy + 0.5) - 0.5) / 255.0;
   o = vec4(c, 1.0);
@@ -269,19 +282,19 @@ void main(){
   R.initPost = () => {
     const G = LR.gpu, tier = G.tier, S = SKY();
     const white = new T.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1); white.needsUpdate = true; R.white = white;
-    PU.uEnvMips.value = LR.sky.envMips; PU.uSharp.value = tier.taaSharp;
+    PU.uEnvMips.value = LR.sky.envMips; PU.uSharp.value = tier.taaSharp; PU.tCanopy.value = white;
     const aoQ = [[2, 3], [2, 3], [2, 4], [3, 5]][tier.ao];
     R.mAO = LR.pass(aoFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tG1: PU.tG1, uHalf: PU.uHalf }), { defines: { AO_SLICES: aoQ[0], AO_STEPS: aoQ[1] } });
     R.mAOB = LR.pass(aoBlurFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tAO: v(null), uHalf: PU.uHalf }));
-    R.mAir = LR.pass(airFS, Object.assign(LR.uni(FRAME + ' ' + AIRU + ' ' + SHU), S, { tDepth: PU.tDepth, uHalf: PU.uHalf, uEnvMips: PU.uEnvMips }), { defines: { AIR_STEPS: tier.vol, AIR_REACH: '150.0' } });
-    R.mLight = LR.pass(lightFS, Object.assign(LR.uni(FRAME + ' ' + AIRU + ' ' + SHU), S, { tG0: PU.tG0, tG1: PU.tG1, tG2: PU.tG2, tDepth: PU.tDepth, tAO: PU.tAO, tAir: PU.tAir, uHalf: PU.uHalf, uEnvMips: PU.uEnvMips, uLightPos: PU.uLightPos, uLightCol: PU.uLightCol, uLightN: PU.uLightN }), { defines: Object.assign({ SHADOW_TAPS: tier.shadowTaps }, LR.qn('dbg', 0) ? { DEBUG_VIEW: LR.qn('dbg', 0) } : {}) });
+    R.mAir = LR.pass(airFS, Object.assign(LR.uni(FRAME + ' ' + AIRU + ' ' + SHU), S, { tDepth: PU.tDepth, uHalf: PU.uHalf, uEnvMips: PU.uEnvMips, tCanopy: PU.tCanopy, uCanopyRect: PU.uCanopyRect, uCanopy: PU.uCanopy }), { defines: { AIR_STEPS: tier.vol, AIR_REACH: '150.0' } });
+    R.mLight = LR.pass(lightFS, Object.assign(LR.uni(FRAME + ' ' + AIRU + ' ' + SHU), S, { tG0: PU.tG0, tG1: PU.tG1, tG2: PU.tG2, tDepth: PU.tDepth, tAO: PU.tAO, tAir: PU.tAir, uHalf: PU.uHalf, uEnvMips: PU.uEnvMips, tCanopy: PU.tCanopy, uCanopyRect: PU.uCanopyRect, uCanopy: PU.uCanopy, uLightPos: PU.uLightPos, uLightCol: PU.uLightCol, uLightN: PU.uLightN }), { defines: Object.assign({ SHADOW_TAPS: tier.shadowTaps }, LR.qn('dbg', 0) ? { DEBUG_VIEW: LR.qn('dbg', 0) } : {}) });
     R.mTAA = LR.pass(taaFS, Object.assign(LR.uni(FRAME), { tCur: PU.tHDR, tHist: PU.tHist, tDepth: PU.tDepth, uJit: PU.uJit, uBlend: PU.uBlend }));
     R.mCopy = LR.pass(copyFS, { tSrc: v(null) });
     R.mDown = LR.pass(downFS, { tSrc: v(null), uT: v(new T.Vector4()), uFirst: v(0) });
     R.mUp = LR.pass(upFS, { tSrc: v(null), tAdd: v(null), uT: v(new T.Vector4()) });
     R.adaptA = LR.rt(1, 1, { type: G.hdrType, filter: T.NearestFilter }); R.adaptB = LR.rt(1, 1, { type: G.hdrType, filter: T.NearestFilter });
     R.mAdapt = LR.pass(adaptFS, { tSrc: v(null), tPrev: v(null), uExposure: PU.uExposure, uKey: PU.uKey, uDt: PU.uDt });
-    R.mFinal = LR.pass(finalFS, { tColor: v(null), tBloom: PU.tBloom, tAdapt: PU.tAdapt, uOut: PU.uOut, uExposure: PU.uExposure, uBloomMix: PU.uBloomMix, uSharp: PU.uSharp, uTime: U.uTime, uGrade: PU.uGrade, uTintG: PU.uTintG, uLiftG: PU.uLiftG });
+    R.mFinal = LR.pass(finalFS, { tColor: v(null), tBloom: PU.tBloom, tAdapt: PU.tAdapt, uOut: PU.uOut, uExposure: PU.uExposure, uBloomMix: PU.uBloomMix, uSharp: PU.uSharp, uTime: U.uTime, uGrade: PU.uGrade, uSplit: PU.uSplit, uTintG: PU.uTintG, uLiftG: PU.uLiftG });
   };
 
   // nearest lamps and fires → the lighting pass
