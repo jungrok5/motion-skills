@@ -23,7 +23,7 @@
     P.hangSign(-25 + 3.3, V.chandler.y + 3.4, 8.5 - 1.2, Math.PI / 2 + 0.06, { shape: P.SHAPES.key, paint: '#cfd4c8' }); P.crate(-20.8, 11.4); P.barrel(-20.9, 5.2);
     P.pot(19.2, 13.2, { size: 1.2 }); P.pot(21.6, 11.2, { size: 1.2 }); P.bench(16.6, 12.8, { yaw: -2.2 });
     // lamps along the ways
-    for (const [x, z, a] of [[3.2, 24, -1.6], [-3.2, 40, 1.6], [3.2, 56, -1.6], [-3.2, 72, 1.6], [3.4, 90, -1.6], [-20, 3.6, 0], [-36, -1.2, 3.1], [21, 6.6, 3.1], [34, 12.4, 3.1], [5.2, -22.5, -1.6], [5.6, -33.5, -1.6], [-48, 8.6, 0], [46, 18.6, 3.1]]) P.lampPost(x, z, { yaw: a });
+    for (const [x, z, a] of [[3.2, 24, -1.6], [-3.2, 40, 1.6], [3.2, 56, -1.6], [-3.2, 72, 1.6], [3.4, 90, -1.6], [-20, 3.6, 0], [-36, -1.2, 3.1], [21, 6.6, 3.1], [34, 12.4, 3.1], [5.2, -22.5, -1.6], [5.6, -33.5, -1.6], [-48, 8.6, 0], [42.4, 19.6, 1.6]]) P.lampPost(x, z, { yaw: a });
     // doorsteps: pots, piles, a barrel here and there
     for (const hh of V.houses) { const d = hh.door, c = [hh.toW(0, 0)[0], hh.toW(0, 0)[1]], ox = d[0] - c[0], oz = d[1] - c[1], l = Math.hypot(ox, oz) || 1, nx = ox / l, nz = oz / l, tx = -nz, tz = nx;
       if (r() < 0.8) P.pot(d[0] + nx * 0.55 + tx * 1.05, d[1] + nz * 0.55 + tz * 1.05, { size: 0.9 + r() * 0.4 }); if (r() < 0.45) P.barrel(d[0] + nx * 0.5 - tx * 1.5, d[1] + nz * 0.5 - tz * 1.5); if (r() < 0.4) P.bench(d[0] + nx * 0.55 - tx * 2.7, d[1] + nz * 0.55 - tz * 2.7, { yaw: Math.atan2(nx, nz) }); }
@@ -34,7 +34,9 @@
       for (let i = 0; i < 16; i++) { const gx = c.x - 12 + (i % 4) * 2.5 + (r() - 0.5) * 0.7, gz = c.z + 8.5 + Math.floor(i / 4) * 2.1 + (r() - 0.5) * 0.5; if (gz < c.z + 15.5) P.tombstone(gx, gz, { yaw: Math.PI / 2 + (r() - 0.5) * 0.3 }); }
       P.bench(c.x + 9.5, c.z - 6, { yaw: -Math.PI / 2 }); P.lampPost(c.x + 12, c.z + 5.5, { yaw: 1.6 }); }
     // ── the farm ──
-    { const f = V.farm; P.fence([[f.x + 26, f.z - 26], [f.x + 4, f.z - 30], [f.x - 20, f.z - 24], [f.x - 30, f.z - 6]], { kind: 'rail', seed: 'f1' }); P.fence([[f.x + 26, f.z - 26], [f.x + 30, f.z - 4], [f.x + 22, f.z + 18]], { kind: 'rail', seed: 'f2' });
+    { const f = V.farm; // the fences leave a gap where the farm road and the footpath to the lane come through
+      P.fence([[f.x + 26, f.z - 26], [f.x + 18.8, f.z - 27.3]], { kind: 'rail', seed: 'f1' }); P.fence([[f.x + 14.6, f.z - 28.1], [f.x + 4, f.z - 30], [f.x - 20, f.z - 24], [f.x - 30, f.z - 6]], { kind: 'rail', seed: 'f1b' });
+      P.fence([[f.x + 26, f.z - 26], [f.x + 28.7, f.z - 11]], { kind: 'rail', seed: 'f2' }); P.fence([[f.x + 29.4, f.z - 7.4], [f.x + 30, f.z - 4], [f.x + 22, f.z + 18]], { kind: 'rail', seed: 'f2b' });
       P.fence([[f.x + 16, f.z + 2], [f.x + 22, f.z + 18], [f.x + 8, f.z + 26]], { kind: 'wattle', seed: 'f3' });
       P.haystack(f.x + 10, f.z - 16, { size: 1.7 }); P.haystack(f.x + 15, f.z - 12, { size: 1.3 }); P.haystack(f.x + 2, f.z - 20, { size: 1.5 }); P.scarecrow(f.x - 6, f.z - 14, { yaw: 0.6 }); P.cart(f.x + 6, f.z - 2, { yaw: -0.5 }); P.woodpile(f.x + 5.5, f.z + 9, { yaw: 0.5 }); P.trough(f.x + 12, f.z + 2, { yaw: 1.1 }); P.barrel(f.x + 3.6, f.z + 1.2); }
     // ── the pond: a pier, a boat-length of planks, reeds are the grass kit's ──
@@ -44,7 +46,7 @@
     P.rocks(V.meadow.x + 14, V.meadow.z - 6, 5, 3.2, { size: 1.5 }); P.rocks(V.meadow.x - 22, V.meadow.z + 8, 4, 2.6, { size: 1.2 }); P.rocks(-16, -58, 3, 2, { size: 1.0 });
     for (let i = 0; i < 46; i++) { const a = r() * LR.TAU, d = 96 + r() * 46, x = Math.cos(a) * d, z = Math.sin(a) * d; if (V.woods(x, z) > 0.5 && LR.water.levelAt(x, z) < -1e8) { if (r() < 0.6) P.rocks(x, z, 2 + r.int(4), 2.4, { size: 0.8 + r() * 1.1 }); else if (r() < 0.5) P.log(x, z, { yaw: r() * 6.28, len: 2.4 + r() * 2.4 }); else P.stump(x, z, { r: 0.3 + r() * 0.25 }); } }
     { const g = V.glade; P.log(g.x + 2.5, g.z - 1.5, { yaw: 0.4, len: 4.6, r: 0.36 }); P.stump(g.x - 2.2, g.z + 1.6, { r: 0.45 }); P.stump(g.x - 3.4, g.z - 2.4, { r: 0.3 }); P.rocks(g.x + 0.5, g.z + 4.5, 4, 2.0, { size: 1.2 }); P.rocks(g.x - 5, g.z - 0.5, 3, 1.5, { size: 0.8 }); }
-    P.log(-18, -74, { yaw: 0.7, len: 4.2, r: 0.34 }); P.stump(V.meadow.x + 30, V.meadow.z + 12);
+    P.log(-22.5, -70.5, { yaw: 0.7, len: 4.2, r: 0.34 }); P.stump(V.meadow.x + 30, V.meadow.z + 12);
     W.fireflyAreas = [{ x: V.pond.x - 6, z: V.pond.z, r: 26 }, { x: V.meadow.x, z: V.meadow.z, r: 36 }, { x: 20, z: -40, r: 22 }, { x: -50, z: -46, r: 20 }];
     W.sounds.push({ x: V.pond.x, y: V.pond.level, z: V.pond.z, kind: 'frogs', r: 34, gain: 0.8 });
   };

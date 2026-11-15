@@ -32,6 +32,10 @@
     const N = n * 24; let prev = at(0), total = 0; const tab = [[0, 0]]; for (let i = 1; i <= N; i++) { const q = at((i / N) * n); total += Math.hypot(q[0] - prev[0], q[1] - prev[1]); tab.push([total, (i / N) * n]); prev = q; }
     P.tour = { at, tab, total, pts }; };
   const tourU = (s) => { const t = P.tour.tab; s = ((s % P.tour.total) + P.tour.total) % P.tour.total; let lo = 0, hi = t.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (t[m][0] <= s) lo = m; else hi = m; } const f = (s - t[lo][0]) / (t[hi][0] - t[lo][0] || 1); return t[lo][1] + (t[hi][1] - t[lo][1]) * f; };
+  // where the tour stands and looks at s metres along it (undamped): for stills along the walk (render.mjs --tour)
+  P.tourPose = (s) => { const u = tourU(s), q = P.tour.at(u), a = P.tour.at(tourU(s + 7)), n = P.tour.pts.length, i = Math.floor(u) % n, wp = P.tour.pts[i], wn = P.tour.pts[(i + 1) % n], f = u - Math.floor(u);
+    let tx = a[0], tz = a[1]; const la = wp.look, lb = wn.look || la; if (la) { const k = wp.pull === undefined ? 0.55 : wp.pull; tx = LR.lerp(tx, la[0] + (lb[0] - la[0]) * f, k); tz = LR.lerp(tz, la[1] + (lb[1] - la[1]) * f, k); }
+    return { s, cam: [q[0], q[1], (Math.atan2(tx - q[0], -(tz - q[1])) * 180) / Math.PI, (((wp.pitch || 0) + 0.03) * 180) / Math.PI] }; };
   P.startTour = () => { if (!P.tour) return; P.touring = true; // join the tour at its nearest point
     let best = 0, bd = 1e9; for (let s = 0; s < P.tour.total; s += 2) { const q = P.tour.at(tourU(s)); const d = Math.hypot(q[0] - P.x, q[1] - P.z); if (d < bd) { bd = d; best = s; } } P.tourS = best; LR.emit('tour', true); };
   P.stopTour = () => { if (P.touring) { P.touring = false; LR.emit('tour', false); } };

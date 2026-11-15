@@ -23,7 +23,8 @@ follows is the design that keeps those in hand, and the knobs to turn if a devic
   of scale does not flash.
 - **Tiers** (`lib/10_gpu.js`): `low` (phones), `medium` (integrated GPUs), `high`, `ultra` set material size, shadow
   size and cascades, occlusion quality, fog steps, grass density and reach, tree detail distances, particle counts,
-  lamp count, device-pixel-ratio cap. The tier is guessed from the device and can be forced with `?q=` or the gear
+  lamp count, the steps of the water's reflection march (`ssr`: 0 on `low`, 12 / 18 / 26 above — only water pixels pay
+  for it), device-pixel-ratio cap. The tier is guessed from the device and can be forced with `?q=` or the gear
   button (reloads at the same spot); a device far below its tier is stepped down once automatically.
 - **Materials are two texture arrays.** Every built thing is drawn by one shader with a layer index per vertex, so a
   whole house — stone, plaster, timber, tiles, glass, iron — is **one draw call**.

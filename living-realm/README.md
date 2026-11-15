@@ -12,8 +12,10 @@ a new place in this style: the plan, the buildings from parts, the materials, th
 # the worked example: 은여울 마을 (Silverford), an MMORPG-style village
 node living-realm/scripts/build.mjs  living-realm/examples/village        # → examples/village/index.html  (open it in a browser)
 node living-realm/scripts/check.mjs  living-realm/examples/village        # loads clean · can be walked · every state reads
+node living-realm/scripts/check.mjs  living-realm/examples/village --walk # only the walk, in one page load → out/walk.png (the plan from above)
 node living-realm/scripts/render.mjs living-realm/examples/village --views           # → out/<view>.jpg
 node living-realm/scripts/render.mjs living-realm/examples/village --sheet --scale .5   # every view × day, dusk, night, rain, snow
+node living-realm/scripts/render.mjs living-realm/examples/village --tour 12 --scale .5 # twelve stills along the tour, as its camera looks
 
 # a realm of your own
 node living-realm/scripts/new-realm.mjs my-realm            # from the starter (Tarn Cabin); write BRIEF.md first

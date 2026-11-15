@@ -142,7 +142,7 @@ void main(){
   vec3 col;
   if (isSky) { col = skyAt(-V, true); col += uWx2.w * vec3(0.55, 0.62, 0.9) * 2.5 * uCloud.x; }
   else {
-    vec4 g0 = texture(tG0, vUv), g1 = texture(tG1, vUv), g2 = texture(tG2, vUv);
+    vec4 g0 = textureLod(tG0, vUv, 0.0), g1 = textureLod(tG1, vUv, 0.0), g2 = textureLod(tG2, vUv, 0.0);   // explicit level: keeps this branch a branch
     vec3 albedo = g0.rgb * g0.rgb, N = nrmUnpack(g1.rgb); float rough = max(g1.a, 0.04), metal = g2.r, trans = g2.g, emis = g2.b * g2.b * 64.0, snow = g2.a;
     float ao = min(g0.a, ssao * sqrt(ssao)), NoV = max(dot(N, V), 1e-3);
     vec3 f0 = mix(vec3(0.04), albedo, metal), diff = albedo * (1.0 - metal);

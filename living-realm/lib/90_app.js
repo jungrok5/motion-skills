@@ -30,7 +30,7 @@
       fit(); if (!LR.RENDER) window.addEventListener('resize', fit);
       const P = LR.player, sp = LR.world.spawn;
       // put the eye somewhere by hand (stills): x, z, compass yaw°, pitch°, y
-      const place = (x, z, yawDeg, pitchDeg = 0, y) => { const gy = LR.land.h(x, z); cam.position.set(x, y === undefined || isNaN(y) ? gy + P.eye : y, z); cam.rotation.set((pitchDeg * Math.PI) / 180, (-yawDeg * Math.PI) / 180, 0); };
+      const place = (x, z, yawDeg, pitchDeg = 0, y) => { const gy = P.groundAt(x, z).y; /* the deck of a bridge or a pier, ice in winter, else the land */ cam.position.set(x, y === undefined || isNaN(y) ? gy + P.eye : y, z); cam.rotation.set((pitchDeg * Math.PI) / 180, (-yawDeg * Math.PI) / 180, 0); };
       let time = 0;
       const info = () => Object.assign({ gpu: G.name, tier: G.tierName, size: [LR.render.W, LR.render.H], inner: [LR.render.w, LR.render.h], tod: +LR.wx.tod.toFixed(2), wx: LR.wx.label(), worldTris: LR.world.stats.tris, solids: LR.world.solids.length, lightsAll: LR.world.lights.length }, LR.render.info);
       // still mode: realm.shot({ cam:[x,z,yaw,pitch,y], tod, weather, snow, wet, season, frames, t })

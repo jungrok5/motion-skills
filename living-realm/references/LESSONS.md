@@ -25,6 +25,10 @@
   face that looks up; walls stay bare, and the rain map keeps the ground under eaves and stalls clear.
 - The brook was swimming-pool cyan → the water's body colour was treated as a lit surface's → a far smaller
   back-scatter colour and much clearer water, so a shallow brook shows its bed and only the far water mirrors the sky.
+- The pond was a sheet of sky with trees standing round it unmirrored → the water marches its reflected ray through
+  the depth buffer (steps that grow with distance, a per-pixel start offset, five bisections at the hit) and takes the
+  lit scene there; the sky stays where nothing is hit. It is the one place screen-space reflection is cheap: only water
+  pixels run it, and what a pond mirrors — the far bank — is nearly always on screen.
 - Dirt paths looked strewn with broken glass → sparse, pale, sharp voronoi "pebbles" → smaller, fewer, close to the
   earth's own colour.
 - A thin dark line crossed the grass 12 m ahead → skirts hung under terrain chunk edges won single pixels along the
@@ -59,6 +63,17 @@
   normals at two scales and a slight tone variation.
 - The tour walked through the inn (it stood on the road to the bridge) → found by `check.mjs`, which walks the whole
   tour against every solid; the inn moved off the road.
+- With the inn fixed the check found the next block, then the next: it reported only the worst one, and the way-points
+  had been placed by reading coordinates. → `check.mjs --walk` now lists every blocked stretch in one page load and
+  draws `out/walk.png` (solids, water, ways, decks, the tour, the views, from above) with a close-up of each. The map
+  showed twelve at once: a market stall, the smithy, a log and a lamp on the way — and two real faults in the plan
+  that no still had shown: the farm's fence ran across its own road, and a house stood on the way to the pond.
+  Look at the walk map as soon as there is a tour, and again after every building or fence that moves.
+- Every view had been judged, the tour never: it is the first thing the page shows, and it is not a list of views.
+  → `render.mjs --tour 16` renders stills along it as its camera looks. One stretch walked up to the chapel porch and
+  turned round staring into the gap between two walls → the tour now passes the chapel across the green, where the
+  whole of it is in view, and never walks into a dead end to turn. (The same strip showed that stills taken on the
+  bridge stood on the land under it — still mode now stands on decks and ice like the walker.)
 
 **The engine**
 - `flat` is a reserved word in GLSL ES 3.00 (a local variable named `flat` failed every surface shader at once).
@@ -71,6 +86,11 @@
 - One "water level" for the whole land rejected every tree below the highest point of the brook → water level is asked
   per place (`LR.water.levelAt`), never kept as one number.
 - Far land rings cost sixty draw calls for a few thousand triangles → joined into one mesh per quarter of the compass.
+- What a CPU rasteriser cannot show has to be read in the shaders: Direct3D (Windows, through ANGLE) must unroll any
+  loop that samples with implicit derivatives, and flattens a branch that does. The shadow compare sat inside the
+  cascade loop, the tap loop and the 24-step fog march → it samples with an explicit level (`textureLod(…, 0.0)`), as
+  do the G-buffer reads inside the lighting branch and the baker's cavity loop. Rule: inside a loop, or a branch
+  that should stay a branch, never `texture()` — `textureLod` or `texelFetch`.
 
 **Working without a GPU**
 - A 720p still takes 10–60 s on a CPU rasteriser and far longer when several renders share the cores → bake materials

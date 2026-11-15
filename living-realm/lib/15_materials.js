@@ -60,7 +60,7 @@ in vec2 vUv; out vec4 o; uniform sampler2D tA;
 void main(){ vec4 a = texture(tA, vUv); o = vec4(sqrt(sat(a.rgb)), a.a); }`;
   const fragB2 = `//#include head
 in vec2 vUv; out vec4 o; uniform sampler2D tA, tB; uniform vec4 uP;   // texel, slope scale, ao strength, ao radius (texels)
-float H(vec2 uv){ return texture(tA, uv).a; }
+float H(vec2 uv){ return textureLod(tA, uv, 0.0).a; }
 void main(){
   float e = uP.x;
   float hx = H(vUv + vec2(e, 0.)) - H(vUv - vec2(e, 0.)), hy = H(vUv + vec2(0., e)) - H(vUv - vec2(0., e));

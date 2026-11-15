@@ -34,6 +34,8 @@ Front-lit noon is the flattest hour of any engine; open the page late in the aft
 - It is a stylised-realistic game look built from generated geometry — not scanned assets, not Lumen/Nanite. Up close,
   walls are flat planes with good normal maps; there is no displacement and no global illumination beyond sky, one
   bounce colour and screen-space occlusion. Foliage is painted sprays on cards: right at a distance, brushy at arm's length.
-- Reflections are the sky only (no screen-space or planar reflections): puddles and the pond mirror clouds, not houses.
+- Water mirrors what is on the screen above it (a ray marched through the depth buffer: trees on the far bank, a
+  bridge, a pier) and the sky elsewhere; what is off-screen or hidden behind something is not mirrored, and puddles
+  on the ground mirror the sky and the lamps' highlights only.
 - Lamps do not cast shadows; interiors do not exist (windows are lit glass).
 - No characters. A walker's body, villagers or animals would need a rig, clips and the body checks in CONTRIBUTING.md.

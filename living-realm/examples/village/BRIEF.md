@@ -28,7 +28,8 @@ but an MMORPG village; day and night, rain and winter changing; walk round it wi
   남문 the south gate in its palisade · 0, 100 — 방앗간 연못 the pond and pier · 62, 50 — 보리밭 농장 the farm · −56, 58 —
   숲속 빈터 a glade at the end of a path through the north-west woods · −110, −82.
 - Ways: the paved lane from the gate north to the square; paved arms west to the chapel and east to the mill; a path
-  over the bridge into the meadow; tracks to the farm, the pond and the windmill.
+  over the bridge into the meadow; tracks to the farm, the pond and the windmill; a footpath from the farm between
+  two houses to the lane (the farm's fences leave a gap for it and for the farm track).
 - Edges: palisade along the south; woods too thick to pass on every other side (the walker is held at 150 m).
 - Far country: forested hills from 200 m, bare ridges and snow caps beyond 800 m.
 
@@ -46,7 +47,7 @@ Everything here is the kit's stock (this example is where the stock came from). 
 ## The walk
 - Spawn 0.5, 88 facing north: the lane, washing and bunting across it, the inn's red roof closing the view.
 - Tour: lane → square → inn front → smithy → mill → back and over the bridge → the meadow oak → the path into the
-  woods to the glade and back → chapel → farm → gate.
+  woods to the glade and back → chapel → farm → the footpath to the lane → gate.
 - Views: gate, lane, square, inn, smithy, mill, bridge, meadow, chapel, farm, pond, woods, glade.
 
 ## Words

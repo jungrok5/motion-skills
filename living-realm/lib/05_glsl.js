@@ -150,7 +150,8 @@ float applyWeather(inout vec3 albedo, inout vec3 N, inout float rough, inout flo
   C.shadow = `
 uniform highp sampler2DShadow uShadowMap; uniform mat4 uShadowMat[3]; uniform vec4 uShadowInfo; uniform vec3 uShadowTexel;
 const vec2 SH_DISC[8] = vec2[8](vec2(-0.613, 0.354), vec2(0.221, -0.722), vec2(0.787, 0.290), vec2(-0.274, -0.268), vec2(-0.090, 0.887), vec2(0.596, -0.386), vec2(-0.880, -0.343), vec2(0.176, 0.213));
-float shadowTap(vec3 sc, float ci){ return texture(uShadowMap, vec3((sc.x + ci) / uShadowInfo.x, sc.y, sc.z)); }
+// explicit level 0: a compare with implicit derivatives inside the cascade / tap / fog-march loops makes Direct3D unroll them
+float shadowTap(vec3 sc, float ci){ return textureLod(uShadowMap, vec3((sc.x + ci) / uShadowInfo.x, sc.y, sc.z), 0.0); }
 // returns light visibility 0..1.  rnd: per-pixel noise 0..1.  taps: 1..8
 float shadowAt(vec3 wp, vec3 N, float NoL, float rnd, int taps){
   if (uShadowInfo.z < 0.01) return 1.0;

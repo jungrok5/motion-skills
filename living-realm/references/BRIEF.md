@@ -38,7 +38,7 @@ Score each 0–2; anything at 0 is fixed before the realm ships, and the sum sho
 | **Night** | black, or day with a blue filter | readable sky, lit windows and lamps doing the work, moon shadows |
 | **Rain** | grey day | dark wet stone, puddles in the low places with rings, mist closing the distance |
 | **Winter** | white paint | snow on what faces up and is open to the sky, dry under eaves, ice on still water, bare crowns |
-| **Walk** | the tour clips a wall or wades a pond | `check.mjs` passes; every view frames something |
+| **Walk** | the tour clips a wall or wades a pond; a fence or a house stands across a way | `check.mjs` passes; on the walk map (`--walk`) every way is open; every view frames something |
 
 Then walk it yourself in the still renderer: stand at the spawn point and turn right round (four stills, 90° apart).
 If any of the four shows the edge of the world, bare land, or a building's blank back, fix the plan.

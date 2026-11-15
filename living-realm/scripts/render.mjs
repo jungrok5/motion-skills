@@ -3,9 +3,10 @@
 //   node <skill>/scripts/render.mjs <realm-dir> --shot "cam=0,60,0,0;tod=16.6" [--shot "…;wx=rain"]   → out/shot-1.jpg …
 //   node <skill>/scripts/render.mjs <realm-dir> --views                    → out/<view>.jpg for each of the realm's views
 //   node <skill>/scripts/render.mjs <realm-dir> --sheet [--scale .5]       → out/sheet.jpg: every view × day, dusk, night, rain, snow
+//   node <skill>/scripts/render.mjs <realm-dir> --tour 12 [--scale .5]     → out/tour.jpg: 12 stills along the tour, as its camera sees them
 //   node <skill>/scripts/render.mjs <realm-dir> --film [--seconds 60] [--fps 30]   → out/film.mp4: the tour with the automatic round
 // A shot is `key=value;…`: cam=x,z,yaw°,pitch°[,y]  tod=hours  wx=clear|rain|snow|winter|autumn  season=0..1  snow=0..1  wet=0..1  frames=n  t=seconds
-// Options: --size 1280x720  --q "q=high&mat=1024" (page options)  --frames 12  --out out  --name <file stem>  --no-build  --png
+// Options: --state "tod=17;wx=rain" (for --tour)  --size 1280x720  --q "q=high&mat=1024" (page options)  --frames 12  --out out  --name <file stem>  --no-build  --png
 // Without a GPU WebGL runs on the CPU (SwiftShader): expect 10–40 s per 720p still.  On a machine with a GPU add --gpu.
 import { createRequire } from 'node:module';
 import { spawn, execSync } from 'node:child_process';
@@ -21,7 +22,7 @@ const has = (k) => args.includes('--' + k);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i > -1 && args[i + 1] !== undefined && !args[i + 1].startsWith('--') ? args[i + 1] : d; };
 const all = (k) => args.map((a, i) => (a === '--' + k ? args[i + 1] : null)).filter(Boolean);
 const dir = resolve(args[0] && !args[0].startsWith('--') ? args[0] : '.');
-if (!existsSync(join(dir, 'src'))) { console.error('usage: render.mjs <realm-dir> [--shot "cam=…;tod=…" | --views | --sheet | --film] [--size 1280x720] [--q "q=high"]'); process.exit(1); }
+if (!existsSync(join(dir, 'src'))) { console.error('usage: render.mjs <realm-dir> [--shot "cam=…;tod=…" | --views | --sheet | --tour 12 | --film] [--size 1280x720] [--q "q=high"]'); process.exit(1); }
 if (!has('no-build')) build(dir, { quiet: true });
 const outDir = resolve(dir, opt('out', 'out')); mkdirSync(outDir, { recursive: true });
 const [W, H] = opt('size', '1280x720').split('x').map(Number), scale = +opt('scale', '1'), w = Math.round(W * scale), h = Math.round(H * scale);
@@ -59,6 +60,13 @@ if (process.argv[1] && resolve(process.argv[1]) === new URL(import.meta.url).pat
       await page.evaluate(([fps]) => window.realm.filmStart(fps), [fps]);
       for (let i = 0, n = Math.round(fps * secs); i < n; i++) { const url = await page.evaluate(() => { window.realm.filmFrame(); return window.realm.canvas.toDataURL('image/jpeg', 0.95); }); save(join(tmp, String(i).padStart(6, '0') + '.jpg'), url); if (i % fps === 0) console.log(`  ${i}/${n} frames · ${((Date.now() - t00) / 1000).toFixed(0)} s`); }
       const out = join(outDir, opt('name', 'film') + '.mp4'); await ff(['-framerate', String(fps), '-i', join(tmp, '%06d.jpg'), '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', opt('crf', '17'), '-movflags', '+faststart', out]); if (!has('keep')) rmSync(tmp, { recursive: true, force: true }); console.log(out);
+    } else if (has('tour')) {
+      // what the page shows before anyone touches it: n stills at equal steps along the tour, each as the tour's camera looks
+      const n = +opt('tour', '12') || 12, o = parseShot(opt('state', '')), poses = await page.evaluate((n) => { const P = window.realm.LR.player; return P.tour ? Array.from({ length: n }, (_, i) => P.tourPose(((i + 0.5) / n) * P.tour.total)) : []; }, n);
+      if (!poses.length) throw new Error('the realm has no tour: add tour:[{ x, z, look:[x, z] }, …] to LR.start({ … })');
+      const tmp = join(outDir, '.tour'); rmSync(tmp, { recursive: true, force: true }); mkdirSync(tmp, { recursive: true }); let k = 0;
+      for (const p of poses) { const a = Date.now(), r = await shoot(page, Object.assign({ frames }, o, { cam: p.cam }), 'image/jpeg'); save(join(tmp, String(k++).padStart(3, '0') + '.jpg'), r.url); console.log(`  ${String(k).padStart(2)} · ${p.s.toFixed(0)} m · at ${p.cam[0].toFixed(1)}, ${p.cam[1].toFixed(1)} looking ${p.cam[2].toFixed(0)}°  ${((Date.now() - a) / 1000).toFixed(1)} s`); }
+      const cols = Math.min(4, n), out = join(outDir, opt('name', 'tour') + '.jpg'); await ff(['-framerate', '1', '-i', join(tmp, '%03d.jpg'), '-vf', `scale=${Math.round(1600 / cols)}:-1,tile=${cols}x${Math.ceil(n / cols)}:padding=4:color=black`, '-frames:v', '1', '-q:v', '3', out]); if (!has('keep')) rmSync(tmp, { recursive: true, force: true }); console.log(out, '(left to right, top to bottom: the walk from its start)');
     } else if (has('sheet')) {
       if (!base.views.length) throw new Error('the realm has no views: add views:[{ name, cam:[x,z,yaw,pitch] }] to LR.start({ … })');
       const tmp = join(outDir, '.sheet'); rmSync(tmp, { recursive: true, force: true }); mkdirSync(tmp, { recursive: true }); let k = 0; const names = (opt('only', '') || '').split(',').filter(Boolean), views = base.views.filter((v) => !names.length || names.includes(v.name));
@@ -66,7 +74,7 @@ if (process.argv[1] && resolve(process.argv[1]) === new URL(import.meta.url).pat
       const out = join(outDir, opt('name', 'sheet') + '.jpg'), tw = Math.round(1600 / STATES.length); await ff(['-framerate', '1', '-i', join(tmp, '%03d.jpg'), '-vf', `scale=${tw}:-1,tile=${STATES.length}x${views.length}:padding=4:color=black`, '-frames:v', '1', '-q:v', '3', out]); if (!has('keep')) rmSync(tmp, { recursive: true, force: true }); console.log(out, '(columns: ' + STATES.map((s) => s[0]).join(', ') + ')');
     } else {
       const shots = has('views') ? base.views.map((v) => ({ name: v.name, o: { cam: v.cam, tod: v.tod, weather: v.weather } })) : all('shot').map((s, i) => ({ name: opt('name', 'shot') + (all('shot').length > 1 ? '-' + (i + 1) : ''), o: parseShot(s) }));
-      if (!shots.length) throw new Error('nothing to render: --shot "cam=…", --views, --sheet or --film');
+      if (!shots.length) throw new Error('nothing to render: --shot "cam=…", --views, --sheet, --tour or --film');
       for (const s of shots) { const a = Date.now(), r = await shoot(page, Object.assign({ frames }, s.o)); const f = join(outDir, s.name + '.' + ext); save(f, r.url); console.log(f, `${((Date.now() - a) / 1000).toFixed(1)} s`, JSON.stringify({ calls: r.info.calls, allCalls: r.info.allCalls, tris: r.info.tris, lights: r.info.lights, tod: r.info.tod, wx: r.info.wx })); }
     }
   } finally { await browser.close(); }

@@ -58,6 +58,26 @@ void main(){
   // the sky in it, and the sun
   vec3 Rr = reflect(-V, N); Rr.y = abs(Rr.y);
   vec3 refl = envAt(Rr, 0.6);
+#if SSR_STEPS > 0
+  { // what stands over the water, mirrored: the reflected ray marched through the depth buffer (trees, houses, the bridge);
+    // steps grow with distance, a per-pixel offset turns the banding into grain the temporal resolve removes
+    vec3 rd = normalize(vec3(Rr.x, max(Rr.y, 0.03), Rr.z)); float jit = hash12(gl_FragCoord.xy + fract(uTime * 7.31) * 113.0);
+    float t = (0.22 + 0.02 * dist) * (1.0 + 0.35 * jit), tp = 0.0, hit = 0.0; vec3 q = vec3(0.0);
+    for (int i = 0; i < SSR_STEPS; i++) {
+      vec4 c = uViewProj * vec4(vWorld + rd * t, 1.0); if (c.w <= 0.0) break;
+      q = c.xyz / c.w * 0.5 + 0.5; if (q.x <= 0.0 || q.x >= 1.0 || q.y <= 0.0 || q.y >= 1.0 || q.z >= 1.0) break;
+      float zs = viewZ(textureLod(tDepth, q.xy, 0.0).r), zr = viewZ(q.z);
+      if (zr > zs && zr - zs < 0.8 + 0.55 * t) { hit = 1.0; break; }
+      tp = t; t *= SSR_GROW;
+    }
+    if (hit > 0.0) {
+      float a = tp, b = t;
+      for (int j = 0; j < 5; j++) { float m = 0.5 * (a + b); vec4 c = uViewProj * vec4(vWorld + rd * m, 1.0); vec3 q2 = c.xyz / c.w * 0.5 + 0.5; if (viewZ(q2.z) > viewZ(textureLod(tDepth, q2.xy, 0.0).r)) { b = m; q = q2; } else a = m; }
+      vec2 e = min(q.xy, 1.0 - q.xy); float k = smoothstep(0.0, 0.07, min(e.x, e.y)) * (1.0 - ice * 0.75);
+      refl = mix(refl, min(textureLod(tCopy, q.xy, 0.0).rgb, vec3(24.0)), k);
+    }
+  }
+#endif
   float fr = 0.02 + 0.98 * pow(1.0 - NoV, 5.0);
   vec3 H = normalize(uSunDir + V); float nh = sat(dot(N, H)), a2 = 0.0016 + 0.02 * uWx2.x, dd = nh * nh * (a2 - 1.0) + 1.0;
   vec3 glint = uSunCol * min(a2 / (dd * dd), 900.0) * 0.02 * sh * fr * 8.0;
@@ -97,7 +117,7 @@ void main(){
       }
     }
     const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(new Float32Array(P), 3)); g.setAttribute('flow', new T.BufferAttribute(new Float32Array(F), 3)); g.setIndex(I); g.computeBoundingSphere();
-    const R = LR.render, mat = LR.material({ vertexShader: VS, fragmentShader: FS, side: T.DoubleSide, depthTest: false, depthWrite: false, defines: { WAVES_LAYER: LR.mat.L('waves') },
+    const R = LR.render, mat = LR.material({ vertexShader: VS, fragmentShader: FS, side: T.DoubleSide, depthTest: false, depthWrite: false, defines: { WAVES_LAYER: LR.mat.L('waves'), SSR_STEPS: LR.off.has('ssr') ? 0 : LR.gpu.tier.ssr | 0, SSR_GROW: (1 + 5.8 / Math.max(LR.gpu.tier.ssr, 6)).toFixed(3) },
       uniforms: Object.assign(LR.uni(R.FRAME + ' uFogCol uFog uSunDir uSunCol uSkyAmb uGroundAmb uCloud uCloudOff uShadowMap uShadowMat uShadowInfo uShadowTexel uMatB uTopo uTopoRect'), LR.sky.U, { tDepth: R.U.tDepth, tCopy: R.U.tCopy, uEnvMips: R.U.uEnvMips, uWaterCol: { value: new T.Vector3(...WA.color) }, uClarity: { value: WA.clarity } }) });
     const m = new T.Mesh(g, mat); m.matrixAutoUpdate = false; m.frustumCulled = true; m.renderOrder = -10; m.name = 'water'; LR.world.forward.add(m); WA.mesh = m; WA.tris = I.length / 3;
   };

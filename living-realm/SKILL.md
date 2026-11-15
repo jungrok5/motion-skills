@@ -58,7 +58,7 @@ woods and mountains beyond). `starter/` (Tarn Cabin: a forester's cabin by a mou
 | `lib/45_props.js` | barrel, crate, sack, cart, haystack, woodpile, bench, lamp post, fences, dry-stone wall, rocks, log, stump, signpost, hanging signs, bunting and washing, trough, tombstone, scarecrow, pier, flower pot — batched per 48 m cell |
 | `lib/50_flora.js` · `51_flora_species.js` | trees and bushes from numbers (`LR.flora.species`): branch skeletons, bark tubes, leaf sprays painted in code, three levels of detail down to billboards baked from the tree itself; oak, beech, birch, spruce, pine, bush |
 | `lib/52_grass.js` | grass, meadow flowers, ferns and weeds placed in the vertex shader from the land's cover maps (nothing stored), in view-culled tiles |
-| `lib/55_water.js` | brooks, ponds and basins: refraction, depth colour, sky mirror, sun glint, foam, rain rings, ice |
+| `lib/55_water.js` | brooks, ponds and basins: refraction, depth colour, the far bank mirrored (screen-space) over a sky mirror, sun glint, foam, rain rings, ice |
 | `lib/60_fx.js` | rain and splashes, snow, chimney smoke, flames, lamp halos, fireflies, birds, falling leaves, motes in sunlight, fountain water — each one draw, all closed forms of time |
 | `lib/72_canopy.js` | crown cover from the planted trees: woods see less sky and hold their own haze, so the sun shows as shafts |
 | `lib/70_render.js` · `75_post.js` | the frame: world and land shaders, the rain map, staggered shadow cascades; occlusion, air, lighting, temporal resolve, bloom, adaptation, grade |
@@ -67,8 +67,8 @@ woods and mountains beyond). `starter/` (Tarn Cabin: a forester's cabin by a mou
 | `lib/88_hud.js` | the glass: hour and weather buttons, automatic round, quality, sound, place cards, touch stick, the frame-rate governor |
 | `lib/90_app.js` · `lib/shell.html` · `vendor/` | boot, loop, the render API · the page · three.js r170 (MIT, `vendor/LICENSE`) |
 | `scripts/build.mjs` | sources → one `index.html` |
-| `scripts/check.mjs` | loads clean · the world can be walked (spawn, views, the whole tour clear of walls and deep water) · every state reads · budgets |
-| `scripts/render.mjs` | stills (`--shot`, `--views`), every view in every state (`--sheet`), a film of the tour (`--film`) |
+| `scripts/check.mjs` | loads clean · the world can be walked (spawn, views, the whole tour clear of walls and deep water) · every state reads · budgets; `--walk` does only the walking part and draws the walk map (`out/walk.png`, close-ups of blocked stretches, `--at x,z` for any spot) |
+| `scripts/render.mjs` | stills (`--shot`, `--views`), every view in every state (`--sheet`), stills along the tour as its camera looks (`--tour 12`), a film of the tour (`--film`) |
 | `scripts/new-realm.mjs` | start a realm folder from the starter or `--from village` |
 | `starter/` | Tarn Cabin — the smallest realm that uses every part, steps ①–⑧ commented |
 | `examples/village/` | 「은여울 마을」 — `BRIEF.md`, `realm.json`, `src/` (land, words, town, details, plants, start) |
@@ -112,6 +112,11 @@ and wants a real GPU; without one (CI, containers) stills render on the CPU at 1
    scatter by the woods function with an `avoid` that keeps trunks off ways, water and walls — with a density that
    varies, so the canopy has gaps for the sun; flowers and ferns on the cover maps.
 6. **The walk.** Spawn, tour way-points (each with what that stretch looks at), 8–12 views, named places, sounds.
+   Then `check.mjs my-realm --walk` (one page load): it lists every stretch of the tour that is inside something and
+   draws `out/walk.png` — solids, water, ways, the tour and the views from above. Read the map: a fence across a
+   road or a house on a path is a fault in the plan, not in the tour. Then `render.mjs my-realm --tour 12 --scale .5`:
+   twelve stills along the tour as its camera looks — the page opens on this walk, so no stretch of it may stare at
+   a blank wall, a hedge or the ground.
 7. **Judge it against what was asked for, then verify.** Put the stills beside the reference (or the brief's own
    words) and list where they fall short, worst first — air and light before plants before surfaces — fix the top of
    the list, render again, repeat (`references/LESSONS.md` has the list this skill's own example went through).
@@ -139,13 +144,13 @@ and wants a real GPU; without one (CI, containers) stills render on the CPU at 1
 - **Budget** (`references/PERF.md`): one mesh per building, props through `LR.props.g`, trees through `LR.flora`,
   ground cover through the cover maps — never thousands of separate meshes. Keep a view under ~520 draw calls and
   ~4 M triangles on `medium`.
-- **Say where the look stops** (`references/LOOK.md`): generated geometry, sky-only reflections, no characters.
+- **Say where the look stops** (`references/LOOK.md`): generated geometry, reflections of what is on screen only, no characters.
 - **Never put `out/` or an MP4 in a repository.**
 
 ## Contract
 - `LR.start({ build(LR) (may be async), weather: { tod, weather }, tour: [{ x, z, look: [x, z], pull, pitch }], views:
   [{ name, cam: [x, z, compass yaw°, pitch°, y?] }], strings, materials(LR) })`; `window.READY` when the page can draw.
-- Page options: `?q=low|medium|high|ultra`, `?scale=`, `?mat=512`, `?off=ao,shadow,bloom,taa,grass,fx,water,audio`,
+- Page options: `?q=low|medium|high|ultra`, `?scale=`, `?mat=512`, `?off=ao,shadow,bloom,taa,grass,fx,water,ssr,audio`,
   `?tod=`, `?wx=clear|rain|snow|winter|autumn`, `?tour=0`, `?auto=0`, `?at=x,z,yaw`, `?stats=1`, `?hud=0`, `?view=mats`.
 - Still mode `?render=1&w=&h=`: `window.realm = { canvas, shot({ cam, tod, weather, season, snow, wet, frames, t }) →
   info, info(), place(), filmStart(fps), filmFrame(), LR }`. `info()` reports tier, sizes, draw calls, triangles, lamps.

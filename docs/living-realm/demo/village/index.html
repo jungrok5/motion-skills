@@ -43,7 +43,7 @@ const LR = { VERSION: '1.0', THREE };
   LR.q = (k, d) => (q.has(k) ? q.get(k) : d);
   LR.qn = (k, d) => (q.has(k) && q.get(k) !== '' && isFinite(+q.get(k)) ? +q.get(k) : d);
   LR.RENDER = q.get('render') === '1';                                   // still mode: no clock, frames on request
-  LR.off = new Set((q.get('off') || '').split(',').filter(Boolean));     // ?off=ao,vol,taa,bloom,grass,shadow,fx,water,audio
+  LR.off = new Set((q.get('off') || '').split(',').filter(Boolean));     // ?off=ao,vol,taa,bloom,grass,shadow,fx,water,ssr,audio
 
   LR.TAU = Math.PI * 2;
   LR.clamp = (x, a = 0, b = 1) => (x < a ? a : x > b ? b : x);
@@ -261,7 +261,8 @@ float applyWeather(inout vec3 albedo, inout vec3 N, inout float rough, inout flo
   C.shadow = `
 uniform highp sampler2DShadow uShadowMap; uniform mat4 uShadowMat[3]; uniform vec4 uShadowInfo; uniform vec3 uShadowTexel;
 const vec2 SH_DISC[8] = vec2[8](vec2(-0.613, 0.354), vec2(0.221, -0.722), vec2(0.787, 0.290), vec2(-0.274, -0.268), vec2(-0.090, 0.887), vec2(0.596, -0.386), vec2(-0.880, -0.343), vec2(0.176, 0.213));
-float shadowTap(vec3 sc, float ci){ return texture(uShadowMap, vec3((sc.x + ci) / uShadowInfo.x, sc.y, sc.z)); }
+// explicit level 0: a compare with implicit derivatives inside the cascade / tap / fog-march loops makes Direct3D unroll them
+float shadowTap(vec3 sc, float ci){ return textureLod(uShadowMap, vec3((sc.x + ci) / uShadowInfo.x, sc.y, sc.z), 0.0); }
 // returns light visibility 0..1.  rnd: per-pixel noise 0..1.  taps: 1..8
 float shadowAt(vec3 wp, vec3 N, float NoL, float rnd, int taps){
   if (uShadowInfo.z < 0.01) return 1.0;
@@ -315,11 +316,12 @@ float fogDepth(vec3 ro, vec3 rd, float t){
 {
   const T = THREE;
   // quality tiers.  scale = internal render scale range (the picture is temporally upsampled to the canvas).
+  // ssr = steps of the water's screen-space reflection march (0: the water mirrors the sky only).
   LR.TIERS = {
     low:    { name: 'low',    mat: 512,  aniso: 2, shadow: 1024, cascades: 2, shadowDist: 70,  shadowTaps: 4, ao: 0, vol: 8,  scaleMin: 0.4,  scaleMax: 0.8,  dprCap: 1.5,  grass: 0.4, grassDist: 40, treeNear: 22, treeMid: 70,  fx: 0.5, bloom: 4, pom: 0, ssr: 0, lights: 8,  topo: 1024, env: 64,  taaSharp: 0.5 },
-    medium: { name: 'medium', mat: 512,  aniso: 4, shadow: 2048, cascades: 3, shadowDist: 110, shadowTaps: 5, ao: 1, vol: 12, scaleMin: 0.5,  scaleMax: 0.85, dprCap: 1.25, grass: 0.7, grassDist: 55, treeNear: 30, treeMid: 95,  fx: 0.75, bloom: 5, pom: 0, ssr: 0, lights: 12, topo: 2048, env: 128, taaSharp: 0.5 },
-    high:   { name: 'high',   mat: 768,  aniso: 8, shadow: 2048, cascades: 3, shadowDist: 140, shadowTaps: 8, ao: 2, vol: 16, scaleMin: 0.6,  scaleMax: 1.0,  dprCap: 1.5,  grass: 1.0, grassDist: 70, treeNear: 38, treeMid: 120, fx: 1, bloom: 6, pom: 1, ssr: 1, lights: 16, topo: 2048, env: 128, taaSharp: 0.45 },
-    ultra:  { name: 'ultra',  mat: 1024, aniso: 16, shadow: 4096, cascades: 3, shadowDist: 170, shadowTaps: 8, ao: 3, vol: 24, scaleMin: 0.75, scaleMax: 1.0,  dprCap: 2,    grass: 1.4, grassDist: 85, treeNear: 48, treeMid: 150, fx: 1.25, bloom: 6, pom: 1, ssr: 1, lights: 24, topo: 2048, env: 256, taaSharp: 0.4 },
+    medium: { name: 'medium', mat: 512,  aniso: 4, shadow: 2048, cascades: 3, shadowDist: 110, shadowTaps: 5, ao: 1, vol: 12, scaleMin: 0.5,  scaleMax: 0.85, dprCap: 1.25, grass: 0.7, grassDist: 55, treeNear: 30, treeMid: 95,  fx: 0.75, bloom: 5, pom: 0, ssr: 12, lights: 12, topo: 2048, env: 128, taaSharp: 0.5 },
+    high:   { name: 'high',   mat: 768,  aniso: 8, shadow: 2048, cascades: 3, shadowDist: 140, shadowTaps: 8, ao: 2, vol: 16, scaleMin: 0.6,  scaleMax: 1.0,  dprCap: 1.5,  grass: 1.0, grassDist: 70, treeNear: 38, treeMid: 120, fx: 1, bloom: 6, pom: 1, ssr: 18, lights: 16, topo: 2048, env: 128, taaSharp: 0.45 },
+    ultra:  { name: 'ultra',  mat: 1024, aniso: 16, shadow: 4096, cascades: 3, shadowDist: 170, shadowTaps: 8, ao: 3, vol: 24, scaleMin: 0.75, scaleMax: 1.0,  dprCap: 2,    grass: 1.4, grassDist: 85, treeNear: 48, treeMid: 150, fx: 1.25, bloom: 6, pom: 1, ssr: 26, lights: 24, topo: 2048, env: 256, taaSharp: 0.4 },
   };
 
   LR.initGPU = (canvas) => {
@@ -463,7 +465,7 @@ in vec2 vUv; out vec4 o; uniform sampler2D tA;
 void main(){ vec4 a = texture(tA, vUv); o = vec4(sqrt(sat(a.rgb)), a.a); }`;
   const fragB2 = `//#include head
 in vec2 vUv; out vec4 o; uniform sampler2D tA, tB; uniform vec4 uP;   // texel, slope scale, ao strength, ao radius (texels)
-float H(vec2 uv){ return texture(tA, uv).a; }
+float H(vec2 uv){ return textureLod(tA, uv, 0.0).a; }
 void main(){
   float e = uP.x;
   float hx = H(vUv + vec2(e, 0.)) - H(vUv - vec2(e, 0.)), hy = H(vUv + vec2(0., e)) - H(vUv - vec2(0., e));
@@ -3319,6 +3321,26 @@ void main(){
   // the sky in it, and the sun
   vec3 Rr = reflect(-V, N); Rr.y = abs(Rr.y);
   vec3 refl = envAt(Rr, 0.6);
+#if SSR_STEPS > 0
+  { // what stands over the water, mirrored: the reflected ray marched through the depth buffer (trees, houses, the bridge);
+    // steps grow with distance, a per-pixel offset turns the banding into grain the temporal resolve removes
+    vec3 rd = normalize(vec3(Rr.x, max(Rr.y, 0.03), Rr.z)); float jit = hash12(gl_FragCoord.xy + fract(uTime * 7.31) * 113.0);
+    float t = (0.22 + 0.02 * dist) * (1.0 + 0.35 * jit), tp = 0.0, hit = 0.0; vec3 q = vec3(0.0);
+    for (int i = 0; i < SSR_STEPS; i++) {
+      vec4 c = uViewProj * vec4(vWorld + rd * t, 1.0); if (c.w <= 0.0) break;
+      q = c.xyz / c.w * 0.5 + 0.5; if (q.x <= 0.0 || q.x >= 1.0 || q.y <= 0.0 || q.y >= 1.0 || q.z >= 1.0) break;
+      float zs = viewZ(textureLod(tDepth, q.xy, 0.0).r), zr = viewZ(q.z);
+      if (zr > zs && zr - zs < 0.8 + 0.55 * t) { hit = 1.0; break; }
+      tp = t; t *= SSR_GROW;
+    }
+    if (hit > 0.0) {
+      float a = tp, b = t;
+      for (int j = 0; j < 5; j++) { float m = 0.5 * (a + b); vec4 c = uViewProj * vec4(vWorld + rd * m, 1.0); vec3 q2 = c.xyz / c.w * 0.5 + 0.5; if (viewZ(q2.z) > viewZ(textureLod(tDepth, q2.xy, 0.0).r)) { b = m; q = q2; } else a = m; }
+      vec2 e = min(q.xy, 1.0 - q.xy); float k = smoothstep(0.0, 0.07, min(e.x, e.y)) * (1.0 - ice * 0.75);
+      refl = mix(refl, min(textureLod(tCopy, q.xy, 0.0).rgb, vec3(24.0)), k);
+    }
+  }
+#endif
   float fr = 0.02 + 0.98 * pow(1.0 - NoV, 5.0);
   vec3 H = normalize(uSunDir + V); float nh = sat(dot(N, H)), a2 = 0.0016 + 0.02 * uWx2.x, dd = nh * nh * (a2 - 1.0) + 1.0;
   vec3 glint = uSunCol * min(a2 / (dd * dd), 900.0) * 0.02 * sh * fr * 8.0;
@@ -3358,7 +3380,7 @@ void main(){
       }
     }
     const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(new Float32Array(P), 3)); g.setAttribute('flow', new T.BufferAttribute(new Float32Array(F), 3)); g.setIndex(I); g.computeBoundingSphere();
-    const R = LR.render, mat = LR.material({ vertexShader: VS, fragmentShader: FS, side: T.DoubleSide, depthTest: false, depthWrite: false, defines: { WAVES_LAYER: LR.mat.L('waves') },
+    const R = LR.render, mat = LR.material({ vertexShader: VS, fragmentShader: FS, side: T.DoubleSide, depthTest: false, depthWrite: false, defines: { WAVES_LAYER: LR.mat.L('waves'), SSR_STEPS: LR.off.has('ssr') ? 0 : LR.gpu.tier.ssr | 0, SSR_GROW: (1 + 5.8 / Math.max(LR.gpu.tier.ssr, 6)).toFixed(3) },
       uniforms: Object.assign(LR.uni(R.FRAME + ' uFogCol uFog uSunDir uSunCol uSkyAmb uGroundAmb uCloud uCloudOff uShadowMap uShadowMat uShadowInfo uShadowTexel uMatB uTopo uTopoRect'), LR.sky.U, { tDepth: R.U.tDepth, tCopy: R.U.tCopy, uEnvMips: R.U.uEnvMips, uWaterCol: { value: new T.Vector3(...WA.color) }, uClarity: { value: WA.clarity } }) });
     const m = new T.Mesh(g, mat); m.matrixAutoUpdate = false; m.frustumCulled = true; m.renderOrder = -10; m.name = 'water'; LR.world.forward.add(m); WA.mesh = m; WA.tris = I.length / 3;
   };
@@ -3960,7 +3982,7 @@ void main(){
   vec3 col;
   if (isSky) { col = skyAt(-V, true); col += uWx2.w * vec3(0.55, 0.62, 0.9) * 2.5 * uCloud.x; }
   else {
-    vec4 g0 = texture(tG0, vUv), g1 = texture(tG1, vUv), g2 = texture(tG2, vUv);
+    vec4 g0 = textureLod(tG0, vUv, 0.0), g1 = textureLod(tG1, vUv, 0.0), g2 = textureLod(tG2, vUv, 0.0);   // explicit level: keeps this branch a branch
     vec3 albedo = g0.rgb * g0.rgb, N = nrmUnpack(g1.rgb); float rough = max(g1.a, 0.04), metal = g2.r, trans = g2.g, emis = g2.b * g2.b * 64.0, snow = g2.a;
     float ao = min(g0.a, ssao * sqrt(ssao)), NoV = max(dot(N, V), 1e-3);
     vec3 f0 = mix(vec3(0.04), albedo, metal), diff = albedo * (1.0 - metal);
@@ -4208,6 +4230,10 @@ void main(){
     const N = n * 24; let prev = at(0), total = 0; const tab = [[0, 0]]; for (let i = 1; i <= N; i++) { const q = at((i / N) * n); total += Math.hypot(q[0] - prev[0], q[1] - prev[1]); tab.push([total, (i / N) * n]); prev = q; }
     P.tour = { at, tab, total, pts }; };
   const tourU = (s) => { const t = P.tour.tab; s = ((s % P.tour.total) + P.tour.total) % P.tour.total; let lo = 0, hi = t.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (t[m][0] <= s) lo = m; else hi = m; } const f = (s - t[lo][0]) / (t[hi][0] - t[lo][0] || 1); return t[lo][1] + (t[hi][1] - t[lo][1]) * f; };
+  // where the tour stands and looks at s metres along it (undamped): for stills along the walk (render.mjs --tour)
+  P.tourPose = (s) => { const u = tourU(s), q = P.tour.at(u), a = P.tour.at(tourU(s + 7)), n = P.tour.pts.length, i = Math.floor(u) % n, wp = P.tour.pts[i], wn = P.tour.pts[(i + 1) % n], f = u - Math.floor(u);
+    let tx = a[0], tz = a[1]; const la = wp.look, lb = wn.look || la; if (la) { const k = wp.pull === undefined ? 0.55 : wp.pull; tx = LR.lerp(tx, la[0] + (lb[0] - la[0]) * f, k); tz = LR.lerp(tz, la[1] + (lb[1] - la[1]) * f, k); }
+    return { s, cam: [q[0], q[1], (Math.atan2(tx - q[0], -(tz - q[1])) * 180) / Math.PI, (((wp.pitch || 0) + 0.03) * 180) / Math.PI] }; };
   P.startTour = () => { if (!P.tour) return; P.touring = true; // join the tour at its nearest point
     let best = 0, bd = 1e9; for (let s = 0; s < P.tour.total; s += 2) { const q = P.tour.at(tourU(s)); const d = Math.hypot(q[0] - P.x, q[1] - P.z); if (d < bd) { bd = d; best = s; } } P.tourS = best; LR.emit('tour', true); };
   P.stopTour = () => { if (P.touring) { P.touring = false; LR.emit('tour', false); } };
@@ -4889,7 +4915,7 @@ void main(){
       fit(); if (!LR.RENDER) window.addEventListener('resize', fit);
       const P = LR.player, sp = LR.world.spawn;
       // put the eye somewhere by hand (stills): x, z, compass yaw°, pitch°, y
-      const place = (x, z, yawDeg, pitchDeg = 0, y) => { const gy = LR.land.h(x, z); cam.position.set(x, y === undefined || isNaN(y) ? gy + P.eye : y, z); cam.rotation.set((pitchDeg * Math.PI) / 180, (-yawDeg * Math.PI) / 180, 0); };
+      const place = (x, z, yawDeg, pitchDeg = 0, y) => { const gy = P.groundAt(x, z).y; /* the deck of a bridge or a pier, ice in winter, else the land */ cam.position.set(x, y === undefined || isNaN(y) ? gy + P.eye : y, z); cam.rotation.set((pitchDeg * Math.PI) / 180, (-yawDeg * Math.PI) / 180, 0); };
       let time = 0;
       const info = () => Object.assign({ gpu: G.name, tier: G.tierName, size: [LR.render.W, LR.render.H], inner: [LR.render.w, LR.render.h], tod: +LR.wx.tod.toFixed(2), wx: LR.wx.label(), worldTris: LR.world.stats.tris, solids: LR.world.solids.length, lightsAll: LR.world.lights.length }, LR.render.info);
       // still mode: realm.shot({ cam:[x,z,yaw,pitch,y], tod, weather, snow, wet, season, frames, t })
@@ -4976,12 +5002,13 @@ const V = {
       south: [[0, 14], [0.5, 34], [-0.5, 56], [0.8, 78], [0, 100], [0, 124], [3, 150]],
       north: [[1, -14], [2.4, -28], [3, -36]], beyond: [[3, -47], [2, -56], [-4, -66], [-14, -76], [-30, -84]],
       west: [[-14, -1], [-28, 1], [-42, 3], [-52, 5]], east: [[14, 2], [28, 6], [40, 12], [50, 16]],
-      farm: [[-28, 1], [-34, 18], [-40, 34], [-50, 46]], woods: [[-30, -84], [-52, -97], [-76, -103], [-97, -95], [-109, -84]], millhill: [[14, -3], [30, -16], [50, -38], [70, -54]], pond: [[40, 12], [46, 30], [50, 44]],
+      farm: [[-28, 1], [-34, 18], [-40, 34], [-50, 46]], woods: [[-30, -84], [-52, -97], [-76, -103], [-97, -95], [-109, -84]], millhill: [[14, -3], [30, -16], [50, -38], [70, -54]], pond: [[40, 12], [44.5, 19], [48, 25.5], [49.5, 33], [50, 44]],
+      alley: [[-1.5, 56], [-11, 55.2], [-21, 53], [-31, 45], [-39, 37]],
     };
     L.road(V.roads.south.slice(0, 5), 4.4, { kind: 'paved', wobble: 0.5, soft: 1.2 }); L.road(V.roads.south.slice(4), 4.2, { kind: 'dirt' });
     L.road(V.roads.north, 3.8, { kind: 'paved', wobble: 0.5 }); L.road(V.roads.beyond, 2.4, { kind: 'dirt', strength: 0.85 });
     L.road(V.roads.west, 3.6, { kind: 'paved', wobble: 0.6 }); L.road(V.roads.east, 3.6, { kind: 'paved', wobble: 0.6 });
-    L.road(V.roads.farm, 2.6, { kind: 'dirt' }); L.road(V.roads.woods, 1.7, { kind: 'dirt', strength: 0.8, wobble: 1.1 }); L.patch(V.glade.x, V.glade.z, V.glade.r - 3, { kind: 'dirt', strength: 0.5, wobble: 1.6 }); L.road(V.roads.millhill, 2.4, { kind: 'dirt', strength: 0.9 }); L.road(V.roads.pond, 2.2, { kind: 'dirt', strength: 0.85 });
+    L.road(V.roads.farm, 2.6, { kind: 'dirt' }); L.road(V.roads.woods, 1.7, { kind: 'dirt', strength: 0.8, wobble: 1.1 }); L.patch(V.glade.x, V.glade.z, V.glade.r - 3, { kind: 'dirt', strength: 0.5, wobble: 1.6 }); L.road(V.roads.millhill, 2.4, { kind: 'dirt', strength: 0.9 }); L.road(V.roads.pond, 2.2, { kind: 'dirt', strength: 0.85 }); L.road(V.roads.alley, 1.5, { kind: 'dirt', strength: 0.75, wobble: 0.8 });
     // what grows where
     L.paint('litter', (x, z) => LR.sm(0.3, 0.75, V.woods(x, z)) * (0.55 + 0.45 * LR.fbm(x * 0.06, z * 0.06, 3)), 'max');
     L.paint('grass', (x, z) => 1 - 0.55 * LR.sm(0.4, 0.9, V.woods(x, z)), 'min');
@@ -5100,7 +5127,7 @@ V.strings = {
     P.hangSign(-25 + 3.3, V.chandler.y + 3.4, 8.5 - 1.2, Math.PI / 2 + 0.06, { shape: P.SHAPES.key, paint: '#cfd4c8' }); P.crate(-20.8, 11.4); P.barrel(-20.9, 5.2);
     P.pot(19.2, 13.2, { size: 1.2 }); P.pot(21.6, 11.2, { size: 1.2 }); P.bench(16.6, 12.8, { yaw: -2.2 });
     // lamps along the ways
-    for (const [x, z, a] of [[3.2, 24, -1.6], [-3.2, 40, 1.6], [3.2, 56, -1.6], [-3.2, 72, 1.6], [3.4, 90, -1.6], [-20, 3.6, 0], [-36, -1.2, 3.1], [21, 6.6, 3.1], [34, 12.4, 3.1], [5.2, -22.5, -1.6], [5.6, -33.5, -1.6], [-48, 8.6, 0], [46, 18.6, 3.1]]) P.lampPost(x, z, { yaw: a });
+    for (const [x, z, a] of [[3.2, 24, -1.6], [-3.2, 40, 1.6], [3.2, 56, -1.6], [-3.2, 72, 1.6], [3.4, 90, -1.6], [-20, 3.6, 0], [-36, -1.2, 3.1], [21, 6.6, 3.1], [34, 12.4, 3.1], [5.2, -22.5, -1.6], [5.6, -33.5, -1.6], [-48, 8.6, 0], [42.4, 19.6, 1.6]]) P.lampPost(x, z, { yaw: a });
     // doorsteps: pots, piles, a barrel here and there
     for (const hh of V.houses) { const d = hh.door, c = [hh.toW(0, 0)[0], hh.toW(0, 0)[1]], ox = d[0] - c[0], oz = d[1] - c[1], l = Math.hypot(ox, oz) || 1, nx = ox / l, nz = oz / l, tx = -nz, tz = nx;
       if (r() < 0.8) P.pot(d[0] + nx * 0.55 + tx * 1.05, d[1] + nz * 0.55 + tz * 1.05, { size: 0.9 + r() * 0.4 }); if (r() < 0.45) P.barrel(d[0] + nx * 0.5 - tx * 1.5, d[1] + nz * 0.5 - tz * 1.5); if (r() < 0.4) P.bench(d[0] + nx * 0.55 - tx * 2.7, d[1] + nz * 0.55 - tz * 2.7, { yaw: Math.atan2(nx, nz) }); }
@@ -5111,7 +5138,9 @@ V.strings = {
       for (let i = 0; i < 16; i++) { const gx = c.x - 12 + (i % 4) * 2.5 + (r() - 0.5) * 0.7, gz = c.z + 8.5 + Math.floor(i / 4) * 2.1 + (r() - 0.5) * 0.5; if (gz < c.z + 15.5) P.tombstone(gx, gz, { yaw: Math.PI / 2 + (r() - 0.5) * 0.3 }); }
       P.bench(c.x + 9.5, c.z - 6, { yaw: -Math.PI / 2 }); P.lampPost(c.x + 12, c.z + 5.5, { yaw: 1.6 }); }
     // ── the farm ──
-    { const f = V.farm; P.fence([[f.x + 26, f.z - 26], [f.x + 4, f.z - 30], [f.x - 20, f.z - 24], [f.x - 30, f.z - 6]], { kind: 'rail', seed: 'f1' }); P.fence([[f.x + 26, f.z - 26], [f.x + 30, f.z - 4], [f.x + 22, f.z + 18]], { kind: 'rail', seed: 'f2' });
+    { const f = V.farm; // the fences leave a gap where the farm road and the footpath to the lane come through
+      P.fence([[f.x + 26, f.z - 26], [f.x + 18.8, f.z - 27.3]], { kind: 'rail', seed: 'f1' }); P.fence([[f.x + 14.6, f.z - 28.1], [f.x + 4, f.z - 30], [f.x - 20, f.z - 24], [f.x - 30, f.z - 6]], { kind: 'rail', seed: 'f1b' });
+      P.fence([[f.x + 26, f.z - 26], [f.x + 28.7, f.z - 11]], { kind: 'rail', seed: 'f2' }); P.fence([[f.x + 29.4, f.z - 7.4], [f.x + 30, f.z - 4], [f.x + 22, f.z + 18]], { kind: 'rail', seed: 'f2b' });
       P.fence([[f.x + 16, f.z + 2], [f.x + 22, f.z + 18], [f.x + 8, f.z + 26]], { kind: 'wattle', seed: 'f3' });
       P.haystack(f.x + 10, f.z - 16, { size: 1.7 }); P.haystack(f.x + 15, f.z - 12, { size: 1.3 }); P.haystack(f.x + 2, f.z - 20, { size: 1.5 }); P.scarecrow(f.x - 6, f.z - 14, { yaw: 0.6 }); P.cart(f.x + 6, f.z - 2, { yaw: -0.5 }); P.woodpile(f.x + 5.5, f.z + 9, { yaw: 0.5 }); P.trough(f.x + 12, f.z + 2, { yaw: 1.1 }); P.barrel(f.x + 3.6, f.z + 1.2); }
     // ── the pond: a pier, a boat-length of planks, reeds are the grass kit's ──
@@ -5121,7 +5150,7 @@ V.strings = {
     P.rocks(V.meadow.x + 14, V.meadow.z - 6, 5, 3.2, { size: 1.5 }); P.rocks(V.meadow.x - 22, V.meadow.z + 8, 4, 2.6, { size: 1.2 }); P.rocks(-16, -58, 3, 2, { size: 1.0 });
     for (let i = 0; i < 46; i++) { const a = r() * LR.TAU, d = 96 + r() * 46, x = Math.cos(a) * d, z = Math.sin(a) * d; if (V.woods(x, z) > 0.5 && LR.water.levelAt(x, z) < -1e8) { if (r() < 0.6) P.rocks(x, z, 2 + r.int(4), 2.4, { size: 0.8 + r() * 1.1 }); else if (r() < 0.5) P.log(x, z, { yaw: r() * 6.28, len: 2.4 + r() * 2.4 }); else P.stump(x, z, { r: 0.3 + r() * 0.25 }); } }
     { const g = V.glade; P.log(g.x + 2.5, g.z - 1.5, { yaw: 0.4, len: 4.6, r: 0.36 }); P.stump(g.x - 2.2, g.z + 1.6, { r: 0.45 }); P.stump(g.x - 3.4, g.z - 2.4, { r: 0.3 }); P.rocks(g.x + 0.5, g.z + 4.5, 4, 2.0, { size: 1.2 }); P.rocks(g.x - 5, g.z - 0.5, 3, 1.5, { size: 0.8 }); }
-    P.log(-18, -74, { yaw: 0.7, len: 4.2, r: 0.34 }); P.stump(V.meadow.x + 30, V.meadow.z + 12);
+    P.log(-22.5, -70.5, { yaw: 0.7, len: 4.2, r: 0.34 }); P.stump(V.meadow.x + 30, V.meadow.z + 12);
     W.fireflyAreas = [{ x: V.pond.x - 6, z: V.pond.z, r: 26 }, { x: V.meadow.x, z: V.meadow.z, r: 36 }, { x: 20, z: -40, r: 22 }, { x: -50, z: -46, r: 20 }];
     W.sounds.push({ x: V.pond.x, y: V.pond.level, z: V.pond.z, kind: 'frogs', r: 34, gain: 0.8 });
   };
@@ -5179,17 +5208,17 @@ LR.start({
     LR.world.spawn = { x: 0.5, z: 88, yaw: 0 };
   },
   // the walk: in at the gate, up the lane, round the square, to the smithy and the mill, over the bridge into the
-  // meadow and back, out to the chapel, home by the farm
+  // meadow and back, out to the chapel, home by the farm and the footpath between two houses
   tour: [
     { x: 0.5, z: 88, look: [0, 40] }, { x: 0.8, z: 64, look: [0, 20] }, { x: -0.2, z: 40, look: [0, 0], pull: 0.4 }, { x: 1.5, z: 19, look: [0, -4], pull: 0.5 },
-    { x: 9.5, z: 4.5, look: [-11, -24], pull: 0.6 }, { x: 5, z: -8.5, look: [-12, -25], pull: 0.6 }, { x: 16, z: -6.5, look: [29, -4], pull: 0.7 }, { x: 19.5, z: 3.5, look: [30, -5], pull: 0.6 },
-    { x: 30, z: 8.5, look: [56, 13], pull: 0.4 }, { x: 43, z: 13.5, look: [58, 13], pull: 0.7 }, { x: 46.5, z: 21, look: [62, 48], pull: 0.6 }, { x: 36, z: 10.5, look: [0, 0], pull: 0.3 },
-    { x: 17.5, z: -9.5, look: [3, -40], pull: 0.3 }, { x: 5, z: -24, look: [3, -41], pull: 0.3 }, { x: 3, z: -35, look: [3, -70], pull: 0.4 }, { x: 3, z: -47.5, look: [0, -86], pull: 0.5 },
-    { x: 0, z: -60, look: [1, -85], pull: 0.7 }, { x: -12, z: -72, look: [1, -85], pull: 0.7 }, { x: -30, z: -84, look: [-76, -103], pull: 0.3 }, { x: -52, z: -97, look: [-97, -95], pull: 0.3 }, { x: -76, z: -103, look: [-110, -82], pull: 0.4 }, { x: -97, z: -95.5, look: [-110, -82], pull: 0.6 }, { x: -107, z: -84, look: [-112, -80], pull: 0.5 },
+    { x: 3.6, z: 12, look: [-11, -24], pull: 0.6 }, { x: 6.2, z: 5.2, look: [-11, -24], pull: 0.6 }, { x: 5, z: -8.5, look: [-12, -25], pull: 0.6 }, { x: 16, z: -6.5, look: [29, -4], pull: 0.7 }, { x: 19.5, z: 3.5, look: [30, -5], pull: 0.6 },
+    { x: 30, z: 8.5, look: [56, 13], pull: 0.4 }, { x: 42.6, z: 14.5, look: [58, 13], pull: 0.7 }, { x: 47.2, z: 23.4, look: [62, 48], pull: 0.6 }, { x: 36, z: 10.5, look: [0, 0], pull: 0.3 },
+    { x: 23, z: 5.6, look: [0, 0], pull: 0.3 }, { x: 16, z: -4.5, look: [3, -40], pull: 0.3 }, { x: 2.6, z: -24, look: [3, -41], pull: 0.3 }, { x: 3, z: -35, look: [3, -70], pull: 0.4 }, { x: 3, z: -47.5, look: [0, -86], pull: 0.5 },
+    { x: 0, z: -60, look: [1, -85], pull: 0.7 }, { x: -12, z: -72, look: [1, -85], pull: 0.7 }, { x: -30, z: -84, look: [-76, -103], pull: 0.3 }, { x: -52, z: -97, look: [-97, -95], pull: 0.3 }, { x: -76, z: -103, look: [-110, -82], pull: 0.4 }, { x: -97, z: -95.5, look: [-110, -82], pull: 0.6 }, { x: -104.6, z: -87.2, look: [-112, -80], pull: 0.5 },
     { x: -98, z: -93.5, look: [-52, -97], pull: 0.3 }, { x: -76, z: -101.5, look: [-30, -84], pull: 0.3 }, { x: -52, z: -95.5, look: [-6, -80], pull: 0.4 }, { x: -30, z: -82.5, look: [1, -85], pull: 0.5 }, { x: -6, z: -64, look: [3, -41], pull: 0.3 }, { x: 2.6, z: -48, look: [0, -20], pull: 0.3 },
-    { x: 3, z: -35, look: [0, 0], pull: 0.3 }, { x: 1, z: -14.5, look: [-25, -8], pull: 0.4 }, { x: -7, z: -9, look: [-25, -8], pull: 0.4 }, { x: -16, z: -1, look: [-60, 6], pull: 0.3 }, { x: -34, z: 2, look: [-60, 6], pull: 0.6 },
-    { x: -46, z: 4.5, look: [-60, 6], pull: 0.8, pitch: 0.12 }, { x: -33, z: 16, look: [-56, 52], pull: 0.4 }, { x: -41, z: 36, look: [-58, 52], pull: 0.6 }, { x: -30, z: 44, look: [0, 60], pull: 0.2 },
-    { x: -19, z: 56, look: [0, 70], pull: 0.2 }, { x: -3.5, z: 70, look: [0, 100], pull: 0.4 },
+    { x: 3, z: -35, look: [0, 0], pull: 0.3 }, { x: 1, z: -14.5, look: [-25, -8], pull: 0.4 }, { x: -5.5, z: -7.5, look: [-25, -8], pull: 0.4 }, { x: -9, z: 0.6, look: [-40, 3], pull: 0.4 }, { x: -17, z: 1.6, look: [-60, 6], pull: 0.3 }, { x: -29.5, z: 2.6, look: [-60, 6], pull: 0.8, pitch: 0.1 },
+    { x: -32, z: 10.5, look: [-60, 6], pull: 0.75, pitch: 0.07 }, { x: -35, z: 20.5, look: [-56, 52], pull: 0.4 }, { x: -41, z: 36, look: [-58, 52], pull: 0.6 }, { x: -31, z: 45, look: [-11, 55], pull: 0.3 },
+    { x: -21, z: 53, look: [0, 56], pull: 0.3 }, { x: -11, z: 55.2, look: [2, 58], pull: 0.4 }, { x: -1.5, z: 59.5, look: [0, 100], pull: 0.4 }, { x: 0.3, z: 74, look: [0, 100], pull: 0.4 },
   ],
 });
 

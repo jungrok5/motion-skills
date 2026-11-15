@@ -46,12 +46,13 @@ const V = {
       south: [[0, 14], [0.5, 34], [-0.5, 56], [0.8, 78], [0, 100], [0, 124], [3, 150]],
       north: [[1, -14], [2.4, -28], [3, -36]], beyond: [[3, -47], [2, -56], [-4, -66], [-14, -76], [-30, -84]],
       west: [[-14, -1], [-28, 1], [-42, 3], [-52, 5]], east: [[14, 2], [28, 6], [40, 12], [50, 16]],
-      farm: [[-28, 1], [-34, 18], [-40, 34], [-50, 46]], woods: [[-30, -84], [-52, -97], [-76, -103], [-97, -95], [-109, -84]], millhill: [[14, -3], [30, -16], [50, -38], [70, -54]], pond: [[40, 12], [46, 30], [50, 44]],
+      farm: [[-28, 1], [-34, 18], [-40, 34], [-50, 46]], woods: [[-30, -84], [-52, -97], [-76, -103], [-97, -95], [-109, -84]], millhill: [[14, -3], [30, -16], [50, -38], [70, -54]], pond: [[40, 12], [44.5, 19], [48, 25.5], [49.5, 33], [50, 44]],
+      alley: [[-1.5, 56], [-11, 55.2], [-21, 53], [-31, 45], [-39, 37]],
     };
     L.road(V.roads.south.slice(0, 5), 4.4, { kind: 'paved', wobble: 0.5, soft: 1.2 }); L.road(V.roads.south.slice(4), 4.2, { kind: 'dirt' });
     L.road(V.roads.north, 3.8, { kind: 'paved', wobble: 0.5 }); L.road(V.roads.beyond, 2.4, { kind: 'dirt', strength: 0.85 });
     L.road(V.roads.west, 3.6, { kind: 'paved', wobble: 0.6 }); L.road(V.roads.east, 3.6, { kind: 'paved', wobble: 0.6 });
-    L.road(V.roads.farm, 2.6, { kind: 'dirt' }); L.road(V.roads.woods, 1.7, { kind: 'dirt', strength: 0.8, wobble: 1.1 }); L.patch(V.glade.x, V.glade.z, V.glade.r - 3, { kind: 'dirt', strength: 0.5, wobble: 1.6 }); L.road(V.roads.millhill, 2.4, { kind: 'dirt', strength: 0.9 }); L.road(V.roads.pond, 2.2, { kind: 'dirt', strength: 0.85 });
+    L.road(V.roads.farm, 2.6, { kind: 'dirt' }); L.road(V.roads.woods, 1.7, { kind: 'dirt', strength: 0.8, wobble: 1.1 }); L.patch(V.glade.x, V.glade.z, V.glade.r - 3, { kind: 'dirt', strength: 0.5, wobble: 1.6 }); L.road(V.roads.millhill, 2.4, { kind: 'dirt', strength: 0.9 }); L.road(V.roads.pond, 2.2, { kind: 'dirt', strength: 0.85 }); L.road(V.roads.alley, 1.5, { kind: 'dirt', strength: 0.75, wobble: 0.8 });
     // what grows where
     L.paint('litter', (x, z) => LR.sm(0.3, 0.75, V.woods(x, z)) * (0.55 + 0.45 * LR.fbm(x * 0.06, z * 0.06, 3)), 'max');
     L.paint('grass', (x, z) => 1 - 0.55 * LR.sm(0.4, 0.9, V.woods(x, z)), 'min');

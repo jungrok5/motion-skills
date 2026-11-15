@@ -34,13 +34,15 @@
       <dt>브리프</dt><dd>건축 양식 · 땅 · 식생 · 물, 좌표가 있는 배치도(가운데 · 랜드마크 5–9곳 · 길 · 가장자리), 상태별로 보여 줄 것, 새로 만들 것</dd>
       <dt>땅과 건물</dt><dd>높이 함수와 개울 · 연못 · 길, 부품(개구부가 뚫린 벽 · 창 · 문 · 지붕)으로 짓는 건물, GPU에서 굽는 재질</dd>
       <dt>살림과 식생</dt><dd>소품과 등불, 숫자로 기르는 나무, 지형 맵에서 자라는 풀 · 들꽃 · 고사리, 산책 경로와 지명</dd>
-      <dt>평가와 검사</dt><dd>스틸을 레퍼런스 옆에 놓고 부족한 점부터 고치는 반복, 산책 경로와 상태별 화면 자동 검사</dd>
+      <dt>평가와 검사</dt><dd>스틸을 레퍼런스 옆에 놓고 부족한 점부터 고치는 반복, 보행 지도와 산책 스트립, 산책 경로와 상태별 화면 자동 검사</dd>
       <dt>출력</dt><dd>걸어 다니는 HTML 한 파일, 시점별 스틸과 상태별 콘택트 시트, 산책 영상 MP4</dd>
     </dl>
     <pre><code>node living-realm/scripts/build.mjs  living-realm/examples/village   # index.html
 node living-realm/scripts/check.mjs  living-realm/examples/village   # check OK
+node living-realm/scripts/check.mjs  living-realm/examples/village --walk   # 보행 지도 out/walk.png
 node living-realm/scripts/render.mjs living-realm/examples/village --views
 node living-realm/scripts/render.mjs living-realm/examples/village --sheet --scale .5
+node living-realm/scripts/render.mjs living-realm/examples/village --tour 16 --scale .5
 
 node living-realm/scripts/new-realm.mjs ~/my-realm                   # 새 장소 폴더</code></pre>
     <p class="mute">조작: W A S D · 방향키로 걷기, Q E · ← →로 돌기, 마우스 · 터치로 둘러보기, Shift 달리기, 1–4 시간, 5–7 날씨, T 자동 순환, C 자동 산책, G 품질, P 성능 수치. 요구 사항: Node 18+, Playwright Chromium, ffmpeg. 페이지는 WebGL 2와 GPU가 필요합니다(GPU 없이도 스틸은 렌더되며 한 장에 10–60초). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/living-realm/SKILL.md">SKILL.md</a>에 있습니다.</p>
@@ -85,8 +87,8 @@ node living-realm/scripts/new-realm.mjs ~/my-realm                   # 새 장�
           <div class="cap"><span class="no">숲 · 18:00</span><b>빛이 드는 숲</b><span class="how">나무 덮개 지도와 숲 안개가 줄기 사이 빛줄기를 만듦</span></div></a>
         <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=-62,-100.5,82&amp;tod=7.7" target="_blank" rel="noopener"><img src="samples/path.jpg" alt="아침 숲길: 고사리 사이로 난 흙길이 안개 낀 초원과 홀로 선 참나무로 이어지는 장면" loading="lazy" width="640" height="360">
           <div class="cap"><span class="no">숲길 · 07:42</span><b>숲길에서 본 초원</b><span class="how">숲에서 초원으로 나가는 길. 고사리와 이끼 바위</span></div></a>
-        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=41,50,84&amp;tod=10.5" target="_blank" rel="noopener"><img src="samples/pond.jpg" alt="방앗간 연못: 잔교와 하늘이 비친 수면, 자갈 물가, 건너편 숲" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">연못 · 10:30</span><b>방앗간 연못</b><span class="how">하늘을 비추는 물, 해 반짝임, 밤에는 반딧불이</span></div></a>
+        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=41,50,84&amp;tod=10.5" target="_blank" rel="noopener"><img src="samples/pond.jpg" alt="방앗간 연못: 잔교와 건너편 나무가 비친 수면, 자갈 물가, 건너편 숲" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">연못 · 10:30</span><b>방앗간 연못</b><span class="how">건너편 나무와 잔교가 비치는 물(화면 공간 반사), 밤에는 반딧불이</span></div></a>
       </div>
     </div>
     <div class="group">
@@ -122,7 +124,7 @@ node living-realm/scripts/new-realm.mjs ~/my-realm                   # 새 장�
       </div>
     </div>
     <div class="group">
-      <h3>검증 <small>상태별 시트 · 재질 · 배치</small></h3>
+      <h3>검증 <small>상태별 시트 · 재질 · 배치 · 보행 지도 · 산책 스트립</small></h3>
       <p><code>check.mjs</code>가 산책 경로 전체를 벽 · 나무 · 깊은 물과 대조하고, 시점마다 낮 · 노을 · 밤 · 비 · 눈을 렌더해 비었는지 · 밤이 낮보다 어두운지 · 날씨가 화면을 바꾸는지 확인합니다.</p>
       <div class="grid">
         <a class="tile" data-tags="proof" href="samples/sheet-full.jpg" target="_blank" rel="noopener"><img src="samples/sheet.jpg" alt="시점 다섯 곳을 낮 · 노을 · 밤 · 비 · 눈 다섯 상태로 나란히 놓은 콘택트 시트" loading="lazy" width="640" height="360">
@@ -131,6 +133,10 @@ node living-realm/scripts/new-realm.mjs ~/my-realm                   # 새 장�
           <div class="cap"><span class="no">재질 시트</span><b>코드로 굽는 재질</b><span class="how">높이 · 색 · 거칠기 함수에서 노멀과 틈새 그늘까지</span></div></a>
         <a class="tile" data-tags="proof" href="samples/map-full.jpg" target="_blank" rel="noopener"><img src="samples/map.jpg" alt="위에서 내려다본 은여울 마을: 가운데 광장과 길, 북쪽을 지나 남동쪽 연못으로 흐르는 개울, 둘레의 숲" loading="lazy" width="640" height="360">
           <div class="cap"><span class="no">배치도</span><b>230 m 위에서 본 마을</b><span class="how">브리프의 좌표대로 놓였는지 확인하는 첫 스틸</span></div></a>
+        <a class="tile" data-tags="proof" href="samples/walk-full.jpg" target="_blank" rel="noopener"><img src="samples/walk.jpg" alt="보행 지도: 위에서 본 마을의 장애물(건물 · 울타리 · 나무 · 소품)과 물, 길, 그 위에 그린 자동 산책 경로와 시점 표시" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">보행 지도</span><b>걸을 수 있는지 한 장으로</b><span class="how">check.mjs --walk가 그림. 길을 막은 울타리와 집을 여기서 찾아 고침</span></div></a>
+        <a class="tile" data-tags="proof" href="samples/tour-full.jpg" target="_blank" rel="noopener"><img src="samples/tour.jpg" alt="자동 산책 경로를 따라 같은 간격으로 찍은 스틸 16장: 골목, 광장, 대장간, 연못 길, 다리, 초원, 숲, 빈터, 예배당, 농장" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">산책 스트립</span><b>자동 산책이 보여 주는 화면</b><span class="how">render.mjs --tour 16. 페이지가 처음 보여 주는 길을 구간마다 확인</span></div></a>
       </div>
     </div>
   </div>

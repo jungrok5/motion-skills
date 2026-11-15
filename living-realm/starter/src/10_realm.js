@@ -37,7 +37,7 @@ R.build = () => {
     LR.world.light({ x: fx, y: fy + 0.5, z: fz, r: 9, power: 5, color: [1, 0.5, 0.18], kind: 'fire', flicker: 0.3, day: 0.6 }); LR.world.fires.push({ x: fx, y: fy + 0.45, z: fz, size: 0.5 }); LR.world.sounds.push({ x: fx, y: fy, z: fz, kind: 'fire', r: 16, gain: 1 }); LR.world.solidCircle(fx, fz, 0.6); }
   // ⑥ what grows: named trees first, then scatter by the woods function; the far country as billboards
   const F = LR.flora, wet = (x, z) => LR.water.levelAt(x, z) > LR.land.h(x, z) - 0.4, way = (x, z) => LR.land.coverAt('dirt', x, z) > 0.2;
-  F.plant('pine', -18, -2, { scale: 1.2, hero: true }); F.plant('birch', 2, 12, { scale: 0.9 });
+  F.plant('pine', -18, -2, { scale: 1.2, hero: true }); F.plant('birch', 5.6, 13.6, { scale: 0.9 });
   F.scatter({ species: [['spruce', 4], ['pine', 2], ['birch', 1], ['bush', 1]], area: [-126, -126, 126, 126], spacing: 7.5, seed: 'tarn', density: (x, z) => R.woods(x, z) * 0.85, avoid: (x, z) => wet(x, z) || way(x, z) });
   F.far({ density: (x, z) => 0.7 * LR.sm(520, 400, LR.land.h(x, z)), inner: 124, outer: 600, spacing: 13, species: [['spruce', 3], ['pine', 2]] });
   // ⑦ what the walker is told, where they start, how far they may go

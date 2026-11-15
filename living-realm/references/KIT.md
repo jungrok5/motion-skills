@@ -115,5 +115,7 @@ the hour runs by itself. `LR.sky.lat` sets the latitude. Everything else follows
 
 ## The walk and the glass
 `LR.start({ tour: [{ x, z, look: [x, z], pull: 0..1, pitch }] })` — a closed loop walked at 1.55 m/s; `look` is what
-that stretch is about. `views` name the stills. `strings` replaces any of `LR.hud.t` (see `examples/village/src/15_words.js`
+that stretch is about (`pull` 0 looks down the way, 1 at `look`). The way is a smooth curve through the points, so it
+cuts corners: check it with `check.mjs --walk` (the walk map) and see it with `render.mjs --tour 12`. Pass a
+landmark at the distance where the whole of it is in frame; do not walk up to its door and turn round. `views` name the stills. `strings` replaces any of `LR.hud.t` (see `examples/village/src/15_words.js`
 for a full Korean set). `LR.player.walk / run / eye / radius` are the walker's numbers.
