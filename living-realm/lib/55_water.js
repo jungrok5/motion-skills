@@ -53,7 +53,7 @@ void main(){
   vec3 skyUp = envAt(vec3(0.0, 1.0, 0.0), uEnvMips - 1.0);
   vec3 body = uWaterCol * (uSunCol * (0.25 + 0.75 * sh) * max(uSunDir.y, 0.1) + skyUp * 1.6);
   float path = thick / max(NoV, 0.25);
-  vec3 ext = exp(-path * vec3(0.95, 0.40, 0.46) / max(uClarity, 0.05));
+  vec3 ext = exp(-path * vec3(0.95, 0.40, 0.46) / max(uClarity * (vFlow.z > 0.5 ? 1.0 : 0.36), 0.05));      // still water is murkier than a running brook
   vec3 col = under * ext + body * (1.0 - ext);
   // the sky in it, and the sun
   vec3 Rr = reflect(-V, N); Rr.y = abs(Rr.y);
@@ -63,8 +63,8 @@ void main(){
   vec3 glint = uSunCol * min(a2 / (dd * dd), 900.0) * 0.02 * sh * fr * 8.0;
   col = mix(col, refl, fr) + glint;
   // foam where it is shallow and where it runs
-  float fn = texture(uNoise, vWorld.xz * 0.9 + uTime * 0.03).r, shore = smoothstep(0.16, 0.0, thick - fn * 0.08) ;
-  float foam = shore * (0.35 + 0.65 * fn) * (vFlow.z > 0.5 ? 1.0 : 0.6);
+  float fn = texture(uNoise, vWorld.xz * 0.9 + uTime * 0.03).r, shore = smoothstep(vFlow.z > 0.5 ? 0.14 : 0.05, 0.0, thick - fn * 0.05) ;
+  float foam = shore * (0.35 + 0.65 * fn) * (vFlow.z > 0.5 ? 0.9 : 0.22);
   if (vFlow.z > 0.5) foam += smoothstep(0.62, 0.9, texture(uNoise, vec2(vFlow.x * 0.6, vFlow.y * 0.08 - uTime * 0.11)).g) * 0.25 * (1.0 - abs(vFlow.x));
   col = mix(col, (uSunCol * (0.3 + 0.7 * sh) * 0.3 + skyUp * 0.9), sat(foam) * 0.8 * (1.0 - ice));
   // ice: a pale sheet with cracks, snow lying on it

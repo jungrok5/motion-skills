@@ -45,7 +45,8 @@
 #lr-stick{position:absolute;width:112px;height:112px;margin:-56px 0 0 -56px;border-radius:50%;border:1px solid var(--line);background:rgba(14,15,18,.25);display:none;pointer-events:none}
 #lr-stick i{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(220,200,143,.4);border:1px solid var(--gold)}
 #lr-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;mix-blend-mode:screen}
-@media (max-width:720px){.pane button .lb{display:none}.pane button{padding:0 9px;height:40px;min-width:40px}#lr-place b{font-size:14px}#lr-num{top:66px;font-size:10px}#lr-top .wide{display:none}}
+@media (max-width:720px){.pane button .lb{display:none}.pane button{padding:0 8px;height:40px;min-width:38px}#lr-place b{font-size:14px}#lr-num{top:66px;font-size:10px}#lr-top .wide{display:none}}
+@media (max-width:430px){#lr-bar{gap:1px;padding:4px}#lr-bar button{padding:0 5px;min-width:34px;height:38px}#lr-bar .sep{margin:7px 1px}}
 @media (prefers-reduced-motion:reduce){.pane,.card,#lr-hint{transition:none}}`;
   const el = (tag, attrs = {}, html = '') => { const e = document.createElement(tag); for (const k in attrs) e.setAttribute(k, attrs[k]); e.innerHTML = html; return e; };
   H.init = () => {

@@ -33,8 +33,8 @@
   };
   // the automatic round: one loop through everything the realm can do, about three minutes
   W.round = [
-    { t: 0, tod: 16.6, weather: 'clear' }, { t: 14, tod: 19.9 }, { t: 30, tod: 23.0 }, { t: 48, tod: 6.1 }, { t: 62, tod: 11.0 },
-    { t: 70, weather: 'rain' }, { t: 104, weather: 'clear', tod: 15.0 }, { t: 122, weather: 'snow', tod: 13.0 }, { t: 160, tod: 17.2 }, { t: 172, tod: 21.5 }, { t: 186, weather: 'winter', tod: 9.5 }, { t: 200, weather: 'clear', tod: 15.5 }, { t: 222, end: true },
+    { t: 0, weather: 'clear' }, { t: 14, tod: 19.9 }, { t: 30, tod: 23.0 }, { t: 48, tod: 6.1 }, { t: 62, tod: 11.0 },
+    { t: 70, weather: 'rain' }, { t: 104, weather: 'clear', tod: 15.0 }, { t: 122, weather: 'snow', tod: 16.0 }, { t: 160, tod: 17.4 }, { t: 172, tod: 21.5 }, { t: 186, weather: 'winter', tod: 9.5 }, { t: 200, weather: 'clear', tod: 15.5 }, { t: 222, end: true },
   ];
   const ease = (cur, tgt, up, down, dt) => cur + (tgt - cur) * (1 - Math.exp(-dt / (tgt > cur ? up : down)));
   let nextBolt = 6, boltT = -9;
@@ -78,7 +78,7 @@
     if (LR.canopy) { const lowS = LR.sm(0.66, 0.14, sunY) * day; LR.render.U.uCanopy.value.set(LR.canopy.shade, LR.canopy.mist * (0.004 + 0.017 * lowS) * (1 - 0.75 * LR.sat(W.rain + W.snowfall)), 0, 0); }
     // exposure: what a camera would need for this light
     const ev = LR.lerp(LR.lerp(3.0, 2.1, LR.sm(-0.24, 0.0, sunY)), 0.40, LR.sm(-0.02, 0.42, sunY));
-    W.exposure = ev * (1 + 0.55 * LR.sat(W.cloud * 1.3 - 0.4) * day * (1 - 0.6 * W.snow)) * (1 - 0.32 * W.snow * day);
+    W.exposure = ev * (1 + 0.55 * LR.sat(W.cloud * 1.3 - 0.4) * day * (1 - 0.6 * W.snow)) * (1 - 0.32 * W.snow * day) * (1 + 0.6 * night * LR.sat(W.cloud * 1.5 - 0.6));
     const P = LR.render.U; P.uExposure.value = W.exposure; P.uKey.value = LR.lerp(0.19, 0.045, night) * (1 + 0.45 * W.snow * day);
     const golden = LR.sm(0.36, 0.05, sunY) * LR.sm(-0.12, 0.02, sunY) * (1 - LR.sat(W.cloud * 1.4 - 0.5));
     const sat = 1.04 - 0.14 * W.rain - 0.1 * W.snow * (1 - golden) - 0.06 * night, con = 1.06 + 0.03 * golden;

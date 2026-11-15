@@ -74,7 +74,7 @@
     g.box(x, y - 0.125, z, 0.2, 0.02, 0.2); g.poly([[x - 0.12, y + 0.12, z + 0.12], [x + 0.12, y + 0.12, z + 0.12], [x, y + 0.2, z]]); g.poly([[x + 0.12, y + 0.12, z - 0.12], [x - 0.12, y + 0.12, z - 0.12], [x, y + 0.2, z]]); g.poly([[x + 0.12, y + 0.12, z + 0.12], [x + 0.12, y + 0.12, z - 0.12], [x, y + 0.2, z]]); g.poly([[x - 0.12, y + 0.12, z - 0.12], [x - 0.12, y + 0.12, z + 0.12], [x, y + 0.2, z]]);
     g.mat('glass', { flags: F.GLOW | F.NOWEATHER, weight: 1 }); g.box(x, y, z, 0.15, 0.22, 0.15, { skip: '+y-y' });
     const p = new T.Vector3(x, y, z).applyMatrix4(g.m);
-    LR.world.light({ x: p.x, y: p.y, z: p.z, r: o.r || 11, power: o.power || 3.2, color: o.color || [1, 0.60, 0.26], kind: 'lamp', glow: 1 });
+    LR.world.light({ x: p.x, y: p.y, z: p.z, r: o.r || 12, power: o.power || 5, color: o.color || [1, 0.60, 0.26], kind: 'lamp', glow: 1 });
   };
 
   // ── walls ───────────────────────────────────────────────────────────────────────────────────────────────────────

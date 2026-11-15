@@ -172,7 +172,7 @@ void main(){
     col += envAt(normalize(Rr), rough * (uEnvMips - 1.5)) * envBRDF(f0, rough, NoV) * so * mix(1.0, skyVis, 0.85);
     // lamps, hearths, torches
     for (int i = 0; i < ${MAXL}; i++) { if (i >= uLightN) break; vec4 lp = uLightPos[i]; vec3 Lv = lp.xyz - wp; float d2 = dot(Lv, Lv), r2 = lp.w * lp.w; if (d2 > r2) continue;
-      float dl2 = sqrt(d2); vec3 Lp = Lv / dl2; float win = 1.0 - d2 * d2 / (r2 * r2); float att = win * win / (d2 + 0.5);
+      float dl2 = sqrt(d2); vec3 Lp = Lv / dl2; float win = 1.0 - d2 * d2 / (r2 * r2); float att = win * win / (d2 + 1.3);
       float nl = trans > 0.0 ? sat((dot(N, Lp) + 0.5) / 1.5) : sat(dot(N, Lp)); vec3 Hp = normalize(Lp + V);
       col += (diff * nl + specGGX(f0, a2, sat(dot(N, Hp)), NoV, nl, sat(dot(V, Hp))) * nl) * uLightCol[i].rgb * att * (0.35 + 0.65 * ao); }
     col += albedo * emis;

@@ -5,8 +5,8 @@ LR.start({
   // named viewpoints for stills and checks: cam = [x, z, compass yaw°, pitch°, (y)]
   views: [
     { name: 'gate', cam: [0.5, 92, 0, 3] }, { name: 'lane', cam: [0.5, 60, 0, 1] }, { name: 'square', cam: [3, 17.5, -6, 4] }, { name: 'inn', cam: [3.5, -6.5, -42, 9] },
-    { name: 'smithy', cam: [17.5, 1.5, 62, 3] }, { name: 'mill', cam: [43, 20.5, 62, 2] }, { name: 'bridge', cam: [12.5, -30.5, -34, 0] }, { name: 'meadow', cam: [-3, -62, -6, -3, undefined] },
-    { name: 'chapel', cam: [-40, 5, -87, 10] }, { name: 'farm', cam: [-36, 36, -128, 2] }, { name: 'pond', cam: [41, 50, 84, -3] }, { name: 'woods', cam: [-62, -100.5, 82, 5] }, { name: 'glade', cam: [-100, -93, -52, 6] },
+    { name: 'smithy', cam: [17.5, 1.5, 62, 3] }, { name: 'mill', cam: [57, 27, -4, 2] }, { name: 'bridge', cam: [12.5, -30.5, -34, 0] }, { name: 'meadow', cam: [-3, -62, -6, -3, undefined] },
+    { name: 'chapel', cam: [-86, 24, 58, 8] }, { name: 'farm', cam: [-36, 36, -128, 2] }, { name: 'pond', cam: [41, 50, 84, -3] }, { name: 'woods', cam: [-62, -100.5, 82, 5] }, { name: 'glade', cam: [-100, -93, -52, 6] },
   ],
   build: async (LR) => {
     V.land(); LR.progress(0.42, '집을 짓는 중'); await LR.breath();

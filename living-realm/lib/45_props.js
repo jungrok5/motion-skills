@@ -41,7 +41,7 @@
   P.lampPost = (x, z, o = {}) => { const g = begin(x, z, o), h = o.h || 3.3; ground(g);
     g.mat('ashlar', { soft: 0.2, scale: 0.5 }); g.box(0, 0.16, 0, 0.42, 0.34, 0.42, { skip: '-y' });
     g.mat('iron'); g.tube([[0, 0.3, 0], [0, h * 0.5, 0], [0, h, 0]], [0.06, 0.045, 0.035], { sides: 7 }); g.tube([[0, h - 0.05, 0], [0, h + 0.18, 0.2], [0, h + 0.1, 0.55]], 0.02, { sides: 5 }); g.tube([[0, h - 0.5, 0], [0, h - 0.1, 0.3], [0, h + 0.1, 0.5]], 0.012, { sides: 4 });
-    noAo(g); A.lamp(g, 0, h - 0.2, 0.55, { r: o.r || 13, power: o.power || 3.6 }); end(g, o); W.solidCircle(x, z, 0.24); };
+    noAo(g); A.lamp(g, 0, h - 0.2, 0.55, { r: o.r || 16, power: o.power || 9 }); end(g, o); W.solidCircle(x, z, 0.24); };
   // post-and-rail or wattle fence along [[x,z],…]
   P.fence = (pts, o = {}) => { const kind = o.kind || 'rail', h = o.h || 1.05, r = LR.rng(o.seed || 'f' + pts[0][0]);
     for (let s = 0; s < pts.length - 1; s++) { const a = pts[s], b = pts[s + 1], len = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.round(len / (kind === 'picket' ? 1.6 : 2.0))); const g = P.g((a[0] + b[0]) / 2, (a[1] + b[1]) / 2);

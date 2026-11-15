@@ -94,17 +94,17 @@ void main(){ float k = floor(seed.w), sz = fract(seed.w) * 2.0; vId = k + seed.x
       `in vec2 vQ; in float vId; out vec4 o; void main(){ float f = softDepth(0.25); vec2 q = vQ; float t = uTime * 1.6 + vId * 0.37;
   float n = texture(uNoise, vec2(q.x * 0.12 + vId * 0.21, q.y * 0.16 - t * 0.35)).r, n2 = texture(uNoise, vec2(q.x * 0.33 + 0.5, q.y * 0.3 - t * 0.6)).g;
   float y = q.y * 0.5 + 0.5, w = (1.0 - y) * 0.9 + 0.08; float shape = smoothstep(w, w * 0.25, abs(q.x + (n - 0.5) * 0.8 * y)) * smoothstep(1.0, 0.25, y + (n2 - 0.5) * 0.55) * smoothstep(0.0, 0.12, y);
-  vec3 c = mix(vec3(1.0, 0.16, 0.02), vec3(1.0, 0.72, 0.22), smoothstep(0.25, 0.9, shape * (1.0 - y * 0.6))) * shape * 9.0 * f; o = vec4(c, shape * 0.12); }`, { order: 3 });
+  vec3 c = mix(vec3(1.0, 0.16, 0.02), vec3(1.0, 0.72, 0.22), smoothstep(0.25, 0.9, shape * (1.0 - y * 0.6))) * shape * 4.2 * f; o = vec4(c, shape * 0.2); }`, { order: 3 });
     // ── halos round lamps and fires, growing with the mist ──
     const lg = W.lights.filter((l) => l.glow);
     if (lg.length) mk('glow', seeds(quad(), lg.length, 'glow', (a, i) => { const l = lg[i]; a[i * 4] = l.x; a[i * 4 + 1] = l.y; a[i * 4 + 2] = l.z; a[i * 4 + 3] = (l.kind === 'fire' ? 1 : 0) + Math.min(0.99, l.power / 10); }), P + `in vec3 position; in vec4 seed; out vec2 vQ; out float vA; uniform vec4 uFog;
 void main(){ float isFire = floor(seed.w), pw = fract(seed.w) * 10.0, on = isFire > 0.5 ? max(uWx2.z, 0.4) : uWx2.z;
   float d = length(seed.xyz - uCamPos), mist = sat(uFog.x * 110.0);
-  float s = (0.34 + 2.2 * mist + 0.008 * d) * (0.8 + 0.06 * pw);
+  float s = (0.34 + 1.5 * mist + 0.008 * d) * (0.8 + 0.03 * pw);
   vec3 r = vec3(viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0]), u = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
-  vec3 wp = seed.xyz + (r * position.x + u * position.y) * s; vA = on * (0.10 + 0.5 * mist) * pw * 0.2 * smoothstep(110.0, 60.0, d) * (0.92 + 0.08 * sin(uTime * 9.0 + seed.x * 5.0));
+  vec3 wp = seed.xyz + (r * position.x + u * position.y) * s; vA = on * (0.10 + 0.3 * mist) * min(pw, 5.0) * 0.16 * smoothstep(110.0, 60.0, d) * (0.92 + 0.08 * sin(uTime * 9.0 + seed.x * 5.0));
   vQ = position.xy; gl_Position = vA > 0.001 ? projectionMatrix * viewMatrix * vec4(wp, 1.0) : vec4(2.0, 2.0, 2.0, 1.0); }`,
-      `in vec2 vQ; in float vA; out vec4 o; void main(){ float f = softDepth(0.6); float r = length(vQ); float g = pow(max(1.0 - r, 0.0), 3.0) + 0.25 * pow(max(1.0 - r, 0.0), 1.2); o = vec4(vec3(1.0, 0.58, 0.24) * g * vA * f, 0.0); }`, { order: 4 });
+      `in vec2 vQ; in float vA; out vec4 o; void main(){ float f = softDepth(0.6); float r = length(vQ); float k = max(1.0 - r, 0.0); float g = k * k * k * k * 1.6 + 0.16 * k * k; o = vec4(vec3(1.0, 0.58, 0.24) * g * vA * f, 0.0); }`, { order: 4 });
     // ── fireflies on summer nights ──
     const ff = W.fireflyAreas || [];
     if (ff.length) { const NF = Math.round(260 * q); mk('fireflies', seeds(quad(), NF, 'ff', (a, i, r) => { const ar = ff[i % ff.length], an = r() * 6.28, d = Math.sqrt(r()) * ar.r; a[i * 4] = ar.x + Math.cos(an) * d; a[i * 4 + 1] = 0.3 + r() * 1.8; a[i * 4 + 2] = ar.z + Math.sin(an) * d; a[i * 4 + 3] = r() * 100; }), P + TOPO + `in vec3 position; in vec4 seed; out vec2 vQ; out float vA;

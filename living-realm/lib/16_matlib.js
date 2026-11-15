@@ -63,7 +63,7 @@ void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
   col = mix(paint, wood, worn * 0.85); col *= 0.3 + 0.7 * gap; rough = mix(0.62, 0.86, worn); metal = 0.;
 }` });
 
-  D('rubble', { moss: 0.9, tile: 2.0, bump: 0.045, por: 0.65, pom: 0.03, glsl: `
+  D('rubble', { moss: 0.9, tile: 2.0, bump: 0.032, ao: 0.5, por: 0.65, pom: 0.03, glsl: `
 void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
   vec2 w = uv + (vec2(fbm(uv, 4., 3), fbm(uv + 0.5, 4., 3)) - 0.5) * 0.06;
   vec4 c = vor(w * vec2(1., 1.), vec2(7., 10.), 0.82);
@@ -77,7 +77,7 @@ void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
   sc *= 0.80 + 0.38 * surfn; sc *= 1.0 - pit * 0.18;
   sc = mix(sc, sc * S(0.80, 0.82, 0.70), smoothstep(0.55, 0.8, fbm(uv + 0.9, 5., 4)) * 0.3);
   vec3 mortar = S(0.60, 0.57, 0.50) * (0.82 + 0.26 * fine);
-  col = mix(mortar, sc, stone); col *= 0.86 + 0.14 * smoothstep(0.0, 0.1, c.x);
+  col = mix(mortar, sc, stone); col *= 0.94 + 0.06 * smoothstep(0.0, 0.1, c.x);
   rough = mix(0.95, 0.82 + 0.1 * surfn, stone); metal = 0.;
 }` });
 
@@ -108,7 +108,7 @@ void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
 }` });
 
   // ── ground ─────────────────────────────────────────────────────────────────────────────────────────────────────
-  D('cobble', { tile: 2.4, bump: 0.04, por: 0.7, pud: 1, pom: 0.03, glsl: `
+  D('cobble', { tile: 2.4, bump: 0.032, ao: 0.5, por: 0.7, pud: 1, pom: 0.03, glsl: `
 void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
   vec2 w = uv + (vec2(fbm(uv, 5., 3), fbm(uv + 0.5, 5., 3)) - 0.5) * 0.03;
   vec4 c = vor(w, vec2(19., 19.), 0.64);
@@ -118,8 +118,8 @@ void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
   vec3 base = S(0.48, 0.46, 0.43);
   vec3 sc = base * (0.86 + 0.26 * c.y); sc = mix(sc, sc * vec3(1.06, 1.0, 0.91), smoothstep(0.6, 0.95, c.w)); sc = mix(sc, sc * vec3(0.94, 0.98, 1.04), smoothstep(0.4, 0.05, c.w) * 0.7);
   sc *= 0.86 + 0.24 * n; sc *= 1.0 + 0.10 * dome * smoothstep(0.4, 0.7, wear); sc *= 1.0 - pit * 0.12;
-  vec3 joint = S(0.36, 0.32, 0.26) * (0.8 + 0.4 * fine); joint = mix(joint, S(0.26, 0.32, 0.16), smoothstep(0.52, 0.76, fbm(uv + 0.2, 5., 4)) * 0.6);
-  col = mix(joint, sc, stone); col *= 0.90 + 0.10 * smoothstep(0.0, 0.14, c.x);
+  vec3 joint = S(0.43, 0.39, 0.32) * (0.8 + 0.4 * fine); joint = mix(joint, S(0.30, 0.35, 0.19), smoothstep(0.52, 0.76, fbm(uv + 0.2, 5., 4)) * 0.6);
+  col = mix(joint, sc, stone); col *= 0.95 + 0.05 * smoothstep(0.0, 0.14, c.x);
   rough = mix(0.95, 0.56 + 0.26 * n - dome * 0.10, stone); metal = 0.;
 }` });
 

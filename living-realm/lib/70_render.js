@@ -179,9 +179,9 @@ void main(){
   mat3 tbn = mat3(normalize(cross(vec3(0., 0., 1.), Ng)), normalize(cross(Ng, vec3(1., 0., 0.))), Ng);
   vec3 N = normalize(tbn * mix(gNt, vec3(0., 0., 1.), smoothstep(30.0, 140.0, dist) * 0.8));
   // under the water line the bed is dark and wet
-  float sub = smoothstep(0.62, 0.98, cv.b) * inner; gAlb *= mix(1.0, 0.6, sub); gRough = mix(gRough, 0.3, sub * 0.6);
+  float sub = smoothstep(0.62, 0.98, cv.b) * inner; gAlb *= mix(1.0, 0.45, sub); gRough = mix(gRough, 0.3, sub * 0.6);
   float ao = gAo; vec3 alb = gAlb; float rough = gRough;
-  float snow = applyWeather(alb, N, rough, ao, gH, vWorld, Ng, gPor, gPud * (1.0 - sub), mix(1.0, 0.75, vBiome.r) * (1.0 - sub));
+  float snow = applyWeather(alb, N, rough, ao, gH, vWorld, Ng, gPor, gPud * (1.0 - sub), mix(1.0, 0.75, vBiome.r) * (1.0 - smoothstep(0.9, 1.0, cv.b) * inner));     // snow lies on the shore, not on the bed
   writeG(alb, ao, N, rough, 0.0, 0.0, 0.0, snow);
 }`;
   R.matTerrain = () => {

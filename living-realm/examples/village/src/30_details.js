@@ -28,7 +28,7 @@
     for (const hh of V.houses) { const d = hh.door, c = [hh.toW(0, 0)[0], hh.toW(0, 0)[1]], ox = d[0] - c[0], oz = d[1] - c[1], l = Math.hypot(ox, oz) || 1, nx = ox / l, nz = oz / l, tx = -nz, tz = nx;
       if (r() < 0.8) P.pot(d[0] + nx * 0.55 + tx * 1.05, d[1] + nz * 0.55 + tz * 1.05, { size: 0.9 + r() * 0.4 }); if (r() < 0.45) P.barrel(d[0] + nx * 0.5 - tx * 1.5, d[1] + nz * 0.5 - tz * 1.5); if (r() < 0.4) P.bench(d[0] + nx * 0.55 - tx * 2.7, d[1] + nz * 0.55 - tz * 2.7, { yaw: Math.atan2(nx, nz) }); }
     P.woodpile(-17.5, 33.5, { yaw: 0 }); P.woodpile(17.2, 66.8, { yaw: 0.1 }); P.cart(-6.8, 87, { yaw: 1.3, load: 'barrels' }); P.barrel(-6.4, 86.6, { y: h(-6.4, 86.6) + 0.83, solid: false }); P.barrel(-7.3, 87.3, { y: h(-7.3, 87.3) + 0.83, solid: false });
-    P.signpost(2.6, 13.2, { arms: [[2.35, 0.1, 0.95], [2.05, 1.7, 0.85], [1.75, 3.3, 0.9]] }); P.signpost(4.8, -34.5, { arms: [[2.3, 3.2, 0.9], [2.0, 0.3, 0.8]] }); P.signpost(-3.4, 106, { arms: [[2.3, 3.14, 1.0]] });
+    P.signpost(7.4, 15.4, { arms: [[2.35, 0.1, 0.95], [2.05, 1.7, 0.85], [1.75, 3.3, 0.9]] }); P.signpost(4.8, -34.5, { arms: [[2.3, 3.2, 0.9], [2.0, 0.3, 0.8]] }); P.signpost(-3.4, 106, { arms: [[2.3, 3.14, 1.0]] });
     // ── the chapel yard: a wall, stones, a bench ──
     { const c = V.chapel; P.stoneWall([[c.x - 13, c.z - 14], [c.x + 3, c.z - 15.5], [c.x + 13, c.z - 11]]); P.stoneWall([[c.x - 13, c.z - 14], [c.x - 17, c.z + 2], [c.x - 14, c.z + 15]]); P.stoneWall([[c.x - 14, c.z + 15], [c.x + 2, c.z + 17], [c.x + 12, c.z + 13]]);
       for (let i = 0; i < 16; i++) { const gx = c.x - 12 + (i % 4) * 2.5 + (r() - 0.5) * 0.7, gz = c.z + 8.5 + Math.floor(i / 4) * 2.1 + (r() - 0.5) * 0.5; if (gz < c.z + 15.5) P.tombstone(gx, gz, { yaw: Math.PI / 2 + (r() - 0.5) * 0.3 }); }

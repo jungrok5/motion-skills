@@ -3,7 +3,7 @@
   const T = THREE;
   // quality tiers.  scale = internal render scale range (the picture is temporally upsampled to the canvas).
   LR.TIERS = {
-    low:    { name: 'low',    mat: 512,  aniso: 2, shadow: 1024, cascades: 2, shadowDist: 70,  shadowTaps: 4, ao: 0, vol: 8,  scaleMin: 0.5,  scaleMax: 1.0,  dprCap: 1,    grass: 0.4, grassDist: 40, treeNear: 22, treeMid: 70,  fx: 0.5, bloom: 4, pom: 0, ssr: 0, lights: 8,  topo: 1024, env: 64,  taaSharp: 0.5 },
+    low:    { name: 'low',    mat: 512,  aniso: 2, shadow: 1024, cascades: 2, shadowDist: 70,  shadowTaps: 4, ao: 0, vol: 8,  scaleMin: 0.4,  scaleMax: 0.8,  dprCap: 1.5,  grass: 0.4, grassDist: 40, treeNear: 22, treeMid: 70,  fx: 0.5, bloom: 4, pom: 0, ssr: 0, lights: 8,  topo: 1024, env: 64,  taaSharp: 0.5 },
     medium: { name: 'medium', mat: 512,  aniso: 4, shadow: 2048, cascades: 3, shadowDist: 110, shadowTaps: 5, ao: 1, vol: 12, scaleMin: 0.5,  scaleMax: 0.85, dprCap: 1.25, grass: 0.7, grassDist: 55, treeNear: 30, treeMid: 95,  fx: 0.75, bloom: 5, pom: 0, ssr: 0, lights: 12, topo: 2048, env: 128, taaSharp: 0.5 },
     high:   { name: 'high',   mat: 768,  aniso: 8, shadow: 2048, cascades: 3, shadowDist: 140, shadowTaps: 8, ao: 2, vol: 16, scaleMin: 0.6,  scaleMax: 1.0,  dprCap: 1.5,  grass: 1.0, grassDist: 70, treeNear: 38, treeMid: 120, fx: 1, bloom: 6, pom: 1, ssr: 1, lights: 16, topo: 2048, env: 128, taaSharp: 0.45 },
     ultra:  { name: 'ultra',  mat: 1024, aniso: 16, shadow: 4096, cascades: 3, shadowDist: 170, shadowTaps: 8, ao: 3, vol: 24, scaleMin: 0.75, scaleMax: 1.0,  dprCap: 2,    grass: 1.4, grassDist: 85, treeNear: 48, treeMid: 150, fx: 1.25, bloom: 6, pom: 1, ssr: 1, lights: 24, topo: 2048, env: 256, taaSharp: 0.4 },
