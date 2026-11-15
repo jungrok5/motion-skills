@@ -90,6 +90,14 @@ a 1080p frame takes ~1.7–2 s with 4 workers (30 s ≈ 30 min); half-size still
   template's waterfall or the example's crater because they exist; build what the place has.
 - **One style.** New props and stages use the same language: chunky Lambert primitives, the painted-map ground, soft light,
   pastel sky, the same label and title styles. No photo textures, no real map tiles, no bloom.
+- **Ready-made miniatures, when primitives sell a thing badly** (a fishing boat, a ferry, cows, a tram): a free Polyfork
+  low-poly GLB may stand in; its flat facets match the chunky look. Find one at `https://polyfork.dev/api/assets?q=…`.
+  Load it with three r170's own loader, `import { GLTFLoader } from 'https://unpkg.com/three@0.170.0/examples/jsm/loaders/GLTFLoader.js'`,
+  with a top-level `await` before `F.start()`. Give every mesh `K.mat('#ffffff', { vertexColors: true })` so the kit's light
+  falls on it, and place it with `K.group(stage, { at, s, rot }).add(model)`. Models come in real metres, so `s` brings them
+  to the toy size of the kit's own pieces (≈ 0.06–0.12 on the region map). Commercial use is fine; never copy a model's
+  `.mjs` source into the project, and a GLB kept in the project keeps its credit line (the asset's `credit` field). More:
+  https://github.com/jungrok5/motion-skills/blob/main/references/3D-MODELS.md
 - **Pure function of t.** No `Math.random`, `Date` or state between frames — `rng(seed)` at build time, `hash`, `noise`;
   animate in `S.onFrame(t => …)`. `check.mjs` catches violations.
 - **The slab shows its sides.** Opening elev 36–44°; the land stands above any sea slab; never hold a straight-down view

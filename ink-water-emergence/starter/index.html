@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>「狛獅子 · Guardian Lion」 — ink-water-emergence starter</title>
+<!-- "inkwater/" points at the skill's lib/. new-film.mjs copies lib/ into the project and rewrites this to "./lib/". -->
+<script type="importmap">{ "imports": { "inkwater/": "../lib/" } }</script>
+</head><body>
+<script type="module">
+// 「狛獅子 · Guardian Lion」 — a stone-guardian lion condenses out of ink drifting in still water, walks, and roars.
+// Brief: BRIEF.md. 7 shots, 13 s. Every number below is film time (cast tracks) or shot time (cameras, water).
+import { Film } from 'inkwater/film.js';
+import { quadruped } from 'inkwater/body.js';
+import { SCORE } from './score.js';
+
+// ---- cast: the body (proportions) and the look (ink densities); the track is continuous across every cut ----
+const shishi = quadruped({ name: 'shishi', mane: 1.05, tail: { n: 7, len: .95, up: 40, curl: 85, r: .05 } });
+const cast = {
+  shishi: {
+    body: shishi, seed: 7, at: [-.9, 0], heading: 0,
+    look: { sweep: { from: 'head', spread: .8 } },          // the head condenses first, the tail last
+    track: [
+      { t: 0, e: 0 }, { t: 1.2, e: .06 }, { t: 2.2, e: .2 }, { t: 4.2, e: .5 }, { t: 6.2, e: .68 }, { t: 7.6, e: .82 },
+      { t: 8.8, e: .93 }, { t: 10, e: 1 }, { t: 12.2, e: 1 }, { t: 13, e: .9 },
+      // walking: s = metres walked (paws plant and never slide); stops before the roar
+      { t: 0, s: 0 }, { t: 4.0, s: 0 }, { t: 4.6, s: .2 }, { t: 8.4, s: 1.95 }, { t: 9.0, s: 2.05 },
+      { t: 8.6, crouch: 0 }, { t: 9.0, crouch: .35 }, { t: 9.4, crouch: .15 },
+      { t: 0, look: .25 }, { t: 6, look: .15 }, { t: 8.8, look: .45 }, { t: 12, look: .5 },
+      { t: 8.9, roar: 0 }, { t: 9.35, roar: 1 }, { t: 10.4, roar: 1 }, { t: 10.9, roar: .25 }, { t: 11.6, roar: .9 }, { t: 12.5, roar: .2 },
+      { t: 0, tailSwish: .6 },
+    ],
+  },
+};
+
+// ---- shots: camera keys (orbit around `at`, or around a point of a creature with `on: 'name.head|body|withers|paws|tail'` + `off`), optional water keys; `fluid` keeps the flow alive at any emergence ----
+const shots = [
+  { name: 'wisps', d: 2.2, cam: [{ t: 0, on: 'shishi.body', off: [0, .1, 0], yaw: 12, pitch: 3, dist: 4.6, fov: 34 }, { t: 2.2, dist: 4.1 }],
+    water: [{ t: 0, fluid: 1 }] },
+  { name: 'face forms', d: 2.0, cam: [{ t: 0, on: 'shishi.head', off: [-.25, -.1, 0], yaw: 38, pitch: 4, dist: 2.3, fov: 34 }, { t: 2, yaw: 30, dist: 2.0 }],
+    water: [{ t: 0, fluid: .85 }] },
+  { name: 'pale body', d: 2.0, cam: [{ t: 0, on: 'shishi.body', yaw: 4, pitch: 2, dist: 4.0, fov: 34 }, { t: 2, dist: 3.7 }],
+    water: [{ t: 0, fluid: .7 }] },
+  { name: 'paws', d: 1.4, cam: [{ t: 0, on: 'shishi.paws', off: [-.3, .32, 0], yaw: 20, pitch: -3, dist: 2.5, fov: 32 }, { t: 1.4, yaw: 14 }] },
+  { name: 'ink darkens', d: 1.2, cam: [{ t: 0, on: 'shishi.withers', off: [.15, .1, 0], yaw: 62, pitch: -6, dist: 2.8, fov: 34 }, { t: 1.2, yaw: 56, dist: 2.6 }] },
+  { name: 'roar', d: 1.8, cam: [{ t: .9, on: 'shishi.head', off: [-.3, -.15, 0], yaw: 48, pitch: 2, dist: 2.2, fov: 34 }, { t: 1.8, dist: 1.9, yaw: 42 }],
+    water: [{ t: 0, fluid: .5 }, { t: .6, fluid: .9 }, { t: 1.8, fluid: .45 }] },
+  { name: 'guardian', d: 2.4, cam: [{ t: 0, on: 'shishi.body', off: [.1, .05, 0], yaw: 26, pitch: 4, dist: 3.9, fov: 34 }, { t: 2.4, yaw: 22, dist: 3.6 }],
+    water: [{ t: 0, fluid: .45 }, { t: 2.4, fluid: .8 }] },
+];
+
+Film({ W: 1920, H: 1080, fps: 24, seed: 3, cast, shots, score: SCORE }).start();
+</script>
+</body></html>

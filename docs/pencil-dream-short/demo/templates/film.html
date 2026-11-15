@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>pencil dream — template</title>
+<!-- A starting film: 16 s, one continuous take. It is an EXAMPLE of the style, not a form to fill in — rewrite it from BRIEF.md.
+     「Night Owl」: a doodled boy with a cobalt scarf (the one spot colour) wakes on the blank page → draws stars in the air with
+     his pencil → the ground, hills, houses and trees spread out from his feet as the camera pulls back → a few huge strokes
+     become a giant owl behind the hills; its eyes are coloured in → the stars lift and swirl around it → crayon night is laid
+     over the sky → the camera pulls back to the sketchbook on a desk.  The grammar (wake → mark → spread → giant → swarm →
+     wash → desk) is the style; the boy, the owl, the stars and the night are this topic's. -->
+<script type="importmap">{ "imports": { "pds/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+import * as S from 'pds/pencil.js';       // line, fill, part, stroke, hatch, curve, arc, ellipse, hand, keys, span, ease
+import * as K from 'pds/kit.js';          // flower, house, tree, hill, ground, fence, bird, cloud, wave, sun, star, glyph …
+import { Film } from 'pds/film.js';
+import { HERO, PAPER, SPOT, LEAD } from './cast.js';
+import { SCORE } from './score.js';
+const { keys, span, ease, lerp, curve, arc, ellipse, hand, line, fill, part } = S;
+
+const F = new Film({ dur: 16, paper: PAPER, spot: SPOT, lead: LEAD, score: SCORE, seed: 4 });
+const FEET = [380, 380];
+
+// ── the hero: the track is the acting (where he looks, how he feels); the pen arm is added by the film ──
+F.hero(HERO, t => ({
+  x: FEET[0], y: FEET[1], breathe: t, flow: t, penAng: 65,
+  yaw: keys([{ t: 0, v: 10 }, { t: 1.2, v: 25 }, { t: 2.4, v: -40 }, { t: 8.8, v: -40 }, { t: 9.6, v: -30 }], t, 'v'),
+  head: { yaw: keys([{ t: 0, v: 0 }, { t: 1.2, v: 25 }, { t: 2.2, v: -15 }, { t: 3, v: -5 }, { t: 9.4, v: 0 }, { t: 10, v: -15 }], t, 'v'),
+          pitch: keys([{ t: 0, v: 0 }, { t: 9.4, v: 0 }, { t: 10.2, v: 32 }, { t: 15, v: 32 }], t, 'v'), roll: keys([{ t: 0, v: 0 }, { t: 1.8, v: -8 }, { t: 2.6, v: 4 }, { t: 3.2, v: 0 }], t, 'v') },
+  look: keys([{ t: 0, v: [0, 0] }, { t: 1.2, v: [.8, -.4] }, { t: 2.2, v: [-.8, -.2] }, { t: 3, v: [-.7, .4] }, { t: 9.4, v: [0, 0] }, { t: 10, v: [-.4, -1] }], t, 'v'),
+  mouth: t < 2.6 ? 'flat' : t < 10.2 ? 'smile' : t < 11.6 ? 'o' : 'grin', brows: t < 1 ? 'flat' : t < 2.6 ? 'knit' : t < 10.2 ? 'soft' : 'up',
+}), { z: 10, drawOn: [.05, 1.3] });
+
+// ── 1 · wake: a thought mark drawn by itself ──
+F.beat('wake', 0);
+F.draw(K.glyph('?', 470, 125, 34), { at: 1.5, dur: .6, by: 'self', z: 12, out: [2.8, 3.2], name: '?' });
+
+// ── 2 · the first marks: he draws stars in the air around him (spot colour, coloured in) ──
+F.beat('first mark', 2.8);
+const myStars = [[300, 274, 14], [310, 247, 10], [286, 259, 8]];
+myStars.forEach(([x, y, r], i) => F.draw(K.star(x, y, r, { rot: i * .3, seed: 30 + i }), { at: 3.0 + i * 1.0, dur: .75, by: 'hero', z: 9, name: `star ${i + 1}` }));
+
+// ── 3 · the world spreads out from his feet ──
+F.beat('spread', 6);
+const world = [
+  { at: [380, 384], parts: K.ground(-1700, 1700, 384, { seed: 2, knock: true }) },
+  { at: [700, 330], parts: K.hill(150, 1700, 400, 130, { seed: 3, bumps: 2, rows: 2 }) },
+  { at: [-700, 300], parts: K.hill(-1700, 100, 410, 170, { seed: 4, bumps: 3, rows: 2 }) },
+  { at: [-520, 330], parts: K.house(-520, 330, 120, { seed: 5 }) },
+  { at: [-330, 360], parts: K.house(-330, 362, 90, { seed: 6, roof: .7 }) },
+  { at: [760, 300], parts: K.house(760, 300, 110, { seed: 7 }) },
+  { at: [600, 380], parts: K.tree(600, 384, 190, { kind: 'bare', seed: 8 }) },
+  { at: [-900, 280], parts: K.tree(-900, 290, 170, { kind: 'pine', seed: 9 }) },
+  { at: [-1050, 300], parts: K.tree(-1050, 305, 140, { kind: 'pine', seed: 10 }) },
+  { at: [1100, 300], parts: K.tree(1100, 300, 160, { kind: 'round', seed: 11 }) },
+  { at: [180, 380], parts: K.fence(60, 280, 384, 34, { seed: 12 }) },
+  { at: [1350, 330], parts: K.house(1350, 332, 100, { seed: 13 }) },
+];
+F.spread(world, { at: 5.6, origin: FEET, speed: 520, rate: 1600, name: 'world' });
+F.draw(K.sun(1050, -650, 120, { rays: false, seed: 14 }), { at: 8.0, dur: 1.0, by: 'self', z: -6, name: 'moon' });
+
+// ── 4 · the giant: a few huge strokes become an owl behind the hills (designed for THIS topic) ──
+F.beat('giant', 8.6);
+const O = [-260, -260], OS = 1;   // owl centre, scale
+const eyeOpen = t => span(t, 11.0, 11.6) * (1 - .9 * S.clamp(1 - Math.abs(t - 13.4) / .12));
+const owl = t => {
+  const [x, y] = O, s = OS, o = eyeOpen(t), L = (pts, w = 3.2, sd = 1, pass = 2) => line(hand(pts, 3, sd, 8), { w, passes: pass });
+  const body = curve([[x - 470, y + 700], [x - 560, y + 200], [x - 450, y - 300], [x - 230, y - 470], [x, y - 500], [x + 230, y - 470], [x + 450, y - 300], [x + 560, y + 200], [x + 470, y + 700]], 10);
+  const parts = [part([L(body, 4, 1)], [...body, [x + 470, y + 900], [x - 470, y + 900]])];
+  const tufts = [-1, 1].map(s2 => L(curve([[x + s2 * 330, y - 380], [x + s2 * 420, y - 640], [x + s2 * 210, y - 470]], 6), 3.4, 3 + s2));
+  const discs = [-1, 1].map(s2 => L(ellipse(x + s2 * 190, y - 210, 200, 190, 0, 30), 2.6, 5 + s2));
+  const ops = [...tufts, ...discs];
+  for (const s2 of [-1, 1]) {
+    const c = [x + s2 * 190, y - 200], rr = 92, lid = 1 - o;
+    ops.push(L(ellipse(c[0], c[1], rr, rr * (1 - .92 * lid), 0, 22), 2.6, 9 + s2, 1));
+    ops.push(fill(ellipse(c[0], c[1] + rr * .05, rr * .72, rr * .72 * Math.max(.06, 1 - lid), 0, 18), { gap: 9, a: .9 }));
+    ops.push(fill(ellipse(c[0] - s2 * 10, c[1] + 6, rr * .3, rr * .3 * Math.max(.05, 1 - lid), 0, 12), { col: 'lead', gap: 6, a: .9, edge: false }));
+  }
+  ops.push(L([[x - 40, y - 90], [x, y - 10], [x + 40, y - 90], [x, y - 120], [x - 40, y - 90]], 2.6, 15));
+  for (const s2 of [-1, 1]) ops.push(L(curve([[x + s2 * 420, y - 60], [x + s2 * 500, y + 260], [x + s2 * 400, y + 560]], 8), 3, 20 + s2));
+  for (let r = 0; r < 3; r++) for (let i = -2; i <= 2; i++) { const cx = x + i * 110 + (r % 2) * 55, cy = y + 140 + r * 120; ops.push(L(arc(cx, cy, 50, 34, .3, Math.PI - .3, 8), 1.8, 30 + r * 7 + i, 1)); }
+  parts.push(part(ops));
+  return parts;
+};
+F.draw(owl, { at: 8.7, dur: 2.2, by: 'self', z: -5, name: 'owl', move: t => ({ y: -Math.max(0, Math.sin((t - 11) * 1.6)) * 6, s: 1 + .006 * Math.sin(t * 1.4), ox: O[0], oy: O[1] + 600 }) });
+
+// ── 5 · the swarm: the stars lift and circle the owl ──
+F.beat('swarm', 11.8);
+F.swarm({ n: 70, at: 11.8, spawn: 1.6, from: [...myStars.map(([x, y]) => [x, y]), [-500, 300], [700, 280]], centre: t => [O[0], O[1] - 120], radius: [820, 520], spin: .55, rise: 8, size: 38, shape: 'star', flap: .6, zBack: -5.5, zFront: 14, seed: 3 });
+
+// ── 6 · the wash and the desk ──
+F.beat('wash', 12.6);
+F.wash([
+  { poly: [[-1800, -1200], [1800, -1200], [1800, 300], [1100, 250], [700, 300], [0, 340], [-700, 260], [-1800, 320]], at: 12.6, dur: 1.8, gap: 22, angle: -.3, a: .6, reach: 3400,
+    grad: { c: [1050, -650], r: [120, 2600], stops: [[0, 'rgba(255,255,255,0)'], [.08, '#bcd0f2'], [.35, '#5d83cf'], [1, '#203f8a']] } },
+]);
+F.beat('desk', 13.6);
+F.desk({ wood: '#5a3b28', cover: '#26303f', light: [-2400, -1900], pencils: [{ x: 1250, y: 1330, ang: -8, len: 1500, col: SPOT }, { x: -2150, y: 300, ang: 82, len: 1300, col: '#3b3b3f', lead: '#232326' }], eraser: { x: 2150, y: -800, ang: 20, col: '#efe6d6', sleeve: '#2f63c4' } });
+
+// ── the camera: close on his face → pull back as the world spreads → the whole spread → the desk ──
+F.camera([
+  { t: 0, x: 395, y: 222, w: 430, r: 0 }, { t: 2.8, x: 360, y: 225, w: 480 },
+  { t: 5.5, x: 350, y: 215, w: 640 }, { t: 8.6, x: 120, y: 60, w: 2300 }, { t: 11.6, x: -60, y: -140, w: 3300 },
+  { t: 13.6, x: 0, y: -40, w: 3700, r: 0 }, { t: 16, x: 0, y: 40, w: 6400, r: -.035 },
+]);
+
+// ── the film's own rules ──
+F.check('the owl stays behind the hills and the hero', () => true);
+F.start();
+</script>
+</body>
+</html>

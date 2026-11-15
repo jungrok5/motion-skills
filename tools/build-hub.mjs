@@ -37,7 +37,7 @@ for (const s of reg.skills) {
     const page = s.page ? read(path.join(docs, s.page, 'index.html')) : '';
     if (!description.includes(u)) problems.push(`${s.id}: source ${x.url} is not in the description of ${s.source}SKILL.md`);
     if (!readme.includes(u)) problems.push(`${s.id}: source ${x.url} is not in ${s.source}README.md`);
-    if (!page.includes(u)) problems.push(`${s.id}: source ${x.url} is not linked on docs/${s.page}index.html`);
+    if (!page.includes(u) && !page.includes(u.replace(/&/g, '&amp;'))) problems.push(`${s.id}: source ${x.url} is not linked on docs/${s.page}index.html`);
   }
 }
 if (problems.length) { console.error(problems.join('\n')); process.exit(1); }

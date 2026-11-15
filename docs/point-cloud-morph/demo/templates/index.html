@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ridgeline — point-cloud-morph template</title>
+<!-- the template: 3 forms, 14 s. A style example (a wind farm studio) — replace the forms, copy and camera with the topic's. -->
+<script type="importmap">{ "imports": { "three": "../lib/three.module.min.js", "pcm/": "../lib/" } }</script>
+</head>
+<body>
+<canvas id="frame"></canvas>
+<script type="module">
+import { Cloud } from 'pcm/cloud.js';
+
+// ---- 1. the film: point budget, palette (one ink, one accent), site chrome
+const F = new Cloud({
+  count: 140000, seed: 4, accent: '#8fd0a8', ink: '#eae8e1',
+  hud: { brand: 'RIDGELINE', nav: ['TURBINES', 'SITES', 'LIVE YIELD', 'FIELD LOG'], tabs: ['TURBINE', 'RIDGE', 'CO-OP'] },
+});
+
+// ---- 2. forms: what the points become (references/FORMS.md). Edges carry the shape; faces are faint specks.
+F.form('turbine', (b) => {
+  b.lathe([[2.4, 0], [2.0, 30], [1.4, 62]], { density: 0.05, edges: 0.6 }, { meridians: 6 });   // the tower
+  b.box([0, 61.5, 1.5], [4, 3.6, 10], { faces: 1.2 });                                          // the nacelle
+  for (let k = 0; k < 3; k++) {                                                                  // three blades, tagged so they turn
+    const a = (k * 120 + 15) * Math.PI / 180, dir = [Math.cos(a), Math.sin(a), 0], side = [-dir[1], dir[0], 0];
+    b.surface((u, v) => { const r = 1.5 + u * 36, w = 2.2 * (1 - u * 0.8) * (v - 0.5); return [dir[0] * r + side[0] * w, 63.3 + dir[1] * r + side[1] * w, 7.2 + (v - 0.5) * 0.6]; }, { tag: 'rotor', density: 0.25, lines: [10, 1], lineDensity: 0.7 });
+  }
+  b.sphere([0, 63.3, 7.2], 1.6, { tag: 'rotor', density: 0.6 });
+  b.dust({ c: [0, 0, 0], size: [70, 0.4, 70] }, { n: 9000 });                                   // ground specks
+  b.circle([0, 0, 0], 9, { w: 0.6 });                                                            // the pad
+  b.blob([0, 61.5, 4], 2.2, { tint: 1, n: 2500 });                                              // hot spot: the gearbox
+}, { motion: [{ tag: 'rotor', pivot: [0, 63.3, 7.2], axis: [0, 0, 1], spin: 36 }] });
+
+const ridge = (x, z) => 14 * Math.exp(-((z + x * 0.25) ** 2) / 260) + 3 * Math.sin(x * 0.09) * Math.cos(z * 0.07);
+F.form('ridge', (b) => {
+  b.terrain({ size: [120, 90], res: [90, 60], height: ridge }, { w: 0.8, density: 0.7 });
+  for (const x of [-42, -21, 0, 21, 42]) { const z = -x * 0.25, y = ridge(x, z); b.line([x, y, z], [x, y + 16, z], { w: 1.2 }); b.circle([x, y + 16, z], 1.2, { tint: 1 }, { axis: 'z' }); }
+  b.blob([21, ridge(21, -5) + 16, -5], 3, { tint: 1, n: 3000 });
+}, { match: 'space' });
+
+F.form('wordmark', (b) => {
+  b.text('RIDGELINE', { at: [0, 4, 0], size: 9, depth: 2 }, { edges: 1 });
+  b.line([-38, -4, 0], [38, -4, 0], { w: 0.6 });
+  b.text('WIND CO-OPERATIVE · EST. 2026', { at: [0, -8, 0], size: 1.6, depth: 0, font: '500 120px "PCM Mono"' }, { w: 0.7 });
+});
+
+// ---- 3. shots: each holds a form; `in` is how the previous one becomes it (references/ENGINE.md)
+F.shot({
+  name: 'turbine', form: 'turbine', dur: 5.5, in: { style: 'scan', dur: 2.2, sweep: 'up' },
+  cam: { yaw: 24, pitch: 10, dist: 215, target: [0, 40, 0], frame: 0.2, drift: 2 },
+  hud: {
+    fig: ['FIG. 01 / UNIT R-07 / POINT CLOUD', 'LOCAL GRID / 1 : 500'], kicker: '(01) TURBINE / INSPECT / LIVE LIDAR',
+    title: ['Every blade,', 'read in the wind.'], body: 'Ridgeline scans each turbine while it turns and keeps the model current for its whole life.',
+    button: 'VISIT THE SITE', link: 'SEE LIVE YIELD', stats: [['UNITS', 'SCANNED', '48'], ['UPTIME', '', '99.2%']],
+    callouts: [{ at: [0, 61.5, 4], text: 'GB-02 GEARBOX · 61 °C', dx: 150, dy: -90 }],
+  },
+});
+F.shot({
+  name: 'ridge', form: 'ridge', dur: 5, in: { style: 'nebula', dur: 2.4, sweep: 'right' },
+  cam: { yaw: 40, pitch: 30, dist: 225, target: [0, 6, 0], frame: 0.06, drift: 1.5 },
+  hud: {
+    chrome: false, fig: ['RIDGE MODEL', 'TERRAIN 90 × 60'],
+    callouts: [{ at: [21, ridge(21, -5) + 16, -5], text: 'R-07 WAKE LOSS · 3.1%', dx: 120, dy: -80 }],
+    rings: [{ c: [0, 0, 0], r: 62 }],
+  },
+});
+F.shot({
+  name: 'wordmark', form: 'wordmark', dur: 3.5, in: { style: 'flow', dur: 2.0, sweep: 'left' },
+  cam: { yaw: 8, pitch: 4, dist: 120, target: [0, 1, 0], drift: 0.8 },
+  hud: { chrome: false, fig: ['RIDGELINE', 'END'] },
+});
+
+// ---- 4. the film's own rules (check.mjs runs them)
+F.check('the turbine faces the camera side', () => true);
+await F.start();
+</script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!doctype html>
+<!-- 「Time」 · aphorism-film worked example · 6 shots, ~43 s. Five old lines about time, each set in editorial type over a
+     scene designed for it, joined by the style's transitions; the film ends where it began (the clock mural), so it loops.
+     BRIEF.md has the plan; cast.js the lead; score.js the music. Every frame is seek(t). -->
+<html><head><meta charset="utf-8"><title>Time · aphorism-film</title>
+<script type="importmap">{ "imports": { "af/": "../../lib/" } }</script></head>
+<body><script type="module">
+import { Film } from 'af/film.js';
+import * as K from 'af/kit.js';
+import * as P from 'af/figure.js';
+import { rng, hash, keys, ease, clamp, lerp, mix, rgba, shade, TAU } from 'af/core.js';
+import { CAST } from './cast.js';
+import { SCORE } from './score.js';
+
+const F = new Film({ seed: 11, score: SCORE });
+const C = K.PALETTES.pop, lead = CAST.lead, INK = K.INK;
+
+// ---------- 1 + 6 · the clock mural: a giant clock painted on a stone wall, a garden at its foot ----------
+const MURAL = { x: 1210, y: 470, r: 400 };
+const mural = F.plate(2100, 1180, (c, w, h) => {
+  K.stoneWall(c, 0, 0, w, h, { seed: 3, bh: 120, bw: 300, col: '#efe2c2', crack: .18 });
+  // the painted mural: bold rings of colour behind the clock, like paint on stone (joints show through: multiply)
+  c.save(); c.globalAlpha = .92;
+  const { x, y, r } = MURAL; const X = x + 90, Y = y + 50;
+  for (const [k, col] of [[1.55, C.blue], [1.32, C.red], [1.16, C.yellow]]) { c.beginPath(); c.arc(X, Y, r * k, 0, TAU); c.fillStyle = col; c.fill(); }
+  for (let i = 0; i < 24; i++) { const a = i * TAU / 24; c.beginPath(); c.moveTo(X + Math.cos(a) * r * 1.18, Y + Math.sin(a) * r * 1.18); c.lineTo(X + Math.cos(a + .06) * r * 1.52, Y + Math.sin(a + .06) * r * 1.52); c.lineTo(X + Math.cos(a - .06) * r * 1.52, Y + Math.sin(a - .06) * r * 1.52); c.closePath(); c.fillStyle = i % 2 ? C.cyan : C.pink; c.fill(); }
+  c.restore();
+  K.clock(c, X, Y, r, { face: '#fbf7ee', rim: '#c99a2e', ring: '#f1e6cc', numerals: true, seconds: false, shadow: false, h: 0, m: 0, hand: 'rgba(0,0,0,0)', lw: 7 });
+  // re-draw the joints over the face so it reads as painted on the blocks
+  c.save(); c.beginPath(); c.arc(X, Y, r * 1.55, 0, TAU); c.clip(); c.globalCompositeOperation = 'multiply'; c.globalAlpha = .6; K.stoneWall(c, 0, 0, w, h, { seed: 3, bh: 120, bw: 300, col: '#ffffff', crack: .18 }); c.restore();
+  // a dark band at the top-left where the quote sits (an arch of shadow under the vines)
+  const g = c.createLinearGradient(0, 0, 900, 0); g.addColorStop(0, rgba('#0c2a1e', .88)); g.addColorStop(.7, rgba('#0c2a1e', .5)); g.addColorStop(1, rgba('#0c2a1e', 0)); c.fillStyle = g; c.fillRect(0, 0, 900, h);
+});
+const canopy = F.plate(2100, 420, (c, w, h) => {
+  K.foliage(c, -100, -160, 1300, 460, { seed: 5, hang: true, size: 46, pal: ['#0f4f33', '#1f7a45', '#3f9a4f', '#8fc24a'], shadow: '#1d2f7a', n: 520 });
+  K.foliage(c, 1500, -200, 700, 330, { seed: 6, hang: true, size: 42, pal: ['#0f4f33', '#1f7a45', '#3f9a4f', '#8fc24a'], shadow: '#1d2f7a', n: 260 });
+  for (let i = 0; i < 9; i++) K.vine(c, 120 + i * 120 + hash(i, 1) * 60, 150, 160 + hash(i, 2) * 220, { seed: 30 + i, size: 20 });
+});
+const garden = F.plate(2200, 420, (c, w, h) => {
+  c.fillStyle = '#1f7a45'; c.fillRect(0, 300, w, 120); c.fillStyle = '#17121c'; c.fillRect(0, 336, w, 6);
+  K.foliage(c, -80, 40, 760, 320, { seed: 7, size: 40, shadow: '#1d2f7a', n: 360 });
+  K.foliage(c, 1500, 70, 760, 300, { seed: 8, size: 40, shadow: '#1d2f7a', n: 330 });
+  K.flowers(c, 0, 90, 640, 200, { seed: 9, kind: 'rose', n: 26, cols: [C.red, C.pink], size: 22 });
+  K.flowers(c, 1520, 100, 650, 200, { seed: 10, kind: 'hydrangea', n: 16, cols: ['#8fb7ff', '#b49cff', '#6f8fe8'], size: 26 });
+  K.flowers(c, 600, 220, 960, 90, { seed: 11, kind: 'daisy', n: 22, size: 14 });
+  K.grassEdge(c, 0, 345, w, { seed: 12, h: 34 });
+});
+function muralShot(g, lt, o) {
+  const { x, y, r } = MURAL, X = x + 90, Y = y + 50;
+  g.put(mural, -90, -50, .35);
+  // the hands: the minute hand runs visibly (time flies); the hour hand follows
+  g.at(.35, c => { const tm = o.time0 + lt * 380; K.clock(c, X - 90, Y - 50, r, { numerals: false, shadow: false, face: 'rgba(0,0,0,0)', rim: 'rgba(0,0,0,0)', time: tm, seconds: true, lw: 8, hand: INK, sec: C.red }); });
+  // calendar pages drift through the frame
+  g.at(.6, c => { for (let i = 0; i < 6; i++) { const k = ((lt * .09 + hash(i, 4)) % 1), px = lerp(2100, 700, k), py = 160 + hash(i, 5) * 520 + Math.sin(lt * 1.3 + i) * 40;
+    c.save(); c.globalAlpha = clamp((px - 760) / 300) * clamp((2100 - px) / 150); c.translate(px, py); c.rotate(Math.sin(lt * 1.7 + i * 2) * .6); c.scale(.55, .55 * Math.abs(Math.cos(lt * 2 + i))); calendarPage(c, i); c.restore(); } });
+  g.put(garden, -140, 700, .7);
+  g.at(.7, c => P.body(c, lead, { x: o.girlX, y: 1045, h: 190, view: o.view, dir: 1 }));
+  g.put(canopy, -90, -60, .9);
+}
+function calendarPage(c, i) {
+  c.beginPath(); c.rect(-70, -90, 140, 180); K.outline(c, '#fbf7ee', 3);
+  c.fillStyle = i % 2 ? C.red : C.blue; c.fillRect(-70, -90, 140, 42); c.beginPath(); c.rect(-70, -90, 140, 42); K.outline(c, null, 3);
+  c.fillStyle = INK; c.font = '900 64px "AF Didone"'; c.textAlign = 'center'; c.fillText(String(1 + (i * 7) % 28), 0, 40);
+}
+
+// ---------- 2 · the wall of clocks: every clock tells a different hour; she walks past looking for hers ----------
+const clockWall = F.plate(2900, 1080, (c, w, h) => {
+  K.pattern(c, 'damask', 0, 0, w, h, { seed: 21, pal: ['#a8231f', '#d8322a', '#f2b51d', INK], s: 120, lw: 2 });
+  c.fillStyle = INK; c.fillRect(0, 770, w, 14); c.fillStyle = '#c99a2e'; c.fillRect(0, 760, w, 10);   // dado rail
+  K.pattern(c, 'tiles', 0, 784, w, 296, { seed: 22, pal: ['#0f4f33', '#1f7a45', '', INK], s: 74 });
+  const R = rng(23), rims = ['#c99a2e', INK, '#fbf7ee', C.blue, '#7a3b1d'];
+  const spots = []; for (let i = 0; i < 46; i++) { const r = 40 + R() * 95, x = 1200 + R() * (w - 1260), y = 90 + R() * (640 - r); if (spots.every(s => Math.hypot(s.x - x, s.y - y) > s.r + r + 24)) spots.push({ x, y, r }); }
+  for (const s of spots) {
+    if (R() < .22) K.frame(c, s.x - s.r * .8, s.y - s.r, s.r * 1.6, s.r * 2, { seed: Math.floor(R() * 99), kind: R() < .5 ? 'poster' : 'abstract', frame: rims[Math.floor(R() * 2)] });
+    else K.clock(c, s.x, s.y, s.r, { rim: rims[Math.floor(R() * rims.length)], face: R() < .2 ? '#f2b51d' : '#fbf7ee', h: R() * 12, m: R() * 60, seconds: false, numerals: s.r > 70 });
+  }
+  // the quote's corner (left) stays dark: a deep red curtain
+  c.fillStyle = '#5e1414'; c.fillRect(0, 0, 1100, 770); K.pattern(c, 'stripes', 0, 0, 1100, 770, { pal: ['#5e1414', '#6f1a18', '#6f1a18'], s: 44 }); c.fillStyle = rgba(INK, .9); c.fillRect(1096, 0, 8, 770);
+  c.fillStyle = '#c99a2e'; c.fillRect(1104, 0, 14, 770);   // the curtain's gilt edge
+});
+const hedge = F.plate(3300, 330, (c, w, h) => {
+  K.foliage(c, -60, 40, w + 120, 340, { seed: 24, size: 44, shadow: '#1d2f7a', n: 1300 });
+  K.flowers(c, 0, 70, w, 160, { seed: 25, kind: 'rose', n: 60, cols: [C.red, C.pink, '#fbf7ee'], size: 20 });
+  K.flowers(c, 0, 100, w, 180, { seed: 26, kind: 'hydrangea', n: 30, cols: ['#8fb7ff', '#b49cff'], size: 22 });
+});
+
+// ---------- 3 · the long gallery: life is short, the art long ----------
+const gallery = F.plate(1920, 1080, (c, w, h) => {
+  const RM = K.room(c, w, h, { seed: 31, back: [870, 380, 1050, 560], deep: 9, walls: ['#14523a', '#11472f'], ceiling: '#e8e2d2', floor: 'marble', tilesX: 8, tilesZ: 22, lights: 9, lightCol: '#dff3ea', panels: 7,
+    panel: (cc, q, side, i, R) => { // a framed painting on each wall bay; the two nearest bays on the left are dark doorways (the quote sits there)
+      if (side < 0 && i < 2) { K.shape(cc, q, '#071a12', 2.5); return; }
+      const ins = (k) => { const cx = (q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4, cy = (q[0][1] + q[1][1] + q[2][1] + q[3][1]) / 4; return q.map(([x, y]) => [lerp(x, cx, k), lerp(y, cy, k)]); };
+      K.shape(cc, ins(.08), '#a8231f', 2.5); K.shape(cc, ins(.25), '#c99a2e', 2); const inner = ins(.36);
+      K.shape(cc, inner, [C.blue, C.yellow, '#fbf7ee', C.red, C.cyan][i % 5], 2);
+      cc.save(); K.path(cc, inner); cc.clip(); const ccx = (inner[0][0] + inner[2][0]) / 2, ccy = (inner[0][1] + inner[2][1]) / 2, rr = Math.abs(inner[2][1] - inner[0][1]) * .3;
+      cc.beginPath(); cc.arc(ccx, ccy, rr, 0, TAU); K.outline(cc, [C.red, C.blue, C.yellow, C.green, C.pink][(i + 2) % 5], 1.5); cc.restore();
+    }, panelV: [.18, .74] });
+  // the far door: an open door of light at the end of the hall
+  K.door(c, 925, 560, 70, 150, { col: C.red, open: 1, inside: '#fbf1d6' });
+  const g = c.createLinearGradient(0, 0, 640, 0); g.addColorStop(0, rgba('#071a12', .6)); g.addColorStop(1, rgba('#071a12', 0)); c.fillStyle = g; c.fillRect(0, 0, 640, h);
+});
+
+// ---------- 4 · the devourer: close-up in front of a wall of torn calendars; an hourglass runs ----------
+const pinned = F.plate(2100, 1180, (c, w, h) => {
+  K.collage(c, 0, 0, w, h, { seed: 41, ground: '#6f1a18', n: 46, cols: ['#f1e6cc', '#e9d39b', '#d8322a', '#fbf7ee', '#2346b8', '#f2b51d'] });
+  for (let i = 0; i < 9; i++) { const x = 900 + hash(i, 1) * 1100, y = 60 + hash(i, 2) * 900; c.save(); c.translate(x, y); c.rotate((hash(i, 3) - .5) * .5); c.scale(1.1, 1.1); calendarPage(c, i + 3); c.restore(); }
+  const g = c.createLinearGradient(0, 0, 900, 0); g.addColorStop(0, rgba('#2a0807', .88)); g.addColorStop(1, rgba('#2a0807', 0)); c.fillStyle = g; c.fillRect(0, 0, 1000, h);
+}, { blur: 3 });
+
+// ---------- 5 · seize the day: she runs along the ruin wall under a huge setting sun ----------
+const dusk = F.plate(2400, 1080, (c, w, h) => {
+  const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#101a4a'); g.addColorStop(.45, '#2346b8'); g.addColorStop(.75, '#d8322a'); g.addColorStop(1, '#f2b51d'); c.fillStyle = g; c.fillRect(0, 0, w, h);
+  K.sun(c, 1500, 640, 230, { cols: ['#f2b51d', '#ec6f9b', '#d8322a'], ringA: .5 });
+  for (let i = 0; i < 5; i++) { c.fillStyle = rgba('#fbf7ee', .9); const y = 300 + i * 70, x = 1100 + hash(i, 9) * 900; c.beginPath(); c.roundRect(x, y, 200 + hash(i, 8) * 260, 18, 9); c.fill(); }
+});
+const ruin = F.plate(3000, 560, (c, w, h) => {
+  // a broken wall: blocks with a jagged top, flowers in the cracks
+  c.save(); c.beginPath(); c.moveTo(0, h); for (let x = 0; x <= w; x += 150) c.lineTo(x, 60 + (hash(x, 3) * 260) * (x % 600 < 300 ? 1 : .3)); c.lineTo(w, h); c.closePath(); c.clip();
+  K.stoneWall(c, 0, 0, w, h, { seed: 51, bh: 100, bw: 230, col: '#efe2c2', crack: .25 }); c.restore();
+  K.foliage(c, -50, 300, 900, 300, { seed: 52, size: 40, shadow: '#1d2f7a', n: 300 }); K.foliage(c, 1800, 330, 1100, 280, { seed: 53, size: 40, shadow: '#1d2f7a', n: 340 });
+  K.flowers(c, 0, 360, w, 140, { seed: 54, kind: 'rose', n: 40, cols: [C.red, C.pink], size: 22 });
+  for (let i = 0; i < 8; i++) K.vine(c, 200 + i * 360, 120 + hash(i, 4) * 100, 160, { seed: 55 + i, size: 18 });
+});
+const walk = F.plate(3600, 120, (c, w, h) => { c.fillStyle = '#c99a2e'; c.fillRect(0, 0, w, h); for (let x = 0; x < w; x += 90) { c.beginPath(); c.rect(x, 0, 90, 40); K.outline(c, '#e9c46a', 3); } c.fillStyle = INK; c.fillRect(0, 40, w, 6); c.fillStyle = '#7a3b1d'; c.fillRect(0, 46, w, 74); });
+
+// ---------- the shots ----------
+F.shot(7.5, (g, lt) => muralShot(g, lt, { time0: 9 * 3600, girlX: 1300, view: 'back' }),
+  { name: 'the mural', cam: [{ t: 0, zoom: 1, x: 0, y: 0 }, { t: 7.5, zoom: 1.07, x: 40, y: 10 }] });
+
+F.shot(7, (g, lt) => {
+  g.put(clockWall, 0, 0, .8);
+  const x = lerp(900, 1980, lt / 7);   // she walks right; the camera trucks with her
+  g.at(.8, c => P.body(c, lead, { x, y: 900, h: 330, view: 'side', dir: 1, pose: P.walk((g.twos() * .95) % 1) }));
+  g.put(hedge, -100, 840, 1.15);
+}, { name: 'the wall of clocks', cam: [{ t: 0, x: 0, zoom: 1 }, { t: 7, x: 520, zoom: 1.02 }], tr: { type: 'papers', d: 1.3, sheets: ['#fbf7ee', '#f1e6cc', '#fbf7ee', '#e9d39b'] } });
+
+F.shot(7, (g, lt) => {
+  g.put(gallery, 0, 0, 1);
+  g.at(1, c => { const d = .74, x = 960, y = 640; P.body(c, lead, { x, y, h: 120, view: 'back' }); });
+  // canvases leaning on the floor near us
+  g.at(1.2, c => { for (let i = 0; i < 3; i++) { c.save(); c.translate(1450 + i * 120, 1060); c.rotate(-.12 + i * .08); K.frame(c, -80, -200, 160, 200, { seed: 60 + i, kind: 'abstract' }); c.restore(); } });
+}, { name: 'the long gallery', cam: [{ t: 0, zoom: 1, x: 0, y: 0 }, { t: 7, zoom: 1.2, x: 10, y: -8 }], tr: { type: 'crack', d: 1.4, at: [1150, 420] } });
+
+F.shot(7, (g, lt) => {
+  g.put(pinned, -90, -50, .3);
+  const lk = g.twos(lt);
+  g.at(1, c => P.bust(c, lead, { x: 1240, y: 420, s: 380, turn: lerp(.18, .05, ease.io(lt / 7)), look: [lk < 3 ? .5 : -.4, .1], blink: [2.1, 4.6].some(b => lk > b && lk < b + .15) ? 1 : 0, mouth: 'set', sway: Math.sin(lt * 1.1) * .3 }));
+  g.at(1.25, c => K.hourglass(c, 1720, 1150, 470, clamp(lt / 7 * .8 + .1)));
+}, { name: 'the devourer', cam: [{ t: 0, zoom: 1.02, x: 0 }, { t: 7, zoom: 1.08, x: 30 }], tr: { type: 'slide', d: .8, dir: 1 } });
+
+F.shot(7.5, (g, lt) => {
+  g.put(dusk, 0, 0, .15);
+  g.put(ruin, -200, 540, .6);
+  const x = lerp(700, 1900, lt / 7.5);
+  g.put(walk, -300, 960, .85);
+  g.at(.85, c => P.body(c, lead, { x, y: 965, h: 300, view: 'side', dir: 1, pose: P.run((g.twos() * 1.5) % 1) }));
+  g.at(1.3, c => { for (let i = 0; i < 9; i++) { const k = (lt * .22 + hash(i, 7)) % 1, px = lerp(2300, -200, k) + 400, py = 120 + hash(i, 8) * 700; c.save(); c.translate(px, py); c.rotate(lt * 2 + i); c.scale(.5, .5 * Math.abs(Math.sin(lt * 3 + i))); K.paper(c, 150, 200, { seed: 70 + i }); c.restore(); } });
+}, { name: 'seize the day', cam: [{ t: 0, x: 0, zoom: 1 }, { t: 7.5, x: 900, zoom: 1.03 }], tr: { type: 'vortex', d: 1.5 } });
+
+F.shot(7.5, (g, lt) => muralShot(g, lt, { time0: 17 * 3600 + 1800, girlX: 1300, view: 'front' }),
+  { name: 'the mural again', cam: [{ t: 0, zoom: 1.07, x: 40, y: 10 }, { t: 7.5, zoom: 1, x: 0, y: 0 }], tr: { type: 'ink', d: 1.6 } });
+
+// ---------- the quotes (type timeline, absolute seconds) ----------
+F.quote({ t0: .5, t1: 7.1, x: 150, y: 250, size: 210, lines: ['k:Fugit irreparabile tempus', 'D:Time', 'I:flies', 'i:beyond recall.'], by: 'Virgil', src: 'Georgics III, 284' });
+F.quote({ t0: 8.4, t1: 14.2, x: 130, y: 230, size: 180, lines: ['i:Lost', 'D:time | i:is / never', 'D:found | i:again.'], by: 'Benjamin Franklin', src: "Poor Richard's Almanack, 1748", scrim: .35 });
+F.quote({ t0: 15.6, t1: 21.2, x: 140, y: 230, size: 170, lines: ['k:Ars longa, vita brevis', 'D:Life | i:is / short,', 'i:and the', 'D:art | I:long.'], by: 'Hippocrates', src: 'Aphorisms I, 1' });
+F.quote({ t0: 22.2, t1: 28.2, x: 130, y: 280, size: 200, lines: ['k:Tempus edax rerum', 'D:Time,', 'i:the devourer', 'i:of all things.'], by: 'Ovid', src: 'Metamorphoses XV, 234' });
+F.quote({ t0: 29.8, t1: 35.7, x: 140, y: 110, size: 170, lines: ['k:Carpe diem', 'P:Seize', 'P:the day,', 'i:trusting as little as possible', 'i:in tomorrow.'], by: 'Horace', src: 'Odes I, 11' });
+F.quote({ t0: 37.4, t1: 43.4, x: 150, y: 250, size: 210, lines: ['k:Fugit irreparabile tempus', 'D:Time', 'I:flies', 'i:beyond recall.'], by: 'Virgil', src: 'Georgics III, 284', out: 'fade' });
+
+// scene rules
+F.check('the walker stays in frame', t => { const s = window.shotAt(t); if (s.name !== 'the wall of clocks') return true; const x = lerp(900, 1980, s.lt / 7) - keys([{ t: 0, x: 0 }, { t: 7, x: 520 }], s.lt, 'x') * .8; return x > 200 && x < 1800; });
+F.check('the runner stays in frame', t => { const s = window.shotAt(t); if (s.name !== 'seize the day') return true; const x = lerp(700, 1900, s.lt / 7.5) - keys([{ t: 0, x: 0 }, { t: 7.5, x: 900 }], s.lt, 'x') * .85; return x > 200 && x < 1800; });
+F.start();
+</script></body></html>

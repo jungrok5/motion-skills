@@ -1,0 +1,38 @@
+{
+  "ko": {
+    "htmlLang": "ko",
+    "titleFont": {"family": "HB Title KR", "file": "NotoSansKR-700-ksx1001.woff2", "weight": 700, "license": "OFL-NotoSansKR.txt", "coverage": "coverage-ko.json", "unicodeRangeFromText": false},
+    "labelFont": {"family": "HB Label KR", "file": "NotoSansKR-400-ksx1001.woff2", "weight": 400, "license": "OFL-NotoSansKR.txt", "coverage": "coverage-ko.json"},
+    "labelStack": "\"HB Label KR\", \"Apple SD Gothic Neo\", \"Malgun Gothic\", sans-serif",
+    "ui": {
+      "unfold": "펼치기", "fold": "접기",
+      "rotate": "회전", "pan": "이동", "reset": "시점 복귀", "controls": "모형 조작",
+      "hintRotate": "클릭·스페이스로 펼치기 · 드래그로 회전 · 휠/두 손가락으로 확대",
+      "hintPan": "클릭·스페이스로 펼치기 · 드래그로 이동 · 휠/두 손가락으로 확대",
+      "unavailable": "이 브라우저에서는 모형을 표시할 수 없습니다. WebGL을 켠 뒤 파일을 다시 여세요.",
+      "noscript": "모형을 조작하려면 JavaScript를 켜세요.",
+      "assembled": "모형을 접었습니다.", "separated": "모형을 펼쳤습니다.",
+      "unfolding": "펼치는 중.", "folding": "접는 중.",
+      "actionAria": "모형 {action}",
+      "modelLabel": "{title} 구조 설명 모형"
+    }
+  },
+  "zh": {
+    "htmlLang": "zh-CN",
+    "titleFont": {"family": "IBM Plex Sans TC", "file": "IBMPlexSansTC-Bold.woff2", "weight": 700, "license": "OFL-IBMPlexSansTC.txt", "coverage": "coverage-zh.json", "unicodeRangeFromText": true},
+    "labelFont": null,
+    "labelStack": "\"Microsoft YaHei\", \"PingFang SC\", sans-serif",
+    "ui": {
+      "unfold": "展開", "fold": "收起",
+      "rotate": "旋转", "pan": "平移", "reset": "复位视图", "controls": "主体操作",
+      "hintRotate": "点击或空格切换 · 拖动旋转 · 滚轮／双指缩放",
+      "hintPan": "点击或空格切换 · 拖动平移 · 滚轮／双指缩放",
+      "unavailable": "当前浏览器无法显示模型，请启用 WebGL 后重新打开文件。",
+      "noscript": "请启用 JavaScript 以操作模型。",
+      "assembled": "模型已收起。", "separated": "模型已展开。",
+      "unfolding": "正在展开。", "folding": "正在收起。",
+      "actionAria": "{action}模型",
+      "modelLabel": "{title}结构示意模型"
+    }
+  }
+}

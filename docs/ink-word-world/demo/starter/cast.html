@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>연못 · 캐스트 시트</title>
+<script type="importmap">{ "imports": { "inkworld/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// Every creature of this world, posed both ways. Render with scripts/stills.mjs --cast and look at it before the scenes.
+import { world, cast } from './world.js';
+import { castSheet } from 'inkworld/cast.js';
+castSheet(world, cast);
+</script>
+</body>
+</html>

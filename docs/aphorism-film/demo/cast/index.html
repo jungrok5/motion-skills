@@ -1,0 +1,51 @@
+<!doctype html>
+<!-- cast.html — the cast sheet. Every character in cast.js: the close-up front and 3/4 turned BOTH ways, the full figure
+     in side view walking and running BOTH ways, front and back. Render it (render.mjs cast.html --stills 1,5) and score
+     it against references/CAST.md before writing shots; check.mjs cast.html fails if a joint leaves its limits. -->
+<html><head><meta charset="utf-8"><title>cast sheet</title>
+<script type="importmap">{ "imports": { "af/": "../lib/" } }</script></head>
+<body><script type="module">
+import { Film } from 'af/film.js';
+import * as K from 'af/kit.js';
+import * as P from 'af/figure.js';
+import { CAST } from './cast.js';
+
+const F = new Film({ seed: 1, fadeIn: 0, fadeOut: 0 });
+const names = Object.keys(CAST), rows = names.length;
+const label = (c, x, y, s) => { c.font = '600 22px "AF Grotesk", sans-serif'; c.fillStyle = '#17121c'; c.fillText(s, x, y); };
+const ground = F.plate(1920, 1080, (c, w, h) => { c.fillStyle = '#f1e6cc'; c.fillRect(0, 0, w, h); K.pattern(c, 'grid', 0, 0, w, h, { pal: ['#f1e6cc', 'rgba(23,18,28,.08)'], s: 60, lw: 1 }); });
+
+// 1 · the sheet (still): per character a row — busts (3/4 left, front, 3/4 right) then figures (side →, side ←, front, back, run →, run ←)
+F.shot(4, g => {
+  g.put(ground, 0, 0, 0);
+  g.screen(c => {
+    const rh = 1080 / rows;
+    names.forEach((n, r) => {
+      const sp = CAST[n], y0 = r * rh, sc = Math.min(1, rh / 1080);
+      label(c, 30, y0 + 40, n + ' — close-up: 3/4 left · front · 3/4 right   |   side → · side ← · front · back · run → · run ←');
+      [-.5, 0, .5].forEach((t, i) => { c.save(); c.beginPath(); c.rect(30 + i * 250, y0 + 60, 240, rh - 80); c.clip(); P.bust(c, sp, { x: 150 + i * 250, y: y0 + 60 + rh * .25, s: rh * .2, turn: t, look: [t * 1.2, 0] }); c.restore(); });
+      const fy = y0 + rh - 40, fh = rh * .55;
+      P.body(c, sp, { x: 890, y: fy, h: fh, view: 'side', dir: 1, pose: P.walk(.12) });
+      P.body(c, sp, { x: 1070, y: fy, h: fh, view: 'side', dir: -1, pose: P.walk(.12) });
+      P.body(c, sp, { x: 1240, y: fy, h: fh, view: 'front' });
+      P.body(c, sp, { x: 1400, y: fy, h: fh, view: 'back' });
+      P.body(c, sp, { x: 1570, y: fy, h: fh, view: 'side', dir: 1, pose: P.run(.1) });
+      P.body(c, sp, { x: 1800, y: fy, h: fh, view: 'side', dir: -1, pose: P.run(.1) });
+    });
+  });
+}, { name: 'sheet' });
+// 2 · motion: every character walks right then left across the floor, then runs, on twos; the faces blink and look
+F.shot(8, g => {
+  g.put(ground, 0, 0, 0);
+  g.screen(c => {
+    const rh = 1080 / rows, lt = g.twos();
+    names.forEach((n, r) => {
+      const sp = CAST[n], fy = r * rh + rh - 40, fh = rh * .7, back = lt > 4, run = (lt % 4) > 2.4;
+      const x = back ? 1800 - (lt - 4) / 4 * 1500 : 300 + lt / 4 * 1500, ph = lt * (run ? 1.6 : 1.1);
+      P.body(c, sp, { x, y: fy, h: fh, view: 'side', dir: back ? -1 : 1, pose: run ? P.run(ph % 1) : P.walk(ph % 1) });
+      P.bust(c, sp, { x: 140, y: r * rh + rh * .4, s: rh * .25, turn: Math.sin(lt * .8) * .45, look: [Math.sin(lt * .8) * .6, 0], blink: (lt % 3) < .12 ? 1 : 0 });
+    });
+  });
+}, { name: 'motion' });
+F.start();
+</script></body></html>

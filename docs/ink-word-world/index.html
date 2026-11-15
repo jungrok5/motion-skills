@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ink-word-world · motion-skills</title>
+<meta name="description" content="빈 종이에 글자를 치면 그 자리에서 붓글씨가 먹으로 풀려 실시간 유체로 번지고, 그 글자가 뜻하는 것이 되어 살아나는 인터랙티브 수묵 페이지를 만듭니다.">
+<meta property="og:title" content="ink-word-world · motion-skills">
+<meta property="og:description" content="빈 종이에 글자를 치면 그 자리에서 붓글씨가 먹으로 풀려 실시간 유체로 번지고, 그 글자가 뜻하는 것이 되어 살아나는 인터랙티브 수묵 페이지를 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/ink-word-world/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/ink-word-world">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / ink-word-world</nav>
+  <h1>ink-word-world</h1>
+  <p>주제 하나를 주면, 빈 종이에 글자를 치는 대로 세계가 생기는 인터랙티브 수묵 페이지를 만듭니다. 글자는 붓이 있는 자리에 붓글씨로 쓰였다가 실시간 유체 시뮬레이션의 먹으로 풀리고, 그 글자가 뜻하는 것이 되어 살아나 서로 영향을 주고받습니다. 원본: 歸藏(@op7418)의 <a href="https://x.com/op7418/status/2120085300185833878?a=9LfZwP5J_d739gBaN8Y&s=19">X 게시물</a> 「墨生 · 字即世界」(한자로 쓰는 산수 수묵)을 보고 만들었습니다. 형식만 가져왔고, 엔진 · 그림 · 두 세계는 이 레포에서 새로 만들었습니다.</p>
+  <ul class="tags"><li>WebGL2 먹 유체</li><li>글자 → 살아 있는 것</li><li>서로 영향을 주는 규칙</li><li>합성 사운드</li><li>라이브 페이지 · MP4</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(어떤 세계인지), 쓰는 말과 글자</dd>
+      <dt>브리프</dt><dd>종이의 구도(물금 · 하늘 · 위에서 본 시점), 12–18개 글자의 표(치는 법 · 역할 · 무엇이 되는지 · 어떻게 움직이는지 · 먹에 하는 일), 생물의 몸 한계, 누가 누구를 만나면 무슨 일이 생기는지와 그때 뜨는 한 줄, 색 · 소리 · 공연 순서를 적은 <code>BRIEF.md</code></dd>
+      <dt>세계</dt><dd><code>world.js</code> 한 파일: 붓 자국(획 · 번짐 · 능선 · 잎 · 점)만으로 그린 그림 함수, 글자 → 살아 있는 것, 규칙, 혼자 연주하는 공연</dd>
+      <dt>확인</dt><dd>캐스트 시트(생물마다 여덟 방향), 자동 검사(글자마다 무언가 일어나는지, 규칙이 발동하는지, 머리 방향 · 굽힘 · 등이 위 · 사는 곳, 먹으로 뒤덮이지 않는지, 두 번 돌려 같은지, 소리, 390px 화면), 스틸 채점</dd>
+      <dt>출력</dt><dd>어디서나 열리는 정적 페이지(라이브러리 · 이미지 · 소리 파일 없음), 공연을 찍은 1080p MP4와 WAV</dd>
+    </dl>
+    <pre><code>cd ink-word-world
+python3 -m http.server 8000    # /examples/tide/?auto
+node scripts/check.mjs examples/tide --quick
+node scripts/stills.mjs examples/tide --cast --sheet 12
+node scripts/render.mjs examples/tide --out out/tide.mp4
+node scripts/new-world.mjs ~/my-world</code></pre>
+    <p class="mute">요구 사항: 보는 데는 WebGL2 브라우저, 스크립트에는 Node 18+ · Playwright Chromium · ffmpeg. GPU · npm 설치 · API 키가 필요 없습니다(CPU WebGL에서 한 스텝 약 45ms, 96초 공연 검사 약 5분). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/ink-word-world/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:560px;--demo-bg:#e9e4d4">
+    <iframe data-src="demo/examples/tide/?auto" title="ink-word-world 예제 실시간 재생" allow="fullscreen; autoplay" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/tide/?auto">데모 열기 (examples/tide)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/tide</code> · 「물때」 17글자 · 혼자 연주 96초 · 종이를 누른 뒤 dal, gorae, 밤처럼 치면 직접 쓸 수 있음</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/tide/?auto" data-cap="예제 &lt;code&gt;examples/tide&lt;/code&gt; · 「물때」 17글자 · 혼자 연주 96초 · 종이를 누른 뒤 dal, gorae, 밤처럼 치면 직접 쓸 수 있음" aria-pressed="true">물때</button>
+        <button class="btn" type="button" data-src="demo/starter/?auto" data-cap="스타터 &lt;code&gt;starter&lt;/code&gt; · 「연못」 7글자 · 혼자 연주 51초 · 새 세계의 출발점" aria-pressed="false">연못</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본에 없는 주제(한글로 쓰는 바다)를 브리프부터 새로 설계한 예제 「물때」의 장면, 가장 작은 세계인 스타터 「연못」, 검토용 이미지입니다. 카드를 누르면 라이브 페이지가 그 순간까지 빠르게 연주한 뒤 이어서 재생됩니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"tide":"물때","pond":"연못","tool":"검토"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「물때」 <small>바다 · 한글 17글자 · 규칙 19개 · 96초</small></h3>
+      <p>물금 하나를 사이에 둔 옆모습의 바다입니다. 달을 쓰면 물이 들고, 바람을 쓰면 돛이 부풀고 안개가 밀리고, 밤을 쓰면 종이가 뒤집혀 등불과 해파리가 빛납니다</p>
+      <div class="grid">
+        <a class="tile" data-tags="tide" href="demo/examples/tide/?auto" target="_blank" rel="noopener">
+          <img src="samples/tide-title.jpg" alt="빈 한지 가운데에서 붓글씨 '물때'가 두 개의 먹 소용돌이로 풀리는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">시작 · 2초</span><b>글자가 먹으로 풀림</b><span class="how">제목이 쓰였다가 서로 반대로 도는 두 소용돌이가 됨</span></div></a>
+        <a class="tile" data-tags="tide" href="demo/examples/tide/?t=19" target="_blank" rel="noopener">
+          <img src="samples/tide-boat.jpg" alt="소나무가 선 먹빛 섬, 물결 위의 황포돛배, 배 위를 도는 갈매기 일곱 마리" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">섬 · 파도 · 배 · 갈매기</span><b>갈매기가 배를 따른다</b><span class="how">글자 넷이 만나 첫 규칙이 발동, 오른쪽에 한 줄이 뜸</span></div></a>
+        <a class="tile" data-tags="tide" href="demo/examples/tide/?t=33" target="_blank" rel="noopener">
+          <img src="samples/tide-whale.jpg" alt="물금 아래를 헤엄치는 큰 먹빛 고래와 흩어지는 멸치 떼, 위로는 섬과 배" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">고래 · 멸치</span><b>고래가 지나면 떼가 갈라진다</b><span class="how">척추 7마디의 몸, 꼬리가 먹을 밀어 물살을 남김</span></div></a>
+        <a class="tile" data-tags="tide" href="demo/examples/tide/?t=43" target="_blank" rel="noopener">
+          <img src="samples/tide-fog.jpg" alt="흰 안개가 물금을 덮고, 섬 위에 붉은 띠의 등대가 선 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">안개 · 등대</span><b>안개 속에 등대만 보인다</b><span class="how">등대는 가까운 섬 위에 서고 빛줄기가 돎</span></div></a>
+        <a class="tile" data-tags="tide" href="demo/examples/tide/?t=50" target="_blank" rel="noopener">
+          <img src="samples/tide-wind.jpg" alt="왼쪽에서 부는 바람에 마른 붓 자국이 날리고 돛이 부푼 배가 오른쪽으로 가는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">바람</span><b>바람을 받아 돛이 부푼다</b><span class="how">젖은 먹이 바람 쪽으로 끌리고 안개가 밀려 나감</span></div></a>
+        <a class="tile" data-tags="tide" href="demo/examples/tide/?t=57" target="_blank" rel="noopener">
+          <img src="samples/tide-night.jpg" alt="검게 뒤집힌 종이, 밝아진 등대 빛줄기와 뱃머리 등불, 섬에 내려앉은 갈매기" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">밤</span><b>등대가 밤바다를 쓴다</b><span class="how">종이가 글자 자리에서부터 뒤집히고 먹은 흰빛이 됨</span></div></a>
+        <a class="tile" data-tags="tide" href="demo/examples/tide/?t=68" target="_blank" rel="noopener">
+          <img src="samples/tide-moon.jpg" alt="밤바다 위의 밝은 달과 물에 비친 달길, 청록으로 빛나며 떠오르는 해파리들" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">달 · 해파리</span><b>달빛 따라 해파리가 뜬다</b><span class="how">달이 뜨면 물금이 올라 섬 발치가 잠김(밀물)</span></div></a>
+        <a class="tile" data-tags="tide" href="demo/examples/tide/?t=75.8" target="_blank" rel="noopener">
+          <img src="samples/tide-bolt.jpg" alt="비 내리는 밤바다에 갈라진 번개가 내리꽂히고 온 화면이 번쩍이는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">비 · 번개</span><b>번개에 온 바다가 놀란다</b><span class="how">떼가 흩어지고 고래가 잠수, 9초 동안 물결이 일어섬</span></div></a>
+        <a class="tile" data-tags="tide" href="demo/examples/tide/?t=86" target="_blank" rel="noopener">
+          <img src="samples/tide-dawn.jpg" alt="붉은 해와 물에 비친 붉은 길, 쪽빛과 먹이 번진 종이 위로 날아가는 갈매기들" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">해</span><b>해가 뜨니 밤이 물러난다</b><span class="how">밤에 해를 쓰면 날이 밝음. 공연 내내 번진 쪽빛이 남아 있음</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>「연못」 스타터 <small>위에서 본 연못 · 7글자 · 규칙 5개 · 51초</small></h3>
+      <p>역할이 하나씩만 있는 가장 작은 세계입니다. 새 주제는 여기서 시작해 글자 · 그림 · 규칙을 모두 바꿉니다</p>
+      <div class="grid">
+        <a class="tile" data-tags="pond" href="demo/starter/?t=18" target="_blank" rel="noopener">
+          <img src="samples/pond-carp.jpg" alt="위에서 본 연못: 이끼 낀 돌 세 개, 연잎 네 장, 붉은 무늬의 잉어들과 붉은 먹 소용돌이" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">돌 · 연잎 · 잉어</span><b>돌 틈으로 잉어가 돈다</b><span class="how">잉어는 떠 있는 붓을 따라오고 획은 피함</span></div></a>
+        <a class="tile" data-tags="pond" href="demo/starter/?t=26" target="_blank" rel="noopener">
+          <img src="samples/pond-rain.jpg" alt="비가 내려 수면에 동그라미가 퍼지고 잉어들이 연잎 아래로 모이는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">비</span><b>비 오면 잉어는 잎 아래로</b><span class="how">빗방울이 떨어진 자리의 먹을 씻음</span></div></a>
+        <a class="tile" data-tags="pond" href="demo/starter/?t=37" target="_blank" rel="noopener">
+          <img src="samples/pond-night.jpg" alt="밤이 된 연못, 흰빛으로 바뀐 연잎과 잉어 위로 연두색 반딧불이 떠다니는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">밤</span><b>잎 사이로 반딧불이 뜬다</b><span class="how">밤 + 연잎 규칙이 반딧불을 만듦</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>검토 <small>캐스트 시트 · 스틸 시트</small></h3>
+      <p>장면을 쓰기 전에 생물을 여덟 방향으로 세워 머리 방향과 등 · 배, 굽힘을 보고, 공연 전체를 한 장에 모아 검토 기준으로 채점합니다</p>
+      <div class="grid">
+        <a class="tile" data-tags="tool" href="demo/examples/tide/cast.html" target="_blank" rel="noopener">
+          <img src="samples/cast.jpg" alt="고래를 오른쪽 · 왼쪽 · 오르기 · 내려가기 · 위 · 아래 · 좌우로 도는 여덟 자세로 그리고 자세마다 붉은 화살표를 붙인 캐스트 시트" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">cast.html</span><b>캐스트 시트</b><span class="how">화살표 = 가야 하는 방향. 등지느러미는 등, 흰 목은 배 쪽</span></div></a>
+        <a class="tile" data-tags="tool" href="https://github.com/jungrok5/motion-skills/blob/main/ink-word-world/references/BRIEF.md" target="_blank" rel="noopener">
+          <img src="samples/sheet.jpg" alt="「물때」 공연의 스틸 열두 장을 시간 순서로 늘어놓은 시트" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">stills.mjs --sheet 12</span><b>스틸 시트</b><span class="how">먹 · 읽힘 · 한 손 · 몸 · 함께 삶 · 밤 · 주제를 채점</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬을 만든 출처와, 이 레포에서 새 주제로 만든 예제입니다.</p>
+  <div class="works">
+    <a class="work" href="https://x.com/op7418/status/2120085300185833878?a=9LfZwP5J_d739gBaN8Y&s=19" target="_blank" rel="noopener"><b>원본 · 歸藏(@op7418)의 X 게시물</b><span>「墨生 · 字即世界」 66초 화면 녹화 · 한자를 치면 먹이 유체로 번지며 산 · 달 · 대나무 · 용이 되는 페이지</span><span class="url">x.com/op7418/status/2120085300185833878</span></a>
+    <a class="work" href="demo/examples/tide/?auto" target="_blank" rel="noopener"><b>「물때」</b><span>바다 · 한글 17글자 · 규칙 19개 · 혼자 연주 96초 · 라이브 페이지</span><span class="url">ink-word-world/examples/tide</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/ink-word-world/examples/tide"><b>원본 레포 · motion-skills</b><span>이 레포에서 만듦</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ink-word-world/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/ink-word-world">폴더</a> <span>lib · scripts · starter · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ink-word-world/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ink-word-world/references/BRIEF.md">references/BRIEF.md</a> <span>원본이 보여 주는 것 · 브리프 틀 · 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ink-word-world/references/WORLD.md">references/WORLD.md</a> <span>세계 · 붓 · 동작 · 소리 API</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ink-word-world/references/LOOK.md">references/LOOK.md</a> <span>먹과 종이로 보이게 하는 값</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ink-word-world/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ink-word-world/examples/tide/BRIEF.md">examples/tide/BRIEF.md</a> <span>「물때」의 브리프</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 글꼴: 배달의민족 연성 (SIL OFL 1.1) · 이미지: 이 레포의 예제를 렌더한 스틸
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

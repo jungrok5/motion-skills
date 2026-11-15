@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Haldane Deep — point-cloud-morph worked example</title>
+<!-- the worked example (BRIEF.md): an ocean-mapping company in five forms, 27.9 s -->
+<script type="importmap">{ "imports": { "three": "../../lib/three.module.min.js", "pcm/": "../../lib/" } }</script>
+</head>
+<body>
+<canvas id="frame"></canvas>
+<script type="module">
+import { Cloud, D2R } from 'pcm/cloud.js';
+
+const F = new Cloud({
+  count: 160000, seed: 11, ink: '#ebe9e3', accent: '#5fd2e6', size: 2.0,
+  score: { root: 49 },
+  hud: { brand: 'HALDANE DEEP', nav: ['SURVEY', 'FLEET', 'LIVE MAP', 'FIELD NOTES'], tabs: ['VESSEL', 'SEAFLOOR', 'SPECIES', 'NETWORK'] },
+});
+
+// ───────────────────────── 1 · the vessel: R/V Haldane, 64 m, bow at +x, waterline y = 0
+const KEEL = -4.5;
+const half = (u) => 7 * (u < 0.6 ? 1 - 0.15 * (1 - u / 0.6) ** 2 : Math.sqrt(Math.max(0, 1 - ((u - 0.6) / 0.4) ** 2)));
+const keel = (u) => KEEL + (u > 0.82 ? ((u - 0.82) / 0.18) ** 2 * 4 : 0);
+const deck = (u) => 2.5 + (u > 0.7 ? ((u - 0.7) / 0.3) ** 2 * 2.2 : 0);
+const hull = (s) => (u, v) => { const p = (v * Math.PI) / 2; return [-32 + 64 * u, keel(u) + (deck(u) - keel(u)) * (1 - Math.cos(p)), s * half(u) * Math.sin(p) ** 0.5]; };
+const seabed = (x, z) => -20 + 2.2 * Math.sin(x * 0.09) * Math.cos(z * 0.07) + 3.5 * Math.exp(-((z - 8) ** 2) / 180);
+const PING = [4, KEEL, 0];
+F.form('vessel', (b) => {
+  const ship = { tag: 'ship' };
+  for (const s of [-1, 1]) {
+    b.surface(hull(s), { ...ship, density: 0.16 }, { nu: 64, nv: 12 });
+    const sheer = [], water = [], bilge = [];
+    for (let i = 0; i <= 64; i++) { const u = i / 64; sheer.push(hull(s)(u, 1)); bilge.push(hull(s)(u, 0.35)); water.push([-32 + 64 * u, 0, s * half(u) * 0.96]); }
+    b.path(sheer, { ...ship, w: 1.15 }); b.path(water, { ...ship, w: 0.7 }); b.path(bilge, { ...ship, w: 0.45, density: 0.5 });
+    for (let k = 1; k < 8; k++) { const u = k / 8, pts = []; for (let j = 0; j <= 12; j++) pts.push(hull(s)(u, j / 12)); b.path(pts, { ...ship, w: 0.45, density: 0.5 }); } // frames
+  }
+  const st = []; for (let j = 0; j <= 12; j++) st.push(hull(1)(1, j / 12)); b.path(st, { ...ship, w: 1.1 });   // the stem
+  b.path([hull(-1)(0, 0), hull(-1)(0, 1), hull(1)(0, 1), hull(1)(0, 0)], { ...ship }, true);                   // the transom
+  b.box([14, 2.5, 0], [13, 5.6, 10.5], { ...ship, faces: 1.4 });                                             // deckhouse
+  b.box([16.5, 8.1, 0], [8, 3.4, 12], { ...ship, faces: 1.2 });                                              // bridge
+  b.path([[20.5, 9.6, -6], [20.5, 9.6, 6]], { ...ship, w: 0.6 });                                            // bridge windows
+  b.lathe([[1.9, 0], [1.6, 6.5], [2.0, 7]], { ...ship, density: 0.4, edges: 0.8 }, { c: [3, 2.5, 0], seg: 40, meridians: 4 }); // funnel
+  b.line([18, 11.5, 0], [18, 23, 0], { ...ship, w: 1.1 }); b.line([18, 19, -4], [18, 19, 4], { ...ship }); b.line([18, 23, 0], [6, 2.5, 0], { ...ship, w: 0.5 }); // mast
+  for (const z of [-4, 4]) b.line([-27, 2.5, z], [-31, 12, z * 0.75], { ...ship, w: 1.2 }); b.line([-31, 12, -3], [-31, 12, 3], { ...ship, w: 1.2 }); // A-frame
+  b.line([-22, 2.5, 3], [-16, 9, 1], { ...ship }); b.line([-16, 9, 1], [-12, 7, 1], { ...ship });            // crane
+  b.quad([-32, 2.5, -5.9], [12, 2.5, -7], [12, 2.5, 7], [-32, 2.5, 5.9], { ...ship, w: 0.3, density: 0.04 }); // deck specks
+  // the multibeam fan: rays from the transducer to the seabed across the track, plus the swath they draw
+  for (let i = 0; i <= 26; i++) { const z = -25 + (50 * i) / 26; b.line(PING, [PING[0], seabed(PING[0], z), z], { ...ship, tint: 1, w: 0.45, density: 0.45, jitter: 0.05, spray: 0 }); }
+  b.blob(PING, 1.6, { ...ship, tint: 1, n: 2200 });
+  b.terrain({ at: [0, 0, 0], size: [72, 50], res: [54, 40], height: seabed, rows: 'z' }, { w: 0.6, density: 0.55 });
+  b.path(Array.from({ length: 26 }, (_, i) => { const z = -25 + i * 2; return [PING[0], seabed(PING[0], z) + 0.15, z]; }), { tint: 1, w: 1.3 });
+}, { motion: [{ tag: 'ship', pivot: [0, 0, 0], axis: [1, 0, 0], sway: { amp: 1.6, hz: 0.16 }, bob: { amp: [0, 0.35, 0], hz: 0.16, phase: 0.25 } }] });
+
+// ───────────────────────── 2 · the seafloor: a trench with a seamount (sonar rows)
+const zAxis = (x) => 12 * Math.sin(x * 0.028);
+const floor = (x, z) => -24 * Math.exp(-((z - zAxis(x)) ** 2) / 170) + 7 * Math.exp(-((z - zAxis(x) - 34) ** 2) / 500) + 19 * Math.exp(-((x - 46) ** 2 + (z + 36) ** 2) / 260) + 1.6 * Math.sin(x * 0.11 + z * 0.05) + 0.8 * Math.sin(z * 0.23);
+F.form('seafloor', (b) => {
+  b.terrain({ size: [170, 124], res: [120, 76], height: floor, rows: 'x', fill: 0.35 }, { w: 0.8, density: 0.7 });
+  b.path(Array.from({ length: 86 }, (_, i) => { const x = -85 + i * 2; return [x, floor(x, zAxis(x)) + 0.3, zAxis(x)]; }), { tint: 1, w: 1.4 });
+  b.blob([46, floor(46, -36) + 1, -36], 4, { tint: 1, n: 3000 });
+});
+
+// ───────────────────────── 3 · the whale: a humpback, 14 m, head at +x
+const rad = (u) => 1.75 * (u < 0.3 ? Math.sin(((u / 0.3) * Math.PI) / 2) ** 0.72 : 0.12 + 0.88 * Math.cos((((u - 0.3) / 0.7) * Math.PI) / 2) ** 1.3);
+const body = (u, v) => {
+  const th = v * Math.PI * 2, r = rad(u), up = Math.sin(th);
+  let y = r * 0.84 * up; if (up > 0 && u < 0.26) y *= 0.72 + (u / 0.26) * 0.28;                         // a flat head top
+  if (up < 0 && u > 0.05 && u < 0.55) y *= 1.12;                                                          // the throat pleats hang lower
+  return [7 - 14 * u, y + 0.3 * Math.sin(Math.PI * u), r * Math.cos(th)];
+};
+const seg = (a, c) => (u, v) => body(a + (c - a) * u, v);
+const fin = (s) => (t, c) => {                                                                            // long pectoral, knobbed leading edge
+  const root = [3.6, -0.8, 1.35 * s], tip = [0.4, -4.1, 4.3 * s], p = [0, 1, 2].map((k) => root[k] + (tip[k] - root[k]) * t);
+  const chord = 0.95 * (1 - 0.72 * t) + 0.07 * Math.sin(t * 34);
+  return [p[0] - (c - 0.3) * chord, p[1] + (c - 0.5) * 0.12, p[2]];
+};
+const fluke = (S, c) => { const A = Math.abs(S), lead = -6.9 - 1.1 * A ** 1.3, chord = 1.15 * (1 - A * A) + 0.25; return [lead - chord * c, 0.17 + 0.04 * (c - 0.5) * (1 - A), 2.7 * S]; };
+F.form('whale', (b) => {
+  b.surface(seg(0, 0.6), { density: 0.3, w: 0.6 }, { nu: 40, nv: 36 });
+  b.surface(seg(0.6, 0.8), { tag: 'tail1', density: 0.3, w: 0.6 }, { nu: 14, nv: 28 });
+  b.surface(seg(0.8, 1), { tag: 'tail2', density: 0.3, w: 0.6 }, { nu: 12, nv: 24 });
+  for (let k = 0; k < 11; k++) { const v = 0.58 + (k / 10) * 0.34, pts = []; for (let i = 0; i <= 30; i++) pts.push(body(0.03 + (i / 30) * 0.42, v)); b.path(pts, { w: 0.85 }); }   // ventral grooves
+  for (const [a, c, tag] of [[0, 0.6, undefined], [0.6, 0.8, 'tail1'], [0.8, 1, 'tail2']]) for (const v of [0.25, 0, 0.5]) { const pts = []; for (let i = 0; i <= 24; i++) pts.push(body(a + ((c - a) * i) / 24, v)); b.path(pts, { tag, w: v === 0.25 ? 1.1 : 0.7 }); } // dorsal + flank lines
+  for (let k = 0; k < 9; k++) b.blob(body(0.02 + k * 0.022, 0.25 + (k % 2 ? 0.03 : -0.03)), 0.16, { n: 70, w: 1, size: 1.1 });  // tubercles on the head
+  for (const s of [-1, 1]) {
+    b.blob([5.35, 0.12, 1.32 * s], 0.12, { n: 120, w: 1.3 });                                                                // eye
+    b.path(Array.from({ length: 16 }, (_, i) => body(0.005 + i * 0.013, s > 0 ? 0.97 - i * 0.004 : 0.53 + i * 0.004)), { w: 1 }); // mouth line
+    const tag = s > 0 ? 'finL' : 'finR';
+    b.surface(fin(s), { tag, density: 0.35, w: 0.65 }, { nu: 24, nv: 4 });
+    b.path(Array.from({ length: 25 }, (_, i) => fin(s)(i / 24, 0)), { tag, w: 1.1 }); b.path(Array.from({ length: 25 }, (_, i) => fin(s)(i / 24, 1)), { tag, w: 0.7 });
+  }
+  b.surface((u, c) => fluke(2 * u - 1, c), { tag: 'tail2', density: 0.35, w: 0.65 }, { nu: 28, nv: 4 });
+  b.path(Array.from({ length: 41 }, (_, i) => fluke(-1 + i / 20, 0)), { tag: 'tail2', w: 1.1 }); b.path(Array.from({ length: 41 }, (_, i) => fluke(-1 + i / 20, 1)), { tag: 'tail2', w: 0.9 });
+  // the small dorsal fin on its hump, two thirds back
+  b.surface((t, c) => { const x = -1.2 - c * 1.6 - t * 0.9, top = body(Math.min(1, (7 - x) / 14), 0.25)[1]; return [x, top + t * 0.75 * (1 - c * 0.6), 0]; }, { tag: 'tail1', density: 0.4, w: 0.7 }, { nu: 6, nv: 10 });
+  b.blob([5.3, 0.4, 0], 0.9, { tint: 1, n: 1600 });                                                       // hot spot: the acoustic tag
+}, { use: 0.82, motion: [
+  { tag: 'tail1', pivot: [-1.4, 0.28, 0], axis: [0, 0, 1], sway: { amp: 7, hz: 0.42 } },
+  // tail2 swings more and later; its bob carries it along with tail1's swing (rotations are not nested)
+  { tag: 'tail2', pivot: [-4.2, 0.17, 0], axis: [0, 0, 1], sway: { amp: 15, hz: 0.42, phase: -0.08 }, bob: { amp: [0, -2.8 * Math.sin(7 * D2R), 0], hz: 0.42 } },
+  { tag: 'finL', pivot: [3.6, -0.7, 1.4], axis: [1, 0, 0], sway: { amp: 6, hz: 0.21 } },
+  { tag: 'finR', pivot: [3.6, -0.7, -1.4], axis: [1, 0, 0], sway: { amp: -6, hz: 0.21 } },
+] });
+
+// ───────────────────────── 4 · the globe: every survey line run
+const R0 = 20, ll = (la, lo, r = R0) => [r * Math.cos(la * D2R) * Math.cos(lo * D2R), r * Math.sin(la * D2R), -r * Math.cos(la * D2R) * Math.sin(lo * D2R)];
+const BOXES = [[52, -32, 8, 14], [38, -58, 6, 10], [-12, 8, 7, 9], [24, 130, 6, 12], [-36, 150, 6, 10]];
+const PORTS = [[57.5, -20], [44, -63], [-6, 12], [33, 132], [-33, 151]];
+const gc = (a, c, lift) => Array.from({ length: 49 }, (_, i) => { const t = i / 48, A = ll(...a, 1), B = ll(...c, 1), d = Math.acos(Math.min(1, A[0] * B[0] + A[1] * B[1] + A[2] * B[2])), s = Math.sin(d) || 1, k = [Math.sin((1 - t) * d) / s, Math.sin(t * d) / s], r = R0 * (1 + lift * Math.sin(Math.PI * t)); return [0, 1, 2].map((j) => (A[j] * k[0] + B[j] * k[1]) * r); });
+F.form('globe', (b) => {
+  b.globe({ r: R0, lat: 12, lon: 24 }, { w: 0.9 });
+  for (const [la, lo, h, w] of BOXES) for (let k = 0; k <= 9; k++) { const L = la - h / 2 + (h * k) / 9; b.path(Array.from({ length: 13 }, (_, i) => ll(L, lo - w / 2 + (w * i) / 12, R0 * 1.004)), { tint: 1, w: 1.1, jitter: 0.02 }); }
+  for (let i = 0; i < PORTS.length; i++) { b.path(gc(PORTS[i], PORTS[(i + 1) % PORTS.length], 0.12), { w: 0.8, density: 0.7 }); b.blob(ll(...PORTS[i], R0 * 1.01), 0.7, { tint: 1, n: 500 }); }
+  b.circle([0, 0, 0], R0 * 1.25, { w: 0.35, density: 0.5 }, { axis: 'y' });
+});
+
+// ───────────────────────── 5 · the name
+F.form('wordmark', (b) => {
+  b.text('HALDANE DEEP', { at: [0, 3, 0], size: 6.4, depth: 1.6 }, { edges: 1 });
+  b.line([-31, -3.2, 0], [31, -3.2, 0], { w: 0.6 });
+  b.text('OCEAN SURVEY · NORTH ATLANTIC · SINCE 2026', { at: [0, -6.4, 0], size: 1.25, depth: 0, font: '500 120px "PCM Mono"' }, { w: 0.75 });
+});
+
+// ───────────────────────── shots
+F.shot({
+  name: 'vessel', form: 'vessel', dur: 6.5, in: { style: 'scan', dur: 2.6, sweep: 'up' },
+  cam: { yaw: 58, pitch: 16, dist: 140, target: [2, -3, 0], frame: 0.2, drift: 2 },
+  hud: {
+    fig: ['FIG. 01 / R/V HALDANE / POINT CLOUD', 'LOCAL GRID / 1 : 250'], scan: 'SCAN 01', kicker: '(01) VESSEL / HULL / LIVE LIDAR',
+    title: ['Mapping the deep,', 'one swath at a time.'], body: 'Haldane Deep runs survey ships that read the seafloor in sound and keep every sounding in one live model.',
+    button: 'BOOK A SURVEY', link: 'EXPLORE A LIVE MODEL', tab: 0,
+    stats: [['SOUNDINGS', 'TODAY', '41 870 220'], ['SWATH', 'WIDTH', '5.2 KM'], ['DEPTH', 'NOW', '2 140 M']],
+    callouts: [{ at: PING, text: 'MB-02 MULTIBEAM · 512 BEAMS', dx: 150, dy: 120 }],
+  },
+});
+F.shot({
+  name: 'seafloor', form: 'seafloor', dur: 5.6, in: { style: 'nebula', dur: 2.6, sweep: 'right' },
+  cam: { yaw: 34, pitch: 34, dist: 265, target: [0, -6, 0], drift: 1.6 },
+  hud: {
+    chrome: false, fig: ['MULTIBEAM MOSAIC', 'GRID 120 × 76 / 25 M'], scan: 'SCAN 02',
+    callouts: [{ at: [-30, floor(-30, zAxis(-30)), zAxis(-30)], text: 'TR-04 TRENCH AXIS · 6 214 M', dx: -60, dy: 150 },
+      { at: [46, floor(46, -36) + 1, -36], text: 'SM-11 SEAMOUNT · RISE 1 870 M', dx: 120, dy: -110 }],
+    rings: [{ c: [0, -14, 0], r: 92, ticks: 96 }],
+  },
+});
+F.shot({
+  name: 'whale', form: 'whale', dur: 6.4, in: { style: 'flow', dur: 2.4, sweep: 'front' },
+  cam: { yaw: 14, pitch: 10, dist: 54, target: [-0.4, -1.2, 0], frame: 0.2, drift: 1.4 },
+  hud: {
+    fig: ['FIG. 03 / HB-27 / ACOUSTIC TAG', 'HYDROPHONE ARRAY / 4 KM'], scan: 'LISTEN 03', kicker: '(03) SPECIES / PAUSE / LIVE',
+    title: ['Listening before', 'we sound.'], body: 'Hydrophones hear whales kilometres out. The sonar stops until they pass, and the pause is logged with the map.',
+    button: 'READ THE PROTOCOL', link: 'HEAR A RECORDING', tab: 2,
+    stats: [['PAUSES', 'THIS YEAR', '312'], ['NEAREST', 'NOW', '3.8 KM']],
+    callouts: [{ at: [5.3, 0.4, 0], text: 'HB-27 HUMPBACK · 14.2 M', dx: -70, dy: -120 }],
+  },
+});
+F.shot({
+  name: 'globe', form: 'globe', dur: 5.4, in: { style: 'burst', dur: 2.4, sweep: 'radial' },
+  cam: { yaw: 70, pitch: 22, dist: 118, target: [0, 0, 0], frame: 0.2, drift: 3 },
+  hud: {
+    fig: ['FIG. 04 / NETWORK / ARCHIVE', 'EPSG 4326 / 12 × 24'], scan: 'SYNC 04', kicker: '(04) NETWORK / ARCHIVE / OPEN DATA',
+    title: ['Every line we run,', 'kept and shared.'], body: 'Twenty-one years of survey lines in one archive, free to every hydrographic office.',
+    button: 'OPEN THE ARCHIVE', link: 'DOWNLOAD A GRID', tab: 3,
+    stats: [['MAPPED', '', '2.1 M KM²'], ['SOUNDINGS', 'ARCHIVED', '9.4 B'], ['OPEN', 'OFFICES', '38']],
+    callouts: [{ at: ll(52, -32, R0 * 1.01), text: 'NA-03 GRID · 41 200 KM²', dx: 130, dy: -90 }],
+    paths: [{ pts: gc(PORTS[0], PORTS[1], 0.3), gap: 10 }],
+  },
+});
+F.shot({
+  name: 'wordmark', form: 'wordmark', dur: 4, in: { style: 'fold', dur: 2.2, sweep: 'radial' },
+  cam: { yaw: 0, pitch: 3, dist: 92, target: [0, -0.5, 0], drift: 0.6 },
+  hud: { chrome: false, fig: ['HALDANE DEEP', 'END OF SURVEY'], scan: 'SCAN 05' },
+});
+
+// ───────────────────────── the film's own rules
+F.check('the sonar fan points down from the keel', () => PING[1] <= KEEL + 0.01 && seabed(PING[0], 0) < PING[1]);
+F.check('the whale tail swings less than 20°', () => 7 + 15 < 25 && 15 < 20);
+F.check('survey tracks sit on the globe', () => BOXES.every(([la]) => Math.abs(la) < 80));
+await F.start();
+</script>
+</body>
+</html>

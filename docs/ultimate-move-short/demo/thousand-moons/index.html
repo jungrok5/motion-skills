@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>月蝕 · Thousand-Moon Eclipse</title>
+<script type="importmap">{ "imports": { "um/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// 「月蝕 · Thousand-Moon Eclipse」 — the worked example (BRIEF.md). 30 s, 16 shots, the fixed grammar of the style:
+// burst → combo → run → first omen → blinks → first burst → stillness → domain → collapse → the cut → silence.
+import { Film } from 'um/film.js';
+import { fighter, run, drawFighter } from 'um/fighter.js';
+import { domain, drawDomain } from 'um/domain.js';
+import { slash, smear, focusLines, motionLines, shardList, shards, spaceCrack, cutLine, vortex, arcPts } from 'um/fx.js';
+import { brush, brush3, splash, blot, fleckList, flecks, inkShadow, INK } from 'um/ink.js';
+import { groundCrack, groundRing } from 'um/world.js';
+import { clamp, lerp, ease, hash, sn, v3, TAU, smooth } from 'um/core.js';
+import { SCORE } from './score.js';
+
+const RED = '#e0142d';
+const HERO = {
+  build: { scale: .96, head: 1.14, shoulder: .142, hip: .1 },
+  hair: { style: 'tied', tail: .62, seed: 11, len: .9, tie: '#f1eee8' },
+  coat: { len: .66, back: 1.4, flare: .3, collar: .06, open: .62, panels: 7, rag: .8 },
+  sash: { col: '#f1eee8', tails: 2, len: .85 },
+  weapon: { kind: 'spear' },
+  face: { brow: .25, jaw: .15, lash: 1 },
+  accent: RED,
+};
+// spear poses for this fighter (the library's poses + overrides; root-local, facing +z)
+const SP = {
+  ready: { pose: 'ready', gx: .18, gy: .86, gz: .3, by: .12, bp: -.22, both: 1, ls: -.5 },
+  low: { pose: 'crouch', gx: .3, gy: .62, gz: -.1, by: 2.6, bp: -.12, both: 0, lhx: -.3, lhy: .62, lhz: .3 },
+  thrust: { pose: 'dash', py: .68, lean: .55, lfz: .62, rfz: -.6, rfy: 0, gx: .12, gy: 1.12, gz: .62, by: 0, bp: .02, both: 1, ls: -.55 },
+  wind: { pose: 'ready', twist: .6, hipYaw: .2, gx: .38, gy: 1.0, gz: -.18, by: 2.3, bp: .04, both: 1, ls: .24 },
+  sweep: { pose: 'slashEnd', gx: -.32, gy: 1.03, gz: .36, by: -1.3, bp: .02, both: 1, ls: -.3 },
+  rise: { pose: 'rise', gx: .18, gy: 1.5, gz: .32, by: .1, bp: 1.0, both: 1, ls: -.5 },
+  spin: { pose: 'tuck', gx: .45, gy: 1.1, gz: .05, by: 1.57, bp: 0, both: 0 },
+  raise: { pose: 'raise', gx: .02, gy: 1.62, gz: .14, by: 0, bp: -1.3, both: 1, ls: .32 },
+  plunge: { pose: 'plunge', gx: 0, gy: .86, gz: .42, by: 0, bp: -1.32, both: 1, ls: .3 },
+  vertical: { pose: 'standUp', gx: .06, gy: 1.1, gz: .28, by: 0, bp: 1.5, br: 0, both: 0 },
+  level: { pose: 'guard', gx: .2, gy: 1.16, gz: .3, by: -1.57, bp: 0, both: 1, ls: -.42 },
+  draw: { pose: 'drawBack', gx: .28, gy: .99, gz: -.26, by: 2.75, bp: -.08, both: 1, ls: -.3 },
+  final: { pose: 'finalCut', gx: -.28, gy: 1.0, gz: .24, by: -1.55, bp: .03, both: 1, ls: -.24 },
+  rest: { pose: 'endStand', gx: .26, gy: .86, gz: .08, by: .55, bp: -.75, both: 0 },
+  skid: { pose: 'skid', gx: .38, gy: .7, gz: -.15, by: 2.6, bp: -.15, both: 0 },
+  runArm: { gx: .3, gy: .9, gz: -.22, by: 2.8, bp: -.18, both: 0, lhx: -.25, lhy: .98, lhz: .22 },
+};
+const K = (t, p, o = {}) => ({ t, ...SP[p], ...o });
+// a run: keys every frame from t0 to t1, root from a to b ([x, z]), facing yaw, cycle rate f
+const runKeys = (t0, t1, a, b, yaw, f = 2, o = {}) => { const out = []; for (let t = t0; t <= t1 + 1e-6; t += 1 / 30) { const k = (t - t0) / (t1 - t0); out.push({ t, ...SP.runArm, ...run(t * f, o), x: lerp(a[0], b[0], k), z: lerp(a[1], b[1], k), yaw, ...o.extra }); } return out; };
+
+const F = new Film({ seed: 11, score: SCORE, accent: RED, env: { seed: 6, far: 'trees' }, fadeIn: 0, fadeOut: 0 });
+const E = F.env;
+
+// the domain: a thousand moons — three giants, a curved wall of hundreds, a swarm through every depth
+const D = domain({ motif: 'moon', seed: 8, accent: RED, wallGlow: 0, fogDist: 170 })
+  .giant({ p: [0, 19, -50], size: 13, th: 0, ck: .2, gone: .97 })
+  .giant({ p: [-26, 9, -40], size: 6, th: .08, ck: .05, gone: .5 })
+  .giant({ p: [24, 11, -44], size: 7, th: .14, ck: .1, gone: .55 })
+  .wall({ z: -95, y0: 1, rows: 22, cols: 44, size: 3.6, curve: .32 })
+  .wall({ z: 95, y0: 1, rows: 22, cols: 44, size: 3.6, curve: .32 })
+  .giant({ p: [0, 13.5, 50], size: 12, th: .3, ck: .99, gone: 2 })
+  .swarm({ n: 50, c: [0, 3, 0], r0: 24, r1: 75, size: [.3, 2.6] });
+const GIANT = D.items[0], ECL = D.items.find(it => it.big && it.p[2] > 0);
+const focus = [0, 1.4, 0];
+
+// ===================================================================== 1 · burst (0.0)
+const H1 = fighter(HERO, [
+  K(-.7, 'thrust', { x: -4.2, yaw: 1.5708 }), K(-.15, 'low', { x: .2, yaw: 1.5708, e: 'out' }),
+  K(.22, 'low', { x: 1.15, yaw: 1.5708, py: .56, e: 'out' }), K(.55, 'low', { x: 1.2, yaw: 1.5708, py: .52, lean: .62 }),
+  K(.72, 'low', { x: 1.2, yaw: 1.5708, py: .5, lean: .66 }), K(.76, 'thrust', { x: -9, yaw: -1.5708, e: 'lin' }),
+], { name: 'Tsuki' });
+E.cracks.push({ crack: groundCrack(3, [1.45, .1], .2, 3.2, { w: .045, branch: .35 }), t0: .2, d: .25, until: 1.4 });
+E.cracks.push({ crack: groundCrack(4, [1.2, -.1], 2.6, 2.4, { w: .035, branch: .35 }), t0: .22, d: .3, until: 1.4 });
+const fl1 = fleckList(1, 70, { t0: .72, t1: .82, at: (tb, h, h2) => v3.add(H1.rig(.7).chest, [-(h2) * 3, (h - .5) * 1.4, (h - .5) * .6]), speed: 2, life: 1, size: .07, g: 1.5 });
+F.shot(1.4, (w, t) => {
+  if (t < .76) { w.ink(H1, { span: lerp(.75, .25, smooth(.5, .74, t)), w: .55, red: true, from: -.7 }); w.fighter(H1); }
+  else {   // vanished: the afterimage stays, then comes apart as flecks
+    // the black silhouette stays where she was, then tears apart from the trailing side
+    const k = (t - .76) / .55, at = H1.rig(.72).chest;
+    if (k < 1) w.layer(at, 1, (c, v) => inkGhost(c, v, k));
+    function inkGhost(c, v, k) {
+      inkShadow(c, v, H1, .72, { span: .25, w: .55, from: -.7, tone: false });
+      drawFighter(c, v, H1, .72, { flat: true, tone: '#0b0b0e' });
+      c.globalCompositeOperation = 'destination-out'; c.fillStyle = '#000';
+      const q = v.p(at); if (!q) return; const R = v.k(q[2]);
+      for (let i = 0; i < 90; i++) { const h = j => hash(i, j), x = q[0] + (h(1) - .8) * R * 2.4, y = q[1] + (h(2) - .45) * R * 2, g = clamp(k * 1.6 - h(3) * .6 + (q[0] - x) / R * .3); if (g > 0) blot(c, x, y, R * .16 * g, { seed: i, dir: Math.PI, stretch: 1.5 }); }
+      c.globalCompositeOperation = 'source-over';
+    }
+  }
+  w.flecks(fl1);
+}, { cam: [{ t: 0, at: [.5, .72, 0], yaw: -.08, pitch: .02, dist: 5.2, fov: 36 }, { t: .45, at: [.75, .72, 0], dist: 4.1 }, { t: .7, at: [.9, .74, 0], dist: 3.3, e: 'io' }, { t: 1.4, at: [.6, .74, 0], dist: 3.6 }],
+  hits: [{ t: .2, a: 6, d: .25 }, { t: .76, a: 10, d: .2 }], mb: .7, name: 'burst' });
+
+// ===================================================================== 2 · reappear, the sweep (1.4)
+const H2 = fighter(HERO, [
+  K(0, 'wind', { x: -1.6, z: 1.2, yaw: 1.2 }), K(.06, 'wind', { x: -1.5, z: 1.2, yaw: 1.2 }), K(.24, 'sweep', { x: -1.2, z: 1.25, yaw: 1.2, e: 'whip' }), K(1, 'sweep', { x: -1.15, z: 1.25, yaw: 1.2, py: .66 }),
+]);
+const crack2 = groundCrack(9, [-1.0, .9], -.25, 22, { w: .07, branch: .2 });
+E.cracks.push({ crack: crack2, t0: 1.4 + .3, d: .35, until: 3.2 });
+F.shot(1, (w, t) => {
+  w.fighter(H2, { ghosts: t < .3 ? [{ dt: .05, a: .35 }, { dt: .1, a: .2 }] : null });
+  const c = v3.add(H2.rig(.15).chest, [0, -.1, 0]);
+  w.inked(c, (ctx, v) => slash(ctx, v, { c, r: 1.55, a0: 2.6, a1: -.5, axis: [-.1, 1, .45], w: .5, head: ease.out(clamp((t - .06) / .16)), fade: clamp((t - .45) / .5), red: { col: RED, n: 2 }, seed: 21 }), -.3);
+}, { cam: [{ t: 0, at: [-1.2, .95, 1.2], yaw: .42, pitch: .06, dist: 4.4, fov: 42 }, { t: 1, at: [-1.1, .95, 1.2], yaw: .3, dist: 4.9 }], hits: [{ t: .2, a: 18, d: .3 }], holds: [[.2, .08]], mb: .9, name: 'sweep' });
+F.impact(1.4 + .2, .05, 'invert');
+
+// ===================================================================== 3 · charge at the lens (2.4)
+const H3 = fighter(HERO, [...runKeys(0, .52, [0, -9], [0, -2.2], 0, 2.4, { lean: .7, stride: .55, py: .76 }), K(.66, 'thrust', { x: 0, z: .6, yaw: 0, e: 'out' }), K(.8, 'thrust', { x: 0, z: .9, yaw: 0 })]);
+F.shot(.8, (w, t) => {
+  w.ink(H3, { span: .4, w: .6, red: true, from: 0 }); w.fighter(H3);
+  w.screen((ctx, v) => { const p = v.p(H3.rig(t).chest); if (p) focusLines(ctx, v.W, v.H, { x: p[0], y: p[1], n: 70, r0: v.H * .32, col: '#1b1b1f', a: .25 + t * .4, t, w: .006 }); });
+}, { cam: [{ t: 0, pos: [.25, .45, 3.2], at: [0, 1, -5], fov: 72 }, { t: .8, pos: [.25, .42, 3.4], at: [0, 1.05, -5], fov: 76 }], hits: [{ t: .62, a: 14, d: .25, fov: 6 }], mb: 1, name: 'charge' });
+
+// ===================================================================== 4 · rising thrust (3.2)
+const H4 = fighter(HERO, [K(0, 'thrust', { x: -2.6, yaw: 1.5708 }), K(.18, 'low', { x: -.9, yaw: 1.5708, e: 'out' }), K(.46, 'rise', { x: .4, yaw: 1.5708, py: .95, e: 'whip' }), K(1, 'rise', { x: .6, yaw: 1.5708, py: .98 })]);
+F.shot(1, (w, t) => {
+  w.ink(H4, { span: .3, w: .3, from: 0 }); w.fighter(H4);
+  w.smear(H4, .2, .5, { red: { col: RED, n: 2 }, w: .55, fade: clamp((t - .6) / .4), seed: 31 });
+}, { cam: [{ t: 0, at: [-1.2, 1.0, 0], yaw: -.35, pitch: -.05, dist: 3.6, fov: 44, roll: .06 }, { t: 1, at: [.4, 1.25, 0], yaw: -.15, dist: 4.2, roll: .03 }], hits: [{ t: .46, a: 14, d: .3 }], holds: [[.46, .07]], mb: .9, name: 'rising thrust' });
+
+// ===================================================================== 5 · airborne spin, ring of ink (4.2)
+const H5 = fighter(HERO, [K(0, 'spin', { x: .6, y: 1.0, yaw: 1.5708 }), K(.75, 'spin', { x: .7, y: 2.2, yaw: 1.5708 + TAU * 1.1, e: 'out' }), K(1, 'raise', { x: .7, y: 2.4, yaw: 1.5708 + TAU * 1.1 })]);
+F.shot(1, (w, t) => {
+  w.fighter(H5);
+  const c = v3.add(H5.rig(.4).chest, [0, -.05, 0]);
+  w.inked(c, (ctx, v) => slash(ctx, v, { c, r: 1.75, a0: 0, a1: TAU * .96, axis: [.08, 1, .05], w: .42, head: ease.out(clamp(t / .7)), fade: clamp((t - .7) / .3) * .6, red: { col: RED, n: 2 }, seed: 41, dry: .5 }), .2);
+}, { cam: [{ t: 0, at: [.6, 1.6, 0], yaw: .5, pitch: .95, dist: 6.5, fov: 46 }, { t: 1, at: [.7, 2.2, 0], yaw: 1.2, pitch: 1.05, dist: 6 }], mb: .8, name: 'spin' });
+
+// ===================================================================== 6 · freeze, orbit, plunge (5.2)
+const H6 = fighter(HERO, [K(0, 'raise', { x: .7, y: 2.4, yaw: 7.85 }), K(.25, 'raise', { x: .7, y: 3.1, yaw: 7.85, e: 'out' }), K(.55, 'raise', { x: .7, y: 3.1, yaw: 7.85 }), K(.85, 'plunge', { x: .7, y: 0, yaw: 7.85, e: 'in' }), K(1.8, 'plunge', { x: .7, y: 0, yaw: 7.85, py: .5 })]);
+const land = [.7, 0, .45];
+for (let i = 0; i < 6; i++) E.cracks.push({ crack: groundCrack(60 + i, [land[0], land[2]], i / 6 * TAU + .3, 2 + hash(i, 3) * 2.5, { w: .045, branch: .3 }), t0: 5.2 + .85, d: .3, until: 7.0 });
+const sh6 = shardList(6, 40, { center: [land[0], .2, land[2]], speed: 7, size: .14, r0: .3, flat: true, tb: .85 });
+const fl6 = fleckList(6, 90, { t0: .85, t1: .9, at: () => [land[0], .1, land[2]], dir: (tb, h) => [Math.cos(h(3) * TAU), .4 + h(4), Math.sin(h(3) * TAU)], speed: 6, life: 1.1, size: .06, g: 6 });
+F.shot(1.8, (w, t) => {
+  w.fighter(H6, { ghosts: t > .55 && t < .85 ? [{ dt: .04, a: .4 }, { dt: .09, a: .25 }] : null });
+  if (t > .55 && t < .9) w.ink(H6, { span: .3, w: .4, from: .55, parts: ['chest', 'pelvis', 'hemB'] });
+  if (t > .85) {
+    const k = t - .85;
+    w.add(1e5, (ctx, v) => { groundRing(ctx, v, land, .4 + 2.2 * ease.out(clamp(k / .5)), .28 * (1 - clamp(k / 1.2) * .6), { seed: 7, dry: .4 + k * .4 }); groundRing(ctx, v, land, .2 + 1.3 * ease.out(clamp(k / .35)), .18, { seed: 8, dry: .55, a0: 1, span: 5 }); });
+    w.at([land[0], .05, land[2]], (ctx, v) => { const p = v.p([land[0], .05, land[2]]); if (p) splash(ctx, p[0], p[1], v.k(p[2]) * 1.0, { seed: 6, grow: ease.out(clamp(k / .18)) * (1 - clamp((k - .6) / .8) * .3), sy: .35, spikes: .45, streaks: 16, drops: 40 }); }, .5);
+    w.add(1e4, (ctx, v) => shards(ctx, v, sh6, t));
+    w.flecks(fl6);
+  }
+}, { cam: t => {
+    // a fast half-orbit while she hangs, then a low wide angle for the drop
+    const o = ease.io(clamp((t - .2) / .45)), d = ease.in(clamp((t - .6) / .25));
+    return { at: [.7, lerp(3.1, 1.1, d), 0], yaw: lerp(-.6, -.6 + Math.PI * .95, o), pitch: lerp(.1, -.12, d), dist: lerp(5.5, 6.4, d), fov: lerp(40, 58, d) };
+  }, hits: [{ t: .85, a: 26, d: .5, fov: -6 }], holds: [[.85, .1]], mb: .8, name: 'freeze · plunge' });
+F.impact(5.2 + .85, .1, 'black');
+
+// ===================================================================== 7 · run into depth, the turn (7.0)
+const H7 = fighter(HERO, runKeys(0, 2, [0, 0], [0, -14], Math.PI, 2, { lean: .6, py: .78 }));
+F.shot(2, (w, t) => {
+  if (t < 1.15) w.ink(H7, { span: .5, w: .42, red: true, from: 0, alpha: 1 - clamp((t - .85) / .3) });
+  w.fighter(H7);
+  // a ring of ink stamped at each foot plant (every half cycle)
+  if (t < 1.2) w.add(1e5 - 2, (ctx, v) => { for (let k = 0; k < 8; k++) { const tp = (k + .25) / 4; if (tp > t) break; const r = H7.rig(tp), f = k % 2 ? r.fL.ank : r.fR.ank, a = t - tp; groundRing(ctx, v, [f[0], 0, f[2]], .25 + 1.6 * ease.out(clamp(a / .4)), .2 * (1 - clamp(a / 1.2)), { seed: 70 + k, dry: .5 + a * .3, alpha: 1 - clamp(a / 1.4) }); } });
+}, { cam: [{ t: 0, pos: [.7, 1.4, 4], at: [0, 1.2, -4] , fov: 46}, { t: 1.1, pos: [1.1, 1.5, -6.4], at: [0, 1.3, -12], fov: 46 }, { t: 1.55, pos: [.9, 1.55, -12.4], at: [0, 1.5, -10.4], fov: 40 }, { t: 2, pos: [.4, 1.62, -16.6], at: [0, 1.55, -13.9], fov: 34 }], mb: .8, name: 'run · turn' });
+
+// ===================================================================== 8 · first omen: two cuts cross, a tiny moon (9.0)
+const H8 = fighter(HERO, [K(0, 'ready', { x: 0, z: 0, yaw: Math.PI, hp: -.35 }), K(.18, 'wind', { yaw: Math.PI, hp: -.3, gy: 1.3 }), K(.32, 'sweep', { yaw: Math.PI, gy: 1.17, bp: .5, e: 'whip', hp: -.3 }), K(.48, 'wind', { yaw: Math.PI, gy: 1.3, bp: .4, hp: -.3 }), K(.62, 'sweep', { yaw: Math.PI, gy: 1.17, bp: .55, e: 'whip', hp: -.3 }), K(1.45, 'sweep', { yaw: Math.PI, gy: 1.17, bp: .55, hp: -.35 }), K(1.6, 'skid', { yaw: .1, e: 'out' }), K(2, 'thrust', { x: 0, z: 5, yaw: 0, e: 'in' })]);
+F.shot(2, (w, t) => {
+  w.fighter(H8);
+  w.screen((ctx, v) => {
+    const W = v.W, Hh = v.H, cx = W * .42, cy = Hh * .3;
+    const cut = (t0, ang, seed) => { const k = ease.out(clamp((t - t0) / .12)); if (k <= 0) return; const L = W * .55, a = [cx - Math.cos(ang) * L / 2, cy - Math.sin(ang) * L / 2], b = [cx + Math.cos(ang) * L / 2, cy + Math.sin(ang) * L / 2]; const pts = Array.from({ length: 20 }, (_, i) => [lerp(a[0], b[0], i / 19), lerp(a[1], b[1], i / 19) + Math.sin(i / 19 * Math.PI) * 6]); brush(ctx, pts, pts.map((_, i) => 15 * Math.sin(Math.PI * i / 19) ** .4), { seed, head: k, dry: .5, splatter: .6, fade: clamp((t - 1.5) / .5) }); };
+    cut(.26, -.5, 81); cut(.56, .55, 82);
+    // the red point, a tiny moon that waxes full for 0.3 s, closes into a spark
+    if (t > .68 && t < 1.4) {
+      const k = t - .68, R = 58;
+      ctx.save(); ctx.shadowColor = RED; ctx.shadowBlur = 16; ctx.fillStyle = RED; ctx.beginPath(); ctx.arc(cx, cy, Math.max(1.5, 4 * (1 - clamp(k / .2))), 0, TAU); ctx.fill(); ctx.restore();
+      const op = clamp((k - .1) / .22), cl = clamp((k - .42) / .1);
+      if (op > 0 && cl < 1) { ctx.save(); ctx.translate(cx, cy); ctx.scale(R * (1 - cl * .9), R * (1 - cl)); D.draw(ctx, { open: op, accent: RED, seed: 3, detail: true, look: [.6, .6] }); ctx.restore(); }
+      if (cl >= 1) { const s = clamp((k - .52) / .3); ctx.save(); ctx.fillStyle = RED; ctx.shadowColor = RED; ctx.shadowBlur = 12; ctx.globalAlpha = 1 - s; ctx.beginPath(); ctx.arc(cx, cy + s * 30, 3, 0, TAU); ctx.fill(); ctx.restore(); }
+    }
+    // the first faint cracks in sky and ground
+    if (t > 1.1) for (let i = 0; i < 3; i++) spaceCrack(ctx, W * (.15 + i * .3), Hh * (.12 + hash(i, 2) * .2), 120, hash(i, 4) * TAU, { seed: 90 + i, grow: clamp((t - 1.1 - i * .1) / .4), w: 1.4, branch: .2, alpha: .7 });
+  });
+}, { cam: [{ t: 0, pos: [-.75, 1.05, 2.0], at: [.9, 4.2, -6], fov: 56 }, { t: .7, pos: [-.72, 1.03, 1.9], at: [.9, 4.25, -6] }, { t: 1.4, pos: [-.7, 1.02, 1.85], at: [.9, 4.25, -6] }, { t: 2, pos: [-.4, 1.1, 2.6], at: [.6, 3.4, -6] }], hits: [{ t: .32, a: 6 }, { t: .62, a: 8 }], holds: [[.82, .06]], mb: .6, name: 'first omen' });
+
+// ===================================================================== 9 · skid, three arc blinks (11.0)
+const B = [[-2.4, 1.2, .9], [1.6, -1.8, -1.4], [3.0, 1.6, 2.4]];      // blink stops [x, z, yaw]
+const H9 = fighter(HERO, [
+  K(0, 'thrust', { x: -6, z: 2, yaw: 1.3 }), K(.22, 'skid', { x: -3.2, z: 1.6, yaw: 1.3, e: 'out' }), K(.42, 'skid', { x: -2.9, z: 1.5, yaw: 1.3 }),
+  K(.5, 'wind', { x: B[0][0], z: B[0][1], yaw: B[0][2], e: 'snap' }), K(.62, 'sweep', { x: B[0][0] + .3 * Math.sin(B[0][2]), z: B[0][1] + .3 * Math.cos(B[0][2]), yaw: B[0][2], e: 'whip' }),
+  K(.75, 'wind', { x: B[1][0], z: B[1][1], yaw: B[1][2], e: 'snap' }), K(.87, 'sweep', { x: B[1][0] + .3 * Math.sin(B[1][2]), z: B[1][1] + .3 * Math.cos(B[1][2]), yaw: B[1][2], e: 'whip' }),
+  K(1.0, 'wind', { x: B[2][0], z: B[2][1], yaw: B[2][2], e: 'snap' }), K(1.12, 'sweep', { x: B[2][0] + .3 * Math.sin(B[2][2]), z: B[2][1] + .3 * Math.cos(B[2][2]), yaw: B[2][2], e: 'whip' }),
+  K(2, 'sweep', { x: B[2][0] + .35 * Math.sin(B[2][2]), z: B[2][1] + .35 * Math.cos(B[2][2]), yaw: B[2][2], py: .64 }),
+]);
+const C9 = [.4, 1.3, .4];   // where the three strokes cross
+const strokes9 = [[.5, [C9[0], C9[1] + .4, C9[2]], 3.2, 2.9, -.3, [.2, 1, .7]], [.75, [C9[0], C9[1] - .2, C9[2]], 3.4, .4, 3.9, [-.7, .5, .2]], [1.0, [C9[0], C9[1] + .1, C9[2]], 3.0, -1, 2.4, [.5, -.4, .8]]];
+F.shot(2, (w, t) => {
+  if (t < .45) w.ink(H9, { span: .4, w: .4, from: 0 });
+  w.fighter(H9, { ghosts: t > .5 && t < 1.3 ? [{ dt: .03, a: .3 }] : null });
+  // the skid: a long black friction trail on the ground
+  w.add(1e5 - 3, (ctx, v) => { const pts = []; for (let i = 0; i <= 12; i++) { const tt = lerp(.05, Math.min(t, .44), i / 12), r = H9.rig(tt); pts.push([r.fL.toe[0], .003, r.fL.toe[2]]); } brush3(ctx, v, pts, pts.map(() => .14), { seed: 91, dry: .45, splatter: .6 }); });
+  strokes9.forEach(([t0, c, r, a0, a1, ax], i) => w.inked(c, (ctx, v) => {
+    const tight = ease.in(clamp((t - 1.75) / .25));
+    slash(ctx, v, { c, r: r * (1 - tight * .55), a0, a1, axis: ax, w: .34, head: ease.out(clamp((t - t0) / .12)), red: { col: RED, n: 2 }, seed: 100 + i, dry: .4 });
+  }, -1));
+}, { cam: t => ({ at: [.3, 1.2, .5], yaw: lerp(.15, -.75, ease.io(t / 2)), pitch: .08, dist: lerp(7.5, 6.6, t / 2), fov: 46, roll: .04 * Math.sin(t * 2) }), hits: [{ t: .62, a: 9 }, { t: .87, a: 9 }, { t: 1.12, a: 12 }], mb: .7, name: 'three blinks' });
+
+// ===================================================================== 10 · first burst (13.0)
+const H10 = fighter(HERO, [K(0, 'sweep', { x: 3.24, z: 1.34, yaw: 2.4, py: .64 }), K(.4, 'sweep', { x: 3.25, z: 1.34, yaw: 2.4 }), K(.62, 'skid', { x: 5.9, z: 2.25, yaw: 4.38, back: 1, e: 'out' }), K(2, 'skid', { x: 6.5, z: 2.45, yaw: 4.38, back: 1 })]);
+const sh10 = shardList(10, 120, { center: C9, speed: 11, size: .2, r0: .2, tb: .45, spin: 6, white: .12 });
+const fl10 = fleckList(10, 140, { t0: .45, t1: .5, at: () => C9, dir: (tb, h) => v3.norm([h(1) - .5, h(2) - .3, h(3) - .5]), speed: 9, life: 1.8, size: .1, g: 1 });
+F.shot(2, (w, t) => {
+  w.fighter(H10);
+  if (t > .4) w.ink(H10, { span: .35, w: .5, from: .4, red: true });
+  w.layer(1e4, 1, (ctx, v) => {
+    if (t > .45) {
+      const p = v.p(C9), k = ease.out(clamp((t - .45) / .3)); if (!p) return;
+      const R = v.k(p[2]) * 2.6;
+      // a black-and-red plume: thick radial strokes bursting outward from the crossing, a few torn blots at the tips
+      ctx.save(); ctx.globalAlpha = 1 - clamp((t - 1.2) / .8) * .7;
+      for (let i = 0; i < 18; i++) { const a = hash(i, 1) * TAU, L = R * k * (.7 + hash(i, 2) * 1.1), pts = Array.from({ length: 10 }, (_, j) => { const u = j / 9, bend = (hash(i, 4) - .5) * .5 * u; return [p[0] + Math.cos(a + bend) * L * u, p[1] + Math.sin(a + bend) * L * u * .72]; }); brush(ctx, pts, pts.map((_, j) => R * (.12 + hash(i, 3) * .16) * (1 - j / 10 * .6)), { seed: 160 + i, dry: .45, splatter: .6, red: i % 5 === 0 ? { col: RED, n: 1 } : null }); }
+      ctx.fillStyle = INK; for (let i = 0; i < 10; i++) { const a = hash(i, 21) * TAU, d = R * k * (.9 + hash(i, 22) * .8); blot(ctx, p[0] + Math.cos(a) * d, p[1] + Math.sin(a) * d * .7, R * .08 * (1 - k * .3), { seed: i + 50, dir: a + Math.PI, stretch: 2 }); }
+      ctx.restore();
+      splash(ctx, p[0], p[1], R * .6, { seed: 12, grow: k, spikes: .5, streaks: 22, drops: 50, alpha: 1 - clamp((t - 1.3) / .7) * .6 });
+      ctx.save(); ctx.strokeStyle = RED; ctx.shadowColor = RED; ctx.shadowBlur = 8; ctx.lineWidth = 2;
+      for (let i = 0; i < 9; i++) { const a = hash(i, 9) * TAU, l = R * k * (.8 + hash(i, 8)); ctx.globalAlpha = 1 - clamp((t - .9) / .6); ctx.beginPath(); ctx.moveTo(p[0] + Math.cos(a) * l * .2, p[1] + Math.sin(a) * l * .14); ctx.quadraticCurveTo(p[0] + Math.cos(a + .2) * l * .6, p[1] + Math.sin(a + .2) * l * .4, p[0] + Math.cos(a) * l, p[1] + Math.sin(a) * l * .7); ctx.stroke(); }
+      ctx.restore();
+    } else strokes9.forEach(([t0, c, r, a0, a1, ax], i) => slash(ctx, v, { c, r: r * .45 * (1 - ease.in(clamp(t / .3)) * .7), a0, a1, axis: ax, w: .34, red: { col: RED, n: 2 }, seed: 100 + i }));
+  });
+  w.add(1e4 - 1, (ctx, v) => shards(ctx, v, sh10, t));
+  w.flecks(fl10);
+  // the sky splits in places, and the moons are glimpsed for the first time — incomplete
+  w.add(1e6, (ctx, v) => { if (t > .55) drawDomain(ctx, v, D, { open: .32, alpha: .4 * clamp((t - .55) / .3) * (1 - clamp((t - 1.6) / .4)), look: focus, only: it => !it.big && it.id % 3 === 0 }); });
+  w.screen((ctx, v) => { if (t > .5) for (let i = 0; i < 5; i++) spaceCrack(ctx, v.W * (.08 + i * .21), v.H * (.1 + hash(i, 7) * .25), 160, Math.PI * (.3 + hash(i, 5) * .4), { seed: 110 + i, grow: clamp((t - .5 - i * .05) / .3), w: 1.8, branch: .3 }); });
+}, { cam: [{ t: 0, at: [.8, 1.3, .6], yaw: -.75, pitch: .05, dist: 6.6, fov: 46 }, { t: .45, dist: 6.2 }, { t: 2, at: [2.5, 1.3, 1.8], yaw: -.95, dist: 9, pitch: .1 }], hits: [{ t: .45, a: 30, d: .6, fov: 8 }], holds: [[.45, .08]], mb: .8, name: 'first burst' });
+F.impact(13 + .25, .1, 'black'); F.impact(13 + .35, .08, 'burst', { y: 1080 * .45, x: 1920 * .52 });
+
+// ===================================================================== 11 · stillness (15.0)
+const H11 = fighter(HERO, [K(0, 'skid', { x: 0, z: 0, yaw: .1 }), K(.9, 'vertical', { x: 0, z: 0, yaw: .1, e: 'io' }), K(1.5, 'vertical', { yaw: .1, edge: 0 }), K(2.2, 'vertical', { yaw: .1, edge: 1, glow: .3 }), K(2.3, 'vertical', { yaw: .1, edge: 1, glow: 1 })]);
+const sh11 = shardList(11, 70, { center: [0, 1.6, -1.5], speed: 2.4, size: .22, r0: 1.2, tb: -1.5, spin: 3 });
+F.shot(2.3, (w, t) => {
+  w.fighter(H11);
+  w.add(1e4, (ctx, v) => shards(ctx, v, sh11, t, { freeze: [-.2, 9] }));
+  // the cracks the strikes left light up: red points travel along them
+  w.screen((ctx, v) => {
+    for (let i = 0; i < 4; i++) { const x = v.W * (.1 + i * .27), y = v.H * (.14 + hash(i, 3) * .3), g = clamp((t - .4 - i * .12) / .7); spaceCrack(ctx, x, y, 170, Math.PI * (.35 + hash(i, 5) * .4), { seed: 120 + i, grow: g, w: 1.6, branch: .3, col: '#1a1a1e' }); if (g > .3) { ctx.save(); ctx.fillStyle = RED; ctx.shadowColor = RED; ctx.shadowBlur = 10; for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.arc(x + Math.cos(Math.PI * (.35 + hash(i, 5) * .4)) * 60 * (k + 1) * g, y + Math.sin(Math.PI * (.35 + hash(i, 5) * .4)) * 60 * (k + 1) * g, 2.6, 0, TAU); ctx.fill(); } ctx.restore(); } }
+  });
+}, { cam: [{ t: 0, at: [0, 1.25, 0], yaw: 2.3, pitch: .05, dist: 3.4, fov: 40 }, { t: 2.3, at: [0, 1.4, 0], yaw: .25, dist: 2.3, fov: 38 }], mb: .3, name: 'stillness' });
+// the eye: an extreme close-up, a red ring in the iris that cracks like glass
+F.shot(.7, (w, t) => {
+  w.fighter(H11, { t: 2.3 });
+  w.screen((ctx, v) => {
+    const e = v.p(H11.eye(2.3, 1)); if (!e) return; const R = v.k(e[2]) * .011;
+    ctx.save(); ctx.strokeStyle = '#1a0306'; ctx.lineWidth = R * .12;
+    for (const k of [1, .62, .32]) { ctx.beginPath(); ctx.arc(e[0], e[1], R * k * (1 + .05 * Math.sin(t * 20)), 0, TAU); ctx.stroke(); }
+    ctx.restore();
+    if (t > .3) for (let i = 0; i < 6; i++) spaceCrack(ctx, e[0], e[1], R * 2.2, i / 6 * TAU + .3, { seed: 130 + i, grow: ease.out(clamp((t - .3) / .2)), w: Math.max(1, R * .05), col: '#fff3f3', branch: .3, depth: 1 });
+  });
+}, { cam: t => { const r = H11.rig(2.3), e = H11.eye(2.3, 1); return { at: e, yaw: .1 + .02 * t, pitch: .02, dist: lerp(.32, .26, t / .7), fov: 30 }; }, mb: 0, name: 'the eye' });
+
+// ===================================================================== 12 · the domain: a thousand moons wax (18.0)
+const H12 = fighter(HERO, [K(0, 'vertical', { x: 0, z: 0, yaw: Math.PI, glow: 1, edge: 1 })]);
+F.shot(4, (w, t) => {
+  const open = t < .6 ? .02 : t < 1 ? .09 + (t - .6) * .1 : .13 + ease.io(clamp((t - 1) / 1.8)) * .95;
+  w.add(1e6, (ctx, v) => drawDomain(ctx, v, D, { open, look: focus, threads: clamp((t - 2) / 1), glow: 1 }));
+  w.add(1e6 + 1, (ctx, v) => drawDomain(ctx, v, D, { open: clamp(t / .7), look: focus, only: it => it === GIANT }));
+  w.fighter(H12);
+  w.env({ dark: clamp((t - 1.4) / 2) * .35 });
+  if (t > 3.0 && t < 3.6) w.screen((ctx, v) => { ctx.fillStyle = `rgba(255,255,255,${ease.in(clamp((t - 3.25) / .3))})`; ctx.fillRect(0, 0, v.W, v.H); });
+}, { cam: t => {
+    if (t < 3.0) { const k = ease.io(clamp((t - .5) / 2.4)); return { at: [0, lerp(5, 11, k), -10], yaw: 0, pitch: lerp(-.18, -.05, k), dist: lerp(14, 42, k), fov: lerp(50, 56, k) }; }
+    if (t < 3.6) { const k = ease.in(clamp((t - 3.0) / .55)); return { pos: v3.lerp([0, 12, 32], [0, 15, -44], k), at: [0, 15, -48], fov: 56 - k * 20 }; }
+    const k = ease.out(clamp((t - 3.6) / .4)); return { at: [0, 1.5, 0], yaw: Math.PI - .15, pitch: .05, dist: lerp(3.2, 2.8, k), fov: 42 };
+  }, mb: t => t > 2.9 && t < 3.75 ? .1 : .4, name: 'domain', tr: { type: 'flash', d: .15 } });
+
+// ===================================================================== 13 · collapse, the eclipse, the charge (22.0)
+const H13 = fighter(HERO, [K(0, 'level', { x: 0, z: 0, yaw: Math.PI, glow: 1, edge: 1 }), K(1.9, 'level', { yaw: Math.PI, glow: 1, edge: 1 }), K(2.6, 'draw', { yaw: Math.PI, by: SP.draw.by - TAU, glow: 1, edge: 1, e: 'io' }), K(3, 'draw', { yaw: Math.PI, by: SP.draw.by - TAU, glow: 1, edge: 1, py: .63 })]);
+const tipAt = t => H13.rig(t).blade.tip;
+const sh13 = shardList(13, 160, { center: [0, 5, 0], speed: 4, size: .26, r0: 6, tb: -.5, spin: 2.5, white: .3 });
+F.shot(3, (w, t) => {
+  const crack = ease.io(clamp(t / 1.1)), gone = clamp((t - .7) / 1.3) * .985, black = ease.io(clamp((t - 2.0) / .45));
+  w.env({ dark: .35 + black * .65 });
+  w.add(1e6, (ctx, v) => drawDomain(ctx, v, D, { open: 1, crack, gone, look: focus, threads: 1 - clamp(t / .8), eclipse: it => it === ECL ? ease.io(clamp((t - 1.5) / .8)) : 0, glow: 1 }));
+  w.add(5e3, (ctx, v) => shards(ctx, v, sh13, t, { freeze: [-.5, .9], swirl: .8, pull: { t: 1.0, d: .9, to: tipAt(Math.min(t, 2.5)), spread: .9 }, red: RED }));
+  w.fighter(H13, black > .5 ? { outline: '#f2f0eb', outlineW: 3, flat: true, tone: '#050506', edge: 1 } : {});
+  if (t > 1.0 && t < 2.6) w.at(H13.rig(t).chest, (ctx, v) => { const p = v.p([0, .3, 0]); if (p) vortex(ctx, p[0], p[1], v.k(p[2]) * 2.4, { t, seed: 14, alpha: clamp((t - 1) / .3) * (1 - clamp((t - 2.2) / .4)), red: RED, hole: false, sq: .32 }); }, .5);
+}, { cam: t => {
+    const k = ease.io(clamp(t / 1.9)), b = ease.io(clamp((t - 2.0) / .8));
+    return { at: [0, 1.3 + b * .6, 0], yaw: Math.PI - .2 + k * TAU, pitch: .06 + b * .08, dist: lerp(3.4, 5.2, k) + b * 3, fov: 44 };
+  }, mb: .22, name: 'collapse · eclipse' });
+
+// ===================================================================== 14 · the cut (25.0)
+const H14 = fighter(HERO, [K(0, 'draw', { x: 0, z: 0, yaw: Math.PI, glow: 1, edge: 1, py: .63 }), K(.12, 'draw', { yaw: Math.PI, glow: 1, edge: 1, py: .62 }), K(.26, 'final', { x: -.3, yaw: Math.PI, glow: 1, edge: 1, e: 'whip' }), K(3, 'final', { x: -.32, yaw: Math.PI, glow: .6, edge: .4 })]);
+const CUTY = .47;      // the cut's height on the frame
+F.shot(3, (w, t) => {
+  const shear = ease.out(clamp((t - .45) / 1.6));
+  w.env({ dark: t < .26 ? 1 : .45 * (1 - clamp((t - .3) / .4)) });
+  if (t < .26) w.env({ bg: '#0c0c0e' });
+  w.add(1e6, (ctx, v) => { if (t < .26) drawDomain(ctx, v, D, { open: 1, crack: 1, gone: .985, eclipse: it => it === ECL ? 1 : 0, corona: 1 - clamp(t / .2), look: focus }); else drawDomain(ctx, v, D, { open: 1, crack: 1, gone: .55 + shear * .2, look: focus, alpha: .65 }); });
+  w.fighter(H14, t < .26 ? { outline: '#f2f0eb', outlineW: 3, flat: true, tone: '#050506', edge: 1 } : {});
+  if (t > .14 && t < .6) w.smear(H14, .14, .3, { red: { col: RED, n: 2 }, w: .8, fade: clamp((t - .35) / .25) });
+  // ink pouring from the cut face, the white tear opening at the centre, white shear streaks
+  w.screen((ctx, v) => {
+    if (t < .3) return;
+    const W = v.W, Hh = v.H, y = Hh * CUTY, k = shear;
+    for (let i = 0; i < 18; i++) { const side = i % 2 ? 1 : -1, x0 = W * hash(i, 1), len = W * (.15 + hash(i, 2) * .35) * k, yy = y + side * (6 + hash(i, 3) * 70 * k); const pts = Array.from({ length: 12 }, (_, j) => [x0 + (j / 11 - .5) * len, yy + side * Math.sin(j / 11 * Math.PI) * 18 * k]); brush(ctx, pts, pts.map((_, j) => (10 + 26 * hash(i, 4)) * Math.sin(Math.PI * j / 11) ** .5 * k), { seed: 140 + i, dry: .5, splatter: .7, alpha: .9 }); }
+    const tw = W * .012 + W * .045 * k, th = Hh * 1.1 * k, cx = W * .5;
+    ctx.save(); ctx.fillStyle = '#fbfaf7'; ctx.beginPath(); ctx.moveTo(cx, y - th / 2);
+    for (let j = 0; j <= 30; j++) { const a = j / 30; ctx.lineTo(cx + tw * Math.sin(Math.PI * a) ** .7 * (1 + (hash(j, 7) - .5) * .9), y - th / 2 + th * a); }
+    for (let j = 30; j >= 0; j--) { const a = j / 30; ctx.lineTo(cx - tw * Math.sin(Math.PI * a) ** .7 * (1 + (hash(j, 8) - .5) * .9), y - th / 2 + th * a); }
+    ctx.fill();
+    ctx.fillStyle = INK; for (let i = 0; i < 40; i++) { const a = hash(i, 31), sd = hash(i, 32) > .5 ? 1 : -1, yy = y - th / 2 + th * a, xx = cx + sd * (tw * Math.sin(Math.PI * a) ** .7 + 4 + hash(i, 33) * 26); blot(ctx, xx, yy, 2 + hash(i, 34) * 7 * k, { seed: i, dir: sd > 0 ? 0 : Math.PI, stretch: 2 }); }
+    ctx.fillStyle = '#fbfaf7'; for (let i = 0; i < 14; i++) { const yy = y + (hash(i, 11) - .5) * Hh * .5 * k, x0 = cx + (hash(i, 12) > .5 ? 1 : -1) * tw * .6, len = W * (.2 + hash(i, 13) * .3) * k, d = x0 > cx ? 1 : -1; ctx.beginPath(); ctx.moveTo(x0, yy - 3); ctx.lineTo(x0 + d * len, yy - 1); ctx.lineTo(x0 + d * len, yy + 1); ctx.lineTo(x0, yy + 4); ctx.fill(); }
+    ctx.restore();
+  });
+  // the world slides apart along the cut: bands above and below move opposite ways
+  if (t > .45) { const s = shear, Hh = 1080, y = Hh * CUTY; w.shear({ bands: [{ y0: -1e4, y1: y - 120, dx: -70 * s }, { y0: y - 120, y1: y, dx: -150 * s }, { y0: y, y1: y + 90, dx: 150 * s }, { y0: y + 90, y1: 1e4, dx: 60 * s }], gapCol: '#fbfaf7' }); }
+  // the red hairline across the whole world (over the impact frames)
+  if (t > .22) w.top((ctx, v) => { const y = v.H * CUTY, k = ease.out(clamp((t - .22) / .06)); cutLine(ctx, [v.W * .5 - v.W * .6 * k, y], [v.W * .5 + v.W * .6 * k, y], { col: RED, w: 3.2 }); });
+}, { cam: t => {
+    if (t < .26) return { at: [0, 1.9, 0], yaw: Math.PI - .2, pitch: .14, dist: 8.2 - t * 2, fov: 44 };
+    const k = ease.out(clamp((t - .4) / 1.6)); return { at: [0, lerp(1.4, 9, k), lerp(0, -10, k)], yaw: Math.PI * 0 + .0, pitch: lerp(.02, -.06, k), dist: lerp(8, 46, k), fov: lerp(40, 54, k), sy: 0 };
+  }, hits: [{ t: .26, a: 34, d: .8, fov: 10 }], holds: [[.26, .1]], mb: t => t < .4 ? .9 : .25, name: 'the cut' });
+F.impact(25 + .26, .05, 'invert'); F.impact(25 + .31, .09, 'white', { keepA: .5 });
+
+// ===================================================================== 15 · silence (28.0)
+const H15 = fighter(HERO, [K(-.6, 'final', { x: -.32, z: 0, yaw: Math.PI }), K(.9, 'rest', { x: -.32, z: 0, yaw: Math.PI, e: 'io' }), K(2, 'rest', { x: -.32, yaw: Math.PI })]);
+const fl15 = fleckList(15, 26, { t0: -1, t1: 0, at: (tb, h, h2) => [-.32 + (h - .5) * 3, .4 + h2 * 2, (h2 - .5) * 2], dir: (tb, h) => [h(1) - .5, .2, h(3) - .5], speed: .25, life: 2.6, size: .05, g: 0, drag: .5 });
+F.shot(2, (w, t) => {
+  w.fighter(H15);
+  w.flecks(fl15, { noGround: true });
+  // the last wisp leaving the hem
+  w.at([-.32, .3, -.2], (ctx, v) => { const r = H15.rig(t), p0 = r.PF.at(r.pelvis, 0, -.55, -.2), pts = Array.from({ length: 9 }, (_, i) => v3.add(p0, [-i * .12 - t * .3, i * .05 + Math.sin(i + t * 3) * .05, i * .02])); brush3(ctx, v, pts, pts.map((_, i) => .06 * (1 - i / 9)), { seed: 151, dry: .6, fade: clamp((t - 1.0) / .8), splatter: .2 }); }, .3);
+  w.top((ctx, v) => { const y = v.H * .3, k = 1 - ease.io(clamp((t - .4) / 1.3)); if (k > 0) cutLine(ctx, [v.W * .5 - v.W * .55 * k, y], [v.W * .5 + v.W * .55 * k, y], { col: RED, w: 1.6, glow: 6 }); });
+}, { cam: [{ t: 0, at: [-.32, 1.4, 0], yaw: .55, pitch: .14, dist: 9, fov: 36 }, { t: 2, yaw: .55, dist: 8.8 }], mb: .2, name: 'silence', tr: { type: 'white', d: .3 } });
+
+F.start();
+</script>
+</body>
+</html>

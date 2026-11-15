@@ -1,0 +1,333 @@
+<!doctype html>
+<!--
+Heritage Blueprint original template code: MIT License.
+Third-party content retains its own licenses; generated work permissions are specified separately.
+Adapted in motion-skills/heritage-blueprint: locale packs (ko, zh), embedded label face, callout-box export for layout checks.
+
+MIT License
+
+Copyright (c) 2026 @木渡川（tanglele）
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+<html lang="@@HTML_LANG@@">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#edeef3">
+<title>@@PAGE_TITLE@@</title>
+<link rel="icon" href="data:,">
+<style>
+/* Embedded title font (per locale); English keeps its own fonts. */
+@@FONT_FACE@@
+h1 .han,#toggle .loc{font-family:"@@TITLE_FAMILY@@","Bahnschrift",@@LABEL_STACK@@;font-weight:700;font-synthesis:none}
+
+:root{color-scheme:light;--paper:oklch(94.9% .007 275);--ink:oklch(51.5% .238 269);--muted:oklch(43% .085 273);--rule:oklch(66% .17 269 / .45);--wash:oklch(90% .04 269);--grid:48px;--grid-major:240px;--grid-line:oklch(64% .17 269 / .14);--grid-bold:oklch(59% .20 269 / .19)}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}body{background-color:var(--paper);background-image:linear-gradient(var(--grid-bold) 1px,transparent 1px),linear-gradient(90deg,var(--grid-bold) 1px,transparent 1px),linear-gradient(var(--grid-line) 1px,transparent 1px),linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);background-size:var(--grid-major) var(--grid-major),var(--grid-major) var(--grid-major),var(--grid) var(--grid),var(--grid) var(--grid);color:var(--ink);font-family:"Bahnschrift","DIN Alternate","Helvetica Neue",sans-serif;-webkit-tap-highlight-color:transparent}
+main{position:absolute;inset:0 0 158px;touch-action:manipulation}canvas{position:absolute;inset:0;width:100%;height:100%;display:block}#model{outline:none;touch-action:none;cursor:grab}#model:focus-visible{outline:1px dashed var(--muted);outline-offset:-20px}#model[data-hit="true"]{cursor:pointer}#model[data-dragging="true"]{cursor:grabbing}
+.corner{position:absolute;width:18px;height:18px;pointer-events:none;opacity:.6}.tl{top:36px;left:36px;border-left:1px solid var(--ink);border-top:1px solid var(--ink)}.tr{top:36px;right:36px;border-right:1px solid var(--ink);border-top:1px solid var(--ink)}
+footer{position:absolute;bottom:max(34px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(520px,calc(100% - 48px))}.controls{display:flex;align-items:center;justify-content:space-between;gap:24px;border-top:1px solid var(--ink);padding-top:23px}h1{font-size:16px;line-height:1.5;font-weight:600;letter-spacing:.09em;margin:0;padding:11px 17px;white-space:nowrap;background:var(--ink);color:white}h1 span{color:inherit;opacity:.8}
+button{font:inherit;font-size:12px;font-weight:600;letter-spacing:.13em;min-height:48px;min-width:150px;padding:0 22px;border:1px solid var(--ink);border-radius:0;background:var(--paper);color:var(--ink);display:flex;align-items:center;justify-content:center;gap:20px;cursor:pointer;touch-action:manipulation;transition:background .2s,color .2s}button:hover{background:var(--ink);color:white}button:focus-visible{outline:2px solid var(--ink);outline-offset:5px}button[aria-disabled="true"]{cursor:wait;background:var(--wash);color:var(--ink);border-color:var(--ink)}button svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.4;transition:transform .5s}button[aria-expanded="true"] svg{transform:rotate(180deg)}.hint{margin:22px 0 0;text-align:center;font-family:"Consolas","Courier New",monospace;font-size:10px;letter-spacing:.12em;line-height:1.5;color:var(--muted)}.sr-only{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}#unavailable{position:absolute;inset:40%;width:80%;left:10%;text-align:center;font-size:14px;line-height:1.7}#unavailable[hidden]{display:none}
+@media(min-width:1600px){footer{width:560px;bottom:44px}h1{font-size:19px}button{font-size:13px;min-width:164px;min-height:50px}.hint{font-size:11px}main{bottom:180px}}
+@media(max-width:600px){:root{--grid:28px;--grid-major:140px}main{bottom:182px;top:30px}.tl{top:20px;left:20px}.tr{top:20px;right:20px}footer{bottom:max(28px,env(safe-area-inset-bottom));width:calc(100% - 40px)}.controls{gap:12px;padding-top:20px}h1{font-size:12px;letter-spacing:.055em;padding:15px 12px}button{min-width:116px;padding:0 13px;font-size:11px;gap:14px}.hint{font-size:9px;letter-spacing:.06em;margin-top:24px}}
+@media(max-height:520px) and (min-width:601px){main{bottom:110px}footer{bottom:15px}.controls{padding-top:10px}.hint{margin-top:8px}button{min-height:44px}.tl,.tr{top:18px}}
+#annotations{pointer-events:none}.siteplan{position:fixed;left:clamp(20px,3vw,58px);top:clamp(66px,6vh,78px);width:clamp(116px,16vmin,184px);z-index:1;margin:0;pointer-events:none;color:var(--ink)}.siteplan svg{width:100%;height:auto;overflow:visible}.siteplan text{fill:currentColor;font-family:"Consolas","Courier New",monospace}.plan-heading{font-size:13px;letter-spacing:1px}.plan-sub{font-size:10px;letter-spacing:.5px}.triangle{fill:none;stroke:currentColor;stroke-width:.8;stroke-dasharray:4 4;opacity:.65}.dimension{fill:none;stroke:currentColor;stroke-width:.8}.plan-point{fill:var(--paper);stroke:currentColor;stroke-width:1.5}
+
+@media(max-width:600px){.siteplan{left:20px;top:52px;width:clamp(110px,30vw,124px)}.siteplan .plan-heading{font-size:20px}.siteplan .plan-sub{font-size:16px}}
+@media(max-height:520px) and (min-width:601px){.siteplan{width:clamp(100px,28vh,116px);left:26px;top:48px}}
+/* The local language leads; English is always a smaller second line. */
+body{font-family:"Bahnschrift",@@LABEL_STACK@@}
+.loc,.en{display:block}.en{font-weight:400;letter-spacing:.04em}
+h1{font-size:20px;line-height:1.35;letter-spacing:.12em;padding:10px 16px;min-width:0}
+h1 span{opacity:1}h1 .en{font-size:12px;line-height:1.5;letter-spacing:.035em;margin-top:5px;opacity:.85}
+button{min-height:68px}button .loc{font-size:16px;letter-spacing:.12em;line-height:1.4}button .en{font-size:12px;line-height:1.4;margin-top:3px}
+.hint{margin-top:18px;font-family:inherit;letter-spacing:.08em}.hint .loc{font-size:12px;line-height:1.6}.hint .en{font-size:9px;line-height:1.5;margin-top:3px}
+.siteplan .plan-heading,.siteplan .plan-distance{font-family:@@LABEL_STACK@@;font-size:15px;letter-spacing:1px}.siteplan .plan-sub{font-size:10px;letter-spacing:.2px}
+#unavailable .en,noscript .en{font-size:.8em;margin-top:6px}
+@media(min-width:1600px){h1{font-size:23px}h1 .en{font-size:13px}button{min-height:76px}button .loc{font-size:18px}button .en{font-size:13px}.hint .loc{font-size:13px}.hint .en{font-size:10px}}
+@media(max-width:600px){h1{font-size:18px;letter-spacing:.08em;padding:10px 11px}h1 .en{font-size:10.5px;letter-spacing:0;margin-top:5px}button{min-height:65px;min-width:108px;padding:0 12px;gap:12px}button .loc{font-size:16px}button .en{font-size:12px}.hint{margin-top:18px}.hint .loc{font-size:11px}.hint .en{font-size:9px}.siteplan .plan-heading,.siteplan .plan-distance{font-size:19px}.siteplan .plan-sub{font-size:14px}}
+@media(max-width:350px){.controls{gap:10px}h1{padding:10px 8px}h1 .en{font-size:8.5px}button{min-width:96px;gap:8px}}
+@media(max-height:520px) and (min-width:601px){main{bottom:136px}.controls{padding-top:10px}h1{font-size:16px;padding:7px 12px}h1 .en{font-size:8px;margin-top:2px}button{min-height:51px}.hint{margin-top:8px}.hint .loc{font-size:10px}.hint .en{font-size:8px;margin-top:0}}
+</style>
+<style>
+.view-tools{position:fixed;right:clamp(20px,3vw,58px);top:clamp(66px,6vh,78px);z-index:2;display:flex;align-items:center;gap:6px}
+.view-tools button{width:44px;height:44px;min-width:44px;min-height:44px;flex:0 0 44px;padding:2px;gap:0;letter-spacing:.04em;background:var(--paper)}
+.view-tools button .loc{font-size:12px;line-height:1.3;letter-spacing:.06em}
+.view-tools button .en{font-size:9px;line-height:1.2;margin-top:3px;letter-spacing:.04em}
+.view-tools button[aria-pressed="true"]{background:var(--ink);color:white}
+.view-tools button:hover{background:var(--wash);color:var(--ink)}
+.view-tools button[aria-pressed="true"]:hover{background:var(--ink);color:white}
+#reset-view{width:44px;height:44px;min-width:44px;min-height:44px;padding:0}
+#reset-view[hidden]{display:flex;visibility:hidden;pointer-events:none}#reset-view svg{width:20px;height:20px}
+@media(max-width:600px){.view-tools{right:20px;top:52px}}
+@media(max-height:520px) and (min-width:601px){.view-tools{top:48px;right:26px}.siteplan .plan-heading,.siteplan .plan-distance{font-size:20px}.siteplan .plan-sub{font-size:15px}}
+</style>
+@@FONT_LICENSE@@
+</head>
+<body>
+<main id="stage" aria-label="@@MODEL_LABEL@@">
+  <canvas id="ground" aria-hidden="true"></canvas>
+  <canvas id="model" role="button" tabindex="0" aria-label="@@UI_ACTION_ARIA@@ / Unfold the model" aria-expanded="false" aria-describedby="hint" data-busy="false"></canvas>
+  <canvas id="annotations" aria-hidden="true"></canvas>
+  <div class="view-tools" role="group" aria-label="@@UI_CONTROLS@@ / Model controls">
+    <button id="rotate-mode" type="button" aria-label="@@UI_ROTATE@@ / Rotate mode" aria-pressed="true"><span><span class="loc">@@UI_ROTATE@@</span><span class="en" lang="en">ROTATE</span></span></button>
+    <button id="pan-mode" type="button" aria-label="@@UI_PAN@@ / Pan mode" aria-pressed="false"><span><span class="loc">@@UI_PAN@@</span><span class="en" lang="en">PAN</span></span></button>
+  <button id="reset-view" type="button" aria-label="@@UI_RESET@@ / Reset view" title="@@UI_RESET@@ / Reset view" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10a8 8 0 1 1 1 7M4 4v6h6"/></svg></button>
+  </div>
+@@INSET@@
+  <p id="unavailable" hidden><span class="loc">@@UI_UNAVAILABLE@@</span><span class="en" lang="en">This browser cannot display the model. Please enable WebGL and reopen this file.</span></p>
+</main>
+<i class="corner tl" aria-hidden="true"></i><i class="corner tr" aria-hidden="true"></i>
+<footer><div class="controls"><h1><span class="loc"><span class="han">@@TITLE_LOCAL@@</span> / @@EDITION@@</span><span class="en" lang="en">@@TITLE_EN@@</span></h1><button id="toggle" type="button" aria-label="@@UI_ACTION_ARIA@@ / Unfold the model" aria-expanded="false" aria-disabled="false"><span><span id="action" class="loc">@@UI_UNFOLD@@</span><span id="action-en" class="en" lang="en">UNFOLD</span></span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 13 10 6l7 7M10 6v11"/></svg></button></div><p class="hint" id="hint"><span class="loc">@@UI_HINT_ROTATE@@</span><span class="en" lang="en">CLICK / SPACE TO TOGGLE · DRAG TO ROTATE · SCROLL / PINCH TO ZOOM</span></p></footer>
+<div class="sr-only" id="status" role="status" aria-live="polite">@@UI_ASSEMBLED@@ Model assembled.</div>
+<noscript><p><span class="loc">@@UI_NOSCRIPT@@</span><span class="en" lang="en">Please enable JavaScript to unfold the model.</span></p></noscript>
+<script id="evidence" type="application/json">@@EVIDENCE_JSON@@</script>
+<script>
+/* Procedural heritage study: X/Y horizontal, Z up. Units are defined by the scene.
+   Separation is an explanatory diagram, not a claim of moving historical fabric. */
+(() => {
+'use strict';
+const META=@@META_JSON@@;
+// Expose the actual embedded-font load result for offline verification.
+const UI=META.ui;
+if(document.fonts){
+ document.fonts.load(META.titleWeight+' 23px "'+META.titleFamily+'"',META.fontText).then(faces=>{document.documentElement.dataset.controlsFont=faces.length?'loaded':'missing';}).catch(error=>{document.documentElement.dataset.controlsFont='error';console.error('Control font could not be loaded',error);});
+ // Canvas callouts draw with the embedded label face; redraw once it is ready.
+ if(META.labelFamily)document.fonts.load('400 15px "'+META.labelFamily+'"',META.labelText).then(faces=>{document.documentElement.dataset.labelFont=faces.length?'loaded':'missing';if(faces.length)render(phase);}).catch(error=>{document.documentElement.dataset.labelFont='error';console.error('Label font could not be loaded',error);});
+}
+const canvas=document.getElementById('model'),ground=document.getElementById('ground'),stage=document.getElementById('stage');
+const annotations=document.getElementById('annotations');
+const resetViewButton=document.getElementById('reset-view'),rotateButton=document.getElementById('rotate-mode'),panButton=document.getElementById('pan-mode');
+const button=document.getElementById('toggle'),label=document.getElementById('action'),labelEn=document.getElementById('action-en'),status=document.getElementById('status');
+const gl=canvas.getContext('webgl',{alpha:true,antialias:true,preserveDrawingBuffer:true,premultipliedAlpha:false});
+if(!gl){document.getElementById('unavailable').hidden=false;button.disabled=true;return;}
+const PI=Math.PI,rad=d=>d*PI/180,clamp=x=>Math.max(0,Math.min(1,x));
+// The reference's cobalt and cool-white family; material names identify parts.
+// Large shells stay porcelain-white, while furnishings and joints carry blue.
+const C={ink:[.42,.49,.78],soft:[.68,.73,.89],paper:[.965,.973,.99],wall:[.967,.973,.992],roof:[.72,.78,.98],stone:[.862,.885,.944],wood:[.52,.59,.88],woodLight:[.865,.895,.975],leaf:[.42,.49,.965],leafLight:[.645,.69,.985],soil:[.88,.907,.965],brass:[.31,.40,.93],accent:[.31,.40,.94],interior:[.71,.75,.89],water:[.79,.84,.975]};
+const I=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
+function mul(a,b){const r=Array(16).fill(0);for(let c=0;c<4;c++)for(let i=0;i<4;i++)for(let k=0;k<4;k++)r[c*4+i]+=a[k*4+i]*b[c*4+k];return r;}
+function tr(x,y,z){const m=I();m[12]=x;m[13]=y;m[14]=z;return m;}
+function rx(a){const m=I(),c=Math.cos(a),s=Math.sin(a);m[5]=c;m[6]=s;m[9]=-s;m[10]=c;return m;}
+function ry(a){const m=I(),c=Math.cos(a),s=Math.sin(a);m[0]=c;m[2]=-s;m[8]=s;m[10]=c;return m;}
+function rz(a){const m=I(),c=Math.cos(a),s=Math.sin(a);m[0]=c;m[1]=s;m[4]=-s;m[5]=c;return m;}
+function point(m,p){return [m[0]*p[0]+m[4]*p[1]+m[8]*p[2]+m[12],m[1]*p[0]+m[5]*p[1]+m[9]*p[2]+m[13],m[2]*p[0]+m[6]*p[1]+m[10]*p[2]+m[14]];}
+const sub=(a,b)=>a.map((v,i)=>v-b[i]),add=(a,b)=>a.map((v,i)=>v+b[i]),scale=(a,s)=>a.map(v=>v*s);
+const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],norm=a=>scale(a,1/(Math.hypot(...a)||1));
+// Ease-in/out with a smooth 2% overshoot at 82%, then exact settlement.
+function ease(t,start,end){const u=clamp((t-start)/(end-start));const s=x=>x*x*x*(x*(6*x-15)+10);return u<.82?1.02*s(u/.82):1+.02*(1-s((u-.82)/.18));}
+const nodes=[];
+function node(name,parent,transform=()=>I()){const n={name,parent,transform,tri:[],lines:[],world:I(),bounds:null,contours:[],dynamicLines:[]};nodes.push(n);return n;}
+function vertex(buf,p,c){buf.push(...p,...c);}
+function line(n,a,b,c=C.ink){vertex(n.lines,a,c);vertex(n.lines,b,c);}
+function poly(n,pts,c,outline=true){for(let i=1;i<pts.length-1;i++){vertex(n.tri,pts[0],c);vertex(n.tri,pts[i],c);vertex(n.tri,pts[i+1],c);}if(outline)pts.forEach((p,i)=>line(n,p,pts[(i+1)%pts.length]));}
+function box(n,x,y,z,w,d,h,c=C.wall,outline=true){const a=[x,y,z],b=[x+w,y,z],cc=[x+w,y+d,z],dd=[x,y+d,z],e=[x,y,z+h],f=[x+w,y,z+h],g=[x+w,y+d,z+h],hh=[x,y+d,z+h];poly(n,[a,dd,cc,b],scale(c,.96),outline);poly(n,[a,b,f,e],scale(c,.97),outline);poly(n,[b,cc,g,f],scale(c,.93),outline);poly(n,[cc,dd,hh,g],c,outline);poly(n,[dd,a,e,hh],c,outline);poly(n,[e,f,g,hh],c,outline);}
+function beam(n,a,b,width,c=C.wood){const v=norm(sub(b,a)),u=scale(norm(cross(v,Math.abs(v[2])>.9?[1,0,0]:[0,0,1])),width/2),w=scale(norm(cross(v,u)),width/2);const ring=p=>[add(add(p,u),w),add(sub(p,u),w),sub(sub(p,u),w),add(sub(p,w),u)];const aa=ring(a),bb=ring(b);poly(n,aa,c);poly(n,bb,c);for(let k=0;k<4;k++)poly(n,[aa[k],aa[(k+1)%4],bb[(k+1)%4],bb[k]],c);}
+function cylinder(n,x,y,z,r,h,c,segments=24,verticalLines=false){const lo=[],hi=[];for(let j=0;j<segments;j++){const a=j*PI*2/segments;lo.push([x+r*Math.cos(a),y+r*Math.sin(a),z]);hi.push([x+r*Math.cos(a),y+r*Math.sin(a),z+h]);}poly(n,hi,c);poly(n,lo,c);for(let j=0;j<segments;j++){const k=(j+1)%segments;poly(n,[lo[j],lo[k],hi[k],hi[j]],scale(c,.97),false);line(n,lo[j],lo[k]);if(verticalLines&&j%4===0)line(n,lo[j],hi[j],C.soft);}}
+function shade(c,theta){const light=.96+.04*Math.cos(theta+.8);return c.map(v=>v*light);}
+function profileRadius(profile,z){for(let k=1;k<profile.length;k++){const a=profile[k-1],b=profile[k];if(z<=b[0]){const t=(z-a[0])/(b[0]-a[0]);return a[1]+(b[1]-a[1])*t;}}return profile.at(-1)[1];}
+// Closed surfaces with contours instead of a visible triangulation mesh.
+function lathe(n,profile,color=C.wall,{segments=96,rings=[],flutes=0,fluteColor=C.ink}={}){
+ const smoothRamp=t=>{t=clamp(t);return t*t*(3-2*t);};
+ const fluteAt=z=>flutes*smoothRamp((z-profile[0][0])/.06)*smoothRamp((profile.at(-1)[0]-z)/.12);
+ const surface=(z,r,a)=>{const rr=r*(1+fluteAt(z)*Math.cos(8*a));return [rr*Math.cos(a),rr*Math.sin(a),z];};
+ const ringAt=(z,r)=>Array.from({length:segments},(_,i)=>surface(z,r,i*2*PI/segments));
+ const rows=profile.map(([z,r])=>ringAt(z,r));
+ for(let k=1;k<rows.length;k++){const a=rows[k-1],b=rows[k];for(let i=0;i<segments;i++){const j=(i+1)%segments;poly(n,[a[i],a[j],b[j],b[i]],shade(color,(i+.5)*2*PI/segments),false);}}
+ poly(n,rows[0].slice().reverse(),scale(color,.91),false);poly(n,rows.at(-1),color,false);
+ for(const k of rings){const row=rows[k];row.forEach((p,i)=>line(n,p,row[(i+1)%segments],C.ink));}
+ // Silhouette curves depend on the viewing angle; rebuild them during orbit.
+  n.contours.push({profile,surface});
+ if(flutes)for(let j=0;j<8;j++){const a=j*2*PI/8;for(let k=1;k<profile.length;k++){const [za,ra]=profile[k-1],[zb,rb]=profile[k];line(n,surface(za,ra,a),surface(zb,rb,a),fluteColor);}}
+}
+// A C2 spline in physical height keeps profile tangent and curvature
+// continuous even when reference-profile samples are unevenly spaced.
+function smoothProfile(points,steps=12){
+ const count=points.length,h=[],a=[],b=[],c=[],d=[],second=Array(count).fill(0),result=[];
+ for(let i=0;i<count-1;i++)h[i]=points[i+1][0]-points[i][0];
+ for(let i=1;i<count-1;i++){a[i]=h[i-1];b[i]=2*(h[i-1]+h[i]);c[i]=h[i];d[i]=6*((points[i+1][1]-points[i][1])/h[i]-(points[i][1]-points[i-1][1])/h[i-1]);if(i>1){const m=a[i]/b[i-1];b[i]-=m*c[i-1];d[i]-=m*d[i-1];}}
+ for(let i=count-2;i>0;i--)second[i]=(d[i]-c[i]*second[i+1])/b[i];
+ for(let i=0;i<count-1;i++)for(let k=0;k<steps;k++){const t=k/steps,u=1-t,r=u*points[i][1]+t*points[i+1][1]+((u*u*u-u)*second[i]+(t*t*t-t)*second[i+1])*h[i]*h[i]/6,slope=(points[i+1][1]-points[i][1])/h[i]+((1-3*u*u)*second[i]+(3*t*t-1)*second[i+1])*h[i]/6;result.push([points[i][0]+t*h[i],r,slope]);}
+ const last=count-2,slope=(points[last+1][1]-points[last][1])/h[last]+(second[last]+2*second[last+1])*h[last]/6;
+ result.push([...points.at(-1),slope]);return result;
+}
+function curveProfile(points,steps=5){const result=[];for(let i=0;i<points.length-1;i++){const p0=points[Math.max(0,i-1)],p1=points[i],p2=points[i+1],p3=points[Math.min(points.length-1,i+2)];for(let k=0;k<steps;k++){const t=k/steps,t2=t*t,t3=t2*t;const r=.5*((2*p1[1])+(-p0[1]+p2[1])*t+(2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*t2+(-p0[1]+3*p1[1]-3*p2[1]+p3[1])*t3);result.push([p1[0]+(p2[0]-p1[0])*t,Math.max(.001,r)]);}}result.push(points.at(-1));return result;}
+const scene = (()=>{
+@@SCENE_JS@@
+})();
+const {root,parts,pose} = scene;
+
+// Cache local envelopes. Full animation sampling is done once, never per frame.
+for(const n of nodes){const all=n.tri.concat(n.lines);if(!all.length)continue;const lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity];for(let k=0;k<all.length;k+=6)for(let j=0;j<3;j++){lo[j]=Math.min(lo[j],all[k+j]);hi[j]=Math.max(hi[j],all[k+j]);}n.bounds=[];for(const x of [lo[0],hi[0]])for(const y of [lo[1],hi[1]])for(const z of [lo[2],hi[2]])n.bounds.push([x,y,z]);}
+function transforms(t){const p=pose(t);for(const n of nodes)n.world=mul(n.parent?n.parent.world:I(),n.transform(p));}
+const DEFAULT_YAW=-PI/4,DEFAULT_PITCH=Math.asin(1/Math.sqrt(3));
+let yaw=DEFAULT_YAW,pitch=DEFAULT_PITCH,viewMode='rotate';
+let cameraRight,cameraUp,cameraDepth,pivot=[0,0,0],contoursDirty=true;
+function updateBasis(){const c=Math.cos(yaw),s=Math.sin(yaw),ce=Math.cos(pitch),se=Math.sin(pitch);cameraRight=[-s,c,0];cameraUp=[-se*c,-se*s,ce];cameraDepth=[ce*c,ce*s,se];}
+updateBasis();
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const iso=p=>{const q=sub(p,pivot);return [dot(q,cameraRight),dot(q,cameraUp),dot(q,cameraDepth)];};
+// A fixed envelope covers the full timeline and every orbit direction. It is
+// calculated once; neither unfolding nor orbiting changes the fitted scale.
+const sweep=[],lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity];
+for(let k=0;k<=240;k++){transforms(k/240);for(const n of nodes)if(n.bounds)for(const v of n.bounds){const p=point(n.world,v);sweep.push(p);for(let j=0;j<3;j++){lo[j]=Math.min(lo[j],p[j]);hi[j]=Math.max(hi[j],p[j]);}}}
+if(!sweep.length)throw new Error('Scene has no geometry');
+pivot=lo.map((v,i)=>(v+hi[i])/2);
+if(scene.pivotXY){pivot[0]=scene.pivotXY[0];pivot[1]=scene.pivotXY[1];}
+let orbitRadius=0,maxRadius=0;
+for(const p of sweep){const q=sub(p,pivot);orbitRadius=Math.max(orbitRadius,Math.hypot(...q));maxRadius=Math.max(maxRadius,Math.hypot(q[0],q[1]));}
+const envelope={minX:-maxRadius,maxX:maxRadius,minY:-orbitRadius,maxY:orbitRadius};
+function rebuildContours(){
+ for(const n of nodes){n.dynamicLines=[];const target={lines:n.dynamicLines};
+  const localDepth=[0,1,2].map(j=>n.world[j*4]*cameraDepth[0]+n.world[j*4+1]*cameraDepth[1]+n.world[j*4+2]*cameraDepth[2]);
+  const localYaw=Math.atan2(localDepth[1],localDepth[0]),tangent=localDepth[2]/Math.max(1e-10,Math.hypot(localDepth[0],localDepth[1]));
+  for(const {profile,surface,opening} of n.contours){
+   const slopes=profile.map((p,k)=>{const a=profile[Math.max(0,k-1)],b=profile[Math.min(profile.length-1,k+1)];return p[2]??(b[1]-a[1])/(b[0]-a[0]);});
+   for(const sign of [-1,1]){let previous=null;
+    for(let k=1;k<profile.length;k++){
+     const a=profile[k-1],b=profile[k],c0=slopes[k-1]*tangent,c1=slopes[k]*tangent,difference=c1-c0;
+     let lo=0,hi=1;
+     if(Math.abs(difference)<1e-12){if(Math.abs(c0)>1){previous=null;continue;}}
+     else {const u=(-1-c0)/difference,v=(1-c0)/difference;lo=Math.max(0,Math.min(u,v));hi=Math.min(1,Math.max(u,v));if(lo>hi){previous=null;continue;}}
+     if(lo>1e-8)previous=null;
+     const angle=t=>Math.acos(Math.max(-1,Math.min(1,c0+difference*t))),start=angle(lo),end=angle(hi),steps=Math.max(1,Math.ceil(Math.abs(end-start)/rad(3)));
+     // Include exact tangent endpoints and subdivide in angle, so near-top
+     // views do not produce missing arcs or angular seams on round stone.
+     for(let j=0;j<=steps;j++){
+      const local=start+(end-start)*j/steps,t=Math.abs(difference)<1e-12?lo+(hi-lo)*j/steps:Math.max(lo,Math.min(hi,(Math.cos(local)-c0)/difference));
+      const z=a[0]+(b[0]-a[0])*t,r=a[1]+(b[1]-a[1])*t,theta=localYaw+sign*local,current=surface(z,r,theta);
+      if(opening&&opening(theta,z)){previous=null;continue;}
+      if(previous)line(target,previous,current,C.ink);previous=current;
+     }
+     if(hi<1-1e-8)previous=null;
+    }
+   }
+  }
+ }
+ contoursDirty=false;
+}
+function shader(type,source){const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s;}
+const program=gl.createProgram();gl.attachShader(program,shader(gl.VERTEX_SHADER,`attribute vec3 aPosition;attribute vec3 aColor;uniform vec4 uView;uniform float uDepthRange;uniform vec3 uRight,uUp,uDepth,uPivot;varying vec3 vColor;void main(){vec3 p=aPosition-uPivot;float x=dot(p,uRight);float y=dot(p,uUp);float d=dot(p,uDepth);gl_Position=vec4(x*uView.x+uView.z,y*uView.y+uView.w,-d/uDepthRange,1.0);vColor=aColor;}`));gl.attachShader(program,shader(gl.FRAGMENT_SHADER,`precision mediump float;varying vec3 vColor;void main(){gl_FragColor=vec4(vColor,1.0);}`));gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program));gl.useProgram(program);
+const attrP=gl.getAttribLocation(program,'aPosition'),attrC=gl.getAttribLocation(program,'aColor'),viewUniform=gl.getUniformLocation(program,'uView');
+const rightUniform=gl.getUniformLocation(program,'uRight'),upUniform=gl.getUniformLocation(program,'uUp'),depthUniform=gl.getUniformLocation(program,'uDepth'),pivotUniform=gl.getUniformLocation(program,'uPivot');
+const depthRangeUniform=gl.getUniformLocation(program,'uDepthRange');
+const triangleBuffer=gl.createBuffer(),lineBuffer=gl.createBuffer();
+gl.enableVertexAttribArray(attrP);gl.enableVertexAttribArray(attrC);gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.clearColor(0,0,0,0);
+let width=1,height=1,dpr=1,zoom=1,origin=[0,0],phase=0,busy=false,opened=false,raf=0,started=0,direction=1;
+let fitZoom=1,fitOrigin=[0,0],viewScale=1,viewOffset=[0,0],gesture=null,gestureUsed=false,suppressClickUntil=0;
+const pointers=new Map();
+const DURATION=META.durationMs;
+let meshPhase=-1,lineCount=0;
+const triData=new Float32Array(nodes.reduce((s,n)=>s+n.tri.length,0));
+const lineCapacity=nodes.reduce((s,n)=>s+n.lines.length+n.contours.reduce((count,spec)=>count+spec.profile.length*24,0),0);
+let lineData=new Float32Array(lineCapacity);
+function screen(p){const q=iso(p);return [origin[0]+q[0]*zoom,origin[1]-q[1]*zoom];}
+function transformedCopy(src,dst,idx,m){for(let k=0;k<src.length;k+=6){const x=src[k],y=src[k+1],z=src[k+2];dst[idx++]=m[0]*x+m[4]*y+m[8]*z+m[12];dst[idx++]=m[1]*x+m[5]*y+m[9]*z+m[13];dst[idx++]=m[2]*x+m[6]*y+m[10]*z+m[14];dst[idx++]=src[k+3];dst[idx++]=src[k+4];dst[idx++]=src[k+5];}return idx;}
+function bindGeometry(buffer){gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.vertexAttribPointer(attrP,3,gl.FLOAT,false,24,0);gl.vertexAttribPointer(attrC,3,gl.FLOAT,false,24,12);}
+function render(t){
+ const geometryChanged=meshPhase!==t,outlineChanged=geometryChanged||contoursDirty;
+ if(geometryChanged){transforms(t);let ti=0;for(const n of nodes)ti=transformedCopy(n.tri,triData,ti,n.world);gl.bindBuffer(gl.ARRAY_BUFFER,triangleBuffer);gl.bufferData(gl.ARRAY_BUFFER,triData,gl.DYNAMIC_DRAW);meshPhase=t;}
+ if(outlineChanged)rebuildContours();
+ if(outlineChanged){const required=nodes.reduce((count,n)=>count+n.lines.length+n.dynamicLines.length,0);if(required>lineData.length)lineData=new Float32Array(required+4096);let li=0;for(const n of nodes){li=transformedCopy(n.lines,lineData,li,n.world);li=transformedCopy(n.dynamicLines,lineData,li,n.world);}lineCount=li/6;gl.bindBuffer(gl.ARRAY_BUFFER,lineBuffer);gl.bufferData(gl.ARRAY_BUFFER,lineData.subarray(0,li),gl.DYNAMIC_DRAW);}
+ gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.uniform4f(viewUniform,2*zoom/width,2*zoom/height,2*origin[0]/width-1,1-2*origin[1]/height);
+ gl.uniform1f(depthRangeUniform,Math.max(1,orbitRadius*2));gl.uniform3fv(rightUniform,cameraRight);gl.uniform3fv(upUniform,cameraUp);gl.uniform3fv(depthUniform,cameraDepth);gl.uniform3fv(pivotUniform,pivot);
+ gl.enable(gl.POLYGON_OFFSET_FILL);gl.polygonOffset(1,1);bindGeometry(triangleBuffer);gl.drawArrays(gl.TRIANGLES,0,triData.length/6);gl.disable(gl.POLYGON_OFFSET_FILL);bindGeometry(lineBuffer);gl.lineWidth(1);gl.drawArrays(gl.LINES,0,lineCount);
+ drawAnnotations(t);canvas.dataset.phase=t.toFixed(6);canvas.dataset.state=busy?(direction>0?'unfolding':'folding'):(opened?'open':'closed');
+}
+function drawAnnotations(t){
+ const ctx=annotations.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);
+ const a=clamp(ease(t,.12,.75)),mobile=width<600,boxes=[];ctx.lineWidth=.75;ctx.strokeStyle='rgba(49,70,214,.58)';ctx.fillStyle='rgb(50,68,193)';
+ const zhFont=(mobile?'12':'15')+'px '+META.labelStack,enFont=(mobile?'9':'11')+'px Consolas, monospace';
+ if(a>.01){ctx.globalAlpha=a;
+   // Guides are supplied by the object's own assembly description.
+   for(const guide of scene.guides?.()||[]){const p=screen(guide.from),q=screen(guide.to);ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(...p);ctx.lineTo(...q);ctx.stroke();}ctx.setLineDash([]);
+  const labels=parts.map(part=>({part,p:screen(point(part.node.world,typeof part.anchor==='function'?part.anchor({cameraRight,cameraUp,cameraDepth,yaw,pitch}):part.anchor||[part.r*cameraRight[0],part.r*cameraRight[1],part.z]))})).sort((a,b)=>a.p[1]-b.p[1]);
+   const step=mobile?29:34,bottom=height-22;let top=22;
+   // Measure the full bilingual text first, so the label column never runs past the edge.
+   const widest=Math.max(...labels.map(({part})=>{ctx.font=zhFont;const a=ctx.measureText(part.label??part.zh).width;ctx.font=enFont;return Math.max(a,ctx.measureText(part.text).width);}));
+   // Start the column right of the model's projected faces (not only the anchors), so labels
+   // clear the body from steep or side views; clamp so the widest label still fits on screen.
+   let bodyRight=-Infinity;for(let k=0;k<triData.length;k+=6){const x=origin[0]+((triData[k]-pivot[0])*cameraRight[0]+(triData[k+1]-pivot[1])*cameraRight[1]+(triData[k+2]-pivot[2])*cameraRight[2])*zoom;if(x>bodyRight)bodyRight=x;}
+   const end=Math.min(Math.max(bodyRight-(mobile?4:0),...labels.map(item=>item.p[0]))+(mobile?12:28),width-widest-(mobile?10:24));
+   // Keep the column below the top-right view tools when they share its horizontal range.
+   const tools=document.querySelector('.view-tools');if(tools&&tools.getBoundingClientRect){const r=tools.getBoundingClientRect(),st=stage.getBoundingClientRect();if(end+widest+5>r.left-st.left)top=Math.max(top,r.bottom-st.top+(mobile?16:20));}
+   labels.forEach((item,i)=>{item.y=Math.max(top,item.p[1],i?labels[i-1].y+step:top);});
+   for(let i=labels.length-1;i>=0;i--)labels[i].y=Math.min(labels[i].y,i===labels.length-1?bottom:labels[i+1].y-step);
+
+   for(const {part,p,y} of labels){ctx.beginPath();ctx.moveTo(...p);ctx.lineTo(end-5,y);ctx.lineTo(end,y);ctx.stroke();ctx.beginPath();ctx.arc(p[0],p[1],1.7,0,PI*2);ctx.fill();ctx.save();ctx.strokeStyle='rgba(240,241,247,.92)';ctx.lineWidth=3;ctx.lineJoin='round';ctx.font=zhFont;ctx.strokeText(part.label??part.zh,end+5,y-3);ctx.font=enFont;ctx.strokeText(part.text,end+5,y+(mobile?10:13));ctx.restore();ctx.font=zhFont;ctx.fillText(part.label??part.zh,end+5,y-3);ctx.font=enFont;ctx.fillText(part.text,end+5,y+(mobile?10:13));boxes.push(labelBox(ctx,part,end+5,y,mobile,zhFont,enFont));}
+ }
+ if(a<.99&&scene.dimension&&rulerFits()){ctx.globalAlpha=(1-a)*clamp((Math.cos(pitch)-.14)/.18);const lo=screen(scene.dimension.from),hi=screen(scene.dimension.to),x=Math.min(lo[0],hi[0])-zoom*scene.dimension.offset;ctx.beginPath();ctx.moveTo(x,hi[1]);ctx.lineTo(x,lo[1]);for(const y of [lo[1],hi[1]]){ctx.moveTo(x-5,y);ctx.lineTo(x+5,y);}ctx.stroke();ctx.save();ctx.translate(x-21,(lo[1]+hi[1])/2);ctx.rotate(-PI/2);ctx.textAlign='center';ctx.font=zhFont;ctx.fillText(scene.dimension.label??scene.dimension.zh,0,0);ctx.font=enFont;ctx.fillText(scene.dimension.en,0,14);ctx.restore();}
+ ctx.globalAlpha=1;annotations.dataset.labels=JSON.stringify(boxes.map(b=>b.map(v=>Math.round(v))));
+}
+// The height ruler is skipped when it would leave the screen or run into the corner diagram.
+function rulerFits(){const lo=screen(scene.dimension.from),hi=screen(scene.dimension.to),x=Math.min(lo[0],hi[0])-zoom*scene.dimension.offset,box=[x-36,Math.min(lo[1],hi[1]),44,Math.abs(lo[1]-hi[1])];if(box[0]<4)return false;const plan=document.querySelector('.siteplan');if(!plan||!plan.getBoundingClientRect)return true;const r=plan.getBoundingClientRect(),st=stage.getBoundingClientRect();const p=[r.left-st.left-6,r.top-st.top-6,r.width+12,r.height+12];return !(box[0]<p[0]+p[2]&&p[0]<box[0]+box[2]&&box[1]<p[1]+p[3]&&p[1]<box[1]+box[3]);}
+// Full bilingual text box of one callout, in CSS px: [x, y, width, height].
+function labelBox(ctx,part,x,y,mobile,zhFont,enFont){ctx.font=zhFont;const w1=ctx.measureText(part.label??part.zh).width;ctx.font=enFont;const w2=ctx.measureText(part.text).width;const top=y-(mobile?13:16),bottom=y+(mobile?13:16);return [x,top,Math.max(w1,w2),bottom-top];}
+// Leave the drafting paper clean: no radial halo or ground shadow.
+function drawGround(){const ctx=ground.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);}
+function syncView(){zoom=fitZoom*viewScale;origin=fitOrigin.map((v,i)=>v+viewOffset[i]);canvas.dataset.camera=[zoom,...origin].map(x=>x.toFixed(4)).join(',');canvas.dataset.viewScale=viewScale.toFixed(4);canvas.dataset.orbit=[yaw,pitch].map(x=>x.toFixed(6)).join(',');canvas.dataset.viewMode=viewMode;resetViewButton.hidden=Math.abs(viewScale-1)<.001&&Math.hypot(...viewOffset)<.1&&Math.abs(yaw-DEFAULT_YAW)<.0001&&Math.abs(pitch-DEFAULT_PITCH)<.0001;}
+function setView(scale,position){viewScale=Math.max(.55,Math.min(3.2,scale));viewOffset=position.map((v,i)=>v-fitOrigin[i]);syncView();render(phase);}
+function setOrbit(azimuth,elevation){yaw=Math.atan2(Math.sin(azimuth),Math.cos(azimuth));pitch=Math.max(rad(-80),Math.min(rad(85),elevation));updateBasis();contoursDirty=true;syncView();render(phase);}
+function resetView(){viewScale=1;viewOffset=[0,0];setOrbit(DEFAULT_YAW,DEFAULT_PITCH);}
+function setMode(mode){viewMode=mode;rotateButton.setAttribute('aria-pressed',String(mode==='rotate'));panButton.setAttribute('aria-pressed',String(mode==='pan'));document.querySelector('#hint .loc').textContent=mode==='rotate'?UI.hintRotate:UI.hintPan;document.querySelector('#hint .en').textContent=mode==='rotate'?'CLICK / SPACE TO TOGGLE · DRAG TO ROTATE · SCROLL / PINCH TO ZOOM':'CLICK / SPACE TO TOGGLE · DRAG TO PAN · SCROLL / PINCH TO ZOOM';syncView();}
+function zoomAt(factor,anchor){const next=Math.max(.55,Math.min(3.2,viewScale*factor)),ratio=next/viewScale;setView(next,anchor.map((v,i)=>v-(v-origin[i])*ratio));}
+function resize(){const rect=stage.getBoundingClientRect(),oldWidth=width,oldHeight=height;width=Math.max(1,rect.width);height=Math.max(1,rect.height);if(oldWidth>1&&oldHeight>1)viewOffset=[viewOffset[0]*width/oldWidth,viewOffset[1]*height/oldHeight];dpr=Math.min(window.devicePixelRatio||1,2);for(const c of [canvas,ground,annotations]){c.width=Math.round(width*dpr);c.height=Math.round(height*dpr);}gl.viewport(0,0,canvas.width,canvas.height);const ew=envelope.maxX-envelope.minX,eh=envelope.maxY-envelope.minY;const margin=width<600?18:Math.max(52,width*.095);fitZoom=Math.max(1,Math.min((width-2*margin)/ew,(height-(width>600&&height<360?32:width<600?52:80))/eh));fitOrigin=[width/2-(envelope.minX+envelope.maxX)*fitZoom/2,height*.51+(envelope.minY+envelope.maxY)*fitZoom/2];syncView();drawGround();render(phase);}
+function updateLabels(){const next=opened?'Fold':'Unfold',nextZh=opened?UI.fold:UI.unfold,aria=UI.actionAria.replace('{action}',nextZh);label.textContent=nextZh;labelEn.textContent=next.toUpperCase();button.setAttribute('aria-expanded',String(opened));canvas.setAttribute('aria-expanded',String(opened));button.setAttribute('aria-label',aria+' / '+next+' the model');canvas.setAttribute('aria-label',aria+' / '+next+' the model');button.setAttribute('aria-disabled',String(busy));canvas.setAttribute('aria-disabled',String(busy));canvas.dataset.busy=String(busy);}
+function frame(now){const progress=clamp((now-started)/DURATION);phase=direction>0?progress:1-progress;if(progress===1){busy=false;opened=direction>0;phase=opened?1:0;updateLabels();status.textContent=opened?UI.separated+' Model separated.':UI.assembled+' Model assembled.';}render(phase);if(busy)raf=requestAnimationFrame(frame);else raf=0;}
+function toggle(){if(busy||gl.isContextLost())return;busy=true;direction=opened?-1:1;started=performance.now();updateLabels();status.textContent=direction>0?UI.unfolding+' Unfolding.':UI.folding+' Folding.';raf=requestAnimationFrame(frame);}
+function hit(x,y){
+ // Project only on clicks. Orbiting reuses the mesh on the GPU instead of
+ // allocating hundreds of thousands of screen-space triangles per frame.
+ for(let k=0;k<triData.length;k+=18){const a=screen(triData.subarray(k,k+3)),b=screen(triData.subarray(k+6,k+9)),c=screen(triData.subarray(k+12,k+15));
+  if(x<Math.min(a[0],b[0],c[0])||x>Math.max(a[0],b[0],c[0])||y<Math.min(a[1],b[1],c[1])||y>Math.max(a[1],b[1],c[1]))continue;
+  const s=(p,q)=>(x-q[0])*(p[1]-q[1])-(p[0]-q[0])*(y-q[1]),u=s(a,b),v=s(b,c),w=s(c,a);
+  if(Math.abs((b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]))<.01)continue;
+  if(!((u<0||v<0||w<0)&&(u>0||v>0||w>0)))return true;
+ }return false;
+}
+// Read-only hooks for scripted checks (photo-angle stills); not part of the UI.
+window.heritageBlueprint={setOrbit:(yawDeg,pitchDeg)=>setOrbit(rad(yawDeg),rad(pitchDeg)),resetView,toggle,state:()=>({phase,opened,busy,yaw,pitch})};
+button.addEventListener('click',toggle);
+resetViewButton.addEventListener('click',resetView);
+rotateButton.addEventListener('click',()=>setMode('rotate'));panButton.addEventListener('click',()=>setMode('pan'));
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
+const localPointer=e=>{const r=canvas.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top];};
+function gestureMetrics(){const p=[...pointers.values()];return p.length>1?{center:p[0].map((v,i)=>(v+p[1][i])/2),distance:Math.hypot(p[1][0]-p[0][0],p[1][1]-p[0][1])}:{center:p[0],distance:0};}
+function beginGesture(mode=gesture?.mode||viewMode){gesture=pointers.size?{...gestureMetrics(),origin:[...origin],scale:viewScale,yaw,pitch,mode}:null;}
+canvas.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&![0,1,2].includes(e.button))return;const mode=e.shiftKey||e.button===1||e.button===2?'pan':viewMode;if(!pointers.size)gestureUsed=false;pointers.set(e.pointerId,localPointer(e));canvas.setPointerCapture(e.pointerId);if(pointers.size>1)gestureUsed=true;beginGesture(mode);});
+canvas.addEventListener('pointermove',e=>{
+ if(!pointers.has(e.pointerId))return;
+ pointers.set(e.pointerId,localPointer(e));const current=gestureMetrics(),delta=current.center.map((v,i)=>v-gesture.center[i]);
+ if(pointers.size>1&&gesture.distance>0){gestureUsed=true;const scale=Math.max(.55,Math.min(3.2,gesture.scale*current.distance/gesture.distance)),ratio=scale/gesture.scale;setView(scale,current.center.map((v,i)=>v-(gesture.center[i]-gesture.origin[i])*ratio));}
+ else if(gestureUsed||Math.hypot(...delta)>4){gestureUsed=true;if(gesture.mode==='rotate'){const speed=PI/Math.max(280,Math.min(width,height));setOrbit(gesture.yaw-delta[0]*speed,gesture.pitch+delta[1]*speed);}else setView(gesture.scale,gesture.origin.map((v,i)=>v+delta[i]));}
+ canvas.dataset.dragging=String(gestureUsed);
+});
+function endGesture(e){if(!pointers.has(e.pointerId))return;const continuingPinch=pointers.size>1;pointers.delete(e.pointerId);if(gestureUsed||e.type==='pointercancel')suppressClickUntil=performance.now()+400;beginGesture(continuingPinch?'pan':gesture?.mode);if(!pointers.size)canvas.dataset.dragging='false';}
+canvas.addEventListener('pointerup',endGesture);canvas.addEventListener('pointercancel',endGesture);canvas.addEventListener('lostpointercapture',endGesture);
+canvas.addEventListener('wheel',e=>{e.preventDefault();const unit=e.deltaMode===1?16:e.deltaMode===2?height:1;zoomAt(Math.exp(-e.deltaY*unit*.0015),localPointer(e));},{passive:false});
+canvas.addEventListener('pointerleave',()=>{canvas.dataset.hit='false';});
+canvas.addEventListener('click',e=>{if(performance.now()<suppressClickUntil)return;if(!busy&&hit(...localPointer(e)))toggle();});
+document.addEventListener('keydown',e=>{if(e.target===resetViewButton||e.target===rotateButton||e.target===panButton)return;if((e.code==='Space'||e.code==='Enter')&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)){e.preventDefault();if(!e.repeat)toggle();}});
+canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();cancelAnimationFrame(raf);busy=false;button.disabled=true;document.getElementById('unavailable').hidden=false;});
+canvas.addEventListener('webglcontextrestored',()=>location.reload());
+window.addEventListener('resize',resize);new ResizeObserver(resize).observe(stage);resize();
+})();
+</script>
+</body>
+</html>

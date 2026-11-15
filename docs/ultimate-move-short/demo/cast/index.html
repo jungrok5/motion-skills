@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cast and motifs · ultimate-move-short</title>
+<script type="importmap">{ "imports": { "um/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// The cast sheet: every fighter turned all the way round (front, three-quarter and profile on BOTH sides, back) in
+// three poses, and every domain motif opening and cracking. Render it after changing lib/fighter.js or lib/domain.js
+// and score it with references/BRIEF.md (body: knees forward, head / chest / toes one way, the near shoulder in front;
+// motifs: each reads at sprite size and at full size). check.mjs runs the joint limits on every figure drawn here.
+//   node <skill>/scripts/render.mjs examples/cast/index.html --stills 1,3,5
+import { Film } from 'um/film.js';
+import { fighter, drawFighter } from 'um/fighter.js';
+import { view } from 'um/cam.js';
+import { MOTIFS } from 'um/domain.js';
+import { clamp } from 'um/core.js';
+
+const RED = '#e0142d';
+const CAST = [
+  { name: 'template · mirror swordsman', design: { hair: { style: 'cropped', seed: 21 }, coat: { len: .6, back: 1.15, collar: .12, panels: 6, rag: .5 }, sash: { col: '#f1eee8', tails: 1, len: .6 }, weapon: { kind: 'katana', len: .8, curve: .04 }, face: { brow: 1, jaw: .8 } },
+    poses: [{ pose: 'stand' }, { pose: 'ready' }, { pose: 'finalCut' }] },
+  { name: 'thousand-moons · Tsuki', design: { build: { scale: .96, head: 1.14, shoulder: .142, hip: .1 }, hair: { style: 'tied', tail: .62, seed: 11, len: .9, tie: '#f1eee8' }, coat: { len: .66, back: 1.4, flare: .3, collar: .06, open: .62, panels: 7, rag: .8 }, sash: { col: '#f1eee8', tails: 2, len: .85 }, weapon: { kind: 'spear' }, face: { brow: .25, jaw: .15, lash: 1 } },
+    poses: [{ pose: 'standUp', gx: .06, gy: 1.1, gz: .28, by: 0, bp: 1.5, br: 0, both: 0 }, { pose: 'ready', gx: .18, gy: .86, gz: .3, by: .12, bp: -.22, both: 1, ls: -.5 }, { pose: 'finalCut', gx: -.28, gy: 1.0, gz: .24, by: -1.55, bp: .03, both: 1, ls: -.24 }] },
+];
+const YAWS = [0, .8, 1.5708, 2.4, Math.PI, -2.4, -1.5708, -.8];   // front · ¾ right · right profile · ¾ back … left side
+const LABEL = ['front', '¾ R', 'right', '¾ back R', 'back', '¾ back L', 'left', '¾ L'];
+
+const F = new Film({ seed: 1, accent: RED, post: { grain: 0, vignette: 0, paper: 0 } });
+CAST.forEach((c, ci) => {
+  const figs = c.poses.map(p => YAWS.map(yaw => fighter({ ...c.design, accent: RED }, [{ t: 0, ...p, yaw }], { name: c.name })));
+  F.shot(2, (w) => {
+    w.env({ bg: '#eceae6' });
+    figs.forEach(row => row.forEach(H => w.fighter(H, { dz: 1e9 })));   // registered for the body check; drawn below
+    w.screen((ctx) => {
+      const W = 1920, Hh = 1080, cw = W / YAWS.length, ch = (Hh - 60) / figs.length;
+      ctx.fillStyle = '#eceae6'; ctx.fillRect(0, 0, W, Hh);
+      ctx.fillStyle = '#333'; ctx.font = '600 26px system-ui, sans-serif'; ctx.fillText(c.name, 24, 38);
+      ctx.font = '18px system-ui, sans-serif'; YAWS.forEach((_, i) => ctx.fillText(LABEL[i], i * cw + 16, 58));
+      figs.forEach((row, ri) => row.forEach((H, i) => {
+        ctx.save(); ctx.beginPath(); ctx.rect(i * cw, 60 + ri * ch, cw, ch); ctx.clip();
+        ctx.translate(i * cw + cw / 2, 60 + ri * ch + ch / 2); const k = ch / 1080; ctx.scale(k, k); ctx.translate(-960, -540);
+        const v = view({ at: [0, .95, 0], yaw: 0, pitch: .04, dist: 3.9, fov: 38 }, W, Hh);
+        const g0 = v.p([0, 0, 0]); ctx.strokeStyle = '#c8c6c2'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, g0[1]); ctx.lineTo(W, g0[1]); ctx.stroke();
+        drawFighter(ctx, v, H, 0, {});
+        ctx.restore();
+      }));
+    });
+  }, { cam: [{ t: 0 }], mb: 0, name: 'cast · ' + c.name });
+});
+// motifs: each one opening (0 → 1) at full size and as a small sprite, then cracking
+const NAMES = Object.keys(MOTIFS);
+F.shot(3, (w, t) => {
+  w.env({ bg: '#eceae6' });
+  w.screen((ctx) => {
+    const W = 1920, open = clamp(t / 2), crack = clamp((t - 2.2) / .6);
+    ctx.fillStyle = '#eceae6'; ctx.fillRect(0, 0, W, 1080);
+    ctx.fillStyle = '#333'; ctx.font = '600 26px system-ui, sans-serif'; ctx.fillText('domain motifs · open ' + open.toFixed(2), 24, 38);
+    NAMES.forEach((n, i) => {
+      const x = W / NAMES.length * (i + .5);
+      ctx.font = '20px system-ui, sans-serif'; ctx.fillText(n, x - 30, 100);
+      ctx.save(); ctx.translate(x, 330); ctx.scale(170, 170); MOTIFS[n](ctx, { open, crack, accent: RED, seed: 7, detail: true, glow: 1, look: [.5, .3], eclipse: n === 'moon' ? crack : 0 }); ctx.restore();
+      for (let k = 0; k < 4; k++) { ctx.save(); ctx.translate(x - 150 + k * 100, 720); ctx.scale(40, 40); MOTIFS[n](ctx, { open: [.15, .45, .75, 1][k] * open, accent: RED, seed: 7 + k, detail: false, glow: .2 }); ctx.restore(); }
+    });
+  });
+}, { cam: [{ t: 0 }], mb: 0, name: 'motifs' });
+F.start();
+</script>
+</body>
+</html>

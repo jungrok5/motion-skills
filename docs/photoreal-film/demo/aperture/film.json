@@ -1,0 +1,56 @@
+{
+ "title": "APERTURE",
+ "fps": 12.0,
+ "w": 640,
+ "h": 268,
+ "count": 216,
+ "ext": "webp",
+ "shots": [
+  {
+   "id": "s01_iris",
+   "start": 0,
+   "n": 27
+  },
+  {
+   "id": "s02_ring",
+   "start": 27,
+   "n": 22
+  },
+  {
+   "id": "s03_elements",
+   "start": 49,
+   "n": 30
+  },
+  {
+   "id": "s04_body",
+   "start": 79,
+   "n": 27
+  },
+  {
+   "id": "s05_shutter",
+   "start": 106,
+   "n": 10
+  },
+  {
+   "id": "s06_coast",
+   "start": 116,
+   "n": 30
+  },
+  {
+   "id": "s07_print",
+   "start": 146,
+   "n": 27
+  },
+  {
+   "id": "s08_dive",
+   "start": 173,
+   "n": 18
+  },
+  {
+   "id": "s09_title",
+   "start": 191,
+   "n": 25
+  }
+ ],
+ "audio": "score.m4a"
+}

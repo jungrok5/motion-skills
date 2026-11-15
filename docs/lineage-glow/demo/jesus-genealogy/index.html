@@ -1,0 +1,170 @@
+<!doctype html>
+<!-- lineage-glow · worked example 「예수님의 족보」 (102 s, 1080×1920). See BRIEF.md for the design and the review log.
+     Matthew 1 read downward as light (Abraham → David → the exile → Jesus, three sets of fourteen), the five women,
+     Luke 3 climbing to Adam and God, then the line opening from one person to all nations. -->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>예수님의 족보 · lineage-glow</title>
+<script type="importmap">{ "imports": { "lg/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+import { Film, keys, win, env, clamp, lerp, hash, bezPart, sCurve, ease } from 'lg/film.js';
+import { chain, fan, converge } from 'lg/lineage.js';
+import { DUR, MATTHEW, LUKE, WOMEN, D, reach, BEATS, LUKE_T } from './timing.js';
+import { SCORE } from './score.js';
+
+const F = new Film({ dur: DUR, title: '예수님의 족보', score: SCORE, fadeOut: 2 });
+const CY = F.center[1];
+const look = (wy, Y, zoom) => ({ x: 0, y: wy - (Y - CY) / zoom, zoom });     // put world row wy at screen row Y
+
+// ── the shapes ──────────────────────────────────────────────────────────────────────────────────────────────────────
+// Matthew's line: chain index i = 0 is Jesus (the root, bottom), i = 40 is Abraham (top). m = 40 − i is Matthew's order.
+const SP = 88;
+const M = chain(41, { y: i => -i * SP, x: i => 16 * Math.sin(i * .62) });
+const at = m => M.pos(40 - m), yM = m => -(40 - m) * SP;
+const isMile = m => m === 0 || m === 13 || m === 26 || m === 27 || m === 40;
+// Luke above Abraham: j = 0 is Abraham (shared), j = 1 … 21 is Terah … God; the rows pack tighter as they go up
+const yL = [at(0)[1]]; for (let j = 1; j <= 21; j++) yL.push(yL[j - 1] - 82 * Math.pow(.95, j - 1));
+const L = chain(22, { y: j => yL[j], x: j => at(0)[0] + 12 * Math.sin(j * .9) * (1 - j / 22) });
+const yTop = yL[21];
+// the five women: beside the father's row, their line runs into the child
+const wpos = w => [at(w.father)[0] + w.side * 270, at(w.father)[1]];
+// all nations: countless lines from Jesus down to a wide row
+const FAN = fan({ from: [0, 0], n: 640, seed: 11, lift: .5, to: (j, r) => { const u = (j + r()) / 640 * 2 - 1; return [u * 940 + (r() - .5) * 30, 600 + r() * 190 - Math.abs(u) * 140]; } });
+
+// ── the camera ──────────────────────────────────────────────────────────────────────────────────────────────────────
+// keyed moves, and during the descent a camera that follows the light down the line
+const camKeys = keys([
+  [0, look(0, 1150, 1.12)], [6.2, look(0, 1130, 1.0), 'sine'],
+  [7.9, look(yM(18), 1000, .3), 'inOut'], [9.8, look(yM(0), 880, .95), 'inOut'], [12, look(yM(0), 900, .9), 'sine'],
+  [44.5, look(0, 1280, .92)], [47.5, look(-1760, 1090, .3), 'inOut'], [51.5, look(-1760, 1090, .31), 'sine'],
+  [54, look(yM(8.5), 1110, .62), 'inOut'], [63.6, look(yM(9.3), 1110, .64), 'sine'],
+  [66, look(yM(39), 1060, .74), 'inOut'], [71.5, look(yM(39.3), 1050, .78), 'sine'],
+  [75, look((yTop - 20) / 2, 1110, .25), 'inOut'], [79.5, look((yTop - 20) / 2, 1110, .255), 'sine'],
+  [82.4, look(0, 720, 1.0), 'inOut'], [88.5, look(260, 760, .8), 'sine'], [94.5, look(300, 770, .72), 'sine'],
+  [99.5, look(60, 900, .95), 'inOut'], [DUR, look(40, 920, 1.0), 'sine'],
+]);
+const follow = t => { const d = D(t), u = win(t, 12, 14.5, 'inOut'); return look(yM(d), lerp(900, 1280, u), lerp(.9, .92, u)); };
+F.camera(t => t > 12 && t < 44.5 ? follow(t) : camKeys(t));
+
+// ── the light ───────────────────────────────────────────────────────────────────────────────────────────────────────
+const fanU = t => win(t, 82.6, 87.5, 'inOut');
+const fanBack = t => win(t, 95.5, 100, 'inOut');
+F.world((g, t) => {
+  const d = D(t), inFan = win(t, 80, 82.5);
+  // warm pool under Jesus, the root
+  g.flare(0, 0, 300, .45 + .15 * Math.sin(t * 1.2), 'soft');
+
+  // the horizon: the edge of the past, first above Abraham, later above God (Luke)
+  const hy = lerp(at(0)[1] - 80, yTop - 60, win(t, LUKE_T[0], LUKE_T[1], 'inOut'));
+  g.horizon(hy, { a: env(t, 7.4, 81, 1.2, 1.5) * (.55 + .45 * win(t, 76, 78)) * clamp((g.Y(hy) - 440) / 140), haze: 150 });
+
+  // the road not yet lit: Matthew's whole line as switched-off grey, waiting for the light to come down it
+  const ghost = env(t, 8.8, 45.5, 1.4, 1);
+  if (ghost > 0) M.draw(g, { a: ghost * .5, on: () => 0, w: 1.3, nodeR: () => 3.4, fadeTop: 470 });
+  // Matthew's line
+  const exileDim = m => m >= 14 && m <= 27 ? 1 - .82 * env(t, 31, 35.8, 1.1, .9) : 1;
+  const maryShift = win(t, 66.5, 68.5);
+  M.draw(g, {
+    grown: t < 12 ? (t > 8 ? 0 : -1) : d, down: true, a: 1 - inFan * .78, fadeTop: 470,
+    on: i => exileDim(40 - i),
+    w: 2.3, linkA: i => i === 0 ? 1 - .6 * maryShift : 1, linkW: i => i === 0 ? 2.3 - 1.2 * maryShift : 2.3,
+    nodeR: i => isMile(40 - i) ? 6.5 : 4.6,
+    flare: i => { const m = 40 - i; return m === 13 ? .6 * env(t, reach(13), 23, .2, 1.2) : m === 27 ? .5 * env(t, 30.2, 36.5, .3, .6) * (.6 + .4 * Math.sin(t * 9)) : m === 40 ? .35 * win(t, 43.3, 44) * (1 - inFan) : m === 0 ? .7 * env(t, 8.6, 13, .3, 1.5) : 0; },
+    labels: i => i === 0 ? '' : MATTHEW[40 - i],
+    side: i => ((40 - i) % 2 ? 1 : -1),
+    labelA: i => {
+      const m = 40 - i, wFocus = WOMEN.some(w => w.father === m || w.child === m) ? 1 : .45;
+      const desc = t < 44.5 ? (isMile(m) ? 1 : clamp(1 - (d - m) * .06, .55, .9)) : 0;
+      const pull = env(t, 44.5, 51.5, 1, .8) * (isMile(m) ? 1 : 0);
+      const women = env(t, 52, 64, 1, 1) * wFocus * (m < 20 ? 1 : 0) + env(t, 64.5, 71.5, 1, .8) * (m >= 36 ? .9 : 0);
+      return Math.max(desc * (1 - win(t, 44, 45.5)), pull, women);
+    },
+    labelColor: i => (40 - i) === 13 && t > reach(13) && t < 23.5 ? F.P.gold : null,
+    labelGlow: i => (40 - i) === 13 ? env(t, reach(13), 23.5, .3, 1) : 0,
+  });
+  // the root's own label, centred beneath it
+  g.label(0, 0, '예수', { dy: 52, size: 32, a: win(t, .5, 1.5) * (1 - win(t, 7, 8)) + win(t, 43, 44) * (1 - win(t, 46, 47)) + win(t, 64.5, 65.5) * (1 - win(t, 71.5, 72.5)) + win(t, 73.5, 74.5) * (1 - win(t, 79.5, 80.5)) + win(t, 99, 100.2), glow: win(t, 99, 100.5) });
+
+  // the three sets of fourteen (Matthew 1:17): brackets to the right of the line
+  const br = env(t, 46.5, 51.6, .9, .7);
+  if (br > 0) for (const [a, b, k] of [[0, 13, 0], [13, 26, 1], [27, 40, 2]]) {
+    const x = 300 + (k === 1 ? 60 : 0), y0 = yM(a) + 10, y1 = yM(b) - 10, u = win(t, 46.6 + k * .6, 47.8 + k * .6, 'inOut');
+    g.line(x, y0, x, lerp(y0, y1, u), { a: br * .9, w: 2, fixed: true });
+    g.line(x - 34, y0, x, y0, { a: br * .7, w: 2, fixed: true }); if (u > .98) g.line(x - 34, y1, x, y1, { a: br * .7, w: 2, fixed: true });
+    g.label(x, (y0 + y1) / 2, '14대', { dx: 22, align: 'left', size: 34, a: br * win(t, 47.6 + k * .6, 48.2 + k * .6), color: F.P.gold, glow: .5 });
+  }
+
+  // the women: a node beside the father, a line into the child
+  WOMEN.forEach((w, n) => {
+    const t0 = n < 4 ? 52.6 + n * .9 : 66.2, show = env(t, t0, n < 4 ? 64.2 : 72, .5, .9) * (1 - inFan);
+    if (show <= 0) return;
+    const p = wpos(w), c = at(w.child), u = win(t, t0 + .2, t0 + 1.3, 'inOut'), curve = sCurve(c, p, .5);
+    g.curve([curve[3], curve[2], curve[1], curve[0]], { u1: u, a: show, w: 2, tip: 1 });
+    g.node(p[0], p[1], { r: 6, a: show, flare: .25 });
+    g.label(p[0], p[1], w.name, { dx: w.side * 24, dy: 1, align: w.side > 0 ? 'left' : 'right', size: 30, a: show, color: F.P.gold, glow: .4 });
+  });
+
+  // Luke: climbing above Abraham to Adam and God
+  const lg = 21 * win(t, LUKE_T[0], LUKE_T[1], 'inOut'), lA = env(t, LUKE_T[0] - .1, 81.5, .2, 1.4);
+  if (lA > 0) L.draw(g, {
+    grown: lg, a: lA, w: 1.8, nodeR: j => j === 21 ? 9 : 3.6, flare: j => j === 21 ? win(t, 77.3, 78.5) * (.9 + .1 * Math.sin(t * 3)) : 0,
+    labels: j => j === 11 ? '노아' : j === 20 ? '아담' : '', side: j => j === 20 ? 1 : -1, labelSize: 26,
+  });
+  if (lA > 0) g.flare(L.pos(21)[0], yTop, 190, lA * win(t, 77.2, 78.6) * (.75 + .1 * Math.sin(t * 2.4)));
+  if (lA > 0) g.label(L.pos(21)[0], yTop, '하나님', { dy: -44, size: 32, a: lA * win(t, 77.4, 78.4), color: F.P.gold, glow: .8 });
+  if (lA > 0) g.label(at(0)[0], at(0)[1], '아브라함', { dx: 24, align: 'left', size: 26, a: lA * env(t, 72, 81, 1, 1) });
+
+  // all nations: from Jesus outward. Each fibre has its own small delay so the burst feels alive, not mechanical
+  const fu = fanU(t), back = fanBack(t);
+  if (fu > 0) {
+    const list = (back > 0 ? converge(FAN, [0, 0], back, .3) : FAN).map((c, j) => { const u = clamp(fu * 1.4 - hash(j, 5) * .4); return u <= 0 ? null : bezPart(c, u); }).filter(Boolean);
+    const fa = 1 - back * .7;
+    g.fibers(list, { a: .16 * fa, w: 1, halo: true });
+    g.fibers(list.filter((_, j) => j % 9 === 0), { a: .35 * fa, w: 1.4 });
+    // the people at the ends: they light one by one, then twinkle
+    FAN.forEach((c, j) => {
+      if (j % 3) return;
+      const lit = clamp((fu * 1.4 - hash(j, 5) * .4 - .98) * 30) * clamp(1 - back * 3); if (lit <= 0) return;
+      const tw = .65 + .35 * Math.sin(t * (1.2 + hash(j, 8) * 2) + j);
+      g.node(c[3][0], c[3][1], { r: 2.6 + hash(j, 9) * 2.2, a: lit * tw });
+    });
+    g.horizon(800, { a: win(t, 86, 88.5) * clamp(1 - back * 2.5), haze: 110, w: 2 });
+  }
+  // Jesus, the one light
+  g.node(0, 0, { r: 9, flare: .5 + .3 * win(t, 0, 1.5, 'out') - .2 * win(t, 7, 8) + .25 * win(t, 43, 44) + .5 * inFan * (1 - win(t, 88, 92) * .4) + .6 * win(t, 96, 100) });
+});
+
+// ── type ────────────────────────────────────────────────────────────────────────────────────────────────────────────
+F.caption(.8, 5.8, '예수님의 족보는\n어디에서 시작될까요?');
+F.caption(6.9, 11.7, '마태복음은 *아브라함*에서\n이야기를 시작해요.');
+const st = (a, b, label) => Array.from({ length: b - a + 1 }, (_, n) => [reach(a + n), n + 1, label]);
+F.counter({ t0: 12.2, t1: 30.4, steps: [...st(0, 13, '첫째 열네 대 · 아브라함부터 다윗까지'), ...st(13, 26, '둘째 열네 대 · 다윗부터 포로기까지').map((s, n) => n === 0 ? [21.1, 1, s[2]] : s)], format: v => `${v}대` });
+F.caption(30.8, 35.8, '나라를 잃고 포로로 끌려간 때에도\n이 줄은 끊어지지 않았어요.');
+F.counter({ t0: 36.1, t1: 44.8, steps: st(27, 40, '셋째 열네 대 · 포로기부터 그리스도까지'), format: v => `${v}대`, gold: 43.6 });
+F.axis(12.5, 44.5, [[yM(0), '기원전 약 2000년'], [yM(13), '기원전 약 1000년'], [yM(27), '기원전 597년'], [yM(40), '기원전 약 4년']], { top: 460 });
+F.caption(45.2, 51.3, '마태는 이 계보를\n*열네 대씩 세 묶음*으로 정리했어요.');
+F.caption(52.3, 57.7, '그 사이에는 *다섯 여인*의\n이름도 적혀 있어요.');
+F.caption(58.2, 63.6, '이방에서 온 사람도,\n아픈 사연을 지닌 사람도 있어요.');
+F.caption(66, 71.4, '마지막 줄은 이렇게 적혀 있어요.\n“마리아에게서 *예수*가 나시니라”');
+F.caption(72.6, 79, '누가복음은 더 거슬러 올라가\n*아담*까지, 하나님까지 닿아요.');
+F.caption(83, 88.3, '아브라함에게 하신 약속은\n이 한 분에게서 이루어지고,');
+F.caption(88.9, 94.3, '그분에게서 *모든 민족*에게로\n빛이 흘러가요.');
+F.caption(96, 101, '그 이름, *예수*.', { size: 54 });
+
+BEATS.forEach(([name, t0], i) => F.beat(name, t0, BEATS[i + 1]?.[1] ?? DUR));
+
+// ── rules: what must stay true in every frame ───────────────────────────────────────────────────────────────────────
+const Y = (t, wy) => { const c = F.cam(t); return CY + (wy - c.y) * c.zoom; };
+F.check('the camera keeps the descending light in frame', t => t < 12.5 || t > 43.5 || (Y(t, yM(D(t))) > 650 && Y(t, yM(D(t))) < 1500));
+F.check('the four women are in frame while named', t => t < 53.5 || t > 63.5 || WOMEN.slice(0, 4).every(w => { const y = Y(t, wpos(w)[1]); return y > 480 && y < 1650; }));
+F.check('Mary and Jesus are in frame while the last line is read', t => t < 66.5 || t > 71 || (Y(t, at(39)[1]) > 480 && Y(t, 0) < 1650));
+F.check('God (the top of Luke) stays below the caption', t => t < 76.5 || t > 79 || Y(t, yTop) > 470);
+F.check('the counter is never up with a caption', t => !((t > 12.2 && t < 30.4 || t > 36.1 && t < 44.8) && F.captions.some(c => t > c.t0 + .4 && t < c.t1 - .4)));
+F.start();
+</script>
+</body>
+</html>

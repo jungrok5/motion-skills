@@ -1,0 +1,193 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Country Platform · perspective-illusion</title>
+<!-- perspective-illusion worked example (a topic not in the source): 솔내역, a made-up country station on a summer morning.
+     An island platform runs away from the camera between two tracks to a footbridge with hills behind. Through the 1.5°
+     lens it is one flat elevation: the canopy columns merge into one column, the catenary masts into one mast on each side,
+     and four yellow caution boards stand in a row at the platform end — until the camera opens it up and the boards turn
+     out to be a diagonal down the platform. The train waiting on the left track is the hero; the first corner view swings
+     away from it. New pieces (track, canopy, mast, footbridge, train, station board, hills) are built in this file over K.
+     Sections: look → kit → layout → pieces → platform → tracks → train → bridge + hills → swap objects → shots → keys → start. -->
+<script type="importmap">{ "imports": { "three": "../lib/three.module.min.js", "illusion/": "../lib/" } }</script>
+<script type="module">
+import { Illusion, THREE } from "illusion/illusion.js";
+import { kit } from "illusion/kit.js";
+
+// ---------- look: a summer morning, pale sky, the sun high on the right so the platform is lit and the train throws its
+// shadow across the left track ----------
+const F = new Illusion({
+  sun: { az: 38, el: 34 }, shadowReach: 48, shadowCenter: [0, 0, -26],
+  look: { shade: "#b7c0d8", hatch: "#7f8bb4", sky: { zenith: "#5f9fe0", horizon: "#f3eedb", low: "#dfe6cf", cloud: "#ffffff", clouds: 0.5, cloudScale: 2.6, seed: 11 } },
+});
+const C = {                                   // 9 flat colours + one accent (safety yellow)
+  concrete: "#d3cec3", edge: "#ecebe5", ballast: "#8f877c", sleeper: "#6e655c", rail: "#9aa0a8",
+  canopy: "#557f6e", column: "#ece6d6", grass: "#a8c06e", field: "#b9cc7a", hill: "#7aa064", hill2: "#5f8a57",
+  train: "#f2f1ec", stripe: "#2f63a8", stripe2: "#e46f2e", glass: "#334360", accent: "#f2c12e", ink: "#17141f",
+};
+
+// ---------- kit ----------
+const K = kit(F, { seed: 21 });
+await K.fonts();
+
+// ---------- layout ----------
+// island platform |x| < 2.8, 1.1 m high, from z = -2 to z = -64; tracks centred at x = ±4.6; masts at x = ±7
+const PW = 2.8, PH = 1.1, Z0 = -2, Z1 = -64, TX = 4.6, MX = 7.0;
+K.ground({ x0: -70, x1: 70, z0: -230, z1: 90, ppm: 6, base: C.grass, paint: (g, P, r) => {
+  // rice paddies with their bunds, a farm road, the track bed's worn edges
+  g.fillStyle = C.field; for (const [x0, x1] of [[-60, -14], [14, 60]]) for (let z = -220; z < 80; z += 16) g.fillRect(P.x(x0), P.z(z), P.s(x1 - x0), P.s(14.5));
+  g.strokeStyle = "rgba(60,90,40,.25)"; g.lineWidth = P.s(0.08); for (const [x0, x1] of [[-60, -14], [14, 60]]) for (let z = -220; z < 80; z += 16) for (let k = 0.5; k < 14.5; k += 0.7) { g.beginPath(); g.moveTo(P.x(x0), P.z(z + k)); g.lineTo(P.x(x1), P.z(z + k)); g.stroke(); }
+  g.fillStyle = "#cdbf9c"; g.fillRect(P.x(-13.6), P.z(-230), P.s(3), P.s(320));
+  g.fillStyle = "#9c9486"; g.fillRect(P.x(-8.5), P.z(-230), P.s(17), P.s(320));
+} });
+
+// ---------- pieces: written for this topic, over K (the kit is not edited) ----------
+/** a ballasted track along z from z0 to z1, centred on x */
+const track = (x, z0, z1) => {
+  const len = z0 - z1, zc = (z0 + z1) / 2;
+  K.prism([[-1.9, 0], [1.9, 0], [1.4, 0.35], [-1.4, 0.35]], len, C.ballast, x, 0, zc);
+  for (let z = z0 - 0.3; z > z1; z -= 0.65) K.box(2.4, 0.12, 0.22, C.sleeper, x, 0.35, z);
+  for (const s of [-1, 1]) { K.box(0.07, 0.16, len, C.rail, x + s * 0.72, 0.47, zc); K.box(0.16, 0.04, len, "#7b8088", x + s * 0.72, 0.47, zc); }
+};
+/** a catenary mast with a cantilever over the track at x + dir × 2.4 */
+const mast = (x, z, dir) => K.group({ x, z, name: "mast" }, () => {
+  K.box(0.32, 7.4, 0.32, "#8e949c", 0, 0, 0);
+  for (let y = 0.9; y < 7; y += 0.75) K.box(0.36, 0.05, 0.36, "#7a8088", 0, y, 0);       // lattice bands
+  K.tube([[0, 6.8, 0], [dir * 2.8, 6.65, 0]], 0.045, "#7a8088"); K.tube([[0, 5.7, 0], [dir * 2.5, 6.0, 0]], 0.035, "#7a8088");
+  K.cyl(0.06, 0.25, "#d6a35a", dir * 2.4, 6.0, 0, { noCast: true });                       // insulator
+  K.box(0.5, 0.06, 0.06, "#7a8088", dir * 2.4, 6.2, 0);
+});
+/** the canopy: columns down the middle, a pitched roof with a fascia board, lamps under it */
+const canopy = (z0, z1) => {
+  const len = z0 - z1, zc = (z0 + z1) / 2;
+  for (let z = z0 - 1; z >= z1 + 0.5; z -= 6) {
+    K.cyl(0.13, 3.4, C.column, 0, PH, z, { seg: 16 }); K.box(0.6, 0.12, 0.6, "#bfb8a6", 0, PH, z);
+    K.box(4.6, 0.18, 0.18, C.column, 0, PH + 3.3, z);                                      // the cross beam
+  }
+  K.prism([[-2.7, 0], [2.7, 0], [2.7, 0.08], [0, 0.55], [-2.7, 0.08]], len, C.canopy, 0, PH + 3.48, zc);
+  for (const s of [-1, 1]) K.box(0.06, 0.32, len, "#e7e2d2", s * 2.72, PH + 3.3, zc);           // fascia boards
+  for (let z = z0 - 4; z > z1 + 2; z -= 6) K.box(0.9, 0.08, 0.16, "#fff6d8", 0.9, PH + 3.18, z, { glow: true });
+};
+/** a station name board (Korean, made-up names): this station big, the neighbours below */
+const nameBoard = (z, ry) => K.group({ x: 0, z, ry, name: "nameboard" }, () => {
+  const t = K.tex(1024, 384, (g, w, h) => {
+    g.fillStyle = "#f7f6f1"; g.fillRect(0, 0, w, h); g.fillStyle = C.stripe; g.fillRect(0, h * 0.64, w, h * 0.1);
+    g.fillStyle = "#1c1b24"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.font = `500 ${h * 0.36}px "PI Noto KR"`; g.fillText("솔 내", w / 2, h * 0.3);
+    g.font = `700 ${h * 0.11}px "PI Barlow"`; g.fillText("SOLNAE", w / 2, h * 0.56);
+    g.font = `500 ${h * 0.1}px "PI Noto KR"`; g.textAlign = "left"; g.fillText("← 갈매", w * 0.05, h * 0.86); g.textAlign = "right"; g.fillText("들꽃 →", w * 0.95, h * 0.86);
+  });
+  for (const x of [-1.1, 1.1]) K.cyl(0.05, 2.6, "#59606b", x, PH, 0, { seg: 10 });
+  K.box(2.7, 1.05, 0.08, "#59606b", 0, PH + 1.55, 0);
+  K.quad(2.6, 0.97, "#ffffff", 0, PH + 1.59, 0.045, { map: t, ink: 0.5 }); K.quad(2.6, 0.97, "#ffffff", 0, PH + 1.59, -0.045, { map: t, ink: 0.5, ry: 180 });
+});
+/** a two-car train on a track centred at x, front at z, facing +z */
+const train = (x, z) => K.group({ x, z, name: "train" }, () => {
+  for (let car = 0; car < 2; car++) {
+    const zc = -car * 20.6 - 10, y0 = 1.0, L = 20, W = 2.95, H = 2.9;
+    K.box(W, H, L, C.train, 0, y0, zc);
+    K.box(W + 0.02, 0.22, L, C.stripe, 0, y0 + 0.5, zc); K.box(W + 0.02, 0.08, L, C.stripe2, 0, y0 + 0.76, zc);
+    K.box(W - 0.3, 0.3, L - 1, "#dad8d0", 0, y0 + H, zc);                                       // roof
+    for (let k = -1; k <= 1; k++) K.box(1.4, 0.32, 2.2, "#c4c2ba", 0, y0 + H + 0.3, zc + k * 6.5);  // roof units
+    for (const s of [-1, 1]) {
+      for (let i = 0; i < 7; i++) { const wz = zc - L / 2 + 1.8 + i * 2.75; if (i % 3 === 0) continue; K.box(0.04, 0.95, 1.9, C.glass, s * (W / 2 + 0.01), y0 + 1.25, wz); }
+      for (const dz of [-6.6, 0, 6.6]) { K.box(0.05, 2.1, 1.3, "#d9d7cf", s * (W / 2 + 0.01), y0 + 0.15, zc + dz); K.box(0.06, 0.8, 0.5, C.glass, s * (W / 2 + 0.02), y0 + 1.2, zc + dz - 0.32); K.box(0.06, 0.8, 0.5, C.glass, s * (W / 2 + 0.02), y0 + 1.2, zc + dz + 0.32); }
+    }
+    for (const bz of [zc - 7, zc + 7]) { K.box(2.3, 0.6, 2.6, "#3c3a42", 0, 0.45, bz); for (const s of [-1, 1]) for (const dz of [-0.9, 0.9]) K.cyl(0.43, 0.12, "#2b2a31", s * 0.72, 0.5, bz + dz, { rz: 90, seg: 18 }); }
+  }
+  // the cab front (the hero's face in the flat view)
+  K.box(2.95, 2.9, 0.1, C.train, 0, 1.0, 0.05);
+  K.box(2.4, 1.0, 0.06, C.glass, 0, 2.3, 0.12);
+  K.box(2.97, 0.22, 0.08, C.stripe, 0, 1.5, 0.12); K.box(2.97, 0.08, 0.08, C.stripe2, 0, 1.76, 0.12);
+  for (const s of [-1, 1]) K.box(0.36, 0.18, 0.06, "#fff3cf", s * 0.95, 1.2, 0.14, { glow: true });
+  K.quad(1.1, 0.26, "#ffffff", 0, 3.4, 0.11, { map: K.label("솔내선 · 들꽃", { w: 512, h: 120, bg: "#1f1e26", fg: "#f2c12e", font: "kr" }), ink: 0.5, glow: true });
+  K.box(1.4, 0.3, 0.5, "#3c3a42", 0, 0.7, 0.3);                                                   // coupler and skirt
+});
+
+// ---------- platform ----------
+K.box(PW * 2, PH, Z0 - Z1, C.concrete, 0, 0, (Z0 + Z1) / 2);
+K.ground({ x0: -PW, x1: PW, z0: Z1, z1: Z0, y: PH + 0.002, ppm: 40, base: C.concrete, paint: (g, P) => {
+  g.strokeStyle = "#b9b3a6"; g.lineWidth = P.s(0.02); for (let z = Z1; z < Z0; z += 1) { g.beginPath(); g.moveTo(0, P.z(z)); g.lineTo(P.x(PW), P.z(z)); g.stroke(); }
+  for (const s of [-1, 1]) {
+    g.fillStyle = C.edge; g.fillRect(P.x(s > 0 ? PW - 0.35 : -PW), 0, P.s(0.35), P.z(Z0));
+    g.fillStyle = C.accent; g.fillRect(P.x(s * (PW - 0.95) - 0.15), 0, P.s(0.3), P.z(Z0));         // tactile line
+    g.fillStyle = "rgba(0,0,0,.18)"; for (let z = Z1; z < Z0; z += 0.1) g.fillRect(P.x(s * (PW - 0.95) - 0.15), P.z(z), P.s(0.3), P.s(0.025));
+  }
+  g.fillStyle = "#f4f2ea"; g.font = `500 ${P.s(0.5)}px "PI Noto KR"`; g.textAlign = "center";
+  for (const z of [-9, -30]) { g.save(); g.translate(P.x(-1.6), P.z(z)); g.fillText("타는 곳 1", 0, 0); g.restore(); g.save(); g.translate(P.x(1.6), P.z(z)); g.fillText("타는 곳 2", 0, 0); g.restore(); }
+} });
+canopy(-8, -44);
+nameBoard(-14, 0);
+K.box(0.9, 0.9, 0.12, "#59606b", 0, PH + 2.35, -26); K.quad(0.8, 0.8, "#ffffff", 0, PH + 2.4, -25.935, { map: K.tex(256, 256, (g, w) => { g.fillStyle = "#fbfaf4"; g.beginPath(); g.arc(w / 2, w / 2, w / 2 - 6, 0, 7); g.fill(); g.strokeStyle = "#1c1b24"; g.lineWidth = 6; g.stroke(); for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283; g.fillStyle = "#1c1b24"; g.fillRect(w / 2 + Math.sin(a) * 100 - 4, w / 2 - Math.cos(a) * 100 - 4, 8, 8); } g.lineWidth = 10; g.beginPath(); g.moveTo(w / 2, w / 2); g.lineTo(w / 2 + 50, w / 2 - 40); g.moveTo(w / 2, w / 2); g.lineTo(w / 2 - 15, w / 2 - 92); g.stroke(); }), ink: 0.5 });
+for (const z of [-19, -31, -37]) K.bench({ x: 0.75, z, ry: -90, c: "#c78e55" });
+for (const z of [-19, -31]) K.bench({ x: -0.75, z, ry: 90, c: "#c78e55" });
+K.vending({ x: -1.2, z: -23, ry: 90, c: "#2f6fbf", label: "음료" });
+K.bin({ x: 1.6, z: -12, c: "#4f7f6a" }); K.bin({ x: -1.6, z: -40, c: "#4f7f6a" });
+for (const z of [-5, -48, -56]) K.planter({ x: 1.5, z, ry: -90, leaf: "#d9567a", w: 0.9 });
+for (const z of [-52]) K.planter({ x: -1.5, z, ry: 90, leaf: "#f0a33a", w: 0.9 });
+const board = (z, text) => K.sign({ x: 1.9, z, y: PH + 0.3, w: 0.9, h: 1.3, ry: -90, px: 300, lines: text.split("\n"), font: "kr", bg: "#fbfaf3", fg: "#1c1b24", border: C.stripe, size: 0.55, post: PH + 0.3 });
+board(-24, "열차 시간\n07:42 갈매\n08:15 들꽃\n09:03 갈매");
+for (const z of [-4, -50, -60]) K.lamp({ x: -1.9, z, h: 4.2, ry: 0 });
+// the platform's near end: a ramp railing
+K.guard({ x0: -PW + 0.1, x1: PW - 0.1, z: Z0 - 0.15 }); K.box(PW * 2 - 0.2, 0.001, 0.001, C.edge, 0, PH, Z0);
+
+// ---------- tracks, masts, wires ----------
+track(-TX, 60, -150); track(TX, 60, -150);
+const wireY = 6.2;
+for (let z = 10; z > -110; z -= 12) { mast(-MX, z, 1); mast(MX, z, -1); }
+for (const x of [-TX + 0.0, TX]) { K.wire([x - MX + MX - 0.2 * Math.sign(x), wireY, 40], [x, wireY, -120], { sag: 0.05, r: 0.012 }); }
+K.fence({ x0: -60, x1: -9.5, z: 30, ry: 90, h: 1.1, c: "#cfd3d6", gap: 0.4, post: 2.5 });
+K.fence({ x0: -60, x1: -9.5, z: -30, ry: -90, h: 1.1, c: "#cfd3d6", gap: 0.4, post: 2.5 });
+
+// ---------- the train: the hero, waiting on the left track ----------
+train(-TX, -17);
+
+// ---------- footbridge and hills ----------
+K.group({ x: 0, z: -66, name: "footbridge" }, () => {
+  for (const x of [-9.6, 9.6]) { K.box(3.2, 8.6, 3.2, "#e3ddcf", x, 0, 0); for (let y = 1.6; y < 8; y += 1.4) K.box(1.4, 0.9, 0.06, C.glass, x, y, 1.62); K.box(3.4, 0.25, 3.4, C.canopy, x, 8.6, 0); }
+  K.box(16.0, 0.5, 2.6, "#d9d3c4", 0, 6.4, 0);
+  K.box(16.0, 2.0, 2.4, "#ece8dc", 0, 6.9, 0);
+  for (let x = -7.6; x <= 7.6; x += 1.6) K.box(1.2, 1.1, 0.05, C.glass, x, 7.3, 1.22);
+  K.box(16.2, 0.25, 2.8, C.canopy, 0, 8.9, 0);
+  K.quad(4.2, 0.7, "#ffffff", 0, 8.1, 1.24, { map: K.label("솔내역  SOLNAE", { w: 1024, h: 170, bg: C.stripe, fg: "#ffffff", font: "kr" }), ink: 0.5 });
+  K.box(0.5, 6.4, 0.5, "#cfc8b6", -2.8, 0, 0); K.box(0.5, 6.4, 0.5, "#cfc8b6", 2.8, 0, 0);
+});
+const hill = (x, z, r, h, c) => K.ball(r, c, x, 0, z, { s: [1, h / r, 0.7], seg: 1 });
+// low hills, far back: through the telephoto they peek over the footbridge as one green band under a strip of sky
+hill(-60, -200, 70, 13, C.hill2); hill(10, -215, 80, 16, C.hill); hill(80, -195, 60, 12, C.hill2); hill(-25, -180, 40, 9, C.hill);
+for (const [x, z, h] of [[-16, -40, 6], [-18, -55, 7], [16, -32, 5.5], [18, -58, 7.5], [-20, -76, 8], [21, -84, 6]]) K.tree({ x, z, h, r: 2, c: x < 0 ? "#5c8a50" : "#6d9a55" });
+K.group({ x: 24, z: -100 }, () => { K.cyl(0.25, 9, "#a7aab0", 0, 0, 0, { seg: 10 }); K.cyl(2.3, 2.6, "#d9d4c4", 0, 9, 0, { seg: 24 }); K.cyl(2.4, 0.5, "#d0412e", 0, 11.6, 0, { rt: 0.2, seg: 24 }); });   // water tower
+
+// ---------- swap objects: four caution boards (발밑 주의), a row across the platform end (lay 0) or a diagonal down it (lay 1) ----------
+const cautionTex = K.label("발밑\n주의", { w: 200, h: 260, bg: C.accent, fg: "#1c1b24", font: "kr", size: 0.7, border: "#1c1b24", borderW: 0.03 });
+for (let k = 0; k < 4; k++) {
+  const x = -1.8 + k * 1.2;
+  const b = K.group({ x, y: PH, z: -3.4, name: "caution" }, () => {
+    for (const s of [-1, 1]) { K.box(0.5, 0.82, 0.03, C.accent, 0, 0, s * 0.16, { rx: s * 11 }); K.quad(0.44, 0.58, "#ffffff", 0, 0.14, s * 0.181, { map: cautionTex, ink: 0.5, ry: s > 0 ? 0 : 180, rx: s * 11 }); }
+    K.box(0.52, 0.05, 0.05, "#1c1b24", 0, 0.8, 0);
+  });
+  F.swap(b, { x, y: PH, z: -3.4 }, { x, y: PH, z: -3.4 - k * 3.2 });
+}
+
+// ---------- shots ----------
+F.shots({
+  flat:  { x: 0, y: 4.4, zf: -26, W: 17, fov: 1.5, H: 0.05, lay: 0, cs: 1.6 },               // one elevation: canopy, train face, bridge
+  worm:  { x: 0.4, y: PH + 0.55, zf: -2.5, W: 9, fov: 86, H: -0.62, lay: 0, cs: 1.0 },     // knee height on the platform
+  cornA: { x: 1.0, y: PH + 1.4, zf: -6, W: 15, fov: 4, H: -0.05, el: 12, yaw: 26, lay: 0, cs: 1.3 },   // away from the train
+  cornAw:{ x: 1.0, y: PH + 1.4, zf: -6, W: 12, fov: 34, H: -0.05, el: 12, yaw: 26, lay: 0, cs: 1.3 },
+  high:  { x: 0, y: 11, zf: -6, W: 13, fov: 38, H: 1.55, lay: 1, cs: 1.3 },
+  cornB: { x: -0.6, y: PH + 0.6, zf: -10, W: 22, fov: 4, H: -0.25, el: 22, yaw: -34, lay: 1, cs: 1.3 },  // over the train
+  cornBw:{ x: -0.6, y: PH + 0.6, zf: -10, W: 16, fov: 46, H: -0.25, el: 22, yaw: -34, lay: 1, cs: 1.3 },
+  low:   { x: TX, y: 0.9, zf: -6, W: 11, fov: 76, H: 0.1, lay: 1, cs: 1.3 },               // down on the right track, rails to the horizon
+});
+F.shots({
+  flat2: F.drift("flat", { W: 0.965 }), flatD: F.drift("flat", { W: 0.985, lay: 1 }), flat2D: F.drift("flat", { W: 0.965, lay: 1 }),
+  worm2: F.drift("worm", { x: -0.25, W: 0.95 }), cornA2: F.drift("cornA", { W: 0.96, yaw: 2 }), cornB2: F.drift("cornB", { W: 0.96, yaw: -2 }),
+  high2: F.drift("high", { x: 0.3, W: 0.95 }), low2: F.drift("low", { x: -0.15, W: 0.95 }),
+});
+// ---------- keys (10 s): the same loop grammar as the template, re-timed for this place ----------
+F.keys([[0, "flat2"], [650, "flat"], [1200, "worm"], [1900, "worm2"], [2300, "cornA"], [2750, "cornA2"], [3400, "cornAw"],
+  [3800, "flat"], [4300, "flatD"], [4800, "flat2D"], [5300, "high"], [6050, "high2"], [6450, "cornB"], [6900, "cornB2"],
+  [7550, "cornBw"], [7950, "low"], [8900, "low2"], [9350, "flat2D"], [9850, "flat2"], [10000, "flat2"]]);
+
+F.start();
+</script>

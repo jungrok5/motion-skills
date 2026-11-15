@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>cast sheet</title>
+<script type="importmap">{ "imports": { "pcs/": "../lib/" } }</script></head>
+<body>
+<script type="module">
+// The cast sheet: every puppet facing right AND left, in the poses the film uses, pins in gold. Score it (references/BRIEF.md →
+// "Cast review") before writing shots:  node <skill>/scripts/render.mjs cast.html --stills 0 --scale .5
+import * as P from '../lib/paper.js';
+import * as Pup from '../lib/puppet.js';
+import * as K from '../lib/kit.js';
+import { Stage } from '../lib/stage.js';
+const F = new Stage({ seed: 2, fadeIn: 0, fadeOut: 0, jitter: 0 });
+await F.ready();
+const { cast } = await import('./cast.js');
+const { KID } = cast();
+const bg = F.layer([0, 0, 1920, 1080], c => P.piece(c, P.rect(-20, -20, 1960, 1120), '#e8dcc6', { edge: 'cut', tex: .6, light: .2 }), { shadow: 0 });
+const POSES = [
+  ['stand', Pup.stand()], ['walk .25', Pup.walk(.25)], ['walk .75', Pup.walk(.75)],
+  ['hold the string up (far arm)', { ...Pup.stand(), armF: -118, foreF: -42, head: -12 }],
+  ['run', Pup.walk(.3, { stride: 40, knee: 80, arms: 40, lean: 10 })], ['blink', Pup.stand(), { swap: { head: 'blink' } }],
+  ['jump tuck', { ...Pup.stand(), thighN: -70, shinN: 110, thighF: -40, shinF: 90, armN: -120, foreN: -20, armF: -100, foreF: -30 }],
+  ['turning', Pup.stand(), { facing: .3 }],
+];
+F.shot(1, g => { g.put(bg, 0, 0, 0, { jit: 0 }); g.at(0, c => { Pup.sheet(c, KID, POSES, { cw: 236, x0: 16, gy: 440, rowH: 500, cols: 8, pins: true }); c.font = `600 22px ${K.FONT}`; c.fillStyle = '#4a3a40'; c.fillText('Kid — facing right / left · pins in gold', 24, 40); }); });
+F.start();
+</script>
+</body>
+</html>

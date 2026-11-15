@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>landmark-map-3d · motion-skills</title>
+<meta name="description" content="유명한 장소 하나를 주면 OpenStreetMap에서 그 동네의 실제 건물 · 길 · 강 · 나무를 받아 귀여운 3D 지도 도시로 짓고, 랜드마크는 실제 치수로 코드에서 직접 만들어, 낮에서 보랏빛 밤으로 넘어가는 세로 영상을 만듭니다.">
+<meta property="og:title" content="landmark-map-3d · motion-skills">
+<meta property="og:description" content="유명한 장소 하나를 주면 실제 동네를 귀여운 3D 지도 도시로 짓고, 랜드마크를 직접 만들어 낮에서 밤으로 넘어가는 세로 영상을 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/landmark-map-3d/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/landmark-map-3d">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / landmark-map-3d</nav>
+  <h1>landmark-map-3d</h1>
+  <p>유명한 장소 하나를 주면 OpenStreetMap에서 그 동네의 실제 건물 · 길 · 강 · 공원 · 나무를 받아 귀여운 3D 지도 도시로 짓고, 랜드마크는 실제 치수로 코드에서 직접 만들어, 자동차 · 사람 · 배가 움직이고 지도 핀과 길 이름이 붙은 채 낮에서 보랏빛 밤으로 넘어가는 1080×1920 세로 영상을 만듭니다.
+  보고 만든 원본: <a href="https://x.com/Nal_uh/status/2119508762298040469?a=AifzriFhkxBwD85fPCI&s=19" target="_blank" rel="noopener">Charly Delaroche의 X 게시물 (Anywhere 지도 앱, 비 오는 밤의 시부야 교차로 · 롬바드 거리 · 금문교)</a>.</p>
+  <ul class="tags"><li>three.js · OpenStreetMap</li><li>귀여운 3D 지도</li><li>손으로 만드는 랜드마크</li><li>낮 → 밤 · 틸트시프트</li><li>세로 MP4 · 합성 사운드</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>장소 하나(에펠탑, 비 오는 밤의 시부야 교차로, 빅벤, 경복궁 …)와 원하는 언어</dd>
+      <dt>데이터</dt><dd>Nominatim으로 좌표를 찾고 OpenStreetMap에서 주변 2 km 안팎을 받아 미터 단위 <code>place.json</code>으로 변환. 건물 윤곽과 높이 · 층수 · 지붕, 도로 폭 · 차선 · 다리 · 이름(언어별), 강과 물(경계에서 잘린 강도 닫음), 공원, 나무, 가로등, 횡단보도, 벤치, 정류장, 장소(POI)</dd>
+      <dt>브리프</dt><dd>꼭 보여 줄 한 순간, 한 줄 이야기, 카메라 키, 랜드마크의 실제 치수와 알아보게 하는 디테일, 그 도시의 색, 빛과 날씨, 핀 · 길 이름 · 제목 문구를 적은 <code>BRIEF.md</code></dd>
+      <dt>도시와 랜드마크</dt><dd>창문 격자 셰이더(밤에 켜짐) · 망사르드 · 박공 · 평지붕 · 지붕 상자 · 굴뚝의 건물, 칠한 바닥, 횡단보도 · 차선, 아치 다리, 돌 둑 아래로 꺼진 물과 반사, 수천 그루의 둥근 나무. 랜드마크는 키트(격자 기둥 · 아치 · 회전체 · 조명 · 서치라이트 · 전광판)로 직접 모델링</dd>
+      <dt>확인</dt><dd>12장 시트와 스틸을 8개 항목으로 채점, 로딩 · 글꼴 · 결정성 · 빈 화면 · 하얗게 날아감 · 핀 겹침 · 화면이 지도 밖으로 나감 · 카메라가 지붕 아래 · 랜드마크가 화면 안 검사</dd>
+      <dt>출력</dt><dd>30fps 1080×1920 MP4(로파이 그루브 · 핀 팝 · 카메라 휙 · 반짝임 합성 사운드), 반복 재생 라이브 페이지</dd>
+    </dl>
+    <pre><code>node landmark-map-3d/scripts/new-film.mjs my-film --q "Big Ben, London" --size 1800x1800
+node landmark-map-3d/scripts/place-map.mjs my-film/place.json
+node landmark-map-3d/scripts/fonts.mjs  my-film/film.html
+node landmark-map-3d/scripts/check.mjs  my-film/film.html
+node landmark-map-3d/scripts/render.mjs my-film/film.html --sheet 12 --scale .4
+node landmark-map-3d/scripts/score.mjs  my-film/film.html --out my-film/out/score.wav
+node landmark-map-3d/scripts/render.mjs my-film/film.html --audio my-film/out/score.wav</code></pre>
+    <p class="mute">요구 사항: Node 18+, Playwright Chromium, ffmpeg. 장소와 글꼴을 받을 때 한 번 네트워크가 필요하고 API 키 · GPU는 필요 없습니다(CPU WebGL에서 1080×1920 한 프레임 약 5–15초, 18초 예제를 워커 3개로 약 40분). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/landmark-map-3d/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:4/5;--h-phone:640px;--demo-bg:#15122a">
+    <iframe data-src="demo/examples/eiffel/?scale=.5" title="landmark-map-3d 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/eiffel/?scale=.5">데모 열기 (examples/eiffel)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/eiffel</code> · 18초 · 스페이스로 멈춤, ← →로 1초씩</span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본 게시물에 없는 장소인 에펠탑을 브리프부터 새로 설계해 만든 예제의 장면, 거리 높이에서 본 디테일, 같은 템플릿으로 다른 도시를 처음 띄워 본 모습입니다. 영상 장면 카드를 누르면 그 순간이 라이브 페이지에서 멈춘 채 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"film":"에펠탑","detail":"디테일","new":"새 장소"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「에펠탑」 <small>18초 · 16:40 → 21:00</small></h3>
+      <p>샹 드 마르스 위의 오후가 금빛, 푸른빛으로 바뀌고, 카메라가 센강으로 내려갔다가 트로카데로 쪽으로 올라서면 밤 9시 정각에 탑이 반짝입니다</p>
+      <div class="grid tall">
+        <a class="tile" data-tags="film" href="demo/examples/eiffel/?scale=.5&amp;t=2.5" target="_blank" rel="noopener">
+          <img src="samples/map.jpg" alt="높은 곳에서 북서쪽을 내려다본 샹 드 마르스: 둥근 나무가 빽빽한 잔디밭과 길, 양옆의 크림색 오스만 건물, 위쪽에 작은 에펠탑과 파란 센강, 왼쪽 위에 'PARIS · FRANCE 에펠탑' 제목, 오른쪽 위에 16:51 시계, 카페 핀들" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">2.5초 · 낮</span><b>지도로 연 샹 드 마르스</b><span class="how">실제 길과 나무 위치, 데이터에서 고른 카페 핀, 제목과 시계</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/eiffel/?scale=.5&amp;t=5.5" target="_blank" rel="noopener">
+          <img src="samples/approach.jpg" alt="조금 더 낮아진 카메라로 본 청동색 에펠탑, 탑 아래 연못과 광장, 강가의 둑과 다리, 별 모양 '에펠탑' 핀" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">5.5초 · 금빛으로</span><b>탑으로 다가감</b><span class="how">손으로 만든 탑이 실제 높이 330 m로 도시와 비례</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/eiffel/?scale=.5&amp;t=8.4" target="_blank" rel="noopener">
+          <img src="samples/golden.jpg" alt="동쪽에서 본 해 질 녘의 에펠탑, 격자 다리와 1층 데크, 뒤로 센강과 강 건너 도시, 회전목마 · 이에나 다리 · 파리 일본문화회관 핀" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">8.4초 · 19:31</span><b>동쪽으로 돌아 본 탑</b><span class="how">알파로 뚫은 X자 격자, 다리 사이 아치, 데크의 격자 띠</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/eiffel/?scale=.5&amp;t=12" target="_blank" rel="noopener">
+          <img src="samples/dusk.jpg" alt="황혼의 보랏빛 도시 위로 금빛 조명이 켜진 에펠탑, 창문마다 불이 들어온 오스만 건물, 아래쪽 강변 도로의 가로등" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">12초 · 황혼</span><b>센강 위로 내려옴</b><span class="how">창문 조명, 가로등 빛 웅덩이, 강가의 바토와 다리</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/eiffel/?scale=.5&amp;t=14.6" target="_blank" rel="noopener">
+          <img src="samples/night.jpg" alt="트로카데로 쪽에서 남동쪽으로 본 밤의 에펠탑, 금빛 탑과 꼭대기에서 돌아가는 두 줄기 빛, 보랏빛 도시와 강 위 다리의 불빛, 21:00 시계" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">14.6초 · 21:00</span><b>트로카데로 쪽 밤</b><span class="how">보랏빛 밤과 따뜻한 불빛, 돌아가는 서치라이트, 강물의 반사</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/eiffel/?scale=.5&amp;t=17.2" target="_blank" rel="noopener">
+          <img src="samples/sparkle.jpg" alt="흰 점들이 반짝이는 밤의 에펠탑 위로 'PARIS · 21:00 에펠탑 매시 정각, 5분 동안 반짝입니다' 끝 화면과 OpenStreetMap 출처" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">17.2초 · 끝 화면</span><b>정각의 반짝임</b><span class="how">탑 표면의 흰 점 900개가 깜빡이고, 끝 문구와 지도 데이터 출처</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>거리 높이의 디테일 <small>같은 도시, 가까이</small></h3>
+      <p>지도 위의 작은 것들이 가까이서도 무너지지 않는지 봅니다. 데이터에 있는 벤치 · 가로등 · 횡단보도가 제자리에 놓입니다</p>
+      <div class="grid tall">
+        <a class="tile" data-tags="detail" href="https://github.com/jungrok5/motion-skills/tree/main/landmark-map-3d/examples/eiffel" target="_blank" rel="noopener">
+          <img src="samples/street-day.jpg" alt="낮의 케 브랑리 강변: 파란 센강과 돌 둑, 보라 회색 아스팔트 위 알록달록한 작은 차들, 흰 횡단보도, 가로등, 둥근 나무와 그림자, 작은 매점 건물" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">가까이 · 낮</span><b>강변 도로</b><span class="how">경로로 이어 붙인 길을 달리는 차, 데이터의 가로등 · 벤치 · 횡단보도</span></div></a>
+        <a class="tile" data-tags="detail" href="https://github.com/jungrok5/motion-skills/tree/main/landmark-map-3d/examples/eiffel" target="_blank" rel="noopener">
+          <img src="samples/street-night.jpg" alt="같은 강변의 밤: 가로등마다 주황빛 웅덩이, 전조등 빛을 앞에 비추는 차들, 창문이 켜진 매점, 보랏빛 바닥" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">가까이 · 밤</span><b>가로등과 전조등</b><span class="how">빛 웅덩이와 전조등은 물에 비치지 않는 빛 레이어</span></div></a>
+        <a class="tile" data-tags="detail" href="https://github.com/jungrok5/motion-skills/blob/main/landmark-map-3d/scripts/place-map.mjs" target="_blank" rel="noopener">
+          <img src="samples/place-map.jpg" alt="place.json을 위에서 그린 지도: 회색 도로, 초록 공원, 파란 센강, 건물 윤곽, 빨간 100 m 격자와 좌표, 이름 붙은 장소들" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">place-map.mjs</span><b>받은 데이터를 위에서</b><span class="how">미터 격자로 좌표를 읽어 카메라 · 핀 · 길 이름 위치를 정함</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>새 장소의 첫 모습 <small>광화문 · 템플릿 그대로</small></h3>
+      <p><code>new-film.mjs --q "Gwanghwamun, Seoul"</code> 한 줄로 받은 서울 도심을 템플릿이 바로 띄운 모습입니다. 가운데 상자는 자리 표시자로, 실제 영상에서는 광화문을 직접 만들어 바꿉니다</p>
+      <div class="grid tall">
+        <a class="tile" data-tags="new" href="https://github.com/jungrok5/motion-skills/blob/main/landmark-map-3d/templates/film.html" target="_blank" rel="noopener">
+          <img src="samples/seoul-day.jpg" alt="템플릿으로 띄운 서울 광화문 일대의 낮: 넓은 세종대로와 광장, 주변 빌딩과 나무, 가운데 자리 표시자 상자, 데이터에서 고른 핀들" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">템플릿 · 낮</span><b>광화문 일대</b><span class="how">높이 정보가 적은 동네는 층수 범위로 채움, 가로등이 없으면 큰길을 따라 자동 배치</span></div></a>
+        <a class="tile" data-tags="new" href="https://github.com/jungrok5/motion-skills/blob/main/landmark-map-3d/templates/film.html" target="_blank" rel="noopener">
+          <img src="samples/seoul-night.jpg" alt="같은 템플릿의 밤: 보랏빛 서울 도심, 창문 불빛과 큰길의 가로등 줄, 자리 표시자 위의 조명" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">템플릿 · 밤</span><b>밤의 세종대로</b><span class="how">같은 빛 프리셋, 장소만 바꿨을 때의 출발점</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬을 만든 출처와, 이 레포에서 새 장소로 만든 예제입니다.</p>
+  <div class="works">
+    <a class="work" href="https://x.com/Nal_uh/status/2119508762298040469?a=AifzriFhkxBwD85fPCI&s=19" target="_blank" rel="noopener"><b>원본 · Charly Delaroche의 X 게시물</b><span>Anywhere 지도 앱 화면 녹화 5초(비 오는 밤의 시부야 교차로) + 롬바드 거리 · 금문교 스틸</span><span class="url">x.com/Nal_uh/status/2119508762298040469</span></a>
+    <a class="work" href="demo/examples/eiffel/?scale=.5" target="_blank" rel="noopener"><b>「에펠탑」</b><span>18초 · 1080×1920 · 라이브 페이지</span><span class="url">landmark-map-3d/examples/eiffel</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/landmark-map-3d/examples/eiffel"><b>원본 레포 · motion-skills</b><span>이 레포에서 만듦</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/landmark-map-3d/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/landmark-map-3d">폴더</a> <span>lib · scripts · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/landmark-map-3d/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/landmark-map-3d/references/BRIEF.md">references/BRIEF.md</a> <span>장소 → 브리프, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/landmark-map-3d/references/LOOK.md">references/LOOK.md</a> <span>원본에서 관찰한 화면 문법</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/landmark-map-3d/references/LANDMARKS.md">references/LANDMARKS.md</a> <span>랜드마크 직접 만들기, 유형별 방법</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/landmark-map-3d/references/ENGINE.md">references/ENGINE.md</a> <span>도시 · 생활 · 타임라인 · 글자 API와 페이지 계약</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/landmark-map-3d/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 지도 데이터 © OpenStreetMap contributors (ODbL). 랜드마크와 도시는 모두 코드로 만들었습니다. 글꼴 Nunito · Noto Sans KR (SIL OFL), three.js (MIT)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

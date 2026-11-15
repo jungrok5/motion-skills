@@ -1,0 +1,39 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Water the Seed · cast sheet</title>
+<script type="importmap">{ "imports": { "bds/": "../../lib/" } }</script></head>
+<body><script type="module">
+// the cast sheet: each creature turned through profile-left, 3/4-left, front, 3/4-right, profile-right and back; then gaits,
+// big poses and faces. Score it (references/BRIEF.md → cast review) before writing a single shot.
+import { Film } from 'bds/film.js';
+import * as P from 'bds/pen.js';
+import * as R from 'bds/rig.js';
+import * as K from 'bds/kit.js';
+import { MOMO, GRAN, CROW, can } from './cast.js';
+const F = new Film({ seed: 3, fadeIn: 0, fadeOut: 0 });
+const label = (c, s, x, y) => P.hand(c, s, x, y, { size: 26, col: P.INK.grey });
+F.shot(1, g => {
+  g.paper();
+  g.screen(c => {
+    const row = (y, spec, s) => R.TURNS.forEach((yaw, i) => { const x = 95 + i * 178; c.save(); K.shadow(c, x, y, 80 * s); R.critter(c, spec, { x, y, s, yaw, eyes: 'open', mouth: yaw === 180 ? 'none' : 'smile' }); c.restore(); label(c, yaw + '°', x - 18, y + 34); });
+    P.hand(c, 'Momo', 18, 40, { size: 34 }); row(230, MOMO, .78);
+    // gaits and big poses, both directions
+    const y2 = 470, poses = [
+      ['walk →', { yaw: 90, walk: .5, stride: 1, armR: { a: .2, f: .7 }, armL: { a: .2, f: -.5 }, mouth: 'smile' }],
+      ['walk ←', { yaw: -90, walk: .5, stride: 1, armR: { a: .2, f: -.5 }, armL: { a: .2, f: .7 }, mouth: 'smile' }],
+      ['run →', { yaw: 75, walk: .5, stride: 1.2, tilt: .25, armR: { a: .5, f: 1.4 }, armL: { a: .5, f: -.8 }, brow: 'worried', mouth: 'open' }],
+      ['jump', { yaw: 30, lift: 40, squash: -.2, armR: 2.6, armL: 2.6, eyes: 'happy', mouth: 'open' }],
+      ['carry can', { yaw: 60, armR: { a: .15, f: .9 }, hold: { arm: 'R', draw: c2 => can(c2, 1, -.1) }, mouth: 'smile' }],
+      ['carry ←', { yaw: -60, armL: { a: .15, f: .9 }, hold: { arm: 'L', draw: c2 => can(c2, -1, .1) }, eyes: 'half', brow: 'angry' }],
+    ];
+    poses.forEach(([n, p], i) => { const x = 95 + i * 178; K.shadow(c, x, y2, 70); R.critter(c, MOMO, { x, y: y2, s: .72, ...p }); label(c, n, x - 30, y2 + 34); });
+    const y3 = 660, faces = [['open', 'none', 'smile'], ['half', 'angry', 'frown'], ['happy', 'none', 'open'], ['squeeze', 'angry', 'open'], ['wide', 'up', 'o'], ['sad', 'worried', 'frown'], ['dizzy', 'none', 'tongue'], ['shut', 'none', 'smile']];
+    faces.forEach(([e, b, m], i) => { const x = 70 + i * 134; R.critter(c, MOMO, { x, y: y3, s: .55, yaw: i % 2 ? 20 : -20, eyes: e, brow: b, mouth: m }); label(c, e, x - 22, y3 + 30); });
+    P.hand(c, 'Gran', 18, 735, { size: 34 }); P.hand(c, 'Crow', 560, 735, { size: 34 });
+    [-90, 0, 90].forEach((yaw, i) => { const x = 80 + i * 135; R.critter(c, GRAN, { x, y: 960, s: .62, yaw, mouth: 'smile', eyes: i === 1 ? 'happy' : 'open' }); });
+    [-90, -45, 45, 90, 180].forEach((yaw, i) => { const x = 615 + i * 108; R.critter(c, CROW, { x, y: 960, s: .6, yaw, eyes: 'half', brow: 'angry', mouth: i === 3 ? 'open' : 'none', ...(i === 2 ? { armR: { a: 2.2, f: .3 }, armL: { a: 2.2, f: .3 } } : {}) }); });
+    R.critter(c, GRAN, { x: 470, y: 960, s: .62, yaw: 180 });
+    label(c, 'back', 452, 1000);
+  });
+}, { name: 'cast' });
+F.start();
+</script></body></html>

@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>아침 커피 · speedpaint-replay</title>
+<script type="importmap">{ "imports": { "sp/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+import { Replay } from 'sp/replay.js';
+import { art } from './art.js';
+// seconds per stage — set them from BRIEF.md (where should the viewer linger?)
+const R = new Replay(art(), { stages: { rough: 3, line: 7, flat: 4, shadow: 4, highlight: 3.5, finish: 3 }, hold: 2.5, labels: 'ko' });
+R.start();
+</script>
+</body>
+</html>

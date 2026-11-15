@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Lamplighter · paper-cutout-short</title>
+<script type="importmap">{ "imports": { "pcs/": "../../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// 「The Lamplighter」 — a worked example of paper-cutout-short (BRIEF.md): at dusk on a paper harbour, Ember the fox lamplighter
+// walks the quay lighting the lamps with her pole; the sun is lowered on its string, the moon pushed up on its stick; at the
+// end of the pier a little lantern climbs the lighthouse on a thread, the beam starts to sweep, a boat comes home.
+// 20.2 s, 3 shots, everything cut from paper in code (no image files). Order: palette → layers → props → Ember's timeline → shots → checks.
+import * as P from 'pcs/paper.js';
+import * as Pup from 'pcs/puppet.js';
+import * as K from 'pcs/kit.js';
+import { Stage } from 'pcs/stage.js';
+const { span, ease, keys, clamp, n1 } = P;
+
+const F = new Stage({ seed: 7, light: [9, 13], grade: { key: '#ffd7a0', keyA: .16, fill: '#4a4a9a', fillA: .14, vignette: .46 } });
+const { SCORE } = await import('./score.js'); F.score = SCORE;
+await F.ready();
+const { cast, PAL, POLE_LEN } = await import('./cast.js');
+const { EMBER, pole, flames } = cast();
+
+// ── the set (painted once) ──
+const GROUND = 905;                 // Ember's soles (z 1)
+const L1 = 1000, L2 = 1900, LH = 2900, LAMP_H = 380;
+const DUSK = ['#3b4d86', '#7a68a6', '#e2907a', '#f6c48a'], NIGHT = ['#18234a', '#2c3368', '#5a4a86', '#8a6a8e'];
+const skyDusk = F.layer([0, 0, 2400, 1150], c => K.backdrop(c, 2400, 1150, { stops: DUSK, seed: 3 }), { shadow: 0 });
+const skyNight = F.layer([0, 0, 2400, 1150], c => K.backdrop(c, 2400, 1150, { stops: NIGHT, seed: 4 }), { shadow: 0 });
+const sun = F.prop([-90, -700, 90, 90], c => { K.string(c, 0, -700, -62); K.sun(c, 62, { col: '#f27a3a', ray: '#f6a640' }); });
+const moon = F.prop([-70, -80, 70, 760], c => { K.stick(c, 0, 50, 760); K.moon(c, 64, { col: '#f6dc8a' }); });
+const starP = F.prop([-20, -500, 20, 20], c => { K.string(c, 0, -500, -14); K.starPiece(c, 15); });
+const cloudP = [0, 1].map(i => F.prop([-10, -600, 330, 10], c => { K.string(c, 70, -600, -60); K.string(c, 250, -600, -50); K.cloud(c, 0, 0, i ? 260 : 320, i ? 80 : 100, '#c2aecd', { seed: 5 + i }); }));
+const headland = F.layer([0, 0, 2600, 1000], c => {
+  K.hills(c, -40, 2640, 640, { col: '#5d6a8c', amp: 50, wave: 900, depth: 400, phase: 1 });
+  for (let i = 0; i < 6; i++) { c.save(); c.translate(160 + i * 410 + (i % 2) * 90, 628 - (i % 3) * 14); K.tree(c, { h: 74, r: 26, leaf: '#4f6a7a', trunk: '#4a4060', seed: i }); c.restore(); }
+  for (const [x, w] of [[1500, 60], [1580, 50], [1660, 70]]) { P.piece(c, P.rect(x, 590, w, 46), '#8a7aa0'); P.piece(c, [[x - 6, 592], [x + w / 2, 560], [x + w + 6, 592]], '#6a5a86'); }
+});
+const sea = [['#6386b8', 640, 22], ['#4f71a6', 705, 20], ['#3e5b8e', 775, 18]].map(([col, y, amp], i) =>
+  F.layer([0, 0, 3800, 1100], c => K.waves(c, -60, 3860, y, { col, amp, wave: 110 + i * 20, depth: 500, foam: true, seed: 30 + i })));
+const boat = F.prop([-140, -230, 140, 30], c => K.boat(c, { w: 210, hull: '#b8574a', sail: '#f3e6cc', sail2: '#e9c9a6' }));
+// the town: four harbour houses on the left, windows dark (lit panes are props laid on top when they light)
+const HOUSES = [
+  { x: 40, w: 220, h: 250, wall: '#e8b860', roof: '#d9785a', chimney: .7, windows: [[.27, .32, 44, 60], [.73, .32, 44, 60]], flowers: 0 },
+  { x: 330, w: 200, h: 300, wall: '#9fc0a8', roof: '#e07e8e', windows: [[.5, .22, 46, 62], [.24, .62, 40, 54, 'square'], [.76, .62, 40, 54, 'square']], door: { x: .5, w: 64 } },
+  { x: 600, w: 230, h: 240, wall: '#c9a9d6', roof: '#7a86c6', chimney: .2, windows: [[.26, .34, 44, 58], [.74, .34, 44, 58]] },
+  { x: 900, w: 190, h: 280, wall: '#f0c9a0', roof: '#b9605a', windows: [[.5, .25, 40, 40, 'round'], [.5, .6, 46, 56]], door: { x: .5, w: 60, col: '#5a6a8a' } },
+];
+const WIN = [];
+const town = F.layer([0, 0, 1300, 1000], c => {
+  HOUSES.forEach((h, i) => { const o = K.house(c, h.x, 880, { ...h, seed: 40 + i }); o.windows.forEach(w => WIN.push({ house: i, r: w })); });
+});
+const litPane = WIN.map(({ r }) => F.prop([r[0] - 4, r[1] - 4, r[0] + r[2] + 4, r[1] + r[3] + 4], c => K.pane(c, r, r[4], '#ffd27a', { barCol: '#9a6a3a' }), { shadow: 0 }));
+const WIN_ON = [4.35, 4.6, 4.85, 5.1, 5.3, 5.55, 5.8, 6.0, 6.25, 6.45];   // window i lights at this time (after lamp 1)
+const quay = F.layer([0, 0, 3600, 400], c => {
+  K.cobbles(c, -220, 3400, 0, 70, { palette: ['#c9b49a', '#b9a6b4', '#d6c0a0', '#a99cb8', '#c8a890'], rows: 3, seed: 12 });
+  P.piece(c, P.rect(-220, 70, 3620, 16), '#8e7e86', { edge: 'cut', light: .3 });
+  const R = P.rng(14);
+  for (let r = 0; r < 4; r++) for (let x = -220 - (r % 2) * 60; x < 3400; x += 120) P.piece(c, P.rrect(x + 3, 88 + r * 60, 114, 54, 8), P.mix('#7a6c80', R() < .5 ? '#9a8a90' : '#5a5070', R() * .5), { light: .45, rim: 2, lift: 2 });
+});
+const rocks = F.prop([-260, -60, 260, 200], c => { for (let i = 0; i < 6; i++) P.piece(c, P.blob(-200 + i * 80, 40 + (i % 2) * 30, 70, 50, 5, i), P.mix('#6a6080', '#8a7a8e', (i % 3) / 3), { light: .5, lift: 3 }); });
+const lampDark = F.prop([-40, -LAMP_H - 90, 40, 4], c => K.lamp(c, { h: LAMP_H, col: '#3d3b4a', glass: '#5a4a62' }));
+const lampLit = F.prop([-40, -LAMP_H - 90, 40, 4], c => K.lamp(c, { h: LAMP_H, col: '#3d3b4a', glass: '#ffd27a' }));
+const LAMP_GLASS = -LAMP_H - 18;
+const lhDark = F.prop([-90, -660, 90, 4], c => K.lighthouse(c, { h: 640, w: 130, glass: '#5a4a62' }));
+const lhLit = F.prop([-90, -660, 90, 4], c => K.lighthouse(c, { h: 640, w: 130, glass: '#ffd27a' }));
+const LH_LAMP = -640 * .82 - 44;
+const lantern = F.prop([-18, -30, 18, 26], c => { P.piece(c, P.rect(-12, -20, 24, 30), '#ffd27a', { edge: 'cut', light: .2 }); P.piece(c, [[-15, -20], [15, -20], [0, -32]], '#3d3b4a', { light: .3 }); P.piece(c, P.rect(-14, 10, 28, 6), '#3d3b4a', { edge: 'cut' }); });
+const hookP = F.prop([-14, -10, 14, 30], c => { P.piece(c, P.rect(-10, 0, 20, 8), '#3d3b4a', { edge: 'cut' }); P.ink(c, [[0, 8], [0, 22]], { col: '#3d3b4a', w: 3 }); });
+const front = F.layer([0, 0, 4400, 400], c => {
+  // out-of-focus mooring posts right in front of the lens, a heavy rope draped between each pair
+  for (let x = 120; x < 4400; x += 1500) {
+    const post = px => { P.piece(c, P.rrect(px, 150, 76, 260, 24), '#4a4258', { light: .45 }); P.piece(c, P.rrect(px - 10, 134, 96, 34, 12), '#5d5470', { light: .5 }); };
+    post(x); post(x + 620);
+    const rope = []; for (let i = 0; i <= 24; i++) { const u = i / 24; rope.push([x + 70 + u * 560, 176 + Math.sin(Math.PI * u) * 90]); }
+    const band = rope.concat(rope.slice().reverse().map(([px, py]) => [px, py + 20]));
+    P.piece(c, band, '#c9a46a', { light: .4, rim: 2 });
+    for (let i = 1; i < 24; i += 2) P.ink(c, [[rope[i][0] - 6, rope[i][1] + 2], [rope[i][0] + 6, rope[i][1] + 18]], { col: '#8a6a3a', w: 2.4, a: .7 });
+  }
+}, { blur: 5 });
+const label = F.prop([-10, -20, 400, 170], c => K.label(c, 'The Lamplighter', 'paper harbour · No. 1 · 12 fps', { w: 390, h: 150, size: 50 }));
+
+// ── Ember's timeline (stage px at z 1; global seconds) ──
+const SPC = Pup.walkSpeed(EMBER);                       // px per walk cycle (feet do not slide)
+const CARRY = { armN: -30, foreN: -55 }, CARRY_POLE = -66;
+const REACH = { ...Pup.stand({ lean: -4, nod: -8 }), armN: -72, foreN: -24, tail: 10 };
+const HAND = [3, 46];
+// where to stop so the pole tip lands on a target (solved on the rig, once)
+function stopFor(tx, ty) {
+  const [hx, hy] = Pup.where(EMBER, { x: 0, ground: GROUND, angles: REACH }, 'foreN', HAND);
+  const a = Math.asin(clamp((ty - hy) / (POLE_LEN + 6), -1, 1)); return { x: tx - Math.cos(a) * (POLE_LEN + 6) - hx, deg: a * 180 / Math.PI };
+}
+const S1 = stopFor(L1, GROUND - 5 + LAMP_GLASS), S2 = stopFor(L2, GROUND - 5 + LAMP_GLASS), S3 = stopFor(LH - 70, GROUND - 190);
+const T = { arrive1: 3.4, lit1: 4.0, leave1: 4.75, lit2: 0, lit3: 10.6 };
+T.arrive2 = T.leave1 + .35 + (S2.x - S1.x) / (SPC * 1.4); T.lit2 = T.arrive2 + .6;   // she hurries to the second lamp
+const SH1 = 9.6, SH2 = 4.6, SH3 = 6.0;
+const T3 = SH1 + SH2, HOME = 2660;
+/** Ember at global time t → { x, facing, angles, swap, poleDeg } */
+function ember(t) {
+  const rate = 1.15, walkTo = (x0, x1, t0, t1) => { const u = clamp((t - t0) / (t1 - t0)); const x = x0 + (x1 - x0) * u; return { x, ph: Math.abs(x - x0) / SPC }; };
+  const blink = (n1(Math.floor(t * 12) * .37, 9) > .82) ? { head: 'blink' } : {};
+  const sway = Math.sin(t * 2.6) * 12;
+  const reachK = (t0) => span(t, t0, t0 + .6, ease.io) - span(t, t0 + .9, t0 + 1.5, ease.io);
+  const carry = (ph) => ({ ...Pup.walk(ph, { stride: 24, knee: 46 }), ...CARRY, tail: sway });
+  if (t < SH1) {
+    const x0 = S1.x - SPC * rate * T.arrive1;
+    if (t < T.arrive1) { const w = walkTo(x0, S1.x, 0, T.arrive1); return { x: w.x, facing: 1, angles: carry(w.ph), swap: blink, poleDeg: CARRY_POLE, moving: 1 }; }
+    if (t < T.leave1 + .35) { const k = reachK(T.arrive1); return { x: S1.x, facing: 1, angles: Pup.blend({ ...Pup.stand(), ...CARRY, tail: sway }, REACH, k), swap: blink, poleDeg: P.lerp(CARRY_POLE, S1.deg, k), k }; }
+    if (t < T.arrive2) { const w = walkTo(S1.x, S2.x, T.leave1 + .35, T.arrive2); return { x: w.x, facing: 1, angles: carry(w.ph), swap: blink, poleDeg: CARRY_POLE, moving: 1 }; }
+    const k = reachK(T.arrive2); return { x: S2.x, facing: 1, angles: Pup.blend({ ...Pup.stand(), ...CARRY, tail: sway }, REACH, k), swap: blink, poleDeg: P.lerp(CARRY_POLE, S2.deg, k), k };
+  }
+  if (t < T3) { const k = reachK(SH1 + .4); return { x: S3.x, facing: 1, angles: Pup.blend({ ...Pup.stand(), ...CARRY, tail: sway }, REACH, k), swap: blink, poleDeg: P.lerp(CARRY_POLE, S3.deg, k), k }; }
+  // shot 3: she signals the boat by raising and dipping the lit pole twice (her far arm is too short to wave clear of her head),
+  // then turns over (edge-on) and walks home
+  const lt = t - T3, sig = span(lt, .8, 1.2) - span(lt, 2.4, 2.8);
+  if (lt < 3.2) return { x: HOME, facing: 1, angles: Pup.blend({ ...Pup.stand(), ...CARRY, tail: sway }, { ...REACH, tail: sway }, sig), swap: blink, poleDeg: P.lerp(CARRY_POLE, -78 + Math.sin((lt - .8) * 7) * 14, sig) };
+  const turnSteps = [1, .35, -.35, -1], ts = Math.min(3, Math.floor((lt - 3.2) * 12 / 1.4));
+  if (lt < 3.55) return { x: HOME, facing: turnSteps[ts], angles: { ...Pup.stand(), ...CARRY, tail: sway }, swap: blink, poleDeg: CARRY_POLE };
+  const w = walkTo(HOME, HOME - SPC * 1.0 * (SH3 - 3.55), T3 + 3.55, T3 + SH3);
+  return { x: w.x, facing: -1, angles: carry(w.ph), swap: blink, poleDeg: CARRY_POLE, moving: -1 };
+}
+// the pole in her near paw at a world angle (deg): convert to the forearm's local angle
+const holding = (a, deg) => ({ foreN: c => { c.save(); c.translate(HAND[0], HAND[1]); c.rotate((deg - ((a.torso || 0) + (a.armN || 0) + (a.foreN || 0))) * Math.PI / 180); P.put(c, pole, { lift: 8 });
+  c.translate(POLE_LEN + 12, 0); c.rotate(-(deg) * Math.PI / 180); P.put(c, flames[Math.floor(F._t * 12) % 2]); c.restore(); } });
+function drawEmber(g, t) {
+  const e = ember(t); F._t = t;
+  return g.puppet(EMBER, { x: e.x, ground: GROUND, facing: e.facing, angles: e.angles, swap: e.swap }, 1, { extra: holding(e.angles, e.poleDeg) });
+}
+const tipAt = t => { const e = ember(t), [hx, hy] = Pup.where(EMBER, { x: e.x, ground: GROUND, facing: e.facing, angles: e.angles }, 'foreN', HAND); return [hx + Math.cos(e.poleDeg * Math.PI / 180) * (POLE_LEN + 6) * Math.sign(e.facing), hy + Math.sin(e.poleDeg * Math.PI / 180) * (POLE_LEN + 6)]; };
+
+// ── shared drawing of the set at time t ──
+function set(g, t, o = {}) {
+  const night = span(t, 4, 12);
+  g.put(skyDusk, -150, -40, .05, { jit: 0 }); if (night > 0) g.put(skyNight, -150, -40, .05, { a: night, jit: 0 });
+  // stars lowered on threads, then twinkling (a quarter turn every few steps)
+  [[300, 120], [700, 60], [1050, 170], [1500, 90], [1900, 140], [2250, 70], [2600, 120]].forEach(([x, y], i) => {
+    const d = span(t, 7 + i * .3, 8.2 + i * .3, ease.out3); if (d <= 0) return;
+    g.put(starP, x, -60 + (y + 60) * d, .2, { lift: 10, rot: (Math.floor(t * 4 + i) % 3) * .12, id: 'st' + i });
+  });
+  cloudP.forEach((c, i) => g.put(c, 420 + i * 1150, 230 + i * 50 + Math.sin(t * 1.1 + i) * 6, .25, { lift: 12, id: 'cl' + i }));
+  g.put(sun, 1340, 380 + 560 * span(t, 0, 7.4, ease.in), .15, { lift: 12, rot: Math.sin(t * 1.3) * .03, id: 'sun' });
+  g.put(moon, 640, 940 - 680 * span(t, 6.2, 9.6, ease.out), .15, { lift: 12, id: 'moon' });
+  g.put(headland, -100, 0, .3, { lift: 8 });
+  const slide = (i) => Math.sin(t * 1.2 + i * 1.7) * (16 + i * 6) * (i % 2 ? -1 : 1);
+  g.put(sea[0], -200 + slide(0), 0, .5, { lift: 8 });
+  // the boat: out at sea, rocking between the strips (comes home in the last shot)
+  const bx = o.boatX ?? 2300, rock = Math.sin(t * 2.2) * .05;
+  g.put(sea[1], -200 + slide(1), 0, .58, { lift: 8 });
+  g.put(boat, bx, 728 + Math.sin(t * 2.2 + 1) * 5, .62, { rot: rock, lift: 8, id: 'boat' });
+  g.put(sea[2], -200 + slide(2), 0, .66, { lift: 10 });
+  g.put(town, 0, 0, .85, { lift: 14 });
+  WIN.forEach((w, i) => { if (t >= WIN_ON[i]) { g.put(litPane[i], 0, 0, .85, { jit: 0 }); } });
+  g.put(rocks, LH + 40, GROUND + 10, 1, { lift: 8 });
+  for (const [x, on] of [[L1, T.lit1], [L2, T.lit2]]) g.put(t >= on ? lampLit : lampDark, x, GROUND - 5, 1, { lift: 12, id: 'lamp' + x });
+  g.put(t >= T.lit3 + 2.2 ? lhLit : lhDark, LH, GROUND, 1, { lift: 14, id: 'lh' });
+  g.put(hookP, LH - 70, GROUND - 200, 1, { lift: 6, id: 'hook' });
+  g.put(quay, 0, GROUND - 2, 1, { lift: 6 });
+}
+function glows(g, t) {
+  WIN.forEach((w, i) => { if (t >= WIN_ON[i]) { const [x, y, ww, hh] = w.r; g.glow(x + ww / 2, y + hh / 2, 70, '#ffc46b', .45, .85); } });
+  for (const [x, on] of [[L1, T.lit1], [L2, T.lit2]]) if (t >= on) { const k = ease.pop(clamp((t - on) / .5)); g.glow(x, GROUND - 5 + LAMP_GLASS, 190 * k, '#ffc46b', .7, 1); }
+  // the lantern on its thread: lit at the hook, then hauled up the tower to the lamp room
+  if (t >= T.lit3) {
+    const up = span(t, T.lit3 + .6, T.lit3 + 2.2, ease.io), ly = P.lerp(GROUND - 200 + 22, GROUND + LH_LAMP + 10, up);
+    if (t < T.lit3 + 2.2) {
+      g.at(1, c => P.ink(c, [[LH - 70, ly - 30], [LH - 70 + (LH - (LH - 70)) * up, GROUND + LH_LAMP - 70]], { col: '#efe2c8', w: 1.6 }));
+      g.put(lantern, LH - 70 + 70 * up, ly, 1, { lift: 8, id: 'lan' }); g.glow(LH - 70 + 70 * up, ly - 6, 80, '#ffc46b', .6, 1);
+    }
+  }
+  if (t >= T.lit3 + 2.2) {   // the beam: a vellum cone that sweeps (its length follows cos of the turn: drawn flat, read as round)
+    const k = ease.out(clamp((t - T.lit3 - 2.2) / .4)), th = (t - T.lit3 - 2.2) * 1.5, cs = Math.cos(th);
+    g.glow(LH, GROUND + LH_LAMP, 220 * k, '#fff0b8', .75, 1);
+    g.at(1, c => { c.save(); c.translate(LH, GROUND + LH_LAMP); c.scale(cs * k, 1); c.globalCompositeOperation = 'screen'; K.beam(c, 1100, 300, { a: .5 }); c.restore(); });
+  }
+}
+
+// ── shots ──
+F.shot(SH1, (g, lt) => {
+  const t = lt;
+  set(g, t); drawEmber(g, t); glows(g, t);
+  g.put(front, -300, GROUND - 40, 1.35, { lift: 10 });
+}, { name: 'the quay', cam: [{ t: 0, x: 0 }, { t: 2.6, x: 60 }, { t: 5.2, x: 200 }, { t: 8.0, x: 920 }, { t: SH1, x: 1040 }] });
+
+F.shot(SH2, (g, lt) => {
+  const t = SH1 + lt;
+  set(g, t); drawEmber(g, t); glows(g, t);
+  g.put(front, -300, GROUND - 40, 1.35, { lift: 10 });
+}, { name: 'the lighthouse', tr: { type: 'card', d: .7 },
+  cam: [{ t: 0, x: LH - 960 - 120, y: 150, zoom: 1.55 }, { t: 1.6, x: LH - 960 - 80, y: 140, zoom: 1.5 }, { t: 3.4, x: LH - 960 - 40, y: -150, zoom: 1.32, e: 'io' }, { t: SH2, x: LH - 960 - 40, y: -170, zoom: 1.3 }] });
+
+F.shot(SH3, (g, lt) => {
+  const t = T3 + lt;
+  set(g, t, { boatX: 2700 - 560 * span(lt, 0, SH3, ease.io) }); drawEmber(g, t); glows(g, t);
+  g.put(front, -300, GROUND - 40, 1.35, { lift: 10 });
+  // the title label is pinned on at the end, dropping in with a swing (screen space)
+  const d = span(lt, 1.6, 2.2, ease.back), sw = Math.sin((lt - 1.6) * 7) * .05 * (1 - span(lt, 1.6, 3.2));
+  if (lt > 1.6) g.put(label, 70, -200 + 270 * d, 0, { rot: -.025 + sw, lift: 16, id: 'label' });
+}, { name: 'night harbour', tr: { type: 'dissolve', d: .6 }, cam: [{ t: 0, x: 1240, y: 0, zoom: 1 }, { t: SH3, x: 1300, zoom: 1.02 }] });
+
+// ── the film's own rules (check.mjs runs them on a grid of t) ──
+const camX = t => { const i = F.locate(F.quant(t)), sh = F.shots[i]; return F.camAt(sh, F.quant(t) - sh.start); };
+F.check('Ember faces the way she walks', t => { const e = ember(t); return !e.moving || Math.sign(e.moving) === Math.sign(e.facing); });
+F.check('Ember stays in frame', t => { const e = ember(t), c = camX(t), sx = F.W / 2 + (e.x - F.W / 2 - c.x) * c.zoom; return t < .9 || (sx > 40 && sx < F.W - 40); });
+F.check('a lamp lights only when the pole tip touches it', t => {
+  for (const [on, x, y] of [[T.lit1, L1, GROUND - 5 + LAMP_GLASS], [T.lit2, L2, GROUND - 5 + LAMP_GLASS], [T.lit3, LH - 70, GROUND - 190]])
+    if (Math.abs(F.quant(t) - F.quant(on)) < 1e-6) { const [px, py] = tipAt(F.quant(on)); if (Math.hypot(px - x, py - y) > 26) return false; }
+  return true;
+});
+F.check('the shots are in time order (lamp 2 lights inside shot 1)', () => T.lit2 + .4 < SH1);
+window.T = T; window.ember = ember; window.tipAt = tipAt;
+F.start();
+</script>
+</body>
+</html>
