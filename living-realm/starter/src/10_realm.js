@@ -31,6 +31,7 @@ R.build = () => {
   // ⑤ small things: each stands on the land and registers a solid if you would bump into it
   P.woodpile(C.x + 5.2, C.z - 0.6, { yaw: 2.1 }); P.barrel(C.x - 1.6, C.z + 4.4); P.stump(-4.5, 9.5); P.log(-1.5, 11.5, { yaw: 0.5 }); P.bench(-6.4, 10.6, { yaw: 2.6, back: false });
   P.pier([T.x - T.r - 1.5, T.z + 6], [T.x - T.r + 7, T.z + 4.5], T.level + 0.5); P.rocks(T.x - 6, T.z + T.r + 1.5, 4, 2.2, { size: 1.1 }); P.rocks(-20, -8, 3, 2); P.lampPost(-7.5, 5.5, { yaw: 2.2, h: 2.8 });
+  A.dress(R.house, { seed: 'tarn', climbers: 1, planters: 1, stuff: 1 });          // and what collects against a wall: a climber, a planter, a barrel
   // a camp fire: a ring of stones, a light, a flame, a sound
   { const fx = -3.2, fz = 9.6, fy = LR.land.h(fx, fz), g = P.g(fx, fz); for (let i = 0; i < 8; i++) { const a = (i / 8) * LR.TAU; g.mat('rock', { scale: 0.5 }); g.blob(fx + Math.cos(a) * 0.5, fy + 0.08, fz + Math.sin(a) * 0.5, 0.16, { seg: 6, rings: 4, seed: i }); }
     g.mat('rock', { flags: LR.FLAG.FIRE | LR.FLAG.NOWEATHER, weight: 0.5 }); g.blob(fx, fy + 0.05, fz, 0.3, { squash: [1, 0.3, 1], seg: 7, rings: 4 });

@@ -62,9 +62,9 @@ woods and mountains beyond). `starter/` (Tarn Cabin: a forester's cabin by a mou
 | `lib/30_geo.js` | `LR.Geo` — a geometry writer in metres (poly, box, beam, tube, lathe, blob, a transform stack, per-vertex material layer, tint, flags, occlusion) and `LR.world` — meshes, solids, decks, lights, smoke points, sounds, places |
 | `lib/35_terrain.js` | `LR.land`: height function → an editable grid (level a site, lay a road, carve a brook, dig a pond), cover maps painted by strokes, ring-of-detail mesh |
 | `lib/40_arch.js` | building **parts**: `wall` (stone / half-timber / boards, with real openings), `window`, `door`, `lantern`, `gableRoof` (thickness, rafters, sag, gable walls), `chimney`, `dormer` — and `house()` that combines them |
-| `lib/42_buildings.js` | `smithy`, `chapel`, `windmill` and `waterWheel` (they turn), `palisade`, `gate`, `bridge` (walkable), `well`, `fountain`, `stall` |
-| `lib/45_props.js` | barrel, crate, sack, cart, haystack, woodpile, bench, lamp post, fences, dry-stone wall, rocks, log, stump, signpost, hanging signs, bunting and washing, trough, tombstone, scarecrow, pier, flower pot — batched per 48 m cell |
-| `lib/50_flora.js` · `51_flora_species.js` | trees and bushes from numbers (`LR.flora.species`): branch skeletons, bark tubes, leaf sprays painted in code, three levels of detail down to billboards baked from the tree itself; oak, beech, birch, spruce, pine, bush |
+| `lib/42_buildings.js` | `dress(house)` — what people leave against a wall (climbers, pots, planters, barrels, wood) · `smithy`, `chapel`, `windmill` and `waterWheel` (they turn), `palisade`, `gate`, `bridge` (walkable), `well`, `fountain`, `stall` |
+| `lib/45_props.js` | barrel, crate, sack, cart, haystack, woodpile, bench, lamp post, fences, dry-stone wall, rocks, log, stump, signpost, hanging signs, bunting, washing and strings of bulbs, planters, trough, tombstone, scarecrow, pier, flower pot — batched per 48 m cell |
+| `lib/50_flora.js` · `51_flora_species.js` | trees and bushes from numbers (`LR.flora.species`): branch skeletons, bark tubes, leaf sprays painted in code, three levels of detail down to billboards baked from the tree itself; oak, beech, birch, spruce, pine, bush, climber (for walls) |
 | `lib/52_grass.js` | grass, meadow flowers, ferns and weeds placed in the vertex shader from the land's cover maps (nothing stored), in view-culled tiles |
 | `lib/55_water.js` | brooks, ponds and basins: refraction, depth colour, the far bank mirrored (screen-space) over a sky mirror, sun glint, foam, rain rings, ice |
 | `lib/60_fx.js` | rain and splashes, snow, chimney smoke, flames, lamp halos, fireflies, birds, falling leaves, motes in sunlight, fountain water — each one draw, all closed forms of time |
@@ -116,7 +116,8 @@ and wants a real GPU; without one (CI, containers) stills render on the CPU at 1
    they are not, write a builder in the project from the parts (`A.wall`, `A.window`, `A.door`, `A.gableRoof`, `LR.Geo`)
    and define the materials it needs with `LR.mat.define` (`references/KIT.md`). Check each new building alone in a
    still before placing twenty. Look at `?view=mats` after adding materials.
-5. **Details and plants.** Props where people would leave them; lamps where people walk at night; named trees, then
+5. **Details and plants.** `A.dress(house)` for every house (bare wall feet are what makes a place look unbuilt), then
+   props where people would leave them; lamps where people walk at night; named trees, then
    scatter by the woods function with an `avoid` that keeps trunks off ways, water and walls — with a density that
    varies, so the canopy has gaps for the sun; flowers and ferns on the cover maps.
 6. **The walk.** Spawn, tour way-points (each with what that stretch looks at), 8–12 views, named places, sounds.

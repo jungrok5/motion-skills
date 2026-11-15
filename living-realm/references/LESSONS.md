@@ -137,6 +137,18 @@ Read it as a list of what is in it that the engine lacks, not as a style to imit
   weather still names its own weather.
 What that picture has and this does not is said in `SOURCE.md` and `LOOK.md`; do not promise it.
 
+**"Is it the lighting?" — no: it is what stands there**
+After tone, wear and the bounce, what still separated the village from the target picture was not light transport but
+things: nothing grew up the walls, nothing stood by the doors. → `A.dress(house)` puts against each house what people
+leave there (a climber or two, pots by the door, a planter under a window, barrels, crates, a woodpile), all within a
+metre of the wall and all found by the walk check; a `climber` species (a tall narrow bush planted 0.1 m from the wall:
+half of it is in the wall, the rest covers it); bulbs on a string from lamp post to lamp post (`bunting` with
+`lights`, lit when the lamps are). Forty-seven things and six strings changed the lane more than the bounce did.
+- Rain was only visible in a lightning flash: the streaks took the sky's light, and the sky had just been made
+  darker. They were then made three times brighter and half as long again, and a still looked slashed with chalk.
+  A streak wants to be a little brighter than what is behind it, thin, and many. Check rain in a still at noon and
+  under a lamp, not only in the dark.
+
 **The engine**
 - `flat` is a reserved word in GLSL ES 3.00 (a local variable named `flat` failed every surface shader at once).
 - A `RawShaderMaterial` with its own `#version` line fails: three.js writes defines above it → use `glslVersion: GLSL3`.

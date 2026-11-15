@@ -36,13 +36,14 @@ void main(){ const vec3 B = vec3(26.0, 18.0, 26.0); float sp = 15.0 + seed.w * 6
   vec3 vel = vec3(uWind.x * (2.0 + 7.0 * uWind.z), -sp, uWind.y * (2.0 + 7.0 * uWind.z));
   vec3 p = seed.xyz * B + vel * uTime; p = mod(p - uCamPos + B * 0.5, B) - B * 0.5 + uCamPos;
   vec3 dir = normalize(vel), toEye = normalize(uCamPos - p), side = normalize(cross(dir, toEye));
-  float len = 0.42 + seed.w * 0.3, wd = 0.006 + 0.004 * seed.x;
+  float len = 0.52 + seed.w * 0.36, wd = 0.006 + 0.004 * seed.x;
   vec3 wp = p + side * position.x * wd + dir * position.y * len;
   float roof = roofAt(p.xz), land = landAt(p.xz);
   vA = step(seed.y, uWx2.x) * step(max(roof, land), p.y) * smoothstep(13.0, 9.0, length(p - uCamPos)) * smoothstep(1.2, 3.5, length(p - uCamPos));
   vQ = position.xy; gl_Position = vA > 0.0 ? projectionMatrix * viewMatrix * vec4(wp, 1.0) : vec4(2.0, 2.0, 2.0, 1.0); }`,
-      ENV + `in vec2 vQ; in float vA; out vec4 o; void main(){ float f = softDepth(0.3); if (f <= 0.0) discard; float a = (1.0 - abs(vQ.x)) * (1.0 - vQ.y * vQ.y) * vA * 0.34 * f;
-  vec3 c = envAt(vec3(0.0, 1.0, 0.0), uEnvMips - 1.0) * 1.6 + uWx2.w * vec3(4.0, 5.0, 7.0); o = vec4(c * a, a * 0.55); }`);
+      ENV + `in vec2 vQ; in float vA; out vec4 o; void main(){ float f = softDepth(0.3); if (f <= 0.0) discard; float a = (1.0 - abs(vQ.x)) * (1.0 - vQ.y * vQ.y) * vA * 0.36 * f;
+  // a streak is a lens for the sky: it shows brighter than what is behind it by day and by lamplight, not only in a flash
+  vec3 c = envAt(vec3(0.0, 1.0, 0.0), uEnvMips - 1.0) * 1.8 + envAt(vec3(0.0, 0.15, 1.0), uEnvMips - 1.0) * 1.1 + vec3(0.010, 0.011, 0.013) + uWx2.w * vec3(4.0, 5.0, 7.0); o = vec4(c * a, a * 0.5); }`);
     // ── splashes where rain meets a surface ──
     mk('splash', seeds(quad(), Math.round(2600 * q), 'splash'), P + TOPO + `in vec3 position; in vec4 seed; out vec2 vQ; out float vA;
 void main(){ const float B = 22.0; float life = fract(uTime * (2.6 + seed.w) + seed.z * 9.0), gen = floor(uTime * (2.6 + seed.w) + seed.z * 9.0);

@@ -88,7 +88,8 @@ own from `g.poly` strips (see `gableRoof` for thickness, soffit and ridge), then
 ## Props — `LR.props` (lib/45_props.js)
 `barrel crate sack haystack woodpile bench cart lampPost rock rocks log stump signpost trough tombstone scarecrow pot`
 take `(x, z, { yaw, scale, y, … })`; `fence(points, { kind: 'rail' | 'wattle' | 'picket' })`, `stoneWall(points)`,
-`bunting(a, b, { washing, colors })` and `hangSign(x, y, z, yaw, { shape: P.SHAPES.mug | anvil | loaf | key | [[x, y]…] })`
+`bunting(a, b, { washing, colors, lights, bare })` (`lights`: a bulb between flags, lit when the lamps are; `bare`: the
+line and its bulbs only), `planter(x, z, { len, yaw, bloom })`, `pot(x, z, { size, bloom })`, and `hangSign(x, y, z, yaw, { shape: P.SHAPES.mug | anvil | loaf | key | [[x, y]…] })`
 take world points; `pier(a, b, y)` registers a deck. A prop of your own: `const g = LR.props.g(x, z)` gives the batch
 for that part of the world — write into it.
 

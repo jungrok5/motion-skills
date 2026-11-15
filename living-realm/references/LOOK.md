@@ -27,7 +27,7 @@
    Snow lies on what faces up and is open; walls under eaves stay bare. Trees turn, drop their leaves, keep twigs.
 9. **A filmic frame.** Temporal anti-aliasing, bloom from real brightness, an eye that adapts, an AgX display curve with a look (contrast, colour), a
    grade that follows the hour (warm at dusk, blue at night, quieter in rain), cool shade against warm light.
-10. **Life.** Smoke, flags, a turning mill, lit windows that differ from each other, fireflies, birds, falling leaves.
+10. **Life.** Things against every wall (a climber, pots by the door, a planter, a barrel), strings of bulbs, smoke, flags, a turning mill, lit windows that differ from each other, fireflies, birds, falling leaves.
 
 ## The numbers that keep it from going flat (measure a still, do not trust the eye)
 Reduce a still to 192 × 108 and take its luma and saturation. A clear day in this style reads:

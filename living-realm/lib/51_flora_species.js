@@ -125,6 +125,19 @@ void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
     wind: { trunk: 0.7, branch: 0.8, flutter: 0.6 },
   });
   // a round shrub: stems straight from the ground
+  // a climber: plant it at the foot of a wall (0.1 m out) and half of it disappears into the wall, the rest covers it.
+  // Tall and narrow, small leaves, red in autumn, bare stems in winter.
+  F.species('climber', {
+    kind: 'bush', variants: 3, seed: 41, height: [2.6, 4.4], stems: [5, 8], bark: 'barksmooth', collide: false,
+    trunk: { radius: 0.022 },
+    levels: [
+      { gnarl: 0.9, up: 0.6, taper: 0.85, segs: 6, leaves: 7 },
+      { count: [3, 6], from: 0.12, to: 1.0, angle: [28, 70], len: [0.22, 0.42], rad: 0.6, up: 0.3, gnarl: 0.7, taper: 0.85, segs: 3 },
+    ],
+    crown: { r: 0.3, ry: 0.52, cy: 0.5 },
+    leaf: { spray: 'ovate', size: [0.42, 0.7], perTwig: 8, from: 0.05, droop: 0.3, leafLen: 0.085, leafAspect: 0.5, summer: ['#3c6a2a', '#487a32', '#2f5a24', '#56883a'], autumn: ['#b02a1c', '#c8501e', '#8a1e16'], twig: '#3e3228', trans: 0.65, snow: 0.6 },
+    wind: { trunk: 0.1, branch: 0.6, flutter: 1.3 }, lod1: { keep: 0.5, grow: 1.5, levels: 0 },
+  });
   F.species('bush', {
     kind: 'bush', variants: 2, seed: 17, height: [1.3, 1.9], stems: [6, 9], bark: 'barksmooth', collide: false,
     trunk: { radius: 0.035 },

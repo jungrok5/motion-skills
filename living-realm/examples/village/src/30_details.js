@@ -11,6 +11,13 @@
     P.bench(4.6, 4.2, { yaw: -2.3 }); P.bench(-4.8, 4.0, { yaw: 2.3 }); P.bench(0, -5.6, { yaw: 0 });
     P.barrel(10.6, 10.9); P.barrel(11.5, 10.4); P.crate(6.3, 10.9, { yaw: 0.3 }); P.crate(6.5, 11.1, { y: h(6.5, 11.1) + 0.62, size: 0.5, yaw: 0.9, solid: false }); P.sack(-6.6, 10.6); P.sack(-7.1, 10.1, { yaw: 1 }); P.crate(-10.9, 10.7, { yaw: 0.2 });
     P.cart(13.5, 5.2, { yaw: 0.9, load: 'hay' }); P.pot(2.2, -7.2, { size: 1.3 }); P.pot(-2.2, -7.2, { size: 1.3 });
+    // what people leave against their walls: climbers, pots by the door, planters under windows, barrels and wood
+    [...V.houses, V.baker, V.chandler, V.hall, V.millB, V.cottage].forEach((hs, i) => { if (hs) A.dress(hs, { seed: 'silverford' + i }); });
+    if (V.inn) A.dress(V.inn, { seed: 'inn', climbers: 3, planters: 2, stuff: 1 });
+    // strings of bulbs for the evening: from lamp post to lamp post round the square, and one up to the inn
+    { const lp = []; for (let i = 0; i < 6; i++) { const a = (i / 6) * LR.TAU + 0.5, x = Math.sin(a) * 13.2, z = Math.cos(a) * 13.2; lp.push([x, h(x, z) + 3.12, z]); }
+      for (let i = 0; i < 6; i++) { const a = lp[i], b = lp[(i + 1) % 6]; P.bunting(a, b, { bare: true, lights: true, sag: 0.55, n: 15 }); }
+      P.bunting(lp[3], [-5.6, y0 + 5.9, -21.05], { bare: true, lights: true, sag: 0.5, n: 11 }); }
     // bunting over the square and the south lane
     const Y = y0 + 6.4; P.bunting([-20.5, Y - 0.6, -9], [-13, Y + 0.6, -15.5], { sag: 0.6 }); P.bunting([-5, Y + 0.8, -21.4], [22.5, Y - 1.2, -6], { sag: 1.3 }); P.bunting([-8.2, h(-8, 31) + 6.2, 31], [8.6, h(8, 30) + 6.6, 30], { sag: 0.8 }); P.bunting([-8.8, h(-8, 47) + 5.6, 47], [8.4, h(8, 46.5) + 5.8, 46.5], { sag: 0.8, washing: true, colors: ['#efe6d2', '#b8c4d0', '#d8c8a8', '#a8433a'] });
     // ── the inn's front: sign, benches, barrels, a hitching rail ──

@@ -231,4 +231,24 @@
     g.pop(); W.add(g, { name: 'stall', double: true });
     W.solidBox(o.x, o.z, w / 2 + 0.1, d / 2 + 0.15, o.yaw || 0);
   };
+
+  // What people leave against their walls.  h: what A.house() returned; o: { seed, climbers (0–3), pots, planters, stuff }
+  // — everything stands within a metre of the wall (keep ways clear: check.mjs --walk).  Climbers need LR.flora.
+  A.dress = (h, o = {}) => {
+    const r = LR.rng('dress' + (o.seed || h.w + ':' + h.d)), P = LR.props, w = h.w, d = h.d, c0 = h.toW(0, 0), cx = h.toW(1, 0), cz = h.toW(0, 1);
+    const yaw = Math.atan2(-(cx[1] - c0[1]), cx[0] - c0[0]), at = (lx, lz) => h.toW(lx, lz), free = (x, z) => !LR.water || LR.water.levelAt(x, z) < LR.land.h(x, z) + 0.05;
+    const sides = [['+z', (t, out) => at((t - 0.5) * w, d / 2 + out), 0], ['-z', (t, out) => at((t - 0.5) * w, -d / 2 - out), Math.PI], ['+x', (t, out) => at(w / 2 + out, (t - 0.5) * d), Math.PI / 2], ['-x', (t, out) => at(-w / 2 - out, (t - 0.5) * d), -Math.PI / 2]];
+    const nc = o.climbers === undefined ? 1 + r.int(2) : o.climbers;
+    if (LR.flora) for (let i = 0; i < nc; i++) { const sd = r.pick(sides), t = r.pick([0.06, 0.94, 0.12 + r() * 0.2, 0.7 + r() * 0.2]), p = sd[1](t, 0.1); if (free(p[0], p[1])) LR.flora.plant('climber', p[0], p[1], { scale: 0.8 + r() * 0.5 }); }
+    // by the door: a pot or two
+    if (o.pots !== false && h.door) { const dx = cx[0] - c0[0], dz = cx[1] - c0[1], ox = cz[0] - c0[0], oz = cz[1] - c0[1]; for (const s of r() < 0.6 ? [-1, 1] : [r() < 0.5 ? -1 : 1]) { const x = h.door[0] + dx * s * 0.95 + ox * 0.32, z = h.door[1] + dz * s * 0.95 + oz * 0.32; if (free(x, z)) P.pot(x, z, { size: 1.0 + r() * 0.5 }); } }
+    // under the windows: a planter on the front or a side
+    const np = o.planters === undefined ? r.int(3) : o.planters;
+    for (let i = 0; i < np; i++) { const sd = sides[i === 0 ? 0 : 2 + r.int(2)], t = 0.14 + r() * 0.16 + (r() < 0.5 ? 0.56 : 0), p = sd[1](t, 0.3); if (free(p[0], p[1])) P.planter(p[0], p[1], { yaw: yaw + sd[2], len: 0.9 + r() * 0.5 }); }
+    // round the side or the back: what there was no room for indoors
+    const ns = o.stuff === undefined ? 1 + r.int(2) : o.stuff;
+    for (let i = 0; i < ns; i++) { const sd = sides[1 + r.int(3)], t = 0.15 + r() * 0.7, kind = r.pick(['barrel', 'barrel', 'crate', 'sack', 'woodpile']), p = sd[1](t, kind === 'woodpile' ? 0.42 : 0.5); if (!free(p[0], p[1])) continue;
+      if (kind === 'barrel') { P.barrel(p[0], p[1]); if (r() < 0.4) { const q = sd[1](t + 0.9 / (sd[2] % Math.PI === 0 ? w : d), 0.5); P.barrel(q[0], q[1]); } }
+      else if (kind === 'crate') P.crate(p[0], p[1], { yaw: yaw + sd[2] + (r() - 0.5) * 0.5 }); else if (kind === 'sack') P.sack(p[0], p[1], { yaw: r() * 6 }); else P.woodpile(p[0], p[1], { yaw: yaw + sd[2], len: 1.4 + r() * 0.8, rows: 3 }); }
+  };
 }
