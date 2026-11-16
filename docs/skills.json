@@ -2044,6 +2044,90 @@
           "url": "https://jungrok5.github.io/motion-skills/agent-launch-film/demo/templates/"
         }
       ]
+    },
+    {
+      "id": "storybook-portrait",
+      "name": "storybook-portrait",
+      "tagline": "주제를 주면 그 주제에 맞는 인물을 새로 설계해 요즘 그림책 스타일의 초상으로 자바스크립트가 직접 그립니다. 무광 과슈 피부, 색 줄이 섞인 마른 붓 머리카락과 잔머리, 옆을 보는 작은 눈동자의 크고 둥근 눈, 빨간 볼, 긴 목, 종이 결이 비치는 크레용 무늬 옷, 떨리는 잉크 선을 이미지 파일 없이 획 하나씩 올리고, 다 그린 뒤에는 숨 쉬고 깜빡이고 눈이 먼저 움직이면 고개가 예비 동작과 함께 따라가며 머리카락과 귀걸이가 늦게 따라옵니다.",
+      "posterAlt": "storybook-portrait로 그린 세 인물: 노란 우비를 입고 빗속에서 웃는 짧은 갈색 머리 아이, 회색 곱슬머리에 동그란 안경을 쓰고 물방울무늬 올리브색 카디건을 입은 할머니와 머리 옆의 벌, 적갈색 올림머리에 남색 앞치마와 빨간 스카프를 하고 볼에 밀가루가 묻은 졸린 견습생. 모두 흰 종이 위에 과슈와 크레용 결로 그려짐",
+      "poster": "storybook-portrait/poster.jpg",
+      "tags": [
+        "그림책 일러스트",
+        "과슈 · 크레용 · 잉크",
+        "주제 → 새 인물",
+        "살아 있는 초상",
+        "PNG · MP4 · 라이브"
+      ],
+      "stats": [
+        "인물 3명 · 4:5",
+        "이미지 파일 0개"
+      ],
+      "page": "storybook-portrait/",
+      "source": "storybook-portrait/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "storybook-portrait/examples/beekeeper/"
+      },
+      "sources": [
+        {
+          "title": "Vamsi Batchu(@vamsibatchuk)의 X 게시물 (@Artedeingenio의 참고 그림 한 장을 주고 외부 파일 없이 순수 자바스크립트 · p5.js · 파이썬 코드로 여러 주제를 그리게 한 방법)",
+          "url": "https://x.com/vamsibatchuk/status/2121788887823778297?a=NmhF1v14IKYs7TtTVf4&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「양봉가 할머니」 · 예제, 곱슬머리 · 안경 · 벌을 좇는 눈 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/storybook-portrait/demo/beekeeper/"
+        },
+        {
+          "title": "「새벽 빵집 견습생」 · 예제, 밀가루와 하품 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/storybook-portrait/demo/dawn-baker/"
+        },
+        {
+          "title": "「비 오는 날」 · 시작 그림 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/storybook-portrait/demo/rain-collector/"
+        }
+      ]
+    },
+    {
+      "id": "storybook-short",
+      "name": "storybook-short",
+      "tagline": "주제를 주면 그림책처럼 손으로 칠한 듯한 짧은 영화를 코드만으로 만듭니다. 모든 프레임은 캔버스 코드, 모든 소리는 Web Audio 코드이고 이미지 · 라이브러리 · 에셋은 쓰지 않습니다. 큰 머리와 종 모양 코트의 인물, 크레용과 과슈로 칠한 펼침면 같은 장소, 디딘 발이 미끄러지지 않는 걷기, 힘을 모았다가 터뜨리고 자리를 잡는 큰 동작, 합성한 음악과 발뒤꿈치에 맞춘 발소리로 몇 장면짜리 이야기를 만들고, 소리가 있는 1920×1080 MP4로 렌더합니다.",
+      "posterAlt": "storybook-short 예제 「장 보는 날」의 네 장면: 노란 벽 창가의 버킷햇 쓴 소녀 클로즈업, 깃발과 과일 가판이 있는 알록달록한 장터, 오리가 떠 있는 운하를 따라 걷는 소녀와 베레모 쓴 할아버지, 벤치에 앉은 두 사람과 떨어지는 아이스크림",
+      "poster": "storybook-short/poster.jpg",
+      "tags": [
+        "그림책 애니메이션",
+        "캔버스 + Web Audio만",
+        "주제 → 새 영화",
+        "디딘 발 고정 · 큰 동작",
+        "MP4 · 라이브"
+      ],
+      "stats": [
+        "영화 2편 · 장면 7개",
+        "에셋 0개"
+      ],
+      "page": "storybook-short/",
+      "source": "storybook-short/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "storybook-short/examples/market-day/"
+      },
+      "sources": [
+        {
+          "title": "Chetaslua(@chetaslua)의 X 게시물 (순수 코드로 만든 손그림 영화: 이미지 · 라이브러리 · 에셋 0개, 모든 프레임은 캔버스 코드, 모든 소리는 Web Audio 코드)",
+          "url": "https://x.com/chetaslua/status/2122095074968469720?a=WMOtOJajKg-tokfUuC4&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「장 보는 날」 · 예제, 장면 5개 · 42초 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/storybook-short/demo/market-day/"
+        },
+        {
+          "title": "「바람 부는 날」 · 시작 그림, 장면 2개 · 16초 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/storybook-short/demo/windy-walk/"
+        }
+      ]
     }
   ]
 }

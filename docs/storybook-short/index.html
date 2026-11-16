@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>storybook-short · motion-skills</title>
+<meta name="description" content="주제를 주면 그림책처럼 손으로 칠한 듯한 짧은 영화를 코드만으로 만듭니다. 모든 프레임은 캔버스 코드, 모든 소리는 Web Audio 코드이고, 이미지 · 라이브러리 · 에셋은 하나도 쓰지 않습니다.">
+<meta property="og:title" content="storybook-short · motion-skills">
+<meta property="og:description" content="주제를 주면 그림책 화풍의 짧은 영화를 캔버스와 Web Audio 코드만으로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/storybook-short/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/storybook-short">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / storybook-short</nav>
+  <h1>storybook-short</h1>
+  <p>주제(작은 하루, 장소, 직업, 작은 사건)를 주면 그림책처럼 손으로 칠한 듯한 짧은 영화를 코드만으로 만듭니다. 모든 프레임은 캔버스 코드, 모든 소리는 Web Audio 코드이고, 이미지 · 라이브러리 · 에셋은 하나도 쓰지 않습니다. 브리프를 먼저 쓰고 인물(큰 머리, 마른 붓 머리카락, 종 모양 코트, 가는 다리, 모자)과 동물을 설계합니다. 장소는 종이 결이 비치는 크레용과 과슈로 펼침면처럼 칠합니다. 장면은 클로즈업 → 전경 → 걷기 → 작은 사건과 큰 동작 → 다시 클로즈업으로 나눕니다. 걷는 동안 디딘 발은 미끄러지지 않고, 눈이 먼저 움직이면 고개가 따라가며, 큰 동작은 힘을 모았다가 터뜨리고 다시 자리를 잡습니다. 음악 · 주변 소리 · 효과음을 합성하고, 발소리는 발뒤꿈치가 닿는 순간에 맞춥니다. 머리와 재료는 storybook-portrait와 같아서 초상과 영화가 한 인물을 함께 씁니다.
+  보고 만든 원본: <a href="https://x.com/chetaslua/status/2122095074968469720?a=WMOtOJajKg-tokfUuC4&amp;s=19" target="_blank" rel="noopener">Chetaslua(@chetaslua)의 X 게시물 (순수 코드로 만든 손그림 영화: 이미지 · 라이브러리 · 에셋 0개, 프레임은 캔버스, 소리는 Web Audio)</a>.</p>
+  <ul class="tags"><li>그림책 애니메이션</li><li>캔버스 + Web Audio만</li><li>주제 → 새 영화</li><li>디딘 발 고정 · 큰 동작</li><li>MP4 · 라이브</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 한 줄(예: 할아버지랑 장 보러 가는 날, 바람 부는 날의 산책)</dd>
+      <dt>브리프</dt><dd>한 줄 줄거리와 작은 반전, 인물(머리 · 모자 · 코트 무늬 · 들고 다니는 소품 · 무게), 장면표(구도 · 장소 · 카메라 · 전환), 걷기 · 시선 · 큰 동작의 모으기 → 동작 → 회복, 음악 · 주변 소리 · 효과음</dd>
+      <dt>만들기</dt><dd>캐스트 시트(좌우 회전 · 앉기 · 좌우 걷기)를 먼저 채점한 뒤 장소를 깊이별 판으로 칠하고, 장면마다 카메라 · 인물 자세 · 동물 · 소리를 씀</dd>
+      <dt>확인</dt><dd>결정성, 장면마다 살아 있음, 잉크 · 평평한 면 없음 · 팔레트, 무릎 방향 · 발 닿음 · 디딘 발 고정 · 팔꿈치 · 보는 방향 = 걷는 방향, 큰 동작의 모으기와 회복, 소리(NaN · 클리핑 · 무음 없음, 발소리 = 발뒤꿈치 닿는 순간), 채점 기준 10개</dd>
+      <dt>출력</dt><dd>소리가 있는 1920×1080 MP4(30 fps), 클릭하면 소리가 나는 라이브 페이지, 스틸, 콘택트 시트, 캐스트 시트</dd>
+    </dl>
+    <pre><code>node storybook-short/scripts/new-film.mjs my-film
+node storybook-short/scripts/render.mjs my-film/index.html --cast
+node storybook-short/scripts/check.mjs my-film/index.html
+node storybook-short/scripts/render.mjs my-film/index.html --sheet 16 --scale .5
+node storybook-short/scripts/render.mjs my-film/index.html</code></pre>
+    <p class="mute">요구 사항: Node 18+와 Playwright Chromium, ffmpeg. 네트워크 · npm 설치 · GPU가 필요 없습니다(42초 예제의 960×540 미리보기가 약 1분, 검사 전체가 몇 초). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/storybook-short/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10.2;--h-phone:260px;--demo-bg:#e9e4da">
+    <iframe data-src="demo/market-day/" title="storybook-short 예제 영화가 재생되는 라이브 페이지" allow="fullscreen; autoplay" allowfullscreen></iframe>
+    <noscript><a href="demo/market-day/">데모 열기 (examples/market-day)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/market-day</code> · 장면 5개 · 42초 · ▶를 누르면 소리와 함께 처음부터</span>
+      <span class="btns" role="group" aria-label="데모 영화">
+        <button class="btn" type="button" data-src="demo/market-day/" data-cap="예제 &lt;code&gt;examples/market-day&lt;/code&gt; · 장면 5개 · 42초 · ▶를 누르면 소리와 함께 처음부터" aria-pressed="true">장 보는 날</button>
+        <button class="btn" type="button" data-src="demo/windy-walk/" data-cap="시작 그림 &lt;code&gt;templates/&lt;/code&gt; · 장면 2개 · 16초" aria-pressed="false">바람 부는 날</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본 영화에 없는 주제 두 개를 브리프부터 새로 만든 영화의 장면입니다. 카드를 누르면 새 탭에서 그 영화의 라이브 페이지나 캐스트 시트가 열립니다. 브라우저가 같은 코드로 그리고 소리를 냅니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"md":"장 보는 날","ww":"바람 부는 날"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>장 보는 날 <small>예제 · 장면 5개 · 42초 · 인물 2명</small></h3>
+      <p>여름 토요일, 미나는 할아버지와 장터에 갔다가 운하를 따라 걸어 돌아오고, 벤치에서 아이스크림을 떨어뜨립니다. 그러자 할아버지가 자기 아이스크림을 내밉니다. 미나(가벼운 몸, 분홍 줄이 섞인 단발, 버킷햇, 물방울 원피스)와 할아버지(무거운 몸, 베레모, 동그란 안경, 흰 콧수염, 체크 카디건, 바구니)는 클로즈업과 전경에서 같은 설계를 씁니다. 운하 산책은 두 사람이 서로 다른 보폭과 속도로 걷고, 발소리는 각자의 발뒤꿈치에 맞춥니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="md" href="demo/market-day/?t=0" target="_blank" rel="noopener">
+          <img src="samples/md-window.jpg" alt="노란 벽 앞의 미나 클로즈업: 버킷햇, 분홍 줄이 섞인 검은 단발, 물방울 원피스. 오른쪽 창밖으로 알록달록한 집들이 보이고 창틀에 주황 고양이와 화분이 있음" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">장면 1 · 창가 · 7초</span><b>장 보는 아침</b><span class="how">창밖을 보다가 고개를 돌려 웃음, 고양이의 꼬리 · 귀 · 깜빡임</span></div></a>
+        <a class="tile" data-tags="md" href="demo/market-day/?t=7.4" target="_blank" rel="noopener">
+          <img src="samples/md-market.jpg" alt="가장자리에 종이가 비치는 펼침면 장터: 색색의 집들, 위에 걸린 깃발 줄, 줄무늬 차양 가판 셋과 과일 상자, 가로등, 가운데 미나와 바구니를 든 할아버지, 앞을 지나가는 흰 개" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">장면 2 · 장터 · 8.4초</span><b>그림책 펼침면</b><span class="how">종이 테두리, 펄럭이는 깃발, 지나가는 개, 자전거 벨</span></div></a>
+        <a class="tile" data-tags="md" href="demo/market-day/?t=15.8" target="_blank" rel="noopener">
+          <img src="samples/md-canal.jpg" alt="운하 건너편의 집들과 포플러, 오리가 떠 있는 파란 운하, 돌길 위를 걷는 할아버지와 앞서 걷는 미나" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">장면 3 · 운하 · 10.4초</span><b>둘이 걷는 길</b><span class="how">디딘 발 고정, 무게마다 다른 보폭, 흔들리는 바구니, 따라가는 카메라</span></div></a>
+        <a class="tile" data-tags="md" href="demo/market-day/?t=26.2" target="_blank" rel="noopener">
+          <img src="samples/md-bench.jpg" alt="운하 앞 벤치에 앉은 미나와 할아버지가 각자 아이스크림 콘을 들고 있음, 왼쪽에 꽃 화분, 물 위의 오리" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">장면 4 · 벤치 · 10.6초</span><b>아이스크림</b><span class="how">앉은 자세, 무릎 위로 모인 코트, 다가오는 오리</span></div></a>
+        <a class="tile" data-tags="md" href="demo/market-day/?t=29.8" target="_blank" rel="noopener">
+          <img src="samples/md-bigmove.jpg" alt="네 장면: 미나가 콘을 들고 있음, 핥으려다 분홍 아이스크림 덩어리가 떨어지며 놀람, 땅에 떨어져 시무룩함, 할아버지가 팔을 뻗어 자기 콘을 내밂" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">큰 동작</span><b>떨어진 한 덩이</b><span class="how">모으기(콘을 들고 뒤로) → 핥기 → 툭 → 회복, 할아버지는 당겼다가 내밂</span></div></a>
+        <a class="tile" data-tags="md" href="demo/market-day/?t=36.8" target="_blank" rel="noopener">
+          <img src="samples/md-grin.jpg" alt="운하와 집들을 배경으로 한 미나 클로즈업, 코끝에 분홍 아이스크림이 묻은 채 입을 벌리고 웃음" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">장면 5 · 웃음 · 5.6초</span><b>코끝의 아이스크림</b><span class="how">같은 인물 설계, 얼굴 소품 하나 추가</span></div></a>
+        <a class="tile" data-tags="md" href="demo/market-day/?cast" target="_blank" rel="noopener">
+          <img src="samples/md-cast.jpg" alt="캐스트 시트 일부: 위는 오른쪽으로 걷는 미나의 네 단계, 아래는 왼쪽 3/4 · 정면 · 오른쪽 3/4으로 선 할아버지와 앉은 할아버지" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 시트</span><b>좌우 회전 · 걷기 · 앉기</b><span class="how">장면보다 먼저 채점, 무릎은 앞으로 · 가까운 어깨는 등 쪽</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>바람 부는 날 <small>시작 그림 · 장면 2개 · 16초</small></h3>
+      <p><code>new-film.mjs</code>가 복사하는 시작 그림입니다. 바람 부는 언덕에서 갈매기를 올려다보던 로완이 개와 함께 능선 길을 따라 집으로 걸어갑니다. 원본 영화의 장면(바닷가 절벽, 광장, 가을 공원, 트램)과 겹치지 않게 고른 주제입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="ww" href="demo/windy-walk/?t=0" target="_blank" rel="noopener">
+          <img src="samples/ww-hilltop.jpg" alt="빨강 노랑 줄무늬 비니를 쓴 아이가 하늘을 올려다보는 클로즈업, 뒤로 푸른 언덕과 나무, 구름, 날리는 잎" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">장면 1 · 언덕 · 7초</span><b>바람과 갈매기</b><span class="how">시선이 먼저, 고개가 따라감, 깊이별 판의 시차</span></div></a>
+        <a class="tile" data-tags="ww" href="demo/windy-walk/?t=7.2" target="_blank" rel="noopener">
+          <img src="samples/ww-ridge.jpg" alt="능선의 모래 길을 오른쪽으로 걷는 아이와 뒤따르는 갈색 개, 울타리, 포플러와 둥근 나무가 있는 언덕" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">장면 2 · 능선 길 · 9.4초</span><b>집으로 걷기</b><span class="how">풀밭 발소리, 개가 짖음, 뒤돌아보는 시선</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. Chetaslua(@chetaslua)가 X에 올린 52초짜리 "순수 코드로 만든 손그림 영화"가 출발점입니다. 이미지 · 라이브러리 · 에셋 없이 프레임은 캔버스 코드, 소리는 Web Audio 코드로 만들었고, storybook-portrait의 출처인 참고 그림과 같은 그림책 화풍입니다. 이 스킬은 그 방법과 형식(작은 하루를 몇 장면으로, 펼침면 같은 장소, 컷아웃 인물, 장면마다 살아 있는 것, 합성한 소리)을 가져와 어떤 주제든 영화로 만들 수 있게 했습니다. 원본 영화의 장면과 인물(퍼핀을 모자에 얹은 소녀, 등대 절벽, 광장, 가을 공원, 트램)은 쓰지 않았고, 시작 그림과 예제는 모두 이 레포의 것입니다. 그림체의 원작자는 @Artedeingenio입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/market-day/" target="_blank" rel="noopener"><b>「장 보는 날」 · 라이브 페이지</b><span>예제: 장면 5개 · 42초 · 인물 2명 · 큰 동작 · Web Audio 소리</span><span class="url">storybook-short/demo/market-day/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/storybook-short/examples/market-day"><b>예제 폴더 · examples/market-day</b><span>BRIEF.md(인물 · 장면표 · 모션 키 · 소리 · 검토 기록), cast.js, film.js, index.html</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/chetaslua/status/2122095074968469720?a=WMOtOJajKg-tokfUuC4&amp;s=19" target="_blank" rel="noopener"><b>원본 · X 게시물</b><span>Chetaslua(@chetaslua) · 순수 코드로 만든 손그림 영화</span><span class="url">x.com/chetaslua/status/2122095074968469720</span></a>
+    <a class="work" href="../storybook-portrait/"><b>같은 그림체 · storybook-portrait</b><span>주제 → 인물 한 명의 초상, 같은 머리 · 재료 엔진</span><span class="url">motion-skills/storybook-portrait/</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/storybook-short/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/storybook-short">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/storybook-short/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/storybook-short/references/BRIEF.md">references/BRIEF.md</a> <span>브리프 틀과 채점 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/storybook-short/references/LOOK.md">references/LOOK.md</a> <span>장소 · 인물 · 살아 있는 것의 그림체</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/storybook-short/references/CAST.md">references/CAST.md</a> <span>인물 설계, 자세 함수, 관절 규칙, 캐스트 시트</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/storybook-short/references/FILM.md">references/FILM.md</a> <span>장면 · 판 · 카메라 · 키트 · 페이지 계약</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/storybook-short/references/MOTION.md">references/MOTION.md</a> <span>AI 티 없애기: 무게 · 관성 · 예비 동작 · 디딘 발</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/storybook-short/references/SOUND.md">references/SOUND.md</a> <span>Web Audio 음악 · 주변 소리 · 효과음 · 발소리</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/storybook-short/references/SOURCE.md">references/SOURCE.md</a> <span>원본 게시물, 가져온 것과 가져오지 않은 것</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/storybook-short/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림과 소리는 코드로 만들었습니다 · 이미지 · 오디오 파일 없음 · 그림체 원작 @Artedeingenio
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
