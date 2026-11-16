@@ -25,7 +25,8 @@ export class Journey {
   constructor(o = {}) {
     const q = new URLSearchParams(location.search);
     this.q = q; this.render = q.has('render'); this.W = 1920; this.H = 1080; this.FPS = o.fps || 24;
-    this.S = +(q.get('scale') || (this.render ? 1 : Math.min(1, Math.max(.5, (innerWidth * devicePixelRatio) / this.W))));
+    // live pages draw at ≤ .75 of 1080p (a frame costs ~40–70 ms at full size on a CPU canvas); renders are full size
+    this.S = +(q.get('scale') || (this.render ? 1 : Math.min(.75, Math.max(.5, (innerWidth * devicePixelRatio) / this.W))));
     this.off = new Set((q.get('off') || '').split(',').filter(Boolean));
     this.seed = o.seed || 1; this.rider = o.rider; this.score = o.score || null; this.renderScore = renderScore;
     this.speed = o.speed || 230; this.tear = o.tear ?? 1.4; this.RX = o.riderX ?? .34 * this.W; this.gear = o.gear || 1.3;
@@ -115,20 +116,21 @@ export class Journey {
     return P;
   }
 
-  riderState(c, t, lt, ld, reprise) {
-    const g = c.ground || (() => 880), gtime = reprise ? t : t;
+  riderState(c, t, lt, ld, reprise, clock = t) {
+    const g = c.ground || (() => 880), gtime = t;
     let gesture = null;
     for (const ge of c.gestures) { const def = this.rider.gestures?.[ge.kind] || Rider.GESTURES[ge.kind]; if (def && lt >= ge.at && lt <= ge.at + def.dur) gesture = { kind: ge.kind, u: (lt - ge.at) / def.dur }; }
-    return { x: ld + this.RX, ground: g, f: 1, wheel: this.tabAt(this.tab.dist, gtime) / (this.rider.R || 70), crank: this.tabAt(this.tab.crank, gtime), t, vs: this.tabAt(this.tab.vs, gtime), acc: this.tabAt(this.tab.acc, gtime), mood: c.mood, gesture, boil: Math.floor(t * this.boilFps + 1e-6), coast: this.tabAt(this.tab.cad, gtime) < .5, pose: c.pose };
+    return { x: ld + this.RX, ground: g, f: 1, wheel: this.tabAt(this.tab.dist, gtime) / (this.rider.R || 70), crank: this.tabAt(this.tab.crank, gtime), t: clock, vs: this.tabAt(this.tab.vs, gtime), acc: this.tabAt(this.tab.acc, gtime), mood: c.mood, gesture, boil: Math.floor(clock * this.boilFps + 1e-6), coast: this.tabAt(this.tab.cad, gtime) < .5, pose: c.pose };
   }
   /** draw chapter i at film time t into ctx (full frame) */
-  drawChapter(ctx, i, t, reprise = false) {
+  drawChapter(ctx, i, t, reprise = false, wrap = false) {
     const c = this.chapters[i], M = c.M, S = this.S, W = this.W, H = this.H, P = this.platesFor(c);
     const lt = reprise ? t - this.dur : t - c.start, ld = this.localDist(i, t, reprise);
+    const clock = wrap ? t - this.dur : t;   // through the last tear the clock runs into the loop, so the end meets the start
     ctx.save(); ctx.setTransform(S, 0, 0, S, 0, 0);
     ctx.drawImage(P.page, 0, 0, W, H);
-    const st = this.riderState(c, t, lt, ld, reprise), film = this;
-    const g = { ctx, M, t, lt, u: lt / c.dur, ld, X: st.x, W, H, ground: st.ground, chapter: c, film, boil: st.boil, st,
+    const st = this.riderState(c, t, lt, ld, reprise, clock), film = this;
+    const g = { ctx, M, t: clock, lt, u: lt / c.dur, ld, X: st.x, W, H, ground: st.ground, chapter: c, film, boil: st.boil, st,
       at(z, fn) { ctx.save(); ctx.translate(-ld * z, 0); fn(ctx); ctx.restore(); },
       screen(fn) { ctx.save(); fn(ctx); ctx.restore(); } };
     const layer = L => ctx.drawImage(L.cv, L.x0 - ld * L.z, 0, L.w, L.h);
@@ -137,7 +139,7 @@ export class Journey {
     ctx.save(); ctx.translate(-ld, 0); g.J = Rider.draw(ctx, M, this.rider, st); ctx.restore();
     for (const L of P.layers) if (L.front || L.z > 1) layer(L);
     if (c.front) c.front(g);
-    if (!this.off.has('texture')) M.post(ctx, W, H, this.seed + i * 13 + (st.boil % 3));
+    if (!this.off.has('texture')) M.post(ctx, W, H, this.seed + i * 13 + (((st.boil % 3) + 3) % 3));
     ctx.restore();
     this.last = { i, J: g.J, st, ld, c };
     return g;
@@ -153,12 +155,12 @@ export class Journey {
     const ctx = this.ctx, S = this.S; ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
     Rider.audit.length = 0;
     const tr = this.tears.find(r => t >= r.t0 && t < r.t1);
-    if (!tr) { const i = t >= this.dur - this.tear ? 0 : this.locate(t); this.drawChapter(ctx, i, t); }
+    if (!tr) { const i = this.locate(t); this.drawChapter(ctx, i, t); }
     else {
       const u = (t - tr.t0) / (tr.t1 - tr.t0);
-      this.drawChapter(ctx, tr.a, t);
+      this.drawChapter(ctx, tr.a, t, false, !!tr.reprise);
       const aRules = [...Rider.audit];
-      this.bctx.setTransform(1, 0, 0, 1, 0, 0); this.drawChapter(this.bctx, tr.b, t, tr.reprise);
+      this.bctx.setTransform(1, 0, 0, 1, 0, 0); this.drawChapter(this.bctx, tr.b, t, tr.reprise, !!tr.reprise);
       const E = this.edge(tr, u), W = this.W, H = this.H, region = [...E, [W + 400, H + 40], [W + 400, -40]];
       const paper = this.chapters[tr.b].M.paper, rimCol = mix(paper, '#fbf8f0', lumOf(paper) < .4 ? .55 : .7);
       const rim = E.map(([x, y], k) => [x - (7 + 9 * (hash(k, tr.b) * .6 + .4 * (n1(y / 40, tr.b) * .5 + .5))), y]);

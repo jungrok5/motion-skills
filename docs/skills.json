@@ -2004,6 +2004,42 @@
           "url": "https://jungrok5.github.io/motion-skills/scanned-realm/demo/starter/"
         }
       ]
+    },
+    {
+      "id": "torn-page-journey",
+      "name": "torn-page-journey",
+      "tagline": "주제 하나를 주면 주인공 하나가 자전거를 타고 감정의 장을 차례로 지나가는 영상을 코드만으로 만듭니다. 감정마다 그림 재료가 바뀌고(크레용 · 연필 · 과슈 · 목판화 · 목탄 · 수채 · 유화 · 분필, 또는 주제에 맞게 새로 만든 재료), 다음 장은 찢어진 새 종이로 덮이며 넘어가 주인공이 잠깐 반씩 두 화풍이 됩니다. 마지막 장이 첫 장으로 이어지는 루프, 감정마다 다시 편곡되는 주제 선율과 효과음까지 모두 합성한 1080p MP4와 라이브 페이지를 냅니다.",
+      "posterAlt": "torn-page-journey로 만든 「The Long Way Home」의 장면 네 개: 아이의 크레용 그림 마을에서 손을 흔들며 자전거를 타는 여우, 과슈 장터 위로 목판화 오르막 종이가 찢어지며 덮이는 순간의 여우, 유화 노을 바다를 지나는 여우, 분필 칠판의 밤에 레몬나무 별자리 아래를 지나는 여우",
+      "poster": "torn-page-journey/poster.jpg",
+      "tags": [
+        "2D 캔버스 · 코드 전용",
+        "그림 재료 8종",
+        "찢어진 종이 전환",
+        "16:9 · 24fps · 루프",
+        "합성 사운드"
+      ],
+      "stats": [
+        "예제 60.5초 · 8장 (감정 8 × 재료 8)",
+        "몸짓 7종 · 예비 동작과 회복 검사"
+      ],
+      "page": "torn-page-journey/",
+      "source": "torn-page-journey/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "torn-page-journey/examples/lemon-tree/"
+      },
+      "sources": [
+        {
+          "title": "Chetaslua의 X 게시물 (110초 영상 — 펠리컨이 자전거를 타고 감정마다 바뀌는 화풍을 지나가는 순수 JS 작품, 음악과 소리까지 코드)",
+          "url": "https://x.com/chetaslua/status/2121885449509851415?a=8qELAlUgdwW0YiWOrYE&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「The Long Way Home」 · 60.5초 · 8장 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/torn-page-journey/demo/examples/lemon-tree/"
+        }
+      ]
     }
   ]
 }

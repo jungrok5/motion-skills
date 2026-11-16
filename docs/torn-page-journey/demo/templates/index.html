@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>my journey — torn-page-journey</title>
+<script type="importmap">{ "imports": { "tpj/": "../lib/" } }</script>
+</head><body>
+<script type="module">
+// A three-chapter journey — an EXAMPLE of the form, not a menu. Replace the rider, the feelings, the media, the places,
+// the gestures and the tune with ones designed from BRIEF.md.
+// Each chapter = one feeling (mood: posture, face, music) × one medium (how every mark is made) × one place (plates + live).
+// Rules: neighbouring chapters never share a medium; the last page tears back into the first (the film loops).
+import { Journey } from 'tpj/journey.js';
+import * as K from 'tpj/kit.js';
+import { RIDER } from './cast.js';
+import { SCORE } from './score.js';
+
+const W = 1920, H = 1080;
+const J = new Journey({ rider: RIDER, score: SCORE, speed: 230, tear: 1.4, seed: 7 });
+
+// 1 · calm — watercolour. Layers are plates (painted once): z 0 = fixed sky, small z = far, 1 = the road, > 1 = in front.
+// paint(ctx, M, x0, x1, H) draws world x from x0 to x1 at that depth; scatter with K.each so any range draws the same things.
+const g1 = K.groundLine(870, 10, 420, 0, 1);                          // the road line: y at world x (z = 1)
+J.chapter({ name: 'calm · the lane', mood: 'calm', medium: 'watercolour', dur: 7, ground: g1,
+  layers: [
+    { z: 0, paint: (c, M) => K.sky(c, M, 0, 0, W, H, { top: '#7fa9d6', bottom: '#f1f0e6' }) },
+    { z: .3, paint: (c, M, x0, x1) => { K.hills(c, M, x0, x1, 760, 50, H, { col: '#a9c98a' }); K.each(x0, x1, 360, 1, (x, k, r) => K.tree(c, M, x, 770, 200 + r() * 80, { kind: 'round', leaf: '#7fb24f' })); } },
+    { z: 1, paint: (c, M, x0, x1) => { K.road(c, M, x0, x1, g1, H, { col: '#cfc6b2', kind: 'path' }); K.grass(c, M, x0, x1, g1, { col: '#6aa54a' }); } },
+  ],
+  back: g => g.at(.4, c => K.bird(c, g.M, 600 + g.t * 40 + g.ld * .4, 320, 14, g.t)),             // live: every frame
+  front: g => g.at(1, c => K.critter(c, g.M, 1900, g.ground(1900), 70, g.t, { kind: 'cat', col: '#5a4a3a', face: -1 })),
+  gestures: [{ at: 2.5, kind: 'bell' }] });
+
+// 2 · fear — charcoal: the storm. A gesture always has an anticipation and a recovery (lib/rider.js GESTURES).
+const g2 = K.groundLine(880, 8, 400, 0, 2);
+J.chapter({ name: 'fear · the storm', mood: 'fear', medium: 'charcoal', dur: 7, speed: 180, ground: g2,
+  layers: [
+    { z: 0, paint: (c, M) => K.sky(c, M, 0, 0, W, H, { top: '#2e2c2a', bottom: '#8a857c' }) },
+    { z: .6, paint: (c, M, x0, x1) => K.each(x0, x1, 520, 3, (x, k) => K.pole(c, M, k * 520, 830, 320, [(k + 1) * 520, 830]), 0) },
+    { z: 1, paint: (c, M, x0, x1) => K.road(c, M, x0, x1, g2, H, { col: '#5d5a54', kind: 'dirt' }) },
+  ],
+  front: g => g.screen(c => K.rain(c, g.M, W, H, g.t, { n: 200 })),
+  gestures: [{ at: 3, kind: 'shiver' }],
+  sound: { sfx: [{ at: 1, type: 'thunder', v: .7 }] } });
+
+// 3 · joy — crayon: home. Downhill: coast, feet off the pedals (feetOff gestures need a coast; the check says so).
+const g3 = x => 830 + .04 * x + 8 * Math.sin(x / 300);
+J.chapter({ name: 'joy · home', mood: 'joy', medium: 'crayon', dur: 7, speed: 250, ground: g3, coast: [[2, 5]],
+  layers: [
+    { z: 0, paint: (c, M) => { K.sky(c, M, 0, 0, W, H, { top: '#4f86d6', band: .2 }); K.sun(c, M, 1560, 150, 70, { face: true, rayLen: 1 }); } },
+    { z: .5, paint: (c, M, x0, x1) => K.each(x0, x1, 360, 5, (x, k, r) => r() < .5 ? K.house(c, M, x, 800, 150, 170, { chimney: true }) : K.flower(c, M, x, 805, 90, { kind: 'sunflower' })) },
+    { z: 1, paint: (c, M, x0, x1) => K.road(c, M, x0, x1, g3, H, { col: '#8cc56a', kind: 'grass' }) },
+  ],
+  gestures: [{ at: 2.3, kind: 'feetup' }] });
+
+J.check('the parcel rides in the basket', () => !!RIDER.cargo);   // the film's own rules
+J.start();
+</script>
+</body></html>

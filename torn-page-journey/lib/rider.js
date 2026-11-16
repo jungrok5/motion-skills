@@ -25,7 +25,7 @@ export const MOODS = {
   fear:      { lean: .5, head: .12, eyes: 'wide', mouth: 'o', hunch: .7 },
   relief:    { lean: .24, head: -.16, eyes: 'soft', mouth: 'smile' },
   awe:       { lean: .2, head: -.2, eyes: 'wide', mouth: 'o' },
-  wonder:    { lean: .22, head: -.32, eyes: 'wide', mouth: 'smile' },
+  wonder:    { lean: .22, head: -.26, eyes: 'wide', mouth: 'smile' },
   calm:      { lean: .24, head: 0, eyes: 'soft', mouth: 'smile' },
   lonely:    { lean: .36, head: .18, eyes: 'soft', mouth: 'flat', hunch: .3 },
   pride:     { lean: .22, head: -.14, eyes: 'happy', mouth: 'grin' },
@@ -48,7 +48,7 @@ export const GESTURES = {
     head: [{ u: 0, v: 0 }, { u: .2, v: .1 }, { u: .36, v: -.22 }, { u: .8, v: -.16 }, { u: 1, v: 0 }],
     mouth: [{ u: 0, v: 0 }, { u: .36, v: 1 }, { u: .74, v: .8 }, { u: 1, v: 0 }] } },
   look:  { dur: 2.4, antic: [0, .16], act: [.16, .7], main: 'head', ch: {   // looks up at something (a kite, a moon)
-    head: [{ u: 0, v: 0 }, { u: .16, v: .08 }, { u: .34, v: -.62, e: 'out' }, { u: .7, v: -.56 }, { u: .9, v: .04, e: 'inOut' }, { u: 1, v: 0 }],
+    head: [{ u: 0, v: 0 }, { u: .16, v: .08 }, { u: .34, v: -.46, e: 'out' }, { u: .7, v: -.42 }, { u: .9, v: .04, e: 'inOut' }, { u: 1, v: 0 }],
     lean: [{ u: 0, v: 0 }, { u: .16, v: .04 }, { u: .34, v: -.1 }, { u: .9, v: .02 }, { u: 1, v: 0 }],
     mouth: [{ u: 0, v: 0 }, { u: .34, v: .5 }, { u: .7, v: .4 }, { u: 1, v: 0 }] } },
   catch: { dur: 1.6, antic: [0, .25], act: [.25, .55], main: 'head', ch: {  // snaps at a butterfly / a leaf / a drop
@@ -139,7 +139,8 @@ export function where(spec, st) {
   };
   const legs = { near: leg('near'), far: leg('far') };
   // arms: hands on the grips unless a gesture takes them; elbows down
-  const armL = spec._arm || (spec._arm = Math.hypot(B.grip[0] - (B.saddle[0] + Math.sin(.28) * torso), B.grip[1] - (B.saddle[1] - .1 - Math.cos(.28) * torso)) / 2 * 1.06);
+  // arm length fitted to an UPRIGHT rider (the farthest the grips ever get), so sitting up never pulls the hands off the bars
+  const armL = spec._arm || (spec._arm = Math.hypot(B.grip[0] - (B.saddle[0] - .02), B.grip[1] - (B.saddle[1] - .06 - torso)) / 2 * 1.03);
   const arm = side => {
     const off = side === 'far' ? [-.03, -.04] : [0, 0], S0 = add(sh, side === 'far' ? [.04, .02] : [-.02, .04]);
     const tgt = add(add(B.grip, off), [gc(side, 'x'), gc(side, 'y')]);

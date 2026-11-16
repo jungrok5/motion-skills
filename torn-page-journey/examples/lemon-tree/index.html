@@ -41,7 +41,8 @@ J.chapter({ name: 'curiosity · meadow', mood: 'curiosity', medium: 'pencil', du
   layers: [
     { z: 0, paint: (c, M) => K.sky(c, M, 0, 0, W, H, { seed: 3 }) },
     { z: .3, paint: (c, M, x0, x1) => { K.hills(c, M, x0, x1, 760, 40, H, { col: '#d9d4c4', seed: 4, line: true }); K.each(x0, x1, 260, 8, (x, k, r) => K.tree(c, M, x, 760, 130 + r() * 70, { kind: r() < .5 ? 'round' : 'poplar', leaf: '#9aa98a' })); } },
-    { z: .7, paint: (c, M, x0, x1) => { K.fence(c, M, x0, x1, 840, { kind: 'post', step: 150, col: '#a39a88' }); K.each(x0, x1, 900, 9, (x, k, r) => K.tree(c, M, x, 846, 360, { kind: 'bare', trunk: '#6d665a' })); } },
+    { z: .7, paint: (c, M, x0, x1) => { K.fence(c, M, x0, x1, 840, { kind: 'post', step: 150, col: '#a39a88' }); K.each(x0, x1, 900, 9, (x, k, r) => { if (k % 2) K.tree(c, M, x, 846, 360, { kind: 'bare', trunk: '#6d665a' }); else K.tree(c, M, x, 846, 470, { kind: 'round', leaf: '#8f9a7c', trunk: '#6d665a' }); }); K.each(x0, x1, 230, 32, (x, k, r) => K.flower(c, M, x, 846, 60 + r() * 40, { kind: r() < .5 ? 'tulip' : 'daisy', petal: '#d9d2c2' })); } },
+    { z: 1.25, front: true, paint: (c, M, x0, x1) => K.each(x0, x1, 1400, 33, (x, k, r) => { K.grass(c, M, x - 160, x + 160, H + 10, { col: '#6d6a5e', h: 120, gap: 7, w: 2.4 }); K.flower(c, M, x + 40, H + 10, 190, { kind: 'daisy', petal: '#f2efe6', centre: '#e0b84a' }); }) },
     { z: 1, paint: (c, M, x0, x1) => { K.road(c, M, x0, x1, g2, H, { col: '#b8ad94', kind: 'path' }); K.grass(c, M, x0, x1, x => g2(x) + 190, { col: '#77806a', h: 40, gap: 11 }); K.each(x0, x1, 420, 31, (x, k, r) => K.rock(c, M, x, g2(x) + 110 + r() * 40, 50 + r() * 40, 24 + r() * 16, { col: '#b9b2a2' })); K.grass(c, M, x0, x1, g2, { col: '#77806a', h: 30, drop: 4 }); K.each(x0, x1, 300, 10, (x, k, r) => K.flower(c, M, x, g2(x) + 2, 46 + r() * 20, { kind: 'daisy', petal: '#f2efe6', centre: '#e8c74a' })); } },
   ],
   back: g => g.at(1, c => K.critter(c, g.M, 2050, g.ground(2050) - 4, 130, g.t, { kind: 'rabbit', col: '#a89e8c', face: -1, look: g.X > 1700 ? .5 : 0 })),
@@ -115,15 +116,16 @@ J.chapter({ name: 'awe · the sea at sunset', mood: 'awe', medium: 'oil', dur: 7
 
 // 8 · wonder — chalk: night; the stars draw the lemon tree; an owl; then the page tears back to morning
 const g8 = K.groundLine(880, 10, 460, 0, 8);
-const tree = [[1180, 330], [1180, 250], [1120, 200], [1180, 160], [1240, 200], [1180, 250], [1240, 280]];
+// the lemon tree, drawn in stars: pot, trunk, a round crown, one lemon
+const tree = [[1120, 400], [1240, 400], [1225, 350], [1135, 350], [1120, 400], [1135, 350], [1180, 350], [1180, 280], [1110, 260], [1090, 200], [1130, 150], [1200, 135], [1260, 175], [1270, 235], [1230, 275], [1180, 280]];
 J.chapter({ name: 'wonder · night', mood: 'wonder', medium: 'chalk', dur: 8, speed: 210, ground: g8,
   layers: [
-    { z: 0, paint: (c, M) => { K.sky(c, M, 0, 0, W, H, { seed: 10 }); K.moon(c, M, 1700, 150, 56, {}); K.constellation(c, M, tree, {}); } },
-    { z: .3, paint: (c, M, x0, x1) => { K.hills(c, M, x0, x1, 780, 50, H, { col: '#25302b', seed: 9 }); K.each(x0, x1, 240, 23, (x, k, r) => { K.house(c, M, x, 776, 50, 60, { wall: '#25302b', roof: '#25302b', window: '#f2d27a', door: false }); }); } },
-    { z: .7, paint: (c, M, x0, x1) => { K.fence(c, M, x0, x1, 846, { kind: 'post', step: 140, col: '#25302b' }); K.each(x0, x1, 1100, 24, (x, k) => K.tree(c, M, x + 300, 852, 330, { kind: 'bare', trunk: '#25302b' })); } },
+    { z: 0, paint: (c, M) => { K.sky(c, M, 0, 0, W, H, { seed: 10 }); K.moon(c, M, 1700, 150, 56, {}); K.constellation(c, M, tree, {}); K.stars(c, M, 1200, 200, 10, 10, 1, { seed: 2, col: '#f4d23c' }); } },
+    { z: .3, paint: (c, M, x0, x1) => { K.hills(c, M, x0, x1, 780, 50, H, { col: '#25302b', seed: 9 }); K.each(x0, x1, 240, 23, (x, k, r) => { K.house(c, M, x, 776, 50, 60, { wall: '#25302b', roof: '#25302b', window: '#f2d27a', door: false }); K.glow(c, x + 14, 760, 40, '#f2d27a', .25); }); } },
+    { z: .7, paint: (c, M, x0, x1) => { K.fence(c, M, x0, x1, 846, { kind: 'post', step: 140, col: '#25302b' }); K.each(x0, x1, 1100, 24, (x, k) => K.tree(c, M, x + 300, 852, 330, { kind: 'bare', trunk: '#b9c4b2' }), 0); } },   // jitter 0: the owl sits on these
     { z: 1, paint: (c, M, x0, x1) => { K.road(c, M, x0, x1, g8, H, { col: '#25302b', kind: 'boards' }); K.grass(c, M, x0, x1, x => g8(x) + 140, { col: '#a9c8a0', h: 60, gap: 22, w: 1.6 }); } },
   ],
-  back: g => { g.screen(c => K.stars(c, g.M, 0, 0, W, 520, 90, { seed: 4, t: g.t })); g.at(.7, c => K.critter(c, g.M, 1100 * Math.round((g.ld * .7 + 900) / 1100) + 300 + 130, 852 - 330 * .62, 90, g.t, { kind: 'owl', col: '#3b4038' })); },
+  back: g => { g.screen(c => K.stars(c, g.M, 0, 0, W, 520, 90, { seed: 4, t: g.t })); g.at(.7, c => { const tx = 1100 * Math.round((g.ld * .7 + 900) / 1100) + 300; K.critter(c, g.M, tx + 2, 852 - 330 * .45, 80, g.t, { kind: 'owl', col: '#3b4038' }); }); },
   front: g => g.at(1, c => { for (let i = 0; i < 9; i++) { const x = 900 + i * 260 + Math.sin(g.t * .7 + i) * 40, y = 720 + Math.sin(g.t * 1.1 + i * 2) * 50; c.fillStyle = 'rgba(240,230,140,' + (.4 + .4 * Math.sin(g.t * 3 + i)) + ')'; c.beginPath(); c.arc(x, y, 3, 0, 7); c.fill(); } }),
   gestures: [{ at: 1.4, kind: 'look' }],
   sound: { sfx: [{ at: 3.0, type: 'hoot', v: .5 }] } });
