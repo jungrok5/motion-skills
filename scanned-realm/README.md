@@ -60,8 +60,6 @@ table; `references/PERF.md` what a frame costs and how to measure it.
 
 Source — the look asked for is the post by Rez (@RezAIT00) on X:
 <https://x.com/RezAIT00/status/2120498246426706176?a=CUYTAAEWhBIL6PS4ZPk&s=19> (a clip of an Unreal Engine forest and
-meadow; no code or assets were published). The engine was first built for `living-realm` and raised against two more
-references the owner gave — 「Larkhollow」 by @lucian__03, <https://claude.ai/artifact/D8t6NHbpDJXtCovZU6KADP>, and
-「Saltline」, <https://claude.ai/artifact/BGY1SztrAYcJQHSsnHHGmp> — none of whose code is here. The scans are from
+meadow; no code or assets were published). The engine was first built for `living-realm`. The scans are from
 Poly Haven, <https://polyhaven.com>, CC0: fetched per realm, credited in each realm's `assets/CREDITS.md`, never
 committed. The workflow is in [SKILL.md](SKILL.md).
