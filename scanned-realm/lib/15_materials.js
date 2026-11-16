@@ -14,12 +14,14 @@
   M.defaults = { tile: 2, bump: 0.01, ao: 1, por: 0.7, pud: 0, stick: 1, pom: 0 };
   // A scanned material: its maps are photographs (assets/tex/<id>/diff · nor · arm · disp, fetched from Poly Haven).
   // It takes the place of the generated material of the same name and keeps that one's weather numbers unless given:
-  //   M.photo('cobble', 'cobblestone_floor_04', { tile, gain, tint: [r, g, b], rough (offset), normal (strength), aoK, por, pud, stick, moss, pom })
+  //   M.photo('cobble', 'cobblestone_floor_04', { tile, gain, tint: [r, g, b], rough (offset), normal (strength), aoK, por, pud, stick, moss, pom,
+//     like: 'barkpine' (a new name starts from that material's recipe and weather numbers) })
   // tile defaults to the scan's real size.  Without the files (fetch-assets.mjs not run) the generated one stays.
-  M.photo = (name, id, o = {}) => { if (LR.q('scan') === '0') return M.id[name];                 // ?scan=0: the generated recipes, to compare
+  M.photo = (name, id, o = {}) => { const twin = () => (M.id[name] === undefined && o.like !== undefined && M.id[o.like] !== undefined ? M.define(name, Object.assign({}, M.defs[M.id[o.like]])) : M.id[name]);
+    if (LR.q('scan') === '0') return twin();                                                     // ?scan=0: the generated recipes, to compare
     const a = LR.ASSETS && LR.ASSETS.textures && LR.ASSETS.textures[id];
-    if (!a || !a.files || !a.files.diff) { if (LR.ASSETS) console.warn(`scanned material "${id}" is not in assets/manifest.json (run fetch-assets.mjs): "${name}" keeps its generated surface`); return M.id[name]; }                     // with no manifest at all the realm simply runs on its recipes
-    const prev = M.id[name] !== undefined ? M.defs[M.id[name]] : {}; return M.define(name, Object.assign({}, prev, { tile: a.tile }, o, { photo: Object.assign({ id }, a.files) })); };
+    if (!a || !a.files || !a.files.diff) { if (LR.ASSETS) console.warn(`scanned material "${id}" is not in assets/manifest.json (run fetch-assets.mjs): "${name}" keeps its generated surface`); return twin(); }                     // with no manifest at all the realm simply runs on its recipes
+    const from = M.id[name] !== undefined ? name : o.like, prev = from !== undefined && M.id[from] !== undefined ? M.defs[M.id[from]] : {}; return M.define(name, Object.assign({}, prev, { tile: a.tile }, o, { photo: Object.assign({ id }, a.files) })); };
   M.L = (name) => { const i = M.id[name]; if (i === undefined) throw new Error('unknown material "' + name + '" (have: ' + Object.keys(M.id).join(', ') + ')'); return i; };
   M.tile = (name) => M.defs[M.L(name)].tile;
 
@@ -97,8 +99,9 @@ void main(){
     const photos = M.defs.filter((d) => d.photo), loader = new T.TextureLoader(), wait = LR.qn('scanwait', 40) * 1000; M.scanned = 0; M.missed = [];
     const one = (url) => new Promise((res) => { let done = false; const end = (t) => { if (!done) { done = true; res(t); } }; setTimeout(() => end(null), wait);
       loader.load(url, (t) => { if (done) { t.dispose(); return; } t.wrapS = t.wrapT = T.RepeatWrapping; t.colorSpace = T.NoColorSpace; t.minFilter = T.LinearMipmapLinearFilter; t.magFilter = T.LinearFilter; t.generateMipmaps = true; t.anisotropy = 4; end(t); }, undefined, () => end(null)); });
-    const sets = new Map(), ahead = (i) => { for (let k = i; k < Math.min(n, i + 4); k++) { const d = M.defs[k], ph = d.photo; if (!ph || sets.has(k)) continue;
-      const keys = ['diff', 'nor', 'arm', 'disp'].filter((q) => ph[q]); sets.set(k, Promise.all(keys.map((q) => one(ph[q]))).then((ts) => { const o = {}; keys.forEach((q, j) => (o[q] = ts[j])); return o; })); } };
+    const sets = new Map(), ahead1 = (k) => { const d = M.defs[k], ph = d.photo; if (!ph || sets.has(k)) return;
+      const keys = ['diff', 'nor', 'arm', 'disp'].filter((q) => ph[q]); sets.set(k, Promise.all(keys.map((q) => one(ph[q]))).then((ts) => { const o = {}; keys.forEach((q, j) => (o[q] = ts[j])); return o; })); };
+    const ahead = (i) => { for (let k = i; k < Math.min(n, i + 4); k++) ahead1(k); };
     const pA = photos.length ? new T.RawShaderMaterial({ glslVersion: T.GLSL3, vertexShader: LR.chunk.fsvs, depthTest: false, depthWrite: false, uniforms: { tDiff: { value: null }, tArm: { value: null }, tDisp: { value: null }, uK: { value: new T.Vector4() }, uTint: { value: new T.Vector3(1, 1, 1) } }, fragmentShader: `${LR.chunk.head}
 in vec2 vUv; layout(location = 0) out vec4 oA; layout(location = 1) out vec4 oB; uniform sampler2D tDiff, tArm, tDisp; uniform vec4 uK; uniform vec3 uTint;   // uK: gain, roughness offset, has disp, has arm
 // the height a scan brings is centred on its own mean (its smallest mip) and laid where the recipes keep theirs — most of a
@@ -110,23 +113,37 @@ void main(){ vec3 d = texture(tDiff, vUv).rgb, arm = uK.w > 0.5 ? texture(tArm, 
     const pB = photos.length ? LR.pass(`//#include head
 in vec2 vUv; out vec4 o; uniform sampler2D tNor, tB; uniform vec2 uN;                    // normal strength, how much of the scan's occlusion
 void main(){ vec3 n = texture(tNor, vUv).xyz * 2.0 - 1.0; n.xy *= uN.x; n = normalize(n); vec3 rm = texture(tB, vUv).rgb; o = vec4(n.xy * 0.5 + 0.5, rm.r, mix(1.0, rm.b, uN.y)); }`, { tNor: { value: null }, tB: { value: tmp.textures[1] }, uN: { value: new T.Vector2(1, 1) } }) : null;
-    for (let i = 0; i < n; i++) {
-      ahead(i); const d = M.defs[i]; let set = d.photo ? await sets.get(i) : null; sets.delete(i);
+    // one layer: from its photographs when they are here (set), else from its recipe
+    const spent = [];
+    const layer = (i, set) => { const d = M.defs[i];
       if (set && !set.diff) { M.missed.push(d.name); for (const k in set) if (set[k]) set[k].dispose(); set = null; }
       const ph = !!set, tx = (k) => (set && set[k]) || null; if (ph) M.scanned++;
       if (ph) { const u = pA.uniforms; u.tDiff.value = tx('diff'); u.tArm.value = tx('arm') || tx('diff'); u.tDisp.value = tx('disp') || tx('diff'); u.uK.value.set(d.gain === undefined ? 1 : d.gain, d.rough || 0, tx('disp') ? 1 : 0, tx('arm') ? 1 : 0); const tt = d.tint || [1, 1, 1]; u.uTint.value.set(tt[0], tt[1], tt[2]); LR.blit(pA, tmp); }
       else { const a = new T.RawShaderMaterial({ glslVersion: T.GLSL3, vertexShader: LR.chunk.fsvs, fragmentShader: fragA(d.glsl || FALLBACK), depthTest: false, depthWrite: false });
-      LR.blit(a, tmp); a.dispose(); }
-      const last = i === n - 1; if (i === 1) A.texture.generateMipmaps = B.texture.generateMipmaps = false; if (last) A.texture.generateMipmaps = B.texture.generateMipmaps = true;
+      LR.blit(a, tmp); spent.push(a); }
       LR.blit(b1, A, i);
       b2.uniforms.uP.value.set(1 / size, (d.bump / d.tile) * size * 0.5, d.ao, Math.max(3, size / 48));
       if (ph && tx('nor')) { pB.uniforms.tNor.value = tx('nor'); pB.uniforms.uN.value.set(d.normal === undefined ? 1 : d.normal, d.aoK === undefined ? 1 : d.aoK); LR.blit(pB, B, i); } else
       LR.blit(b2, B, i);
-      if (set) for (const k in set) if (set[k]) set[k].dispose();
-      if (onStep) { onStep(i, n, d.name); await LR.breath(); }
+      const gone = spent.splice(0); LR.settle(() => { for (const m of gone) m.dispose(); if (set) for (const k in set) if (set[k]) set[k].dispose(); }); };
+    // Streaming (the live page; not stills, not ?stream=0): every layer is baked from its recipe at once and the walk
+    // begins; each scan then takes its layer as its maps arrive.  Otherwise each scanned layer waits for its maps here.
+    const stream = (M.stream = photos.length > 0 && !LR.RENDER && LR.q('stream') !== '0'); M.arrived = 0; M.due = stream ? photos.length : 0;
+    for (let i = 0; i < n; i++) {
+      let set = null; if (!stream) { ahead(i); set = M.defs[i].photo ? await sets.get(i) : null; sets.delete(i); }
+      const last = i === n - 1; if (i === 1) A.texture.generateMipmaps = B.texture.generateMipmaps = false; if (last) A.texture.generateMipmaps = B.texture.generateMipmaps = true;
+      layer(i, set);
+      if (onStep) { onStep(i, n, M.defs[i].name); await LR.breath(); }
     }
-    r.setRenderTarget(null); tmp.dispose(); b1.dispose(); b2.dispose(); if (pA) pA.dispose(); if (pB) pB.dispose();
-    if (M.missed.length) console.warn('scanned maps that did not arrive, drawn from their generated recipe: ' + M.missed.join(', '));
+    r.setRenderTarget(null);
+    const done = () => { LR.settle(() => { tmp.dispose(); b1.dispose(); b2.dispose(); if (pA) pA.dispose(); if (pB) pB.dispose(); });
+      if (M.missed.length) console.warn('scanned maps that did not arrive, drawn from their generated recipe: ' + M.missed.join(', ')); };
+    if (!stream) done();
+    else M.arriving = (async () => { const ids = []; M.defs.forEach((d, i) => { if (d.photo) ids.push(i); });
+      for (let k = 0; k < ids.length; k++) { for (let j = k; j < Math.min(ids.length, k + 4); j++) ahead1(ids[j]);
+        const set = await sets.get(ids[k]); sets.delete(ids[k]); await LR.breath();
+        const rt0 = r.getRenderTarget(); layer(ids[k], set); r.setRenderTarget(rt0); M.arrived++; LR.emit('scan', M.defs[ids[k]].name); }
+      done(); })();
     M.A = A; M.B = B; LR.U.uMatA.value = A.texture; LR.U.uMatB.value = B.texture;
     // per-layer weather parameters for the world shaders: porosity, puddles, snow, parallax (in uv units)
     const P = (M.params = []); for (let i = 0; i < 48; i++) { const d = M.defs[i]; P.push(d ? new T.Vector4(d.por, d.pud, d.stick, d.pom / d.tile) : new T.Vector4(0.7, 0, 1, 0)); }

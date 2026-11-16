@@ -91,6 +91,93 @@ the splat texture holds the right values and was re-uploaded, the land mesh ther
 covers it. The village's ways and yards do not show it. Until it is found, do not rely on a painted yard right
 against a small house on a small (`half: 128`) land — look at a still.
 
+### Round 2 — instancing, plants, leaves (what the first round's lessons turned into)
+Three of the lessons above were limits of the first design, and are gone: a scanned object is no longer "one material
+layer" (it has two textures of its own), sixty of them no longer cost two million triangles (they are instanced with
+levels of detail), and cut-out materials are carried (plants). The triangle budget and `hero` are gone with them.
+
+**The catalogue's triangle count is not the file's.** The first triage threw out every grass and flower set as "a
+million triangles": `grass_medium_01` is listed at 1.6 M and its glTF holds 24 730; `celandine_01` 9 000. *Fix:*
+`fetch-assets.mjs` counts triangles from the file and prints them; choose from that, and per member of a set
+(`dandelion_01#0` is 23 000, `#2` is 2 300).
+
+**A plant's cut-out is not in its glTF.** The first ferns were green rectangles: Poly Haven's glTF carries a JPEG
+colour map, and the cut-out is a separate file (`Alpha`, `opacity`) that only the Blender file wires up; the glTF's
+`alphaMode` cannot be trusted either way. *Fix:* the fetch takes the cut-out map whenever the asset has one, and a
+model that has one is drawn cut-out.
+
+**A simplifier that keeps seams stops on a scan that is all seam.** `boulder_01` (66 000 triangles) has two vertices
+to every position: photogrammetry unwraps into thousands of small islands. meshoptimizer's `simplify` treats every one
+as a seam and stopped at 82 % whatever error it was allowed — so the level was rejected, the boulder had one level, and
+forty of them were 2.8 M triangles in the view and as many again in the shadows. *Fix:* when the result is far from
+the target, collapse **across** seams (`simplifyWithAttributes` … `'Permissive'`) with the texture coordinates
+weighing in the error: 4 % of the triangles end up spanning islands at a quarter of the count, 16 % at a fifteenth,
+where they are a few pixels of rock among rock. Grid clustering (`simplifySloppy`) tears 27–80 %. `check.mjs` warns
+by name on a dense scan with fewer than three levels.
+
+**Reach is not size.** Solid things are drawn to 320 × their size, which is right for a statue and gave every pile of
+twigs in the forest a reach of 450 m: 1 270 of them, a million triangles, in a view of the lane that has no forest in
+it. *Fix:* what `scatter` strews gets a short reach (24–70 m) and no shadow when small; a plant is gone at 16–45 m.
+Read the per-model numbers, not the total — the total said "the scans are heavy", the list said which two.
+
+**Level by size was wrong for both ends.** Switching at 9 and 26 times a thing's size kept a 66 000-triangle boulder
+whole to 21 m and would have switched a 950-triangle table for nothing. *Fix:* a level is used while its triangles are
+about two pixels wide — `584 × size / √triangles` metres on a 1080-line screen. Measured on `high`: the village's
+views went from 11–14 M triangles drawn to 3.4–4.2 M (`?scan=0` is 3.1–3.7 M), the scans from 3–4 M to 0.07–0.23 M
+in 93–331 copies and 27–82 draw calls.
+
+**Freeing a texture right after the pass that read it lost the pass.** With fifty models baked before the material
+layers, every layer came out empty — a black world with correctly lit grass. The draw calls were there, their state
+was right, a read-back straight after each draw showed the pixels; at the end the textures were zero. Nothing had
+cleared, re-allocated or deleted them: the sources of each bake had been freed in the same breath as the bake, and
+the software renderer, loaded with uploads, dropped passes whose inputs were gone (it is legal WebGL, and it worked
+with fifteen models). *Fix:* everything a bake has read is freed through `LR.settle()` — passes are finished first
+where stills are made, and the freeing waits a moment on the live page. `check.mjs` now reads the smallest copy of
+every layer and every model map and fails on an empty one. *Finding it:* halve the list until it works (36 models
+fine, 42 not), then stop guessing and log — draw state, then deletions and re-allocations with stacks, then each
+texture's content at draw time against the end.
+
+**A card that is all leaf makes a crown that reads as cabbage.** The first photographed sprays were laid as densely as
+the painted ones, with leaves half as large again: every card became a solid green polygon, and bushes turned into
+balls of shards. *Fix:* fewer, smaller leaves (`fill` 0.72, `size` 1.15), each shading the ones under it in the atlas;
+crowns darker inside, under and within a clump (0.4 → 1), with less light filtering down the deeper a leaf sits; far
+cards cut out by a hash instead of a threshold on a blurred map, so a crown thins into lace.
+
+**A box round one piece of an atlas catches its neighbour.** The pine sprays came out with grey triangles in them:
+corners of the bark that shares the picture. *Fix:* only the largest connected piece inside a box is kept (grown by
+two texels first, so a needle a hair off its twig still belongs).
+
+**Not every atlas is a photograph.** `tree_small_02`'s leaves are a flat-shaded drawing. Look at an atlas with its
+cut-out applied before giving it to a species.
+
+**A generated bark beside scanned ground reads as a drawing.** The conifers and beeches still wore recipes (plates
+with black cracks) after the oaks had a scan, and were the first thing the eye caught in the woods. *Fix:* a bark
+scan for every kind of tree; `like:` lets a new material name fall back to an old recipe when the scans are away.
+
+**Soft shadows need the depth the shadow map will not give back.** A depth texture set up for comparison cannot be
+read as a number, and the distance to what throws the shadow is what sets its width. *Fix:* every shadow pass writes
+its depth again into two bytes of colour. And a wide disc on a surface that leans from the light finds the surface
+itself in its own way: each tap is compared at the depth the surface has *there* (its plane, from the normal).
+
+**The licence is part of the asset.** Megascans, asked for by name, is free now — and cannot be served by a web page
+or fetched by a script (`references/ASSETS.md`). Find that out before designing around a library, not after.
+
+**126 MB is not a loading screen.** Fifty models and eighteen surfaces at 1k. *Fix:* the walk starts on the recipes
+and the measured boxes; scans arrive in it. `maps` per asset (`"d"` for plants, tools and food) took a fifth off.
+
+**A page that works on the machine it was built on has not been run on a PC.** The owner opened the live pages on a
+Windows PC: one realm's canvas went white with the browser's broken-picture mark (the WebGL context was lost while the
+page started) and the next page could not make a context at all ("Error creating WebGL context", printed as a stack
+trace). Nothing here could reproduce it — the pages had only ever run on a CPU rasteriser and on phones — so the cause
+is not proven; the likely ones are a graphics process killed while one long shader compiled (Direct3D's compiler is
+slow on long shaders and the browser's watchdog does not wait), or a first frame too heavy for the card the tier was
+guessed for. After a few such crashes the browser stops handing out contexts until it is restarted. *Fix:* every
+program is prepared in the background before the first frame (`LR.warm`, `KHR_parallel_shader_compile`); small and old
+graphics chips start on `medium`, and a guessed tier in the middle of its resolution range; a lost context reopens the
+page once in safe mode (`?safe=1`: lowest tier, optional passes off — the smallest shaders); and when there is no
+context a panel says so in the realm's language, with what to do, the card's name and the ways on. *Rule:* a failure
+to start is a screen the visitor reads — never a stack trace, never a blank canvas.
+
 ## The engine
 **The picture**
 - Shade under eaves and jetties was black → the computed sky was physically dim next to the sun (single scattering

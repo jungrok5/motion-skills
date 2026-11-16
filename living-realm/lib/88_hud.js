@@ -9,7 +9,7 @@
     wx: { clear: 'clear', rain: 'rain', snow: 'snow', winter: 'winter', overcast: 'overcast' },
     hint: 'W A S D or arrow keys to walk · Q E or ← → to turn · drag or click to look · Shift to run',
     hintTouch: 'left thumb walks · right thumb looks',
-    help: [['W A S D / ↑ ↓', 'walk'], ['← → / Q E', 'turn'], ['mouse', 'look (click to capture, Esc to release)'], ['Shift', 'run'], ['Space', 'hop'], ['1 2 3 4', 'dawn · day · dusk · night'], ['5 6 7', 'clear · rain · winter'], ['T', 'automatic round'], ['C', 'tour walk'], ['G', 'quality'], ['M', 'sound'], ['P', 'numbers'], ['H', 'hide the panels'], ['F', 'full screen']],
+    help: [['W A S D / ↑ ↓', 'walk'], ['← → / Q E', 'turn'], ['mouse', 'look (click to capture, Esc to release)'], ['Shift', 'run'], ['Space', 'hop'], ['gamepad', 'left stick walks · right stick looks · trigger runs · A hops'], ['1 2 3 4', 'dawn · day · dusk · night'], ['5 6 7', 'clear · rain · winter'], ['T', 'automatic round'], ['C', 'tour walk'], ['G', 'quality'], ['M', 'sound'], ['P', 'numbers'], ['H', 'hide the panels'], ['F', 'full screen']],
     quality: 'Quality', tiers: { auto: 'auto', low: 'low', medium: 'medium', high: 'high', ultra: 'ultra' }, sound: 'Sound', full: 'Full screen', keys: 'Keys', taking: 'You have the walk — press C for the tour',
   };
   const ICON = {
@@ -94,7 +94,7 @@
   let hintT = 0; H.hint = (text, sec = 5) => { const e = H.els.hint; if (!e) return; if (text) e.textContent = text; e.classList.add('on'); clearTimeout(hintT); hintT = setTimeout(() => e.classList.remove('on'), sec * 1000); };
   let cardT = 0; H.card = (title, sub) => { const e = H.els.card; if (!e) return; e.firstChild.textContent = title; e.lastChild.textContent = sub || ''; e.classList.add('on'); clearTimeout(cardT); cardT = setTimeout(() => e.classList.remove('on'), 4200); };
   // reload keeping where we stand, the hour and the weather
-  H.reload = (tier) => { const p = LR.player, u = new URL(location.href); if (tier) u.searchParams.set('q', tier); else u.searchParams.delete('q'); u.searchParams.set('at', [p.x.toFixed(1), p.z.toFixed(1), ((p.yaw * 180) / Math.PI).toFixed(0)].join(',')); u.searchParams.set('tod', LR.wx.tod.toFixed(2)); u.searchParams.set('wx', LR.wx.want.weather); if (!p.touring) u.searchParams.set('tour', '0'); location.href = u.toString(); };
+  H.reload = (tier) => { const p = LR.player, u = new URL(location.href); if (tier) u.searchParams.set('q', tier); else u.searchParams.delete('q'); u.searchParams.delete('safe');      /* choosing a quality by hand leaves safe mode */ u.searchParams.set('at', [p.x.toFixed(1), p.z.toFixed(1), ((p.yaw * 180) / Math.PI).toFixed(0)].join(',')); u.searchParams.set('tod', LR.wx.tod.toFixed(2)); u.searchParams.set('wx', LR.wx.want.weather); if (!p.touring) u.searchParams.set('tour', '0'); location.href = u.toString(); };
 
   // ── every frame: the clock line, place cards, numbers, and the resolution governor ───────────────────────────────
   let acc = 0, n = 0, lastPlace = null, slowFor = 0, okFor = 0, wait = 3, capScale = 1, sec = 0;

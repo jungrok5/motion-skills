@@ -265,7 +265,7 @@ void main(){
 #if CONTACT_STEPS > 0
     if (sh > 0.02 && NoLr > 0.0) sh *= contactShadow(wp, N, dist, rnd);
 #endif
-    float shT = trans > 0.0 ? mix(sh, 1.0, 0.22 + 0.2 * trans) : sh;                      // light filters down through leaves
+    float shT = trans > 0.0 ? mix(sh, 1.0, (0.2 + 0.2 * trans) * g0.a * g0.a) : sh;        // light filters down through leaves — less the deeper in the crown
     float micro = sat(NoL * 6.0 + ao * ao * 2.0 - 1.0);                              // light does not reach into tight creases
     vec3 dl = diff * (trans > 0.0 ? sat((NoLr + 0.45) / 1.45) : NoL) + specGGX(f0, a2, sat(dot(N, H)), NoV, NoL, sat(dot(V, H))) * NoL;
     col = dl * uSunCol * (trans > 0.0 ? mix(sh, shT, 0.5) : sh) * mix(1.0, micro, 0.6);
@@ -411,6 +411,7 @@ void main(){
   };
 
   R.initPost = () => {
+    PR.init();
     const G = LR.gpu, tier = G.tier, S = SKY(); R.giOn = tier.gi > 0 && !LR.off.has('gi');
     const white = new T.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1); white.needsUpdate = true; R.white = white; const black = new T.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1); black.needsUpdate = true; R.black = black;
     PU.uEnvMips.value = LR.sky.envMips; PU.uSharp.value = tier.taaSharp; PU.tCanopy.value = white;
@@ -419,7 +420,7 @@ void main(){
     R.mAOB = LR.pass(aoBlurFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tAO: v(null), uHalf: PU.uHalf }));
     if (R.giOn) { R.mGI = LR.pass(giFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tG1: PU.tG1, tHist: v(null), uHalf: PU.uHalf }), { defines: { GI_RAYS: tier.gi | 0, GI_STEPS: 8, GI_DEBUG: LR.qn('gidbg', 0) | 0 } }); R.mGIB = LR.pass(giBlurFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tGI: v(null), uHalf: PU.uHalf })); }
     R.mAir = LR.pass(airFS, Object.assign(LR.uni(FRAME + ' ' + AIRU + ' ' + SHU), S, { tDepth: PU.tDepth, uHalf: PU.uHalf, uEnvMips: PU.uEnvMips, tCanopy: PU.tCanopy, uCanopyRect: PU.uCanopyRect, uCanopy: PU.uCanopy, uShaft: PU.uShaft }), { defines: { AIR_STEPS: tier.vol, AIR_REACH: '150.0', SHAFT_STEPS: LR.off.has('shafts') ? 0 : tier.vol >= 24 ? 36 : tier.vol >= 16 ? 28 : tier.vol >= 12 ? 20 : 0 } });
-    R.mLight = LR.pass(lightFS, Object.assign(LR.uni(FRAME + ' ' + AIRU + ' ' + SHU + ' uTopo uTopoRect'), S, { tG0: PU.tG0, tG1: PU.tG1, tG2: PU.tG2, tDepth: PU.tDepth, tAO: PU.tAO, tAir: PU.tAir, uHalf: PU.uHalf, uEnvMips: PU.uEnvMips, tCanopy: PU.tCanopy, uCanopyRect: PU.uCanopyRect, uCanopy: PU.uCanopy, uLightPos: PU.uLightPos, uLightCol: PU.uLightCol, uLightN: PU.uLightN, uFill: PU.uFill, tGI: PU.tGI, uBounce: PU.uBounce, tHist: PU.tHistL, uHistOk: PU.uHistOk }), { defines: Object.assign({ SHADOW_TAPS: tier.shadowTaps, SKY_REACH: LR.off.has('skyshare') ? 0 : tier.gi >= 3 ? 2 : tier.ao > 0 ? 1 : 0, CONTACT_STEPS: LR.off.has('contact') ? 0 : tier.contact | 0, MIRROR_STEPS: LR.off.has('mirror') || tier.ssr < 18 ? 0 : tier.ssr >= 26 ? 20 : 14 }, LR.qn('dbg', 0) ? { DEBUG_VIEW: LR.qn('dbg', 0) } : {}) });
+    R.mLight = LR.pass(lightFS, Object.assign(LR.uni(FRAME + ' ' + AIRU + ' ' + SHU + ' uShadowZ uTopo uTopoRect'), S, { tG0: PU.tG0, tG1: PU.tG1, tG2: PU.tG2, tDepth: PU.tDepth, tAO: PU.tAO, tAir: PU.tAir, uHalf: PU.uHalf, uEnvMips: PU.uEnvMips, tCanopy: PU.tCanopy, uCanopyRect: PU.uCanopyRect, uCanopy: PU.uCanopy, uLightPos: PU.uLightPos, uLightCol: PU.uLightCol, uLightN: PU.uLightN, uFill: PU.uFill, tGI: PU.tGI, uBounce: PU.uBounce, tHist: PU.tHistL, uHistOk: PU.uHistOk }), { defines: Object.assign(tier.name === 'low' || LR.off.has('pcss') ? {} : { PCSS: 1, PCSS_TAPS: tier.name === 'medium' ? 8 : tier.name === 'high' ? 12 : 16, PCSS_ANGLE: (Math.tan((LR.qn('pcss', 1.4) * Math.PI) / 360)).toFixed(5), PCSS_WIDTH: '0.3' }, { SHADOW_TAPS: tier.shadowTaps, SKY_REACH: LR.off.has('skyshare') ? 0 : tier.gi >= 3 ? 2 : tier.ao > 0 ? 1 : 0, CONTACT_STEPS: LR.off.has('contact') ? 0 : tier.contact | 0, MIRROR_STEPS: LR.off.has('mirror') || tier.ssr < 18 ? 0 : tier.ssr >= 26 ? 20 : 14 }, LR.qn('dbg', 0) ? { DEBUG_VIEW: LR.qn('dbg', 0) } : {}) });
     R.mTAA = LR.pass(taaFS, Object.assign(LR.uni(FRAME), { tCur: PU.tHDR, tHist: PU.tHist, tDepth: PU.tDepth, uJit: PU.uJit, uBlend: PU.uBlend }));
     R.mCopy = LR.pass(copyFS, { tSrc: v(null) });
     R.mDown = LR.pass(downFS, { tSrc: v(null), uT: v(new T.Vector4()), uFirst: v(0) });
@@ -440,6 +441,21 @@ void main(){
     PU.uLightN.value = n; R.info.lights = n;
   };
 
+  // ── where a frame's time goes (?prof=1, shown in the numbers panel) ─────────────────────────────────────────────
+  // GPU time a pass, measured by the graphics card itself (EXT_disjoint_timer_query_webgl2 — desktop Chrome and Edge
+  // have it, Safari and Firefox mostly not: then only the CPU side is shown).  One query is open at a time; results come
+  // back a few frames late and are smoothed.  R.prof.ms = { shadows, gbuffer, ao, air, bounce, light, forward, resolve, bloom, final }
+  const PR = (R.prof = { on: LR.q('prof') === '1' || LR.q('prof') === 'true', ms: {}, cpu: {}, pend: [], cur: null, ext: null, order: ['shadows', 'gbuffer', 'ao', 'air', 'bounce', 'light', 'forward', 'resolve', 'bloom', 'final'] });
+  PR.init = () => { if (!PR.on) return; const gl = LR.gpu.renderer.getContext(); PR.gl = gl; PR.ext = gl.getExtension('EXT_disjoint_timer_query_webgl2'); };
+  PR.begin = (name) => { if (!PR.on) return; PR.end(); PR.cur = { name, t0: performance.now(), q: null };
+    if (PR.ext && PR.pend.length < 40) { const q = PR.gl.createQuery(); PR.gl.beginQuery(PR.ext.TIME_ELAPSED_EXT, q); PR.cur.q = q; } };
+  PR.end = () => { const c = PR.cur; if (!c) return; PR.cur = null; const dt = performance.now() - c.t0; PR.cpu[c.name] = PR.cpu[c.name] === undefined ? dt : PR.cpu[c.name] * 0.9 + dt * 0.1;
+    if (c.q) { PR.gl.endQuery(PR.ext.TIME_ELAPSED_EXT); PR.pend.push(c); } };
+  PR.poll = () => { if (!PR.ext) return; const gl = PR.gl, bad = gl.getParameter(PR.ext.GPU_DISJOINT_EXT);
+    while (PR.pend.length && gl.getQueryParameter(PR.pend[0].q, gl.QUERY_RESULT_AVAILABLE)) { const c = PR.pend.shift(); if (!bad) { const ms = gl.getQueryParameter(c.q, gl.QUERY_RESULT) / 1e6; PR.ms[c.name] = PR.ms[c.name] === undefined ? ms : PR.ms[c.name] * 0.9 + ms * 0.1; } gl.deleteQuery(c.q); } };
+  PR.text = () => { const src = PR.ext ? PR.ms : PR.cpu, rows = PR.order.filter((k) => src[k] !== undefined); if (!rows.length) return ''; let sum = 0; for (const k of rows) sum += src[k];
+    return `\n${PR.ext ? 'GPU' : 'CPU side'} ${sum.toFixed(1)} ms\n` + rows.map((k) => `${k} ${src[k].toFixed(2)}`).join('\n'); };
+
   // ── one frame ───────────────────────────────────────────────────────────────────────────────────────────────────
   const P0 = new T.Matrix4(), VPu = new T.Matrix4(), prevVP = new T.Matrix4();
   R.draw = (cam, time, dt) => {
@@ -456,24 +472,33 @@ void main(){
     U.uCamPos.value.copy(cam.position); U.uNearFar.value.set(cam.near, cam.far); U.uTime.value = time; U.uFrame.value = R.frame; PU.uDt.value = LR.RENDER && !R.film ? 10 : dt;
     R.gatherLights(cam, time);
     // shadows, then the G-buffer
+    PR.poll(); PR.begin('shadows');
     R.updateShadows(cam, LR.RENDER || R.frame < 3);
+    PR.begin('gbuffer');
     r.setRenderTarget(R.gbuf); r.setClearColor(0x000000, 0); r.clear(true, true, false); r.render(W.scene, cam);
     R.info.calls = r.info.render.calls; R.info.tris = r.info.render.triangles;
     // occlusion and air at half size
+    PR.begin('ao');
     if (G.tier.ao > 0 && !LR.off.has('ao')) { LR.blit(R.mAO, R.ao); R.mAOB.uniforms.tAO.value = R.ao.texture; LR.blit(R.mAOB, R.aoB); PU.tAO.value = R.aoB.texture; } else PU.tAO.value = R.white;
+    PR.begin('air');
     LR.blit(R.mAir, R.air);
+    PR.begin('bounce');
     // bounce: from last frame's picture (none on the first frame after a cut)
     if (R.giOn && R.histValid && taa) { R.mGI.uniforms.tHist.value = (R.frame & 1 ? R.histB : R.histA).texture; LR.blit(R.mGI, R.gi); R.mGIB.uniforms.tGI.value = R.gi.texture; LR.blit(R.mGIB, R.giB); PU.tGI.value = R.giB.texture; } else PU.tGI.value = R.black;
     { const ok = R.histValid && taa; PU.tHistL.value = ok ? (R.frame & 1 ? R.histB : R.histA).texture : R.black; PU.uHistOk.value = ok ? 1 : 0; }
+    PR.begin('light');
     LR.blit(R.mLight, R.hdr);
+    PR.begin('forward');
     // see-through things: water reads a half-size copy of the lit picture
     if (W.forward.children.length) { R.mCopy.uniforms.tSrc.value = R.hdr.texture; LR.blit(R.mCopy, R.copy); r.setRenderTarget(R.hdr); r.render(W.forward, cam); }
     cam.projectionMatrix.copy(P0); cam.projectionMatrixInverse.copy(P0).invert();
     // resolve onto the canvas grid
+    PR.begin('resolve');
     let colorTex;
     if (taa) { const dst = R.frame & 1 ? R.histA : R.histB, src = R.frame & 1 ? R.histB : R.histA; PU.tHist.value = src.texture; PU.uBlend.value = R.histValid ? (LR.RENDER && !R.film ? Math.max(0.06, 1 / Math.min(R.frame, 16)) : 0.1) : 1; LR.blit(R.mTAA, dst); R.histValid = true; colorTex = dst.texture; }
     else colorTex = R.hdr.texture;
     // bloom
+    PR.begin('bloom');
     const B = R.bloom, BU = R.bloomUp;
     if (B.length && !LR.off.has('bloom')) {
       let src = colorTex, sw = R.W, sh = R.H;
@@ -483,8 +508,10 @@ void main(){
       PU.tBloom.value = up.texture;
       const a = R.frame & 1 ? R.adaptA : R.adaptB, b = R.frame & 1 ? R.adaptB : R.adaptA; R.mAdapt.uniforms.tSrc.value = B[B.length - 1].texture; R.mAdapt.uniforms.tPrev.value = b.texture; LR.blit(R.mAdapt, a); PU.tAdapt.value = a.texture;
     } else { PU.tBloom.value = colorTex; PU.tAdapt.value = R.white; }
+    PR.begin('final');
     R.mFinal.uniforms.tColor.value = colorTex;
     r.setRenderTarget(null); r.setViewport(0, 0, R.W, R.H); LR.blit(R.mFinal, null);
+    PR.end();
     R.info.allCalls = r.info.render.calls;
   };
 }

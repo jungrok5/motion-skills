@@ -1,10 +1,11 @@
 // scanned-realm · 80_player — walking.  Keyboard (W A S D / arrows, Q E or ← → to turn, Shift to run, Space to hop),
-// mouse (click to look freely, or drag), touch (left thumb moves, right thumb looks).  The walker stands on the land,
+// mouse (click to look freely, or drag), touch (left thumb moves, right thumb looks), a gamepad (left stick walks,
+// right stick looks, a trigger or a pressed stick runs, A hops).  The walker stands on the land,
 // on bridges and piers, on the frozen pond; cannot pass walls, trunks, fences or deep water.  Until the first input
 // the eye strolls a tour on its own.
 {
   const T = THREE;
-  const P = (LR.player = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, vx: 0, vz: 0, vy: 0, air: false, eye: 1.68, radius: 0.34, walk: 2.5, run: 5.8, bob: 0, speed: 0, moving: false, running: false, surface: 'grass', touring: false, tourS: 0, idle: 0, keys: {}, look: { dx: 0, dy: 0 }, stick: { x: 0, y: 0, active: false }, locked: false, enabled: true });
+  const P = (LR.player = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, vx: 0, vz: 0, vy: 0, air: false, eye: 1.68, radius: 0.34, walk: 2.5, run: 5.8, bob: 0, speed: 0, moving: false, running: false, surface: 'grass', touring: false, tourS: 0, idle: 0, keys: {}, look: { dx: 0, dy: 0 }, stick: { x: 0, y: 0, active: false }, pad: { x: 0, y: 0, run: false, hop: false }, locked: false, enabled: true });
   const W = LR.world;
   // the floor under a point: land, or a deck within a step of where we stand
   P.groundAt = (x, z, yNow) => {
@@ -69,6 +70,15 @@
     const sens = 0.0022; P.yaw += P.look.dx * sens; P.pitch = LR.clamp(P.pitch - P.look.dy * sens, -1.35, 1.35); P.look.dx = P.look.dy = 0;
     const turn = (K.ArrowRight || K.KeyE ? 1 : 0) - (K.ArrowLeft || K.KeyQ ? 1 : 0); P.yaw += turn * 1.9 * dt;
     if (K.PageUp) P.pitch = Math.min(1.3, P.pitch + dt); if (K.PageDown) P.pitch = Math.max(-1.3, P.pitch - dt);
+    // a gamepad, if one is plugged in: read each frame (the browser has no events for sticks).  Left stick walks, right
+    // stick looks, either trigger or a pressed left stick runs, the bottom face button hops.
+    const pad = P.pad; pad.x = pad.y = 0; pad.run = pad.hop = false;
+    if (navigator.getGamepads) { const dz = (v) => (Math.abs(v) < 0.16 ? 0 : (v - Math.sign(v) * 0.16) / 0.84);
+      for (const gp of navigator.getGamepads()) { if (!gp || !gp.connected || gp.axes.length < 2) continue;
+        const ax = dz(gp.axes[0]), ay = dz(gp.axes[1]), rx = dz(gp.axes[2] || 0), ry = dz(gp.axes[3] || 0), b = (i) => !!(gp.buttons[i] && gp.buttons[i].pressed);
+        if (ax || ay) { pad.x += ax; pad.y += ay; P.stopTour(); }
+        if (rx || ry) { P.yaw += rx * Math.abs(rx) * 2.6 * dt; P.pitch = LR.clamp(P.pitch - ry * Math.abs(ry) * 1.9 * dt, -1.35, 1.35); P.stopTourLook(); }
+        if (b(6) || b(7) || b(10)) pad.run = true; if (b(0)) { pad.hop = true; P.stopTour(); } } }
     if (P.lookHold > 0) P.lookHold -= dt;
     if (P.touring && P.tour) {
       P.tourS += 1.55 * dt; const u = tourU(P.tourS), q = P.tour.at(u), a = P.tour.at(tourU(P.tourS + 7)), i = Math.floor(u) % P.tour.pts.length, wp = P.tour.pts[i], wn = P.tour.pts[(i + 1) % P.tour.pts.length], f = u - Math.floor(u);
@@ -81,7 +91,8 @@
       // legs
       let fwd = (K.KeyW || K.ArrowUp ? 1 : 0) - (K.KeyS || K.ArrowDown ? 1 : 0), side = (K.KeyD ? 1 : 0) - (K.KeyA ? 1 : 0);
       if (P.stick.active) { fwd += -P.stick.y; side += P.stick.x; }
-      const mag = Math.min(1, Math.hypot(fwd, side)); P.running = !!(K.ShiftLeft || K.ShiftRight) || (P.stick.active && Math.hypot(P.stick.x, P.stick.y) > 0.96);
+      fwd += -P.pad.y; side += P.pad.x;
+      const mag = Math.min(1, Math.hypot(fwd, side)); P.running = !!(K.ShiftLeft || K.ShiftRight) || P.pad.run || (P.stick.active && Math.hypot(P.stick.x, P.stick.y) > 0.96);
       const g0 = P.groundAt(P.x, P.z, P.y), slow = g0.depth > 0.2 ? 0.55 : 1;
       const top = (P.running ? P.run : P.walk) * slow * (fwd < 0 ? 0.7 : 1), sy = Math.sin(P.yaw), cy = Math.cos(P.yaw);
       let wx = 0, wz = 0; if (mag > 0.01) { const fx = fwd / Math.max(mag, 1e-6) * mag, sx = side / Math.max(mag, 1e-6) * mag; wx = (sy * fx + cy * sx) * top; wz = (-cy * fx + sy * sx) * top; }
@@ -92,7 +103,7 @@
       const g1 = P.groundAt(nx, nz, P.y); if (g1.depth > 1.0 && g1.depth > g0.depth) { nx = P.x; nz = P.z; P.vx *= 0.3; P.vz *= 0.3; }
       const rr = Math.hypot(nx, nz), R = W.radius; if (rr > R) { nx *= R / rr; nz *= R / rr; }
       P.x = nx; P.z = nz; const g = P.groundAt(P.x, P.z, P.y);
-      if (K.Space && !P.air) { P.vy = 4.3; P.air = true; }
+      if ((K.Space || P.pad.hop) && !P.air) { P.vy = 4.3; P.air = true; }
       if (P.air) { P.vy -= 13 * dt; P.y += P.vy * dt; if (P.y <= g.y) { P.y = g.y; P.air = false; P.vy = 0; } } else P.y = g.y > P.y ? LR.damp(P.y, g.y, 18, dt) : LR.damp(P.y, g.y, 12, dt);
       P.speed = Math.hypot(P.vx, P.vz); P.moving = P.speed > 0.25 && !P.air; P.surface = g.depth > 0.12 ? 'water' : g.surf || P.surfaceAt(P.x, P.z, g);
       P.idle = P.moving || turn ? 0 : P.idle + dt;

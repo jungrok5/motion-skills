@@ -1,21 +1,25 @@
 # scanned-realm
 
-A place you can walk through in the browser, in a game-engine look, whose **surfaces and small objects are scans**.
-It is the engine of [`living-realm`](../living-realm/) — one HTML file, no assets, everything generated — with that
-condition lifted: the paving, wall stone, plaster, roofs, timber, paths, forest floor, rock and bark a place is made of
-are photographed PBR materials at their real size, and its barrels, crates, stumps, a fallen trunk and a fire pit are
-photogrammetry models, all CC0 from [Poly Haven](https://polyhaven.com). They go through the same deferred WebGL 2
-renderer as everything the code still builds (land, buildings, trees, grass, sky, weather, light, sound): the hour runs
-from dawn to night, rain darkens the scanned stone and fills puddles on it, winter lays snow on the scanned roofs.
+A place you can walk through in the browser, in a game-engine look, whose **surfaces, objects, ground plants and
+leaves are scans**. It is the engine of [`living-realm`](../living-realm/) — one HTML file, no assets, everything
+generated — with that condition lifted: the paving, wall stone, plaster, roofs, timber, paths, forest floor, rock and
+bark a place is made of are photographed PBR materials at their real size; its barrels, tables, baskets, pots, tools,
+the fruit and bread on its stalls, its boulders and rock faces are photogrammetry models, **instanced, with levels of
+detail made at load and chosen by how wide their triangles are on screen**; its ferns, nettles, docks and flowers are
+scanned cut-out plants; and the leaves on its generated trees are painted from photographed leaves and twigs — all CC0
+from [Poly Haven](https://polyhaven.com). They go through the same deferred WebGL 2 renderer as everything the code
+still builds (land, buildings, the trees' wood, grass, sky, weather, light, sound): the hour runs from dawn to night,
+shadows widen with the distance to what throws them, rain darkens the scanned stone and fills puddles on it, winter
+lays snow on the scanned roofs and lays the ferns down.
 Give the skill a topic and it designs a new place in this style — the plan, the buildings from parts, **the list of
 scans that place is made of**, the plants, the walk.
 
 ```bash
-# the worked example: 은여울 마을 (Silverford), with 15 scanned surfaces and 6 scanned objects
-node scanned-realm/scripts/fetch-assets.mjs scanned-realm/examples/village   # assets.json → assets/ (57 MB from Poly Haven; not in the repo)
+# the worked example: 은여울 마을 (Silverford), with 18 scanned surfaces, 50 scanned models and 3 leaf atlases
+node scanned-realm/scripts/fetch-assets.mjs scanned-realm/examples/village   # assets.json → assets/ (126 MB from Poly Haven; not in the repo)
 node scanned-realm/scripts/build.mjs  scanned-realm/examples/village         # → examples/village/index.html
 (cd scanned-realm/examples/village && python3 -m http.server 8000)           # open http://localhost:8000 — not file://
-node scanned-realm/scripts/check.mjs  scanned-realm/examples/village         # loads clean · every scan arrived · can be walked · every state reads
+node scanned-realm/scripts/check.mjs  scanned-realm/examples/village         # loads clean · every scan arrived and baked · can be walked · every state reads · what the scans cost a view
 node scanned-realm/scripts/render.mjs scanned-realm/examples/village --mats            # → out/mats.jpg: every material layer
 node scanned-realm/scripts/render.mjs scanned-realm/examples/village --views           # → out/<view>.jpg
 node scanned-realm/scripts/render.mjs scanned-realm/examples/village --sheet --scale .5   # every view × day, dusk, night, rain, snow
@@ -26,19 +30,25 @@ node scanned-realm/scripts/new-realm.mjs my-realm           # from the starter (
 node scanned-realm/scripts/fetch-assets.mjs my-realm && node scanned-realm/scripts/build.mjs my-realm && node scanned-realm/scripts/check.mjs my-realm
 ```
 
-On the page: **W A S D / arrows** walk · **Q E / ← →** turn · mouse or touch looks · **Shift** runs · **1–4** dawn, day,
-dusk, night · **5–7** clear, rain, winter · **T** the automatic round · **C** the tour · **G** quality · **M** sound ·
-**P** numbers. Options: `?scan=0` (the generated recipes only, to compare), `?q=low|medium|high|ultra`, `?tod=19.5`,
-`?wx=rain`, `?tour=0`.
+On the page: **W A S D / arrows** walk · **Q E / ← →** turn · the mouse looks (click to capture) · **Shift** runs ·
+**Space** hops · on a phone the **left thumb** is a stick and the **right thumb** looks · a **gamepad** walks with its
+left stick and looks with its right · **1–4** dawn, day, dusk, night · **5–7** clear, rain, winter · **T** the automatic
+round · **C** the tour · **G** quality · **M** sound · **P** numbers. The walk is a first-person eye: there is no body
+to see. It starts at once on the generated place and the scans arrive while you walk. Options: `?scan=0` (the generated
+recipes only, to compare), `?stream=0` (wait for every scan first), `?prof=1` (milliseconds a pass, measured by the
+graphics card), `?q=low|medium|high|ultra`, `?tod=19.5`, `?wx=rain`, `?tour=0`.
 
 Requirements: Node 18+ with Playwright Chromium, `curl`, ffmpeg (sheets and films), and the network when fetching.
-The page needs WebGL 2 and wants a GPU; without one, stills render on the CPU at 1–4 minutes each. three.js r170 is
-vendored (MIT, `vendor/LICENSE`).
+The page needs WebGL 2 and wants a GPU; without one, stills render on the CPU at 1–4 minutes each. three.js r170 and
+meshoptimizer's simplifier are vendored (both MIT, `vendor/LICENSE`, `vendor/LICENSE-meshoptimizer.md`).
 
-What it is and is not: scanned surfaces on generated geometry. Buildings, land, trees and grass are still built by
-code; scanned plants and trees are not carried (the world draws opaque objects only); light is screen-space; the page
-loads 33–57 MB of scans once. `references/LOOK.md` says where the look stops, `references/ASSETS.md` how scans are
-chosen, fitted and shipped, and which were tried and dropped.
+What it is and is not: scanned surfaces, objects, plants and leaves on generated land, buildings and tree skeletons.
+There are no scanned trees or buildings; levels of detail are a few simplified copies a model, not Nanite; light is
+screen-space, not Lumen; 41–126 MB of scans arrive while you walk. **Megascans is not used and cannot be**: it has
+been free on Fab since late 2026, but its licence forbids serving the raw files from a public page and fetching them by
+script — stills rendered with it would be fine, a page that serves it is not. `references/LOOK.md` says where the look
+stops, `references/ASSETS.md` how scans are chosen, fitted and shipped, which were tried and dropped, and the licence
+table; `references/PERF.md` what a frame costs and how to measure it.
 
 Source — the look asked for is the post by Rez (@RezAIT00) on X:
 <https://x.com/RezAIT00/status/2120498246426706176?a=CUYTAAEWhBIL6PS4ZPk&s=19> (a clip of an Unreal Engine forest and

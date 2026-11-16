@@ -118,10 +118,10 @@ void main(){ vec3 p = position;
   int flags = int(meta.y + 0.5); if ((flags & 4) != 0) { float w = meta.w / 255.0, g = gustAt(p.xz, uTime); p.xz += uWind.xy * g * 0.32 * w; }
 #endif
   gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0); }`;
-  const shadowFS = `precision highp float; out vec4 o; void main(){ o = vec4(1.0); }`;
+  const shadowFS = `precision highp float; out vec4 o; void main(){ ${LR.SHADOW_OUT} }`;
   R.matShadow = (o = {}) => {
     const key = 's' + (o.terrain ? 't' : 'b') + (o.kinetic ? 'k' : '') + (o.back ? 'x' : ''); if (cache[key]) return cache[key];             // back: only the faces turned from the light (a stand-in hull that must not shade what it stands for)
-    return (cache[key] = LR.material({ vertexShader: shadowVS, fragmentShader: shadowFS, defines: Object.assign(o.terrain ? {} : { BUILT: 1 }, o.kinetic ? { KINETIC: 1 } : {}), side: o.terrain ? T.FrontSide : o.back ? T.BackSide : T.DoubleSide, colorWrite: false,
+    return (cache[key] = LR.material({ vertexShader: shadowVS, fragmentShader: shadowFS, defines: Object.assign(o.terrain ? {} : { BUILT: 1 }, o.kinetic ? { KINETIC: 1 } : {}), side: o.terrain ? T.FrontSide : o.back ? T.BackSide : T.DoubleSide,
       polygonOffset: true, polygonOffsetFactor: o.terrain ? 2.5 : 1.6, polygonOffsetUnits: o.terrain ? 4 : 2.5, uniforms: LR.uni(FRAME) }));
   };
   R.matTopo = () => cache.topo || (cache.topo = LR.material({ side: T.DoubleSide,
@@ -242,13 +242,13 @@ void main(){
   R.initShadow = () => {
     const G = LR.gpu, n = G.tier.cascades, size = Math.min(G.tier.shadow, Math.floor(G.renderer.capabilities.maxTextureSize / n / 2) * 2);   // the atlas holds the cascades side by side
     const dt = new T.DepthTexture(size * n, size); dt.type = T.UnsignedIntType; dt.format = T.DepthFormat; dt.compareFunction = T.LessEqualCompare; dt.minFilter = dt.magFilter = T.LinearFilter;
-    SH.rt = LR.rt(size * n, size, { format: T.RedFormat, type: T.UnsignedByteType, depth: true, depthTexture: dt, filter: T.NearestFilter });
-    SH.n = n; SH.size = size; U.uShadowMap.value = dt; U.uShadowInfo.value.set(n, 1 / size, 1, 0);
+    SH.rt = LR.rt(size * n, size, { format: T.RGFormat, type: T.UnsignedByteType, depth: true, depthTexture: dt, filter: T.NearestFilter });               // colour: the depth again, readable (LR.SHADOW_OUT)
+    SH.n = n; SH.size = size; U.uShadowMap.value = dt; U.uShadowZ.value = SH.rt.texture; U.uShadowInfo.value.set(n, 1 / size, 1, 0);
     for (let i = 0; i < n; i++) { const c = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1); c.matrixAutoUpdate = false; SH.cams.push(c); }
     const d = G.tier.shadowDist; SH.splits = n === 3 ? [0, d * 0.085, d * 0.3, d] : [0, d * 0.2, d];
   };
   const v3 = (x, y, z) => new T.Vector3(x, y, z);
-  const corners = [], ctr = v3(), lx = v3(), ly = v3(), lz = v3(), tmp = v3(), cf = v3(), cr = v3(), cu = v3(), bias = new T.Matrix4().set(0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1);
+  const clr0 = new T.Color(), corners = [], ctr = v3(), lx = v3(), ly = v3(), lz = v3(), tmp = v3(), cf = v3(), cr = v3(), cu = v3(), bias = new T.Matrix4().set(0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1);
   for (let i = 0; i < 8; i++) corners.push(v3());
   R.updateShadows = (cam, force) => {
     const r = LR.gpu.renderer, n = SH.n, L = U.uSunDir.value, strength = LR.sm(0.0, 0.25, LR.sky.keyPower || 1);
@@ -275,7 +275,7 @@ void main(){
       U.uShadowMat.value[i].copy(bias).multiply(c.projectionMatrix).multiply(c.matrixWorldInverse);
       U.uShadowTexel.value.setComponent(i, tex);
       SH.rt.viewport.set(i * SH.size, 0, SH.size, SH.size); SH.rt.scissor.set(i * SH.size, 0, SH.size, SH.size); SH.rt.scissorTest = true;
-      r.setRenderTarget(SH.rt); r.clear(false, true, false); r.render(LR.world.shadowScene, c); drew++;
+      r.setRenderTarget(SH.rt); r.getClearColor(clr0); const ca0 = r.getClearAlpha(); r.setClearColor(0xff0000, 1); r.clear(true, true, false); r.setClearColor(clr0, ca0); r.render(LR.world.shadowScene, c); drew++;
     }
     R.info.shadowPasses = drew;
   };

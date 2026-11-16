@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>scanned-realm · motion-skills</title>
-<meta name="description" content="장소 하나를 주면 브라우저에서 걸어 다니는 3D 세계를 만듭니다. living-realm 엔진에서 '에셋 없이 한 파일' 조건을 풀어, 바닥 · 벽 · 지붕 · 목재는 촬영한 스캔 재질로, 통 · 상자 · 그루터기는 스캔 모델로 그립니다.">
+<meta name="description" content="장소 하나를 주면 브라우저에서 걸어 다니는 3D 세계를 만듭니다. living-realm 엔진에서 '에셋 없이 한 파일' 조건을 풀어, 바닥 · 벽 · 지붕 · 나무껍질은 촬영한 스캔 재질로, 통 · 탁자 · 바구니 · 과일 · 바위는 LOD가 있는 스캔 모델로, 고사리 · 들풀과 나뭇잎은 스캔 식생으로 그립니다.">
 <meta property="og:title" content="scanned-realm · motion-skills">
-<meta property="og:description" content="장소 하나를 주면 브라우저에서 걸어 다니는 3D 세계를 만듭니다. living-realm 엔진에서 '에셋 없이 한 파일' 조건을 풀어, 바닥 · 벽 · 지붕 · 목재는 촬영한 스캔 재질로, 통 · 상자 · 그루터기는 스캔 모델로 그립니다.">
+<meta property="og:description" content="장소 하나를 주면 브라우저에서 걸어 다니는 3D 세계를 만듭니다. living-realm 엔진에서 '에셋 없이 한 파일' 조건을 풀어, 바닥 · 벽 · 지붕 · 나무껍질은 촬영한 스캔 재질로, 통 · 탁자 · 바구니 · 과일 · 바위는 LOD가 있는 스캔 모델로, 고사리 · 들풀과 나뭇잎은 스캔 식생으로 그립니다.">
 <meta property="og:image" content="https://jungrok5.github.io/motion-skills/scanned-realm/poster.jpg">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
@@ -22,7 +22,7 @@
   <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / scanned-realm</nav>
   <h1>scanned-realm</h1>
   <p>장소 하나를 주면(MMORPG 마을 · 항구 · 산사 · 야영지) 브라우저에서 걸어 다니는 3D 세계를 만듭니다. <a href="../living-realm/">living-realm</a> 엔진에서 "에셋 없이 HTML 한 파일" 조건을 푼 스킬입니다. 자갈길 · 돌담 · 회벽 · 기와 · 목재 · 흙길 · 숲 바닥 · 바위 · 나무껍질은 실물을 촬영한 PBR 스캔 재질(색 · 노멀 · 거칠기 · 음영 · 높이)을 실제 크기로 쓰고, 통 · 상자 · 그루터기 · 쓰러진 고목 · 화덕 · 양동이는 포토그래메트리 모델입니다. 모두 <a href="https://polyhaven.com">Poly Haven</a>의 CC0 에셋이고, 엔진의 재질 레이어와 지오메트리 배치에 다시 구워 넣기 때문에 생성한 것과 똑같이 햇빛 · 그림자 · 비 · 웅덩이 · 이끼 · 눈을 받습니다. 땅 · 건물 · 나무 · 풀 · 하늘 · 날씨 · 빛 · 소리는 그대로 코드로 만듭니다.</p>
-  <ul class="tags"><li>WebGL 2 디퍼드</li><li>스캔 PBR 재질 · 스캔 모델</li><li>Poly Haven · CC0</li><li>낮밤 · 비 · 겨울</li><li>키보드 · 터치로 걷기</li></ul>
+  <ul class="tags"><li>WebGL 2 디퍼드</li><li>스캔 재질 · 모델 · 식생 · 잎</li><li>인스턴싱 · LOD</li><li>Poly Haven · CC0</li><li>낮밤 · 비 · 겨울</li><li>키보드 · 터치 · 게임패드로 걷기</li></ul>
 </div></header>
 
 <main>
@@ -32,12 +32,12 @@
     <dl>
       <dt>입력</dt><dd>장소 한 줄 (누구의 어떤 곳인지, 어느 지역과 시대인지)</dd>
       <dt>브리프</dt><dd>건축 양식 · 땅 · 식생 · 물, 좌표가 있는 배치도, 상태별로 보여 줄 것, 그 장소를 이루는 표면과 소품 목록</dd>
-      <dt>스캔 고르기</dt><dd>표면마다 후보 두세 개(태그 · 실제 크기), 소품마다 삼각형 수 확인 → <code>assets.json</code> → 스크립트로 내려받기 → 재질 시트에서 읽히는 것 · 방향 · 톤 판정</dd>
-      <dt>땅 · 건물 · 살림</dt><dd>높이 함수와 물 · 길, 부품으로 짓는 건물, 스캔 재질의 밝기 맞춤, 생성 소품 자리에 서는 스캔 모델, 숫자로 기르는 나무와 풀</dd>
-      <dt>평가와 검사</dt><dd>스캔 켬 · 끔 비교, 스캔이 모두 도착했는지, 보행 지도와 산책 경로, 상태별 화면 자동 검사</dd>
+      <dt>스캔 고르기</dt><dd>표면마다 후보 두세 개(태그 · 실제 크기), 그 장소에 놓일 물건과 자라는 풀, 나무의 잎 아틀라스 → <code>assets.json</code>(애셋마다 받을 맵 지정) → 스크립트로 내려받기(실제 삼각형 수 출력) → 재질 시트에서 읽히는 것 · 방향 · 톤 판정</dd>
+      <dt>땅 · 건물 · 살림</dt><dd>높이 함수와 물 · 길, 부품으로 짓는 건물, 스캔 재질의 밝기 맞춤, 생성 소품 자리에 서는 스캔 모델과 좌판 · 문가 · 벽 밑에 놓이는 꾸러미(kit), 스캔 식생의 분포 규칙, 숫자로 기르고 촬영한 잎을 입히는 나무</dd>
+      <dt>평가와 검사</dt><dd>스캔 켬 · 끔 비교, 스캔이 모두 도착하고 제대로 구워졌는지, 시점마다 스캔이 차지하는 삼각형 수, 보행 지도와 산책 경로, 상태별 화면 자동 검사</dd>
       <dt>출력</dt><dd>걸어 다니는 페이지(<code>index.html</code> + <code>assets/</code>, 또는 Poly Haven 서버에서 읽는 HTML 한 파일), 스틸과 콘택트 시트, 산책 영상 MP4</dd>
     </dl>
-    <pre><code>node scanned-realm/scripts/fetch-assets.mjs scanned-realm/examples/village   # assets.json → assets/ (57 MB)
+    <pre><code>node scanned-realm/scripts/fetch-assets.mjs scanned-realm/examples/village   # assets.json → assets/ (126 MB)
 node scanned-realm/scripts/build.mjs  scanned-realm/examples/village         # index.html
 node scanned-realm/scripts/check.mjs  scanned-realm/examples/village         # check OK
 node scanned-realm/scripts/render.mjs scanned-realm/examples/village --mats  # 재질 시트
@@ -45,15 +45,15 @@ node scanned-realm/scripts/render.mjs scanned-realm/examples/village --views
 node scanned-realm/scripts/build.mjs  scanned-realm/examples/village --cdn --out realm.html
 
 node scanned-realm/scripts/new-realm.mjs ~/my-realm                         # 새 장소 폴더</code></pre>
-    <p class="mute">조작: W A S D · 방향키로 걷기, Q E · ← →로 돌기, 마우스 · 터치로 둘러보기, Shift 달리기, 1–4 시간, 5–7 날씨, T 자동 순환, C 자동 산책, G 품질, P 성능 수치. 요구 사항: Node 18+, Playwright Chromium, curl, ffmpeg, 내려받을 때 네트워크. 페이지는 WebGL 2와 GPU가 필요합니다(GPU 없이도 스틸은 렌더되며 한 장에 1–4분). 스캔 파일은 저장소에 넣지 않고 장소마다 목록으로 받아 옵니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/scanned-realm/SKILL.md">SKILL.md</a>에, 스캔을 고르고 맞추는 법은 <a href="https://github.com/jungrok5/motion-skills/blob/main/scanned-realm/references/ASSETS.md">references/ASSETS.md</a>에 있습니다.</p>
+    <p class="mute">조작: W A S D · 방향키로 걷기, Q E · ← →로 돌기, 마우스로 둘러보기(클릭하면 고정), Shift 달리기, Space 뛰기. 모바일은 왼쪽 엄지가 조이스틱, 오른쪽 엄지가 시선. 게임패드는 왼쪽 스틱으로 걷고 오른쪽 스틱으로 둘러봅니다. 1–4 시간, 5–7 날씨, T 자동 순환, C 자동 산책, G 품질, P 성능 수치(<code>?prof=1</code>이면 패스별 GPU 시간). 걷기는 1인칭 시점이며 몸은 그리지 않습니다. 페이지는 생성 재질로 먼저 시작하고 스캔은 걷는 동안 도착합니다. 3D 화면이 시작되지 않으면 안내와 함께 안전 모드(가장 낮은 품질)로 다시 엽니다. 요구 사항: Node 18+, Playwright Chromium, curl, ffmpeg, 내려받을 때 네트워크. 페이지는 WebGL 2와 GPU가 필요합니다.</p>
   </div>
   <div class="demo" style="--ar:16/10.6;--demo-bg:#0c0e11">
     <iframe data-src="demo/village/" title="scanned-realm 예제 실시간 실행" allow="fullscreen; autoplay" allowfullscreen></iframe>
     <noscript><a href="demo/village/">데모 열기</a></noscript>
-    <div class="bar"><span data-cap-target>예제 <code>examples/village</code> · 「은여울 마을」 · 버튼을 누르면 스캔 57 MB를 Poly Haven에서 받고 시작</span>
+    <div class="bar"><span data-cap-target>예제 <code>examples/village</code> · 「은여울 마을」 · 버튼을 누르면 바로 시작하고 스캔 126 MB는 걷는 동안 Poly Haven에서 도착</span>
       <span class="btns" role="group" aria-label="데모 예제">
-        <button class="btn" type="button" data-src="demo/village/" data-cap="예제 &lt;code&gt;examples/village&lt;/code&gt; · 「은여울 마을」 · 버튼을 누르면 스캔 57 MB를 Poly Haven에서 받고 시작" aria-pressed="true">은여울 마을</button>
-        <button class="btn" type="button" data-src="demo/starter/" data-cap="스타터 &lt;code&gt;starter&lt;/code&gt; · 「Tarn Cabin」 · 다른 스캔 목록으로 만든 최소 장소 (33 MB)" aria-pressed="false">스타터</button>
+        <button class="btn" type="button" data-src="demo/village/" data-cap="예제 &lt;code&gt;examples/village&lt;/code&gt; · 「은여울 마을」 · 버튼을 누르면 바로 시작하고 스캔 126 MB는 걷는 동안 Poly Haven에서 도착" aria-pressed="true">은여울 마을</button>
+        <button class="btn" type="button" data-src="demo/starter/" data-cap="스타터 &lt;code&gt;starter&lt;/code&gt; · 「Tarn Cabin」 · 다른 스캔 목록으로 만든 최소 장소 (41 MB)" aria-pressed="false">스타터</button>
         <button class="btn" type="button" data-src="demo/village/?scan=0" data-cap="같은 마을을 스캔 없이 · 코드로 구운 재질과 생성 소품만 (내려받기 없음)" aria-pressed="false">스캔 없이</button>
       </span></div>
   </div>
@@ -61,70 +61,84 @@ node scanned-realm/scripts/new-realm.mjs ~/my-realm                         # �
 
 <section id="samples"><div class="wrap">
   <h2>샘플</h2>
-  <p class="lead">예제 「은여울 마을」은 living-realm의 같은 마을에 스캔 재질 15종과 스캔 모델 6종을 넣은 것입니다. 카드를 누르면 라이브 페이지가 그 자리 · 그 시간 · 그 날씨로 열리고, 스캔 57 MB를 Poly Haven 서버에서 한 번 내려받습니다(화면 왼쪽 위에 출처 표기). 달라지는 것은 몇 미터 안에서 보이는 표면과 놓인 물건이고, 건물 윤곽 · 나무 · 풀 · 빛은 living-realm 그대로입니다. 스캔한 식물과 나무는 아직 싣지 못합니다. 원본 영상(<a href="https://x.com/RezAIT00/status/2120498246426706176?a=CUYTAAEWhBIL6PS4ZPk&amp;s=19">Rez의 X 게시물</a>)과 견준 레퍼런스(<a href="https://claude.ai/artifact/D8t6NHbpDJXtCovZU6KADP">「Larkhollow」</a> · <a href="https://claude.ai/artifact/BGY1SztrAYcJQHSsnHHGmp">「Saltline」</a>)의 코드와 에셋은 쓰지 않았습니다.</p>
+  <p class="lead">예제 「은여울 마을」은 living-realm의 같은 마을에 스캔 재질 18종, 스캔 모델 50종, 잎 아틀라스 3종을 넣은 것입니다. 카드를 누르면 라이브 페이지가 그 자리 · 그 시간 · 그 날씨로 열립니다. 페이지는 생성 재질로 바로 시작하고, 스캔 126 MB는 걷는 동안 Poly Haven 서버에서 도착해 제자리를 채웁니다(화면 왼쪽 위에 출처와 도착 수 표시). GPU가 있는 기기에서 여세요.</p>
   <div class="chips" data-for="gallery" data-labels='{"day":"마을과 숲","ab":"스캔 켬 · 끔","wx":"시간 · 날씨","new":"다른 주제","proof":"검증"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
   <div id="gallery">
     <div class="group">
-      <h3>은여울 마을 <small>스캔 재질 15종 · 스캔 모델 6종</small></h3>
-      <p>포장 · 벽 · 지붕 · 목재는 Poly Haven의 촬영 재질을 실제 크기로 깔았고, 통 · 상자 · 양동이 · 그루터기 · 고목 · 화덕은 스캔 모델입니다. 건물과 지형, 나무와 풀은 코드가 만듭니다.</p>
+      <h3>은여울 마을 <small>스캔 재질 18종 · 스캔 모델 50종 · 잎 아틀라스 3종</small></h3>
+      <p>포장 · 벽 · 지붕 · 목재 · 나무껍질은 Poly Haven의 촬영 재질을 실제 크기로 깔았습니다. 통 · 탁자 · 바구니 · 그릇 · 연장 · 과일과 빵 · 바위 · 암벽 · 석상은 스캔 모델이고, 종류마다 한 번에 그리며(인스턴싱) 화면에서 삼각형이 두 픽셀쯤 되는 단계(LOD)를 골라 씁니다. 고사리 · 쐐기풀 · 소리쟁이 · 민들레 · 들꽃은 스캔 식생, 나뭇잎은 촬영한 잎과 잔가지 사진입니다. 건물과 지형, 나무의 줄기와 가지, 풀잎은 코드가 만듭니다.</p>
       <div class="grid">
-        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=0.5,60,0&amp;tod=17.2" target="_blank" rel="noopener"><img src="samples/lane.jpg" alt="남문 안쪽 골목: 촬영한 자갈 포장 길 양옆의 돌 1층 · 목골 2층 집들, 길 위의 깃발, 길 끝 광장의 분수" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">남문 골목 · 17:12</span><b>골목</b><span class="how">자갈길 · 막돌 벽 · 회벽 · 기와가 모두 스캔 재질. 건물 형태는 코드로 지음</span></div></a>
-        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=3,17.5,-6&amp;tod=16.0" target="_blank" rel="noopener"><img src="samples/square.jpg" alt="샘터 광장: 스캔 자갈 포장 위의 분수와 줄무늬 차양 좌판, 가로등, 3층 여관" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">광장 · 16:00</span><b>샘터 광장</b><span class="how">분수의 마름돌과 광장 포장이 스캔. 낡은 구간 · 흙이 드러난 틈은 엔진이 섞음</span></div></a>
-        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=3.5,-6.5,-42&amp;tod=16.2" target="_blank" rel="noopener"><img src="samples/inn.jpg" alt="붉은 지붕 여관: 스캔 돌벽 1층 위의 목골 2 · 3층과 기와 지붕, 앞마당의 자갈 포장" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">여관 · 16:12</span><b>붉은 지붕 여관</b><span class="how">돌 1층 · 회벽 · 기와 · 포장이 스캔 재질. 창과 문은 실제 개구부</span></div></a>
-        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=17.5,1.5,62&amp;tod=14" target="_blank" rel="noopener"><img src="samples/smithy.jpg" alt="모루 대장간: 돌집 옆의 열린 헛간과 벽돌 화덕의 불, 집 앞에 놓인 스캔 통" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">대장간 · 14:00</span><b>모루 대장간</b><span class="how">돌벽 · 지붕 · 벽돌 화덕이 스캔 재질, 앞의 통은 스캔 모델</span></div></a>
+        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=0.5,60,0&amp;tod=17.2" target="_blank" rel="noopener"><img src="samples/lane.jpg" alt="남문 안쪽 골목: 촬영한 자갈 포장 길 양옆의 돌 1층 · 목골 2층 집들, 길 위의 깃발, 벽 밑의 스캔 들풀, 길 끝 광장의 분수" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">남문 골목 · 17:12</span><b>골목</b><span class="how">자갈길 · 막돌 벽 · 회벽 · 기와가 스캔 재질, 벽 밑 쐐기풀과 소리쟁이는 스캔 식생</span></div></a>
+        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=3,17.5,-6&amp;tod=16.0" target="_blank" rel="noopener"><img src="samples/square.jpg" alt="샘터 광장: 스캔 자갈 포장 위의 분수와 줄무늬 차양 좌판, 좌판 위의 스캔 과일과 빵, 3층 여관" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">광장 · 16:00</span><b>샘터 광장</b><span class="how">좌판 위 과일 · 빵 · 항아리가 스캔 모델. 거리에 따라 부드러워지는 그림자</span></div></a>
+        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=-2.6,14.6,-43&amp;tod=14" target="_blank" rel="noopener"><img src="samples/table.jpg" alt="장터의 낮은 탁자: 스캔 나무 탁자 위의 고리버들 바구니와 사과, 놋그릇, 뒤편의 좌판과 궤짝" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">장터 · 14:00</span><b>바구니가 놓인 탁자</b><span class="how">탁자 · 바구니 · 사과 · 궤짝 모두 포토그래메트리 모델. 한 종류는 드로 콜 하나(인스턴싱)</span></div></a>
+        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=5.5,5.5,135&amp;tod=14" target="_blank" rel="noopener"><img src="samples/stall.jpg" alt="과일 좌판 가까이: 판자 좌판 위에 쌓인 스캔 사과와 레몬, 모서리의 사과 바구니, 뒤편의 통" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">과일 좌판 · 14:00</span><b>좌판의 과일</b><span class="how">사과 한 알 7천 삼각형 → 이 거리에서는 LOD로 4백 삼각형. 그림자는 생략</span></div></a>
+        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=-3.5,-6.5,-43&amp;tod=14" target="_blank" rel="noopener"><img src="samples/pots.jpg" alt="광장의 파란 탁자: 칠이 벗겨진 스캔 탁자 위의 도기 항아리와 우유통, 놋솥, 바구니" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">광장 · 14:00</span><b>도기와 놋그릇</b><span class="how">스캔 탁자 위 스캔 그릇들. 놋솥은 금속 반사</span></div></a>
+        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=-4.2,-15,-41&amp;tod=14" target="_blank" rel="noopener"><img src="samples/inn.jpg" alt="여관 앞: 체크 식탁보를 덮은 스캔 식탁과 걸상 둘, 식탁 위의 빵과 사과, 옆에 놓인 스캔 와인 통 셋" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">여관 앞 · 14:00</span><b>여관 앞 식탁</b><span class="how">식탁 · 걸상 · 통 · 빵이 스캔. 풀과 돌벽의 담쟁이는 엔진</span></div></a>
+        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=19.5,0.8,99&amp;tod=14" target="_blank" rel="noopener"><img src="samples/smithy.jpg" alt="대장간 앞: 벽에 기대 세운 스캔 방패, 스캔 통, 망치와 손도끼가 놓인 작업대, 화덕의 불" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">대장간 · 14:00</span><b>대장간의 연장</b><span class="how">방패 · 통 · 작업대 · 망치 · 손도끼가 스캔 모델</span></div></a>
+        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=-108,-84,-141&amp;tod=15" target="_blank" rel="noopener"><img src="samples/tor.jpg" alt="숲속 바위 능선: 층이 진 스캔 암벽과 그 앞의 스캔 바위들, 풀과 낙엽, 햇빛이 새는 숲" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">숲속 빈터 · 15:00</span><b>암벽과 바위</b><span class="how">암벽은 한쪽 면 스캔 둘을 등 맞대어 세움. 가까이서는 타일 바위 재질이 결을 더함</span></div></a>
+        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=-20,-90,-14&amp;tod=15" target="_blank" rel="noopener"><img src="samples/meadow.jpg" alt="초원 끝의 바위: 키 큰 풀 너머로 솟은 스캔 암벽과 바위, 뒤편의 숲 가장자리" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">꽃 초원 · 15:00</span><b>초원의 암벽</b><span class="how">6만 6천 삼각형 바위는 5 m 안에서만 원본, 이 거리에서는 1천 삼각형</span></div></a>
+        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=-100,-93,-52&amp;tod=15" target="_blank" rel="noopener"><img src="samples/wood.jpg" alt="깊은 숲: 스캔 나무껍질을 입은 굵은 참나무들, 낙엽이 깔린 바닥의 스캔 고사리, 어두운 수관" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">깊은 숲 · 15:00</span><b>숲 안쪽</b><span class="how">나무껍질 · 낙엽 바닥 · 고사리 · 잎이 모두 스캔에서 옴. 줄기와 가지 형태는 코드</span></div></a>
+        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=-70,-99,60&amp;tod=13" target="_blank" rel="noopener"><img src="samples/twig.jpg" alt="가문비나무 아래에서 올려다본 가지: 촬영한 잔가지 사진으로 그린 바늘잎, 그 너머의 활엽수" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">숲 가장자리 · 13:00</span><b>촬영한 잔가지</b><span class="how">나무는 숫자로 기르고, 잎 카드에는 스캔한 잔가지 · 잎 사진을 입힘</span></div></a>
+        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=-47,-1,-58&amp;tod=14" target="_blank" rel="noopener"><img src="samples/chapel.jpg" alt="예배당 뜰: 받침돌 위의 스캔 석상, 돌담과 풀밭, 뒤편의 숲" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">예배당 뜰 · 14:00</span><b>받침돌 위의 석상</b><span class="how">석상은 스캔 모델(2만 8천 삼각형), 받침돌과 돌담은 코드</span></div></a>
+        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=-6.4,31.8,-82&amp;tod=15" target="_blank" rel="noopener"><img src="samples/wall.jpg" alt="돌벽 가까이: 촬영 막돌 벽과 칠이 벗겨진 파란 덧문, 다듬은 돌 창대, 벽 밑의 스캔 들풀" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">골목 집 · 15:00</span><b>한 걸음 앞의 벽</b><span class="how">실물 크기의 스캔 벽. 돌이 줄눈에서 솟는 요철(패럴랙스)</span></div></a>
         <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=9.2,12.6,25&amp;tod=14" target="_blank" rel="noopener"><img src="samples/market.jpg" alt="장터 가까이: 자갈 포장 위에 놓인 스캔 와인 통 세 개와 자루, 좌판의 과일, 수레" loading="lazy" width="640" height="360">
           <div class="cap"><span class="no">장터 · 14:00</span><b>한 걸음 앞의 통</b><span class="how">포토그래메트리 통(10,820 삼각형). 엔진의 그림자 · 접촉 그림자 · 비를 그대로 받음</span></div></a>
-        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=-29.5,11.5,-45&amp;tod=14" target="_blank" rel="noopener"><img src="samples/well.jpg" alt="우물가: 스캔 돌로 쌓은 우물과 기와 지붕, 그 앞에 선 양동이와 옆에 넘어진 양동이" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">우물 · 14:00</span><b>우물과 양동이</b><span class="how">우물 몸통은 막돌 스캔, 양동이 둘은 스캔 모델(이름으로 놓은 소품)</span></div></a>
-        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=-6.4,31.8,-82&amp;tod=10.5" target="_blank" rel="noopener"><img src="samples/wall.jpg" alt="돌벽 가까이: 아침 햇빛을 받은 촬영 막돌 벽, 칠이 벗겨진 파란 덧문과 창, 다듬은 돌 창대" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">골목 집 · 10:30</span><b>한 걸음 앞의 벽</b><span class="how">실물 크기의 스캔 벽. 돌이 줄눈에서 솟는 요철(패럴랙스), 이끼와 때는 엔진이 얹음</span></div></a>
-        <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=-105,-76,-43&amp;tod=10" target="_blank" rel="noopener"><img src="samples/glade.jpg" alt="숲속 빈터: 앞쪽의 이끼 낀 큰 바위, 뒤편의 돌 화덕과 쓰러진 고목, 숲" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">숲속 빈터 · 10:00</span><b>빈터의 바위와 고목</b><span class="how">바위는 생성 형태에 스캔 바위 표면. 뒤의 고목 · 화덕은 스캔 모델</span></div></a>
         <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=12.5,-30.5,-34&amp;tod=16.5" target="_blank" rel="noopener"><img src="samples/bridge.jpg" alt="돌다리: 개울 위의 아치 다리와 그 너머 꽃 초원, 숲" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">돌다리 · 16:30</span><b>초원으로 가는 돌다리</b><span class="how">다리 돌과 물가 자갈이 스캔. 물 · 풀 · 나무는 엔진 그대로</span></div></a>
+          <div class="cap"><span class="no">돌다리 · 16:30</span><b>초원으로 가는 돌다리</b><span class="how">다리 돌과 물가 자갈이 스캔, 물가 바위는 스캔 모델</span></div></a>
         <a class="tile" data-tags="day" href="demo/village/?tour=0&amp;at=57,27,-4&amp;tod=15" target="_blank" rel="noopener"><img src="samples/mill.jpg" alt="여울 물레방아: 개울에 선 물레바퀴와 방앗간 집, 물가의 자작나무" loading="lazy" width="640" height="360">
           <div class="cap"><span class="no">물레방아 · 15:00</span><b>여울 물레방아</b><span class="how">돌아가는 바퀴의 판자와 방앗간 벽이 스캔 재질</span></div></a>
       </div>
     </div>
     <div class="group">
       <h3>스캔 켬 · 끔 <small>같은 자리 · 같은 시간</small></h3>
-      <p>스캔마다 생성 쌍둥이가 있습니다. <code>?scan=0</code>으로 열거나 스캔이 40초 안에 오지 않으면 그 표면은 코드로 구운 재질로, 그 물건은 생성 소품으로 그립니다. 오른쪽 카드가 그 화면입니다.</p>
+      <p>표면마다 생성 쌍둥이(코드로 구운 재질)가 있고, 통 · 상자 · 그루터기 · 바위도 생성 소품이 있습니다. <code>?scan=0</code>으로 열면 그것만으로 그립니다. 스캔이 도착하기 전 처음 몇 초도 오른쪽 화면처럼 보입니다.</p>
       <div class="grid">
         <a class="tile" data-tags="ab" href="demo/village/?tour=0&amp;at=0.5,60,0&amp;tod=17.2" target="_blank" rel="noopener"><img src="samples/lane.jpg" alt="(위와 같은 골목 화면, 스캔 켬)" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">골목 · 스캔 켬</span><b>스캔 재질</b><span class="how">촬영한 자갈 · 돌 · 회벽 · 기와</span></div></a>
+          <div class="cap"><span class="no">골목 · 스캔 켬</span><b>스캔 재질과 식생</b><span class="how">촬영한 자갈 · 돌 · 회벽 · 기와, 벽 밑의 스캔 들풀</span></div></a>
         <a class="tile" data-tags="ab" href="demo/village/?tour=0&amp;at=0.5,60,0&amp;tod=17.2&amp;scan=0" target="_blank" rel="noopener"><img src="samples/lane-gen.jpg" alt="같은 골목을 스캔 없이 연 화면: 코드로 구운 자갈길과 돌벽, 회벽" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">골목 · 스캔 끔 (?scan=0)</span><b>생성 재질</b><span class="how">같은 자리 · 같은 시간. 스캔이 오지 않으면 페이지가 그리는 화면</span></div></a>
+          <div class="cap"><span class="no">골목 · 스캔 끔 (?scan=0)</span><b>생성 재질</b><span class="how">같은 자리 · 같은 시간. 스캔이 도착하기 전 몇 초 동안의 화면이기도 함</span></div></a>
         <a class="tile" data-tags="ab" href="demo/village/?tour=0&amp;at=9.2,12.6,25&amp;tod=14" target="_blank" rel="noopener"><img src="samples/market.jpg" alt="(위와 같은 장터 화면, 스캔 켬)" loading="lazy" width="640" height="360">
           <div class="cap"><span class="no">장터 · 스캔 켬</span><b>스캔 통</b><span class="how">포토그래메트리 모델</span></div></a>
         <a class="tile" data-tags="ab" href="demo/village/?tour=0&amp;at=9.2,12.6,25&amp;tod=14&amp;scan=0" target="_blank" rel="noopener"><img src="samples/market-gen.jpg" alt="같은 장터를 스캔 없이 연 화면: 선반 돌려 만든 생성 통과 코드로 구운 자갈 포장" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">장터 · 스캔 끔 (?scan=0)</span><b>생성 통</b><span class="how">회전체로 만든 통 · 판자 재질. 스캔마다 이런 생성 쌍둥이가 있음</span></div></a>
-        <a class="tile" data-tags="ab" href="demo/village/?tour=0&amp;at=-6.4,31.8,-82&amp;tod=10.5" target="_blank" rel="noopener"><img src="samples/wall.jpg" alt="(위와 같은 벽 화면, 스캔 켬)" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">벽 · 스캔 켬</span><b>스캔 벽</b><span class="how">촬영한 막돌</span></div></a>
-        <a class="tile" data-tags="ab" href="demo/village/?tour=0&amp;at=-6.4,31.8,-82&amp;tod=10.5&amp;scan=0" target="_blank" rel="noopener"><img src="samples/wall-gen.jpg" alt="같은 벽을 스캔 없이 연 화면: 코드로 구운 막돌 벽과 마름돌" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">벽 · 스캔 끔 (?scan=0)</span><b>생성 벽</b><span class="how">GLSL 함수로 구운 막돌</span></div></a>
+          <div class="cap"><span class="no">장터 · 스캔 끔 (?scan=0)</span><b>생성 통</b><span class="how">회전체로 만든 통 · 판자 재질. 통 · 상자 · 그루터기 · 바위는 생성 쌍둥이가 있음</span></div></a>
+        <a class="tile" data-tags="ab" href="demo/village/?tour=0&amp;at=-100,-93,-52&amp;tod=15" target="_blank" rel="noopener"><img src="samples/wood.jpg" alt="(위와 같은 숲 화면, 스캔 켬)" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">숲 · 스캔 켬</span><b>스캔 껍질 · 잎 · 고사리</b><span class="how">촬영한 나무껍질과 잎, 스캔 고사리</span></div></a>
+        <a class="tile" data-tags="ab" href="demo/village/?tour=0&amp;at=-100,-93,-52&amp;tod=15&amp;scan=0" target="_blank" rel="noopener"><img src="samples/wood-gen.jpg" alt="같은 숲을 스캔 없이 연 화면: 코드로 그린 나무껍질과 잎, 생성 고사리" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">숲 · 스캔 끔 (?scan=0)</span><b>생성 껍질 · 잎</b><span class="how">GLSL 함수로 구운 껍질과 코드로 그린 잎 가지</span></div></a>
       </div>
     </div>
     <div class="group">
-      <h3>시간 · 날씨 <small>스캔도 같은 상태를 읽음</small></h3>
-      <p>스캔 재질은 엔진의 재질 레이어에 다시 구워지므로 비에 젖고, 높이 맵의 낮은 곳에 웅덩이가 차고, 위를 보는 면에 눈이 쌓입니다.</p>
+      <h3>시간 · 계절 · 날씨 <small>스캔도 같은 상태를 읽음</small></h3>
+      <p>스캔 재질은 엔진의 재질 레이어에 다시 구워지므로 비에 젖고, 높이 맵의 낮은 곳에 웅덩이가 차고, 위를 보는 면에 눈이 쌓입니다. 스캔 모델과 식생도 같은 표면 법칙으로 그리므로 젖고, 물들고, 눈을 받습니다.</p>
       <div class="grid">
         <a class="tile" data-tags="wx" href="demo/village/?tour=0&amp;at=3,17.5,-6&amp;tod=19.75" target="_blank" rel="noopener"><img src="samples/dusk.jpg" alt="해 질 녘 광장: 불이 켜진 창과 가로등, 보랏빛 하늘, 어두워진 자갈 포장" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">광장 · 19:45</span><b>노을</b><span class="how">스캔 재질도 엔진의 시간별 노출과 그레이드를 그대로 받음</span></div></a>
+          <div class="cap"><span class="no">광장 · 19:45</span><b>노을</b><span class="how">스캔 재질과 모델도 엔진의 시간별 노출과 그레이드를 그대로 받음</span></div></a>
         <a class="tile" data-tags="wx" href="demo/village/?tour=0&amp;at=0.5,60,0&amp;tod=14.5&amp;wx=rain" target="_blank" rel="noopener"><img src="samples/rain.jpg" alt="비 오는 골목: 젖어 어두워진 스캔 자갈길의 웅덩이와 파문, 빗줄기, 안개에 잠긴 광장" loading="lazy" width="640" height="360">
           <div class="cap"><span class="no">골목 · 비</span><b>비</b><span class="how">스캔 돌이 젖어 어두워지고 낮은 곳(스캔의 높이 맵)에 웅덩이가 참</span></div></a>
         <a class="tile" data-tags="wx" href="demo/village/?tour=0&amp;at=6,10,-20&amp;tod=21.8&amp;wet=1&amp;puddle=1" target="_blank" rel="noopener"><img src="samples/after-rain.jpg" alt="비 갠 밤의 광장: 젖은 스캔 자갈과 웅덩이에 비치는 가로등과 불 켜진 창, 분수" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">광장 · 비 갠 밤</span><b>비 갠 뒤</b><span class="how">젖은 스캔 포장과 웅덩이가 등불과 창을 비춤(화면 공간 반사)</span></div></a>
-        <a class="tile" data-tags="wx" href="demo/village/?tour=0&amp;at=3,17.5,-6&amp;tod=9.5&amp;wx=winter" target="_blank" rel="noopener"><img src="samples/winter.jpg" alt="맑은 겨울 아침 광장: 눈 덮인 스캔 기와 지붕과 긴 아침 그림자, 굴뚝 연기, 잎이 진 나무" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">광장 · 겨울 아침</span><b>맑은 겨울 아침</b><span class="how">눈은 위를 보는 면 · 하늘이 열린 곳에만. 스캔 지붕 · 통 위에도 쌓임</span></div></a>
+          <div class="cap"><span class="no">광장 · 비 갠 밤</span><b>비 갠 뒤</b><span class="how">젖은 스캔 포장과 웅덩이가 등불과 창을 비춤</span></div></a>
+        <a class="tile" data-tags="wx" href="demo/village/?tour=0&amp;at=-62,-100.5,82&amp;tod=16&amp;wx=autumn" target="_blank" rel="noopener"><img src="samples/autumn.jpg" alt="가을 숲 가장자리: 노랗고 붉게 물든 잎, 갈색으로 변한 스캔 고사리, 스캔 바위" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">숲 가장자리 · 가을</span><b>가을</b><span class="how">촬영한 잎도 잎마다 제 때에 물들고, 스캔 고사리는 누렇게 변함</span></div></a>
+        <a class="tile" data-tags="wx" href="demo/village/?tour=0&amp;at=3,17.5,-6&amp;tod=9.5&amp;wx=winter" target="_blank" rel="noopener"><img src="samples/winter.jpg" alt="맑은 겨울 아침 광장: 눈 덮인 스캔 기와 지붕과 긴 아침 그림자, 눈이 얹힌 좌판과 통, 잎이 진 나무" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">광장 · 겨울 아침</span><b>맑은 겨울 아침</b><span class="how">눈은 위를 보는 면 · 하늘이 열린 곳에만 쌓이고, 스캔 모델 위에도 쌓임</span></div></a>
       </div>
     </div>
     <div class="group">
       <h3>다른 주제 <small>스타터 · 다른 스캔 목록</small></h3>
-      <p>같은 엔진으로 만든 산속 호숫가 오두막입니다. 판자벽 · 초가 · 막돌 · 흙 · 숲 바닥 · 소나무 껍질을 마을과 다른 스캔 9종으로 골랐습니다. 새 장소는 이 폴더를 복사해 시작합니다.</p>
+      <p>같은 엔진으로 만든 산속 호숫가 오두막입니다. 판자벽 · 초가 · 막돌 · 흙 · 숲 바닥 · 소나무 껍질을 마을과 다른 스캔 9종으로 골랐고, 스캔 바위 · 고사리와 침엽수 잔가지 아틀라스도 씁니다. 새 장소는 이 폴더를 복사해 시작합니다.</p>
       <div class="grid">
         <a class="tile" data-tags="new" href="demo/starter/" target="_blank" rel="noopener"><img src="samples/starter.jpg" alt="산속 호숫가의 오두막: 촬영한 판자벽과 초가 지붕, 막돌 기단, 문 옆의 스캔 통, 소나무 숲" loading="lazy" width="640" height="360">
           <div class="cap"><span class="no">Tarn Cabin · 15:00</span><b>호숫가 오두막</b><span class="how">판자벽 · 초가 · 기단 · 흙 마당이 스캔 재질. 단계 ⓪–⑧ 주석</span></div></a>
@@ -133,8 +147,8 @@ node scanned-realm/scripts/new-realm.mjs ~/my-realm                         # �
       </div>
     </div>
     <div class="group">
-      <h3>검증 <small>재질 시트 · 스캔 도착 검사</small></h3>
-      <p><code>check.mjs</code>가 이름 붙인 스캔이 모두 도착했는지, 스캔 모델이 몇 개 · 몇 삼각형으로 놓였는지 세고, 산책 경로 전체를 벽 · 나무 · 깊은 물과 대조하고, 시점마다 낮 · 노을 · 밤 · 비 · 눈을 렌더해 확인합니다.</p>
+      <h3>검증 <small>재질 시트 · 스캔 도착 · 삼각형 수</small></h3>
+      <p><code>check.mjs</code>가 이름 붙인 스캔이 모두 도착하고 비어 있지 않게 구워졌는지, 스캔 모델이 몇 개 놓였고 시점마다 몇 삼각형을 쓰는지 세고(은여울 마을: 시점당 93–331개 · 7만–23만 삼각형 · 드로 콜 27–82), 산책 경로 전체를 벽 · 나무 · 깊은 물과 대조하고, 시점마다 낮 · 노을 · 밤 · 비 · 눈을 렌더해 확인합니다. 프레임 속도는 GPU가 없는 환경에서 만들어 재지 못했습니다. 실제 기기에서는 <code>?prof=1</code>로 패스별 GPU 시간을 볼 수 있습니다.</p>
       <div class="grid">
         <a class="tile" data-tags="proof" href="samples/mats-full.jpg" target="_blank" rel="noopener"><img src="samples/mats.jpg" alt="재질 시트: 스캔으로 바뀐 회벽 · 목재 · 판자 · 막돌 · 마름돌 · 벽돌 · 자갈 포장 · 흙 · 낙엽 · 자갈 · 바위 · 슬레이트 · 기와 · 초가 · 나무껍질과 생성으로 남은 잔디 · 이끼 · 쇠 · 천 · 눈, 스캔 모델 여섯 개의 텍스처" loading="lazy" width="640" height="360">
           <div class="cap"><span class="no">재질 시트</span><b>스캔과 생성이 한 장에</b><span class="how">render.mjs --mats. 스캔을 고른 직후 여기서 읽히는 것 · 방향 · 톤을 봄</span></div></a>
@@ -145,13 +159,13 @@ node scanned-realm/scripts/new-realm.mjs ~/my-realm                         # �
 
 <section id="works"><div class="wrap">
   <h2>실제 작품</h2>
-  <p class="lead">이 스킬은 이 레포에서 living-realm의 예제 「은여울 마을」에 스캔을 넣으며 다듬었습니다. 목표로 삼은 화면은 Rez의 X 게시물이고, 스캔은 모두 Poly Haven(CC0)에서 받습니다.</p>
+  <p class="lead">이 스킬은 이 레포에서 living-realm의 예제 「은여울 마을」에 스캔을 넣으며 다듬었습니다. 목표로 삼은 화면은 Rez의 X 게시물이고, 스캔은 모두 Poly Haven(CC0)에서 받습니다. Megascans는 무료가 되었지만 Fab 라이선스가 원본 파일을 공개 페이지에서 내려 주는 것과 스크립트 내려받기를 금지하므로 쓰지 않습니다.</p>
   <div class="works">
-    <a class="work" href="demo/village/" target="_blank" rel="noopener"><b>「은여울 마을」 · 라이브 페이지</b><span>걸어 다니는 마을 · 스캔 재질 15종 · 스캔 모델 6종 · 낮밤 · 비 · 겨울 · 스캔 57 MB를 Poly Haven 서버에서 읽음</span><span class="url">jungrok5.github.io/motion-skills/scanned-realm/demo/village/</span></a>
+    <a class="work" href="demo/village/" target="_blank" rel="noopener"><b>「은여울 마을」 · 라이브 페이지</b><span>걸어 다니는 마을 · 스캔 재질 18종 · 스캔 모델 50종 · 잎 아틀라스 3종 · 낮밤 · 비 · 겨울 · 스캔 126 MB가 걷는 동안 Poly Haven 서버에서 도착</span><span class="url">jungrok5.github.io/motion-skills/scanned-realm/demo/village/</span></a>
     <a class="work" href="demo/village/?scan=0" target="_blank" rel="noopener"><b>같은 마을 · 스캔 없이</b><span>코드로 구운 재질과 생성 소품만으로 여는 같은 페이지 · 내려받기 없음</span><span class="url">jungrok5.github.io/motion-skills/scanned-realm/demo/village/?scan=0</span></a>
     <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/scanned-realm/examples/village"><b>예제 소스 · examples/village</b><span>브리프, 스캔 목록(assets.json), 땅, 지명, 건물 배치, 살림, 식생, 산책 경로</span><span class="url">github.com/jungrok5/motion-skills/…/scanned-realm/examples/village</span></a>
     <a class="work" href="https://x.com/RezAIT00/status/2120498246426706176?a=CUYTAAEWhBIL6PS4ZPk&amp;s=19"><b>출처 게시물 · Rez (X)</b><span>"This is fable 5.2 with blender and unreal" · 언리얼 엔진 숲과 초원 영상 48초 (코드 · 에셋 없음: 화면만 참고)</span><span class="url">x.com/RezAIT00/status/2120498246426706176</span></a>
-    <a class="work" href="https://polyhaven.com"><b>스캔 출처 · Poly Haven</b><span>CC0 스캔 재질과 모델. 장소마다 목록으로 받아 오고 저장소에는 넣지 않음. 쓴 스캔과 제작자는 각 장소의 assets/CREDITS.md에</span><span class="url">polyhaven.com</span></a>
+    <a class="work" href="https://polyhaven.com"><b>스캔 출처 · Poly Haven</b><span>CC0 스캔 재질 · 모델 · 식생 · 잎 아틀라스. 장소마다 목록으로 받아 오고 저장소에는 넣지 않음. 쓴 스캔과 제작자는 각 장소의 assets/CREDITS.md에</span><span class="url">polyhaven.com</span></a>
     <a class="work" href="https://claude.ai/artifact/D8t6NHbpDJXtCovZU6KADP"><b>레퍼런스 · 「Larkhollow」 (@lucian__03)</b><span>엔진의 톤 · 대기 · 풀을 견준 코드 생성 농장 (코드는 가져오지 않음)</span><span class="url">claude.ai/artifact/D8t6NHbpDJXtCovZU6KADP</span></a>
     <a class="work" href="https://claude.ai/artifact/BGY1SztrAYcJQHSsnHHGmp"><b>레퍼런스 · 「Saltline」</b><span>낮은 키의 톤과 젖은 바닥을 견준 코드 생성 항구 (코드는 가져오지 않음)</span><span class="url">claude.ai/artifact/BGY1SztrAYcJQHSsnHHGmp</span></a>
   </div>
@@ -163,11 +177,11 @@ node scanned-realm/scripts/new-realm.mjs ~/my-realm                         # �
     <li><a href="https://github.com/jungrok5/motion-skills/blob/main/scanned-realm/SKILL.md">SKILL.md</a> <span>워크플로 · 규칙 · 계약</span></li>
     <li><a href="https://github.com/jungrok5/motion-skills/tree/main/scanned-realm">폴더</a> <span>lib · scripts · references · starter · examples</span></li>
     <li><a href="https://github.com/jungrok5/motion-skills/blob/main/scanned-realm/README.md">README.md</a> <span>빠른 시작 · 조작</span></li>
-    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/scanned-realm/references/ASSETS.md">references/ASSETS.md</a> <span>스캔 고르기 · 맞추기 · 용량 · 라이선스 · 배포, 써 보고 뺀 것</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/scanned-realm/references/ASSETS.md">references/ASSETS.md</a> <span>스캔 고르기 · LOD · 식생 · 잎 아틀라스 · 용량과 스트리밍 · 라이선스 표(Megascans 포함) · 배포, 써 보고 뺀 것</span></li>
     <li><a href="https://github.com/jungrok5/motion-skills/blob/main/scanned-realm/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 검토 기준</span></li>
     <li><a href="https://github.com/jungrok5/motion-skills/blob/main/scanned-realm/references/LOOK.md">references/LOOK.md</a> <span>화면을 이루는 것과 한계</span></li>
     <li><a href="https://github.com/jungrok5/motion-skills/blob/main/scanned-realm/references/KIT.md">references/KIT.md</a> <span>모든 빌더와 옵션</span></li>
-    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/scanned-realm/references/PERF.md">references/PERF.md</a> <span>프레임 구성 · 예산 · 로딩</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/scanned-realm/references/PERF.md">references/PERF.md</a> <span>프레임 구성 · 시점별 삼각형 수 · 패스별 GPU 시간 재는 법 · 로딩</span></li>
     <li><a href="https://github.com/jungrok5/motion-skills/blob/main/scanned-realm/references/SOURCE.md">references/SOURCE.md</a> <span>무엇으로 만들었는지, 조건을 풀어 달라진 것과 그대로인 것</span></li>
     <li><a href="https://github.com/jungrok5/motion-skills/blob/main/scanned-realm/references/LESSONS.md">references/LESSONS.md</a> <span>스캔을 넣으며 겪은 문제와 해결</span></li>
     <li><a href="../living-realm/">living-realm</a> <span>같은 엔진의 에셋 0개 · HTML 한 파일 판</span></li>
@@ -176,7 +190,7 @@ node scanned-realm/scripts/new-realm.mjs ~/my-realm                         # �
 </main>
 
 <footer><div class="wrap">
-  <a href="../">← 스킬 목록</a> · 이미지는 모두 이 스킬의 예제에서 렌더한 프레임입니다. 스캔 재질과 모델: <a href="https://polyhaven.com">Poly Haven</a> (CC0). three.js r170 (MIT).
+  <a href="../">← 스킬 목록</a> · 이미지는 모두 이 스킬의 예제에서 렌더한 프레임입니다. 스캔 재질 · 모델 · 식생: <a href="https://polyhaven.com">Poly Haven</a> (CC0). three.js r170 · meshoptimizer (MIT).
 </div></footer>
 <script src="../assets/site.js"></script>
 </body>

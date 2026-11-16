@@ -22,7 +22,7 @@ node living-realm/scripts/new-realm.mjs my-realm            # from the starter (
 node living-realm/scripts/build.mjs my-realm && node living-realm/scripts/check.mjs my-realm
 ```
 
-On the page: **W A S D / arrows** walk · **Q E / ← →** turn · mouse or touch looks · **Shift** runs · **1–4** dawn, day,
+On the page: **W A S D / arrows** walk · **Q E / ← →** turn · mouse or touch looks (left thumb walks, right thumb looks) · a gamepad's sticks walk and look · **Shift** runs · **1–4** dawn, day,
 dusk, night · **5–7** clear, rain, winter · **T** the automatic round · **C** the tour · **G** quality · **M** sound ·
 **P** numbers. Options: `?q=low|medium|high|ultra`, `?tod=19.5`, `?wx=rain`, `?tour=0`.
 

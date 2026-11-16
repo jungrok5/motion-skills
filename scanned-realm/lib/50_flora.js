@@ -104,9 +104,39 @@
         const i = ((cy0 + y) * W + cx0 + x) * 4; over(i, [col[0] * sh, col[1] * sh, col[2] * sh], cov); B[i + 2] = B[i + 2] + (1 - B[i + 2]) * cov; if (cov > 0.4) B[i + 1] = id;
       }
     };
+    // a photographed piece (LR.atlas.part): its base at (bx, by), pointing along ang, `len` long (cell units), its colour times tint.
+    // mode 0: all of it is one leaf (id).  mode 1: a whole spray — what is brown is twig, what is green is leaf, in patches that fall together
+    const smp = [0, 0, 0, 0];
+    const stamp = (P, bx_, by_, ang, len, tint, id, mode, cut, wid) => {
+      const X = px(bx_), Y = px(by_), Lp = px(len), Wp = cut ? px(wid) * 2.1 : Lp * (P.w / P.h), c = Math.cos(ang), s = Math.sin(ang), lod = Math.log2(Math.max(1, P.h / Lp)), hw = Wp / 2, pw = CELL / 14;
+      const xs = [X - s * -hw, X + s * -hw, X + c * Lp - s * -hw, X + c * Lp + s * -hw], ys = [Y + c * -hw, Y - c * -hw, Y + s * Lp + c * -hw, Y + s * Lp - c * -hw];
+      const ax = Math.max(1, Math.floor(Math.min(...xs) - 1)), bx = Math.min(CELL - 2, Math.ceil(Math.max(...xs) + 1)), ay = Math.max(1, Math.floor(Math.min(...ys) - 1)), by = Math.min(CELL - 2, Math.ceil(Math.max(...ys) + 1));
+      if (mode === 0) { const off = Math.max(1, Math.round(CELL * 0.007)), ox = off, oy = -off * 2;                // the shade it throws on the leaves already there
+        for (let y = ay; y <= by; y++) for (let x = ax; x <= bx; x++) { const tx = x + ox, ty = y + oy; if (tx < 1 || ty < 1 || tx > CELL - 2 || ty > CELL - 2) continue;
+          const dx = x + 0.5 - X, dy = y + 0.5 - Y, t = (dx * c + dy * s) / Lp, u = 0.5 + (-dx * s + dy * c) / Wp; if (t < 0 || t > 1 || u < 0 || u > 1) continue;
+          let cv; if (cut) { const v = (u - 0.5) * 2.1; cv = LR.sat(0.5 - (Math.abs(v) - cut(t)) * (Wp / 2.1)); } else { LR.atlas.sample(P, u, t, lod + 1, smp); cv = Math.min(1, smp[3]); }
+          if (cv > 0.05) { const j = ((cy0 + ty) * W + cx0 + tx) * 4, k = 1 - 0.42 * cv; A[j] *= k; A[j + 1] *= k; A[j + 2] *= k; } } }
+      for (let y = ay; y <= by; y++) for (let x = ax; x <= bx; x++) {
+        const dx = x + 0.5 - X, dy = y + 0.5 - Y, t = (dx * c + dy * s) / Lp, u = 0.5 + (-dx * s + dy * c) / Wp; if (t < 0 || t > 1 || u < 0 || u > 1) continue;
+        let cov, r0, g0, b0;
+        if (cut) {                                                                // the photograph's blade (its stalk left out) seen through a generated outline
+          const v = (u - 0.5) * 2.1, w = cut(t), sd = (Math.abs(v) - w) * (Wp / 2.1); cov = LR.sat(0.5 - sd) * LR.sat(t * Lp + 0.5) * LR.sat((1 - t) * Lp + 0.5); if (cov <= 0) continue;
+          LR.atlas.sample(P, 0.5 + (u - 0.5) * 0.92, 0.16 + 0.8 * t, lod, smp);
+          if (smp[3] > 0.3) { const k = 1 / smp[3]; r0 = smp[0] * k; g0 = smp[1] * k; b0 = smp[2] * k; } else { r0 = P.mean[0]; g0 = P.mean[1]; b0 = P.mean[2]; }
+        } else { LR.atlas.sample(P, u, t, lod, smp); cov = Math.min(1, smp[3]); if (cov < 0.02) continue; const k = 1 / smp[3]; r0 = smp[0] * k; g0 = smp[1] * k; b0 = smp[2] * k; }
+        const col = [r0 * r0 * tint[0], g0 * g0 * tint[1], b0 * b0 * tint[2]], i = ((cy0 + y) * W + cx0 + x) * 4;
+        over(i, col, cov);
+        if (mode === 1 && r0 > g0 * 1.02) { B[i] = Math.max(B[i], cov); B[i + 2] *= 1 - cov; }
+        else { B[i + 2] = B[i + 2] + (1 - B[i + 2]) * cov; if (cov > 0.4) B[i + 1] = mode === 1 ? (((Math.floor(x / pw) * 73856093) ^ (Math.floor(y / pw) * 19349663)) >>> 0) % 997 / 997 : id; }
+      }
+    };
+    // species.leaf.scan = { atlas: key, parts: [[u0, v0, u1, v1, turn], …], kind: 'leaves' | 'spray', size, own (0..1: how much of the photograph's own
+    // hue is kept against the species' palette), gain } — used when that atlas is loaded (LR.atlas.load), else the painted spray
+    const scanOf = (L) => { const sc = L.scan; if (!sc || !LR.atlas || !LR.atlas.has(sc.atlas)) return null; if (!sc._p) sc._p = sc.parts.map((q) => LR.atlas.part(sc.atlas, q)); return sc; };
+    const tintFor = (P, c, own, g) => [0, 1, 2].map((k) => (own + ((1 - own) * c[k]) / Math.max(2e-3, P.mean[k] * P.mean[k])) * g);
     const leafCol = (pal, r) => { const a = pal[r.int(pal.length)], b = pal[r.int(pal.length)], t = r(), k = r.range(0.8, 1.12); return [LR.lerp(a[0], b[0], t) * k, LR.lerp(a[1], b[1], t) * k, LR.lerp(a[2], b[2], t) * k]; };
     const sprayBroad = (L, r) => {                                               // a leafy branchlet: an axis, side twigs, twiglets, small leaves all along
-      const pal = L.summer.map(hex), tw = hex(L.twig), sh = L.spray, ll = L.leafLen || 0.078, la = L.leafAspect || 0.3, fill = L.leafFill === undefined ? 0.92 : L.leafFill, leaves = [];
+      const SC = scanOf(L), pal = L.summer.map(hex), tw = hex(L.twig), sh = L.spray, ll = (L.leafLen || 0.078) * (SC ? SC.size || 1.15 : 1), la = L.leafAspect || 0.3, fill = (L.leafFill === undefined ? 0.92 : L.leafFill) * (SC ? SC.fill || 0.72 : 1), leaves = [];
       const inside = (x, y) => x > 0.035 && x < 0.965 && y > 0.03 && y < 0.97;
       const twig = (x0, y0, ang, len, w0, depth, tone) => {
         const n = Math.max(2, Math.round(len / 0.042)); let x = x0, y = y0, a = ang; const bend = r.range(-0.3, 0.3); tone = tone || r.range(0.62, 1.28);
@@ -126,7 +156,8 @@
       leaves.sort((p, q) => p[1] - q[1]);                                        // low ones first so the upper overlap them
       for (const l of leaves) { let len = Math.min(l[3], 0.3); for (let k = 0; k < 4 && !inside(l[0] + Math.cos(l[2]) * len, l[1] + Math.sin(l[2]) * len); k++) { l[2] = Math.atan2(0.5 - l[1], 0.5 - l[0]) + r.range(-0.8, 0.8); len *= 0.85; }
         const c = leafCol(pal, r), tn = l[4] || 1; c[0] *= tn; c[1] *= tn; c[2] *= tn; if (r() < 0.05) { c[0] *= 1.5; c[1] *= 1.15; }
-        leaf(l[0], l[1], l[2], len, len * la, sh, c, r()); }
+        if (SC) { const P = SC._p[r.int(SC._p.length)]; stamp(P, l[0], l[1], l[2], len, tintFor(P, c, SC.own === undefined ? 0.35 : SC.own, SC.gain || 1), r(), 0, SC.cut ? SHAPES[SC.cut] : null, len * la); }
+        else leaf(l[0], l[1], l[2], len, len * la, sh, c, r()); }
     };
     const sprayNeedle = (L, r) => {                                              // a flat spruce branchlet: herringbone twigs, needles all along
       const pal = L.summer.map(hex), tw = hex(L.twig), nl = L.leafLen || 0.034, nw = L.needleWidth || 0.0065;
@@ -139,11 +170,15 @@
       for (const s of segs) needles(s[0], s[1], s[2], s[3], r(), 1 - 0.25 * s[4]);
     };
     const sprayPine = (L, r) => {                                                // long needles in tufts at the twig ends
-      const pal = L.summer.map(hex), tw = hex(L.twig), nl = L.leafLen || 0.3;
-      const tuft = (x, y, a) => { const c = leafCol(pal, r), id = r(), n = 46; for (let i = 0; i < n; i++) { const na = a + r.range(-1.35, 1.35), l = nl * r.range(0.6, 1.1) * (1 - 0.3 * Math.abs(na - a) / 1.35), sh = r.range(0.7, 1.2); const ex = LR.clamp(x + Math.cos(na) * l, 0.03, 0.97), ey = LR.clamp(y + Math.sin(na) * l, 0.03, 0.97); line(x, y, ex, ey, 0.0075, 0.004, [c[0] * sh, c[1] * sh, c[2] * sh], 1, id); } };
+      const SC = scanOf(L), pal = L.summer.map(hex), tw = hex(L.twig), nl = L.leafLen || 0.3;
+      const tuft = (x, y, a) => { if (SC) { for (const d of [-0.62, 0.62, 0]) { const P = SC._p[r.int(SC._p.length)], c = leafCol(pal, r), aa = a + d * r.range(0.8, 1.2), len = Math.min(nl * (SC.size || 1.9) * (d ? r.range(0.72, 0.9) : 1), Math.max(0.1, (0.95 - y) / Math.max(0.3, Math.sin(aa)))); stamp(P, x, y, aa, len, tintFor(P, c, SC.own === undefined ? 0.5 : SC.own, SC.gain || 1), r(), 1); } return; } const c = leafCol(pal, r), id = r(), n = 46; for (let i = 0; i < n; i++) { const na = a + r.range(-1.35, 1.35), l = nl * r.range(0.6, 1.1) * (1 - 0.3 * Math.abs(na - a) / 1.35), sh = r.range(0.7, 1.2); const ex = LR.clamp(x + Math.cos(na) * l, 0.03, 0.97), ey = LR.clamp(y + Math.sin(na) * l, 0.03, 0.97); line(x, y, ex, ey, 0.0075, 0.004, [c[0] * sh, c[1] * sh, c[2] * sh], 1, id); } };
       let x = 0.5, y = 0.03, a = Math.PI / 2 + r.range(-0.1, 0.1); const ends = [];
       for (let i = 0; i < 3; i++) { const nx = x + Math.cos(a) * 0.14, ny = y + Math.sin(a) * 0.14; line(x, y, nx, ny, 0.022 - i * 0.004, 0.018 - i * 0.004, tw, 0, 0); const sd = i % 2 ? 1 : -1, ba = a + sd * r.range(0.6, 0.95), bl = r.range(0.16, 0.24), bx = nx + Math.cos(ba) * bl, by = ny + Math.sin(ba) * bl; line(nx, ny, bx, by, 0.012, 0.008, tw, 0, 0); ends.push([bx, by, ba]); x = nx; y = ny; a += r.range(-0.2, 0.2); }
-      ends.push([x, y, a]); for (const e of ends) tuft(e[0], e[1], e[2]);
+      ends.push([x, y, a]); if (SC) ends.sort((p, q) => p[1] - q[1]); for (const e of ends) tuft(e[0], e[1], SC ? LR.lerp(e[2], Math.PI / 2, 0.35) : e[2]);
+    };
+    const sprayScan = (L, r, SC, k) => {                                         // a whole photographed spray (a conifer twig, a compound leaf) fills the cell
+      const P = SC._p[k % SC._p.length], pal = L.summer.map(hex), m = [0, 1, 2].map((q) => pal.reduce((a, c) => a + c[q], 0) / pal.length), len = Math.min(0.93, 0.92 * (P.h / P.w));
+      stamp(P, 0.5, 0.03, Math.PI / 2 + r.range(-0.03, 0.03), len, tintFor(P, m, SC.own === undefined ? 0.5 : SC.own, SC.gain || 1), 0, 1);
     };
     let cell = 0;
     for (const sp of species) {
@@ -151,7 +186,7 @@
       for (let k = 0; k < 2; k++) {
         if (cell >= COLS * ROWS) throw new Error('flora: the leaf atlas holds ' + (COLS * ROWS / 2) + ' species');
         cx0 = (cell % COLS) * CELL; cy0 = Math.floor(cell / COLS) * CELL; const r = LR.rng('spray' + sp.name + k + sp.seed);
-        (sp.leaf.spray === 'needle' ? sprayNeedle : sp.leaf.spray === 'pine' ? sprayPine : sprayBroad)(sp.leaf, r);
+        const scn = scanOf(sp.leaf); if (scn && scn.kind === 'spray') sprayScan(sp.leaf, r, scn, k); else (sp.leaf.spray === 'needle' ? sprayNeedle : sp.leaf.spray === 'pine' ? sprayPine : sprayBroad)(sp.leaf, r);
         // snow clumps; fill what nothing covered with the cell's mean colour so edges do not darken
         let sr = 0, sg = 0, sb = 0, sw = 0;
         for (let y = 0; y < CELL; y++) for (let x = 0; x < CELL; x++) { const i = ((cy0 + y) * W + cx0 + x) * 4; B[i + 3] = LR.sm(0.42, 0.6, LR.fbm(x / CELL * 5 + cell * 3.7, y / CELL * 5 + 1.3, 3)); if (B[i + 2] > 0.5) { sr += A[i]; sg += A[i + 1]; sb += A[i + 2]; sw++; } }
@@ -265,7 +300,7 @@
       const q = sub(add(k.p, mul(k.s, k.size * 0.55)), c), e = [q[0] / rx, q[1] / ry, q[2] / rx], dd = LR.sat(vlen(e)), g = cl[k.clump], gq = sub(ctr(k), g.c), gd = LR.sat(vlen(gq) / g.r);
       const crownP = def.kind === 'conifer' ? norm([q[0] / rx * 1.1, 0.55, q[2] / rx * 1.1]) : norm([e[0], e[1] + 0.3, e[2]]);
       k.puff = norm(add(add(mul(crownP, 1 - cw * 0.5), mul(norm(gq), cw * gd)), [0, 0.12, 0]));
-      k.ao = LR.lerp(0.6, 1, LR.sm(0.2, 0.95, dd)) * LR.lerp(0.88, 1, LR.sm(-0.7, 0.3, e[1])) * LR.lerp(1 - cw * 0.25, 1, LR.sm(0.15, 0.9, gd));
+      k.ao = LR.lerp(0.4, 1, LR.sm(0.25, 0.97, dd)) * LR.lerp(0.82, 1, LR.sm(-0.7, 0.3, e[1])) * LR.lerp(1 - cw * 0.42, 1, LR.sm(0.15, 0.9, gd));     // deep in the crown, under it, inside a clump: darker
     }
     return tree;
   };
@@ -392,7 +427,8 @@ void main(){
     if (alpha < 0.5) discard;
 #else
     alpha *= smoothstep(0.05, 0.3, abs(dot(normalize(uCamPos - vWorld), gn)));          // a card seen edge-on is a smear: let it go
-    if (alpha < 0.5 + (n1 - 0.5) * LEAF_HASH) discard;
+    { float mip = 0.5 * log2(max(dot(dx, dx), dot(dy, dy)) * LEAF_PX * LEAF_PX + 1e-8);                  // far cards: a hashed cut-out — a crown thins into a lace of leaves, it does not close into blobs
+      if (alpha < 0.5 + (n1 - 0.5) * mix(LEAF_HASH, LEAF_LACE, smoothstep(0.6, 2.6, mip))) discard; }
 #endif
     leafy = sat(B.b * present * 1.6);
     vec3 leaf = A.rgb * A.rgb;
@@ -433,7 +469,7 @@ in vec2 vUv; in vec4 vAux; flat in vec4 vMeta; flat in vec4 vInst; in vec3 vWorl
 uniform sampler2D uLeafA, uLeafB; uniform vec4 uLeafP; out vec4 o;
 void main(){
   if (vMeta.x > 0.5) { vec4 A = texture(uLeafA, vUv, -1.0), B = texture(uLeafB, vUv, -1.0); float present; float alpha = leafAlpha(A, B, sat(uWx.w + (vInst.z - 0.5) * 0.16), vAux.y, uLeafP.x, present); if (alpha < 0.42) discard; }
-  o = vec4(1.0);
+  ${LR.SHADOW_OUT}
 }`;
   // billboards: one quad per far tree, colour and normal baked from the tree itself
   const impVS = `//#include head
@@ -508,8 +544,8 @@ void main(){
     if (V.length > 16) throw new Error('flora: at most 16 tree variants in use (have ' + V.length + ')');
     const mkU = (v, own) => Object.assign(own || LR.uni(FRAME() + ' uMatA uMatB uTopo uTopoRect'), leafU, {
       uMatP: { value: LR.mat.params }, uTree: { value: new T.Vector4(v.top, v.def.wind.trunk, v.def.wind.branch, v.def.wind.flutter) }, uTwig: { value: new T.Vector3(...hex(v.def.leaf.twig)) },
-      uAut: { value: v.def.leaf.autumn.map((c) => new T.Vector3(...hex(c))) }, uLeafP: { value: new T.Vector4(v.def.evergreen ? 1 : 0, v.def.leaf.trans, v.def.leaf.snow, v.def.leaf.gloss || 0.74) } });
-    const defsG = { SNOW_LAYER: LR.mat.L('snow'), LEAF_BIAS: LR.qn('leafbias', 0.5).toFixed(3), LEAF_HASH: LR.qn('leafhash', 0.06).toFixed(3) };
+      uAut: { value: v.def.leaf.autumn.map((c) => new T.Vector3(...hex(c))) }, uLeafP: { value: new T.Vector4(v.def.evergreen ? 1 : 0, v.def.leaf.trans, v.def.leaf.snow, v.def.leaf.gloss || 0.6) } });
+    const defsG = { SNOW_LAYER: LR.mat.L('snow'), LEAF_BIAS: LR.qn('leafbias', 0.5).toFixed(3), LEAF_HASH: LR.qn('leafhash', 0.06).toFixed(3), LEAF_LACE: LR.qn('leaflace', 0.7).toFixed(3), LEAF_PX: at.A.image.width.toFixed(1) };
     const geo = (buf, max) => { const g = new T.InstancedBufferGeometry(), a = buf.attrs(); for (const k of ['position', 'normal', 'uv', 'aux', 'meta']) g.setAttribute(k, a[k]); g.setIndex(a.index);
       const ib = new T.InstancedInterleavedBuffer(new Float32Array(Math.max(1, max) * 8), 8, 1); ib.setUsage(T.DynamicDrawUsage); g.setAttribute('iPos', new T.InterleavedBufferAttribute(ib, 4, 0)); g.setAttribute('iRot', new T.InterleavedBufferAttribute(ib, 4, 4)); g.instanceCount = 0; g.userData.ib = ib; g.userData.attrs = a; return g; };
     const twin = (g0, max) => { const g = new T.InstancedBufferGeometry(), a = g0.userData.attrs; for (const k of ['position', 'normal', 'uv', 'aux', 'meta']) g.setAttribute(k, a[k]); g.setIndex(a.index); const ib = new T.InstancedInterleavedBuffer(new Float32Array(Math.max(1, max) * 8), 8, 1); ib.setUsage(T.DynamicDrawUsage); g.setAttribute('iPos', new T.InterleavedBufferAttribute(ib, 4, 0)); g.setAttribute('iRot', new T.InterleavedBufferAttribute(ib, 4, 4)); g.instanceCount = 0; g.userData.ib = ib; return g; };
@@ -518,7 +554,7 @@ void main(){
     for (const v of V) {
       const n = (v.list || []).length; v.count = n;
       v.mat = LR.material({ vertexShader: treeVS, fragmentShader: treeFS, defines: defsG, side: T.DoubleSide, uniforms: mkU(v) });
-      v.smat = LR.material({ vertexShader: treeVS, fragmentShader: treeShadowFS, side: T.DoubleSide, colorWrite: false, polygonOffset: true, polygonOffsetFactor: 2.0, polygonOffsetUnits: 3, uniforms: Object.assign(LR.uni(FRAME()), leafU, { uTree: v.mat.uniforms.uTree, uLeafP: v.mat.uniforms.uLeafP }) });
+      v.smat = LR.material({ vertexShader: treeVS, fragmentShader: treeShadowFS, side: T.DoubleSide, polygonOffset: true, polygonOffsetFactor: 2.0, polygonOffsetUnits: 3, uniforms: Object.assign(LR.uni(FRAME()), leafU, { uTree: v.mat.uniforms.uTree, uLeafP: v.mat.uniforms.uLeafP }) });
       v.g = [geo(v.b[0], n), geo(v.b[1], n)]; v.gs = twin(v.g[1], n);
       v.mesh = v.g.map((g, l) => { const m = new T.Mesh(g, v.mat); m.frustumCulled = false; m.matrixAutoUpdate = false; m.visible = false; m.name = 'tree:' + v.def.name + v.k + ':' + l; W.scene.add(m); return m; });
       v.smesh = new T.Mesh(v.gs, v.smat); v.smesh.frustumCulled = false; v.smesh.matrixAutoUpdate = false; v.smesh.visible = false; v.scount = [0, 0, 0];
@@ -541,7 +577,7 @@ void main(){
       const cx = (v.idx % IC) * CP, cy = (Math.floor(v.idx / IC) * 2 + st) * CP;
       impRT.viewport.set(cx + 2, cy + 2, CP - 4, CP - 4); impRT.scissor.set(cx, cy, CP, CP); impRT.scissorTest = true;
       const last = v.idx === V.length - 1 && st === 1; if (last) for (const t of impRT.textures) t.generateMipmaps = true;
-      r.setRenderTarget(impRT); r.render(bscene, bcam); bscene.remove(m); g.dispose(); bm.dispose();
+      r.setRenderTarget(impRT); r.render(bscene, bcam); bscene.remove(m); LR.settle(() => { g.dispose(); bm.dispose(); });
     }
     r.setRenderTarget(null); impRT.scissorTest = false; r.setClearColor(0x000000, 1);
     F.impRT = impRT;

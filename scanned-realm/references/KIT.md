@@ -51,23 +51,33 @@ within `?scanwait=40` seconds, the recipe is drawn instead (`LR.mat.missed` list
 The scan's height is centred on its own mean and laid where the recipes keep theirs (most of a surface high, creases
 low), so moss, flaking paint, puddles and `pom` read it as they read a recipe. `?scan=0` skips every scan.
 
-## Scanned objects — `LR.models` (lib/47_models.js)
-- `await LR.models.load([ids])` inside `materials(LR)` (which may be `async`) — before the bake, because each of a
-  model's materials becomes a layer (`model:<id>:<n>`; they count toward the 48). `LR.models.look = { '<id>': { gain,
-  tint, rough, normal } }` before the load tunes its maps. Cut-out and blended materials are skipped.
-- `LR.models.place(id, x, z, { h | scale, yaw, pitch, roll, sink, y, tint, lie, solid })` in `build` → `true`, or
-  `false` when the model is not loaded or the triangle budget is spent (so `place(…) || P.log(…)` keeps the place
-  whole). `h` is its height above the ground in metres; the model's origin is the ground; `solid`: `false`, a factor
-  of its radius (0.8), or `'box'` for a long thing. `'<id>#<k>'` is the k-th object of a set, centred on itself.
-- `LR.models.stand('barrel' | 'crate' | 'stump' | 'rock', id | [ids], { min, full, h, max })`: the kit's prop of that
-  name draws the scan from then on — everywhere, the builders' and `A.dress`'s copies too. Rocks under `min` stay
-  generated; rocks under `full` (1.1) use the lightest third of the ids. A prop called with `{ hero: true }` is placed
-  from the whole budget; `{ generated: true }` keeps that copy generated.
-- A scan goes into batches of its own (`scans`, per 48 m cell) and into the G-buffer only; an eight-sided hull
-  (48 triangles) throws its shadow and marks it in the rain map.
-- `LR.models.budget` (0.6 / 1.2 / 2.0 / 3.0 M triangles by tier), `LR.models.share` (0.7: where stand-ins stop),
-  `LR.models.by` (copies and triangles per object — `check.mjs` prints it), `LR.models.lost` (named objects that
-  did not fit).
+## Scanned objects and plants — `LR.models` (lib/47_models.js) · `references/ASSETS.md`
+- `await LR.models.load([id | { id, …options }])` inside `materials(LR)` (which may be `async`). On the live page it
+  returns at once — the models are known from their measured boxes and drawn when they arrive; stills wait for them.
+  Options: `plant` (cut-out, wind, season, light through leaves), `wind`, `trans`, `turn`, `shadow: 'hull' | 'mesh' |
+  'none'`, `far`, `lod: [d0, d1, d2]`, `lodK`, `px`, `gain`, `tint`, `rough`, `normal`, `metal`, `moss`,
+  `detail: '<material>'` (+ `detailTile`, `detailReach`, `detailColor`, `detailRelief`).
+- `LR.models.place(id | 'id#k', x, z, { h | scale, yaw, pitch, roll, sink, y, tint, lie, solid: false | factor |
+  'box' })` in `build` → `true`, or `false` when the model is not in the manifest (so `place(…) || P.log(…)` keeps
+  the place whole without scans). `y` puts it on a table top; `lie` lays a long thing on its side.
+- `LR.models.scatter({ ids, density(x, z) → 0..1, spacing, area: [x0, z0, x1, z1], seed, scale: [lo, hi], sink, tilt,
+  tintVar, avoid(x, z) })` → how many it placed. What it strews gets a short reach.
+- `LR.models.stand('barrel' | 'crate' | 'stump' | 'rock', id | [ids], { min, h, max })`: the kit's prop of that name
+  — the builders' and `A.dress`'s too — draws the scan (`min`: rocks at least that big). `{ generated: true }` on a
+  prop keeps that copy generated.
+- `LR.models.set(name, [{ id, s: [lo, hi], … }])` — kits other code looks for: `'goods:fruit'` / `'goods:bread'` /
+  `'goods:greens'` / `'goods:pots'` (`A.stall({ goods })`: `n` a tray, `tumble`, `rise`, or `big: true` to stand
+  alone on the counter), `'yard'` (`A.dress`: `sink`, `lean`, `spin: false`, `solid`), `'weeds'` (`A.dress`).
+- Read-outs: `LR.models.by` (copies per model), `LR.models.live` (`.lod` distances, `.tri` triangles by level),
+  `LR.render.info.scans` (`inst`, `tris`, `calls`, `shadowTris` this frame), `LR.models.failed`, `.due` / `.arrived`.
+
+## Leaf atlases — `LR.atlas` (lib/46_atlas.js)
+- `await LR.atlas.load(['<id>:<map>', '<cut-out model id>'])` in `materials(LR)`; `LR.atlas.has(key)`.
+- `LR.flora.defs.<species>.leaf.scan = { atlas, parts: [[u0, v0, u1, v1, turn]], kind: 'leaves' (default) | 'spray',
+  cut: '<outline>' ('oak' | 'ovate' | 'birch' | 'lance'), size, fill, own, gain }` before the trees are built;
+  `LR.grass.scan = { frond: [key, part], leaf: [key, part], frondStretch, leafStretch }`.
+- A pine's `leaf.scan` parts are tufts hung on its painted twigs; a species without `scan`, or whose atlas did not
+  load, keeps its painted spray.
 
 ## Geometry — `LR.Geo` (lib/30_geo.js)
 `const g = new LR.Geo()` then:
@@ -153,3 +163,13 @@ that stretch is about (`pull` 0 looks down the way, 1 at `look`). The way is a s
 cuts corners: check it with `check.mjs --walk` (the walk map) and see it with `render.mjs --tour 12`. Pass a
 landmark at the distance where the whole of it is in frame; do not walk up to its door and turn round. `views` name the stills. `strings` replaces any of `LR.hud.t` (see `examples/village/src/15_words.js`
 for a full Korean set). `LR.player.walk / run / eye / radius` are the walker's numbers.
+
+The walker is a first-person eye (no body is drawn) that stands on the land, on bridges, piers and the frozen pond,
+and cannot pass walls, trunks, fences, placed scans or deep water. Input, all at once and none required:
+| | walk | look | run · hop |
+|---|---|---|---|
+| keyboard + mouse | W A S D / ↑ ↓ | drag, or click to capture the pointer; Q E / ← → turn | Shift · Space |
+| touch | left half of the screen is a stick that appears under the thumb | drag on the right half | push the stick to its rim |
+| gamepad | left stick | right stick | a trigger or a pressed left stick · the bottom face button |
+Walking input ends the tour; looking only pauses its head for a few seconds. A visible character would be a body that
+moves — a rig, clips and the repository's motion rules (`references/MOTION-QUALITY.md`) — and is not part of this skill.

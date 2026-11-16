@@ -23,6 +23,17 @@
     { const r = LR.rng('corners'); for (const hh of [...V.houses, V.baker, V.chandler, V.hall, V.cottage, V.inn]) for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { if (r() > 0.4) continue; const p = hh.toW(sx * (hh.w / 2 + 0.9), sz * (hh.d / 2 + 0.9)); if (!avoid(p[0], p[1]) && clear(p[0], p[1], 0.5)) F.plant('bush', p[0], p[1], { scale: 0.6 + r() * 0.5 }); } }
     // beyond where anyone walks: painted forest standing as billboards
     F.far({ density: (x, z) => { const r = Math.hypot(x, z), h = LR.land.h(x, z); return LR.sm(0.2, 0.6, LR.noise(x * 0.004 + 3, z * 0.004 + 1) + 0.35) * LR.sm(520, 400, h) * 0.8; }, inner: 250, outer: 720, spacing: 13, species: [['beech', 3], ['oak', 2], ['spruce', 3], ['pine', 1.5]] });
+    // ── scanned plants: copies of photographed ferns, flowers and weeds by the land's own maps (none when the scans are not there) ──
+    { const MD = LR.models, C = (n, x, z) => LR.land.coverAt(n, x, z), set = (id, n) => Array.from({ length: n }, (_, k) => id + '#' + k), open = (x, z) => 1 - LR.sm(0.2, 0.5, V.woods(x, z));
+      const verge = (x, z) => { const d = Math.max(C('dirt', x, z), C('paved', x, z)); return LR.sm(0.02, 0.12, d) * LR.sm(0.5, 0.2, d); };                 // the ragged edge of a way
+      MD.scatter({ ids: set('fern_02', 4), seed: 'ferns', spacing: 1.9, scale: [1.0, 1.9], density: (x, z) => C('fern', x, z) * LR.sm(0.3, 0.6, V.woods(x, z)) * 0.5, avoid: onWay });
+      MD.scatter({ ids: set('flower_ursinia', 5), seed: 'ursinia', spacing: 1.2, scale: [1.7, 2.7], density: (x, z) => LR.sm(0.25, 0.7, C('flowers', x, z)) * open(x, z) * 0.45, avoid: onWay });
+      MD.scatter({ ids: set('flower_empodium', 5), seed: 'empodium', spacing: 1.5, scale: [1.2, 1.9], density: (x, z) => LR.sm(0.3, 0.8, C('flowers', x, z)) * open(x, z) * 0.3, avoid: onWay });
+      MD.scatter({ ids: ['dandelion_01#2', 'dandelion_01#3', 'dandelion_01#4', ...set('weed_plant_02', 5)], seed: 'verge', spacing: 0.9, scale: [1.3, 2.3], density: (x, z) => verge(x, z) * 0.5 * LR.sm(150, 110, Math.hypot(x, z)) });
+      MD.scatter({ ids: [...set('shrub_03', 4), ...set('periwinkle_plant', 6)], seed: 'edge', spacing: 1.6, scale: [1.2, 2.0], density: (x, z) => { const w = V.woods(x, z); return LR.sm(0.1, 0.3, w) * LR.sm(0.7, 0.4, w) * 0.4; }, avoid: onWay });
+      MD.scatter({ ids: ['grass_medium_02#0', 'grass_medium_02#2', 'grass_medium_02#4', 'grass_medium_02#1'], seed: 'tufts', spacing: 1.3, scale: [1.2, 2.2], density: (x, z) => (verge(x, z) * 0.45 + LR.sm(0.5, 0.9, C('tall', x, z)) * open(x, z) * 0.12) * LR.sm(150, 110, Math.hypot(x, z)) });
+      MD.scatter({ ids: ['celandine_01#0', 'celandine_01#1', 'celandine_01#4'], seed: 'celandine', spacing: 1.5, scale: [1.3, 2.2], density: (x, z) => { const w = V.woods(x, z); return LR.sm(0.15, 0.4, w) * LR.sm(0.95, 0.6, w) * 0.4; }, avoid: onWay });
+      MD.scatter({ ids: set('dry_branches_medium_01', 3), seed: 'twigs', spacing: 5.5, scale: [0.8, 1.4], tilt: 0.05, tintVar: 0.08, density: (x, z) => LR.sm(0.45, 0.8, V.woods(x, z)) * 0.5, avoid: (x, z) => onWay(x, z) || wet(x, z) }); }
     LR.grass.flowers = [{ color: '#ee6a1e', center: '#1c1408', size: 0.055, height: 0.10, share: 0.5, petals: 5 }, { color: '#f6f3e8', center: '#e2ac12', size: 0.030, height: 0.07, share: 0.28, petals: 13 },
       { color: '#5a6fd8', center: '#ded79a', size: 0.024, height: 0.04, share: 0.14, petals: 5 }, { color: '#e8c63a', center: '#8a6a10', size: 0.020, height: 0.03, share: 0.08, petals: 8 }];
   };

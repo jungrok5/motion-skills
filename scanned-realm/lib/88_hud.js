@@ -10,7 +10,7 @@
     hint: 'W A S D or arrow keys to walk · Q E or ← → to turn · drag or click to look · Shift to run',
     hintTouch: 'left thumb walks · right thumb looks',
     scans: 'Scanned surfaces and objects: Poly Haven · CC0',
-    help: [['W A S D / ↑ ↓', 'walk'], ['← → / Q E', 'turn'], ['mouse', 'look (click to capture, Esc to release)'], ['Shift', 'run'], ['Space', 'hop'], ['1 2 3 4', 'dawn · day · dusk · night'], ['5 6 7', 'clear · rain · winter'], ['T', 'automatic round'], ['C', 'tour walk'], ['G', 'quality'], ['M', 'sound'], ['P', 'numbers'], ['H', 'hide the panels'], ['F', 'full screen']],
+    help: [['W A S D / ↑ ↓', 'walk'], ['← → / Q E', 'turn'], ['mouse', 'look (click to capture, Esc to release)'], ['Shift', 'run'], ['Space', 'hop'], ['gamepad', 'left stick walks · right stick looks · trigger runs · A hops'], ['1 2 3 4', 'dawn · day · dusk · night'], ['5 6 7', 'clear · rain · winter'], ['T', 'automatic round'], ['C', 'tour walk'], ['G', 'quality'], ['M', 'sound'], ['P', 'numbers'], ['H', 'hide the panels'], ['F', 'full screen']],
     quality: 'Quality', tiers: { auto: 'auto', low: 'low', medium: 'medium', high: 'high', ultra: 'ultra' }, sound: 'Sound', full: 'Full screen', keys: 'Keys', taking: 'You have the walk — press C for the tour',
   };
   const ICON = {
@@ -58,11 +58,14 @@
     document.head.appendChild(el('style', {}, CSS));
     E.place = root.appendChild(el('div', { id: 'lr-place', class: 'pane' }, `<b>${meta.title || ''}</b><span></span>`));
     // where the scans come from stays on the glass (Poly Haven asks for it of pages that read from its server)
-    if (LR.ASSETS && LR.mat.scanned > 0) E.credit = root.appendChild(el('a', { id: 'lr-credit', href: 'https://polyhaven.com', target: '_blank', rel: 'noopener' }, t.scans));
+    // — and, while they are still arriving (the walk starts on the generated place), how many have
+    { const MS = LR.models || {}, due = () => (LR.mat.due || 0) + (MS.due || 0), got = () => (LR.mat.arrived || 0) + (MS.arrived || 0);
+      if (LR.ASSETS && (LR.mat.scanned > 0 || due() > 0)) { E.credit = root.appendChild(el('a', { id: 'lr-credit', href: 'https://polyhaven.com', target: '_blank', rel: 'noopener' }, t.scans));
+        const say = () => { E.credit.textContent = t.scans + (got() < due() ? ` · ${got()} / ${due()}` : ''); }; say(); LR.on('scan', say); } }
     const btn = (id, icon, label, title) => `<button type="button" data-k="${id}" title="${title || label}" aria-label="${title || label}" aria-pressed="false" class="${label ? '' : 'ic'}">${svg(icon)}${label ? `<span class="lb">${label}</span>` : ''}</button>`;
     E.bar = root.appendChild(el('div', { id: 'lr-bar', class: 'pane', role: 'toolbar' }, btn('dawn', 'dawn', t.dawn) + btn('day', 'day', t.day) + btn('dusk', 'dusk', t.dusk) + btn('night', 'night', t.night) + '<span class="sep"></span>' + btn('clear', 'clear', t.clear) + btn('rain', 'rain', t.rain) + btn('snow', 'snow', t.snow) + '<span class="sep"></span>' + btn('auto', 'auto', t.auto) + btn('walk', 'walk', t.walk)));
     E.top = root.appendChild(el('div', { id: 'lr-top', class: 'pane', role: 'toolbar' }, btn('gear', 'gear', '', t.quality) + btn('sound', 'mute', '', t.sound) + `<span class="wide" style="display:flex">${btn('keys', 'keys', '', t.keys)}${btn('full', 'full', '', t.full)}</span>`));
-    E.num = root.appendChild(el('div', { id: 'lr-num' })); E.num.style.display = LR.q('stats') ? '' : 'none';
+    E.num = root.appendChild(el('div', { id: 'lr-num' })); E.num.style.display = LR.q('stats') || LR.q('prof') ? '' : 'none';
     E.hint = root.appendChild(el('div', { id: 'lr-hint' }, LR.gpu.mobile ? t.hintTouch : t.hint));
     E.card = root.appendChild(el('div', { class: 'card' }, '<b></b><i></i><span></span>'));
     E.help = root.appendChild(el('div', { id: 'lr-help', class: 'pane' }, '<table>' + t.help.map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('') + '</table>'));
@@ -99,7 +102,7 @@
   let hintT = 0; H.hint = (text, sec = 5) => { const e = H.els.hint; if (!e) return; if (text) e.textContent = text; e.classList.add('on'); clearTimeout(hintT); hintT = setTimeout(() => e.classList.remove('on'), sec * 1000); };
   let cardT = 0; H.card = (title, sub) => { const e = H.els.card; if (!e) return; e.firstChild.textContent = title; e.lastChild.textContent = sub || ''; e.classList.add('on'); clearTimeout(cardT); cardT = setTimeout(() => e.classList.remove('on'), 4200); };
   // reload keeping where we stand, the hour and the weather
-  H.reload = (tier) => { const p = LR.player, u = new URL(location.href); if (tier) u.searchParams.set('q', tier); else u.searchParams.delete('q'); u.searchParams.set('at', [p.x.toFixed(1), p.z.toFixed(1), ((p.yaw * 180) / Math.PI).toFixed(0)].join(',')); u.searchParams.set('tod', LR.wx.tod.toFixed(2)); u.searchParams.set('wx', LR.wx.want.weather); if (!p.touring) u.searchParams.set('tour', '0'); location.href = u.toString(); };
+  H.reload = (tier) => { const p = LR.player, u = new URL(location.href); if (tier) u.searchParams.set('q', tier); else u.searchParams.delete('q'); u.searchParams.delete('safe');      /* choosing a quality by hand leaves safe mode */ u.searchParams.set('at', [p.x.toFixed(1), p.z.toFixed(1), ((p.yaw * 180) / Math.PI).toFixed(0)].join(',')); u.searchParams.set('tod', LR.wx.tod.toFixed(2)); u.searchParams.set('wx', LR.wx.want.weather); if (!p.touring) u.searchParams.set('tour', '0'); location.href = u.toString(); };
 
   // ── every frame: the clock line, place cards, numbers, and the resolution governor ───────────────────────────────
   let acc = 0, n = 0, lastPlace = null, slowFor = 0, okFor = 0, wait = 3, capScale = 1, sec = 0;
@@ -108,7 +111,7 @@
     if (acc >= 0.5) {
       const fps = n / acc; H.fps = fps; acc = 0; n = 0;
       if (E.place) { const c = wx.clock(), tl = H.t.wx[wx.label()] || wx.label(); E.place.lastChild.textContent = c.text + ' · ' + tl; }
-      if (E.num && E.num.style.display !== 'none') E.num.textContent = `${fps.toFixed(0)} fps\n${R.w}×${R.h} (${R.scale.toFixed(2)}×)\n${G.tierName}${G.auto ? ' · auto' : ''}\n${R.info.allCalls} calls · ${(R.info.tris / 1e6).toFixed(2)} M tris\n${R.info.lights || 0} lights`;
+      if (E.num && E.num.style.display !== 'none') E.num.textContent = `${fps.toFixed(0)} fps\n${R.w}×${R.h} (${R.scale.toFixed(2)}×)\n${G.tierName}${G.auto ? ' · auto' : ''}\n${R.info.allCalls} calls · ${(R.info.tris / 1e6).toFixed(2)} M tris\n${R.info.lights || 0} lights${R.info.scans && R.info.scans.inst ? `\nscans ${R.info.scans.inst} × ${(R.info.scans.tris / 1e6).toFixed(2)} M` : ''}${R.prof && R.prof.on ? R.prof.text() : ''}`;
       // governor: hold the display's rate by trading internal resolution; probe upward when there is room
       if (LR.q('scale') === null || LR.q('scale') === undefined) {
         const target = Math.min(H.refresh || 60, 60), lo = G.tier.scaleMin, hi = Math.min(G.tier.scaleMax, capScale);

@@ -13,9 +13,11 @@
   };
 
   LR.initGPU = (canvas) => {
-    const renderer = new T.WebGLRenderer({ canvas, antialias: false, alpha: false, depth: false, stencil: false, powerPreference: 'high-performance', preserveDrawingBuffer: LR.RENDER });
+    // no context (hardware acceleration off, a blocked driver, or the browser has shut WebGL after a graphics crash): say
+    // that, not a stack trace — LR.trouble() shows what to do
+    let renderer; try { renderer = new T.WebGLRenderer({ canvas, antialias: false, alpha: false, depth: false, stencil: false, powerPreference: 'high-performance', preserveDrawingBuffer: LR.RENDER }); } catch (e) { const err = new Error('no WebGL'); err.trouble = 'nogl'; throw err; }
     const gl = renderer.getContext();
-    if (!renderer.capabilities.isWebGL2) throw new Error('WebGL 2 is needed');
+    if (!renderer.capabilities.isWebGL2) { const err = new Error('WebGL 2 is needed'); err.trouble = 'nogl'; throw err; }
     renderer.autoClear = false; renderer.outputColorSpace = T.LinearSRGBColorSpace; renderer.info.autoReset = false;
     renderer.debug.checkShaderErrors = true;
     const dbg = gl.getExtension('WEBGL_debug_renderer_info');
@@ -27,8 +29,15 @@
     G.maxAniso = renderer.capabilities.getMaxAnisotropy();
     // tier: ?q= wins, then a guess from the device
     const want = LR.q('q', '');
-    const guess = G.mobile ? 'low' : G.software ? 'medium' : /Intel|Iris|UHD|HD Graphics|Mali|Adreno|PowerVR/i.test(G.name) && !/Arc/i.test(G.name) ? 'medium' : 'high';
-    G.tierName = LR.TIERS[want] ? want : guess; G.auto = !LR.TIERS[want];
+    // integrated and old or small discrete chips start on `medium` (the G button raises it); only what is plainly a current
+    // discrete card starts on `high`.  A wrong guess downward costs a press; a wrong guess upward can cost the page.
+    const small = /Intel|Iris|UHD|HD Graphics|Mali|Adreno|PowerVR/i.test(G.name) && !/Arc/i.test(G.name), weak = /Radeon(\(TM\))? (Graphics|R\d|HD|Vega)|Vega \d|GeForce (GT |MX|\d{3}M|[6-9]\d{2}\b|GTX (6|7|9)\d{2}\b|GTX 10[0-5]0\b)|Quadro (K|M|P[4-6]\d{2}\b)|FirePro|Microsoft Basic|llvmpipe/i.test(G.name);
+    const guess = G.mobile ? 'low' : G.software ? 'medium' : small || weak ? 'medium' : 'high';
+    // ?safe=1: the lowest tier with every optional pass off — the smallest shaders and buffers the engine has.  The page
+    // reopens itself this way once if the graphics context is lost while it starts (LR.trouble)
+    G.safe = LR.q('safe') === '1';
+    if (G.safe) for (const k of ['gi', 'contact', 'mirror', 'shafts', 'ssr', 'pcss', 'skyshare', 'ao']) LR.off.add(k);
+    G.tierName = G.safe ? 'low' : LR.TIERS[want] ? want : guess; G.auto = !LR.TIERS[want] && !G.safe;
     G.tier = Object.assign({}, LR.TIERS[G.tierName]);
     if (LR.qn('mat', 0)) G.tier.mat = LR.qn('mat', 512);
     G.hdrType = G.halfFloat ? T.HalfFloatType : T.UnsignedByteType;
@@ -50,11 +59,31 @@
   const tri = new T.BufferGeometry(); tri.setAttribute('position', new T.BufferAttribute(new Float32Array([-1, -1, 0, 3, -1, 0, -1, 3, 0]), 3));
   const fsScene = new T.Scene(), fsCam = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1), fsMesh = new T.Mesh(tri, null); fsMesh.frustumCulled = false; fsScene.add(fsMesh);
   LR.triGeo = tri;
+  LR.passes = [];                                                                    // every full-screen pass made, so their programs can be prepared before the first frame (LR.warm)
   LR.pass = (frag, uniforms = {}, o = {}) => {
     const p = { glslVersion: T.GLSL3, vertexShader: LR.sh(o.vert || LR.chunk.fsvs), fragmentShader: LR.sh(frag), uniforms, defines: o.defines || {}, depthTest: false, depthWrite: false, blending: o.blending || T.NoBlending, transparent: !!o.blending };
     for (const k of ['blendSrc', 'blendDst', 'blendEquation', 'blendSrcAlpha', 'blendDstAlpha']) if (o[k] !== undefined) p[k] = o[k];
-    return new T.RawShaderMaterial(p);
+    const m = new T.RawShaderMaterial(p); LR.passes.push(m); m.addEventListener('dispose', () => { const k = LR.passes.indexOf(m); if (k >= 0) LR.passes.splice(k, 1); }); return m;
   };
+  // Prepare every program the first frame will need, without holding the graphics thread: each is compiled and linked
+  // in the background (KHR_parallel_shader_compile) and waited for.  Compiled on first use instead, one large shader can
+  // hold the graphics process for longer than the browser's watchdog allows (Direct3D's compiler on Windows is slow on
+  // long shaders) — the browser then kills it and the page is left with a dead canvas.  step(done, total) reports.
+  LR.warm = async (scenes, cam, step) => { const r = LR.gpu.renderer, tmp = new T.Scene(), hidden = [];
+    for (const m of LR.passes) { const q = new T.Mesh(tri, m); q.frustumCulled = false; tmp.add(q); }
+    for (const sc of scenes) sc.traverse((o) => { if (o.visible === false && o.material) { o.visible = true; hidden.push(o); } });       // what is not in view yet will be
+    const all = [tmp, ...scenes]; let done = 0;
+    try { for (const sc of all) { await r.compileAsync(sc, sc === tmp ? fsCam : cam); if (step) step(++done, all.length); await LR.breath(); } }
+    finally { for (const o of hidden) o.visible = false; tmp.clear(); } };
+  // the same for meshes that join the world after it has started (a scan that has just arrived): resolve when their
+  // programs are ready, so their first frame does not compile
+  LR.warmMeshes = async (meshes, cam) => { if (LR.RENDER || !meshes.length) return; const tmp = new T.Scene(); for (const o of meshes) { const q = new T.Mesh(o.geometry, o.material); q.frustumCulled = false; tmp.add(q); }
+    try { await LR.gpu.renderer.compileAsync(tmp, cam || LR.cam); } catch (e) { /* then they compile on first use */ } finally { tmp.clear(); } };
+  // Freeing a texture (or a program) right after the pass that read it: WebGL promises the pass is carried out first,
+  // but a software renderer under a heavy load of uploads was seen to lose such passes — whole material layers came out
+  // empty once fifty models were baked before them.  So what a bake has read is freed through here: where stills are
+  // made the passes are finished first; on the live page the freeing waits a moment instead of stalling a frame.
+  LR.settle = (free) => { const gl = LR.gpu.renderer.getContext(); if (LR.RENDER) { gl.finish(); if (free) free(); } else { gl.flush(); if (free) setTimeout(free, 1500); } };
   LR.blit = (mat, target, layer) => { const r = LR.gpu.renderer; fsMesh.material = mat; if (layer === undefined) r.setRenderTarget(target || null); else r.setRenderTarget(target, layer); r.render(fsScene, fsCam); };
   // world material helper (RawShaderMaterial, GLSL3)
   LR.material = (o) => new T.RawShaderMaterial(Object.assign({ glslVersion: T.GLSL3 }, o, { vertexShader: LR.sh(o.vertexShader), fragmentShader: LR.sh(o.fragmentShader) }));
