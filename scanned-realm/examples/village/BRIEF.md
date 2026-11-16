@@ -68,7 +68,8 @@ tiles; all Poly Haven, CC0, 1k.
   a low table of baskets, a painted table of pots, baskets at the stalls' corners, a chest by the cloth stall;
 - the inn's front: a laid table, two stools, bread and apples on it; the smithy: a bench with a hammer and a hatchet,
   a shield against the wall; the farm: a ladder at the rick, a pick and an axe by the wood, a spade stood in the
-  earth, a watering can; the cottage: a spinning wheel by the door; the chapel yard: a statue on a plinth;
+  earth, a watering can, baskets of onions and sweet potatoes by the barrel; the cottage: a spinning wheel by the
+  door; the chapel yard: a statue on a plinth; the pond: a painted bench on the shore;
 - by the doors and walls of every house (the `yard` kit): tubs, baskets, churns, a watering can, a spade;
 - the land's own: three tors of bedrock (`rock_face_01` and `rock_face_02` back to back) in the glade, at the far end
   of the meadow and behind the pond; a fallen trunk and a ring of fire stones in the glade; twigs on the forest floor.

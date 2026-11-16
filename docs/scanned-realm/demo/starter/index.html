@@ -6504,7 +6504,7 @@ void main(){
       // a page shown inside another page (a samples site's frame), on a phone, or with data saving on does not pull tens
       // of megabytes of scans unasked: it waits for a press, and says how much.  Elsewhere it starts at once.  ?go=1 skips the wait.
       if (!LR.RENDER && LR.ASSETS && LR.q('scan') !== '0' && !LR.q('go') && (window.self !== window.top || G.mobile || (navigator.connection && navigator.connection.saveData))) await new Promise((go) => {
-        const t = Object.assign({ gate: 'Load the scans and start', gateOff: 'open without scans', gateFrom: 'from Poly Haven · CC0' }, cfg.strings || {}), mb = LR.ASSETS.bytes ? '≈ ' + Math.round(LR.ASSETS.bytes / 1e6) + ' MB · ' : '';
+        const t = Object.assign({ gate: 'Start — the scans arrive as you walk', gateOff: 'open without scans', gateFrom: 'from Poly Haven · CC0' }, cfg.strings || {}), mb = LR.ASSETS.bytes ? '≈ ' + Math.round(LR.ASSETS.bytes / 1e6) + ' MB · ' : '';
         const box = document.createElement('div'), u = new URL(location.href); u.searchParams.set('scan', '0'); box.id = 'gate';
         box.innerHTML = `<button type="button"></button><span>${mb}${t.gateFrom} · <a href="${u.href.replace(/"/g, '&quot;')}"></a></span>`; box.querySelector('button').textContent = t.gate; box.querySelector('a').textContent = t.gateOff;
         const bar = document.getElementById('bar'); (bar ? bar.parentNode : document.body).appendChild(box); if (bar) bar.style.visibility = 'hidden';

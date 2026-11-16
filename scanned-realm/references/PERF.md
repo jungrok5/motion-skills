@@ -109,7 +109,9 @@ Measured on the village on `high`, per view (drawn = everything the frame draws,
 The rest of a frame is what it was: grass 0.6–1.0 M, the land 0.4 M, trees 0.05–0.6 M, buildings and props 0.25 M,
 and 1.6–1.7 M in the shadow cascades. Before the levels were right the same views drew 11–14 M: forty boulders whole
 (2.8 M, and again in the shadows) and every twig pile in the forest (1.1 M) — `references/LESSONS.md`, round 2.
-`check.mjs` prints `scans <copies> × <M tris>` for every view; read it.
+`check.mjs` prints `scans <copies> × <M tris>` for every view; read it. On `medium`, as the check runs it: 2.7–3.4 M
+triangles and 389–444 draw calls a view, 253–276 copies of scans in 0.18–0.20 M of them; 23 103 copies are placed in
+the whole village (13 163 of them ferns), and a frame looks at the handful of cells near the eye.
 
 ## Where a frame's time goes — `?prof=1`
 `?prof=1` (it opens the numbers panel, `P`) shows milliseconds a pass: shadows, G-buffer, occlusion, air, bounce,
