@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>agent-launch-film · motion-skills</title>
+<meta name="description" content="제품 · 앱 · AI 에이전트 하나를 주면 런치 영상을 만듭니다. 점 매트릭스 화면을 얼굴로 단 사물 마스코트가 깨어나고, 입력창에 글자가 쳐지고, 유리 UI 카드가 밝은 3D 공간에 떠서 피사계 심도로 흐려지며, 장면은 자르지 않고 움직여서 넘어갑니다.">
+<meta property="og:title" content="agent-launch-film · motion-skills">
+<meta property="og:description" content="제품 · 앱 · AI 에이전트 하나를 주면 마스코트 · 유리 UI 카드 · 채팅 · 카운터 · 스웜으로 이어지는 런치 영상을 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/agent-launch-film/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/agent-launch-film">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / agent-launch-film</nav>
+  <h1>agent-launch-film</h1>
+  <p>제품 · 앱 · AI 에이전트 하나를 주면 에이전트가 일하는 모습을 보여 주는 런치 영상을 만듭니다. 점 매트릭스 화면을 얼굴로 단 사물 마스코트가 깨어나고, 입력창에 글자가 쳐지고 커서가 누르면, 유리 UI 카드(배운 것의 카드 더미, 카운터가 올라가는 회전 카드, 에이전트가 제안하고 사용자가 답하는 채팅, 렌즈를 스쳐 가는 결과물 무리, 결과 한 줄, 버튼 하나, 전후 막대)가 밝은 3D 공간에 떠서 피사계 심도와 모션 블러로 흐려집니다. 장면은 자르지 않고 물러나거나 카메라가 뚫고 지나가며 넘어갑니다. 모든 조각은 주제에 맞춰 HTML/CSS로 그리고, 소리는 영상에서 합성합니다.
+  보고 만든 원본: <a href="https://x.com/UseFastlane/status/2116024028708196432?a=3dL47zV5VgDkc5ipWFw&s=19" target="_blank" rel="noopener">Fastlane(@UseFastlane)의 X 게시물 (AI 광고 제작 제품의 97초 런치 영상)</a>. 제품 · 헬멧 마스코트 · 광고 · 사람 영상은 가져오지 않고 화면 문법만 가져왔습니다.</p>
+  <ul class="tags"><li>AI 에이전트 런치 영상</li><li>유리 UI 카드 · 3D 피사계 심도</li><li>점 매트릭스 마스코트</li><li>채팅 · 타이핑 · 카운터</li><li>합성 사운드 · MP4 · 라이브 페이지</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>제품 · 앱 · 서비스 · 에이전트 하나와 사용자 이름. 로고나 음원이 있으면 함께</dd>
+      <dt>브리프</dt><dd>한 줄 요지, 인사 → 학습 → 읽기 → 질문 → 결과물 → 대량 → 실행 → 성과 → 끝의 장면 흐름, 8단어 이하의 읽을 문구, 카드마다 읽을 것과 질감, 숫자, 마스코트를 적은 <code>BRIEF.md</code></dd>
+      <dt>마스코트 · 그림</dt><dd>주제의 세계에서 고른 사물에 점 매트릭스 화면을 단 마스코트(SVG), 주제에 맞춰 코드로 그린 썸네일 · 포스터 · 목록. 마스코트 시트(화면 문구 전부, 좌우 회전, 채팅 아바타)</dd>
+      <dt>확인</dt><dd>장면 시트, 장면 하나의 8프레임 스트립. 읽을 문구의 시간 · 타이핑 속도 · 크기 · 화면 안 · 초점 · 겹침, 장면마다 움직임, 빈 화면, 장면 전환의 프레임 간 튐, 밝은 바탕, 포인트 색 비율, 결정성 검사</dd>
+      <dt>출력</dt><dd>30fps MP4(기본 1920×1080, 어떤 크기든), UI 효과음과 신스 배경을 합성한 WAV, 반복 재생 라이브 페이지</dd>
+    </dl>
+    <pre><code>cd agent-launch-film/examples/bori
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs index.html --mascot --scale .5
+node ../../scripts/render.mjs index.html --sheet --scale .4
+node ../../scripts/score.mjs index.html --out out/film.wav
+node ../../scripts/render.mjs index.html --audio out/film.wav
+node ../../scripts/new-film.mjs ~/my-film</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. GPU · npm 설치 · API 키가 필요 없습니다(한 프레임은 페이지 스크린샷, 49초 예제의 절반 크기 미리 보기를 워커 4개로 약 2분). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/agent-launch-film/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10.2;--h-phone:calc((100vw - 34px)*.62);--demo-bg:#0d0d0f">
+    <iframe data-src="demo/examples/bori/" title="agent-launch-film 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/bori/">데모 열기 (examples/bori)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/bori</code> · 49초 · 9장면 · 스페이스로 멈춤, ← →로 장면 이동</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/bori/" data-cap="예제 &lt;code&gt;examples/bori&lt;/code&gt; · 49초 · 9장면 · 스페이스로 멈춤, ← →로 장면 이동" aria-pressed="true">보리</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/film.html&lt;/code&gt; · 20초 · 4장면 · 새 영상의 출발점" aria-pressed="false">시작 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본 영상에 없는 주제로 브리프부터 새로 설계해 만든 예제의 장면, 시작 템플릿, 검토 시트입니다. 카드를 누르면 그 순간이 라이브 페이지에서 멈춘 채 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"film":"보리","tpl":"Tally · 검토"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「보리」 <small>49초 · 9장면 · 한국어 · 96bpm</small></h3>
+      <p>냉장고 사진 한 장으로 일주일 저녁을 정하고 장을 봐 주는 에이전트. 마스코트는 호박색 LED 화면을 단 밥솥이고, 김이 오릅니다. 재료 타일과 위에서 본 요리 그림은 모두 이 주제를 위해 코드로 그렸습니다</p>
+      <div class="grid">
+        <a class="tile" data-tags="film" href="demo/examples/bori/?t=3.6" target="_blank" rel="noopener">
+          <img src="samples/hello.jpg" alt="밝은 바탕에 '저녁 고민 끝, 지민 님' 제목, 화면에 '준비'라고 뜬 흰 밥솥 마스코트, '우리집 냉장고.jpg'가 입력된 입력창과 초록 버튼을 누르는 커서" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">인사 · 5초</span><b>저녁 고민 끝, 지민 님</b><span class="how">밥솥이 깨어나 화면이 보리 → 준비로 바뀌고, 입력창에 글자가 쳐진 뒤 커서가 버튼을 누름</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/bori/?t=6.3" target="_blank" rel="noopener">
+          <img src="samples/learn.jpg" alt="'지민 님 입맛을 배웠어요' 아래 '입맛' 카드: 순한 맛-매운 맛 · 한식-양식 · 간단-정성 점 슬라이더와 '맵고 간단한 한식' 문구, 뒤에 흐린 다음 카드" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">학습 · 카드 더미</span><b>지민 님 입맛을 배웠어요</b><span class="how">앞 카드를 읽고 나면 카메라 쪽으로 들려 날아가고 뒤 카드가 앞으로 나옴</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/bori/?t=14.3" target="_blank" rel="noopener">
+          <img src="samples/scan.jpg" alt="'냉장고 속 재료 14가지' 아래 호를 그리며 도는 재료 카드들(애호박 · 김치 · 두부 …), 가운데는 선명하고 양옆은 기울어 흐림, 아래 '두부 · 애호박은 내일까지' 칩" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">읽기 · 회전 카드</span><b>냉장고 속 재료 14가지</b><span class="how">카운터가 올라가는 동안 재료 카드가 호를 따라 돌고, 유통기한이 가장 짧은 재료를 칩으로 알림</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/bori/?t=21.5" target="_blank" rel="noopener">
+          <img src="samples/ask.jpg" alt="밥솥 아바타의 흰 말풍선 세 개와 지민의 초록 말풍선 '좋아! 대신 맵게', 오른쪽에 위에서 본 된장찌개 포스터와 '+ 청양고추 2' 칩" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">질문 · 채팅</span><b>오늘은 된장찌개 어때요?</b><span class="how">에이전트는 반짝이며 생각한 뒤 글자를 흘려 쓰고, 사용자는 포인트 색 말풍선으로 답함. 오래된 말풍선은 위로 밀려 흐려짐</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/bori/?t=24.9" target="_blank" rel="noopener">
+          <img src="samples/search.jpg" alt="'레시피 48,000개 중에서' 글자 뒤로 흐릿한 요리 포스터 수십 장이 렌즈를 향해 쏟아지는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">대량 · 스웜</span><b>레시피 48,000개 중에서</b><span class="how">포스터 42장이 깊은 곳에서 카메라를 스쳐 지나가며 모션 블러로 번짐</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/bori/?t=29.7" target="_blank" rel="noopener">
+          <img src="samples/week.jpg" alt="'일주일 저녁, 정했어요' 아래 월~일 요리 포스터 일곱 장이 한 줄로 서 있고 그중 한 장이 앞으로 나와 선명한 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">결과물 · 스포트라이트 줄</span><b>일주일 저녁, 정했어요</b><span class="how">초점이 월요일부터 일요일까지 한 장씩 멈췄다 넘어감. 줄 전체가 초점을 따라 미끄러짐</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/bori/?t=36.3" target="_blank" rel="noopener">
+          <img src="samples/order.jpg" alt="왼쪽 '장보기 목록' 카드에 재료 · 수량 · 가격 · 켜진 토글 줄, 오른쪽 '12개 · 46,800원' 막대와 '주문하기' 버튼, 아래 '내일 아침 7시 도착' 칩" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">실행 · 버튼 하나</span><b>12개 · 46,800원</b><span class="how">목록 줄이 차례로 들어오며 토글이 켜지고, 커서가 주문하기를 누르면 도착 시간 칩이 뜸</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/bori/?t=41.2" target="_blank" rel="noopener">
+          <img src="samples/result.jpg" alt="'이번 주, 35,200원 아꼈어요' 아래 식비 · 버린 재료 · 장보는 시간의 회색(전)과 초록(후) 막대" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">성과 · 전후 막대</span><b>이번 주, 35,200원 아꼈어요</b><span class="how">그룹마다 단위가 달라 각자의 큰 값에 맞춰 그리고, 숫자는 전 값에서 후 값으로 셈</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/bori/?t=46.3" target="_blank" rel="noopener">
+          <img src="samples/end.jpg" alt="'오늘 저녁은 된장찌개.' 아래 화면에 '보리'가 뜬 밥솥 마스코트와 김, 아래 회색 한 줄 소개" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">끝 · 마스코트</span><b>오늘 저녁은 된장찌개.</b><span class="how">화면이 '완료'로 깜빡인 뒤 이름으로 돌아오고, 고개를 끄덕이기 전에 살짝 내려앉음</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>시작 템플릿 「Tally」 · 검토 <small>20초 · 4장면 · 영어</small></h3>
+      <p>프리랜서 장부를 정리해 주는 에이전트. 마스코트는 민트색 화면의 계산기입니다. 새 영상은 이 템플릿에서 시작해 마스코트 · 문구 · 카드를 모두 주제에 맞게 바꿉니다</p>
+      <div class="grid">
+        <a class="tile" data-tags="tpl" href="demo/templates/?t=3.4" target="_blank" rel="noopener">
+          <img src="samples/t-hello.jpg" alt="'Meet Tally, Jordan' 제목, 화면에 READY가 뜬 계산기 마스코트, 'northbank.com'이 입력된 파란 버튼의 입력창" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 인사</span><b>Meet Tally, Jordan</b><span class="how">LED 글자는 화면보다 넓으면 흐르기 전에 먼저 좁혀서 맞춤</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/templates/?t=8" target="_blank" rel="noopener">
+          <img src="samples/t-sort.jpg" alt="'Sorting 1,284 receipts' 아래 호를 그리는 영수증 카드들과 'Saved to your books' 칩" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 회전 카드</span><b>Sorting 1,284 receipts</b><span class="how">카메라가 앞 장면을 뚫고 지나간 뒤 이어지는 장면</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/templates/?t=13.6" target="_blank" rel="noopener">
+          <img src="samples/t-ask.jpg" alt="계산기 아바타의 말풍선 'You can deduct 3 of these.'와 파란 'Do it' 말풍선, 아래 Deducted 칩이 붙은 영수증 카드 세 장" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 채팅 + 줄</span><b>You can deduct 3 of these.</b><span class="how">대답 뒤에 결과 카드가 줄로 들어오고 초점이 옮겨 감</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/templates/?t=18.5" target="_blank" rel="noopener">
+          <img src="samples/t-done.jpg" alt="'Your books, handled.' 아래 '$4,120 found in deductions' 카드와 DONE이 뜬 계산기" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 끝</span><b>Your books, handled.</b><span class="how">옆으로 휙 넘어온 장면에서 숫자가 올라가고 밑줄이 그어짐</span></div></a>
+        <a class="tile" data-tags="tpl" href="samples/mascot.jpg" target="_blank" rel="noopener">
+          <img src="samples/mascot.jpg" alt="밥솥 마스코트 시트: 화면 문구 보리 · 준비 · 완료, 왼쪽 · 오른쪽으로 24도 돌린 모습, 68px와 150px 채팅 아바타" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">검토 · 마스코트 시트</span><b>render.mjs --mascot</b><span class="how">영상이 쓰는 화면 문구 전부, 좌우 회전, 채팅 아바타를 한 장에 그려 글자가 읽히는지 확인</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬을 만든 출처와, 이 레포에서 새 주제로 만든 예제입니다.</p>
+  <div class="works">
+    <a class="work" href="https://x.com/UseFastlane/status/2116024028708196432?a=3dL47zV5VgDkc5ipWFw&s=19" target="_blank" rel="noopener"><b>원본 · Fastlane의 X 게시물</b><span>AI 광고 제작 제품 런치 영상 · 97초 · 1920×1080</span><span class="url">x.com/UseFastlane/status/2116024028708196432</span></a>
+    <a class="work" href="demo/examples/bori/" target="_blank" rel="noopener"><b>「보리」</b><span>49초 · 9장면 · 밥솥 마스코트 · 라이브 페이지</span><span class="url">agent-launch-film/examples/bori</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/agent-launch-film/examples/bori"><b>원본 레포 · motion-skills</b><span>이 레포에서 만듦</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/agent-launch-film/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/agent-launch-film">폴더</a> <span>lib · scripts · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/agent-launch-film/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/agent-launch-film/references/BRIEF.md">references/BRIEF.md</a> <span>제품 → 브리프, 검토 목록</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/agent-launch-film/references/LOOK.md">references/LOOK.md</a> <span>원본에서 읽은 화면 문법</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/agent-launch-film/references/ENGINE.md">references/ENGINE.md</a> <span>무대 · 장면 · 조각 · 계약</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/agent-launch-film/references/MASCOT.md">references/MASCOT.md</a> <span>마스코트 설계</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/agent-launch-film/references/SOURCE.md">references/SOURCE.md</a> <span>출처와 가져온 것</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/agent-launch-film/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 글꼴: Pretendard(ALF Sans로 이름을 바꾼 부분 집합), JetBrains Mono — SIL OFL 1.1. 그림은 모두 코드로 그렸습니다
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
