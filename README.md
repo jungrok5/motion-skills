@@ -68,10 +68,14 @@ Need a ready-made 3D model in a three.js piece? [`references/3D-MODELS.md`](refe
 Polyfork low-poly catalogue (https://github.com/lucas-martinic/polyfork-catalog): what its licence allows (commercial use
 yes; no redistributing the `.mjs` source; committed GLBs keep their CC BY credit), which skills stay code-only, and how to load one.
 
+Characters or creatures that move? [`references/MOTION-QUALITY.md`](references/MOTION-QUALITY.md) is how to take the
+"AI slop" look out of motion — weight, inertia, anticipation and recovery, breathing idles, feet that never slide — and how
+to use a video-generation reference (ElevenLabs only with the owner's go-ahead) without committing generated media.
+
 ## Adding a skill
 
 Skills usually arrive from another project repo where they were proven on real work. To add or absorb one so it lands
 like the others (folder layout, provenance, lessons, samples page, registry entry), follow
 [CONTRIBUTING.md](CONTRIBUTING.md) (Korean). The site lives in [`docs/`](docs/): the hub is drawn from
 [`docs/skills.json`](docs/skills.json) (`node tools/build-hub.mjs` prerenders it), each skill page starts from
-[`docs/_template/`](docs/_template/), and GitHub Pages publishes `docs/` from `main`.
+[`docs/_template/`](docs/_template/), and GitHub Pages publishes `docs/` from `main`. Every change lands through a pull request that the owner reviews and merges — never a direct push or merge to `main`.
