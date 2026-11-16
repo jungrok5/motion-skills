@@ -2006,6 +2006,46 @@
       ]
     },
     {
+      "id": "agent-launch-film",
+      "name": "agent-launch-film",
+      "tagline": "제품 · 앱 · AI 에이전트 하나를 주면 에이전트가 일하는 모습을 보여 주는 런치 영상을 만듭니다. 점 매트릭스 화면을 얼굴로 단 사물 마스코트가 깨어나고, 입력창에 글자가 쳐지고 커서가 누르면, 유리 UI 카드(배운 것의 카드 더미, 카운터가 올라가는 회전 카드, 에이전트가 제안하고 사용자가 답하는 채팅, 렌즈를 스쳐 가는 결과물 무리, 결과 한 줄, 버튼 하나, 전후 막대)가 밝은 3D 공간에 떠서 피사계 심도와 모션 블러로 흐려집니다. 장면은 자르지 않고 물러나거나 카메라가 뚫고 지나가며 넘어가고, 모든 조각은 주제에 맞춰 HTML/CSS로 그리며, UI 효과음과 신스 배경은 영상에서 합성합니다. 반복 재생 라이브 페이지와 MP4를 냅니다.",
+      "posterAlt": "agent-launch-film으로 만든 「보리」의 장면 네 개: '저녁 고민 끝, 지민 님' 아래 화면에 '준비'가 뜬 밥솥 마스코트와 입력창을 누르는 커서, 밥솥 아바타의 말풍선과 초록 말풍선 옆 된장찌개 포스터, 월~일 요리 포스터가 한 줄로 서고 한 장이 앞으로 나온 장면, '이번 주, 35,200원 아꼈어요' 아래 회색과 초록의 전후 막대",
+      "poster": "agent-launch-film/poster.jpg",
+      "tags": [
+        "AI 에이전트 런치 영상",
+        "유리 UI 카드 · 3D 피사계 심도",
+        "점 매트릭스 마스코트",
+        "채팅 · 타이핑 · 카운터",
+        "합성 사운드 · MP4 · 라이브 페이지"
+      ],
+      "stats": [
+        "예제 「보리」 49초 · 9장면 · 한국어",
+        "사진 · 영상 · 생성 미디어 0개, 모두 코드로 그림"
+      ],
+      "page": "agent-launch-film/",
+      "source": "agent-launch-film/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "agent-launch-film/examples/bori/"
+      },
+      "sources": [
+        {
+          "title": "Fastlane(@UseFastlane)의 X 게시물 (AI 광고 제작 제품 \"Claude for Ads\"의 97초 런치 영상): 화면 문법의 출처",
+          "url": "https://x.com/UseFastlane/status/2116024028708196432?a=3dL47zV5VgDkc5ipWFw&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「보리」 · 냉장고 사진 한 장으로 일주일 저녁 · 49초 · 9장면 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/agent-launch-film/demo/examples/bori/"
+        },
+        {
+          "title": "「Tally」 · 시작 템플릿, 계산기 마스코트의 장부 에이전트 · 20초 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/agent-launch-film/demo/templates/"
+        }
+      ]
+    },
+    {
       "id": "storybook-portrait",
       "name": "storybook-portrait",
       "tagline": "주제를 주면 그 주제에 맞는 인물을 새로 설계해 요즘 그림책 스타일의 초상으로 자바스크립트가 직접 그립니다. 무광 과슈 피부, 색 줄이 섞인 마른 붓 머리카락과 잔머리, 옆을 보는 작은 눈동자의 크고 둥근 눈, 빨간 볼, 긴 목, 종이 결이 비치는 크레용 무늬 옷, 떨리는 잉크 선을 이미지 파일 없이 획 하나씩 올리고, 다 그린 뒤에는 숨 쉬고 깜빡이고 눈이 먼저 움직이면 고개가 예비 동작과 함께 따라가며 머리카락과 귀걸이가 늦게 따라옵니다.",
