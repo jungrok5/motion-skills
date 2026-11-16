@@ -98,7 +98,7 @@ Front-lit noon is the flattest hour of any engine; open the page late in the aft
   one bounce off what is on screen (it cannot see behind the camera or behind things, and outdoors under an open sky
   it is subtle; it tells in lanes, under eaves and by lamplight), and less sky where buildings stand close (read off
   a top-down height map). There is no Lumen-like multi-bounce and no Nanite-like geometry: three.js has neither.
-- The page is no longer one file: 33–120 MB of scans arrive while you walk, from `assets/` or from Poly Haven's
+- The page is no longer one file: 41–126 MB of scans arrive while you walk, from `assets/` or from Poly Haven's
   server — the first seconds are the generated place, and things appear in it. Offline, or with `?scan=0`, it stays
   generated: a different, flatter picture.
 - Wet paving, puddles and ice mirror what stands over them the same way on `high` and above (lamps and lit windows

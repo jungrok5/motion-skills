@@ -165,7 +165,8 @@ LR.grass.scan = { frond: ['fern_02', part], leaf: ['weed_plant_02', part] };
 
 `starter` — a second, different list: `raw_plank_wall` (`gain 0.8`), `wood_planks_grey`, `thatch_roof_angled`
 (`gain 1.25`), `stacked_stone_wall`, `forest_ground_04`, `brown_mud_dry`, `river_small_rocks`, `rock_pitted_mossy`,
-`pine_bark`; `wooden_crate_02`, `tree_stump_01`, `stone_fire_pit`.
+`pine_bark`; `wine_barrel_01`, `tree_stump_01`, `stone_fire_pit`, `boulder_01` (every rock of 0.5 and up),
+`fern_02` (strewn under the trees); the twigs of `fir_tree_01` and `pine_tree_01` on its spruces and pines.
 
 Tried and dropped: `Barrel_01` (an oil drum), `rock_07` / `rock_09` (pebbles at 12 000–15 000 triangles),
 `wooden_lantern_01` (blended glass), `rock_moss_set_01/02` (six rocks sharing one map), `mountainside` (153 000
@@ -177,8 +178,8 @@ brand), the Namaqualand boulders (desert granite), `brown_mud_leaves_01` (a moss
 ## Weight, and how the page starts
 | | surfaces | models + atlases | the page loads |
 |---|---|---|---|
-| `examples/village` | 18 · 48 MB | 50 + 3 · 72 MB | **120 MB** besides a 1.4 MB html |
-| `starter` | 9 · 26 MB | 3 · 7 MB | **33 MB** |
+| `examples/village` | 18 · 50 MB | 50 + 3 · 76 MB | **126 MB** besides a 1.4 MB html |
+| `starter` | 9 · 25 MB | 5 + 2 · 15 MB | **41 MB** |
 
 That is a lot to wait for, so **the live page does not wait** (streaming): every surface is baked from its generated
 recipe at once, every model is placed from its measured box, the walk begins — and each scan takes its layer, each

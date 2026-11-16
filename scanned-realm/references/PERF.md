@@ -57,7 +57,7 @@ follows is the design that keeps those in hand, and the knobs to turn if a devic
 
 ## Loading
 The page compiles about sixty shader programs, bakes its material layers and builds the place before the first frame.
-**It does not wait for the scans** (120 MB for the village, 33 MB for the starter — JPEGs and geometry, once; the
+**It does not wait for the scans** (126 MB for the village, 41 MB for the starter — JPEGs and geometry, once; the
 browser caches them):
 - every surface is baked from its generated recipe at once, and the walk begins; each scan then takes its layer as its
   maps arrive (four fetched ahead, each freed after its layer), and the credit line counts them in;

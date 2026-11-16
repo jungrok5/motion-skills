@@ -162,7 +162,7 @@ itself in its own way: each tap is compared at the depth the surface has *there*
 **The licence is part of the asset.** Megascans, asked for by name, is free now — and cannot be served by a web page
 or fetched by a script (`references/ASSETS.md`). Find that out before designing around a library, not after.
 
-**120 MB is not a loading screen.** Fifty models and eighteen surfaces at 1k. *Fix:* the walk starts on the recipes
+**126 MB is not a loading screen.** Fifty models and eighteen surfaces at 1k. *Fix:* the walk starts on the recipes
 and the measured boxes; scans arrive in it. `maps` per asset (`"d"` for plants, tools and food) took a fifth off.
 
 **A page that works on the machine it was built on has not been run on a PC.** The owner opened the live pages on a

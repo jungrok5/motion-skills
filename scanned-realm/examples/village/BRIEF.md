@@ -84,7 +84,7 @@ seen through an oak leaf's outline, on the oaks; `shrub_03`'s toothed leaves on 
 ground cover.
 
 What stays generated, and why: hay and haystacks (a roof scan on a rick goes dark), cloth, glass, iron, snow, turf and
-grass blades, the trees' wood, every building. 18 surfaces, 50 models, 3 atlases: 120 MB, arriving while you walk.
+grass blades, the trees' wood, every building. 18 surfaces, 50 models, 3 atlases: 126 MB, arriving while you walk.
 
 ## To make new
 Everything here is the kit's stock (this example is where the stock came from). A different topic starts from this table.

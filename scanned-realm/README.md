@@ -16,7 +16,7 @@ scans that place is made of**, the plants, the walk.
 
 ```bash
 # the worked example: 은여울 마을 (Silverford), with 18 scanned surfaces, 50 scanned models and 3 leaf atlases
-node scanned-realm/scripts/fetch-assets.mjs scanned-realm/examples/village   # assets.json → assets/ (120 MB from Poly Haven; not in the repo)
+node scanned-realm/scripts/fetch-assets.mjs scanned-realm/examples/village   # assets.json → assets/ (126 MB from Poly Haven; not in the repo)
 node scanned-realm/scripts/build.mjs  scanned-realm/examples/village         # → examples/village/index.html
 (cd scanned-realm/examples/village && python3 -m http.server 8000)           # open http://localhost:8000 — not file://
 node scanned-realm/scripts/check.mjs  scanned-realm/examples/village         # loads clean · every scan arrived and baked · can be walked · every state reads · what the scans cost a view
@@ -44,7 +44,7 @@ meshoptimizer's simplifier are vendored (both MIT, `vendor/LICENSE`, `vendor/LIC
 
 What it is and is not: scanned surfaces, objects, plants and leaves on generated land, buildings and tree skeletons.
 There are no scanned trees or buildings; levels of detail are a few simplified copies a model, not Nanite; light is
-screen-space, not Lumen; 33–120 MB of scans arrive while you walk. **Megascans is not used and cannot be**: it has
+screen-space, not Lumen; 41–126 MB of scans arrive while you walk. **Megascans is not used and cannot be**: it has
 been free on Fab since late 2026, but its licence forbids serving the raw files from a public page and fetching them by
 script — stills rendered with it would be fine, a page that serves it is not. `references/LOOK.md` says where the look
 stops, `references/ASSETS.md` how scans are chosen, fitted and shipped, which were tried and dropped, and the licence

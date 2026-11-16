@@ -35,7 +35,7 @@ softened the shadows with distance, and let the walk begin before the download h
 | ground plants | painted fronds and blades | scanned ferns, nettles, docks, dandelions, flowers within a few metres of the eye, over the engine's own grass |
 | leaves | painted sprays | photographed leaves and twigs laid into the same sprays; the trees themselves are still grown from numbers |
 | shadows | one soft width | wider the further the thing that throws them |
-| what ships | one `index.html`, runs from disk | `index.html` + `assets/` (33–120 MB) on a server, or one html that reads from Poly Haven |
+| what ships | one `index.html`, runs from disk | `index.html` + `assets/` (41–126 MB) on a server, or one html that reads from Poly Haven |
 | network | none | the scans, arriving while you walk |
 | buildings, land, grass blades, sky, weather, light, sound, the walk | generated | **the same** |
 
