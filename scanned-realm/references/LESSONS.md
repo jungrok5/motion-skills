@@ -178,6 +178,89 @@ page once in safe mode (`?safe=1`: lowest tier, optional passes off — the smal
 context a panel says so in the realm's language, with what to do, the card's name and the ways on. *Rule:* a failure
 to start is a screen the visitor reads — never a stack trace, never a blank canvas.
 
+### Round 3 — whole trees, kits of structures, a lens, ground that does not repeat
+Asked for: the three things the second round said it had not done.
+
+**"Scanned trees" is decided by a table, not by wanting them.** The catalogue lists a tree's triangles for another
+version of the model; the files said: the full-grown fir and pine are 7.0 and 17.2 million triangles and 465 and
+914 MB each, the jacaranda 3.9 million and 205 MB. A page that reads originals from the library's server cannot take
+those. What it can take: one gnarled 3.4 m tree at 1.07 million and 45 MB, sets of saplings and shrubs at 0.4 million
+and 19–23 MB. *So:* measure every candidate from its glTF (triangles, megabytes, objects, which materials are cut
+out) before promising anything; say which trees are scans and that the forest is not.
+
+**A tree's levels of detail cannot be edge collapse.** A crown is tens of thousands of leaves that do not touch each
+other or the twig: a simplifier that works within connected pieces stops at "every leaf is still two triangles".
+*Fix (lib/46_lods.js):* find the pieces (weld by position, union over triangles); leaves are dropped by a fixed
+lottery — each level a subset of the one before — and the ones kept are enlarged about their own middles (growth
+`(1 / share)^0.45`, capped at 6, less for a spray several times the usual size); twigs are ranked by their share of
+the surface and dropped thinnest first, which is what "sub-pixel from here" means; a ceiling on the triangles of each
+wood level keeps a trunk from staying at ten thousand. The first version called anything six times the median a stem
+and never dropped it: a fir's bigger sprays are that, and the far levels would not go under 16 000.
+
+**A level in view is a draw call, and a tree has seven.** Five kinds of shrub and six of sapling, two or three
+materials each, seven levels: the lane went from 444 draw calls to 602. *Fix:* parts of a tree that wear the same
+maps (a shrub's leaves and twigs off one atlas) are one part; a sapling or a shrub takes five levels, not seven;
+wood that has come down to a few triangles is not drawn; fewer kinds. 545 — and the count now says how many of them
+are the shadow cascades (a still draws all three, the live page one or two a frame).
+
+**The second level, at nine metres, looked like a different tree.** A third of the leaves, enlarged, is right at
+thirty metres and wrong where you stand under the crown. *Fix:* a tree's levels are kept to 5 / 14 / 30 / 60 / 110 /
+190 m (a sapling a third of that) — a hero tree is one tree, it can afford to be whole when you are beside it.
+
+**A scanned tree needs the year too.** It stood green among gold neighbours in autumn and kept every leaf in the snow.
+*Fix:* its leaves turn early and whole, each tree and clump to its own gold or russet, and are shed in clumps by the
+season (`fall`); the shadow pass sheds the same leaves, or a bare tree throws a full crown's shadow.
+
+**A kit piece is not where its file's origin is.** The fort's pieces are laid out in a field 70 m across; a piece is
+placed about its own middle by moving the copy's origin — and culling and distance used that origin. The tower was
+there from the woods and gone from the meadow; two corners were missing from above. It looked like a placement
+mistake and was not. *Fix:* each copy keeps where its middle is, and view, range and level are decided there.
+
+**A kit's wall tiles.** Its UVs run from −7 to 11; baked maps clamped at the edge drew a smear. *Fix:* a model's maps
+repeat when any of its UVs leave 0–1 (measured at load). The same was true of a sapling's bark.
+
+**"Stand it on its lowest point" lifts a pier.** Pieces whose poles go 0.6–0.9 m below their zero were each lifted
+by a different amount. *Fix:* `arrange` and `swing` keep the model's own zero (`base: false`).
+
+**Draw a kit before placing it.** Twenty-two pieces with names like `wall_thin_corner_02` say nothing about which
+face is the outside or where the open ends are. Sixty lines that plot each piece's triangles from the front, the side
+and above (no renderer) answered it in a minute: walls run along z, the outside is −x, a corner's two arms. Then the
+plan was set out in the kit's frame with quarter turns, and looked at from above in the engine (`up=48`) before
+anything else — which is where the missing tower showed.
+
+**Letting go of vertex copies found the one place that still read them.** Dropping a buffer's array once the
+graphics card has it saved 60 MB after one still (347 → 286 MB of array buffers) and crashed the next frame: the
+renderer measures a geometry's bounding sphere when it first draws it, and another level shared the positions that
+were gone. *Fix:* every scan geometry is given its sphere when it is made. And measure memory after a forced
+collection — before one, the heap figure was 553 MB with or without the change.
+
+**A lens before the resolve, not after.** Fourteen taps a pixel is a noisy blur; after temporal anti-aliasing it would
+stay noisy and would read a depth buffer that jitters. Between the lit picture and the resolve, with the disc turned
+every frame, the resolve adds the frames up and a still has two hundred taps. A map of the largest blur in each 8 px
+tile sizes the disc (and lets the sharp parts of the picture skip the pass); what is behind a sharper pixel may not
+spread over it. The focus is the median of nine depths in the middle of the picture, eased in dioptres. The first
+stills had the bottom third of every picture melted — real for that aperture, wrong for a walk: the near side is held
+back to six tenths, and the amount came down. **Focus on a subject, not on a distance:** the first "close-up" still
+named 2.5 m and focused on grass.
+
+**A tile shows from above, most on what is laid in rows.** The cobbled lane from seven metres up showed a grid of
+the same dark stone; stains and relaid patches did not hide it. *Fix:* each ground layer is read twice with offsets
+that change from patch to patch of a noise that does not repeat, and the two are joined along whichever stands
+taller — the join runs round stones. Offsets only, so normals stay true; explicit gradients, so the mip level does not
+jump at a patch's edge. Cobbles were the worry (two layouts cross-faded would ghost) and were fine: a height blend is
+not a cross-fade.
+
+**A time limit on a whole file fails exactly the big ones.** The live test, run while stills were rendering on the
+same machine, reported 54 of 58 models: the four trees had "not arrived". Each request had forty seconds; a 20–45 MB
+file read between slow frames took longer — and so it would on a slow line with nothing else wrong. *Fix:* a
+download is given up when nothing of it has arrived for forty seconds, not when all of it has taken that long. Test
+the live page under load, and with the heavy scans forced on (`?heavy=1`): the still renderer waits for everything
+and would never have shown this.
+
+**254 MB is a decision, not a detail.** The four heavy scans are 105 MB of it. They are marked, come last, and a
+phone, the lowest quality and safe mode do without them — the button a framed page waits behind states what *that*
+device will fetch — and every one of them has the engine's own tree as its fallback, so the place is whole either way.
+
 ## The engine
 **The picture**
 - Shade under eaves and jetties was black → the computed sky was physically dim next to the sun (single scattering

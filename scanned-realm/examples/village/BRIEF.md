@@ -26,10 +26,11 @@ but an MMORPG village; day and night, rain and winter changing; walk round it wi
   −60, 6 · the skyline from everywhere — 여울 물레방아 the mill and wheel · 53, 13 — 바람 언덕 풍차 the windmill on its
   hill · 80, −62 · the skyline north-east — 돌다리 the bridge · 3, −41 — 꽃 초원 the meadow and its lone oak · −6, −82 —
   남문 the south gate in its palisade · 0, 100 — 방앗간 연못 the pond and pier · 62, 50 — 보리밭 농장 the farm · −56, 58 —
-  숲속 빈터 a glade at the end of a path through the north-west woods · −110, −82.
+  숲속 빈터 a glade at the end of a path through the north-west woods · −110, −82 — 옛 성터 the old fort, a walled
+  yard with a round tower in its own clearing north of the meadow · −9, −132 · closes the view across the meadow.
 - Ways: the paved lane from the gate north to the square; paved arms west to the chapel and east to the mill; a path
-  over the bridge into the meadow; tracks to the farm, the pond and the windmill; a footpath from the farm between
-  two houses to the lane (the farm's fences leave a gap for it and for the farm track).
+  over the bridge into the meadow, and on up to the fort's gate; tracks to the farm, the pond and the windmill; a
+  footpath from the farm between two houses to the lane (the farm's fences leave a gap for it and for the farm track).
 - Edges: palisade along the south; woods too thick to pass on every other side (the walker is held at 150 m).
 - Far country: forested hills from 200 m, bare ridges and snow caps beyond 800 m.
 
@@ -84,17 +85,33 @@ seen through an oak leaf's outline, on the oaks; `shrub_03`'s toothed leaves on 
 `fir_tree_01`'s twigs on the spruces, `pine_tree_01`'s tufts on the pines; `fern_02`'s fronds and a dock leaf in the
 ground cover.
 
+**Whole trees** (heavy scans — a desktop has them, a phone has the engine's own in their place): seven old thorns,
+one scan (`island_tree_02`, a gnarled 3.4 m tree placed at 1.25–1.6 ×, each turned differently) — in the chapel
+yard, by the pond's bench, at the fort's gate and in its yard, at the farm, at the meadow's edge, on the mill hill;
+about 160 young firs and pines (`fir_sapling`, `pine_sapling_small`) where the wood thins out and in groves by the
+fort, the glade and the meadow; about 100 evergreen shrubs (`searsia_lucida`) at the feet of walls and fences.
+
+**Structures** (kits of scanned pieces): the old fort — `modular_fort_01`, eleven of its twenty-two pieces: the gate
+between two short walls toward the meadow, a wall with loopholes east, two long walls north and west, three corners,
+and the round tower where west meets south; its gate leaves are `large_castle_door` at 1.8 ×, standing open; a fire
+pit, barrels, a table and a ladder in the yard, nettles along the foot of the walls. The pond's pier —
+`modular_wooden_pier` at 0.8 ×: three sections of deck, the hoist frame, then loose planks and bare poles (not its
+ramp: the bank is a step high). The churchyard's wrought-iron gate — `large_iron_gate` between two generated piers,
+one leaf open.
+
 What stays generated, and why: hay and haystacks (a roof scan on a rick goes dark), cloth, glass, iron, snow, turf and
-grass blades, the trees' wood, every building. 18 surfaces, 50 models, 3 atlases: 126 MB, arriving while you walk.
+grass blades, the forest's trees, every house (the library has no houses). 18 surfaces, 58 models, 3 atlases: 254 MB
+arriving while you walk — 149 MB on a phone, which is not sent the four heavy ones.
 
 ## To make new
 Everything here is the kit's stock (this example is where the stock came from). A different topic starts from this table.
 
 ## The walk
 - Spawn 0.5, 88 facing north: the lane, washing and bunting across it, the inn's red roof closing the view.
-- Tour: lane → square → inn front → smithy → mill → back and over the bridge → the meadow oak → the path into the
-  woods to the glade and back → chapel → farm → the footpath to the lane → gate.
-- Views: gate, lane, square, inn, smithy, mill, bridge, meadow, chapel, farm, pond, woods, glade.
+- Tour: lane → square → inn front → smithy → mill → back and over the bridge → the meadow oak → up the path to the
+  fort's gate, along its wall to the tower → across the meadow to the path into the woods, to the glade and back →
+  chapel → farm → the footpath to the lane → gate. 746 m, eight minutes; the lens follows what it looks at.
+- Views: gate, lane, square, inn, smithy, mill, bridge, meadow, chapel, farm, pond, woods, glade, fort, pier.
 
 ## Words
 Korean on the glass; place names as above; the title card reads 은여울 마을.

@@ -34,14 +34,18 @@ softened the shadows with distance, and let the walk begin before the download h
 | objects | lathes, boxes and noise blobs | scanned barrels, crates, tables, baskets, pots, tools, fruit and bread, a statue, boulders, rock faces — instanced, with levels of detail; the generated ones remain as twins of the kit's four props |
 | ground plants | painted fronds and blades | scanned ferns, nettles, docks, dandelions, flowers within a few metres of the eye, over the engine's own grass |
 | leaves | painted sprays | photographed leaves and twigs laid into the same sprays; the trees themselves are still grown from numbers |
+| whole trees | none | a few: one scanned thorn tree stood in seven places, scanned saplings and shrubs — heavy, so not on a phone; the forest stays grown from numbers |
+| structures | built from parts | the houses still are; a fort, a pier and two gates are kits of scanned pieces set out one by one |
+| the lens, the ground | no depth of field; a tile repeats | depth of field on the tour; each ground layer read twice so its tile does not show |
 | shadows | one soft width | wider the further the thing that throws them |
-| what ships | one `index.html`, runs from disk | `index.html` + `assets/` (41–126 MB) on a server, or one html that reads from Poly Haven |
+| what ships | one `index.html`, runs from disk | `index.html` + `assets/` (41–254 MB) on a server, or one html that reads from Poly Haven |
 | network | none | the scans, arriving while you walk |
 | buildings, land, grass blades, sky, weather, light, sound, the walk | generated | **the same** |
 
 So this raises what you see within a few metres — paving, walls, roofs, bark, the things left about, what grows at
-your feet, the leaf in front of your face — and leaves the rest where it was: a wall's outline is still a straight
-line, a tree is still cards on a skeleton, light is still screen-space. `references/LOOK.md` says where the look stops.
+your feet, the leaf in front of your face, one tree by the bench, the wall of the fort — and leaves the rest where it
+was: a house wall's outline is still a straight line, a forest tree is still cards on a skeleton, light is still
+screen-space. `references/LOOK.md` says where the look stops.
 
 ## Megascans, asked for by name
 Quixel Megascans became free on Fab in late 2026. It is the library an Unreal scene like the reference is made of, and

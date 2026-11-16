@@ -30,8 +30,11 @@
   MD.set = (name, list) => { MD.kit[name] = list.map((e) => (typeof e === 'string' ? { id: e, s: [1, 1] } : e)).filter((e) => MD.defs[e.id]); };
   const MS = typeof MeshoptSimplifier !== 'undefined' && MeshoptSimplifier.supported ? MeshoptSimplifier : null;
   const wait = () => LR.qn('scanwait', 40) * 1000, hash1 = (x) => { const v = Math.sin(x * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
-  const xhr = (url, type) => new Promise((res, rej) => { const r = new XMLHttpRequest(); r.open('GET', url); r.responseType = type; r.timeout = wait();
-    r.onload = () => ((r.status === 200 || r.status === 0) && r.response ? res(r.response) : rej(new Error(url + ' → ' + r.status))); r.onerror = r.ontimeout = () => rej(new Error('cannot read ' + url)); r.send(); });
+  // a file is given up when nothing of it has arrived for ?scanwait seconds — not when the whole of it has taken that
+  // long: a tree is 20–45 MB, minutes on a slow line (and a busy page reads what has arrived only between frames)
+  const xhr = (url, type) => new Promise((res, rej) => { const r = new XMLHttpRequest(); r.open('GET', url); r.responseType = type; let t = 0;
+    const arm = () => { clearTimeout(t); t = setTimeout(() => { r.onload = r.onerror = null; try { r.abort(); } catch (e) { /* already over */ } rej(new Error('cannot read ' + url + ' (nothing arrived for ' + Math.round(wait() / 1000) + ' s)')); }, wait()); };
+    r.onprogress = arm; r.onload = () => { clearTimeout(t); if ((r.status === 200 || r.status === 0) && r.response) res(r.response); else rej(new Error(url + ' → ' + r.status)); }; r.onerror = () => { clearTimeout(t); rej(new Error('cannot read ' + url)); }; arm(); r.send(); });
   const COMP = { 5120: Int8Array, 5121: Uint8Array, 5122: Int16Array, 5123: Uint16Array, 5125: Uint32Array, 5126: Float32Array }, NUM = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT4: 16 };
   const RD = { 5126: 'getFloat32', 5123: 'getUint16', 5125: 'getUint32', 5121: 'getUint8', 5122: 'getInt16', 5120: 'getInt8' };
   MD.has = (id) => !!MD.defs[id];

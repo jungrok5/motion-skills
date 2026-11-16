@@ -1,9 +1,10 @@
 # ASSETS — choosing scans, fitting them, shipping them
 
 What this skill adds to the engine is read from files: **scanned surfaces** (photographed materials), **scanned
-objects and plants** (photogrammetry models, drawn instanced with levels of detail) and **foliage atlases**
-(photographed leaves, twigs and fronds that the engine's own trees and ground cover are painted from). Land,
-buildings, the trees' wood, grass blades, sky, weather and sound are still built by code. This note is how to pick the
+objects and plants** (photogrammetry models, drawn instanced with levels of detail), **whole scanned trees** and
+**kits of scanned structures** (the same models, with what a tree and a wall need), and **foliage atlases**
+(photographed leaves, twigs and fronds that the engine's own trees and ground cover are painted from). Land, houses,
+the forest's trees, grass blades, sky, weather and sound are still built by code. This note is how to pick the
 files for a topic, make them sit in the picture, and ship the page.
 
 ## Where scans may come from (read 2026-11-16)
@@ -23,7 +24,8 @@ to `assets/manifest.json` by hand (same fields) and its author and licence to `a
 my-realm/assets.json
   { "res": "1k",
     "textures": ["cobblestone_floor_04", { "id": "pine_bark", "maps": "dna" }, …],
-    "models":   ["wine_barrel_01", { "id": "fern_02", "maps": "d" }, { "id": "rock_face_01", "res": "2k" }, …],
+    "models":   ["wine_barrel_01", { "id": "fern_02", "maps": "d" }, { "id": "rock_face_01", "res": "2k" },
+                 { "id": "island_tree_02", "maps": "dn", "heavy": true }, …],
     "atlases":  [{ "id": "island_tree_02", "map": "leaves" }, { "id": "fir_tree_01", "map": "twig" }] }
 node scanned-realm/scripts/fetch-assets.mjs my-realm [--res 2k] [--force]
 my-realm/assets/tex/<id>/… · assets/models/<id>/… · assets/atlas/<id>_<map>_{diff,alpha}.jpg · assets/manifest.json · assets/CREDITS.md
@@ -31,7 +33,12 @@ my-realm/assets/tex/<id>/… · assets/models/<id>/… · assets/atlas/<id>_<map
 - `maps` says which maps to fetch: **d** colour, **n** normal, **a** occlusion-roughness-metal, **h** height
   (surfaces only). Default all. Height is what the relief march and the crease logic read — bark and cloth do without
   (`"dna"`); a plant, a tool or a loaf does with colour alone (`"d"`), furniture with `"dn"`. A plant's cut-out map is
-  fetched whatever you ask.
+  fetched whatever you ask — the model's one `Alpha` map, and a tree's `leaves_alpha` / `twigs_alpha`, which belong to
+  the material whose colour map carries the same name.
+- `"heavy": true` marks a model of tens of megabytes (a whole tree). The page loads heavy models last and **leaves
+  them out on a phone, on the `low` tier and in safe mode** (`?heavy=1 | 0` decides by hand); the button a framed
+  page waits behind states the megabytes that device will really fetch. `check.mjs` warns about a model over 15 MB
+  that is not marked.
 - `manifest.json` holds what the page needs: files, real sizes, every file's address on Poly Haven's server, and
   **each model's measured boxes** (so the page can place a model before its triangles have arrived). `build.mjs`
   inlines it. `assets/` is never committed to this repository; run the fetch after cloning.
@@ -89,9 +96,10 @@ its copies, chosen each frame.
 - **Big scans need grain**: a 7 m rock face at 1k has 150 texels a metre. `detail: 'rock'` lays one of the engine's
   tiling materials over it near the eye (triplanar — its light and dark over the scan's colour, its normal over the
   scan's), fading out by `detailReach` (14 m). This is why big rocks can now be scans and stay sharp at arm's length.
-- **Options per model** (in `MD.load`): `plant`, `wind`, `trans` (light through leaves), `turn` (how much the season
-  turns it), `shadow`, `far`, `lod`, `lodK`, `px` (map size), `gain`, `tint`, `rough`, `normal`, `metal` (the whole
-  object's metalness: the engine keeps none per texel), `moss`, `detail`, `detailTile`, `detailReach`.
+- **Options per model** (in `MD.load`): `plant`, `tree`, `wind`, `trans` (light through leaves), `turn` (how much the
+  season turns it), `fall` (how much of a tree's foliage winter sheds), `leafGain` / `leafTint` (a tree's foliage
+  apart from its bark), `shadow`, `far`, `lod`, `lodK`, `px` (map size), `gain`, `tint`, `rough`, `normal`, `metal`
+  (the whole object's metalness: the engine keeps none per texel), `moss`, `detail`, `detailTile`, `detailReach`.
 
 ```js
 await MD.load(['wine_barrel_01', { id: 'boulder_01', detail: 'rock', moss: 0.9 }, { id: 'brass_pot_01', metal: 0.85 },
@@ -120,9 +128,79 @@ lit through its leaves, turned by the season, laid low by deep winter.
   foot of a wall, celandine at the wood's edge — by cover and noise, never evenly. Scans a few metres from the eye are
   what make a forest floor read as photographed; a carpet of them costs a million triangles and adds nothing.
 
+## Whole trees
+A tree model is a trunk, thousands of twigs, and tens of thousands of leaves or needle sprays, each a little piece of
+mesh of its own, with the foliage cut out by a map beside the glTF (`leaves_alpha`, `twigs_alpha`). Measured in the
+files, not the catalogue (read 2026-11-16):
+
+| model | triangles | download | usable in a page? |
+|---|---|---|---|
+| `fir_tree_01` · `pine_tree_01` | 6.98 M · 17.2 M | 465 MB · 914 MB | no — take their twig atlases instead |
+| `jacaranda_tree` · `pine_sapling_medium` | 3.86 M · 6.04 M | 205 MB · 255 MB | no |
+| `island_tree_01` · `island_tree_03` · `tree_small_02` | 1.6 M · 2.1 M · 2.1 M | 63 · 81 · 96 MB | too heavy for what they add |
+| **`island_tree_02`** (a gnarled thorn, 3.4 m: place it at 1.3–1.6 ×) | 1.07 M | 44.6 MB | **yes**, a handful |
+| **`fir_sapling`** · **`pine_sapling_small`** (three young trees each, 0.7–1.3 m) | 433 k · 398 k | 22.8 · 19.1 MB | **yes** |
+| **`searsia_lucida`** (seven evergreen shrubs, 0.7–2.3 m) | 377 k | 18.6 MB | **yes** |
+| `fir_sapling_medium` | 1.53 M | 74 MB | no |
+
+```js
+await MD.load([{ id: 'island_tree_02', tree: true, fall: 0.9, leafGain: 1.45, leafTint: [0.96, 1, 0.8] },
+  { id: 'fir_sapling', tree: true, turn: 0 }]);                                  // turn: 0 — an evergreen keeps its colour
+MD.place('island_tree_02', x, z, { scale: 1.4, yaw, trunk: 0.32 }) || LR.flora.plant('beech', x, z, { scale: 0.8 });
+MD.scatter({ ids: ['fir_sapling#0', 'fir_sapling#1', 'fir_sapling#2'], density: (x, z) => …, scale: [1.1, 2.3] });
+```
+- `tree: true` draws the model's **wood** as a solid thing (bark, moss, snow, the weather) that sways with the gusts,
+  and whatever has a cut-out map as **leaves**: cut out, lit through, trembling each on its own, darker inside the
+  crown than at its skin (every vertex is told how deep in its tree's box it is), turning gold and russet in autumn
+  (`turn`) and shed in clumps in winter (`fall`; the shadow sheds with it).
+- **Levels of detail cannot be edge collapse**: the pieces do not touch. `lib/46_lods.js` makes seven when the model
+  arrives — leaves dropped by a fixed lottery (each level a subset of the one before) and the ones left enlarged about
+  their own middles so the crown keeps its cover; twigs dropped thinnest first (by their share of the surface); what
+  is kept simplified within itself; wood of a few triangles not drawn at all. `island_tree_02`: 1.07 M → 498 k →
+  124 k → 44 k → 17 k → 5.8 k → 2.0 k triangles, kept to 5 / 14 / 30 / 60 / 110 / 190 m (times the tier's reach);
+  a sapling or a shrub (under 4.5 m) takes five of the seven — 157 k → 71 k → 21 k → 2.8 k → 0.3 k — at about a
+  third of those distances. Making them takes about two seconds for the big tree, a part at a time between frames.
+- **They are heavy**: mark them `"heavy"`, name them last in `MD.load` (they then arrive last), place few whole
+  trees (seven in the village) and always as `place(…) || F.plant(…)`, because a phone will not have them.
+- A set of saplings is three trees in a row: place the members (`'fir_sapling#0'`). Parts of a tree that wear the
+  same maps (a shrub's leaves and twigs off one atlas) are joined into one at load: half the draw calls.
+- `trunk: metres` is what stops the walker (a tree's box is its crown); keep other trees out from under it yourself
+  (the village keeps a list of where they stand).
+- Out in the light a sapling is a young tree; under a closed canopy it is a dark stick. Put them at the wood's edge,
+  in clearings, by walls.
+
+## Structures — kits
+Poly Haven has no houses. What it has are **kits**: `modular_fort_01` (22 pieces: walls 2.5 m and 4.2 m thick and
+8.6 m high with battlements, a gate, corners, ends, walkways, stairs, a round tower 15.8 m across — 28 000 triangles
+and 10.6 MB for all of it), `modular_wooden_pier` (deck sections on poles, a ramp, a hoist frame, loose planks and
+poles — 85 000 triangles), and doors and gates in several parts (`large_castle_door`, `large_iron_gate`).
+
+```js
+await MD.load([{ id: 'modular_fort_01', moss: 0.85, detail: 'rock', detailTile: 2.4, detailReach: 24 }, 'modular_wooden_pier']);
+MD.place('modular_fort_01#12', x, z, { yaw: Math.PI / 2, y, solid: false });       // one piece, about its own middle
+MD.arrange('modular_wooden_pier', [4, 3, 2, 5, 1, 0], x, z, { yaw, scale: 0.8, about: [0.05, z0], y });   // pieces as the file has them
+MD.swing('large_castle_door', 1, x, z, { scale: 1.8, y, open: 1.6 });              // a leaf, turned on its hinge
+```
+- **Look at every piece from above before placing one** (a few lines that plot the glTF's vertices are enough): its
+  size, which way it runs, **which face is its outside** (the fort's walls: −x), where its ends are open. Then set
+  the plan out in the kit's own frame and turn pieces by quarter turns.
+- A kit's pieces **tile** (their UVs run far past 0–1): the maps are repeated where they do, and `detail: 'rock'`
+  gives a wall grain near the eye that a 1k map over metres of masonry does not have.
+- A piece of a kit lies **tens of metres from its file's origin**. The engine places it about its own middle, and
+  culls it and chooses its level by that middle (`references/LESSONS.md`: a tower that was there from one side only).
+- `arrange` keeps the pieces as their author set them (a pier's sections butt as they should); `about` is the model's
+  own point that lands on (x, z). Pieces are **not** stood on their lowest points there (`base: false`): a pier's
+  poles go below its zero by different amounts.
+- **The walker**: give every wall a `LR.world.solidBox`, leave the gate's opening out, give a deck a floor
+  (`LR.world.floors.push({ x, z, hx, hz, yaw, c, s, h: () => deckY })`). Sink the pieces a hand's breadth so uneven
+  ground does not show under them; let weeds grow along the foot.
+- **Open ends**: a wall piece is a shell, open where the next piece joins. End a run in a tower, a corner or a rock,
+  never in the air.
+- A door can be the leaves of a bigger gate: `scale` it to the arch and `swing` the leaves open.
+
 ## Foliage atlases — photographed leaves on generated trees
-A tree model at Poly Haven is one to three million triangles; its leaves are two small pictures. Name them under
-`"atlases"` and only those are fetched. The engine's trees are still grown from numbers; their leaf sprays, and the
+A whole tree is 0.4–17 million triangles (above); its leaves are two small pictures. Name them under `"atlases"` and
+only those are fetched. The engine's trees are still grown from numbers; their leaf sprays, and the
 fern fronds and broad leaves of the ground cover, are **painted from the photographs**:
 
 ```js
@@ -143,7 +221,7 @@ LR.grass.scan = { frond: ['fern_02', part], leaf: ['weed_plant_02', part] };
   pinnately veined leaf.
 
 ## What the two realms here use
-`examples/village` — 18 surfaces, 50 models, 3 atlases:
+`examples/village` — 18 surfaces, 58 models, 3 atlases:
 
 | for | scan | note |
 |---|---|---|
@@ -162,6 +240,8 @@ LR.grass.scan = { frond: ['fern_02', part], leaf: ['weed_plant_02', part] };
 | the market | goods on the counters: `food_apple_01`, `lemon`, `croissant`, `hamburger_buns#k`, `ceramic_pot`, `brass_pot_01`, `metal_jug` (`yellow_onion` and `sweet_potato` are in baskets at the farm: no stall sells greens here); tables `WoodenTable_01`, `painted_wooden_table`; `wicker_basket_01/02`, `wooden_crate_01`, `planter_box_01` | goods throw no shadow |
 | set pieces | `dining_table` and `painted_wooden_stool` at the inn, `small_wooden_table_01` with `cross_pein_hammer` and `hatchet` and a `kite_shield` at the smithy, `wooden_ladder_02`, `picke_dirty_01`, `wooden_axe`, `rusted_spade_01`, `watering_can_metal_01` at the farm, `painted_wooden_bench` by the pond, `spinning_wheel_01` at the cottage door, `gothic_statue` in the chapel yard, `stone_fire_pit`, `dead_tree_trunk`, `wooden_bucket_01/02` | |
 | plants | `fern_02`, `weed_plant_02`, `nettle_plant`, `shrub_03`, `dandelion_01`, `periwinkle_plant`, `flower_ursinia`, `flower_empodium`, `grass_medium_02`, `celandine_01`, `dry_branches_medium_01` | `maps: "d"` |
+| whole trees | `island_tree_02` (seven old thorns: chapel yard, pond, fort, farm, meadow, mill hill), `fir_sapling` and `pine_sapling_small` (about 160 young trees at the wood's edge and in groves), `searsia_lucida` (about 100 shrubs at the feet of walls and fences, and round the fort) | `heavy`, `tree: true` |
+| structures | `modular_fort_01` (the old fort beyond the meadow: eleven pieces — gate, five walls, three corners, the round tower), `large_castle_door` (its gate leaves, at 1.8 ×, open), `modular_wooden_pier` (the pond's pier: three deck sections, the hoist frame, loose planks and poles, at 0.8 ×), `large_iron_gate` (the churchyard gate, one leaf open) | `detail: 'rock'` on the fort |
 
 `starter` — a second, different list: `raw_plank_wall` (`gain 0.8`), `wood_planks_grey`, `thatch_roof_angled`
 (`gain 1.25`), `stacked_stone_wall`, `forest_ground_04`, `brown_mud_dry`, `river_small_rocks`, `rock_pitted_mossy`,
@@ -173,12 +253,14 @@ Tried and dropped: `Barrel_01` (an oil drum), `rock_07` / `rock_09` (pebbles at 
 triangles and 7 MB for one cliff), `moss_01` and `grass_bermuda_01` (tufts of a few centimetres, meant to be scattered
 by the hundred thousand), `tree_small_02`'s leaves (a drawing), `jug_01` (printed tulips), `CheeseBox_01` (a printed
 brand), the Namaqualand boulders (desert granite), `brown_mud_leaves_01` (a moss-green carpet), `medieval_wood`
-(read as stone blocks).
+(read as stone blocks); the big trees in the table above; the quiver trees and `othonna_cerarioides` (desert plants);
+the library's other structures (a modern alley: fire escapes, dumpsters, roller doors); the pier's ramp (it climbs
+2.4 m: the pond's bank is a step high).
 
 ## Weight, and how the page starts
 | | surfaces | models + atlases | the page loads |
 |---|---|---|---|
-| `examples/village` | 18 · 50 MB | 50 + 3 · 76 MB | **126 MB** besides a 1.4 MB html |
+| `examples/village` | 18 · 50 MB | 58 + 3 · 204 MB (105 MB of it the four heavy ones) | **254 MB** besides a 1.4 MB html — **149 MB** on a phone or on `low` |
 | `starter` | 9 · 25 MB | 5 + 2 · 15 MB | **41 MB** |
 
 That is a lot to wait for, so **the live page does not wait** (streaming): every surface is baked from its generated
