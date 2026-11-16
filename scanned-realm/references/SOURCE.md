@@ -38,7 +38,7 @@ softened the shadows with distance, and let the walk begin before the download h
 | structures | built from parts | the houses still are; a fort, a pier and two gates are kits of scanned pieces set out one by one |
 | the lens, the ground | no depth of field; a tile repeats | depth of field on the tour; each ground layer read twice so its tile does not show |
 | shadows | one soft width | wider the further the thing that throws them |
-| what ships | one `index.html`, runs from disk | `index.html` + `assets/` (41–254 MB) on a server, or one html that reads from Poly Haven |
+| what ships | one `index.html`, runs from disk | `index.html` + `assets/` (63–254 MB; 41–149 MB to a phone) on a server, or one html that reads from Poly Haven |
 | network | none | the scans, arriving while you walk |
 | buildings, land, grass blades, sky, weather, light, sound, the walk | generated | **the same** |
 

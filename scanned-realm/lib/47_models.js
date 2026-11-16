@@ -383,20 +383,22 @@ void main(){
     const ball = new T.Sphere(new T.Vector3(d.cx, d.cy, d.cz), Math.hypot(d.max[0] - d.min[0], d.max[1] - d.min[1], d.max[2] - d.min[2]) / 2);      // given, not measured: the renderer must not go looking for vertices the page has let go of
     const withInst = (g, b) => { g.boundingSphere = ball; g.setAttribute('iA', new T.InterleavedBufferAttribute(b, 4, 0)); g.setAttribute('iQ', new T.InterleavedBufferAttribute(b, 4, 4)); g.setAttribute('iC', new T.InterleavedBufferAttribute(b, 4, 8)); g.setAttribute('iD', new T.InterleavedBufferAttribute(b, 4, 12)); g.instanceCount = 0; return g; };
     const small = d.tree && size < 4.5;                                        // a sapling or a shrub: five of the seven levels (each level in view is a draw call)
+    const dense = d.tree && !small && d.tris > 6e5;                            // a tree of a million triangles is never drawn whole: its first level keeps every leaf, at half the triangles
     // a level of a part: its triangles, and its vertices where the level has its own (a tree's thinned crown).
     // Once the graphics card has a buffer the page lets go of its own copy (a whole tree is 60 MB of vertices): BA()
     const BA = (a, n, norm) => { const b = new T.BufferAttribute(a, n, !!norm); if (KEEP) return b; return b.onUpload(letGo); };
     const attr = (lv, q) => (lv.pos ? { idx: lv.idx, pos: BA(lv.pos, 3), nor: BA(lv.nor, 3), uv: BA(lv.uv, 2), k: lv.k ? BA(lv.k, 1, true) : q.k } : { idx: lv.idx, pos: q.pos, nor: q.nor, uv: q.uv, k: q.k });
     const parts = d.prims.map((p, i) => { const mat = MD.mats[d.model + ':' + p.mi]; if (!mat) return null; const q = { p, mat, pos: BA(p.pos, 3), nor: BA(p.nor, 3), uv: BA(p.uv, 2) };
-      if (d.tree) { const lv = (d.pre && d.pre[i]) || levels(d, p); q.k = BA(p.k, 1, true); q.lv = (small ? [0, 1, 2, 4, 6] : [0, 1, 2, 3, 4, 5, 6]).map((l) => attr(lv[l], q)); } else q.lv = lodsFor(p, d.plant).map((idx) => ({ idx, pos: q.pos, nor: q.nor, uv: q.uv }));
+      if (d.tree) { const lv = (d.pre && d.pre[i]) || levels(d, p); q.k = BA(p.k, 1, true); q.lv = (small ? [0, 1, 2, 4, 6] : dense ? [1, 2, 3, 4, 5, 6] : [0, 1, 2, 3, 4, 5, 6]).map((l) => attr(lv[l], q)); } else q.lv = lodsFor(p, d.plant).map((idx) => ({ idx, pos: q.pos, nor: q.nor, uv: q.uv }));
       return q; }).filter(Boolean); d.pre = null;
     d.nl = Math.max(...parts.map((q) => q.lv.length)); const hInv = 1 / Math.max(0.05, d.max[1]);
     // how far each level reaches.  A solid thing: while its triangles are about two pixels wide on a 1080-line screen
     // (584 × size / √triangles metres) — a 66 000-triangle boulder is whole only within 5 m, a 950-triangle table always.
     // A plant the same way but sooner (350 ×: its far levels drop whole leaves, and it is one of hundreds); gone at 16–45 m.
-    // A tree: seven levels, each kept to a distance that grows with the tree — a 5 m tree is whole within 5 m, at
-    // half its triangles to 14 m, a tenth to 30 m, a fiftieth beyond 60 m; a sapling a third of those distances.
-    { const tl = (l) => parts.reduce((a, q) => a + q.lv[Math.min(l, q.lv.length - 1)].idx.length / 3, 0), tk = LR.clamp(size / 7, 0.34, 1) * (o.lodK || 1), TD = small ? [5, 14, 36, 85] : [5, 14, 30, 60, 110, 190]; d.lod = [];
+    // A tree: seven levels, each kept to a distance that grows with the tree — a 5 m tree is at half its triangles
+    // (every leaf, each simpler) to 14 m, a tenth to 30 m, a fiftieth beyond 60 m; a sapling a third of those
+    // distances, with five levels.  A tree of over 600 000 triangles is not drawn whole at any distance.
+    { const tl = (l) => parts.reduce((a, q) => a + q.lv[Math.min(l, q.lv.length - 1)].idx.length / 3, 0), tk = LR.clamp(size / 7, 0.34, 1) * (o.lodK || 1), TD = small ? [4, 11, 28, 70] : dense ? [14, 30, 60, 110, 190] : [5, 14, 30, 60, 110, 190]; d.lod = [];
       for (let l = 0; l < d.nl - 1; l++) d.lod.push(o.lod && o.lod[l] !== undefined ? o.lod[l] : d.tree ? Math.max(TD[Math.min(l, TD.length - 1)] * tk, ((o.lodK || 1) * 300 * size) / Math.sqrt(tl(l))) : d.plant ? Math.max(l ? 9 : 3.5, ((o.lodK || 1) * 350 * size) / Math.sqrt(tl(l))) : Math.max(l ? 2.6 : 1.3, ((o.lodK || 1) * 584 * size) / Math.sqrt(tl(l)))); }
     for (let l = 0; l < d.nl; l++) { const b = ibuf(d.cap), ms = []; let tri = 0;
       for (const q of parts) { const lv = q.lv[Math.min(l, q.lv.length - 1)], idx = lv.idx; if (!idx.length) continue; const g = new T.InstancedBufferGeometry(); g.setAttribute('position', lv.pos); g.setAttribute('normal', lv.nor); g.setAttribute('uv', lv.uv); if (lv.k) g.setAttribute('aK', lv.k); g.setIndex(BA(idx, 1)); withInst(g, b);
@@ -405,7 +407,7 @@ void main(){
       d.buf.push(b); d.mesh.push(ms); d.tri.push(tri); }
     if (shadow !== 'none') { const b = ibuf(d.cap), ms = []; let tri = 0;
       if (shadow === 'hull') { const g = withInst(hullGeo(d), b), m = new T.Mesh(g, parts[0].mat.hull); m.frustumCulled = false; m.matrixAutoUpdate = false; m.visible = false; W.shadowScene.add(m); ms.push(m); tri = 28; }
-      else for (const q of parts) { const lv = q.lv[d.tree ? Math.min(q.lv.length - 1, small ? 3 : 4) : q.lv.length - 1], idx = lv.idx; if (!idx.length) continue; const g = new T.InstancedBufferGeometry(); g.setAttribute('position', lv.pos); g.setAttribute('uv', lv.uv); if (lv.k) g.setAttribute('aK', lv.k); g.setIndex(BA(idx, 1)); withInst(g, b);      // a tree's shadow: a middle level, so the crown's shape is in it
+      else for (const q of parts) { const lv = q.lv[d.tree ? Math.min(q.lv.length - 1, small || dense ? 3 : 4) : q.lv.length - 1], idx = lv.idx; if (!idx.length) continue; const g = new T.InstancedBufferGeometry(); g.setAttribute('position', lv.pos); g.setAttribute('uv', lv.uv); if (lv.k) g.setAttribute('aK', lv.k); g.setIndex(BA(idx, 1)); withInst(g, b);      // a tree's shadow: a middle level, so the crown's shape is in it
         const m = new T.Mesh(g, q.mat.sh); m.frustumCulled = false; m.matrixAutoUpdate = false; m.visible = false; W.shadowScene.add(m); ms.push(m); tri += idx.length / 3; }
       d.sbuf = b; d.smesh = ms; d.stri = tri; }
     d.inst = src; MD.live.push(d); };

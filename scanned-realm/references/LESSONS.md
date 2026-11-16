@@ -204,8 +204,10 @@ wood that has come down to a few triangles is not drawn; fewer kinds. 545 — an
 are the shadow cascades (a still draws all three, the live page one or two a frame).
 
 **The second level, at nine metres, looked like a different tree.** A third of the leaves, enlarged, is right at
-thirty metres and wrong where you stand under the crown. *Fix:* a tree's levels are kept to 5 / 14 / 30 / 60 / 110 /
-190 m (a sapling a third of that) — a hero tree is one tree, it can afford to be whole when you are beside it.
+thirty metres and wrong where you stand under the crown. *Fix:* a tree's levels are kept to 14 / 30 / 60 / 110 / 190 m
+(a sapling a third of that) — a hero tree is one tree and can afford every leaf when you are beside it. Not every
+triangle, though: a still taken 3.5 m from one drew 1.07 M for it alone, so a tree of over 600 000 triangles starts
+at its first level (every leaf, at half the triangles).
 
 **A scanned tree needs the year too.** It stood green among gold neighbours in autumn and kept every leaf in the snow.
 *Fix:* its leaves turn early and whole, each tree and clump to its own gold or russet, and are shed in clumps by the

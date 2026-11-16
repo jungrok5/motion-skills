@@ -157,9 +157,11 @@ MD.scatter({ ids: ['fir_sapling#0', 'fir_sapling#1', 'fir_sapling#2'], density: 
   arrives — leaves dropped by a fixed lottery (each level a subset of the one before) and the ones left enlarged about
   their own middles so the crown keeps its cover; twigs dropped thinnest first (by their share of the surface); what
   is kept simplified within itself; wood of a few triangles not drawn at all. `island_tree_02`: 1.07 M → 498 k →
-  124 k → 44 k → 17 k → 5.8 k → 2.0 k triangles, kept to 5 / 14 / 30 / 60 / 110 / 190 m (times the tier's reach);
-  a sapling or a shrub (under 4.5 m) takes five of the seven — 157 k → 71 k → 21 k → 2.8 k → 0.3 k — at about a
-  third of those distances. Making them takes about two seconds for the big tree, a part at a time between frames.
+  124 k → 44 k → 17 k → 5.8 k → 2.0 k triangles. **A tree of over 600 000 triangles is never drawn whole**: its
+  first level (every leaf, each simpler) is what you see to 14 m, the rest to 30 / 60 / 110 / 190 m and beyond
+  (times the tier's reach). A sapling or a shrub (under 4.5 m) takes five levels — 157 k → 71 k → 21 k → 2.8 k →
+  0.3 k — at about 1.8 / 5 / 13 / 32 m for a 1.5 m sapling. Making the levels takes about two seconds for the big
+  tree, a part at a time between frames.
 - **They are heavy**: mark them `"heavy"`, name them last in `MD.load` (they then arrive last), place few whole
   trees (seven in the village) and always as `place(…) || F.plant(…)`, because a phone will not have them.
 - A set of saplings is three trees in a row: place the members (`'fir_sapling#0'`). Parts of a tree that wear the
@@ -246,7 +248,8 @@ LR.grass.scan = { frond: ['fern_02', part], leaf: ['weed_plant_02', part] };
 `starter` — a second, different list: `raw_plank_wall` (`gain 0.8`), `wood_planks_grey`, `thatch_roof_angled`
 (`gain 1.25`), `stacked_stone_wall`, `forest_ground_04`, `brown_mud_dry`, `river_small_rocks`, `rock_pitted_mossy`,
 `pine_bark`; `wine_barrel_01`, `tree_stump_01`, `stone_fire_pit`, `boulder_01` (every rock of 0.5 and up),
-`fern_02` (strewn under the trees); the twigs of `fir_tree_01` and `pine_tree_01` on its spruces and pines.
+`fern_02` (strewn under the trees), `fir_sapling` (whole young firs where the wood thins out — heavy); the twigs of
+`fir_tree_01` and `pine_tree_01` on its spruces and pines.
 
 Tried and dropped: `Barrel_01` (an oil drum), `rock_07` / `rock_09` (pebbles at 12 000–15 000 triangles),
 `wooden_lantern_01` (blended glass), `rock_moss_set_01/02` (six rocks sharing one map), `mountainside` (153 000
@@ -261,7 +264,7 @@ the library's other structures (a modern alley: fire escapes, dumpsters, roller 
 | | surfaces | models + atlases | the page loads |
 |---|---|---|---|
 | `examples/village` | 18 · 50 MB | 58 + 3 · 204 MB (105 MB of it the four heavy ones) | **254 MB** besides a 1.4 MB html — **149 MB** on a phone or on `low` |
-| `starter` | 9 · 25 MB | 5 + 2 · 15 MB | **41 MB** |
+| `starter` | 9 · 25 MB | 6 + 2 · 38 MB (23 MB of it the saplings) | **63 MB** — **41 MB** on a phone or on `low` |
 
 That is a lot to wait for, so **the live page does not wait** (streaming): every surface is baked from its generated
 recipe at once, every model is placed from its measured box, the walk begins — and each scan takes its layer, each

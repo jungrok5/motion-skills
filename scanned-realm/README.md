@@ -51,8 +51,8 @@ What it is and is not: scanned surfaces, objects, plants and leaves on generated
 scanned trees and kits of scanned structures among them. The forest is still the engine's trees (the library's big
 firs and pines are 7–17 million triangles and 465–914 MB each: not for a browser) and the houses are still built from
 parts (the library has a fort, a pier and gates, no houses); levels of detail are a few simplified copies a model,
-not Nanite; light is screen-space, not Lumen; 41–254 MB of scans arrive while you walk (149 MB on a phone, which is
-not sent the trees). **Megascans is not used and cannot be**: it has
+not Nanite; light is screen-space, not Lumen; 63–254 MB of scans arrive while you walk (41–149 MB on a phone, which
+is not sent the trees). **Megascans is not used and cannot be**: it has
 been free on Fab since late 2026, but its licence forbids serving the raw files from a public page and fetching them by
 script — stills rendered with it would be fine, a page that serves it is not. `references/LOOK.md` says where the look
 stops, `references/ASSETS.md` how scans are chosen, fitted and shipped, which were tried and dropped, and the licence
