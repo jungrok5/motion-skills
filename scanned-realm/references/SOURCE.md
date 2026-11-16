@@ -12,7 +12,10 @@ rounds against two more references the owner gave — 「Larkhollow」 by @lucia
 time: surfaces drawn by a function read as drawn at arm's length, and a lathe-turned barrel is not a barrel.
 
 Then the owner asked for a **separate skill with the conditions lifted**. This is it: the same engine, allowed to read
-files.
+files. A second request raised it: more and more varied assets that fit, "a real Unreal 5, AAA feel", whether
+Megascans could be used, and good optimisation. That round made the scanned objects instanced with levels of detail,
+brought in scanned plants, rocks, furniture, tools and market goods, painted the trees' leaves from photographs,
+softened the shadows with distance, and let the walk begin before the download has ended.
 
 ## What is taken from where
 | from | what | how it is here |
@@ -20,22 +23,33 @@ files.
 | the X post | the look to reach | nothing of it — it published no code and no assets; its frames were read (`living-realm/references/SOURCE.md` has the reading) |
 | 「Larkhollow」, 「Saltline」 | tone, air, wet ground to measure against | none of their code; the measurements are in the engine's look numbers |
 | `living-realm` (this repository) | the whole engine: `lib/`, the scripts, the village and the starter as places | copied in, so this skill stands alone; the two will drift apart |
-| [Poly Haven](https://polyhaven.com) | scanned surfaces and objects, CC0 | fetched by `fetch-assets.mjs` when a realm is built — **not committed**; listed with their authors in each realm's `assets/CREDITS.md`; the ones tried are in `references/ASSETS.md` |
+| [Poly Haven](https://polyhaven.com) | scanned surfaces, objects, plants and leaf atlases, CC0 | fetched by `fetch-assets.mjs` when a realm is built — **not committed**; listed with their authors in each realm's `assets/CREDITS.md`; the ones tried are in `references/ASSETS.md` |
 | three.js r170 | the WebGL layer | vendored, MIT (`vendor/LICENSE`) |
+| meshoptimizer 1.3.0 (Arseny Kapoulkine) | its simplifier, compiled to WebAssembly: the levels of detail of scanned objects, made at load | vendored, MIT (`vendor/meshopt_simplifier.js`, `vendor/LICENSE-meshoptimizer.md`) |
 
 ## What "conditions lifted" changes — and what it does not
 | | living-realm | scanned-realm |
 |---|---|---|
-| surfaces | every one a GLSL function baked at load | the ones a place is made of are photographs at their real size; the rest stay functions |
-| small objects | lathes, boxes and noise blobs | scanned barrels, crates, buckets, stumps, a fallen trunk, a fire pit — the generated ones remain as the fallback; rocks stay generated shapes, now wearing a scanned rock surface |
-| what ships | one `index.html`, runs from disk | `index.html` + `assets/` (33–57 MB) on a server, or one html that reads from Poly Haven |
-| network | none | the scans, once |
-| buildings, land, trees, grass, sky, weather, light, sound, the walk | generated | **the same** |
+| surfaces | every one a GLSL function baked at load | the ones a place is made of are photographs at their real size (bark too); the rest stay functions |
+| objects | lathes, boxes and noise blobs | scanned barrels, crates, tables, baskets, pots, tools, fruit and bread, a statue, boulders, rock faces — instanced, with levels of detail; the generated ones remain as twins of the kit's four props |
+| ground plants | painted fronds and blades | scanned ferns, nettles, docks, dandelions, flowers within a few metres of the eye, over the engine's own grass |
+| leaves | painted sprays | photographed leaves and twigs laid into the same sprays; the trees themselves are still grown from numbers |
+| shadows | one soft width | wider the further the thing that throws them |
+| what ships | one `index.html`, runs from disk | `index.html` + `assets/` (33–120 MB) on a server, or one html that reads from Poly Haven |
+| network | none | the scans, arriving while you walk |
+| buildings, land, grass blades, sky, weather, light, sound, the walk | generated | **the same** |
 
-So this raises what you see within a few metres — paving, walls, roofs, timber, the things left about — and leaves
-the rest where it was: a wall's outline is still a straight line, foliage is still painted sprays, light is still
-screen-space. Scanned plants (cut-out leaves) and scanned buildings are not carried; `references/LOOK.md` says where
-the look stops.
+So this raises what you see within a few metres — paving, walls, roofs, bark, the things left about, what grows at
+your feet, the leaf in front of your face — and leaves the rest where it was: a wall's outline is still a straight
+line, a tree is still cards on a skeleton, light is still screen-space. `references/LOOK.md` says where the look stops.
+
+## Megascans, asked for by name
+Quixel Megascans became free on Fab in late 2026. It is the library an Unreal scene like the reference is made of, and
+it would be the obvious thing to use. It cannot be used here: the Fab Standard Licence lets you build a product with
+the assets but not pass the raw files on, standalone or extractable — and a web page that draws a scan has to send
+the scan; Fab's terms also forbid downloading by script, and need an account. (Read 2026-11-16; the survey is in
+`references/ASSETS.md`.) What that licence does allow is pictures: stills or video rendered with Megascans in any
+tool. A realm that has to be a public page uses CC0 scans.
 
 ## Why Poly Haven
 One licence for everything (CC0: no attribution owed, commercial use allowed, redistribution allowed), an API that

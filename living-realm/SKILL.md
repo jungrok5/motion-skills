@@ -160,7 +160,7 @@ and wants a real GPU; without one (CI, containers) stills render on the CPU at 1
 ## Contract
 - `LR.start({ build(LR) (may be async), weather: { tod, weather }, tour: [{ x, z, look: [x, z], pull, pitch }], views:
   [{ name, cam: [x, z, compass yaw°, pitch°, y?] }], strings, materials(LR) })`; `window.READY` when the page can draw.
-- Page options: `?q=low|medium|high|ultra`, `?scale=`, `?mat=512`, `?off=ao,gi,skyshare,shadow,contact,mirror,shafts,bloom,taa,grass,fx,water,ssr,audio`,
+- Page options: `?safe=1` (lowest tier, optional passes off: what the page reopens itself in once if its graphics context is lost), `?q=low|medium|high|ultra`, `?scale=`, `?mat=512`, `?off=ao,gi,skyshare,shadow,contact,mirror,shafts,bloom,taa,grass,fx,water,ssr,audio`,
   `?tod=`, `?wx=clear|rain|snow|winter|autumn`, `?wet=1&puddle=1` (just after rain), `?tour=0`, `?auto=0`, `?at=x,z,yaw`, `?stats=1`, `?hud=0`, `?view=mats`.
 - Still mode `?render=1&w=&h=`: `window.realm = { canvas, shot({ cam, tod, weather, season, snow, wet, frames, t }) →
   info, info(), place(), filmStart(fps), filmFrame(), LR }`. `info()` reports tier, sizes, draw calls, triangles, lamps.

@@ -15,7 +15,7 @@
     P.barrel(13.3, -4.5); P.barrel(13.8, -3.7); P.crate(13.1, -1.2, { yaw: 0.2, size: 0.5 });
     P.crate(-13.2, -6.5, { yaw: -0.3 }); P.pot(-12.9, -3.3, { size: 1.3 }); P.pot(-13.5, -3.9, { size: 1.0 }); P.pot(-12.6, -6.9, { size: 0.9 });
     P.cart(14.2, 6.6, { yaw: 0.7 }); P.sack(13.2, 7.9, { yaw: 0.2 }); P.barrel(15.4, 5.2);
-    P.barrel(10.6, 10.9); P.barrel(11.5, 10.4); P.crate(6.3, 10.9, { yaw: 0.3 }); P.crate(6.5, 11.1, { y: h(6.5, 11.1) + 0.62, size: 0.5, yaw: 0.9, solid: false }); P.sack(-6.6, 10.6); P.sack(-7.1, 10.1, { yaw: 1 }); P.crate(-10.9, 10.7, { yaw: 0.2 });
+    P.barrel(10.6, 10.9); P.barrel(11.5, 10.4); P.crate(6.3, 10.9, { yaw: 0.3 }); P.crate(6.5, 11.1, { y: h(6.5, 11.1) + (LR.models.defs.wooden_crate_02 ? 0.45 : 0.62), size: 0.5, yaw: 0.9, solid: false });     // the scanned crate is lower than the generated one P.sack(-6.6, 10.6); P.sack(-7.1, 10.1, { yaw: 1 }); P.crate(-10.9, 10.7, { yaw: 0.2 });
     P.cart(13.5, 5.2, { yaw: 0.9, load: 'hay' }); P.pot(2.2, -7.2, { size: 1.3 }); P.pot(-2.2, -7.2, { size: 1.3 });
     // what people leave against their walls: climbers, pots by the door, planters under windows, barrels and wood
     [...V.houses, V.baker, V.chandler, V.hall, V.millB, V.cottage].forEach((hs, i) => { if (hs) A.dress(hs, { seed: 'silverford' + i }); });
@@ -87,7 +87,8 @@
       // the farm and the cottage: a ladder at the rick, tools by the wood, a spinning wheel at the door, a statue in the chapel yard
       { const f = V.farm, c = V.chapel; MD.place('wooden_ladder_02', f.x + 8.7, f.z - 14.3, { yaw: 0.9, solid: 0.5 }); MD.place('picke_dirty_01', f.x + 4.1, f.z + 10.4, { lie: true, yaw: 0.5, solid: false }); MD.place('wooden_axe', f.x + 6.9, f.z + 7.7, { lie: true, yaw: 2.2, scale: 1.3, solid: false });
         MD.place('rusted_spade_01', f.x - 4.5, f.z - 12.5, { sink: 0.2, pitch: 0.09, yaw: 1.1, solid: false }); MD.place('watering_can_metal_01', f.x - 3.9, f.z - 12.9, { yaw: 2.6, scale: 1.2, solid: false });
-        MD.place('gothic_statue', c.x + 7.5, c.z - 10.5, { yaw: 1.2, scale: 1.1, solid: 0.7 });
+        if (MD.defs.gothic_statue) { const sx = c.x + 7.5, sz = c.z - 10.5, sy = h(sx, sz), g = P.g(sx, sz); g.mat('ashlar'); g.box(sx, sy + 0.1, sz, 1.9, 0.2, 1.9); g.box(sx, sy + 0.6, sz, 1.45, 0.8, 1.45, { soft: 0.3 }); g.box(sx, sy + 1.05, sz, 1.65, 0.1, 1.65);      // a plinth for it
+          MD.place('gothic_statue', sx, sz, { y: sy + 1.1, yaw: 1.2, scale: 0.95, solid: false }); LR.world.solidBox(sx, sz, 1.0, 1.0, 0); }
         if (V.cottage && V.cottage.door) { const hh = V.cottage, d = hh.door, c0 = hh.toW(0, 0), ox = d[0] - c0[0], oz = d[1] - c0[1], l = Math.hypot(ox, oz) || 1, nx = ox / l, nz = oz / l; MD.place('spinning_wheel_01', d[0] + nx * 0.75 + nz * 1.6, d[1] + nz * 0.75 - nx * 1.6, { yaw: Math.atan2(nx, nz) + 0.5, solid: 0.5 }); } }
       MD.place('stone_fire_pit', g.x - 0.4, g.z + 0.2, { yaw: 0.6, sink: 0.02, solid: 0.9 });
       MD.place('wooden_bucket_01', -32.2, 8.6, { yaw: 0.8, solid: false }); MD.place('wooden_bucket_01', -34.9, 8.3, { yaw: 2.3, solid: false, lie: true });

@@ -42,6 +42,9 @@ R.build = () => {
   F.plant('pine', -18, -2, { scale: 1.2, hero: true }); F.plant('birch', 5.6, 13.6, { scale: 0.9 });
   F.scatter({ species: [['spruce', 4], ['pine', 2], ['birch', 1], ['bush', 1]], area: [-126, -126, 126, 126], spacing: 7.5, seed: 'tarn', density: (x, z) => R.woods(x, z) * 0.85, avoid: (x, z) => wet(x, z) || way(x, z) });
   F.far({ density: (x, z) => 0.7 * LR.sm(520, 400, LR.land.h(x, z)), inner: 124, outer: 600, spacing: 13, species: [['spruce', 3], ['pine', 2]] });
+  // scanned ferns under the trees, by the woods function and a noise — in drifts, with bare floor between (nothing when the scans are not there)
+  LR.models.scatter({ ids: ['fern_02#0', 'fern_02#1', 'fern_02#2', 'fern_02#3'], seed: 'ferns', spacing: 1.8, scale: [1.0, 1.9], area: [-70, -70, 70, 70],
+    density: (x, z) => LR.sm(0.35, 0.7, R.woods(x, z)) * LR.sm(0.45, 0.65, LR.fbm(x * 0.08 + 3, z * 0.08, 2)) * 0.55, avoid: (x, z) => wet(x, z) || way(x, z) });
   // ⑦ what the walker is told, where they start, how far they may go
   LR.world.places.push({ x: C.x + 2, z: C.z + 4, r: 6, name: 'The Cabin', sub: 'smoke and split wood' }, { x: T.x - T.r, z: T.z + 5, r: 7, name: 'The Tarn', sub: 'cold and clear' });
   LR.world.fireflyAreas = [{ x: T.x, z: T.z, r: 24 }]; LR.world.radius = 62; LR.world.spawn = { x: -30, z: 26, yaw: 40 };

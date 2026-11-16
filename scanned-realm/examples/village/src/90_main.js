@@ -11,7 +11,7 @@ LR.start({
     // scanned objects.  Barrels, crates, stumps and the bigger rocks of the kit are drawn from scans; the rest are placed by name
     // (30_details.js) or by the kits below.  Big scans wear the engine's tiling rock near the eye; small things throw no shadow of their own.
     await MD.load(['wine_barrel_01', 'wooden_crate_02', 'wooden_bucket_01', 'stone_fire_pit', 'tree_stump_01', 'dead_tree_trunk', { id: 'dry_branches_medium_01', far: 45 },
-      ...['boulder_01', 'rock_face_01', 'rock_face_02'].map((id) => ({ id, detail: 'rock', moss: 0.9 })),
+      { id: 'boulder_01', detail: 'rock', moss: 0.9, tint: [0.8, 0.84, 0.86] }, ...['rock_face_01', 'rock_face_02'].map((id) => ({ id, detail: 'rock', moss: 0.9 })),
       'WoodenTable_01', 'painted_wooden_table', 'painted_wooden_bench', 'painted_wooden_stool', 'small_wooden_table_01', 'dining_table', 'wooden_crate_01', 'wooden_bucket_02', 'wicker_basket_01', 'wicker_basket_02',
       'planter_box_01', 'wooden_ladder_02', 'spinning_wheel_01', 'gothic_statue', 'ceramic_pot', 'kite_shield', { id: 'brass_pot_01', metal: 0.85 }, { id: 'metal_jug', metal: 0.6 }, { id: 'watering_can_metal_01', metal: 0.6 },
       ...['cross_pein_hammer', 'hatchet', 'picke_dirty_01', 'rusted_spade_01', 'wooden_axe', 'croissant', 'sweet_potato', 'yellow_onion', 'lemon', 'food_apple_01', 'hamburger_buns'].map((id) => ({ id, shadow: 'none' })),
@@ -22,13 +22,13 @@ LR.start({
       const SHR = [[0.054, 0.041, 0.264, 0.295], [0.317, 0.121, 0.510, 0.349], [0.031, 0.312, 0.311, 0.647], [0.422, 0.380, 0.590, 0.591], [0.478, 0.604, 0.749, 0.933], [0.050, 0.675, 0.242, 0.901]];
       D.oak.leaf.scan = { atlas: isl, parts: ISL, cut: 'oak', size: 1.25, own: 0.3 };
       D.beech.leaf.scan = { atlas: isl, parts: [ISL[0], ISL[2], ISL[4], ISL[5]], size: 1.5, own: 0.3 };
-      D.bush.leaf.scan = { atlas: isl, parts: [ISL[1], ISL[3], ISL[6], ISL[5]], size: 1.45, own: 0.4 };
+      D.bush.leaf.scan = { atlas: isl, parts: [ISL[1], ISL[3], ISL[6], ISL[5]], size: 1.3, own: 0.4 }; D.bush.leaf.size = [0.36, 0.58]; D.bush.leaf.perTwig = 11;     // smaller sprays, more of them: a bush of big cards is a cabbage
       D.birch.leaf.scan = { atlas: 'shrub_03', parts: SHR, size: 1.35, own: 0.3 };
       D.climber.leaf.scan = { atlas: 'shrub_03', parts: [SHR[0], SHR[2], SHR[4], SHR[5]], size: 1.3, own: 0.3 };
       D.spruce.leaf.scan = { atlas: 'fir_tree_01:twig', kind: 'spray', parts: [[0.306, 0.399, 0.645, 0.775], [0.635, 0.452, 0.953, 0.830]], own: 0.45 };
       D.pine.leaf.scan = { atlas: 'pine_tree_01:twig', parts: [[0.035, 0.044, 0.195, 0.432], [0.651, 0.342, 0.937, 0.518, 1]], size: 1.7, own: 0.5 };
       LR.grass.scan = { frond: ['fern_02', [0.089, 0.111, 0.235, 0.948, 0]], leaf: ['weed_plant_02', [0.143, 0.488, 0.745, 0.778, 3]] }; }
-    MD.stand('barrel', 'wine_barrel_01'); MD.stand('crate', 'wooden_crate_02', { h: 0.72 }); MD.stand('stump', 'tree_stump_01'); MD.stand('rock', 'boulder_01', { min: 0.8 });
+    MD.stand('barrel', 'wine_barrel_01'); MD.stand('crate', 'wooden_crate_02', { h: 0.72 }); MD.stand('stump', 'tree_stump_01'); MD.stand('rock', 'boulder_01', { min: 0.5 });
     // what the market sells, and what stands about a yard
     MD.set('goods:fruit', [{ id: 'food_apple_01', s: [0.8, 1.05], n: 9 }, { id: 'lemon', s: [0.9, 1.15], n: 9 }, { id: 'food_apple_01', s: [0.75, 1.0], n: 8 }]);
     MD.set('goods:bread', [{ id: 'croissant', s: [0.9, 1.15], n: 5, tumble: 0.25 }, { id: 'hamburger_buns#0', s: [1.1, 1.4], n: 6, tumble: 0.2 }, { id: 'hamburger_buns#2', s: [1.1, 1.4], n: 6, tumble: 0.2 }]);

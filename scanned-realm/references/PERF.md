@@ -67,7 +67,14 @@ browser caches them):
   that can cost a frame while you walk);
 - only the foliage atlases (3–4 MB) are waited for: the trees' leaves are painted from them.
 Stills, films and `check.mjs` (`?render=1`) wait for everything, so they are the same every time; `?stream=0` makes
-the live page wait too. A map that has not arrived after `?scanwait=40` seconds is given up and that layer stays its
+the live page wait too.
+
+**Programs are prepared before the first frame** (`LR.warm`: every full-screen pass and every material of the three
+scenes is compiled and linked in the background — `KHR_parallel_shader_compile` — and waited for, the veil showing
+`shaders`). Compiled on first use instead, one long shader can hold the graphics process longer than a browser's
+watchdog allows on Windows, and the page is left with a dead canvas. If the context is lost all the same, the page
+reopens itself once with `?safe=1` (lowest tier; bounce, contact shadows, mirrors, shafts, soft shadows, sky share and
+occlusion off), and after that shows a panel that says what happened (`references/LESSONS.md`). A map that has not arrived after `?scanwait=40` seconds is given up and that layer stays its
 recipe. Shader compilation takes a few seconds on most systems, longer the first time on Windows.
 
 What a bake has read is freed through `LR.settle()`: finished first where stills are made, a moment later on the
@@ -88,9 +95,21 @@ numbers a copy).
 | shadows | a small solid thing an eight-sided hull (28 triangles), big ones their lowest level, plants over 0.9 m their lowest level within 26 m, goods none |
 | textures | two a model, sized to the thing (128–1024 px), never larger than its files |
 
-Measured on the village on `high` (`check.mjs` prints it per view; the table is filled in `references/LESSONS.md`,
-round 8): the scans add 0.2–0.5 M triangles and 30–70 draw calls to a view. Before the levels of detail the same
-plants alone cost 1.0–1.6 M.
+Measured on the village on `high`, per view (drawn = everything the frame draws, shadows included):
+
+| view | drawn | of which the scans | copies · draw calls | their shadows |
+|---|---|---|---|---|
+| glade (deep wood) | 3.71 M | 0.14 M | 216 · 27 | 71 k |
+| woods (edge, boulders) | 3.99 M | 0.23 M | 205 · 58 | 75 k |
+| lane | 4.16 M | 0.19 M | 331 · 82 | 63 k |
+| square (market) | 3.43 M | 0.17 M | 241 · 62 | 49 k |
+| meadow | 3.40 M | 0.23 M | 195 · 37 | 102 k |
+| farm | 3.51 M | 0.07 M | 93 · 38 | 72 k |
+
+The rest of a frame is what it was: grass 0.6–1.0 M, the land 0.4 M, trees 0.05–0.6 M, buildings and props 0.25 M,
+and 1.6–1.7 M in the shadow cascades. Before the levels were right the same views drew 11–14 M: forty boulders whole
+(2.8 M, and again in the shadows) and every twig pile in the forest (1.1 M) — `references/LESSONS.md`, round 2.
+`check.mjs` prints `scans <copies> × <M tris>` for every view; read it.
 
 ## Where a frame's time goes — `?prof=1`
 `?prof=1` (it opens the numbers panel, `P`) shows milliseconds a pass: shadows, G-buffer, occlusion, air, bounce,
