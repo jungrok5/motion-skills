@@ -9,6 +9,12 @@
     A.stall({ x: 8.5, z: 8.5, yaw: -2.35, seed: 's1', goods: 'fruit', colors: ['#c9473a', '#efe6d2'] }); A.stall({ x: -8.8, z: 8.8, yaw: 2.35, seed: 's2', goods: 'bread', colors: ['#d8a03a', '#efe6d2'] });
     A.stall({ x: 11.5, z: -2.5, yaw: -1.75, seed: 's3', goods: 'cloth', colors: ['#3f6f9a', '#efe6d2'] }); A.stall({ x: -11.2, z: -5, yaw: 1.2, seed: 's4', goods: 'pots', colors: ['#5f8a55', '#efe6d2'] });
     P.bench(4.6, 4.2, { yaw: -2.3 }); P.bench(-4.8, 4.0, { yaw: 2.3 }); P.bench(0, -5.6, { yaw: 0 });
+    // what a market leaves round its stalls: in groups that say what is sold there, with open paving between them
+    P.crate(10.7, 9.7, { yaw: 0.3 }); P.crate(11.2, 8.9, { yaw: -0.4, size: 0.5 }); P.barrel(9.9, 10.7); P.sack(10.2, 9.0, { yaw: 1.1 });
+    P.sack(-10.7, 9.9, { yaw: 0.4 }); P.sack(-11.0, 9.1, { yaw: 2.0 }); P.sack(-10.2, 10.6, { yaw: 1.2 }); P.crate(-9.8, 11.0, { yaw: 0.6 });
+    P.barrel(13.3, -4.5); P.barrel(13.8, -3.7); P.crate(13.1, -1.2, { yaw: 0.2, size: 0.5 });
+    P.crate(-13.2, -6.5, { yaw: -0.3 }); P.pot(-12.9, -3.3, { size: 1.3 }); P.pot(-13.5, -3.9, { size: 1.0 }); P.pot(-12.6, -6.9, { size: 0.9 });
+    P.cart(14.2, 6.6, { yaw: 0.7 }); P.sack(13.2, 7.9, { yaw: 0.2 }); P.barrel(15.4, 5.2);
     P.barrel(10.6, 10.9); P.barrel(11.5, 10.4); P.crate(6.3, 10.9, { yaw: 0.3 }); P.crate(6.5, 11.1, { y: h(6.5, 11.1) + 0.62, size: 0.5, yaw: 0.9, solid: false }); P.sack(-6.6, 10.6); P.sack(-7.1, 10.1, { yaw: 1 }); P.crate(-10.9, 10.7, { yaw: 0.2 });
     P.cart(13.5, 5.2, { yaw: 0.9, load: 'hay' }); P.pot(2.2, -7.2, { size: 1.3 }); P.pot(-2.2, -7.2, { size: 1.3 });
     // what people leave against their walls: climbers, pots by the door, planters under windows, barrels and wood

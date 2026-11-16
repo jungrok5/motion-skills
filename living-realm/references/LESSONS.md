@@ -172,6 +172,19 @@ uneven ground, buildings grounded in the land, repetition broken at every scale,
 Rule: after the plan is right, go through it with one question — what here is straight, level, even or repeated? —
 and break each at the scale it shows.
 
+**"Is it because there is no GPU here?"** — no, and it is worth saying exactly. The page is a GPU program; the
+machine it is developed on has none, so every still is the same shaders run by a CPU rasteriser: the same pixels, a
+minute apiece. A GPU machine shows it moving, sharper (`ultra`, more pixels) and lets it be tuned by eye and measured —
+faster progress, not another class of picture. What sets the ceiling is the method: generated geometry, screen-space
+light, one file with no assets. A film still needs sculpted or scanned assets and an engine's or an offline
+renderer's light. Say this when asked; do not let "no GPU here" stand in for it.
+- Up close a baked texel is a centimetre wide and surfaces went smooth → a fine grain (normal, tone, roughness) from
+  the noise texture within eight metres, on built things and on the land.
+- The square at noon measured washed out because its paving was pale and even → darker cobbles, each its own value.
+- Leaves were painted at 512 px on every tier above `low` → 768 on `high`, 1024 on `ultra`.
+- The square was dressed house by house and stood empty in the middle of its own market → goods in groups round
+  each stall (what is sold there), a cart, and open paving between.
+
 **The engine**
 - `flat` is a reserved word in GLSL ES 3.00 (a local variable named `flat` failed every surface shader at once).
 - A `RawShaderMaterial` with its own `#version` line fails: three.js writes defines above it → use `glslVersion: GLSL3`.

@@ -130,8 +130,8 @@ void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
   float stone = smoothstep(0.03, 0.085, c.x), dome = 1.0 - pow(1.0 - sat(c.x * 4.4), 2.4);
   float n = fbm(uv + c.y * 5., 26., 4), fine = fbmv(uv, 110., 3), wear = fbm(uv + 0.3, 2., 3), pit = smoothstep(0.72, 0.82, fbmv(uv + 0.6, 60., 2));
   h = mix(0.24 + fine * 0.14, 0.46 + dome * 0.34 + (c.w - 0.5) * 0.10 + (n - 0.5) * 0.10 - pit * 0.06, stone) + (wear - 0.5) * 0.2;
-  vec3 base = S(0.48, 0.46, 0.43);
-  vec3 sc = base * (0.86 + 0.26 * c.y); sc = mix(sc, sc * vec3(1.06, 1.0, 0.91), smoothstep(0.6, 0.95, c.w)); sc = mix(sc, sc * vec3(0.94, 0.98, 1.04), smoothstep(0.4, 0.05, c.w) * 0.7);
+  vec3 base = S(0.41, 0.395, 0.37);
+  vec3 sc = base * (0.72 + 0.52 * c.y); sc = mix(sc, S(0.27, 0.26, 0.25), step(0.88, hash12(floor(c.yw * 53.0) + 9.0)) * 0.7); sc = mix(sc, sc * vec3(1.14, 1.0, 0.82), step(0.9, hash12(floor(c.yw * 37.0) + 2.0)) * 0.7); sc = mix(sc, sc * vec3(1.06, 1.0, 0.91), smoothstep(0.6, 0.95, c.w)); sc = mix(sc, sc * vec3(0.94, 0.98, 1.04), smoothstep(0.4, 0.05, c.w) * 0.7);
   sc *= 0.86 + 0.24 * n; sc *= 1.0 + 0.10 * dome * smoothstep(0.4, 0.7, wear); sc *= 1.0 - pit * 0.12;
   vec3 joint = S(0.43, 0.39, 0.32) * (0.8 + 0.4 * fine); joint = mix(joint, S(0.30, 0.35, 0.19), smoothstep(0.52, 0.76, fbm(uv + 0.2, 5., 4)) * 0.6);
   col = mix(joint, sc, stone); col *= 0.95 + 0.05 * smoothstep(0.0, 0.14, c.x);

@@ -52,6 +52,11 @@ void main(){
   vec3 albedo = a.rgb * a.rgb * tint;
   vec3 N = normalize(tbn * nrmDec(b.xy));
   float rough = b.z, ao = b.w * vCol.a, emis = 0.0, metal = Q.x, snow = 0.0, h = a.a;
+  // at arm's length a baked texel is a centimetre wide and the surface goes smooth: a fine grain on top (normal, tone,
+  // roughness) holds it together until the eye is against the wall
+  { float near = smoothstep(8.0, 1.6, distance(uCamPos, vWorld)); if (near > 0.0) { vec4 d1 = texture(uNoise, uv * 19.0), d2 = texture(uNoise, uv * 67.0 + 0.31);
+      vec2 dg = vec2(d1.r - d1.g + (d2.b - d2.a) * 0.7, d1.b - d1.a + (d2.r - d2.g) * 0.7) * 0.5 * near * (1.0 - metal * 0.6);
+      N = normalize(N + tbn[0] * dg.x + tbn[1] * dg.y); albedo *= 1.0 + (d2.r - 0.5) * 0.18 * near; rough = sat(rough + (d1.g - 0.5) * 0.14 * near); } }
   // nothing built is clean: grime where it is creased or low, and broad stains so no wall is one flat colour
   { vec4 st = texture(uNoise, vWorld.xz * 0.063 + vWorld.y * 0.097), st2 = texture(uNoise, vec2(vWorld.x + vWorld.z, vWorld.y) * 0.31);
     float grime = smoothstep(1.0, 0.5, vCol.a) * (0.55 + 0.45 * st2.g);
@@ -205,6 +210,9 @@ void main(){
   float macro = texture(uNoise, xz * 0.0031).g * 0.6 + nz.b * 0.4; gAlb *= mix(0.78, 1.18, macro);
   mat3 tbn = mat3(normalize(cross(vec3(0., 0., 1.), Ng)), normalize(cross(Ng, vec3(1., 0., 0.))), Ng);
   vec3 N = normalize(tbn * mix(gNt, vec3(0., 0., 1.), smoothstep(30.0, 140.0, dist) * 0.8));
+  { float near = smoothstep(8.0, 1.6, dist) * inner; if (near > 0.0) { vec4 d1 = texture(uNoise, xz * 7.3), d2 = texture(uNoise, xz * 26.0 + 0.31);          // the same fine grain underfoot
+      vec2 dg = vec2(d1.r - d1.g + (d2.b - d2.a) * 0.7, d1.b - d1.a + (d2.r - d2.g) * 0.7) * 0.5 * near;
+      N = normalize(N + tbn[0] * dg.x + tbn[1] * dg.y); gAlb *= 1.0 + (d2.r - 0.5) * 0.2 * near; gRough = sat(gRough + (d1.g - 0.5) * 0.14 * near); } }
   // under the water line the bed is dark and wet
   float sub = smoothstep(0.62, 0.98, cv.b) * inner; gAlb *= mix(1.0, 0.45, sub); gRough = mix(gRough, 0.3, sub * 0.6);
   float ao = gAo; vec3 alb = gAlb; float rough = gRough;

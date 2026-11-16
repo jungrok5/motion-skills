@@ -657,8 +657,8 @@ void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
   float stone = smoothstep(0.03, 0.085, c.x), dome = 1.0 - pow(1.0 - sat(c.x * 4.4), 2.4);
   float n = fbm(uv + c.y * 5., 26., 4), fine = fbmv(uv, 110., 3), wear = fbm(uv + 0.3, 2., 3), pit = smoothstep(0.72, 0.82, fbmv(uv + 0.6, 60., 2));
   h = mix(0.24 + fine * 0.14, 0.46 + dome * 0.34 + (c.w - 0.5) * 0.10 + (n - 0.5) * 0.10 - pit * 0.06, stone) + (wear - 0.5) * 0.2;
-  vec3 base = S(0.48, 0.46, 0.43);
-  vec3 sc = base * (0.86 + 0.26 * c.y); sc = mix(sc, sc * vec3(1.06, 1.0, 0.91), smoothstep(0.6, 0.95, c.w)); sc = mix(sc, sc * vec3(0.94, 0.98, 1.04), smoothstep(0.4, 0.05, c.w) * 0.7);
+  vec3 base = S(0.41, 0.395, 0.37);
+  vec3 sc = base * (0.72 + 0.52 * c.y); sc = mix(sc, S(0.27, 0.26, 0.25), step(0.88, hash12(floor(c.yw * 53.0) + 9.0)) * 0.7); sc = mix(sc, sc * vec3(1.14, 1.0, 0.82), step(0.9, hash12(floor(c.yw * 37.0) + 2.0)) * 0.7); sc = mix(sc, sc * vec3(1.06, 1.0, 0.91), smoothstep(0.6, 0.95, c.w)); sc = mix(sc, sc * vec3(0.94, 0.98, 1.04), smoothstep(0.4, 0.05, c.w) * 0.7);
   sc *= 0.86 + 0.24 * n; sc *= 1.0 + 0.10 * dome * smoothstep(0.4, 0.7, wear); sc *= 1.0 - pit * 0.12;
   vec3 joint = S(0.43, 0.39, 0.32) * (0.8 + 0.4 * fine); joint = mix(joint, S(0.30, 0.35, 0.19), smoothstep(0.52, 0.76, fbm(uv + 0.2, 5., 4)) * 0.6);
   col = mix(joint, sc, stone); col *= 0.95 + 0.05 * smoothstep(0.0, 0.14, c.x);
@@ -2682,7 +2682,7 @@ void main(){
     const G = LR.gpu, tier = G.tier, W = LR.world, r = G.renderer, gl = G.gl, t0 = performance.now();
     const used = F.order.filter((n) => F.inst.some((i) => i.sp === n) || F.farInst.some((i) => i.sp === n)).map((n) => F.defs[n]);
     if (!used.length) return F;
-    const at = (F.atlas = paintAtlas(used, LR.qn('leafpx', tier.name === 'low' ? 256 : 512)));
+    const at = (F.atlas = paintAtlas(used, LR.qn('leafpx', tier.name === 'low' ? 256 : tier.name === 'medium' ? 512 : tier.name === 'high' ? 768 : 1024)));
     const leafU = { uLeafA: { value: at.A }, uLeafB: { value: at.B } };
     // variants
     const V = (F.variants = []);
@@ -3719,6 +3719,11 @@ void main(){
   vec3 albedo = a.rgb * a.rgb * tint;
   vec3 N = normalize(tbn * nrmDec(b.xy));
   float rough = b.z, ao = b.w * vCol.a, emis = 0.0, metal = Q.x, snow = 0.0, h = a.a;
+  // at arm's length a baked texel is a centimetre wide and the surface goes smooth: a fine grain on top (normal, tone,
+  // roughness) holds it together until the eye is against the wall
+  { float near = smoothstep(8.0, 1.6, distance(uCamPos, vWorld)); if (near > 0.0) { vec4 d1 = texture(uNoise, uv * 19.0), d2 = texture(uNoise, uv * 67.0 + 0.31);
+      vec2 dg = vec2(d1.r - d1.g + (d2.b - d2.a) * 0.7, d1.b - d1.a + (d2.r - d2.g) * 0.7) * 0.5 * near * (1.0 - metal * 0.6);
+      N = normalize(N + tbn[0] * dg.x + tbn[1] * dg.y); albedo *= 1.0 + (d2.r - 0.5) * 0.18 * near; rough = sat(rough + (d1.g - 0.5) * 0.14 * near); } }
   // nothing built is clean: grime where it is creased or low, and broad stains so no wall is one flat colour
   { vec4 st = texture(uNoise, vWorld.xz * 0.063 + vWorld.y * 0.097), st2 = texture(uNoise, vec2(vWorld.x + vWorld.z, vWorld.y) * 0.31);
     float grime = smoothstep(1.0, 0.5, vCol.a) * (0.55 + 0.45 * st2.g);
@@ -3872,6 +3877,9 @@ void main(){
   float macro = texture(uNoise, xz * 0.0031).g * 0.6 + nz.b * 0.4; gAlb *= mix(0.78, 1.18, macro);
   mat3 tbn = mat3(normalize(cross(vec3(0., 0., 1.), Ng)), normalize(cross(Ng, vec3(1., 0., 0.))), Ng);
   vec3 N = normalize(tbn * mix(gNt, vec3(0., 0., 1.), smoothstep(30.0, 140.0, dist) * 0.8));
+  { float near = smoothstep(8.0, 1.6, dist) * inner; if (near > 0.0) { vec4 d1 = texture(uNoise, xz * 7.3), d2 = texture(uNoise, xz * 26.0 + 0.31);          // the same fine grain underfoot
+      vec2 dg = vec2(d1.r - d1.g + (d2.b - d2.a) * 0.7, d1.b - d1.a + (d2.r - d2.g) * 0.7) * 0.5 * near;
+      N = normalize(N + tbn[0] * dg.x + tbn[1] * dg.y); gAlb *= 1.0 + (d2.r - 0.5) * 0.2 * near; gRough = sat(gRough + (d1.g - 0.5) * 0.14 * near); } }
   // under the water line the bed is dark and wet
   float sub = smoothstep(0.62, 0.98, cv.b) * inner; gAlb *= mix(1.0, 0.45, sub); gRough = mix(gRough, 0.3, sub * 0.6);
   float ao = gAo; vec3 alb = gAlb; float rough = gRough;

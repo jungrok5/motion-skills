@@ -495,7 +495,7 @@ void main(){
     const G = LR.gpu, tier = G.tier, W = LR.world, r = G.renderer, gl = G.gl, t0 = performance.now();
     const used = F.order.filter((n) => F.inst.some((i) => i.sp === n) || F.farInst.some((i) => i.sp === n)).map((n) => F.defs[n]);
     if (!used.length) return F;
-    const at = (F.atlas = paintAtlas(used, LR.qn('leafpx', tier.name === 'low' ? 256 : 512)));
+    const at = (F.atlas = paintAtlas(used, LR.qn('leafpx', tier.name === 'low' ? 256 : tier.name === 'medium' ? 512 : tier.name === 'high' ? 768 : 1024)));
     const leafU = { uLeafA: { value: at.A }, uLeafB: { value: at.B } };
     // variants
     const V = (F.variants = []);

@@ -67,6 +67,8 @@ Into the light: a meadow toward a low sun, a wood with the sun behind the trunks
 Front-lit noon is the flattest hour of any engine; open the page late in the afternoon.
 
 ## Where it stops (say so when showing it)
+- Developing without a GPU does not lower the picture (stills are the same shaders on a CPU rasteriser); it slows the
+  work and leaves frame rate unmeasured. A GPU machine does not raise it to a film still either: the method sets the ceiling.
 - It is a stylised-realistic game look built from generated geometry — not scanned assets, not Lumen/Nanite. Up close,
   walls are flat planes whose relief is parallax (stones stand out of their joints, but a wall's outline stays a straight
   line); indirect light is the sky, one bounce colour from the land, screen-space occlusion and — on `high` and above —
