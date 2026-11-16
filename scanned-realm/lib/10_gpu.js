@@ -55,6 +55,11 @@
     for (const k of ['blendSrc', 'blendDst', 'blendEquation', 'blendSrcAlpha', 'blendDstAlpha']) if (o[k] !== undefined) p[k] = o[k];
     return new T.RawShaderMaterial(p);
   };
+  // Freeing a texture (or a program) right after the pass that read it: WebGL promises the pass is carried out first,
+  // but a software renderer under a heavy load of uploads was seen to lose such passes — whole material layers came out
+  // empty once fifty models were baked before them.  So what a bake has read is freed through here: where stills are
+  // made the passes are finished first; on the live page the freeing waits a moment instead of stalling a frame.
+  LR.settle = (free) => { const gl = LR.gpu.renderer.getContext(); if (LR.RENDER) { gl.finish(); if (free) free(); } else { gl.flush(); if (free) setTimeout(free, 1500); } };
   LR.blit = (mat, target, layer) => { const r = LR.gpu.renderer; fsMesh.material = mat; if (layer === undefined) r.setRenderTarget(target || null); else r.setRenderTarget(target, layer); r.render(fsScene, fsCam); };
   // world material helper (RawShaderMaterial, GLSL3)
   LR.material = (o) => new T.RawShaderMaterial(Object.assign({ glslVersion: T.GLSL3 }, o, { vertexShader: LR.sh(o.vertexShader), fragmentShader: LR.sh(o.fragmentShader) }));

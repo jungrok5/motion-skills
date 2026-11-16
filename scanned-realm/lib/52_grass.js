@@ -279,14 +279,19 @@ void main(){
   writeG(alb, vP.x, N, mix(vP.z, 0.6, snow), 0.0, vP.y * (1.0 - snow), 0.0, snow);
 }`;
   const fernShadowFS = `precision highp float; uniform sampler2D tFern; in vec2 vUv; out vec4 o;
-void main(){ if (texture(tFern, vUv).a < 0.4) discard; o = vec4(1.0); }`;
+void main(){ if (texture(tFern, vUv).a < 0.4) discard; ${LR.SHADOW_OUT} }`;
 
   // ── the frond pictures, painted in code: left half a fern frond, right half one broad leaf; base at v = 0 ────────
   const paintFronds = () => {
-    const S = 512, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), r = LR.rng(4711);
+    // LR.grass.scan = { frond: [atlas key, part], leaf: [atlas key, part], frondStretch, leafStretch }: photographed pieces
+    // (lib/46_atlas.js) take the place of the painted frond and the painted broad leaf — base at the top of this picture
+    const sc = GR.scan && LR.atlas ? GR.scan : null, pf = sc && sc.frond ? LR.atlas.canvas(sc.frond[0], sc.frond[1]) : null, pl = sc && sc.leaf ? LR.atlas.canvas(sc.leaf[0], sc.leaf[1]) : null;
+    const S = (pf || pl) && LR.gpu.tier.mat >= 768 ? 1024 : 512, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d', { willReadFrequently: true }), r = LR.rng(4711), K = S / 512;
+    const photo = (pc, cx, stretch) => { const m = 6 * K, dh = S - 2 * m, dw = Math.min(S / 2 - 2 * m, dh * (pc.width / pc.height) * stretch); x.save(); x.translate(cx, S / 2); x.scale(1, -1); x.imageSmoothingQuality = 'high'; x.drawImage(pc, -dw / 2, -dh / 2, dw, dh); x.restore(); };
+    GR.scanned = !!(pf || pl); x.save(); x.scale(K, K);
     const rgb = (a, k = 1) => `rgb(${Math.round(a[0] * k)},${Math.round(a[1] * k)},${Math.round(a[2] * k)})`;
     // fern: a midrib with pairs of toothed pinnae, longest a third of the way up, all leaning toward the tip
-    { const cx = S / 4, y0 = 6, y1 = S - 6, n = 46, half = S / 4 - 6;
+    if (!pf) { const S = 512, cx = S / 4, y0 = 6, y1 = S - 6, n = 46, half = S / 4 - 6;
       for (let i = 0; i < n; i++) { const u = 0.035 + 0.96 * (i / (n - 1)), y = y0 + (y1 - y0) * u * 0.93, len = half * 1.04 * Math.pow(Math.sin(Math.PI * Math.pow(u, 0.55)), 0.9) * (1 - 0.2 * u) * (0.93 + 0.1 * r()), pw = ((y1 - y0) / n) * 0.86, ang = LR.lerp(1.5, 1.08, u);
         for (const sgn of [-1, 1]) { const dx = Math.sin(ang) * sgn, dy = Math.cos(ang), px = -dy, py = dx, sh = 0.8 + 0.36 * r(), teeth = Math.max(4, Math.round(len / 6)), up = sgn > 0 ? 1 : -1;
           const wAt = (k) => pw * Math.pow(1 - k / (teeth * 2), 0.55) * (k % 2 ? 1.0 : 0.74);
@@ -297,14 +302,17 @@ void main(){ if (texture(tFern, vUv).a < 0.4) discard; o = vec4(1.0); }`;
           x.strokeStyle = rgb([96, 146, 58], sh); x.lineWidth = 1; x.beginPath(); x.moveTo(cx, y); x.lineTo(cx + dx * len * 0.9, y + dy * len * 0.9); x.stroke(); } }
       x.strokeStyle = rgb([50, 70, 26]); x.lineWidth = 4.5; x.lineCap = 'round'; x.beginPath(); x.moveTo(cx, 0); x.lineTo(cx, y1 - 60); x.stroke(); x.lineWidth = 2; x.beginPath(); x.moveTo(cx, y1 - 70); x.lineTo(cx, y1 - 8); x.stroke(); }
     // broad leaf: a short stalk, an ovate blade with a pale midrib and side veins
-    { const cx = (S * 3) / 4, y0 = S * 0.16, y1 = S - 10, half = S / 4 - 14; const wAt = (v) => half * Math.pow(Math.sin(Math.PI * Math.pow(v, 0.62)), 0.85) * (1 + 0.04 * Math.sin(v * 46));
+    if (!pl) { const S = 512, cx = (S * 3) / 4, y0 = S * 0.16, y1 = S - 10, half = S / 4 - 14; const wAt = (v) => half * Math.pow(Math.sin(Math.PI * Math.pow(v, 0.62)), 0.85) * (1 + 0.04 * Math.sin(v * 46));
       x.beginPath(); x.moveTo(cx, y0); for (let k = 0; k <= 60; k++) { const v = k / 60; x.lineTo(cx - wAt(v), y0 + (y1 - y0) * v); } for (let k = 60; k >= 0; k--) { const v = k / 60; x.lineTo(cx + wAt(v), y0 + (y1 - y0) * v); } x.closePath();
       const gr = x.createLinearGradient(cx - half, 0, cx + half, 0); gr.addColorStop(0, rgb([52, 104, 34])); gr.addColorStop(0.5, rgb([80, 134, 46])); gr.addColorStop(1, rgb([48, 98, 32])); x.fillStyle = gr; x.fill();
       x.strokeStyle = rgb([136, 176, 84]); x.lineCap = 'round';
       for (let k = 1; k < 9; k++) { const v = k / 9.5, y = y0 + (y1 - y0) * v; for (const sgn of [-1, 1]) { x.lineWidth = 1.6; x.beginPath(); x.moveTo(cx, y); x.quadraticCurveTo(cx + sgn * wAt(v) * 0.5, y + 16, cx + sgn * wAt(Math.min(1, v + 0.1)) * 0.93, y + 44); x.stroke(); } }
       x.lineWidth = 5; x.beginPath(); x.moveTo(cx, 0); x.lineTo(cx, y0 + 6); x.stroke(); x.lineWidth = 3; x.beginPath(); x.moveTo(cx, y0); x.lineTo(cx, y1 - 6); x.stroke(); }
+    x.restore(); if (pf) photo(pf, S / 4, sc.frondStretch || 1.8); if (pl) photo(pl, (S * 3) / 4, sc.leafStretch || 1.0);
     // unpainted texels take the leaf colour (alpha stays 0) so smaller mip levels do not darken the edges
-    const im = x.getImageData(0, 0, S, S), d = im.data; for (let i = 0; i < d.length; i += 4) { if (d[i + 3] < 8) { d[i] = 50; d[i + 1] = 104; d[i + 2] = 32; d[i + 3] = 0; } }
+    const im = x.getImageData(0, 0, S, S), d = im.data, fill = [[50, 104, 32], [50, 104, 32]];
+    for (let h = 0; h < 2; h++) { if (!(h ? pl : pf)) continue; let sr = 0, sg = 0, sb = 0, n = 0; for (let y = 0; y < S; y += 3) for (let xx = h * S / 2; xx < (h + 1) * S / 2; xx += 3) { const i = (y * S + xx) * 4; if (d[i + 3] > 200) { sr += d[i]; sg += d[i + 1]; sb += d[i + 2]; n++; } } if (n) fill[h] = [sr / n, sg / n, sb / n]; }
+    for (let i = 0; i < d.length; i += 4) { if (d[i + 3] < 8) { const f = fill[((i >> 2) % S) < S / 2 ? 0 : 1]; d[i] = f[0]; d[i + 1] = f[1]; d[i + 2] = f[2]; d[i + 3] = 0; } }
     const t = new T.DataTexture(new Uint8Array(d.buffer.slice(0)), S, S, T.RGBAFormat, T.UnsignedByteType);
     t.minFilter = T.LinearMipmapLinearFilter; t.magFilter = T.LinearFilter; t.generateMipmaps = true; t.wrapS = t.wrapT = T.ClampToEdgeWrapping; t.anisotropy = Math.min(4, LR.gpu.maxAniso || 1); t.needsUpdate = true;
     return t;
@@ -351,7 +359,7 @@ void main(){ if (texture(tFern, vUv).a < 0.4) discard; o = vec4(1.0); }`;
       const S = kdim * cell, rout = ring[2], maxT = Math.min(low ? 96 : 160, Math.ceil((Math.PI * (rout + S * 0.75) ** 2) / (S * S)) + 4);
       const tiles = new Float32Array(maxT * 4);
       const uniforms = Object.assign(baseU(), { uTiles: { value: tiles }, uRing: { value: new T.Vector4(cell, ring[0], ring[2], ring[1]) }, uRing2: { value: new T.Vector4(ring2[0], ring2[1], ring2[2], ring2[3]) } }, extra.uniforms || {});
-      const mat = LR.material({ vertexShader: vs, fragmentShader: fs, defines: Object.assign({ MAXT: maxT, CELLS: kdim * kdim, KDIM: kdim }, defs), side: T.DoubleSide, uniforms, colorWrite: extra.shadow ? false : true });
+      const mat = LR.material({ vertexShader: vs, fragmentShader: fs, defines: Object.assign({ MAXT: maxT, CELLS: kdim * kdim, KDIM: kdim }, defs), side: T.DoubleSide, uniforms });
       if (extra.shadow) { mat.polygonOffset = true; mat.polygonOffsetFactor = 1.6; mat.polygonOffsetUnits = 2.5; }
       const mesh = new T.Mesh(geo, mat); mesh.frustumCulled = false; mesh.matrixAutoUpdate = false; mesh.name = 'cover:' + name; mesh.renderOrder = extra.order === undefined ? -2 : extra.order;
       const Ly = { name, geo, mat, mesh, tiles, maxT, S, cells: kdim * kdim, rin: Math.max(0, ring[0] - ring[1] - 1), rout: rout + 1, occ: occGrid, top: extra.top || 1.3, shadow: !!extra.shadow, reach: extra.reach, count: 0 };

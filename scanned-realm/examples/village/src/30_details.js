@@ -61,7 +61,35 @@
     { const g = V.glade; if (!LR.models.place('dead_tree_trunk', g.x + 2.5, g.z - 1.5, { yaw: 0.4, scale: 1.7, sink: 0.05, solid: 'box' })) P.log(g.x + 2.5, g.z - 1.5, { yaw: 0.4, len: 4.6, r: 0.36 }); P.stump(g.x - 2.2, g.z + 1.6, { r: 0.45, hero: true }); P.stump(g.x - 3.4, g.z - 2.4, { r: 0.3, hero: true }); P.rocks(g.x + 0.5, g.z + 4.5, 4, 2.0, { size: 1.2 }); P.rocks(g.x - 5, g.z - 0.5, 3, 1.5, { size: 0.8 }); }
     P.log(-22.5, -70.5, { yaw: 0.7, len: 4.2, r: 0.34 }); P.stump(V.meadow.x + 30, V.meadow.z + 12, { hero: true });
     // ── scanned objects with no generated twin (they are simply not there when the scans are not) ──
-    { const MD = LR.models, g = V.glade; MD.place('stone_fire_pit', g.x - 0.4, g.z + 0.2, { yaw: 0.6, sink: 0.02, solid: 0.9 });
+    { const MD = LR.models, g = V.glade, on = (id, x, z, top, o = {}) => MD.place(id, x, z, Object.assign({ y: h(x, z) + top, solid: false }, o));
+      // bedrock comes through: a rock face is a scan of one side of a cliff, so two stand back to back, with boulders at their feet
+      const tor = (x, z, yaw, k = 1) => { const fx = Math.sin(yaw), fz = Math.cos(yaw);
+        MD.place('rock_face_01', x, z, { yaw, scale: k, sink: 0.45 * k, solid: 'box' }); MD.place('rock_face_02', x - fx * 3.4 * k, z - fz * 3.4 * k, { yaw: yaw + Math.PI + 0.3, scale: 1.25 * k, sink: 0.5 * k, solid: 'box' });
+        P.rocks(x + fx * 3.6 * k + fz * 2.5, z + fz * 3.6 * k - fx * 2.5, 3, 1.6, { size: 1.3 }); P.rocks(x - fz * 4.6 * k, z + fx * 4.6 * k, 2, 1.2, { size: 1.1 }); };
+      if (MD.defs.rock_face_01 && MD.defs.rock_face_02) { tor(g.x - 6.5, g.z + 8.5, 2.36); tor(-24, -106, 0.2, 1.15); tor(V.pond.x + 24, V.pond.z - 15, -1.3, 0.9); }
+      // the inn's front: a laid table at the bench, stools, something to eat
+      if (MD.place('dining_table', -7.2, -18.45, { yaw: 0.03, solid: 'box' })) { MD.place('painted_wooden_stool', -7.9, -17.25, { yaw: 0.4, solid: 0.6 }); MD.place('painted_wooden_stool', -6.4, -17.3, { yaw: 2.1, solid: 0.6 });
+        on('metal_jug', -7.55, -18.5, 0.88, { scale: 0.85 }); on('croissant', -6.85, -18.3, 0.88, { yaw: 0.7 }); on('croissant', -6.7, -18.62, 0.88, { yaw: 2.2 }); on('food_apple_01', -7.9, -18.25, 0.88); on('food_apple_01', -7.98, -18.42, 0.88, { yaw: 2 }); on('brass_pot_01', -6.25, -18.45, 0.88, { scale: 0.7 }); }
+      // the market: a low table of baskets, a painted table of pots, baskets at the stalls' corners
+      if (MD.place('WoodenTable_01', -5.2, 11.8, { yaw: -0.25, scale: 1.2, solid: 'box' })) { on('wicker_basket_01', -5.65, 11.7, 0.66, { scale: 1.5, yaw: 0.3 }); for (let i = 0; i < 6; i++) on('food_apple_01', -5.65 + (r() - 0.5) * 0.32, 11.7 + (r() - 0.5) * 0.24, 0.7 + (i > 3 ? 0.06 : 0), { yaw: r() * 6, pitch: r() - 0.5 });
+        on('wicker_basket_02#0', -4.6, 11.95, 0.66, { scale: 1.5 }); on('brass_pot_01', -5.0, 11.62, 0.66, { scale: 0.8, yaw: 1 }); }
+      if (MD.place('painted_wooden_table', -6.4, -9.6, { yaw: 0.5, scale: 0.9, solid: 'box' })) { const t = (lx, lz) => [-6.4 + lx * Math.cos(0.5) + lz * Math.sin(0.5), -9.6 - lx * Math.sin(0.5) + lz * Math.cos(0.5)];
+        [['ceramic_pot', -0.7, 0.1, 0.6], ['ceramic_pot', -0.2, -0.2, 0.45], ['metal_jug', 0.25, 0.15, 0.9], ['brass_pot_01', 0.7, -0.1, 0.9], ['metal_jug', 0.55, 0.28, 0.7], ['wicker_basket_02#0', -0.75, -0.25, 1.3]].forEach(([id, lx, lz, sc]) => { const q = t(lx, lz); on(id, q[0], q[1], 0.865, { scale: sc, yaw: r() * 6 }); }); }
+      { const st = (x, z, yaw, lx, lz) => [x + lx * Math.cos(yaw) + lz * Math.sin(yaw), z - lx * Math.sin(yaw) + lz * Math.cos(yaw)];
+        let q = st(8.5, 8.5, -2.35, 2.0, 1.25); if (MD.place('wicker_basket_01', q[0], q[1], { scale: 1.9, yaw: 1.1, solid: false })) for (let i = 0; i < 7; i++) on('food_apple_01', q[0] + (r() - 0.5) * 0.4, q[1] + (r() - 0.5) * 0.3, 0.05 + (i > 4 ? 0.07 : 0), { yaw: r() * 6, pitch: r() - 0.5 });
+        q = st(-8.8, 8.8, 2.35, -2.0, 1.2); MD.place('wicker_basket_02#0', q[0], q[1], { scale: 2.2, solid: 0.6 }); q = st(-8.8, 8.8, 2.35, 2.05, 1.1); MD.place('wicker_basket_02#0', q[0], q[1], { scale: 1.8, yaw: 2, solid: 0.6 });
+        q = st(-11.2, -5, 1.2, -2.05, 1.2); MD.place('ceramic_pot', q[0], q[1], { scale: 1.25, yaw: 0.6, solid: 0.7 }); q = st(-11.2, -5, 1.2, 2.1, 1.0); MD.place('planter_box_01', q[0], q[1], { yaw: 1.2, solid: 'box' });
+        q = st(11.5, -2.5, -1.75, 2.0, 1.2); MD.place('wooden_crate_01', q[0], q[1], { scale: 1.25, yaw: -1.4, solid: 'box' }); }
+      MD.place('wooden_bucket_02', 2.6, 3.4, { scale: 0.9, yaw: 0.4, solid: 0.7 });
+      // the smithy: a bench with its tools, a shield against the wall
+      if (MD.place('small_wooden_table_01', 23.25, 1.95, { yaw: Math.PI / 2, scale: 1.4, solid: 'box' })) { on('cross_pein_hammer', 23.2, 1.7, 0.75, { lie: true, yaw: 0.6, scale: 1.3 }); on('hatchet', 23.3, 2.25, 0.75, { lie: true, yaw: 2.4, scale: 1.2 }); }
+      MD.place('kite_shield', 23.52, -0.35, { yaw: -Math.PI / 2, pitch: -0.2, scale: 0.9, solid: false }); MD.place('wooden_axe', 22.75, -8.6, { lie: true, yaw: 0.8, scale: 1.3, solid: false });
+      // the farm and the cottage: a ladder at the rick, tools by the wood, a spinning wheel at the door, a statue in the chapel yard
+      { const f = V.farm, c = V.chapel; MD.place('wooden_ladder_02', f.x + 8.7, f.z - 14.3, { yaw: 0.9, solid: 0.5 }); MD.place('picke_dirty_01', f.x + 4.1, f.z + 10.4, { lie: true, yaw: 0.5, solid: false }); MD.place('wooden_axe', f.x + 6.9, f.z + 7.7, { lie: true, yaw: 2.2, scale: 1.3, solid: false });
+        MD.place('rusted_spade_01', f.x - 4.5, f.z - 12.5, { sink: 0.2, pitch: 0.09, yaw: 1.1, solid: false }); MD.place('watering_can_metal_01', f.x - 3.9, f.z - 12.9, { yaw: 2.6, scale: 1.2, solid: false });
+        MD.place('gothic_statue', c.x + 7.5, c.z - 10.5, { yaw: 1.2, scale: 1.1, solid: 0.7 });
+        if (V.cottage && V.cottage.door) { const hh = V.cottage, d = hh.door, c0 = hh.toW(0, 0), ox = d[0] - c0[0], oz = d[1] - c0[1], l = Math.hypot(ox, oz) || 1, nx = ox / l, nz = oz / l; MD.place('spinning_wheel_01', d[0] + nx * 0.75 + nz * 1.6, d[1] + nz * 0.75 - nx * 1.6, { yaw: Math.atan2(nx, nz) + 0.5, solid: 0.5 }); } }
+      MD.place('stone_fire_pit', g.x - 0.4, g.z + 0.2, { yaw: 0.6, sink: 0.02, solid: 0.9 });
       MD.place('wooden_bucket_01', -32.2, 8.6, { yaw: 0.8, solid: false }); MD.place('wooden_bucket_01', -34.9, 8.3, { yaw: 2.3, solid: false, lie: true });
       MD.place('wooden_bucket_01', 23.4, -1.2, { yaw: 0.2, solid: false }); MD.place('wooden_bucket_01', -57.5, 52.4, { yaw: 1.2, solid: false }); }
     W.fireflyAreas = [{ x: V.pond.x - 6, z: V.pond.z, r: 26 }, { x: V.meadow.x, z: V.meadow.z, r: 36 }, { x: 20, z: -40, r: 22 }, { x: -50, z: -46, r: 20 }];

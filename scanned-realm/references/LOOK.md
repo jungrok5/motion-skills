@@ -4,7 +4,9 @@
 1. **A computed sky.** Sun and moon positions from the hour, the season and a latitude; Rayleigh + Mie + ozone single
    scattering into a sky-view table; clouds as a lit noise shell that throws the same shadow on the land that you see
    overhead; stars that turn. Never a gradient, never a painted dome.
-2. **One light, honestly shadowed.** The sun (or the moon) with cascaded soft shadows; its colour is what the
+2. **One light, honestly shadowed.** The sun (or the moon) with cascaded shadows that **harden where a thing meets
+   the ground and soften with distance** — the foot of a post is crisp, a crown's shade twelve metres below it is a
+   dapple of soft discs (the disc is 1.4° wide, `?pcss=`; a real sun is 0.5°, and reads too hard on a screen). Its colour is what the
    atmosphere lets through at that elevation. Shade is lit by the sky's colour and by what the land throws back, through
    ambient occlusion — so shade is blue by day, deep, and never black. Small things are tied to the ground by contact
    shadows marched through the depth buffer.
@@ -16,9 +18,15 @@
    stone, plaster, roof, timber, boards, the earth of its paths, the floor of its woods, rock, bark) are scans at their
    real size — colour, normal, roughness, occlusion, height — re-baked into the same layers the generated ones use, so
    they take the same rain, moss, snow and relief. What a scan does worse stays a baked function (hay, cloth, glass,
-   iron, snow). Tints change the colour of a wall, never its nature. The things left about — barrels, crates, buckets,
-   stumps, a fallen trunk, a ring of fire stones — are scanned objects where one fits; rocks are generated shapes
-   wearing a scanned rock surface (`references/ASSETS.md`).
+   iron, snow). Tints change the colour of a wall, never its nature. The things left about — barrels, crates, tables,
+   baskets, pots, tools, the fruit and bread on a stall, stumps, boulders, a tor of bedrock — are scanned objects with
+   levels of detail; big ones wear one of the engine's tiling surfaces near the eye, so they keep their grain at arm's
+   length (`references/ASSETS.md`).
+4b. **Photographed leaves.** The trees are grown from numbers, but what is on their cards is photographs: scanned
+   leaves laid along painted twigs (each shading the ones beneath), whole scanned sprays for conifers, scanned fronds
+   and docks in the ground cover, scanned bark on the trunks — and scanned ferns, nettles, docks, dandelions and
+   flowers standing within a few metres of the eye. Crowns are dark inside and under, lit at the rim; far foliage is
+   cut out by a hash, so a crown thins into a lace of leaves instead of closing into blobs.
 5. **Wear.** Nothing is one clean colour: paint flakes to bare wood, plaster drops off its brick, dressed stone has
    lost its corners, iron rusts, joints are dark and tight. Moss where it is damp (north faces, tops, creases, the foot of walls), darker at the ground, nothing
    exactly straight (ridge sag, leaning posts, shutters a little askew).
@@ -73,20 +81,26 @@ Front-lit noon is the flattest hour of any engine; open the page late in the aft
 ## Where it stops (say so when showing it)
 - Developing without a GPU does not lower the picture (stills are the same shaders on a CPU rasteriser); it slows the
   work and leaves frame rate unmeasured. A GPU machine does not raise it to a film still either: the method sets the ceiling.
-- Surfaces and a handful of small objects are scans; **the buildings, the land, the trees and the grass are still
-  generated geometry**. Up close a wall is a photographed surface on a flat plane whose relief is parallax (stones
-  stand out of their joints, but the wall's outline stays a straight line); foliage is painted sprays on cards: right
-  at a distance, brushy at arm's length — and now the weakest thing in the frame, next to a scanned wall.
-- **No scanned plants or trees**: the world shader draws opaque objects only, and cut-out or glass materials are skipped
-  by the reader. That is the next step up, not something a realm can switch on.
+- Surfaces, objects, ground plants and the leaves are scans; **the buildings, the land, the trees' wood and the grass
+  blades are still generated geometry**. Up close a wall is a photographed surface on a flat plane whose relief is
+  parallax (stones stand out of their joints, but the wall's outline stays a straight line). A tree is photographed
+  leaves on cards on a generated skeleton: convincing from three metres out, cards at arm's length.
+- **No scanned trees and no scanned buildings**: a tree model is one to three million triangles, a building is not in
+  the library. No glass or blended materials on scanned objects (a lantern's panes are skipped).
+- **Megascans cannot be used here** — free on Fab since late 2026, but its licence forbids serving the raw files from
+  a public page and fetching them by script (`references/ASSETS.md`). The scans are Poly Haven's (CC0).
+- Not Nanite: levels of detail are three or four simplified copies of a model chosen per copy, not clusters chosen
+  per pixel; a thing changes level at a distance where its triangles are about two pixels wide. Not Lumen either
+  (below). Not virtual textures: a scanned object's maps are 1k.
 - A scan repeats: a 1.5 m patch of paving is laid twenty times across a square. Stains, damp and relaid patches break
   it; a scan with one loud stone still shows.
 - Indirect light is the sky, one bounce colour from the land, screen-space occlusion and — on `high` and above —
   one bounce off what is on screen (it cannot see behind the camera or behind things, and outdoors under an open sky
   it is subtle; it tells in lanes, under eaves and by lamplight), and less sky where buildings stand close (read off
   a top-down height map). There is no Lumen-like multi-bounce and no Nanite-like geometry: three.js has neither.
-- The page is no longer one file: 33–57 MB of scans load once, from `assets/` or from Poly Haven's server. Offline,
-  or with `?scan=0`, the place is drawn from the generated recipes — a different, flatter picture.
+- The page is no longer one file: 33–120 MB of scans arrive while you walk, from `assets/` or from Poly Haven's
+  server — the first seconds are the generated place, and things appear in it. Offline, or with `?scan=0`, it stays
+  generated: a different, flatter picture.
 - Wet paving, puddles and ice mirror what stands over them the same way on `high` and above (lamps and lit windows
   in a square after rain); below that they mirror the sky.
 - Water mirrors what is on the screen above it (a ray marched through the depth buffer: trees on the far bank, a
