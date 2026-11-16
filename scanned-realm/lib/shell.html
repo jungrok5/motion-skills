@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="__LANG__">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>__TITLE__</title>
+<style>
+  html,body{margin:0;height:100%;background:__BG__;overflow:hidden;color:#ece6d6;font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+  #view{position:fixed;inset:0;width:100%;height:100%;display:block;background:#000;outline:none}
+  body.render #view{position:static;width:auto;height:auto}
+  #veil{position:fixed;inset:0;display:grid;place-items:center;background:__BG__;transition:opacity 1.4s;z-index:20;text-align:center}
+  #veil.gone{opacity:0;pointer-events:none}
+  #veil b{display:block;font:500 clamp(20px,4vw,34px)/1.2 Georgia,"Noto Serif KR","Nanum Myeongjo",serif;letter-spacing:.18em;color:#e9dcb8}
+  #veil small{display:block;margin-top:8px;font-size:12px;letter-spacing:.3em;text-transform:uppercase;opacity:.6}
+  #bar{width:min(260px,60vw);height:2px;background:#ffffff1c;margin:22px auto 0;overflow:hidden}#bar i{display:block;height:100%;width:0;background:#d8c38a;transition:width .25s}
+  #step{margin-top:10px;font-size:11px;letter-spacing:.12em;opacity:.45;min-height:1.4em}
+  #gate{margin-top:20px} #gate button{appearance:none;font:inherit;font-size:13px;letter-spacing:.08em;color:#1a1710;background:#d8c38a;border:0;border-radius:99px;padding:10px 22px;cursor:pointer}
+  #gate button:hover{background:#e9d7a4} #gate button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  #gate span{display:block;margin-top:10px;font-size:11px;letter-spacing:.06em;opacity:.6} #gate a{color:inherit}
+  #err{position:fixed;left:12px;top:12px;right:12px;white-space:pre-wrap;color:#ffb4a8;font:12px/1.4 ui-monospace,monospace;z-index:30;pointer-events:none}
+  #hud{position:fixed;inset:0;z-index:10;pointer-events:none}
+</style>
+</head>
+<body>
+<canvas id="view" tabindex="0"></canvas>
+<div id="hud"></div>
+<div id="veil"><div><b>__TITLE__</b><small>__SUB__</small><div id="bar"><i></i></div><div id="step"></div></div></div>
+<div id="err"></div>
+<script type="module">
+/*__REALM__*/
+</script>
+</body>
+</html>
