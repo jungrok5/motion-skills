@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Long Way Home — torn-page-journey</title>
+<script type="importmap">{ "imports": { "tpj/": "../../lib/" } }</script>
+</head><body>
+<script type="module">
+// 「The Long Way Home」 — a red fox carries a potted lemon tree home, the long way: eight feelings, eight media, one ride.
+// BRIEF.md has the plan; cast.js the fox; score.js the tune. Each chapter: a ground line, plates (painted once), live things.
+import { Journey } from 'tpj/journey.js';
+import * as K from 'tpj/kit.js';
+import { rect, ellipse, shade, mix } from 'tpj/core.js';
+import { HANA } from './cast.js';
+import { SCORE } from './score.js';
+
+const W = 1920, H = 1080;
+const J = new Journey({ rider: HANA, score: SCORE, speed: 230, tear: 1.4, seed: 11, title: 'The Long Way Home' });
+
+// 1 · joy — crayon: a child's drawing of the morning village
+const g1 = K.groundLine(860, 10, 420, 0, 1);
+J.chapter({ name: 'joy · morning', mood: 'joy', medium: 'crayon', dur: 7.5, ground: g1,
+  layers: [
+    { z: 0, paint: (c, M) => { K.sky(c, M, 0, 0, W, H, { top: '#4f86d6', band: .18, seed: 4 }); K.sun(c, M, 1560, 150, 70, { col: '#f6c437', rays: 14, face: true, rayLen: 1 }); } },
+    { z: .2, paint: (c, M, x0, x1) => { K.each(x0, x1, 520, 2, (x, k, r) => K.cloud(c, M, x, 230 + r() * 120, 150 + r() * 80, {})); K.each(x0, x1, 1300, 3, (x, k, r) => K.balloon(c, M, x + 300, 300 + r() * 80, 42)); } },
+    { z: .55, paint: (c, M, x0, x1) => {
+      K.hills(c, M, x0, x1, 790, 50, H, { col: '#8cc56a', seed: 2 });
+      K.each(x0, x1, 340, 5, (x, k, r) => { const v = r(); if (v < .3) K.house(c, M, x, 790, 150, 170, { wall: ['#f0b64a', '#e98a5d', '#f4e27a'][k % 3 >>> 0], roof: '#d4473a', chimney: true }); else if (v < .65) K.tree(c, M, x, 795, 190 + r() * 60, { kind: r() < .3 ? 'pine' : 'round', fruit: r() < .5 ? '#e5473a' : null, leaf: '#4fa04a' }); else K.flower(c, M, x, 800, 80 + r() * 30, { kind: 'sunflower' }); });
+    } },
+    { z: 1, paint: (c, M, x0, x1) => {
+      K.road(c, M, x0, x1, g1, H, { col: '#a8a49c', kind: 'path', lw: 3 });
+      c.save(); const P = [[x0 - 30, H]]; for (let x = x0 - 30; x <= x1 + 30; x += 30) P.push([x, g1(x) + 48]); P.push([x1 + 30, H]); M.shape(c, P, { fill: '#5cb44a', seed: 6, dir: -.3 }); c.restore();
+      K.each(x0, x1, 150, 7, (x, k, r) => K.flower(c, M, x, g1(x) + 120 + r() * 60, 40 + r() * 20, { kind: r() < .5 ? 'daisy' : 'tulip', petal: ['#f06a8b', '#f7d148', '#a67be0'][k % 3 >>> 0] }));
+    } },
+  ],
+  back: g => { g.at(.3, c => K.kite(c, g.M, 1500 + g.ld * .3 + 120, 210 + Math.sin(g.t) * 14, 34, 1500 + g.ld * .3 - 40, 760, g.t)); g.at(.4, c => { for (let i = 0; i < 3; i++) K.bird(c, g.M, 400 + i * 80 + g.t * 40 + g.ld * .4, 300 + i * 22, 14, g.t, { phase: i }); }); },
+  front: g => g.at(1, c => { const x = 2600, y = g.ground(x); K.critter(c, g.M, x, y + 6, 70, g.t, { kind: 'dog', col: '#a0683c', face: -1 }); K.butterfly(c, g.M, 1000 + g.t * 60, 640 + Math.sin(g.t * 2) * 30, 18, g.t, { col: '#f4a63a' }); }),
+  gestures: [{ at: 1.6, kind: 'bell' }, { at: 4.2, kind: 'wave' }] });
+
+// 2 · curiosity — pencil: a sketchbook meadow, a rabbit at the fence, a butterfly to snap at
+const g2 = K.groundLine(870, 8, 500, 0, 2);
+J.chapter({ name: 'curiosity · meadow', mood: 'curiosity', medium: 'pencil', dur: 7.5, ground: g2,
+  layers: [
+    { z: 0, paint: (c, M) => K.sky(c, M, 0, 0, W, H, { seed: 3 }) },
+    { z: .3, paint: (c, M, x0, x1) => { K.hills(c, M, x0, x1, 760, 40, H, { col: '#d9d4c4', seed: 4, line: true }); K.each(x0, x1, 260, 8, (x, k, r) => K.tree(c, M, x, 760, 130 + r() * 70, { kind: r() < .5 ? 'round' : 'poplar', leaf: '#9aa98a' })); } },
+    { z: .7, paint: (c, M, x0, x1) => { K.fence(c, M, x0, x1, 840, { kind: 'post', step: 150, col: '#a39a88' }); K.each(x0, x1, 900, 9, (x, k, r) => { if (k % 2) K.tree(c, M, x, 846, 360, { kind: 'bare', trunk: '#6d665a' }); else K.tree(c, M, x, 846, 470, { kind: 'round', leaf: '#8f9a7c', trunk: '#6d665a' }); }); K.each(x0, x1, 230, 32, (x, k, r) => K.flower(c, M, x, 846, 60 + r() * 40, { kind: r() < .5 ? 'tulip' : 'daisy', petal: '#d9d2c2' })); } },
+    { z: 1.25, front: true, paint: (c, M, x0, x1) => K.each(x0, x1, 1400, 33, (x, k, r) => { K.grass(c, M, x - 160, x + 160, H + 10, { col: '#6d6a5e', h: 120, gap: 7, w: 2.4 }); K.flower(c, M, x + 40, H + 10, 190, { kind: 'daisy', petal: '#f2efe6', centre: '#e0b84a' }); }) },
+    { z: 1, paint: (c, M, x0, x1) => { K.road(c, M, x0, x1, g2, H, { col: '#b8ad94', kind: 'path' }); K.grass(c, M, x0, x1, x => g2(x) + 190, { col: '#77806a', h: 40, gap: 11 }); K.each(x0, x1, 420, 31, (x, k, r) => K.rock(c, M, x, g2(x) + 110 + r() * 40, 50 + r() * 40, 24 + r() * 16, { col: '#b9b2a2' })); K.grass(c, M, x0, x1, g2, { col: '#77806a', h: 30, drop: 4 }); K.each(x0, x1, 300, 10, (x, k, r) => K.flower(c, M, x, g2(x) + 2, 46 + r() * 20, { kind: 'daisy', petal: '#f2efe6', centre: '#e8c74a' })); } },
+  ],
+  back: g => g.at(1, c => K.critter(c, g.M, 2050, g.ground(2050) - 4, 130, g.t, { kind: 'rabbit', col: '#a89e8c', face: -1, look: g.X > 1700 ? .5 : 0 })),
+  front: g => g.at(1, c => { const bx = g.X + 300 - Math.max(0, g.lt - 2.4) * 120, by = 470 + Math.sin(g.t * 2.3) * 24 - Math.max(0, g.lt - 3.2) * 90; K.butterfly(c, g.M, bx, by, 20, g.t, { col: '#f0c544' }); }),
+  gestures: [{ at: 1.0, kind: 'look' }, { at: 3.2, kind: 'catch' }] });
+
+// 3 · bustle — gouache: the market street
+const g3 = K.groundLine(880, 4, 600, 0, 3);
+J.chapter({ name: 'bustle · market', mood: 'bustle', medium: 'gouache', dur: 7.5, ground: g3,
+  layers: [
+    { z: 0, paint: (c, M) => K.sky(c, M, 0, 0, W, H, { top: '#a9cfd8', bottom: '#e4ead8', seed: 5 }) },
+    { z: .4, paint: (c, M, x0, x1) => { K.each(x0, x1, 170, 11, (x, k, r) => K.house(c, M, x - 85, 760, 166, 380 + r() * 140, { kind: 'town', wall: ['#d77a5c', '#e7c26a', '#7aa6a2', '#c9524a', '#8fa6c9'][(k % 5 + 5) % 5], roof: ['#5b4a4a', '#3f5a6a'][(k % 2 + 2) % 2], window: '#f3ead2' }), 0); K.bunting(c, M, x0, x1, 300, 30, {}); } },
+    { z: .75, paint: (c, M, x0, x1) => K.each(x0, x1, 420, 12, (x, k, r) => K.stall(c, M, x, 838, 280, 260, { stripes: [['#d9483b', '#f4efe2'], ['#3f7f5f', '#f4efe2'], ['#3f6fa8', '#f4efe2']][(k % 3 + 3) % 3], goods: ['#e2a33a', '#d0563c', '#7aa345', '#f2d34a'] }), .3) },
+    { z: 1, paint: (c, M, x0, x1) => K.road(c, M, x0, x1, g3, H, { col: '#9a958a', kind: 'cobble' }) },
+  ],
+  back: g => g.at(.75, c => K.each(g.ld * .75 - 200, g.ld * .75 + W + 200, 420, 13, (x, k, r) => K.person(c, g.M, x + 330, 846, 200 + r() * 30, g.t, { coat: ['#5b7f9a', '#c9a24a', '#8a5a7a', '#6d8a5a'][(k % 4 + 4) % 4], hat: r() < .5 ? '#3a3a3a' : null, carry: r() < .4 ? '#d0563c' : null, seed: k * 3 }), 0)),
+  front: g => g.at(1, c => { K.critter(c, g.M, 2300, g.ground(2300), 64, g.t, { kind: 'cat', col: '#2e2c2a', face: -1 }); K.critter(c, g.M, 1200, g.ground(1200) + 30, 40, g.t, { kind: 'hen', col: '#efe6d2' }); }),
+  gestures: [{ at: 2.6, kind: 'wave' }, { at: 5.4, kind: 'bell' }] });
+
+// 4 · triumph — woodcut: the long climb under the rayed sun (standing on the pedals)
+const g4 = x => 930 - .07 * x + 10 * Math.sin(x / 300);
+J.chapter({ name: 'triumph · the climb', mood: 'triumph', medium: 'woodcut', dur: 7.5, speed: 185, ground: g4,
+  layers: [
+    { z: 0, paint: (c, M) => { K.sky(c, M, 0, 0, W, H, { top: '#e0a63c', seed: 6 }); K.sun(c, M, 1380, 230, 96, { col: '#c4432a', rays: 22, rayLen: 6, rayW: .05, rayCol: '#f1dcae' }); K.sun(c, M, 1380, 230, 96, { col: '#c4432a', rays: 0 }); } },
+    { z: .3, paint: (c, M, x0, x1) => K.mountains(c, M, x0, x1, 700, 170, { col: '#c4432a', seed: 3 }) },
+    { z: .6, paint: (c, M, x0, x1) => { K.hills(c, M, x0, x1, 790, 60, H, { col: '#6f4424', seed: 5 }); K.each(x0, x1, 330, 14, (x, k, r) => K.tree(c, M, x, 770 - 30 * Math.sin(x / 300), 210 + r() * 90, { kind: 'pine', leaf: '#1e1a16', trunk: '#1e1a16' })); } },
+    { z: 1, paint: (c, M, x0, x1) => { K.road(c, M, x0, x1, g4, H, { col: '#1e1a16', kind: 'path' }); K.grass(c, M, x0, x1, g4, { col: '#e0a63c', h: 22, drop: -2 }); } },
+  ],
+  back: g => g.at(.5, c => { for (let i = 0; i < 4; i++) K.bird(c, g.M, 1100 + i * 70 + g.t * 30 + g.ld * .5, 380 + (i % 2) * 30, 16, g.t, { phase: i * .7 }); }),
+  front: g => g.at(1, c => K.rock(c, g.M, 2500, g.ground(2500), 140, 70, { col: '#6f4424' })),
+  gestures: [] });
+
+// 5 · sorrow — charcoal: the storm; rain, poles, bare trees; she hunches and shivers
+const g5 = K.groundLine(880, 8, 420, 0, 5);
+J.chapter({ name: 'sorrow · the storm', mood: 'sorrow', medium: 'charcoal', dur: 7.5, speed: 175, ground: g5,
+  layers: [
+    { z: 0, paint: (c, M) => { K.sky(c, M, 0, 0, W, H, { top: '#2e2c2a', bottom: '#8a857c', seed: 7 }); for (let i = 0; i < 7; i++) K.cloud(c, M, 100 + i * 300 + (i % 3) * 40, 120 + (i % 3) * 90, 360 + (i % 2) * 260, { col: ['#3d3a36', '#56524c', '#47443f'][i % 3], line: false, tall: .5 }); } },
+    { z: .3, paint: (c, M, x0, x1) => K.hills(c, M, x0, x1, 760, 70, H, { col: '#5d5a54', seed: 6 }) },
+    { z: .65, paint: (c, M, x0, x1) => { K.each(x0, x1, 520, 15, (x, k) => K.pole(c, M, k * 520, 830, 330, [(k + 1) * 520, 830]), 0); K.each(x0, x1, 700, 16, (x, k, r) => K.tree(c, M, x + 260, 836, 300 + r() * 80, { kind: 'bare', trunk: '#2a2724' })); } },
+    { z: 1, paint: (c, M, x0, x1) => { K.road(c, M, x0, x1, g5, H, { col: '#5d5a54', kind: 'dirt' }); K.each(x0, x1, 600, 17, (x, k, r) => K.puddle(c, M, x, g5(x) + 60 + r() * 60, 160, { col: '#8f8a80' })); } },
+  ],
+  front: g => { g.screen(c => K.rain(c, g.M, W, H, g.t, { n: 220, a: .5, angle: .3, col: '#d8d4ca' })); },
+  gestures: [{ at: 3.0, kind: 'shiver' }],
+  sound: { sfx: [{ at: .9, type: 'thunder', v: .7, d: 3 }] } });
+
+// 6 · relief — watercolour: after the rain, willows and puddles; downhill, feet off the pedals
+const g6 = x => 820 + .05 * x + 8 * Math.sin(x / 260);
+J.chapter({ name: 'relief · after rain', mood: 'relief', medium: 'watercolour', dur: 7.5, speed: 260, ground: g6, coast: [[2.0, 5.6]],
+  layers: [
+    { z: 0, paint: (c, M) => { K.sky(c, M, 0, 0, W, H, { top: '#6f9fd2', bottom: '#eef2ec', seed: 8 }); } },
+    { z: .12, paint: (c, M, x0, x1) => { K.rainbow(c, M, 1300, 760, 560, { a: .55, w: 14 }); K.each(x0, x1, 600, 18, (x, k, r) => K.cloud(c, M, x, 180 + r() * 120, 260 + r() * 100, { col: '#ffffff', line: false })); } },
+    { z: .45, paint: (c, M, x0, x1) => { K.hills(c, M, x0, x1, 780, 30, H, { col: '#9cc47a', seed: 7 }); K.each(x0, x1, 380, 19, (x, k, r) => K.tree(c, M, x, 790, 230 + r() * 120, { kind: r() < .6 ? 'willow' : 'poplar', leaf: '#7fb24f', trunk: '#6b5440' })); } },
+    { z: 1, paint: (c, M, x0, x1) => { K.road(c, M, x0, x1, g6, H, { col: '#c9c2b0', kind: 'path', line: false }); K.each(x0, x1, 520, 20, (x, k, r) => K.puddle(c, M, x, g6(x) + 50 + r() * 70, 180, { col: '#9cc0d8' })); K.grass(c, M, x0, x1, x => g6(x) + 150, { col: '#6aa54a', h: 48, gap: 9 }); } },
+  ],
+  back: g => g.at(.5, c => { for (let i = 0; i < 2; i++) K.bird(c, g.M, 300 + i * 60 + g.t * 50 + g.ld * .5, 330 + i * 26, 14, g.t, { phase: i }); }),
+  gestures: [{ at: 2.4, kind: 'feetup' }],
+  sound: { sfx: [{ at: .4, type: 'drip', v: .4 }, { at: 1.1, type: 'drip', v: .3 }, { at: 5.9, type: 'splash', v: .3 }] } });
+
+// 7 · awe — oil: the sea at sunset; she looks up at the sun
+const g7 = x => 870 - .02 * x + 12 * Math.sin(x / 340);
+J.chapter({ name: 'awe · the sea at sunset', mood: 'awe', medium: 'oil', dur: 7.5, speed: 205, ground: g7,
+  layers: [
+    { z: 0, paint: (c, M) => { K.sky(c, M, 0, 0, W, 640, { top: '#7e5aa0', bottom: '#f3a84a', seed: 9 }); K.sun(c, M, 1420, 560, 64, { col: '#ffe6a0', rays: 0 }); K.glow(c, 1420, 560, 360, '#ffb85a', .35); } },
+    { z: .15, paint: (c, M, x0, x1) => { K.water(c, M, x0, x1, 600, 200, { col: '#a3608a', glint: '#ffd27a' }); K.hills(c, M, x0, x0 + 900, 610, 60, 640, { col: '#5a4a6a', seed: 9 }); } },
+    { z: .55, paint: (c, M, x0, x1) => { K.hills(c, M, x0, x1, 820, 120, H, { col: '#6c7a3e', seed: 8, freq: 1 / 520 }); K.each(x0, x1, 560, 21, (x, k, r) => K.tree(c, M, x, 740 + r() * 40, 300 + r() * 80, { kind: 'umbrella', leaf: '#3f5a2e', trunk: '#4a3524' })); } },
+    { z: 1, paint: (c, M, x0, x1) => { K.road(c, M, x0, x1, g7, H, { col: '#c49a6c', kind: 'path' }); K.each(x0, x1, 120, 22, (x, k, r) => K.flower(c, M, x, g7(x) + 30 + r() * 120, 26, { kind: 'dot', petal: ['#f2d34a', '#b78ad6'][(k % 2 + 2) % 2] })); } },
+  ],
+  back: g => g.at(.35, c => { for (let i = 0; i < 3; i++) K.bird(c, g.M, 900 + i * 110 + g.t * 25 + g.ld * .35, 300 + i * 40, 18, g.t, { phase: i, col: '#f4ece0', rate: 3 }); }),
+  gestures: [{ at: 2.0, kind: 'look' }],
+  sound: { sfx: [{ at: 1.0, type: 'chirp', v: .3 }, { at: 4.4, type: 'chirp', v: .25 }] } });
+
+// 8 · wonder — chalk: night; the stars draw the lemon tree; an owl; then the page tears back to morning
+const g8 = K.groundLine(880, 10, 460, 0, 8);
+// the lemon tree, drawn in stars: pot, trunk, a round crown, one lemon
+const tree = [[1120, 400], [1240, 400], [1225, 350], [1135, 350], [1120, 400], [1135, 350], [1180, 350], [1180, 280], [1110, 260], [1090, 200], [1130, 150], [1200, 135], [1260, 175], [1270, 235], [1230, 275], [1180, 280]];
+J.chapter({ name: 'wonder · night', mood: 'wonder', medium: 'chalk', dur: 8, speed: 210, ground: g8,
+  layers: [
+    { z: 0, paint: (c, M) => { K.sky(c, M, 0, 0, W, H, { seed: 10 }); K.moon(c, M, 1700, 150, 56, {}); K.constellation(c, M, tree, {}); K.stars(c, M, 1200, 200, 10, 10, 1, { seed: 2, col: '#f4d23c' }); } },
+    { z: .3, paint: (c, M, x0, x1) => { K.hills(c, M, x0, x1, 780, 50, H, { col: '#25302b', seed: 9 }); K.each(x0, x1, 240, 23, (x, k, r) => { K.house(c, M, x, 776, 50, 60, { wall: '#25302b', roof: '#25302b', window: '#f2d27a', door: false }); K.glow(c, x + 14, 760, 40, '#f2d27a', .25); }); } },
+    { z: .7, paint: (c, M, x0, x1) => { K.fence(c, M, x0, x1, 846, { kind: 'post', step: 140, col: '#25302b' }); K.each(x0, x1, 1100, 24, (x, k) => K.tree(c, M, x + 300, 852, 330, { kind: 'bare', trunk: '#b9c4b2' }), 0); } },   // jitter 0: the owl sits on these
+    { z: 1, paint: (c, M, x0, x1) => { K.road(c, M, x0, x1, g8, H, { col: '#25302b', kind: 'boards' }); K.grass(c, M, x0, x1, x => g8(x) + 140, { col: '#a9c8a0', h: 60, gap: 22, w: 1.6 }); } },
+  ],
+  back: g => { g.screen(c => K.stars(c, g.M, 0, 0, W, 520, 90, { seed: 4, t: g.t })); g.at(.7, c => { const tx = 1100 * Math.round((g.ld * .7 + 900) / 1100) + 300; K.critter(c, g.M, tx + 2, 852 - 330 * .45, 80, g.t, { kind: 'owl', col: '#3b4038' }); }); },
+  front: g => g.at(1, c => { for (let i = 0; i < 9; i++) { const x = 900 + i * 260 + Math.sin(g.t * .7 + i) * 40, y = 720 + Math.sin(g.t * 1.1 + i * 2) * 50; c.fillStyle = 'rgba(240,230,140,' + (.4 + .4 * Math.sin(g.t * 3 + i)) + ')'; c.beginPath(); c.arc(x, y, 3, 0, 7); c.fill(); } }),
+  gestures: [{ at: 1.4, kind: 'look' }],
+  sound: { sfx: [{ at: 3.0, type: 'hoot', v: .5 }] } });
+
+// the film's own rules (besides the rider's body rules and the wheels on the road, which the runtime checks)
+J.check('the lemon tree rides in the basket', () => !!HANA.cargo && HANA.bike.basket);
+J.start();
+</script>
+</body></html>
