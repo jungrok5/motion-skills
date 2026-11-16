@@ -8,6 +8,15 @@ A collection of Claude Code skills for making motion graphics. Each top-level fo
   `references/3D-MODELS.md` first — free Polyfork models, commercial use OK, but never commit their `.mjs` source,
   and committed GLBs need their CC BY credit line. Skills that say code-only (`machine-sim`, `swarm-world`,
   `aesthetics-film`, `photoreal-film`, `ink-word-world`, `dragon-realm`) stay code-only.
+- A skill (or piece) whose bodies move — people, animals, creatures: read `references/MOTION-QUALITY.md` and take the
+  "AI slop" look out — weight sets timing, inertia / follow-through, anticipation before and recovery after big moves,
+  every idle breathes, planted feet never slide (turns are stepped). Motion comes from a video-model reference →
+  key poses → rig numbers + interpolation, not from limbs tweened separately in code. A new skill ships those as
+  brief fields, Rules, a motion row on the cast sheet and `check` failures.
+- Generated video / image / voice is a reference, never a committed asset: keep it out of the repo (scratch or a
+  git-ignored `ref/`), never in `docs/`. **ElevenLabs (any tool: speech, sound, music, image, video, voice design,
+  agents) only after the owner says yes for that request** — say what, which model, how many takes, rough cost, then
+  wait; no answer means no call. Code-only skills take no generated motion at all.
 - Adding a skill, or absorbing one from another project repo: follow `CONTRIBUTING.md` step by step (a skill takes a topic and designs a new piece in its style — not a
   re-render of its example or a fill-in template; folder layout,
   provenance in `SKILL.md` + `docs/skills.json`, `references/LESSONS.md`, verify from a clean copy, samples page from `docs/_template/`;
@@ -24,4 +33,7 @@ A collection of Claude Code skills for making motion graphics. Each top-level fo
 - Shared look lives in `docs/assets/site.css` / `site.js`; skill pages keep the template's sections and classes.
 - Before finishing any site change, serve `docs/` (`python3 -m http.server`) and check the hub and touched pages at
   1280 px and 390 px, dark and light: no horizontal scroll, no console errors or 404s, demos load.
-- Work on a branch; do not push to `main` without the owner's go-ahead.
+- Work on a branch and **always finish with a PR to `main`** — every change, a new skill included. Never push to
+  `main`, never merge a PR (or enable auto-merge), never merge a branch into `main` locally: the owner reviews and
+  merges. Bring `main` into your branch, not the other way round. Only an explicit "merge it" from the owner for that
+  PR changes this.
