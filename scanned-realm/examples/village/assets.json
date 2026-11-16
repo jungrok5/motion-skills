@@ -1,0 +1,28 @@
+{
+  "res": "1k",
+  "textures": [
+    "cobblestone_floor_04",
+    "rustic_stone_wall",
+    "white_sandstone_blocks_02",
+    "white_rough_plaster",
+    "clay_roof_tiles_02",
+    "roof_slates_02",
+    "reed_roof_03",
+    "weathered_brown_planks",
+    "rough_wood",
+    "medieval_red_brick",
+    "stony_dirt_path",
+    "leaves_forest_ground",
+    "gravel_floor_02",
+    "mossy_rock",
+    "bark_brown_02"
+  ],
+  "models": [
+    "wine_barrel_01",
+    "wooden_crate_02",
+    "wooden_bucket_01",
+    "stone_fire_pit",
+    "tree_stump_01",
+    "dead_tree_trunk"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "res": "1k",
+  "textures": [
+    "raw_plank_wall",
+    "thatch_roof_angled",
+    "stacked_stone_wall",
+    "wood_planks_grey",
+    "forest_ground_04",
+    "brown_mud_dry",
+    "river_small_rocks",
+    "pine_bark",
+    "rock_pitted_mossy"
+  ],
+  "models": [
+    "stone_fire_pit",
+    "tree_stump_01",
+    "wine_barrel_01"
+  ]
+}
