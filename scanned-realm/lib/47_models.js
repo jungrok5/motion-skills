@@ -217,7 +217,8 @@ void main(){
       material(id + ':' + mi, tex, o, plant); }
     const put = (v) => { const d = MD.defs[v.id]; if (d && d.pending) { d.prims = v.prims; d.pending = false; return d; } return reg(v, id, o); };                // made early from its box: now it has its triangles
     const ds = [put(whole)]; roots.forEach((prims, k) => { if (!prims.length) return; const v = view(prims, id + '#' + k); v.own = true; ds.push(put(v)); });      // one object of a set: placed about its own centre
-    if (MD.built) for (const d of ds) if (d.n && !d.cells) realise(d);
+    // arrived after the walk began: its programs are prepared before its first frame (it stays unseen until they are)
+    if (MD.built) for (const d of ds) if (d.n && !d.cells) { realise(d); d.warming = true; LR.warmMeshes([].concat(...d.mesh, d.smesh || [])).then(() => { d.warming = false; }); }
   };
 
   // ── levels of detail ────────────────────────────────────────────────────────────────────────────────────────────
@@ -316,6 +317,7 @@ void main(){
     VP.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); frustum.setFromProjectionMatrix(VP);
     const cx = cam.position.x, cy = cam.position.y, cz = cam.position.z, k = MD.reach(), sd = LR.gpu.tier.shadowDist * 0.75, shadows = !LR.off.has('shadow');
     for (const d of MD.live) {
+      if (d.warming) continue;
       const src = d.inst, far = d.far * k, L = d.lod, nl = d.nl, cap = d.cap, B = d.buf, S = d.sbuf && shadows ? d.sbuf.array : null, sfar = Math.min(sd, d.shadowFar * k);
       const cnt = [0, 0, 0, 0]; let ns = 0; order.length = 0;
       for (const c of d.cells) { const dist = Math.hypot(c.x - cx, c.y - cy, c.z - cz) - c.r; if (dist > far) continue; sph.center.set(c.x, c.y, c.z); sph.radius = c.r; c.vis = frustum.intersectsSphere(sph); if (!c.vis && (!S || dist > sfar)) continue; c.d = dist; order.push(c); }

@@ -23,9 +23,11 @@ into the project as `BRIEF.md` (the template is at the end of this file; `new-re
    roof, a paper-and-lattice door, a stone wall with a tiled coping, red pine; none of that is the village example.
 5. **What it is made of — the scans.** From the building tradition, name the surfaces (paving, wall stone, plaster,
    roof, timber, boards, the earth of the paths, the floor of the woods, rock, bark) and find a photographed one for
-   each (`references/ASSETS.md`); name the few objects that will be scans (barrels, rocks, a stump — with their
-   triangle counts) and what stays generated. A Hanseatic quay and a Jeju cove share no scan either: this list is
-   designed per topic like the plan is.
+   each (`references/ASSETS.md`) — the bark of each kind of tree too. Then **what lies about and what grows**: what
+   this place sells, cooks with, works with and leaves by its doors (the scanned objects, in groups that say what a
+   spot is for); the rock the land throws up; the weeds at its walls and the plants on its forest floor (the scanned
+   plants, by where they grow); and which photographed leaves its trees wear. A Hanseatic quay and a Jeju cove share
+   no scan either: this list is designed per topic like the plan is.
 6. **The walk.** Where the walker starts and what they see first; the tour as a list of way-points, each with what that
    stretch looks at; 8–12 named views for stills.
 
@@ -43,7 +45,7 @@ Score each 0–2; anything at 0 is fixed before the realm ships, and the sum sho
 | **Night** | black, or day with a blue filter | readable sky, lit windows and lamps doing the work, moon shadows |
 | **Rain** | grey day | dark wet stone, puddles in the low places with rings, mist closing the distance |
 | **Winter** | white paint | snow on what faces up and is open to the sky, dry under eaves, ice on still water, bare crowns |
-| **Scans** | a photograph pasted on a box: the wrong thing for the wall, its tiling counted across the square, brighter than everything generated beside it, a rock standing on the grass | each surface reads as what it is from five metres and sits in one tone with its neighbours; objects are seated in the ground; `check.mjs` reports every scan arrived |
+| **Scans** | a photograph pasted on a box: the wrong thing for the wall, its tiling counted across the square, brighter than everything generated beside it, a rock standing on the grass | each surface reads as what it is from five metres and sits in one tone with its neighbours; objects are seated in the ground and gathered where someone would have left them; plants grow in drifts with bare ground between; a crown is dark inside and has gaps; `check.mjs` reports every scan arrived and what the scans cost each view (0.1–0.3 M triangles) |
 | **Walk** | the tour clips a wall or wades a pond; a fence or a house stands across a way | `check.mjs` passes; on the walk map (`--walk`) every way is open; every view frames something |
 
 Then walk it yourself in the still renderer: stand at the spawn point and turn right round (four stills, 90° apart).

@@ -75,6 +75,10 @@
     const all = [tmp, ...scenes]; let done = 0;
     try { for (const sc of all) { await r.compileAsync(sc, sc === tmp ? fsCam : cam); if (step) step(++done, all.length); await LR.breath(); } }
     finally { for (const o of hidden) o.visible = false; tmp.clear(); } };
+  // the same for meshes that join the world after it has started (a scan that has just arrived): resolve when their
+  // programs are ready, so their first frame does not compile
+  LR.warmMeshes = async (meshes, cam) => { if (LR.RENDER || !meshes.length) return; const tmp = new T.Scene(); for (const o of meshes) { const q = new T.Mesh(o.geometry, o.material); q.frustumCulled = false; tmp.add(q); }
+    try { await LR.gpu.renderer.compileAsync(tmp, cam || LR.cam); } catch (e) { /* then they compile on first use */ } finally { tmp.clear(); } };
   // Freeing a texture (or a program) right after the pass that read it: WebGL promises the pass is carried out first,
   // but a software renderer under a heavy load of uploads was seen to lose such passes — whole material layers came out
   // empty once fifty models were baked before them.  So what a bake has read is freed through here: where stills are

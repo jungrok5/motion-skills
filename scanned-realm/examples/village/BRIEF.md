@@ -57,14 +57,34 @@ tiles; all Poly Haven, CC0, 1k.
 | frames, posts, beams | `rough_wood` | `gain 0.75`, `tile 1.2`; `medieval_wood` read as blockwork and was dropped |
 | chimneys, the forge | `medieval_red_brick` | |
 | paths · the floor of the woods · the shore | `stony_dirt_path` · `leaves_forest_ground` · `gravel_floor_02` | `tile 3.0` and `2.4` on the first two |
-| rock (on generated shapes) · bark (oaks, logs, stumps) | `mossy_rock` · `bark_brown_02` | |
+| rock (small generated shapes, and the grain laid over big scans near the eye) | `mossy_rock` | |
+| bark: oaks, logs, stumps · beech and bushes · pine · spruce | `bark_brown_02` · `chinese_hackberry_bark` · `pine_bark` · `knotted_pine_bark` | no height maps; a generated bark beside scanned ground read as a drawing |
 
-Objects: `wine_barrel_01` (10 820 triangles; every barrel, 35 of them) · `wooden_crate_02` (5 176; every crate) ·
-`tree_stump_01` (41 046; the three named stumps) · `dead_tree_trunk` (101 802; one, in the glade) · `stone_fire_pit`
-(3 887; the glade) · `wooden_bucket_01` (5 116; the well, the smithy, the farm).
-What stays generated, and why: hay and haystacks (a roof scan on a rick goes dark), cloth, glass, iron, snow, turf
-under the grass, every leaf — and the rocks' shapes: the scanned boulder set shares one texture between six rocks and
-was blurred at arm's length (`references/ASSETS.md`).
+**What lies about** (scanned objects — instanced, with levels of detail; `fetch-assets.mjs` prints their triangles):
+- every barrel, crate and stump of the kit: `wine_barrel_01`, `wooden_crate_02`, `tree_stump_01`; every rock of 0.5 and
+  up: `boulder_01` (66 122 triangles — whole only within 5 m);
+- the market, which is what the square is for: fruit, bread, roots and pots **on the stalls' counters** (`food_apple_01`,
+  `lemon`, `croissant`, `hamburger_buns#k`, `yellow_onion`, `sweet_potato`, `ceramic_pot`, `brass_pot_01`, `metal_jug`),
+  a low table of baskets, a painted table of pots, baskets at the stalls' corners, a chest by the cloth stall;
+- the inn's front: a laid table, two stools, bread and apples on it; the smithy: a bench with a hammer and a hatchet,
+  a shield against the wall; the farm: a ladder at the rick, a pick and an axe by the wood, a spade stood in the
+  earth, a watering can; the cottage: a spinning wheel by the door; the chapel yard: a statue on a plinth;
+- by the doors and walls of every house (the `yard` kit): tubs, baskets, churns, a watering can, a spade;
+- the land's own: three tors of bedrock (`rock_face_01` and `rock_face_02` back to back) in the glade, at the far end
+  of the meadow and behind the pond; a fallen trunk and a ring of fire stones in the glade; twigs on the forest floor.
+
+**What grows** (scanned plants, by where they grow): ferns under the trees (`fern_02`), nettles, docks and dandelions
+at the foot of walls and on the ragged edge of ways (`nettle_plant`, `weed_plant_02`, `dandelion_01`), tufts on the
+verges (`grass_medium_02`), daisies and star flowers in the meadow (`flower_ursinia`, `flower_empodium`), celandine,
+periwinkle and low shrubs at the wood's edge (`celandine_01`, `periwinkle_plant`, `shrub_03`).
+
+**Leaves** (photographed, on the trees the engine grows): `island_tree_02`'s leaves on the beeches and bushes — and,
+seen through an oak leaf's outline, on the oaks; `shrub_03`'s toothed leaves on the birches and climbers;
+`fir_tree_01`'s twigs on the spruces, `pine_tree_01`'s tufts on the pines; `fern_02`'s fronds and a dock leaf in the
+ground cover.
+
+What stays generated, and why: hay and haystacks (a roof scan on a rick goes dark), cloth, glass, iron, snow, turf and
+grass blades, the trees' wood, every building. 18 surfaces, 50 models, 3 atlases: 120 MB, arriving while you walk.
 
 ## To make new
 Everything here is the kit's stock (this example is where the stock came from). A different topic starts from this table.
