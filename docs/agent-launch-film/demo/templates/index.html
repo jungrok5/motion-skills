@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tally — agent launch film (template)</title>
+<!-- The template: 「Tally」, a bookkeeping agent for freelancers (≈ 17 s, 4 scenes). An example of the style, not a menu:
+     write BRIEF.md for your topic, design your own mascot (mascot.js) and replace every line, card and move below. -->
+<script type="importmap">{ "imports": { "alf/": "../lib/" } }</script>
+</head>
+<body>
+<div id="frame"></div>
+<script type="module">
+import { Film, K, E } from 'alf/film.js';
+import { MASCOT } from './mascot.js';
+
+const F = new Film({
+  W: 1920, H: 1080, title: 'Tally',
+  brand: { accent: '#3E63DD', glow: '#8EA6F5', ground: '#ECEDEF' },
+  mascot: MASCOT,
+  score: { bpm: 104, chords: [[0, 4, 7, 11], [9, 12, 16, 19], [5, 9, 12, 16], [7, 11, 14, 17]], root: 50 },
+});
+const BLUE = '#8EA6F5', MINT = '#9BE3CC', LILAC = '#C9B8F2';
+
+// 1 · hello — the greeting, the mascot wakes, the user connects a bank
+F.scene('hello', {
+  dur: 4.8, out: 'push',
+  cam: [[0, { z: -1180, y: -20 }], [4.8, { z: -990, y: 0 }]],
+  glow: [{ x: 0.2, y: 0.42, r: 0.3, c: LILAC, a: 0.45 }, { x: 0.72, y: 0.6, r: 0.34, c: BLUE, a: 0.5 }],
+}, (S) => {
+  S.add(K.headline('Meet *Tally*, Jordan'), { at: [0, -370, 0], in: 0.25 });
+  S.add(K.mascot({ say: [[0, 'TALLY'], [3.0, 'READY']], nod: [2.85], size: 400 }), { at: [0, -40, 0], in: 0, enter: 'pop' });
+  S.add(K.input({ placeholder: 'Connect your bank', text: 'northbank.com', type: [1.1, 2.2], press: 2.75, halo: BLUE }), { at: [0, 300, 0], in: 0.55 });
+  S.add(K.cursor({ path: [[0, 520, 300], [0.9, 520, 300], [1.25, 410, 40]], click: [1.3] }), { at: [0, 300, -20], in: 1.45, sharp: true });
+});
+
+// 2 · sort — receipts pour in on an arc, a counter runs, a chip says it is kept
+F.scene('sort', {
+  dur: 5.6,
+  cam: [[0, { z: -1000 }], [5.4, { z: -920, x: 30 }]],
+  glow: [{ x: 0.5, y: 0.6, r: 0.38, c: BLUE, a: 0.5 }, { x: 0.15, y: 0.3, r: 0.22, c: MINT, a: 0.35 }],
+}, (S) => {
+  S.add(K.headline('Sorting *{n}* receipts', { sub: 'Bank · Email · Photos', n: { from: 0, to: 1284, at: [0.3, 2.6] } }), { at: [0, -360, 0], in: 0.1 });
+  const R = [['Blue Hour Café', '$18.40', 'Meals', '#E9A23B'], ['Rail pass', '$96.00', 'Travel', '#3E63DD'], ['Desk lamp', '$64.99', 'Home office', '#2FA36B'],
+    ['Font license', '$45.00', 'Software', '#9B6BF2'], ['Coworking', '$220.00', 'Rent', '#E25D7A'], ['Cloud storage', '$9.99', 'Software', '#9B6BF2'], ['Taxi', '$23.10', 'Travel', '#3E63DD']];
+  S.carousel(R.map(([m, a, c, col], i) => K.card({ w: 300, parts: [K.meta(`RECEIPT · MAR ${10 + i}`), K.title(m), K.line(a, { size: 40 }), K.html(`<div>${K.tag(c, { color: col }).node.outerHTML}</div>`)] })),
+    { at: [0, 40, 0], radius: 1500, step: 15, spin: [0.2, 4.8, 70], in: 0.2, enter: 'fly', read: false });
+  S.add(K.chip('Saved to your books'), { at: [0, 330, -60], in: 2.8 });
+});
+
+// 3 · ask — the agent finds deductions and asks; the user says yes; it acts, and the receipts show it
+F.scene('ask', {
+  dur: 6.6, out: 'whip',
+  cam: [[0, { z: -1000, x: -20, y: -30 }], [6.6, { z: -930, x: 20, y: 10 }]],
+  glow: [{ x: 0.5, y: 0.42, r: 0.34, c: BLUE, a: 0.5 }, { x: 0.5, y: 0.8, r: 0.3, c: MINT, a: 0.3 }],
+}, (S) => {
+  S.add(K.chat([
+    { who: 'agent', name: 'Tally', text: 'You can deduct *3* of these.', at: 0.3 },
+    { who: 'user', name: 'Jordan', initial: 'J', text: 'Do it', at: 1.9 },
+    { who: 'agent', text: 'Done. Filed under *home office*.', at: 2.7 },
+  ], { w: 900 }), { at: [0, -150, 0], in: 0, enter: 'fade' });
+  const items = [['Desk lamp', '$64.99'], ['Coworking', '$220.00'], ['Font license', '$45.00']];
+  S.row(items.map(([m, a]) => K.card({ w: 300, parts: [K.title(m), K.line(a, { size: 38 }), K.chip('Deducted', { size: 20 })] })),
+    { at: [0, 290, 0], gap: 340, in: 3.6, stagger: 0.12, focus: [[0, 0], [4.4, 0], [6.0, 2]], read: false });
+}, );
+
+// 4 · done — the number that matters, the mascot says it is done
+F.scene('done', {
+  dur: 5.0,
+  cam: [[0, { z: -1040 }], [5.0, { z: -960 }]],
+  glow: [{ x: 0.36, y: 0.55, r: 0.32, c: BLUE, a: 0.55 }, { x: 0.74, y: 0.5, r: 0.26, c: MINT, a: 0.45 }],
+}, (S) => {
+  S.add(K.card({ w: 560, halo: BLUE, parts: [K.meta('THIS QUARTER · TALLY'), K.stat({ value: 4120, fmt: (v) => '$' + Math.round(v).toLocaleString('en-US'), label: 'found in deductions', caption: 'Filed before Friday.', at: [0.2, 1.6] })] }), { at: [-260, 10, 0], in: 0.15 });
+  S.add(K.mascot({ say: [[0, 'DONE', { blink: true }], [1.6, 'DONE']], nod: [0.4] }), { at: [380, -10, 40], in: 0.35, enter: 'pop', s: 0.74 });
+  S.add(K.headline('Your books, *handled*.', { size: 54 }), { at: [0, -380, 0], in: 0.9 });
+});
+
+F.start();
+</script>
+</body>
+</html>

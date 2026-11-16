@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>보리 — 냉장고 사진 한 장으로 일주일 저녁 (agent-launch-film example)</title>
+<!-- The worked example: 「보리」, a meal-planning agent (a topic the source never touched), designed from BRIEF.md:
+     a rice-cooker mascot with an amber LED face, ingredient and dish drawings in art.js, 9 scenes, ≈ 49 s, Korean. -->
+<script type="importmap">{ "imports": { "alf/": "../../lib/" } }</script>
+</head>
+<body>
+<div id="frame"></div>
+<script type="module">
+import { Film, K } from 'alf/film.js';
+import { MASCOT } from './mascot.js';
+import { thumb, dish, WEEK } from './art.js';
+
+const F = new Film({
+  W: 1920, H: 1080, title: '보리',
+  brand: { accent: '#1E9E5A', glow: '#9ADBB4', ground: '#EEEDE8' },
+  mascot: MASCOT,
+  score: { bpm: 96, root: 48, chords: [[0, 4, 7, 9], [5, 9, 12, 16], [2, 5, 9, 12], [7, 11, 14, 17]], arp: '0.1.2.3.2.1.0.2.' },
+});
+const MINT = '#9ADBB4', HONEY = '#F6C978', PEACH = '#F5B49A', SKY = '#B9D4F2';
+const RED = '#E5484D';
+
+// 1 · hello — greeting, the cooker wakes, the user hands over a photo of the fridge
+F.scene('hello', {
+  dur: 5.0, out: 'push',
+  cam: [[0, { z: -1180, y: -20 }], [5.0, { z: -990, y: 0 }]],
+  glow: [{ x: 0.22, y: 0.4, r: 0.3, c: MINT, a: 0.5 }, { x: 0.74, y: 0.62, r: 0.32, c: HONEY, a: 0.5 }],
+}, (S) => {
+  S.add(K.headline('저녁 고민 끝, *지민* 님'), { at: [0, -380, 0], in: 0.25 });
+  S.add(K.mascot({ say: [[0, '보리'], [3.1, '준비']], nod: [2.95], size: 400 }), { at: [0, -40, 0], in: 0, enter: 'pop' });
+  S.add(K.input({ placeholder: '냉장고 사진을 올려 주세요', text: '우리집 냉장고.jpg', type: [1.1, 2.3], press: 2.85, halo: MINT }), { at: [0, 300, 0], in: 0.55 });
+  S.add(K.cursor({ path: [[0, 540, 280], [0.85, 540, 280], [1.25, 410, 30]], click: [1.3] }), { at: [0, 300, -20], in: 1.55, sharp: true });
+});
+
+// 2 · learn — what it already knows about the user: a pile of cards, read one at a time
+F.scene('learn', {
+  dur: 6.5,
+  cam: [[0, { z: -1000 }], [6.5, { z: -930, y: 10 }]],
+  glow: [{ x: 0.5, y: 0.6, r: 0.32, c: MINT, a: 0.55 }, { x: 0.18, y: 0.3, r: 0.2, c: SKY, a: 0.35 }],
+}, (S) => {
+  S.add(K.headline('지민 님 입맛을 *배웠어요*', { sub: '최근 주문 · 저장한 레시피 · 남긴 리뷰' }), { at: [0, -390, 0], in: 0.1 });
+  S.stack([
+    K.card({ w: 540, halo: MINT, parts: [K.title('입맛', { badge: '지민' }), K.sliders([['순한 맛', '매운 맛', 0.8], ['한식', '양식', 0.18], ['간단', '정성', 0.32]]), K.chips(['땅콩 빼기', '오이 빼기'], { tone: 'ghost', size: 20, read: false }), K.foot('맵고 간단한 한식', 'FROM 주문 기록 · 리뷰 2건')] }),
+    K.card({ w: 540, halo: HONEY, parts: [K.title('한 주 예산'), K.stat({ value: 50000, fmt: (v) => Math.round(v).toLocaleString('ko-KR') + '원', caption: '2인 · 저녁 7끼', at: [0.15, 1.2] })] }),
+  ], { at: [0, 70, 0], in: 0.3, every: [2.5] });
+});
+
+// 3 · scan — what is in the fridge: ingredient cards on an arc, a counter, what runs out first
+F.scene('scan', {
+  dur: 6.0, out: 'push',
+  cam: [[0, { z: -1000 }], [6.0, { z: -930, x: -30 }]],
+  glow: [{ x: 0.5, y: 0.62, r: 0.38, c: HONEY, a: 0.45 }, { x: 0.82, y: 0.3, r: 0.22, c: MINT, a: 0.4 }],
+}, (S) => {
+  S.add(K.headline('냉장고 속 재료 *{n}*가지', { sub: '유통기한 · 남은 양 · 같이 쓰는 재료', n: { from: 0, to: 14, at: [0.3, 2.2] } }), { at: [0, -390, 0], in: 0.1 });
+  const ING = [['달걀', '#FBF3E4', 'D-9'], ['애호박', '#EEF4DC', 'D-1'], ['김치', '#FBE6DF', 'D-20'], ['두부', '#F4F1E8', 'D-1'], ['양파', '#F8EEDD', 'D-12'], ['돼지고기', '#FBE8E6', 'D-3'], ['대파', '#EEF3E2', 'D-5'], ['버섯', '#F3ECE2', 'D-4'], ['감자', '#F6EFDF', 'D-15']];
+  S.carousel(ING.map(([n, bg, d]) => K.card({ w: 250, pad: 18, parts: [K.html(`<div style="width:100%;aspect-ratio:1">${thumb(n, bg)}</div>`), K.title(n), K.html(`<div>${K.tag(d, { color: d === 'D-1' ? RED : '#9AA0A6' }).node.outerHTML}</div>`)] })),
+    { at: [0, 60, 0], radius: 1500, step: 14, spin: [0.2, 5.0, 80], in: 0.2, enter: 'fly', read: false });
+  S.add(K.chip('두부 · 애호박은 *내일까지*', { icon: 'spark', iconBg: RED }), { at: [0, 380, -60], in: 2.9 });
+});
+
+// 4 · ask — the cooker proposes, the user adds one wish, the recipe answers
+F.scene('ask', {
+  dur: 7.6,
+  cam: [[0, { z: -1000, x: -30 }], [7.6, { z: -940, x: 30 }]],
+  glow: [{ x: 0.36, y: 0.55, r: 0.32, c: MINT, a: 0.5 }, { x: 0.76, y: 0.5, r: 0.26, c: HONEY, a: 0.5 }],
+}, (S) => {
+  S.add(K.chat([
+    { who: 'agent', name: '보리', text: '두부랑 애호박이 *내일까지*예요.', at: 0.3 },
+    { who: 'agent', text: '오늘은 *된장찌개* 어때요?', at: 1.9 },
+    { who: 'user', name: '지민', initial: '지', text: '좋아! 대신 맵게', at: 3.5 },
+    { who: 'agent', text: '청양고추 *두 개* 넣을게요.', at: 4.4 },
+  ], { w: 860 }), { at: [-330, -40, 0], in: 0, enter: 'fade' });
+  S.add(K.poster({ w: 340, h: 470, bg: WEEK[0].bg, art: dish({ ...WEEK[0].d, seed: 3 }), title: '된장찌개', size: 44, badge: '20분', label: '오늘 저녁', labelColor: '#1E9E5A', read: true }), { at: [560, -20, 0], in: 2.3, ry: -8, enter: 'right' });
+  S.add(K.chip('+ 청양고추 2', { icon: false, tone: 'accent' }), { at: [700, 250, -80], in: 5.0 });
+});
+
+// 5 · search — thousands of recipes pour past; a counter says how many were weighed
+F.scene('search', {
+  dur: 3.9,
+  cam: [[0, { z: -1000 }], [3.9, { z: -900 }]],
+  glow: [{ x: 0.5, y: 0.5, r: 0.4, c: MINT, a: 0.45 }, { x: 0.3, y: 0.7, r: 0.25, c: PEACH, a: 0.35 }],
+}, (S) => {
+  S.swarm((i) => { const w = WEEK[i % 7]; return K.poster({ w: 180, h: 250, bg: w.bg, art: dish({ ...w.d, seed: 20 + i }) }); }, { n: 42, t: [0, 3.2] });
+  S.add(K.headline('레시피 *{n}*개 중에서', { n: { from: 0, to: 48000, at: [0.2, 2.6] } }), { at: [0, 0, -120], in: 0.15, sharp: true });
+});
+
+// 6 · week — seven dinners land in a row; the eye walks across them
+F.scene('week', {
+  dur: 6.6, out: 'whip',
+  cam: [[0, { z: -1060 }], [6.6, { z: -980 }]],
+  glow: [{ x: 0.5, y: 0.6, r: 0.42, c: HONEY, a: 0.45 }, { x: 0.15, y: 0.4, r: 0.2, c: MINT, a: 0.4 }],
+}, (S) => {
+  S.add(K.headline('일주일 저녁, *정했어요*'), { at: [0, -400, 0], in: 0.1 });
+  S.row(WEEK.map((w, i) => K.poster({ w: 220, h: 330, bg: w.bg, art: dish({ ...w.d, seed: 40 + i }), title: w.name, size: 27, badge: w.day })),
+    { at: [0, 70, 0], gap: 252, in: 0.3, stagger: 0.09, focus: [[0, 0], ...[1, 2, 3, 4, 5, 6].flatMap((i) => [[0.5 + i * 0.85, i - 1], [0.9 + i * 0.85, i]])], depth: 160, lift: 70, tilt: 16, squeeze: 22, enter: 'fly', read: false });
+});
+
+// 7 · order — the shopping list ticks in, one button, it is on its way
+F.scene('order', {
+  dur: 6.6,
+  cam: [[0, { z: -1000, x: 20 }], [6.6, { z: -940, x: -20 }]],
+  glow: [{ x: 0.3, y: 0.55, r: 0.3, c: MINT, a: 0.5 }, { x: 0.72, y: 0.45, r: 0.28, c: HONEY, a: 0.45 }],
+}, (S) => {
+  const L = [['#F4F1E8', '두부', '1모', '1,900원'], ['#EEF4DC', '애호박', '2개', '3,400원'], ['#E9F2DF', '청양고추', '1봉', '2,200원'], ['#F3ECE2', '버섯', '1팩', '3,980원'], ['#FBE8E6', '불고기용 돼지고기', '600g', '12,800원'], ['#E7F1E4', '시금치', '1단', '2,900원']];
+  S.add(K.card({ w: 640, parts: [K.title('장보기 목록', { badge: '12개' }), K.rows(L.map(([c, n, q, p]) => [{ c }, n, q, p, '@toggle']), { cols: '36px 1fr 80px 130px 44px', at: 0.2, every: 0.16 }), K.meta('+ 6개 더 · 집에 있는 재료는 뺐어요')] }), { at: [-360, 30, 0], in: 0.1 });
+  S.add(K.input({ w: 720, text: '12개 · 46,800원', type: false, button: '주문하기', press: 3.0, halo: MINT }), { at: [480, -30, 0], in: 1.2 });
+  S.add(K.cursor({ path: [[0, 360, 260], [0.5, 360, 260], [1.05, 255, 10]], click: [1.1] }), { at: [480, -30, -20], in: 1.9, sharp: true });
+  S.add(K.chip('내일 아침 *7시* 도착'), { at: [480, 110, -40], in: 3.5 });
+});
+
+// 8 · result — what the week changed, before (grey) and after (accent)
+F.scene('result', {
+  dur: 6.4,
+  cam: [[0, { z: -1000 }], [6.4, { z: -930 }]],
+  glow: [{ x: 0.5, y: 0.6, r: 0.38, c: MINT, a: 0.55 }],
+}, (S) => {
+  S.add(K.headline('이번 주, *35,200원* 아꼈어요', { sub: '지난달 같은 주와 비교' }), { at: [0, -390, 0], in: 0.1 });
+  S.add(K.card({ w: 900, pad: 40, parts: [K.bars([
+    { label: '식비', a: 82000, fa: '82,000원', b: 46800, fb: '46,800원', note: '−43%' },
+    { label: '버린 재료', a: 6, fa: '6개', b: 0, fb: '0개', note: '−6개' },
+    { label: '장보는 시간', a: 50, fa: '50분', b: 3, fb: '3분', note: '−47분' },
+  ], { at: [0.3, 1.8], h: 260 })] }), { at: [0, 90, 0], in: 0.35 });
+});
+
+// 9 · end — the cooker says it is done; the line that stays
+F.scene('end', {
+  dur: 5.4,
+  cam: [[0, { z: -1080 }], [5.4, { z: -1000 }]],
+  glow: [{ x: 0.5, y: 0.55, r: 0.34, c: MINT, a: 0.55 }, { x: 0.25, y: 0.35, r: 0.2, c: HONEY, a: 0.4 }, { x: 0.78, y: 0.66, r: 0.2, c: PEACH, a: 0.35 }],
+}, (S) => {
+  S.add(K.mascot({ say: [[0, '완료', { blink: true }], [1.5, '보리']], nod: [0.35], size: 420 }), { at: [0, -10, 0], in: 0, enter: 'pop' });
+  S.add(K.headline('오늘 저녁은 *된장찌개*.'), { at: [0, -400, 0], in: 0.6 });
+  S.add(K.line('보리 — 냉장고 사진 한 장으로 일주일 저녁', { muted: true, size: 28 }), { at: [0, 330, 0], in: 1.2, read: true });
+});
+
+F.start();
+</script>
+</body>
+</html>
