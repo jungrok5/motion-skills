@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>별빛 사막 · 새 장면</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@400;600&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-nightdunes.js"></script>
+<script>
+/* Template scene — house style "nightdunes" (see kits/nightdunes/STYLE.md). A placeholder 30 s shot with a different subject
+   from the worked example (the magi's caravan and Jerusalem): a lone traveller with a staff walks along a dune crest under the
+   great star to a dark goat-hair tent, stoops in at its door, and a lamp is lit inside — the door glows and warms the sand. The
+   camera, low behind the near dune, trucks with him, then pulls back and rises while the lens closes in, until the tent is one
+   warm point in a sea of dunes.
+   To make your film: keep draw()'s skeleton (camera → D.sky → D.land → bin 0 → your objects → bin 1 → D.drift → glow →
+   D.finish → words); replace the tent and the traveller with your subject. Things that stand on the crest go between the bins. */
+const { clamp, lerp, ss, eo, eio } = Pilot;
+const W = Pilot.W, H = Pilot.H, V = Pilot.ori === 'v', S = window.SCRIPT, B = S.beat, DUR = S.DUR;
+let D, T;                                     // the world, the tent
+const CLOTH = [.5, .43, .37];                 // goat-hair cloth (albedo)
+// the traveller: walks -x along crest 1 from 13 m right of the tent to its door (a smooth stop), then stoops in
+const X0 = 13, walkX = t => { const u = clamp(t / B.arrive); return lerp(X0, T.door, 1 - Math.pow(1 - u, 1.7)); };
+function camera(t) {
+  const k = eio(clamp((t - B.back) / 8.5)), kz = eio(clamp((t - B.back) / 9));
+  const fx = (Math.min(walkX(t), X0) + T.x) / 2, LAM = D.lam;
+  // low, just behind the crest of the near dune (a dark edge across the bottom), the eye a little above the stage crest
+  const x1 = fx + (V ? 13 : 22), hc = D.hgt(fx, D.crestZ(fx)), eye = hc + 2.2;
+  const c0 = D.crestZ(x1) - LAM, h0 = D.hgt(x1, c0), z1 = c0 - clamp((eye - h0) / .24, 5, 16);
+  // then back and up while the lens closes in (a dolly-zoom), keeping the tent in the frame
+  const x = lerp(x1, x1 + (V ? 24 : 38), k), z = lerp(z1, -180, kz), y = Math.max(lerp(eye, 21, Math.pow(k, .85)), D.hgt(x, z) + 1.4);
+  const yaw = Math.atan2(fx - x, D.crestZ(fx) + 4 - z) + lerp(V ? .02 : -.06, V ? .04 : .02, k);
+  return D.camera({ x, y, z, yaw, F: DUNES.dolly(V ? 1900 : 1700, V ? 3400 : 2900, k), hz: H * lerp(V ? .6 : .62, V ? .62 : .6, k), k });
+}
+// a limb as a tapered quad (always wound the same way, so pieces overlap without holes)
+function quad(p, x0, y0, x1, y1, w0, w1) { const dx = x1 - x0, dy = y1 - y0, l = Math.hypot(dx, dy) || 1, nx = dy / l, ny = -dx / l;
+  p.moveTo(x0 + nx * w0 / 2, y0 + ny * w0 / 2); p.lineTo(x1 + nx * w1 / 2, y1 + ny * w1 / 2); p.lineTo(x1 - nx * w1 / 2, y1 - ny * w1 / 2); p.lineTo(x0 - nx * w0 / 2, y0 - ny * w0 / 2); p.closePath(); }
+function traveller(ph, amp, f) {   // metres, feet at the origin, facing f (1 right, -1 left)
+  const p = new Path2D(), X = v => v * f, bob = .02 * Math.cos(ph * 2) * amp;
+  for (const o of [0, Math.PI]) { const a = .34 * Math.sin(ph + o) * amp; quad(p, X(0), -.84, X(Math.sin(a) * .84), -.84 + Math.cos(a) * .84, .13, .08); }
+  p.moveTo(X(-.19), -1.42 + bob); p.quadraticCurveTo(X(-.03), -1.5 + bob, X(.13), -1.43 + bob); p.lineTo(X(.27), -.6); p.quadraticCurveTo(X(.0), -.5, X(-.3), -.58); p.closePath();   // the robe
+  p.moveTo(X(.14), -1.6 + bob); p.ellipse(X(.03), -1.6 + bob, .12, .14, 0, 0, 6.283);                                                               // the head in a hood
+  p.moveTo(X(-.03), -1.74 + bob); p.lineTo(X(-.03), -1.46 + bob); p.lineTo(X(-.24), -1.44 + bob); p.closePath();
+  quad(p, X(.06), -1.36 + bob, X(.32), -1.08, .09, .07);                                                                                               // the arm to the staff
+  const st = .1 * Math.sin(ph) * amp; quad(p, X(.3 + st), -1.98, X(.44 + st * .3), 0, .045, .05);
+  return p;
+}
+function drawTraveller(ctx, C, t) {
+  const x = walkX(t), e = ss(B.enter, B.enter + 1.1, t), xx = lerp(x, T.x1 - .2, e), z = lerp(D.crestZ(x), T.z, e), p = D.P(C, xx, D.hgt(xx, D.crestZ(xx)) - .03, z);
+  if (!p || e >= 1) return;
+  const s = C.F / p[2], spd = t < B.arrive ? 1.7 * Math.pow(1 - clamp(t / B.arrive), .7) : 0, ph = (X0 - x) / 1.45 * 6.2832, sx = D.starXY ? D.starXY[0] : W * .3, sy = D.starXY ? D.starXY[1] : -H;
+  const tl = Math.hypot(sx - p[0], sy - p[1]), tow = [(sx - p[0]) / tl, (sy - p[1]) / tl];
+  ctx.save(); ctx.translate(p[0], p[1]); ctx.scale(s, s * (1 - .22 * e));   // he stoops at the door
+  D.rimFill(ctx, traveller(ph, clamp(spd + .15 * e), -1), s, tow, 'rgb(9,11,22)', clamp(s * .045, .9, 3.2));
+  ctx.restore();
+}
+function poly(ctx, C, pts) { const q = pts.map(v => D.P(C, ...v)); if (q.some(v => !v)) return null; ctx.beginPath(); q.forEach((v, i) => i ? ctx.lineTo(v[0], v[1]) : ctx.moveTo(v[0], v[1])); ctx.closePath(); return q; }
+function tent(ctx, C, t, lamp, f) {
+  const { x0, x1, z, g } = T, zf = z - 1.6, zb = z + 1.6, yR = g + 2.1, d = Math.hypot(T.x - C.x, z - C.z), warm = .06 * lamp * f;
+  // the front roof (a sloped cloth plane), the gable toward the camera with its door, guy ropes, a starlit ridge
+  const q0 = poly(ctx, C, [[x0, g, zf], [x1, g, zf], [x1, yR, z], [T.x, yR - .18, z], [x0, yR, z]]);   // the ridge sags between its poles
+  if (q0) { const gr = ctx.createLinearGradient(0, q0[3][1], 0, q0[0][1]); gr.addColorStop(0, D.faceCol([0, -1], d, yR, warm * .3, CLOTH)); gr.addColorStop(1, D.faceCol([0, -.3], d, g, warm * .3, CLOTH));
+    ctx.fillStyle = gr; ctx.fill();
+    ctx.strokeStyle = 'rgba(4,5,12,.35)'; ctx.lineWidth = 1; for (let i = 1; i < 5; i++) { const u = x0 + (x1 - x0) * i / 5, a = D.P(C, u, yR - .18 * (1 - Math.abs(u - T.x) / (x1 - T.x)), z), b = D.P(C, u, g, zf); if (a && b) { ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); } } }   // woven strips
+  if (C.x > x1 && poly(ctx, C, [[x1, g, zf], [x1, yR, z], [x1, g, zb]])) { ctx.fillStyle = D.faceCol([1, 0], d, yR, warm, CLOTH); ctx.fill(); }
+  const q = poly(ctx, C, [[x1 + .02, g, z - .55], [x1 + .02, g + 1.35, z], [x1 + .02, g, z + .55]]);
+  if (q) { const gr = ctx.createLinearGradient(0, q[0][1], 0, q[1][1]), a = lamp * f;
+    gr.addColorStop(0, `rgb(${lerp(10, 255, a) | 0},${lerp(10, 196, a) | 0},${lerp(18, 120, a) | 0})`); gr.addColorStop(1, `rgb(${lerp(8, 170, a) | 0},${lerp(8, 96, a) | 0},${lerp(16, 48, a) | 0})`); ctx.fillStyle = gr; ctx.fill(); }
+  const a = D.P(C, x0, yR, z), b = D.P(C, x1, yR, z);
+  ctx.save(); ctx.lineCap = 'round';
+  const m = D.P(C, T.x, yR - .18, z);
+  if (a && b && m) { ctx.strokeStyle = 'rgba(160,180,230,.45)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.quadraticCurveTo(2 * m[0] - (a[0] + b[0]) / 2, 2 * m[1] - (a[1] + b[1]) / 2, b[0], b[1]); ctx.stroke(); }
+  for (const u of [x0, x1]) { const p0 = D.P(C, u, yR - .1, z), p1 = D.P(C, u, yR + .22, z); if (p0 && p1) { ctx.strokeStyle = 'rgb(10,10,18)'; ctx.lineWidth = Math.max(1.2, C.F / p0[2] * .06); ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.stroke(); } }   // pole tips
+  ctx.strokeStyle = 'rgba(8,10,20,.85)'; ctx.lineWidth = 1;
+  for (const [p0, p1] of [[[x1, yR, z], [x1 + 1.7, g - .1, z]], [[x0, yR, z], [x0 - 1.7, g - .1, z]], [[x1, yR - .9, zf + .7], [x1 + 1.1, g - .1, zf - .6]]]) { const u = D.P(C, ...p0), v = D.P(C, ...p1); if (u && v) { ctx.beginPath(); ctx.moveTo(u[0], u[1]); ctx.lineTo(v[0], v[1]); ctx.stroke(); } }
+  ctx.restore();
+}
+function glow(ctx, C, lamp, f) {   // the lamp's light out of the door, on top of everything (screen)
+  const p = D.P(C, T.x1 + .3, T.g + .55, T.z); if (!p || lamp <= 0) return; const s = C.F / p[2];
+  ctx.save(); ctx.globalCompositeOperation = 'screen';
+  for (const [R, al, c] of [[Math.max(140, 10 * s), .16, '255,150,70'], [Math.max(40, 2.6 * s), .4, '255,180,100'], [Math.max(10, .7 * s), .8, '255,222,160']]) {
+    const gr = ctx.createRadialGradient(p[0], p[1], 0, p[0], p[1], R); gr.addColorStop(0, `rgba(${c},${al * lamp * f})`); gr.addColorStop(1, `rgba(${c},0)`); ctx.fillStyle = gr; ctx.fillRect(p[0] - R, p[1] - R, 2 * R, 2 * R); }
+  ctx.restore();
+}
+function draw(ctx, t) {
+  if (!D) {
+    D = DUNES.world({ bins: 2, bin: (x, z) => z < D.crestZ(x) - .35 ? 1 : 0, star: null });   // bin 1 = the near slope of the stage crest (in front of the figures)
+    const zc = D.crestZ(0); T = { x: 0, z: zc + 1.0, g: D.hgt(0, zc) - .2, x0: -2.3, x1: 2.3, door: 3.3 };
+    const y0 = camera(0).yaw, y1 = camera(DUR).yaw; D.star = [(y0 + y1) / 2 + (V ? .06 : .12), V ? .24 : .17];   // the great star: in frame from the first shot to the last
+  }
+  const C = camera(t), lamp = ss(B.lamp, B.lamp + 1.4, t), f = .88 + .07 * Math.sin(t * 13) + .05 * Math.sin(t * 23.7 + 1);
+  D.sky(ctx, C, t);
+  D.land(C, { lights: [{ x: T.x1 + 1.2, z: T.z, k: .14 * lamp * f }] });   // the lamp warms the sand before the door
+  D.layer(ctx, 0);
+  const inside = walkX(t) < T.x1 + .25 || t > B.enter + .5;               // once at the door he is behind the gable
+  if (inside) drawTraveller(ctx, C, t);
+  tent(ctx, C, t, lamp, f);
+  if (!inside) drawTraveller(ctx, C, t);
+  D.layer(ctx, 1);
+  D.drift(ctx, C, t, T.x + 6, C.x + 9 * C.sy);
+  glow(ctx, C, lamp, f);
+  D.finish(ctx, t, { band: V ? .68 : .7 });
+  { const k = ss(B.end - .2, B.end + .9, t); if (k > 0) { ctx.fillStyle = `rgba(2,4,12,${.8 * k})`; ctx.fillRect(0, 0, W, H); } }
+  Story.captions(ctx, t, S.lines, { y: V ? H * .8 : H * .85, size: V ? 52 : 46, color: '#eef1fa' });
+  Story.endCard(ctx, t, S.endCard, B.end, { color: '#eef1fa', srcColor: '#c9d2e6', ctaColor: '#f0c27a' });
+  Story.fadeBlack(ctx, t, DUR);
+}
+Pilot.run({ W, H, dur: DUR, fonts: ["600 40px 'Noto Serif KR'", "700 40px 'Noto Serif KR'", "400 28px 'Noto Sans KR'", "600 30px 'Noto Sans KR'"], draw });
+</script>
+</body>
+</html>

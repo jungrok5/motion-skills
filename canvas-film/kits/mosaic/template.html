@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>로마 모자이크 · 새 장면</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@400;600&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-mosaic.js"></script>
+<script>
+/* Template scene — house style "mosaic" (see kits/mosaic/STYLE.md). A placeholder 30 s floor with a different subject from the
+   worked example (a map of the Holy Land and the empire): an early-church floor of a basket of loaves between two fish (after
+   the Tabgha floor), found in the dark by a lamp; the light settles; gold glass stones turn over one by one in a ring around
+   the basket and a glint runs round it. Legibility first: few big shapes, large stones (~1/45 of the frame width), strong
+   value steps between figure and ground, and the words on a plain stone threshold below the floor — never on tesserae.
+   To make your film: keep the skeleton (shapes as Path2D → color(x, y) for the fill + outlines for the courses → Mosaic.build
+   once → draw the floor with a slow camera → light over it → flip/glint the stones that carry the story → words on plain
+   stone); replace the basket, loaves and fish with your image. */
+const { clamp, lerp, ss, eo, eio, win, rng, fbm, mix } = Pilot;
+const W = Pilot.W, H = Pilot.H, V = Pilot.ori === 'v', S = window.SCRIPT, B = S.beat, DUR = S.DUR;
+const MS = 1.25;                                             // floor canvas px per frame px (crisp under the push)
+const FH = Math.round(H * (V ? .655 : .75));                   // the floor; below it a plain stone threshold for the words
+const ST = { marble: [234, 222, 196], cream: [242, 234, 214], ochre: [200, 156, 96], umber: [104, 72, 46], terra: [150, 70, 46],
+  loaf: [196, 128, 70], crust: [232, 190, 128], score: [142, 86, 46], sea: [96, 122, 136], slate: [62, 82, 96], belly: [168, 178, 176], gold: [226, 178, 76], black: [44, 34, 26] };
+let FL = null, RING = null;
+
+function build() {
+  // everything here is in floor px (frame px × MS)
+  const s = (V ? 20 : 19) * MS, k = (V ? 1.05 : .8) * MS, w = W * MS, h = FH * MS;
+  const dense = pts => Mosaic.resample(pts, s * .5);          // straight edges: many points, so the smoothing only rounds the corners
+  const bc = [w / 2, (V ? .5 : .5) * h], bw0 = 380 * k, bw1 = 290 * k, bh = 250 * k, btop = bc[1] - bh * .3;
+  // ---- shapes ----
+  const basket = dense([[bc[0] - bw0 / 2, btop], [bc[0] + bw0 / 2, btop], [bc[0] + bw1 / 2, btop + bh], [bc[0] - bw1 / 2, btop + bh], [bc[0] - bw0 / 2, btop]]);
+  const lr = 76 * k, loaves = [[-134, -8], [134, -8], [-46, -50], [46, -50]].map(([dx, dy]) => [bc[0] + dx * k, btop + dy * k]);
+  // two fish: above and below the basket's ring, swimming opposite ways (portrait), or either side of it (landscape)
+  const fl = (V ? 520 : 440) * k, fh = (V ? 158 : 150) * k;
+  const FISH = V ? [{ c: [w * .5, h * .165], a: -.04, flip: 1 }, { c: [w * .5, h * .815], a: Math.PI + .04, flip: -1 }]
+                 : [{ c: [w * .2, bc[1] + 30 * k], a: Math.PI + .12, flip: -1 }, { c: [w * .8, bc[1] + 30 * k], a: -.12, flip: 1 }];
+  FISH.forEach(f => { f.ux = Math.cos(f.a); f.uy = Math.sin(f.a); f.vx = f.uy * f.flip; f.vy = -f.ux * f.flip;   // u: tail → head, v: belly → back
+    f.P = (u, v) => [f.c[0] + f.ux * u * fl + f.vx * v * fh, f.c[1] + f.uy * u * fl + f.vy * v * fh];
+    f.uv = (x, y) => { const dx = x - f.c[0], dy = y - f.c[1]; return [(dx * f.ux + dy * f.uy) / fl, (dx * f.vx + dy * f.vy) / fh]; }; });
+  const body = u => .5 * Math.pow(Math.sin(Math.PI * clamp((.5 - u) / .86)), .7) + .02;
+  const fishPts = f => { const top = [], bot = []; for (let u = .5; u >= -.33; u -= .03) { top.push(f.P(u, body(u))); bot.push(f.P(u, -body(u))); }
+    return [...top, f.P(-.36, .07), f.P(-.56, .46), f.P(-.47, 0), f.P(-.56, -.46), f.P(-.36, -.07), ...bot.reverse()]; };
+  const path = pts => { const p = new Path2D(); pts.forEach(([x, y], i) => i ? p.lineTo(x, y) : p.moveTo(x, y)); p.closePath(); return p; };
+  const circle = (c, r, n = 60) => Array.from({ length: n }, (_, i) => [c[0] + Math.cos(i / n * 6.283) * r, c[1] + Math.sin(i / n * 6.283) * r]);
+  const rect = m => dense([[m, m], [w - m, m], [w - m, h - m], [m, h - m], [m, m]]);
+  const P = { basket: path(basket), loaves: loaves.map(c => path(circle(c, lr, 40))), fish: FISH.map(f => path(fishPts(f))) };
+  const tc = Pilot.canvas(2, 2).getContext('2d'), inP = (p, x, y) => tc.isPointInPath(p, x, y);
+  const ringC = [bc[0], btop + bh * .2], ringR = (V ? 258 : 300) * k, band0 = 30 * MS, band1 = band0 + s * 2.2;
+  // ---- the fill: the underdrawing's colour at (x, y) (loaves front to back, then basket, fish, border, ground) ----
+  const color = (x, y) => {
+    const n = fbm(x * .004, y * .004);
+    for (let i = 0; i < 4; i++) if (inP(P.loaves[i], x, y)) { const c = loaves[i], l = clamp(.5 + ((c[0] - x) + (c[1] - y)) / (lr * 1.8)); return mix(ST.loaf, ST.crust, l); }
+    if (inP(P.basket, x, y)) { const row = Math.floor((y - btop) / (s * 1.05)); return row % 3 === 2 ? mix(ST.umber, ST.black, .3) : row % 3 ? ST.ochre : mix(ST.ochre, ST.crust, .5); }
+    for (let i = 0; i < 2; i++) if (inP(P.fish[i], x, y)) { const [u, v] = FISH[i].uv(x, y);
+      const e = Math.hypot((u - .33) * fl, (v - .1) * fh); if (e < s * .8) return ST.black; if (e < s * 1.6) return ST.cream;   // the eye
+      return v > 0 ? mix(ST.sea, ST.slate, clamp(v * 2.2)) : mix(ST.belly, ST.sea, clamp(v + .3)); }
+    const m = Math.min(x, y, w - x, h - y); if (m > band0 && m < band1) return mix(ST.ochre, ST.cream, .3 * n);     // the border band
+    return mix(ST.marble, ST.cream, .5 * n);
+  };
+  const outlines = [];
+  loaves.forEach(c => outlines.push({ pts: circle(c, lr, 40), color: ST.umber, courses: 1, closed: true }));
+  outlines.push({ pts: dense([[bc[0] - bw0 / 2 - 10 * k, btop], [bc[0] + bw0 / 2 + 10 * k, btop]]), color: ST.black, courses: 1 }, { pts: basket, color: ST.umber, courses: 2, closed: true });
+  FISH.forEach(f => { outlines.push({ pts: fishPts(f), color: ST.black, courses: 1, closed: true },
+    { pts: [f.P(.24, .34), f.P(.19, 0), f.P(.24, -.34)], color: ST.umber, courses: 1 },                     // gill
+    { pts: dense([f.P(.12, .03), f.P(-.3, .03)]), color: ST.belly, courses: 1 }); });                      // lateral line
+  outlines.push({ pts: circle(ringC, ringR, 120), color: ST.cream, courseColor: () => ST.marble, courses: 1, closed: true },
+    { pts: rect(band0), color: ST.terra, courses: 1, closed: true }, { pts: rect(band1), color: ST.umber, courses: 1, closed: true });
+  FL = Mosaic.build({ w, h, tile: s, seed: 19, color, outlines });
+  // the ring's stones in order round from the top (clockwise): they turn to gold glass one by one
+  const ring = []; for (let i = 0; i <= 160; i++) { const a = -Math.PI / 2 + i / 160 * 6.283; ring.push([ringC[0] + Math.cos(a) * ringR, ringC[1] + Math.sin(a) * ringR]); }
+  RING = FL.near(ring, s * .55);
+}
+
+function draw(ctx, t) {
+  if (!FL) build();
+  ctx.fillStyle = Mosaic.GROUT; ctx.fillRect(0, 0, W, H);
+  const push = eio(clamp((t - B.whole) / (DUR - B.whole))), z = 1 + .06 * push, fx = W / 2, fy = FH * .48;
+  ctx.save(); ctx.setTransform(z / MS, 0, 0, z / MS, W / 2 - fx * z, FH * .48 - fy * z);
+  ctx.drawImage(FL.canvas, 0, 0);
+  // gold glass laid stone by stone round the basket; then a glint runs round the ring
+  const L = RING.len, g0 = B.gold, g1 = B.gold + 4.6;
+  for (const { i, d } of RING.list) { const at = g0 + (g1 - g0) * d / L, k = clamp((t - at) / .35); if (k <= 0) continue; Mosaic.flip(ctx, FL, i, k, ST.gold);
+    const gl = B.glint + 2.4 * d / L; Mosaic.glint(ctx, FL, i, .5 * win(t, at + .1, at + 1.0, .15, .7) + .9 * win(t, gl, gl + 1.1, .25, .7)); }
+  ctx.restore();
+  // the lamp: a warm pool crossing the dark floor, then the light settles over all of it (light from the upper left, as the stones are lit)
+  { const k = ss(B.lamp - .6, B.lamp + 7.6, t), lx = lerp(-W * .1, W * .52, eio(k)), ly = lerp(FH * .75, FH * .42, eio(k)), R = (V ? 620 : 760) * (1 + .5 * ss(B.whole - 1, B.whole + 3, t));
+    const dark = lerp(.94, .3, ss(B.whole - 1, B.whole + 3.5, t)) * ss(-.5, .1, t) + .06, gr = ctx.createRadialGradient(lx, ly, 0, lx, ly, R);
+    gr.addColorStop(0, `rgba(14,9,5,${dark * .05})`); gr.addColorStop(.55, `rgba(14,9,5,${dark * .45})`); gr.addColorStop(1, `rgba(14,9,5,${dark})`);
+    ctx.fillStyle = gr; ctx.fillRect(0, 0, W, FH + 2);
+    ctx.save(); ctx.globalCompositeOperation = 'soft-light'; const wg = ctx.createRadialGradient(lx, ly, 0, lx, ly, R * .8); wg.addColorStop(0, 'rgba(255,190,110,.55)'); wg.addColorStop(1, 'rgba(255,190,110,0)'); ctx.fillStyle = wg; ctx.fillRect(0, 0, W, FH); ctx.restore(); }
+  // the threshold: a plain dark stone slab under the floor (no tesserae under the words), its edge lit
+  { ctx.fillStyle = '#211913'; ctx.fillRect(0, FH, W, H - FH); ctx.fillStyle = 'rgba(232,206,160,.22)'; ctx.fillRect(0, FH, W, 3); const g = ctx.createLinearGradient(0, FH, 0, FH + 60); g.addColorStop(0, 'rgba(0,0,0,.45)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, FH + 3, W, 60); }
+  { const k = ss(B.end - .2, B.end + .9, t); if (k > 0) { ctx.fillStyle = `rgba(20,14,10,${.85 * k})`; ctx.fillRect(0, 0, W, H); } }
+  Story.captions(ctx, t, S.lines, { y: V ? H * .715 : H * .86, size: V ? 52 : 46, color: '#f1e8d6', shadow: 'rgba(0,0,0,0)' });
+  Story.endCard(ctx, t, S.endCard, B.end, { color: '#f1e8d6', srcColor: '#dacdb4', ctaColor: '#e2b24c' });
+  Story.fadeBlack(ctx, t, DUR);
+}
+Pilot.run({ W, H, dur: DUR, fonts: ["600 40px 'Noto Serif KR'", "700 40px 'Noto Serif KR'", "400 28px 'Noto Sans KR'", "600 30px 'Noto Sans KR'"], draw });
+</script>
+</body>
+</html>

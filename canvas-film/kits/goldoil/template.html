@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>금빛 기름 · 새 장면</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@400;600&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-goldoil.js"></script>
+<script>
+/* Template scene — house style "goldoil" (see kits/goldoil/STYLE.md). A placeholder 30 s macro shot with a different subject
+   from the worked example (one drop falling to a wooden floor, oil poured from a horn over backlit heads): a clay oil lamp on a
+   stone floor in the dark is filled from a small jug; the last drop gathers on the jug's lip, falls, spreads into a thin film
+   in front of the lamp, and the wick is lit — the film of oil then carries the flame's light.
+   To make your film: keep draw()'s order (backdrop → bokeh → floor → light on the floor → GOLD.grab → pool → the solid things →
+   streams → GOLD.grab → drops → flames and blooms → motes → GOLD.glow → GOLD.finish → words) and the macro camera (a slow push-in
+   about the landing point); replace the lamp, the jug and the beats. Oil is never the light source: it only carries light
+   that comes from behind it (the far lamp, the flame). */
+const { clamp, lerp, ss, eio } = Pilot, css = GOLD.css;
+const W = Pilot.W, H = Pilot.H, V = Pilot.ori === 'v', S = window.SCRIPT, B = S.beat, DUR = S.DUR, U = Math.min(W, H);
+// composition per orientation (fractions of the frame): horizon, focus row, lamp base, lamp size, film radius and tilt
+const C = V ? { hor: .41, surf: .65, lx: .36, ly: .62, s: .46, R: .21, tilt: .24, ly2: .675, title: .80 }
+            : { hor: .42, surf: .70, lx: .40, ly: .65, s: .42, R: .12, tilt: .20, ly2: .72, title: .86 };
+let FLOOR;
+// a clay oil lamp seen from the side, base at (x, y), length ~1.3·s: bowl, a spout to the right, a filling hole on top
+function lampPath(x, y, s) { const p = new Path2D();
+  p.moveTo(x - .5 * s, y - .14 * s);
+  p.bezierCurveTo(x - .52 * s, y + .02 * s, x + .28 * s, y + .04 * s, x + .44 * s, y - .09 * s);   // the belly
+  p.lineTo(x + .72 * s, y - .15 * s); p.quadraticCurveTo(x + .83 * s, y - .19 * s, x + .73 * s, y - .23 * s);   // the spout and its lip
+  p.lineTo(x + .42 * s, y - .25 * s); p.bezierCurveTo(x + .32 * s, y - .42 * s, x - .44 * s, y - .42 * s, x - .5 * s, y - .14 * s);   // the shoulder
+  p.closePath(); return p; }
+function flame(ctx, x, y, h, k, t) {
+  if (k <= 0) return; const fl = 1 + .06 * Math.sin(t * 13) + .04 * Math.sin(t * 7.3 + 1), hh = h * k * fl, ww = hh * .3, sw = Math.sin(t * 2.1) * hh * .06;
+  ctx.save(); ctx.globalCompositeOperation = 'screen';
+  for (const [f, col, a] of [[1, [255, 140, 44], .8], [.72, [255, 200, 110], .95], [.42, [255, 246, 222], 1]]) {
+    ctx.beginPath(); ctx.moveTo(x - ww * f, y); ctx.bezierCurveTo(x - ww * f, y - hh * f * .45, x + sw - ww * f * .15, y - hh * f * .8, x + sw, y - hh * f);
+    ctx.bezierCurveTo(x + sw + ww * f * .15, y - hh * f * .8, x + ww * f, y - hh * f * .45, x + ww * f, y); ctx.arc(x, y, ww * f, 0, Math.PI); ctx.closePath(); ctx.fillStyle = css(col, a); ctx.fill(); }
+  ctx.restore(); }
+function draw(ctx, t) {
+  // macro camera: a slow push-in about the landing point (which stays put on screen)
+  const z = 1 + .12 * (.5 * t / DUR + .5 * ss(0, DUR, t)), cx = W / 2, SY = C.ly2 * H;
+  const sx = x => cx + (x - cx) * z, sy = y => SY + (y - SY) * z;
+  const ex = ss(0, .8, t), lit = ss(B.light, B.light + .8, t);
+  const s = C.s * U * z, Lx = sx(C.lx * W), Ly = sy(C.ly * H), hx = Lx - .06 * s, hy = Ly - .3 * s, tipX = Lx + .79 * s, tipY = Ly - .21 * s;
+  // ---- the room behind: a wide out-of-focus warm lamp, bokeh
+  ctx.fillStyle = '#100a06'; ctx.fillRect(0, 0, W, H);
+  const LX = W * .58, LY = H * (V ? .2 : .16);
+  let g = ctx.createRadialGradient(LX, LY, 0, LX, LY, Math.max(W, H) * (V ? .6 : .75));
+  g.addColorStop(0, `rgba(240,176,96,${.9 * ex})`); g.addColorStop(.16, `rgba(200,130,60,${.8 * ex})`); g.addColorStop(.42, `rgba(110,66,28,${.7 * ex})`); g.addColorStop(1, `rgba(22,14,8,${.6 * ex})`);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  GOLD.bokeh(ctx, { n: V ? 9 : 11, seed: 14, x: -W * .1, y: -H * .04, w: W * 1.2, h: H * (C.hor - .02), r: (V ? .07 : .045) * W, a: .11 * ex, t, col: [255, 196, 120] });
+  // ---- the stone floor (built once), pushed in with the camera; the far lamp lies on it as a soft band, the flame as a warm pool
+  ctx.save(); ctx.globalAlpha = ex; ctx.setTransform(z, 0, 0, z, cx * (1 - z), SY * (1 - z)); ctx.drawImage(FLOOR, 0, 0); ctx.restore();
+  const horS = sy(C.hor * H);
+  g = ctx.createLinearGradient(0, horS - H * .05, 0, horS + H * .08); g.addColorStop(0, 'rgba(120,74,32,0)'); g.addColorStop(.42, `rgba(132,82,36,${.7 * ex})`); g.addColorStop(1, 'rgba(120,74,32,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, horS - H * .05, W, H * .13);
+  if (lit > 0) { ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.translate(tipX, Ly); ctx.scale(1, C.tilt * 1.6);
+    g = ctx.createRadialGradient(0, 0, 0, 0, 0, U * .7); g.addColorStop(0, `rgba(170,100,40,${.5 * lit})`); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(-U, -U, 2 * U, 2 * U); ctx.restore(); }
+  // ---- the film of oil in front of the lamp (it refracts the floor under it), then the lamp (which stands behind its far edge)
+  const pX = sx(cx + .23 * C.s * U), pY = SY, R = C.R * W * z, rD = .045 * U * z;
+  if (t > B.land) {
+    const tt = t - B.land, k0 = 1.05 * rD / R, kp = k0 + (1 - k0) * (1 - Math.exp(-tt * .75));
+    GOLD.pool(ctx, pX, pY, R, kp, { bg: GOLD.grab(ctx, .5), tilt: C.tilt, t: tt, caus: 0, glow: .25 * ss(0, 1.5, tt) + .75 * lit, seed: 9,
+      dome: Math.exp(-tt * 2.6), domeR: lerp(.9, .5, ss(0, .7, tt)), rings: [[.05, .9, .26], [.9, .5, .24], [2.2, .35, .2]] });
+    GOLD.bloom(ctx, pX, pY, [255, 176, 80], .5 * ss(-.04, .1, tt) * (1 - ss(.1, 1.6, tt)), { r: W * (V ? .2 : .13), streak: .2 });
+  }
+  { ctx.save(); ctx.globalCompositeOperation = 'multiply'; ctx.translate(Lx + .1 * s, Ly); ctx.scale(1, .12);   // contact shadow
+    g = ctx.createRadialGradient(0, 0, 0, 0, 0, .75 * s); g.addColorStop(0, 'rgba(40,24,12,.9)'); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.fillRect(-s, -s, 2 * s, 2 * s); ctx.restore(); }
+  const LP = lampPath(Lx, Ly, s);
+  ctx.save(); ctx.translate(0, -s * .012); ctx.fillStyle = css([255, 186, 96], .8 * ex); ctx.fill(LP); ctx.restore();   // rim: the far light wraps the top edge
+  ctx.fillStyle = '#1c1009'; ctx.fill(LP);
+  ctx.save(); ctx.clip(LP); ctx.globalCompositeOperation = 'screen';
+  g = ctx.createRadialGradient(LX, LY, 0, LX, LY, H * .9); g.addColorStop(0, css([120, 70, 30], .35 * ex)); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(Lx - s, Ly - s, 2 * s, 2 * s);
+  if (lit > 0) { g = ctx.createRadialGradient(tipX, tipY, 0, tipX, tipY, s * .9); g.addColorStop(0, css([255, 170, 80], .75 * lit)); g.addColorStop(.4, css([170, 90, 30], .35 * lit)); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(Lx - s, Ly - s, 2 * s, 2 * s); }
+  ctx.restore();
+  ctx.fillStyle = '#070402'; ctx.beginPath(); ctx.ellipse(hx, hy, .1 * s, .026 * s, 0, 0, 6.2832); ctx.fill();   // the filling hole
+  ctx.strokeStyle = css([255, 196, 110], .5 * ex); ctx.lineWidth = Math.max(1, s * .005); ctx.beginPath(); ctx.ellipse(hx, hy - s * .004, .1 * s, .026 * s, 0, Math.PI, 2 * Math.PI); ctx.stroke();
+  ctx.strokeStyle = '#120a05'; ctx.lineWidth = s * .012; ctx.beginPath(); ctx.moveTo(tipX - s * .03, tipY + s * .015); ctx.lineTo(tipX, tipY - s * .01); ctx.stroke();   // the wick
+  // ---- the jug: comes down over the hole, tips, pours; tips back and moves aside (its last drop hangs from the lip), then leaves
+  const enter = eio(clamp((t - B.jug) / (B.pour - B.jug))), on = ss(B.pour, B.pour + .8, t), off = ss(B.stop, B.stop + .8, t), aside = eio(clamp((t - B.stop - .4) / 1.6)), leave = eio(clamp((t - B.drop - .8) / 3.2));
+  const mx = lerp(hx - .12 * U * z, hx + .02 * U * z, enter) + aside * (pX - hx - .02 * U * z), lip = lerp(hy - .6 * U * z, hy - .26 * U * z, enter) - aside * .03 * U * z, my = lip - leave * .9 * U * z;   // once the drop has gone, the jug lifts out of frame
+  const ang = 2.75 + .5 * enter + .62 * on - .55 * off;
+  if (enter > 0) GOLD.jar(ctx, mx, my, .3 * U * z, ang, { light: -Math.PI / 2, rimA: .8 * ex });
+  if (t > B.pour + .3 && t < B.stop + .8) GOLD.stream(ctx, mx, my, hx, hy, ss(B.pour + .3, B.pour + 1, t), { w: .014 * U * z * (1 - .7 * off), t, back: true, alpha: 1 - ss(B.stop + .2, B.stop + .8, t), glints: 4, speed: U * .5 });
+  // ---- the last drop: gathers on the lip on a thread that thins, pinches off, falls slowly (the room upside down inside it)
+  const bg = GOLD.grab(ctx);
+  if (t > B.stop + 1.4 && t < B.land) {
+    let r = rD, dy, sD = 1.03, tp = 0, neck = null;
+    if (t < B.drop) { const gr = ss(B.stop + 1.4, B.drop - .3, t), dip = Math.pow(ss(B.drop - 1, B.drop, t), 1.5); r = rD * (.45 + .55 * gr); sD = 1.1 + .15 * gr; tp = .3;
+      dy = my + r * sD * 1.25 + r * .5 * dip;
+      neck = { top: my - 2, hw: q => r * (.2 + .3 * q * q) * (1 - .85 * dip * Math.exp(-(((q - .45) / .14) ** 2))) }; }
+    else { const u = t - B.drop, f = u / (B.land - B.drop), y0 = lip + rD * 1.9; dy = y0 + (pY - rD * .8 - y0) * Math.pow(f, 1.6); sD = 1.03 + .2 * Math.exp(-u * 1.1) * Math.cos(u * 7.5); tp = .3 * Math.exp(-u * 3); }
+    GOLD.drop(ctx, mx, dy, r, t, { bg, s: sD, tp, neck, caus: .55 });
+    GOLD.bloom(ctx, mx - r * .36, dy - r * sD * .5, [255, 230, 180], .14, { r: r * 1.1, streak: 0, ghosts: false });
+  }
+  // ---- the flame, the motes in the light, the lens
+  flame(ctx, tipX, tipY - s * .008, s * .17, lit, t);
+  if (lit > 0) GOLD.bloom(ctx, tipX, tipY - s * .06, [255, 180, 90], .55 * lit, { r: s * .45, streak: .3 });
+  GOLD.motes(ctx, t * 1.4, { n: V ? 90 : 110, seed: 27, light: lit > .5 ? [tipX, tipY, U * .7] : [LX, LY + H * .2, U * .8], a: ex, size: V ? 1 : .9 });
+  GOLD.glow(ctx, .45 + .2 * lit, { wide: .5 });
+  GOLD.finish(ctx, t, { vignette: .5, vy: V ? .46 : .5 });
+  // ---- the words' band, captions, end card
+  { const y0 = H * (V ? .7 : .76), g2 = ctx.createLinearGradient(0, y0, 0, H); g2.addColorStop(0, 'rgba(8,5,3,0)'); g2.addColorStop(.5, 'rgba(8,5,3,.45)'); g2.addColorStop(1, 'rgba(8,5,3,.6)'); ctx.fillStyle = g2; ctx.fillRect(0, y0, W, H - y0); }
+  { const k = ss(B.end - .2, B.end + .9, t); if (k > 0) { ctx.fillStyle = `rgba(8,5,3,${.7 * k})`; ctx.fillRect(0, 0, W, H); } }
+  Story.captions(ctx, t, S.lines, { y: H * C.title, size: V ? 52 : 46, color: '#f3ece0' });
+  Story.endCard(ctx, t, S.endCard, B.end, { color: '#f3ece0', srcColor: '#e3d6bd', ctaColor: '#e9c77a' });
+  Story.fadeBlack(ctx, t, DUR);
+}
+Pilot.run({ W, H, dur: DUR, fonts: ["600 40px 'Noto Serif KR'", "700 40px 'Noto Serif KR'", "400 28px 'Noto Sans KR'", "600 30px 'Noto Sans KR'"],
+  init: async () => { FLOOR = GOLD.floor(W, H, { hor: C.hor * H, focus: C.surf * H, kind: 'stone', seed: 11 }); }, draw });
+</script>
+</body>
+</html>

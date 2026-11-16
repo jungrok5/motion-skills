@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>석회벽과 낮은 해 · 새 장면</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@400;600&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-fresco.js"></script>
+<script>
+/* Template scene — house style "fresco" (see kits/fresco/STYLE.md). A placeholder 30 s shot with a different subject from the worked
+   example (Peter speaking to many seated men): late in the day a woman sweeps an empty plastered courtyard. The low sun beyond the
+   gateway lays its shaft and its pool across the flagstones; she stands in it, her veil glowing at its edge, the dust she raises
+   turning in the beam; then something small glints in the pool of light — she stops — and the sun grows (Luke 15:8–9, as a
+   placeholder story).
+   To make your film: keep init()'s order (floor → walls → grime → props → gate stones → grain → open shade → the gate burnt out →
+   defocus; then the pool with every body's shadow, the shaft, the bloom, the dust) and draw()'s (room → bloom → pool → shaft →
+   figures far to near, each a base plate + a light plate screened by the sun's strength → a thin veil of the shaft → dust → grade
+   → words). Build the world in metres and let the kit project it: the beam, the pool, the shadows and the dust then agree.
+   Replace the woman, the props and the beats. Never outline a figure: light finds its edges. */
+const { clamp, lerp, ss, eio, rng, canvas, hex } = Pilot, F = FRESCO;
+const W = Pilot.W, H = Pilot.H, V = Pilot.ori === 'v', S = window.SCRIPT, B = S.beat, DUR = S.DUR;
+// the courtyard in metres (the camera 1.55 m above the floor; world px = portrait px at zoom 1); the gateway on the left, the sun low beyond it
+const CF = { F: 1000, E: 1.55, YH: 700, CX: 540, DW: 6.5, XL: -3.9, XR: 2.8, G0: -2.75, G1: -1.45, GS: 2.3, GH: 2.95, tanE: .3, hx: .72, hz: .7 };
+const C = F.court(CF), P = C.P, { XL, XR, DW, G0, G1, GH } = CF;
+const OX = 900, OY = 300, RW = 3000, RH = 2100;                 // the room plate: world x -900..2100, y -300..1800
+const HER = { X: .3, D: 4.1, Hm: 1.6, c: { robe: '#3c4660', sash: '#7a3a2a', veil: '#cbbfa6', skin: '#b08468', broom: '#6a5236', head: '#a8905a' } };
+const COIN = { X: .9, D: 3.5 };
+const K = {};
+// the woman, in units of her height (feet at the origin, y up negative), facing +x before the mirror f (-1: toward the gateway);
+// sw = the broom's swing -1..1. Parts: q (silhouette), armF, robe, sash, veil, face, veilF, broom, arm, skin
+function woman(Pm, sw, f = -1) {
+  const q = new Path2D(), pt = {}; for (const k of ['armF', 'robe', 'sash', 'veil', 'face', 'veilF', 'broom', 'arm', 'skin']) pt[k] = new Path2D();
+  const add = F.adder(Pm, f, q), U = (x, y) => [x + .09 * Math.max(0, -y - .45), y];   // bent a little forward over the broom
+  const top = [.1 + .03 * sw, -.7], bot = [.5 + .15 * sw, -.085], at = k => [lerp(top[0], bot[0], k), lerp(top[1], bot[1], k)];
+  const hU = at(.12), hL = at(.4), [hx, hy] = U(.03, -.92);
+  { const s = U(-.06, -.765), a = F.ik(s, hU, .17, .17, 1); add(F.caps(s, a.el, .042, .038), pt.armF); add(F.caps(a.el, a.wr, .038, .03), pt.armF); }   // the far arm to the upper hand
+  add([U(-.05, -.835), U(-.13, -.805), U(-.155, -.745), U(-.142, -.6), [-.132, -.45], [-.16, -.2], [-.19, -.02], [.17, -.02], [.15, -.2], [.12, -.45], U(.122, -.58), U(.132, -.7), U(.116, -.79), U(.05, -.842)], pt.robe);
+  add([U(-.138, -.535), U(.124, -.535), U(.123, -.49), U(-.136, -.49)], pt.sash);
+  add([[hx + .06, hy - .04], [hx + .03, hy - .076], [hx - .02, hy - .086], [hx - .066, hy - .06], [hx - .086, hy - .01], [hx - .1, hy + .06], U(-.165, -.74), U(-.172, -.62), [-.168, -.47], [-.12, -.455], U(-.06, -.62), U(-.01, -.78), [hx + .02, hy + .075], [hx + .05, hy + .045], [hx + .066, hy]], pt.veil);
+  add(F.circ(hx + .026, hy + .006, .045, .056), pt.face);
+  add([[hx - .024, hy - .086], [hx + .035, hy - .078], [hx + .072, hy - .04], [hx + .078, hy - .012], [hx + .05, hy - .03], [hx + .01, hy - .046], [hx - .034, hy - .05]], pt.veilF);   // the hood over the brow
+  add(F.caps(top, bot, .009, .009, 3), pt.broom);
+  { const d = [bot[0] - top[0], bot[1] - top[1]], L = Math.hypot(...d), n = [-d[1] / L, d[0] / L];
+    add([[bot[0] + n[0] * .016, bot[1] + n[1] * .016], [bot[0] - n[0] * .016, bot[1] - n[1] * .016], [bot[0] + .13, -.012], [bot[0] + .11, -.002], [bot[0] - .06, -.002], [bot[0] - .07, -.012]], pt.broom);   // the bundle of twigs, splayed on the floor
+    add([[bot[0] + n[0] * .02 - d[0] / L * .012, bot[1] + n[1] * .02 - d[1] / L * .012], [bot[0] - n[0] * .02 - d[0] / L * .012, bot[1] - n[1] * .02 - d[1] / L * .012], [bot[0] - n[0] * .02 + d[0] / L * .012, bot[1] - n[1] * .02 + d[1] / L * .012], [bot[0] + n[0] * .02 + d[0] / L * .012, bot[1] + n[1] * .02 + d[1] / L * .012]], pt.sash); }   // its binding
+  { const s = U(.08, -.76), a = F.ik(s, hL, .17, .17, 1); add(F.caps(s, a.el, .044, .04), pt.arm); add(F.caps(a.el, a.wr, .04, .032), pt.arm); }   // the near arm to the lower hand
+  add(F.circ(hL[0], hL[1], .023, .02, 10), pt.skin);   // (the far hand is hidden behind her)
+  return Object.assign(q, pt);
+}
+const place = m => { const [fx, fy] = P(m.X, 0, m.D), Sp = CF.F * m.Hm / m.D; m.fx = fx; m.fy = fy; m.S = Sp; m.P = (x, y) => [fx + x * Sp, fy + y * Sp]; return m; };
+// one figure onto a base plate (its colours in the open shade, roundness, the sky's edge) and a light plate (the floor's bounce, the
+// beam where it crosses it, the sun's edge, the backlit veil) — both translated by -off, T is scratch
+function figure(Bx, Lx, Tx, off, m, p, bc) {
+  const { fx, fy, S: Sp, c } = m, box = [fx - .6 * Sp, fy - 1.06 * Sp, 1.2 * Sp, 1.12 * Sp], a = .6, AMB = [a, a * .9, a * .82];
+  const tone = (col, k = 1) => { const h = hex(col); return `rgb(${h[0] * AMB[0] * k | 0},${h[1] * AMB[1] * k | 0},${h[2] * AMB[2] * k | 0})`; };
+  Bx.save(); Bx.filter = `blur(${(.014 * Sp).toFixed(1)}px)`; Bx.fillStyle = 'rgba(16,9,5,.5)'; Bx.beginPath(); Bx.ellipse(fx, fy - .004 * Sp, .24 * Sp, .032 * Sp, 0, 0, 6.283); Bx.fill(); Bx.restore();
+  for (const [k, col, kk] of [['armF', c.robe, .78], ['robe', c.robe, 1], ['sash', c.sash, 1], ['veil', c.veil, .92], ['face', c.skin, .8], ['veilF', c.veil, 1], ['broom', c.broom, 1], ['arm', c.robe, .9], ['skin', c.skin, 1]]) { Bx.fillStyle = tone(col, kk); Bx.fill(p[k]); }
+  Bx.save(); Bx.clip(p);
+  let gr = Bx.createLinearGradient(0, fy - .75 * Sp, 0, fy); gr.addColorStop(0, 'rgba(12,6,4,0)'); gr.addColorStop(1, 'rgba(12,6,4,.4)'); Bx.fillStyle = gr; Bx.fillRect(...box);   // darker down the body
+  const hw = .19 * Sp; gr = Bx.createLinearGradient(fx - hw, 0, fx + hw, 0); gr.addColorStop(0, 'rgba(10,5,4,.16)'); gr.addColorStop(.28, 'rgba(10,5,4,0)'); gr.addColorStop(.6, 'rgba(10,5,4,.1)'); gr.addColorStop(1, 'rgba(10,5,4,.42)'); Bx.fillStyle = gr; Bx.fillRect(...box);   // round: the far side darker
+  { const rf = rng(Math.round(fx * 7 + fy)); for (let i = 0; i < 6; i++) { const xx = fx + (rf() - .5) * .28 * Sp, wd = (.01 + .014 * rf()) * Sp, y0 = fy - .5 * Sp, y1 = fy - .03 * Sp;   // folds of the robe: a soft shade with a faint lit edge
+    const g2 = Bx.createLinearGradient(xx - wd, 0, xx + wd * 1.6, 0); g2.addColorStop(0, 'rgba(10,5,4,0)'); g2.addColorStop(.4, `rgba(10,5,4,${.12 + .12 * rf()})`); g2.addColorStop(.62, 'rgba(255,236,210,.05)'); g2.addColorStop(1, 'rgba(255,236,210,0)'); Bx.fillStyle = g2; Bx.fillRect(xx - wd, y0, 2.6 * wd, y1 - y0); } }
+  Bx.restore();
+  F.rim(Bx, Tx, off, p, box, [.15, 1], .007 * Sp, 'rgba(206,196,182,.3)', 'rgba(206,196,182,0)', .004 * Sp);   // the open sky's edge on the head and shoulders
+  Lx.save(); Lx.globalCompositeOperation = 'destination-out'; Lx.fill(p); Lx.restore();
+  Lx.save(); Lx.clip(p); gr = Lx.createLinearGradient(0, fy, 0, fy - .7 * Sp); gr.addColorStop(0, 'rgba(255,178,116,.1)'); gr.addColorStop(1, 'rgba(255,178,116,0)'); Lx.fillStyle = gr; Lx.fillRect(...box); Lx.restore();   // the lit floor's bounce
+  F.edgeOn(Lx, Tx, off, p, p.veil, box, [1, .3], .016 * Sp, 'rgb(255,208,150)', .005 * Sp, .9, false);   // the veil against the light: a warm edge
+  F.edgeOn(Lx, Tx, off, p, p.veil, box, [1, .3], .016 * Sp, 'rgb(255,184,104)', .013 * Sp, .45, true);   // and a little light through the thin cloth
+  if (bc) { Lx.save(); Lx.clip(bc); Lx.clip(p);
+    gr = Lx.createLinearGradient(fx - .26 * Sp, fy - Sp, fx + .16 * Sp, fy - .5 * Sp); gr.addColorStop(0, 'rgba(255,190,120,.3)'); gr.addColorStop(.5, 'rgba(255,190,120,.12)'); gr.addColorStop(1, 'rgba(255,190,120,.02)'); Lx.fillStyle = gr; Lx.fillRect(...box);   // the key
+    F.rim(Lx, Tx, off, p, box, [1, .4], .016 * Sp, 'rgba(255,214,158,.9)', 'rgba(255,200,140,.3)', .006 * Sp);   // the sun's edge
+    Lx.restore(); }
+}
+const swing = t => { const on = ss(B.sweep, B.sweep + .8, t) * (1 - ss(B.stop - .5, B.stop, t)); return on * Math.sin((t - B.sweep) * 2 * Math.PI / 1.7); };
+function herAt(sw) {   // her plates for one step of the broom (21 steps, each drawn once)
+  const key = Math.round((sw + 1) * 10); if (K.her.cache.has(key)) return K.her.cache.get(key);
+  const { pw, ph, off, bc } = K.her, Bc = canvas(pw, ph), Lc = canvas(pw, ph), Tc = canvas(pw, ph), xs = [Bc, Lc, Tc].map(c => { const x = c.getContext('2d'); x.translate(-off[0], -off[1]); return x; });
+  figure(xs[0], xs[1], xs[2], off, HER, woman(HER.P, key / 10 - 1), bc); F.lens(Bc); F.lens(Lc);
+  const r = { B: Bc, L: Lc }; K.her.cache.set(key, r); return r; }
+function build() {
+  const poly = F.poly, Wb = C.wall;
+  // ---- the courtyard's colours (albedo)
+  const room = canvas(RW, RH); const g = room.getContext('2d'); g.translate(OX, OY);
+  const floor = x => F.flagstones(x, P, { XL, XR, DW, near: .7, seed: 7 });
+  floor(g);
+  const avoid = (X0, Y0) => (X0 > G0 - .6 && X0 < G1 + .6 && Y0 < GH + .5) || (X0 > -.6 && X0 < 1.1);   // never round the gate, never behind her
+  F.plaster(g, [P(XR, 0, DW), P(XR, 0, 1), P(XR, 9, 1), P(XR, 9, DW)], '#a28a70', 13, (X, Y) => P(XR, Y, lerp(DW, 1.6, (X + 4) / 7)), { avoid });
+  F.plaster(g, [P(XL, 0, DW), P(XL, 0, 1), P(XL, 9, 1), P(XL, 9, DW)], '#a89076', 17, (X, Y) => P(XL, Y, lerp(DW, 1.6, (X + 4) / 7)), { avoid });
+  F.plaster(g, [Wb(XL, 0), Wb(XR, 0), Wb(XR, 9), Wb(XL, 9)], '#b29b7f', 19, Wb, { patches: 0 });
+  for (const X of [XL, XR]) F.grime(g, [P(X, 0, DW), P(X, 0, 1), P(X, .7, 1), P(X, .7, DW)], P(0, .7, 3)[1], P(0, 0, 1.4)[1]);
+  F.grime(g, [Wb(XL, 0), Wb(XR, 0), Wb(XR, .7), Wb(XL, .7)], Wb(0, .7)[1], Wb(0, 0)[1]);
+  // props: a doorway into the house, a stone ledge along the back wall, two water jars
+  { const [x0, y0] = Wb(.25, 2.1), [x1, y1] = Wb(1.05, 0); g.fillStyle = '#9c8668'; g.fillRect(x0 - 16, y0 - 22, x1 - x0 + 32, 22); g.fillStyle = '#2e2218'; g.fillRect(x0, y0, x1 - x0, y1 - y0);
+    g.fillStyle = 'rgba(16,10,6,.5)'; g.fillRect(x0, y0, x1 - x0, 16); g.fillStyle = '#8a7458'; g.fillRect(x0 - 10, y1 - 8, x1 - x0 + 20, 10); }
+  g.fillStyle = '#8c7658'; poly(g, [Wb(1.3, .42), Wb(XR, .42), Wb(XR, 0), Wb(1.3, 0)]); g.fill(); g.fillStyle = 'rgba(30,20,12,.35)'; poly(g, [Wb(1.3, .36), Wb(XR, .36), Wb(XR, 0), Wb(1.3, 0)]); g.fill();
+  for (const [X, hgt, D] of [[1.7, .6, 6.2], [2.05, .48, 6.25]]) { const [cx, cy] = P(X, 0, D), s = CF.F / D; g.fillStyle = '#8a5a3c'; g.beginPath(); g.ellipse(cx, cy - hgt * .45 * s, .16 * s, hgt * .5 * s, 0, 0, 6.283); g.fill(); g.fillRect(cx - .06 * s, cy - hgt * s, .12 * s, .12 * s); }
+  F.gateStones(g, C, 4);
+  F.grain(g, RW, RH, 5);
+  // ---- the courtyard's own light: warm bounce off the sunlit floor, darker up the walls and to the right
+  F.openShade(g, RW, RH, OX, OY, { base: 'rgb(222,206,188)', bounce: [[560, 1080, 900, 'rgba(100,72,44,1)'], [260, 900, 520, 'rgba(96,70,42,1)']],
+    shade: lx => { let gr = lx.createLinearGradient(0, -OY, 0, 760); gr.addColorStop(0, 'rgb(140,130,124)'); gr.addColorStop(1, '#fff'); lx.fillStyle = gr; lx.fillRect(-OX, -OY, RW, 1060);
+      gr = lx.createLinearGradient(400, 0, 1700, 0); gr.addColorStop(0, '#fff'); gr.addColorStop(1, 'rgb(176,166,160)'); lx.fillStyle = gr; lx.fillRect(-OX, -OY, RW, RH);
+      gr = lx.createLinearGradient(0, 1120, 0, 1800); gr.addColorStop(0, '#fff'); gr.addColorStop(1, 'rgb(160,150,140)'); lx.fillStyle = gr; lx.fillRect(-OX, 1120, RW, 700); } });
+  F.gate(g, C);
+  K.room = F.defocus(room, { blur: 1.2, oy: OY, rows: [[1200, 2.5], [1380, 4.5], [1560, 7]] });
+  // ---- her, the sun's pool (with her long shadow), the shaft, the glow, the dust
+  place(HER);
+  { const pw = Math.ceil(HER.S * 1.3), ph = Math.ceil(HER.S * 1.25), off = [Math.floor(HER.fx - pw / 2), Math.floor(HER.fy - HER.S * 1.15)];
+    const pts = C.beamAt(HER.D), bc = new Path2D(); poly(bc, pts); K.her = { pw, ph, off, bc, cache: new Map() }; }
+  K.PB = { x: -700, y: 880, w: 2600, h: 920 }; K.pool = F.sunPool(C, K.PB, floor, mx => mx.fill(woman(C.cast(HER.X, HER.D, HER.Hm), 0)), { fade: [940, 1800, .45] });
+  K.SB = { x: -500, y: 300, w: 2500, h: 1500 }; K.shaft = F.shaft(C, K.SB);
+  K.BB = { x: -500, y: 120, w: 1300, h: 1150 }; K.bloom = F.bloom(C, K.BB);
+  K.dust = F.dust(110, 41, 7); K.grain = F.grainTile(91);
+  K.heads = [[...HER.P(-.05, -.92), .1 * HER.S]]; K.bodies = [[HER.fx, HER.fy, HER.S, HER.D, 1.02]];
+}
+function draw(ctx, t) {
+  const k = eio(clamp(t / DUR)), I = (.62 + .26 * ss(.3, 3, t) + .12 * ss(B.joy, B.joy + 2.5, t)) * ss(0, .9, t);   // the camera's creep; the sun's strength
+  const Cm = V ? { z0: 1.2, z: lerp(1.2, 1.3, k), x0: 520, x: lerp(520, 540, k), y0: 872, y: lerp(872, 852, k) }
+               : { z0: .86, z: lerp(.86, .92, k), x0: 560, x: lerp(560, 590, k), y0: 860, y: lerp(860, 850, k) };
+  const layer = p => { const s = Cm.z0 * (1 + (Cm.z / Cm.z0 - 1) * p), cx = Cm.x0 + (Cm.x - Cm.x0) * p, cy = Cm.y0 + (Cm.y - Cm.y0) * p; ctx.setTransform(s, 0, 0, s, W / 2 - cx * s, H / 2 - cy * s); return s; };
+  ctx.save(); ctx.fillStyle = '#16100c'; ctx.fillRect(0, 0, W, H);
+  layer(.94); ctx.drawImage(K.room, -OX, -OY);
+  ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .5 + .5 * I; ctx.drawImage(K.bloom, K.BB.x, K.BB.y);
+  layer(1); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = clamp(I * 1.05); ctx.drawImage(K.pool, K.PB.x, K.PB.y); ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'screen'; layer(.97); ctx.globalAlpha = .75 * I; ctx.drawImage(K.shaft, K.SB.x, K.SB.y); ctx.globalAlpha = 1;
+  // the coin in the pool: a small warm glint that turns (never a star burst)
+  { layer(1); const gl = ss(B.glint, B.glint + .4, t) * (1 - .55 * ss(B.glint + 1.2, B.glint + 3, t)), [cx, cy] = P(COIN.X, 0, COIN.D), r = 9 * 4 / COIN.D;
+    if (gl > 0) { ctx.globalCompositeOperation = 'screen'; const tw = .75 + .25 * Math.sin(t * 2.3), R = r * (5 + 3 * gl);
+      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R); g.addColorStop(0, `rgba(255,236,190,${.9 * gl * tw * I})`); g.addColorStop(.18, `rgba(255,210,140,${.45 * gl * tw * I})`); g.addColorStop(1, 'rgba(255,200,130,0)'); ctx.fillStyle = g; ctx.fillRect(cx - R, cy - R, 2 * R, 2 * R);
+      ctx.fillStyle = `rgba(255,226,160,${gl * I})`; ctx.beginPath(); ctx.ellipse(cx, cy, r, r * .32, 0, 0, 6.283); ctx.fill(); } }
+  { const p = herAt(swing(t)), [ox, oy] = K.her.off; layer(1); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; ctx.drawImage(p.B, ox, oy); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = I; ctx.drawImage(p.L, ox, oy); }
+  ctx.globalCompositeOperation = 'screen'; layer(.97); ctx.globalAlpha = .14 * I; ctx.drawImage(K.shaft, K.SB.x, K.SB.y);   // a thin veil of the shaft in front
+  { layer(1); ctx.globalAlpha = 1; const sweep = Math.abs(swing(t)); F.drawDust(ctx, t, K.dust, C, { focus: HER.D, I: I * (1 + .6 * sweep), bodies: K.bodies, heads: K.heads }); }
+  F.finish(ctx, t, K.grain);
+  ctx.restore();
+  // ---- the words' band, captions, end card
+  { const y0 = H * (V ? .7 : .76), g2 = ctx.createLinearGradient(0, y0, 0, H); g2.addColorStop(0, 'rgba(10,8,10,0)'); g2.addColorStop(.45, 'rgba(10,8,10,.42)'); g2.addColorStop(1, 'rgba(10,8,10,.55)'); ctx.fillStyle = g2; ctx.fillRect(0, y0, W, H - y0); }
+  { const e = ss(B.end - .2, B.end + .9, t); if (e > 0) { ctx.fillStyle = `rgba(10,7,5,${.72 * e})`; ctx.fillRect(0, 0, W, H); } }
+  Story.captions(ctx, t, S.lines, { y: H * (V ? .8 : .86), size: V ? 52 : 46, color: '#f3ece0' });
+  Story.endCard(ctx, t, S.endCard, B.end, { color: '#f3ece0', srcColor: '#e3d6bd', ctaColor: '#e9c77a' });
+  Story.fadeBlack(ctx, t, DUR);
+}
+Pilot.run({ W, H, dur: DUR, fonts: ["600 40px 'Noto Serif KR'", "700 40px 'Noto Serif KR'", "400 28px 'Noto Sans KR'", "600 30px 'Noto Sans KR'"], init: async () => build(), draw });
+</script>
+</body>
+</html>

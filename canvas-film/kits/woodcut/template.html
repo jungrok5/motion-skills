@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>목판화 · 새 장면</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@400;600&display=swap">
+</head>
+<body>
+<script src="lib.js"></script>
+<script src="story.js"></script>
+<script src="script.js"></script>
+<script src="kit-woodcut.js"></script>
+<script>
+/* Template scene — house style "woodcut" (see kits/woodcut/STYLE.md). A placeholder 30 s print with a different subject from
+   the worked example (Bethlehem under the moon): a sower at sunrise. The block starts black; the knife cuts the sun, then the
+   sky ray by ray outward from it, then the furrows from the horizon toward us; the gold plate prints through the cuts at dawn;
+   a small sower walks the field casting seed (white chips); at the end the brayer rolls fresh ink over the block.
+   To make your film: keep the skeleton (plate once → regions back to front → hatch/cut/stabs with t0 for what is carved on
+   screen → gold through the cuts → render with a slow camera → figures drawn as ink over it → words on the uncut wood below);
+   replace the sun, field, tree and sower with your image. */
+const { clamp, lerp, ss, eo, eio, win, rng, fbm } = Pilot;
+const W = Pilot.W, H = Pilot.H, V = Pilot.ori === 'v', S = window.SCRIPT, B = S.beat, DUR = S.DUR;
+const GOLD = [233, 185, 92], INK = Woodcut.INK, PAPER = Woodcut.PAPER;
+const hz = H * (V ? .45 : .5), ground = H * (V ? .665 : .75);          // horizon; below `ground` the wood stays uncut (words)
+const SUN = [W * (V ? .58 : .6), hz + 4], SR = V ? 96 : 100;
+const hzAt = x => hz + 6 * Math.sin(x * .007 + .4) + 4 * Math.sin(x * .019);
+const TREE = [W * (V ? .86 : .82), hzAt(W * (V ? .86 : .82))], TS = V ? 1.15 : 1;
+const sunD = (x, y) => Math.hypot(x - SUN[0], y - SUN[1]);
+let PL = null;
+
+function build() {
+  PL = Woodcut.plate(7, pl => {
+    // regions, back to front: 1 sky · 3 field · 4 uncut ground · 5 tree
+    pl.region(1, g => g.rect(0, 0, W, H));
+    pl.region(3, g => { g.moveTo(0, H); for (let x = 0; x <= W; x += 8) g.lineTo(x, hzAt(x)); g.lineTo(W, H); });
+    pl.region(4, g => g.rect(0, ground, W, H - ground));
+    const crown = a => (V ? 64 : 58) * TS * (1 + .18 * Math.sin(a * 3 + 1) + .1 * Math.sin(a * 7));
+    const tc = [TREE[0], TREE[1] - (V ? 150 : 130) * TS];
+    pl.region(5, g => { for (let a = 0; a <= 6.3; a += .1) g.lineTo(tc[0] + Math.cos(a) * crown(a) * 1.3, tc[1] + Math.sin(a) * crown(a)); g.closePath();
+      g.moveTo(TREE[0] - 7 * TS, TREE[1] + 4); g.lineTo(TREE[0] - 5 * TS, tc[1]); g.lineTo(TREE[0] + 5 * TS, tc[1]); g.lineTo(TREE[0] + 9 * TS, TREE[1] + 4); });
+    // the sun: half risen, cut first with the U-gouge in horizontal strokes, top to bottom, then three broken rings
+    for (let k = 0, y = SUN[1] - SR + 3; y < hzAt(SUN[0]) - 2; y += 6.5, k++) { const hw = Math.sqrt(Math.max(0, SR * SR - (y - SUN[1]) ** 2)); if (hw > 3) pl.cut([[SUN[0] - hw, y], [SUN[0] + hw, y]], 8, { kind: 'u', chip: .05, t0: .6 + k * .07, dur: .35 }); }
+    for (const [rr, w, t0] of [[SR + 18, 3.6, 2.0], [SR + 34, 2.6, 2.3], [SR + 48, 1.8, 2.6]]) for (let a0 = Math.PI + .05; a0 < 2 * Math.PI - .2; a0 += .42) {
+      const pts = []; for (let a = a0; a < a0 + .3; a += .03) pts.push([SUN[0] + Math.cos(a) * rr, SUN[1] + Math.sin(a) * rr]); pl.cut(pts, w, { kind: 'v', t0: t0 + (a0 - Math.PI) * .12, dur: .3 }); }
+    // the sky: rays from the sun, wide near it, thinning and breaking with distance; carved outward on screen
+    { const lines = [], n = V ? 120 : 150; for (let i = 0; i < n; i++) { const a = Math.PI + .03 + (Math.PI - .06) * (i + .5) / n, r0 = SR + 62 + (i % 3) * 46;
+        const L = []; for (let r = r0; r < 2400; r += 30) L.push([SUN[0] + Math.cos(a) * r, SUN[1] + Math.sin(a) * r]); lines.push(L); }
+      pl.hatch(lines, { keep: (x, y) => pl.reg(x, y) === 1, kind: 'v', len: [60, 260], gap: [6, 46], thr: .12, wmin: .9, wmax: 7, gamma: 1.2, dur: .3,
+        tone: (x, y) => { const d = sunD(x, y) - SR, glow = Math.exp(-Math.max(0, hzAt(x) - y) / (V ? 170 : 150)) * .55;
+          return clamp((Math.exp(-d / (V ? 480 : 560)) * .95 + glow) * (.55 + .7 * fbm(x * .003 + 2, y * .006))); },
+        t0: (x, y, r) => B.rays + (sunD(x, y) - SR) / (V ? 210 : 260) + r() * .35 }); }
+    // the sun's glare on the field just under it: short horizontal U-cuts, narrowing toward us
+    for (let k = 0, y = hzAt(SUN[0]) + 5; k < 7; k++, y += 6.5) { const hw = SR * 1.15 * (1 - k / 8); pl.cut([[SUN[0] - hw, y + 2 * Math.sin(k)], [SUN[0] + hw, y]], 6 - k * .5, { kind: 'u', chip: .08, t0: B.field - .4 + k * .08, dur: .3 }); }
+    // the field: furrows run to the sun (the vanishing point), bright near the horizon, dark toward us; carved from far to near
+    { const lines = [], n = V ? 70 : 90; for (let i = 0; i < n; i++) { const a = .04 + (Math.PI - .08) * (i + .5) / n, L = [];
+        for (let r = 8; r < 2400; r += 14) L.push([SUN[0] + Math.cos(a) * r * 1.8, hz + Math.sin(a) * r]); lines.push(L); }
+      pl.hatch(lines, { keep: (x, y) => pl.reg(x, y) === 3 && y > hzAt(x) + 3 && y < ground - 14, kind: 'v', len: [30, 150], gap: [5, 26], thr: .1, wmin: .8, wmax: 6.5, gamma: 1.2, dur: .25,
+        tone: (x, y) => clamp(1.08 - (y - hz) / (ground - hz) * 1.05 + .25 * Math.exp(-Math.abs(x - SUN[0]) / 260)) * clamp((ground - 14 - y) / 90 + .15 * Math.sin(x * .05)),
+        t0: (x, y, r) => B.field + (y - hz) / (V ? 95 : 80) + r() * .3 }); }
+    // clods: a scatter of stab cuts in the near field (the turned earth catching the low sun)
+    { const r = rng(11), list = []; for (let i = 0; i < (V ? 160 : 220); i++) { const x = r() * W, y = lerp(hz + 40, ground - 20, Math.sqrt(r())); if (pl.reg(x, y) === 3) list.push([x, y, .9 + r() * 1.8]); }
+      pl.stabs(list, { t0: (x, y, rr) => B.field + 2 + (y - hz) / 90 + rr() * .5 }); }
+    // the tree: black wood standing, a knife halo on the sun side, a few lit leaf stabs facing the sun
+    { const ring = []; for (let a = 2.2; a <= 5.9; a += .07) ring.push([tc[0] + Math.cos(a) * (crown(a) * 1.3 + 6), tc[1] + Math.sin(a) * (crown(a) + 6)]); pl.halo(ring, { w: 2.4, t0: () => B.rays + 3.4, dur: .3 });
+      const r = rng(5), fl = []; for (let j = 0; j < 30; j++) { const a = 3 + r() * 1.6, d = .4 + r() * .5; fl.push([tc[0] + Math.cos(a) * crown(a) * 1.25 * d, tc[1] + Math.sin(a) * crown(a) * d, .8 + r() * 1.3]); } pl.stabs(fl, { t0: () => B.rays + 3.8 }); }
+    // gold plate (shows only through the cuts): the sunrise warms everything near the sun
+    pl.gold((g, t) => { const k = ss(B.dawn, B.dawn + 3, t); if (k <= 0) return; const R = V ? 820 : 900, gr = g.createRadialGradient(SUN[0], SUN[1], 0, SUN[0], SUN[1], R);
+      gr.addColorStop(0, `rgba(${GOLD},${k})`); gr.addColorStop(.35, `rgba(${GOLD},${.7 * k})`); gr.addColorStop(1, `rgba(${GOLD},0)`); g.fillStyle = gr; g.fillRect(SUN[0] - R, SUN[1] - R, 2 * R, 2 * R); });
+  });
+}
+
+// the sower, drawn as ink over the print each frame: hat, coat, seed bag, one arm casting every second step (units: figure height)
+function sower(ctx, x, fy, h, t) {
+  const ph = (t - B.sower) * 5.4, sw = Math.sin(ph), cast = .5 + .5 * Math.sin(ph / 2 - 1.2);
+  ctx.save(); ctx.fillStyle = INK; ctx.strokeStyle = INK; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const hip = [x, fy - .47 * h], sh = [x + .07 * h, fy - .8 * h];
+  // legs (a little knee), coat flaring to the knee
+  ctx.lineWidth = .085 * h;
+  for (const s of [sw, -sw]) { const fx = x + s * .17 * h, kx = x + s * .1 * h + .03 * h; ctx.beginPath(); ctx.moveTo(hip[0], hip[1]); ctx.lineTo(kx, fy - .24 * h); ctx.lineTo(fx, fy - .02 * h); ctx.lineTo(fx + .06 * h, fy); ctx.stroke(); }
+  ctx.beginPath(); ctx.moveTo(sh[0] - .08 * h, sh[1]); ctx.lineTo(sh[0] + .09 * h, sh[1] + .02 * h); ctx.lineTo(x + .16 * h, fy - .3 * h); ctx.lineTo(x - .14 * h, fy - .3 * h); ctx.closePath(); ctx.fill();
+  // seed bag on the hip, the strap over the shoulder
+  ctx.beginPath(); ctx.ellipse(x + .13 * h, fy - .5 * h, .085 * h, .1 * h, .2, 0, 6.283); ctx.fill();
+  // head and a wide-brimmed hat
+  ctx.beginPath(); ctx.arc(sh[0] + .05 * h, sh[1] - .1 * h, .065 * h, 0, 6.283); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(sh[0] + .05 * h, sh[1] - .15 * h, .15 * h, .028 * h, -.08, 0, 6.283); ctx.fill(); ctx.fillRect(sh[0] - .02 * h, sh[1] - .23 * h, .13 * h, .08 * h);
+  // arms: the casting arm sweeps out and up; the other dips into the bag
+  ctx.lineWidth = .06 * h; const a = lerp(1.9, -.35, cast), el = [sh[0] + Math.cos(a) * .2 * h, sh[1] + Math.sin(a) * .2 * h], hd = [el[0] + Math.cos(a - .25) * .19 * h, el[1] + Math.sin(a - .25) * .19 * h];
+  ctx.beginPath(); ctx.moveTo(sh[0], sh[1]); ctx.lineTo(el[0], el[1]); ctx.lineTo(hd[0], hd[1]); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(sh[0] - .03 * h, sh[1] + .02 * h); ctx.lineTo(x + .06 * h, fy - .56 * h); ctx.lineTo(x + .14 * h, fy - .52 * h); ctx.stroke();
+  ctx.restore(); return { hand: hd, cast };
+}
+// seed: white chips flung from the hand at each cast, falling to the furrows (closed-form, so any frame can be drawn alone)
+function seeds(ctx, t, pathAt, h) {
+  const per = 2 * Math.PI / 2.7, first = B.sower + 1.2; ctx.save(); ctx.fillStyle = PAPER;
+  for (let k = 0; first + k * per < t; k++) { const tc = first + k * per, [x0, y0] = pathAt(tc), r = rng(100 + k);
+    for (let i = 0; i < 16; i++) { const u = t - tc - r() * .15; if (u <= 0) continue; const vx = (60 + 120 * r()) * (V ? 1 : 1.1), vy = -(40 + 90 * r()), x = x0 + .35 * h + vx * u, y = y0 - .75 * h + vy * u + 260 * u * u;
+      if (y > y0 + .02 * h + 30 * r()) continue; const s = 3.2 + 2.2 * r(); ctx.fillRect(x - s / 2, y - s / 2, s, s); } }
+  ctx.restore();
+}
+
+function draw(ctx, t) {
+  if (!PL) build();
+  ctx.fillStyle = INK; ctx.fillRect(0, 0, W, H);
+  const push = eio(clamp(t / DUR)), cam = { x: lerp(W / 2, W * .48, push), y: H / 2, z: 1 + .07 * push };
+  PL.render(ctx, t, cam);
+  // the sower walks in along the field just under the horizon, small against the lit sky
+  const h = V ? 172 : 140, pathAt = tt => { const x = lerp(-60, W * (V ? .36 : .4), clamp((tt - B.sower) / 9.5)); return [x, hzAt(x) + (V ? 34 : 30)]; };
+  if (t > B.sower) { ctx.save(); ctx.setTransform(cam.z, 0, 0, cam.z, W / 2 - cam.x * cam.z, H / 2 - cam.y * cam.z); const [x, fy] = pathAt(t); sower(ctx, x, fy, h, t); seeds(ctx, t, pathAt, h); ctx.restore(); }
+  Woodcut.brayer(ctx, eio(clamp((t - B.ink) / 1.6)));
+  Story.captions(ctx, t, S.lines, { y: V ? H * .715 : H * .86, size: V ? 52 : 46, color: '#efe6d2', shadow: 'rgba(0,0,0,0)' });
+  Story.endCard(ctx, t, S.endCard, B.end, { color: '#efe6d2', srcColor: '#d8ccb2', ctaColor: '#e9c77a' });
+  Story.fadeBlack(ctx, t, DUR);
+}
+Pilot.run({ W, H, dur: DUR, fonts: ["600 40px 'Noto Serif KR'", "700 40px 'Noto Serif KR'", "400 28px 'Noto Sans KR'", "600 30px 'Noto Sans KR'"], draw });
+</script>
+</body>
+</html>
