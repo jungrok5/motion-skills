@@ -43,7 +43,7 @@ const LR = { VERSION: '1.0', THREE };
   LR.q = (k, d) => (q.has(k) ? q.get(k) : d);
   LR.qn = (k, d) => (q.has(k) && q.get(k) !== '' && isFinite(+q.get(k)) ? +q.get(k) : d);
   LR.RENDER = q.get('render') === '1';                                   // still mode: no clock, frames on request
-  LR.off = new Set((q.get('off') || '').split(',').filter(Boolean));     // ?off=ao,gi,vol,shafts,taa,bloom,grass,shadow,contact,mirror,fx,water,ssr,audio
+  LR.off = new Set((q.get('off') || '').split(',').filter(Boolean));     // ?off=ao,gi,skyshare,vol,shafts,taa,bloom,grass,shadow,contact,mirror,fx,water,ssr,audio
 
   LR.TAU = Math.PI * 2;
   LR.clamp = (x, a = 0, b = 1) => (x < a ? a : x > b ? b : x);
@@ -321,7 +321,7 @@ float fogDepth(vec3 ro, vec3 rd, float t){
   // gi = rays per half-size pixel of the screen-space bounce (0: sky light and occlusion only).
   LR.TIERS = {
     low:    { name: 'low',    mat: 512,  aniso: 2, shadow: 1024, cascades: 2, shadowDist: 70,  shadowTaps: 4, ao: 0, vol: 8,  scaleMin: 0.4,  scaleMax: 0.8,  dprCap: 1.5,  grass: 0.4, grassDist: 40, treeNear: 22, treeMid: 70,  fx: 0.5, bloom: 4, pom: 0, gi: 0, contact: 0, ssr: 0, lights: 8,  topo: 1024, env: 64,  taaSharp: 0.5 },
-    medium: { name: 'medium', mat: 512,  aniso: 4, shadow: 2048, cascades: 3, shadowDist: 110, shadowTaps: 5, ao: 1, vol: 12, scaleMin: 0.5,  scaleMax: 0.85, dprCap: 1.25, grass: 0.7, grassDist: 55, treeNear: 30, treeMid: 95,  fx: 0.75, bloom: 5, pom: 0, gi: 0, contact: 0, ssr: 12, lights: 12, topo: 2048, env: 128, taaSharp: 0.5 },
+    medium: { name: 'medium', mat: 512,  aniso: 4, shadow: 2048, cascades: 3, shadowDist: 110, shadowTaps: 5, ao: 1, vol: 12, scaleMin: 0.5,  scaleMax: 0.85, dprCap: 1.25, grass: 0.7, grassDist: 55, treeNear: 30, treeMid: 95,  fx: 0.75, bloom: 5, pom: 0, gi: 2, contact: 0, ssr: 12, lights: 12, topo: 2048, env: 128, taaSharp: 0.5 },
     high:   { name: 'high',   mat: 768,  aniso: 8, shadow: 2048, cascades: 3, shadowDist: 140, shadowTaps: 8, ao: 2, vol: 16, scaleMin: 0.6,  scaleMax: 1.0,  dprCap: 1.5,  grass: 1.0, grassDist: 70, treeNear: 38, treeMid: 120, fx: 1, bloom: 6, pom: 1, gi: 3, contact: 8, ssr: 18, lights: 16, topo: 2048, env: 128, taaSharp: 0.45 },
     ultra:  { name: 'ultra',  mat: 1024, aniso: 16, shadow: 4096, cascades: 3, shadowDist: 170, shadowTaps: 8, ao: 3, vol: 24, scaleMin: 0.75, scaleMax: 1.0,  dprCap: 2,    grass: 1.4, grassDist: 85, treeNear: 48, treeMid: 150, fx: 1.25, bloom: 6, pom: 1, gi: 5, contact: 12, ssr: 26, lights: 24, topo: 2048, env: 256, taaSharp: 0.4 },
   };
@@ -1497,6 +1497,11 @@ void main(){
     return { g, tris: I.length / 3 };
   };
 
+  // nothing people walk on is level: a gentle swell everywhere inside `radius` (less under paving), so the lines of a
+  // lane and the feet of walls are never ruled.  Call it after the ways are laid and before anything is built.
+  L.roughen = (amp = 0.09, o = {}) => { const n = L.n, f = o.scale || 0.21, R = o.radius || L.half, H = L.H;
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const x = -L.half + i * L.res, z = -L.half + j * L.res; if (x * x + z * z > R * R) continue;
+      const pav = L.coverAt('paved', x, z), k = 1 - 0.45 * pav; H[j * n + i] += ((LR.fbm(x * f, z * f, 3) - 0.5) * 2 * amp + (LR.fbm(x * 0.9 + 7, z * 0.9, 2) - 0.5) * amp * 0.45) * k; } };
   L.build = () => {
     const W = LR.world, n = L.n, half = L.half;
     // textures: height (R16F, the grass and the rain read it), splat and cover (RGBA8)
@@ -1661,7 +1666,9 @@ void main(){
     face(); pn(x, len, 0, h);
     if (style === 'stone' && !o.skipCorners) {                                                 // quoins: dressed blocks binding the corners
       g.mat('ashlar', { tint: o.quoinTint, soft: 0.22 }); const ch = 0.34; let k = o.quoinPhase || 0;
-      for (let y = 0; y + ch <= h + 0.01; y += ch, k++) { const l0 = k % 2 ? 0.5 : 0.3, l1 = k % 2 ? 0.3 : 0.5; g.box(l0 / 2 - 0.02, y + ch / 2, -0.06, l0, ch - 0.02, 0.2, { grain: 'x', skip: '-z' }); g.box(len - l1 / 2 + 0.02, y + ch / 2, -0.06, l1, ch - 0.02, 0.2, { grain: 'x', skip: '-z' }); }
+      // no two blocks alike: lengths, heights and how far each stands proud all wander, so the corner is not a ruled edge
+      for (let y = 0; y + ch <= h + 0.01; y += ch, k++) { const l0 = (k % 2 ? 0.5 : 0.3) + (r() - 0.5) * 0.12, l1 = (k % 2 ? 0.3 : 0.5) + (r() - 0.5) * 0.12, p0 = (r() - 0.5) * 0.035, p1 = (r() - 0.5) * 0.035, h0 = ch - 0.02 - r() * 0.035, h1 = ch - 0.02 - r() * 0.035;
+        g.box(l0 / 2 - 0.02 - r() * 0.02, y + ch / 2, -0.06 + p0, l0, h0, 0.2, { grain: 'x', skip: '-z' }); g.box(len - l1 / 2 + 0.02 + r() * 0.02, y + ch / 2, -0.06 + p1, l1, h1, 0.2, { grain: 'x', skip: '-z' }); }
     }
     if (style === 'boards') { g.mat('timber', { tint: o.timberTint, soft: 0.25 }); g.box(0, h / 2, -0.04, 0.16, h, 0.16, { grain: 'y', skip: '+y-y' }); g.box(len, h / 2, -0.04, 0.16, h, 0.16, { grain: 'y', skip: '+y-y' }); g.box(len / 2, h - 0.07, -0.03, len, 0.14, 0.14, { grain: 'x', skip: '+x-x' }); }
   };
@@ -1676,7 +1683,7 @@ void main(){
   // o: { pitch (deg), mat, tint, eave: overhang at the eaves, verge: overhang at the gables, thick, sag, rafters, timberTint, gables: 'timber'|'stone'|'boards'|null, gableTint }
   A.gableRoof = (g, w, d, y, o = {}) => {
     const r = o.rng || LR.rng(o.seed || 9), pitch = (o.pitch || 50) * deg, tan = Math.tan(pitch), cos = Math.cos(pitch), sin = Math.sin(pitch), eave = o.eave === undefined ? 0.55 : o.eave, verge = o.verge === undefined ? 0.4 : o.verge, mat = o.mat || 'tiles';
-    const th = o.thick || (mat === 'thatch' ? 0.34 : 0.1), hd = d / 2, ridgeY = y + hd * tan, sag = o.sag === undefined ? 0.07 : o.sag, nx = Math.max(2, Math.ceil((w + verge * 2) / 1.4));
+    const th = o.thick || (mat === 'thatch' ? 0.34 : 0.1), hd = d / 2, ridgeY = y + hd * tan, sag = o.sag === undefined ? 0.05 + r() * 0.11 : o.sag, nx = Math.max(2, Math.ceil((w + verge * 2) / 1.4));
     const X = (i) => -w / 2 - verge + (i / nx) * (w + verge * 2), dip = (i) => -sag * Math.sin((i / nx) * Math.PI) * (0.6 + 0.4 * r()) - (mat === 'thatch' ? 0.03 * r() : 0);
     const dips = []; for (let i = 0; i <= nx; i++) dips.push(dip(i));
     for (const s of [1, -1]) {
@@ -1702,6 +1709,24 @@ void main(){
     g.mat(mat === 'thatch' ? 'thatch' : mat, { tint: o.ridgeTint || o.tint });
     const rp = []; for (let i = 0; i <= nx; i++) rp.push([X(i), ridgeY + th / cos + dips[i] + (mat === 'thatch' ? 0.02 : 0.0), 0]);
     g.tube(rp, mat === 'thatch' ? 0.2 : 0.085, { sides: 6, caps: true });
+    // the outline against the sky is never a ruled line: single cap tiles along the ridge, tile ends of uneven length at
+    // the eaves and the verges (a thatch gets a shaggy fringe instead).  o.ragged: false leaves the roof clean.
+    if (o.ragged !== false) {
+      const thatch = mat === 'thatch', dipAt = (x) => { const f = LR.clamp((x - X(0)) / (X(nx) - X(0)), 0, 1) * nx, i = Math.min(nx - 1, Math.floor(f)); return dips[i] + (dips[i + 1] - dips[i]) * (f - i); };
+      if (!thatch) for (let x = X(0) + 0.2; x < X(nx) - 0.1; x += 0.36 + r() * 0.05) {                 // ridge tiles, each a little askew, one in a dozen slipped
+        const slip = r() < 0.08 ? -0.035 : 0; g.mat(mat, { tint: A.vary(o.ridgeTint || o.tint || '#808080', r, 0.07), uv: false });
+        g.at(x, ridgeY + th / cos + dipAt(x) + 0.085 + slip, (r() - 0.5) * 0.03, (r() - 0.5) * 0.09, 0, (r() - 0.5) * 0.08); g.box(0, 0, 0, 0.37, 0.07, 0.25, { skip: '-y' }); g.pop(); }
+      for (const s of [1, -1]) {
+        const ez = s * (hd + eave), ey = y - eave * tan, up = [0, cos, s * sin], us = [0, sin, -s * cos], step = thatch ? 0.16 : 0.2;
+        for (let x = X(0) + step / 2; x < X(nx); x += step * (0.9 + 0.2 * r())) {                       // eave: tile butts (or straw) of uneven length
+          const ext = thatch ? 0.04 + r() * 0.2 : r() < 0.06 ? 0.13 : 0.015 + r() * 0.06, lift = (thatch ? -0.1 : 0.012) + r() * 0.014, E = [x, ey + th / cos + dipAt(x) * 0.4, ez], k = 0.16;
+          g.mat(mat, { tint: A.vary(o.tint || '#808080', r, thatch ? 0.12 : 0.08), uv: false });
+          g.beam([E[0], E[1] + us[1] * k + up[1] * lift, E[2] + us[2] * k + up[2] * lift], [E[0], E[1] - us[1] * ext + up[1] * (lift - 0.01), E[2] - us[2] * ext + up[2] * (lift - 0.01)], step * (thatch ? 1.15 : 0.92), thatch ? 0.16 : 0.034, { up }); }
+        if (!thatch) for (const gx of [X(0), X(nx)]) { const sg = gx < 0 ? -1 : 1, L = Math.hypot(hd + eave, ridgeY - ey), nt = Math.round(L / 0.26);   // verge: tiles that overhang the gable unevenly
+          for (let i = 0; i < nt; i++) { const t = (i + 0.5) / nt, yy = ey + th / cos + (ridgeY - ey + (sg < 0 ? dips[0] : dips[nx])) * t, zz = ez * (1 - t), ext = r() < 0.05 ? 0.1 : 0.012 + r() * 0.045, lift = 0.014 + r() * 0.012;
+            g.mat(mat, { tint: A.vary(o.tint || '#808080', r, 0.08), uv: false }); g.beam([gx - sg * 0.14, yy + up[1] * lift, zz + up[2] * lift], [gx + sg * ext, yy + up[1] * lift, zz + up[2] * lift], 0.25, 0.034, { up }); } }
+      }
+    }
     // the gable walls
     if (o.gables) for (const s of [-1, 1]) {
       g.at(s * w / 2, y, s < 0 ? -hd : hd, s < 0 ? -Math.PI / 2 : Math.PI / 2);
@@ -1752,7 +1777,8 @@ void main(){
     if (o.garden !== false) LR.land.border(o.x, o.z, w / 2 + 1.2, d / 2 + 1.5, o.yaw || 0, { width: 2.4, flowers: o.garden === undefined ? 0.5 : o.garden });
     const plaster = o.plaster || r.pick(['#ffffff', '#f6efdf', '#f2e6cf', '#efe9dc', '#ecdcc0', '#f4e4d2']), timber = o.timber || r.pick(['#ffffff', '#e2d6c8', '#d2c4b4', '#f0e2d0', '#c2b6aa']), shut = o.shutters === undefined ? r.pick(['#5f8a58', '#5f7f9e', '#a24a3c', '#8a7446', '#4f7a7c', '#b08a3c']) : o.shutters;
     const roof = Object.assign({ mat: 'tiles', pitch: 50 + r() * 6 }, o.roof || {});
-    g.at(o.x, y0, o.z, o.yaw || 0);
+    // no old house stands plumb: each leans a little its own way (o.lean: [pitch, roll] in radians, or 0 for a new one)
+    { const lr = LR.rng('lean' + (o.seed || o.x + ':' + o.z)), ln = o.lean === 0 ? [0, 0] : o.lean || [(lr() - 0.5) * 0.022, (lr() - 0.5) * 0.022]; g.at(o.x, y0, o.z, o.yaw || 0, ln[0], ln[1]); }
     // the plinth the house stands on
     g.mat(o.plinthMat || 'rubble', { tint: o.stone }); g.aoFn = (x, y) => 0.6 + 0.4 * LR.sm(-0.2, 0.5, y);
     g.box(0, pl / 2 - 0.3, 0, w + 0.14, pl + 0.6, d + 0.14, { skip: '-y', grain: 'x' }); g.aoFn = null;
@@ -3819,12 +3845,15 @@ void main(){
   float wLit = sp.b * inner, wDirt = sp.r * inner, wPav = sp.g * inner, wShore = cv.b * inner;
   { float rag = texture(uNoise, xz * 0.83).r * 0.6 + texture(uNoise, xz * 0.21 + 0.3).b * 0.4 - 0.5;        // nothing trodden has a ruled edge
     wDirt = sat(wDirt + rag * 1.5 * wDirt * (1.0 - wDirt) * 4.0); wPav = sat(wPav + rag * 0.8 * wPav * (1.0 - wPav) * 4.0); }
-  { float worn = texture(uNoise, xz * 0.017 + 0.61).g * 0.65 + nz.a * 0.35; float gap = smoothstep(0.60, 0.78, worn) * wPav; wPav *= 1.0 - gap * 0.55; wDirt = max(wDirt, gap * 0.8); }   // worn paving: earth shows through
+  { float worn = texture(uNoise, xz * 0.017 + 0.61).g * 0.65 + nz.a * 0.35; float gap = smoothstep(0.54, 0.74, worn) * wPav; wPav *= 1.0 - gap * 0.55; wDirt = max(wDirt, gap * 0.8); }   // worn paving: earth shows through
   float wRock = smoothstep(0.30, 0.52, slope + (nz.r - 0.5) * 0.16) * mix(1.0, 0.0, wPav);
   if (wLit > 0.004) lay(float(L_LITTER), wLit, xz * uTiles.w, dx * uTiles.w, dy * uTiles.w);
   if (wDirt > 0.004) lay(float(L_DIRT), wDirt, xz * uTiles.y, dx * uTiles.y, dy * uTiles.y);
   if (wShore > 0.004) lay(float(L_GRAVEL), wShore, xz * uTiles2.y, dx * uTiles2.y, dy * uTiles2.y);
-  if (wPav > 0.004) lay(float(L_COBBLE), wPav, xz * uTiles.z, dx * uTiles.z, dy * uTiles.z);
+  if (wPav > 0.004) {                                                       // a street is relaid in stretches by different hands: other sizes, other directions
+    vec2 uc = xz * uTiles.z; float pn = texture(uNoise, xz * 0.031 + 0.21).r, sc = 1.0;
+    if (pn > 0.57) { uc = mat2(0.80, 0.60, -0.60, 0.80) * uc * 1.31 + 0.37; sc = 1.31; } else if (pn < 0.34) { uc = mat2(0.94, -0.34, 0.34, 0.94) * uc * 0.83; sc = 0.83; }
+    lay(float(L_COBBLE), wPav, uc, dx * uTiles.z * sc, dy * uTiles.z * sc); }
   if (wRock > 0.004) lay(float(L_ROCK), wRock, xz * uTiles2.x + vWorld.y * 0.13, dx * uTiles2.x, dy * uTiles2.x);
   // far country: forest as paint, bare rock, snow line
   float far = 1.0 - inner;
@@ -4146,6 +4175,18 @@ float contactShadow(vec3 wp, vec3 N, float dist, float rnd){
   return 1.0;
 }
 #endif
+#if SKY_REACH > 0
+// how much of the sky the buildings round a point leave open, read off the top-down height map of built things: eight
+// directions, one or two reaches.  A lane between houses sees a strip of sky, the foot of a wall half of it, a field all.
+uniform sampler2D uTopo; uniform vec4 uTopoRect;
+float skyShare(vec3 wp, vec3 N, float rnd){
+  float a0 = rnd * 0.7854, vis = 0.0, ws = 0.0;
+  for (int i = 0; i < 8; i++) { float a = a0 + float(i) * 0.7854; vec2 d = vec2(cos(a), sin(a)); float w = max(dot(N, normalize(vec3(d.x, 0.7, d.y))), 0.0) + 0.05, tn = 0.0;
+    for (int j = 0; j < SKY_REACH; j++) { float rr = j == 0 ? 2.4 : 7.0; tn = max(tn, (textureLod(uTopo, (wp.xz + d * rr - uTopoRect.xy) * uTopoRect.zw, 0.0).r - wp.y - 0.3) / rr); }
+    vis += (1.0 - tn / sqrt(1.0 + tn * tn)) * w; ws += w; }
+  return vis / ws;
+}
+#endif
 #if MIRROR_STEPS > 0
 // wet paving and puddles mirror what stands over them: the reflected ray marched through the depth buffer, and where it
 // lands, last frame's picture.  Only smooth surfaces ask (rain, ice, glass), so a dry day pays nothing.
@@ -4208,6 +4249,9 @@ void main(){
     vec3 aoc = max(vec3(ao), ((ao * (2.0404 * albedo - 0.3324) + (-4.7951 * albedo + 0.6417)) * ao + (2.7552 * albedo + 0.6903)) * ao);
     vec3 irr = envAt(N, uEnvMips - 2.0) * 0.6 + envAt(normalize(N + vec3(0.0, 0.6, 0.0)), uEnvMips - 1.0) * 0.4;
     float cv = canopyAt(wp), skyVis = 1.0 - uCanopy.x * cv;                                // under the crowns only part of the sky is seen
+#if SKY_REACH > 0
+    float share = dist < 90.0 ? mix(1.0, skyShare(wp, N, rnd), 0.85 * smoothstep(90.0, 60.0, dist)) : 1.0; skyVis *= share;   // and between houses only a strip of it
+#endif
     irr = irr * skyVis + vec3(0.34, 0.42, 0.18) * uSunCol * (0.25 + max(uSunDir.y, 0.0)) * cv * 0.085;   // and what comes through the leaves is green
     col += diff * (irr * uFill + vec3(0.012, 0.014, 0.018) * (0.4 + uSunCol.g)) * aoc;
     col += diff * gi * uBounce;                                                        // light that has already met a surface (screen space)
@@ -4346,7 +4390,7 @@ void main(){
     R.mAOB = LR.pass(aoBlurFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tAO: v(null), uHalf: PU.uHalf }));
     if (R.giOn) { R.mGI = LR.pass(giFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tG1: PU.tG1, tHist: v(null), uHalf: PU.uHalf }), { defines: { GI_RAYS: tier.gi | 0, GI_STEPS: 8, GI_DEBUG: LR.qn('gidbg', 0) | 0 } }); R.mGIB = LR.pass(giBlurFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tGI: v(null), uHalf: PU.uHalf })); }
     R.mAir = LR.pass(airFS, Object.assign(LR.uni(FRAME + ' ' + AIRU + ' ' + SHU), S, { tDepth: PU.tDepth, uHalf: PU.uHalf, uEnvMips: PU.uEnvMips, tCanopy: PU.tCanopy, uCanopyRect: PU.uCanopyRect, uCanopy: PU.uCanopy, uShaft: PU.uShaft }), { defines: { AIR_STEPS: tier.vol, AIR_REACH: '150.0', SHAFT_STEPS: LR.off.has('shafts') ? 0 : tier.vol >= 24 ? 36 : tier.vol >= 16 ? 28 : tier.vol >= 12 ? 20 : 0 } });
-    R.mLight = LR.pass(lightFS, Object.assign(LR.uni(FRAME + ' ' + AIRU + ' ' + SHU), S, { tG0: PU.tG0, tG1: PU.tG1, tG2: PU.tG2, tDepth: PU.tDepth, tAO: PU.tAO, tAir: PU.tAir, uHalf: PU.uHalf, uEnvMips: PU.uEnvMips, tCanopy: PU.tCanopy, uCanopyRect: PU.uCanopyRect, uCanopy: PU.uCanopy, uLightPos: PU.uLightPos, uLightCol: PU.uLightCol, uLightN: PU.uLightN, uFill: PU.uFill, tGI: PU.tGI, uBounce: PU.uBounce, tHist: PU.tHistL, uHistOk: PU.uHistOk }), { defines: Object.assign({ SHADOW_TAPS: tier.shadowTaps, CONTACT_STEPS: LR.off.has('contact') ? 0 : tier.contact | 0, MIRROR_STEPS: LR.off.has('mirror') || tier.ssr < 18 ? 0 : tier.ssr >= 26 ? 20 : 14 }, LR.qn('dbg', 0) ? { DEBUG_VIEW: LR.qn('dbg', 0) } : {}) });
+    R.mLight = LR.pass(lightFS, Object.assign(LR.uni(FRAME + ' ' + AIRU + ' ' + SHU + ' uTopo uTopoRect'), S, { tG0: PU.tG0, tG1: PU.tG1, tG2: PU.tG2, tDepth: PU.tDepth, tAO: PU.tAO, tAir: PU.tAir, uHalf: PU.uHalf, uEnvMips: PU.uEnvMips, tCanopy: PU.tCanopy, uCanopyRect: PU.uCanopyRect, uCanopy: PU.uCanopy, uLightPos: PU.uLightPos, uLightCol: PU.uLightCol, uLightN: PU.uLightN, uFill: PU.uFill, tGI: PU.tGI, uBounce: PU.uBounce, tHist: PU.tHistL, uHistOk: PU.uHistOk }), { defines: Object.assign({ SHADOW_TAPS: tier.shadowTaps, SKY_REACH: LR.off.has('skyshare') ? 0 : tier.gi >= 3 ? 2 : tier.ao > 0 ? 1 : 0, CONTACT_STEPS: LR.off.has('contact') ? 0 : tier.contact | 0, MIRROR_STEPS: LR.off.has('mirror') || tier.ssr < 18 ? 0 : tier.ssr >= 26 ? 20 : 14 }, LR.qn('dbg', 0) ? { DEBUG_VIEW: LR.qn('dbg', 0) } : {}) });
     R.mTAA = LR.pass(taaFS, Object.assign(LR.uni(FRAME), { tCur: PU.tHDR, tHist: PU.tHist, tDepth: PU.tDepth, uJit: PU.uJit, uBlend: PU.uBlend }));
     R.mCopy = LR.pass(copyFS, { tSrc: v(null) });
     R.mDown = LR.pass(downFS, { tSrc: v(null), uT: v(new T.Vector4()), uFirst: v(0) });
@@ -5202,6 +5246,7 @@ R.build = () => {
   L.paint('litter', (x, z) => LR.sm(0.3, 0.8, R.woods(x, z)), 'max'); L.paint('grass', (x, z) => 1 - 0.5 * R.woods(x, z), 'min');
   L.paint('tall', (x, z) => 0.45 + 0.4 * LR.fbm(x * 0.05, z * 0.05, 3)); L.paint('flowers', (x, z) => LR.sm(0.6, 0.75, LR.fbm(x * 0.08 + 9, z * 0.08, 3)) * (1 - R.woods(x, z)) * 0.7);
   L.paint('fern', (x, z) => LR.sm(0.4, 0.8, R.woods(x, z)) * LR.sm(0.45, 0.6, LR.fbm(x * 0.09 + 2, z * 0.09 + 7, 3)));
+  LR.land.roughen(0.09, { radius: 60 });                                              // nothing people use is level: a swell under everything, before building
   // ④ a building from the parts: here LR.arch.house does it from a few numbers (see lib/40_arch.js for wall, window,
   //    door, gableRoof, chimney if you need a kind of building the kit does not have)
   const A = LR.arch, P = LR.props, C = R.cabin;

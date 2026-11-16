@@ -24,8 +24,9 @@ follows is the design that keeps those in hand, and the knobs to turn if a devic
 - **Tiers** (`lib/10_gpu.js`): `low` (phones), `medium` (integrated GPUs), `high`, `ultra` set material size, shadow
   size and cascades, occlusion quality, fog steps, grass density and reach, tree detail distances, particle counts,
   lamp count, the steps of the water's reflection march (`ssr`: 0 on `low`, 12 / 18 / 26 above — only water pixels pay
-  for it), contact shadows (`contact`: 8 steps on `high`, 12 on `ultra`, off below), the screen-space bounce (`gi`: 3 rays of
-  8 steps per half-size pixel on `high`, 5 on `ultra`, off below), the mirror on wet ground (14–20 steps, only on
+  for it), contact shadows (`contact`: 8 steps on `high`, 12 on `ultra`, off below), the screen-space bounce (`gi`: 2 rays of
+  8 steps per half-size pixel on `medium`, 3 on `high`, 5 on `ultra`, off on `low`), sky share from the height map of
+  built things (8–16 taps on lit pixels within 90 m; `?off=skyshare`), the mirror on wet ground (14–20 steps, only on
   smooth pixels, `high` and above), rays toward the sun (20–36 depth taps at half size, `medium` and above), device-pixel-ratio cap. The tier is guessed from the device and can be forced with `?q=` or the gear
   button (reloads at the same spot); a device far below its tier is stepped down once automatically.
 - **Materials are two texture arrays.** Every built thing is drawn by one shader with a layer index per vertex, so a

@@ -178,12 +178,15 @@ void main(){
   float wLit = sp.b * inner, wDirt = sp.r * inner, wPav = sp.g * inner, wShore = cv.b * inner;
   { float rag = texture(uNoise, xz * 0.83).r * 0.6 + texture(uNoise, xz * 0.21 + 0.3).b * 0.4 - 0.5;        // nothing trodden has a ruled edge
     wDirt = sat(wDirt + rag * 1.5 * wDirt * (1.0 - wDirt) * 4.0); wPav = sat(wPav + rag * 0.8 * wPav * (1.0 - wPav) * 4.0); }
-  { float worn = texture(uNoise, xz * 0.017 + 0.61).g * 0.65 + nz.a * 0.35; float gap = smoothstep(0.60, 0.78, worn) * wPav; wPav *= 1.0 - gap * 0.55; wDirt = max(wDirt, gap * 0.8); }   // worn paving: earth shows through
+  { float worn = texture(uNoise, xz * 0.017 + 0.61).g * 0.65 + nz.a * 0.35; float gap = smoothstep(0.54, 0.74, worn) * wPav; wPav *= 1.0 - gap * 0.55; wDirt = max(wDirt, gap * 0.8); }   // worn paving: earth shows through
   float wRock = smoothstep(0.30, 0.52, slope + (nz.r - 0.5) * 0.16) * mix(1.0, 0.0, wPav);
   if (wLit > 0.004) lay(float(L_LITTER), wLit, xz * uTiles.w, dx * uTiles.w, dy * uTiles.w);
   if (wDirt > 0.004) lay(float(L_DIRT), wDirt, xz * uTiles.y, dx * uTiles.y, dy * uTiles.y);
   if (wShore > 0.004) lay(float(L_GRAVEL), wShore, xz * uTiles2.y, dx * uTiles2.y, dy * uTiles2.y);
-  if (wPav > 0.004) lay(float(L_COBBLE), wPav, xz * uTiles.z, dx * uTiles.z, dy * uTiles.z);
+  if (wPav > 0.004) {                                                       // a street is relaid in stretches by different hands: other sizes, other directions
+    vec2 uc = xz * uTiles.z; float pn = texture(uNoise, xz * 0.031 + 0.21).r, sc = 1.0;
+    if (pn > 0.57) { uc = mat2(0.80, 0.60, -0.60, 0.80) * uc * 1.31 + 0.37; sc = 1.31; } else if (pn < 0.34) { uc = mat2(0.94, -0.34, 0.34, 0.94) * uc * 0.83; sc = 0.83; }
+    lay(float(L_COBBLE), wPav, uc, dx * uTiles.z * sc, dy * uTiles.z * sc); }
   if (wRock > 0.004) lay(float(L_ROCK), wRock, xz * uTiles2.x + vWorld.y * 0.13, dx * uTiles2.x, dy * uTiles2.x);
   // far country: forest as paint, bare rock, snow line
   float far = 1.0 - inner;

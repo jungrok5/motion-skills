@@ -109,7 +109,8 @@ and wants a real GPU; without one (CI, containers) stills render on the CPU at 1
    landmarks, ways, water, edges, far country), what each state shows here, what must be made new, the walk, the words.
    Research what you do not know. The village example's houses belong to its brief.
 2. **Start the folder.** `node living-realm/scripts/new-realm.mjs my-realm` and write `src/10_land.js`: the height
-   function, a `woods(x, z)` function, water, roads and squares, cover maps.
+   function, a `woods(x, z)` function, water, roads and squares, cover maps — then `LR.land.roughen()` and patches of
+   rank grass, worn earth and flowers painted by noise: nothing people use is level or even (`references/LOOK.md`).
 3. **Land and light first.** With no buildings yet, render `--shot` stills from three or four spots at noon, at dusk
    and from 200 m up looking down (`cam=0,0,0,-89.9,230`): is the plan there, do ways and water read, is the skyline good?
 4. **Buildings.** Use `LR.arch.house` and the builders in `42_buildings.js` where they are right for the topic; where
@@ -159,7 +160,7 @@ and wants a real GPU; without one (CI, containers) stills render on the CPU at 1
 ## Contract
 - `LR.start({ build(LR) (may be async), weather: { tod, weather }, tour: [{ x, z, look: [x, z], pull, pitch }], views:
   [{ name, cam: [x, z, compass yaw°, pitch°, y?] }], strings, materials(LR) })`; `window.READY` when the page can draw.
-- Page options: `?q=low|medium|high|ultra`, `?scale=`, `?mat=512`, `?off=ao,gi,shadow,contact,mirror,shafts,bloom,taa,grass,fx,water,ssr,audio`,
+- Page options: `?q=low|medium|high|ultra`, `?scale=`, `?mat=512`, `?off=ao,gi,skyshare,shadow,contact,mirror,shafts,bloom,taa,grass,fx,water,ssr,audio`,
   `?tod=`, `?wx=clear|rain|snow|winter|autumn`, `?wet=1&puddle=1` (just after rain), `?tour=0`, `?auto=0`, `?at=x,z,yaw`, `?stats=1`, `?hud=0`, `?view=mats`.
 - Still mode `?render=1&w=&h=`: `window.realm = { canvas, shot({ cam, tod, weather, season, snow, wet, frames, t }) →
   info, info(), place(), filmStart(fps), filmFrame(), LR }`. `info()` reports tier, sizes, draw calls, triangles, lamps.

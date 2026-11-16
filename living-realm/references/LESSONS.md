@@ -148,6 +148,29 @@ half of it is in the wall, the rest covers it); bulbs on a string from lamp post
   darker. They were then made three times brighter and half as long again, and a still looked slashed with chalk.
   A streak wants to be a little brighter than what is behind it, thin, and many. Check rain in a still at noon and
   under a lamp, not only in the dark.
+- Outlines: a roof drawn as two planes meets the sky in ruled lines, and that reads as a model before anything else
+  does. → the roof builder lays single cap tiles along the ridge (each a little askew, one in a dozen slipped), tile
+  butts of uneven length along the eaves and across the verges, a shaggy fringe on thatch (`ragged: false` switches it
+  off); corner stones differ in length, height and how far they stand proud. About 2,400 triangles a house.
+- Indirect light again: besides the bounce, the lighting pass now asks the top-down height map of built things how
+  much sky a point can see (eight directions, two reaches) and gives a lane or the foot of a wall less of the sky's
+  light. Like the bounce it is a small number (under one grey level across an open lane) that grounds things; `medium`
+  now runs the bounce too (two rays). Neither is Lumen: say so.
+
+**"It looks too honest" — everything was plumb, level and even**
+The owner's word for what was still wrong, after light, wear and things: 정직하다 — ruled. Environment artists' notes
+on game towns say the same in other words (`LOOK.md`, "What makes a built place read as natural"): traces of use,
+uneven ground, buildings grounded in the land, repetition broken at every scale, outlines that vary.
+- The land was level wherever it had been levelled → `LR.land.roughen()` lays a gentle swell under everything (less
+  under paving), called after the ways are laid and before anything is built, so sites are still flat where they must be.
+- Paving was one pattern from end to end → the land shader relays it in stretches (a noise picks another size and
+  direction of the same cobbles), and the worn gaps where earth shows are wider.
+- Lawns were even → rank grass and weeds in patches, worn earth where feet turn, flowers in drifts (cover maps
+  painted by noise inside the village).
+- Every house stood plumb and every ridge sagged alike → each house leans its own half degree, each roof sags by its
+  own amount.
+Rule: after the plan is right, go through it with one question — what here is straight, level, even or repeated? —
+and break each at the scale it shows.
 
 **The engine**
 - `flat` is a reserved word in GLSL ES 3.00 (a local variable named `flat` failed every surface shader at once).

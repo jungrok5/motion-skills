@@ -130,7 +130,9 @@
     face(); pn(x, len, 0, h);
     if (style === 'stone' && !o.skipCorners) {                                                 // quoins: dressed blocks binding the corners
       g.mat('ashlar', { tint: o.quoinTint, soft: 0.22 }); const ch = 0.34; let k = o.quoinPhase || 0;
-      for (let y = 0; y + ch <= h + 0.01; y += ch, k++) { const l0 = k % 2 ? 0.5 : 0.3, l1 = k % 2 ? 0.3 : 0.5; g.box(l0 / 2 - 0.02, y + ch / 2, -0.06, l0, ch - 0.02, 0.2, { grain: 'x', skip: '-z' }); g.box(len - l1 / 2 + 0.02, y + ch / 2, -0.06, l1, ch - 0.02, 0.2, { grain: 'x', skip: '-z' }); }
+      // no two blocks alike: lengths, heights and how far each stands proud all wander, so the corner is not a ruled edge
+      for (let y = 0; y + ch <= h + 0.01; y += ch, k++) { const l0 = (k % 2 ? 0.5 : 0.3) + (r() - 0.5) * 0.12, l1 = (k % 2 ? 0.3 : 0.5) + (r() - 0.5) * 0.12, p0 = (r() - 0.5) * 0.035, p1 = (r() - 0.5) * 0.035, h0 = ch - 0.02 - r() * 0.035, h1 = ch - 0.02 - r() * 0.035;
+        g.box(l0 / 2 - 0.02 - r() * 0.02, y + ch / 2, -0.06 + p0, l0, h0, 0.2, { grain: 'x', skip: '-z' }); g.box(len - l1 / 2 + 0.02 + r() * 0.02, y + ch / 2, -0.06 + p1, l1, h1, 0.2, { grain: 'x', skip: '-z' }); }
     }
     if (style === 'boards') { g.mat('timber', { tint: o.timberTint, soft: 0.25 }); g.box(0, h / 2, -0.04, 0.16, h, 0.16, { grain: 'y', skip: '+y-y' }); g.box(len, h / 2, -0.04, 0.16, h, 0.16, { grain: 'y', skip: '+y-y' }); g.box(len / 2, h - 0.07, -0.03, len, 0.14, 0.14, { grain: 'x', skip: '+x-x' }); }
   };
@@ -145,7 +147,7 @@
   // o: { pitch (deg), mat, tint, eave: overhang at the eaves, verge: overhang at the gables, thick, sag, rafters, timberTint, gables: 'timber'|'stone'|'boards'|null, gableTint }
   A.gableRoof = (g, w, d, y, o = {}) => {
     const r = o.rng || LR.rng(o.seed || 9), pitch = (o.pitch || 50) * deg, tan = Math.tan(pitch), cos = Math.cos(pitch), sin = Math.sin(pitch), eave = o.eave === undefined ? 0.55 : o.eave, verge = o.verge === undefined ? 0.4 : o.verge, mat = o.mat || 'tiles';
-    const th = o.thick || (mat === 'thatch' ? 0.34 : 0.1), hd = d / 2, ridgeY = y + hd * tan, sag = o.sag === undefined ? 0.07 : o.sag, nx = Math.max(2, Math.ceil((w + verge * 2) / 1.4));
+    const th = o.thick || (mat === 'thatch' ? 0.34 : 0.1), hd = d / 2, ridgeY = y + hd * tan, sag = o.sag === undefined ? 0.05 + r() * 0.11 : o.sag, nx = Math.max(2, Math.ceil((w + verge * 2) / 1.4));
     const X = (i) => -w / 2 - verge + (i / nx) * (w + verge * 2), dip = (i) => -sag * Math.sin((i / nx) * Math.PI) * (0.6 + 0.4 * r()) - (mat === 'thatch' ? 0.03 * r() : 0);
     const dips = []; for (let i = 0; i <= nx; i++) dips.push(dip(i));
     for (const s of [1, -1]) {
@@ -171,6 +173,24 @@
     g.mat(mat === 'thatch' ? 'thatch' : mat, { tint: o.ridgeTint || o.tint });
     const rp = []; for (let i = 0; i <= nx; i++) rp.push([X(i), ridgeY + th / cos + dips[i] + (mat === 'thatch' ? 0.02 : 0.0), 0]);
     g.tube(rp, mat === 'thatch' ? 0.2 : 0.085, { sides: 6, caps: true });
+    // the outline against the sky is never a ruled line: single cap tiles along the ridge, tile ends of uneven length at
+    // the eaves and the verges (a thatch gets a shaggy fringe instead).  o.ragged: false leaves the roof clean.
+    if (o.ragged !== false) {
+      const thatch = mat === 'thatch', dipAt = (x) => { const f = LR.clamp((x - X(0)) / (X(nx) - X(0)), 0, 1) * nx, i = Math.min(nx - 1, Math.floor(f)); return dips[i] + (dips[i + 1] - dips[i]) * (f - i); };
+      if (!thatch) for (let x = X(0) + 0.2; x < X(nx) - 0.1; x += 0.36 + r() * 0.05) {                 // ridge tiles, each a little askew, one in a dozen slipped
+        const slip = r() < 0.08 ? -0.035 : 0; g.mat(mat, { tint: A.vary(o.ridgeTint || o.tint || '#808080', r, 0.07), uv: false });
+        g.at(x, ridgeY + th / cos + dipAt(x) + 0.085 + slip, (r() - 0.5) * 0.03, (r() - 0.5) * 0.09, 0, (r() - 0.5) * 0.08); g.box(0, 0, 0, 0.37, 0.07, 0.25, { skip: '-y' }); g.pop(); }
+      for (const s of [1, -1]) {
+        const ez = s * (hd + eave), ey = y - eave * tan, up = [0, cos, s * sin], us = [0, sin, -s * cos], step = thatch ? 0.16 : 0.2;
+        for (let x = X(0) + step / 2; x < X(nx); x += step * (0.9 + 0.2 * r())) {                       // eave: tile butts (or straw) of uneven length
+          const ext = thatch ? 0.04 + r() * 0.2 : r() < 0.06 ? 0.13 : 0.015 + r() * 0.06, lift = (thatch ? -0.1 : 0.012) + r() * 0.014, E = [x, ey + th / cos + dipAt(x) * 0.4, ez], k = 0.16;
+          g.mat(mat, { tint: A.vary(o.tint || '#808080', r, thatch ? 0.12 : 0.08), uv: false });
+          g.beam([E[0], E[1] + us[1] * k + up[1] * lift, E[2] + us[2] * k + up[2] * lift], [E[0], E[1] - us[1] * ext + up[1] * (lift - 0.01), E[2] - us[2] * ext + up[2] * (lift - 0.01)], step * (thatch ? 1.15 : 0.92), thatch ? 0.16 : 0.034, { up }); }
+        if (!thatch) for (const gx of [X(0), X(nx)]) { const sg = gx < 0 ? -1 : 1, L = Math.hypot(hd + eave, ridgeY - ey), nt = Math.round(L / 0.26);   // verge: tiles that overhang the gable unevenly
+          for (let i = 0; i < nt; i++) { const t = (i + 0.5) / nt, yy = ey + th / cos + (ridgeY - ey + (sg < 0 ? dips[0] : dips[nx])) * t, zz = ez * (1 - t), ext = r() < 0.05 ? 0.1 : 0.012 + r() * 0.045, lift = 0.014 + r() * 0.012;
+            g.mat(mat, { tint: A.vary(o.tint || '#808080', r, 0.08), uv: false }); g.beam([gx - sg * 0.14, yy + up[1] * lift, zz + up[2] * lift], [gx + sg * ext, yy + up[1] * lift, zz + up[2] * lift], 0.25, 0.034, { up }); } }
+      }
+    }
     // the gable walls
     if (o.gables) for (const s of [-1, 1]) {
       g.at(s * w / 2, y, s < 0 ? -hd : hd, s < 0 ? -Math.PI / 2 : Math.PI / 2);
@@ -221,7 +241,8 @@
     if (o.garden !== false) LR.land.border(o.x, o.z, w / 2 + 1.2, d / 2 + 1.5, o.yaw || 0, { width: 2.4, flowers: o.garden === undefined ? 0.5 : o.garden });
     const plaster = o.plaster || r.pick(['#ffffff', '#f6efdf', '#f2e6cf', '#efe9dc', '#ecdcc0', '#f4e4d2']), timber = o.timber || r.pick(['#ffffff', '#e2d6c8', '#d2c4b4', '#f0e2d0', '#c2b6aa']), shut = o.shutters === undefined ? r.pick(['#5f8a58', '#5f7f9e', '#a24a3c', '#8a7446', '#4f7a7c', '#b08a3c']) : o.shutters;
     const roof = Object.assign({ mat: 'tiles', pitch: 50 + r() * 6 }, o.roof || {});
-    g.at(o.x, y0, o.z, o.yaw || 0);
+    // no old house stands plumb: each leans a little its own way (o.lean: [pitch, roll] in radians, or 0 for a new one)
+    { const lr = LR.rng('lean' + (o.seed || o.x + ':' + o.z)), ln = o.lean === 0 ? [0, 0] : o.lean || [(lr() - 0.5) * 0.022, (lr() - 0.5) * 0.022]; g.at(o.x, y0, o.z, o.yaw || 0, ln[0], ln[1]); }
     // the plinth the house stands on
     g.mat(o.plinthMat || 'rubble', { tint: o.stone }); g.aoFn = (x, y) => 0.6 + 0.4 * LR.sm(-0.2, 0.5, y);
     g.box(0, pl / 2 - 0.3, 0, w + 0.14, pl + 0.6, d + 0.14, { skip: '-y', grain: 'x' }); g.aoFn = null;

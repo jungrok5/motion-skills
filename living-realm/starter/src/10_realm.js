@@ -24,6 +24,7 @@ R.build = () => {
   L.paint('litter', (x, z) => LR.sm(0.3, 0.8, R.woods(x, z)), 'max'); L.paint('grass', (x, z) => 1 - 0.5 * R.woods(x, z), 'min');
   L.paint('tall', (x, z) => 0.45 + 0.4 * LR.fbm(x * 0.05, z * 0.05, 3)); L.paint('flowers', (x, z) => LR.sm(0.6, 0.75, LR.fbm(x * 0.08 + 9, z * 0.08, 3)) * (1 - R.woods(x, z)) * 0.7);
   L.paint('fern', (x, z) => LR.sm(0.4, 0.8, R.woods(x, z)) * LR.sm(0.45, 0.6, LR.fbm(x * 0.09 + 2, z * 0.09 + 7, 3)));
+  LR.land.roughen(0.09, { radius: 60 });                                              // nothing people use is level: a swell under everything, before building
   // ④ a building from the parts: here LR.arch.house does it from a few numbers (see lib/40_arch.js for wall, window,
   //    door, gableRoof, chimney if you need a kind of building the kit does not have)
   const A = LR.arch, P = LR.props, C = R.cabin;

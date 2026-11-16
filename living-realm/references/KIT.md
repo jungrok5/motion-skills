@@ -15,6 +15,7 @@ south, `Math.PI / 2` east, `Math.PI` north, `-Math.PI / 2` west. Everything is s
 | `carve(points [[x, z, waterLevel]…], width, depth, { bank })` | a brook's bed under the given water levels, gravel on its shores |
 | `pond(x, z, r, level, depth, { wobble })` | a bowl with a rim; pair it with `LR.water.pond(level, rect)` |
 | `apron(x, z, hx, hz, yaw, { width, strength })` · `border(x, z, hx, hz, yaw, { width, flowers, weeds })` | worn earth round a building's foot · a strip outside it where weeds and flowers are left (`house()` does both; `apron: false`, `garden: false` to opt out) |
+| `roughen(amp = 0.09, { radius, scale })` | a gentle swell under everything (less under paving): call after the ways, before building |
 | `paint(name, fn(x, z, index) → 0..1, mode: 'set' | 'max' | 'min' | 'mul')` | cover maps at 0.5 m: `dirt`, `paved`, `litter` (forest floor), `grass` (density), `tall` (blade height), `flowers`, `fern`, `shore` |
 
 The mesh is built for you after `build()` returns: 1 m cells inside ±128 m, 2 m to ±256, 8 m to ±1024, 64 m to ±4096.
@@ -83,7 +84,7 @@ Whole buildings (each levels its site, adds itself to the world, registers its s
 
 **A building the kit does not have** is written the same way these are: a function in the project that makes an
 `LR.Geo`, calls `LR.land.level`, uses `A.side` + `A.wall` for walls (or `g.poly` / `g.box` directly), a roof of its
-own from `g.poly` strips (see `gableRoof` for thickness, soffit and ridge), then `LR.world.add` and `solidBox`.
+own from `g.poly` strips (see `gableRoof` (ridge tiles and uneven tile ends at eaves and verges by default; `ragged: false` for a clean edge) for thickness, soffit and ridge), then `LR.world.add` and `solidBox`.
 
 ## Props — `LR.props` (lib/45_props.js)
 `barrel crate sack haystack woodpile bench cart lampPost rock rocks log stump signpost trough tombstone scarecrow pot`

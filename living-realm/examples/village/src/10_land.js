@@ -61,6 +61,13 @@ const V = {
     L.paint('fern', (x, z, k) => Math.min(LR.land.splat[k * 4 + 3] / 255 + 0.5, LR.sm(0.35, 0.8, V.woods(x, z)) * LR.sm(0.42, 0.62, LR.fbm(x * 0.07 + 11, z * 0.07 + 5, 3))));
     LR.water.stream(V.brook3, 5.2); LR.water.stream(V.out3, 4.6);
     LR.water.pond(V.pond.level, [V.pond.x - V.pond.r - 7, V.pond.z - V.pond.r - 7, V.pond.x + V.pond.r + 7, V.pond.z + V.pond.r + 7]);
+    // nothing is level or even: a swell under everything, patches of rank grass and weeds, worn earth where feet turn
+    L.roughen(0.10, { radius: 140 });
+    { const inV = (x, z) => LR.sm(118, 96, Math.hypot(x, z)), free = (x, z) => 1 - LR.sat(L.coverAt('paved', x, z) * 3);
+      L.paint('tall', (x, z) => LR.sm(0.60, 0.74, LR.fbm(x * 0.10 + 3, z * 0.10, 3)) * 0.95 * inV(x, z), 'max');
+      L.paint('dirt', (x, z) => LR.sm(0.69, 0.79, LR.fbm(x * 0.16 + 31, z * 0.16 + 5, 3)) * 0.75 * inV(x, z) * free(x, z), 'max');
+      L.paint('grass', (x, z) => 1 - LR.sm(0.69, 0.79, LR.fbm(x * 0.16 + 31, z * 0.16 + 5, 3)) * 0.85 * inV(x, z), 'mul');
+      L.paint('flowers', (x, z) => LR.sm(0.66, 0.78, LR.fbm(x * 0.13 + 71, z * 0.13 + 9, 3)) * 0.8 * inV(x, z), 'max'); }
     LR.world.radius = 150; LR.world.baseY = V.y0 - 1.5;
     return L;
   };

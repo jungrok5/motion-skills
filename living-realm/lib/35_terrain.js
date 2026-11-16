@@ -112,6 +112,11 @@
     return { g, tris: I.length / 3 };
   };
 
+  // nothing people walk on is level: a gentle swell everywhere inside `radius` (less under paving), so the lines of a
+  // lane and the feet of walls are never ruled.  Call it after the ways are laid and before anything is built.
+  L.roughen = (amp = 0.09, o = {}) => { const n = L.n, f = o.scale || 0.21, R = o.radius || L.half, H = L.H;
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const x = -L.half + i * L.res, z = -L.half + j * L.res; if (x * x + z * z > R * R) continue;
+      const pav = L.coverAt('paved', x, z), k = 1 - 0.45 * pav; H[j * n + i] += ((LR.fbm(x * f, z * f, 3) - 0.5) * 2 * amp + (LR.fbm(x * 0.9 + 7, z * 0.9, 2) - 0.5) * amp * 0.45) * k; } };
   L.build = () => {
     const W = LR.world, n = L.n, half = L.half;
     // textures: height (R16F, the grass and the rain read it), splat and cover (RGBA8)

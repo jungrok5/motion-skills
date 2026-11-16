@@ -29,6 +29,27 @@
    grade that follows the hour (warm at dusk, blue at night, quieter in rain), cool shade against warm light.
 10. **Life.** Things against every wall (a climber, pots by the door, a planter, a barrel), strings of bulbs, smoke, flags, a turning mill, lit windows that differ from each other, fireflies, birds, falling leaves.
 
+## What makes a built place read as natural (from how game towns are made)
+Collected from environment artists' write-ups on game villages and towns (links at the end), as a checklist:
+1. **Outlines with character.** Buildings are known by silhouette first: varied heights and roof shapes, sagging
+   ridges, leaning walls, chimneys, dormers, tile edges that are not ruled. (`gableRoof` ragged edges, `house` lean.)
+2. **Traces of use.** Ruts and worn earth where people walk and turn, paving relaid in stretches, things left where
+   they were last needed. (`roughen`, worn gaps, `A.dress`.)
+3. **Grounding.** Nothing sits on the land like a model on a table: earth climbs the wall foot, weeds and climbers
+   grow against it, the ground swells. (aprons, borders, climbers, sky share.)
+4. **Repetition broken at every scale.** Colour drifts across a wall and a street; a pattern never runs unbroken for
+   long; no two neighbours are the same size or stand at the same angle.
+5. **Clusters and rests.** Small things in groups that tell what the place is for, with plain ground between them —
+   detail everywhere reads as noise.
+6. **Plants that are messy.** Uneven height, clumps, gaps, something different at the edges of ways.
+7. **A reason for the view.** Roof lines and trees enclose it; a landmark closes it.
+Sources: [The strings of environment design](https://80.lv/articles/the-strings-of-environment-design/) ·
+[Medieval village production guide](https://80.lv/articles/medieval-village-production-guide/) ·
+[Building a game-ready Nordic village scene](https://80.lv/articles/building-a-game-ready-nordic-village-scene-with-day-night-lighting-setups) ·
+[Artcraft: exterior level design (World of Warcraft)](https://www.engadget.com/2014-10-27-latest-artcraft-covers-exterior-level-design.html) ·
+[Environmental art style and asset pipelines](https://app.studyraid.com/en/read/100521/4502598/environmental-art-style-and-asset-pipelines).
+No game's footage could be watched from here; these are what their makers wrote.
+
 ## The numbers that keep it from going flat (measure a still, do not trust the eye)
 Reduce a still to 192 × 108 and take its luma and saturation. A clear day in this style reads:
 - **mean luma 0.40–0.46**, 5th percentile ≤ 0.22 (there is real shade), 95th ≤ 0.8 (nothing is chalk);
@@ -50,7 +71,8 @@ Front-lit noon is the flattest hour of any engine; open the page late in the aft
   walls are flat planes whose relief is parallax (stones stand out of their joints, but a wall's outline stays a straight
   line); indirect light is the sky, one bounce colour from the land, screen-space occlusion and — on `high` and above —
   one bounce off what is on screen (it cannot see behind the camera or behind things, and outdoors under an open sky
-  it is subtle; it tells in lanes, under eaves and by lamplight). There is no Lumen-like multi-bounce and no Nanite-like
+  it is subtle; it tells in lanes, under eaves and by lamplight), and less sky where buildings stand close (read off
+  a top-down height map). There is no Lumen-like multi-bounce and no Nanite-like
   geometry: three.js has neither. Foliage is painted sprays on cards: right at a distance, brushy at arm's length.
 - Wet paving, puddles and ice mirror what stands over them the same way on `high` and above (lamps and lit windows
   in a square after rain); below that they mirror the sky.

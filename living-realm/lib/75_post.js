@@ -204,6 +204,18 @@ float contactShadow(vec3 wp, vec3 N, float dist, float rnd){
   return 1.0;
 }
 #endif
+#if SKY_REACH > 0
+// how much of the sky the buildings round a point leave open, read off the top-down height map of built things: eight
+// directions, one or two reaches.  A lane between houses sees a strip of sky, the foot of a wall half of it, a field all.
+uniform sampler2D uTopo; uniform vec4 uTopoRect;
+float skyShare(vec3 wp, vec3 N, float rnd){
+  float a0 = rnd * 0.7854, vis = 0.0, ws = 0.0;
+  for (int i = 0; i < 8; i++) { float a = a0 + float(i) * 0.7854; vec2 d = vec2(cos(a), sin(a)); float w = max(dot(N, normalize(vec3(d.x, 0.7, d.y))), 0.0) + 0.05, tn = 0.0;
+    for (int j = 0; j < SKY_REACH; j++) { float rr = j == 0 ? 2.4 : 7.0; tn = max(tn, (textureLod(uTopo, (wp.xz + d * rr - uTopoRect.xy) * uTopoRect.zw, 0.0).r - wp.y - 0.3) / rr); }
+    vis += (1.0 - tn / sqrt(1.0 + tn * tn)) * w; ws += w; }
+  return vis / ws;
+}
+#endif
 #if MIRROR_STEPS > 0
 // wet paving and puddles mirror what stands over them: the reflected ray marched through the depth buffer, and where it
 // lands, last frame's picture.  Only smooth surfaces ask (rain, ice, glass), so a dry day pays nothing.
@@ -266,6 +278,9 @@ void main(){
     vec3 aoc = max(vec3(ao), ((ao * (2.0404 * albedo - 0.3324) + (-4.7951 * albedo + 0.6417)) * ao + (2.7552 * albedo + 0.6903)) * ao);
     vec3 irr = envAt(N, uEnvMips - 2.0) * 0.6 + envAt(normalize(N + vec3(0.0, 0.6, 0.0)), uEnvMips - 1.0) * 0.4;
     float cv = canopyAt(wp), skyVis = 1.0 - uCanopy.x * cv;                                // under the crowns only part of the sky is seen
+#if SKY_REACH > 0
+    float share = dist < 90.0 ? mix(1.0, skyShare(wp, N, rnd), 0.85 * smoothstep(90.0, 60.0, dist)) : 1.0; skyVis *= share;   // and between houses only a strip of it
+#endif
     irr = irr * skyVis + vec3(0.34, 0.42, 0.18) * uSunCol * (0.25 + max(uSunDir.y, 0.0)) * cv * 0.085;   // and what comes through the leaves is green
     col += diff * (irr * uFill + vec3(0.012, 0.014, 0.018) * (0.4 + uSunCol.g)) * aoc;
     col += diff * gi * uBounce;                                                        // light that has already met a surface (screen space)
@@ -404,7 +419,7 @@ void main(){
     R.mAOB = LR.pass(aoBlurFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tAO: v(null), uHalf: PU.uHalf }));
     if (R.giOn) { R.mGI = LR.pass(giFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tG1: PU.tG1, tHist: v(null), uHalf: PU.uHalf }), { defines: { GI_RAYS: tier.gi | 0, GI_STEPS: 8, GI_DEBUG: LR.qn('gidbg', 0) | 0 } }); R.mGIB = LR.pass(giBlurFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tGI: v(null), uHalf: PU.uHalf })); }
     R.mAir = LR.pass(airFS, Object.assign(LR.uni(FRAME + ' ' + AIRU + ' ' + SHU), S, { tDepth: PU.tDepth, uHalf: PU.uHalf, uEnvMips: PU.uEnvMips, tCanopy: PU.tCanopy, uCanopyRect: PU.uCanopyRect, uCanopy: PU.uCanopy, uShaft: PU.uShaft }), { defines: { AIR_STEPS: tier.vol, AIR_REACH: '150.0', SHAFT_STEPS: LR.off.has('shafts') ? 0 : tier.vol >= 24 ? 36 : tier.vol >= 16 ? 28 : tier.vol >= 12 ? 20 : 0 } });
-    R.mLight = LR.pass(lightFS, Object.assign(LR.uni(FRAME + ' ' + AIRU + ' ' + SHU), S, { tG0: PU.tG0, tG1: PU.tG1, tG2: PU.tG2, tDepth: PU.tDepth, tAO: PU.tAO, tAir: PU.tAir, uHalf: PU.uHalf, uEnvMips: PU.uEnvMips, tCanopy: PU.tCanopy, uCanopyRect: PU.uCanopyRect, uCanopy: PU.uCanopy, uLightPos: PU.uLightPos, uLightCol: PU.uLightCol, uLightN: PU.uLightN, uFill: PU.uFill, tGI: PU.tGI, uBounce: PU.uBounce, tHist: PU.tHistL, uHistOk: PU.uHistOk }), { defines: Object.assign({ SHADOW_TAPS: tier.shadowTaps, CONTACT_STEPS: LR.off.has('contact') ? 0 : tier.contact | 0, MIRROR_STEPS: LR.off.has('mirror') || tier.ssr < 18 ? 0 : tier.ssr >= 26 ? 20 : 14 }, LR.qn('dbg', 0) ? { DEBUG_VIEW: LR.qn('dbg', 0) } : {}) });
+    R.mLight = LR.pass(lightFS, Object.assign(LR.uni(FRAME + ' ' + AIRU + ' ' + SHU + ' uTopo uTopoRect'), S, { tG0: PU.tG0, tG1: PU.tG1, tG2: PU.tG2, tDepth: PU.tDepth, tAO: PU.tAO, tAir: PU.tAir, uHalf: PU.uHalf, uEnvMips: PU.uEnvMips, tCanopy: PU.tCanopy, uCanopyRect: PU.uCanopyRect, uCanopy: PU.uCanopy, uLightPos: PU.uLightPos, uLightCol: PU.uLightCol, uLightN: PU.uLightN, uFill: PU.uFill, tGI: PU.tGI, uBounce: PU.uBounce, tHist: PU.tHistL, uHistOk: PU.uHistOk }), { defines: Object.assign({ SHADOW_TAPS: tier.shadowTaps, SKY_REACH: LR.off.has('skyshare') ? 0 : tier.gi >= 3 ? 2 : tier.ao > 0 ? 1 : 0, CONTACT_STEPS: LR.off.has('contact') ? 0 : tier.contact | 0, MIRROR_STEPS: LR.off.has('mirror') || tier.ssr < 18 ? 0 : tier.ssr >= 26 ? 20 : 14 }, LR.qn('dbg', 0) ? { DEBUG_VIEW: LR.qn('dbg', 0) } : {}) });
     R.mTAA = LR.pass(taaFS, Object.assign(LR.uni(FRAME), { tCur: PU.tHDR, tHist: PU.tHist, tDepth: PU.tDepth, uJit: PU.uJit, uBlend: PU.uBlend }));
     R.mCopy = LR.pass(copyFS, { tSrc: v(null) });
     R.mDown = LR.pass(downFS, { tSrc: v(null), uT: v(new T.Vector4()), uFirst: v(0) });
