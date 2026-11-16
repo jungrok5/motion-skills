@@ -70,7 +70,15 @@
     { "id": "lemon", "maps": "d" },
     { "id": "food_apple_01", "maps": "d" },
     { "id": "hamburger_buns", "maps": "d" },
-    { "id": "wooden_axe", "maps": "d" }
+    { "id": "wooden_axe", "maps": "d" },
+    { "id": "modular_wooden_pier", "maps": "dn" },
+    { "id": "modular_fort_01", "maps": "dna" },
+    { "id": "large_iron_gate", "maps": "dna" },
+    { "id": "large_castle_door", "maps": "dna" },
+    { "id": "fir_sapling", "maps": "d", "heavy": true },
+    { "id": "pine_sapling_small", "maps": "d", "heavy": true },
+    { "id": "searsia_lucida", "maps": "d", "heavy": true },
+    { "id": "island_tree_02", "maps": "dn", "heavy": true }
   ],
   "atlases": [
     { "id": "island_tree_02", "map": "leaves" },
