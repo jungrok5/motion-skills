@@ -19,7 +19,7 @@
     uSunDir: v(new THREE.Vector3(0.4, 0.8, 0.3)), uSunCol: v(new THREE.Vector3(8, 7.5, 6.5)),   // the key light (sun or moon) as it reaches the ground
     uSkyAmb: v(new THREE.Vector3(0.6, 0.8, 1.1)), uGroundAmb: v(new THREE.Vector3(0.2, 0.2, 0.15)),
     uFogCol: v(new THREE.Vector3(0.6, 0.7, 0.8)), uFog: v(new THREE.Vector4(0.004, 0.06, 0, 0.35)),   // density at y0, height falloff 1/m, y0, mie g
-    uShadowMap: v(null), uShadowMat: v([new THREE.Matrix4(), new THREE.Matrix4(), new THREE.Matrix4()]),
+    uShadowMap: v(null), uShadowZ: v(null), uShadowMat: v([new THREE.Matrix4(), new THREE.Matrix4(), new THREE.Matrix4()]),
     uShadowInfo: v(new THREE.Vector4(3, 1 / 2048, 1, 1)), uShadowTexel: v(new THREE.Vector3(0.05, 0.15, 0.5)),   // count, 1/size, strength, spare · world metres per texel
     uCloud: v(new THREE.Vector4(0.45, 0.5, 0, 0)), uCloudOff: v(new THREE.Vector4()),                   // coverage, density, spare, shadow strength · scroll
   });
@@ -146,12 +146,21 @@ float applyWeather(inout vec3 albedo, inout vec3 N, inout float rough, inout flo
   return snow;
 }
 `;
-  // cascaded shadows from one atlas (cascades side by side), percentage-closer filtered on a rotated disc
+  // what every shadow pass writes beside the depth buffer: the same depth in two bytes, so the lighting pass can read
+  // how far the thing that throws a shadow is from what it falls on (a depth texture set up for comparison cannot be read)
+  LR.SHADOW_OUT = 'float zq = gl_FragCoord.z * 255.0; o = vec4(floor(zq) / 255.0, fract(zq), 0.0, 1.0);';
+  // cascaded shadows from one atlas (cascades side by side), percentage-closer filtered on a rotated disc.
+  // With PCSS defined (the lighting pass, medium tier up) the disc grows with the distance between the thing and its
+  // shadow: sharp where a post meets the ground, soft where a crown's shade lands twelve metres below it.
   C.shadow = `
 uniform highp sampler2DShadow uShadowMap; uniform mat4 uShadowMat[3]; uniform vec4 uShadowInfo; uniform vec3 uShadowTexel;
 const vec2 SH_DISC[8] = vec2[8](vec2(-0.613, 0.354), vec2(0.221, -0.722), vec2(0.787, 0.290), vec2(-0.274, -0.268), vec2(-0.090, 0.887), vec2(0.596, -0.386), vec2(-0.880, -0.343), vec2(0.176, 0.213));
 // explicit level 0: a compare with implicit derivatives inside the cascade / tap / fog-march loops makes Direct3D unroll them
 float shadowTap(vec3 sc, float ci){ return textureLod(uShadowMap, vec3((sc.x + ci) / uShadowInfo.x, sc.y, sc.z), 0.0); }
+#ifdef PCSS
+uniform highp sampler2D uShadowZ;
+float shadowZ(vec2 uv, float ci){ vec2 t = texelFetch(uShadowZ, ivec2(vec2((uv.x + ci) / uShadowInfo.x, uv.y) * vec2(textureSize(uShadowZ, 0))), 0).rg; return t.r + t.g / 255.0; }
+#endif
 // returns light visibility 0..1.  rnd: per-pixel noise 0..1.  taps: 1..8
 float shadowAt(vec3 wp, vec3 N, float NoL, float rnd, int taps){
   if (uShadowInfo.z < 0.01) return 1.0;
@@ -166,8 +175,21 @@ float shadowAt(vec3 wp, vec3 N, float NoL, float rnd, int taps){
     if (edge > 0.004 + band * rnd * (i < n - 1 ? 1.0 : 0.0) && sc.z < 1.0 && sc.z > 0.0) {
       float ang = rnd * TAU, ca = cos(ang), sa = sin(ang); mat2 R = mat2(ca, sa, -sa, ca);
       float rad = (i == 0 ? 1.9 : 1.5) * uShadowInfo.y; float s = 0.0;
+#ifdef PCSS
+      // a wide disc on a surface that leans from the light would find the surface itself in its own way: each tap is
+      // compared at the depth the surface has there (its plane, from the normal), by at most 30 cm
+      mat4 SM = uShadowMat[i]; vec3 gx = vec3(SM[0][0], SM[1][0], SM[2][0]), gy = vec3(SM[0][1], SM[1][1], SM[2][1]), gz = vec3(SM[0][2], SM[1][2], SM[2][2]);
+      vec3 du = cross(gy, N), dv = cross(gx, N); float ku = dot(gx, du), kv = dot(gy, dv); vec2 dzd = vec2(abs(ku) > 1e-12 ? dot(gz, du) / ku : 0.0, abs(kv) > 1e-12 ? dot(gz, dv) / kv : 0.0); const float ZL = 0.3 / 840.0;
+      { float lim = min(PCSS_WIDTH / tex, 30.0), zs = 0.0, nb = 0.0;                        // the widest disc, in texels of this cascade
+        if (lim > 2.2) {
+          for (int k = 0; k < 6; k++) { vec2 o = R * SH_DISC[k] * lim * uShadowInfo.y; float zb = shadowZ(clamp(sc.xy + o, 0.002, 0.998), float(i)); if (zb < sc.z + clamp(dot(o, dzd), -ZL, ZL) - 6e-5) { zs += zb; nb += 1.0; } }
+          if (nb > 0.5) rad = clamp((sc.z - zs / nb) * 840.0 * PCSS_ANGLE / tex, 1.5, lim) * uShadowInfo.y; } }
+      for (int k = 0; k < PCSS_TAPS; k++) { float fk = float(k) + 0.5, rr = sqrt(fk / float(PCSS_TAPS)), th = fk * 2.39996; vec2 o = R * vec2(cos(th), sin(th)) * rr * rad; s += shadowTap(vec3(clamp(sc.xy + o, 0.002, 0.998), sc.z + clamp(dot(o, dzd), -ZL, ZL)), float(i)); }
+      vis = s / float(PCSS_TAPS);
+#else
       for (int k = 0; k < 8; k++) { if (k >= taps) break; vec2 o = R * SH_DISC[k] * rad; s += shadowTap(vec3(clamp(sc.xy + o, 0.002, 0.998), sc.z), float(i)); }
       vis = s / float(taps);
+#endif
       if (i == n - 1) vis = mix(vis, 1.0, smoothstep(0.08, 0.0, edge));
       break;
     }

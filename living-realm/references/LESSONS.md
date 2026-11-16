@@ -212,3 +212,16 @@ renderer's light. Say this when asked; do not let "no GPU here" stand in for it.
   work: each owned named files only and was forbidden the rest; each had to render stills and judge them against the
   reference frames; anything they wanted changed in a shared file came back as a note, not an edit (that is how the
   shadow-atlas limit and the turf tiling were found).
+
+**A page that works on the machine it was built on has not been run on a PC.** The owner opened the live pages on a
+Windows PC: one realm's canvas went white with the browser's broken-picture mark (the WebGL context was lost while the
+page started) and the sister skill's page could not make a context at all ("Error creating WebGL context", printed as a stack
+trace). Nothing here could reproduce it — the pages had only ever run on a CPU rasteriser and on phones — so the cause
+is not proven; the likely ones are a graphics process killed while one long shader compiled (Direct3D's compiler is
+slow on long shaders and the browser's watchdog does not wait), or a first frame too heavy for the card the tier was
+guessed for. After a few such crashes the browser stops handing out contexts until it is restarted. *Fix:* every
+program is prepared in the background before the first frame (`LR.warm`, `KHR_parallel_shader_compile`); small and old
+graphics chips start on `medium`, and a guessed tier in the middle of its resolution range; a lost context reopens the
+page once in safe mode (`?safe=1`: lowest tier, optional passes off — the smallest shaders); and when there is no
+context a panel says so in the realm's language, with what to do, the card's name and the ways on. *Rule:* a failure
+to start is a screen the visitor reads — never a stack trace, never a blank canvas.

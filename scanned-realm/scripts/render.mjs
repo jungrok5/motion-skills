@@ -81,7 +81,7 @@ if (process.argv[1] && resolve(process.argv[1]) === new URL(import.meta.url).pat
     } else {
       const shots = has('views') ? base.views.map((v) => ({ name: v.name, o: { cam: v.cam, tod: v.tod, weather: v.weather } })) : all('shot').map((s, i) => ({ name: opt('name', 'shot') + (all('shot').length > 1 ? '-' + (i + 1) : ''), o: parseShot(s) }));
       if (!shots.length) throw new Error('nothing to render: --shot "cam=…", --views, --sheet, --tour or --film');
-      for (const s of shots) { const a = Date.now(), r = await shoot(page, Object.assign({ frames }, s.o)); const f = join(outDir, s.name + '.' + ext); save(f, r.url); console.log(f, `${((Date.now() - a) / 1000).toFixed(1)} s`, JSON.stringify({ calls: r.info.calls, allCalls: r.info.allCalls, tris: r.info.tris, lights: r.info.lights, tod: r.info.tod, wx: r.info.wx })); }
+      for (const s of shots) { const a = Date.now(), r = await shoot(page, Object.assign({ frames }, s.o)); const f = join(outDir, s.name + '.' + ext); save(f, r.url); console.log(f, `${((Date.now() - a) / 1000).toFixed(1)} s`, JSON.stringify({ calls: r.info.calls, allCalls: r.info.allCalls, tris: r.info.tris, lights: r.info.lights, tod: r.info.tod, wx: r.info.wx , scans: r.info.scans && r.info.scans.inst ? `${r.info.scans.inst} copies ${(r.info.scans.tris / 1e6).toFixed(2)} M tris ${r.info.scans.calls} calls` : undefined })); }
     }
   } finally { await browser.close(); }
 }

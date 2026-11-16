@@ -8,7 +8,7 @@ A collection of Claude Code skills for making motion graphics. Each top-level fo
   `references/3D-MODELS.md` first — free Polyfork models, commercial use OK, but never commit their `.mjs` source,
   and committed GLBs need their CC BY credit line. Skills that say code-only (`machine-sim`, `swarm-world`,
   `aesthetics-film`, `photoreal-film`, `ink-word-world`, `dragon-realm`, `living-realm`) stay code-only.
-- `scanned-realm` draws its surfaces and small objects from Poly Haven CC0 scans, listed per realm in
+- `scanned-realm` draws its surfaces, objects, ground plants and tree leaves from Poly Haven CC0 scans, listed per realm in
   `assets.json` and fetched with `scripts/fetch-assets.mjs`. Never commit a realm's `assets/` and never put scans in
   `docs/`; its site demos are built with `build.mjs --cdn` (the page reads the scans from Poly Haven's server and shows the credit).
 - A skill (or piece) whose bodies move — people, animals, creatures: read `references/MOTION-QUALITY.md` and take the

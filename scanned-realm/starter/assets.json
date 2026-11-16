@@ -8,12 +8,18 @@
     "forest_ground_04",
     "brown_mud_dry",
     "river_small_rocks",
-    "pine_bark",
+    { "id": "pine_bark", "maps": "dna" },
     "rock_pitted_mossy"
   ],
   "models": [
     "stone_fire_pit",
     "tree_stump_01",
-    "wine_barrel_01"
+    "wine_barrel_01",
+    "boulder_01",
+    { "id": "fern_02", "maps": "d" }
+  ],
+  "atlases": [
+    { "id": "fir_tree_01", "map": "twig" },
+    { "id": "pine_tree_01", "map": "twig" }
   ]
 }

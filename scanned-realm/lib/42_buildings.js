@@ -222,7 +222,15 @@
       g.mat('cloth', { tint: cols[i % 2], flags: F.SWAY, weight: 0.5, uv: false }); g.poly([[x0, 2.36, d / 2 + 0.45], [x1, 2.36, d / 2 + 0.45], [x1, 2.12, d / 2 + 0.47], [(x0 + x1) / 2, 2.02, d / 2 + 0.47], [x0, 2.12, d / 2 + 0.47]], { two: true, hint: [0, 0, 1] }); }
     // goods on the counter
     const goods = o.goods || r.pick(['fruit', 'bread', 'cloth', 'pots', 'greens']);
+    // scanned goods where a kit of them is loaded — LR.models.set('goods:fruit', [{ id, s: [lo, hi], n: how many a tray, big: true (stands alone, no tray) }, …])
+    const kit = LR.models && LR.models.kit && LR.models.kit['goods:' + goods], cy = Math.cos(o.yaw || 0), sy = Math.sin(o.yaw || 0), toW = (lx, lz) => [o.x + lx * cy + lz * sy, o.z - lx * sy + lz * cy];
     for (let i = 0; i < 5; i++) { const gx = -w / 2 + 0.35 + (i / 4) * (w - 0.7), gz = d / 2 - 0.35 + (r() - 0.5) * 0.2;
+      if (kit && kit.length) { const k = kit[(i + r.int(kit.length)) % kit.length], top = y0 + 0.895;
+        if (k.big) { const p = toW(gx, gz); LR.models.place(k.id, p[0], p[1], { y: top, scale: k.s[0] + (k.s[1] - k.s[0]) * r(), yaw: r() * 6.28, solid: false }); continue; }
+        g.mat('planks'); g.box(gx, 0.93, gz, 0.46, 0.07, 0.4);
+        for (let q = 0, n = k.n || 7; q < n; q++) { const row = q < n * 0.7 ? 0 : 1, a = r() * 6.28, rad = row ? 0.07 * r() : 0.05 + 0.13 * Math.sqrt(r()), p = toW(gx + Math.cos(a) * rad * 1.15, gz + Math.sin(a) * rad * 0.95), sc = k.s[0] + (k.s[1] - k.s[0]) * r();
+          LR.models.place(k.id, p[0], p[1], { y: top + 0.07 + row * (k.rise || 0.05), scale: sc, yaw: r() * 6.28, pitch: (r() - 0.5) * (k.tumble === undefined ? 1.2 : k.tumble), roll: (r() - 0.5) * (k.tumble === undefined ? 1.2 : k.tumble), solid: false }); }
+        continue; }
       if (goods === 'cloth') { g.mat('cloth', { tint: r.pick(['#a4423a', '#3f5f8a', '#c8a23a', '#5a7a4a', '#7a4a7a', '#e8dcc0']) }); g.box(gx, 0.96 + r() * 0.05, gz, 0.42, 0.12 + r() * 0.1, 0.5, { soft: 0.4 }); continue; }
       if (goods === 'pots') { g.mat('tiles', { tint: r.pick(['#f0d8c0', '#c8a890', '#e8e0d0']) }); const s = 0.8 + r() * 0.5; g.lathe(gx, gz, [[0.07 * s, 0.9], [0.14 * s, 0.98], [0.15 * s, 1.1], [0.08 * s, 1.2], [0.1 * s, 1.24]], { sides: 9 }); continue; }
       g.mat('planks'); g.box(gx, 0.96, gz, 0.46, 0.14, 0.4);
@@ -250,5 +258,21 @@
     for (let i = 0; i < ns; i++) { const sd = sides[1 + r.int(3)], t = 0.15 + r() * 0.7, kind = r.pick(['barrel', 'barrel', 'crate', 'sack', 'woodpile']), p = sd[1](t, kind === 'woodpile' ? 0.42 : 0.5); if (!free(p[0], p[1])) continue;
       if (kind === 'barrel') { P.barrel(p[0], p[1]); if (r() < 0.4) { const q = sd[1](t + 0.9 / (sd[2] % Math.PI === 0 ? w : d), 0.5); P.barrel(q[0], q[1]); } }
       else if (kind === 'crate') P.crate(p[0], p[1], { yaw: yaw + sd[2] + (r() - 0.5) * 0.5 }); else if (kind === 'sack') P.sack(p[0], p[1], { yaw: r() * 6 }); else P.woodpile(p[0], p[1], { yaw: yaw + sd[2], len: 1.4 + r() * 0.8, rows: 3 }); }
+    // what stands about a door where scans of such things are loaded — LR.models.set('yard', [{ id, s: [lo, hi], sink, lean, spin: false }, …]):
+    // a bucket, a watering can, a basket, a churn, a spade stood in the earth
+    const yard = LR.models && LR.models.kit && LR.models.kit.yard;
+    if (yard && yard.length && o.yard !== false) { const ry = LR.rng('yard' + (o.seed || h.w + ':' + h.d)), ny = o.yard === undefined ? 1 + ry.int(2) : o.yard;
+      for (let i = 0; i < ny; i++) { const sd = sides[ry.int(4)], t = 0.1 + ry() * 0.8, k = yard[ry.int(yard.length)], p = sd[1](t, 0.34 + ry() * 0.2), sc = k.s[0] + (k.s[1] - k.s[0]) * ry(), yw = k.spin === false ? yaw + sd[2] : ry() * 6.28;
+        if (!free(p[0], p[1]) || (h.door && Math.hypot(p[0] - h.door[0], p[1] - h.door[1]) < 1.2)) continue;
+        LR.models.place(k.id, p[0], p[1], { scale: sc, yaw: yw, pitch: k.lean ? -k.lean : 0, sink: (k.sink || 0) * sc, solid: k.solid === undefined ? false : k.solid }); } }
+    // at the foot of the walls: nettles, docks, dandelions — where scans of them are loaded (LR.models.kit.weeds = [{ id, s: [lo, hi] }, …]).
+    // They gather in stretches (a noise along the wall), thin out on paving and keep clear of the door.
+    const kit = LR.models && LR.models.kit && LR.models.kit.weeds;
+    if (kit && kit.length && o.weeds !== false) { const rw = LR.rng('weeds' + (o.seed || h.w + ':' + h.d)), dense = o.weeds === undefined ? 1 : o.weeds;
+      for (const sd of sides) { const len = sd[2] % Math.PI === 0 ? w : d;
+        for (let t = 0.03; t < 0.98; t += 0.3 / len) { const out = 0.1 + rw() * rw() * 0.55, p = sd[1](t, out), pick = rw(), sc = rw(), yw = rw() * 6.28, roll = rw();
+          const patch = LR.sm(0.42, 0.6, LR.fbm(p[0] * 0.33 + 7, p[1] * 0.33, 2)), paved = LR.land.coverAt('paved', p[0], p[1]) > 0.5 ? 0.3 : 1;
+          if (roll > 0.75 * patch * paved * dense || !free(p[0], p[1]) || (h.door && Math.hypot(p[0] - h.door[0], p[1] - h.door[1]) < 1.4)) continue;
+          const k = kit[Math.floor(pick * kit.length)]; LR.models.place(k.id, p[0], p[1], { scale: k.s[0] + (k.s[1] - k.s[0]) * sc, yaw: yw }); } } }
   };
 }

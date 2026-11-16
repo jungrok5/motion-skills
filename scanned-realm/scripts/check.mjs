@@ -43,13 +43,21 @@ const rules = await page.evaluate(() => {
   if (!W.places.length) warn.push('no named places');
   // the scans: every surface and object the realm names must have arrived (a missing one is drawn from its generated
   // recipe, which is a different picture), and the copies of scanned objects must fit the triangle budget
-  { const M = LR.mat, MD = LR.models, want = M.defs.filter((d) => d.photo && !d.name.startsWith('model:')).length, got = (M.scanned || 0) - M.defs.filter((d) => d.photo && d.name.startsWith('model:') && !(M.missed || []).includes(d.name)).length;
+  { const M = LR.mat, MD = LR.models, want = M.defs.filter((d) => d.photo).length, got = M.scanned || 0;
     if (!LR.ASSETS) warn.push('no assets/manifest.json — the place is drawn from its generated recipes and props only: run fetch-assets.mjs (assets.json names the scans), then build again');
     if (M.missed && M.missed.length) fail.push(`scans that did not arrive: ${M.missed.join(', ')} — run fetch-assets.mjs again (or the page was opened from file:// in a browser)`);
     if (MD.failed.length) fail.push(`scanned models that did not load: ${MD.failed.join(', ')}`);
-    if (MD.lost.length) warn.push(`scanned objects placed by name that did not fit the triangle budget of ${(MD.budget / 1e6).toFixed(1)} M on this tier: ${MD.lost.join(', ')} — fewer copies of the stand-ins, a higher { min } for rocks, or a lighter model`);
-    if (MD.over) info.push(`${MD.over} stand-in copies are drawn generated on this tier (stand-ins stop at ${Math.round(MD.share * 100)} % of ${(MD.budget / 1e6).toFixed(1)} M triangles)`);
-    if (LR.ASSETS) info.push(`scans: ${got} of ${want} surfaces · ${Object.keys(MD.by).length} objects in ${MD.placed} copies, ${(MD.used / 1e6).toFixed(2)} M of ${((MD.budget || 0) / 1e6).toFixed(1)} M triangles` + (MD.placed ? ' — ' + Object.entries(MD.by).sort((a, b) => b[1][1] - a[1][1]).map(([k, v]) => `${k} ×${v[0]} ${Math.round(v[1] / 1000)}k`).join(', ') : '')); }
+    { const flat = MD.live.filter((d) => !d.plant && d.tris > 12000 && d.nl < 3).map((d) => `${d.id} (${Math.round(d.tris / 1000)}k triangles, ${d.nl} level${d.nl > 1 ? 's' : ''})`); if (flat.length) warn.push(`dense scans that could not be simplified — every copy is drawn whole: ${flat.join(', ')}`); }
+    // … and must have something in them: a layer or a model's map that baked empty draws black (seen when a bake's
+    // sources were freed before a software renderer had carried the bake out) — read the smallest copy of each
+    { const R = LR.gpu.renderer, gl = R.getContext(), fb = gl.createFramebuffer(), px = new Uint8Array(4), empty = []; gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+      const top = (size) => Math.floor(Math.log2(size)), blank = () => { if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) return false; px.fill(1); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); return px[0] + px[1] + px[2] + px[3] === 0; };
+      if (M.A) { const t = R.properties.get(M.A.texture).__webglTexture; M.defs.forEach((d, i) => { gl.framebufferTextureLayer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, t, top(M.size), i); if (blank()) empty.push('material ' + d.name); }); }
+      for (const k in MD.mats) { const m = MD.mats[k], t = R.properties.get(m.tex.A).__webglTexture; gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, top(m.tex.size)); if (blank()) empty.push('model ' + k); }
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.deleteFramebuffer(fb); R.resetState();
+      if (empty.length) fail.push(`baked empty (drawn black): ${empty.slice(0, 12).join(', ')}${empty.length > 12 ? ', …' : ''}`); }
+    if (LR.ASSETS) { const by = Object.entries(MD.by).sort((a, b) => b[1][0] - a[1][0]);
+      info.push(`scans: ${got} of ${want} surfaces · ${by.length} models in ${MD.placed} copies` + (by.length ? ' — ' + by.slice(0, 10).map(([k, v]) => `${k} ×${v[0]}`).join(', ') + (by.length > 10 ? ', …' : '') : '')); } }
   info.push(`${LR.mat.defs.length} materials · ${W.solids.length} solids · ${W.lights.length} lights · ${W.floors.length} decks · ${W.places.length} places · built ${(W.stats.tris / 1e6).toFixed(2)} M triangles in ${W.stats.meshes} meshes`);
   return { fail, warn, info, hits: W.tourHits || [], views: (LR.cfg.views || []).map((v) => ({ name: v.name, cam: v.cam })), gpu: window.realm.info().gpu, tier: window.realm.info().tier };
 });
@@ -102,7 +110,7 @@ if (!rules.views.length) warn.push('no views: LR.start({ views: [{ name, cam }] 
 for (let i = 0; i < nv; i++) {
   const v = rules.views[i], S = {};
   for (const [sn, st] of STATES) { const r = await shoot(page, Object.assign({ cam: v.cam, frames: 6 }, st), 'image/jpeg'); S[sn] = Object.assign(await stat(r.url), { info: r.info }); const x = S[sn];
-    console.log(`  ${(v.name + ' · ' + sn).padEnd(22)} light ${x.mean.toFixed(2)} ± ${x.sd.toFixed(2)}  sat ${x.sat.toFixed(2)}  blown ${(x.blown * 100).toFixed(1)}%  black ${(x.murk * 100).toFixed(0)}%  ${r.info.calls} calls  ${(r.info.tris / 1e6).toFixed(2)} M tris`);
+    console.log(`  ${(v.name + ' · ' + sn).padEnd(22)} light ${x.mean.toFixed(2)} ± ${x.sd.toFixed(2)}  sat ${x.sat.toFixed(2)}  blown ${(x.blown * 100).toFixed(1)}%  black ${(x.murk * 100).toFixed(0)}%  ${r.info.calls} calls  ${(r.info.tris / 1e6).toFixed(2)} M tris` + (r.info.scans && r.info.scans.inst ? `  scans ${r.info.scans.inst} × ${(r.info.scans.tris / 1e6).toFixed(2)} M` : ''));
     if (x.sd < 0.02) fail.push(`${v.name} · ${sn}: a blank picture`); else if (x.sd < 0.045) warn.push(`${v.name} · ${sn}: flat (light ± ${x.sd.toFixed(2)}) — fog too thick, or nothing lit against shade`);
     // flat is a number: a clear day that is bright all over, or grey all over, has lost its shade or its air (references/LOOK.md)
     if (sn === 'day' && x.mean > 0.56) warn.push(`${v.name} · day: washed out (mean light ${x.mean.toFixed(2)}, the look wants 0.40–0.46) — the sky fills the shade or the air is thick: LR.wx.key, fill, the look's fog`);
