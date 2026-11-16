@@ -157,8 +157,28 @@ uniform vec4 uTiles;                                                         // 
 uniform vec4 uTiles2;                                                        // 1/tile of rock, gravel
 vec3 gAlb; vec3 gNt; float gRough, gAo, gH, gPor, gPud;
 float hb(float w, float hNew, float hOld){ return sat((w - 0.5) * 2.3 + (hNew - hOld) * 1.1 * (1.0 - abs(w * 2.0 - 1.0)) + 0.5); }
+#ifdef NOTILE
+// A tile laid edge to edge shows its repeat from any height: the same dark stone every two metres.  So each layer is
+// read twice, each copy moved by an offset that changes from patch to patch of a slow noise (no two patches alike, and
+// the noise itself never repeats), and the two are joined along whichever stands taller — the join runs round stones
+// and clods, not through them.  Offsets only: the grain keeps its direction and its normals stay true.
+float ntPick(vec2 p, float layer, out vec2 oa, out vec2 ob){
+  p += layer * 13.7; float k = vnoise(p) * 0.62 + vnoise(p * 2.7 + 5.3) * 0.38, l = k * 7.0, i = floor(l);
+  oa = hash22(vec2(i, layer + 0.5)); ob = hash22(vec2(i + 1.0, layer + 0.5)); return l - i; }
+void ntRead(float layer, vec2 uv, vec2 dx, vec2 dy, vec2 p, out vec4 a, out vec4 b){
+  vec2 oa, ob; float f = ntPick(p, layer, oa, ob);
+  a = textureGrad(uMatA, vec3(uv + oa, layer), dx, dy); vec4 a2 = textureGrad(uMatA, vec3(uv + ob, layer), dx, dy);
+  float m = smoothstep(0.36, 0.64, f + (a2.a - a.a) * 0.35);
+  if (m < 0.002) b = textureGrad(uMatB, vec3(uv + oa, layer), dx, dy); else if (m > 0.998) b = textureGrad(uMatB, vec3(uv + ob, layer), dx, dy);
+  else b = mix(textureGrad(uMatB, vec3(uv + oa, layer), dx, dy), textureGrad(uMatB, vec3(uv + ob, layer), dx, dy), m);
+  a = mix(a, a2, m); }
+#endif
 void lay(float layer, float w, vec2 uv, vec2 dx, vec2 dy){
+#ifdef NOTILE
+  vec4 a, b; ntRead(layer, uv, dx, dy, vWorld.xz * NT_PATCH, a, b);
+#else
   vec4 a = textureGrad(uMatA, vec3(uv, layer), dx, dy), b = textureGrad(uMatB, vec3(uv, layer), dx, dy);
+#endif
   float m = hb(w, a.a, gH); vec4 P = uMatP[int(layer)];
   gAlb = mix(gAlb, a.rgb * a.rgb, m); gNt = mix(gNt, nrmDec(b.xy), m); gRough = mix(gRough, b.z, m); gAo = mix(gAo, b.w, m); gH = mix(gH, a.a, m); gPor = mix(gPor, P.x, m); gPud = mix(gPud, P.y, m);
 }
@@ -169,8 +189,15 @@ void main(){
   vec4 nz = texture(uNoise, xz * 0.031);
   float slope = 1.0 - Ng.y;
   // turf: the grass colour law, with the texture as detail around it
-  vec2 uvT = xz * uTiles.x; vec4 ta = texture(uMatA, vec3(uvT, float(L_TURF))), tb = texture(uMatB, vec3(uvT, float(L_TURF)));
+  vec2 uvT = xz * uTiles.x;
+#ifdef NOTILE
+  vec4 ta, tb, ta2; ntRead(float(L_TURF), uvT, dx * uTiles.x, dy * uTiles.x, xz * NT_PATCH, ta, tb);
+  { vec2 oa, ob, u2 = uvT * 0.19 + 0.37, gx = dx * uTiles.x * 0.19, gy = dy * uTiles.x * 0.19; float f = ntPick(xz * NT_PATCH * 0.23 + 31.0, float(L_TURF), oa, ob);       // the far copy: wider patches
+    ta2 = mix(textureGrad(uMatA, vec3(u2 + oa, float(L_TURF)), gx, gy), textureGrad(uMatA, vec3(u2 + ob, float(L_TURF)), gx, gy), smoothstep(0.3, 0.7, f)); }
+#else
+  vec4 ta = texture(uMatA, vec3(uvT, float(L_TURF))), tb = texture(uMatB, vec3(uvT, float(L_TURF)));
   vec4 ta2 = texture(uMatA, vec3(uvT * 0.19 + 0.37, float(L_TURF)));
+#endif
   vec3 detail = ta.rgb * ta.rgb / vec3(0.085, 0.150, 0.026); detail = mix(detail, ta2.rgb * ta2.rgb / vec3(0.085, 0.150, 0.026), smoothstep(12.0, 60.0, dist));
   float grassy = mix(1.0, sp.a, inner);
   vec3 gcol = grassTint(xz, cv.g) * clamp(detail, 0.35, 2.2);
@@ -222,6 +249,8 @@ void main(){
   R.matTerrain = () => {
     if (cache.land) return cache.land; const M = LR.mat, Ld = LR.land;
     const d = Object.assign(defs(), { L_TURF: M.L('turf'), L_DIRT: M.L('dirt'), L_COBBLE: M.L('cobble'), L_LITTER: M.L('litter'), L_ROCK: M.L('rock'), L_GRAVEL: M.L('gravel') });
+    // high and ultra read each ground layer twice so its tile never shows a repeat (?off=notile to compare); NT_PATCH: patches per metre
+    if ((LR.gpu.tier.name === 'high' || LR.gpu.tier.name === 'ultra') && !LR.off.has('notile')) { d.NOTILE = 1; d.NT_PATCH = (LR.qn('ntpatch', 0.3)).toFixed(4); }
     return (cache.land = LR.material({ vertexShader: landVS, fragmentShader: landFS, defines: d,
       uniforms: Object.assign(LR.uni(FRAME + ' uMatA uMatB uTopo uTopoRect'), matParams(), Ld.U, {
         uTiles: { value: new T.Vector4(1 / M.tile('turf'), 1 / M.tile('dirt'), 1 / M.tile('cobble'), 1 / M.tile('litter')) }, uTiles2: { value: new T.Vector4(1 / M.tile('rock'), 1 / M.tile('gravel'), LR.off.has('grass') ? 0 : LR.gpu.tier.grassDist, 0) } }) }));

@@ -10,8 +10,8 @@
     hint: 'W A S D or arrow keys to walk · Q E or ← → to turn · drag or click to look · Shift to run',
     hintTouch: 'left thumb walks · right thumb looks',
     scans: 'Scanned surfaces and objects: Poly Haven · CC0',
-    help: [['W A S D / ↑ ↓', 'walk'], ['← → / Q E', 'turn'], ['mouse', 'look (click to capture, Esc to release)'], ['Shift', 'run'], ['Space', 'hop'], ['gamepad', 'left stick walks · right stick looks · trigger runs · A hops'], ['1 2 3 4', 'dawn · day · dusk · night'], ['5 6 7', 'clear · rain · winter'], ['T', 'automatic round'], ['C', 'tour walk'], ['G', 'quality'], ['M', 'sound'], ['P', 'numbers'], ['H', 'hide the panels'], ['F', 'full screen']],
-    quality: 'Quality', tiers: { auto: 'auto', low: 'low', medium: 'medium', high: 'high', ultra: 'ultra' }, sound: 'Sound', full: 'Full screen', keys: 'Keys', taking: 'You have the walk — press C for the tour',
+    help: [['W A S D / ↑ ↓', 'walk'], ['← → / Q E', 'turn'], ['mouse', 'look (click to capture, Esc to release)'], ['Shift', 'run'], ['Space', 'hop'], ['gamepad', 'left stick walks · right stick looks · trigger runs · A hops'], ['1 2 3 4', 'dawn · day · dusk · night'], ['5 6 7', 'clear · rain · winter'], ['T', 'automatic round'], ['C', 'tour walk'], ['L', 'the lens while you walk: depth of field (the tour always has it)'], ['G', 'quality'], ['M', 'sound'], ['P', 'numbers'], ['H', 'hide the panels'], ['F', 'full screen']],
+    quality: 'Quality', tiers: { auto: 'auto', low: 'low', medium: 'medium', high: 'high', ultra: 'ultra' }, sound: 'Sound', full: 'Full screen', keys: 'Keys', taking: 'You have the walk — press C for the tour', lensOn: 'Lens on: what you are not looking at goes soft — L again to switch it off', lensOff: 'Lens off', lensNone: 'This quality has no lens — raise it with G',
   };
   const ICON = {
     dawn: '<path d="M3 17h18M6 13a6 6 0 0 1 12 0M12 3v3M4.5 7.5l2 2M19.5 7.5l-2 2"/>', day: '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
@@ -78,13 +78,14 @@
       else if (k === 'walk') { if (LR.player.touring) LR.player.stopTour(); else LR.player.startTour(); }
       else if (k === 'gear') { const order = ['auto', 'low', 'medium', 'high', 'ultra'], cur = LR.gpu.auto ? 'auto' : LR.gpu.tierName, nx = order[(order.indexOf(cur) + 1) % order.length]; H.reload(nx === 'auto' ? null : nx); }
       else if (k === 'sound') { if (LR.audio) { if (!LR.audio.ready) { LR.audio.init(); LR.audio.mute(false); } else LR.audio.mute(!LR.audio.muted); } sync(); }
+      else if (k === 'lens') { const z = LR.render.lens; if (!z.on) H.hint(t.lensNone, 4); else { z.walk = z.walk ? 0 : 1; H.hint(z.walk ? t.lensOn : t.lensOff, 4); } }
       else if (k === 'keys') E.help.classList.toggle('on');
       else if (k === 'full') { const d = document; if (d.fullscreenElement) d.exitFullscreen(); else if (d.documentElement.requestFullscreen) d.documentElement.requestFullscreen().catch(() => {}); }
       sync();
     };
     H.act = act;
     root.addEventListener('click', (e) => { const b = e.target.closest('button[data-k]'); if (b) { act(b.dataset.k); b.blur(); document.getElementById('view').focus(); } });
-    const KEY = { Digit1: 'dawn', Digit2: 'day', Digit3: 'dusk', Digit4: 'night', Digit5: 'clear', Digit6: 'rain', Digit7: 'snow', KeyT: 'auto', KeyC: 'walk', KeyG: 'gear', KeyM: 'sound', KeyF: 'full' };
+    const KEY = { Digit1: 'dawn', Digit2: 'day', Digit3: 'dusk', Digit4: 'night', Digit5: 'clear', Digit6: 'rain', Digit7: 'snow', KeyT: 'auto', KeyC: 'walk', KeyL: 'lens', KeyG: 'gear', KeyM: 'sound', KeyF: 'full' };
     LR.on('key', (code) => { if (KEY[code]) act(KEY[code]); else if (code === 'KeyH') { H.show = !H.show; root.classList.toggle('off', !H.show); } else if (code === 'KeyP') E.num.style.display = E.num.style.display === 'none' ? '' : 'none'; else if (code === 'Slash' || code === 'F1') E.help.classList.toggle('on'); else if (code === 'Escape') E.help.classList.remove('on'); });
     const sync = () => { const q = (k) => E.bar.querySelector(`[data-k="${k}"]`), w = wx.want.weather;
       q('clear').setAttribute('aria-pressed', w === 'clear' || w === 'winter' || w === 'autumn'); q('rain').setAttribute('aria-pressed', w === 'rain'); q('snow').setAttribute('aria-pressed', w === 'snow');

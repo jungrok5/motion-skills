@@ -7,6 +7,7 @@
 //   node <skill>/scripts/render.mjs <realm-dir> --film [--seconds 60] [--fps 30]   → out/film.mp4: the tour with the automatic round
 //   node <skill>/scripts/render.mjs <realm-dir> --mats                     → out/mats.jpg: every material layer, scan or recipe, under a raking light
 // A shot is `key=value;…`: cam=x,z,yaw°,pitch°[,y]  tod=hours  wx=clear|rain|snow|winter|autumn  season=0..1  snow=0..1  wet=0..1  frames=n  t=seconds
+//   up=metres (the eye that far above the ground: a look from above)  dof=amount (the lens: 1 is the tour's, 0 none)  focus=metres (else the middle of the picture)
 // Options: --state "tod=17;wx=rain" (for --tour)  --size 1280x720  --q "q=high&mat=1024" (page options)  --frames 12  --out out  --name <file stem>  --no-build  --png
 // The page is opened from disk with file access allowed, so it can read its scans from assets/ (--q "scan=0" to leave them out).
 // Without a GPU WebGL runs on the CPU (SwiftShader): expect 1–4 minutes per 720p still on `high`.  On a machine with a GPU add --gpu.

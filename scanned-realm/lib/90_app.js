@@ -11,7 +11,7 @@
       // a page shown inside another page (a samples site's frame), on a phone, or with data saving on does not pull tens
       // of megabytes of scans unasked: it waits for a press, and says how much.  Elsewhere it starts at once.  ?go=1 skips the wait.
       if (!LR.RENDER && LR.ASSETS && LR.q('scan') !== '0' && !LR.q('go') && (window.self !== window.top || G.mobile || (navigator.connection && navigator.connection.saveData))) await new Promise((go) => {
-        const t = Object.assign({ gate: 'Start — the scans arrive as you walk', gateOff: 'open without scans', gateFrom: 'from Poly Haven · CC0' }, cfg.strings || {}), mb = LR.ASSETS.bytes ? '≈ ' + Math.round(LR.ASSETS.bytes / 1e6) + ' MB · ' : '';
+        const t = Object.assign({ gate: 'Start — the scans arrive as you walk', gateOff: 'open without scans', gateFrom: 'from Poly Haven · CC0' }, cfg.strings || {}), bytes = (LR.ASSETS.bytes || 0) - (LR.models && !LR.models.heavy() ? LR.ASSETS.heavyBytes || 0 : 0), mb = bytes ? '≈ ' + Math.round(bytes / 1e6) + ' MB · ' : '';      /* a phone is not sent the trees */
         const box = document.createElement('div'), u = new URL(location.href); u.searchParams.set('scan', '0'); box.id = 'gate';
         box.innerHTML = `<button type="button"></button><span>${mb}${t.gateFrom} · <a href="${u.href.replace(/"/g, '&quot;')}"></a></span>`; box.querySelector('button').textContent = t.gate; box.querySelector('a').textContent = t.gateOff;
         const bar = document.getElementById('bar'); (bar ? bar.parentNode : document.body).appendChild(box); if (bar) bar.style.visibility = 'hidden';
@@ -42,10 +42,12 @@
       const place = (x, z, yawDeg, pitchDeg = 0, y) => { const gy = P.groundAt(x, z).y; /* the deck of a bridge or a pier, ice in winter, else the land */ cam.position.set(x, y === undefined || isNaN(y) ? gy + P.eye : y, z); cam.rotation.set((pitchDeg * Math.PI) / 180, (-yawDeg * Math.PI) / 180, 0); };
       let time = 0;
       const info = () => Object.assign({ gpu: G.name, tier: G.tierName, size: [LR.render.W, LR.render.H], inner: [LR.render.w, LR.render.h], tod: +LR.wx.tod.toFixed(2), wx: LR.wx.label(), worldTris: LR.world.stats.tris, solids: LR.world.solids.length, lightsAll: LR.world.lights.length }, LR.render.info);
-      // still mode: realm.shot({ cam:[x,z,yaw,pitch,y], tod, weather, snow, wet, season, frames, t })
+      // still mode: realm.shot({ cam:[x,z,yaw,pitch,y], up, tod, weather, snow, wet, season, frames, t, dof, focus })
+      // up: the eye this many metres above the ground instead of at head height (a look from above)
       const shot = (o = {}) => {
-        if (o.cam) place(o.cam[0], o.cam[1], o.cam[2] || 0, o.cam[3] || 0, o.cam[4]);
+        if (o.cam) place(o.cam[0], o.cam[1], o.cam[2] || 0, o.cam[3] || 0, o.up !== undefined && !isNaN(o.up) ? P.groundAt(o.cam[0], o.cam[1]).y + o.up : o.cam[4]);
         LR.wx.snap(o); if (o.t !== undefined) time = o.t;
+        LR.render.lens.shot = o.dof > 0 ? o.dof : 0; LR.render.lens.focus = o.focus > 0 ? o.focus : 0;      // dof: how much lens (1 = the tour's), focus: metres (none: the middle of the picture)
         const n = o.frames || 10; LR.render.histValid = false; LR.render.frame = 0;
         for (let i = 0; i < n; i++) { time += 1 / 60; LR.wx.time = time; LR.wx.frame++; LR.wx.apply(); if (LR.qn('dbg', 0)) LR.render.U.uExposure.value = 0.33; LR.emit('frame', time, 1 / 60, cam); LR.render.draw(cam, time, 1 / 60); }
         return info();

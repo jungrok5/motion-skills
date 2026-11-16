@@ -5,7 +5,7 @@
   const T = THREE, U = LR.U, R = LR.render, FRAME = R.FRAME;
   const v = (value) => ({ value }), MAXL = 24;
   const PU = (R.U = {
-    tG0: v(null), tG1: v(null), tG2: v(null), tDepth: v(null), tAO: v(null), tAir: v(null), tGI: v(null), uBounce: v(1), tHistL: v(null), tHDR: v(null), tHist: v(null), tCopy: v(null), tBloom: v(null), tAdapt: v(null),
+    tG0: v(null), tG1: v(null), tG2: v(null), tDepth: v(null), tAO: v(null), tAir: v(null), tGI: v(null), uBounce: v(1), tHistL: v(null), tHDR: v(null), tCur: v(null), tFocus: v(null), uDof: v(new T.Vector4(0, 8, 0, 0)), tHist: v(null), tCopy: v(null), tBloom: v(null), tAdapt: v(null),
     uHalf: v(new T.Vector4(1, 1, 1, 1)), uOut: v(new T.Vector4(1, 1, 1, 1)), uJit: v(new T.Vector2()), uEnvMips: v(7),
     tCanopy: v(null), uCanopyRect: v(new T.Vector4(-256, -256, 1 / 512, 1 / 512)), uCanopy: v(new T.Vector4(0, 0, 0, 0)), uSplit: v(new T.Vector4(0.3, 0.5, 0.5, 0)),
     uLightPos: v(Array.from({ length: MAXL }, () => new T.Vector4())), uLightCol: v(Array.from({ length: MAXL }, () => new T.Vector4())), uLightN: v(0),
@@ -384,8 +384,74 @@ void main(){
   o = vec4(c, 1.0);
 }`;
 
+  // ── the lens: what is not at the distance it is focused on goes soft ────────────────────────────────────────────
+  // It works on the lit picture before the temporal resolve, on the frame as it was jittered: a handful of taps a pixel
+  // on a disc that is turned every frame, and the resolve that follows adds the frames up, so fourteen taps become a
+  // couple of hundred.  A tap counts where its own blur disc reaches this pixel (a scatter read as a gather); what lies
+  // behind a sharper pixel may not spread over it.  A map of the largest blur in each 8 px tile sizes the disc and lets
+  // the sharp parts of the picture skip the work.  The focus is where the middle of the picture is — the median of nine
+  // depths, eased like an eye finding its range — or the distance a still names.  R.lens = { tour, walk, shot, focus }.
+  const DOFC = `
+uniform vec4 uDof;                                                           // blur px·m, largest radius px, focus named in metres (0: the middle of the picture), spare
+uniform sampler2D tFocus;
+float cocAt(float z, float fd){ float k = uDof.x * (fd - 1.0 / z); return clamp(k < 0.0 ? k * 0.6 : k, -uDof.y, uDof.y); }      // + behind the focus, − in front of it (held back: a walk is not a macro shot)
+float blurR(float k){ return max(abs(k) - 0.4, 0.0); }                                              // under half a pixel is sharp
+`;
+  const focusFS = `//#include head
+//#include frame
+in vec2 vUv; out vec4 o; uniform sampler2D tDepth, tPrev; uniform float uDt; uniform vec4 uDof;
+#define s2(a, b) { float t = a; a = min(t, b); b = max(t, b); }
+#define mn3(a, b, c) s2(a, b); s2(a, c);
+#define mx3(a, b, c) s2(b, c); s2(a, c);
+#define mnmx3(a, b, c) mx3(a, b, c); s2(a, b);
+#define mnmx4(a, b, c, d) s2(a, b); s2(c, d); s2(a, c); s2(b, d);
+#define mnmx5(a, b, c, d, e) s2(a, b); s2(c, d); mn3(a, c, e); mx3(b, d, e);
+#define mnmx6(a, b, c, d, e, f) s2(a, d); s2(b, e); s2(c, f); mn3(a, b, c); mx3(d, e, f);
+void main(){
+  float v[9]; vec2 j = vec2(fract(uFrame * 0.61803), fract(uFrame * 0.75488)) - 0.5, asp = vec2(uRes.y / uRes.x, 1.0);
+  for (int i = 0; i < 9; i++) { vec2 g = vec2(float(i % 3), float(i / 3)) - 1.0; v[i] = 1.0 / viewZ(textureLod(tDepth, vec2(0.5, 0.5) + (g * 0.034 + j * 0.022) * asp, 0.0).r); }
+  mnmx6(v[0], v[1], v[2], v[3], v[4], v[5]); mnmx5(v[1], v[2], v[3], v[4], v[6]); mnmx4(v[2], v[3], v[4], v[7]); mnmx3(v[3], v[4], v[8]);
+  float target = uDof.z > 0.0 ? 1.0 / uDof.z : clamp(v[4], 1.0 / 400.0, 1.0 / 0.7);                 // in dioptres: that is the scale a lens moves on
+  float prev = texture(tPrev, vec2(0.5)).r; if (prev <= 0.0) prev = target;
+  o = vec4(mix(prev, target, sat(1.0 - exp(-uDt * 3.2))), 0.0, 0.0, 1.0);
+}`;
+  const dofTileFS = `//#include head
+//#include frame
+${DOFC}
+in vec2 vUv; out vec4 o; uniform sampler2D tDepth;
+void main(){ float fd = texture(tFocus, vec2(0.5)).r, m = 0.0;
+  for (int j = 0; j < 4; j++) for (int i = 0; i < 4; i++) m = max(m, blurR(cocAt(viewZ(textureLod(tDepth, vUv + (vec2(float(i), float(j)) - 1.5) * 2.0 * uRes.zw, 0.0).r), fd)));
+  o = vec4(m / uDof.y, 0.0, 0.0, 1.0); }`;
+  const dofSpreadFS = `//#include head
+in vec2 vUv; out vec4 o; uniform sampler2D tSrc; uniform vec4 uT;                                    // 1/size of the tile map, the largest radius in tiles
+void main(){ float m = 0.0;
+  for (int j = -2; j <= 2; j++) for (int i = -2; i <= 2; i++) { float s = textureLod(tSrc, vUv + vec2(float(i), float(j)) * uT.xy, 0.0).r; if (s * uT.z > float(max(abs(i), abs(j))) - 1.0) m = max(m, s); }   // a blur reaches only as far as its radius
+  o = vec4(m, 0.0, 0.0, 1.0); }`;
+  const dofFS = `//#include head
+//#include hash
+//#include frame
+${DOFC}
+in vec2 vUv; out vec4 o; uniform sampler2D tSrc, tDepth, tTile;
+void main(){
+  vec3 c0 = textureLod(tSrc, vUv, 0.0).rgb; float fd = texture(tFocus, vec2(0.5)).r;
+  float z0 = viewZ(textureLod(tDepth, vUv, 0.0).r), r0 = blurR(cocAt(z0, fd)), R = max(texture(tTile, vUv).r * uDof.y, r0);
+  if (R < 0.5) { o = vec4(c0, 1.0); return; }
+  float n0 = ign(gl_FragCoord.xy + mod(uFrame, 64.0) * vec2(5.588, 3.193)), n1 = fract(n0 * 7.31 + 0.37 + mod(uFrame, 16.0) * 0.618);
+  float w0 = 1.0 / (r0 * r0 + 1.0), ws = w0, wt = R * R / float(DOF_TAPS); vec3 acc = c0 * w0;
+  for (int i = 0; i < DOF_TAPS; i++) {
+    float rr = sqrt((float(i) + n1) / float(DOF_TAPS)) * R, a = float(i) * 2.39996323 + n0 * TAU; vec2 uv = vUv + vec2(cos(a), sin(a)) * rr * uRes.zw;
+    float z = viewZ(textureLod(tDepth, uv, 0.0).r), r = blurR(cocAt(z, fd)); if (z > z0) r = min(r, r0 * 2.0);          // what is behind does not spread over what is sharper in front
+    float w = sat(r - rr + 0.5) * wt / (r * r + 1.0);
+    acc += min(textureLod(tSrc, uv, 0.0).rgb, vec3(DOF_MAX)) * w; ws += w; }
+  o = vec4(acc / ws, 1.0);
+}`;
+
   // ── targets ─────────────────────────────────────────────────────────────────────────────────────────────────────
   const disp = (x) => { if (!x) return; if (x.depthTexture) x.depthTexture.dispose(); x.dispose(); };
+  // the lens.  amount: the blur radius of what is infinitely far, as a part of the picture's height, when the focus is
+  // at 1 m (so 0.026 → 0.26 % of the height with the focus at 10 m: a fast cinema lens, not a miniature).  tour / walk /
+  // shot: how much of it each way of looking gets (0 … 1 and beyond).  focus: metres, for a still (0: the middle).
+  const LZ = (R.lens = { on: false, amount: 0.026, max: 0.013, tour: 1, walk: 0, shot: 0, focus: 0, k: 0 });
   R.resize = (W, H) => {
     const G = LR.gpu; R.W = Math.max(8, W | 0); R.H = Math.max(8, H | 0); G.renderer.setSize(R.W, R.H, false);
     [R.histA, R.histB].forEach(disp); (R.bloom || []).forEach(disp);
@@ -398,7 +464,7 @@ void main(){
   R.setScale = (s, force) => {
     const G = LR.gpu; R.giOn = G.tier.gi > 0 && !LR.off.has('gi'); s = LR.clamp(s, 0.35, 1); const w = Math.max(8, Math.round(R.W * s)), h = Math.max(8, Math.round(R.H * s));
     if (!force && w === R.w && h === R.h) return; R.scale = s; R.w = w; R.h = h;
-    [R.gbuf, R.hdr, R.ao, R.aoB, R.air, R.copy, R.gi, R.giB].forEach(disp);
+    [R.gbuf, R.hdr, R.ao, R.aoB, R.air, R.copy, R.gi, R.giB, R.dofRT, R.dofTile, R.dofTileB].forEach(disp);
     const dt = new T.DepthTexture(w, h); dt.type = T.UnsignedIntType; dt.format = T.DepthFormat; dt.minFilter = dt.magFilter = T.NearestFilter;
     R.gbuf = LR.rt(w, h, { count: 3, depth: true, depthTexture: dt, filter: T.NearestFilter });
     R.hdr = LR.rt(w, h, { type: G.hdrType });
@@ -406,13 +472,15 @@ void main(){
     R.ao = LR.rt(hw, hh, { format: T.RedFormat, filter: T.NearestFilter }); R.aoB = LR.rt(hw, hh, { format: T.RedFormat, filter: T.NearestFilter });
     R.air = LR.rt(hw, hh, { type: G.hdrType, filter: T.NearestFilter }); R.copy = LR.rt(hw, hh, { type: G.hdrType });
     if (R.giOn) { R.gi = LR.rt(hw, hh, { type: G.hdrType, filter: T.NearestFilter }); R.giB = LR.rt(hw, hh, { type: G.hdrType, filter: T.NearestFilter }); }
-    PU.tG0.value = R.gbuf.textures[0]; PU.tG1.value = R.gbuf.textures[1]; PU.tG2.value = R.gbuf.textures[2]; PU.tDepth.value = dt; PU.tAir.value = R.air.texture; PU.tHDR.value = R.hdr.texture; PU.tCopy.value = R.copy.texture;
+    if (R.lens.on) { const tw = Math.max(1, Math.ceil(w / 8)), th = Math.max(1, Math.ceil(h / 8)); R.dofRT = LR.rt(w, h, { type: G.hdrType }); R.dofTile = LR.rt(tw, th, { format: T.RedFormat, filter: T.NearestFilter }); R.dofTileB = LR.rt(tw, th, { format: T.RedFormat }); }
+    PU.tG0.value = R.gbuf.textures[0]; PU.tG1.value = R.gbuf.textures[1]; PU.tG2.value = R.gbuf.textures[2]; PU.tDepth.value = dt; PU.tAir.value = R.air.texture; PU.tHDR.value = R.hdr.texture; PU.tCur.value = R.hdr.texture; PU.tCopy.value = R.copy.texture;
     PU.uHalf.value.set(hw, hh, 1 / hw, 1 / hh); U.uRes.value.set(w, h, 1 / w, 1 / h);
   };
 
   R.initPost = () => {
     PR.init();
     const G = LR.gpu, tier = G.tier, S = SKY(); R.giOn = tier.gi > 0 && !LR.off.has('gi');
+    LZ.amount = 0.026 * LR.qn('dof', 1); LZ.on = tier.name !== 'low' && G.halfFloat && !LR.off.has('dof') && LZ.amount > 0;
     const white = new T.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1); white.needsUpdate = true; R.white = white; const black = new T.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1); black.needsUpdate = true; R.black = black;
     PU.uEnvMips.value = LR.sky.envMips; PU.uSharp.value = tier.taaSharp; PU.tCanopy.value = white;
     const aoQ = [[2, 3], [2, 3], [2, 4], [3, 5]][tier.ao];
@@ -421,8 +489,13 @@ void main(){
     if (R.giOn) { R.mGI = LR.pass(giFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tG1: PU.tG1, tHist: v(null), uHalf: PU.uHalf }), { defines: { GI_RAYS: tier.gi | 0, GI_STEPS: 8, GI_DEBUG: LR.qn('gidbg', 0) | 0 } }); R.mGIB = LR.pass(giBlurFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tGI: v(null), uHalf: PU.uHalf })); }
     R.mAir = LR.pass(airFS, Object.assign(LR.uni(FRAME + ' ' + AIRU + ' ' + SHU), S, { tDepth: PU.tDepth, uHalf: PU.uHalf, uEnvMips: PU.uEnvMips, tCanopy: PU.tCanopy, uCanopyRect: PU.uCanopyRect, uCanopy: PU.uCanopy, uShaft: PU.uShaft }), { defines: { AIR_STEPS: tier.vol, AIR_REACH: '150.0', SHAFT_STEPS: LR.off.has('shafts') ? 0 : tier.vol >= 24 ? 36 : tier.vol >= 16 ? 28 : tier.vol >= 12 ? 20 : 0 } });
     R.mLight = LR.pass(lightFS, Object.assign(LR.uni(FRAME + ' ' + AIRU + ' ' + SHU + ' uShadowZ uTopo uTopoRect'), S, { tG0: PU.tG0, tG1: PU.tG1, tG2: PU.tG2, tDepth: PU.tDepth, tAO: PU.tAO, tAir: PU.tAir, uHalf: PU.uHalf, uEnvMips: PU.uEnvMips, tCanopy: PU.tCanopy, uCanopyRect: PU.uCanopyRect, uCanopy: PU.uCanopy, uLightPos: PU.uLightPos, uLightCol: PU.uLightCol, uLightN: PU.uLightN, uFill: PU.uFill, tGI: PU.tGI, uBounce: PU.uBounce, tHist: PU.tHistL, uHistOk: PU.uHistOk }), { defines: Object.assign(tier.name === 'low' || LR.off.has('pcss') ? {} : { PCSS: 1, PCSS_TAPS: tier.name === 'medium' ? 8 : tier.name === 'high' ? 12 : 16, PCSS_ANGLE: (Math.tan((LR.qn('pcss', 1.4) * Math.PI) / 360)).toFixed(5), PCSS_WIDTH: '0.3' }, { SHADOW_TAPS: tier.shadowTaps, SKY_REACH: LR.off.has('skyshare') ? 0 : tier.gi >= 3 ? 2 : tier.ao > 0 ? 1 : 0, CONTACT_STEPS: LR.off.has('contact') ? 0 : tier.contact | 0, MIRROR_STEPS: LR.off.has('mirror') || tier.ssr < 18 ? 0 : tier.ssr >= 26 ? 20 : 14 }, LR.qn('dbg', 0) ? { DEBUG_VIEW: LR.qn('dbg', 0) } : {}) });
-    R.mTAA = LR.pass(taaFS, Object.assign(LR.uni(FRAME), { tCur: PU.tHDR, tHist: PU.tHist, tDepth: PU.tDepth, uJit: PU.uJit, uBlend: PU.uBlend }));
+    R.mTAA = LR.pass(taaFS, Object.assign(LR.uni(FRAME), { tCur: PU.tCur, tHist: PU.tHist, tDepth: PU.tDepth, uJit: PU.uJit, uBlend: PU.uBlend }));
     R.mCopy = LR.pass(copyFS, { tSrc: v(null) });
+    if (LZ.on) { LZ.focA = LR.rt(1, 1, { type: G.hdrType, filter: T.NearestFilter }); LZ.focB = LR.rt(1, 1, { type: G.hdrType, filter: T.NearestFilter });
+      R.mFocus = LR.pass(focusFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tPrev: v(null), uDt: PU.uDt, uDof: PU.uDof }));
+      R.mDofTile = LR.pass(dofTileFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tFocus: PU.tFocus, uDof: PU.uDof }));
+      R.mDofSpread = LR.pass(dofSpreadFS, { tSrc: v(null), uT: v(new T.Vector4()) });
+      R.mDof = LR.pass(dofFS, Object.assign(LR.uni(FRAME), { tSrc: PU.tHDR, tDepth: PU.tDepth, tTile: v(null), tFocus: PU.tFocus, uDof: PU.uDof }), { defines: { DOF_TAPS: tier.name === 'medium' ? 9 : tier.name === 'high' ? 14 : 22, DOF_MAX: '24.0' } }); }
     R.mDown = LR.pass(downFS, { tSrc: v(null), uT: v(new T.Vector4()), uFirst: v(0) });
     R.mUp = LR.pass(upFS, { tSrc: v(null), tAdd: v(null), uT: v(new T.Vector4()) });
     R.adaptA = LR.rt(1, 1, { type: G.hdrType, filter: T.NearestFilter }); R.adaptB = LR.rt(1, 1, { type: G.hdrType, filter: T.NearestFilter });
@@ -444,8 +517,8 @@ void main(){
   // ── where a frame's time goes (?prof=1, shown in the numbers panel) ─────────────────────────────────────────────
   // GPU time a pass, measured by the graphics card itself (EXT_disjoint_timer_query_webgl2 — desktop Chrome and Edge
   // have it, Safari and Firefox mostly not: then only the CPU side is shown).  One query is open at a time; results come
-  // back a few frames late and are smoothed.  R.prof.ms = { shadows, gbuffer, ao, air, bounce, light, forward, resolve, bloom, final }
-  const PR = (R.prof = { on: LR.q('prof') === '1' || LR.q('prof') === 'true', ms: {}, cpu: {}, pend: [], cur: null, ext: null, order: ['shadows', 'gbuffer', 'ao', 'air', 'bounce', 'light', 'forward', 'resolve', 'bloom', 'final'] });
+  // back a few frames late and are smoothed.  R.prof.ms = { shadows, gbuffer, ao, air, bounce, light, forward, lens, resolve, bloom, final }
+  const PR = (R.prof = { on: LR.q('prof') === '1' || LR.q('prof') === 'true', ms: {}, cpu: {}, pend: [], cur: null, ext: null, order: ['shadows', 'gbuffer', 'ao', 'air', 'bounce', 'light', 'forward', 'lens', 'resolve', 'bloom', 'final'] });
   PR.init = () => { if (!PR.on) return; const gl = LR.gpu.renderer.getContext(); PR.gl = gl; PR.ext = gl.getExtension('EXT_disjoint_timer_query_webgl2'); };
   PR.begin = (name) => { if (!PR.on) return; PR.end(); PR.cur = { name, t0: performance.now(), q: null };
     if (PR.ext && PR.pend.length < 40) { const q = PR.gl.createQuery(); PR.gl.beginQuery(PR.ext.TIME_ELAPSED_EXT, q); PR.cur.q = q; } };
@@ -473,7 +546,7 @@ void main(){
     R.gatherLights(cam, time);
     // shadows, then the G-buffer
     PR.poll(); PR.begin('shadows');
-    R.updateShadows(cam, LR.RENDER || R.frame < 3);
+    R.updateShadows(cam, LR.RENDER || R.frame < 3); R.info.shadowCalls = r.info.render.calls;      // of the frame's draw calls, how many were shadows (a still draws every cascade, the live page one or two a frame)
     PR.begin('gbuffer');
     r.setRenderTarget(R.gbuf); r.setClearColor(0x000000, 0); r.clear(true, true, false); r.render(W.scene, cam);
     R.info.calls = r.info.render.calls; R.info.tris = r.info.render.triangles;
@@ -493,6 +566,13 @@ void main(){
     if (W.forward.children.length) { R.mCopy.uniforms.tSrc.value = R.hdr.texture; LR.blit(R.mCopy, R.copy); r.setRenderTarget(R.hdr); r.render(W.forward, cam); }
     cam.projectionMatrix.copy(P0); cam.projectionMatrixInverse.copy(P0).invert();
     // resolve onto the canvas grid
+    // the lens: on the tour, in a still that asks for it, or while walking if it was switched on (L)
+    PR.begin('lens');
+    { const still = LR.RENDER && !R.film, want = !LZ.on ? 0 : still ? LZ.shot : LR.player && LR.player.touring ? LZ.tour : LZ.walk; LZ.k = still ? want : LR.damp(LZ.k, want, 1.3, dt);
+      if (LZ.on && LZ.k > 0.02) { PU.uDof.value.set(LZ.amount * LZ.k * R.h, Math.min(16, Math.max(2, LZ.max * R.h * Math.min(1.6, Math.max(1, LZ.k)))), still ? LZ.focus : 0, 0);
+        const a = R.frame & 1 ? LZ.focA : LZ.focB, b = R.frame & 1 ? LZ.focB : LZ.focA; R.mFocus.uniforms.tPrev.value = b.texture; LR.blit(R.mFocus, a); PU.tFocus.value = a.texture;
+        LR.blit(R.mDofTile, R.dofTile); R.mDofSpread.uniforms.tSrc.value = R.dofTile.texture; R.mDofSpread.uniforms.uT.value.set(1 / R.dofTile.width, 1 / R.dofTile.height, PU.uDof.value.y / 8, 0); LR.blit(R.mDofSpread, R.dofTileB);
+        R.mDof.uniforms.tTile.value = R.dofTileB.texture; LR.blit(R.mDof, R.dofRT); PU.tCur.value = R.dofRT.texture; } else PU.tCur.value = R.hdr.texture; }
     PR.begin('resolve');
     let colorTex;
     if (taa) { const dst = R.frame & 1 ? R.histA : R.histB, src = R.frame & 1 ? R.histB : R.histA; PU.tHist.value = src.texture; PU.uBlend.value = R.histValid ? (LR.RENDER && !R.film ? Math.max(0.06, 1 / Math.min(R.frame, 16)) : 0.1) : 1; LR.blit(R.mTAA, dst); R.histValid = true; colorTex = dst.texture; }
