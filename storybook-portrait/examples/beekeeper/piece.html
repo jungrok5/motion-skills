@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>storybook portrait</title>
+<script type="importmap">{ "imports": { "sp/": "../../lib/" } }</script></head>
+<body><script type="module">
+// The page: paints the character in character.js, then keeps it alive. ?cast = cast sheet · ?done = skip the drawing
+// ?render=1&t=… = one still for scripts (window.seek(t)). Click to replay.
+import { mount } from 'sp/portrait.js';
+import * as character from './character.js';
+mount(character);
+</script></body></html>
