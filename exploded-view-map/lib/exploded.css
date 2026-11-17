@@ -1,0 +1,44 @@
+/* exploded.css — default look of the pieces lib/exploded.js makes (plates, pins, marker, route, tag) and the rules the
+ * live page needs. A page overrides any of it with its own palette and type; keep the structural rules. */
+html.ev, html.ev body { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; }
+html.ev-fallback, html.ev-fallback body { height: auto; overflow: auto; }
+canvas[layoutsubtree] { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; cursor: grab; }
+canvas.ev-turning { cursor: grabbing; }
+/* the layout root sits at the canvas origin: pieces are measured from it */
+#page { position: absolute; left: 0; top: 0; }
+[data-ev=sheet] { position: absolute; inset: 0; }
+[data-ev-base], [data-ev-map] { position: absolute; }
+[data-ev-base] { background: var(--ev-base, #cfd8de); overflow: hidden; }
+[data-ev-base] svg, .ev-route { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+.ev-plate { pointer-events: none; user-select: none; }
+.ev-plate svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.ev-plate .ev-fill { fill: var(--ev-fill, #eee); pointer-events: visiblePainted; }
+.ev-minor { fill: none; stroke: var(--ev-minor, rgba(30, 40, 60, .16)); stroke-width: .9; vector-effect: non-scaling-stroke; }
+.ev-label { font: 500 13px ui-monospace, "SF Mono", Menlo, Consolas, monospace; fill: var(--ev-label, rgba(30, 40, 60, .7)); text-anchor: middle; dominant-baseline: central; }
+.ev-route { pointer-events: none; display: none; }
+html.ev-fallback .ev-route { display: block; }
+.ev-route-casing { fill: none; stroke: #fff; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.ev-route-line { fill: none; stroke: #e2482b; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+
+.ev-pin { position: absolute; left: 0; top: 0; z-index: 5; appearance: none; border: 0; background: none; padding: 0 0 12px; margin: 0;
+  font: inherit; color: inherit; cursor: pointer; white-space: nowrap; user-select: none; }
+.ev-pin span { display: flex; align-items: baseline; gap: 6px; background: #fff; border-radius: 7px; padding: 4px 9px 5px; box-shadow: 0 0 0 1px rgba(20, 28, 40, .16); }
+.ev-pin em { font-style: italic; font-size: 16px; line-height: 1.1; }
+.ev-pin small { font: 10.5px ui-monospace, Menlo, Consolas, monospace; opacity: .7; }
+.ev-pin::after { content: ""; position: absolute; left: 50%; bottom: 7px; width: 9px; height: 9px; margin-left: -4.5px; background: #fff; transform: rotate(45deg); box-shadow: 1px 1px 0 0 rgba(20, 28, 40, .16); }
+.ev-pin.hot span, .ev-pin:hover span, .ev-pin:focus-visible span { background: #1c2330; color: #fff; }
+.ev-pin.hot::after, .ev-pin:hover::after, .ev-pin:focus-visible::after { background: #1c2330; }
+.ev-pin:focus { outline: none; }
+.ev-marker { position: absolute; left: 0; top: 0; z-index: 5; width: 16px; height: 16px; border-radius: 50%; background: #e2482b; box-shadow: inset 0 0 0 3px #fff, 0 0 0 1px rgba(20, 28, 40, .3); }
+
+.ev-tag { position: fixed; left: 0; top: 0; z-index: 9; pointer-events: none; padding: 5px 10px 6px; border-radius: 999px; background: rgba(255, 255, 255, .94);
+  color: #4b5261; box-shadow: 0 0 0 1px rgba(20, 28, 40, .14), 0 4px 12px -4px rgba(20, 28, 40, .3); font: 12px/1.25 ui-monospace, Menlo, Consolas, monospace;
+  white-space: nowrap; opacity: 0; transition: opacity .12s; }
+.ev-tag.on { opacity: 1; }
+.ev-tag b { color: #c93a20; font-weight: 400; }
+
+/* the plain page when HTML-in-Canvas is off: the same HTML, laid out flat */
+.hic-fallback { position: relative; }
+.hic-fallback #page { position: relative; margin: 12px auto; }
+html.ev-fallback .ev-bar { display: none; }

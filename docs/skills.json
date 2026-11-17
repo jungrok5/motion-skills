@@ -2681,6 +2681,50 @@
           "url": "https://jungrok5.github.io/motion-skills/hypertext-hotel/demo/examples/night-bakery/"
         }
       ]
+    },
+    {
+      "id": "exploded-view-map",
+      "name": "exploded-view-map",
+      "tagline": "주제 하나를 주면 등고선 지도 · 경로 · 수치 · 태양 슬라이더 · 정류장 목록이 있는 실제 웹페이지를 만들고, HTML-in-Canvas로 그 페이지를 3D로 분해합니다. 등고선 층은 종이판으로 쌓여 계단식 지형이 되고, 카드는 독서대처럼 일어나 카메라를 향하며, 슬라이더가 정하는 햇빛이 위쪽 판들을 지나며 그림자를 드리웁니다. 분해된 채로도 입력 · 드래그 · 클릭이 되는 진짜 DOM이며, 종이 소리까지 코드로 합성합니다.",
+      "poster": "exploded-view-map/poster.jpg",
+      "posterAlt": "exploded-view-map으로 만든 장면 네 개: 수심 등고선 열 장이 계단처럼 쌓인 산호초 모형과 비스듬히 선 다이빙 계획 카드, 분해 전의 평평한 다이빙 계획 페이지, 핀마다 등불이 켜진 밤의 산호초, 종이판 열세 장으로 쌓인 화산섬과 자전거 계획 카드",
+      "tags": [
+        "HTML-in-Canvas · WebGL2",
+        "종이판 계단 지형",
+        "분해된 채로 동작하는 DOM",
+        "햇빛 · 그림자 · 밤 등불",
+        "합성 사운드 · 코드 전용"
+      ],
+      "stats": [
+        "예제 「Lantern Reef」 · 수심 4 m마다 판 10장",
+        "검사: 모든 카드 · 핀이 그려진 자리에서 눌림, 그려진 슬라이더 끌기, 층 들기"
+      ],
+      "page": "exploded-view-map/",
+      "source": "exploded-view-map/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "exploded-view-map/examples/reef-dive/"
+      },
+      "sources": [
+        {
+          "title": "Felix Rieseberg의 「Exploded View」 데모 (등산 계획 페이지의 지도와 카드를 HTML-in-Canvas로 3D 분해)",
+          "url": "https://claude.ai/artifact/CBxLSFEFnojedyQW5L458v"
+        },
+        {
+          "title": "HTML-in-Canvas 데모 페이지 (데모 열다섯 개)",
+          "url": "https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk"
+        },
+        {
+          "title": "Felix Rieseberg의 X 게시물 「All hail the weird web」 (Claude 데스크톱 앱의 HTML-in-Canvas)",
+          "url": "https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「Lantern Reef」 · 산호초 다이빙 계획 · 라이브 데모",
+          "url": "https://jungrok5.github.io/motion-skills/exploded-view-map/demo/examples/reef-dive/"
+        }
+      ]
     }
   ]
 }
