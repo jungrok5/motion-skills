@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Apple — pencil-live-action template</title>
+<script type="importmap">{ "imports": { "three": "./lib/vendor/three.module.min.js", "pla/": "./lib/" } }</script>
+</head><body>
+<script type="module">
+// 「The Apple」 (16.5 s) — the template: the whole grammar, short. A pencil girl on a sketchbook at the edge of a café table in
+// a cobbled alley; the real pencil draws her an umbrella; she walks off the page to the table's edge and floats down; on the
+// cobbles an apple draws itself beside her, as big as she is; she touches it and it is a real apple (a Poly Haven scan);
+// a ring draws itself round them and the alley goes back to paper. Replace the topic: write BRIEF.md, then cast.js,
+// props.js, this file's beats and the score. Every number here is a pure function of t.
+import { Film, P, v3 } from 'pla/film.js';
+import { gait } from 'pla/gait.js';
+import { MILA } from './cast.js';
+import { umbrella, apple } from './props.js';
+import { SCORE } from './score.js';
+const { keys, ease, clamp, lerp, n1, span } = P;
+
+const F = new Film({ dur: 16.5, title: 'The Apple', score: SCORE, look: { highTint: [1.07, 1.0, .9] } });
+await F.load();
+F.plate.turn(60);
+await F.table({ at: [0, 0], size: [.8, .55], tex: 'wood_table', legs: 'four', legWood: true, corner: .02 });
+await F.ground('cobblestone_floor_08', { radius: 6, at: [.5, .1] });
+const book = F.sketchbook({ at: [.28, .74, .03], rot: -4 });
+const sy = book.userData.surfaceY, TOP = .74, Hm = .07, LEG = .37 * Hm, Z = .06;
+F.pencil({ colour: '#7a2e2a', hold: [.45, .75, .5] });
+
+// ── beats (seconds) ──
+const T_UMB = 2.5, T_WALK = 4.9, T_OPEN = 6.3, T_STEP = 6.75, T_LAND = 10.4, T_APPLE = 10.9, T_TOUCH = 13.0, T_IRIS = 14.6;
+const EDGE = [.393, TOP, Z], LAND = [.512, 0, Z + .006], APPLE = [.592, 0, Z - .012];
+
+// ── Mila's feet (lib/gait.js): idle on the page, then off the sketchbook (a 6 mm step down) to the table's edge ──
+const yAt = (x) => x < .384 ? sy : TOP;
+const g = gait({ start: { L: [.296, sy, Z], R: [.284, sy, Z] }, legLen: LEG, ankle: .025 * Hm, face0: 0 });
+g.walk({ to: [EDGE[0] - .004, Z], t0: T_WALK, speed: .055, y: yAt });
+g.face(90, T_OPEN - .5, .3);
+const g2 = gait({ start: { L: [LAND[0] + .004, 0, LAND[2] - .004], R: [LAND[0] - .004, 0, LAND[2] + .004] }, legLen: LEG, ankle: .025 * Hm, face0: 90 });
+g2.turnInPlace(40, 11.6, .8);
+
+// ── the float: from the edge down to the cobbles under the umbrella (gentle sway, slows as it nears the ground) ──
+const floatAt = t => { const k = clamp((t - T_STEP) / (T_LAND - T_STEP)), e = k < .15 ? (k / .15) ** 2 * .15 * .5 : .075 + (k - .15) / .85 * .925;
+  const sway = Math.sin(t * 2.2) * .006 * Math.sin(Math.PI * k); return [lerp(EDGE[0] + .006, LAND[0], ease.inOut(k)) + sway, lerp(EDGE[1], 0, e), lerp(EDGE[2], LAND[2], k)]; };
+
+let hero;
+function track(t) {
+  if (t < T_STEP) {             // on the page, the umbrella, the walk, the wind-up at the edge
+    const a = g.at(t), pose = { mouth: 'smile', head: {}, arms: { L: { a: 6, b: 12 }, R: { a: 6, b: 12 } } }; let hip = a.hipY, tilt = 0;
+    pose.head.yaw = keys([{ t: 0, v: 20 }, { t: 1, v: -25 }, { t: 2, v: 10 }], t, 'v'); hip -= Math.sin(t * 1.13 + .7) * .00045;   // a slow weight shift (its own rhythm: in step with the breath it would cancel it)
+    if (t > T_UMB - .4) { const up = span(t, T_UMB - .4, T_UMB); pose.arms.R = { a: 8 + 150 * up, b: 15 }; pose.head = { yaw: 10, pitch: 30 * up }; pose.mouth = 'o'; pose.brows = 'up'; }
+    if (t > T_UMB + 2.3) { pose.mouth = 'grin'; pose.arms.R = { a: 150, b: 15 }; }
+    if (t > T_WALK && t < T_OPEN - .4) { const sw = Math.sin((a.L[0] - a.R[0]) / .012 * 1.4); pose.arms.L = { a: 8 + sw * 14, b: 18 }; pose.head = { yaw: 0, pitch: 8 }; }
+    const crouch = span(t, T_OPEN, T_STEP - .1) * (1 - span(t, T_STEP - .1, T_STEP)); hip -= crouch * .006; tilt = 6 * crouch;   // gather before the step off
+    return { feet: { L: a.L, R: a.R }, planted: a.planted, face: a.face, hip, ground: a.L[1], pose, tilt };
+  }
+  if (t < T_LAND) {             // floating: hanging from the handle, legs dangling, a sway that lags the umbrella
+    const p = floatAt(t), sw = Math.sin(t * 2.2 - .6);
+    return { at: p, face: 90, hip: p[1] + .385 * Hm, ground: 0, tilt: sw * 6,
+      pose: { mouth: 'grin', brows: 'up', head: { pitch: -15, yaw: 10 }, look: [.3, .8], arms: { R: { a: 165, b: 8 }, L: { a: 40 + sw * 10, b: 30 } }, legs: { L: { a: 12 + sw * 8, k: 18 }, R: { a: -6 - sw * 6, k: 28 } } } };
+  }
+  const a = g2.at(t), pose = { mouth: 'smile', head: {}, arms: { L: { a: 8, b: 14 }, R: { a: 8, b: 14 } } }; let hip = a.hipY, armsW = null, stretch = false;
+  const land = 1 - span(t, T_LAND, T_LAND + .5, ease.out); hip -= land * .008; pose.arms.R = { a: 160 - 150 * span(t, T_LAND + .2, T_LAND + .8), b: 10 };
+  hip -= Math.sin(t * 1.21 + .3) * .00045;
+  if (t > T_APPLE) { pose.head = { yaw: 30, pitch: 10 }; pose.look = [.8, 0]; pose.mouth = 'o'; pose.brows = 'up'; }
+  if (t > T_TOUCH - .6) { const k = span(t, T_TOUCH - .6, T_TOUCH - .1) * (1 - span(t, T_TOUCH + .9, T_TOUCH + 1.4)); armsW = { R: v3.lerp(v3.add(a.root, [.004, LEG * 1.2, 0]), [APPLE[0] - .045, .035, APPLE[2] + .01], k) }; stretch = true; pose.mouth = t > T_TOUCH + .3 ? 'grin' : 'o'; }
+  return { feet: { L: a.L, R: a.R }, planted: a.planted, face: a.face, hip, ground: 0, pose, armsW, stretch };
+}
+hero = F.hero(MILA, track, { height: Hm });
+
+// ── the umbrella: drawn by the pencil above her raised hand, carried, opened at the edge, furled on landing ──
+const handR = t => { const w = F.heroWorld(hero, t); return w ? w.hand.R : EDGE; };
+const openK = t => span(t, T_OPEN, T_STEP, ease.back) * (1 - span(t, T_LAND + .2, T_LAND + .7));
+F.sketch({ name: 'umbrella', plane: t => F.facing(handR(t)), parts: t => umbrella(t < T_OPEN ? .15 : openK(t) * .85 + .15), at: T_UMB, dur: 2.0, by: 'pencil', shadow: true, out: [T_LAND + .8, T_LAND + 1.3] });
+// ── the apple: draws itself beside her, then is the real thing ──
+const appleSketch = F.sketch({ name: 'apple', plane: F.upright(APPLE, 0), parts: apple(), at: T_APPLE, dur: 1.6, by: 'self', shadow: true, anchor: [0, -40] });
+const real = await F.model('food_apple_01', { pos: APPLE });
+if (real) { real.rotation.y = .6; F.realify({ sketch: appleSketch, obj: real, at: T_TOUCH, dur: 1.2, from: [APPLE[0] - .045, .035, APPLE[2] + .01], radius: .12 }); }
+
+// ── the close ──
+F.iris({ at: T_IRIS, draw: 1.0, centre: v3.lerp(v3.add(LAND, [0, .04, 0]), v3.add(APPLE, [0, .04, 0]), .5), r: .085, shape: 'circle', by: 'self', fill: [T_IRIS + .7, T_IRIS + 1.7] });
+
+F.action('step off the edge', { anticipation: [T_OPEN, T_STEP - .1], action: [T_STEP, T_LAND], recovery: [T_LAND, T_LAND + .5] });
+F.action('touch', { anticipation: [T_TOUCH - .6, T_TOUCH - .1], action: [T_TOUCH - .1, T_TOUCH + .3], recovery: [T_TOUCH + .9, T_TOUCH + 1.4] });
+
+const floatKeys = []; for (let t = T_STEP + .4; t < T_LAND - .3; t += .5) { const p = floatAt(t), k = (t - T_STEP) / (T_LAND - T_STEP); floatKeys.push({ t, look: v3.add(p, [0, .05, 0]), pos: v3.add(p, [.04, lerp(.06, .03, k), .28]) }); }
+F.camera([
+  { t: 0, pos: [.29, .80, .29], look: [.29, .768, .06], mm: 50, fstop: 2.8, focusOn: 'hero' },
+  { t: 2.4, pos: [.3, .83, .34], look: [.3, .80, .06], mm: 45 },
+  { t: 5.2, pos: [.35, .83, .34], look: [.355, .80, .06] },
+  { t: 6.5, pos: [.42, .83, .34], look: [.4, .80, .06] },
+  ...floatKeys,
+  { t: T_LAND + .2, pos: [.56, .07, .34], look: [.52, .05, .06], mm: 40 },
+  { t: 12.4, pos: [.585, .055, .36], look: [.55, .045, .05] },
+  { t: 16.5, pos: [.6, .06, .40], look: [.555, .048, .045] },
+]);
+F.beat('the page', 0); F.beat('the umbrella', T_UMB - .4); F.beat('the drop', T_OPEN); F.beat('the apple', T_APPLE); F.beat('real', T_TOUCH); F.beat('the close', T_IRIS);
+F.start();
+</script>
+</body></html>
