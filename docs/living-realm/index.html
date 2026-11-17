@@ -43,6 +43,7 @@ node living-realm/scripts/check.mjs  living-realm/examples/village --walk   # �
 node living-realm/scripts/render.mjs living-realm/examples/village --views
 node living-realm/scripts/render.mjs living-realm/examples/village --sheet --scale .5
 node living-realm/scripts/render.mjs living-realm/examples/village --tour 16 --scale .5
+node living-realm/scripts/render.mjs living-realm/examples/village --phone   # 휴대폰이 보여 주는 화면
 
 node living-realm/scripts/new-realm.mjs ~/my-realm                   # 새 장소 폴더</code></pre>
     <p class="mute">조작: W A S D · 방향키로 걷기, Q E · ← →로 돌기, 마우스 · 터치로 둘러보기, Shift 달리기, 1–4 시간, 5–7 날씨, T 자동 순환, C 자동 산책, G 품질, P 성능 수치. 휴대폰에서는 캔버스를 CSS 픽셀당 2픽셀로 잡고 초당 30프레임을 기준으로 내부 해상도를 조절하며(<code>?fps=60</code>이면 60 기준), 작게 그린 프레임은 여러 프레임에 걸쳐 캔버스 해상도로 복원합니다. 요구 사항: Node 18+, Playwright Chromium, ffmpeg. 페이지는 WebGL 2와 GPU가 필요합니다(GPU 없이도 스틸은 렌더되며 한 장에 10–60초). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/living-realm/SKILL.md">SKILL.md</a>에 있습니다.</p>
