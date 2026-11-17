@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hollow Oak · honey tasting card</title>
+<!-- liquid-glass-page · worked example (BRIEF.md): an apiary's tasting card with honey lying on it. The page, the liquid
+     (honey, its colour per variety, warmth → viscosity), the weather (slow drips from a dipper) and the warm window light
+     were designed for this topic; lib/liquid.js is the skill's engine, unchanged. -->
+<style>
+  :root {
+    --paper: #f5eddc; --panel: #fbf6ea; --ink: #2b1d0f; --soft: #76604a; --rule: rgba(43, 29, 15, .16);
+    --dot: rgba(150, 90, 20, .13); --accent: #b5600c; --on-accent: #fff8ec;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  :root[data-theme="dark"] { --paper: #17110a; --panel: #20180e; --ink: #f3e6cf; --soft: #b59d7f; --rule: rgba(243, 230, 207, .17); --dot: rgba(227, 154, 59, .1); --accent: #e39a3b; --on-accent: #1a1209; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --paper: #17110a; --panel: #20180e; --ink: #f3e6cf; --soft: #b59d7f; --rule: rgba(243, 230, 207, .17); --dot: rgba(227, 154, 59, .1); --accent: #e39a3b; --on-accent: #1a1209; } }
+  html, body { margin: 0; height: 100%; background: var(--paper); overflow: hidden; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #page {
+    position: relative; box-sizing: border-box; width: 100vw; height: 100vh; overflow: auto;
+    padding: clamp(14px, 2.4vh, 28px) clamp(16px, 4vw, 56px);
+    display: grid; grid-template-rows: auto 1fr auto; gap: clamp(12px, 2.2vh, 24px);
+    background-color: var(--paper); color: var(--ink); font: 400 15px/1.5 var(--sans);
+    /* a faint comb of dots: every bend of the honey shows in it */
+    background-image: radial-gradient(var(--dot) 1.4px, transparent 1.6px), radial-gradient(var(--dot) 1.4px, transparent 1.6px);
+    background-size: 26px 45px; background-position: 0 0, 13px 22.5px;
+  }
+  #page * { box-sizing: border-box; }
+  #page ::selection { background: color-mix(in srgb, var(--accent) 32%, transparent); }
+  #page :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+  #page.liquid-grab, #page.liquid-grab :not(button, input, label, a) { cursor: grab; }
+  #page.liquid-grabbing, #page.liquid-grabbing * { cursor: grabbing !important; }
+  .mono { font: 500 11px/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--soft); }
+  .bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-bottom: 10px; border-bottom: 1px solid var(--rule); }
+  .mark { font: 600 19px/1 var(--serif); display: flex; align-items: center; gap: 10px; }
+  .mark svg { width: 20px; height: 20px; }
+  .sheet { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(280px, .8fr); gap: clamp(22px, 4vw, 60px); align-items: start; }
+  .col { display: flex; flex-direction: column; gap: clamp(10px, 1.9vh, 20px); min-width: 0; }
+  h1 { margin: 0; font: 600 clamp(40px, min(5.8vw, 10vh), 92px)/.95 var(--serif); letter-spacing: -.02em; }
+  h1 em { font-style: italic; color: var(--accent); }
+  .lede { margin: 0; max-width: 58ch; color: var(--soft); font-size: clamp(14px, 1.1vw, 16px); }
+  .lede strong { color: var(--ink); font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: clamp(13px, 1.05vw, 15px); }
+  th { text-align: left; font: 500 10.5px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--soft); padding: 0 8px 6px 0; border-bottom: 1px solid var(--rule); }
+  td { padding: 7px 8px 7px 0; border-bottom: 1px solid var(--rule); vertical-align: baseline; }
+  td.name { font: 600 clamp(15px, 1.25vw, 18px)/1.2 var(--serif); white-space: nowrap; }
+  td.name i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 8px; background: var(--c); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15); }
+  td.notes { color: var(--soft); }
+  td.price { text-align: right; font: 500 13px/1 var(--mono); white-space: nowrap; }
+  td.grade { font: 400 12px/1 var(--mono); color: var(--soft); white-space: nowrap; }
+  .order { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: end; max-width: 640px; }
+  .order label { grid-column: 1 / -1; }
+  .order input { height: 44px; padding: 0 14px; font: 500 16px/1 var(--sans); color: var(--ink); background: var(--panel); border: 1.5px solid var(--ink); border-radius: 22px; width: 100%; min-width: 0; }
+  .btn { height: 44px; padding: 0 18px; font: 600 15px/1 var(--sans); border-radius: 22px; border: 1.5px solid var(--ink); background: var(--panel); color: var(--ink); cursor: pointer; white-space: nowrap; }
+  .btn:hover { background: var(--ink); color: var(--paper); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .bench { margin: 0; padding: 16px; border: 1px solid var(--rule); border-radius: 16px; background: var(--panel); display: grid; gap: 13px; min-width: 0; }
+  .ctl { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: baseline; }
+  .ctl label, .ctl .lab { font-weight: 600; font-size: 14px; }
+  .ctl output { font: 500 12px/1 var(--mono); color: var(--soft); }
+  .ctl input[type=range] { grid-column: 1 / -1; }
+  input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 22px; margin: 0; background: transparent; cursor: pointer; --p: 50%; }
+  input[type=range]::-webkit-slider-runnable-track { height: 5px; border-radius: 5px; background: linear-gradient(90deg, var(--accent) var(--p), var(--rule) var(--p)); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; margin-top: -8px; border-radius: 50%; background: var(--panel); border: 1.5px solid var(--ink); }
+  .swatches { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; border: 0; padding: 0; margin: 0; }
+  .swatches label { display: inline-flex; align-items: center; gap: 6px; font: 500 11px/1 var(--mono); padding: 5px 9px 5px 6px; border-radius: 99px; border: 1px solid var(--rule); color: var(--soft); cursor: pointer; }
+  .swatches input { appearance: none; -webkit-appearance: none; width: 13px; height: 13px; margin: 0; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2); }
+  .swatches label:has(input:checked) { color: var(--ink); border-color: var(--ink); }
+  .row { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; padding-top: 11px; border-top: 1px solid var(--rule); }
+  .switch { display: inline-flex; align-items: center; gap: 9px; font-weight: 600; font-size: 14px; cursor: pointer; }
+  .switch input { appearance: none; -webkit-appearance: none; width: 38px; height: 22px; margin: 0; border-radius: 22px; background: color-mix(in srgb, var(--ink) 26%, transparent); position: relative; cursor: pointer; }
+  .switch input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--panel); transition: transform .18s; }
+  .switch input:checked { background: var(--accent); }
+  .switch input:checked::after { transform: translateX(16px); }
+  .live { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; font: 400 12px/1.35 var(--mono); padding: 12px 16px; border: 1px solid var(--rule); border-radius: 16px; background: var(--panel); }
+  .live dt { color: var(--soft); }
+  .live dd { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .foot { display: flex; justify-content: space-between; gap: 6px 24px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--rule); }
+  @media (max-width: 860px) {
+    .sheet { grid-template-columns: minmax(0, 1fr); }
+    .bar .mid, td.grade, th.grade { display: none; }
+    td.notes { font-size: 12.5px; }
+    .order { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .order input { grid-column: 1 / -1; }
+  }
+</style>
+</head>
+<body>
+<canvas id="stage" layoutsubtree content="drawable" aria-label="A honey tasting card with honey on it">
+  <main id="page" drawable>
+    <header class="bar">
+      <div class="mark"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l7.4 4.25v8.5L10 18.5l-7.4-4.25v-8.5z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.5l3.4 1.95v3.9L10 14.3l-3.4-1.95v-3.9z" fill="var(--accent)"/></svg>Hollow Oak Apiary</div>
+      <div class="mono mid">Tasting card · autumn harvest · five honeys</div>
+      <div class="mono" id="basket">basket · 0 jars</div>
+    </header>
+
+    <div class="sheet">
+      <section class="col">
+        <div class="mono">Counter card · every word under the honey is live</div>
+        <h1>Taste the <span id="dollopHome">honey</span> <em>slowly.</em></h1>
+        <p class="lede">Pale to dark, mild to bitter. <strong>Drag the big dollop</strong> over a line to read it larger, warm the pantry and watch it run.</p>
+        <table aria-label="The five honeys">
+          <thead><tr><th>Honey</th><th>Tasting notes</th><th class="grade">Pfund</th><th style="text-align:right">250 g</th></tr></thead>
+          <tbody>
+            <tr><td class="name"><i style="--c:#f3e2a2"></i>Acacia</td><td class="notes" data-liquid-select>clear, vanilla, stays runny for months</td><td class="grade">8 mm</td><td class="price">€ 7.50</td></tr>
+            <tr><td class="name"><i style="--c:#e8c264"></i>Linden</td><td class="notes">mint and green wood, a cool finish</td><td class="grade">34 mm</td><td class="price">€ 8.00</td></tr>
+            <tr><td class="name"><i style="--c:#d38f2c"></i>Heather</td><td class="notes">jelly-thick, toffee, a little smoke</td><td class="grade">72 mm</td><td class="price">€ 9.50</td></tr>
+            <tr><td class="name"><i style="--c:#a85a16"></i>Chestnut</td><td class="notes">bitter-sweet, leather, long and dry</td><td class="grade">98 mm</td><td class="price">€ 9.00</td></tr>
+            <tr><td class="name"><i style="--c:#6e3410"></i>Buckwheat</td><td class="notes">malt, molasses, almost savoury</td><td class="grade">118 mm</td><td class="price">€ 8.50</td></tr>
+          </tbody>
+        </table>
+        <div class="order">
+          <label class="mono" for="label">Name for the jar label</label>
+          <input id="label" type="text" autocomplete="off" spellcheck="false" placeholder="Type a name. The caret is real." data-hic-edit>
+          <button class="btn primary" id="drizzle" type="button" data-hic-click data-liquid="splash">Drizzle</button>
+          <button class="btn" id="spoon" type="button" data-liquid="wipe">Spoon it off</button>
+        </div>
+      </section>
+
+      <section class="col">
+        <fieldset class="bench" id="bench">
+          <legend class="mono">The pantry</legend>
+          <div class="ctl">
+            <label for="warmth">Warmth</label><output id="warmthOut" for="warmth">22 °C · pours slowly</output>
+            <input id="warmth" type="range" min="10" max="40" step="1" value="22">
+          </div>
+          <div class="ctl">
+            <label for="drip">Drip from the dipper</label><output id="dripOut" for="drip">steady</output>
+            <input id="drip" type="range" min="0" max="100" step="1" value="40">
+          </div>
+          <div class="ctl">
+            <span class="lab" id="colourLab">Honey on the card</span><output id="colourOut">heather</output>
+            <fieldset class="swatches" aria-labelledby="colourLab">
+              <label><input type="radio" name="honey" value="acacia" style="--c:#f3e2a2">acacia</label>
+              <label><input type="radio" name="honey" value="linden" style="--c:#e8c264">linden</label>
+              <label><input type="radio" name="honey" value="heather" style="--c:#d38f2c" checked>heather</label>
+              <label><input type="radio" name="honey" value="buckwheat" style="--c:#6e3410">buckwheat</label>
+            </fieldset>
+          </div>
+          <div class="row">
+            <label class="switch"><input type="checkbox" id="lens" checked>Big dollop</label>
+            <label class="switch"><input type="checkbox" id="dark">Dark pantry</label>
+            <button class="btn" id="reserve" type="button" style="height:34px;padding:0 14px;font-size:13px">Reserve a jar</button>
+          </div>
+        </fieldset>
+        <dl class="live" aria-label="Live DOM state">
+          <dt>focus</dt><dd id="rFocus">body</dd>
+          <dt>selection</dt><dd id="rSel">none</dd>
+        </dl>
+      </section>
+    </div>
+
+    <footer class="foot mono">
+      <span>Move the pointer to smear it · click to ripple · drag the big dollop</span>
+      <span>Honey from our own hives · Hollow Oak</span>
+    </footer>
+  </main>
+</canvas>
+
+<script src="../../lib/hic.js"></script>
+<script src="../../lib/liquid.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  // the honey of each variety: the colour it lets through and how quickly it darkens with depth
+  var HONEYS = {
+    acacia: { tint: [1.0, .93, .6], density: 1.1 },
+    linden: { tint: [1.0, .82, .38], density: 1.7 },
+    heather: { tint: [1.0, .62, .15], density: 2.4 },
+    buckwheat: { tint: [.86, .42, .12], density: 3.3 }
+  };
+  var narrow = innerWidth < 700;
+  var DRIP_AT = narrow ? [.94] : [.08, .37, .56];   // on a phone one drip runs down the margin, clear of the text
+
+  var L = Liquid.start({
+    canvas: '#stage', page: '#page',
+    liquid: { extends: 'honey', tint: HONEYS.heather.tint, density: HONEYS.heather.density },
+    weather: { rain: 0, intro: 'fall', drip: { at: DRIP_AT, every: 2.6 } },
+    light: {
+      dir: [-.6, -.8], window: { dist: .4, w: .12, h: .13, panes: 3, glow: 22, color: [1, .9, .72] },
+      sky: [.98, .93, .84], skyDark: [.95, .7, .4], bounce: [1, .9, .75]
+    },
+    lens: { anchor: '#dollopHome', radius: .13, magnify: 1.8 },
+    beads: { density: narrow ? .4 : .65, clusters: 8, big: narrow ? 2 : 4, mid: 10, small: 60 },
+    keepDry: 'h1, td.notes, td.price, .lede',
+    noTrail: '.bench, .live, .bar, thead',
+    spectral: 3,                                    // honey barely splits light: three samples are enough
+    seed: 23
+  });
+  if (L.fallback) return;
+
+  // warmth sets viscosity: cold honey barely moves, warm honey runs (and ripples a little more)
+  Liquid.range('#warmth', '#warmthOut', function (v) {
+    L.set({ slide: .085 * Math.pow(1.13, v - 22) });
+    L.mat.ripple.damp = HIC.clamp(.94 + (v - 10) * .0012, .9, .99);
+    return { label: v + ' °C · ' + (v < 15 ? 'barely moves' : v < 26 ? 'pours slowly' : v < 33 ? 'runs' : 'runs like syrup') };
+  });
+  var drip = L.cfg.weather.drip;
+  if (HIC.calm) $('drip').value = 0;
+  Liquid.range('#drip', '#dripOut', function (v) {
+    drip.every = v === 0 ? 1e9 : 6.5 - v * .055;
+    return { label: v === 0 ? 'dipper up' : v < 35 ? 'now and then' : v < 70 ? 'steady' : 'pouring' };
+  });
+  document.querySelectorAll('input[name=honey]').forEach(function (r) {
+    r.addEventListener('change', function () { L.set(HONEYS[r.value]); $('colourOut').textContent = r.value; });
+  });
+  $('lens').addEventListener('change', function (e) { L.set({ lens: e.target.checked }); });
+  var root = document.documentElement;
+  function isDark() { var t = root.getAttribute('data-theme'); return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; }
+  $('dark').checked = isDark();
+  $('dark').addEventListener('change', function (e) { root.setAttribute('data-theme', e.target.checked ? 'dark' : 'light'); L.stage.requestPaint(); });
+  if (HIC.param('dark') !== null) { root.setAttribute('data-theme', 'dark'); $('dark').checked = true; }
+
+  // Drizzle (this topic's splash): a wavy ribbon of honey laid across the card from the button
+  var rnd = HIC.rng(91);
+  $('drizzle').addEventListener('click', function (e) {
+    var b = L.boxOf(e.currentTarget), x0 = b[0] + b[2] / 2, y0 = b[1] - 14, len = Math.min(L.state().W * .55, 520), ph = rnd() * 6;
+    for (var i = 0; i < 96; i++) {
+      var t = i / 95, x = x0 - len * .5 + len * t, y = y0 - 40 * Math.sin(t * 3.1 + ph) * (1 - t * .4) - t * 60;
+      var d = L.addDrop(x, y, 4.2 + rnd() * 1.6 + Math.sin(t * 9 + ph) * 1.2);
+      if (d) { d.kind = 'trail'; d.th = 999; d.hold = 1e9; d.lobes = null; }
+    }
+    L.impulse(x0, y0, 30, 1.2);
+  });
+  $('spoon').addEventListener('click', function () { L.wipe(); });
+  var jars = 0;
+  $('reserve').addEventListener('click', function () { jars++; $('basket').textContent = 'basket · ' + jars + (jars === 1 ? ' jar' : ' jars'); });
+
+  function describe(el) { return !el || el === document.body ? 'body' : el.tagName.toLowerCase() + (el.id ? '#' + el.id : el.classList[0] ? '.' + el.classList[0] : ''); }
+  setInterval(function () {
+    var f = describe(document.activeElement), s = String(getSelection()).replace(/\s+/g, ' ').trim();
+    s = s ? '“' + (s.length > 34 ? s.slice(0, 33) + '…' : s) + '”' : 'none';
+    if ($('rFocus').textContent !== f) $('rFocus').textContent = f;
+    if ($('rSel').textContent !== s) $('rSel').textContent = s;
+  }, 250);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rain Card · liquid-glass-page template</title>
+<!--
+  liquid-glass-page · the template (an example of the style, not a menu): a reading card left out in the rain.
+  A real web page lies under a layer of water. Ripples, beads and a big drop you can drag bend it, and every word,
+  field and button under the water still works.
+
+  FIXED (the style): the page is live DOM inside <canvas layoutsubtree content="drawable">; lib/liquid.js draws it
+  through ripples + metaball beads + one big lens drop; pointer = wet fingertip, click = ripple, drag the big drop,
+  a control bench on the page itself; #still / #calm / #fallback.
+  DESIGNED PER TOPIC (change all of this for a new topic): the page's content and layout, the palette and type, the
+  liquid (Liquid.start({ liquid })), the weather, the light, the lens anchor, which controls the bench has and their
+  wording, the splash / wipe verbs. Write BRIEF.md first (references/BRIEF.md).
+-->
+<style>
+  /* ---- palette and type: designed per topic */
+  :root {
+    --paper: #eef0ea; --panel: #f8f9f5; --ink: #18211c; --soft: #56605a; --rule: rgba(24, 33, 28, .16);
+    --grid: rgba(40, 80, 70, .07); --accent: #1f6f78; --on-accent: #fff;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  :root[data-theme="dark"] { --paper: #0d1413; --panel: #131c1b; --ink: #e7efe9; --soft: #9aaba3; --rule: rgba(231, 239, 233, .18); --grid: rgba(120, 200, 190, .06); --accent: #5fc3c9; --on-accent: #0d1413; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --paper: #0d1413; --panel: #131c1b; --ink: #e7efe9; --soft: #9aaba3; --rule: rgba(231, 239, 233, .18); --grid: rgba(120, 200, 190, .06); --accent: #5fc3c9; --on-accent: #0d1413; } }
+
+  /* ---- the stage: fixed, full window (the style) */
+  html, body { margin: 0; height: 100%; background: var(--paper); overflow: hidden; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* #page is the live page. position: relative so liquid.js can measure elements by offsets */
+  #page {
+    position: relative; box-sizing: border-box; width: 100vw; height: 100vh; overflow: auto;
+    padding: clamp(14px, 2.4vh, 28px) clamp(16px, 4vw, 56px);
+    display: grid; grid-template-rows: auto 1fr auto; gap: clamp(12px, 2.4vh, 26px);
+    background-color: var(--paper); color: var(--ink); font: 400 15px/1.5 var(--sans);
+    /* faint ruled lines so every bend of the water shows */
+    background-image: linear-gradient(var(--grid) 1px, transparent 1px);
+    background-size: 100% 28px;
+  }
+  #page * { box-sizing: border-box; }
+  #page ::selection { background: color-mix(in srgb, var(--accent) 32%, transparent); }
+  #page :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+  #page.liquid-grab, #page.liquid-grab :not(button, input, label, a) { cursor: grab; }
+  #page.liquid-grabbing, #page.liquid-grabbing * { cursor: grabbing !important; }
+  .mono { font: 500 11px/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--soft); }
+
+  .bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-bottom: 10px; border-bottom: 1px solid var(--rule); }
+  .mark { font: 700 17px/1 var(--sans); display: flex; align-items: center; gap: 9px; }
+  .mark i { width: 12px; height: 12px; border-radius: 0 50% 50% 50%; transform: rotate(45deg); background: var(--accent); display: block; }
+
+  .sheet { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, .85fr); gap: clamp(22px, 4vw, 64px); align-items: start; }
+  .col { display: flex; flex-direction: column; gap: clamp(12px, 2.2vh, 22px); min-width: 0; }
+  h1 { margin: 0; font: 600 clamp(38px, min(5.6vw, 10.5vh), 96px)/.95 var(--serif); letter-spacing: -.025em; text-wrap: balance; }
+  h1 em { font-style: italic; color: var(--accent); }
+  .lede { margin: 0; max-width: 56ch; color: var(--soft); font-size: clamp(14px, 1.15vw, 17px); }
+  .lede strong { color: var(--ink); font-weight: 600; }
+  .poem { margin: 0; padding: 14px 0 0; border-top: 1px solid var(--rule); font: italic 400 clamp(16px, 1.45vw, 21px)/1.5 var(--serif); }
+  .poem p { margin: 0 0 .6em; }
+  .poem small { display: block; font: 400 12px/1.5 var(--sans); color: var(--soft); font-style: normal; }
+  .write { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: end; max-width: 620px; }
+  .write label { grid-column: 1 / -1; }
+  .write input { height: 44px; padding: 0 14px; font: 500 16px/1 var(--sans); color: var(--ink); background: var(--panel); border: 1.5px solid var(--ink); border-radius: 10px; width: 100%; min-width: 0; }
+  .btn { height: 44px; padding: 0 18px; font: 600 15px/1 var(--sans); border-radius: 10px; border: 1.5px solid var(--ink); background: var(--panel); color: var(--ink); cursor: pointer; }
+  .btn:hover { background: var(--ink); color: var(--paper); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+
+  .bench { margin: 0; padding: 16px; border: 1px solid var(--rule); border-radius: 14px; background: var(--panel); display: grid; gap: 13px; min-width: 0; }
+  .ctl { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: baseline; }
+  .ctl label { font-weight: 600; font-size: 14px; }
+  .ctl output { font: 500 12px/1 var(--mono); color: var(--soft); }
+  .ctl input[type=range] { grid-column: 1 / -1; }
+  input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 22px; margin: 0; background: transparent; cursor: pointer; --p: 50%; }
+  input[type=range]::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: linear-gradient(90deg, var(--accent) var(--p), var(--rule) var(--p)); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; margin-top: -8px; border-radius: 50%; background: var(--panel); border: 1.5px solid var(--ink); }
+  .presets { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
+  .presets button { font: 500 11px/1 var(--mono); padding: 5px 8px; border-radius: 6px; border: 1px solid var(--rule); background: transparent; color: var(--soft); cursor: pointer; }
+  .presets button[aria-pressed=true] { color: var(--ink); border-color: var(--ink); }
+  .row { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; padding-top: 11px; border-top: 1px solid var(--rule); }
+  .switch { display: inline-flex; align-items: center; gap: 9px; font-weight: 600; font-size: 14px; cursor: pointer; }
+  .switch input { appearance: none; -webkit-appearance: none; width: 38px; height: 22px; margin: 0; border-radius: 22px; background: color-mix(in srgb, var(--ink) 26%, transparent); position: relative; cursor: pointer; }
+  .switch input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--panel); transition: transform .18s; }
+  .switch input:checked { background: var(--accent); }
+  .switch input:checked::after { transform: translateX(16px); }
+  .live { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; font: 400 12px/1.35 var(--mono); padding: 12px 16px; border: 1px solid var(--rule); border-radius: 14px; background: var(--panel); }
+  .live dt { color: var(--soft); }
+  .live dd { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .foot { display: flex; justify-content: space-between; gap: 6px 24px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--rule); }
+  @media (max-width: 860px) {
+    .sheet { grid-template-columns: minmax(0, 1fr); }
+    .bar .mid { display: none; }
+    .write { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .write input { grid-column: 1 / -1; }
+  }
+</style>
+</head>
+<body>
+<!-- The live page: everything inside #page is real HTML (designed per topic). data-hic-edit / data-hic-click mark
+     what scripts/check.mjs clicks through the water. -->
+<canvas id="stage" layoutsubtree content="drawable" aria-label="A reading card under rainwater">
+  <main id="page" drawable>
+    <header class="bar">
+      <div class="mark"><i aria-hidden="true"></i>Rain Card</div>
+      <div class="mono mid">No. 07 · a page left out in the weather</div>
+      <div class="mono">water · n 1.33</div>
+    </header>
+
+    <div class="sheet">
+      <section class="col">
+        <div class="mono">Reading card · every line here is live text</div>
+        <h1>A page left out in the <span id="lensHome">rain</span> is <em>still a page.</em></h1>
+        <p class="lede">Select a line, press Tab, type below. <strong>Every bead is a small lens</strong> over real HTML, and the page under it keeps working.</p>
+        <div class="poem" aria-label="A short poem">
+          <p>The gutter counts in quarter notes,<br>the window keeps a crooked score;<br>each drop holds the whole street upside down<br>and lets it go along the floor.</p>
+          <small>Drag the big drop over the lines to read them larger.</small>
+        </div>
+        <div class="write">
+          <label class="mono" for="note">Write a line under the water</label>
+          <input id="note" type="text" autocomplete="off" spellcheck="false" placeholder="Type here. The caret is real." data-hic-edit>
+          <button class="btn primary" id="splash" type="button" data-hic-click data-liquid="splash">Splash</button>
+          <button class="btn" id="wipe" type="button" data-liquid="wipe">Wipe dry</button>
+        </div>
+      </section>
+
+      <section class="col">
+        <fieldset class="bench" id="bench">
+          <legend class="mono">The weather</legend>
+          <div class="ctl">
+            <label for="ior">Refractive index</label><output id="iorOut" for="ior">n = 1.33</output>
+            <input id="ior" type="range" min="100" max="242" step="1" value="133">
+            <div class="presets" role="group" aria-label="Materials">
+              <button type="button" data-n="100">air 1.00</button><button type="button" data-n="131">ice 1.31</button>
+              <button type="button" data-n="133">water 1.33</button><button type="button" data-n="152">glass 1.52</button>
+            </div>
+          </div>
+          <div class="ctl">
+            <label for="disp">Dispersion</label><output id="dispOut" for="disp">35%</output>
+            <input id="disp" type="range" min="0" max="100" step="1" value="35">
+          </div>
+          <div class="ctl">
+            <label for="rain">Rain</label><output id="rainOut" for="rain">drizzle</output>
+            <input id="rain" type="range" min="0" max="100" step="1" value="10">
+          </div>
+          <div class="row">
+            <label class="switch"><input type="checkbox" id="lens" checked>Big drop</label>
+            <label class="switch"><input type="checkbox" id="dark">Dark paper</label>
+          </div>
+        </fieldset>
+        <dl class="live" aria-label="Live DOM state">
+          <dt>focus</dt><dd id="rFocus">body</dd>
+          <dt>selection</dt><dd id="rSel">none</dd>
+        </dl>
+      </section>
+    </div>
+
+    <footer class="foot mono">
+      <span>Move the pointer to wet the page · click for ripples · drag the big drop</span>
+      <span>Type in the field and the letters get wet</span>
+    </footer>
+  </main>
+</canvas>
+
+<script src="../lib/hic.js"></script>
+<script src="../lib/liquid.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+
+  // ---- the liquid, the weather, the light: designed per topic (references/BRIEF.md, references/ENGINE.md)
+  var L = Liquid.start({
+    canvas: '#stage', page: '#page',
+    liquid: 'water',                                  // or { extends: 'water', tint: [...], slide: .6, ... }
+    weather: { rain: .1, wind: 0, intro: 'sheet' },
+    light: { dir: [-.56, -.83], window: { panes: 2 } },
+    lens: { anchor: '#lensHome', radius: .14 },
+    keepDry: 'h1, .poem p, .lede',                    // big beads are not seeded on the words you want readable
+    noTrail: '.bench, .live, .bar',
+    seed: 7
+  });
+  if (L.fallback) return;                             // the plain page is showing; nothing else to wire
+
+  // ---- the bench: real controls on the page drive the liquid
+  var NAMES = [[1.00, 'air'], [1.31, 'ice'], [1.33, 'water'], [1.47, 'oil'], [1.52, 'glass'], [2.42, 'diamond']];
+  Liquid.range('#ior', '#iorOut', function (v) {
+    var n = v / 100, m = NAMES.find(function (x) { return Math.abs(x[0] - n) < .006; });
+    L.set({ ior: n });
+    document.querySelectorAll('.presets button').forEach(function (b) { b.setAttribute('aria-pressed', String(+b.dataset.n === v)); });
+    return { label: 'n = ' + n.toFixed(2) + (m ? ' · ' + m[1] : '') };
+  });
+  document.querySelectorAll('.presets button').forEach(function (b) {
+    b.addEventListener('click', function () { $('ior').value = b.dataset.n; $('ior').dispatchEvent(new Event('input')); });
+  });
+  Liquid.range('#disp', '#dispOut', function (v) { L.set({ dispersion: v / 100 }); return { label: v + '%' }; });
+  if (HIC.calm) $('rain').value = 0;
+  Liquid.range('#rain', '#rainOut', function (v) {
+    L.set({ rain: v / 100 });
+    return { label: v === 0 ? 'dry' : v < 30 ? 'drizzle' : v < 65 ? 'shower' : 'downpour' };
+  });
+  $('lens').addEventListener('change', function (e) { L.set({ lens: e.target.checked }); });
+  var root = document.documentElement;
+  function isDark() { var t = root.getAttribute('data-theme'); return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; }
+  $('dark').checked = isDark();
+  $('dark').addEventListener('change', function (e) { root.setAttribute('data-theme', e.target.checked ? 'dark' : 'light'); L.stage.requestPaint(); });
+  if (HIC.param('dark') !== null) { root.setAttribute('data-theme', 'dark'); $('dark').checked = true; }
+  $('splash').addEventListener('click', function (e) { var b = L.boxOf(e.currentTarget); L.splash(b[0] + b[2] / 2, b[1] + b[3] / 2); });
+  $('wipe').addEventListener('click', function () { L.wipe(); });
+
+  // ---- proof that the page is real: what has focus, what is selected
+  function describe(el) { return !el || el === document.body ? 'body' : el.tagName.toLowerCase() + (el.id ? '#' + el.id : el.classList[0] ? '.' + el.classList[0] : ''); }
+  setInterval(function () {
+    var f = describe(document.activeElement), s = String(getSelection()).replace(/\s+/g, ' ').trim();
+    s = s ? '“' + (s.length > 34 ? s.slice(0, 33) + '…' : s) + '”' : 'none';
+    if ($('rFocus').textContent !== f) $('rFocus').textContent = f;
+    if ($('rSel').textContent !== s) $('rSel').textContent = s;
+  }, 250);
+})();
+</script>
+</body>
+</html>

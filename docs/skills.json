@@ -2296,6 +2296,45 @@
           "url": "https://jungrok5.github.io/motion-skills/jelly-page/demo/examples/party-invite/"
         }
       ]
+    },
+    {
+      "id": "liquid-glass-page",
+      "name": "liquid-glass-page",
+      "tagline": "주제를 주면 그 주제의 실제 웹페이지를 만들고 주제에 맞게 설계한 액체(물 · 꿀 · 기름 · 수은 …)를 얹어 HTML-in-Canvas와 WebGL2로 그립니다. 물결과 방울이 페이지를 굴절시키고 큰 방울은 끌어서 돋보기로 쓰며, 아래의 글자 · 입력칸 · 버튼은 그대로 동작합니다.",
+      "poster": "liquid-glass-page/poster.jpg",
+      "posterAlt": "네 장면: 시 카드 위를 확대하는 투명한 큰 물방울, 시음 노트를 금빛으로 확대하는 큰 꿀방울과 흘러내린 꿀 리본, 어두운 팬트리의 호박색 꿀방울, 수은으로 바꾼 거울 같은 방울",
+      "tags": [
+        "HTML-in-Canvas · WebGL2",
+        "굴절 · 분산 · 메타볼 방울",
+        "살아 있는 페이지",
+        "주제마다 액체 설계",
+        "코드 전용"
+      ],
+      "stats": [
+        "액체 예시 5종 (물 · 꿀 · 기름 · 수은 · 레진)",
+        "돋보기 너머 클릭 · 결정적 스틸 검사"
+      ],
+      "page": "liquid-glass-page/",
+      "source": "liquid-glass-page/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "liquid-glass-page/examples/honey-tasting/"
+      },
+      "sources": [
+        {
+          "title": "Felix Rieseberg의 \"Liquid Glass\" 데모",
+          "url": "https://claude.ai/artifact/CxxmVRwFgSmV9xB7XFsjbf"
+        },
+        {
+          "title": "HTML-in-Canvas 데모 페이지 (데모 15개)",
+          "url": "https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk"
+        },
+        {
+          "title": "Felix Rieseberg의 X 게시물 \"All hail the weird web\"",
+          "url": "https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&s=19"
+        }
+      ],
+      "workedExample": "https://jungrok5.github.io/motion-skills/liquid-glass-page/demo/examples/honey-tasting/"
     }
   ]
 }
