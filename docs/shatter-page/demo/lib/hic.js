@@ -349,7 +349,10 @@
       for (var c = 0; c < 4; c++) { m[c * 4] -= off[0] * m[c * 4 + 3]; m[c * 4 + 1] -= off[1] * m[c * 4 + 3]; }
       return m;
     }
-    S.place = function (el, m) {
+    // While S.probe() tests an element, the page's own placements of it (a frame loop) are held back, or they would
+    // move it away before the browser is asked what is under the probe point.
+    S.place = function (el, m) { if (!el.__hicProbing) placeRaw(el, m); };
+    function placeRaw(el, m) {
       if (!m) m = HIDE;
       if (m && typeof m.toFloat64Array === 'function') m = m.is2D ? [m.a, m.b, m.c, m.d, m.e, m.f] : Array.from(m.toFloat64Array());
       for (var i = 0; i < m.length; i++) if (!isFinite(m[i])) { m = HIDE; break; }
@@ -360,7 +363,7 @@
         var css = cssMatrix(m === HIDE ? m : fromLayout(m, layoutOffset(el)));
         if (el.__hicCss !== css) { el.__hicCss = css; el.style.transformOrigin = '0 0'; el.style.transform = css; el.__hicNorm = el.style.transform; ownMove = true; }
       }
-    };
+    }
     S.home = function (el) { var o = layoutOffset(el); el.__hicCss = ''; S.place(el, [1, 0, 0, 1, o[0], o[1]]); };
     S.placeLocal = function (el, x, y, toPage) {
       var q0 = toPage(x, y), qx = toPage(x + 1, y), qy = toPage(x, y + 1);
@@ -387,13 +390,15 @@
           // put the target's centre at the canvas centre, then ask the browser what is there (all layers, so an
           // overlay above the canvas does not hide the answer)
           var b = HIC.box(el, target), lx = b[0] + b[2] / 2, ly = b[1] + b[3] / 2;
-          S.place(el, [1, 0, 0, 1, Math.round(cr.width / 2 - lx), Math.round(cr.height / 2 - ly)]);
+          el.__hicProbing = true;
+          placeRaw(el, [1, 0, 0, 1, Math.round(cr.width / 2 - lx), Math.round(cr.height / 2 - ly)]);
           await frames();
           var x = cr.left + cr.width / 2, y = cr.top + cr.height / 2;
           var hits = doc.elementsFromPoint ? doc.elementsFromPoint(x, y) : [doc.elementFromPoint(x, y)];
           if (hits.some(function (h) { return h && (h === target || target.contains(h)); })) { found = S.mode; break; }
         }
         S.mode = found || 'css'; probe.mode = S.mode + (found ? '' : '?');
+        el.__hicProbing = false;
         S.home(el);   // leave it where it is laid out; the page places it from here
         return S.mode;
       })();
@@ -423,12 +428,17 @@
   // ------------------------------------------------------------------ helpers for pages
   // Element-local box of a descendant (CSS px, relative to the drawable root): [x, y, w, h]
   HIC.box = function (rootEl, el) {
-    var a = rootEl.getBoundingClientRect(), b = el.getBoundingClientRect();
-    // undo a CSS-mode transform on the root by using offsets when possible
+    // Layout offsets ignore CSS transforms, so this stays right while the page is placed (scaled, tilted) for hit
+    // testing. Elements without offsets (SVG) fall back to their boxes on screen.
+    if (el.offsetWidth === undefined || rootEl.offsetWidth === undefined) {
+      var a = rootEl.getBoundingClientRect(), b = el.getBoundingClientRect();
+      return [b.left - a.left, b.top - a.top, b.width, b.height];
+    }
     var x = 0, y = 0, n = el;
-    while (n && n !== rootEl) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
-    if (n === rootEl) return [x, y, el.offsetWidth, el.offsetHeight];
-    return [b.left - a.left, b.top - a.top, b.width, b.height];
+    while (n) { x += n.offsetLeft || 0; y += n.offsetTop || 0; n = n.offsetParent; }
+    var rx = 0, ry = 0; n = rootEl;
+    while (n) { rx += n.offsetLeft || 0; ry += n.offsetTop || 0; n = n.offsetParent; }
+    return [x - rx, y - ry, el.offsetWidth, el.offsetHeight];
   };
   // A seeded random generator (mulberry32) so a page looks the same on every load and in every still.
   HIC.rng = function (seed) {

@@ -100,8 +100,10 @@ coming, not how fast they are. Stills come from `stills()` (or the skill's `scri
   layout offset itself in CSS mode (`S.layoutOffset(el)`), so the same matrix works in both modes. Before 1.1, a skill
   placing descendants had to remove the offset by hand (exploded-view-map did).
 - **`S.probe()` used to leave the page at its probe offset** and could answer `css?` when an overlay covered the canvas
-  centre or the target was measured through a transform. Since 1.1 it measures with offsets, asks `elementsFromPoint`
-  (every layer) and puts the element home (`S.home(el)`) before it resolves.
+  centre or the target was measured through a transform. Since 1.1 it measures with layout offsets (`HIC.box`
+  ignores transforms), asks `elementsFromPoint` (every layer), holds back the page's own `S.place` calls for that
+  element while it waits (a frame loop that keeps placing the page used to move it away mid-probe), and puts the element
+  home (`S.home(el)`) before it resolves.
 - **A DOM change made inside the `onPaint` callback is not reported as a new paint.** Since 1.1 a MutationObserver
   notices such changes and asks for one more paint on the next frame. `onPaint(fn)` now also receives the paint event
   (`event.changedElements`, where the browser gives it), so a page with several drawn children can upload only the one
