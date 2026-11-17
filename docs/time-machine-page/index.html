@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>time-machine-page · motion-skills</title>
+<meta name="description" content="주제를 받아, 진짜 웹페이지 하나를 다이얼로 시대를 넘기며 그 시대의 재료(활판과 망점, 필름 입자, 형광 주사선, 목판, 등사, 디더링, 홀로그램)로 그리는 라이브 웹페이지를 만듭니다.">
+<meta property="og:title" content="time-machine-page · motion-skills">
+<meta property="og:description" content="주제를 받아, 진짜 웹페이지 하나를 다이얼로 시대를 넘기며 그 시대의 재료로 그리는 라이브 웹페이지를 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/time-machine-page/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/time-machine-page">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / time-machine-page</nav>
+  <h1>time-machine-page</h1>
+  <p>주제를 받아, 제목을 고치고 메모를 적을 수 있는 진짜 웹페이지 하나를 다이얼로 시대를 넘기며 그 시대의 재료로 그리는 라이브 웹페이지를 만듭니다. 시대마다 같은 DOM을 CSS로 다시 짜고 셰이더 패스(활판과 망점, 필름 입자와 흔들림, 형광 주사선, 목판, 등사, 디더링, 홀로그램)로 그리며, 다이얼을 돌리면 카메라가 종이의 망점이나 필름 입자 속으로 파고들었다가 다음 시대의 재료로 바뀌어 빠져나옵니다.
+  원본: Felix Rieseberg의 <a href="https://claude.ai/artifact/VtYey85VQXYqqfURRYqpiq" target="_blank" rel="noopener">「Time Machine」 데모</a>(<a href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk" target="_blank" rel="noopener">HTML-in-Canvas 데모 페이지</a>, <a href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19" target="_blank" rel="noopener">X 게시물</a>)를 보고 만들었습니다. 라이브 데모는 Chrome · Edge 157 이상이나 Claude 데스크톱 앱에서 보이고, 다른 브라우저에서는 같은 HTML이 다이얼이 동작하는 평범한 페이지로 보입니다.</p>
+  <ul class="tags"><li>라이브 웹페이지</li><li>HTML-in-Canvas</li><li>시대 다이얼</li><li>셰이더 패스</li><li>코드 전용</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(레시피, 마을 소식, 밴드 공연 포스터, 학교 시간표, 제품 소개 …)</dd>
+      <dt>브리프</dt><dd>문서와 슬롯 · 독자가 만질 컨트롤 · 그림 하나 · 주제의 역사에 맞는 3–5개 시대(연도 · 매체 · 그 시대의 말투와 단위 · 레이아웃 · 패스 · 둘레 · 다이브 지점 · 소리)를 적은 <code>BRIEF.md</code></dd>
+      <dt>페이지</dt><dd>슬롯과 메모 기록을 담은 DOM 하나, 시대별 CSS, 시대마다 패스로 짠 셰이더(필요하면 새 패스), 무게감 있는 다이얼과 다이브 여행, 확대, X-ray, 합성 소리</dd>
+      <dt>확인</dt><dd>그림 너머 실제 클릭 · 입력 · 폰 폭 · 대체 페이지, 모든 시대에서 메모 입력과 등록, 시대끼리 다른 그림, 다이얼 실제 드래그의 다이브 깊이와 착지, 키 · 버튼 · 대기열, 확대 뒤 클릭, X-ray, 소리, calm</dd>
+      <dt>출력</dt><dd>네트워크 없이 file:// 과 Claude 아티팩트에서 도는 폴더 하나(<code>index.html</code> + <code>lib/</code>), 스틸 PNG</dd>
+    </dl>
+    <pre><code>node scripts/check.mjs examples/daily-loaf/index.html
+node scripts/still.mjs examples/daily-loaf/index.html --out out --all
+node scripts/still.mjs examples/daily-loaf/index.html --out out --era ditto --travel woodcut,0.3
+node scripts/new-page.mjs ../my-time-machine</code></pre>
+    <p class="mute">요구 사항: 확인과 스틸에 Node + Playwright Chromium. 페이지 자체는 아무것도 필요 없습니다(시스템 글꼴, 인라인 SVG, 합성 소리). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/time-machine-page/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10;--demo-bg:#0b0b0c">
+    <iframe data-src="demo/examples/daily-loaf/" title="time-machine-page 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/daily-loaf/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/daily-loaf</code> · 빵 레시피 · 1450 목판 → 1962 등사 → 1996 웹 → 2040 홀로그램</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/daily-loaf/" data-cap="예제 &lt;code&gt;examples/daily-loaf&lt;/code&gt; · 빵 레시피 · 1450 목판 → 1962 등사 → 1996 웹 → 2040 홀로그램" aria-pressed="true">빵 레시피</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/index.html&lt;/code&gt; · 마을 도서관 소식 · 1904 신문 → 1937 뉴스릴 → 1979 터미널" aria-pressed="false">도서관 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제와 템플릿을 시대별로, 그리고 시대 사이를 여행하는 순간과 확대한 재료를 찍은 스틸입니다. 카드를 누르면 그 페이지의 라이브 데모가 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"loaf":"빵 레시피","library":"도서관 템플릿","journey":"여행 · 확대"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>빵 레시피 <small>examples/daily-loaf</small></h3>
+      <p>같은 레시피 카드가 네 시대를 지납니다. 빵 개수를 바꾸면 재료가 그 시대의 단위로 다시 계산되고, 적은 메모는 쓴 해와 함께 따라옵니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="loaf" href="demo/examples/daily-loaf/" target="_blank" rel="noopener">
+          <img src="samples/loaf-woodcut.jpg" alt="촛불 아래 낡은 넝마 종이에 찍힌 목판 레시피, 화덕 그림이 평행 칼선으로 새겨지고 붉은 머리글자가 있음" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">1450 · 목판</span><b>좋은 흰 빵 굽는 법</b><span class="how">woodcut · paper · desk 패스, 붉은 머리글자는 그대로</span></div></a>
+        <a class="tile" data-tags="loaf" href="demo/examples/daily-loaf/" target="_blank" rel="noopener">
+          <img src="samples/loaf-ditto.jpg" alt="학교 책상 위 보라색으로 번지고 오른쪽으로 갈수록 흐려지는 등사 인쇄 가정 시간 유인물" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">1962 · 등사</span><b>가정 시간 유인물</b><span class="how">예제 안에서 새로 쓴 ditto 패스: 보라 잉크 · 번짐 · 흐려짐 · 겹상</span></div></a>
+        <a class="tile" data-tags="loaf" href="demo/examples/daily-loaf/" target="_blank" rel="noopener">
+          <img src="samples/loaf-web.jpg" alt="베이지색 CRT 모니터 속 회색 배경의 1996년 개인 홈페이지, 파란 밑줄 링크와 공사 중 띠" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">1996 · 웹 페이지</span><b>밥의 빵 페이지</b><span class="how">640×480 원본 픽셀 · 216색 디더링 · 주사선 · 섀도 마스크 · 볼록 유리</span></div></a>
+        <a class="tile" data-tags="loaf" href="demo/examples/daily-loaf/" target="_blank" rel="noopener">
+          <img src="samples/loaf-holo.jpg" alt="어두운 방에서 푸른 고리 위에 떠 있는 청록색 빛의 사워도우 레시피 홀로그램" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">2040 · 홀로그램</span><b>주방 비서의 사워도우</b><span class="how">holo · bloom · lab 패스, 색 번짐과 간섭 띠</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>도서관 템플릿 <small>templates/index.html</small></h3>
+      <p>스타일의 기본 예시입니다. 마을 도서관 소식이 신문, 뉴스릴, 도서 목록 단말기로 바뀝니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="library" href="demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/library-print.jpg" alt="램프 아래 가죽 책상 위 1904년 신문 1면, 도서관 그림이 망점으로 찍힘" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">1904 · 신문</span><b>무료 도서관 개관</b><span class="how">letterpress · halftone · paper(접힌 자국) · desk</span></div></a>
+        <a class="tile" data-tags="library" href="demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/library-film.jpg" alt="붉은 커튼과 관객 머리 실루엣 사이 극장 스크린에 비친 흑백 뉴스릴 자막 화면" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">1937 · 뉴스릴</span><b>백만 번째 책 대출</b><span class="how">weave · mono · grain · dust · cinema · flicker</span></div></a>
+        <a class="tile" data-tags="library" href="demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/library-term.jpg" alt="베이지 모니터 속 녹색 형광 도서 목록 화면, 도서관 그림이 선으로만 그려짐" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">1979 · 터미널</span><b>카드 목록이 컴퓨터로</b><span class="how">barrel · mono(형광) · bloom · scanlines · mask · monitor</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>여행과 확대 <small>#travel · #zoom</small></h3>
+      <p>다이얼을 돌린 순간을 멈춰 찍었습니다. 카메라가 재료 속으로 들어가 다음 시대의 재료로 바뀝니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="journey" href="demo/examples/daily-loaf/" target="_blank" rel="noopener">
+          <img src="samples/loaf-dive.jpg" alt="목판 그림 속으로 깊이 확대해 칼선이 화면을 채운 장면" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">여행 · 30%</span><b>목판 속으로 다이브</b><span class="how">1450 → 1962, 칼선이 화면을 채우는 순간</span></div></a>
+        <a class="tile" data-tags="journey" href="demo/examples/daily-loaf/" target="_blank" rel="noopener">
+          <img src="samples/loaf-crossing.jpg" alt="CRT의 RGB 섀도 마스크 줄무늬 위로 청록색 홀로그램 선이 겹쳐 바뀌는 순간" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">여행 · 42%</span><b>형광 줄무늬에서 빛으로</b><span class="how">1996 → 2040, 깊은 곳에서 재료가 바뀜</span></div></a>
+        <a class="tile" data-tags="journey" href="demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/library-halftone.jpg" alt="6배 확대한 신문 그림, 둥근 망점과 번진 잉크 가장자리가 보임" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">확대 · ×6</span><b>망점과 잉크</b><span class="how">휠로 확대해도 페이지는 그대로 클릭되고 입력됨</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 주제를 바꿔 처음부터 만든 예제와, 스킬을 만들 때 본 원본 데모입니다.</p>
+  <div class="works">
+    <a class="work" href="https://jungrok5.github.io/motion-skills/time-machine-page/demo/examples/daily-loaf/" target="_blank" rel="noopener"><b>The Daily Loaf</b><span>빵 레시피 · 4개 시대 · 새 패스 하나(ditto) · 빵 개수 입력</span><span class="url">jungrok5.github.io/motion-skills/time-machine-page/demo/examples/daily-loaf/</span></a>
+    <a class="work" href="https://claude.ai/artifact/VtYey85VQXYqqfURRYqpiq" target="_blank" rel="noopener"><b>원본 · 「Time Machine」 데모</b><span>Felix Rieseberg · HTML-in-Canvas 데모 15개 중 하나</span><span class="url">claude.ai/artifact/VtYey85VQXYqqfURRYqpiq</span></a>
+    <a class="work" href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk" target="_blank" rel="noopener"><b>HTML-in-Canvas 데모 페이지</b><span>데모 15개 모음</span><span class="url">claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk</span></a>
+    <a class="work" href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19" target="_blank" rel="noopener"><b>X 게시물 · All hail the weird web</b><span>Claude 데스크톱 앱의 HTML-in-Canvas 소개</span><span class="url">x.com/felixrieseberg/status/2122036839238492493</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/time-machine-page/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/time-machine-page">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/time-machine-page/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/time-machine-page/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/time-machine-page/references/LOOK.md">references/LOOK.md</a> <span>원본 데모에서 관찰한 형식</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/time-machine-page/references/ENGINE.md">references/ENGINE.md</a> <span>설정 · 패스 목록 · 새 패스 추가</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/time-machine-page/references/HIC.md">references/HIC.md</a> <span>HTML-in-Canvas 공통 규칙</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/time-machine-page/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림은 코드(인라인 SVG와 셰이더)로 그렸습니다
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

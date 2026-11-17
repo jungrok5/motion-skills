@@ -2593,6 +2593,50 @@
           "url": "https://jungrok5.github.io/motion-skills/event-horizon-page/demo/examples/pulsar-tour/"
         }
       ]
+    },
+    {
+      "id": "time-machine-page",
+      "name": "time-machine-page",
+      "tagline": "주제 하나(레시피, 마을 소식, 밴드 공연 포스터, 학교 시간표 …)를 주면, 제목을 고치고 메모를 적을 수 있는 진짜 웹페이지 하나를 다이얼로 시대를 넘기며 그 시대의 재료로 그리는 라이브 웹페이지를 만듭니다. 시대마다 같은 DOM을 CSS로 다시 짜고 셰이더 패스(활판과 망점, 필름 입자와 흔들림, 형광 주사선, 목판, 등사, 디더링, 홀로그램)와 둘레(책상, 극장, 모니터, 실험실)로 그리며, 다이얼을 돌리면 카메라가 재료 속으로 파고들었다가 다음 시대로 빠져나옵니다. 문서, 시대, 시대별 말투와 패스, 그림, 소리를 주제마다 설계합니다.",
+      "poster": "time-machine-page/poster.jpg",
+      "posterAlt": "time-machine-page로 만든 페이지 네 장면: 촛불 아래 넝마 종이에 찍힌 1450년 목판 빵 레시피, 붉은 커튼과 관객 실루엣 사이 극장 스크린의 1937년 흑백 뉴스릴 도서관 소식, 베이지 CRT 모니터 속 1996년 회색 개인 홈페이지 빵 레시피, 어두운 방 푸른 고리 위에 뜬 2040년 청록색 사워도우 레시피 홀로그램",
+      "tags": [
+        "HTML-in-Canvas · WebGL2",
+        "시대 다이얼",
+        "합성 가능한 셰이더 패스",
+        "재료 속 다이브 전환",
+        "코드 전용"
+      ],
+      "stats": [
+        "예제 빵 레시피 · 4개 시대(목판 · 등사 · 1996 웹 · 홀로그램) · 새 패스 ditto · 빵 개수 입력",
+        "검사: 모든 시대에서 그림 너머 메모 입력 · 시대끼리 다른 그림 · 다이얼 드래그 다이브 ×20 · 착지 · 확대 뒤 클릭 · X-ray · calm"
+      ],
+      "page": "time-machine-page/",
+      "source": "time-machine-page/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "time-machine-page/examples/daily-loaf/"
+      },
+      "sources": [
+        {
+          "title": "Felix Rieseberg의 「Time Machine」 데모 (한 웹페이지가 다이얼로 신문 · 뉴스릴 · 터미널을 지나는 HTML-in-Canvas 페이지)",
+          "url": "https://claude.ai/artifact/VtYey85VQXYqqfURRYqpiq"
+        },
+        {
+          "title": "HTML-in-Canvas 데모 페이지 (「HTML-in-Canvas is now in Claude」, 데모 15개)",
+          "url": "https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk"
+        },
+        {
+          "title": "Felix Rieseberg의 X 게시물 「All hail the weird web」",
+          "url": "https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "The Daily Loaf · 빵 레시피 1450 → 2040 · 라이브 데모",
+          "url": "https://jungrok5.github.io/motion-skills/time-machine-page/demo/examples/daily-loaf/"
+        }
+      ]
     }
   ]
 }
