@@ -2461,6 +2461,50 @@
         }
       ],
       "workedExample": "https://jungrok5.github.io/motion-skills/shatter-page/demo/examples/plate-for-luck/"
+    },
+    {
+      "id": "paper-desk",
+      "name": "paper-desk",
+      "tagline": "주제를 주면 그 주제의 문서를 램프 아래 책상 위 종이 한 장으로 만듭니다. 문서는 타이핑 · 선택 · 검색이 되는 실제 HTML이고, 말고 · 접고 · 구기고 · 커피를 쏟고 · 불태워도 계속 동작합니다.",
+      "poster": "paper-desk/poster.jpg",
+      "posterAlt": "네 장면: 회색 사무용 책상 위 사직서 메모와 커피 머그, 불이 붙어 구멍이 난 사직서, 공처럼 구겨진 종이, 호두나무 책상 위 촛불 옆에서 모서리가 말린 편지",
+      "tags": [
+        "HTML-in-Canvas",
+        "살아 있는 문서",
+        "종이 물리",
+        "WebGL2 조명",
+        "코드 전용"
+      ],
+      "stats": [
+        "예제 I Quit 사직서 · 접기 · 구기기 · 커피 얼룩 · 불",
+        "검사: 평면 클릭 8/8 · 말림 1 s 안에 복귀 · 구김 면적 20 % · 말린 · 구겨진 · 타는 종이에 입력"
+      ],
+      "page": "paper-desk/",
+      "source": "paper-desk/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "paper-desk/examples/resignation-letter/"
+      },
+      "sources": [
+        {
+          "title": "원본 데모 · The Paper Desk",
+          "url": "https://claude.ai/artifact/BKGBk584YpYtxBebEQsYSm"
+        },
+        {
+          "title": "HTML-in-Canvas 데모 페이지",
+          "url": "https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk"
+        },
+        {
+          "title": "Felix Rieseberg의 X 게시물",
+          "url": "https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "I Quit · 사직서 · 라이브 데모",
+          "url": "https://jungrok5.github.io/motion-skills/paper-desk/demo/examples/resignation-letter/"
+        }
+      ]
     }
   ]
 }
