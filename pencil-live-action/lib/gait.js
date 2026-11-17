@@ -78,10 +78,10 @@ export function gait(o) {
       out.root = [(out.L[0] + out.R[0]) / 2, Math.min(out.L[1], out.R[1]), (out.L[2] + out.R[2]) / 2];
       let f = faces[0].face; for (const e of faces) { if (t >= e.t + e.dur) f = e.face; else if (t > e.t) { f = angLerp(f, e.face, sm((t - e.t) / e.dur)); break; } else break; }
       out.face = f;
-      // compass gait: the hip rides on the legs — lowest when the feet are far apart, highest as the swing foot passes
-      const spread = Math.hypot(out.L[0] - out.R[0], out.L[2] - out.R[2]), down = ['L', 'R'].filter(s => out.planted[s]);
-      const base = down.length ? down.reduce((a, s) => a + out[s][1], 0) / down.length : Math.min(out.L[1], out.R[1]);
-      out.hipY = base + ank + Math.sqrt(Math.max(0, legLen * legLen * .992 - (spread / 2) ** 2));
+      // compass gait: the hip rides on the legs — as high as the lower foot allows (so on stairs and rungs every
+      // planted foot stays in reach), lowest when the feet are far apart, highest as the swing foot passes
+      const spread = Math.hypot(out.L[0] - out.R[0], out.L[2] - out.R[2]), reach = Math.sqrt(Math.max(0, legLen * legLen * .975 - (spread / 2) ** 2));
+      out.hipY = Math.min(out.L[1], out.R[1]) + ank + reach;   // the lower foot (planted or swinging up to its rung) must stay in reach
       out.airborne = hops.some(h => t > h.t0 && t < h.t1);
       return out;
     },

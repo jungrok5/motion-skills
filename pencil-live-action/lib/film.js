@@ -192,7 +192,7 @@ export class Film {
     const ank = H * .025, un = p => { const l = toLocal(p); return [l[0], l[1] - ank]; };
     if (tr.feet) pose.legs = { L: { to: un(feet.L) }, R: { to: un(feet.R) }, ...(pose.legs || {}) };
     if (tr.hip !== undefined) pose.hip = -(tr.hip - at[1]) / m;
-    if (tr.armsW) { pose.arms = { ...(pose.arms || {}) }; for (const s of ['L', 'R']) if (tr.armsW[s]) pose.arms[s] = { to: toLocal(tr.armsW[s]) }; }
+    if (tr.armsW) { pose.arms = { ...(pose.arms || {}) }; for (const s of ['L', 'R']) if (tr.armsW[s]) pose.arms[s] = { to: toLocal(tr.armsW[s]), stretch: !!tr.stretch }; }
     const d = drawHero(spec, pose);
     const W = p => toWorld(p);
     return { h, tr, at, m, H, pose, d, toWorld: W, toLocal, head: W(d.at.head), hand: { L: W(d.at.hand.L), R: W(d.at.hand.R) }, top: W(d.at.top), feet, planted: tr.planted || null };

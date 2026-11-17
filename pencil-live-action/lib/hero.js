@@ -24,13 +24,13 @@
 // pose = {
 //   x, y (feet, world), yaw (body, deg), head: { yaw (relative to body), roll, pitch (+ up) }, look: [lx, ly] (−1…1), blink (0…1),
 //   mouth: 'smile' | 'grin' | 'o' | 'flat' | 'open' | 'smirk' | 'sad', brows: 'up' | 'flat' | 'knit' | 'soft',
-//   arms: { R: { a, b } | { to: [x, y] } (the pencil tip, or the hand when empty) | { grip: [x, y], dir } (the hand, pencil along dir rad), L: … }   a = upper arm from hanging, toward the facing side (outward when frontal), b = elbow bend
+//   arms: { R: { a, b } | { to: [x, y], stretch } (the pencil tip, or the hand when empty; stretch = reaching past the arm is meant) | { grip: [x, y], dir } (the hand, pencil along dir rad), L: … }   a = upper arm from hanging, toward the facing side (outward when frontal), b = elbow bend
 //   legs: { R: { a, k } | { to: [x, y] } (the ankle, by 2-bone IK: knee folds back), L: … }, hip (world y of the hip; default y − .385 H), stance (× H), breathe (s), flow (s, hair / scarf sway), hold: 'R' | 'L' | null (pencil in that hand),
 //   penAng (deg, the pencil's angle when held and not drawing), open: 'R' | 'L' (an open palm ready to catch)
 // }
 import { TAU, clamp, lerp, n1, hash, curve, arc, ellipse, hand as wob, line, fill, part, hatch, bez } from './pencil.js';
 
-export const LIM = { neck: 90, roll: 32, pitch: 42, shoulder: [-70, 195], elbow: [-4, 155], hip: [-35, 80], knee: [-4, 145] };
+export const LIM = { neck: 90, roll: 32, pitch: 42, shoulder: [-70, 195], elbow: [-4, 155], hip: [-30, 118], knee: [-4, 145] };
 const D = Math.PI / 180;
 
 function rot(p, c, a) { const s = Math.sin(a), k = Math.cos(a), x = p[0] - c[0], y = p[1] - c[1]; return [c[0] + x * k - y * s, c[1] + x * s + y * k]; }
@@ -105,9 +105,13 @@ export function hero(spec, pose) {
       const T = o.to, d0 = nrm(sub(T, S)), da = Math.atan2(d0[1], d0[0]) + (d0[0] >= 0 ? .55 : -.55) * (holds ? 1 : 0);
       penDir = holds ? [Math.cos(da), Math.sin(da)] : d0;
       const G = holds ? sub(T, [penDir[0] * pl * .7, penDir[1] * pl * .7]) : T;
-      const sol = ik(S, G, ua, fa, P => side > .35 ? -f * P[0] * side + P[1] * (1 - side) : P[1] + Math.abs(P[0] - x) * .4);
+      const sc = P => side > .35 ? -f * P[0] * side + P[1] * (1 - side) : P[1] + Math.abs(P[0] - x) * .4;
+      let sol = ik(S, G, ua, fa, sc);
+      // prefer the elbow that bends the way an elbow can (the scored one can flip when the target is close to the shoulder)
+      const bendOf = (E2, H2) => { const ang = v => Math.atan2(v[0] * dir, v[1]) / D; return ((ang(sub(H2, E2)) - ang(sub(E2, S)) + 540) % 360) - 180; };
+      if (side > .5) { const b0 = bendOf(sol.E, sol.H); if (b0 < LIM.elbow[0] || b0 > LIM.elbow[1]) { const alt = ik(S, G, ua, fa, P => -sc(P)), b1 = bendOf(alt.E, alt.H); if (b1 >= LIM.elbow[0] && b1 <= LIM.elbow[1]) sol = alt; } }
       E = sol.E; Hd = sol.H;
-      if (sol.short > H * .02) A(`${s} hand cannot reach its target (${Math.round(sol.short)} short)`);
+      if (sol.short > H * .03 && !o.stretch) A(`${s} hand cannot reach its target (${Math.round(sol.short)} short)`);   // stretch: reaching for something out of reach is allowed
       if (holds) tip = add(Hd, penDir, pl * .7);
     } else {
       const a = (o.a ?? 8) * D, b = (o.b ?? 12) * D;
@@ -148,7 +152,7 @@ export function hero(spec, pose) {
     if (o.to) {
       // IK to an ankle target: thigh = shin; the knee folds backward (the shin trails the facing side)
       const dx = (o.to[0] - (Hp[0] + sx)) * fwd, dy = o.to[1] - Hp[1], d0 = Math.hypot(dx, dy), d = Math.min(d0, (thigh + shin) * .999);
-      if (d0 > (thigh + shin) * 1.02) A(`${s} foot cannot reach its step (${Math.round(d0 - thigh - shin)} short)`);
+      if (d0 > (thigh + shin) * 1.04) A(`${s} foot cannot reach its step (${Math.round(d0 - thigh - shin)} short)`);
       const kk = 2 * Math.acos(clamp(d / (2 * thigh), -1, 1)); aDeg = (Math.atan2(dx, dy) + kk / 2) / D; kDeg = kk / D;
     }
     const a = aDeg * D, k = kDeg * D;

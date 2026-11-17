@@ -37,7 +37,7 @@ export async function openFilm(browser, url, { quiet = false, viewport = { width
   const page = await browser.newPage({ viewport, deviceScaleFactor: 1 });
   let failed = null; const errors = [];
   page.on('pageerror', e => { failed = failed || e; errors.push(e.message); if (!quiet) console.error('page error:', e.message); });
-  page.on('console', m => { if ((m.type() === 'error' || m.type() === 'warning') && !/GPU stall|GL Driver Message|WebGL/.test(m.text())) { errors.push(m.text()); if (!quiet) console.error(`console ${m.type()}:`, m.text().slice(0, 400)); } });
+  page.on('console', m => { if ((m.type() === 'error' || m.type() === 'warning') && !/GPU stall|GL Driver Message|WebGL|willReadFrequently/.test(m.text())) { errors.push(m.text()); if (!quiet) console.error(`console ${m.type()}:`, m.text().slice(0, 400)); } });
   page.on('requestfailed', r => errors.push('request failed: ' + r.url()));
   page.on('response', r => { if (r.status() >= 400) errors.push(`${r.status()} ${r.url()}`); });
   await page.goto(url, { waitUntil: 'commit', timeout: 0 });
