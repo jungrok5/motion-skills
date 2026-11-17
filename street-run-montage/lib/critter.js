@@ -70,7 +70,7 @@ export function buildCritter(spec) {
   }
   if (spec.collar) part(neck, new THREE.TorusGeometry(g0 * .55, .012, 6, 16).rotateX(Math.PI / 2), spec.collar, { pos: [0, -.005, 0], ink: false });
   // tail: a chain of tapering segments
-  const tail = [], nT = K.tail === 'stub' ? 1 : 6, tl = (K.tail === 'long' ? L * 1.05 : K.tail === 'fluffy' ? L * .75 : K.tail === 'curl' ? L * .5 : .05) / nT;
+  const tail = [], nT = K.tail === 'stub' ? 1 : 6, tl = (K.tail === 'long' ? L * 1.05 : K.tail === 'fluffy' ? L * (K.kind === 'corgi' || spec.kind === 'corgi' ? .5 : .75) : K.tail === 'curl' ? L * .5 : .05) / nT;
   let tp = bone('tail0', hips, 0, g0 * .55, -L * .32); tail.push(tp);
   for (let i = 0; i < nT; i++) {
     const r0 = (K.tail === 'fluffy' ? .045 + .03 * Math.sin(Math.PI * (i + .5) / nT) : .022 * (1 - i / nT * .5)) * (h / .25) ** .5;
@@ -79,7 +79,7 @@ export function buildCritter(spec) {
   }
   // legs (front: upper, lower, paw; hind: thigh, shin, metatarsal, paw)
   const legs = {};
-  const LG = { fu: h * .44, fl: h * .44, fp: h * .09, hu: h * .43, hl: h * .45, hm: h * .27, hp: h * .09 };
+  const LG = { fu: h * .47, fl: h * .45, fp: h * .09, hu: h * .45, hl: h * .47, hm: h * .28, hp: h * .09 };
   for (const [nm, sx, front] of [['FL', 1, true], ['FR', -1, true], ['HL', 1, false], ['HR', -1, false]]) {
     const parent = front ? chest : hips, top = bone('top' + nm, parent, sx * g0 * .55, -g0 * .15, front ? L * .14 : -L * .12);
     const c = (front ? spec.socksF : spec.socksH) || coat;
@@ -113,10 +113,13 @@ export class Buddy {
     this.S = new Table(D, hz, t => this.rider.sAt(t) + keys(lead, t));
     this.Vt = this.S.slope(); this.Vs = this.Vt.follow(1.6, 1);
     // stride from speed and size; the gait phase is ∫ v / stride dt
-    this.stride = v => clamp((.55 + .2 * v) * (h / .25), .3 * h / .25, 1.6 * h / .25 + .4);
+    // the stride a leg can actually reach: the planted paw sweeps ± stride·duty/2 under a hip at stand height
+    const LG = this.LG, reach = .82 * Math.sqrt(Math.max(0, (LG.fu + LG.fl) ** 2 - (h * .86 - LG.fp - this.K.girth * .15) ** 2));
+    this.reach = reach;
+    this.stride = v => { const d = v < 1.2 ? .68 : v < 3.4 ? .52 : .36; return clamp((.45 + .16 * v) * (h / .25), .25 * h / .25, 2 * reach / d); };
     const ph = new Table(D, hz, t => Math.max(0, this.Vs.at(t)) / this.stride(Math.max(0, this.Vs.at(t))));
     this.Ph = ph.integral(0);
-    this.Bob = new Table(D, hz, t => this.yAt(t)); this.BobLag = this.Bob.follow(2.5, .4);
+    this.Bob = new Table(D, hz, t => this.yAt(t)); this.BobLag = this.Bob.follow(2.5, .4); this._rests = null;
     return this;
   }
   sAt(t) { return this.S.at(t); }
@@ -130,6 +133,27 @@ export class Buddy {
   _sit(t) { let k = 0; for (const m of this.moves) if (m.do === 'sit') k = Math.max(k, smooth(span(t, m.at, m.at + .5)) * (1 - smooth(span(t, m.at + (m.dur || 3) - .4, m.at + (m.dur || 3))))); return k; }
   _leap(t) { for (const m of this.moves) if (m.do === 'leap' && t > m.at - .32 && t < m.land + .4) return m; return null; }
 
+  /** rest intervals (sitting, or standing still): [{ a, b }] — paws step into place at a */
+  _restAt(t) {
+    if (!this._rests) {
+      const R = [], dt = 1 / 60; let a = null;
+      for (let x = 0; x <= this.dur + 1; x += dt) { const r = this._sit(x) > 0 || this.Vs.at(x) < .08; if (r && a === null) a = x; if (!r && a !== null) { R.push({ a, b: x }); a = null; } }
+      if (a !== null) R.push({ a, b: this.dur + 2 }); this._rests = R;
+    }
+    for (const r of this._rests) if (t >= r.a && t < r.b) return r; return null;
+  }
+  /** where a paw is while moving at t: planted at the touch-down point (stride of that moment), or swinging to the next */
+  _loco(nm, t) {
+    const R = this.R, K = this.K, h = K.height, lg = this.legs[nm], front = lg.front, v = Math.max(0, this.Vs.at(t)), gait = this.gait(v);
+    const duty = gait === 'gallop' ? .36 : gait === 'trot' ? .52 : .68;
+    const offs = gait === 'gallop' ? { HL: 0, HR: .1, FL: .48, FR: .58 } : gait === 'trot' ? { FL: 0, HR: 0, FR: .5, HL: .5 } : { HL: 0, FL: .25, HR: .5, FR: .75 };
+    const ph = this.Ph.at(t), hipOff = front ? K.len * .38 : -K.len * .36;
+    const p = ((ph - offs[nm]) % 1 + 1) % 1, cyc = Math.floor(ph - offs[nm]);
+    const footAt = c => { const tt = this.Ph.inverse(c + offs[nm]), vv = Math.max(0, this.Vs.at(tt)), rr = this.stride(vv) * duty / 2, sq = this.sAt(tt), sd = this.sideAt(tt); const P = R.at(sq + hipOff + rr, sd + (lg.sx > 0 ? -1 : 1) * K.girth * .5, 0); P.y = R.y(sq + hipOff + rr) + this.yAt(tt); return P; };
+    if (p < duty) return { paw: footAt(cyc), contact: 'ground' };
+    const a = footAt(cyc), b = footAt(cyc + 1), k = (p - duty) / (1 - duty), e = smooth(k), paw = a.clone().lerp(b, e);
+    paw.y += Math.sin(Math.PI * k) * h * (gait === 'gallop' ? .32 : .22); return { paw, contact: 'air' };
+  }
   pose(t) {
     const R = this.R, K = this.K, h = K.height, LG = this.LG, b = this.bones;
     const s = this.sAt(t), side = this.sideAt(t), v = Math.max(0, this.Vs.at(t)), gait = this.gait(v), y0 = this.yAt(t);
@@ -137,8 +161,7 @@ export class Buddy {
     const res = { t, s, side, v, gait, paws: {}, contact: {}, bad: [] };
     // heading: along the route, turned toward lateral motion; at rest, toward m.face of the last sit
     const ds = Math.max(.15, v), dside = (this.sideAt(t + .1) - this.sideAt(t - .1)) / .2;
-    let yaw = R.yaw(s) - Math.atan2(dside, ds) * .9;
-    for (const m of this.moves) if (m.do === 'sit' && m.face !== undefined) yaw += m.face * sit;
+    let yaw = R.yaw(s) - Math.atan2(dside, ds) * .9; const yaw0 = yaw;
     const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw + Math.PI, 0));   // the rig faces +Z; the route runs -Z
     const fwd = V(0, 0, 1).applyQuaternion(q), left = V(1, 0, 0).applyQuaternion(q);
     // gait timing
@@ -154,16 +177,17 @@ export class Buddy {
     }
     const bob = gait === 'gallop' ? Math.abs(Math.sin(Math.PI * ph * 2)) * .03 * h / .25 : gait === 'trot' ? Math.abs(Math.sin(TAU * ph)) * .012 : 0;
     const breathe = Math.sin(t * TAU / (gait === 'stand' ? 1.6 : .6)) * (gait === 'stand' ? .004 : .002);
-    const standH = h * .97 - crouch * h * .28 - sit * h * .18;
+    const standH = h * .86 - crouch * h * .22 - sit * h * .26;
     const base = R.at(s, side, 0); base.y = R.y(s) + y0;
     const pos = base.clone().add(V(0, standH + bob + breathe, 0));
     this.root.position.copy(pos);
-    this.root.quaternion.copy(q).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-pitch - sit * .55, 0, 0)));
+    const sitP = this._sitP = Math.min(.62, Math.asin(clamp(((LG.fu + LG.fl) * .95 + LG.fp - h * .6 + K.girth * .15) / (K.len * .42), 0, 1)));
+    this.root.quaternion.copy(q).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-pitch - sit * sitP, 0, 0)));
     this.root.updateMatrixWorld(true);
     b.hips.rotation.set(flex * .5 + sit * .35, 0, 0); b.chest.rotation.set(-flex * .5 - sit * .25, 0, 0);
     b.chest.scale.setScalar(1 + breathe * 2);
     // head: steady on the gallop (counter-pitch), looks at the rider or ahead; call (meow / bark) opens the jaw
-    let hy = .06 * n1(t * .6, 41), hp = pitch + sit * .5 - flex * .3, jaw = 0;
+    let hy = .06 * n1(t * .6, 41) + this.moves.reduce((a, m) => a + (m.do === 'sit' && m.face !== undefined ? m.face * sit : 0), 0), hp = pitch + sit * .5 - flex * .3, jaw = 0;
     for (const m of this.moves) {
       if (m.do === 'look') { const k = bump(t, m.at, m.at + (m.dur || 1)) ** .5; hy = lerp(hy, m.yaw ?? .8, k); hp = lerp(hp, m.pitch ?? -.3, k); }
       if (m.do === 'call') { const k = bump(t, m.at, m.at + (m.dur || .6)); jaw = Math.max(jaw, k); hp -= .3 * k; }
@@ -183,25 +207,20 @@ export class Buddy {
       const lg = this.legs[nm], front = lg.front, top = V(); lg.top.getWorldPosition(top);
       const reach = stride * duty / 2, hipOff = front ? K.len * .38 : -K.len * .36;
       let paw, contact;
-      if (gait === 'stand' || sit > 0 || v < .08) {
-        // at rest: paws planted under the joints (sitting: hind paws forward under the haunch)
-        const ss = this.sAt(t) + (front ? hipOff : hipOff + sit * h * .25);
-        paw = R.at(ss, side + (lg.sx > 0 ? -1 : 1) * K.girth * .55 * (yaw > 0 ? 1 : 1), 0); paw.y = R.y(ss) + y0;
-        paw = base.clone().addScaledVector(fwd, front ? K.len * .38 + sit * .02 : -K.len * .3 + sit * h * .35).addScaledVector(left, lg.sx * K.girth * .6); paw.y = R.y(s) + y0;
-        contact = 'ground';
+      const rest = this._restAt(t);
+      if (rest) {
+        // at rest: paws under their joints (sitting: hind paws forward under the haunch); arriving, each paw steps there
+        const S = rest.sit ?? (rest.sit = this.moves.some(m => m.do === 'sit' && m.at < rest.b && m.at + (m.dur || 3) > rest.a) ? 1 : 0), sp = this._sitP || 0;
+        const f0 = V(0, 0, 1).applyAxisAngle(V(0, 1, 0), yaw0 + Math.PI), l0 = V(1, 0, 0).applyAxisAngle(V(0, 1, 0), yaw0 + Math.PI);
+        const target = base.clone().addScaledVector(f0, front ? K.len * .39 * Math.cos(sp * S) : -K.len * .37 * Math.cos(sp * S) + h * .32 * S).addScaledVector(l0, lg.sx * K.girth * .55); target.y = R.y(s) + y0;
+        const delay = { FL: 0, HR: .07, FR: .14, HL: .21 }[nm], k = smooth((t - rest.a - delay) / .26);
+        if (k >= 1 || rest.a <= 0) { paw = target; contact = 'ground'; }
+        else { const from = this._loco(nm, rest.a); paw = from.paw.clone().lerp(target, k); if (k > 0) paw.y += Math.sin(Math.PI * k) * h * .12; contact = k > 0 ? 'air' : from.contact; }
       } else if (airK || (leap && t > leap.at - .02 && t < leap.land)) {
         const q2 = leap ? clamp((t - leap.at) / leap.air) : .5;
         const tuck = front ? V(0, -h * lerp(.55, .8, q2), lerp(.1, .3, q2) * h) : V(0, -h * lerp(.75, .55, q2), -h * lerp(.5, .1, q2));
         paw = top.clone().add(tuck.applyQuaternion(this.root.quaternion)); contact = 'air';
-      } else {
-        const p = ((ph - offs[nm]) % 1 + 1) % 1, cyc = Math.floor(ph - offs[nm]);
-        const footAt = c => { const tt = this.Ph.inverse(c + offs[nm]), sq = this.sAt(tt), sd = this.sideAt(tt), off = front ? hipOff : hipOff; const P = R.at(sq + off + reach, sd + (lg.sx > 0 ? -1 : 1) * K.girth * .5, 0); P.y = R.y(sq + off + reach) + this.yAt(tt); return P; };
-        if (p < duty) { paw = footAt(cyc); contact = 'ground'; }
-        else {
-          const a = footAt(cyc), bP = footAt(cyc + 1), k = (p - duty) / (1 - duty), e = smooth(k);
-          paw = a.clone().lerp(bP, e); paw.y += Math.sin(Math.PI * k) * h * (gait === 'gallop' ? .32 : .22); contact = 'air';
-        }
-      }
+      } else ({ paw, contact } = this._loco(nm, t));
       res.paws[nm] = paw.clone(); res.contact[nm] = contact;
       // IK: front = upper + lower (elbow pole back) to the wrist; hind = thigh + shin (knee pole forward) to the hock
       const lift = contact === 'air' ? 1 : 0;

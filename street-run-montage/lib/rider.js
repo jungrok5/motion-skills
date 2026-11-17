@@ -155,7 +155,7 @@ export function buildBody(S) {
   // ears
   for (const sx of [-1, 1]) part(head, ell(.022 * k, .034 * k, .016 * k, 8), S.skin, { pos: [sx * hr * .97, hy - .005, -.01], ink: true, inkW: iw * .7 });
   // hair: a shell over the back and top, bangs, side locks and long locks (bones, so they can trail)
-  part(head, new THREE.SphereGeometry(hr * 1.07, 24, 14, Math.PI * .8, Math.PI * 1.4, 0, Math.PI * .72).scale(1, 1.06, 1.04), hairM, { pos: [0, hy, -.004] });
+  part(head, new THREE.SphereGeometry(hr * 1.07, 24, 14, Math.PI * .86, Math.PI * 1.28, 0, Math.PI * .72).scale(1, 1.06, 1.04), hairM, { pos: [0, hy, -.004] });
   part(head, new THREE.SphereGeometry(hr * 1.08, 24, 10, 0, TAU, 0, Math.PI * .3).scale(1, 1.06, 1.04), hairM, { pos: [0, hy, 0] });
   for (let i = -3; i <= 3; i++) { const a = i * .17; part(head, new THREE.ConeGeometry(.032 * k, .11 * k, 5).scale(1, 1, .35).rotateX(Math.PI).rotateZ(-i * .08), hairM, { pos: [Math.sin(a) * hr * .98, hy + hr * .55, Math.cos(a) * hr * .93], rot: [.35, 0, 0], inkW: iw * .7 }); }
   for (const sx of [-1, 1]) part(head, new THREE.ConeGeometry(.03 * k, .2 * k, 5).scale(1, 1, .4).rotateX(Math.PI), hairM, { pos: [sx * hr * .92, hy - .02 * k, .045 * k], rot: [.05, 0, sx * .05], inkW: iw * .7 });
@@ -349,7 +349,7 @@ export class Rider {
     // push: plant on the ground beside the board (toe side), locked to the world point while in contact
     for (const p of this.pushes) {
       if (t < p.t0 || t > p.back) continue;
-      const plantS = p.sp + .02, gp = R.at(plantS, lane + sg * .24, 0); gp.y = R.y(plantS);
+      const plantS = p.sp + .02, gp = R.at(plantS, this.laneAt(p.plant) + sg * .24, 0); gp.y = R.y(plantS);
       const deckBack = deck(p.last ? backZ : .08, 0);
       if (t < p.plant) { const q = smooth(span(t, p.t0, p.plant)); back = deckBack.clone().lerp(gp, q); back.y += Math.sin(Math.PI * q) * .1; backContact = 'air'; }
       else if (t <= p.lift) { back = gp; backContact = 'ground'; }
@@ -417,7 +417,7 @@ export class Rider {
     // ── hair: trails with speed, lifts as the body drops (spring-lagged bob), flutters ──
     const v = this.Vlag.at(t), lag = (this.Bob.at(t) - this.BobLag.at(t));
     for (const L of this.locks) {
-      const base = .25 + clamp(v / 7) * .95 + clamp(-lag * 6, -.4, .6);
+      const hk = S.hairStyle === 'bob' ? .45 : S.hairStyle === 'short' ? .3 : 1, base = .2 + (clamp(v / 7) * .95 + clamp(-lag * 6, -.4, .6)) * hk;
       L.chain.forEach((bn, j) => { const fl = n1(t * (3 + j) + L.a * 5, 11) * (.08 + clamp(v / 7) * .14); bn.rotation.set(j === 0 ? base * .8 + .1 : base * .25 + fl, 0, L.side * (.12 + fl * .5)); });
     }
     // ── face: blinks on irregular beats, mouth opens on a cheer ──

@@ -1,5 +1,5 @@
 // street-run-montage · town.js — the route and the town laid out along it.
-//   Route: segments [{ len, turn (deg, + = left), rise (m) }] → a centre line with distance s, heading and height.
+//   Route: segments [{ len, turn (deg, + = right), rise (m) }] → a centre line with distance s, heading and height.
 //   Town (K): pieces placed in route coordinates — s (metres along the route) and x (metres to the right of it) — so
 //   the world is built around the action: K.rail({ tau: [12.2, 13.4] }) puts a rail under the rider's grind.
 //   Zones (K.zone('lane' | 'shops' | 'river' | 'park' | 'plaza' | 'harbor', s0, s1, opts)) scatter a whole street;
@@ -336,11 +336,30 @@ export class Town {
   }
   /** the river (water plane between x0 and x1, both banks' edges) */
   river(s0, s1, x0, x1, o = {}) {
-    const y = o.y ?? -2.2; this.sweep(this.M.water, s0, s1, [[x0, y], [x1, y]], { flip: true, tileU: 18, tileV: 18, step: 4 });
+    const y = o.y ?? -2.2; (this.water = this.water || []).push({ s0: this._s(s0), s1: this._s(s1), a: Math.min(x0, x1), b: Math.max(x0, x1) }); this.sweep(this.M.water, s0, s1, [[x0, y], [x1, y]], { flip: true, tileU: 18, tileV: 18, step: 4 });
     this.sweep(cel('#bdb6a8'), s0, s1, [[x0, 0], [x0 + (x1 > x0 ? .1 : -.1), y]], { flip: x1 < x0, step: 4 });
     return this;
   }
-  boat(s, x, o = {}) { s = this._s(s); const c = o.color || '#f2f0ea'; this.box(cel(c), s, x, o.y ?? -1.8, 4, .8, 12, { solid: false }); this.box(cel(o.cabin || '#e8432e'), s, x, (o.y ?? -1.8) + .8, 3, 1.6, 4, { solid: false }); return this; }
+  /** a small ferry: white hull with a coloured band, a cabin with a window strip, a funnel, a mast */
+  boat(s, x, o = {}) {
+    s = this._s(s); const c = o.color || '#f2f0ea', band = o.cabin || '#22305a', y = o.y ?? -1.8, L = o.len ?? 16;
+    this.box(cel(c), s, x, y, 4.4, 1.3, L, { solid: false }); this.box(cel(band), s, x, y + .9, 4.45, .25, L * .98, { solid: false });
+    this.box(cel(c), s, x, y + 1.3, 3.4, 1.7, L * .45, { solid: false }); this.box(cel('#2c4a72'), s, x, y + 2.05, 3.45, .5, L * .43, { solid: false });
+    this.box(cel(c), s - L * .05, x, y + 3, 2.6, 1.1, L * .22, { solid: false }); this.box(cel('#2c4a72'), s - L * .05, x, y + 3.35, 2.65, .35, L * .2, { solid: false });
+    this.put(new THREE.CylinderGeometry(.45, .5, 1.6, 12).translate(0, .8, 0), cel(o.funnel || '#e8432e'), s + L * .12, x, y + 3);
+    this.put(new THREE.CylinderGeometry(.05, .05, 3, 6).translate(0, 1.5, 0), cel('#3b3f48'), s - L * .18, x, y + 4.1);
+    return this;
+  }
+  /** the ground beside everything: a wide sweep that follows the route's height, with holes where there is water */
+  ground(s0, s1, w = 220, mat) {
+    mat = mat || cel(mix(this.season.grass, '#a39c8e', .45)); const W = this.water || [];
+    for (let s = s0; s < s1; s += 8) {
+      const e = Math.min(s1, s + 8), cuts = W.filter(q => q.s0 < e && q.s1 > s).map(q => [q.a, q.b]).sort((a, b) => a[0] - b[0]);
+      let x = -w; for (const [a, b] of cuts) { if (a > x) this.sweep(mat, s, e, [[x, -.07], [a, -.07]], { flip: true, step: 8, tileU: 8 }); x = Math.max(x, b); }
+      if (x < w) this.sweep(mat, s, e, [[x, -.07], [w, -.07]], { flip: true, step: 8, tileU: 8 });
+    }
+    return this;
+  }
 
   // ── zones: a whole street in one call (examples of the style — build new ones in the page with the pieces) ──
   zone(kind, s0, s1, o = {}) { const f = ZONES[kind]; if (!f) throw new Error('no zone ' + kind); f(this, this._s(s0), this._s(s1), o, rng(o.seed || Math.floor(s0 * 11 + 3))); return this; }
@@ -391,14 +410,14 @@ export const ZONES = {
     for (let s = s0 + 4; s < s1; s += 7 + r() * 5) { K.tree(s, -(w / 2 + 3 + r() * 6)); if (r() < .6) K.tree(s + 3, w / 2 + 3 + r() * 6); }
     for (let s = s0 + 12; s < s1; s += 25) K.bench(s, -(w / 2 + .2));
   },
-  /** a station plaza: wide paving, the station hall (o.text), planters, benches, ledges, lamps */
+  /** a station plaza: wide paving, the station hall (o.text), planters, lamps, tall blocks across (o.far: false = open view) */
   plaza(K, s0, s1, o, r) {
     const w = o.w ?? 16, side = o.side ?? -1;
     K.road(s0, s1, { w, lines: false, mat: K.M.walk });
     K.station((s0 + s1) / 2, side * (w / 2 + 4), { text: o.text || 'STATION', w: Math.min(60, s1 - s0) });
     for (let s = s0 + 6; s < s1 - 3; s += 14) K.planter(s, side * (w / 2 - 1));
     for (let s = s0 + 10; s < s1; s += 18) K.lamp(s, -side * (w / 2 - .5));
-    for (let s = s0; s < s1 + 30; s += 20) K.apartments(s, -side * (w / 2 + 20 + r() * 20), { floors: 6 + Math.floor(r() * 8) });
+    if (o.far !== false) for (let s = s0; s < s1 + 30; s += 20) K.apartments(s, -side * (w / 2 + 20 + r() * 20), { floors: 6 + Math.floor(r() * 8) });
   },
   /** a harbour front: a seawall on the sea side, the sea, bollards, lamps, a moored boat */
   harbor(K, s0, s1, o, r) {

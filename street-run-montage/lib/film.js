@@ -97,10 +97,10 @@ export class Run {
       if (m.rail === 'ledge') this.K.ledge({ ...spec, h: m.h + .02 }); else this.K.rail({ ...spec, h: m.h - .03 });
     }
     if (this._town) this._town(this.K, this);
-    this.K.wires(); this.K.build();
+    this.K.ground(-80, this.R.len + 160); this.K.wires(); this.K.build();
     const mid = this.R.at(this.R.len / 2); this.clouds = clouds(this.scene, this.L, mid, 16, this.o.seed || 3);
     // the ground far below everything (verges beyond the sweeps)
-    const gnd = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000).rotateX(-Math.PI / 2), cel(this.o.ground || mix(this.season.grass, '#9a9488', .5))); gnd.position.set(mid.x, -.05 + Math.min(0, ...this.R.Y), mid.z); gnd.receiveShadow = true; this.scene.add(gnd);
+    const gnd = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000).rotateX(-Math.PI / 2), cel(this.o.ground || mix(this.season.grass, '#9a9488', .5))); gnd.position.set(mid.x, -12 + Math.min(0, ...this.R.Y), mid.z); gnd.receiveShadow = true; this.scene.add(gnd);
     this._fx();
     // characters on their own layer for the mask pass
     this.rider.group.traverse(o => o.layers.enable(1)); this.bud?.group.traverse(o => o.layers.enable(1));
@@ -110,10 +110,10 @@ export class Run {
     this.problems = [];
   }
   _fx() {
-    // grind sparks: line segments, rebuilt each frame from hashes (pure function of t)
-    const N = 90; this.sparkGeo = new THREE.BufferGeometry(); this.sparkGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * 6), 3));
-    this.sparks = new THREE.LineSegments(this.sparkGeo, new THREE.LineBasicMaterial({ color: 0xffd27a, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
-    this.sparks.frustumCulled = false; this.scene.add(this.sparks);
+    // grind sparks: short bright streaks (points along each streak), rebuilt each frame from hashes (pure function of t)
+    const N = 70, P = 5; this.sparkN = [N, P]; this.sparkGeo = new THREE.BufferGeometry(); this.sparkGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * P * 3), 3));
+    this.sparks = new THREE.Points(this.sparkGeo, new THREE.PointsMaterial({ color: 0xffa040, size: Math.max(2, 4.5 * this.scale), sizeAttenuation: false, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+    this.sparks.frustumCulled = false; this.sparks.layers.set(2); this.scene.add(this.sparks);
     // dust puffs at pushes and landings
     this.dust = []; const dm = new THREE.MeshBasicMaterial({ color: 0xf2efe8, transparent: true, opacity: .6, depthWrite: false });
     for (let i = 0; i < 10; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), dm.clone()); m.visible = false; this.scene.add(m); this.dust.push(m); }
@@ -161,7 +161,7 @@ export class Run {
     // render (and the subject mask when the background streaks)
     const blur = this.off.has('blur') ? 0 : (c.blur ?? 1) * clamp(this.rider.V.at(tau) / 5, 0, 1.4) * c.rate;
     const r = this.renderer, ctx = this.ctx, W = this.W, H = this.H;
-    r.setClearColor(0x000000, 1); this.camera.layers.enableAll(); r.render(this.scene, this.camera);
+    r.setClearColor(0x000000, 1); this.camera.layers.set(0); this.camera.layers.enable(1); r.render(this.scene, this.camera);
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; ctx.filter = 'none';
     if (blur > .05) {
       const vec = this._streak(c, tau, cam, blur);
@@ -180,12 +180,14 @@ export class Run {
       r.shadowMap.autoUpdate = false; r.setClearColor(0x000000, 0); r.clear();
       this.scene.overrideMaterial = this.depthOnly; this.camera.layers.set(0); r.render(this.scene, this.camera);
       r.autoClear = false; this.scene.overrideMaterial = this.white; this.camera.layers.set(1); r.render(this.scene, this.camera);
-      r.autoClear = true; this.scene.overrideMaterial = so; this.camera.layers.enableAll(); r.shadowMap.autoUpdate = true;
+      r.autoClear = true; this.scene.overrideMaterial = so; this.camera.layers.set(0); this.camera.layers.enable(1); r.shadowMap.autoUpdate = true;
       this.sky.visible = sky; this.clouds.visible = cl; this.sparks.visible = sp; if (this.leaves) this.leaves.visible = lv; for (const d of this.dust) d.visible = d.userData.v;
       this.mctx.globalCompositeOperation = 'copy'; this.mctx.filter = `blur(${Math.max(1, W / 960)}px)`; this.mctx.drawImage(this.gl, 0, 0); this.mctx.filter = 'none';
       this.mctx.globalCompositeOperation = 'source-in'; this.mctx.drawImage(this.tmp, 0, 0);
       ctx.drawImage(this.mask, 0, 0);
     } else { ctx.globalCompositeOperation = 'copy'; ctx.drawImage(this.gl, 0, 0); ctx.globalCompositeOperation = 'source-over'; }
+    // sparks: a sharp additive overlay (never smeared with the background)
+    if (rp.board.contact === 'rail') { r.shadowMap.autoUpdate = false; r.setClearColor(0x000000, 0); this.camera.layers.set(2); r.render(this.scene, this.camera); this.camera.layers.set(0); this.camera.layers.enable(1); r.shadowMap.autoUpdate = true; ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(this.gl, 0, 0); ctx.globalCompositeOperation = 'source-over'; }
     this._post(t, c, k, cam);
     return this.last;
   }
@@ -226,7 +228,7 @@ export class Run {
       pos = anchor.clone().addScaledVector(F, -d).setY(gY + h); target = anchor.clone();
     } else {
       const ahead = c.ahead ? 1 : c.behind ? -1 : 0, front = c.front;
-      if (front) { const bf = rp.bodyF.clone().setY(0).normalize(); pos = Hd.clone().addScaledVector(bf, d).addScaledVector(F, lead + .25).setY(gY + h); }
+      if (front) { const hq = new THREE.Quaternion(); this.rider.bones.head.getWorldQuaternion(hq); const hf = V(0, 0, 1).applyQuaternion(hq).setY(0).normalize(); pos = Hd.clone().addScaledVector(hf, d).addScaledVector(F, lead).setY(gY + h); }
       else pos = anchor.clone().addScaledVector(F, ahead * d + lead).addScaledVector(Rt, ahead ? side * (c.x ?? .6) : side * d).setY(gY + h);
       pos.add(hand);
     }
@@ -247,11 +249,11 @@ export class Run {
     if (rp.board.contact === 'rail') {
       const wl = this.rider.bd.wheels, base = [V(), V()]; wl[0].getWorldPosition(base[0]); wl[2].getWorldPosition(base[1]);
       const back = this.R.tan(rp.s).negate();
-      for (let i = 0; i < arr.length / 6; i++) {
+      const [N, PP] = this.sparkN;
+      for (let i = 0; i < N; i++) {
         const f = Math.floor(tau * 30), r = (j) => hash(i, f, j), o = base[i % 2].clone().add(V(0, -.03, 0));
         const dir = back.clone().multiplyScalar(.6 + r(1) * 1.2).add(V((r(2) - .5) * .8, r(3) * .6 - .1, (r(4) - .5) * .8)), age = r(5);
-        const a = o.clone().addScaledVector(dir, age * .35), b = a.clone().addScaledVector(dir, .05 + r(6) * .06);
-        arr.set([a.x, a.y, a.z, b.x, b.y, b.z], i * 6);
+        for (let k = 0; k < PP; k++) { const a = o.clone().addScaledVector(dir, age * .35 + k * .018); arr.set([a.x, a.y, a.z], (i * PP + k) * 3); }
       }
     }
     P.needsUpdate = true;
@@ -344,7 +346,7 @@ export class Run {
       for (const sd of ['L', 'R']) { const k = 'r' + sd, f = rp.feet[sd].pos, con = rp.contact[sd]; if (con === 'ground' && prev[k] && prev[k].con === 'ground') { const d = f.distanceTo(prev[k].p) * 1000; if (d > slipR) { slipR = d; worstR = `${sd} @${tau.toFixed(2)}`; } } prev[k] = { p: f.clone(), con }; }
       if (b) { const bp = b.pose(tau); for (const nm of ['FL', 'FR', 'HL', 'HR']) { const k = 'b' + nm, f = bp.paws[nm], con = bp.contact[nm]; if (con === 'ground' && prev[k] && prev[k].con === 'ground' && prev[k].gait === bp.gait) { const d = f.distanceTo(prev[k].p) * 1000; if (d > slipB) { slipB = d; worstB = `${nm} @${tau.toFixed(2)}`; } } prev[k] = { p: f.clone(), con, gait: bp.gait }; } }
     }
-    out.numbers.slipRider = +slipR.toFixed(2); out.numbers.slipBuddy = +slipB.toFixed(2);
+    out.numbers.slipRider = +slipR.toFixed(2); out.numbers.slipBuddy = +slipB.toFixed(2); out.numbers.slipAt = [worstR, worstB].filter(Boolean).join(' / ');
     if (slipR > 5) out.problems.push(`rider: planted foot slides ${slipR.toFixed(1)} mm in a step (${worstR})`);
     if (slipB > 5) out.problems.push(`buddy: planted paw slides ${slipB.toFixed(1)} mm in a step (${worstB})`);
     // gathers: every pop has a crouch at least .12 s before it
@@ -353,7 +355,7 @@ export class Run {
     for (const m of b?.moves || []) if (m.do === 'leap') { if (!(m.at > .35)) out.problems.push(`buddy: leap at ${m.at}s too early to gather`); }
     out.numbers.gathers = gathers;
     // idle: while stopped, something must breathe (chest / hips move)
-    if (r.dismount) { const a = r.pose(r.dismount.at + 1.4).hips.y, bb = r.pose(r.dismount.at + 2.2).hips.y; out.numbers.idleBreath = +((Math.abs(a - bb)) * 1000).toFixed(1); if (Math.abs(a - bb) < .001) out.problems.push('rider: dead still at rest'); }
+    if (r.dismount) { let lo = 1e9, hi = -1e9; for (let t = r.dismount.at + 1.2; t < Math.min(this.storyDur, r.dismount.at + 4.6); t += .1) { const y = r.pose(t).head.y; lo = Math.min(lo, y); hi = Math.max(hi, y); } out.numbers.idleBreath = hi > lo ? +((hi - lo) * 1000).toFixed(1) : null; if (hi - lo < .002 && hi > lo - 1) out.problems.push('rider: dead still at rest'); }
     // speed rises only with a push or a downhill
     for (let tau = .5; tau < this.storyDur - .5; tau += .25) { const dv = r.V.at(tau + .5) - r.V.at(tau); if (dv > .35) { const pushed = r.pushes.some(p => p.plant < tau + .6 && p.back > tau - .2), down = this.R.grade(r.sAt(tau)) < -.02; if (!pushed && !down) { out.problems.push(`rider: speeds up at ${tau.toFixed(2)}s without a push or a slope`); break; } } }
     return out;

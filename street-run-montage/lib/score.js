@@ -11,7 +11,7 @@
 //   { notes: [{ t, n (midi), d, v, ins, pan }], hits: [{ t, ins, v }], sfx: [{ t, type, v, d, pan }], beds: { air: [{t, v}] … }, roll: [[t, v, contact]], reverb }
 //   ins: epiano · bass · pluck · guitar · pad · strings · bell · lead · glock
 //   hits: kick · snare · clap · hat · open · shaker · crash · tom
-//   sfx: pop · land · flick · grind · push · step · clack · whoosh · meow · bark · yip · cheer · crossing · train · chirp
+//   sfx: pop · land · flick · grind · push · step · clack · whoosh · meow · bark · yip · cheer · crossing · train · horn · chirp
 //   beds: air · birds · city · river · wind
 const TAU = Math.PI * 2;
 const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
@@ -210,5 +210,6 @@ function sfx(e, sr, N, put) {
   else if (ty === 'cheer') { for (let k = 0; k < sr * .6; k++) { const t = k / sr, f = 300 + 120 * Math.sin(Math.PI * t / .6); put(i0 + k, (Math.sin(TAU * f * t) * .3 + Math.sin(TAU * f * 2 * t) * .2 + Math.sin(TAU * f * 3 * t) * .1) * Math.sin(Math.PI * t / .6) * v * .4, 0, .4); } }
   else if (ty === 'crossing') { const d = e.d || 2; for (let k = 0; k < sr * d; k++) { const t = k / sr, on = (t % .5) < .25 ? 1 : 0; put(i0 + k, (Math.sin(TAU * 1040 * t) + Math.sin(TAU * 1310 * t) * .6) * on * Math.exp(-(t % .25) / .12) * v * .2, pan || -.4, .4); } }
   else if (ty === 'train') { const d = e.d || 4; for (let k = 0; k < sr * d; k++) { const t = k / sr, x = r(), q = t / d; lp += .01 * (x - lp); const cl = (t * 6 % 1) < .05 ? Math.sin(TAU * 200 * t) * .4 : 0; put(i0 + k, (lp * 5 + cl) * Math.sin(Math.PI * q) * v * .6, -.8 + 1.6 * q, .3); } }
+  else if (ty === 'horn') { const d = e.d || 1.8; for (let k = 0; k < sr * d; k++) { const t = k / sr, en = Math.min(1, t / .15) * Math.min(1, (d - t) / .3); let x = 0; for (const [f, a] of [[98, 1], [147, .7], [196, .35], [294, .15]]) x += Math.sin(TAU * f * t + Math.sin(TAU * 4 * t) * .3) * a; put(i0 + k, Math.tanh(x * .8) * en * v * .35, pan || -.5, .6); } }
   else if (ty === 'chirp') { for (let n = 0; n < 3; n++) for (let k = 0; k < sr * .07; k++) { const t = k / sr; put(i0 + Math.floor(n * .1 * sr) + k, Math.sin(TAU * (3000 + 9000 * t) * t) * Math.sin(Math.PI * t / .07) * v * .2, pan || .4, .3); } }
 }
