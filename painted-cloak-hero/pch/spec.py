@@ -5,9 +5,9 @@ import os
 import importlib.util
 
 DEFAULT_CLIPS = [
-    {'type': 'idle', 'dur': 2.0, 'blinks': [0.9]},
-    {'type': 'turn', 'dur': 1.4, 'to': 62},
-    {'type': 'walk', 'dur': 2.8},
+    {'type': 'idle', 'dur': 4.0, 'blinks': [1.2, 3.1]},
+    {'type': 'walk', 'dur': 1.0},
+    {'type': 'turn', 'dur': 2.2, 'by': 180},
 ]
 
 
@@ -21,11 +21,11 @@ def load(path):
     m = spec.setdefault('motion', {})
     m.setdefault('fps', 24)
     m.setdefault('clips', DEFAULT_CLIPS)
-    m.setdefault('start', {'x': -0.35, 'y': 0.1, 'yaw': -20})
     r = spec.setdefault('review', {})
     r.setdefault('title', 'HERO / ANIMATION REVIEW')
-    r.setdefault('bg', '#8c8ea0')
-    r.setdefault('floor', '#77798a')
+    r.setdefault('bg', '#7d7a97')
+    r.setdefault('floor', '#76738f')
+    r.setdefault('grid', '#8c89a3')
     r.setdefault('camera', {})
     spec['_dir'] = os.path.dirname(os.path.abspath(path))
     proj_parts = os.path.join(spec['_dir'], 'parts.py')

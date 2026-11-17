@@ -109,10 +109,10 @@ def export_glb(rig, path):
               export_apply=False, export_yup=True, export_skins=True, export_morph=False,
               export_force_sampling=True, export_optimize_animation_size=True, export_def_bones=False,
               export_animation_mode='ACTIONS',
-              export_image_format='AUTO', export_cameras=False, export_lights=False)
+              export_image_format='WEBP', export_image_quality=85, export_cameras=False, export_lights=False)
     try:
         bpy.ops.export_scene.gltf(**kw)
     except TypeError:
-        for k in ('export_optimize_animation_size', 'export_def_bones', 'export_image_format', 'export_animation_mode'):
+        for k in ('export_optimize_animation_size', 'export_def_bones', 'export_image_format', 'export_image_quality', 'export_animation_mode'):
             kw.pop(k, None)
         bpy.ops.export_scene.gltf(**kw)
