@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>storybook short</title>
+<script type="importmap">{ "imports": { "ss/": "../../lib/" } }</script></head>
+<body><script type="module">
+// The page: ?render=1&t=… one frame for scripts (window.seek) · ?cast cast sheet · live: click for sound.
+import { mount } from 'ss/film.js';
+import { film, score, ACTORS } from './film.js';
+mount(film, { actors: ACTORS, score });
+</script></body></html>

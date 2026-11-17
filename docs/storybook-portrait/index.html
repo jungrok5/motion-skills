@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>storybook-portrait · motion-skills</title>
+<meta name="description" content="주제를 주면 그 주제에 맞는 인물을 새로 설계해, 과슈 피부 · 색 줄이 섞인 마른 붓 머리카락 · 크레용 결의 옷 · 떨리는 잉크 선의 그림책 스타일 초상으로 자바스크립트가 직접 그리고, 다 그린 뒤에는 숨 쉬고 깜빡이고 눈길을 돌리며 살아 있게 합니다.">
+<meta property="og:title" content="storybook-portrait · motion-skills">
+<meta property="og:description" content="주제를 주면 새 인물을 설계해 그림책 스타일 초상으로 코드가 직접 그리고, 다 그린 뒤 숨 쉬고 깜빡이며 살아 움직입니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/storybook-portrait/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/storybook-portrait">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / storybook-portrait</nav>
+  <h1>storybook-portrait</h1>
+  <p>주제(직업 · 사람 · 순간 · 감정)를 주면 그 주제에 맞는 인물을 새로 설계해 요즘 그림책 스타일의 초상으로 자바스크립트가 직접 그립니다. 무광 과슈 피부, 어두운 머리에 색 줄이 섞인 마른 붓 결과 삐져나온 잔머리, 옆을 보는 작은 눈동자의 크고 둥근 눈, 큰 머리 아래쪽에 모인 작은 이목구비, 빨간 볼, 긴 목, 종이 결이 비치는 크레용 무늬 옷, 떨리는 가는 잉크 선을 흰 종이 위에 획 하나씩 올립니다. 이미지 파일은 하나도 쓰지 않습니다. 다 그린 뒤에는 숨 쉬고, 불규칙하게 깜빡이고, 눈이 먼저 움직이면 고개가 반대쪽으로 살짝 움츠렸다가 따라가 지나쳤다 돌아오며, 머리카락과 귀걸이가 늦게 따라옵니다.
+  보고 만든 원본: <a href="https://x.com/vamsibatchuk/status/2121788887823778297?a=NmhF1v14IKYs7TtTVf4&amp;s=19" target="_blank" rel="noopener">Vamsi Batchu(@vamsibatchuk)의 X 게시물 (@Artedeingenio의 참고 그림 한 장으로 순수 코드만 써서 여러 주제를 그린 방법)</a>.</p>
+  <ul class="tags"><li>그림책 일러스트</li><li>과슈 · 크레용 · 잉크</li><li>주제 → 새 인물</li><li>살아 있는 초상</li><li>PNG · MP4 · 라이브</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 한 줄(예: 양봉하는 할머니, 새벽 빵집 견습생, 비 오는 날 일부러 나가는 아이)</dd>
+      <dt>브리프</dt><dd>한 줄 정의와 피할 것, 인물(나이 · 성격 · 주제를 한눈에 알리는 이야기 소품 · 무게 · 대기 동작), 얼굴 수치, 머리 모양과 색 줄, 옷 무늬 한 가지와 부딪는 색 한 쌍, 같은 재료로 그린 소품, 팔레트 5–7색, 시선 · 고개 비트와 큰 동작</dd>
+      <dt>그리기</dt><dd>과슈 피부 → 눈 · 코 · 볼 → 머리카락 덩어리 → 어두운 마른 붓 결 → 띠로 모인 색 줄 → 귀 · 귀걸이 → 잔머리 → 크레용 옷과 무늬 → 소품, 획마다 붓 방향으로 칠해지는 과정</dd>
+      <dt>확인</dt><dd>캐스트 시트(좌우 회전 · 표정 · 좌우 눈길 동작), 결정성, 종이 여백 · 잉크 · 팔레트 · 평평한 면 없음, 방향 규칙(코 · 가까운 귀 · 가슴 앞이 같은 쪽), 숨 · 불규칙한 깜빡임 · 눈이 먼저 · 예비 동작 · 지나침 · 머리카락 늦게, 고정된 아래쪽 가장자리, 스틸 채점 기준 10개</dd>
+      <dt>출력</dt><dd>1080×1350 또는 2160×2700 PNG, 그리는 과정 단계 스틸, 캐스트 시트, 그려진 뒤 살아 움직이는 MP4, 라이브 페이지</dd>
+    </dl>
+    <pre><code>node storybook-portrait/scripts/new-portrait.mjs my-portrait
+node storybook-portrait/scripts/render.mjs my-portrait/piece.html --cast
+node storybook-portrait/scripts/check.mjs my-portrait/piece.html
+node storybook-portrait/scripts/render.mjs my-portrait/piece.html --scale 2
+node storybook-portrait/scripts/render.mjs my-portrait/piece.html --stages 6
+node storybook-portrait/scripts/render.mjs my-portrait/piece.html --film</code></pre>
+    <p class="mute">요구 사항: Node 18+와 Playwright Chromium, MP4 · 단계 스틸에만 ffmpeg. 네트워크 · npm 설치 · GPU가 필요 없습니다(초상 한 장이 0.3–0.6초, 검사 전체가 몇 초, 17.5초 MP4가 약 40초). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/storybook-portrait/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:4/4.3;--h-phone:560px;--demo-bg:#e9e4da">
+    <iframe data-src="demo/beekeeper/" title="storybook-portrait 예제가 그려지고 살아 움직이는 라이브 페이지" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/beekeeper/">데모 열기 (examples/beekeeper)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/beekeeper</code> · 7.5초 동안 그려진 뒤 살아 움직임 · 누르면 다시</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/beekeeper/" data-cap="예제 &lt;code&gt;examples/beekeeper&lt;/code&gt; · 7.5초 동안 그려진 뒤 살아 움직임 · 누르면 다시" aria-pressed="true">양봉가 할머니</button>
+        <button class="btn" type="button" data-src="demo/dawn-baker/" data-cap="예제 &lt;code&gt;examples/dawn-baker&lt;/code&gt; · 그려진 뒤 하품이라는 큰 동작" aria-pressed="false">새벽 빵집 견습생</button>
+        <button class="btn" type="button" data-src="demo/rain-collector/" data-cap="시작 그림 &lt;code&gt;templates/&lt;/code&gt; · 비를 세는 아이" aria-pressed="false">비 오는 날</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본 그림에 없는 주제 세 개를 브리프부터 새로 설계해 그린 인물입니다. 카드를 누르면 새 탭에서 브라우저가 같은 획을 직접 그리는 라이브 페이지나 캐스트 시트가 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"bee":"양봉가 할머니","baker":"새벽 빵집 견습생","rain":"비 오는 날"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>양봉가 할머니 <small>예제 · 무거운 몸 · 곱슬머리 · 안경 · 벌</small></h3>
+      <p>옥상에서 벌을 치는 할머니가 떠나지 않는 벌 한 마리를 눈으로 좇습니다. 회색 곱슬머리는 이 주제를 위해 새로 만든 머리 모양(마른 붓 나선 약 95개, 아래는 어둡게 위는 밝게)이고, 동그란 안경 · 꿀 디퍼 브로치 · 벌은 같은 재료로 그린 소품입니다. 시선 비트는 벌이 나는 경로에서 0.55초마다 읽어 오고, 고개는 벌이 한쪽 끝에 갔을 때만 천천히 따라갑니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="bee" href="demo/beekeeper/?done" target="_blank" rel="noopener">
+          <img src="samples/bee-finish.jpg" alt="회색 곱슬머리에 동그란 갈색 안경을 쓴 할머니가 위를 보고, 머리 오른쪽에 노랑 검정 줄무늬 벌이 날고 있음. 분홍 볼과 분홍 코, 진주 귀걸이" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">완성</span><b>벌을 좇는 눈</b><span class="how">과슈 피부, 곱슬 나선, 갈색 잉크 안경테</span></div></a>
+        <a class="tile" data-tags="bee" href="demo/beekeeper/" target="_blank" rel="noopener">
+          <img src="samples/bee-stages.jpg" alt="그리는 과정 네 장면: 살구색 얼굴만, 회색 머리 덩어리와 안경, 곱슬 결이 올라간 머리, 물방울무늬 올리브색 카디건까지 완성" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">그리는 과정</span><b>획이 올라가는 순서</b><span class="how">피부 → 얼굴 → 머리 → 옷 → 소품</span></div></a>
+        <a class="tile" data-tags="bee" href="demo/beekeeper/?cast" target="_blank" rel="noopener">
+          <img src="samples/bee-cast.jpg" alt="캐스트 시트의 회전 줄: 왼쪽 강한 3/4, 왼쪽 3/4, 정면, 오른쪽 3/4, 오른쪽 강한 3/4로 돈 할머니. 코와 가까운 귀, 카디건 앞섶이 같은 쪽으로 돎" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 시트</span><b>좌우로 돌려 보기</b><span class="how">코 · 가까운 귀 · 가슴 앞이 한 방향, 가슴은 고개의 절반</span></div></a>
+        <a class="tile" data-tags="bee" href="demo/beekeeper/?done" target="_blank" rel="noopener">
+          <img src="samples/bee-gaze.jpg" alt="세 장면: 벌이 할머니 머리 위를 오른쪽에서 왼쪽으로 지나가는 동안 눈을 깜빡이고 눈동자가 벌을 따라 위로 움직임" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">살아 있는 동안</span><b>눈이 먼저, 고개는 나중</b><span class="how">벌의 경로에서 읽은 시선 비트, 고개를 돌릴 때 깜빡임</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>새벽 빵집 견습생 <small>예제 · 올림머리 · 앞치마 · 밀가루 · 하품</small></h3>
+      <p>새벽 4시 50분 빵집의 막내가 하품을 참지 못합니다. 이야기 소품은 밀가루(볼에 묻은 자국, 코끝, 앞치마의 손자국, 오븐 빛 속에 떠오르는 가루)이고, 큰 동작은 하품입니다. 숨을 깊게 들이쉬며 고개가 뒤로 넘어가고, 입이 천천히 벌어졌다가 놓이고, 고개를 좌우로 털어 냅니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="baker" href="demo/dawn-baker/?done" target="_blank" rel="noopener">
+          <img src="samples/baker-finish.jpg" alt="적갈색 올림머리의 졸린 눈 견습생, 왼쪽 볼에 하얀 밀가루 자국과 코끝의 밀가루, 금색 링 귀걸이" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">완성</span><b>밀가루 묻은 얼굴</b><span class="how">빗어 넘긴 마른 붓 결과 나선 번, 주황 색 줄</span></div></a>
+        <a class="tile" data-tags="baker" href="demo/dawn-baker/?done" target="_blank" rel="noopener">
+          <img src="samples/baker-yawn.jpg" alt="하품 네 장면: 눈이 감기기 시작함, 고개가 기울며 입이 벌어짐, 크게 벌린 입과 감은 눈, 다시 눈을 뜨고 옆을 봄" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">큰 동작</span><b>하품</b><span class="how">모으기(깊은 숨) → 천천히 벌어짐 → 멈춤 → 놓고 털어 냄</span></div></a>
+        <a class="tile" data-tags="baker" href="demo/dawn-baker/?cast" target="_blank" rel="noopener">
+          <img src="samples/baker-cast.jpg" alt="캐스트 시트의 왼쪽 눈길 줄: 시간 순서대로 다섯 장면, 눈이 먼저 왼쪽으로 가고 고개가 반대쪽으로 살짝 움츠렸다가 따라가 지나쳤다 돌아옴" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 시트</span><b>왼쪽으로 눈길</b><span class="how">눈 먼저 · 예비 동작 · 돌기 · 지나침 · 자리 잡기</span></div></a>
+        <a class="tile" data-tags="baker" href="demo/dawn-baker/" target="_blank" rel="noopener">
+          <img src="samples/baker-stages.jpg" alt="그리는 과정 네 장면: 얼굴, 이목구비와 볼, 적갈색 올림머리, 줄무늬 셔츠와 남색 앞치마와 빨간 스카프까지 완성" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">그리는 과정</span><b>앞치마는 마지막에</b><span class="how">크레용 결 위로 종이가 비침</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>비 오는 날 <small>시작 그림 · 가벼운 몸 · 짧은 머리 · 우비</small></h3>
+      <p><code>new-portrait.mjs</code>가 복사하는 시작 그림입니다. 비가 오면 일부러 나가 빗방울을 세는 아이를, 노란 우비와 목 뒤로 젖힌 모자, 비스듬히 떨어지는 파란 색연필 빗줄기로 그렸습니다. 원본 그림(긴 흑청색 단발, 줄무늬 카디건)과 겹치지 않게 고른 주제입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="rain" href="demo/rain-collector/?done" target="_blank" rel="noopener">
+          <img src="samples/rain-finish.jpg" alt="앞머리를 일자로 자른 갈색 단발의 아이가 눈동자를 굴리며 웃고, 주근깨와 분홍 볼, 노란 우비, 주변에 파란 빗줄기" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">완성</span><b>빗방울을 세는 아이</b><span class="how">갈색 머리에 황토색 줄, 주근깨, 선으로 그린 코</span></div></a>
+        <a class="tile" data-tags="rain" href="demo/rain-collector/" target="_blank" rel="noopener">
+          <img src="samples/rain-stages.jpg" alt="그리는 과정 네 장면: 얼굴, 짧은 머리, 노란 우비 모자가 그려지기 시작함, 노란 우비와 단추까지 완성" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">그리는 과정</span><b>시작 그림</b><span class="how">우비 모자는 몸에 붙은 뒤쪽 층</span></div></a>
+        <a class="tile" data-tags="rain" href="demo/rain-collector/?cast" target="_blank" rel="noopener">
+          <img src="samples/rain-cast.jpg" alt="캐스트 시트의 표정 줄: 경계, 차분, 기쁨, 놀람, 졸림 다섯 표정의 아이" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 시트</span><b>표정 다섯</b><span class="how">눈썹 기울기 · 들림, 입꼬리, 벌린 입, 눈꺼풀</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. Vamsi Batchu(@vamsibatchuk)가 X에 공개한 방법이 출발점입니다. @Artedeingenio의 참고 그림 한 장을 모델에 주고, 외부 파일이나 스킬 없이 순수 자바스크립트 · p5.js · 파이썬 코드만으로 여러 주제의 그림을 그리게 했고, 어떤 스타일에도 대체로 통한다고 했습니다. 이 스킬은 그 방법과 그림체의 문법(과슈 피부, 색 줄이 섞인 마른 붓 머리, 크레용 옷, 떨리는 잉크 선, 옆을 보는 큰 눈)을 가져와 어떤 주제든 새 인물로 그릴 수 있게 만들었습니다. 참고 그림과 그 인물은 쓰지 않았고, 시작 그림과 예제의 인물은 모두 이 레포의 것입니다. 그림체의 원작자는 @Artedeingenio입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/beekeeper/" target="_blank" rel="noopener"><b>「양봉가 할머니」 · 라이브 페이지</b><span>예제: 곱슬머리 · 안경 · 벌을 좇는 눈 · 무거운 몸</span><span class="url">storybook-portrait/demo/beekeeper/</span></a>
+    <a class="work" href="demo/dawn-baker/" target="_blank" rel="noopener"><b>「새벽 빵집 견습생」 · 라이브 페이지</b><span>예제: 올림머리 · 앞치마 · 밀가루 · 하품</span><span class="url">storybook-portrait/demo/dawn-baker/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/storybook-portrait/examples"><b>예제 폴더 · examples/</b><span>BRIEF.md(주제 · 인물 · 설계 · 모션 비트 · 검토 기록), character.js, piece.html</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/vamsibatchuk/status/2121788887823778297?a=NmhF1v14IKYs7TtTVf4&amp;s=19" target="_blank" rel="noopener"><b>원본 · X 게시물</b><span>Vamsi Batchu(@vamsibatchuk) · 참고 그림은 @Artedeingenio</span><span class="url">x.com/vamsibatchuk/status/2121788887823778297</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/storybook-portrait/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/storybook-portrait">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/storybook-portrait/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/storybook-portrait/references/BRIEF.md">references/BRIEF.md</a> <span>브리프 틀과 스틸 채점 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/storybook-portrait/references/LOOK.md">references/LOOK.md</a> <span>재료 다섯 가지, 얼굴, 돌린 고개</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/storybook-portrait/references/FIGURE.md">references/FIGURE.md</a> <span>인물 데이터 필드, 소품(extras), 층, 페이지 계약</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/storybook-portrait/references/MOTION.md">references/MOTION.md</a> <span>움직이는 것과 규칙, 무게, 비트, 참고 영상, 큰 동작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/storybook-portrait/references/SOURCE.md">references/SOURCE.md</a> <span>원본 게시물, 가져온 것과 가져오지 않은 것</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/storybook-portrait/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림은 코드로 그렸습니다 · 이미지 파일 없이 획만으로 · 그림체 원작 @Artedeingenio
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

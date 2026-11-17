@@ -78,7 +78,7 @@ not an asset.
   request only, not the next piece. No answer = no call; carry on with the skill's code path (synthesised score,
   hand-keyed motion). Other paid generators follow the same rule.
 - **Code-only skills stay code-only.** `machine-sim`, `swarm-world`, `aesthetics-film`, `photoreal-film`,
-  `ink-word-world`, `dragon-realm`, `living-realm` (and any skill whose `SKILL.md` says code-only) take no generated or downloaded
+  `ink-word-world`, `dragon-realm`, `living-realm`, `torn-page-journey` (and any skill whose `SKILL.md` says code-only) take no generated or downloaded
   motion data. They still apply every principle above, hand-keyed in code.
 - **Licences.** Public motion clips and models follow their own licence (see `references/3D-MODELS.md` for Polyfork);
   check before committing anything derived from them, and credit it.

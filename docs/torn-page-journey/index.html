@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>torn-page-journey · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 주인공 하나가 자전거를 타고 감정의 장을 차례로 지나가는 영상을 코드만으로 만듭니다. 감정마다 그림 재료(크레용 · 연필 · 과슈 · 목판화 · 목탄 · 수채 · 유화 · 분필)가 바뀌고 장과 장 사이는 찢어진 종이로 넘어갑니다.">
+<meta property="og:title" content="torn-page-journey · motion-skills">
+<meta property="og:description" content="감정마다 그림체가 바뀌는 자전거 여행 영상 — 찢어진 종이 전환, 코드로 합성한 음악, 끝이 처음으로 이어지는 루프.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/torn-page-journey/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/torn-page-journey">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / torn-page-journey</nav>
+  <h1>torn-page-journey</h1>
+  <p>주제 하나를 주면 주인공 하나가 자전거를 타고 감정의 장을 차례로 지나가는 영상을 코드만으로 만듭니다. 감정마다 그림 재료가 바뀌고(아이의 크레용 그림, 연필 스케치북, 과슈, 세 가지 잉크의 목판화, 비 오는 목탄, 수채, 유화, 밤의 칠판), 다음 장은 찢어진 새 종이로 덮이며 넘어가 그 순간 주인공은 반은 이전 화풍, 반은 다음 화풍입니다. 마지막 장은 첫 장으로 찢겨 돌아가 끝없이 이어지고, 하나의 주제 선율이 감정마다 다른 악기와 선법으로 바뀌는 음악과 효과음도 모두 코드로 합성합니다.
+  보고 만든 원본: <a href="https://x.com/chetaslua/status/2121885449509851415?a=8qELAlUgdwW0YiWOrYE&amp;s=19" target="_blank" rel="noopener">Chetaslua의 X 게시물 (110초 영상, 순수 JS)</a>.</p>
+  <ul class="tags"><li>2D 캔버스 · 코드 전용</li><li>그림 재료 8종</li><li>찢어진 종이 전환</li><li>16:9 · 24fps · 루프</li><li>합성 사운드</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(레몬나무를 싣고 집으로 가는 여우, 우체부의 마지막 배달, 전학 첫날 …). 레퍼런스 영상이 있으면 그 스틸</dd>
+      <dt>브리프</dt><dd>주인공 · 바구니에 실은 이야기의 물건 · 무게와 숨 쉬는 대기 동작 · 4–9개 감정의 흐름 · 장마다 그림 재료 · 장소 · 길(평지 · 오르막 · 내리막) · 곁의 동물 · 몸짓 하나 · 소리, 그리고 주제 선율을 적은 <code>BRIEF.md</code></dd>
+      <dt>주인공</dt><dd>데이터로 새로 설계한 자전거 탄 주인공(<code>cast.js</code>), 모든 재료로 오른쪽 · 왼쪽 양방향 · 페달 한 바퀴 · 숨쉬기 · 몸짓의 핵심 포즈를 한 장에 그린 캐스트 시트로 채점</dd>
+      <dt>장</dt><dd>감정 × 그림 재료 × 장소 × 몸짓. 깊이별 판을 한 번 그려 시차로 흐르게 하고, 앉아서 숨 쉬는 동물과 새 · 비 · 반딧불 같은 움직임을 매 프레임 그림. 장 사이는 찢어진 가장자리 · 흰 섬유 테두리 · 그림자가 있는 종이 전환</dd>
+      <dt>확인</dt><dd>모든 장 그리기 · 결정성 · 무릎 · 팔꿈치 · 목 범위 · 페달 위의 발(px) · 바퀴 미끄러짐(px) · 크랭크 · 숨쉬기 · 몸짓 예비 동작 · 장마다 재료가 바뀌는지 · 이웃한 장이 다르게 보이는지 · 루프 이음매 · 악보</dd>
+      <dt>출력</dt><dd>24fps 1920×1080 MP4(합성 음악 · 종이 찢는 소리 · 체인 · 프리휠 · 벨 · 장소의 소리 포함), ♪ 버튼으로 소리까지 재생하는 끝없이 도는 라이브 페이지</dd>
+    </dl>
+    <pre><code>cd torn-page-journey/examples/lemon-tree
+node ../../scripts/check.mjs cast.html
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs index.html --sheet 24 --scale .5
+node ../../scripts/score.mjs index.html
+node ../../scripts/render.mjs index.html --workers 4 --audio out/lemon-tree.wav
+node ../../scripts/new-journey.mjs ../../../my-journey</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. 네트워크와 GPU가 필요 없습니다(CPU에서 1080p 한 프레임 약 0.1–0.2초, 60초 영상을 워커 4개로 몇 분). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/torn-page-journey/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:calc((100vw - 34px)*.5625);--demo-bg:#1d1b18">
+    <iframe data-src="demo/examples/lemon-tree/" title="torn-page-journey 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/lemon-tree/">데모 열기 (examples/lemon-tree)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/lemon-tree</code> · 60.5초 · 8장 · ♪ 버튼으로 소리</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/lemon-tree/" data-cap="예제 &lt;code&gt;examples/lemon-tree&lt;/code&gt; · 60.5초 · 8장 · ♪ 버튼으로 소리" aria-pressed="true">먼 길을 돌아 집으로</button>
+        <button class="btn" type="button" data-src="demo/examples/lemon-tree/cast.html" data-cap="캐스트 시트 &lt;code&gt;examples/lemon-tree/cast.html&lt;/code&gt; · 재료 8종 × 양방향 · 페달 · 숨쉬기 · 몸짓" aria-pressed="false">캐스트 시트</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/index.html&lt;/code&gt; · 21초 · 3장 · 새 작품의 출발점" aria-pressed="false">시작 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제 「The Long Way Home」의 장과 찢어지는 순간, 캐스트 시트, 시작 템플릿의 스틸입니다. 카드를 누르면 라이브 페이지가 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"ch":"장 (감정 × 재료)","tear":"찢어지는 순간","tool":"캐스트 시트 · 템플릿"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「The Long Way Home」 <small>60.5초 · 8장</small></h3>
+      <p>빨간 여우 하나가 화분에 심은 레몬나무를 바구니에 싣고 먼 길을 돌아 집으로 갑니다. 원본에 없는 주제로 브리프부터 끝까지 만든 예제입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="ch" href="demo/examples/lemon-tree/?t=5" target="_blank" rel="noopener"><img src="samples/joy-crayon.jpg" alt="아이가 크레용으로 그린 마을에서 손을 흔들며 자전거를 타는 여우, 웃는 해와 열기구" loading="lazy" width="640" height="360"><div class="cap"><span class="no">기쁨 · 크레용</span><b>아침 마을</b><span class="how">아이의 그림 같은 마을, 벨을 울리고 손을 흔드는 여우</span></div></a>
+        <a class="tile" data-tags="ch" href="demo/examples/lemon-tree/?t=11.1" target="_blank" rel="noopener"><img src="samples/curiosity-pencil.jpg" alt="스프링 스케치북에 연필로 그린 초원, 울타리 곁의 토끼와 나비를 쫓는 여우" loading="lazy" width="640" height="360"><div class="cap"><span class="no">호기심 · 연필</span><b>스케치북 초원</b><span class="how">울타리 곁 토끼가 돌아보고, 여우는 나비를 덥석</span></div></a>
+        <a class="tile" data-tags="ch" href="demo/examples/lemon-tree/?t=18.3" target="_blank" rel="noopener"><img src="samples/bustle-gouache.jpg" alt="과슈로 칠한 장터 거리, 줄무늬 차양 가게와 높은 집들 앞을 지나는 여우" loading="lazy" width="640" height="360"><div class="cap"><span class="no">북적임 · 과슈</span><b>장터 거리</b><span class="how">숨 쉬는 손님들, 고양이와 닭, 아코디언 음악</span></div></a>
+        <a class="tile" data-tags="ch" href="demo/examples/lemon-tree/?t=26" target="_blank" rel="noopener"><img src="samples/triumph-woodcut.jpg" alt="빛살이 뻗는 붉은 해 아래 목판화로 새긴 오르막을 페달에 서서 오르는 여우" loading="lazy" width="640" height="360"><div class="cap"><span class="no">승리 · 목판화</span><b>긴 오르막</b><span class="how">잉크 세 가지, 끌 자국, 페달에 서서 오르기</span></div></a>
+        <a class="tile" data-tags="ch" href="demo/examples/lemon-tree/?t=33.6" target="_blank" rel="noopener"><img src="samples/sorrow-charcoal.jpg" alt="목탄으로 그린 비바람 속 전봇대 길을 웅크린 채 지나는 여우" loading="lazy" width="640" height="360"><div class="cap"><span class="no">슬픔 · 목탄</span><b>폭풍</b><span class="how">비, 천둥, 웅크림과 몸 떨기, 단조의 피아노</span></div></a>
+        <a class="tile" data-tags="ch" href="demo/examples/lemon-tree/?t=40.7" target="_blank" rel="noopener"><img src="samples/relief-watercolour.jpg" alt="수채로 그린 비 갠 길, 버드나무와 무지개 아래 내리막을 달리는 여우" loading="lazy" width="640" height="360"><div class="cap"><span class="no">안도 · 수채</span><b>비 갠 뒤</b><span class="how">내리막에서 페달을 놓고 다리를 쭉, 무지개와 물웅덩이</span></div></a>
+        <a class="tile" data-tags="ch" href="demo/examples/lemon-tree/?t=47.8" target="_blank" rel="noopener"><img src="samples/awe-oil.jpg" alt="유화 붓 자국의 노을 바다와 우산 소나무 곁을 지나며 해를 올려다보는 여우" loading="lazy" width="640" height="360"><div class="cap"><span class="no">경외 · 유화</span><b>노을 바다</b><span class="how">임파스토 붓 자국, 갈매기, 해를 올려다보기</span></div></a>
+        <a class="tile" data-tags="ch" href="demo/examples/lemon-tree/?t=54.9" target="_blank" rel="noopener"><img src="samples/wonder-chalk.jpg" alt="분필로 그린 밤, 레몬나무 모양 별자리와 달, 나무 위 부엉이 곁을 지나는 여우" loading="lazy" width="640" height="360"><div class="cap"><span class="no">경이 · 분필</span><b>별자리의 밤</b><span class="how">별이 그리는 레몬나무, 부엉이, 반딧불, 오르골</span></div></a>
+        <a class="tile" data-tags="tear" href="demo/examples/lemon-tree/?t=22.5" target="_blank" rel="noopener"><img src="samples/tear-market-to-climb.jpg" alt="과슈 장터 위로 목판화 오르막 종이가 찢어진 가장자리와 함께 덮이는 순간, 여우는 반씩 두 화풍" loading="lazy" width="640" height="360"><div class="cap"><span class="no">전환 · 과슈 → 목판화</span><b>찢어지는 종이</b><span class="how">찢어진 가장자리, 흰 섬유 테두리, 그림자</span></div></a>
+        <a class="tile" data-tags="tear" href="demo/examples/lemon-tree/?t=52.4" target="_blank" rel="noopener"><img src="samples/tear-sunset-to-night.jpg" alt="유화 노을 위로 분필 칠판의 밤 종이가 덮이는 순간" loading="lazy" width="640" height="360"><div class="cap"><span class="no">전환 · 유화 → 분필</span><b>노을에서 밤으로</b><span class="how">밝은 장과 어두운 장이 번갈아</span></div></a>
+        <a class="tile" data-tags="tear" href="demo/examples/lemon-tree/?t=60" target="_blank" rel="noopener"><img src="samples/tear-loop.jpg" alt="분필의 밤 위로 크레용 아침 종이가 다시 덮이며 처음으로 돌아가는 순간" loading="lazy" width="640" height="360"><div class="cap"><span class="no">전환 · 분필 → 크레용</span><b>처음으로</b><span class="how">마지막 장이 첫 장으로, 이음매 없는 루프</span></div></a>
+        <a class="tile" data-tags="tool" href="demo/examples/lemon-tree/cast.html" target="_blank" rel="noopener"><img src="samples/cast-sheet.jpg" alt="여우 주인공을 크레용 · 연필 · 과슈 · 목판화 · 목탄 · 수채로 오른쪽과 왼쪽 양방향으로 그린 캐스트 시트" loading="lazy" width="640" height="360"><div class="cap"><span class="no">캐스트 시트</span><b>Hana · 재료 8종 × 양방향</b><span class="how">페달 한 바퀴, 숨쉬기, 몸짓 7종의 핵심 포즈</span></div></a>
+        <a class="tile" data-tags="tool" href="demo/templates/" target="_blank" rel="noopener"><img src="samples/template-calm.jpg" alt="수채로 그린 오솔길에서 빨간 비옷과 노란 가방의 아이가 자전거를 타는 템플릿" loading="lazy" width="640" height="360"><div class="cap"><span class="no">시작 템플릿 · 21초</span><b>평온 → 두려움 → 기쁨</b><span class="how">수채 · 목탄 · 크레용 3장, 사람 주인공</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. 출발점은 Chetaslua가 X에 올린 110초 영상입니다. 펠리컨 한 마리가 자전거를 타고 크레용, 연필, 과슈, 목판화, 목탄, 수채, 민화풍 문양, 유화, 밤 항구, 칠판의 장을 차례로 지나며, 장과 장 사이는 찢어진 종이로 넘어가고, 그림과 음악과 모든 소리가 순수 JS 코드입니다. 이 스킬은 그 형식(한 번도 끊지 않는 옆모습 여행, 감정 하나 = 그림 재료 하나, 찢어진 종이 전환, 재료가 다시 그리는 같은 주인공, 루프)만 가져오고, 엔진과 예제 「The Long Way Home」의 주인공 · 장면 · 음악은 모두 이 레포의 것입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/examples/lemon-tree/" target="_blank" rel="noopener"><b>「The Long Way Home」 · 60.5초 · 8장</b><span>크레용 → 연필 → 과슈 → 목판화 → 목탄 → 수채 → 유화 → 분필 → 다시 크레용, 라이브 페이지</span><span class="url">torn-page-journey/demo/examples/lemon-tree/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/torn-page-journey/examples"><b>예제 폴더 · examples/</b><span>lemon-tree</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/chetaslua/status/2121885449509851415?a=8qELAlUgdwW0YiWOrYE&amp;s=19" target="_blank" rel="noopener"><b>레퍼런스 영상 · X 게시물</b><span>Chetaslua(@chetaslua) · 2026년 11월 · 110초 · 순수 JS, 음악과 소리까지 코드</span><span class="url">x.com/chetaslua</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/torn-page-journey/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/torn-page-journey">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/torn-page-journey/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/torn-page-journey/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 캐스트 · 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/torn-page-journey/references/LOOK.md">references/LOOK.md</a> <span>원본에서 읽어 낸 형식</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/torn-page-journey/references/MEDIA.md">references/MEDIA.md</a> <span>그림 재료 8종, 어울리는 감정, 새 재료 추가</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/torn-page-journey/references/KIT.md">references/KIT.md</a> <span>API</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/torn-page-journey/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림과 소리는 코드로 만들었습니다
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
