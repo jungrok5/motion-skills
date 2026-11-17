@@ -57,14 +57,14 @@ export class Film {
     this.S = +(q.get('scale') || (this.render ? 1 : Math.min(1, Math.max(.5, (innerWidth * devicePixelRatio) / this.W))));
     this.dur = o.dur || 30; this.seed = o.seed || 1; this.title = o.title || document.title;
     this.paper = o.paper || '#f3f0e9'; this.lead = o.lead || '#2f2f33'; this.tone = o.tone || '#55555a';   // tone: graphite shading (hair, pupils)
-    this.score = o.score || null; this.fadeIn = o.fadeIn ?? .6; this.fadeOut = o.fadeOut ?? .8;
+    this.score = o.score || null; this.fadeIn = o.fadeIn ?? .4; this.fadeOut = o.fadeOut ?? .8;
     this.grade = { vignette: .2, grain: .05, ...(o.grade || {}) };
     this.base = o.base || './'; this.cdn = q.has('cdn') || !!o.cdn || !!window.PLA_CDN;
     this.items = []; this.sketches = []; this.heroes = []; this.reals = []; this.realifies = []; this.irises = []; this.rules = []; this.beats = []; this.actions = [];
     this.cam = [{ t: 0, pos: [0, 1, 1], look: [0, .75, 0], mm: 35 }]; this.pens = [];
     const mk = (w, h) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
     this.mk = mk; this.canvas = mk(this.W * this.S, this.H * this.S); this.ctx = this.canvas.getContext('2d');
-    this.layer = mk(this.W * this.S, this.H * this.S); this.lctx = this.layer.getContext('2d');
+    this.layer = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(Math.round(this.W * this.S), Math.round(this.H * this.S)) : mk(this.W * this.S, this.H * this.S); this.lctx = this.layer.getContext('2d');
     this.pt = new Painter(this.ctx, { paper: this.paper, spot: this.tone, lead: this.lead }); this.lpt = new Painter(this.lctx, { paper: this.paper, spot: this.tone, lead: this.lead });
     for (const p of [this.pt, this.lpt]) { p.weight = 1; p.spotEdge = this.lead; }
     this.plate = new Plate({ W: this.W * this.S, H: this.H * this.S, base: this.base, cdn: this.cdn, look: { ...(o.look || {}), dof: !this.off.has('dof') } });
@@ -158,9 +158,10 @@ export class Film {
     const hand = flow(C, t, 'hand', .6), dist = len3(sub3(look, pos));
     // a little hand-held life, scaled by how far the camera is from what it looks at
     const hh = [n1(t * .55, 11) * .6 + n1(t * 1.7, 12) * .25, n1(t * .5, 13) * .5 + n1(t * 1.9, 14) * .2, 0].map(v => v * .0035 * hand * dist);
+    this.setBasis(add3(pos, hh), add3(look, hh.map(v => v * .4)), mm);   // the drawing's cards need the camera before focus is found
     let focus = flow(C, t, 'focus', null);
     const fo = C.find(k => k.focusOn) ? flowFocus(C, t) : null;
-    const target = fo === 'hero' ? this.heroHead(t) : Array.isArray(fo) ? fo : null;
+    const target = fo === 'hero' ? this.heroHead(t) : typeof fo === 'function' ? fo(t) : Array.isArray(fo) ? fo : null;
     if (focus == null) focus = target ? len3(sub3(target, pos)) : dist;
     return { pos: add3(pos, hh), look: add3(look, hh.map(v => v * .4)), mm, fstop, focus, roll };
     function flowFocus(K, t) { let f = null; for (const k of K) if (k.t <= t && k.focusOn !== undefined) f = k.focusOn; return f ?? K.find(k => k.focusOn !== undefined)?.focusOn; }
@@ -204,9 +205,9 @@ export class Film {
     r.obj.traverse(o => { if (!o.isMesh) return; const mats = Array.isArray(o.material) ? o.material : [o.material];
       for (const mat of mats) { mat.onBeforeCompile = sh => { Object.assign(sh.uniforms, r.u);
         sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vRW;').replace('#include <project_vertex>', '#include <project_vertex>\nvRW = (modelMatrix * vec4(transformed, 1.)).xyz;');
-        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vRW; uniform vec3 uRC; uniform float uRR, uRS;\nfloat rh(vec3 p){ return fract(sin(dot(floor(p * 900.), vec3(12.9898, 78.233, 37.719))) * 43758.5453); }')
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vRW; uniform vec3 uRC; uniform float uRR, uRS;\nfloat rh0(vec3 p){ return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }\nfloat rh(vec3 p){ p *= 260.; vec3 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f); return mix(mix(mix(rh0(i), rh0(i + vec3(1,0,0)), f.x), mix(rh0(i + vec3(0,1,0)), rh0(i + vec3(1,1,0)), f.x), f.y), mix(mix(rh0(i + vec3(0,0,1)), rh0(i + vec3(1,0,1)), f.x), mix(rh0(i + vec3(0,1,1)), rh0(i + vec3(1,1,1)), f.x), f.y), f.z); }')
           .replace('void main() {', 'void main() {\n  float rd = length(vRW - uRC) - uRR + (rh(vRW) - .5) * uRS;\n  if (uRR >= 0. && rd > 0.) discard;')
-          .replace('#include <dithering_fragment>', '#include <dithering_fragment>\n  if (uRR >= 0.) gl_FragColor.rgb += vec3(1., .96, .88) * 1.6 * (1. - smoothstep(0., uRS * 1.5, -rd));');
+          .replace('#include <dithering_fragment>', '#include <dithering_fragment>\n  if (uRR >= 0.) gl_FragColor.rgb += vec3(1., .96, .88) * .9 * (1. - smoothstep(0., uRS * .6, -rd));');
       }; mat.needsUpdate = true; } });
   }
   revealK(r, t) { return clamp((t - r.at) / r.dur); }
@@ -238,8 +239,7 @@ export class Film {
   frame(t) {
     const ctx = this.ctx, W = this.W, H = this.H, S = this.S, plate = this.plate, cam = this.camAt(t);
     // camera basis first (the drawing's cards need it)
-    const c = plate.camera; c.position.set(...cam.pos); c.up.set(0, 1, 0); c.lookAt(...cam.look); c.updateMatrixWorld();
-    const rgt = new T.Vector3().setFromMatrixColumn(c.matrixWorld, 0); rgt.y = 0; rgt.normalize(); this.camRight = rgt.toArray(); this.camPos = cam.pos;
+    this.setBasis(cam.pos, cam.look, cam.mm);
     this.boil = Math.floor(t * this.boilFps);
     for (const r of this.reals) if (r.track) { const s = r.track(t) || {}; if (s.pos) r.obj.position.set(...s.pos); if (s.rot) r.obj.rotation.set(...s.rot); if (s.quat) r.obj.quaternion.set(...s.quat); if (s.scale !== undefined) r.obj.scale.setScalar(s.scale); if (s.visible !== undefined) r.obj.visible = s.visible; }
     this.placePencil(t);
@@ -275,7 +275,9 @@ export class Film {
     if (blur < .6 && alpha >= 1 && !erase) { this.ctx.setTransform(this.S, 0, 0, this.S, 0, 0); fn(this.pt); this.ctx.setTransform(1, 0, 0, 1, 0, 0); return; }
     const L = this.lctx; L.setTransform(1, 0, 0, 1, 0, 0); L.clearRect(0, 0, this.layer.width, this.layer.height); L.setTransform(this.S, 0, 0, this.S, 0, 0); fn(this.lpt);
     if (erase) erase(L);
-    const ctx = this.ctx; ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = alpha; if (blur >= .6) ctx.filter = `blur(${(blur * this.S).toFixed(2)}px)`; ctx.drawImage(this.layer, 0, 0); ctx.restore();
+    // a fresh bitmap each time: a filtered drawImage of a reused canvas can show an older frame's pixels (Chromium)
+    const src = this.layer.transferToImageBitmap ? this.layer.transferToImageBitmap() : this.layer;
+    const ctx = this.ctx; ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = alpha; if (blur >= .6) ctx.filter = `blur(${(blur * this.S).toFixed(2)}px)`; ctx.drawImage(src, 0, 0); ctx.restore(); if (src.close) src.close();
   }
   drawSketchItem(s, pl, anc, t) {
     let a = 1; if (s.out) a *= 1 - ease.sine((t - s.out[0]) / (s.out[1] - s.out[0])); if (s.alpha) a *= s.alpha(t); if (a <= 0.003) return;
@@ -297,7 +299,7 @@ export class Film {
   shadowRig(key, n = 256) {
     this.srigs = this.srigs || {}; if (this.srigs[key]) return this.srigs[key];
     const cv = this.mk(n, n), tex = new T.CanvasTexture(cv); tex.minFilter = T.LinearFilter;
-    const geo = new T.PlaneGeometry(1, 1), m = new T.MeshBasicMaterial({ colorWrite: false, depthWrite: false, transparent: true, opacity: 0 });
+    const geo = new T.PlaneGeometry(1, 1), m = new T.ShaderMaterial({ vertexShader: 'void main(){ gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }', fragmentShader: 'void main(){ discard; }', depthWrite: false, side: T.DoubleSide });   // casts only
     const mesh = new T.Mesh(geo, m); mesh.castShadow = true; mesh.receiveShadow = false; mesh.userData.shadowOnly = true;
     mesh.customDepthMaterial = new T.MeshDepthMaterial({ depthPacking: T.RGBADepthPacking, alphaMap: tex, alphaTest: .5 });
     // a soft contact shadow under the feet (what really sits a drawing on a surface)
@@ -401,10 +403,23 @@ export class Film {
   pencilPx(t) { this.frameGeom(t); const s = this.pencilAt(t); if (!s || !s.visible) return null; return { tip: this.proj(s.tip), back: this.proj(add3(s.tip, s.axis, this.pen.len)), drawing: s.drawing }; }
   /** colours used by the drawing (the drawing stays graphite: lead, tone, paper) */
   drawnColours() { const set = new Set(); for (const s of this.sketches) for (const p of this.partsOf(s, s.at + .01)) for (const op of p.ops) set.add(op.col || 'lead'); return [...set]; }
-  frameGeom(t) { const cam = this.camAt(t), c = this.plate.camera; c.fov = 2 * Math.atan(12 / (cam.mm || 35)) * 180 / Math.PI; c.position.set(...cam.pos); c.up.set(0, 1, 0); c.lookAt(...cam.look); c.updateProjectionMatrix(); c.updateMatrixWorld(); const r = new T.Vector3().setFromMatrixColumn(c.matrixWorld, 0); r.y = 0; r.normalize(); this.camRight = r.toArray(); this.camPos = cam.pos; return cam; }
+  setBasis(pos, look, mm) { const c = this.plate.camera; c.fov = 2 * Math.atan(12 / (mm || 35)) * 180 / Math.PI; c.position.set(...pos); c.up.set(0, 1, 0); c.lookAt(...look); c.updateProjectionMatrix(); c.updateMatrixWorld(); const r = new T.Vector3().setFromMatrixColumn(c.matrixWorld, 0); r.y = 0; r.normalize(); this.camRight = r.toArray(); this.camPos = pos; }
+  frameGeom(t) { const cam = this.camAt(t); this.setBasis(cam.pos, cam.look, cam.mm); return cam; }
 
   // ── contract ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+  /** the page's lit colour: one calibration render looking straight down at the sketchbook — the drawing's paper-white
+   *  (knock-outs) is that colour, so a figure drawn on the page reads as the same paper wherever it walks */
+  calibratePaper() {
+    if (!this.book || this.q.has('rawpaper')) return;
+    const c = this.book.position, y = this.book.userData.surfaceY, save = this.plate.look.dof;
+    this.plate.look.dof = false; const fr = this.plate.front; this.plate.front = [];
+    this.plate.render({ pos: [c.x + .001, y + .25, c.z + .02], look: [c.x, y, c.z], mm: 50, fstop: 8, focus: .25 }); this.plate.look.dof = save; this.plate.front = fr;
+    const x = this.mk(1, 1).getContext('2d', { willReadFrequently: true }); x.drawImage(this.plate.canvas, this.plate.W / 2 - .5, this.plate.H / 2 - .5, 1, 1, 0, 0, 1, 1);
+    const d = x.getImageData(0, 0, 1, 1).data, hex = '#' + [d[0], d[1], d[2]].map(v => v.toString(16).padStart(2, '0')).join('');
+    this.paperLit = hex; for (const p of [this.pt, this.lpt]) p.paper = hex;
+  }
   start() {
+    this.calibratePaper();
     this.prepare();
     window.seek = t => this.frame(t); window.DURATION = this.dur; window.FPS = this.FPS; window.SIZE = { W: this.W, H: this.H };
     window.runChecks = t => { this.frame(t); return [...this.rules.filter(r => { try { return !r.fn(t); } catch { return true; } }).map(r => r.name), ...new Set(this.audit || [])]; };

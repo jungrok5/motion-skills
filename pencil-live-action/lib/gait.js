@@ -5,7 +5,7 @@
 // legs: their height comes from how far apart the feet are (a compass gait — lowest in double support), so the bob is a
 // consequence of the steps, not a sine added on top. check.mjs measures planted feet frame to frame.
 //
-//   const g = gait({ start: { L: [x, y, z], R: [x, y, z] }, legLen: .37 * H, face0 })
+//   const g = gait({ start: { L: [x, y, z], R: [x, y, z] }, legLen: .37 * H, ankle: .025 * H, face0 })   (H = the hero's height, m)
 //   g.walk({ to: [x, z] | path: [[x, z]…], t0, speed: .05 (m/s), stride: .45 × legLen, y: (x, z) => surface y })
 //   g.step('L', [x, y, z], t0, dur)      one explicit step (stairs, a ladder rung, a turn on the spot)
 //   g.hop(t0, dur, height, to?)          both feet leave and land together (a jump, a landing)
@@ -19,7 +19,7 @@ const yawOf = (dx, dz) => Math.atan2(dx, dz) * 180 / Math.PI;
 const angLerp = (a, b, k) => { let d = ((b - a + 540) % 360) - 180; return a + d * k; };
 
 export function gait(o) {
-  const legLen = o.legLen, ev = { L: [], R: [] }, faces = [{ t: -1e9, face: o.face0 ?? 0, dur: 0 }], hops = [];
+  const legLen = o.legLen, ank = o.ankle ?? 0, ev = { L: [], R: [] }, faces = [{ t: -1e9, face: o.face0 ?? 0, dur: 0 }], hops = [];
   const pos0 = { L: o.start.L.slice(), R: o.start.R.slice() };
   const last = s => ev[s].length ? ev[s][ev[s].length - 1].to : pos0[s];
   const lastT = () => Math.max(...['L', 'R'].map(s => ev[s].length ? ev[s][ev[s].length - 1].t1 : -1e9));
@@ -32,7 +32,7 @@ export function gait(o) {
     /** a turn on the spot: two small steps that re-plant both feet around the root, facing `face` */
     turnInPlace(face, t0, dur = .7, width = legLen * .32) {
       const a = G.at(t0), mid = [(a.L[0] + a.R[0]) / 2, (a.L[1] + a.R[1]) / 2, (a.L[2] + a.R[2]) / 2], r = face * Math.PI / 180, side = [Math.cos(r), 0, -Math.sin(r)];
-      const pl = [mid[0] - side[0] * width / 2, mid[1], mid[2] - side[2] * width / 2], pr = [mid[0] + side[0] * width / 2, mid[1], mid[2] + side[2] * width / 2];
+      const pl = [mid[0] + side[0] * width / 2, mid[1], mid[2] + side[2] * width / 2], pr = [mid[0] - side[0] * width / 2, mid[1], mid[2] - side[2] * width / 2];   // facing +z, the left foot is at +x
       // the foot on the side we turn toward goes first
       const cur = G.at(t0).face, first = ((face - cur + 540) % 360) - 180 > 0 ? 'R' : 'L', second = first === 'R' ? 'L' : 'R';
       G.step(first, first === 'L' ? pl : pr, t0, dur * .5, legLen * .08); G.step(second, second === 'L' ? pl : pr, t0 + dur * .45, dur * .5, legLen * .08); G.face(face, t0, dur);
@@ -48,13 +48,13 @@ export function gait(o) {
       let first = w.lead || 'R', t = w.t0 ?? lastT();
       for (let k = 1; k <= n; k++) {
         const s = k === n ? Ltot : k * Ltot / n, q = P(s), dl = Math.hypot(q.d[0], q.d[1]) || 1, nx = q.d[1] / dl, nz = -q.d[0] / dl;
-        const foot = k % 2 ? first : (first === 'R' ? 'L' : 'R'), sg = foot === 'R' ? 1 : -1;
+        const foot = k % 2 ? first : (first === 'R' ? 'L' : 'R'), sg = foot === 'R' ? -1 : 1;   // the right foot is on the right of the walking direction
         const to = [q.p[0] + nx * sg * width / 2, 0, q.p[1] + nz * sg * width / 2]; to[1] = yAt(to[0], to[2]);
         G.step(foot, to, t, swing, w.lift ?? legLen * .16); t += dt;
         if (k === 1) G.face(yawOf(q.d[0], q.d[1]), w.t0 ?? t - dt, dt * 1.2);
       }
       // the trailing foot closes up beside the last one
-      const q = P(Ltot), dl = Math.hypot(q.d[0], q.d[1]) || 1, nx = q.d[1] / dl, nz = -q.d[0] / dl, lastFoot = n % 2 ? first : (first === 'R' ? 'L' : 'R'), other = lastFoot === 'R' ? 'L' : 'R', sg = other === 'R' ? 1 : -1;
+      const q = P(Ltot), dl = Math.hypot(q.d[0], q.d[1]) || 1, nx = q.d[1] / dl, nz = -q.d[0] / dl, lastFoot = n % 2 ? first : (first === 'R' ? 'L' : 'R'), other = lastFoot === 'R' ? 'L' : 'R', sg = other === 'R' ? -1 : 1;
       const to = [q.p[0] + nx * sg * width / 2, 0, q.p[1] + nz * sg * width / 2]; to[1] = yAt(to[0], to[2]);
       G.step(other, to, t, swing * .8, legLen * .1); G.lastEnd = t + swing * .8;
       return G;
@@ -81,7 +81,7 @@ export function gait(o) {
       // compass gait: the hip rides on the legs — lowest when the feet are far apart, highest as the swing foot passes
       const spread = Math.hypot(out.L[0] - out.R[0], out.L[2] - out.R[2]), down = ['L', 'R'].filter(s => out.planted[s]);
       const base = down.length ? down.reduce((a, s) => a + out[s][1], 0) / down.length : Math.min(out.L[1], out.R[1]);
-      out.hipY = base + Math.sqrt(Math.max(0, legLen * legLen * .97 - (spread / 2) ** 2));
+      out.hipY = base + ank + Math.sqrt(Math.max(0, legLen * legLen * .992 - (spread / 2) ** 2));
       out.airborne = hops.some(h => t > h.t0 && t < h.t1);
       return out;
     },

@@ -148,7 +148,7 @@ export class Plate {
   /** o: { W, H, base (URL of the film folder), cdn (read scans from Poly Haven), look: { expo, warm, sat, contrast, … } } */
   constructor(o = {}) {
     this.W = o.W || 1920; this.H = o.H || 1080; this.base = o.base || './'; this.cdn = !!o.cdn;
-    this.look = Object.assign({ gain: 1, expo: null, sat: 1.04, contrast: 1.04, lift: 0, shadowTint: [.96, .99, 1.05], highTint: [1.05, 1.0, .93], fstop: 2.8, dof: true, sunBoost: 1 }, o.look || {});
+    this.look = Object.assign({ gain: 1, expo: null, sat: 1.04, contrast: 1.04, lift: 0, shadowTint: [.97, .99, 1.04], highTint: [1.07, 1.0, .9], fstop: 2.8, dof: true, sunBoost: 1 }, o.look || {});
     this.canvas = cnv(this.W, this.H);
     const r = this.renderer = new T.WebGLRenderer({ canvas: this.canvas, antialias: false, alpha: true, premultipliedAlpha: false, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
     r.setPixelRatio(1); r.setSize(this.W, this.H, false); r.outputColorSpace = T.LinearSRGBColorSpace; r.toneMapping = T.NoToneMapping;
