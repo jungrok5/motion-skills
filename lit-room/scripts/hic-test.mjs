@@ -126,14 +126,18 @@ export async function run(file, o = {}) {
     if (!focused) fail(`a click on ${editSel} at (${pt.x | 0}, ${pt.y | 0}) [${pt.via}] did not focus it (hit ${await page.evaluate(p => { const h = document.elementFromPoint(p.x, p.y); return h ? h.tagName + (h.id ? '#' + h.id : '') : 'nothing'; }, pt)})`);
     else ok(`a real click through the drawing focuses ${editSel} [${pt.via}]`);
     const sA = await stats(page, clip);
+    const crop = clip && { x: Math.max(clip.x, pt.x - 220), y: Math.max(clip.y, pt.y - 80), width: Math.min(440, clip.x + clip.width - Math.max(clip.x, pt.x - 220)), height: Math.min(160, clip.y + clip.height - Math.max(clip.y, pt.y - 80)) };
+    const cA = crop && crop.width > 20 && crop.height > 20 ? await stats(page, crop) : null;
     await page.keyboard.press('End'); await page.keyboard.type(o.typeText || ' zq7', { delay: 40 }); await page.waitForTimeout(o.typeSettle ?? 700);
     const after = await page.evaluate(s => { const e = document.querySelector(s); return e.value ?? e.textContent; }, editSel);
     const up1 = await page.evaluate(() => window.__hic.uploads);
     const sB = await stats(page, clip);
+    const cB = cA ? await stats(page, crop) : null;
     if (after === before) fail('typing did not change the text'); else ok(`typing changes the live text ("…${after.slice(-12)}")`);
     if (up1 <= up0) fail('no new upload after typing'); else ok(`typing re-uploads the page (${up1 - up0} uploads)`);
-    const d = diff(sA, sB);
-    if (d < 0.05) fail(`the canvas did not change after typing (diff ${d.toFixed(3)})`); else info(`canvas change after typing: ${d.toFixed(2)}`);
+    const d = diff(sA, sB), dc = cA ? diff(cA, cB) : 0;
+    if (d < 0.05 && dc < 0.05) fail(`the canvas did not change after typing (diff ${d.toFixed(3)}, around the field ${dc.toFixed(3)})`);
+    else info(`canvas change after typing: ${d.toFixed(2)} (around the field ${dc.toFixed(2)})`);
   }
   // 4 click
   const clickSel = o.click || await page.evaluate(() => { const e = document.querySelector('canvas [data-hic-click]'); if (!e) return null; if (!e.id) e.id = 'hic-click-probe'; return '#' + e.id; });

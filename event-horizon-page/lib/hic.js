@@ -15,7 +15,7 @@
  */
 (function (root) {
   'use strict';
-  var HIC = { version: '1.0.0' };
+  var HIC = { version: '1.1.0' };
   var doc = root.document;
 
   // ------------------------------------------------------------------ test hook (read by scripts/check.mjs)
@@ -212,14 +212,17 @@
   //   S.gl                  the WebGL2 context (null if opts.gl === false)
   //   S.W, S.H, S.dpr       canvas size in CSS px and the backing scale; S.resize() refreshes them (call on 'resize')
   //   S.upload(el, tex, w, h)  the element's pixels into tex at w×h device px (defaults: element size × dpr); returns {w,h}
-  //   S.onPaint(fn)         fn(S) when drawable content changed (pure hit-test moves are filtered out in CSS mode)
+  //   S.onPaint(fn)         fn(S, event) when drawable content changed (pure hit-test moves are filtered out in CSS
+  //                         mode); event.changedElements, where the browser gives it, names the children that changed
   //   S.requestPaint()      ask for a paint (after you changed something that the browser did not see as a change)
-  //   S.place(el, m)        where el is drawn, for hit testing: m maps element-local CSS px → canvas CSS px.
-  //                         m: DOMMatrix, [a,b,c,d,e,f] (2D) or 16 numbers (column-major, CSS matrix3d order); null hides el
+  //   S.place(el, m)        where el is drawn, for hit testing: m maps element-local CSS px → canvas CSS px (relative
+  //                         to the canvas origin in both modes; in CSS mode the element's layout offset is taken off).
+  //                         m: DOMMatrix, [a,b,c,d,e,f] (2D) or 16 numbers (column-major, CSS matrix3d order); null hides el.
+  //                         S.home(el) puts it back where it is laid out (identity in CSS mode)
   //   S.placeLocal(el, x, y, toPage)  for a non-affine warp: toPage(x, y) → [px, py] element-local or null. The element is
   //                         placed with the warp's local affine at the pointer, so what is under the pointer is what is clicked
   //   S.probe(el, target)   async: decides how placement reaches hit testing here ('geo' or 'css'); call once after the
-  //                         first upload. target: an element inside el (default el.firstElementChild)
+  //                         first upload. target: an element inside el (default el.firstElementChild). Leaves el at home
   //   S.loop(fn)            fn(t, dt) every frame while visible (t in s; fixed at HIC.still for stills); returns stop()
   //   S.ready(info)         marks the page ready for checks (__hic.ready) and records info
   HIC.stage = function (canvas, opts) {
@@ -287,7 +290,20 @@
     function markContent() { contentDirty = true; }
     ['input', 'change', 'click', 'keydown', 'keyup', 'focusin', 'focusout', 'pointerdown', 'pointerup', 'selectionchange', 'scroll', 'transitionend', 'animationend', 'load']
       .forEach(function (t) { root.addEventListener(t, markContent, true); doc.addEventListener(t, markContent, true); });
-    canvas.onpaint = function () {
+    // A DOM change made inside the onPaint callback is not reported as a new paint, so it would never be uploaded.
+    // A MutationObserver on the drawn subtree notices such changes (its callback runs in the same task, right after
+    // the paint handler) and asks for one more paint on the next frame.
+    var inPaint = false, mutatedInPaint = false;
+    if (root.MutationObserver) new MutationObserver(function (records) {
+      if (!inPaint) return;
+      for (var i = 0; i < records.length; i++) {
+        var r = records[i];
+        // our own hit-test placement (S.place in CSS mode) is not a change of content
+        if (r.type === 'attributes' && r.attributeName === 'style' && r.target.__hicNorm !== undefined && r.target.style.transform === r.target.__hicNorm) continue;
+        mutatedInPaint = true; return;
+      }
+    }).observe(canvas, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['class', 'style', 'hidden', 'value', 'checked', 'src'] });
+    canvas.onpaint = function (ev) {
       probe.paints++;
       if (!paintFn) return;
       // In CSS mode every transform we set for hit testing is reported as a paint with no new pixels: skip those,
@@ -298,7 +314,14 @@
         return;
       }
       ownMove = false; contentDirty = false;
-      paintFn(S);
+      inPaint = true; mutatedInPaint = false;
+      try { paintFn(S, ev); } finally {
+        // mutation records are delivered as a microtask after this handler; check once they have been
+        Promise.resolve().then(function () {
+          inPaint = false;
+          if (mutatedInPaint) { mutatedInPaint = false; requestAnimationFrame(S.requestPaint); }
+        });
+      }
     };
     S.onPaint = function (fn) { paintFn = fn; S.requestPaint(); return S; };
     S.requestPaint = function () { contentDirty = true; if (canvas.requestPaint) canvas.requestPaint(); };
@@ -314,17 +337,31 @@
       return new DOMMatrix(Array.prototype.slice.call(m));
     }
     var HIDE = [1, 0, 0, 1, -100000, -100000];
+    // Where the element's layout box sits inside the canvas (CSS px). A CSS transform starts from there, while
+    // updateElementGeometry and every matrix this file takes are relative to the canvas origin.
+    function chain(n) { var x = 0, y = 0; while (n) { x += n.offsetLeft || 0; y += n.offsetTop || 0; n = n.offsetParent; } return [x, y]; }
+    function layoutOffset(el) { var a = chain(el), b = chain(canvas); return [a[0] - b[0], a[1] - b[1]]; }
+    S.layoutOffset = layoutOffset;
+    function fromLayout(m, off) {
+      if (!off[0] && !off[1]) return m;
+      m = Array.prototype.slice.call(m);
+      if (m.length === 6) { m[4] -= off[0]; m[5] -= off[1]; return m; }
+      for (var c = 0; c < 4; c++) { m[c * 4] -= off[0] * m[c * 4 + 3]; m[c * 4 + 1] -= off[1] * m[c * 4 + 3]; }
+      return m;
+    }
     S.place = function (el, m) {
       if (!m) m = HIDE;
+      if (m && typeof m.toFloat64Array === 'function') m = m.is2D ? [m.a, m.b, m.c, m.d, m.e, m.f] : Array.from(m.toFloat64Array());
       for (var i = 0; i < m.length; i++) if (!isFinite(m[i])) { m = HIDE; break; }
       if (S.mode === 'geo') {
         try { canvas.updateElementGeometry(el, { canvasTransform: domMatrix(m) }); } catch (e) { S.mode = 'css'; }
       }
       if (S.mode === 'css') {
-        var css = cssMatrix(m);
-        if (el.__hicCss !== css) { el.__hicCss = css; el.style.transformOrigin = '0 0'; el.style.transform = css; ownMove = true; }
+        var css = cssMatrix(m === HIDE ? m : fromLayout(m, layoutOffset(el)));
+        if (el.__hicCss !== css) { el.__hicCss = css; el.style.transformOrigin = '0 0'; el.style.transform = css; el.__hicNorm = el.style.transform; ownMove = true; }
       }
     };
+    S.home = function (el) { var o = layoutOffset(el); el.__hicCss = ''; S.place(el, [1, 0, 0, 1, o[0], o[1]]); };
     S.placeLocal = function (el, x, y, toPage) {
       var q0 = toPage(x, y), qx = toPage(x + 1, y), qy = toPage(x, y + 1);
       if (!q0 || !qx || !qy) { S.place(el, null); return null; }
@@ -347,16 +384,17 @@
           S.mode = modes[i]; el.__hicCss = '';
           if (S.mode === 'css' && HIC.features().geometry) { try { canvas.updateElementGeometry(el, { canvasTransform: new DOMMatrix() }); } catch (e) {} }
           if (S.mode === 'geo') el.style.transform = '';
-          var tb = target.getBoundingClientRect(), eb = el.getBoundingClientRect();
-          // put the target's centre at the canvas centre, then ask the browser what is there
-          var lx = tb.left - eb.left + tb.width / 2, ly = tb.top - eb.top + tb.height / 2;
+          // put the target's centre at the canvas centre, then ask the browser what is there (all layers, so an
+          // overlay above the canvas does not hide the answer)
+          var b = HIC.box(el, target), lx = b[0] + b[2] / 2, ly = b[1] + b[3] / 2;
           S.place(el, [1, 0, 0, 1, Math.round(cr.width / 2 - lx), Math.round(cr.height / 2 - ly)]);
           await frames();
-          var hit = doc.elementFromPoint(cr.left + cr.width / 2, cr.top + cr.height / 2);
-          if (hit && (hit === target || target.contains(hit))) { found = S.mode; break; }
+          var x = cr.left + cr.width / 2, y = cr.top + cr.height / 2;
+          var hits = doc.elementsFromPoint ? doc.elementsFromPoint(x, y) : [doc.elementFromPoint(x, y)];
+          if (hits.some(function (h) { return h && (h === target || target.contains(h)); })) { found = S.mode; break; }
         }
         S.mode = found || 'css'; probe.mode = S.mode + (found ? '' : '?');
-        el.__hicCss = '';
+        S.home(el);   // leave it where it is laid out; the page places it from here
         return S.mode;
       })();
     };

@@ -31,7 +31,7 @@ live-page skill.
 
 Markup that works in both: `<canvas id="stage" layoutsubtree content="drawable"><div id="page" drawable>…</div></canvas>`.
 `lib/hic.js` hides the differences. `HIC.supported()`, `HIC.stage(canvas)` → `S.upload(el, tex)`, `S.onPaint(fn)`,
-`S.place(el, matrix)`, `S.placeLocal(el, x, y, toPage)`, `S.probe(el)`, `S.loop(fn)`, `S.ready()`, `HIC.fallback(canvas)`,
+`S.place(el, matrix)`, `S.placeLocal(el, x, y, toPage)`, `S.home(el)`, `S.probe(el)`, `S.loop(fn)`, `S.ready()`, `HIC.fallback(canvas)`,
 WebGL helpers (`HIC.gl.program / texture / target / pingpong / bind / fullscreen`) and `HIC.mat4`. The header of `hic.js`
 documents each one.
 
@@ -94,3 +94,37 @@ coming, not how fast they are. Stills come from `stills()` (or the skill's `scri
   local affine at the pointer, and hide it (`S.place(el, null)`) where no page is drawn, so clicks there reach the canvas.
 - **Having `updateElementGeometry` does not prove it moves hit testing.** Some builds ignore it. `S.probe()` puts a known
   element at the canvas centre, asks `elementFromPoint` and falls back to CSS mode.
+- **Direct children of the canvas are laid out at its origin.** Their own margins do not move them, so a CSS
+  transform on a child is already relative to the canvas. A transform on a *descendant* (a card inside the page) starts
+  from that descendant's layout box. Since runtime 1.1 `S.place` always takes canvas-relative matrices and removes the
+  layout offset itself in CSS mode (`S.layoutOffset(el)`), so the same matrix works in both modes. Before 1.1, a skill
+  placing descendants had to remove the offset by hand (exploded-view-map did).
+- **`S.probe()` used to leave the page at its probe offset** and could answer `css?` when an overlay covered the canvas
+  centre or the target was measured through a transform. Since 1.1 it measures with offsets, asks `elementsFromPoint`
+  (every layer) and puts the element home (`S.home(el)`) before it resolves.
+- **A DOM change made inside the `onPaint` callback is not reported as a new paint.** Since 1.1 a MutationObserver
+  notices such changes and asks for one more paint on the next frame. `onPaint(fn)` now also receives the paint event
+  (`event.changedElements`, where the browser gives it), so a page with several drawn children can upload only the one
+  that changed.
+- **Software GL in headless Chromium is slow**, about 0.7–10 fps on a loaded machine. This led to four changes:
+  - Use `antialias: false`, because 4× MSAA on SwiftShader made frames about 3× slower.
+  - Draw only when something changed.
+  - Pages queued frames faster than the GPU drew them. The backlog starved the compositor, so Playwright screenshots
+    took 30–60 s and timed out. Keep one frame in flight by polling a GPU fence on later frames.
+  - Give every live-page skill a reduced-resolution flag (`#q=0.5`) and `#nointro` for checks. Step physics and tweens
+    by simulated time in checks. Run checks one at a time.
+- **`fenceSync` never reports done inside the task that created it**, even after `gl.finish()`. Poll it on later frames,
+  or read synchronously with a plain `readPixels` from your own render target. Reading straight from a texture uploaded
+  from an element returned zeros: render it to a target first.
+- **With `UNPACK_PREMULTIPLY_ALPHA_WEBGL` on, a Float32Array `texSubImage2D` silently uploads nothing.** Turn it off
+  around float uploads (deflection tables, maps).
+- **`#still=t` counts from page load**, not from the start of a demo that begins after a delay. Pages with delayed
+  idle demos document their own still addresses.
+- **The shared typing check diffed too sparsely** for small glyph changes on tilted or 3D pages. Since 1.1 it also diffs
+  a crop around the edited field.
+- **Chrome 157's geometry path (`updateElementGeometry`) is untested here**, because the checks run on Chromium 153 with
+  the earlier API in CSS mode. One source demo notes that Chrome 157 can return a stale hit test after a geometry change
+  until an attribute outside the canvas changes. app-cube guards against this by touching an attribute on `<html>`.
+  Check that guard on a real Chrome 157+.
+- **Clean-copy tests share `/tmp`.** Name the quick-start project folder after the skill (`../my-<skill>`), not
+  `../my-page`.

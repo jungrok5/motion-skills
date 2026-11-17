@@ -611,7 +611,7 @@
     function placeAll() {
       pieces.forEach(function (p) {
         var m = screenMatrix(p);
-        if (S.mode === 'css') for (var c = 0; c < 4; c++) { m[c * 4] -= p.lx * m[c * 4 + 3]; m[c * 4 + 1] -= p.ly * m[c * 4 + 3]; }   // CSS transforms start at the element's layout box
+        // canvas-relative; hic.js (1.1+) takes the element's layout offset off in CSS mode
         if (p.kind === 'pin' && p.pin.pop.x < -0.5) m = null;
         S.place(p.el, m ? m.map(function (v) { return +v.toFixed(5); }) : null);
       });
