@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Kite — pencil-live-action</title>
+<script type="importmap">{ "imports": { "three": "../../lib/vendor/three.module.min.js", "pla/": "../../lib/" } }</script>
+</head><body>
+<script type="module">
+// 「The Kite」 (30 s) — the worked example: a pencil boy on a sketchbook at a café table on a sunny square. A real pencil
+// draws him a slide off the page; it draws itself on ahead of him all the way down to the cobbles; the pencil draws a
+// kite in the air, it falls into his hands and turns real (red tissue, bamboo, a real string); the wind takes it up; the
+// pencil circles it and the square goes back to paper. BRIEF.md has the design; every number here is a pure function of t.
+import { Film, P, v3 } from 'pla/film.js';
+import { gait } from 'pla/gait.js';
+import { PIP } from './cast.js';
+import { slideTop, slideRun, chutePath, RUNG, kiteDrawing, buildKite, buildString } from './props.js';
+import { SCORE } from './score.js';
+const { keys, ease, clamp, lerp, n1, span } = P;
+
+const F = new Film({ dur: 30, title: 'The Kite', score: SCORE, look: { highTint: [1.08, 1.0, .89], sat: 1.06 } });
+await F.load();
+F.plate.turn(200);
+await F.table({ at: [0, 0], r: .36, tex: 'wood_table_worn', legs: 'pedestal', grain: .4 });
+await F.ground('patterned_cobblestone', { radius: 6, at: [.6, .1] });
+const book = F.sketchbook({ at: [-.03, .74, .03], rot: 6 });
+const sy = book.userData.surfaceY, Hm = .07, LEG = .37 * Hm, mm = .001;
+const pen = F.pencil({ colour: '#28452f', hold: [.5, .72, .48] });
+
+// ── the slide: drawn standing up from the page (origin = the ladder's foot), then drawing itself down to the ground ──
+const O = [.035, sy, .05], GY = Math.round(sy / mm), Wsl = p => [O[0] + p[0] * mm, O[1] - p[1] * mm, O[2]];
+const slidePlane = F.upright(O, 0);
+F.sketch({ name: 'slide', plane: slidePlane, parts: slideTop(), at: 3.9, dur: 3.6, by: 'pencil', shadow: true });
+const T_SLIDE = 12.95, D_SLIDE = 2.3;
+F.sketch({ name: 'chute', plane: slidePlane, parts: slideRun(GY), at: T_SLIDE - .25, dur: D_SLIDE * .82, by: 'self', shadow: true, anchor: [330, 200] });
+const path = chutePath(GY), cum = [0]; for (let i = 1; i < path.length; i++) cum.push(cum[i - 1] + Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]));
+const along = s => { s = clamp(s, 0, cum[cum.length - 1]); let i = 1; while (i < cum.length - 1 && cum[i] < s) i++; const k = (s - cum[i - 1]) / (cum[i] - cum[i - 1] || 1), a = path[i - 1], b = path[i]; return { p: [lerp(a[0], b[0], k), lerp(a[1], b[1], k)], d: [b[0] - a[0], b[1] - a[1]] }; };
+
+// ── Pip's feet: footholds first, the body follows (lib/gait.js) ──
+const Z = .057;
+const g = gait({ start: { L: [-.044, sy, Z], R: [-.056, sy, Z] }, legLen: LEG, ankle: .025 * Hm, face0: 0 });
+g.hop(3.62, .3, .009, [-.012, 0, 0]);                                         // startled by the pencil: hops back
+g.turnInPlace(55, 5.0, .8);                                                   // turns to watch the drawing
+g.walk({ to: [O[0] - .005, Z], t0: 7.75, speed: .052, y: () => sy, lead: 'R' });
+const tc = g.lastEnd + .15, rungW = i => { const r = RUNG(i); return Wsl([(r.a[0] + r.b[0]) / 2, r.a[1]]).map((v, j) => j === 2 ? Z - .002 : v); };
+g.face(90, tc - .2, .3);
+g.step('R', rungW(0), tc, .32).step('L', rungW(1), tc + .42, .32).step('R', rungW(2), tc + .84, .32).step('L', rungW(3), tc + 1.26, .32);
+const plat = (x) => Wsl([x, -46]).map((v, j) => j === 2 ? Z - .002 : v);
+g.step('R', plat(15), tc + 1.68, .34).step('L', plat(17.5), tc + 2.0, .3);
+const T_SIT = tc + 2.4;                                                       // sits down at the top of the chute
+// after the slide: the landing on the cobbles and what follows
+const END = Wsl(path[path.length - 1]), LAND = [END[0] + .03, 0, Z + .004];
+const T_FLY = T_SLIDE + D_SLIDE, T_LAND = T_FLY + .36;
+const g2 = gait({ start: { L: [LAND[0] + .004, 0, LAND[2] - .005], R: [LAND[0] - .004, 0, LAND[2] + .005] }, legLen: LEG, ankle: .025 * Hm, face0: 90 });
+g2.turnInPlace(25, 16.9, .8);                                                 // turns toward the camera, looks up at the square
+g2.step('L', [LAND[0] + .014, 0, LAND[2] - .003], 22.45, .3, LEG * .1).step('R', [LAND[0] + .008, 0, LAND[2] + .004], 23.25, .3, LEG * .1);   // pulled toward the kite: a side-step to his left, the right foot closes
+// where the kite is drawn, where it falls, where it rises
+const KITE_AIR = [LAND[0] + .036, .058, LAND[2] - .004], T_KDRAW = 17.3, T_DROP = 19.5, T_CATCH = 19.95, T_REAL = 20.0, T_LIFT = 21.6;
+
+// ── Pip's acting: per beat, the stance and gaze (anticipation → action → recovery) ──
+const tipW = t => { const s = F.pen.state || F.pencilAt(t); return s && s.visible ? s.tip : null; };
+const handsMid = t => { const w = F.heroWorld(hero, t); return w ? v3.lerp(w.hand.L, w.hand.R, .5) : LAND; };
+let hero;
+function track(t) {
+  // 1) on the page (0 → the climb)
+  if (t < T_SIT) {
+    const a = g.at(t), pose = { mouth: 'smile', brows: 'flat', head: {}, arms: { L: { a: 6, b: 14 }, R: { a: 6, b: 14 } } };
+    let hip = a.hipY, tilt = 0;
+    // idle: weight shifts and a look around (0–3.4)
+    pose.head.yaw = keys([{ t: 0, v: 0 }, { t: .8, v: -30 }, { t: 1.7, v: -30 }, { t: 2.3, v: 25 }, { t: 3.1, v: 10 }], t, 'v'); pose.head.pitch = keys([{ t: 0, v: 0 }, { t: 2.3, v: 14 }, { t: 3.2, v: 4 }], t, 'v');
+    hip -= Math.sin(t * 1.13 + .7) * .00045;
+    // the startle: anticipation (crouch), the hop, the landing (3.35 → 4.3)
+    const cr = span(t, 3.35, 3.62, ease.inOut) * (1 - span(t, 3.62, 3.75)) + span(t, 3.9, 3.98) * (1 - span(t, 4.0, 4.4, ease.out)) * .9;
+    hip -= cr * .006; if (t > 3.35 && t < 4.6) { pose.mouth = 'o'; pose.brows = 'up'; pose.arms = { L: { a: 20 + 70 * span(t, 3.5, 3.7), b: 30 }, R: { a: 20 + 70 * span(t, 3.5, 3.7), b: 30 } }; tilt = -6 * span(t, 3.5, 3.7) * (1 - span(t, 3.95, 4.4)); }
+    // watching the pencil draw: eyes and head follow its tip
+    const tip = tipW(t);
+    if (t > 3.5 && t < 7.9 && tip) { const head = [a.root[0], hip + LEG * 1.45, Z], dx = v3.dot(v3.sub(tip, head), F.camRight), dy = tip[1] - head[1];
+      pose.head.yaw = clamp(Math.atan2(dx, .03) * 40, -35, 35) * span(t, 3.5, 4.2); pose.head.pitch = clamp(dy * 900, -25, 35); pose.look = [clamp(dx * 60, -1, 1), clamp(-dy * 40, -1, 1)]; pose.mouth = t > 5 ? 'grin' : 'o'; }
+    if (t > 4.6 && t < 7.8) pose.arms = { L: { a: 10, b: 20 }, R: { a: 10 + 25 * span(t, 6.6, 7.0) * (1 - span(t, 7.3, 7.7)), b: 60 } };
+    // walking: arms swing opposite the legs
+    if (t > 7.75 && t < tc) { const sw = Math.sin((a.L[0] - a.R[0]) / .012 * 1.4); pose.arms = { L: { a: 8 + sw * 14, b: 18 }, R: { a: 8 - sw * 14, b: 18 } }; pose.head = { yaw: 0, pitch: 6 }; pose.mouth = 'smile'; }
+    // climbing: hands to the rungs above the feet
+    let armsW = null, stretchC = false;
+    if (t >= tc - .1 && t < tc + 1.75) {   // climbing: hands on the rungs just above the shoulders
+      const shW = [a.root[0], hip + .27 * Hm, Z], hs = [0, 1, 2, 3].map(i => rungW(i)).concat([plat(12), Wsl([13, -56]).map((v, j) => j === 2 ? Z - .002 : v), Wsl([19, -57]).map((v, j) => j === 2 ? Z - .002 : v)]);
+      const near = (want, not) => hs.filter(h => h !== not).reduce((b, h) => v3.len(v3.sub(h, want)) < v3.len(v3.sub(b, want)) ? h : b), hi = near(v3.add(shW, [.007, .009, 0])), lo = near(v3.add(shW, [.007, -.004, 0]), hi);
+      armsW = { R: v3.add(hi, [.002, .001, 0]), L: v3.add(lo, [.002, .002, 0]) }; stretchC = true; pose.head = { yaw: 0, pitch: 20 }; pose.mouth = 'flat'; }
+    return { feet: { L: a.L, R: a.R }, planted: a.planted, face: a.face, hip, ground: sy, pose, armsW, tilt, stretch: stretchC };   // climbing: the hands reach for the holds
+  }
+  // 2) sitting at the top, the wind-up, the slide (T_SIT → T_FLY)
+  if (t < T_FLY) {
+    const { s, q, seat } = seatAt(t), fq = along(s + 20), foot = Wsl([fq.p[0], fq.p[1] + 1]).map((v, j) => j === 2 ? .053 : v);
+    const sitK = span(t, T_SIT, T_SIT + .35), slope = Math.atan2(q.d[1], q.d[0]) * 180 / Math.PI, wind = span(t, T_SIT + .4, T_SLIDE - .05) * (1 - span(t, T_SLIDE, T_SLIDE + .3));
+    const feet = { L: v3.add(foot, [0, 0, -.002]), R: v3.add(foot, [.001, 0, .002]) }, hipY = seat[1] + (1 - sitK) * LEG * .7;
+    const fast = span(t, T_SLIDE + .4, T_SLIDE + 1.2);
+    return { at: [seat[0], seat[1], .053], face: 90, hip: hipY, ground: seat[1], blob: .5, tilt: -wind * 8 - clamp(slope, -70, 70) * .18,
+      pose: { mouth: fast > .3 ? 'open' : 'grin', brows: 'up', head: { yaw: -10 * fast, pitch: -8 * fast }, arms: { L: { a: 40 + 120 * wind + 60 * fast, b: 20 }, R: { a: 40 + 120 * wind + 60 * fast, b: 20 } },
+        legs: { L: { a: lerp(20, 88, sitK), k: lerp(25, 12, sitK) }, R: { a: lerp(10, 82, sitK), k: lerp(30, 8, sitK) } } } };
+  }
+  // 3) off the end, the landing (anticipation was the slide itself; recovery is the crouch)
+  if (t < T_LAND) { const k = (t - T_FLY) / (T_LAND - T_FLY), p = v3.lerp(END, LAND, k), y = Math.sin(Math.PI * k) * .012;
+    const f = [p[0], y, p[2]]; return { feet: { L: v3.add(f, [.002, 0, -.004]), R: v3.add(f, [-.002, 0, .004]) }, planted: { L: false, R: false }, face: 90, hip: y + LEG * .9, ground: 0, tilt: -10 * (1 - k),
+      pose: { mouth: 'open', brows: 'up', arms: { L: { a: 110, b: 20 }, R: { a: 110, b: 20 } } } }; }
+  // 4) on the cobbles: the recovery, awe, the kite, the wind
+  const a = g2.at(t), pose = { mouth: 'smile', head: {}, arms: { L: { a: 8, b: 14 }, R: { a: 8, b: 14 } } };
+  let hip = a.hipY, tilt = 0, armsW = null;
+  const land = 1 - span(t, T_LAND, T_LAND + .55, ease.out); hip -= land * .009; if (land > 0) { pose.arms = { L: { a: 50 * land + 8, b: 30 }, R: { a: 50 * land + 8, b: 30 } }; tilt = 4 * land; }
+  hip -= Math.sin(t * 1.21 + .3) * .00045;
+  // awe: looking up and around the square
+  if (t > T_LAND + .5 && t < T_KDRAW + .3) { pose.mouth = 'o'; pose.brows = 'up'; pose.head = { yaw: keys([{ t: T_LAND + .5, v: 0 }, { t: 16.3, v: -40 }, { t: 17.2, v: 20 }], t, 'v'), pitch: keys([{ t: T_LAND + .5, v: 0 }, { t: 16, v: 32 }, { t: 17.3, v: 18 }], t, 'v') }; }
+  // the kite being drawn beside him: he watches it, then raises his arms for the catch
+  if (t >= T_KDRAW + .3 && t < T_REAL) { pose.mouth = t > T_DROP - .4 ? 'open' : 'grin'; pose.head = { yaw: 25, pitch: 26 - 20 * span(t, T_DROP, T_CATCH) }; pose.look = [.8, -.5];
+    if (t > T_DROP - .5) { const up = span(t, T_DROP - .5, T_DROP - .1), kp = kiteAt(t); armsW = { L: v3.lerp(handsRest(), v3.add(kp, [-.004, -.012, .002]), up), R: v3.lerp(handsRest(), v3.add(kp, [.004, -.012, .002]), up) }; }
+    const dip = span(t, T_CATCH, T_CATCH + .12) * (1 - span(t, T_CATCH + .12, T_CATCH + .5)); hip -= dip * .006; }
+  const stretch = t > T_DROP - .5 && t < T_LIFT + .6;   // reaching up for it, then holding it out at arm's length
+  // holding the real kite, then the string as the wind takes it
+  if (t >= T_REAL) { const kp = kiteAt(t), hold = 1 - span(t, T_LIFT, T_LIFT + .5), grip = v3.add(a.root, [.006, LEG * 1.7, .004]);
+    const sp = stringPull(t); pose.mouth = t > T_LIFT ? 'grin' : 'smile'; pose.brows = 'up'; pose.head = { yaw: 20 + 10 * (1 - hold), pitch: 15 + 25 * span(t, T_LIFT, 24) }; pose.look = [.6, -.9];
+    armsW = { L: v3.lerp(v3.lerp(grip, v3.add(grip, [.002, .005, 0]), sp), v3.add(kp, [-.003, -.008, 0]), hold), R: v3.lerp(v3.lerp(v3.add(grip, [.002, .003, 0]), v3.add(grip, [.005, .008, 0]), sp), v3.add(kp, [.003, -.008, 0]), hold) };
+    tilt = -9 * sp; }
+  return { feet: { L: a.L, R: a.R }, planted: a.planted, face: a.face, hip, ground: 0, pose, armsW, tilt, stretch };
+}
+function seatAt(t) {
+  const s = t < T_SLIDE ? 0 : Math.pow(clamp((t - T_SLIDE) / D_SLIDE), 1.55) * cum[cum.length - 1], q = along(s + 6), d = Math.hypot(q.d[0], q.d[1]) || 1, nx = q.d[1] / d, ny = -q.d[0] / d;
+  return { s, q, seat: Wsl([q.p[0] + nx * 2.5 - 4, q.p[1] + ny * 2.5 - 1]).map((v, j) => j === 2 ? .053 : v) };
+}
+const handsRest = () => v3.add(LAND, [.004, LEG * 1.6, 0]);
+const stringPull = t => span(t, T_LIFT + .4, 22.3) * (.75 + .25 * Math.sin(t * 2.3));
+hero = F.hero(PIP, track, { height: Hm });
+
+// ── the kite: drawn in the air, falls into his hands, turns real, the wind takes it ──
+function kiteAt(t) {
+  if (t < T_DROP) return KITE_AIR;
+  if (t < T_CATCH) { const k = ease.in((t - T_DROP) / (T_CATCH - T_DROP)); return v3.lerp(KITE_AIR, [LAND[0] + .009, LEG * 1.72, LAND[2] - .006], k); }
+  if (t < T_LIFT) return [LAND[0] + .009 + (g2.at(t).root[0] - LAND[0]), LEG * 1.72 + Math.sin(t * 2) * .0006, LAND[2] - .006];
+  const k = t - T_LIFT, rise = [[0, 0, 0], [.02, .05, -.01], [.05, .12, -.03], [.08, .18, -.05], [.095, .21, -.06], [.1, .22, -.065]], i = Math.min(4, Math.floor(k / 1.2)), f = ease.inOut(clamp(k / 1.2 - i));
+  const base = [LAND[0] + .009 + (g2.at(T_LIFT).root[0] - LAND[0]), LEG * 1.72, LAND[2] - .006], r = v3.lerp(rise[i], rise[i + 1], k > 6 ? 1 : f);
+  return [base[0] + r[0] + n1(t * .7, 3) * .01 * clamp(k / 2), base[1] + r[1] + n1(t * .9, 4) * .008 * clamp(k / 2), base[2] + r[2]];
+}
+const kiteSketch = F.sketch({ name: 'kite', plane: t => F.facing(kiteAt(t)), parts: kiteDrawing(), at: T_KDRAW, dur: 2.0, by: 'pencil', shadow: true });
+const kite = buildKite(), string = buildString();
+F.real(kite, { name: 'kite', track: t => { const p = kiteAt(t), toCam = Math.atan2(F.camPos[0] - p[0], F.camPos[2] - p[2]), fly = span(t, T_LIFT, T_LIFT + 1.5);
+  kite.userData.tail(t, .4 + fly * 1.6); return { pos: p, rot: [-.35 * fly + n1(t * 1.3, 8) * .08 * fly, toCam - .3 * fly, n1(t * 1.1, 9) * .25 * fly] }; } });
+F.real(string, { name: 'string', track: t => { const on = t > T_LIFT - .1; if (on) { const w = F.heroWorld(hero, t); kite.updateMatrixWorld(); const b = kite.localToWorld(kite.userData.bridle.clone()).toArray(); string.userData.set(w.hand.R, b, .12 * span(t, T_LIFT, T_LIFT + 2)); } return { visible: on }; } });
+F.realify({ sketch: kiteSketch, obj: kite, at: T_REAL, dur: 1.3, from: [LAND[0] + .011, LEG * 1.55, LAND[2] - .004], radius: .085 });
+
+// ── the close: the pencil rings the kite; the square goes back to paper ──
+const IRIS_C = v3.lerp(v3.add(g2.at(26).root, [0, LEG * 1.6, 0]), kiteAt(27), .5);
+F.iris({ at: 26.5, draw: 1.4, centre: IRIS_C, r: .17, shape: 'circle', by: 'self' });   // too wide a frame for the pencil: the ring draws itself
+
+// ── the big moves (check.mjs: each has a wind-up and a settle) ──
+F.action('startle hop', { anticipation: [3.35, 3.62], action: [3.62, 3.92], recovery: [3.92, 4.4] });
+F.action('slide', { anticipation: [T_SIT + .4, T_SLIDE], action: [T_SLIDE, T_FLY + .36], recovery: [T_LAND, T_LAND + .55] });
+F.action('catch', { anticipation: [T_DROP - .5, T_CATCH], action: [T_CATCH, T_CATCH + .12], recovery: [T_CATCH + .12, T_CATCH + .5] });
+
+// ── the camera: one take, from the page down to the cobbles and up to the sky ──
+const kiteFocus = t => t < T_LIFT + 1 ? F.heroHead(t) : v3.lerp(F.heroHead(t), kiteAt(t), .5 * span(t, T_LIFT + 1, T_LIFT + 3));
+const slideKeys = []; for (let t = T_SLIDE + .3; t < T_FLY - .05; t += .35) { const st = seatAt(t).seat, k = (t - T_SLIDE) / D_SLIDE;
+  slideKeys.push({ t, look: v3.add(st, [.012, -.004, 0]), pos: v3.add(st, [lerp(.06, .085, k), lerp(.03, .015, k), lerp(.25, .24, k)]) }); }
+F.camera([
+  { t: 0, pos: [-.035, .80, .27], look: [-.04, .768, .05], mm: 50, fstop: 2.8, focusOn: 'hero' },
+  { t: 3.0, pos: [-.025, .80, .28], look: [-.035, .768, .05] },
+  { t: 4.6, pos: [.03, .815, .33], look: [.01, .776, .05], mm: 45 },
+  { t: 7.4, pos: [.045, .815, .32], look: [.02, .778, .05] },
+  { t: 9.6, pos: [.07, .81, .30], look: [.04, .781, .05] },
+  { t: 11.0, pos: [.1, .818, .3], look: [.062, .797, .05] },
+  { t: 12.2, pos: [.115, .83, .3], look: [.07, .808, .05] },
+  ...slideKeys,
+  { t: T_FLY + .3, pos: [.78, .055, .31], look: [.68, .036, .05], mm: 42 },
+  { t: 16.6, pos: [.765, .05, .3], look: [.68, .038, .05], mm: 40 },
+  { t: 18.3, pos: [.765, .052, .3], look: [.69, .05, .05] },
+  { t: 21.2, pos: [.76, .048, .31], look: [.695, .06, .05], focusOn: kiteFocus },
+  { t: 23.6, pos: [.76, .05, .40], look: [.72, .12, .02] },
+  { t: 26.2, pos: [.785, .07, .5], look: [.735, .125, .0] },
+  { t: 30, pos: [.787, .07, .51], look: [.736, .126, .0] },
+]);
+F.beat('the page', 0); F.beat('the pencil', 3.2); F.beat('the way out', 7.7); F.beat('the slide', T_SIT); F.beat('the world', T_LAND); F.beat('the kite', T_KDRAW); F.beat('real', T_REAL); F.beat('the wind', T_LIFT); F.beat('the close', 26.2);
+F.check('Pip in frame while he acts', t => { if (t > 28.6) return true; const p = F.heroPx(t)[0]; return !p || (p.head[0] > 0 && p.head[0] < 1920 && p.head[1] > 0 && p.head[1] < 1080); });
+F.start();
+</script>
+</body></html>

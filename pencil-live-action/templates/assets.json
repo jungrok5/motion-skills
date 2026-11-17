@@ -1,0 +1,6 @@
+{
+ "res": "2k",
+ "hdri": "braustuble_alley",
+ "textures": ["cobblestone_floor_08", "wood_table"],
+ "models": [{ "id": "food_apple_01", "res": "1k" }]
+}
