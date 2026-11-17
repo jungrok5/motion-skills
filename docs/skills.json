@@ -2318,6 +2318,42 @@
    ]
   },
   {
+   "id": "street-run-montage",
+   "name": "street-run-montage",
+   "tagline": "주제 하나를 주면 스케이트보드를 탄 주인공과 함께 달리는 동물이 맑은 날의 동네를 질주하는 1분짜리 애니메이션 몽타주를 three.js 코드로 만듭니다. 푸른 그림자의 2톤 셀 셰이딩, 비트마다 바뀌는 카메라(골목 끝 망원 · 바퀴 높이 · 점프 아래 앙각 · 얼굴 · 지나가기 · 머리 위 · 회전), 피사체는 선명하고 배경만 흐르는 모션 블러, 푸시 · 올리 · 킥플립 · 그라인드 불꽃 · 매뉴얼 같은 진짜 트릭, 마지막 멈춤과 환호까지 담고, 비트에 맞춘 그루브와 보드 · 동물 소리를 모두 합성한 1080p MP4와 라이브 페이지를 냅니다.",
+   "posterAlt": "street-run-montage로 만든 「The Ferry Bell」의 장면 네 개: 벚꽃 핀 언덕길 아래로 스케이트보드를 타고 내려오는 민트색 후드의 소녀와 옆을 달리는 코기, 하늘을 배경으로 화단 위를 날아 넘는 소녀를 땅에서 올려다본 장면, 방파제 턱 위에서 그라인드하며 바퀴에서 불꽃이 튀는 장면, 페리 터미널 앞에서 보드에서 내려 두 팔을 들고 환호하는 소녀와 앉은 코기",
+   "poster": "street-run-montage/poster.jpg",
+   "tags": [
+    "three.js · 셀 셰이딩",
+    "비트마다 컷 · 카메라 14종",
+    "배경 모션 블러",
+    "트릭 · 발 고정 검사",
+    "합성 사운드"
+   ],
+   "stats": [
+    "예제 36.8초 · 16컷 (슬로모션 2)",
+    "라이더 + 네발 동반자 · 미끄러짐 0 mm"
+   ],
+   "page": "street-run-montage/",
+   "source": "street-run-montage/",
+   "absorbedFrom": {
+    "repo": "https://github.com/jungrok5/motion-skills",
+    "path": "street-run-montage/examples/ferry-bell/"
+   },
+   "sources": [
+    {
+     "title": "keshi의 X 게시물 (60초 영상 — 스케이트보더와 검은 고양이가 햇살 가득한 가을 동네를 함께 질주하는 셀 셰이딩 애니메이션 몽타주)",
+     "url": "https://x.com/keshiAIart/status/2122300022280823089?a=XFn7wiVQgUnXUe0tASY&s=19"
+    }
+   ],
+   "workedExample": [
+    {
+     "title": "「The Ferry Bell」 · 36.8초 · 16컷 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/street-run-montage/demo/examples/ferry-bell/"
+    }
+   ]
+  },
+  {
    "id": "logo-construction",
    "name": "logo-construction",
    "tagline": "주제나 브랜드 하나를 주면 격자 위에 새 기하학 로고를 설계하고, 그 로고가 만들어지는 과정을 세로 영상으로 보여 줍니다. 회색 러프 스케치 위에 커서가 같은 기울기의 사선과 수평선을 긋고 복사해 옮기고, 확대해서 원을 끌어 그린 뒤, 정렬 패널로 간격을 맞추고 셰이프 빌더로 칸을 하나씩 채웁니다. 가이드를 지우고 모서리를 둥글린 다음, 완성된 로고와 코드로 그린 목업(플리스 · 물병 · 명함 · 간판 · 토트백)을 보여 줍니다. 모든 변이 가이드 위에 있는지 검사하고, 클릭 소리까지 합성한 1080×1920 MP4와 라이브 페이지를 냅니다.",
