@@ -2379,6 +2379,50 @@
           "url": "https://jungrok5.github.io/motion-skills/app-cube/demo/examples/lisbon-weekend/"
         }
       ]
+    },
+    {
+      "id": "droste-page",
+      "name": "droste-page",
+      "tagline": "주제 하나를 주면 자기 자신의 그림이 끝없이 들어 있는 살아 있는 웹페이지를 만듭니다. 진짜 DOM 페이지 한 장의 창에 페이지 전체가 등각 드로스테 사상으로 다시 그려져, 스크롤하면 사본 속으로 끝없이 빨려 들어가고 슬라이더로 에셔의 나선처럼 감깁니다. 모든 사본이 같은 라이브 페이지라서 글자를 고치면 모든 사본이 한꺼번에 바뀌고, 어느 깊이에 그려진 버튼도 눌립니다. 표면 · 창 · 내용 · 재질 · 사본마다 바뀌는 빛 · 합성 소리를 주제에 맞게 설계합니다.",
+      "poster": "droste-page/poster.jpg",
+      "posterAlt": "droste-page로 만든 페이지 네 장면: 한 바퀴 감긴 시리얼 상자 뒷면 속으로 같은 상자가 이어지는 모습, 금박 액자 속에 같은 갤러리 벽이 기울어진 채 이어지는 모습, 정면으로 겹겹이 작아지는 시리얼 상자, 두 바퀴 나선으로 휘어 들어가는 갤러리 벽",
+      "tags": [
+        "HTML-in-Canvas · WebGL2",
+        "등각 드로스테 사상",
+        "끝없는 줌 · 에셔 나선",
+        "모든 사본이 라이브",
+        "합성 사운드"
+      ],
+      "stats": [
+        "예제 시리얼 상자 · 템플릿 갤러리 벽",
+        "재질 6종 · 액자 5종 · 사본별 번호와 빛"
+      ],
+      "page": "droste-page/",
+      "source": "droste-page/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "droste-page/examples/cereal-box/"
+      },
+      "sources": [
+        {
+          "title": "Felix Rieseberg의 「Droste」 데모 (자기 그림이 걸린 델프트 타일 벽, 에셔 사상)",
+          "url": "https://claude.ai/artifact/RjZStie469yP8BUZGKAiUY"
+        },
+        {
+          "title": "HTML-in-Canvas 데모 페이지 (데모 15개 모음)",
+          "url": "https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk"
+        },
+        {
+          "title": "Felix Rieseberg의 X 게시물 (Claude 데스크톱 앱의 HTML-in-Canvas 소개)",
+          "url": "https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「Spiral Crunch」 · 시리얼 상자 뒷면 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/droste-page/demo/examples/cereal-box/"
+        }
+      ]
     }
   ]
 }
