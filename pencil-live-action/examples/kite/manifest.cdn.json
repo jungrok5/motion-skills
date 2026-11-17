@@ -1,0 +1,32 @@
+{
+ "source": "Poly Haven (https://polyhaven.com), CC0",
+ "res": "2k",
+ "hdri": {
+  "id": "palermo_square",
+  "name": "Palermo Square",
+  "authors": "Andreas Mischok",
+  "hdr": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/palermo_square_2k.hdr",
+  "jpg": "https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/palermo_square.jpg"
+ },
+ "textures": {
+  "patterned_cobblestone": {
+   "files": {
+    "diff": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/patterned_cobblestone/patterned_cobblestone_diff_2k.jpg",
+    "nor": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/patterned_cobblestone/patterned_cobblestone_nor_gl_2k.jpg",
+    "arm": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/patterned_cobblestone/patterned_cobblestone_arm_2k.jpg"
+   },
+   "tile": 2.499999523162842,
+   "name": "Patterned Cobblestone"
+  },
+  "wood_table_worn": {
+   "files": {
+    "diff": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/wood_table_worn/wood_table_worn_diff_2k.jpg",
+    "nor": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/wood_table_worn/wood_table_worn_nor_gl_2k.jpg",
+    "arm": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/wood_table_worn/wood_table_worn_arm_2k.jpg"
+   },
+   "tile": 0.5500000715255737,
+   "name": "Wood Table Worn"
+  }
+ },
+ "models": {}
+}
