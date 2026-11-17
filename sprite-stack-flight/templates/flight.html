@@ -33,7 +33,7 @@ F.world({
     [16, ['#8a8a78', '#7a7a6a']],                                      // rock
     [99, '#f2f4f6'],                                                   // snow
   ]),
-  water: { ramp: ['#164a9a', '#2464b8', '#3a86d0', '#64c0e0'], depth: 10, glints: .05 },
+  water: { ramp: ['#164a9a', '#2464b8', '#3a86d0', '#64c0e0'], depth: 10, glints: .03 },
   decorate(W) {
     SK.scatter(W, { count: 12000, where: (x, y) => { const l = W.level(x, y); return l >= 3 && l <= 9 && W.n.value(x, y, 24) > .5; }, stamp: (W, x, y, r) => SK.tree(W, x, y, { h: 2, big: r() < .3 }) });
   },

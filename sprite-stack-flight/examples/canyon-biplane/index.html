@@ -75,6 +75,7 @@ F.craft(plane, {
   mass: 1.5, speed: 22, turn: .85, clearance: 6, over: 1, chase: 2.3, chaseDist: 24, chaseRise: 5, eye: 1.4, voxelSize: .25,
   frame: (s, t) => Math.floor(t * 24) % 3,                    // the prop turns at 24 fps — any t gives the same frame
   trail: { color: '#fff4e6', from: [[1, 11, 2], [33, 11, 2]] }, trailWhen: s => s.rolling > 0 || s.thr > .82,
+  sound: { engine: 'prop', hz: 58 },                              // a radial engine's lope
 });
 
 // ---- the flight: overhead over the river, down into the mesas, a roll, the open cockpit, out over the town ----

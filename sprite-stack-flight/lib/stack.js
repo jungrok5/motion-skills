@@ -148,7 +148,7 @@ function rot(yaw, pitch, roll) {
 }
 // draw a stack at screen (x, y): o = { yaw, pitch, roll, elev (radians; 90° = straight down), scale (px per voxel), frame }
 SS.drawStack = function (ctx, model, o) {
-  const fr = model.frames[o.frame || 0], sl = fr.slices, s = o.scale || 1, e = o.elev, sE = Math.sin(e), cE = Math.cos(e);
+  const nf = model.frames.length, fr = model.frames[(((o.frame | 0) % nf) + nf) % nf], sl = fr.slices, s = o.scale || 1, e = o.elev, sE = Math.sin(e), cE = Math.cos(e);
   const M = rot(o.yaw || 0, o.pitch || 0, o.roll || 0), cx = model.w / 2, cy = model.h / 2, cz = sl.length / 2;
   const a = s * M[0][0], c = s * M[0][1], e0 = s * M[0][2];
   const b = s * (sE * M[1][0] - cE * M[2][0]), d = s * (sE * M[1][1] - cE * M[2][1]), f0 = s * (sE * M[1][2] - cE * M[2][2]);
@@ -574,7 +574,7 @@ SS.create = function (opt = {}) {
   // ---- page contract ----
   F.start = function () {
     window.DURATION = DURATION; window.FPS = FPS; window.PIXEL = { W, H, scale: SCALE };
-    window.FLIGHT = { sample: F.sample, terrainAt: F.terrainAt, N, steps: STEPS.map(s => ({ t0: s.t0, t1: s.t1, cam: s.cam, roll: s.roll, bank: s.bank, climb: s.climb, thr: s.thr })), clearance: CR.clearance, mass: CR.mass, handedness: F.handedness, inCloud: F.inCloud, voxels: CRAFT.voxels, slices: CRAFT.frames[0].slices.length, frames: CRAFT.frames.length };
+    window.FLIGHT = { sample: F.sample, terrainAt: F.terrainAt, N, steps: STEPS.map(s => ({ t0: s.t0, t1: s.t1, cam: s.cam, roll: s.roll, bank: s.bank, climb: s.climb, thr: s.thr })), clearance: CR.clearance, mass: CR.mass, handedness: F.handedness, inCloud: F.inCloud, sound: Object.assign({ engine: 'prop', hz: 62, wind: 1, level: 1 }, CR.sound || {}), voxels: CRAFT.voxels, slices: CRAFT.frames[0].slices.length, frames: CRAFT.frames.length };
     const isSheet = Q.get('sheet') === 'craft', isMap = Q.has('map');
     window.seek = t => { if (isSheet) return sheet(); if (isMap) return map(); frame(clamp(t, 0, DURATION)); };
     document.body.style.cssText = 'margin:0;background:#000;display:grid;place-items:center;height:100vh;overflow:hidden';
@@ -586,7 +586,7 @@ SS.create = function (opt = {}) {
     // live: the film loops; the first click / key / ?play=1 hands the craft to the viewer
     let t0 = performance.now(), mode = 'film';
     const views = ['chase', 'over', 'cockpit'], ptr = { x: 0, y: 0, down: 0, downAt: 0 }, keys = {};
-    const takeOver = () => { if (mode === 'play') return; const tt = ((performance.now() - t0) / 1000) % DURATION, sn = F.sample(tt); mode = 'play';
+    const takeOver = () => { if (mode === 'play') return; const tt = Math.max(0, (performance.now() - t0) / 1000) % DURATION, sn = F.sample(tt); mode = 'play';
       const fl = flyer({ x: sn.x, y: sn.y, z: sn.z, heading: sn.psi * 180 / Math.PI }); fl.camYaw = sn.camYaw; fl.ovx = sn.ovx; fl.ovy = sn.ovy; fl.phi = sn.phi; fl.th = sn.th;
       live = { fl, cam: F.stepAt(tt).cam, hist: [], acc: 0, last: performance.now(), t: tt, snap: fl.snap() }; };
     cv.addEventListener('pointermove', e => { const r = cv.getBoundingClientRect(); ptr.x = clamp(((e.clientX - r.left) / r.width - .5) * 2, -1, 1); ptr.y = clamp(((e.clientY - r.top) / r.height - .5) * 2, -1, 1); });
@@ -596,8 +596,8 @@ SS.create = function (opt = {}) {
     addEventListener('keyup', e => { keys[e.key] = 0; });
     if (Q.has('play')) takeOver();
     const loop = now => {
-      if (mode === 'film') { const tt = ((now - t0) / 1000) % DURATION; frame(Math.floor(tt * FPS) / FPS); }
-      else { const dt = Math.min(.1, (now - live.last) / 1000); live.last = now; live.acc += dt;
+      if (mode === 'film') { const tt = Math.max(0, (now - t0) / 1000) % DURATION; frame(Math.floor(tt * FPS) / FPS); }
+      else { const dt = Math.max(0, Math.min(.1, (now - live.last) / 1000)); live.last = now; live.acc += dt;
         const kx = (keys.ArrowRight || keys.d ? 1 : 0) - (keys.ArrowLeft || keys.a ? 1 : 0), ky = (keys.ArrowDown || keys.s ? 1 : 0) - (keys.ArrowUp || keys.w ? 1 : 0);
         const cmd = { bank: (kx || ptr.x) * CR.bankMax * .85, climb: -(ky || ptr.y) * 28, thr: ptr.down && now - ptr.downAt > 220 || keys.Shift ? 1 : .5 };
         while (live.acc >= 1 / HZ) { live.fl.step(1 / HZ, cmd); live.acc -= 1 / HZ; live.t += 1 / HZ; if (Math.round(live.t * HZ) % Math.round(HZ * .06) === 0) { live.hist.unshift(live.fl.snap()); live.hist.length = Math.min(live.hist.length, 45); } }

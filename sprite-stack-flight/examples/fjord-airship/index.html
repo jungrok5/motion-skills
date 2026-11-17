@@ -68,6 +68,7 @@ const ship = SS.model({ w: 31, h: 46, d: 19, frames: 2, outline: '#1a1a2c' }, (M
 F.craft(ship, {
   mass: 4, speed: 11, turn: .7, clearance: 8, over: 1, chase: 2.0, chaseDist: 40, chaseSide: 16, chaseRise: 9, eye: -2, voxelSize: .3, bankMax: 22,
   frame: (s, t) => Math.floor(t * 16) % 2,
+  sound: { engine: 'prop', hz: 34, wind: .8, level: .8 },   // two slow pod engines, a low drone
 });
 
 // ---- the flight: in over the fjord, a slow turn along the water, the bridge, out over the boat houses ----

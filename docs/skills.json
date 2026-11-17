@@ -2164,6 +2164,54 @@
           "url": "https://jungrok5.github.io/motion-skills/torn-page-journey/demo/examples/lemon-tree/"
         }
       ]
+    },
+    {
+      "id": "sprite-stack-flight",
+      "name": "sprite-stack-flight",
+      "tagline": "주제 하나를 주면 3D 엔진도 폴리곤도 이미지 파일도 없이, 납작한 픽셀 층을 쌓는 스프라이트 스태킹으로 그 주제의 비행 장면을 코드만으로 만듭니다. 복셀 모델을 층으로 자른 기체, 정수 계단으로 쌓은 지형과 원반을 쌓은 구름, 그 기체만의 조종석과 비행 계획을 새로 설계하고, 위에서 · 뒤에서 · 조종석 시점을 오가는 1080p MP4(엔진과 바람 소리 합성)와 직접 조종할 수 있는 라이브 페이지를 냅니다.",
+      "posterAlt": "sprite-stack-flight로 만든 장면 네 개: 위에서 내려다본 사막의 강과 마을 위를 나는 빨간 복엽기와 DUST MAIL 제목, 붉은 메사 위에서 연기를 끌며 롤하는 복엽기, 분홍빛 노을 아래 눈 덮인 산맥 위를 나는 비행선, 나무 창살과 조타륜이 있는 비행선 함교에서 본 피오르",
+      "poster": "sprite-stack-flight/poster.jpg",
+      "tags": [
+        "스프라이트 스태킹 · 코드 전용",
+        "480×270 → 1080p",
+        "시점 3종",
+        "직접 조종",
+        "합성 사운드"
+      ],
+      "stats": [
+        "예제 2편 · 32초 · 36.5초",
+        "기체 무게로 정하는 뱅크 · 롤 타이밍 검사"
+      ],
+      "page": "sprite-stack-flight/",
+      "source": "sprite-stack-flight/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "sprite-stack-flight/examples/canyon-biplane/"
+      },
+      "sources": [
+        {
+          "title": "Pavian의 X 게시물 (3D도 폴리곤도 없이 층을 쌓아 만든 32 KB 비행 시뮬레이터 소개)",
+          "url": "https://x.com/meta_pavy/status/2122241297482408234?a=yknJyWI6foguElHQBnI&s=19"
+        },
+        {
+          "title": "Dash의 X 게시물 (No 3D engine, no polygons, 32 KB of code — 소개된 원작)",
+          "url": "https://x.com/creativedash/status/2122000830895386680"
+        },
+        {
+          "title": "원작의 라이브 데모 (스프라이트 스태킹 전투기와 섬)",
+          "url": "https://remix.ui8.ai/fly"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「Dust Mail」 · 32초 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/sprite-stack-flight/demo/canyon-biplane.html"
+        },
+        {
+          "title": "「The Winter Post」 · 36.5초 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/sprite-stack-flight/demo/fjord-airship.html"
+        }
+      ]
     }
   ]
 }

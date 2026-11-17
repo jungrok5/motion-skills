@@ -5,6 +5,9 @@
 //   node <skill>/scripts/render.mjs scene.html                         → out/scene.mp4 (one loop, 1920×1080, H.264)
 //   node <skill>/scripts/render.mjs scene.html --q "pass=light"        (any page query: pass=base|light, off=rain,light,…)
 // Options: --scale 4 (8 = 4K from 480×270)  --workers 2  --crf 16  --out out/  --gif 6 (also a short preview GIF, seconds)
+//          --mute (no sound). By default the MP4 gets a synthesised track from the flight itself: engine (pitch follows
+//          the throttle, louder in the cockpit), wind (follows the speed), a whoosh in rolls. Same t → same samples.
+//   node <skill>/scripts/render.mjs index.html --q map=1 --stills 0   → the plan map;  --q sheet=craft --stills 0 → craft sheet
 // The page canvas is tiny (480×270), so frames are cheap; ffmpeg scales them up nearest-neighbour, so pixels stay square
 // and sharp. An integer scale ≥ 2 also keeps the 4:2:0 chroma blocks inside one pixel, so colours do not bleed.
 import { createRequire } from 'node:module';
@@ -95,16 +98,48 @@ await Promise.all(Array.from({ length: workers }, async (_, w) => {
   }
   ff.stdin.end(); await closed; await page.close();
 }));
-await browser.close();
 const list = join(tmp, 'list.txt');
 writeFileSync(list, Array.from({ length: workers }, (_, w) => join(tmp, `${String(w).padStart(2, '0')}.mp4`)).filter(existsSync).map(f => `file '${f}'`).join('\n'));
 const out = join(outDir, `${name}.mp4`);
 execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', '-movflags', '+faststart', out]);
 rmSync(tmp, { recursive: true, force: true });
 console.log(`${out}  (${((Date.now() - t0) / 1000).toFixed(0)} s)`);
+// ---- the sound: synthesised from the flight (deterministic), muxed under the video ----
+if (!args.includes('--mute')) {
+  const sp = await (await open()).evaluate(([n, fps]) => { const out = [], snd = window.FLIGHT.sound, steps = window.FLIGHT.steps;
+    for (let f = 0; f <= n; f++) { const t = f / fps, s = window.FLIGHT.sample(t), st = steps.find(x => t < x.t1) || steps[steps.length - 1]; out.push([s.v, s.thr, s.rolling, ['over', 'chase', 'cockpit'].indexOf(st.cam), s.bank]); }
+    return { out, snd }; }, [n, FPS]);
+  const SR = 48000, total = Math.round(LOOP * SR), pcm = new Float32Array(total), snd = sp.snd, v0 = sp.out.reduce((a, r) => a + r[0], 0) / sp.out.length;
+  let seed = 12345; const rnd = () => (seed = (seed * 1103515245 + 12345) >>> 0) / 2147483648 - 1;
+  let ph = 0, lw = 0, lw2 = 0, lr = 0, le = 0, gE = 0, gW = 0, peak = 1e-9;
+  const camGain = [[.35, .55], [.6, .6], [.95, .35]];             // [engine, wind] per camera: over, chase, cockpit
+  for (let i = 0; i < total; i++) {
+    const fpos = i / SR * FPS, k = Math.min(sp.out.length - 2, Math.floor(fpos)), u = fpos - k, a = sp.out[k], b = sp.out[k + 1];
+    const v = a[0] + (b[0] - a[0]) * u, thr = a[1] + (b[1] - a[1]) * u, roll = a[2] + (b[2] - a[2]) * u, cg = camGain[a[3]] || camGain[1];
+    gE += ((cg[0] * snd.level) - gE) * .0004; gW += ((cg[1] * snd.wind) - gW) * .0004;
+    const f0 = snd.hz * (.8 + .55 * thr); ph += f0 / SR;
+    let eng = 0; if (snd.engine === 'jet') { lr += (rnd() - lr) * (.02 + .1 * thr); eng = lr * 2.2 + Math.sin(ph * 6.283 * 7) * .08; }
+    else { for (let h = 1; h <= 7; h++) eng += Math.sin(ph * 6.283 * h + h) / h; if (snd.engine === 'prop') eng *= .65 + .35 * Math.sin(ph * 6.283 * .5) ** 2; eng *= .32; }
+    le += (eng - le) * (a[3] === 2 ? .5 : .18);                         // muffled outside, bright in the cockpit
+    const n0 = rnd(); lw += (n0 - lw) * (.012 + .03 * v / Math.max(1, v0)); lw2 += (lw - lw2) * .3;
+    const wind = lw2 * 3.2 * (v / Math.max(1, v0)) * (1 + Math.abs(a[4]) * .4);
+    const whoosh = roll > 0 ? (rnd() * .5 + lw * 2) * roll * .5 : 0;
+    const t = i / SR, fade = Math.min(1, t / .6, (LOOP - t) / .8);
+    pcm[i] = (le * gE + wind * gW + whoosh) * fade; peak = Math.max(peak, Math.abs(pcm[i]));
+  }
+  const g = .8 / peak, wav = Buffer.alloc(44 + total * 2);
+  wav.write('RIFF', 0); wav.writeUInt32LE(36 + total * 2, 4); wav.write('WAVEfmt ', 8); wav.writeUInt32LE(16, 16); wav.writeUInt16LE(1, 20); wav.writeUInt16LE(1, 22);
+  wav.writeUInt32LE(SR, 24); wav.writeUInt32LE(SR * 2, 28); wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34); wav.write('data', 36); wav.writeUInt32LE(total * 2, 40);
+  for (let i = 0; i < total; i++) wav.writeInt16LE(Math.round(Math.max(-1, Math.min(1, pcm[i] * g)) * 32767), 44 + i * 2);
+  const wf = join(outDir, `${name}.wav`), mf = join(outDir, `${name}.av.mp4`); writeFileSync(wf, wav);
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', out, '-i', wf, '-c:v', 'copy', '-c:a', 'aac', '-b:a', '160k', '-shortest', '-movflags', '+faststart', mf]);
+  execFileSync('mv', [mf, out]); rmSync(wf);
+  console.log(`${out}  (+ synthesised sound, peak normalised)`);
+}
 const gif = opt('gif');
 if (gif) {
   const g = join(outDir, `${name}.gif`);
   execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-t', gif, '-i', out, '-vf', `fps=15,scale=${W * 2}:${H * 2}:flags=neighbor,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=none`, g]);
   console.log(g);
 }
+await browser.close();
