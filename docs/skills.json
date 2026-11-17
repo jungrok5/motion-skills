@@ -2166,6 +2166,118 @@
       ]
     },
     {
+      "id": "pencil-live-action",
+      "name": "pencil-live-action",
+      "tagline": "주제 하나를 주면 연필 그림 캐릭터가 스케치북에서 걸어 나와 실사 세계로 내려가는 원테이크 단편을 만듭니다. Poly Haven CC0 스캔으로 지은 실제 장소와 진짜 연필, 같은 렌즈로 흐려지고 그림자를 드리우는 흑연 그림, 손대면 진짜가 되는 그림까지 1080p MP4와 브라우저에서 도는 페이지로 냅니다.",
+      "posterAlt": "pencil-live-action으로 만든 「The Kite」의 장면 네 개: 실제 광장 카페 탁자 위 스케치북에서 진짜 초록 연필이 미끄럼틀을 그리는 모습, 탁자 위로 뻗은 미끄럼틀에 앉아 내려가는 연필 소년, 돌바닥에서 허공에 그려진 연 옆의 소년, 소년의 손에서 진짜가 된 빨간 연",
+      "poster": "pencil-live-action/poster.jpg",
+      "tags": [
+        "three.js + 2D 캔버스",
+        "Poly Haven CC0 스캔",
+        "원테이크 · 16:9 · 24fps",
+        "MP4 · 라이브 페이지",
+        "합성 사운드"
+      ],
+      "stats": [
+        "예제 30초 · 원테이크",
+        "좌우 움직임 캐스트 시트"
+      ],
+      "page": "pencil-live-action/",
+      "source": "pencil-live-action/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "pencil-live-action/examples/kite/"
+      },
+      "sources": [
+        {
+          "title": "OscarAI의 X 게시물 (30초 영상)",
+          "url": "https://x.com/Artedeingenio/status/2122359802328207699?a=tNv0nx5KaAk-8vSz8XU&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「The Kite」 · 30초 · 원테이크 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/pencil-live-action/demo/examples/kite/"
+        }
+      ]
+    },
+    {
+      "id": "walking-colossus",
+      "name": "walking-colossus",
+      "tagline": "주제 하나를 주면 아파트 · 배 · 성당 같은 거대한 일상의 건축물이 유압 다리로 안개 속을 걸어가는 실사풍 영화를 three.js 코드만으로 만듭니다. 실제 크기의 몸체와 사람 크기의 디테일, 다리를 붙일 하부, 무게에서 나온 보행, 지면 · 시간 · 안개, 발이 닿는 순간에 맞춘 아홉 샷과 걸음마다 배치한 합성 사운드를 주제마다 새로 설계하고, 다리가 물리적으로 가능한지 검사한 뒤 1080p MP4로 렌더합니다.",
+      "posterAlt": "walking-colossus로 만든 장면 네 개: 흐린 새벽 갯벌을 다리 열 개로 걷는 녹슨 컨테이너선의 옆모습, 렌즈 앞 물웅덩이에 내리꽂히는 배의 발, 불 켜진 거주구와 구명정, 푸른 황혼의 안개 속을 걷는 패널 아파트",
+      "poster": "walking-colossus/poster.jpg",
+      "tags": [
+        "three.js · 코드 전용",
+        "3D 모델 · 이미지 텍스처 0개",
+        "보행 · 다리 IK 검사",
+        "안개 · 심도 · 모션 블러",
+        "1080p MP4 · 합성 사운드"
+      ],
+      "stats": [
+        "예제 2개 · 걷는 배 40초 · 걷는 아파트 45초",
+        "프레임당 380–540만 삼각형 · 결정적 렌더"
+      ],
+      "page": "walking-colossus/",
+      "source": "walking-colossus/",
+      "absorbedFrom": {
+        "repo": "https://github.com/Leonxlnx/walking-block",
+        "path": "src/"
+      },
+      "sources": [
+        {
+          "title": "Leonxlnx/walking-block (GitHub, MIT — 다리 여덟 개로 걷는 소련식 패널 아파트, three.js 절차적 생성, 45초 영화)",
+          "url": "https://github.com/Leonxlnx/walking-block"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「Low Tide」 · 걷는 컨테이너선 · 40초 · 9샷 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/walking-colossus/demo/low-tide/"
+        },
+        {
+          "title": "「Walking Block」 · 원본 영화를 엔진에 옮긴 예제 · 45초 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/walking-colossus/demo/walking-block/"
+        }
+      ]
+    },
+    {
+      "id": "sprite-stack-short",
+      "name": "sprite-stack-short",
+      "tagline": "주제 하나를 주면 물건 하나를 위 · 옆 · 앞 · 뒤 네 방향의 픽셀아트로 그리고, 옆모습의 한 줄을 슬라이스 한 장으로 바꿔 1px씩 쌓아 어느 각도로든 돌린 뒤, 그 물건이 사는 작은 픽셀 세계(섬을 도는 배, 마을을 지나는 트럭, 광장의 로봇)까지 보여 주는 짧은 영상을 코드만으로 만듭니다. 네 그림을 깎아 만든 복셀 모델, 질량에서 나오는 속도 · 회전 · 미끄러짐 · 차체 기울기, 슬라이스마다 오르는 음과 속도를 따르는 엔진 소리까지 합성한 1080p MP4와 라이브 페이지를 냅니다.",
+      "posterAlt": "sprite-stack-short로 만든 「Tug at Dawn」의 장면 네 개: 종이 위에 위 · 옆 · 앞 · 뒤 네 방향으로 그린 예인선, 옆모습을 가로지르는 스캔선과 쌓여 가는 슬라이스 스택, 크게 확대해 턴테이블처럼 도는 예인선, 물보라를 그리며 섬을 끼고 도는 새벽 항구의 예인선",
+      "poster": "sprite-stack-short/poster.jpg",
+      "tags": [
+        "2D 캔버스 · 픽셀아트",
+        "스프라이트 스태킹",
+        "네 방향 그림 → 복셀",
+        "16:9 · 30fps",
+        "합성 칩튠"
+      ],
+      "stats": [
+        "예제 28초 · 7비트 (네 방향 → 슬라이스 → 쌓기 → 회전 → 세계)",
+        "모델 검사 · 움직임 숫자 검사"
+      ],
+      "page": "sprite-stack-short/",
+      "source": "sprite-stack-short/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "sprite-stack-short/examples/tugboat-dawn/"
+      },
+      "sources": [
+        {
+          "title": "Kimo의 X 게시물 (17초 영상 — 스프라이트 스태킹으로 픽셀아트를 어느 각도로든: 네 방향에서 그리고, 옆모습의 한 줄마다 슬라이스, 1px씩 쌓아 돌리기)",
+          "url": "https://x.com/asynkimo/status/2121716250820964431?a=8jjw0gVhdGPGqgSNo04&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「Tug at Dawn」 · 28초 · 7비트 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/sprite-stack-short/demo/examples/tugboat-dawn/"
+        }
+      ]
+    },
+    {
       "id": "sprite-stack-flight",
       "name": "sprite-stack-flight",
       "tagline": "주제 하나를 주면 3D 엔진도 폴리곤도 이미지 파일도 없이, 납작한 픽셀 층을 쌓는 스프라이트 스태킹으로 그 주제의 비행 장면을 코드만으로 만듭니다. 복셀 모델을 층으로 자른 기체, 정수 계단으로 쌓은 지형과 원반을 쌓은 구름, 그 기체만의 조종석과 비행 계획을 새로 설계하고, 위에서 · 뒤에서 · 조종석 시점을 오가는 1080p MP4(엔진과 바람 소리 합성)와 직접 조종할 수 있는 라이브 페이지를 냅니다.",
