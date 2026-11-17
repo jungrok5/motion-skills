@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>책을 당기면 비밀 문이 열리는 줄 알았다</title>
+<script type="importmap">{ "imports": { "scv/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+import { film, score, ACTORS } from './piece.js';
+import { mount } from 'scv/vignette.js';
+mount(film, { score, actors: ACTORS });
+</script>
+</body>
+</html>
