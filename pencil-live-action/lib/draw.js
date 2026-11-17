@@ -1,4 +1,4 @@
-// pencil-dream-short · draw.js — the Painter: renders parts (knock-outs, graphite lines, coloured-in fills) through a camera,
+// pencil-live-action · draw.js (from pencil-dream-short) — the Painter: renders parts (knock-outs, graphite lines, tone fills) through a camera,
 // with draw-on progress per stroke and the boil (lines shiver a little, `boil` times a second).
 //
 //   const pt = new Painter(ctx, { paper, spot, lead })

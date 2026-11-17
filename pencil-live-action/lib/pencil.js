@@ -1,4 +1,4 @@
-// pencil-dream-short · pencil.js — the medium: the graphite line, the spot-colour marker, the crayon, the paper.
+// pencil-live-action · pencil.js (from pencil-dream-short) — the medium: the graphite line, the tone, the paper.
 // Everything is a pure function of its inputs (seeded hashes, no Math.random), so a film page is a pure function of t.
 //
 // A drawing is a list of PARTS; a part is { knock?: poly, ops: [stroke…] }:

@@ -1,4 +1,4 @@
-// pencil-dream-short · score.js — a small music-box / felt-piano band and the sounds of pencil and paper, synthesised in plain JS
+// pencil-live-action · score.js (from pencil-dream-short) — a small music-box / felt-piano band and the sounds of pencil and paper, synthesised in plain JS
 // (adapted from sketch-cartoon-short's score.js: + box (music box), bell, and the sfx sparkle · swell · breath · flutter · splash)
 // (no Web Audio, no files), so the same score plays on the live page and is written to a WAV by scripts/score.mjs.
 //

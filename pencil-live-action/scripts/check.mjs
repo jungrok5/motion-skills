@@ -64,7 +64,7 @@ if (isCast) {
   if (scan.slide.length) { const worst = scan.slide.reduce((a, b) => b[2] > a[2] ? b : a); F(`planted feet slide: ${scan.slide.length} frames over 1.5 px (worst ${worst[2]} px, ${worst[1]} at ${worst[0].toFixed(2)} s) — step the feet (lib/gait.js), never move a planted one`); }
   if (scan.float.length > 2) F(`the held pencil floats: its back end is in frame for ${scan.float.length} frames (first at ${scan.float[0][0].toFixed(2)} s, ${scan.float[0][1].join(',')}) — hold it so the hand stays out of frame (pencil({ hold }), the camera)`);
   if (scan.blank.length) F(`blank-looking frames at ${scan.blank.slice(0, 6).join(', ')} s`);
-  for (const [h, a, b, mv] of scan.idle) F(`${h} stands dead still ${a.toFixed(1)}–${b.toFixed(1)} s (head moves ${mv} % of his height) — every idle breathes`);
+  for (const [h, a, b, mv] of scan.idle) F(`${h} stands dead still ${a.toFixed(1)}–${b.toFixed(1)} s (head moves ${mv} % of the height) — every idle breathes`);
   for (const a of info.actions) { const an = a.anticipation ? a.anticipation[1] - a.anticipation[0] : 0, rc = a.recovery ? a.recovery[1] - a.recovery[0] : 0;
     if (an < .15) F(`action "${a.name}": anticipation ${an.toFixed(2)} s (want ≥ .15 s — gather before the move)`); if (rc < .2) F(`action "${a.name}": recovery ${rc.toFixed(2)} s (want ≥ .2 s — settle after it)`); }
   if (!info.actions.length && info.heroes.length) F('no F.action declared: name the big moves with their anticipation / action / recovery');
