@@ -5,7 +5,7 @@ with size. Cycles on the CPU, denoised.
 import math
 import bpy
 from mathutils import Matrix, Vector
-from .geom import Mesh, T, RZ
+from .geom import Mesh, T
 from .materials import hex2rgb
 
 LOOK = {

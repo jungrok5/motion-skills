@@ -74,7 +74,6 @@ def search(limb, j, rel_angles, width, r_drum):
 
 def assign(kin, motion, fps=12, width_of=None):
     """Sample every action, search every actuated joint, write anchors into the limbs (and return a report)."""
-    from .kin import D2R
     acts = motion.actions()
     rel = {}
     for name, (dur, loop) in list(acts.items()) + [('rest', (0.1, False))]:

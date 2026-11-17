@@ -357,7 +357,6 @@ class Kin:
         command's `extras[name]`), 'lag' (follow-through: points where its parent was `lag` seconds ago)."""
         par = W[e.get('parent', 'body')]
         Rp = par.to_3x3()
-        rest = Matrix(e.get('_rest', Matrix.Identity(4)))
         typ = e.get('type', 'fixed')
         at = Vector(e.get('at', (0, 0, 0)))
         base = par @ at
@@ -385,7 +384,7 @@ class Kin:
 
     def pose_light(self, cmd, bone):
         """Just one bone's world matrix (used by lag extras looking back in time)."""
-        W, _ = self.pose({**cmd, 'extras_off': True}, None)
+        W, _ = self.pose(cmd, None)
         return W[bone], None
 
 

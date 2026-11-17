@@ -4,9 +4,8 @@ Pose transfer: kin gives every bone's world matrix W[b]. A pose bone's matrix_ba
     basis = (P_rest^-1 · B_rest)^-1 · (W[parent]^-1 · W[b])
 so Blender's evaluated pose equals W exactly (checked by check.py: "bake = kinematics").
 """
-import math
 import bpy
-from mathutils import Matrix, Vector
+from mathutils import Matrix
 
 
 def make_armature(kin, W, coll, name='rig'):

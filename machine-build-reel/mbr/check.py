@@ -245,7 +245,7 @@ def _world_tris(ob, M):
 def clash(mc, k, arm, RR, step=None):
     """Part vs part on different bones through sampled frames of every action. Pairs that already touch in the
     rest pose (pins in their cheeks, lugs on their beams) are left out; anything new is a clash."""
-    kin, mot = mc.kin, mc.mot
+    mot = mc.mot
     parts = [p for p in k.parts if p['obj'].type == 'MESH']
     local = {}
     for p in parts:

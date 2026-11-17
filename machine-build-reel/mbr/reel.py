@@ -13,7 +13,6 @@ Sections are separated by a dip to dark. Every frame is a pure function of (sect
 PNGs are skipped. Each section is encoded on its own, then joined: out/reel/reel.mp4.
 """
 import json
-import math
 import os
 import random
 import bpy
@@ -111,8 +110,6 @@ class Reel:
         t = f / self.fps
         R.pose_machine(self.ctx, name or 'idle', t)
         self.set_root_offset(0.0)
-        pb = self.ctx.arm.pose.bones['head']
-        Mh = self.ctx.arm.matrix_world @ pb.matrix
         hl = self.mc.M['head'].get('len', 2.0)
         # frame the head's rest position (the camera holds still; the head moves through the frame)
         W, _ = self.mc.pose(name or 'idle', self.mc.mot.moves[name]['dur'] if name else 0.0)
@@ -208,7 +205,6 @@ class Reel:
             self.figure.location = self.fig0
         out = {'plates': [], 'compare': []}
         res = self.res
-        cell = (res[0] // 2, res[1] // 2)
         # close-up plates: render + (code-only) line drawing from the same camera
         for p in mc.M['plates']:
             slug = p['name'].replace(' ', '_')

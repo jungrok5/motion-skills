@@ -5,7 +5,6 @@ searched · armature · parts (project build(k): stock limbs + the topic's own b
 studio · actions keyed · save · glTF · numbers out.
 """
 import json
-import math
 import os
 import bpy
 from mathutils import Matrix, Vector
@@ -70,7 +69,7 @@ def build(path, out_dir, glb=True, keyed=True, studio=True):
     if keyed:
         for name, (dur, loop) in actions.items():
             n = int(round(dur * mc.fps))
-            travel = False      # the glTF / .blend actions stay in place; the speed goes in the info file
+            # the glTF / .blend actions stay in place; the walk's speed goes in the info file
             RG.bake_action(arm, kin, RR, f'A_{name}', lambda t, a=name: mc.pose(a, t, travel=False)[0], n, mc.fps)
             info_actions[name] = {'frames': n + 1, 'dur': n / mc.fps, 'loop': loop,
                                   'speed': mc.mot.v if name == 'walk' else 0.0,

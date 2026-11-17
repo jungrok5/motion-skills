@@ -15,8 +15,8 @@ A project calls these from its build(k) and adds what its topic needs (the body,
 stock builder takes overrides from the limb spec (`width`, `drum`, `style`) so a new machine is not re-skinned stock.
 """
 import math
-from mathutils import Matrix, Vector
-from .geom import Mesh, T, RX, RY, RZ, look
+from mathutils import Matrix
+from .geom import Mesh, T, RX, RZ
 from .kin import up_length
 
 PI = math.pi
@@ -211,8 +211,6 @@ def segment(k, l, i, style):
 
 
 def foot(k, l, style):
-    w, r = dims(l)
-    ceramic = style == 'ceramic'
     rb = l.ball
     # the ball rides the last segment
     mb = Mesh()

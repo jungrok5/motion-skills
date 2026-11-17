@@ -9,7 +9,7 @@ import math
 import os
 import subprocess
 import bpy
-from mathutils import Matrix, Vector
+from mathutils import Vector
 from . import studio as ST, rig as RG
 
 FONT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'fonts', 'Inter-Medium.otf')
@@ -241,6 +241,6 @@ def grid(paths, out, cols, cell=(640, 360), labels=None, bg='0x101012', pad=6, l
     fl.append(''.join(f'[c{i}]' for i in range(n)) + f'xstack=inputs={n}:layout={lay}:fill={bg}[g]')
     fl.append(f'[g]pad={W}:{H}:0:0:color={bg}[out]')
     if n == 1:
-        fl[-2] = f'[c0]copy[g]'
+        fl[-2] = '[c0]copy[g]'
     ff(ins + ['-filter_complex', ';'.join(fl), '-map', '[out]', '-frames:v', '1', out])
     return out

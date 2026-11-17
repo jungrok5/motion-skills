@@ -14,7 +14,7 @@ Identical meshes are shared (`share='key'`): the four legs' copies cost one mesh
 import math
 import bpy
 from mathutils import Matrix, Vector
-from .geom import Mesh, T, RX, RY, RZ, look
+from .geom import Mesh
 
 STAGES = {'feet': 0, 'lower': 1, 'upper': 2, 'body': 3, 'hydraulics': 4, 'shells': 5, 'neck': 6, 'head': 7, 'lights': 8}
 

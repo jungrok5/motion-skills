@@ -142,7 +142,6 @@ def head(k):
     """Sensor pod: a long ceramic upper shell over a black chin, a glass visor band, a row of blue sensor lights each
     side, a yaw bearing ring underneath where the last neck link meets it."""
     S = k.st
-    L = k.M['head']['len']
     # head bone frame: X right, Y forward, Z up; origin at the neck tip
     m = Mesh()
     m.loft([(-0.9, 0.42, 0.45, 2.3, 0, 0.15), (-0.2, 0.55, 0.55, 2.4, 0, 0.2), (1.0, 0.52, 0.5, 2.5, 0, 0.18),

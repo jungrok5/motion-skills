@@ -47,3 +47,9 @@ What went wrong while building this skill and its two machines, so the next mach
 ## Sizes
 - **The .glb was 4.1 MB** (bevels applied, every frame keyed) → the web copy has no bevels and every 2nd frame
   (1.7 MB); the full one stays in `out/`.
+
+## Arms (supported, not in either example)
+- **A test WADER with two arms hung them inside the front legs** → `clash` reported 90 new intersections through the
+  walk, `reach` a 2.2 m overreach in a careless key pose → arms need their own space: shoulders outboard of the hips
+  or well ahead of the front feet's swing, elbows bulging away from the legs (`knee` sign), `hand.<limb>` offsets
+  inside the arm's reach. Run `check` after placing them, before any parts.

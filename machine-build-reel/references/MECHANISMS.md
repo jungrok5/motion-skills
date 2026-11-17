@@ -38,6 +38,10 @@ Other keys: `body.z`, `neck.at`, `neck.links` [[length, angle from horizontal], 
 `spin` {rate or `extra.<name>` key}, `lag` {lag s, gain, max_deg}), `palette`, `gait`, `idle`, `moves`, `plates`,
 `reel`, `figure`, `figure_at`.
 
+Arms (`role: 'arm'`) use the same planar chain (2 segments, elbow `knee` −1 by default), a palm and fingers that curl
+(`curl.<limb>`), and hand targets in body space (`home` x, y, z; `hand.<limb>` offsets; `world.<limb>` to reach a
+world point). Neither example has arms: give them their own space (references/LESSONS.md) and check before parts.
+
 ## Writing your own parts
 ```python
 from mbr.geom import Mesh, T, RX, RY, RZ
