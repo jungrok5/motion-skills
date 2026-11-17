@@ -67,4 +67,15 @@ minor that swells for the hero and the away shot and ducks under every footfall 
 
 | shot | reads as one huge thing | weight / grounding | detail holds at framing | light & colour | composition | notes |
 |---|---|---|---|---|---|---|
-| (filled in after the storyboard) | | | | | | |
+| f_open | 4 | 4 — stakes and water at the lens | 4 | 4 — grey-rose air, hull dark | 4 | the ship reads after the rack focus; f/3 blur on the stakes |
+| f_side | 4 | 4 | 3 — too far to show detail, by design | 4 | 4 | the silhouette carries it; ten legs read |
+| f_hero | 4 | 4 — prints, rims | 4 | 4 | 4 | |
+| f_foot | 5 | 5 — the foot in the water sheet, debris | 4 | 4 | 4 | the girder belt reads as a later addition |
+| f_belly | 4 | 4 | 3 — the flat bottom is a dark mass | 4 | 4 | next: more lamps / sea-chest detail on the bottom |
+| f_life | 4 | — | 4 | 5 — amber cabins, orange lifeboat | 4 | laundry small at this framing |
+| f_knee | 4 | 4 | 4 | 4 | 4 | |
+| f_puddle | 4 | 4 | 4 | 4 | 3 — the mirror is subtle under this sky | |
+| f_away | 4 | 4 | 4 | 4 | 4 | the stern flag and the funnel read |
+
+Checked by `check.mjs` (all passed: reach 15.7–22.1 m of 28.1, knee 65–102°, feet 0 mm slide, ≥ 5 feet down,
+lift-off 23 % of mid-swing, deterministic, 3.8 M triangles).
