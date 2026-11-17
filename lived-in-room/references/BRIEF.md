@@ -11,14 +11,17 @@ A topic is usually one line ("a potter's studio", "my desk", "a night-shift nurs
 - **A building**, specifically: type, decade, structure, storey, country. "A room" has no wall thickness; "the top
   floor of a 1970s concrete walk-up" does. The building type decides the shell, the window, the door, the ceiling,
   the services — everything in `skeleton.py`. Record which way plan-north (the +Y wall) really faces: it decides
-  where the morning sun comes from.
+  where the sun can come from.
 - **A person**: who is here, what they do in this room, at what hours, what they would never allow in it. The
   person decides the inventory and where each thing goes.
 - **Their history, as things.** If the user has a file about themselves (the source calls his `MYLIFE.md`), read it
   and pick the things that stand for its stories — a grandmother's cup, the first instrument, the team scarf — without
   being told one by one. If there is no file, ask (below). If the person is invented, say so in the brief.
 - **Two hours.** The same room is filmed twice: pick two hours that light it differently (lamps at night / low sun
-  through mist; noon glare / a storm). Give each a clock time, a season, the weather, and what is switched on.
+  through mist; noon glare / a storm). Give each a clock time, a date, the weather, and what is switched on — and say
+  **who is holding the phone** at each, and so what is with them and not in the room (their shoes, their bag). Say
+  which way the window really faces: with the date and the hour it decides where sunlight can fall, and whether it
+  can fall at all.
 - **The rule of the room**: one sentence about how this person arranges things, strong enough to decide placement.
   ("She keeps heat, damp and sun away from the tapes." "He works standing; nothing he uses daily is below the waist.")
   A reviewer will test every thing against it.

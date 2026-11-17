@@ -243,7 +243,9 @@ class ShootMixin:
             hand.rotation_euler = tuple(e)
 
     def daylight(self, elev=12.0, azim=0.0, strength=3.0, color=5200, angle=1.0, name='sun'):
-        """A sun. azim in degrees: 0 = it shines from the north (+Y) toward the south, 90 = from the east."""
+        """A sun. elev = its height in degrees. azim = where it stands, in plan degrees: 0 = straight out from the
+        plan-north (+Y) wall, positive toward plan-east (+X), negative toward plan-west. For a window in the plan-north
+        wall that is the sun's true azimuth minus the window's true bearing: look both up (FILM.md)."""
         l = bpy.data.lights.new(name, 'SUN')
         l.energy = strength
         l.color = _col(color)

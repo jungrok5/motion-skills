@@ -15,7 +15,7 @@ Made from KOBATAKA's article "Vibe Modeling vol.06 — 65 ways to make an AI × 
 (<https://note.com/its_kobataka/n/n67bb2f8c9ce4?utm_source=x&utm_medium=social&utm_campaign=202611_vibe_modeling_vol06&utm_content=reply_discovery_01>);
 `references/SOURCE.md` is a summary of it in Korean, with each of the 65 mapped to where it lives in this skill.
 Built and proven in this repo on `examples/rooftop-tapes` 「옥탑 녹음실」 — a Seoul rooftop room and the 191 cassettes
-of the tenant who records her neighbourhood, at 02:14 and at 06:50: a topic that is not in the article.
+of the tenant who records her neighbourhood, at 02:14 and at 16:40: a topic that is not in the article.
 
 **Fixed by the skill (the style)**
 - One room at real scale, built in code: no downloaded models, no texture files, no generated assets. Pictures in
@@ -27,7 +27,8 @@ of the tenant who records her neighbourhood, at 02:14 and at 06:50: a topic that
   floating, sinking, tipping and intersection, in millimetres, every time it changes.
 - Placement by use, with the traces of use: off square, ajar, half-used. One dirt for the whole room.
 - Many small motions; the outside as one picture; a dark room with a few places picked out; lamps kept warm by exposure.
-- The film is a hand-held phone walk from the door, at two hours of the day from the same model.
+- The film is a hand-held phone walk from the door, at two hours of the day from the same model. Someone is holding
+  that phone: the brief says who, and what they carry is not lying in the room at that hour.
 - Reviewed in rounds by a second agent that did not build it; the findings are judged, not obeyed.
 - Determinism: a frame is a function of its number. Output: `.blend`, linear EXR → PNG → MP4, a frame-sequence page.
 
@@ -36,19 +37,20 @@ of the tenant who records her neighbourhood, at 02:14 and at 06:50: a topic that
 - The person, their history as things, and the rule by which they arrange the room.
 - The inventory: which things, how many, their real sizes; the handful that are theirs alone; what is on the screens.
 - Where each thing goes and why; which are left off square, ajar, half-used.
-- The picture outside and its far lights; the two hours; what is on at each; what moves; the two walks.
+- The picture outside and its far lights; which way the window really faces and so where the sun can fall; the two
+  hours; who walks in at each; what is on; what moves; the two walks.
 
 ## What's in this folder
 | path | what |
 |---|---|
-| `lib/lr/room.py` | `Room`: the register of things, the skeleton (`shell`, `walls`, `skirting`, `cornice`), the six supports (`put`, `against`, `stack`, `hang`, `stick`, `suspend`, `lean`, `fix`) |
-| `lib/lr/openings.py` | `window` (frame, two sashes on two tracks, panes, crescent lock, inner sill), `door`, `drops` (water on the pane) |
+| `lib/lr/room.py` | `Room`: the register of things, the skeleton (`shell`, `walls`, `skirting`, `cornice`), the six supports (`put`, `against`, `stack`, `hang`, `stick`, `suspend`, `lean`, `fix`), `away` (what is not there at an hour) |
+| `lib/lr/openings.py` | `window` (frame, two sashes on two tracks, panes, crescent lock, inner sill, winter film), `door` (kerb, lock, closer), `drops` (water on the pane) |
 | `lib/lr/phys.py` · `audit.py` | measuring: where a thing comes to rest, gaps, penetration depth, tipping; the audit of the whole room; screen time per thing |
-| `lib/lr/shoot.py` | motions (`tick`, `spin`, `pages`, `flicker`, `blink`, `flutter`, `travel`), light (`lamp`, `glow`, `backdrop`, `beacon`, `daylight`, `haze`, `phone_light`, the work light), the camera (`walk`: bob, tremor, turn cap, focus lag and hunt) |
+| `lib/lr/shoot.py` | motions (`tick`, `spin`, `pages`, `flicker`, `blink`, `flutter`, `travel`), light (`lamp`, `glow`, `backdrop`, `outdoors`, `beacon`, `daylight`, `haze`, `phone_light`, the work light), `hands` (a clock's hour per version), the camera (`walk`: bob, tremor, turn cap, focus lag and hunt) |
 | `lib/lr/geo.py` | `Part`: closed-shell modelling from numbers — `box`, `sheet`, `lathe`, `cyl`, `pipe`, `sphere`, `prism`, `tube`, `skin`, `slab`, `drape`, `merge`; `import_glb`, `close_mesh` |
-| `lib/lr/mat.py` | materials with wear and the one shared dirt: `paint`, `wall`, `wood`, `planks`, `metal`, `plastic`, `ceramic`, `fabric`, `paper`, `glass`, `emit`, `picture`, `volume` |
+| `lib/lr/mat.py` | materials with wear and the one shared dirt: `paint`, `wall`, `wood`, `planks`, `metal`, `plastic`, `ceramic`, `fabric`, `paper`, `glass`, `film`, `emit`, `picture`, `volume` |
 | `lib/lr/draw.py` | pictures in Pillow: `spine` (vertical CJK setting), `scrawl` (hand lettering), `waveform`, `sky`, `skyline`; the bundled Hangul + Latin face |
-| `lib/lr/kit.py` | the common things: shelf unit, desk, drawers, books and `shelve`, paper, poster, note, frame, mug, bottle, plant, cushion, mattress, blanket, towel, lamps, outlet, switch, power strip, cable, monitor, laptop, keyboard, headphones, clock, fan |
+| `lib/lr/kit.py` | the common things: shelf unit, desk, drawers, books and `shelve`, paper, poster, note, frame, mirror, mug, bottle, plant, cushion, mattress, blanket, towel, curtain, clothes rail, garment, lamps, outlet, switch, power strip, cable, monitor, laptop, keyboard, headphones, clock, fan |
 | `lib/lr/project.py` · `scene.py` · `finish.py` · `exr.py` | the project driver and versions · Cycles settings and quality presets · the phone look in numpy (bloom, AgX, grain) · EXR reader |
 | `scripts/new_room.py` | start a project: the starter's files plus the `BRIEF.md` and `RESEARCH.md` forms |
 | `scripts/audit.py` | measure the room: every fault with its number; `--break` proves the audit can see |
@@ -57,7 +59,7 @@ of the tenant who records her neighbourhood, at 02:14 and at 06:50: a topic that
 | `scripts/check.py` | files, inventory, research, model, audit, life, camera, picture |
 | `scripts/finish.py` · `encode.py` · `flipbook.py` | EXR → PNG · MP4 per version · a page that plays the frames |
 | `templates/` | `BRIEF.md` and `RESEARCH.md` forms, the frame-sequence player |
-| `starter/` | the smallest room (a desk under a window, 55 things, two hours): runs as it is |
+| `starter/` | the smallest room (a desk under a window, 73 things, two hours): runs as it is |
 | `examples/rooftop-tapes/` | the worked example: `BRIEF.md`, `RESEARCH.md`, `REVIEW.md`, and the six project files |
 | `references/` | **SOURCE** (the article, summarised in Korean, and the 65 mapped) · **BRIEF** (topic → brief, the questions, the rubric) · **METHOD** (skeleton first, nothing guessed, how things are made, how they are held, lived-in) · **FILM** (outside, motions, light, the walk, versions, render) · **REVIEW** (rounds, the reviewer's brief, the retro) · **KIT** (library reference) · **LESSONS** (what broke and the fix) |
 
@@ -96,8 +98,9 @@ numpy, Pillow, ffmpeg. No GPU needed; one that Blender can see is used.
    six supports, each with `kind=` and `why=`, furniture first. After each zone: `audit.py` (must pass before the next
    zone) and `render.py --view <zone>` in the work light. A sunk thing is re-seated, never nudged upward.
 6. **Leave the traces of use**: off square, ajar, half-used — as many as the brief decided, where a hand would leave them.
-7. **Film.** In `film.py`: the picture outside and its far lights; what is on at each hour; every small motion and
-   what drives it; the two walks. `render.py --still night:0.2,night:0.8,dawn:0.5` and read the medians;
+7. **Film.** In `film.py`: the picture outside and its far lights; the sun from the window's true bearing, the date
+   and the hour (look them up); what is on at each hour; who walks in, and what they have with them (`r.away`);
+   every small motion and what drives it; the two walks. `render.py --still night:0.2,night:0.8,afternoon:0.5` (your own version names) and read the medians;
    `sheet.py --camera` for the turn speed; `sheet.py --walk` for the whole of both walks on one sheet.
 8. **Check.** `check.py` must pass: documents filled in, inventory matches what was built in number and size,
    every source present, the versions are the same room, the audit passes and proves it can see, enough moves,
@@ -129,7 +132,10 @@ numpy, Pillow, ffmpeg. No GPU needed; one that Blender can see is used.
 - **Dark on purpose.** A few places lit; exposure set when developing; the work light for looking, the film light for mood.
 - **The walk is a person**: from the door, at a hand's height, bobbing only while walking, never past the turn cap,
   never through a thing.
-- **Two hours, one room.** Versions differ in `film.py` only.
+- **Two hours, one room.** Versions differ in `film.py` only: light, motion, the walk, a clock's hands, and which
+  things the tenant has taken with her (`r.away` — built, placed and audited like the rest, only not rendered then).
+- **The sun is looked up too.** A patch of sunlight has an hour, a date and a bearing; one that the window's
+  orientation cannot give is the first thing a careful viewer rejects.
 - **Deterministic.** `r.rng(tag)` for chance, functions of the frame for motion, no wall-clock time.
 - **Check by looking — at the right picture.** Every change → the audit; every zone → a work-light view; every light
   change → a still with its median; every walk → the contact sheet.
@@ -140,6 +146,7 @@ numpy, Pillow, ffmpeg. No GPU needed; one that Blender can see is used.
 - `skeleton.build(r)` makes only the building and calls `r.shell` first. `layout.furnish(r)` makes everything else and
   must not depend on `r.v`. `film.light(r)`, `film.motion(r)`, `film.camera(r)` are called once per version, in that
   order, after the room exists; `film.plate(r)` (optional) puts the outside behind the work-light views.
+  `r.away(things, on=version)` hides a thing in the versions named; nothing may rest on a thing that is away.
 - Every object in the room is registered with a `kind` that is an id in `inventory.py` and one of the six supports.
 - A thing is authored with its origin under its footprint and its front toward −Y; a hung or stuck thing with its
   back on y = 0. Units are metres.

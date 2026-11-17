@@ -47,6 +47,39 @@ An audit that cries wolf gets ignored, so each false alarm was traced to its cau
 - After these, `audit.py --break` (lift a thing 180 mm, sink one 10 mm, expect both reported) was added so the audit
   proves it can still see.
 
+## What the second pair of eyes caught (and the audit never could)
+
+The audit passed the example with every thing held; the first review then returned 24 findings
+(`examples/rooftop-tapes/REVIEW.md`). The ones that are true of any room:
+
+- **The rule of the room was true in the text and false in the plan.** The brief said the washing dried "by the
+  door, furthest from the tapes"; the rack stood on the tape wall, 0.25 m from the first tape, with the circulator
+  blowing the damp air along it → a `why=` is a claim: measure it on the plan (`render.py --view plan`) before
+  believing it. The reviewer did; the builder had not.
+- **A sunbeam at an hour before sunrise, from the wrong side** → the dawn patch was placed for the picture → the sun
+  is looked up like any other number: sunrise and sunset bearings for the place and date, the sun's bearing and
+  height at the hour, the window's true bearing (`FILM.md`). Then ask which wall the sun can ever reach: here that
+  answer turned the building round, because the room's rule needed a wall the sun never touches.
+- **Everything running and nobody there; nothing changed by the next hour** → decide who holds the phone at each
+  hour and take what they carry out of that hour's room (`r.away`); set the clock (`r.hands`); let a screen advance
+  rather than turn its own pages.
+- **A room dressed around one hobby** → no clothes, nothing to cook on, no trace of washing. Ask of every setting:
+  *what does every dwelling of this type have that the brief did not mention?* and put it in the inventory.
+- **No curtain on the only window** → the same question, for privacy and for cold.
+- **Running machines with no plug** → a spinning fan with no lead is a tell in the foreground: every thing that runs
+  gets a lead to a socket, and the sockets get strips when there are more plugs than holes.
+- **A lamp whose head hung past the desk and lit the bin** → a turn given with the wrong sign: a thing's front points
+  along (sin rz, −cos rz); render the zone in the work light before trusting a rotation.
+- **"A 2 a.m. sky that reads as dusk"** → the picture outside was the brightest thing in the frame → two stops down;
+  the glass then mirrors the room by itself.
+- **The window looked at a picture, not at its own roof** → what is within a few metres is built for real
+  (`r.outdoors`): a deck, a parapet, a tank.
+- **Winter film on the panes glowed heater-red** → it was frosted *glass*, which mirrors every lamp → `mat.film`: a
+  matt translucent sheet.
+- **The torch was a theatre spot** → a hard-edged cone → a wide cone with a soft edge (`blend=0.9`) and a hot middle.
+- **Not every finding is taken.** Wallpaper seams, a fitted sheet, leaning tapes, better socks: declined, with the
+  reason written down (cost against what the film shows; `sheet.py --screen` says what the camera never finds).
+
 ## Modelling
 
 - **A fan tilted as a whole stands on the edge of its base** → build the head as its own `Part`, tilt it, `merge` it
@@ -67,7 +100,7 @@ An audit that cries wolf gets ignored, so each false alarm was traced to its cau
   put the far lights there.
 - **Yellow water tanks glowing at midnight** → the plate is emissive: everything on it shines by its drawn colour →
   draw unlit things nearly black at night.
-- **Black dots on the dawn sky** → far lights that were "off" were still black spheres → hide what is off.
+- **Black dots on the daylight sky** → far lights that were "off" were still black spheres → hide what is off.
 - **The phone torch: invisible at 0.4 W, a white-hot disc at 13 W** → a spot light has the intensity of a point light
   of the same watts; in a small room 2–3 W reads as a torch.
 - **The heater turned the whole room red** → an emissive element and a light at 11 W → 6.5 W, hue toward orange. The
@@ -84,10 +117,10 @@ An audit that cries wolf gets ignored, so each false alarm was traced to its cau
 - **The numbers in the brief drifted from the room** → counts change every round → the brief quotes `sheet.py
   --inventory` and `check.py`, run last.
 
-## Time (4 CPU cores, no GPU; the example room, 369 things)
+## Time (4 CPU cores, no GPU; the example room, 405 things)
 
-- Building the room: about 3 s. The audit of the whole room: about 5 s. `check.py --fast`: about 20 s.
-- A preview still (960 × 540, 24 samples): 27–34 s at night, 34–40 s at dawn with haze.
+- Building the room: about 4 s. The audit of the whole room: about 6 s. `check.py --fast`: about 25 s.
+- A preview still (960 × 540, 24 samples): 28–35 s at night, 36–40 s in daylight with haze. A film frame at 640 × 360: 13–16 s.
 
 ## Blender 5.x from Python
 

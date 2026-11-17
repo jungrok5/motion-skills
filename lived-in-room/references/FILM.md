@@ -22,8 +22,11 @@ strength, z, u)`), far enough that it parallaxes like a distance as the visitor 
   structure its own rate and phase — lights that flash in step look like a machine. A rate outside the range is
   reported as a problem. Lights that are off at an hour are hidden, not black.
 - **Glass.** The pane is `mat.glass(window=True)`: light and shadow rays pass straight through, so the room is lit by
-  the plate without refraction noise. `r.drops(window, n, moving)` puts water on the room side of the pane; the
-  moving ones run, stall and run.
+  the plate without refraction noise. When the outside is darker than the room, the pane mirrors the room: keep the
+  night picture dark (a 2 a.m. sky is nearly black, far dimmer than a desk lamp) and the reflection comes for free.
+  `r.drops(window, n, moving)` puts water on the room side of the pane; the moving ones run, stall and run.
+  `r.window(wrap=…)` covers the lower panes with winter film — a matt translucent sheet (`mat.film`), not frosted
+  glass, which would mirror every lamp.
 
 ## Small motions
 
@@ -59,13 +62,13 @@ the air. `check.py` wants at least six motions per version and fails one that is
   Exposure is `look['exposure']` per version, in stops, applied when the frames are developed — change it and run
   `finish.py`, do not re-render and do not recolour the bulbs.
 - **Numbers.** `render.py` prints the median, p95 and p99.5 of every still. A night interior sits around a median of
-  20–35 (of 255) with p99.5 near 200; a hazy dawn 30–60. Put the target in the brief; `versions[v]['median'] = (lo, hi)`
+  15–35 (of 255) with p99.5 near 200; a hazy low-sun hour 30–60. Put the target in the brief; `versions[v]['median'] = (lo, hi)`
   makes `check.py` hold you to it.
 - **To look at the room, use the work light**: `render.py --view <name>` renders the same room evenly lit from the
   viewpoints in `ROOM['views']`. Mood hides exactly the faults a review is for.
 
 Light power is in Blender watts and only ratios matter: in a 14 m² room a desk lamp is about 5 W at its bulb, a glow
-lamp 1 W, a heater's light 6 W, a phone torch 2–3 W, a low sun 3 through `r.daylight`.
+lamp 0.5–1 W, a heater's light 6–8 W as a wide spot, a phone torch 3 W, a low sun 3 through `r.daylight`.
 
 ## Haze
 
@@ -83,7 +86,7 @@ The film is what someone sees who comes in at the door holding a phone.
             dict(t=4.0, pos=…, look=…),
             dict(t=12.0, pos=…, look=…, close=True, hunt=True), …],
            shake=0.36, step=0.65, pan_cap=12)
-    r.phone_light(on_at=9.2, watts=2.6)
+    r.phone_light(on_at=9.2, watts=3.0, angle=75, blend=0.9)
 
 - **Keys** say where the phone is and what it points at. Two keys at the same place are a stop; the path eases into
   and out of stops and passes through the others.
@@ -95,8 +98,9 @@ The film is what someone sees who comes in at the door holding a phone.
   `sheet.py --camera` prints the turn speed second by second. Give a turn more time or less angle.
 - **Focus follows late and hunts once.** The autofocus lags by `af` seconds; at a key with `hunt=True` it overshoots and
   settles — the moment a phone finds a near subject. Use it once or twice.
-- **The torch**: `r.phone_light(on_at)` switches on a hard white light beside the lens. A circle of light that moves
-  with the picture tells the viewer there is a person behind it. Keep it weak enough that what it lands on is not burnt.
+- **The torch**: `r.phone_light(on_at)` switches on a white light beside the lens. Light that moves with the picture
+  tells the viewer there is a person behind it. A phone's LED is a wide soft flood with a hot middle (cone 70–85°,
+  `blend` near 0.9), not a hard-edged spot; keep it weak enough that what it lands on is not burnt.
 - **Each version takes its own path**, to what that hour lights.
 - A phone's main camera is 24–26 mm-equivalent; its small sensor at ƒ/1.6 has roughly the depth of field of ƒ/6 on
   full frame — most of the room sharp, a near thing soft.
@@ -106,6 +110,29 @@ The film is what someone sees who comes in at the door holding a phone.
 `ROOM['versions'] = {name: dict(seconds, look)}`. Make one hour properly; another hour is then a matter of light and
 path. Things that differ by hour (a lamp on or off, a screen asleep, far lights hidden) are set in `film.py` through
 `r.lit(on)`, `r.glow`, `r.lamp(on=…)` — never by changing what is in the room.
+
+**Each hour has its own state, and someone is holding the phone.** A room in which every lamp is on, every machine
+running and nobody there — and in which nothing has moved by the next hour — reads as a set. So the brief says who
+walks in at each hour, and `film.py` says what follows from it:
+
+- `r.away(things, on='afternoon')` — what that person has with them is not lying in the room: the shoes on their feet,
+  the bag on their shoulder, the thing in the bag; and what the hour does not have (water on the pane in a dry
+  afternoon). The thing is still built, placed and audited; it is only not rendered in that version. The phone is never
+  in the room: it is the camera.
+- `r.hands(hour_hand, minute_hand, h, m)` — a clock shows the hour of the version (`kit.clock(hands=True)`).
+- A screen shows one thing progressing (`kit.screen_pages` of the same view a step further on), not pages turning
+  by themselves.
+
+**The sun has a date, an hour and a bearing.** Decide which way the window really faces, look up the sun's azimuth and
+altitude for the place, the date and the hour, and convert (for a window in the plan-north wall):
+`r.daylight(elev=altitude, azim=sun_azimuth − window_bearing)` — the sign is the side the sun is on as you look out of
+the window: positive to the right, negative to the left; its light falls to the opposite side of the room. Then check where the patch lands against the room's own rule. In the
+example the first version put a dawn patch on the tape wall at an hour before sunrise; the review worked that out,
+and the building was turned (`examples/rooftop-tapes/REVIEW.md`).
+
+**The outside can be partly real.** What is within a few metres of the window — a terrace, a parapet, a tank, a
+balcony rail — is built as geometry and registered with `r.outdoors(ob)`; it slides against the far picture as the
+visitor walks, which a single plate cannot do.
 
 ## Render and develop
 

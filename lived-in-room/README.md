@@ -21,13 +21,13 @@ A new room for your own topic: `python3 lived-in-room/scripts/new_room.py my-roo
 `BRIEF.md` and `RESEARCH.md` first (`check.py` fails until you do).
 
 Requirements: Python 3.13 with `bpy` 5.x (or Blender 5.x itself: `blender -b -P script.py -- args`), numpy, Pillow,
-ffmpeg. No GPU needed — on 4 CPU cores the example room (369 things) builds in 3 s, is audited in 5 s, and renders
-a 960 × 540 preview still in about 30 s; a GPU Blender can see is used automatically. Nothing is downloaded at
+ffmpeg. No GPU needed — on 4 CPU cores the example room (405 things) builds in 4 s, is audited in 6 s, and renders
+a 960 × 540 preview still in 30–40 s; a GPU Blender can see is used automatically. Nothing is downloaded at
 build or render time.
 
 Worked example: [`examples/rooftop-tapes`](examples/rooftop-tapes) — 「옥탑 녹음실」, a rooftop room in Seoul and the
-191 cassettes of the tenant who records her neighbourhood, at 02:14 and at 06:50 — with its `BRIEF.md`, the sources
-of its numbers in `RESEARCH.md`, and the review rounds in `REVIEW.md`. Samples page:
+191 cassettes of the tenant who records her neighbourhood, at 02:14 and at 16:40 — with its `BRIEF.md`, the sources
+of its numbers in `RESEARCH.md`, and the review rounds in `REVIEW.md` (the first review turned the building round). Samples page:
 https://jungrok5.github.io/motion-skills/lived-in-room/
 
 Source — made from this article: https://note.com/its_kobataka/n/n67bb2f8c9ce4?utm_source=x&utm_medium=social&utm_campaign=202611_vibe_modeling_vol06&utm_content=reply_discovery_01

@@ -11,7 +11,7 @@ Z up (height H). Walls are `'N'` (y = D), `'S'` (y = 0), `'E'` (x = W), `'W'` (x
 
 | | |
 |---|---|
-| `r.v` | the version being built (`'night'`, `'dawn'`, … or `'work'` for the review views) |
+| `r.v` | the version being built (`'night'`, `'afternoon'`, … or `'work'` for the review views) |
 | `r.W, r.D, r.H` | inside size · `r.items` the register · `r.h` a dict for handles `layout.py` leaves for `film.py` |
 | `r.rng(tag)` | seeded randomness that is the same in every version · `r.nudge(tag, amount)` one number in ± amount |
 | `r.name(base)` | a unique object name (`tape`, `tape.002`, …) · `r.zone(name)` names the zone of what follows |
@@ -22,8 +22,8 @@ Z up (height H). Walls are `'N'` (y = D), `'S'` (y = 0), `'E'` (x = W), `'W'` (x
 | call | makes |
 |---|---|
 | `r.shell((W, D, H), wall=0.2, floor=, walls=, ceiling=)` | floor and ceiling; remembers wall thickness (one number or per wall) |
-| `r.window(wall, u, sill, w, h, frame_d, face, stile, setback, slide, glass_t, lock, handle, stool, casing)` | a two-sash sliding window: frame, rails, sashes, panes, crescent lock, pull, inner sill. Cuts its opening |
-| `r.door(wall, u, w, h, leaf_t, face, open_deg, swing, hinge, lever_z)` | frame and leaf with lever handles; sets `r.doorway` (where the walk starts) |
+| `r.window(wall, u, sill, w, h, frame_d, face, stile, setback, slide, glass_t, lock, handle, stool, casing, wrap)` | a two-sash sliding window: frame, rails, sashes, panes, crescent lock, pull, inner sill; `wrap` = share of each pane covered with winter film. Cuts its opening |
+| `r.door(wall, u, w, h, leaf_t, face, open_deg, swing, hinge, lever_z, step, lock, closer)` | frame and leaf with lever handles, a kerb, a lock case, a closer; sets `r.doorway` (where the walk starts) |
 | `r.opening(wall, u, z, w, h)` | a bare hole (for an opening of your own) |
 | `r.walls()` | the four walls as solids round their openings (called for you after `build`) |
 | `r.skirting(height, thick)` · `r.cornice(height, depth)` | boards at the foot and head of the walls |
@@ -42,10 +42,11 @@ Z up (height H). Walls are `'N'` (y = D), `'S'` (y = 0), `'E'` (x = W), `'W'` (x
 | `r.lean(ob, wall, u, foot, turn)` | foot out, top on the wall |
 | `r.fix(ob, to, wall, u, z, d \| loc, rz, rot, embed)` | screwed, built in, plugged in |
 | `r.allow(a, b)` | two things that are meant to pass through each other |
+| `r.away(things, on=version)` | (in `film.py`) things the tenant has with her at that hour, or that the hour does not have: built and audited, not rendered then |
 
-**Film** (`film.py`) — see `FILM.md`: `r.backdrop`, `r.plate_pt`, `r.beacon`, `r.lamp`, `r.glow`, `r.lit`, `r.ambient`,
-`r.daylight`, `r.haze`, `r.phone_light`, `r.camera`, `r.walk`, `r.animate`, `r.spin`, `r.tick`, `r.pages`, `r.flicker`,
-`r.blink`, `r.flutter`, `r.travel`.
+**Film** (`film.py`) — see `FILM.md`: `r.backdrop`, `r.plate_pt`, `r.outdoors`, `r.beacon`, `r.lamp`, `r.glow`, `r.lit`,
+`r.ambient`, `r.daylight`, `r.haze`, `r.phone_light`, `r.hands`, `r.camera`, `r.walk`, `r.animate`, `r.spin`, `r.tick`,
+`r.pages`, `r.flicker`, `r.blink`, `r.flutter`, `r.travel`.
 
 ## Modelling — `lr.geo.Part`
 
@@ -75,8 +76,8 @@ Every recipe has wandering roughness (`wear`) and takes `dirt=` from the room's 
 
 `paint` · `wall` (paper / emulsion with a weave) · `wood` · `planks` (boards or printed sheet flooring) · `metal` ·
 `plastic` · `rubber` · `ceramic` (glaze, optional speckle) · `fabric` (weave, sheen, optional stripes) · `paper` ·
-`glass(window=True)` for panes · `liquid` · `emit(color, strength, off=)` · `picture(name, image, emission=, coat=)` ·
-`volume`. `mat.emit_socket(m)` is the socket to flicker or blink. `mat.DIRT` holds the room's dirt colour and scale.
+`glass(window=True)` for panes · `film` (a translucent sheet: winter film, tracing paper) · `liquid` ·
+`emit(color, strength, off=)` · `picture(name, image, emission=, coat=, screen=)` · `volume`. `mat.emit_socket(m)` is the socket to flicker or blink. `mat.DIRT` holds the room's dirt colour and scale.
 
 ## Pictures — `lr.draw` (Pillow)
 
@@ -91,13 +92,13 @@ Each returns one object, not yet in the room. Sizes are arguments: look the real
 | | |
 |---|---|
 | furniture | `shelf_unit`, `wall_shelf`, `desk`, `drawers(ajar=…)`, `low_table`, `stool` |
-| books and paper | `book(title=…, lying=…)`, `shelve(r, unit, level, books)`, `paper`, `poster`, `note`, `frame`, `carton` |
+| books and paper | `book(title=…, lying=…)`, `shelve(r, unit, level, books)`, `paper`, `poster`, `note`, `frame`, `mirror`, `carton` |
 | vessels | `mug(fill=…)`, `bottle(fill=…, label=…)`, `can`, `pot`, `cup_of_pens`, `bin`, `plant` |
-| soft | `cushion`, `mattress`, `blanket`, `towel` |
+| soft | `cushion`, `mattress`, `blanket`, `towel`, `curtain` (hung from a rail), `clothes_rail` + `garment` (on hangers) |
 | lights | `desk_lamp`, `floor_lamp`, `pendant`, `ceiling_panel` (each with `ob['lr_bulb']` where it has a bulb) |
 | electrics | `outlet`, `switch`, `power_strip`, `cable(points)`, `sag(p0, p1, drop)` |
 | screens | `screen_pages(name, images)`, `monitor`, `laptop`, `keyboard`, `mouse`, `headphones` |
-| moving | `clock()` → (clock, second hand, pivot) · `fan()` → (body, rotor, pivot, tilt) |
+| moving | `clock()` → (clock, second hand, pivot) — `hands=True` adds separate hour and minute hands for `r.hands()` · `fan()` → (body, rotor, pivot, tilt) |
 
 These are the common words. What makes a room one person's room is built in the project's `props.py` from `Part`.
 

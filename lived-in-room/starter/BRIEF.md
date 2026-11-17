@@ -25,10 +25,10 @@ Questions asked: none (the starter is invented). assumed: all of the above.
 | finishes | sheet flooring, skirting 60 × 9, no cornice | finish |
 | services | switch at 1,200 by the door, one socket at 300 behind the desk, a 500 mm LED panel | power, ceiling-light |
 
-## 3. Inventory — 56 things of 28 kinds
+## 3. Inventory — 73 things of 29 kinds
 `inventory.py`. A desk, a stool, a shelf unit with 22 books (six lettered: the row the camera reads), a lamp, a laptop,
-a mug a third full, a cup of pens, three sheets of paper, two sticky notes, a plant, a clock with its second hand, a
-framed print, a bin, a cushion, a cable from lamp to socket — and the building.
+a mug a third full, a cup of pens, three sheets of paper, two sticky notes, a plant, 17 beads of water on the pane, a
+clock with its second hand, a framed print, a bin, a cushion, a cable from lamp to socket — and the building.
 - **What makes them read as real:** the window's two sashes on two tracks and its lock; the lamp's cable reaching a socket.
 - **Never drawn:** logos and trade marks.
 
@@ -43,9 +43,9 @@ framed print, a bin, a cushion, a cable from lamp to socket — and the building
 ## 5. Film
 - **The outside:** a drawn row of towers 40 m beyond the glass, 120 m wide; three of the far ones carry a flashing red
   light at 28, 41 and 52 a minute (inside the 20–60 of RESEARCH `beacon`).
-- **Moves:** night — clock second hand, two sticky notes, the laptop's pages, the lamp's flicker, three beacons.
-  Dawn — the second hand and the notes.
-- **Light:** night — the lamp on the desk and the screen; target median 10–25. Dawn — low sun and haze; target 25–60.
+- **Moves:** night (12) — clock second hand, two sticky notes, three beads of water running down the pane, the
+  laptop's pages, the lamp's flicker, three beacons, the torch. Dawn (6) — the second hand, the notes, the water.
+- **Light:** night — the lamp on the desk and the screen; median about 11. Dawn — low sun and haze; median about 30.
 - **The walk:** night — in at the door, three steps, over the desk with one focus hunt; the torch at 4.6 s (6 s).
   Dawn — in, forward, a slow turn to the shelf (5 s). Turn cap 12° a second.
 
