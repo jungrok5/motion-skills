@@ -514,3 +514,10 @@ stone, earth or water. (The rain map also took everything built as a roof; what 
 pot plants, signs — is left out of it now: it shelters nothing.) *Rule:* a reflection is judged with something to reflect in the picture — a pool between the eye and a lit house, at
 dusk — on the lowest tier too; and a wet square is looked at by day, from above eye height, where every mistake in
 where the water lies is plain.
+
+**A reload the page gives itself came back to the start button.** In a frame or on a phone the page waits for a press
+before it fetches anything. The quality button reloads the page, and so does the step down a slow device is given
+after ten seconds below its tier — and each reload stood at the start button again, mid-walk. It showed only when the
+streaming grew long enough for the step down to fire inside the samples page's frame (on the CPU rasteriser every
+device is a slow one). *Fix:* a reload the page makes carries `go=1`, as the safe-mode retry already did. *Rule:* what
+the visitor agreed to once is carried through every reload the page makes itself.
