@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>jelly-page · motion-skills</title>
+<meta name="description" content="주제를 받아, 손으로 당기면 출렁이는 젤리 속에 진짜 웹페이지를 굳혀 넣은 라이브 페이지를 만듭니다. 글자는 젤리 속 사탕처럼 보이지만 그대로 입력하고 누를 수 있습니다.">
+<meta property="og:title" content="jelly-page · motion-skills">
+<meta property="og:description" content="주제를 받아, 손으로 당기면 출렁이는 젤리 속에 진짜 웹페이지를 굳혀 넣은 라이브 페이지를 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/jelly-page/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/jelly-page">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / jelly-page</nav>
+  <h1>jelly-page</h1>
+  <p>주제를 받아, 손으로 당기면 출렁이는 젤리 속에 진짜 웹페이지를 굳혀 넣은 라이브 페이지를 만듭니다. 글자는 젤리 속 사탕처럼 보이지만 그대로 입력하고 누를 수 있고, 온도를 올리면 녹아서 평범한 페이지가 됩니다.
+  원본: Felix Rieseberg의 <a href="https://claude.ai/artifact/HGJRkas2J1QTVjctgi5A7V">「Jelly」 데모</a>(<a href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk">HTML-in-Canvas 데모 페이지</a>, <a href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19">X 게시물</a>)를 보고 만들었습니다. 코드는 모두 새로 썼습니다.
+  라이브 데모는 Chrome · Edge 157 이상이나 Claude 데스크톱 앱에서 보입니다. 다른 브라우저에서는 같은 HTML이 평범한 페이지로 나옵니다.</p>
+  <ul class="tags"><li>HTML-in-Canvas</li><li>젤리 물리</li><li>굴절과 반사</li><li>라이브 웹페이지</li><li>코드 전용</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 한 줄 (아이 생일 초대장, 빵집 오늘의 메뉴, 제품 출시 알림)</dd>
+      <dt>브리프</dt><dd>페이지의 할 일과 입력 요소, 맛과 색, 틀 모양, 식탁보 · 접시 · 방, 젤리 속 알갱이, 소리</dd>
+      <dt>페이지</dt><dd>진짜 HTML과 CONFIG, 컨트롤 연결 (새 페이지 스크립트로 시작)</dd>
+      <dt>검사</dt><dd>당기기 · 흔들림이 잦아드는 시간 · 흔들리는 중 클릭 · 떨어뜨리기 · 녹이기 · 소리 · 스틸 결정성</dd>
+      <dt>출력</dt><dd>폴더 하나 (index.html + lib/), 상태별 스틸</dd>
+    </dl>
+    <pre><code>node jelly-page/scripts/new-page.mjs my-jelly
+node jelly-page/scripts/check.mjs my-jelly/index.html
+node jelly-page/scripts/still.mjs my-jelly/index.html --out my-jelly/out --act drop --at 0.3,0.85</code></pre>
+    <p class="mute">요구 사항: Node, Playwright Chromium (스크립트가 HTML-in-Canvas 플래그를 켭니다). 네트워크 · 이미지 · 폰트 없음. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/jelly-page/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10;--h-phone:calc((100vw - 34px)*1.35);--demo-bg:#fff3f6">
+    <iframe data-src="demo/examples/party-invite/" title="jelly-page 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/party-invite/">데모 열기 (examples/party-invite)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/party-invite</code> · 젤리를 끌어당기고, 이름을 쓰고 RSVP</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/party-invite/" data-cap="예제 &lt;code&gt;examples/party-invite&lt;/code&gt; · 젤리를 끌어당기고, 이름을 쓰고 RSVP" aria-pressed="true">생일 초대장</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/index.html&lt;/code&gt; · 새 페이지의 출발점" aria-pressed="false">시작 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제와 템플릿을 HTML-in-Canvas를 켠 Chromium에서 상태별로 찍은 스틸입니다. 카드를 누르면 라이브 데모가 열립니다.</p>
+  <div id="gallery">
+    <div class="group">
+      <h3>생일 초대장 <small>examples/party-invite</small></h3>
+      <p>아이 생일 초대장: 이름 줄, 날짜, RSVP 입력과 버튼. 2단 타원 틀, 도자기 접시, 땡땡이 종이 식탁보, 스프링클과 기포.</p>
+      <div class="grid">
+        <a class="tile" href="demo/examples/party-invite/" target="_blank" rel="noopener"><img src="samples/party-rest.jpg" alt="노란 땡땡이 식탁보 위 보라 띠 접시에 놓인 분홍 2단 젤리, 젤리 속에 'Mia is 6!' 초대장과 입력칸이 사탕 글자로 보임" loading="lazy" width="640" height="400"><div class="cap"><span class="no">정지 · 라즈베리</span><b>굳은 젤리</b><span class="how">창문이 비치는 윗면, 색이 물든 그림자</span></div></a>
+        <a class="tile" href="demo/examples/party-invite/" target="_blank" rel="noopener"><img src="samples/party-pull.jpg" alt="젤리 앞쪽을 끌어당겨 움푹 들어가고 기울어진 젤리, RSVP 줄이 휘어짐" loading="lazy" width="640" height="400"><div class="cap"><span class="no">당기기</span><b>끌어당긴 순간</b><span class="how">눌린 자리를 따라 페이지도 함께 휘어짐</span></div></a>
+        <a class="tile" href="demo/examples/party-invite/" target="_blank" rel="noopener"><img src="samples/party-lift.jpg" alt="접시 위로 들려 올라간 젤리와 옆으로 흐려진 분홍 그림자" loading="lazy" width="640" height="400"><div class="cap"><span class="no">떨어뜨리기 · 0.3초</span><b>들어 올림</b><span class="how">아래로 늘어진 몸, 떨어져 나간 부드러운 그림자</span></div></a>
+        <a class="tile" href="demo/examples/party-invite/" target="_blank" rel="noopener"><img src="samples/party-squash.jpg" alt="접시에 떨어져 납작하게 퍼진 젤리" loading="lazy" width="640" height="400"><div class="cap"><span class="no">떨어뜨리기 · 0.86초</span><b>착지</b><span class="how">허리가 불룩해지는 찌그러짐과 옆으로 쏠림</span></div></a>
+        <a class="tile" href="demo/examples/party-invite/" target="_blank" rel="noopener"><img src="samples/party-blue.jpg" alt="분홍 땡땡이 식탁보 위의 파란 젤리 초대장" loading="lazy" width="640" height="400"><div class="cap"><span class="no">맛 바꾸기</span><b>블루 라즈베리</b><span class="how">젤리 색과 식탁보 무늬 색이 함께 바뀜</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>시작 템플릿 <small>templates/index.html</small></h3>
+      <p>스타일의 예시: 둥근 사각 틀, 줄무늬 식탁보, 유리 접시, 과일 알갱이.</p>
+      <div class="grid">
+        <a class="tile" href="demo/templates/" target="_blank" rel="noopener"><img src="samples/jiggle-rest.jpg" alt="하늘색 줄무늬 식탁보 위 유리 접시에 놓인 빨간 사각 젤리, 속에 'Jiggle' 글자와 맛 버튼, 온도 슬라이더" loading="lazy" width="640" height="400"><div class="cap"><span class="no">정지 · 딸기</span><b>Jiggle</b><span class="how">물결 모양 밑단, 속에 박힌 과일 알갱이</span></div></a>
+        <a class="tile" href="demo/templates/" target="_blank" rel="noopener"><img src="samples/jiggle-lime.jpg" alt="분홍 줄무늬 식탁보 위의 초록 라임 젤리" loading="lazy" width="640" height="400"><div class="cap"><span class="no">맛 바꾸기</span><b>라임</b><span class="how">식탁보가 보색으로 바뀜</span></div></a>
+        <a class="tile" href="demo/templates/" target="_blank" rel="noopener"><img src="samples/jiggle-melt.jpg" alt="위에서 내려다본, 반쯤 녹아 납작해진 빨간 젤리 속 페이지" loading="lazy" width="640" height="400"><div class="cap"><span class="no">녹이기</span><b>반쯤 녹은 젤리</b><span class="how">시점이 위에서 내려다보는 쪽으로, 끝까지 녹이면 평범한 페이지</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 원본에 없던 주제로 끝까지 만든 예제와, 스킬이 보고 만든 원본 데모입니다.</p>
+  <div class="works">
+    <a class="work" href="https://jungrok5.github.io/motion-skills/jelly-page/demo/examples/party-invite/" target="_blank" rel="noopener"><b>Mia is 6! · 젤리 생일 초대장</b><span>브리프 → 페이지 → 검사 → 스틸 검토</span><span class="url">jungrok5.github.io/motion-skills/jelly-page/demo/examples/party-invite/</span></a>
+    <a class="work" href="https://claude.ai/artifact/HGJRkas2J1QTVjctgi5A7V" target="_blank" rel="noopener"><b>원본 · Felix Rieseberg 「Jelly」</b><span>HTML-in-Canvas 데모 15개 중 하나</span><span class="url">claude.ai/artifact/HGJRkas2J1QTVjctgi5A7V</span></a>
+    <a class="work" href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk" target="_blank" rel="noopener"><b>HTML-in-Canvas 데모 페이지</b><span>데모 15개 모음</span><span class="url">claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk</span></a>
+    <a class="work" href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19" target="_blank" rel="noopener"><b>X 게시물 · All hail the weird web</b><span>스킬의 출처</span><span class="url">x.com/felixrieseberg/status/2122036839238492493</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/jelly-page/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/jelly-page">폴더</a> <span>lib · scripts · templates · examples · references</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/jelly-page/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/jelly-page/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/jelly-page/references/LOOK.md">references/LOOK.md</a> <span>원본 데모에서 관찰한 형식</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/jelly-page/references/ENGINE.md">references/ENGINE.md</a> <span>엔진 설정과 API, 확장 방법</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/jelly-page/references/HIC.md">references/HIC.md</a> <span>HTML-in-Canvas 공통 노트</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/jelly-page/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림은 코드로 렌더링 (이미지 · 폰트 없음)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

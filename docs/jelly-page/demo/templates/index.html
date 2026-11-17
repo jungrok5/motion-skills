@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jiggle — a page set in jelly</title>
+<!--
+  jelly-page template: the house example of the style (a generic "jelly page").
+  The page inside <canvas> is ordinary HTML: an editable headline, flavour radios, a temperature range, a drop button.
+  lib/jelly.js draws it as candy letters set in a moulded jelly on a plate; press and pull the jelly and it wobbles.
+  For a new topic, rewrite four things (see references/BRIEF.md): the page HTML + its CSS, the CONFIG below
+  (flavours, mould, table, plate, room, bits, sound), the wiring of your controls, and the wording outside the canvas.
+-->
+<style>
+  :root { --ink: #2a2420; --paper: #f2ece0; --flav: #e0263f; --ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+          --round: ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif; }
+  html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); overflow: hidden; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+  #stage.pulling, #stage.pulling * { cursor: grabbing !important; }
+
+  /* ---- the page set in the jelly. Transparent background: dark ink becomes candy, colours stay colours. ---- */
+  #page { width: 960px; height: 600px; box-sizing: border-box; padding: 40px 56px 48px; font-family: var(--round);
+          display: grid; grid-template-rows: auto 1fr auto; gap: 10px; color: var(--ink); user-select: none; -webkit-user-select: none; }
+  #page .kicker { margin: 0; font: 700 26px/1 var(--round); letter-spacing: .14em; text-transform: uppercase; }
+  #word { margin: 0; align-self: center; justify-self: center; font: 800 200px/.9 var(--round); letter-spacing: -.02em;
+          white-space: nowrap; outline: none; cursor: text; user-select: text; -webkit-user-select: text; caret-color: var(--ink); }
+  .row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 24px; }
+  .flavours { display: flex; gap: 14px; border: 0; margin: 0; padding: 0; }
+  .flavours label { cursor: pointer; display: block; }
+  .flavours input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .flavours span { display: block; width: 52px; height: 52px; border-radius: 50%; background: var(--c); border: 6px solid var(--ink); box-sizing: border-box; }
+  .flavours input:checked + span { background: radial-gradient(circle, var(--ink) 0 26%, var(--c) 30%); transform: scale(1.15); }
+  .flavours input:focus-visible + span { outline: 5px solid #ffb000; outline-offset: 6px; }
+  .temp { display: flex; align-items: center; gap: 14px; justify-self: center; font: 700 26px/1 var(--round); }
+  #temp { -webkit-appearance: none; appearance: none; width: 220px; height: 60px; background: transparent; margin: 0; cursor: pointer; }
+  #temp::-webkit-slider-runnable-track { height: 14px; border-radius: 7px; background: var(--ink); }
+  #temp::-webkit-slider-thumb { -webkit-appearance: none; width: 52px; height: 52px; margin-top: -19px; border-radius: 50%; background: var(--flav); border: 9px solid var(--ink); box-sizing: border-box; }
+  #drop { white-space: nowrap; font: 800 34px/1 var(--round); color: var(--flav); background: var(--ink); border: 0; border-radius: 40px; height: 76px; padding: 0 34px; cursor: pointer; }
+  #drop:focus-visible, #temp:focus-visible { outline: 5px solid #ffb000; outline-offset: 5px; }
+  /* phones held upright: a taller page, the controls stacked (the engine fits the mould to whatever size the page is) */
+  @media (max-aspect-ratio: 4/5) {
+    #page { width: 600px; height: 820px; padding: 44px 40px; }
+    #word { font-size: 150px; }
+    .row { grid-template-columns: 1fr; justify-items: center; gap: 22px; }
+  }
+
+  /* ---- outside the canvas ---- */
+  .pill { position: fixed; bottom: 16px; font: 500 14px/1 var(--ui); color: #fff8ee; background: rgba(42, 36, 32, .72); padding: 10px 15px; border-radius: 999px; border: 0; margin: 0; }
+  #snd { right: 16px; cursor: pointer; }
+  #hint { left: 16px; pointer-events: none; transition: opacity .8s; }
+  #hint.gone { opacity: 0; }
+  @media (max-width: 480px) { #hint { bottom: 60px; } }
+</style>
+</head>
+<body>
+<canvas id="stage" layoutsubtree content="drawable" aria-label="A web page set in a slab of jelly">
+  <div id="page" drawable>
+    <p class="kicker">Today's jelly</p>
+    <h1 id="word" contenteditable="plaintext-only" spellcheck="false" data-hic-edit aria-label="Headline, editable">Jiggle</h1>
+    <div class="row">
+      <fieldset class="flavours" aria-label="Flavour">
+        <label><input type="radio" name="flavour" value="strawberry" aria-label="Strawberry" checked><span style="--c:#e0263f"></span></label>
+        <label><input type="radio" name="flavour" value="lemon" aria-label="Lemon"><span style="--c:#f5c419"></span></label>
+        <label><input type="radio" name="flavour" value="lime" aria-label="Lime"><span style="--c:#72c42b"></span></label>
+        <label><input type="radio" name="flavour" value="blackcurrant" aria-label="Blackcurrant"><span style="--c:#7b3fd0"></span></label>
+      </fieldset>
+      <label class="temp">firm <input type="range" id="temp" min="0" max="1" step="0.01" value="0.18" aria-label="Temperature, from cold and firm to melted"> melted</label>
+      <button id="drop" type="button" data-hic-click>Drop it</button>
+    </div>
+  </div>
+</canvas>
+<button id="snd" class="pill" type="button" aria-pressed="false" hidden>Sound off</button>
+<p id="hint" class="pill">Press and pull the jelly. Click the word and type.</p>
+
+<script src="../lib/hic.js"></script>
+<script src="../lib/squelch.js"></script>
+<script src="../lib/jelly.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  // ---- the design for this topic (references/BRIEF.md → references/ENGINE.md lists every field)
+  var CONFIG = {
+    canvas: $('stage'), page: $('page'), soundButton: $('snd'),
+    flavours: {
+      strawberry:   { jelly: '#d91c3a', glow: '#ff3b3b', bits: ['#6a0818', '#ffc2c8'], cloth: '#7fb6d8' },
+      lemon:        { jelly: '#f2c010', glow: '#ffd23a', bits: ['#fff3b0', '#d88a00'], cloth: '#8aa6e0' },
+      lime:         { jelly: '#5cb81c', glow: '#8be03a', bits: ['#e8ffb0', '#2f6a0c'], cloth: '#e7a0b6' },
+      blackcurrant: { jelly: '#5a1fa8', glow: '#9a4cff', bits: ['#1c0638', '#d9b8ff'], cloth: '#e8c46a' }
+    },
+    candy: '#fff2de', paper: '#f2ece0',
+    mould: { shape: 'rect', corner: 0.38, flutes: 9, fluteDepth: 0.075, tiers: 1, height: 0.56 },
+    table: { pattern: 'stripes', base: '#f4f1ea', scale: 0.34, angle: 0.18 },
+    plate: { kind: 'glass', shape: 'rect', tint: '#cfeadf' },
+    room:  { window: '#fff3df', panes: [3, 2], lamp: '#ffd59a', wall: '#9c968c' },
+    bits:  { kind: 'fruit', count: 14, size: [0.07, 0.12], seed: 4 },
+    sound: { pitch: 1, wet: 1 },
+    temperature: 0.18
+  };
+  var J = JELLY.create(CONFIG);
+  if (J.fallback) return;
+
+  // ---- wire the page's own controls to the jelly
+  var page = $('page');
+  document.querySelectorAll('input[name=flavour]').forEach(function (r) {
+    r.addEventListener('change', function () {
+      J.setFlavour(r.value);
+      page.style.setProperty('--flav', getComputedStyle(r.nextElementSibling).getPropertyValue('--c'));
+    });
+  });
+  $('temp').addEventListener('input', function (e) { J.setTemperature(+e.target.value); });
+  $('drop').addEventListener('click', function () { J.drop(); });
+  // one headline line, at most 12 letters, shrinking to fit
+  var word = $('word');
+  word.addEventListener('beforeinput', function (e) {
+    if (e.inputType === 'insertParagraph' || e.inputType === 'insertLineBreak') e.preventDefault();
+    else if (e.data && word.textContent.length >= 12 && getSelection().isCollapsed) e.preventDefault();
+  });
+  word.addEventListener('input', function () {
+    word.style.fontSize = '';
+    var max = page.clientWidth - 112, w = word.scrollWidth, fs = parseFloat(getComputedStyle(word).fontSize);
+    if (w > max) word.style.fontSize = Math.max(60, Math.floor(fs * max / w)) + 'px';
+  });
+  $('stage').addEventListener('jelly:touch', function () { $('hint').classList.add('gone'); });
+})();
+</script>
+</body>
+</html>

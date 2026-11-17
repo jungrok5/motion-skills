@@ -2252,6 +2252,50 @@
           "url": "https://jungrok5.github.io/motion-skills/wet-ink-page/demo/examples/tea-room/"
         }
       ]
+    },
+    {
+      "id": "jelly-page",
+      "name": "jelly-page",
+      "tagline": "주제를 받아, 손으로 당기면 출렁이는 젤리 속에 진짜 웹페이지를 굳혀 넣은 라이브 페이지를 만듭니다. 페이지와 입력 요소, 맛과 색, 틀 모양, 식탁보 · 접시 · 방, 젤리 속 알갱이와 소리를 주제에 맞게 설계하고, 글자는 젤리 속 사탕처럼 보이지만 그대로 입력하고 누를 수 있습니다. 온도를 올리면 녹아 평범한 페이지가 되고, 떨어뜨리면 튀어 오릅니다.",
+      "poster": "jelly-page/poster.jpg",
+      "posterAlt": "jelly-page로 만든 장면 네 개: 노란 땡땡이 식탁보 위 도자기 접시에 놓인 분홍 2단 젤리 속 'Mia is 6!' 생일 초대장, 같은 젤리를 앞쪽에서 끌어당겨 RSVP 줄이 휘어진 순간, 떨어뜨린 뒤 납작하게 퍼진 젤리, 분홍 줄무늬 식탁보 위 유리 접시에 놓인 초록 라임 사각 젤리 속 'Jiggle' 페이지",
+      "tags": [
+        "HTML-in-Canvas · WebGL2",
+        "젤리 물리 · 굴절",
+        "진짜 HTML 입력",
+        "주제마다 틀 · 맛 · 식탁",
+        "합성 사운드"
+      ],
+      "stats": [
+        "당기면 140 px 출렁, 3초 안에 1 px 아래로",
+        "흔들리는 중 · 녹은 상태에서도 클릭과 입력"
+      ],
+      "page": "jelly-page/",
+      "source": "jelly-page/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "jelly-page/examples/party-invite/"
+      },
+      "sources": [
+        {
+          "title": "Felix Rieseberg의 「Jelly」 데모 (젤리 속에 굳힌 라이브 웹페이지)",
+          "url": "https://claude.ai/artifact/HGJRkas2J1QTVjctgi5A7V"
+        },
+        {
+          "title": "HTML-in-Canvas 데모 페이지 (데모 15개 모음)",
+          "url": "https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk"
+        },
+        {
+          "title": "Felix Rieseberg의 X 게시물 「All hail the weird web」",
+          "url": "https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「Mia is 6!」 젤리 생일 초대장 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/jelly-page/demo/examples/party-invite/"
+        }
+      ]
     }
   ]
 }
