@@ -354,23 +354,25 @@ def liquid(color='#7a5a20', ior=1.33):
     return g.m
 
 
-def emit(color, strength=5.0, name=None):
-    """A surface that is a light: a filament, an LED, a heater bar, a standby dot. Not cached: its strength is
-    usually animated or differs per version."""
+def emit(color, strength=5.0, name=None, off=None):
+    """A surface that is a light: a bulb, an LED, a heater bar, a diffuser, a standby dot. `strength` 0 = switched
+    off — and then it is still a thing: frosted glass, a grey quartz tube, a dark lens (`off` = its colour when off;
+    default a pale version of its light). Not cached: its strength is animated or differs per version."""
     g = G(name or f'emit {color}')
-    e = g.n('Emission', Color=rgba(color), Strength=strength)
-    g.link(e.outputs[0], g.out.inputs['Surface'])
+    c = rgba(color)
+    base = rgba(off) if off is not None else tuple(0.55 * x + 0.3 for x in c[:3]) + (1.0,)
+    g.principled(Base_Color=base, Roughness=0.35, Emission_Color=c, Emission_Strength=strength)
     g.m['lr_emit'] = True
     return g.m
 
 
 def emit_socket(m):
-    """The strength socket of an emit() / picture(emission>0) material, for r.animate()."""
+    """The strength socket of an emit() / picture(emission>0) material, for r.glow(), r.flicker(), r.blink()."""
     for n in m.node_tree.nodes:
-        if n.type == 'EMISSION':
-            return n.inputs['Strength']
         if n.type == 'BSDF_PRINCIPLED':
             return n.inputs['Emission Strength']
+        if n.type == 'EMISSION':
+            return n.inputs['Strength']
     raise ValueError(f'{m.name}: no emission in this material')
 
 

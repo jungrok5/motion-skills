@@ -261,7 +261,7 @@ def view_outside(version, seed=8):
     (green waterproofing, yellow water tanks, a red neon cross or two), a slope of small houses behind them, far
     apartment slabs, and a hill with a mast. One picture, 3600 × 1350. Returns (image, marks) where marks has the
     picture positions (u, v from the top) of the mast and chimney tops, their mid levels, and the crosses."""
-    night = version != 'dawn'
+    night = version == 'night'                                         # the work-light views see the morning picture
     W, H = 3600, 1350
     rnd = random.Random(seed)
     sky = [(0, '#05070e'), (0.5, '#0e1322'), (0.72, '#25202c'), (1, '#2c2224')] if night else \
@@ -325,7 +325,7 @@ def view_outside(version, seed=8):
             if rnd.random() < 0.3:                                    # a water tank
                 tw = 18 + row * 4
                 tx = x + rnd.randint(4, max(5, bw - tw - 4))
-                d.rounded_rectangle([tx, y0 - bh - 4 - tw, tx + tw, y0 - bh - 3], 4, fill='#6e5a12' if night else '#e1b62e')
+                d.rounded_rectangle([tx, y0 - bh - 4 - tw, tx + tw, y0 - bh - 3], 4, fill='#2e2609' if night else '#e1b62e')
                 marks['tank'].append(((tx + tw / 2) / W, (y0 - bh - tw / 2) / H))
             if rnd.random() < 0.035 + (0.03 if row < 2 else 0):       # a steeple with a neon cross
                 cx = x + bw / 2
@@ -346,10 +346,10 @@ def view_outside(version, seed=8):
         d.rectangle([x + bw * 0.62 + 60, y0 - bh - 96, x + bw * 0.62 + 110, y0 - bh - 16], fill='#0b0d12' if night else '#5d5a55')
         if tank:
             tx = x + bw * 0.2
-            d.rounded_rectangle([tx, y0 - bh - 126, tx + 104, y0 - bh - 14], 14, fill='#84690f' if night else '#e7bd33')
-            d.rounded_rectangle([tx + 28, y0 - bh - 138, tx + 76, y0 - bh - 122], 5, fill='#6a540c' if night else '#c9a326')
+            d.rounded_rectangle([tx, y0 - bh - 126, tx + 104, y0 - bh - 14], 14, fill='#3a300b' if night else '#e7bd33')
+            d.rounded_rectangle([tx + 28, y0 - bh - 138, tx + 76, y0 - bh - 122], 5, fill='#2c2408' if night else '#c9a326')
             for k in range(1, 5):
-                d.line([tx + 2, y0 - bh - 14 - k * 22, tx + 102, y0 - bh - 14 - k * 22], fill='#6a540c' if night else '#cfa82a', width=2)
+                d.line([tx + 2, y0 - bh - 14 - k * 22, tx + 102, y0 - bh - 14 - k * 22], fill='#2c2408' if night else '#cfa82a', width=2)
         for k in range(rnd.randint(1, 3)):                            # windows of the top floor below the parapet
             wx = x + 50 + k * 190 + rnd.randint(0, 40)
             lit_ = night and rnd.random() < 0.6
@@ -551,14 +551,20 @@ def kettle(name='kettle'):
 
 
 def ac_unit(name='air conditioner'):
-    """A wall-mounted split unit, 754 × 308 × 189 [ac], back on y = 0, origin at the middle of its back. A 65 mm
-    pipe sleeve leaves through the wall at its lower right, sloping down toward outside."""
+    """A wall-mounted split unit, 754 × 308 × 189 [ac]: back on y = 0, origin at the middle of its back."""
     white = mat.plastic('#f1f0eb', rough=0.35, dirt=0.3)
     p = Part(name)
     p.box((0.754, 0.189, 0.308), at=(0, -0.0945, -0.154), mat=white, bevel=0.012)
     p.box((0.7, 0.012, 0.06), at=(0, -0.186, -0.15), rot=(-28, 0, 0), mat=white, bevel=0.003)         # the louver, closed for winter
     p.box((0.5, 0.004, 0.004), at=(0, -0.19, -0.02), mat=mat.plastic('#c9c8c2'), bevel=0)
-    p.cyl(0.0325, 0.24, at=(0.3, -0.03, -0.12), rot=(-87, 0, 0), mat=mat.plastic('#e4e2da', rough=0.5), seg=16)   # sleeve into the wall
+    return p.build()
+
+
+def pipe_sleeve(length=0.22, name='pipe sleeve'):
+    """The 65 mm sleeve that takes the refrigerant lines and the drain hose through the wall, sloping down toward
+    outside [ac]: origin where it enters the wall face, running into the wall (+y)."""
+    p = Part(name)
+    p.cyl(0.0325, length, at=(0, -0.02, 0.0), rot=(-87, 0, 0), mat=mat.plastic('#e4e2da', rough=0.5), seg=16)
     return p.build()
 
 
@@ -682,7 +688,7 @@ def mini_car(color='#c8412f', name='mini car'):
     for sx in (-1, 1):
         p.box((0.004, 0.012, 0.014), at=(sx * 0.03, -0.06, 0.027), mat=body, bevel=0)
         for sy in (-1, 1):
-            p.cyl(0.013, 0.012, at=(sx * 0.034 + (0.006 if sx > 0 else -0.006), sy * 0.048, 0.013), rot=(0, sx * 90, 0), mat=mat.rubber('#151517'), seg=14)
+            p.cyl(0.013, 0.012, at=(sx * 0.034, sy * 0.048, 0.013), rot=(0, sx * 90, 0), mat=mat.rubber('#151517'), seg=14)
     return p.ground(center=False).build()
 
 

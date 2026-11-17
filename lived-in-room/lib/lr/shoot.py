@@ -38,7 +38,7 @@ class ShootMixin:
     def animate(self, target, fn, name=None, kind='move', note=''):
         """fn(f) → {data_path: value} for any Blender struct: an object ('location', 'rotation_euler'), a light's data
         ('energy'), a node socket ('default_value'). Give it a name and it counts as one of the room's motions."""
-        self._anims.append((target, fn))
+        self._anims.append((target, fn, name))
         if name:
             self.motions.append(dict(name=name, kind=kind, note=note))
 
@@ -206,7 +206,7 @@ class ShootMixin:
         nm = name or self.name('beacon')
         if per_min is not None and not (lo <= per_min <= hi):
             self.problems.append(f'beacon {nm}: {per_min:g} flashes a minute is outside the researched range {lo}–{hi}')
-        m = mat.emit(color, strength, name=nm)
+        m = mat.emit(color, strength, name=nm, off='#0a0a0a')
         p = geo.Part(nm)
         p.sphere(size / 2, at=(0, 0, -size / 2), mat=m, seg=8, rings=4)
         ob = p.build()
@@ -216,6 +216,7 @@ class ShootMixin:
         s = mat.emit_socket(m)
         if not self.lit(on):
             s.default_value = 0.0
+            ob.hide_render = True                                    # a far light that is off is not a black dot on the sky
         elif per_min is not None:
             ph = self.rng('beacon/' + nm).uniform(0, 60.0 / per_min) if phase is None else phase
             self.blink(s, per_min, on=strength, off=strength * 0.02, duty=duty, phase=ph, name=nm, kind='beacon')
@@ -376,7 +377,7 @@ class ShootMixin:
 
     def bake(self):
         frames = range(0, self.n + 2)
-        for target, fn in self._anims:
+        for target, fn, _name in self._anims:
             for f in frames:
                 for path, val in fn(f).items():
                     setattr(target, path, val)

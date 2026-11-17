@@ -8,7 +8,7 @@ ROOM = dict(
     seed=11,
     # the same room, lit and walked twice: only light, motion and the walk differ between versions (film.py)
     versions=dict(
-        night=dict(seconds=6.0, look=dict(exposure=0.5, grain=0.06)),
+        night=dict(seconds=6.0, look=dict(exposure=1.3, grain=0.055)),
         dawn=dict(seconds=5.0, look=dict(exposure=-0.4, grain=0.035, shadows='#1a2230', highlights='#ffe9cf')),
     ),
     look=dict(),

@@ -30,6 +30,8 @@ def furnish(r):
     r.put(kit.plant(pot_r=0.042, pot_h=0.08, leaves=7, leaf=0.16, seed=2), win, at=(1.0, 3.2 + 0.022), under=0.9 + 0.3, kind='plant',
           why='on the sill for the light: a pot small enough for a 100 mm sill')
 
+    r.drops(win, n=14, moving=3, seed=1)                              # the window sweats: three beads run, in both versions
+
     r.zone('shelf wall')
     unit = r.against(kit.shelf_unit(0.8, 1.8, 0.3, shelves=5, body=oak), 'W', u=1.45, kind='shelf', why='the long blank wall')
     rnd = r.rng('books')

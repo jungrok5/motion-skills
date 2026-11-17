@@ -9,7 +9,7 @@ import props
 def plate(r):
     """The world outside: one picture 40 m beyond the glass. Also used by the work-light views."""
     img, tops = props.view_outside(r.v)
-    r.backdrop(img, 'N', distance=40, width=120, strength=1.4 if r.v == 'night' else 3.5 if r.v == 'dawn' else 0.6, z=14)
+    r.backdrop(img, 'N', distance=40, width=120, strength=1.4 if r.v == 'night' else 2.6 if r.v == 'dawn' else 0.6, z=14)
     return tops
 
 

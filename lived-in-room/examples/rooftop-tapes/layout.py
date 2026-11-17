@@ -65,7 +65,7 @@ def furnish(r):
     seat = r.put(kit.stool(0.17, 0.46, seat_mat=pine), rug, at=(1.74, 3.22), rz=22, kind='stool', why='pushed back and turned as she stood up')
     r.put(kit.cushion(0.33, 0.33, 0.045, '#8a7a56', name='seat pad'), seat, at=(1.74, 3.22), rz=31, kind='seat pad', why='a wooden stool for four hours needs one', soft=0.004)
     r.put(kit.bin(0.11, 0.27), 'floor', at=(0.76, 3.93), kind='bin', why='left of the desk, under the hand that peels labels')
-    r.h['bars'] = mat.emit('#ff5a14', 0.0, name='heater bars')
+    r.h['bars'] = mat.emit('#ff5a14', 0.0, name='heater bars', off='#b9b3a8')
     heat = r.put(props.heater(bars=r.h['bars']), 'floor', at=(2.66, 3.86), rz=-52, kind='heater',
                  why='at the far end of the desk, aimed at the seat: as far from the tapes as the room allows')
     r.h['heater'] = heat.ob
@@ -193,7 +193,7 @@ def furnish(r):
         p = rack_.ob.matrix_world @ Vector((along, rods[ri * 2], rods[ri * 2 + 1]))
         it = r.hang(s, frm=rack_, at=tuple(p), rz=90, kind='washing', why='socks go where the towels leave room')
         r.h['wash'].append(it.ob)
-    body, rotor, pivot, tilt = kit.fan(0.25, 0.5)
+    body, rotor, pivot, tilt = kit.fan(0.26, 0.56, base_r=0.15)                # a 9-inch circulator, 330 across its base class [heat-air]
     fan = r.put(body, 'floor', at=(1.12, 0.72), rz=-128, kind='circulator', why='on the floor, blowing along the rack: this is what dries the washing overnight [heat-air]')
     r.fix(rotor, fan, loc=tuple(body.matrix_world @ Vector(pivot)), rot=(-tilt, 0, -128), embed=True, kind='circulator rotor', why='it turns')
     r.h['rotor'] = rotor

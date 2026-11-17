@@ -78,6 +78,7 @@ class Project:
         self._load('skeleton').build(r)
         r.walls()
         self._load('layout').furnish(r)
+        r.fingerprint = r.model_hash()                              # taken before any motion: this is the room itself
         if model_only:
             return r
         film = self._load('film')
@@ -94,7 +95,12 @@ class Project:
         else:
             film.light(r)
             film.motion(r)
-            film.camera(r)
+            if view:                                              # a review viewpoint, under this version's own light
+                v = self.view(view, r)
+                r.camera(lens=v.get('lens', 20.0))
+                r.view(v['pos'], v['look'], ortho=v.get('ortho'), fstop=v.get('fstop', 8.0))
+            else:
+                film.camera(r)
         if mode == 'supports':
             paint_supports(r)
         r.bake()

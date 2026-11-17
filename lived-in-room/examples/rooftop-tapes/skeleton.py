@@ -32,4 +32,6 @@ def build(r):
     r.fix(kit.outlet(1, name='ac outlet'), 'wall E', wall='E', u=0.42, z=2.06, embed=True, kind='outlet', why='the air conditioner has its own socket, high [power]')
     r.fix(kit.ceiling_panel(0.5, 0.047), 'ceiling', loc=(1.65, 2.15, r.H), rz=0, kind='ceiling light', why='the one room light, 500 mm LED panel [ceiling-light]')
     # wall-mounted split unit: 150 below the ceiling, its 65 mm sleeve sloping down through the wall [ac]
-    r.fix(props.ac_unit(), 'wall E', wall='E', u=1.0, z=r.H - 0.15 - 0.154, embed=True, kind='air conditioner', why='over the bed head, away from the tapes')
+    ac = r.fix(props.ac_unit(), 'wall E', wall='E', u=1.0, z=r.H - 0.15 - 0.154, kind='air conditioner', why='over the bed head, away from the tapes')
+    r.fix(props.pipe_sleeve(), ['wall E', ac], wall='E', u=1.3, z=r.H - 0.15 - 0.27, embed=True, kind='pipe sleeve',
+          why='lines and drain leave through one 65 mm hole behind the unit, sloping down to the roof [ac]')

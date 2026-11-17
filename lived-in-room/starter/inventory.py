@@ -18,7 +18,7 @@ INVENTORY = [
     dict(id='door', name='door frame', n=1, size=None, method='model', support='fix', use='the building', ref='door'),
     dict(id='door leaf', name='door leaf', n=1, size=None, method='model', support='fix', use='the building', ref='door'),
     dict(id='outlet', name='wall socket', n=1, size=None, method='model', support='fix', use='power for the desk', ref='power'),
-    dict(id='switch', name='light switch', n=1, size=(70, 120, 38), method='model', support='fix', use='by the door, at hand height', ref='power'),
+    dict(id='switch', name='light switch', n=1, size=(70, 120, 48), method='model', support='fix', use='by the door, at hand height', ref='power'),
     dict(id='ceiling light', name='LED ceiling light', n=1, size=(500, 500, 47), method='model', support='fix', use='the room light, off in both versions', ref='ceiling-light'),
     # furniture
     dict(id='desk', name='desk', n=1, size=(1200, 600, 720), method='model', support='place', use='work, every evening', ref='desk'),
@@ -33,6 +33,7 @@ INVENTORY = [
     dict(id='note', name='sticky note', n=2, size=None, method='model', support='stick', use='reminders at eye level', ref='-'),
     # the rest
     dict(id='book', name='books', n=22, size=None, method='model', support='place', use='shelved by use: the working ones at hand height', ref='desk'),
+    dict(id='drop', name='beads of water on the pane', n=17, size=None, method='model', support='stick', use='a cold window over a warm room; three of them run', ref='-'),
     dict(id='plant', name='pot plant', n=1, size=None, method='model', support='place', use='on the sill for the light', ref='-'),
     dict(id='clock', name='wall clock', n=1, size=None, method='model', support='hang', use='seen from the desk', ref='-'),
     dict(id='second hand', name="the clock's second hand", n=1, size=None, method='model', support='fix', use='it moves', ref='-'),

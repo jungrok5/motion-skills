@@ -4,6 +4,7 @@
   render.py --still night:0.5,dawn:3.2s      finished stills along the walks        → out/stills/<version>_<frame>.jpg
   render.py --view plan,desk [--supports]    the room under the WORK LIGHT, from the review views in room.py
                                              (--supports: every thing painted by its support type) → out/views/
+  render.py --view desk --in night[:3.5s]    the same viewpoint under a version's own light        → out/views/desk_night.jpg
   render.py --version night [--step 2]       the frames of one walk (resumes; --step 2 = every other frame first)
   render.py --all                            every version                                → out/exr/<version>/NNNN.exr
   render.py --blend                          save the built room as a .blend per version  → out/<version>.blend
@@ -23,6 +24,7 @@ def main():
     ap.add_argument('--still')
     ap.add_argument('--view')
     ap.add_argument('--supports', action='store_true')
+    ap.add_argument('--in', dest='within', help='version (and optionally a moment: night:3.5s) whose light the views are rendered in')
     ap.add_argument('--version')
     ap.add_argument('--all', action='store_true')
     ap.add_argument('--blend', action='store_true')
@@ -64,6 +66,12 @@ def main():
                 still(r, v, f, P.out('stills', f'{v}_{f:04d}.jpg'), a.q or 'preview')
     if a.view:
         for name in a.view.split(','):
+            if a.within:
+                v, f = _boot.parse_when(P, a.within if ':' in a.within else a.within + ':0.5')
+                with _boot.Hush(log):
+                    r = P.build(v, a.q or 'preview', view=name, **over)
+                still(r, v, f, P.out('views', f'{name}_{v}.jpg'), a.q or 'preview')
+                continue
             with _boot.Hush(log):
                 r = P.build('work', a.q or 'preview', view=name, mode='supports' if a.supports else None, **over)
             still(r, 'work', 1, P.out('views', f'{name}{"_supports" if a.supports else ""}.jpg'), a.q or 'preview')

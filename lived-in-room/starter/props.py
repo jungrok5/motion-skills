@@ -7,7 +7,7 @@ from lr import draw
 
 def view_outside(version, seed=3):
     """The one picture beyond the window: far towers, a middle row, near roofs. Returns (image, roof tops)."""
-    night = version != 'dawn'
+    night = version == 'night'                                     # the work-light views see the morning picture
     sky = [(0, '#070a14'), (0.62, '#141a2c'), (1, '#2a2430')] if night else [(0, '#8fa6c4'), (0.55, '#d9c4b8'), (1, '#f0d2b0')]
     lit = 0.22 if night else 0.02
     layers = [

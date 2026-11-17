@@ -597,7 +597,7 @@ def clock(d=0.3, depth=0.04, rim='#1b1b1d', seconds=37, hm=(2, 14), name='clock'
     return ob, hand, (0.0, -depth - 0.0045, 0.0)
 
 
-def fan(d=0.25, h=0.42, body=None, blades=3, tilt=12.0, name='fan'):
+def fan(d=0.25, h=0.42, body=None, blades=3, tilt=12.0, name='fan', base_r=None):
     """A desk fan / air circulator: a flat base, a stem, and a head tilted back by `tilt` degrees. Returns
     (body, rotor, pivot, tilt): fix the rotor at body.matrix_world @ Vector(pivot) with rot=(-tilt, 0, the body's rz)
     and r.spin(rotor, rpm, axis=1). The cage is a ring and spokes: the blades are seen through it."""
@@ -606,7 +606,7 @@ def fan(d=0.25, h=0.42, body=None, blades=3, tilt=12.0, name='fan'):
     R = d / 2
     hub_z = h - R - 0.01
     p = Part(name)
-    p.cyl(d * 0.42, 0.03, mat=m, seg=28, bevel=0.006)
+    p.cyl(base_r or d * 0.42, 0.03, mat=m, seg=28, bevel=0.006)
     p.tube([(0, 0.02, 0.03), (0, 0.06, hub_z)], 0.014, mat=m, seg=10)
     head = Part('_head')                                              # built round the hub, then tilted as one
     for y in (-0.045, 0.02):

@@ -35,13 +35,15 @@ def light(r):
     if night:
         r.ambient('#0a0f1c', 0.012)
         r.h['desk light'] = r.lamp('desk light', tuple(lamp.matrix_world @ Vector(lamp['lr_bulb'])), watts=5.0, color=2700, radius=0.02)
-        r.h['heat light'] = r.lamp('heater light', tuple(heat.matrix_world @ Vector((0, -0.06, 0.2))), watts=11.0, color='#ff5a1e', radius=0.09)
+        r.h['heat light'] = r.lamp('heater light', tuple(heat.matrix_world @ Vector((0, -0.06, 0.2))), watts=6.5, color='#ff6a2a', radius=0.09)
         nl = r.h['night lamp']
         r.h['night light'] = r.lamp('night light', tuple(nl.matrix_world @ Vector((0, 0, 0.1))), watts=0.9, color=2400, radius=0.05)
     else:
-        r.ambient('#a9bbd4', 0.22)
-        r.daylight(elev=9.0, azim=33.0, strength=2.4, color=4300, angle=1.6)       # the sun just clear of the hill
-        r.haze(0.026, color=(1.0, 0.96, 0.92))
+        r.ambient('#a9bbd4', 0.3)
+        r.daylight(elev=9.0, azim=33.0, strength=3.2, color=4200, angle=1.6)       # the sun just clear of the hill
+        r.haze(0.04, color=(1.0, 0.96, 0.92))
+        d = r.doorway['center']                                      # the door stands open behind the visitor: the terrace's cool light comes in
+        r.lamp('door sky', (d.x, d.y - 0.25, 1.1), watts=9.0, color=7500, size=(0.75, 1.9), aim=(d.x, d.y + 2.0, 0.9))
     r.glow(next(m for m in lamp.data.materials if m.get('lr_emit')), 45.0, on='night')
     r.glow(r.h['bars'], 22.0, on='night')
     r.glow(r.h['night'], 5.0, on='night')
@@ -78,7 +80,7 @@ def motion(r):
             lv = 0.5 + 0.5 * util.fbm1(r.sec(f) * 5.5, 11.0)
             return {'default_value': 9.0 if lv * 6.4 > k + 0.6 else 0.15}
         for k, s in enumerate(socks):
-            r.animate(s, lambda f, k=k: level(f, k), name='mixer level LEDs' if k == 0 else None, kind='meter', note='six LEDs follow the tape')
+            r.animate(s, lambda f, k=k: level(f, k), name='mixer level LEDs' if k == 3 else None, kind='meter', note='six LEDs follow the tape')
 
 
 def camera(r):
@@ -91,7 +93,7 @@ def camera(r):
             dict(t=12.0, pos=(1.5, 2.66, 1.42), look=(0.0, 2.85, 1.3), close=True, hunt=True),    # up to the tapes
             dict(t=16.0, pos=(1.22, 2.5, 1.38), look=(0.0, 2.6, 1.22), close=True),          # along the row
         ], shake=0.36, pan_cap=12)
-        r.phone_light(on_at=9.2, watts=0.42, angle=56)
+        r.phone_light(on_at=9.2, watts=2.6, angle=50)
     else:
         r.walk([
             dict(t=0.0, pos=(2.62, 0.25, 1.48), look=(1.5, 4.2, 1.2)),
