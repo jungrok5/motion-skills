@@ -144,5 +144,5 @@ plate falls back to a stand-in so pages still run; check.mjs fails a stand-in fi
 `window.runChecks(t)` (names of broken rules, including `body: …` from the rig), `window.shotAt(t)` (`{i, name, lt}` — the
 beat), `window.film` (`feetAt`, `heroPx`, `pencilPx`, `drawnColours`, `actions`, `penSfx()`, `plate.notes`), `window.__ready =
 true` — all set by `F.start()`. `?render=1` = fixed canvas, no live loop (with `?t=20`: that frame); `?t=20` on the live page =
-start there; `?scale=.5`; `?cdn=1` = scans from Poly Haven; `?off=dof,grain,vignette,shadows`. The live page fits the window,
+start there; `?scale=.5`; `?cdn=1` = scans from Poly Haven; `?off=dof,grain,vignette,shadows`; `?full=1` = a live page at full quality. A live page (not `?render=1`) shows a loading screen, loads 1k scans from the CDN and on a phone uses the HDR as the backdrop at half size. The live page fits the window,
 plays at 24 fps and loops; click or space pauses, ← → jump a second, the bar scrubs, ♪ plays the score in sync.
