@@ -73,7 +73,7 @@ woods and mountains beyond). `starter/` (Tarn Cabin: a forester's cabin by a mou
 | `lib/90_app.js` · `lib/shell.html` · `vendor/` | boot, loop, the render API · the page · three.js r170 (MIT, `vendor/LICENSE`) |
 | `scripts/build.mjs` | sources → one `index.html` |
 | `scripts/check.mjs` | loads clean · the world can be walked (spawn, views, the whole tour clear of walls and deep water) · every state reads (and a clear day that is washed out or grey is named, with its numbers) · budgets; `--walk` does only the walking part and draws the walk map (`out/walk.png`, close-ups of blocked stretches, `--at x,z` for any spot) |
-| `scripts/render.mjs` | stills (`--shot`, `--views`), every view in every state (`--sheet`), stills along the tour as its camera looks (`--tour 12`), a film of the tour (`--film`) |
+| `scripts/render.mjs` | stills (`--shot`, `--views`), every view in every state (`--sheet`), stills along the tour as its camera looks (`--tour 12`), what a phone shows (`--phone`), a film of the tour (`--film`) |
 | `scripts/new-realm.mjs` | start a realm folder from the starter or `--from village` |
 | `starter/` | Tarn Cabin — the smallest realm that uses every part, steps ①–⑧ commented |
 | `examples/village/` | 「은여울 마을」 — `BRIEF.md`, `realm.json`, `src/` (land, words, town, details, plants, start) |
@@ -130,7 +130,9 @@ and wants a real GPU; without one (CI, containers) stills render on the CPU at 1
    `node living-realm/scripts/check.mjs my-realm` must print `check OK` (it walks the whole tour against
    every solid and the water, and renders views in day, dusk, night, rain and snow). Then `render.mjs --sheet` and score
    it with the review in `references/BRIEF.md`; then stand at the spawn point and render four stills 90° apart. Fix and
-   repeat. Open `index.html` in a browser with a GPU and walk it; press `P` for the numbers.
+   repeat. `render.mjs my-realm --phone` shows what a phone gets (the tour at a phone's canvas, tier and scale, as its
+   screen stretches it): the stills are 1280 × 720 at full scale and say nothing about that — look at it once, and after
+   any change to the tiers or the resolve. Open `index.html` in a browser with a GPU and walk it; press `P` for the numbers.
 8. **Deliver.** `index.html` is the realm (it runs from disk or any static host). Optionally `render.mjs --film` for
    an MP4 of the tour with the automatic round (on a machine with a GPU: `--gpu`).
 
@@ -157,7 +159,7 @@ and wants a real GPU; without one (CI, containers) stills render on the CPU at 1
 ## Contract
 - `LR.start({ build(LR) (may be async), weather: { tod, weather }, tour: [{ x, z, look: [x, z], pull, pitch }], views:
   [{ name, cam: [x, z, compass yaw°, pitch°, y?] }], strings, materials(LR) })`; `window.READY` when the page can draw.
-- Page options: `?safe=1` (lowest tier, optional passes off: what the page reopens itself in once if its graphics context is lost), `?q=low|medium|high|ultra`, `?scale=`, `?mat=512`, `?off=ao,gi,skyshare,shadow,contact,mirror,shafts,bloom,taa,grass,fx,water,ssr,audio`,
+- Page options: `?safe=1` (lowest tier, optional passes off: what the page reopens itself in once if its graphics context is lost), `?q=low|medium|high|ultra`, `?scale=`, `?fps=60` (the frame rate the resolution governor holds; a phone's is 30), `?dpr=` (canvas pixels a CSS pixel), `?mat=512`, `?off=ao,gi,skyshare,shadow,contact,mirror,shafts,bloom,taa,taau,lodbias,cubic,grass,fx,water,ssr,audio`,
   `?tod=`, `?wx=clear|rain|snow|winter|autumn`, `?wet=1&puddle=1` (just after rain), `?tour=0`, `?auto=0`, `?at=x,z,yaw`, `?stats=1`, `?hud=0`, `?view=mats`.
 - Still mode `?render=1&w=&h=`: `window.realm = { canvas, shot({ cam, tod, weather, season, snow, wet, frames, t }) →
   info, info(), place(), filmStart(fps), filmFrame(), LR }`. `info()` reports tier, sizes, draw calls, triangles, lamps.

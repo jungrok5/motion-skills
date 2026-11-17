@@ -13,21 +13,31 @@ follows is the design that keeps those in hand, and the knobs to turn if a devic
 | air | ½ | 8–24 fog steps, one shadow tap each; the far part is a closed form |
 | lighting | internal | one full-screen pass: the sun's shadow **widens with the distance to what throws it** (6 depth taps to find that distance, then 8–16 compare taps on a disc that grows with it — `medium` and above; 4 fixed taps on `low`), sky and bounce from an octahedral environment map, up to 24 lamps in a loop with a range test |
 | see-through | internal | water (one mesh), then particles — each kind is **one draw**, positions computed in the vertex shader from time (nothing simulated, nothing uploaded) |
-| temporal resolve | canvas | reprojects, clips to the neighbourhood, and **upsamples** the internal picture to the canvas grid |
+| lens | internal | on the tour, in a still that asks, or while walking after `L`: the focus (the median of nine depths, eased), a map of the largest blur in each 8 px tile, then 9 / 14 / 22 taps on a disc the size of the pixel's blur — pixels in focus skip it; none on `low` |
+| temporal resolve | canvas | reprojects (the history is read with a five-tap Catmull-Rom filter), clips to the neighbourhood, and **resolves up** to the canvas grid: a canvas pixel takes each frame by how near that frame's sample fell to it |
 | bloom, adapt, grade | canvas → small | dual-filter chain, 4–6 levels |
 
 ## What keeps it fast
-- **Internal resolution is separate from the canvas.** The world is rendered at 50–100 % of the canvas size and
-  resolved temporally to full size; a governor (`lib/88_hud.js`) watches the frame rate twice a second and moves the
-  scale in 0.1 steps between the tier's limits, probing upward with back-off. History stays at canvas size, so a change
-  of scale does not flash.
+- **Internal resolution is separate from the canvas.** The world is rendered at 40–100 % of the canvas size and
+  resolved up over the frames: each frame's samples fall at another place within a pixel (16–48 places, more the
+  smaller the frame), a canvas pixel listens to a frame by how near its sample fell, and textures are read as fine as
+  the canvas asks (a level bias of log2 of the scale) — so a view held still comes up to the canvas's own detail, not
+  to the small frame stretched. A governor (`lib/88_hud.js`) watches the frame rate twice a second and moves the scale
+  in 0.1 steps between the tier's limits, probing upward with back-off. History stays at canvas size, so a change of
+  scale does not flash. `?off=taau`, `?off=lodbias` and `?off=cubic` switch the three parts of the resolve off, to compare.
+- **A phone is given pixels before frames.** Its canvas has two pixels a CSS pixel on every tier (2.4 M pixels at
+  most — a tablet), it starts at 0.7 of that, and its governor aims at thirty frames a second, not sixty (`?fps=60`
+  asks for sixty; `?dpr=` pins the canvas). One that holds full scale with half its frames to spare is given a canvas
+  of two and a half pixels a CSS pixel, once (the scale steps down to match, and the governor goes on from there). Before, `low` drew 0.4–0.8 of a canvas of 1.5 pixels a CSS pixel and
+  chased sixty: 230–350 pixels across a screen of 1170, and the page looked out of focus from its first frame
+  (`references/LESSONS.md`).
 - **Tiers** (`lib/10_gpu.js`): `low` (phones), `medium` (integrated GPUs), `high`, `ultra` set material size, shadow
   size and cascades, occlusion quality, fog steps, grass density and reach, tree detail distances, particle counts,
   lamp count, the steps of the water's reflection march (`ssr`: 0 on `low`, 12 / 18 / 26 above — only water pixels pay
   for it), contact shadows (`contact`: 8 steps on `high`, 12 on `ultra`, off below), the screen-space bounce (`gi`: 2 rays of
   8 steps per half-size pixel on `medium`, 3 on `high`, 5 on `ultra`, off on `low`), sky share from the height map of
-  built things (8–16 taps on lit pixels within 90 m; `?off=skyshare`), the mirror on wet ground (14–20 steps, only on
-  smooth pixels, `high` and above), rays toward the sun (20–36 depth taps at half size, `medium` and above), device-pixel-ratio cap. The tier is guessed from the device and can be forced with `?q=` or the gear
+  built things (8–16 taps on lit pixels within 90 m; `?off=skyshare`), the mirror on wet ground (`mirror`: 8 / 12 / 18 / 24 steps along the reflected ray's line on the
+  screen and three to five halvings onto the crossing, only on smooth pixels — a dry day pays nothing), rays toward the sun (20–36 depth taps at half size, `medium` and above), the canvas's pixels a CSS pixel on a desktop. The tier is guessed from the device and can be forced with `?q=` or the gear
   button (reloads at the same spot); a device far below its tier is stepped down once automatically.
 - **Materials are two texture arrays.** Every built thing is drawn by one shader with a layer index per vertex, so a
   whole house — stone, plaster, timber, tiles, glass, iron — is **one draw call**.
@@ -45,26 +55,29 @@ follows is the design that keeps those in hand, and the knobs to turn if a devic
 0. What the look costs on `high` and above, all per pixel and all switchable: relief on stone and paving within 24 m
    (eight height taps, `?off=` has no switch — lower the tier), contact shadows (`?off=contact`, 8–12 depth taps on lit
    pixels), the bounce (`?off=gi`, half size: ~24 depth taps and a blur), the mirror on wet
-   ground (`?off=mirror`; it costs in rain, when most of the ground is smooth), rays toward the sun (`?off=shafts`), the water's reflection march (`?off=ssr`). `medium` has none of the three except the reflection.
+   ground (`?off=mirror`; it costs in rain, when most of the ground is smooth), rays toward the sun (`?off=shafts`), the water's reflection march (`?off=ssr`). `medium` and `low` have the mirror and the water's reflection, with fewer steps, and none of the rest.
 1. Look at the numbers: `P` on the page, or `realm.info()` in the console: fps, internal size, draw calls, triangles.
 2. `?off=` switches parts off to find the cost: `ao`, `shadow`, `bloom`, `taa`, `grass`, `fx`, `water`, `audio`
-   (and whatever the plant kits honour). `?scale=0.5` pins the internal scale; `?q=low|medium|high|ultra` pins the tier.
+   (and whatever the plant kits honour). `?scale=0.5` pins the internal scale; `?q=low|medium|high|ultra` pins the tier; `?fps=` sets the rate the governor holds.
 3. Usual causes, in order: too many grass triangles in view (lower `tier.grass` / `grassDist`), too many full-detail
    trees near the eye (thin the planting near ways, lower `treeNear`), a view down a long street with every building
    in it (accept it, or bend the street), too many lamps in range (the loop is per pixel: keep `tier.lights` modest).
-4. Budgets `check.mjs` warns about, per view on `medium`: 520 draw calls into the G-buffer, 4.2 M triangles.
+4. Budgets `check.mjs` warns about, per view on `medium`: 580 draw calls (a still draws all three shadow cascades —
+   the check prints how many of the calls are shadows; the live page draws one or two cascades a frame), 4.2 M triangles.
 5. `?prof=1` says which pass it is (below); `?off=pcss` goes back to the fixed shadow filter.
 
 ## Loading
 The page compiles about sixty shader programs, bakes its material layers and builds the place before the first frame.
-**It does not wait for the scans** (126 MB for the village, 41 MB for the starter — JPEGs and geometry, once; the
-browser caches them):
+**It does not wait for the scans** (254 MB for the village, 63 MB for the starter — JPEGs and geometry, once; the
+browser caches them; a phone and the `low` tier leave out the scans marked `heavy`, the whole trees, and fetch
+149 MB and 41 MB):
 - every surface is baked from its generated recipe at once, and the walk begins; each scan then takes its layer as its
   maps arrive (four fetched ahead, each freed after its layer), and the credit line counts them in;
 - every model is placed from the box `fetch-assets.mjs` measured — stood in for props, bumped into — and is drawn
   from the frame its triangles and maps arrive, three models at a time. On arrival its maps are re-baked (two small
   passes) and its levels of detail are made (meshoptimizer, a few to a few tens of milliseconds a model: the one thing
-  that can cost a frame while you walk);
+  that can cost a frame while you walk). The heavy ones come last; a download is given up when nothing has arrived
+  for `?scanwait` seconds, not when it is long (a 45 MB tree on a slow line is slow, not lost);
 - only the foliage atlases (3–4 MB) are waited for: the trees' leaves are painted from them.
 Stills, films and `check.mjs` (`?render=1`) wait for everything, so they are the same every time; `?stream=0` makes
 the live page wait too.
@@ -94,28 +107,35 @@ numbers a copy).
 | how far | solid things `320 × size` (an apple 45 m, a barrel 300 m), plants 16–45 m, thinned out by a dither over the last fifth |
 | shadows | a small solid thing an eight-sided hull (28 triangles), big ones their lowest level, plants over 0.9 m their lowest level within 26 m, goods none |
 | textures | two a model, sized to the thing (128–1024 px), never larger than its files |
+| a whole tree | seven levels made at load (`lib/46_lods.js`): leaves thinned by lottery and enlarged, wood dropped thinnest first and then simplified — the 3.4 m thorn is 1 072 k → 498 k → 124 k → 44 k → 17 k → 5.8 k → 2 k triangles; a tree over 600 k is never drawn whole, a tree under 4.5 m has five levels; its shadow is its fourth or fifth |
+| each copy | culled, sorted into cells and given its level by its own middle and its own scale — a kit piece lies tens of metres from its file's origin, and a boulder at 0.4 of the largest switches level sooner |
+| memory | a geometry's vertex arrays are let go once they are on the card (`?keep=1` keeps them): the village holds about 260–290 MB of buffers, 350 MB if they were kept, 190 MB without the heavy scans |
 
 Measured on the village on `high`, per view (drawn = everything the frame draws, shadows included):
 
-| view | drawn | of which the scans | copies · draw calls | their shadows |
-|---|---|---|---|---|
-| glade (deep wood) | 3.71 M | 0.14 M | 216 · 27 | 71 k |
-| woods (edge, boulders) | 3.99 M | 0.23 M | 205 · 58 | 75 k |
-| lane | 4.16 M | 0.19 M | 331 · 82 | 63 k |
-| square (market) | 3.43 M | 0.17 M | 241 · 62 | 49 k |
-| meadow | 3.40 M | 0.23 M | 195 · 37 | 102 k |
-| farm | 3.51 M | 0.07 M | 93 · 38 | 72 k |
+| view | drawn | of which the scans | copies · draw calls |
+|---|---|---|---|
+| the old fort, from the meadow | 4.15 M | 0.61 M | 176 · 88 |
+| inside the fort's gate | 4.80 M | 0.63 M | 433 · 129 |
+| the scanned pier | 3.97 M | 0.19 M | 104 |
+| beside a whole scanned tree (8.5 m) | 4.97 M | 0.77 M | 370 |
+| a grove of scanned saplings | 4.68 M | 0.84 M | — |
+| tor (fifty boulders) | 4.90 M | 0.75 M | — |
+| lane | 4.65 M | 0.29 M | 457 · 117 |
+| square (market) | 4.13 M | 0.30 M | 387 · 96 |
+| meadow | 4.27 M | 0.63 M | 226 |
+| deep wood | 4.15 M | 0.14 M | 214 · 26 |
 
 The rest of a frame is what it was: grass 0.6–1.0 M, the land 0.4 M, trees 0.05–0.6 M, buildings and props 0.25 M,
 and 1.6–1.7 M in the shadow cascades. Before the levels were right the same views drew 11–14 M: forty boulders whole
-(2.8 M, and again in the shadows) and every twig pile in the forest (1.1 M) — `references/LESSONS.md`, round 2.
-`check.mjs` prints `scans <copies> × <M tris>` for every view; read it. On `medium`, as the check runs it: 2.7–3.4 M
-triangles and 389–444 draw calls a view, 253–276 copies of scans in 0.18–0.20 M of them; 23 103 copies are placed in
-the whole village (13 163 of them ferns), and a frame looks at the handful of cells near the eye.
+(2.8 M, and again in the shadows) and every twig pile in the forest (1.1 M) — `references/LESSONS.md`, round 2. In
+round 3 the grove first drew 1.48 M of scans (one tree whole, 3.5 m from the eye) and the tor 1.53 M (the largest
+boulder's distances applied to all fifty) — hence the two rules in the table above.
+`check.mjs` prints `scans <copies> × <M tris>` for every view; read it. __MEDIUM__
 
 ## Where a frame's time goes — `?prof=1`
 `?prof=1` (it opens the numbers panel, `P`) shows milliseconds a pass: shadows, G-buffer, occlusion, air, bounce,
-lighting, see-through, resolve, bloom, final. They are measured by the graphics card itself
+lighting, see-through, lens, resolve, bloom, final. They are measured by the graphics card itself
 (`EXT_disjoint_timer_query_webgl2`: desktop Chrome and Edge have it; where it is missing only the CPU side is shown),
 smoothed over a few frames. This is the first thing to look at on a real machine — nothing here could measure it.
 

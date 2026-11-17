@@ -2,14 +2,20 @@
 {
   const T = THREE;
   // quality tiers.  scale = internal render scale range (the picture is temporally upsampled to the canvas).
+  // dprCap = canvas pixels a CSS pixel at most, on a desktop (a phone's canvas has its own rule: 90_app).
+  // `low` is the phone's tier.  It was drawn at 0.4–0.8 of a canvas of 1.5 pixels a CSS pixel and stretched: 350
+  // pixels across a 1170-pixel screen at the start, 230 once the governor had chased sixty frames a second — it
+  // looked out of focus.  A phone now has a canvas of two pixels a CSS pixel, 0.4–1.0 of it drawn and the rest
+  // resolved from the frames before (75_post), and its governor holds thirty frames a second, not sixty (88_hud).
   // ssr = steps of the water's screen-space reflection march (0: the water mirrors the sky only).
+  // mirror = steps of the wet ground's reflection march (75_post): only smooth pixels pay, so a dry day pays nothing.
   // contact = steps of the screen-space contact shadow toward the sun (0: cascades only).
   // gi = rays per half-size pixel of the screen-space bounce (0: sky light and occlusion only).
   LR.TIERS = {
-    low:    { name: 'low',    mat: 512,  aniso: 2, shadow: 1024, cascades: 2, shadowDist: 70,  shadowTaps: 4, ao: 0, vol: 8,  scaleMin: 0.4,  scaleMax: 0.8,  dprCap: 1.5,  grass: 0.4, grassDist: 40, treeNear: 22, treeMid: 70,  fx: 0.5, bloom: 4, pom: 0, gi: 0, contact: 0, ssr: 0, lights: 8,  topo: 1024, env: 64,  taaSharp: 0.5 },
-    medium: { name: 'medium', mat: 512,  aniso: 4, shadow: 2048, cascades: 3, shadowDist: 110, shadowTaps: 5, ao: 1, vol: 12, scaleMin: 0.5,  scaleMax: 0.85, dprCap: 1.25, grass: 0.7, grassDist: 55, treeNear: 30, treeMid: 95,  fx: 0.75, bloom: 5, pom: 0, gi: 2, contact: 0, ssr: 12, lights: 12, topo: 2048, env: 128, taaSharp: 0.5 },
-    high:   { name: 'high',   mat: 768,  aniso: 8, shadow: 2048, cascades: 3, shadowDist: 140, shadowTaps: 8, ao: 2, vol: 16, scaleMin: 0.6,  scaleMax: 1.0,  dprCap: 1.5,  grass: 1.0, grassDist: 70, treeNear: 38, treeMid: 120, fx: 1, bloom: 6, pom: 1, gi: 3, contact: 8, ssr: 18, lights: 16, topo: 2048, env: 128, taaSharp: 0.45 },
-    ultra:  { name: 'ultra',  mat: 1024, aniso: 16, shadow: 4096, cascades: 3, shadowDist: 170, shadowTaps: 8, ao: 3, vol: 24, scaleMin: 0.75, scaleMax: 1.0,  dprCap: 2,    grass: 1.4, grassDist: 85, treeNear: 48, treeMid: 150, fx: 1.25, bloom: 6, pom: 1, gi: 5, contact: 12, ssr: 26, lights: 24, topo: 2048, env: 256, taaSharp: 0.4 },
+    low:    { name: 'low',    mat: 512,  aniso: 4, shadow: 1024, cascades: 2, shadowDist: 70,  shadowTaps: 4, ao: 0, vol: 8,  scaleMin: 0.4,  scaleMax: 1.0,  dprCap: 1.5,  grass: 0.4, grassDist: 40, treeNear: 22, treeMid: 70,  fx: 0.5, bloom: 4, pom: 0, gi: 0, contact: 0, ssr: 0, mirror: 8, lights: 8,  topo: 1024, env: 64,  taaSharp: 0.5 },
+    medium: { name: 'medium', mat: 512,  aniso: 4, shadow: 2048, cascades: 3, shadowDist: 110, shadowTaps: 5, ao: 1, vol: 12, scaleMin: 0.5,  scaleMax: 0.85, dprCap: 1.25, grass: 0.7, grassDist: 55, treeNear: 30, treeMid: 95,  fx: 0.75, bloom: 5, pom: 0, gi: 2, contact: 0, ssr: 12, mirror: 12, lights: 12, topo: 2048, env: 128, taaSharp: 0.5 },
+    high:   { name: 'high',   mat: 768,  aniso: 8, shadow: 2048, cascades: 3, shadowDist: 140, shadowTaps: 8, ao: 2, vol: 16, scaleMin: 0.6,  scaleMax: 1.0,  dprCap: 1.5,  grass: 1.0, grassDist: 70, treeNear: 38, treeMid: 120, fx: 1, bloom: 6, pom: 1, gi: 3, contact: 8, ssr: 18, mirror: 18, lights: 16, topo: 2048, env: 128, taaSharp: 0.45 },
+    ultra:  { name: 'ultra',  mat: 1024, aniso: 16, shadow: 4096, cascades: 3, shadowDist: 170, shadowTaps: 8, ao: 3, vol: 24, scaleMin: 0.75, scaleMax: 1.0,  dprCap: 2,    grass: 1.4, grassDist: 85, treeNear: 48, treeMid: 150, fx: 1.25, bloom: 6, pom: 1, gi: 5, contact: 12, ssr: 26, mirror: 24, lights: 24, topo: 2048, env: 256, taaSharp: 0.4 },
   };
 
   LR.initGPU = (canvas) => {

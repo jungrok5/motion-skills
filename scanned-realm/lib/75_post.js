@@ -6,7 +6,7 @@
   const v = (value) => ({ value }), MAXL = 24;
   const PU = (R.U = {
     tG0: v(null), tG1: v(null), tG2: v(null), tDepth: v(null), tAO: v(null), tAir: v(null), tGI: v(null), uBounce: v(1), tHistL: v(null), tHDR: v(null), tCur: v(null), tFocus: v(null), uDof: v(new T.Vector4(0, 8, 0, 0)), tHist: v(null), tCopy: v(null), tBloom: v(null), tAdapt: v(null),
-    uHalf: v(new T.Vector4(1, 1, 1, 1)), uOut: v(new T.Vector4(1, 1, 1, 1)), uJit: v(new T.Vector2()), uEnvMips: v(7),
+    uHalf: v(new T.Vector4(1, 1, 1, 1)), uOut: v(new T.Vector4(1, 1, 1, 1)), uJit: v(new T.Vector2()), uUp: v(new T.Vector3(1, 1, 0)), uEnvMips: v(7),
     tCanopy: v(null), uCanopyRect: v(new T.Vector4(-256, -256, 1 / 512, 1 / 512)), uCanopy: v(new T.Vector4(0, 0, 0, 0)), uSplit: v(new T.Vector4(0.3, 0.5, 0.5, 0)),
     uLightPos: v(Array.from({ length: MAXL }, () => new T.Vector4())), uLightCol: v(Array.from({ length: MAXL }, () => new T.Vector4())), uLightN: v(0),
     uExposure: v(0.3), uKey: v(0.18), uGrade: v(new T.Vector4(1, 1, 0.3, 0.02)), uTintG: v(new T.Vector3(1, 1, 1)), uLiftG: v(new T.Vector3(0, 0, 0)), uBloomMix: v(0.06), uFill: v(0.62), uShaft: v(1), uHistOk: v(0), uSharp: v(0.4), uBlend: v(0.1), uDt: v(0.016),
@@ -219,19 +219,33 @@ float skyShare(vec3 wp, vec3 N, float rnd){
 #if MIRROR_STEPS > 0
 // wet paving and puddles mirror what stands over them: the reflected ray marched through the depth buffer, and where it
 // lands, last frame's picture.  Only smooth surfaces ask (rain, ice, glass), so a dry day pays nothing.
-vec4 mirror(vec3 wp, vec3 rd, float dist, float rnd){
-  float t = (0.10 + 0.02 * dist) * (1.0 + 0.4 * rnd);
+// The ray is walked along its line on the screen, in even steps there (closer together near the foot): a pool eight
+// metres off mirrors a window thirty metres beyond it, which is a short way up the screen and a long way in metres —
+// steps counted in metres either stop short of the house or stride over it.  Where the ray is first found behind
+// something the crossing is narrowed by halving.  open: the ray reached the far end of the world, or the end of its
+// reach inside the picture, and met nothing — that is sky, not an unknown.
+vec4 mirror(vec3 wp, vec3 rd, float dist, float rnd, out float open){
+  open = 0.0; float T = MIRROR_REACH;
+  vec4 c0 = uViewProj * vec4(wp, 1.0), c1 = uViewProj * vec4(wp + rd * T, 1.0);
+  if (c1.w < 0.2) { T *= clamp((c0.w - 0.2) / max(c0.w - c1.w, 1e-4), 0.0, 1.0); c1 = uViewProj * vec4(wp + rd * T, 1.0); }      // a ray coming toward the eye stops in front of it
+  vec3 n0 = c0.xyz / c0.w, n1 = c1.xyz / c1.w; vec2 d = n1.xy - n0.xy; float sMax = 1.0;
+  if (abs(d.x) > 1e-5) sMax = min(sMax, ((d.x > 0.0 ? 1.0 : -1.0) - n0.x) / d.x);
+  if (abs(d.y) > 1e-5) sMax = min(sMax, ((d.y > 0.0 ? 1.0 : -1.0) - n0.y) / d.y);
+  float sPrev = 0.0, zPrev = viewZ(n0.z * 0.5 + 0.5);
   for (int i = 0; i < MIRROR_STEPS; i++) {
-    vec4 c = uViewProj * vec4(wp + rd * t, 1.0); if (c.w <= 0.0) break; vec3 q = c.xyz / c.w * 0.5 + 0.5;
-    if (q.x <= 0.0 || q.x >= 1.0 || q.y <= 0.0 || q.y >= 1.0 || q.z >= 1.0) break;
-    float ds = textureLod(tDepth, q.xy, 0.0).r, dz = viewZ(q.z) - viewZ(ds);
-    if (dz > 0.0 && dz < 0.7 + 0.5 * t) {
+    float s = sMax * pow((float(i) + 0.3 + 0.7 * rnd) / float(MIRROR_STEPS), 1.4); vec3 q = mix(n0, n1, s) * 0.5 + 0.5;
+    if (q.z >= 1.0) { open = 1.0; return vec4(0.0); }
+    float zr = viewZ(q.z), ds = textureLod(tDepth, q.xy, 0.0).r, dz = zr - viewZ(ds);
+    if (dz > 0.0 && dz < 0.6 + 1.6 * abs(zr - zPrev)) {
+      float a = sPrev, b = s;
+      for (int j = 0; j < MIRROR_FINE; j++) { float m = 0.5 * (a + b); vec3 qm = mix(n0, n1, m) * 0.5 + 0.5; float dm = textureLod(tDepth, qm.xy, 0.0).r;
+        if (viewZ(qm.z) > viewZ(dm)) { b = m; q = qm; ds = dm; } else a = m; }
       vec4 pc = uPrevViewProj * vec4(worldAt(q.xy, ds), 1.0); vec2 pu = pc.xy / pc.w * 0.5 + 0.5, e = min(pu, 1.0 - pu);
       return vec4(min(textureLod(tHist, pu, 0.0).rgb, vec3(24.0)), pc.w > 0.0 ? smoothstep(0.0, 0.07, min(e.x, e.y)) : 0.0);
     }
-    t *= 1.3;
+    sPrev = s; zPrev = zr;
   }
-  return vec4(0.0);
+  open = sMax < 1.0 ? 0.0 : 1.0; return vec4(0.0);
 }
 #endif
 vec3 specGGX(vec3 f0, float a2, float NoH, float NoV, float NoL, float VoH){
@@ -289,7 +303,11 @@ void main(){
     float so = sat(pow(NoV + ao, exp2(-16.0 * rough - 1.0)) - 1.0 + ao);
     vec3 seen = envAt(normalize(Rr), rough * (uEnvMips - 1.5)) * mix(1.0, skyVis, 0.85);
 #if MIRROR_STEPS > 0
-    if (rough < 0.46 && uHistOk > 0.5 && dist < 60.0) { vec3 mr = reflect(-V, N); if (mr.y > -0.2) { vec4 m = mirror(wp + N * 0.03, mr, dist, rnd); seen = mix(seen, m.rgb, m.a * smoothstep(0.46, 0.22, rough) * smoothstep(60.0, 40.0, dist)); } }
+    if (rough < 0.46 && uHistOk > 0.5 && dist < 60.0) { vec3 mr = reflect(-V, N);
+      mr = normalize(mr + (vec3(fract(rnd * 7.13), fract(rnd * 3.71), fract(rnd * 11.3)) - 0.5) * rough * 0.5);      // a rougher film spreads it: a lamp draws out into a streak
+      if (mr.y > -0.2) { float open, k = smoothstep(0.46, 0.22, rough) * smoothstep(60.0, 40.0, dist); vec4 m = mirror(wp + N * 0.03, mr, dist, rnd, open);
+        seen = mix(seen, envAt(normalize(Rr), rough * (uEnvMips - 1.5)), open * k);      // nothing in the ray's way: the sky itself, not the share of it a lane is allowed
+        seen = mix(seen, m.rgb, m.a * k); } }
 #endif
     col += seen * envBRDF(f0, rough, NoV) * so;
     // lamps, hearths, torches
@@ -312,8 +330,23 @@ void main(){
   // ── temporal resolve: reproject, clip the history to what the neighbourhood allows, blend — onto the canvas grid ─
   const taaFS = `//#include head
 //#include frame
-in vec2 vUv; out vec4 o; uniform sampler2D tCur, tHist, tDepth; uniform vec2 uJit; uniform float uBlend;
+in vec2 vUv; out vec4 o; uniform sampler2D tCur, tHist, tDepth; uniform vec2 uJit; uniform float uBlend; uniform vec4 uOut; uniform vec3 uUp;      // uUp: canvas pixels a frame pixel, the mean of the weight below, 1 while resolving up
 vec3 tm(vec3 c){ return c / (1.0 + max(c.r, max(c.g, c.b))); } vec3 itm(vec3 c){ return c / max(1.0 - max(c.r, max(c.g, c.b)), 1e-3); }
+// The history is read where this pixel was a frame ago — between texels whenever the eye moves.  Read with two-by-two
+// weights it loses a little sharpness every frame, and a walk is all motion: the picture goes soft and stays soft.
+// A Catmull-Rom read (five taps for the nine that matter) keeps what the history had; the clip below takes its ringing.
+vec3 histAt(vec2 uv){
+#ifdef HIST_CUBIC
+  vec2 p = uv * uOut.xy, c = floor(p - 0.5) + 0.5, f = p - c;
+  vec2 w0 = f * (-0.5 + f * (1.0 - 0.5 * f)), w1 = 1.0 + f * f * (-2.5 + 1.5 * f), w2 = f * (0.5 + f * (2.0 - 1.5 * f)), w3 = f * f * (-0.5 + 0.5 * f);
+  vec2 w12 = w1 + w2, t0 = (c - 1.0) * uOut.zw, t3 = (c + 2.0) * uOut.zw, t12 = (c + w2 / w12) * uOut.zw;
+  vec4 r = vec4(textureLod(tHist, vec2(t12.x, t0.y), 0.0).rgb, 1.0) * (w12.x * w0.y) + vec4(textureLod(tHist, vec2(t0.x, t12.y), 0.0).rgb, 1.0) * (w0.x * w12.y)
+         + vec4(textureLod(tHist, t12, 0.0).rgb, 1.0) * (w12.x * w12.y) + vec4(textureLod(tHist, vec2(t3.x, t12.y), 0.0).rgb, 1.0) * (w3.x * w12.y) + vec4(textureLod(tHist, vec2(t12.x, t3.y), 0.0).rgb, 1.0) * (w12.x * w3.y);
+  return max(r.rgb / r.a, vec3(0.0));
+#else
+  return textureLod(tHist, uv, 0.0).rgb;
+#endif
+}
 vec3 ycc(vec3 c){ return vec3(dot(c, vec3(0.25, 0.5, 0.25)), dot(c, vec3(0.5, 0.0, -0.5)), dot(c, vec3(-0.25, 0.5, -0.25))); }
 vec3 rgb(vec3 c){ return vec3(c.x + c.y - c.z, c.x + c.z, c.x - c.y - c.z); }
 void main(){
@@ -325,9 +358,15 @@ void main(){
   vec3 c = ycc(tm(textureLod(tCur, uv, 0.0).rgb)), m1 = c, m2 = c * c;
   for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) { if (i == 0 && j == 0) continue; vec3 s = ycc(tm(textureLod(tCur, uv + vec2(float(i), float(j)) * tx, 0.0).rgb)); m1 += s; m2 += s * s; }
   m1 /= 9.0; vec3 sd = sqrt(max(m2 / 9.0 - m1 * m1, 0.0)) * 1.15 + 0.004;
-  vec3 h = ycc(tm(textureLod(tHist, puv, 0.0).rgb));
+  vec3 h = ycc(tm(histAt(puv)));
   h = clamp(h, m1 - sd, m1 + sd);
-  float a = uBlend; if (puv.x < 0.0 || puv.y < 0.0 || puv.x > 1.0 || puv.y > 1.0 || pc.w <= 0.0) a = 1.0;
+  float a = uBlend;
+  // Resolving up: the frame has fewer pixels than the canvas, so this canvas pixel's sample of it fell somewhere within
+  // a frame pixel of it.  Taken at the same weight every frame, the result is the frame stretched — as soft as the frame
+  // is small, however long it is held.  So a pixel listens to a frame by how near its sample fell: over a jitter cycle
+  // each canvas pixel is made of the samples that landed on it, and a still view comes up to the canvas's own detail.
+  if (uUp.z > 0.5 && a < 1.0) { vec2 q = uv * uRes.xy, dq = (q - floor(q) - 0.5) * uUp.x; a *= clamp(exp(-2.29 * dot(dq, dq)) / uUp.y, 0.2, 2.2); }      // never deaf to a frame (what moves must not linger), never all ear (one sample is noise)
+  if (puv.x < 0.0 || puv.y < 0.0 || puv.x > 1.0 || puv.y > 1.0 || pc.w <= 0.0) a = 1.0;
   o = vec4(itm(rgb(mix(h, c, a))), 1.0);
 }`;
   const copyFS = `//#include head
@@ -488,8 +527,8 @@ void main(){
     R.mAOB = LR.pass(aoBlurFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tAO: v(null), uHalf: PU.uHalf }));
     if (R.giOn) { R.mGI = LR.pass(giFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tG1: PU.tG1, tHist: v(null), uHalf: PU.uHalf }), { defines: { GI_RAYS: tier.gi | 0, GI_STEPS: 8, GI_DEBUG: LR.qn('gidbg', 0) | 0 } }); R.mGIB = LR.pass(giBlurFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tGI: v(null), uHalf: PU.uHalf })); }
     R.mAir = LR.pass(airFS, Object.assign(LR.uni(FRAME + ' ' + AIRU + ' ' + SHU), S, { tDepth: PU.tDepth, uHalf: PU.uHalf, uEnvMips: PU.uEnvMips, tCanopy: PU.tCanopy, uCanopyRect: PU.uCanopyRect, uCanopy: PU.uCanopy, uShaft: PU.uShaft }), { defines: { AIR_STEPS: tier.vol, AIR_REACH: '150.0', SHAFT_STEPS: LR.off.has('shafts') ? 0 : tier.vol >= 24 ? 36 : tier.vol >= 16 ? 28 : tier.vol >= 12 ? 20 : 0 } });
-    R.mLight = LR.pass(lightFS, Object.assign(LR.uni(FRAME + ' ' + AIRU + ' ' + SHU + ' uShadowZ uTopo uTopoRect'), S, { tG0: PU.tG0, tG1: PU.tG1, tG2: PU.tG2, tDepth: PU.tDepth, tAO: PU.tAO, tAir: PU.tAir, uHalf: PU.uHalf, uEnvMips: PU.uEnvMips, tCanopy: PU.tCanopy, uCanopyRect: PU.uCanopyRect, uCanopy: PU.uCanopy, uLightPos: PU.uLightPos, uLightCol: PU.uLightCol, uLightN: PU.uLightN, uFill: PU.uFill, tGI: PU.tGI, uBounce: PU.uBounce, tHist: PU.tHistL, uHistOk: PU.uHistOk }), { defines: Object.assign(tier.name === 'low' || LR.off.has('pcss') ? {} : { PCSS: 1, PCSS_TAPS: tier.name === 'medium' ? 8 : tier.name === 'high' ? 12 : 16, PCSS_ANGLE: (Math.tan((LR.qn('pcss', 1.4) * Math.PI) / 360)).toFixed(5), PCSS_WIDTH: '0.3' }, { SHADOW_TAPS: tier.shadowTaps, SKY_REACH: LR.off.has('skyshare') ? 0 : tier.gi >= 3 ? 2 : tier.ao > 0 ? 1 : 0, CONTACT_STEPS: LR.off.has('contact') ? 0 : tier.contact | 0, MIRROR_STEPS: LR.off.has('mirror') || tier.ssr < 18 ? 0 : tier.ssr >= 26 ? 20 : 14 }, LR.qn('dbg', 0) ? { DEBUG_VIEW: LR.qn('dbg', 0) } : {}) });
-    R.mTAA = LR.pass(taaFS, Object.assign(LR.uni(FRAME), { tCur: PU.tCur, tHist: PU.tHist, tDepth: PU.tDepth, uJit: PU.uJit, uBlend: PU.uBlend }));
+    R.mLight = LR.pass(lightFS, Object.assign(LR.uni(FRAME + ' ' + AIRU + ' ' + SHU + ' uShadowZ uTopo uTopoRect'), S, { tG0: PU.tG0, tG1: PU.tG1, tG2: PU.tG2, tDepth: PU.tDepth, tAO: PU.tAO, tAir: PU.tAir, uHalf: PU.uHalf, uEnvMips: PU.uEnvMips, tCanopy: PU.tCanopy, uCanopyRect: PU.uCanopyRect, uCanopy: PU.uCanopy, uLightPos: PU.uLightPos, uLightCol: PU.uLightCol, uLightN: PU.uLightN, uFill: PU.uFill, tGI: PU.tGI, uBounce: PU.uBounce, tHist: PU.tHistL, uHistOk: PU.uHistOk }), { defines: Object.assign(tier.name === 'low' || LR.off.has('pcss') ? {} : { PCSS: 1, PCSS_TAPS: tier.name === 'medium' ? 8 : tier.name === 'high' ? 12 : 16, PCSS_ANGLE: (Math.tan((LR.qn('pcss', 1.4) * Math.PI) / 360)).toFixed(5), PCSS_WIDTH: '0.3' }, { SHADOW_TAPS: tier.shadowTaps, SKY_REACH: LR.off.has('skyshare') ? 0 : tier.gi >= 3 ? 2 : tier.ao > 0 ? 1 : 0, CONTACT_STEPS: LR.off.has('contact') ? 0 : tier.contact | 0, MIRROR_STEPS: LR.off.has('mirror') ? 0 : tier.mirror | 0, MIRROR_REACH: '90.0', MIRROR_FINE: tier.mirror >= 24 ? 5 : tier.mirror >= 18 ? 4 : 3 }, LR.qn('dbg', 0) ? { DEBUG_VIEW: LR.qn('dbg', 0) } : {}) });
+    R.mTAA = LR.pass(taaFS, Object.assign(LR.uni(FRAME), { tCur: PU.tCur, tHist: PU.tHist, tDepth: PU.tDepth, uJit: PU.uJit, uBlend: PU.uBlend, uOut: PU.uOut, uUp: PU.uUp }), { defines: LR.off.has('cubic') ? {} : { HIST_CUBIC: 1 } });
     R.mCopy = LR.pass(copyFS, { tSrc: v(null) });
     if (LZ.on) { LZ.focA = LR.rt(1, 1, { type: G.hdrType, filter: T.NearestFilter }); LZ.focB = LR.rt(1, 1, { type: G.hdrType, filter: T.NearestFilter });
       R.mFocus = LR.pass(focusFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tPrev: v(null), uDt: PU.uDt, uDof: PU.uDof }));
@@ -531,11 +570,19 @@ void main(){
 
   // ── one frame ───────────────────────────────────────────────────────────────────────────────────────────────────
   const P0 = new T.Matrix4(), VPu = new T.Matrix4(), prevVP = new T.Matrix4();
+  // the mean, over where a sample can fall, of the weight exp(-2.29 d²) a canvas pixel gives a sample d canvas pixels away,
+  // when a frame pixel is `up` canvas pixels wide — the resolve divides by it, so the blend keeps its average
+  const erf = (x) => { const t = 1 / (1 + 0.3275911 * x); return 1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x); };
+  const upMean = (up) => { const a = (Math.sqrt(Math.PI / 2.29) * erf((Math.sqrt(2.29) * up) / 2)) / up; return a * a; };
   R.draw = (cam, time, dt) => {
     const G = LR.gpu, r = G.renderer, W = LR.world, taa = !LR.off.has('taa');
     R.frame++; r.info.reset();
     cam.updateMatrixWorld(); cam.updateProjectionMatrix(); P0.copy(cam.projectionMatrix); VPu.multiplyMatrices(P0, cam.matrixWorldInverse);
-    const k = R.frame % 16, jx = taa ? LR.halton(k + 1, 2) - 0.5 : 0, jy = taa ? LR.halton(k + 1, 3) - 0.5 : 0;
+    // resolving up to a larger canvas (never in a still, which averages its frames): more places for the sample to fall
+    // the more canvas pixels a frame pixel covers, and textures read as fine as the canvas asks (uLod)
+    const up = R.W / R.w, tu = taa && up > 1.02 && !(LR.RENDER && !R.film) && !LR.off.has('taau'), cyc = !tu || up < 1.3 ? 16 : up < 1.7 ? 24 : up < 2.2 ? 32 : 48;
+    PU.uUp.value.set(up, upMean(up), tu ? 1 : 0); U.uLod.value = taa && up > 1.02 && !LR.off.has('lodbias') ? Math.max(-1.6, -Math.log2(up)) : 0;
+    const k = R.frame % cyc, jx = taa ? LR.halton(k + 1, 2) - 0.5 : 0, jy = taa ? LR.halton(k + 1, 3) - 0.5 : 0;
     cam.projectionMatrix.elements[8] += (2 * jx) / R.w; cam.projectionMatrix.elements[9] += (2 * jy) / R.h;
     cam.projectionMatrixInverse.copy(cam.projectionMatrix).invert();
     U.uProj.value.copy(cam.projectionMatrix); U.uInvProj.value.copy(cam.projectionMatrixInverse); U.uView.value.copy(cam.matrixWorldInverse);

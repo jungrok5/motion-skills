@@ -133,7 +133,7 @@ void main(){
 #if defined(TREE) && defined(PLANT)
   { float shed = smoothstep(0.68, 0.94, uWx.w + (vAux.z - 0.5) * 0.1) * uQ.w; if (shed > 0.0 && hash12(floor(vUv * 29.0) + floor(vWorld.xz * 2.7) * 7.3 + floor(vWorld.y * 2.1)) < shed) discard; }      // winter: the crown is shed in clumps
 #endif
-  vec4 a = texture(tA, vUv), b = texture(tB, vUv);
+  vec4 a = texture(tA, vUv, uLod), b = texture(tB, vUv, uLod);
 #ifdef CUT
   { float lod = max(0.0, 0.5 * log2(max(dot(dFdx(vUv), dFdx(vUv)), dot(dFdy(vUv), dFdy(vUv))) * uCutSize * uCutSize));      // small mips lose coverage: give it back
     if (a.a * (1.0 + 0.3 * lod) < 0.5 + (ign(gl_FragCoord.xy + mod(uFrame, 16.0) * vec2(3.17, 5.91)) - 0.5) * 0.3) discard; }
@@ -157,8 +157,8 @@ void main(){
   // it grain — its light and dark over the scan's colour, its normal over the scan's.  uDet: 1 / tile, reach, colour, relief
   { float dk = smoothstep(uDet.y, uDet.y * 0.3, dist);
     if (dk > 0.003) { vec3 w3 = abs(Ng); w3 *= w3; w3 *= w3; w3 /= w3.x + w3.y + w3.z; vec3 q = vWorld * uDet.x; float L = float(DETAIL);
-      vec4 dA = texture(uMatA, vec3(q.zy, L)) * w3.x + texture(uMatA, vec3(q.xz, L)) * w3.y + texture(uMatA, vec3(q.xy, L)) * w3.z;
-      vec2 nx = nrmDec(texture(uMatB, vec3(q.zy, L)).xy).xy, ny = nrmDec(texture(uMatB, vec3(q.xz, L)).xy).xy, nz = nrmDec(texture(uMatB, vec3(q.xy, L)).xy).xy;
+      vec4 dA = texture(uMatA, vec3(q.zy, L), uLod) * w3.x + texture(uMatA, vec3(q.xz, L), uLod) * w3.y + texture(uMatA, vec3(q.xy, L), uLod) * w3.z;
+      vec2 nx = nrmDec(texture(uMatB, vec3(q.zy, L), uLod).xy).xy, ny = nrmDec(texture(uMatB, vec3(q.xz, L), uLod).xy).xy, nz = nrmDec(texture(uMatB, vec3(q.xy, L), uLod).xy).xy;
       vec3 mean = textureLod(uMatA, vec3(0.5, 0.5, L), 12.0).rgb;
       float kk = dot(dA.rgb * dA.rgb, vec3(0.3, 0.6, 0.1)) / max(0.02, dot(mean * mean, vec3(0.3, 0.6, 0.1)));
       albedo *= mix(1.0, clamp(kk, 0.5, 1.7), dk * uDet.z);
@@ -374,7 +374,7 @@ void main(){
     d.cells = [...cells.values()]; let smax = 0;
     for (const c of d.cells) { for (const i of c.ids) { c.x += C[i * 3]; c.y += C[i * 3 + 1]; c.z += C[i * 3 + 2]; } c.x /= c.ids.length; c.y /= c.ids.length; c.z /= c.ids.length;
       for (const i of c.ids) { c.r = Math.max(c.r, Math.hypot(C[i * 3] - c.x, C[i * 3 + 1] - c.y, C[i * 3 + 2] - c.z)); smax = Math.max(smax, src[i * 16 + 3]); } c.ids = Int32Array.from(c.ids); }
-    const size = Math.hypot(d.max[0] - d.min[0], d.max[1] - d.min[1], d.max[2] - d.min[2]) * smax; d.rad = size / 2; for (const c of d.cells) c.r += d.rad;
+    const size = Math.hypot(d.max[0] - d.min[0], d.max[1] - d.min[1], d.max[2] - d.min[2]) * smax; d.rad = size / 2; d.smax = smax || 1; for (const c of d.cells) c.r += d.rad;
     // how far each level reaches: by the thing's size (a barrel changes at 9 m and 26 m, a cliff face at 60 m and 170 m)
     d.far = o.far || (d.tree ? LR.clamp(size * 42, 55, 420) : d.plant ? LR.clamp(size * 30, 16, 45) : d.strewn ? LR.clamp(size * 40, 24, 70) : Math.max(30, size * 320));       // what a rule strews over the ground (twigs, stones) is not a landmark                                    // an apple is gone at 45 m, a barrel at 300
     const shadow = o.shadow || (d.plant ? (size > 0.9 ? 'mesh' : 'none') : d.strewn && size < 1.6 ? 'none' : size < 2.2 ? 'hull' : 'mesh'); d.shadowFar = d.tree ? (size > 4 ? 1e9 : 40) : d.plant ? 26 : d.strewn ? 40 : 1e9;
@@ -430,7 +430,7 @@ void main(){
       if (d.plant && order.length > 1) order.sort((a, b) => a.d - b.d);                                    // nearest first, so a full buffer drops the far ones
       for (const c of order) { const ids = c.ids, vis = c.vis;
         for (let q = 0; q < ids.length; q++) { const o = ids[q] * 16, o3 = ids[q] * 3, ex = C[o3] - cx, ey = C[o3 + 1] - cy, ez = C[o3 + 2] - cz, dd = Math.sqrt(ex * ex + ey * ey + ez * ez); if (dd > far) continue;
-          if (vis) { let l = 0; while (l < nl - 1 && dd > L[l] * k) l++; if (cnt[l] < cap) { const arr = B[l].array, t = cnt[l]++ * 16; for (let e = 0; e < 16; e++) arr[t + e] = src[o + e]; arr[t + 13] = dd > far * 0.8 ? (dd - far * 0.8) / (far * 0.2) : 0; } }
+          if (vis) { let l = 0; const kk = k * Math.max(0.45, src[o + 3] / d.smax); while (l < nl - 1 && dd > L[l] * kk) l++;      /* the distances are the largest copy's: a boulder half its size changes level at half the distance */ if (cnt[l] < cap) { const arr = B[l].array, t = cnt[l]++ * 16; for (let e = 0; e < 16; e++) arr[t + e] = src[o + e]; arr[t + 13] = dd > far * 0.8 ? (dd - far * 0.8) / (far * 0.2) : 0; } }
           if (S && dd < sfar && ns < cap) { const t = ns++ * 16; for (let e = 0; e < 16; e++) S[t + e] = src[o + e]; } } }
       for (let l = 0; l < nl; l++) { const n = cnt[l], b = B[l]; for (const m of d.mesh[l]) { m.visible = n > 0; m.geometry.instanceCount = n; }
         if (n) { b.clearUpdateRanges(); b.addUpdateRange(0, n * 16); b.needsUpdate = true; I.inst += n; I.tris += n * d.tri[l]; I.calls += d.mesh[l].length; } }

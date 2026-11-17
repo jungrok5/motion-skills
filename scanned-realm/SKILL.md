@@ -66,7 +66,7 @@ lake, with a second, different list of scans and young scanned firs at the edge 
 | `scripts/fetch-assets.mjs` | `assets.json` → `assets/` (maps, models, leaf atlases, `manifest.json` with real sizes, server addresses, triangle counts, megabytes and every model's measured boxes, `CREDITS.md`) from Poly Haven's API, with `curl`; which maps per asset (`"maps": "d"`); a tree's foliage cut-outs (`leaves_alpha`, `twigs_alpha`); `"heavy": true` |
 | `scripts/build.mjs` | sources + engine + the manifest → `index.html`; `--cdn` makes the page read the scans from Poly Haven's server; `--out file` |
 | `scripts/check.mjs` | loads clean · **every scan arrived and baked**, copies per scanned model, the scans' triangles per view, dense scans without levels · the world can be walked (spawn, views, the whole tour) · every state reads · budgets; `--walk` does only the walking part and draws the walk map |
-| `scripts/render.mjs` | the material sheet (`--mats`), stills (`--shot`, `--views`; a shot takes `up=` metres above the ground, `dof=` and `focus=` for the lens), every view in every state (`--sheet`), stills along the tour (`--tour 12`), a film (`--film`) |
+| `scripts/render.mjs` | the material sheet (`--mats`), stills (`--shot`, `--views`; a shot takes `up=` metres above the ground, `dof=` and `focus=` for the lens), every view in every state (`--sheet`), stills along the tour (`--tour 12`), what a phone shows (`--phone`), a film (`--film`) |
 | `scripts/new-realm.mjs` | start a realm folder from the starter or `--from village` (with its `assets.json`) |
 | `lib/15_materials.js` · `16_matlib.js` | the material baker — a tileable GLSL function **or a scan's four maps** → two texture arrays — `LR.mat.photo`, and the stock recipes (the twins) |
 | `lib/47_models.js` | `LR.models`: a small glTF reader, maps re-baked per model (repeated where a kit's walls tile), levels of detail (meshoptimizer), instancing and per-frame culling by each copy's own middle, cut-out plants, **whole trees** (`tree: true`), `place`, `scatter`, sets (`id#k`), `arrange` and `swing` for the pieces of a kit, stand-ins for the kit's barrel / crate / stump / rock, kits (`goods:…`, `yard`, `weeds`), streaming, heavy scans |
@@ -141,6 +141,8 @@ Node 18+ with Playwright Chromium, `curl`, ffmpeg (sheets and films); network ac
    with `--q "scan=0"`: if the scans did not make it better, the choice or the tone is wrong.
    `node scanned-realm/scripts/check.mjs my-realm` must print `check OK`; then `render.mjs --sheet` and the review in
    `references/BRIEF.md`. Read the check's `scans … × … M tris` per view: a view should pay 0.1–0.3 M for them.
+   `render.mjs my-realm --phone` shows what a phone gets (the tour at a phone's canvas, tier and scale, as its screen
+   stretches it, without the heavy scans): the stills are 1280 × 720 at full scale and say nothing about that.
    Open the page from a server on a machine with a GPU and walk it; `?prof=1` shows the milliseconds a pass.
 9. **Deliver.** The folder (`index.html` + `assets/`) on any static host, or `build.mjs my-realm --cdn --out realm.html`
    for one file that reads from Poly Haven. Say which, how many megabytes arrive, and where the look stops.
@@ -208,8 +210,9 @@ Node 18+ with Playwright Chromium, `curl`, ffmpeg (sheets and films); network ac
   (seconds before a scan is given up), `?go=1` (do not wait for a press inside a frame or on a phone), `?prof=1`
   (milliseconds a pass), `?pcss=1.4` (how wide the sun is taken to be, degrees), `?dof=1` (how much lens the tour
   has; 0 none), `?heavy=0|1` (leave out or force the heavy scans), `?keep=1` (do not let go of vertex copies),
-  `?q=low|medium|high|ultra`, `?scale=`, `?mat=512`,
-  `?off=ao,gi,skyshare,shadow,pcss,contact,mirror,shafts,bloom,taa,dof,notile,grass,fx,water,ssr,audio`,
+  `?q=low|medium|high|ultra`, `?scale=`, `?fps=60` (the frame rate the resolution governor holds; a phone's is 30),
+  `?dpr=` (canvas pixels a CSS pixel), `?mat=512`,
+  `?off=ao,gi,skyshare,shadow,pcss,contact,mirror,shafts,bloom,taa,taau,lodbias,cubic,dof,notile,grass,fx,water,ssr,audio`,
   `?tod=`, `?wx=clear|rain|snow|winter|autumn`, `?wet=1&puddle=1`, `?tour=0`, `?auto=0`, `?at=x,z,yaw`, `?stats=1`, `?hud=0`, `?view=mats`.
 - Still mode `?render=1&w=&h=`: `window.realm = { canvas, shot({ cam, up, tod, weather, season, snow, wet, frames, t,
   dof, focus }) → info, info(), place(), filmStart(fps), filmFrame(), LR }`. Keys: `L` the lens while walking.

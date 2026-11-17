@@ -7,7 +7,11 @@
       LR.cfg = cfg;
       const canvas = document.getElementById('view'); LR.watchContext(canvas, cfg); const G = LR.initGPU(canvas), r = G.renderer;
       if (LR.RENDER) document.body.classList.add('render');
-      const size = () => { if (LR.RENDER) return [LR.qn('w', 1280), LR.qn('h', 720)]; const d = Math.min(window.devicePixelRatio || 1, G.tier.dprCap); return [Math.round(window.innerWidth * d), Math.round(window.innerHeight * d)]; };
+      // the canvas: on a desktop the tier's pixels a CSS pixel.  A phone or tablet gets two whatever the tier (its screen
+      // has three; at one and a half, stretched, the page looked out of focus) and 2.4 M pixels at most (a tablet at two is
+      // over 5 M); one that holds full scale with frames to spare is given two and a half (G.dprUp, set by the governor).
+      // ?dpr= pins it.
+      const size = () => { if (LR.RENDER) return [LR.qn('w', 1280), LR.qn('h', 720)]; let d = Math.min(window.devicePixelRatio || 1, LR.qn('dpr', 0) || (G.mobile ? Math.max(2, G.tier.dprCap) * (G.dprUp || 1) : G.tier.dprCap)); const px = window.innerWidth * window.innerHeight * d * d, lim = G.mobile ? 2.4e6 : 0; if (lim && px > lim) d *= Math.sqrt(lim / px); return [Math.round(window.innerWidth * d), Math.round(window.innerHeight * d)]; };
       // a page shown inside another page (a samples site's frame), on a phone, or with data saving on does not pull tens
       // of megabytes of scans unasked: it waits for a press, and says how much.  Elsewhere it starts at once.  ?go=1 skips the wait.
       if (!LR.RENDER && LR.ASSETS && LR.q('scan') !== '0' && !LR.q('go') && (window.self !== window.top || G.mobile || (navigator.connection && navigator.connection.saveData))) await new Promise((go) => {
@@ -23,7 +27,7 @@
       if (LR.q('view') === 'mats') { const [w, h] = size(); r.setSize(w, h, false); const sh = LR.mat.sheet(6); r.setRenderTarget(null); r.setViewport(0, 0, w, h); LR.blit(sh.material, null); window.realm = { canvas, info: () => ({ names: sh.names }) }; document.getElementById('veil').classList.add('gone'); window.READY = true; return; }
       LR.sky.init(); LR.render.initShadow(); LR.render.initPost();
       const cam = (LR.cam = new T.PerspectiveCamera(58, 16 / 9, 0.15, 9000)); cam.rotation.order = 'YXZ';
-      const [w0, h0] = size(); LR.render.scale = LR.RENDER ? LR.qn('scale', 1) : LR.qn('scale', G.mobile || G.auto ? (G.tier.scaleMin + G.tier.scaleMax) / 2 : G.tier.scaleMax);      /* a guessed tier starts in the middle of its range: the governor raises it if the frames allow */ LR.render.resize(w0, h0);
+      const [w0, h0] = size(); LR.render.scale = LR.RENDER ? LR.qn('scale', 1) : LR.qn('scale', G.mobile || G.auto || G.safe ? (G.tier.scaleMin + G.tier.scaleMax) / 2 : G.tier.scaleMax);      /* a guessed tier starts in the middle of its range: the governor raises it if the frames allow */ LR.render.resize(w0, h0);
       LR.progress(0.34, 'land'); await LR.breath();
       if (cfg.build) await cfg.build(LR);
       LR.progress(0.8, 'plants'); await LR.breath();
@@ -36,7 +40,7 @@
       LR.emit('init');
       if (!LR.RENDER && LR.q('warm') !== '0') { LR.progress(0.95, 'shaders'); await LR.breath(); await LR.warm([LR.world.scene, LR.world.shadowScene, LR.world.forward], cam, (i, n) => LR.progress(0.95 + 0.05 * (i / n), 'shaders')); }
       const fit = () => { const [w, h] = size(); if (w !== LR.render.W || h !== LR.render.H) LR.render.resize(w, h); cam.aspect = LR.render.W / LR.render.H; cam.fov = cam.aspect >= 1.25 ? 58 : LR.clamp((2 * Math.atan(Math.tan((58 * Math.PI) / 360) * (1.25 / cam.aspect)) * 180) / Math.PI, 58, 86); cam.updateProjectionMatrix(); };
-      fit(); if (!LR.RENDER) window.addEventListener('resize', fit);
+      fit(); LR.fit = fit; if (!LR.RENDER) window.addEventListener('resize', fit);
       const P = LR.player, sp = LR.world.spawn;
       // put the eye somewhere by hand (stills): x, z, compass yaw°, pitch°, y
       const place = (x, z, yawDeg, pitchDeg = 0, y) => { const gy = P.groundAt(x, z).y; /* the deck of a bridge or a pier, ice in winter, else the land */ cam.position.set(x, y === undefined || isNaN(y) ? gy + P.eye : y, z); cam.rotation.set((pitchDeg * Math.PI) / 180, (-yawDeg * Math.PI) / 180, 0); };

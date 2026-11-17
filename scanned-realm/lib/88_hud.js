@@ -115,12 +115,15 @@
       if (E.num && E.num.style.display !== 'none') E.num.textContent = `${fps.toFixed(0)} fps\n${R.w}×${R.h} (${R.scale.toFixed(2)}×)\n${G.tierName}${G.auto ? ' · auto' : ''}\n${R.info.allCalls} calls · ${(R.info.tris / 1e6).toFixed(2)} M tris\n${R.info.lights || 0} lights${R.info.scans && R.info.scans.inst ? `\nscans ${R.info.scans.inst} × ${(R.info.scans.tris / 1e6).toFixed(2)} M` : ''}${R.prof && R.prof.on ? R.prof.text() : ''}`;
       // governor: hold the display's rate by trading internal resolution; probe upward when there is room
       if (LR.q('scale') === null || LR.q('scale') === undefined) {
-        const target = Math.min(H.refresh || 60, 60), lo = G.tier.scaleMin, hi = Math.min(G.tier.scaleMax, capScale);
+        const target = Math.min(H.refresh || 60, LR.qn('fps', G.mobile ? 30 : 60)), lo = G.tier.scaleMin, hi = Math.min(G.tier.scaleMax, capScale);      // a phone holds thirty and spends the rest on pixels: a soft picture at sixty reads as out of focus (?fps=60 asks for sixty)
         if (sec > 2.5) {
           if (fps < target * 0.86) { slowFor += 0.5; okFor = 0; } else if (fps > target * 0.95) { okFor += 0.5; slowFor = 0; } else { slowFor = 0; okFor = 0; }
           if (slowFor >= 1 && R.scale > lo + 0.01) { if (H.probing) { capScale = Math.max(lo, R.scale - 0.1); wait = Math.min(60, wait * 2); H.probing = false; } R.setScale(Math.max(lo, R.scale - (fps < target * 0.6 ? 0.2 : 0.1))); slowFor = 0; }
           else if (okFor >= wait && R.scale < hi - 0.01) { R.setScale(Math.min(hi, R.scale + 0.1)); okFor = 0; H.probing = true; }
           else if (okFor >= 2 && H.probing) { H.probing = false; }
+          // a phone that holds full scale with frames to spare has pixels left on its screen: its canvas goes from two a CSS
+          // pixel to two and a half, once.  The scale steps down so the same pixels are drawn at first; the governor goes on from there
+          if (G.mobile && !G.dprUp && LR.fit && (window.devicePixelRatio || 1) > 2.2 && !LR.q('dpr') && R.scale >= G.tier.scaleMax - 0.01 && fps > target * 1.5) { H.spare = (H.spare || 0) + 0.5; if (H.spare >= 6) { G.dprUp = 1.25; R.scale = R.scale / 1.25; LR.fit(); okFor = 0; } } else H.spare = 0;
           // a device far below the tier it was given: step the whole tier down once
           if (G.auto && R.scale <= lo + 0.01 && fps < 22) { H.slowTier = (H.slowTier || 0) + 0.5; if (H.slowTier > 5 && G.tierName !== 'low' && !LR.q('stepped')) { const order = ['low', 'medium', 'high', 'ultra'], nx = order[Math.max(0, order.indexOf(G.tierName) - 1)]; const u = new URL(location.href); u.searchParams.set('stepped', '1'); history.replaceState(null, '', u); H.reload(nx); } } else H.slowTier = 0;
         }

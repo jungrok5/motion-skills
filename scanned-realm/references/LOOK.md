@@ -119,10 +119,12 @@ Front-lit noon is the flattest hour of any engine; open the page late in the aft
   the whole trees), from `assets/` or from Poly Haven's server — the first seconds are the generated place, and things
   appear in it; the trees come last, and each takes a second or two to be given its levels. Offline, or with `?scan=0`, it stays
   generated: a different, flatter picture.
-- Wet paving, puddles and ice mirror what stands over them the same way on `high` and above (lamps and lit windows
-  in a square after rain); below that they mirror the sky.
+- Wet paving, puddles and ice mirror what stands over them on every tier — the house across the square and its lit
+  windows, a lamp drawn out into a streak on the wet stone beside the pool, the sky where nothing stands — by a ray
+  marched through the depth buffer (8 steps on `low` to 24 on `ultra`, then narrowed onto the crossing). What is off
+  the screen is not there to be mirrored: the pool shows the sky in its place.
 - Water mirrors what is on the screen above it (a ray marched through the depth buffer: trees on the far bank, a
-  bridge, a pier) and the sky elsewhere; what is off-screen or hidden behind something is not mirrored, and puddles
-  on the ground mirror the sky and the lamps' highlights only.
+  bridge, a pier) and the sky elsewhere; what is off-screen or hidden behind something is not mirrored — in water
+  and in puddles alike.
 - Lamps do not cast shadows; interiors do not exist (windows are lit glass).
 - No characters. A walker's body, villagers or animals would need a rig, clips and the body checks in CONTRIBUTING.md.

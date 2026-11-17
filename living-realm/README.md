@@ -16,6 +16,7 @@ node living-realm/scripts/check.mjs  living-realm/examples/village --walk # only
 node living-realm/scripts/render.mjs living-realm/examples/village --views           # → out/<view>.jpg
 node living-realm/scripts/render.mjs living-realm/examples/village --sheet --scale .5   # every view × day, dusk, night, rain, snow
 node living-realm/scripts/render.mjs living-realm/examples/village --tour 12 --scale .5 # twelve stills along the tour, as its camera looks
+node living-realm/scripts/render.mjs living-realm/examples/village --phone             # → out/phone.jpg: what a phone shows (its canvas, tier and scale)
 
 # a realm of your own
 node living-realm/scripts/new-realm.mjs my-realm            # from the starter (Tarn Cabin); write BRIEF.md first

@@ -26,6 +26,7 @@ node scanned-realm/scripts/check.mjs  scanned-realm/examples/village         # l
 node scanned-realm/scripts/render.mjs scanned-realm/examples/village --mats            # → out/mats.jpg: every material layer
 node scanned-realm/scripts/render.mjs scanned-realm/examples/village --views           # → out/<view>.jpg
 node scanned-realm/scripts/render.mjs scanned-realm/examples/village --sheet --scale .5   # every view × day, dusk, night, rain, snow
+node scanned-realm/scripts/render.mjs scanned-realm/examples/village --phone           # → out/phone.jpg: what a phone shows (its canvas, tier and scale)
 node scanned-realm/scripts/build.mjs  scanned-realm/examples/village --cdn --out realm.html   # one file that reads the scans from Poly Haven's server
 
 # a realm of your own
@@ -40,7 +41,8 @@ round · **C** the tour · **L** the lens while you walk (the tour always has it
 numbers. The walk is a first-person eye: there is no body
 to see. It starts at once on the generated place and the scans arrive while you walk. Options: `?scan=0` (the generated
 recipes only, to compare), `?stream=0` (wait for every scan first), `?prof=1` (milliseconds a pass, measured by the
-graphics card), `?dof=0` (no lens), `?heavy=0` (without the whole trees), `?q=low|medium|high|ultra`, `?tod=19.5`,
+graphics card), `?dof=0` (no lens), `?heavy=0` (without the whole trees), `?q=low|medium|high|ultra`, `?fps=60` (a phone holds
+thirty frames a second and spends the rest on pixels; this asks for sixty), `?tod=19.5`,
 `?wx=rain`, `?tour=0`.
 
 Requirements: Node 18+ with Playwright Chromium, `curl`, ffmpeg (sheets and films), and the network when fetching.

@@ -3,7 +3,7 @@
 {
   const T = THREE, U = LR.U;
   const R = (LR.render = { frame: 0, scale: 1, info: {} });
-  const FRAME = 'uTime uFrame uRes uCamPos uNearFar uViewProj uInvViewProj uPrevViewProj uView uProj uInvProj uWx uWx2 uWind uNoise';
+  const FRAME = 'uTime uFrame uRes uCamPos uNearFar uViewProj uInvViewProj uPrevViewProj uView uProj uInvProj uWx uWx2 uWind uNoise uLod';
   R.FRAME = FRAME;
 
   // ── built things ────────────────────────────────────────────────────────────────────────────────────────────────
@@ -41,12 +41,12 @@ void main(){
   // relief: walk the eye's ray down through the height field (eight layers, then one interpolation) so stones stand
   // out of their joints and slide against each other as you pass
   if (P.w > 0.0) { vec3 V = normalize(uCamPos - vWorld); vec3 vt = vec3(dot(V, tbn[0]), dot(V, tbn[1]), dot(V, tbn[2])); float fade = smoothstep(24.0, 9.0, distance(uCamPos, vWorld));
-    if (fade > 0.0 && vt.z > 0.02) { vec2 gx = dFdx(vUv), gy = dFdy(vUv), shift = vt.xy / max(vt.z, 0.3) * P.w * fade * 1.6, st = shift / 8.0, cu = uv + shift * 0.38;
+    if (fade > 0.0 && vt.z > 0.02) { vec2 gx = dFdx(vUv) * LODK, gy = dFdy(vUv) * LODK, shift = vt.xy / max(vt.z, 0.3) * P.w * fade * 1.6, st = shift / 8.0, cu = uv + shift * 0.38;
       float cur = 0.0, dep = 1.0 - textureGrad(uMatA, vec3(cu, layer), gx, gy).a, prevDep = dep;
       for (int i = 0; i < 8; i++) { if (cur >= dep) break; cu -= st; cur += 0.125; prevDep = dep; dep = 1.0 - textureGrad(uMatA, vec3(cu, layer), gx, gy).a; }
       float after = dep - cur, before = prevDep - cur + 0.125; uv = mix(cu, cu + st, sat(after / min(after - before, -1e-4))); } }
 #endif
-  vec4 a = texture(uMatA, vec3(uv, layer)), b = texture(uMatB, vec3(uv, layer));
+  vec4 a = texture(uMatA, vec3(uv, layer), uLod), b = texture(uMatB, vec3(uv, layer), uLod);      // uLod: as fine as the canvas asks, when the frame is smaller than the canvas
   vec3 tint = vCol.rgb * 2.0; tint *= tint;
   if (Q.z > 0.0) tint = mix(vec3(1.0), tint, smoothstep(0.36, 0.47, a.a));               // where the paint has flaked the wood is its own colour
   vec3 albedo = a.rgb * a.rgb * tint;
@@ -68,7 +68,7 @@ void main(){
     float big = texture(uNoise, wq * 0.043 + 0.13).b, mid = texture(uNoise, wq * 0.21 + 0.4).r, fine = texture(uNoise, wq * 1.1).g;
     float lost = smoothstep(0.405, 0.45, big * 0.62 + mid * 0.30 + fine * 0.07 + (1.0 - vCol.a) * 0.22 - 0.26);
     if (lost > 0.0) {
-      vec2 bu = wq * 0.72; vec4 ba = texture(uMatA, vec3(bu, float(BRICK_LAYER))), bb = texture(uMatB, vec3(bu, float(BRICK_LAYER)));
+      vec2 bu = wq * 0.72; vec4 ba = texture(uMatA, vec3(bu, float(BRICK_LAYER)), uLod), bb = texture(uMatB, vec3(bu, float(BRICK_LAYER)), uLod);
       float rim = lost * (1.0 - lost) * 4.0;
       albedo = mix(albedo, ba.rgb * ba.rgb * (0.78 + 0.3 * mid), lost) * (1.0 - 0.45 * rim);
       N = normalize(mix(N, tbn * nrmDec(bb.xy), lost)); rough = mix(rough, bb.z, lost); ao *= mix(1.0, 0.86 * bb.w, lost); h = mix(h, ba.a * 0.6, lost);
@@ -185,7 +185,7 @@ void lay(float layer, float w, vec2 uv, vec2 dx, vec2 dy){
 void main(){
   vec3 Ng = normalize(vN); float dist = distance(vWorld, uCamPos), inner = vBiome.a;
   vec2 luv = (vWorld.xz - uLandRect.xy) * uLandRect.zw; vec4 sp = texture(uSplat, luv), cv = texture(uCover, luv);
-  vec2 xz = vWorld.xz, dx = dFdx(xz), dy = dFdy(xz);
+  vec2 xz = vWorld.xz, dx = dFdx(xz) * LODK, dy = dFdy(xz) * LODK;
   vec4 nz = texture(uNoise, xz * 0.031);
   float slope = 1.0 - Ng.y;
   // turf: the grass colour law, with the texture as detail around it
@@ -195,7 +195,7 @@ void main(){
   { vec2 oa, ob, u2 = uvT * 0.19 + 0.37, gx = dx * uTiles.x * 0.19, gy = dy * uTiles.x * 0.19; float f = ntPick(xz * NT_PATCH * 0.23 + 31.0, float(L_TURF), oa, ob);       // the far copy: wider patches
     ta2 = mix(textureGrad(uMatA, vec3(u2 + oa, float(L_TURF)), gx, gy), textureGrad(uMatA, vec3(u2 + ob, float(L_TURF)), gx, gy), smoothstep(0.3, 0.7, f)); }
 #else
-  vec4 ta = texture(uMatA, vec3(uvT, float(L_TURF))), tb = texture(uMatB, vec3(uvT, float(L_TURF)));
+  vec4 ta = texture(uMatA, vec3(uvT, float(L_TURF)), uLod), tb = texture(uMatB, vec3(uvT, float(L_TURF)), uLod);
   vec4 ta2 = texture(uMatA, vec3(uvT * 0.19 + 0.37, float(L_TURF)));
 #endif
   vec3 detail = ta.rgb * ta.rgb / vec3(0.085, 0.150, 0.026); detail = mix(detail, ta2.rgb * ta2.rgb / vec3(0.085, 0.150, 0.026), smoothstep(12.0, 60.0, dist));

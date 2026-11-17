@@ -477,3 +477,38 @@ this when asked; do not let "no GPU here" stand in for it.
   work: each owned named files only and was forbidden the rest; each had to render stills and judge them against the
   reference frames; anything they wanted changed in a shared file came back as a note, not an edit (that is how the
   shadow-atlas limit and the turf tiling were found).
+
+**On a phone the picture looked out of focus — from its first frame.** The owner's words: not crisp, hazy, as if the
+focus were off, and so from the start. Nothing here had looked at a phone's picture at a phone's size: every still
+was 1280 × 720 at full scale. Rendered the way a phone ran it (the tour's frames at the canvas and scale of the `low`
+tier, stretched to the screen's 1170 pixels), the cause was plain, and it was three things on top of each other.
+(1) *Too few pixels.* `low` drew 0.4–0.8 of a canvas of 1.5 pixels a CSS pixel: 350 pixels across at the start, and
+the governor, chasing sixty frames a second on a device that could not reach them at any size, took it to 230 within
+seconds. (2) *The resolve did not resolve.* It took every frame at the same weight wherever that frame's sample had
+fallen, which adds up to the small frame stretched — held still for a minute it was as soft as in the first second.
+(3) *Textures were read for the small frame*, a level coarser than the canvas could show. *Fix:* a phone's canvas has
+two pixels a CSS pixel on any tier and its governor aims at thirty frames a second (`?fps=60` for sixty), from 0.7 of
+the canvas; a canvas pixel listens to a frame by how near that frame's sample fell to it, with more places for the
+sample to fall the smaller the frame; the history is read with a Catmull-Rom filter, so a walk does not blur it a
+little every frame; textures take a level bias of log2 of the scale; `low` filters them at four samples of
+anisotropy, not two. The same applies on any device whose frame is smaller than its canvas — every guessed tier starts
+in the middle of its range. *Rule:* judge the page at the size and scale its visitors get, not at the size the stills
+are made; and a resolve that is called "upsampling" must be shown to gain detail on a still view (`?off=taau` against
+not, at `?scale=0.5`).
+
+**"Do the puddles mirror the light and the sky?" — asked, and the honest answer was "the sky, and a glint".** The
+mirror on wet ground marched the reflected ray in steps that grew by 1.3: fourteen of them on `high` reach ten metres
+from a puddle eight metres off, and a lit window across a square needs fifteen — so by night a pool showed a dark sky
+and nothing of the house behind it; `medium` and `low`, which is every phone, had no mirror at all. Nobody had put a
+pool between the eye and a house in a still, so nothing showed it. *Fix:* the ray is walked along its line on the
+screen, in even steps there, not in metres — a window thirty metres beyond a pool is a short way up the screen — 8 /
+12 / 18 / 24 steps by tier, on every tier; the crossing is narrowed by halving once the ray is found behind
+something; a ray that ran its whole reach and met nothing is given the sky itself (not the share of sky a lane is
+allowed); and the rougher wet film beside a pool spreads the ray, so a lamp draws out into a streak. The pools
+themselves were wrong too, once the sky showed in them: laid on one wide field of noise, a whole square stood under a
+single sheet while the next lay dry — a flood, not puddles. With a finer field laid in they are one to four metres
+across, about a fifth of open paving when full, stone tops standing out along their edges. And the rings
+rain makes were drawn on the lawns as well — hung over the blades at four tenths of their strength, because the test
+against the depth buffer had been softened to keep them whole on cobbles: they are made only where the ground is
+stone, earth or water. *Rule:* a reflection is judged with something to reflect in the picture — a pool between the
+eye and a lit house, at dusk — on the lowest tier too.

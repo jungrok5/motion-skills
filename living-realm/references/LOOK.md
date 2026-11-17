@@ -76,10 +76,12 @@ Front-lit noon is the flattest hour of any engine; open the page late in the aft
   it is subtle; it tells in lanes, under eaves and by lamplight), and less sky where buildings stand close (read off
   a top-down height map). There is no Lumen-like multi-bounce and no Nanite-like
   geometry: three.js has neither. Foliage is painted sprays on cards: right at a distance, brushy at arm's length.
-- Wet paving, puddles and ice mirror what stands over them the same way on `high` and above (lamps and lit windows
-  in a square after rain); below that they mirror the sky.
+- Wet paving, puddles and ice mirror what stands over them on every tier — the house across the square and its lit
+  windows, a lamp drawn out into a streak on the wet stone beside the pool, the sky where nothing stands — by a ray
+  marched through the depth buffer (8 steps on `low` to 24 on `ultra`, then narrowed onto the crossing). What is off
+  the screen is not there to be mirrored: the pool shows the sky in its place.
 - Water mirrors what is on the screen above it (a ray marched through the depth buffer: trees on the far bank, a
-  bridge, a pier) and the sky elsewhere; what is off-screen or hidden behind something is not mirrored, and puddles
-  on the ground mirror the sky and the lamps' highlights only.
+  bridge, a pier) and the sky elsewhere; what is off-screen or hidden behind something is not mirrored — in water
+  and in puddles alike.
 - Lamps do not cast shadows; interiors do not exist (windows are lit glass).
 - No characters. A walker's body, villagers or animals would need a rig, clips and the body checks in CONTRIBUTING.md.
