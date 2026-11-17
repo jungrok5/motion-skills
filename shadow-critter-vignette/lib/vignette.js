@@ -15,6 +15,7 @@ export const EASE = {
   hold: t => (t < 1 ? 0 : 1),
 };
 const facingOf = (dX, dZ) => Math.atan2(dX, -dZ);
+let UID = 0; // each pose function names its plants uniquely, so the drift check never mixes two walks
 const rightOf = yaw => [-Math.cos(yaw), -Math.sin(yaw)];   // the critter's own right, on the floor (X, Z)
 
 /**
@@ -26,8 +27,10 @@ const rightOf = yaw => [-Math.cos(yaw), -Math.sin(yaw)];   // the critter's own 
 export function walk(C, o) {
   const a = C.a, [X0, Z0] = o.from, [X1, Z1] = o.to, dX = X1 - X0, dZ = Z1 - Z0, L = Math.hypot(dX, dZ) || 1, ux = dX / L, uz = dZ / L;
   const yaw = o.yaw ?? facingOf(ux, uz), [rx, rz] = rightOf(yaw), gap = C.geom().hipGap;
-  const n = Math.max(2, Math.round(L / ((o.stride ?? 1.25 * a) / 2))), h = L / n, stride = 2 * h;
-  const lift = o.lift ?? .2 * a, bob = o.bob ?? .07 * a, easeIn = o.easeIn ?? .2, easeOut = o.easeOut ?? .22;
+  const n = Math.max(2, Math.round(L / ((o.stride ?? 1.6 * a) / 2))), h = L / n, stride = 2 * h, id = 'w' + (++UID);
+  // the pelvis sits low enough that both legs reach the floor at double support (feet half a step either side)
+  const G = C.geom(), legL = (C.spec.legs.thigh + C.spec.legs.shin) * a, sink = Math.max(0, -G.hipY - Math.sqrt(Math.max(0, (legL * .985) ** 2 - (h * .74) ** 2)));
+  const lift = o.lift ?? .22 * a, bob = o.bob ?? .07 * a, easeIn = o.easeIn ?? .2, easeOut = o.easeOut ?? .22;
   const dAt = t => { const u = P.clamp((t - o.t0) / (o.t1 - o.t0)), vmax = 1 / (1 - (easeIn + easeOut) / 2); let s;
     if (u < easeIn) s = vmax * u * u / (2 * easeIn); else if (u > 1 - easeOut) { const w = 1 - u; s = 1 - vmax * w * w / (2 * easeOut); } else s = vmax * (u - easeIn / 2);
     return P.clamp(s) * L; };
@@ -38,8 +41,8 @@ export function walk(C, o) {
   // fix the closing step: it starts where that foot last landed
   steps[n].from = (n - 1) * h; steps[n].a = (n - .42) * h;
   const footAt = (d, i) => {
-    let along = 0, lf = 0, planted = true, key = 'start' + i;
-    for (const S of steps) { if (S.foot !== i) continue; if (d >= S.b) { along = S.to; key = 'm' + S.m; } else if (d > S.a) { const w = (d - S.a) / (S.b - S.a); along = P.lerp(S.from, S.to, P.smooth(w)); lf = Math.sin(Math.PI * w) * lift * (S.m === n || S.m === 0 ? .7 : 1); planted = false; break; } else break; }
+    let along = 0, lf = 0, planted = true, key = id + 'start' + i;
+    for (const S of steps) { if (S.foot !== i) continue; if (d >= S.b) { along = S.to; key = id + 'm' + S.m; } else if (d > S.a) { const w = (d - S.a) / (S.b - S.a); along = P.lerp(S.from, S.to, P.smooth(w)); lf = Math.sin(Math.PI * w) * lift * (S.m === n || S.m === 0 ? .7 : 1); planted = false; break; } else break; }
     const side = i ? 1 : -1;
     return { X: X0 + ux * along + rx * gap * side, Z: Z0 + uz * along + rz * gap * side, lift: lf, planted, k: key };
   };
@@ -47,7 +50,7 @@ export function walk(C, o) {
     const d = dAt(t), feet = [footAt(d, 0), footAt(d, 1)];
     const ph = d / stride, m = P.clamp(Math.min(d, L - d) / (stride * .35)), sw = Math.sin((d / h) * Math.PI) * (o.swing ?? .45) * m;
     const bb = (.5 + .5 * Math.cos(2 * Math.PI * (d / h - .5))) * bob * m; void ph; // lowest (largest y) at each heel strike
-    return { X: X0 + ux * d, Z: Z0 + uz * d, yaw, feet, pelvis: [0, bb - bob * m * .5], lean: .07 * m, arms: { L: { a: sw, e: .35 }, R: { a: -sw, e: .35 } }, walking: t > o.t0 && t < o.t1, moveDir: [ux, uz] };
+    return { X: X0 + ux * d, Z: Z0 + uz * d, yaw, feet, pelvis: [0, bb - bob * m * .5 + sink * P.smooth(P.clamp(Math.min(t - o.t0 + .12, o.t1 + .12 - t) / .24))], lean: .07 * m, arms: { L: { a: sw, e: .5, out: .12 }, R: { a: -sw, e: .5, out: .12 } }, walking: t > o.t0 && t < o.t1, moveDir: [ux, uz] };
   };
   const contacts = []; let prev = null;
   for (let t = o.t0; t <= o.t1 + 1 / 240; t += 1 / 240) { const p = pose(t); if (prev) p.feet.forEach((f, i) => { const q = prev.feet[i]; if (f.planted && !q.planted) contacts.push({ t: +t.toFixed(4), foot: i, X: f.X, Z: f.Z }); }); prev = p; }
@@ -58,8 +61,8 @@ export function walk(C, o) {
 /** stand(C, o) — standing at [X, Z] facing yaw; the weight drifts a little over planted feet */
 export function stand(C, o) {
   const gap = C.geom().hipGap, yaw = o.yaw ?? 0, [rx, rz] = rightOf(yaw), [X, Z] = o.at;
-  const feet = o.feet || [0, 1].map(i => ({ X: X + rx * gap * (i ? 1 : -1) * (o.wide ?? 1), Z: Z + rz * gap * (i ? 1 : -1) * (o.wide ?? 1), lift: 0, planted: true, k: 'stand' + i }));
-  const pose = t => ({ X, Z, yaw, feet, pelvis: [Math.sin(t * .7 + (o.seed || 0)) * .025 * C.a, 0], arms: { L: { a: .06, e: .2 }, R: { a: .06, e: .2 } } });
+  const feet = o.feet || [0, 1].map(i => ({ X: X + rx * gap * (i ? 1 : -1) * (o.wide ?? 1), Z: Z + rz * gap * (i ? 1 : -1) * (o.wide ?? 1), lift: 0, planted: true, k: 'stand' + (++UID) + i }));
+  const pose = t => ({ X, Z, yaw, feet, pelvis: [Math.sin(t * .7 + (o.seed || 0)) * .025 * C.a, 0], arms: { L: { a: .1, e: .65, out: .16 }, R: { a: .1, e: .65, out: .16 } } });
   pose.spec = { kind: 'stand', ...o, yaw }; pose.contacts = [];
   return pose;
 }
@@ -70,7 +73,7 @@ export function stand(C, o) {
  */
 export function turn(C, o) {
   const gap = C.geom().hipGap, [X, Z] = o.at, d = o.to - o.from, n = o.steps ?? Math.max(2, Math.ceil(Math.abs(d) / 1.2)), T = o.t1 - o.t0;
-  const yawAfter = k => o.from + d * Math.min(1, k / n);
+  const yawAfter = k => o.from + d * Math.min(1, k / n), id = 't' + (++UID);
   const footPos = (i, yaw) => { const [rx, rz] = rightOf(yaw); return { X: X + rx * gap * (i ? 1 : -1), Z: Z + rz * gap * (i ? 1 : -1) }; };
   // step k moves foot (first + k) % 2; the foot on the side we turn towards goes first
   const first = d > 0 ? 1 : 0;
@@ -79,13 +82,13 @@ export function turn(C, o) {
     const feet = [0, 1].map(i => {
       // this foot's yaw: after its last completed step
       let last = -1; for (let j = 0; j < (u >= n ? n : k); j++) if ((first + j) % 2 === i) last = j;
-      if (u >= n) { const p = footPos(i, o.to); return { ...p, lift: 0, planted: true, k: 'turn-end' + i }; }
+      if (u >= n) { const p = footPos(i, o.to); return { ...p, lift: 0, planted: true, k: id + 'end' + i }; }
       const yi = last < 0 ? o.from : yawAfter(last + 1);
-      if (i === mover) { const e = P.smooth(w), y2 = P.lerp(yi, yawAfter(k + 1), e), p = footPos(i, y2); return { ...p, lift: Math.sin(Math.PI * w) * .14 * C.a, planted: w <= 0 || w >= 1, k: 'turn' + k + i }; }
-      return { ...footPos(i, yi), lift: 0, planted: true, k: 'turn' + (last + 1) + i };
+      if (i === mover) { const e = P.smooth(w), y2 = P.lerp(yi, yawAfter(k + 1), e), p = footPos(i, y2); return { ...p, lift: Math.sin(Math.PI * w) * .14 * C.a, planted: w <= 0 || w >= 1, k: id + k + i }; }
+      return { ...footPos(i, yi), lift: 0, planted: true, k: id + (last + 1) + i };
     });
     const yaw = P.lerp(o.from, o.to, P.smooth(P.clamp((t - o.t0) / T)));
-    return { X, Z, yaw, feet, pelvis: [0, -Math.sin(Math.PI * (u % 1)) * .03 * C.a * (u < n ? 1 : 0)], arms: { L: { a: .12, e: .3 }, R: { a: .12, e: .3 } }, turning: t > o.t0 && t < o.t1 };
+    return { X, Z, yaw, feet, pelvis: [0, Math.sin(Math.PI * (u % 1)) * .04 * C.a * (u < n ? 1 : 0)], arms: { L: { a: .14, e: .6, out: .2 }, R: { a: .14, e: .6, out: .2 } }, turning: t > o.t0 && t < o.t1 };
   };
   const contacts = []; for (let k = 0; k < n; k++) contacts.push({ t: +(o.t0 + (k + 1) * T / n).toFixed(4), foot: (first + k) % 2, X, Z });
   pose.contacts = contacts; pose.spec = { kind: 'turn', ...o, steps: n };
@@ -211,13 +214,13 @@ export class Vignette {
     const out = [], add = (name, value, limit, ok) => out.push({ name, value: +(+value).toFixed(3), limit, ok });
     const c = P.canvas(this.W, this.H), ctx = c.getContext('2d');
     for (const cm of this.cast) {
-      const who = cm.actor.name; let kneeBad = 0, kneeMax = 0, elbowMax = 0, reachMax = 0, drift = 0, neckMax = 0, faceBad = 0, handMiss = 0; const plant = [new Map(), new Map()];
+      const who = cm.actor.name; let kneeBad = 0, kneeMax = 0, elbowMax = 0, reachMax = 0, reachT = 0, driftT = 0, drift = 0, neckMax = 0, faceBad = 0, handMiss = 0; const plant = [new Map(), new Map()];
       for (let t = 0; t < this.dur; t += step) {
         const p = this.poseAt(cm, t), j = drawCritter(ctx, cm.actor, p, { room: this.room, light: this.light, shadow: 0, rim: 0 });
         for (let i = 0; i < 2; i++) {
           kneeMax = Math.max(kneeMax, j.kneeBend[i]); if (j.prof > .55 && j.kneeBend[i] > .12 && j.kneeCross[i] < 0) kneeBad++;
-          reachMax = Math.max(reachMax, j.reach[i]);
-          const f = p.feet?.[i]; if (f && f.planted && !f.airborne) { const key = String(f.k), a = j.ankles[i], m = plant[i]; if (m.has(key)) { const b = m.get(key); drift = Math.max(drift, Math.hypot(a[0] - b[0], a[1] - b[1])); } else m.set(key, a); }
+          if (j.reach[i] > reachMax) { reachMax = j.reach[i]; reachT = t; }
+          const f = p.feet?.[i]; if (f && f.planted && !f.airborne) { const key = String(f.k), a = j.toes[i], m = plant[i]; if (m.has(key)) { const b = m.get(key), dd = Math.hypot(a[0] - b[0], a[1] - b[1]); if (dd > drift) { drift = dd; driftT = t; } } else m.set(key, a); }
         }
         elbowMax = Math.max(elbowMax, ...j.elbowBend);
         neckMax = Math.max(neckMax, Math.abs(p.head?.rawTurn || 0));
@@ -227,8 +230,8 @@ export class Vignette {
       add(`${who}: knees fold back in profile (frames wrong)`, kneeBad, '0', kneeBad === 0);
       add(`${who}: knee bend max (rad)`, kneeMax, `≤ ${JOINTS.knee[1]}`, kneeMax <= JOINTS.knee[1]);
       add(`${who}: elbow bend max (rad)`, elbowMax, `≤ ${JOINTS.elbow[1]}`, elbowMax <= JOINTS.elbow[1]);
-      add(`${who}: legs reach their feet (max reach / leg length)`, reachMax, '≤ 1.0', reachMax <= 1.0 + 1e-6);
-      add(`${who}: planted foot drift on screen (px)`, drift, '≤ 1.5', drift <= 1.5);
+      add(`${who}: legs reach their feet (max reach / leg length, worst at ${reachT.toFixed(2)} s)`, reachMax, '≤ 1.0', reachMax <= 1.0 + 1e-6);
+      add(`${who}: planted foot drift on screen (px, worst at ${driftT.toFixed(2)} s)`, drift, '≤ 1.5', drift <= 1.5);
       add(`${who}: neck turn max (rad)`, neckMax, `≤ ${JOINTS.neckTurn}`, neckMax <= JOINTS.neckTurn);
       add(`${who}: walks the way it faces (frames wrong)`, faceBad, '0', faceBad === 0);
       add(`${who}: hands reach their keyed targets (px off)`, handMiss, '≤ 3', handMiss <= 3);
@@ -281,21 +284,22 @@ export class Vignette {
 /** cast sheet: the critter turned all the way round, walks both ways, a stepped turn, the big move both ways, faces */
 export function castSheet(film, actors, o = {}) {
   const cw = o.cell || 220, ch = Math.round(cw * 1.3), pad = 10, head = 26, rows = [];
-  const R = K.makeRoom({ W: cw, H: ch, horizon: ch * .2, vpX: cw / 2, eye: 900, refZ: 1000 });
   for (const A of actors) {
-    const a = A.a, sc = (ch * .62) / (A.geom().hipY * -1 + a * 3.4 + (A.geom().headY - A.geom().top) * 0), Z = 1000 / sc, X = 0;
+    const a = A.a, sc = (ch * .6) / (a * 4.7), Z = 1000 / sc, X = 0;
+    // a camera per actor: the floor line sits low in the cell, the critter fills about 60 % of its height
+    const R = K.makeRoom({ W: cw, H: ch, horizon: ch * .3, vpX: cw / 2, eye: (ch * .86 - ch * .3) / sc, refZ: 1000 });
     const base = { X, Z, arms: { L: { a: .06, e: .2 }, R: { a: .06, e: .2 } } };
     const at = (yaw, extra = {}) => ({ ...stand(A, { at: [X, Z], yaw })(0), ...extra });
-    rows.push({ title: `${A.name} · turnaround (front → right → back → left)`, cells: [0, .6, 1.57, 2.4, 3.14, -2.4, -1.57, -.6].map(y => ({ A, Z, label: `yaw ${y}`, pose: at(y) })) });
-    for (const dir of [1, -1]) { const w = walk(A, { from: [X - dir * 3 * a, Z], to: [X + dir * 3 * a, Z], t0: 0, t1: 4, easeIn: 0, easeOut: 0 }); rows.push({ title: `${A.name} · walk ${dir > 0 ? '→ right' : '← left'} (phases)`, cells: [1.6, 1.75, 1.9, 2.05, 2.2].map(t => { const p = w(t); return { A, Z, label: `t ${t}`, pose: { ...p, X: X + (p.X - w(2).X) * 0 + (p.X - w(2).X), } }; }) }); }
+    rows.push({ title: `${A.name} · turnaround (front → right → back → left)`, cells: [0, .6, 1.57, 2.4, 3.14, -2.4, -1.57, -.6].map(y => ({ A, Z, R, label: `yaw ${y}`, pose: at(y) })) });
+    for (const dir of [1, -1]) { const w = walk(A, { from: [X - dir * 3 * a, Z], to: [X + dir * 3 * a, Z], t0: 0, t1: 4, easeIn: 0, easeOut: 0 }); rows.push({ title: `${A.name} · walk ${dir > 0 ? '→ right' : '← left'} (phases)`, cells: [1.6, 1.75, 1.9, 2.05, 2.2].map(t => ({ A, Z, R, label: `t ${t}`, pose: w(t) })) }); }
     const tr = turn(A, { at: [X, Z], from: 1.57, to: -1.57, t0: 0, t1: 1.6, steps: 3 });
-    rows.push({ title: `${A.name} · stepped turn on the spot (right → left, 3 steps; feet stay planted)`, cells: [0, .3, .55, .8, 1.05, 1.3, 1.6].map(t => ({ A, Z, label: `t ${t}`, pose: tr(t) })) });
+    rows.push({ title: `${A.name} · stepped turn on the spot (right → left, 3 steps; feet stay planted)`, cells: [0, .3, .55, .8, 1.05, 1.3, 1.6].map(t => ({ A, Z, R, label: `t ${t}`, pose: tr(t) })) });
     for (const dir of [1, -1]) {
-      const yaw = dir * 2.5, tg = R.proj(dir * .9 * a, a * 4.2, Z);
-      const mv = keyed(stand(A, { at: [X, Z], yaw }), [{ t: 0 }, { t: .4, crouch: .25 * a, lean: .1, antic: true, arms: { R: { a: -.3, e: .6 } } }, { t: .6, ease: 'snap', hop: .3 * a, tiptoe: 1, big: true, arms: { R: { target: tg, w: 1 } }, head: { nod: -.4 } }, { t: 1.0, ease: 'back', crouch: .12 * a, settle: true, arms: { R: { a: .2, e: .4 } } }, { t: 1.4 }]);
-      rows.push({ title: `${A.name} · big move ${dir > 0 ? 'right' : 'left'}: rest → gather → jump-reach → land → settle`, cells: [0, .4, .6, 1.0, 1.4].map(t => ({ A, Z, label: `t ${t}`, pose: mv(t) })) });
+      const yaw = dir * 2.5, tg = R.proj(dir * 1.75 * a, a * 2.85, Z), H = dir > 0 ? 'R' : 'L'; // up and out, clear of the head; the near hand
+      const mv = keyed(stand(A, { at: [X, Z], yaw }), [{ t: 0 }, { t: .4, crouch: .25 * a, lean: .1, antic: true, arms: { [H]: { a: -.3, e: .6 } } }, { t: .6, ease: 'snap', hop: .3 * a, tiptoe: 1, big: true, arms: { [H]: { target: tg, w: 1 } }, head: { nod: -.4 } }, { t: 1.0, ease: 'back', crouch: .12 * a, settle: true, arms: { [H]: { a: .2, e: .6, w: 0 } } }, { t: 1.4 }]);
+      rows.push({ title: `${A.name} · big move ${dir > 0 ? 'right' : 'left'}: rest → gather → jump-reach → land → settle`, cells: [0, .4, .6, 1.0, 1.4].map(t => ({ A, Z, R, label: `t ${t}`, pose: mv(t) })) });
     }
-    rows.push({ title: `${A.name} · faces: open · blink · look up · glum lid · side glance`, cells: [{}, { blink: 1 }, { nod: -.5, gaze: [0, -1] }, { lid: .55, gaze: [0, .6] }, { turn: .9, gaze: [1, 0] }].map((h, i) => ({ A, Z, label: ['open', 'blink', 'look up', 'glum', 'glance'][i], pose: { ...at(.25), head: h } })) });
+    rows.push({ title: `${A.name} · faces: open · blink · look up · glum lid · side glance`, cells: [{}, { blink: 1 }, { nod: -.5, gaze: [0, -1] }, { lid: .55, gaze: [0, .6] }, { turn: .9, gaze: [1, 0] }].map((h, i) => ({ A, Z, R, label: ['open', 'blink', 'look up', 'glum', 'glance'][i], pose: { ...at(.25), head: h } })) });
   }
   const cols = Math.max(...rows.map(r => r.cells.length)), c = P.canvas(cols * (cw + pad) + pad, rows.length * (ch + head + pad) + pad), g = c.getContext('2d');
   g.fillStyle = '#efe7da'; g.fillRect(0, 0, c.width, c.height);
@@ -304,7 +308,7 @@ export function castSheet(film, actors, o = {}) {
     row.cells.forEach((cl, ci) => {
       const x = pad + ci * (cw + pad), cell = P.canvas(cw, ch), cg = cell.getContext('2d');
       cg.drawImage(P.paper(cw, ch, '#f3e9d6', 3), 0, 0);
-      const gy = R.floor(0, cl.Z)[1]; cg.strokeStyle = 'rgba(60,40,30,.25)'; cg.beginPath(); cg.moveTo(0, gy); cg.lineTo(cw, gy); cg.stroke();
+      const R = cl.R, gy = R.floor(0, cl.Z)[1]; cg.strokeStyle = 'rgba(60,40,30,.25)'; cg.beginPath(); cg.moveTo(0, gy); cg.lineTo(cw, gy); cg.stroke();
       const p = { breath: 0, ...cl.pose }; drawCritter(cg, cl.A, p, { room: R, light: [cw * .5, ch * .05], shadow: .35, rim: 0 });
       g.drawImage(cell, x, y + head); g.strokeStyle = 'rgba(0,0,0,.15)'; g.strokeRect(x + .5, y + head + .5, cw - 1, ch - 1);
       g.fillStyle = 'rgba(40,30,36,.8)'; g.font = '12px system-ui, sans-serif'; g.fillText(cl.label, x + 6, y + head + 15);

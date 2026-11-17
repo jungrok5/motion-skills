@@ -10,8 +10,10 @@ import { makeScore } from 'scv/score.js';
 export const room = K.makeRoom({ W: 1080, H: 1440, horizon: 650, vpX: 470, eye: 520, refZ: 1000, left: -760, right: 600, back: 2500, ceiling: 1500, near: 480, light: { color: '#ffd98c' } });
 const R = room;
 const WIN = K.sub(R.walls.back, .1, .2, .56, .76);      // the window, on the back wall
-const SHELF = { x0: 360, x1: 600, y0: 0, y1: 1180, z0: 1080, z1: 2350 };
-const BOOK = { Y: 540, Z: 1330, h: 150, d: 26, w: 36 }; // the red book on the shelf face (X = SHELF.x0)
+const SHELF = { x0: 380, x1: 600, y0: 0, y1: 1180, z0: 1120, z1: 2350 };
+const ROWS = 8, BROW = 6;                                 // shelf rows; the red book stands on row 6 (counted from the top)
+const BOOK = { Y: SHELF.y1 * (1 - ((BROW + 1) / ROWS - .035)), Z: 1330, h: 82, w: 30 }; // the red book on the shelf face (X = SHELF.x0)
+const BU = (SHELF.z1 - BOOK.Z) / (SHELF.z1 - SHELF.z0);    // where it sits along the face (u: 0 at the far end)
 const tiltAt = t => {                                      // how far its top is pulled out (radians), keyed with the beats
   const keys = [[0, .06], [4.55, .06], [5.0, .27], [7.05, .27], [7.35, .62], [9.55, .62], [10.05, .06]];
   for (let i = 1; i < keys.length; i++) if (t <= keys[i][0]) { const [ta, a] = keys[i - 1], [tb, b] = keys[i]; return P.lerp(a, b, P.smooth(P.clamp((t - ta) / (tb - ta)))); }
@@ -20,8 +22,16 @@ const tiltAt = t => {                                      // how far its top is
 const bookTop = (t, k = 1) => { const a = tiltAt(t), X = SHELF.x0 - Math.sin(a) * BOOK.h * k, Y = BOOK.Y + Math.cos(a) * BOOK.h * k; return R.proj(X, Y, BOOK.Z); };
 
 const plates = [{
+  // in front of everything: a low crate in the near corner, dark against the room, a jar and books on it
+  z: 10, paint(g) {
+    const T = { x0: -430, x1: -210, y0: 0, y1: 190, z0: 720, z1: 930 };
+    const top = K.box(g, R, T, { seed: 171, color: '#3e2a1c', faces: { right: (g2, m, s) => { K.faceWash(g2, m, '#2e1e14', s); P.pen(g2, [m(.5, .1), m(.5, .9)], { seed: s + 1, alpha: .35 }); }, front: (g2, m, s) => K.faceWash(g2, m, '#38261a', s), top: (g2, m, s) => K.faceWash(g2, m, '#5a3e28', s, { bloom: .9 }) } }).top;
+    const sc = R.scaleAt(820), p = top(.62, .45); K.jar(g, p[0], p[1], 46 * sc, 70 * sc, { seed: 173, fill: '#6a8a4a', level: .55, glass: '#a9bdb2' });
+    K.books(g, ...top(.3, .65), sc * .8, { seed: 175, n: 3 });
+  },
+}, {
   z: 0, paint(g) {
-    K.shell(g, R, { wall: '#7d6a55', back: '#8a7660', floor: '#a58360', ceiling: '#4a3a2e', boards: 13, beams: 4, seed: 12 });
+    K.shell(g, R, { wall: '#5a3e2a', back: '#6c4b32', floor: '#86593a', ceiling: '#2a1c14', boards: 13, beams: 4, seed: 12, dark: .45 });
     // back wall: frames, notes, the window with a little table under it
     K.frame(g, K.sub(R.walls.back, .62, .14, .8, .36), { frame: '#4a3524', color: '#7f9a8e', seed: 3, paint: (g2, m, s) => { P.wash(g2, K.quad(m, 0, .55, 1, 1, 4), { color: '#5d7a52', seed: s + 4, alpha: .8 }); P.wash(g2, P.ellipse(...m(.3, .35), 14, 10, 12), { color: '#e9d8a0', seed: s + 5, alpha: .8 }); } });
     K.frame(g, K.sub(R.walls.back, .66, .42, .84, .56), { frame: '#5a4030', color: '#c9b48c', seed: 4 });
@@ -40,27 +50,31 @@ const plates = [{
     const rug = R.face([[-420, 0, 2050], [180, 0, 2050], [180, 0, 1250], [-420, 0, 1250]]);
     P.wash(g, K.quad(rug, 0, 0, 1, 1, 8), { color: '#8e4a3a', seed: 70, alpha: .85, bloom: .8 });
     P.wash(g, K.quad(rug, .08, .1, .92, .9, 8), { color: '#b8784a', seed: 71, alpha: .5, edge: .6 });
-    K.lightShaft(g, R, WIN, { dz: 1150, dx: 140, k: .62, cols: 2, rows: 3 });
+    K.lightShaft(g, R, WIN, { dz: 1150, dx: 140, k: .85, cols: 2, rows: 3, color: '#ffc46a' });
+    // things on the floor: a stack of books by the shelf, a stool by the window
+    K.stool(g, R, -470, 1900, { seed: 141 });
+    K.books(g, ...R.floor(250, 1180), R.scaleAt(1180) * 1.15, { seed: 151, n: 4 });
+    K.books(g, ...R.floor(-560, 1500), R.scaleAt(1500) * 1.1, { seed: 157, n: 3 });
     // the hanging lamp (unlit)
     K.lamp(g, R, -60, 1500, { y: 1080, w: 170, h: 80, color: '#6e4c38', seed: 81 });
     // the tall bookshelf on the right wall: its face looks into the room
     K.box(g, R, SHELF, { seed: 91, color: '#5a3e2a', faces: {
       left: (g2, m, s) => {
         K.faceWash(g2, m, '#4a3222', s, { bloom: .8 });
-        const rows = 6, r = P.rng(s);
+        const rows = ROWS, r = P.rng(s);
         for (let j = 0; j < rows; j++) {
           const v0 = j / rows + .02, v1 = (j + 1) / rows - .035;
           K.faceWash(g2, K.sub(m, .02, v0, .98, v1), '#2c1d14', s + j, { line: false, edge: .2 });
           // books: spines of different heights and colours, a gap where the red one sits
-          let u = .04; while (u < .95) { const bw = .025 + r() * .03, ht = .55 + r() * .4; const col = P.pick([['#7a3a2e', 2], ['#3e5a4a', 2], ['#8a6a3a', 2], ['#4a4a6a', 1], ['#a8905a', 1], ['#5e2e3a', 1]], r);
-            const isGap = j === 3 && u > .14 && u < .26; if (!isGap) { K.faceWash(g2, K.sub(m, u, v1 - (v1 - v0) * ht, u + bw, v1), col, s + 100 + j * 50 + Math.floor(u * 100), { edge: .5, bloom: .4, lineAlpha: .35 }); if (r() < .4) P.pen(g2, [m(u + .002, v1 - (v1 - v0) * ht * .7), m(u + bw - .002, v1 - (v1 - v0) * ht * .7)], { seed: s + j + u, alpha: .4, color: '#e0c890' }); }
+          let u = .04; while (u < .95) { const bw = .018 + r() * .02, ht = .5 + r() * .38; const col = P.pick([['#7a3a2e', 2], ['#3e5a4a', 2], ['#8a6a3a', 2], ['#4a4a6a', 1], ['#a8905a', 1], ['#5e2e3a', 1]], r);
+            const isGap = j === BROW && u > BU - .035 && u < BU + .03; if (!isGap) { K.faceWash(g2, K.sub(m, u, v1 - (v1 - v0) * ht, u + bw, v1), col, s + 100 + j * 50 + Math.floor(u * 100), { edge: .5, bloom: .4, lineAlpha: .35 }); if (r() < .4) P.pen(g2, [m(u + .002, v1 - (v1 - v0) * ht * .7), m(u + bw - .002, v1 - (v1 - v0) * ht * .7)], { seed: s + j + u, alpha: .4, color: '#e0c890' }); }
             u += bw + .003; }
         }
       },
       front: (g2, m, s) => K.faceWash(g2, m, '#5e4230', s),
       top: (g2, m, s) => K.faceWash(g2, m, '#6a4a34', s),
     } });
-    K.grade(g, 1080, 1440, { k: .25, warmK: .08, cx: .4, cy: .4 });
+    K.grade(g, 1080, 1440, { k: .35, warmK: .1, cx: .4, cy: .4, light: R.proj(-160, 820, 2500), fallK: .7, fall: '#7a4a2a', warm: '#ff9a40', warmK: .22 });
   },
 }];
 
@@ -83,7 +97,7 @@ const fx = [
 // ── the critter ──
 export const kuma = new Critter({ name: 'Kuma', a: 88, seed: 4, ears: { type: 'bear', size: 1.05, spread: .7 }, eyes: { w: .24, h: .33, gap: .4, y: .08, pupil: 'oval' }, whiskers: 0, tail: { type: 'puff' }, wear: { type: 'scarf', color: '#c0473a' } });
 const A = kuma.a;
-const SPOT = [240, 1420], FROM = [-300, 2240], AWAY = [-190, 2050];
+const SPOT = [292, 1400], FROM = [-170, 2000], AWAY = [-130, 1990];
 const yIn = Math.atan2(SPOT[0] - FROM[0], -(SPOT[1] - FROM[1])), yShelf = 2.05, yOut = Math.atan2(AWAY[0] - SPOT[0], -(AWAY[1] - SPOT[1])) + Math.PI * 2;
 const hand = t => bookTop(t, .9);
 const atShelf = keyed(stand(kuma, { at: SPOT, yaw: yShelf, seed: 2 }), [
@@ -91,28 +105,28 @@ const atShelf = keyed(stand(kuma, { at: SPOT, yaw: yShelf, seed: 2 }), [
   { t: 3.95, head: { nod: -.55, gaze: [0, -1] } },                                               // look: there it is
   { t: 4.25, head: { nod: -.5, gaze: [.2, -1] }, arms: { R: { a: .3, e: .5 } } },
   { t: 4.55, tiptoe: 1, lean: .06, arms: { R: { target: hand, w: 1 } } },                          // try: up on its toes
-  { t: 5.0, tiptoe: 1, lean: -.08, arms: { R: { target: hand, w: 1 } } },                          //   …and pull
-  { t: 5.35, tiptoe: 0, ease: 'out', arms: { R: { a: .1, e: .3, w: 0 } }, head: { nod: -.3, gaze: [.6, -.3] } },
+  { t: 5.0, tiptoe: 1, lean: -.1, shift: -.05 * A, arms: { R: { target: hand, w: 1 } } },                          //   …and pull
+  { t: 5.35, tiptoe: 0, ease: 'out', arms: { R: { a: .1, e: .65, w: 0 } }, head: { nod: -.3, gaze: [.6, -.3] } },
   { t: 5.8, head: { turn: .75, nod: -.1, gaze: [1, 0] } },                                       // wait: the wall, any moment now
   { t: 6.7, head: { turn: .7, nod: -.12, gaze: [1, .1] } },
   { t: 7.0, head: { nod: -.5, gaze: [0, -1] } },
   { t: 7.15, crouch: .22 * A, lean: .14, squash: .25, antic: true, head: { nod: -.55, gaze: [0, -1] }, arms: { R: { a: -.25, e: .7 } } }, // again: gather…
   { t: 7.35, ease: 'snap', hop: .32 * A, tiptoe: 1, lean: -.12, big: true, arms: { R: { target: hand, w: 1 } } },          //   …jump and yank
   { t: 7.6, ease: 'in', crouch: .14 * A, squash: .2, arms: { R: { target: hand, w: .6 } } },                                   //   land
-  { t: 7.95, ease: 'back', settle: true, arms: { R: { a: .12, e: .3, w: 0 } }, head: { nod: -.35, gaze: [0, -.6] } },
+  { t: 7.95, ease: 'back', settle: true, arms: { R: { a: .12, e: .65, w: 0 } }, head: { nod: -.35, gaze: [0, -.6] } },
   { t: 8.4, head: { turn: .8, nod: -.1, gaze: [1, 0] } },                                        // nothing: the wall again
   { t: 9.0, head: { turn: .75, nod: 0, gaze: [.8, .2], lid: .45 } },
   { t: 9.3, crouch: .04 * A, lean: .1, head: { nod: -.3, gaze: [0, -.6], lid: .5 } },            // after: glum, put it back
   { t: 9.55, tiptoe: .6, arms: { R: { target: hand, w: 1 } }, head: { nod: -.45, lid: .45 } },
   { t: 10.05, tiptoe: .6, arms: { R: { target: hand, w: 1 } }, head: { nod: -.4, lid: .5 } },
-  { t: 10.4, tiptoe: 0, arms: { R: { a: .06, e: .2, w: 0 } }, head: { nod: 0, lid: .5, gaze: [0, .3] } },
+  { t: 10.4, tiptoe: 0, arms: { R: { a: .1, e: .65, w: 0 } }, head: { nod: 0, lid: .5, gaze: [0, .3] } },
 ]);
 const pose = seq([
   [3.0, walk(kuma, { from: FROM, to: SPOT, t0: .3, t1: 3.0 })],
   [3.6, turn(kuma, { at: SPOT, from: yIn, to: yShelf, t0: 3.0, t1: 3.6 })],
   [10.45, atShelf],
   [11.05, keyed(turn(kuma, { at: SPOT, from: yShelf, to: yOut, t0: 10.45, t1: 11.05 }), [{ t: 10.45, head: { lid: .5 } }, { t: 11.05, head: { lid: .3 } }])],
-  [99, keyed(walk(kuma, { from: SPOT, to: AWAY, t0: 11.05, t1: 13.4, stride: 1.1 * A }), [{ t: 11, head: { lid: .3, nod: .1 } }])],
+  [99, keyed(walk(kuma, { from: SPOT, to: AWAY, t0: 11.05, t1: 13.6, stride: 1.4 * A }), [{ t: 11, head: { lid: .3, nod: .1 } }])],
 ]);
 
 export const film = new Vignette({

@@ -18,7 +18,7 @@ export const CRITTER = {
   whiskers: 2,
   body: { w: .8, h: 1.0 },
   legs: { thigh: .5, shin: .5, w: .15 },
-  arms: { upper: .66, fore: .62, w: .13 },
+  arms: { upper: .74, fore: .7, w: .13 },
   tail: { type: 'cat', len: 1.5, w: .13 },              // cat | fox | puff | none
   wear: { type: 'skirt', color: '#5d9a7c', len: .52 },   // skirt | shorts | scarf | bag | hat | none
 };
@@ -81,34 +81,33 @@ export function drawCritter(ctx, C, pose, env = {}) {
 
   // ── lower body: pelvis, hips, feet (IK) ──
   const tip = pose.tiptoe || 0;
-  const pel = [(pose.pelvis?.[0] || 0), G.hipY + (pose.pelvis?.[1] || 0) - tip * .13 * a];
+  const pel = [(pose.pelvis?.[0] || 0), G.hipY + (pose.pelvis?.[1] || 0) - tip * .08 * a];
   const hips = [[pel[0] - Rx * G.hipGap, pel[1]], [pel[0] + Rx * G.hipGap, pel[1]]];
   const feetL = (pose.feet || [{ X: pose.X - Rx * 20, Z: pose.Z }, { X: pose.X + Rx * 20, Z: pose.Z }]).map(f => { const q = R.floor(f.X, f.Z); return [(q[0] - O[0]) / s, (q[1] - O[1]) / s - (f.lift || 0)]; });
   const ankleH = .05 * a, L1 = S.legs.thigh * a, L2 = S.legs.shin * a, joints = { hips: [], knees: [], ankles: [], feet: [], shoulders: [], elbows: [], hands: [], kneeBend: [], elbowBend: [], reach: [] };
   // near foot = the one closer to the camera (smaller Z): drawn last; with a silhouette only the order of colour matters
   const legs = [0, 1].map(i => {
-    const f = feetL[i], ank = [f[0], f[1] - ankleH - (pose.feet?.[i]?.tip ?? tip) * .06 * a];
+    const f = feetL[i], tipRaise = (pose.feet?.[i]?.tip ?? tip) * .06 * a, ank = [f[0], f[1] - ankleH - tipRaise];
     const k = ik(hips[i], ank, L1, L2, dir);
     // the knee's sideways offset is what a profile shows; front-on it folds towards the camera (foreshortened)
     const line = P.lp(hips[i], k.end, L1 / (L1 + L2)), kk = P.lp(line, k.mid, Math.max(.18, prof));
     const v1 = [k.mid[0] - hips[i][0], k.mid[1] - hips[i][1]], v2 = [k.end[0] - k.mid[0], k.end[1] - k.mid[1]];
     const bend = Math.abs(Math.atan2(v1[0] * v2[1] - v1[1] * v2[0], v1[0] * v2[0] + v1[1] * v2[1]));
     const cross = (v1[0] * v2[1] - v1[1] * v2[0]) * dir; // > 0: shin folds back (correct for a profile facing dir)
-    return { hip: hips[i], knee: kk, ankle: k.end, foot: f, bend, cross, reach: k.reach };
+    return { hip: hips[i], knee: kk, ankle: k.end, foot: f, bend, cross, reach: k.reach, tipRaise };
   });
 
   // ── upper body frame: lean about the pelvis (a profile shows it; front-on it reads as a small dip) ──
   const lean = pose.lean || 0, up = new DOMMatrix().translate(pel[0], pel[1]).rotate(lean * Fx * 180 / Math.PI).scale(1, 1 - Math.abs(lean) * (1 - prof) * .12 - sq * .12 + br * .012).translate(-pel[0], -pel[1]);
   const U = p => { const q = up.transformPoint(new DOMPoint(p[0], p[1])); return [q.x, q.y]; };
-  const shY = G.shY - pel[1] + pel[1] + (pose.pelvis?.[1] || 0) - tip * .13 * a;
-  const tw = S.body.w * a * (.78 + .22 * Math.abs(Rx)), torsoTop = G.shY + (pose.pelvis?.[1] || 0) - tip * .13 * a;
+  const tw = S.body.w * a * (.78 + .22 * Math.abs(Rx)), torsoTop = G.shY + (pose.pelvis?.[1] || 0) - tip * .08 * a;
   const torso = [[pel[0] - tw * .42, torsoTop + .12 * a], [pel[0] + tw * .42, torsoTop + .12 * a], [pel[0] + tw * .56, pel[1] + .12 * a], [pel[0] - tw * .56, pel[1] + .12 * a]].map(U);
 
   // ── arms: FK in the body frame, optional IK towards a screen target ──
   const shoulders = [-1, 1].map(sd => U([pel[0] + sd * Rx * tw * .4 + Fx * .02 * a, torsoTop + .2 * a]));
   const arms = ['L', 'R'].map((w, i) => {
     const A = pose.arms?.[w] || {}, sd = i ? 1 : -1, sh = shoulders[i];
-    const la = A.a ?? .08, out = A.out ?? .12, e = A.e ?? .25, l1 = S.arms.upper * a, l2 = S.arms.fore * a;
+    const la = A.a ?? .08, out = A.out ?? .12, e = A.e ?? .4, l1 = S.arms.upper * a, l2 = S.arms.fore * a;
     const dirv = (ang, o) => { const f = Math.sin(ang) * Math.cos(o), side = Math.sin(o), down = Math.cos(ang) * Math.cos(o); return [f * Fx + side * sd * Rx, down]; };
     const rot = lean * Fx; // arms hang from the leaned torso
     const rr = v => [v[0] * Math.cos(rot) - v[1] * Math.sin(rot), v[0] * Math.sin(rot) + v[1] * Math.cos(rot)];
@@ -124,9 +123,8 @@ export function drawCritter(ctx, C, pose, env = {}) {
     return { sh, el, hand, bend, reach, near: Rx * sd < 0 ? true : false };
   });
   // which arm is nearer the camera: the one on the side facing the viewer
-  const nearArm = Fx > .15 ? 0 : Fx < -.15 ? 1 : (Math.cos(yaw) >= 0 ? 0 : 1);
-  // actually: facing right (Fx > 0) the viewer sees the right side → the right arm (1) is near
-  const near = Fx > .15 ? 1 : Fx < -.15 ? 0 : -1; void nearArm;
+  // facing right (Fx > 0) the viewer sees the right side → the right arm (1) is near; front / back: both at the sides
+  const near = Fx > .15 ? 1 : Fx < -.15 ? 0 : -1;
 
   // ── head ──
   const hTurn = P.clamp(hd.turn || 0, -JOINTS.neckTurn, JOINTS.neckTurn), hy = yaw + hTurn, hFx = Math.sin(hy), hRx = -Math.cos(hy);
@@ -150,7 +148,7 @@ export function drawCritter(ctx, C, pose, env = {}) {
     if (T.type === 'puff') { g.beginPath(); g.arc(tailBase[0] + back * .25 * a, tailBase[1] - .05 * a, .22 * a, 0, 7); g.fill(); }
     else { const sp = P.spline(pts, 2); g.lineWidth = (T.type === 'fox' ? T.w * 2.2 : T.w) * a; g.beginPath(); sp.forEach((p, i) => i ? g.lineTo(...p) : g.moveTo(...p)); g.stroke(); if (T.type === 'fox') { const e = sp[sp.length - 1]; g.beginPath(); g.ellipse(e[0], e[1], .2 * a, .28 * a, 0, 0, 7); g.fill(); } }
   }
-  const drawArm = (A, w) => { g.fillStyle = ink; capsule(g, A.sh, A.el, w); capsule(g, A.el, A.hand, w * .92); g.beginPath(); g.arc(A.hand[0], A.hand[1], w * .95, 0, 7); g.fill(); };
+  const drawArm = (A, w) => { g.fillStyle = ink; capsule(g, A.sh, A.el, w); capsule(g, A.el, A.hand, w * .92); g.beginPath(); g.arc(A.hand[0], A.hand[1], w * .8, 0, 7); g.fill(); };
   const armW = S.arms.w * a;
   if (near === -1) { /* front / back: both arms at the sides, draw after torso */ } else drawArm(arms[1 - near], armW);
   for (const L of legs) { g.fillStyle = ink; capsule(g, L.hip, L.knee, S.legs.w * a); capsule(g, L.knee, L.ankle, S.legs.w * a * .9);
@@ -243,7 +241,7 @@ export function drawCritter(ctx, C, pose, env = {}) {
   }
 
   // joints (screen) for the checks
-  for (const L of legs) { joints.hips.push(toScr(L.hip)); joints.knees.push(toScr(L.knee)); joints.ankles.push(toScr(L.ankle)); joints.feet.push(toScr([L.foot[0], L.foot[1]])); joints.kneeBend.push(L.bend); joints.reach.push(L.reach); joints.kneeCross = (joints.kneeCross || []).concat(L.cross); }
+  for (const L of legs) { joints.hips.push(toScr(L.hip)); joints.knees.push(toScr(L.knee)); joints.ankles.push(toScr(L.ankle)); (joints.toes = joints.toes || []).push(toScr([L.ankle[0], L.ankle[1] + ankleH + L.tipRaise])); joints.feet.push(toScr([L.foot[0], L.foot[1]])); joints.kneeBend.push(L.bend); joints.reach.push(L.reach); joints.kneeCross = (joints.kneeCross || []).concat(L.cross); }
   for (const A of arms) { joints.shoulders.push(toScr(A.sh)); joints.elbows.push(toScr(A.el)); joints.hands.push(toScr(A.hand)); joints.elbowBend.push(A.bend); }
   joints.head = toScr(hc); joints.origin = O; joints.scale = s; joints.headTurn = hTurn; joints.prof = prof; joints.dir = dir;
   joints.bbox = [bx, by, bx + bw, by + bh];

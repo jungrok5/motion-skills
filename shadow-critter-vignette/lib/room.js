@@ -53,6 +53,8 @@ export const sub = (map, u0, v0, u1, v1) => { const m = (u, v) => map(P.lerp(u0,
 export function shell(g, R, o = {}) {
   const s = o.seed || 11, wall = o.wall || '#7a6650', back = o.back || wall, floor = o.floor || '#b08a62', ceil = o.ceiling || P.shade(wall, -.35), dark = o.dark ?? .35;
   const W = R.walls;
+  // the sheet under everything: where the paint skips, warm paper shows (granulation), never a hole
+  g.drawImage(P.paper(R.W, R.H, o.paper || '#efe2c8', s), 0, 0);
   // ceiling and walls first (big washes), then floor
   P.wash(g, quad(W.ceiling, 0, 0, 1, 1, 10), { color: ceil, seed: s, alpha: .95, bloom: .9, dir: 0 });
   P.wash(g, quad(W.left, 0, 0, 1, 1, 10), { color: P.shade(wall, -dark * .6), seed: s + 1, alpha: .95, dir: 1.57 });
@@ -61,13 +63,15 @@ export function shell(g, R, o = {}) {
   P.wash(g, quad(W.floor, 0, 0, 1, 1, 10), { color: floor, seed: s + 4, alpha: .95, dir: 0, bloom: .9 });
   const r = P.rng(s + 9);
   if (o.planks !== false) for (const [k, map, n] of [['left', W.left, 9], ['right', W.right, 9], ['back', W.back, 14]]) {
-    for (let i = 1; i < n; i++) { const u = i / n + (r() - .5) * .02; P.pen(g, [map(u, 0), map(u, .5 + (r() - .5) * .2), map(u, 1)], { seed: s + i * 7 + k.length, alpha: .32 + r() * .2 }); }
+    for (let i = 1; i < n; i++) { const u = i / n + (r() - .5) * .02; P.pen(g, [map(u, 0), map(u, .5 + (r() - .5) * .2), map(u, 1)], { seed: s + i * 7 + k.length, alpha: .42 + r() * .25 }); }
     // a few boards a shade lighter or darker
-    for (let i = 0; i < n; i += 2 + Math.floor(r() * 2)) P.wash(g, quad(map, i / n, 0, (i + 1) / n, 1, 4), { color: P.shade(k === 'back' ? back : wall, r() < .5 ? -.12 : .08), alpha: .25, seed: s + 40 + i, edge: .2, bloom: .4 });
+    for (let i = 0; i < n; i += 2 + Math.floor(r() * 2)) P.wash(g, quad(map, i / n, 0, (i + 1) / n, 1, 4), { color: P.shade(k === 'back' ? back : wall, r() < .5 ? -.18 : .1), alpha: .35, seed: s + 40 + i, edge: .2, bloom: .4 });
   }
+  // grain and knots: short loose strokes along the boards
+  for (const [map, n] of [[W.left, 60], [W.right, 60], [W.back, 90], [W.floor, 90]]) for (let i = 0; i < n; i++) { const u = r(), v = r(), L = .03 + r() * .08, flo = map === W.floor; const a = flo ? map(u, v) : map(u, v), b = flo ? map(u + (r() - .5) * .01, Math.min(1, v + L)) : map(u + (r() - .5) * .004, Math.min(1, v + L)); P.pen(g, [a, b], { seed: s + 500 + i, alpha: .14 + r() * .14, width: .9 }); if (r() < .08) { P.pen(g, [...P.ellipse(a[0], a[1], 3 + r() * 3, 1.5 + r() * 2, 10), [a[0] + 4, a[1]]], { seed: s + 600 + i, alpha: .3, width: 1 }); } }
   // floor boards: lines that run to the vanishing point
   const nb = o.boards ?? 12;
-  for (let i = 1; i < nb; i++) { const u = i / nb; P.pen(g, [W.floor(u, 0), W.floor(u, 1)], { seed: s + 80 + i, alpha: .38, width: 1.4 }); }
+  for (let i = 1; i < nb; i++) { const u = i / nb; P.pen(g, [W.floor(u, 0), W.floor(u, 1)], { seed: s + 80 + i, alpha: .5, width: 1.6 }); }
   for (let j = 0; j < 9; j++) { const v = Math.pow((j + r()) / 9, 1.8); for (let i = 0; i < nb; i++) if (r() < .45) { const u = (i + .1) / nb, u2 = (i + .9) / nb; P.pen(g, [W.floor(u, v), W.floor(u2, v)], { seed: s + 200 + j * 20 + i, alpha: .22, width: 1.1 }); } }
   // ceiling beams
   for (let i = 0; i < (o.beams ?? 4); i++) { const v = (i + .5) / (o.beams ?? 4); const a = W.ceiling(0, v), b = W.ceiling(1, v); const w = 26 * R.scaleAt(P.lerp(R.near, R.back, v)); P.wash(g, [[a[0], a[1] - w], [b[0], b[1] - w], [b[0], b[1] + w], [a[0], a[1] + w]], { color: P.shade(ceil, -.25), seed: s + 300 + i, alpha: .9, dir: 0 }); P.pen(g, [[a[0], a[1] + w], [b[0], b[1] + w]], { seed: s + 310 + i, alpha: .5 }); }
@@ -99,8 +103,10 @@ export function windowLight(g, R, map, o = {}) {
   for (let j = 1; j < rows; j++) bar(0, j / rows - fw * .2, 1, j / rows + fw * .2, .1);
   // bloom: the light eats the edges of the bars
   const c = [P.lerp(bb[0], bb[2], .5), P.lerp(bb[1], bb[3], .55)];
-  P.glow(g, c[0], c[1], Math.max(bb[2] - bb[0], bb[3] - bb[1]) * .75, sky, .55);
-  P.glow(g, c[0], c[1], Math.max(bb[2] - bb[0], bb[3] - bb[1]) * 1.2, '#ffcf7a', .22);
+  const big = Math.max(bb[2] - bb[0], bb[3] - bb[1]);
+  P.glow(g, c[0], c[1], big * .7, sky, .7);
+  P.glow(g, c[0], c[1], big * 1.3, '#ffcf7a', .35);
+  P.glow(g, c[0], c[1] + big * .4, big * 2.2, '#ffb860', .18);
   return open;
 }
 
@@ -112,7 +118,7 @@ export function lightShaft(g, R, winMap, o = {}) {
   const c = winMap.corners, cols = o.cols ?? 2, rows = o.rows ?? 3;
   const patch = (u0, v0, u1, v1) => { const pts = []; for (const [u, v] of [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]) { const top = c[0].map((a, i) => P.lerp(a, c[1][i], u)), bot = c[3].map((a, i) => P.lerp(a, c[2][i], u)), p = top.map((a, i) => P.lerp(a, bot[i], v)); const t = p[1] / (o.height ?? (c[0][1])); pts.push(R.floor(p[0] + dx * t, p[2] - dz * t)); } return pts; };
   g.save(); g.globalCompositeOperation = 'screen';
-  for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) { const p = patch(i / cols + .02, j / rows + .02, (i + 1) / cols - .02, (j + 1) / rows - .02); P.path(g, P.rough(p, 3, 7 + i * 3 + j, 6)); g.fillStyle = P.css(col, k * .55); g.fill(); }
+  for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) { const p = patch(i / cols + .02, j / rows + .02, (i + 1) / cols - .02, (j + 1) / rows - .02); P.path(g, P.rough(p, 3, 7 + i * 3 + j, 6)); g.fillStyle = P.css(col, k * .8); g.fill(); }
   // the beam: a wide soft wedge from the window to the patch
   const top = [R.proj(...c[0]), R.proj(...c[1])], all = patch(0, 0, 1, 1);
   const beam = [top[0], top[1], all[1], all[2], all[3]];
@@ -123,6 +129,24 @@ export function lightShaft(g, R, winMap, o = {}) {
 }
 
 // ── things on faces ──
+/** books(g, x, y, s, o): a stack of books lying on the floor or a table at (x, y), scale s */
+export function books(g, x, y, s, o = {}) {
+  const r = P.rng(o.seed || 121), n = o.n || 4, cols = o.colors || ['#7a3a2e', '#3e5a4a', '#8a6a3a', '#4a4a6a', '#a8905a'];
+  let yy = y; for (let i = 0; i < n; i++) { const w = (70 + r() * 40) * s, h = (12 + r() * 8) * s, dx = (r() - .5) * 16 * s, c = cols[Math.floor(r() * cols.length)];
+    const bk = [[x - w / 2 + dx, yy - h], [x + w / 2 + dx, yy - h], [x + w / 2 + dx, yy], [x - w / 2 + dx, yy]]; P.wash(g, bk, { color: c, seed: (o.seed || 121) + i, alpha: .97, edge: .5, rough: .6, bloom: .3 });
+    P.wash(g, [[x - w / 2 + dx + 3 * s, yy - h * .75], [x + w / 2 + dx - 2 * s, yy - h * .75], [x + w / 2 + dx - 2 * s, yy - h * .3], [x - w / 2 + dx + 3 * s, yy - h * .3]], { color: '#efe2c4', seed: (o.seed || 121) + 30 + i, alpha: .7, rough: .4, edge: .2 });
+    P.pen(g, [...bk, bk[0]], { seed: (o.seed || 121) + 60 + i, alpha: .45 }); yy -= h; }
+}
+/** stool(g, R, X, Z, o): a small wooden stool on the floor */
+export function stool(g, R, X, Z, o = {}) {
+  const H = o.h || 160, w = o.w || 120, c = o.color || '#6a4a32', s = o.seed || 131;
+  for (const [dx, dz] of [[-1, 1], [1, 1], [-1, -1], [1, -1]]) { const a = R.proj(X + dx * w * .4, H, Z + dz * w * .4), b = R.proj(X + dx * w * .48, 0, Z + dz * w * .48); P.ink(g, [a, b], { width: 9 * R.scaleAt(Z), color: P.shade(c, dz > 0 ? -.2 : 0), alpha: .95, seed: s + dx + dz * 3 }); }
+  const top = R.face([[X - w / 2, H, Z + w / 2], [X + w / 2, H, Z + w / 2], [X + w / 2, H, Z - w / 2], [X - w / 2, H, Z - w / 2]]);
+  P.wash(g, quad(top, 0, 0, 1, 1, 4), { color: P.shade(c, .15), seed: s + 9, alpha: .97, edge: .5 });
+  const fr = R.face([[X - w / 2, H, Z - w / 2], [X + w / 2, H, Z - w / 2], [X + w / 2, H - 22, Z - w / 2], [X - w / 2, H - 22, Z - w / 2]]);
+  P.wash(g, quad(fr, 0, 0, 1, 1, 4), { color: P.shade(c, -.2), seed: s + 10, alpha: .97 }); P.pen(g, [...quad(fr, 0, 0, 1, 1, 1), fr(0, 0)], { seed: s + 11, alpha: .5 });
+  return top;
+}
 /** frame(g, map, o): a picture frame or poster on a wall face; o.paint(g, inner map) paints the picture */
 export function frame(g, map, o = {}) {
   const s = o.seed || 31;
@@ -235,6 +259,7 @@ export function lamp(g, R, X, Z, o = {}) {
 /** grade(g, W, H, o): the last pass over a plate — warm light, darker corners (multiply), so the room sits in one light */
 export function grade(g, W, H, o = {}) {
   g.save(); g.globalCompositeOperation = 'multiply';
+  if (o.light) { const [lx, ly] = o.light, f = g.createRadialGradient(lx, ly, Math.min(W, H) * .12, lx, ly, Math.max(W, H) * 1.05); f.addColorStop(0, 'rgba(255,255,255,0)'); f.addColorStop(.5, P.css(o.fall || '#a07850', (o.fallK ?? .5) * .5)); f.addColorStop(1, P.css(o.fall || '#a07850', o.fallK ?? .5)); g.fillStyle = f; g.fillRect(0, 0, W, H); }
   const v = g.createRadialGradient(W * (o.cx ?? .5), H * (o.cy ?? .45), Math.min(W, H) * .25, W * .5, H * .5, Math.max(W, H) * .78);
   v.addColorStop(0, 'rgba(255,255,255,0)'); v.addColorStop(1, P.css(o.edge || '#5a4030', o.k ?? .55)); g.fillStyle = v; g.fillRect(0, 0, W, H);
   g.globalCompositeOperation = 'soft-light'; g.fillStyle = P.css(o.warm || '#ffb860', o.warmK ?? .18); g.fillRect(0, 0, W, H);

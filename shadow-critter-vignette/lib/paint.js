@@ -316,12 +316,12 @@ export function wash(ctx, poly, o = {}) {
   const r = rng(o.seed || 1), col = o.color || '#c9a77a', A = o.alpha ?? .9, layers = o.layers ?? 3;
   const bb = bounds(poly), w = bb[2] - bb[0], h = bb[3] - bb[1];
   ctx.save();
-  for (let l = 0; l < layers; l++) { path(ctx, rough(poly, o.rough ?? 2, (o.seed || 1) + l * 17, 5)); ctx.fillStyle = css(jitter(col, r, .04), Math.min(1, A / layers * 1.35)); ctx.fill(); }
+  for (let l = 0; l < layers; l++) { path(ctx, rough(poly, o.rough ?? 2, (o.seed || 1) + l * 17, 5)); ctx.fillStyle = css(jitter(col, r, .04), Math.min(1, A / layers * 1.9)); ctx.fill(); }
   path(ctx, poly); ctx.clip();
   const n = Math.round(w * h / 2600 * (o.bloom ?? .7)) + 3;
   for (let i = 0; i < n; i++) {
     const x = bb[0] + r() * w, y = bb[1] + r() * h, rr = 12 + r() * Math.min(140, Math.max(w, h) * .35), c2 = r() < .55 ? shade(col, -.18) : shade(col, .16);
-    const g = ctx.createRadialGradient(x, y, 0, x, y, rr); g.addColorStop(0, css(c2, .07 + r() * .1)); g.addColorStop(1, css(c2, 0)); ctx.fillStyle = g; ctx.fillRect(x - rr, y - rr, rr * 2, rr * 2);
+    const g = ctx.createRadialGradient(x, y, 0, x, y, rr); g.addColorStop(0, css(c2, .1 + r() * .16)); g.addColorStop(.7, css(c2, .04)); g.addColorStop(1, css(c2, 0)); ctx.fillStyle = g; ctx.fillRect(x - rr, y - rr, rr * 2, rr * 2);
   }
   // brush streaks along one direction, very faint
   const dir = o.dir ?? 1.45, m = Math.round(w * h / 5000) + 2; ctx.lineCap = 'round';
@@ -331,7 +331,7 @@ export function wash(ctx, poly, o = {}) {
   ctx.restore();
   const edge = o.edge ?? .45;
   if (edge > 0) { ctx.save(); const P = rough(poly, (o.rough ?? 2) * .8, (o.seed || 1) + 5, 5); path(ctx, P); ctx.lineJoin = 'round'; ctx.strokeStyle = css(shade(col, -.3), edge * .35); ctx.lineWidth = 2.2; ctx.stroke(); ctx.strokeStyle = css(shade(col, -.2), edge * .12); ctx.lineWidth = 6; ctx.stroke(); ctx.restore(); }
-  if (o.tooth !== 0) tooth(ctx, bb, o.tooth ?? .18, 1, (o.seed || 1) + 9);
+  if (o.tooth !== 0) tooth(ctx, bb, o.tooth ?? .22, 1, (o.seed || 1) + 9);
   return bb;
 }
 /** pen(ctx, pts, o) — the sepia ink sketch line drawn over the washes (planks, frames, edges): thin, broken, a little loose */
