@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>street-run-montage · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 스케이트보드를 탄 주인공과 함께 달리는 동물이 맑은 날의 동네를 질주하는 애니메이션 몽타주를 three.js 코드로 만듭니다.">
+<meta property="og:title" content="street-run-montage · motion-skills">
+<meta property="og:description" content="주제 하나를 주면 스케이트보드를 탄 주인공과 함께 달리는 동물이 맑은 날의 동네를 질주하는 애니메이션 몽타주를 three.js 코드로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/street-run-montage/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/street-run-montage">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / street-run-montage</nav>
+  <h1>street-run-montage</h1>
+  <p>주제 하나를 주면 스케이트보드를 탄 주인공과 함께 달리는 동물이 맑은 날의 동네를 질주하는 1분짜리 애니메이션 몽타주를 three.js 코드로 만듭니다. 푸른 그림자의 2톤 셀 셰이딩, 비트마다 바뀌는 카메라, 피사체는 선명하고 배경만 흐르는 모션 블러, 모았다가 착지하는 진짜 트릭, 마지막 멈춤과 환호까지 담고, 컷에 맞춘 그루브와 보드 · 동물 소리도 모두 코드로 합성합니다.
+  보고 만든 원본: <a href="https://x.com/keshiAIart/status/2122300022280823089?a=XFn7wiVQgUnXUe0tASY&amp;s=19" target="_blank" rel="noopener">keshi의 X 게시물 (60초 영상, 스케이트보더와 검은 고양이)</a>.</p>
+  <ul class="tags"><li>three.js · 셀 셰이딩</li><li>비트마다 컷 · 카메라 14종</li><li>배경 모션 블러</li><li>트릭 · 발 고정 검사</li><li>합성 사운드</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(마지막 페리를 잡으러 가는 소녀와 코기, 새벽 배달 소년과 까마귀, 방학 첫날 …). 레퍼런스 영상이 있으면 그 스틸과 컷 길이</dd>
+      <dt>브리프</dt><dd>가야 할 곳과 이유 · 라이더(체형 · 무게 · 스탠스 · 모자 · 후드 · 보드 그림) · 동반 동물(종류 · 털 · 무게 · 달리는 버릇) · 계절과 빛 · 4–6곳의 길 · 이야기 시간의 비트(트릭마다 모으기 → 동작 → 착지) · 비트 단위 샷 목록 · 곡을 적은 <code>BRIEF.md</code></dd>
+      <dt>캐스트</dt><dd>데이터로 새로 설계한 라이더와 동물(<code>cast.js</code>), 여섯 방향 · 핵심 포즈 좌우 · 걸음 · 도약 · 앉기를 한 장에 렌더한 캐스트 시트로 채점</dd>
+      <dt>라이드와 샷</dt><dd>속도 · 차선 · 트릭을 이야기 시간으로 키잉하고, 그 동작 아래에 동네를 배치(<code>K.planter({ tau })</code>, 그라인드 턱은 자동). 비트 단위 컷마다 다른 카메라, 슬로모션은 트릭에만</dd>
+      <dt>확인</dt><dd>모든 샷 그리기 · 결정성 · 비트 위의 컷 · 카메라 종류 · 벽 속 카메라 없음 · 피사체가 화면 안 · 관절 범위 · 디딘 발과 발바닥 미끄러짐(mm) · 도약 전 모으기 · 숨 쉬는 대기 · 밀지 않고 빨라지지 않기 · 악보</dd>
+      <dt>출력</dt><dd>30fps 1920×1080 MP4(그루브 · 바퀴 구르는 소리 · 팝 · 착지 · 그라인드 · 짖는 소리 포함), ♪ 버튼으로 소리까지 재생하는 라이브 페이지</dd>
+    </dl>
+    <pre><code>cd street-run-montage/examples/ferry-bell
+node ../../scripts/check.mjs cast.html
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs index.html --sheet 16 --scale .5
+node ../../scripts/score.mjs index.html
+node ../../scripts/render.mjs index.html --workers 4 --audio out/ferry-bell.wav
+node ../../scripts/new-run.mjs ../../../my-run</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. 네트워크와 GPU가 필요 없습니다(SwiftShader로 미리보기 한 프레임 약 0.13초, 1080p 약 1초, 37초 영상을 워커 4개로 몇 분). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/street-run-montage/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:calc((100vw - 34px)*.5625);--demo-bg:#0e1420">
+    <iframe data-src="demo/examples/ferry-bell/" title="street-run-montage 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/ferry-bell/">데모 열기 (examples/ferry-bell)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/ferry-bell</code> · 36.8초 · 16컷 · ♪ 버튼으로 소리</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/ferry-bell/" data-cap="예제 &lt;code&gt;examples/ferry-bell&lt;/code&gt; · 36.8초 · 16컷 · ♪ 버튼으로 소리" aria-pressed="true">마지막 페리</button>
+        <button class="btn" type="button" data-src="demo/examples/ferry-bell/cast.html" data-cap="캐스트 시트 &lt;code&gt;examples/ferry-bell/cast.html&lt;/code&gt; · 여섯 방향 · 포즈 좌우 · 걸음 · 도약 · 앉기" aria-pressed="false">캐스트 시트</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/index.html&lt;/code&gt; · 12초 · 5컷 · 새 작품의 출발점" aria-pressed="false">시작 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본에 없는 주제로 처음부터 만든 예제 「The Ferry Bell」의 샷들과, 그 캐스트 시트, 시작 템플릿입니다. 카드를 누르면 브라우저에서 바로 재생되는 라이브 페이지가 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"film":"「The Ferry Bell」 샷","tools":"캐스트 시트 · 템플릿"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「The Ferry Bell」 <small>36.8초 · 16컷 · 124bpm</small></h3>
+      <p>마지막 페리 종이 울리자 하나와 코기 모치가 언덕 위에서 상점가와 방파제를 지나 터미널까지 달립니다. 봄 오후, 벚꽃과 꽃잎.</p>
+      <div class="grid">
+        <a class="tile" data-tags="film" href="demo/examples/ferry-bell/" target="_blank" rel="noopener">
+          <img src="samples/01-wide.jpg" alt="「The Ferry Bell」 언덕 위 장면: 골목 끝 망원으로 본 출발. 벚꽃 아래 작은 두 실루엣" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 1 · wide · 8박</span><b>언덕 위</b>
+          <span class="how">골목 끝 망원으로 본 출발. 벚꽃 아래 작은 두 실루엣</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/ferry-bell/" target="_blank" rel="noopener">
+          <img src="samples/02-feet.jpg" alt="「The Ferry Bell」 밀어 차기 장면: 바퀴 높이 카메라. 뒷발이 땅을 디딘 채 보드가 앞으로 나감" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 2 · feet · 4박</span><b>밀어 차기</b>
+          <span class="how">바퀴 높이 카메라. 뒷발이 땅을 디딘 채 보드가 앞으로 나감</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/ferry-bell/" target="_blank" rel="noopener">
+          <img src="samples/03-low-front.jpg" alt="「The Ferry Bell」 내리막 장면: 렌즈 쪽으로 내려오는 하나와 옆을 달리는 모치, 속도선" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 3 · low-front · 4박</span><b>내리막</b>
+          <span class="how">렌즈 쪽으로 내려오는 하나와 옆을 달리는 모치, 속도선</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/ferry-bell/" target="_blank" rel="noopener">
+          <img src="samples/04-face.jpg" alt="「The Ferry Bell」 눈 맞춤 장면: 모치를 내려다보는 얼굴. 고개가 향한 쪽에서 잡은 클로즈업" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 4 · face · 4박</span><b>눈 맞춤</b>
+          <span class="how">모치를 내려다보는 얼굴. 고개가 향한 쪽에서 잡은 클로즈업</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/ferry-bell/" target="_blank" rel="noopener">
+          <img src="samples/05-worm.jpg" alt="「The Ferry Bell」 화단 넘기 장면: 땅에서 올려다본 올리. 하늘을 배경으로 반 속도" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 5 · worm · 슬로모션</span><b>화단 넘기</b>
+          <span class="how">땅에서 올려다본 올리. 하늘을 배경으로 반 속도</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/ferry-bell/" target="_blank" rel="noopener">
+          <img src="samples/06-buddy.jpg" alt="「The Ferry Bell」 모치 장면: 코기의 전용 샷. 짧은 다리의 빠른 보폭, 꼬리, 귀" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 6 · buddy · 4박</span><b>모치</b>
+          <span class="how">코기의 전용 샷. 짧은 다리의 빠른 보폭, 꼬리, 귀</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/ferry-bell/" target="_blank" rel="noopener">
+          <img src="samples/08-kickflip.jpg" alt="「The Ferry Bell」 킥플립 장면: 들린 두 발 아래에서 한 바퀴 도는 보드, 해 쪽 플레어" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 8 · low-side · 슬로모션</span><b>킥플립</b>
+          <span class="how">들린 두 발 아래에서 한 바퀴 도는 보드, 해 쪽 플레어</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/ferry-bell/" target="_blank" rel="noopener">
+          <img src="samples/10-grind.jpg" alt="「The Ferry Bell」 방파제 그라인드 장면: 턱 위를 미끄러지는 트럭에서 튀는 불꽃" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 10 · feet · 6박</span><b>방파제 그라인드</b>
+          <span class="how">턱 위를 미끄러지는 트럭에서 튀는 불꽃</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/ferry-bell/" target="_blank" rel="noopener">
+          <img src="samples/13-orbit.jpg" alt="「The Ferry Bell」 셔빗 장면: 트릭 주위를 도는 카메라" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 13 · orbit · 4박</span><b>셔빗</b>
+          <span class="how">트릭 주위를 도는 카메라</span></div></a>
+        <a class="tile" data-tags="film" href="demo/examples/ferry-bell/" target="_blank" rel="noopener">
+          <img src="samples/16-hero.jpg" alt="「The Ferry Bell」 도착 장면: 보드에서 내려 환호. 뒤에는 페리, 앉아서 짖는 모치" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">샷 16 · hero · 10박</span><b>도착</b>
+          <span class="how">보드에서 내려 환호. 뒤에는 페리, 앉아서 짖는 모치</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>캐스트 시트 · 템플릿 <small>장면을 쓰기 전에 보는 것</small></h3>
+      <p>몸이 물리적으로 가능한지, 양쪽 방향이 한 사람으로 읽히는지 먼저 봅니다. 템플릿은 새 작품의 출발점이고, 주제에 맞게 새로 설계합니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="tools" href="demo/examples/ferry-bell/cast.html" target="_blank" rel="noopener">
+          <img src="samples/cast-sheet.jpg" alt="하나와 모치: 라이더 여섯 방향 · 핵심 포즈 좌우 · 코기의 걸음 · 도약 · 앉기" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 시트 · cast.html</span><b>하나와 모치</b>
+          <span class="how">라이더 여섯 방향 · 핵심 포즈 좌우 · 코기의 걸음 · 도약 · 앉기</span></div></a>
+        <a class="tile" data-tags="tools" href="demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/template.jpg" alt="미노와 쿠리: 빨간 후드와 비니의 아이, 크림색 개, 여름 골목에서 상점가로" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">시작 템플릿 · 12초 · 5컷</span><b>미노와 쿠리</b>
+          <span class="how">빨간 후드와 비니의 아이, 크림색 개, 여름 골목에서 상점가로</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. 원본 게시물의 형식(셀 셰이딩, 비트마다 바뀌는 카메라, 배경 블러, 라이더와 동물의 질주)을 코드로 새로 지었고, 출연진 · 동네 · 샷은 가져오지 않았습니다.</p>
+  <div class="works">
+    <a class="work" href="https://jungrok5.github.io/motion-skills/street-run-montage/demo/examples/ferry-bell/" target="_blank" rel="noopener"><b>「The Ferry Bell」</b><span>36.8초 · 16컷(슬로모션 2) · 소녀와 코기 · 봄 항구 마을 · 라이브 페이지</span><span class="url">street-run-montage/demo/examples/ferry-bell/</span></a>
+    <a class="work" href="https://x.com/keshiAIart/status/2122300022280823089?a=XFn7wiVQgUnXUe0tASY&amp;s=19" target="_blank" rel="noopener"><b>원본 · keshi의 X 게시물</b><span>60초 · 스케이트보더와 검은 고양이 · 스킬의 출처</span><span class="url">x.com/keshiAIart/status/2122300022280823089</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/street-run-montage/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/street-run-montage">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/street-run-montage/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/street-run-montage/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 캐스트 · 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/street-run-montage/references/LOOK.md">references/LOOK.md</a> <span>원본에서 본 것과 룩의 수치</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/street-run-montage/references/CAMERA.md">references/CAMERA.md</a> <span>샷 문법 · 카메라 14종 · 컷 규칙</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/street-run-montage/references/MOTION.md">references/MOTION.md</a> <span>무게 · 모으기 · 디딘 발 · 검사 수치</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/street-run-montage/references/KIT.md">references/KIT.md</a> <span>API</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/street-run-montage/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 이미지는 모두 이 스킬의 코드로 렌더했습니다. three.js (MIT)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
