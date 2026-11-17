@@ -2763,6 +2763,50 @@
         }
       ],
       "workedExample": "https://jungrok5.github.io/motion-skills/knitted-page/demo/examples/apple-cake/"
+    },
+    {
+      "id": "lit-room",
+      "name": "lit-room",
+      "tagline": "주제를 주면 밤의 작은 방을 3D로 짓고 책상 위 모니터에 그 주제의 웹페이지를 띄웁니다. 페이지는 클릭 · 입력이 되는 실제 HTML이고, 그 화면의 빛이 방의 조명이라 페이지 색과 끌어 옮긴 빛을 따라 방이 물듭니다.",
+      "poster": "lit-room/poster.jpg",
+      "posterAlt": "네 장면: 랜턴 불빛 아래 배의 해도대와 빨강 · 초록 현등이 뜬 남색 당직 화면, 랜턴을 끄자 빨강과 초록 빛이 책상 양쪽을 물들인 선실, 해 질 녘 창가 책상의 어두운 화면 위 색색의 빛, 장밋빛 새벽 화면에 분홍으로 물든 해도대",
+      "tags": [
+        "HTML-in-Canvas",
+        "화면이 곧 조명",
+        "절차적 3D 방",
+        "WebGL2 조명",
+        "코드 전용"
+      ],
+      "stats": [
+        "예제 Night Watch 배의 해도대 · 현등 끌기 · 침로 입력 · 바다 프리셋 3 · 랜턴 스위치",
+        "검사: 빨강 페이지 → 책상 붉은빛 비율 0.89 · 현등 드래그 972 px · 좌우 밝기비 9.1 → 1.4 · 시점을 돌린 뒤에도 화면 클릭"
+      ],
+      "page": "lit-room/",
+      "source": "lit-room/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "lit-room/examples/night-watch/"
+      },
+      "sources": [
+        {
+          "title": "원본 데모 · Lit Room",
+          "url": "https://claude.ai/artifact/D5pdvChFfvxBsvVNb5KNCJ"
+        },
+        {
+          "title": "HTML-in-Canvas 데모 페이지",
+          "url": "https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk"
+        },
+        {
+          "title": "Felix Rieseberg의 X 게시물",
+          "url": "https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "Night Watch · 배의 해도대 · 라이브 데모",
+          "url": "https://jungrok5.github.io/motion-skills/lit-room/demo/examples/night-watch/"
+        }
+      ]
     }
   ]
 }
