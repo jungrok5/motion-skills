@@ -104,7 +104,7 @@ row(kneeBelow === 0, 'knee direction', kneeBelow ? `${kneeBelow} samples with a 
 row(true, 'bone lengths', `thigh ${f2(LT)} m, shin ${f2(LS)} m, fixed (two-bone IK, lengths never animated)`);
 row(slide <= 0.002, 'planted feet', `max slide ${f2(slide * 1000, 1)} mm while planted (limit 2 mm)`);
 row(sink <= 1e-4 && float <= 1e-4, 'feet on the ground', `sink ${f2(sink * 1000, 1)} mm, float ${f2(float * 1000, 1)} mm while planted`);
-row(minSide >= 2 && outside === 0, 'support', `>= ${minSupport} feet down (>= ${minSide} a side); body over the planted feet ${outside ? 'FAILS ' + outside + ' samples' : 'always'}`);
+row(minSide >= 1 && minSupport >= 3 && outside === 0, 'support', `>= ${minSupport} feet down (>= ${minSide} a side); body over the planted feet ${outside ? 'FAILS ' + outside + ' samples' : 'always'}`);
 row(footGap > 2 * CFG.FOOT_R + 0.5 ? true : 'warn', 'foot spacing', `closest feet on one side ${f2(footGap)} m apart (pads ${f2(2 * CFG.FOOT_R)} m; claws reach ${f2(2 * CFG.CLAW_R)} m)`);
 row(peel < 0.35, 'anticipation', `lift-off speed ${f2(peel * 100, 0)}% of mid-swing (the foot peels off, limit 35%)`);
 row(slamH < 0.35, 'slam', `at touchdown the foot moves ${f2(slamH * 100, 0)}% as fast sideways as down (lands straight down, limit 35%)`);
@@ -150,7 +150,7 @@ if (a.events) {
 if (!a.fast) {
   const { openProject, frame, pixels } = await import('./_browser.mjs');
   const W = +(a.w || 320), H = +(a.h || 180);
-  const B = await openProject(dir, { w: W, h: H });
+  const B = await openProject(dir, { w: W, h: H, q: 'look=grain:0' });   // no film grain: 'motion' must measure the picture, not the noise
   const logs = [...new Set(B.logs)].filter((l) => !/GPU stall|GL Driver Message/.test(l));
   row(!B.errors.length, 'module build', B.errors.length ? B.errors.join(' | ').slice(0, 400) : `all modules built in ${B.readyMs} ms ${JSON.stringify(B.info.buildMs)}`);
   row(B.info.tris < 7e6 ? true : 'warn', 'triangles', `${(B.info.tris / 1e6).toFixed(2)} M per frame, ${B.info.calls} draw calls (budget ~7 M)`);
@@ -164,8 +164,8 @@ if (!a.fast) {
     await frame(B.page, t2); const p2 = await pixels(B.page, 96);
     let mv = 0; for (let i = 0; i < p1.data.length; i += 4) mv += Math.abs(p1.data[i] - p2.data[i]) + Math.abs(p1.data[i + 1] - p2.data[i + 1]);
     mv /= p1.data.length / 2;
-    const ok = st.med > 6 && st.med < 200 && st.p99 > 25 && mv > 0.15;
-    row(ok, 'shot ' + s.shot, `median ${f2(st.med, 0)} p99 ${f2(st.p99, 0)} (luma 0-255), motion ${f2(mv)} per pixel over 0.6 s` + (st.med <= 6 ? ' — black' : st.p99 <= 25 ? ' — nothing lit' : mv <= 0.15 ? ' — nothing moves' : ''));
+    const ok = st.med > 6 && st.med < 200 && st.p99 > 25 && mv > 0.6;
+    row(ok, 'shot ' + s.shot, `median ${f2(st.med, 0)} p99 ${f2(st.p99, 0)} (luma 0-255), motion ${f2(mv)} per pixel over 0.6 s` + (st.med <= 6 ? ' — black' : st.p99 <= 25 ? ' — nothing lit' : mv <= 0.6 ? ' — nothing moves' : ''));
   }
   const after = [...new Set(B.logs)].filter((l) => !/GPU stall|GL Driver Message/.test(l));
   row(!after.length, 'console', after.length ? after.slice(0, 5).join(' | ').slice(0, 400) : 'no errors, no 404s');

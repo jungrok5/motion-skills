@@ -103,7 +103,7 @@ export class Batch {
       const jp = P[i][closeJ ? (j + 1) % nj : Math.min(nj - 1, j + 1)], jm = P[i][closeJ ? (j - 1 + nj) % nj : Math.max(0, j - 1)];
       const du = sub(ip, im), dv = sub(jp, jm);
       let n = [du[1] * dv[2] - du[2] * dv[1], du[2] * dv[0] - du[0] * dv[2], du[0] * dv[1] - du[1] * dv[0]];
-      const l = Math.hypot(...n) || 1; n = n.map((x) => (flip ? -x : x) / l);
+      const l = Math.hypot(...n); n = l > 1e-9 ? n.map((x) => (flip ? -x : x) / l) : [0, 1, 0];   // a collapsed row (a pointed end) must not give a zero normal (NaN in the shader)
       this.v(...P[i][j], ...n, Array.isArray(C[0]) ? C[i][j] : C);
     }
     const jm = closeJ ? nj : nj - 1;

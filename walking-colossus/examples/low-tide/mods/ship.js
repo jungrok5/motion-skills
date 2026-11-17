@@ -23,7 +23,7 @@ export async function create(ctx) {
   function halfW(x, y) {
     const fx = fxOf(x), yk = Math.min(1.3, Math.max(0, y / D));
     const bowK = SS(fx, 0.42, 1.0);
-    let w = B2 * Math.pow(Math.max(0, 1 - bowK), 0.45 + 0.85 * (1 - yk));         // fine entry low, flare high
+    let w = B2 * Math.pow(Math.max(0, 1 - bowK), 0.62 + 0.6 * (1 - Math.min(1, yk)));   // fine entry low, a little flare high
     w *= 1 - 0.22 * SS(-x, 44, 57) * (1 - 0.6 * yk);                               // the run aft
     return Math.max(0.12, w);
   }
@@ -226,7 +226,7 @@ export async function create(ctx) {
     const OR = lin(0xa04a18, 0.8);
     const P = [];
     for (let i = 0; i <= 14; i++) {
-      const u = i / 14, x = lx0 + (lx1 - lx0) * u, r = 1.25 * Math.pow(Math.sin(Math.PI * u), 0.45), row = [];
+      const u = i / 14, x = lx0 + (lx1 - lx0) * u, r = 0.06 + 1.2 * Math.pow(Math.sin(Math.PI * u), 0.45), row = [];
       for (let j = 0; j <= 14; j++) { const a = j / 14 * Math.PI * 2; row.push([x, ly + Math.sin(a) * r * 0.85, lz + Math.cos(a) * r]); }
       P.push(row);
     }
@@ -340,13 +340,13 @@ export async function create(ctx) {
   }
 
   // ------------------------------------------------------------------ materials + meshes
-  K.mesh(hull, K.mat('paintedMetal', { w: { rust: 0.6, chip: 0.25, streak: 1.0, dirt: 0.85, moss: 0.35, mossColor: 0x1c2414, wet: 0.65 } }), { parent: root, name: 'ship:hull' });
+  K.mesh(hull, K.mat('paintedMetal', { w: { rust: 0.3, chip: 0.12, streak: 1.0, dirt: 0.8, moss: 0.3, mossColor: 0x1c2414, wet: 0.65 } }), { parent: root, name: 'ship:hull' });
   K.mesh(steel, K.mat('steel', { w: { rust: 0.55, streak: 0.8 } }), { parent: root, name: 'ship:steel' });
-  K.mesh(paint, K.mat('paint', { w: { rust: 0.4, streak: 1.0, chip: 0.25, dirt: 0.7 } }), { parent: root, name: 'ship:paint' });
+  K.mesh(paint, K.mat('paint', { w: { rust: 0.14, streak: 0.9, chip: 0.08, dirt: 0.7 } }), { parent: root, name: 'ship:paint' });
   K.mesh(rust, K.mat('rust', {}), { parent: root, name: 'ship:rust' });
   K.mesh(dark, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0.4 }), { parent: root, name: 'ship:dark' });
   K.mesh(loose, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8 }), { parent: root, shadow: false, name: 'ship:lines' });
-  K.mesh(emis, new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false }), { parent: root, shadow: false, name: 'ship:lights' });
+  K.mesh(emis, new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false, side: THREE.DoubleSide }), { parent: root, shadow: false, name: 'ship:lights' });
 
   // work lights under the hull (the engine allows up to 6 warm PointLights on the body)
   for (const [x, y, z] of ctx.anchors.lamps) { const L = new THREE.PointLight(new THREE.Color(1.0, 0.55, 0.22), 60, 22, 2); L.position.set(x, y - 0.6, z); L.castShadow = false; root.add(L); }

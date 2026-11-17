@@ -21,7 +21,7 @@ export const LOOK = {
   zenith: [0.070, 0.078, 0.100], horizon: [0.205, 0.172, 0.165],
   skyGlowDir: [1.0, 0.06, 0.15], skyGlow: 0.85,
   fogColor: [0.150, 0.136, 0.136], mistColor: [0.185, 0.172, 0.168],
-  fogDensity: 0.0034, mistDensity: 0.018, mistHeight: 2.4,
+  fogDensity: 0.0026, mistDensity: 0.018, mistHeight: 2.4,
   hemiSky: [0.78, 0.74, 0.74], hemiGround: [0.050, 0.044, 0.040], hemiIntensity: 2.0,
   keyColor: [1.0, 0.86, 0.74], keyIntensity: 1.1, keyDir: [0.75, 0.55, -0.35],
   envIntensity: 0.7, exposure: 1.0, bloom: 0.55, saturation: 1.0, contrast: 1.08,
@@ -47,10 +47,10 @@ export const ANCHORS = {
 export const GROUND = {
   puddle: { cell: 17, p: 0.72 },
   hero: [
-    [101.0, 33.0, 8.5, 4.6, 0.35],     // f_open: the water sheet the lens sits in
-    [79.0, 29.6, 6.5, 4.0, -0.2],      // f_foot: the foot plants into it
+    [141.0, 35.0, 8.5, 4.6, 0.35],     // f_open: the water sheet the lens sits in
+    [70.5, 24.0, 6.0, 4.2, 0.25],      // f_foot: leg 3 plants into it at t 18.20 (70.7, 22)
     [-20.0, 36.0, 7.0, 3.6, 0.2],
-    [93.0, 41.0, 9.0, 5.5, 1.1],       // f_puddle: the mirror
+    [111.0, 37.0, 8.0, 4.6, 1.08],     // f_puddle: the mirror, long axis along the lens
   ],
   mud: 0.95, ruts: null,
   tint: [1.55, 1.42, 1.28],            // grey-brown estuary mud under a pale sky
@@ -60,7 +60,7 @@ export const GROUND = {
   far: { trees: 0, shrubs: 6, poles: false },
   fences: [],
   bushes: 0, debris: 14, debrisMix: [0.35, 0.8, 1.0],
-  keepClear: [[101, 33, 9], [79, 29.6, 7], [93, 41, 10]],
+  keepClear: [[141, 35, 9], [70.5, 24, 7], [111, 37, 10], [79, 33, 4]],
   scenery(k) {
     // rows of old oyster stakes leaning out of the mud (dark, weed-fouled wood)
     const stake = (x, z, h, lean, yaw) => {
@@ -69,17 +69,12 @@ export const GROUND = {
       k.parts.push(k.colorize(k.tube([[x, -0.2, z], [(x + top[0]) / 2, h * 0.5, (z + top[2]) / 2], top], 0.075, 0.05, 6), [0.032 * c, 0.028 * c, 0.022 * c]));
     };
     const row = (x0, z0, x1, z1, step) => { const n = Math.floor(Math.hypot(x1 - x0, z1 - z0) / step); for (let i = 0; i <= n; i++) { if (k.r() < 0.12) continue; const u = i / n; stake(x0 + (x1 - x0) * u + (k.r() - 0.5) * 0.4, z0 + (z1 - z0) * u + (k.r() - 0.5) * 0.4, 0.8 + k.r() * 1.1, 0.05 + k.r() * 0.18, k.r() * 6.28); } };
-    row(60, 36, 150, 42, 1.6); row(70, 27.5, 120, 26.5, 1.7); row(-60, 34, 40, 40, 1.8); row(-80, -40, 60, -46, 1.8); row(95, 47, 112, 60, 1.5);
+    row(60, 36, 160, 41, 1.6); row(128, 31, 150, 30, 1.4); row(70, 27.5, 120, 26.5, 1.7); row(-60, 34, 40, 40, 1.8); row(-80, -40, 60, -46, 1.8); row(95, 47, 112, 60, 1.5);
   },
   dressing(k) {
-    // a small fishing boat lying on its side in the mud, beyond the f_open water sheet
-    const T = k.THREE;
-    const hull = new T.CylinderGeometry(1.25, 1.25, 7.0, 14, 1, true, 0, Math.PI);
-    k.put(hull, [0.11, 0.105, 0.095], 108, 0.5, 39.5, 0.55, 0, Math.PI / 2 + 0.35);
-    k.put(new T.BoxGeometry(1.4, 1.1, 1.6), [0.09, 0.088, 0.082], 107.2, 1.0, 40.4, 0.55, 0.3, 0.35);
-    k.put(new T.CylinderGeometry(0.06, 0.06, 3.2, 5), [0.05, 0.045, 0.04], 108.5, 2.0, 39.0, 0.55, 0.0, 0.9);
-    // a mooring buoy and tyres
-    k.put(new T.SphereGeometry(0.55, 12, 8), [0.12, 0.05, 0.03], 88.5, 0.35, 36.2);
+    // a mooring buoy, tyres, a plank: what the tide left
+    k.put(new k.THREE.SphereGeometry(0.55, 12, 8), [0.12, 0.05, 0.03], 135.5, 0.35, 41.5);
+    k.tyre(143.5, 39.8, 0.3, 1.1, 0.06); k.plank(138.0, 32.5, 0.6, 2.2, 0.03);
     k.tyre(97.5, 37.0, 0.2, 0.6, 0.08); k.tyre(83.0, 35.5, 0.4, 1.4, 0.05);
     k.plank(99.5, 29.0, 0.9, 2.4, 0.03); k.chunk(104.0, 31.0, 0.9, 0.4, 0.6, 0.5, 0.25, 0);
   },
@@ -116,7 +111,7 @@ export function shots({ P, lerp, ease }) {
   return {
     f_open: { cam: (tl, t) => {
       const k = ease(tl / 5), r = ease((tl - 1.8) / 2.4);
-      return { world: true, pos: [104.5 - 1.5 * k, 0.45 + 0.3 * k, 36.5], tgt: [P(t) + 20, 11 + 4 * k, 0], fov: 32 - 2 * k,
+      return { world: true, pos: [146 - 1.5 * k, 0.45 + 0.3 * k, 37.5], tgt: [P(t) + 20, 12 + 4 * k, 0], fov: 30 - 2 * k,
         dof: { focus: lerp(3.2, 95, r), aperture: 3.0, maxBlur: 22 }, shake: 1.4, post: { fade: ease(tl / 1.2) } };
     } },
     f_side: { cam: (tl) => {
@@ -130,17 +125,19 @@ export function shots({ P, lerp, ease }) {
     } },
     f_foot: { cam: (tl) => {
       const k = ease(tl / 4);
-      return { world: true, pos: [88.5 - 1.0 * k, 0.55 + 0.1 * k, 36.0], tgt: [lerp(74, 71, k), lerp(7.5, 11, k), lerp(23, 16, k)], fov: 56, shake: 2.2,
+      // leg 3 plants at t = 18.20 at (70.7, 22) (check.mjs --events)
+      return { world: true, pos: [80.5 - 1.0 * k, 0.55 + 0.1 * k, 33.0], tgt: [lerp(69, 67, k), lerp(7.5, 11, k), lerp(21, 15, k)], fov: 56, shake: 2.2,
         dof: { focus: 14, aperture: 1.6 } };
     } },
     f_belly: { cam: (tl, t) => {
       const k = tl / 5;
-      return { world: true, pos: [P(21.5) + 26, 1.3, 2.5], tgt: [P(t) - 12 + 8 * k, 15.5, lerp(-1.5, 1.5, k)], fov: 62, shake: 1.4 };
+      // the propeller passes over the lens at t ~ 22.8
+      return { world: true, pos: [-4 + 1.0 * k, 1.3, 3.0], tgt: [P(t) - 18 - 8 * k, 15.0, lerp(-1.5, 1.5, k)], fov: 62, shake: 1.4 };
     } },
     f_life: { cam: (tl) => {
       const k = tl / 5, e = ease(k);
-      return { pos: [lerp(-34, -40, k), lerp(26, 32, e), lerp(30, 27, k)], tgt: [lerp(-43, -46, k), lerp(26.5, 31, e), 10], fov: 34, shake: 0.35,
-        dof: { focus: 19, aperture: 2.2 } };
+      return { pos: [lerp(-32, -38, k), lerp(30, 38, e), lerp(30, 28, k)], tgt: [lerp(-42, -45, k), lerp(31, 38.5, e), 9], fov: 34, shake: 0.35,
+        dof: { focus: 21, aperture: 2.2 } };
     } },
     f_knee: { cam: (tl) => {
       const k = tl / 4;
@@ -149,8 +146,9 @@ export function shots({ P, lerp, ease }) {
     } },
     f_puddle: { cam: (tl) => {
       const k = tl / 4;
-      return { world: true, pos: [97.5 - 1.0 * k, 1.1 + 0.2 * k, 47.5], tgt: [lerp(70, 76, k), lerp(9, 11, k), 0], fov: 56, shake: 1.4,
-        dof: { focus: 50, aperture: 0.9 } };
+      // leg 3 plants at t = 33.40 at (104, 22), behind the mirror
+      return { world: true, pos: [118.5 - 1.0 * k, 1.15 + 0.2 * k, 44.5], tgt: [lerp(96, 100, k), lerp(9, 11, k), 6], fov: 56, shake: 1.4,
+        dof: { focus: 40, aperture: 0.9 } };
     } },
     f_away: { cam: (tl, t) => {
       const k = tl / 3, e = ease(k);

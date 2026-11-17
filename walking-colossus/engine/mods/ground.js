@@ -20,7 +20,7 @@ let PUD_CELL = 22, PUD_P = 0.30;
 // hero puddles [x, z, a, b, rot]: world space, placed in front of the shots that look at water
 let HERO = [];
 const NOHERO = [1e5, 1e5, 0.1, 0.1, 0];
-const NPRINT = 48, NPRINT_NEAR = 16, PRINTS_PER_LEG = 6;
+const NPRINT_NEAR = 16, PRINTS_PER_LEG = 6;   // footprints kept per leg; the nearest 16 press the grass
 
 // ---------------------------------------------------------------- hashing (JS mirror of GLSL)
 function pcg(v) {
@@ -178,7 +178,7 @@ export async function create(ctx) {
   const uFacZ = { value: 1 };
   const heroV = HERO4.map((h) => new THREE.Vector4(h[0], h[1], h[2], h[3]));
   const uHero = { value: heroV }, uHeroRot = { value: HERO4.map((h) => h[4]) };
-  const prints = Array.from({ length: NPRINT }, () => new THREE.Vector4(0, 0, 1e5, 0));
+  const prints = Array.from({ length: NLEGS * PRINTS_PER_LEG }, () => new THREE.Vector4(0, 0, 1e5, 0));
   const printsNear = Array.from({ length: NPRINT_NEAR }, () => new THREE.Vector4(0, 0, 1e5, 0));
   const uPrintN = { value: printsNear };
   const legU = Array.from({ length: NLEGS }, () => new THREE.Vector4(0, 0, 1e5, 1));
@@ -399,6 +399,8 @@ float printH(vec2 q, float side){
       vec4 pc = uMirrorMat * vec4(P0 + R * sD, 1.0);
       vec2 uv = pc.xy / pc.w;
       vec4 m = textureLod(tMirror, clamp(uv, 0.002, 0.998), 0.0);
+      if (any(isnan(m)) || any(isinf(m))) m = vec4(0.0);   // one bad pixel in the mirror must not bloom into a blob
+      m.rgb = min(m.rgb, vec3(6.0));
       float inb = step(0.0, uv.x) * step(uv.x, 1.0) * step(0.0, uv.y) * step(uv.y, 1.0) * step(0.0, pc.w);
       hitA = clamp(m.a, 0.0, 1.0) * inb;
       refl = mix(sky, m.rgb, hitA);
@@ -410,6 +412,8 @@ float printH(vec2 q, float side){
         float fk = (float(k) + 0.25 + 0.5 * gJit) / 8.0;
         vec2 uvk = mix(uv, uv1, fk) + vec2(sin(vWP.x * 5.0 + vWP.z * 3.0 + fk * 23.0 + uTime * 1.3) * 0.0035 * fk, 0.0);
         vec4 mk = textureLod(tMirror, clamp(uvk, 0.002, 0.998), 0.0);
+        if (any(isnan(mk)) || any(isinf(mk))) mk = vec4(0.0);
+        mk.rgb = min(mk.rgb, vec3(6.0));
         streak += mk.rgb * smoothstep(0.3, 1.0, max(mk.r, mk.g)) * clamp(mk.a, 0.0, 1.0) * (1.0 - 0.8 * fk);
       }
       streak = mix(streak, dot(streak, vec3(0.45, 0.45, 0.1)) * vec3(1.0, 0.60, 0.26), 0.6) * 0.24 * step(0.0, pc1.w);   // keep the smear amber, never red
@@ -1260,7 +1264,7 @@ float gPropN = 0.5;`)
         if (Math.hypot(p.x - cx, p.z - cz) - p.r < 170 && frustum.intersectsSphere(_sph)) { mirrorWanted = true; break; }
       }
       if (!mirrorWanted) {
-        for (let k = 0; k < NPRINT; k++) {
+        for (let k = 0; k < prints.length; k++) {
           const p = prints[k];
           _sph.center.set(p.x, 0, p.y); _sph.radius = 5;
           if (Math.hypot(p.x - cx, p.y - cz) < 60 && frustum.intersectsSphere(_sph)) { mirrorWanted = true; break; }
