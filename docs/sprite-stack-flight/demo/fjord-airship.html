@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Winter Post — sprite-stack-flight</title>
+<script src="lib/stack.js"></script>
+<script src="lib/kit.js"></script>
+</head>
+<body>
+<script>
+// "The Winter Post": a slow mail airship over snowy fjords at blue hour, warm windows against a cold world. See BRIEF.md.
+const F = SS.create({ title: 'THE WINTER POST', sub: 'NORTH OF THE LAST ROAD', fps: 30, far: 420 });
+
+F.look({
+  sky: ['#f2b7a6', '#c9a7c9', '#8288c2', '#46559a', '#232d66', '#141a44'], fog: '#c4b3cf',
+  cloud: ['#525c8a', '#8890ba', '#bfc3df', '#edf0fa'], shadow: .7, stars: 140, starColor: '#f4f2ff',
+  band: '#10142c', text: '#f4f0ff', textShadow: '#2a2450',
+});
+
+// ---- the world: steep snowy mountains cut by long deep fjords; dark pines low down, red boat houses at the water ----
+F.world({
+  size: 512, seed: 23, unit: 1,
+  height(x, y, n) {
+    const ridge = n.ridge(x, y, 120, 4), base = n.fbm(x, y, 200, 3);
+    let h = 3 + base * 10 + ridge * ridge * ridge * 46;
+    const f = Math.abs(n.fbm(x, y, 260, 4) - .5);                     // the fjords follow two noise contours
+    const g = Math.abs(n.fbm(x + 7, y + 3, 170, 3) - .5);
+    const cut = Math.min(f, g * 1.3);
+    if (cut < .08) h = SS.lerp(-6, h, SS.smooth(.02, .08, cut));
+    return h;
+  },
+  color(lv, x, y, i) {
+    if (lv <= 1) return i.rnd < .5 ? '#3e4252' : '#4a4e5e';                 // shore stones
+    if (lv <= 9) return i.n.value(x, y, 5) > .78 ? '#c3cde2' : i.rnd < .6 ? '#23403a' : '#1c3632';   // pine slopes, a little snow
+    if (lv <= 18) return i.n.value(x, y, 7) + (lv - 9) / 16 > .72 ? (i.rnd < .3 ? '#b8c3dc' : '#c9d2e6') : (i.rnd < .7 ? '#5a6074' : '#666d82');  // rock with snowfields, more higher up
+    return i.rnd < .5 ? '#dfe6f4' : '#ccd6ea';                             // high snow in blue light
+  },
+  water: { ramp: ['#0e1a3a', '#162a52', '#22406a', '#35587e'], depth: 6, glints: .015, glint: '#ffd9b8', foam: '#c8d4e8', rate: .5 },
+  decorate(W) {
+    SK.scatter(W, { count: 26000, where: (x, y) => { const l = W.level(x, y); return l >= 2 && l <= 8 && W.n.value(x, y, 18) > .4; },
+      stamp: (W, x, y, r) => SK.pine(W, x, y, { h: 3 + (r() * 3 | 0), dark: '#18302a', lite: '#2b4d40', snow: r() < .35 ? '#e8eef8' : null }) });
+    // boat houses: red sheds on the shore with one warm window each
+    SK.scatter(W, { count: 900, where: (x, y) => W.level(x, y) === 1 && W.level(x, y + 2) <= 0, stamp: (W, x, y) => { SK.house(W, x, y, { w: 3, d: 2, h: 2, roof: '#e9eef8', ridge: '#ffffff', wall: '#9a2f2a' }); W.paint(x + 1, y + 1, '#ffcf7a'); } });
+    // ice floes on the fjords
+    SK.scatter(W, { count: 2500, where: (x, y) => W.level(x, y) < -1 && W.n.value(x, y, 12) > .62, stamp: (W, x, y, r) => { for (let k = 0; k < 4; k++) W.paint(x + (k & 1), y + (k >> 1), r() < .5 ? '#c9d6ea' : '#a8b8d4'); } });
+  },
+});
+
+F.clouds({ count: 30, base: [52, 64], size: [5, 11], puffs: [4, 8], stretch: 2.2, wind: [.5, .15], seed: 9 });
+
+// ---- the craft: a cream airship with a red band, cruciform fins, a lit gondola and two engine pods ----
+const CANVAS = '#d8d0bc', CANVAS2 = '#c6bea8', BAND = '#a8322c', FRAME = '#4a3a30';
+const ship = SS.model({ w: 31, h: 46, d: 19, frames: 2, outline: '#1a1a2c' }, (M, f) => {
+  const cx = 15;
+  SK.envelope(M, { cx, cy: 21, cz: 11, rx: 7.5, ry: 20, rz: 6.5, color: (x, y, z) => y >= 12 && y <= 13 ? BAND : (Math.floor(y / 3) % 2 ? CANVAS : CANVAS2) });
+  SK.fin(M, { cx, y0: 33, y1: 42, yt0: 38, yt1: 43, z0: 15, z1: 18, color: BAND });                                // top fin
+  SK.fin(M, { cx, y0: 33, y1: 42, yt0: 38, yt1: 43, z0: 6, z1: 3, color: BAND });                                  // bottom fin
+  M.plate([[cx - 13, 38], [cx - 6, 33], [cx + 6, 33], [cx + 13, 38], [cx + 13, 43], [cx - 13, 43]], 11, 11, BAND);  // side fins
+  M.box(cx - 2, 15, 2, cx + 2, 27, 4, FRAME); M.box(cx - 1, 14, 3, cx + 1, 14, 4, FRAME);                          // the gondola
+  for (let y = 16; y <= 26; y += 2) { M.glow(cx - 2, y, 3, '#ffd27a'); M.glow(cx + 2, y, 3, '#ffd27a'); }          // its warm windows
+  M.glow(cx, 15, 3, '#ffe9b0');
+  for (const s of [-1, 1]) { M.tube(cx + s * 7, 5, 26, 30, [1.5, 1.2], '#5a4e46'); M.box(cx + s * 3, 27, 5, cx + s * 6, 28, 5, FRAME);        // engine pods + struts
+    SK.prop(M, f, { cx: cx + s * 7, cz: 5, y: 31, r: 3, frames: 2, color: '#2a2420', disc: '#8a8480' }); }
+  SK.navLights(M, { cx, x: 13, y: 40, z: 11 });
+});
+
+F.craft(ship, {
+  mass: 4, speed: 11, turn: .7, clearance: 8, over: 1, chase: 2.0, chaseDist: 40, chaseSide: 16, chaseRise: 9, eye: -2, voxelSize: .3, bankMax: 22,
+  frame: (s, t) => Math.floor(t * 16) % 2,
+  sound: { engine: 'prop', hz: 34, wind: .8, level: .8 },   // two slow pod engines, a low drone
+});
+
+// ---- the flight: in over the fjord, a slow turn along the water, the bridge, out over the boat houses ----
+F.plan({
+  start: { x: 231, y: 300, z: 40, heading: 0 },
+  steps: [
+    { dur: 5, cam: 'over', bank: 0, climb: 0, thr: .5 },
+    { dur: 4.5, bank: 8 },
+    { dur: 6, cam: 'chase', bank: 0, climb: 2 },
+    { dur: 5, bank: -14 },
+    { dur: 6, cam: 'cockpit', bank: 0, climb: -2, thr: .6 },
+    { dur: 4, bank: 12 },
+    { dur: 6, cam: 'over', bank: 0, climb: 3, caption: 'THE WINTER POST ARRIVES' },
+  ],
+});
+
+// ---- the bridge: a bay of tall windows, a lamp-lit wooden frame, the ship's wheel that turns with the bank, a telegraph ----
+const WOODD = '#3a2a22', WOODL = '#6a4a34', BRASS = '#d8a84a', LAMP = '#ffcf7a';
+F.cockpit({
+  static(P) {
+    P.rect(0, 0, 480, 20, WOODD); P.rect(0, 20, 480, 2, WOODL); P.dither(0, 22, 480, 3, '#000000', .4);           // the roof beam
+    for (let x = 60; x <= 420; x += 72) { const lean = (x - 240) * .12; P.poly([[x - 3 - lean, 20], [x + 3 - lean, 20], [x + 4, 200], [x - 4, 200]], WOODD); P.line(x - 2 - lean, 20, x - 3, 200, WOODL); }  // mullions
+    P.rect(0, 20, 22, 200, WOODD); P.rect(458, 20, 22, 200, WOODD);
+    P.poly([[0, 270], [0, 198], [480, 198], [480, 270]], '#4a3428'); P.rect(0, 198, 480, 3, WOODL); P.rect(0, 201, 480, 1, BRASS);  // console
+    for (let y = 206; y < 270; y += 6) P.line(0, y, 480, y + 1, '#3e2c22', 4);
+    P.disc(240, 10, 5, LAMP); P.dither(200, 0, 80, 22, LAMP, .18);                                                  // the bridge lamp
+  },
+  over(P, s, t) {
+    // the ship's wheel: turned by the helmsman as the ship banks (it leads the bank: it is what causes it)
+    const a = s.bankCmd * 2.2, cx = 240, cy = 262;
+    P.ring(cx, cy, 30, 33, WOODL, -Math.PI, 0); P.ring(cx, cy, 33, 34, '#2a1e18', -Math.PI, 0);
+    for (let k = 0; k < 8; k++) { const b = a + k * Math.PI / 4, ex = cx + Math.cos(b) * 42, ey = cy + Math.sin(b) * 42; if (ey > cy + 4) continue;
+      P.line(cx + Math.cos(b) * 8, cy + Math.sin(b) * 8, ex, ey, WOODL); P.line(cx + Math.cos(b) * 8 + 1, cy + Math.sin(b) * 8, ex + 1, ey, '#2a1e18'); P.disc(ex, ey, 2, '#7a5a40'); }
+    P.disc(cx, cy, 7, BRASS); P.disc(cx, cy, 3, '#8a6a2a');
+    // the engine telegraph: the lever shows the throttle
+    P.disc(400, 236, 18, BRASS); P.disc(400, 236, 15, '#f2ead6'); P.text('AHEAD', 400, 226, '#5a3a2a', 1, 'center');
+    const la = Math.PI * (1.15 + s.thr * .7); P.line(400, 236, 400 + Math.cos(la) * 14, 236 + Math.sin(la) * 14, '#2a1e18'); P.disc(400, 236, 2, '#2a1e18');
+    // the compass binnacle and the altimeter readout
+    SK.gauge(P, 80, 236, 18, (s.heading ?? 0) / 360, { rim: BRASS, face: '#f2ead6', tick: '#5a3a2a', needle: '#a8322c', a0: -Math.PI / 2, a1: Math.PI * 1.5, ticks: 12 });
+    P.text('N', 80, 221, '#a8322c', 1, 'center');
+    SK.readout(P, 128, 230, String(Math.round(s.z * 25)).padStart(4, '0') + ' FT', { bg: '#1a1410', color: LAMP, rim: BRASS });
+  },
+});
+F.start();
+</script>
+</body>
+</html>
