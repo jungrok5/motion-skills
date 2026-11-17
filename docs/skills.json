@@ -2354,6 +2354,46 @@
    ]
   },
   {
+   "id": "logo-construction",
+   "name": "logo-construction",
+   "tagline": "주제나 브랜드 하나를 주면 격자 위에 새 기하학 로고를 설계하고, 그 로고가 만들어지는 과정을 세로 영상으로 보여 줍니다. 회색 러프 스케치 위에 커서가 같은 기울기의 사선과 수평선을 긋고 복사해 옮기고, 확대해서 원을 끌어 그린 뒤, 정렬 패널로 간격을 맞추고 셰이프 빌더로 칸을 하나씩 채웁니다. 가이드를 지우고 모서리를 둥글린 다음, 완성된 로고와 코드로 그린 목업(플리스 · 물병 · 명함 · 간판 · 토트백)을 보여 줍니다. 모든 변이 가이드 위에 있는지 검사하고, 클릭 소리까지 합성한 1080×1920 MP4와 라이브 페이지를 냅니다.",
+   "posterAlt": "logo-construction의 장면 네 개: 회색 여우 스케치 위로 같은 각도로 기울어진 가는 검은 가이드선들, 셰이프 빌더로 몸통과 머리가 검게 채워지고 꼬리 칸에 빨간 테두리가 보이는 여우, 줄무늬 등대 스케치 위 수평선과 커서가 분배 버튼을 누르는 Align 패널, 회벽에 달린 둥근 남색 간판에 크림색 등대 로고와 NORTH PIER 글자",
+   "poster": "logo-construction/poster.jpg",
+   "tags": [
+    "2D 캔버스 · 코드 전용",
+    "로고 작도 · 9:16",
+    "격자 규칙 검사",
+    "코드로 그린 목업 5종",
+    "합성 클릭 사운드"
+   ],
+   "stats": [
+    "예제 2개 · 43초 · 44초",
+    "가이드 25 · 34개 → 칸 10개"
+   ],
+   "page": "logo-construction/",
+   "source": "logo-construction/",
+   "absorbedFrom": {
+    "repo": "https://github.com/jungrok5/motion-skills",
+    "path": "logo-construction/examples/lighthouse/"
+   },
+   "sources": [
+    {
+     "title": "The Dr. Logos(@TheDoctorLogos)의 X 게시물 (41.5초 세로 영상 — 디자이너 graphicdesignpark가 스케치 위에 같은 기울기의 선과 원으로 무스 로고를 작도하고 셰이프 빌더로 채운 뒤 목업으로 보여 줌)",
+     "url": "https://x.com/TheDoctorLogos/status/2122343959577886904?a=I0lPjyIB7nKGbjj92uo&s=19"
+    }
+   ],
+   "workedExample": [
+    {
+     "title": "「North Pier」 · 44초 · 등대 로고 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/logo-construction/demo/lighthouse/"
+    },
+    {
+     "title": "「Ember Fox」 · 43초 · 여우 로고 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/logo-construction/demo/starter/"
+    }
+   ]
+  },
+  {
    "id": "sprite-stack-flight",
    "name": "sprite-stack-flight",
    "tagline": "주제 하나를 주면 3D 엔진도 폴리곤도 이미지 파일도 없이, 납작한 픽셀 층을 쌓는 스프라이트 스태킹으로 그 주제의 비행 장면을 코드만으로 만듭니다. 복셀 모델을 층으로 자른 기체, 정수 계단으로 쌓은 지형과 원반을 쌓은 구름, 그 기체만의 조종석과 비행 계획을 새로 설계하고, 위에서 · 뒤에서 · 조종석 시점을 오가는 1080p MP4(엔진과 바람 소리 합성)와 직접 조종할 수 있는 라이브 페이지를 냅니다.",
