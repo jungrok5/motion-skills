@@ -483,8 +483,8 @@ focus were off, and so from the start. Nothing here had looked at a phone's pict
 was 1280 × 720 at full scale. Rendered the way a phone ran it (the tour's frames at the canvas and scale of the `low`
 tier, stretched to the screen's 1170 pixels), the cause was plain, and it was three things on top of each other.
 (1) *Too few pixels.* `low` drew 0.4–0.8 of a canvas of 1.5 pixels a CSS pixel: 350 pixels across at the start, and
-the governor, chasing sixty frames a second on a device that could not reach them at any size, took it to 230 within
-seconds. (2) *The resolve did not resolve.* It took every frame at the same weight wherever that frame's sample had
+the governor, chasing sixty frames a second, takes it to 230 within seconds on any device that cannot hold them (what
+the owner's phone did was not measured: no phone here). (2) *The resolve did not resolve.* It took every frame at the same weight wherever that frame's sample had
 fallen, which adds up to the small frame stretched — held still for a minute it was as soft as in the first second.
 (3) *Textures were read for the small frame*, a level coarser than the canvas could show. *Fix:* a phone's canvas has
 two pixels a CSS pixel on any tier and its governor aims at thirty frames a second (`?fps=60` for sixty), from 0.7 of
