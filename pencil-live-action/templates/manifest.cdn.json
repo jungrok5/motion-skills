@@ -1,0 +1,43 @@
+{
+ "source": "Poly Haven (https://polyhaven.com), CC0",
+ "res": "2k",
+ "hdri": {
+  "id": "braustuble_alley",
+  "name": "Braustuble Alley",
+  "authors": "Elvis Posa",
+  "hdr": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/braustuble_alley_2k.hdr",
+  "jpg": "https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/braustuble_alley.jpg"
+ },
+ "textures": {
+  "cobblestone_floor_08": {
+   "files": {
+    "diff": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/cobblestone_floor_08/cobblestone_floor_08_diff_2k.jpg",
+    "nor": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/cobblestone_floor_08/cobblestone_floor_08_nor_gl_2k.jpg",
+    "arm": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/cobblestone_floor_08/cobblestone_floor_08_arm_2k.jpg"
+   },
+   "tile": 2,
+   "name": "Cobblestone Floor 08"
+  },
+  "wood_table": {
+   "files": {
+    "diff": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/wood_table/wood_table_diff_2k.jpg",
+    "nor": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/wood_table/wood_table_nor_gl_2k.jpg",
+    "arm": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/wood_table/wood_table_arm_2k.jpg"
+   },
+   "tile": 1,
+   "name": "Wood Table"
+  }
+ },
+ "models": {
+  "food_apple_01": {
+   "name": "Food Apple 01",
+   "file": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/food_apple_01/food_apple_01_1k.gltf",
+   "inc": {
+    "textures/food_apple_01_diff_1k.jpg": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/food_apple_01/food_apple_01_diff_1k.jpg",
+    "food_apple_01.bin": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/food_apple_01/food_apple_01.bin",
+    "textures/food_apple_01_nor_gl_1k.jpg": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/food_apple_01/food_apple_01_nor_gl_1k.jpg",
+    "textures/food_apple_01_rough_1k.jpg": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/food_apple_01/food_apple_01_rough_1k.jpg"
+   }
+  }
+ }
+}
