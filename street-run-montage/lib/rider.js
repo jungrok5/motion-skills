@@ -12,7 +12,7 @@
 // anything outside them, any foot target out of reach, and the contacts (for the slip check).
 import * as THREE from 'three';
 import { clamp, lerp, keys, ease, smooth, bump, n1, hash, span, Table, DEG, TAU, mix, shade, canvas } from './core.js';
-import { cel, inked, flat } from './look.js';
+import { cel, inked, flat, shadeTint } from './look.js';
 
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 const Q = new THREE.Quaternion(), M = new THREE.Matrix4();
@@ -126,13 +126,14 @@ export function buildBoard(b, ink, inkW) {
 // ───────────── the body ─────────────
 export function buildBody(S) {
   const H = S.height, k = H / 1.6, ink = S.ink, iw = S.inkW, ov = S.top.oversize || 1.15;
+  const skinM = cel(S.skin, { shade: S.skinShade || '#e6b2ac' }), hairM = cel(S.hair, S.hairShade ? { shade: S.hairShade } : {});
   const D = {
-    legU: .40 * k, legL: .38 * k, ankle: .07 * k, hipW: .085 * k * S.build, pelvisY: .85 * k,
-    spine: .22 * k, chest: .16 * k, neck: .07 * k, headR: .125 * k, shW: .17 * k * S.build, armU: .26 * k, armL: .24 * k, hand: .075 * k,
+    legU: .365 * k, legL: .35 * k, ankle: .07 * k, hipW: .09 * k * S.build, pelvisY: .8 * k,
+    spine: .22 * k, chest: .16 * k, neck: .065 * k, headR: .138 * k, shW: .17 * k * S.build, armU: .26 * k, armL: .24 * k, hand: .075 * k,
   };
   const bones = {}, root = new THREE.Group(); root.name = S.name;
   const bone = (name, parent, x, y, z) => { const b = new THREE.Group(); b.name = name; b.position.set(x, y, z); parent.add(b); bones[name] = b; return b; };
-  const part = (b, geo, color, o = {}) => { const m = new THREE.Mesh(geo, typeof color === 'string' ? cel(color) : color); m.castShadow = true; m.receiveShadow = true; if (o.ink !== false) inked(m, ink, o.inkW || iw); if (o.pos) m.position.set(...o.pos); if (o.rot) m.rotation.set(...o.rot); b.add(m); return m; };
+  const part = (b, geo, color, o = {}) => { const m = new THREE.Mesh(geo, color === S.skin ? skinM : typeof color === 'string' ? cel(color) : color); m.castShadow = true; m.receiveShadow = true; if (o.ink !== false) inked(m, ink, o.inkW || iw); if (o.pos) m.position.set(...o.pos); if (o.rot) m.rotation.set(...o.rot); b.add(m); return m; };
   const pelvis = bone('pelvis', root, 0, 0, 0), spine = bone('spine', pelvis, 0, .04 * k, 0), chest = bone('chest', spine, 0, D.spine, 0);
   const neck = bone('neck', chest, 0, D.chest, 0), head = bone('head', neck, 0, D.neck, 0);
   // hoodie (oversized): belly on the spine, chest + shoulders on the chest, hood behind the neck
@@ -148,13 +149,12 @@ export function buildBody(S) {
   // neck + head (face texture), cap or beanie, hair
   part(neck, limb(D.neck + .02, .045 * k, .045 * k, 8), S.skin, { pos: [0, D.neck, 0], ink: false });
   const faces = {}; const face = blink => mouth => { const key = blink + ':' + mouth; return faces[key] || (faces[key] = faceTex(S, blink, mouth)); };
-  const headMat = new THREE.MeshToonMaterial({ map: face(0)(0), gradientMap: cel('#fff').gradientMap });
+  const headMat = shadeTint(new THREE.MeshToonMaterial({ map: face(0)(0), gradientMap: cel('#fff').gradientMap }), S.skinShade || '#e6b2ac');
   const headM = part(head, new THREE.SphereGeometry(D.headR, 28, 18).scale(1, 1.06, 1), headMat, { pos: [0, D.headR * .95, 0] });
   const hy = D.headR * .95, hr = D.headR;
   // ears
   for (const sx of [-1, 1]) part(head, ell(.022 * k, .034 * k, .016 * k, 8), S.skin, { pos: [sx * hr * .97, hy - .005, -.01], ink: true, inkW: iw * .7 });
   // hair: a shell over the back and top, bangs, side locks and long locks (bones, so they can trail)
-  const hairM = cel(S.hair);
   part(head, new THREE.SphereGeometry(hr * 1.07, 24, 14, Math.PI * .8, Math.PI * 1.4, 0, Math.PI * .72).scale(1, 1.06, 1.04), hairM, { pos: [0, hy, -.004] });
   part(head, new THREE.SphereGeometry(hr * 1.08, 24, 10, 0, TAU, 0, Math.PI * .3).scale(1, 1.06, 1.04), hairM, { pos: [0, hy, 0] });
   for (let i = -3; i <= 3; i++) { const a = i * .17; part(head, new THREE.ConeGeometry(.032 * k, .11 * k, 5).scale(1, 1, .35).rotateX(Math.PI).rotateZ(-i * .08), hairM, { pos: [Math.sin(a) * hr * .98, hy + hr * .55, Math.cos(a) * hr * .93], rot: [.35, 0, 0], inkW: iw * .7 }); }
@@ -178,7 +178,7 @@ export function buildBody(S) {
     const brim = new THREE.CylinderGeometry(hr * .95, hr * .95, .012, 20, 1, false, -Math.PI * .45, Math.PI * .9).scale(1, 1, 1.15 * (S.cap.brim ?? 1));
     part(head, brim, capM, { pos: [0, hy + .03 * k, .07 * k], rot: [-.12, 0, 0] });
     if (S.cap.logo) { const lm = new THREE.Mesh(new THREE.PlaneGeometry(.085 * k, .042 * k), flat('#ffffff', { map: logoTex(S.cap.logo, S.cap.color, S.cap.logoColor) })); lm.material.map.repeat.set(.5, 1); lm.position.set(0, hy + .075 * k, hr * 1.02); lm.rotation.x = -.42; head.add(lm); }
-  } else if (S.beanie) part(head, new THREE.SphereGeometry(hr * 1.14, 22, 12, 0, TAU, 0, Math.PI * .55).scale(1, 1.05, 1.05), S.beanie, { pos: [0, hy + .01, 0] });
+  } else if (S.beanie) { part(head, new THREE.SphereGeometry(hr * 1.14, 22, 12, 0, TAU, 0, Math.PI * .42).scale(1, 1.12, 1.06), S.beanie, { pos: [0, hy + .035 * k, -.006] }); part(head, new THREE.TorusGeometry(hr * 1.06, .022 * k, 6, 24).rotateX(Math.PI / 2).scale(1, 1, 1.02), shade(S.beanie, -.12), { pos: [0, hy + .055 * k, -.006], inkW: iw * .7 }); }
   // arms: shoulders on the chest, thick sleeves, hands
   for (const [sd, sx] of [['L', 1], ['R', -1]]) {
     const sh = bone('shoulder' + sd, chest, sx * D.shW, .1 * k, 0);
@@ -191,10 +191,10 @@ export function buildBody(S) {
   // legs: shorts cuffs on the thighs, skin, socks, shoes
   for (const [sd, sx] of [['L', 1], ['R', -1]]) {
     const hip = bone('hip' + sd, pelvis, sx * D.hipW, -.04 * k, 0);
-    const th = bone('thigh' + sd, hip, 0, 0, 0); part(th, limb(D.legU, .062 * k, .046 * k), S.skin);
-    if (S.bottom.kind !== 'pants') part(th, new THREE.CylinderGeometry(.085 * k * S.build, .08 * k * S.build, .17 * k, 12).translate(0, -.07 * k, 0), S.bottom.color);
+    const th = bone('thigh' + sd, hip, 0, 0, 0); part(th, limb(D.legU, .074 * k, .054 * k), S.skin);
+    if (S.bottom.kind !== 'pants') part(th, new THREE.CylinderGeometry(.095 * k * S.build, .088 * k * S.build, .16 * k, 12).translate(0, -.06 * k, 0), S.bottom.color);
     else part(th, limb(D.legU, .075 * k, .058 * k), S.bottom.color);
-    const sn = bone('shin' + sd, th, 0, -D.legU, 0); part(sn, limb(D.legL, .045 * k, .033 * k), S.bottom.kind === 'pants' ? S.bottom.color : S.skin);
+    const sn = bone('shin' + sd, th, 0, -D.legU, 0); part(sn, limb(D.legL, .053 * k, .036 * k), S.bottom.kind === 'pants' ? S.bottom.color : S.skin);
     part(sn, new THREE.CylinderGeometry(.037 * k, .035 * k, .09 * k, 10).translate(0, -D.legL + .05 * k, 0), S.socks, { inkW: iw * .7 });
     const ft = bone('foot' + sd, sn, 0, -D.legL, 0);
     const shoe = S.shoes;
@@ -359,7 +359,7 @@ export class Rider {
     // flips: feet leave the deck while the board turns beneath (held up under the hips)
     let lift = 0; if (bd.contact === 'air') for (const m of this.moves) if (['kickflip', 'heelflip', 'shuvit'].includes(m.do) && t > m.at && t < m.land) lift = bump(t, m.at + .04, m.land - .02);
     if (lift > 0) {
-      const flatDeck = (z) => R.at(s, lane, bd.y + this.bd.deckTop + .04 + lift * .16).addScaledVector(fwd, -z);
+      const flatDeck = (z) => R.at(s, lane, bd.y + this.bd.deckTop + .03 + lift * .07).addScaledVector(fwd, -z);
       front.lerp(flatDeck(frontZ), Math.min(1, lift * 3)).add(right.clone().multiplyScalar(sg * lift * .08)); back.lerp(flatDeck(backZ), Math.min(1, lift * 3));
       qF = footQ(R.yaw(s) + sg * (Math.PI / 2 - .25)); qBk = footQ(R.yaw(s) + sg * (Math.PI / 2 + .08)); contactL = 'air'; backContact = 'air';
     }
@@ -380,7 +380,7 @@ export class Rider {
     const mid = front.clone().lerp(back, lerp(.5, .14, pk)); if (dm && t > dm.at) mid.copy(front).lerp(back, .5);
     const baseY = Math.max(front.y, Math.min(back.y, front.y + .3)) ;
     let hipY = (pk > .5 ? front.y : Math.min(front.y, back.y) + (Math.abs(front.y - back.y) * .5)) + ankle + this.legLen * lerp(.93, .52, crouch);
-    if (lift > 0) hipY = R.y(s) + bd.y + this.bd.deckTop + ankle + this.legLen * .5 + lift * .12;
+    if (lift > 0) hipY = R.y(s) + bd.y + this.bd.deckTop + ankle + this.legLen * .55 + lift * .05;
     const breathe = Math.sin(t * TAU / 3.4) * .006 * (1 + standK);
     const pelvisPos = V(mid.x, hipY + breathe, mid.z).addScaledVector(bodyF, -.02 - crouch * .05);
     // keep both ankles reachable
@@ -459,7 +459,7 @@ export class Rider {
       if (pk > 0) { const sw = Math.sin(t * TAU / .9 + ph); flex = lerp(flex, 15 + sw * 35, pk); abd = lerp(abd, 14, pk); elbow = lerp(elbow, 35, pk); }
       // air / rail: wide balance
       const balance = Math.max(airK, this._active(t, ['manual', 'armsOut']) ? 1 : 0);
-      abd = lerp(abd, 78 + 8 * Math.sin(t * 5 + ph), balance); flex = lerp(flex, front ? 25 : -5, balance); elbow = lerp(elbow, 18, balance);
+      abd = lerp(abd, (front ? 62 : 48) + 7 * n1(t * 2.3 + sx * 3, 33), balance); flex = lerp(flex, front ? 38 : -18, balance); elbow = lerp(elbow, front ? 34 : 22, balance);
       // standing: arms hang and breathe
       abd = lerp(abd, 9 + Math.sin(t * TAU / 3.4) * 1.2, standK); flex = lerp(flex, 4, standK); elbow = lerp(elbow, 12, standK);
       for (const m of this.moves) {

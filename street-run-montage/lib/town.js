@@ -113,8 +113,25 @@ export class Town {
   sAt(tau) { return this.tauToS(tau); }
   _s(v) { return typeof v === 'object' && v && v.tau !== undefined ? this.sAt(v.tau) : v; }
   mark(name, v) { this.marks[name] = v; return v; }
-  solid(s, x, y, w, h, d) {   // an axis-aligned world box around a piece (approx.), for the camera check
-    const p = this.R.at(s, x, y + h / 2), r = Math.max(w, d) / 2; this.solids.push({ min: V(p.x - r, p.y - h / 2, p.z - r), max: V(p.x + r, p.y + h / 2, p.z + r), w, d, s, x });
+  /** register an oriented box around a piece: centre (s, x), bottom y, size across (w) × height (h) × along (d) */
+  solid(s, x, y, w, h, d) {
+    const c = this.R.at(s, x, y + h / 2), hd = this.R.heading(s);
+    this.solids.push({ c, cos: Math.cos(hd), sin: Math.sin(hd), hx: w / 2, hy: h / 2, hz: d / 2, w, d, s, x, min: V(c.x - Math.max(w, d), c.y - h / 2, c.z - Math.max(w, d)), max: V(c.x + Math.max(w, d), c.y + h / 2, c.z + Math.max(w, d)) });
+  }
+  /** is a world point inside any solid (grown by margin m)? */
+  inside(p, m = 0) {
+    for (const b of this.solids) {
+      if (p.x < b.min.x - m || p.x > b.max.x + m || p.z < b.min.z - m || p.z > b.max.z + m) continue;
+      const dx = p.x - b.c.x, dz = p.z - b.c.z, ax = dx * b.cos + dz * b.sin, az = -dx * b.sin + dz * b.cos;
+      if (Math.abs(ax) < b.hx + m && Math.abs(az) < b.hz + m && Math.abs(p.y - b.c.y) < b.hy + m) return b;
+    }
+    return null;
+  }
+  /** walk from the target toward the camera; return the last clear point before a solid (or the camera itself) */
+  clearLine(cam, target, m = .15) {
+    const d = cam.clone().sub(target), L = d.length(), n = Math.ceil(L / .12); let last = target.clone();
+    for (let i = 1; i <= n; i++) { const p = target.clone().addScaledVector(d, i / n); if (this.inside(p, m)) return { pos: last.addScaledVector(d, -.0), cut: 1 - (i - 1) / n }; last = p; }
+    return { pos: cam.clone(), cut: 0 };
   }
   /** a box at route coords (centre bottom), yaw relative to the route */
   box(mat, s, x, y, w, h, d, o = {}) {
@@ -217,7 +234,7 @@ export class Town {
     const pg = new THREE.ExtrudeGeometry(shape, { depth: w + ov * 2, bevelEnabled: false }); pg.translate(0, 0, -(w + ov * 2) / 2); pg.rotateY(Math.PI / 2);
     const uv = pg.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) / 2, uv.getY(i) / 2);
     this.b.add(pg, cel('#ffffff', { map: roof(rc), key: 'roof' + rc }), this.R.frame(s, x + side * d / 2, h, Math.PI / 2));
-    this.solid(s, x + side * d / 2, 0, w, h + rh, d); return this;
+    this.solid(s, x + side * d / 2, 0, d, h + rh, w); return this;
   }
   apartments(s, x, o = {}) {
     s = this._s(s); const r = this.r, w = o.w ?? 14 + r() * 14, d = o.d ?? 10, fl = o.floors ?? 4 + Math.floor(r() * 8), h = fl * 3, side = Math.sign(x) || 1;
@@ -225,7 +242,7 @@ export class Town {
     const fm = cel('#ffffff', { map: facade(c, '#5a7aa0', 1, 1, 30 + Math.floor(r() * 5)), key: 'apt' + c });
     this.b.add(boxGeo(d, h, w, 3), fm, this.R.frame(s, x + side * d / 2, h / 2, o.yaw || 0));
     this.box(cel(shade(c, -.15)), s, x + side * d / 2, h, d + .2, .4, w + .2, { solid: false });
-    this.solid(s, x + side * d / 2, 0, w, h, d); return this;
+    this.solid(s, x + side * d / 2, 0, d, h, w); return this;
   }
   pole(s, x, o = {}) {
     s = this._s(s); const h = o.h ?? 8.5, M = this.M;
@@ -259,13 +276,13 @@ export class Town {
         this.b.add(ico, cel(c), p);
       }
     }
-    this.solid(s, x, 0, cr * 1.6, h + cr, cr * 1.6); return this;
+    this.solid(s, x, 0, .5, h * .6, .5); this.solid(s, x, h * .5, cr * 1.5, h * .5 + cr, cr * 1.5); return this;
   }
   bench(s, x, o = {}) {
     s = this._s(s); const yaw = o.yaw ?? (x > 0 ? Math.PI / 2 : -Math.PI / 2), M = this.M, w = o.w ?? 1.8;
     this.box(M.wood, s, x, .42, w, .06, .45, { yaw, solid: false }); this.box(M.wood, s, x + (x > 0 ? .22 : -.22), .72, w, .3, .05, { yaw, solid: false });
     for (const k of [-.4, .4]) this.box(M.dark, s + k * w, x, 0, .06, .42, .4, { yaw, solid: false });
-    this.solid(s, x, 0, w, .9, .6); return this;
+    this.solid(s, x, 0, .6, .9, w); return this;
   }
   vending(s, x, o = {}) {
     s = this._s(s); const c = o.color || '#d8382e', yaw = x > 0 ? -Math.PI / 2 : Math.PI / 2;
@@ -298,7 +315,7 @@ export class Town {
     P(new THREE.PlaneGeometry(w, .9).translate(0, h - .55, .01), flat('#ffffff', { map: signTex(o.text || 'CORNER MART', o.signStyle || {}) }));
     P(new THREE.PlaneGeometry(w, .14).translate(0, 2.55, .05), cel(o.stripe || '#f08a24'));
     if (o.awning !== false) { const ag = new THREE.PlaneGeometry(w * .9, 1.1).rotateX(-1.1).translate(0, 2.75, .45); P(ag, cel(o.awningColor || '#e8432e', { side: THREE.DoubleSide })); }
-    this.solid(s, x + side * d / 2, 0, w, h, d); return this;
+    this.solid(s, x + side * d / 2, 0, d, h, w); return this;
   }
   /** a station hall: glass front, a long curved canopy, a name board */
   station(s, x, o = {}) {
@@ -307,7 +324,7 @@ export class Town {
     const cg = new THREE.CylinderGeometry(d * .75, d * .75, w + 6, 24, 1, true, -Math.PI * .28, Math.PI * .56); cg.rotateZ(Math.PI / 2); cg.scale(1, .35, 1);
     this.b.add(cg, cel('#e6e9ec', { side: THREE.DoubleSide }), this.R.frame(s, x + side * d * .25, h + 1.2, Math.PI / 2));
     const sm = this.R.frame(s, x - side * .05, h - 2.2, side > 0 ? -Math.PI / 2 : Math.PI / 2); this.b.add(new THREE.PlaneGeometry(w * .4, 1.2), flat('#ffffff', { map: signTex(o.text || 'STATION', { bg: '#1f3f78', fg: '#ffffff', stripe: '#1f3f78', stripe2: '#1f3f78' }) }), sm);
-    this.solid(s, x + side * d / 2, 0, w, h + 3, d); return this;
+    this.solid(s, x + side * d / 2, 0, d, h + 3, w); return this;
   }
   /** a bridge crossing the far river at s (a deck on piers, painted girders) */
   bridge(s, x0, x1, o = {}) {

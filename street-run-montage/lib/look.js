@@ -30,12 +30,31 @@ export function gradient() {
   return GRAD;
 }
 const MATS = new Map();
+/** the light's shadow tint (linear), shared by every material that takes its own shadow colour */
+export const AMB = { value: new THREE.Color('#6a7fc4') };
+/**
+ * give a material its own shadow colour (a multiplier, e.g. warm peach for skin) instead of the light's cool tint:
+ * lit = the colour, shadow = colour × shade — the direct light is rescaled so the lit side stays the colour.
+ */
+export function shadeTint(m, shade) {
+  const u = { value: col(shade) };
+  m.onBeforeCompile = sh => {
+    sh.uniforms.uShade = u; sh.uniforms.uAmb = AMB;
+    sh.fragmentShader = sh.fragmentShader.replace('void main() {', 'uniform vec3 uShade; uniform vec3 uAmb;\nvoid main() {')
+      .replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
+        reflectedLight.indirectDiffuse *= uShade / max(uAmb, vec3(0.02));
+        reflectedLight.directDiffuse *= (vec3(1.0) - uShade) / max(vec3(1.0) - uAmb, vec3(0.05));`);
+  };
+  m.customProgramCacheKey = () => 'shade';
+  m.userData.shade = u; return m;
+}
 /** a cel material (cached by key): colour or texture; opts: { map, side, transparent, alphaTest, emissive } */
 export function cel(color = '#ffffff', o = {}) {
-  const key = o.key || (typeof color === 'string' ? color : '') + (o.map ? o.map.uuid : '') + (o.side || '') + (o.alphaTest || '') + (o.emissive || '');
+  const key = o.key || (typeof color === 'string' ? color : '') + (o.map ? o.map.uuid : '') + (o.side || '') + (o.alphaTest || '') + (o.emissive || '') + (o.shade || '');
   if (key && MATS.has(key)) return MATS.get(key);
   const m = new THREE.MeshToonMaterial({ color: col(color), gradientMap: gradient(), map: o.map || null, side: o.side || THREE.FrontSide, transparent: !!o.transparent, alphaTest: o.alphaTest || 0 });
   if (o.emissive) { m.emissive = col(o.emissive); m.emissiveIntensity = o.emissiveIntensity ?? 1; }
+  if (o.shade) shadeTint(m, o.shade);
   if (key) MATS.set(key, m);
   return m;
 }
@@ -158,16 +177,17 @@ export const lineTex = () => tex('line', 64, 512, (g, w, h) => { g.fillStyle = '
 export function skyDome(L) {
   const m = new THREE.ShaderMaterial({
     uniforms: { uZ: { value: col(L.zenith) }, uM: { value: col(L.mid) }, uH: { value: col(L.horizon) }, uSun: { value: new THREE.Vector3(0, 1, 0) }, uGlow: { value: L.sunGlow }, uWarm: { value: col(L.warm) } },
-    vertexShader: `varying vec3 vD; void main(){ vD = normalize(position); vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position = p.xyww; }`,
+    vertexShader: `varying vec3 vD; void main(){ vD = normalize(position); vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position = vec4(p.xy, p.w * 0.9995, p.w); }`,
     fragmentShader: `uniform vec3 uZ, uM, uH, uSun, uWarm; uniform float uGlow; varying vec3 vD;
       void main(){ float e = clamp(vD.y, -0.2, 1.0); vec3 c = e < 0.18 ? mix(uH, uM, smoothstep(-0.02, 0.18, e)) : mix(uM, uZ, smoothstep(0.18, 0.75, e));
         float s = max(dot(normalize(vD), normalize(uSun)), 0.0);
         c += uWarm * (pow(s, 12.0) * 0.35 + pow(s, 200.0) * 0.6) * uGlow; c = mix(c, vec3(1.0), smoothstep(0.9993, 0.9996, s));
-        gl_FragColor = vec4(c, 1.0); #include <colorspace_fragment> }`,
+        gl_FragColor = vec4(c, 1.0);
+        #include <colorspace_fragment>
+      }`,
     side: THREE.BackSide, depthWrite: false, depthTest: false, fog: false,
   });
   const mesh = new THREE.Mesh(new THREE.SphereGeometry(10, 32, 16), m); mesh.renderOrder = -10; mesh.frustumCulled = false;
-  mesh.onBeforeRender = (r, s, cam) => mesh.position.copy(cam.position);
   return mesh;
 }
 /** a painted cumulus card (seeded): crisp white puffs, lilac-blue undersides */
@@ -197,7 +217,7 @@ export function clouds(scene, L, centre = new THREE.Vector3(), n = 14, seed = 3)
 /** the lights for a preset: sun (casts the shadows) + ambient = the shadow tint, so lit + shade = the material colour */
 export function lights(scene, L) {
   const sh = col(L.shadow), warm = col(L.warm);
-  const amb = new THREE.AmbientLight(sh, Math.PI);
+  const amb = new THREE.AmbientLight(sh, Math.PI); AMB.value.copy(sh);
   const sun = new THREE.DirectionalLight(new THREE.Color(Math.max(0, warm.r - sh.r), Math.max(0, warm.g - sh.g), Math.max(0, warm.b - sh.b)), Math.PI);
   sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
   const c = sun.shadow.camera; c.left = -28; c.right = 28; c.top = 28; c.bottom = -28; c.near = 1; c.far = 260;

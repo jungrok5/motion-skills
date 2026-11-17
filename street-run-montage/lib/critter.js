@@ -10,7 +10,7 @@
 // back, the wrist folds the paw back when lifted. Hind legs: knee forward, the hock back, the foot folds forward when
 // lifted. The spine flexes in the gallop; the tail trails with speed and swishes at rest; the idle breathes.
 import * as THREE from 'three';
-import { clamp, lerp, keys, smooth, bump, n1, hash, span, Table, DEG, TAU, shade } from './core.js';
+import { clamp, lerp, keys, smooth, bump, n1, hash, span, Table, DEG, TAU, shade, lum } from './core.js';
 import { cel, inked, flat } from './look.js';
 import { ik2 } from './rider.js';
 
@@ -27,7 +27,7 @@ function limb(l, r0, r1 = r0, seg = 8) {
 
 export const KINDS = {
   cat:  { len: .42, height: .25, snout: .15, ears: 'pointy', tail: 'long', head: .075, girth: .085, neck: .07, mass: 4, tailUp: true },
-  dog:  { len: .5, height: .36, snout: .55, ears: 'pointy', tail: 'curl', head: .085, girth: .11, neck: .1, mass: 12, tailUp: true },
+  dog:  { len: .5, height: .3, snout: .5, ears: 'pointy', tail: 'curl', head: .095, girth: .125, neck: .09, mass: 12, tailUp: true },
   corgi:{ len: .52, height: .22, snout: .5, ears: 'big', tail: 'fluffy', head: .085, girth: .115, neck: .08, mass: 12, tailUp: false },
   fox:  { len: .5, height: .32, snout: .6, ears: 'big', tail: 'fluffy', head: .075, girth: .09, neck: .09, mass: 6, tailUp: false },
 };
@@ -39,7 +39,8 @@ export function buildCritter(spec) {
   const h = K.height, L = K.len, g0 = K.girth, coat = spec.coat || '#222228', belly = spec.belly || coat;
   const bones = {}, root = new THREE.Group(); root.name = spec.name || 'buddy';
   const bone = (name, parent, x, y, z) => { const b = new THREE.Group(); b.name = name; b.position.set(x, y, z); parent.add(b); bones[name] = b; return b; };
-  const part = (b, geo, color, o = {}) => { const m = new THREE.Mesh(geo, typeof color === 'string' ? cel(color) : color); m.castShadow = true; m.receiveShadow = true; if (o.ink !== false) inked(m, ink, o.inkW || iw); if (o.pos) m.position.set(...o.pos); if (o.rot) m.rotation.set(...o.rot); b.add(m); return m; };
+  const warm = spec.shade || (lum(coat) > .45 ? '#e0b8b4' : null), cm = c => cel(c, warm && c !== '#121214' && c !== '#ffffff' ? { shade: warm } : {});
+  const part = (b, geo, color, o = {}) => { const m = new THREE.Mesh(geo, typeof color === 'string' ? cm(color) : color); m.castShadow = true; m.receiveShadow = true; if (o.ink !== false) inked(m, ink, o.inkW || iw); if (o.pos) m.position.set(...o.pos); if (o.rot) m.rotation.set(...o.rot); b.add(m); return m; };
   const hips = bone('hips', root, 0, 0, -L * .25), chest = bone('chest', root, 0, 0, L * .25);
   part(hips, ell(g0 * .95, g0 * .92, L * .34), coat, { pos: [0, 0, -.01] });
   part(chest, ell(g0 * 1.02, g0 * 1.04, L * .34), coat, { pos: [0, .005, .01] });

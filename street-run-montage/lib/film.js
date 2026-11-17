@@ -35,7 +35,7 @@ export const CAMS = {
   buddy:     { d: 1.25, h: .2, fov: 52, look: 'buddy', track: true, blur: 1.3 },
   worm:      { d: 0, h: .06, fov: 74, look: 'rider', fixed: true, blur: 0 },       // on the ground, looking up as they fly over
   pass:      { d: 3.2, h: .9, fov: 44, look: 'rider', fixed: true, blur: 0 },      // fixed beside the path, panning
-  wide:      { d: 16, h: 3.5, fov: 24, look: 'rider', fixed: true, blur: 0 },      // far, long lens, establishing
+  wide:      { d: 1.8, h: 2.2, fov: 22, lead: 20, look: 'rider', fixed: true, blur: 0 },   // down the street, long lens, establishing
   overhead:  { d: 1.2, h: 7.5, fov: 40, look: 'rider', track: true, blur: .5 },
   orbit:     { d: 2.8, h: 1.0, fov: 44, look: 'rider', track: true, blur: .6 },
   hero:      { d: 3.2, h: .55, fov: 34, look: 'rider', fixed: true, blur: 0 },     // the end pose: low, front, still
@@ -216,7 +216,7 @@ export class Run {
       const ta = c.atTau ?? lerp(c.tau0, c.tau1, c.anchor ?? .5), sa = this.rider.sAt(ta), la = this.rider.laneAt(ta), Fa = R.tan(sa), Ra = R.right(sa);
       if (c.cam === 'worm') pos = R.at(sa + (c.lead || 0), la + side * (c.x ?? .35), (c.h ?? .06));
       else if (c.cam === 'hero') pos = R.at(sa + (c.lead ?? 0), la + side * d, c.h ?? .55);
-      else pos = R.at(sa + (c.lead ?? (c.cam === 'wide' ? 4 : 1.5)), la + side * d, c.h ?? 1);
+      else pos = R.at(sa + (c.lead ?? 1.5), la + side * d, c.h ?? 1);
       pos.add(hand.multiplyScalar(.3));
       if (c.cam === 'worm' && c.look !== 'buddy') target = P.clone().add(V(0, .2, 0));
       if (c.lookAt) target = R.at(sa + c.lookAt[0], la + c.lookAt[1], c.lookAt[2]);
@@ -231,11 +231,15 @@ export class Run {
       pos.add(hand);
     }
     if (c.offset) pos.add(V(...c.offset));
+    // never inside a wall: pull the camera in along the line to what it looks at until nothing solid is between
+    let cut = 0; if (!c.through) { const cl = this.K.clearLine(pos, target); if (cl.cut > 0) { pos = cl.pos; cut = cl.cut; } }
+    const gy = this.R.y(this.rider.sAt(tau)); if (pos.y < gy + .04) pos.y = gy + .04;
     this.camera.fov = c.fov ?? 40; this.camera.updateProjectionMatrix();
     this.camera.position.copy(pos); this.camera.up.set(0, 1, 0); this.camera.lookAt(target);
     if (c.roll) this.camera.rotateZ(c.roll * DEG * (c.rollK ? lerp(1, 0, k) : 1));
     this.camera.updateMatrixWorld(); RES.set(this.W, this.H);
-    return { pos, target, ahead: c.ahead, behind: c.behind };
+    this.sky.position.copy(this.camera.position); this.sky.updateMatrixWorld();
+    return { pos, target, ahead: c.ahead, behind: c.behind, cut };
   }
   _updateFx(t, tau, c, rp) {
     // sparks: while the board is on the rail, from the trucks
