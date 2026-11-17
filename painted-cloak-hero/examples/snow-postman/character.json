@@ -1,0 +1,32 @@
+{
+  "name": "snow-postman",
+  "title": "Snow-pass postman",
+  "body": { "height": 1.78, "heads": 7.0, "build": 1.05, "skin": "#e2b393" },
+  "face": { "eyes": "#1b1512", "iris": "#2f241c", "brows": "#5a3a22", "mouth": "#9a4f45", "eyeSize": 0.5 },
+  "bodyPart": { "legs": { "color": "#2b2f3d" } },
+  "style": { "paint": { "len": [0.06, 0.15], "width": [0.016, 0.034], "jitter": 18 } },
+  "parts": [
+    { "type": "hair_bob", "color": "#6b4428", "length": 0.12, "bangs": 0.0, "volume": 1.0 },
+    { "type": "trousers", "color": "#2f3546", "fit": 1.18 },
+    { "type": "top", "color": "#33405e", "to": "hips", "sleeves": "long", "cuff": "#26304a", "collar": "#d9cfb8",
+      "buttons": "#c9a44a", "buttonCount": 4 },
+    { "type": "satchel", "color": "#7a4a26", "strap": "#5b361b", "flap": "#8d5a30" },
+    { "type": "boots", "color": "#2a1f19", "height": 0.62, "sole": "#151010", "cuff": "#3a2b22" },
+    { "type": "cloak", "color": "#9c2f2a", "length": 0.42, "opening": 96, "flare": 0.28, "lag": 5,
+      "stiff": 0.07, "clasp": "#c9a44a", "cord": "#5b361b", "fringe": 0.045,
+      "paint": { "tones": ["#5e1a1c", "#9c2f2a", "#cf5a3c", "#e88a5a"], "weights": [0.3, 0.38, 0.22, 0.1], "lightBias": 0.4 } },
+    { "type": "hat", "style": "beanie", "color": "#d9a33c", "sit": 0.4,
+      "paint": { "tones": ["#a8741f", "#d9a33c", "#f0c96a"], "angle": 90, "len": [0.02, 0.05], "width": [0.006, 0.012] } }
+  ],
+  "motion": {
+    "fps": 24,
+    "clips": [
+      { "type": "idle", "dur": 3.5, "blinks": [0.9, 2.6], "breathPeriod": 1.75, "look": -6 },
+      { "type": "walk", "dur": 0.96, "stride": 0.44 },
+      { "type": "run", "dur": 0.66, "stride": 0.8 },
+      { "type": "turn", "dur": 2.4, "by": -150, "move": 1.2 }
+    ]
+  },
+  "review": { "title": "HERO / ANIMATION REVIEW", "bg": "#76788f", "floor": "#6d6f86", "grid": "#86889e",
+              "orbit": [20, -85], "clipSeconds": 3.0 }
+}

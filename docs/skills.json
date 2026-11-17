@@ -2440,6 +2440,46 @@
      "url": "https://jungrok5.github.io/motion-skills/sprite-stack-flight/demo/fjord-airship.html"
     }
    ]
+  },
+  {
+   "id": "painted-cloak-hero",
+   "name": "painted-cloak-hero",
+   "tagline": "주제 하나를 주면 블렌더에서 7등신 3D 영웅을 옷 한 벌씩 따로 만들고, 망토 · 모자 · 옷을 붓 자국이 보이는 손 그림 질감으로 칠합니다. 망토에는 따로 뼈 줄을 넣어 몸보다 몇 프레임 늦게 따라오게 하고, 대기 · 걷기 · 달리기를 끊김 없는 루프로, 돌아서기는 예비 동작과 회복을 넣어 만듭니다. 동작마다 이름과 프레임 카운터를 띄운 검토 영상을 렌더한 뒤 어디가 어긋났는지 목록으로 정리하고, .blend, 동작별 애니메이션이 든 .glb와 three.js 검토 플레이어를 냅니다.",
+   "posterAlt": "painted-cloak-hero로 만든 두 영웅의 검토 화면 네 장: 삿갓을 쓰고 이끼색 망토를 두른 뱃사공이 서 있는 모습, 뱃사공이 걸으며 망토 자락이 뒤로 늦게 따라오는 옆모습, 진홍 망토와 겨자색 털모자의 우편배달부가 달리며 망토가 뒤로 휘날리는 모습, 우편배달부의 붓 자국 망토 뒷모습",
+   "poster": "painted-cloak-hero/poster.jpg",
+   "tags": [
+    "블렌더 · bpy",
+    "손 그림 붓 자국 질감",
+    "몇 프레임 늦게 따라오는 망토",
+    "루프 사이클 · 동작별 검토",
+    "glTF + three.js"
+   ],
+   "stats": [
+    "예제 2명 · 동작 3–4개 (루프 + 돌아서기)",
+    "검사 14개 · 어긋난 곳 목록"
+   ],
+   "page": "painted-cloak-hero/",
+   "source": "painted-cloak-hero/",
+   "absorbedFrom": {
+    "repo": "https://github.com/jungrok5/motion-skills",
+    "path": "painted-cloak-hero/examples/snow-postman/"
+   },
+   "sources": [
+    {
+     "title": "작가 rewind(@rewind02)의 X 게시물 (4초 영상: 블렌더 + Claude로 만든 밀짚모자와 붓 자국 파란 망토의 영웅, 대기 · 걷기 사이클, \"the cloak never moves with the body. it follows it, a few frames late\")",
+     "url": "https://x.com/rewind02/status/2121933776884269192?a=RaDjcVLQVKppvgFvRB4&s=19"
+    }
+   ],
+   "workedExample": [
+    {
+     "title": "눈 고개 우편배달부 · 대기 · 걷기 · 달리기 · 돌아서기 · 검토 플레이어",
+     "url": "https://jungrok5.github.io/motion-skills/painted-cloak-hero/demo/?src=snow-postman"
+    },
+    {
+     "title": "비 오는 날 뱃사공 · 시작 예제 · 검토 플레이어",
+     "url": "https://jungrok5.github.io/motion-skills/painted-cloak-hero/demo/?src=rain-ferryman"
+    }
+   ]
   }
  ]
 }
