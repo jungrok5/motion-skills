@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Night Loaf — a bakery of live HTML</title>
+<!-- hypertext-hotel worked example (examples/night-bakery, see BRIEF.md): a brick bakery at three in the morning, cut open
+     at the front. The oven's dial is a range that makes the fire roar, the extractor is a checkbox that spins the fan, the
+     proof range makes the dough rise on every tray, the order book is a text field on the chalkboard, the alarm is a time
+     input, the shop bell is a button, and the bread hoist is one vertical range whose thumb is the hoist's handle. -->
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: #04060d; overflow: hidden; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+  :root { --dh-ui-line: rgba(255, 179, 71, .55); }
+
+  /* enamel plates: cream with the bakery's navy rim; a checkbox drawn as a round push switch */
+  .enamel { display: block; width: 150px; padding: 9px 8px 8px; text-align: center; font: 700 13px/1.1 'Trebuchet MS', 'Segoe UI', sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #1f2e5a;
+    background: radial-gradient(circle at 50% 0, #fffdf4, #efe6cf 70%); border: 4px solid #1f2e5a; border-radius: 12px; box-shadow: inset 0 0 0 2px #f8f2e2, inset 0 0 0 4px #9aa6c8; cursor: pointer; }
+  .enamel input[type=checkbox] { -webkit-appearance: none; appearance: none; display: block; width: 44px; height: 44px; margin: 0 auto 7px; border-radius: 50%; cursor: pointer; position: relative;
+    background: radial-gradient(circle at 40% 35%, #9a9aa0, #3a3a40 70%); border: 4px solid #c07a42; box-shadow: 0 3px 0 #6a3a1a, inset 0 -3px 4px rgba(0, 0, 0, .5); }
+  .enamel input[type=checkbox]:checked { background: radial-gradient(circle at 40% 35%, #fff2c0, #ffb347 55%, #c46a12); box-shadow: 0 1px 0 #6a3a1a, 0 0 14px #ffb347, inset 0 -2px 3px rgba(120, 50, 0, .4); }
+  .enamel input:focus-visible, .wood input:focus-visible, .wood select:focus-visible, .clockplate input:focus-visible { outline: 3px solid #ffd27a; outline-offset: 2px; }
+  /* wooden dials: a range or a select on an oak plate with copper fittings */
+  .wood { display: block; width: 230px; padding: 9px 14px 11px; text-align: center; font: 700 13px/1.1 Georgia, serif; letter-spacing: .1em; text-transform: uppercase; color: #fbe7c4;
+    background: linear-gradient(#8a5a32, #6a3f20); border: 3px solid #c07a42; border-radius: 8px; box-shadow: inset 0 2px 0 rgba(255, 220, 170, .35), inset 0 -3px 0 rgba(40, 20, 5, .4); }
+  .wood b { display: block; font: 700 22px/1 Georgia, serif; letter-spacing: 0; margin-top: 4px; color: #fff3d8; }
+  .wood input[type=range] { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 26px; margin: 6px 0 0; background: transparent; cursor: pointer; }
+  .wood input[type=range]::-webkit-slider-runnable-track { height: 8px; border-radius: 4px; background: linear-gradient(90deg, #3a1a08, #ff8a3a 70%, #fff0c8); border: 1px solid #3a1a08; }
+  .wood input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; margin-top: -8px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ffe0b8, #c07a42 60%, #6a3a1a); border: 1px solid #3a1a08; }
+  .wood select { display: block; width: 100%; margin-top: 7px; font: 600 17px Georgia, serif; color: #2b1505; background: #f7ead0; border: 2px solid #c07a42; border-radius: 6px; padding: 3px 6px; }
+  /* chalk on the board: the order book (a text field) and the price card (an output) */
+  .chalk { display: block; width: 260px; padding: 8px 14px 10px; background: #233029; border: 6px solid #7a5232; border-radius: 4px; font: 16px/1.2 'Chalkboard SE', 'Comic Sans MS', 'Segoe Print', cursive; color: #e9efe6; }
+  .chalk input { display: block; width: 100%; box-sizing: border-box; margin-top: 5px; font: 22px/1.25 'Chalkboard SE', 'Comic Sans MS', 'Segoe Print', cursive; color: #fffdf0; background: transparent; border: 0; border-bottom: 2px dashed rgba(240, 240, 230, .5); outline: none; }
+  .price { display: block; width: 170px; padding: 6px 10px 8px; text-align: center; background: #233029; border: 5px solid #7a5232; font: 15px/1.2 'Chalkboard SE', 'Comic Sans MS', cursive; color: #e9efe6; }
+  .price output { display: block; font: 30px/1.1 'Chalkboard SE', 'Comic Sans MS', cursive; color: #ffe9a8; }
+  /* the shop bell: a button under a copper dome */
+  .shopbell { display: block; width: 104px; text-align: center; }
+  .shopbell button { width: 92px; height: 58px; border: 0; border-radius: 46px 46px 6px 6px; cursor: pointer; font: 700 11px/1 Georgia, serif; letter-spacing: .08em; color: #3a1a08;
+    background: radial-gradient(ellipse at 35% 25%, #ffe7c4, #d98a4a 45%, #8a4a1e); box-shadow: inset 0 -4px 0 #5a2a0e; }
+  .shopbell output { display: block; margin-top: 3px; font: 700 12px Georgia, serif; color: #ffe2b0; }
+  /* the alarm: a time input on an enamel clock plate */
+  .clockplate { display: block; width: 170px; padding: 10px 8px; text-align: center; border-radius: 50%; aspect-ratio: 1; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center;
+    background: radial-gradient(circle, #fffdf4 55%, #e9dfc4 70%, #1f2e5a 71%, #1f2e5a 76%, #c07a42 77%); font: 700 12px/1 'Trebuchet MS', sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #1f2e5a; }
+  .clockplate input { font: 700 24px/1 'Courier New', monospace; color: #1f2e5a; background: transparent; border: 0; width: 110px; margin: 6px auto 0; text-align: center; }
+  /* the neon */
+  .neon { margin: 0; padding: 4px 24px 10px; font: italic 600 64px/1.1 Georgia, 'Times New Roman', serif; color: #fff6e6; white-space: nowrap; outline: none;
+    text-shadow: 0 0 4px #fff, 0 0 12px #ffb347, 0 0 26px #ff8a1a, 0 0 46px #ff7a00; }
+  /* the hoist: a vertical range whose thumb is the copper handle on the dumbwaiter */
+  .hoist { -webkit-appearance: none; appearance: none; writing-mode: vertical-lr; direction: rtl; display: block; width: 110px; height: 1200px; background: transparent; cursor: grab; }
+  .hoist::-webkit-slider-runnable-track { background: transparent; width: 110px; height: 100%; border: 0; }
+  .hoist::-webkit-slider-thumb { -webkit-appearance: none; width: 110px; height: 60px; border-radius: 30px; border: 3px solid #5a2a0e; cursor: grab;
+    background: linear-gradient(#5a2a0e, #5a2a0e) center / 64px 8px no-repeat, radial-gradient(ellipse at 40% 30%, #ffe0b8, #d98a4a 50%, #8a4a1e); box-shadow: 0 3px 4px rgba(0, 0, 0, .5); }
+  .hoist:focus-visible::-webkit-slider-thumb { border-color: #ffe7a8; }
+  .ind { display: block; width: 190px; padding: 6px 0 7px; text-align: center; font: 700 22px/1 Georgia, serif; color: #ffe7a8; background: #1f2e5a; border: 4px solid #c07a42; border-radius: 8px; }
+</style>
+</head>
+<body>
+<canvas id="stage" layoutsubtree content="drawable" aria-label="The Night Loaf: a bakery at night whose oven, fan, dough, lamps, order book, alarm, shop bell and bread hoist are live HTML controls">
+  <h1 data-k="sign" class="neon" contenteditable="plaintext-only" spellcheck="false" aria-label="The bakery's sign (you can type here)">The Night Loaf</h1>
+  <!-- shop -->
+  <label data-k="shop.open" class="enamel"><input type="checkbox" checked> Open</label>
+  <label data-k="shop.loaf" class="wood">Today's loaf <select aria-label="Today's loaf"><option value="3.20">Country sourdough</option><option value="2.40">Seeded rye</option><option value="1.80">Milk loaf</option><option value="4.50">Walnut &amp; fig</option></select></label>
+  <div data-k="shop.price" class="price">price <output id="price">£3.20</output></div>
+  <div data-k="shop.bell" class="shopbell"><button type="button" id="bell" data-hic-click data-sound="bell">Ring</button><output id="served">0 served</output></div>
+  <!-- bakehouse -->
+  <label data-k="bake.oven" class="wood">Oven <b id="temp">220 °C</b><input type="range" min="180" max="260" value="220" aria-label="Oven temperature"></label>
+  <label data-k="bake.fan" class="enamel"><input type="checkbox"> Extractor</label>
+  <!-- proving room -->
+  <label data-k="prove.rise" class="wood">Proof <input type="range" min="0" max="100" value="35" aria-label="Proof"></label>
+  <label data-k="prove.heat" class="enamel"><input type="checkbox" checked> Warmer</label>
+  <!-- flour loft -->
+  <label data-k="loft.orders" class="chalk">Order book <input id="orders" type="text" value="40 baguettes for the café" data-hic-edit aria-label="Order book"></label>
+  <label data-k="loft.lamp" class="enamel"><input type="checkbox" checked> Loft</label>
+  <!-- the baker's flat -->
+  <label data-k="flat.lamp" class="enamel"><input type="checkbox" checked> Lamp</label>
+  <label data-k="flat.radio" class="wood">Wireless <input type="range" min="0" max="100" value="60" aria-label="Wireless volume"></label>
+  <!-- office -->
+  <label data-k="office.alarm" class="clockplate">Alarm <input type="time" value="03:30" aria-label="Alarm"></label>
+  <label data-k="office.lamp" class="enamel"><input type="checkbox" checked> Desk</label>
+  <!-- the bread hoist -->
+  <input data-k="hoist" class="hoist" type="range" min="0" max="2" step="0.01" value="0" data-thumb="60" aria-label="Bread hoist: shop, proving room or flat">
+  <output data-k="hoist.at" class="ind">Bakehouse</output>
+</canvas>
+<script src="../../lib/hic.js"></script>
+<script src="../../lib/dollhouse.js"></script>
+<script src="../../lib/props.js"></script>
+<script src="../../lib/sound.js"></script>
+<script>
+(function () {
+  'use strict';
+  var m = Dollhouse.mat, P = Dollhouse.props;
+  var copper = function () { return m('#c07a42', { metal: 1, rough: 0.35 }); };
+  var doughMovers = [];
+  Dollhouse.start({
+    canvas: 'stage', title: 'The Night Loaf',
+    building: {
+      cols: [4.3, 1.4, 4.3], floors: [2.8, 2.6, 2.5], depth: 3.2, frame: '#efe7d6', inlay: '#c07a42',
+      wings: { w: 0.85, face: '#5e2a22', mortar: '#b9a890', quoin: '#d8cbb0', glass: '#ffc06a' },
+      base: { h: 0.45, face: '#a8957a', mortar: '#6d604e', steps: 0 }, cornice: '#efe7d6',
+      roof: { kind: 'gable', h: 2.3, face: '#3d3a44', c2: '#1d1b22', chimneys: [-3.3, 3.9] },
+      sign: { key: 'sign', w: 5.6, color: '#ffa040', lift: 0.25 }
+    },
+    ground: { kind: 'street', trees: 2, pave: '#8a8378', leaf: '#2a4430' },
+    sky: { top: '#03050c', mid: '#0b1330', low: '#162040', glow: '#2a1a1a', moon: [-0.74, 0.8, 0.75] },
+    look: { exposure: 1.15, bloom: 0.6, rim: '#c98a4a', ink: '#1f2e5a' },
+    lens: { mag: 1.8 },
+    rooms: [
+      { id: 'shop', name: 'Shop', cell: [0, 0], wall: m('#e7d9b4', { c2: '#d6c497', pat: 'stripes', s: 0.2 }), floor: m('#ece4d0', { c2: '#1f2e5a', pat: 'check', s: 0.3, rough: 0.5 }),
+        build: function (B, R) {
+          P.trim(B, R, { rail: 1.05, c: '#1f2e5a' });
+          P.door(B, 0.65, 0, -R.d + 0.01, { w: 0.85, h: 2.05, c: '#1f2e5a' });
+          P.shelf(B, 3.0, 0, -R.d + 0.2, { w: 2.0, h: 2.05, rows: 4, fill: 'loaves', wood: '#7a4a28' });
+          P.counter(B, 2.55, 0, -1.3, { w: 2.2, h: 0.95, d: 0.6, front: '#1f2e5a', front2: '#28396e', top: '#d9cdb4', topPat: 'plaster', panel: '#2a3c74' });
+          P.loaf(B, 2.45, 0.95, -1.3, { r: 0.15 }); P.loaf(B, 2.95, 0.95, -1.35, { r: 0.13, round: true, c: '#a8622a' }); P.loaf(B, 3.4, 0.95, -1.25, { r: 0.14, c: '#c98d44' });
+          P.doll(B, 3.35, 0, -2.25, { coat: '#1f2e5a', apron: '#f3ecd8', hair: '#8a4a22' });
+          P.lamp(B, 'shop.lamp', 2.6, R.h, -1.4, { kind: 'pendant', len: 0.55, shade: '#e6dcc4', power: 2.6 });
+          B.panel('shop.open', { at: [1.55, 1.55, -R.d + 0.03], w: 0.5 });
+          B.panel('shop.loaf', { at: [2.55, 0.55, -0.99], w: 0.95 });
+          B.panel('shop.price', { at: [3.0, 2.38, -R.d + 0.03], w: 0.62 });
+          B.panel('shop.bell', { at: [1.78, 1.13, -1.3], w: 0.34 });
+        } },
+      { id: 'bake', name: 'Bakehouse', cell: [2, 0], wall: m('#d9cbb0', { c2: '#b9a88a', pat: 'tile', s: 0.22, rough: 0.6 }), floor: m('#7a6a5a', { c2: '#4a3e34', pat: 'tile', s: 0.4 }),
+        build: function (B, R) {
+          P.hearth(B, 'bake.oven', 1.4, 0, -R.d + 0.55, { kind: 'oven', w: 1.7, h: 1.6, d: 1.0, power: 3.2, flue: R.h - 1.5, flameW: 0.55 });
+          P.table(B, 3.1, 0, -1.25, { w: 1.3, d: 0.7, h: 0.85, top: m('#d8c8a8', { pat: 'wood', c2: '#c0ae8a' }) });
+          [[2.8, -1.3], [3.25, -1.2]].forEach(function (p) { B.ball(p[0], 0.88, p[1], 0.13, m('#efe2c4', { rough: 0.9 }), { sy: 0.45 }); });
+          P.doll(B, 3.35, 0, -0.6, { coat: '#f3ecd8', cap: '#ffffff', apron: '#e2d8c4', hair: '#3a2416', mass: 1.3 });
+          P.sack(B, 3.9, 0, -2.7, { label: '#1f2e5a' }); P.sack(B, 3.45, 0, -2.85, {}); P.sack(B, 3.7, 0.6, -2.8, { c: '#e2d4b0' });
+          P.lamp(B, 'bake.lamp', 3.0, R.h, -1.6, { kind: 'bulb', power: 1.3 });
+          var fan = P.fan(B, 3.0, R.h, -1.7, { name: 'bake.fan', r: 0.5, c: '#c07a42' });
+          B.panel('bake.oven', { at: [2.95, 1.75, -R.d + 0.03], w: 0.82 });
+          B.panel('bake.fan', { at: [3.95, 1.75, -R.d + 0.03], w: 0.48 });
+        } },
+      { id: 'prove', name: 'Proving room', cell: [0, 1], wall: m('#c9d3c4', { c2: '#b7c3b2', pat: 'tile', s: 0.18, rough: 0.6 }), floor: m('#6b5848', { c2: '#4a3a2e', pat: 'planks', s: 0.18 }),
+        build: function (B, R) {
+          [1.15, 2.35].forEach(function (x, i) {
+            var tops = P.rack(B, x, 0, -R.d + 0.55, { w: 0.95, d: 0.55, h: 1.9, trays: 5, metal: '#a7adb2' });
+            tops.forEach(function (ty, j) {
+              doughMovers.push(B.mover(function (G) { for (var k = -1; k <= 1; k++) for (var q = -1; q <= 1; q += 2) G.ball(k * 0.28, 0, q * 0.12, 0.1, m('#f1e4c6', { c2: '#e2d0a8', pat: 'plaster', rough: 0.95 }), { sy: 0.55, seg: 12, rings: 7 }); }, { at: [x, ty, -R.d + 0.55], shadow: j === tops.length - 1 }));
+            });
+          });
+          P.lamp(B, 'prove.heat', 1.75, R.h, -1.8, { kind: 'pendant', len: 0.5, shade: '#5a1a14', color: '#ff5a3c', power: 2.2 });
+          P.lamp(B, 'prove.bulb', 3.6, R.h, -2.2, { kind: 'bulb', power: 0.9, color: '#e8f0ff', shadow: false });
+          P.clock(B, 3.6, 2.15, -R.d + 0.02, { r: 0.15 });
+          B.panel('prove.rise', { at: [3.55, 1.35, -R.d + 0.03], w: 0.82 });
+          B.panel('prove.heat', { at: [3.55, 0.6, -R.d + 0.03], w: 0.46 });
+        } },
+      { id: 'loft', name: 'Flour loft', cell: [2, 1], wall: m('#cbb79a', { c2: '#b8a282', pat: 'planks', s: 0.25 }), floor: m('#8a6440', { c2: '#6a4628', pat: 'planks', s: 0.2 }),
+        build: function (B, R) {
+          [[0.45, 0, -2.7], [0.95, 0, -2.75], [0.7, 0.62, -2.72], [0.5, 0, -2.0], [1.05, 0, -2.05]].forEach(function (p, i) { P.sack(B, p[0], p[1], p[2], { label: i % 2 ? '#7a1f1f' : null }); });
+          P.crate(B, 3.8, 0, -2.6, {}); P.crate(B, 3.85, 0.36, -2.6, { s: 0.4 }); P.barrel(B, 3.2, 0, -2.75, {});
+          var a = B.aspect('loft.orders'); P.board(B, 2.3, 1.45, -R.d + 0.005, { w: 1.45, h: 1.45 * a, c: '#5a3a22' });
+          P.lamp(B, 'loft.lamp', 2.3, R.h, -1.6, { kind: 'pendant', len: 0.4, shade: '#6a7a8a', metalShade: true, power: 2.4 });
+          B.panel('loft.orders', { at: [2.3, 1.45, -R.d + 0.04], w: 1.4 });
+          B.panel('loft.lamp', { at: [3.9, 1.5, -R.d + 0.03], w: 0.46 });
+        } },
+      { id: 'flat', name: "The baker's flat", cell: [0, 2], wall: m('#6b7fa0', { c2: '#5a6d8e', pat: 'dots', s: 0.24 }), floor: m('#7a5232', { c2: '#5b3a22', pat: 'planks', s: 0.16 }),
+        build: function (B, R) {
+          P.trim(B, R, { c: '#e8dcc4' }); P.rug(B, 1.6, 0, -1.4, { w: 2.0, d: 1.1, c: '#8a3a2a', c2: '#e6c070' });
+          P.bed(B, 1.35, 0, -2.2, { w: 1.9, d: 1.1, quilt: '#c45a3a', quilt2: '#f0e0b8' });
+          P.window(B, 2.75, 1.45, -R.d + 0.01, { w: 0.7, h: 0.85, curtain: '#e6c070', curtain2: '#d0a850' });
+          P.sofa(B, 3.55, 0, -1.3, { w: 1.0, c: '#2f5a4a', c2: '#2a5040' });
+          P.doll(B, 3.55, 0.42, -1.25, { sit: true, coat: '#3a3a5a', hair: '#d8d0c0' });
+          P.lamp(B, 'flat.lamp', 2.75, 0, -2.6, { kind: 'floor', power: 2.2 });
+          B.light('flat.radio', { at: [3.55, 0.9, -2.5], color: '#ffd27a', power: 0.5, range: 2.5, shadow: false });   // before the set, so its dial glows with it
+          P.table(B, 3.55, 0, -2.75, { w: 0.6, d: 0.4, h: 0.6 }); P.radio(B, 3.55, 0.6, -2.75, { glow: 'flat.radio' });
+          B.panel('flat.lamp', { at: [0.55, 1.65, -R.d + 0.03], w: 0.46 });
+          B.panel('flat.radio', { at: [3.6, 1.65, -R.d + 0.03], w: 0.8 });
+        } },
+      { id: 'office', name: 'Office', cell: [2, 2], wall: m('#d8c79c', { c2: '#c8b48a', pat: 'diamond', s: 0.28 }), floor: m('#7a5232', { c2: '#5b3a22', pat: 'planks', s: 0.16 }),
+        build: function (B, R) {
+          P.trim(B, R, {}); P.shelf(B, 3.75, 0, -R.d + 0.2, { w: 0.9, h: 2.1, fill: 'books', c: '#7a4a22' });
+          P.table(B, 2.0, 0, -1.9, { w: 1.4, d: 0.7 }); P.chair(B, 2.0, 0, -1.3, { ry: 180 });
+          B.box(1.55, 0.75, -2.05, 1.95, 0.8, -1.75, m('#7a1f1f', { rough: 0.7 })); B.box(1.57, 0.8, -2.03, 1.93, 0.805, -1.77, m('#f3ecd8'));
+          P.lamp(B, 'office.lamp', 2.45, 0.75, -2.05, { kind: 'table', shade: '#3f7a4a', power: 2.0 });
+          B.panel('office.alarm', { at: [0.95, 1.55, -R.d + 0.03], w: 0.62 });
+          B.panel('office.lamp', { at: [2.55, 1.7, -R.d + 0.03], w: 0.46 });
+        } },
+      { id: 'hoist', name: 'Bread hoist', cell: [1, 0, 1, 3], wall: m('#8a7a68', { c2: '#6a5a4a', pat: 'brick', s: 0.12 }), floor: m('#3a3330'), ceil: m('#2a2420'),
+        build: function (B, R) {
+          Dollhouse.lift(B, R, { id: 'hoist', key: 'hoist', indicator: 'hoist.at', names: ['Bakehouse', 'Proving', 'Flat'], carH: 1.5, mass: 0.7, metal: '#c07a42', light: '#ffcf90',
+            // a dumbwaiter instead of a passenger cage: an open oak box with two trays of bread
+            car: function (C, cw, cd, ch, metal) {
+              var oak = P.mats.wood('#8a5a32');
+              C.box(-cw / 2, 0, -cd / 2, cw / 2, 0.06, cd / 2, oak); C.box(-cw / 2, ch - 0.06, -cd / 2, cw / 2, ch, cd / 2, oak);
+              C.box(-cw / 2, 0, -cd / 2, cw / 2, ch, -cd / 2 + 0.04, oak);
+              [-1, 1].forEach(function (s) { C.box(s * cw / 2 - 0.03, 0, -cd / 2, s * cw / 2 + 0.03, ch, cd / 2, oak); });
+              [0.55, 1.05].forEach(function (y) { C.box(-cw / 2 + 0.03, y, -cd / 2, cw / 2 - 0.03, y + 0.03, cd / 2 - 0.05, metal);
+                for (var k = -1; k <= 1; k++) P.loaf(C, k * 0.32, y + 0.03, -0.05, { r: 0.12, c: k ? '#b8732e' : '#c98d44' }); });
+              P.loaf(C, -0.25, 0.06, -0.1, { r: 0.13, round: true, c: '#a8622a' }); P.loaf(C, 0.2, 0.06, 0.05, { r: 0.13 });
+              C.ball(0, ch - 0.12, 0, 0.06, m('#fff0d0', { emit: 5, unlit: true, noShadow: true, glow: 'hoist.car' }));
+            } });
+        } }
+    ],
+    ready: function (D) {
+      // the shop: open/closed, today's loaf and its price, the bell
+      D.on('shop.open', 'change', function (on) { D.setLight('shop.lamp', on); });
+      D.on('shop.loaf', 'change', function (v) { document.getElementById('price').textContent = '£' + v; });
+      var served = 0; document.getElementById('bell').addEventListener('click', function () { served++; document.getElementById('served').textContent = served + ' served'; });
+      // the oven: 180 °C a low orange fire, 260 °C a tall white-hot one
+      var hot = function (v) {
+        var k = (v - 180) / 80; document.getElementById('temp').textContent = Math.round(v) + ' °C';
+        D.light('bake.oven').power(1.6 + k * 3.4).color(k < 0.5 ? '#ff7a2a' : k < 0.85 ? '#ff9a4a' : '#ffc890'); D.flame('bake.oven', 0.6 + k * 0.9);
+        if (k > 0.75 && !hot.roar) { hot.roar = true; D.sfx('whoosh'); } if (k < 0.6) hot.roar = false;
+      };
+      D.on('bake.oven', 'input', hot); hot(+D.field('bake.oven').value);
+      // the extractor fan: spins up with inertia, coasts down
+      var spin = D.spring(0, 0.45, 1), angle = 0, fan = D.mover('bake.fan');
+      D.on('bake.fan', 'change', function (on) { spin.to(on ? 1 : 0); });
+      D.animate(function (t, dt) { if (spin.v < 0.001 && spin.target === 0) return false; angle += spin.v * dt * 540; fan.set({ ry: angle }); return true; });
+      // the dough rises on a slow spring (no overshoot: dough has no bounce)
+      var rise = D.spring(0.35, 0.6, 1);
+      D.on('prove.rise', 'input', function (v) { rise.to(v / 100); });
+      D.animate(function () { var k = 0.55 + rise.v * 1.1; doughMovers.forEach(function (mv) { mv.set({ s: [0.9 + rise.v * 0.2, k, 0.9 + rise.v * 0.2] }); }); return Math.abs(rise.v - rise.target) > 1e-4; });
+      D.on('prove.heat', 'change', function (on) { D.setLight('prove.heat', on); });
+      D.on('loft.lamp', 'change', function (on) { D.setLight('loft.lamp', on); });
+      D.on('flat.lamp', 'change', function (on) { D.setLight('flat.lamp', on); });
+      D.on('flat.radio', 'input', function (v) { D.light('flat.radio').power(0.1 + v / 100 * 1.4); });
+      D.on('office.lamp', 'change', function (on) { D.setLight('office.lamp', on); });
+      D.on('office.alarm', 'change', function () { D.sfx('chime', [67, 72]); });
+    }
+  });
+})();
+</script>
+</body>
+</html>
