@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>North Pier · logo-construction</title>
+<script type="importmap">{ "imports": { "lc/": "../../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+import { Film } from 'lc/film.js';
+import { mark } from './mark.js';
+// from BRIEF.md
+new Film(mark(), {
+  signature: '@northpier.ferries',
+  title: 'NORTH PIER', subtitle: 'harbour ferries',
+  ink: '#14283f',
+  mockups: [
+    { kind: 'sign', base: '#173452', ink: '#f2e7cf', wall: '#d7d2c8', rim: '#b69152', text: 'North Pier' },
+    { kind: 'tote', base: '#efe8d8', ink: '#173452', back: '#9fb2bf', text: 'North Pier' },
+    { kind: 'fabric', base: '#c9452f', ink: '#f6efe2' },
+  ],
+  timing: { sketch: 2, construct: 16, select: 2.4, build: 7, clean: 1.1, refine: 4, reveal: 2.8, mockup: 1.7 },
+}).start();
+</script>
+</body>
+</html>

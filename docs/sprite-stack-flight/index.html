@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>sprite-stack-flight · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 3D 엔진도 폴리곤도 이미지 파일도 없이, 납작한 픽셀 층을 쌓는 스프라이트 스태킹으로 그 주제의 비행 장면을 코드만으로 만듭니다.">
+<meta property="og:title" content="sprite-stack-flight · motion-skills">
+<meta property="og:description" content="주제 하나를 주면 3D 엔진도 폴리곤도 이미지 파일도 없이, 납작한 픽셀 층을 쌓는 스프라이트 스태킹으로 그 주제의 비행 장면을 코드만으로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/sprite-stack-flight/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/sprite-stack-flight">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / sprite-stack-flight</nav>
+  <h1>sprite-stack-flight</h1>
+  <p>주제 하나를 주면 3D 엔진도 폴리곤도 이미지 파일도 없이, 납작한 픽셀 층을 쌓는 스프라이트 스태킹으로 그 주제의 비행 장면을 코드만으로 만듭니다. 기체, 계단식 지형, 조종석, 비행 계획을 주제에 맞게 새로 설계하고, 위에서 · 뒤에서 · 조종석 시점을 오가는 1080p MP4와 직접 조종할 수 있는 라이브 페이지를 냅니다.
+  원본: <a href="https://x.com/meta_pavy/status/2122241297482408234?a=yknJyWI6foguElHQBnI&amp;s=19" target="_blank" rel="noopener">Pavian의 X 게시물</a>이 소개한 <a href="https://x.com/creativedash/status/2122000830895386680" target="_blank" rel="noopener">Dash의 32 KB 비행 시뮬레이터</a>(<a href="https://remix.ui8.ai/fly" target="_blank" rel="noopener">라이브 데모</a>)를 보고 만들었습니다.</p>
+  <ul class="tags"><li>스프라이트 스태킹 · 코드 전용</li><li>480×270 → 1080p</li><li>시점 3종</li><li>직접 조종하는 라이브 페이지</li><li>합성 사운드</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 한 줄(무엇이 · 어디를 · 언제 나는지), 참고 이미지나 영상</dd>
+      <dt>브리프</dt><dd>기체(무게 · 팔레트 · 부품 · 항법등), 세계(높이를 만드는 법 · 층별 색 · 물 · 소품 · 랜드마크), 시간대와 구름, 조종석, 비행 계획 표</dd>
+      <dt>설계</dt><dd>복셀 모델을 층으로 자른 기체, 정수 계단으로 쌓은 지형, 원반을 쌓은 구름, 그 기체만의 조종석. 전체 지도(<code>?map=1</code>)와 기체 시트(<code>?sheet=craft</code>)로 확인</dd>
+      <dt>확인</dt><dd>콘택트 시트와 스틸 채점, 자동 검사(결정성, 지면 여유, 항법등 좌우, 뱅크의 관성과 오버슈트, 롤의 예비 동작, 카메라 지연, 속도)</dd>
+      <dt>출력</dt><dd>최근접 확대로 선명한 1920×1080 MP4(엔진 · 바람 · 롤 소리 합성), 영화를 반복하다 클릭하면 조종이 넘어오는 라이브 페이지</dd>
+    </dl>
+    <pre><code>cd sprite-stack-flight/examples/canyon-biplane
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs index.html --q map=1 --stills 0
+node ../../scripts/render.mjs index.html --sheet 8
+node ../../scripts/render.mjs index.html
+node ../../scripts/new-flight.mjs ../../../my-flight   # 새 주제</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. GPU와 네트워크가 필요 없고, 30초 영상을 CPU로 1분 안팎에 렌더합니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/sprite-stack-flight/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9.6;--demo-bg:#000">
+    <iframe data-src="demo/canyon-biplane.html" title="sprite-stack-flight 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/canyon-biplane.html">데모 열기 (examples/canyon-biplane)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/canyon-biplane</code> · 32초 · 화면을 누르면 직접 조종</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/canyon-biplane.html" data-cap="예제 &lt;code&gt;examples/canyon-biplane&lt;/code&gt; · 32초 · 화면을 누르면 직접 조종" aria-pressed="true">Dust Mail</button>
+        <button class="btn" type="button" data-src="demo/fjord-airship.html" data-cap="예제 &lt;code&gt;examples/fjord-airship&lt;/code&gt; · 36.5초 · 무거운 비행선, 롤 없음" aria-pressed="false">The Winter Post</button>
+        <button class="btn" type="button" data-src="demo/template.html" data-cap="템플릿 &lt;code&gt;templates/flight.html&lt;/code&gt; · 25초 · 새 주제의 출발점" aria-pressed="false">템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">같은 엔진과 키트로 주제만 바꿔 새로 설계한 예제 두 편과 시작 템플릿, 그리고 설계를 확인하는 화면입니다. 카드를 누르면 새 탭에서 그 장면이 그 순간에 멈춘 채 열리고, 브라우저가 직접 그립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"dust":"Dust Mail","post":"The Winter Post","tool":"확인 화면"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>Dust Mail <small>32초 · 노을 무렵의 사막</small></h3>
+      <p>빨간 우편 복엽기의 마지막 비행. 붉은 지층의 메사와 강, 어도비 마을, 한 번의 롤, 놋쇠 계기판의 개방형 조종석입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="dust" href="demo/canyon-biplane.html?t=1.8" target="_blank" rel="noopener">
+          <img src="samples/dust-over.jpg" alt="위에서 내려다본 사막: 굽이치는 청록 강, 어도비 집들, 빨간 복엽기와 그 그림자, 둥근 구름, DUST MAIL 제목 띠" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">위 시점 · 1.8초</span><b>강 위의 우편기</b><span class="en">over</span>
+          <span class="how">고도만큼 떨어진 그림자, 땅 위를 흘러가는 구름 그림자, 제목 띠</span></div></a>
+        <a class="tile" data-tags="dust" href="demo/canyon-biplane.html?t=9" target="_blank" rel="noopener">
+          <img src="samples/dust-chase.jpg" alt="뒤에서 본 복엽기가 붉은 지층의 메사 절벽과 협곡 위를 날고, 지평선은 주황빛 안개에 잠김" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">뒤 시점 · 9초</span><b>메사 사이로</b><span class="en">chase</span>
+          <span class="how">층마다 한 색인 지층, 어두운 남쪽 벽, 화면 열마다 한 줄씩 쌓은 원근 지형</span></div></a>
+        <a class="tile" data-tags="dust" href="demo/canyon-biplane.html?t=16" target="_blank" rel="noopener">
+          <img src="samples/dust-roll.jpg" alt="롤 도중 뒤집힌 복엽기가 날개 끝에서 흰 연기를 끌며 기울어진 지평선 위를 날아감" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">뒤 시점 · 16초</span><b>한 번의 롤</b><span class="en">roll</span>
+          <span class="how">작게 반대로 모았다가 도는 롤, 날개 끝 연기, 반쯤 따라 기우는 카메라</span></div></a>
+        <a class="tile" data-tags="dust" href="demo/canyon-biplane.html?t=21" target="_blank" rel="noopener">
+          <img src="samples/dust-cockpit.jpg" alt="개방형 조종석: 위쪽 날개 밑면과 버팀대, 빨간 엔진 덮개, 놋쇠 테 앞유리, 나무 계기판의 둥근 계기들" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">조종석 · 21초</span><b>날개 아래 자리</b><span class="en">cockpit</span>
+          <span class="how">윗날개, 버팀대, 덮개, 놋쇠 계기, 덮개 앞에서 도는 프로펠러</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>The Winter Post <small>36.5초 · 푸른 시간의 피오르</small></h3>
+      <p>겨울 우편을 싣고 피오르를 거슬러 오르는 비행선. 무거워서 늦게 기울고 롤은 하지 않으며, 곤돌라 창만 따뜻합니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="post" href="demo/fjord-airship.html?t=2.2" target="_blank" rel="noopener">
+          <img src="samples/post-over.jpg" alt="위에서 본 눈 덮인 산과 짙은 남색 피오르, 침엽수 숲, 크림색 비행선과 그림자, 제목 THE WINTER POST" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">위 시점 · 2.2초</span><b>피오르 위</b><span class="en">over</span>
+          <span class="how">눈밭과 바위, 침엽수, 유빙, 비행선 위를 지나는 구름</span></div></a>
+        <a class="tile" data-tags="post" href="demo/fjord-airship.html?t=13" target="_blank" rel="noopener">
+          <img src="samples/post-chase.jpg" alt="비스듬히 뒤에서 본 비행선이 분홍빛 지평선과 눈 덮인 산맥 위를 날고, 아래로 침엽수와 피오르가 보임" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">뒤 시점 · 13초</span><b>3/4 뒤에서</b><span class="en">chaseSide</span>
+          <span class="how">둥근 기체는 옆으로 비킨 카메라로. 안개 속으로 겹쳐지는 능선</span></div></a>
+        <a class="tile" data-tags="post" href="demo/fjord-airship.html?t=28" target="_blank" rel="noopener">
+          <img src="samples/post-cockpit.jpg" alt="곤돌라 함교: 기울어진 나무 창살, 지붕 들보의 등불, 나침반, 고도계, 반쯤 보이는 조타륜, 기관 전신기" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">조종석 · 28초</span><b>등불 켠 함교</b><span class="en">cockpit</span>
+          <span class="how">뱅크 명령을 따라 먼저 도는 조타륜, 스로틀을 가리키는 전신기 손잡이</span></div></a>
+        <a class="tile" data-tags="post" href="demo/fjord-airship.html?t=33.5" target="_blank" rel="noopener">
+          <img src="samples/post-arrive.jpg" alt="위에서 본 비행선이 피오르 굽이를 지나고, 왼쪽 아래에 THE WINTER POST ARRIVES 자막" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">위 시점 · 33.5초</span><b>우편 도착</b><span class="en">caption</span>
+          <span class="how">마지막은 다시 넓게. 자막 한 줄</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>확인 화면 <small>설계 단계</small></h3>
+      <p>장면을 쓰기 전에 보는 화면입니다. 시작 템플릿도 같은 흐름으로 바꿔 씁니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="tool" href="demo/canyon-biplane.html?sheet=craft" target="_blank" rel="noopener">
+          <img src="samples/sheet-biplane.jpg" alt="복엽기 기체 시트: 45도 간격 여덟 방향의 위 시점, 뒤 시점, 좌우 뱅크, 상승, 60도 간격의 롤" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">?sheet=craft</span><b>복엽기 기체 시트</b>
+          <span class="how">여덟 방향, 좌우 뱅크, 롤. 빨간 좌현등과 초록 우현등 위치를 검사</span></div></a>
+        <a class="tile" data-tags="tool" href="demo/fjord-airship.html?sheet=craft" target="_blank" rel="noopener">
+          <img src="samples/sheet-airship.jpg" alt="비행선 기체 시트: 여덟 방향에서 본 크림색 기낭과 빨간 꼬리날개, 뒤 시점과 뱅크" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">?sheet=craft</span><b>비행선 기체 시트</b>
+          <span class="how">같은 부품 키트로 만든 전혀 다른 실루엣</span></div></a>
+        <a class="tile" data-tags="tool" href="demo/canyon-biplane.html?map=1" target="_blank" rel="noopener">
+          <img src="samples/plan-map.jpg" alt="계획 지도: 높을수록 밝은 사막 세계 전체와 시점별 색으로 그린 비행 경로, 최저 지면 여유와 단계별 좌표" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">?map=1</span><b>계획 지도</b>
+          <span class="how">세계 전체, 시점별 경로, 지면에 가장 가까운 순간</span></div></a>
+        <a class="tile" data-tags="tool" href="demo/template.html?t=10" target="_blank" rel="noopener">
+          <img src="samples/template.jpg" alt="템플릿: 뒤에서 본 흰 수상비행기가 초록 섬과 파란 바다 사이 해협 위를 날아감" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 25초</span><b>시작 비행</b><span class="en">templates/flight.html</span>
+          <span class="how"><code>new-flight.mjs</code>가 복사하는 출발점. 모든 부분을 주제에 맞게 바꿈</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. X에서 본 32 KB 스프라이트 스태킹 비행 시뮬레이터의 기법(층을 쌓은 기체와 지형, 세 시점)만 가져왔고, 엔진과 키트, 두 예제의 기체 · 세계 · 조종석은 모두 이 레포의 코드입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/canyon-biplane.html" target="_blank" rel="noopener"><b>「Dust Mail」 · 32초</b><span>사막의 복엽기, 라이브 페이지</span><span class="url">sprite-stack-flight/demo/canyon-biplane.html</span></a>
+    <a class="work" href="demo/fjord-airship.html" target="_blank" rel="noopener"><b>「The Winter Post」 · 36.5초</b><span>피오르의 비행선, 라이브 페이지</span><span class="url">sprite-stack-flight/demo/fjord-airship.html</span></a>
+    <a class="work" href="https://x.com/meta_pavy/status/2122241297482408234?a=yknJyWI6foguElHQBnI&amp;s=19" target="_blank" rel="noopener"><b>원본 · Pavian의 X 게시물</b><span>"3D 아님 폴리곤도 없음" · 2026년 11월</span><span class="url">x.com/meta_pavy</span></a>
+    <a class="work" href="https://x.com/creativedash/status/2122000830895386680" target="_blank" rel="noopener"><b>소개된 작품 · Dash의 X 게시물</b><span>No 3D engine, no polygons, 32 KB of code</span><span class="url">x.com/creativedash</span></a>
+    <a class="work" href="https://remix.ui8.ai/fly" target="_blank" rel="noopener"><b>그 작품의 라이브 데모</b><span>스프라이트 스태킹 전투기와 섬</span><span class="url">remix.ui8.ai/fly</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sprite-stack-flight/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/sprite-stack-flight">폴더</a> <span>lib · scripts · templates · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sprite-stack-flight/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sprite-stack-flight/templates/BRIEF.md">templates/BRIEF.md</a> <span>브리프 틀과 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sprite-stack-flight/references/LOOK.md">references/LOOK.md</a> <span>픽셀, 계단 지형, 빛, 시점, 참고 자료 읽기</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sprite-stack-flight/references/KIT.md">references/KIT.md</a> <span>엔진과 부품 API</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sprite-stack-flight/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림은 코드로 그렸습니다 (이미지 · 모델 파일 없음)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
