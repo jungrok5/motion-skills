@@ -2423,6 +2423,44 @@
           "url": "https://jungrok5.github.io/motion-skills/droste-page/demo/examples/cereal-box/"
         }
       ]
+    },
+    {
+      "id": "shatter-page",
+      "name": "shatter-page",
+      "tagline": "주제를 받아 유리 · 얼음 · 도자기처럼 깨지는 판 위에 인쇄된 실제 웹페이지를 만듭니다. 클릭하면 맞은 자리에서 금이 가 조각이 무게 있게 떨어지고, 날아가는 조각 위에서도 페이지가 동작하며, 시간 슬라이더로 되감아 붙입니다.",
+      "poster": "shatter-page/poster.jpg",
+      "posterAlt": "테라코타 타일에 떨어져 깨지는 청첩장 접시, 금 이음선으로 다시 붙은 접시, 쇠공에 맞아 갈라지는 유리판, 바닥으로 쏟아지는 유리 조각",
+      "tags": [
+        "HTML-in-Canvas",
+        "깨지는 유리",
+        "강체 물리",
+        "되감기"
+      ],
+      "stats": [
+        "재질 프리셋 5종",
+        "충격 방식 3종"
+      ],
+      "page": "shatter-page/",
+      "source": "shatter-page/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "shatter-page/examples/plate-for-luck/"
+      },
+      "sources": [
+        {
+          "title": "원본 데모 「Shatter」 (Felix Rieseberg)",
+          "url": "https://claude.ai/artifact/Berg7ureW47JTrMNVoH8TU"
+        },
+        {
+          "title": "HTML-in-Canvas 데모 페이지",
+          "url": "https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk"
+        },
+        {
+          "title": "Felix Rieseberg의 X 게시물",
+          "url": "https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&s=19"
+        }
+      ],
+      "workedExample": "https://jungrok5.github.io/motion-skills/shatter-page/demo/examples/plate-for-luck/"
     }
   ]
 }

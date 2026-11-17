@@ -70,6 +70,7 @@ with a live demo that runs in the browser and a gallery of work made with the sk
 | [`liquid-glass-page/`](liquid-glass-page/) | A live web page with a topic-designed liquid on it (water, honey, oil, mercury …): ripples, refracting beads and a draggable magnifier drop over real, clickable HTML via HTML-in-Canvas | [samples page · honey tasting card · live](https://jungrok5.github.io/motion-skills/liquid-glass-page/) |
 | [`app-cube/`](app-cube/) | A live web page that is a glossy 3×3 twisty cube whose six faces are working HTML apps; twist the layers and every scattered tile still clicks and types, designed per topic (apps, material, studio, sound) | [samples page · Lisbon Weekend · live](https://jungrok5.github.io/motion-skills/app-cube/) |
 | [`droste-page/`](droste-page/) | A live web page that contains a picture of itself without end (Droste effect): scroll to fall in, wind it into an Escher spiral, type or click in any copy | [samples page · cereal box · live](https://jungrok5.github.io/motion-skills/droste-page/) |
+| [`shatter-page/`](shatter-page/) | A live web page printed on a breakable pane (glass, ice, porcelain, sugar glass) that cracks from a click, falls in rigid-body pieces that stay clickable and typeable, rewinds on a time slider and mends with seams (HTML-in-Canvas, WebGL) | [samples page · plate for luck · live](https://jungrok5.github.io/motion-skills/shatter-page/) |
 
 To use a skill with Claude Code, copy (or symlink) its folder into `.claude/skills/` of your project, or point the agent at
 its `SKILL.md`.
