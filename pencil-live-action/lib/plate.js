@@ -98,13 +98,14 @@ function standIn(kind, N = 512) {
 const FULL_VS = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }`;
 // the tone curve: T(x) = 1 - exp(-x·e) (invertible, so the backdrop can be fed through it unchanged)
 const BACKDROP_FS = `
-uniform sampler2D map; uniform float gain, expo, hasMap; uniform vec3 skyA, skyB, gnd;
+uniform sampler2D map; uniform float gain, expo, hasMap, linearMap; uniform vec3 skyA, skyB, gnd;
 varying vec3 vDir;
 void main(){
   vec3 d = normalize(vDir);
   vec3 c;
   if (hasMap > .5) { vec2 uv = vec2(atan(d.z, d.x) * .15915494 + .5, asin(clamp(d.y, -1., 1.)) * .31830989 + .5); c = texture2D(map, uv).rgb; }   // sRGB texture: the sampler decodes it
   else { float y = d.y; c = y > 0. ? mix(skyA, skyB, pow(1. - y, 3.)) : gnd * (.8 + .2 * smoothstep(-.3, 0., y)); }
+  if (linearMap > .5) { gl_FragColor = vec4(c * gain, 1.); return; }   // an HDR backdrop is already light: it takes the tone curve like the scene
   c = clamp(c * gain, 0., .985);
   gl_FragColor = vec4(-log(1. - c) / expo, 1.);   // pre-inverse of the tone curve
 }`;
@@ -148,6 +149,9 @@ export class Plate {
   /** o: { W, H, base (URL of the film folder), cdn (read scans from Poly Haven), look: { expo, warm, sat, contrast, … } } */
   constructor(o = {}) {
     this.W = o.W || 1920; this.H = o.H || 1080; this.base = o.base || './'; this.cdn = !!o.cdn;
+    // light: a live page on the web — 1k scans from the CDN, textures ≤ 2048 px (≤ 1024 on a phone), and on a phone the HDR
+    // itself as the backdrop (no 8k photo to decode). Renders (render.mjs) always load the full set.
+    this.light = o.light || null; this.progress = { done: 0, total: 0, label: '' };
     this.look = Object.assign({ gain: 1, expo: null, sat: 1.04, contrast: 1.04, lift: 0, shadowTint: [.97, .99, 1.04], highTint: [1.07, 1.0, .9], fstop: 2.8, dof: true, sunBoost: 1 }, o.look || {});
     this.canvas = cnv(this.W, this.H);
     const r = this.renderer = new T.WebGLRenderer({ canvas: this.canvas, antialias: false, alpha: true, premultipliedAlpha: false, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
@@ -155,7 +159,10 @@ export class Plate {
     r.shadowMap.enabled = true; r.shadowMap.type = T.PCFSoftShadowMap; r.autoClear = true;
     this.scene = new T.Scene(); this.camera = new T.PerspectiveCamera(40, this.W / this.H, .005, 400);
     this.manifest = null; this.standIn = true; this.textures = {}; this.models = {}; this.front = []; this.notes = [];
-    const rt = (o2 = {}) => new T.WebGLRenderTarget(this.W, this.H, { type: T.HalfFloatType, ...o2 });
+    // a linear HDR target where the GPU can draw into half floats; 8-bit otherwise (some phones)
+    const ex = r.extensions, hdrOK = ex.has('EXT_color_buffer_half_float') || ex.has('EXT_color_buffer_float');
+    this.rtType = hdrOK ? T.HalfFloatType : T.UnsignedByteType; if (!hdrOK) this.notes.push('8-bit render targets (no half-float colour buffers here)');
+    const rt = (o2 = {}) => new T.WebGLRenderTarget(this.W, this.H, { type: this.rtType, ...o2 });
     this.rtScene = rt({ depthTexture: new T.DepthTexture(this.W, this.H), samples: 0 });
     this.rtDof = rt(); this.rtMask = new T.WebGLRenderTarget(this.W, this.H, { depthTexture: new T.DepthTexture(this.W, this.H) });
     const quad = (fs, uniforms) => { const m = new T.ShaderMaterial({ vertexShader: FULL_VS, fragmentShader: fs, uniforms, depthTest: false, depthWrite: false }); const s = new T.Scene(); s.add(new T.Mesh(new T.PlaneGeometry(2, 2), m)); return { m, s }; };
@@ -166,6 +173,10 @@ export class Plate {
   }
 
   // ── loading ──
+  /** count a loading step (for the page's loading screen) */
+  async step(label, fn) { this.progress.total++; this.progress.label = label; try { return await fn(); } finally { this.progress.done++; } }
+  /** a CDN file at a lighter resolution when this is a light live page (Poly Haven names every size the same way) */
+  lite(u, res = '1k') { return this.light && this.cdn && /^https:\/\/dl\.polyhaven\.org\//.test(u) ? u.replace(/\/(2k|4k)\//, `/${res}/`).replace(/_(2k|4k)\.(jpg|hdr|png)$/, `_${res}.$2`) : u; }
   async load() {
     const tryJSON = async u => { try { const r = await fetch(u); return r.ok ? await r.json() : null; } catch { return null; } };
     this.manifest = this.cdn ? await tryJSON(this.base + 'manifest.cdn.json') : (await tryJSON(this.base + 'assets/manifest.json'));
@@ -176,10 +187,14 @@ export class Plate {
     // light
     let sun;
     if (!this.standIn) {
-      const buf = await (await fetch(url(this.manifest.hdri.hdr))).arrayBuffer(), hdr = parseHDR(buf);
+      const hdrURL = this.light === 'phone' ? url(this.manifest.hdri.hdr) : this.lite(url(this.manifest.hdri.hdr));
+      const buf = await this.step('light', async () => (await fetch(hdrURL)).arrayBuffer()), hdr = parseHDR(buf);
       sun = this.sunInfo = findSun(hdr);   // (also takes the sun out of hdr.data)
-      const tex = new T.DataTexture(flipRows(hdr), hdr.w, hdr.h, T.RGBAFormat, T.FloatType); tex.mapping = T.EquirectangularReflectionMapping; tex.magFilter = tex.minFilter = T.LinearFilter; tex.flipY = false; tex.needsUpdate = true;
-      const pm = new T.PMREMGenerator(this.renderer); this.scene.environment = pm.fromEquirectangular(tex).texture; pm.dispose(); tex.dispose();
+      // half floats: filterable on every WebGL2 device (32-bit float filtering is not, e.g. on iPhones)
+      const f = flipRows(hdr), h16 = new Uint16Array(f.length); for (let i = 0; i < f.length; i++) h16[i] = T.DataUtils.toHalfFloat(Math.min(f[i], 65000));
+      const tex = new T.DataTexture(h16, hdr.w, hdr.h, T.RGBAFormat, T.HalfFloatType); tex.mapping = T.EquirectangularReflectionMapping; tex.magFilter = tex.minFilter = T.LinearFilter; tex.flipY = false; tex.wrapS = T.RepeatWrapping; tex.needsUpdate = true;
+      const pm = new T.PMREMGenerator(this.renderer); this.scene.environment = pm.fromEquirectangular(tex).texture; pm.dispose();
+      this.hdrTex = tex;
     } else {
       sun = this.sunInfo = { dir: new T.Vector3(-.5, .75, .35).normalize(), E: 2.2, Eup: 4, col: new T.Color(1, .95, .86), mean: 1.2, meanLo: .5, sharp: 30 };
       const s = new T.Scene(); s.background = null; const pm = new T.PMREMGenerator(this.renderer);
@@ -194,15 +209,18 @@ export class Plate {
     const sc = this.sun.shadow.camera; sc.left = sc.bottom = -.6; sc.right = sc.top = .6; sc.near = .05; sc.far = 12;
     this.scene.add(this.sun, this.sun.target); this.scene.environmentIntensity = 1;
     // the backdrop
-    let map = null;
-    if (!this.standIn && this.manifest.hdri.jpg) map = await this.image(url(this.manifest.hdri.jpg), 4096);
-    this.backdrop = this.dome(map);
+    let map = null, linear = false;
+    if (!this.standIn && this.manifest.hdri.jpg && this.light !== 'phone') map = await this.step('backdrop', () => this.image(url(this.manifest.hdri.jpg), this.light ? 4096 : 4096));
+    else if (!this.standIn) { map = this.hdrTex; linear = true; }          // a phone: the HDR is the backdrop (softer, but no 8k photo)
+    if (this.hdrTex && !linear) { this.hdrTex.dispose(); this.hdrTex = null; }
+    this.backdrop = this.dome(map, { linear });
     return this;
   }
   /** load an image (downscaled to maxW) as a texture */
   async image(u, maxW = 4096, srgb = true) {
-    const blob = await (await fetch(u)).blob(); let bmp;
-    try { bmp = await createImageBitmap(blob, { resizeWidth: maxW, resizeQuality: 'high', imageOrientation: 'flipY' }); }
+    const r = await fetch(u); if (!r.ok) throw new Error(`${r.status} ${u}`); const blob = await r.blob(); let bmp;
+    // downscale only (never up): read the size first, then resize if the picture is wider than maxW
+    try { const full = await createImageBitmap(blob, { imageOrientation: 'flipY' }); if (full.width <= maxW) bmp = full; else { bmp = await createImageBitmap(full, { resizeWidth: maxW, resizeHeight: Math.round(full.height * maxW / full.width), resizeQuality: 'high' }); full.close(); } }
     catch { bmp = await createImageBitmap(blob, { imageOrientation: 'flipY' }); }
     const t = new T.Texture(bmp); t.flipY = false; if (srgb) t.colorSpace = T.SRGBColorSpace; t.wrapS = t.wrapT = T.RepeatWrapping; t.anisotropy = 8; t.generateMipmaps = true; t.minFilter = T.LinearMipmapLinearFilter; t.needsUpdate = true; return t;
   }
@@ -216,7 +234,7 @@ export class Plate {
     }
     g.setAttribute('dir', new T.BufferAttribute(dir, 3));
     const m = new T.ShaderMaterial({ vertexShader: BACKDROP_VS, fragmentShader: BACKDROP_FS, side: T.BackSide, depthWrite: false,
-      uniforms: { map: { value: map }, hasMap: { value: map ? 1 : 0 }, gain: { value: this.look.gain }, expo: { value: this.expo }, skyA: { value: new T.Color(.62, .74, .9) }, skyB: { value: new T.Color(.93, .92, .9) }, gnd: { value: new T.Color(.36, .34, .31) } } });
+      uniforms: { map: { value: map }, hasMap: { value: map ? 1 : 0 }, linearMap: { value: o.linear ? 1 : 0 }, gain: { value: this.look.gain }, expo: { value: this.expo }, skyA: { value: new T.Color(.62, .74, .9) }, skyB: { value: new T.Color(.93, .92, .9) }, gnd: { value: new T.Color(.36, .34, .31) } } });
     const mesh = new T.Mesh(g, m); mesh.position.set(0, h, 0); mesh.rotation.y = (o.turn || 0) * Math.PI / 180; mesh.renderOrder = -10; mesh.frustumCulled = false;
     this.scene.add(mesh); return mesh;
   }
@@ -231,20 +249,20 @@ export class Plate {
     const m = new T.MeshStandardMaterial({ color: 0xffffff, roughness: o.roughness ?? 1, metalness: 0, envMapIntensity: o.env ?? 1 });
     m.userData.tile = o.tile ?? te?.tile ?? 1;
     if (!te) { m.map = standIn(o.kind || (/wood|plank|table|oak|walnut/.test(id) ? 'wood' : 'stone')); m.roughness = o.kind === 'wood' ? .6 : .9; this.notes.push(`stand-in surface: ${id}`); return Promise.resolve(m); }
-    return (async () => {
-      const mw = o.maxW || 4096;
-      m.map = await this.image(url(te.files.diff), mw);
-      if (te.files.nor) { m.normalMap = await this.image(url(te.files.nor), mw, false); m.normalScale = new T.Vector2(o.bump ?? 1, o.bump ?? 1); }
-      if (te.files.arm) { const t = await this.image(url(te.files.arm), mw, false); m.aoMap = t; m.roughnessMap = t; m.metalnessMap = t; m.metalness = 1; m.roughness = o.roughness ?? 1; }
+    return this.step(id, async () => {
+      const mw = o.maxW || (this.light === 'phone' ? 1024 : this.light ? 2048 : 4096), U = f => this.lite(url(f));
+      m.map = await this.image(U(te.files.diff), mw);
+      if (te.files.nor) { m.normalMap = await this.image(U(te.files.nor), mw, false); m.normalScale = new T.Vector2(o.bump ?? 1, o.bump ?? 1); }
+      if (te.files.arm) { const t = await this.image(U(te.files.arm), mw, false); m.aoMap = t; m.roughnessMap = t; m.metalnessMap = t; m.metalness = 1; m.roughness = o.roughness ?? 1; }
       return m;
-    })();
+    });
   }
   /** a scanned model (glTF) → Group, scaled to metres as authored */
   async model(id) {
     const me = this.manifest?.models?.[id]; if (!me) { this.notes.push(`missing model: ${id}`); return null; }
     const mgr = new T.LoadingManager(), base = /^https?:/.test(me.file) ? '' : this.base;
     if (me.inc) mgr.setURLModifier(u => { for (const [rel, abs] of Object.entries(me.inc)) if (u.endsWith(rel) || u.endsWith(encodeURI(rel))) return abs; return u; });
-    const g = await new GLTFLoader(mgr).loadAsync(base + me.file);
+    const g = await this.step(id, () => new GLTFLoader(mgr).loadAsync(base + me.file));
     g.scene.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; } });
     return g.scene;
   }

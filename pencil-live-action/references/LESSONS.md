@@ -40,3 +40,11 @@ Problem → cause → fix, one or two lines each.
   cancelled it. → give the weight shift its own rhythm (`sin(t·1.13 + .7)`), never the breath's.
 - **The startle and the slide read as pops.** → no gather. → every big move is an `F.action` with ≥ .15 s of anticipation
   and ≥ .2 s of recovery; check.mjs fails one without.
+
+## The live page on the web
+- **The samples page showed only a black screen.** → ~34 MB of scans with nothing on screen while they loaded; 2k scans were
+  being *up*-scaled to 4096 px (4× the memory); float HDR textures cannot be filtered on many phones; the 8k backdrop photo
+  is too big for a phone; and the shadow caster's shader had no colour output (a GL error on every draw). → a loading screen
+  with progress and a readable error; images are only ever downscaled; the HDR is uploaded as half floats; a live page loads
+  1k scans (13 MB), a phone uses the HDR itself as the backdrop and draws at half size; 8-bit render targets where half
+  floats cannot be drawn into; the caster writes a colour before it discards. Renders (`?render=1`) still load everything at full size.

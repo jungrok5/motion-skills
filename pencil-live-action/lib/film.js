@@ -54,7 +54,9 @@ export class Film {
     const q = new URLSearchParams(location.search);
     this.q = q; this.render = q.has('render'); this.W = 1920; this.H = 1080; this.FPS = o.fps || 24; this.boilFps = o.boil || 8;
     this.off = new Set((q.get('off') || '').split(',').filter(Boolean));
-    this.S = +(q.get('scale') || (this.render ? 1 : Math.min(1, Math.max(.5, (innerWidth * devicePixelRatio) / this.W))));
+    // a live page draws at the size it is shown (pixel ratio capped at 1.5), a phone smaller still; renders are full size
+    this.phone = !this.render && (matchMedia('(pointer: coarse)').matches || Math.min(screen.width, screen.height) < 700);
+    this.S = +(q.get('scale') || (this.render ? 1 : Math.min(this.phone ? .5 : 1, Math.max(.35, (innerWidth * Math.min(1.5, devicePixelRatio)) / this.W))));
     this.dur = o.dur || 30; this.seed = o.seed || 1; this.title = o.title || document.title;
     this.paper = o.paper || '#f3f0e9'; this.lead = o.lead || '#2f2f33'; this.tone = o.tone || '#55555a';   // tone: graphite shading (hair, pupils)
     this.score = o.score || null; this.fadeIn = o.fadeIn ?? .4; this.fadeOut = o.fadeOut ?? .8;
@@ -67,13 +69,31 @@ export class Film {
     this.layer = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(Math.round(this.W * this.S), Math.round(this.H * this.S)) : mk(this.W * this.S, this.H * this.S); this.lctx = this.layer.getContext('2d');
     this.pt = new Painter(this.ctx, { paper: this.paper, spot: this.tone, lead: this.lead }); this.lpt = new Painter(this.lctx, { paper: this.paper, spot: this.tone, lead: this.lead });
     for (const p of [this.pt, this.lpt]) { p.weight = 1; p.spotEdge = this.lead; }
-    this.plate = new Plate({ W: this.W * this.S, H: this.H * this.S, base: this.base, cdn: this.cdn, look: { ...(o.look || {}), dof: !this.off.has('dof') } });
+    this.plate = new Plate({ W: this.W * this.S, H: this.H * this.S, base: this.base, cdn: this.cdn, light: this.render || q.has('full') ? null : this.phone ? 'phone' : 'web', look: { ...(o.look || {}), dof: !this.off.has('dof') } });
+    if (!this.render) { this.loadingScreen(); addEventListener('unhandledrejection', e => { if (!window.__ready) this.fail(`Could not load the film (${e.reason && e.reason.message || e.reason}).`); }); addEventListener('error', e => { if (!window.__ready) this.fail(`Could not load the film (${e.message}).`); }); }
     this.grainTiles = P.grainTiles(this.seed + 5); this.tooth = this.ctx.createPattern(P.toothTile(this.seed + 3), 'repeat');
     this.renderScore = (spec, sr, dur) => renderScore({ ...spec, sfx: [...(spec.sfx || []), ...(spec.pen === false ? [] : this.penSfx())] }, sr, dur);
     document.body.style.margin = 0; document.body.style.background = '#0d0c0b'; document.body.style.overflow = 'hidden';
     document.body.appendChild(this.canvas);
   }
-  async load() { await this.plate.load(); if (this.off.has('shadows')) this.plate.renderer.shadowMap.enabled = false; return this; }
+  async load() {
+    try { await this.plate.load(); }
+    catch (e) { this.fail(`Could not load the place (${e.message}).`); throw e; }
+    if (this.off.has('shadows')) this.plate.renderer.shadowMap.enabled = false;
+    this.plate.renderer.domElement.addEventListener('webglcontextlost', ev => { ev.preventDefault(); this.fail('The graphics card dropped this page (WebGL context lost) — reload, or try a desktop browser.'); });
+    return this;
+  }
+  /** a loading screen over the (still black) canvas: what is being fetched and how far along — live pages only */
+  loadingScreen() {
+    const d = document.createElement('div'); d.className = 'pla-loading';
+    d.style.cssText = 'position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font:14px system-ui,sans-serif;color:#e9e1d0;background:#0d0c0b;z-index:5;text-align:center;padding:16px';
+    d.innerHTML = `<b style="font:600 17px Georgia,serif">${this.title}</b><span class="t">Loading the place — Poly Haven scans …</span><span style="width:min(260px,70vw);height:4px;background:#3a3128;border-radius:2px;overflow:hidden"><i style="display:block;height:100%;width:0;background:#d8b878;transition:width .3s"></i></span>`;
+    document.body.appendChild(d); this.loadEl = d;
+    const tick = () => { if (!this.loadEl) return; const p = this.plate.progress, k = p.total ? p.done / p.total : 0; d.querySelector('i').style.width = Math.round(Math.max(.04, k) * 100) + '%';
+      if (!this.failed) d.querySelector('.t').textContent = `Loading the place — Poly Haven scans · ${p.label || '…'} (${p.done}/${Math.max(p.total, p.done)})`; requestAnimationFrame(tick); };
+    tick();
+  }
+  fail(msg) { this.failed = true; window.__error = msg; console.error(msg); if (this.loadEl) { this.loadEl.querySelector('.t').textContent = msg; this.loadEl.style.display = 'flex'; } else { const d = document.createElement('div'); d.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font:14px system-ui,sans-serif;color:#e9e1d0;background:rgba(13,12,11,.85);padding:16px;text-align:center;z-index:5'; d.textContent = msg; document.body.appendChild(d); } }
   get scene() { return this.plate.scene; }
 
   // ── the real set ─────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -299,7 +319,7 @@ export class Film {
   shadowRig(key, n = 256) {
     this.srigs = this.srigs || {}; if (this.srigs[key]) return this.srigs[key];
     const cv = this.mk(n, n), tex = new T.CanvasTexture(cv); tex.minFilter = T.LinearFilter;
-    const geo = new T.PlaneGeometry(1, 1), m = new T.ShaderMaterial({ vertexShader: 'void main(){ gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }', fragmentShader: 'void main(){ discard; }', depthWrite: false, side: T.DoubleSide });   // casts only
+    const geo = new T.PlaneGeometry(1, 1), m = new T.ShaderMaterial({ vertexShader: 'void main(){ gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }', fragmentShader: 'void main(){ gl_FragColor = vec4(0.); discard; }', depthWrite: false, side: T.DoubleSide });   // casts only
     const mesh = new T.Mesh(geo, m); mesh.castShadow = true; mesh.receiveShadow = false; mesh.userData.shadowOnly = true;
     mesh.customDepthMaterial = new T.MeshDepthMaterial({ depthPacking: T.RGBADepthPacking, alphaMap: tex, alphaTest: .5 });
     // a soft contact shadow under the feet (what really sits a drawing on a surface)
@@ -426,7 +446,7 @@ export class Film {
     window.shotAt = t => { let i = 0; while (i < this.shots.length - 1 && t >= this.shots[i + 1].start) i++; return { i, name: this.shots[i].name, lt: t - this.shots[i].start }; };
     window.film = this;
     if (this.render) { this.canvas.style.width = '100%'; this.frame(+(this.q.get('t') || 0)); }
-    else { this.fit(); this.credit(); this.live(+(this.q.get('t') || 0)); }
+    else { this.fit(); this.credit(); this.frame(+(this.q.get('t') || 0)); if (this.loadEl) { this.loadEl.remove(); this.loadEl = null; } this.live(+(this.q.get('t') || 0)); }
     window.__ready = true;
   }
   credit() {
