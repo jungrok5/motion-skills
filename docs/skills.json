@@ -2549,6 +2549,50 @@
           "url": "https://jungrok5.github.io/motion-skills/swarm-page/demo/examples/bee-ledger/"
         }
       ]
+    },
+    {
+      "id": "event-horizon-page",
+      "name": "event-horizon-page",
+      "tagline": "주제를 주면 그 주제의 실제 웹페이지를 만들고, 그 위에 블랙홀 · 펄서 · 웜홀을 띄워 슈바르츠실트 빛 경로로 계산한 중력 렌즈로 휘게 합니다. 천체를 끌어서 던지고, 단어를 먹이면 찢겨 나선으로 빨려 들고, 휘어진 글자도 선택되고 버튼은 보이는 자리에서 눌립니다.",
+      "poster": "event-horizon-page/poster.jpg",
+      "posterAlt": "event-horizon-page로 만든 페이지 네 장면: 남색 투어 페이지 PULSAR SEASON 옆의 보라 고리 펄서와 청록 빔, 투어 날짜를 휘게 하는 펄서, 베이지 강의 노트의 문단을 휘게 하는 주황 원반 블랙홀, 문단을 먹어 글자가 주황 실이 되어 빨려 드는 블랙홀",
+      "tags": [
+        "HTML-in-Canvas · WebGL2",
+        "중력 렌즈",
+        "블랙홀 · 펄서 · 웜홀",
+        "살아 있는 페이지",
+        "코드 전용"
+      ],
+      "stats": [
+        "천체 3종",
+        "렌즈 클릭 오차 0 px"
+      ],
+      "page": "event-horizon-page/",
+      "source": "event-horizon-page/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "event-horizon-page/examples/pulsar-tour/"
+      },
+      "sources": [
+        {
+          "title": "Felix Rieseberg의 \"Event Horizon\" 데모 (원본)",
+          "url": "https://claude.ai/artifact/YLk8PESrskZLHiAiyqUZHN"
+        },
+        {
+          "title": "HTML-in-Canvas 데모 페이지 (데모 15개)",
+          "url": "https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk"
+        },
+        {
+          "title": "Felix Rieseberg의 X 게시물 · All hail the weird web",
+          "url": "https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "Halcyon Static 「Pulsar Season」 투어 페이지 · 펄서",
+          "url": "https://jungrok5.github.io/motion-skills/event-horizon-page/demo/examples/pulsar-tour/"
+        }
+      ]
     }
   ]
 }
