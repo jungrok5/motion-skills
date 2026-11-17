@@ -2208,6 +2208,50 @@
           "url": "https://jungrok5.github.io/motion-skills/sheet-city/demo/examples/marathon-block/"
         }
       ]
+    },
+    {
+      "id": "wet-ink-page",
+      "name": "wet-ink-page",
+      "tagline": "주제 하나(시, 메뉴판, 전시 초대장, 선언문 …)를 주면 젖은 잉크로 인쇄된 살아 있는 웹페이지를 만듭니다. 끌면 실제 페이지의 글자와 색 덩어리가 마블링처럼 휘저어지고 점도만큼 흐르다 멈추며, 누르면 안료 방울이 피어나고, 그 사이에도 입력 · 클릭이 되고, Esc를 누르면 모든 글자가 제자리로 흘러 돌아갑니다. 내용 · 종이 · 안료 · 점도 · 빗 · 방울을 주제마다 설계합니다.",
+      "poster": "wet-ink-page/poster.jpg",
+      "posterAlt": "wet-ink-page로 만든 페이지 네 장면: 연청자색 종이에 인쇄된 찻집 메뉴판 'Slow pour.'와 말차 · 히비스커스 찻사발, 말차 사발 위 우유 과녁 방울을 차선으로 가른 모습, 시 브로드사이드의 제목이 쪽빛 리본으로 끌려간 자동 시연, 쪽빛 · 주홍 · 황토로 마블링된 템플릿",
+      "tags": [
+        "HTML-in-Canvas · WebGL2",
+        "마블링 · 변위 맵",
+        "입력 · 클릭되는 실제 페이지",
+        "Esc 되감기",
+        "코드 전용"
+      ],
+      "stats": [
+        "예제 찻집 메뉴판 · 차선(살 5개) · 우유 과녁 방울",
+        "검사: 휘젓기 · 방울 · 흘러간 입력창 클릭 · 점도 · 되감기 · 스틸 결정성"
+      ],
+      "page": "wet-ink-page/",
+      "source": "wet-ink-page/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "wet-ink-page/examples/tea-room/"
+      },
+      "sources": [
+        {
+          "title": "Felix Rieseberg의 「Ink」 데모 (젖은 잉크로 인쇄된 페이지를 끌어 휘젓고 Esc로 되감기)",
+          "url": "https://claude.ai/artifact/WEmmb18oUbyCSkYyB1JMiB"
+        },
+        {
+          "title": "HTML-in-Canvas 데모 페이지 (「HTML-in-Canvas is now in Claude」, 데모 15개)",
+          "url": "https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk"
+        },
+        {
+          "title": "Felix Rieseberg의 X 게시물 「All hail the weird web」",
+          "url": "https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「Low Tide Tea Room」 · 찻집 메뉴판 · 라이브 데모",
+          "url": "https://jungrok5.github.io/motion-skills/wet-ink-page/demo/examples/tea-room/"
+        }
+      ]
     }
   ]
 }

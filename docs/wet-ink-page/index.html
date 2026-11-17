@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>wet-ink-page · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 젖은 잉크로 인쇄된 살아 있는 웹페이지를 만듭니다. 끌면 실제 페이지의 글자와 색 덩어리가 마블링처럼 휘저어지고, 누르면 안료 방울이 피어나며, 그 사이에도 입력하고 클릭할 수 있고, Esc를 누르면 모든 글자가 제자리로 흘러 돌아갑니다.">
+<meta property="og:title" content="wet-ink-page · motion-skills">
+<meta property="og:description" content="젖은 잉크로 인쇄된 웹페이지 — 끌어서 휘젓고, 눌러서 안료를 떨어뜨리고, 움직이는 동안에도 입력 · 클릭, Esc로 되감기.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/wet-ink-page/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/wet-ink-page">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / wet-ink-page</nav>
+  <h1>wet-ink-page</h1>
+  <p>주제 하나(시 한 편, 찻집 메뉴판, 전시 개막 초대장, 선언문 …)를 주면 젖은 잉크로 인쇄된 살아 있는 웹페이지를 만듭니다. 페이지를 끌면 실제 DOM의 글자와 색 덩어리가 마블링 물판처럼 리본 · 갈고리 · 초승달로 휘저어지고, 손을 뗀 뒤에도 잉크의 점도만큼 흘러가다 멈춥니다. 누르면 안료 방울이 피어나며 둘레의 글자를 밀어내고, 그 사이에도 입력창에 글을 쓰고 흘러간 버튼을 누를 수 있습니다. Esc를 누르면 기록해 둔 흐름을 거꾸로 돌려 모든 글자가 제자리로 돌아갑니다. 내용 · 종이 · 이름 붙인 안료 · 점도 · 빗(펜 · 빗 · 차선) · 방울 · 자동 시연을 주제마다 새로 설계하고, 결과물은 네트워크 없이 도는 폴더 하나입니다.
+  원본: Felix Rieseberg의 <a href="https://claude.ai/artifact/WEmmb18oUbyCSkYyB1JMiB" target="_blank" rel="noopener">「Ink」 데모</a>(<a href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk" target="_blank" rel="noopener">HTML-in-Canvas 데모 페이지</a>, <a href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19" target="_blank" rel="noopener">X 게시물</a>)을 보고 만들었습니다. 라이브 데모는 Chrome · Edge 157 이상이나 Claude 데스크톱 앱에서 동작하고, 다른 브라우저에서는 같은 HTML이 평범한 페이지로 보입니다.</p>
+  <ul class="tags"><li>HTML-in-Canvas · WebGL2</li><li>마블링 · 변위 맵</li><li>입력 · 클릭되는 실제 페이지</li><li>Esc 되감기</li><li>코드 전용</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(시, 메뉴판, 전시 초대장, 선언문, 프로그램 …)</dd>
+      <dt>브리프</dt><dd>헤드라인과 입력이 뜻하는 것 · 본문 · 단색 덩어리 2–3개 · 종이와 주제에 맞게 이름 붙인 안료 3–6개 · 점도 · 빗의 살 수 · 방울 · 자동 시연 · 스틸용 장면을 적은 <code>BRIEF.md</code></dd>
+      <dt>페이지</dt><dd>창 하나 크기의 실제 HTML 페이지와 <code>window.INK</code> 설정(엔진 <code>lib/wet-ink.js</code>, 런타임 <code>lib/hic.js</code>)</dd>
+      <dt>확인</dt><dd>공통 검사(그리기 · 왜곡 너머 클릭과 입력 · 휴대폰 폭 · 대체 페이지)와 휘젓기 이동량(px) · 흐름 정지 시간 · 방울 색 · 흘러간 칩 클릭 · 흘러간 입력창 클릭과 입력 · 점도 비교 · 되감기 후 차이 · 스틸 결정성, 1280 · 390 스틸 검토</dd>
+      <dt>출력</dt><dd>index.html + lib/ 폴더 하나(파일로 열기 · Claude 아티팩트), 스틸 PNG</dd>
+    </dl>
+    <pre><code>cd wet-ink-page
+node scripts/check.mjs examples/tea-room/index.html
+node scripts/still.mjs examples/tea-room/index.html --out out --at 1,8 --act latte,whisk
+node scripts/new-page.mjs ../my-page
+node scripts/check.mjs ../my-page/index.html</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium(스크립트가 <code>CanvasDrawElement</code> 플래그를 켭니다). 네트워크와 npm 설치가 필요 없습니다. 헤드리스 검사는 소프트웨어 GL이라 페이지 하나에 몇 분 걸립니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/wet-ink-page/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10;--demo-bg:#e9ebdc">
+    <iframe data-src="demo/examples/tea-room/" title="wet-ink-page 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/tea-room/">데모 열기 (examples/tea-room)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/tea-room</code> · 끌어서 휘젓기 · 눌러서 우유 방울 · Esc로 되감기</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/tea-room/" data-cap="예제 &lt;code&gt;examples/tea-room&lt;/code&gt; · 끌어서 휘젓기 · 눌러서 우유 방울 · Esc로 되감기" aria-pressed="true">찻집 메뉴판</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/index.html&lt;/code&gt; · 시 한 편의 브로드사이드 · 새 페이지의 출발점" aria-pressed="false">시작 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제 「Low Tide Tea Room」과 시작 템플릿을 HTML-in-Canvas를 켠 Chromium에서 찍은 스틸입니다. 카드를 누르면 라이브 데모가 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"tea":"찻집 메뉴판","tpl":"시작 템플릿"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「Low Tide Tea Room」 <small>찻집의 오늘 메뉴</small></h3>
+      <p>원본에 없는 주제로 브리프부터 끝까지 만든 예제입니다. 다섯 살 차선(whisk)으로 휘젓고, 누르면 우유가 과녁 모양으로 피어나며, 휘젓는 동안에도 Pour 버튼이 쟁반에 잔을 담습니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="tea" href="demo/examples/tea-room/" target="_blank" rel="noopener"><img src="samples/tea-rest.jpg" alt="연청자색 종이에 'Slow pour.' 헤드라인, 말차와 히비스커스 찻사발 원, 다섯 가지 차 메뉴와 Pour 버튼이 인쇄된 정지 상태" loading="lazy" width="640" height="400"><div class="cap"><span class="no">정지 상태</span><b>인쇄된 메뉴판</b><span class="how">헤드라인, 찻사발 두 개, 메뉴 다섯 줄, 차 색 안료</span></div></a>
+        <a class="tile" data-tags="tea" href="demo/examples/tea-room/" target="_blank" rel="noopener"><img src="samples/tea-latte.jpg" alt="말차 사발 위에 우유 과녁 방울을 떨어뜨리고 차선으로 아래로 그어 우유가 다섯 갈래로 끌려 내려간 모습" loading="lazy" width="640" height="400"><div class="cap"><span class="no">방울 · 차선</span><b>우유 과녁을 가르기</b><span class="how">피어나며 밀어내는 방울, 다섯 살로 끌어내린 우유</span></div></a>
+        <a class="tile" data-tags="tea" href="demo/examples/tea-room/" target="_blank" rel="noopener"><img src="samples/tea-whisk.jpg" alt="차선을 지그재그로 저어 헤드라인과 찻사발이 말차색 가는 줄무늬 리본으로 휘감긴 마블링" loading="lazy" width="640" height="400"><div class="cap"><span class="no">지그재그 · 말차</span><b>휘저은 헤드라인</b><span class="how">글자는 리본으로, 원은 혀와 초승달로</span></div></a>
+        <a class="tile" data-tags="tea" href="demo/examples/tea-room/" target="_blank" rel="noopener"><img src="samples/tea-demo.jpg" alt="자동 시연 중간, 히비스커스 리본이 메뉴를 가로지르고 헤드라인이 'Hibiscus day'로 바뀐 상태" loading="lazy" width="640" height="400"><div class="cap"><span class="no">자동 시연 · 11초</span><b>움직이는 동안 입력</b><span class="how">오늘의 특선을 입력하는 사이 메뉴 위로 히비스커스</span></div></a>
+        <a class="tile" data-tags="tea" href="demo/examples/tea-room/" target="_blank" rel="noopener"><img src="samples/tea-phone.jpg" alt="휴대폰 폭 390px에서 한 단으로 다시 배치된 찻집 메뉴판과 시작 템플릿, 안료가 가로 한 줄" loading="lazy" width="640" height="400"><div class="cap"><span class="no">휴대폰 폭 390</span><b>한 단 배치</b><span class="how">메뉴판과 템플릿, 가로 스크롤 없이 안료는 한 줄로</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>시작 템플릿 <small>시 한 편의 브로드사이드</small></h3>
+      <p>새 페이지의 출발점입니다. 쪽빛 · 주홍 · 황토 · 램프 블랙과 '물'(안료 없이 휘젓기), 펜 하나의 빗.</p>
+      <div class="grid">
+        <a class="tile" data-tags="tpl" href="demo/templates/" target="_blank" rel="noopener"><img src="samples/tpl-rest.jpg" alt="크림색 종이에 시 제목 'The river keeps its own hours'와 주홍 원, 황토 띠, 시 네 연이 인쇄된 템플릿" loading="lazy" width="640" height="400"><div class="cap"><span class="no">정지 상태</span><b>브로드사이드</b><span class="how">큰 제목, 주홍 원, 시, 안료 띠</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/templates/" target="_blank" rel="noopener"><img src="samples/tpl-demo.jpg" alt="제목 글자들이 쪽빛 리본으로 끌려가고 주홍 원이 초승달로 휘어진 자동 시연 장면" loading="lazy" width="640" height="400"><div class="cap"><span class="no">자동 시연 · 9초</span><b>흐르는 제목</b><span class="how">물결 한 번, 원 위의 방울, 주홍 나선</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/templates/" target="_blank" rel="noopener"><img src="samples/tpl-marble.jpg" alt="주홍과 황토 방울 위로 지그재그를 그어 페이지 전체가 쪽빛 · 주홍 · 황토 마블링이 된 모습" loading="lazy" width="640" height="400"><div class="cap"><span class="no">방울 + 지그재그</span><b>마블링</b><span class="how">섞이지 않는 안료, 가는 종이 이음선</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. 출발점은 Felix Rieseberg가 Claude 데스크톱 앱에 HTML-in-Canvas를 켜며 공개한 데모 열다섯 개 중 「Ink」입니다. 젖은 잉크로 인쇄된 견본 한 장을 끌면 잉크가 손을 따라 흐르고, 누르면 안료 방울이 떨어지고, Esc를 누르면 모든 글자가 제자리로 돌아갑니다. 이 스킬은 그 재료와 상호작용의 문법, 기법의 계열만 가져오고, 엔진 코드와 예제의 내용 · 디자인은 모두 이 레포의 것입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/examples/tea-room/" target="_blank" rel="noopener"><b>「Low Tide Tea Room」 · 라이브 데모</b><span>차선으로 휘젓는 찻집 메뉴판, 우유 과녁 방울, Pour 버튼과 쟁반</span><span class="url">wet-ink-page/demo/examples/tea-room/</span></a>
+    <a class="work" href="https://claude.ai/artifact/WEmmb18oUbyCSkYyB1JMiB" target="_blank" rel="noopener"><b>원본 데모 · 「Ink」</b><span>Felix Rieseberg · HTML-in-Canvas 데모 열다섯 개 중 하나</span><span class="url">claude.ai/artifact/WEmmb18oUbyCSkYyB1JMiB</span></a>
+    <a class="work" href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk" target="_blank" rel="noopener"><b>HTML-in-Canvas 데모 페이지</b><span>「HTML-in-Canvas is now in Claude」 · 데모 15개</span><span class="url">claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk</span></a>
+    <a class="work" href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19" target="_blank" rel="noopener"><b>X 게시물 · 「All hail the weird web」</b><span>Felix Rieseberg(@felixrieseberg)</span><span class="url">x.com/felixrieseberg</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/wet-ink-page/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/wet-ink-page">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/wet-ink-page/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/wet-ink-page/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/wet-ink-page/references/LOOK.md">references/LOOK.md</a> <span>원본에서 읽어 낸 형식</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/wet-ink-page/references/ENGINE.md">references/ENGINE.md</a> <span>엔진 API · 설정 · 확장</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/wet-ink-page/references/HIC.md">references/HIC.md</a> <span>HTML-in-Canvas 공통 노트</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/wet-ink-page/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림과 소리는 코드로 만들었습니다
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

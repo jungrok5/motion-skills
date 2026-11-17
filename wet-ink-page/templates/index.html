@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Broadside — a poem printed in wet ink</title>
+<!--
+  wet-ink-page · templates/index.html — the house example of the style: a poetry broadside printed in wet ink.
+  Drag across it and the print follows your hand like ink floating on a marbler's bath; press without dragging for a drop
+  of pigment; the title field still takes typing and the colours still click wherever they drift; Esc settles it all back.
+
+  Start a project from this file (node <skill>/scripts/new-page.mjs my-page), then REDESIGN for the topic:
+    1. the page — the HTML inside #page: a headline that is mirrored from a text field, the body (poem, menu, programme,
+       manifesto…), large solid shapes (they make the best marbling), the pigment chips, the viscosity gauge, Settle;
+    2. the palette — --paper and the pigments (data-color on each radio; 3–6 of them; named for the topic);
+    3. the material — window.INK below: viscosity, comb (teeth, ribbon), drop (radius, rings), look;
+    4. the idle demo — INK.demo.steps: a few strokes that show off THIS layout, a word typed, a colour picked, a settle.
+  Keep the contract: one #page sized to the window, [data-hic-edit] on a text field, [data-hic-click] on a button,
+  #still / #calm / #fallback handled by the engine (references/ENGINE.md).
+-->
+<style>
+  :root {
+    /* palette — designed per topic. Print must be darker than the paper (it is drawn as ink absorbing light). */
+    --paper: #efe8d8;
+    --ink: #1f2a5c;          /* the press ink: text and rules */
+    --red: #c23a22;          /* vermilion: the big disc */
+    --gold: #c9922b;         /* ochre: the bar */
+    --soft: #6f6a5c;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  html, body { margin: 0; height: 100%; background: var(--paper); overflow: hidden; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+
+  /* The page: exactly one window, laid out on a grid. Everything inside is ordinary HTML. */
+  #page {
+    box-sizing: border-box; width: 100vw; height: 100vh; overflow: hidden; position: relative;
+    background: var(--paper); color: var(--ink); font-family: var(--serif);
+    padding: clamp(18px, 4vh, 40px) clamp(16px, 5vw, 64px);
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto minmax(0, 1fr) auto; column-gap: clamp(20px, 4vw, 56px);
+    cursor: grab; -webkit-font-smoothing: antialiased;
+  }
+  #page.ink-stirring { cursor: grabbing; }
+  #page * { box-sizing: border-box; }
+  #page ::selection { background: #e9c46a; }
+  .bar { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: baseline; font: 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+  .bar b { font-weight: 700; }
+  #sound { font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--ink); background: none; border: 0; border-bottom: 1px solid var(--ink); padding: 2px 0; cursor: pointer; }
+
+  /* the headline and the solid shapes — big masses of colour are what the comb drags into ribbons */
+  .head { position: relative; grid-column: 1; margin-top: clamp(8px, 2.5vh, 28px); min-height: 0; }
+  .disc { position: absolute; z-index: 0; border-radius: 50%; background: var(--red); width: clamp(140px, 30vw, 400px); aspect-ratio: 1; right: 4%; top: -6%; }
+  .bar2 { position: absolute; z-index: 0; background: var(--gold); height: clamp(14px, 2.4vh, 22px); width: 38%; left: 0; bottom: -18px; }
+  h1 { position: relative; z-index: 1; margin: 0; font-weight: 700; line-height: .9; letter-spacing: -.02em; font-size: 120px; max-width: 13ch; overflow-wrap: break-word; mix-blend-mode: multiply; }
+
+  .poem { grid-column: 1; grid-row: 3; align-self: start; margin: clamp(26px, 5vh, 52px) 0 0; font-style: italic; font-size: clamp(15px, 2.1vh, 19px); line-height: 1.5; max-width: 34em; columns: 2 16em; column-gap: 40px; }
+  .poem p { margin: 0 0 .6em; break-inside: avoid; }
+  .poem .by { font: 11px/1.4 var(--mono); font-style: normal; letter-spacing: .1em; text-transform: uppercase; color: var(--soft); }
+
+  /* pigments: radio inputs drawn as ink drawdowns (a full band over two thinned ones). data-color feeds the engine. */
+  .pigs { grid-column: 2; grid-row: 2 / 4; border: 0; margin: clamp(8px, 2.5vh, 28px) 0 0; padding: 0; display: grid; gap: clamp(6px, 1.4vh, 14px); align-content: start; }
+  .pigs legend { font: 10px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 8px; padding: 0; }
+  .pigs label { display: grid; gap: 4px; width: clamp(64px, 7vw, 96px); cursor: pointer; font: 10px/1.1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+  .pigs input { appearance: none; -webkit-appearance: none; margin: 0; width: 100%; height: clamp(34px, 7vh, 64px); border-radius: 2px; cursor: pointer;
+    background: linear-gradient(var(--c) 0 60%, color-mix(in srgb, var(--c) 50%, var(--paper)) 60% 80%, color-mix(in srgb, var(--c) 22%, var(--paper)) 80%); }
+  .pigs input[value=none] { background: repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--ink) 25%, var(--paper)) 6px 7px); border: 1px solid var(--ink); }
+  .pigs input:checked { box-shadow: -8px 0 0 0 var(--paper), -11px 0 0 0 var(--ink); }
+
+  /* the deck: the title field, the viscosity gauge, Settle */
+  .deck { grid-column: 1 / -1; grid-row: 4; display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) auto; column-gap: clamp(16px, 3vw, 44px); align-items: end; border-top: 1px solid var(--ink); padding-top: 14px; }
+  .cell { display: grid; gap: 8px; min-width: 0; }
+  .lab { font: 10px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; display: flex; justify-content: space-between; }
+  #title-field { font: 600 clamp(18px, 2.6vh, 24px)/1.2 var(--serif); color: var(--ink); background: transparent; border: 0; border-bottom: 1px solid var(--ink); padding: 6px 0; outline: 0; width: 100%; caret-color: var(--red); }
+  #title-field::placeholder { color: color-mix(in srgb, var(--ink) 45%, var(--paper)); font-style: italic; font-weight: 400; }
+  #thick { width: 100%; margin: 6px 0 4px; accent-color: var(--ink); cursor: pointer; }
+  #settle { font: 12px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--paper); background: var(--ink); border: 0; border-radius: 2px; padding: 14px 22px; cursor: pointer; }
+  .hint { grid-column: 1 / -1; font: 10px/1.4 var(--mono); letter-spacing: .08em; color: var(--soft); margin-top: 10px; }
+  #page :is(button, input):focus-visible { outline: 2px dashed var(--ink); outline-offset: 4px; }
+
+  /* phone / tall windows: one column, chips in a row */
+  @media (max-aspect-ratio: 1/1) {
+    #page { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto minmax(0, 1fr) auto; }
+    .head { padding-right: 26vw; display: flex; flex-direction: column; }
+    .bar2 { order: 2; }
+    .disc { width: 34vw; right: -6%; top: -6%; }
+    .bar2 { position: relative; bottom: auto; margin-top: 12px; width: 40%; }
+    .pigs { grid-column: 1; grid-row: 3; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+    .pigs legend { width: 100%; }
+    .pigs label { width: calc((100% - 32px) / 5); }
+    .pigs input { height: 30px; }
+    .poem { grid-row: 4; columns: 1; margin-top: 16px; font-size: clamp(14px, 1.9vh, 17px); }
+    .deck { grid-row: 5; grid-template-columns: minmax(0, 1fr) auto; row-gap: 12px; }
+    .deck .field { grid-column: 1 / -1; }
+  }
+  /* fallback: the same page, scrolling like any page */
+  @media (max-height: 620px) {
+    #page { padding-top: 14px; padding-bottom: 12px; }
+    .disc { width: 17vw; right: 0; top: -14%; }
+    .poem { margin-top: 26px; font-size: 12px; line-height: 1.3; columns: 2 11em; column-gap: 24px; } .poem p { margin-bottom: .35em; } .poem .by { display: none; }
+    .pigs input { height: 26px; } .pigs { gap: 4px; } .pigs label { width: 58px; }
+    .deck { padding-top: 8px; } #title-field { font-size: 16px; padding: 3px 0; } #settle { padding: 9px 16px; } .hint { display: none; }
+  }
+  @media (max-aspect-ratio: 1/1) and (max-height: 780px) {
+    .poem { font-size: 14px; line-height: 1.4; } .poem p { margin-bottom: .4em; } .hint { display: none; }
+    #title-field { font-size: 17px; padding: 3px 0; } #settle { padding: 10px 18px; }
+  }
+  body:has(.hic-fallback) { overflow: auto; }
+  .hic-fallback #page { height: auto; min-height: 100vh; cursor: auto; }
+</style>
+</head>
+<body>
+<canvas id="stage" layoutsubtree content="drawable" aria-label="A poem printed in wet ink: drag to stir it">
+  <main id="page" drawable>
+    <header class="bar"><span><b>Broadside</b> · No. 7</span><button id="sound" type="button" aria-pressed="false">Sound off</button></header>
+
+    <div class="head">
+      <div class="disc" aria-hidden="true"></div>
+      <div class="bar2" aria-hidden="true"></div>
+      <h1 id="headline">The river keeps its own hours</h1>
+    </div>
+
+    <div class="poem">
+      <p>It does not hurry for the bridge,<br>or slow because the lamps are lit.</p>
+      <p>It takes the light the way it takes a leaf:<br>turns it over, carries it, lets it go.</p>
+      <p>Stand here long enough and learn<br>the only clock it keeps —</p>
+      <p>everything comes back,<br>never quite to the same place.</p>
+      <p class="by">Printed wet · drag to stir</p>
+    </div>
+
+    <fieldset class="pigs">
+      <legend>Pigment</legend>
+      <label style="--c:#1f2a5c"><input type="radio" name="pigment" value="indigo" data-color="#22306a" checked>Indigo</label>
+      <label style="--c:#c23a22"><input type="radio" name="pigment" value="vermilion" data-color="#c63b22">Vermilion</label>
+      <label style="--c:#c9922b"><input type="radio" name="pigment" value="ochre" data-color="#d29a2c">Ochre</label>
+      <label style="--c:#1b1a17"><input type="radio" name="pigment" value="black" data-color="#1c1b18">Lamp black</label>
+      <label><input type="radio" name="pigment" value="none">Water</label>
+    </fieldset>
+
+    <footer class="deck">
+      <label class="cell field"><span class="lab">Title</span>
+        <input id="title-field" type="text" maxlength="40" placeholder="Type a new title" autocomplete="off" spellcheck="false" data-hic-edit></label>
+      <label class="cell"><span class="lab"><span>Thin ink</span><span>Thick ink</span></span>
+        <input id="thick" type="range" min="0" max="100" value="55" aria-label="How thick the ink is"></label>
+      <div class="cell"><span class="lab">Esc</span><button id="settle" type="button" data-hic-click>Settle</button></div>
+      <p class="hint">Drag to stir · press for a drop · Shift-drag selects text · Esc settles everything back</p>
+    </footer>
+  </main>
+</canvas>
+
+<script src="../lib/hic.js"></script>
+<script src="../lib/wet-ink.js"></script>
+<script>
+(function () {
+  'use strict';
+  // ---- the page's own behaviour (works in the fallback too): the title field prints the headline
+  var head = document.getElementById('headline'), field = document.getElementById('title-field');
+  var DEFAULT = head.textContent;
+  function fit() { WetInk.fitText(head, { min: 34, max: Math.min(150, innerWidth * 0.12), maxHeight: innerHeight * (innerWidth < innerHeight ? 0.24 : innerHeight < 620 ? 0.24 : 0.34) }); }
+  field.addEventListener('input', function () { head.textContent = field.value.trim() ? field.value : DEFAULT; fit(); });
+  addEventListener('resize', fit); fit();
+
+  // ---- the material: designed per topic (every field: references/ENGINE.md)
+  window.INK = {
+    pigments: 'input[name=pigment]',
+    viscosity: { input: '#thick', damp: [0.5, 4.0], radius: [0.035, 0.085] },
+    comb: { teeth: 1, ribbon: 0.022, threads: 0.45 },
+    drop: { radius: 0.05, rings: 0, spread: 1 },
+    look: { rim: 0.3, sheen: 0.35 },
+    settle: { button: '#settle' },
+    sound: { toggle: '#sound', labels: ['Sound off', 'Sound on'] },
+    probe: '#headline',
+    // the idle demo: a wave through the title, a drop on the disc, a new title typed, a spiral in vermilion, settle
+    demo: {
+      delay: 2.5, again: 40,
+      steps: [
+        { at: 0.0, to: 2.6, path: WetInk.path.wave(0.05, 0.2, 0.62, 0.3, 0.06, 1.2) },
+        { at: 3.0, drop: [0.66, 0.2] },
+        { at: 3.6, type: 'Still the river', into: '#title-field' },
+        { at: 5.6, pick: 'input[value=vermilion]' },
+        { at: 6.0, to: 8.6, path: WetInk.path.spiral(0.62, 0.24, 0.03, 0.2, 1.4) },
+        { at: 11.5, settle: true }
+      ]
+    },
+    // scripted states for stills (node <skill>/scripts/still.mjs index.html --act title)
+    acts: {
+      title: function (ink) { ink.stroke(WetInk.path.wave(0.04, 0.18, 0.7, 0.3, 0.08, 1.4), { steps: 120, coast: 30 }); },
+      marble: function (ink) {
+        ink.pick(1); ink.drop(0.66, 0.22); ink.pick(2); ink.drop(0.6, 0.3, { radius: 0.035 }); ink.pick(0);
+        ink.stroke(WetInk.path.zigzag(0.1, 0.12, 0.85, 0.5, 4), { steps: 160, coast: 30 });
+      }
+    }
+  };
+  WetInk.start(window.INK);
+})();
+</script>
+</body>
+</html>
