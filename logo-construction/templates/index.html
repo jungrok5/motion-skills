@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ember Fox · logo-construction</title>
+<script type="importmap">{ "imports": { "lc/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+import { Film } from 'lc/film.js';
+import { mark } from './mark.js';
+// everything below comes from BRIEF.md: the signature, the wordmark, the closing shots, the timings
+new Film(mark(), {
+  signature: '@ember.fox',
+  title: 'EMBER FOX', subtitle: 'coffee roasters',
+  mockups: [
+    { kind: 'fabric', base: '#26324a', ink: '#ef8a3a' },
+    { kind: 'bottle', base: '#c96a2e', ink: '#1c1a17', sky: '#cfd6da', ground: '#4b4a33' },
+    { kind: 'card', base: '#1f2733', ink: '#ef8a3a', paper: '#f3efe6', text: 'Ember Fox · coffee roasters' },
+  ],
+  timing: { sketch: 2.2, construct: 16, select: 2.6, build: 8, clean: 1.1, refine: 4.2, reveal: 2.8, mockup: 1.7 },
+}).start();
+</script>
+</body>
+</html>
