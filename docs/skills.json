@@ -2725,6 +2725,44 @@
           "url": "https://jungrok5.github.io/motion-skills/exploded-view-map/demo/examples/reef-dive/"
         }
       ]
+    },
+    {
+      "id": "knitted-page",
+      "name": "Knitted Page",
+      "tagline": "주제를 주면 실제 웹페이지를 털실로 뜬 니트로 만듭니다. 코마다 페이지의 색 하나를 받고, 늘어진 실을 당기면 한 줄씩 풀려 실타래 더미와 그 아래 숨은 층이 드러났다가 바늘이 다시 떠 올립니다.",
+      "poster": "knitted-page/poster.jpg",
+      "posterAlt": "네 장면: 나무 테이블 위 Winter Fair 니트 포스터, 위쪽부터 풀리며 실타래가 쌓이는 포스터, 깅엄 식탁보 위 사과 케이크 니트 레시피, 모두 풀린 뒤 남은 실타래와 할머니의 손글씨 쪽지",
+      "tags": [
+        "HTML-in-Canvas",
+        "털실 니트",
+        "실 당겨 풀기",
+        "살아 있는 웹페이지"
+      ],
+      "stats": [
+        "코마다 페이지 색 하나 · 1만 코 이상",
+        "실 당겨 풀기 · 바늘로 다시 뜨기"
+      ],
+      "page": "knitted-page/",
+      "source": "knitted-page/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "knitted-page/examples/apple-cake/"
+      },
+      "sources": [
+        {
+          "title": "「Knitted Page」 데모",
+          "url": "https://claude.ai/artifact/Y8uZf2xz48joUiM1nPhxLW"
+        },
+        {
+          "title": "HTML-in-Canvas 데모 페이지",
+          "url": "https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk"
+        },
+        {
+          "title": "Felix Rieseberg의 X 게시물",
+          "url": "https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&s=19"
+        }
+      ],
+      "workedExample": "https://jungrok5.github.io/motion-skills/knitted-page/demo/examples/apple-cake/"
     }
   ]
 }
