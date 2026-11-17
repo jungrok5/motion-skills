@@ -12,7 +12,7 @@ const R = room;
 const WIN = K.sub(R.walls.back, .1, .2, .56, .76);      // the window, on the back wall
 const SHELF = { x0: 380, x1: 600, y0: 0, y1: 1180, z0: 1120, z1: 2350 };
 const ROWS = 8, BROW = 6;                                 // shelf rows; the red book stands on row 6 (counted from the top)
-const BOOK = { Y: SHELF.y1 * (1 - ((BROW + 1) / ROWS - .035)), Z: 1330, h: 82, w: 30 }; // the red book on the shelf face (X = SHELF.x0)
+const BOOK = { Y: SHELF.y1 * (1 - ((BROW + 1) / ROWS - .035)), Z: 1250, h: 82, w: 30 }; // the red book on the shelf face (X = SHELF.x0)
 const BU = (SHELF.z1 - BOOK.Z) / (SHELF.z1 - SHELF.z0);    // where it sits along the face (u: 0 at the far end)
 const tiltAt = t => {                                      // how far its top is pulled out (radians), keyed with the beats
   const keys = [[0, .06], [4.55, .06], [5.0, .27], [7.05, .27], [7.35, .62], [9.55, .62], [10.05, .06]];
@@ -26,7 +26,7 @@ const plates = [{
   z: 10, paint(g) {
     const T = { x0: -430, x1: -210, y0: 0, y1: 190, z0: 720, z1: 930 };
     const top = K.box(g, R, T, { seed: 171, color: '#3e2a1c', faces: { right: (g2, m, s) => { K.faceWash(g2, m, '#2e1e14', s); P.pen(g2, [m(.5, .1), m(.5, .9)], { seed: s + 1, alpha: .35 }); }, front: (g2, m, s) => K.faceWash(g2, m, '#38261a', s), top: (g2, m, s) => K.faceWash(g2, m, '#5a3e28', s, { bloom: .9 }) } }).top;
-    const sc = R.scaleAt(820), p = top(.62, .45); K.jar(g, p[0], p[1], 46 * sc, 70 * sc, { seed: 173, fill: '#6a8a4a', level: .55, glass: '#a9bdb2' });
+    const sc = R.scaleAt(820), p = top(.62, .45); K.jar(g, p[0], p[1], 30 * sc, 46 * sc, { seed: 173, fill: '#6a8a4a', level: .55, glass: '#a9bdb2' });
     K.books(g, ...top(.3, .65), sc * .8, { seed: 175, n: 3 });
   },
 }, {
@@ -97,15 +97,15 @@ const fx = [
 // ── the critter ──
 export const kuma = new Critter({ name: 'Kuma', a: 88, seed: 4, ears: { type: 'bear', size: 1.05, spread: .7 }, eyes: { w: .24, h: .33, gap: .4, y: .08, pupil: 'oval' }, whiskers: 0, tail: { type: 'puff' }, wear: { type: 'scarf', color: '#c0473a' } });
 const A = kuma.a;
-const SPOT = [292, 1400], FROM = [-170, 2000], AWAY = [-130, 1990];
-const yIn = Math.atan2(SPOT[0] - FROM[0], -(SPOT[1] - FROM[1])), yShelf = 2.05, yOut = Math.atan2(AWAY[0] - SPOT[0], -(AWAY[1] - SPOT[1])) + Math.PI * 2;
+const SPOT = [302, 1395], FROM = [-170, 2000], AWAY = [-130, 1990];
+const yIn = Math.atan2(SPOT[0] - FROM[0], -(SPOT[1] - FROM[1])), yShelf = 1.8, yOut = Math.atan2(AWAY[0] - SPOT[0], -(AWAY[1] - SPOT[1])) + Math.PI * 2;
 const hand = t => bookTop(t, .9);
 const atShelf = keyed(stand(kuma, { at: SPOT, yaw: yShelf, seed: 2 }), [
   { t: 3.6 },
   { t: 3.95, head: { nod: -.55, gaze: [0, -1] } },                                               // look: there it is
   { t: 4.25, head: { nod: -.5, gaze: [.2, -1] }, arms: { R: { a: .3, e: .5 } } },
   { t: 4.55, tiptoe: 1, lean: .06, arms: { R: { target: hand, w: 1 } } },                          // try: up on its toes
-  { t: 5.0, tiptoe: 1, lean: -.1, shift: -.05 * A, arms: { R: { target: hand, w: 1 } } },                          //   …and pull
+  { t: 5.0, tiptoe: .85, lean: -.08, shift: -.02 * A, arms: { R: { target: hand, w: 1 } } },                          //   …and pull
   { t: 5.35, tiptoe: 0, ease: 'out', arms: { R: { a: .1, e: .65, w: 0 } }, head: { nod: -.3, gaze: [.6, -.3] } },
   { t: 5.8, head: { turn: .75, nod: -.1, gaze: [1, 0] } },                                       // wait: the wall, any moment now
   { t: 6.7, head: { turn: .7, nod: -.12, gaze: [1, .1] } },
@@ -117,8 +117,8 @@ const atShelf = keyed(stand(kuma, { at: SPOT, yaw: yShelf, seed: 2 }), [
   { t: 8.4, head: { turn: .8, nod: -.1, gaze: [1, 0] } },                                        // nothing: the wall again
   { t: 9.0, head: { turn: .75, nod: 0, gaze: [.8, .2], lid: .45 } },
   { t: 9.3, crouch: .04 * A, lean: .1, head: { nod: -.3, gaze: [0, -.6], lid: .5 } },            // after: glum, put it back
-  { t: 9.55, tiptoe: .6, arms: { R: { target: hand, w: 1 } }, head: { nod: -.45, lid: .45 } },
-  { t: 10.05, tiptoe: .6, arms: { R: { target: hand, w: 1 } }, head: { nod: -.4, lid: .5 } },
+  { t: 9.55, tiptoe: 1, arms: { R: { target: hand, w: 1 } }, head: { nod: -.45, lid: .45 } },
+  { t: 10.05, tiptoe: 1, arms: { R: { target: hand, w: 1 } }, head: { nod: -.4, lid: .5 } },
   { t: 10.4, tiptoe: 0, arms: { R: { a: .1, e: .65, w: 0 } }, head: { nod: 0, lid: .5, gaze: [0, .3] } },
 ]);
 const pose = seq([

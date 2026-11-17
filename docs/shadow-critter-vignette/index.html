@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>shadow-critter-vignette · motion-skills</title>
+<meta name="description" content="아이의 엉뚱한 착각 하나를 주면, 흰 눈 두 개만 있는 작은 먹빛 실루엣이 창문 빛이 뒤에서 드는 수채화 방에서 그것을 해 보고, 기다리고, 더 크게 다시 해 보고, 아무 일도 없이 돌아서는 짧은 세로 영상을 코드만으로 만듭니다.">
+<meta property="og:title" content="shadow-critter-vignette · motion-skills">
+<meta property="og:description" content="아이의 착각 하나 → 수채화 방 속 작은 먹빛 실루엣의 말 없는 짧은 세로 영상, 코드만으로.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/shadow-critter-vignette/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/shadow-critter-vignette">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / shadow-critter-vignette</nav>
+  <h1>shadow-critter-vignette</h1>
+  <p>아이의 엉뚱한 착각 하나(“이걸 누르면 ○○이 나오는 줄 알았다”)를 주면 7–16초짜리 말 없는 세로 영상을 코드만으로 만듭니다. 흰 눈 두 개와 옷 색 하나만 있는 작은 먹빛 실루엣이, 창문 빛이 뒤에서 드는 손그림 수채화 방에서 무언가를 해 보고, 기다리고, 더 크게 다시 해 보고, 아무 일도 없이 돌아섭니다. 마지막 한 줄 “~하는 줄 알았다”는 그림 안이 아니라 게시물 문구로 붙습니다. 방은 캔버스의 수채 번짐 · 펜 선 · 창빛으로 칠하고, 실루엣은 디딘 발이 미끄러지지 않는 리그로 움직이며, 소리는 방의 공기 소리와 작은 효과음을 Web Audio로 합성합니다.
+  보고 만든 원본: <a href="https://x.com/FromUltraViolet/status/2122260736147865803?a=vREhJxrQtm6qiT45-n4&amp;s=19" target="_blank" rel="noopener">シャンプー台_Ⅰ(@FromUltraViolet)의 X 게시물 「あのへんを押せば出てくるのだと思ってた」 (10초 AI 영상)</a>.</p>
+  <ul class="tags"><li>먹빛 실루엣 + 수채화 방</li><li>아이의 착각 → 새 영상</li><li>3:4 세로 · 고정 한 컷</li><li>디딘 발 고정 · 큰 동작</li><li>MP4 · 라이브</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>착각 한 줄(예: 책을 당기면 비밀 문이 열리는 줄 알았다, 누르면 토스트가 나오는 줄 알았다)</dd>
+      <dt>브리프</dt><dd>착각이 생긴 까닭과 안 되는 까닭, 실루엣(귀 · 눈 · 꼬리 · 크기 · 옷 색 하나), 방(장소 · 시간 · 창 · 팔레트 · 잡동사니 · 해 보는 물건), 도착 → 보기 → 해 보기 → 기다림 → 더 크게 → 아무 일 없음 → 그다음의 박자표, 소리</dd>
+      <dt>만들기</dt><dd>캐스트 시트(한 바퀴 돌기 · 좌우 걷기 · 발을 옮겨 도는 회전 · 좌우 큰 동작 · 표정)를 먼저 채점하고, 원근 방 키트로 방을 칠하고, 움직이는 부품을 손 목표와 같은 시간 함수로 키잉</dd>
+      <dt>확인</dt><dd>결정성, 매 순간 살아 있음, 칠한 방(평평한 면 없음) · 창이 가장 밝음 · 먹빛 몸 · 옷 색 하나, 무릎 · 발 닿음 · 디딘 발 고정 · 목 · 걷는 방향 · 손이 물건에 닿음, 깜빡임 · 큰 동작의 모으기와 회복 · 발 딛는 회전 · 박자(해 보기 · 기다림 · 그다음) · 한 줄 문구, 소리</dd>
+      <dt>출력</dt><dd>소리가 있는 1080×1440 MP4(24 fps), 문구 파일, 클릭하면 소리가 나는 라이브 페이지, 스틸, 콘택트 시트, 캐스트 시트</dd>
+    </dl>
+    <pre><code>node shadow-critter-vignette/scripts/new-vignette.mjs my-vignette
+node shadow-critter-vignette/scripts/render.mjs my-vignette/index.html --cast
+node shadow-critter-vignette/scripts/check.mjs my-vignette/index.html
+node shadow-critter-vignette/scripts/render.mjs my-vignette/index.html --sheet 12 --scale .5
+node shadow-critter-vignette/scripts/render.mjs my-vignette/index.html</code></pre>
+    <p class="mute">요구 사항: Node 18+와 Playwright Chromium, ffmpeg. 네트워크 · npm 설치 · GPU가 필요 없습니다(12초 영상 렌더가 약 30초). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/shadow-critter-vignette/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:3/4.5;--h-phone:600px;--demo-bg:#1d1612">
+    <iframe data-src="demo/secret-shelf/" title="shadow-critter-vignette 예제가 재생되는 라이브 페이지" allow="fullscreen; autoplay" allowfullscreen></iframe>
+    <noscript><a href="demo/secret-shelf/">데모 열기 (examples/secret-shelf)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/secret-shelf</code> · 12.8초 · ▶를 누르면 소리와 함께 처음부터</span>
+      <span class="btns" role="group" aria-label="데모 영상">
+        <button class="btn" type="button" data-src="demo/secret-shelf/" data-cap="예제 &lt;code&gt;examples/secret-shelf&lt;/code&gt; · 12.8초 · ▶를 누르면 소리와 함께 처음부터" aria-pressed="true">비밀 문</button>
+        <button class="btn" type="button" data-src="demo/toaster/" data-cap="시작 템플릿 &lt;code&gt;templates/&lt;/code&gt; · 11.4초" aria-pressed="false">토스트</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본 영상에 없는 착각 두 개를 브리프부터 새로 만든 영상의 장면입니다. 카드를 누르면 새 탭에서 그 순간부터 라이브 페이지가 열립니다. 브라우저가 같은 코드로 그리고 소리를 냅니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"ss":"비밀 문","tt":"토스트"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>책을 당기면 비밀 문이 열리는 줄 알았다 <small>예제 · 12.8초</small></h3>
+      <p>해 질 녘 오래된 서재. 곰 귀에 빨간 목도리를 한 쿠마가 창가에서 걸어와 책장 앞에 섭니다. 한 권만 살짝 튀어나온 빨간 책은 영화 속 비밀 문 손잡이처럼 보입니다. 발끝으로 서서 당기고, 문이 열릴 벽 쪽을 바라보며 기다리고, 웅크렸다가 뛰어올라 세게 당기지만 책만 기울 뿐입니다. 시무룩하게 책을 도로 밀어 넣고 발을 옮겨 돌아서서 창가로 걸어갑니다.</p>
+      <div class="grid tall">
+        <a class="tile" data-tags="ss" href="demo/secret-shelf/?t=1.6" target="_blank" rel="noopener">
+          <img src="samples/ss-arrive.jpg" alt="금빛 창이 있는 오래된 서재, 오른쪽 벽의 높은 책장, 바닥의 창빛 무늬와 러그 위를 걸어오는 흰 눈의 작은 검은 곰 실루엣" loading="lazy" width="640" height="853" style="aspect-ratio:3/4">
+          <div class="cap"><span class="no">도착 · 1.6초</span><b>창가에서 책장으로</b><span class="how">3/4 정면 걷기, 디딘 발 고정, 뒤로 길게 떨어지는 그림자</span></div></a>
+        <a class="tile" data-tags="ss" href="demo/secret-shelf/?t=4.6" target="_blank" rel="noopener">
+          <img src="samples/ss-try.jpg" alt="책장 앞에서 발끝으로 선 검은 실루엣이 옆을 보며 튀어나온 빨간 책 윗부분을 잡아당기고 있음" loading="lazy" width="640" height="853" style="aspect-ratio:3/4">
+          <div class="cap"><span class="no">해 보기 · 4.9초</span><b>저 책이 손잡이</b><span class="how">팔이 먼저 올라가고 발끝, 손이 기우는 책을 따라감</span></div></a>
+        <a class="tile" data-tags="ss" href="demo/secret-shelf/?t=5.6" target="_blank" rel="noopener">
+          <img src="samples/ss-wait.jpg" alt="빨간 책이 조금 기운 책장 앞에 가만히 서서 벽 쪽을 바라보며 기다리는 검은 실루엣" loading="lazy" width="640" height="853" style="aspect-ratio:3/4">
+          <div class="cap"><span class="no">기다림 · 6.2초</span><b>이제 열리겠지</b><span class="how">숨 쉬고 깜빡이며 버티는 1.3초, 시계 소리만</span></div></a>
+        <a class="tile" data-tags="ss" href="demo/secret-shelf/?t=6.9" target="_blank" rel="noopener">
+          <img src="samples/ss-again.jpg" alt="웅크렸다 뛰어오른 검은 실루엣이 공중에서 빨간 책을 세게 당기는 순간, 발 아래 그림자가 떨어져 있음" loading="lazy" width="640" height="853" style="aspect-ratio:3/4">
+          <div class="cap"><span class="no">더 크게 · 7.36초</span><b>뛰어올라 홱</b><span class="how">웅크림(모으기) → 점프 당기기 → 찌그러지며 착지 → 자리 잡기</span></div></a>
+        <a class="tile" data-tags="ss" href="demo/secret-shelf/?t=9.4" target="_blank" rel="noopener">
+          <img src="samples/ss-after.jpg" alt="눈꺼풀이 내려온 검은 실루엣이 발끝으로 서서 빨간 책을 책장에 도로 밀어 넣고 있음" loading="lazy" width="640" height="853" style="aspect-ratio:3/4">
+          <div class="cap"><span class="no">그다음 · 9.8초</span><b>도로 밀어 넣기</b><span class="how">내려온 눈꺼풀, 한숨, 발을 옮겨 도는 회전</span></div></a>
+        <a class="tile" data-tags="ss" href="demo/secret-shelf/?cast" target="_blank" rel="noopener">
+          <img src="samples/ss-cast.jpg" alt="캐스트 시트 일부: 정면 · 오른쪽 3/4 · 옆모습으로 선 곰 실루엣, 그 아래 오른쪽과 왼쪽으로 걷는 단계" loading="lazy" width="640" height="853" style="aspect-ratio:3/4">
+          <div class="cap"><span class="no">캐스트 시트</span><b>한 바퀴 · 걷기 · 회전 · 큰 동작</b><span class="how">장면보다 먼저 좌우 양쪽으로 채점, 손이 머리에 가리지 않는지</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>누르면 토스트가 나오는 줄 알았다 <small>시작 템플릿 · 11.4초</small></h3>
+      <p><code>new-vignette.mjs</code>가 복사하는 시작 템플릿입니다. 아침 부엌. 쥐 귀에 겨자색 반바지를 입은 츄가 낮은 의자 위 토스터의 레버를 발끝으로 서서 누르고, 고개를 갸웃하며 기다립니다. 레버는 ‘띵’ 하고 빈 채로 튀어 오릅니다. 두 손으로 뛰어올라 다시 눌러도 마찬가지라, 빈 구멍을 들여다보고 돌아섭니다.</p>
+      <div class="grid tall">
+        <a class="tile" data-tags="tt" href="demo/toaster/?t=3.9" target="_blank" rel="noopener">
+          <img src="samples/tt-try.jpg" alt="아침 부엌, 낮은 나무 의자 위 은색 토스터의 레버를 발끝으로 서서 누르는 쥐 귀의 검은 실루엣, 겨자색 반바지와 가는 꼬리" loading="lazy" width="640" height="853" style="aspect-ratio:3/4">
+          <div class="cap"><span class="no">해 보기 · 4.1초</span><b>레버를 꾹</b><span class="how">손이 레버 손잡이를 타고 함께 내려감</span></div></a>
+        <a class="tile" data-tags="tt" href="demo/toaster/?t=4.8" target="_blank" rel="noopener">
+          <img src="samples/tt-wait.jpg" alt="토스터 옆에서 고개를 갸웃하고 토스트 구멍을 바라보며 기다리는 검은 실루엣" loading="lazy" width="640" height="853" style="aspect-ratio:3/4">
+          <div class="cap"><span class="no">기다림 · 5.3초</span><b>곧 나오겠지</b><span class="how">갸웃한 고개, 깜빡임, 냉장고 웅웅 소리</span></div></a>
+        <a class="tile" data-tags="tt" href="demo/toaster/?t=6.3" target="_blank" rel="noopener">
+          <img src="samples/tt-again.jpg" alt="뛰어오르며 두 손으로 토스터 레버를 내리누르는 검은 실루엣" loading="lazy" width="640" height="853" style="aspect-ratio:3/4">
+          <div class="cap"><span class="no">더 크게 · 6.72초</span><b>두 손으로 쾅</b><span class="how">웅크림 → 깡충 → 두 손 누르기 → 착지</span></div></a>
+        <a class="tile" data-tags="tt" href="demo/toaster/?t=8.4" target="_blank" rel="noopener">
+          <img src="samples/tt-after.jpg" alt="몸을 앞으로 기울여 빈 토스터 구멍을 들여다보는 검은 실루엣" loading="lazy" width="640" height="853" style="aspect-ratio:3/4">
+          <div class="cap"><span class="no">그다음 · 8.9초</span><b>빈 구멍 들여다보기</b><span class="how">기울인 몸, 내려간 시선, 작은 “흠”</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. シャンプー台_Ⅰ(@FromUltraViolet)가 X에 올린 10초짜리 AI 영상이 출발점입니다. 햇빛 드는 수채화 가게에서 초록 치마를 입은 작은 검은 고양이 실루엣이 자판기 앞에서 발끝으로 서서 여기저기를 눌러 보고, 기다리다가 돌아서고, 글은 「あのへんを押せば出てくるのだと思ってた(저 근처를 누르면 나오는 줄 알았다)」 한 줄입니다. 이 스킬은 그 형식(고정 한 컷, 아이의 착각을 해 보기 → 기다림 → 돌아섬, “~하는 줄 알았다” 한 줄)과 그림(흰 눈의 먹빛 실루엣, 뒤에서 빛이 드는 수채화 실내)을 가져와 어떤 착각이든 코드로 만들 수 있게 했습니다. 원본의 자판기 · 가게 · 고양이 · 프레임은 쓰지 않았고, 시작 템플릿과 예제는 모두 이 레포의 것입니다. AI 영상은 참고로만 보았고 레포에 넣지 않았습니다.</p>
+  <div class="works">
+    <a class="work" href="demo/secret-shelf/" target="_blank" rel="noopener"><b>「책을 당기면 비밀 문이 열리는 줄 알았다」 · 라이브 페이지</b><span>예제: 12.8초 · 박자 8개 · 큰 동작 · Web Audio 소리</span><span class="url">shadow-critter-vignette/demo/secret-shelf/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/shadow-critter-vignette/examples/secret-shelf"><b>예제 폴더 · examples/secret-shelf</b><span>BRIEF.md(착각 · 실루엣 · 방 · 박자표 · 모션 · 소리 · 검토 기록), piece.js, index.html</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/FromUltraViolet/status/2122260736147865803?a=vREhJxrQtm6qiT45-n4&amp;s=19" target="_blank" rel="noopener"><b>원본 · X 게시물</b><span>シャンプー台_Ⅰ(@FromUltraViolet) · 「あのへんを押せば出てくるのだと思ってた」</span><span class="url">x.com/FromUltraViolet/status/2122260736147865803</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shadow-critter-vignette/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/shadow-critter-vignette">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shadow-critter-vignette/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shadow-critter-vignette/references/BRIEF.md">references/BRIEF.md</a> <span>브리프 틀과 채점 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shadow-critter-vignette/references/LOOK.md">references/LOOK.md</a> <span>실루엣 · 방 · 화면 · 소리의 그림체</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shadow-critter-vignette/references/CRITTER.md">references/CRITTER.md</a> <span>실루엣 리그, 관절 범위, 캐스트 시트</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shadow-critter-vignette/references/ROOM.md">references/ROOM.md</a> <span>원근 카메라 · 면 맵 · 방 키트 · 빛</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shadow-critter-vignette/references/MOTION.md">references/MOTION.md</a> <span>AI 티 없애기: 박자 · 디딘 발 · 큰 동작 · 물건을 타는 손</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shadow-critter-vignette/references/SOURCE.md">references/SOURCE.md</a> <span>원본 게시물, 가져온 것과 가져오지 않은 것</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shadow-critter-vignette/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림과 소리는 코드로 만들었습니다 · 이미지 · 오디오 파일 없음 · 원본 영상 @FromUltraViolet
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

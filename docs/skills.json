@@ -2164,6 +2164,46 @@
           "url": "https://jungrok5.github.io/motion-skills/torn-page-journey/demo/examples/lemon-tree/"
         }
       ]
+    },
+    {
+      "id": "shadow-critter-vignette",
+      "name": "shadow-critter-vignette",
+      "tagline": "아이의 엉뚱한 착각 하나를 주면, 흰 눈 두 개와 옷 색 하나만 있는 작은 먹빛 실루엣이 창문 빛이 뒤에서 드는 손그림 수채화 방에서 그것을 해 보고, 기다리고, 더 크게 다시 해 보고, 아무 일도 없이 돌아서는 7–16초 세로 영상을 코드만으로 만듭니다. 원근 방 키트와 수채 번짐, 디딘 발이 미끄러지지 않는 실루엣 리그, 물건을 따라가는 손, Web Audio 소리로 소리가 있는 1080×1440 MP4와 “~하는 줄 알았다” 한 줄 문구를 냅니다.",
+      "posterAlt": "shadow-critter-vignette의 세 장면: 금빛 창이 있는 서재에서 흰 눈의 검은 곰 실루엣이 발끝으로 서서 빨간 책을 당기는 모습, 뛰어올라 세게 당기는 모습, 아침 부엌에서 쥐 귀의 검은 실루엣이 토스터 레버를 누르는 모습",
+      "poster": "shadow-critter-vignette/poster.jpg",
+      "tags": [
+        "먹빛 실루엣 + 수채화 방",
+        "아이의 착각 → 새 영상",
+        "3:4 세로 · 고정 한 컷",
+        "디딘 발 고정 · 큰 동작",
+        "MP4 · 라이브"
+      ],
+      "stats": [
+        "영상 2편 · 박자 8개",
+        "에셋 0개"
+      ],
+      "page": "shadow-critter-vignette/",
+      "source": "shadow-critter-vignette/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "shadow-critter-vignette/examples/secret-shelf/"
+      },
+      "sources": [
+        {
+          "title": "シャンプー台_Ⅰ(@FromUltraViolet)의 X 게시물 「あのへんを押せば出てくるのだと思ってた」 (흰 눈의 검은 고양이 실루엣이 수채화 가게의 자판기를 눌러 보는 10초 AI 영상)",
+          "url": "https://x.com/FromUltraViolet/status/2122260736147865803?a=vREhJxrQtm6qiT45-n4&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「책을 당기면 비밀 문이 열리는 줄 알았다」 · 예제, 12.8초 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/shadow-critter-vignette/demo/secret-shelf/"
+        },
+        {
+          "title": "「누르면 토스트가 나오는 줄 알았다」 · 시작 템플릿, 11.4초 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/shadow-critter-vignette/demo/toaster/"
+        }
+      ]
     }
   ]
 }
