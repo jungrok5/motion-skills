@@ -2166,6 +2166,42 @@
       ]
     },
     {
+      "id": "pencil-live-action",
+      "name": "pencil-live-action",
+      "tagline": "주제 하나를 주면 연필 그림 캐릭터가 스케치북에서 걸어 나와 실사 세계로 내려가는 원테이크 단편을 만듭니다. Poly Haven CC0 스캔으로 지은 실제 장소와 진짜 연필, 같은 렌즈로 흐려지고 그림자를 드리우는 흑연 그림, 손대면 진짜가 되는 그림까지 1080p MP4와 브라우저에서 도는 페이지로 냅니다.",
+      "posterAlt": "pencil-live-action으로 만든 「The Kite」의 장면 네 개: 실제 광장 카페 탁자 위 스케치북에서 진짜 초록 연필이 미끄럼틀을 그리는 모습, 탁자 위로 뻗은 미끄럼틀에 앉아 내려가는 연필 소년, 돌바닥에서 허공에 그려진 연 옆의 소년, 소년의 손에서 진짜가 된 빨간 연",
+      "poster": "pencil-live-action/poster.jpg",
+      "tags": [
+        "three.js + 2D 캔버스",
+        "Poly Haven CC0 스캔",
+        "원테이크 · 16:9 · 24fps",
+        "MP4 · 라이브 페이지",
+        "합성 사운드"
+      ],
+      "stats": [
+        "예제 30초 · 원테이크",
+        "좌우 움직임 캐스트 시트"
+      ],
+      "page": "pencil-live-action/",
+      "source": "pencil-live-action/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "pencil-live-action/examples/kite/"
+      },
+      "sources": [
+        {
+          "title": "OscarAI의 X 게시물 (30초 영상)",
+          "url": "https://x.com/Artedeingenio/status/2122359802328207699?a=tNv0nx5KaAk-8vSz8XU&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「The Kite」 · 30초 · 원테이크 · 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/pencil-live-action/demo/examples/kite/"
+        }
+      ]
+    },
+    {
       "id": "shadow-critter-vignette",
       "name": "shadow-critter-vignette",
       "tagline": "아이의 엉뚱한 착각 하나를 주면, 흰 눈 두 개와 옷 색 하나만 있는 작은 먹빛 실루엣이 창문 빛이 뒤에서 드는 손그림 수채화 방에서 그것을 해 보고, 기다리고, 더 크게 다시 해 보고, 아무 일도 없이 돌아서는 7–16초 세로 영상을 코드만으로 만듭니다. 원근 방 키트와 수채 번짐, 디딘 발이 미끄러지지 않는 실루엣 리그, 물건을 따라가는 손, Web Audio 소리로 소리가 있는 1080×1440 MP4와 “~하는 줄 알았다” 한 줄 문구를 냅니다.",
