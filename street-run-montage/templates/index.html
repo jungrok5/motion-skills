@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>street-run-montage · template</title>
+<script type="importmap">{ "imports": { "three": "../lib/three.module.min.js", "srm/": "../lib/" } }</script>
+</head><body>
+<script type="module">
+// A 12-second starting film: 5 shots, cut on the beat. EVERYTHING here is an example of the style — write your own
+// route, town, ride, buddy plan and shots from BRIEF.md (references/BRIEF.md · CAMERA.md · KIT.md).
+import { Run } from 'srm/film.js';
+import { SCORE } from './score.js';
+import { CAST } from './cast.js';
+
+const F = new Run({ title: 'template', bpm: 120, light: 'afternoon', season: 'summer' });
+// the route: a straight lane, a gentle bend to the left, then a shopping street
+F.route([{ len: 50 }, { len: 24, turn: 25 }, { len: 60 }]);
+F.cast(CAST);
+// the ride in STORY time: speed keys (m/s), lane keys (m, + = right), moves
+F.ride({
+  speed: [{ t: 0, v: 1.2 }, { t: .5, v: 1.6 }, { t: 1.4, v: 2.8 }, { t: 2.3, v: 3.9 }, { t: 3.2, v: 4.6 }, { t: 9.5, v: 4.6 }, { t: 11, v: 1.2 }, { t: 11.6, v: 0 }],
+  lane: [{ t: 0, v: 0 }, { t: 6, v: .3 }],
+  moves: [
+    { at: .2, do: 'push', n: 3, every: .9 },
+    { at: 4.6, do: 'ollie', h: .42 },
+    { at: 6.8, do: 'look', target: 'buddy', side: 1, dur: 1.2 },
+    { at: 8.4, do: 'kickflip', h: .45 },
+    { at: 11.7, do: 'dismount' },
+  ],
+});
+// the buddy runs on the rider's right, a little ahead, and barks on the landing
+F.buddy({ lead: [{ t: 0, v: .8 }, { t: 5, v: 1.4 }, { t: 9, v: .6 }, { t: 11.6, v: 1.4 }], side: [{ t: 0, v: 1.1 }], moves: [{ at: 9.2, do: 'call', dur: .5 }] });
+// the town, built around the ride
+F.town(K => {
+  K.zone('lane', -20, 70, { poleSide: -1 });
+  K.zone('shops', 70, 160, { shops: [{ text: 'HOSHI BAKERY', signStyle: { fg: '#7a3a1c', stripe: '#f2c230', stripe2: '#d8433a' } }, { text: 'TSUKI BOOKS', signStyle: { fg: '#2f5f9e' } }] });
+  K.hedge({ tau: 4.0 }, { tau: 4.9 }, -1.6, { h: .6, w: .5 });   // a low hedge beside the ollie
+});
+// the shots in FILM time, in beats (120 bpm → .5 s a beat)
+F.shots([
+  { beats: 5, cam: 'wide', side: -1 },
+  { beats: 4, cam: 'feet', side: 1 },
+  { beats: 5, cam: 'low-side', side: 1, back: .3 },
+  { beats: 4, cam: 'front', side: 1, x: .9 },
+  { beats: 6, cam: 'side', side: -1, d: 3.6 },
+]);
+F.score(SCORE);
+F.start();
+</script>
+</body></html>
