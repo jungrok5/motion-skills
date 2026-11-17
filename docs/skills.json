@@ -2335,6 +2335,50 @@
         }
       ],
       "workedExample": "https://jungrok5.github.io/motion-skills/liquid-glass-page/demo/examples/honey-tasting/"
+    },
+    {
+      "id": "app-cube",
+      "name": "app-cube",
+      "tagline": "주제를 주면 면마다 실제로 작동하는 앱이 붙은 3×3 큐브 웹페이지를 만듭니다. 층을 돌려 앱이 타일로 흩어져도 클릭과 입력이 그대로 됩니다.",
+      "poster": "app-cube/poster.jpg",
+      "posterAlt": "네 장면: 계획 · 지도 · 노란 승차권 면이 보이는 상아색 큐브, 섞인 큐브의 앞 타일에 입력한 글자, 윗층이 반쯤 돈 검은 큐브, 층이 도는 섞인 큐브",
+      "tags": [
+        "HTML-in-Canvas",
+        "실시간 웹페이지",
+        "3D 큐브",
+        "WebGL",
+        "코드 전용"
+      ],
+      "stats": [
+        "예제 리스본 주말 여행 · 앱 6개 · 타일 54개",
+        "검사: 보이는 타일 27/27 클릭 대응 · 돌린 뒤 입력 · 격자 · 섞기 · 되돌리기 · 맞추기 · 궤도 관성"
+      ],
+      "page": "app-cube/",
+      "source": "app-cube/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "app-cube/examples/lisbon-weekend/"
+      },
+      "sources": [
+        {
+          "title": "원본 데모 · Six Apps, One Cube",
+          "url": "https://claude.ai/artifact/287yYEVG3FekMqofmJkUki"
+        },
+        {
+          "title": "HTML-in-Canvas 데모 페이지",
+          "url": "https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk"
+        },
+        {
+          "title": "Felix Rieseberg의 X 게시물",
+          "url": "https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "Lisbon Weekend · 여행 플래너 큐브 · 라이브 데모",
+          "url": "https://jungrok5.github.io/motion-skills/app-cube/demo/examples/lisbon-weekend/"
+        }
+      ]
     }
   ]
 }

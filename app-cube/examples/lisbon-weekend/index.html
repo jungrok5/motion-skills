@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lisbon Weekend</title>
+<!-- app-cube worked example (BRIEF.md next to this file): a weekend in Lisbon as six travel apps on an ivory enamel cube under
+     a warm dusk studio. Plan (front), map (right), tram-ticket controls (top), packing (back), money (left), phrases (bottom). -->
+<style>
+  :root { --ui: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif; --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    --azul: #1f4f9a; --azul2: #3b74c9; --sand: #f5ecd9; --ink: #1d1a16; --terra: #c9542e; --sun: #f2b234; }
+  html, body { margin: 0; height: 100%; background: #140809; color: #fbefe2; font-family: var(--ui); overflow: hidden; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+  #hud { position: fixed; left: 24px; top: 22px; max-width: min(340px, calc(100% - 48px)); pointer-events: none; user-select: none; }
+  #hud small { display: block; font: 600 12px/1 var(--ui); letter-spacing: .18em; text-transform: uppercase; color: #f2b234; margin-bottom: 8px; }
+  #hud h1 { margin: 0; font: italic 600 36px/1.05 var(--serif); }
+  #hud ol { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 7px; }
+  #hud li { font: 500 15px/1.3 var(--ui); color: #d8c4b4; display: flex; gap: 9px; align-items: center; }
+  #hud li::before { content: ''; flex: none; width: 13px; height: 13px; transform: rotate(45deg) scale(.8); border: 1.5px solid currentColor; box-sizing: border-box; }
+  #hud li.done { color: #f2b234; } #hud li.done::before { background: currentColor; }
+  @media (max-width: 560px) { #hud h1 { font-size: 25px; } #hud li { font-size: 12.5px; } #hud { left: 16px; top: 14px; } }
+  /* small or short windows (an embedded demo, a phone): a compact HUD that keeps clear of the cube */
+  @media (max-width: 900px), (max-height: 620px) { #hud { left: 14px; top: 12px; max-width: 230px; } #hud h1 { font-size: 20px; } #hud ol { margin-top: 8px; gap: 4px; } #hud li { font-size: 11.5px; gap: 7px; } #hud li::before { width: 10px; height: 10px; } #hud small { font-size: 9.5px; margin-bottom: 5px; } }
+
+  .face { position: absolute; left: 0; top: 0; width: 720px; height: 720px; overflow: hidden; box-sizing: border-box; font-family: var(--ui); color: var(--ink); }
+  .face * { box-sizing: border-box; }
+  .face button, .face select { font: inherit; color: inherit; border: 0; margin: 0; padding: 0; background: none; cursor: pointer; }
+  .face .abs { position: absolute; margin: 0; }
+  .hic-fallback { height: 100%; overflow: auto; background: #140809; }
+  .hic-fallback .face { position: relative; margin: 16px auto; border-radius: 18px; }
+  .cube-fallback ~ #hud { display: none; }
+  /* azulejo border: a blue-and-white tile strip drawn with gradients */
+  .azulejo { position: absolute; left: 0; right: 0; height: 36px; background:
+    radial-gradient(circle at 18px 18px, var(--azul) 0 6px, transparent 7px) 0 0/36px 36px,
+    conic-gradient(from 45deg at 18px 18px, var(--azul2) 0 25%, #fff 0 50%, var(--azul2) 0 75%, #fff 0) 0 0/36px 36px; }
+
+  /* Plan (front) */
+  #f-plan { background: var(--sand); }
+  #f-plan .azulejo.t { top: 0; } #f-plan .azulejo.b { top: 684px; }
+  #pl-head { left: 28px; top: 58px; font: 700 26px/1 var(--ui); letter-spacing: .2em; text-transform: uppercase; color: var(--terra); }
+  #plan { position: absolute; left: 26px; top: 100px; width: 668px; height: 470px; font: 500 60px/94px var(--serif); outline: none; caret-color: var(--terra); white-space: pre-wrap; overflow: hidden;
+    background: repeating-linear-gradient(transparent 0 90px, rgba(31, 79, 154, .22) 90px 92px, transparent 92px 94px); }
+  #pl-foot span { position: absolute; top: 606px; font: 600 28px/1 var(--ui); color: rgba(29, 26, 22, .6); }
+  #pl-days { left: 30px; } #pl-words { left: 270px; } #pl-weather { left: 510px; color: var(--azul) !important; }
+
+  /* Map (right) */
+  #f-map { background: #e8d6b2; }
+  #mp-svg { position: absolute; inset: 0; width: 720px; height: 720px; }
+  .pin { position: absolute; width: 168px; height: 72px; border-radius: 36px; display: flex; align-items: center; gap: 12px; padding: 0 18px 0 12px; background: #fff; font: 700 30px/1 var(--ui) !important;
+    box-shadow: 0 6px 0 rgba(60, 30, 10, .22); color: var(--ink) !important; }
+  .pin::before { content: ''; flex: none; width: 34px; height: 34px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: var(--terra); }
+  .pin[aria-pressed=true] { background: var(--terra); color: #fff !important; } .pin[aria-pressed=true]::before { background: #fff; }
+  #pin-alfama { left: 516px; top: 100px; } #pin-baixa { left: 276px; top: 340px; } #pin-belem { left: 36px; top: 372px; } #pin-lx { left: 36px; top: 150px; }
+  #mp-info { left: 270px; top: 560px; width: 420px; font: 600 30px/1.25 var(--ui); color: #fff; text-shadow: 0 2px 0 rgba(0, 30, 60, .3); }
+  #mp-info b { display: block; font: italic 700 40px/1.1 var(--serif); }
+
+  /* Ticket (top): the cube's controls */
+  #f-ticket { background: linear-gradient(180deg, #f2b234, #e89a1c); color: #2a1a05; }
+  #f-ticket::before { content: ''; position: absolute; left: 0; right: 0; top: 232px; border-top: 6px dotted rgba(42, 26, 5, .35); }
+  #tk-title { left: 28px; top: 34px; font: 800 64px/1 var(--ui); letter-spacing: -.03em; }
+  #tk-sub { left: 30px; top: 112px; font: 600 26px/1.25 var(--ui); opacity: .75; }
+  #tk-status { left: 256px; top: 24px; width: 208px; height: 192px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; }
+  #tk-status b { font: 800 84px/.9 var(--ui); font-variant-numeric: tabular-nums; }
+  #tk-status span { font: 700 28px/1.1 var(--ui); }
+  #tk-status.ok b { font: italic 700 64px/1 var(--serif); color: var(--azul); }
+  #f-ticket .key { position: absolute; width: 192px; height: 192px; border-radius: 28px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+    font: 800 34px/1 var(--ui); background: #2a1a05; color: #f9d98a; box-shadow: inset 0 -8px 0 rgba(0, 0, 0, .35); }
+  #f-ticket .key svg { width: 60px; height: 60px; }
+  #f-ticket .key:hover { background: #3c2609; }
+  #tk-shuffle { left: 24px; top: 264px; background: var(--azul) !important; color: #fff !important; } #tk-back { left: 264px; top: 264px; } #tk-sort { left: 504px; top: 264px; }
+  #tk-sound { left: 504px; top: 24px; background: rgba(42, 26, 5, .14) !important; color: #2a1a05 !important; box-shadow: inset 0 0 0 4px rgba(42, 26, 5, .4) !important; }
+  #tk-sound[aria-pressed=false] .wave { display: none; } #tk-sound[aria-pressed=false] { opacity: .55; }
+  #f-ticket .mode { position: absolute; top: 528px; width: 192px; height: 150px; border-radius: 28px; font: 800 30px/1.1 var(--ui); background: rgba(42, 26, 5, .12); box-shadow: inset 0 0 0 4px rgba(42, 26, 5, .3); }
+  #f-ticket .mode[aria-pressed=true] { background: #2a1a05; color: #f9d98a; }
+  #tk-auto { left: 24px; } #tk-write { left: 264px; } #tk-twist { left: 504px; }
+
+  /* Packing (back) */
+  #f-pack { background: var(--azul); color: #fff; }
+  .item { position: absolute; width: 200px; height: 200px; border-radius: 30px; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start; padding: 22px; text-align: left;
+    font: 700 32px/1.05 var(--ui) !important; background: rgba(255, 255, 255, .1); box-shadow: inset 0 0 0 3px rgba(255, 255, 255, .35); color: #fff !important; }
+  .item::before { content: ''; position: absolute; left: 22px; top: 22px; width: 48px; height: 48px; border-radius: 50%; box-shadow: inset 0 0 0 4px #fff; }
+  .item[aria-pressed=true] { background: #fff; color: var(--azul) !important; }
+  .item[aria-pressed=true]::before { background: var(--azul) radial-gradient(circle, #fff 0 9px, transparent 10px); box-shadow: none; }
+  #pk-bar { left: 28px; top: 560px; width: 664px; height: 26px; border-radius: 13px; background: rgba(255, 255, 255, .2); overflow: hidden; }
+  #pk-bar i { display: block; height: 100%; width: 0; background: var(--sun); transition: width .3s; }
+  #pk-text { left: 28px; top: 612px; font: 700 40px/1 var(--ui); } #pk-text span { font: italic 600 36px/1 var(--serif); color: #bcd3ff; margin-left: 14px; }
+
+  /* Money (left) */
+  #f-money { background: #1e2a22; color: #eef5e6; }
+  #mn-head { left: 28px; top: 40px; font: 700 26px/1 var(--ui); letter-spacing: .2em; text-transform: uppercase; color: #9fd39a; }
+  #mn-eur { left: 28px; top: 84px; font: 800 120px/1 var(--ui); letter-spacing: -.04em; }
+  #mn-amount { position: absolute; left: 28px; top: 300px; width: 424px; height: 120px; border: 0; border-radius: 28px; padding: 0 28px; font: 700 64px/1 var(--ui); color: #1e2a22; background: #eef5e6; outline: none; font-variant-numeric: tabular-nums; }
+  #mn-cur { position: absolute; left: 504px; top: 300px; width: 192px; height: 120px; border-radius: 28px; background: #9fd39a; color: #1e2a22; font: 800 46px/1 var(--ui); text-align: center; text-align-last: center; appearance: none; -webkit-appearance: none; }
+  #mn-out { left: 28px; top: 520px; width: 664px; font: 800 86px/1 var(--ui); font-variant-numeric: tabular-nums; letter-spacing: -.03em; color: #f2d36b; }
+  #mn-note { left: 30px; top: 630px; font: 500 24px/1 var(--ui); color: #93a88f; }
+
+  /* Phrases (bottom) */
+  #f-phrase { background: var(--terra); color: #fff3e8; }
+  .card { position: absolute; width: 200px; height: 200px; border-radius: 30px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; text-align: left;
+    background: #fff3e8; color: var(--ink) !important; box-shadow: 0 8px 0 rgba(80, 20, 0, .25); }
+  .card b { font: 700 32px/1.05 var(--ui); } .card i { font: italic 500 26px/1.1 var(--serif); color: var(--terra); }
+  .card[aria-pressed=true] { background: var(--ink); color: #fff3e8 !important; } .card[aria-pressed=true] i { color: var(--sun); }
+  #ph-say { left: 28px; top: 520px; width: 664px; font: italic 600 64px/1.05 var(--serif); user-select: text; }
+  #ph-how { left: 30px; top: 616px; width: 664px; font: 600 28px/1.2 var(--ui); opacity: .85; }
+</style>
+</head>
+<body>
+<canvas id="stage" layoutsubtree content="drawable" aria-label="A travel cube: six working apps for a weekend in Lisbon">
+  <section class="face" id="f-plan" drawable aria-label="Plan">
+    <div class="azulejo t"></div><div class="azulejo b"></div>
+    <p class="abs" id="pl-head">Weekend plan</p>
+    <div id="plan" contenteditable="true" spellcheck="false" role="textbox" aria-multiline="true" aria-label="Plan" data-hic-edit data-span>Fri: tram 28 to Alfama.
+Sat: Belém, tarts.
+Sun: </div>
+    <div id="pl-foot"><span id="pl-days">3 days</span><span id="pl-words"></span><span id="pl-weather">24° sun</span></div>
+  </section>
+
+  <section class="face" id="f-map" drawable aria-label="Map">
+    <svg id="mp-svg" viewBox="0 0 720 720" aria-hidden="true"></svg>
+    <button class="pin" id="pin-alfama" type="button" aria-pressed="true" data-hic-click>Alfama</button>
+    <button class="pin" id="pin-baixa" type="button" aria-pressed="false">Baixa</button>
+    <button class="pin" id="pin-belem" type="button" aria-pressed="false">Belém</button>
+    <button class="pin" id="pin-lx" type="button" aria-pressed="false">LX</button>
+    <p class="abs" id="mp-info"><b>Alfama</b>the old quarter, fado at night</p>
+  </section>
+
+  <section class="face" id="f-ticket" drawable aria-label="Tram ticket: turn the cube">
+    <p class="abs" id="tk-title">Tram 28</p><p class="abs" id="tk-sub">drag a tile<br>to take a turn</p>
+    <p class="abs" id="tk-status" aria-live="polite"><b>✓</b><span>In order</span></p>
+    <button class="key" id="tk-sound" type="button" data-cube="sound" aria-label="Sound"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19h7l9-7v24l-9-7H9z" fill="currentColor"/><path class="wave" d="M31 18c3 3.5 3 8.5 0 12M36 13c5.5 6 5.5 16 0 22"/></svg></button>
+    <button class="key" id="tk-shuffle" type="button" data-cube="scramble"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 34c6-14 12-20 32-20M33 8l7 6-7 6M8 14c5 0 9 3 12 8M26 30c3 3 7 4 14 4M33 28l7 6-7 6"/></svg>Shuffle</button>
+    <button class="key" id="tk-back" type="button" data-cube="undo"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10L8 22l12 12M8 22h32"/></svg>Back</button>
+    <button class="key" id="tk-sort" type="button" data-cube="solve"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 12h28M10 24h28M10 36h28"/></svg>Sort out</button>
+    <button class="mode" id="tk-auto" type="button" data-cube="mode" data-mode="auto">Tap &amp;<br>turn</button>
+    <button class="mode" id="tk-write" type="button" data-cube="mode" data-mode="write">Just<br>tap</button>
+    <button class="mode" id="tk-twist" type="button" data-cube="mode" data-mode="twist">Just<br>turn</button>
+  </section>
+
+  <section class="face" id="f-pack" drawable aria-label="Packing">
+    <div id="pk-items"></div>
+    <div class="abs" id="pk-bar"><i></i></div>
+    <p class="abs" id="pk-text"></p>
+  </section>
+
+  <section class="face" id="f-money" drawable aria-label="Money">
+    <p class="abs" id="mn-head">Euros to</p>
+    <p class="abs" id="mn-eur">€ →</p>
+    <input id="mn-amount" type="text" inputmode="decimal" value="45" aria-label="Amount in euros" data-span>
+    <select id="mn-cur" aria-label="Currency"><option>USD</option><option>GBP</option><option selected>KRW</option><option>JPY</option></select>
+    <output class="abs" id="mn-out" for="mn-amount mn-cur"></output>
+    <p class="abs" id="mn-note">sample rates, not live</p>
+  </section>
+
+  <section class="face" id="f-phrase" drawable aria-label="Phrases">
+    <div id="ph-cards"></div>
+    <p class="abs" id="ph-say">Obrigado!</p>
+    <p class="abs" id="ph-how">oh-bree-GAH-doo · thank you</p>
+  </section>
+</canvas>
+
+<div id="hud"><small>Six apps · one cube</small><h1>Lisbon Weekend</h1>
+  <ol><li id="h-use">Tap a pin, a card or the plan</li><li id="h-turn">Drag a tile to turn a layer</li><li id="h-again">Keep planning on the shuffled cube</li></ol>
+</div>
+
+<script src="../../lib/hic.js"></script>
+<script src="../../lib/cube.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var cube = null, snd = function () { return cube && cube.sound; };
+  var el = function (tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+
+  // ---------------------------------------------------------------- Plan
+  var plan = $('plan');
+  function words() { var t = plan.innerText.replace(/\s+/g, ' ').trim(); $('pl-words').textContent = (t ? t.split(' ').length : 0) + ' words'; }
+  plan.addEventListener('input', words); words();
+
+  // ---------------------------------------------------------------- Map: river, hills and streets drawn in code
+  (function drawMap() {
+    var NS = 'http://www.w3.org/2000/svg', svg = $('mp-svg'), rnd = HIC.rng(28);
+    function add(tag, attrs) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); svg.appendChild(e); return e; }
+    for (var i = 0; i < 6; i++) {   // hills as contour rings
+      var cx = 120 + rnd() * 480, cy = 80 + rnd() * 340, r = 60 + rnd() * 70;
+      for (var k = 0; k < 4; k++) add('ellipse', { cx: cx, cy: cy, rx: r - k * 16, ry: (r - k * 16) * .7, fill: 'none', stroke: 'rgba(150,100,50,.32)', 'stroke-width': 3 });
+    }
+    for (var s = 0; s < 14; s++) {   // streets
+      var x = rnd() * 720, y = rnd() * 460, a = rnd() * Math.PI, l = 120 + rnd() * 260;
+      add('path', { d: 'M' + x + ' ' + y + 'q' + (Math.cos(a) * l / 2 + 30) + ' ' + (Math.sin(a) * l / 2 - 20) + ' ' + Math.cos(a) * l + ' ' + Math.sin(a) * l, fill: 'none', stroke: '#fffdf6', 'stroke-width': 12, 'stroke-linecap': 'round' });
+    }
+    add('path', { d: 'M0 500 C 160 470, 300 540, 460 500 S 680 470, 720 488 L720 720 L0 720Z', fill: '#3b74c9' });   // the Tagus
+    add('path', { d: 'M0 520 C 160 490, 300 560, 460 520 S 680 490, 720 508', fill: 'none', stroke: 'rgba(255,255,255,.35)', 'stroke-width': 4, 'stroke-dasharray': '18 16' });
+    add('path', { d: 'M86 120 L 330 380 L 580 140', fill: 'none', stroke: '#c9542e', 'stroke-width': 7, 'stroke-dasharray': '2 16', 'stroke-linecap': 'round' });   // the tram line
+  })();
+  var PLACES = { alfama: ['Alfama', 'the old quarter, fado at night'], baixa: ['Baixa', 'grid streets down to the river'], belem: ['Belém', 'the tower and the custard tarts'], lx: ['LX Factory', 'old mills, books and lunch'] };
+  [].forEach.call(document.querySelectorAll('.pin'), function (p) {
+    p.addEventListener('click', function () {
+      [].forEach.call(document.querySelectorAll('.pin'), function (q) { q.setAttribute('aria-pressed', String(q === p)); });
+      var d = PLACES[p.id.slice(4)]; $('mp-info').innerHTML = '<b>' + d[0] + '</b>' + d[1];
+      if (snd()) snd().tone(660, .12, { type: 'triangle', gain: .12, glide: 990 });
+    });
+  });
+
+  // ---------------------------------------------------------------- Packing: six tiles, one item each
+  var ITEMS = [['Passport', true], ['Adapter', false], ['Sun hat', true], ['Walking shoes', true], ['Charger', false], ['Swimsuit', false]];
+  ITEMS.forEach(function (it, i) {
+    var b = el('button', 'item', it[0]); b.type = 'button'; b.setAttribute('aria-pressed', String(it[1]));
+    b.style.left = (20 + (i % 3) * 240) + 'px'; b.style.top = (20 + Math.floor(i / 3) * 240) + 'px';
+    b.addEventListener('click', function () { var on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', String(on)); pack(); if (snd()) snd().tone(on ? 880 : 520, .1, { gain: .12 }); });
+    $('pk-items').appendChild(b);
+  });
+  function pack() {
+    var all = document.querySelectorAll('.item'), n = [].filter.call(all, function (b) { return b.getAttribute('aria-pressed') === 'true'; }).length;
+    $('pk-bar').firstChild.style.width = (100 * n / all.length) + '%';
+    $('pk-text').innerHTML = n + ' of ' + all.length + ' packed<span>' + (n === all.length ? 'ready to go' : 'keep going') + '</span>';
+  }
+  pack();
+
+  // ---------------------------------------------------------------- Money (sample rates, fixed in the page)
+  var RATES = { USD: [1.08, '$', 2], GBP: [0.85, '£', 2], KRW: [1480, '₩', 0], JPY: [165, '¥', 0] };
+  function convert() {
+    var v = parseFloat($('mn-amount').value.replace(',', '.')) || 0, r = RATES[$('mn-cur').value];
+    $('mn-out').textContent = r[1] + (v * r[0]).toLocaleString('en-US', { minimumFractionDigits: r[2], maximumFractionDigits: r[2] });
+  }
+  $('mn-amount').addEventListener('input', convert); $('mn-cur').addEventListener('change', convert); convert();
+
+  // ---------------------------------------------------------------- Phrases
+  var PHRASES = [['Thank you', 'Obrigado!', 'oh-bree-GAH-doo'], ['Good morning', 'Bom dia!', 'bon DEE-ah'], ['The bill, please', 'A conta, por favor.', 'ah KON-tah, poor fah-VOR'],
+    ['Where is…?', 'Onde fica…?', 'ON-deh FEE-kah'], ['Two tarts', 'Dois pastéis.', 'doysh pash-TAYSH'], ['Cheers!', 'Saúde!', 'sah-OO-deh']];
+  PHRASES.forEach(function (p, i) {
+    var b = el('button', 'card', '<b>' + p[0] + '</b><i>' + p[1] + '</i>'); b.type = 'button'; b.setAttribute('aria-pressed', String(i === 0));
+    b.style.left = (20 + (i % 3) * 240) + 'px'; b.style.top = (20 + Math.floor(i / 3) * 240) + 'px';
+    b.addEventListener('click', function () {
+      [].forEach.call(document.querySelectorAll('.card'), function (c) { c.setAttribute('aria-pressed', String(c === b)); });
+      $('ph-say').textContent = p[1]; $('ph-how').textContent = p[2] + ' · ' + p[0].toLowerCase();
+      if (snd()) [0, .07].forEach(function (a, k) { snd().tone([587, 880][k], .25, { type: 'triangle', gain: .1, at: a }); });
+    });
+    $('ph-cards').appendChild(b);
+  });
+
+  // ---------------------------------------------------------------- the cube: ivory enamel, a warm dusk studio, a wooden tock
+  cube = AppCube.create(document.getElementById('stage'), {
+    faces: ['#f-plan', '#f-map', '#f-ticket', '#f-pack', '#f-money', '#f-phrase'],
+    view: { yaw: -0.58, pitch: 0.42 },
+    body: { color: '#e9dcc4', gloss: 0.75, roughness: 0.16, groove: 0.62 },
+    tile: { glass: 0.14, emit: 0.84, light: 0.24, hot: '#f2b234' },
+    studio: {
+      ambient: ['#060203', '#1a0d0a'],
+      lights: [
+        { dir: [0.40, 0.78, 0.46], size: [0.62, 0.34], color: '#fff0da', power: 2.3, soft: 0.06 },
+        { dir: [-0.88, 0.22, 0.40], size: [0.22, 0.85], color: '#8fbaff', power: 1.0, soft: 0.08 },
+        { dir: [0.70, 0.18, -0.70], size: [0.22, 0.70], color: '#ffb36b', power: 1.0, soft: 0.10 },
+        { dir: [-0.44, 0.36, 0.82], size: [0.07, 1.30], color: '#fff6ea', power: 1.6, soft: 0.05 }
+      ]
+    },
+    backdrop: { center: '#4f2621', edge: '#120607', glowA: { at: [-0.62, -0.16], color: '#0d3557', size: 2.6 }, glowB: { at: [0.7, 0.32], color: '#6b3a0e', size: 2.4 } },
+    floor: { tint: '#1c0c09', reflect: 0.36 },
+    sweep: { color: '#ffe2a8' },
+    sound: { snap: { freq: 210, body: 0.07, click: 1800 }, tick: { freq: 2600, gain: 0.1 }, chime: [69, 72, 76, 81], chimeWave: 'triangle' },
+    onChange: function (s) {
+      var st = $('tk-status');
+      st.classList.toggle('ok', s.solved);
+      st.querySelector('b').textContent = s.solved ? '✓' : s.moves;
+      st.querySelector('span').textContent = s.solved ? 'In order' : (s.moves === 1 ? 'turn' : 'turns') + (s.last ? ' · ' + s.last : '');
+      if (s.user && s.moves) $('h-turn').classList.add('done');
+    }
+  });
+  addEventListener('cubeuse', function (e) { $('h-use').classList.add('done'); if (e.detail.afterTwist && $('h-turn').classList.contains('done')) $('h-again').classList.add('done'); });
+})();
+</script>
+</body>
+</html>
