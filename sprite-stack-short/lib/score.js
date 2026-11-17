@@ -30,7 +30,7 @@
     for (const b of F.beats) {
       const s = b.start, M = b.model || F.hero;
       if (b.in === 'tiles' && b.i > 0) for (let j = 0; j < 6; j++) sfx.push({ t: s + j * .06, kind: 'blip', f: midi(root + 36 - PENTA[j % 5] - 12 * Math.floor(j / 5)), v: .05, d: .07 });
-      if (b.kind === 'views') { const dv = Math.min(.9, b.dur * .14); for (let i = 0; i < 4; i++) { const s0 = s + b.dur * .1 + i * (b.dur * .62 - dv) / 3; sfx.push({ t: s0, kind: 'pop', f: midi(deg(root + 12, [1, 3, 5, 8][i])), v: .1 }); sfx.push({ t: s0, kind: 'scratch', d: dv, v: .03 }); } }
+      if (b.kind === 'views') { const dv = Math.min(.9, b.dur * .14); for (let i = 0; i < 4; i++) { const s0 = s + Math.max(0, (i ? b.dur * .1 : -dv * .35) + i * (b.dur * .62 - dv) / 3); sfx.push({ t: s0, kind: 'pop', f: midi(deg(root + 12, [1, 3, 5, 8][i])), v: .1 }); sfx.push({ t: s0, kind: 'scratch', d: dv, v: .03 }); } }
       if (b.kind === 'slices') for (let z = 0; z < M.H; z++) { const t = s + b.dur * .08 + (z / M.H) * b.dur * .74; sfx.push({ t, kind: 'blip', f: midi(deg(root + 12, 1 + z % 10, MAJ) + (z >= 10 ? 0 : 0)), v: .07, d: .06 }); }
       if (b.kind === 'stack') { const t = s + b.dur * .45; [1, 3, 5, 8].forEach((d, i) => sfx.push({ t: t + i * .045, kind: 'blip', f: midi(deg(root + 12, d)), v: .07, d: .22 })); sfx.push({ t, kind: 'click', v: .12 }); }
       if (b.kind === 'turn') sfx.push({ t: s + b.dur * .15, kind: 'whoosh', d: b.dur * .6, v: .07 });
@@ -89,7 +89,7 @@
     for (const d of comb) { const buf = new Float32Array(d); let p = 0, f = 0; for (let i = 0; i < n; i++) { const y = buf[p]; f = y * .8 + f * .2; buf[p] = rv[i] + f * .78; p = (p + 1) % d; wet[i] += y * .25; } }
     for (const d of ap) { const buf = new Float32Array(d); let p = 0; for (let i = 0; i < n; i++) { const b = buf[p], y = -wet[i] + b; buf[p] = wet[i] + b * .5; p = (p + 1) % d; wet[i] = y; } }
     let peak = 0; for (let i = 0; i < n; i++) { L[i] += wet[i] * .35; R[i] += wet[i] * .35; peak = Math.max(peak, Math.abs(L[i]), Math.abs(R[i])); }
-    const g = peak > .89 ? .89 / peak : 1, fo = Math.floor(.4 * sr);
+    const g = peak > 1e-6 ? .8 / peak : 1, fo = Math.floor(.4 * sr);
     for (let i = 0; i < n; i++) { const k = i > n - fo ? (n - i) / fo : 1; L[i] = Math.tanh(L[i] * g * 1.05) * k; R[i] = Math.tanh(R[i] * g * 1.05) * k; }
     return [L, R];
   }

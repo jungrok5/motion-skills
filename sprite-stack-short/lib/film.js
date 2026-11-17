@@ -39,13 +39,12 @@
       const [w, h] = artSize(z), R = raster(w, h).fill(F.paperC), labels = [], names = b.labels || { top: 'TOP', side: 'SIDE', front: 'FRONT', back: 'BACK' };
       let x = Math.round((w - total) / 2); const cy = Math.round(h * .54), dv = Math.min(.9, b.dur * .14);
       order.forEach((k, i) => {
-        const [vw, vh] = d[k], y = Math.round(cy - vh / 2), s0 = b.dur * .1 + i * (b.dur * .62 - dv) / 3, p = SS.clamp((u - s0) / dv, 0, 1);
+        const [vw, vh] = d[k], y = Math.round(cy - vh / 2), s0 = (i ? b.dur * .1 : -dv * .35) + i * (b.dur * .62 - dv) / 3, p = SS.clamp((u - s0) / dv, 0, 1);
         if (p > 0) {
           const rows = Math.ceil(p * vh);
           R.grid(V(M)[k], vw, vh, x, y, rows);
           if (p < 1) for (let i2 = -1; i2 <= vw; i2++) R.px(x + i2, y + rows - 1, F.accentC);       // the pen row
-          labels.push({ x: x + vw / 2, y: y + vh + 5, text: names[k], a: Math.min(1, p * 3) });
-          if ((k === 'top' || k === 'side') && p === 1) { const ay = y + vh + 3, ax = x + vw - 8; for (let j = 0; j < 7; j++) R.px(ax + j, ay, F.accentC); for (let j = 1; j < 3; j++) { R.px(ax + 6 - j, ay - j, F.accentC); R.px(ax + 6 - j, ay + j, F.accentC); } }
+          labels.push({ x: x + vw / 2, y: y + vh, text: names[k], a: Math.min(1, p * 3), arrow: (k === 'top' || k === 'side') && p === 1 });
         }
         x += vw + gap;
       });
@@ -56,21 +55,21 @@
       const total = M.L + gap + M.L + gap + M.R * 2, z = b.zoom && b.zoom !== 'auto' ? b.zoom : fitZoom(total, M.H * (1 + spread) + M.R * 1.2);
       const [w, h] = artSize(z), R = raster(w, h).fill(F.paperC), labels = [];
       const p = SS.clamp((u - b.dur * .08) / (b.dur * .74), 0, 1), zf = p * M.H, zc = Math.min(M.H - 1, Math.floor(zf)), frac = zf - Math.floor(zf), done = p >= 1;
-      let x = Math.round((w - total) / 2); const cy = Math.round(h * .58);
+      let x = Math.round((w - total) / 2); const cy = Math.round(h * .55);
       // the side view with the scan line on the current row
       const sy = Math.round(cy - M.H / 2), row = M.H - 1 - zc;
       for (let i = -4; i < M.L + 4; i++) if (!(i >= 0 && i < M.L && V(M).side[row * M.L + i])) R.px(x + i, sy + row, F.accentC);
       R.grid(V(M).side, M.L, M.H, x, sy, M.H, (c, i, j) => j === row && !done ? mul(c, 1.25) : c);
-      labels.push({ x: x + M.L / 2, y: sy + M.H + 5, text: b.sideLabel || 'SIDE' });
+      labels.push({ x: x + M.L / 2, y: sy + M.H, text: b.sideLabel || 'SIDE' });
       x += M.L + gap;
       // the top view, dimmed except the pixels of this slice
       const ty = Math.round(cy - M.W / 2), sl = SS.slice(M, zc);
       R.grid(V(M).top, M.L, M.W, x, ty, M.W, (c, i, j) => (!done && sl[j * M.L + i]) ? c : mix(c, F.paperC, done ? 0 : .72));
       if (!done) for (let j = 0; j < M.W; j++) for (let i = 0; i < M.L; i++) if (sl[j * M.L + i] && !V(M).top[j * M.L + i]) R.px(x + i, ty + j, F.accentC);
-      labels.push({ x: x + M.L / 2, y: ty + M.W + 5, text: (b.sliceLabel || 'slice') + ` ${zc + 1}/${M.H}` });
+      labels.push({ x: x + M.L / 2, y: ty + M.W, text: (b.sliceLabel || 'slice') + ` ${zc + 1}/${M.H}` });
       x += M.L + gap;
       // the stack building up: placed slices, the current one dropping in
-      const scx = x + M.R, scy = Math.round(cy + M.H * (1 + spread) / 2 + M.R * .3);
+      const scx = x + M.R, scy = Math.round(h * .5 + M.H * (1 + spread) / 2);
       ground(R, M, scx, scy, a);
       SS.draw(R, M, { x: scx, y: scy, a, spread, light: F.light, cap: done ? -1 : (frac > .02 ? zc : zc - 1), zfn: zz => done || zz < zc ? 0 : zz === zc ? -Math.round((1 - SS.ease.out(frac)) * 10) : null });
       return { R, z, labels, paper: true };
@@ -122,8 +121,14 @@
     function text(ctx, s, OW, OH, t) {
       const b = s.beat, fs = Math.round(OH * .042);
       if (!OFF.has('labels')) for (const l of s.labels || []) {
-        const [X, Y] = s.map(l.x, l.y); ctx.globalAlpha = l.a == null ? 1 : l.a; ctx.fillStyle = F.ink; ctx.font = `600 ${Math.round(OH * .025)}px ${F.font}`;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(l.text, X, Y); ctx.globalAlpha = 1;
+        const [X, Y0] = s.map(l.x, l.y), Y = Y0 + OH * .022, fz = Math.round(OH * .025); ctx.globalAlpha = l.a == null ? 1 : l.a; ctx.fillStyle = F.ink; ctx.font = `600 ${fz}px ${F.font}`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(l.text, X, Y);
+        if (l.arrow) {        // "the front points this way": a small arrow after the label, at full resolution
+          const w = ctx.measureText(l.text).width, ax = X + w / 2 + fz * .5, ay = Y + fz * .55, L = fz * 1.5;
+          ctx.strokeStyle = F.accent; ctx.lineWidth = Math.max(1.5, fz * .12); ctx.lineCap = 'round'; ctx.beginPath();
+          ctx.moveTo(ax, ay); ctx.lineTo(ax + L, ay); ctx.moveTo(ax + L - fz * .4, ay - fz * .35); ctx.lineTo(ax + L, ay); ctx.lineTo(ax + L - fz * .4, ay + fz * .35); ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
       }
       if (b.caption && !OFF.has('captions')) {
         const tin = b.in === 'tiles' ? (b.tin || .6) : 0, a = SS.clamp((s.u - tin) / .25, 0, 1) * SS.clamp((b.dur - s.u) / .2, 0, 1);
@@ -224,7 +229,7 @@
         // live: loop, click = sound on / off, space = pause
         let playing = true, tNow = 0, last = performance.now(), audio = null, src = null;
         const hint = document.createElement('div'); hint.textContent = '클릭하면 소리가 켜집니다 · click for sound · space = pause';
-        hint.style.cssText = 'position:fixed;left:50%;bottom:10px;transform:translateX(-50%);font:12px system-ui;color:#cfc8b8;background:rgba(0,0,0,.45);padding:4px 10px;border-radius:12px;pointer-events:none;transition:opacity .6s';
+        hint.style.cssText = 'position:fixed;left:50%;bottom:10px;transform:translateX(-50%);font:11px system-ui;white-space:nowrap;color:#cfc8b8;background:rgba(0,0,0,.45);padding:3px 9px;border-radius:12px;pointer-events:none;transition:opacity .6s';
         document.body.appendChild(hint); setTimeout(() => hint.style.opacity = 0, 4500);
         const startAudio = () => { if (!audio) return; if (src) { try { src.stop(); } catch (e) { /* stopped */ } } src = audio.ctx.createBufferSource(); src.buffer = audio.buf; src.connect(audio.ctx.destination); src.start(0, tNow % F.dur); src.onended = null; audio.t0 = audio.ctx.currentTime - tNow; };
         addEventListener('click', () => {
