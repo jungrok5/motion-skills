@@ -29,7 +29,7 @@ export function walk(C, o) {
   const yaw = o.yaw ?? facingOf(ux, uz), [rx, rz] = rightOf(yaw), gap = C.geom().hipGap;
   const n = Math.max(2, Math.round(L / ((o.stride ?? 1.6 * a) / 2))), h = L / n, stride = 2 * h, id = 'w' + (++UID);
   // the pelvis sits low enough that both legs reach the floor at double support (feet half a step either side)
-  const G = C.geom(), legL = (C.spec.legs.thigh + C.spec.legs.shin) * a, sink = Math.max(0, -G.hipY - Math.sqrt(Math.max(0, (legL * .985) ** 2 - (h * .74) ** 2)));
+  const G = C.geom(), legL = (C.spec.legs.thigh + C.spec.legs.shin) * a, sink = Math.max(0, -G.hipY - Math.sqrt(Math.max(0, (legL * .975) ** 2 - (h * .8) ** 2)));
   const lift = o.lift ?? .22 * a, bob = o.bob ?? .07 * a, easeIn = o.easeIn ?? .2, easeOut = o.easeOut ?? .22;
   const dAt = t => { const u = P.clamp((t - o.t0) / (o.t1 - o.t0)), vmax = 1 / (1 - (easeIn + easeOut) / 2); let s;
     if (u < easeIn) s = vmax * u * u / (2 * easeIn); else if (u > 1 - easeOut) { const w = 1 - u; s = 1 - vmax * w * w / (2 * easeOut); } else s = vmax * (u - easeIn / 2);
@@ -116,7 +116,12 @@ export function keyed(base, keys) {
     if (hop > .01) { out.feet = out.feet.map(f => ({ ...f, lift: (f.lift || 0) + hop, planted: false, airborne: true })); }
     // a hand target may be a function of time (a hand that rides a moving thing: a book being pulled, a lever going down)
     const arms = at(t, k => k.arms ? Object.fromEntries(Object.entries(k.arms).map(([w, A]) => [w, A && typeof A.target === 'function' ? { ...A, target: A.target(t) } : A])) : null);
-    if (arms) out.arms = { L: { ...(p.arms?.L || {}), ...(arms.L || {}) }, R: { ...(p.arms?.R || {}), ...(arms.R || {}) } };
+    if (arms) {
+      out.arms = { L: { ...(p.arms?.L || {}), ...(arms.L || {}) }, R: { ...(p.arms?.R || {}), ...(arms.R || {}) } };
+      // a hand is "on" its target (and checked for reaching it) only between two keys that both put it there
+      let i = keys.findIndex(k => k.t >= t); if (i < 0) i = keys.length - 1; const KA = keys[Math.max(0, i - 1)], KB = keys[i];
+      for (const w of ['L', 'R']) { const on = k => !!(k.arms?.[w]?.target) && (k.arms[w].w ?? 1) >= .98; if (out.arms[w].target) out.arms[w].on = on(KA) && on(KB); }
+    }
     const head = at(t, k => k.head || null); if (head) out.head = { ...(p.head || {}), ...head };
     return out;
   };
@@ -214,7 +219,7 @@ export class Vignette {
     const out = [], add = (name, value, limit, ok) => out.push({ name, value: +(+value).toFixed(3), limit, ok });
     const c = P.canvas(this.W, this.H), ctx = c.getContext('2d');
     for (const cm of this.cast) {
-      const who = cm.actor.name; let kneeBad = 0, kneeMax = 0, elbowMax = 0, reachMax = 0, reachT = 0, driftT = 0, drift = 0, neckMax = 0, faceBad = 0, handMiss = 0; const plant = [new Map(), new Map()];
+      const who = cm.actor.name; let handT = '', kneeBad = 0, kneeMax = 0, elbowMax = 0, reachMax = 0, reachT = 0, driftT = 0, drift = 0, neckMax = 0, faceBad = 0, handMiss = 0; const plant = [new Map(), new Map()];
       for (let t = 0; t < this.dur; t += step) {
         const p = this.poseAt(cm, t), j = drawCritter(ctx, cm.actor, p, { room: this.room, light: this.light, shadow: 0, rim: 0 });
         for (let i = 0; i < 2; i++) {
@@ -225,7 +230,7 @@ export class Vignette {
         elbowMax = Math.max(elbowMax, ...j.elbowBend);
         neckMax = Math.max(neckMax, Math.abs(p.head?.rawTurn || 0));
         if (p.walking && p.moveDir) { const [ux, uz] = p.moveDir, fx = Math.sin(p.yaw), fz = -Math.cos(p.yaw); if (ux * fx + uz * fz < .5) faceBad++; }
-        for (const w of ['L', 'R']) { const A = p.arms?.[w]; if (A?.target && (A.w ?? 1) > .98) { const h = j.hands[w === 'L' ? 0 : 1]; const miss = Math.hypot(h[0] - A.target[0], h[1] - A.target[1]); if (miss > 3) handMiss = Math.max(handMiss, miss); } }
+        for (const w of ['L', 'R']) { const A = p.arms?.[w]; if (A?.target && (A.w ?? 1) > .98 && A.on !== false) { const h = j.hands[w === 'L' ? 0 : 1]; const miss = Math.hypot(h[0] - A.target[0], h[1] - A.target[1]); if (miss > handMiss) { handMiss = miss; handT = `${w} at ${t.toFixed(2)} s`; } } }
       }
       add(`${who}: knees fold back in profile (frames wrong)`, kneeBad, '0', kneeBad === 0);
       add(`${who}: knee bend max (rad)`, kneeMax, `≤ ${JOINTS.knee[1]}`, kneeMax <= JOINTS.knee[1]);
@@ -234,7 +239,7 @@ export class Vignette {
       add(`${who}: planted foot drift on screen (px, worst at ${driftT.toFixed(2)} s)`, drift, '≤ 1.5', drift <= 1.5);
       add(`${who}: neck turn max (rad)`, neckMax, `≤ ${JOINTS.neckTurn}`, neckMax <= JOINTS.neckTurn);
       add(`${who}: walks the way it faces (frames wrong)`, faceBad, '0', faceBad === 0);
-      add(`${who}: hands reach their keyed targets (px off)`, handMiss, '≤ 3', handMiss <= 3);
+      add(`${who}: hands reach their keyed targets (px off${handT ? ', worst ' + handT : ''})`, handMiss, '≤ 3', handMiss <= 3);
     }
     return out;
   }
