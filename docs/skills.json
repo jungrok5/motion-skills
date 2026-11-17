@@ -2505,6 +2505,50 @@
           "url": "https://jungrok5.github.io/motion-skills/paper-desk/demo/examples/resignation-letter/"
         }
       ]
+    },
+    {
+      "id": "swarm-page",
+      "name": "swarm-page",
+      "tagline": "주제를 받아, 페이지의 글자 픽셀이 새 · 벌 · 반딧불이 · 물고기 · 종이비행기 떼가 되어 날아올랐다가 제자리에 내려앉아 다시 읽히는 라이브 웹페이지를 만듭니다. 떼는 일곱 이웃을 따르는 규칙으로 날아 방향 전환이 물결처럼 번지고, 모여 있을 때는 진짜 HTML이라 글자를 고르고 누르고 고쳐 쓸 수 있습니다.",
+      "poster": "swarm-page/poster.jpg",
+      "posterAlt": "swarm-page로 만든 장면 네 개: 양봉 장부의 글자가 버튼 쪽부터 금빛 벌로 흩어지는 이륙 순간, 노을 지붕 위로 길게 접힌 검은 새 떼, 빛줄기 아래를 나는 금빛 벌 떼, 밤하늘 달 앞을 지나는 하얗게 빛나는 새 떼",
+      "tags": [
+        "HTML-in-Canvas",
+        "픽셀이 떼로 나는 페이지",
+        "일곱 이웃 군집 비행",
+        "라이브 웹페이지",
+        "코드 전용"
+      ],
+      "stats": [
+        "예제 양봉 장부 · 벌 떼 · 정렬되는 표",
+        "생물 6종 · 예비 동작 · 착지 흔들림 검사"
+      ],
+      "page": "swarm-page/",
+      "source": "swarm-page/",
+      "absorbedFrom": {
+        "repo": "https://github.com/jungrok5/motion-skills",
+        "path": "swarm-page/examples/bee-ledger/"
+      },
+      "sources": [
+        {
+          "title": "Felix Rieseberg의 「Swarm」 데모 (들새 조사 페이지의 픽셀이 찌르레기 떼로 날아올랐다 돌아오는 HTML-in-Canvas 데모)",
+          "url": "https://claude.ai/artifact/NfKoLhxvZ9AcX32i9CBvHU"
+        },
+        {
+          "title": "HTML-in-Canvas 데모 페이지 (데모 15개 모음)",
+          "url": "https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk"
+        },
+        {
+          "title": "Felix Rieseberg의 X 게시물 (All hail the weird web — Claude 데스크톱 앱의 HTML-in-Canvas)",
+          "url": "https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&s=19"
+        }
+      ],
+      "workedExample": [
+        {
+          "title": "「Linden Hill honey ledger」 · 양봉 장부가 벌 떼가 되는 라이브 페이지",
+          "url": "https://jungrok5.github.io/motion-skills/swarm-page/demo/examples/bee-ledger/"
+        }
+      ]
     }
   ]
 }

@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Linden Hill honey ledger</title>
+<!-- swarm-page worked example (see BRIEF.md): a beekeeper's ledger whose figures go out foraging as bees on a late
+     summer afternoon and come home to the comb. Made with ../../lib/swarm.js. -->
+<style>
+  :root {
+    --ink: #2b1d0e; --ink-soft: rgba(43, 29, 14, .72); --rule: rgba(43, 29, 14, .32); --amber: #9a5b06;
+    --slab: Rockwell, "Rockwell Nova", "Roboto Slab", "Courier New", Georgia, serif;
+    --text: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --label: "Gill Sans", "Gill Sans MT", "Trebuchet MS", Arial, sans-serif;
+  }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: linear-gradient(#a9c4dc, #f6ecd2 55%, #f2c46c); color: var(--ink); }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  #page { position: absolute; left: 0; top: 0; box-sizing: border-box; width: 100vw; height: 100vh;
+    padding: clamp(16px, 3.6vh, 40px) clamp(16px, 5vw, 84px) 0; display: grid; align-content: start; gap: clamp(8px, 2vh, 22px);
+    font: clamp(14px, 2vh, 17px)/1.45 var(--text); color: var(--ink); }
+  #page ::selection { background: rgba(255, 214, 120, .8); }
+  #page [contenteditable] { outline: none; cursor: text; caret-color: var(--amber); }
+  .top { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; font: 600 clamp(11px, 1.5vh, 13px)/1.2 var(--label); letter-spacing: .14em; text-transform: uppercase; }
+  .top .ctl { display: flex; gap: 1.2em; }
+  .top button { font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--ink); background: none; border: 0; border-bottom: 1.5px solid currentColor; padding: 0 0 2px; cursor: pointer; }
+  #home { visibility: hidden; }
+  #page[data-swarm-air] #home { visibility: visible; }
+  h1 { margin: 0; max-width: 13em; font: 700 min(8.4vw, 12.5vh)/.95 var(--slab); letter-spacing: -.015em; }
+  .cols { display: grid; grid-template-columns: minmax(0, 25em) minmax(0, 30em); justify-content: space-between; gap: clamp(18px, 5vw, 90px); }
+  .note p { margin: 0 0 .9em; font-size: 1.08em; }
+  .note p.small { font-size: .92em; color: var(--ink-soft); font-style: italic; }
+  #open { font: 700 clamp(19px, 3vh, 28px)/1 var(--slab); color: var(--ink); background: #f5c542; border: 2px solid var(--ink); border-radius: 999px; padding: .38em .9em .42em; cursor: pointer; }
+  #open:focus-visible, .top button:focus-visible, th button:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+  .hint { display: block; margin-top: .7em; font-style: italic; color: var(--ink-soft); }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  caption { caption-side: top; text-align: left; padding-bottom: .6em; font: 600 .74em/1.2 var(--label); letter-spacing: .14em; text-transform: uppercase; }
+  th, td { text-align: left; padding: .42em 0; }
+  th { border-bottom: 2px solid var(--ink); padding-top: 0; }
+  th:nth-child(n+2), td:nth-child(n+2) { text-align: right; }
+  td { border-bottom: 1px solid var(--rule); }
+  td:first-child { font-family: var(--slab); font-weight: 700; }
+  th button { font: 600 .74em/1.2 var(--label); letter-spacing: .12em; text-transform: uppercase; color: inherit; background: none; border: 0; padding: .2em 0; cursor: pointer; }
+  th[aria-sort="ascending"] button::after { content: " \2191"; } th[aria-sort="descending"] button::after { content: " \2193"; }
+  #scene { position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; pointer-events: none; }
+  #scene svg { display: block; width: 100%; height: 100%; }
+  .hic-fallback #scene { display: none; }
+  @media (max-width: 760px) { .cols { grid-template-columns: minmax(0, 1fr); } td:nth-child(4), th:nth-child(4), .note p.small { display: none; } }
+  @media (max-height: 640px) { .note p.small { display: none; } }
+</style>
+</head>
+<body>
+<canvas id="stage" layoutsubtree content="drawable" aria-label="A honey ledger whose figures can fly out as bees">
+  <article id="page" drawable>
+    <header class="top">
+      <span>Linden Hill apiary &middot; Ledger, week 34</span>
+      <span class="ctl"><button id="home" type="button" data-swarm-hold>Call them home</button><button id="sound" type="button" aria-pressed="false" data-swarm-hold>Sound</button></span>
+    </header>
+    <h1 id="headline" contenteditable="plaintext-only" spellcheck="false" data-hic-edit data-swarm-oneline>Seven hives, one long afternoon.</h1>
+    <div class="cols">
+      <section class="note">
+        <p id="note" contenteditable="plaintext-only" spellcheck="false">The lime flow is over and the heather is a week away. Open the hives and the ledger goes out foraging; call them home and every figure comes back to its cell.</p>
+        <p class="small" contenteditable="plaintext-only" spellcheck="false">Next inspection: Saturday, before ten, while the bees are still slow.</p>
+        <button id="open" type="button">Open the hives</button>
+        <span class="hint">Click any line to write in it. Sort the table by any column.</span>
+      </section>
+      <table id="ledger">
+        <caption>This week&rsquo;s frames</caption>
+        <thead><tr>
+          <th scope="col" aria-sort="none"><button type="button" data-col="0">Hive</button></th>
+          <th scope="col" aria-sort="none"><button type="button" data-col="1">Frames</button></th>
+          <th scope="col" aria-sort="descending"><button type="button" data-col="2" data-hic-click>Honey kg</button></th>
+          <th scope="col" aria-sort="none"><button type="button" data-col="3">Temper</button></th>
+        </tr></thead>
+        <tbody>
+          <tr><td>Clover</td><td>11</td><td>18.4</td><td>calm</td></tr>
+          <tr><td>The Abbess</td><td>10</td><td>16.9</td><td>calm</td></tr>
+          <tr><td>Hawthorn</td><td>9</td><td>12.2</td><td>lively</td></tr>
+          <tr><td>No. 4</td><td>8</td><td>9.6</td><td>testy</td></tr>
+          <tr><td>Little Jo</td><td>6</td><td>5.1</td><td>calm</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+  <div id="scene" drawable aria-hidden="true"><svg id="meadow" preserveAspectRatio="none"></svg></div>
+</canvas>
+<script src="../../lib/hic.js"></script>
+<script src="../../lib/swarm.js"></script>
+<script>
+(function () {
+  'use strict';
+  // the meadow in front: far limes and hedges, three hives on stands, lavender and grass
+  function meadow(W, H) {
+    var svg = document.getElementById('meadow'), g = H * 0.93, out = [];
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    out.push('<path fill="#b9a77c" opacity=".55" d="' + Swarm.draw.ridge(W, H * 0.9, H * 0.07, 3, 5, { trees: true, base: H }) + '"/>');
+    out.push('<path fill="#7d7a4a" opacity=".8" d="' + Swarm.draw.ridge(W, H * 0.935, H * 0.045, 6, 8, { trees: true, base: H }) + '"/>');
+    var hives = '', x0 = Math.max(16, W * 0.03), hw = Math.max(34, Math.min(70, W * 0.045));
+    for (var i = 0; i < 3; i++) {
+      var x = x0 + i * hw * 1.45, h = hw * (0.9 + 0.12 * (i % 2)), top = g - h - hw * 0.25;
+      hives += 'M' + x + ' ' + (top + h) + ' h' + hw + ' v' + (-h) + ' h' + (-hw) + 'Z';                                  // the box
+      hives += 'M' + (x - hw * 0.08) + ' ' + top + ' h' + hw * 1.16 + ' l' + (-hw * 0.08) + ' ' + (-hw * 0.16) + ' h' + (-hw) + 'Z';  // the roof
+      hives += 'M' + (x + hw * 0.1) + ' ' + (top + h) + ' v' + hw * 0.3 + ' h4 v' + (-hw * 0.3) + 'Z M' + (x + hw * 0.86) + ' ' + (top + h) + ' v' + hw * 0.3 + ' h4 v' + (-hw * 0.3) + 'Z';
+    }
+    out.push('<path fill="#5a3d1c" d="' + hives + '"/>');
+    var grass = Swarm.draw.blades(0, W, H + 2, Math.round(W / 3), H * 0.02, H * 0.07, 12, { lean: 0.5, depth: 6 });
+    out.push('<path fill="none" stroke="#5f6a2e" stroke-width="1.3" stroke-linecap="round" d="' + grass.stems + '"/>');
+    var lav = Swarm.draw.blades(W * 0.55, W, H + 2, Math.round(W / 9), H * 0.04, H * 0.1, 21, { lean: 0.3, head: true, headChance: 0.9, headLen: 0.32, headW: 2.6 });
+    out.push('<path fill="none" stroke="#56603a" stroke-width="1.4" d="' + lav.stems + '"/><path fill="#7b5aa6" d="' + lav.heads + '"/>');
+    svg.innerHTML = out.join('');
+  }
+  var swarm = Swarm.start({
+    page: '#page', scene: '#scene', onResize: meadow, seed: 34,
+    sky: {
+      stops: [[0, '#9fbcd8'], [0.4, '#e4e6dc'], [0.72, '#f6e3b4'], [1, '#f0bf62']],
+      sun: { x: 0.62, y: 0.76, r: 0.042, color: '#ffe3a0', glow: 0.42 },
+      clouds: { amount: 0.3, y0: 0.25, y1: 0.6, shade: '#d9cfb8', lit: '#fff1cf', scale: 0.8 }, cirrus: 0.2, rays: 0.6, vignette: 0.18
+    },
+    creature: { shape: 'bee', size: 2.4, flap: 26, glide: 0.12, tint: '#e2a51f', tintMix: 0.78, haze: '#f2deb0' },
+    flock: { shape: 'ball', leaders: 56, speed: 190, minSpeed: 80, maxTurn: 3.4, align: 3, salience: 4, cohere: 2, wander: 1.1,
+      spread: 0.38, thick: 1, stretch: 1, jitter: 70, area: [0.18, 0.12, 0.86, 0.58], depth: 0.3, follow: [8, 26], startle: [4, 7] },
+    lift: { speed: 1100, gather: 0.3, kick: 260 },
+    land: { order: 'origin', span: 1.6 },
+    idle: { every: [1.2, 3] },
+    trigger: { fly: '#open', land: '#home' },
+    sound: { kind: 'buzz', ambience: 'birds', toggle: '#sound' }
+  });
+  // sort the ledger by a column: the rows fly to their new places
+  var table = document.getElementById('ledger');
+  table.tHead.addEventListener('click', function (e) {
+    var b = e.target.closest('th button'); if (!b) return;
+    var col = +b.dataset.col, th = b.parentNode, body = table.tBodies[0], rows = [].slice.call(body.rows);
+    var dir = th.getAttribute('aria-sort') === 'descending' ? 'ascending' : 'descending';
+    var key = function (r) { var t = r.cells[col].textContent.trim(); var n = parseFloat(t.replace(/[^\d.]/g, '')); return isNaN(n) ? t.toLowerCase() : n; };
+    swarm.reflow(function () {
+      [].forEach.call(table.tHead.rows[0].cells, function (c) { c.setAttribute('aria-sort', 'none'); });
+      th.setAttribute('aria-sort', dir);
+      rows.slice().sort(function (a, c) { var x = key(a), y = key(c); return (x < y ? -1 : x > y ? 1 : 0) * (dir === 'ascending' ? 1 : -1); }).forEach(function (r) { body.appendChild(r); });
+    }, rows);
+  });
+})();
+</script>
+</body>
+</html>
