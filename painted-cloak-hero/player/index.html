@@ -3,19 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hero animation review</title>
+<title>Hero clip review</title>
 <style>
-  html, body { margin: 0; height: 100%; background: #8c8ea0; overflow: hidden; font: 500 13px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif; }
-  #stage { position: fixed; inset: 0; }
+  html, body { margin: 0; height: 100%; background: #7d7a97; overflow: hidden; font: 500 13px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  #stage { position: fixed; inset: 0; touch-action: none; cursor: grab; }
   canvas { display: block; width: 100%; height: 100%; }
   .hud { position: fixed; left: 18px; top: 14px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.25); pointer-events: none; letter-spacing: .02em; }
   .hud b { font-weight: 600; font-size: 14px; display: block; margin-bottom: 2px; }
-  .inset { position: fixed; right: 18px; top: 14px; width: 19vw; min-width: 96px; max-width: 260px; aspect-ratio: 8 / 9; border: 2px solid rgba(255,255,255,.85); background: #5c5e6a; overflow: hidden; }
+  .inset { position: fixed; right: 18px; top: 14px; width: 17vw; min-width: 84px; max-width: 220px; aspect-ratio: 3 / 4; border: 2px solid rgba(255,255,255,.7); background: #5c5a70; overflow: hidden; }
   .inset img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .bar { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: center; max-width: calc(100% - 24px); }
   .bar button { font: inherit; color: #fff; background: rgba(30,32,44,.55); border: 1px solid rgba(255,255,255,.35); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
   .bar button.on { background: rgba(255,255,255,.9); color: #23242c; }
-  .bar input { width: min(260px, 40vw); accent-color: #fff; }
+  .bar input { width: min(200px, 34vw); accent-color: #fff; }
   body.capture .bar { display: none; }
 </style>
 <script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
@@ -24,17 +24,19 @@
 <div id="stage"></div>
 <div class="hud"><b id="title">HERO / ANIMATION REVIEW</b><span id="clip">–</span><br><span id="frame">–</span></div>
 <div class="inset" id="inset" hidden><img id="back" alt="back-view concept"></div>
-<div class="bar" id="bar"><button id="play" class="on">❚❚</button><input id="scrub" type="range" min="0" max="1000" value="0"></div>
+<div class="bar" id="bar"><button id="play" class="on" aria-label="play / pause">❚❚</button><input id="scrub" type="range" min="0" max="1000" value="0" aria-label="frame"><button id="orbit" class="on">orbit</button></div>
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from './vendor/jsm/loaders/GLTFLoader.js';
 
-// The review scene from the source workflow: grey floor, fixed camera, back-view concept in the corner.
-// Blender is Z-up; glTF / three.js is Y-up: (x, y, z)_blender -> (x, z, -y).
+// The review scene from the source: flat floor, fixed light, the concept pinned in the corner, every clip on its own
+// with its name and a frame counter. The hero stays on the spot; the camera orbits (drag to turn it), the floor
+// scrolls under a walk. Blender is Z-up; glTF / three.js is Y-up: (x, y, z)_blender -> (x, z, -y).
 const q = new URLSearchParams(location.search);
 const base = q.get('src') || '.';
 const meta = await (await fetch(`${base}/meta.json`)).json();
 const B = (v) => new THREE.Vector3(v[0], v[2], -v[1]);
+const fps = meta.fps || 24;
 
 document.body.style.background = meta.review.bg;
 document.getElementById('title').textContent = meta.review.title || 'HERO / ANIMATION REVIEW';
@@ -49,68 +51,84 @@ document.getElementById('stage').appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(meta.review.bg);
-scene.fog = new THREE.Fog(meta.review.bg, 6, 16);
-const cam = new THREE.PerspectiveCamera(20, 16 / 9, 0.05, 60);
-cam.position.copy(B(meta.camera.loc));
-const target = B(meta.camera.target);
-cam.lookAt(target);
+scene.fog = new THREE.Fog(meta.review.bg, 9, 26);
+const cam = new THREE.PerspectiveCamera(20, 16 / 9, 0.05, 80);
 const lensV = (lens, aspect) => 2 * Math.atan(36 / Math.max(aspect, 1) / 2 / lens) * 180 / Math.PI;
+const cf = meta.cam_fn;
+function placeCam(yawDeg) {
+  // same as build.review_camera: target shifted to the hero's right of frame (away from the inset)
+  const a = yawDeg * Math.PI / 180, el = cf.elev * Math.PI / 180;
+  const side = [Math.cos(a), Math.sin(a)];
+  const tb = [side[0] * cf.dx, side[1] * cf.dx, cf.tz];
+  const lb = [tb[0] + Math.sin(a) * cf.dist * Math.cos(el), tb[1] - Math.cos(a) * cf.dist * Math.cos(el), tb[2] + cf.dist * Math.sin(el)];
+  cam.position.copy(B(lb));
+  cam.lookAt(B(tb));
+}
+const orbit = meta.camera.orbit || [-25, 80];
+const orbitAt = (u) => { const k = u * u * (3 - 2 * u); return orbit[0] + (orbit[1] - orbit[0]) * k; };
 
-// floor + grid (0.25 m)
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshStandardMaterial({ color: meta.review.floor, roughness: .9 }));
+// floor + grid: one grid step wide wrap, so the scroll never jumps
+const step = meta.grid || 0.25;
+const floorG = new THREE.Group();
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.MeshStandardMaterial({ color: meta.review.floor, roughness: .92 }));
 floor.rotation.x = -Math.PI / 2;
 floor.receiveShadow = true;
-scene.add(floor);
-const grid = new THREE.GridHelper(40, 160, meta.review.grid || '#6d6f80', meta.review.grid || '#6d6f80');
+const grid = new THREE.GridHelper(60, Math.round(60 / step), meta.review.grid || '#8c89a3', meta.review.grid || '#8c89a3');
 grid.position.y = 0.001;
-grid.material.transparent = true; grid.material.opacity = .55;
-scene.add(grid);
+grid.material.transparent = true; grid.material.opacity = .5;
+floorG.add(floor, grid);
+scene.add(floorG);
 
-scene.add(new THREE.HemisphereLight(0xdfe3f0, 0x55576a, 1.4));
-const key = new THREE.DirectionalLight(0xfff6ec, 2.2);
-key.position.copy(target).add(new THREE.Vector3(-2.2, 3.2, 2.6));
-key.target.position.copy(target);
-key.castShadow = true;
-key.shadow.mapSize.set(2048, 2048);
-Object.assign(key.shadow.camera, { left: -2.5, right: 2.5, top: 2.5, bottom: -2.5, near: .5, far: 12 });
-key.shadow.radius = 6;
-key.shadow.bias = -0.0005;
-scene.add(key, key.target);
-const fill = new THREE.DirectionalLight(0xe8edff, 0.9);
-fill.position.copy(cam.position).add(new THREE.Vector3(1.5, 0.5, 0));
-scene.add(fill);
-const rim = new THREE.DirectionalLight(0xffffff, 1.2);
-rim.position.copy(target).add(new THREE.Vector3(1.2, 2.6, -3.0));
+// fixed light: a warm sun from the front left (shadow back right), a cool sky fill, a rim
+scene.add(new THREE.HemisphereLight(0xdfe0f2, 0x57546c, 1.25));
+const sun = new THREE.DirectionalLight(0xfff1dc, 2.6);
+sun.position.copy(B([-0.6 * 6, -0.55 * 6, 0.58 * 6]));
+sun.target.position.set(0, 0.8, 0);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -2.5, right: 2.5, top: 2.5, bottom: -2.5, near: .5, far: 16 });
+sun.shadow.radius = 5;
+sun.shadow.bias = -0.0006;
+scene.add(sun, sun.target);
+const rim = new THREE.DirectionalLight(0xffffff, 0.9);
+rim.position.copy(B([1.2, 3.0, 2.6]));
 scene.add(rim);
 
 const gltf = await new GLTFLoader().loadAsync(`${base}/character.glb`);
 const hero = gltf.scene;
-hero.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
+hero.traverse((o) => {
+  if (!o.isMesh) return;
+  o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false;
+  const m = o.material;
+  if (m && m.alphaTest > 0) { m.side = THREE.DoubleSide; o.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: m.map, alphaTest: m.alphaTest }); }
+});
 scene.add(hero);
 const mixer = new THREE.AnimationMixer(hero);
-const clip = gltf.animations[0];
-const action = mixer.clipAction(clip);
-action.play();
-const DURATION = meta.duration ?? clip.duration;
-const N = meta.n ?? Math.round(DURATION * (meta.fps || 24)) + 1;
+const byName = Object.fromEntries(gltf.animations.map((a) => [a.name, a]));
 
 if (meta.back) {
   document.getElementById('back').src = `${base}/${meta.back}`;
   document.getElementById('inset').hidden = false;
 }
 
-function label(t) {
-  let c = meta.clips[0];
-  for (const k of meta.clips) if (t >= k.t0 - 1e-6) c = k;
-  const kind = ['walk', 'turn', 'spin'].includes(c.type) ? 'locomotion' : 'in place';
-  return `${c.label[0].toUpperCase() + c.label.slice(1)} [${kind}]  ${(t - c.t0).toFixed(2)} s`;
+let ci = Math.max(0, meta.clips.findIndex((c) => c.label === q.get('clip')));
+let action = null;
+const KIND = { walk: 'locomotion', run: 'locomotion', idle: 'loop', turn: 'one-shot' };
+function pick(i) {
+  ci = i;
+  const c = meta.clips[i];
+  if (action) action.stop();
+  const anim = byName[c.label] || gltf.animations[i];
+  action = mixer.clipAction(anim);
+  action.play();
+  T = 0;
+  for (const b of document.querySelectorAll('.bar .clipb')) b.classList.toggle('on', b.dataset.i == i);
 }
 
 function size() {
   const w = innerWidth, h = innerHeight;
   renderer.setSize(w, h, false);
   cam.aspect = w / h;
-  // keep the Blender framing: same vertical field when wide, widen when tall (phones)
   const v = lensV(meta.camera.lens, 16 / 9);
   cam.fov = cam.aspect >= 16 / 9 ? v : 2 * Math.atan(Math.tan(v * Math.PI / 360) * (16 / 9) / cam.aspect) * 180 / Math.PI;
   cam.updateProjectionMatrix();
@@ -118,34 +136,59 @@ function size() {
 addEventListener('resize', size);
 size();
 
-let t = 0, playing = !q.has('capture'), last = performance.now();
+// T = time since the clip started (keeps running across loops; the floor and the orbit use it)
+let T = 0, playing = !q.has('capture'), auto = true, yaw = orbit[0], last = performance.now();
+const reviewLen = () => { const c = meta.clips[ci]; return c.loop ? Math.max(c.dur, Math.ceil((meta.review.clipSeconds || 3) / c.dur) * c.dur) : c.dur; };
 function draw() {
-  mixer.setTime(Math.min(t, clip.duration - 1e-4));
+  const c = meta.clips[ci];
+  const t = c.loop ? T % c.dur : Math.min(T, c.dur);
+  mixer.setTime(Math.min(t, c.dur - 1e-4));
+  const d = c.speed > 0 ? (c.speed * T) % step : 0;
+  const f = B(c.fwd);
+  floorG.position.set(-f.x * d, 0, -f.z * d);
+  if (auto) yaw = orbitAt(Math.min(1, (T % reviewLen()) / reviewLen()));
+  placeCam(yaw);
   renderer.render(scene, cam);
-  const f = Math.min(N, Math.floor(t * (meta.fps || 24) + 1e-6) + 1);
-  document.getElementById('clip').textContent = label(t);
-  document.getElementById('frame').textContent = `${f} / ${N}`;
-  document.getElementById('scrub').value = Math.round(t / DURATION * 1000);
+  const n = c.loop ? c.n : c.n + 1;
+  document.getElementById('clip').textContent = `${c.label[0].toUpperCase() + c.label.slice(1)} [${KIND[c.type] || (c.loop ? 'loop' : 'one-shot')}]  ${t.toFixed(2)} s`;
+  document.getElementById('frame').textContent = `${Math.min(n, Math.floor(t * fps + 1e-6) + 1)} / ${n}`;
+  document.getElementById('scrub').value = Math.round(t / c.dur * 1000);
 }
 function loop(now) {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
-  if (playing) { t += dt; if (t > DURATION) t = 0; }
+  if (playing) {
+    T += dt;
+    const c = meta.clips[ci];
+    if (!c.loop && T > c.dur + 0.8) T = 0;
+  }
   draw();
   requestAnimationFrame(loop);
 }
-document.getElementById('play').onclick = (e) => { playing = !playing; e.target.textContent = playing ? '❚❚' : '▶'; e.target.classList.toggle('on', playing); };
-document.getElementById('scrub').oninput = (e) => { t = e.target.value / 1000 * DURATION; playing = false; document.getElementById('play').textContent = '▶'; document.getElementById('play').classList.remove('on'); };
-for (const c of meta.clips) {
+const playB = document.getElementById('play');
+const setPlay = (p) => { playing = p; playB.textContent = p ? '❚❚' : '▶'; playB.classList.toggle('on', p); };
+playB.onclick = () => setPlay(!playing);
+document.getElementById('scrub').oninput = (e) => { T = e.target.value / 1000 * meta.clips[ci].dur; setPlay(false); };
+const orbitB = document.getElementById('orbit');
+orbitB.onclick = () => { auto = !auto; orbitB.classList.toggle('on', auto); };
+meta.clips.forEach((c, i) => {
   const b = document.createElement('button');
-  b.textContent = c.label;
-  b.onclick = () => { t = c.t0; };
-  document.getElementById('bar').appendChild(b);
-}
+  b.textContent = c.label; b.className = 'clipb'; b.dataset.i = i;
+  b.onclick = () => pick(i);
+  document.getElementById('bar').insertBefore(b, playB);
+});
+// drag to orbit
+let drag = null;
+const st = document.getElementById('stage');
+st.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, yaw }; auto = false; orbitB.classList.remove('on'); st.setPointerCapture(e.pointerId); });
+st.addEventListener('pointermove', (e) => { if (drag) yaw = drag.yaw - (e.clientX - drag.x) * 0.4; });
+st.addEventListener('pointerup', () => { drag = null; });
+pick(ci);
 
-// contract: seek(t) renders that instant; DURATION; __ready
-window.DURATION = DURATION;
-window.seek = (s) => { t = Math.max(0, Math.min(DURATION, s)); draw(); };
+// contract: seek(t) renders that instant of the current clip (t in seconds, may run past one loop); DURATION; __ready
+window.DURATION = reviewLen();
+window.clip = (label) => { const i = meta.clips.findIndex((c) => c.label === label); if (i >= 0) { pick(i); window.DURATION = reviewLen(); } };
+window.seek = (s) => { T = Math.max(0, s); draw(); };
 window.__ready = true;
 requestAnimationFrame(loop);
 </script>

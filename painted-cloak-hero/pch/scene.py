@@ -87,7 +87,7 @@ def lights(target=(0, 0, 0.6), scale=1.0, H=1.1):
     sun.color = (1.0, 0.95, 0.86)
     so = bpy.data.objects.new('sun', sun)
     bpy.context.scene.collection.objects.link(so)
-    so.rotation_euler = Euler((math.radians(58), 0, math.radians(-128)), 'XYZ')
+    so.rotation_euler = Euler((math.radians(55), 0, math.radians(-47)), 'XYZ')   # from the front left; shadow falls back right
     out.append(so)
     for name, loc, energy, size, col in (
         ('fill', (2.8, -2.2, 1.8), 60, 3.0, (0.86, 0.9, 1.0)),

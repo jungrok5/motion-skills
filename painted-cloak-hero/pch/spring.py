@@ -36,7 +36,8 @@ class ChainSim:
         self.sub = substeps
         self.state = {}
         self.hist = []          # per frame: {parent bone: delta}, for the delayed goals
-        self.parents = sorted({c['parent'] for c in chains})
+        self.parents = sorted({c['parent'] for c in chains} | ({'upper_arm.L', 'upper_arm.R', 'forearm.L', 'forearm.R'}
+                                                               if any(c['params'].get('armKick') for c in chains) else set()))
         self.stats = {c['name']: {'max_dev': 0.0, 'sum_dev': 0.0, 'n': 0} for c in chains}
 
     def _params(self, c):
@@ -56,20 +57,28 @@ class ChainSim:
             'fold': math.radians(float(p.get('fold', 8))),
         }
 
-    def _ring_limit(self, D, c, d, gd, pr):
+    def _ring_limit(self, D, c, d, gd, pr, lag=0.0):
         """Skirt / cape rows: free to flare outward, but only a little sideways twist and inward fold, so rows never
         cross each other (a twirl would otherwise wrap the skirt round the legs)."""
-        M3 = D[c['parent']].to_3x3()
+        # the row's own frame, as late as the row follows the body (so a limit never drags the hem along 'now')
+        M3 = (self.delayed(c['parent'], lag) if lag > 0 and self.hist else D[c['parent']]).to_3x3()
         th = pr['ring']
         rh = M3 @ Vector((math.cos(th), math.sin(th), 0))
         th_ = M3 @ Vector((-math.sin(th), math.cos(th), 0))
         zh = M3 @ Vector((0, 0, 1))
         L = d.length
         dt, dr, dz = d.dot(th_), d.dot(rh), d.dot(zh)
-        tw = max(-pr['twist'], min(pr['twist'], math.atan2(dt, math.hypot(dr, dz))))
+        # soft limits (smooth saturation, not a hard clamp): a hard clamp made fast loops (a run) chaotic — the hem
+        # hit the stop at a slightly different moment every cycle and the loop never repeated
+        tw = pr['twist'] * math.tanh(math.atan2(dt, math.hypot(dr, dz)) / max(pr['twist'], 1e-6))
         phi = math.atan2(dr, -dz)
         phi0 = math.atan2(gd.dot(rh), -gd.dot(zh))
-        phi = max(phi0 - pr['fold'], min(min(phi0 + pr['cone'], math.radians(100)), phi))
+        lo = phi0 - pr['fold']
+        hi = min(phi0 + pr['cone'], math.radians(100))
+        k = max(0.02, 0.3 * pr['fold'])
+        phi = lo + k * math.log1p(math.exp(min(40.0, (phi - lo) / k)))
+        k2 = max(0.02, 0.25 * (hi - phi0))
+        phi = hi - k2 * math.log1p(math.exp(min(40.0, (hi - phi) / k2)))
         return (rh * math.sin(phi) - zh * math.cos(phi)) * math.cos(tw) * L + th_ * math.sin(tw) * L
 
     def _colliders(self, D):
@@ -123,9 +132,11 @@ class ChainSim:
         R.translation = A.translation.lerp(B.translation, f)
         return R
 
-    def goals(self, D, c):
+    def goals(self, D, c, lag=None):
+        """Where the chain's joints should be. lag=0 gives the no-delay goal (what 'moving with the body' would be),
+        which the lag check measures against."""
         Dp = D[c['parent']]
-        lag = float(c['params'].get('lag', 0.0))
+        lag = float(c['params'].get('lag', 0.0)) if lag is None else lag
         n = len(c['points']) - 1
         if lag > 0 and self.hist:
             g = [Dp @ c['points'][0]] + [self.delayed(c['parent'], lag * i / n) @ c['points'][i] for i in range(1, n + 1)]
@@ -143,15 +154,20 @@ class ChainSim:
                 w = max(0.0, sx * math.cos(th)) ** 1.2
                 if w < 0.02:
                     continue
-                el_rest = Dp @ sk.tail['upper_arm.' + s]
-                wr_rest = Dp @ sk.tail['forearm.' + s]
-                del_ = D['upper_arm.' + s] @ sk.tail['upper_arm.' + s] - el_rest
-                dwr = D['forearm.' + s] @ sk.tail['forearm.' + s] - wr_rest
-                z_el, z_wr = el_rest.z, wr_rest.z
                 for i in range(1, n + 1):
+                    # the arm's push reaches each row as late as the body's motion does (lag * i / n frames)
+                    dl = lag * i / n if lag > 0 and self.hist else 0.0
+                    Dc = self.delayed(c['parent'], dl) if dl else Dp
+                    Dua = self.delayed('upper_arm.' + s, dl) if dl else D['upper_arm.' + s]
+                    Dfa = self.delayed('forearm.' + s, dl) if dl else D['forearm.' + s]
+                    el_rest = Dc @ sk.tail['upper_arm.' + s]
+                    wr_rest = Dc @ sk.tail['forearm.' + s]
+                    del_ = Dua @ sk.tail['upper_arm.' + s] - el_rest
+                    dwr = Dfa @ sk.tail['forearm.' + s] - wr_rest
+                    z_el, z_wr = el_rest.z, wr_rest.z
                     z = g[i].z
                     if z >= z_el:
-                        k = max(0.0, 1 - (z - z_el) / max(1e-3, (Dp @ sk.head['upper_arm.' + s]).z - z_el))
+                        k = max(0.0, 1 - (z - z_el) / max(1e-3, (Dc @ sk.head['upper_arm.' + s]).z - z_el))
                         dv = del_ * k
                     elif z >= z_wr:
                         f = (z_el - z) / max(1e-3, z_el - z_wr)
@@ -216,13 +232,14 @@ class ChainSim:
                     if d.length < 1e-9:
                         d = gd.copy()
                     if pr['ring'] is not None:
-                        d = self._ring_limit(D, c, d, gd, pr)
+                        d = self._ring_limit(D, c, d, gd, pr, float(c['params'].get('lag', 0.0)) * i / (len(pos) - 1))
                     # cone limit around the rest (goal) direction
                     ang = d.angle(gd) if gd.length > 1e-9 else 0.0
-                    if ang > pr['cone']:
+                    lim = pr['cone'] * math.tanh(ang / max(pr['cone'], 1e-6))      # soft cone
+                    if ang > 1e-6 and ang - lim > 1e-6:
                         axis = gd.cross(d)
                         if axis.length > 1e-9:
-                            d = Matrix.Rotation(pr['cone'], 3, axis.normalized()) @ gd.normalized()
+                            d = Matrix.Rotation(lim, 3, axis.normalized()) @ gd.normalized()
                     q = a + d.normalized() * lens[i - 1]
                     for kind in pr['collide']:
                         if kind == 'skirt':

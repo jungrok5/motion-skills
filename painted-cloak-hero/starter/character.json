@@ -10,7 +10,7 @@
     { "type": "trousers", "color": "#46503f", "fit": 1.25 },
     { "type": "top", "color": "#e6dfcb", "to": "hips", "sleeves": "short", "collar": "#e6dfcb" },
     { "type": "boots", "color": "#4a3426", "height": 0.42, "sole": "#2b1f17" },
-    { "type": "cloak", "color": "#3d6b4f", "length": 0.3, "lag": 3, "clasp": "#b08d3c",
+    { "type": "cloak", "color": "#3d6b4f", "length": 0.3, "lag": 4, "clasp": "#b08d3c",
       "paint": { "tones": ["#24432f", "#3d6b4f", "#6f9a6c"] } },
     { "type": "hat", "style": "cone", "color": "#c9a35a", "band": "#5a3b22", "ties": "#5a3b22",
       "paint": { "tones": ["#8f6c34", "#c9a35a", "#e8cf8a"] } }

@@ -56,14 +56,15 @@ def motion_hash(clips):
 
 def measure_lag(c, chains):
     """Frames by which the cloak hem follows where the body puts it: argmin over k of |tip(f) - goal(f - k)|
-    (circular for loops, means removed so the steady trailing offset does not count). Returns (lag, per chain)."""
+    (circular for loops, means removed so the steady trailing offset does not count). Horizontal only: the chain does
+    not stretch, so the walk's up-and-down bob reaches the hem at once — the delay is in the swing. Returns (lag, per chain)."""
     fr = c['frames']
     n = c['n'] if c['loop'] else len(fr)
     out = {}
     for ch in chains:
         name = ch['name']
-        tip = [V(f['tips'][name][0]) for f in fr[:n]]
-        goal = [V(f['tips'][name][1]) for f in fr[:n]]
+        tip = [_flat(V(f['tips'][name][0])) for f in fr[:n]]
+        goal = [_flat(V(f['tips'][name][1])) for f in fr[:n]]
         if c['loop']:
             mt = sum(tip, Vector()) / n
             mg = sum(goal, Vector()) / n

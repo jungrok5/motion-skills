@@ -79,7 +79,7 @@ class Ctx:
         if isinstance(own, dict):
             pnt.update(own)
         su, sv = PT.uv_scale(ob.data)
-        if su * sv < 4e-4:             # tiny pieces (buttons, glints): plain colour
+        if su * sv < 3e-3:             # tiny pieces (eyes, brows, buttons): plain colour
             return {k: v for k, v in mat.items() if k != 'paint'}
         m = dict(mat)
         m.pop('pattern', None)
@@ -730,8 +730,9 @@ def hat_part(ctx, p):
                 ctx.add(tie, p['ties'], rigid='head')
                 bands.append(tie)
     elif style == 'beanie':
-        crown = geom.lathe('hat_crown', [(0.0001, r.z * 0.75), (rr * 0.8, r.z * 0.6), (rr, r.z * 0.2), (rr * 1.02, -r.z * 0.1)],
-                           segs=40, center=(0, c.y, base_z - r.z * 0.1))
+        rb = rr * 1.1                       # a knit cap sits over the hair, so it is a size up from the head
+        crown = geom.lathe('hat_crown', [(0.0001, r.z * 1.0), (rb * 0.55, r.z * 0.94), (rb * 0.88, r.z * 0.7), (rb, r.z * 0.3),
+                                         (rb * 1.02, -r.z * 0.12)], segs=40, center=(0, c.y, base_z - r.z * 0.2))
         geom.solidify(crown, 0.006 * H)
         crowns.append(crown)
         fr = 0.0

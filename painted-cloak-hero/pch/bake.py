@@ -77,7 +77,7 @@ def bake_clip(rig, body, ctx, m, c, fps, warm_loops=3):
     sim = ChainSim(sk, ctx.chains, body, ctx.surfaces, fps)
     chain_bones = {b for ch in ctx.chains for b in ch['bones']}
     W = (warm_loops * N) if loop else 0
-    frames_D, frames_P, frames_pose, frames_info, travel = [], [], [], [], []
+    frames_D, frames_P, frames_pose, frames_info, frames_G, travel = [], [], [], [], [], []
     for k in range(-W, N + 1):
         t = k / fps
         pose = fn(m, c, t if loop else max(0.0, min(t, c['dur'])), root0)
@@ -86,6 +86,7 @@ def bake_clip(rig, body, ctx, m, c, fps, warm_loops=3):
         if k < 0:
             continue
         T = fwd * (v * t)
+        G0 = {ch['name']: sim.goals(D, ch, lag=0.0)[-1] - T for ch in ctx.chains}
         Tm = Matrix.Translation(-T)
         D = {b: Tm @ M for b, M in D.items()}
         P = {ch['name']: [q - T for q in sim.state[ch['name']][0]] for ch in ctx.chains}
@@ -93,6 +94,7 @@ def bake_clip(rig, body, ctx, m, c, fps, warm_loops=3):
         frames_P.append(P)
         frames_pose.append(pose)
         frames_info.append(info)
+        frames_G.append(G0)
         travel.append(v * t)
     seam = 0.0
     seams = {}
@@ -130,7 +132,7 @@ def bake_clip(rig, body, ctx, m, c, fps, warm_loops=3):
         tips = {}
         for ch in ctx.chains:
             last = ch['bones'][-1]
-            goal = D[ch['parent']] @ ch['points'][-1]
+            goal = frames_G[f][ch['name']]          # where the hem would be if it moved with the body (no delay)
             tips[ch['name']] = [list(D[last] @ sk.tail[last]), list(goal), [list(q) for q in frames_P[f][ch['name']]]]
         info = frames_info[f]
         frames.append({'f': f, 't': round(f / fps, 4), 'travel': travel[f], 'pose': {

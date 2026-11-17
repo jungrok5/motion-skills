@@ -39,12 +39,13 @@ def auto_tones(col):
     """dark / mid / light from one colour: shadows cooler and deeper, lights warmer and paler (a painter's palette)."""
     r, g, b = hex_rgb(col)
     h, l, s = colorsys.rgb_to_hls(r, g, b)
-    dk = 0.62 + 0.24 * max(0.0, (l - 0.55) / 0.45)        # pale cloth gets softer shadows (no dirty blotches)
+    dk = 0.62 + 0.27 * max(0.0, (l - 0.55) / 0.45)        # pale cloth gets softer shadows (no dirty blotches)
     dark = colorsys.hls_to_rgb((h + 0.02) % 1, l * dk, min(1, s * 1.08))
-    cool = (0.36, 0.37, 0.48)                            # shadows lean cool (grey-violet), most on pale cloth
-    mixk = 0.12 + 0.3 * max(0.0, (l - 0.55) / 0.45)
+    cool = (0.38, 0.38, 0.56)                            # shadows lean cool (grey-violet), most on pale cloth
+    mixk = 0.12 + 0.42 * max(0.0, (l - 0.55) / 0.45)
     dark = tuple(d * (1 - mixk) + c * l * mixk * 1.25 for d, c in zip(dark, cool))
-    light = colorsys.hls_to_rgb((h - 0.025) % 1, min(0.92, l + (1 - l) * 0.38), s * 0.92)
+    lf = 0.16 + 0.22 * min(1.0, l / 0.5)                  # dark cloth gets subtle lights, not pale streaks
+    light = colorsys.hls_to_rgb((h - 0.025) % 1, min(0.92, l + (1 - l) * lf), s * 0.92)
     return [dark, (r, g, b), light]
 
 
@@ -89,13 +90,15 @@ def draw(spec, color, scale):
     tones = [hex_rgb(t) for t in spec['tones']] if spec.get('tones') else auto_tones(color)
     nt = len(tones)
     pale = colorsys.rgb_to_hls(*hex_rgb(color))[1] > 0.72 and not spec.get('tones')
-    wts = spec.get('weights') or (([0.14, 0.5, 0.36] if pale else [0.28, 0.42, 0.30]) if nt == 3 else [1 / nt] * nt)
+    wts = spec.get('weights') or (([0.1, 0.52, 0.38] if pale else [0.28, 0.42, 0.30]) if nt == 3 else [1 / nt] * nt)
     wts = np.array(wts[:nt], float)
     wts /= wts.sum()
     canvas = np.empty((H, W, 3), np.float32)
     canvas[:] = tones[int(spec.get('base', min(1, nt - 1)))]
     lmin, lmax = spec.get('len', [0.07, 0.2])
     wmin, wmax = spec.get('width', [0.022, 0.045])
+    ks = max(0.2, min(1.0, math.sqrt(su * sv) / 0.3))     # small pieces (a cuff, a hand) get a smaller brush
+    lmin, lmax, wmin, wmax = lmin * ks, lmax * ks, wmin * ks, wmax * ks
     ang0 = math.radians(float(spec.get('angle', 90)))
     jit = math.radians(float(spec.get('jitter', 14)))
     bristle = float(spec.get('bristle', 0.5))
