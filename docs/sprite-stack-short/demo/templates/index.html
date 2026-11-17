@@ -1,0 +1,51 @@
+<!doctype html>
+<!-- index.html — the short. Order: BRIEF.md (the topic as a short) → cast.js (models, reviewed on sheet.html) → this page.
+     Every frame is seek(t). Check: node <skill>/scripts/check.mjs index.html --scale .5 · stills: render.mjs index.html --stills 2,8 -->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>sprite-stack short</title>
+<style>@font-face { font-family: "ALF Sans"; src: url("../lib/fonts/ALFSans-ksx1001.woff2") format("woff2"); font-weight: 100 900; }</style>
+<script src="../lib/stack.js"></script>
+<script src="../lib/world.js"></script>
+<script src="../lib/film.js"></script>
+<script src="../lib/score.js"></script>
+<script src="cast.js"></script>
+</head>
+<body>
+<script>
+const C = window.CAST;
+
+// the world (BRIEF.md → "the world"): ground material, areas, paths, props. This example: a little square with a lawn ring.
+const world = SS.world({
+  size: [320, 320],
+  ground: { kind: 'tiles', a: '#d9d2c3', b: '#cfc7b6', grout: '#b9b09d', size: 8 },
+  areas: [
+    { name: 'lawn', fill: 'grass', poly: [[40, 40], [280, 40], [280, 110], [110, 110], [110, 210], [280, 210], [280, 280], [40, 280]], edge: { w: 2, kind: 'line', color: '#8f8778' } },
+  ],
+  props: [
+    { m: C.hero, x: 190, y: 160, a: Math.PI / 2 },
+    { m: C.bench, x: 160, y: 130 }, { m: C.bench, x: 160, y: 190, a: Math.PI },
+  ],
+  scatter: [{ models: [C.tree], n: 14, on: ['lawn'], seed: 5, gap: 6 }],
+  // a vehicle instead? add  mover: { model: C.hero, path: 0, mass, speed, on: [...], engine }  and a  paths: [{ pts, paint: false }]
+  // (see examples/tugboat-dawn): then the camera follows it and check.mjs measures its motion.
+});
+
+SS.film({
+  title: 'Post Box',
+  hero: C.hero, models: [C.hero, C.tree, C.bench], world,
+  beats: [                                    // the form: views → slices → stack → turn → world (+ an opening world shot, a title)
+    { kind: 'views', dur: 3.6, caption: 'Draw it from four sides' },
+    { kind: 'slices', dur: 4.2, caption: 'Each row of the side view becomes a slice' },
+    { kind: 'stack', dur: 3, caption: 'Stack the slices 1 px apart and turn them' },
+    { kind: 'turn', dur: 2.6 },
+    { kind: 'world', dur: 5, zoom: 2, in: 'tiles', camera: { orbit: [190, 160], rate: .35 }, caption: 'Any angle, in its own world' },
+    { kind: 'title', dur: 2.2, zoom: 2, camera: { orbit: [190, 160], rate: .35 }, text: 'Post Box' },
+  ],
+  score: { bpm: 112, key: 60, melody: '1 2 3 5 3 2 1 .', chords: '1 4 5 1' },
+}).start();
+</script>
+</body>
+</html>
