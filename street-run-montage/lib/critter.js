@@ -151,7 +151,10 @@ export class Buddy {
     const p = ((ph - offs[nm]) % 1 + 1) % 1, cyc = Math.floor(ph - offs[nm]);
     const footAt = c => { const tt = this.Ph.inverse(c + offs[nm]), vv = Math.max(0, this.Vs.at(tt)), rr = this.stride(vv) * duty / 2, sq = this.sAt(tt), sd = this.sideAt(tt); const P = R.at(sq + hipOff + rr, sd + (lg.sx > 0 ? -1 : 1) * K.girth * .5, 0); P.y = R.y(sq + hipOff + rr) + this.yAt(tt); return P; };
     if (p < duty) return { paw: footAt(cyc), contact: 'ground' };
-    const a = footAt(cyc), b = footAt(cyc + 1), k = (p - duty) / (1 - duty), e = smooth(k), paw = a.clone().lerp(b, e);
+    const a = footAt(cyc), b = footAt(cyc + 1), k = (p - duty) / (1 - duty), e = smooth(k);
+    // slowing to a stop the next footfall is far in the future: never swing further than one stride
+    const step = b.clone().sub(a), mx = this.stride(v) * 1.1; if (step.length() > mx) b.copy(a).addScaledVector(step.normalize(), mx);
+    const paw = a.clone().lerp(b, e);
     paw.y += Math.sin(Math.PI * k) * h * (gait === 'gallop' ? .32 : .22); return { paw, contact: 'air' };
   }
   pose(t) {
@@ -229,14 +232,14 @@ export class Buddy {
         const k = ik2(top, wrist, LG.fu, LG.fl, fwd.clone().negate());
         aim(lg.u, top.clone().sub(k.K), fwd); aim(lg.l, k.K.clone().sub(k.T2), fwd);
         lg.p.rotation.set(lift ? 1.1 : 0, 0, 0);
-        if (!k.reach && k.over > .02) res.bad.push(`${nm} out of reach ${(k.over * 100).toFixed(1)} cm`);
+        if (contact === 'ground' && !k.reach && k.over > .02) res.bad.push(`${nm} planted paw out of reach ${(k.over * 100).toFixed(1)} cm`);
       } else {
         const hock = paw.clone().add(V(0, LG.hm * .92, 0)).addScaledVector(fwd, -LG.hm * (.38 - lift * .5));
         const k = ik2(top, hock, LG.hu, LG.hl, fwd);
         aim(lg.u, top.clone().sub(k.K), fwd); aim(lg.l, k.K.clone().sub(k.T2), fwd);
         const md = k.T2.clone().sub(paw.clone().add(V(0, .0, 0))); aim(lg.m, md, fwd);
         lg.p.rotation.set(lift ? -.5 : 0, 0, 0);
-        if (!k.reach && k.over > .02) res.bad.push(`${nm} out of reach ${(k.over * 100).toFixed(1)} cm`);
+        if (contact === 'ground' && !k.reach && k.over > .02) res.bad.push(`${nm} planted paw out of reach ${(k.over * 100).toFixed(1)} cm`);
       }
       // paw level on the ground when planted
       if (contact === 'ground') { const qp = new THREE.Quaternion(); lg.p.parent.getWorldQuaternion(qp); lg.p.quaternion.copy(qp.invert().multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw + Math.PI, 0)))); }
