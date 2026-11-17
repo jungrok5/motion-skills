@@ -125,8 +125,9 @@ void main(){ vec3 p = position;
       polygonOffset: true, polygonOffsetFactor: o.terrain ? 2.5 : 1.6, polygonOffsetUnits: o.terrain ? 4 : 2.5, uniforms: LR.uni(FRAME) }));
   };
   R.matTopo = () => cache.topo || (cache.topo = LR.material({ side: T.DoubleSide,
-    vertexShader: `precision highp float; in vec3 position; uniform mat4 projectionMatrix, viewMatrix; out float vY; void main(){ vY = position.y; gl_Position = projectionMatrix * viewMatrix * vec4(position, 1.0); }`,
-    fragmentShader: `precision highp float; in float vY; out vec4 o; void main(){ o = vec4(vY, 0.0, 0.0, 1.0); }`, uniforms: {} }));
+    // what sways in the wind is no roof (flags, washing, pot plants, hanging signs): it keeps nothing under it dry
+    vertexShader: `precision highp float; in vec3 position; in vec4 meta; uniform mat4 projectionMatrix, viewMatrix; out float vY; out float vSway; void main(){ vY = position.y; vSway = (int(meta.y + 0.5) & 4) != 0 ? 1.0 : 0.0; gl_Position = projectionMatrix * viewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `precision highp float; in float vY; in float vSway; out vec4 o; void main(){ if (vSway > 0.5) discard; o = vec4(vY, 0.0, 0.0, 1.0); }`, uniforms: {} }));
 
   // ── the land ────────────────────────────────────────────────────────────────────────────────────────────────────
   // one colour law for grass, shared by the ground under it and the blades on it

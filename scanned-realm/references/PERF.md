@@ -131,7 +131,10 @@ and 1.6–1.7 M in the shadow cascades. Before the levels were right the same vi
 (2.8 M, and again in the shadows) and every twig pile in the forest (1.1 M) — `references/LESSONS.md`, round 2. In
 round 3 the grove first drew 1.48 M of scans (one tree whole, 3.5 m from the eye) and the tor 1.53 M (the largest
 boulder's distances applied to all fifty) — hence the two rules in the table above.
-`check.mjs` prints `scans <copies> × <M tris>` for every view; read it. __MEDIUM__
+`check.mjs` prints `scans <copies> × <M tris>` for every view; read it. On `medium`, as the check runs it: 2.9–3.95 M
+triangles and 480–570 draw calls a view — 330–380 of the calls the three shadow cascades a still draws — with 0.21–0.25 M
+of the triangles the scans' (320–330 copies); 23 525 copies are placed in the whole village (13 081 of them ferns), and a
+frame looks at the handful of cells near the eye.
 
 ## Where a frame's time goes — `?prof=1`
 `?prof=1` (it opens the numbers panel, `P`) shows milliseconds a pass: shadows, G-buffer, occlusion, air, bounce,

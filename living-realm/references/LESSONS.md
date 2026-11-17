@@ -258,5 +258,7 @@ single sheet while the next lay dry — a flood, not puddles. With a finer field
 across, about a fifth of open paving when full, stone tops standing out along their edges. And the rings
 rain makes were drawn on the lawns as well — hung over the blades at four tenths of their strength, because the test
 against the depth buffer had been softened to keep them whole on cobbles: they are made only where the ground is
-stone, earth or water. *Rule:* a reflection is judged with something to reflect in the picture — a pool between the
-eye and a lit house, at dusk — on the lowest tier too.
+stone, earth or water. (The rain map also took everything built as a roof; what sways in the wind — flags, washing,
+pot plants, signs — is left out of it now: it shelters nothing.) *Rule:* a reflection is judged with something to reflect in the picture — a pool between the eye and a lit house, at
+dusk — on the lowest tier too; and a wet square is looked at by day, from above eye height, where every mistake in
+where the water lies is plain.
