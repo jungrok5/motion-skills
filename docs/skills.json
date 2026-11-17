@@ -2202,6 +2202,46 @@
    ]
   },
   {
+   "id": "walking-colossus",
+   "name": "walking-colossus",
+   "tagline": "주제 하나를 주면 아파트 · 배 · 성당 같은 거대한 일상의 건축물이 유압 다리로 안개 속을 걸어가는 실사풍 영화를 three.js 코드만으로 만듭니다. 실제 크기의 몸체와 사람 크기의 디테일, 다리를 붙일 하부, 무게에서 나온 보행, 지면 · 시간 · 안개, 발이 닿는 순간에 맞춘 아홉 샷과 걸음마다 배치한 합성 사운드를 주제마다 새로 설계하고, 다리가 물리적으로 가능한지 검사한 뒤 1080p MP4로 렌더합니다.",
+   "posterAlt": "walking-colossus로 만든 장면 네 개: 흐린 새벽 갯벌을 다리 열 개로 걷는 녹슨 컨테이너선의 옆모습, 렌즈 앞 물웅덩이에 내리꽂히는 배의 발, 불 켜진 거주구와 구명정, 푸른 황혼의 안개 속을 걷는 패널 아파트",
+   "poster": "walking-colossus/poster.jpg",
+   "tags": [
+    "three.js · 코드 전용",
+    "3D 모델 · 이미지 텍스처 0개",
+    "보행 · 다리 IK 검사",
+    "안개 · 심도 · 모션 블러",
+    "1080p MP4 · 합성 사운드"
+   ],
+   "stats": [
+    "예제 2개 · 걷는 배 40초 · 걷는 아파트 45초",
+    "프레임당 380–540만 삼각형 · 결정적 렌더"
+   ],
+   "page": "walking-colossus/",
+   "source": "walking-colossus/",
+   "absorbedFrom": {
+    "repo": "https://github.com/Leonxlnx/walking-block",
+    "path": "src/"
+   },
+   "sources": [
+    {
+     "title": "Leonxlnx/walking-block (GitHub, MIT — 다리 여덟 개로 걷는 소련식 패널 아파트, three.js 절차적 생성, 45초 영화)",
+     "url": "https://github.com/Leonxlnx/walking-block"
+    }
+   ],
+   "workedExample": [
+    {
+     "title": "「Low Tide」 · 걷는 컨테이너선 · 40초 · 9샷 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/walking-colossus/demo/low-tide/"
+    },
+    {
+     "title": "「Walking Block」 · 원본 영화를 엔진에 옮긴 예제 · 45초 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/walking-colossus/demo/walking-block/"
+    }
+   ]
+  },
+  {
    "id": "street-run-montage",
    "name": "street-run-montage",
    "tagline": "주제 하나를 주면 스케이트보드를 탄 주인공과 함께 달리는 동물이 맑은 날의 동네를 질주하는 1분짜리 애니메이션 몽타주를 three.js 코드로 만듭니다. 푸른 그림자의 2톤 셀 셰이딩, 비트마다 바뀌는 카메라(골목 끝 망원 · 바퀴 높이 · 점프 아래 앙각 · 얼굴 · 지나가기 · 머리 위 · 회전), 피사체는 선명하고 배경만 흐르는 모션 블러, 푸시 · 올리 · 킥플립 · 그라인드 불꽃 · 매뉴얼 같은 진짜 트릭, 마지막 멈춤과 환호까지 담고, 비트에 맞춘 그루브와 보드 · 동물 소리를 모두 합성한 1080p MP4와 라이브 페이지를 냅니다.",
