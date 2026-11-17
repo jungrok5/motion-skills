@@ -72,7 +72,7 @@ class Project:
         if version != 'work' and version not in self.versions:
             raise KeyError(f'no version "{version}" in room.py (have: {", ".join(self.versions)})')
         scn = sc.reset()
-        q = sc.setup(scn, self.size, self.fps, quality, **over)
+        q = sc.setup(scn, getattr(self, 'render_size', None) or self.size, self.fps, quality, **over)
         scn.frame_start, scn.frame_end = 1, self.frames(version)
         r = Room(self, version, scn, q, quality)
         self._load('skeleton').build(r)

@@ -167,9 +167,14 @@ class ShootMixin:
         return ob
 
     def glow(self, material, strength, on=None):
-        """Set an emissive material (mat.emit or a screen) for this version: `strength` when on, 0 when off."""
+        """Set an emissive material (mat.emit, or a screen) for this version: `strength` when on, 0 when off. A screen
+        that is off goes black."""
+        lit = self.lit(on) and strength > 0
         s = mat.emit_socket(material)
-        s.default_value = strength if self.lit(on) else 0.0
+        s.default_value = strength if lit else 0.0
+        pw = material.node_tree.nodes.get('lr_power')
+        if pw is not None:
+            pw.outputs[0].default_value = 1.0 if lit else 0.0
         return s
 
     def backdrop(self, image, wall, distance=40.0, width=140.0, strength=1.0, z=None, u=None, name='plate'):
@@ -223,6 +228,20 @@ class ShootMixin:
         self.beacons.append(dict(name=nm, per_min=per_min, u=u, v=v))
         return ob
 
+    def outdoors(self, ob):
+        """Register something you built OUTSIDE the room (a terrace deck, a parapet, a tank on the roof): it is
+        rendered, seen through the window with true parallax, and left out of the room's inventory and audit."""
+        ob.visible_shadow = True
+        self.outside.append(ob)
+        return ob
+
+    def hands(self, hour_hand, minute_hand, h, m, axis=1):
+        """Set a clock's hour and minute hands for this version (they turn about `axis`, like the second hand)."""
+        for hand, turns in ((hour_hand, ((h % 12) + m / 60.0) / 12.0), (minute_hand, m / 60.0)):
+            e = list(hand.rotation_euler)
+            e[axis] = e[axis] - turns * TAU
+            hand.rotation_euler = tuple(e)
+
     def daylight(self, elev=12.0, azim=0.0, strength=3.0, color=5200, angle=1.0, name='sun'):
         """A sun. azim in degrees: 0 = it shines from the north (+Y) toward the south, 90 = from the east."""
         l = bpy.data.lights.new(name, 'SUN')
@@ -256,7 +275,7 @@ class ShootMixin:
         self.scene.cycles.volume_step_rate = 4.0
         return ob
 
-    def phone_light(self, on_at, watts=1.5, angle=58.0, color=6300, off_at=None, name='phone light'):
+    def phone_light(self, on_at, watts=1.5, angle=80.0, color=6500, off_at=None, name='phone light', blend=0.75):
         """The visitor switches on the torch of the phone they are filming with: a hard white circle that moves with
         the camera and tells the viewer someone is holding it. Call after r.camera()."""
         if self.cam is None:
@@ -264,7 +283,7 @@ class ShootMixin:
         l = bpy.data.lights.new(name, 'SPOT')
         l.color = _col(color)
         l.spot_size = math.radians(angle)
-        l.spot_blend = 0.25
+        l.spot_blend = blend                                         # a phone's LED is a wide soft flood, not a theatre spot
         l.shadow_soft_size = 0.004
         ob = bpy.data.objects.new(name, l)
         self.scene.collection.objects.link(ob)

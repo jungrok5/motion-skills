@@ -368,6 +368,80 @@ def towel(width=0.34, front=0.42, back=0.3, rail_r=0.006, color='#d9cfc0', strip
     return p.build()
 
 
+def curtain(width=0.4, drop=1.5, pleats=5, depth=0.07, color='#6b5a48', name='curtain', rings=True):
+    """A heavy curtain hanging in folds for r.hang(frm=rail, at=point): origin at the middle of its top edge, where
+    it hangs from the rail. `width` is how wide it hangs now: narrow = drawn back and bunched, wide = drawn across."""
+    cloth = mat.fabric(color, weave=1.2, sheen=0.3)
+    t = 0.004
+    n = pleats * 8
+    rings_ = []
+    for zi in range(9):
+        z = -drop * zi / 8
+        spread = 1.0 + 0.10 * (zi / 8)                                   # the folds open a little toward the hem
+        outer, inner = [], []
+        for i in range(n + 1):
+            u = i / n
+            x = (u - 0.5) * width * spread
+            y = -depth / 2 * (1 + math.sin(TAU * pleats * u))
+            dy = -depth / 2 * TAU * pleats * math.cos(TAU * pleats * u) / (width * spread)
+            ln = math.hypot(1.0, dy)
+            nx, ny = -dy / ln, 1.0 / ln
+            outer.append((x - nx * t / 2, y - ny * t / 2 - 0.004, z))
+            inner.append((x + nx * t / 2, y + ny * t / 2 - 0.004, z))
+        rings_.append(outer + inner[::-1])
+    p = Part(name)
+    p.skin(rings_, mat=cloth)
+    if rings:
+        steel = mat.metal('#8d8d8b', rough=0.4)
+        for i in range(pleats):
+            x = (i + 0.5) / pleats * width - width / 2
+            p.pipe(0.012, 0.0095, 0.004, at=(x, -0.002, -0.004), rot=(90, 0, 0), mat=steel, seg=10)
+    return p.build()
+
+
+def clothes_rail(w=0.9, h=1.55, d=0.42, body=None, name='clothes rail'):
+    """A free-standing clothes rail. ob['lr_rail'] = (y, z) of its bar, which runs along X: hang garments from it
+    with r.hang(garment, frm=rail, at=rail.matrix_world @ Vector((x, y, z)))."""
+    m = _m(body, lambda: mat.metal('#d9d9d6', rough=0.35))
+    p = Part(name)
+    for sx in (-1, 1):
+        x = sx * (w / 2 - 0.012)
+        p.tube([(x, -d / 2, 0.012), (x, d / 2, 0.012)], 0.012, mat=m, seg=8)
+        p.tube([(x, 0, 0.012), (x, 0, h)], 0.011, mat=m, seg=8)
+    p.tube([(-w / 2 + 0.012, 0, h), (w / 2 - 0.012, 0, h)], 0.011, mat=m, seg=8)
+    p.tube([(-w / 2 + 0.012, 0, 0.1), (w / 2 - 0.012, 0, 0.1)], 0.008, mat=m, seg=8)
+    ob = p.build()
+    ob['lr_rail'] = (0.0, h)
+    return ob
+
+
+def garment(width=0.44, length=0.7, color='#3a4250', thick=0.03, sleeves=True, rail_r=0.011, name='garment'):
+    """A shirt, coat or jacket on a hanger: origin where the hanger's hook sits on the rail. The garment is as wide as
+    X and as thick as Y, so the rail it hangs on runs along its Y — turn it a quarter from the rail's own facing.
+    thick = how padded it is."""
+    cloth = mat.fabric(color, weave=1.0, sheen=0.3)
+    p = Part(name)
+    p.tube([(0, 0, rail_r + 0.002), (0, 0, -0.03)], 0.002, mat=mat.metal('#9a9a98'), seg=5)                     # the hanger's neck
+    p.tube([(-(rail_r + 0.002), 0, 0.0), (0, 0, rail_r + 0.002), (rail_r + 0.002, 0, 0.0)], 0.002, mat=mat.metal('#9a9a98'), seg=5)   # its hook, over the rail
+    sh = width / 2
+    rings_ = []
+    for s, (hw, z) in enumerate(((sh * 0.2, -0.03), (sh, -0.075), (sh * (1.12 if sleeves else 1.0), -0.2), (sh * 1.02, -length * 0.6), (sh * 1.06, -length))):
+        tt = thick * (0.4 if s == 0 else 1.0)
+        rings_.append([(-hw, -tt / 2, z), (hw, -tt / 2, z), (hw, tt / 2, z), (-hw, tt / 2, z)])
+    p.skin(rings_, mat=cloth)
+    return p.build()
+
+
+def mirror(w=0.3, h=1.1, frame_mat=None, name='mirror'):
+    """A framed mirror for r.hang() / r.stick(): back on y = 0, origin at the top centre of its back."""
+    mf = _m(frame_mat, lambda: mat.wood('#c9a66e', '#a37e48', rough=0.5))
+    glass_ = mat.metal('#e6e9ea', rough=0.03, wear=0.0, dirt=0.05)
+    p = Part(name)
+    p.box((w, 0.016, h), at=(0, -0.008, -h), mat=mf, bevel=0.002)
+    p.box((w - 0.03, 0.002, h - 0.03), at=(0, -0.017, -h + 0.015), mat=glass_, bevel=0)
+    return p.build()
+
+
 # ---- light fittings --------------------------------------------------------------------------------
 def desk_lamp(h=0.42, reach=0.26, body=None, glow=None, name='desk lamp'):
     """An arm lamp. ob['lr_bulb'] = where its bulb is (local): put the light there with
@@ -500,7 +574,7 @@ def screen_pages(name, images, emission=1.5, rough=0.25):
     atlas = Image.new('RGB', (w * len(images), h))
     for i, im in enumerate(images):
         atlas.paste(im.convert('RGB').resize((w, h)), (i * w, 0))
-    m = mat.picture(name, atlas, rough=rough, emission=emission, repeat=True)
+    m = mat.picture(name, atlas, rough=rough, emission=emission, repeat=True, screen=True)
     node = next(n for n in m.node_tree.nodes if n.type == 'MAPPING')
     node.inputs['Scale'].default_value = (1.0 / len(images), 1.0, 1.0)
     m['lr_pages'] = len(images)
@@ -565,10 +639,12 @@ def headphones(color='#141416', name='headphones'):
 
 
 # ---- things that move ------------------------------------------------------------------------------
-def clock(d=0.3, depth=0.04, rim='#1b1b1d', seconds=37, hm=(2, 14), name='clock'):
+def clock(d=0.3, depth=0.04, rim='#1b1b1d', seconds=37, hm=(2, 14), name='clock', hands=False):
     """A wall clock for r.hang(): back on y = 0, origin at the centre of the back. Returns (clock, second_hand,
-    pivot): fix the hand at clock.matrix_world @ pivot with the clock's rz, then r.tick(hand, axis=1, start=seconds).
-    hm = the hour and minute it shows — make it the hour of the scene."""
+    pivot): fix the hand at clock.matrix_world @ Vector(pivot) with the clock's rz, then r.tick(hand, axis=1, start=…).
+    hm = the hour and minute painted on the dial. hands=True leaves the dial bare and also returns separate
+    (hour_hand, minute_hand), pointing at 12, to be fixed at the same pivot and set per version with r.hands(…) —
+    for a room filmed at two hours."""
     S = 512
     im, dr = draw.new(S, S, '#f2efe6')
     c = S / 2
@@ -576,25 +652,36 @@ def clock(d=0.3, depth=0.04, rim='#1b1b1d', seconds=37, hm=(2, 14), name='clock'
         a = TAU * i / 60
         r0 = c * (0.86 if i % 5 == 0 else 0.92)
         dr.line([c + r0 * math.sin(a), c - r0 * math.cos(a), c + c * 0.96 * math.sin(a), c - c * 0.96 * math.cos(a)], fill='#1c1c1c', width=6 if i % 5 == 0 else 2)
-    for k in range(1, 13):
-        a = TAU * k / 12
-        draw.text(dr, (c + c * 0.72 * math.sin(a), c - c * 0.72 * math.cos(a)), str(k), size=46, weight=600, anchor='mm')
-    for ang, ln, wd in ((TAU * ((hm[0] % 12) + hm[1] / 60) / 12, 0.48, 14), (TAU * hm[1] / 60, 0.74, 9)):
-        dr.line([c, c, c + c * ln * math.sin(ang), c - c * ln * math.cos(ang)], fill='#121212', width=wd)
+    for kk in range(1, 13):
+        a = TAU * kk / 12
+        draw.text(dr, (c + c * 0.72 * math.sin(a), c - c * 0.72 * math.cos(a)), str(kk), size=46, weight=600, anchor='mm')
+    if not hands:
+        for ang, ln, wd in ((TAU * ((hm[0] % 12) + hm[1] / 60) / 12, 0.48, 14), (TAU * hm[1] / 60, 0.74, 9)):
+            dr.line([c, c, c + c * ln * math.sin(ang), c - c * ln * math.cos(ang)], fill='#121212', width=wd)
     dr.ellipse([c - 14, c - 14, c + 14, c + 14], fill='#121212')
     face = mat.picture(name + ' face', im, rough=0.6)
     body = mat.plastic(rim, rough=0.4)
     p = Part(name)
     p.cyl(d / 2, depth, at=(0, 0, 0), rot=(90, 0, 0), mat=body, seg=40, bevel=0.004)
-    p.box((d * 0.66, 0.002, d * 0.66), at=(0, -depth - 0.001, -d * 0.33), mat=body, bevel=0, faces={'front': face})
+    p.prism(geo.circle(d / 2 - 0.013, 40), 0.002, at=(0, -depth, 0), rot=(90, 0, 0), mat=body, top=face)      # a round dial
     p.pipe(d / 2, d / 2 - 0.012, 0.012, at=(0, -depth, 0), rot=(90, 0, 0), mat=body, seg=40)
+    p.cyl(0.004, 0.016, at=(0, -depth, 0), rot=(90, 0, 0), mat=body, seg=10)                 # the arbor every hand sits on
     ob = p.build()
     h = Part(name + ' second hand')
     red = mat.paint('#b3261e', rough=0.4, dirt=0)
     h.box((0.0025, 0.0012, d * 0.36), at=(0, 0, -d * 0.07), mat=red, bevel=0)
     h.cyl(0.006, 0.0025, at=(0, 0.00125, 0), rot=(90, 0, 0), mat=red, seg=12)
     hand = h.build()
-    return ob, hand, (0.0, -depth - 0.0045, 0.0)
+    pivot = (0.0, -depth - 0.0085, 0.0)
+    if not hands:
+        return ob, hand, pivot
+    black = mat.paint('#141414', rough=0.4, dirt=0)
+    out = []
+    for nm, ln, wd, off in (('hour hand', 0.23, 0.009, 0.004), ('minute hand', 0.36, 0.006, 0.002)):
+        q = Part(f'{name} {nm}')
+        q.box((wd, 0.0012, d * ln), at=(0, off, -d * 0.03), mat=black, bevel=0)
+        out.append(q.build())
+    return ob, hand, pivot, out[0], out[1]
 
 
 def fan(d=0.25, h=0.42, body=None, blades=3, tilt=12.0, name='fan', base_r=None):

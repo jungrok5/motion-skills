@@ -47,7 +47,7 @@ def main():
                         f'scale={w}:{h}:flags=lanczos,format=yuv420p', '-c:v', 'libx264', '-crf', str(a.crf), '-preset', 'slow', '-movflags', '+faststart', out], check=True)
         shutil.rmtree(tmp)
         made.append(out)
-        note = '' if step == 1 else f'  (every {step}th frame was rendered: {P.fps / step:g} fps — render the rest for {P.fps} fps)'
+        note = '' if step == 1 else f'  (one frame in {step} was rendered: {P.fps / step:g} fps — render the rest for {P.fps} fps)'
         print(f'out/{v}.mp4  {len(have)} frames, {len(have) * step / P.fps:.1f} s, {w}x{h}, {os.path.getsize(out) / 1e6:.1f} MB{note}')
     if len(made) > 1:
         lst = P.out('tmp', 'concat.txt')

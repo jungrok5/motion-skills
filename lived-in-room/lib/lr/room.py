@@ -442,6 +442,27 @@ class Room(OpeningsMixin, ShootMixin):
                 self.allow(ob, hname)
         return it
 
+    def away(self, things, on):
+        """Things that are not in the room at an hour because the tenant has them with her (her shoes, her bag, the
+        recorder that goes out by day) or because the hour has none (water on the pane in the afternoon). The room is
+        still the same model — the thing is built, placed and audited — it is only not rendered in the versions named
+        in `on`. Call it from film.py. A thing that something else rests on cannot be away."""
+        if isinstance(on, str):
+            on = (on,)
+        names = [self._nm(t) for t in (things if isinstance(things, (list, tuple)) else [things])]
+        gone = self.v in on
+        for n in names:
+            if n not in self.items:
+                raise KeyError(f'away: no thing called "{n}"')
+            if gone:
+                for it in self.items.values():
+                    if n in it.on and it.name not in names and it.support in ('place', 'hang', 'suspend', 'lean'):
+                        self.problems.append(f'{n} is away in "{self.v}" but {it.name} is held by it')
+                self.items[n].ob.hide_render = True
+                self.items[n].ob.hide_viewport = True
+                self.motions = [m for m in self.motions if m['name'] != n]     # what is not here does not count as moving
+        return gone
+
     # -- lived-in ---------------------------------------------------------------------------------------
     def nudge(self, tag, amount):
         """A seeded number in ±amount: the 3 cm a drawer was left open, the 4° a frame hangs off level."""

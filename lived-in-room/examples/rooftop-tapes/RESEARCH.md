@@ -29,8 +29,8 @@ unless the line says otherwise. Three grades, written honestly:
 - numbers (estimate): nominal 1500 × 1200 for a small room; sill at 900; frame face ≈ 55, sash stile ≈ 60; the crescent
   sits on the inner sash's meeting stile at mid-height.
 - used here: single frame 120 deep in a 190 wall (a double frame at 232 would stand proud of this wall), flush outside,
-  a 70 mm reveal inside under a stool board; 1500 × 1200, sill 900 — it opens onto the roof terrace, not onto a drop, so
-  no rail; lock 80, handle 280.
+  a plain papered 70 mm reveal inside over a flush board; 1500 × 1200, sill 900 — it opens onto the roof terrace, not onto
+  a drop, so no rail; lock 80, handle 280. For the winter, insulating film on the lower 42 % of each pane.
 - whose way of doing it: the window fitter — frame to the outside face, the reveal dressed inside.
 - source: https://image2.hanssem.com/event/doc/catalog/Hanssem_Window_2511.pdf · https://ko.wikisource.org/wiki/주택건설기준_등에_관한_규정
 
@@ -38,7 +38,8 @@ unless the line says otherwise. Three grades, written honestly:
 - what: a steel entry door opening outward onto the roof.
 - numbers (opened): an interior ABS door leaf is 36 mm thick (not this door; the only door spec page that opened).
 - numbers (snippet): fitters quote on a 900 × 2100 or 1000 × 2100 frame. (estimate): steel leaf 45–50 thick, lever about 1,000 above the floor.
-- used here: 900 × 2100 frame, 45 mm leaf, lever at 1,000, hinges on the east jamb, open 88°.
+- used here: 900 × 2100 frame over a 100 mm kerb, 45 mm leaf, lever at 1,000 with a lock case above it, a closer at the
+  head, hinges on the east jamb, open 88°.
 - source: https://store.hanssem.com/goods/1064647 (thickness of an interior leaf only) — the frame size is `source: estimate`
 
 ## finish — floor, skirting, moulding, wallpaper
@@ -85,11 +86,26 @@ unless the line says otherwise. Three grades, written honestly:
   up. `ROOM['beacon_range'] = (20, 60)`; `r.beacon()` refuses a rate outside it. The neon crosses are signs: steady.
 - source: https://law.go.kr/LSW/flDownload.do?flSeq=136894377
 
+## sun — where the light can fall, and when
+- numbers (opened): Seoul, 17 November 2026 — sunrise 07:13 at azimuth 113°, sunset 17:20 at azimuth 246°, solar noon 12:16
+  with the sun 33.5° up; the day is 10 h 07 min long.
+- derived (the standard solar-position formulas for 37.57° N, declination −19°): at 16:40 the sun stands at azimuth 240°,
+  6.3° above the horizon.
+- used here: the window faces west-north-west (300°). The sun is then never to the right of the window's axis at any
+  season (the furthest north it ever sets is about 300°), so direct sun can only fall toward the plan-east wall — the
+  bed — and never on the plan-west wall, where the tapes are. That is why she gave the tapes that wall. At 16:40 the
+  sun is 60° to the left of the axis: `r.daylight(elev=6.3, azim=-60)`; its light reaches the east wall 2.9–3.8 m
+  from the door wall, 0.6–2.0 m up.
+- whose way of doing it: the first review's — it worked out that the first version's "dawn sun on the tape wall at
+  06:50" was before sunrise, from the wrong side, and against the room's own rule (REVIEW.md, round 1, finding 2).
+- source: https://www.timeanddate.com/sun/south-korea/seoul?month=11&year=2026
+
 ## rooftop — what the window sees
 - numbers (opened): exposed urethane roof waterproofing is laid about 3 mm thick in "green, grey and others", with a top coat
   in any colour — green is the stock colour, not a rule. (estimate): a one-tonne polyethylene rooftop water tank is about
   1.1–1.2 m across and 1.15–1.3 m high.
-- used here: the picture outside — green decks showing over parapets, yellow tanks, small houses up a slope, far slabs.
+- used here: her own terrace, built for real outside the window (a green deck, a 1.1 m parapet, a yellow tank ⌀ 1.15 × 1.3),
+  and beyond it the picture — green decks showing over parapets, yellow tanks, small houses up a slope, far slabs.
 - source: https://vrteotgdakjwbjeugnxx.supabase.co/storage/v1/object/public/product-images/coatingspecs/KCC_dojangsayangseo_seupotannochulbangsujaeK_kor.pdf
 
 ## cassette — tapes, cases, machines
@@ -136,7 +152,7 @@ unless the line says otherwise. Three grades, written honestly:
 - derived: a 26 mm lens sees 69° across, so a full width in seven seconds is about 10° a second.
 - used here: `r.walk(step=0.65, pan_cap=12)`: the picture rises and falls once a step and only while walking; the tremor has
   a slow part and a small 9–10 Hz part; the fastest turn in either walk is under 9° a second. Lens 24 mm, depth of field
-  as ƒ/6 on full frame (a small sensor at ƒ/1.6).
+  as ƒ/6 on full frame (a small sensor at ƒ/1.6). The phone itself is not in the room: it is the camera.
 - source: https://pmc.ncbi.nlm.nih.gov/articles/PMC3104090 · https://en.wikipedia.org/wiki/Physiological_tremor ·
   https://www.reddigitalcinema.com/red-101/camera-panning-speed · https://www.apple.com/iphone-16/specs/
 

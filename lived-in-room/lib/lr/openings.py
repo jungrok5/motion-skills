@@ -16,7 +16,7 @@ from .geo import Part
 class OpeningsMixin:
     def window(self, wall, u, sill, w, h, frame_d=0.12, face=0.055, stile=0.06, setback=None, slide=0.0, glass_t=0.022,
                lock=0.08, handle=0.28, stool=0.0, stool_t=0.022, casing=0.0, frame_mat=None, glass_mat=None,
-               name=None, kind='window'):
+               name=None, kind='window', wrap=0.0):
         """A two-sash horizontal sliding window in wall `wall`: opening left edge at u, bottom at `sill`, w × h.
           frame_d   depth of the frame (single ≈ 0.12, double ≈ 0.23)       face   visible width of the frame members
           stile     visible width of the sash members                        setback  room face of the wall → room face of
@@ -24,6 +24,7 @@ class OpeningsMixin:
           slide     how far the inner sash stands open, metres               lock   length of the crescent lock (0 = none)
           stool     depth of an inner sill board projecting into the room (0 = none); it also covers the reveal
           casing    width of a trim round the opening on the room side (0 = the wall finish returns into the reveal)
+          wrap      share of each pane's height, from the bottom, covered with frosted insulating film (winter)
         Returns the Item. Its object carries lr_glass (local y of the room face of the inner pane), lr_clear (w, h of
         the glazed opening) and lr_stool (local z of the top of the stool) for putting things on the sill and drops on
         the glass."""
@@ -57,6 +58,9 @@ class OpeningsMixin:
             for z in (z0, z0 + sh - stile):
                 p.box((sw - 2 * stile, sd, stile), at=(x0 + sw / 2, y, z), mat=fm, bevel=0.002)
             p.box((sw - 2 * stile + 0.012, glass_t, sh - 2 * stile + 0.012), at=(x0 + sw / 2, y, z0 + stile - 0.006), mat=gm, bevel=0)
+            if wrap > 0:
+                p.box((sw - 2 * stile - 0.004, 0.0024, (sh - 2 * stile) * wrap), at=(x0 + sw / 2, y - glass_t / 2 - 0.0012, z0 + stile + 0.002),
+                      mat=mat.film('#e6ecee', opacity=0.72), bevel=0)
         xi = sashes[1][0]
         if lock:                                                              # crescent lock on the meeting stile
             lz = z0 + sh / 2
@@ -82,10 +86,11 @@ class OpeningsMixin:
         ob['lr_clear'] = (cw, ch)
         ob['lr_stool'] = stool_z
         ob['lr_inner_sash'] = (xi, xi + sw, z0, z0 + sh)
+        ob['lr_wrap'] = wrap
         return self.add(ob, kind, 'fix', ['wall ' + wall], cls='skeleton', zone='skeleton')
 
     def door(self, wall, u, w=0.9, h=2.1, leaf_t=0.045, face=0.04, open_deg=85.0, swing='out', hinge='left', frame_mat=None,
-             leaf_mat=None, lever_z=1.0, name=None, kind='door', step=0.0):
+             leaf_mat=None, lever_z=1.0, name=None, kind='door', step=0.0, lock=False, closer=False):
         """A hinged door: opening left edge at u, w × h, standing open by open_deg. swing='out' opens away from the
         room (an entry door), 'in' into it. hinge = the side the hinges are on as you face the door from inside.
         Returns (frame item, leaf item). The walk-through begins in this doorway."""
@@ -110,6 +115,13 @@ class OpeningsMixin:
         for y in (-leaf_t / 2 - 0.03, leaf_t / 2 + 0.03):                      # a lever handle on each side
             q.cyl(0.011, 0.03, at=(s * (lw - 0.06), y + (0.015 if y < 0 else -0.015), lever_z - step), rot=(90 if y < 0 else -90, 0, 0), mat=steel, seg=12)
             q.box((0.12, 0.016, 0.018), at=(s * (lw - 0.11), y, lever_z - step - 0.009), mat=steel, bevel=0.005)
+        if lock:                                                              # a lock case above the lever, both faces
+            for y in (-leaf_t / 2 - 0.012, leaf_t / 2 + 0.012):
+                q.box((0.07, 0.024, 0.16), at=(s * (lw - 0.075), y, lever_z - step + 0.1), mat=mat.plastic('#1d1e21', rough=0.4), bevel=0.004)
+        if closer:                                                            # a door closer on the room face, at the head
+            yc = -leaf_t / 2 - 0.022 if swing == 'out' else leaf_t / 2 + 0.022
+            q.box((0.22, 0.044, 0.06), at=(s * 0.16, yc, lh - 0.09), mat=steel, bevel=0.004)
+            q.tube([(s * 0.16, yc, lh - 0.025), (s * 0.4, yc - (0.03 if swing == 'out' else -0.03), lh - 0.02)], 0.006, mat=steel, seg=6)
         lob = q.build()
         y_leaf = t - leaf_t / 2 if swing == 'out' else leaf_t / 2
         hinge_pt = self.wall_pt(wall, u + (face + 0.003 if hinge == 'left' else w - face - 0.003), step + 0.004, -y_leaf)
@@ -133,7 +145,8 @@ class OpeningsMixin:
         for i in range(n + moving):
             r = rnd.uniform(*size)
             x = rnd.uniform(x0 + stile + 0.01, x1 - stile - 0.01)
-            z = rnd.uniform(z0 + stile + 0.02, z1 - stile - 0.02)
+            zlo = z0 + stile + 0.02 + (z1 - z0 - 2 * stile) * float(ob.get('lr_wrap', 0.0))      # water only on the bare glass above the film
+            z = zlo + (z1 - stile - 0.02 - zlo) * rnd.random() ** 1.8                              # most of it low, where the pane is coldest
             p = Part(self.name('drop'))
             p.sphere(r, at=(0, 0, 0), mat=m, seg=8, rings=4, squash=(1.0, 0.45, 1.25 if i >= n else 1.0))
             lo, hi = p.bounds()
@@ -146,7 +159,7 @@ class OpeningsMixin:
             made.append(it)
             if i >= n:
                 v = rnd.uniform(*speed)
-                span = (z1 - stile - 0.02) - (z0 + stile + 0.02)
+                span = (z1 - stile - 0.02) - zlo
                 off = rnd.uniform(0, span)
                 wob = rnd.uniform(0, 6.28)
                 top = z1 - stile - 0.02

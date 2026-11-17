@@ -233,7 +233,7 @@ def screen_time(r, every=6, samples=7):
         tan_h = cam.data.sensor_width / 2 / cam.data.lens
         tan_v = tan_h / aspect
         for n, it in r.items.items():
-            if it.cls == 'skeleton':
+            if it.cls == 'skeleton' or it.ob.hide_render:
                 continue
             seen = False
             for p in pts[n]:

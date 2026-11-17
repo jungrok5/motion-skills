@@ -1,5 +1,6 @@
 """The building first. A rooftop room (옥탑방) added on top of a 1990s four-storey brick-faced walk-up: block walls,
-a low ceiling, sheet flooring over floor heating, one PVC sliding window, a steel door straight onto the roof.
+a low ceiling, sheet flooring over floor heating, one PVC sliding window (plan-north; it really faces
+west-north-west), a steel door straight onto the roof.
 Every number is from RESEARCH.md (ids in brackets). Nothing here is furniture."""
 from lr import kit, mat
 import props
@@ -8,13 +9,15 @@ import props
 def build(r):
     # 3.3 × 4.3 m inside (14.2 m²), ceiling 2.25 m (rule: ≥ 2.2 m [shell]); 150 mm block + plaster both faces = 190 mm
     r.shell((3.3, 4.3, 2.25), wall=0.19,
-            floor=mat.planks('#c9a56b', '#ad8850', plank=(0.9, 0.1), rough=0.28, coat=0.6, dirt=0.35),     # wood-print sheet flooring [finish]
-            walls=mat.wall('#e6dfcc', dirt=0.4), ceiling=mat.wall('#eeeadf', weave=0.4, dirt=0.2))
-    # PVC single sliding window, frame 120 deep [window] in a 190 wall: flush outside, a 70 mm reveal inside under a
-    # stool board; 1500 × 1200 with the sill at 900 (it opens onto the roof terrace, so no guard rail is called for)
-    r.window('N', u=0.9, sill=0.9, w=1.5, h=1.2, frame_d=0.12, face=0.055, stile=0.06, lock=0.08, handle=0.28, stool=0.02)
-    # steel entry door 900 × 2100 [door], opening outward onto the roof; hinges on the east jamb
-    r.door('S', u=0.25, w=0.9, h=2.1, leaf_t=0.045, open_deg=88, swing='out', hinge='left',
+            floor=mat.planks('#c6a56e', '#b8965f', plank=(1.2, 0.15), rough=0.4, coat=0.25, gap=0.0015, dirt=0.3),   # wood-print sheet flooring [finish]
+            walls=mat.wall('#e6dfcc', dirt=0.16, weave=0.6), ceiling=mat.wall('#eeeadf', weave=0.4, dirt=0.12))
+    # PVC single sliding window, frame 120 deep [window] in a 190 wall: flush outside, a plain 70 mm reveal inside over a
+    # flush board, the paper returning into it; 1500 × 1200 with the sill at 900 (it opens onto the roof terrace, so no
+    # guard rail is called for). For the winter the lower 42 % of each pane is covered with insulating film.
+    r.window('N', u=0.9, sill=0.9, w=1.5, h=1.2, frame_d=0.12, face=0.055, stile=0.06, lock=0.08, handle=0.28, stool=0.0, wrap=0.42)
+    # steel entry door 900 × 2100 [door], opening outward onto the roof over a 100 mm kerb (a door onto a roof slab
+    # has one: rain); hinges on the east jamb; a lock case above the lever, a closer at the head
+    r.door('S', u=0.25, w=0.9, h=2.1, leaf_t=0.045, open_deg=88, swing='out', hinge='left', step=0.1, lock=True, closer=True,
            frame_mat=mat.paint('#4f5660', rough=0.45), leaf_mat=mat.paint('#56606c', rough=0.42))
     r.walls()
     r.skirting(0.06, 0.009, material=mat.plastic('#d9d2c0', rough=0.45))                               # 60 × 9 PVC [finish]

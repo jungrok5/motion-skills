@@ -81,7 +81,8 @@ Requirements: Python 3.13 with `bpy` 5.x (`pip install bpy`; or Blender 5.x itse
 numpy, Pillow, ffmpeg. No GPU needed; one that Blender can see is used.
 
 ## Workflow
-1. **Topic → brief.** Read `references/BRIEF.md` and `references/METHOD.md`. Decide the building, the person, their
+1. **Topic → brief.** Read `references/BRIEF.md`, `references/METHOD.md` and `references/LESSONS.md` (what earlier rooms
+   got wrong). Decide the building, the person, their
    history as things, the two hours and the rule of the room; ask the user the questions in `BRIEF.md` when they
    are there, read their own file about themselves when they have one. `new_room.py my-room --title "…"`, then write
    §1 of `BRIEF.md`. Show it to the user before building when they are there to answer.

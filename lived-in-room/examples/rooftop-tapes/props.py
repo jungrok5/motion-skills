@@ -20,27 +20,31 @@ JCARD = ['#efe7d2', '#f1ece0', '#e6dcc3', '#d9e2e6', '#f0d9c8', '#e8e2b8', '#dfe
 
 
 # ---- pictures --------------------------------------------------------------------------------------
-def tape_atlas(n, seed, typed=0.15):
+def tape_atlas(n, seed, typed=0.15, first=0, total=190):
     """One picture holding n cassette-case spines side by side (each 32 × 208 px): a paper J-card with a date and
-    a hand-written title, running top to bottom. Returns (material, [uv rect per spine])."""
+    a hand-written title, running top to bottom. Blanks are bought by the box, so card colours come in runs; the
+    tapes are racked in the order recorded, so the years climb from 2019 to 2026 along the rows (`first` = how many
+    tapes come before this row, of `total`). Returns (material, [uv rect per spine])."""
     rnd = random.Random(f'tapes/{seed}')
     w, h = 32, 208
     im = Image.new('RGB', (w * n, h), '#efe7d2')
+    bg, run = None, 0
     for i in range(n):
-        bg = rnd.choice(JCARD)
+        if run <= 0:
+            bg = rnd.choice([c for c in JCARD if c != bg])
+            run = rnd.randint(7, 13)
+        run -= 1
         dark = bg in ('#1d1e22', '#b33a2c')
         cell = Image.new('RGB', (h, w), bg)                           # drawn lying down, then turned
         d = ImageDraw.Draw(cell)
-        ink = '#e9e4d6' if dark else rnd.choice(['#1b2a4a', '#222222', '#3a2a22', '#7a2a1e'])
-        yr = rnd.choice(['19', '20', '21', '22', '23', '24', '25', '26'])
-        draw.text(d, (6, w / 2), f"'{yr}.{rnd.randint(1, 12):02d}", size=11, fill=ink, anchor='lm', weight=500)
+        ink = '#e9e4d6' if dark else rnd.choice(['#1b2a4a', '#222222', '#3a2a22'])
+        when = 2019 + 7.9 * (first + i) / max(1, total)
+        draw.text(d, (6, w / 2), f"'{int(when) % 100:02d}.{1 + int((when % 1) * 12):02d}", size=11, fill=ink, anchor='lm', weight=500)
         title = rnd.choice(SOUNDS)
         if rnd.random() < typed:
             draw.text(d, (52, w / 2), title, size=15, fill=ink, anchor='lm', weight=600)
         else:
             draw.scrawl((cell, d), (50, 4), title, size=16, fill=ink, seed=seed * 100 + i, slant=5)
-        if rnd.random() < 0.3:
-            d.rectangle([h - 16, 6, h - 8, w - 6], fill=rnd.choice(['#c8412f', '#2f6f8a', '#d9a72b', '#2f7a4a']))
         im.paste(cell.rotate(-90, expand=True), (i * w, 0))           # reads top → bottom, letter tops to the right
         ImageDraw.Draw(im).line([i * w, 0, i * w, h], fill='#8d8778')
     m = mat.picture(f'tape spines {seed}', im, rough=0.28, coat=0.6)
@@ -74,40 +78,27 @@ def shell_label(title, seed=0, body='#2a2b2f'):
     return im
 
 
-def monitor_pages():
-    """The tenant's screen: the tape being transferred, as a waveform, a list of takes, and a render queue —
-    the three pages it steps through."""
+def monitor_pages(n=8):
+    """The tenant's screen: tonight's tape being played into the computer. ONE view that advances — the playhead a
+    step further, the counter a second on, the level bars different — not pages changing by themselves."""
     out = []
-    for k in range(3):
+    for k in range(n):
         im, d = draw.new(1060, 600, '#0f1318')
         d.rectangle([0, 0, 1060, 34], fill='#1a2028')
-        draw.text(d, (16, 17), ['옥상 빗소리 — A면.wav', '테이프 목록 2026', '보관본 내보내기'][k], size=17, fill='#b8c2cf', anchor='lm', weight=600)
+        draw.text(d, (16, 17), '옥상 빗소리 — A면.wav', size=17, fill='#b8c2cf', anchor='lm', weight=600)
         draw.text(d, (1044, 17), '02:14', size=16, fill='#7d8896', anchor='rm')
-        if k == 0:
-            for j, (y, col, sd) in enumerate(((70, '#69c98a', 4), (250, '#69c98a', 9))):
-                d.rectangle([16, y, 1044, y + 150], fill='#141a21')
-                draw.waveform(d, (24, y + 8, 1036, y + 142), seed=sd, fill=col, bars=220)
-                draw.text(d, (22, y + 4), 'L' if j == 0 else 'R', size=14, fill='#5d6875')
-            d.line([640, 60, 640, 410], fill='#e9c98f', width=2)
-            for i in range(26):
-                d.rectangle([24 + i * 39, 440, 24 + i * 39 + 30, 440 + 12 + (i * 37) % 90], fill='#2c6f8f' if i % 5 else '#e9c98f')
-            draw.text(d, (24, 566), '테이프 → 파일   44.1 kHz   돌비 끔   속도 4.76 cm/s', size=16, fill='#8d98a6', anchor='lm')
-        elif k == 1:
-            for i, s in enumerate(SOUNDS[:13]):
-                y = 56 + i * 40
-                d.rectangle([16, y, 1044, y + 34], fill='#161c24' if i % 2 else '#121820')
-                draw.text(d, (30, y + 17), f'{i + 1:02d}', size=16, fill='#5d6875', anchor='lm')
-                draw.text(d, (80, y + 17), s, size=18, fill='#d5dce6' if i != 4 else '#e9c98f', anchor='lm', weight=500)
-                d.rectangle([700, y + 12, 700 + 60 + (i * 53) % 280, y + 22], fill='#2c6f8f')
-                draw.text(d, (1030, y + 17), f'{20 + (i * 7) % 40}:{(i * 13) % 60:02d}', size=16, fill='#8d98a6', anchor='rm')
-        else:
-            draw.text(d, (40, 110), '보관본 만드는 중', size=34, fill='#d5dce6', weight=600)
-            for i in range(5):
-                y = 190 + i * 70
-                draw.text(d, (40, y), SOUNDS[20 + i], size=20, fill='#aeb7c4')
-                d.rectangle([340, y + 4, 1010, y + 20], fill='#1c232c')
-                d.rectangle([340, y + 4, 340 + [670, 670, 410, 60, 0][i], y + 20], fill='#69c98a' if i < 2 else '#e9c98f')
-            draw.text(d, (40, 560), '자는 동안 끝남 · 남은 시간 3시간 10분', size=18, fill='#8d98a6', anchor='lm')
+        px = 560 + k * 9
+        for j, (y, sd) in enumerate(((70, 4), (250, 9))):
+            d.rectangle([16, y, 1044, y + 150], fill='#141a21')
+            draw.waveform(d, (24, y + 8, 1036, y + 142), seed=sd, fill='#69c98a', bars=220)
+            d.rectangle([px, y, 1044, y + 150], fill='#11161c')                      # not played yet
+            draw.text(d, (22, y + 4), 'L' if j == 0 else 'R', size=14, fill='#5d6875')
+        d.line([px, 60, px, 410], fill='#e9c98f', width=2)
+        rnd = random.Random(k * 7 + 3)
+        for i in range(26):
+            d.rectangle([24 + i * 39, 540 - (14 + rnd.randint(0, 80)), 24 + i * 39 + 30, 540], fill='#2c6f8f' if i % 5 else '#e9c98f')
+        draw.text(d, (24, 566), f'테이프 → 파일   녹음 중 00:{17 + k // 2:02d}:{(41 + k) % 60:02d}   44.1 kHz   돌비 끔', size=16, fill='#8d98a6', anchor='lm')
+        d.ellipse([1010, 556, 1030, 576], fill='#c8412f')
         out.append(im)
     return out
 
@@ -210,23 +201,43 @@ def panel(w, h, kind, seed=0):
 
 
 def sound_map(seed=5):
-    """The hero print: a hand-drawn map of the neighbourhood with a pin for every tape. 600 × 840 px for A2-ish."""
+    """The hero print: a hand-drawn map of the neighbourhood, one pin for every tape. 600 × 840 px.
+    Returns (image, pins) with pins as (u, v) picture fractions (v from the top) for the real pin heads."""
     rnd = random.Random(seed)
-    im, d = draw.new(600, 840, '#ece3cc')
+    im, d = draw.new(600, 840, '#f6f0df')
     for i in range(9):                                                # streets
         y = 70 + i * 86 + rnd.randint(-14, 14)
-        d.line([20, y, 580, y + rnd.randint(-30, 30)], fill='#b9ad8c', width=rnd.choice((3, 5, 9)))
+        d.line([20, y, 580, y + rnd.randint(-30, 30)], fill='#b3a684', width=rnd.choice((3, 5, 9)))
     for i in range(7):
         x = 50 + i * 84 + rnd.randint(-12, 12)
-        d.line([x, 60, x + rnd.randint(-40, 40), 800], fill='#b9ad8c', width=rnd.choice((3, 5)))
-    d.line([20, 640, 250, 700, 420, 660, 580, 760], fill='#8fb1c0', width=16)      # the stream
-    for _ in range(46):
-        x, y = rnd.randint(40, 560), rnd.randint(80, 790)
-        d.line([x, y, x, y - 12], fill='#3a2a22', width=2)
-        d.ellipse([x - 5, y - 22, x + 5, y - 12], fill=rnd.choice(['#c8412f', '#c8412f', '#2f6f8a', '#d9a72b']))
+        d.line([x, 60, x + rnd.randint(-40, 40), 800], fill='#b3a684', width=rnd.choice((3, 5)))
+    d.line([20, 640, 250, 700, 420, 660, 580, 760], fill='#7fa9bb', width=16)      # the stream
+    pins = []
+    for _ in range(34):
+        x, y = rnd.randint(40, 560), rnd.randint(90, 780)
+        d.line([x, y, x - 3, y + 9], fill='#6b6456', width=2)                       # the pin's shadow
+        pins.append((x / 600, y / 840))
     draw.scrawl((im, d), (30, 14), '우리 동네 소리 지도', size=34, fill='#27304a', seed=seed)
     draw.scrawl((im, d), (380, 806), '2019 — 2026', size=20, fill='#27304a', seed=seed + 1)
-    return im
+    return im, pins
+
+
+def sound_board(w=0.5, h=0.7, name='sound map'):
+    """The map on a cork board with real pins (plaster on block takes no pins): back on y = 0, origin at the top
+    centre of its back, for r.hang()."""
+    img, pins = sound_map()
+    cork = mat.paint('#a87b4f', rough=0.95, dirt=0.3)
+    p = Part(name)
+    p.box((w, 0.012, h), at=(0, -0.006, -h), mat=cork, bevel=0.002)
+    pw, ph = w - 0.07, h - 0.07
+    p.box((pw, 0.0006, ph), at=(0, -0.0123, -h + 0.035), mat=mat.paper('#f6f0df'), bevel=0, faces={'front': mat.picture(name + ' paper', img, rough=0.8)})
+    cols = ['#c8412f', '#c8412f', '#2f6f8a', '#d9a72b']
+    rnd = random.Random(3)
+    for u, v in pins:
+        x, z = (u - 0.5) * pw, -0.035 - v * ph
+        p.sphere(0.0042, at=(x, -0.0185, z - 0.0042), mat=mat.plastic(rnd.choice(cols), rough=0.25, dirt=0.0), seg=6, rings=4)
+        p.cyl(0.0008, 0.008, at=(x, -0.0125, z), rot=(90, 0, 0), mat=mat.metal('#9a9a98'), seg=4)
+    return p.build()
 
 
 def gig_poster(title, sub, bg, fg, seed=0):
@@ -240,7 +251,7 @@ def gig_poster(title, sub, bg, fg, seed=0):
     return im
 
 
-def calendar_page(month='11', year='2026', first_wd=6, days=30, mark=(16,)):
+def calendar_page(month='11', year='2026', first_wd=0, days=30, mark=(17,)):
     im, d = draw.new(420, 594, '#f4f1e8')
     d.rectangle([0, 0, 420, 150], fill='#27405a')
     draw.text(d, (30, 76), month + '월', size=84, fill='#f4f1e8', anchor='lm', weight=800)
@@ -264,8 +275,8 @@ def view_outside(version, seed=8):
     night = version == 'night'                                         # the work-light views see the morning picture
     W, H = 3600, 1350
     rnd = random.Random(seed)
-    sky = [(0, '#05070e'), (0.5, '#0e1322'), (0.72, '#25202c'), (1, '#2c2224')] if night else \
-          [(0, '#7f97b8'), (0.45, '#c2c3cf'), (0.66, '#efcdb4'), (1, '#f3d9c2')]
+    sky = [(0, '#020308'), (0.5, '#05070d'), (0.72, '#120f14'), (1, '#161113')] if night else \
+          [(0, '#6f8fb4'), (0.42, '#b9bcc8'), (0.62, '#f0c79c'), (0.7, '#f3b989'), (1, '#f1cfae')]      # 16:40, the sun low on the left
     im = draw.sky(W, H, sky)
     d = ImageDraw.Draw(im)
     hz = H * 0.66                                                      # the horizon as the picture sees it
@@ -358,7 +369,7 @@ def view_outside(version, seed=8):
     if night:                                                         # the glow that sits on a city
         g = Image.new('RGB', (W, H), (0, 0, 0))
         gd = ImageDraw.Draw(g)
-        gd.ellipse([-W * .2, hz - 150, W * 1.2, hz + 210], fill=(70, 48, 40))
+        gd.ellipse([-W * .2, hz - 110, W * 1.2, hz + 170], fill=(38, 26, 22))
         from PIL import ImageChops
         im = ImageChops.screen(im, g.filter(ImageFilter.GaussianBlur(90)))
         soft = im.filter(ImageFilter.GaussianBlur(5))
@@ -399,17 +410,20 @@ def cassette(image, name='cassette'):
     return p.build()
 
 
-def tape_rack(w=0.84, rows=5, pitch=0.128, d=0.082, board=0.012, name='tape rack'):
-    """A shallow wall rack made for cassettes: `rows` boards `pitch` apart between two cheeks, back on y = 0, origin
-    at the middle of the underside of the lowest board. Knows its shelves like kit.shelf_unit."""
+def tape_rack(w=0.84, rows=5, pitch=0.128, d=0.082, board=0.012, batten=0.018, name='tape rack'):
+    """A shallow wall rack made for cassettes: `rows` boards `pitch` apart between two cheeks. It stands off the wall
+    on two battens (an outside wall is where damp gathers behind furniture): back of the battens on y = 0, origin at
+    the middle of the underside of the lowest board. Knows its shelves like kit.shelf_unit."""
     pine = mat.wood('#c9a66e', '#a37e48', rough=0.55, coat=0.05, axis='X')
     p = Part(name)
     H = rows * pitch + board
+    y0 = -batten
     for sx in (-1, 1):
-        p.box((board, d, H), at=(sx * (w / 2 - board / 2), -d / 2, 0), mat=pine, bevel=0.001)
+        p.box((board, d, H), at=(sx * (w / 2 - board / 2), y0 - d / 2, 0), mat=pine, bevel=0.001)
+        p.box((0.03, batten, H), at=(sx * (w / 2 - 0.12), -batten / 2, 0), mat=pine, bevel=0)
     for k in range(rows + 1):
-        p.box((w - 2 * board, d, board), at=(0, -d / 2, k * pitch), mat=pine, bevel=0.001)
-    p.box((w - 2 * board, 0.004, H - 2 * board), at=(0, -0.002, board), mat=pine, bevel=0)
+        p.box((w - 2 * board, d, board), at=(0, y0 - d / 2, k * pitch), mat=pine, bevel=0.001)
+    p.box((w - 2 * board, 0.004, H - 2 * board), at=(0, y0 - 0.002, board), mat=pine, bevel=0)
     ob = p.build()
     ob['lr_levels'] = [k * pitch + board for k in range(rows)]
     ob['lr_clear'] = [pitch - board] * rows
@@ -424,7 +438,7 @@ def deck(name='cassette deck', glow=None):
     for sx in (-1, 1):
         for sy in (-1, 1):
             p.cyl(0.018, 0.012, at=(sx * 0.18, sy * 0.11, 0), mat=mat.rubber(), seg=12)
-    g = glow or mat.emit('#ffb45a', 0.0, name=name + ' meters')
+    g = glow or mat.emit('#ffb45a', 0.0, name=name + ' meters', off='#141210')
     p.box((0.098, 0.002, 0.034), at=(0.0355, -0.146, 0.062), mat=g, bevel=0)
     return p.build()
 
@@ -710,3 +724,105 @@ def flip_phone(name='flip phone', color='#b9bcc2'):
     p.box((0.022, 0.018, 0.0006), at=(0, 0.012, 0.023), mat=mat.plastic('#1c2a3a', rough=0.15), bevel=0)
     p.cyl(0.0035, 0.012, at=(0.014, 0.043, 0.0115), mat=mat.plastic('#55585e'), seg=8)
     return p.build()
+
+
+# ---- what the first review asked for ------------------------------------------------------------------
+def burner(name='burner'):
+    """A portable butane burner, 340 × 280 × 90: the only stove a room like this has."""
+    body = mat.paint('#c9c9c6', rough=0.35)
+    p = Part(name)
+    p.box((0.34, 0.28, 0.075), mat=body, bevel=0.006)
+    p.cyl(0.07, 0.006, at=(-0.055, 0.0, 0.075), mat=mat.metal('#2a2a2c', rough=0.5), seg=20)
+    for i in range(4):
+        a = TAU * i / 4 + 0.78
+        p.box((0.05, 0.008, 0.014), at=(-0.055 + 0.075 * math.cos(a), 0.075 * math.sin(a), 0.075), rot=(0, 0, math.degrees(a)), mat=mat.metal('#2a2a2c', rough=0.5), bevel=0)
+    p.cyl(0.018, 0.012, at=(0.12, -0.14, 0.035), rot=(90, 0, 0), mat=mat.plastic('#1c1c1e'), seg=12)
+    return p.build()
+
+
+def basket(name='toiletries basket'):
+    """A plastic basket of wash things, carried across the terrace to the tap and back."""
+    p = Part(name)
+    p.lathe([(0, 0), (0.1, 0), (0.12, 0.13), (0.117, 0.13), (0.098, 0.004), (0, 0.004)], mat=mat.plastic('#8fb7d6', rough=0.5), seg=20)
+    for x, y, r_, h, c in ((-0.04, 0.02, 0.022, 0.17, '#f1f0ea'), (0.035, 0.03, 0.02, 0.15, '#e9c98f'), (0.0, -0.045, 0.025, 0.12, '#d97a6a')):
+        p.cyl(r_, h, at=(x, y, 0.0045), mat=mat.plastic(c, rough=0.4), seg=12, bevel=0.004)
+    p.tube([(-0.11, 0, 0.125), (-0.07, 0, 0.21), (0.07, 0, 0.21), (0.11, 0, 0.125)], 0.005, mat=mat.plastic('#8fb7d6', rough=0.5), seg=6)
+    return p.build()
+
+
+def absorber(name='moisture absorber'):
+    """A tub of moisture absorber, 110 × 80 × 100: how the tapes' owner fights an outside wall."""
+    p = Part(name)
+    p.box((0.11, 0.08, 0.085), mat=mat.plastic('#e9eef0', rough=0.3), bevel=0.008)
+    p.box((0.112, 0.082, 0.016), at=(0, 0, 0.084), mat=mat.plastic('#3f7fb0', rough=0.4), bevel=0.004)
+    return p.build()
+
+
+def hygrometer(name='hygrometer'):
+    """A small dial hygrometer standing on the rack: ⌀ 70."""
+    im, d = draw.new(160, 160, '#f2efe6')
+    for i in range(11):
+        a = math.radians(-120 + i * 24)
+        d.line([80 + 58 * math.sin(a), 80 - 58 * math.cos(a), 80 + 70 * math.sin(a), 80 - 70 * math.cos(a)], fill='#222', width=3)
+    d.pieslice([10, 10, 150, 150], -150, -110, fill='#c8412f')
+    d.line([80, 80, 80 + 52 * math.sin(math.radians(-18)), 80 - 52 * math.cos(math.radians(-18))], fill='#121212', width=4)
+    draw.text(d, (80, 118), '%', size=22, fill='#444', anchor='mm', weight=600)
+    p = Part(name)
+    p.cyl(0.035, 0.022, at=(0, 0.011, 0.035), rot=(90, 0, 0), mat=mat.plastic('#d9d6cc', rough=0.4), seg=24, bevel=0.003)
+    p.prism([(0.031 * math.cos(TAU * i / 24), 0.031 * math.sin(TAU * i / 24)) for i in range(24)], 0.001, at=(0, -0.011, 0.035), rot=(90, 0, 0),
+            mat=mat.plastic('#d9d6cc'), top=mat.picture(name + ' dial', im, rough=0.5))
+    p.box((0.04, 0.03, 0.004), at=(0, 0, 0), mat=mat.plastic('#d9d6cc', rough=0.4), bevel=0.001)
+    return p.build()
+
+
+def mini_pc(name='mini pc'):
+    """The computer: a small box behind the monitor, one blue LED."""
+    p = Part(name)
+    p.box((0.13, 0.13, 0.04), mat=mat.metal('#3a3c40', rough=0.4), bevel=0.006)
+    p.box((0.004, 0.001, 0.004), at=(0.04, -0.0655, 0.018), mat=mat.emit('#6fb6ff', 6.0, name=name + ' led', off='#1c2a3a'), bevel=0)
+    return p.build()
+
+
+def mat_controller(name='mat controller'):
+    """The dial of an electric floor mat, by the pillow."""
+    p = Part(name)
+    p.box((0.07, 0.12, 0.03), mat=mat.plastic('#e9e6dc', rough=0.4), bevel=0.006)
+    p.cyl(0.02, 0.008, at=(0, 0.015, 0.03), mat=mat.plastic('#b9b5a8', rough=0.4), seg=16)
+    p.box((0.006, 0.006, 0.002), at=(0, -0.04, 0.03), mat=mat.emit('#ff7a2a', 4.0, name=name + ' lamp', off='#5a3a2a'), bevel=0)
+    return p.build()
+
+
+def tissue_roll(name='tissue roll'):
+    p = Part(name)
+    p.pipe(0.055, 0.02, 0.1, mat=mat.paper('#f4f1ea', rough=0.95, dirt=0.05), seg=24)
+    return p.build()
+
+
+def terrace(r):
+    """The room's own roof, built for real outside the window and the door: a deck 150 mm below the room's floor, a
+    parapet, a yellow water tank. A rooftop window looks first at its own parapet — and real things at 2–5 m slide
+    against the picture 40 m away as the visitor walks."""
+    grey = mat.paint('#8d8f8c', rough=0.9, dirt=0.5)
+    green = mat.paint('#4f7f5c', rough=0.75, dirt=0.5)                 # urethane waterproofing [rooftop]
+    yellow = mat.plastic('#d9ab2a', rough=0.5, dirt=0.4)
+    p = Part('terrace')
+    p.box((9.5, 5.6, 0.2), at=(1.65, 4.49 + 2.8, -0.35), mat=green, bevel=0)                    # deck beyond the window wall
+    p.box((9.5, 0.2, 1.1), at=(1.65, 4.49 + 5.5, -0.15), mat=grey, bevel=0.01)                  # parapet, top just above the sill
+    p.box((0.2, 5.6, 1.1), at=(-3.0, 4.49 + 2.8, -0.15), mat=grey, bevel=0.01)
+    p.box((9.5, 4.2, 0.2), at=(1.65, -0.19 - 2.1, -0.35), mat=green, bevel=0)                   # deck beyond the door
+    p.box((9.5, 0.2, 1.1), at=(1.65, -0.19 - 4.1, -0.15), mat=grey, bevel=0.01)
+    r.outdoors(p.build())
+    t = Part('water tank')
+    t.box((1.4, 1.4, 0.12), at=(0.15, 7.6, -0.15), mat=grey, bevel=0.01)
+    t.lathe([(0, 0), (0.56, 0), (0.575, 0.03), (0.575, 1.08), (0.5, 1.2), (0.22, 1.24), (0.22, 1.3), (0, 1.3)], at=(0.15, 7.6, -0.03), mat=yellow, seg=28)
+    for z in (0.3, 0.55, 0.8):
+        t.pipe(0.582, 0.57, 0.03, at=(0.15, 7.6, -0.03 + z), mat=yellow, seg=28)
+    r.outdoors(t.build())
+
+
+def water_label():
+    im, d = draw.new(256, 96, '#eaf4fb')
+    d.rectangle([0, 0, 256, 20], fill='#2f7fb8')
+    d.rectangle([0, 76, 256, 96], fill='#2f7fb8')
+    draw.text(d, (128, 48), '샘물 2L', size=30, fill='#1f5f96', anchor='mm', weight=800)
+    return im

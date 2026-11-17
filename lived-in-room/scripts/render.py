@@ -9,7 +9,7 @@
   render.py --all                            every version                                → out/exr/<version>/NNNN.exr
   render.py --blend                          save the built room as a .blend per version  → out/<version>.blend
 
-  --q draft|preview|final|hero   --spp N   --scale 0.5   --threads N
+  --q draft|preview|final|hero   --spp N   --scale 0.5   --size 640x360 (exact pixels)   --threads N
 """
 import os
 import sys
@@ -33,12 +33,17 @@ def main():
     ap.add_argument('--q', default=None)
     ap.add_argument('--spp', type=int)
     ap.add_argument('--scale', type=float)
+    ap.add_argument('--size', help='render at exactly WxH pixels (same shape as the film)')
     ap.add_argument('--threads', type=int, default=0)
     a = ap.parse_args(_boot.argv())
     P = _boot.boot(a.project)
     from PIL import Image
     from lr import finish, scene as sc
     over = {k: v for k, v in dict(spp=a.spp, scale=a.scale, threads=a.threads).items() if v}
+    if a.size:
+        w, h = (int(x) for x in a.size.lower().split('x'))
+        P.render_size = (w, h)
+        over['scale'] = 1.0
     log = P.out('blender.log')
 
     def still(r, version, frame, path, quality):

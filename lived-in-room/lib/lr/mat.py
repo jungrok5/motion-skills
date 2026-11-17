@@ -347,6 +347,22 @@ def glass(tint='#ffffff', rough=0.0, ior=1.5, window=False, frost=0.0):
 
 
 @cached
+def film(color='#e6ecee', opacity=0.72, rough=0.6):
+    """A translucent sheet you cannot see through clearly: insulating film or bubble wrap on a pane, tracing paper,
+    a frosted shade. It is lit like a matt surface and lets a share of what is behind it through, unfocused — unlike
+    frosted GLASS, which mirrors every lamp in the room."""
+    g = G(f'film {color}{opacity}')
+    p = g.n('BsdfPrincipled', Base_Color=rgba(color), Roughness=rough, Specular_IOR_Level=0.15)
+    tr = g.n('BsdfTransparent', Color=(1, 1, 1, 1))
+    mx = g.n('MixShader')
+    mx.inputs[0].default_value = 1.0 - opacity
+    g.link(p.outputs[0], mx.inputs[1])
+    g.link(tr.outputs[0], mx.inputs[2])
+    g.link(mx.outputs[0], g.out.inputs['Surface'])
+    return g.m
+
+
+@cached
 def liquid(color='#7a5a20', ior=1.33):
     """Tea, water, oil seen through a bottle."""
     g = G(f'liquid {color}')
@@ -387,16 +403,22 @@ def to_image(name, pil):
     return img
 
 
-def picture(name, image, rough=0.5, emission=0.0, coat=0.0, dirt=0.0, repeat=False):
+def picture(name, image, rough=0.5, emission=0.0, coat=0.0, dirt=0.0, repeat=False, screen=False):
     """An image on a surface: a spine, a label, a poster, a page, a screen (emission > 0), the view outside.
     `image` is a Pillow image or a Blender image. The face it goes on needs UVs: Part.box(faces=…), sheet(image=…),
-    lathe(label=…), slab(image=…)."""
+    lathe(label=…), slab(image=…). screen=True makes it a display: switched off (r.glow(m, 0)) it is black glass,
+    not a printed picture of its last page."""
     g = G(name)
     img = image if isinstance(image, bpy.types.Image) else to_image(name, image)
     t = g.n('TexImage', {'image': img, 'extension': 'REPEAT' if repeat else 'EXTEND'})
     g.link(g.coords('UV'), t.inputs['Vector'])
     col = t.outputs['Color']
     ins = dict(Coat_Weight=coat, Coat_Roughness=0.08)
+    if screen:
+        pw = g.n('Value')
+        pw.name = pw.label = 'lr_power'
+        pw.outputs[0].default_value = 1.0
+        col = g.mix(pw.outputs[0], '#020203', col)
     if emission:
         ins.update(Emission_Color=t.outputs['Color'], Emission_Strength=emission)
     g.finish(col, rough, 0.0, dirt, **ins)

@@ -1,4 +1,4 @@
-"""「옥탑 녹음실」 — a rooftop room in Seoul, at 02:14 on a November night and again at 06:50 in mist.
+"""「옥탑 녹음실」 — a rooftop room in Seoul, at 02:14 on a November night and again at 16:40, in the last low sun.
 Its tenant has recorded the neighbourhood on cassette for seven years. BRIEF.md is the design; RESEARCH.md is
 where every number comes from."""
 
@@ -8,8 +8,8 @@ ROOM = dict(
     size=(1920, 1080),
     seed=7,
     versions=dict(
-        night=dict(seconds=16.0, look=dict(exposure=0.9, grain=0.055, bloom=0.10, halation=0.14)),
-        dawn=dict(seconds=10.0, look=dict(exposure=0.25, grain=0.035, shadows='#18202c', highlights='#ffe2c2', split=0.2, saturation=1.1)),
+        night=dict(seconds=16.0, look=dict(exposure=1.45, grain=0.055, bloom=0.10, halation=0.14, saturation=0.96)),
+        afternoon=dict(seconds=12.0, look=dict(exposure=0.65, grain=0.035, shadows='#18202c', highlights='#ffdcae', split=0.22, saturation=1.1)),
     ),
     look=dict(),
     beacon_range=(20, 60),          # 중광도 B 표시등: 분당 20–60회 섬광 [beacon]
@@ -20,5 +20,7 @@ ROOM = dict(
         door=dict(pos=(1.3, 2.9, 1.5), look=(2.3, 0.0, 0.9), lens=20),
         laundry=dict(pos=(2.2, 2.2, 1.5), look=(0.5, 0.9, 0.6), lens=22),
         entry=dict(pos=(2.6, 0.35, 1.45), look=(1.4, 4.2, 1.0), lens=20),
+        sill=dict(pos=(1.72, 3.55, 1.32), look=(1.62, 4.4, 1.12), lens=32),
+        pillow=dict(pos=(1.75, 2.2, 1.25), look=(3.0, 2.9, 0.35), lens=24),
     ),
 )
