@@ -128,5 +128,6 @@ def orbit_camera(name, target, yaw_deg, dist, height, lens=50):
 
 def frame_dist(height_m, lens=50, fill=0.8, sensor=36, aspect=16 / 9):
     """Distance at which a subject height_m fills `fill` of the frame height."""
-    vfov = 2 * math.atan(sensor / aspect / 2 / lens)
+    # Blender fits the 36 mm sensor to the longer side: the height for a portrait frame
+    vfov = 2 * math.atan(sensor / max(aspect, 1.0) / 2 / lens)
     return height_m / fill / 2 / math.tan(vfov / 2)

@@ -73,7 +73,7 @@ def concept(dir_, H, clip, samples=24):
     for name, yaw in (('front', 0), ('back', 180)):
         p = os.path.join(dir_, f'{name}.png')
         if not os.path.exists(p):
-            view(p, yaw, H, res=(600, 800), samples=samples, fill=0.88)
+            view(p, yaw, H, res=(600, 800), samples=samples, fill=0.8, aim=0.47)
         out[name] = p
     return out
 

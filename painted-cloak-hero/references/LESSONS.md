@@ -36,3 +36,10 @@ What went wrong while building this skill, so the next hero does not repeat it.
 - **A strip of skin at the crotch** → the trouser seat ended above the torso's bottom → seat down to hip − 0.08 H.
 - **The beanie read as a headband and hair poked through its top** → the cap was head-sized under a hair shell → a knit
   cap is a size up from the head and sits higher (`sit` .4).
+
+## Renders
+- **The concept and the cast sheet cut the feet off** → portrait frames: Blender fits the 36 mm sensor to the longer
+  side (the height), the framing maths assumed the width → `frame_dist` uses the height for portrait frames; the
+  concept is framed at 80 % with the aim a little low.
+- **A full review is slow on a CPU** (≈ 5 s a 960×540 frame, ~20 min for three clips) → look at `stills --clip` first,
+  render `clip <name>` for the one you are fixing, and `review` once at the end.
