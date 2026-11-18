@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>walking-colossus · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 아파트 · 배 · 성당 같은 거대한 일상의 건축물이 유압 다리로 안개 속을 걸어가는 실사풍 영화를 three.js 코드만으로 만듭니다.">
+<meta property="og:title" content="walking-colossus · motion-skills">
+<meta property="og:description" content="주제 하나를 주면 아파트 · 배 · 성당 같은 거대한 일상의 건축물이 유압 다리로 안개 속을 걸어가는 실사풍 영화를 three.js 코드만으로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/walking-colossus/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/walking-colossus">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / walking-colossus</nav>
+  <h1>walking-colossus</h1>
+  <p>주제 하나를 주면 아파트 · 배 · 성당 같은 거대한 일상의 건축물이 유압 다리로 안개 속을 걸어가는 실사풍 영화를 three.js 코드만으로 만듭니다. 원본: <a href="https://github.com/Leonxlnx/walking-block">Leonxlnx/walking-block</a>(소련식 패널 아파트가 다리 여덟 개로 황혼의 들판을 건너는 45초 영화)을 보고 만들었습니다.</p>
+  <ul class="tags"><li>three.js · 코드 전용</li><li>3D 모델 · 이미지 텍스처 0개</li><li>보행 · 다리 IK 검사</li><li>안개 · 심도 · 모션 블러</li><li>1080p MP4 · 합성 사운드</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나 (걸어갈 건축물 · 장소 · 시간)</dd>
+      <dt>브리프</dt><dd>실제 크기의 몸체, 사람 크기의 디테일, 다리를 붙일 배 · 거더, 무게에서 나온 보행 수치, 지면 · 시간 · 안개, 아홉 비트의 샷과 소리</dd>
+      <dt>설계와 검사</dt><dd><code>colossus.js</code> 한 파일의 수치와 몸체 모듈, 다리 도달 · 무릎 각도와 방향 · 디딘 발 고정 · 지지 · 결정성 · 샷마다 노출과 움직임 검사, 발이 닿는 순간에 맞춘 카메라</dd>
+      <dt>출력</dt><dd>스틸과 콘택트 시트, 오프라인 렌더 PNG 프레임, 걸음마다 배치한 합성 사운드, 1080p MP4</dd>
+    </dl>
+    <pre><code>cp -r walking-colossus /tmp/try &amp;&amp; cd /tmp/try/examples/low-tide
+node ../../scripts/check.mjs --fast --events   # 다리 · 보행 · 지지 · 카메라 + 샷별 발자국
+node ../../scripts/shot.mjs --board --n 1      # 스토리보드 shots/s_sheet.jpg
+node ../../scripts/render.mjs &amp;&amp; node ../../scripts/audio.mjs &amp;&amp; node ../../scripts/encode.mjs
+node ../../scripts/new-colossus.mjs ~/my-colossus --title "Night Ferry" --legs 4</code></pre>
+    <p class="mute">요구 사항: Node 18+, Playwright + Chromium(GPU가 있으면 GPU, 없으면 SwiftShader), ffmpeg. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/walking-colossus/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:240px;--demo-bg:#000">
+    <iframe data-src="demo/low-tide/?scale=0.6" title="walking-colossus 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/low-tide/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/low-tide</code> · 「Low Tide」 · 40초 · 실시간(무거움, GPU 권장)</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/low-tide/?scale=0.6" data-cap="예제 &lt;code&gt;examples/low-tide&lt;/code&gt; · 「Low Tide」 · 40초 · 실시간(무거움, GPU 권장)" aria-pressed="true">Low Tide</button>
+        <button class="btn" type="button" data-src="demo/walking-block/?scale=0.6" data-cap="예제 &lt;code&gt;examples/walking-block&lt;/code&gt; · 원본 영화 · 45초 · 실시간(무거움, GPU 권장)" aria-pressed="false">Walking Block</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">스킬의 엔진으로 렌더한 샷입니다. 위는 원본에 없는 주제로 처음부터 만든 예제, 아래는 원본 영화를 같은 엔진에 옮긴 스타일 예제입니다. 카드를 누르면 그 시점부터 라이브 데모가 재생됩니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"low":"Low Tide","block":"Walking Block"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「Low Tide」 <small>새 주제 · 40초 · 9샷</small></h3>
+      <p>물이 빠진 갯벌에 남겨진 녹슨 컨테이너선이 다리 열 개로 일어나 흐린 새벽의 갯벌을 건너 바다를 찾아갑니다. 브리프 → 몸체 설계 → 검사 → 스틸 채점으로 만든 예제입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="low" href="demo/low-tide/?t=0.5" target="_blank" rel="noopener">
+          <img src="samples/lt-open.jpg" alt="갯벌 물웅덩이 높이의 렌즈 너머 굴 말뚝들 사이로 안개 속 거대한 배와 다리가 보이는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">오프닝 · 0–5초</span><b>안개 속의 무언가</b><span class="how">물웅덩이 높이의 렌즈, 말뚝에서 배로 초점 이동</span></div></a>
+        <a class="tile" data-tags="low" href="demo/low-tide/?t=5" target="_blank" rel="noopener">
+          <img src="samples/lt-side.jpg" alt="망원 렌즈로 본 컨테이너선의 옆모습과 그 아래 걷고 있는 다리 열 개" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">옆모습 · 5–10초</span><b>전체 실루엣</b><span class="how">170 m 거리의 망원, 다리 열 개가 번갈아 걷는 모습</span></div></a>
+        <a class="tile" data-tags="low" href="demo/low-tide/?t=10" target="_blank" rel="noopener">
+          <img src="samples/lt-hero.jpg" alt="낮은 3/4 시점에서 뱃머리 쪽으로 걸어오는 배와 진흙 위 말뚝들" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">히어로 · 10–15초</span><b>낮은 3/4</b><span class="how">뱃머리 앞 지면 높이에서 다가오는 배</span></div></a>
+        <a class="tile" data-tags="low" href="demo/low-tide/?t=15" target="_blank" rel="noopener">
+          <img src="samples/lt-foot.jpg" alt="렌즈 바로 앞 물웅덩이에 발톱 달린 거대한 발이 내리꽂히는 앙각 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">발 · 15–19초</span><b>물에 내리꽂히는 발</b><span class="how">18.20초에 3번 다리가 물웅덩이에 착지</span></div></a>
+        <a class="tile" data-tags="low" href="demo/low-tide/?t=19" target="_blank" rel="noopener">
+          <img src="samples/lt-belly.jpg" alt="바로 아래에서 올려다본 선체 바닥과 양쪽 거더 벨트, 다리들" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">선저 · 19–24초</span><b>머리 위로 지나가는 배</b><span class="how">작업등, 해초, 물방울, 천천히 도는 프로펠러</span></div></a>
+        <a class="tile" data-tags="low" href="demo/low-tide/?t=24" target="_blank" rel="noopener">
+          <img src="samples/lt-life.jpg" alt="불 켜진 선실 창문이 줄지은 거주구와 주황색 구명정" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">생활 · 24–29초</span><b>거주구의 불빛</b><span class="how">호박색 창문, 구명정, 브리지 윙의 빨래</span></div></a>
+        <a class="tile" data-tags="low" href="demo/low-tide/?t=29" target="_blank" rel="noopener">
+          <img src="samples/lt-knee.jpg" alt="진흙에서 들어 올렸다 내리찍는 다리의 무릎과 유압 실린더 근접" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">기계 · 29–33초</span><b>무릎과 피스톤</b><span class="how">착지 뒤 다음 다리가 진흙에서 떨어지는 순간</span></div></a>
+        <a class="tile" data-tags="low" href="demo/low-tide/?t=33" target="_blank" rel="noopener">
+          <img src="samples/lt-puddle.jpg" alt="물웅덩이 위 낮은 시점, 수면에 비친 배와 그 뒤로 착지하는 발" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">거울 · 33–37초</span><b>수면에 비친 배</b><span class="how">평면 반사, 33.40초에 뒤쪽 발 착지</span></div></a>
+        <a class="tile" data-tags="low" href="demo/low-tide/?t=37" target="_blank" rel="noopener">
+          <img src="samples/lt-away.jpg" alt="배 뒤에서 크레인으로 올라가며 안개 속으로 걸어가는 배를 보는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">떠남 · 37–40초</span><b>바다 쪽 안개 속으로</b><span class="how">선미 뒤에서 크레인 업, 페이드 아웃</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>「Walking Block」 <small>원본 영화 · 45초 · 9샷</small></h3>
+      <p>원본 레포의 건물 · 하부 기계 모듈과 카메라를 스킬의 엔진 위에 그대로 옮긴 스타일 예제입니다. 엔진의 기본 룩이 이 영화의 푸른 황혼입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="block" href="demo/walking-block/?t=11" target="_blank" rel="noopener">
+          <img src="samples/wb-hero.jpg" alt="풀숲 너머 푸른 황혼의 안개 속을 다리 여덟 개로 걷는 패널 아파트" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">히어로 · 11–16.5초</span><b>걷는 아파트</b><span class="how">원본의 레퍼런스 2번 구도</span></div></a>
+        <a class="tile" data-tags="block" href="demo/walking-block/?t=16.5" target="_blank" rel="noopener">
+          <img src="samples/wb-foot.jpg" alt="렌즈 앞에 발톱 달린 발이 진흙에 내리꽂히는 앙각 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">발 · 16.5–20.5초</span><b>진흙에 박히는 발</b><span class="how">18.75초에 2번 다리 착지</span></div></a>
+        <a class="tile" data-tags="block" href="demo/walking-block/?t=26" target="_blank" rel="noopener">
+          <img src="samples/wb-life.jpg" alt="발코니와 빨래, 불 켜진 방들이 보이는 아파트 외벽" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">생활 · 26–31.5초</span><b>발코니와 빨래</b><span class="how">인테리어 매핑 창문, 흔들리는 빨래</span></div></a>
+        <a class="tile" data-tags="block" href="demo/walking-block/?t=35.5" target="_blank" rel="noopener">
+          <img src="samples/wb-puddle.jpg" alt="물웅덩이에 비친 걷는 아파트" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">거울 · 35.5–40.5초</span><b>웅덩이의 반사</b><span class="how">37.95초에 웅덩이 뒤로 착지</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">스킬이 만들어진 원본 프로젝트와, 스킬로 만든 두 예제의 라이브 페이지입니다. 원본 영화(1080p 45초 MP4)는 원본 레포의 릴리스에 있습니다.</p>
+  <div class="works">
+    <a class="work" href="https://jungrok5.github.io/motion-skills/walking-colossus/demo/low-tide/" target="_blank" rel="noopener"><b>「Low Tide」 · 걷는 컨테이너선 · 40초 · 라이브 페이지</b><span>다리 10개 · 흐린 새벽의 갯벌 · 9샷</span><span class="url">walking-colossus/demo/low-tide/</span></a>
+    <a class="work" href="https://jungrok5.github.io/motion-skills/walking-colossus/demo/walking-block/" target="_blank" rel="noopener"><b>「Walking Block」 · 원본 영화를 엔진에 옮긴 예제 · 45초 · 라이브 페이지</b><span>다리 8개 · 푸른 황혼의 들판 · 9샷</span><span class="url">walking-colossus/demo/walking-block/</span></a>
+    <a class="work" href="https://github.com/Leonxlnx/walking-block"><b>원본 레포 · Leonxlnx/walking-block</b><span>스킬의 출처 (MIT)</span><span class="url">github.com/Leonxlnx/walking-block</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/walking-colossus/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/walking-colossus">폴더</a> <span>engine · scripts · templates · examples · references</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/walking-colossus/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/walking-colossus/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 스틸 채점 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/walking-colossus/references/MODULES.md">references/MODULES.md</a> <span>colossus.js와 모듈 계약, 모든 옵션</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/walking-colossus/references/GAIT.md">references/GAIT.md</a> <span>무게 → 보행 수치, 움직임 검사</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/walking-colossus/references/LOOK.md">references/LOOK.md</a> <span>후처리, 룩 수치, 색 목표</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/walking-colossus/references/SHOTS.md">references/SHOTS.md</a> <span>아홉 비트의 문법</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/walking-colossus/references/SOUND.md">references/SOUND.md</a> <span>걸음에 맞춘 합성 사운드</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/walking-colossus/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/walking-colossus/references/SOURCE.md">references/SOURCE.md</a> <span>원본에서 가져온 것과 새로 만든 것</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 이미지는 스킬의 엔진으로 렌더했습니다 · 엔진은 <a href="https://github.com/Leonxlnx/walking-block">Leonxlnx/walking-block</a>(MIT)에서 가져와 고쳤습니다
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

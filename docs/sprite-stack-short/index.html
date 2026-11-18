@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>sprite-stack-short · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 물건 하나를 위 · 옆 · 앞 · 뒤 네 방향의 픽셀아트로 그리고, 옆모습의 한 줄을 슬라이스 한 장으로 바꿔 1px씩 쌓아 어느 각도로든 돌린 뒤, 그 물건이 사는 작은 픽셀 세계까지 보여 주는 짧은 영상을 코드만으로 만듭니다.">
+<meta property="og:title" content="sprite-stack-short · motion-skills">
+<meta property="og:description" content="주제 하나를 주면 물건 하나를 네 방향의 픽셀아트로 그리고, 슬라이스로 쌓아 어느 각도로든 돌린 뒤, 그 물건이 사는 픽셀 세계까지 보여 주는 짧은 영상을 코드만으로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/sprite-stack-short/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/sprite-stack-short">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / sprite-stack-short</nav>
+  <h1>sprite-stack-short</h1>
+  <p>주제 하나를 주면 물건 하나를 위 · 옆 · 앞 · 뒤 네 방향의 픽셀아트로 그리고, 옆모습의 한 줄을 슬라이스 한 장으로 바꿔 1px씩 쌓아 어느 각도로든 돌린 뒤, 그 물건이 사는 작은 픽셀 세계(섬을 도는 배, 마을을 지나는 트럭, 광장의 로봇)까지 보여 주는 짧은 영상을 코드만으로 만듭니다. 원본: Kimo(@asynkimo)의 <a href="https://x.com/asynkimo/status/2121716250820964431?a=8jjw0gVhdGPGqgSNo04&amp;s=19" target="_blank" rel="noopener">X 게시물</a>을 보고 만들었습니다.</p>
+  <ul class="tags"><li>2D 캔버스 · 픽셀아트</li><li>스프라이트 스태킹</li><li>네 방향 그림 → 복셀</li><li>16:9 · 30fps</li><li>합성 칩튠</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(등대 섬을 도는 예인선, 야시장의 푸드트럭, 산길의 제설차, 우리 회사 배달 로봇 …)</dd>
+      <dt>브리프</dt><dd>주인공 물건과 크기 · 실루엣 · 팔레트 · 앞과 뒤를 알려 주는 색 · 가는 부품, 움직이면 질량 · 속도 · 미끄러짐 · 기울기 · 엔진, 세계(바닥 재료 · 장소 · 소품 · 코스 · 카메라), 비트와 자막, 선율을 적은 <code>BRIEF.md</code></dd>
+      <dt>모델</dt><dd>주인공의 네 방향 픽셀 그림(<code>cast.js</code>)을 깎아 만든 복셀, 회전체 · 상자 · 복셀 함수로 만든 소품. 네 그림이 서로 맞는지(잃는 픽셀 0 %) · 옆모습이 오른쪽을 보는지 검사하고, 여덟 각도와 기울기 자세를 한 장에 그린 모델 시트로 채점</dd>
+      <dt>영상</dt><dd>네 방향 그리기 → 스캔선이 지나는 줄마다 슬라이스가 떨어져 쌓이는 장면 → 1px 간격으로 닫히며 도는 스택 → 턴테이블 → 삼각 조각으로 깨지며 들어가는 세계(카메라와 함께 도는 바닥, 발자국 그림자, 물보라 · 먼지, 흔들리는 소품)</dd>
+      <dt>확인</dt><dd>모든 비트 그리기 · 빈 프레임 · 결정성 · 표면을 벗어나지 않는지 · 화면 안 · 자막 폭 · 픽셀 블록 · 회전 속도 · 미끄러짐 · 질량에 맞는 가속 · 회전보다 늦게 따라오는 차체 기울기 · 멈춰 있지 않은지 · 악보</dd>
+      <dt>출력</dt><dd>30fps 1920×1080 MP4(칩튠 · 슬라이스마다 오르는 음 · 속도를 따르는 엔진 소리 포함), 클릭하면 소리가 켜지는 라이브 페이지</dd>
+    </dl>
+    <pre><code>node sprite-stack-short/scripts/new-short.mjs my-short --from tugboat-dawn
+cd my-short
+node ../sprite-stack-short/scripts/check.mjs sheet.html
+node ../sprite-stack-short/scripts/check.mjs index.html --scale .5
+node ../sprite-stack-short/scripts/render.mjs index.html --sheet 12 --scale .5
+node ../sprite-stack-short/scripts/score.mjs index.html
+node ../sprite-stack-short/scripts/render.mjs index.html --audio out/my-short.wav</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. 네트워크와 GPU가 필요 없습니다(28초 영상이 CPU에서 약 20초). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/sprite-stack-short/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:calc((100vw - 34px)*.5625);--demo-bg:#0d0c12">
+    <iframe data-src="demo/examples/tugboat-dawn/" title="sprite-stack-short 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/tugboat-dawn/">데모 열기 (examples/tugboat-dawn)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/tugboat-dawn</code> · 28초 · 클릭하면 소리</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/tugboat-dawn/" data-cap="예제 &lt;code&gt;examples/tugboat-dawn&lt;/code&gt; · 28초 · 클릭하면 소리" aria-pressed="true">새벽의 예인선</button>
+        <button class="btn" type="button" data-src="demo/examples/tugboat-dawn/sheet.html" data-cap="모델 시트 &lt;code&gt;examples/tugboat-dawn/sheet.html&lt;/code&gt; · 네 방향 그림 · 슬라이스 · 여덟 각도 · 기울기" aria-pressed="false">모델 시트</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/index.html&lt;/code&gt; · 20.6초 · 궤도 카메라 · 새 작품의 출발점" aria-pressed="false">시작 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제 「Tug at Dawn」의 비트와 전환, 모델 시트, 시작 템플릿의 스틸입니다. 카드를 누르면 그 순간의 라이브 페이지가 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"beat":"비트","shard":"전환","tool":"모델 시트 · 템플릿"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「Tug at Dawn」 <small>28초 · 7비트</small></h3>
+      <p>항구의 예인선 한 척이 새벽에 등대 섬을 한 바퀴 돕니다. 원본의 자동차 · 레이스 트랙과 다른 주제로 브리프부터 끝까지 만든 예제입니다(물 위에서 미끄러지고 흔들리는 배, 물보라, 반짝이는 물).</p>
+      <div class="grid">
+        <a class="tile" data-tags="beat" href="demo/examples/tugboat-dawn/?t=1.5" target="_blank" rel="noopener"><img src="samples/world-teaser.jpg" alt="새벽 항구의 물 위에 떠 있는 예인선, 오른쪽에 빨간 줄무늬 등대와 소나무가 있는 섬, 왼쪽 위에 나무 부두" loading="lazy" width="640" height="360"><div class="cap"><span class="no">세계 · 도입</span><b>등대 섬 앞</b><span class="how">출발 전 물 위에서 흔들리는 예인선</span></div></a>
+        <a class="tile" data-tags="beat" href="demo/examples/tugboat-dawn/?t=6.5" target="_blank" rel="noopener"><img src="samples/views.jpg" alt="종이 위에 위 · 옆 · 앞 · 뒤 네 방향으로 그린 예인선 픽셀아트, 위와 옆 그림 아래 앞쪽을 가리키는 화살표" loading="lazy" width="640" height="360"><div class="cap"><span class="no">views · 네 방향</span><b>네 방향에서 그리기</b><span class="how">한 줄씩 그려지는 위 · 옆 · 앞 · 뒤 그림</span></div></a>
+        <a class="tile" data-tags="beat" href="demo/examples/tugboat-dawn/?t=10.5" target="_blank" rel="noopener"><img src="samples/slices.jpg" alt="옆모습을 가로지르는 파란 스캔선, 가운데 그 줄의 슬라이스만 밝은 위 그림, 오른쪽에 아래부터 쌓여 가는 슬라이스 스택" loading="lazy" width="640" height="360"><div class="cap"><span class="no">slices · 슬라이스</span><b>한 줄이 한 장으로</b><span class="how">스캔선, 그 줄의 슬라이스, 떨어져 쌓이는 스택</span></div></a>
+        <a class="tile" data-tags="beat" href="demo/examples/tugboat-dawn/?t=14.6" target="_blank" rel="noopener"><img src="samples/stack.jpg" alt="1px 간격으로 닫힌 슬라이스 스택이 비스듬히 돌아가는 예인선, 아래 그림자" loading="lazy" width="640" height="360"><div class="cap"><span class="no">stack · 쌓기</span><b>1px씩 띄워 쌓기</b><span class="how">벌어진 스택이 닫히고 돌기 시작</span></div></a>
+        <a class="tile" data-tags="beat" href="demo/examples/tugboat-dawn/?t=17.4" target="_blank" rel="noopener"><img src="samples/turn.jpg" alt="크게 확대한 예인선이 턴테이블처럼 도는 장면, 왼쪽 위 빛을 받는 면과 그림자" loading="lazy" width="640" height="360"><div class="cap"><span class="no">turn · 회전</span><b>어느 각도든 같은 배</b><span class="how">빛을 받는 면이 회전을 따라 바뀜</span></div></a>
+        <a class="tile" data-tags="beat" href="demo/examples/tugboat-dawn/?t=23" target="_blank" rel="noopener"><img src="samples/harbour-loop.jpg" alt="섬을 끼고 도는 예인선 뒤로 퍼지는 흰 물보라, 초록 부표와 빨간 부표" loading="lazy" width="640" height="360"><div class="cap"><span class="no">세계 · 한 바퀴</span><b>물보라를 그리며</b><span class="how">미끄러지듯 도는 배, 따라 도는 카메라, 흔들리는 부표</span></div></a>
+        <a class="tile" data-tags="beat" href="demo/examples/tugboat-dawn/?t=26.8" target="_blank" rel="noopener"><img src="samples/title.jpg" alt="물 위를 지나는 예인선 위로 Tug at Dawn 제목 띠" loading="lazy" width="640" height="360"><div class="cap"><span class="no">title · 제목</span><b>Tug at Dawn</b><span class="how">세계 위에 얹는 제목 띠, 마지막 화음</span></div></a>
+        <a class="tile" data-tags="shard" href="demo/examples/tugboat-dawn/?t=3.5" target="_blank" rel="noopener"><img src="samples/shards-to-paper.jpg" alt="항구 장면이 삼각형 조각으로 깨지며 종이 페이지로 바뀌는 순간" loading="lazy" width="640" height="360"><div class="cap"><span class="no">전환 · 세계 → 종이</span><b>삼각 조각</b><span class="how">가운데부터 바깥으로 바뀌는 조각</span></div></a>
+        <a class="tile" data-tags="shard" href="demo/examples/tugboat-dawn/?t=19.2" target="_blank" rel="noopener"><img src="samples/shards-to-world.jpg" alt="종이 위 예인선 턴테이블이 삼각형 조각으로 항구 세계로 바뀌는 순간" loading="lazy" width="640" height="360"><div class="cap"><span class="no">전환 · 종이 → 세계</span><b>세계로 들어가기</b><span class="how">반짝이는 소리와 함께 깨지는 종이</span></div></a>
+        <a class="tile" data-tags="tool" href="demo/examples/tugboat-dawn/sheet.html" target="_blank" rel="noopener"><img src="samples/model-sheet.jpg" alt="예인선의 네 방향 그림, 벌린 슬라이스, 0도부터 315도까지 여덟 각도, 기울기 자세를 한 장에 그린 모델 시트" loading="lazy" width="640" height="360"><div class="cap"><span class="no">모델 시트</span><b>예인선 · 여덟 각도</b><span class="how">0° 오른쪽 · 90° 앞 · 180° 왼쪽 · 270° 뒤, 기울기 자세</span></div></a>
+        <a class="tile" data-tags="tool" href="demo/templates/?t=2.6" target="_blank" rel="noopener"><img src="samples/template-views.jpg" alt="종이 위에 네 방향으로 그린 빨간 우체통 픽셀아트" loading="lazy" width="640" height="360"><div class="cap"><span class="no">시작 템플릿 · 20.6초</span><b>우체통 · 네 방향</b><span class="how">앞에는 투입구, 뒤에는 수거 문</span></div></a>
+        <a class="tile" data-tags="tool" href="demo/templates/?t=14" target="_blank" rel="noopener"><img src="samples/template-orbit.jpg" alt="잔디로 둘러싸인 돌바닥 광장 가운데 우체통과 벤치, 카메라가 돌며 보는 장면" loading="lazy" width="640" height="360"><div class="cap"><span class="no">시작 템플릿 · 궤도 카메라</span><b>광장의 우체통</b><span class="how">움직이지 않는 주인공은 카메라가 돎</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. 출발점은 Kimo가 X에 올린 17초 영상 "You can turn pixel art to any angle with sprite stacking"입니다. 파란 스포츠카를 네 방향에서 그리고, 옆모습의 한 줄마다 슬라이스를 만들어 1px씩 쌓아 돌린 뒤, 레이스 트랙을 달리게 합니다. 이 스킬은 그 기법과 형식(네 방향 그림 → 슬라이스 → 쌓기 → 회전 → 세계, 삼각 조각 전환, 함께 도는 바닥)만 가져오고, 엔진과 예제 「Tug at Dawn」의 배 · 섬 · 소리는 모두 이 레포의 것입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/examples/tugboat-dawn/" target="_blank" rel="noopener"><b>「Tug at Dawn」 · 28초 · 7비트</b><span>세계 → 네 방향 → 슬라이스 → 쌓기 → 회전 → 세계 → 제목, 라이브 페이지</span><span class="url">sprite-stack-short/demo/examples/tugboat-dawn/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/sprite-stack-short/examples"><b>예제 폴더 · examples/</b><span>tugboat-dawn</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/asynkimo/status/2121716250820964431?a=8jjw0gVhdGPGqgSNo04&amp;s=19" target="_blank" rel="noopener"><b>레퍼런스 영상 · X 게시물</b><span>Kimo(@asynkimo) · 17초 · 스프라이트 스태킹으로 픽셀아트를 어느 각도로든</span><span class="url">x.com/asynkimo</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sprite-stack-short/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/sprite-stack-short">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sprite-stack-short/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sprite-stack-short/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 모델 시트 · 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sprite-stack-short/references/LOOK.md">references/LOOK.md</a> <span>원본에서 읽어 낸 형식</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sprite-stack-short/references/KIT.md">references/KIT.md</a> <span>API</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sprite-stack-short/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 자막 글꼴 Pretendard(SIL OFL 1.1) · 그림 · 소리는 모두 코드
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

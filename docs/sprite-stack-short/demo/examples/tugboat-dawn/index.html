@@ -1,0 +1,66 @@
+<!doctype html>
+<!-- tugboat-dawn · 「Tug at Dawn」 — the worked example: a harbour tug drawn from four sides, sliced, stacked, turned, then
+     sailing a loop round the lighthouse island at dawn. Brief: BRIEF.md. Models: cast.js. Sheet: sheet.html. -->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tug at Dawn · sprite-stack-short</title>
+<style>@font-face { font-family: "ALF Sans"; src: url("../../lib/fonts/ALFSans-ksx1001.woff2") format("woff2"); font-weight: 100 900; }</style>
+<script src="../../lib/stack.js"></script>
+<script src="../../lib/world.js"></script>
+<script src="../../lib/film.js"></script>
+<script src="../../lib/score.js"></script>
+<script src="cast.js"></script>
+</head>
+<body>
+<script>
+const C = window.CAST;
+
+// the harbour: water everywhere, the mainland on the left (grass with a sand edge), a plank pier, the lighthouse island
+const world = SS.world({
+  size: [760, 600],
+  ground: { kind: 'water', colors: ['#2b5688', '#305f95', '#376aa1', '#4277ad'], glint: '#ffd9a8', lite: '#5c8fbf' },
+  areas: [
+    { name: 'land', fill: { kind: 'grass', colors: ['#5f9a4a', '#69a551', '#73ae58', '#7db760'], tuft: '#4d8240', lite: '#97c977' },
+      poly: [[0, 0], [150, 0], [172, 80], [146, 190], [166, 320], [128, 440], [154, 600], [0, 600]], edge: { w: 7, fill: { kind: 'sand', colors: ['#e2c79a', '#e8cfa4', '#eed7ae'] }, name: 'sand' } },
+    { name: 'island', fill: { kind: 'grass', colors: ['#5f9a4a', '#69a551', '#73ae58'], tuft: '#4d8240' },
+      poly: [[452, 252], [500, 244], [530, 270], [536, 312], [512, 346], [468, 350], [436, 322], [432, 284]], edge: { w: 6, fill: { kind: 'sand', colors: ['#e2c79a', '#e8cfa4'] }, name: 'sand' } },
+    { name: 'pier', fill: { kind: 'planks', colors: ['#a77b4f', '#b3865a', '#9c7148'], board: 4, len: 13 }, poly: [[150, 234], [350, 234], [350, 254], [150, 254]] },
+  ],
+  // the tug's course: an invisible loop round the island (paint: false), keeping clear of the pier and the shore
+  paths: [{ pts: [[388, 298], [412, 253], [453, 216], [515, 216], [556, 253], [580, 298], [568, 350], [512, 372], [456, 372], [400, 350]], width: 24, paint: false, name: 'course' }],
+  props: [
+    { m: C.lighthouse, x: 488, y: 290 },
+    { m: C.pine, x: 458, y: 318 }, { m: C.pine, x: 512, y: 324 }, { m: C.pine, x: 470, y: 270, a: 1 },
+    { m: C.house, x: 84, y: 120, a: Math.PI / 2 }, { m: C.house, x: 70, y: 250, a: Math.PI / 2 + .1 }, { m: C.house, x: 96, y: 390, a: Math.PI / 2 - .05 },
+    { m: C.crate, x: 226, y: 240, a: .2 }, { m: C.crate, x: 236, y: 248, a: -.1 }, { m: C.crate, x: 300, y: 242, a: .5 },
+    { m: C.bollard, x: 346, y: 237 }, { m: C.bollard, x: 346, y: 251 }, { m: C.bollard, x: 276, y: 237 },
+    { m: C.buoyG, x: 590, y: 361, sway: 1 }, { m: C.buoyR, x: 443, y: 404, sway: 1 }, { m: C.buoyG, x: 357, y: 314, sway: 1 }, { m: C.buoyR, x: 400, y: 213, sway: 1 }, { m: C.buoyG, x: 555, y: 205, sway: 1 },
+  ],
+  scatter: [{ models: [C.pine], n: 16, on: ['land'], seed: 3, gap: 4, area: [10, 10, 140, 590] }],
+  mover: { model: C.tug, path: 0, mass: 3, speed: 34, drift: 9, lean: 1.5, roll: .035, start: .4, on: ['water'], engine: 'diesel',
+           trail: { kind: 'wake', n: 30, dt: .07, spread: .32 } },
+  camera: { turn: .45, lead: .4, stiff: 2.6 },
+  light: -2.3,
+});
+
+SS.film({
+  title: 'Tug at Dawn',
+  paper: '#f6f1e6', ink: '#1f1c26', accent: '#2f6bff',
+  hero: C.tug, models: [C.tug, C.lighthouse, C.pine, C.buoyR, C.crate, C.house],
+  world,
+  beats: [
+    { kind: 'world', dur: 3.2, zoom: 2, caption: '픽셀아트 예인선, 어느 각도로든' },
+    { kind: 'views', dur: 4.0, in: 'tiles', caption: '예인선을 네 방향에서 그립니다', labels: { top: '위', side: '옆 (오른쪽)', front: '앞', back: '뒤' } },
+    { kind: 'slices', dur: 5.5, caption: '옆모습의 한 줄이 슬라이스 한 장이 됩니다', sideLabel: '옆', sliceLabel: '슬라이스' },
+    { kind: 'stack', dur: 3.2, caption: '슬라이스를 1px씩 띄워 쌓고 돌립니다' },
+    { kind: 'turn', dur: 3.0, caption: '어느 각도든 같은 배' },
+    { kind: 'world', dur: 6.5, zoom: 2, in: 'tiles', caption: '새벽 항구, 등대 섬 한 바퀴' },
+    { kind: 'title', dur: 2.6, zoom: 2, text: 'Tug at Dawn', sub: 'sprite-stack-short' },
+  ],
+  score: { bpm: 104, key: 62, melody: '1 3 5 . 6 5 3 . 2 3 5 . 3 2 1 .', chords: '1 6 4 5', engine: 'diesel' },
+}).start();
+</script>
+</body>
+</html>

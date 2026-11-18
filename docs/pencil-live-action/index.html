@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>pencil-live-action · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 연필 그림 캐릭터가 스케치북에서 걸어 나와 실사 세계로 내려가는 원테이크 단편을 만듭니다. Poly Haven CC0 스캔으로 지은 실제 장소와 진짜 연필, 같은 렌즈로 흐려지고 그림자를 드리우는 흑연 그림, 손대면 진짜가 되는 그림까지 1080p MP4와 브라우저에서 도는 페이지로 냅니다.">
+<meta property="og:title" content="pencil-live-action · motion-skills">
+<meta property="og:description" content="연필 그림 캐릭터가 스케치북에서 걸어 나와 실사 세계로 내려가는 원테이크 단편을 만드는 스킬">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/pencil-live-action/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/pencil-live-action">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / pencil-live-action</nav>
+  <h1>pencil-live-action</h1>
+  <p>주제 하나를 주면 연필 그림 캐릭터가 스케치북에서 걸어 나와 실사 세계로 내려가는 원테이크 단편을 만듭니다. Poly Haven CC0 스캔으로 지은 실제 장소와 진짜 연필, 같은 렌즈로 흐려지고 그림자를 드리우는 흑연 그림, 손대면 진짜가 되는 그림까지 1080p MP4와 브라우저에서 도는 페이지로 냅니다.
+  보고 만든 원본: <a href="https://x.com/Artedeingenio/status/2122359802328207699?a=tNv0nx5KaAk-8vSz8XU&s=19" target="_blank" rel="noopener">OscarAI의 X 게시물 (30초 영상)</a>.</p>
+  <ul class="tags"><li>three.js + 2D 캔버스</li><li>Poly Haven CC0 스캔</li><li>원테이크 · 16:9 · 24fps</li><li>MP4 · 라이브 페이지</li><li>합성 사운드</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 한 줄 (예: 연을 날리는 소년, 사과를 찾는 소녀)</dd>
+      <dt>브리프</dt><dd>장소(HDRI와 바닥·탁자 스캔), 주인공의 무게와 대기 동작, 진짜 연필이 그려 줄 출구, 내려가는 길, 진짜가 될 그림, 마무리 틀, 시간표</dd>
+      <dt>설계</dt><dd>데이터로 만든 주인공(여덟 방향과 좌우 움직임 캐스트 시트), 발자국부터 정하는 걸음, 3D로 서는 그림, 스캔이나 코드로 만든 진짜 물건</dd>
+      <dt>검사</dt><dd>관절 범위, 디딘 발 미끄러짐, 숨 쉬는 대기, 예비 동작과 회복, 떠 있는 연필, 그림에 색 없음, 결정성</dd>
+      <dt>출력</dt><dd>1920×1080 MP4(24fps, 소리 포함)와 라이브 페이지</dd>
+    </dl>
+    <pre><code>node pencil-live-action/scripts/new-film.mjs my-film --from kite
+node pencil-live-action/scripts/fetch-assets.mjs my-film
+cd my-film
+node ../pencil-live-action/scripts/check.mjs film.html
+node ../pencil-live-action/scripts/score.mjs film.html --out out/film.wav
+node ../pencil-live-action/scripts/render.mjs film.html --workers 3 --audio out/film.wav</code></pre>
+    <p class="mute">요구 사항: Node, Playwright Chromium, ffmpeg, curl(스캔을 한 번 받을 때). GPU는 없어도 됩니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/pencil-live-action/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:calc((100vw - 34px)*.5625);--demo-bg:#0d0c0b">
+    <iframe data-src="demo/examples/kite/" title="pencil-live-action 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/kite/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/kite</code> · 30초 원테이크 · 스캔은 Poly Haven에서 읽음 · ♪ 버튼으로 소리</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/kite/" data-cap="예제 &lt;code&gt;examples/kite&lt;/code&gt; · 30초 원테이크 · 스캔은 Poly Haven에서 읽음 · ♪ 버튼으로 소리" aria-pressed="true">연과 소년</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/film.html&lt;/code&gt; · 16.5초 · 새 영화의 출발점" aria-pressed="false">시작 템플릿</button>
+        <button class="btn" type="button" data-src="demo/examples/kite/cast.html" data-cap="캐스트 시트 &lt;code&gt;examples/kite/cast.html&lt;/code&gt; · 여덟 방향 · 좌우 움직임(숨, 제자리 회전, 뜀) · 표정" aria-pressed="false">캐스트 시트</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본에 없는 새 주제 두 편을 이 스킬로 만든 장면입니다. 카드를 누르면 그 장면부터 브라우저에서 재생됩니다(스캔을 Poly Haven에서 받느라 처음 몇 초 걸립니다).</p>
+  <div class="chips" data-for="gallery" data-labels='{"kite":"연과 소년","apple":"사과 (템플릿)","cast":"캐스트 시트"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「The Kite」 <small>30초 · 원테이크 · 팔레르모 광장</small></h3>
+      <p>햇살 좋은 광장의 카페 탁자 위 스케치북에서, 모자를 쓴 연필 소년이 진짜 연필이 그려 준 미끄럼틀을 타고 돌바닥까지 내려가 진짜 빨간 연을 날립니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="kite" href="demo/examples/kite/?t=1" target="_blank" rel="noopener"><img src="samples/page.jpg" alt="실제 광장 카페 탁자 위 스케치북에 서 있는 연필 그림 소년, 뒤로 흐릿한 광장" loading="lazy" width="640" height="360"><div class="cap"><span class="no">종이 · 0초</span><b>스케치북 위의 소년</b><span class="how">흐릿한 실제 광장 앞, 숨 쉬며 두리번거리는 그림</span></div></a>
+        <a class="tile" data-tags="kite" href="demo/examples/kite/?t=5" target="_blank" rel="noopener"><img src="samples/pencil.jpg" alt="화면 밖에서 들어온 진짜 초록 연필이 종이 위에 서는 사다리와 미끄럼틀을 그리는 장면" loading="lazy" width="640" height="360"><div class="cap"><span class="no">진짜 연필 · 3초</span><b>종이에서 서는 미끄럼틀</b><span class="how">화면 밖에서 쥔 연필, 한 획씩 3D로 서는 선</span></div></a>
+        <a class="tile" data-tags="kite" href="demo/examples/kite/?t=10" target="_blank" rel="noopener"><img src="samples/climb.jpg" alt="연필 소년이 그려진 사다리를 오르는 장면" loading="lazy" width="640" height="360"><div class="cap"><span class="no">출구 · 9초</span><b>사다리 오르기</b><span class="how">가로대를 디딘 발, 손이 닿는 곳의 손잡이</span></div></a>
+        <a class="tile" data-tags="kite" href="demo/examples/kite/?t=13.5" target="_blank" rel="noopener"><img src="samples/slide.jpg" alt="탁자 가장자리를 넘어 아래로 꺾인 미끄럼틀을 타고 내려가는 소년, 진짜 나무 탁자 모서리" loading="lazy" width="640" height="360"><div class="cap"><span class="no">내려가는 길 · 13초</span><b>탁자 너머로</b><span class="how">앞서 저절로 그려지는 미끄럼틀, 함께 내려가는 카메라</span></div></a>
+        <a class="tile" data-tags="kite" href="demo/examples/kite/?t=16.5" target="_blank" rel="noopener"><img src="samples/world.jpg" alt="돌바닥에 낮게 깔린 카메라, 광장을 올려다보는 연필 소년" loading="lazy" width="640" height="360"><div class="cap"><span class="no">세계 · 15초</span><b>소년의 눈높이</b><span class="how">발밑의 돌은 선명하게, 광장은 흐릿하게</span></div></a>
+        <a class="tile" data-tags="kite" href="demo/examples/kite/?t=18.5" target="_blank" rel="noopener"><img src="samples/kite-drawn.jpg" alt="소년 옆 허공에 연필이 그린 마름모 연" loading="lazy" width="640" height="360"><div class="cap"><span class="no">그림 · 17초</span><b>허공에 그린 연</b><span class="how">진짜 연과 같은 크기로 그린 윤곽</span></div></a>
+        <a class="tile" data-tags="kite" href="demo/examples/kite/?t=20.8" target="_blank" rel="noopener"><img src="samples/real.jpg" alt="소년의 손에서부터 빨간 습자지와 대나무 살의 진짜 연으로 바뀌는 순간" loading="lazy" width="640" height="360"><div class="cap"><span class="no">진짜 · 20초</span><b>손끝에서 진짜로</b><span class="how">닿은 곳부터 번지는 실물, 가장자리의 반짝임</span></div></a>
+        <a class="tile" data-tags="kite" href="demo/examples/kite/?t=24" target="_blank" rel="noopener"><img src="samples/wind.jpg" alt="진짜 실에 매달린 빨간 연이 바람에 떠오르고 소년이 몸을 뒤로 젖혀 버티는 장면" loading="lazy" width="640" height="360"><div class="cap"><span class="no">바람 · 22초</span><b>진짜 실, 그린 손</b><span class="how">당기는 쪽으로 옆걸음, 뒤로 젖힌 몸</span></div></a>
+        <a class="tile" data-tags="kite" href="demo/examples/kite/?t=29.5" target="_blank" rel="noopener"><img src="samples/close.jpg" alt="원 안에만 광장이 남고 바깥은 흰 종이로 돌아간 마지막 장면" loading="lazy" width="640" height="360"><div class="cap"><span class="no">마무리 · 26초</span><b>종이로 돌아가는 광장</b><span class="how">저절로 그려지는 원, 그 바깥은 종이</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>「The Apple」 <small>16.5초 · 시작 템플릿 · 자갈 골목</small></h3>
+      <p>골목 카페 탁자 위 스케치북에서 소녀가 연필이 그려 준 우산을 펴고 내려가, 자기만 한 사과 그림에 손을 대면 진짜 사과(스캔)가 됩니다. 같은 문법을 짧게 담은 출발점입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="apple" href="demo/templates/?t=8" target="_blank" rel="noopener"><img src="samples/umbrella.jpg" alt="그려진 우산을 펴고 탁자 아래로 천천히 내려가는 연필 소녀" loading="lazy" width="640" height="360"><div class="cap"><span class="no">내려가는 길 · 7초</span><b>우산을 펴고</b><span class="how">우산보다 늦게 따라 흔들리는 몸</span></div></a>
+        <a class="tile" data-tags="apple" href="demo/templates/?t=14.6" target="_blank" rel="noopener"><img src="samples/apple.jpg" alt="자갈 바닥 위 소녀 옆의 진짜 빨간 사과" loading="lazy" width="640" height="360"><div class="cap"><span class="no">진짜 · 13초</span><b>스캔이 된 사과</b><span class="how">Poly Haven food_apple_01, 그림과 같은 크기</span></div></a>
+        <a class="tile" data-tags="cast" href="demo/examples/kite/cast.html" target="_blank" rel="noopener"><img src="samples/cast.jpg" alt="연필 소년을 여덟 방향으로 돌린 모습과 오른쪽·왼쪽 움직임, 표정" loading="lazy" width="640" height="360"><div class="cap"><span class="no">캐스트 시트</span><b>여덟 방향과 좌우 움직임</b><span class="how">숨, 발을 딛는 제자리 회전, 모았다 뛰고 내려앉기</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. OscarAI(@Artedeingenio)가 X에 올린 30초 영상 「The Girl Who Drew a Door」가 출발점입니다. 카페 탁자 위 스케치북의 연필 그림 소녀에게 진짜 손이 문과 계단을 그려 주고, 소녀가 돌바닥 거리로 내려가 그린 꽃을 진짜로 만들고, 하트가 화면을 닫는 영상으로, 영상 생성 모델로 만든 것입니다. 이 스킬은 그 문법(종이 → 진짜의 손길 → 3D로 서는 출구 → 종이 밖으로 → 내려가는 길 → 캐릭터 눈높이의 세계 → 진짜가 되는 그림 → 종이로 돌아가는 마무리)과 매체(실사 배경 위 흑연 그림)만 가져오고, 화면은 직접 만든 엔진이 그립니다. 실제 세계는 Poly Haven의 CC0 스캔(HDRI, 바닥과 탁자 재질, 사과)으로, 그림은 캔버스로 그립니다. 예제의 인물과 이야기, 소품, 음악은 모두 이 레포의 것입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/examples/kite/" target="_blank" rel="noopener"><b>「The Kite」 · 30초 · 원테이크</b><span>연필 소년, 진짜 연필이 그린 미끄럼틀, 탁자 너머로, 돌바닥, 진짜가 된 연과 실, 라이브 페이지</span><span class="url">pencil-live-action/demo/examples/kite/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/pencil-live-action/examples"><b>예제 폴더 · examples/</b><span>kite</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/Artedeingenio/status/2122359802328207699?a=tNv0nx5KaAk-8vSz8XU&s=19" target="_blank" rel="noopener"><b>레퍼런스 영상 · X 게시물</b><span>OscarAI(@Artedeingenio) · 2026년 11월 · 30초</span><span class="url">x.com/Artedeingenio</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pencil-live-action/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/pencil-live-action">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pencil-live-action/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pencil-live-action/references/BRIEF.md">references/BRIEF.md</a> <span>주제에서 브리프로, 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pencil-live-action/references/LOOK.md">references/LOOK.md</a> <span>원본에서 관찰한 두 세계와 문법</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pencil-live-action/references/GRAMMAR.md">references/GRAMMAR.md</a> <span>원테이크의 박자, 시간, 카메라</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pencil-live-action/references/API.md">references/API.md</a> <span>라이브러리</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pencil-live-action/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 스캔: <a href="https://polyhaven.com" target="_blank" rel="noopener">Poly Haven</a> (CC0) — HDRI Palermo Square, Braustuble Alley · 재질 Patterned Cobblestone, Wood Table Worn, Cobblestone Floor 08, Wood Table · 모델 Food Apple 01 · three.js (MIT)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
