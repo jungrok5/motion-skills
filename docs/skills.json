@@ -2482,6 +2482,50 @@
    ]
   },
   {
+   "id": "machine-build-reel",
+   "name": "machine-build-reel",
+   "tagline": "주제 하나를 주면 거대한 보행 기계를 설계해 블렌더에서 코드로 부품 하나하나 만듭니다. 관절마다 포크 · 드럼 · 핀이 있고, 힘을 쓰는 관절마다 붙는 유압 실린더는 로드가 실린더 밖으로 빠지지 않는 고정점을 스크립트가 모든 동작을 훑어 고릅니다. 걷기 · 대기 · 큰 동작을 15개 검사(디딘 발 미끄러짐, 부품 충돌, 예비 동작 등)로 확인한 뒤, 회색 스튜디오에서 1.75 m 사람 옆을 걸어가고 부품이 조립 순서대로 모이는 빌드 릴로 렌더합니다.",
+   "posterAlt": "machine-build-reel로 만든 두 기계의 릴 장면 네 장: 회색 스튜디오에서 주황색 사람 모형 옆을 걷는 흰 세라믹 · 검은 카본의 네발 보행 기계 WADER, WADER 무릎 관절의 볼트 플랜지와 유압 실린더 클로즈업, 파란 컨테이너를 실은 노란 여섯발 기계 RIDGE HAULER가 걷는 모습, RIDGE HAULER가 무릎을 꿇고 몸을 낮춘 모습",
+   "poster": "machine-build-reel/poster.jpg",
+   "tags": [
+    "블렌더 · bpy · Cycles",
+    "부품 하나하나 코드로",
+    "유압 실린더 고정점 자동 탐색",
+    "검사 15개 · 부품 충돌",
+    "glTF + three.js"
+   ],
+   "stats": [
+    "예제 2대 · 부품 148–153개 · 유압 12개씩",
+    "릴 8구간 · 검사 15개"
+   ],
+   "page": "machine-build-reel/",
+   "source": "machine-build-reel/",
+   "absorbedFrom": {
+    "repo": "https://github.com/jungrok5/motion-skills",
+    "path": "machine-build-reel/examples/ridge-hauler/"
+   },
+   "sources": [
+    {
+     "title": "apek(@apekshik)의 X 게시물 (87초 영상: 블렌더에서 코드로만 만든 30 m 보행 로봇 「Stilt」 — 부품 160개, 유압, 리그, 걷기, 조립 장면, 참고 이미지와 나란히)",
+     "url": "https://x.com/apekshik/status/2122464141990588795?a=wPnMYQkwOmHrLCQmpTA&s=19"
+    },
+    {
+     "title": "AnyMachine 레포 (게시물이 소개한 방법: 참고 이미지 → 부품표 → 빌드 스크립트 → 확인 렌더 → 충돌 검사, MIT)",
+     "url": "https://github.com/apekshik/anymachine"
+    }
+   ],
+   "workedExample": [
+    {
+     "title": "RIDGE HAULER · 9 m 여섯발 화물 기계 · 플레이어",
+     "url": "https://jungrok5.github.io/motion-skills/machine-build-reel/demo/?src=ridge-hauler"
+    },
+    {
+     "title": "WADER · 25 m 네발 보행 기계 · 시작 예제 · 플레이어",
+     "url": "https://jungrok5.github.io/motion-skills/machine-build-reel/demo/?src=wader"
+    }
+   ]
+  },
+  {
    "id": "sheet-city",
    "name": "sheet-city",
    "tagline": "주제 하나(가계부, 카페의 주간 매출, 도서관 대출, 마라톤 훈련 계획 …)를 주면 수식 · 선택 · 셀 편집 · 실행 취소 · 슬라이더가 되는 진짜 스프레드시트를 책상 위 모형 도시로 그리는 라이브 웹페이지를 만듭니다. 셀마다 값만큼 높은 건물이 서고 지붕에 그 숫자가 찍히며, 지붕을 눌러 숫자를 고치면 그 셀을 읽는 셀까지 빛이 거리를 따라 달려가고 건물이 함께 움직입니다. 표의 행과 수식, 색, 외벽, 책상, 빛, 소품, 소리를 주제마다 설계합니다.",

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>machine-build-reel · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 거대한 보행 기계를 설계해 블렌더에서 코드로 부품 하나하나 만들고, 핀 · 포크 · 유압 실린더가 실제로 움직이는 리그와 걷기 · 대기 · 큰 동작을 검사한 뒤, 회색 스튜디오의 빌드 릴 영상으로 렌더합니다.">
+<meta property="og:title" content="machine-build-reel · motion-skills">
+<meta property="og:description" content="부품 하나하나 코드로 만든 거대 보행 기계, 실제로 움직이는 유압 관절, 15개 검사, 1.75 m 사람 옆을 걸어가는 빌드 릴.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/machine-build-reel/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/machine-build-reel">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / machine-build-reel</nav>
+  <h1>machine-build-reel</h1>
+  <p>주제 하나를 주면 거대한 보행 기계를 설계해 블렌더에서 코드로 부품 하나하나 만듭니다. 관절마다 포크 · 드럼 · 핀이 있고, 힘을 쓰는 관절마다 유압 실린더가 붙는데 로드가 실린더 밖으로 빠지지 않는 고정점을 스크립트가 고릅니다. 걷기 · 대기 · 큰 동작을 15개 검사로 확인한 뒤, 회색 스튜디오에서 1.75 m 사람 옆을 걸어가는 빌드 릴(조립 순서, 관절 클로즈업, 도면과 결과 나란히)로 렌더합니다.
+  보고 만든 원본: <a href="https://x.com/apekshik/status/2122464141990588795?a=wPnMYQkwOmHrLCQmpTA&amp;s=19" target="_blank" rel="noopener">apek(@apekshik)의 X 게시물 (블렌더에서 코드로만 만든 30 m 보행 로봇 「Stilt」 영상)</a>과 그 글이 소개한 레포 <a href="https://github.com/apekshik/anymachine" target="_blank" rel="noopener">AnyMachine</a>.</p>
+  <ul class="tags"><li>블렌더 · bpy · Cycles</li><li>부품 하나하나 코드로</li><li>유압 실린더 고정점 자동 탐색</li><li>검사 15개 · 부품 충돌</li><li>glTF + three.js</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 한 줄 (선택: 설정화 한 장, 소유자가 허락한 경우에만 이미지 모델로 만든 턴어라운드 · 관절 플레이트)</dd>
+      <dt>브리프 · 부품표</dt><dd>하는 일과 실제 크기, 무게를 버티는 구조(케이블 마스트 · 박스 거더 · 트러스), 다리 종류와 개수, 마감, 걸음 숫자, 큰 동작의 핵심 포즈 — <code>BRIEF.md</code>, 형상 전에 <code>PARTS.md</code></dd>
+      <dt>만들기</dt><dd><code>machine.py</code>: 숫자(<code>MACHINE</code>) + 부품 코드(<code>build(k)</code>) — 공용 관절 부품(포크 · 드럼 · 핀 · 볼트 캡 · 실린더 · 러그 · 볼 소켓 발)에 주제마다 몸통 · 짐 · 머리를 새로 씀 → 리그(부품마다 뼈 하나) → 걷기 · 대기 · 큰 동작</dd>
+      <dt>검사</dt><dd>블렌더 포즈 = 운동학, 닿는 거리, 반대로 꺾임, 디딘 발 미끄러짐(mm), 지지 발 수, 로드가 실린더 안에 남는지 · 지렛대 길이, 모든 동작에서 부품끼리 충돌, 숨쉬는 대기, 예비 동작 · 회복, 루프, 결정성 — 15개 → <code>REVIEW.md</code></dd>
+      <dt>출력</dt><dd><code>.blend</code>, 동작별 애니메이션이 든 <code>.glb</code> + three.js 플레이어, 턴어라운드(양쪽) · 동작 시트 · 관절 플레이트, Cycles 빌드 릴 MP4</dd>
+    </dl>
+    <pre><code>python3.13 -m venv ~/.venv-bpy
+~/.venv-bpy/bin/pip install bpy
+S=path/to/machine-build-reel; PY=~/.venv-bpy/bin/python
+$PY $S/scripts/machine.py new my-machine --from ridge-hauler
+cd my-machine     # BRIEF.md · PARTS.md → machine.py
+$PY $S/scripts/machine.py check    # → out/REVIEW.md
+$PY $S/scripts/machine.py sheet
+$PY $S/scripts/machine.py reel --res 640x360 --samples 14
+$PY $S/scripts/machine.py player</code></pre>
+    <p class="mute">요구 사항: 블렌더의 파이썬(<code>pip install bpy</code> 또는 블렌더 본체), ffmpeg, GPU가 없으면 선 도면용 Mesa EGL. Cycles를 CPU로 씁니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/machine-build-reel/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10.6;--demo-bg:#8d8e91">
+    <iframe data-src="demo/?src=wader&amp;action=walk" title="machine-build-reel 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/?src=wader">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>시작 예제 <code>starter</code> WADER · 걷기 · 대기 · probe · wake · 조립 · 끌어서 카메라 돌리기</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/?src=wader&amp;action=walk" data-cap="시작 예제 &lt;code&gt;starter&lt;/code&gt; WADER · 걷기 · 대기 · probe · wake · 조립 · 끌어서 카메라 돌리기" aria-pressed="true">WADER</button>
+        <button class="btn" type="button" data-src="demo/?src=ridge-hauler&amp;action=walk" data-cap="예제 &lt;code&gt;examples/ridge-hauler&lt;/code&gt; · 세발씩 걷기 · 대기 · kneel · wake · 조립" aria-pressed="false">RIDGE HAULER</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본의 Stilt를 다시 만들지 않고, 이 스킬로 새로 설계한 기계 두 대입니다. 스틸은 빌드 릴(블렌더 Cycles, 640×360)과 검토 시트에서 뽑았고, 카드를 누르면 같은 기계의 <code>.glb</code>가 three.js 플레이어에서 그 동작으로 재생됩니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"wader":"WADER","hauler":"RIDGE HAULER","sheet":"시트 · 도면"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>WADER <small>starter · 25 m 네발 보행 기계</small></h3>
+      <p>얕은 물과 습지를 왜가리처럼 건너는 기계. 세 마디 다리 4개(유압 실린더 12개), 사다리 목과 파란 센서 머리, 뒤로 끌리는 수염. 흰 세라믹 슬리브 아래 검은 카본 기둥과 힘줄 케이블이 무게를 받습니다. 부품 153개, 뼈 67개.</p>
+      <div class="grid">
+        <a class="tile" data-tags="wader" href="demo/?src=wader&amp;action=walk" target="_blank" rel="noopener">
+          <img src="samples/wader-walk.jpg" alt="회색 스튜디오에서 흰 세라믹과 검은 카본의 네발 보행 기계가 걸어가고, 발치에 주황색 1.75 m 사람 모형이 서 있음" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">릴 1 · 걷기 · 9초</span><b>사람 옆을 지나가는 25 m</b><span class="how">네 박자 걸음, 디딘 동안 68 %. 발을 빨리 들고 천천히 내리며, 내디딜 때마다 몸통이 가라앉고 디딘 쪽으로 기웁니다.</span></div></a>
+        <a class="tile" data-tags="wader" href="demo/?src=wader&amp;action=assembly" target="_blank" rel="noopener">
+          <img src="samples/wader-assembly.jpg" alt="조립 장면: 다리와 몸체 프레임이 먼저 서 있고 흰 세라믹 덮개와 목이 위에서 내려오는 중" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">릴 2 · 조립 · 9초</span><b>발부터, 구조 다음 덮개, 불빛은 마지막</b><span class="how">부품마다 조립 단계가 있어 그 순서로 내려와 살짝 지나쳤다가 자리를 잡습니다.</span></div></a>
+        <a class="tile" data-tags="wader" href="demo/?src=wader&amp;action=walk" target="_blank" rel="noopener">
+          <img src="samples/wader-stride.jpg" alt="낮은 카메라로 다리 사이에서 올려다본 보행 기계, 무릎 관절과 유압 실린더가 크게 보임" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">릴 3 · 다리 사이 · 7초</span><b>무릎 높이에서</b><span class="how">관절마다 볼트 플랜지와 세라믹 캡, 실린더는 다리 옆에 번갈아 붙어 있습니다.</span></div></a>
+        <a class="tile" data-tags="wader" href="demo/?src=wader&amp;action=wake" target="_blank" rel="noopener">
+          <img src="samples/wader-head.jpg" alt="센서 머리 클로즈업: 파란 불빛이 켜진 긴 머리와 뒤로 뻗은 수염, 사다리 목" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">릴 5 · 깨어나기 · 9초</span><b>불빛이 더듬거리며 켜짐</b><span class="how">늘어진 머리를 들고, 불빛이 깜박이며 켜지고, 왼쪽 · 오른쪽을 본 뒤 자리 잡습니다. 수염은 머리보다 0.2초 늦게 따라옵니다.</span></div></a>
+        <a class="tile" data-tags="wader" href="demo/?src=wader&amp;action=probe" target="_blank" rel="noopener">
+          <img src="samples/wader-probe.jpg" alt="앞다리를 접고 몸을 숙여 목을 땅 쪽으로 뻗은 보행 기계" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">릴 4 · probe · 11초</span><b>모았다가, 숙이고, 지나쳐 돌아옴</b><span class="how">먼저 0.37 m 솟아 힘을 모으고, 3.4 m 내려가 13° 숙이며 살핀 뒤, 제자리를 0.45 m 지나쳐 올라왔다가 가라앉습니다.</span></div></a>
+        <a class="tile" data-tags="wader sheet" href="samples/wader-pair-full.jpg" target="_blank" rel="noopener">
+          <img src="samples/wader-pair.jpg" alt="왼쪽은 무릎 관절의 선 도면, 오른쪽은 같은 카메라로 렌더한 무릎 관절" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">릴 8 · 비교</span><b>도면 | 만든 것</b><span class="how">참고 이미지가 없으면 같은 카메라의 선 도면을 왼쪽에 둡니다. 이름표는 "reference"가 아니라 "drawing"입니다.</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>RIDGE HAULER <small>examples/ridge-hauler · 새 주제로 만든 예제</small></h3>
+      <p>길이 없는 산골로 20 ft 컨테이너를 나르는 9 m 여섯발 화물 기계. 곤충 다리(돌아가는 coxa + 두 마디), 세발씩 걷기, 노란 도장 · 아연도금 강철, 승무원 캡, 도는 레이더, 주황 경광등. 짐을 내릴 때 무릎을 꿇습니다. 몸통 · 컨테이너 · 캡 · 레이더는 예제 코드에서 새로 만들었습니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="hauler" href="demo/?src=ridge-hauler&amp;action=walk" target="_blank" rel="noopener">
+          <img src="samples/hauler-walk.jpg" alt="회색 스튜디오에서 파란 컨테이너를 실은 노란 여섯발 기계가 걸어가고 주황색 사람 모형이 옆에 서 있음" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">릴 1 · 걷기</span><b>언제나 발 세 개</b><span class="how">세발씩 번갈아 걷기, 주기 2.6초. 몸통은 거의 흔들리지 않고 디딘 삼각형 쪽으로 1.2° 기웁니다.</span></div></a>
+        <a class="tile" data-tags="hauler" href="demo/?src=ridge-hauler&amp;action=kneel" target="_blank" rel="noopener">
+          <img src="samples/hauler-kneel.jpg" alt="여섯 다리의 무릎을 함께 접어 몸통을 낮춘 화물 기계, 캡이 옆을 봄" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">릴 4 · kneel · 10초</span><b>짐을 내리려고 꿇기</b><span class="how">살짝 솟아 버티고, 1.75 m 수평으로 내려가 캡이 짐을 살핀 뒤, 높이를 지나쳐 올라왔다 자리 잡습니다.</span></div></a>
+        <a class="tile" data-tags="hauler sheet" href="samples/hauler-plates-full.jpg" target="_blank" rel="noopener">
+          <img src="samples/hauler-plates.jpg" alt="관절 플레이트 8장: coxa, 무릎, 발, 캡, 레이더, 엉덩이 유압, 컨테이너 잠금, 섀시" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">플레이트 8장</span><b>메커니즘마다 한 장</b><span class="how">원본처럼 관절 단위로 가까이 봅니다. 노란 박스 거더, 아연도금 포크, 볼트 플랜지와 실린더.</span></div></a>
+        <a class="tile" data-tags="hauler sheet" href="samples/hauler-turnaround-full.jpg" target="_blank" rel="noopener">
+          <img src="samples/hauler-turnaround.jpg" alt="RIDGE HAULER 턴어라운드: 앞, 왼쪽 3/4, 왼쪽, 뒤, 오른쪽, 오른쪽 3/4, 위" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">턴어라운드 · 양쪽</span><b>앞 · 뒤 · 왼쪽 · 오른쪽이 맞는지</b><span class="how">실린더가 설계대로 번갈아 붙었는지, 불빛이 양쪽에 있는지 봅니다.</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>시트와 도면 <small>machine.py sheet · reel</small></h3>
+      <p>릴 전에 사람이 보는 시트입니다. 참고 이미지 없이(코드만으로) 진행하면 설계 시트의 선 도면이 원본의 설정화 자리를 대신합니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="sheet wader" href="samples/wader-sheet-full.jpg" target="_blank" rel="noopener">
+          <img src="samples/wader-sheet.jpg" alt="WADER 설계 시트: 앞 · 왼쪽 · 위 · 3/4 선 도면과 높이 · 길이 · 보폭 · 주기 숫자" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">릴 6 · 설계 시트</span><b>선 도면과 숫자</b><span class="how">Freestyle 선, 평평한 종이. 높이 25.4 m, 보폭 5.0 m, 주기 5.2초.</span></div></a>
+        <a class="tile" data-tags="sheet wader" href="samples/wader-motion-full.jpg" target="_blank" rel="noopener">
+          <img src="samples/wader-motion.jpg" alt="WADER 동작 시트: 걷기 핵심 포즈를 왼쪽과 오른쪽에서, 대기의 숨, probe와 wake의 모음 · 정점 · 회복" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">동작 시트 · 양쪽</span><b>모이고, 닿고, 숨 쉬는지</b><span class="how">걷기 다섯 순간을 양쪽 옆에서, 큰 동작마다 모음 · 정점 · 회복을 한 장에 봅니다.</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. 출발점은 apek(@apekshik)이 X에 올린 87초 영상(회색 스튜디오에서 흰 세라믹과 검은 프레임의 30 m 보행 로봇이 주황색 사람 옆을 걷고, 부품이 조립 순서대로 모이고, 머리가 불빛을 켜며 깨어나고, 설정화 · 턴어라운드 · 관절 플레이트와 만든 모델을 나란히 보여 줌)과 그 글이 소개한 레포 AnyMachine의 방법(참고 이미지 → 부품표 → 빌드 스크립트 → 참고 이미지 옆 확인 렌더 → 영상 모델에서 읽은 동작 → 충돌 검사)입니다. 이 스킬은 그 방법과 스튜디오 모양, 릴 순서만 가져오고, 코드는 새로 썼으며 Stilt의 디자인은 쓰지 않았습니다. 같은 "다리 달린 거대한 것"이라도 안개 속 실사 영화라면 <a href="../walking-colossus/">walking-colossus</a>, 조작하는 시뮬레이터 페이지라면 <a href="../machine-sim/">machine-sim</a>이 맞습니다.</p>
+  <div class="works">
+    <a class="work" href="demo/?src=wader" target="_blank" rel="noopener"><b>WADER · 플레이어</b><span>25 m · 부품 153 · 뼈 67 · 유압 12 · 걷기 5.2초 · 대기 12초 · probe 11초 · wake 9초 · 조립</span><span class="url">machine-build-reel/demo/?src=wader</span></a>
+    <a class="work" href="demo/?src=ridge-hauler" target="_blank" rel="noopener"><b>RIDGE HAULER · 플레이어</b><span>9 m · 부품 148 · 뼈 73 · 유압 12 · 세발씩 걷기 · kneel 10초 · wake 8초 · 조립</span><span class="url">machine-build-reel/demo/?src=ridge-hauler</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/machine-build-reel/examples/ridge-hauler"><b>예제 폴더 · examples/ridge-hauler</b><span>브리프, 부품표, machine.py(섀시 · 컨테이너 · 캡 · 레이더), 검토 기록</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/apekshik/status/2122464141990588795?a=wPnMYQkwOmHrLCQmpTA&amp;s=19" target="_blank" rel="noopener"><b>원본 게시물 · X</b><span>apek(@apekshik) · 87초 영상 · 부품 160개 · 유압 · 리그 · 걷기</span><span class="url">x.com/apekshik/status/2122464141990588795</span></a>
+    <a class="work" href="https://github.com/apekshik/anymachine" target="_blank" rel="noopener"><b>원본 레포 · AnyMachine</b><span>PIPELINE.md · stilt/ (MIT) — 방법만 참고</span><span class="url">github.com/apekshik/anymachine</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/machine-build-reel/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/machine-build-reel">폴더</a> <span>mbr · scripts · player · starter · examples · templates</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/machine-build-reel/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/machine-build-reel/references/SOURCE.md">references/SOURCE.md</a> <span>원본 영상의 구간과 이 스킬의 대응</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/machine-build-reel/references/PIPELINE.md">references/PIPELINE.md</a> <span>참고 이미지부터 시작하는 순서, 명령으로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/machine-build-reel/references/BRIEF.md">references/BRIEF.md</a> <span>브리프 틀과 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/machine-build-reel/references/MECHANISMS.md">references/MECHANISMS.md</a> <span>관절 · 하중 경로 · 공용 부품 · 새 부품 쓰기</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/machine-build-reel/references/MOTION.md">references/MOTION.md</a> <span>걸음 숫자, 핵심 포즈로 쓰는 동작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/machine-build-reel/references/REEL.md">references/REEL.md</a> <span>릴의 여덟 구간</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/machine-build-reel/references/REFERENCES.md">references/REFERENCES.md</a> <span>이미지 · 영상 모델, 허락, 코드만으로 하는 길</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/machine-build-reel/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 기계는 모두 코드로 만들었습니다(외부 모델 · 텍스처 · 생성 이미지 0개) · 플레이어 three.js r170 (MIT) · 라벨 폰트 Inter (SIL OFL)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
