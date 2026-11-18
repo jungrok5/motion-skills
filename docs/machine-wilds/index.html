@@ -21,8 +21,8 @@
 <header class="hero"><div class="wrap">
   <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / machine-wilds</nav>
   <h1>machine-wilds</h1>
-  <p>장소 하나를 주면(숲 골짜기 · 물에 잠긴 채석장 · 버려진 항구 · 고갯길), 폐허가 숲에 덮인 땅을 <b>거대한 보행 기계들이 안개 속에서 걸어 다니는 세계</b>를 브라우저에서 걸을 수 있게 만듭니다. <a href="../scanned-realm/">scanned-realm</a> 엔진(Poly Haven의 CC0 스캔 재질 · 모델 · 식생, 디퍼드 렌더러, 시간과 날씨)에 세 가지를 더한 스킬입니다. 높낮이가 있는 지형, 코드로 부품 하나하나 만드는 기계(<a href="../machine-build-reel/">machine-build-reel</a>의 관절 · 유압 실린더 방식), 그리고 <b>지형 위에서 계획하는 걸음</b>입니다. 발은 내려놓는 자리의 실제 높이와 경사에 닿고, 디딘 발은 움직이지 않으며, 다리마다 자기 땅에 맞춰 따로 굽고, 몸통의 높이와 기울기는 디딘 발에서 나옵니다(<a href="../walking-colossus/">walking-colossus</a>의 걸음을 지형으로 확장). 기계의 등불은 안개 속에서 빛기둥이 됩니다. 이 레포의 세 스킬을 바탕으로 만들었고 스캔은 <a href="https://polyhaven.com">Poly Haven</a>에서 받습니다. 특정 게임의 기계 · 이름 · 에셋은 쓰지 않으며, 주제마다 장소와 기계를 새로 설계합니다.</p>
-  <ul class="tags"><li>WebGL 2 디퍼드 · 스캔 에셋</li><li>지형에 맞춘 다리 IK</li><li>부품 하나하나 코드로 · 유압 실린더</li><li>안개 속 빛기둥</li><li>브라우저 없이 몸 검사</li><li>키보드 · 터치 · 게임패드로 걷기</li></ul>
+  <p>장소 하나를 주면(숲 골짜기 · 물에 잠긴 채석장 · 버려진 항구 · 고갯길), 폐허가 숲에 덮인 땅을 <b>거대한 보행 기계들이 안개 속에서 걸어 다니는 세계</b>를 브라우저에서 걸을 수 있게 만듭니다. <a href="../scanned-realm/">scanned-realm</a> 엔진(Poly Haven의 CC0 스캔 재질 · 모델 · 식생, 디퍼드 렌더러, 시간과 날씨)에 세 가지를 더한 스킬입니다. 높낮이가 있는 지형, 코드로 부품 하나하나 만드는 기계(<a href="../machine-build-reel/">machine-build-reel</a>의 관절 · 유압 실린더 방식), 그리고 <b>지형 위에서 계획하는 걸음</b>입니다. 발은 내려놓는 자리의 실제 높이와 경사에 닿고, 디딘 발은 움직이지 않으며, 다리마다 자기 땅에 맞춰 따로 굽고, 몸통의 높이와 기울기는 디딘 발에서 나옵니다(<a href="../walking-colossus/">walking-colossus</a>의 걸음을 지형으로 확장). 기계는 새것이 아닙니다. 녹슬고 이끼 낀 산업용 유압에 일부만 흰 세라믹 외장을 두르고, 종류마다 정한 나이만큼 때 · 녹물 · 이끼가 기계와 함께 움직입니다. 걷는 기계뿐 아니라 <b>나는 기계</b>도 만듭니다. 날개를 구동 뼈대로 달고, 돌기 전에 기울고, 몇 번 치고 활공하며, 하늘에서 안개로 불빛을 내립니다. 기계의 등불은 안개 속에서 빛기둥이 됩니다. 이 레포의 세 스킬을 바탕으로 만들었고 스캔은 <a href="https://polyhaven.com">Poly Haven</a>에서 받습니다. 특정 게임의 기계 · 이름 · 에셋은 쓰지 않으며, 주제마다 장소와 기계를 새로 설계합니다.</p>
+  <ul class="tags"><li>WebGL 2 디퍼드 · 스캔 에셋</li><li>지형에 맞춘 다리 IK</li><li>부품 하나하나 코드로 · 유압 실린더</li><li>안개 속 빛기둥</li><li>날아다니는 기계 새</li><li>브라우저 없이 몸 검사</li><li>키보드 · 터치 · 게임패드로 걷기</li></ul>
 </div></header>
 
 <main>
@@ -65,48 +65,52 @@ cd my-realm &amp;&amp; python3 -m http.server 8000                   # 걸어 �
   <div class="chips" data-for="gallery" data-labels='{"mist":"안개와 등불","day":"낮","sheet":"검사 시트","starter":"스타터"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
   <div id="gallery">
     <div class="group">
-      <h3>쇠울림 골짜기 <small>examples/iron-valley · 기계 세 종류 여섯 대와 잔해 하나</small></h3>
+      <h3>쇠울림 골짜기 <small>examples/iron-valley · 기계 네 종류 열한 대와 잔해 하나</small></h3>
       <p>고갯길의 정비 구역이 버려진 지 사십 년, 감시 · 운반 · 중계를 하던 기계들은 여전히 제 길을 돕니다. 가로 640 m, 높낮이 50 m.</p>
       <div class="grid">
-        <a class="tile" data-tags="mist" href="demo/iron-valley/?at=37.6,16.7,-89&amp;t=976&amp;tod=20.4&amp;wx=mist&amp;tour=0" target="_blank" rel="noopener">
-          <img src="samples/crane-mist.jpg" alt="안개 낀 저녁 숲, 전나무 가지 사이로 다리 넷의 두루미가 다가오고 머리의 탐조등이 안개를 가르는 빛기둥을 만든다" loading="lazy" width="640" height="360">
+        <a class="tile" data-tags="mist" href="demo/iron-valley/?at=-23.2,44.4,21&amp;t=160&amp;tod=20.4&amp;wx=mist&amp;tour=0" target="_blank" rel="noopener">
+          <img src="samples/edge-mist.jpg" alt="끊어진 고가도로 끝 콘크리트 방호벽 너머, 안개 속에 멈춰 선 두루미가 목을 들어 탐조등으로 골짜기를 훑고, 멀리 중계소의 창과 하늘의 솔개 불빛이 보인다" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">안개 · 20:24</span><b>고가 끝에서</b><span class="en">set piece · survey</span>
+          <span class="how">두루미가 26 m 앞에 멈춰 서서 머리를 들고 둘러봄(큰 동작 survey: 예비 · 정점 · 회복)</span></div></a>
+        <a class="tile" data-tags="mist" href="demo/iron-valley/?at=45.8,14.8,-88&amp;t=192&amp;tod=20.4&amp;wx=mist&amp;tour=0" target="_blank" rel="noopener">
+          <img src="samples/crane-mist.jpg" alt="안개 낀 저녁 숲, 전나무 사이로 다리 넷의 두루미가 서 있고 머리의 탐조등이 안개를 가르는 빛기둥을 만든다" loading="lazy" width="640" height="360">
           <div class="cap"><span class="no">안개 · 20:24</span><b>두루미의 탐조등</b><span class="en">crane · 25 m · 86 t</span>
           <span class="how">긴 목 끝의 탐조등 하나(8° 원뿔)가 안개 속 빛기둥으로 보임</span></div></a>
-        <a class="tile" data-tags="mist" href="demo/iron-valley/?at=-20.9,-86.1,-84&amp;t=20&amp;tod=20.4&amp;wx=mist&amp;tour=0" target="_blank" rel="noopener">
+        <a class="tile" data-tags="mist" href="demo/iron-valley/?at=-18.6,-87.4,-90&amp;t=20.5&amp;tod=20.4&amp;wx=mist&amp;tour=0" target="_blank" rel="noopener">
           <img src="samples/porter-eyes.jpg" alt="어둑한 숲길에서 여섯 다리 운반기가 걸어오고 호박색 두 눈의 빛이 안개를 뚫고 나온다" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">안개 · 20:24</span><b>등짐의 두 눈</b><span class="en">porter · 11 m · 38 t</span>
-          <span class="how">여섯 다리 운반기 세 대가 북쪽 비탈 길을 줄지어 돎</span></div></a>
-        <a class="tile" data-tags="mist" href="demo/iron-valley/?at=-22.5,42,-20&amp;t=140&amp;tod=20.4&amp;wx=mist&amp;tour=0" target="_blank" rel="noopener">
-          <img src="samples/edge-mist.jpg" alt="끊어진 고가도로 끝 콘크리트 방호벽 너머, 안개 속에 멈춰 선 두루미가 목을 들어 탐조등으로 골짜기를 훑는다" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">안개 · 20:24</span><b>끊어진 고가 끝에서</b><span class="en">the set piece</span>
-          <span class="how">두루미가 무너진 구간에 멈춰 목을 들고 좌우를 살핌(큰 동작 survey)</span></div></a>
-        <a class="tile" data-tags="mist" href="demo/iron-valley/?at=-150,120,-123&amp;t=976&amp;tod=20.4&amp;wx=mist&amp;tour=0" target="_blank" rel="noopener">
+          <div class="cap"><span class="no">안개 · 20:24</span><b>등짐의 두 눈</b><span class="en">porter · 6 legs · 38 t</span>
+          <span class="how">녹슨 철골 짐틀, 삼각 걸음. 발은 디딘 자리의 높이와 경사에 맞춰 놓임</span></div></a>
+        <a class="tile" data-tags="mist" href="demo/iron-valley/?at=-22.4,47.8,-164&amp;t=46&amp;tod=20.4&amp;wx=mist&amp;tour=0" target="_blank" rel="noopener">
+          <img src="samples/kites-mist.jpg" alt="밤안개 낀 하늘, 나무 위로 기계 새 다섯이 무리 지어 날며 저마다 아래로 가는 빛기둥을 내린다" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">안개 · 20:24</span><b>솔개 다섯</b><span class="en">kite · 9.4 m span · flies</span>
+          <span class="how">날개는 구동 뼈대. 오르면 느려지고, 돌기 전에 기울고, 몇 번 치고 활공함</span></div></a>
+        <a class="tile" data-tags="mist" href="demo/iron-valley/?at=-151,120.6,-131&amp;t=974&amp;tod=20.4&amp;wx=mist&amp;tour=0" target="_blank" rel="noopener">
           <img src="samples/ridge-forest.jpg" alt="어두운 숲 너머로 다리 여덟의 거대한 기계가 지나가고, 등에 실린 건물의 창에 불이 켜져 있다" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">안개 · 20:24</span><b>숲 너머의 마루</b><span class="en">ridge · 73 m · 5200 t</span>
-          <span class="how">골짜기 가장자리를 21분에 한 바퀴 도는 중계소, 들목에서 본 모습</span></div></a>
+          <div class="cap"><span class="no">안개 · 20:24</span><b>마루가 지나감</b><span class="en">ridge · 73 m · 5200 t</span>
+          <span class="how">걸음 주기 15초. 디딜 때마다 땅이 울리고 발자국이 눌려 있음</span></div></a>
         <a class="tile" data-tags="mist" href="demo/iron-valley/?at=-265.8,68.2,147&amp;t=976&amp;tod=20.4&amp;wx=mist&amp;tour=0" target="_blank" rel="noopener">
           <img src="samples/ridge-eyes.jpg" alt="안개 속에서 정면으로 다가오는 거대한 기계의 두 눈이 빛기둥 두 줄을 던진다" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">안개 · 20:24</span><b>마루의 두 눈</b><span class="en">eyes in the mist</span>
-          <span class="how">뱃머리 아래 두 등(10° 원뿔, 360 m)을 정면에서 봄</span></div></a>
+          <div class="cap"><span class="no">안개 · 20:24</span><b>마루의 두 눈</b><span class="en">two eyes, 33 m up</span>
+          <span class="how">종류마다 등불 색과 수가 달라 불빛만으로 구분됨</span></div></a>
         <a class="tile" data-tags="mist" href="demo/iron-valley/?at=9,122.4,88&amp;tod=22.5&amp;wx=mist&amp;tour=0" target="_blank" rel="noopener">
           <img src="samples/hall-fire.jpg" alt="밤, 지붕이 반쯤 무너진 콘크리트 골조 안에 모닥불이 타고 발전기와 연료통과 상자가 놓여 있다" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">안개 · 밤</span><b>정비창 터의 모닥불</b><span class="en">the one warm light</span>
-          <span class="how">골짜기에서 하나뿐인 따뜻한 빛. 스캔 소품으로 꾸린 야영지</span></div></a>
-        <a class="tile" data-tags="mist" href="demo/iron-valley/?at=-57,38,-38&amp;t=80&amp;tod=6.4&amp;wx=mist&amp;tour=0" target="_blank" rel="noopener">
-          <img src="samples/dawn-floor.jpg" alt="새벽 안개 낀 골짜기 바닥, 이끼에 덮여 누운 기계 잔해 뒤로 두루미가 지나간다" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">안개 · 새벽</span><b>누운 두루미</b><span class="en">a wreck under moss</span>
-          <span class="how">같은 부품을 쓰러진 자세로 한 번 세워 이끼를 입힌 잔해, 그 옆이 기계 길</span></div></a>
-        <a class="tile" data-tags="day" href="demo/iron-valley/?at=-22.5,42,-28&amp;t=131&amp;tod=13&amp;wx=clear&amp;tour=0" target="_blank" rel="noopener">
+          <div class="cap"><span class="no">안개 · 22:30</span><b>정비창의 모닥불</b><span class="en">the one warm light</span>
+          <span class="how">차가운 안개 속 단 하나의 따뜻한 불</span></div></a>
+        <a class="tile" data-tags="mist" href="demo/iron-valley/?at=-64,34.8,-63&amp;t=88.6&amp;tod=6.5&amp;wx=mist&amp;tour=0" target="_blank" rel="noopener">
+          <img src="samples/dawn-floor.jpg" alt="새벽 안개 낀 골짜기 바닥, 녹물이 흐른 흰 외장의 긴 다리가 먼지를 일으키며 지나간다" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">안개 · 06:30</span><b>새벽, 다리 밑에서</b><span class="en">every leg its own length</span>
+          <span class="how">흰 세라믹 외장에 녹물과 때, 관절마다 드럼과 유압 실린더</span></div></a>
+        <a class="tile" data-tags="day" href="demo/iron-valley/?at=-23,43.9,-35&amp;t=128.8&amp;tod=13&amp;wx=clear&amp;tour=0" target="_blank" rel="noopener">
           <img src="samples/edge-day.jpg" alt="맑은 낮, 고가도로 끝 방호벽 바로 앞을 흰 외장의 두루미가 등 높이로 지나간다" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">맑음 · 낮</span><b>눈높이로 지나가는 등</b><span class="en">26 m away, level with the deck</span>
-          <span class="how">고가 상판(22 m)과 두루미의 등이 같은 높이</span></div></a>
-        <a class="tile" data-tags="day" href="demo/iron-valley/?at=-70,127.6,80&amp;tod=13&amp;wx=clear&amp;tour=0" target="_blank" rel="noopener">
+          <div class="cap"><span class="no">맑음 · 13:00</span><b>눈높이로 지나가는 등</b><span class="en">back level with the deck</span>
+          <span class="how">고가 상판 22 m, 두루미의 등이 그 높이</span></div></a>
+        <a class="tile" data-tags="day" href="demo/iron-valley/?at=-100,127,80&amp;tod=13&amp;wx=clear&amp;tour=0" target="_blank" rel="noopener">
           <img src="samples/road-day.jpg" alt="맑은 낮의 가문비 숲, 갈라진 아스팔트 옛길 가에 덮개를 씌운 차가 서 있고 고사리가 자란다" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">맑음 · 낮</span><b>옛길</b><span class="en">scanned ground, bark, ferns, a covered car</span>
-          <span class="how">스캔 아스팔트 · 숲 바닥 · 나무껍질 · 고사리 · 덮개 씌운 차</span></div></a>
-        <a class="tile" data-tags="day" href="demo/iron-valley/?at=104,-86,46&amp;t=162&amp;tod=15&amp;wx=clear&amp;tour=0" target="_blank" rel="noopener">
+          <div class="cap"><span class="no">맑음 · 13:00</span><b>옛길</b><span class="en">scans · Poly Haven CC0</span>
+          <span class="how">아스팔트 · 콘크리트 · 숲 바닥 · 고사리 · 덮개 씌운 차 모두 스캔</span></div></a>
+        <a class="tile" data-tags="day" href="demo/iron-valley/?at=115,-116.8,146&amp;t=162&amp;tod=15&amp;wx=clear&amp;tour=0" target="_blank" rel="noopener">
           <img src="samples/yard-kneel.jpg" alt="컨테이너가 쌓인 야적장 옆에서 여섯 다리 운반기가 다리를 접어 짐칸을 낮추고 있다" loading="lazy" width="640" height="360">
-          <div class="cap"><span class="no">맑음 · 오후</span><b>짐터에서 무릎 꿇기</b><span class="en">kneel: gather, fold, overshoot</span>
+          <div class="cap"><span class="no">맑음 · 15:00</span><b>야적장에서 무릎 꿇기</b><span class="en">porter · kneel</span>
           <span class="how">살짝 일어섰다가 1.7 m 낮추고, 기다린 뒤 제 높이를 지나쳐 올라와 자리 잡음</span></div></a>
       </div>
     </div>
@@ -126,6 +130,10 @@ cd my-realm &amp;&amp; python3 -m http.server 8000                   # 걸어 �
           <img src="samples/cast-ridge.jpg" alt="다리 여덟로 걷는 중계소를 사방에서 본 캐스트 시트, 창이 줄지은 콘크리트 건물과 철탑, 이끼" loading="lazy" width="640" height="360">
           <div class="cap"><span class="no">캐스트 시트</span><b>마루</b><span class="en">103 bones · 46k / 18k / 10k triangles</span>
           <span class="how">66 × 73 × 33 m. 발치의 주황색 점이 1.75 m 사람</span></div></a>
+        <a class="tile" data-tags="sheet" href="https://github.com/jungrok5/motion-skills/blob/main/machine-wilds/lib/48_mech_fly.js" target="_blank" rel="noopener">
+          <img src="samples/cast-kite.jpg" alt="하늘을 나는 기계 새 솔개를 사방에서 본 캐스트 시트: 용골 몸통, 두 마디 날개와 깃 모양 판, 부채꼴 꼬리" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 시트</span><b>솔개</b><span class="en">9 bones · flies: bank, beat, glide</span>
+          <span class="how">사방, 날갯짓 네 순간, 활공을 밑에서, 선회 중 기울기. 검사는 고도 · 기울기 · 하중 · 날개 각</span></div></a>
         <a class="tile" data-tags="sheet" href="https://github.com/jungrok5/motion-skills/blob/main/machine-wilds/scripts/gym.mjs" target="_blank" rel="noopener">
           <img src="samples/gym-course.jpg" alt="경사로, 턱, 옆경사, 도랑, 둔덕이 있는 단면 위를 걷는 기계의 뼈대를 옆에서 그린 그림. 왼발은 실선, 오른발은 점선" loading="lazy" width="640" height="360">
           <div class="cap"><span class="no">gym.mjs --course</span><b>시험 코스</b><span class="en">ramp · drop · side slope · ditch · mound</span>
@@ -157,7 +165,7 @@ cd my-realm &amp;&amp; python3 -m http.server 8000                   # 걸어 �
   <h2>실제 작품</h2>
   <p class="lead">이 스킬은 이 레포 안에서, 세 스킬(scanned-realm · walking-colossus · machine-build-reel)을 바탕으로 만들었습니다. 스캔은 <a href="https://polyhaven.com">Poly Haven</a>의 CC0 에셋이며 저장소에 넣지 않고 페이지가 Poly Haven 서버에서 읽습니다.</p>
   <div class="works">
-    <a class="work" href="demo/iron-valley/" target="_blank" rel="noopener"><b>「쇠울림 골짜기」</b><span>숲 골짜기 640 m · 기계 세 종류 여섯 대 · 잔해 · 고가 · 정비창 · 송전탑 · 야적장</span><span class="url">machine-wilds/demo/iron-valley/</span></a>
+    <a class="work" href="demo/iron-valley/" target="_blank" rel="noopener"><b>「쇠울림 골짜기」</b><span>숲 골짜기 640 m · 기계 네 종류 열한 대(솔개 다섯 포함) · 잔해 · 고가 · 정비창 · 송전탑 · 야적장</span><span class="url">machine-wilds/demo/iron-valley/</span></a>
     <a class="work" href="demo/starter/" target="_blank" rel="noopener"><b>「Lantern Quarry」</b><span>물에 잠긴 채석장 · 등불 기계 두 대 · 스타터</span><span class="url">machine-wilds/demo/starter/</span></a>
     <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/machine-wilds/examples/iron-valley"><b>이 레포에서 만듦 · examples/iron-valley</b><span>브리프 · 땅 · 폐허 · 기계 숫자와 부품 · 식생 소스</span><span class="url">github.com/jungrok5/motion-skills</span></a>
     <a class="work" href="https://polyhaven.com" target="_blank" rel="noopener"><b>Poly Haven</b><span>스캔 재질 · 모델 · 잎 아틀라스 (CC0)</span><span class="url">polyhaven.com</span></a>
