@@ -1,0 +1,126 @@
+<!doctype html>
+<!-- droste-page samples page (from docs/_template/index.html). -->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>droste-page · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 자기 자신의 그림이 끝없이 들어 있는 살아 있는 웹페이지(드로스테 효과)를 만듭니다. 스크롤하면 사본 속으로 끝없이 빨려 들어가고, 슬라이더로 에셔의 나선처럼 감을 수 있으며, 어느 깊이의 사본에서 타이핑하고 클릭해도 진짜 페이지가 반응합니다.">
+<meta property="og:title" content="droste-page · motion-skills">
+<meta property="og:description" content="자기 자신의 그림이 끝없이 들어 있는 라이브 웹페이지 — 등각 드로스테 사상, 끝없는 줌, 에셔 나선, 모든 사본이 살아 있는 HTML-in-Canvas.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/droste-page/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/droste-page">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / droste-page</nav>
+  <h1>droste-page</h1>
+  <p>주제 하나를 주면 자기 자신의 그림이 끝없이 들어 있는 살아 있는 웹페이지를 만듭니다. 진짜 DOM 페이지 한 장에 액자 같은 창이 있고, 그 창에 페이지 전체가 다시 그려지며, 그 안에 또 그려집니다(드로스테 효과). 스크롤하면 사본 속으로 끝없이 빨려 들어가고, 진짜 슬라이더로 에셔의 나선처럼 감을 수 있습니다. 모든 사본이 같은 라이브 페이지라서 글자를 고치면 모든 사본이 한꺼번에 바뀌고, 어느 깊이에 그려진 버튼을 눌러도 그 버튼이 눌립니다. 사본마다 번호와 시간대의 빛이 다릅니다.
+  원본: Felix Rieseberg의 <a href="https://claude.ai/artifact/RjZStie469yP8BUZGKAiUY" target="_blank" rel="noopener">「Droste」 데모</a>(<a href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk" target="_blank" rel="noopener">HTML-in-Canvas 데모 페이지</a>, <a href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19" target="_blank" rel="noopener">X 게시물</a>)을 보고 만들었습니다. 코드 · 그림 · 소리는 모두 새로 썼습니다.
+  라이브 데모는 Chrome / Edge 157 이상이나 Claude 데스크톱 앱에서 움직이고, 다른 브라우저에서는 같은 HTML이 평범한 페이지로 보입니다.</p>
+  <ul class="tags"><li>HTML-in-Canvas · WebGL2</li><li>등각 드로스테 사상</li><li>끝없는 줌 · 에셔 나선</li><li>모든 사본이 라이브</li><li>합성 사운드 · 코드 전용</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(타일 벽의 그림, 자기 사진이 놓인 책장, 자기 화면을 띄운 휴대폰, 시리얼 상자 뒷면 …)</dd>
+      <dt>브리프</dt><dd>자기 그림을 품을 표면 · 창의 위치와 배율 S · 액자 · 고칠 수 있는 한 줄 · 누를 것 2–8개와 바뀌는 것 · 번호가 놓일 자리 · 감기 조절기 이름 · 영역별 재질 · 사본마다 바뀌는 빛 3–6개 · 소리</dd>
+      <dt>페이지</dt><dd>보통 HTML/CSS로 짠 한 장의 페이지(가로 · 세로 배치, 폴백 포함)와 <code>Droste.create({...})</code> 설정 한 개. 셰이더가 재질(타일 유약 · 회벽 · 나뭇결 · 인쇄 망점 · 금속)과 액자 몰딩 · 빛 · 그림자 · 번호를 더함</dd>
+      <dt>확인</dt><dd>공통 라이브 페이지 검사, 모든 버튼의 역사상, 한 단계 깊은 사본에서의 실제 클릭, 두 사본에 동시에 반영되는 타이핑, 낙하와 정착 시간, 감기와 정수 바퀴 고정, 조용할 때 선명한 업로드, 밝기, 스틸 채점</dd>
+      <dt>출력</dt><dd>네트워크 없이 file://과 Claude 아티팩트에서 도는 폴더 하나(<code>index.html</code> + <code>lib/</code>), 스틸</dd>
+    </dl>
+    <pre><code>cd droste-page
+node scripts/check.mjs examples/cereal-box/index.html
+node scripts/check.mjs templates/index.html
+node scripts/still.mjs examples/cereal-box/index.html --out out --poses "rest;fall=-0.3,wind=0;fall=0.5,wind=2"
+node scripts/new-page.mjs ../my-page
+node scripts/check.mjs ../my-page/index.html</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium(스크립트가 HTML-in-Canvas 플래그를 켬). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/droste-page/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10;--h-phone:calc((100vw - 34px)*1.4);--demo-bg:#2a1a0c">
+    <iframe data-src="demo/examples/cereal-box/" title="droste-page 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/cereal-box/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/cereal-box</code> · 스크롤로 낙하 · 고리를 눌러 깨물기</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/cereal-box/" data-cap="예제 &lt;code&gt;examples/cereal-box&lt;/code&gt; · 스크롤로 낙하 · 고리를 눌러 깨물기" aria-pressed="true">시리얼 상자</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/index.html&lt;/code&gt; · 자기 그림이 걸린 갤러리 벽" aria-pressed="false">갤러리 벽 (템플릿)</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제 「Spiral Crunch」와 시작 템플릿을 여러 감기 · 낙하 자세에서 찍은 스틸입니다. 카드를 누르면 라이브 데모가 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"ex":"예제 · 시리얼 상자","tpl":"템플릿 · 갤러리 벽"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「Spiral Crunch」 <small>시리얼 상자 뒷면</small></h3>
+      <p>시리얼 상자 뒷면에 그 상자 뒷면의 그림이 인쇄되어 있습니다. 상표를 고치고, 퍼즐의 고리를 깨물고, 상자를 비틀면 나선을 따라 들어간 모든 상자가 함께 바뀝니다. 원본에 없는 주제로 브리프부터 끝까지 만든 예제입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="ex" href="demo/examples/cereal-box/" target="_blank" rel="noopener"><img src="samples/cereal-rest.jpg" alt="한 바퀴 감긴 시리얼 상자 뒷면, 빨간 상표와 별 모양 번호 1, 창 속에 같은 상자가 기울어진 채 작아지며 이어짐" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">한 바퀴 · 쉬는 자세</span><b>상자 속의 상자</b><span class="how">열리며 빨려 든 뒤 멈추는 자세. 사본마다 번호 1, 2, 3</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/examples/cereal-box/#wind=0&amp;fall=-0.3" target="_blank" rel="noopener"><img src="samples/cereal-flat.jpg" alt="감기 0의 시리얼 상자 뒷면, 정면으로 겹겹이 작아지는 상자들, 왼쪽 고리 퍼즐과 오른쪽 트위스트 미터" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">감기 0</span><b>평평한 중첩</b><span class="how">그림 속의 그림. 사본마다 부엌의 빛이 바뀜</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/examples/cereal-box/#wind=2&amp;fall=0.45" target="_blank" rel="noopener"><img src="samples/cereal-twice.jpg" alt="두 바퀴 감긴 시리얼 상자, 상표와 패널이 나선을 따라 휘며 중심의 빛으로 사라짐" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">감기 2</span><b>두 겹 나선</b><span class="how">한 바퀴 돌 때마다 두 사본씩 깊어지는 나선</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/examples/cereal-box/#wind=1.5&amp;fall=-0.1" target="_blank" rel="noopener"><img src="samples/cereal-seam.jpg" alt="반 바퀴 더 감긴 시리얼 상자, 왼쪽 아래로 접힌 마분지 같은 이음매가 지나감" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">감기 1.5</span><b>접힌 이음매</b><span class="how">정수 바퀴 사이에서 닫히지 않는 자리를 마분지 주름으로</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>갤러리 벽 <small>시작 템플릿</small></h3>
+      <p>회벽에 걸린 금박 액자 속 그림이 그 벽 자체입니다. 작은 그림을 누르면 모든 사본에서 다시 칠해지고, 황동 명판의 번호와 시간대가 사본마다 다릅니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="tpl" href="demo/templates/" target="_blank" rel="noopener"><img src="samples/gallery-rest.jpg" alt="한 바퀴 감긴 갤러리 벽, 금박 액자 속에 같은 벽이 기울어진 채 이어지고 아래 황동 명판에 번호 1" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">한 바퀴 · 쉬는 자세</span><b>그림 속의 방</b><span class="how">액자 · 램프 · 명판 · 작은 그림 · 벽 라벨 · 판자 벽</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/templates/#wind=0&amp;fall=-0.25" target="_blank" rel="noopener"><img src="samples/gallery-flat.jpg" alt="감기 0의 갤러리 벽, 큰 액자 안에 같은 벽이 정면으로 세 겹 들어 있고 창빛이 비스듬히 떨어짐" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">감기 0</span><b>정면의 액자</b><span class="how">창살 빛 · 회벽 질감 · 액자 그림자 · 명판 번호 3</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/templates/#wind=2&amp;fall=0.6" target="_blank" rel="noopener"><img src="samples/gallery-twice.jpg" alt="두 바퀴 감긴 갤러리 벽, 액자와 라벨이 나선으로 휘어 들어감" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">감기 2</span><b>에셔의 화랑</b><span class="how">나선을 따라 노을 · 밤 · 새벽으로 바뀌는 빛</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬로 만든 예제와, 스킬을 만들 때 보고 참고한 원본 데모입니다.</p>
+  <div class="works">
+    <a class="work" href="https://jungrok5.github.io/motion-skills/droste-page/demo/examples/cereal-box/" target="_blank" rel="noopener"><b>「Spiral Crunch」 · 라이브 페이지</b><span>시리얼 상자 뒷면 · 상표 고치기 · 고리 6개 · 트위스트 미터 · 합성 사운드</span><span class="url">jungrok5.github.io/motion-skills/droste-page/demo/examples/cereal-box/</span></a>
+    <a class="work" href="https://claude.ai/artifact/RjZStie469yP8BUZGKAiUY" target="_blank" rel="noopener"><b>원본 · Felix Rieseberg의 「Droste」 데모</b><span>스킬의 출처 · 코발트 델프트 타일 벽</span><span class="url">claude.ai/artifact/RjZStie469yP8BUZGKAiUY</span></a>
+    <a class="work" href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk" target="_blank" rel="noopener"><b>HTML-in-Canvas 데모 페이지</b><span>데모 15개 모음</span><span class="url">claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk</span></a>
+    <a class="work" href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19" target="_blank" rel="noopener"><b>X 게시물 · All hail the weird web</b><span>Claude 데스크톱 앱의 HTML-in-Canvas 소개</span><span class="url">x.com/felixrieseberg/status/2122036839238492493</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/droste-page/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/droste-page">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/droste-page/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/droste-page/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/droste-page/references/LOOK.md">references/LOOK.md</a> <span>원본 데모에서 관찰한 형식</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/droste-page/references/ENGINE.md">references/ENGINE.md</a> <span>사상 · 설정 · API · 재질과 액자 추가</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/droste-page/references/HIC.md">references/HIC.md</a> <span>HTML-in-Canvas 공통 규칙</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/droste-page/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림은 이 스킬의 페이지를 렌더한 스틸입니다
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studio 4B · a pane of glass you can break</title>
+<!-- shatter-page template: the house example of the style. A live page printed on a pane of window glass, hanging in a
+     sunlit room. Click the glass and it breaks; the page keeps working on every piece; the time tape pulls it back and
+     Mend puts the pane together again. For a new topic, write BRIEF.md first (references/BRIEF.md), then design the page,
+     the material, the room, the impact and the wording below. Nothing here is a menu to pick from. -->
+<style>
+  /* ---- the room behind the canvas while it starts (same colour as the wall) and the chrome outside the glass ---- */
+  :root { --wall: #dcd8d1; --ink: #17343a; --accent: #c4471f; --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif; --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  html, body { margin: 0; height: 100%; background: var(--wall); overflow: hidden; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  .chrome { position: fixed; z-index: 2; bottom: 16px; font: 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgba(30, 32, 36, .62); background: none; border: 0; padding: 8px 4px; transition: opacity .5s; }
+  button.chrome { cursor: pointer; } button.chrome:hover, button.chrome:focus-visible { color: #1e2024; outline: none; text-decoration: underline; }
+  .chrome.gone { opacity: 0; pointer-events: none; }
+  #hint { left: 16px; pointer-events: none; } #mend { left: 16px; } #sound { right: 16px; }
+
+  /* ---- the page printed on the glass: ordinary HTML and CSS. Its own size is the pane's size in CSS px. ----
+     Leave the background transparent on glass (the glass shows through); give it a colour on opaque materials. */
+  #page { position: relative; width: 760px; height: 960px; box-sizing: border-box; padding: 54px 58px; color: var(--ink); font-family: var(--serif); }
+  #page * { box-sizing: border-box; }
+  .bar { display: flex; justify-content: space-between; align-items: center; font: 600 14px/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; padding-bottom: 16px; border-bottom: 2px solid var(--ink); }
+  .bar .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-right: 8px; vertical-align: -1px; }
+  h1 { margin: 34px 0 6px; font-size: 104px; line-height: .9; font-weight: 400; letter-spacing: -.03em; outline: none; caret-color: var(--accent); }
+  h1:focus { text-decoration: underline 2px rgba(23, 52, 58, .3); text-underline-offset: 12px; }
+  .sub { margin: 0 0 30px; font-size: 25px; font-style: italic; }
+  .lab { display: block; font: 600 13px/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; margin-bottom: 14px; }
+  .today { border-top: 2px solid var(--ink); padding: 22px 0 18px; display: grid; gap: 12px; }
+  .today label { display: inline-flex; align-items: center; gap: 16px; font-size: 28px; cursor: pointer; width: max-content; }
+  .today input { appearance: none; margin: 0; width: 28px; height: 28px; border: 2.5px solid var(--ink); border-radius: 4px; display: grid; place-items: center; cursor: pointer; }
+  .today input:checked { background: var(--accent); border-color: var(--accent); }
+  .today input:checked::after { content: ""; width: 13px; height: 7px; border-left: 3.5px solid #fff; border-bottom: 3.5px solid #fff; transform: translateY(-2px) rotate(-45deg); }
+  .today input:checked + span { text-decoration: line-through 2px; opacity: .55; }
+  .note { border-top: 2px solid var(--ink); padding: 20px 0 22px; }
+  .note input { width: 100%; font: italic 28px/1.2 var(--serif); color: var(--ink); background: transparent; border: 0; border-bottom: 2px solid var(--ink); padding: 4px 0 8px; outline: none; caret-color: var(--accent); }
+  .note input::placeholder { color: var(--ink); opacity: .4; }
+  .tape { border-top: 2px solid var(--ink); padding-top: 20px; }
+  .tape .head { display: flex; justify-content: space-between; font: 600 13px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+  .tape input[type=range] { appearance: none; display: block; width: 100%; height: 44px; margin: 6px 0 0; background: transparent; cursor: ew-resize; }
+  .tape input[type=range]::-webkit-slider-runnable-track { height: 12px; border-left: 2.5px solid var(--ink); border-right: 2.5px solid var(--ink); background: linear-gradient(var(--ink), var(--ink)) center / 100% 2.5px no-repeat; }
+  .tape input[type=range]::-webkit-slider-thumb { appearance: none; width: 28px; height: 28px; margin-top: -8px; border-radius: 50%; background: var(--ink); border: 4px solid #f4f1ea; box-shadow: 0 0 0 2.5px var(--ink); }
+  .tape input[type=range]:disabled { opacity: .55; cursor: default; }
+  .ends, .foot { display: flex; justify-content: space-between; align-items: center; font: 500 12px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+  .foot { margin-top: 26px; font-size: 14px; font-weight: 600; }
+  .foot button { font: 600 14px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink); background: transparent; border: 2.5px solid var(--ink); border-radius: 99px; padding: 12px 22px; cursor: pointer; }
+  .foot button:hover:not(:disabled) { background: var(--ink); color: #f4f1ea; }
+  .foot button:disabled { visibility: hidden; }
+
+  /* ---- the plain page when HTML-in-Canvas is missing ---- */
+  body.plain { overflow: auto; } body.plain .chrome { display: none; }
+  .hic-fallback #page { width: auto; max-width: 760px; height: auto; margin: 24px auto; padding: 32px 22px; background: rgba(255, 255, 255, .5); }
+  .hic-fallback h1 { font-size: clamp(48px, 13vw, 104px); }
+</style>
+</head>
+<body>
+<canvas id="stage" layoutsubtree content="drawable" aria-label="A pane of glass with a live page printed on it">
+  <div id="page" drawable>
+    <!-- data-shatter="…" marks what the engine fills in or drives: state, clock, time (the tape), count, mend, seams -->
+    <div class="bar"><span>Studio 4B</span><span><i class="dot"></i><span data-shatter="state">Whole</span></span><span data-shatter="clock">0.00 s</span></div>
+    <h1 id="headline" contenteditable="plaintext-only" spellcheck="false" data-hic-edit aria-label="Headline">Knock softly.</h1>
+    <p class="sub">We are recording until six.</p>
+    <div class="today">
+      <span class="lab">Today</span>
+      <label><input type="checkbox" id="c1" data-hic-click><span>Mic check</span></label>
+      <label><input type="checkbox" id="c2"><span>Take three of the chorus</span></label>
+      <label><input type="checkbox" id="c3"><span>Tick this one on a falling piece</span></label>
+    </div>
+    <div class="note"><label class="lab" for="note">Leave a note</label><input id="note" type="text" placeholder="Write on the glass" autocomplete="off" spellcheck="false"></div>
+    <div class="tape">
+      <div class="head"><label for="tape">Time</label><span data-shatter="clock">0.00 s</span></div>
+      <input type="range" id="tape" data-shatter="time" disabled aria-label="Time: drag back to pull the pieces back">
+      <div class="ends"><span>Whole</span><span>Now</span></div>
+      <div class="foot"><span data-shatter="count">1 piece</span><button type="button" data-shatter="mend" disabled>Mend</button></div>
+    </div>
+  </div>
+</canvas>
+<div id="hint" class="chrome" data-shatter="hint">Click the glass</div>
+<button id="mend" class="chrome gone" type="button" data-shatter="mend">Mend the pane</button>
+<button id="sound" class="chrome" type="button" data-shatter="sound" aria-pressed="false" data-on="Sound on" data-off="Sound off">Sound off</button>
+<script src="../lib/hic.js"></script>
+<script src="../lib/shatter-sound.js"></script>
+<script src="../lib/shatter.js"></script>
+<script>
+(function () {
+  'use strict';
+  var app = Shatter.mount({
+    canvas: document.getElementById('stage'),
+    page: document.getElementById('page'),
+    // the material: start from the nearest preset and design the numbers for the topic (references/ENGINE.md)
+    material: { base: 'glass', tint: '#d3eee4', edge: '#4c9a80' },
+    // the room: wall, floor, the window the sun comes through
+    room: { wall: '#dcd8d1', floor: '#a99d8b', floorStyle: 'boards', sun: '#ffeed6', ambient: '#c2c4c8' },
+    // the pane: its outline, its real width in metres (sets the weight and timing of the fall) and where it hangs
+    pane: { shape: 'rect', width: 0.76, at: [0, 0.98, 0] },
+    // how it breaks: a steel ball thrown from the viewer, slow motion for the first half second
+    impact: { kind: 'throw', strength: 0.85, slowmo: 0.16, prop: { color: '#a3a9b1', radius: 0.034, metal: 1 } },
+    // what a mend leaves behind: thin pale seams where the cracks were
+    mend: { style: 'line', color: '#6e8f86', light: '#f6fffb' },
+    text: { pieces: function (n) { return n === 1 ? '1 piece' : n + ' pieces'; } },
+    seed: 4
+  });
+  if (app.fallback) document.body.classList.add('plain');
+})();
+</script>
+</body>
+</html>

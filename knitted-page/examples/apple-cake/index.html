@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oma's apple cake — a knitted recipe</title>
+<!--
+  knitted-page worked example: Oma's apple-cake recipe, knitted chunky in cotton on a blue gingham kitchen cloth.
+  Made through the flow (BRIEF.md → page → check → stills). The servings stepper rewrites the quantities, the oven timer
+  counts down (its digits re-knit every second), and unravelling the recipe reveals Oma's handwritten secret.
+  Gauge: one stitch is 10 × 8 design px; the card is 120 × 112 stitches (72 × 162 on a phone).
+-->
+<style>
+  :root { color-scheme: light; }
+  html, body { margin: 0; height: 100%; background: #c9d3df; overflow: hidden; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  #stage.knit-grab, #stage.knit-grab * { cursor: grab !important; }
+  #stage.knit-pull, #stage.knit-pull * { cursor: grabbing !important; }
+  #page, #under { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; }
+  .knit-mount { position: absolute; left: 0; top: 0; }
+
+  /* ---- the recipe: 1200 × 900 design px = 120 × 112 stitches of 10 × 8 ---- */
+  .knit-card {
+    --bg: #eadcc0; --ink: #5a2a1c; --accent: #b8312a; --leaf: #5f7d3a;
+    position: relative; width: 1200px; height: 900px; overflow: hidden; background: var(--bg); color: var(--ink);
+    font-family: "Arial Rounded MT Bold", ui-rounded, "SF Pro Rounded", Nunito, Inter, system-ui, sans-serif; font-weight: 900;
+  }
+  .knit-card ::selection { background: var(--leaf); color: var(--bg); }
+  .knit-card > * { position: absolute; margin: 0; }
+  .band { left: 0; width: 1200px; }
+  .band.top { top: 10px; } .band.bot { top: 780px; }
+  #title {
+    left: 72px; top: 140px; width: 780px; height: 260px; overflow: hidden;
+    font-size: 120px; line-height: 130px; white-space: pre-wrap; outline: none; caret-color: transparent; cursor: text;
+  }
+  .apple { left: 870px; top: 128px; }
+  .serves { left: 72px; top: 420px; width: 1056px; height: 100px; font-size: 64px; line-height: 100px; }
+  .serves > * { position: absolute; top: 0; }
+  .serves .lbl { left: 0; font-size: 62px; letter-spacing: .08em; text-transform: uppercase; }
+  .serves output { left: 492px; width: 120px; text-align: center; font-size: 80px; color: var(--accent); }
+  .knit-card button {
+    height: 100px; box-sizing: border-box; border: 0; border-radius: 0; margin: 0; cursor: pointer; font: inherit;
+    font-size: 60px; line-height: 100px; letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; text-align: left; padding: 0 36px;
+  }
+  .step { width: 96px; padding: 0 !important; text-align: center !important; font-size: 80px !important; color: var(--bg); background: var(--leaf); }
+  #less { left: 384px; } #more { left: 624px; }
+  .qty { left: 72px; top: 550px; width: 1056px; font-size: 62px; line-height: 72px; letter-spacing: .06em; text-transform: uppercase; color: var(--leaf); }
+  #oven { left: 72px; top: 650px; width: 480px; color: var(--ink); background: transparent; box-shadow: inset 0 0 0 10px var(--ink); }
+  #oven.hot { color: var(--bg); background: var(--accent); box-shadow: none; }
+  #pull { left: 588px; top: 650px; width: 540px; padding: 0 28px; font-size: 54px; color: var(--bg); background: var(--ink); }
+  .knit-card button:hover { filter: brightness(1.15); }
+  .knit-card button:focus-visible { outline: 10px solid var(--accent); outline-offset: 10px; }
+
+  /* ---- under the knitting: Oma's own card, in her hand ---- */
+  .knit-under { position: relative; width: 1200px; height: 900px; }
+  .note {
+    position: absolute; left: 110px; top: 170px; width: 640px; height: 440px; box-sizing: border-box; padding: 36px 44px 0 96px;
+    transform: rotate(2.2deg); color: #2d3550;
+    font-family: "Segoe Script", "Bradley Hand", "Brush Script MT", "Comic Sans MS", cursive;
+    background: linear-gradient(90deg, transparent 70px, #d9573f 70px, #d9573f 73px, transparent 73px),
+                repeating-linear-gradient(#fbf7ec 0 43px, #a9c3dd 43px 45px) 0 30px / 100% 100% no-repeat, #fbf7ec;
+  }
+  .note h2 { margin: 0 0 14px; font-size: 46px; line-height: 44px; font-weight: 700; color: #9c2a20; }
+  .note p { margin: 0 0 22px; font-size: 27px; line-height: 44px; }
+  .note button { font: 700 22px/1 system-ui, sans-serif; padding: 12px 20px; border: 0; border-radius: 4px; background: #5a2a1c; color: #fbf7ec; cursor: pointer; }
+
+  /* ---- phone (portrait): 72 × 162 stitches ---- */
+  @media (max-aspect-ratio: 4/5) {
+    .knit-card, .knit-under { width: 720px; height: 1300px; }
+    .band { width: 720px; } .band.bot { top: 1180px; }
+    #title { left: 36px; top: 130px; width: 660px; height: 220px; font-size: 100px; line-height: 110px; }
+    .apple { left: 228px; top: 370px; }
+    .serves { left: 36px; top: 640px; width: 660px; }
+    .qty { left: 36px; top: 760px; width: 660px; font-size: 56px; line-height: 64px; }
+    #oven { left: 36px; top: 900px; width: 648px; }
+    #pull { left: 36px; top: 1020px; width: 648px; }
+    .note { left: 40px; top: 120px; width: 640px; height: 520px; }
+  }
+
+  .corner { position: fixed; bottom: 16px; margin: 0; font: 500 14px/1.25 system-ui, sans-serif; color: #2d3550; background: rgba(251, 247, 236, .82); padding: 10px 14px; border-radius: 999px; border: 0; }
+  #hint { left: 16px; max-width: calc(100% - 150px); pointer-events: none; transition: opacity .8s; }
+  #hint.gone { opacity: 0; }
+  #sound { right: 16px; cursor: pointer; }
+  #sound.on { background: #5f7d3a; color: #fbf7ec; }
+  .hic-fallback { background: #c9d3df; min-height: 100%; }
+  .hic-fallback #page, .hic-fallback #under { position: static; height: auto; overflow: visible; }
+  .hic-fallback .knit-mount { position: static; padding: 8px; }
+  .hic-fallback [data-knit-back], .hic-fallback [data-knit-unravel] { display: none; }
+  html:has(.hic-fallback), html:has(.hic-fallback) body { overflow: auto; }
+</style>
+</head>
+<body>
+<canvas id="stage" layoutsubtree content="drawable" aria-label="Oma's apple-cake recipe, knitted. Type in the title; pull the loose thread to unravel it.">
+  <div id="page" drawable>
+    <div class="knit-mount">
+      <article id="card" class="knit-card">
+        <div class="band top" data-knit-motif="apples"></div>
+        <h1 id="title" contenteditable="plaintext-only" spellcheck="false" autocapitalize="off" aria-label="Recipe title (editable)" data-hic-edit>Oma's
+apple cake</h1>
+        <div class="apple" data-knit-motif="apple"></div>
+        <div class="serves" role="group" aria-label="Servings">
+          <span class="lbl">Serves</span>
+          <button class="step" id="less" type="button" aria-label="Fewer">−</button>
+          <output id="count" aria-live="polite">8</output>
+          <button class="step" id="more" type="button" aria-label="More" data-hic-click>+</button>
+        </div>
+        <p class="qty" id="qty">4 apples · 200 g butter</p>
+        <button id="oven" type="button">Oven 45:00</button>
+        <button id="pull" type="button" data-knit-unravel>Pull a thread</button>
+        <div class="band bot" data-knit-motif="apples"></div>
+      </article>
+    </div>
+  </div>
+  <div id="under" drawable>
+    <div class="knit-mount">
+      <div class="knit-under">
+        <section class="note" aria-label="Under the knitting">
+          <h2>Oma's secret</h2>
+          <p>Brown the butter first, until it smells of hazelnuts. One spoon of sour cream in the batter. Don't tell Uncle Willi.</p>
+          <button type="button" data-knit-back>Knit it back up</button>
+        </section>
+      </div>
+    </div>
+  </div>
+</canvas>
+<p id="hint" class="corner">Type in the title · pull the loose thread</p>
+<button id="sound" class="corner" type="button" aria-pressed="false">♪ Sound</button>
+
+<script src="../../lib/hic.js"></script>
+<script src="../../lib/knit.js"></script>
+<script>
+(function () {
+  'use strict';
+  // A big apple for the intarsia picture: round body (two lobes at the top), a stem and a leaf, one highlight.
+  // Stitches are 10 × 8, so the grid is 1.25 × taller than wide to come out round.
+  function apple(cols) {
+    var rows = Math.round(cols * 1.25 * 1.05), out = [];
+    for (var y = 0; y < rows; y++) {
+      var r = '';
+      for (var x = 0; x < cols; x++) {
+        var u = (x + 0.5) / cols * 2 - 1, v = (y + 0.5) / rows * 2 - 1;
+        var by = v - 0.18, body = (u * u) / 0.82 + (by * by) / 0.62 < 1 && !(Math.abs(u) < 0.14 && by < -0.62);
+        var lobe = Math.abs(u) > 0.12 && Math.pow(Math.abs(u) - 0.45, 2) / 0.2 + Math.pow(by + 0.5, 2) / 0.09 < 1;
+        var stem = Math.abs(u + 0.04 - (v + 0.9) * 0.25) < 0.07 && v < -0.45 && v > -0.95;
+        var leaf = Math.pow((u - 0.32) * Math.cos(0.5) + (v + 0.78) * Math.sin(0.5), 2) / 0.07 + Math.pow(-(u - 0.32) * Math.sin(0.5) + (v + 0.78) * Math.cos(0.5), 2) / 0.012 < 1;
+        var shine = Math.pow(u + 0.42, 2) / 0.012 + Math.pow(by + 0.1, 2) / 0.05 < 1;
+        r += stem ? '0' : leaf ? '2' : shine && (body || lobe) ? '3' : (body || lobe) ? '1' : '.';
+      }
+      out.push(r);
+    }
+    return out;
+  }
+  var knit = Knit.start({
+    stitch: [10, 8],
+    palette: ['--bg', '--ink', '--accent', '--leaf'],
+    // chunky cotton: thicker, tighter twist, little fuzz, more sheen
+    yarn: { thick: 0.23, ply: 4, twist: 0.7, fuzz: 0.35, sheen: 0.32, sparkle: 0.1, wobble: 0.12 },
+    table: { kind: 'gingham', a: '#eef0f1', b: '#6f93c4', c: '#6f93c4', scale: 8 },
+    lamp: { x: 0.3, y: 0.22, r: 0.8, floor: 0.55, key: '#fff3de', amb: '#c4d2ec' },
+    needles: { shaft: '#b9bec6', knob: '#b8312a', metal: 1 },
+    heap: { x: 0.84, y: 0.78, size: 1 },
+    knit: { secs: 2.8 },
+    motifs: {
+      apples: { colors: ['var(--ink)', 'var(--accent)', 'var(--leaf)'], rows: [
+        '000000000000',
+        '............',
+        '....20......',
+        '..11.11.....',
+        '.1111111....',
+        '.1111111..0.',
+        '.1111111....',
+        '..11111.....',
+        '...1.1......',
+        '............',
+        '000000000000'] },
+      apple: { colors: ['var(--ink)', 'var(--accent)', 'var(--leaf)', 'var(--bg)'], repeat: false, rows: apple(24) }
+    }
+  });
+
+  // the recipe's own behaviour: servings rewrite the quantities, the oven counts down (its digits re-knit each second)
+  var n = 8, count = document.getElementById('count'), qty = document.getElementById('qty');
+  function serves(d) {
+    n = Math.max(2, Math.min(16, n + d)); count.textContent = n;
+    qty.textContent = Math.ceil(n / 2) + ' apples · ' + n * 25 + ' g butter';
+  }
+  document.getElementById('less').addEventListener('click', function () { serves(-2); });
+  document.getElementById('more').addEventListener('click', function () { serves(2); });
+  var oven = document.getElementById('oven'), left = 45 * 60, timer = 0;
+  function show() { oven.textContent = 'Oven ' + String(Math.floor(left / 60)).padStart(2, '0') + ':' + String(left % 60).padStart(2, '0'); }
+  oven.addEventListener('click', function () {
+    if (timer) { clearInterval(timer); timer = 0; oven.classList.remove('hot'); return; }
+    oven.classList.add('hot');
+    timer = setInterval(function () { left = Math.max(0, left - 1); show(); if (!left) { clearInterval(timer); timer = 0; } }, 1000);
+  });
+})();
+</script>
+</body>
+</html>

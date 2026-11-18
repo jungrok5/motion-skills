@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>liquid-glass-page · motion-skills</title>
+<meta name="description" content="주제를 주면 그 주제의 실제 웹페이지를 만들고, 그 위에 액체(물 · 꿀 · 기름 · 수은 …)를 얹어 HTML-in-Canvas와 WebGL2로 그립니다. 물결과 방울이 페이지를 굴절시키고, 큰 방울은 끌어서 돋보기로 쓰며, 아래의 글자 · 입력칸 · 버튼은 그대로 동작합니다.">
+<meta property="og:title" content="liquid-glass-page · motion-skills">
+<meta property="og:description" content="주제를 주면 그 주제의 실제 웹페이지를 만들고, 그 위에 액체(물 · 꿀 · 기름 · 수은 …)를 얹어 HTML-in-Canvas와 WebGL2로 그립니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/liquid-glass-page/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/liquid-glass-page">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / liquid-glass-page</nav>
+  <h1>liquid-glass-page</h1>
+  <p>주제를 주면 그 주제의 실제 웹페이지(렌즈 사양서, 스파 가격표, 비 오는 날의 시, 수족관 입장권, 꿀 시음 카드 …)를 만들고, 그 위에 주제에 맞게 설계한 액체를 얹어 그립니다. 물결은 감쇠 파동 방정식으로, 방울은 메타볼 필드로 계산해 페이지를 스넬의 법칙과 분산으로 굴절시키고, 깊이만큼 물들이고, 그림자와 집광을 드리우고, 작은 방을 비춥니다. 포인터는 젖은 손끝이 되고, 클릭하면 물결이 일고, 큰 방울은 끌어서 돋보기로 씁니다. 그 아래의 글자는 선택되고 입력칸은 타이핑되며 버튼은 돋보기 너머로도 눌립니다.
+  원본: Felix Rieseberg의 <a href="https://claude.ai/artifact/CxxmVRwFgSmV9xB7XFsjbf" target="_blank" rel="noopener">"Liquid Glass" 데모</a>(<a href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk" target="_blank" rel="noopener">HTML-in-Canvas 데모 페이지</a>, <a href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19" target="_blank" rel="noopener">X 게시물</a>)를 보고 만들었습니다. 코드는 모두 새로 썼습니다.
+  라이브 데모는 Chrome · Edge 157 이상이나 Claude 데스크톱 앱에서 보입니다. 다른 브라우저에서는 같은 HTML이 평범한 페이지로 보입니다.</p>
+  <ul class="tags"><li>HTML-in-Canvas · WebGL2</li><li>굴절 · 분산 · 메타볼 방울</li><li>살아 있는 페이지</li><li>주제마다 액체 설계</li><li>코드 전용</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(꿀 시음 카드, 카메라 렌즈 사양서, 스파 가격표, 비 오는 날의 시, 수족관 입장권 …)</dd>
+      <dt>브리프</dt><dd>페이지가 어떤 문서인지 · 살아 있는 입력칸과 버튼 · 페이지 위 조작판 · 젖지 않을 글자 · 액체(굴절률 · 분산 · 색 · 농도 · 점도 · 방울 크기 · 흔적) · 날씨(비 · 바람 · 흘러내림) · 빛 · 동사 이름을 적은 <code>BRIEF.md</code></dd>
+      <dt>페이지</dt><dd>주제의 실제 HTML과 CSS, <code>Liquid.start({...})</code>, 조작판을 물리적 원인(온도 → 점도처럼)에 연결하는 코드</dd>
+      <dt>확인</dt><dd>스틸 채점(읽힘 · 액체다움 · 돋보기 · 구성 · 밝은 종이와 어두운 종이) · 물결이 일고 3초 안에 잦아드는지 · 손끝 흔적 · 큰 방울 끌기와 멈춤 · 돋보기 너머 클릭 · 선택 · 결정적 스틸</dd>
+      <dt>출력</dt><dd><code>index.html</code> + <code>lib/</code> 한 폴더(file:// · Claude 아티팩트에서 동작, 네트워크 없음), 스틸 PNG</dd>
+    </dl>
+    <pre><code>cd liquid-glass-page
+node scripts/check.mjs examples/honey-tasting/index.html
+node scripts/still.mjs examples/honey-tasting/index.html --out out --at 4 --act drag --to 'td.notes'
+node scripts/new-page.mjs ../my-liquid-page
+node scripts/check.mjs ../my-liquid-page/index.html</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium(스크립트가 <code>--enable-blink-features=CanvasDrawElement</code>로 기능을 켭니다). 네트워크와 npm install이 필요 없습니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/liquid-glass-page/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10;--h-phone:620px;--demo-bg:#f5eddc">
+    <iframe data-src="demo/examples/honey-tasting/" title="liquid-glass-page 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/honey-tasting/">데모 열기 (examples/honey-tasting)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/honey-tasting</code> · 꿀 · 흘러내림 · 온도로 점도 조절</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/honey-tasting/" data-cap="예제 &lt;code&gt;examples/honey-tasting&lt;/code&gt; · 꿀 · 흘러내림 · 온도로 점도 조절" aria-pressed="true">꿀 시음 카드</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/index.html&lt;/code&gt; · 물 · 비 · 굴절률 조절" aria-pressed="false">빗속의 시 카드</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">템플릿(물을 얹은 시 카드)과 예제(꿀을 얹은 시음 카드)를 기능을 켠 Chromium에서 찍은 스틸입니다. 카드를 누르면 라이브 데모가 열립니다.</p>
+  <div id="gallery">
+    <div class="group">
+      <h3>꿀 시음 카드 <small>examples/honey-tasting</small></h3>
+      <p>양봉장의 시음 카드 위에 히스 꿀. 위에서 천천히 흘러내린 꿀 리본, 온도로 바뀌는 점도, 꿀 색 네 가지.</p>
+      <div class="grid">
+        <a class="tile" href="demo/examples/honey-tasting/" target="_blank" rel="noopener">
+          <img src="samples/honey-lens.jpg" alt="시음 노트 위로 끌어 온 큰 꿀방울이 글자를 금빛으로 확대하는 시음 카드" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">예제 · 큰 방울</span><b>시음 노트 위의 돋보기</b><span class="how">끌어 온 큰 꿀방울 아래 확대된 살아 있는 글자</span></div></a>
+        <a class="tile" href="demo/examples/honey-tasting/" target="_blank" rel="noopener">
+          <img src="samples/honey-drizzle.jpg" alt="Drizzle 버튼에서 카드를 가로질러 놓인 꿀 리본과 위에서 흘러내린 꿀줄기" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">예제 · Drizzle</span><b>꿀 뿌리기</b><span class="how">이 주제의 동사: 물결 모양으로 이어진 꿀 리본</span></div></a>
+        <a class="tile" href="demo/examples/honey-tasting/" target="_blank" rel="noopener">
+          <img src="samples/honey-dark.jpg" alt="어두운 팬트리 모드의 시음 카드와 호박색 꿀방울" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">예제 · 어두운 종이</span><b>어두운 팬트리</b><span class="how">테두리와 반사로 그려지는 꿀</span></div></a>
+        <a class="tile" href="demo/examples/honey-tasting/" target="_blank" rel="noopener">
+          <img src="samples/honey-phone.jpg" alt="폭 390 화면의 한 단 시음 카드와 꿀방울" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">예제 · 폭 390</span><b>휴대폰 폭</b><span class="how">한 단 배치, 가로 스크롤 없음</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>빗속의 시 카드 <small>templates/index.html</small></h3>
+      <p>스타일의 기본 예시: 비 맞은 읽기 카드 위의 물. 굴절률 · 분산 · 비를 페이지 위 조작판으로 바꿉니다.</p>
+      <div class="grid">
+        <a class="tile" href="demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/tpl-idle.jpg" alt="제목의 rain 위에 놓인 큰 물방울과 페이지에 흩어진 물방울" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">템플릿 · 처음 화면</span><b>비 맞은 페이지</b><span class="how">무리 지은 방울과 제목 위의 큰 방울</span></div></a>
+        <a class="tile" href="demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/tpl-lens.jpg" alt="시 구절 위로 끌어 온 투명한 큰 물방울이 글자를 확대한 모습" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">템플릿 · 큰 방울</span><b>시 위의 물 돋보기</b><span class="how">가장자리에서 페이지로 이어지는 렌즈</span></div></a>
+        <a class="tile" href="demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/tpl-dark.jpg" alt="어두운 종이 위 Splash 버튼에서 튄 물방울" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">템플릿 · 어두운 종이</span><b>Splash</b><span class="how">버튼에서 터져 나간 방울과 물결</span></div></a>
+        <a class="tile" href="demo/templates/#liquid=mercury" target="_blank" rel="noopener">
+          <img src="samples/tpl-mercury.jpg" alt="같은 카드 위에 액체를 수은으로 바꾼 거울 같은 방울" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">템플릿 · #liquid=mercury</span><b>수은으로 바꾸면</b><span class="how">빛을 거의 다 반사하는 구르는 방울</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">스킬의 흐름(브리프 → 새로 설계 → 검사 → 스틸 채점)으로 만든 예제와 원본 데모입니다.</p>
+  <div class="works">
+    <a class="work" href="https://jungrok5.github.io/motion-skills/liquid-glass-page/demo/examples/honey-tasting/" target="_blank" rel="noopener"><b>Hollow Oak 꿀 시음 카드</b><span>꿀 · 흘러내림 · 온도로 점도 · 돋보기 너머 클릭</span><span class="url">jungrok5.github.io/motion-skills/liquid-glass-page/demo/examples/honey-tasting/</span></a>
+    <a class="work" href="https://claude.ai/artifact/CxxmVRwFgSmV9xB7XFsjbf" target="_blank" rel="noopener"><b>원본 · "Liquid Glass" 데모</b><span>Felix Rieseberg, 물 아래의 광학 테스트 카드</span><span class="url">claude.ai/artifact/CxxmVRwFgSmV9xB7XFsjbf</span></a>
+    <a class="work" href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk" target="_blank" rel="noopener"><b>HTML-in-Canvas 데모 페이지</b><span>데모 15개 모음</span><span class="url">claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk</span></a>
+    <a class="work" href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19" target="_blank" rel="noopener"><b>X 게시물 · All hail the weird web</b><span>Claude 데스크톱 앱의 HTML-in-Canvas 소개</span><span class="url">x.com/felixrieseberg/status/2122036839238492493</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/liquid-glass-page/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/liquid-glass-page">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/liquid-glass-page/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/liquid-glass-page/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 스틸 채점 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/liquid-glass-page/references/LOOK.md">references/LOOK.md</a> <span>원본 데모에서 관찰한 형식</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/liquid-glass-page/references/ENGINE.md">references/ENGINE.md</a> <span>엔진 설정 · 액체 매개변수 · API</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/liquid-glass-page/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/liquid-glass-page/references/HIC.md">references/HIC.md</a> <span>HTML-in-Canvas 공통 노트</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 이미지는 모두 이 스킬의 페이지를 렌더한 스틸입니다
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

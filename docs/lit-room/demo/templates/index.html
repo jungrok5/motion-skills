@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiet Hours · a lit room</title>
+<!--
+  lit-room template: a writer's corner at dusk. The monitor shows a live page (the #page element below); its light colours
+  the room. This page is an EXAMPLE of the style, not a form to fill: for a new topic, design the room (ROOM), its props and
+  lamps, and the page on the screen (its HTML, CSS, controls and wording) from your BRIEF.md.
+  Hash flags: #still=1 (a still), #calm, #nointro, #q=0.5 (lower render scale), #fallback (the plain page).
+-->
+<style>
+  html, body { margin: 0; height: 100%; background: #07070a; overflow: hidden; color: #eee; font: 14px/1.4 system-ui, sans-serif; }
+  #room { position: fixed; inset: 0; width: 100%; height: 100%; display: block; overflow: hidden; cursor: grab; touch-action: none; outline: none; }
+  #room.lr-drag { cursor: grabbing; }
+  #hint { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); margin: 0; color: rgba(240,235,225,.6); font-size: 12px; letter-spacing: .02em;
+          pointer-events: none; white-space: nowrap; text-shadow: 0 1px 4px #000; }
+
+  /* ---------------- the page on the screen: 1280 × 720 CSS px, designed per topic ---------------- */
+  #page { --bg: #0b0a0d; --ink: #f6ecdc; --dim: #8d8578; --accent: #ffb35c; --line: rgba(246,236,220,.13);
+          --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+          position: relative; width: 1280px; height: 720px; overflow: hidden; box-sizing: border-box; background: var(--bg); color: var(--ink);
+          font: 500 22px/1.35 var(--sans); user-select: none; -webkit-user-select: none; transition: background .4s; }
+  #page[data-mood="neon"]  { --bg: #12051a; --ink: #ffe9fb; --dim: #b07aa6; --accent: #ff3fa4; }
+  #page[data-mood="moon"]  { --bg: #050b16; --ink: #dfe9ff; --dim: #6f83a6; --accent: #7fb6ff; }
+  #page[data-mood="paper"] { --bg: #f3ecdf; --ink: #231c14; --dim: #85796a; --accent: #c4512e; --line: rgba(35,28,20,.14); }
+  #page *, #page *::before { box-sizing: border-box; }
+  #page button, #page textarea { font: inherit; color: inherit; margin: 0; }
+  #page button { cursor: pointer; border: 0; background: none; padding: 0; }
+  #page :focus { outline: none; } #page :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+  #page .bar { position: absolute; left: 0; top: 0; right: 0; height: 76px; display: flex; align-items: center; gap: 10px; padding: 0 26px 0 34px; border-bottom: 1px solid var(--line); }
+  #page .mark { display: flex; align-items: center; gap: 12px; font: 600 28px/1 var(--serif); width: 250px; }
+  #page .mark i { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 18px var(--accent); }
+  #page .tabs { display: flex; gap: 8px; flex: 1; }
+  #page .tab, #page .switch { height: 48px; padding: 0 22px; border-radius: 24px; font-size: 24px; font-weight: 600; color: var(--dim); }
+  #page .tab[aria-pressed="true"] { color: var(--bg); background: var(--ink); }
+  #page .switch { box-shadow: inset 0 0 0 2px var(--line); }
+  #page .switch[aria-pressed="true"] { color: #1a1206; background: var(--accent); box-shadow: none; }
+  #page section { position: absolute; left: 0; top: 76px; width: 1280px; height: 644px; }
+  #page .glow { position: absolute; width: 230px; height: 230px; margin: -115px 0 0 -115px; border-radius: 50%; cursor: grab; touch-action: none;
+                background: radial-gradient(closest-side, var(--c0) 0, var(--c0) 30%, var(--c1) 60%, transparent 100%); }
+  #page .glow.is-held { cursor: grabbing; }
+  #page .glow-a { --c0: #fff1d2; --c1: rgba(255,160,60,.75); left: 260px; top: 300px; }
+  #page .glow-b { --c0: #ffd0e2; --c1: rgba(255,60,130,.7); left: 1010px; top: 230px; width: 190px; height: 190px; margin: -95px 0 0 -95px; }
+  #page .glow-c { --c0: #d4fbff; --c1: rgba(40,190,210,.7); left: 760px; top: 500px; width: 160px; height: 160px; margin: -80px 0 0 -80px; }
+  /* each mood recolours the glows too: the room's light follows */
+  #page[data-mood="neon"] .glow-a { --c0: #ffd6f4; --c1: rgba(255,40,170,.8); }
+  #page[data-mood="neon"] .glow-b { --c0: #d8f6ff; --c1: rgba(0,200,255,.75); }
+  #page[data-mood="neon"] .glow-c { --c0: #eadbff; --c1: rgba(140,60,255,.8); }
+  #page[data-mood="moon"] .glow-a { --c0: #ffffff; --c1: rgba(150,190,255,.7); }
+  #page[data-mood="moon"] .glow-b { --c0: #e6f0ff; --c1: rgba(90,140,255,.6); }
+  #page[data-mood="moon"] .glow-c { --c0: #f4f8ff; --c1: rgba(200,220,255,.55); }
+  #page .line { position: absolute; left: 64px; right: 64px; top: 190px; margin: 0; font: 600 132px/1.02 var(--serif); letter-spacing: -.02em;
+                color: var(--ink); caret-color: var(--accent); user-select: text; -webkit-user-select: text; cursor: text; white-space: pre-wrap; text-shadow: 0 2px 30px rgba(0,0,0,.35); }
+  #page .hint { position: absolute; left: 66px; bottom: 30px; margin: 0; font-size: 22px; color: var(--dim); pointer-events: none; }
+  #page textarea { position: absolute; left: 64px; top: 48px; width: 1152px; height: 520px; resize: none; border: 0; border-radius: 18px; padding: 30px 34px;
+                   background: rgba(127,127,127,.08); box-shadow: inset 0 0 0 1px var(--line); font: 400 34px/1.5 var(--serif); user-select: text; -webkit-user-select: text; caret-color: var(--accent); }
+  #page .moods { position: absolute; left: 64px; top: 70px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; width: 1152px; }
+  #page .moods button { height: 360px; border-radius: 22px; text-align: left; padding: 26px; font: 600 40px/1.1 var(--serif); box-shadow: inset 0 0 0 2px var(--line); display: flex; align-items: flex-end; }
+  #page .moods button[aria-pressed="true"] { box-shadow: inset 0 0 0 4px var(--accent); }
+  #page .m-candle { background: linear-gradient(160deg, #3a1d06, #ff9f3a); color: #fff3df; }
+  #page .m-neon { background: linear-gradient(160deg, #2b0640, #ff2f9a); color: #ffe9fb; }
+  #page .m-moon { background: linear-gradient(160deg, #04101f, #3d7fd6); color: #e6f0ff; }
+  #page .m-paper { background: #f3ecdf; color: #231c14; }
+  #page [hidden] { display: none !important; }
+  /* the same page without HTML-in-Canvas: an ordinary page that fits the window */
+  .hic-fallback #page { width: min(1280px, 100%); height: auto; min-height: 720px; position: relative; overflow: visible; }
+  .hic-fallback #page section { position: relative; width: 100%; height: auto; min-height: 560px; top: 0; }
+  .hic-fallback #page .bar { position: relative; flex-wrap: wrap; height: auto; padding: 12px; }
+  .hic-fallback #page .line { position: relative; left: 0; right: 0; top: 0; padding: 40px 20px; font-size: clamp(40px, 9vw, 120px); }
+  .hic-fallback #page .moods, .hic-fallback #page textarea { position: relative; left: 0; top: 0; width: 100%; }
+  .hic-fallback #page .moods { grid-template-columns: repeat(2, 1fr); }
+  .hic-fallback #page .moods button { height: 160px; }
+  .hic-fallback ~ #hint { display: none; }
+</style>
+</head>
+<body>
+<canvas id="room" layoutsubtree content="drawable" aria-label="A writer's corner at dusk; the monitor shows a live page whose light colours the room">
+  <div id="page" drawable data-mood="candle">
+    <header class="bar">
+      <span class="mark"><i aria-hidden="true"></i>Quiet Hours</span>
+      <nav class="tabs" aria-label="Screens">
+        <button type="button" class="tab" data-tab="light" aria-pressed="true">Light</button>
+        <button type="button" class="tab" data-tab="write" aria-pressed="false">Write</button>
+        <button type="button" class="tab" data-tab="mood" aria-pressed="false">Mood</button>
+      </nav>
+      <button type="button" class="switch" id="lampSwitch" data-room-lamp="desk lamp" aria-pressed="true" data-hic-click>Desk lamp</button>
+    </header>
+    <section data-panel="light" aria-label="Light">
+      <div class="glow glow-a" data-lamp tabindex="0" role="button" aria-label="Amber glow, drag to move"></div>
+      <div class="glow glow-b" data-lamp tabindex="0" role="button" aria-label="Rose glow, drag to move"></div>
+      <div class="glow glow-c" data-lamp tabindex="0" role="button" aria-label="Teal glow, drag to move"></div>
+      <h1 class="line" id="line" contenteditable="plaintext-only" spellcheck="false" data-hic-edit>Write something warm.</h1>
+      <p class="hint">Drag a glow · type on the line</p>
+    </section>
+    <section data-panel="write" aria-label="Write" hidden>
+      <textarea id="notes" aria-label="Notes" spellcheck="false">Notes for tonight:
+– the kettle, then the second chapter
+– leave the lamp on for the cat</textarea>
+    </section>
+    <section data-panel="mood" aria-label="Mood" hidden>
+      <div class="moods">
+        <button type="button" class="m-candle" data-mood="candle" aria-pressed="true">Candle</button>
+        <button type="button" class="m-neon" data-mood="neon" aria-pressed="false">Neon</button>
+        <button type="button" class="m-moon" data-mood="moon" aria-pressed="false">Moon</button>
+        <button type="button" class="m-paper" data-mood="paper" aria-pressed="false">Paper</button>
+      </div>
+    </section>
+  </div>
+</canvas>
+<p id="hint">Drag the room to look around · scroll to zoom · double-click to go close</p>
+<script src="../lib/hic.js"></script>
+<script src="../lib/lit-room.js"></script>
+<script src="../lib/props.js"></script>
+<script>
+// ---------------- the room, as data (metres; x right, y up, z out of the back wall toward you) ----------------
+var ROOM = {
+  seed: 11,
+  size: [4.0, 2.6, 3.6],
+  shell: {
+    wall: { color: '#8f7b6a' },
+    floor: { kind: 'planks', color: '#6e4a2f' },
+    ceiling: { color: '#cbbfb0' },
+    skirting: { color: '#d8cbb8', h: 0.09 },
+    back: { holes: [{ x: 0.35, y: 0.95, w: 0.85, h: 1.15, bars: [1, 1], frame: '#e8dfcf' }] }
+  },
+  outside: { top: '#0b1430', horizon: '#3a3f6a', glow: '#7a4a44', stars: 0.6, lights: 0.12, ground: '#06070c', moon: [0.25, 0.32, -1], moonSize: 0.0012, power: 0.12 },
+  ambient: { sky: '#323b5c', ground: '#2a1d16', power: 0.07 },
+  screen: { grid: [8, 5], aspect: 16 / 9 },
+  look: { exposure: 1.0, bloom: 0.35, grain: 0.02, vignette: 0.6 },
+  camera: { home: [0.36, 0.17, 2.15], start: [-0.2, 0.08, 1.05], close: [0, 0.05, 0.78] },
+  props: [
+    { type: 'rug', at: [2.0, 0, 1.75], w: 2.3, d: 1.5, colors: ['#5a2a26', '#d6c2a0', '#2e4656'] },
+    { type: 'desk', at: [2.0, 0, 0.42], w: 1.45, d: 0.7, h: 0.74, color: '#8a5d3b', drawers: true },
+    { type: 'monitor', at: [2.0, 0.74, 0.27], w: 0.6, color: '#151619', stand: '#202124' },
+    { type: 'keyboard', at: [1.98, 0.74, 0.58], color: '#c4c0b8', keys: '#efece5' },
+    { type: 'mouse', at: [2.42, 0.74, 0.6], pad: '#2b2d31' },
+    { type: 'mug', at: [1.47, 0.74, 0.55], color: '#d9d1c2' },
+    { type: 'paper', at: [1.58, 0.74, 0.63], rot: 12, w: 0.15, d: 0.21, cover: '#2f4a5c' },
+    { type: 'plant', at: [2.58, 0.74, 0.25], pot: '#c26a4c', leaf: '#557d3c', leaves: 16 },
+    { type: 'bookStack', at: [1.47, 0.74, 0.25], n: 3 },
+    { type: 'deskLamp', at: [1.38, 0.74, 0.32], rot: -20, name: 'desk lamp', body: '#2f3b3a', color: '#ffc98a', power: 0.4, reach: 0.2 },
+    { type: 'shelf', at: [2.0, 1.55, 0.0], w: 1.1, color: '#8a6440' },
+    { type: 'books', at: [1.52, 1.55, 0.04], n: 9, h: 0.24 },
+    { type: 'tin', at: [2.35, 1.55, 0.12], r: 0.05, h: 0.13, kind: 'ceramic', color: '#2f4a5c' },
+    { type: 'frame', at: [3.25, 1.45, 0.0], w: 0.5, h: 0.62, frame: '#1f1a17', paint: paintDusk },
+    { type: 'curtains', at: [0.775, 2.2, 0.0], w: 1.15, h: 1.55, color: '#6e2f2a', open: 0.75 },
+    { type: 'chair', at: [2.75, 0, 1.15], rot: -35, color: '#3a4048' },
+    { type: 'crate', at: [0.5, 0, 0.55], size: [0.42, 0.36, 0.36], color: '#8c6b49' },
+    { type: 'plant', at: [0.5, 0.36, 0.55], pot: '#d9d1c2', leaf: '#4a7038', leaves: 22, size: 0.22, r: 0.08, h: 0.12 },
+    { type: 'pendant', at: [2.0, 2.6, 1.6], drop: 0.75, shade: '#e3d5bc', name: 'pendant', on: false, power: 1.4 }
+  ]
+};
+// A picture for the wall, painted in code (designed per topic like everything else).
+function paintDusk(g, w, h) {
+  var s = g.createLinearGradient(0, 0, 0, h); s.addColorStop(0, '#273a62'); s.addColorStop(0.55, '#d98a5f'); s.addColorStop(1, '#f2c487');
+  g.fillStyle = s; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#f7e2b5'; g.beginPath(); g.arc(w * 0.62, h * 0.52, w * 0.09, 0, 7); g.fill();
+  g.fillStyle = '#3b2e3f'; g.beginPath(); g.moveTo(0, h * 0.7); g.bezierCurveTo(w * 0.3, h * 0.55, w * 0.6, h * 0.78, w, h * 0.62); g.lineTo(w, h); g.lineTo(0, h); g.fill();
+  g.fillStyle = '#1f1a26'; g.beginPath(); g.moveTo(0, h * 0.85); g.bezierCurveTo(w * 0.4, h * 0.72, w * 0.7, h * 0.9, w, h * 0.8); g.lineTo(w, h); g.lineTo(0, h); g.fill();
+}
+
+// ---------------- start, and wire the page's own controls ----------------
+var canvas = document.getElementById('room'), page = document.getElementById('page');
+var R = LitRoom.start({ canvas: canvas, page: page, room: ROOM });
+LitRoom.wire(page, R);
+</script>
+</body>
+</html>

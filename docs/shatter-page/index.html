@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>shatter-page · motion-skills</title>
+<meta name="description" content="깨지는 판(유리 · 얼음 · 도자기 · 설탕 유리) 위에 인쇄된 실제 웹페이지를 만듭니다. 클릭하면 맞은 자리에서 금이 가고 조각이 무게를 갖고 떨어지며, 날아가는 조각 위에서도 페이지가 그대로 동작하고, 시간 슬라이더로 되감아 붙일 수 있습니다.">
+<meta property="og:title" content="shatter-page · motion-skills">
+<meta property="og:description" content="깨지는 판(유리 · 얼음 · 도자기 · 설탕 유리) 위에 인쇄된 실제 웹페이지를 만듭니다. 클릭하면 맞은 자리에서 금이 가고 조각이 무게를 갖고 떨어지며, 날아가는 조각 위에서도 페이지가 그대로 동작하고, 시간 슬라이더로 되감아 붙일 수 있습니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/shatter-page/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/shatter-page">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / shatter-page</nav>
+  <h1>shatter-page</h1>
+  <p>깨지는 판(유리 · 얼음 · 도자기 · 설탕 유리) 위에 인쇄된 실제 웹페이지를 만듭니다. 클릭하면 맞은 자리에서 금이 가고 조각이 무게를 갖고 떨어지며, 날아가는 조각 위에서도 페이지가 그대로 동작하고, 시간 슬라이더로 되감아 붙일 수 있습니다. 주제를 주면 페이지 · 재질 · 방 · 충격 방식을 새로 설계합니다. 원본: Felix Rieseberg의 <a href="https://claude.ai/artifact/Berg7ureW47JTrMNVoH8TU">「Shatter」 데모</a>(<a href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk">HTML-in-Canvas 데모 페이지</a>, <a href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19">X 게시물</a>)를 보고 만들었습니다. 라이브 데모는 Chrome · Edge 157 이상 또는 Claude 데스크톱 앱에서 동작하고, 다른 브라우저에서는 같은 HTML이 일반 페이지로 보입니다.</p>
+  <ul class="tags"><li>HTML-in-Canvas</li><li>깨지는 유리</li><li>강체 물리</li><li>되감기</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 한 줄 (예: 박물관 "만지지 마세요" 안내판, 접시에 인쇄한 청첩장)</dd>
+      <dt>브리프</dt><dd>인쇄할 페이지와 동작할 컨트롤, 재질(균열 · 무게 · 소리), 충격 방식, 방과 빛, 이음선</dd>
+      <dt>검사</dt><dd>깨짐 · 조각 볼록성과 면적 · 낙하 · 떨어지는 조각 위 실제 클릭과 입력 · 정지 · 되감기 · 결정성 · 소리</dd>
+      <dt>출력</dt><dd>index.html + BRIEF.md + lib/ 한 폴더 (file:// · Claude 아티팩트), 스틸</dd>
+    </dl>
+    <pre><code>node scripts/new-page.mjs ../my-pane            # 또는 --from plate-for-luck
+node scripts/check.mjs ../my-pane/index.html
+node scripts/still.mjs ../my-pane/index.html --out ../my-pane/out --act idle,fall,rest,mended</code></pre>
+    <p class="mute">요구 사항: Node 18 이상, Playwright Chromium(검사와 스틸). 보는 사람은 Chrome · Edge 157 이상 또는 Claude 데스크톱 앱 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/shatter-page/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+    <div class="demo" style="--ar:16/10.6; --demo-bg:#efe8dc">
+    <iframe data-src="demo/examples/plate-for-luck/" title="shatter-page 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/plate-for-luck/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/plate-for-luck</code> · 접시를 클릭하면 떨어져 깨짐</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/plate-for-luck/" data-cap="예제 &lt;code&gt;examples/plate-for-luck&lt;/code&gt; · 접시를 클릭하면 떨어져 깨짐" aria-pressed="true">도자기 접시</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/index.html&lt;/code&gt; · 유리를 클릭하면 쇠공이 날아감" aria-pressed="false">유리판</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제와 템플릿을 HTML-in-Canvas를 켠 Chromium에서 렌더한 스틸입니다. 카드를 누르면 그 장면의 라이브 데모가 열립니다.</p>
+  <div id="gallery">
+    <div class="group">
+      <h3>도자기 접시 청첩장 <small>examples/plate-for-luck</small></h3>
+      <p>원본에 없는 주제로 브리프부터 만든 예제. 클릭하면 접시가 떨어져 타일에서 깨지고, 금으로 이어 붙입니다.</p>
+      <div class="grid">
+        <a class="tile" href="https://jungrok5.github.io/motion-skills/shatter-page/demo/examples/plate-for-luck/" target="_blank" rel="noopener">
+          <img src="samples/plate-idle.jpg" alt="회벽 앞에 걸린 흰 도자기 접시. 코발트 테두리와 Eleni & Marcus 청첩장 문구" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">예제 · 도자기</span><b>접시에 인쇄된 청첩장</b><span class="en">Save the date</span>
+          <span class="how">이름 편집 · RSVP 체크 · 이름 입력이 되는 원형 페이지</span></div></a>
+        <a class="tile" href="https://jungrok5.github.io/motion-skills/shatter-page/demo/examples/plate-for-luck/#break=0.5,0.5&at=0.5&still=1" target="_blank" rel="noopener">
+          <img src="samples/plate-landing.jpg" alt="테라코타 타일에 떨어져 몇 조각으로 갈라지는 접시" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">예제 · 도자기</span><b>타일에 떨어진 순간</b><span class="en">drop</span>
+          <span class="how">클릭하면 미끄러져 떨어지고 바닥에 닿은 곳에서 깨짐</span></div></a>
+        <a class="tile" href="https://jungrok5.github.io/motion-skills/shatter-page/demo/examples/plate-for-luck/#break=0.5,0.5&rest&still=1" target="_blank" rel="noopener">
+          <img src="samples/plate-rest.jpg" alt="타일 바닥에 흩어진 접시 조각들" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">예제 · 도자기</span><b>흩어진 행운의 조각</b><span class="en">pieces of luck</span>
+          <span class="how">큰 조각 몇 개와 부스러기, 조각마다 인쇄가 보임</span></div></a>
+        <a class="tile" href="https://jungrok5.github.io/motion-skills/shatter-page/demo/examples/plate-for-luck/#mended&break=0.5,0.5&still=1" target="_blank" rel="noopener">
+          <img src="samples/plate-mended.jpg" alt="금빛 이음선이 그어진 채 다시 붙은 접시" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">예제 · 도자기</span><b>금으로 붙인 접시</b><span class="en">kintsugi</span>
+          <span class="how">되감아 붙이면 깨진 자리에 금 이음선이 남음</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>유리판 템플릿 <small>templates/index.html</small></h3>
+      <p>스타일의 기본 예시. 쇠공이 날아와 유리를 깨고, 조각은 바닥에 쌓입니다.</p>
+      <div class="grid">
+        <a class="tile" href="https://jungrok5.github.io/motion-skills/shatter-page/demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/glass-idle.jpg" alt="햇빛이 드는 벽 앞에 걸린 유리판과 그 위에 인쇄된 페이지" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 유리</span><b>스튜디오 문 유리</b><span class="en">Knock softly.</span>
+          <span class="how">창빛과 인쇄 그림자가 벽에 비치는 유리판</span></div></a>
+        <a class="tile" href="https://jungrok5.github.io/motion-skills/shatter-page/demo/templates/#break=0.45,0.32&at=0.15&still=1" target="_blank" rel="noopener">
+          <img src="samples/glass-crack.jpg" alt="쇠공에 맞아 방사형으로 금이 가며 갈라지는 유리" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 유리</span><b>쇠공이 맞은 직후</b><span class="en">throw</span>
+          <span class="how">방사형 균열과 끊긴 고리 균열, 슬로 모션</span></div></a>
+        <a class="tile" href="https://jungrok5.github.io/motion-skills/shatter-page/demo/templates/#break=0.45,0.32&at=0.45&still=1" target="_blank" rel="noopener">
+          <img src="samples/glass-fall.jpg" alt="바닥으로 떨어지며 회전하는 유리 조각들과 바닥 반사" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 유리</span><b>떨어지는 조각</b><span class="en">live on every piece</span>
+          <span class="how">날아가는 조각 위에서도 체크와 입력이 동작</span></div></a>
+        <a class="tile" href="https://jungrok5.github.io/motion-skills/shatter-page/demo/templates/#mended&break=0.45,0.32&still=1" target="_blank" rel="noopener">
+          <img src="samples/glass-mended.jpg" alt="옅은 이음선이 남은 채 다시 붙은 유리판" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 유리</span><b>다시 붙인 유리</b><span class="en">Mend</span>
+          <span class="how">시간 테이프를 끝까지 되감은 뒤 남은 옅은 이음선</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 예제와, 스킬의 출처인 원본 데모입니다.</p>
+  <div class="works">
+    <a class="work" href="https://jungrok5.github.io/motion-skills/shatter-page/demo/examples/plate-for-luck/" target="_blank" rel="noopener"><b>A plate for luck</b><span>도자기 · drop · 금 이음선 라이브 데모</span><span class="url">jungrok5.github.io/motion-skills/shatter-page/demo/examples/plate-for-luck/</span></a>
+    <a class="work" href="https://claude.ai/artifact/Berg7ureW47JTrMNVoH8TU"><b>원본 데모 · Shatter</b><span>Felix Rieseberg, 스킬의 출처</span><span class="url">claude.ai/artifact/Berg7ureW47JTrMNVoH8TU</span></a>
+    <a class="work" href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk"><b>HTML-in-Canvas 데모 페이지</b><span>15개 데모 모음</span><span class="url">claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk</span></a>
+    <a class="work" href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19"><b>X 게시물</b><span>「All hail the weird web」</span><span class="url">x.com/felixrieseberg/status/2122036839238492493</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shatter-page/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/shatter-page">폴더</a> <span>lib · scripts · templates · examples · references</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shatter-page/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shatter-page/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shatter-page/references/LOOK.md">references/LOOK.md</a> <span>원본 데모에서 관찰한 형식</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shatter-page/references/ENGINE.md">references/ENGINE.md</a> <span>엔진 설정과 API, 재질 추가</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shatter-page/references/HIC.md">references/HIC.md</a> <span>HTML-in-Canvas 공통 노트</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/shatter-page/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 이미지는 이 스킬의 코드로 렌더한 스틸입니다
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Light takes the long way · lecture notes</title>
+<!-- event-horizon-page template: the house example of the style. A one-screen lecture handout (ordinary HTML) laid out in
+     a canvas and drawn through a black hole's lens. Replace the content, palette, object and wording for your topic
+     (BRIEF.md first); keep the structure: #stage > #page[drawable], the dock outside the canvas, the hint pill. -->
+<style>
+  :root {
+    /* the page's palette: designed per topic */
+    --paper: #f3efe6; --ink: #17140f; --body: #3d372d; --muted: #7a7062; --line: #d8d0c0; --accent: #b4480f; --sel: #ffd9a8;
+    --display: Charter, 'Bitstream Charter', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+    --text: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--paper); }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; background: var(--paper); }
+  /* the live page: one screen, no scroll. position: relative so offsets measure from it */
+  #page { position: relative; width: 100vw; height: 100vh; box-sizing: border-box; overflow: hidden; display: flex; flex-direction: column;
+    padding: clamp(14px, 2.6vh, 26px) clamp(18px, 5.4vw, 92px) clamp(76px, 11vh, 104px);
+    background: var(--paper); color: var(--ink); font: 16px/1.5 var(--text); -webkit-font-smoothing: antialiased; }
+  #page *, .dock * { box-sizing: border-box; }
+  #page ::selection { background: var(--sel); color: var(--ink); }
+  .bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 14px; font-weight: 600; flex: none; }
+  .brand { display: flex; align-items: center; gap: 10px; letter-spacing: .02em; }
+  .brand i { width: 11px; height: 11px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 3px var(--paper), 0 0 0 4.5px var(--accent); }
+  .bar button { font: 600 13px/1 var(--text); padding: 7px 12px; border: 1.5px solid var(--ink); border-radius: 999px; background: transparent; color: var(--ink); cursor: pointer; }
+  .bar button[aria-pressed=true] { background: var(--ink); color: var(--paper); }
+  main { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: clamp(14px, 3.6vh, 40px); }
+  h1 { font: 700 clamp(44px, min(10vw, 17vh), 156px)/.95 var(--display); letter-spacing: -.03em; margin: 0; outline: none; max-width: 8.5em; caret-color: var(--accent); }
+  .cols > section { min-width: 0; }
+  .cols { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); column-gap: clamp(24px, 7vw, 130px); row-gap: 20px; align-items: start; }
+  .lede { font-size: clamp(16px, 1.4vw, 21px); line-height: 1.5; color: var(--body); max-width: 30em; margin: 0; outline: none; }
+  .eq { margin: 12px 0 0; font: italic 15px/1.45 var(--display); color: var(--muted); }
+  .eq[hidden] { display: none; }
+  form { display: flex; margin-top: clamp(12px, 2.4vh, 24px); max-width: 26em; }
+  #word { flex: 1; min-width: 0; font: 16px var(--text); height: 44px; padding: 0 14px; border: 1.5px solid var(--ink); border-right: 0; border-radius: 8px 0 0 8px; background: #fffdf8; color: var(--ink); outline: none; caret-color: var(--accent); }
+  #word::placeholder { color: #9a8f7e; }
+  #drop { font: 600 15px var(--text); height: 44px; padding: 0 18px; border: 1.5px solid var(--ink); border-radius: 0 8px 8px 0; background: var(--ink); color: var(--paper); cursor: pointer; white-space: nowrap; }
+  .tray { min-height: 1.5em; max-height: 3.1em; overflow: hidden; margin: 10px 0 0; font-size: 15px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 10px; }
+  .tray span { color: var(--ink); font-weight: 600; }
+  h2 { display: flex; justify-content: space-between; align-items: baseline; margin: 0; padding-bottom: 9px; border-bottom: 1.5px solid var(--ink);
+    font: 600 12.5px/1 var(--text); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  h2 span + span { color: var(--ink); font-variant-numeric: tabular-nums; }
+  ol { list-style: none; margin: 0; padding: 0; counter-reset: n; }
+  li { counter-increment: n; border-bottom: 1px solid var(--line); }
+  li label { display: flex; align-items: center; gap: 13px; padding: clamp(6px, 1.2vh, 10px) 0; font-size: clamp(15px, 1.15vw, 17px); cursor: pointer; }
+  input.tick { appearance: none; width: 23px; height: 23px; flex: none; margin: 0; border: 1.5px solid var(--ink); border-radius: 50%; display: grid; place-items: center; font: 600 12px/1 var(--text); color: var(--ink); cursor: pointer; }
+  input.tick::after { content: counter(n); }
+  input.tick:checked { background: var(--accent); border-color: var(--accent); }
+  input.tick:checked::after { content: ""; width: 9px; height: 5px; border-left: 2px solid #fff; border-bottom: 2px solid #fff; transform: translateY(-1.5px) rotate(-45deg); }
+  input.tick:checked + span { color: var(--muted); text-decoration: line-through; }
+  /* the dock: real controls, outside the canvas, never bent */
+  .dock { position: fixed; z-index: 3; left: 50%; bottom: clamp(10px, 2vh, 20px); transform: translateX(-50%); display: flex; align-items: center; gap: 14px;
+    padding: 9px 16px; border: 1px solid var(--line); border-radius: 14px; background: #fffdf8; box-shadow: 0 6px 24px -10px rgba(40, 30, 10, .35);
+    font: 500 14px var(--text); color: var(--ink); white-space: nowrap; max-width: calc(100vw - 16px); }
+  .dock label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .dock .sep { width: 1px; height: 20px; background: var(--line); }
+  .sw { position: relative; display: block; }
+  .sw input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+  .sw b { display: block; position: relative; width: 34px; height: 20px; border-radius: 10px; background: #cfc6b6; }
+  .sw b::after { content: ""; position: absolute; left: 2px; top: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+  .sw input:checked + b { background: var(--ink); } .sw input:checked + b::after { left: 16px; }
+  #hungry:checked + b { background: var(--accent); }
+  .sw input:focus-visible + b, .dock button:focus-visible { outline: 3px solid #8fb4ff; outline-offset: 2px; }
+  input[type=range] { width: clamp(70px, 8vw, 120px); accent-color: var(--ink); }
+  .dock button { font: 600 13px var(--text); height: 30px; padding: 0 12px; border: 1.5px solid var(--ink); border-radius: 8px; background: transparent; color: var(--ink); cursor: pointer; }
+  .dock button:disabled { color: #b3a996; border-color: var(--line); cursor: default; }
+  #hint { position: fixed; left: 0; top: 0; z-index: 2; pointer-events: none; padding: 7px 12px; border-radius: 999px; background: var(--ink); color: var(--paper);
+    font: 600 13px/1 var(--text); opacity: 0; transition: opacity .5s; }
+  #hint.on { opacity: 1; }
+  @media (max-width: 760px) { .cols { grid-template-columns: minmax(0, 1fr); } #page { padding-bottom: 116px; }
+    .dock { flex-wrap: wrap; justify-content: center; gap: 8px 14px; padding: 8px 12px; font-size: 13px; left: 8px; right: 8px; transform: none; max-width: none; } .dock .sep { display: none; } input[type=range] { width: 70px; } }
+  @media (max-height: 640px), (max-width: 760px) and (max-height: 900px) { .try li:nth-child(n+4) { display: none; } .eq { display: none; } }
+  .hic-fallback #page { width: auto; height: auto; min-height: 100vh; }
+  .hic-fallback ~ .dock, .hic-fallback ~ #hint { display: none; }
+  html:has(.hic-fallback), html:has(.hic-fallback) body { overflow: auto; height: auto; }
+</style>
+</head>
+<body>
+<canvas id="stage" layoutsubtree content="drawable" aria-label="Lecture notes bent by a black hole">
+  <div id="page" drawable>
+    <header class="bar">
+      <span class="brand"><i></i>PHYS 218 · Week 9</span>
+      <button id="eqbtn" type="button" aria-pressed="false" data-hic-click data-eh-keep>Show the equation</button>
+    </header>
+    <main id="main">
+      <h1 id="title" contenteditable="plaintext-only" spellcheck="false" data-hic-edit aria-label="Title, editable">Light takes the long way.</h1>
+      <div class="cols">
+        <section>
+          <p class="lede" contenteditable="plaintext-only" spellcheck="false">These notes are live text. Drag the black hole over them: every word stays where it was set, only its light bends on the way to your eye. Select a bent line, rewrite the title, or drop in a question.</p>
+          <p class="eq" id="eq" hidden>A ray obeys u″ = 3u² − u along its path (u = 1/r). Pass closer than b = √27 M and it never comes back out.</p>
+          <form id="ask" autocomplete="off">
+            <input id="word" type="text" maxlength="28" placeholder="Ask a question" aria-label="A question to drop into the black hole" data-eh-atom>
+            <button id="drop" type="submit" data-eh-atom>Drop it in</button>
+          </form>
+          <p class="tray" id="tray" aria-live="polite"></p>
+        </section>
+        <section class="try">
+          <h2><span>Problem set</span><span id="count">0 of 5</span></h2>
+          <ol>
+            <li><label><input class="tick" type="checkbox" id="p-drag" data-eh-atom><span>Drag the black hole across this list</span></label></li>
+            <li><label><input class="tick" type="checkbox" id="p-type" data-eh-atom><span>Rewrite the title</span></label></li>
+            <li><label><input class="tick" type="checkbox" id="p-select" data-eh-atom><span>Select a word while it is bent</span></label></li>
+            <li><label><input class="tick" type="checkbox" id="p-feed" data-eh-atom><span>Drop a question into the hole</span></label></li>
+            <li><label><input class="tick" type="checkbox" id="p-eat" data-eh-atom><span>Switch on Hungry and let it eat a paragraph</span></label></li>
+          </ol>
+        </section>
+      </div>
+    </main>
+  </div>
+</canvas>
+<footer class="dock" id="dock" data-eh-dock>
+  <label title="Switch gravity on or off">Gravity <span class="sw"><input type="checkbox" id="gravity" checked><b></b></span></label>
+  <span class="sep"></span>
+  <label title="How heavy the black hole is">Mass <input type="range" id="mass" min="0" max="100" value="45" aria-label="Mass"></label>
+  <span class="sep"></span>
+  <label title="Let it swallow whatever it touches">Hungry <span class="sw"><input type="checkbox" id="hungry"><b></b></span></label>
+  <button id="restore" type="button" disabled title="Give back everything it swallowed">Restore</button>
+  <span class="sep"></span>
+  <label title="Sound on or off">Sound <span class="sw"><input type="checkbox" id="sound"><b></b></span></label>
+</footer>
+<div id="hint">Drag me</div>
+<script src="../lib/hic.js"></script>
+<script src="../lib/event-horizon.js"></script>
+<script>
+(function () {
+  'use strict';
+  // the page's own behaviour: the problem set ticks itself, the equation button toggles a line
+  var count = document.getElementById('count');
+  function tally() { count.textContent = document.querySelectorAll('input.tick:checked').length + ' of 5'; }
+  function tick(id) { var c = document.getElementById(id); if (c && !c.checked) { c.checked = true; tally(); } }
+  document.getElementById('page').addEventListener('change', function (e) { if (e.target.classList.contains('tick')) tally(); });
+  var eqb = document.getElementById('eqbtn'), eq = document.getElementById('eq');
+  eqb.addEventListener('click', function () { eq.hidden = !eq.hidden; eqb.setAttribute('aria-pressed', String(!eq.hidden)); eqb.textContent = eq.hidden ? 'Show the equation' : 'Hide the equation'; });
+
+  EventHorizon.create({
+    canvas: '#stage', page: '#page', eatRoot: '#main',
+    // the object: designed per topic (kind, size, colours, disk). #kind=neutron or #kind=wormhole previews the other kinds.
+    object: {
+      kind: 'blackhole', mass: .45, size: [3.4, 11.5],
+      ramp: ['#4a1004', '#c2410c', '#f59e0b', '#fff3d6', '#dbe9ff'],      // cool → hot; the hottest gas is blue-white
+      disk: { inner: 6, outer: 21, tilt: 81, roll: -14, gain: 1, beaming: 3, streaks: 1, speed: 1, spin: 1 },
+      ring: 1, glow: 1, warm: .8
+    },
+    rest: '#title',                                   // rests beside the end of the title's first line
+    intro: { word: 'long', in: '#title' },            // the opening: drifts in, takes this word, gives it back
+    feed: { form: '#ask', input: '#word', tray: '#tray', keep: 6 },
+    controls: { gravity: '#gravity', mass: '#mass', hungry: '#hungry', restore: '#restore', sound: '#sound' },
+    hint: { el: '#hint', after: 4 },
+    sound: { root: 110, scale: [0, 2, 4, 7, 9], bed: .5, timbre: 'sine' },
+    on: function (ev) {
+      if (ev === 'drag') tick('p-drag');
+      if (ev === 'type') tick('p-type');
+      if (ev === 'select') tick('p-select');
+      if (ev === 'feed') tick('p-feed');
+      if (ev === 'eat') tick('p-eat');
+    }
+  });
+})();
+</script>
+</body>
+</html>

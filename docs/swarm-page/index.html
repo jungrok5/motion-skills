@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>swarm-page · motion-skills</title>
+<meta name="description" content="주제를 받아, 페이지의 글자 픽셀이 새 · 벌 · 반딧불이 · 물고기 · 종이비행기 떼가 되어 날아올랐다가 제자리에 내려앉아 다시 읽히는 라이브 웹페이지를 만듭니다.">
+<meta property="og:title" content="swarm-page · motion-skills">
+<meta property="og:description" content="주제를 받아, 페이지의 글자 픽셀이 새 · 벌 · 반딧불이 · 물고기 · 종이비행기 떼가 되어 날아올랐다가 제자리에 내려앉아 다시 읽히는 라이브 웹페이지를 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/swarm-page/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/swarm-page">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / swarm-page</nav>
+  <h1>swarm-page</h1>
+  <p>주제를 받아, 페이지의 글자 픽셀이 새 · 벌 · 반딧불이 · 물고기 · 종이비행기 떼가 되어 날아올랐다가 제자리에 내려앉아 다시 읽히는 라이브 웹페이지를 만듭니다. 떼는 일곱 이웃을 따르는 규칙으로 움직여 방향 전환이 물결처럼 번지고, 페이지가 모여 있을 때는 모든 글자를 누르고 고쳐 쓸 수 있습니다.
+  원본: Felix Rieseberg의 <a href="https://claude.ai/artifact/NfKoLhxvZ9AcX32i9CBvHU">「Swarm」 데모</a>(<a href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk">HTML-in-Canvas 데모 페이지</a>, <a href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19">X 게시물</a>)를 보고 만들었습니다. 코드는 모두 새로 썼습니다.
+  라이브 데모는 Chrome · Edge 157 이상이나 Claude 데스크톱 앱에서 보입니다. 다른 브라우저에서는 같은 HTML이 평범한 페이지로 나옵니다.</p>
+  <ul class="tags"><li>HTML-in-Canvas</li><li>픽셀이 떼로 나는 페이지</li><li>일곱 이웃 군집 비행</li><li>라이브 웹페이지</li><li>코드 전용</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나 (양봉 장부, 공연 라인업, 졸업 공지, 관찰 일지 …)</dd>
+      <dt>브리프</dt><dd>페이지 내용과 조작, 생물(모양 · 무게 · 날갯짓), 떼의 형태, 하늘과 앞 풍경, 날리는 방법</dd>
+      <dt>페이지</dt><dd>진짜 HTML 한 장 + <code>Swarm.start({...})</code> 설정, SVG 앞 풍경</dd>
+      <dt>검사</dt><dd>예비 동작 · 이륙 물결 · 관성 · 회전 제한 · 물결 전파 · 날갯짓과 활공 · 착지 흔들림 · 입력 수치</dd>
+      <dt>출력</dt><dd>네트워크 없이 도는 폴더 하나 (<code>index.html</code> + <code>lib/</code>), 스틸 PNG</dd>
+    </dl>
+    <pre><code>node scripts/check.mjs examples/bee-ledger/index.html
+node scripts/still.mjs examples/bee-ledger/index.html --out out --act fly --at 0.5,3
+node scripts/new-page.mjs ../my-swarm-page
+node scripts/check.mjs ../my-swarm-page/index.html</code></pre>
+    <p class="mute">요구 사항: Node, Playwright Chromium (검사와 스틸은 HTML-in-Canvas 플래그를 켜서 실행). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/swarm-page/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10;--h-phone:calc((100vw - 34px)*1.5);--demo-bg:#f6e3b4">
+    <iframe data-src="demo/examples/bee-ledger/" title="swarm-page 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/bee-ledger/">데모 열기 (examples/bee-ledger)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/bee-ledger</code> · 「Open the hives」를 누르고, 표를 정렬하고, 글을 고쳐 쓰기</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/bee-ledger/" data-cap="예제 &lt;code&gt;examples/bee-ledger&lt;/code&gt; · 「Open the hives」를 누르고, 표를 정렬하고, 글을 고쳐 쓰기" aria-pressed="true">양봉 장부</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/index.html&lt;/code&gt; · 해 질 녘 지붕 위의 칼새 떼, 날 때마다 밤낮이 바뀜" aria-pressed="false">시작 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제와 템플릿을 HTML-in-Canvas 플래그를 켠 Chromium에서 시뮬레이션 시간으로 찍은 스틸입니다. 카드를 누르면 해당 라이브 데모가 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"bee":"양봉 장부","swift":"시작 템플릿"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>양봉 장부 <small>examples/bee-ledger</small></h3>
+      <p>장부의 숫자와 글자가 벌 떼가 되어 늦여름 오후의 하늘로 나갔다가 벌통 쪽부터 돌아옵니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="bee" href="demo/examples/bee-ledger/" target="_blank" rel="noopener">
+          <img src="samples/bee-rest.jpg" alt="벌통과 라벤더 앞에 놓인 양봉 장부 페이지, 제목과 정렬되는 표" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">양봉 장부 · 정지</span><b>모여 있는 페이지</b><span class="how">읽고 고쳐 쓰고 정렬할 수 있는 상태</span></div></a>
+        <a class="tile" data-tags="bee" href="demo/examples/bee-ledger/" target="_blank" rel="noopener">
+          <img src="samples/bee-liftoff.jpg" alt="버튼 쪽 글자부터 금빛 벌로 흩어지고 표는 아직 떨고 있는 이륙 순간" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">양봉 장부 · 0.5초</span><b>이륙 물결</b><span class="how">버튼에서 퍼지는 웅크림과 떨림, 그다음 이륙</span></div></a>
+        <a class="tile" data-tags="bee" href="demo/examples/bee-ledger/" target="_blank" rel="noopener">
+          <img src="samples/bee-swarm.jpg" alt="빛줄기 아래 하늘을 나는 금빛 벌 떼 두 덩어리" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">양봉 장부 · 3.5초</span><b>벌 떼</b><span class="how">공 모양 군집, 날개 떨림, 가까운 벌은 크게</span></div></a>
+        <a class="tile" data-tags="bee" href="demo/examples/bee-ledger/" target="_blank" rel="noopener">
+          <img src="samples/bee-homecoming.jpg" alt="벌들이 제자리로 내려앉으며 제목과 표가 반쯤 다시 모인 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">양봉 장부 · 착지 2.4초</span><b>귀소</b><span class="how">벌통 쪽부터 차례로 내려앉아 다시 읽히는 장부</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>시작 템플릿 <small>templates/index.html</small></h3>
+      <p>골목 소식지가 해 질 녘 지붕 위의 칼새 떼가 되고, 날 때마다 하늘이 밤으로 바뀌어 글자도 밝은 색으로 돌아옵니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="swift" href="demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/swifts-rest.jpg" alt="노을 하늘과 지붕 실루엣 위의 소식지 페이지" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 정지</span><b>해 질 녘 소식지</b><span class="how">투명한 페이지 뒤로 엔진이 그린 하늘</span></div></a>
+        <a class="tile" data-tags="swift" href="demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/swifts-liftoff.jpg" alt="제목 왼쪽 글자가 검은 새 떼로 부서지며 떠오르는 순간" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 0.35초</span><b>떠오르는 제목</b><span class="how">글자 픽셀 하나하나가 새 한 마리</span></div></a>
+        <a class="tile" data-tags="swift" href="demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/swifts-dusk.jpg" alt="노을 하늘에 길게 접힌 검은 새 떼" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 3초</span><b>얇은 막처럼 접히는 떼</b><span class="how">일곱 이웃 규칙, 기울며 도는 새</span></div></a>
+        <a class="tile" data-tags="swift" href="demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/swifts-night.jpg" alt="밤하늘의 달 앞을 지나는 하얗게 빛나는 새 떼" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 7.5초</span><b>밤으로 바뀐 하늘</b><span class="how">두 번째 조명, 밝은 색으로 바뀐 새</span></div></a>
+        <a class="tile" data-tags="swift" href="demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/swifts-landing.jpg" alt="밤하늘 아래 새 떼가 제목 위로 내려앉는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 착지 1.6초</span><b>위에서부터 내려앉기</b><span class="how">제자리를 살짝 지나쳤다 돌아오는 착지</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. 출발점은 Felix Rieseberg의 「Swarm」 데모로, 저녁 들새 조사 기록 페이지가 찌르레기 떼가 되어 호수 위를 날다 돌아옵니다. 이 스킬은 그 형식(페이지 픽셀이 곧 떼, 모이면 다시 살아 있는 페이지)만 가져오고, 엔진과 예제 「Linden Hill honey ledger」의 내용 · 생물 · 하늘은 모두 이 레포의 것입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/examples/bee-ledger/" target="_blank" rel="noopener"><b>「Linden Hill honey ledger」 · 양봉 장부</b><span>벌 떼 · 늦여름 오후 · 정렬되는 표 · 라이브 페이지</span><span class="url">swarm-page/demo/examples/bee-ledger/</span></a>
+    <a class="work" href="https://claude.ai/artifact/NfKoLhxvZ9AcX32i9CBvHU" target="_blank" rel="noopener"><b>원본 데모 · 「Swarm」</b><span>Felix Rieseberg · HTML-in-Canvas 데모 15개 중 하나</span><span class="url">claude.ai/artifact/NfKoLhxvZ9AcX32i9CBvHU</span></a>
+    <a class="work" href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk" target="_blank" rel="noopener"><b>HTML-in-Canvas 데모 페이지</b><span>데모 15개 모음</span><span class="url">claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk</span></a>
+    <a class="work" href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19" target="_blank" rel="noopener"><b>X 게시물 · All hail the weird web</b><span>스킬의 출처</span><span class="url">x.com/felixrieseberg/status/2122036839238492493</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/swarm-page/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/swarm-page">폴더</a> <span>lib · scripts · templates · examples · references</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/swarm-page/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/swarm-page/references/BRIEF.md">references/BRIEF.md</a> <span>주제에서 브리프로, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/swarm-page/references/LOOK.md">references/LOOK.md</a> <span>원본 데모에서 관찰한 형식</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/swarm-page/references/ENGINE.md">references/ENGINE.md</a> <span>엔진 API와 설정, 새 생물 추가</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/swarm-page/references/HIC.md">references/HIC.md</a> <span>HTML-in-Canvas 공통 규칙</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/swarm-page/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림은 이 레포의 코드로 렌더한 스틸입니다
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

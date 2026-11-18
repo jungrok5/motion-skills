@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desk Cube</title>
+<!-- app-cube template: the house example of the style (a generic "desk for one day" topic).
+     Six ordinary DOM apps, one per face, become a glossy 3×3 twisty cube in a photo studio (lib/cube.js over lib/hic.js).
+     For a new topic, write BRIEF.md first, then redesign every face, the palette (CONFIG below) and the wording.
+     Face grid: 720 px square, nine 240 px tiles. A control (button, checkbox, input) sits inside one tile with a 16 px margin;
+     text may run across tiles; a control that must span tiles is marked data-span (scripts/check.mjs reports the rest). -->
+<style>
+  :root { --ui: ui-rounded, 'SF Pro Rounded', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif; --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; }
+  html, body { margin: 0; height: 100%; background: #07080d; color: #eef0f6; font-family: var(--ui); overflow: hidden; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+  /* HUD: an ordinary overlay, outside the canvas */
+  #hud { position: fixed; left: 24px; top: 22px; max-width: min(330px, calc(100% - 48px)); pointer-events: none; user-select: none; }
+  #hud h1 { margin: 0; font: 600 34px/1.05 var(--serif); letter-spacing: -.01em; }
+  #hud ol { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 7px; }
+  #hud li { font: 500 15px/1.3 var(--ui); color: #b9bdd0; display: flex; gap: 9px; align-items: center; transition: color .3s; }
+  #hud li::before { content: ''; flex: none; width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid currentColor; box-sizing: border-box; }
+  #hud li.done { color: #7fe3b9; } #hud li.done::before { background: currentColor; }
+  @media (max-width: 560px) { #hud h1 { font-size: 24px; } #hud li { font-size: 12.5px; } #hud { left: 16px; top: 14px; } }
+  /* small or short windows (an embedded demo, a phone): a compact HUD that keeps clear of the cube */
+  @media (max-width: 900px), (max-height: 620px) { #hud { left: 14px; top: 12px; max-width: 230px; } #hud h1 { font-size: 20px; } #hud ol { margin-top: 8px; gap: 4px; } #hud li { font-size: 11.5px; gap: 7px; } #hud li::before { width: 10px; height: 10px; } #hud small { font-size: 9.5px; margin-bottom: 5px; } }
+
+  /* ---------- the six faces: 720 px squares of plain HTML ---------- */
+  .face { position: absolute; left: 0; top: 0; width: 720px; height: 720px; overflow: hidden; box-sizing: border-box; font-family: var(--ui); }
+  .face * { box-sizing: border-box; }
+  .face button { font: inherit; color: inherit; border: 0; margin: 0; padding: 0; background: none; cursor: pointer; }
+  .face .abs { position: absolute; }
+  /* fallback: the faces become a column of ordinary panels */
+  .hic-fallback { height: 100%; overflow: auto; background: #07080d; }
+  .hic-fallback .face { position: relative; margin: 16px auto; border-radius: 18px; }
+  .cube-fallback ~ #hud { display: none; }
+
+  /* Notes (front) */
+  #f-note { background: linear-gradient(160deg, #fbf1c9, #f1dfa0); color: #2a2412; }
+  #note { position: absolute; left: 24px; top: 26px; width: 672px; height: 440px; font: 500 70px/110px var(--serif); outline: none; caret-color: #d2462e;
+    background: repeating-linear-gradient(transparent 0 106px, rgba(60, 45, 10, .14) 106px 108px, transparent 108px 110px); white-space: pre-wrap; overflow: hidden; }
+  #note-foot span { position: absolute; top: 560px; font: 600 30px/1 var(--ui); color: rgba(42, 36, 18, .62); }
+  #note-words { left: 28px; } #note-chars { left: 268px; } #note-date { left: 508px; color: #d2462e !important; }
+
+  /* Timer (right) */
+  #f-timer { background: radial-gradient(120% 100% at 20% 0%, #ff8d6b, #e4553f 60%, #b83627); color: #fff7f0; }
+  #tm-label { left: 28px; top: 36px; font: 700 34px/1 var(--ui); letter-spacing: .06em; text-transform: uppercase; opacity: .85; }
+  #tm-time { left: 0; width: 720px; top: 70px; text-align: center; font: 700 150px/1 var(--ui); font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
+  #f-timer .key { position: absolute; top: 264px; width: 192px; height: 192px; border-radius: 40px; background: rgba(255, 255, 255, .16); font: 700 40px/1 var(--ui);
+    box-shadow: inset 0 2px 0 rgba(255, 255, 255, .35), inset 0 -8px 0 rgba(90, 10, 0, .25); }
+  #f-timer .key:hover { background: rgba(255, 255, 255, .26); }
+  #tm-go { left: 24px; background: #fff7f0 !important; color: #c13f2b; } #tm-reset { left: 264px; } #tm-plus { left: 504px; }
+  #tm-dots { left: 0; width: 720px; top: 560px; display: flex; justify-content: center; gap: 44px; }
+  #tm-dots i { width: 40px; height: 40px; border-radius: 50%; border: 4px solid rgba(255, 247, 240, .7); }
+  #tm-dots i.on { background: #fff7f0; }
+
+  /* Turn (top): the cube's own controls */
+  #f-turn { background: radial-gradient(130% 110% at 15% 0%, #4a3fb3, #2b237a 50%, #17123f); color: #f1efff; }
+  #tn-title { left: 28px; top: 40px; font: 700 70px/1 var(--ui); letter-spacing: -.04em; }
+  #tn-sub { left: 30px; top: 128px; font: 500 28px/1.2 var(--ui); color: #c4bdfb; }
+  #tn-status { left: 256px; top: 24px; width: 208px; height: 192px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; }
+  #tn-status b { font: 700 86px/.9 var(--ui); font-variant-numeric: tabular-nums; }
+  #tn-status span { font: 600 30px/1 var(--ui); color: #d6d0ff; }
+  #tn-status.ok b { width: 84px; height: 84px; border-radius: 50%; background: #7fe3b9 radial-gradient(circle at 50% 46%, transparent 0 0); position: relative; font-size: 0; }
+  #tn-status.ok b::after { content: ''; position: absolute; left: 28px; top: 16px; width: 22px; height: 40px; border: solid #17123f; border-width: 0 9px 9px 0; transform: rotate(45deg); }
+  #f-turn .key { position: absolute; width: 192px; height: 192px; border-radius: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+    font: 700 36px/1 var(--ui); background: linear-gradient(#7b6df2, #5848d3); box-shadow: inset 0 2px 0 rgba(255, 255, 255, .3), inset 0 -9px 0 rgba(15, 8, 60, .35); }
+  #f-turn .key svg { width: 64px; height: 64px; }
+  #f-turn .key:hover { filter: brightness(1.1); }
+  #tn-scramble { left: 24px; top: 264px; background: linear-gradient(#ffe36e, #ffcb2e) !important; color: #2a2207; }
+  #tn-undo { left: 264px; top: 264px; } #tn-solve { left: 504px; top: 264px; }
+  #tn-sound { left: 504px; top: 24px; background: rgba(20, 12, 80, .45) !important; box-shadow: inset 0 0 0 3px rgba(241, 239, 255, .3) !important; }
+  #tn-sound[aria-pressed=false] .wave { display: none; } #tn-sound[aria-pressed=false] { color: rgba(241, 239, 255, .55); }
+  #f-turn .mode { position: absolute; top: 528px; width: 192px; height: 144px; border-radius: 36px; font: 700 34px/1 var(--ui); background: rgba(20, 12, 80, .45); color: #c4bdfb; box-shadow: inset 0 0 0 3px rgba(241, 239, 255, .18); }
+  #f-turn .mode[aria-pressed=true] { background: #f1efff; color: #2b237a; }
+  #tn-auto { left: 24px; } #tn-write { left: 264px; } #tn-twist { left: 504px; }
+
+  /* Tasks (back) */
+  #f-todo { background: linear-gradient(170deg, #9fe6c8, #5cc7a0); color: #0f2f24; }
+  #td-title { left: 28px; top: 34px; font: 700 64px/1 var(--ui); letter-spacing: -.03em; }
+  #td-count { left: 508px; top: 46px; width: 184px; text-align: right; font: 600 34px/1 var(--ui); opacity: .7; font-variant-numeric: tabular-nums; }
+  .task { position: absolute; left: 28px; width: 664px; height: 60px; display: flex; align-items: center; gap: 22px; font: 600 40px/1 var(--ui); cursor: pointer; }
+  .task input { appearance: none; -webkit-appearance: none; flex: none; width: 52px; height: 52px; margin: 0; border-radius: 16px; background: rgba(255, 255, 255, .55); box-shadow: inset 0 0 0 3px #0f2f24; cursor: pointer; }
+  .task input:checked { background: #0f2f24 linear-gradient(45deg, transparent 0 0); }
+  .task input:checked + span { text-decoration: line-through; opacity: .5; }
+  #td-new { position: absolute; left: 28px; top: 572px; width: 424px; height: 96px; border: 0; border-radius: 26px; padding: 0 26px; font: 600 36px/1 var(--ui); color: #0f2f24; background: rgba(255, 255, 255, .7); outline: none; }
+  #td-add { position: absolute; left: 508px; top: 572px; width: 184px; height: 96px; border-radius: 26px !important; background: #0f2f24 !important; color: #c9f7e2 !important; font: 700 36px/1 var(--ui) !important; }
+
+  /* Mixer (left) */
+  #f-mix { background: #15161d; color: #eceaf4; }
+  #mx-swatch { left: 24px; top: 24px; width: 432px; height: 192px; border-radius: 34px; box-shadow: inset 0 -10px 0 rgba(0, 0, 0, .15); }
+  #mx-hex { left: 504px; top: 24px; width: 192px; height: 192px; display: flex; flex-direction: column; justify-content: center; font: 600 36px/1.2 var(--mono); user-select: text; }
+  #mx-hex small { font: 600 22px/1 var(--ui); color: #8d8ca0; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 10px; }
+  .mx-row { position: absolute; left: 24px; width: 672px; }
+  .mx-row label { display: block; font: 600 28px/1 var(--ui); color: #a9a8bb; margin: 0 0 22px 6px; text-transform: uppercase; letter-spacing: .08em; }
+  .mx-row input { width: 100%; height: 56px; margin: 0; appearance: none; -webkit-appearance: none; background: none; cursor: ew-resize; }
+  .mx-row input::-webkit-slider-runnable-track { height: 18px; border-radius: 9px; background: var(--track); }
+  .mx-row input::-webkit-slider-thumb { -webkit-appearance: none; width: 52px; height: 52px; margin-top: -17px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 7px #15161d, inset 0 -5px 0 rgba(0, 0, 0, .15); }
+  #mx-h-row { top: 290px; --track: linear-gradient(90deg, #f44, #fd4, #4e6, #4cf, #64f, #f4c, #f44); }
+  #mx-l-row { top: 530px; --track: linear-gradient(90deg, #111, #888, #fff); }
+
+  /* Water (bottom) */
+  #f-tally { background: radial-gradient(120% 100% at 30% 0%, #8fd3ff, #3f9be6 60%, #2373c4); color: #f2faff; }
+  #ty-label { left: 28px; top: 40px; font: 700 54px/1 var(--ui); letter-spacing: -.02em; }
+  #ty-goal { left: 30px; top: 110px; font: 500 30px/1 var(--ui); opacity: .8; }
+  #f-tally .key { position: absolute; top: 264px; width: 192px; height: 192px; border-radius: 50%; font: 700 96px/1 var(--ui); background: rgba(255, 255, 255, .2); box-shadow: inset 0 -9px 0 rgba(0, 30, 80, .25); }
+  #ty-minus { left: 24px; } #ty-plus { left: 504px; background: #f2faff !important; color: #2373c4; }
+  #ty-num { left: 240px; width: 240px; top: 280px; text-align: center; font: 700 150px/1 var(--ui); font-variant-numeric: tabular-nums; }
+  #ty-drops { left: 0; width: 720px; top: 560px; display: flex; justify-content: center; gap: 22px; }
+  #ty-drops i { width: 52px; height: 70px; border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%; border: 4px solid rgba(242, 250, 255, .75); transform: rotate(180deg); }
+  #ty-drops i.on { background: #f2faff; }
+</style>
+</head>
+<body>
+<canvas id="stage" layoutsubtree content="drawable" aria-label="A cube whose six faces are working apps">
+  <section class="face" id="f-note" drawable aria-label="Notes">
+    <div id="note" contenteditable="true" spellcheck="false" role="textbox" aria-multiline="true" aria-label="Notes" data-hic-edit data-span>Every tile is a real page.
+Click here and write.</div>
+    <div id="note-foot"><span id="note-words"></span><span id="note-chars"></span><span id="note-date">Today</span></div>
+  </section>
+
+  <section class="face" id="f-timer" drawable aria-label="Focus timer">
+    <p class="abs" id="tm-label">Focus</p>
+    <p class="abs" id="tm-time" role="timer">25:00</p>
+    <button class="key" id="tm-go" type="button" data-hic-click>Start</button>
+    <button class="key" id="tm-reset" type="button">Reset</button>
+    <button class="key" id="tm-plus" type="button">+5</button>
+    <div class="abs" id="tm-dots" aria-label="Sessions done"><i></i><i></i><i></i><i></i></div>
+  </section>
+
+  <section class="face" id="f-turn" drawable aria-label="Turn the cube">
+    <p class="abs" id="tn-title">Turn</p><p class="abs" id="tn-sub">drag any tile</p>
+    <p class="abs" id="tn-status" aria-live="polite"><b></b><span>Solved</span></p>
+    <button class="key" id="tn-sound" type="button" data-cube="sound" aria-label="Sound"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19h7l9-7v24l-9-7H9z" fill="currentColor"/><path class="wave" d="M31 18c3 3.5 3 8.5 0 12M36 13c5.5 6 5.5 16 0 22"/></svg></button>
+    <button class="key" id="tn-scramble" type="button" data-cube="scramble"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15h7c8 0 11 18 20 18h8M35 27l6 6-6 6M6 33h7c3 0 5-2 6.5-4.5M26 19.5C28 17 30 15 33 15h8M35 9l6 6-6 6"/></svg>Shuffle</button>
+    <button class="key" id="tn-undo" type="button" data-cube="undo"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 9l-9 9 9 9M8 18h20a11 11 0 0 1 0 22H17"/></svg>Back</button>
+    <button class="key" id="tn-solve" type="button" data-cube="solve"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 25l10 10 20-22"/></svg>Solve</button>
+    <button class="mode" id="tn-auto" type="button" data-cube="mode" data-mode="auto">Both</button>
+    <button class="mode" id="tn-write" type="button" data-cube="mode" data-mode="write">Use</button>
+    <button class="mode" id="tn-twist" type="button" data-cube="mode" data-mode="twist">Twist</button>
+  </section>
+
+  <section class="face" id="f-todo" drawable aria-label="Tasks">
+    <p class="abs" id="td-title">Tasks</p><p class="abs" id="td-count"></p>
+    <div id="td-list">
+      <label class="task" style="top:146px"><input type="checkbox"><span>Water the fern</span></label>
+      <label class="task" style="top:282px"><input type="checkbox" checked><span>Reply to Mina</span></label>
+      <label class="task" style="top:382px"><input type="checkbox"><span>Book the dentist</span></label>
+    </div>
+    <input id="td-new" type="text" placeholder="New task" aria-label="New task" data-span>
+    <button id="td-add" type="button">Add</button>
+  </section>
+
+  <section class="face" id="f-mix" drawable aria-label="Colour mixer">
+    <div class="abs" id="mx-swatch"></div>
+    <p class="abs" id="mx-hex"><small>Colour</small><span id="mx-code">#000000</span></p>
+    <div class="mx-row" id="mx-h-row"><label for="mx-h">Hue</label><input id="mx-h" type="range" min="0" max="360" value="262" data-span></div>
+    <div class="mx-row" id="mx-l-row"><label for="mx-l">Light</label><input id="mx-l" type="range" min="15" max="85" value="58" data-span></div>
+  </section>
+
+  <section class="face" id="f-tally" drawable aria-label="Water">
+    <p class="abs" id="ty-label">Glasses of water</p><p class="abs" id="ty-goal">goal: 8 today</p>
+    <button class="key" id="ty-minus" type="button" aria-label="One less">&minus;</button>
+    <output class="abs" id="ty-num">3</output>
+    <button class="key" id="ty-plus" type="button" aria-label="One more">+</button>
+    <div class="abs" id="ty-drops" aria-hidden="true"></div>
+  </section>
+</canvas>
+
+<div id="hud"><h1>Desk Cube</h1>
+  <ol><li id="h-use">Click a face and use it</li><li id="h-turn">Drag a tile to turn a layer</li><li id="h-again">Use it again. It still works.</li></ol>
+</div>
+
+<script src="../lib/hic.js"></script>
+<script src="../lib/cube.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var cube = null;   // set below; apps reach the cube's sound through it
+  var snd = function () { return cube && cube.sound; };
+
+  // ---------------------------------------------------------------- the apps (each one ordinary DOM; none knows it is on a cube)
+  // Notes
+  var note = $('note');
+  function count() {
+    var t = note.innerText.replace(/\s+/g, ' ').trim(), w = t ? t.split(' ').length : 0;
+    $('note-words').textContent = w + (w === 1 ? ' word' : ' words');
+    $('note-chars').textContent = note.textContent.length + ' chars';
+  }
+  note.addEventListener('input', count); count();
+
+  // Timer
+  var left = 25 * 60, timer = 0, done = 0;
+  function show() { $('tm-time').textContent = String(Math.floor(left / 60)).padStart(2, '0') + ':' + String(left % 60).padStart(2, '0'); }
+  function tick() {
+    left = Math.max(0, left - 1); show();
+    if (!left) { stop(); done = Math.min(4, done + 1); dots(); if (snd()) [0, .18, .36].forEach(function (a) { snd().tone(880, .5, { at: a, gain: .15 }); }); left = 25 * 60; show(); }
+  }
+  function stop() { clearInterval(timer); timer = 0; $('tm-go').textContent = 'Start'; }
+  function dots() { [].forEach.call($('tm-dots').children, function (d, i) { d.classList.toggle('on', i < done); }); }
+  $('tm-go').addEventListener('click', function () { if (timer) stop(); else { timer = setInterval(tick, 1000); this.textContent = 'Pause'; } });
+  $('tm-reset').addEventListener('click', function () { stop(); left = 25 * 60; show(); });
+  $('tm-plus').addEventListener('click', function () { left = Math.min(99 * 60, left + 300); show(); });
+  dots();
+
+  // Tasks
+  function tasks() { var all = $('td-list').querySelectorAll('input'), n = [].filter.call(all, function (c) { return c.checked; }).length; $('td-count').textContent = n + ' / ' + all.length; }
+  $('td-list').addEventListener('change', function (e) { tasks(); if (snd()) snd().tone(e.target.checked ? 990 : 660, .12, { gain: .12 }); });
+  function addTask() {
+    var v = $('td-new').value.trim(); if (!v) return;
+    var items = $('td-list').querySelectorAll('.task');   // three rows fit: the newest replaces the oldest
+    var spans = [].map.call(items, function (l) { return [l.querySelector('span').textContent, l.querySelector('input').checked]; });
+    spans.shift(); spans.push([v, false]);
+    [].forEach.call(items, function (l, i) { l.querySelector('span').textContent = spans[i][0]; l.querySelector('input').checked = spans[i][1]; });
+    $('td-new').value = ''; tasks();
+  }
+  $('td-add').addEventListener('click', addTask);
+  $('td-new').addEventListener('keydown', function (e) { if (e.key === 'Enter') addTask(); });
+  tasks();
+
+  // Mixer
+  function mix() {
+    var h = +$('mx-h').value, l = +$('mx-l').value, c = 'hsl(' + h + ' 78% ' + l + '%)';
+    $('mx-swatch').style.background = c;
+    var probe = document.createElement('i'); probe.style.color = c; document.body.appendChild(probe);
+    var rgb = getComputedStyle(probe).color.match(/\d+/g).slice(0, 3); probe.remove();
+    $('mx-code').textContent = '#' + rgb.map(function (v) { return (+v).toString(16).padStart(2, '0'); }).join('');
+  }
+  $('mx-h').addEventListener('input', mix); $('mx-l').addEventListener('input', mix); mix();
+
+  // Water
+  var glasses = 3;
+  for (var i = 0; i < 8; i++) $('ty-drops').appendChild(document.createElement('i'));
+  function water() { $('ty-num').textContent = glasses; [].forEach.call($('ty-drops').children, function (d, i) { d.classList.toggle('on', i < glasses); }); }
+  $('ty-plus').addEventListener('click', function () { glasses = Math.min(8, glasses + 1); water(); if (snd()) snd().tone(520 + glasses * 60, .18, { gain: .14, glide: 900 }); });
+  $('ty-minus').addEventListener('click', function () { glasses = Math.max(0, glasses - 1); water(); });
+  water();
+
+  // ---------------------------------------------------------------- the cube: material, studio and sound for this topic
+  var CONFIG = {
+    faces: ['#f-note', '#f-timer', '#f-turn', '#f-todo', '#f-mix', '#f-tally'],   // front, right, top, back, left, bottom
+    body: { color: '#101116', gloss: 1, roughness: 0.09 },
+    tile: { glass: 0.18, emit: 0.88 },
+    backdrop: { center: '#1d2348', edge: '#05060b', glowA: { at: [-0.64, -0.2], color: '#3c1030', size: 3 }, glowB: { at: [0.7, 0.3], color: '#0a2a4a', size: 2.6 } },
+    sound: { snap: { freq: 150, body: 0.09, click: 2600 }, chime: [72, 76, 79, 84] },
+    onChange: function (s) {
+      var st = $('tn-status');
+      st.classList.toggle('ok', s.solved);
+      st.querySelector('b').textContent = s.solved ? '' : s.moves;
+      st.querySelector('span').textContent = s.solved ? 'Solved' : (s.moves === 1 ? 'move' : 'moves') + (s.last ? ' · ' + s.last : '');
+      if (s.user && s.moves) $('h-turn').classList.add('done');
+    }
+  };
+  cube = AppCube.create(document.getElementById('stage'), CONFIG);
+
+  // HUD hints
+  addEventListener('cubeuse', function (e) { $('h-use').classList.add('done'); if (e.detail.afterTwist && $('h-turn').classList.contains('done')) $('h-again').classList.add('done'); });
+})();
+</script>
+</body>
+</html>

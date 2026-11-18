@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>paper-desk · motion-skills</title>
+<meta name="description" content="주제를 주면 그 주제의 문서를 책상 위 종이 한 장으로 만듭니다. 문서는 타이핑 · 선택 · 검색이 되는 실제 HTML이고, 말고 · 접고 · 구기고 · 커피를 쏟고 · 불태워도 계속 동작합니다.">
+<meta property="og:title" content="paper-desk · motion-skills">
+<meta property="og:description" content="주제를 주면 그 주제의 문서를 책상 위 종이 한 장으로 만듭니다. 문서는 타이핑 · 선택 · 검색이 되는 실제 HTML이고, 말고 · 접고 · 구기고 · 커피를 쏟고 · 불태워도 계속 동작합니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/paper-desk/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/paper-desk">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / paper-desk</nav>
+  <h1>paper-desk</h1>
+  <p>주제를 주면 그 주제의 문서를 책상 위 종이 한 장으로 만듭니다. 문서는 타이핑 · 선택 · 검색이 되는 실제 HTML이고, 말고 · 접고 · 구기고 · 커피를 쏟고 · 불태워도 계속 동작합니다. 원본: Felix Rieseberg의 <a href="https://claude.ai/artifact/BKGBk584YpYtxBebEQsYSm">「The Paper Desk」 데모</a>(<a href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk">HTML-in-Canvas 데모 페이지</a>, <a href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19">X 게시물</a>)을 보고 만들었습니다. 라이브 데모는 Chrome · Edge 157 이상이나 Claude 데스크톱 앱에서 보이고, 다른 브라우저에서는 같은 HTML이 평범한 페이지로 보입니다.</p>
+  <ul class="tags"><li>HTML-in-Canvas</li><li>살아 있는 문서</li><li>종이 물리</li><li>WebGL2 조명</li><li>코드 전용</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 한 줄 (연애편지, 보물 지도, 시험지, 사직서, 레시피 카드 …)</dd>
+      <dt>브리프</dt><dd>문서의 HTML과 살아 있는 동작, 종이 · 잉크, 책상 · 램프 · 소품, 주제에 맞는 행동</dd>
+      <dt>페이지</dt><dd><code>PaperDesk.create({…})</code> 설정 하나와 문서 DOM 코드</dd>
+      <dt>검사</dt><dd>공통 HTML-in-Canvas 검사와 행동별 수치 검사, 스틸 채점</dd>
+      <dt>출력</dt><dd><code>index.html</code> + <code>lib/</code> 한 폴더 (오프라인 · Claude 아티팩트), 스틸</dd>
+    </dl>
+    <pre><code>node scripts/check.mjs examples/resignation-letter/index.html
+node scripts/still.mjs examples/resignation-letter/index.html --out out --act "idle;fold;crumple;burn,stain"
+node scripts/new-page.mjs ../my-desk
+node scripts/check.mjs ../my-desk/index.html</code></pre>
+    <p class="mute">요구 사항: Node, Playwright Chromium (스크립트가 <code>CanvasDrawElement</code> 플래그를 켬). 네트워크 · npm 설치 불필요. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/paper-desk/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <!-- Live demo. data-src is loaded by site.js ({o} → h or v by screen width). Switch buttons: data-src + optional data-cap (HTML,
+       shown in [data-cap-target]). Size: --ar (desktop aspect), --h-phone (height under 820 px), --demo-bg. -->
+  <div class="demo" style="--ar:16/10;--h-phone:calc((100vw - 34px)*1.4);--demo-bg:#0b0c0d">
+    <iframe data-src="demo/examples/resignation-letter/" title="paper-desk 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/resignation-letter/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/resignation-letter</code> · 사직서 · 접기 · 구기기 · 커피 · 불</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/resignation-letter/" data-cap="예제 &lt;code&gt;examples/resignation-letter&lt;/code&gt; · 사직서 · 접기 · 구기기 · 커피 · 불" aria-pressed="true">I Quit</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/index.html&lt;/code&gt; · 편지 · 호두나무 책상 · 촛불" aria-pressed="false">시작 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<!-- Samples gallery: every skill has one. Up to ~12 tiles: one .grid. More: split into .group blocks and/or add filter chips
+     (tiles carry data-tags="key …"; the chips' data-labels maps key → label; site.js builds the buttons and counts).
+     .no is the kicker line: category · length. Put a number in it only when it is a real order (canvas-film: "장면 01 · 창조 · 35초"). -->
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제와 템플릿을 HTML-in-Canvas를 켠 Chromium에서 상태별로 찍은 스틸입니다. 카드를 누르면 그 페이지의 라이브 데모가 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"ex":"예제 · I Quit","tpl":"템플릿 · 편지"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>책상 위 종이 한 장 <small>예제 6 · 템플릿 4</small></h3>
+      <p>같은 엔진, 다른 주제: 사무실의 사직서와 서재의 편지.</p>
+      <div class="grid">
+        <a class="tile" data-tags="ex" href="https://jungrok5.github.io/motion-skills/paper-desk/demo/examples/resignation-letter/" target="_blank" rel="noopener">
+          <img src="samples/memo-idle.jpg" alt="사직서 메모와 커피 머그, 연필, 스테이플러가 놓인 회색 사무용 책상" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">예제 · I Quit</span><b>I Quit · 처음 화면</b>
+          <span class="how">흰 복사지 메모 · 회색 데스크 · 커피 머그와 스테이플러</span></div></a>
+        <a class="tile" data-tags="ex" href="https://jungrok5.github.io/motion-skills/paper-desk/demo/examples/resignation-letter/" target="_blank" rel="noopener">
+          <img src="samples/memo-fold.jpg" alt="사직서의 아래쪽을 접어 올린 장면" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">예제 · I Quit</span><b>봉투용 접기</b>
+          <span class="how">아래 3분의 1을 접어 올린 종이 · 뒷면에 비치는 잉크</span></div></a>
+        <a class="tile" data-tags="ex" href="https://jungrok5.github.io/motion-skills/paper-desk/demo/examples/resignation-letter/" target="_blank" rel="noopener">
+          <img src="samples/memo-coffee.jpg" alt="구겼다 편 사직서에 커피 얼룩 두 개" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">예제 · I Quit</span><b>커피 얼룩</b>
+          <span class="how">쏟은 커피의 번진 얼룩과 마른 테두리 · 구겼다 편 주름</span></div></a>
+        <a class="tile" data-tags="ex" href="https://jungrok5.github.io/motion-skills/paper-desk/demo/examples/resignation-letter/" target="_blank" rel="noopener">
+          <img src="samples/memo-crumple.jpg" alt="공처럼 구겨진 사직서" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">예제 · I Quit</span><b>구기기</b>
+          <span class="how">누르고 있는 동안 공처럼 뭉쳐진 종이와 그림자</span></div></a>
+        <a class="tile" data-tags="ex" href="https://jungrok5.github.io/motion-skills/paper-desk/demo/examples/resignation-letter/" target="_blank" rel="noopener">
+          <img src="samples/memo-burn.jpg" alt="사직서에 불이 붙어 구멍이 나고 커피 얼룩이 있는 장면" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">예제 · I Quit</span><b>불태우기</b>
+          <span class="how">노이즈를 따라 번지는 불길 · 빛나는 가장자리 · 그을음과 구멍</span></div></a>
+        <a class="tile" data-tags="ex" href="https://jungrok5.github.io/motion-skills/paper-desk/demo/examples/resignation-letter/" target="_blank" rel="noopener">
+          <img src="samples/memo-night.jpg" alt="램프를 끈 어두운 책상에서 불타는 사직서" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">예제 · I Quit</span><b>램프를 끈 밤</b>
+          <span class="how">불길만이 종이와 책상을 비추는 장면</span></div></a>
+        <a class="tile" data-tags="tpl" href="https://jungrok5.github.io/motion-skills/paper-desk/demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/letter-idle.jpg" alt="호두나무 책상 위 크림색 편지와 잉크병, 만년필, 촛불" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">템플릿 · 편지</span><b>시작 템플릿 · 편지</b>
+          <span class="how">크림색 레이드지 · 호두나무 책상 · 잉크병, 만년필, 촛불</span></div></a>
+        <a class="tile" data-tags="tpl" href="https://jungrok5.github.io/motion-skills/paper-desk/demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/letter-curl.jpg" alt="편지의 오른쪽 아래 모서리가 말려 올라간 장면" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">템플릿 · 편지</span><b>모서리 들어 올리기</b>
+          <span class="how">원통을 따라 말리는 모서리와 종이 뒷면</span></div></a>
+        <a class="tile" data-tags="tpl" href="https://jungrok5.github.io/motion-skills/paper-desk/demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/letter-airmail.jpg" alt="파란 항공 우편지로 바꾸고 아래를 접은 편지" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">템플릿 · 편지</span><b>항공 우편지 · 접기</b>
+          <span class="how">종이 선택을 바꾼 파란 항공 우편지와 접힌 아랫단</span></div></a>
+        <a class="tile" data-tags="tpl" href="https://jungrok5.github.io/motion-skills/paper-desk/demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/letter-night.jpg" alt="어두운 책상에서 촛불과 타는 편지" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">템플릿 · 편지</span><b>촛불과 불길</b>
+          <span class="how">램프를 끄고 촛불과 타는 종이만 남은 밤</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 예제와, 스킬의 출처인 원본 데모입니다.</p>
+  <div class="works">
+    <a class="work" href="https://jungrok5.github.io/motion-skills/paper-desk/demo/examples/resignation-letter/" target="_blank" rel="noopener"><b>I Quit · 사직서</b><span>주제를 받아 새로 만든 예제 · 라이브 데모</span><span class="url">paper-desk/demo/examples/resignation-letter/</span></a>
+    <a class="work" href="https://claude.ai/artifact/BKGBk584YpYtxBebEQsYSm" target="_blank" rel="noopener"><b>원본 · The Paper Desk</b><span>Felix Rieseberg의 HTML-in-Canvas 데모</span><span class="url">claude.ai/artifact/BKGBk584…</span></a>
+    <a class="work" href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk" target="_blank" rel="noopener"><b>HTML-in-Canvas 데모 페이지</b><span>15개 데모 모음</span><span class="url">claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk</span></a>
+    <a class="work" href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19" target="_blank" rel="noopener"><b>X 게시물</b><span>「All hail the weird web」</span><span class="url">x.com/felixrieseberg/status/2122036839238492493</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/paper-desk/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/paper-desk">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/paper-desk/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/paper-desk/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/paper-desk/references/LOOK.md">references/LOOK.md</a> <span>원본 데모 관찰 기록</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/paper-desk/references/ENGINE.md">references/ENGINE.md</a> <span>엔진 API · 설정 · 종이 · 책상 · 소품 추가</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/paper-desk/references/HIC.md">references/HIC.md</a> <span>HTML-in-Canvas 공통 노트</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/paper-desk/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 이미지는 이 스킬의 페이지를 렌더한 스틸입니다
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

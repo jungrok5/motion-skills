@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eleni &amp; Marcus · save the date (smash it)</title>
+<!-- shatter-page worked example (BRIEF.md): a Greek wedding save-the-date printed on a porcelain plate. Click the plate:
+     it slips, falls and smashes on the tiles; the RSVP still works on the pieces; "Glue it in gold" mends it with
+     kintsugi seams. -->
+<style>
+  :root { --wall: #efe8dc; --cobalt: #1f3f8f; --gold: #a97a22; --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif; --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  html, body { margin: 0; height: 100%; background: var(--wall); overflow: hidden; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  .chrome { position: fixed; z-index: 2; bottom: 16px; font: 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: rgba(60, 40, 30, .7); background: none; border: 0; padding: 8px 4px; transition: opacity .5s; }
+  button.chrome { cursor: pointer; } button.chrome:hover, button.chrome:focus-visible { color: #2a1a12; outline: none; text-decoration: underline; }
+  .chrome.gone { opacity: 0; pointer-events: none; }
+  #hint, #mend { left: 16px; } #hint { pointer-events: none; } #sound { right: 16px; }
+
+  /* the plate: a round page, glazed, with a cobalt band; text in the middle, inside the well */
+  #page { position: relative; width: 680px; height: 680px; box-sizing: border-box; border-radius: 50%; background: radial-gradient(circle, #fbf8f1 0 56%, #f3eee3 57% 62%, #f8f4ec 63%); color: var(--cobalt); font-family: var(--serif); text-align: center; padding: 150px 140px 0; }
+  #page * { box-sizing: border-box; }
+  .band { position: absolute; inset: 22px; border-radius: 50%; pointer-events: none;
+    background: repeating-conic-gradient(var(--cobalt) 0 3.2deg, transparent 3.2deg 5deg, var(--cobalt) 5deg 6deg, transparent 6deg 10deg);
+    -webkit-mask: radial-gradient(circle, transparent 0 286px, #000 287px 304px, transparent 305px); mask: radial-gradient(circle, transparent 0 286px, #000 287px 304px, transparent 305px); }
+  .ring { position: absolute; inset: 52px; border-radius: 50%; border: 2px solid var(--cobalt); pointer-events: none; }
+  .kicker { font: 600 13px/1 var(--mono); letter-spacing: .3em; text-transform: uppercase; margin: 0 0 10px; }
+  h1 { margin: 0; font-size: 58px; line-height: .95; font-weight: 400; font-style: italic; outline: none; caret-color: var(--gold); }
+  h1:focus { text-decoration: underline 2px rgba(31, 63, 143, .3); text-underline-offset: 8px; }
+  .when { margin: 10px 0 16px; font: 600 15px/1.3 var(--mono); letter-spacing: .18em; text-transform: uppercase; }
+  .rsvp { display: grid; gap: 7px; justify-items: start; margin: 0 auto; width: max-content; text-align: left; }
+  .rsvp label { display: inline-flex; gap: 12px; align-items: center; font-size: 21px; cursor: pointer; }
+  .rsvp input { appearance: none; margin: 0; width: 22px; height: 22px; border: 2px solid var(--cobalt); border-radius: 50%; display: grid; place-items: center; cursor: pointer; }
+  .rsvp input:checked { background: var(--cobalt); box-shadow: inset 0 0 0 3px #fbf8f1; }
+  .name { width: 300px; margin: 12px auto 0; font: italic 21px/1.2 var(--serif); color: var(--cobalt); background: transparent; border: 0; border-bottom: 1.5px solid var(--cobalt); padding: 2px 0 4px; text-align: center; outline: none; display: block; }
+  .name::placeholder { color: var(--cobalt); opacity: .45; }
+  .tape { width: 330px; margin: 12px auto 0; }
+  .tape input[type=range] { appearance: none; display: block; width: 100%; height: 26px; margin: 0; background: transparent; cursor: ew-resize; }
+  .tape input[type=range]::-webkit-slider-runnable-track { height: 8px; background: linear-gradient(var(--cobalt), var(--cobalt)) center / 100% 1.5px no-repeat; border-left: 1.5px solid var(--cobalt); border-right: 1.5px solid var(--cobalt); }
+  .tape input[type=range]::-webkit-slider-thumb { appearance: none; width: 18px; height: 18px; margin-top: -5px; border-radius: 50%; background: var(--cobalt); border: 3px solid #fbf8f1; box-shadow: 0 0 0 1.5px var(--cobalt); }
+  .tape input[type=range]:disabled { opacity: .5; }
+  .foot { display: flex; justify-content: space-between; align-items: center; font: 600 11px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; margin-top: 4px; }
+  .foot button { font: 600 11px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); background: transparent; border: 1.5px solid var(--gold); border-radius: 99px; padding: 7px 12px; cursor: pointer; }
+  .foot button:disabled { visibility: hidden; }
+
+  body.plain { overflow: auto; } body.plain .chrome { display: none; }
+  .hic-fallback #page { width: min(680px, 100vw); height: auto; aspect-ratio: auto; border-radius: 24px; margin: 20px auto; padding: 48px 20px; }
+  .hic-fallback .band, .hic-fallback .ring { display: none; }
+</style>
+</head>
+<body>
+<canvas id="stage" layoutsubtree content="drawable" aria-label="A porcelain plate printed with a wedding save-the-date">
+  <div id="page" drawable>
+    <svg data-shatter="seams"></svg>
+    <div class="band"></div><div class="ring"></div>
+    <p class="kicker">Save the date · <span data-shatter="state">Whole</span></p>
+    <h1 id="names" contenteditable="plaintext-only" spellcheck="false" data-hic-edit aria-label="The couple">Eleni &amp; Marcus</h1>
+    <p class="when">14 · VI · 2027 · Nafplio</p>
+    <div class="rsvp">
+      <label><input type="checkbox" id="r1" data-hic-click><span>We'll be there</span></label>
+      <label><input type="checkbox" id="r2"><span>Bringing a plus-one</span></label>
+      <label><input type="checkbox" id="r3"><span>Will break a plate</span></label>
+    </div>
+    <input class="name" id="guest" type="text" placeholder="Your name" autocomplete="off" spellcheck="false" aria-label="Your name">
+    <div class="tape">
+      <input type="range" id="tape" data-shatter="time" disabled aria-label="Time: drag back to put the pieces back">
+      <div class="foot"><span data-shatter="count">1 piece of luck</span><span data-shatter="clock">0.00 s</span><button type="button" data-shatter="mend" disabled>Glue it in gold</button></div>
+    </div>
+  </div>
+</canvas>
+<div id="hint" class="chrome" data-shatter="hint">Click the plate · break it for luck</div>
+<button id="mend" class="chrome gone" type="button" data-shatter="mend">Glue it in gold</button>
+<button id="sound" class="chrome" type="button" data-shatter="sound" aria-pressed="false" data-on="Sound on" data-off="Sound off">Sound off</button>
+<script src="../../lib/hic.js"></script>
+<script src="../../lib/shatter-sound.js"></script>
+<script src="../../lib/shatter.js"></script>
+<script>
+(function () {
+  'use strict';
+  var app = Shatter.mount({
+    canvas: document.getElementById('stage'),
+    page: document.getElementById('page'),
+    material: { base: 'porcelain', glaze: '#f6f2e8', edge: '#e6dccb', back: '#eee8db', physics: { breakSpeed: 3.0 } },
+    room: { wall: '#efe8dc', floor: '#b8664c', floorStyle: 'tiles', boardWidth: 0.3, skirting: '#e7dfcf', skirtingHeight: 0.09,
+      sun: '#ffe2b4', sunPower: 1.05, ambient: '#cfc4b8', gloss: 0.12, sunDir: [-0.55, 0.36, 0.75] },
+    pane: { shape: 'disc', width: 0.30, at: [0, 1.05, 0] },
+    impact: { kind: 'drop', tip: -1.1, strength: 0.8, slowmo: 0.2 },
+    mend: { style: 'gold', color: '#b8862a', light: '#f6d98a' },
+    text: {
+      pieces: function (n) { return n === 1 ? '1 piece of luck' : n + ' pieces of luck'; },
+      state: { whole: 'Whole', broken: 'Opa!', held: 'Held', rewinding: 'Gluing', mended: 'Golden' }
+    },
+    camera: { margin: 1.3 },
+    seed: 14
+  });
+  if (app.fallback) document.body.classList.add('plain');
+})();
+</script>
+</body>
+</html>
