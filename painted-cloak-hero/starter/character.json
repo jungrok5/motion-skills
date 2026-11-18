@@ -1,0 +1,27 @@
+{
+  "name": "rain-ferryman",
+  "title": "Rain ferryman",
+  "body": { "height": 1.72, "heads": 6.8, "build": 1.0, "skin": "#d6a786" },
+  "face": { "eyes": "#1d1410", "iris": "#3a2a20", "brows": "#2a1d16", "mouth": "#8e4a3c", "eyeSize": 0.55 },
+  "bodyPart": { "legs": { "color": "#3b3a36" } },
+  "style": { "paint": { "len": [0.06, 0.16], "width": [0.018, 0.036] } },
+  "parts": [
+    { "type": "hair_bob", "color": "#2a1d16", "length": 0.2, "bangs": 0.06, "volume": 1.1 },
+    { "type": "trousers", "color": "#46503f", "fit": 1.25 },
+    { "type": "top", "color": "#e6dfcb", "to": "hips", "sleeves": "short", "collar": "#e6dfcb" },
+    { "type": "boots", "color": "#4a3426", "height": 0.42, "sole": "#2b1f17" },
+    { "type": "cloak", "color": "#3d6b4f", "length": 0.3, "lag": 4, "clasp": "#b08d3c",
+      "paint": { "tones": ["#24432f", "#3d6b4f", "#6f9a6c"] } },
+    { "type": "hat", "style": "cone", "color": "#c9a35a", "band": "#5a3b22", "ties": "#5a3b22",
+      "paint": { "tones": ["#8f6c34", "#c9a35a", "#e8cf8a"] } }
+  ],
+  "motion": {
+    "fps": 24,
+    "clips": [
+      { "type": "idle", "dur": 4.0, "blinks": [1.2, 3.1] },
+      { "type": "walk", "dur": 1.0, "stride": 0.42 },
+      { "type": "turn", "dur": 2.2, "by": 180 }
+    ]
+  },
+  "review": { "title": "HERO / ANIMATION REVIEW", "bg": "#7d7a97", "floor": "#76738f", "grid": "#8c89a3", "orbit": [-25, 80] }
+}
