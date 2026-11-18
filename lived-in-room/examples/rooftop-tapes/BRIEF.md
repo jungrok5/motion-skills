@@ -62,7 +62,7 @@ Questions the skill asks, and the answers used (all "assumed", the person being 
 | outside | her own terrace: deck 150 below the room floor, parapet 1.1 m, a one-tonne tank | rooftop |
 | not here | no sprinkler, no guard rail, no sink: none is found in a single room opening onto its own roof | shell, window |
 
-## 3. Inventory — 407 things of 101 kinds, and the building's 11 parts
+## 3. Inventory — 407 things and the building's 11 parts, 102 kinds in all
 `inventory.py` is the list; `python3 ../../scripts/sheet.py --inventory` prints it with what was built. In short:
 
 | zone | things | n |
@@ -82,7 +82,8 @@ Questions the skill asks, and the answers used (all "assumed", the person being 
 | leads | 18: two strips to their sockets; lamp, monitor, PC, heater, night lamp, charger, fridge, cooker, circulator, deck, air conditioner, electric mat; recorder → mixer, microphone → mixer, mixer → PC, headphones → PC | 18 |
 
 The headphones are counted twice because they are in two places: on the desk at 02:14, on the peg at 16:40
-(`r.away` hides one of the two at each hour). The fingerprint of the model is the same at both hours.
+(`r.away` hides one of the two at each hour; the work-light views show both). The fingerprint of the model is the
+same at both hours.
 
 By support: place 296 · stick 47 · fix 50 (11 of them the building) · hang 24 · lean 1 · suspend 0.
 Every one is modelled in code (`method='model'`) or is a drawn picture on a sheet (`'image'`); nothing was generated or downloaded.

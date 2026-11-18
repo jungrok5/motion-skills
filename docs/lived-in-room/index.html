@@ -47,19 +47,144 @@ python3 ../lived-in-room/scripts/render.py --all --q preview
 python3 ../lived-in-room/scripts/finish.py
 python3 ../lived-in-room/scripts/encode.py
 python3 ../lived-in-room/scripts/new_room.py ~/my-topic --title "방의 이름"</code></pre>
-    <p class="mute">요구 사항: Python 3.13 + <code>bpy</code> 5.x(Blender의 파이썬 모듈), numpy, Pillow, ffmpeg. GPU가 없어도 됩니다(__TIMING__). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/SKILL.md">SKILL.md</a>에 있습니다.</p>
+    <p class="mute">요구 사항: Python 3.13 + <code>bpy</code> 5.x(Blender의 파이썬 모듈), numpy, Pillow, ffmpeg. GPU가 없어도 됩니다(CPU 4코어에서 예제 방(물건 407개)을 4초에 짓고 6초에 검사하며, 960 × 540 미리보기 한 장에 30–40초, 640 × 360 영상 프레임 한 장에 13–18초). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/SKILL.md">SKILL.md</a>에 있습니다.</p>
   </div>
   <div class="demo" style="--ar:16/9;--h-phone:calc((100vw - 34px)*.5625);--demo-bg:#000">
     <iframe data-src="demo/rooftop-tapes/" title="lived-in-room 예제 옥탑 녹음실 프레임 시퀀스 재생" allow="fullscreen" allowfullscreen></iframe>
     <noscript><a href="demo/rooftop-tapes/">데모 열기 (examples/rooftop-tapes)</a></noscript>
-    <div class="bar"><span data-cap-target>__DEMO_CAP_A__</span>
+    <div class="bar"><span data-cap-target>예제 <code>examples/rooftop-tapes</code> · 「옥탑 녹음실」 밤 02:14 16초 + 오후 16:40 12초 · 640 × 360 · 12fps 프레임 시퀀스</span>
       <span class="btns" role="group" aria-label="데모 예제">
-        <button class="btn" type="button" data-src="demo/rooftop-tapes/" data-cap="__DEMO_CAP_A_ESC__" aria-pressed="true">옥탑 녹음실</button>
-        <button class="btn" type="button" data-src="demo/starter/" data-cap="__DEMO_CAP_B_ESC__" aria-pressed="false">STARTER</button>
+        <button class="btn" type="button" data-src="demo/rooftop-tapes/" data-cap="예제 &lt;code&gt;examples/rooftop-tapes&lt;/code&gt; · 「옥탑 녹음실」 밤 02:14 16초 + 오후 16:40 12초 · 640 × 360 · 12fps 프레임 시퀀스" aria-pressed="true">옥탑 녹음실</button>
+        <button class="btn" type="button" data-src="demo/starter/" data-cap="시작 프로젝트 &lt;code&gt;starter&lt;/code&gt; · 「창가 책상」 밤 6초 + 새벽 5초" aria-pressed="false">STARTER</button>
       </span></div>
   </div>
 </div></section>
-__SAMPLES__
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원문에 없는 주제(서울의 옥탑방과 카세트테이프 191개)로 브리프부터 새로 설계한 예제의 두 시각, 검토에 쓴 작업등 그림, 바로 돌려 볼 수 있는 시작 프로젝트입니다. 영상은 CPU 4코어로 640 × 360 크기에 한 프레임 걸러 렌더해 12fps 프레임 시퀀스로 올렸고(MP4는 레포에 넣지 않습니다), 영상 장면의 카드를 누르면 그 순간이 멈춘 채 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"night":"밤 02:14","afternoon":"오후 16:40","method":"방법","starter":"STARTER"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「옥탑 녹음실」 밤 02:14 <small>주제: 동네 소리를 카세트테이프에 녹음하는 사람의 서울 옥탑방 · 16초</small></h3>
+      <p>원문에 없는 주제로 브리프부터 새로 설계했습니다. 옥상에 잠깐 나갔다가 휴대폰을 든 채 들어와 테이프 벽까지 걸어가 라이트를 켭니다. 움직이는 것은 31가지: 초침, 서큘레이터와 빨래, 포스트잇과 커튼, 유리의 물방울, 모니터, 불빛의 떨림, 먼 탑의 등</p>
+      <div class="grid">
+        <a class="tile" data-tags="night" href="demo/rooftop-tapes/?t=0.2" target="_blank" rel="noopener">
+          <img src="samples/rt-n-door.jpg" alt="어두운 옥탑방을 문간에서 본 장면: 왼쪽 벽의 테이프 선반과 장식장, 창 아래 책상의 스탠드와 파형이 뜬 모니터, 책상 밑을 주황빛으로 물들인 히터, 머리맡의 둥근 등, 창밖의 드문드문한 불빛" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">밤 02:14 · 0초</span><b>옥상에서 들어서며</b><span class="how">불을 다섯 군데만 남긴 방: 스탠드 · 모니터 · 히터 · 머리맡 등 · 창. 나머지는 어둠에 둠</span></div></a>
+        <a class="tile" data-tags="night" href="demo/rooftop-tapes/?t=5" target="_blank" rel="noopener">
+          <img src="samples/rt-n-desk.jpg" alt="책상과 창을 가까이 본 밤 장면: 녹음기와 믹서, 마이크, 파형이 뜬 모니터, 히터 빛이 든 책상 밑, 창밖 언덕 위 탑의 붉은 등과 드문드문한 불빛" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">5초</span><b>책상과 창</b><span class="how">창밖 도시는 40 m 앞의 그림 한 장, 옥상 난간과 물탱크는 실제 모델. 두 탑 꼭대기의 붉은 등은 분당 30회 · 46회로 따로 깜빡임</span></div></a>
+        <a class="tile" data-tags="night" href="demo/rooftop-tapes/?t=8.5" target="_blank" rel="noopener">
+          <img src="samples/rt-n-turn.jpg" alt="서쪽 벽으로 고개를 돌리는 밤 장면: 어둠 속의 테이프 선반과 장식장 위 데크, 벽의 코르크판 지도와 시계, 오른쪽에 책상 스탠드" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">8.5초</span><b>서쪽 벽으로</b><span class="how">가장 빠른 회전이 초당 8.2°. 한 화면 폭을 7초에 걸쳐 돌리라는 규칙에서 나온 상한 12° 안쪽</span></div></a>
+        <a class="tile" data-tags="night" href="demo/rooftop-tapes/?t=11" target="_blank" rel="noopener">
+          <img src="samples/rt-n-torch.jpg" alt="휴대폰 라이트가 켜진 장면: 흰 빛이 다섯 줄의 테이프 선반과 코르크판 지도, 장식장 위의 라디오를 비추고 가장자리는 어둠으로 떨어짐" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">11초</span><b>휴대폰 라이트</b><span class="how">9.2초에 켜지는 넓고 부드러운 빛. 화면과 함께 움직이는 빛으로 카메라를 든 사람이 드러남</span></div></a>
+        <a class="tile" data-tags="night" href="demo/rooftop-tapes/?t=15" target="_blank" rel="noopener">
+          <img src="samples/rt-n-row.jpg" alt="테이프 선반을 가까이 본 장면: 손글씨 책등이 다섯 줄로 꽂혀 있고 맨 윗줄은 절반만 차 있으며 그 끝에 눕힌 테이프 두 개와 습도계" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">15초</span><b>테이프 191개</b><span class="how">케이스 109 × 69.6 × 16.8 mm, 손글씨 책등은 위에서 아래로. 색은 상자 단위로, 연도는 줄을 따라 올라감</span></div></a>
+        <a class="tile" data-tags="night" href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/examples/rooftop-tapes/layout.py" target="_blank" rel="noopener">
+          <img src="samples/rt-n-deskclose.jpg" alt="책상 위를 밤 조명으로 본 장면: 스탠드 아래 쌓인 테이프 세 개와 녹음기, 믹서의 초록 LED, 마이크, 파형이 뜬 모니터, 키보드 옆에 내려놓은 헤드폰, 주황빛이 든 책상 밑" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">같은 방, 다른 자리</span><b>듣다가 일어선 자리</b><span class="how">헤드폰은 컴퓨터에 꽂힌 채 키보드 옆에, 녹음기에 든 테이프의 빈 케이스는 열린 채, 맨 위 테이프에는 쓰다 만 라벨</span></div></a>
+        <a class="tile" data-tags="night" href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/examples/rooftop-tapes/BRIEF.md" target="_blank" rel="noopener">
+          <img src="samples/rt-n-pillow.jpg" alt="침대 머리맡을 밤 조명으로 본 장면: 낮은 상 위의 둥근 등과 두루마리 휴지, 양은 냄비, 베개와 말아 젖힌 줄무늬 이불, 왼쪽에서 책상 밑을 향해 주황빛을 내는 히터" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">같은 방, 다른 자리</span><b>머리맡</b><span class="how">저녁을 먹은 냄비와 그 앞에 내려놓은 젓가락, 읽던 책. 히터의 빛은 테이프 벽이 아니라 책상 밑에서 끝남</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>같은 방, 오후 16:40 <small>12초</small></h3>
+      <p>같은 모델에서 빛과 걷는 길만 바꿨습니다. 퇴근해 들어서면 서북서로 난 창으로 든 낮은 해가 침대 쪽 벽에 놓여 있습니다. 첫 판은 새벽 해가 테이프 벽에 드는 장면이었는데, 검토에서 그 시각 · 그 방향으로는 불가능하고 방의 규칙에도 어긋난다는 지적을 받아 건물의 방향과 시각을 다시 정했습니다</p>
+      <div class="grid">
+        <a class="tile" data-tags="afternoon" href="demo/rooftop-tapes/?t=16.5" target="_blank" rel="noopener">
+          <img src="samples/rt-a-door.jpg" alt="같은 방의 늦은 오후를 문간에서 본 장면: 불은 모두 꺼져 있고 아래쪽에 단열 필름을 붙인 창이 뿌옇게 빛나며 오른쪽 벽 에어컨 아래에 세로로 긴 햇빛이 놓임. 왼쪽 벽의 테이프 선반 옆 고리에 헤드폰이 걸려 있음" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">오후 16:40 · 0.5초</span><b>같은 방, 다른 시각</b><span class="how">모델은 그대로이고 빛과 걷는 길만 다름. 퇴근해 들어서는 중이라 운동화 · 가방 · 녹음기는 방에 없음</span></div></a>
+        <a class="tile" data-tags="afternoon" href="demo/rooftop-tapes/?t=22" target="_blank" rel="noopener">
+          <img src="samples/rt-a-window.jpg" alt="오후의 책상과 창: 꺼진 검은 모니터, 아래쪽 단열 필름이 뿌옇게 빛나는 창과 그 너머 안개 낀 언덕과 탑, 걷어 둔 커튼, 오른쪽 벽의 햇빛과 에어컨" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">6초</span><b>서북서로 난 창</b><span class="how">11월 17일 16:40 서울의 해는 방위 240°, 고도 6.3°. 창의 축에서 왼쪽으로 60°</span></div></a>
+        <a class="tile" data-tags="afternoon" href="demo/rooftop-tapes/?t=27.8" target="_blank" rel="noopener">
+          <img src="samples/rt-a-wall.jpg" alt="오후의 동쪽 벽: 창 모양의 햇빛 두 줄이 벽에 놓이고 그 아래 낮은 상과 히터, 베개와 줄무늬 이불, 왼쪽에 책상 끝과 걷어 둔 커튼, 위쪽에 포스터" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">11.8초</span><b>침대 쪽 벽의 해</b><span class="how">이 창으로는 해가 동쪽 벽에만 닿음. 테이프를 서쪽 벽에 둔 이유</span></div></a>
+        <a class="tile" data-tags="afternoon" href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/examples/rooftop-tapes/RESEARCH.md" target="_blank" rel="noopener">
+          <img src="samples/rt-a-desk.jpg" alt="오후의 책상을 가까이 본 장면: 꺼진 검은 모니터와 스탠드, 믹서와 키보드, 머그, 아래쪽 단열 필름이 뿌옇게 빛나는 창과 걷어 둔 커튼, 왼쪽 벽의 포스트잇" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">같은 방, 다른 자리</span><b>낮의 책상</b><span class="how">겨울이라 창 아래 42%에 붙인 단열 필름이 뒤에서 빛을 받아 뿌옇게 빛남. 밤에 책상에 있던 헤드폰은 벽의 고리로 돌아가 있음</span></div></a>
+        <a class="tile" data-tags="afternoon" href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/examples/rooftop-tapes/REVIEW.md" target="_blank" rel="noopener">
+          <img src="samples/rt-a-tapes.jpg" alt="오후의 서쪽 벽: 햇빛이 닿지 않는 그늘 속의 테이프 선반과 장식장 위 데크와 라디오, 고리에 걸린 헤드폰, 코르크판 지도, 왼쪽에 옷걸이의 옷" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">같은 방, 다른 자리</span><b>해가 닿지 않는 벽</b><span class="how">벽에서 띄운 선반, 맨 윗줄의 습도계, 양 끝 바닥의 제습제. 낮에는 헤드폰이 고리에 걸려 있음</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>방법 <small>작업등 · 받침 · 검토</small></h3>
+      <p>어두운 장면을 보기 전에 방 전체를 자로 재고, 밝은 작업등 아래에서 다른 눈으로 봅니다</p>
+      <div class="grid">
+        <a class="tile" data-tags="method" href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/examples/rooftop-tapes/layout.py" target="_blank" rel="noopener">
+          <img src="samples/rt-plan.jpg" alt="천장을 걷어 내고 위에서 본 방 전체: 위쪽 벽의 책상, 왼쪽의 테이프 장식장과 옷걸이, 오른쪽의 침대, 아래쪽 문 옆의 빨래 건조대와 냉장고" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">작업등 · 평면</span><b>방 전체</b><span class="how">물건 407개. 뼈대 → 가구 → 그 위의 물건 → 벽 → 전선 순서로 들임</span></div></a>
+        <a class="tile" data-tags="method" href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/references/METHOD.md" target="_blank" rel="noopener">
+          <img src="samples/rt-supports.jpg" alt="입구에서 본 방을 받침 방식별 색으로 칠한 그림: 놓인 것은 파랑, 걸린 것은 주황, 붙인 것은 분홍, 고정한 것은 회색" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">받침 방식별 색</span><b>무엇이 무엇을 받치는가</b><span class="how">놓기 296 · 붙이기 47 · 고정 50 · 걸기 24 · 기대기 1. 방식 없이는 방에 들어올 수 없음</span></div></a>
+        <a class="tile" data-tags="method" href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/references/REVIEW.md" target="_blank" rel="noopener">
+          <img src="samples/rt-work-entry.jpg" alt="고르게 밝힌 작업등 아래 입구에서 본 방: 옷걸이와 서랍장, 테이프 선반과 장식장, 책상과 커튼 달린 창, 히터, 낮은 상, 벽걸이 에어컨" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">작업등 · 입구</span><b>검토는 밝은 빛에서</b><span class="how">어두운 장면에서는 떠 있는 물건이 눈에 안 띔. 검토용 렌더는 같은 방을 고르게 밝힘(두 시각의 물건이 함께 보여 헤드폰이 두 곳에 있음)</span></div></a>
+        <a class="tile" data-tags="method" href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/examples/rooftop-tapes/props.py" target="_blank" rel="noopener">
+          <img src="samples/rt-work-tapes.jpg" alt="작업등 아래의 서쪽 벽: 다섯 줄의 테이프 선반, 장식장 위의 카세트 데크와 라디오, 옛 장난감들, 고리에 걸린 헤드폰과 코르크판 지도" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">작업등 · 서쪽 벽</span><b>테이프 벽</b><span class="how">할아버지의 라디오, 1999년부터 가진 미니카와 팽이, 건전지가 죽은 알 모양 게임기</span></div></a>
+        <a class="tile" data-tags="method" href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/examples/rooftop-tapes/skeleton.py" target="_blank" rel="noopener">
+          <img src="samples/rt-work-door.jpg" alt="작업등 아래의 문 쪽: 바깥으로 열린 철문과 문턱, 신발 매트와 슬리퍼, 달력과 거울, 스위치와 보일러 조절기, 빨래 건조대와 생수병, 세제가 든 대야" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">작업등 · 문</span><b>문간</b><span class="how">문 개구부 900 × 2,100(문턱 100 mm 포함), 스위치 높이 1,200, 그 옆의 보일러 조절기</span></div></a>
+        <a class="tile" data-tags="method" href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/examples/rooftop-tapes/REVIEW.md" target="_blank" rel="noopener">
+          <img src="samples/rt-work-laundry.jpg" alt="작업등 아래의 남서쪽: 냉장고 위의 밥솥과 주전자, 문 옆 벽의 빨래 건조대와 그 아래 생수병, 서큘레이터, 옷 아홉 벌이 걸린 옷걸이와 그 밑의 여행 가방, 플라스틱 서랍장" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">작업등 · 빨래와 옷</span><b>검토가 옮긴 빨래</b><span class="how">처음에는 테이프 옆에 있던 건조대. 다른 에이전트의 검토 뒤 문 쪽 벽으로 옮기고 바람을 문 쪽으로 돌림. 두 번째 검토에서 옷과 서랍장, 여행 가방이 늘어남</span></div></a>
+        <a class="tile" data-tags="method" href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/scripts/sheet.py" target="_blank" rel="noopener">
+          <img src="samples/rt-walk.jpg" alt="두 워크스루의 콘택트 시트: 위 두 줄은 밤, 아래 두 줄은 오후, 장면마다 시간과 밝기 수치" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">sheet.py --walk</span><b>콘택트 시트</b><span class="how">두 판의 처음부터 끝까지를 한 장에서 보고 밝기 중앙값을 읽음</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>「창가 책상」 시작 프로젝트 <small>밤 6초 + 새벽 5초</small></h3>
+      <p>복사해서 바로 도는 가장 작은 방입니다. 새 주제는 여기서 시작해 건물 · 사람 · 물건 · 빛을 모두 바꿉니다</p>
+      <div class="grid">
+        <a class="tile" data-tags="starter" href="demo/starter/?t=4.8" target="_blank" rel="noopener">
+          <img src="samples/st-night.jpg" alt="시작 프로젝트의 밤: 창 아래 책상의 스탠드와 켜진 노트북, 종이, 머그, 창밖의 불 켜진 건물들" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">밤 01:40</span><b>창가 책상</b><span class="how">복사해서 바로 렌더되는 가장 작은 방. 물건 73개</span></div></a>
+        <a class="tile" data-tags="starter" href="demo/starter/?t=9" target="_blank" rel="noopener">
+          <img src="samples/st-dawn.jpg" alt="시작 프로젝트의 새벽: 불 꺼진 방의 창으로 흐린 빛이 들어오고 책상 위의 노트북과 스탠드, 창턱의 화분이 보임" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">새벽 06:50</span><b>같은 방의 새벽</b><span class="how">같은 모델, 빛과 걷는 길만 다름</span></div></a>
+        <a class="tile" data-tags="starter" href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/starter" target="_blank" rel="noopener">
+          <img src="samples/st-plan.jpg" alt="시작 프로젝트를 위에서 본 평면: 위쪽 벽의 책상, 왼쪽 벽의 책장, 스툴과 방석" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">작업등 · 평면</span><b>시작 방</b><span class="how">새 주제는 여기서 시작해 전부 바꿈</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬을 만든 출처와, 이 레포에서 새 주제로 만든 예제입니다.</p>
+  <div class="works">
+    <a class="work" href="https://note.com/its_kobataka/n/n67bb2f8c9ce4?utm_source=x&amp;utm_medium=social&amp;utm_campaign=202611_vibe_modeling_vol06&amp;utm_content=reply_discovery_01" target="_blank" rel="noopener"><b>원본 · KOBATAKA의 note 글</b><span>「Vibe Modeling vol.06｜AI×Blender로 3D 장면을 진짜처럼 만드는 65가지 궁리」. AI에게 Blender를 조작하게 해 물체 약 500개의 서재를 만들고 밤 36초 · 아침 안개 25초로 찍은 과정</span><span class="url">note.com/its_kobataka/n/n67bb2f8c9ce4</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/references/SOURCE.md"><b>원문의 한국어 요약 정리</b><span>장별 요점과 65가지 방법, 그 하나하나가 이 스킬의 어디에 들어 있는지와 넣지 않은 것</span><span class="url">lived-in-room/references/SOURCE.md</span></a>
+    <a class="work" href="demo/rooftop-tapes/" target="_blank" rel="noopener"><b>「옥탑 녹음실」</b><span>서울의 옥탑방과 테이프 191개 · 물건 407개 · 밤 02:14 16초 + 오후 16:40 12초 · 프레임 시퀀스 페이지</span><span class="url">lived-in-room/examples/rooftop-tapes</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/examples/rooftop-tapes/REVIEW.md"><b>검토 기록</b><span>물리 검사가 잡은 것, 다른 에이전트의 검토 두 라운드(24건 · 17건)에서 받아들인 것과 받아들이지 않은 것, 스틸 채점표, 회고</span><span class="url">examples/rooftop-tapes/REVIEW.md</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/lived-in-room/examples/rooftop-tapes"><b>원본 레포 · motion-skills</b><span>이 레포에서 만듦</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/lived-in-room">폴더</a> <span>lib · scripts · templates · starter · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/references/SOURCE.md">references/SOURCE.md</a> <span>원문 요약 정리(한국어)와 65가지 방법의 대응</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 되묻는 질문, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/references/METHOD.md">references/METHOD.md</a> <span>뼈대 먼저 · 조사한 숫자 · 만드는 방법 · 받침 여섯 가지와 물리 검사 · 생활감</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/references/FILM.md">references/FILM.md</a> <span>창밖 그림 · 작은 움직임 · 빛 · 손에 든 카메라 · 두 시간대</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/references/REVIEW.md">references/REVIEW.md</a> <span>라운드 · 다른 에이전트의 검토 · 회고</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/references/KIT.md">references/KIT.md</a> <span>lr 라이브러리: 방 · 받침 · 모델링 · 재질 · 그림 · 공통 소품</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/examples/rooftop-tapes/BRIEF.md">examples/rooftop-tapes/BRIEF.md</a> <span>예제의 브리프</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/lived-in-room/examples/rooftop-tapes/RESEARCH.md">examples/rooftop-tapes/RESEARCH.md</a> <span>예제의 숫자와 출처</span></li>
+  </ul>
+</div></section>
 </main>
 
 <footer><div class="wrap">

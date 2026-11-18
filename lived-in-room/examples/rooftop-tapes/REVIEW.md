@@ -67,7 +67,7 @@ bookkeeping of who is here now pass.
 | A16 | The condensation reads as specks | **declined** — low priority by the reviewer's own mark; it is on screen for under two seconds at a size of a few pixels |
 | B1 | The recorder's bag hangs over the wet washing | **taken** — the tote hangs on the door end of the clothes rail; the peg rail over the rack is gone |
 | B2 | A tape is playing and nobody could be listening: headphones on a peg 1.5 m away, no pen out, no half-written label, no open case | **taken** — at 02:14 the headphones lie on the desk with a lead to the computer and the peg is bare; at 16:40 they are back on the peg (`r.away`, both ways). An empty case lies open, a pen is out of the cup, a half-written strip of masking tape is stuck on the top tape. **Declined:** a log book (the sound map on the wall is her log) |
-| B3 | The bubble wrap is a grey band in the sunlit hour | **taken** — `mat.film` now lets light through and scatters it (a library fix): the wrap is the brightest part of the window |
+| B3 | The bubble wrap is a grey band in the sunlit hour | **taken** — `mat.film` now lets light through and scatters it (a library fix): the wrap glows milky instead of reading as a grey board. It is still a little darker than the sky above it |
 | B4 | A 2.1 m leaf on a 0.1 m kerb leaves no wall over the door | **declined: misread** — 2.1 m is the opening measured from the room's floor and includes the kerb; the leaf is 1.95 m and 150 mm of wall shows over the frame. The brief now states the three numbers |
 | B5 | Too few possessions for seven years | **taken in part** — a plastic three-drawer chest, a suitcase on its long side under the hanging clothes, nine hangers, chopsticks by the pan, a basin with detergent by the door. **Declined:** rice sack, ramen multipack, kimchi tub, broom (none of them would be on camera; `sheet.py --screen`) |
 | B6 | The clothes are five flat cards | **taken in part** — sleeves, uneven spacing, each turned a few degrees (`kit.garment(sleeves=)`, new). **Declined:** quilting on the coat (0.4 s on screen at the frame's edge) |
@@ -84,6 +84,28 @@ bookkeeping of who is here now pass.
 - **Done when:** `audit.py` clean and `check.py` passing with 407 things. Both hold.
 - **Why the rounds stop here:** what round 2 left undone is detail the walk does not find. A third review would be
   the next step for a longer film; it was not run.
+
+## The stills, scored
+
+Scored on the final frames (`out/frames`, 640 × 360) and the views under each hour's light, with the rubric in the
+skill's `references/BRIEF.md`.
+
+| | score | why |
+|---|---|---|
+| building | 4 | a low rooftop room: PVC sliding window with winter film, steel door over a kerb, split unit and its sleeve, sheet floor, one ceiling panel. The wallpaper has no seams and the floor no welds |
+| scale | 5 | two reviews found nothing wrong with a size; every size has a source or is marked an estimate |
+| held | 5 | the audit passes on 407 things and proves it can see; nothing in the frames reads as hovering or cut |
+| use | 4 | two rounds of findings about use were taken; the drawer chest still stands in front of one end of the clothes rail |
+| lived-in | 4 | 76 % of the kinds of placed things sit off square; a label half written, a case left open, supper not washed up. The rows of tapes are still too even |
+| person | 4 | the tapes, the map with a pin per tape, the recorder and the things kept since childhood say who; her clothes say nothing |
+| light | 4 | night: five places picked out and the lamps still warm, though the first nine seconds are very dark (median 13). Afternoon: the patch is on the right wall at the right height |
+| motion | 3 | the screen, the meters, the mixer's LEDs, the beacons and the second hand carry the first half of each walk. In the two closing shots — the tape wall, the sunlit wall — only the hand-held frame and the torch move |
+| walk | 4 | steps, slow turns under the cap, one hunt per walk. At 12 frames a second the tremor is coarser than it was designed |
+| two hours | 5 | plainly the same room: the light, the clock, the window, and what she has with her all differ |
+
+**Under 4: motion.** It goes back to `film.py` → `motion()`: something small should move in each closing shot (a
+tape's leader, the hygrometer's needle; the curtain's shadow across the sun patch). That means rendering both walks
+again and was not done for this example.
 
 ## Retro — what the next room should know
 

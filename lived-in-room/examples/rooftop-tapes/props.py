@@ -601,22 +601,6 @@ def wall_box(w, h, t, image, name, glow=0.0):
     return p.build()
 
 
-def coat_rail(w=0.5, pegs=3, name='coat rail'):
-    """A board with pegs for r.fix(wall=…). lr_pegs = local points where things hang (the peg tips' roots)."""
-    wood_ = mat.wood('#8a6238', '#5f4022', rough=0.5)
-    steel = mat.metal('#55585e', rough=0.4)
-    p = Part(name)
-    p.box((w, 0.018, 0.07), at=(0, -0.009, -0.035), mat=wood_, bevel=0.003)
-    pts = []
-    for i in range(pegs):
-        x = -w / 2 + w * (i + 0.5) / pegs
-        p.tube([(x, -0.016, 0.0), (x, -0.05, 0.004), (x, -0.058, 0.02)], 0.004, mat=steel, seg=8)
-        pts += [x, -0.045, 0.006]
-    ob = p.build()
-    ob['lr_pegs'] = pts
-    return ob
-
-
 def tote(color='#c9b99a', name='tote bag', image=None):
     """A cotton bag hanging by its handles: back on y = 0, origin at the top of the handle loop."""
     cloth = mat.fabric(color, weave=1.4)
