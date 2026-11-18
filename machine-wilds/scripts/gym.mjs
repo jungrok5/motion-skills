@@ -19,13 +19,13 @@ const opt = (k, d) => { const i = args.indexOf('--' + k); return i > -1 && args[
 const dir = resolve(args[0] && !args[0].startsWith('--') ? args[0] : '.');
 
 // the limits a machine must keep (references/MACHINES.md says why each number is what it is)
-export const LIMITS = { clamp: 0.002, slip: 0.004, gap: 0.03, sole: 0.5, tiltOver: 4, bendFlip: 0, foldMax: 165, bodyAcc: 1.6, bodyAccLight: 2.8, kneeLow: 0.05, swingLow: -0.02, overlapMin: 0.15, belly: 0.5, loop: 0.02, determinism: 1e-9, fixShare: 0.02, idleBreath: 0.02, idleSlip: 0.004, anticipation: 0.04, recovery: 0.03 };
+export const LIMITS = { clamp: 0.002, slip: 0.004, gap: 0.03, sole: 0.5, tiltOver: 4, bendFlip: 0, foldMax: 165, bodyAcc: 1.6, bodyAccLight: 2.8, kneeLow: 0.05, swingLow: -0.02, overlapMin: 0.15, belly: 0.5, loop: 0.02, determinism: 1e-9, flyClear: 26, bankMax: 58, flyPitch: 24, flyLoad: 1.9, wing: 62, fixShare: 0.02, idleBreath: 0.02, idleSlip: 0.004, anticipation: 0.04, recovery: 0.03 };
 
 export function load(realmDir, { course = false } = {}) {
   const noop = () => new Proxy(function () {}, { get: (t, k) => (k === Symbol.toPrimitive ? () => 0 : noop()), apply: () => noop(), construct: () => noop() });
   // the sources run as one function with everything they name passed in (a vm context would look every `Math` up the slow way)
   const env = { location: { search: '' }, document: { querySelector: () => null, getElementById: () => null }, window: {}, THREE: noop(), REALM_ASSETS: null, REALM_META: {} };
-  const lib = ['00_core.js', '35_terrain.js', '48_mech.js', '48_mech_gait.js'].map((f) => readFileSync(join(skill, 'lib', f), 'utf8'));
+  const lib = ['00_core.js', '35_terrain.js', '48_mech.js', '48_mech_fly.js', '48_mech_gait.js'].map((f) => readFileSync(join(skill, 'lib', f), 'utf8'));
   const srcDir = join(realmDir, 'src'), src = existsSync(srcDir) ? readdirSync(srcDir).filter((f) => f.endsWith('.js')).sort().map((f) => `\n// ── src/${f} ──\n` + readFileSync(join(srcDir, f), 'utf8')) : [];
   // everything the numbers do not need is a stand-in that swallows any call (water, plants, buildings, the renderer)
   const stubs = `
@@ -44,13 +44,21 @@ export function load(realmDir, { course = false } = {}) {
       const way = []; for (let x = -140; x <= 140; x += 28) way.push([x, 0]); way.push([165, 35], [150, 80]); for (let x = 120; x >= -120; x -= 40) way.push([x, 110]); way.push([-150, 80], [-165, 35]);
       M.route('course', way, { width: 0 }); const mv = Object.keys(M.kinds[kind].spec.moves || {})[0];
       return M.spawn(kind, { route: 'course', name: kind, halts: [{ at: 0.86, hold: 10, move: mv }] }); };`;
-  const code = [lib[0], stubs, lib[1], after, lib[2], lib[3], ...src, COURSE, '\nreturn LR;'].join('\n');
+  const code = [lib[0], stubs, lib[1], after, lib[2], lib[3], lib[4], ...src, COURSE, '\nreturn LR;'].join('\n');
   return new Function(...Object.keys(env), code)(...Object.values(env));
 
 }
 
 export function judge(A, lim = LIMITS) {
   const bad = [], f = (ok, msg) => { if (!ok) bad.push(msg); };
+  if (A.fly) {   // a flyer's rules
+    f(A.clear >= lim.flyClear, `flight: it comes within ${A.clear.toFixed(1)} m of the land (${lim.flyClear} m keeps it over the trees: raise the line there)`);
+    f(A.bankMax <= lim.bankMax, `flight: banked ${A.bankMax.toFixed(0)}° (a turn too tight for its speed: widen it or slow it)`); f(A.bankShare <= 0.08, `flight: in ${(A.bankShare * 100).toFixed(0)} % of its turns it is not banked into the turn`);
+    f(A.pitchMax <= lim.flyPitch, `flight: pitched ${A.pitchMax.toFixed(0)}° (the line climbs or falls too steeply)`); f(A.load <= lim.flyLoad, `flight: a turn of ${A.load.toFixed(1)} g`);
+    f(A.wing[0] >= -lim.wing && A.wing[1] <= lim.wing && A.wing[2] >= -lim.wing && A.wing[3] <= lim.wing, `wings: a hinge swings ${Math.min(A.wing[0], A.wing[2]).toFixed(0)}…${Math.max(A.wing[1], A.wing[3]).toFixed(0)}° (past ±${lim.wing}°)`);
+    f(A.wing[1] - A.wing[0] >= 20, `wings: they hardly move (${(A.wing[1] - A.wing[0]).toFixed(0)}° at the shoulder)`); f(A.beatShare >= 0.15 && A.glide + A.beatShare < 1.01, `wings: it beats ${(A.beatShare * 100).toFixed(0)} % of the time (it must both beat and rest)`);
+    f(A.bob >= 0.03, `weight: the body does not ride the beat (${(A.bob * 1000).toFixed(0)} mm): nothing carries it`); f(A.loop <= 0.05, `loop: one lap later it is ${A.loop.toFixed(2)} m off`); f(A.determinism <= lim.determinism, 'determinism: the same instant gave two poses');
+    return bad; }
   f(A.clamp <= lim.clamp, `reach: a leg was asked for ${(A.clamp * 1000).toFixed(0)} mm more than it has`);
   f(A.slip <= lim.slip, `feet: a planted foot moved ${(A.slip * 1000).toFixed(1)} mm`);
   f(A.gap <= lim.gap, `feet: a planted sole is ${(A.gap * 1000).toFixed(0)} mm off the ground`);
@@ -70,7 +78,7 @@ export function judge(A, lim = LIMITS) {
   for (const k in A.moves) { const m = A.moves[k]; f(m.anticipation >= lim.anticipation, `move ${k}: no gather before it (${(m.anticipation * 100).toFixed(0)} % of ${m.main})`); f(m.recovery >= lim.recovery, `move ${k}: no overshoot on the way back (${(m.recovery * 100).toFixed(0)} %)`); }
   return bad;
 }
-const line = (A) => `${A.unit.padEnd(12)} lap ${A.lap.toFixed(0)} s · ${A.cycles} cycles · stride ${A.stride.toFixed(2)} m · speed ≤ ${A.speedMax.toFixed(2)} m/s
+const line = (A) => A.fly ? `${A.unit.padEnd(12)} lap ${A.lap.toFixed(0)} s · ${A.len.toFixed(0)} m · ${A.speedMin.toFixed(1)}–${A.speedMax.toFixed(1)} m/s\n   over the land by ≥ ${A.clear.toFixed(1)} m · banks to ${A.bankMax.toFixed(0)}° (wrong in ${(A.bankShare * 100).toFixed(0)} % of its turns) · turns of ≤ ${A.load.toFixed(2)} g · pitch ≤ ${A.pitchMax.toFixed(0)}°\n   wings: shoulder ${A.wing[0].toFixed(0)}…${A.wing[1].toFixed(0)}° · elbow ${A.wing[2].toFixed(0)}…${A.wing[3].toFixed(0)}° · beating ${(A.beatShare * 100).toFixed(0)} %, gliding ${(A.glide * 100).toFixed(0)} % of the lap · the body rides the beat by ${(A.bob * 1000).toFixed(0)} mm` : `${A.unit.padEnd(12)} lap ${A.lap.toFixed(0)} s · ${A.cycles} cycles · stride ${A.stride.toFixed(2)} m · speed ≤ ${A.speedMax.toFixed(2)} m/s
    reach ${(A.spanMin * 100).toFixed(0)}–${(A.spanMax * 100).toFixed(0)} % of the leg · clamp ${(A.clamp * 1000).toFixed(1)} mm · body rides ≤ ${A.lowMax.toFixed(2)} m under its height for its legs' sake (mean ${A.lowMean.toFixed(2)}) · last-resort corrections ${(A.fixShare * 100).toFixed(1)} % of the lap, ≤ ${A.fixMax.toFixed(2)} m · body ≤ ${A.bodyAcc.toFixed(2)} m/s²
    planted: slip ${(A.slip * 1000).toFixed(2)} mm · sole off ground ${(A.gap * 1000).toFixed(1)} mm · sole vs ground tilt ${A.sole.toFixed(2)}° (ground up to ${A.tiltMax.toFixed(0)}°, footfalls moved ≤ ${A.moved.toFixed(2)} m)
    swing clears by ${A.swingLow > 1e8 ? '—' : A.swingLow.toFixed(2) + ' m'} · knees ≥ ${A.kneeLow.toFixed(2)} m up · belly ≥ ${A.belly.toFixed(2)} m · feet down ≥ ${A.supportMin} · joints bend ${A.straight.toFixed(0)}–${A.foldMax.toFixed(0)}° · wrong bends ${A.bendFlip}
@@ -83,7 +91,7 @@ export function run(realmDir, { course = false, dt = 0.1, only = null, onEach = 
   const out = [], sheets = [];
   const each = () => { const fitted = M.plan({ press: !course }); for (const kind in fitted) for (const j in fitted[kind]) if (fitted[kind][j].fail) out.push({ unit: kind, bad: [`cylinders: ${j}: ${fitted[kind][j].fail}`] });
     for (const u of M.units) { const A = M.audit(u, { dt }); A.needSupport = u.kin.limbs.length >= 6 ? 3 : 2; out.push({ unit: u.name, A, bad: judge(A) }); } if (onEach) onEach(LR, sheets); };
-  if (course) { for (const kind of Object.keys(M.kinds)) { if (only && only !== kind) continue; LR.gymCourse(kind); each(); } } else each();
+  if (course) { for (const kind of Object.keys(M.kinds)) { if ((only && only !== kind) || M.kinds[kind].spec.flight) continue; LR.gymCourse(kind); each(); } } else each();
   return { LR, out, sheets };
 }
 
@@ -91,7 +99,7 @@ export function run(realmDir, { course = false, dt = 0.1, only = null, onEach = 
 function sheetRows(LR, course, rows = []) {
   const M = LR.mech, W = 1500, seen = new Set();
   for (const u of M.units) {
-    if (u.post || seen.has(u.kind + u.R.name)) continue; seen.add(u.kind + u.R.name); const span = Math.min(u.R.len, course ? 290 : 150), s0 = course ? 6 : u.R.len * 0.05, sc = W / (span + 20), ride = u.K.spec.ride, H = Math.round((ride * 2.3 + 14) * sc);
+    if (u.post || u.fly || seen.has(u.kind + u.R.name)) continue; seen.add(u.kind + u.R.name); const span = Math.min(u.R.len, course ? 290 : 150), s0 = course ? 6 : u.R.len * 0.05, sc = W / (span + 20), ride = u.K.spec.ride, H = Math.round((ride * 2.3 + 14) * sc);
     // the land's profile under the left and the right feet, and the bodies at 8 moments
     const px = (s) => (s - s0 + 10) * sc, zl = u.track / 2; let y0 = 1e9; const prof = [[], []];
     for (let s = s0 - 10; s <= s0 + span + 10; s += 0.5) { const b = u.bodyAt(s), rt = [-Math.sin(b.h), Math.cos(b.h)]; [-1, 1].forEach((sd, i) => { const y = LR.land.h(b.x + rt[0] * zl * sd, b.z + rt[1] * zl * sd); prof[i].push([s, y]); y0 = Math.min(y0, y); }); }
@@ -136,7 +144,8 @@ export async function map(LR, file, { half = 256, px = 3 } = {}) {
   const M = LR.mech, cols = ['#ffd24a', '#ff7a3c', '#7fd4ff', '#e58cff', '#b8ff7a'];
   Object.values(M.routes).forEach((r, i) => { const pts = []; for (let s = 0; s <= r.len; s += 2) { const p = r.at(s); pts.push(X(p[0]) + ',' + X(p[1])); } g += `<polyline points="${pts.join(' ')}" fill="none" stroke="${cols[i % 5]}" stroke-width="${Math.max(2, r.width * px)}" stroke-opacity="0.16"/><polyline points="${pts.join(' ')}" fill="none" stroke="${cols[i % 5]}" stroke-width="1.6"/>`;
     for (let s = 0; s < r.len; s += 50) { const p = r.at(s); g += `<text x="${X(p[0])}" y="${X(p[1])}" font-size="11" fill="#fff" stroke="#000" stroke-width="2.4" paint-order="stroke">${r.name} ${s}</text>`; } });
-  const seen = new Set(); for (const u of M.units) { const key = u.kind + '/' + (u.R ? u.R.name : u.name); if (seen.has(key)) continue; seen.add(key); for (const l of u.kin.limbs) for (const P of u.plants[l.name]) g += `<circle cx="${X(P.x)}" cy="${X(P.z)}" r="${Math.max(1.5, l.ball * 1.6 * px)}" fill="${P.moved > 0.01 ? '#ff3b3b' : '#111'}" fill-opacity="0.8"/>`; }
+  for (const u of M.units) if (u.fly) { const pts = []; for (let s = 0; s <= u.len; s += 4) { const p = u.at(s); pts.push(X(p[0] + 0) + ',' + X(p[2])); } g += `<polyline points="${pts.join(' ')}" fill="none" stroke="#fff" stroke-width="1.4" stroke-dasharray="7 5" stroke-opacity="0.8"/>`; }
+  const seen = new Set(); for (const u of M.units) { if (u.fly) continue; const key = u.kind + '/' + (u.R ? u.R.name : u.name); if (seen.has(key)) continue; seen.add(key); for (const l of u.kin.limbs) for (const P of u.plants[l.name]) g += `<circle cx="${X(P.x)}" cy="${X(P.z)}" r="${Math.max(1.5, l.ball * 1.6 * px)}" fill="${P.moved > 0.01 ? '#ff3b3b' : '#111'}" fill-opacity="0.8"/>`; }
   for (const p of (LR.world.places || [])) g += `<circle cx="${X(p.x)}" cy="${X(p.z)}" r="4" fill="#fff" stroke="#000"/><text x="${+X(p.x) + 7}" y="${+X(p.z) + 4}" font-size="15" font-weight="bold" fill="#fff" stroke="#000" stroke-width="3" paint-order="stroke">${p.name}</text>`;
   for (let v = -half + (half % 50); v <= half; v += 50) g += `<line x1="${X(v)}" y1="0" x2="${X(v)}" y2="${W}" stroke="#000" stroke-opacity="0.18"/><line y1="${X(v)}" x1="0" y2="${X(v)}" x2="${W}" stroke="#000" stroke-opacity="0.18"/><text x="${+X(v) + 3}" y="12" font-size="11" fill="#000">${v}</text><text y="${+X(v) - 3}" x="3" font-size="11" fill="#000">${v}</text>`;
   g += `<text x="10" y="${W - 12}" font-size="14" fill="#fff" stroke="#000" stroke-width="3" paint-order="stroke">x east → · z south ↓ · ${lo.toFixed(0)}…${hi.toFixed(0)} m · contours 5 m · red: steeper than 30° / 38° · dots: footfalls (red: moved to better ground)</text>`;

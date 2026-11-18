@@ -32,7 +32,7 @@
       const K = u.K, kin = u.kin, r = M.poseAt(u, time), Wd = r.W, c = r.cmd, B = Wd.body; u.pose = r;
       const o0 = u.row * MAXB * 12; for (let i = 0; i < kin.nb; i++) skin(data, o0 + i * 12, Wd[kin.bones[i][0]], K.rest[i]);
       const d = Math.hypot(B.p[0] - cam.position.x, B.p[1] - cam.position.y, B.p[2] - cam.position.z); sph.center.set(B.p[0], B.p[1] - K.spec.ride * 0.3, B.p[2]); sph.radius = K.radius; u.dist = d;
-      const seen = d < 1500 && frustum.intersectsSphere(sph), lod = d < K.radius * 4.5 * q ? 0 : d < K.radius * 13 * q ? 1 : 2; u.lod = seen ? lod : -1; if (seen) tris += K.tris[lod];
+      const seen = d < 1500 && frustum.intersectsSphere(sph), lk = K.spec.lodK || 1, lod = d < K.radius * 4.5 * q * lk ? 0 : d < K.radius * 13 * q * lk ? 1 : 2; u.lod = seen ? lod : -1; if (seen) tris += K.tris[lod];
       for (let i = 0; i < 3; i++) { u.meshes[i].visible = seen && i === lod; u.shadows[i].visible = d < LR.gpu.tier.shadowDist + K.radius * 2 && i === Math.min(2, lod + 1); }
       // someone near: the head finds them and stays on them; it lets go slowly when they leave
       const A = u.aware, range = K.spec.aware === undefined ? K.spec.ride * 4 : K.spec.aware;
@@ -49,6 +49,8 @@
     // the ground carries every footfall to the eye: a short ring, weaker with distance
     let sx = 0, sy = 0; for (const p of imp) { if (p.age > 2.6) continue; const d = Math.hypot(p.x - cam.position.x, p.z - cam.position.z), amp = ((0.0042 * Math.sqrt(p.tonnes)) / (1 + d / 14)) * Math.exp(-p.age * 2.6) * LR.sm(0, 0.06, p.age); sy += amp * Math.sin(p.age * 31 + p.k); sx += amp * 0.5 * Math.sin(p.age * 24 + p.k * 2.1); }
     lastShake = LR.off.has('shake') ? [0, 0, 0] : [sx, sy, sx * 0.6]; cam.position.x += lastShake[0]; cam.position.y += lastShake[1]; cam.position.z += lastShake[2]; shaken = [cam.position.x, cam.position.y, cam.position.z]; M.shake = Math.hypot(sx, sy);
+    // a flyer cries now and then (each at its own times)
+    if (!LR.RENDER) for (const u of M.units) { const cr = u.fly && u.K.spec.cry; if (!cr) continue; const k = Math.floor((time + (u.phase || 0) * cr[0]) / cr[0]); if (u._cry !== undefined && k !== u._cry) LR.emit('mechcall', { unit: u, at: u.pose.W.body.p, f: cr[1], len: cr[2], gain: cr[3] || 0.6 }); u._cry = k; }
     // a move with a voice: when its time comes round, the machine calls
     if (!LR.RENDER) for (const u of M.units) { const c = u.pose.cmd, sd = c.move && c.move.sound; if (sd) { if (u._mt !== undefined && u._mt < sd[0] && c.mt >= sd[0]) LR.emit('mechcall', { unit: u, at: (u.pose.W.head || u.pose.W.body).p, f: sd[1], len: sd[2], gain: sd[3] || 1 }); u._mt = c.mt; } else u._mt = undefined; }
     // new footfalls since the last frame: for dust and sound (the live page; a still shows what the ages say)
@@ -65,13 +67,14 @@
   M.studio = (kind) => {
     const K = M.kinds[kind]; if (!K) throw new Error('no machine kind ' + kind + ' (have: ' + Object.keys(M.kinds).join(', ') + ')'); const W = LR.world, L = LR.land;
     M.units.length = 0; for (const k in M.routes) delete M.routes[k]; W.solids.length = 0; W.lights.length = 0; W.sounds.length = 0; W.places.length = 0; M.planned = false;
-    const xs = K.spec.limbs.map((l) => l.home[0]), wb = Math.max(...xs) - Math.min(...xs), R = Math.max(26, wb * 2.6), half = Math.min(320, Math.ceil((R * 2.2 + 40) / 64) * 64);
+    const FL = K.spec.flight, xs = K.spec.limbs.map((l) => l.home[0]), wb = FL ? (FL.span || 6) * 1.5 : Math.max(...xs) - Math.min(...xs), R = FL ? Math.max(40, (FL.speed * FL.speed) / 5) : Math.max(26, wb * 2.6), half = Math.min(320, Math.ceil((R * 2.2 + 40) / 64) * 64);
     L.create({ height: (x, z) => (LR.fbm(x * 0.07, z * 0.07, 3) - 0.5) * 0.12, half, res: 0.5 }); L.paint('paved', () => 1); L.paint('grass', () => 0); L.paint('tall', () => 0); L.paint('flowers', () => 0); L.paint('fern', () => 0);
     if (LR.grass) LR.grass.enabled = false;
     const pts = []; for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; pts.push([Math.sin(a) * R * 1.25, -Math.cos(a) * R]); }      // it passes (0, −R) heading east
-    M.route('studio', pts, { width: 0 }); const mv = Object.keys(K.spec.moves || {})[0], u = M.spawn(kind, { route: 'studio', name: kind, halts: [{ at: 0.5, hold: 12, move: mv }] }); M.plan({ press: false });
+    // (a flyer goes round the same oval a few metres up, climbing along one side and coming down the other: low enough to stand by the figure)
+    M.route('studio', pts, { width: 0 }); const mv = Object.keys(K.spec.moves || {})[0], u = FL ? M.spawn(kind, { name: kind, fly: pts.map((p, i) => [p[0], p[1], 6 + (FL.span || 6) * 0.4 + 2.5 * Math.sin((i / 16) * Math.PI * 2)]) }) : M.spawn(kind, { route: 'studio', name: kind, halts: [{ at: 0.5, hold: 12, move: mv }] }); if (FL) delete M.routes.studio; M.plan({ press: false });
     // a figure 1.75 m tall beside the way, in orange: what the size is measured against
-    { const g = new LR.Geo(), fx = 0, fz = -R + Math.max(...K.spec.limbs.map((l) => Math.abs(l.home[1]))) + 2.2, y = L.h(fx, fz); g.mat('cloth', { tint: '#ff7a1a', flags: LR.FLAG.NOWEATHER }); g.tube([[fx, y, fz], [fx, y + 0.85, fz], [fx, y + 1.45, fz]], [0.16, 0.2, 0.17], { sides: 8, caps: true }); g.blob(fx, y + 1.62, fz, 0.13, { amp: 0, seg: 8, rings: 6 }); W.add(g, { name: 'figure' }); M.figure = [fx, fz]; }
+    { const g = new LR.Geo(), fx = 0, fz = -R + (FL ? (FL.span || 6) * 0.6 : Math.max(...K.spec.limbs.map((l) => Math.abs(l.home[1])))) + 2.2, y = L.h(fx, fz); g.mat('cloth', { tint: '#ff7a1a', flags: LR.FLAG.NOWEATHER }); g.tube([[fx, y, fz], [fx, y + 0.85, fz], [fx, y + 1.45, fz]], [0.16, 0.2, 0.17], { sides: 8, caps: true }); g.blob(fx, y + 1.62, fz, 0.13, { amp: 0, seg: 8, rings: 6 }); W.add(g, { name: 'figure' }); M.figure = [fx, fz]; }
     M.start(); W.radius = half - 10; W.spawn = { x: 0, z: -R + 40, yaw: 0 }; return u;
   };
   // ── a wreck: a kind in a pose, built into the world and left there ─────────────────────────────────────────────

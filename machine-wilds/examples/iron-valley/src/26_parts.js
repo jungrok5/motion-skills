@@ -44,6 +44,37 @@ V.parts = {
     for (const e of k.S.extras) k.bone(e.name, (g) => { k.mat('dark'); g.tube([[0, 0, 0], [0, e.len * 0.5, 0], [0, e.len, 0]], e.name === 'mast' ? [0.07, 0.045, 0.02] : [0.045, 0.03, 0.012], { sides: k.n(6), caps: true }); });
     k.lamp('mast', { at: [0, 5.15, 0], dir: [0, 1, 0], color: [1, 0.18, 0.08], power: 0.7, range: 10, lens: 0.07, glow: 0.9 });
   },
+  // 솔개: a keel no longer than a car, wings of two parts with slats for feathers, a fan for a tail, an eye under a hooked brow.
+  // (a wing bone: X the leading edge's way (forward), Y out along the wing, Z up on the left wing and down on the right)
+  kite(k) {
+    k.bone('body', (g) => {
+      k.mat('dark'); k.loft('x', [[-1.7, 0.1, 0.12, 0, 0, 3], [-0.9, 0.24, 0.3, 0, 0, 3], [0.2, 0.3, 0.4, 0, 0, 3], [1.0, 0.24, 0.3, 0.03, 0, 3], [1.35, 0.14, 0.16, 0.08, 0, 3]], { sides: 12 });
+      k.mat('shell'); k.loft('x', [[-1.3, 0.2, 0.26, 0.06, 0, 3], [-0.4, 0.32, 0.42, 0.08, 0, 3], [0.5, 0.33, 0.43, 0.08, 0, 3], [1.15, 0.2, 0.26, 0.1, 0, 3]], { sides: 12, from: -0.6 * Math.PI, to: 0.6 * Math.PI, caps: false });
+      k.mat('accent'); k.loft('x', [[-0.12, 0.345, 0.45, 0.085, 0, 3], [0.12, 0.345, 0.45, 0.085, 0, 3]], { sides: 12, from: -0.6 * Math.PI, to: 0.6 * Math.PI, caps: false });
+      // the shoulders: a drum either side for the wing to turn on, a spar through the keel between them
+      k.mat('joint'); for (const s of [-1, 1]) k.xcyl(0.02, 0.48, 0.22, s * 0.42, 0.16, { sides: 10 }); k.mat('steel'); g.tube([[0.25, 0.22, -0.5], [0.25, 0.22, 0.5]], 0.06, { sides: 6 });
+      // feet it never uses, folded under
+      if (k.mid) { k.mat('dark'); for (const s of [-1, 1]) { g.tube([[-0.2, -0.26, s * 0.2], [-0.7, -0.42, s * 0.24], [-1.0, -0.36, s * 0.24]], 0.04, { sides: 5 }); g.box(-1.08, -0.37, s * 0.24, 0.22, 0.05, 0.16, { soft: 0.3 }); } }
+    });
+    for (const [side, n1, n2] of [[-1, 'wing_L1', 'wing_L2'], [1, 'wing_R1', 'wing_R2']]) { const up = -side;      // which way this wing's Z is up
+      k.bone(n1, (g) => { k.mat('joint'); k.xcyl(-0.24, 0.24, 0, 0, 0.15, { sides: 10 }); k.mat('dark'); g.tube([[0.12, 0.1, 0], [0.16, 2.1, 0]], [0.075, 0.055], { sides: k.n(8), caps: true });
+        // the inner wing: a panel behind the spar, ribs under it
+        k.mat('shell'); g.poly([[0.2, 0.16, up * 0.03], [0.24, 2.08, up * 0.03], [-0.95, 2.02, up * 0.0], [-1.1, 0.22, up * -0.02]], { hint: [0, 0, up], two: true }); k.mat('accent'); g.poly([[0.21, 1.5, up * 0.035], [0.235, 1.85, up * 0.035], [-0.96, 1.8, up * 0.005], [-0.99, 1.46, up * 0.004]], { hint: [0, 0, up], two: true });
+        if (k.mid) { k.mat('dark'); for (const y of [0.5, 1.1, 1.7]) g.box(-0.4, y, -up * 0.03, 1.25, 0.035, 0.05, {}); } k.mat('joint'); k.xcyl(-0.2, 0.3, 2.1, 0, 0.11, { sides: 8 }); });
+      k.bone(n2, (g) => { k.mat('dark'); g.tube([[0.14, 0, 0], [0.02, 2.2, 0]], [0.05, 0.022], { sides: k.n(7), caps: true });
+        // five slats for primaries, fanned from the wrist, each its own blade
+        const N = k.lod === 2 ? 3 : 5; for (let i = 0; i < N; i++) { const f = i / (N - 1), a = 0.1 + f * 1.15, len = 2.35 - f * 0.75, y0 = 0.1 + (1 - f) * 0.5, c = Math.cos(a), sn = Math.sin(a), ax = [-sn, c], px = [c, sn], w = 0.2;
+          const P = (al, ac) => [0.08 + ax[0] * al + px[0] * ac, y0 + ax[1] * al + px[1] * ac, up * (0.02 - 0.012 * i)]; g.mat(LR.mat.L ? 'ceramic' : 'ceramic', { tint: i % 2 ? '#c9cdca' : '#e2e4e0' }); g.poly([P(0, w), P(len * 0.85, w * 0.8), P(len, 0), P(len * 0.85, -w * 0.7), P(0, -w)], { hint: [0, 0, up], two: true }); } });
+    }
+    k.bone('tail', (g) => { k.mat('joint'); g.tube([[0, 0, 0], [0, 0.3, 0]], 0.1, { sides: 8, caps: true }); const N = k.lod === 2 ? 3 : 5; for (let i = 0; i < N; i++) { const a = (i / (N - 1) - 0.5) * 1.0, c = Math.cos(a), sn = Math.sin(a), len = 1.5 - Math.abs(a) * 0.4;
+        g.mat('ceramic', { tint: i % 2 ? '#c9cdca' : '#e2e4e0' }); g.poly([[sn * 0.2 - c * 0.13, 0.2 * c + sn * 0.13 * 0 + 0.1, 0.01 * i], [sn * len - c * 0.16, c * len + 0.1, 0.01 * i], [sn * len + c * 0.16, c * len + 0.1, 0.01 * i], [sn * 0.2 + c * 0.13, 0.2 * c + 0.1, 0.01 * i]], { two: true }); } });
+    k.bone('streamer', (g) => { k.mat('accent'); g.tube([[0, 0, 0], [0, 0.9, 0], [0, 1.8, 0]], [0.03, 0.02, 0.008], { sides: 5 }); });
+    k.bone('neck_01', (g) => { k.mat('dark'); g.tube([[0, 0, 0], [0, 0.5, 0]], [0.14, 0.11], { sides: k.n(8), caps: true }); });
+    k.bone('head', (g) => { k.mat('dark'); k.loft('x', [[-0.2, 0.14, 0.16, 0, 0, 3], [0.2, 0.2, 0.2, 0, 0, 3], [0.55, 0.13, 0.12, -0.03, 0, 3]], { sides: 10 }); k.mat('shell'); k.loft('x', [[-0.18, 0.17, 0.2, 0.03, 0, 3], [0.25, 0.23, 0.23, 0.04, 0, 3], [0.6, 0.1, 0.1, 0.02, 0, 3]], { sides: 10, from: -0.55 * Math.PI, to: 0.55 * Math.PI, caps: false });
+      k.mat('dark'); g.tube([[0.52, -0.02, 0], [0.84, -0.06, 0], [0.92, -0.2, 0]], [0.06, 0.035, 0.008], { sides: 6 }); });
+    k.lamp('head', { name: 'eye', at: [0.3, -0.19, 0], dir: [0.62, -0.78, 0], color: [0.78, 0.92, 1.0], power: 30, cone: 7, range: 120, lens: 0.11, proud: 0.02 });
+    k.lamp('wing_L2', { at: [0.04, 2.18, 0], dir: [0, 1, 0], color: [1, 0.08, 0.05], power: 0.9, range: 9, lens: 0.05, glow: 0.9 }); k.lamp('wing_R2', { at: [0.04, 2.18, 0], dir: [0, 1, 0], color: [0.1, 1, 0.3], power: 0.9, range: 9, lens: 0.05, glow: 0.9 });
+  },
   // 등짐: a bed on six legs, a cab like a visor with two amber lamps, a frame of old girders holding what it carries
   porter(k) {
     k.limbs({ style: 'girder' });

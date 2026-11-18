@@ -49,10 +49,21 @@ V.machines = () => {
     moves: {
       // it calls: sinks, then rises to its full height with every light up, holds, comes down past rest and settles
       call: { dur: 24, main: 'body.dy', sound: [7.6, 46, 9, 2.2], keys: { 'body.dy': [[0, 0], [2.6, -0.7], [8, 1.5], [16, 1.5], [20.5, -0.3], [24, 0]], 'body.pitch': [[0, 0], [2.6, -0.5], [8, 1.2], [16, 1.2], [20.5, -0.2], [24, 0]], 'head.pitch': [[0, 0], [2.6, 6], [8, -10], [16, -8], [21, 2], [24, 0]], 'head.yaw': [[0, 0], [8, 0], [11, 26], [14, -24], [17, 0], [24, 0]], light: [[0, 1], [6.6, 1], [8.2, 2.2], [15.5, 2.2], [18, 1], [24, 1]] } } } });
+  // 솔개: a kite — it has no legs to speak of.  Two-part wings on a keel, a fan of a tail, one eye that looks down into the mist.
+  // 0.9 t on a 9 m span: 14 m/s, a beat every 1.15 s in bouts of nine seconds, banked by what each turn asks.
+  M.define('kite', { title: '솔개', tonnes: 0.9, ride: 1.2, tall: 2, aware: 80, lensGain: 30, lodK: 5, cry: [47, 560, 0.8, 0.5], build: (k) => V.parts.kite(k),
+    palette: { shell: ['ceramic', '#dcdedb'], dark: ['paintmetal', '#262a2d'], frame: ['paintmetal', '#4d565c'], accent: ['paintmetal', '#4f8f96'] },
+    limbs: [], neck: { at: [1.25, 0.12, 0], links: [[0.5, 8]] }, head: { len: 0.9 },
+    extras: [{ name: 'wing_L1', type: 'spin', parent: 'body', at: [0.25, 0.22, -0.42], dir: [0, 0, -1], axis: [1, 0, 0], xdir: [1, 0, 0], len: 2.1 }, { name: 'wing_L2', type: 'spin', parent: 'wing_L1', at: [0, 2.1, 0], dir: [0, 1, 0], axis: [1, 0, 0], xdir: [1, 0, 0], len: 2.3 },
+      { name: 'wing_R1', type: 'spin', parent: 'body', at: [0.25, 0.22, 0.42], dir: [0, 0, 1], axis: [-1, 0, 0], xdir: [1, 0, 0], len: 2.1 }, { name: 'wing_R2', type: 'spin', parent: 'wing_R1', at: [0, 2.1, 0], dir: [0, 1, 0], axis: [-1, 0, 0], xdir: [1, 0, 0], len: 2.3 },
+      { name: 'tail', type: 'spin', parent: 'body', at: [-1.5, 0.05, 0], dir: [-1, 0, 0], axis: [1, 0, 0], xdir: [0, 0, 1], len: 1.5 }, { name: 'streamer', type: 'lag', parent: 'body', at: [-1.6, -0.1, 0], dir: [-1, -0.15, 0], len: 1.8, lag: 0.18, gain: 0.5, maxDeg: 30 }],
+    flight: { speed: 14, beat: 0.87, stroke: [30, 20], fold: 16, dihedral: 7, bout: 9, bob: 0.16, lead: 0.7, bankMax: 52, span: 9.4, gaze: 24, tail: 'tail', wings: [['wing_L1', 'wing_L2'], ['wing_R1', 'wing_R2']] } });
   for (const k in V.ways) M.route(k, V.ways[k], { width: k === 'rim' ? 38 : k === 'round' ? 15 : 13, grade: k === 'rim' ? 0.12 : 0.2 });
   M.spawn('crane', { name: '두루미 1', route: 'round', offset: 0, halts: [{ at: 0.179, hold: 18, move: 'survey' }, { at: 0.62, hold: 12 }] });
   M.spawn('crane', { name: '두루미 2', route: 'round', offset: 330, halts: [{ at: 0.179, hold: 18, move: 'survey' }, { at: 0.62, hold: 12 }] });
   for (let i = 0; i < 3; i++) M.spawn('porter', { name: '등짐 ' + (i + 1), route: 'bank', offset: i * 42, halts: [{ at: 0.45, hold: 16, move: 'kneel' }, { at: 0.9, hold: 8 }] });
+  // five kites in a loose skein: each a little behind, beside and above the one before, each beating in its own time
+  [[0, 0, 0], [3.4, 7, 2.5], [6.6, -8, 4], [10.4, 13, 6.5], [13.2, -15, 3]].forEach((q, i) => M.spawn('kite', { name: '솔개 ' + (i + 1), fly: V.sky, offset: -q[0], shift: [q[1], q[2]], phase: i * 0.23 }));
   M.spawn('ridge', { name: '마루', route: 'rim', offset: 120, halts: [{ at: 0.3, hold: 34, move: 'call' }] });
 };
 // the gym (scripts/gym.mjs): the land and the machines, nothing else

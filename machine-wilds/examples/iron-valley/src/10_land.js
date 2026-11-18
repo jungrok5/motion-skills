@@ -35,6 +35,10 @@ const V = {
     bank: [[-62, -78], [-16, -92], [30, -84], [72, -76], [112, -80], [122, -108], [90, -132], [40, -122], [-6, -126], [-52, -114], [-82, -96]],
     rim: [[-236, -30], [-214, -150], [-120, -222], [-10, -238], [110, -224], [206, -160], [240, -50], [236, 60], [200, 160], [112, 226], [-10, 238], [-130, 222], [-212, 150], [-240, 50]],
   };
+  // the line the kites fly, [x, z, height]: a wide ring over the valley that swings in low over the viaduct and the fallen crane
+  // and climbs away over the banks — turns no tighter than forty metres, no climb steeper than one in four, never under
+  // 30 m over the land (the trees are 22, a crane's lifted head 37), well inside the relic's rim.  (given as heights; kept as metres over the land)
+  V.sky = [[-150, 30, 76], [-100, -60, 80], [-10, -95, 78], [80, -60, 72], [130, 10, 62], [110, 90, 60], [40, 130, 66], [-40, 120, 70], [-20, 50, 57], [-70, 20, 55], [-130, 70, 70]].map((p) => [p[0], p[1], p[2] - V.base(p[0], p[1])]);
   // how wooded a spot is, 0…1: one function for the litter, the planting and the far forest
   V.woods = (x, z) => {
     const r = Math.hypot(x, z), d = z - V.axis(x); let f = 0.25 + 0.75 * sm(4, 26, Math.abs(d)) + (LR.fbm(x * 0.017 + 2, z * 0.017 + 6, 3) - 0.5) * 0.7;
