@@ -68,12 +68,33 @@ way in looking down the road. Tour (641 m): the road, the viaduct to its edge an
 valley floor and the fallen crane, up again. Nine views. Sounds: the brook, frogs at the tarn, the fire, footfalls and
 calls. Korean.
 
-## Review (stills at 640 × 360 on a CPU; the live page was run for frames and errors, not for frame rate)
-| still | air | lamps | read | ground | weight | scale | place | scans | own | fix |
+## Review (film frames at 960 × 540 and stills at 640 × 360, on a CPU; the live page was run for frames and errors, not for frame rate)
+Graded against `references/BRIEF.md` (1–5; under 4 goes back). The first pass is kept so the fixes can be read.
+
+**First pass**
+| still | air | lamps | read | ground | weight | scale | place | scans | own | what was wrong |
 |---|---|---|---|---|---|---|---|---|---|---|
-| crane through the trees, mist, 20:24 | 5 | 4 | 4 | 4 | — | 3 | 4 | 4 | 4 | the beam passes over the eye: a view from the side shows its cone better |
-| porter walking at the eye, mist | 5 | 5 | 5 | 4 | — | 3 | 4 | 4 | 5 | — |
-| relic head-on (first try) | 2 | 1 | 2 | — | — | — | — | — | — | eyes at power 700 whited the picture out → 150 |
-| viaduct edge, crane passing, noon | 3 | — | 5 | 4 | — | 5 | 5 | 4 | 5 | the set piece reads; in mist at 20:24 the first try was under-exposed → `LR.wx.key` 0.2, 20:24 |
-| relic from the way in, mist | 5 | 4 | 4 | — | — | 4 | 4 | 4 | 5 | — |
-| cast sheets (three kinds) | — | — | 5 | 5 | 4 | 5 | — | — | 5 | porter's first sheet cut its legs off → framing by width |
+| relic head-on | 2 | 1 | 2 | — | — | — | — | — | — | eyes at power 700 whited the picture out → 150 |
+| viaduct edge in mist | 2 | 3 | 4 | 4 | — | 5 | 4 | 3 | 5 | under-exposed → `LR.wx.key` 0.2, 20:24; mist after dark holds a light of its own (`glow`) |
+| dawn on the valley floor | 1 | — | 3 | 3 | — | 3 | 2 | 2 | 4 | a white wall: the engine's sixfold dawn fog on top of mist → capped |
+| noon from the viaduct | 3 | — | 5 | 4 | — | 5 | 2 | 4 | 3 | far hills lawn green with white caps → dark woods, rock above the tree line |
+| crane, cast sheet | — | — | 5 | 5 | 4 | 5 | — | — | 3 | showroom white; the look asked for is rusted and mossed → `age` on every kind |
+| kite, cast sheet | — | — | 3 | — | 3 | 4 | — | — | 4 | banked all the way round the studio, beat phases a quarter off → straights; blades weathered |
+| sky in mist | 3 | 4 | — | — | — | — | — | — | — | one dark cloud like an ink blot → the sky closes in mist |
+| carrier kneeling, day | — | — | 2 | 3 | — | 3 | 2 | 4 | 4 | camera on a 25° bank, grass in the lens → a level spot in the yard |
+
+**As delivered**
+| picture | air | lamps | read | ground | weight | scale | place | scans | own | note |
+|---|---|---|---|---|---|---|---|---|---|---|
+| relic past the way in (film 1) | 5 | 4 | 5 | 4 | 4 | 4 | 4 | 3 | 5 | windows and two red points carry it; the foreground bank is dark on purpose, a third of the frame at most |
+| crane through the gap (film 2) | 5 | 5 | 5 | 4 | 4 | 5 | 5 | 4 | 5 | beam as a cone, relic's windows and the kites' beams behind: three kinds told apart by light alone |
+| crane surveys (film 3) | 5 | 5 | 5 | — | 5 | 5 | 4 | 4 | 5 | gather, lift, overshoot, settle |
+| kites over the viaduct (film 4) | 5 | 5 | 4 | — | 4 | 3 | 3 | — | 5 | five beams combing down; the birds themselves are small and dark, as they would be |
+| carrier at the knee (film 5) | 5 | 5 | 5 | 5 | 4 | 3 | 4 | 4 | 5 | amber against the cold; feet on the slope |
+| dawn under the crane (film 6) | 4 | — | 4 | 5 | 4 | 3 | 4 | 4 | 5 | rust run down the pale shells, dust at the footfall; the head is out of frame |
+| noon from the viaduct (film 7) | 3 | — | 5 | 4 | 4 | 5 | 4 | 4 | 4 | clear air is not what this place is for: the weakest of the seven |
+| cast sheets (four kinds) | — | — | 5 | 5 | 4 | 5 | — | — | 5 | every side agrees; walk, idle, move; the kite's beat, glide and bank |
+
+What is still under AAA and why: foliage is cards and reads as such inside ten metres; shadows from the machines' lamps are
+not cast (their light passes through trunks); a noon picture shows the engine's limits in a way mist does not. Frame rate
+on a real GPU has not been measured from this machine.
