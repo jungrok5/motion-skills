@@ -46,7 +46,7 @@
     return best[1] > 0 ? fract(best[0] / NQ) : null; };
 
   // what is built and stands in a foot's way (ruins, placed scans — whatever has registered a solid by the time the walk is planned)
-  M.blocked = (x, z, r) => { const W = LR.world; if (!W || !W.solids) return false; for (const s of W.solids) { if (s.mech) continue; if (s.r !== undefined) { if (Math.hypot(x - s.x, z - s.z) < s.r + r) return true; } else { const dx = x - s.x, dz = z - s.z, lx = dx * s.c - dz * s.s, lz = dx * s.s + dz * s.c; if (Math.abs(lx) < s.hx + r && Math.abs(lz) < s.hz + r) return true; } } return false; };
+  M.blocked = (x, z, r) => { const W = LR.world; if (!W || !W.solids) return false; for (const s of W.solids) { if (s.mech || s.y0 !== undefined) continue; if (s.r !== undefined) { if (Math.hypot(x - s.x, z - s.z) < s.r + r) return true; } else { const dx = x - s.x, dz = z - s.z, lx = dx * s.c - dz * s.s, lz = dx * s.s + dz * s.c; if (Math.abs(lx) < s.hx + r && Math.abs(lz) < s.hz + r) return true; } } return false; };
   // where a foot may come down near (x, z): not on a face too steep to stand on, not on something built, not in deep water
   const footing = (u, l, x, z) => {
     const L = land(), g = u.K.spec.gait, maxS = g.maxSlope === undefined ? 1 - Math.cos((g.footTilt || 26) * D2R) : g.maxSlope, e = Math.max(0.5, l.ball * 1.6), n = [0, 1, 0];

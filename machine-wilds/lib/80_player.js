@@ -19,6 +19,7 @@
   const collide = (x, z, r) => {
     for (let it = 0; it < 3; it++) { let hit = false;
       for (const s of W.solids) {
+        if (s.y0 !== undefined && (P.y + 1.2 < s.y0 || P.y > s.y1)) continue;      // a solid with a height (a parapet on a deck) stops only who is at that height
         if (s.r !== undefined) { const dx = x - s.x, dz = z - s.z, d = Math.hypot(dx, dz), m = s.r + r; if (d < m) { if (d < 1e-5) { x += m; } else { x = s.x + (dx / d) * m; z = s.z + (dz / d) * m; } hit = true; } }
         else { const dx = x - s.x, dz = z - s.z, lx = dx * s.c - dz * s.s, lz = dx * s.s + dz * s.c, ex = s.hx + r, ez = s.hz + r; if (Math.abs(lx) < ex && Math.abs(lz) < ez) { const px = ex - Math.abs(lx), pz = ez - Math.abs(lz); let nlx = lx, nlz = lz; if (px < pz) nlx = Math.sign(lx || 1) * ex; else nlz = Math.sign(lz || 1) * ez; x = s.x + nlx * s.c + nlz * s.s; z = s.z - nlx * s.s + nlz * s.c; hit = true; } }
       }

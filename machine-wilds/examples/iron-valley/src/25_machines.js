@@ -50,8 +50,8 @@ V.machines = () => {
       // it calls: sinks, then rises to its full height with every light up, holds, comes down past rest and settles
       call: { dur: 24, main: 'body.dy', sound: [7.6, 46, 9, 2.2], keys: { 'body.dy': [[0, 0], [2.6, -0.7], [8, 1.5], [16, 1.5], [20.5, -0.3], [24, 0]], 'body.pitch': [[0, 0], [2.6, -0.5], [8, 1.2], [16, 1.2], [20.5, -0.2], [24, 0]], 'head.pitch': [[0, 0], [2.6, 6], [8, -10], [16, -8], [21, 2], [24, 0]], 'head.yaw': [[0, 0], [8, 0], [11, 26], [14, -24], [17, 0], [24, 0]], light: [[0, 1], [6.6, 1], [8.2, 2.2], [15.5, 2.2], [18, 1], [24, 1]] } } } });
   for (const k in V.ways) M.route(k, V.ways[k], { width: k === 'rim' ? 38 : k === 'round' ? 15 : 13, grade: k === 'rim' ? 0.12 : 0.2 });
-  M.spawn('crane', { name: '두루미 1', route: 'round', offset: 0, halts: [{ at: 0.2, hold: 18, move: 'survey' }, { at: 0.62, hold: 12 }] });
-  M.spawn('crane', { name: '두루미 2', route: 'round', offset: 330, halts: [{ at: 0.2, hold: 18, move: 'survey' }, { at: 0.62, hold: 12 }] });
+  M.spawn('crane', { name: '두루미 1', route: 'round', offset: 0, halts: [{ at: 0.179, hold: 18, move: 'survey' }, { at: 0.62, hold: 12 }] });
+  M.spawn('crane', { name: '두루미 2', route: 'round', offset: 330, halts: [{ at: 0.179, hold: 18, move: 'survey' }, { at: 0.62, hold: 12 }] });
   for (let i = 0; i < 3; i++) M.spawn('porter', { name: '등짐 ' + (i + 1), route: 'bank', offset: i * 42, halts: [{ at: 0.45, hold: 16, move: 'kneel' }, { at: 0.9, hold: 8 }] });
   M.spawn('ridge', { name: '마루', route: 'rim', offset: 120, halts: [{ at: 0.3, hold: 34, move: 'call' }] });
 };

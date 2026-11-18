@@ -32,14 +32,16 @@ east) · steep: the north bank (20–30°, crags), the bench edges · level: the
 ## The machines
 | kind | for | size · tonnes | legs | cycle · duty · stride · lift | silhouette | idle · move | lamps | how many · where |
 |---|---|---|---|---|---|---|---|---|
-| 두루미 crane | a watcher: it walks the valley and looks | 24 × 24.6 × 8.7 m · 86 t | 4, heron legs of three segments (front knees forward, hind knees back) | 6.4 s · 0.78 · 5.6 m · 1.9 m | a keel under three pale shells, a ladder neck, a head like a bird's with a long bill, a whip mast on a counterweight boom | breathes, the head sweeps 16° · **survey**: the neck dips, rises 22° over the mist, the head turns 56° left and 50° right with its light up, comes down past rest | one cool white search light (8° cone, 170 m), two cyan eyes, amber running lights, red beacons on tail and mast | 2 on the round (797 s a lap, 330 s apart); they stand at the viaduct gap and by the tarn |
+| 두루미 crane | a watcher: it walks the valley and looks | 24 × 24.6 × 8.7 m · 86 t | 4, heron legs of three segments (front knees forward, hind knees back) | 6.4 s · 0.78 · 5.6 m · 1.9 m | a keel under three pale shells, a ladder neck, a head like a bird's with a long bill, a whip mast on a counterweight boom | breathes, the head sweeps 16° · **survey**: the neck dips, rises 22° over the mist, the head turns 56° left and 50° right with its light up, comes down past rest | one cool white search light (8° cone, 170 m), two cyan eyes, amber running lights, red beacons on tail and mast | 2 on the round (893 s a lap, 330 s apart); they stand at the viaduct gap and on the shelf south of the hall |
 | 등짐 porter | a carrier: it takes loads between the yard and nowhere | 12 × 11 × 14.6 m · 38 t | 6, insect legs (a turret, an arm, femur and tibia; knees above the bed) | 3.6 s · 0.62 · 3.4 m · 1.1 m, tripod | a flat bed, a cage of girders holding a container, a tank and crates gone to moss, a visor cab | breathes, its radar turns · **kneel**: rises a little, folds until the bed is 1.7 m lower, waits, stands past its height | two amber eyes (14° cones, 70 m), a red tail light | 3 in a string on the bank way, 42 s apart (so each has left the yard before the next kneels); they kneel at the yard |
 | 마루 ridge | a relay station that walks its line | 66 × 73 × 33 m · 5200 t | 8, two-segment girders with cylinders half a metre thick | 15 s · 0.68 · 15 m · 3.4 m, two groups of four | a street-long deck of box girders carrying a three-step concrete station with rows of windows, tanks, a stuck jib, a lattice mast; moss and brush on every flat | breathes 30 cm, its prow turns · **call**: sinks, rises 1.5 m with every light up and sounds, comes down past rest | two great warm eyes under the prow (10° cones, 360 m), lit windows, red corner lights, amber lights under the deck | 1 on the rim (1265 s a lap); it calls on the western rise |
 
 ## The ways and the set piece
-- **round** (cranes, 780 m, 15 m wide): down the valley floor south of the brook, through the viaduct's gap, round the
-  tarn's bog and home along the first shelf. The walker crosses it on the path down to the fallen crane, and stands
-  above it on the viaduct.
+- **round** (cranes, 900 m, 15 m wide): down the valley floor south of the brook, through the viaduct's gap, round the
+  tarn's bog, then along the high shelf south of the hall, across the old road, past the way in (17 m from where the
+  walker starts) and down the western slope. It crosses the viaduct's line once through the gap and once beyond its
+  south abutment — never under a standing span (the crane is taller than the deck). The walker crosses it on the path
+  down to the fallen crane and on the road, and stands above it on the viaduct.
 - **bank** (porters, 460 m, 13 m wide): a loop on the north shelf past the yard, crossing the old road north of the
   viaduct's abutment.
 - **rim** (the relic, 1500 m, 38 m wide): round the whole valley at 240 m; from the walk it is lit windows and two
@@ -57,7 +59,7 @@ shrub_02, fir_sapling (heavy) · leaf atlases: fir_tree_01, pine_tree_01 twigs �
 water and the ways, brush. 101 MB (78 MB on a phone).
 
 ## The hour, the walk, the words
-Opens at 20:24 in mist. The round: mist at dusk → night → a grey dawn → clear noon → rain → mist again. Spawn at the
+Opens at 20:24 in mist (the mist holds a little light of its own after dark: shapes, not murk). The round: mist at dusk → night → a grey dawn → clear noon → rain → mist again. Spawn at the
 way in looking down the road. Tour (641 m): the road, the viaduct to its edge and back, the hall, the path down to the
 valley floor and the fallen crane, up again. Nine views. Sounds: the brook, frogs at the tarn, the fire, footfalls and
 calls. Korean.

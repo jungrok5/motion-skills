@@ -11,7 +11,7 @@
     uLightPos: v(Array.from({ length: MAXL }, () => new T.Vector4())), uLightCol: v(Array.from({ length: MAXL }, () => new T.Vector4())), uLightN: v(0),
     // lamps that move (a machine's eyes and search lights): where, how far · which way, the cosine of the cone's half angle (2: no cone) · colour, how much spills every way
     uLampPos: v(Array.from({ length: MAXP }, () => new T.Vector4())), uLampDir: v(Array.from({ length: MAXP }, () => new T.Vector4())), uLampCol: v(Array.from({ length: MAXP }, () => new T.Vector4())), uLampN: v(0),
-    uExposure: v(0.3), uKey: v(0.18), uGrade: v(new T.Vector4(1, 1, 0.3, 0.02)), uTintG: v(new T.Vector3(1, 1, 1)), uLiftG: v(new T.Vector3(0, 0, 0)), uBloomMix: v(0.06), uFill: v(0.62), uShaft: v(1), uHistOk: v(0), uSharp: v(0.4), uBlend: v(0.1), uDt: v(0.016),
+    uExposure: v(0.3), uKey: v(0.18), uGrade: v(new T.Vector4(1, 1, 0.3, 0.02)), uTintG: v(new T.Vector3(1, 1, 1)), uLiftG: v(new T.Vector3(0, 0, 0)), uBloomMix: v(0.06), uFill: v(0.62), uAirGlow: v(new T.Vector4(0.5, 0.62, 0.8, 0)), uShaft: v(1), uHistOk: v(0), uSharp: v(0.4), uBlend: v(0.1), uDt: v(0.016),
   });
   const SKY = () => LR.sky.U;
   const AIRU = 'uFogCol uFog uSunDir uSunCol uSkyAmb uGroundAmb uCloud uCloudOff';
@@ -138,6 +138,7 @@ void main(){ float z = viewZ(halfDepth(tDepth, vUv)), w = 0.0; vec3 s = vec3(0.0
 //#include half
 //#include canopy
 in vec2 vUv; out vec4 o; uniform sampler2D tDepth; uniform float uEnvMips, uShaft;
+uniform vec4 uAirGlow;      // rgb: light the mist holds of its own after dark (moon and sky caught in it), a: how much
 uniform vec4 uLampPos[${MAXP}]; uniform vec4 uLampDir[${MAXP}]; uniform vec4 uLampCol[${MAXP}]; uniform int uLampN;
 float hg(float mu, float g){ float g2 = g * g; return (1.0 - g2) / (4.0 * PI * pow(1.0 + g2 - 2.0 * g * mu, 1.5)); }
 // A lamp in the mist.  Two parts: what spills every way lights the air round the lens (a halo, in closed form: the
@@ -170,7 +171,7 @@ void main(){
   float d = halfDepth(tDepth, vUv); vec2 uvd = vUv + uRes.zw * 0.25;
   vec3 wp = worldAt(uvd, min(d, 0.99999)); vec3 rd = wp - uCamPos; float dist = length(rd); rd /= dist; if (d >= 0.999999) dist = 60000.0;
   float mu = dot(rd, uSunDir), ph = min(mix(hg(mu, 0.74), hg(mu, -0.18), 0.22), 0.9) * 0.7 + 0.024;      // a little of the light goes every way: shafts read from the side too
-  vec3 keyIn = uSunCol * PI * ph, amb = envAt(vec3(0.0, 1.0, 0.0), uEnvMips - 1.0) * 0.9;
+  vec3 keyIn = uSunCol * PI * ph, amb = envAt(vec3(0.0, 1.0, 0.0), uEnvMips - 1.0) * 0.9 + uAirGlow.rgb * uAirGlow.a;
   float tMax = min(dist, AIR_REACH), jit = ign(gl_FragCoord.xy + mod(uFrame, 32.0) * vec2(5.588, 3.371));
   vec3 ins = vec3(0.0); float Tr = 1.0, tPrev = 0.0, cs = cloudShadow(uCamPos + rd * min(tMax, 45.0));     // clouds are large: once per ray
   for (int i = 0; i < AIR_STEPS; i++) {
@@ -185,7 +186,7 @@ void main(){
   }
   // the rest of the way: no shadow detail, the haze takes the colour of the sky it is seen against
   float cap = min(dist, 45000.0); float odFar = max(fogDepth(uCamPos, rd, cap) - fogDepth(uCamPos, rd, tMax), 0.0), Tf = exp(-odFar);
-  vec3 hz = envAt(normalize(vec3(rd.x, 0.10 + max(rd.y, 0.0) * 0.5, rd.z)), 2.5);
+  vec3 hz = envAt(normalize(vec3(rd.x, 0.10 + max(rd.y, 0.0) * 0.5, rd.z)), 2.5) + uAirGlow.rgb * uAirGlow.a * (0.7 + 0.5 * sat(rd.y * 2.0 + 0.3));
   hz += uSunCol * PI * ph * 0.22 * (1.0 - uCloud.x * uCloud.w);
   ins += Tr * (1.0 - Tf) * hz; Tr *= Tf;
 #if SHAFT_STEPS > 0
@@ -563,7 +564,7 @@ void main(){
     R.mAO = LR.pass(aoFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tG1: PU.tG1, uHalf: PU.uHalf }), { defines: { AO_SLICES: aoQ[0], AO_STEPS: aoQ[1] } });
     R.mAOB = LR.pass(aoBlurFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tAO: v(null), uHalf: PU.uHalf }));
     if (R.giOn) { R.mGI = LR.pass(giFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tG1: PU.tG1, tHist: v(null), uHalf: PU.uHalf }), { defines: { GI_RAYS: tier.gi | 0, GI_STEPS: 8, GI_DEBUG: LR.qn('gidbg', 0) | 0 } }); R.mGIB = LR.pass(giBlurFS, Object.assign(LR.uni(FRAME), { tDepth: PU.tDepth, tGI: v(null), uHalf: PU.uHalf })); }
-    R.mAir = LR.pass(airFS, Object.assign(LR.uni(FRAME + ' ' + AIRU + ' ' + SHU), S, { tDepth: PU.tDepth, uHalf: PU.uHalf, uEnvMips: PU.uEnvMips, tCanopy: PU.tCanopy, uCanopyRect: PU.uCanopyRect, uCanopy: PU.uCanopy, uShaft: PU.uShaft, uLampPos: PU.uLampPos, uLampDir: PU.uLampDir, uLampCol: PU.uLampCol, uLampN: PU.uLampN }), { defines: { AIR_STEPS: tier.vol, AIR_REACH: '150.0', SHAFT_STEPS: LR.off.has('shafts') ? 0 : tier.vol >= 24 ? 36 : tier.vol >= 16 ? 28 : tier.vol >= 12 ? 20 : 0 } });
+    R.mAir = LR.pass(airFS, Object.assign(LR.uni(FRAME + ' ' + AIRU + ' ' + SHU), S, { tDepth: PU.tDepth, uHalf: PU.uHalf, uEnvMips: PU.uEnvMips, tCanopy: PU.tCanopy, uCanopyRect: PU.uCanopyRect, uCanopy: PU.uCanopy, uShaft: PU.uShaft, uAirGlow: PU.uAirGlow, uLampPos: PU.uLampPos, uLampDir: PU.uLampDir, uLampCol: PU.uLampCol, uLampN: PU.uLampN }), { defines: { AIR_STEPS: tier.vol, AIR_REACH: '150.0', SHAFT_STEPS: LR.off.has('shafts') ? 0 : tier.vol >= 24 ? 36 : tier.vol >= 16 ? 28 : tier.vol >= 12 ? 20 : 0 } });
     R.mLight = LR.pass(lightFS, Object.assign(LR.uni(FRAME + ' ' + AIRU + ' ' + SHU + ' uShadowZ uTopo uTopoRect'), S, { tG0: PU.tG0, tG1: PU.tG1, tG2: PU.tG2, tDepth: PU.tDepth, tAO: PU.tAO, tAir: PU.tAir, uHalf: PU.uHalf, uEnvMips: PU.uEnvMips, tCanopy: PU.tCanopy, uCanopyRect: PU.uCanopyRect, uCanopy: PU.uCanopy, uLightPos: PU.uLightPos, uLightCol: PU.uLightCol, uLightN: PU.uLightN, uLampPos: PU.uLampPos, uLampDir: PU.uLampDir, uLampCol: PU.uLampCol, uLampN: PU.uLampN, uFill: PU.uFill, tGI: PU.tGI, uBounce: PU.uBounce, tHist: PU.tHistL, uHistOk: PU.uHistOk }), { defines: Object.assign(tier.name === 'low' || LR.off.has('pcss') ? {} : { PCSS: 1, PCSS_TAPS: tier.name === 'medium' ? 8 : tier.name === 'high' ? 12 : 16, PCSS_ANGLE: (Math.tan((LR.qn('pcss', 1.4) * Math.PI) / 360)).toFixed(5), PCSS_WIDTH: '0.3' }, { SHADOW_TAPS: tier.shadowTaps, SKY_REACH: LR.off.has('skyshare') ? 0 : tier.gi >= 3 ? 2 : tier.ao > 0 ? 1 : 0, CONTACT_STEPS: LR.off.has('contact') ? 0 : tier.contact | 0, MIRROR_STEPS: LR.off.has('mirror') ? 0 : tier.mirror | 0, MIRROR_REACH: '90.0', MIRROR_FINE: tier.mirror >= 24 ? 5 : tier.mirror >= 18 ? 4 : 3 }, LR.qn('dbg', 0) ? { DEBUG_VIEW: LR.qn('dbg', 0) } : {}) });
     R.mTAA = LR.pass(taaFS, Object.assign(LR.uni(FRAME), { tCur: PU.tCur, tHist: PU.tHist, tDepth: PU.tDepth, uJit: PU.uJit, uBlend: PU.uBlend, uOut: PU.uOut, uUp: PU.uUp }), { defines: LR.off.has('cubic') ? {} : { HIST_CUBIC: 1 } });
     R.mCopy = LR.pass(copyFS, { tSrc: v(null) });

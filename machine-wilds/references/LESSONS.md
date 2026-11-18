@@ -45,6 +45,19 @@ was learned putting scans into it (scanned-realm), then the engine's own list (l
   function of time, so Node knows where every unit is at any second: ask it for the camera, then render once.
 - **A vm context made the land take 28 s in Node.** → Every `Math` and `LR` was looked up through the context's
   interceptors. → The gym runs the sources as one function with their globals passed in: 1.4 s.
+- **Night in the mist was a blank picture.** → `check.mjs` measured it: light 0.13 ± 0.02. Fog after dark was lit only by
+  what the sky dome gave, which is what the trees got too: everything the same dark. → The mist holds a light of its own
+  after dark (`glow` in the look → `uAirGlow` in the air pass, on the marched part and on the far haze): trunks and machines
+  are shapes against it, and the lamps still own the picture. The dawn hour (5–6) needs nothing: the engine's morning mist
+  with a low sun is already shafts through the trees.
+- **A crane's neck went through the viaduct it walked under.** → Its way crossed the viaduct line twice: once through the gap
+  made for it, once under a standing span 20 m up — and the machine is 25 m tall. Nothing checked heights. → The way goes
+  round the south abutment (and now crosses the walker's road by the way in, which is the better picture). Draw every way
+  over the ruins on the map before building either.
+- **Parapets 22 m up stopped the walker on the ground beneath them.** → Solids are circles and boxes on the map. → A solid may
+  carry `{ y0, y1 }`: it stops only who is at that height, and neither the footing nor the way check counts it.
+- **A still inherits the hour of the still before it.** → `shot({ cam })` without `tod` and `weather` keeps whatever the last
+  one set: a batch that mixes hours must name them every time.
 - **A tour along the road walked through the cars parked on it.** → The walk map (`check.mjs --walk`) shows it in
   one picture; the cars went to the verge.
 

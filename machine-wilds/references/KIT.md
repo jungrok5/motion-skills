@@ -5,10 +5,12 @@ weather, the walk). What `machine-wilds` adds:
 - **Machines** — `LR.mech` (lib/48_mech*.js): `references/MACHINES.md`. In every `avoid` of a scatter use
   `LR.mech.wayDist(x, z)` (metres outside the nearest way; negative on it).
 - **Materials** (lib/17_mechmats.js): `steel chrome paintmetal rustplate ceramic rubber concrete asphalt`.
-- **Weather**: `LR.wx.looks.mist` and `?wx=mist`; `LR.start({ round: [{ t, tod, weather }, …, { t, end: true }] })` sets
+- **Weather**: `LR.wx.looks.mist` and `?wx=mist` (its `glow` is the light the mist holds after dark; `LR.wx.airGlow`, 0.015, scales it); `LR.start({ round: [{ t, tod, weather }, …, { t, end: true }] })` sets
   the automatic round of the realm.
 - **The walker on slopes** (lib/80_player.js): a climb slows the step from a grade of 0.18, and a face steeper than a
   grade of 0.94 (43°) is slid along, not climbed. Decks (`LR.world.floors`) are not slopes.
+- **Solids with a height**: `LR.world.solidBox(x, z, hx, hz, yaw, { y0, y1 })` stops only who stands between those heights.
+- **A film**: `LR.start({ film: [{ name, dur, tod, weather, t, cam: (u, LR, seconds) => ({ at: [x, z], up | y, look: [x, y, z] | yaw, pitch, fov }) }] })` → `scripts/film.mjs`.
 - **Lamps** that move: `k.lamp(...)` on a machine; `?off=lamps`, `?off=shake`.
 - **Events**: `LR.on('footfall', (p) => …)` (`{ x, y, z, tonnes, size, unit, leg }`), `LR.on('mechcall', …)`;
   `LR.audio.footfall({ d, side, tonnes, wet })`, `LR.audio.call({ d, side, f, len, gain })`.

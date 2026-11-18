@@ -4,7 +4,7 @@
 V.plants = () => {
   const F = LR.flora, MD = LR.models, L = LR.land, M = LR.mech, W = LR.world;
   const wet = (x, z) => LR.water.levelAt(x, z) > L.h(x, z) - 0.35, paved = (x, z) => L.coverAt('paved', x, z) > 0.3, way = (x, z) => M.wayDist(x, z);
-  const clear = (x, z, pad = 0.9) => { for (const s of W.solids) { if (s.mech) continue; if (s.r !== undefined) { if (Math.hypot(x - s.x, z - s.z) < s.r + pad) return false; } else { const dx = x - s.x, dz = z - s.z, lx = dx * s.c - dz * s.s, lz = dx * s.s + dz * s.c; if (Math.abs(lx) < s.hx + pad && Math.abs(lz) < s.hz + pad) return false; } } return true; };
+  const clear = (x, z, pad = 0.9) => { for (const s of W.solids) { if (s.mech || s.y0 !== undefined) continue; if (s.r !== undefined) { if (Math.hypot(x - s.x, z - s.z) < s.r + pad) return false; } else { const dx = x - s.x, dz = z - s.z, lx = dx * s.c - dz * s.s, lz = dx * s.s + dz * s.c; if (Math.abs(lx) < s.hx + pad && Math.abs(lz) < s.hz + pad) return false; } } return true; };
   const onDeck = (x, z) => V.deck && Math.abs(x - V.deck.x) < V.deck.w / 2 + 2.5 && z > V.viaduct.piers[0] - 8 && z < V.viaduct.piers[5] + 8;
   const avoid = (x, z) => wet(x, z) || paved(x, z) || way(x, z) < 2.6 || !clear(x, z, 1.8) || onDeck(x, z) || L.coverAt('dirt', x, z) > 0.45;
   // heroes: the pines of the lookout, a great spruce over the hall, birches at the tarn

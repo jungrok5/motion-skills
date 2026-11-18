@@ -11,7 +11,7 @@ V.ruins = () => {
       g.mat('concrete', { seed: z & 255 }); for (const s of [-1, 1]) { g.box(x + s * 3.1, (y0 + top) / 2, z, 1.9, top - y0, 1.7, { soft: 0.12, ao: [0.55, 1] }); g.box(x + s * 3.1, L.h(x + s * 3.1, z) + 0.3, z, 2.9, 1.2, 2.7, { soft: 0.2, ao: [0.5, 0.9] }); W.solidBox(x + s * 3.1, z, 1.5, 1.4); }
       g.box(x, top + 0.75, z, w - 0.8, 1.5, 2.3, { soft: 0.1 }); g.box(x, (y0 + top) / 2 + 2, z, 4.6, 0.9, 1.0, { soft: 0.15 }); if (broken) rebar(g, x, top + 1.6, z + broken * 1.2, [0, 0.25, broken], 16, 1.6, [w - 2, 0.5, 0.2]); };
     const span = (z0, z1) => { const zc = (z0 + z1) / 2, len = z1 - z0;
-      g.mat('concrete', { seed: (z0 + 300) & 255 }); g.box(x, Y - 0.25 - 0.75, zc, w, 1.5, len, { soft: 0.08, grain: 'z' }); for (const s of [-1, 1]) { g.box(x + s * (w / 2 - 0.18), Y + 0.45, zc, 0.36, 0.9, len, { soft: 0.15, grain: 'z' }); W.solidBox(x + s * (w / 2 - 0.1), zc, 0.3, len / 2); }
+      g.mat('concrete', { seed: (z0 + 300) & 255 }); g.box(x, Y - 0.25 - 0.75, zc, w, 1.5, len, { soft: 0.08, grain: 'z' }); for (const s of [-1, 1]) { g.box(x + s * (w / 2 - 0.18), Y + 0.45, zc, 0.36, 0.9, len, { soft: 0.15, grain: 'z' }); W.solidBox(x + s * (w / 2 - 0.1), zc, 0.3, len / 2, 0, { y0: Y - 0.5, y1: Y + 3 }); }
       for (let z = z0 + 3; z < z1; z += 6) for (const s of [-1, 1]) g.box(x + s * (w / 2 + 0.25), Y - 0.9, z, 0.5, 1.2, 0.5, { soft: 0.2 });
       g.mat('asphalt', { seed: (z0 + 90) & 255 }); g.box(x, Y - 0.02, zc, w - 0.72, 0.1, len, { skip: '-y', grain: 'z' });
       W.floors.push({ x, z: zc, hx: w / 2 - 0.4, hz: len / 2, yaw: 0, c: 1, s: 0, h: () => Y + 0.03 }); };

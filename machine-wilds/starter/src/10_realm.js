@@ -18,6 +18,9 @@ R.land = () => {
   // ② water: the pit has filled to its second bench
   LR.water.pond(R.pit.water, [-R.pit.r - 8, -R.pit.r - 8, R.pit.r + 8, R.pit.r + 8]);
   // ③ ways and ground: the haul road down to the water's edge, leaf litter under the trees, ferns in the damp
+  // (the benches' faces are cliffs: the road is a ramp cut through them, falling evenly from the rim to the water's edge)
+  { const pts = R.ramp, len = []; let tot = 0; for (let i = 1; i < pts.length; i++) { tot += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); len.push(tot); } const y0 = L.h(pts[1][0], pts[1][1]), y1 = R.pit.water + 0.5, l0 = len[0];
+    for (let i = 1; i < pts.length - 0; i++) { const a = pts[i - 1], b = pts[i], n = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 1.2); for (let k = 0; k <= n; k++) { const x = a[0] + ((b[0] - a[0]) * k) / n, z = a[1] + ((b[1] - a[1]) * k) / n, d = (i > 1 ? len[i - 2] : 0) + (Math.hypot(b[0] - a[0], b[1] - a[1]) * k) / n; if (d < l0) continue; L.levelDisc(x, z, 2.4, LR.lerp(y0, y1, (d - l0) / (tot - l0)), 3.5); } } }
   L.road(R.ramp, 3.2, { kind: 'dirt', wobble: 1.2 });
   L.paint('litter', (x, z) => LR.sm(0.3, 0.8, R.woods(x, z)), 'max'); L.paint('grass', (x, z) => 1 - 0.5 * R.woods(x, z), 'min');
   L.paint('tall', (x, z) => 0.4 + 0.4 * LR.fbm(x * 0.05, z * 0.05, 3)); L.paint('fern', (x, z) => LR.sm(0.4, 0.8, R.woods(x, z)) * LR.sm(0.45, 0.6, LR.fbm(x * 0.09 + 2, z * 0.09 + 7, 3)));

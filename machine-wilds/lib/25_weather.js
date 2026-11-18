@@ -17,7 +17,7 @@
     winter:{ cloud: 0.30, dark: 0.0, rain: 0, snowfall: 0, season: 1, wind: 0.2,  fog: 0.0026, fogH: 0.040, turb: 1.2 },
     autumn:{ cloud: 0.42, dark: 0.0, rain: 0, snowfall: 0, season: 0.45, wind: 0.34, fog: 0.0032, fogH: 0.042, turb: 1.4 },
     // mist: low cloud lying in the valleys — the air itself is what you see; lamps cut cones in it and far things are shapes
-    mist:  { cloud: 0.92, dark: 0.45, rain: 0, snowfall: 0, season: 0, wind: 0.1, fog: 0.0125, fogH: 0.034, turb: 1.8 },
+    mist:  { cloud: 0.8, dark: 0.3, rain: 0, snowfall: 0, season: 0, wind: 0.1, fog: 0.0125, fogH: 0.034, turb: 1.8, glow: 1 },
   };
   W.cur = Object.assign({}, W.looks.clear);
   W.set = (o) => {
@@ -50,7 +50,7 @@
     if (W.want.tod !== null) { let d = (W.want.tod - W.tod + 24) % 24; if (d < 0.02) { W.tod = W.want.tod; W.want.tod = null; } else { const sp = Math.max(0.5, Math.min(3.2, d * 0.9)); W.tod = (W.tod + Math.min(d, sp * dt)) % 24; } }
     else W.tod = (W.tod + W.flow * dt) % 24;
     // clouds first, then what falls from them; season turns slowly
-    c.cloud = ease(c.cloud, L.cloud, 5, 7, dt); c.dark = ease(c.dark, L.dark, 6, 6, dt); c.wind = ease(c.wind, L.wind, 4, 6, dt); c.fog = ease(c.fog, L.fog, 7, 8, dt); c.fogH = ease(c.fogH, L.fogH, 7, 8, dt); c.turb = ease(c.turb, L.turb, 6, 6, dt);
+    c.cloud = ease(c.cloud, L.cloud, 5, 7, dt); c.dark = ease(c.dark, L.dark, 6, 6, dt); c.wind = ease(c.wind, L.wind, 4, 6, dt); c.fog = ease(c.fog, L.fog, 7, 8, dt); c.fogH = ease(c.fogH, L.fogH, 7, 8, dt); c.turb = ease(c.turb, L.turb, 6, 6, dt); c.glow = ease(c.glow || 0, L.glow || 0, 6, 6, dt);
     const ready = LR.sm(0.72, 0.92, c.cloud);
     W.rain = ease(W.rain, L.rain * ready * (1 - LR.sm(0.25, 0.6, W.season)), 4, 5, dt);
     W.season = ease(W.season, L.season, 9, 7, dt);
@@ -89,6 +89,9 @@
     // the look: W.punch = contrast (AgX power), W.colour = saturation; rain and snow take colour out, night a little
     const sat = W.colour * (1 - 0.13 * W.rain - 0.09 * W.snow * (1 - golden) - 0.05 * night), con = W.punch + 0.03 * golden - 0.05 * LR.sat(W.rain + W.snowfall);
     P.uFill.value = W.fill * (1 + 0.5 * LR.sat(W.cloud * 1.4 - 0.5)); P.uBounce.value = W.bounce; P.uShaft.value = W.shafts;
+    // mist after dark holds a light of its own (the moon and the last of the sky, scattered through it): trunks and machines stand
+    // dark against it instead of sinking into it.  W.airGlow sets how much (0.015: a moonlit fog); by day it is nothing
+    P.uAirGlow.value.w = (c.glow || 0) * (W.airGlow === undefined ? 0.015 : W.airGlow) * LR.sm(0.12, -0.08, sunY);
     P.uGrade.value.set(con, sat, 0.26, 0.022);
     P.uTintG.value.set(1 + 0.05 * golden - 0.05 * night - 0.03 * W.rain, 1 + 0.01 * golden - 0.005 * night, 1 - 0.07 * golden + 0.1 * night + 0.03 * W.rain + 0.03 * W.snow);
     P.uLiftG.value.set(0.004 + 0.004 * night, 0.006 + 0.008 * night, 0.012 + 0.022 * night);

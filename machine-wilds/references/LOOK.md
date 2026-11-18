@@ -4,6 +4,8 @@
 - **Mist is the subject.** `mist` is low cloud lying in the land (`fog` 0.0125 a metre at the ground, thinning with
   height): at 100 m a thing keeps a third of itself, at 200 m a tenth — far machines are shapes, then only lights. The
   realm opens at dusk, at night or before dawn; `LR.wx.key` (0.2 here) keeps a dark picture readable.
+- **Dark, with shapes in it.** After dark the mist holds a light of its own (the moon and the last of the sky caught in it):
+  what stands in it is a silhouette, nearer things darker than farther ones. Without it a night wood in fog is one dark tone.
 - **Lamps.** Every lamp adds to the air pass: a halo (the closed-form integral of 1/d² along the eye's ray) and, with a
   cone, a beam — the stretch of the ray inside the cone walked in six steps, brightest where it runs at the eye. What
   stands in a beam is lit by it. The lens itself glows. Twelve lamps a frame, nearest and brightest first.

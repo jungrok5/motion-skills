@@ -61,6 +61,7 @@ and one standing in the water) is a second, unrelated topic.
 | `scripts/gym.mjs` | the machines walked over the land **in Node** (no browser, seconds): numbers and pass / fail for every unit; `--course` the test course (ramp, drop, side slope, ditch, mound); `--sheet` a side view of each unit on the land's real profile; `--map` the land's relief, slopes, ways and every footfall |
 | `scripts/check.mjs` | the gym on the realm and the course · no two machines in each other's legs · the page loads clean · every scan arrived and baked · spawn, views and tour can be walked (and no climb is past the walker) · the machines audited again in the page · nothing solid on a way · every state reads · the lamps show in the mist · budgets; `--walk` only the walking part |
 | `scripts/render.mjs` | `--cast [kind]` the cast sheet (a kind alone in a studio beside a 1.75 m figure: front, back, both sides, four three-quarters, the walk from both sides, standing, the move's gather / peak / recover, leaving, a turn) · `--shot` · `--views` · `--sheet` (every view × day, dusk, night, rain, snow, mist) · `--tour 12` · `--phone` · `--film` · `--mats` |
+| `scripts/film.mjs` | a film from the shots a realm declares (`film: [{ name, dur, tod, weather, t, cam(u) }]`): every frame's camera and clock are functions of time, so frames are written one by one and a render that stops goes on where it was; `--still` two frames a shot first; `--sound` the footfalls and calls placed from the same functions → `out/film.mp4` |
 | `scripts/fetch-assets.mjs` · `build.mjs` · `new-realm.mjs` | `assets.json` → `assets/` from Poly Haven · sources + engine → `index.html` (`--cdn`: the page reads the scans from Poly Haven's server) · start a realm folder from the starter or `--from iron-valley` |
 | `lib/48_mech.js` | `LR.mech`: frames, planar limbs (2 / 3 segments, the ankle that leans with the fold), feet and toes, neck, head, extras (`fixed spin lag`), the cylinder anchor search — numbers only |
 | `lib/48_mech_gait.js` | ways, units, footfalls on the land, the timetable of a lap (walk · arrive · stand · leave), the command at time t, pressing the ways and footprints into the land, the audit — numbers only |
@@ -120,7 +121,11 @@ fetching. No npm install, no keys. `gym.mjs` needs only Node. The page needs Web
    the eye, one seen from the side, one far (only its lights). Worst first: air and light, then the machines'
    read, then plants and surfaces. `check.mjs my-realm` must print `check OK`; `render.mjs --sheet`, `--phone`.
    Open the page from a server on a machine with a GPU, walk under a machine, listen. `?prof=1` shows the milliseconds.
-9. **Deliver.** The folder (`index.html` + `assets/`) on any static host, or `build.mjs my-realm --cdn --out
+9. **A film, if asked.** Declare five or six shots in `LR.start({ film })` — each a place, an hour, the second of the
+   valley's clock it starts at (ask the gym where a machine is then) and a camera as a function of the shot's time.
+   `film.mjs my-realm --still` (two frames a shot: look at them), `--sound`, then `film.mjs my-realm` in the
+   background: hours on a CPU, resumable. Never commit the MP4.
+10. **Deliver.** The folder (`index.html` + `assets/`) on any static host, or `build.mjs my-realm --cdn --out
    realm.html`. Say how many megabytes arrive, what was measured and what was not, and where the look stops.
 
 ## Rules
@@ -138,6 +143,9 @@ fetching. No npm install, no keys. `gym.mjs` needs only Node. The page needs Web
 - **Every joint is a mechanism; every part rides one bone; the script picks the cylinders.** If no anchor pair keeps a
   rod in its barrel, the joint's range is too wide: change the gait, do not hide the cylinder.
 - **Nothing on a way.** Trees, scans and ruins keep off with `LR.mech.wayDist`; `check.mjs` fails on a solid there.
+- **Dark, not murky.** After dark the mist holds a light of its own (`glow` in the look, `LR.wx.airGlow`), so trunks and
+  machines stand as shapes against it; `check.mjs` warns when a night picture is flat (light ± under 0.045) and fails a
+  blank one. A view that is black is a view pointed at nothing: move it.
 - **Lamps are the picture.** Give each kind lamps with a reason (an eye, a search light, running lights, a beacon),
   few beams (the passes carry 12 lamps a frame, nearest and brightest first), colours that separate the kinds.
 - **Code-only motion, CC0 scans, nothing generated committed.** Sound is synthesised in the page. ElevenLabs or any
@@ -167,7 +175,9 @@ fetching. No npm install, no keys. `gym.mjs` needs only Node. The page needs Web
   color, power, cone, range, lens, glow })`, `k.n(sides)`, `k.fine`, `k.mid`. Bones: `body`, `hip_<L>`,
   `thigh|shin|tarsus_<L>`, `foot_<L>`, `toe<i>_<L>`, `act_<joint>_<L>_cyl|_rod`, `neck_01…`, `head`, extras by name.
 - Everything of scanned-realm's contract: `assets.json`, `LR.start({ materials, build, weather: { tod, weather },
-  round, tour, views, strings })`, `LR.mat.photo`, `LR.models`, `LR.atlas`, `LR.Geo`, `LR.world`, the page options
+  round, film, tour, views, strings })`, `LR.mat.photo`, `LR.models`, `LR.atlas`, `LR.Geo`, `LR.world` (a solid may carry
+  `{ y0, y1 }`: it then stops only who is at that height — a parapet on a deck — and does not count as standing on a way under it), the page options
   (`?q= ?scale= ?scan=0 ?safe=1 ?prof=1 ?tod= ?wx=clear|rain|snow|mist ?at= ?tour=0 ?off=…,lamps,shake`), still mode
   `?render=1` with `window.realm.shot({ cam, up, tod, weather, t, frames, dof, focus })`, `window.READY`.
-  `?cast=<kind>` opens the studio.
+  `?cast=<kind>` opens the studio; `?t=150` starts the live page's clock at that second. A still keeps the hour and weather of the
+  one before it unless told: give every `--shot` its `tod` and `wx`. `window.realm.reel.{ shots, pose, warm, frame }` is what `film.mjs` drives.
