@@ -77,7 +77,8 @@
     // air: mist at dawn and dusk and after dark, thick in rain and snow
     // morning mist lies thick and burns off by nine; an evening only goes a little golden
     const low = LR.sm(0.42, 0.02, Math.abs(sunY)) * (1 - LR.sat(W.rain + W.snowfall)), dawn = LR.sm(4.2, 5.4, W.tod) * LR.sm(9.2, 7.4, W.tod);
-    const fog = c.fog * (1 + low * (0.6 + 4.6 * dawn)) + night * 0.0012;
+    // (a look that is already mist does not grow sixfold at dawn: past 0.016 the valley is a white wall and nothing reads)
+    const fog = Math.max(c.fog * (1 + 0.25 * low), Math.min(c.fog * (1 + low * (0.6 + 4.6 * dawn)), 0.016)) + night * 0.0012;
     U.uFog.value.set(fog, LR.lerp(c.fogH, 0.02, low * 0.5), W.baseY, 0);
     // woods hold damp air: thick at dawn and toward evening, so the sun shows as shafts between the trunks
     if (LR.canopy) { const lowS = LR.sm(0.66, 0.14, sunY) * day; LR.render.U.uCanopy.value.set(LR.canopy.shade, LR.canopy.mist * (0.004 + 0.017 * lowS) * (1 - 0.75 * LR.sat(W.rain + W.snowfall)), 0, 0); }

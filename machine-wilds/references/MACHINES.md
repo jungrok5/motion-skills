@@ -69,6 +69,27 @@ better ground), `wade`, `clear`, `steepSlow`, `reachMax`, `settle` / `settleTime
    Route options: `width` (the corridor: its middle 90 % is eased, trees keep off it), `grade` (0.2), `ease` (0.8),
    `rough`, `worn`.
 
+## A kind that flies — `flight: { … }` and `spawn(kind, { fly })`
+A flyer has no `limbs`. Its wings and tail are `extras` of type `spin` (a hinge and its axis) that the flight drives,
+and its line is points `[x, z, metres over the land there]` — a closed curve like a way, in the air.
+```js
+M.define('kite', { tonnes: 0.9, limbs: [], lodK: 5, cry: [47, 560, 0.8, 0.5],          // lodK: keep the fine build this many times further (it is small and far)
+  extras: [{ name: 'wing_L1', type: 'spin', at: […], axis: [1, 0, 0] }, { name: 'wing_L2', parent: 'wing_L1', … }, …, { name: 'tail', … }],
+  flight: { speed: 14, beat: 0.87, stroke: [30, 20], fold: 16, dihedral: 7, bout: 9, bob: 0.16, lead: 0.7, bankMax: 52, span: 9.4, gaze: 24,
+            tail: 'tail', wings: [['wing_L1', 'wing_L2'], ['wing_R1', 'wing_R2']] } });
+M.spawn('kite', { fly: V.sky, offset: -3.4, shift: [7, 2.5], phase: 0.23 });            // shift: its place in a skein (right, up); phase: its own beat
+```
+What the flight does, all of it a function of time: it **slows as it climbs and gains coming down** (`speed` × 0.72…1.3);
+it **banks before it turns**, by what the turn `lead` seconds ahead asks at its speed, and its head looks into the turn
+before that; it beats in **bouts** (`bout` seconds: a run of beats, then a glide) — harder on a climb, hardly at all
+coming down or banked over — the outer wing (`stroke[1]`, folding by `fold` on the upstroke) a little behind the inner;
+and **the body rides the beat** (`bob`: lowest in the middle of the downstroke). The beat rate follows the size: a
+9 m span beats under once a second; a thing that beats four times a second is the size of a crow.
+
+Lay the line like a way: turns wide enough for the speed (at 14 m/s a 40 m radius is 0.5 g), no climb steeper than
+one in four, never lower over the land than the trees and the tallest walker's lifted head. Lamps on a flyer look
+down (`gaze`): from the ground a kite at night is a beam sweeping the mist and a red point crossing the sky.
+
 ## Parts — `build(k)`
 `k.limbs({ style })` builds every leg from the numbers: hip bearing and yoke (or turret and arm), a drum, a spar with
 covers or flanges and a hose, a fork with a pin and bolted caps, the cup, the ball, the hub, toes on pins, and across
@@ -110,6 +131,10 @@ k.lamp('head', { at: [1.2, -0.3, 0], dir: [0.97, -0.24, 0], color: [0.72, 0.9, 1
 | move | gather ≥ 4 %, overshoot ≥ 3 % of the main channel | add the key before and the key after |
 | loop, determinism | one lap later the same pose (≤ 20 mm); the same instant twice the same pose | something reads a clock or a random number at run time |
 | apart (check.mjs) | no two machines closer than their legs reach | space `offset`s on a shared way, part the ways |
+| flight: clear | ≥ 26 m over the land under it and under its wingtips | raise the line there (trees are 22 m; a tall walker's head more) |
+| flight: bank, load | ≤ 58° and ≤ 1.9 g; banked into ≥ 92 % of its turns | a turn too tight for its speed: widen it, or lower `speed` |
+| flight: pitch | ≤ 24° | the line climbs or falls too steeply: spread the height over more points |
+| wings | every hinge within ±62°; ≥ 20° of stroke at the shoulder; beating ≥ 15 % of the lap and gliding some of it; the body rides the beat ≥ 30 mm | `stroke`, `fold`, `bout`, `bob` |
 | the way (check.mjs) | nothing solid on it | `LR.mech.wayDist(x, z)` in every `avoid`; move the ruin |
 
 `gym.mjs --course` walks each kind alone over an oval whose straight carries a 14° ramp, a level top, a 1.2 m drop,

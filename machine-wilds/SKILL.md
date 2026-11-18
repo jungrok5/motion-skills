@@ -22,9 +22,9 @@ scans allowed) with machines, relief and mist added; the machines' kinematics, c
 of their designs, names or assets is here** — every machine and place is designed from the topic
 (`references/SOURCE.md`). Scans are from <https://polyhaven.com> (CC0) and are not committed.
 Built and proven on `examples/iron-valley` 「쇠울림 골짜기」 (a valley 640 m across with 36 m of relief: a broken
-viaduct, a maintenance hall with a camp fire, pylons, a container yard; three kinds of machine — a 25 m long-necked
-four-legged watcher, a string of six-legged carriers, a 73 m eight-legged relic on the rim — and one that fell long
-ago). `starter/` (Lantern Quarry: a flooded quarry cut in benches, two wardens of a fourth kind, one walking the rim
+viaduct, a maintenance hall with a camp fire, pylons, a container yard; four kinds of machine — a 25 m long-necked
+four-legged watcher, a string of six-legged carriers, a 73 m eight-legged relic on the rim, a skein of five kites
+with nine-metre wings overhead — and one that fell long ago). `starter/` (Lantern Quarry: a flooded quarry cut in benches, two wardens of a fourth kind, one walking the rim
 and one standing in the water) is a second, unrelated topic.
 
 **Fixed by the skill (the style)**
@@ -65,6 +65,7 @@ and one standing in the water) is a second, unrelated topic.
 | `scripts/fetch-assets.mjs` · `build.mjs` · `new-realm.mjs` | `assets.json` → `assets/` from Poly Haven · sources + engine → `index.html` (`--cdn`: the page reads the scans from Poly Haven's server) · start a realm folder from the starter or `--from iron-valley` |
 | `lib/48_mech.js` | `LR.mech`: frames, planar limbs (2 / 3 segments, the ankle that leans with the fold), feet and toes, neck, head, extras (`fixed spin lag`), the cylinder anchor search — numbers only |
 | `lib/48_mech_gait.js` | ways, units, footfalls on the land, the timetable of a lap (walk · arrive · stand · leave), the command at time t, pressing the ways and footprints into the land, the audit — numbers only |
+| `lib/48_mech_fly.js` | kinds that fly: a line in the air, speed with the climb, bank before the turn, wing beats in bouts and glides, the body riding the beat, its audit — numbers only |
 | `lib/48_mech_kit.js` | the part kit: `k.bone(name, (g) => …)`, `k.limbs()`, `k.neckLinks()`, `k.loft`, `k.lamp`, palette roles, three levels of detail |
 | `lib/48_mech_run.js` | the machines in the page: one skinned mesh a level a unit, lamps, the feet the walker bumps into, ground shake, footfall events, the head that turns, the studio, wrecks |
 | `lib/17_mechmats.js` | recipes: `steel chrome paintmetal rustplate ceramic rubber concrete asphalt` (a scan may take any of their names) |
