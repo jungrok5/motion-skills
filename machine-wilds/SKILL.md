@@ -35,6 +35,9 @@ and one standing in the water) is a second, unrelated topic.
   solids and deep water), planted feet fixed in the world, swings that clear the ground between, the body's height and
   tilt from its feet through a window as long as its mass asks, a soft limit that lowers the body before a leg runs
   out, shorter steps on a grade. Every pose is a pure function of time — what is drawn is what was checked.
+- **Old, not clean**: rusted and mossed industrial hydraulics, some under pale ceramic shells. Every kind has an `age`:
+  grime in the creases, rust run down from seams and fittings, moss on what faces up — laid in the machine's own space,
+  so it walks with it. Rods stay bright where the seals wipe them. No kind is factory-new.
 - **A body has weight**: heavier → longer cycle, more of it on the ground, slower sink into each step; it gathers
   before it leaves and runs on a little when it stops; it breathes while it stands; moves are key poses with an
   anticipation and an overshoot; trailing parts lag. No downloaded or generated motion.

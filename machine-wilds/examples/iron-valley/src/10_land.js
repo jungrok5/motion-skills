@@ -47,8 +47,9 @@ const V = {
   };
 }
 V.land = () => {
+  // the far hills are wooded to their shoulders: bare rock and a little snow only at the very top
   const sm = LR.sm, L = LR.land.create({ height: V.base, half: 320, res: 0.5,
-    biome: (x, z, h, slope) => { const r = Math.hypot(x, z), n = LR.noise(x * 0.004 + 3, z * 0.004 + 1); return [sm(300, 380, r) * sm(0.6, 0.36, slope) * sm(620, 430, h + n * 60) * sm(0.15, 0.45, n + 0.4), sm(0.4, 0.62, slope) * sm(300, 360, r), sm(560, 700, h + n * 50)]; } });
+    biome: (x, z, h, slope) => { const r = Math.hypot(x, z), n = LR.noise(x * 0.004 + 3, z * 0.004 + 1); return [sm(300, 380, r) * sm(0.72, 0.42, slope) * sm(700, 520, h + n * 60) * (0.72 + 0.28 * sm(0.15, 0.45, n + 0.4)), sm(0.5, 0.74, slope) * sm(300, 360, r), sm(680, 800, h + n * 50)]; } });
   // the brook: down the valley's axis, its level just under the land and never rising downstream
   const pts = []; for (let x = -316; x <= 316; x += 14) pts.push([x, V.axis(x) + (LR.fbm(x * 0.05, 3, 2) - 0.5) * 7]);
   let prev = 1e9; V.brook = pts.map((p) => { const y = Math.min(V.base(p[0], p[1]) - 1.15, prev - 0.03); prev = y; return [p[0], p[1], y]; });

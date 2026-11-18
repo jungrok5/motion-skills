@@ -21,10 +21,12 @@ have negative z). A limb's segment, a neck link, a toe, a cylinder: X the hinge 
 | · `ball`, `toes`, `toeLen` | the foot's ball radius (the ankle's height over the sole), toe count or spread angles, toe length |
 | · `act`, `hipDrop`, `coxa`, `style` | which joints are powered · the yoke under a mammal hip · the insect's arm · `'shell'` (pale covers on a dark spar) or `'girder'` |
 | `neck: { at, links: [[length, elevation°]…] }`, `head: { len }` | a chain of links and a head that keeps level like a sensor on a gimbal |
+| `flight`, `lodK`, `cry` | a kind that flies (below) · keep the fine build this many times further · `[period s, Hz, seconds, gain]`: a call from the air |
 | `extras` | bones of your own: `fixed`, `spin` (`rate` °/s about `axis`), `lag` (trails `lag` seconds behind its parent, bends up to `maxDeg`) |
 | `gait` | below |
 | `idle: { period, breath, shift, scan }` | what moves while it stands: the body's rise (m), its sideways shift (m), the head's sweep (°) |
 | `moves: { name: { dur, main, sound: [t, Hz, seconds, gain], keys: { channel: [[t, v]…] } } }` | key poses. Channels: `body.dx dy dz roll pitch yaw` · `neck.pitch neck.yaw` · `head.pitch yaw roll` · `light` · `extra.<name>`. `main` is the channel the checks read: it must first go **against** its direction (≥ 4 %: the gather) and pass rest on the way back (≥ 3 %: the overshoot) |
+| `age` | 0…1 (0.55): how long it has stood in the weather. The kit lays patches in the machine's own space — more on what faces up — and the surface turns them into grime, rust run down from seams, and moss on tops and north sides. Rods, rubber and lenses stay as they are. A machine that still works is 0.4–0.6, one nobody tends 0.8–1; a wreck takes `moss` on top of that |
 | `aware`, `lensGain`, `palette`, `build(k)` | how near someone must come for the head to turn (m; 0 never) · how bright the lenses glow · role → `[material, '#tint']` · the parts |
 
 ### The gait, from the mass

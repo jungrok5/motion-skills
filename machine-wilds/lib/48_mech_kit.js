@@ -121,7 +121,14 @@
         for (const sx of [-1, 1]) g.box(sx * w2 * 0.52, L - w2 * 0.05, 0, w2 * 0.1, w2 * 0.7, w2 * 0.5, { soft: 0.25 });
         if (style === 'shell') { k.mat('shell'); k.loft('y', [[L * 0.12, w2 * 0.3, w2 * 0.5, w2 * 0.12, 0, 3], [L * 0.5, w2 * 0.36, w2 * 0.54, w2 * 0.12, 0, 3], [L * 0.9, w2 * 0.28, w2 * 0.46, w2 * 0.1, 0, 3]], { sides: 12, from: -0.45 * Math.PI, to: 0.45 * Math.PI, caps: false }); }
         if (k.fine) { k.mat('rubber'); g.tube([[w2 * 0.2, 0, -w2 * 0.38], [w2 * 0.22, L * 0.5, -w2 * 0.42], [w2 * 0.2, L, -w2 * 0.38]], w2 * 0.035, { sides: 5 }); } })); return this; }
-    done() { const g = this.g.geometry(), bone = new Float32Array(this.g.n); for (const r of this.ranges) bone.fill(r[2], r[0], r[1]); g.setAttribute('bone', new T.BufferAttribute(bone, 1)); return { geometry: g, lamps: this.lamps, tris: this.g.tris, min: this.g.min.slice(), max: this.g.max.slice() }; }
+    // age: nothing here left a works this decade.  spec.age (0…1; 0.55) lowers the vertex's alpha in patches laid in the
+    // machine's own space — more on what faces up, where water stands — and the surface shader turns that into grime, into
+    // rust that has run down from seams, and (on tops and north sides) into moss.  Lamps, rods and rubber are left alone.
+    weather() { const G = this.g, age = this.S.age === undefined ? 0.55 : this.S.age; if (!(age > 0)) return; const size = Math.max(G.max[0] - G.min[0], G.max[1] - G.min[1], G.max[2] - G.min[2], 1), f = 1.5 / Math.sqrt(size), skip = new Set(['chrome', 'rubber'].map((n) => LR.mat.L(n)));
+      for (let i = 0; i < G.n; i++) { if ((G.M[i * 4 + 1] & (LR.FLAG.LAMP | 8 | 32)) || skip.has(G.M[i * 4])) continue; const x = G.P[i * 3], y = G.P[i * 3 + 1], z = G.P[i * 3 + 2], ny = G.N[i * 4 + 1] / 127;
+        const n1 = LR.fbm(x * f + y * f * 0.6 + 11.3, z * f - y * f * 0.5 + 4.1, 3), n2 = LR.fbm(x * f * 3.1 + 2.7, z * f * 3.1 + y * f * 2.2, 2), k = age * LR.sat((n1 - 0.5) * 3.2 + (n2 - 0.5) * 0.9 + 0.3 + Math.max(0, ny) * 0.55 - Math.max(0, -ny) * 0.15);
+        G.C[i * 4 + 3] = Math.round(G.C[i * 4 + 3] * (1 - 0.62 * k)); } }
+    done() { this.weather(); const g = this.g.geometry(), bone = new Float32Array(this.g.n); for (const r of this.ranges) bone.fill(r[2], r[0], r[1]); g.setAttribute('bone', new T.BufferAttribute(bone, 1)); return { geometry: g, lamps: this.lamps, tris: this.g.tris, min: this.g.min.slice(), max: this.g.max.slice() }; }
   }
   M.Kit = Kit;
   // the three builds of a kind (near, middle, far), made once

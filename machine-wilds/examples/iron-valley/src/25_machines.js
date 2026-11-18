@@ -8,7 +8,7 @@ V.machines = () => {
   const M = LR.mech;
   const CL = { kind: 'mammal', width: 0.7, drum: 0.76, ball: 0.44, toes: 3, toeLen: 1.5, act: [1, 1, 1], hipDrop: 0.35 };
   const craneLegs = [Object.assign({}, CL, { name: 'FL', at: [3.2, -1.0, -1.5], segs: [6.4, 5.7, 3.4], knee: 1, gamma: 11, home: [4.4, -2.9] }), Object.assign({}, CL, { name: 'RL', at: [-3.5, -1.0, -1.7], segs: [6.4, 5.7, 3.4], knee: -1, gamma: 11, home: [-4.9, -3.2] })];
-  M.define('crane', { title: '두루미', tonnes: 86, ride: 15.6, belly: [4.6, 1.9, 1.2], aware: 60, build: (k) => V.parts.crane(k),
+  M.define('crane', { title: '두루미', age: 0.6, tonnes: 86, ride: 15.6, belly: [4.6, 1.9, 1.2], aware: 60, build: (k) => V.parts.crane(k),
     palette: { shell: ['ceramic', '#dfe0dc'], dark: ['paintmetal', '#2a2e31'], frame: ['paintmetal', '#566068'], accent: ['paintmetal', '#4f8f96'] },
     limbs: [...craneLegs, ...craneLegs.map(M.mirror)],
     neck: { at: [5.0, 0.4, 0], links: [[2.5, 68], [2.4, 60], [2.2, 48], [2.0, 34], [1.7, 20]] }, head: { len: 3.0 },
@@ -27,7 +27,7 @@ V.machines = () => {
   // 등짐: six insect legs under a flat bed; it carries what it was last given and has not been unloaded since
   const PL = { kind: 'insect', width: 0.42, drum: 0.5, ball: 0.3, toes: 4, toeLen: 0.8, act: [1, 1], coxa: 1.2, style: 'girder' };
   const porterLegs = [[3.6, 4.4, 'F'], [0, 0, 'M'], [-3.6, -4.4, 'R']].map(([x, hx, n]) => Object.assign({}, PL, { name: n + 'L', at: [x, -0.3, -1.5], segs: [4.4, 5.6], knee: 1, home: [hx, n === 'M' ? -5.0 : -4.6] }));
-  M.define('porter', { title: '등짐', tonnes: 38, ride: 4.9, belly: [3.6, 0.9, 1.0], aware: 26, lensGain: 18, build: (k) => V.parts.porter(k),
+  M.define('porter', { title: '등짐', age: 0.8, tonnes: 38, ride: 4.9, belly: [3.6, 0.9, 1.0], aware: 26, lensGain: 18, build: (k) => V.parts.porter(k),
     palette: { frame: ['paintmetal', '#8f9468'], rust: ['rustplate', '#cfc6b6'], dark: ['paintmetal', '#33362f'] },
     limbs: [...porterLegs, ...porterLegs.map(M.mirror)], head: { len: 1.4 }, neck: { at: [4.3, 0.35, 0], links: [[0.9, 12]] },
     extras: [{ name: 'radar', type: 'spin', parent: 'body', at: [-2.6, 5.3, 0.6], dir: [0, 1, 0], axis: [0, 1, 0], xdir: [1, 0, 0], rate: 34, len: 0.6 },
@@ -40,7 +40,7 @@ V.machines = () => {
   // 마루: a relic on eight legs — a relay station that never stopped walking its rounds
   const TL = { kind: 'mammal', width: 2.6, drum: 3.0, bar: 0.5, ball: 1.6, toes: 4, toeLen: 5.0, act: [1, 1], hipDrop: 1.5, style: 'girder', actLat: 1.5 };
   const titanLegs = [[18, 2.5, 1, 'A'], [6, 1.5, 1, 'B'], [-6, -1.5, -1, 'C'], [-18, -2.5, -1, 'D']].map(([x, dx, knee, n]) => Object.assign({}, TL, { name: n + 'L', at: [x, -2, -9], segs: [17, 18.5], knee, home: [x + dx, -12.5] }));
-  M.define('ridge', { title: '마루', tonnes: 5200, ride: 34, belly: [20, 4, 7], aware: 0, lensGain: 22, build: (k) => V.parts.ridge(k),
+  M.define('ridge', { title: '마루', age: 1, tonnes: 5200, ride: 34, belly: [20, 4, 7], aware: 0, lensGain: 22, build: (k) => V.parts.ridge(k),
     palette: { frame: ['rustplate', '#bdb4a4'], rust: ['rustplate', '#d9cfbf'], dark: ['paintmetal', '#3a3d3b'], shell: ['concrete', '#c9c6be'] },
     limbs: [...titanLegs, ...titanLegs.map(M.mirror)], neck: { at: [24, -3.5, 0], links: [[3.2, -62]] }, head: { len: 6 },
     extras: [{ name: 'mast', type: 'lag', parent: 'body', at: [-14, 16, 2], dir: [0, 1, 0], len: 22, lag: 0.9, gain: 1.2, maxDeg: 5 }, { name: 'cable_1', type: 'lag', parent: 'body', at: [10, -4.5, -5], dir: [0, -1, 0], len: 13, lag: 1.1, gain: 1.4, maxDeg: 16 }, { name: 'cable_2', type: 'lag', parent: 'body', at: [-9, -4.5, 4], dir: [0, -1, 0], len: 17, lag: 1.3, gain: 1.4, maxDeg: 16 }, { name: 'cable_3', type: 'lag', parent: 'body', at: [-2, -4.5, -6], dir: [0, -1, 0], len: 9, lag: 0.9, gain: 1.4, maxDeg: 16 }],
@@ -51,7 +51,7 @@ V.machines = () => {
       call: { dur: 24, main: 'body.dy', sound: [7.6, 46, 9, 2.2], keys: { 'body.dy': [[0, 0], [2.6, -0.7], [8, 1.5], [16, 1.5], [20.5, -0.3], [24, 0]], 'body.pitch': [[0, 0], [2.6, -0.5], [8, 1.2], [16, 1.2], [20.5, -0.2], [24, 0]], 'head.pitch': [[0, 0], [2.6, 6], [8, -10], [16, -8], [21, 2], [24, 0]], 'head.yaw': [[0, 0], [8, 0], [11, 26], [14, -24], [17, 0], [24, 0]], light: [[0, 1], [6.6, 1], [8.2, 2.2], [15.5, 2.2], [18, 1], [24, 1]] } } } });
   // 솔개: a kite — it has no legs to speak of.  Two-part wings on a keel, a fan of a tail, one eye that looks down into the mist.
   // 0.9 t on a 9 m span: 14 m/s, a beat every 1.15 s in bouts of nine seconds, banked by what each turn asks.
-  M.define('kite', { title: '솔개', tonnes: 0.9, ride: 1.2, tall: 2, aware: 80, lensGain: 30, lodK: 5, cry: [47, 560, 0.8, 0.5], build: (k) => V.parts.kite(k),
+  M.define('kite', { title: '솔개', age: 0.45, tonnes: 0.9, ride: 1.2, tall: 2, aware: 80, lensGain: 30, lodK: 5, cry: [47, 560, 0.8, 0.5], build: (k) => V.parts.kite(k),
     palette: { shell: ['ceramic', '#dcdedb'], dark: ['paintmetal', '#262a2d'], frame: ['paintmetal', '#4d565c'], accent: ['paintmetal', '#4f8f96'] },
     limbs: [], neck: { at: [1.25, 0.12, 0], links: [[0.5, 8]] }, head: { len: 0.9 },
     extras: [{ name: 'wing_L1', type: 'spin', parent: 'body', at: [0.25, 0.22, -0.42], dir: [0, 0, -1], axis: [1, 0, 0], xdir: [1, 0, 0], len: 2.1 }, { name: 'wing_L2', type: 'spin', parent: 'wing_L1', at: [0, 2.1, 0], dir: [0, 1, 0], axis: [1, 0, 0], xdir: [1, 0, 0], len: 2.3 },
@@ -63,7 +63,7 @@ V.machines = () => {
   M.spawn('crane', { name: '두루미 2', route: 'round', offset: 330, halts: [{ at: 0.179, hold: 18, move: 'survey' }, { at: 0.62, hold: 12 }] });
   for (let i = 0; i < 3; i++) M.spawn('porter', { name: '등짐 ' + (i + 1), route: 'bank', offset: i * 42, halts: [{ at: 0.45, hold: 16, move: 'kneel' }, { at: 0.9, hold: 8 }] });
   // five kites in a loose skein: each a little behind, beside and above the one before, each beating in its own time
-  [[0, 0, 0], [3.4, 7, 2.5], [6.6, -8, 4], [10.4, 13, 6.5], [13.2, -15, 3]].forEach((q, i) => M.spawn('kite', { name: '솔개 ' + (i + 1), fly: V.sky, offset: -q[0], shift: [q[1], q[2]], phase: i * 0.23 }));
+  [[0, 0, 0], [1.2, 8, 1.5], [1.9, -9, 2.5], [3.1, 16, 4], [3.6, -18, 3]].forEach((q, i) => M.spawn('kite', { name: '솔개 ' + (i + 1), fly: V.sky, offset: -q[0], shift: [q[1], q[2]], phase: i * 0.23 }));
   M.spawn('ridge', { name: '마루', route: 'rim', offset: 120, halts: [{ at: 0.3, hold: 34, move: 'call' }] });
 };
 // the gym (scripts/gym.mjs): the land and the machines, nothing else

@@ -77,6 +77,14 @@ void main(){
     float grime = smoothstep(1.0, 0.5, vCol.a) * (0.55 + 0.45 * st2.g);
     albedo *= mix(vec3(1.0), vec3(0.62, 0.57, 0.50), grime * 0.6 * (1.0 - metal));
     albedo *= 0.86 + 0.26 * st.r; rough = min(1.0, rough + grime * 0.1); }
+#ifdef SKIN
+  // a machine left out for decades: where the kit has aged it (the vertex's alpha) the steel under the paint and behind the
+  // shells comes through as rust that has run down from seams and fittings — long streaks, laid in the machine's own space
+  if (Q.y > 0.0 && (flags & 64) == 0) { float age = smoothstep(0.93, 0.5, vCol.a); if (age > 0.0) {
+      vec4 r1 = texture(uNoise, vec2((SP.x + SP.z * 0.8) * 0.23, SP.y * 0.034) + 0.37), r2 = texture(uNoise, SP.xz * 0.41 + SP.y * 0.33);
+      float rust = smoothstep(0.50, 0.70, r1.r * 0.62 + r2.g * 0.38 + age * 0.34 - 0.12) * age;
+      albedo = mix(albedo, vec3(0.20, 0.088, 0.04) * (0.65 + 0.7 * r2.b), rust * 0.86); rough = mix(rough, 0.92, rust); metal *= 1.0 - rust * 0.85; } }
+#endif
   // old plaster lets go: where it is low, creased or simply unlucky a patch has fallen and the brick behind shows
   if (li == PLASTER_LAYER) {
     vec2 wq = vec2(vWorld.x * -Ng.z + vWorld.z * Ng.x, vWorld.y);                           // along the wall, up the wall

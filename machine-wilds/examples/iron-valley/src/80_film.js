@@ -1,4 +1,4 @@
-// 쇠울림 골짜기 · the reel (scripts/film.mjs).  Six shots; in each the camera and the machines' clock are functions of the shot's
+// 쇠울림 골짜기 · the reel (scripts/film.mjs).  Seven shots; in each the camera and the machines' clock are functions of the shot's
 // time, so a frame can be drawn alone.  `t` is the second of the valley's clock the shot starts at — found by asking the gym
 // where a machine is (the walk is a pure function of time).  A camera returns { at, up | y, look | yaw, pitch, fov }.
 {
@@ -12,6 +12,8 @@
     { name: 'approach', dur: 5.5, tod: 20.4, weather: 'mist', t: 141.5, cam: (u, LR, s) => { const b = at('두루미 1', 141.5 + s).W.body.p, h = hold(s); return { at: [-22.6 + h[0], 53 - 7.4 * ease(u)], up: 1.66 + h[1], look: [b[0] + 3, b[1] + 2.5, b[2]], fov: 58 }; } },
     // it stands, lifts its head over the mist and looks: the search light comes round across the eye
     { name: 'survey', dur: 6.5, tod: 20.4, weather: 'mist', t: 155.2, cam: (u, LR, s) => { const r = at('두루미 1', 155.2 + s).W, hd = r.head.p, b = r.body.p, h = hold(s, 1.4); return { at: [-23.2 + h[0], 44.4], up: 1.62 + h[1], look: [mix(b[0], hd[0], 0.72), mix(b[1], hd[1], 0.72), mix(b[2], hd[2], 0.72)], fov: 54 }; } },
+    // the kites come down out of the mist over the viaduct, five beams combing the deck, and bank away west over the one that fell
+    { name: 'kites', dur: 6.5, tod: 20.4, weather: 'mist', t: 44.2, cam: (u, LR, s) => { const P = ['솔개 1', '솔개 2', '솔개 3'].map((n) => at(n, 44.2 + s).W.body.p), h = hold(s, 1.3); return { at: [-22.4 + h[0], 47.5 + 0.8 * ease(u)], up: 1.66 + h[1], look: [0, 1, 2].map((i) => (P[0][i] * 2 + P[1][i] + P[2][i]) / 4), fov: 64 }; } },
     // a carrier on the north bank, at the height of its knees: two amber eyes, feet finding the ground
     { name: 'porter', dur: 6, tod: 20.4, weather: 'mist', t: 16.5, cam: (u, LR, s) => { const r = at('등짐 1', 16.5 + s).W, hd = r.head.p, h = hold(s); return { at: [-19.6 + 1.8 * ease(u) + h[0], -85.6 - 3.2 * ease(u)], up: 1.15 + h[1], look: [hd[0], hd[1] - 1.2, hd[2]], fov: 60 }; } },
     // dawn on the valley floor: a crane walks past the one that fell — every leg its own length on the worn ground
