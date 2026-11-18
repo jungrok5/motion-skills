@@ -60,6 +60,32 @@ was learned putting scans into it (scanned-realm), then the engine's own list (l
   one set: a batch that mixes hours must name them every time.
 - **A tour along the road walked through the cars parked on it.** → The walk map (`check.mjs --walk`) shows it in
   one picture; the cars went to the verge.
+- **"Rusted, mossed hydraulics under some pale shells" was asked for; the watcher came out showroom white.** → The
+  materials had rust and moss in them, but a pale ceramic shell never reached the threshold of either, and nothing on
+  a cast sheet at noon asks "how old is this?". → Every kind has an `age`: the kit lowers the vertex's alpha in
+  patches laid in the machine's own space (more on what faces up), and the surface turns that into grime, into rust
+  streaks that run down from seams, and into moss — all walking with the machine. *Rule:* read the look the owner
+  named off the cast sheet word by word before any mood still; mist hides exactly what was asked for.
+- **A flyer turned about in a circle is never level.** → The first kite sheet showed wings "hanging" in every side
+  view: the studio's oval kept it banked 25° the whole way round. → A flyer's studio is two long straights joined by
+  half circles; it is turned about on a straight, in the middle of a downstroke, and shown banked on purpose after.
+- **A skein strung out over 180 m is five birds, not a flight.** → Offsets of three seconds at 14 m/s are 45 m apart.
+  → Offsets of about a second, a few metres to the side and above: the gym prints where each is at one instant.
+- **The kites' line climbed 27° and pulled 2.6 g.** → A line through points sixty metres apart with twenty metres of
+  height between them is a roller coaster. → No turn tighter than forty metres at 14 m/s, no more than one in four up
+  or down; `gym` fails on pitch, bank and load.
+- **Mist at dawn was a white wall.** → The engine thickens the air sixfold at dawn, which is right for clear weather
+  and absurd on top of a look that is already mist. → Capped; a look that is mist grows by a quarter at most.
+- **Far hills in lawn green with white caps turned a noon still into a cartoon.** → Above the far forest's tree line
+  the land fell back to turf, and the far forest's own albedo was nearly a meadow's. → A wood seen across a valley is
+  dark (its crowns shade each other), and above the trees the biome is rock. Look at one clear-noon still for the
+  horizon even if the piece is all mist.
+- **A lone dark cloud hung in the mist like an ink blot.** → Under mist the sky still broke into clouds, unlit at night
+  against the glowing air. → A mist look closes the sky (`cloud: 1`).
+- **A planted tree stood on a way that had been moved.** → Scatters ask `wayDist`; three trees placed by hand did not.
+  → `check.mjs` names the first solid on a way; hand-placed things are checked like the rest.
+- **The film's sound came back empty.** → Audio is off in a render page; the offline render refused too. → `film.mjs
+  --sound` opens the page with `sound=1`.
 
 ## Scans in the engine (scanned-realm)
 ## Scans

@@ -15,7 +15,7 @@
 {
   const A = (LR.audio = { ready: false, muted: false, volume: 0.8, reverb: true, ctx: null, errors: 0,
     mix: { wind: 1, birds: 1, insects: 1, rain: 1, world: 1, steps: 1, thunder: 1 } });
-  const OFF = !!LR.RENDER || LR.off.has('audio');
+  const OFF = (!!LR.RENDER && !LR.q('sound', '')) || LR.off.has('audio');      // a render is silent — unless it is the sound that is being rendered (?sound=1: film.mjs --sound)
   const win = typeof window !== 'undefined' ? window : {};
   const AC = win.AudioContext || win.webkitAudioContext, OAC = win.OfflineAudioContext || win.webkitOfflineAudioContext;
   const { clamp, sm, lerp } = LR, sat = (x) => (x < 0 ? 0 : x > 1 ? 1 : x), TAU = Math.PI * 2;
