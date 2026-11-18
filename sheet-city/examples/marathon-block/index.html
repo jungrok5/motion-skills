@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en" class="sc-page">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marathon Block City</title>
+<!-- sheet-city worked example: a 12-week marathon training block (see BRIEF.md). Every week is a street of
+     buildings: easy, tempo, interval and long-run kilometres in front, the week's total, the hours on your feet and the
+     kilometres so far behind them. Drag "Peak long run" and the long runs, the totals and the whole skyline behind follow. -->
+<link rel="stylesheet" href="../../lib/sheet.css">
+<style>
+  html, body { background: #241c18; }
+  #sheet { --paper: #fffdf8; --ink: #22201d; --ink-soft: #6c655c; --grid: #e2ddd3; --chrome: #f3efe6; --accent: #e8582a; --loss: #b0281f; --draft: #ffe9a6;
+    --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; --num-font: ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, sans-serif; }
+  #sheet tr.sofar td:not(.label) { background-color: #eef8f5; }   /* kilometres so far: printed on the sheet, in front of the city */
+  #sheet tr.week td.lot  { background-color: #c9eee6; }   /* the week's total: a teal glass skyline at the back */
+  #sheet tr.hours td.lot { background-color: #ded8f5; }   /* hours on feet: lilac                                  */
+  #sheet tr.easy td.lot  { background-color: #e5f3d6; }
+  #sheet tr.tempo td.lot { background-color: #ffe7b0; }
+  #sheet tr.ints td.lot  { background-color: #ffd8df; }
+  #sheet tr.long td.lot  { background-color: #cfe4ff; }
+  #sheet tr.sofar td.label, #sheet tr.week td.label, #sheet tr.long td.label { font-weight: 800; }
+  #sheet tr.head td .v { color: #a2472a; }
+</style>
+</head>
+<body>
+<div class="sc-stage">
+  <canvas id="city" layoutsubtree content="drawable" aria-label="A 12-week marathon training plan drawn as a model city on a wooden desk">
+    <div id="sheet" drawable></div>
+  </canvas>
+</div>
+<script src="../../lib/hic.js"></script>
+<script src="../../lib/sheet.js"></script>
+<script src="../../lib/sound.js"></script>
+<script src="../../lib/city.js"></script>
+<script>
+(function () {
+  'use strict';
+  var C = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'];
+  var weeks = C.map(function (c, k) { return 'W' + (k + 1); });
+  var easy = [24, 26, 28, 22, 30, 32, 34, 26, 34, 32, 24, 14];
+  var tempo = [6, 6, 8, 5, 8, 10, 10, 6, 10, 8, 6, 3];
+  var ints = [0, 5, 5, 4, 6, 6, 8, 5, 8, 8, 5, 0];
+  var longShare = [0.5, 0.56, 0.62, 0.5, 0.69, 0.75, 0.84, 0.59, 0.91, 1, 0.62];   // of the peak long run; week 12 is the race
+  function row(cls, label, f, total, extra) { var cells = [label].concat(C.map(f)); cells.push(total || ''); return Object.assign({ cls: cls, cells: cells }, extra || {}); }
+  var BOOK = {
+    title: 'Spring 42',
+    rows: [
+      { cls: 'head', cells: ['Spring marathon'].concat(weeks, ['Total']) },
+      // back to front: the totals, then the runs from the longest to the shortest
+      row('week', 'Week km', function (c) { return '=SUM(' + c + '4:' + c + '7)'; }, '=SUM(B2:M2)'),
+      row('hours', 'Hours on feet', function (c) { return '=ROUND(' + c + '2*$B$9/60,1)'; }, '=SUM(B3:M3)', { unit: 0.5, fmt: { dp: 1 } }),
+      row('easy', 'Easy', function (c, k) { return String(easy[k]); }, '=SUM(B4:M4)'),
+      row('long', 'Long run', function (c, k) { return k === 11 ? '42.2' : '=ROUND($B$10*' + longShare[k] + ',0)'; }, '=SUM(B5:M5)'),
+      row('tempo', 'Tempo', function (c, k) { return String(tempo[k]); }, '=SUM(B6:M6)'),
+      row('ints', 'Intervals', function (c, k) { return String(ints[k]); }, '=SUM(B7:M7)'),
+      // a running sum, printed flat in front of the city (as a building it would hide behind the week totals):
+      // every edit's light hops along it week by week
+      row('sofar', 'Km so far', function (c, k) { return k ? '=' + C[k - 1] + '8+' + c + '2' : '=B2'; }, '=M8'),
+      { cls: 'knob', cells: ['Easy pace min/km', '6.1'], fmt: { dp: 1 } },
+      { cls: 'knob', cells: ['Peak long run km', '32'] }
+    ],
+    city: 'B2:M7',
+    widths: { A: 178, 'default': 90 },
+    rowH: 58,
+    fmt: { dp: 0 },
+    slider: { cell: 'B10', min: 20, max: 38, step: 1, label: 'Peak long run km' },
+    select: 'H6',
+    labels: { undo: 'Undo', sound: 'Sound' }
+  };
+  var book = SheetBook.create(document.getElementById('sheet'), BOOK);
+
+  SheetCity.start({
+    canvas: document.getElementById('city'), sheet: document.getElementById('sheet'), book: book,
+    unit: 4, storey: 14, tallest: 470, deepest: 50,        // one storey = 4 km (hours on feet: half an hour)
+    facade: { week: 'curtain', hours: 'bays', long: 'ribbon', 'default': 'punched' },
+    camera: { yaw: 0.24, pitch: 0.62 },
+    look: {
+      backdrop: '#241c18', desk: '#7b5233', deskLine: '#b88a62', deskKind: 'wood', grain: 0.12, paper: '#f7f1e6',
+      sun: [0.6, 0.36, -0.46], sunColor: '#ffc98a', sunPower: 1.4, sky: '#4a5676', bounce: '#9c6a44', ambient: 0.95,
+      window: { x0: 0.04, y0: 0.0, x1: 1.0, y1: 1.02, soft: 0.1, bars: [2, 1], bar: 0.007 },
+      glass: '#4f5c78', lit: '#ffb661', litShare: 0.15, accent: '#e8582a', pulse: '#ff8a4c', ring: '#ffd27a', vignette: 0.3, contrast: 0.22
+    },
+    props: function (P, W, H) {
+      var pen = 470;
+      return [
+        // a felt-tip pen: it makes the first edit (a custom writer: lying along x, tip at its far end)
+        P.object({ at: [-W / 2 + 120, H / 2 + 105], yaw: -0.12, lift: 10, writer: true, tip: [pen, 0, 0], parts: [
+          P.lathe([[0, 9.5], [40, 10]], '#1f1f22', { axis: 'x', gloss: 0.7, capStart: true }),
+          P.lathe([[40, 10], [380, 10]], '#e8582a', { axis: 'x', gloss: 0.6, sides: 18 }),
+          P.lathe([[380, 10], [440, 7], [458, 3]], '#1f1f22', { axis: 'x', gloss: 0.5 }),
+          P.lathe([[458, 3], [pen, 1.2]], '#2d2d33', { axis: 'x', gloss: 0.2 })
+        ] }),
+        // a water bottle behind the sheet, at the far left
+        P.object({ at: [-W / 2 + 40, -H / 2 - 120], parts: [
+          P.lathe([[0, 44], [6, 47], [150, 47], [190, 40], [214, 22]], ['#2f8f86', '#3aa79c', '#3aa79c', '#2f8f86'], { gloss: 0.85, capStart: true }),
+          P.lathe([[214, 22], [244, 22], [248, 17]], '#26282b', { gloss: 0.3 }),
+          P.torus([0, 252, 0], 11, 3.2, '#26282b', 0.3, 'z')
+        ] }),
+        // a stopwatch lying in front, at the right
+        P.object({ at: [W / 2 - 60, H / 2 + 110], yaw: 0.4, parts: [
+          P.lathe([[0, 40], [16, 40]], '#c7c9cc', { gloss: 0.95, capStart: true, capEnd: false }),
+          P.lathe([[16, 40], [16, 35], [14, 0.1]], ['#c7c9cc', '#f4f1e8'], { gloss: 0.6 }),
+          P.box([-2, 2, -52], [2, 14, -40], '#c7c9cc', 0.9),
+          P.box([-5, 4, -60], [5, 12, -52], '#e8582a', 0.5),
+          P.box([-1.2, 14.6, -26], [1.2, 15.4, 0], '#e8582a', 0.3)
+        ] })
+      ];
+    },
+    // the pen makes the first edit: a harder tempo in week 7 — the week's total, the hours and every week after it rise
+    intro: { swoop: true, write: { cell: 'H6', text: '14' } },
+    sound: { scale: [0, 3, 5, 7, 10], base: 196, timbre: 'glass' },
+    hint: 'Click a rooftop, type kilometres, press Enter — or drag Peak long run'
+  });
+})();
+</script>
+</body>
+</html>

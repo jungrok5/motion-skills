@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Winter Fair — a knitted page</title>
+<!--
+  knitted-page template: the house example of the style (a village winter-fair poster knitted in three colourways).
+  Copy it with scripts/new-page.mjs and redesign EVERYTHING topic-shaped: the card's words and controls, the yarns (the
+  colourways and `palette`), the gauge (`stitch`, card size), the motifs, the table, the needles, what lies under the
+  knitting (#under) and the wording of the hint. Keep the structure:
+    canvas#stage[layoutsubtree][content=drawable]
+      #page[drawable]  > .knit-mount > #card.knit-card      the knitted page (laid out in stitch units)
+      #under[drawable] > .knit-mount > .knit-under          what unravelling reveals (optional; live when bare)
+  Stitch units: one stitch is --sw × --sh design px (here 10 × 8). Put every edge on that grid so letters, rules and
+  motifs fall on whole stitches. Text must be big and heavy: a letter needs ≥ 6 stitches of height to read.
+-->
+<style>
+  :root { color-scheme: dark; --sw: 10px; --sh: 8px; }
+  html, body { margin: 0; height: 100%; background: #1d0f08; overflow: hidden; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  #stage.knit-grab, #stage.knit-grab * { cursor: grab !important; }
+  #stage.knit-pull, #stage.knit-pull * { cursor: grabbing !important; }
+  #page, #under { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; }
+  .knit-mount { position: absolute; left: 0; top: 0; }
+
+  /* ---- the knitted page: 1200 × 720 design px = 120 × 90 stitches ---- */
+  .knit-card {
+    --bg: #efe6d2; --ink: #23365e; --accent: #c4402f;
+    position: relative; width: 1200px; height: 720px; overflow: hidden;
+    background: var(--bg); color: var(--ink);
+    font-family: "Arial Rounded MT Bold", ui-rounded, "SF Pro Rounded", Nunito, Inter, system-ui, sans-serif; font-weight: 900;
+  }
+  .knit-card.c1 { --bg: #1f2c4a; --ink: #eee4cc; --accent: #e1a43c; }
+  .knit-card.c2 { --bg: #2f5b45; --ink: #f0e6cf; --accent: #c8392e; }
+  .knit-card ::selection { background: var(--accent); color: var(--bg); }
+  .knit-card > * { position: absolute; margin: 0; }
+  .band { left: 0; width: 1200px; }
+  .band.top { top: 8px; } .band.bot { top: 640px; }
+  #head {
+    left: 70px; top: 96px; width: 760px; height: 304px; overflow: hidden;
+    font-size: 152px; line-height: 152px; letter-spacing: -0.01em; white-space: pre-wrap;
+    outline: none; caret-color: transparent; cursor: text;
+  }
+  .when { left: 70px; top: 408px; width: 780px; font-size: 64px; line-height: 72px; letter-spacing: .02em; color: var(--accent); }
+  .star { left: 880px; top: 120px; }
+  .row { left: 70px; top: 504px; width: 1060px; height: 104px; }
+  .row > * { position: absolute; top: 0; }
+  .ways { left: 0; border: 0; padding: 8px 0; margin: 0; display: flex; gap: 20px; }
+  .ways label { display: block; cursor: pointer; }
+  .ways input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+  .ways span { display: block; width: 60px; height: 88px; box-sizing: border-box; background: var(--c); border: solid var(--ink); border-width: 8px 10px; }
+  .ways input:checked + span { box-shadow: inset 0 0 0 10px var(--accent); }
+  .ways input:focus-visible + span { outline: 8px solid var(--accent); }
+  .knit-card button {
+    height: 104px; box-sizing: border-box; border: 0; border-radius: 0; margin: 0; cursor: pointer;
+    font: inherit; font-size: 60px; line-height: 104px; letter-spacing: .08em; text-transform: uppercase; padding: 0 30px; text-align: left; white-space: nowrap;
+  }
+  #going { left: 250px; width: 370px; color: var(--ink); background: transparent; box-shadow: inset 0 0 0 10px var(--ink); }
+  #unravel { left: 650px; width: 410px; color: var(--bg); background: var(--ink); font-size: 66px; }
+  #unravel:hover, #going:hover { background: var(--accent); color: var(--bg); }
+  .knit-card button:focus-visible { outline: 8px solid var(--accent); outline-offset: 8px; }
+
+  /* ---- under the knitting: a raffle ticket left on the table (same 1200 × 720 box) ---- */
+  .knit-under { position: relative; width: 1200px; height: 720px; font-family: Georgia, "Times New Roman", serif; }
+  .ticket {
+    position: absolute; left: 160px; top: 150px; width: 600px; height: 360px; box-sizing: border-box; padding: 34px 44px 0 64px;
+    background: #f4ecd8; color: #3b2a1c; transform: rotate(-3deg); border-left: 14px dotted #1d0f08;
+    box-shadow: inset 0 0 0 6px #f4ecd8, inset 0 0 0 9px #b8392b;
+  }
+  .ticket .k { margin: 0; font: 700 22px/1 system-ui, sans-serif; letter-spacing: .22em; text-transform: uppercase; color: #b8392b; }
+  .ticket h2 { margin: 14px 0 6px; font-size: 64px; line-height: 1; }
+  .ticket p { margin: 0 0 22px; font-size: 26px; line-height: 1.3; }
+  .ticket button { font: 700 24px/1 system-ui, sans-serif; padding: 14px 22px; border: 0; border-radius: 4px; background: #3b2a1c; color: #f4ecd8; cursor: pointer; }
+
+  /* ---- phone (portrait): the same page re-laid on 64 × 130 stitches ---- */
+  @media (max-aspect-ratio: 4/5) {
+    .knit-card, .knit-under { width: 640px; height: 1040px; }
+    .band { width: 640px; } .band.bot { top: 960px; }
+    #head { left: 40px; top: 96px; width: 580px; height: 248px; font-size: 120px; line-height: 120px; }
+    .star { left: 210px; top: 360px; }
+    .when { left: 40px; top: 616px; width: 560px; font-size: 56px; line-height: 64px; }
+    .row { left: 40px; top: 712px; width: 560px; height: 232px; }
+    #going { left: 240px; width: 320px; font-size: 56px; padding: 0 24px; }
+    #unravel { left: 0; top: 128px; width: 560px; }
+    .ticket { left: 40px; top: 120px; width: 560px; height: 380px; }
+  }
+
+  /* ---- outside the canvas ---- */
+  .corner { position: fixed; bottom: 16px; margin: 0; font: 500 14px/1 system-ui, sans-serif; color: #f4ead6; background: rgba(20, 12, 8, .66); padding: 10px 14px; border-radius: 999px; border: 0; }
+  #hint { left: 16px; max-width: calc(100% - 150px); line-height: 1.25; pointer-events: none; transition: opacity .8s; }
+  #hint.gone { opacity: 0; }
+  #sound { right: 16px; cursor: pointer; }
+  #sound.on { background: rgba(196, 64, 47, .85); }
+  /* feature off: the same HTML as an ordinary page */
+  .hic-fallback { background: #1d0f08; min-height: 100%; overflow: auto; }
+  .hic-fallback #page, .hic-fallback #under { position: static; height: auto; overflow: visible; }
+  .hic-fallback .knit-mount { position: static; padding: 8px; }
+  .hic-fallback [data-knit-back], .hic-fallback [data-knit-unravel] { display: none; }
+  html:has(.hic-fallback), html:has(.hic-fallback) body { overflow: auto; }
+</style>
+</head>
+<body>
+<canvas id="stage" layoutsubtree content="drawable" aria-label="A winter fair poster, knitted. Type in the headline; pull the loose thread to unravel it.">
+  <div id="page" drawable>
+    <div class="knit-mount">
+      <article id="card" class="knit-card">
+        <div class="band top" data-knit-motif="peerie"></div>
+        <h1 id="head" contenteditable="plaintext-only" spellcheck="false" autocapitalize="off" aria-label="Headline (editable)" data-hic-edit>Winter
+Fair</h1>
+        <div class="star" data-knit-motif="star"></div>
+        <p class="when">Sat 14 Dec · 10–4</p>
+        <div class="row">
+          <fieldset class="ways" aria-label="Colourway">
+            <label><input type="radio" name="way" value="c0" checked aria-label="Snow"><span style="--c:#efe6d2"></span></label>
+            <label><input type="radio" name="way" value="c1" aria-label="Night"><span style="--c:#1f2c4a"></span></label>
+            <label><input type="radio" name="way" value="c2" aria-label="Holly"><span style="--c:#2f5b45"></span></label>
+          </fieldset>
+          <button id="going" type="button" data-hic-click>Going 41</button>
+          <button id="unravel" type="button" data-knit-unravel>Unravel</button>
+        </div>
+        <div class="band bot" data-knit-motif="peerie"></div>
+      </article>
+    </div>
+  </div>
+  <div id="under" drawable>
+    <div class="knit-mount">
+      <div class="knit-under">
+        <section class="ticket" aria-label="Under the knitting">
+          <p class="k">Under the jumper</p>
+          <h2>Raffle No. 0417</h2>
+          <p>Bring it to the cake stall before three. First prize: a hand-knitted tea cosy.</p>
+          <button type="button" data-knit-back>Knit it back up</button>
+        </section>
+      </div>
+    </div>
+  </div>
+</canvas>
+<p id="hint" class="corner">Type in the headline · pull the loose thread</p>
+<button id="sound" class="corner" type="button" aria-pressed="false">♪ Sound</button>
+
+<script src="../lib/hic.js"></script>
+<script src="../lib/knit.js"></script>
+<script>
+(function () {
+  'use strict';
+  // An eight-point star (the "selbu rose" of Norwegian knitting), drawn on the stitch grid. Stitches are wider than
+  // they are tall (10 × 8), so the grid is taller than it is wide to come out square.
+  function star(cols) {
+    var rows = Math.round(cols * 10 / 8), out = [];
+    for (var y = 0; y < rows; y++) {
+      var r = '';
+      for (var x = 0; x < cols; x++) {
+        var u = Math.abs((x + 0.5) / cols * 2 - 1), v = Math.abs((y + 0.5) / rows * 2 - 1);
+        var s = u + v, arm = Math.max(u, v) < 0.62 || s < 1.0;          // a square and a diamond: eight points
+        var split = Math.abs(u - v) < 0.08 && s > 0.5;                     // the petals part along the diagonals
+        var core = s < 0.3, ring = s > 0.38 && s < 0.5;
+        r += core ? '1' : (ring || split) ? '.' : arm ? '0' : '.';
+      }
+      out.push(r);
+    }
+    return out;
+  }
+  var knit = Knit.start({
+    stitch: [10, 8],
+    // the yarns of the colourway in use: a stitch close to one takes it exactly (the swatches keep their own colours)
+    palette: ['--bg', '--ink', '--accent'],
+    yarn: { thick: 0.21, ply: 3, twist: 0.55, fuzz: 0.8, sheen: 0.22, sparkle: 0.25, wobble: 0.16 },
+    table: { kind: 'wood', a: '#1c0e07', b: '#58331b', c: '#80512c', scale: 16 },
+    lamp: { x: 0.32, y: 0.26, r: 0.7, floor: 0.42, key: '#fff0d8', amb: '#b9c7ec' },
+    needles: { shaft: '#cfa46a', knob: '#7a2b1d', metal: 0 },
+    heap: { x: 0.86, y: 0.8, size: 1 },
+    reveal: { hold: 0 },
+    motifs: {
+      peerie: { colors: ['var(--ink)', 'var(--accent)'], rows: [
+        '000000000000',
+        '............',
+        '..1.....0...',
+        '.111....0...',
+        '11.11.00000.',
+        '.111....0...',
+        '..1.....0...',
+        '............',
+        '000000000000'] },
+      star: { colors: ['var(--ink)', 'var(--accent)'], repeat: false, rows: star(23) }
+    }
+  });
+  var card = document.getElementById('card');
+  document.querySelectorAll('input[name="way"]').forEach(function (r) {
+    r.addEventListener('change', function () { card.classList.remove('c0', 'c1', 'c2'); card.classList.add(r.value); });
+  });
+  var going = 41, btn = document.getElementById('going');
+  btn.addEventListener('click', function () { btn.textContent = 'Going ' + (++going); });
+})();
+</script>
+</body>
+</html>

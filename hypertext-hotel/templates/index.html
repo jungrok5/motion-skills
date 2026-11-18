@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Number Nine — a townhouse of live HTML</title>
+<!-- hypertext-hotel template: a small townhouse at night, cut open at the front. Every object you can work is a real
+     HTML control drawn into its room by WebGL (HTML-in-Canvas): the lamp switches are checkboxes, the hob and the fire are
+     ranges, the wallpaper is a select, the note on the desk is a text field, the doorbell is a button, and the lift is one
+     vertical range whose thumb is the lever on the car. "Show just HTML elements" and the lens show the plain controls.
+     This is the house example of the style. For a new topic, write BRIEF.md first and redesign the building, the rooms,
+     the controls, their CSS, the palette and the sounds (references/BRIEF.md). -->
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: #070a14; overflow: hidden; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+
+  /* ---- the controls, styled as objects of this house (designed per topic) ---- */
+  /* a brass switch plate: label + checkbox drawn as a toggle */
+  .plate { width: 150px; padding: 10px 8px 9px; text-align: center; font: 700 14px/1.1 Georgia, 'Times New Roman', serif; letter-spacing: .08em; text-transform: uppercase; color: #2b1a05;
+    background: radial-gradient(circle at 9px 9px, #5a421a 0 2px, transparent 2.6px), radial-gradient(circle at calc(100% - 9px) calc(100% - 9px), #5a421a 0 2px, transparent 2.6px), linear-gradient(165deg, #e7c77e, #b98d3e 55%, #8f6a2a);
+    border: 2px solid #6b4f1d; border-radius: 8px; box-shadow: inset 0 2px 0 rgba(255, 245, 205, .7), inset 0 -3px 0 rgba(60, 40, 8, .35); cursor: pointer; display: block; }
+  .plate input[type=checkbox] { -webkit-appearance: none; appearance: none; display: block; position: relative; width: 64px; height: 30px; margin: 0 auto 8px; border-radius: 16px; cursor: pointer;
+    background: linear-gradient(#2a1c0c, #4a3516); border: 2px solid #5d4319; box-shadow: inset 0 3px 5px rgba(0, 0, 0, .6); }
+  .plate input[type=checkbox]::before { content: ''; position: absolute; top: 2px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff6d8, #d9b867 45%, #8a6722); box-shadow: 0 2px 3px rgba(0, 0, 0, .6); transition: left .12s; }
+  .plate input[type=checkbox]:checked { background: linear-gradient(#7a4a12, #d99a34); }
+  .plate input[type=checkbox]:checked::before { left: 35px; background: radial-gradient(circle at 35% 30%, #fffbe8, #ffe39a 45%, #c79a3a); }
+  .plate input:focus-visible, .dial input:focus-visible, .dial select:focus-visible { outline: 3px solid #fff2b8; outline-offset: 2px; }
+  /* a dial: a range or a select on an enamel plate */
+  .dial { width: 220px; padding: 9px 14px 10px; font: 700 13px/1.1 Georgia, serif; letter-spacing: .1em; text-transform: uppercase; color: #f4e6c4; text-align: center;
+    background: linear-gradient(#264a40, #17332c); border: 3px solid #c39a4c; border-radius: 10px; box-shadow: inset 0 0 0 2px #5e4516; display: block; }
+  .dial input[type=range] { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 26px; margin: 7px 0 0; background: transparent; cursor: pointer; }
+  .dial input[type=range]::-webkit-slider-runnable-track { height: 8px; border-radius: 4px; background: linear-gradient(90deg, #3a2a10, #f0b14a); border: 1px solid #5d4319; }
+  .dial input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 26px; margin-top: -10px; border-radius: 4px; background: linear-gradient(90deg, #8a6722, #fff0c0 45%, #b98f3f); border: 1px solid #4d3711; }
+  .dial select { display: block; width: 100%; margin-top: 7px; font: 600 16px Georgia, serif; color: #2b1a05; background: #f2e3bd; border: 2px solid #8f6a2a; border-radius: 6px; padding: 4px 6px; }
+  /* the note on the desk: a text field on a paper card */
+  .note { width: 240px; padding: 10px 12px 12px; background: #f6efd9; border-radius: 3px; box-shadow: 0 0 0 1px #c9b78e inset; font: italic 14px/1.2 Georgia, serif; color: #4b3a22; display: block; }
+  .note input { display: block; width: 100%; box-sizing: border-box; margin-top: 6px; font: italic 20px/1.2 'Segoe Script', 'Bradley Hand', 'Comic Sans MS', cursive; color: #1d2c6b; background: repeating-linear-gradient(transparent 0 25px, #9db3d6 25px 26px); border: 0; padding: 0 2px; outline: none; }
+  /* the doorbell: a button on a brass push plate */
+  .bell { width: 120px; padding: 8px; display: block; background: linear-gradient(160deg, #e7c77e, #a77d34); border: 2px solid #6b4f1d; border-radius: 50px; text-align: center; }
+  .bell button { width: 64px; height: 64px; border-radius: 50%; border: 3px solid #5d4319; background: radial-gradient(circle at 40% 35%, #fffaf0, #e8dcc0 50%, #a99870); font: 700 11px Georgia, serif; color: #3a2a10; cursor: pointer; }
+  .bell button:active { transform: translateY(2px); }
+  .bell output { display: block; margin-top: 4px; font: 700 11px Georgia, serif; color: #2b1a05; letter-spacing: .06em; }
+  /* the neon sign: contenteditable text with a glow */
+  .neon { margin: 0; padding: 4px 22px 8px; font: 400 64px/1.1 'Brush Script MT', 'Segoe Script', cursive; color: #fff1f6; white-space: nowrap; outline: none;
+    text-shadow: 0 0 4px #fff, 0 0 12px #ff5f8f, 0 0 26px #ff2f6f, 0 0 44px #ff2f6f; }
+  /* the lift: one vertical range; its thumb is the lever plate on the car (data-thumb = its height in px) */
+  .lever { -webkit-appearance: none; appearance: none; writing-mode: vertical-lr; direction: rtl; display: block; width: 120px; height: 900px; background: transparent; cursor: grab; }
+  .lever::-webkit-slider-runnable-track { background: transparent; width: 120px; height: 100%; border: 0; }
+  .lever::-webkit-slider-thumb { -webkit-appearance: none; width: 120px; height: 70px; border-radius: 8px; border: 3px solid #5e4516; cursor: grab;
+    background: repeating-linear-gradient(#fff6cf 0 2px, #e9c56e 2px 3px, #5a4013 3px 6px) center / 70px 18px no-repeat, linear-gradient(172deg, #fbe7a6, #e2bb5c 45%, #b98c36);
+    box-shadow: inset 0 3px 0 rgba(255, 250, 220, .85), 0 3px 5px rgba(0, 0, 0, .5); }
+  .lever:focus-visible::-webkit-slider-thumb { border-color: #fff3c4; }
+  .floor { display: block; width: 150px; padding: 4px 0 6px; text-align: center; font: 700 26px/1 Georgia, serif; color: #ffe7a8; background: #17332b; border: 5px solid #c79a3e; border-radius: 9px; box-shadow: inset 0 0 0 2px #5e4516; }
+</style>
+</head>
+<body>
+<canvas id="stage" layoutsubtree content="drawable" aria-label="Number Nine: a townhouse at night whose lamps, fire, wallpaper, note, doorbell and lift are live HTML controls">
+  <h1 data-k="sign" class="neon" contenteditable="plaintext-only" spellcheck="false" aria-label="The house sign (you can type here)">Number Nine</h1>
+  <!-- kitchen -->
+  <label data-k="kitchen.lamp" class="plate"><input type="checkbox" checked> Kitchen lamp</label>
+  <label data-k="kitchen.hob" class="dial">Hob <input type="range" min="0" max="100" value="55" aria-label="Hob flame"></label>
+  <!-- parlour -->
+  <label data-k="parlour.lamp" class="plate"><input type="checkbox" checked> Floor lamp</label>
+  <label data-k="parlour.fire" class="dial">Fire <input type="range" min="0" max="100" value="70" aria-label="Fire"></label>
+  <div data-k="door.bell" class="bell"><button type="button" id="ring" data-hic-click data-sound="bell">Ring</button><output id="rung">rung 0</output></div>
+  <!-- study -->
+  <label data-k="study.lamp" class="plate"><input type="checkbox" checked> Desk lamp</label>
+  <label data-k="study.note" class="note">Note to self <input id="note" type="text" value="Water the fern" data-hic-edit aria-label="A note"></label>
+  <label data-k="study.paper" class="dial">Wallpaper <select aria-label="Wallpaper"><option value="#3d5a6b">Slate</option><option value="#7b4a3a">Terracotta</option><option value="#4e6b3a">Fern</option><option value="#6b5a8a">Lilac</option></select></label>
+  <!-- bedroom -->
+  <label data-k="bedroom.lamp" class="plate"><input type="checkbox" checked> Bedside</label>
+  <label data-k="bedroom.dim" class="dial">Night light <input type="range" min="0" max="100" value="80" aria-label="Night light"></label>
+  <!-- lift -->
+  <input data-k="lift" class="lever" type="range" min="0" max="1" step="0.01" value="0" data-thumb="70" aria-label="Lift: ground or first floor">
+  <output data-k="lift.floor" class="floor">G</output>
+</canvas>
+<script src="../lib/hic.js"></script>
+<script src="../lib/dollhouse.js"></script>
+<script src="../lib/props.js"></script>
+<script src="../lib/sound.js"></script>
+<script>
+(function () {
+  'use strict';
+  var m = Dollhouse.mat, P = Dollhouse.props;
+  var cream = '#ebe2cc';
+  Dollhouse.start({
+    canvas: 'stage', title: 'Number Nine',
+    // the building: three columns (two rooms and the lift shaft between them) by two floors
+    building: {
+      cols: [4.4, 1.5, 4.4], floors: [2.7, 2.7], depth: 3.2, frame: cream, inlay: '#b48a3e',
+      wings: { w: 0.8, face: '#6f3527', mortar: '#c9b9a0', quoin: '#ddd3bd', glass: '#ffcf8a' },
+      base: { h: 0.42, steps: 2 }, cornice: '#efe6d2', roof: { kind: 'flat', chimneys: [-4.2, 4.6] },
+      sign: { key: 'sign', w: 5.2, color: '#ff4f86' }
+    },
+    ground: { kind: 'street', trees: 1 },
+    sky: { top: '#04060e', mid: '#0c1430', low: '#1b2246', moon: [-0.72, 0.78, 0.8] },
+    look: { exposure: 1.05, bloom: 0.55 },
+    rooms: [
+      { id: 'kitchen', name: 'Kitchen', cell: [0, 0], wall: m('#d9cfa8', { c2: '#c3b78c', pat: 'stripes', s: 0.16 }), floor: m('#e8e2d4', { c2: '#2b2b30', pat: 'check', s: 0.32, rough: 0.5 }),
+        build: function (B, R) {
+          P.trim(B, R, { rail: 1.0 });
+          P.hearth(B, 'kitchen.hob', 0.9, 0, -R.d + 0.45, { kind: 'stove', power: 1.2 });
+          P.shelf(B, 2.6, 1.2, -R.d + 0.2, { w: 1.5, h: 0.9, d: 0.3, fill: 'jars', rows: 2 });
+          P.table(B, 2.7, 0, -1.3, { w: 1.2, d: 0.75, cloth: '#b8463a' }); P.chair(B, 2.15, 0, -1.3, { ry: 90 }); P.chair(B, 3.25, 0, -1.3, { ry: -90 });
+          P.loaf(B, 2.75, 0.76, -1.3, {}); P.doll(B, 3.35, 0, -0.95, { coat: '#3f6b5a', apron: '#efe7d6', hair: '#6a3a1e', ry: -30 });
+          P.lamp(B, 'kitchen.lamp', 2.7, R.h, -1.3, { kind: 'pendant', len: 0.7, shade: '#e0b04a', power: 2.2 });
+          B.panel('kitchen.lamp', { at: [0.5, 1.5, -R.d + 0.03], w: 0.55 });
+          B.panel('kitchen.hob', { at: [3.85, 1.6, -R.d + 0.03], w: 0.85 });
+        } },
+      { id: 'parlour', name: 'Parlour', cell: [2, 0], wall: m('#5a2f3a', { c2: '#6b3a46', pat: 'dots', s: 0.2 }), floor: m('#6b4128', { c2: '#4a2a18', pat: 'planks', s: 0.15, rough: 0.55 }),
+        build: function (B, R) {
+          P.trim(B, R, { rail: 0.9, c: '#e8dcc4' }); P.rug(B, 2.3, 0, -1.5, { w: 2.6, d: 1.6, c: '#2f4a5a', c2: '#d8b060' });
+          P.hearth(B, 'parlour.fire', 1.9, 0, -R.d + 0.2, { kind: 'fireplace', power: 2.6 });
+          P.frame(B, 1.9, 1.85, -R.d + 0.02, { w: 0.8, h: 0.55, c: '#2f4f6a', c2: '#e8c070' });
+          P.sofa(B, 3.35, 0, -0.85, { w: 1.3, c: '#6b3a24', c2: '#5a2f1c' });
+          P.lamp(B, 'parlour.lamp', 0.6, 0, -1.6, { kind: 'floor', power: 2.4 });
+          P.plant(B, 4.05, 0, -2.7, {}); P.doll(B, 3.6, 0.42, -0.8, { sit: true, coat: '#c8a24a', hair: '#2a1a12', ry: -25 });
+          B.panel('parlour.lamp', { at: [0.55, 1.55, -R.d + 0.03], w: 0.55 });
+          B.panel('parlour.fire', { at: [3.75, 1.55, -R.d + 0.03], w: 0.85 });
+        } },
+      { id: 'study', name: 'Study', cell: [0, 1], wall: m('#3d5a6b', { c2: '#34505e', pat: 'stripes', s: 0.22, dyn: 1 }), floor: m('#7a5232', { c2: '#5b3a22', pat: 'planks', s: 0.16 }),
+        build: function (B, R) {
+          P.trim(B, R, { rail: 1.0 });
+          P.shelf(B, 0.95, 0, -R.d + 0.2, { w: 1.4, h: 2.2, fill: 'books' });
+          P.window(B, 3.3, 1.55, -R.d + 0.01, { w: 0.9, h: 1.0 });
+          P.table(B, 2.6, 0, -1.6, { w: 1.4, d: 0.7 }); P.chair(B, 2.6, 0, -1.0, { ry: 180 });
+          P.lamp(B, 'study.lamp', 3.05, 0.75, -1.75, { kind: 'table', shade: '#3f7a4a', power: 2.2 });
+          P.clock(B, 2.25, 2.3, -R.d + 0.02, {}); P.doll(B, 2.3, 0.42, -1.0, { sit: true, coat: '#3a3a5a', hat: '#222' });
+          B.panel('study.lamp', { at: [4.1, 1.5, -R.d + 0.03], w: 0.5 });
+          B.panel('study.note', { at: [2.05, 0.77, -1.75], w: 0.6, rx: -72 });
+          B.panel('study.paper', { at: [2.25, 1.6, -R.d + 0.03], w: 0.82 });
+        } },
+      { id: 'bedroom', name: 'Bedroom', cell: [2, 1], wall: m('#e3d3b0', { c2: '#cdb88f', pat: 'diamond', s: 0.3 }), floor: m('#8a6440', { c2: '#6a4628', pat: 'planks', s: 0.16 }),
+        build: function (B, R) {
+          P.trim(B, R, {}); P.rug(B, 2.2, 0, -1.2, { w: 2.2, d: 1.2, c: '#6a2a3a', c2: '#e0c080' });
+          P.bed(B, 2.3, 0, -1.9, { w: 2.0, d: 1.3, quilt: '#3f6aa0', quilt2: '#efe2c0' });
+          P.table(B, 3.75, 0, -2.6, { w: 0.5, d: 0.45, h: 0.6 }); P.lamp(B, 'bedroom.lamp', 3.75, 0.6, -2.6, { kind: 'table', shade: '#f0d8a8', power: 2 });
+          P.window(B, 1.0, 1.6, -R.d + 0.01, { w: 0.8, h: 0.9, curtain: '#3f6aa0' });
+          B.panel('bedroom.lamp', { at: [3.95, 1.6, -R.d + 0.03], w: 0.52 });
+          B.panel('bedroom.dim', { at: [2.4, 1.9, -R.d + 0.03], w: 0.85 });
+        } },
+      { id: 'shaft', name: 'Lift', cell: [1, 0, 1, 2], wall: m('#77726a', { c2: '#6a655e', pat: 'plaster' }), floor: m('#2b2a29', { c2: '#1f1e1d', pat: 'tile', s: 0.3 }), ceil: m('#3a3632'),
+        build: function (B, R) { Dollhouse.lift(B, R, { key: 'lift', indicator: 'lift.floor', names: ['G', '1'], operator: { coat: '#1f4a6b', hat: '#1f4a6b' } }); } }
+    ],
+    // things outside the rooms: the doorbell on the right wing, by the steps
+    outside: function (B, o) {
+      P.board(B, o.right - o.wing / 2, 1.15, 0, { w: 0.5, h: 0.5, c: '#3a2a1a' });
+      B.panel('door.bell', { at: [o.right - o.wing / 2, 1.15, 0.05], w: 0.44 });
+    },
+    ready: function (D) {
+      // switches: each checkbox turns its lamp on and off
+      ['kitchen.lamp', 'parlour.lamp', 'study.lamp', 'bedroom.lamp'].forEach(function (k) { D.on(k, 'change', function (on) { D.setLight(k, on); }); });
+      // ranges: the hob and the fire scale their flame's light; the night light dims the bedside lamp
+      D.on('kitchen.hob', 'input', function (v) { D.light('kitchen.hob').set(v > 2 ? 1 : 0).power(0.4 + v / 100 * 1.8); });
+      D.on('parlour.fire', 'input', function (v) { D.light('parlour.fire').set(v > 2 ? 1 : 0).power(0.6 + v / 100 * 3); });
+      D.on('bedroom.dim', 'input', function (v) { D.light('bedroom.lamp').power(0.2 + v / 100 * 2.4); });
+      // the select repaints the study's walls (tint slot 1 = materials made with dyn: 1)
+      D.on('study.paper', 'change', function (c) { D.tint('study', 1, c); });
+      var n = 0, ring = document.getElementById('ring'), out = document.getElementById('rung');
+      ring.addEventListener('click', function () { n++; out.textContent = 'rung ' + n; });
+    }
+  });
+})();
+</script>
+</body>
+</html>

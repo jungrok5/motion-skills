@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mia is 6! — a jelly party invitation</title>
+<!--
+  jelly-page worked example: a kids' party invitation set in a tiered party jelly (see BRIEF.md).
+  Made through the flow: BRIEF.md → this page → scripts/check.mjs → stills reviewed.
+  New for this topic: an RSVP form (name field, yes / no, send), flavours as party colours, an oval stepped mould,
+  a round china plate with a painted band, a dotted paper tablecloth, sprinkles and air bubbles, a higher, wetter squelch.
+-->
+<style>
+  :root { --ink: #2b1f2a; --paper: #fff3f6; --flav: #ff3d6e; --ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+          --round: ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif; }
+  html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); overflow: hidden; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+  #stage.pulling, #stage.pulling * { cursor: grabbing !important; }
+
+  /* ---- the invitation set in the jelly (transparent: dark ink becomes candy) ---- */
+  #page { width: 960px; height: 640px; box-sizing: border-box; padding: 34px 60px 40px; font-family: var(--round); color: var(--ink);
+          display: grid; grid-template-rows: auto 1fr auto auto auto; gap: 12px; user-select: none; -webkit-user-select: none; }
+  .top { display: flex; justify-content: space-between; align-items: center; }
+  .kicker { margin: 0; font: 800 28px/1 var(--round); letter-spacing: .16em; text-transform: uppercase; }
+  .party { display: flex; gap: 12px; border: 0; margin: 0; padding: 0; }
+  .party label { cursor: pointer; display: block; }
+  .party input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .party span { display: block; width: 44px; height: 44px; border-radius: 50%; background: var(--c); border: 6px solid var(--ink); box-sizing: border-box; }
+  .party input:checked + span { background: radial-gradient(circle, var(--ink) 0 25%, var(--c) 29%); transform: scale(1.18); }
+  .party input:focus-visible + span { outline: 5px solid #ffb000; outline-offset: 5px; }
+  #who { margin: 0; align-self: center; justify-self: center; font: 800 170px/.9 var(--round); letter-spacing: -.02em; white-space: nowrap;
+         outline: none; cursor: text; user-select: text; -webkit-user-select: text; caret-color: var(--ink); }
+  .when { margin: 0; text-align: center; font: 700 30px/1.2 var(--round); user-select: text; -webkit-user-select: text; }
+  .rsvp, .jig { display: flex; align-items: center; justify-content: center; gap: 16px; font: 700 24px/1 var(--round); }
+  .rsvp input[type=text] { font: 700 26px/1 var(--round); color: var(--ink); width: 230px; height: 56px; box-sizing: border-box; padding: 0 18px;
+                           border: 6px solid var(--ink); border-radius: 30px; background: transparent; outline: none; }
+  .rsvp input[type=text]::placeholder { color: var(--ink); opacity: .55; }
+  .yn { display: flex; gap: 8px; border: 0; margin: 0; padding: 0; }
+  .yn label { cursor: pointer; }
+  .yn input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .yn span { display: block; padding: 12px 18px; border: 6px solid var(--ink); border-radius: 30px; }
+  .yn input:checked + span { background: var(--ink); color: var(--flav); }
+  .yn input:focus-visible + span, .rsvp input[type=text]:focus { outline: 5px solid #ffb000; outline-offset: 3px; }
+  button { font: 800 28px/1 var(--round); color: var(--flav); background: var(--ink); border: 0; border-radius: 34px; height: 62px; padding: 0 28px; cursor: pointer; white-space: nowrap; }
+  button:focus-visible, #temp:focus-visible { outline: 5px solid #ffb000; outline-offset: 4px; }
+  #temp { -webkit-appearance: none; appearance: none; width: 200px; height: 56px; background: transparent; margin: 0; cursor: pointer; }
+  #temp::-webkit-slider-runnable-track { height: 12px; border-radius: 6px; background: var(--ink); }
+  #temp::-webkit-slider-thumb { -webkit-appearance: none; width: 46px; height: 46px; margin-top: -17px; border-radius: 50%; background: var(--flav); border: 8px solid var(--ink); box-sizing: border-box; }
+  @media (max-aspect-ratio: 4/5) {
+    #page { width: 620px; height: 900px; padding: 40px 34px; }
+    .top { flex-direction: column; gap: 18px; }
+    #who { font-size: 128px; }
+    .rsvp { flex-wrap: wrap; }
+  }
+
+  .pill { position: fixed; bottom: 16px; font: 500 14px/1 var(--ui); color: #fff7fb; background: rgba(43, 31, 42, .72); padding: 10px 15px; border-radius: 999px; border: 0; margin: 0; }
+  #snd { right: 16px; cursor: pointer; }
+  #hint { left: 16px; pointer-events: none; transition: opacity .8s; }
+  #hint.gone { opacity: 0; }
+  @media (max-width: 480px) { #hint { bottom: 60px; } }
+</style>
+</head>
+<body>
+<canvas id="stage" layoutsubtree content="drawable" aria-label="A party invitation set in a wobbly party jelly">
+  <div id="page" drawable>
+    <div class="top">
+      <p class="kicker">You're invited</p>
+      <fieldset class="party" aria-label="Party jelly flavour">
+        <label><input type="radio" name="party" value="raspberry" aria-label="Raspberry" checked><span style="--c:#ff3d6e"></span></label>
+        <label><input type="radio" name="party" value="blue" aria-label="Blue raspberry"><span style="--c:#2f8cff"></span></label>
+        <label><input type="radio" name="party" value="orange" aria-label="Orange"><span style="--c:#ff8a1f"></span></label>
+        <label><input type="radio" name="party" value="apple" aria-label="Green apple"><span style="--c:#5ccf3a"></span></label>
+      </fieldset>
+    </div>
+    <h1 id="who" contenteditable="plaintext-only" spellcheck="false" data-hic-edit aria-label="Whose party, editable">Mia is 6!</h1>
+    <p class="when">Saturday 14 June · 2 to 5 pm · 12 Plum Lane</p>
+    <form class="rsvp" id="rsvp" onsubmit="return false">
+      <input type="text" id="guest" placeholder="Your name" aria-label="Your name" autocomplete="off">
+      <fieldset class="yn" aria-label="Coming?">
+        <label><input type="radio" name="coming" value="yes" checked><span>I'll come</span></label>
+        <label><input type="radio" name="coming" value="no"><span>Can't</span></label>
+      </fieldset>
+      <button id="send" type="submit" data-hic-click>Send RSVP</button>
+    </form>
+    <div class="jig">
+      <label for="temp">firm</label><input type="range" id="temp" min="0" max="1" step="0.01" value="0.3" aria-label="How warm the party is, from firm to melted"><span>melted</span>
+      <button id="drop" type="button">Plop!</button>
+    </div>
+  </div>
+</canvas>
+<button id="snd" class="pill" type="button" aria-pressed="false" hidden>Sound off</button>
+<p id="hint" class="pill">Pull the jelly. Type your name and RSVP.</p>
+
+<script src="../../lib/hic.js"></script>
+<script src="../../lib/squelch.js"></script>
+<script src="../../lib/jelly.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var CONFIG = {
+    canvas: $('stage'), page: $('page'), soundButton: $('snd'),
+    // party colours: bright, sweet, a cloth colour that clashes cheerfully with each
+    flavours: {
+      raspberry: { jelly: '#ff2a62', glow: '#ff5a8a', cloth: '#ffd23f' },
+      blue:      { jelly: '#1f6dff', glow: '#4fa0ff', cloth: '#ff7aa8' },
+      orange:    { jelly: '#ff7a10', glow: '#ffa040', cloth: '#5bc8e8' },
+      apple:     { jelly: '#4cc52a', glow: '#8ef05a', cloth: '#ff8fb8' }
+    },
+    candy: '#fff8ee', paper: '#fff3f6',
+    // a tall, stepped party mould: an oval with deep flutes and two tiers
+    mould: { shape: 'oval', margin: [0.52, 0.52], flutes: 7, fluteDepth: 0.09, tiers: 2, height: 0.64, shoulder: 0.42, dome: 0.01 },
+    material: { firmHz: 2.6, softHz: 1.2, damping: [0.1, 0.14] },
+    table: { pattern: 'dots', base: '#fffaf2', scale: 0.3, angle: 0.3 },
+    plate: { kind: 'china', shape: 'round', margin: 0.34, band: '#7a5cff' },
+    room:  { window: '#fff6ec', panes: [2, 2], lamp: '#ffe0b0', wall: '#a49aa0' },
+    // sprinkles and air bubbles: colours given here override the flavour's bit colours
+    bits:  { kind: 'mixed', count: 20, size: [0.05, 0.085], seed: 11, colours: ['#ffffff', '#ffe14a', '#4ad2ff', '#ff6fd0', '#7cf06a'] },
+    sound: { pitch: 1.15, wet: 1.25 },
+    temperature: 0.3, tilt: 44
+  };
+  var J = JELLY.create(CONFIG);
+  if (J.fallback) { wire(null); return; }
+  wire(J);
+
+  function wire(J) {
+    var page = $('page');
+    document.querySelectorAll('input[name=party]').forEach(function (r) {
+      r.addEventListener('change', function () {
+        if (J) J.setFlavour(r.value);
+        page.style.setProperty('--flav', getComputedStyle(r.nextElementSibling).getPropertyValue('--c'));
+      });
+    });
+    $('temp').addEventListener('input', function (e) { if (J) J.setTemperature(+e.target.value); });
+    $('drop').addEventListener('click', function () { if (J) J.drop(); });
+    // the RSVP: the button answers, and a yes gives the jelly a happy jump
+    $('send').addEventListener('click', function () {
+      var name = $('guest').value.trim(), yes = document.querySelector('input[name=coming]:checked').value === 'yes';
+      $('send').textContent = yes ? (name ? 'See you, ' + name.slice(0, 12) + '!' : 'See you there!') : 'Maybe next time';
+      if (J && yes) J.drop();
+    });
+    var who = $('who');
+    who.addEventListener('beforeinput', function (e) {
+      if (e.inputType === 'insertParagraph' || e.inputType === 'insertLineBreak') e.preventDefault();
+      else if (e.data && who.textContent.length >= 14 && getSelection().isCollapsed) e.preventDefault();
+    });
+    who.addEventListener('input', function () {
+      who.style.fontSize = '';
+      var max = page.clientWidth - 120, w = who.scrollWidth, fs = parseFloat(getComputedStyle(who).fontSize);
+      if (w > max) who.style.fontSize = Math.max(56, Math.floor(fs * max / w)) + 'px';
+    });
+    if (J) $('stage').addEventListener('jelly:touch', function () { $('hint').classList.add('gone'); });
+  }
+})();
+</script>
+</body>
+</html>

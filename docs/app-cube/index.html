@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>app-cube · motion-skills</title>
+<meta name="description" content="주제를 주면 면마다 실제로 작동하는 앱이 붙은 3×3 큐브 웹페이지를 만듭니다. 층을 돌려 앱이 타일로 흩어져도 클릭과 입력이 그대로 됩니다.">
+<meta property="og:title" content="app-cube · motion-skills">
+<meta property="og:description" content="주제를 주면 면마다 실제로 작동하는 앱이 붙은 3×3 큐브 웹페이지를 만듭니다. 층을 돌려 앱이 타일로 흩어져도 클릭과 입력이 그대로 됩니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/app-cube/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/app-cube">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / app-cube</nav>
+  <h1>app-cube</h1>
+  <p>주제를 주면 면마다 실제로 작동하는 앱이 붙은 3×3 큐브 웹페이지를 만듭니다. 타일을 끌면 층이 돌아 앱이 큐브 곳곳에 타일로 흩어지지만,
+    각 타일은 여전히 자기 앱의 그 부분으로 클릭되고 입력됩니다. 원본: Felix Rieseberg의
+    <a href="https://claude.ai/artifact/287yYEVG3FekMqofmJkUki">「Six Apps, One Cube」 데모</a>(<a href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk">HTML-in-Canvas 데모 페이지</a>,
+    <a href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19">X 게시물</a>)를 보고 만들었습니다.
+    라이브 데모는 Chrome · Edge 157 이상이나 Claude 데스크톱 앱에서 보이며, 다른 브라우저에서는 같은 앱 여섯 개가 평범한 페이지로 나옵니다.</p>
+  <ul class="tags"><li>HTML-in-Canvas</li><li>실시간 웹페이지</li><li>3D 큐브</li><li>WebGL</li><li>코드 전용</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 한 줄 (예: 리스본 주말 여행, 밴드 투어, 빵 굽는 하루)</dd>
+      <dt>브리프</dt><dd>할 일이 서로 다른 앱 여섯 개, 240 px 타일 격자 배치, 조작 면의 문구, 재질 · 스튜디오 조명 · 소리</dd>
+      <dt>페이지</dt><dd>평범한 HTML 면 여섯 개 + <code>AppCube.create</code> 설정, 타일 대응 · 격자 · 돌리기 · 돌린 뒤 입력 검사</dd>
+      <dt>출력</dt><dd><code>index.html</code> + <code>lib/</code> 한 폴더 (file:// · Claude 아티팩트에서 동작), 검토용 스틸</dd>
+    </dl>
+    <pre><code>node scripts/check.mjs examples/lisbon-weekend/index.html
+node scripts/still.mjs examples/lisbon-weekend/index.html --out out --act idle,twist,typed,back,under
+node scripts/new-page.mjs ../my-cube
+node scripts/check.mjs ../my-cube/index.html</code></pre>
+    <p class="mute">요구 사항: Node, Playwright Chromium (검사 스크립트가 HTML-in-Canvas 플래그를 켭니다). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/app-cube/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10">
+    <iframe data-src="demo/examples/lisbon-weekend/" title="app-cube 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/lisbon-weekend/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/lisbon-weekend</code> · 여행 플래너 큐브</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/lisbon-weekend/" data-cap="예제 &lt;code&gt;examples/lisbon-weekend&lt;/code&gt; · 여행 플래너 큐브" aria-pressed="true">리스본 주말</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/index.html&lt;/code&gt; · 책상 위 하루 큐브" aria-pressed="false">Desk Cube</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제와 템플릿을 HTML-in-Canvas를 켠 Chromium에서 찍은 스틸입니다. 카드를 누르면 그 페이지의 라이브 데모가 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"lisbon":"리스본 주말","desk":"Desk Cube"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>리스본 주말 <small>examples/lisbon-weekend</small></h3>
+      <p>계획 · 지도 · 트램 승차권 조작 면 · 짐 싸기 · 환전 · 회화, 상아색 법랑 큐브와 해 질 녘 스튜디오.</p>
+      <div class="grid">
+        <a class="tile" data-tags="lisbon" href="demo/examples/lisbon-weekend/" target="_blank" rel="noopener">
+          <img src="samples/lisbon-idle.jpg" alt="상아색 큐브의 앞면에 주말 계획, 오른쪽 면에 지도와 핀, 윗면에 노란 트램 승차권 조작 버튼" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">처음 화면</span><b>맞춰진 큐브</b><span class="how">계획 · 지도 · 승차권 세 면이 보이는 첫 모습</span></div></a>
+        <a class="tile" data-tags="lisbon" href="demo/examples/lisbon-weekend/" target="_blank" rel="noopener">
+          <img src="samples/lisbon-typed.jpg" alt="섞인 큐브의 앞쪽 가운데 타일에 방금 입력한 'still typing' 글자가 바로 서 있음" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">섞인 뒤 입력</span><b>커서를 따라 도는 큐브</b><span class="how">섞인 큐브에서 입력하자 커서 타일이 앞으로 와서 바로 섬</span></div></a>
+        <a class="tile" data-tags="lisbon" href="demo/examples/lisbon-weekend/" target="_blank" rel="noopener">
+          <img src="samples/lisbon-twist.jpg" alt="섞인 큐브의 윗층이 비스듬히 돌아가는 중" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">층 돌리기</span><b>돌아가는 윗층</b><span class="how">흩어진 앱 타일 위로 한 층이 도는 순간</span></div></a>
+        <a class="tile" data-tags="lisbon" href="demo/examples/lisbon-weekend/" target="_blank" rel="noopener">
+          <img src="samples/lisbon-back.jpg" alt="뒤에서 본 큐브: 파란 짐 싸기 면과 초록 환전 면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">뒤쪽</span><b>짐 싸기와 환전</b><span class="how">배경을 끌어 돌려 본 뒷면과 왼쪽 면</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>Desk Cube <small>templates/index.html</small></h3>
+      <p>스타일의 기본 예시: 메모 · 집중 타이머 · 조작 면 · 할 일 · 색 섞기 · 물 마시기, 검은 유광 큐브와 남색 스튜디오.</p>
+      <div class="grid">
+        <a class="tile" data-tags="desk" href="demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/desk-idle.jpg" alt="검은 큐브의 앞면에 노란 메모, 오른쪽에 주황 타이머, 윗면에 보라 조작 버튼" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">처음 화면</span><b>책상 위 하루</b><span class="how">메모 · 타이머 · 조작 면</span></div></a>
+        <a class="tile" data-tags="desk" href="demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/desk-twist.jpg" alt="윗층이 30도쯤 돌아간 검은 큐브" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">층 돌리기</span><b>반쯤 돈 윗층</b><span class="how">타일을 끌면 그 층이 손가락을 따라 돎</span></div></a>
+        <a class="tile" data-tags="desk" href="demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/desk-typed.jpg" alt="섞인 검은 큐브, 메모 타일에 입력한 글자" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">섞인 뒤 입력</span><b>흩어진 메모</b><span class="how">여섯 앱이 타일로 섞인 뒤에도 메모에 입력</span></div></a>
+        <a class="tile" data-tags="desk" href="demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/desk-under.jpg" alt="아래에서 본 큐브의 파란 물 마시기 면이 바닥에 비침" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">아래쪽</span><b>물 마시기 면</b><span class="how">바닥 반사와 함께 보이는 아랫면</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬의 예제와, 스킬을 만든 원본 데모입니다.</p>
+  <div class="works">
+    <a class="work" href="https://jungrok5.github.io/motion-skills/app-cube/demo/examples/lisbon-weekend/" target="_blank" rel="noopener"><b>Lisbon Weekend</b><span>여행 플래너 큐브 · 앱 여섯 개 · 라이브 데모</span><span class="url">jungrok5.github.io/motion-skills/app-cube/demo/…</span></a>
+    <a class="work" href="https://claude.ai/artifact/287yYEVG3FekMqofmJkUki"><b>원본 · Six Apps, One Cube</b><span>Felix Rieseberg의 HTML-in-Canvas 데모</span><span class="url">claude.ai/artifact/287yYEVG3FekMqofmJkUki</span></a>
+    <a class="work" href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk"><b>HTML-in-Canvas 데모 페이지</b><span>데모 15개 모음</span><span class="url">claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk</span></a>
+    <a class="work" href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19"><b>X 게시물</b><span>"All hail the weird web"</span><span class="url">x.com/felixrieseberg/status/2122036839238492493</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/app-cube/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/app-cube">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/app-cube/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/app-cube/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/app-cube/references/LOOK.md">references/LOOK.md</a> <span>원본 데모에서 관찰한 형식</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/app-cube/references/ENGINE.md">references/ENGINE.md</a> <span>엔진 설정과 API</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/app-cube/references/HIC.md">references/HIC.md</a> <span>HTML-in-Canvas 공통 노트</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/app-cube/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 이미지는 모두 이 스킬의 페이지를 렌더한 스틸입니다
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

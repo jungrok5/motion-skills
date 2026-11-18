@@ -1,0 +1,134 @@
+<!doctype html>
+<!--
+  sheet-city samples page (from docs/_template/index.html).
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>sheet-city · motion-skills</title>
+<meta name="description" content="주제를 받아, 수식과 편집과 실행 취소가 되는 진짜 스프레드시트를 책상 위 모형 도시로 그리는 라이브 웹페이지를 만듭니다. 셀마다 값만큼 높은 건물이 서고, 지붕에 그 숫자가 찍힙니다.">
+<meta property="og:title" content="sheet-city · motion-skills">
+<meta property="og:description" content="주제를 받아, 수식과 편집과 실행 취소가 되는 진짜 스프레드시트를 책상 위 모형 도시로 그리는 라이브 웹페이지를 만듭니다. 셀마다 값만큼 높은 건물이 서고, 지붕에 그 숫자가 찍힙니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/sheet-city/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/sheet-city">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / sheet-city</nav>
+  <h1>sheet-city</h1>
+  <p>주제를 받아, 수식과 편집과 실행 취소가 되는 진짜 스프레드시트를 책상 위 모형 도시로 그리는 라이브 웹페이지를 만듭니다. 셀마다 값만큼 높은 건물이 서고 지붕에 그 숫자가 찍히며, 지붕을 눌러 숫자를 고치면 그 셀을 읽는 셀까지 빛이 거리를 따라 달려가 건물이 함께 움직입니다.
+  원본: Felix Rieseberg의 <a href="https://claude.ai/artifact/VZ6Un8f7RzJArq7wqMrE72" target="_blank" rel="noopener">「Sheet City」 데모</a>(<a href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk" target="_blank" rel="noopener">HTML-in-Canvas 데모 페이지</a>, <a href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19" target="_blank" rel="noopener">X 게시물</a>)를 보고 만들었습니다. 라이브 데모는 Chrome · Edge 157 이상이나 Claude 데스크톱 앱에서 보이고, 다른 브라우저에서는 같은 표가 평범한 스프레드시트 페이지로 보입니다.</p>
+  <ul class="tags"><li>라이브 웹페이지</li><li>HTML-in-Canvas</li><li>스프레드시트 도시</li><li>WebGL 조명</li><li>코드 전용</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(가계부, 카페의 주간 매출, 학교 도서관 대출, 마라톤 훈련 계획 …)</dd>
+      <dt>브리프</dt><dd>시트가 답할 질문 · 열과 행(합계는 뒤, 항목은 앞) · 수식과 누적 합 · 음수가 되는 행 · 슬라이더 하나 · 한 층의 값 · 색 · 외벽 · 책상 · 빛 · 소품 · 첫 편집 · 소리를 적은 <code>BRIEF.md</code></dd>
+      <dt>페이지</dt><dd>DOM 표와 편집 줄(수식 칸 · 슬라이더 · 실행 취소 · 소리)을 담은 캔버스, 그것을 모형 도시로 그리는 WebGL2(창 빛과 부드러운 그림자 · 높이 격자로 만든 차폐 · 하늘을 비추는 유리 · 소품)</dd>
+      <dt>확인</dt><dd>그림 너머 실제 클릭 · 입력 · 업로드 · 폰 폭 · 대체 페이지, 지붕 클릭 = 그 셀 선택, 편집 후 건물 이동 · 오버슈트 · 3초 안 정지 · 의존 셀로 가는 빛 · 고리, 실행 취소, 슬라이더 실제 드래그, 궤도 회전 뒤 클릭, 스틸 결정성, 오프닝, calm</dd>
+      <dt>출력</dt><dd>네트워크 없이 file:// 과 Claude 아티팩트에서 도는 폴더 하나(<code>index.html</code> + <code>lib/</code>), 스틸 PNG</dd>
+    </dl>
+    <pre><code>node scripts/check.mjs examples/marathon-block/index.html
+node scripts/still.mjs examples/marathon-block/index.html --out out --act idle,edit,close --at 0.35
+node scripts/new-page.mjs ../my-sheet
+node scripts/check.mjs ../my-sheet/index.html</code></pre>
+    <p class="mute">요구 사항: 확인과 스틸에 Node + Playwright Chromium. 페이지 자체는 아무것도 필요 없습니다(시스템 글꼴, 합성 소리). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/sheet-city/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10;--demo-bg:#241c18">
+    <iframe data-src="demo/examples/marathon-block/" title="sheet-city 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/marathon-block/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/marathon-block</code> · 12주 마라톤 훈련 계획 · 지붕을 눌러 숫자 입력</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/marathon-block/" data-cap="예제 &lt;code&gt;examples/marathon-block&lt;/code&gt; · 12주 마라톤 훈련 계획 · 지붕을 눌러 숫자 입력" aria-pressed="true">마라톤 훈련 블록</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/index.html&lt;/code&gt; · 한 해 가계부 · 적자인 달은 붉은 구덩이" aria-pressed="false">가계부 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제(마라톤 훈련 계획, 저녁 빛의 나무 탁자)와 템플릿(가계부, 오후 빛의 커팅 매트)을 HTML-in-Canvas를 켠 Chromium에서 찍은 스틸입니다. 카드를 누르면 그 페이지의 라이브 데모가 열립니다.</p>
+  <div id="gallery">
+    <div class="group">
+      <h3>마라톤 훈련 블록 <small>examples/marathon-block</small></h3>
+      <p>12주 · 주간 거리 · 발로 보낸 시간 · 이지 · 롱런 · 템포 · 인터벌, 그 앞에 평평하게 찍힌 누적 거리. 「Peak long run」 슬라이더로 롱런과 합계가 함께 움직입니다.</p>
+      <div class="grid">
+        <a class="tile" href="demo/examples/marathon-block/" target="_blank" rel="noopener">
+          <img src="samples/marathon-idle.jpg" alt="나무 탁자 위 스프레드시트에서 12주 훈련 거리가 건물로 서 있고, 창살 그림자가 저녁 빛 속에 비스듬히 드리운 모습" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">예제 · 집 시점</span><b>저녁 탁자 위의 훈련 계획</b><span class="how">뒤에 주간 거리, 앞으로 갈수록 짧은 달리기</span></div></a>
+        <a class="tile" href="demo/examples/marathon-block/" target="_blank" rel="noopener">
+          <img src="samples/marathon-edit.jpg" alt="11주차 인터벌 건물이 높아지고 그 둘레로 고리가 퍼지며, 앞줄 누적 거리가 아직 옛 숫자를 들고 있는 모습" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">예제 · 편집 0.45초 뒤</span><b>숫자를 고친 순간</b><span class="how">고리 · 거리를 달리는 빛 · 빛이 닿기 전까지 옛 숫자</span></div></a>
+        <a class="tile" href="demo/examples/marathon-block/" target="_blank" rel="noopener">
+          <img src="samples/marathon-orbit.jpg" alt="시트 오른쪽 낮은 곳에서 본 도시, 앞줄 누적 거리 숫자가 길게 이어지는 모습" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">예제 · 궤도 회전</span><b>반대편 낮은 시점</b><span class="how">끌어서 돌려도 클릭은 그려진 셀에</span></div></a>
+        <a class="tile" href="demo/examples/marathon-block/" target="_blank" rel="noopener">
+          <img src="samples/marathon-close.jpg" alt="선택된 템포 셀의 지붕과 그 주변 건물의 창 줄, 지붕 숫자가 크게 보이는 근접 장면" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">예제 · 근접</span><b>지붕이 곧 셀</b><span class="how">살아 있는 숫자 · 층마다 창 한 줄 · 선택 테두리</span></div></a>
+        <a class="tile" href="demo/examples/marathon-block/" target="_blank" rel="noopener">
+          <img src="samples/marathon-slider.jpg" alt="Peak long run 슬라이더를 끝까지 올려 롱런과 주간 거리 건물이 높아진 모습" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">예제 · 슬라이더</span><b>최장 롱런 38 km</b><span class="how">시트 위에 그려진 진짜 range 입력</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>가계부 <small>templates/index.html</small></h3>
+      <p>한 해 열두 달 · 저축 누적 · 수입 · 지출 · 남은 돈. 적자인 달은 붉은 구덩이가 되고 숫자는 유리 위에 남습니다.</p>
+      <div class="grid">
+        <a class="tile" href="demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/budget-idle.jpg" alt="초록 커팅 매트 위 가계부 도시, 뒤로 갈수록 높아지는 저축 누적 탑과 연필 · 머그잔 · 동전" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">템플릿 · 집 시점</span><b>오후 창가의 가계부</b><span class="how">7 · 8월 적자는 붉은 구덩이</span></div></a>
+        <a class="tile" href="demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/budget-edit.jpg" alt="1월 여가비 건물이 솟고 B열을 따라 파란 빛이 저축 누적 쪽으로 달리는 모습" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">템플릿 · 편집 0.4초 뒤</span><b>1월 여가비 180 → 1,180</b><span class="how">빛이 열을 따라 합계와 남은 돈으로</span></div></a>
+        <a class="tile" href="demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/budget-draft.jpg" alt="수식 칸에 수식을 입력하는 동안 선택된 셀이 노란 초안 색으로 바뀌어 그 건물 외벽까지 노래진 모습" loading="lazy" width="640" height="400">
+          <div class="cap"><span class="no">템플릿 · 수식 칸</span><b>입력 중인 초안</b><span class="how">수식 칸의 글이 셀과 건물 색에 바로 보임</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. 출발점은 Felix Rieseberg가 Claude 데스크톱 앱의 HTML-in-Canvas를 소개하며 공개한 열다섯 데모 가운데 「Sheet City」입니다. 이 스킬은 그 형식(진짜 표가 책상 위 모형 도시가 되고, 지붕이 셀이며, 고친 값이 거리를 따라 퍼지는 문법)과 기법만 가져오고, 코드 · 셰이더 · 데이터 · 소리와 예제는 모두 이 레포의 것입니다.</p>
+  <div class="works">
+    <a class="work" href="https://jungrok5.github.io/motion-skills/sheet-city/demo/examples/marathon-block/" target="_blank" rel="noopener"><b>마라톤 훈련 블록 · 12주</b><span>주제에서 브리프로, 새로 설계한 예제 라이브 페이지</span><span class="url">sheet-city/demo/examples/marathon-block/</span></a>
+    <a class="work" href="https://claude.ai/artifact/VZ6Un8f7RzJArq7wqMrE72" target="_blank" rel="noopener"><b>원본 데모 · Sheet City</b><span>Felix Rieseberg · HTML-in-Canvas 데모</span><span class="url">claude.ai/artifact/VZ6Un8f7RzJArq7wqMrE72</span></a>
+    <a class="work" href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk" target="_blank" rel="noopener"><b>HTML-in-Canvas 데모 페이지</b><span>데모 열다섯 개</span><span class="url">claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk</span></a>
+    <a class="work" href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19" target="_blank" rel="noopener"><b>X 게시물 · All hail the weird web</b><span>Felix Rieseberg(@felixrieseberg)</span><span class="url">x.com/felixrieseberg</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sheet-city/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/sheet-city">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sheet-city/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sheet-city/references/BRIEF.md">references/BRIEF.md</a> <span>주제에서 브리프로, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sheet-city/references/LOOK.md">references/LOOK.md</a> <span>원본 데모에서 관찰한 형식</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sheet-city/references/ENGINE.md">references/ENGINE.md</a> <span>엔진 API와 설정, 새 소품 · 외벽 추가</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sheet-city/references/HIC.md">references/HIC.md</a> <span>HTML-in-Canvas 공통 규칙</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/sheet-city/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림은 이 스킬의 코드로 그린 스틸입니다
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

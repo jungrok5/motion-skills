@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Room in the Picture</title>
+<!--
+  droste-page template: a gallery wall with one framed painting, and the painting is of this wall. It is an example of
+  the style, not a menu: for a new topic, write BRIEF.md first (references/BRIEF.md) and design the surface, the window,
+  the content, the controls, the light and the sounds again.
+
+  The parts every Droste page has (see SKILL.md → Contract):
+    #stage            <canvas layoutsubtree content="drawable">, the only thing on screen
+    #page             one ordinary page, exactly the canvas size, drawn through the Droste map
+    #window           the hole: the page scaled by 1/S about its own fixed point. Its box comes from --S, --cx, --cy below.
+                      Nothing inside it is ever seen (the next copy covers it); the engine keeps its digit strip there.
+    [data-surface]    regions the shader gives a material (names map to `surfaces` in the config)
+    #num              the counter: each copy shows its own number (composed by the shader from real digits)
+    #wind             a real range input: how far the copies wind into a spiral
+    [data-hic-edit]   at least one editable thing (typing changes every copy at once)
+-->
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #1b1d1a; }
+  #stage { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; touch-action: none; outline: none; }
+
+  /* ---------- the page: every length is in --u (set by the engine; this default is for the fallback) */
+  #page {
+    --u: min(1vw, 1.5vh);
+    --S: 2.4; --cx: .5; --cy: .45;                       /* the window: scale and centre (fractions of the page) */
+    --wl: calc(var(--cx) * 100vw - 50vw / var(--S)); --wr: calc(var(--cx) * 100vw + 50vw / var(--S));
+    --wt: calc(var(--cy) * 100vh - 50vh / var(--S)); --wb: calc(var(--cy) * 100vh + 50vh / var(--S));
+    --fb: var(--frame-b, calc(3 * var(--u)));            /* frame width, set by the engine from frame.width */
+    --ink: #24251f; --brass: #c6a052;
+    position: relative; overflow: hidden; width: 100vw; height: 100vh; box-sizing: border-box;
+    background: #8d9a82; color: var(--ink);
+    font-family: Georgia, 'Times New Roman', 'DejaVu Serif', serif;
+    -webkit-font-smoothing: antialiased; user-select: none; -webkit-user-select: none;
+  }
+  #page *, #page *::before, #page *::after { box-sizing: border-box; }
+  #page ::selection { background: #2f6bff; color: #fff; }
+
+  /* the hole (and the fallback's stand-in for it) */
+  #window { position: absolute; left: var(--wl); top: var(--wt); width: calc(100% / var(--S)); height: calc(100% / var(--S)); }
+
+  /* the picture lamp above the frame (brass bar; the shader adds its glow at night) */
+  #lamp { position: absolute; left: calc(50vw - 11 * var(--u)); width: calc(22 * var(--u)); height: calc(1.1 * var(--u));
+    top: calc(var(--wt) - var(--fb) - 1.1 * var(--u)); border-radius: calc(.55 * var(--u));
+    background: linear-gradient(180deg, #f1dc98, #c9a24c 35%, #8d6a26 70%, #5c4314); }
+
+  /* wall lettering above the painting: the editable line */
+  #title { position: absolute; left: 8vw; right: 8vw; top: calc(var(--wt) - var(--fb) - 9.6 * var(--u)); height: calc(6 * var(--u));
+    margin: 0; text-align: center; white-space: nowrap; overflow: hidden;
+    font-size: calc(4.2 * var(--u)); line-height: calc(6 * var(--u)); font-weight: 400; letter-spacing: .02em; font-style: italic;
+    outline: none; cursor: text; user-select: text; -webkit-user-select: text; caret-color: #b2361f; }
+
+  /* the brass plaque under the frame carries the copy number */
+  #plaque { position: absolute; left: calc(50vw - 7 * var(--u)); width: calc(14 * var(--u)); height: calc(3.6 * var(--u));
+    top: calc(var(--wb) + var(--fb) + 1.4 * var(--u));
+    display: flex; align-items: center; justify-content: center; gap: calc(.6 * var(--u));
+    font-size: calc(2 * var(--u)); letter-spacing: .14em; color: #3a2a0c; border-radius: calc(.25 * var(--u));
+    background: linear-gradient(176deg, #f0d993, #d0aa55 38%, #b1883a 74%, #d8b866);
+    box-shadow: inset 0 0 0 calc(.1 * var(--u)) #7a5a1d; }
+  #num { display: block; width: calc(3.4 * var(--u)); height: 1.25em; line-height: 1.25em; text-align: center; font-variant-numeric: lining-nums; }
+  #page.droste-live #num { color: transparent; }   /* the shader writes each copy's own number here */
+
+  /* salon-hung miniatures: real buttons with CSS-painted pictures; a click repaints one in every copy */
+  .mini { position: absolute; padding: calc(.9 * var(--u)); border: 0; cursor: pointer; outline: none;
+    background: linear-gradient(135deg, #2c2016, #5b4128 40%, #2a1d12); border-radius: calc(.2 * var(--u));
+    box-shadow: inset 0 0 0 calc(.18 * var(--u)) #c9a14a, inset 0 0 0 calc(.32 * var(--u)) #3a2a18; }
+  .mini:focus-visible { box-shadow: inset 0 0 0 calc(.3 * var(--u)) #ffd36b; }
+  .mini i { display: block; width: 100%; height: 100%; }
+  .mini[data-v="0"] i { background: radial-gradient(circle at 50% 42%, #f4c25b 0 18%, transparent 19%), linear-gradient(#e98b4a, #c9455a 55%, #3b2e5a); }
+  .mini[data-v="1"] i { background: linear-gradient(#21304f 0 30%, #7aa1c4 30% 48%, #d8c9a4 48% 70%, #6f8d4f 70%); }
+  .mini[data-v="2"] i { background: radial-gradient(ellipse at 50% 78%, #7b4a2a 0 22%, transparent 23%), radial-gradient(circle at 38% 52%, #d9442c 0 11%, transparent 12%),
+      radial-gradient(circle at 60% 50%, #f0b232 0 10%, transparent 11%), radial-gradient(circle at 50% 38%, #6d9a3c 0 9%, transparent 10%), linear-gradient(#3b2f2a, #5c4a3b); }
+  .mini[data-v="3"] i { background: linear-gradient(90deg, #d8b23a 0 33%, #2f4b8f 33% 66%, #b83a2b 66%); }
+  .mini[data-v="4"] i { background: radial-gradient(circle at 30% 30%, #fff 0 6%, transparent 7%), radial-gradient(circle at 70% 60%, #fff8 0 4%, transparent 5%), linear-gradient(160deg, #0d1b3a, #283e74 60%, #6a5a8c); }
+  .mini[data-v="5"] i { background: repeating-linear-gradient(45deg, #ece3cc 0 8%, #2b4d6e 8% 16%); }
+  #m1 { left: calc(var(--wl) - var(--fb) - 21 * var(--u)); top: calc(var(--wt) - 1 * var(--u)); width: calc(12 * var(--u)); height: calc(15 * var(--u)); }
+  #m2 { left: calc(var(--wl) - var(--fb) - 25 * var(--u)); top: calc(var(--wt) + 16.5 * var(--u)); width: calc(16 * var(--u)); height: calc(11 * var(--u)); }
+  #m3 { left: calc(var(--wl) - var(--fb) - 8 * var(--u)); top: calc(var(--wt) + 16.5 * var(--u)); width: calc(5.5 * var(--u)); height: calc(7.5 * var(--u)); padding: calc(.6 * var(--u)); }
+
+  /* the wall label: a card beside the painting */
+  #label { position: absolute; left: calc(var(--wr) + var(--fb) + 5 * var(--u)); top: calc(var(--wt) + 3 * var(--u)); width: calc(19 * var(--u));
+    padding: calc(1.4 * var(--u)) calc(1.6 * var(--u)); background: #f7f3ea; color: #2a2823; font-size: calc(1.32 * var(--u)); line-height: 1.4;
+    box-shadow: 0 calc(.15 * var(--u)) calc(.5 * var(--u)) rgba(0,0,0,.25); }
+  #label b { display: block; font-size: 1.25em; font-weight: 400; font-style: italic; margin-bottom: .3em; }
+  #label p { margin: .45em 0 0; }
+  #label small { display: block; margin-top: .6em; font-size: .86em; color: #6a655a; }
+
+  /* the sound switch: a brass wall plate with a real toggle button */
+  #sound { position: absolute; left: calc(var(--wl) - var(--fb) - 25 * var(--u)); top: calc(var(--wt) + 30 * var(--u)); width: calc(10 * var(--u)); height: calc(4.4 * var(--u));
+    border: 0; border-radius: calc(.4 * var(--u)); cursor: pointer; font: inherit; font-size: calc(1.25 * var(--u)); letter-spacing: .06em; color: #3a2a0c;
+    background: linear-gradient(176deg, #f0d993, #c9a24c 45%, #a57d33); box-shadow: inset 0 0 0 calc(.1 * var(--u)) #7a5a1d; outline: none; }
+  #sound[aria-pressed="true"] { background: linear-gradient(176deg, #fff1b8, #e3bd5e 45%, #b88c39); }
+
+  /* the wainscot: painted wood panelling at the foot of the wall, with a rail on top */
+  #wainscot { position: absolute; left: 0; right: 0; top: 81vh; bottom: 0; background: #4d3b2a;
+    border-top: calc(1.4 * var(--u)) solid #6a523a; box-shadow: inset 0 calc(.35 * var(--u)) 0 #8b6e4f; }
+  #wind { position: absolute; left: calc(50vw - 20 * var(--u)); width: calc(40 * var(--u)); top: calc(81vh + 3 * var(--u)); height: calc(5 * var(--u));
+    display: flex; align-items: center; justify-content: center; gap: calc(1.6 * var(--u));
+    font-size: calc(1.9 * var(--u)); font-style: italic; color: #f3e6c8; white-space: nowrap; }
+  #wind input { appearance: none; -webkit-appearance: none; margin: 0; width: calc(18 * var(--u)); height: calc(4 * var(--u)); background: transparent; outline: none; cursor: grab; touch-action: none; }
+  #wind input::-webkit-slider-runnable-track { height: calc(.6 * var(--u)); border-radius: var(--u);
+    background: linear-gradient(90deg, transparent 0 var(--p, 50%), rgba(20,12,4,.6) var(--p, 50%)), linear-gradient(180deg, #f5e3a4, #d2ab55 35%, #9c732a); }
+  #wind input::-webkit-slider-thumb { -webkit-appearance: none; width: calc(3 * var(--u)); height: calc(3 * var(--u)); margin-top: calc(-1.2 * var(--u)); border-radius: 50%;
+    background: radial-gradient(circle at 38% 32%, #fffdf6, #eee6d2 45%, #b9ac90); box-shadow: 0 calc(.3 * var(--u)) calc(.6 * var(--u)) rgba(0,0,0,.45); }
+  #wind input:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 calc(.25 * var(--u)) #ffd36b; }
+  #hint { position: absolute; left: 0; right: 0; top: calc(81vh + 9.5 * var(--u)); margin: 0; text-align: center; font-size: calc(1.6 * var(--u)); color: #e9d9b6; font-style: italic; pointer-events: none; }
+
+  /* phone, portrait: the label folds away, the miniatures stand either side, the plaque and the slider stay */
+  @media (orientation: portrait) {
+    #page { --cy: .41; }
+    #title { top: calc(var(--wt) - var(--fb) - 11 * var(--u)); font-size: calc(3.6 * var(--u)); height: calc(7 * var(--u)); line-height: calc(7 * var(--u)); left: 4vw; right: 4vw; }
+    #m1 { left: calc(1.6 * var(--u)); top: calc(var(--wt) + 2 * var(--u)); width: calc(10 * var(--u)); height: calc(13 * var(--u)); }
+    #m2 { left: calc(1.6 * var(--u)); top: calc(var(--wt) + 20 * var(--u)); width: calc(10 * var(--u)); height: calc(8 * var(--u)); }
+    #m3 { left: auto; right: calc(2.6 * var(--u)); top: calc(var(--wt) + 2 * var(--u)); width: calc(7 * var(--u)); height: calc(9 * var(--u)); }
+    #label { left: calc(8 * var(--u)); right: calc(8 * var(--u)); width: auto; top: calc(var(--wb) + var(--fb) + 8 * var(--u)); font-size: calc(2 * var(--u)); padding: calc(1.6 * var(--u)) calc(2 * var(--u)); }
+    #label p:not(:first-of-type), #label small { display: none; }
+    #sound { left: auto; right: calc(1.6 * var(--u)); top: calc(var(--wt) + 20 * var(--u)); width: calc(10 * var(--u)); font-size: calc(1.6 * var(--u)); height: calc(6 * var(--u)); }
+    #plaque { left: calc(50vw - 9 * var(--u)); width: calc(18 * var(--u)); height: calc(4.6 * var(--u)); font-size: calc(2.6 * var(--u)); }
+    #num { width: calc(4.4 * var(--u)); }
+    #wainscot, #wind { top: 84vh; }
+    #wind { left: 3vw; width: 94vw; font-size: calc(2.6 * var(--u)); top: calc(84vh + 3 * var(--u)); }
+    #wind input { width: calc(26 * var(--u)); }
+    #hint { top: calc(84vh + 10 * var(--u)); font-size: calc(2.2 * var(--u)); }
+  }
+
+  /* the fallback (no HTML-in-Canvas): the same page as an ordinary page, with the window shown as an empty frame */
+  html:has(.hic-fallback), html:has(.hic-fallback) body { overflow: auto; height: auto; }
+  .hic-fallback #window { border: var(--fb) solid #2a1a12; outline: calc(.3 * var(--u)) solid #c99a3c; outline-offset: calc(-1 * var(--fb) + .6 * var(--u));
+    background: #7c8873; display: flex; align-items: center; justify-content: center; font-style: italic; color: #f3eedf; }
+  .hic-fallback #window::after { content: '(this wall, again)'; font-size: calc(2 * var(--u)); }
+</style>
+</head>
+<body>
+<canvas id="stage" layoutsubtree content="drawable" aria-label="A gallery wall with a painting of itself">
+  <div id="page" drawable>
+    <div id="wainscot" data-surface="wainscot" aria-hidden="true"></div>
+    <div id="window" aria-hidden="true"></div>
+    <div id="lamp" aria-hidden="true"></div>
+    <h1 id="title" contenteditable="plaintext-only" spellcheck="false" data-hic-edit aria-label="Wall lettering">The Room in the Picture</h1>
+    <button class="mini" id="m1" data-v="0" type="button" aria-label="Miniature: repaint" data-hic-click><i></i></button>
+    <button class="mini" id="m2" data-v="1" type="button" aria-label="Miniature: repaint"><i></i></button>
+    <button class="mini" id="m3" data-v="3" type="button" aria-label="Miniature: repaint"><i></i></button>
+    <div id="label" data-surface="label">
+      <b>The Room in the Picture</b>
+      <p>Oil on canvas. The painting shows the wall it hangs on, painting included.</p>
+      <p>Repaint a miniature and it changes in every copy at once.</p>
+      <small>Scroll to fall in · wind the room below</small>
+    </div>
+    <button id="sound" type="button" aria-pressed="false" data-on="Sound on" data-off="Sound off">Sound off</button>
+    <div id="plaque" data-surface="brass"><span>N&#186;</span><b id="num">1</b></div>
+    <label id="wind"><span>Wind the room</span><input type="range" min="0" max="2" step="0.001" value="1" aria-label="Wind the room"></label>
+    <p id="hint">Scroll to fall in</p>
+  </div>
+</canvas>
+<script src="../lib/hic.js"></script>
+<script src="../lib/droste-sound.js"></script>
+<script src="../lib/droste.js"></script>
+<script>
+(function () {
+  'use strict';
+  var title = document.getElementById('title');
+  title.addEventListener('keydown', function (e) { if (e.key === 'Enter') e.preventDefault(); });   // one line of lettering
+
+  // The whole look of this page is this object: designed per topic (references/BRIEF.md, references/ENGINE.md).
+  var D = Droste.create({
+    canvas: '#stage', page: '#page', window: '#window',
+    frame: { style: 'gilt', width: 3 },
+    surfaces: {
+      base: { type: 'plaster', scale: 2.2, rough: 1, mottle: .06 },            // the wall
+      wainscot: { type: 'wood', plank: 9, dir: 'v', gloss: .35, tone: .06 },
+      label: { type: 'card', fiber: 1, varnish: .1 },
+      brass: { type: 'metal', brush: 1, gloss: 1 }
+    },
+    light: { moods: Droste.MOODS.day, lamp: '#lamp', panes: { x: -6, y: 2, w: 46, h: 56, cols: 2, rows: 3, strength: .9 } },
+    counter: { el: '#num', start: 1, label: 'Copy number' },
+    wind: { input: '#wind input', rest: 1, max: 2, spin: .7 },
+    fall: { rest: -0.25, opening: 3.6, drift: 0 },
+    glow: '#fff1d2', seam: { style: 'crease' }, ripple: '#ffd77a',
+    sound: 'ceramic', soundToggle: '#sound', hint: '#hint',
+    onReady: function (D) { if (D.intro) setTimeout(function () { D.typeInto(title, 'The Room in the Picture'); }, 900); }
+  });
+
+  // a click on a miniature repaints it: the real button changes, so every copy changes with it
+  [].forEach.call(document.querySelectorAll('.mini'), function (b) {
+    b.addEventListener('click', function () {
+      b.setAttribute('data-v', String((+b.getAttribute('data-v') + 1) % 6));
+      if (!D.fallback) D.tap(b);
+    });
+  });
+})();
+</script>
+</body>
+</html>

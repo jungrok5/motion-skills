@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swarm page · template</title>
+<!-- swarm-page template: the house example of the style. A street bulletin at dusk whose words lift off as a flock of
+     swifts over the rooftops, turn the sky to night and settle back into the page. Copy it (scripts/new-page.mjs) and
+     design the page, the creature, the sky, the scene and the trigger for your topic: see references/BRIEF.md. -->
+<style>
+  /* 1 · palette and type for this topic (system font stacks only) */
+  :root {
+    --ink: #161826; --ink-soft: rgba(22, 24, 38, .74); --rule: rgba(22, 24, 38, .38);
+    --display: "Avenir Next Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    --text: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: linear-gradient(#6f86a8, #c9b6c0 60%, #f2b892); color: var(--ink); }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  /* 2 · the page: transparent background (the sky is drawn by the engine), ink that reads on the sky */
+  #page { position: absolute; left: 0; top: 0; box-sizing: border-box; width: 100vw; height: 100vh;
+    padding: clamp(18px, 4vh, 44px) clamp(18px, 5vw, 80px) 0; display: grid; grid-template-rows: auto auto auto; align-content: start;
+    gap: clamp(10px, 2.4vh, 28px); font: clamp(14px, 2.1vh, 18px)/1.45 var(--text); color: var(--ink); }
+  #page[data-swarm-light="b"] { --ink: #e9e6f2; --ink-soft: rgba(233, 230, 242, .78); --rule: rgba(233, 230, 242, .4); }
+  #page ::selection { background: rgba(255, 236, 214, .85); color: #161826; }
+  #page [contenteditable] { outline: none; cursor: text; caret-color: currentColor; }
+  .top { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; font: 600 clamp(11px, 1.5vh, 13px)/1.2 var(--display); letter-spacing: .16em; text-transform: uppercase; }
+  .air { display: flex; gap: 1.2em; align-items: baseline; }
+  .air i { font: italic 400 1.15em var(--text); letter-spacing: 0; text-transform: none; color: var(--ink-soft); visibility: hidden; }
+  #page[data-swarm-air] .air i { visibility: visible; }
+  .top button { font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--ink); background: none; border: 0; border-bottom: 1.5px solid currentColor; padding: 0 0 2px; cursor: pointer; }
+  #land { visibility: hidden; }
+  #page[data-swarm-air] #land { visibility: visible; }
+  h1 { margin: 0; max-width: 11em; font: 800 min(10vw, 15vh)/.9 var(--display); letter-spacing: -.02em; }
+  .cols { display: grid; grid-template-columns: minmax(0, 28em) minmax(0, 22em); justify-content: space-between; gap: clamp(20px, 6vw, 100px); }
+  .note p { margin: 0 0 1em; font-style: italic; font-size: 1.15em; }
+  #fly { font: 800 clamp(22px, 3.4vh, 32px)/1 var(--display); color: var(--ink); background: none; border: 0; border-bottom: 3px solid currentColor; padding: 0 0 4px; cursor: pointer; }
+  #fly:focus-visible, .top button:focus-visible, #sort:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+  .hint { margin-left: 1.2em; font-style: italic; color: var(--ink-soft); }
+  .list h2 { margin: 0 0 .5em; display: flex; justify-content: space-between; font: 600 .78em/1.2 var(--display); letter-spacing: .14em; text-transform: uppercase; border-bottom: 2px solid var(--ink); padding-bottom: .5em; }
+  #sort { font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  ol { margin: 0; padding: 0; list-style: none; }
+  li { display: flex; justify-content: space-between; gap: 1em; padding: .45em 0; border-bottom: 1px solid var(--rule); }
+  li b { font-weight: 600; font-variant-numeric: tabular-nums; }
+  /* 3 · the scene in front: silhouettes that never fly */
+  #scene { position: absolute; left: 0; top: 0; width: 100vw; height: 100vh; pointer-events: none; }
+  #scene svg { display: block; width: 100%; height: 100%; }
+  #scene .far { fill: #4a4660; } #scene .near { fill: #1b1c2b; }
+  #scene[data-swarm-light="b"] .far { fill: #1d2440; } #scene[data-swarm-light="b"] .near { fill: #0a0d18; }
+  .hic-fallback #scene { display: none; }
+  @media (max-width: 760px) { .cols { grid-template-columns: minmax(0, 1fr); } .list { display: none; } }
+</style>
+</head>
+<body>
+<canvas id="stage" layoutsubtree content="drawable" aria-label="A bulletin whose words can fly as a flock">
+  <article id="page" drawable>
+    <header class="top">
+      <span>Wharf Lane bulletin &middot; Thursday evening</span>
+      <span class="air"><i>Keep typing.</i><button id="land" type="button" data-swarm-hold>Land</button><button id="sound" type="button" aria-pressed="false" data-swarm-hold>Sound</button></span>
+    </header>
+    <h1 id="headline" contenteditable="plaintext-only" spellcheck="false" data-hic-edit data-swarm-oneline>Every word here can fly.</h1>
+    <div class="cols">
+      <section class="note">
+        <p id="note" contenteditable="plaintext-only" spellcheck="false">Press the button and the bulletin lifts off over the roofs as a flock of swifts. No bird leads: each keeps to its seven nearest neighbours, so a turn runs through all of them. They come home to the places they left, and the page reads again.</p>
+        <button id="fly" type="button">Let it fly &#8599;</button><span class="hint">Click any text and type.</span>
+      </section>
+      <section class="list">
+        <h2><span>Tonight on the lane</span><button id="sort" type="button" data-hic-click>Sort A&ndash;Z</button></h2>
+        <ol id="items">
+          <li><span>Bins out by the gate</span><b>19:00</b></li>
+          <li><span>Choir in the yard</span><b>19:30</b></li>
+          <li><span>Lost: one blue scarf</span><b>No. 14</b></li>
+          <li><span>Allotment swap</span><b>20:15</b></li>
+        </ol>
+      </section>
+    </div>
+  </article>
+  <div id="scene" drawable aria-hidden="true"><svg id="roofs" preserveAspectRatio="none"></svg></div>
+</canvas>
+<script src="../lib/hic.js"></script>
+<script src="../lib/swarm.js"></script>
+<script>
+(function () {
+  'use strict';
+  // 4 · the scene, drawn for the size of the view (rooftops, far and near)
+  function scenery(W, H) {
+    var svg = document.getElementById('roofs'), base = H + 2;
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.innerHTML =
+      '<path class="far" d="' + Swarm.draw.roofs(-20, W + 20, base, H * 0.08, H * 0.15, 4) + '"/>' +
+      '<path class="near" d="' + Swarm.draw.roofs(-40, W + 40, base, H * 0.03, H * 0.09, 9) + '"/>';
+  }
+  // 5 · the swarm: sky, creature, flock and trigger designed for this topic
+  var swarm = Swarm.start({
+    page: '#page', scene: '#scene', onResize: scenery,
+    sky: {
+      stops: [[0, '#647ea3'], [0.42, '#a9a9c4'], [0.72, '#e7b9a6'], [1, '#f4a477']],
+      sun: { x: 0.18, y: 1.02, r: 0.05, color: '#ffc58e', glow: 0.32 },
+      clouds: { amount: 0.6, y0: 0.42, y1: 0.86, shade: '#8a7c98', lit: '#ffb07c' }, cirrus: 0.35
+    },
+    skyB: {
+      stops: [[0, '#0b0f24'], [0.5, '#17214a'], [0.85, '#2c3c66'], [1, '#43577e']],
+      moon: { x: 0.84, y: 0.17, r: 0.026 }, stars: 0.9,
+      clouds: { amount: 0.4, y0: 0.5, y1: 0.86, shade: '#0d1430', lit: '#3b4670' }, cirrus: 0.25
+    },
+    light: { turn: true },
+    creature: { shape: 'starling', size: 2.6, flap: 8, glide: 0.4, tint: '#1a1c2c', tintMix: 0.35, tintB: '#cfd6ee', tintMixB: 0.75, haze: '#9aa2c0' },
+    flock: { shape: 'sheet', area: [0.08, 0.1, 0.92, 0.6] },
+    trigger: { fly: '#fly', land: '#land', intro: { el: '#headline', at: 1.2, back: 3.4 } },
+    sound: { kind: 'wings', toggle: '#sound' }
+  });
+  // 6 · page behaviour: sorting the list re-forms it (moved rows fly from their old places)
+  document.getElementById('sort').addEventListener('click', function () {
+    var ol = document.getElementById('items'), lis = [].slice.call(ol.children);
+    swarm.reflow(function () {
+      lis.slice().sort(function (a, b) { return a.textContent.localeCompare(b.textContent); }).forEach(function (li) { ol.appendChild(li); });
+    }, lis);
+  });
+})();
+</script>
+</body>
+</html>

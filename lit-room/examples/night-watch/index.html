@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Night Watch · a lit room</title>
+<!--
+  lit-room worked example (see BRIEF.md): the chart table of a small sailing ship's cabin at night. The monitor shows the
+  watch page: drag the port (red), starboard (green) and masthead (white) running lights across it and the cabin turns
+  red, green or pale; set the course; switch the brass lantern; pick a sea (calm, squall, dawn) and the cabin follows.
+  New props for this topic live in this page (LitRoom.prop: compass, chart roll, rope coil, hanging lantern).
+-->
+<style>
+  html, body { margin: 0; height: 100%; background: #05070b; overflow: hidden; color: #eee; font: 14px/1.4 system-ui, sans-serif; }
+  #room { position: fixed; inset: 0; width: 100%; height: 100%; display: block; overflow: hidden; cursor: grab; touch-action: none; outline: none; }
+  #room.lr-drag { cursor: grabbing; }
+  #hint { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); margin: 0; color: rgba(230,236,245,.6); font-size: 12px; pointer-events: none; white-space: nowrap; text-shadow: 0 1px 4px #000; }
+
+  /* ---------------- the watch page on the screen (1280 × 720) ---------------- */
+  #page { --bg: #07111f; --bg2: #0c1a2e; --ink: #e9eef6; --dim: #7a8aa3; --brass: #d8a64e; --line: rgba(233,238,246,.12);
+          --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+          --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+          position: relative; width: 1280px; height: 720px; overflow: hidden; box-sizing: border-box; color: var(--ink);
+          background: radial-gradient(120% 90% at 50% 110%, var(--bg2), var(--bg)); font: 500 22px/1.35 var(--sans); user-select: none; -webkit-user-select: none; }
+  #page[data-mood="squall"] { --bg: #0d1513; --bg2: #2a3b36; --ink: #e3ece6; --dim: #839a90; --brass: #b9c7b0; }
+  #page[data-mood="dawn"]   { --bg: #f2a58c; --bg2: #ffe0b8; --ink: #3a1d22; --dim: #8f5b55; --brass: #a8432e; --line: rgba(58,29,34,.16); }
+  #page *, #page *::before { box-sizing: border-box; }
+  #page button, #page textarea { font: inherit; color: inherit; margin: 0; }
+  #page button { cursor: pointer; border: 0; background: none; padding: 0; }
+  #page :focus { outline: none; } #page :focus-visible { outline: 3px solid var(--brass); outline-offset: 3px; }
+  #page .bar { position: absolute; inset: 0 0 auto 0; height: 80px; display: flex; align-items: center; gap: 10px; padding: 0 28px 0 34px; border-bottom: 1px solid var(--line); }
+  #page .mark { width: 300px; font: 600 30px/1 var(--serif); letter-spacing: .01em; }
+  #page .mark small { display: block; margin-top: 4px; font: 500 15px/1 var(--mono); color: var(--dim); letter-spacing: .12em; text-transform: uppercase; }
+  #page .tabs { display: flex; gap: 8px; flex: 1; }
+  #page .tab, #page .switch { height: 50px; padding: 0 24px; border-radius: 10px; font: 600 24px/1 var(--sans); color: var(--dim); }
+  #page .tab[aria-pressed="true"] { color: var(--bg); background: var(--ink); }
+  #page .switch { box-shadow: inset 0 0 0 2px var(--line); }
+  #page .switch[aria-pressed="true"] { color: #1d1204; background: var(--brass); box-shadow: 0 0 22px rgba(216,166,78,.45); }
+  #page section { position: absolute; left: 0; top: 80px; width: 1280px; height: 640px; }
+  /* running lights: port red, starboard green, masthead white */
+  #page .rl { position: absolute; width: 270px; height: 270px; margin: -135px 0 0 -135px; border-radius: 50%; cursor: grab; touch-action: none;
+              background: radial-gradient(closest-side, #fff 0, var(--c) 34%, var(--f) 62%, transparent 100%); }
+  #page .rl.is-held { cursor: grabbing; }
+  #page .rl::after { content: attr(data-name); position: absolute; left: 50%; top: 100%; transform: translateX(-50%); font: 600 16px/1 var(--mono); letter-spacing: .14em; color: var(--dim); white-space: nowrap; }
+  #page .port { --c: #ff2a2a; --f: rgba(255,20,30,.55); left: 190px; top: 420px; }
+  #page .star { --c: #23e070; --f: rgba(20,220,110,.5); left: 1090px; top: 420px; }
+  #page .mast { --c: #fff4d6; --f: rgba(255,240,200,.45); left: 640px; top: 140px; width: 190px; height: 190px; margin: -95px 0 0 -95px; }
+  #page .course { position: absolute; left: 70px; right: 70px; top: 250px; text-align: center; margin: 0; pointer-events: none; }
+  #page .course small { display: block; font: 600 18px/1 var(--mono); letter-spacing: .3em; color: var(--dim); text-transform: uppercase; margin-bottom: 14px; }
+  #page .course span { display: inline-block; min-width: 2ch; font: 600 104px/1.05 var(--serif); letter-spacing: -.01em; caret-color: var(--brass); user-select: text; -webkit-user-select: text; cursor: text; white-space: pre-wrap; pointer-events: auto; }
+  #page .readout { position: absolute; left: 70px; right: 70px; bottom: 34px; display: flex; justify-content: space-between; font: 500 20px/1 var(--mono); color: var(--dim); letter-spacing: .06em; }
+  #page textarea { position: absolute; left: 70px; top: 46px; width: 1140px; height: 548px; resize: none; border: 0; padding: 28px 34px; border-radius: 8px;
+                   background: repeating-linear-gradient(transparent 0 49px, var(--line) 49px 50px); box-shadow: inset 0 0 0 1px var(--line);
+                   font: 400 30px/50px var(--serif); user-select: text; -webkit-user-select: text; caret-color: var(--brass); }
+  #page .seas { position: absolute; left: 70px; top: 60px; width: 1140px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  #page .seas button { height: 470px; border-radius: 12px; padding: 28px; text-align: left; display: flex; flex-direction: column; justify-content: flex-end; box-shadow: inset 0 0 0 2px var(--line); }
+  #page .seas button b { font: 600 46px/1.05 var(--serif); } #page .seas button span { font: 500 19px/1.3 var(--mono); opacity: .75; margin-top: 10px; }
+  #page .seas button[aria-pressed="true"] { box-shadow: inset 0 0 0 4px var(--brass); }
+  #page .s-calm { background: linear-gradient(180deg, #050b18, #12305a); color: #e9eef6; }
+  #page .s-squall { background: linear-gradient(180deg, #1e2a27, #5d746a); color: #eef3ef; }
+  #page .s-dawn { background: linear-gradient(180deg, #ffd9b0, #f08e7e); color: #3a1d22; }
+  #page [hidden] { display: none !important; }
+  .hic-fallback #page { width: min(1280px, 100%); height: auto; min-height: 720px; overflow: visible; }
+  .hic-fallback #page section { position: relative; top: 0; width: 100%; height: auto; min-height: 560px; }
+  .hic-fallback #page .bar { position: relative; flex-wrap: wrap; height: auto; padding: 12px; }
+  .hic-fallback #page .mark { width: auto; }
+  .hic-fallback #page .course { position: relative; left: 0; right: 0; top: 0; padding: 220px 16px 60px; }
+  .hic-fallback #page .course span { font-size: clamp(40px, 9vw, 104px); }
+  .hic-fallback #page .readout { position: relative; left: 0; right: 0; bottom: 0; flex-wrap: wrap; gap: 8px; padding: 0 16px 20px; }
+  .hic-fallback #page .seas, .hic-fallback #page textarea { position: relative; left: 0; top: 0; width: 100%; }
+  .hic-fallback #page .seas { grid-template-columns: 1fr; } .hic-fallback #page .seas button { height: 150px; }
+  .hic-fallback ~ #hint { display: none; }
+</style>
+</head>
+<body>
+<canvas id="room" layoutsubtree content="drawable" aria-label="A ship's cabin at night; the chart-table monitor shows the watch page, and its running lights colour the cabin">
+  <div id="page" drawable data-mood="calm">
+    <header class="bar">
+      <span class="mark">Albatross<small>Night watch · 02:40</small></span>
+      <nav class="tabs" aria-label="Screens">
+        <button type="button" class="tab" data-tab="lights" aria-pressed="true">Lights</button>
+        <button type="button" class="tab" data-tab="log" aria-pressed="false">Log</button>
+        <button type="button" class="tab" data-tab="sea" aria-pressed="false">Sea</button>
+      </nav>
+      <button type="button" class="switch" data-room-lamp="table lantern" aria-pressed="true" data-hic-click>Lantern</button>
+    </header>
+    <section data-panel="lights" aria-label="Running lights">
+      <div class="rl mast" data-lamp data-name="MASTHEAD" tabindex="0" role="button" aria-label="Masthead light, drag to move"></div>
+      <div class="rl port" data-lamp data-name="PORT" tabindex="0" role="button" aria-label="Port light, drag to move"></div>
+      <div class="rl star" data-lamp data-name="STARBOARD" tabindex="0" role="button" aria-label="Starboard light, drag to move"></div>
+      <p class="course"><small>Course</small><span id="course" contenteditable="plaintext-only" spellcheck="false" data-hic-edit>274° · steady</span></p>
+      <div class="readout"><span>48°12′N 6°31′W</span><span>wind SW 4</span><span>baro 1012 ↘</span></div>
+    </section>
+    <section data-panel="log" aria-label="Log" hidden>
+      <textarea id="log" aria-label="Ship's log" spellcheck="false">02:00  Took the watch. Wind SW 4, sea slight, a long swell from the west.
+02:20  Lighthouse fine on the starboard bow, flashing every ten seconds.
+02:40  Coffee. All quiet below.</textarea>
+    </section>
+    <section data-panel="sea" aria-label="Sea" hidden>
+      <div class="seas">
+        <button type="button" class="s-calm" data-mood="calm" aria-pressed="true"><b>Calm night</b><span>stars, slight sea</span></button>
+        <button type="button" class="s-squall" data-mood="squall" aria-pressed="false"><b>Squall</b><span>rain on the glass</span></button>
+        <button type="button" class="s-dawn" data-mood="dawn" aria-pressed="false"><b>Dawn</b><span>first light, eastward</span></button>
+      </div>
+    </section>
+  </div>
+</canvas>
+<p id="hint">Drag the cabin to look around · scroll to zoom · double-click to go close</p>
+<script src="../../lib/hic.js"></script>
+<script src="../../lib/lit-room.js"></script>
+<script src="../../lib/props.js"></script>
+<script>
+// ---------------- props made for this topic (the kit, used in the page; lib/ is untouched) ----------------
+// a brass compass in a gimballed bowl, its card painted in code
+LitRoom.prop('compass', function (b, o) {
+  b.tess = 0.015;
+  b.mat('wood', '#3e2616'); b.boxAt(-0.08, 0, -0.08, 0.16, 0.035, 0.16, { r: 0.006, seg: 1 });
+  b.move(0, 0.035, 0);
+  b.mat('brass', '#c39448'); b.lathe([[0, 0], [0.055, 0.004], [0.066, 0.03], [0.068, 0.045], [0.062, 0.046], [0.058, 0.032], [0, 0.03]], { seg: 32 });
+  var card = b.atlas(256, 256, function (g, w, h) {
+    g.fillStyle = '#efe6d0'; g.fillRect(0, 0, w, h); g.translate(w / 2, h / 2);
+    g.strokeStyle = '#3a2a1a'; g.lineWidth = 2; g.beginPath(); g.arc(0, 0, w * 0.46, 0, 7); g.stroke();
+    for (var i = 0; i < 32; i++) { g.save(); g.rotate(i * Math.PI / 16); g.beginPath(); g.moveTo(0, -w * 0.46); g.lineTo(0, -w * (i % 4 ? 0.42 : 0.38)); g.stroke(); g.restore(); }
+    for (i = 0; i < 4; i++) { g.save(); g.rotate(i * Math.PI / 2); g.fillStyle = i ? '#2b3a4a' : '#a8432e'; g.beginPath(); g.moveTo(0, -w * 0.36); g.lineTo(w * 0.05, 0); g.lineTo(-w * 0.05, 0); g.fill(); g.restore(); }
+    g.fillStyle = '#3a2a1a'; g.font = '600 26px Georgia, serif'; g.textAlign = 'center'; g.fillText('N', 0, -w * 0.25);
+  });
+  b.mat('paper', '#ffffff'); b.at(function () { b.move(0, 0.031, 0); b.box(0.105, 0.002, 0.105, { decal: { face: 'Y', rect: card }, ao: false }); });
+  b.mat('glass', '#ffffff'); b.at(function () { b.move(0, 0.044, 0); b.cyl(0.06, 0.001, { seg: 28, ao: false }); });
+});
+// a rolled sea chart lying on the table, tied with a string
+LitRoom.prop('chartRoll', function (b, o) {
+  b.tess = 0.02; b.rotY(o.turn || 0); b.move(0, 0.03, 0); b.rotZ(90);
+  b.mat('paper', '#e7dcc3'); b.at(function () { b.move(0, -0.3, 0); b.cyl(0.03, 0.6, { seg: 20 }); });
+  b.mat('paper', '#d7c7a6'); b.at(function () { b.move(0, -0.302, 0); b.cyl(0.012, 0.604, { seg: 14, ao: false }); });
+  b.mat('fabric', '#8c2f22'); b.at(function () { b.move(0, 0.08, 0); b.cyl(0.0315, 0.012, { seg: 20, open: true, ao: false }); });
+});
+// a coil of rope on the deck: a flat spiral tube
+LitRoom.prop('rope', function (b, o) {
+  var pts = [], turns = 4.2, r0 = 0.07, r1 = pick(o.r, 0.2);
+  function pick(v, d) { return v === undefined ? d : v; }
+  for (var i = 0; i <= 160; i++) { var t = i / 160, a = t * turns * Math.PI * 2, r = r0 + (r1 - r0) * t; pts.push([Math.cos(a) * r, 0.018 + 0.02 * Math.max(0, 1 - t * 3) + 0.006 * Math.sin(a * 3), Math.sin(a) * r]); }
+  b.tess = 0.03; b.mat('fabric', o.color || '#b59a6a'); b.tube(pts, 0.016, { seg: 8, ao: true }); b.occluder([-r1, 0, -r1], [r1, 0.05, r1]);
+});
+// a lantern hanging from a deck beam on a short chain
+LitRoom.prop('hangingLantern', function (b, o, room) {
+  var drop = o.drop || 0.5;
+  b.mat('metal', '#2a2622'); b.tube([[0, 0, 0], [0, -drop, 0]], 0.004);
+  b.move(0, -drop - 0.26, 0);
+  LitRoom.props.lantern(b, Object.assign({ h: 0.24, power: 0.22, name: 'deck lantern', flicker: 0.1 }, o), room);
+});
+
+// ---------------- the cabin, as data ----------------
+var ROOM = {
+  seed: 3,
+  size: [3.4, 2.25, 3.2],
+  shell: {
+    wall: { kind: 'boards', color: '#6d4a33', wainscot: { h: 0.95, color: '#4b2f1e', board: 0.13 } },
+    floor: { kind: 'planks', color: '#4f3422' },
+    ceiling: { kind: 'paint', color: '#d6cbb4' },
+    back: { holes: [{ x: 2.33, y: 1.23, w: 0.44, h: 0.44, frame: '#6b4a30', bars: [0, 0], sill: false, depth: 0.2 }] }
+  },
+  outside: { top: '#04070f', horizon: '#16243c', glow: '#2b3554', stars: 1, sea: '#07111d', moon: [-0.35, 0.3, -1], moonSize: 0.0022, power: 0.06 },
+  ambient: { sky: '#2c3a58', ground: '#1d150f', power: 0.07 },
+  screen: { grid: [8, 5], aspect: 16 / 9 },
+  look: { exposure: 1.05, bloom: 0.4, grain: 0.025, vignette: 0.7, screenLight: 25 },
+  camera: { home: [0.26, 0.2, 2.1], start: [-0.25, 0.08, 1.0], close: [0, 0.04, 0.72], dist: [0.5, 2.5] },
+  props: [
+    { type: 'block', at: [1.7, 2.17, 0.75], size: [3.4, 0.12, 0.14], color: '#5a3a24' },
+    { type: 'block', at: [1.7, 2.17, 1.75], size: [3.4, 0.12, 0.14], color: '#5a3a24' },
+    { type: 'block', at: [1.7, 2.17, 2.75], size: [3.4, 0.12, 0.14], color: '#5a3a24' },
+    { type: 'desk', at: [1.45, 0, 0.36], w: 1.25, d: 0.62, h: 0.76, color: '#5b3a24', thick: 0.045, leg: 0.06 },
+    { type: 'monitor', at: [1.5, 0.76, 0.2], w: 0.52, color: '#14161a', stand: '#1d1f23' },
+    { type: 'keyboard', at: [1.46, 0.76, 0.49], color: '#2b2c30', keys: '#3a3c42', legend: '#c9c4b8' },
+    { type: 'compass', at: [1.96, 0.76, 0.48] },
+    { type: 'chartRoll', at: [1.12, 0.76, 0.58], turn: 8 },
+    { type: 'mug', at: [1.95, 0.76, 0.24], color: '#2e5276', drink: '#1d0f07' },
+    { type: 'lantern', at: [0.98, 0.76, 0.26], name: 'table lantern', power: 0.2, flicker: 0.12 },
+    { type: 'paper', at: [1.18, 0.76, 0.3], w: 0.2, d: 0.26, rot: -8, lines: true, color: '#efe5cf' },
+    { type: 'porthole', at: [2.55, 1.45, 0.0], r: 0.21, plate: '#5b3a24', metal: '#c39448' },
+    { type: 'frame', at: [0.62, 1.55, 0.0], w: 0.62, h: 0.46, frame: '#2b1d14', paint: paintChart },
+    { type: 'bunk', at: [0.45, 0, 2.0], rot: 90, w: 1.9, d: 0.78, h: 0.5, wood: '#5b3a24', blanket: '#7a2f28', mattress: '#cfc6b2' },
+    { type: 'hangingLantern', at: [1.9, 2.11, 1.45], drop: 0.36 },
+    { type: 'crate', at: [2.9, 0, 0.35], size: [0.5, 0.42, 0.42], color: '#7e5d3c' },
+    { type: 'rope', at: [2.9, 0.42, 0.37], r: 0.17 },
+    { type: 'chair', at: [2.75, 0, 1.45], rot: -60, color: '#4a3020', frame: '#2a1b12', seatKind: 'wood' }
+  ]
+};
+// the chart on the wall: soundings, a coastline and a rhumb line, drawn in code
+function paintChart(g, w, h, rnd) {
+  g.fillStyle = '#e9dfc6'; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#d6c08f'; g.beginPath(); g.moveTo(0, h * 0.2);
+  for (var x = 0; x <= w; x += w / 20) g.lineTo(x, h * (0.15 + 0.12 * Math.sin(x / w * 7) + rnd() * 0.04));
+  g.lineTo(w, 0); g.lineTo(0, 0); g.fill();
+  g.strokeStyle = 'rgba(60,90,120,.5)'; g.lineWidth = 1.5;
+  for (var k = 1; k < 4; k++) { g.beginPath(); for (x = 0; x <= w; x += w / 20) g.lineTo(x, h * (0.15 + k * 0.12 + 0.1 * Math.sin(x / w * 6 + k))); g.stroke(); }
+  g.fillStyle = 'rgba(40,50,70,.65)'; g.font = '13px Georgia, serif';
+  for (var i = 0; i < 40; i++) g.fillText(String(5 + Math.floor(rnd() * 60)), rnd() * w, h * 0.35 + rnd() * h * 0.6);
+  g.strokeStyle = '#a8432e'; g.lineWidth = 3; g.setLineDash([12, 8]); g.beginPath(); g.moveTo(w * 0.1, h * 0.9); g.lineTo(w * 0.85, h * 0.4); g.stroke(); g.setLineDash([]);
+  g.translate(w * 0.8, h * 0.78); g.strokeStyle = '#3a2a1a'; g.lineWidth = 1.5; g.beginPath(); g.arc(0, 0, h * 0.13, 0, 7); g.stroke();
+  for (i = 0; i < 8; i++) { g.rotate(Math.PI / 4); g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -h * (i % 2 ? 0.08 : 0.16)); g.stroke(); }
+}
+
+var canvas = document.getElementById('room'), page = document.getElementById('page');
+var R = LitRoom.start({ canvas: canvas, page: page, room: ROOM });
+LitRoom.wire(page, R);
+</script>
+</body>
+</html>

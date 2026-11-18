@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lantern Reef · dive plan</title>
+<!-- exploded-view-map worked example: a coral-reef dive plan (BRIEF.md). Depth is negative height; the plates are depth
+     contours every 4 m; the water tints the deep plates and throws moving caustics; the toggle bleaches the coral. -->
+<link rel="stylesheet" href="../../lib/exploded.css">
+<style>
+  /* TOPIC: palette and type. System font stacks only (no network). */
+  :root { --ink: #0f2b38; --ink2: #4a6672; --ink3: #7f98a2; --rule: #d9e6e8; --card: #fbfefe; --paper: #eef5f4; --accent: #ff6a4d; --soft: #e8f2f3; }
+  body { background: #dfe2dc; color: var(--ink); font: 14px/1.38 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+  .serif { font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+
+  /* layout: the flat page. The map box ([data-ev-map]) and the base map ([data-ev-base]) share --mx --my --mw --mh. */
+  #page { width: 1180px; height: 700px; --mx: 20px; --my: 20px; --mw: 660px; --mh: 660px; }
+  [data-ev=sheet] { background: var(--paper); border-radius: 16px; }
+  [data-ev-base], [data-ev-map] { left: var(--mx); top: var(--my); width: var(--mw); height: var(--mh); }
+  [data-ev-base] { border-radius: 4px; }
+  #side { position: absolute; left: 700px; top: 20px; width: 460px; height: 660px; display: flex; flex-direction: column; gap: 12px; }
+  @media (max-width: 760px) {
+    #page { width: 400px; height: 1030px; --mx: 10px; --my: 10px; --mw: 380px; --mh: 380px; }
+    #side { left: 10px; top: 402px; width: 380px; height: 618px; }
+  }
+  .card { position: relative; background: var(--card); border-radius: 12px; box-shadow: inset 0 0 0 1px var(--rule); padding: 15px 18px; }
+  .eyebrow { font-size: 11px; font-weight: 650; letter-spacing: .09em; text-transform: uppercase; color: var(--ink3); }
+  .brand { display: flex; align-items: center; gap: 8px; margin: -2px 0 10px; color: var(--ink2); font-size: 13px; }
+  .brand svg { width: 18px; height: 18px; }
+  .brand b { color: var(--ink); font-weight: 650; }
+  .brand .meta { margin-left: auto; font-size: 11px; color: var(--ink3); }
+  #title { display: block; width: 100%; box-sizing: border-box; margin: 4px 0 4px -8px; padding: 2px 8px 3px; border: 0; border-radius: 8px; background: transparent;
+    font: italic 400 32px/1.15 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; color: var(--ink); caret-color: var(--accent); }
+  #title:hover, #title:focus { background: var(--soft); outline: none; }
+  .card p { margin: 0; color: var(--ink2); }
+  .nums { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .nums > div + div { border-left: 1px solid var(--rule); padding-left: 16px; }
+  .nums output { display: block; font-size: 22px; font-weight: 650; font-variant-numeric: tabular-nums; margin-top: 1px; }
+  .nums output span { font-size: 13px; font-weight: 500; color: var(--ink2); margin-left: 3px; }
+  #profile { display: block; width: 100%; height: 78px; margin-top: 8px; overflow: visible; }
+  #profile .area { fill: rgba(15, 107, 138, .13); } #profile .line { fill: none; stroke: var(--accent); stroke-width: 1.8; }
+  #profile .dot { fill: var(--accent); } #profile .cur { fill: #fff; stroke: var(--accent); stroke-width: 2.5; }
+  #profile text { font: 650 9.5px system-ui, sans-serif; fill: #fff; text-anchor: middle; dominant-baseline: central; }
+  .row { display: flex; align-items: baseline; justify-content: space-between; }
+  #clock { font-size: 13px; }
+  #sun { appearance: none; -webkit-appearance: none; display: block; width: 100%; height: 24px; margin: 6px 0 2px; background: transparent; cursor: pointer; }
+  #sun::-webkit-slider-runnable-track { height: 8px; border-radius: 4px; background: linear-gradient(90deg, #f4b37a, #bfe6ee 22%, #e9fbff 45%, #bfe6ee 68%, #f08a62 86%, #183a5a 93%, #0b1c30); }
+  #sun::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; margin-top: -5px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1.5px var(--ink), 0 2px 4px rgba(0,0,0,.25); }
+  #sun:focus { outline: none; }
+  .ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink3); }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 10px; padding: 3px; border-radius: 10px; background: var(--soft); }
+  .seg label { position: relative; text-align: center; padding: 6px 0; border-radius: 7px; font-weight: 550; color: var(--ink2); cursor: pointer; }
+  .seg input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+  .seg label:has(input:checked) { background: var(--ink); color: #fff; }
+  #c-stops { flex: 1; min-height: 0; padding: 12px 10px 6px; }
+  #c-stops .eyebrow { padding: 0 8px 6px; }
+  #stops { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 6px; }
+  .stop { appearance: none; display: grid; grid-template-columns: 26px 1fr; align-items: center; gap: 10px; width: 100%; border: 0; background: none; border-radius: 9px;
+    padding: 7px 8px; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+  .stop b { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 12px; }
+  .stop em { display: block; font: italic 18px/1.05 "Iowan Old Style", Palatino, Georgia, serif; }
+  .stop small { display: block; font-size: 12px; color: var(--ink3); }
+  .stop:hover, .stop.hot, .stop:focus-visible { background: var(--soft); outline: none; }
+  .ev-pin em { font-family: "Iowan Old Style", Palatino, Georgia, serif; }
+  .ev-pin span { background: #fffbe9; } .ev-pin small { color: #0f6b8a; opacity: 1; }
+  .ev-marker { background: #ffcf3a; box-shadow: inset 0 0 0 3px #0f2b38, 0 0 0 1px rgba(255,255,255,.6); }
+  /* corals: three living colours, bleached to white */
+  .coral1 { fill: #ff7d6b; } .coral2 { fill: #f3b443; } .coral3 { fill: #a77fd6; } .coral1, .coral2, .coral3 { stroke: rgba(15,43,56,.25); stroke-width: .8; }
+  #page[data-variant=bleached] .coral1, #page[data-variant=bleached] .coral2, #page[data-variant=bleached] .coral3 { fill: #fbfaf7; stroke: rgba(240,150,150,.7); }
+  .ripple { fill: none; stroke: rgba(255,255,255,.18); stroke-width: 1.2; }
+  .note { font-size: 11px; color: var(--ink3); margin-top: 4px; }
+  .nums4 { grid-template-columns: repeat(4, 1fr); } .nums4 > div + div { padding-left: 12px; } .nums4 output { font-size: 20px; }
+
+  /* the bar outside the canvas */
+  .ev-bar { position: fixed; left: 0; right: 0; bottom: 20px; z-index: 3; display: flex; justify-content: center; align-items: center; gap: 10px; pointer-events: none; }
+  .ev-bar button { pointer-events: auto; appearance: none; border: 0; border-radius: 999px; padding: 11px 20px 12px; background: #0f2b38; color: #fff; font: 600 14px/1 system-ui, sans-serif; cursor: pointer; box-shadow: 0 6px 18px -6px rgba(0,0,0,.5); }
+  .ev-bar #toggle { min-width: 196px; }
+  .ev-bar #snd { background: rgba(255,255,255,.85); color: #0f2b38; }
+  .ev-bar .hint { font-size: 13px; color: #4b5261; transition: color .4s; }
+  html.ev-apart .ev-bar .hint { color: #e9e4da; }
+  @media (max-width: 760px) { .ev-bar .hint { display: none; } }
+</style>
+</head>
+<body>
+<canvas id="stage" layoutsubtree content="drawable" aria-label="A dive plan, taken apart into depth layers">
+  <div id="page">
+    <div data-ev="sheet" drawable><div data-ev-base></div></div>
+    <div data-ev-map></div>
+    <aside id="side">
+      <section class="card" data-ev="card" drawable>
+        <div class="brand"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 12c3-3 6-3 9 0s5 3 7 1" fill="none" stroke="#0f6b8a" stroke-width="1.7"/><circle cx="14" cy="6" r="3" fill="none" stroke="#ff6a4d" stroke-width="1.6"/></svg><b>Dive plan</b><span class="meta mono">Contours every 4 m</span></div>
+        <label class="eyebrow" for="title">Dive</label>
+        <input id="title" data-hic-edit type="text" value="Lantern Reef: arch and wall" spellcheck="false" autocomplete="off" maxlength="48">
+        <p>Guided from the mooring. Safety stop at 5 m.</p>
+      </section>
+      <section class="card" data-ev="card" drawable>
+        <div class="nums nums4">
+          <div><span class="eyebrow">Max</span><output id="s-max"></output></div>
+          <div><span class="eyebrow">Swim</span><output id="s-swim"></output></div>
+          <div><span class="eyebrow">Time</span><output id="s-time"></output></div>
+          <div><span class="eyebrow">Air</span><output id="s-air"></output></div>
+        </div>
+        <svg id="profile" viewBox="0 0 424 70" preserveAspectRatio="none" role="img" aria-label="Depth along the dive"></svg>
+        <div class="note">Illustration only, not dive advice.</div>
+      </section>
+      <section class="card" data-ev="card" drawable>
+        <div class="row"><label class="eyebrow" for="sun">Sun at the surface</label><output id="clock" class="mono" for="sun"></output></div>
+        <input id="sun" type="range" min="0" max="1000" value="300" step="1" aria-label="Time of day">
+        <div class="ends"><span>Sunrise</span><span>Night</span></div>
+        <div class="seg" role="radiogroup" aria-label="Reef">
+          <label><input type="radio" name="reef" value="living" checked>Living reef</label>
+          <label><input type="radio" name="reef" value="bleached">Bleached</label>
+        </div>
+      </section>
+      <section class="card" id="c-stops" data-ev="card" drawable>
+        <div class="eyebrow">Stops</div>
+        <div id="stops"></div>
+      </section>
+    </aside>
+  </div>
+</canvas>
+<div class="ev-bar"><button id="toggle" type="button">Take it apart</button><span class="hint">Drag to turn · scroll to pull apart · click a layer to lift it</span><button id="snd" type="button" aria-pressed="false">Sound off</button></div>
+
+<script src="../../lib/hic.js"></script>
+<script src="../../lib/terrain.js"></script>
+<script src="../../lib/paper-sound.js"></script>
+<script src="../../lib/exploded.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); }, T = EVTerrain, sm = function (a, b, x) { var t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+
+  // ---- the reef: depth in metres as negative height (BRIEF: crest, garden plateau, cay, arch channel, east wall)
+  var crest = T.ridges([
+    [[0.20, 0.74, -1], [0.36, 0.58, -4], [0.50, 0.45, -6], [0.62, 0.33, -10], [0.74, 0.18, -16]],
+    [[0.36, 0.58, -4], [0.24, 0.42, -13], [0.14, 0.28, -22]],
+    [[0.50, 0.45, -6], [0.56, 0.64, -15], [0.58, 0.84, -24]]
+  ], { fall: 105, shoulder: 80, base: -40, sharp: 0.3 });
+  var garden = T.bumps([{ at: [0.36, 0.66], r: 0.2, h: 31 }, { at: [0.24, 0.76], r: 0.07, h: 8 }], -40);
+  var arch = T.bumps([{ at: [0.505, 0.45], r: 0.03, h: -10 }]);
+  var reef = function (u, v) {
+    var h = Math.max(crest(u, v), garden(u, v)) + arch(u, v);
+    var edge = 0.68 + 0.05 * (T.fbm(v * 4, 1.3, 3, 9) - 0.5) + 0.1 * v;           // the wall: past it the reef falls away
+    return h - 24 * sm(edge, edge + 0.06, u);
+  };
+  var height = T.floor(T.rough(T.warp(reef, 0.025, 3.5, 21), 1.6, 10, 5), -40, 1.5);
+
+  var PINS = [
+    { id: 'buoy', name: 'Mooring', note: '', at: [0.215, 0.74] },
+    { id: 'garden', name: 'Coral garden', note: '', at: [0.36, 0.64] },
+    { id: 'arch', name: 'The arch', note: '', at: [0.505, 0.45] },
+    { id: 'wall', name: 'Wall edge', note: '', at: [0.70, 0.38] }
+  ];
+  PINS.forEach(function (p) { if (!p.note) p.note = Math.round(-height(p.at[0], p.at[1])) + ' m'; });
+  var ROUTE = [[0.215, 0.74], [0.29, 0.69], [0.36, 0.64], [0.43, 0.55], [0.505, 0.45], [0.60, 0.41], [0.70, 0.38], [0.64, 0.33], [0.55, 0.39], [0.44, 0.51], [0.32, 0.63], [0.25, 0.71], [0.215, 0.74]];
+  var M_ACROSS = 420;                                                            // the map is 420 m wide
+
+  // coral heads on every plate above −20 m, only where that plate is the visible top; ripples on the deep sand
+  function decorate(k, info) {
+    var r = T.rng(1000 + k), out = '';
+    if (k === 0) {
+      for (var i = 0; i < 14; i++) { var x = r() * info.w, y = r() * info.h; out += '<path class="ripple" d="M' + x.toFixed(0) + ' ' + y.toFixed(0) + 'q12 -6 24 0t24 0t24 0"/>'; }
+      return out;
+    }
+    if (info.level < -20) return '';
+    for (var n = 0; n < 260; n++) {
+      var u = (info.x + r() * info.w) / info.mu, v = (info.y + r() * info.h) / info.mh, h = height(u, v);
+      if (h < info.level + 0.6 || h > info.level + 3.2) continue;
+      var p = info.at(u, v), rad = 3 + r() * 5, c = 'coral' + (1 + Math.floor(r() * 3));
+      out += '<circle class="' + c + '" cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="' + rad.toFixed(1) + '"/>';
+      if (r() < 0.5) out += '<circle class="' + c + '" cx="' + (p[0] + rad * 1.1).toFixed(1) + '" cy="' + (p[1] - rad * 0.6).toFixed(1) + '" r="' + (rad * 0.6).toFixed(1) + '"/>';
+    }
+    return out;
+  }
+
+  var view = ExplodedView.create(document.getElementById('stage'), {
+    terrain: { height: height, levels: { from: -36, step: 4, count: 10 }, grid: 170, minor: 1, decorate: decorate,
+      labels: { from: [0.30, 0.70], to: [0.98, 0.58], text: function (l) { return (l ? '−' + (-l) : '0') + ' m'; } },
+      tag: function (l) { return 'shallower than ' + (-l) + ' m'; }, aria: function (l) { return 'Reef shallower than ' + (-l) + ' metres'; } },
+    variants: {
+      living: { ramp: ['#5aa6b8', '#69b6c2', '#7cc5c9', '#92d2cd', '#a9ddd1', '#c0e6d6', '#d4eedc', '#e6f3e1', '#f3f2e2', '#fbf4e2'], base: '#2a6a8d', minor: 'rgba(10,50,70,.22)', label: 'rgba(8,40,60,.8)' },
+      bleached: { ramp: ['#6a9fac', '#7aacb6', '#8cb9bd', '#a0c4c2', '#b4cdc8', '#c6d6cf', '#d6dfd7', '#e4e8e0', '#efefe6', '#f8f4e8'], base: '#33677f', minor: 'rgba(10,50,70,.2)', label: 'rgba(8,40,60,.75)' }
+    },
+    variant: 'living',
+    material: { thickness: 6, gap: 15, core: '#e6efee', weight: 1.1 },
+    desk: { color: '#dfe2dc', lit: '#183f52', pattern: 'mat' },
+    atmos: { tint: '#7fc2e6', deep: 0.75, caustics: 0.55 },
+    route: { points: ROUTE, color: '#ff6a4d', casing: '#fffbe9' },
+    pins: PINS, marker: { label: 'The group' },
+    camera: { yaw: -0.32, tilt: 0.92 },
+    intro: { delay: 0.7, apart: 1 }
+  });
+  window.__evVariants = { living: 1, bleached: 1 };
+
+  // ---- readouts (rules of thumb, illustration only)
+  var swim = view.route.length * M_ACROSS, maxD = -Math.min.apply(null, view.route.profile.map(function (p) { return p[1]; }));
+  var minutes = Math.round(swim / 11 + 8), avgAta = 1 + maxD * 0.55 / 10, air = Math.round(16 * avgAta * minutes / 12 / 5) * 5;
+  $('#s-max').innerHTML = Math.round(maxD) + '<span>m</span>';
+  $('#s-swim').innerHTML = Math.round(swim / 10) * 10 + '<span>m</span>';
+  $('#s-time').innerHTML = minutes + '<span>min</span>';
+  $('#s-air').innerHTML = air + '<span>bar</span>';
+  var prof = $('#profile'), P = view.route.profile, W = 424, H = 70, lo = -maxD, hi = 0;
+  var X = function (d) { return 8 + d / P[P.length - 1][0] * (W - 16); }, Y = function (h) { return 8 + (hi - h) / (hi - lo) * (H - 16); };
+  var line = P.map(function (p, i) { return (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1); }).join('');
+  prof.innerHTML = '<path class="area" d="' + line + 'L' + X(P[P.length - 1][0]) + ' 0L8 0Z"/><path class="line" d="' + line + '"/>' +
+    PINS.map(function (p, i) { var d = view.route.at[p.id] * P[P.length - 1][0], h = view.heightAt(p.at[0], p.at[1]); return '<circle class="dot" cx="' + X(d) + '" cy="' + Y(h) + '" r="7"/><text x="' + X(d) + '" y="' + Y(h) + '">' + 'ABCD'[i] + '</text>'; }).join('') +
+    '<circle class="cur" r="4.5" cx="8" cy="8"/>';
+  var cur = prof.querySelector('.cur');
+  $('#stops').innerHTML = PINS.map(function (p, i) { return '<button type="button" class="stop" data-pin="' + p.id + '"' + (i === 2 ? ' data-hic-click' : '') + '><b>' + 'ABCD'[i] + '</b><span><em></em><small></small></span></button>'; }).join('');
+  [].forEach.call(document.querySelectorAll('.stop'), function (b, i) { b.querySelector('em').textContent = PINS[i].name; b.querySelector('small').textContent = PINS[i].note; });
+
+  // ---- the sun at the surface; the group's position follows the clock from 09:10
+  var sun = $('#sun'), DAY = { rise: 6 * 60, set: 18 * 60 + 30, maxEl: 1.25, az0: 75, az1: 285, amber: 0.6 }, START = 9 * 60 + 10;
+  function onSun() {
+    var L = ExplodedView.daylight(sun.value / 1000, DAY);
+    $('#clock').textContent = ExplodedView.clock(L.minutes);
+    view.setLight(L);
+    var g = Math.max(0, Math.min(1, (L.minutes - START) / minutes)); view.setMarker(g);
+    var i = Math.min(P.length - 1, Math.round(g * (P.length - 1))); cur.setAttribute('cx', X(P[i][0])); cur.setAttribute('cy', Y(P[i][1]));
+  }
+  sun.addEventListener('input', onSun);
+  var hs = parseFloat(HIC.param('sun')); if (isFinite(hs)) sun.value = Math.round(hs * 1000);
+  [].forEach.call(document.querySelectorAll('input[name=reef]'), function (r) {
+    if (HIC.param('variant') === r.value) r.checked = true;
+    r.addEventListener('change', function () { view.setVariant(r.value); });
+  });
+  onSun();
+  view.on('pin', function (p) {
+    var at = START + view.route.at[p.id] * minutes;
+    view.animateInput(sun, Math.round(Math.max(0, Math.min(0.9, (at - DAY.rise) / (DAY.set - DAY.rise) * 0.9)) * 1000), 400);
+    if (view.state && view.state.eT < 0.4) view.apart(0.45);
+  });
+  var toggle = $('#toggle'), snd = $('#snd');
+  view.on('apart', function (v) { toggle.textContent = v > 0.2 ? 'Put it back together' : 'Take it apart'; });
+  toggle.addEventListener('click', function () { if (view.state.eT > 0.2) view.together(); else view.apart(1); });
+  snd.addEventListener('click', function () { var on = !PaperSound.on; if (on) PaperSound.enable(); else PaperSound.disable(); snd.textContent = on ? 'Sound on' : 'Sound off'; snd.setAttribute('aria-pressed', String(on)); });
+  PaperSound.voice({ desk: 80, paper: 0.45 });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>event-horizon-page · motion-skills</title>
+<meta name="description" content="주제를 주면 그 주제의 실제 웹페이지를 만들고, 그 위에 블랙홀 · 펄서 · 웜홀을 띄워 중력 렌즈로 페이지를 휘게 합니다. 끌어서 던지고, 단어를 먹이고, 페이지를 먹게 해도 글자는 선택되고 버튼은 눌립니다.">
+<meta property="og:title" content="event-horizon-page · motion-skills">
+<meta property="og:description" content="블랙홀 · 펄서 · 웜홀이 실제 웹페이지를 중력 렌즈로 휘게 하는 HTML-in-Canvas 페이지 — 단어를 먹이면 찢겨 나선으로 빨려 들어갑니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/event-horizon-page/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/event-horizon-page">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / event-horizon-page</nav>
+  <h1>event-horizon-page</h1>
+  <p>주제를 주면 그 주제의 실제 웹페이지(물리 강의 노트, 밴드의 투어 페이지, 뉴스레터, 이력서, 제품 출시 페이지 …)를 만들고, 그 위에 주제에 맞게 설계한 천체 하나(강착 원반이 빛나는 블랙홀, 빔이 도는 펄서, 페이지의 반대편이 보이는 웜홀)를 띄워 중력 렌즈로 페이지를 휘게 합니다. 빛의 경로는 슈바르츠실트 궤도 방정식 u″ = 3u² − u로 적분한 표에서 나오고, 원반은 빛이 원반면을 지나는 자리에서 그려져 뒤쪽이 그림자 위로 휘어 보입니다. 천체는 끌어서 던질 수 있고, 단어를 먹이면 그 단어가 페이지에서 찢겨 나선을 그리며 빨려 들어가고, Hungry를 켜면 닿는 글자를 먹고 Restore로 모두 돌려줍니다. 휘어진 글자도 선택되고 제목은 다시 쓸 수 있으며 버튼은 보이는 자리에서 눌립니다.
+  원본: Felix Rieseberg의 <a href="https://claude.ai/artifact/YLk8PESrskZLHiAiyqUZHN" target="_blank" rel="noopener">"Event Horizon" 데모</a>(<a href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk" target="_blank" rel="noopener">HTML-in-Canvas 데모 페이지</a>, <a href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19" target="_blank" rel="noopener">X 게시물</a>)를 보고 만들었습니다. 코드는 모두 새로 썼습니다.
+  라이브 데모는 Chrome · Edge 157 이상이나 Claude 데스크톱 앱에서 보입니다. 다른 브라우저에서는 같은 HTML이 평범한 페이지로 보입니다.</p>
+  <ul class="tags"><li>HTML-in-Canvas · WebGL2</li><li>중력 렌즈 · 측지선 표</li><li>블랙홀 · 펄서 · 웜홀</li><li>살아 있는 페이지</li><li>코드 전용</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(밴드의 투어 페이지, 물리 강의 노트, 뉴스레터, 이력서, 브랜드 출시 페이지 …)</dd>
+      <dt>브리프</dt><dd>어떤 페이지인지 · 실제 문장의 제목과 본문 · 먹이는 입력칸의 이름 · 팔레트 · 천체의 종류와 크기 · 다섯 빛깔 램프 · 원반 · 빔 · 목구멍 · 쉬는 자리와 첫 장면의 단어 · 먹였을 때 일어나는 일 · 소리를 적은 <code>BRIEF.md</code></dd>
+      <dt>페이지</dt><dd>주제의 실제 HTML과 CSS, 캔버스 밖의 조작판(Gravity · Mass · Hungry · Restore · Sound), <code>EventHorizon.create({...})</code>와 주제마다의 동작(<code>onFeed</code>, 체크리스트)</dd>
+      <dt>확인</dt><dd>스틸 채점(쉬는 모습의 읽힘 · 렌즈 · 천체의 빛 · 실처럼 늘어나는 조각 · 휴대폰) · 약한 장 극한과 광자구 · 먼 곳은 그대로 · 끌기 오차와 던진 뒤 멈춤 · 휜 버튼 클릭 · 휜 글자 선택 · 먹이기 · Hungry와 Restore · 질량 · 결정적 스틸 · 소리</dd>
+      <dt>출력</dt><dd><code>index.html</code> + <code>lib/</code> 한 폴더(file:// · Claude 아티팩트에서 동작, 네트워크 없음), 스틸 PNG</dd>
+    </dl>
+    <pre><code>cd event-horizon-page
+node scripts/check.mjs examples/pulsar-tour/index.html
+node scripts/still.mjs examples/pulsar-tour/index.html --out out --at 1.3 --act "move:.6,.55"
+node scripts/new-page.mjs ../my-event-horizon
+node scripts/check.mjs ../my-event-horizon/index.html</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium(스크립트가 <code>--enable-blink-features=CanvasDrawElement</code>로 기능을 켭니다). 네트워크와 npm install이 필요 없습니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/event-horizon-page/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10;--h-phone:620px;--demo-bg:#0b0e1c">
+    <iframe data-src="demo/examples/pulsar-tour/" title="event-horizon-page 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/pulsar-tour/">데모 열기 (examples/pulsar-tour)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/pulsar-tour</code> · 펄서 · 신청곡마다 빨라지는 회전</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/pulsar-tour/" data-cap="예제 &lt;code&gt;examples/pulsar-tour&lt;/code&gt; · 펄서 · 신청곡마다 빨라지는 회전" aria-pressed="true">투어 페이지 · 펄서</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/index.html&lt;/code&gt; · 블랙홀 · 강의 노트와 문제 목록" aria-pressed="false">강의 노트 · 블랙홀</button>
+        <button class="btn" type="button" data-src="demo/templates/#kind=wormhole" data-cap="템플릿 &lt;code&gt;templates/index.html#kind=wormhole&lt;/code&gt; · 목구멍 안에 페이지의 반대편" aria-pressed="false">웜홀</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제(밴드의 투어 페이지와 펄서)와 템플릿(물리 강의 노트와 블랙홀, 다른 천체로 바꾼 미리보기)의 스틸입니다. 카드를 누르면 라이브 데모가 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"ex":"예제 · 펄서","tpl":"템플릿 · 블랙홀 · 웜홀"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>Halcyon Static 「Pulsar Season」 <small>예제 · 펄서</small></h3>
+      <p>가상의 밴드가 여는 여섯 밤의 투어 페이지입니다. 원본에 없는 주제로 브리프부터 검사와 스틸 채점까지 끝낸 예제입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="ex" href="demo/examples/pulsar-tour/" target="_blank" rel="noopener"><img src="samples/ex-rest.jpg" alt="남색 투어 페이지의 제목 PULSAR SEASON 옆에 보라 고리를 두른 중성자별이 떠 있고 청록 빔 두 줄이 비스듬히 뻗으며 날짜 목록의 왼쪽이 휘어 있다" loading="lazy" width="640" height="400"><div class="cap"><span class="no">쉬는 모습</span><b>제목 옆의 펄서</b><span class="how">보라 강착 고리, 청록 빔, 휘어 들어가는 날짜 목록</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/examples/pulsar-tour/" target="_blank" rel="noopener"><img src="samples/ex-dates.jpg" alt="펄서가 투어 날짜 목록 위에 놓여 도시 이름과 공연장 글자가 별 둘레로 원호를 그리며 늘어난 모습" loading="lazy" width="640" height="400"><div class="cap"><span class="no">렌즈</span><b>날짜 위로 끌어 온 별</b><span class="how">아인슈타인 고리, 안쪽의 뒤집힌 상, 그래도 눌리는 Tickets 버튼</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/examples/pulsar-tour/" target="_blank" rel="noopener"><img src="samples/ex-feed.jpg" alt="신청곡 Glass Hymn이 Heard 목록에 남고 그 복사본이 분홍 실처럼 늘어나 별로 빨려 드는 순간" loading="lazy" width="640" height="400"><div class="cap"><span class="no">먹이기</span><b>신청곡 한 곡</b><span class="how">곡명은 목록에 남고 복사본이 빨려 들며 별이 빨라짐</span></div></a>
+        <a class="tile" data-tags="ex" href="demo/examples/pulsar-tour/" target="_blank" rel="noopener"><img src="samples/ex-hungry.jpg" alt="Hungry를 켠 펄서가 날짜 목록을 가로지르며 도시 이름과 버튼을 먹어 빈 줄이 생긴 모습" loading="lazy" width="640" height="400"><div class="cap"><span class="no">Hungry</span><b>투어를 먹는 별</b><span class="how">닿는 날짜와 버튼이 찢겨 들어가고 Restore로 되돌림</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>「Light takes the long way.」 <small>템플릿 · 블랙홀</small></h3>
+      <p>물리 강의 노트 한 장과 블랙홀입니다. 새 페이지의 출발점이며, 주소에 <code>#kind=wormhole</code>이나 <code>#kind=neutron</code>을 붙이면 다른 천체로 바꿔 봅니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="tpl" href="demo/templates/" target="_blank" rel="noopener"><img src="samples/tpl-rest.jpg" alt="베이지 종이의 강의 노트, 세리프 제목 Light takes the long way의 끝에 블랙홀이 쉬며 long이라는 단어가 늘어나 있다" loading="lazy" width="640" height="400"><div class="cap"><span class="no">쉬는 모습</span><b>제목 끝의 블랙홀</b><span class="how">기울어진 원반, 그림자 위로 휜 원반 뒷면, 따뜻한 번짐</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/templates/" target="_blank" rel="noopener"><img src="samples/tpl-lens.jpg" alt="블랙홀이 본문 문단 위에 놓여 문장이 그림자 둘레로 원호를 그리고 입력칸 버튼이 휘어진 모습" loading="lazy" width="640" height="400"><div class="cap"><span class="no">렌즈</span><b>문단 위의 블랙홀</b><span class="how">휜 문장도 선택되고, 휜 버튼도 눌림</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/templates/" target="_blank" rel="noopener"><img src="samples/tpl-hungry.jpg" alt="Hungry를 켠 블랙홀이 본문 문단을 먹어 글자가 뜨거운 주황 실이 되어 소용돌이치며 빨려 드는 모습" loading="lazy" width="640" height="400"><div class="cap"><span class="no">Hungry</span><b>문단을 먹는 블랙홀</b><span class="how">가까운 쪽부터 늘어나며 달아오르는 글자의 실</span></div></a>
+        <a class="tile" data-tags="tpl" href="demo/templates/#kind=wormhole" target="_blank" rel="noopener"><img src="samples/tpl-wormhole.jpg" alt="강의 노트 위의 웜홀, 보랏빛 목구멍 안에 페이지의 반대편이 뒤집혀 작게 보이고 테두리가 빛난다" loading="lazy" width="640" height="400"><div class="cap"><span class="no">다른 천체</span><b>웜홀</b><span class="how">목구멍 안에 반전된 색의 페이지 반대편</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">스킬의 흐름(브리프 → 새로 설계 → 검사 → 스틸 채점)으로 만든 예제와 원본 데모입니다.</p>
+  <div class="works">
+    <a class="work" href="https://jungrok5.github.io/motion-skills/event-horizon-page/demo/examples/pulsar-tour/" target="_blank" rel="noopener"><b>Halcyon Static 「Pulsar Season」 투어 페이지</b><span>펄서 · 신청곡마다 빨라지는 회전 · 날짜를 먹는 Hungry</span><span class="url">jungrok5.github.io/motion-skills/event-horizon-page/demo/examples/pulsar-tour/</span></a>
+    <a class="work" href="https://claude.ai/artifact/YLk8PESrskZLHiAiyqUZHN" target="_blank" rel="noopener"><b>원본 · "Event Horizon" 데모</b><span>Felix Rieseberg, 블랙홀이 휘게 하는 실제 웹페이지</span><span class="url">claude.ai/artifact/YLk8PESrskZLHiAiyqUZHN</span></a>
+    <a class="work" href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk" target="_blank" rel="noopener"><b>HTML-in-Canvas 데모 페이지</b><span>데모 15개 모음</span><span class="url">claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk</span></a>
+    <a class="work" href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19" target="_blank" rel="noopener"><b>X 게시물 · All hail the weird web</b><span>Claude 데스크톱 앱의 HTML-in-Canvas 소개</span><span class="url">x.com/felixrieseberg/status/2122036839238492493</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/event-horizon-page/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/event-horizon-page">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/event-horizon-page/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/event-horizon-page/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 스틸 채점 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/event-horizon-page/references/LOOK.md">references/LOOK.md</a> <span>원본 데모에서 관찰한 형식</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/event-horizon-page/references/ENGINE.md">references/ENGINE.md</a> <span>엔진 설정 · 천체 매개변수 · API · 새 천체 추가</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/event-horizon-page/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/event-horizon-page/references/HIC.md">references/HIC.md</a> <span>HTML-in-Canvas 공통 노트</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 이미지는 모두 이 스킬의 페이지를 렌더한 스틸입니다
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

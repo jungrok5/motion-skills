@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>knitted-page · motion-skills</title>
+<meta name="description" content="주제를 주면 실제 웹페이지를 털실로 뜬 니트로 만듭니다. 코마다 아래 페이지의 색 하나를 받고, 늘어진 실을 당기면 한 줄씩 풀려 실타래 더미가 되었다가 바늘이 다시 떠 올립니다.">
+<meta property="og:title" content="knitted-page · motion-skills">
+<meta property="og:description" content="주제를 주면 실제 웹페이지를 털실로 뜬 니트로 만듭니다. 코마다 아래 페이지의 색 하나를 받고, 늘어진 실을 당기면 한 줄씩 풀려 실타래 더미가 되었다가 바늘이 다시 떠 올립니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/knitted-page/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/knitted-page">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / knitted-page</nav>
+  <h1>knitted-page</h1>
+  <p>주제를 주면 실제 웹페이지를 털실로 뜬 니트로 만듭니다. 코마다 아래 페이지의 색 하나를 받고, 늘어진 실을 당기면 한 줄씩 풀려 실타래 더미가 되었다가 바늘이 다시 떠 올립니다. 페이지는 그대로 살아 있어 제목을 고쳐 쓰면 바뀐 코만 다시 떠지고, 버튼과 라디오는 그려진 자리에서 눌립니다.
+  원본: Felix Rieseberg의 <a href="https://claude.ai/artifact/Y8uZf2xz48joUiM1nPhxLW">「Knitted Page」 데모</a>(<a href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk">HTML-in-Canvas 데모 페이지</a>, <a href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19">X 게시물</a>)를 보고 만들었습니다. 라이브 데모는 Chrome · Edge 157 이상이나 Claude 데스크톱 앱에서 보이고, 다른 브라우저에서는 같은 HTML이 평범한 페이지로 보입니다.</p>
+  <ul class="tags"><li>HTML-in-Canvas</li><li>털실 니트</li><li>실 당겨 풀기</li><li>살아 있는 웹페이지</li><li>코드 전용</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나 (겨울 장터 포스터, 할머니의 레시피 카드, 스키 산장 메뉴, 축구팀 머플러 페이지)</dd>
+      <dt>브리프</dt><dd>페이지와 컨트롤, 실 색과 게이지, 무늬, 테이블, 바늘, 풀면 드러나는 것</dd>
+      <dt>페이지</dt><dd>코 단위로 짠 실제 HTML, 큰 글자, 세로 화면 배치</dd>
+      <dt>검사</dt><dd>공통 HTML-in-Canvas 검사, 다시 뜨기 · 실 당기기 · 풀기 · 드러난 층 클릭 · 안전망 수치</dd>
+      <dt>출력</dt><dd>폴더 하나짜리 라이브 페이지(index.html + lib/), 스틸</dd>
+    </dl>
+    <pre><code>node scripts/check.mjs examples/apple-cake/index.html
+node scripts/still.mjs examples/apple-cake/index.html --out out --act pull --u 0.35
+node scripts/new-page.mjs ../my-knitted-page
+node scripts/check.mjs ../my-knitted-page/index.html</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium(검사와 스틸은 HTML-in-Canvas 플래그를 켜고 실행). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/knitted-page/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10;--h-phone:calc((100vw - 34px)*1.5);--demo-bg:#1d0f08">
+    <iframe data-src="demo/examples/apple-cake/" title="knitted-page 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/apple-cake/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/apple-cake</code> · 할머니의 사과 케이크 레시피 · 실을 당겨 보세요</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/apple-cake/" data-cap="예제 &lt;code&gt;examples/apple-cake&lt;/code&gt; · 할머니의 사과 케이크 레시피 · 실을 당겨 보세요" aria-pressed="true">사과 케이크</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/index.html&lt;/code&gt; · 겨울 장터 포스터 · 배색 3가지" aria-pressed="false">시작 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">템플릿(겨울 장터 포스터)과 새 주제로 만든 예제(할머니의 레시피)를 여러 상태에서 찍은 스틸입니다. 카드를 누르면 라이브 데모가 열립니다.</p>
+  <div id="gallery">
+    <div class="group">
+      <h3>할머니의 사과 케이크 <small>examples/apple-cake</small></h3>
+      <p>브리프부터 새로 설계한 예제입니다. 면사 게이지, 사과 무늬, 깅엄 식탁보, 스틸 바늘, 풀면 드러나는 할머니의 비밀 쪽지.</p>
+      <div class="grid">
+        <a class="tile" href="https://jungrok5.github.io/motion-skills/knitted-page/demo/examples/apple-cake/" target="_blank" rel="noopener">
+          <img src="samples/cake-idle.jpg" alt="깅엄 식탁보 위에 놓인 니트 레시피 카드. 사과 무늬 띠와 큰 사과 그림, Oma's apple cake 제목" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">예제 · 쉬는 상태</span><b>떠 놓은 레시피</b><span class="how">인분 버튼과 오븐 타이머가 살아 있는 페이지</span></div></a>
+        <a class="tile" href="https://jungrok5.github.io/motion-skills/knitted-page/demo/examples/apple-cake/" target="_blank" rel="noopener">
+          <img src="samples/cake-knit.jpg" alt="절반쯤 풀린 레시피를 스틸 바늘 두 개가 아래에서부터 다시 떠 올리는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">예제 · 다시 뜨기</span><b>스틸 바늘</b><span class="how">실타래 더미에서 실이 바늘로 이어짐</span></div></a>
+        <a class="tile" href="https://jungrok5.github.io/motion-skills/knitted-page/demo/examples/apple-cake/" target="_blank" rel="noopener">
+          <img src="samples/cake-bare.jpg" alt="모두 풀린 뒤 깅엄 위에 남은 실타래 더미와 할머니의 손글씨 쪽지" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">예제 · 모두 풀림</span><b>할머니의 비밀</b><span class="how">드러난 쪽지도 실제 HTML, 버튼으로 다시 뜨기</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>겨울 장터 포스터 <small>templates/index.html</small></h3>
+      <p>스타일의 기본 예시입니다. 페어아일 띠, 여덟 꼭지 별, 배색 3가지, 아래에 숨은 추첨권.</p>
+      <div class="grid">
+        <a class="tile" href="https://jungrok5.github.io/motion-skills/knitted-page/demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/fair-idle.jpg" alt="나무 테이블 위의 크림색 니트 포스터. Winter Fair 제목, 별 무늬, 오른쪽 위에 늘어진 실" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 쉬는 상태</span><b>Winter Fair</b><span class="how">코마다 페이지의 색 하나</span></div></a>
+        <a class="tile" href="https://jungrok5.github.io/motion-skills/knitted-page/demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/fair-pull.jpg" alt="위쪽 줄부터 풀린 포스터, 팽팽한 실이 손 쪽으로, 오른쪽 아래에 쌓이는 실타래" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 당기는 중</span><b>한 줄씩 풀림</b><span class="how">맨 윗줄부터 풀리고 아래 추첨권이 드러남</span></div></a>
+        <a class="tile" href="https://jungrok5.github.io/motion-skills/knitted-page/demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/fair-bare.jpg" alt="나무 테이블 위에 추첨권과 실타래 더미만 남은 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 모두 풀림</span><b>추첨권 No. 0417</b><span class="how">빈 테이블에서는 아래 층만 눌림</span></div></a>
+        <a class="tile" href="https://jungrok5.github.io/motion-skills/knitted-page/demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/fair-night.jpg" alt="남색 바탕에 크림색 글자와 노란 무늬로 바뀐 배색의 니트 포스터" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 배색</span><b>Night 배색</b><span class="how">라디오 하나로 거의 모든 코가 다시 떠짐</span></div></a>
+        <a class="tile" href="https://jungrok5.github.io/motion-skills/knitted-page/demo/templates/" target="_blank" rel="noopener">
+          <img src="samples/fair-type.jpg" alt="제목에 글자를 입력하자 바늘이 들어와 바뀐 코를 떠 넣는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 입력</span><b>입력한 글자 떠 넣기</b><span class="how">바뀐 코만 아래 줄부터 다시 뜨기</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포 안에서 만든 스킬입니다. 예제의 라이브 데모와 원본 데모로 연결됩니다.</p>
+  <div class="works">
+    <a class="work" href="https://jungrok5.github.io/motion-skills/knitted-page/demo/examples/apple-cake/" target="_blank" rel="noopener"><b>할머니의 사과 케이크</b><span>예제 라이브 데모 · 120 × 112코 · 깅엄 식탁보</span><span class="url">jungrok5.github.io/motion-skills/knitted-page/demo/examples/apple-cake/</span></a>
+    <a class="work" href="https://claude.ai/artifact/Y8uZf2xz48joUiM1nPhxLW" target="_blank" rel="noopener"><b>원본 · 「Knitted Page」 데모</b><span>Felix Rieseberg · HTML-in-Canvas 데모 15개 중 하나</span><span class="url">claude.ai/artifact/Y8uZf2xz48joUiM1nPhxLW</span></a>
+    <a class="work" href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk" target="_blank" rel="noopener"><b>HTML-in-Canvas 데모 페이지</b><span>원본 데모 모음</span><span class="url">claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk</span></a>
+    <a class="work" href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19" target="_blank" rel="noopener"><b>X 게시물</b><span>「All hail the weird web」</span><span class="url">x.com/felixrieseberg/status/2122036839238492493</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/knitted-page/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/knitted-page">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/knitted-page/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/knitted-page/references/BRIEF.md">references/BRIEF.md</a> <span>주제에서 브리프로, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/knitted-page/references/LOOK.md">references/LOOK.md</a> <span>원본 데모를 관찰한 기록</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/knitted-page/references/ENGINE.md">references/ENGINE.md</a> <span>엔진 API와 설정, 확장 방법</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/knitted-page/references/HIC.md">references/HIC.md</a> <span>HTML-in-Canvas 공통 규칙</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/knitted-page/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림과 코드는 이 레포의 코드로 그렸습니다(외부 이미지 · 폰트 없음).
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

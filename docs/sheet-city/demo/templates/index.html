@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en" class="sc-page">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home Budget City</title>
+<!-- sheet-city template: the house example of the style. A household budget for a year is a working spreadsheet; WebGL
+     draws it as a model city on a desk (HTML-in-Canvas). Copy with scripts/new-page.mjs and redesign every part marked
+     DESIGN for your topic: the palette (CSS below), the BOOK (rows, formulas, slider), the LOOK, the props and the sound. -->
+<link rel="stylesheet" href="../lib/sheet.css">
+<style>
+  /* DESIGN: the palette. Row classes come from BOOK.rows[].cls; a building's walls take its cell's fill colour. */
+  html, body { background: #3b4648; }
+  #sheet { --paper: #fbfaf6; --ink: #1d2433; --ink-soft: #5e6779; --grid: #d9dbe1; --chrome: #eeefe9; --accent: #2f5bea; --loss: #b0281f;
+    --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; --num-font: ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, sans-serif; }
+  #sheet tr.saved td.lot { background-color: #cfe0ff; }      /* the savings pot: glassy blue towers at the back   */
+  #sheet tr.total td.lot { background-color: #ffe2b8; }      /* money in / money out totals: warm sandstone          */
+  #sheet tr.inc td.lot   { background-color: #eaf2ff; }
+  #sheet tr.out td.lot   { background-color: #fff3e6; }
+  #sheet tr.net td.lot   { background-color: #ccefd9; }      /* what is left: green, a pit when it goes below zero  */
+  #sheet tr.net td.lot.neg { background-color: #ffd2cf; }
+  #sheet tr.total td.label, #sheet tr.saved td.label, #sheet tr.net td.label { font-weight: 800; }
+  #sheet tr.knob td.label .v { font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="sc-stage">
+  <canvas id="city" layoutsubtree content="drawable" aria-label="A household budget drawn as a model city on a desk">
+    <div id="sheet" drawable></div>
+  </canvas>
+</div>
+<script src="../lib/hic.js"></script>
+<script src="../lib/sheet.js"></script>
+<script src="../lib/sound.js"></script>
+<script src="../lib/city.js"></script>
+<script>
+(function () {
+  'use strict';
+  // ---------------------------------------------------------------- DESIGN: the book (the topic's data and formulas)
+  var M = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'];
+  var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var side = [0, 150, 300, 0, 450, 600, 0, 0, 350, 500, 250, 800];
+  var food = [620, 600, 640, 610, 650, 630, 700, 720, 640, 630, 650, 780];
+  var travel = [160, 150, 170, 180, 240, 320, 520, 480, 200, 170, 160, 260];
+  var bills = [410, 390, 330, 260, 210, 190, 180, 190, 220, 290, 360, 430];
+  var fun = [180, 160, 220, 240, 300, 380, 650, 600, 260, 240, 220, 720];
+  function row(cls, label, f, avg) { var cells = [label].concat(M.map(f)); cells.push(avg ? avg : ''); return { cls: cls, cells: cells }; }
+  var avg = function (r) { return '=AVERAGE(B' + r + ':M' + r + ')'; };
+  // Totals sit behind the rows they add up, so from the front the tall ones never hide the small ones.
+  var BOOK = {
+    title: 'Home 2026',
+    rows: [
+      { cls: 'head', cells: ['Home 2026'].concat(months, ['Avg']) },
+      row('saved', 'Saved so far', function (c, k) { return k ? '=' + M[k - 1] + '2+' + c + '12' : '=B12'; }, '=M2'),
+      row('total', 'Money in', function (c) { return '=SUM(' + c + '4:' + c + '5)'; }, avg(3)),
+      row('inc', 'Pay', function (c, k) { return k === 11 ? '4200' : '3400'; }, avg(4)),
+      row('inc', 'Side work', function (c, k) { return String(side[k]); }, avg(5)),
+      row('total', 'Money out', function (c) { return '=SUM(' + c + '7:' + c + '11)'; }, avg(6)),
+      row('out', 'Rent', function () { return '=$B$13'; }, avg(7)),
+      row('out', 'Food', function (c, k) { return String(food[k]); }, avg(8)),
+      row('out', 'Travel', function (c, k) { return String(travel[k]); }, avg(9)),
+      row('out', 'Bills', function (c, k) { return String(bills[k]); }, avg(10)),
+      row('out', 'Fun', function (c, k) { return String(fun[k]); }, avg(11)),
+      row('net', 'Left over', function (c) { return '=' + c + '3-' + c + '6'; }, avg(12)),
+      { cls: 'knob', cells: ['Rent per month', '1450'] }
+    ],
+    city: 'B2:M12',                                  // these cells stand up as buildings
+    widths: { A: 170, 'default': 92 },
+    rowH: 56,
+    fmt: { dp: 0 },
+    slider: { cell: 'B13', min: 800, max: 2600, step: 25, label: 'Rent per month' },
+    select: 'H11',
+    labels: { undo: 'Undo', sound: 'Sound' }
+  };
+  var book = SheetBook.create(document.getElementById('sheet'), BOOK);
+
+  // ---------------------------------------------------------------- DESIGN: the city, the light, the desk, the props
+  SheetCity.start({
+    canvas: document.getElementById('city'), sheet: document.getElementById('sheet'), book: book,
+    unit: 250, storey: 15, tallest: 480, deepest: 60,       // one storey = 250 of money
+    facade: { saved: 'curtain', total: 'ribbon', net: 'bays', 'default': 'punched' },
+    look: {
+      backdrop: '#3b4648', desk: '#173234', deskLine: '#76a0a0', deskKind: 'mat', deskGrid: 0.16,
+      sun: [-0.66, 0.46, -0.40], sunColor: '#ffe6bc', sunPower: 1.25, sky: '#5d6f9c', bounce: '#8a7258',
+      window: { x0: 0.0, y0: -0.04, x1: 1.04, y1: 1.02, soft: 0.13, bars: [1, 0], bar: 0.008 },
+      glass: '#5d6e94', lit: '#ffbf70', litShare: 0.08, accent: '#2f5bea', pulse: '#5b8cff', ring: '#ffc77a', loss: '#9c2a20'
+    },
+    props: function (P, W, H) {
+      return [
+        P.pencil({ at: [140, H / 2 + 100], yaw: -0.08, body: '#e0a21c', writer: true }),
+        // a mug of tea at the far right corner
+        P.object({ at: [W / 2 + 130, -H / 2 + 60], parts: [
+          P.lathe([[0, 52], [8, 56], [118, 58]], ['#2f5f8f', '#e9e4da'], { gloss: 0.8, capStart: true, capEnd: false }),
+          P.lathe([[118, 58], [118, 53], [12, 51]], ['#e9e4da', '#d6cfc2'], { gloss: 0.6, capEnd: false }),
+          P.lathe([[96, 50.5], [96, 0.1]], '#7a4a26', { gloss: 0.9, capEnd: false }),
+          P.torus([62, 62, 0], 26, 7, '#e9e4da', 0.8, 'z')
+        ] }),
+        // a short stack of coins
+        P.object({ at: [W / 2 + 110, H / 2 - 60], parts: [
+          P.lathe([[0, 30], [6, 30]], '#c9a54a', { gloss: 0.9, capStart: true }),
+          P.lathe([[6, 29], [12, 29]], '#b89a52', { gloss: 0.9 }),
+          P.lathe([[12, 30], [18, 30]], '#c9a54a', { gloss: 0.9 })
+        ] })
+      ];
+    },
+    // the pencil makes the first edit: July's fun money drops, July stops being a hole, the savings rise from July on
+    intro: { swoop: true, write: { cell: 'H11', text: '300' } },
+    sound: { scale: [0, 2, 4, 7, 9], base: 220, timbre: 'marimba' },
+    hint: 'Click a rooftop, type a number, press Enter'
+  });
+})();
+</script>
+</body>
+</html>

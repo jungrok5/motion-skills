@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>hypertext-hotel · motion-skills</title>
+<meta name="description" content="주제를 주면 앞면이 잘려 열린 밤의 미니어처 건물을 라이브 웹페이지로 만듭니다. 방마다 램프가 그림자를 드리우고, 손댈 수 있는 물건은 모두 그 물건처럼 꾸민 진짜 HTML 컨트롤입니다.">
+<meta property="og:title" content="hypertext-hotel · motion-skills">
+<meta property="og:description" content="주제를 주면 앞면이 잘려 열린 밤의 미니어처 건물을 라이브 웹페이지로 만듭니다. 방마다 램프가 그림자를 드리우고, 손댈 수 있는 물건은 모두 그 물건처럼 꾸민 진짜 HTML 컨트롤입니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/hypertext-hotel/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/hypertext-hotel">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / hypertext-hotel</nav>
+  <h1>hypertext-hotel</h1>
+  <p>주제를 주면 앞면이 잘려 열린 밤의 미니어처 건물을 라이브 웹페이지로 만듭니다. 방마다 램프가 부드러운 그림자를 드리우고, 손댈 수 있는 물건은 모두 그 물건처럼 꾸민 진짜 HTML 컨트롤입니다. 스위치는 체크박스, 다이얼은 range, 승강기는 손잡이가 썸인 세로 range 하나입니다.
+    원본: Felix Rieseberg의 <a href="https://claude.ai/artifact/WgPzNowvy1DGy3jeXhzNMD">「Hotel Hypertext」 데모</a>(<a href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk">HTML-in-Canvas 데모 모음</a>, <a href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19">X 게시물</a>)을 보고 만들었습니다. 코드는 모두 이 레포에서 새로 썼습니다.
+    라이브 데모는 Chrome · Edge 157 이상이나 Claude 데스크톱 앱에서 동작하고, 다른 브라우저에서는 같은 컨트롤이 평범한 페이지로 보입니다.</p>
+  <ul class="tags"><li>HTML-in-Canvas</li><li>인형의 집 단면</li><li>라이브 HTML 컨트롤</li><li>WebGL 조명과 그림자</li><li>돋보기 렌즈</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>건물이 될 주제 한 줄 (밤의 빵집, 등대, 우주 정거장, 학교 …)</dd>
+      <dt>브리프</dt><dd>층과 칸, 방마다 소품 · 램프 · 컨트롤, 컨트롤이 하는 일, 색, 승강기, 소리</dd>
+      <dt>설계</dt><dd>건물 격자와 지붕 · 간판 · 거리, 방의 소품과 조명, 물건처럼 꾸민 컨트롤의 CSS와 동작</dd>
+      <dt>검증</dt><dd>모든 컨트롤과 쌍둥이가 그려진 자리에서 클릭되는지, 스위치 · 승강기 · 렌즈 · 결정성의 숫자 검사, 스틸 채점</dd>
+      <dt>출력</dt><dd>index.html + lib/ 한 폴더 (네트워크 없이 file:// · Claude 아티팩트에서 동작), 스틸 PNG</dd>
+    </dl>
+    <pre><code>node scripts/check.mjs examples/night-bakery/index.html
+node scripts/still.mjs examples/night-bakery/index.html --out out --act idle,lens,plain
+node scripts/new-page.mjs ../my-hotel
+node scripts/check.mjs ../my-hotel/index.html</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium (검사와 스틸), 페이지는 Chrome · Edge 157+ 또는 Claude 데스크톱 앱. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/hypertext-hotel/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10;--demo-bg:#04060d">
+    <iframe data-src="demo/examples/night-bakery/" title="hypertext-hotel 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/night-bakery/">데모 열기 (examples/night-bakery)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/night-bakery</code> · 방 6개와 빵 승강기 · 컨트롤 17개</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/night-bakery/" data-cap="예제 &lt;code&gt;examples/night-bakery&lt;/code&gt; · 방 6개와 빵 승강기 · 컨트롤 17개" aria-pressed="true">밤의 빵집</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/index.html&lt;/code&gt; · 방 4개와 승강기 · 새 작품의 출발점" aria-pressed="false">시작 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제와 템플릿을 HTML-in-Canvas를 켠 Chromium에서 찍은 스틸입니다. 카드를 누르면 그 상태의 라이브 데모가 열립니다.</p>
+  <div id="gallery">
+    <div class="group">
+      <h3>밤의 빵집 <small>examples/night-bakery</small></h3>
+      <p>새벽 세 시의 빵집. 오븐 다이얼, 환풍기 스위치, 발효 슬라이더, 칠판의 주문서, 알람 시계, 가게 종, 빵 승강기가 모두 HTML입니다.</p>
+      <div class="grid">
+        <a class="tile" href="demo/examples/night-bakery/#nointro" target="_blank" rel="noopener"><img src="samples/bakery-night.jpg" alt="달 뜬 밤, 박공지붕과 주황 네온 간판 아래 여섯 방에 불이 켜진 벽돌 빵집 단면" loading="lazy" width="640" height="400"><div class="cap"><span class="no">전체 · 쉬는 상태</span><b>The Night Loaf</b><span class="how">가게, 굽는 방, 발효실, 밀가루 다락, 빵장수의 방, 사무실과 빵 승강기</span></div></a>
+        <a class="tile" href="demo/examples/night-bakery/#nointro&amp;lens=loft.orders" target="_blank" rel="noopener"><img src="samples/bakery-lens.jpg" alt="밀가루 다락 위에 놓인 놋쇠 돋보기, 유리 안에 칠판 주문서가 꾸밈 없는 텍스트 입력란으로 보임" loading="lazy" width="640" height="400"><div class="cap"><span class="no">돋보기</span><b>유리 아래의 진짜 HTML</b><span class="how">칠판 주문서가 &lt;input type="text"&gt;로, 유리 안에서도 클릭과 입력</span></div></a>
+        <a class="tile" href="demo/examples/night-bakery/#nointro&amp;plain" target="_blank" rel="noopener"><img src="samples/bakery-plain.jpg" alt="모눈종이 위 건물 윤곽선에 태그 이름이 붙은 꾸밈 없는 컨트롤 17개가 방마다 놓인 화면" loading="lazy" width="640" height="400"><div class="cap"><span class="no">HTML만 보기</span><b>쌍둥이 컨트롤</b><span class="how">같은 컨트롤의 스타일 없는 쌍둥이, 양쪽이 서로 따라감</span></div></a>
+        <a class="tile" href="demo/examples/night-bakery/#nointro&amp;view=bake" target="_blank" rel="noopener"><img src="samples/bakery-oven.jpg" alt="260도로 올린 오븐 다이얼, 아치형 벽돌 오븐 안에서 높이 타오르는 불과 빵장수 인형" loading="lazy" width="640" height="400"><div class="cap"><span class="no">range · 260 °C</span><b>굽는 방</b><span class="how">다이얼을 올리면 불이 커지고 빛이 주황에서 흰빛으로</span></div></a>
+        <a class="tile" href="demo/examples/night-bakery/#nointro&amp;view=prove" target="_blank" rel="noopener"><img src="samples/bakery-proof.jpg" alt="붉은 보온등 아래 선반 두 개의 쟁반마다 반죽이 부풀어 오른 발효실" loading="lazy" width="640" height="400"><div class="cap"><span class="no">range · 발효 100</span><b>발효실</b><span class="how">반동 없는 느린 스프링으로 쟁반마다 부푸는 반죽</span></div></a>
+        <a class="tile" href="demo/examples/night-bakery/#nointro&amp;lift=2&amp;dark=shop.lamp,loft.lamp,office.lamp" target="_blank" rel="noopener"><img src="samples/bakery-lights-off.jpg" alt="가게 · 다락 · 사무실 불을 끈 빵집, 빵 승강기는 꼭대기 층에 올라가 있음" loading="lazy" width="640" height="400"><div class="cap"><span class="no">checkbox · 세로 range</span><b>불을 끈 방, 올라간 승강기</b><span class="how">램프갓도 함께 꺼지고, 승강기는 층을 살짝 지나쳤다 자리 잡음</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>시작 템플릿 <small>templates/index.html</small></h3>
+      <p>네 방과 승강기가 있는 타운하우스. 모든 컨트롤 종류(체크박스, range, select, 텍스트, 버튼, output, 편집 가능한 간판)가 들어 있습니다.</p>
+      <div class="grid">
+        <a class="tile" href="demo/templates/#nointro" target="_blank" rel="noopener"><img src="samples/townhouse.jpg" alt="분홍 네온 간판 Number Nine 아래 부엌 · 거실 · 서재 · 침실과 가운데 승강기가 있는 타운하우스 단면" loading="lazy" width="640" height="400"><div class="cap"><span class="no">템플릿 · 전체</span><b>Number Nine</b><span class="how">벽돌 날개와 모서리 돌, 가로등과 나무, 달과 먼 도시</span></div></a>
+        <a class="tile" href="demo/templates/#nointro&amp;view=parlour" target="_blank" rel="noopener"><img src="samples/townhouse-parlour.jpg" alt="벽난로와 플로어 램프가 켜진 거실, 소파에 앉은 인형과 벽의 놋쇠 불 조절 다이얼" loading="lazy" width="640" height="400"><div class="cap"><span class="no">템플릿 · 방 확대</span><b>거실</b><span class="how">불 조절 range, 숨 쉬는 인형, 흔들리는 불빛</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 이 흐름(브리프 → 설계 → 검사 → 스틸 채점)으로 만든 예제와 스킬의 원본입니다.</p>
+  <div class="works">
+    <a class="work" href="https://jungrok5.github.io/motion-skills/hypertext-hotel/demo/examples/night-bakery/" target="_blank" rel="noopener"><b>「The Night Loaf」 · 밤의 빵집</b><span>방 6개, 빵 승강기, 컨트롤 17개, 라이브 페이지</span><span class="url">hypertext-hotel/demo/examples/night-bakery/</span></a>
+    <a class="work" href="https://claude.ai/artifact/WgPzNowvy1DGy3jeXhzNMD"><b>원본 · 「Hotel Hypertext」</b><span>Felix Rieseberg의 HTML-in-Canvas 데모</span><span class="url">claude.ai/artifact/WgPzNowvy1DGy3jeXhzNMD</span></a>
+    <a class="work" href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk"><b>HTML-in-Canvas 데모 모음</b><span>데모 15개가 모인 페이지</span><span class="url">claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk</span></a>
+    <a class="work" href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19"><b>X 게시물 · All hail the weird web</b><span>Claude 앱의 HTML-in-Canvas 발표</span><span class="url">x.com/felixrieseberg/status/2122036839238492493</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/hypertext-hotel/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/hypertext-hotel">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/hypertext-hotel/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/hypertext-hotel/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/hypertext-hotel/references/LOOK.md">references/LOOK.md</a> <span>원본 데모에서 본 것</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/hypertext-hotel/references/ENGINE.md">references/ENGINE.md</a> <span>설정과 API, 소품 · 컨트롤 · 동작 추가</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/hypertext-hotel/references/HIC.md">references/HIC.md</a> <span>HTML-in-Canvas 공통 노트</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/hypertext-hotel/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림과 소리는 코드로 만들었습니다
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

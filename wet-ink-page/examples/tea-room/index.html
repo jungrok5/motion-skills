@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Low Tide Tea Room — today's pours</title>
+<!-- wet-ink-page · examples/tea-room — a tea room's menu printed in wet ink. Brief: BRIEF.md. Stir it with a whisk (5 tines),
+     press for a bullseye of milk, pour a cup into your tray and write today's special while it moves. Esc settles. -->
+<style>
+  :root {
+    --paper: #e9ebdc; --ink: #1f2b23; --matcha: #6f8f30; --hibiscus: #a8283f; --hojicha: #8a5428; --soft: #5f6a5c;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  html, body { margin: 0; height: 100%; background: var(--paper); overflow: hidden; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+  #page { box-sizing: border-box; width: 100vw; height: 100vh; overflow: hidden; position: relative; background: var(--paper); color: var(--ink);
+    font-family: var(--serif); padding: clamp(16px, 3.6vh, 36px) clamp(16px, 4.5vw, 60px);
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto minmax(0, 1fr) auto; column-gap: clamp(18px, 3.5vw, 48px);
+    cursor: grab; -webkit-font-smoothing: antialiased; }
+  #page.ink-stirring { cursor: grabbing; }
+  #page * { box-sizing: border-box; }
+  .bar { grid-column: 1 / -1; display: flex; gap: 18px; justify-content: space-between; align-items: baseline; font: 11px/1.2 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+  .bar b { font-weight: 700; }
+  .bar .r { display: flex; gap: 18px; align-items: baseline; }
+  #tray { font-variant-numeric: tabular-nums; }
+  #sound { font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--ink); background: none; border: 0; border-bottom: 1px solid var(--ink); padding: 2px 0; cursor: pointer; }
+
+  .head { position: relative; grid-column: 1; margin-top: clamp(6px, 2vh, 22px); min-height: clamp(150px, 36vh, 300px); }
+  .bowl { position: absolute; border-radius: 50%; mix-blend-mode: multiply; }
+  .bowl.m { background: var(--matcha); width: clamp(130px, 23vw, 300px); aspect-ratio: 1; right: 14%; top: -2%; }
+  .bowl.h { background: var(--hibiscus); width: clamp(80px, 13vw, 170px); aspect-ratio: 1; right: 4%; top: 34%; }
+  .bowl.m::after { content: ""; position: absolute; inset: 9%; border-radius: 50%; border: clamp(3px, .5vw, 6px) solid color-mix(in srgb, var(--matcha) 70%, #1f2b23); }
+  .band { position: relative; background: var(--hojicha); height: clamp(10px, 1.6vh, 16px); width: 30%; margin-top: 14px; }
+  h1 { position: relative; mix-blend-mode: multiply; margin: 0; font-weight: 700; font-style: italic; line-height: .92; letter-spacing: -.025em; font-size: 120px; max-width: 9ch; overflow-wrap: break-word; }
+  .sub { position: relative; margin: 10px 0 0; font: 11px/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--soft); }
+
+  .menu { grid-column: 1; grid-row: 3; align-self: start; list-style: none; margin: clamp(20px, 4vh, 40px) 0 0; padding: 0; max-width: 36em; display: grid; gap: clamp(4px, 1.1vh, 10px); }
+  .menu li { display: grid; grid-template-columns: auto minmax(20px, 1fr) auto auto; align-items: baseline; column-gap: 12px; }
+  .menu .n { font-size: clamp(16px, 2.4vh, 22px); font-weight: 600; }
+  .menu .n i { font-weight: 400; font-size: .72em; color: var(--soft); margin-left: .5em; }
+  .menu .dots { border-bottom: 1.5px dotted color-mix(in srgb, var(--ink) 45%, var(--paper)); transform: translateY(-4px); }
+  .menu .p { font: 14px/1 var(--mono); font-variant-numeric: tabular-nums; }
+  .menu button { font: 10px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; background: none; color: var(--ink); border: 1px solid var(--ink); border-radius: 999px; padding: 6px 10px; cursor: pointer; }
+
+  .pigs { grid-column: 2; grid-row: 2 / 4; border: 0; margin: clamp(6px, 2vh, 22px) 0 0; padding: 0; display: grid; gap: clamp(6px, 1.3vh, 12px); align-content: start; }
+  .pigs legend { font: 10px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 8px; padding: 0; }
+  .pigs label { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 10px; cursor: pointer; font: 10px/1.1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+  .pigs input { appearance: none; -webkit-appearance: none; margin: 0; width: clamp(38px, 5vh, 52px); aspect-ratio: 1; border-radius: 50%; cursor: pointer; background: var(--c);
+    box-shadow: inset 0 0 0 4px color-mix(in srgb, var(--c) 60%, var(--paper)); border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent); }
+  .pigs input:checked { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+  .deck { grid-column: 1 / -1; grid-row: 4; display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) auto; column-gap: clamp(16px, 3vw, 40px); align-items: end; border-top: 1px solid var(--ink); padding-top: 12px; }
+  .cell { display: grid; gap: 8px; min-width: 0; }
+  .lab { font: 10px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; display: flex; justify-content: space-between; }
+  #special { font: italic 600 clamp(18px, 2.6vh, 24px)/1.2 var(--serif); color: var(--ink); background: transparent; border: 0; border-bottom: 1px solid var(--ink); padding: 6px 0; outline: 0; width: 100%; caret-color: var(--hibiscus); }
+  #special::placeholder { color: color-mix(in srgb, var(--ink) 45%, var(--paper)); font-weight: 400; }
+  #steep { width: 100%; margin: 6px 0 4px; accent-color: var(--hojicha); cursor: pointer; }
+  #settle { font: 12px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--paper); background: var(--ink); border: 0; border-radius: 999px; padding: 13px 22px; cursor: pointer; }
+  .hint { grid-column: 1 / -1; font: 10px/1.4 var(--mono); letter-spacing: .06em; color: var(--soft); margin: 8px 0 0; }
+  #page :is(button, input):focus-visible { outline: 2px dashed var(--ink); outline-offset: 4px; }
+
+  @media (max-aspect-ratio: 1/1) {
+    #page { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto minmax(0, 1fr) auto; }
+    .bar .r { gap: 12px; }
+    .head { min-height: 0; padding-right: 30vw; }
+    .bowl.m { width: 30vw; right: 0; top: -2%; } .bowl.h { width: 17vw; right: -3%; top: 48%; }
+    .pigs { grid-column: 1; grid-row: 3; display: flex; justify-content: space-between; margin-top: 16px; }
+    .pigs legend { display: none; }
+    .pigs label { grid-template-columns: 1fr; justify-items: center; gap: 4px; font-size: 9px; text-align: center; }
+    .menu { grid-row: 4; margin-top: 14px; }
+    .menu li { grid-template-columns: minmax(0, 1fr) auto auto; }
+    .menu .dots { display: none; }
+    .menu .n i { display: block; margin: 0; }
+    .deck { grid-row: 5; grid-template-columns: minmax(0, 1fr) auto; row-gap: 10px; }
+    .deck .field { grid-column: 1 / -1; }
+  }
+  /* short windows (an embedded demo, a laptop with toolbars): tighten the rhythm, drop the notes and the hint */
+  @media (max-height: 620px) {
+    #page { padding-top: 14px; padding-bottom: 12px; }
+    .head { min-height: 0; }
+    .bowl.m { width: 17vw; right: 20%; top: -8%; } .bowl.h { width: 10vw; right: 12%; top: 20%; }
+    .sub { margin-top: 4px; } .band { margin-top: 8px; }
+    .menu { margin-top: 12px; gap: 2px; }
+    .menu .n { font-size: 14px; } .menu .n i { display: none; } .menu .p { font-size: 12px; } .menu button { padding: 3px 8px; }
+    .pigs input { width: 30px; } .pigs { gap: 5px; }
+    .deck { padding-top: 8px; } #special { font-size: 16px; padding: 3px 0; } #settle { padding: 9px 16px; } .hint { display: none; }
+  }
+  @media (max-aspect-ratio: 1/1) and (max-height: 780px) {
+    .menu { gap: 2px; margin-top: 10px; } .menu .n { font-size: 15px; } .menu .n i { font-size: 12px; }
+    .menu button { padding: 4px 8px; } .hint { display: none; } .pigs { margin-top: 10px; } .pigs input { width: 32px; }
+    #special { font-size: 17px; padding: 3px 0; } #settle { padding: 10px 18px; }
+  }
+  body:has(.hic-fallback) { overflow: auto; }
+  .hic-fallback #page { height: auto; min-height: 100vh; cursor: auto; }
+</style>
+</head>
+<body>
+<canvas id="stage" layoutsubtree content="drawable" aria-label="The tea room's menu printed in wet ink: drag to stir it">
+  <main id="page" drawable>
+    <header class="bar"><span><b>Low Tide Tea Room</b> · today's pours</span>
+      <span class="r"><span id="tray">Tray · 0 cups</span><button id="sound" type="button" aria-pressed="false">Sound off</button></span></header>
+
+    <div class="head">
+      <div class="bowl m" aria-hidden="true"></div>
+      <div class="bowl h" aria-hidden="true"></div>
+      <h1 id="headline">Slow pour.</h1>
+      <p class="sub">Whisk to stir · press for milk</p>
+      <div class="band" aria-hidden="true"></div>
+    </div>
+
+    <ul class="menu" aria-label="Today's teas">
+      <li><span class="n">Matcha<i>whisked, grassy, thick</i></span><span class="dots"></span><span class="p">6.50</span><button type="button" data-tea="Matcha" data-hic-click>Pour</button></li>
+      <li><span class="n">Hojicha<i>roasted, cocoa, low caffeine</i></span><span class="dots"></span><span class="p">5.00</span><button type="button" data-tea="Hojicha">Pour</button></li>
+      <li><span class="n">Hibiscus<i>tart, ruby, iced or hot</i></span><span class="dots"></span><span class="p">4.50</span><button type="button" data-tea="Hibiscus">Pour</button></li>
+      <li><span class="n">Butterfly pea<i>blue until the lemon</i></span><span class="dots"></span><span class="p">5.50</span><button type="button" data-tea="Butterfly pea">Pour</button></li>
+      <li><span class="n">Genmaicha<i>green tea, toasted rice</i></span><span class="dots"></span><span class="p">4.80</span><button type="button" data-tea="Genmaicha">Pour</button></li>
+    </ul>
+
+    <fieldset class="pigs">
+      <legend>Pour in</legend>
+      <label style="--c:#5f7f25"><input type="radio" name="pigment" value="matcha" data-color="#5f7f25" checked>Matcha</label>
+      <label style="--c:#7b4a22"><input type="radio" name="pigment" value="hojicha" data-color="#7b4a22">Hojicha</label>
+      <label style="--c:#a5243c"><input type="radio" name="pigment" value="hibiscus" data-color="#a5243c">Hibiscus</label>
+      <label style="--c:#2f4fa3"><input type="radio" name="pigment" value="pea" data-color="#2f4fa3">Butterfly pea</label>
+      <label style="--c:#f7f3e7"><input type="radio" name="pigment" value="milk" data-color="#f7f3e7" data-cover=".96">Milk</label>
+    </fieldset>
+
+    <footer class="deck">
+      <label class="cell field"><span class="lab">Today's special</span>
+        <input id="special" type="text" maxlength="28" placeholder="Write today's special" autocomplete="off" spellcheck="false" data-hic-edit></label>
+      <label class="cell"><span class="lab"><span>Light steep</span><span>Strong</span></span>
+        <input id="steep" type="range" min="0" max="100" value="45" aria-label="Steep: how thick the ink is"></label>
+      <div class="cell"><span class="lab">Esc</span><button id="settle" type="button">Settle</button></div>
+      <p class="hint">Drag to whisk · press for a drop · Shift-drag selects · Esc settles the bowl</p>
+    </footer>
+  </main>
+</canvas>
+
+<script src="../../lib/hic.js"></script>
+<script src="../../lib/wet-ink.js"></script>
+<script>
+(function () {
+  'use strict';
+  var head = document.getElementById('headline'), field = document.getElementById('special'), tray = document.getElementById('tray');
+  var DEFAULT = head.textContent, cups = 0;
+  function fit() { var tall = innerWidth < innerHeight; WetInk.fitText(head, { min: 34, max: tall ? 64 : Math.min(140, innerWidth * 0.1), maxHeight: innerHeight * (tall ? 0.2 : 0.3) }); }
+  field.addEventListener('input', function () { head.textContent = field.value.trim() ? field.value : DEFAULT; fit(); });
+  document.querySelectorAll('[data-tea]').forEach(function (b) {
+    b.addEventListener('click', function () { cups++; tray.textContent = 'Tray · ' + cups + (cups === 1 ? ' cup' : ' cups') + ' · ' + b.dataset.tea; });
+  });
+  addEventListener('resize', fit); fit();
+
+  var P = WetInk.path;
+  window.INK = {
+    pigments: 'input[name=pigment]',
+    viscosity: { input: '#steep', damp: [0.45, 4.4], radius: [0.04, 0.09] },
+    comb: { teeth: 5, spacing: 0.018, ribbon: 0.009, swell: 0.6, threads: 0.8, marker: 5 },     // a whisk
+    drop: { radius: 0.085, rings: 3, spread: 1, bloom: 0.55 },                                   // a milk bullseye
+    look: { sheen: 0.5, rim: 0.25, vein: 0.35, markInk: '#1f2b23' },
+    settle: { button: '#settle' },
+    sound: { toggle: '#sound', labels: ['Sound off', 'Sound on'] },
+    probe: '#headline',
+    demo: {
+      delay: 2.5, again: 40,
+      steps: [
+        { at: 0.0, pick: 'input[value=milk]' },
+        { at: 0.2, drop: [0.66, 0.3] },
+        { at: 1.0, drop: [0.66, 0.3], radius: 0.035 },
+        { at: 2.0, to: 3.6, path: P.line(0.66, 0.12, 0.66, 0.5) },
+        { at: 4.2, type: 'Hibiscus day', into: '#special' },
+        { at: 6.0, pick: 'input[value=hibiscus]' },
+        { at: 6.3, to: 9.0, path: P.wave(0.05, 0.6, 0.62, 0.66, 0.05, 2) },
+        { at: 12.0, settle: true }
+      ]
+    },
+    acts: {
+      latte: function (ink) { ink.pick(4); ink.drop(0.66, 0.3); ink.drop(0.66, 0.3, { radius: 0.035 }); ink.stroke(P.line(0.66, 0.1, 0.66, 0.52), { steps: 90, coast: 20 }); },
+      whisk: function (ink) { ink.pick(0); ink.stroke(P.zigzag(0.05, 0.16, 0.8, 0.42, 3), { steps: 150, coast: 30 }); },
+      menu: function (ink) {
+        document.querySelectorAll('[data-tea]').forEach(function (b, i) { if (i < 3) b.click(); });
+        ink.pick(3); ink.stroke(P.spiral(0.32, 0.62, 0.03, 0.2, 1.3), { steps: 140, coast: 30 }); ink.pick(4); ink.drop(0.72, 0.62);
+      }
+    }
+  };
+  WetInk.start(window.INK);
+})();
+</script>
+</body>
+</html>
