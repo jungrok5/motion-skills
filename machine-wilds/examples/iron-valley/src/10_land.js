@@ -51,9 +51,10 @@ V.land = () => {
   L.carve(V.brook, 6.2, 1.3, { bank: 6 });
   // the tarn on the first shelf, in a bog; its water leaves north to the brook
   const T = V.tarn; T.level = V.base(T.x, T.z) - 1.5; L.pond(T.x, T.z, T.r, T.level, 2.0, { wobble: 0.3 });
+  { const n = L.n, R = T.r * 2.3; for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const x = -L.half + i * L.res, z = -L.half + j * L.res, d = Math.hypot(x - T.x, z - T.z); if (d > T.r * 1.34 && d < R) L.H[j * n + i] = Math.max(L.H[j * n + i], T.level + 0.45 * sm(R, R - 9, d)); } }      // the bog's rim holds its water on every side
   { let y = T.level; V.outflow = [[T.x - 6, T.z - T.r + 2], [T.x - 14, T.z - T.r - 16], [T.x - 20, 30], [T.x - 16, 12], [T.x - 8, V.axis(T.x - 8) + 2]].map((p, i) => { y = Math.min(y - 0.05, i ? V.base(p[0], p[1]) - 1.0 : y); return [p[0], p[1], y]; }); L.carve(V.outflow, 3.6, 0.9, { bank: 4 }); }
   LR.water.stream(V.brook, 6.2); LR.water.stream(V.outflow, 3.6);
-  LR.water.pond(T.level, [T.x - T.r * 1.5 - 6, T.z - T.r * 1.5 - 6, T.x + T.r * 1.5 + 6, T.z + T.r * 1.5 + 6]);
+  LR.water.pond(T.level, [T.x - T.r * 1.4 - 2, T.z - T.r * 1.4 - 2, T.x + T.r * 1.4 + 2, T.z + T.r * 1.4 + 2]);
   // what is left of the road: it came in from the south-west, passed the hall and went under the viaduct
   V.road = [[-196, 150], [-150, 122], [-112, 128], [-70, 128], [-30, 124], [4, 122], [22, 122]];
   L.road(V.road, 5.2, { kind: 'paved', wobble: 1.4, soft: 1.6, strength: 0.8 });

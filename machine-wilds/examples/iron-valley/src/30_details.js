@@ -5,7 +5,7 @@ V.details = () => {
   const MD = LR.models, L = LR.land, W = LR.world, P = LR.props, M = LR.mech, r = LR.rng('details'), TAU = Math.PI * 2, D = V.deck;
   const car = (x, z, yaw, o = {}) => MD.place('covered_car#4', x, z, Object.assign({ yaw, sink: 0.04, solid: 'box' }, o)) || (() => { const g = P.g(x, z), y = o.y === undefined ? L.h(x, z) : o.y; g.at(x, y, z, yaw, 0, 0); g.mat('cloth', { tint: '#5c6468' }); g.box(0, 0.5, 0, 1.75, 0.9, 4.3, { soft: 0.5 }); g.box(0, 1.05, -0.2, 1.5, 0.45, 2.2, { soft: 0.6 }); g.pop(); W.solidBox(x, z, 0.95, 2.2, yaw); })();
   // the old road: three cars where they stopped, one in the ditch
-  car(-128, 126.4, 1.72); car(-88, 129.6, 1.45); car(-51, 131.5, 0.6, { roll: 0.2 }); car(-9, 123.4, 1.65);
+  car(-128, 129.4, 1.72); car(-88, 124.2, 1.45); car(-51, 132.5, 0.6, { roll: 0.2 }); car(-9, 126.8, 1.65);
   // on the viaduct: two more, a line of barriers before each broken edge (they stop the walker too)
   if (D) { car(D.x - 2.4, 84, 0.1, { y: D.y + 0.03 }); car(D.x + 2.6, 58, 2.9, { y: D.y + 0.03 });
     for (const [z, k] of [[D.z0 + 2.0, 1], [V.viaduct.gone[0] - 2.0, -1]]) { for (let i = 0; i < 6; i++) { const x = D.x - 4.4 + i * 1.72; if (!MD.place('concrete_road_barrier_02', x, z + (r() - 0.5) * 0.3, { y: D.y + 0.03, yaw: (r() - 0.5) * 0.25, scale: 1.05, solid: false })) { const g = P.g(x, z); g.mat('concrete'); g.box(x, D.y + 0.5, z, 1.5, 1.0, 0.4, { soft: 0.2 }); } } W.solidBox(D.x, z, D.w / 2, 0.35); }

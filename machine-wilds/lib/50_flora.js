@@ -1,4 +1,4 @@
-// scanned-realm · 50_flora — trees and bushes.  A species is a set of numbers (LR.flora.species); from them the page
+// machine-wilds · 50_flora — trees and bushes.  A species is a set of numbers (LR.flora.species); from them the page
 // grows a branch skeleton per seeded variant, wraps it in bark tubes, hangs leaf cards on the twigs (the leaf sprays
 // are painted in code into an atlas, with a twig layer that stays when the leaves fall), and makes three levels of
 // detail: the full tree, a lighter one, and a billboard baked from the tree itself (colour + normal, summer and bare).

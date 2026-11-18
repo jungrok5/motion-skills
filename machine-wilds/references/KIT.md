@@ -1,5 +1,19 @@
 # KIT — every builder and its options
 
+This is the engine's kit as `scanned-realm` has it (land, water, materials, scans, geometry, buildings, props, trees,
+weather, the walk). What `machine-wilds` adds:
+- **Machines** — `LR.mech` (lib/48_mech*.js): `references/MACHINES.md`. In every `avoid` of a scatter use
+  `LR.mech.wayDist(x, z)` (metres outside the nearest way; negative on it).
+- **Materials** (lib/17_mechmats.js): `steel chrome paintmetal rustplate ceramic rubber concrete asphalt`.
+- **Weather**: `LR.wx.looks.mist` and `?wx=mist`; `LR.start({ round: [{ t, tod, weather }, …, { t, end: true }] })` sets
+  the automatic round of the realm.
+- **The walker on slopes** (lib/80_player.js): a climb slows the step from a grade of 0.18, and a face steeper than a
+  grade of 0.94 (43°) is slid along, not climbed. Decks (`LR.world.floors`) are not slopes.
+- **Lamps** that move: `k.lamp(...)` on a machine; `?off=lamps`, `?off=shake`.
+- **Events**: `LR.on('footfall', (p) => …)` (`{ x, y, z, tonnes, size, unit, leg }`), `LR.on('mechcall', …)`;
+  `LR.audio.footfall({ d, side, tonnes, wet })`, `LR.audio.call({ d, side, f, len, gain })`.
+The village named in the examples below is scanned-realm's worked example; the builders are the same here.
+
 Units are metres; +x east, +y up, +z south. A compass yaw of 0° looks north (−z), 90° east. A building's own frame has
 x along its ridge, z out of its front, y up from its levelled site; `yaw` (radians) turns it about y — yaw 0 fronts
 south, `Math.PI / 2` east, `Math.PI` north, `-Math.PI / 2` west. Everything is seeded: the same source builds the same realm.

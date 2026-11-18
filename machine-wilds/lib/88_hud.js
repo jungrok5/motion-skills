@@ -1,4 +1,4 @@
-// scanned-realm · 88_hud — what is on the glass: the place and the hour, buttons for the hour and the weather, an
+// machine-wilds · 88_hud — what is on the glass: the place and the hour, buttons for the hour and the weather, an
 // automatic round, quality and sound, a name card when you walk into a named place, the thumb stick on touch screens,
 // and the governor that keeps the frame rate by changing the internal resolution.
 {

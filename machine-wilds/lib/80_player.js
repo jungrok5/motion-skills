@@ -1,4 +1,4 @@
-// scanned-realm · 80_player — walking.  Keyboard (W A S D / arrows, Q E or ← → to turn, Shift to run, Space to hop),
+// machine-wilds · 80_player — walking.  Keyboard (W A S D / arrows, Q E or ← → to turn, Shift to run, Space to hop),
 // mouse (click to look freely, or drag), touch (left thumb moves, right thumb looks), a gamepad (left stick walks,
 // right stick looks, a trigger or a pressed stick runs, A hops).  The walker stands on the land,
 // on bridges and piers, on the frozen pond; cannot pass walls, trunks, fences or deep water.  Until the first input

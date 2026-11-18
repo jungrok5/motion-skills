@@ -1,4 +1,4 @@
-// scanned-realm · 72_canopy — how much of the sky a place on the ground can see through the trees.  A woodland floor
+// machine-wilds · 72_canopy — how much of the sky a place on the ground can see through the trees.  A woodland floor
 // is lit by a fraction of the sky; without this every forest is as bright as a lawn and sun shafts have nothing dark
 // to stand against.  Built once from the planted trees: a 1 m map of crown cover, blurred.
 {

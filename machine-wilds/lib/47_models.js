@@ -1,4 +1,4 @@
-// scanned-realm · 47_models — scanned objects and plants (Poly Haven glTF, fetched by fetch-assets.mjs), drawn instanced.
+// machine-wilds · 47_models — scanned objects and plants (Poly Haven glTF, fetched by fetch-assets.mjs), drawn instanced.
 // A model keeps its own maps (re-baked into two textures in the engine's encoding, at a size that suits how big the
 // thing is), gets real levels of detail when the page loads (meshoptimizer for solid things, thinning for plants), and
 // every copy is one instance: culled and given its level of detail on the CPU each frame, drawn in one call per level.

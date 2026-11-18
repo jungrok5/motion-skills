@@ -1,4 +1,4 @@
-// scanned-realm · 52_grass — ground cover without storing a single plant: grass blades, meadow flowers, ferns and
+// machine-wilds · 52_grass — ground cover without storing a single plant: grass blades, meadow flowers, ferns and
 // broad-leaf weeds are placed in the vertex shader from the instance number on a world-fixed grid of cells, read the
 // land's own maps (height, grass density, tall, flowers, fern, the rain map) and are drawn only in the tiles the eye
 // can see (one draw call per layer: a list of visible tiles in a uniform array).  Rings of falling density and growing

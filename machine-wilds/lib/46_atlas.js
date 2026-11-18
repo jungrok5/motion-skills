@@ -1,4 +1,4 @@
-// scanned-realm · 46_atlas — photographed leaf, frond and twig atlases, read as pictures the engine paints its own
+// machine-wilds · 46_atlas — photographed leaf, frond and twig atlases, read as pictures the engine paints its own
 // foliage from.  A tree model at Poly Haven is millions of triangles, but its leaves are a small colour map and a
 // cut-out map: those two pictures are all that is fetched ("atlases" in assets.json), and the trees the engine grows
 // from numbers wear them — as do the ferns and broad leaves of the ground cover.  A cut-out plant model's own maps

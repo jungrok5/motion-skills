@@ -1,4 +1,4 @@
-// scanned-realm · 75_post — the frame after the G-buffer: ambient occlusion from depth, air (height fog with the sun's
+// machine-wilds · 75_post — the frame after the G-buffer: ambient occlusion from depth, air (height fog with the sun's
 // shafts marched through the shadow cascades), the lighting pass, see-through things, temporal anti-aliasing that also
 // upsamples a smaller internal picture, bloom, eye adaptation, and the grade onto the canvas.
 {
@@ -589,7 +589,7 @@ void main(){
       const p = l.power * l._k * f * LR.sm(75 + l.r, 55, l._d); PU.uLightPos.value[i].set(l.x, l.y, l.z, l.r); PU.uLightCol.value[i].set(l.color[0] * p, l.color[1] * p, l.color[2] * p, 0); }
     PU.uLightN.value = n; R.info.lights = n;
     // moving lamps (LR.mech fills R.lamps each frame): the nearest and brightest
-    const lamps = (R.lamps || []).filter((l) => l.power > 0.002); for (const l of lamps) { l._d = Math.hypot(l.p[0] - cam.position.x, l.p[1] - cam.position.y, l.p[2] - cam.position.z); l._s = l.power * (l.beam ? 6 : 1) / (1 + l._d * 0.02); } lamps.sort((a, b) => b._s - a._s);
+    const lamps = LR.off.has('lamps') ? [] : (R.lamps || []).filter((l) => l.power > 0.002); for (const l of lamps) { l._d = Math.hypot(l.p[0] - cam.position.x, l.p[1] - cam.position.y, l.p[2] - cam.position.z); l._s = l.power * (l.beam ? 6 : 1) / (1 + l._d * 0.02); } lamps.sort((a, b) => b._s - a._s);
     const m = Math.min(MAXP, lamps.length); for (let i = 0; i < m; i++) { const l = lamps[i]; PU.uLampPos.value[i].set(l.p[0], l.p[1], l.p[2], l.range); PU.uLampDir.value[i].set(l.d[0], l.d[1], l.d[2], l.beam ? Math.cos(l.cone) : 2); PU.uLampCol.value[i].set(l.color[0] * l.power, l.color[1] * l.power, l.color[2] * l.power, l.spill === undefined ? (l.beam ? 0.06 : 1) : l.spill); }
     PU.uLampN.value = m; R.info.lamps = m;
   };

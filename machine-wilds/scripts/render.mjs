@@ -1,4 +1,4 @@
-// scanned-realm · render.mjs — stills, a contact sheet of every view in every state, or a film of the tour.
+// machine-wilds · render.mjs — stills, a contact sheet of every view in every state, or a film of the tour.
 // Builds index.html first.  Run from anywhere:
 //   node <skill>/scripts/render.mjs <realm-dir> --shot "cam=0,60,0,0;tod=16.6" [--shot "…;wx=rain"]   → out/shot-1.jpg …
 //   node <skill>/scripts/render.mjs <realm-dir> --views                    → out/<view>.jpg for each of the realm's views
@@ -10,7 +10,7 @@
 //   node <skill>/scripts/render.mjs <realm-dir> --mats                     → out/mats.jpg: every material layer, scan or recipe, under a raking light
 //   node <skill>/scripts/render.mjs <realm-dir> --cast [kind,…] [--size 640x480]   → out/cast-<kind>.jpg: each machine alone in a studio beside a 1.75 m figure —
 //                                                                            front, back, both sides, the four three-quarters, then the walk from both sides, standing, its move (gather, peak, recover)
-// A shot is `key=value;…`: cam=x,z,yaw°,pitch°[,y]  tod=hours  wx=clear|rain|snow|winter|autumn  season=0..1  snow=0..1  wet=0..1  frames=n  t=seconds
+// A shot is `key=value;…`: cam=x,z,yaw°,pitch°[,y]  tod=hours  wx=clear|rain|snow|winter|autumn|mist  season=0..1  snow=0..1  wet=0..1  frames=n  t=seconds
 //   up=metres (the eye that far above the ground: a look from above)  dof=amount (the lens: 1 is the tour's, 0 none)  focus=metres (else the middle of the picture)
 // Options: --state "tod=17;wx=rain" (for --tour)  --size 1280x720  --q "q=high&mat=1024" (page options)  --frames 12  --out out  --name <file stem>  --no-build  --png
 // The page is opened from disk with file access allowed, so it can read its scans from assets/ (--q "scan=0" to leave them out).
@@ -56,7 +56,7 @@ export const parseShot = (s) => { const o = {}; for (const kv of s.split(';')) {
 export const shoot = (page, o, type = mime) => page.evaluate(([o, type]) => { const info = window.realm.shot(o); return { info, url: window.realm.canvas.toDataURL(type, 0.92) }; }, [o, type]);
 const save = (f, url) => writeFileSync(f, Buffer.from(url.split(',')[1], 'base64'));
 const ff = (a) => new Promise((res, rej) => { const p = spawn('ffmpeg', ['-v', 'error', '-y', ...a], { stdio: 'inherit' }); p.on('exit', (c) => (c ? rej(new Error('ffmpeg failed')) : res())); });
-export const STATES = [['day', { tod: 13.5, weather: 'clear' }], ['dusk', { tod: 19.6, weather: 'clear' }], ['night', { tod: 23, weather: 'clear' }], ['rain', { tod: 14.5, weather: 'rain' }], ['snow', { tod: 11, weather: 'snow' }]];
+export const STATES = [['day', { tod: 13.5, weather: 'clear' }], ['dusk', { tod: 19.6, weather: 'clear' }], ['night', { tod: 23, weather: 'clear' }], ['rain', { tod: 14.5, weather: 'rain' }], ['snow', { tod: 11, weather: 'snow' }], ['mist', { tod: 20.4, weather: 'mist' }]];
 
 if (process.argv[1] && resolve(process.argv[1]) === new URL(import.meta.url).pathname) {
   if (has('mats')) {   // the material sheet: every layer — scan or recipe — under a raking light, six to a row, in the order printed

@@ -1,106 +1,80 @@
-# BRIEF — from a topic to a realm
+# BRIEF — from a topic to a realm on paper
 
-A realm is a place somebody could walk into: a village, a harbour, a mountain shrine, a caravan camp, a ruined abbey, a
-fishing pier at the end of a road. The brief turns the user's topic into decisions before any code is written. Write it
-into the project as `BRIEF.md` (the template is at the end of this file; `new-realm.mjs` copies it).
+The brief is written before any code, in the realm's folder. It decides what is designed for this topic — the place,
+**its machines**, their ways — and it is where the stills are graded afterwards. A topic is a place, what ruined it,
+and an hour: "a drowned harbour where crane-machines still unload ships that never come, before dawn", "a mountain
+pass, the snow plough walkers keep it open for no one". Research what you do not know (how a quarry is cut, how a
+harbour is laid out, how big a pylon is).
 
-## How to think about it
+## What to decide
+1. **The place in one line**, and its past in three: what it was, what happened, how long ago (that sets how much has
+   grown back, what still stands, what the machines still do).
+2. **The land** with numbers: its size, its highest and lowest points, where it is steep and where it is level, water.
+   Relief is the point — a walker should climb, look down, lose sight of a machine behind a ridge. Name five to eight
+   places with coordinates.
+3. **What people left**: three or four ruins, each a builder you will write (never the example's viaduct or hall),
+   each with a reason to walk to it; one of them a camp or a light that says someone is still here.
+4. **The machines** — for each kind (two or three kinds read as a world; one is enough for a small place):
+   - what it is **for** (that decides everything else) and what it still does;
+   - size beside a person, **mass in tonnes**, how many legs of which kind (mammal 2 or 3 segments, insect), where
+     the knees go;
+   - the gait its mass implies (`references/MACHINES.md` has the table): cycle, share of it on the ground, stride,
+     lift; how much of a slope its body takes;
+   - its **silhouette in one sentence** — one that could not be said of the example's machines or of any game's;
+   - idle (what moves while it stands), **one move** in key poses with its gather and its overshoot, what it does
+     when someone comes near;
+   - **lamps**: which, what colour, which throw a beam; how it is told from the other kinds at night;
+   - how many, on which way, where they stand still, how far apart.
+5. **The ways**: one closed line a kind, drawn on the map (`gym.mjs --map`) where the land lets that size of machine
+   go and where the walker will meet it. Where does the walker cross a way? Where is the walker above a machine, and
+   where under one?
+6. **The set piece**: the one place where a machine passes close enough to fill the picture while the walker is safe.
+7. **What it is made of**: the scans (ground, rock, bark, concrete, metal; objects lying about; plants; leaf
+   atlases) — `references/ASSETS.md`. The trees.
+8. **The hour and the air** the page opens on (dark and misty is the style; which hour?), the automatic round.
+9. **The walk**: spawn, the tour as a list of places, eight to twelve views, sounds, words and their language.
 
-1. **Whose place, where, when.** One sentence a stranger could picture: "a fording village under wooded hills, late
-   medieval Central Europe as an MMORPG would draw it, a summer afternoon". Research what you do not know — what the
-   roofs of that region are made of, how the houses meet the street, which trees grow there, what the lanterns look
-   like. This is where "a harbour" becomes a Hanseatic quay or a Jeju fishing cove; they share no building.
-2. **A plan with a reason.** Places grow round something: a ford, a well, a crossroads, a gate. Put that in the middle,
-   then 5–9 landmarks a walker can name and see from each other (a tower, a mill, a big tree, a bridge), ways between
-   them, water, and edges that keep the walker in without a wall of nothing (woods too thick, a palisade, a cliff, the
-   sea). Give every landmark coordinates in metres: +x east, +z south, the middle at the origin, 100–150 m to the edge.
-3. **What each state is for.** The page shows the same place by day, at dusk, at night, in rain and in winter; decide
-   what each one reveals here: which windows and lamps carry the night, where puddles gather, what freezes, what the
-   snow lies on, where the sun comes through at dawn.
-4. **What must be made new.** List the buildings, materials, plants and props this topic needs that the kit does not
-   have as stock (`references/KIT.md`), and how each will be made from the kit's parts (`LR.mat.define`, `LR.Geo`,
-   `LR.arch.wall / gableRoof / window`, `LR.flora.species`). A Korean mountain village needs a tiled hip-and-gable
-   roof, a paper-and-lattice door, a stone wall with a tiled coping, red pine; none of that is the village example.
-5. **What it is made of — the scans.** From the building tradition, name the surfaces (paving, wall stone, plaster,
-   roof, timber, boards, the earth of the paths, the floor of the woods, rock, bark) and find a photographed one for
-   each (`references/ASSETS.md`) — the bark of each kind of tree too. Then **what lies about and what grows**: what
-   this place sells, cooks with, works with and leaves by its doors (the scanned objects, in groups that say what a
-   spot is for); the rock the land throws up; the weeds at its walls and the plants on its forest floor (the scanned
-   plants, by where they grow); and which photographed leaves its trees wear. A Hanseatic quay and a Jeju cove share
-   no scan either: this list is designed per topic like the plan is.
-6. **The walk.** Where the walker starts and what they see first; the tour as a list of way-points, each with what that
-   stretch looks at; 8–12 named views for stills.
-
-## Review — score the sheet (`render.mjs --sheet`) before calling it done
-
-Score each 0–2; anything at 0 is fixed before the realm ships, and the sum should reach 16 of 20.
-
-| | 0 | 2 |
-|---|---|---|
-| **A place** | scattered objects | landmarks read from each other; ways lead somewhere; a skyline |
-| **Its own** | the example's houses moved about | buildings, plants and materials of this topic, researched |
-| **Lived in** | clean boxes on a lawn | wear, moss, clutter at doors, things leaning; nothing floats or intersects |
-| **Ground** | tiling shows; paths are stripes | paving breaks into dirt into grass; grass thins at the edges of ways |
-| **Light** | flat, or everything one colour | the sun's side and the shade's colour differ; near, middle and far are separated by air |
-| **Night** | black, or day with a blue filter | readable sky, lit windows and lamps doing the work, moon shadows |
-| **Rain** | grey day | dark wet stone, puddles in the low places with rings, mist closing the distance |
-| **Winter** | white paint | snow on what faces up and is open to the sky, dry under eaves, ice on still water, bare crowns |
-| **Scans** | a photograph pasted on a box: the wrong thing for the wall, its tiling counted across the square, brighter than everything generated beside it, a rock standing on the grass | each surface reads as what it is from five metres and sits in one tone with its neighbours; objects are seated in the ground and gathered where someone would have left them; plants grow in drifts with bare ground between; a crown is dark inside and has gaps; `check.mjs` reports every scan arrived and what the scans cost each view (0.1–0.3 M triangles) |
-| **Walk** | the tour clips a wall or wades a pond; a fence or a house stands across a way | `check.mjs` passes; on the walk map (`--walk`) every way is open; every view frames something |
-
-Then walk it yourself in the still renderer: stand at the spawn point and turn right round (four stills, 90° apart).
-If any of the four shows the edge of the world, bare land, or a building's blank back, fix the plan.
+## The review (grade every still 1–5; anything under 4 goes back)
+| | question |
+|---|---|
+| air | Is the mist the thing you see? Do far things lose their detail before their shape? Is there one warm light against the cold? |
+| lamps | Does a beam cross the picture as a cone you could draw? Are the kinds told apart by their lights alone? |
+| the machine's read | From its silhouette alone: what is it, how big, which way does it face? Do front, back, left and right agree on the cast sheet? |
+| on the ground | Are its feet on the ground — soles on the slope, toes down, the uphill leg shorter? Is any leg straight as a pole or folded shut? |
+| weight | (on the motion row and in the live page) Does it sink into a step, lean into a climb, gather before it leaves, breathe while it stands? Is anything floating, sliding or dead still? |
+| scale | Is there something a person's size in the picture — a car, a door, a barrier, the figure? |
+| the place | Does the land rise and fall? Could you say what stood here? Is anything a plain grey box? |
+| scans | Does each surface read as what it is at arm's length and from across the valley? (compare `--q "scan=0"`) |
+| its own | Could this picture be mistaken for the example, the starter, or a game? |
 
 <!-- template -->
-# Brief — <name of the place>
+# Brief — (title)
 
-**One line.** <whose place, where, when>
+## The place
+(one line) · (what it was · what happened · how long ago)
 
-## Setting
-- Region and period (and how literal): 
-- Walls / roofs / openings / ornament: 
-- Ground and ways: 
-- Trees and ground cover: 
-- Water: 
-- Light (latitude, the hour the page opens on): 
-- Sounds worth placing: 
-
-## Plan (metres; +x east, +z south; the middle is 0, 0)
-- The middle and why the place is here: 
-- Landmarks (5–9): name · what · x, z · seen from: 
-- Ways: 
-- Water: 
-- Edges (what keeps the walker in): 
-- Far country: 
-
-## States
-- Day: 
-- Dusk: 
-- Night (what is lit): 
-- Rain (where water gathers): 
-- Winter (what the snow lies on, what freezes): 
-
-## The scans (→ `assets.json`; `references/ASSETS.md`)
-| what the place is made of | scan id | tried on the sheet? tone, direction, repetition |
+## The land
+size · highest / lowest · steep where · level where · water
+| place | x, z | what |
 |---|---|---|
-| paving |  |  |
-| wall stone |  |  |
-| roof |  |  |
-| timber · boards |  |  |
-| paths · the floor of the woods |  |  |
 
-Objects (id · triangles · where): 
-What stays generated, and why: 
+## What people left
+| ruin | where | what it was | why walk there |
+|---|---|---|---|
 
-## To make new (not in the kit as stock)
-| thing | made from |
-|---|---|
-|  |  |
+## The machines
+| kind | for | size · tonnes | legs | cycle · duty · stride · lift | silhouette | idle · move | lamps | how many · where |
+|---|---|---|---|---|---|---|---|---|
 
-## The walk
-- Spawn (x, z, facing) and the first thing seen: 
-- Tour way-points and what each stretch looks at: 
-- Views for stills (8–12): 
+## The ways and the set piece
+(each way: where it goes and why there · where the walker crosses, stands above, stands under) · (the set piece)
 
-## Words
-- Language, place names, the title card: 
+## What it is made of
+surfaces: … · objects: … · plants: … · leaf atlases: … · trees: …
+
+## The hour, the walk, the words
+opens at … in … · the round · spawn · tour · views · sounds · language
+
+## Review
+| still | air | lamps | read | ground | weight | scale | place | scans | own | fix |
+|---|---|---|---|---|---|---|---|---|---|---|

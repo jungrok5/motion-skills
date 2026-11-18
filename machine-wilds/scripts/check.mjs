@@ -1,16 +1,20 @@
-// scanned-realm · check.mjs — does the realm load clean, can it be walked, and does every state read?
+// machine-wilds · check.mjs — do the machines keep the rules of a body, does the realm load clean, can it be walked, and does every state read?
 //   node <skill>/scripts/check.mjs <realm-dir> [--views 4] [--size 480x270] [--q "mat=256"]
 //   node <skill>/scripts/check.mjs <realm-dir> --walk      only step 2 (after moving a building or the tour): one page load;
 //                                                           writes out/walk.png — solids, water, ways and the tour from above —
 //                                                           and a close-up out/walk-N.png of every blocked stretch;
 //                                                           --at x,z[,r] adds a close-up out/walk-at.png of that spot
+// 0. the machines (gym.mjs, in Node): on the realm's own ways and over the test course — reach, bends, planted feet, soles on the
+//    ground, support, cylinders, the body's accelerations, idle, moves, loop, determinism; no two machines in each other's legs
 // 1. the page builds and loads with no shader or script error
 // 2. the world's rules: the spawn point, every view and the whole tour stand on open ground (not inside a wall, a
-//    trunk or deep water), named places are inside the world, counts are within the engine's limits
+//    trunk or deep water) and no stretch of it is a climb the walker cannot make, named places are inside the world, counts are
+//    within the engine's limits; the machines audited again in the page; nothing solid on a machine's way
 // 3. every view (or the first --views of them) in day, dusk, night, rain and snow: not blank, not black, not blown;
 //    night is darker than day, rain and snow change the picture, something moves in half a second
 //    a clear day is not washed out or grey (warnings, with the numbers)
 // 4. budgets: draw calls and triangles per view (warnings)
+// 5. the lamps in the mist: in front of a machine with a beam, at night in mist, the picture with its lamps differs from the picture without
 // Exit code 1 on FAIL.  Needs Playwright Chromium; on a machine without a GPU it runs on the CPU and takes minutes.
 import { resolve, join } from 'node:path';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
@@ -21,6 +25,13 @@ if (!args.includes('--size')) process.argv.push('--size', '480x270');
 if (!args.includes('--q')) process.argv.push('--q', 'mat=256');
 const { open, shoot, STATES } = await import('./render.mjs');
 const fail = [], warn = [];
+// 0. the machines, walked over the land in Node (seconds): every rule a body must keep, with its numbers — and the same again
+//    over the test course (a ramp, a step, a side slope, a ditch, a mound), so a kind is known to cope before its way is laid
+const gym = await import('./gym.mjs');
+if (!args.includes('--walk')) for (const course of [false, true]) { let res; try { res = gym.run(dir, { course, dt: 0.1 }); } catch (e) { if (/no LR\.gym/.test(e.message)) { console.log('no machines (the realm sets no LR.gym)'); break; } fail.push('gym: ' + e.message); break; }
+  for (const o of res.out) { for (const b of o.bad) fail.push(`${course ? 'course' : 'machines'} · ${o.unit}: ${b}`); if (o.A) console.log(`${course ? 'course ' : 'gym    '}${o.unit}: ${o.A.cycles} cycles a lap · reach ${(o.A.spanMin * 100).toFixed(0)}–${(o.A.spanMax * 100).toFixed(0)} % · slip ${(o.A.slip * 1000).toFixed(2)} mm · sole off ground ${(o.A.gap * 1000).toFixed(1)} mm · rod in barrel ≥ ${(o.A.overlapMin * 100).toFixed(0)} % · body ≤ ${o.A.bodyAcc.toFixed(2)} m/s² · ${o.bad.length ? o.bad.length + ' broken' : 'ok'}`); }
+  if (!course) { const U = res.LR.mech.units; for (let i = 0; i < U.length; i++) for (let j = i + 1; j < U.length; j++) { const a = U[i], b = U[j]; if (a.post || b.post) continue; const span = Math.min(900, Math.max(a.lap, b.lap)), need = (Math.max(a.wb, a.track) + Math.max(b.wb, b.track)) * 0.62 + (a.K.spec.gait.stride + b.K.spec.gait.stride) * 0.5; let near = 1e9, at = 0;
+      for (let t = 0; t < span; t += 1) { const p = res.LR.mech.cmd(a, t).body.p, q = res.LR.mech.cmd(b, t).body.p, d = Math.hypot(p[0] - q[0], p[2] - q[2]); if (d < near) { near = d; at = t; } } if (near < need) fail.push(`machines · ${a.name} and ${b.name} come within ${near.toFixed(1)} m of each other at t = ${at} s (their legs need ${need.toFixed(1)} m): space their offsets or part their ways`); } } }
 let ctx; try { ctx = await open(); } catch (e) { console.error('FAIL:', e.message); process.exit(1); }
 const { browser, page } = ctx;
 const rules = await page.evaluate(() => {
@@ -39,6 +50,16 @@ const rules = await page.evaluate(() => {
     if (wet > 0.45) fail.push(`the tour wades ${wet.toFixed(2)} m deep near (${wat[0].toFixed(1)}, ${wat[1].toFixed(1)}) — use the bridge`); }
   else warn.push('no tour: LR.start({ tour: [...] }) gives the page something to show before anyone touches it');
   for (const p of W.places) if (Math.hypot(p.x, p.z) > W.radius + p.r) warn.push(`place "${p.name}" is outside the world radius`);
+  // the machines as the page has them (the land pressed, the ruins standing): the same audit the gym ran, coarser; nothing may stand
+  // on a way; and the tour may not ask the walker up a face they cannot climb
+  const mech = []; if (LR.mech && LR.mech.units.length) { const M = LR.mech; for (const s of W.solids) if (s.mech) s.r = 0;
+    for (const u of M.units) { const A = M.audit(u, { dt: 0.25 }); A.needSupport = u.kin.limbs.length >= 6 ? 3 : 2; mech.push(A); }
+    for (const k in M.routes) { const r = M.routes[k], hw = r.width * 0.36; let n = 0, first = null; for (let d = 0; d < r.len; d += 1.5) { const p = r.at(d); for (const s of W.solids) { if (s.mech) continue; const hit = s.r !== undefined ? Math.hypot(p[0] - s.x, p[1] - s.z) < s.r + hw : (() => { const dx = p[0] - s.x, dz = p[1] - s.z, lx = dx * s.c - dz * s.s, lz = dx * s.s + dz * s.c; return Math.abs(lx) < s.hx + hw && Math.abs(lz) < s.hz + hw; })(); if (hit) { n++; first = first || [s.x, s.z]; break; } } }
+      if (n) fail.push(`something solid stands on the machines' way "${k}" (${n} places, the first near ${first[0].toFixed(0)}, ${first[1].toFixed(0)}): a tree, a scan or a ruin — keep them off with LR.mech.wayDist(x, z)`); }
+    for (const v of [W.spawn, ...(LR.cfg.views || []).map((q) => ({ x: q.cam[0], z: q.cam[1], name: q.name }))]) if (M.wayDist(v.x, v.z) < 0 && !onFloor(v.x, v.z)) warn.push(`${v.name ? 'view "' + v.name + '"' : 'the spawn point'} stands on a machine's way`);
+    const K = {}; for (const u of M.units) K[u.kind] = u.K; info.push('machines: ' + Object.keys(K).map((k) => `${M.units.filter((u) => u.kind === k).length} × ${k} (${K[k].kin.nb} bones, ${K[k].tris.map((t) => Math.round(t / 1000) + 'k').join(' / ')} triangles)`).join(' · ') + ` · ${Object.keys(M.routes).length} ways`); }
+  if (P.tour) { let worst = 0, at = null; for (let s = 0; s < P.tour.total; s += 0.5) { const a = P.tourPose(s).cam, b = P.tourPose(s + 0.5).cam, ga = P.groundAt(a[0], a[1]), gb = P.groundAt(b[0], b[1]); if (ga.surf || gb.surf) continue; const g = (gb.y - ga.y) / Math.max(0.05, Math.hypot(b[0] - a[0], b[1] - a[1])); if (g > worst) { worst = g; at = a; } }
+    info.push(`the tour's steepest climb is ${(Math.atan(worst) * 57.3).toFixed(0)}°`); if (worst > 0.94) fail.push(`the tour climbs a face of ${(Math.atan(worst) * 57.3).toFixed(0)}° near (${at[0].toFixed(0)}, ${at[1].toFixed(0)}): a walker cannot (43° is the most)`); }
   if (LR.mat.defs.length > 48) fail.push(`${LR.mat.defs.length} materials — the engine carries 48`);
   if (!W.places.length) warn.push('no named places');
   // the scans: every surface and object the realm names must have arrived (a missing one is drawn from its generated
@@ -63,10 +84,11 @@ const rules = await page.evaluate(() => {
     if (LR.ASSETS) { const by = Object.entries(MD.by).sort((a, b) => b[1][0] - a[1][0]);
       info.push(`scans: ${got} of ${want} surfaces · ${by.length} models in ${MD.placed} copies` + (by.length ? ' — ' + by.slice(0, 10).map(([k, v]) => `${k} ×${v[0]}`).join(', ') + (by.length > 10 ? ', …' : '') : '')); } }
   info.push(`${LR.mat.defs.length} materials · ${W.solids.length} solids · ${W.lights.length} lights · ${W.floors.length} decks · ${W.places.length} places · built ${(W.stats.tris / 1e6).toFixed(2)} M triangles in ${W.stats.meshes} meshes`);
-  return { fail, warn, info, hits: W.tourHits || [], views: (LR.cfg.views || []).map((v) => ({ name: v.name, cam: v.cam })), gpu: window.realm.info().gpu, tier: window.realm.info().tier };
+  return { fail, warn, info, mech, hits: W.tourHits || [], views: (LR.cfg.views || []).map((v) => ({ name: v.name, cam: v.cam })), gpu: window.realm.info().gpu, tier: window.realm.info().tier };
 });
 console.log(rules.gpu + ' · tier ' + rules.tier); for (const l of rules.info) console.log(l);
 fail.push(...rules.fail); warn.push(...rules.warn);
+for (const A of rules.mech || []) for (const b of gym.judge(A)) fail.push(`in the page · ${A.unit}: ${b}`);
 // the walk map: what the walker can bump into, seen from above, with the tour drawn on it — written by --walk (and
 // whenever the tour fails), so a blocked stretch can be seen and moved instead of guessed at
 const drawMap = (o) => page.evaluate((o) => {
@@ -125,6 +147,13 @@ for (let i = 0; i < nv; i++) {
   if (diff(S.day, S.rain) < 6) fail.push(`${v.name}: rain does not change the picture`); if (diff(S.day, S.snow) < 10) fail.push(`${v.name}: snow does not change the picture`);
   if (i === 0) { const a = await shoot(page, { cam: v.cam, frames: 6, tod: 13.5, weather: 'clear', t: 20 }, 'image/jpeg'), b = await shoot(page, { cam: v.cam, frames: 6, tod: 13.5, weather: 'clear', t: 20.6 }, 'image/jpeg'); const m = diff(await stat(a.url), await stat(b.url)); console.log(`  ${v.name}: moves ${m.toFixed(2)} in 0.6 s`); if (m < 0.05) warn.push(`${v.name}: nothing moves in 0.6 s — wind, water, smoke?`); }
 }
+// 5. the lamps in the mist: stand in front of a machine that carries a beam, on a misty night — the picture with its lamps must
+//    differ from the picture without them (a cone in the air, light on the ground), or the valley has lost what it is about
+if (nv > 0 && (rules.mech || []).length) { const cam = await page.evaluate(() => { const LR = window.realm.LR, M = LR.mech, u = M.units.find((q) => q.lampDefs.some((l) => l.beam)); if (!u) return null; const t = 40, r = M.poseAt(u, t), b = r.W.body.p, h = r.cmd.h, k = u.K.spec.ride * 3.2, x = b[0] + Math.cos(h) * k - Math.sin(h) * 5, z = b[2] + Math.sin(h) * k + Math.cos(h) * 5, tg = (r.W.head || r.W.body).p;
+    return { name: u.name, t, cam: [x, z, (Math.atan2(tg[0] - x, -(tg[2] - z)) * 180) / Math.PI, (Math.atan2(tg[1] - LR.land.h(x, z) - 1.7, Math.hypot(tg[0] - x, tg[2] - z)) * 180) / Math.PI * 0.6] }; });
+  if (!cam) warn.push('no machine carries a beam (k.lamp with a cone): nothing cuts the mist');
+  else { const st = { cam: cam.cam, frames: 6, tod: 23, weather: 'mist', t: cam.t }, a = await stat((await shoot(page, st, 'image/jpeg')).url); await page.evaluate(() => window.realm.LR.off.add('lamps')); const b = await stat((await shoot(page, st, 'image/jpeg')).url); await page.evaluate(() => window.realm.LR.off.delete('lamps'));
+    const d = diff(a, b); console.log(`  lamps in the mist (${cam.name}): the picture changes by ${d.toFixed(2)} with them, light ${b.mean.toFixed(3)} → ${a.mean.toFixed(3)}`); if (d < 0.6) fail.push(`the lamps of ${cam.name} do not show in the mist (the picture changes by ${d.toFixed(2)}): raise their power or the mist (LR.wx.looks.mist.fog)`); } }
 await browser.close();
 for (const w of warn) console.log('warn:', w); for (const f of fail) console.log('FAIL:', f);
 console.log(fail.length ? `${fail.length} problem(s)` : 'check OK'); process.exit(fail.length ? 1 : 0);

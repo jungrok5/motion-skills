@@ -1,4 +1,4 @@
-// scanned-realm · 90_app — boot, the loop, the render API.  A realm's last source calls LR.start({ … }).
+// machine-wilds · 90_app — boot, the loop, the render API.  A realm's last source calls LR.start({ … }).
 {
   const T = THREE;
   // LR.start({ materials(LR), build(LR) → may be async, tour:[{x,z,look:[x,z]}…], strings:{…}, weather:{ tod, weather, auto } })
@@ -45,7 +45,7 @@
       const P = LR.player, sp = LR.world.spawn;
       // put the eye somewhere by hand (stills): x, z, compass yaw°, pitch°, y
       const place = (x, z, yawDeg, pitchDeg = 0, y) => { const gy = P.groundAt(x, z).y; /* the deck of a bridge or a pier, ice in winter, else the land */ cam.position.set(x, y === undefined || isNaN(y) ? gy + P.eye : y, z); cam.rotation.set((pitchDeg * Math.PI) / 180, (-yawDeg * Math.PI) / 180, 0); };
-      let time = 0;
+      let time = LR.RENDER ? 0 : LR.qn('t', 0);      // ?t=150: the live page's clock starts there (the machines are where they are at that second)
       const info = () => Object.assign({ gpu: G.name, tier: G.tierName, size: [LR.render.W, LR.render.H], inner: [LR.render.w, LR.render.h], tod: +LR.wx.tod.toFixed(2), wx: LR.wx.label(), worldTris: LR.world.stats.tris, solids: LR.world.solids.length, lightsAll: LR.world.lights.length }, LR.render.info);
       // still mode: realm.shot({ cam:[x,z,yaw,pitch,y], up, tod, weather, snow, wet, season, frames, t, dof, focus })
       // up: the eye this many metres above the ground instead of at head height (a look from above)

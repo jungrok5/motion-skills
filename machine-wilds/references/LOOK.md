@@ -1,5 +1,20 @@
 # LOOK — what makes the picture, and where it stops
 
+## What machine-wilds adds to the picture
+- **Mist is the subject.** `mist` is low cloud lying in the land (`fog` 0.0125 a metre at the ground, thinning with
+  height): at 100 m a thing keeps a third of itself, at 200 m a tenth — far machines are shapes, then only lights. The
+  realm opens at dusk, at night or before dawn; `LR.wx.key` (0.2 here) keeps a dark picture readable.
+- **Lamps.** Every lamp adds to the air pass: a halo (the closed-form integral of 1/d² along the eye's ray) and, with a
+  cone, a beam — the stretch of the ray inside the cone walked in six steps, brightest where it runs at the eye. What
+  stands in a beam is lit by it. The lens itself glows. Twelve lamps a frame, nearest and brightest first.
+- **One warm light.** A fire, a lit window, a work lamp: the cold of the machines' lights reads against it.
+- **Scale.** Something a person's size in every picture of a machine: a car, a barrier, a door, the 1.75 m figure.
+- **Where it stops.** A lamp throws no shadow of its own: its beam is cut where the eye's ray ends, not where a trunk
+  stands in it, so light leaks through a wood. Moving shadows of a machine in the far cascade update every fourth
+  frame. A machine is rigid parts (no cables swinging between two bones, no cloth). Footprints are in the land when it
+  is built, not made as you watch. Everything below still holds.
+
+
 ## The ingredients (keep all of them; a realm that drops one stops looking like this)
 1. **A computed sky.** Sun and moon positions from the hour, the season and a latitude; Rayleigh + Mie + ozone single
    scattering into a sky-view table; clouds as a lit noise shell that throws the same shadow on the land that you see

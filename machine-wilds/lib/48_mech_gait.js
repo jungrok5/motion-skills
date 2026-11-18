@@ -286,7 +286,7 @@
     // idle: while it stands, something must still move — the body breathes, the head looks about, the lights pulse
     A.idle = null; const I = u.K.spec.idle;
     { let t0 = null; if (u.post) t0 = 0.5 - (u.offset || 0); else if (u.haltList && u.haltList.length) { const hh = u.haltList.find((q) => !q.move) || u.haltList[0]; t0 = hh.t0 + 0.4 - (u.offset || 0); }
-      if (t0 !== null && I) { let y0 = 1e9, y1 = -1e9, h0 = 1e9, h1 = -1e9, l0 = 9, l1 = -9, slip = 0; const first = {}; for (let i = 0; i < 80; i++) { const r = M.poseAt(u, t0 + i * 0.1); y0 = Math.min(y0, r.W.body.p[1]); y1 = Math.max(y1, r.W.body.p[1]); if (r.W.head) { const hy = Math.atan2(r.W.head.x[2], r.W.head.x[0]); h0 = Math.min(h0, hy); h1 = Math.max(h1, hy); } l0 = Math.min(l0, r.cmd.light); l1 = Math.max(l1, r.cmd.light);
+      if (t0 !== null && I) { let y0 = 1e9, y1 = -1e9, h0 = 1e9, h1 = -1e9, l0 = 9, l1 = -9, slip = 0; const first = {}; for (let i = 0; i < 80; i++) { const r = M.poseAt(u, t0 + i * 0.1); y0 = Math.min(y0, r.W.body.p[1]); y1 = Math.max(y1, r.W.body.p[1]); if (r.W.head) { const hy = LR.wrapPi(Math.atan2(r.W.head.x[2], r.W.head.x[0]) - r.cmd.h); h0 = Math.min(h0, hy); h1 = Math.max(h1, hy); } l0 = Math.min(l0, r.cmd.light); l1 = Math.max(l1, r.cmd.light);
           for (const l of legs) { const e = r.sols[l.name].J[l.n]; if (first[l.name]) slip = Math.max(slip, V.len(V.sub(e, first[l.name]))); else first[l.name] = e; } }
         A.idle = { breath: y1 - y0, scan: r2d(h1 - h0), light: l1 - l0, slip }; } }
     // moves: the main channel must gather against its direction first and overshoot rest on the way back

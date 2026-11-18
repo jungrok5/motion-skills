@@ -1,4 +1,4 @@
-// scanned-realm · 00_core — the namespace, numbers, seeded randomness, CPU noise, tracks, hooks, URL options.
+// machine-wilds · 00_core — the namespace, numbers, seeded randomness, CPU noise, tracks, hooks, URL options.
 // Sources are plain scripts joined in name order inside one module: everything hangs off LR.
 const LR = { VERSION: '1.0', THREE };
 {

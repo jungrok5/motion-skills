@@ -1,0 +1,73 @@
+# Brief — 쇠울림 골짜기 (Soeullim, "the valley where iron rings")
+
+## The place
+A wooded valley forty years after people left it; the machines they built to watch it, carry for it and relay its
+signals have never been told to stop.
+It was a maintenance district on a mountain road: a viaduct over the valley, a hall where the machines were serviced, a
+yard of containers, a power line along the north ridge. The road was cut when the watchers, re-routed by no one,
+walked through one span of the viaduct. Spruce and pine closed over everything else.
+
+## The land
+640 m of editable land (the walk is 222 m in radius) · highest 47 m (the north ridge), lowest −3 m (the brook in the
+east) · steep: the north bank (20–30°, crags), the bench edges · level: the valley floor, the bog round the tarn.
+| place | x, z | what |
+|---|---|---|
+| 들목 (the way in) | −150, 118 | the old road enters the wood on the high southern shelf (27 m) |
+| 망바위 (the lookout) | −96, 104 | a crag over the valley, pines on it |
+| 끊어진 고가 (the broken viaduct) | −22, −72…108 | deck at 22 m; the span over the machines' way is gone; the southern half is walkable to its edge |
+| 정비창 터 (the hall) | 34, 122 | a concrete frame, half its roof down, a camp fire inside |
+| 쇠늪 (the tarn) | 122, 84 | a bog the cranes wade round |
+| 누운 두루미 (the fallen crane) | −72, 6 | by the brook, under moss |
+| 짐터 (the yard) | 96, −104 | containers and a loading frame on the north shelf |
+| 여울 (the ford) | 62, −1 | where the path crosses the brook |
+
+## What people left
+| ruin | where | what it was | why walk there |
+|---|---|---|---|
+| viaduct | across the valley | the road's bridge: twin-column piers, a box-girder deck, parapets, lamp standards | the set piece: its broken edge is level with a crane's back |
+| hall | south shelf | a two-storey concrete frame with panel walls and sheet roofing | the one warm light; fuel, a generator, boxes: someone is here |
+| pylons | north ridge | three lattice towers, the middle one down, lines to the ground | a silhouette on the skyline |
+| yard | north shelf | eight containers and a portal frame | the carriers kneel here |
+
+## The machines
+| kind | for | size · tonnes | legs | cycle · duty · stride · lift | silhouette | idle · move | lamps | how many · where |
+|---|---|---|---|---|---|---|---|---|
+| 두루미 crane | a watcher: it walks the valley and looks | 24 × 24.6 × 8.7 m · 86 t | 4, heron legs of three segments (front knees forward, hind knees back) | 6.4 s · 0.78 · 5.6 m · 1.9 m | a keel under three pale shells, a ladder neck, a head like a bird's with a long bill, a whip mast on a counterweight boom | breathes, the head sweeps 16° · **survey**: the neck dips, rises 22° over the mist, the head turns 56° left and 50° right with its light up, comes down past rest | one cool white search light (8° cone, 170 m), two cyan eyes, amber running lights, red beacons on tail and mast | 2 on the round (797 s a lap, 330 s apart); they stand at the viaduct gap and by the tarn |
+| 등짐 porter | a carrier: it takes loads between the yard and nowhere | 12 × 11 × 14.6 m · 38 t | 6, insect legs (a turret, an arm, femur and tibia; knees above the bed) | 3.6 s · 0.62 · 3.4 m · 1.1 m, tripod | a flat bed, a cage of girders holding a container, a tank and crates gone to moss, a visor cab | breathes, its radar turns · **kneel**: rises a little, folds until the bed is 1.7 m lower, waits, stands past its height | two amber eyes (14° cones, 70 m), a red tail light | 3 in a string on the bank way, 42 s apart (so each has left the yard before the next kneels); they kneel at the yard |
+| 마루 ridge | a relay station that walks its line | 66 × 73 × 33 m · 5200 t | 8, two-segment girders with cylinders half a metre thick | 15 s · 0.68 · 15 m · 3.4 m, two groups of four | a street-long deck of box girders carrying a three-step concrete station with rows of windows, tanks, a stuck jib, a lattice mast; moss and brush on every flat | breathes 30 cm, its prow turns · **call**: sinks, rises 1.5 m with every light up and sounds, comes down past rest | two great warm eyes under the prow (10° cones, 360 m), lit windows, red corner lights, amber lights under the deck | 1 on the rim (1265 s a lap); it calls on the western rise |
+
+## The ways and the set piece
+- **round** (cranes, 780 m, 15 m wide): down the valley floor south of the brook, through the viaduct's gap, round the
+  tarn's bog and home along the first shelf. The walker crosses it on the path down to the fallen crane, and stands
+  above it on the viaduct.
+- **bank** (porters, 460 m, 13 m wide): a loop on the north shelf past the yard, crossing the old road north of the
+  viaduct's abutment.
+- **rim** (the relic, 1500 m, 38 m wide): round the whole valley at 240 m; from the walk it is lit windows and two
+  eyes in the mist, and, where it passes the way in, legs between the trees.
+- **The set piece**: the southern half of the viaduct, walked out to the broken edge, barriers across it. A crane
+  comes through the gap 26 m away with its back level with the walker's feet, stops there, and lifts its head to look.
+
+## What it is made of
+surfaces: forest_leaves_03 (floor), mud_forest (earth), river_small_rocks, mossy_rock, pine_bark, asphalt_02 (road and
+deck), dirty_concrete and cracked_concrete (ruins), rusty_metal_02 (painted plate), rust_coarse_01 (bare plate),
+corrugated_iron_02 (sheets, containers) · objects: covered_car, concrete_road_barrier_02, old_tyre,
+rusted_wheel_rim_01, barrel_03, old_military_crate, metal_jerrycan, portable_generator, utility_box_01, boulder_01,
+rock_face_02, rock_moss_set_01 / 02, dead_tree_trunk, tree_stump_02, dry_branches_medium_01 · plants: fern_02,
+shrub_02, fir_sapling (heavy) · leaf atlases: fir_tree_01, pine_tree_01 twigs · trees: spruce, pine, birch at the
+water and the ways, brush. 101 MB (78 MB on a phone).
+
+## The hour, the walk, the words
+Opens at 20:24 in mist. The round: mist at dusk → night → a grey dawn → clear noon → rain → mist again. Spawn at the
+way in looking down the road. Tour (641 m): the road, the viaduct to its edge and back, the hall, the path down to the
+valley floor and the fallen crane, up again. Nine views. Sounds: the brook, frogs at the tarn, the fire, footfalls and
+calls. Korean.
+
+## Review (stills at 640 × 360 on a CPU; the live page was run for frames and errors, not for frame rate)
+| still | air | lamps | read | ground | weight | scale | place | scans | own | fix |
+|---|---|---|---|---|---|---|---|---|---|---|
+| crane through the trees, mist, 20:24 | 5 | 4 | 4 | 4 | — | 3 | 4 | 4 | 4 | the beam passes over the eye: a view from the side shows its cone better |
+| porter walking at the eye, mist | 5 | 5 | 5 | 4 | — | 3 | 4 | 4 | 5 | — |
+| relic head-on (first try) | 2 | 1 | 2 | — | — | — | — | — | — | eyes at power 700 whited the picture out → 150 |
+| viaduct edge, crane passing, noon | 3 | — | 5 | 4 | — | 5 | 5 | 4 | 5 | the set piece reads; in mist at 20:24 the first try was under-exposed → `LR.wx.key` 0.2, 20:24 |
+| relic from the way in, mist | 5 | 4 | 4 | — | — | 4 | 4 | 4 | 5 | — |
+| cast sheets (three kinds) | — | — | 5 | 5 | 4 | 5 | — | — | 5 | porter's first sheet cut its legs off → framing by width |

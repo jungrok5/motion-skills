@@ -52,7 +52,7 @@ V.machines = () => {
   for (const k in V.ways) M.route(k, V.ways[k], { width: k === 'rim' ? 38 : k === 'round' ? 15 : 13, grade: k === 'rim' ? 0.12 : 0.2 });
   M.spawn('crane', { name: '두루미 1', route: 'round', offset: 0, halts: [{ at: 0.2, hold: 18, move: 'survey' }, { at: 0.62, hold: 12 }] });
   M.spawn('crane', { name: '두루미 2', route: 'round', offset: 330, halts: [{ at: 0.2, hold: 18, move: 'survey' }, { at: 0.62, hold: 12 }] });
-  for (let i = 0; i < 3; i++) M.spawn('porter', { name: '등짐 ' + (i + 1), route: 'bank', offset: i * 17, halts: [{ at: 0.45, hold: 16, move: 'kneel' }, { at: 0.9, hold: 8 }] });
+  for (let i = 0; i < 3; i++) M.spawn('porter', { name: '등짐 ' + (i + 1), route: 'bank', offset: i * 42, halts: [{ at: 0.45, hold: 16, move: 'kneel' }, { at: 0.9, hold: 8 }] });
   M.spawn('ridge', { name: '마루', route: 'rim', offset: 120, halts: [{ at: 0.3, hold: 34, move: 'call' }] });
 };
 // the gym (scripts/gym.mjs): the land and the machines, nothing else

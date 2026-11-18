@@ -1,4 +1,4 @@
-// scanned-realm · fetch-assets.mjs — downloads the scanned assets a realm names (Poly Haven, CC0) into <realm>/assets/.
+// machine-wilds · fetch-assets.mjs — downloads the scanned assets a realm names (Poly Haven, CC0) into <realm>/assets/.
 //   node <skill>/scripts/fetch-assets.mjs <realm-dir> [--res 1k|2k] [--force]
 // <realm>/assets.json: { "res": "1k", "textures": ["cobblestone_floor_04", { "id": "pine_bark", "maps": "dna" }, …],
 //   "models": ["wine_barrel_01", { "id": "rock_face_01", "res": "2k" }, { "id": "croissant", "maps": "d" }, { "id": "island_tree_02", "heavy": true }, …],
@@ -13,7 +13,7 @@ const args = process.argv.slice(2), dir = resolve(args[0] && !args[0].startsWith
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i > -1 ? args[i + 1] : d; }, force = args.includes('--force');
 if (!existsSync(join(dir, 'assets.json'))) { console.error('usage: fetch-assets.mjs <realm-dir>   (needs <realm-dir>/assets.json)'); process.exit(1); }
 const want = JSON.parse(readFileSync(join(dir, 'assets.json'), 'utf8')), res = opt('res', want.res || '1k');
-const API = 'https://api.polyhaven.com', UA = 'scanned-realm-fetch/1.0';
+const API = 'https://api.polyhaven.com', UA = 'machine-wilds-fetch/1.0';
 const curl = (url, out) => execFileSync('curl', ['-sS', '-L', '--fail', '--retry', '3', '-m', '300', '-A', UA, ...(out ? ['-o', out] : []), url], { maxBuffer: 1 << 28 });
 const json = (url) => JSON.parse(curl(url).toString());
 const get = (url, out) => { if (!force && existsSync(out) && statSync(out).size > 0) return false; mkdirSync(dirname(out), { recursive: true }); curl(url, out); return true; };

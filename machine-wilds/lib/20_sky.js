@@ -1,4 +1,4 @@
-// scanned-realm · 20_sky — the sky is computed, not painted: sun and moon positions from the hour and the season,
+// machine-wilds · 20_sky — the sky is computed, not painted: sun and moon positions from the hour and the season,
 // single scattering through a Rayleigh + Mie + ozone atmosphere into a small sky-view table, clouds as a lit noise
 // shell that also throws its shadow on the land, stars, and an environment map the world is lit and mirrored by.
 {

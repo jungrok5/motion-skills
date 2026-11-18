@@ -1,4 +1,4 @@
-// scanned-realm · 40_arch — buildings from parts: walls with real openings (stone, half-timber, boards), windows with
+// machine-wilds · 40_arch — buildings from parts: walls with real openings (stone, half-timber, boards), windows with
 // leaded glass that lights at dusk, plank doors, roofs with thickness, rafters and sag, chimneys, dormers — and
 // LR.arch.house() which puts them together from a few parameters.  Everything is written in the building's own
 // frame (x along the ridge, z out of the front, y up from the levelled site) into one LR.Geo per building.

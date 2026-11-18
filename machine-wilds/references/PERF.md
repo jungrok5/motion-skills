@@ -1,5 +1,19 @@
 # PERF — where the time goes and how the frame is kept
 
+## What machines cost (machine-wilds)
+- **Drawing**: a unit is one draw call in the G-buffer and one in each shadow cascade it reaches, whatever its part
+  count: every vertex carries its bone's number and reads three texels of a float texture (192 bones × 16 units).
+  Three builds a kind — the example's are 33 k / 13 k / 7 k triangles (crane), 46 k / 18 k / 10 k (relic) — chosen by
+  distance against the kind's size; a unit outside the frustum is not drawn.
+- **Posing**: `poseAt(unit, t)` is a few hundred microseconds of JavaScript a unit (a command is 13 samples of what
+  the feet say about the ground; each trailing part poses the body once more a little earlier).
+- **Lamps**: 12 a frame in the air pass at half size (a ray–sphere test, an arctangent, and for a beam a quadratic and
+  six steps) and in the light pass (one more loop like the point lights').
+- **Land**: a realm with a way near its rim wants the editable middle wider (`half: 320` is 1281² heights and cover
+  maps of 13 MB; the build takes about half as long again as `half: 256`).
+None of this was measured on a real GPU here (see below).
+
+
 The page was built and checked on a machine with no GPU (Chromium's CPU rasteriser), so **frame rates on real GPUs are
 not measured here**. What is measured is what can be counted: draw calls, triangles, passes and buffer sizes. What
 follows is the design that keeps those in hand, and the knobs to turn if a device struggles.

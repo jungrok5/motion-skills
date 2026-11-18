@@ -1,0 +1,20 @@
+{
+  "res": "1k",
+  "textures": [
+    "mossy_rock",
+    "forest_leaves_03",
+    "mud_forest",
+    "river_small_rocks",
+    { "id": "pine_bark", "maps": "dna" },
+    { "id": "rusty_metal_02", "maps": "dna" }
+  ],
+  "models": [
+    "boulder_01",
+    "rock_moss_set_02",
+    { "id": "fern_02", "maps": "d" }
+  ],
+  "atlases": [
+    { "id": "fir_tree_01", "map": "twig" },
+    { "id": "pine_tree_01", "map": "twig" }
+  ]
+}

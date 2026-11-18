@@ -1,4 +1,4 @@
-// scanned-realm · 10_gpu — the renderer, render targets, full-screen passes, quality tiers, the runtime noise texture.
+// machine-wilds · 10_gpu — the renderer, render targets, full-screen passes, quality tiers, the runtime noise texture.
 {
   const T = THREE;
   // quality tiers.  scale = internal render scale range (the picture is temporally upsampled to the canvas).

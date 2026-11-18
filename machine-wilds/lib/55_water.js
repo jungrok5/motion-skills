@@ -1,4 +1,4 @@
-// scanned-realm · 55_water — still and running water drawn after the lit world: it bends what is under it, takes the
+// machine-wilds · 55_water — still and running water drawn after the lit world: it bends what is under it, takes the
 // colour of its depth, mirrors the sky, glints in the sun, rings in the rain and freezes over in winter.
 // LR.water.pond(level, [x0, z0, x1, z1]) · LR.water.stream([[x, z, y], …], width) · LR.water.disc(x, y, z, r)
 {

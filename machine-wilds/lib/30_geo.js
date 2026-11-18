@@ -1,4 +1,4 @@
-// scanned-realm · 30_geo — LR.Geo, a geometry writer for built things (walls, beams, roofs, props), and LR.world,
+// machine-wilds · 30_geo — LR.Geo, a geometry writer for built things (walls, beams, roofs, props), and LR.world,
 // the registry everything in a realm is added to: meshes, solids to walk into, lights, smoke points, floors.
 // Units are metres.  Texture coordinates are laid in metres too (1 / the material's tile), so a stone is the same
 // size on every wall.  Vertex: position f32x3 · normal i8x4 · uv f32x2 · colour u8x4 (tint rgb, ao) · meta u8x4 (layer, flags, seed, weight)

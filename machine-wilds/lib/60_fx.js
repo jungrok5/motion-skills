@@ -1,4 +1,4 @@
-// scanned-realm · 60_fx — everything that floats, falls or glows: rain streaks and their splashes, snow, chimney
+// machine-wilds · 60_fx — everything that floats, falls or glows: rain streaks and their splashes, snow, chimney
 // smoke, flames, lamp halos, fireflies, birds, drifting leaves, motes in the sunlight, fountain water.
 // All of it is stateless: positions are closed forms of time and an instance's random seed, wrapped round the eye,
 // so nothing is simulated or uploaded per frame.  Drawn after the lit world, tested against its depth by hand.

@@ -1,4 +1,4 @@
-// scanned-realm · 35_terrain — the land: a height function sampled to a grid you can edit (level a site, lay a road,
+// machine-wilds · 35_terrain — the land: a height function sampled to a grid you can edit (level a site, lay a road,
 // cut a stream bed), cover maps painted with the same strokes (dirt, paving, leaf litter, grass, flowers, shore),
 // and the mesh: 1 m near the middle, coarser rings out to the mountains.
 {

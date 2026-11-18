@@ -1,4 +1,4 @@
-// scanned-realm · build.mjs — put three.js, the engine (lib/*.js) and a realm's sources (src/*.js) into one html file
+// machine-wilds · build.mjs — put three.js, the engine (lib/*.js) and a realm's sources (src/*.js) into one html file
 // that reads its scans (assets/manifest.json, written by fetch-assets.mjs) from the assets/ folder beside it.
 //   node <skill>/scripts/build.mjs [project-dir] [--cdn] [--out file.html]      → <project-dir>/index.html
 // Every source is a plain script; they are joined in name order inside one module, so a later file sees the earlier ones.

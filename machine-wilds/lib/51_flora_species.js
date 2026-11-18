@@ -1,4 +1,4 @@
-// scanned-realm · 51_flora_species — the stock trees.  Each is only numbers for LR.flora.species(); a realm defines its
+// machine-wilds · 51_flora_species — the stock trees.  Each is only numbers for LR.flora.species(); a realm defines its
 // own the same way (or overrides these by name) before it plants.
 //
 // kind      'broadleaf' | 'conifer' | 'bush'          variants  how many seeded individuals to grow (instances pick one)

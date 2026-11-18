@@ -27,7 +27,7 @@ my-realm/assets.json
     "models":   ["wine_barrel_01", { "id": "fern_02", "maps": "d" }, { "id": "rock_face_01", "res": "2k" },
                  { "id": "island_tree_02", "maps": "dn", "heavy": true }, …],
     "atlases":  [{ "id": "island_tree_02", "map": "leaves" }, { "id": "fir_tree_01", "map": "twig" }] }
-node scanned-realm/scripts/fetch-assets.mjs my-realm [--res 2k] [--force]
+node machine-wilds/scripts/fetch-assets.mjs my-realm [--res 2k] [--force]
 my-realm/assets/tex/<id>/… · assets/models/<id>/… · assets/atlas/<id>_<map>_{diff,alpha}.jpg · assets/manifest.json · assets/CREDITS.md
 ```
 - `maps` says which maps to fetch: **d** colour, **n** normal, **a** occlusion-roughness-metal, **h** height

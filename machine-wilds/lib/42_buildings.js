@@ -1,4 +1,4 @@
-// scanned-realm · 42_buildings — the buildings a settlement is known by, made from the parts in 40_arch:
+// machine-wilds · 42_buildings — the buildings a settlement is known by, made from the parts in 40_arch:
 // a smithy with an open forge, a chapel with a tower, a windmill and a water wheel that turn, a palisade and gate,
 // an arched stone bridge you can walk over, a well, a fountain, market stalls.  Each takes a site and options,
 // writes one mesh, and registers what the world needs to know (solids, floors, lights, smoke, sounds).

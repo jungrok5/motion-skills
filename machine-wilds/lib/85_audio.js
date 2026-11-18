@@ -1,4 +1,4 @@
-// scanned-realm · 85_audio — what the realm sounds like, all of it made here from noise and sine waves: no files, no
+// machine-wilds · 85_audio — what the realm sounds like, all of it made here from noise and sine waves: no files, no
 // network, no libraries.  One graph builder serves the live AudioContext and an OfflineAudioContext, so a check can
 // render a scenario and measure it.  The beds (wind, rain, water, fire) are a few shared looping noise buffers
 // through filters; the voices (birds, bells, steps, thunder) are oscillators and noise slices scheduled a little

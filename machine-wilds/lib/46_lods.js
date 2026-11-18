@@ -1,4 +1,4 @@
-// scanned-realm · 46_lods — levels of detail for a scanned tree, made when it arrives.
+// machine-wilds · 46_lods — levels of detail for a scanned tree, made when it arrives.
 // A tree model is a trunk, thousands of twigs and tens of thousands of leaves or needle sprays, each its own little
 // piece of mesh.  Edge collapse cannot take a crown from a million triangles to a few thousand: the pieces do not touch.
 // So, as every engine that draws a forest does it: leaves are dropped by a fixed lottery (each level a subset of the one

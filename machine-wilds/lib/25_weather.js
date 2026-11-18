@@ -1,4 +1,4 @@
-// scanned-realm · 25_weather — the hour, the season and the weather as one state that eases toward what was asked:
+// machine-wilds · 25_weather — the hour, the season and the weather as one state that eases toward what was asked:
 // clouds gather before rain falls, stone darkens before puddles fill, leaves turn before snow lies.  Every system
 // (sky, air, surfaces, plants, particles, sound, the grade) reads this state; nothing switches.
 {

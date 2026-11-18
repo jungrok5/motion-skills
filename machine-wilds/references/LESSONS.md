@@ -1,8 +1,54 @@
 # LESSONS — what went wrong, why, and the fix
 
-The first part is what was learned putting scans into the engine. The second part is the engine's own list, carried
-over from the skill it came from: every one of them still holds here.
+Three parts. First what was learned putting **walking machines on uneven land** into the engine (this skill). Then what
+was learned putting scans into it (scanned-realm), then the engine's own list (living-realm): every one still holds.
 
+## Machines on the land (machine-wilds)
+- **The body jumped a metre and a half when a foot lifted.** → Its height was "ride over the mean of the feet, then, if
+  a leg is over-stretched, come down by the excess": the excess vanished the moment the stretched leg went into swing.
+  → The height is bounded by every leg's own limit — hip height over that leg's ground, a swinging leg counted through
+  its swing (its ground eases from the last footfall to the next) — the bound is soft (a smooth minimum), and the
+  whole is eased through a window. The instant correction stays as a last resort and `gym` fails if it runs.
+- **A five-tap average is not smooth.** → The body's vertical speed stepped whenever a tap crossed a kink: 3 m/s² on a
+  machine of 86 tonnes. → Thirteen taps of a raised cosine; the limit of a leg rounded off; the sink into a landing a
+  raised-cosine pulse instead of `t·e^-t` (whose second derivative at the start is its largest value). The check
+  measures the body's acceleration over 0.3 s and fails over 1.6 m/s² for heavy machines.
+- **The ankle folded backward at a long reach forward.** → A three-segment leg's tarsus leaned a fixed angle; with the
+  foot far ahead and the leg nearly straight the shin came round past it. → The tarsus leans with the fold (it takes
+  60 % of the shin's swing) and never comes within 20° of the shin's line.
+- **No cylinder fitted the knee.** → Twice. First the leg stood too crouched (75 % of its reach): every joint swung
+  twice as far as with 86 %. Then the search only tried anchors in the middle of each part: a wide swing wants one eye
+  near the pin and the other far along its part, where the length changes little with the angle. → `ride` set for
+  80–88 %; the search covers 10–85 % of the upper part and 8–62 % of the lower; barrel radius is its own number
+  (`bar`) so a colossus does not get a barrel 1.7 m thick.
+- **Footprints tripped the next foot.** → A print 22 cm deep in a 1.7 m bowl has a 23° wall; the hind foot landed on
+  the front foot's wall and the check said the sole could not turn that far. → Prints are 6 % of their radius deep,
+  with a wide soft profile.
+- **A way cut a bench into the hillside with a wall of stretched earth above it.** → The engine's `road()` eases the
+  ground with a 2.5 m margin. → Ways are eased by the machine code: toward level across, a skirt 1.2 half-widths or
+  2.6 times the cut on either side, the grade along it capped (cut and fill), its bumps put back afterwards.
+- **A way worn level makes the terrain walk pointless.** → Eased 80 %, not 100 %, with its own roughness returned and
+  the rises and falls along it kept: on the side-view sheet the legs must be at different lengths.
+- **The land's edit zone ends before its edge.** → The colossus's way ran where strokes fade out (the last 28 m of
+  the editable middle): half-eased ground, cliffs. → The land was made 640 m wide for a way at 240 m.
+- **Three carriers walked through each other.** → 9.5 s apart at 1.5 m/s is 14 m for a machine 12 m long with legs.
+  → `check.mjs` walks every pair of units through a lap and fails when two come within their legs' reach.
+- **Stains swam over a walking machine.** → Grime, moss and grain were looked up at the world position. → A skinned
+  mesh passes its rest position to the fragment shader and those lookups use it.
+- **A still at the wrong hour.** → Still mode took the engine's default (16:24, clear), not the realm's
+  (`weather: { tod, weather }`); twenty minutes of renders were of a sunny afternoon. → A still starts in the realm's
+  own hour and weather.
+- **A lamp at 100 m, looked into, whites out the picture.** → The beam's forward peak times a power set for seeing it
+  from the side. → Powers are set looking into the beam; a relic's eyes at 150, a crane's search light at 90, a
+  carrier's at 22 read as cones from the side and as a glare (not a blank) from in front.
+- **Guessing where a machine is costs two minutes a guess.** → On a CPU a still takes that long. → The walk is a pure
+  function of time, so Node knows where every unit is at any second: ask it for the camera, then render once.
+- **A vm context made the land take 28 s in Node.** → Every `Math` and `LR` was looked up through the context's
+  interceptors. → The gym runs the sources as one function with their globals passed in: 1.4 s.
+- **A tour along the road walked through the cars parked on it.** → The walk map (`check.mjs --walk`) shows it in
+  one picture; the cars went to the verge.
+
+## Scans in the engine (scanned-realm)
 ## Scans
 
 **A scan's name is not its use.** `medieval_wood` on the beams read as courses of stone blocks from across the

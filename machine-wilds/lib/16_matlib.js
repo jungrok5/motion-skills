@@ -1,4 +1,4 @@
-// scanned-realm · 16_matlib — the stock materials.  Each is a tileable function of uv (0..1): colour, height, roughness.
+// machine-wilds · 16_matlib — the stock materials.  Each is a tileable function of uv (0..1): colour, height, roughness.
 // A project adds its own with LR.mat.define() before the bake; these are the common ground of timber-and-stone worlds.
 {
   const D = LR.mat.define;

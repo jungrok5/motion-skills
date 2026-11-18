@@ -1,4 +1,4 @@
-// scanned-realm · 05_glsl — shader chunks shared by every pass, the shared uniform holders, and LR.sh() which
+// machine-wilds · 05_glsl — shader chunks shared by every pass, the shared uniform holders, and LR.sh() which
 // resolves `//#include name` lines.  All shaders are GLSL ES 3.00 (RawShaderMaterial, glslVersion GLSL3).
 {
   const C = (LR.chunk = {});

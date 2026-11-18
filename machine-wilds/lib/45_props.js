@@ -1,4 +1,4 @@
-// scanned-realm · 45_props — the small things that make a place lived in.  Every prop writes into a batch for its
+// machine-wilds · 45_props — the small things that make a place lived in.  Every prop writes into a batch for its
 // part of the world (LR.props.g(x, z): one mesh per 48 m cell), stands on the land, and registers a solid if you
 // would bump into it.  LR.props.flush() adds the batches to the world (the app calls it after build).
 {

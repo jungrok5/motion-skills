@@ -1,4 +1,4 @@
-// scanned-realm · 15_materials — every surface is a procedural PBR material baked on the GPU when the page loads:
+// machine-wilds · 15_materials — every surface is a procedural PBR material baked on the GPU when the page loads:
 // a tileable height + colour + roughness function per material → two texture arrays (albedo+height, normal+rough+ao).
 // No image files.  LR.mat.define(name, { glsl, tile, bump, … }) adds one; LR.mat.bake() fills the arrays.
 {

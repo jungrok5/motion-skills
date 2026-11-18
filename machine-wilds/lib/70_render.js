@@ -1,4 +1,4 @@
-// scanned-realm · 70_render — what is drawn into the G-buffer (built things, the land), the cascaded sun shadow with
+// machine-wilds · 70_render — what is drawn into the G-buffer (built things, the land), the cascaded sun shadow with
 // staggered updates, and the top-down rain map (which surfaces have open sky above them).
 {
   const T = THREE, U = LR.U;
