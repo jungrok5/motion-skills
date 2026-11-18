@@ -11,6 +11,7 @@
     uCamPos: v(new THREE.Vector3()), uNearFar: v(new THREE.Vector2(0.25, 4000)),
     uViewProj: v(new THREE.Matrix4()), uInvViewProj: v(new THREE.Matrix4()), uPrevViewProj: v(new THREE.Matrix4()), uView: v(new THREE.Matrix4()), uProj: v(new THREE.Matrix4()), uInvProj: v(new THREE.Matrix4()),
     uJitter: v(new THREE.Vector2()),
+    uLod: v(0),                                                                    // texture level bias: log2 of the internal scale while the frame is resolved up to a larger canvas (75_post)
     uWx: v(new THREE.Vector4(0, 0, 0, 0)),                                         // wet, puddle, snow cover, season (0 summer … 1 winter)
     uWx2: v(new THREE.Vector4(0, 0, 0, 0)),                                        // rain rate, snowfall rate, lamps on 0..1, lightning flash
     uWind: v(new THREE.Vector4(0.8, 0.6, 0.3, 0)),                                 // dir x, dir z, strength, spare
@@ -47,7 +48,8 @@ vec3 octDec(vec2 e){ e = e * 2.0 - 1.0; vec3 n = vec3(e.x, 1.0 - abs(e.x) - abs(
 `;
   // frame uniforms every pass can name
   C.frame = `
-uniform float uTime; uniform float uFrame; uniform vec4 uRes; uniform vec3 uCamPos; uniform vec2 uNearFar;
+uniform float uTime; uniform float uFrame; uniform vec4 uRes; uniform vec3 uCamPos; uniform vec2 uNearFar; uniform float uLod;
+#define LODK exp2(uLod)
 uniform mat4 uViewProj, uInvViewProj, uPrevViewProj, uView, uProj, uInvProj;
 uniform vec4 uWx, uWx2, uWind; uniform sampler2D uNoise;
 float viewZ(float d){ return uNearFar.x * uNearFar.y / (uNearFar.y - d * (uNearFar.y - uNearFar.x)); }
@@ -111,14 +113,17 @@ float applyWeather(inout vec3 albedo, inout vec3 N, inout float rough, inout flo
   float wet = uWx.x, snowAmt = uWx.z, snow = 0.0;
   if (wet + snowAmt + uWx.y < 0.002) return 0.0;
   float open = skyOpen(wp);
-  vec4 nz = texture(uNoise, wp.xz * 0.043);
+  vec4 nz = texture(uNoise, wp.xz * 0.043); float nzf = texture(uNoise, wp.xz * 0.113 + 0.31).b;
   if (wet + uWx.y > 0.002) {
     float w = wet * mix(0.3, 1.0, open) * (1.0 - snowAmt * 0.6);
     float soak = w * por;
     albedo *= mix(1.0, 0.52, soak);
     rough = mix(rough, max(0.08, rough * mix(0.34, 0.74, por * por)), w);
     if (pud > 0.01 && Ng.y > 0.85 && uWx.y > 0.01) {
-      float lvl = uWx.y * 0.56 - h * 0.55 - nz.r * 0.72 + (nz.g - 0.5) * 0.2;
+      // where water stands: the low places of two fields of noise, one metres across and one a stride across.  On the wide
+      // field alone a whole square lay under one sheet (a flood, and the next square dry); with the finer one laid in, the
+      // pools are one to four metres, about a fifth of open paving when full, stone tops standing out along their edges
+      float lvl = uWx.y * 0.737 - h * 0.55 - (nz.r * 0.55 + nzf * 0.45) + (nz.g - 0.5) * 0.14;
       float p = smoothstep(0.0, 0.05, lvl) * pud * open * smoothstep(0.85, 0.97, Ng.y);
       if (p > 0.0) {
         vec2 rp = vec2(0.0);

@@ -1931,14 +1931,6 @@
     {
      "title": "Rez(@RezAIT00)의 X 게시물 (\"This is fable 5.2 with blender and unreal\" — 언리얼 엔진으로 렌더한 숲과 초원 48초 영상)",
      "url": "https://x.com/RezAIT00/status/2120498246426706176?a=CUYTAAEWhBIL6PS4ZPk&s=19"
-    },
-    {
-     "title": "「Larkhollow」 — @lucian__03의 코드 생성 농장 (Claude 아티팩트): 톤 · 대기 · 풀의 깊이를 견줄 두 번째 레퍼런스",
-     "url": "https://claude.ai/artifact/D8t6NHbpDJXtCovZU6KADP"
-    },
-    {
-     "title": "「Saltline」 — 코드로 생성하는 항구 게임 (Claude 아티팩트): 낮은 키의 톤과 비에 젖은 바닥을 견준 세 번째 레퍼런스",
-     "url": "https://claude.ai/artifact/BGY1SztrAYcJQHSsnHHGmp"
     }
    ],
    "workedExample": [
@@ -1955,20 +1947,22 @@
   {
    "id": "scanned-realm",
    "name": "scanned-realm",
-   "tagline": "장소 하나를 주면(MMORPG 마을 · 항구 · 산사 · 야영지) 브라우저에서 걸어 다니는 3D 세계를 만듭니다. living-realm 엔진에서 \"에셋 없이 HTML 한 파일\" 조건을 푼 스킬로, 자갈길 · 돌담 · 회벽 · 기와 · 목재 · 흙길 · 숲 바닥 · 바위 · 나무껍질은 실물을 촬영한 PBR 스캔 재질을 실제 크기로 쓰고, 통 · 탁자 · 바구니 · 그릇 · 연장 · 좌판의 과일과 빵 · 바위 · 암벽은 포토그래메트리 모델을 인스턴싱과 LOD(화면에서 삼각형이 두 픽셀쯤 되는 단계)로 그리며, 고사리 · 쐐기풀 · 들꽃은 스캔 식생, 나뭇잎은 촬영한 잎과 잔가지 사진입니다. 모두 Poly Haven의 CC0 에셋을 장소마다 목록으로 받아 와 엔진의 표면 법칙으로 그리므로 같은 햇빛 · 거리에 따라 번지는 그림자 · 비 · 웅덩이 · 이끼 · 눈을 받습니다. 페이지는 생성 재질로 바로 시작하고 스캔은 걷는 동안 도착합니다. 땅 · 건물 · 나무 줄기 · 풀 · 하늘 · 날씨 · 빛 · 소리는 코드로 만들고, 시간과 날씨가 이어서 바뀌며, 키보드 · 마우스 · 터치 · 게임패드로 걷습니다.",
-   "posterAlt": "scanned-realm으로 만든 「은여울 마을」의 장면 네 개: 층이 진 스캔 암벽과 바위가 놓인 숲, 스캔 과일과 바구니가 놓인 장터 좌판, 스캔 나무껍질과 고사리의 깊은 숲, 방패와 연장이 놓인 대장간 앞",
+   "tagline": "장소 하나를 주면(MMORPG 마을 · 항구 · 산사 · 야영지) 브라우저에서 걸어 다니는 3D 세계를 만듭니다. living-realm 엔진에서 \"에셋 없이 HTML 한 파일\" 조건을 푼 스킬로, 자갈길 · 돌담 · 회벽 · 기와 · 목재 · 흙길 · 숲 바닥 · 바위 · 나무껍질은 실물을 촬영한 PBR 스캔 재질을 실제 크기로 쓰고, 통 · 탁자 · 바구니 · 그릇 · 연장 · 좌판의 과일과 빵 · 바위 · 암벽은 포토그래메트리 모델을 인스턴싱과 LOD(화면에서 삼각형이 두 픽셀쯤 되는 단계)로 그리며, 고사리 · 쐐기풀 · 들꽃은 스캔 식생, 나뭇잎은 촬영한 잎과 잔가지 사진입니다. 통째로 스캔한 나무 · 묘목 · 관목이 엔진의 나무 사이에 서고(LOD 7단계를 도착할 때 만들며 휴대폰에는 보내지 않음), 조각을 맞춰 세우는 스캔 구조물(성벽 · 성문 · 둥근 망루 · 부두 · 철문)도 놓입니다. 모두 Poly Haven의 CC0 에셋을 장소마다 목록으로 받아 와 엔진의 표면 법칙으로 그리므로 같은 햇빛 · 거리에 따라 번지는 그림자 · 비 · 웅덩이 · 이끼 · 눈을 받습니다. 페이지는 생성 재질로 바로 시작하고 스캔은 걷는 동안 도착합니다. 땅 · 집 · 숲의 나무 · 풀 · 하늘 · 날씨 · 빛 · 소리는 코드로 만들고, 시간과 날씨가 이어서 바뀌며, 자동 산책에는 보는 곳에 초점이 맞는 렌즈(피사계 심도)가 걸리고, 키보드 · 마우스 · 터치 · 게임패드로 걷습니다.",
+   "posterAlt": "scanned-realm으로 만든 「은여울 마을」의 장면 네 개: 스캔 돌 성벽과 둥근 망루가 선 옛 성터, 밧줄이 걸린 기중 틀과 널판 데크의 스캔 부두, 금빛으로 물든 통째 스캔 나무, 피사계 심도로 배경이 흐려진 과일 좌판",
    "poster": "scanned-realm/poster.jpg",
    "tags": [
     "WebGL 2 디퍼드",
     "스캔 재질 · 모델 · 식생 · 잎",
+    "통째 스캔 나무 · 성벽 · 부두",
     "인스턴싱 · LOD",
+    "피사계 심도",
     "Poly Haven · CC0",
     "낮밤 · 비 · 겨울",
     "키보드 · 터치 · 게임패드"
    ],
    "stats": [
-    "예제 「은여울 마을」 · 스캔 재질 18종 · 모델 50종 · 잎 아틀라스 3종",
-    "스캔 126 MB는 저장소 밖 · 걷는 동안 Poly Haven 서버에서 도착"
+    "예제 「은여울 마을」 · 스캔 재질 18종 · 모델 58종 · 잎 아틀라스 3종",
+    "스캔 254 MB(휴대폰은 149 MB)는 저장소 밖 · 걷는 동안 Poly Haven 서버에서 도착"
    ],
    "page": "scanned-realm/",
    "source": "scanned-realm/",
@@ -1982,25 +1976,17 @@
      "url": "https://x.com/RezAIT00/status/2120498246426706176?a=CUYTAAEWhBIL6PS4ZPk&s=19"
     },
     {
-     "title": "「Larkhollow」 — @lucian__03의 코드 생성 농장 (Claude 아티팩트): 엔진의 톤 · 대기 · 풀을 견준 레퍼런스",
-     "url": "https://claude.ai/artifact/D8t6NHbpDJXtCovZU6KADP"
-    },
-    {
-     "title": "「Saltline」 — 코드로 생성하는 항구 게임 (Claude 아티팩트): 낮은 키의 톤과 비에 젖은 바닥을 견준 레퍼런스",
-     "url": "https://claude.ai/artifact/BGY1SztrAYcJQHSsnHHGmp"
-    },
-    {
      "title": "Poly Haven — 스캔 재질과 모델의 출처 (CC0, 저장소에는 넣지 않고 장소마다 받아 옴)",
      "url": "https://polyhaven.com"
     }
    ],
    "workedExample": [
     {
-     "title": "「은여울 마을」 · 스캔 재질 18종 · 스캔 모델 50종 · 잎 아틀라스 3종 · 라이브 페이지 (스캔 126 MB가 걷는 동안 Poly Haven 서버에서 도착)",
+     "title": "「은여울 마을」 · 스캔 재질 18종 · 스캔 모델 58종 · 잎 아틀라스 3종 · 라이브 페이지 (옛 성터 · 스캔 부두 · 통째 스캔 나무 · 스캔 254 MB(휴대폰 149 MB)가 걷는 동안 Poly Haven 서버에서 도착)",
      "url": "https://jungrok5.github.io/motion-skills/scanned-realm/demo/village/"
     },
     {
-     "title": "「Tarn Cabin」 · 스타터, 다른 스캔 목록의 산속 호숫가 오두막 · 라이브 페이지",
+     "title": "「Tarn Cabin」 · 스타터, 다른 스캔 목록의 산속 호숫가 오두막과 스캔 전나무 묘목 · 라이브 페이지",
      "url": "https://jungrok5.github.io/motion-skills/scanned-realm/demo/starter/"
     }
    ]

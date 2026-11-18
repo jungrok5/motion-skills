@@ -45,6 +45,11 @@ R.build = () => {
   // scanned ferns under the trees, by the woods function and a noise — in drifts, with bare floor between (nothing when the scans are not there)
   LR.models.scatter({ ids: ['fern_02#0', 'fern_02#1', 'fern_02#2', 'fern_02#3'], seed: 'ferns', spacing: 1.8, scale: [1.0, 1.9], area: [-70, -70, 70, 70],
     density: (x, z) => LR.sm(0.35, 0.7, R.woods(x, z)) * LR.sm(0.45, 0.65, LR.fbm(x * 0.08 + 3, z * 0.08, 2)) * 0.55, avoid: (x, z) => wet(x, z) || way(x, z) });
+  // young firs where the wood thins out toward the clearing — whole scanned trees, the three of the set (out in the
+  // light a sapling is a young tree; under a closed canopy it is a dark stick).  Nothing where they are not loaded:
+  // a phone has the engine's spruces only
+  LR.models.scatter({ ids: ['fir_sapling#0', 'fir_sapling#1', 'fir_sapling#2'], seed: 'young', spacing: 3.2, scale: [1.1, 2.3], tilt: 0.05, tintVar: 0.1, sink: 0.03, area: [-60, -60, 60, 60],
+    density: (x, z) => { const w = R.woods(x, z); return LR.sm(0.04, 0.25, w) * LR.sm(0.7, 0.4, w) * 0.45; }, avoid: (x, z) => wet(x, z) || way(x, z) });
   // ⑦ what the walker is told, where they start, how far they may go
   LR.world.places.push({ x: C.x + 2, z: C.z + 4, r: 6, name: 'The Cabin', sub: 'smoke and split wood' }, { x: T.x - T.r, z: T.z + 5, r: 7, name: 'The Tarn', sub: 'cold and clear' });
   LR.world.fireflyAreas = [{ x: T.x, z: T.z, r: 24 }]; LR.world.radius = 62; LR.world.spawn = { x: -30, z: 26, yaw: 40 };

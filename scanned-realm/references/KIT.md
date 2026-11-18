@@ -54,12 +54,20 @@ low), so moss, flaking paint, puddles and `pom` read it as they read a recipe. `
 ## Scanned objects and plants — `LR.models` (lib/47_models.js) · `references/ASSETS.md`
 - `await LR.models.load([id | { id, …options }])` inside `materials(LR)` (which may be `async`). On the live page it
   returns at once — the models are known from their measured boxes and drawn when they arrive; stills wait for them.
-  Options: `plant` (cut-out, wind, season, light through leaves), `wind`, `trans`, `turn`, `shadow: 'hull' | 'mesh' |
-  'none'`, `far`, `lod: [d0, d1, d2]`, `lodK`, `px`, `gain`, `tint`, `rough`, `normal`, `metal`, `moss`,
-  `detail: '<material>'` (+ `detailTile`, `detailReach`, `detailColor`, `detailRelief`).
+  Options: `plant` (cut-out, wind, season, light through leaves), `tree` (a whole tree: wood solid and swaying,
+  foliage as leaves, seven levels — `fall`, `leafGain`, `leafTint`), `wind`, `trans`, `turn`, `shadow: 'hull' | 'mesh'
+  | 'none'`, `far`, `lod: [d0, d1, d2]`, `lodK`, `px`, `gain`, `tint`, `rough`, `normal`, `metal`, `moss`,
+  `detail: '<material>'` (+ `detailTile`, `detailReach`, `detailColor`, `detailRelief`). A model marked `"heavy"` in
+  `assets.json` is not loaded on a phone, on `low` or in safe mode (`LR.models.heavy()`, `LR.models.skipped`).
 - `LR.models.place(id | 'id#k', x, z, { h | scale, yaw, pitch, roll, sink, y, tint, lie, solid: false | factor |
-  'box' })` in `build` → `true`, or `false` when the model is not in the manifest (so `place(…) || P.log(…)` keeps
-  the place whole without scans). `y` puts it on a table top; `lie` lays a long thing on its side.
+  'box', trunk: metres, base: false })` in `build` → `true`, or `false` when the model is not in the manifest or was
+  left out (so `place(…) || P.log(…)` keeps the place whole without scans). `y` puts it on a table top; `lie` lays a
+  long thing on its side; `trunk` is the circle that stops the walker at a tree; `base: false` keeps the model's own
+  zero at `y` instead of standing it on its lowest point.
+- `LR.models.arrange(id, [k, …], x, z, { yaw, scale, y, about: [mx, mz] })` — several objects of a set, standing to
+  each other as the file has them (a pier's sections, a kit laid out by its author); (x, z) is where their middle
+  goes, or the model's own point `about`. `LR.models.swing(id, k, x, z, { yaw, scale, y, open })` — one leaf of a
+  door or gate where `arrange(…, { about: [0, 0] })` would put it, turned about its outer edge by `open` radians.
 - `LR.models.scatter({ ids, density(x, z) → 0..1, spacing, area: [x0, z0, x1, z1], seed, scale: [lo, hi], sink, tilt,
   tintVar, avoid(x, z) })` → how many it placed. What it strews gets a short reach.
 - `LR.models.stand('barrel' | 'crate' | 'stump' | 'rock', id | [ids], { min, h, max })`: the kit's prop of that name
@@ -69,7 +77,10 @@ low), so moss, flaking paint, puddles and `pom` read it as they read a recipe. `
   `'goods:greens'` / `'goods:pots'` (`A.stall({ goods })`: `n` a tray, `tumble`, `rise`, or `big: true` to stand
   alone on the counter), `'yard'` (`A.dress`: `sink`, `lean`, `spin: false`, `solid`), `'weeds'` (`A.dress`).
 - Read-outs: `LR.models.by` (copies per model), `LR.models.live` (`.lod` distances, `.tri` triangles by level),
-  `LR.render.info.scans` (`inst`, `tris`, `calls`, `shadowTris` this frame), `LR.models.failed`, `.due` / `.arrived`.
+  `LR.render.info.scans` (`inst`, `tris`, `calls`, `shadowTris` this frame), `LR.models.failed`, `.due` / `.arrived`,
+  `.skipped` (heavy ones left out).
+- `LR.lods.tree(part, 'leaf' | 'wood', MeshoptSimplifier)` (lib/46_lods.js) is what makes a tree's levels;
+  `LR.lods.LEAF` / `LR.lods.WOOD` are its tables (share kept, share of their triangles, error allowed, a ceiling).
 
 ## Leaf atlases — `LR.atlas` (lib/46_atlas.js)
 - `await LR.atlas.load(['<id>:<map>', '<cut-out model id>'])` in `materials(LR)`; `LR.atlas.has(key)`.
@@ -171,5 +182,12 @@ and cannot pass walls, trunks, fences, placed scans or deep water. Input, all at
 | keyboard + mouse | W A S D / ↑ ↓ | drag, or click to capture the pointer; Q E / ← → turn | Shift · Space |
 | touch | left half of the screen is a stick that appears under the thumb | drag on the right half | push the stick to its rim |
 | gamepad | left stick | right stick | a trigger or a pressed left stick · the bottom face button |
+**The lens** (`LR.render.lens`, lib/75_post.js): on the tour what the middle of the picture shows is sharp and what
+is nearer or farther goes soft — a depth of field between the lit picture and the temporal resolve. `amount` (0.026:
+the blur of what is infinitely far is 0.26 % of the picture's height with the focus at 10 m), `max` (the largest
+radius, 1.3 % of the height), `tour` / `walk` (how much each way of looking gets; `L` switches `walk`), `?dof=` scales
+it, `?off=dof` and the `low` tier have none. A still asks for it: `shot({ dof: 1, focus: 3.5 })` — `focus` in metres,
+else the middle of the picture. The near side is held back to six tenths: a walk is not a macro shot.
+
 Walking input ends the tour; looking only pauses its head for a few seconds. A visible character would be a body that
 moves — a rig, clips and the repository's motion rules (`references/MOTION-QUALITY.md`) — and is not part of this skill.

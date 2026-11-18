@@ -16,7 +16,7 @@ A collection of Claude Code skills for making motion graphics. Each top-level fo
   are the masters, and each skill carries copies (`lib/hic.js`, `scripts/hic-test.mjs`, `references/HIC.md`). Edit only the
   masters, then run `node tools/sync-hic.mjs`. `--check` must pass before a PR. Read `references/HTML-IN-CANVAS.md` before
   touching one: the page stays real (selectable, typeable, findable) and what you see is what you click.
-- `scanned-realm` draws its surfaces, objects, ground plants and tree leaves from Poly Haven CC0 scans, listed per realm in
+- `scanned-realm` draws its surfaces, objects, ground plants, tree leaves, a few whole trees and kits of structures from Poly Haven CC0 scans, listed per realm in
   `assets.json` and fetched with `scripts/fetch-assets.mjs`. Never commit a realm's `assets/` and never put scans in
   `docs/`; its site demos are built with `build.mjs --cdn` (the page reads the scans from Poly Haven's server and shows the credit).
 - A skill (or piece) whose bodies move — people, animals, creatures: read `references/MOTION-QUALITY.md` and take the

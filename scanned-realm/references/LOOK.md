@@ -27,18 +27,23 @@
    and docks in the ground cover, scanned bark on the trunks — and scanned ferns, nettles, docks, dandelions and
    flowers standing within a few metres of the eye. Crowns are dark inside and under, lit at the rim; far foliage is
    cut out by a hash, so a crown thins into a lace of leaves instead of closing into blobs.
+4c. **A few things that are scans whole.** One old tree by a bench, young firs where the wood thins out, a shrub at
+   the foot of a wall; a fort's walls and tower at the end of a path, a pier on the pond, an iron gate. Beside a
+   scanned trunk the generated ones show what they are, so there are few, and they stand where one thing is looked at.
 5. **Wear.** Nothing is one clean colour: paint flakes to bare wood, plaster drops off its brick, dressed stone has
    lost its corners, iron rusts, joints are dark and tight. Moss where it is damp (north faces, tops, creases, the foot of walls), darker at the ground, nothing
    exactly straight (ridge sag, leaning posts, shutters a little askew).
 6. **Depth at the openings.** Windows and doors are real recesses with frames; eaves have rafters and a shaded soffit;
    upper floors jetty out on joist ends. Flat fronts are what make a town look like a model.
 7. **Ground that breaks up.** Paving → dirt → turf by height-blended masks; grass blades over it in the same colour
-   law; flowers in drifts; nothing tiled to the horizon.
+   law; flowers in drifts; nothing tiled to the horizon — each ground layer is read twice with offsets that change
+   from patch to patch and joined along the taller, so no stone comes round again every two metres.
 8. **Weather as a state of surfaces.** Rain darkens porous things and makes hard things shine, fills the low places
    of paved and earth ground with ringed puddles — but only where the sky is open above (a top-down map of roofs).
    Snow lies on what faces up and is open; walls under eaves stay bare. Trees turn, drop their leaves, keep twigs.
 9. **A filmic frame.** Temporal anti-aliasing, bloom from real brightness, an eye that adapts, an AgX display curve with a look (contrast, colour), a
-   grade that follows the hour (warm at dusk, blue at night, quieter in rain), cool shade against warm light.
+   grade that follows the hour (warm at dusk, blue at night, quieter in rain), cool shade against warm light — and,
+   when nobody is steering, **a lens**: what the tour looks at is sharp, the grass at its feet and the hills behind go soft.
 10. **Life.** Things against every wall (a climber, pots by the door, a planter, a barrel), strings of bulbs, smoke, flags, a turning mill, lit windows that differ from each other, fireflies, birds, falling leaves.
 
 ## What makes a built place read as natural (from how game towns are made)
@@ -81,30 +86,45 @@ Front-lit noon is the flattest hour of any engine; open the page late in the aft
 ## Where it stops (say so when showing it)
 - Developing without a GPU does not lower the picture (stills are the same shaders on a CPU rasteriser); it slows the
   work and leaves frame rate unmeasured. A GPU machine does not raise it to a film still either: the method sets the ceiling.
-- Surfaces, objects, ground plants and the leaves are scans; **the buildings, the land, the trees' wood and the grass
+- Surfaces, objects, ground plants and the leaves are scans; **the houses, the land, the forest's trees and the grass
   blades are still generated geometry**. Up close a wall is a photographed surface on a flat plane whose relief is
-  parallax (stones stand out of their joints, but the wall's outline stays a straight line). A tree is photographed
-  leaves on cards on a generated skeleton: convincing from three metres out, cards at arm's length.
-- **No scanned trees and no scanned buildings**: a tree model is one to three million triangles, a building is not in
-  the library. No glass or blended materials on scanned objects (a lantern's panes are skipped).
+  parallax (stones stand out of their joints, but the wall's outline stays a straight line). A forest tree is
+  photographed leaves on cards on a generated skeleton: convincing from three metres out, cards at arm's length.
+- **Whole scanned trees are few and small**: a gnarled 5 m thorn, saplings, shrubs — what a browser can take (up to a
+  million triangles and 45 MB a model). The library's full-grown firs and pines are 7–17 million triangles and
+  465–914 MB each; the forest is not made of them and will not be. A scanned tree changes level in steps you can
+  catch if you watch it while walking up (its leaves thin out and grow), and far away it is a few thousand triangles
+  of enlarged leaves, not a picture of itself.
+- **Scanned structures are the kits the library has** — a fort's walls, gate and tower, a pier, doors and gates —
+  not houses: every house is still built from the engine's parts and wears scanned surfaces. A kit's wall is a low
+  count of big faces with a tiling 1k map: fine from a few metres, soft at arm's length but for the engine's grain
+  over it. No glass or blended materials on scanned objects (a lantern's panes are skipped).
+- **The lens is on the tour only** (and in stills that ask for it): a depth of field gathered from the frame itself —
+  what is hidden behind a blurred thing is not there to show through its edge, and a bright point far out of focus
+  shimmers a little while the picture is moving. Walking has none unless you press `L`.
 - **Megascans cannot be used here** — free on Fab since late 2026, but its licence forbids serving the raw files from
   a public page and fetching them by script (`references/ASSETS.md`). The scans are Poly Haven's (CC0).
 - Not Nanite: levels of detail are three or four simplified copies of a model chosen per copy, not clusters chosen
   per pixel; a thing changes level at a distance where its triangles are about two pixels wide. Not Lumen either
   (below). Not virtual textures: a scanned object's maps are 1k.
-- A scan repeats: a 1.5 m patch of paving is laid twenty times across a square. Stains, damp and relaid patches break
-  it; a scan with one loud stone still shows.
+- A scan repeats: a 1.5 m patch of paving is laid twenty times across a square. On `high` and `ultra` the land reads
+  each ground layer twice with offsets that change from patch to patch and joins the two along the taller, so a lane
+  seen from above no longer shows the same dark stone every two metres; on `medium` and `low`, and on walls and roofs
+  on every tier, stains, damp and relaid patches are what break it, and a scan with one loud stone still shows.
 - Indirect light is the sky, one bounce colour from the land, screen-space occlusion and — on `high` and above —
   one bounce off what is on screen (it cannot see behind the camera or behind things, and outdoors under an open sky
   it is subtle; it tells in lanes, under eaves and by lamplight), and less sky where buildings stand close (read off
   a top-down height map). There is no Lumen-like multi-bounce and no Nanite-like geometry: three.js has neither.
-- The page is no longer one file: 41–126 MB of scans arrive while you walk, from `assets/` or from Poly Haven's
-  server — the first seconds are the generated place, and things appear in it. Offline, or with `?scan=0`, it stays
+- The page is no longer one file: 63–254 MB of scans arrive while you walk (41–149 MB on a phone, which is not sent
+  the whole trees), from `assets/` or from Poly Haven's server — the first seconds are the generated place, and things
+  appear in it; the trees come last, and each takes a second or two to be given its levels. Offline, or with `?scan=0`, it stays
   generated: a different, flatter picture.
-- Wet paving, puddles and ice mirror what stands over them the same way on `high` and above (lamps and lit windows
-  in a square after rain); below that they mirror the sky.
+- Wet paving, puddles and ice mirror what stands over them on every tier — the house across the square and its lit
+  windows, a lamp drawn out into a streak on the wet stone beside the pool, the sky where nothing stands — by a ray
+  marched through the depth buffer (8 steps on `low` to 24 on `ultra`, then narrowed onto the crossing). What is off
+  the screen is not there to be mirrored: the pool shows the sky in its place.
 - Water mirrors what is on the screen above it (a ray marched through the depth buffer: trees on the far bank, a
-  bridge, a pier) and the sky elsewhere; what is off-screen or hidden behind something is not mirrored, and puddles
-  on the ground mirror the sky and the lamps' highlights only.
+  bridge, a pier) and the sky elsewhere; what is off-screen or hidden behind something is not mirrored — in water
+  and in puddles alike.
 - Lamps do not cast shadows; interiors do not exist (windows are lit glass).
 - No characters. A walker's body, villagers or animals would need a rig, clips and the body checks in CONTRIBUTING.md.
