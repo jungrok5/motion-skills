@@ -450,8 +450,10 @@
       if (sc.snow === undefined) W.snow = W.season > 0.6 || W.snowfall > 0.3 ? 1 : 0; if (sc.wet === undefined) W.wet = W.rain;
       const s = { x: num(sc.x, 0), y: sc.y, z: num(sc.z, 0), yaw: num(sc.yaw, 0), moving: !!sc.moving, running: !!sc.running, speed: num(sc.speed, sc.running ? 4.5 : 2.2), surface: sc.surface || 'grass', sheltered: num(sc.sheltered, 0) };
       const th = (Array.isArray(sc.thunder) ? sc.thunder : sc.thunder === undefined ? [] : [sc.thunder]).map((x) => (typeof x === 'number' ? { at: 0, delay: x } : x)).sort((a, b) => a.at - b.at);
-      const dt = stepped ? 1 / 40 : 1 / 60, tod0 = W.tod; let ti = 0, failed = null;
-      const tick = (t) => { E.vt = t; if (sc.todRate) W.tod = (((tod0 + sc.todRate * t) % 24) + 24) % 24; while (ti < th.length && th[ti].at <= t) E.thunder(th[ti++].delay); E.update(dt, s, W, sc.sources || []); };
+      const dt = stepped ? 1 / 40 : 1 / 60, tod0 = W.tod; let ti = 0, ei = 0, failed = null;
+      // events: [{ at, kind: 'footfall' | 'call', d, side, tonnes | f, len, gain }] — the machines of a film, placed in time (scripts/film.mjs)
+      const evs = (sc.events || []).slice().sort((a, b) => a.at - b.at);
+      const tick = (t) => { E.vt = t; if (sc.todRate) W.tod = (((tod0 + sc.todRate * t) % 24) + 24) % 24; while (ti < th.length && th[ti].at <= t) E.thunder(th[ti++].delay); while (ei < evs.length && evs[ei].at <= t) { const e = evs[ei++]; if (e.kind === 'call') E.call(e); else E.footfall(e); } E.update(dt, s, W, sc.sources || []); };
       // where the context can pause itself, the render is walked like a live run (nodes made just in time, finished ones unhooked);
       // where it cannot, the whole scenario is scheduled before the render starts
       tick(0);

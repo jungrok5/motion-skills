@@ -11,6 +11,10 @@ V.parts = {
       // the carapace: three overlapping shells along the back, open below so the keel shows
       k.mat('shell'); for (const [x0, x1, hh, ww] of [[-5.2, -1.6, 1.0, 1.45], [-2.1, 2.2, 1.18, 1.62], [1.7, 5.3, 0.98, 1.4]])
         k.loft('x', [[x0, hh * 0.55, ww * 0.6, 0.02, 0, 3], [x0 + 0.5, hh, ww, 0.05, 0, 3], [(x0 + x1) / 2, hh * 1.04, ww * 1.03, 0.08, 0, 3], [x1 - 0.5, hh * 0.96, ww * 0.97, 0.05, 0, 3], [x1, hh * 0.6, ww * 0.62, 0.02, 0, 3]], { sides: 18, from: -0.62 * Math.PI, to: 0.62 * Math.PI, caps: false });
+      // what is left of its livery: a band of faded teal round the middle shell, unit marks stencilled fore and aft, a dark line where shells meet
+      k.mat('accent'); k.loft('x', [[-0.55, 1.245, 1.69, 0.08, 0, 3], [0.55, 1.245, 1.69, 0.08, 0, 3]], { sides: 18, from: -0.6 * Math.PI, to: 0.6 * Math.PI, caps: false });
+      k.mat('dark'); for (const x of [-1.85, 1.95]) k.loft('x', [[x - 0.09, 1.0, 1.44, 0.06, 0, 3], [x + 0.09, 1.0, 1.44, 0.06, 0, 3]], { sides: 18, from: -0.6 * Math.PI, to: 0.6 * Math.PI, caps: false });
+      if (k.mid) { k.mat('dark'); for (const s of [-1, 1]) for (const [x, w] of [[3.1, 0.5], [3.75, 0.22], [4.1, 0.22], [-3.3, 0.5], [-3.95, 0.22]]) g.box(x, 0.36, s * 1.385, w, 0.34, 0.03, {}); }
       // the girders the hips bolt to, and the ribs between them
       k.mat('frame'); for (const [x, hz] of [[3.2, 1.5], [-3.5, 1.7]]) { g.box(x, -0.95, 0, 1.25, 0.8, hz * 2 + 0.5, { soft: 0.2 }); for (const s of [-1, 1]) { g.box(x, -0.55, s * hz * 0.6, 0.9, 0.9, 0.24, { soft: 0.2 }); if (k.fine) k.bolts('x', [x + 0.63, -0.95, s * hz], 0.3, 8, 0.035); } }
       if (k.mid) for (let x = -2.6; x <= 2.4; x += 1.25) g.box(x, -0.85, 0, 0.14, 0.62, 2.1, { soft: 0.2 });
@@ -30,6 +34,7 @@ V.parts = {
       k.mat('shell'); k.loft('x', [[-0.7, 0.36, 0.42, 0.06, 0, 3], [-0.1, 0.6, 0.62, 0.1, 0, 3], [0.8, 0.58, 0.58, 0.1, 0, 3], [1.3, 0.3, 0.36, 0.06, 0, 3]], { sides: 14, from: -0.55 * Math.PI, to: 0.55 * Math.PI, caps: false });
       // the bill: two long blades with a gap between them
       k.mat('shell'); k.loft('x', [[1.15, 0.2, 0.24, 0.06, 0, 3], [2.0, 0.13, 0.15, 0.03, 0, 3], [3.0, 0.03, 0.04, -0.02, 0, 3]], { sides: 10 }); k.mat('dark'); k.loft('x', [[1.15, 0.12, 0.2, -0.22, 0, 3], [2.0, 0.08, 0.12, -0.17, 0, 3], [2.8, 0.02, 0.03, -0.12, 0, 3]], { sides: 8 });
+      k.mat('accent'); k.loft('x', [[0.2, 0.615, 0.625, 0.1, 0, 3], [0.5, 0.612, 0.62, 0.1, 0, 3]], { sides: 14, from: -0.55 * Math.PI, to: 0.55 * Math.PI, caps: false });
       // the great lens in a hood under the brow, two small eyes beside it
       k.mat('joint'); g.push(new THREE.Matrix4().makeRotationZ(-Math.PI / 2 - 0.24)); g.lathe(0.36, 0, [[0.44, -1.52], [0.5, -1.2], [0.46, -0.9]], { sides: k.n(14) }); g.pop();
     });

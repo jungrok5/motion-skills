@@ -62,6 +62,18 @@
       let fdt = 1 / 30;
       window.realm.filmStart = (fps = 30) => { fdt = 1 / fps; time = 0; P.place(sp.x, sp.z, sp.yaw || 0); P.startTour(); if (cfg.round) LR.wx.round = cfg.round; LR.wx.snap({ weather: (cfg.weather && cfg.weather.weather) || 'clear', tod: (cfg.weather && cfg.weather.tod) || 16.6 }); LR.wx.set({ auto: true }); LR.render.histValid = false; LR.render.film = true; };
       window.realm.filmFrame = () => { time += fdt; P.update(fdt, cam); LR.wx.update(fdt, time); LR.emit('frame', time, fdt, cam); LR.render.draw(cam, time, fdt); };
+      // a reel: shots whose camera and clock are functions of time (LR.start({ film: [{ name, dur, tod, weather, t, cam(u, LR, seconds) }] })),
+      // so any frame can be drawn in any order and a render can stop and go on (scripts/film.mjs).  cam returns { at: [x, z], up (metres
+      // over the ground; 1.68) | y, look: [x, y, z] | yaw°, pitch°, fov, dof, focus }
+      { const shots = cfg.film || [], pose = (i, k, fps) => { const sh = shots[i], sec = k / fps, c = sh.cam(Math.min(1, sec / sh.dur), LR, sec), x = c.at[0], z = c.at[1], y = c.y !== undefined ? c.y : P.groundAt(x, z).y + (c.up === undefined ? P.eye : c.up);
+            let yaw = c.yaw || 0, pitch = c.pitch || 0; if (c.look) { yaw = (Math.atan2(c.look[0] - x, -(c.look[2] - z)) * 180) / Math.PI; pitch = (Math.atan2(c.look[1] - y, Math.hypot(c.look[0] - x, c.look[2] - z)) * 180) / Math.PI; }
+            return { cam: [x, z, yaw, pitch, y], t: (sh.t || 0) + sec * (sh.rate === undefined ? 1 : sh.rate), fov: c.fov, dof: c.dof || 0, focus: c.focus || 0, state: { tod: sh.tod, weather: sh.weather } }; };
+        const aim = (q) => { place(q.cam[0], q.cam[1], q.cam[2], q.cam[3], q.cam[4]); cam.fov = q.fov || (LR.fit ? cam.fov : 58); if (q.fov) cam.updateProjectionMatrix(); };
+        window.realm.reel = { shots: shots.map((sh) => ({ name: sh.name, dur: sh.dur })),
+          // the first frame of a stretch: the hour, the weather and the meter settled, the picture's history started
+          warm(i, k, fps) { const q = pose(i, k, fps); LR.render.film = false; if (LR.fit) LR.fit(); shot({ cam: q.cam, t: q.t - 1 / 60 * 8, tod: q.state.tod, weather: q.state.weather, frames: 8, dof: q.dof, focus: q.focus }); if (q.fov) { cam.fov = q.fov; cam.updateProjectionMatrix(); } LR.render.film = true; },
+          frame(i, k, fps) { const q = pose(i, k, fps); aim(q); time = q.t; LR.wx.time = time; LR.wx.frame++; LR.wx.apply(); LR.render.lens.shot = q.dof; LR.render.lens.focus = q.focus; LR.emit('frame', time, 1 / fps, cam); LR.render.draw(cam, time, 1 / fps); return q; },
+          pose }; }
       P.setTour(cfg.tour);
       if (LR.RENDER) {
         place(sp.x, sp.z, sp.yaw || 0); if (cfg.weather) LR.wx.snap({ weather: cfg.weather.weather, tod: cfg.weather.tod });      // a still starts in the realm's own hour and weather

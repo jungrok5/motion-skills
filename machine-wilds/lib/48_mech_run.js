@@ -21,12 +21,13 @@
       u.lampDefs = M.geometry(u.kind, 0).lamps; u.aware = { w: 0, yaw: 0, pitch: 0 }; u.solids = kin.limbs.map(() => { const s = { x: 0, z: 0, r: 0, mech: true }; W.solids.push(s); return s; }); });
     LR.on('frame', M.update, 20);
   };
-  const frustum = new T.Frustum(), pm = new T.Matrix4(), sph = new T.Sphere(); let lastShake = [0, 0, 0];
+  const frustum = new T.Frustum(), pm = new T.Matrix4(), sph = new T.Sphere(); let lastShake = [0, 0, 0], shaken = [NaN, NaN, NaN];
   M.impacts = []; M.lamps = [];
   M.update = (time, dt, cam) => {
     if (!M.boneTex) return; const data = M.boneData, R = LR.render, lamps = (M.lamps = []), imp = (M.impacts = []), q = LR.gpu.tier.name === 'low' ? 0.6 : LR.gpu.tier.name === 'medium' ? 0.8 : 1, live = !LR.RENDER || LR.q('aware') === '1';
     cam.updateMatrixWorld(); pm.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); frustum.setFromProjectionMatrix(pm); let tris = 0;
-    cam.position.x -= lastShake[0]; cam.position.y -= lastShake[1]; cam.position.z -= lastShake[2];
+    // (the shake of the last frame is taken off only if nobody has placed the eye since: the walker and a film place it every frame)
+    if (cam.position.x === shaken[0] && cam.position.y === shaken[1] && cam.position.z === shaken[2]) { cam.position.x -= lastShake[0]; cam.position.y -= lastShake[1]; cam.position.z -= lastShake[2]; }
     for (const u of M.units) {
       const K = u.K, kin = u.kin, r = M.poseAt(u, time), Wd = r.W, c = r.cmd, B = Wd.body; u.pose = r;
       const o0 = u.row * MAXB * 12; for (let i = 0; i < kin.nb; i++) skin(data, o0 + i * 12, Wd[kin.bones[i][0]], K.rest[i]);
@@ -47,7 +48,7 @@
     M.boneTex.needsUpdate = true; R.lamps = lamps; R.info.mechTris = tris; R.info.mechs = M.units.filter((u) => u.lod >= 0).length;
     // the ground carries every footfall to the eye: a short ring, weaker with distance
     let sx = 0, sy = 0; for (const p of imp) { if (p.age > 2.6) continue; const d = Math.hypot(p.x - cam.position.x, p.z - cam.position.z), amp = ((0.0042 * Math.sqrt(p.tonnes)) / (1 + d / 14)) * Math.exp(-p.age * 2.6) * LR.sm(0, 0.06, p.age); sy += amp * Math.sin(p.age * 31 + p.k); sx += amp * 0.5 * Math.sin(p.age * 24 + p.k * 2.1); }
-    lastShake = LR.off.has('shake') ? [0, 0, 0] : [sx, sy, sx * 0.6]; cam.position.x += lastShake[0]; cam.position.y += lastShake[1]; cam.position.z += lastShake[2]; M.shake = Math.hypot(sx, sy);
+    lastShake = LR.off.has('shake') ? [0, 0, 0] : [sx, sy, sx * 0.6]; cam.position.x += lastShake[0]; cam.position.y += lastShake[1]; cam.position.z += lastShake[2]; shaken = [cam.position.x, cam.position.y, cam.position.z]; M.shake = Math.hypot(sx, sy);
     // a move with a voice: when its time comes round, the machine calls
     if (!LR.RENDER) for (const u of M.units) { const c = u.pose.cmd, sd = c.move && c.move.sound; if (sd) { if (u._mt !== undefined && u._mt < sd[0] && c.mt >= sd[0]) LR.emit('mechcall', { unit: u, at: (u.pose.W.head || u.pose.W.body).p, f: sd[1], len: sd[2], gain: sd[3] || 1 }); u._mt = c.mt; } else u._mt = undefined; }
     // new footfalls since the last frame: for dust and sound (the live page; a still shows what the ages say)
