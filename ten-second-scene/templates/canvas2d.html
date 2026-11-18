@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__TITLE__</title>
+<!-- ten-second-scene · Canvas 2D. ONE file: the kit is inlined below by new-scene.mjs (refresh with --refresh).
+     Your scene is the last <script id="scene-code">. No image files, no network, no Math.random / Date: pure function of t. -->
+<script data-kit="kit.js">/*@kit*/</script>
+<script data-kit="brush.js">/*@kit*/</script>
+<script data-kit="body.js">/*@kit*/</script>
+</head><body>
+<script id="scene-code">
+// This skeleton shows the contract, not the look: replace every layer with what BRIEF.md designs.
+const { scene, camera, rng, ramp, css, mix, ease, clamp, lerp, Brush, Body, grain } = TSS;
+const W = 1080, H = 1920;
+let cam, layers = {}, cast = [];
+
+function camAt(t) {                      // a slow push-in: the camera is a function of t too
+  const k = ease.inOut(t / 10, 1.6);
+  return camera({ pos: [0, 1.6, lerp(9, 8, k)], target: [0, 1.4, 0], fov: 46, W, H });
+}
+
+scene({
+  title: '__TITLE__', W, H, duration: 10, fps: 30, renderer: 'canvas2d',
+  setup() {
+    // static layers are painted ONCE here (deterministic) and reused by every frame
+    const sky = document.createElement('canvas'); sky.width = W; sky.height = H;
+    const g = sky.getContext('2d');
+    const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#1b2440'); gr.addColorStop(.6, '#6d5a78'); gr.addColorStop(1, '#d99a70');
+    g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    Brush.field(g, { x: 0, y: 0, w: W, h: H * .7, count: 2500, size: [6, 22], aspect: [3, 6], seed: 3,
+      colorAt: (x, y, r) => mix(ramp([[0, '#1b2440'], [.6, '#6d5a78'], [1, '#d99a70']], y / H + r.normal(0, .02)), '#ffffff', r() * .05),
+      angleAt: (x, y) => .1 * Math.sin(y * .01), light: [-.6, -.8], impasto: .25 });
+    layers.sky = sky;
+    const walker = Body.make({ id: 'walker', seed: 4, height: 1.72, coat: true, colors: { coat: '#3b4a5a' } });
+    cast = [walker];
+    layers.actor = Body.actor(walker, { root: t => ({ x: lerp(-3.5, 3.5, ease.inOut(clamp((t - .5) / 9), 1.4)), z: 0, yaw: Math.PI / 2 }), t1: 10 });
+  },
+  frame(t, { ctx }) {
+    cam = camAt(t);
+    ctx.drawImage(layers.sky, 0, 0);
+    const p0 = cam.project([0, 0, 0]);
+    ctx.fillStyle = '#2a2730'; ctx.fillRect(0, p0.y, W, H - p0.y);
+    Body.draw2d(ctx, layers.actor.pose(t), cam, { light: [-.5, .6, .5], ambient: .5 });
+    grain(ctx, W, H, t, .05);
+  },
+  probe(t) { return { figures: [layers.actor.probe(t, camAt(t))] }; },     // check.mjs / audit.mjs read this
+  info() { return { strokes: 2500, figures: 1 }; },
+  cast() { return cast; },                                                  // ?sheet=cast
+});
+</script></body></html>

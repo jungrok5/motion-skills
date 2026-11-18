@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__TITLE__</title>
+<!-- ten-second-scene · WebGL2 strokes. ONE file: the kit is inlined below by new-scene.mjs (refresh with --refresh).
+     Your scene is the last <script id="scene-code">. No image files, no network, no Math.random / Date: pure function of t. -->
+<script data-kit="kit.js">/*@kit*/</script>
+<script data-kit="strokes-gl.js">/*@kit*/</script>
+</head><body>
+<script id="scene-code">
+// This skeleton shows the contract, not the look: replace the plan with what BRIEF.md designs.
+const { scene, rng, ramp, mix, Strokes, fullscreen } = TSS;
+const W = 1080, H = 1920;
+let strokes, ground, N = 0;
+
+// motion(): per-stroke wind sway; anim = [kind, phase, amp, stiffness]
+const MOTION = `vec4 motion(vec2 p, float ang, float len, vec4 a, float t){
+  float wave = sin(t * 1.3 - p.x * 0.004 + a.y * 6.283) * a.z;
+  return vec4(wave * 4.0, 0.0, wave * 0.08, wave * 0.3);
+}`;
+
+scene({
+  title: '__TITLE__', W, H, duration: 10, fps: 30, renderer: 'webgl',
+  setup({ gl }) {
+    ground = fullscreen(gl, `vec4 shade(vec2 px, vec2 res, float t){ float y = px.y / res.y; return vec4(mix(vec3(.16,.2,.35), vec3(.85,.6,.4), y), 1.0); }`, W, H);
+    strokes = Strokes(gl, { W, H, motion: MOTION });
+    const r = rng(11), list = [];
+    for (let i = 0; i < 20000; i++) {
+      const x = r() * W, y = r() * H, s = 6 + 18 * r() ** 2;
+      const c = mix(ramp([[0, '#29335c'], [.55, '#8a6a8c'], [1, '#e2a36f']], y / H + r.normal(0, .03)), '#fff', r() * .06);
+      list.push({ x, y, angle: r.normal(0, .25), len: s * (3 + 3 * r()), width: s, bend: r.range(-.5, .5), color: c, seed: r(), anim: [0, r(), y > H * .6 ? 1 : .1, 0] });
+    }
+    strokes.set(list); N = list.length;
+  },
+  frame(t, { gl }) {
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    ground({ time: t });
+    strokes.draw({ time: t, light: [-.5, -.6, .8] });
+  },
+  info() { return { strokes: N }; },
+});
+</script></body></html>
