@@ -7,9 +7,9 @@
   const hold = (sec, k = 1) => [Math.sin(sec * 0.7) * 0.05 * k + Math.sin(sec * 1.9 + 1) * 0.02 * k, Math.sin(sec * 0.9 + 2) * 0.03 * k + Math.sin(sec * 2.3) * 0.012 * k];
   V.film = [
     // the relic passes the way in: lit windows over the wood, legs between the trunks, the ground carrying each step
-    { name: 'relic', dur: 5.5, tod: 20.4, weather: 'mist', t: 971, cam: (u, LR, s) => { const b = at('마루', 971 + s).W.body.p, h = hold(s); return { at: [-150 - 2.2 * ease(u) + h[0], 120 + 1.4 * ease(u)], up: 1.66 + h[1], look: [b[0], b[1] - 14, b[2]], fov: 56 }; } },
+    { name: 'relic', dur: 5.5, tod: 20.4, weather: 'mist', t: 971, cam: (u, LR, s) => { const b = at('마루', 971 + s).W.body.p, h = hold(s); return { at: [-150 - 2.2 * ease(u) + h[0], 120 + 1.4 * ease(u)], up: 1.66 + h[1], look: [b[0], b[1] - 7, b[2]], fov: 56 }; } },
     // out on the viaduct: a crane comes through the gap and slows
-    { name: 'approach', dur: 5.5, tod: 20.4, weather: 'mist', t: 141.5, cam: (u, LR, s) => { const b = at('두루미 1', 141.5 + s).W.body.p, h = hold(s); return { at: [-22.6 + h[0], 53 - 7.4 * ease(u)], up: 1.66 + h[1], look: [b[0] + 3, b[1] + 2.5, b[2]], fov: 58 }; } },
+    { name: 'approach', dur: 5.5, tod: 20.4, weather: 'mist', t: 141.5, cam: (u, LR, s) => { const b = at('두루미 1', 141.5 + s).W.body.p, h = hold(s); return { at: [-22.6 + h[0], 53 - 7.4 * ease(u)], up: 1.66 + h[1], look: [b[0] + 3, b[1] + 5.5, b[2]], fov: 58 }; } },
     // it stands, lifts its head over the mist and looks: the search light comes round across the eye
     { name: 'survey', dur: 6.5, tod: 20.4, weather: 'mist', t: 155.2, cam: (u, LR, s) => { const r = at('두루미 1', 155.2 + s).W, hd = r.head.p, b = r.body.p, h = hold(s, 1.4); return { at: [-23.2 + h[0], 44.4], up: 1.62 + h[1], look: [mix(b[0], hd[0], 0.72), mix(b[1], hd[1], 0.72), mix(b[2], hd[2], 0.72)], fov: 54 }; } },
     // the kites come down out of the mist over the viaduct, five beams combing the deck, and bank away west over the one that fell

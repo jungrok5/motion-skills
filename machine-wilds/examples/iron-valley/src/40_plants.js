@@ -9,7 +9,7 @@ V.plants = () => {
   const avoid = (x, z) => wet(x, z) || paved(x, z) || way(x, z) < 2.6 || !clear(x, z, 1.8) || onDeck(x, z) || L.coverAt('dirt', x, z) > 0.45;
   // heroes: the pines of the lookout, a great spruce over the hall, birches at the tarn
   F.plant('pine', V.lookout.x + 7, V.lookout.z + 8, { scale: 1.35, hero: true, yaw: 1.1 }); F.plant('pine', V.lookout.x - 9, V.lookout.z + 3, { scale: 1.1, hero: true, yaw: 4.0 }); F.plant('spruce', V.hall.x - 19, V.hall.z + 6, { scale: 1.6, hero: true });
-  F.plant('birch', V.tarn.x - 30, V.tarn.z - 10, { scale: 1.1 }); F.plant('birch', V.tarn.x - 33, V.tarn.z - 6, { scale: 0.9 }); F.plant('birch', V.tarn.x + 6, V.tarn.z + 31, { scale: 1.0 });
+  F.plant('birch', V.tarn.x - 30, V.tarn.z - 10, { scale: 1.1 }); F.plant('birch', V.tarn.x - 33, V.tarn.z - 6, { scale: 0.9 }); F.plant('birch', V.tarn.x - 16, V.tarn.z + 24, { scale: 1.0 });      // (clear of the cranes' way, which rounds the bog to the south)
   // the wood
   F.scatter({ species: [['spruce', 5], ['pine', 2.6], ['birch', 0.7]], area: [-316, -316, 316, 316], spacing: 6.2, seed: 'wood', density: (x, z) => LR.sm(0.22, 0.75, V.woods(x, z)) * (0.5 + 0.45 * LR.sm(0.34, 0.66, LR.fbm(x * 0.04 + 4, z * 0.04 + 9, 2))), avoid, scale: [0.95, 1.6] });
   // light-loving trees where the canopy is open: by the brook, round the tarn, beside the ways

@@ -44,7 +44,7 @@ V.parts = {
     for (const e of k.S.extras) k.bone(e.name, (g) => { k.mat('dark'); g.tube([[0, 0, 0], [0, e.len * 0.5, 0], [0, e.len, 0]], e.name === 'mast' ? [0.07, 0.045, 0.02] : [0.045, 0.03, 0.012], { sides: k.n(6), caps: true }); });
     k.lamp('mast', { at: [0, 5.15, 0], dir: [0, 1, 0], color: [1, 0.18, 0.08], power: 0.7, range: 10, lens: 0.07, glow: 0.9 });
   },
-  // 솔개: a keel no longer than a car, wings of two parts with slats for feathers, a fan for a tail, an eye under a hooked brow.
+  // 솔개: a keel no longer than a car, wings of two parts with slats for feathers, a fan for a tail (the blades weathered plate, only the leading one of each wing and the back still pale), an eye under a hooked brow.
   // (a wing bone: X the leading edge's way (forward), Y out along the wing, Z up on the left wing and down on the right)
   kite(k) {
     k.bone('body', (g) => {
@@ -64,10 +64,10 @@ V.parts = {
       k.bone(n2, (g) => { k.mat('dark'); g.tube([[0.14, 0, 0], [0.02, 2.2, 0]], [0.05, 0.022], { sides: k.n(7), caps: true });
         // five slats for primaries, fanned from the wrist, each its own blade
         const N = k.lod === 2 ? 3 : 5; for (let i = 0; i < N; i++) { const f = i / (N - 1), a = 0.1 + f * 1.15, len = 2.35 - f * 0.75, y0 = 0.1 + (1 - f) * 0.5, c = Math.cos(a), sn = Math.sin(a), ax = [-sn, c], px = [c, sn], w = 0.2;
-          const P = (al, ac) => [0.08 + ax[0] * al + px[0] * ac, y0 + ax[1] * al + px[1] * ac, up * (0.02 - 0.012 * i)]; g.mat(LR.mat.L ? 'ceramic' : 'ceramic', { tint: i % 2 ? '#c9cdca' : '#e2e4e0' }); g.poly([P(0, w), P(len * 0.85, w * 0.8), P(len, 0), P(len * 0.85, -w * 0.7), P(0, -w)], { hint: [0, 0, up], two: true }); } });
+          const P = (al, ac) => [0.08 + ax[0] * al + px[0] * ac, y0 + ax[1] * al + px[1] * ac, up * (0.02 - 0.012 * i)]; if (i === 0) g.mat('ceramic', { tint: '#dcdedb' }); else g.mat(i % 2 ? 'rustplate' : 'paintmetal', { tint: i % 2 ? '#b3a797' : '#77847f' });      /* the leading blade is still pale; the rest are plate that has weathered */ g.poly([P(0, w), P(len * 0.85, w * 0.8), P(len, 0), P(len * 0.85, -w * 0.7), P(0, -w)], { hint: [0, 0, up], two: true }); } });
     }
     k.bone('tail', (g) => { k.mat('joint'); g.tube([[0, 0, 0], [0, 0.3, 0]], 0.1, { sides: 8, caps: true }); const N = k.lod === 2 ? 3 : 5; for (let i = 0; i < N; i++) { const a = (i / (N - 1) - 0.5) * 1.0, c = Math.cos(a), sn = Math.sin(a), len = 1.5 - Math.abs(a) * 0.4;
-        g.mat('ceramic', { tint: i % 2 ? '#c9cdca' : '#e2e4e0' }); g.poly([[sn * 0.2 - c * 0.13, 0.2 * c + sn * 0.13 * 0 + 0.1, 0.01 * i], [sn * len - c * 0.16, c * len + 0.1, 0.01 * i], [sn * len + c * 0.16, c * len + 0.1, 0.01 * i], [sn * 0.2 + c * 0.13, 0.2 * c + 0.1, 0.01 * i]], { two: true }); } });
+        g.mat(i % 2 ? 'rustplate' : 'paintmetal', { tint: i % 2 ? '#b3a797' : '#77847f' }); g.poly([[sn * 0.2 - c * 0.13, 0.2 * c + sn * 0.13 * 0 + 0.1, 0.01 * i], [sn * len - c * 0.16, c * len + 0.1, 0.01 * i], [sn * len + c * 0.16, c * len + 0.1, 0.01 * i], [sn * 0.2 + c * 0.13, 0.2 * c + 0.1, 0.01 * i]], { two: true }); } });
     k.bone('streamer', (g) => { k.mat('accent'); g.tube([[0, 0, 0], [0, 0.9, 0], [0, 1.8, 0]], [0.03, 0.02, 0.008], { sides: 5 }); });
     k.bone('neck_01', (g) => { k.mat('dark'); g.tube([[0, 0, 0], [0, 0.5, 0]], [0.14, 0.11], { sides: k.n(8), caps: true }); });
     k.bone('head', (g) => { k.mat('dark'); k.loft('x', [[-0.2, 0.14, 0.16, 0, 0, 3], [0.2, 0.2, 0.2, 0, 0, 3], [0.55, 0.13, 0.12, -0.03, 0, 3]], { sides: 10 }); k.mat('shell'); k.loft('x', [[-0.18, 0.17, 0.2, 0.03, 0, 3], [0.25, 0.23, 0.23, 0.04, 0, 3], [0.6, 0.1, 0.1, 0.02, 0, 3]], { sides: 10, from: -0.55 * Math.PI, to: 0.55 * Math.PI, caps: false });

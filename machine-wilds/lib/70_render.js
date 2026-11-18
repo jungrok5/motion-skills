@@ -263,7 +263,7 @@ void main(){
   if (far > 0.0 || vBiome.r + vBiome.g + vBiome.b > 0.003) {
     vec4 fz = texture(uNoise, xz * 0.0062), fz2 = texture(uNoise, xz * 0.031 + 0.2);
     float canopy = fz2.r * 0.6 + fz2.g * 0.4;
-    vec3 green = mix(vec3(0.020, 0.052, 0.014), vec3(0.055, 0.105, 0.022), canopy) * (0.75 + 0.5 * fz.g);
+    vec3 green = mix(vec3(0.008, 0.019, 0.009), vec3(0.022, 0.043, 0.015), canopy) * (0.75 + 0.5 * fz.g);      // a wood seen from across a valley is dark: its crowns shade each other (spruce, not meadow)
     vec3 autumn = mix(vec3(0.16, 0.085, 0.022), vec3(0.20, 0.14, 0.03), fz.b), bare = vec3(0.075, 0.062, 0.050) * (0.8 + 0.4 * canopy);
     vec3 fc = mix(green, autumn, smoothstep(0.2, 0.55, uWx.w + (fz.r - 0.5) * 0.3) * 0.85); fc = mix(fc, mix(bare, green * 0.8, step(0.72, fz.a)), smoothstep(0.55, 0.95, uWx.w));
     float fw = vBiome.r;

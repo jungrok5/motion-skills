@@ -17,7 +17,7 @@
     winter:{ cloud: 0.30, dark: 0.0, rain: 0, snowfall: 0, season: 1, wind: 0.2,  fog: 0.0026, fogH: 0.040, turb: 1.2 },
     autumn:{ cloud: 0.42, dark: 0.0, rain: 0, snowfall: 0, season: 0.45, wind: 0.34, fog: 0.0032, fogH: 0.042, turb: 1.4 },
     // mist: low cloud lying in the valleys — the air itself is what you see; lamps cut cones in it and far things are shapes
-    mist:  { cloud: 0.8, dark: 0.3, rain: 0, snowfall: 0, season: 0, wind: 0.1, fog: 0.0125, fogH: 0.034, turb: 1.8, glow: 1 },
+    mist:  { cloud: 1.0, dark: 0.3, rain: 0, snowfall: 0, season: 0, wind: 0.1, fog: 0.0125, fogH: 0.034, turb: 1.8, glow: 1 },
   };
   W.cur = Object.assign({}, W.looks.clear);
   W.set = (o) => {
