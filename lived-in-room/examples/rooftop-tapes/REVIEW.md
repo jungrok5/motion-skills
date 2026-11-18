@@ -84,3 +84,29 @@ bookkeeping of who is here now pass.
 - **Done when:** `audit.py` clean and `check.py` passing with 407 things. Both hold.
 - **Why the rounds stop here:** what round 2 left undone is detail the walk does not find. A third review would be
   the next step for a longer film; it was not run.
+
+## Retro — what the next room should know
+
+- **Settle the sun before the plan.** The first design put a dawn patch on the tape wall. The hour was before sunrise,
+  the side was wrong, and the rule of the room forbade it. Working out the sun's bearing and height for the date and
+  both hours (RESEARCH `sun`) turned the building to face west-north-west and moved the second hour to 16:40; every
+  zone was laid out again. It belongs in the research, before the first thing is placed.
+- **Say who holds the phone at each hour before writing the inventory.** It decided what is not in the room (her
+  sneakers, bag and recorder at 16:40; her terrace slippers at 02:14; no phone on the table at all) and what is in two
+  places (the headphones). It also answered "everything running and nobody here".
+- **The audit is for what cannot be seen; the reviewer is for what cannot be measured.** Round 0: about eighty real
+  faults in a room that looked finished in its dark stills. Round 2: ten more, all introduced by that round's own
+  moves. The reviewer found none of those; it found washing drying beside the tapes, a heater aimed at them, a bag
+  hung over wet cloth, a tape playing to nobody. Scale passed at the first review because no size was guessed.
+- **Run the audit after every batch of moves, before any picture.** Each review round moved thirty things and broke
+  ten.
+- **A fix can undo the rule it was made for.** Moving the heater away from the drawers pointed it at the rack. After
+  moving anything that throws light or air, check where it lands.
+- **Decide earlier:** furniture stands off the wall by what must pass behind it (the curtain, the leads); a tenant of
+  seven years needs storage as well as a hobby; a thing in two places is two objects.
+- **What the time went on:** on four CPU cores a film frame takes 13–18 s at 640 × 360, so both walks were rendered at
+  that size on every other frame (12 a second) — about 75 minutes. The work-light views cost a few seconds each and
+  were used for every decision. A render that stops resumes from its saved frames.
+- **Left undone, knowingly:** condensation that reads as water rather than specks; quilting on the coat; wallpaper
+  seams; tapes leaning in a half-full row (the library has no thing-leans-on-thing support); a coiled surplus of lead;
+  a third review round; a full-size, 24-a-second render of the film.
