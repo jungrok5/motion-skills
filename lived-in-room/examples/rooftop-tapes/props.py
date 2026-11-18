@@ -310,8 +310,9 @@ def view_outside(version, seed=8):
         d.rectangle([x, hz - bh, x + bw, hz + 4], fill=col)
         for wy in range(int(hz - bh + 6), int(hz - 2), 7):
             for wx in range(x + 4, x + bw - 4, 6):
-                if night and rnd.random() < 0.3:
-                    d.rectangle([wx, wy, wx + 2, wy + 3], fill=rnd.choice(['#ffd9a0', '#ffe9c8', '#cfe0ff', '#ffc878']))
+                if night and rnd.random() < 0.045:                # at 2 a.m. almost every window is dark
+                    s_ = rnd.choice((1, 1, 2))
+                    d.rectangle([wx, wy, wx + s_, wy + s_ + 1], fill=rnd.choice(['#ffd9a0', '#ffe9c8', '#cfe0ff', '#ffc878', '#9fb6d9']))
                 elif not night and rnd.random() < 0.7:
                     d.rectangle([wx, wy, wx + 2, wy + 3], fill='#77849a')
     # the slope of small houses: many small roofs, a few lit windows
@@ -321,22 +322,22 @@ def view_outside(version, seed=8):
         while x < W:
             bw, bh = rnd.randint(50, 130) + row * 10, rnd.randint(34, 78) + row * 8
             if night:
-                col = rnd.choice(['#0f131b', '#121720', '#0d1016', '#151a22'])
+                col = rnd.choice(['#090c12', '#0b0e15', '#080a0f', '#0c1017'])
             else:
                 col = rnd.choice(['#a39a8e', '#8f8a84', '#b0a595', '#9a9186', '#a8a09a'])
             d.rectangle([x, y0 - bh, x + bw, y0 + 60], fill=col)
-            roof = rnd.choice(['#1d3a2b', '#1a2f25', '#24303a']) if night else rnd.choice(['#5f8f6a', '#6f9a78', '#7d8a94', '#8c5a48'])
+            roof = rnd.choice(['#0b1410', '#0a120e', '#0d1116']) if night else rnd.choice(['#5f8f6a', '#6f9a78', '#7d8a94', '#8c5a48'])
             d.rectangle([x - 2, y0 - bh - 4, x + bw + 2, y0 - bh + 3], fill=roof)
             for _ in range(rnd.randint(0, 3)):
                 wx, wy = x + rnd.randint(6, max(7, bw - 18)), y0 - bh + rnd.randint(10, max(11, bh - 10))
-                if night and rnd.random() < 0.5:
-                    d.rectangle([wx, wy, wx + 9 + row, wy + 7 + row], fill=rnd.choice(['#ffcf8a', '#ffe2b0', '#fff0d0', '#bcd4ff']))
+                if night and rnd.random() < 0.07:
+                    d.rectangle([wx, wy, wx + 6 + row, wy + 5 + row], fill=rnd.choice(['#e9b66e', '#ffd9a0', '#c9b28a', '#8fa6c9']))
                 else:
                     d.rectangle([wx, wy, wx + 9 + row, wy + 7 + row], fill='#07090d' if night else '#4d5866')
             if rnd.random() < 0.3:                                    # a water tank
                 tw = 18 + row * 4
                 tx = x + rnd.randint(4, max(5, bw - tw - 4))
-                d.rounded_rectangle([tx, y0 - bh - 4 - tw, tx + tw, y0 - bh - 3], 4, fill='#2e2609' if night else '#e1b62e')
+                d.rounded_rectangle([tx, y0 - bh - 4 - tw, tx + tw, y0 - bh - 3], 4, fill='#141108' if night else '#e1b62e')
                 marks['tank'].append(((tx + tw / 2) / W, (y0 - bh - tw / 2) / H))
             if rnd.random() < 0.035 + (0.03 if row < 2 else 0):       # a steeple with a neon cross
                 cx = x + bw / 2
@@ -349,23 +350,30 @@ def view_outside(version, seed=8):
     # the nearest roofs, at our own height: a parapet line, green waterproofing, a big tank, a stair tower
     y0 = H * 0.86
     for x, bw, bh, tank in ((-40, 760, 150, True), (840, 620, 110, False), (1540, 900, 170, True), (2520, 560, 120, False), (3140, 520, 160, True)):
-        wall = '#151821' if night else '#b3a898'
+        wall = '#0b0d13' if night else '#b3a898'
         d.rectangle([x, y0 - bh, x + bw, H], fill=wall)
-        d.rectangle([x, y0 - bh - 16, x + bw, y0 - bh], fill='#20242e' if night else '#c6bcae')              # the parapet
-        d.rectangle([x + 14, y0 - bh - 4, x + bw - 14, y0 - bh], fill='#17382a' if night else '#5c9469')       # green deck showing over it
+        d.rectangle([x, y0 - bh - 16, x + bw, y0 - bh], fill='#10131a' if night else '#c6bcae')              # the parapet
+        d.rectangle([x + 14, y0 - bh - 4, x + bw - 14, y0 - bh], fill='#0a1610' if night else '#5c9469')       # green deck showing over it
         d.rectangle([x + bw * 0.62, y0 - bh - 150, x + bw * 0.62 + 170, y0 - bh - 16], fill='#12151c' if night else '#a79d8f')    # the stair tower
         d.rectangle([x + bw * 0.62 + 60, y0 - bh - 96, x + bw * 0.62 + 110, y0 - bh - 16], fill='#0b0d12' if night else '#5d5a55')
         if tank:
             tx = x + bw * 0.2
-            d.rounded_rectangle([tx, y0 - bh - 126, tx + 104, y0 - bh - 14], 14, fill='#3a300b' if night else '#e7bd33')
+            d.rounded_rectangle([tx, y0 - bh - 126, tx + 104, y0 - bh - 14], 14, fill='#17130a' if night else '#e7bd33')
             d.rounded_rectangle([tx + 28, y0 - bh - 138, tx + 76, y0 - bh - 122], 5, fill='#2c2408' if night else '#c9a326')
             for k in range(1, 5):
                 d.line([tx + 2, y0 - bh - 14 - k * 22, tx + 102, y0 - bh - 14 - k * 22], fill='#2c2408' if night else '#cfa82a', width=2)
         for k in range(rnd.randint(1, 3)):                            # windows of the top floor below the parapet
             wx = x + 50 + k * 190 + rnd.randint(0, 40)
-            lit_ = night and rnd.random() < 0.6
+            lit_ = night and rnd.random() < 0.12
             d.rectangle([wx, y0 - bh + 36, wx + 110, y0 - bh + 96], fill=('#ffd596' if rnd.random() < 0.7 else '#cfe0ff') if lit_ else ('#07090d' if night else '#56606c'))
             d.line([wx + 55, y0 - bh + 36, wx + 55, y0 - bh + 96], fill=wall, width=5)
+    if night:                                                         # street lamps strung along the lanes of the slope
+        for _ in range(9):
+            x0_, y_ = rnd.randint(0, W), hz + rnd.randint(14, 150)
+            n_, dx_, dy_ = rnd.randint(4, 9), rnd.randint(46, 90), rnd.uniform(-9, 9)
+            for k in range(n_):
+                x_, yy = x0_ + k * dx_ + rnd.randint(-8, 8), y_ + k * dy_ + rnd.randint(-3, 3)
+                d.ellipse([x_ - 2, yy - 2, x_ + 2, yy + 2], fill=rnd.choice(['#ffb45a', '#ffc27a', '#f0e6d0']))
     if night:                                                         # the glow that sits on a city
         g = Image.new('RGB', (W, H), (0, 0, 0))
         gd = ImageDraw.Draw(g)
@@ -571,6 +579,9 @@ def ac_unit(name='air conditioner'):
     p.box((0.754, 0.189, 0.308), at=(0, -0.0945, -0.154), mat=white, bevel=0.012)
     p.box((0.7, 0.012, 0.06), at=(0, -0.186, -0.15), rot=(-28, 0, 0), mat=white, bevel=0.003)         # the louver, closed for winter
     p.box((0.5, 0.004, 0.004), at=(0, -0.19, -0.02), mat=mat.plastic('#c9c8c2'), bevel=0)
+    p.box((0.71, 0.006, 0.016), at=(0, -0.1885, -0.146), mat=mat.plastic('#3a3c40', rough=0.5), bevel=0)        # the louvre slot
+    p.box((0.74, 0.003, 0.003), at=(0, -0.19, -0.06), mat=mat.plastic('#b9b8b2'), bevel=0)                    # the front panel's seam
+    p.box((0.05, 0.003, 0.014), at=(0.3, -0.19, -0.09), mat=mat.plastic('#2a2c30', rough=0.3), bevel=0)       # the display window
     return p.build()
 
 

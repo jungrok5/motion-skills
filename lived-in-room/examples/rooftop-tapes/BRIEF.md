@@ -22,13 +22,14 @@ change was the building's orientation and the second hour.
 - **The two hours, and who is holding the phone — she is, both times:**
   `night` — 02:14, mid-November, clear and cold. She stepped out onto the roof for a minute and comes back in. On:
   the desk lamp, the screen (tonight's tape playing into the computer), the two-bar heater, the lamp by the pillow,
-  every standby light, the circulator drying the washing. Her terrace slippers are on her feet.
-  `afternoon` — 16:40 the same day. She comes home from work. On: the rice cooker's keep-warm lamp and the power
-  strips. The sun is 6° up and 60° to the left of the window; its light lies on the east wall by the bed head. Her
+  every standby light, the circulator drying the washing. The headphones lie on the desk where she put them down,
+  plugged in; a label is half written. Her terrace slippers are on her feet.
+  `afternoon` — 16:40 the same day. She comes home from work. On: the rice cooker's keep-warm lamp, the power
+  strips, and the circulator, left running because the washing still hangs. The headphones are back on their peg. The sun is 6° up and 60° to the left of the window; its light lies on the east wall by the bed head. Her
   sneakers, her bag and the recorder in it are with her; the window is dry.
 - **The rule of the room:** *she keeps heat, damp and sun away from the tapes.* So the tape wall is the west wall —
   the one wall the sun never reaches — on battens, with a hygrometer and absorber tubs; the heater stands east of the
-  seat with its axis passing north of the rack; the washing dries on the door wall with the circulator between it and
+  seat and its beam ends in the knee-hole of the desk; the washing dries on the door wall with the circulator between it and
   the tapes, blowing toward the door; the bed takes the east wall, where the late sun lands.
 - **Reference:** none. No generated picture was used; the composition was decided on the plan view.
 
@@ -37,7 +38,7 @@ Questions the skill asks, and the answers used (all "assumed", the person being 
 2. Which building? — assumed: a Seoul rooftop room, because its skeleton differs from the source's in every part.
 3. What happens here, when? — assumed: tape transfer and labelling, 22:00–02:00; sleep; washing dried indoors.
 4. Which machines? — assumed: a portable field recorder, a hi-fi deck, a small mixer, a desk microphone, a mini PC; no makers.
-5. On the desk right now? — assumed: this week's three tapes, a bare cassette, masking tape, a cold mug.
+5. On the desk right now? — assumed: this week's three tapes, a bare cassette and its open case, masking tape, a pen, a cold mug.
 6. Given or made by someone? — assumed: the mug (mother), the radio (grandfather).
 7. Played with at twelve? — assumed: the five things under "nostalgia" in RESEARCH.md.
 8. Never allowed here? — assumed: heat, damp and sun near tapes — the rule above.
@@ -53,7 +54,7 @@ Questions the skill asks, and the answers used (all "assumed", the person being 
 | outer wall | 150 block + plaster both faces = 190 mm | shell |
 | orientation | the window faces 300° (west-north-west) | sun |
 | window | PVC single sliding, 1500 × 1200, sill 900, frame 120 deep flush outside (a plain 70 mm reveal inside), crescent 80, pull 280; insulating film on the lower 42 % of each pane for the winter | window |
-| door | steel, 900 × 2100 frame over a 100 mm kerb, 45 leaf, opens outward, hinges east, lever at 1,000, lock case, closer | door |
+| door | steel; the opening is 900 × 2,100 measured from the room's floor and includes a 100 mm kerb, so the leaf is 1,950 high and 150 mm of wall shows over the frame; 45 leaf, opens outward, hinges east, lever at 1,000, lock case, closer | door |
 | finishes | wood-print sheet floor; PVC skirting 60 × 9; PVC moulding 40 × 12; wallpaper walls and ceiling | finish |
 | power | switch at 1,200 on the door's latch side; sockets at 300 (N, W, E); a high socket for the air conditioner; board by the door | power |
 | heating / cooling | floor heating, controller beside the switch; wall split unit 754 × 308 × 189, 150 under the ceiling, one 65 mm sleeve sloping out behind it | boiler, ac |
@@ -61,26 +62,29 @@ Questions the skill asks, and the answers used (all "assumed", the person being 
 | outside | her own terrace: deck 150 below the room floor, parapet 1.1 m, a one-tonne tank | rooftop |
 | not here | no sprinkler, no guard rail, no sink: none is found in a single room opening onto its own roof | shell, window |
 
-## 3. Inventory — 405 things of 94 kinds
+## 3. Inventory — 407 things of 101 kinds, and the building's 11 parts
 `inventory.py` is the list; `python3 ../../scripts/sheet.py --inventory` prints it with what was built. In short:
 
 | zone | things | n |
 |---|---|---|
 | the building | floor, ceiling, 4 walls, skirting, moulding, window, door frame and leaf | 11 |
 | services | switch, controller, board, 4 sockets, ceiling light, air conditioner, pipe sleeve | 10 |
-| desk | desk, monitor, mini PC, keyboard, mouse, recorder, mixer, microphone, lamp, mug, bottle, pens, 3 flat tapes, a bare cassette, masking tape | 17 |
+| desk | desk, monitor, mini PC, keyboard, mouse, recorder, mixer, microphone, lamp, mug, bottle, pens, 3 flat tapes, a bare cassette and its open case, a pen, a half-written label, masking tape, the headphones put down | 21 |
 | under the desk | drawers, power strip, rug, stool, seat pad, bin, heater | 7 |
 | window | plant, 39 beads of water on the pane, curtain rail, curtain | 42 |
-| tape wall | rack on battens, **188 tapes** in five rows + 2 lying flat + the next 3 by the deck, hygrometer, sideboard, deck, radio, 5 childhood things, 16 books, 5 magazines, 2 cartons, 2 absorber tubs, headphones on a peg, the sound map on cork, 2 fixings | 231 |
+| tape wall | rack on battens, **188 tapes** in five rows + 2 lying flat + the next 3 by the deck, hygrometer, sideboard, deck, radio, 5 childhood things, 16 books, 5 magazines, 2 cartons, 2 absorber tubs, the headphones on their peg, the sound map on cork, 2 fixings | 232 |
 | north wall | clock, its three hands, 5 notes, a nail | 10 |
-| bed | mattress, duvet and its fold, pillow, mat controller, low table, pan, night lamp, a book, tissue roll, a pile of 5 books, burner | 17 |
+| bed | mattress, duvet, pillow, mat controller, low table, pan, chopsticks, night lamp, a book, tissue roll, a pile of 5 books, burner | 16 |
 | east wall | 2 posters, calendar, mirror, 2 nails | 6 |
-| clothes | clothes rail, a padded coat and 4 garments | 6 |
+| clothes | clothes rail, a padded coat and 8 garments, the tote on its end, a plastic drawer chest, a suitcase under the clothes | 13 |
 | washing | drying rack, 4 cloths, 4 socks, circulator and its blades, 6 water bottles under the rack | 17 |
-| door | fridge, rice cooker, kettle, second power strip, peg rail, tote, umbrella, mat, 2 sneakers, 2 terrace slippers, 2 house slippers, wash basket | 15 |
-| leads | 16: two strips to their sockets; lamp, monitor, PC, heater, night lamp, charger, fridge, cooker, circulator, deck, air conditioner; recorder → mixer, microphone → mixer, mixer → PC | 16 |
+| door | fridge, rice cooker, kettle, second power strip, umbrella, mat, 2 sneakers, 2 terrace slippers, 2 house slippers, wash basket, basin, detergent | 15 |
+| leads | 18: two strips to their sockets; lamp, monitor, PC, heater, night lamp, charger, fridge, cooker, circulator, deck, air conditioner, electric mat; recorder → mixer, microphone → mixer, mixer → PC, headphones → PC | 18 |
 
-By support: place 289 · stick 46 · fix 49 (11 of them the building) · hang 20 · lean 1 · suspend 0.
+The headphones are counted twice because they are in two places: on the desk at 02:14, on the peg at 16:40
+(`r.away` hides one of the two at each hour). The fingerprint of the model is the same at both hours.
+
+By support: place 296 · stick 47 · fix 50 (11 of them the building) · hang 24 · lean 1 · suspend 0.
 Every one is modelled in code (`method='model'`) or is a drawn picture on a sheet (`'image'`); nothing was generated or downloaded.
 
 **What makes them read as real** (modelled for the things the camera gets close to):
@@ -95,14 +99,14 @@ Every one is modelled in code (`method='model'`) or is a drawn picture on a shee
 ## 4. Placement by use
 | zone | what happens here | left off-square / ajar / half-used |
 |---|---|---|
-| desk | she sits, plays the day's tape into the computer, speaks the slate, writes the label | keyboard turned 4.5°; recorder turned to the left hand; mouse at −14°; mug a third full, handle outward; bottle half drunk; the three tapes a slipped pile; the lamp swung in over them |
+| desk | she sits, plays the day's tape into the computer, speaks the slate, writes the label | keyboard turned 4.5°; recorder turned to the left hand; mouse at −14°; mug a third full, handle outward; bottle half drunk; the three tapes a slipped pile with a half-written label on the top one; the case of the tape in the recorder lying open; a pen out of the cup; the headphones put down beside the keyboard |
 | under the desk | feet on the rug, heater on the shins | middle drawer 3 cm open; stool pushed back and turned 22°; seat pad askew on it |
-| window | the lights of the hill while she works; the curtain across when she sleeps | curtain bunched to the right; film on the lower panes only |
+| window | the lights of the hill while she works; the curtain across when she sleeps (the desk stands 140 mm off the wall to let it pass) | curtain bunched to the right; film on the lower panes only |
 | tape wall | filing while standing at the deck | the newest row half full; two tapes lying flat, unfiled; the next three stood by the deck; gaps; her grandfather's radio turned 7° to the room |
-| bed | supper from the pan, reading, sleep | duvet folded back on itself; pillow dented; a book face up; the charger's end lying where the phone was; a pile of books on the side she gets out |
-| clothes | dressing by the door | the padded coat nearest the door; hangers at different angles |
+| bed | supper from the pan, reading, sleep | duvet rolled back on itself; chopsticks put down in front of the pan; pillow dented; a book face up; the charger's end lying where the phone was; a pile of books on the side she gets out |
+| clothes | dressing by the door | the padded coat nearest the door; nine hangers crowded, each turned a few degrees; the bottom drawer of the chest 2 cm open; a suitcase of spare bedding under the clothes |
 | washing | drying overnight in the circulator's air, by the door | towels at different heights; socks where the towels leave room; six bottles set down under the rack |
-| door | shoes off, bag on its peg, wash things to carry across the terrace | sneakers kicked off; house slippers stepped out of, pointing two ways; the umbrella leaning in the corner since the last rain |
+| door | shoes off, wash things to carry across the terrace | sneakers kicked off; house slippers stepped out of, pointing two ways; the umbrella leaning in the corner since the last rain |
 
 ## 5. Film
 - **The outside:** her own terrace built for real — a green deck, a parapet whose top is just above the sill, a
@@ -114,19 +118,19 @@ Every one is modelled in code (`method='model'`) or is a drawn picture on a shee
   in the window's draught · the calendar by the open door · 5 beads of water running down the pane · the screen's
   transfer advancing once a second · desk lamp, heater glow and night lamp flickering by different amounts · the
   recorder's meters · six mixer LEDs following the tape · two flashing beacons · her torch at 9.2 s.
-  **Afternoon (8):** the second hand, the five notes, the curtain, the calendar.
+  **Afternoon (17):** the second hand, the five notes, the curtain, the calendar, the circulator's blades and the 8 cloths in its air.
 - **Light — night:** a dark room with five places picked out — the desk under its lamp, the screen, the heater's
-  orange on the rug, the pillow end, and the window. Lamps 2,400–2,700 K; the sky outside nearly black. Median 15–25
-  until the torch, 50–60 with it. **Afternoon:** nothing on; the sun through thin haze (0.03 per metre) lays two
-  strips on the east wall; the open door behind her lets in the terrace's cool light. Median 35–45.
+  orange under the desk, the pillow end, and the window. Lamps 2,400–2,700 K; the sky outside nearly black. Median 13–15
+  until the torch, 45–60 with it. **Afternoon:** nothing on; the sun through thin haze (0.03 per metre) lays two
+  strips on the east wall; the open door behind her lets in the terrace's cool light. Median 40–50.
 - **The walk — night (16 s):** in at the door looking at the desk and window (0–4 s), four steps in (4–8 s) turning
   toward the west wall, up to the tapes with the focus hunting once (12 s), then along the row. The torch — a wide soft
   flood with a hot middle — comes on at 9.2 s. **Afternoon (12 s):** in at the door looking at the window, forward, then
   round to the right, to the light on the wall by her pillow, the focus hunting once as it arrives. Turn cap 12° a
-  second in both (RESEARCH `handheld`); the fastest turns are 8.2 and 6.8.
+  second in both (RESEARCH `handheld`); the fastest turns are 8.2 and 7.6.
 
 ## 6. Review rounds
-`REVIEW.md` beside this file: round 0 (the audit), round 1 (24 findings), round 2.
+`REVIEW.md` beside this file: round 0 (the audit), round 1 (24 findings), round 2 (17).
 
 ## 7. Stills, scored
 At the end of `REVIEW.md`.

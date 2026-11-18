@@ -346,8 +346,9 @@ def mattress(w=1.0, d=2.0, h=0.07, color='#d8d2c2', name='mattress'):
     return p.build()
 
 
-def blanket(w=1.3, d=1.5, h=0.035, color='#6f7f95', stripe=None, folds=1.0, seed=0, name='blanket'):
-    """A blanket thrown over something flat: a slab with wandering folds (put it on a mattress with soft=…)."""
+def blanket(w=1.3, d=1.5, h=0.035, color='#6f7f95', stripe=None, folds=1.0, seed=0, name='blanket', roll=0.0):
+    """A blanket or duvet thrown over something flat: a slab with wandering folds (put it on a mattress with soft=…).
+    roll = height of the fat roll along its far (+Y) edge where it was thrown back on itself."""
     import random
     rnd = random.Random(f'{name}/{seed}')
     ph = [rnd.uniform(0, TAU) for _ in range(6)]
@@ -355,9 +356,10 @@ def blanket(w=1.3, d=1.5, h=0.035, color='#6f7f95', stripe=None, folds=1.0, seed
     def top(x, y):
         ex, ey = min(1.0, (w / 2 - abs(x)) / 0.04), min(1.0, (d / 2 - abs(y)) / 0.04)
         f = (math.sin(9 * x + 2.2 * y + ph[0]) * 0.5 + math.sin(4.3 * x - 6.1 * y + ph[1]) * 0.35 + math.sin(15 * x + ph[2]) * 0.15)
-        return max(0.004, (h + 0.012 * folds * f) * (max(0.0, ex) * max(0.0, ey)) ** 0.4)
+        ridge = roll * math.exp(-((y - (d / 2 - 0.13)) / 0.085) ** 2) * (0.85 + 0.15 * math.sin(7 * x + ph[3]))
+        return max(0.004, (h + ridge + 0.012 * folds * f) * (max(0.0, ex) * max(0.0, ey)) ** 0.4)
     p = Part(name)
-    p.slab(w, d, top, mat=mat.fabric(color, stripe=stripe, stripe_w=0.09), nx=24, ny=26)
+    p.slab(w, d, top, mat=mat.fabric(color, stripe=stripe, stripe_w=0.09), nx=24, ny=30)
     return p.build()
 
 
@@ -429,6 +431,14 @@ def garment(width=0.44, length=0.7, color='#3a4250', thick=0.03, sleeves=True, r
         tt = thick * (0.4 if s == 0 else 1.0)
         rings_.append([(-hw, -tt / 2, z), (hw, -tt / 2, z), (hw, tt / 2, z), (-hw, tt / 2, z)])
     p.skin(rings_, mat=cloth)
+    if sleeves:                                                      # sleeves hang at the sides, a little forward of the body
+        for sx in (-1, 1):
+            x0 = sx * sh * 0.98
+            rs = []
+            for i, (dx, z, rr) in enumerate(((0.0, -0.085, 0.034), (0.035, -0.22, 0.04), (0.05, -0.42, 0.036), (0.055, -min(length * 0.82, 0.62), 0.03))):
+                cx = x0 + sx * dx
+                rs.append([(cx - rr, -thick * 0.5, z), (cx + rr, -thick * 0.5, z), (cx + rr, thick * 0.5, z), (cx - rr, thick * 0.5, z)])
+            p.skin(rs, mat=cloth)
     return p.build()
 
 
@@ -618,20 +628,31 @@ def mouse(body=None, name='mouse'):
     return p.ground().build()
 
 
-def headphones(color='#141416', name='headphones'):
-    """Over-ear headphones for r.hang(): origin at the top of the band's inside (where a hook carries them)."""
+def headphones(color='#141416', name='headphones', flat=False):
+    """Over-ear headphones. For r.hang(): origin at the top of the band's inside (where a hook carries them).
+    flat=True: put down on a table instead — the band lying level, resting on the round of its two cups, origin under
+    the middle (r.put it); ob['lr_cup'] = the left cup's lowest point, where its lead leaves."""
     m = mat.plastic(color, rough=0.45)
     pad = mat.fabric('#1d1d20', weave=0.5)
     p = Part(name)
     R = 0.085
     band = [(R * math.sin(a), 0, -R + R * math.cos(a)) for a in [math.radians(x) for x in range(-100, 101, 20)]]
     p.tube(band, 0.006, mat=m, seg=8)
+    cx = R * math.sin(math.radians(100)) - 0.004
+    cz = -R + R * math.cos(math.radians(100)) - 0.03
     for sx in (-1, 1):
-        x = sx * R * math.sin(math.radians(100))
-        z = -R + R * math.cos(math.radians(100))
-        p.cyl(0.042, 0.03, at=(x - sx * 0.004, 0, z - 0.03), rot=(0, sx * 90, 0), mat=m, seg=20, bevel=0.005)
-        p.cyl(0.04, 0.016, at=(x - sx * 0.032, 0, z - 0.03), rot=(0, sx * 90, 0), mat=pad, seg=20, bevel=0.006)
+        p.cyl(0.042, 0.03, at=(sx * cx, 0, cz), rot=(0, sx * 90, 0), mat=m, seg=20, bevel=0.005)
+        p.cyl(0.04, 0.016, at=(sx * (cx - 0.028), 0, cz), rot=(0, sx * 90, 0), mat=pad, seg=20, bevel=0.006)
     lo, hi = p.bounds()
+    if flat:
+        p.turn((90, 0, 0))
+        lo, hi = p.bounds()
+        p.ground()
+        ob = p.build()
+        cy = -cz - (lo[1] + hi[1]) / 2
+        ob['lr_com'] = (0.0, cy, 0.042)        # the weight is in the cups, and the cups are what it lies on
+        ob['lr_cup'] = (-cx, cy, 0.0)
+        return ob
     p.shift((0, 0, -0.006))                     # origin: the inside top of the band, where a peg carries it
     ob = p.build()
     ob['lr_depth'] = float(hi[1])             # how far its cups reach toward the wall: hang it at least this far out

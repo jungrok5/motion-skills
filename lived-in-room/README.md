@@ -21,7 +21,7 @@ A new room for your own topic: `python3 lived-in-room/scripts/new_room.py my-roo
 `BRIEF.md` and `RESEARCH.md` first (`check.py` fails until you do).
 
 Requirements: Python 3.13 with `bpy` 5.x (or Blender 5.x itself: `blender -b -P script.py -- args`), numpy, Pillow,
-ffmpeg. No GPU needed — on 4 CPU cores the example room (405 things) builds in 4 s, is audited in 6 s, and renders
+ffmpeg. No GPU needed — on 4 CPU cores the example room (407 things) builds in 4 s, is audited in 6 s, and renders
 a 960 × 540 preview still in 30–40 s; a GPU Blender can see is used automatically. Nothing is downloaded at
 build or render time.
 

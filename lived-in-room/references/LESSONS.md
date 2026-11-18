@@ -47,6 +47,13 @@ An audit that cries wolf gets ignored, so each false alarm was traced to its cau
 - After these, `audit.py --break` (lift a thing 180 mm, sink one 10 mm, expect both reported) was added so the audit
   proves it can still see.
 
+- **Chopsticks across a pan "would tip by 88 mm"** → the underside of a thing is sampled every 30 mm, and a pan's rim
+  is 2 mm wide: one rim was found and the other missed. The audit cannot tell a thing bridging two thin edges from one
+  balanced on a point. Known limit: rest such a thing on a face (they now lie on the table by the pan), or give the
+  edge some width. Not fixed by loosening the tolerance.
+- **Headphones laid flat "would tip"** → they lie on the round of their cups and the band hovers: the weight is in
+  the cups, not at the middle of the box round them → `kit.headphones(flat=True)` sets `lr_com` there.
+
 ## What the second pair of eyes caught (and the audit never could)
 
 The audit passed the example with every thing held; the first review then returned 24 findings
@@ -79,6 +86,21 @@ The audit passed the example with every thing held; the first review then return
 - **The torch was a theatre spot** → a hard-edged cone → a wide cone with a soft edge (`blend=0.9`) and a hot middle.
 - **Not every finding is taken.** Wallpaper seams, a fitted sheet, leaning tapes, better socks: declined, with the
   reason written down (cost against what the film shows; `sheet.py --screen` says what the camera never finds).
+
+- **The second round found the fixes that only half worked.** The heater, moved for the first review, now faced the
+  tape wall and washed it orange on film: a light's beam is part of where a thing stands — after moving a lamp or a
+  heater, look at where its cone ends against the rule of the room, in a still, before the next review.
+- **A tape playing and nobody able to hear it** → headphones on a peg 1.5 m from the seat, no pen out, no label half
+  written. A machine that runs wants the trace of the person running it. And a thing that is in one place at night and
+  another by day is two objects, each `r.away` at the other hour — the inventory lists both.
+- **A night city with every window lit** → at 2 a.m. about one window in twenty is; what reads as a city then is
+  street lamps strung along the lanes, a few signs, the red lamps on what is tall. Roofs and tanks are near black.
+- **A desk flush to the wall under a curtained window** → the curtain cannot be drawn and the leads have nowhere to
+  drop. Stand furniture off the wall by whatever has to pass behind it.
+- **A reviewer misread a number** → "a 2.1 m door on a 0.1 m kerb" was a 2.1 m opening that includes the kerb. Say in
+  the brief what each dimension is measured from; decline the finding with the numbers, do not rebuild the door.
+- **"Too few possessions for seven years"** → a room is also storage: where folded clothes go, where spare bedding
+  goes, what stands by the door for washing. Under the hanging clothes is the place a small room keeps them.
 
 ## Modelling
 
@@ -117,7 +139,7 @@ The audit passed the example with every thing held; the first review then return
 - **The numbers in the brief drifted from the room** → counts change every round → the brief quotes `sheet.py
   --inventory` and `check.py`, run last.
 
-## Time (4 CPU cores, no GPU; the example room, 405 things)
+## Time (4 CPU cores, no GPU; the example room, 407 things)
 
 - Building the room: about 4 s. The audit of the whole room: about 6 s. `check.py --fast`: about 25 s.
 - A preview still (960 × 540, 24 samples): 28–35 s at night, 36–40 s in daylight with haze. A film frame at 640 × 360: 13–16 s.

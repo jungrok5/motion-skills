@@ -76,7 +76,8 @@ Every recipe has wandering roughness (`wear`) and takes `dirt=` from the room's 
 
 `paint` · `wall` (paper / emulsion with a weave) · `wood` · `planks` (boards or printed sheet flooring) · `metal` ·
 `plastic` · `rubber` · `ceramic` (glaze, optional speckle) · `fabric` (weave, sheen, optional stripes) · `paper` ·
-`glass(window=True)` for panes · `film` (a translucent sheet: winter film, tracing paper) · `liquid` ·
+`glass(window=True)` for panes · `film` (a translucent sheet that glows when lit from behind: winter film, tracing
+paper) · `liquid` ·
 `emit(color, strength, off=)` · `picture(name, image, emission=, coat=, screen=)` · `volume`. `mat.emit_socket(m)` is the socket to flicker or blink. `mat.DIRT` holds the room's dirt colour and scale.
 
 ## Pictures — `lr.draw` (Pillow)
@@ -94,10 +95,10 @@ Each returns one object, not yet in the room. Sizes are arguments: look the real
 | furniture | `shelf_unit`, `wall_shelf`, `desk`, `drawers(ajar=…)`, `low_table`, `stool` |
 | books and paper | `book(title=…, lying=…)`, `shelve(r, unit, level, books)`, `paper`, `poster`, `note`, `frame`, `mirror`, `carton` |
 | vessels | `mug(fill=…)`, `bottle(fill=…, label=…)`, `can`, `pot`, `cup_of_pens`, `bin`, `plant` |
-| soft | `cushion`, `mattress`, `blanket`, `towel`, `curtain` (hung from a rail), `clothes_rail` + `garment` (on hangers) |
+| soft | `cushion`, `mattress`, `blanket(roll=…)` (a duvet thrown back: fat where it rolls over on itself), `towel`, `curtain` (hung from a rail), `clothes_rail` + `garment(sleeves=…)` (on hangers) |
 | lights | `desk_lamp`, `floor_lamp`, `pendant`, `ceiling_panel` (each with `ob['lr_bulb']` where it has a bulb) |
 | electrics | `outlet`, `switch`, `power_strip`, `cable(points)`, `sag(p0, p1, drop)` |
-| screens | `screen_pages(name, images)`, `monitor`, `laptop`, `keyboard`, `mouse`, `headphones` |
+| screens | `screen_pages(name, images)`, `monitor`, `laptop`, `keyboard`, `mouse`, `headphones` (to hang on a peg; `flat=True` to lie on a desk) |
 | moving | `clock()` → (clock, second hand, pivot) — `hands=True` adds separate hour and minute hands for `r.hands()` · `fan()` → (body, rotor, pivot, tilt) |
 
 These are the common words. What makes a room one person's room is built in the project's `props.py` from `Part`.

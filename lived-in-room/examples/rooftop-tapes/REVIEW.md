@@ -47,3 +47,40 @@ more strictly than the builder had.
 | 24 | Sticky notes cover the screen's picture; the "off" screen still shows a picture | **taken** — all five notes on the wall by the window; a screen that is off is black glass (a library fix) |
 
 Nothing was found wrong with scale.
+
+- **Result:** 405 things after the fixes; `audit.py` clean; `check.py` 17 ok.
+
+## Round 2 — the same reviewer, shown the fixes
+
+Given: seven work-light views, seven stills, the log above. Asked for fixes that did not work and for new findings
+only. It returned 7 of the first kind and 10 of the second (round 1: 24) and said scale, the sun's geometry and the
+bookkeeping of who is here now pass.
+
+| # | finding (short) | taken / declined |
+|---|---|---|
+| A3/8 | The heater now faces the tape wall: on film the rack is washed orange, the one thing her rule forbids | **taken** — turned 21° further, moved 0.1 m east, its light an 84° beam: it ends in the knee-hole of the desk. The rack is lit by lamp and screen spill until the torch comes on |
+| A6 | The night window is still a lattice of lit windows in two blobs, with glowing roofs and tanks | **taken** — redrawn: at 02:14 about one window in twenty is lit, in mixed sizes and colours; street lamps strung along the lanes; roofs, decks and tanks near black; the plate one stop darker |
+| A10 | The duvet is a flat striped sheet with a separate foam block on it; the mat controller has no cord | **taken** — one body, fat where it rolls back on itself (`kit.blanket(roll=)`, new); a lead from the controller into the bedding. **Declined:** a visible sliver of the mat itself |
+| A18 | The air conditioner is a white block | **taken** — louvre slot, panel seam, display window |
+| A21 | The water bottles still read as cola | **taken** — pale blue plastic, blue caps, no dark liquid |
+| A1 | The circulator blows at the south wall, not the door; at 16:40 it is off while washing hangs | **taken** — turned 34° east; it runs in both hours, and the washing moves in both |
+| A16 | The condensation reads as specks | **declined** — low priority by the reviewer's own mark; it is on screen for under two seconds at a size of a few pixels |
+| B1 | The recorder's bag hangs over the wet washing | **taken** — the tote hangs on the door end of the clothes rail; the peg rail over the rack is gone |
+| B2 | A tape is playing and nobody could be listening: headphones on a peg 1.5 m away, no pen out, no half-written label, no open case | **taken** — at 02:14 the headphones lie on the desk with a lead to the computer and the peg is bare; at 16:40 they are back on the peg (`r.away`, both ways). An empty case lies open, a pen is out of the cup, a half-written strip of masking tape is stuck on the top tape. **Declined:** a log book (the sound map on the wall is her log) |
+| B3 | The bubble wrap is a grey band in the sunlit hour | **taken** — `mat.film` now lets light through and scatters it (a library fix): the wrap is the brightest part of the window |
+| B4 | A 2.1 m leaf on a 0.1 m kerb leaves no wall over the door | **declined: misread** — 2.1 m is the opening measured from the room's floor and includes the kerb; the leaf is 1.95 m and 150 mm of wall shows over the frame. The brief now states the three numbers |
+| B5 | Too few possessions for seven years | **taken in part** — a plastic three-drawer chest, a suitcase on its long side under the hanging clothes, nine hangers, chopsticks by the pan, a basin with detergent by the door. **Declined:** rice sack, ramen multipack, kimchi tub, broom (none of them would be on camera; `sheet.py --screen`) |
+| B6 | The clothes are five flat cards | **taken in part** — sleeves, uneven spacing, each turned a few degrees (`kit.garment(sleeves=)`, new). **Declined:** quilting on the coat (0.4 s on screen at the frame's edge) |
+| B7 | The curtain cannot be drawn: its hem would drag through the back row of the desk; the bunch is thin | **taken** — desk 140 mm off the wall; curtain 50 mm off it; the bunch 0.46 m wide in nine folds |
+| B8 | The fridge door meets the clothes rail | **taken** — rail 0.23 m further north; the fan's lead goes round by the wall |
+| B9 | Leads under the desk are stretched strings | **taken in part** — each drops straight down behind the desk, lies on the floor and turns to the strip. **Declined:** a coiled surplus on every lead |
+| B10 | The strip's switch lamp is the most saturated point of the sunlit frame | **taken** — a fifth of its night strength at 16:40 |
+
+- **The audit, after these edits and before any picture was looked at:** tipping 3 · intersecting pairs 7 — headphones
+  through the computer and the pen cup, a pen through the recorder, the open case through the mixer, two twisted
+  garments through each other, the heater on the rug's edge, a suitcase standing on two of its four wheels, and
+  chopsticks laid across the pan's 2 mm rim, which the audit cannot tell from a thing balanced on a point (they now
+  lie on the table in front of the pan). All fixed by moving things, none by loosening a tolerance.
+- **Done when:** `audit.py` clean and `check.py` passing with 407 things. Both hold.
+- **Why the rounds stop here:** what round 2 left undone is detail the walk does not find. A third review would be
+  the next step for a longer film; it was not run.

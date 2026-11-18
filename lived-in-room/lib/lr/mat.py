@@ -353,10 +353,15 @@ def film(color='#e6ecee', opacity=0.72, rough=0.6):
     frosted GLASS, which mirrors every lamp in the room."""
     g = G(f'film {color}{opacity}')
     p = g.n('BsdfPrincipled', Base_Color=rgba(color), Roughness=rough, Specular_IOR_Level=0.15)
+    tl = g.n('BsdfTranslucent', Color=rgba(color))              # lit from behind it glows: the brightest thing in a sunlit window
+    body = g.n('MixShader')
+    body.inputs[0].default_value = 0.55
+    g.link(p.outputs[0], body.inputs[1])
+    g.link(tl.outputs[0], body.inputs[2])
     tr = g.n('BsdfTransparent', Color=(1, 1, 1, 1))
     mx = g.n('MixShader')
     mx.inputs[0].default_value = 1.0 - opacity
-    g.link(p.outputs[0], mx.inputs[1])
+    g.link(body.outputs[0], mx.inputs[1])
     g.link(tr.outputs[0], mx.inputs[2])
     g.link(mx.outputs[0], g.out.inputs['Surface'])
     return g.m

@@ -14,7 +14,7 @@ from mathutils import Vector
 from lr import kit, mat
 import props
 
-DESK = (0.95, 3.685)          # world position of the desk's front-left corner
+DESK = (0.95, 3.56)           # world position of the desk's front-left corner (the desk stands 140 mm off the wall)
 
 
 def furnish(r):
@@ -25,8 +25,8 @@ def furnish(r):
 
     # ---------------------------------------------------------------- the desk, under the window
     r.zone('desk')
-    desk = r.against(kit.desk(1.4, 0.6, 0.72, top_mat=walnut, leg_mat=white), 'N', u=1.65, gap=0.015, kind='desk',
-                     why='under the window: the meters are read by daylight, the street is heard through the glass')
+    desk = r.against(kit.desk(1.4, 0.6, 0.72, top_mat=walnut, leg_mat=white), 'N', u=1.65, gap=0.14, kind='desk',
+                     why='under the window, 140 mm off the wall so the curtain can be drawn behind it and the leads can drop')
     on = lambda x, y: (x / 1.4, y / 0.6)                                   # metres from the desk's front-left corner
     scr = kit.screen_pages('monitor screen', props.monitor_pages(8), emission=2.2)
     r.h['screen'] = scr
@@ -45,7 +45,7 @@ def furnish(r):
     lamp = r.put(kit.desk_lamp(0.42, 0.26, glow=mat.emit('#ffcf96', 0.0, name='desk bulb', off='#e9e4d8')), desk, rel=on(0.09, 0.50), rz=50, kind='desk lamp',
                  why='left corner, its head swung in over the recorder and the pile of tapes: light for labels, none on the screen')
     r.h['lamp'] = lamp.ob
-    r.put(kit.mug(0.041, 0.092, body=mat.ceramic('#b9b5a2', rough=0.3, speckle=0.7), fill=0.35), desk, rel=on(1.22, 0.36), rz=150, kind='mug',
+    r.put(kit.mug(0.041, 0.092, body=mat.ceramic('#b9b5a2', rough=0.3, speckle=0.7), fill=0.35), desk, rel=on(1.32, 0.115), rz=150, kind='mug',
           why='her mother threw it; right hand, handle outward, a third of cold barley tea left')
     r.put(kit.bottle(0.032, 0.215, fill=0.4, liquid='#7a5a20'), desk, rel=on(1.31, 0.5), kind='tea bottle', why='half drunk, pushed back out of the way')
     r.put(kit.cup_of_pens(seed=3), desk, rel=on(1.17, 0.52), kind='pen cup', why='labels are written by hand')
@@ -53,14 +53,32 @@ def furnish(r):
         ('옥상 빗소리', '2026. 7. 장마 첫날', '#efe7d2'), ('두부 트럭', '2026. 10. 아침 6시 10분', '#dfe6d5'), ('보일러 점화', '2026. 11. 첫 추위', '#f0d9c8')))]
     r.stack(flat, desk, rel=on(0.075, 0.17), rz=-12, askew=14, drift=0.01, kind='tape flat', why="this week's three, waiting to be transferred")
     r.put(props.cassette(props.shell_label('인쇄 골목 B', 2)), desk, rel=on(0.50, 0.10), rz=24, kind='cassette', why='just out of the recorder')
+    # mid-work: she was listening when she stepped out — the headphones are on the desk, a label is half written
+    hp = r.put(kit.headphones(name='headphones on the desk', flat=True), desk, rel=on(1.165, 0.33), rz=22, kind='headphones, put down',
+               why='put down beside the keyboard when she stood up; they are plugged into the computer')
+    r.h['hp desk'] = hp
+    case = kit.Part('open case')
+    clear = mat.plastic('#cfd3d6', rough=0.12, dirt=0.25)
+    case.box((0.109, 0.0696, 0.009), at=(-0.056, 0, 0), mat=clear, bevel=0.0008, faces={'top': mat.picture('open case card', props.jcard('인쇄 골목', '2026. 11. B면', '#e8e2b8', seed=41), rough=0.3)})
+    case.box((0.109, 0.0696, 0.007), at=(0.056, 0.004, 0), rot=(0, 0, 4), mat=clear, bevel=0.0008)
+    r.put(case.build(), desk, rel=on(0.125, 0.30), rz=-9, kind='open case', why='the empty case of the tape that is in the recorder, lying open')
+    pen = kit.Part('pen')
+    pen.tube([(-0.07, 0, 0.004), (0.07, 0, 0.004)], 0.004, mat=mat.plastic('#1f3f8a', rough=0.35), seg=8)
+    r.put(pen.build(), desk, rel=on(0.09, 0.065), rz=-8, kind='pen', why='out of the cup, dropped in front of the three tapes')
+    lab = kit.Part('label strip')
+    lab.sheet(0.075, 0.018, at=(0, 0, -0.009), mat=mat.paper('#e8d9a8', rough=0.8), image=mat.picture('label strip', _strip('인쇄 골목 B  11.1'), rough=0.8), t=0.0003)
+    top_tape = flat[-1]
+    q = top_tape.matrix_world @ Vector((0.008, 0.004, props.CASE[0]))
+    r.stick(lab.build(), on=top_tape, point=tuple(q), normal=(0, 0, 1), roll=math.degrees(top_tape.rotation_euler.z) + 6, kind='label strip',
+            why='a strip of masking tape with the label half written, stuck on the top tape so it is not lost')
     roll = kit.Part('masking tape')
     roll.pipe(0.03, 0.019, 0.018, mat=mat.paper('#e8d9a8', rough=0.8))
     r.put(roll.build(), desk, rel=on(0.60, 0.20), kind='masking tape', why='every label is masking tape and a pen')
 
     r.zone('under the desk')
-    r.put(kit.drawers(0.4, 0.5, 0.58, n=3, ajar=(0.0, 0.03, 0.0), body=white), 'floor', at=(1.65 - 0.449, 3.955), kind='drawers',
+    r.put(kit.drawers(0.4, 0.5, 0.58, n=3, ajar=(0.0, 0.03, 0.0), body=white), 'floor', at=(1.65 - 0.449, 3.83), kind='drawers',
           why='at the west end, away from the heater; labels, pens and batteries, the middle drawer never quite shut')
-    strip = r.put(kit.power_strip(4), 'floor', at=(1.95, 4.14), rz=4, kind='power strip', why='behind the feet, against the wall')
+    strip = r.put(kit.power_strip(4), 'floor', at=(1.95, 4.225), rz=3, kind='power strip', why='on the floor behind the desk, against the wall')
     r.h['strips'] = [next(m for m in strip.ob.data.materials if m.get('lr_emit'))]
     rug = r.put(_slab(0.82, 0.9, 0.008, mat.fabric('#7d5a48', weave=1.6, stripe='#6a4a3c', stripe_w=0.06), 'rug'), 'floor', at=(1.86, 3.45), rz=2, kind='rug',
                 why='under the knee-hole: a warm patch for feet on a floor that is cold at its edges')
@@ -68,8 +86,8 @@ def furnish(r):
     r.put(kit.cushion(0.33, 0.33, 0.045, '#8a7a56', name='seat pad'), seat, at=(1.82, 3.3), rz=31, kind='seat pad', why='a wooden stool for four hours needs one', soft=0.004)
     r.put(kit.bin(0.11, 0.27), 'floor', at=(0.76, 3.93), kind='bin', why='left of the desk, under the hand that peels labels')
     r.h['bars'] = mat.emit('#ff5a14', 0.0, name='heater bars', off='#b9b3a8')
-    heat = r.put(props.heater(bars=r.h['bars']), 'floor', at=(2.42, 3.32), rz=-105.5, kind='heater',
-                 why='east of the seat, clear of the table and the bedding, aimed at her shins: its axis meets the west wall north of the rack')
+    heat = r.put(props.heater(bars=r.h['bars']), 'floor', at=(2.53, 3.3), rz=-126, kind='heater',
+                 why='east of the seat, clear of the table and the bedding, aimed into the knee-hole: its beam ends under the desk, not on the tape wall')
     r.h['heater'] = heat.ob
 
     # ---------------------------------------------------------------- the window
@@ -80,13 +98,13 @@ def furnish(r):
     r.h['drops'] = r.drops(win, n=34, moving=5, seed=2)
     steel = mat.metal('#8d8d8b', rough=0.4)
     cr = kit.Part('curtain rail')
-    cr.tube([(-1.1, -0.07, 0), (1.1, -0.07, 0)], 0.011, mat=steel, seg=8)
+    cr.tube([(-1.1, -0.05, 0), (1.1, -0.05, 0)], 0.011, mat=steel, seg=8)
     for x in (-0.95, 0.95):
-        cr.tube([(x, 0.0, 0.0), (x, -0.07, 0.0)], 0.007, mat=steel, seg=6)
+        cr.tube([(x, 0.0, 0.0), (x, -0.05, 0.0)], 0.007, mat=steel, seg=6)
         cr.cyl(0.02, 0.004, at=(x, -0.004, 0), rot=(90, 0, 0), mat=steel, seg=12)
     rail = r.fix(cr.build(), 'wall N', wall='N', u=1.8, z=2.16, kind='curtain rail', why='over the only window')
-    cur = kit.curtain(0.36, 1.41, pleats=5, color='#5c4f5e')
-    p = rail.ob.matrix_world @ Vector((0.82, -0.07, -0.011))
+    cur = kit.curtain(0.46, 1.41, pleats=9, depth=0.06, color='#5c4f5e')
+    p = rail.ob.matrix_world @ Vector((0.8, -0.05, -0.011))
     r.h['curtain'] = r.hang(cur, frm=rail, at=tuple(p), kind='curtain', why='drawn back to the right while she is up — she likes the lights of the hill — and across when she sleeps').ob
 
     # ---------------------------------------------------------------- the tape wall (west)
@@ -145,7 +163,7 @@ def furnish(r):
     r.put(kit.carton(0.34, 0.28, 0.2, name='carton of cables'), side, rel=top(0.74, 0.18), level=0, rz=-4, kind='carton', why='cables and adapters, the box never unpacked')
     for i, (x, y, rz) in enumerate(((0.1, 3.37, 6), (0.1, 2.12, -12))):
         r.put(props.absorber(name=r.name('moisture absorber')), 'floor', at=(x, y), rz=90 + rz, kind='moisture absorber', why='one at each end of the tapes, against the outside wall')
-    r.hang(kit.headphones(), 'W', u=3.52, z=1.42, hook='peg', kind='headphones', why='on a peg between rack and desk: reached from the seat and from the deck')
+    r.h['hp peg'] = r.hang(kit.headphones(), 'W', u=3.52, z=1.42, hook='peg', kind='headphones', why='on their peg between rack and desk whenever she is not listening')
     r.hang(props.sound_board(), 'W', u=3.93, z=1.9, hook='nail', kind='sound map',
            why='the map of where each tape was made, on cork beside the desk where she can add a pin')
 
@@ -171,15 +189,17 @@ def furnish(r):
     # ---------------------------------------------------------------- the bed (east wall)
     r.zone('bed')
     bed = r.put(kit.mattress(1.0, 2.0, 0.07, '#d9d3c4'), 'floor', at=(2.78, 1.85), kind='mattress', why='along the east wall, head to the north: the wall the late sun reaches, so not the tapes')
-    duvet = r.put(kit.blanket(0.96, 1.15, 0.085, '#5f7391', stripe='#e6dfcf', folds=1.7, seed=2, name='duvet'), bed, at=(2.76, 1.5), rz=3, kind='duvet', soft=0.03,
-                  why='a winter duvet, thrown back from the pillow when she got up')
-    r.put(kit.blanket(0.94, 0.42, 0.1, '#e6dfcf', folds=1.9, seed=5, name='duvet fold'), duvet, at=(2.75, 1.93), rz=-4, kind='duvet', soft=0.04,
-          why='the top third folded back on itself, underside up')
+    duvet = r.put(kit.blanket(0.98, 1.4, 0.075, '#5f7391', stripe='#e6dfcf', folds=1.6, seed=2, name='duvet', roll=0.085), bed, at=(2.77, 1.6), rz=3, kind='duvet', soft=0.03,
+                  why='a winter duvet thrown back from the pillow: one body, fat where it rolled over on itself')
     r.put(kit.cushion(0.5, 0.34, 0.1, '#e9e4d6', name='pillow', dent=0.025), bed, at=(2.82, 2.6), rz=-8, kind='pillow', soft=0.012, why='head end, dented')
-    r.put(props.mat_controller(), 'floor', at=(2.2, 2.62), rz=20, kind='mat controller', why='the electric mat under the bedding: its dial on the floor beside the pillow')
+    ctl = r.put(props.mat_controller(), 'floor', at=(2.2, 2.62), rz=20, kind='mat controller', why='the electric mat under the bedding: its dial on the floor beside the pillow')
     low = r.put(kit.low_table(0.6, 0.4, 0.28), 'floor', at=(3.07, 3.25), rz=90 - 3, kind='low table', why='at the head of the bed along the wall: supper and the night lamp')
     lt = lambda x, y: (x / 0.6, y / 0.4)
-    r.put(kit.pot(0.09, 0.085, body=mat.metal('#d3a83a', rough=0.32)), low, rel=lt(0.135, 0.24), rz=90, kind='ramen pot', why='supper eaten from the pan, not washed yet')
+    pot = r.put(kit.pot(0.09, 0.085, body=mat.metal('#d3a83a', rough=0.32), lid=False), low, rel=lt(0.135, 0.24), rz=90, kind='ramen pot', why='supper eaten from the pan, not washed yet')
+    ch = kit.Part('chopsticks')
+    for dy in (-0.006, 0.007):
+        ch.tube([(-0.115, dy, 0.003), (0.115, dy * 0.4, 0.003)], 0.003, mat=mat.wood('#b98a55', '#8a5f35'), seg=6)
+    r.put(ch.build(), low, rel=lt(0.15, 0.06), rz=7, kind='chopsticks', why='put down in front of the pan when she finished')
     r.h['night'] = mat.emit('#ffc98a', 0.0, name='night lamp glow', off='#e9e2d0')
     nl = kit.Part('night lamp')
     nl.cyl(0.04, 0.05, mat=mat.wood('#b98a55', '#8a5f35'), seg=20, bevel=0.004)
@@ -203,15 +223,33 @@ def furnish(r):
 
     # ---------------------------------------------------------------- clothes (west wall, south)
     r.zone('clothes')
-    cr_ = r.against(kit.clothes_rail(0.9, 1.55, 0.42), 'W', u=1.3, gap=0.1, kind='clothes rail', why='what a rooftop room has instead of a wardrobe; clothes are dry, so they may stand by the tapes')
+    cr_ = r.against(kit.clothes_rail(1.0, 1.55, 0.42), 'W', u=1.53, gap=0.14, kind='clothes rail',
+                    why='what a rooftop room has instead of a wardrobe; clothes are dry, so they may stand by the tapes; clear of the fridge door')
     ry, rz_ = cr_.ob['lr_rail']
-    clothes = ((-0.3, dict(width=0.5, length=0.95, thick=0.1, color='#3f4a3a')), (-0.13, dict(width=0.44, length=0.72, thick=0.03, color='#d9d6cf')),
-               (-0.02, dict(width=0.44, length=0.7, thick=0.03, color='#7f8fa3')), (0.1, dict(width=0.46, length=0.74, thick=0.04, color='#2c3440')),
-               (0.27, dict(width=0.45, length=0.66, thick=0.05, color='#8a5a3a')))
+    clothes = ((-0.36, dict(width=0.5, length=0.95, thick=0.11, color='#3f4a3a')), (-0.25, dict(width=0.44, length=0.72, thick=0.03, color='#d9d6cf')),
+               (-0.19, dict(width=0.44, length=0.7, thick=0.03, color='#7f8fa3')), (-0.1, dict(width=0.46, length=0.74, thick=0.045, color='#2c3440')),
+               (-0.03, dict(width=0.42, length=0.62, thick=0.03, color='#b5563f')), (0.07, dict(width=0.45, length=0.66, thick=0.05, color='#8a5a3a')),
+               (0.15, dict(width=0.44, length=0.78, thick=0.03, color='#e4dfd2')), (0.26, dict(width=0.46, length=0.9, thick=0.06, color='#51627a')),
+               (0.37, dict(width=0.43, length=0.68, thick=0.03, color='#3a3a40')))
     for i, (x, kw) in enumerate(clothes):
         g = kit.garment(name=r.name('garment'), **kw)
         p = cr_.ob.matrix_world @ Vector((x, ry, rz_ + 0.011))
-        r.hang(g, frm=cr_, at=tuple(p), rz=rnd.uniform(-5, 5), kind='garment', why='the padded coat nearest the door, work clothes behind it')
+        rnd.uniform(-11, 11)
+        r.hang(g, frm=cr_, at=tuple(p), rz=(7, 4, 1, -3, -6, -2, 3, 7, 10)[i], kind='garment', why='the padded coat nearest the door, work clothes behind it, crowded as a rail gets')
+    p = cr_.ob.matrix_world @ Vector((-0.455, ry, rz_ + 0.011))
+    r.h['tote'] = r.hang(props.tote(image=_tote_print()), frm=cr_, at=tuple(p), rz=0, kind='tote bag',
+                         why='the bag the recorder goes out in: on the door end of the clothes rail, away from the wet rack')
+    r.put(kit.drawers(0.4, 0.42, 0.62, n=3, ajar=(0.0, 0.0, 0.02), body=mat.plastic('#e9e6dc', rough=0.4), front=mat.plastic('#cfd9df', rough=0.35), name='plastic drawers'),
+          'floor', at=(0.8, 2.02), rz=90 + 3, kind='plastic drawers', why='folded clothes: what does not go on a hanger')
+    sc = kit.Part('suitcase')
+    green = mat.plastic('#4a5a52', rough=0.5)
+    sc.box((0.68, 0.26, 0.45), mat=green, bevel=0.02)
+    sc.tube([(-0.1, 0, 0.45), (-0.08, 0, 0.485), (0.08, 0, 0.485), (0.1, 0, 0.45)], 0.008, mat=mat.plastic('#1c1c1e'), seg=6)       # the carrying handle, up
+    sc.tube([(0.34, -0.07, 0.3), (0.372, -0.07, 0.3), (0.372, 0.07, 0.3), (0.34, 0.07, 0.3)], 0.006, mat=mat.metal('#8f9296'), seg=6)   # the pull handle, pushed in
+    for z in (0.05, 0.4):
+        sc.cyl(0.022, 0.026, at=(-0.352, -0.085, z - 0.013), mat=mat.rubber(), seg=10)
+    r.put(sc.build(), 'floor', at=(0.52, 1.44), rz=90 + 3, kind='suitcase',
+          why='spare bedding lives in it: on its long side under the hanging clothes, in front of the rail, where it is out of every path')
 
     # ---------------------------------------------------------------- the washing, by the door (south wall)
     r.zone('washing')
@@ -234,12 +272,12 @@ def furnish(r):
         it = r.hang(s, frm=rack_, at=tuple(p), rz=0, kind='washing', why='socks go where the towels leave room')
         r.h['wash'].append(it.ob)
     body, rotor, pivot, tilt = kit.fan(0.26, 0.56, base_r=0.15)                # a 9-inch circulator [heat-air]
-    fan = r.put(body, 'floor', at=(1.33, 1.38), rz=6, kind='circulator',
+    fan = r.put(body, 'floor', at=(1.33, 1.38), rz=40, kind='circulator',
                 why='between the washing and the tapes, blowing at the washing and the door: the damp air goes out, not along the tape wall')
-    r.fix(rotor, fan, loc=tuple(body.matrix_world @ Vector(pivot)), rot=(-tilt, 0, 6), embed=True, kind='circulator rotor', why='it turns')
+    r.fix(rotor, fan, loc=tuple(body.matrix_world @ Vector(pivot)), rot=(-tilt, 0, 40), embed=True, kind='circulator rotor', why='it turns')
     r.h['rotor'] = rotor
     for i in range(6):
-        r.put(kit.bottle(0.045, 0.31, fill=1.0 if i else 0.3, liquid='#eaf5f8', label=props.water_label(), name=r.name('water bottle')), 'floor',
+        r.put(kit.bottle(0.045, 0.31, fill=0.0, glassy=mat.plastic('#d5e8f0', rough=0.18, dirt=0.05), cap='#2f7fb8', label=props.water_label(), name=r.name('water bottle')), 'floor',
               at=(1.5 + (i % 3) * 0.095, 0.21 + (i // 3) * 0.095), kind='water bottle', why='carried up five floors six at a time, set down just inside the door, under the rack')
 
     # ---------------------------------------------------------------- the south wall and the door
@@ -250,10 +288,6 @@ def furnish(r):
     r.put(props.kettle(), fr, at=(0.6, 0.17), rz=-70, kind='kettle', why='beside the cooker, unplugged')
     strip2 = r.put(kit.power_strip(4, name='fridge strip'), 'floor', at=(0.115, 0.3), rz=90, kind='power strip', why='between fridge and wall: one two-gang socket feeds this whole corner')
     r.h['strips'].append(next(m for m in strip2.ob.data.materials if m.get('lr_emit')))
-    rail = r.fix(props.coat_rail(0.5, 3), 'wall S', wall='S', u=1.86, z=1.66, kind='coat rail', why='beside the door, at shoulder height')
-    pegs = list(rail.ob['lr_pegs'])
-    p = rail.ob.matrix_world @ Vector(pegs[0:3])
-    r.h['tote'] = r.hang(props.tote(image=_tote_print()), frm=rail, at=tuple(p), kind='tote bag', why='the bag the recorder goes out in, on the peg nearest the door')
     r.lean(props.umbrella(), 'S', u=0.12, foot=0.14, turn=-6, kind='umbrella', why='in the corner behind the door, still there from the last rain')
     mat_ = r.put(_slab(0.75, 0.45, 0.006, mat.rubber('#3a3d42', rough=0.9), 'door mat'), 'floor', at=(2.6, 0.34), kind='door mat', why='shoes come off here')
     r.h['sneakers'] = [r.put(props.shoe(name=r.name('shoe')), mat_, at=(x, y), rz=rz, kind='shoe', why='toes to the door, kicked off rather than placed')
@@ -264,6 +298,13 @@ def furnish(r):
     for i, (x, y, rz) in enumerate(((2.02, 0.84, 8), (2.15, 0.79, -16))):
         r.put(props.slipper(name=r.name('slipper')), 'floor', at=(x, y), rz=rz, kind='slipper', why='stepped out of at the mat edge, pointing into the room')
     r.put(props.basket(), 'floor', at=(3.12, 0.6), rz=30, kind='toiletries basket', why='the tap and the toilet are across the terrace: her wash things live by the door')
+    bs = kit.Part('basin')
+    bs.lathe([(0, 0), (0.15, 0), (0.19, 0.1), (0.186, 0.1), (0.147, 0.004), (0, 0.004)], mat=mat.plastic('#d97a6a', rough=0.45), seg=24)
+    basin = r.put(bs.build(), 'floor', at=(2.1, 0.33), kind='basin', why='for hand-washing; it lives by the door with the detergent in it')
+    dt = kit.Part('detergent')
+    dt.box((0.1, 0.06, 0.2), mat=mat.plastic('#2f7fb8', rough=0.35), bevel=0.012)
+    dt.cyl(0.018, 0.03, at=(0.02, 0, 0.2), mat=mat.plastic('#f1f0ea'), seg=12, bevel=0.003)
+    r.put(dt.build(), basin, at=(2.1, 0.33), rz=25, kind='detergent', why='stood in the basin')
 
     # ---------------------------------------------------------------- leads: everything that runs reaches a socket
     r.zone('leads')
@@ -274,21 +315,27 @@ def furnish(r):
     north = r.items['outlet'].ob
     so = north.matrix_world @ Vector((-0.035, -0.012, 0))
     sx = strip.ob.matrix_world @ Vector((0.14, 0.0, 0.015))
-    run('strip lead', [(sx.x, sx.y, 0.016), (2.3, 4.2, 0.004), (2.72, 4.268, 0.004)] + kit.sag((2.72, 4.268, 0.004), (so.x, so.y, so.z), 0.0, 6)[1:], [strip, north, 'floor'])
+    run('strip lead', [(sx.x, sx.y, 0.016), (2.3, 4.25, 0.004), (2.72, 4.268, 0.004)] + kit.sag((2.72, 4.268, 0.004), (so.x, so.y, so.z), 0.0, 6)[1:], [strip, north, 'floor'])
     socks = [strip.ob.matrix_world @ Vector(tuple(strip.ob['lr_sockets'])[i * 3:i * 3 + 3]) for i in range(4)]
     lb = lamp.ob.matrix_world @ Vector((0, 0.074, 0.009))                 # out of the back of the lamp's base
-    run('lamp lead', [tuple(lb), (lb.x + 0.01, 4.293, 0.735), (lb.x + 0.02, 4.293, 0.6), (1.5, 4.27, 0.18)] + kit.sag((1.5, 4.27, 0.18), (socks[0].x, socks[0].y, socks[0].z + 0.002), 0.05, 6)[1:],
-        [lamp, strip, desk])
-    run('monitor lead', [W(0.80, 0.50, 0.728), W(0.80, 0.608, 0.728), W(0.80, 0.608, 0.5), (1.78, 4.27, 0.12)] + kit.sag((1.78, 4.27, 0.12), (socks[1].x, socks[1].y, socks[1].z + 0.002), 0.03, 5)[1:],
-        [r.items['monitor'], strip, desk])
-    run('pc lead', [W(1.02, 0.56, 0.74), W(1.02, 0.608, 0.74), W(1.02, 0.608, 0.5), (1.98, 4.275, 0.12)] + kit.sag((1.98, 4.275, 0.12), (socks[2].x, socks[2].y, socks[2].z + 0.002), 0.03, 5)[1:],
-        [pc, strip, desk])
+    back = DESK[1] + 0.6 + 0.02                                         # just behind the desk's back edge: leads drop here and lie on the floor
+    def drop(x, z_from, sock, slack):
+        return [(x, back, z_from), (x, back + 0.01, 0.2), (x + slack, back + 0.02, 0.006), ((x + slack + sock.x) / 2, back + 0.05, 0.006), (sock.x, sock.y, sock.z + 0.002)]
+    run('lamp lead', [tuple(lb), (lb.x + 0.02, back - 0.03, 0.735)] + drop(lb.x + 0.02, 0.72, socks[0], 0.35), [lamp, strip, desk, 'floor'])
+    run('monitor lead', [W(0.80, 0.50, 0.728), W(0.80, 0.6, 0.728)] + drop(DESK[0] + 0.80, 0.72, socks[1], 0.06), [r.items['monitor'], strip, desk, 'floor'])
+    run('pc lead', [W(1.02, 0.56, 0.74), W(1.02, 0.6, 0.74)] + drop(DESK[0] + 1.02, 0.73, socks[2], 0.1), [pc, strip, desk, 'floor'])
+    cup = Vector(hp.ob['lr_cup'])
+    hq = hp.ob.matrix_world @ (cup + Vector((0, 0.024, 0.0125)))     # in the back of the left cup, low
+    hd = hp.ob.matrix_world @ (cup + Vector((-0.01, 0.075, 0.0)))
+    run('headphone lead', [tuple(hq), (hd.x, hd.y, 0.7222), ((hd.x + W(1.0, 0.435, 0)[0]) / 2 + 0.02, hd.y + 0.035, 0.7222), W(1.0, 0.435, 0.7222)], [hp, pc, desk], rad=0.0018, color='#2a2a2c')
+    cq = ctl.ob.matrix_world @ Vector((0, 0.06, 0.012))
+    run('mat lead', [tuple(cq), (2.26, 2.72, 0.006), (2.31, 2.76, 0.03)], [ctl, bed, 'floor'], rad=0.002, color='#e9e7e0')
     run('recorder lead', [W(0.385, 0.222), W(0.40, 0.29), W(0.41, 0.352)], [rec, mix, desk], rad=0.0022, color='#3a3a3c')
     run('microphone lead', [W(0.578, 0.372), W(0.545, 0.40), W(0.506, 0.42)], [mic, mix, desk], rad=0.0022, color='#3a3a3c')
     run('pc audio lead', [W(0.50, 0.53), W(0.56, 0.572), W(0.80, 0.575), W(0.928, 0.535)], [mix, pc, desk], rad=0.0022, color='#3a3a3c')
     hb = heat.ob.matrix_world @ Vector((0.0, 0.07, 0.03))
     so2 = north.matrix_world @ Vector((0.035, -0.012, 0))
-    run('heater lead', [tuple(hb), (2.6, 3.7, 0.006), (2.74, 4.2, 0.006)] + kit.sag((2.74, 4.2, 0.006), (so2.x, so2.y, so2.z), 0.03, 6)[1:], [heat, north], rad=0.0035, color='#2a2a2c')
+    run('heater lead', [tuple(hb), (2.62, 3.7, 0.006), (2.74, 4.2, 0.006)] + kit.sag((2.74, 4.2, 0.006), (so2.x, so2.y, so2.z), 0.03, 6)[1:], [heat, north], rad=0.0035, color='#2a2a2c')
     east = r.items['outlet.003'].ob
     eo = east.matrix_world @ Vector((0.035, -0.012, 0))
     nb = night.ob.matrix_world @ Vector((0.03, 0.0, 0.01))
@@ -308,7 +355,7 @@ def furnish(r):
     run('cooker lead', [tuple(cb), (0.2, cb.y + 0.02, 0.86), (0.2, 0.3, 0.82)] + kit.sag((0.2, 0.3, 0.82), (s2[1].x + 0.02, s2[1].y, s2[1].z + 0.01), 0.02, 6)[1:] + [(s2[1].x, s2[1].y, s2[1].z + 0.002)],
         [cook, strip2, fr], color='#e9e7e0')
     fb = fan.ob.matrix_world @ Vector((0.0, 0.14, 0.012))
-    run('circulator lead', [tuple(fb), (1.0, 1.25, 0.004), (0.62, 0.72, 0.004), (0.22, 0.6, 0.004), (s2[2].x + 0.03, s2[2].y, 0.02), (s2[2].x, s2[2].y, s2[2].z + 0.002)],
+    run('circulator lead', [tuple(fb), (1.05, 1.02, 0.004), (0.62, 0.72, 0.004), (0.22, 0.6, 0.004), (s2[2].x + 0.03, s2[2].y, 0.02), (s2[2].x, s2[2].y, s2[2].z + 0.002)],
         [fan, strip2, 'floor'], color='#e9e7e0')
     db = deck.ob.matrix_world @ Vector((0.0, 0.14, 0.05))
     run('deck lead', [tuple(db), (0.0065, db.y, 0.79), (0.0065, db.y, 0.3), (0.016, 2.2, 0.004), (0.016, 0.7, 0.004), (0.06, 0.52, 0.004), (s2[3].x, s2[3].y - 0.03, 0.02), (s2[3].x, s2[3].y, s2[3].z + 0.002)],
@@ -350,3 +397,10 @@ def _stack_level(r, obs, sup, level, rel, kind, why, turn=0.0):
     for ob in obs[1:]:
         below = r.put(ob, below, at=(first.ob.location.x + rnd.uniform(-0.006, 0.006), first.ob.location.y + rnd.uniform(-0.006, 0.006)),
                       rz=math.degrees(sup.ob.rotation_euler.z) + turn + rnd.uniform(-9, 9), kind=kind, why=why)
+
+
+def _strip(text):
+    from lr import draw
+    im, d = draw.new(300, 72, '#e8d9a8')
+    draw.scrawl((im, d), (10, 12), text, size=34, fill='#27304a', seed=5)
+    return im

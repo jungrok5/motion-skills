@@ -9,7 +9,7 @@ ROOM = dict(
     seed=7,
     versions=dict(
         night=dict(seconds=16.0, look=dict(exposure=1.45, grain=0.055, bloom=0.10, halation=0.14, saturation=0.96)),
-        afternoon=dict(seconds=12.0, look=dict(exposure=0.65, grain=0.035, shadows='#18202c', highlights='#ffdcae', split=0.22, saturation=1.1)),
+        afternoon=dict(seconds=12.0, look=dict(exposure=0.9, grain=0.035, shadows='#18202c', highlights='#ffdcae', split=0.22, saturation=1.1)),
     ),
     look=dict(),
     beacon_range=(20, 60),          # 중광도 B 표시등: 분당 20–60회 섬광 [beacon]

@@ -20,7 +20,7 @@ def plate(r):
     """Outside: her own terrace built for real, and beyond it one picture 90 m wide, 40 m away, horizon at eye level."""
     props.terrace(r)
     img, marks = props.view_outside(r.v)
-    strength = dict(night=0.34, afternoon=2.3).get(r.v, 0.7)
+    strength = dict(night=0.2, afternoon=2.3).get(r.v, 0.7)
     r.backdrop(img, 'N', distance=40, width=90, strength=strength, z=1.45 + (0.66 - 0.5) * 90 * 1350 / 3600, u=6.8)
     return marks
 
@@ -41,8 +41,8 @@ def light(r):
         r.ambient('#0a0f1c', 0.01)
         r.h['desk light'] = r.lamp('desk light', tuple(lamp.matrix_world @ Vector(lamp['lr_bulb'])), watts=5.0, color=2700, radius=0.02)
         front = heat.matrix_world @ Vector((0, -0.07, 0.2))
-        r.h['heat light'] = r.lamp('heater light', tuple(front), watts=8.0, color='#ff7436', radius=0.08, spot=120, blend=0.9,
-                                   aim=tuple(heat.matrix_world @ Vector((0, -1.2, 0.05))))
+        r.h['heat light'] = r.lamp('heater light', tuple(front), watts=7.0, color='#ff7436', radius=0.08, spot=84, blend=0.7,
+                                   aim=tuple(heat.matrix_world @ Vector((0, -1.2, -0.05))))        # a reflector heater throws a beam, not a glow
         nl = r.h['night lamp']
         r.h['night light'] = r.lamp('night light', tuple(nl.matrix_world @ Vector((0, 0, 0.1))), watts=0.55, color=2400, radius=0.05)
     else:
@@ -58,12 +58,14 @@ def light(r):
     r.glow(r.h['deck'], 0.5, on='night')                           # the deck is on and idle
     r.glow(r.h['cooker'], 30.0)                                    # the cooker keeps warm round the clock
     for s in r.h['strips']:
-        r.glow(s, 10.0)
+        r.glow(s, 10.0 if night else 2.0)                         # a neon rocker is a point at night and almost nothing by day
     for g in r.h['leds']:
         r.glow(g, 0.0)
     # what she has with her
     r.away(r.h['outdoor'], on='night')                             # on her feet: she has just been out on the roof
     r.away(r.h['sneakers'] + [r.h['tote'], r.h['recorder']], on='afternoon')    # on her feet, on her shoulder, in the bag
+    r.away(r.h['hp peg'], on='night')                               # at night the headphones are on the desk: she was listening
+    r.away(r.h['hp desk'], on='afternoon')                         # by day they are back on their peg
     r.away(r.h['drops'], on='afternoon')                           # the pane sweats at night and is dry by the afternoon
     r.hands(r.h['hands'][0], r.h['hands'][1], 2 if night else 16, 14 if night else 40)
 
@@ -75,10 +77,10 @@ def motion(r):
         r.flutter(n, axis=0, amp=1.3, freq=0.9 + 0.17 * i, name=f'sticky note {i + 1}', seed=20 + i, note='the draught of a single-glazed window')
     r.flutter(r.h['curtain'], axis=0, amp=0.5, freq=0.35, rest=0.0, name='curtain', seed=41, note='the same draught, slower: it is heavy')
     r.flutter(r.h['calendar'], axis=0, amp=0.8, freq=0.5, rest=-0.9, name='calendar', seed=40, note='the door is open beside it')
+    r.spin(r.h['rotor'], 1300, axis=1, name='circulator blades')        # she leaves it running while the washing hangs
+    for i, c in enumerate(r.h['wash']):
+        r.flutter(c, axis=0, amp=(2.2 if i < 4 else 3.4), freq=0.55 + 0.11 * i, name=f'washing {i + 1}', seed=i, note="in the circulator's air")
     if night:
-        r.spin(r.h['rotor'], 1300, axis=1, name='circulator blades')
-        for i, c in enumerate(r.h['wash']):
-            r.flutter(c, axis=0, amp=(2.2 if i < 4 else 3.4), freq=0.55 + 0.11 * i, name=f'washing {i + 1}', seed=i, note="in the circulator's air")
         r.pages(r.h['screen'], 8, hold=1.0, name='monitor: the transfer advancing')
         r.flicker(r.h['desk light'], 0.022, 5.0, name='desk lamp', seed=1)
         r.flicker(r.h['heat light'], 0.05, 2.2, name='heater glow', seed=2)
@@ -110,5 +112,5 @@ def camera(r):
             dict(t=0.0, pos=(2.62, 0.25, 1.48), look=(1.7, 4.3, 1.25)),                      # in the doorway: the window, the beam
             dict(t=4.0, pos=(1.95, 1.45, 1.46), look=(2.1, 4.2, 1.1)),
             dict(t=8.0, pos=(1.72, 1.62, 1.45), look=(2.9, 3.8, 1.0)),                       # turning with the light
-            dict(t=12.0, pos=(1.6, 1.7, 1.45), look=(3.1, 3.15, 0.8), close=True, hunt=True),     # the sun on the wall by her pillow
+            dict(t=12.0, pos=(1.62, 1.72, 1.47), look=(3.02, 2.98, 0.62), close=True, hunt=True),  # the sun on the wall over her pillow
         ], shake=0.32, pan_cap=12)
