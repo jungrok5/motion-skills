@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spiral Crunch — the back of the box</title>
+<!--
+  droste-page worked example (BRIEF.md next to this file): the back panel of a cereal box, printed with a picture of the
+  back of this box, which is printed with a picture of the back of this box… The brand name is live type you can
+  rewrite, the loops on the puzzle are real buttons, the "Twist-O-Meter" is the wind, and every box down the spiral
+  carries its own number in the starburst.
+-->
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #2a1a0c; }
+  #stage { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; touch-action: none; outline: none; }
+
+  #page {
+    --u: min(1vw, 1.5vh);
+    --S: 2.5; --cx: .5; --cy: .53;
+    --wl: calc(var(--cx) * 100vw - 50vw / var(--S)); --wr: calc(var(--cx) * 100vw + 50vw / var(--S));
+    --wt: calc(var(--cy) * 100vh - 50vh / var(--S)); --wb: calc(var(--cy) * 100vh + 50vh / var(--S));
+    --fb: var(--frame-b, calc(1.6 * var(--u)));
+    --red: #e0262f; --blue: #1d3b8f; --cream: #fff6dc; --sun: #ffc928;
+    position: relative; overflow: hidden; width: 100vw; height: 100vh; box-sizing: border-box; color: var(--blue);
+    /* sunburst rays from the window's centre: a spiral when the box is twisted */
+    background: repeating-conic-gradient(from 0deg at 50% 53%, #ffd23f 0 7.5deg, #ffbf1c 7.5deg 15deg);
+    font-family: 'Arial Black', 'Helvetica Neue', Arial, 'DejaVu Sans', sans-serif; font-weight: 900;
+    user-select: none; -webkit-user-select: none; -webkit-font-smoothing: antialiased;
+  }
+  #page *, #page *::before, #page *::after { box-sizing: border-box; }
+  #page ::selection { background: var(--blue); color: #fff; }
+  #window { position: absolute; left: var(--wl); top: var(--wt); width: calc(100% / var(--S)); height: calc(100% / var(--S)); }
+
+  /* the logo: live, editable lettering in a red slab with a white keyline */
+  #logo { position: absolute; left: 50vw; top: calc(1.4 * var(--u)); transform: translateX(-50%) rotate(-2deg); margin: 0; white-space: nowrap; overflow: hidden;
+    max-width: 92vw; padding: calc(.3 * var(--u)) calc(2.4 * var(--u)); background: var(--red); border-radius: calc(1.6 * var(--u));
+    box-shadow: 0 0 0 calc(.45 * var(--u)) #fff, 0 0 0 calc(.9 * var(--u)) var(--blue);
+    font-size: calc(6 * var(--u)); line-height: 1.15; letter-spacing: .01em; color: #fff;
+    text-shadow: calc(.35 * var(--u)) calc(.35 * var(--u)) 0 var(--blue);
+    outline: none; cursor: text; user-select: text; -webkit-user-select: text; caret-color: #fff; }
+  #tag { position: absolute; left: 0; right: 0; top: calc(10.6 * var(--u)); text-align: center; margin: 0;
+    font-size: calc(1.6 * var(--u)); letter-spacing: .12em; color: var(--blue); }
+
+  /* the starburst: each box down the spiral carries its own number */
+  #burst { position: absolute; left: calc(var(--wr) + var(--fb) + 4 * var(--u)); top: calc(2 * var(--u)); width: calc(17 * var(--u)); height: calc(17 * var(--u));
+    display: flex; flex-direction: column; align-items: center; justify-content: center; transform: rotate(9deg);
+    background: var(--red); color: #fff; text-align: center; font-size: calc(1.5 * var(--u)); line-height: 1.05;
+    clip-path: polygon(50% 0%, 59% 13%, 75% 7%, 76% 24%, 93% 25%, 86% 40%, 100% 50%, 86% 60%, 93% 75%, 76% 76%, 75% 93%, 59% 87%, 50% 100%, 41% 87%, 25% 93%, 24% 76%, 7% 75%, 14% 60%, 0% 50%, 14% 40%, 7% 25%, 24% 24%, 25% 7%, 41% 13%); }
+  #burst small { font-size: 1em; letter-spacing: .08em; }
+  #num { display: block; width: calc(9 * var(--u)); font-size: calc(4.6 * var(--u)); line-height: 1.25; color: #fff8d8; font-variant-numeric: lining-nums; }
+  #page.droste-live #num { color: transparent; }
+
+  /* panels printed on the card */
+  .panel { position: absolute; background: var(--cream); border-radius: calc(1.2 * var(--u)); padding: calc(1.2 * var(--u)) calc(1.4 * var(--u));
+    box-shadow: 0 0 0 calc(.35 * var(--u)) var(--blue); color: var(--blue); }
+  .panel h2 { margin: 0 0 calc(.6 * var(--u)); font-size: calc(1.9 * var(--u)); line-height: 1.1; color: var(--red); letter-spacing: .02em; }
+  .panel p { margin: 0; font-family: 'Helvetica Neue', Arial, 'DejaVu Sans', sans-serif; font-weight: 700; font-size: calc(1.2 * var(--u)); line-height: 1.3; }
+
+  /* puzzle: spot the loops. Each loop is a real button; a click takes a bite out of it in every box at once */
+  #puzzle { left: calc(2.4 * var(--u)); top: calc(var(--wt) - 2 * var(--u)); width: calc(var(--wl) - var(--fb) - 5 * var(--u)); }
+  #loops { display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(.8 * var(--u)); margin-top: calc(1 * var(--u)); }
+  .loop { aspect-ratio: 1; border: 0; padding: 0; border-radius: 50%; cursor: pointer; outline: none; background: transparent; position: relative; }
+  .loop::before { content: ''; position: absolute; inset: 6%; border-radius: 50%;
+    background: radial-gradient(circle, transparent 0 27%, var(--c) 29% 63%, color-mix(in srgb, var(--c), #000 25%) 66% 70%, transparent 72%); }
+  .loop[data-bite="1"]::after { content: ''; position: absolute; width: 42%; height: 42%; right: -2%; top: -2%; border-radius: 50%; background: var(--cream); }
+  .loop:focus-visible { box-shadow: 0 0 0 calc(.3 * var(--u)) var(--blue); }
+  #l1 { --c: #ff6b3d; } #l2 { --c: #ffd23f; } #l3 { --c: #7bd389; } #l4 { --c: #6aa8ff; } #l5 { --c: #c86bff; } #l6 { --c: #ff8fb8; }
+  #score { margin-top: calc(1 * var(--u)) !important; }
+
+  /* twist-o-meter: the wind */
+  #meter { left: calc(var(--wr) + var(--fb) + 3 * var(--u)); right: calc(2.4 * var(--u)); top: calc(var(--wt) + 11 * var(--u)); }
+  #wind { display: flex; flex-direction: column; gap: calc(.4 * var(--u)); margin-top: calc(.6 * var(--u)); font-size: calc(1.3 * var(--u)); color: var(--blue); }
+  #wind input { appearance: none; -webkit-appearance: none; margin: 0; width: 100%; height: calc(3.4 * var(--u)); background: transparent; outline: none; cursor: grab; touch-action: none; }
+  #wind input::-webkit-slider-runnable-track { height: calc(1 * var(--u)); border-radius: var(--u); box-shadow: 0 0 0 calc(.25 * var(--u)) var(--blue);
+    background: linear-gradient(90deg, var(--red) 0 var(--p, 50%), #fff var(--p, 50%)); }
+  #wind input::-webkit-slider-thumb { -webkit-appearance: none; width: calc(3 * var(--u)); height: calc(3 * var(--u)); margin-top: calc(-1 * var(--u)); border-radius: 50%;
+    background: radial-gradient(circle, var(--cream) 0 30%, #ffd23f 32% 60%, #e9a11a 62%); box-shadow: 0 0 0 calc(.25 * var(--u)) var(--blue); }
+  #wind input:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 calc(.45 * var(--u)) var(--red); }
+  #ticks { display: flex; justify-content: space-between; font-size: calc(1 * var(--u)); }
+
+  /* the strip along the foot of the panel */
+  #foot { position: absolute; left: 0; right: 0; bottom: 0; height: calc(5.6 * var(--u)); background: var(--blue); color: #fff;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 calc(2.4 * var(--u)); font-size: calc(1.3 * var(--u)); letter-spacing: .06em; }
+  #sound { font: inherit; font-size: calc(1.2 * var(--u)); color: var(--blue); background: var(--sun); border: 0; border-radius: calc(2 * var(--u));
+    padding: calc(.6 * var(--u)) calc(1.4 * var(--u)); cursor: pointer; outline: none; box-shadow: 0 0 0 calc(.25 * var(--u)) #fff; }
+  #sound[aria-pressed="true"] { background: #fff; }
+  #hint { position: absolute; left: 0; right: 0; bottom: calc(6.6 * var(--u)); margin: 0; text-align: center; font-size: calc(1.4 * var(--u)); letter-spacing: .1em; color: var(--blue); pointer-events: none; }
+
+  @media (orientation: portrait) {   /* the box stands up on a phone */
+    #page { --cy: .5; }
+    #logo { font-size: calc(5.4 * var(--u)); top: calc(3 * var(--u)); }
+    #tag { top: calc(13 * var(--u)); font-size: calc(2 * var(--u)); }
+    #burst { left: auto; right: calc(1 * var(--u)); top: calc(var(--wt) - 18 * var(--u)); width: calc(15 * var(--u)); height: calc(15 * var(--u)); font-size: calc(1.6 * var(--u)); }
+    #num { font-size: calc(4.4 * var(--u)); }
+    #puzzle { left: calc(2 * var(--u)); width: calc(var(--wl) - var(--fb) - 3.5 * var(--u)); top: calc(var(--wt) + 1 * var(--u)); padding: calc(1 * var(--u)); }
+    #puzzle p:not(#score) { display: none; }
+    #loops { grid-template-columns: 1fr 1fr; }
+    #meter { left: calc(var(--wr) + var(--fb) + 1.5 * var(--u)); right: calc(2 * var(--u)); top: calc(var(--wt) + 1 * var(--u)); padding: calc(1 * var(--u)); }
+    #meter p { display: none; }
+    .panel h2 { font-size: calc(2 * var(--u)); }
+    #foot { height: calc(8 * var(--u)); font-size: calc(1.8 * var(--u)); }
+    #foot span:first-child { display: none; }
+    #sound { font-size: calc(2 * var(--u)); }
+    #hint { bottom: calc(10 * var(--u)); font-size: calc(2.2 * var(--u)); }
+  }
+
+  html:has(.hic-fallback), html:has(.hic-fallback) body { overflow: auto; height: auto; }
+  .hic-fallback #window { background: var(--cream); box-shadow: 0 0 0 var(--fb) var(--red); display: flex; align-items: center; justify-content: center; }
+  .hic-fallback #window::after { content: '(a picture of this box)'; font-size: calc(2 * var(--u)); }
+</style>
+</head>
+<body>
+<canvas id="stage" layoutsubtree content="drawable" aria-label="The back of a cereal box with a picture of itself">
+  <div id="page" drawable>
+    <div id="window" aria-hidden="true"></div>
+    <h1 id="logo" contenteditable="plaintext-only" spellcheck="false" data-hic-edit aria-label="Brand name">SPIRAL CRUNCH</h1>
+    <p id="tag">TOASTED OAT LOOPS · NOW WITH MORE BOX</p>
+    <div id="burst" role="img"><small>COLLECT</small><small>BOX Nº</small><b id="num">1</b></div>
+    <div class="panel" id="puzzle" data-surface="panel">
+      <h2>Bite the loops!</h2>
+      <p>Tap a loop to take a bite. Every box inside this box gets bitten too.</p>
+      <div id="loops">
+        <button class="loop" id="l1" type="button" aria-label="Loop 1" data-hic-click></button>
+        <button class="loop" id="l2" type="button" aria-label="Loop 2"></button>
+        <button class="loop" id="l3" type="button" aria-label="Loop 3"></button>
+        <button class="loop" id="l4" type="button" aria-label="Loop 4"></button>
+        <button class="loop" id="l5" type="button" aria-label="Loop 5"></button>
+        <button class="loop" id="l6" type="button" aria-label="Loop 6"></button>
+      </div>
+      <p id="score">0 of 6 bitten</p>
+    </div>
+    <div class="panel" id="meter" data-surface="panel">
+      <h2>Twist-O-Meter</h2>
+      <p>How many times the box goes round before it reaches the next box.</p>
+      <label id="wind"><span>Twist the box</span><input type="range" min="0" max="2" step="0.001" value="1" aria-label="Twist the box"></label>
+      <div id="ticks" aria-hidden="true"><span>flat</span><span>once</span><span>twice</span></div>
+    </div>
+    <p id="hint">SCROLL TO FALL IN</p>
+    <div id="foot" data-surface="foot"><span>NET WT ∞ OZ · PART OF A COMPLETE BREAKFAST, AND OF THIS BOX</span><button id="sound" type="button" aria-pressed="false" data-on="CRUNCH ON" data-off="CRUNCH OFF">CRUNCH OFF</button></div>
+  </div>
+</canvas>
+<script src="../../lib/hic.js"></script>
+<script src="../../lib/droste-sound.js"></script>
+<script src="../../lib/droste.js"></script>
+<script>
+(function () {
+  'use strict';
+  var logo = document.getElementById('logo');
+  logo.addEventListener('keydown', function (e) { if (e.key === 'Enter') e.preventDefault(); });
+
+  var D = Droste.create({
+    canvas: '#stage', page: '#page', window: '#window',
+    frame: { style: 'print', width: 1.6 },                        // a printed red border with a white keyline, not a moulding
+    surfaces: {
+      base: { type: 'card', fiber: 1.2, halftone: .34, varnish: .55 },   // printed board: halftone dots up close, a varnish sheen
+      panel: { type: 'card', fiber: 1, halftone: .3, varnish: .3 },
+      foot: { type: 'card', fiber: 1, halftone: .34, varnish: .5 }
+    },
+    light: { moods: Droste.MOODS.kitchen, key: [-.4, -.7, .6], panes: { x: 8, y: -10, w: 40, h: 46, cols: 3, rows: 2, skew: .45, strength: .55 }, shadow: .55 },
+    counter: { el: '#num', start: 1, cell: .66, label: 'Box number' },
+    wind: { input: '#wind input', rest: 1, max: 2, spin: 1.1 },
+    fall: { rest: -0.3, opening: 3.2 },
+    glow: '#fff4cf', seam: { style: 'crease', color: '#7a4a10', width: 1.2 }, ripple: '#ffffff',
+    sound: 'card', soundToggle: '#sound', hint: '#hint',
+    onReady: function (D) { if (D.intro) setTimeout(function () { D.typeInto(logo, 'SPIRAL CRUNCH'); }, 700); }
+  });
+
+  // the puzzle: the real buttons change, so every box down the spiral changes with them
+  var score = document.getElementById('score');
+  [].forEach.call(document.querySelectorAll('.loop'), function (b, i) {
+    b.addEventListener('click', function () {
+      b.setAttribute('data-bite', b.getAttribute('data-bite') === '1' ? '0' : '1');
+      score.textContent = document.querySelectorAll('.loop[data-bite="1"]').length + ' of 6 bitten';
+      if (!D.fallback) D.tap(b, i);
+    });
+  });
+})();
+</script>
+</body>
+</html>

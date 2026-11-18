@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>painted-cloak-hero · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 블렌더에서 7등신 3D 영웅을 옷 한 벌씩 만들고 붓 자국이 보이는 손 그림 질감으로 칠한 뒤, 몸보다 몇 프레임 늦게 따라오는 망토와 함께 대기 · 걷기 · 달리기 루프와 돌아서기를 만들어 동작마다 검토합니다.">
+<meta property="og:title" content="painted-cloak-hero · motion-skills">
+<meta property="og:description" content="붓 자국으로 칠한 3D 영웅과 몇 프레임 늦게 따라오는 망토, 동작마다 이름과 카운터를 띄운 검토 영상과 어긋난 곳 목록.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/painted-cloak-hero/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/painted-cloak-hero">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / painted-cloak-hero</nav>
+  <h1>painted-cloak-hero</h1>
+  <p>주제 하나를 주면 블렌더에서 7등신 3D 영웅을 옷 한 벌씩 따로 만들고, 망토 · 모자 · 옷을 붓 자국이 보이는 손 그림 질감으로 칠합니다. 망토는 몸과 함께 움직이지 않고 몇 프레임 늦게 따라오며, 대기 · 걷기 · 달리기는 끊김 없는 루프로 만들고 동작마다 이름과 프레임 카운터를 띄운 검토 영상과 어긋난 곳 목록을 냅니다.
+  보고 만든 원본: <a href="https://x.com/rewind02/status/2121933776884269192?a=RaDjcVLQVKppvgFvRB4&amp;s=19" target="_blank" rel="noopener">작가 rewind(@rewind02)의 X 게시물 (밀짚모자와 붓 자국 파란 망토의 영웅, 블렌더 + Claude)</a>.</p>
+  <ul class="tags"><li>블렌더 · bpy</li><li>손 그림 붓 자국 질감</li><li>몇 프레임 늦게 따라오는 망토</li><li>루프 사이클 · 동작별 검토</li><li>glTF + three.js</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 한 줄 (선택: 앞 · 뒤 설정화 두 장)</dd>
+      <dt>브리프</dt><dd>입는 순서대로 적은 옷, 붓 자국 색(어두운 색 → 밝은 색), 망토의 무게와 늦게 따라오는 프레임 수, 동작마다 자세 · 예비 동작 · 회복, 검토 기록 — <code>character.json</code></dd>
+      <dt>만들기</dt><dd>설정화 앞 · 뒤 → 블록아웃 → 바지 · 셔츠 · 장화 · 모자를 따로 만든 메시 → 붓 자국 질감(UV 위에 미터 단위로 그린 획, 망토 밑단과 밀짚 챙은 올이 풀린 가장자리) → 몸 뼈 + 망토 뼈 줄 → 대기 · 걷기 · 달리기 루프와 돌아서기를 한 동작씩</dd>
+      <dt>망토</dt><dd>마디마다 몸이 <code>lag × i / n</code> 프레임 전에 있던 자리를 쫓아감 — 어깨는 지금, 밑단은 몇 프레임 늦게 · 팔의 흔들림도 같은 만큼 늦게 · 부드러운 한계로 루프가 정확히 반복</dd>
+      <dt>검사</dt><dd>관절 범위, 움직이는 바닥 위에서 발 고정, 망토가 늦는 프레임 수(1–8), 밑단이 뒤로 끌리는지, 다리와의 간격, 루프 닫힘, 숨쉬는 대기, 돌아서기 예비 동작, 붓 자국 대비, 결정성 — 14개 → <code>REVIEW.md</code> 어긋난 곳 목록</dd>
+      <dt>출력</dt><dd><code>.blend</code>, 동작별 애니메이션이 든 <code>.glb</code> + three.js 검토 플레이어, 동작마다 검토 MP4(Cycles), 설정화 · 턴어라운드 · 캐스트 시트</dd>
+    </dl>
+    <pre><code>python3.13 -m venv ~/.venv-bpy
+~/.venv-bpy/bin/pip install bpy
+S=path/to/painted-cloak-hero; PY=~/.venv-bpy/bin/python
+$PY $S/scripts/hero.py new my-hero --from snow-postman
+cd my-hero          # BRIEF.md → character.json
+$PY $S/scripts/hero.py check     # → out/REVIEW.md
+$PY $S/scripts/hero.py concept
+$PY $S/scripts/hero.py sheet
+$PY $S/scripts/hero.py review
+$PY $S/scripts/hero.py player</code></pre>
+    <p class="mute">요구 사항: 블렌더의 파이썬(<code>pip install bpy</code> 또는 블렌더 본체), ffmpeg. GPU 없이 동작합니다. 블렌더 MCP로 한 단계씩 실행하는 방법은 <a href="https://github.com/jungrok5/motion-skills/blob/main/painted-cloak-hero/references/BLENDER-MCP.md">references/BLENDER-MCP.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10.6;--demo-bg:#76788f">
+    <iframe data-src="demo/?src=snow-postman&amp;clip=run" title="painted-cloak-hero 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/?src=snow-postman">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/snow-postman</code> · 대기 · 걷기 · 달리기 · 돌아서기 · 끌어서 카메라 돌리기</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/?src=snow-postman&amp;clip=run" data-cap="예제 &lt;code&gt;examples/snow-postman&lt;/code&gt; · 대기 · 걷기 · 달리기 · 돌아서기 · 끌어서 카메라 돌리기" aria-pressed="true">우편배달부</button>
+        <button class="btn" type="button" data-src="demo/?src=rain-ferryman&amp;clip=walk" data-cap="시작 예제 &lt;code&gt;starter&lt;/code&gt; · 대기 · 걷기 · 돌아서기" aria-pressed="false">뱃사공</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본에 없는 주제 두 가지로 만든 영웅입니다. 스틸은 블렌더 Cycles로 렌더한 검토 화면이고, 카드를 누르면 같은 영웅의 <code>.glb</code>가 three.js 검토 플레이어에서 재생됩니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"post":"우편배달부","ferry":"뱃사공","sheet":"설정화 · 몸 검사"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>눈 고개 우편배달부 <small>examples/snow-postman · 새 주제로 만든 예제</small></h3>
+      <p>진홍 망토(뼈 9줄 × 4마디, 5프레임 늦게), 남색 제복과 놋쇠 단추, 겨자색 털모자, 프로젝트에서 새로 만든 가죽 가방 부품. 달리기를 더했습니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="post" href="demo/?src=snow-postman&amp;clip=run" target="_blank" rel="noopener">
+          <img src="samples/postman-run.jpg" alt="진홍 망토를 두른 우편배달부가 달리는 옆모습, 망토가 뒤로 길게 휘날리고 밑단의 올이 풀려 있음" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">달리기 · 0.67초 루프</span><b>뒤로 흐르는 망토</b><span class="how">밑단이 몸보다 늦게 따라오며 뒤로 끌리고, 두 발이 모두 뜨는 순간이 있습니다. 루프는 0.1 cm 안에서 닫힙니다.</span></div></a>
+        <a class="tile" data-tags="post" href="demo/?src=snow-postman&amp;clip=turn" target="_blank" rel="noopener">
+          <img src="samples/postman-turn.jpg" alt="몸을 돌리는 우편배달부, 망토 자락이 몸보다 늦게 넓게 돌아감" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">돌아서기 · 150°</span><b>몸이 멈춘 뒤에도 도는 자락</b><span class="how">반대쪽으로 살짝 감았다가 두 걸음으로 돌고, 엉덩이가 자리를 잡는 동안 망토는 계속 흔들립니다.</span></div></a>
+        <a class="tile" data-tags="post" href="demo/?src=snow-postman&amp;clip=idle" target="_blank" rel="noopener">
+          <img src="samples/postman-idle.jpg" alt="서서 숨 쉬는 우편배달부의 앞모습, 열린 망토 사이로 제복과 가방끈이 보임" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">대기 · 3.5초 루프</span><b>붓 자국으로 칠한 옷</b><span class="how">가슴이 오르내리고 무게가 옮겨 가며 두 번 깜박입니다. 망토의 색 네 가지는 어두운 색부터 차례로 칠했습니다.</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>비 오는 날 뱃사공 <small>starter · 시작 예제</small></h3>
+      <p>삿갓, 이끼색 망토(4프레임 늦게), 크림색 셔츠, 올리브색 바지, 갈색 장화. 라이브러리 부품만으로 만든 시작 영웅입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="ferry" href="demo/?src=rain-ferryman&amp;clip=walk" target="_blank" rel="noopener">
+          <img src="samples/ferryman-review.jpg" alt="검토 화면: 왼쪽 위에 HERO / ANIMATION REVIEW, Walk [locomotion], 프레임 카운터, 오른쪽 위에 망토 뒷모습 설정화, 가운데 걷는 뱃사공" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">걷기 · 검토 영상</span><b>원본과 같은 검토 화면</b><span class="how">평평한 바닥, 고정된 빛, 구석의 설정화, 동작 이름과 프레임 카운터. 카메라는 앞에서 옆으로 돌고 바닥은 걸음만큼 흘러갑니다.</span></div></a>
+        <a class="tile" data-tags="ferry" href="demo/?src=rain-ferryman&amp;clip=walk" target="_blank" rel="noopener">
+          <img src="samples/ferryman-walk.jpg" alt="옆에서 본 걷는 뱃사공, 이끼색 망토 자락이 몸 뒤로 끌림" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">걷기 · 1초 루프</span><b>몇 프레임 늦은 자락</b><span class="how">디딘 발은 흘러가는 바닥에 붙어 있고, 망토 밑단은 측정해 보면 몸보다 3.4프레임 늦게 움직입니다.</span></div></a>
+        <a class="tile" data-tags="ferry" href="demo/?src=rain-ferryman&amp;clip=turn" target="_blank" rel="noopener">
+          <img src="samples/ferryman-turn.jpg" alt="강 쪽으로 돌아서는 뱃사공, 망토가 늦게 따라 돌아감" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">돌아서기 · 180°</span><b>삿갓과 망토</b><span class="how">밀짚 삿갓은 둘레를 따라 짧은 획으로 칠하고 가장자리 올을 풀었습니다.</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>설정화와 몸 검사 <small>hero.py concept · hero.py sheet</small></h3>
+      <p>원본의 1단계처럼 망토까지 그린 앞 · 뒤 설정화를 만들고(사용자가 준 그림이 있으면 그것을 씀), 동작 포즈를 양쪽 옆에서 본 캐스트 시트로 무릎 · 팔꿈치 방향을 봅니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="sheet" href="samples/postman-concept.jpg" target="_blank" rel="noopener">
+          <img src="samples/postman-concept-thumb.jpg" alt="우편배달부 설정화: 앞모습과 뒷모습, 붓 자국 진홍 망토" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">설정화</span><b>앞 · 뒤 두 장</b><span class="how">뒷모습은 검토 영상 오른쪽 위에 고정됩니다.</span></div></a>
+        <a class="tile" data-tags="sheet" href="samples/postman-cast.jpg" target="_blank" rel="noopener">
+          <img src="samples/postman-cast-thumb.jpg" alt="우편배달부 캐스트 시트: 걷기 · 달리기 · 돌아서기 · 대기 포즈를 오른쪽과 왼쪽 옆에서 본 그림" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 시트</span><b>동작 포즈, 양쪽 옆</b><span class="how">무릎은 뒤로, 팔꿈치는 앞으로만 접히는지 봅니다. 자동 검사가 모든 동작의 모든 프레임을 같은 기준으로 잽니다.</span></div></a>
+        <a class="tile" data-tags="sheet" href="samples/ferryman-turnaround.jpg" target="_blank" rel="noopener">
+          <img src="samples/ferryman-turnaround-thumb.jpg" alt="뱃사공 턴어라운드: 앞, 왼쪽 3/4, 왼쪽, 뒤, 오른쪽, 오른쪽 3/4" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">턴어라운드</span><b>뱃사공, 여섯 방향</b><span class="how">걸쇠와 셔츠는 앞, 망토는 뒤에 있는지 봅니다.</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. 출발점은 rewind(@rewind02)가 X에 올린 4초 영상(찢어진 밀짚모자와 붓 자국 파란 망토를 두른 영웅이 서 있다가 걷고, 카메라가 앞에서 옆으로 돌며, 구석에 뒷모습 설정화와 "HERO / ANIMATION REVIEW" 글씨가 있는 검토 화면)과 여덟 단계 작업 순서입니다. 이 스킬은 그 방법(설정화 → 블록아웃 → 옷 메시 → 붓 자국 → 몸 뼈 + 망토 뼈 → 망토가 늦게 따라오는 대기 · 걷기 → 검토 화면 → 동작별 렌더와 어긋난 곳 목록)과 검토 화면의 모양만 가져오고, 원본의 영웅은 쓰지 않았습니다. 두 영웅의 디자인과 코드는 모두 이 레포의 것입니다. 바로 앞 단계의 방법(옷에 뼈 넣기)은 <a href="../cloth-rig-character/">cloth-rig-character</a>에 있습니다.</p>
+  <div class="works">
+    <a class="work" href="demo/?src=snow-postman" target="_blank" rel="noopener"><b>눈 고개 우편배달부 · 검토 플레이어</b><span>대기 3.5초 · 걷기 0.96초 · 달리기 0.67초 루프, 돌아서기 2.4초, 동작마다 버튼</span><span class="url">painted-cloak-hero/demo/?src=snow-postman</span></a>
+    <a class="work" href="demo/?src=rain-ferryman" target="_blank" rel="noopener"><b>비 오는 날 뱃사공 · 검토 플레이어</b><span>대기 4초 · 걷기 1초 루프, 돌아서기 2.2초</span><span class="url">painted-cloak-hero/demo/?src=rain-ferryman</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/painted-cloak-hero/examples/snow-postman"><b>예제 폴더 · examples/snow-postman</b><span>브리프, character.json, 가방 부품(parts.py), 검토 기록</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/rewind02/status/2121933776884269192?a=RaDjcVLQVKppvgFvRB4&amp;s=19" target="_blank" rel="noopener"><b>원본 게시물 · X</b><span>rewind(@rewind02) · 4초 영상 · 블렌더 + Claude · 여덟 단계</span><span class="url">x.com/rewind02/status/2121933776884269192</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-cloak-hero/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/painted-cloak-hero">폴더</a> <span>pch · scripts · player · starter · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-cloak-hero/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-cloak-hero/references/SOURCE.md">references/SOURCE.md</a> <span>원본 게시물의 여덟 단계와 이 스킬의 대응</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-cloak-hero/references/BRIEF.md">references/BRIEF.md</a> <span>브리프 틀과 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-cloak-hero/references/PAINT.md">references/PAINT.md</a> <span>붓 자국 질감</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-cloak-hero/references/RIG.md">references/RIG.md</a> <span>몇 프레임 늦게 따라오는 망토</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-cloak-hero/references/MOTION.md">references/MOTION.md</a> <span>루프 사이클과 돌아서기, 검토 카메라</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-cloak-hero/references/PARTS.md">references/PARTS.md</a> <span>character.json과 부품, 새 부품 만들기</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-cloak-hero/references/BODY.md">references/BODY.md</a> <span>앞뒤좌우와 관절 검사</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-cloak-hero/references/BLENDER-MCP.md">references/BLENDER-MCP.md</a> <span>블렌더 MCP로 한 단계씩</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/painted-cloak-hero/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 영웅은 모두 코드로 만들고 칠했습니다(외부 모델 · 텍스처 0개) · 검토 플레이어 three.js r170 (MIT) · HUD 폰트 Inter (SIL OFL)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

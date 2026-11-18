@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flight — sprite-stack-flight</title>
+<script src="lib/stack.js"></script>
+<script src="lib/kit.js"></script>
+</head>
+<body>
+<script>
+// A starting flight: a little seaplane over a green archipelago at noon. Replace every part with your topic's own —
+// the look, the world, the craft, the plan, the cockpit — following BRIEF.md. Nothing here is meant to stay as it is.
+const F = SS.create({ title: 'FLIGHT', sub: 'A SUBTITLE', fps: 30 });
+
+// 1. the look: sky stops (horizon → zenith), fog at the horizon, four cloud tones (shadow → highlight)
+F.look({
+  sky: ['#d6ecf2', '#a6d2ec', '#6aaee0', '#3f86cf'], fog: '#d4e8ef',
+  cloud: ['#8ea6c4', '#c6d6e8', '#eef5fb', '#ffffff'], shadow: .72,
+});
+
+// 2. the world: height(x, y, n) in terrace levels (≤ 0 = water; negative = depth), color(level, x, y, info) per terrace
+F.world({
+  size: 512, seed: 3, unit: 1,
+  height(x, y, n) {
+    const land = n.fbm(x, y, 140, 5);                                  // 0..1, wraps at the world size
+    return (land - .52) * 70 + n.fbm(x, y, 30, 2) * 4;
+  },
+  color: SK.bands([
+    [1, ['#e8d6a0', '#dcc890']],                                       // beach
+    [5, ['#6cbf3a', '#5aae32']],                                       // grass
+    [10, ['#4c9a2c', '#3f8a28']],
+    [16, ['#8a8a78', '#7a7a6a']],                                      // rock
+    [99, '#f2f4f6'],                                                   // snow
+  ]),
+  water: { ramp: ['#164a9a', '#2464b8', '#3a86d0', '#64c0e0'], depth: 10, glints: .03 },
+  decorate(W) {
+    SK.scatter(W, { count: 12000, where: (x, y) => { const l = W.level(x, y); return l >= 3 && l <= 9 && W.n.value(x, y, 24) > .5; }, stamp: (W, x, y, r) => SK.tree(W, x, y, { h: 2, big: r() < .3 }) });
+  },
+});
+
+// 3. the clouds: puffs of stacked discs drifting with one wind (their shadows move with them)
+F.clouds({ count: 40, base: [48, 60], size: [4, 8], wind: [1.2, .3], seed: 5 });
+
+// 4. the craft: a voxel model cut into slices. x = across (port → starboard), y = along (0 = nose), z = up.
+//    frames: 3 for a turning propeller; outline: a dark rim under the stack.
+const plane = SS.model({ w: 31, h: 26, d: 11, frames: 3, outline: '#1c2030' }, (M, f) => {
+  const cx = 15;
+  SK.fuselage(M, { cx, cz: 5, y0: 3, y1: 23, r: u => u < .3 ? 2.6 : SS.lerp(2.6, 1, (u - .3) / .7), color: '#f4f2ea' });
+  M.box(cx - 1, 7, 7, cx + 1, 9, 7, '#7fc4e8');                                                     // cabin glass
+  SK.wings(M, { cx, y: 8, span: 15, chord: 4, tip: 3, z: 8, thick: 1, color: (x) => Math.abs(x - cx) > 12 ? '#e0402c' : '#f4f2ea' });   // high wing
+  M.plate([[cx - 6, 21], [cx + 6, 21], [cx + 5, 24], [cx - 5, 24]], 5, 5, '#f4f2ea');              // tailplane
+  SK.fin(M, { cx, y0: 19, y1: 24, yt0: 22, yt1: 24, z0: 5, z1: 10, color: '#e0402c' });
+  for (const s of [-1, 1]) { M.tube(cx + s * 4, 1, 5, 18, [1.3, 1], '#d8d4c8'); M.box(cx + s * 3, 9, 2, cx + s * 3, 10, 3, '#7a7a80'); }   // floats + struts
+  SK.prop(M, f, { cx, cz: 5, y: 2, r: 4, frames: 3, color: '#2a2a30', disc: '#9a9aa4' });
+  SK.navLights(M, { cx, x: 15, y: 9, z: 8 });                                                       // red port, green starboard
+});
+
+// 5. the flight model: mass sets the timing (1 nimble … 4 heavy); speed in cells/s; clearance above the ground
+F.craft(plane, {
+  mass: 1.3, speed: 20, clearance: 6, over: 1, chase: 2.4, chaseDist: 24, chaseRise: 5, voxelSize: .25,
+  frame: (s, t) => Math.floor(t * 24) % 3,
+  trail: { from: [[0, 10, 8], [30, 10, 8]] },
+});
+
+// 6. the plan: steps of { dur, cam: over | chase | cockpit, bank°, climb°, thr 0..1, roll: left | right, caption }
+F.plan({
+  start: { x: 256, y: 256, z: 40, heading: 30 },
+  steps: [
+    { dur: 4, cam: 'over', bank: 0 },
+    { dur: 4, bank: -30 },
+    { dur: 5, cam: 'chase', bank: 0, climb: -4 },
+    { dur: 3, roll: 'right', thr: .9 },
+    { dur: 5, cam: 'cockpit', bank: 20, climb: 3, thr: .55 },
+    { dur: 4, cam: 'over', bank: 0, caption: 'A CAPTION' },
+  ],
+});
+
+// 7. the cockpit: static (drawn once), over (every frame, on top). Design one for your craft.
+F.cockpit({
+  static(P) {
+    SK.canopy(P, { cy: 300, r: 330, thick: 12, color: '#3a3f4a', hi: '#5a6070', lo: '#22262e' });
+    SK.dash(P, { y: 206, color: '#2e323c', lip: '#4a5060', shadow: '#16181e' });
+  },
+  over(P, s, t, F) {
+    SK.attitude(P, 240, 238, 20, s);
+    SK.gauge(P, 180, 238, 15, s.v / 36, { label: 'SPD' });
+    SK.gauge(P, 300, 238, 15, s.thr, { label: 'RPM' });
+    SK.radar(P, 360, 214, 60, 44, s, F, { tint: '#64ff9a' });
+    SK.readout(P, 70, 228, String(Math.round(s.z * 30)).padStart(4, '0'));
+  },
+});
+
+F.start();
+</script>
+</body>
+</html>

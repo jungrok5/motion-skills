@@ -16,7 +16,8 @@
     "tree_stump_01",
     "wine_barrel_01",
     "boulder_01",
-    { "id": "fern_02", "maps": "d" }
+    { "id": "fern_02", "maps": "d" },
+    { "id": "fir_sapling", "maps": "d", "heavy": true }
   ],
   "atlases": [
     { "id": "fir_tree_01", "map": "twig" },

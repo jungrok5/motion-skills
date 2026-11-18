@@ -178,6 +178,91 @@ page once in safe mode (`?safe=1`: lowest tier, optional passes off — the smal
 context a panel says so in the realm's language, with what to do, the card's name and the ways on. *Rule:* a failure
 to start is a screen the visitor reads — never a stack trace, never a blank canvas.
 
+### Round 3 — whole trees, kits of structures, a lens, ground that does not repeat
+Asked for: the three things the second round said it had not done.
+
+**"Scanned trees" is decided by a table, not by wanting them.** The catalogue lists a tree's triangles for another
+version of the model; the files said: the full-grown fir and pine are 7.0 and 17.2 million triangles and 465 and
+914 MB each, the jacaranda 3.9 million and 205 MB. A page that reads originals from the library's server cannot take
+those. What it can take: one gnarled 3.4 m tree at 1.07 million and 45 MB, sets of saplings and shrubs at 0.4 million
+and 19–23 MB. *So:* measure every candidate from its glTF (triangles, megabytes, objects, which materials are cut
+out) before promising anything; say which trees are scans and that the forest is not.
+
+**A tree's levels of detail cannot be edge collapse.** A crown is tens of thousands of leaves that do not touch each
+other or the twig: a simplifier that works within connected pieces stops at "every leaf is still two triangles".
+*Fix (lib/46_lods.js):* find the pieces (weld by position, union over triangles); leaves are dropped by a fixed
+lottery — each level a subset of the one before — and the ones kept are enlarged about their own middles (growth
+`(1 / share)^0.45`, capped at 6, less for a spray several times the usual size); twigs are ranked by their share of
+the surface and dropped thinnest first, which is what "sub-pixel from here" means; a ceiling on the triangles of each
+wood level keeps a trunk from staying at ten thousand. The first version called anything six times the median a stem
+and never dropped it: a fir's bigger sprays are that, and the far levels would not go under 16 000.
+
+**A level in view is a draw call, and a tree has seven.** Five kinds of shrub and six of sapling, two or three
+materials each, seven levels: the lane went from 444 draw calls to 602. *Fix:* parts of a tree that wear the same
+maps (a shrub's leaves and twigs off one atlas) are one part; a sapling or a shrub takes five levels, not seven;
+wood that has come down to a few triangles is not drawn; fewer kinds. 545 — and the count now says how many of them
+are the shadow cascades (a still draws all three, the live page one or two a frame).
+
+**The second level, at nine metres, looked like a different tree.** A third of the leaves, enlarged, is right at
+thirty metres and wrong where you stand under the crown. *Fix:* a tree's levels are kept to 14 / 30 / 60 / 110 / 190 m
+(a sapling a third of that) — a hero tree is one tree and can afford every leaf when you are beside it. Not every
+triangle, though: a still taken 3.5 m from one drew 1.07 M for it alone, so a tree of over 600 000 triangles starts
+at its first level (every leaf, at half the triangles).
+
+**A scanned tree needs the year too.** It stood green among gold neighbours in autumn and kept every leaf in the snow.
+*Fix:* its leaves turn early and whole, each tree and clump to its own gold or russet, and are shed in clumps by the
+season (`fall`); the shadow pass sheds the same leaves, or a bare tree throws a full crown's shadow.
+
+**A kit piece is not where its file's origin is.** The fort's pieces are laid out in a field 70 m across; a piece is
+placed about its own middle by moving the copy's origin — and culling and distance used that origin. The tower was
+there from the woods and gone from the meadow; two corners were missing from above. It looked like a placement
+mistake and was not. *Fix:* each copy keeps where its middle is, and view, range and level are decided there.
+
+**A kit's wall tiles.** Its UVs run from −7 to 11; baked maps clamped at the edge drew a smear. *Fix:* a model's maps
+repeat when any of its UVs leave 0–1 (measured at load). The same was true of a sapling's bark.
+
+**"Stand it on its lowest point" lifts a pier.** Pieces whose poles go 0.6–0.9 m below their zero were each lifted
+by a different amount. *Fix:* `arrange` and `swing` keep the model's own zero (`base: false`).
+
+**Draw a kit before placing it.** Twenty-two pieces with names like `wall_thin_corner_02` say nothing about which
+face is the outside or where the open ends are. Sixty lines that plot each piece's triangles from the front, the side
+and above (no renderer) answered it in a minute: walls run along z, the outside is −x, a corner's two arms. Then the
+plan was set out in the kit's frame with quarter turns, and looked at from above in the engine (`up=48`) before
+anything else — which is where the missing tower showed.
+
+**Letting go of vertex copies found the one place that still read them.** Dropping a buffer's array once the
+graphics card has it saved 60 MB after one still (347 → 286 MB of array buffers) and crashed the next frame: the
+renderer measures a geometry's bounding sphere when it first draws it, and another level shared the positions that
+were gone. *Fix:* every scan geometry is given its sphere when it is made. And measure memory after a forced
+collection — before one, the heap figure was 553 MB with or without the change.
+
+**A lens before the resolve, not after.** Fourteen taps a pixel is a noisy blur; after temporal anti-aliasing it would
+stay noisy and would read a depth buffer that jitters. Between the lit picture and the resolve, with the disc turned
+every frame, the resolve adds the frames up and a still has two hundred taps. A map of the largest blur in each 8 px
+tile sizes the disc (and lets the sharp parts of the picture skip the pass); what is behind a sharper pixel may not
+spread over it. The focus is the median of nine depths in the middle of the picture, eased in dioptres. The first
+stills had the bottom third of every picture melted — real for that aperture, wrong for a walk: the near side is held
+back to six tenths, and the amount came down. **Focus on a subject, not on a distance:** the first "close-up" still
+named 2.5 m and focused on grass.
+
+**A tile shows from above, most on what is laid in rows.** The cobbled lane from seven metres up showed a grid of
+the same dark stone; stains and relaid patches did not hide it. *Fix:* each ground layer is read twice with offsets
+that change from patch to patch of a noise that does not repeat, and the two are joined along whichever stands
+taller — the join runs round stones. Offsets only, so normals stay true; explicit gradients, so the mip level does not
+jump at a patch's edge. Cobbles were the worry (two layouts cross-faded would ghost) and were fine: a height blend is
+not a cross-fade.
+
+**A time limit on a whole file fails exactly the big ones.** The live test, run while stills were rendering on the
+same machine, reported 54 of 58 models: the four trees had "not arrived". Each request had forty seconds; a 20–45 MB
+file read between slow frames took longer — and so it would on a slow line with nothing else wrong. *Fix:* a
+download is given up when nothing of it has arrived for forty seconds, not when all of it has taken that long. Test
+the live page under load, and with the heavy scans forced on (`?heavy=1`): the still renderer waits for everything
+and would never have shown this.
+
+**254 MB is a decision, not a detail.** The four heavy scans are 105 MB of it. They are marked, come last, and a
+phone, the lowest quality and safe mode do without them — the button a framed page waits behind states what *that*
+device will fetch — and every one of them has the engine's own tree as its fallback, so the place is whole either way.
+
 ## The engine
 **The picture**
 - Shade under eaves and jetties was black → the computed sky was physically dim next to the sun (single scattering
@@ -392,3 +477,47 @@ this when asked; do not let "no GPU here" stand in for it.
   work: each owned named files only and was forbidden the rest; each had to render stills and judge them against the
   reference frames; anything they wanted changed in a shared file came back as a note, not an edit (that is how the
   shadow-atlas limit and the turf tiling were found).
+
+**On a phone the picture looked out of focus — from its first frame.** The owner's words: not crisp, hazy, as if the
+focus were off, and so from the start. Nothing here had looked at a phone's picture at a phone's size: every still
+was 1280 × 720 at full scale. Rendered the way a phone ran it (the tour's frames at the canvas and scale of the `low`
+tier, stretched to the screen's 1170 pixels), the cause was plain, and it was three things on top of each other.
+(1) *Too few pixels.* `low` drew 0.4–0.8 of a canvas of 1.5 pixels a CSS pixel: 350 pixels across at the start, and
+the governor, chasing sixty frames a second, takes it to 230 within seconds on any device that cannot hold them (what
+the owner's phone did was not measured: no phone here). (2) *The resolve did not resolve.* It took every frame at the same weight wherever that frame's sample had
+fallen, which adds up to the small frame stretched — held still for a minute it was as soft as in the first second.
+(3) *Textures were read for the small frame*, a level coarser than the canvas could show. *Fix:* a phone's canvas has
+two pixels a CSS pixel on any tier and its governor aims at thirty frames a second (`?fps=60` for sixty), from 0.7 of
+the canvas; a canvas pixel listens to a frame by how near that frame's sample fell to it, with more places for the
+sample to fall the smaller the frame; the history is read with a Catmull-Rom filter, so a walk does not blur it a
+little every frame; textures take a level bias of log2 of the scale; `low` filters them at four samples of
+anisotropy, not two. The same applies on any device whose frame is smaller than its canvas — every guessed tier starts
+in the middle of its range. *Rule:* judge the page at the size and scale its visitors get, not at the size the stills
+are made; and a resolve that is called "upsampling" must be shown to gain detail on a still view (`?off=taau` against
+not, at `?scale=0.5`).
+
+**"Do the puddles mirror the light and the sky?" — asked, and the honest answer was "the sky, and a glint".** The
+mirror on wet ground marched the reflected ray in steps that grew by 1.3: fourteen of them on `high` reach ten metres
+from a puddle eight metres off, and a lit window across a square needs fifteen — so by night a pool showed a dark sky
+and nothing of the house behind it; `medium` and `low`, which is every phone, had no mirror at all. Nobody had put a
+pool between the eye and a house in a still, so nothing showed it. *Fix:* the ray is walked along its line on the
+screen, in even steps there, not in metres — a window thirty metres beyond a pool is a short way up the screen — 8 /
+12 / 18 / 24 steps by tier, on every tier; the crossing is narrowed by halving once the ray is found behind
+something; a ray that ran its whole reach and met nothing is given the sky itself (not the share of sky a lane is
+allowed); and the rougher wet film beside a pool spreads the ray, so a lamp draws out into a streak. The pools
+themselves were wrong too, once the sky showed in them: laid on one wide field of noise, a whole square stood under a
+single sheet while the next lay dry — a flood, not puddles. With a finer field laid in they are one to four metres
+across, about a fifth of open paving when full, stone tops standing out along their edges. And the rings
+rain makes were drawn on the lawns as well — hung over the blades at four tenths of their strength, because the test
+against the depth buffer had been softened to keep them whole on cobbles: they are made only where the ground is
+stone, earth or water. (The rain map also took everything built as a roof; what sways in the wind — flags, washing,
+pot plants, signs — is left out of it now: it shelters nothing.) *Rule:* a reflection is judged with something to reflect in the picture — a pool between the eye and a lit house, at
+dusk — on the lowest tier too; and a wet square is looked at by day, from above eye height, where every mistake in
+where the water lies is plain.
+
+**A reload the page gives itself came back to the start button.** In a frame or on a phone the page waits for a press
+before it fetches anything. The quality button reloads the page, and so does the step down a slow device is given
+after ten seconds below its tier — and each reload stood at the start button again, mid-walk. It showed only when the
+streaming grew long enough for the step down to fire inside the samples page's frame (on the CPU rasteriser every
+device is a slow one). *Fix:* a reload the page makes carries `go=1`, as the safe-mode retry already did. *Rule:* what
+the visitor agreed to once is carried through every reload the page makes itself.

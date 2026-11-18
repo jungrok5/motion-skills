@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hic.js smoke test</title>
+<!-- The smallest complete HTML-in-Canvas page: one live page, drawn through a warp that follows the pointer, still
+     clickable and typeable under the warp. Used by tools/hic/hic-test.mjs to prove the runtime; a reference for skills. -->
+<style>
+  html, body { margin: 0; height: 100%; background: #f3efe6; overflow: hidden; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #page { width: 100vw; height: 100vh; box-sizing: border-box; padding: 8vh 8vw; font: 18px/1.5 Georgia, serif; color: #1d1a14; background: #f3efe6; }
+  #page h1 { font-size: clamp(36px, 8vw, 96px); line-height: 1; margin: 0 0 24px; outline: none; }
+  #page input { font: inherit; padding: 6px 10px; border: 2px solid #1d1a14; background: #fff; }
+  #page button { font: inherit; padding: 6px 16px; border: 2px solid #1d1a14; background: #1d1a14; color: #fff; cursor: pointer; }
+</style>
+</head>
+<body>
+<canvas id="stage" layoutsubtree content="drawable" aria-label="A live page under a lens">
+  <div id="page" drawable>
+    <h1 id="title" contenteditable="plaintext-only" spellcheck="false" data-hic-edit>Still a web page.</h1>
+    <p>Every word here is real text. Move the pointer: the page bends under a lens, and what you click is what you see.</p>
+    <p><input id="field" value="Type here" aria-label="A text field"> <button id="btn" type="button" data-hic-click>Clicked 0</button></p>
+  </div>
+</canvas>
+<script src="hic.js"></script>
+<script>
+(function () {
+  'use strict';
+  var canvas = document.getElementById('stage'), page = document.getElementById('page');
+  if (!HIC.supported('webgl')) { HIC.fallback(canvas); return; }
+  var S = HIC.stage(canvas), gl = S.gl;
+  var n = 0, btn = document.getElementById('btn');
+  btn.addEventListener('click', function () { btn.textContent = 'Clicked ' + (++n); });
+
+  var tex = HIC.gl.texture(gl, { mips: true });
+  var prog = HIC.gl.program(gl, null, [
+    '#version 300 es', 'precision highp float;', 'in vec2 vUv; out vec4 o;',
+    'uniform sampler2D uPage; uniform vec2 uRes, uLens; uniform float uR, uK;',
+    // the same warp as toPage() below: a lens that magnifies near the pointer
+    'vec2 warp(vec2 s){ vec2 d = s - uLens; float r = length(d) / uR; float k = 1. - uK * exp(-r*r); return uLens + d * k; }',
+    'void main(){ vec2 s = vec2(vUv.x, 1. - vUv.y) * uRes; vec2 q = warp(s) / uRes;',
+    '  vec3 c = texture(uPage, q).rgb; float r = length(s - uLens) / uR; c *= 1. - .08 * exp(-r*r*.5) * (1. - exp(-r*r));',
+    '  o = vec4(c, 1.); }'
+  ].join('\n'));
+  var lens = [-1e4, -1e4], R = 160, K = 0.45;
+  function toPage(x, y) { var dx = x - lens[0], dy = y - lens[1], r = Math.hypot(dx, dy) / R, k = 1 - K * Math.exp(-r * r); return [lens[0] + dx * k, lens[1] + dy * k]; }
+  var pointer = null;
+  canvas.addEventListener('pointermove', function (e) { var b = canvas.getBoundingClientRect(); pointer = [e.clientX - b.left, e.clientY - b.top]; });
+  window.addEventListener('resize', function () { S.resize(); S.requestPaint(); });
+  var ready = false;
+  S.onPaint(function () {
+    if (!S.upload(page, tex)) return;
+    if (!ready) { ready = true; S.probe(page, document.getElementById('title')).then(function (mode) { S.ready({ mode: mode }); }); }
+  });
+  S.loop(function (t) {
+    if (pointer) { lens[0] += (pointer[0] - lens[0]) * 0.25; lens[1] += (pointer[1] - lens[1]) * 0.25; }
+    else if (HIC.still !== null) { lens = [S.W * 0.42, S.H * 0.3]; }
+    if (ready && pointer) S.placeLocal(page, pointer[0], pointer[1], toPage);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, canvas.width, canvas.height);
+    prog.use(); HIC.gl.bind(gl, prog, { uPage: tex });
+    gl.uniform2f(prog.u.uRes, S.W, S.H); gl.uniform2f(prog.u.uLens, lens[0], lens[1]); gl.uniform1f(prog.u.uR, R); gl.uniform1f(prog.u.uK, K);
+    HIC.gl.fullscreen(gl);
+  });
+  // where an element of the page is on screen (the check uses it to click through the warp)
+  window.__hic.screenOf = function (el) {
+    var b = HIC.box(page, el), q = [b[0] + b[2] / 2, b[1] + b[3] / 2], s = q.slice();
+    for (var i = 0; i < 20; i++) { var p = toPage(s[0], s[1]); s[0] += q[0] - p[0]; s[1] += q[1] - p[1]; }
+    return s;
+  };
+})();
+</script>
+</body>
+</html>

@@ -15,7 +15,11 @@ LR.start({
       'WoodenTable_01', 'painted_wooden_table', 'painted_wooden_bench', 'painted_wooden_stool', 'small_wooden_table_01', 'dining_table', 'wooden_crate_01', 'wooden_bucket_02', 'wicker_basket_01', 'wicker_basket_02',
       'planter_box_01', 'wooden_ladder_02', 'spinning_wheel_01', 'gothic_statue', 'ceramic_pot', 'kite_shield', { id: 'brass_pot_01', metal: 0.85 }, { id: 'metal_jug', metal: 0.6 }, { id: 'watering_can_metal_01', metal: 0.6 },
       ...['cross_pein_hammer', 'hatchet', 'picke_dirty_01', 'rusted_spade_01', 'wooden_axe', 'croissant', 'sweet_potato', 'yellow_onion', 'lemon', 'food_apple_01', 'hamburger_buns'].map((id) => ({ id, shadow: 'none' })),
-      ...['fern_02', 'weed_plant_02', 'nettle_plant', 'shrub_03', 'dandelion_01', 'periwinkle_plant', 'flower_ursinia', 'flower_empodium', 'grass_medium_02', 'celandine_01'].map((id) => ({ id, plant: true }))]);
+      ...['fern_02', 'weed_plant_02', 'nettle_plant', 'shrub_03', 'dandelion_01', 'periwinkle_plant', 'flower_ursinia', 'flower_empodium', 'grass_medium_02', 'celandine_01'].map((id) => ({ id, plant: true })),
+      // scanned structures: a pier, the pieces of a fort (its walls tile: the engine's rock gives them grain near the eye), a wrought-iron gate, a castle door
+      { id: 'modular_wooden_pier', moss: 0.3 }, { id: 'modular_fort_01', moss: 0.85, detail: 'rock', detailTile: 2.4, detailReach: 24, detailColor: 0.6 }, { id: 'large_iron_gate', metal: 0.8 }, 'large_castle_door',
+      // whole scanned trees (heavy: left out on a phone and on the lowest quality — 40_plants.js grows the engine's own there), last, so they arrive last
+      { id: 'fir_sapling', tree: true, turn: 0 }, { id: 'pine_sapling_small', tree: true, turn: 0 }, { id: 'searsia_lucida', tree: true, turn: 0.25, wind: 0.2 }, { id: 'island_tree_02', tree: true, fall: 0.9, leafGain: 1.45, leafTint: [0.96, 1.0, 0.8] }]);
     // photographed leaves, twigs and fronds: the trees the engine grows and its ground cover are painted from these
     await LR.atlas.load(['island_tree_02:leaves', 'fir_tree_01:twig', 'pine_tree_01:twig', 'shrub_03', 'fern_02', 'weed_plant_02']);
     { const D = LR.flora.defs, isl = 'island_tree_02:leaves', ISL = [[0.165, 0.021, 0.337, 0.392], [0.361, 0.031, 0.482, 0.361], [0.518, 0.050, 0.648, 0.362], [0.694, 0.021, 0.815, 0.413], [0.018, 0.630, 0.182, 1.000], [0.217, 0.577, 0.354, 1.000], [0.423, 0.604, 0.562, 1.000]];
@@ -46,6 +50,7 @@ LR.start({
     { name: 'gate', cam: [0.5, 92, 0, 3] }, { name: 'lane', cam: [0.5, 60, 0, 1] }, { name: 'square', cam: [3, 17.5, -6, 4] }, { name: 'inn', cam: [3.5, -6.5, -42, 9] },
     { name: 'smithy', cam: [17.5, 1.5, 62, 3] }, { name: 'mill', cam: [57, 27, -4, 2] }, { name: 'bridge', cam: [12.5, -30.5, -34, 0] }, { name: 'meadow', cam: [-3, -62, -6, -3, undefined] },
     { name: 'chapel', cam: [-86, 24, 58, 8] }, { name: 'farm', cam: [-36, 36, -128, 2] }, { name: 'pond', cam: [41, 50, 84, -3] }, { name: 'woods', cam: [-62, -100.5, 82, 5] }, { name: 'glade', cam: [-100, -93, -52, 6] },
+    { name: 'fort', cam: [-13.5, -98, -8, 7] }, { name: 'pier', cam: [38.5, 57, 102, -3] },
   ],
   build: async (LR) => {
     V.land(); LR.progress(0.42, '집을 짓는 중'); await LR.breath();
@@ -61,7 +66,10 @@ LR.start({
     { x: 3.6, z: 12, look: [-11, -24], pull: 0.6 }, { x: 6.2, z: 5.2, look: [-11, -24], pull: 0.6 }, { x: 5, z: -8.5, look: [-12, -25], pull: 0.6 }, { x: 16, z: -6.5, look: [29, -4], pull: 0.7 }, { x: 19.5, z: 3.5, look: [30, -5], pull: 0.6 },
     { x: 30, z: 8.5, look: [56, 13], pull: 0.4 }, { x: 42.6, z: 14.5, look: [58, 13], pull: 0.7 }, { x: 47.2, z: 23.4, look: [62, 48], pull: 0.6 }, { x: 36, z: 10.5, look: [0, 0], pull: 0.3 },
     { x: 23, z: 5.6, look: [0, 0], pull: 0.3 }, { x: 16, z: -4.5, look: [3, -40], pull: 0.3 }, { x: 2.6, z: -24, look: [3, -41], pull: 0.3 }, { x: 3, z: -35, look: [3, -70], pull: 0.4 }, { x: 3, z: -47.5, look: [0, -86], pull: 0.5 },
-    { x: 0, z: -60, look: [1, -85], pull: 0.7 }, { x: -12, z: -72, look: [1, -85], pull: 0.7 }, { x: -30, z: -84, look: [-76, -103], pull: 0.3 }, { x: -52, z: -97, look: [-97, -95], pull: 0.3 }, { x: -76, z: -103, look: [-110, -82], pull: 0.4 }, { x: -97, z: -95.5, look: [-110, -82], pull: 0.6 }, { x: -104.6, z: -87.2, look: [-112, -80], pull: 0.5 },
+    { x: 0, z: -60, look: [1, -85], pull: 0.7 }, { x: -12, z: -72, look: [-9, -118], pull: 0.6 },
+    // up the path to the old fort, to its gate, along the wall to the tower, and back across the meadow to the wood
+    { x: -13.8, z: -89, look: [-9, -122], pull: 0.8, pitch: 0.06 }, { x: -11.2, z: -104, look: [-9, -126], pull: 0.9, pitch: 0.12 }, { x: -11, z: -112.5, look: [-22, -121], pull: 0.8, pitch: 0.14 }, { x: -20.5, z: -99.5, look: [-52, -97], pull: 0.4 }, { x: -38, z: -93, look: [-76, -103], pull: 0.3 },
+    { x: -52, z: -97, look: [-97, -95], pull: 0.3 }, { x: -76, z: -103, look: [-110, -82], pull: 0.4 }, { x: -97, z: -95.5, look: [-110, -82], pull: 0.6 }, { x: -104.6, z: -87.2, look: [-112, -80], pull: 0.5 },
     { x: -98, z: -93.5, look: [-52, -97], pull: 0.3 }, { x: -76, z: -101.5, look: [-30, -84], pull: 0.3 }, { x: -52, z: -95.5, look: [-6, -80], pull: 0.4 }, { x: -30, z: -82.5, look: [1, -85], pull: 0.5 }, { x: -6, z: -64, look: [3, -41], pull: 0.3 }, { x: 2.6, z: -48, look: [0, -20], pull: 0.3 },
     { x: 3, z: -35, look: [0, 0], pull: 0.3 }, { x: 1, z: -14.5, look: [-25, -8], pull: 0.4 }, { x: -5.5, z: -7.5, look: [-25, -8], pull: 0.4 }, { x: -9, z: 0.6, look: [-40, 3], pull: 0.4 }, { x: -17, z: 1.6, look: [-60, 6], pull: 0.3 }, { x: -29.5, z: 2.6, look: [-60, 6], pull: 0.8, pitch: 0.1 },
     { x: -32, z: 10.5, look: [-60, 6], pull: 0.75, pitch: 0.07 }, { x: -35, z: 20.5, look: [-56, 52], pull: 0.4 }, { x: -41, z: 36, look: [-58, 52], pull: 0.6 }, { x: -31, z: 45, look: [-11, 55], pull: 0.3 },

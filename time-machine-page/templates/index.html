@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Millbrook Library · a page through time</title>
+<!--
+  time-machine-page — the template (the house example of the style; generic topic: a town library opens and grows up).
+  One live page (#page) is restyled for three eras by the CSS below and drawn through each era's shader passes:
+    1904 NEWSPRINT  paper + letterpress + halftone on a desk under a lamp
+    1937 NEWSREEL   gate weave + monochrome film + grain + dust + flicker in a cinema
+    1979 TERMINAL   CRT bulge + green phosphor + scanlines + glow in a beige monitor
+  The dial at the bottom turns the page through them. For a new topic, write BRIEF.md first (references/BRIEF.md), then
+  redesign everything here: the content, the eras (3–5, chosen for the topic), each era's CSS and passes, the picture, sounds.
+-->
+<style>
+  /* ---------------------------------------------------------------- the page in every era */
+  #page, #page * { box-sizing: border-box; }
+  #page { position: relative; overflow: hidden; margin: 0; cursor: default; -webkit-font-smoothing: antialiased; }
+  #page h1, #page h2, #page p, #page ul, #page dl, #page dd, #page figure { margin: 0; padding: 0; font: inherit; }
+  #page ul { list-style: none; }
+  #page .headline { outline: none; cursor: text; white-space: pre-wrap; overflow-wrap: anywhere; }
+  #page input, #page button { font: inherit; color: inherit; margin: 0; border-radius: 0; appearance: none; background: none; border: 0; outline: none; }
+  #page input { cursor: text; min-width: 0; }
+  #page button { cursor: pointer; }
+  #page .art { display: block; width: 100%; height: 100%; }
+  #page .notes li { display: flex; gap: .55em; }
+  #page .notes time { flex: none; }
+  #page .notes span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #page .log-form { display: flex; }
+  #page .facts > div { display: flex; justify-content: space-between; gap: 1em; }
+  /* the picture: one SVG, coloured per era through these variables */
+  #page .art .sky { fill: var(--sky); } #page .art .far { fill: var(--far); } #page .art .stone { fill: var(--stone); }
+  #page .art .shade { fill: var(--shade); } #page .art .dark { fill: var(--dark); } #page .art .lit { fill: var(--lit); }
+  #page .art .flag { fill: var(--flag); } #page .art .line { fill: none; stroke: var(--dark); stroke-width: 1.4; }
+  #page .art text { fill: var(--dark); font: 700 11px/1 Georgia, serif; letter-spacing: .28em; }
+
+  /* ---------------------------------------------------------------- 1904 NEWSPRINT: a broadsheet, set in metal type.
+     Pictures are drawn in warm sepia (the halftone pass screens warm pixels), type is neutral black. */
+  #page[data-era=print] {
+    --sky: #f2e6cf; --far: #c9b28c; --stone: #e2cfaa; --shade: #9c8058; --dark: #2c1d0d; --lit: #fbf1dc; --flag: #6e5434;
+    background: #fff; color: #000; font: 400 15px/21px Georgia, "Times New Roman", "Liberation Serif", serif;
+    padding: 18px 28px 16px; display: grid; grid-template-columns: 300px 230px minmax(0, 1fr); column-gap: 0;
+    grid-template-rows: auto auto auto 1fr; grid-template-areas: "mast mast mast" "head head head" "plate plate body" "facts log log";
+    caret-color: #000;
+  }
+  #page[data-era=print] ::selection { background: #b9c9ff; }
+  #page[data-era=print] .mast { grid-area: mast; text-align: center; border-top: 3px solid #000; border-bottom: 1px solid #000; padding: 4px 0 0; }
+  #page[data-era=print] .mast-name { font: 700 44px/50px "Old English Text MT", "UnifrakturMaguntia", Georgia, serif; letter-spacing: .02em; }
+  #page[data-era=print] .mast-date { border-top: 1px solid #000; padding: 3px 0 3px; font-size: 11px; line-height: 14px; letter-spacing: .16em; text-transform: uppercase; }
+  #page[data-era=print] .headline { grid-area: head; text-align: center; text-transform: uppercase; font: 700 27px/33px Georgia, serif; letter-spacing: .03em; padding: 7px 4px 6px; border-bottom: 1px solid #000; max-height: 80px; overflow: hidden; }
+  #page[data-era=print] .headline:focus { outline: 1px dashed #000; outline-offset: -2px; }
+  #page[data-era=print] .plate { grid-area: plate; padding: 10px 14px 0 0; }
+  #page[data-era=print] .plate .frame { height: 300px; border: 1px solid #000; overflow: hidden; }
+  #page[data-era=print] .plate figcaption { font-style: italic; font-size: 12.5px; text-align: center; padding-top: 4px; }
+  #page[data-era=print] .body { grid-area: body; border-left: 1px solid #000; padding: 10px 0 0 14px; text-align: justify; hyphens: auto; }
+  #page[data-era=print] .body p + p { text-indent: 1.2em; }
+  #page[data-era=print] .body p:first-child::first-letter { float: left; font-size: 48px; line-height: 38px; padding: 4px 4px 0 0; }
+  #page[data-era=print] .facts { grid-area: facts; align-self: end; margin: 10px 14px 0 0; border: 1px solid #000; }
+  #page[data-era=print] .facts::before { content: "In Figures."; display: block; text-align: center; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; border-bottom: 1px solid #000; padding: 3px 0; }
+  #page[data-era=print] .facts > div { padding: 4px 8px; font-size: 13px; line-height: 18px; }
+  #page[data-era=print] .facts > div + div { border-top: 1px dotted #000; }
+  #page[data-era=print] .facts dd { font-style: italic; }
+  #page[data-era=print] .log { grid-area: log; margin: 12px 0 0; border: 1.5px dashed #000; padding: 6px 12px 9px; display: flex; flex-direction: column; min-height: 0; position: relative; }
+  #page[data-era=print] .log::after { content: "✂ Cut here and keep."; position: absolute; right: 4px; top: -16px; font-style: italic; font-size: 11px; }
+  #page[data-era=print] .log h2 { text-align: center; font-size: 12px; letter-spacing: .22em; text-transform: uppercase; }
+  #page[data-era=print] .notes { flex: 1 1 0; min-height: 0; overflow: hidden; font-size: 13px; line-height: 21px; margin-top: 3px;
+    background: repeating-linear-gradient(transparent 0 20px, #000 20px 21px); }
+  #page[data-era=print] .notes time { font-style: italic; }
+  #page[data-era=print] .log-form { gap: 10px; margin-top: 6px; }
+  #page[data-era=print] .log-form input { flex: 1; border-bottom: 1px solid #000; font-style: italic; font-size: 14px; padding: 2px 2px; }
+  #page[data-era=print] .log-form input::placeholder { color: #000; opacity: .75; }
+  #page[data-era=print] .log-form button { border: 1px solid #000; box-shadow: 2px 2px #000; padding: 2px 14px; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; background: #fff; }
+  #page[data-era=print] .log-form button:active { transform: translate(1px, 1px); box-shadow: 1px 1px #000; }
+
+  /* ---------------------------------------------------------------- 1937 NEWSREEL: a title card on a cinema screen */
+  #page[data-era=film] {
+    --sky: #2c2c2c; --far: #565656; --stone: #cfcfcf; --shade: #8a8a8a; --dark: #101010; --lit: #ffffff; --flag: #ececec;
+    background: #050505; color: #f2f2f2; font: 600 19px/1.15 "Arial Narrow", "Liberation Sans Narrow", "Helvetica Neue", Arial, sans-serif;
+    text-align: center; padding: 14px 28px; display: grid; grid-template-columns: 1fr 1fr; column-gap: 18px;
+    grid-template-rows: auto 330px auto auto 1fr; grid-template-areas: "mast mast" "plate plate" "head head" "body facts" "log log"; caret-color: #fff;
+  }
+  #page[data-era=film] ::selection { background: #fff; color: #000; }
+  #page[data-era=film] .mast { grid-area: mast; display: flex; justify-content: center; align-items: center; gap: 14px; }
+  #page[data-era=film] .mast-name { font: 400 26px/1 Impact, "Anton", "Arial Black", sans-serif; letter-spacing: .2em; text-transform: uppercase; padding: 5px 18px 4px; border: 2px solid #fff; box-shadow: 0 0 0 3px #050505, 0 0 0 5px #fff; }
+  #page[data-era=film] .mast-name::before, #page[data-era=film] .mast-name::after { content: "★"; margin: 0 .5em; font-size: .7em; vertical-align: .15em; }
+  #page[data-era=film] .mast-date { display: none; }
+  #page[data-era=film] .plate { grid-area: plate; margin-top: 12px; position: relative; border: 3px solid #fff; overflow: hidden; }
+  #page[data-era=film] .plate .frame { height: 100%; }
+  #page[data-era=film] .plate figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: 4px 0 5px; background: #000c; font-size: 15px; letter-spacing: .1em; text-transform: uppercase; }
+  #page[data-era=film] .headline { grid-area: head; margin-top: 10px; font: 400 40px/1.05 Impact, "Anton", "Arial Black", sans-serif; letter-spacing: .03em; text-transform: uppercase; text-shadow: 3px 3px 0 #555; max-height: 88px; overflow: hidden; }
+  #page[data-era=film] .headline:focus { box-shadow: inset 0 0 0 2px #fff; }
+  #page[data-era=film] .body { grid-area: body; margin-top: 10px; font-size: 18px; line-height: 23px; text-align: left; }
+  #page[data-era=film] .facts { grid-area: facts; margin-top: 12px; align-self: start; }
+  #page[data-era=film] .facts > div { padding: 3px 0; border-bottom: 2px solid #fff; align-items: baseline; text-transform: uppercase; }
+  #page[data-era=film] .facts dt { font-size: 14px; letter-spacing: .12em; color: #cfcfcf; }
+  #page[data-era=film] .facts dd { font: 400 22px/1 Impact, "Arial Black", sans-serif; letter-spacing: .04em; }
+  #page[data-era=film] .log { grid-area: log; align-self: end; display: flex; align-items: center; gap: 12px; border: 2px solid #d9d9d9; padding: 6px 10px 6px 54px; position: relative; text-align: left; margin-top: 10px; }
+  #page[data-era=film] .log::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 42px; border-right: 2px solid #d9d9d9; background: repeating-linear-gradient(-45deg, #eee 0 9px, #050505 9px 18px); }
+  #page[data-era=film] .log h2 { flex: none; font: 400 19px/1 Impact, "Arial Black", sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+  #page[data-era=film] .notes { flex: 1; min-width: 0; height: 24px; overflow: hidden; font-size: 16px; line-height: 24px; font-style: italic; }
+  #page[data-era=film] .notes li + li { display: none; }
+  #page[data-era=film] .notes time { color: #bdbdbd; }
+  #page[data-era=film] .log-form { flex: none; gap: 10px; align-items: center; }
+  #page[data-era=film] .log-form input { width: 170px; border-bottom: 2px solid #f0f0f0; font-size: 17px; font-style: italic; padding: 2px 4px; }
+  #page[data-era=film] .log-form input::placeholder { color: #a8a8a8; }
+  #page[data-era=film] .log-form button { border: 2px solid #f0f0f0; padding: 3px 12px 2px; font: 400 18px/1 Impact, "Arial Black", sans-serif; letter-spacing: .14em; text-transform: uppercase; transform: rotate(-1.5deg); }
+  #page[data-era=film] .log-form button:hover { background: #fff; color: #000; }
+
+  /* ---------------------------------------------------------------- 1979 TERMINAL: a library catalogue on a CRT.
+     The page is white-on-black monospace; the passes make it green phosphor. The picture becomes vector strokes. */
+  #page[data-era=term] {
+    --sky: transparent; --far: transparent; --stone: transparent; --shade: transparent; --dark: #d8d8d8; --lit: transparent; --flag: transparent;
+    background: #000; color: #d4d4d4; font: 400 18px/24px "Courier New", "Liberation Mono", "DejaVu Sans Mono", monospace;
+    text-transform: uppercase; padding: 12px 18px; display: grid; grid-template-columns: 330px 1fr; column-gap: 24px;
+    grid-template-rows: 24px auto auto 1fr auto; grid-template-areas: "mast mast" "head head" "plate body" "facts body" "log log";
+    caret-color: #fff; -webkit-font-smoothing: none;
+  }
+  #page[data-era=term] ::selection { background: #fff; color: #000; }
+  #page[data-era=term] .mast { grid-area: mast; display: flex; justify-content: space-between; background: #c8c8c8; color: #000; padding: 0 8px; white-space: nowrap; overflow: hidden; }
+  #page[data-era=term] .mast-name::before { content: "** "; } #page[data-era=term] .mast-name::after { content: " **"; }
+  #page[data-era=term] .headline { grid-area: head; margin: 12px 0 10px; color: #fff; font-size: 26px; line-height: 30px; text-transform: uppercase; max-height: 62px; overflow: hidden; }
+  #page[data-era=term] .headline::before { content: "> "; color: #8a8a8a; }
+  #page[data-era=term] .headline:focus { box-shadow: 0 2px 0 0 #b8b8b8; }
+  #page[data-era=term] .plate { grid-area: plate; height: 196px; border: 2px solid #b8b8b8; position: relative; }
+  #page[data-era=term] .plate .frame { height: 100%; padding: 6px; }
+  #page[data-era=term] .plate figcaption { position: absolute; left: 10px; top: -13px; background: #000; padding: 0 6px; font-size: 14px; line-height: 24px; }
+  #page[data-era=term] .art * { fill: none !important; stroke: #d8d8d8; stroke-width: 1.3; }
+  #page[data-era=term] .art .sky, #page[data-era=term] .art .flag { stroke: none; }
+  #page[data-era=term] .art text { fill: #d8d8d8 !important; stroke: none; font-family: "Courier New", monospace; }
+  #page[data-era=term] .body { grid-area: body; counter-reset: ln; }
+  #page[data-era=term] .body p { counter-increment: ln; white-space: pre; overflow: hidden; text-overflow: clip; }
+  #page[data-era=term] .body p::before { content: counter(ln, decimal-leading-zero) "  "; color: #fff; }
+  #page[data-era=term] .facts { grid-area: facts; margin-top: 12px; border-top: 2px dashed #8a8a8a; padding-top: 4px; }
+  #page[data-era=term] .facts dd { color: #fff; }
+  #page[data-era=term] .log { grid-area: log; margin-top: 8px; border-top: 2px solid #b8b8b8; padding-top: 4px; }
+  #page[data-era=term] .log h2 { display: none; }
+  #page[data-era=term] .notes { height: 48px; overflow: hidden; }
+  #page[data-era=term] .notes time { color: #fff; }
+  #page[data-era=term] .notes time::after { content: ":"; }
+  #page[data-era=term] .log-form { gap: 12px; }
+  #page[data-era=term] .log-form::before { content: "NOTE>"; color: #fff; flex: none; }
+  #page[data-era=term] .log-form input { flex: 1; color: #fff; text-transform: uppercase; }
+  #page[data-era=term] .log-form input::placeholder { color: #6a6a6a; }
+  #page[data-era=term] .log-form button { flex: none; background: #c8c8c8; color: #000; padding: 0 10px; text-transform: uppercase; }
+  #page[data-era=term] .log-form button::before { content: "[ "; } #page[data-era=term] .log-form button::after { content: " ]"; }
+  #page[data-era=term] .log-form button:hover { background: #fff; }
+
+  /* ---------------------------------------------------------------- phone width: one column in every era */
+  @media (max-width: 520px) {
+    #page[data-era=print] { grid-template-columns: 1fr; grid-template-rows: auto auto auto auto auto 1fr; grid-template-areas: "mast" "head" "plate" "body" "facts" "log"; padding: 12px 14px; font-size: 14px; line-height: 19px; }
+    #page[data-era=print] .mast-name { font-size: 27px; line-height: 34px; }
+    #page[data-era=print] .headline { font-size: 19px; line-height: 23px; max-height: 72px; }
+    #page[data-era=print] .plate { padding: 8px 0 0; } #page[data-era=print] .plate .frame { height: 180px; }
+    #page[data-era=print] .body { border-left: 0; padding: 8px 0 0; } #page[data-era=print] .body p + p { display: none; }
+    #page[data-era=print] .facts { margin: 8px 0 0; }
+    #page[data-era=film] { grid-template-columns: 1fr; grid-template-rows: auto 200px auto auto auto 1fr; grid-template-areas: "mast" "plate" "head" "body" "facts" "log"; padding: 10px 12px; }
+    #page[data-era=film] .mast-name { font-size: 18px; padding: 4px 8px; }
+    #page[data-era=film] .headline { font-size: 28px; }
+    #page[data-era=film] .body { font-size: 16px; line-height: 20px; }
+    #page[data-era=film] .log { flex-wrap: wrap; padding-left: 10px; } #page[data-era=film] .log::before { display: none; }
+    #page[data-era=film] .log-form input { width: 150px; }
+    #page[data-era=term] { grid-template-columns: 1fr; grid-template-rows: 24px auto 150px auto auto 1fr; grid-template-areas: "mast" "head" "plate" "body" "facts" "log"; font-size: 13px; line-height: 19px; padding: 8px 10px; }
+    #page[data-era=term] .mast-date { display: none; }
+    #page[data-era=term] .headline { font-size: 18px; line-height: 22px; max-height: 66px; }
+    #page[data-era=term] .plate { height: 150px; margin-top: 6px; }
+    #page[data-era=term] .body { margin-top: 8px; }
+    #page[data-era=term] .notes { height: 38px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="stage" layoutsubtree content="drawable" aria-label="The Millbrook Library page, drawn as it looked in the year on the dial">
+  <main id="page" drawable data-era="print">
+    <header class="mast">
+      <p class="mast-name" data-slot="masthead"></p>
+      <p class="mast-date" data-slot="dateline"></p>
+    </header>
+    <h1 class="headline" data-slot="headline" contenteditable="plaintext-only" spellcheck="false" data-hic-edit></h1>
+    <figure class="plate">
+      <div class="frame">
+        <!-- the picture: shapes classed by role (sky, far, stone, shade, dark, lit, flag); each era colours them -->
+        <svg class="art" viewBox="0 0 400 250" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <rect class="sky" width="400" height="250"/>
+          <circle class="lit" cx="330" cy="46" r="20"/>
+          <path class="far" d="M0 176 C40 160 70 168 100 158 C130 150 150 162 180 160 L180 200 L0 200Z"/>
+          <path class="far" d="M260 168 C300 152 340 160 400 150 L400 200 L260 200Z"/>
+          <ellipse class="shade" cx="38" cy="150" rx="30" ry="40"/><rect class="dark" x="35" y="176" width="6" height="30"/>
+          <ellipse class="shade" cx="368" cy="146" rx="28" ry="42"/><rect class="dark" x="365" y="176" width="6" height="30"/>
+          <path class="stone" d="M86 92 L200 48 L314 92Z"/>
+          <path class="line" d="M86 92 L200 48 L314 92Z"/>
+          <rect class="stone" x="92" y="92" width="216" height="16"/>
+          <text x="200" y="104" text-anchor="middle">LIBRARY</text>
+          <rect class="shade" x="96" y="108" width="208" height="76"/>
+          <g class="stone"><rect x="102" y="108" width="12" height="76"/><rect x="132" y="108" width="12" height="76"/><rect x="162" y="108" width="12" height="76"/>
+            <rect x="226" y="108" width="12" height="76"/><rect x="256" y="108" width="12" height="76"/><rect x="286" y="108" width="12" height="76"/></g>
+          <path class="dark" d="M186 184 L186 140 Q200 124 214 140 L214 184Z"/>
+          <path class="lit" d="M190 184 L190 142 Q200 131 210 142 L210 184Z" opacity=".55"/>
+          <rect class="stone" x="80" y="184" width="240" height="8"/><rect class="stone" x="70" y="192" width="260" height="8"/>
+          <rect class="shade" x="60" y="200" width="280" height="8"/>
+          <rect class="far" y="208" width="400" height="42"/>
+          <path class="line" d="M80 74 Q140 96 200 64 Q260 96 320 74"/>
+          <g class="flag"><path d="M98 79 l6 12 6-10Z"/><path d="M126 86 l6 11 6-10Z"/><path d="M156 86 l6 10 6-11Z"/><path d="M182 74 l6 11 6-12Z"/>
+            <path d="M210 74 l6 12 6-11Z"/><path d="M238 86 l6 11 6-10Z"/><path d="M268 86 l6 10 6-11Z"/><path d="M294 79 l6 11 6-12Z"/></g>
+          <g class="dark"><circle cx="134" cy="203" r="5"/><path d="M127 208 h14 l2 30 h-18Z"/><circle cx="150" cy="210" r="3.6"/><path d="M145 214 h10 l1 22 h-12Z"/>
+            <circle cx="262" cy="204" r="5"/><path d="M254 199 h16 v2 h-16Z"/><path d="M255 209 h14 l3 29 h-20Z"/><rect x="272" y="214" width="9" height="12" rx="1"/></g>
+        </svg>
+      </div>
+      <figcaption data-slot="caption"></figcaption>
+    </figure>
+    <div class="body" data-slot="body"></div>
+    <dl class="facts" data-slot="facts"></dl>
+    <section class="log" aria-label="Notes">
+      <h2 data-slot="logTitle"></h2>
+      <ul class="notes" data-log-list></ul>
+      <form class="log-form" autocomplete="off">
+        <input type="text" data-log-input data-slot-placeholder="logHint" maxlength="60" spellcheck="false" aria-label="Your note">
+        <button type="button" data-log-add data-hic-click data-slot="logButton"></button>
+      </form>
+    </section>
+  </main>
+</canvas>
+<div id="dial"></div>
+<script src="../lib/hic.js"></script>
+<script src="../lib/passes.js"></script>
+<script src="../lib/time-machine.js"></script>
+<script>
+TimeMachine.start({
+  start: 'print',
+  notes: [{ year: 1904, text: 'Borrowed a book on bees. Due back in two weeks.' }],
+  eras: [
+    {
+      id: 'print', year: 1904, label: 'Newsprint', accent: '#f0c27a', tone: 523,
+      page: { w: 900, h: 620 }, phone: { w: 360, h: 820 }, frame: [36, 44, 44, 44], sheet: 18,
+      focus: [0.3, 0.42], phoneFocus: [0.5, 0.3], dive: 18, maxZoom: 14,
+      passes: [
+        ['letterpress', { ink: '#17120c', rough: 0.7 }],
+        ['halftone', { pitch: 4.4, angle: 45, ink: '#17120c' }],
+        ['paper', { tint: '#ece0c3', age: 0.6, fold: 0.52 }],
+        ['desk', { wood: '#3e2716', lamp: [-0.4, -0.6] }],
+        ['vignette', { amount: 0.5 }]
+      ],
+      sound: { pulse: [1.7, 62, 0.1], noise: ['lowpass', 700, 0.7, 0.012] },
+      content: {
+        masthead: 'The Millbrook Courier',
+        dateline: 'Millbrook, Saturday, October 1, 1904 · Price One Cent',
+        headline: 'Free Library Opens Its Doors to All',
+        caption: 'The new library on Elm Street, as it stood this morning.',
+        body: [
+          'At ten o’clock this morning the Mayor turned a brass key in the door of the Free Library on Elm Street, and some three hundred citizens filed in out of the rain to see what the town had built.',
+          'They found a reading room with sixty-four chairs, gas lamps on every table and eight thousand volumes on open shelves. Any resident may borrow two books at a time upon signing the register. The librarian, Miss Ada Pruitt, asks only that hands be clean.'
+        ],
+        facts: [['Volumes on the shelves', '8,200'], ['Seats in the reading room', '64'], ['Open daily', '9 a.m. to 9 p.m.']],
+        logTitle: 'Reader’s Card', logHint: 'Write a line for the card', logButton: 'Post'
+      }
+    },
+    {
+      id: 'film', year: 1937, label: 'Newsreel', accent: '#ffffff', tone: 440,
+      page: { w: 880, h: 640 }, phone: { w: 360, h: 760 }, frame: [86, 170, 150, 170], phoneFrame: [40, 24, 90, 24],
+      focus: [0.5, 0.3], phoneFocus: [0.5, 0.2], dive: 18, maxZoom: 12,
+      passes: [
+        ['weave', { amount: 0.9 }],
+        ['mono', { dark: '#070707', light: '#f3efe4', contrast: 1.15 }],
+        ['grain', { amount: 0.13, size: 1.1 }],
+        ['dust', {}],
+        ['cinema', { curtain: '#5e1216' }],
+        ['flicker', { amount: 0.06 }],
+        ['vignette', { amount: 0.6 }]
+      ],
+      sound: { noise: ['bandpass', 2600, 0.9, 0.05], gate: [24, 0.85], hum: [50, 0.012] },
+      content: {
+        masthead: 'Millbrook News Parade',
+        dateline: 'Millbrook · October 1937',
+        headline: 'The Library Lends Its Millionth Book!',
+        caption: 'Elm Street · the doors open at nine',
+        body: ['A girl of nine walks out with book number one million: a guide to the stars. The reading room is full every night of the week, and a new wing goes up next spring.'],
+        facts: [['Books lent', '1,000,000'], ['Card holders', '5,400'], ['New wing', '1938']],
+        logTitle: 'Audience notes', logHint: 'Add a note', logButton: 'File'
+      }
+    },
+    {
+      id: 'term', year: 1979, label: 'Terminal', accent: '#7dffa4', tone: 880,
+      page: { w: 800, h: 560 }, phone: { w: 360, h: 700 }, frame: [58, 58, 70, 58], phoneFrame: [44, 44, 52, 44],
+      focus: [0.3, 0.12], phoneFocus: [0.4, 0.1], dive: 16, maxZoom: 12,
+      passes: [
+        ['barrel', { k: 0.1 }],
+        ['mono', { dark: '#010805', light: '#a6ffbf', contrast: 1.35, gamma: 0.62 }],
+        ['bloom', { amount: 1.4, lod: 2.5, tint: '#52ff86' }],
+        ['scanlines', { pitch: 2.6, depth: 0.4 }],
+        ['mask', { pitch: 2.4, depth: 0.5 }],
+        ['monitor', { plastic: '#cdc3ab', room: '#16140f', bezel: 48 }],
+        ['vignette', { amount: 0.55 }]
+      ],
+      sound: { hum: [60, 0.012], whine: [15700, 0.003], noise: ['highpass', 5000, 0.7, 0.005] },
+      content: {
+        masthead: 'Millbrook PL Catalog',
+        dateline: '10/01/79 09:00',
+        headline: 'Welcome. The card catalog is now a computer.',
+        caption: 'ELM ST BRANCH',
+        body: ['Enter a title, author or subject', '128,600 records loaded', 'Terminals on every floor', 'The old drawers go to the museum', 'Search: bees', '  1 The Hive and the Honey Bee 638', '  2 Bees of the World       595', '  3 Keeping Bees in Town    638', 'Help: press ? then return'],
+        facts: [['Records', '128,600'], ['Terminals', '12'], ['Uptime', '99.1%']],
+        logTitle: 'Log', logHint: 'Type a note', logButton: 'Enter'
+      }
+    }
+  ]
+});
+</script>
+</body>
+</html>

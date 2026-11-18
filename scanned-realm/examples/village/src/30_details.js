@@ -1,5 +1,6 @@
 // 은여울 마을 · the small things: lamps round the square, market stalls, the inn's yard, signs, bunting over the
-// lanes, the graveyard wall, the farm's fences and ricks, the pier on the pond, rocks along the brook.
+// lanes, the graveyard wall and its iron gate, the farm's fences and ricks, the pier on the pond, rocks along the brook,
+// the old fort beyond the meadow.
 {
   const A = LR.arch, P = LR.props, W = LR.world, h = (x, z) => LR.land.h(x, z);
   V.details = () => {
@@ -45,7 +46,14 @@
     // ── the chapel yard: a wall, stones, a bench ──
     { const c = V.chapel; P.stoneWall([[c.x - 13, c.z - 14], [c.x + 3, c.z - 15.5], [c.x + 13, c.z - 11]]); P.stoneWall([[c.x - 13, c.z - 14], [c.x - 17, c.z + 2], [c.x - 14, c.z + 15]]); P.stoneWall([[c.x - 14, c.z + 15], [c.x + 2, c.z + 17], [c.x + 12, c.z + 13]]);
       for (let i = 0; i < 16; i++) { const gx = c.x - 12 + (i % 4) * 2.5 + (r() - 0.5) * 0.7, gz = c.z + 8.5 + Math.floor(i / 4) * 2.1 + (r() - 0.5) * 0.5; if (gz < c.z + 15.5) P.tombstone(gx, gz, { yaw: Math.PI / 2 + (r() - 0.5) * 0.3 }); }
-      P.bench(c.x + 9.5, c.z - 6, { yaw: -Math.PI / 2 }); P.lampPost(c.x + 12, c.z + 5.5, { yaw: 1.6 }); }
+      P.bench(c.x + 9.5, c.z - 6, { yaw: -Math.PI / 2 }); P.lampPost(c.x + 12, c.z + 5.5, { yaw: 1.6 });
+      // the yard is shut toward the lane, with a wrought-iron gate between two piers (a scan): one leaf stands open
+      const gx = c.x + 12.7, gz = c.z - 1.9, MD = LR.models;
+      P.stoneWall([[c.x + 13, c.z - 11], [gx + 0.05, gz - 2.2]]); P.stoneWall([[gx - 0.05, gz + 2.2], [c.x + 13.1, c.z + 6.5], [c.x + 12, c.z + 13]]);
+      for (const s of [-1, 1]) P.stoneWall([[gx, gz + s * 1.72], [gx, gz + s * 2.34]], { h: 3.15, thick: 0.62 });
+      if (MD.has('large_iron_gate')) { const y = h(gx, gz) - 0.02, Q = Math.PI / 2;
+        MD.arrange('large_iron_gate', [2, 3], gx, gz, { yaw: Q, about: [0, 0], y }); MD.swing('large_iron_gate', 0, gx, gz, { yaw: Q, y, open: 1.25 });
+        W.solidBox(gx, gz + 0.78, 0.12, 0.8, 0); } }
     // ── the farm ──
     { const f = V.farm; // the fences leave a gap where the farm road and the footpath to the lane come through
       P.fence([[f.x + 26, f.z - 26], [f.x + 18.8, f.z - 27.3]], { kind: 'rail', seed: 'f1' }); P.fence([[f.x + 14.6, f.z - 28.1], [f.x + 4, f.z - 30], [f.x - 20, f.z - 24], [f.x - 30, f.z - 6]], { kind: 'rail', seed: 'f1b' });
@@ -53,7 +61,15 @@
       P.fence([[f.x + 16, f.z + 2], [f.x + 22, f.z + 18], [f.x + 8, f.z + 26]], { kind: 'wattle', seed: 'f3' });
       P.haystack(f.x + 10, f.z - 16, { size: 1.7 }); P.haystack(f.x + 15, f.z - 12, { size: 1.3 }); P.haystack(f.x + 2, f.z - 20, { size: 1.5 }); P.scarecrow(f.x - 6, f.z - 14, { yaw: 0.6 }); P.cart(f.x + 6, f.z - 2, { yaw: -0.5 }); P.woodpile(f.x + 5.5, f.z + 9, { yaw: 0.5 }); P.trough(f.x + 12, f.z + 2, { yaw: 1.1 }); P.barrel(f.x + 3.6, f.z + 1.2); }
     // ── the pond: a pier, a boat-length of planks, reeds are the grass kit's ──
-    { const p = V.pond; P.pier([p.x - p.r - 2.5, p.z + 2], [p.x - p.r + 7.5, p.z + 1.2], p.level + 0.55, { width: 1.9 }); P.barrel(p.x - p.r - 3.6, p.z + 3.6); P.crate(p.x - p.r - 4.4, p.z + 0.4, { yaw: 0.5 }); P.lampPost(p.x - p.r - 3.2, p.z - 1.6, { yaw: 1.6 }); P.bench(p.x - p.r - 6.5, p.z + 8, { yaw: 1.2 }); }
+    { const p = V.pond, a = [p.x - p.r - 2.5, p.z + 2], b = [p.x - p.r + 7.5, p.z + 1.2], deck = p.level + 0.55, MD = LR.models, id = 'modular_wooden_pier';
+      // a scanned pier (Poly Haven's kit, as its author laid it out, without the ramp): three sections of deck on poles, a
+      // hoist frame, then loose planks and bare poles where the end has gone.  Its poles stand in the pond's bed.
+      if (MD.has(id)) { const s = 0.8, dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz), ux = dx / l, uz = dz / l, yaw = Math.atan2(ux, uz), d2 = MD.defs[id + '#2'], d4 = MD.defs[id + '#4'];
+        const z0 = d4.min[2] + 0.25, z1 = d2.max[2] - 0.15, len = (z1 - z0) * s, top = 2.66 * s;                 // the deck runs from the shore end of section 3 to the far end of section 1 (model z)
+        MD.arrange(id, [4, 3, 2, 5, 1, 0], a[0], a[1], { yaw, scale: s, about: [0.05, z0], y: deck - top });
+        const cx = a[0] + ux * len / 2, cz = a[1] + uz * len / 2, fy = Math.atan2(-uz, ux); W.floors.push({ x: cx, z: cz, hx: len / 2, hz: 1.02 * s, yaw: fy, c: Math.cos(fy), s: Math.sin(fy), h: () => deck });
+      } else P.pier(a, b, deck, { width: 1.9 });
+      P.barrel(p.x - p.r - 3.6, p.z + 3.6); P.crate(p.x - p.r - 4.4, p.z + 0.4, { yaw: 0.5 }); P.lampPost(p.x - p.r - 3.2, p.z - 1.6, { yaw: 1.6 }); P.bench(p.x - p.r - 6.5, p.z + 8, { yaw: 1.2 }); }
     // ── rocks: along the brook, in the meadow, in the woods ──
     for (let i = 1; i < V.brook3.length - 1; i++) { const p = V.brook3[i], q = V.brook3[i + 1]; for (let k = 0; k < 3; k++) { const t = r(), sx = p[0] + (q[0] - p[0]) * t, sz = p[1] + (q[1] - p[1]) * t, dx = -(q[1] - p[1]), dz = q[0] - p[0], l = Math.hypot(dx, dz) || 1, s = r.sign() * (2.6 + r() * 2.4); const x = sx + (dx / l) * s, z = sz + (dz / l) * s; if (Math.hypot(x - V.bridge.x, z - V.bridge.z) > 7 && Math.hypot(x - V.wheel[0], z - V.wheel[1]) > 6) P.rocks(x, z, 1 + r.int(3), 1.1, { size: 0.55 + r() * 0.5 }); } }
     P.rocks(V.meadow.x + 14, V.meadow.z - 6, 5, 3.2, { size: 1.5 }); P.rocks(V.meadow.x - 22, V.meadow.z + 8, 4, 2.6, { size: 1.2 }); P.rocks(-16, -58, 3, 2, { size: 1.0 });
@@ -97,6 +113,31 @@
       MD.place('stone_fire_pit', g.x - 0.4, g.z + 0.2, { yaw: 0.6, sink: 0.02, solid: 0.9 });
       MD.place('wooden_bucket_01', -32.2, 8.6, { yaw: 0.8, solid: false }); MD.place('wooden_bucket_01', -34.9, 8.3, { yaw: 2.3, solid: false, lie: true });
       MD.place('wooden_bucket_01', 23.4, -1.2, { yaw: 0.2, solid: false }); MD.place('wooden_bucket_01', -57.5, 52.4, { yaw: 1.2, solid: false }); }
+    // ── the old fort beyond the meadow: Poly Haven's scanned fort kit, set out as a walled yard with a round tower ──
+    // Pieces by their number in the file: 1 the tower, 6 and 9 long walls (9 has loopholes), 10 a short wall, 12 the
+    // gate, 8 a corner.  A wall piece's outer face is its −x side; quarter turns bring it to face out.  The gate's
+    // leaves are the scanned castle door, grown to the arch and standing open.  Without the scans: its footings.
+    { const MD = LR.models, f = V.fort, id = 'modular_fort_01', y = f.y - 0.22, Q = Math.PI / 2, T = V.T;
+      if (MD.has(id)) {
+        const put = (k, lx, lz, turn) => MD.place(id + '#' + k, f.x + lx, f.z + lz, { yaw: turn * Q, y, solid: false });
+        put(10, 7.41, 11.475, 1); put(12, 0, 11.475, 1); put(10, -7.41, 11.475, 1); put(8, 13.785, 10.08, 1);          // the front, south toward the meadow: the gate
+        put(9, 15.18, 0, 2); put(8, 13.785, -10.08, 2);                                                                  // east
+        put(6, 3.705, -11.475, 3); put(10, -7.41, -11.475, 3); put(8, -13.785, -10.08, 3);                               // the back, north
+        put(6, -15.18, 0, 0); put(1, -13.455, 9.75, 0);                                                                  // west, and the tower where it meets the front
+        for (const [cx, cz, hx, hz] of [[-6.48, 11.475, 4.63, 1.3], [6.48, 11.475, 4.63, 1.3], [13.785, 11.475, 2.67, 1.3], [15.18, 0, 1.3, 10.1], [13.785, -11.475, 2.67, 1.3], [0, -11.475, 11.2, 1.3], [-13.785, -11.475, 2.67, 1.3], [-15.18, -1.5, 1.3, 8.9]]) W.solidBox(f.x + cx, f.z + cz, hx, hz, 0);
+        W.solidCircle(f.x - 13.455, f.z + 9.75, 7.5);
+        for (const k of [1, 2]) MD.swing('large_castle_door', k, f.x, f.z + 12.0, { scale: 1.8, y: f.y - 0.05, open: 1.62 });
+      } else { const x0 = f.x - 16, x1 = f.x + 16, z0 = f.z - 12.3, z1 = f.z + 12.3; P.stoneWall([[f.x - 2.2, z1], [x0, z1], [x0, z0], [x1, z0], [x1, z1], [f.x + 2.2, z1]], { h: 1.3, thick: 0.9 }); }
+      // what whoever camps here has left in the yard
+      P.barrel(f.x + 11.6, f.z + 7.4); P.barrel(f.x + 12.3, f.z + 6.2, { scale: 0.9 }); P.crate(f.x + 10.6, f.z + 8.4, { yaw: 0.4 }); P.woodpile(f.x - 6.5, f.z - 8.6, { yaw: 0.05, rows: 4 }); P.log(f.x + 3.6, f.z - 1.8, { yaw: 0.5, len: 2.6, r: 0.26 }); P.log(f.x + 0.2, f.z + 1.9, { yaw: -0.9, len: 2.3, r: 0.24 });
+      if (!MD.place('stone_fire_pit', f.x + 2.2, f.z + 0.6, { yaw: 1.1, sink: 0.02, solid: 0.9 })) P.rocks(f.x + 2.2, f.z + 0.6, 5, 0.7, { size: 0.5 });
+      W.light({ x: f.x + 2.2, y: f.y + 0.6, z: f.z + 0.6, r: 11, color: [1.0, 0.52, 0.2], power: 7, flicker: 0.3, kind: 'fire', day: 0.25 });
+      MD.place('WoodenTable_01', f.x + 9.2, f.z - 6.6, { yaw: 0.2, solid: 'box' }); MD.place('wooden_bucket_02', f.x + 7.4, f.z - 5.2, { yaw: 1.3, solid: false }); MD.place('wooden_ladder_02', f.x + 13.3, f.z - 3.2, { yaw: -Q + 0.12, solid: false });
+      { const kit = MD.kit.weeds || [], rr = LR.rng('fortweeds');                                                        // nettles and docks along the foot of the walls, inside and out
+        if (kit.length) for (let i = 0; i < 150; i++) { const side = rr.int(4), t = rr() * 2 - 1, out = rr() < 0.45 ? 1 : -1, off = out > 0 ? 0.5 + rr() * 1.4 : -(2.9 + rr() * 1.1);
+          const lx = side < 2 ? t * 15 : (side === 2 ? 1 : -1) * (16.455 + off), lz = side < 2 ? (side === 0 ? 1 : -1) * (12.75 + off) : t * 11.5; if (Math.abs(lx) < 2.6 && lz > 0) continue; if (Math.hypot(lx + 13.455, lz - 9.75) < 8.6) continue;
+          const e = kit[rr.int(kit.length)]; MD.place(e.id, f.x + lx, f.z + lz, { scale: e.s[0] + rr() * (e.s[1] - e.s[0]), yaw: rr() * 6.28, solid: false }); } }
+      W.places.push({ x: f.x, z: f.z + 6, r: 17, name: T.fort, sub: T.fortSub }); }
     W.fireflyAreas = [{ x: V.pond.x - 6, z: V.pond.z, r: 26 }, { x: V.meadow.x, z: V.meadow.z, r: 36 }, { x: 20, z: -40, r: 22 }, { x: -50, z: -46, r: 20 }];
     W.sounds.push({ x: V.pond.x, y: V.pond.level, z: V.pond.z, kind: 'frogs', r: 34, gain: 0.8 });
   };

@@ -17,10 +17,11 @@ float softDepth(float soft){ float zs = viewZ(textureLod(tDepth, gl_FragCoord.xy
   const TOPO = `uniform sampler2D uTopo; uniform vec4 uTopoRect; uniform sampler2D uHeight; uniform vec4 uLandRect;
 float roofAt(vec2 xz){ vec2 uv = (xz - uTopoRect.xy) * uTopoRect.zw; return textureLod(uTopo, uv, 0.0).r; }
 float landAt(vec2 xz){ return textureLod(uHeight, (xz - uLandRect.xy) * uLandRect.zw, 0.0).r; }
+uniform sampler2D uSplat; float grassAt(vec2 xz){ return textureLod(uSplat, (xz - uLandRect.xy) * uLandRect.zw, 0.0).a; }
 `;
   const mk = (name, geo, vs, fs, o = {}) => {
     const R = LR.render, L = LR.land;
-    const uniforms = Object.assign(LR.uni(R.FRAME + ' uFogCol uFog uSunDir uSunCol uSkyAmb uGroundAmb uCloud uCloudOff uTopo uTopoRect uShadowMap uShadowMat uShadowInfo uShadowTexel'), LR.sky.U, { tDepth: R.U.tDepth, uEnvMips: R.U.uEnvMips, uHeight: L.U.uHeight, uLandRect: L.U.uLandRect }, o.uniforms || {});
+    const uniforms = Object.assign(LR.uni(R.FRAME + ' uFogCol uFog uSunDir uSunCol uSkyAmb uGroundAmb uCloud uCloudOff uTopo uTopoRect uShadowMap uShadowMat uShadowInfo uShadowTexel'), LR.sky.U, { tDepth: R.U.tDepth, uEnvMips: R.U.uEnvMips, uHeight: L.U.uHeight, uLandRect: L.U.uLandRect, uSplat: L.U.uSplat }, o.uniforms || {});
     const m = LR.material({ vertexShader: HEAD + vs, fragmentShader: HEAD + DEPTH + fs, uniforms, depthTest: false, depthWrite: false, transparent: true, side: T.DoubleSide, blending: T.CustomBlending, blendSrc: T.OneFactor, blendDst: T.OneMinusSrcAlphaFactor, blendSrcAlpha: T.OneFactor, blendDstAlpha: T.OneMinusSrcAlphaFactor, defines: o.defines || {} });
     const mesh = new T.Mesh(geo, m); mesh.frustumCulled = false; mesh.matrixAutoUpdate = false; mesh.renderOrder = o.order || 0; mesh.name = name; LR.world.forward.add(mesh); FX.parts[name] = mesh; return mesh;
   };
@@ -52,6 +53,7 @@ void main(){ const float B = 22.0; float life = fract(uTime * (2.6 + seed.w) + s
   vec3 toEye = normalize(uCamPos - c), side = normalize(cross(vec3(0.0, 1.0, 0.0), toEye)); float s = 0.03 + 0.07 * life;
   vec3 wp = c + side * position.x * s * 1.5 + vec3(0.0, 1.0, 0.0) * (position.y + 1.0) * s * (1.2 - life);
   vA = step(seed.y, uWx2.x) * (1.0 - life) * smoothstep(11.0, 8.0, length(c - uCamPos)) * step(y, uCamPos.y + 9.0);
+  if (roofAt(xz) < landAt(xz) + 0.3) vA *= 1.0 - smoothstep(0.25, 0.55, grassAt(xz));      // a drop makes its ring on stone, earth and water — in grass it is lost among the blades (drawn there, the rings hung over the lawn)
   vQ = position.xy; gl_Position = vA > 0.0 ? projectionMatrix * viewMatrix * vec4(wp, 1.0) : vec4(2.0, 2.0, 2.0, 1.0); }`,
       ENV + `in vec2 vQ; in float vA; out vec4 o; void main(){ float f = softDepth(0.05) ; float r = length(vQ * vec2(1.0, 1.4) + vec2(0.0, 0.6)); float a = smoothstep(1.0, 0.75, r) * smoothstep(0.35, 0.7, r) * vA * 0.5 * max(f, 0.4);
   vec3 c = envAt(vec3(0.0, 1.0, 0.0), uEnvMips - 1.0) * 1.8 + uWx2.w * vec3(3.0, 4.0, 6.0); o = vec4(c * a, a * 0.5); }`);

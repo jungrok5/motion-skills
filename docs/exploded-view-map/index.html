@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>exploded-view-map · motion-skills</title>
+<meta name="description" content="주제 하나를 주면 등고선 지도 · 경로 · 수치 · 태양 슬라이더 · 정류장 목록이 있는 실제 웹페이지를 만들고, HTML-in-Canvas로 그 페이지를 3D로 분해합니다. 등고선 층이 종이판으로 쌓여 계단식 지형이 되고, 카드는 떠올라도 계속 입력하고 누를 수 있습니다.">
+<meta property="og:title" content="exploded-view-map · motion-skills">
+<meta property="og:description" content="지도와 카드가 층층이 떠오르는 분해도 웹페이지 — 종이판 지형, 슬라이더가 정하는 햇빛과 그림자, 분해된 채로 동작하는 실제 DOM.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/exploded-view-map/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/exploded-view-map">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / exploded-view-map</nav>
+  <h1>exploded-view-map</h1>
+  <p>주제 하나를 주면 등고선 지도 · 경로 · 수치와 고도 단면 · 태양 슬라이더와 두 갈래 토글 · 정류장 목록이 있는 실제 웹페이지를 만들고, HTML-in-Canvas로 그 페이지를 3D로 분해합니다. 등고선 층은 저마다의 높이에 쌓인 종이판이 되어 계단식 지형을 이루고, 카드는 독서대처럼 일어나 카메라를 향하며, 핀은 기둥 위에 섭니다. 끌면 돌아가고, 스크롤하면 층이 벌어지고, 층을 누르면 그 위가 통째로 들리며, Esc로 다시 평평한 페이지가 됩니다. 슬라이더가 정하는 햇빛이 위쪽 판들을 지나며 그림자를 드리우고, 해가 지면 핀마다 등불이 켜집니다. 분해된 채로도 제목을 입력하고 슬라이더를 끌고 정류장을 누를 수 있는 진짜 DOM이며, 종이와 책상 소리는 코드로 합성합니다.
+  원본: Felix Rieseberg의 <a href="https://claude.ai/artifact/CBxLSFEFnojedyQW5L458v" target="_blank" rel="noopener">「Exploded View」 데모</a>(<a href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk" target="_blank" rel="noopener">HTML-in-Canvas 데모 페이지</a>, <a href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19" target="_blank" rel="noopener">X 게시물</a>)를 보고 만들었습니다. 라이브 데모는 Chrome · Edge 157 이상이나 Claude 데스크톱 앱에서 3D로 보이고, 다른 브라우저에서는 같은 HTML이 평범한 페이지로 보입니다.</p>
+  <ul class="tags"><li>HTML-in-Canvas · WebGL2</li><li>종이판 계단 지형</li><li>분해된 채로 동작하는 DOM</li><li>햇빛 · 그림자 · 밤 등불</li><li>합성 사운드 · 코드 전용</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(산호초 다이빙 계획, 도시 언덕을 넘는 자전거 길, 스키장, 포도밭 계단, 건물의 층 …)</dd>
+      <dt>브리프</dt><dd>쌓을 것(높이 함수와 높이 간격, 또는 층 목록) · 판에 찍을 것 · 두 가지 팔레트와 토글의 뜻 · 카드 네 장의 수치와 문구 · 슬라이더의 뜻 · 경로 · 핀 · 책상 · 물이나 안개 · 소리를 적은 <code>BRIEF.md</code></dd>
+      <dt>페이지</dt><dd><code>EVTerrain</code> 조각으로 짠 높이 함수, 카드 HTML과 CSS(휴대폰 배치 포함), <code>ExplodedView.create</code> 설정 하나</dd>
+      <dt>확인</dt><dd>공통 HTML-in-Canvas 검사 + 분해 · 정착 시간 · 모든 카드와 핀이 그려진 자리에서 눌리는지 · 돌린 채 입력 · 그려진 슬라이더 끌기 · 층 들기 · 팔레트 전환 · 밤 · 다시 합치기, 그리고 스틸 검토</dd>
+      <dt>출력</dt><dd>네트워크 없이 도는 한 폴더(<code>index.html</code> + <code>lib/</code>), file://과 Claude 아티팩트에서 동작, 스틸 PNG</dd>
+    </dl>
+    <pre><code>cd exploded-view-map
+node scripts/check.mjs examples/reef-dive/index.html
+node scripts/still.mjs examples/reef-dive/index.html --out out --act flat,apart,night
+node scripts/new-page.mjs ../my-exploded-map
+node scripts/check.mjs ../my-exploded-map/index.html</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium(스크립트가 <code>--enable-blink-features=CanvasDrawElement</code>를 켭니다). 네트워크와 npm 설치가 필요 없습니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/exploded-view-map/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10;--demo-bg:#183f52">
+    <iframe data-src="demo/examples/reef-dive/" title="exploded-view-map 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/reef-dive/">데모 열기 (examples/reef-dive)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/reef-dive</code> · 수심 4 m마다 10장 · 끌어서 돌리기 · 스크롤로 분해</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/reef-dive/" data-cap="예제 &lt;code&gt;examples/reef-dive&lt;/code&gt; · 수심 4 m마다 10장 · 끌어서 돌리기 · 스크롤로 분해" aria-pressed="true">산호초 다이빙</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/index.html&lt;/code&gt; · 50 m마다 13장 · 새 페이지의 출발점" aria-pressed="false">섬 자전거 일주</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제 「Lantern Reef」와 시작 템플릿 「The Crater Loop」를 여러 상태로 찍은 스틸입니다. 카드를 누르면 라이브 데모가 열립니다.</p>
+  <div id="gallery">
+    <div class="group">
+      <h3>「Lantern Reef」 <small>산호초 다이빙 계획 · 수심 0–36 m</small></h3>
+      <p>수심을 음의 높이로 둔 높이 함수에서 4 m마다 판을 잘랐습니다. 깊은 판일수록 물빛으로 물들고, 위쪽 판에는 물결 빛무늬가 흐르며, 토글은 산호를 하얗게 탈색시킵니다. 원본에 없는 주제로 브리프부터 끝까지 만든 예제입니다.</p>
+      <div class="grid">
+        <a class="tile" href="demo/examples/reef-dive/" target="_blank" rel="noopener"><img src="samples/reef-apart.jpg" alt="수심 등고선 열 장이 계단처럼 쌓인 산호초 모형과 그 옆에 비스듬히 선 다이빙 계획 카드들" loading="lazy" width="640" height="360"><div class="cap"><span class="no">분해 · 살아 있는 산호</span><b>층층이 떠오른 산호초</b><span class="how">물빛으로 물드는 깊은 판, 경로 리본, 기둥 위의 핀</span></div></a>
+        <a class="tile" href="demo/examples/reef-dive/" target="_blank" rel="noopener"><img src="samples/reef-flat.jpg" alt="평평한 다이빙 계획 페이지: 청록 등고선 지도, 다섯 개의 정류장 핀, 수심 단면과 수치 카드" loading="lazy" width="640" height="360"><div class="cap"><span class="no">평면 · 실제 페이지</span><b>분해 전의 다이빙 계획</b><span class="how">최대 수심 · 거리 · 시간 · 공기 소모, 수심 단면</span></div></a>
+        <a class="tile" href="demo/examples/reef-dive/#variant=bleached" target="_blank" rel="noopener"><img src="samples/reef-bleached.jpg" alt="같은 산호초 모형에서 산호가 모두 하얗게 탈색된 모습" loading="lazy" width="640" height="360"><div class="cap"><span class="no">토글 · 탈색</span><b>해양 열파 뒤의 같은 산호초</b><span class="how">팔레트 전환이 판을 다시 올림</span></div></a>
+        <a class="tile" href="demo/examples/reef-dive/" target="_blank" rel="noopener"><img src="samples/reef-night.jpg" alt="밤의 산호초 모형, 핀마다 따뜻한 등불이 켜지고 경로가 빛남" loading="lazy" width="640" height="360"><div class="cap"><span class="no">슬라이더 · 밤</span><b>해가 진 뒤</b><span class="how">달빛, 핀마다 등불, 빛나는 경로</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>「The Crater Loop」 <small>시작 템플릿 · 화산섬 자전거 일주</small></h3>
+      <p>해수면부터 50 m마다 판을 자른 화산섬입니다. 새 페이지는 이 템플릿이나 예제에서 시작해 주제에 맞게 다시 설계합니다.</p>
+      <div class="grid">
+        <a class="tile" href="demo/templates/" target="_blank" rel="noopener"><img src="samples/island-apart.jpg" alt="종이판 열세 장으로 쌓인 화산섬과 그 옆의 자전거 계획 카드들" loading="lazy" width="640" height="360"><div class="cap"><span class="no">분해 · 건기</span><b>계단식 화산섬</b><span class="how">분화구 둘레까지 오르는 경로 리본</span></div></a>
+        <a class="tile" href="demo/templates/" target="_blank" rel="noopener"><img src="samples/island-lift.jpg" alt="가운데 층부터 위쪽이 통째로 들린 화산섬 모형" loading="lazy" width="640" height="360"><div class="cap"><span class="no">층 들기 · 우기</span><b>한 층을 눌러 들어 올리기</b><span class="how">그 위의 층이 함께 들려 아래가 보임</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. 출발점은 Felix Rieseberg가 Claude 데스크톱 앱에 HTML-in-Canvas를 켜며 공개한 데모 열다섯 개 중 「Exploded View」입니다. 등산 계획 페이지의 지도와 카드가 3D로 분해되고, 등고선 띠가 종이판으로 쌓이며, 분해된 채로 모든 카드가 동작합니다. 이 스킬은 그 형식과 기법만 가져오고, 엔진 · 지형 · 문구 · 소리는 모두 새로 썼습니다.</p>
+  <div class="works">
+    <a class="work" href="demo/examples/reef-dive/" target="_blank" rel="noopener"><b>「Lantern Reef」 · 산호초 다이빙 계획</b><span>수심 판 10장, 물빛 · 빛무늬, 산호 탈색 토글, 라이브 데모</span><span class="url">exploded-view-map/demo/examples/reef-dive/</span></a>
+    <a class="work" href="https://claude.ai/artifact/CBxLSFEFnojedyQW5L458v" target="_blank" rel="noopener"><b>원본 데모 · Exploded View</b><span>Felix Rieseberg · HTML-in-Canvas 데모</span><span class="url">claude.ai/artifact/CBxLSFEFnojedyQW5L458v</span></a>
+    <a class="work" href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk" target="_blank" rel="noopener"><b>HTML-in-Canvas 데모 페이지</b><span>데모 열다섯 개의 목록</span><span class="url">claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk</span></a>
+    <a class="work" href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19" target="_blank" rel="noopener"><b>X 게시물</b><span>「All hail the weird web」</span><span class="url">x.com/felixrieseberg</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/exploded-view-map/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/exploded-view-map">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/exploded-view-map/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/exploded-view-map/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/exploded-view-map/references/LOOK.md">references/LOOK.md</a> <span>원본에서 읽어 낸 형식</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/exploded-view-map/references/ENGINE.md">references/ENGINE.md</a> <span>엔진 API와 확장 방법</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/exploded-view-map/references/HIC.md">references/HIC.md</a> <span>HTML-in-Canvas 공통 노트</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/exploded-view-map/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림과 소리는 코드로 만들었습니다
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

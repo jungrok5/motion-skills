@@ -1,7 +1,8 @@
 // scanned-realm · fetch-assets.mjs — downloads the scanned assets a realm names (Poly Haven, CC0) into <realm>/assets/.
 //   node <skill>/scripts/fetch-assets.mjs <realm-dir> [--res 1k|2k] [--force]
 // <realm>/assets.json: { "res": "1k", "textures": ["cobblestone_floor_04", { "id": "pine_bark", "maps": "dna" }, …],
-//   "models": ["wine_barrel_01", { "id": "rock_face_01", "res": "2k" }, { "id": "croissant", "maps": "d" }, …], "atlases": [{ "id": "fir_tree_01", "map": "twig" }] }
+//   "models": ["wine_barrel_01", { "id": "rock_face_01", "res": "2k" }, { "id": "croissant", "maps": "d" }, { "id": "island_tree_02", "heavy": true }, …],
+//   "atlases": [{ "id": "fir_tree_01", "map": "twig" }] }      heavy: a model of tens of megabytes (a tree) — phones and the lowest quality leave it out
 // Writes assets/tex/<id>/{diff,nor,arm,disp}.jpg, assets/models/<id>/…, assets/manifest.json (real-world sizes, files)
 // and assets/CREDITS.md.  Nothing here is committed: assets/ is in .gitignore; run this after cloning.
 // Uses curl (it honours proxies and system certificates); Node 18+.
@@ -47,7 +48,7 @@ for (const entry of want.textures || []) {
 // a model is named by its id, or as { "id": …, "res": "2k", "maps": "d" | "dn" | "dna" } — maps: which of colour, normal and
 // occlusion-roughness to fetch (small things do with colour alone)
 for (const entry of want.models || []) {
-  const e = typeof entry === 'string' ? { id: entry } : entry, id = e.id, mres = e.res || res, maps = e.maps || 'dna';
+  const e = typeof entry === 'string' ? { id: entry } : entry, id = e.id, mres = e.res || res, maps = e.maps || 'dna', b0 = bytes;
   const files = json(`${API}/files/${id}`), info = json(`${API}/info/${id}`), g = files.gltf && files.gltf[mres] && files.gltf[mres].gltf;
   if (!g) { console.error(`model ${id}: no glTF at ${mres}`); continue; }
   const skip = (rel) => (/_nor_gl_|_nor_dx_/.test(rel) && !maps.includes('n')) || (/_arm_|_rough_|_metal_|_ao_/.test(rel) && !maps.includes('a'));
@@ -57,14 +58,19 @@ for (const entry of want.models || []) {
   const ak = Object.keys(files).find((k) => /^(alpha|opacity)$/i.test(k)), au = ak && files[ak][mres] && files[ak][mres].jpg ? files[ak][mres].jpg.url : null; let alpha = null;
   if (au) { const f = join(out, 'textures', basename(au)); get(au, f); size(f); alpha = { file: `assets/models/${id}/textures/${basename(au)}`, url: au };
     const dr = Object.keys(inc).find((r) => /_diff_/.test(r)); if (dr) alpha.diff = { file: `assets/models/${id}/${dr}`, url: inc[dr] }; }                // its colour map by name too: plants' atlases are also read as pictures
+  // a tree has several materials and only its foliage is cut out: leaves_alpha, twigs_alpha … go with the material whose
+  // colour map carries the same name (<id>_leaves_diff)
+  let alphaBy = null; for (const k of Object.keys(files)) { const mm = k.match(/^(.+)_(alpha|opacity)$/i), u = mm && files[k][mres] && files[k][mres].jpg ? files[k][mres].jpg.url : null; if (!u) continue;
+    const f = join(out, 'textures', basename(u)); get(u, f); size(f); (alphaBy = alphaBy || {})[mm[1].toLowerCase()] = { file: `assets/models/${id}/textures/${basename(u)}`, url: u }; }
   // the triangles that will really be drawn: counted from the file (the library's own "polycount" is of another version of the model)
   let tris = 0; try { const gj = JSON.parse(readFileSync(main, 'utf8')); for (const me of gj.meshes || []) for (const pr of me.primitives || []) tris += Math.floor((gj.accessors[pr.indices !== undefined ? pr.indices : pr.attributes.POSITION].count) / 3); } catch (e) { tris = 0; }
   // its box and each of its objects' boxes, measured from the vertices: with them the page can place a model before its
   // triangles have arrived (the walk starts on the generated place; the scans come in as they load)
   let roots = null; try { roots = boxes(main); } catch (e) { console.error(`model ${id}: could not measure it (${e.message}) — the page will wait for it instead`); }
-  manifest.models[id] = { file: `assets/models/${id}/${basename(g.url)}`, url: g.url, inc, maps, alpha, name: info.name, authors: Object.keys(info.authors || {}), tris, roots };
+  manifest.models[id] = { file: `assets/models/${id}/${basename(g.url)}`, url: g.url, inc, maps, alpha, alphaBy, name: info.name, authors: Object.keys(info.authors || {}), tris, roots, bytes: bytes - b0 };
+  if (e.heavy) { manifest.models[id].heavy = true; manifest.heavyBytes = (manifest.heavyBytes || 0) + bytes - b0; }
   credits.push(`- model **${info.name}** (\`${id}\`) by ${manifest.models[id].authors.join(', ') || 'Poly Haven'} — https://polyhaven.com/a/${id} — CC0`);
-  console.log(`model ${id}  ${basename(g.url)} + ${n} files  ${mres} ${maps}  ${tris} triangles${alpha ? '  cut-out' : ''}`);
+  console.log(`model ${id}  ${basename(g.url)} + ${n} files  ${mres} ${maps}  ${tris} triangles${alpha ? '  cut-out' : ''}${alphaBy ? '  cut-out: ' + Object.keys(alphaBy).join(', ') : ''}  ${((bytes - b0) / 1e6).toFixed(1)} MB${e.heavy ? ' (heavy)' : ''}`);
 }
 // leaf and twig atlases: the colour and cut-out maps of a tree model's foliage, without its millions of triangles —
 // { "id": "island_tree_02", "map": "leaves" } → assets/atlas/island_tree_02_leaves_{diff,alpha}.jpg; the trees' own sprays are made of them

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>lit-room · motion-skills</title>
+<meta name="description" content="주제를 주면 모니터 속 웹페이지가 진짜로 동작하고 그 화면의 빛이 방을 물들이는 3D 방을 만듭니다. 화면 위 빛을 끌면 방의 빛이 따라 움직이고, 방을 끌어 둘러보며 화면을 3D로 클릭하고 입력합니다.">
+<meta property="og:title" content="lit-room · motion-skills">
+<meta property="og:description" content="모니터 속 라이브 페이지가 방의 조명이 되는 3D 방 — HTML-in-Canvas, 코드 전용.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/lit-room/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/lit-room">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / lit-room</nav>
+  <h1>lit-room</h1>
+  <p>주제를 주면 밤의 작은 방 하나를 3D로 짓고, 책상 위 모니터에 그 주제의 웹페이지를 띄웁니다. 페이지는 클릭 · 선택 · 입력이 되는 실제 HTML이고, 그 화면의 빛이 방의 조명입니다. 분홍 페이지는 책상을 분홍으로 물들이고, 페이지 위 빛을 왼쪽으로 끌면 방의 왼쪽이 밝아지며, 방을 끌어 둘러보는 동안에도 화면은 원근 그대로 눌립니다. 원본: Felix Rieseberg의 <a href="https://claude.ai/artifact/D5pdvChFfvxBsvVNb5KNCJ">「Lit Room」 데모</a>(<a href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk">HTML-in-Canvas 데모 페이지</a>, <a href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19">X 게시물</a>)을 보고 만들었습니다. 라이브 데모는 Chrome · Edge 157 이상이나 Claude 데스크톱 앱에서 보이고, 다른 브라우저에서는 같은 HTML이 평범한 페이지로 보입니다.</p>
+  <ul class="tags"><li>HTML-in-Canvas</li><li>화면이 곧 조명</li><li>절차적 3D 방</li><li>WebGL2 조명</li><li>코드 전용</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(배의 해도대, 해 질 녘 교실, 문 닫은 카페 카운터, 아이 방, 라디오 부스 …)</dd>
+      <dt>브리프</dt><dd>방과 시간 · 앉는 사람 · 소품 8–14개(주제용 새 소품 2–4개) · 색과 재질 · 방의 램프 · 창밖, 그리고 화면 속 페이지(탭 · 끌 수 있는 빛 · 입력하는 한 줄 · 프리셋과 그 색이 방에 주는 빛)를 적은 <code>BRIEF.md</code></dd>
+      <dt>방</dt><dd>데이터로 쓴 방(<code>ROOM</code>): 구멍 난 벽 · 바닥 · 천장 · 창밖 하늘이나 바다, 상자 · 원기둥 · 회전체 · 관으로 만든 소품, 캔버스 2D로 그린 그림 · 해도 · 러그</dd>
+      <dt>빛</dt><dd>페이지 밉맵 → 8×5 칸의 면광원(정점마다), 화면에서 나오는 부드러운 그림자, 광택면의 화면 반사, 방 램프, 미리 구운 AO, 페이지 밝기를 따라가는 노출</dd>
+      <dt>출력</dt><dd>폴더 하나의 라이브 페이지(<code>index.html</code> + <code>lib/</code>), 네트워크 없이 file:// · 아티팩트에서 동작, 검사 숫자와 스틸</dd>
+    </dl>
+    <pre><code>node scripts/new-page.mjs ../my-lit-room
+node scripts/check.mjs ../my-lit-room/index.html
+node scripts/still.mjs ../my-lit-room/index.html --out ../my-lit-room/out --act "idle;close;mood:neon,tab:mood"
+node scripts/check.mjs examples/night-watch/index.html</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium(스크립트가 HTML-in-Canvas 플래그를 켭니다). 라이브로 보려면 Chrome · Edge 157 이상이나 Claude 데스크톱 앱. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/lit-room/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10;--h-phone:calc((100vw - 34px)*1.3);--demo-bg:#05070b">
+    <iframe data-src="demo/examples/night-watch/" title="lit-room 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/night-watch/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/night-watch</code> · 배의 해도대 · 현등을 끌어 선실 물들이기</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/night-watch/" data-cap="예제 &lt;code&gt;examples/night-watch&lt;/code&gt; · 배의 해도대 · 현등을 끌어 선실 물들이기" aria-pressed="true">Night Watch</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/index.html&lt;/code&gt; · 해 질 녘 글 쓰는 책상 · 빛 · 메모 · 분위기" aria-pressed="false">시작 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제 「Night Watch」와 시작 템플릿 「Quiet Hours」를 HTML-in-Canvas를 켠 Chromium에서 찍은 스틸입니다. 카드를 누르면 라이브 데모가 열립니다.</p>
+  <div id="gallery">
+    <div class="group">
+      <h3>「Night Watch」 <small>배의 해도대 · 새벽 2시 40분</small></h3>
+      <p>작은 범선 선실의 해도대입니다. 화면은 당직 페이지이고 현등 세 개(좌현 빨강 · 우현 초록 · 마스트 흰빛)를 끌면 선실의 빛이 바뀝니다. 나침반 · 말린 해도 · 밧줄 타래 · 매단 랜턴은 이 주제를 위해 페이지 안에서 만든 소품입니다. 원본에 없는 주제로 브리프부터 끝까지 만든 예제입니다.</p>
+      <div class="grid">
+        <a class="tile" href="demo/examples/night-watch/" target="_blank" rel="noopener"><img src="samples/nw-idle.jpg" alt="나무 판자 선실의 해도대, 랜턴 불빛과 모니터의 남색 당직 페이지, 오른쪽 위 둥근 현창 너머 밤바다" loading="lazy" width="640" height="400"><div class="cap"><span class="no">예제 · 기본 시점</span><b>당직 중인 해도대</b><span class="how">랜턴 · 나침반 · 말린 해도 · 현창 너머 달빛 바다</span></div></a>
+        <a class="tile" href="demo/examples/night-watch/" target="_blank" rel="noopener"><img src="samples/nw-apart.jpg" alt="랜턴을 끈 어두운 선실, 화면 양 끝의 빨간 빛과 초록 빛이 책상 왼쪽과 오른쪽을 각각 물들임" loading="lazy" width="640" height="400"><div class="cap"><span class="no">예제 · 현등 끌기</span><b>빨강은 왼쪽, 초록은 오른쪽</b><span class="how">랜턴을 끄고 현등을 양 끝으로, 책상이 두 색으로</span></div></a>
+        <a class="tile" href="demo/examples/night-watch/" target="_blank" rel="noopener"><img src="samples/nw-dawn.jpg" alt="화면이 장밋빛 새벽 프리셋으로 바뀌어 해도대와 벽이 분홍빛으로 물든 선실" loading="lazy" width="640" height="400"><div class="cap"><span class="no">예제 · 바다 프리셋</span><b>새벽</b><span class="how">밝은 페이지가 탁자와 벽을 장밋빛으로</span></div></a>
+        <a class="tile" href="demo/examples/night-watch/" target="_blank" rel="noopener"><img src="samples/nw-close.jpg" alt="모니터에 가까이 다가간 시점, 침로 274도 문구와 현등 세 개가 보이는 당직 페이지" loading="lazy" width="640" height="400"><div class="cap"><span class="no">예제 · 더블클릭</span><b>화면 가까이</b><span class="how">원근 그대로 입력되는 침로 한 줄</span></div></a>
+        <a class="tile" href="demo/examples/night-watch/" target="_blank" rel="noopener"><img src="samples/nw-cabin.jpg" alt="선실을 비스듬히 둘러본 시점, 랜턴 옆 해도대와 나무 상자 위 밧줄 타래, 벽의 해도 액자와 놋쇠 현창" loading="lazy" width="640" height="400"><div class="cap"><span class="no">예제 · 둘러보기</span><b>밧줄 타래와 현창</b><span class="how">방을 끌어 돌아보면 선실의 다른 쪽</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>「Quiet Hours」 <small>시작 템플릿 · 해 질 녘 글 쓰는 책상</small></h3>
+      <p>새 작품의 출발점입니다. 빛 세 개를 끌고 한 줄을 고쳐 쓰는 페이지, 메모, 네 가지 분위기, 책상 램프 스위치가 있습니다.</p>
+      <div class="grid">
+        <a class="tile" href="demo/templates/" target="_blank" rel="noopener"><img src="samples/qh-idle.jpg" alt="해 질 녘 창가 책상, 커튼 사이 보랏빛 하늘, 책상 램프와 어두운 화면 위 호박색 · 분홍 · 청록 빛" loading="lazy" width="640" height="400"><div class="cap"><span class="no">템플릿 · 기본 시점</span><b>글 쓰는 책상</b><span class="how">창 · 커튼 · 선반 · 화분 · 키보드</span></div></a>
+        <a class="tile" href="demo/templates/" target="_blank" rel="noopener"><img src="samples/qh-neon.jpg" alt="네온 분위기로 바뀐 페이지, 자줏빛 화면 빛이 책상과 키보드를 물들임" loading="lazy" width="640" height="400"><div class="cap"><span class="no">템플릿 · 분위기</span><b>네온</b><span class="how">페이지 색이 바뀌면 방의 빛도</span></div></a>
+        <a class="tile" href="demo/templates/" target="_blank" rel="noopener"><img src="samples/qh-paper.jpg" alt="밝은 종이 분위기의 페이지가 책상 앞쪽과 키보드를 하얗게 비추는 장면" loading="lazy" width="640" height="400"><div class="cap"><span class="no">템플릿 · 분위기</span><b>종이</b><span class="how">흰 페이지는 조명, 눈처럼 노출이 따라감</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. 출발점은 Felix Rieseberg가 Claude 데스크톱 앱에 HTML-in-Canvas를 켜며 공개한 데모 열다섯 개 중 「Lit Room」입니다. 저녁의 방에서 모니터 속 페이지의 빛이 방을 물들이는 형식과 기법만 가져오고, 엔진(실행 중 페이지에서 계산하는 빛) · 소품 · 페이지 · 문구는 모두 이 레포의 것입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/examples/night-watch/" target="_blank" rel="noopener"><b>「Night Watch」 · 배의 해도대</b><span>현등 끌기 · 침로 입력 · 항해 일지 · 바다 프리셋 세 가지 · 랜턴 스위치, 라이브 데모</span><span class="url">lit-room/demo/examples/night-watch/</span></a>
+    <a class="work" href="https://claude.ai/artifact/D5pdvChFfvxBsvVNb5KNCJ" target="_blank" rel="noopener"><b>원본 데모 · Lit Room</b><span>Felix Rieseberg · 저녁의 방, 모니터 속 라이브 페이지가 방을 비춤</span><span class="url">claude.ai/artifact/D5pdvChFfvxBsvVNb5KNCJ</span></a>
+    <a class="work" href="https://claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk" target="_blank" rel="noopener"><b>HTML-in-Canvas 데모 페이지</b><span>데모 열다섯 개 모음</span><span class="url">claude.ai/artifact/7cCNqKnoFSoib9SuNLB3vk</span></a>
+    <a class="work" href="https://x.com/felixrieseberg/status/2122036839238492493?a=ARrikCShhoXCfhmuoJ0&amp;s=19" target="_blank" rel="noopener"><b>Felix Rieseberg의 X 게시물</b><span>「All hail the weird web」, Claude 앱의 HTML-in-Canvas 소개</span><span class="url">x.com/felixrieseberg</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/lit-room/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/lit-room">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/lit-room/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/lit-room/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/lit-room/references/LOOK.md">references/LOOK.md</a> <span>원본 데모에서 읽어 낸 형식과 기법</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/lit-room/references/ENGINE.md">references/ENGINE.md</a> <span>엔진 API · ROOM 설정 · 소품 추가</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/lit-room/references/HIC.md">references/HIC.md</a> <span>HTML-in-Canvas 공통 규칙</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/lit-room/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 방 · 소품 · 그림은 모두 코드로 만들었습니다
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

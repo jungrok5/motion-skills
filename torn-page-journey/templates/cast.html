@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>cast sheet</title>
+<script type="importmap">{ "imports": { "tpj/": "../lib/" } }</script></head><body>
+<script type="module">
+// render: node <skill>/scripts/render.mjs cast.html --stills 0 --scale .5   ·   check: node <skill>/scripts/check.mjs cast.html
+import { castSheet } from 'tpj/sheet.js';
+import { RIDER } from './cast.js';
+castSheet(RIDER);   // castSheet(RIDER, { media: ['watercolour', 'charcoal', 'crayon'], gestures: ['wave', 'shiver'] }) to narrow it
+</script></body></html>

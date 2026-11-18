@@ -5,8 +5,11 @@
 //   node <skill>/scripts/render.mjs <realm-dir> --sheet [--scale .5]       → out/sheet.jpg: every view × day, dusk, night, rain, snow
 //   node <skill>/scripts/render.mjs <realm-dir> --tour 12 [--scale .5]     → out/tour.jpg: 12 stills along the tour, as its camera sees them
 //   node <skill>/scripts/render.mjs <realm-dir> --film [--seconds 60] [--fps 30]   → out/film.mp4: the tour with the automatic round
+//   node <skill>/scripts/render.mjs <realm-dir> --phone [--seconds 2.5]    → out/phone.jpg: what a phone shows — the tour at a phone's canvas, tier and
+//                                                                            starting scale, as its 1170-pixel screen stretches it (judge sharpness here)
 //   node <skill>/scripts/render.mjs <realm-dir> --mats                     → out/mats.jpg: every material layer, scan or recipe, under a raking light
 // A shot is `key=value;…`: cam=x,z,yaw°,pitch°[,y]  tod=hours  wx=clear|rain|snow|winter|autumn  season=0..1  snow=0..1  wet=0..1  frames=n  t=seconds
+//   up=metres (the eye that far above the ground: a look from above)  dof=amount (the lens: 1 is the tour's, 0 none)  focus=metres (else the middle of the picture)
 // Options: --state "tod=17;wx=rain" (for --tour)  --size 1280x720  --q "q=high&mat=1024" (page options)  --frames 12  --out out  --name <file stem>  --no-build  --png
 // The page is opened from disk with file access allowed, so it can read its scans from assets/ (--q "scan=0" to leave them out).
 // Without a GPU WebGL runs on the CPU (SwiftShader): expect 1–4 minutes per 720p still on `high`.  On a machine with a GPU add --gpu.
@@ -24,10 +27,11 @@ const has = (k) => args.includes('--' + k);
 const opt = (k, d) => { const i = args.indexOf('--' + k); return i > -1 && args[i + 1] !== undefined && !args[i + 1].startsWith('--') ? args[i + 1] : d; };
 const all = (k) => args.map((a, i) => (a === '--' + k ? args[i + 1] : null)).filter(Boolean);
 const dir = resolve(args[0] && !args[0].startsWith('--') ? args[0] : '.');
-if (!existsSync(join(dir, 'src'))) { console.error('usage: render.mjs <realm-dir> [--shot "cam=…;tod=…" | --views | --sheet | --tour 12 | --film | --mats] [--size 1280x720] [--q "q=high"]'); process.exit(1); }
+if (!existsSync(join(dir, 'src'))) { console.error('usage: render.mjs <realm-dir> [--shot "cam=…;tod=…" | --views | --sheet | --tour 12 | --film | --phone | --mats] [--size 1280x720] [--q "q=high"]'); process.exit(1); }
 if (!has('no-build')) build(dir, { quiet: true });
 const outDir = resolve(dir, opt('out', 'out')); mkdirSync(outDir, { recursive: true });
-const [W, H] = opt('size', '1280x720').split('x').map(Number), scale = +opt('scale', '1'), w = Math.round(W * scale), h = Math.round(H * scale);
+const PHONE = has('phone'), Q = opt('q', PHONE ? 'q=low&scale=0.7&heavy=0' : '');      // --phone: a 390 × 844 screen at two canvas pixels a CSS pixel, the `low` tier where it starts
+const [W, H] = opt('size', PHONE ? '780x1688' : '1280x720').split('x').map(Number), scale = +opt('scale', '1'), w = Math.round(W * scale), h = Math.round(H * scale);
 const frames = +opt('frames', '12'), ext = has('png') ? 'png' : 'jpg', mime = has('png') ? 'image/png' : 'image/jpeg';
 const ARGS = has('gpu') ? ['--allow-file-access-from-files', '--ignore-gpu-blocklist', '--enable-gpu', '--use-angle=default'] : ['--allow-file-access-from-files', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--enable-gpu-rasterization', '--disable-dev-shm-usage'];
 export async function open(query = '', quiet = false) {
@@ -36,7 +40,7 @@ export async function open(query = '', quiet = false) {
   let failed = null; const seen = new Set();
   page.on('pageerror', (e) => { failed = failed || e; console.error('page error:', e.message.slice(0, 2000)); });
   page.on('console', (m) => { const t = m.text(); if (/GPU stall|ReadPixels|Automatic fallback|useProgram: program not valid/.test(t)) return; const k = t.slice(0, 200); if (seen.has(k)) return; seen.add(k); if (m.type() === 'error' || m.type() === 'warning') { if (!quiet && seen.size < 8) console.error(`console ${m.type()}:`, t.replace(/\n\s*\n/g, '\n').slice(0, 1800)); if (/Shader Error|not compiled|program not valid/.test(t)) failed = failed || new Error('a shader failed: ' + t.slice(0, 400)); } });
-  const url = pathToFileURL(join(dir, 'index.html')).href + `?render=1&w=${w}&h=${h}&frames=2` + (opt('q', '') ? '&' + opt('q', '') : '') + (query ? '&' + query : '');
+  const url = pathToFileURL(join(dir, 'index.html')).href + `?render=1&w=${w}&h=${h}&frames=2` + (Q ? '&' + Q : '') + (query ? '&' + query : '');
   await page.goto(url, { waitUntil: 'commit', timeout: 0 });
   for (const t0 = Date.now(); ;) {
     const s = await page.evaluate(() => [window.READY === true, window.FAILED || null]);
@@ -61,7 +65,16 @@ if (process.argv[1] && resolve(process.argv[1]) === new URL(import.meta.url).pat
   const base = await page.evaluate(() => ({ gpu: window.realm.info().gpu, views: (window.realm.LR.cfg.views || []).map((v) => ({ name: v.name, cam: v.cam, tod: v.tod, weather: v.weather })) }));
   console.log(`${base.gpu} · loaded in ${((Date.now() - t00) / 1000).toFixed(1)} s`);
   try {
-    if (has('film')) {
+    if (PHONE) {
+      // The stills are 1280 × 720 at full scale; a phone draws fewer pixels than its canvas has and resolves them up over the
+      // frames, while walking.  So: the tour's own frames, sixty a second, with the live blend — then the canvas stretched
+      // to the screen's pixels, as the browser does it.  This is the picture to judge "is it sharp on a phone" by.
+      const n = Math.round(60 * +opt('seconds', '2.5')), tmp = join(outDir, '.phone.png'), out = join(outDir, opt('name', 'phone') + '.jpg');
+      const size = await page.evaluate(() => { const R = window.realm.LR.render; return `${R.w}×${R.h} drawn, resolved to ${R.W}×${R.H}`; });
+      await page.evaluate(() => window.realm.filmStart(60)); for (let i = 0; i < n; i++) await page.evaluate(() => window.realm.filmFrame());
+      save(tmp, await page.evaluate(() => window.realm.canvas.toDataURL('image/png'))); await ff(['-i', tmp, '-vf', 'scale=1170:-2:flags=bilinear', '-q:v', '2', out]); rmSync(tmp, { force: true });
+      console.log(out, `(${size}; frame ${n} of the tour, as a 1170-pixel screen shows it)`);
+    } else if (has('film')) {
       const fps = +opt('fps', '30'), secs = +opt('seconds', '60'), tmp = join(outDir, '.film'); rmSync(tmp, { recursive: true, force: true }); mkdirSync(tmp, { recursive: true });
       await page.evaluate(([fps]) => window.realm.filmStart(fps), [fps]);
       for (let i = 0, n = Math.round(fps * secs); i < n; i++) { const url = await page.evaluate(() => { window.realm.filmFrame(); return window.realm.canvas.toDataURL('image/jpeg', 0.95); }); save(join(tmp, String(i).padStart(6, '0') + '.jpg'), url); if (i % fps === 0) console.log(`  ${i}/${n} frames · ${((Date.now() - t00) / 1000).toFixed(0)} s`); }

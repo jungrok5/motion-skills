@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dust Mail — sprite-stack-flight</title>
+<script src="lib/stack.js"></script>
+<script src="lib/kit.js"></script>
+</head>
+<body>
+<script>
+// "Dust Mail": a red mail biplane's last run over desert mesas at golden hour. See BRIEF.md.
+const F = SS.create({ title: 'DUST MAIL', sub: 'THE LAST RUN TO RED BUTTE', fps: 30 });
+
+F.look({
+  sky: ['#ffd7a3', '#f2b48c', '#c99cb4', '#8f8cc4', '#6a78b8'], fog: '#f3c9a2',
+  cloud: ['#b98a8a', '#e3b39e', '#f9dcc0', '#fff1de'], shadow: .74,
+  sun: { az: 250, el: 7, r: 8, color: '#fff3c4', halo: '#ffcf86' },
+  band: '#2a1712', text: '#fff1dc', textShadow: '#5a2a1a', trail: '#fff4e6',
+});
+
+// ---- the world: desert floor, terraced mesas and buttes in red strata, one green river ----
+const STRATA = ['#c4683c', '#d98a4e', '#b5552f', '#e0a066', '#c97448', '#a94a2c'];
+F.world({
+  size: 512, seed: 11, unit: 1,
+  height(x, y, n) {
+    let h = 2 + n.fbm(x, y, 96, 4) * 4;
+    const mesa = SS.smooth(.5, .53, n.fbm(x, y, 150, 5)), butte = SS.smooth(.72, .75, n.fbm(x, y, 48, 3));
+    h += mesa * (11 + n.fbm(x, y, 24, 2) * 3) + butte * 9;
+    const rv = Math.abs(n.fbm(x, y, 220, 3) - .5);                 // the river winds along a noise contour
+    if (rv < .02) h = Math.min(h, rv < .009 ? -2.5 + rv * 100 : 1 + (rv - .009) * 260);
+    return h;
+  },
+  color(lv, x, y, i) {
+    if (lv <= 1) return i.rnd < .5 ? '#7e9a44' : '#6c8a3a';           // river banks
+    if (lv <= 5) return i.rnd < .3 ? '#d6a46c' : i.rnd < .6 ? '#e0b07a' : '#cf9a62';   // sand
+    if (i.slope === 0 && lv >= 13) return i.rnd < .5 ? '#e7b27a' : '#dca46c';          // flat mesa tops
+    return STRATA[lv % STRATA.length];                                // strata: one colour per terrace
+  },
+  water: { ramp: ['#1d4f5c', '#2a7076', '#3c918a', '#62b3a0'], depth: 3, glints: .03, foam: '#d9efe0', shore: 0 },
+  decorate(W) {
+    // sage on the desert floor, cottonwoods on the banks, a few rock spires, an adobe town by the river
+    SK.scatter(W, { count: 9000, where: (x, y) => { const l = W.level(x, y); return l >= 2 && l <= 5; }, stamp: (W, x, y, r) => W.stamp(x, y, 1, r() < .5 ? '#8a9a5a' : '#6f8450', '#55663e') });
+    SK.scatter(W, { count: 5000, where: (x, y) => W.level(x, y) === 1 && W.n.value(x, y, 20) > .45, stamp: (W, x, y, r) => SK.tree(W, x, y, { h: 2 + (r() * 2 | 0), dark: '#3d5a22', mid: '#5c8030', lite: '#8fae48', big: r() < .4 }) });
+    SK.scatter(W, { count: 60, where: (x, y) => { const l = W.level(x, y); return l >= 3 && l <= 5; }, stamp: (W, x, y, r) => SK.rock(W, x, y, { r: 1 + (r() * 2 | 0), h: 6 + (r() * 6 | 0), color: '#b8603a', side: '#7a3a22' }) });
+    // the town of Red Butte: find a dry bank cell near the start and build a grid of flat-roofed adobe houses
+    let tx = 300, ty = 210; for (let k = 0; k < 4000 && !(W.level(tx, ty) >= 2 && W.level(tx, ty) <= 4); k++) { tx = 260 + (W.rng() * 120 | 0); ty = 170 + (W.rng() * 120 | 0); }
+    F.town = [tx, ty];
+    for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) if (W.rng() < .8) SK.house(W, tx + i * 6, ty + j * 5, { w: 4, d: 3, h: 2, roof: W.rng() < .5 ? '#d9b48a' : '#c99a6e', ridge: '#e8c79c', wall: '#a8744e' });
+  },
+});
+
+F.clouds({ count: 16, base: [72, 86], size: [4, 9], puffs: [3, 6], stretch: 2.6, flat: true, wind: [1.4, .25], seed: 4 });
+
+// ---- the craft: a red biplane, cream wings, black cowl, spinning prop (3 frames) ----
+const RED = '#c8342c', RED2 = '#e0503a', CREAM = '#efe0bc', WOOD = '#5a3a26', DARK = '#2c2428';
+const plane = SS.model({ w: 35, h: 30, d: 13, frames: 3, outline: '#2a1512' }, (M, f) => {
+  const cx = 17;
+  SK.fuselage(M, { cx, cz: 5, y0: 3, y1: 26, r: u => u < .28 ? 3.3 : SS.lerp(3.3, 1, (u - .28) / .72), color: (x, y, z) => z >= 7 && y > 8 ? RED2 : RED });
+  M.tube(cx, 5, 3, 6, [3.6, 3.4], (x, y, z) => (x + z) % 2 ? DARK : '#4a4044');                // the cowl, finned
+  SK.wings(M, { cx, y: 9, span: 16, chord: 5, tip: 4, z: 2, thick: 1, color: (x, y, z) => Math.abs(x - cx) > 13 ? RED : CREAM });
+  SK.wings(M, { cx, y: 8, span: 17, chord: 5, tip: 4, z: 10, thick: 1, color: (x, y, z) => Math.abs(x - cx) > 14 ? RED : CREAM });
+  for (const s of [-1, 1]) { M.box(cx + s * 11, 10, 3, cx + s * 11, 10, 9, WOOD); M.box(cx + s * 11, 12, 3, cx + s * 11, 12, 9, WOOD); M.box(cx + s * 2, 9, 8, cx + s * 2, 9, 9, WOOD); }
+  M.box(cx - 1, 13, 7, cx + 1, 16, 8, 0); M.box(cx - 1, 13, 6, cx + 1, 16, 6, '#3a2418');        // the open cockpit
+  M.ell(cx, 15, 8, 1.2, 1.2, 1.2, '#6b4a30'); M.set(cx, 14, 8, '#a8c8d8');                        // the pilot's helmet + goggles
+  M.box(cx - 1, 12, 8, cx + 1, 12, 8, '#cfe6f0');                                                  // windscreen
+  M.plate([[cx - 7, 24], [cx + 7, 24], [cx + 6, 28], [cx - 6, 28]], 6, 6, CREAM);                  // tailplane
+  SK.fin(M, { cx, y0: 22, y1: 28, yt0: 25, yt1: 28, z0: 6, z1: 11, color: RED });
+  for (const s of [-1, 1]) { M.box(cx + s * 3, 8, 0, cx + s * 3, 9, 1, DARK); M.box(cx + s * 2, 8, 2, cx + s * 2, 8, 3, WOOD); }  // wheels + legs
+  SK.prop(M, f, { cx, cz: 5, y: 2, r: 5, frames: 3, color: '#3a3026', disc: '#a89a88', spinner: '#d9d2c4' });
+  SK.navLights(M, { cx, x: 17, y: 10, z: 10 });
+});
+
+F.craft(plane, {
+  mass: 1.5, speed: 22, turn: .85, clearance: 6, over: 1, chase: 2.3, chaseDist: 24, chaseRise: 5, eye: 1.4, voxelSize: .25,
+  frame: (s, t) => Math.floor(t * 24) % 3,                    // the prop turns at 24 fps — any t gives the same frame
+  trail: { color: '#fff4e6', from: [[1, 11, 2], [33, 11, 2]] }, trailWhen: s => s.rolling > 0 || s.thr > .82,
+  sound: { engine: 'prop', hz: 58 },                              // a radial engine's lope
+});
+
+// ---- the flight: overhead over the river, down into the mesas, a roll, the open cockpit, out over the town ----
+F.plan({
+  start: { x: 236, y: 300, z: 44, heading: 50 },
+  steps: [
+    { dur: 4, cam: 'over', bank: 0, climb: 0, thr: .55 },
+    { dur: 3.5, bank: -32 },
+    { dur: 4.5, cam: 'chase', bank: 0, climb: -6 },
+    { dur: 3.5, bank: 28, climb: 0 },
+    { dur: 3, bank: 0, roll: 'right', thr: .9 },
+    { dur: 5, cam: 'cockpit', bank: -22, climb: 5, thr: .6 },
+    { dur: 3.5, bank: 18, climb: 0 },
+    { dur: 5, cam: 'over', bank: -12, climb: 9, caption: 'MAIL FOR RED BUTTE' },
+  ],
+});
+
+// ---- the cockpit: an open biplane seat — the top wing overhead, struts, the red cowl, a wooden panel of brass dials ----
+F.cockpit({
+  static(P) {
+    P.rect(0, 0, 480, 30, '#d8c59c'); for (let x = 12; x < 480; x += 26) P.rect(x, 0, 2, 30, '#bfa97e');   // top wing underside + ribs
+    P.rect(0, 30, 480, 3, '#8f7a56'); P.dither(0, 33, 480, 3, '#6e5a3e', .5);
+    P.rect(206, 0, 68, 26, '#c9b68c'); P.rect(206, 26, 68, 2, '#8f7a56');                                     // centre section
+    P.line(214, 30, 196, 150, WOOD); P.line(215, 30, 197, 150, WOOD); P.line(266, 30, 284, 150, WOOD); P.line(265, 30, 283, 150, WOOD);  // cabane struts
+    P.rect(14, 33, 5, 200, '#6b4a30'); P.rect(15, 33, 1, 200, '#8a6444'); P.rect(461, 33, 5, 200, '#6b4a30'); P.rect(462, 33, 1, 200, '#8a6444');  // interplane struts
+    P.poly([[150, 214], [330, 214], [300, 168], [180, 168]], RED); P.poly([[180, 168], [300, 168], [292, 158], [188, 158]], '#3a3034');   // cowl
+    P.rect(186, 170, 108, 2, RED2); for (let x = 192; x < 290; x += 10) P.rect(x, 160, 3, 7, '#5a5054');
+    // the windscreen: a brass frame, clear glass with two glare streaks (you see the cowl through it)
+    P.rect(196, 176, 88, 2, '#c9a046'); P.rect(196, 176, 2, 30, '#c9a046'); P.rect(282, 176, 2, 30, '#c9a046'); P.rect(197, 177, 86, 1, '#f0d27a');
+    P.line(206, 200, 224, 180, '#ffffff', 2); P.line(212, 200, 228, 182, '#e8f4f8', 3); P.line(262, 200, 274, 186, '#ffffff', 2);
+    SK.dash(P, { y: 204, color: '#6b4126', lip: '#8c5a36', shadow: '#3a2414', shape: [[0, 270], [0, 214], [120, 204], [360, 204], [480, 214], [480, 270]] });
+    for (let y = 214; y < 270; y += 5) P.line(0, y + ((y * 7) % 3), 480, y, '#5e3820', 3);                    // wood grain
+  },
+  over(P, s, t, F) {
+    // the prop ahead of the cowl: a faint dithered disc and one dark blade streak that turns every frame
+    for (let y = -26; y <= 26; y++) { const w = Math.round(88 * Math.sqrt(1 - (y / 27) ** 2)); for (let x = -w; x <= w; x++) if (SS.bayer(x + 240, y + 150) < .07) P.px(240 + x, 150 + y, '#5a4a3a'); }
+    const a = t * 41; P.line(240 + Math.cos(a) * 86, 150 + Math.sin(a) * 26, 240 - Math.cos(a) * 86, 150 - Math.sin(a) * 26, '#3a3026', 2);
+    const brass = { rim: '#c9a046', face: '#1e1a16', tick: '#efe4c8', needle: '#ff9a3a' };
+    SK.gauge(P, 54, 236, 17, s.v / 40, { ...brass, label: 'AIRSPEED' });
+    SK.gauge(P, 104, 240, 14, (s.z % 100) / 100, { ...brass, a0: -Math.PI / 2, a1: Math.PI * 1.5, ticks: 10, label: 'ALT' });
+    SK.attitude(P, 240, 238, 17, s, { rim: '#c9a046', sky: '#6bb6e0', ground: '#9a6038' });
+    SK.gauge(P, 376, 240, 14, s.thr, { ...brass, label: 'RPM' });
+    SK.gauge(P, 426, 236, 17, ((s.heading ?? 0) / 360), { ...brass, a0: -Math.PI / 2, a1: Math.PI * 1.5, ticks: 12, label: 'COMPASS' });
+    SK.readout(P, 290, 230, String(Math.round(s.z * 30)).padStart(4, '0'), { bg: '#1e1a16', color: '#ffcf6a', rim: '#c9a046' });
+  },
+});
+F.start();
+</script>
+</body>
+</html>

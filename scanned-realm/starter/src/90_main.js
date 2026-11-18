@@ -10,7 +10,11 @@ LR.start({
     P('rock', 'rock_pitted_mossy');
     // objects and plants: instanced, with levels of detail made at load.  A big scan wears a tiling surface of the
     // engine near the eye (detail); a plant is cut out, moves in the wind and turns with the season (plant)
-    await MD.load(['stone_fire_pit', 'tree_stump_01', 'wine_barrel_01', { id: 'boulder_01', detail: 'rock', moss: 0.9, tint: [0.8, 0.84, 0.86] }, { id: 'fern_02', plant: true }]);
+    // … and a whole scanned tree (tree: true): its wood solid and swaying, its needles cut-out leaves, seven levels of
+    // detail made when it arrives.  It is "heavy" in assets.json — 23 MB for three saplings — so it is named last (it
+    // then arrives last) and a phone or the lowest quality is not sent it at all
+    await MD.load(['stone_fire_pit', 'tree_stump_01', 'wine_barrel_01', { id: 'boulder_01', detail: 'rock', moss: 0.9, tint: [0.8, 0.84, 0.86] }, { id: 'fern_02', plant: true },
+      { id: 'fir_sapling', tree: true, turn: 0 }]);
     // stand-ins: every barrel, stump and rock the kit and the builders place is drawn from a scan
     MD.stand('barrel', 'wine_barrel_01'); MD.stand('stump', 'tree_stump_01'); MD.stand('rock', 'boulder_01', { min: 0.5 });
     // leaves: the trees are grown from numbers, their sprays are painted from photographs — a box in the atlas for

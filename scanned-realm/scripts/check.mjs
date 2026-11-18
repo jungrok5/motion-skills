@@ -47,6 +47,10 @@ const rules = await page.evaluate(() => {
     if (!LR.ASSETS) warn.push('no assets/manifest.json — the place is drawn from its generated recipes and props only: run fetch-assets.mjs (assets.json names the scans), then build again');
     if (M.missed && M.missed.length) fail.push(`scans that did not arrive: ${M.missed.join(', ')} — run fetch-assets.mjs again (or the page was opened from file:// in a browser)`);
     if (MD.failed.length) fail.push(`scanned models that did not load: ${MD.failed.join(', ')}`);
+    // whole trees: tens of megabytes and up to a million triangles each — they must be marked heavy (phones and the lowest quality leave them out) and must have their levels
+    if (LR.ASSETS) for (const id in MD.opt) { const a = LR.ASSETS.models[id], o = MD.opt[id]; if (!a) continue; if (!a.heavy && a.bytes > 15e6) warn.push(`${id} is ${Math.round(a.bytes / 1e6)} MB and not marked "heavy" in assets.json — every phone will fetch it`);
+      if (o.tree) { const d = MD.live.find((q) => q.model === id); if (d && d.nl < 5) warn.push(`${id} is a tree with ${d.nl} levels of detail (5 or 7 expected)`); else if (d && d.tri[d.nl - 1] > Math.max(4000, d.tri[0] * 0.03)) warn.push(`${id}: its farthest level still has ${d.tri[d.nl - 1]} triangles`); } }
+    if (MD.skipped.length) info.push(`heavy scans left out on this device: ${MD.skipped.join(', ')}`);
     { const flat = MD.live.filter((d) => !d.plant && d.tris > 12000 && d.nl < 3).map((d) => `${d.id} (${Math.round(d.tris / 1000)}k triangles, ${d.nl} level${d.nl > 1 ? 's' : ''})`); if (flat.length) warn.push(`dense scans that could not be simplified — every copy is drawn whole: ${flat.join(', ')}`); }
     // … and must have something in them: a layer or a model's map that baked empty draws black (seen when a bake's
     // sources were freed before a software renderer had carried the bake out) — read the smallest copy of each
@@ -110,13 +114,13 @@ if (!rules.views.length) warn.push('no views: LR.start({ views: [{ name, cam }] 
 for (let i = 0; i < nv; i++) {
   const v = rules.views[i], S = {};
   for (const [sn, st] of STATES) { const r = await shoot(page, Object.assign({ cam: v.cam, frames: 6 }, st), 'image/jpeg'); S[sn] = Object.assign(await stat(r.url), { info: r.info }); const x = S[sn];
-    console.log(`  ${(v.name + ' · ' + sn).padEnd(22)} light ${x.mean.toFixed(2)} ± ${x.sd.toFixed(2)}  sat ${x.sat.toFixed(2)}  blown ${(x.blown * 100).toFixed(1)}%  black ${(x.murk * 100).toFixed(0)}%  ${r.info.calls} calls  ${(r.info.tris / 1e6).toFixed(2)} M tris` + (r.info.scans && r.info.scans.inst ? `  scans ${r.info.scans.inst} × ${(r.info.scans.tris / 1e6).toFixed(2)} M` : ''));
+    console.log(`  ${(v.name + ' · ' + sn).padEnd(22)} light ${x.mean.toFixed(2)} ± ${x.sd.toFixed(2)}  sat ${x.sat.toFixed(2)}  blown ${(x.blown * 100).toFixed(1)}%  black ${(x.murk * 100).toFixed(0)}%  ${r.info.calls} calls (${r.info.shadowCalls || 0} shadow)  ${(r.info.tris / 1e6).toFixed(2)} M tris` + (r.info.scans && r.info.scans.inst ? `  scans ${r.info.scans.inst} × ${(r.info.scans.tris / 1e6).toFixed(2)} M` : ''));
     if (x.sd < 0.02) fail.push(`${v.name} · ${sn}: a blank picture`); else if (x.sd < 0.045) warn.push(`${v.name} · ${sn}: flat (light ± ${x.sd.toFixed(2)}) — fog too thick, or nothing lit against shade`);
     // flat is a number: a clear day that is bright all over, or grey all over, has lost its shade or its air (references/LOOK.md)
     if (sn === 'day' && x.mean > 0.56) warn.push(`${v.name} · day: washed out (mean light ${x.mean.toFixed(2)}, the look wants 0.40–0.46) — the sky fills the shade or the air is thick: LR.wx.key, fill, the look's fog`);
     if (sn === 'day' && x.sat < 0.13) warn.push(`${v.name} · day: grey (saturation ${x.sat.toFixed(2)}) — LR.wx.colour, or haze over everything`);
     if (x.blown > 0.2) warn.push(`${v.name} · ${sn}: ${(x.blown * 100).toFixed(0)}% blown white`); if (x.murk > 0.6) warn.push(`${v.name} · ${sn}: ${(x.murk * 100).toFixed(0)}% near black — a night still needs a readable sky and lit windows`);
-    if (r.info.calls > 520) warn.push(`${v.name} · ${sn}: ${r.info.calls} draw calls into the G-buffer`); if (r.info.tris > 4.2e6) warn.push(`${v.name} · ${sn}: ${(r.info.tris / 1e6).toFixed(1)} M triangles`); }
+    if (r.info.calls > 580) warn.push(`${v.name} · ${sn}: ${r.info.calls} draw calls (${r.info.shadowCalls || 0} of them the shadow cascades — a still draws all three, the live page one or two a frame)`); if (r.info.tris > 4.2e6) warn.push(`${v.name} · ${sn}: ${(r.info.tris / 1e6).toFixed(1)} M triangles`); }
   if (S.night.mean > S.day.mean * 0.75) fail.push(`${v.name}: night (${S.night.mean.toFixed(2)}) is not darker than day (${S.day.mean.toFixed(2)})`);
   if (diff(S.day, S.rain) < 6) fail.push(`${v.name}: rain does not change the picture`); if (diff(S.day, S.snow) < 10) fail.push(`${v.name}: snow does not change the picture`);
   if (i === 0) { const a = await shoot(page, { cam: v.cam, frames: 6, tod: 13.5, weather: 'clear', t: 20 }, 'image/jpeg'), b = await shoot(page, { cam: v.cam, frames: 6, tod: 13.5, weather: 'clear', t: 20.6 }, 'image/jpeg'); const m = diff(await stat(a.url), await stat(b.url)); console.log(`  ${v.name}: moves ${m.toFixed(2)} in 0.6 s`); if (m < 0.05) warn.push(`${v.name}: nothing moves in 0.6 s — wind, water, smoke?`); }

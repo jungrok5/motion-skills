@@ -10,8 +10,8 @@
     hint: 'W A S D or arrow keys to walk · Q E or ← → to turn · drag or click to look · Shift to run',
     hintTouch: 'left thumb walks · right thumb looks',
     scans: 'Scanned surfaces and objects: Poly Haven · CC0',
-    help: [['W A S D / ↑ ↓', 'walk'], ['← → / Q E', 'turn'], ['mouse', 'look (click to capture, Esc to release)'], ['Shift', 'run'], ['Space', 'hop'], ['gamepad', 'left stick walks · right stick looks · trigger runs · A hops'], ['1 2 3 4', 'dawn · day · dusk · night'], ['5 6 7', 'clear · rain · winter'], ['T', 'automatic round'], ['C', 'tour walk'], ['G', 'quality'], ['M', 'sound'], ['P', 'numbers'], ['H', 'hide the panels'], ['F', 'full screen']],
-    quality: 'Quality', tiers: { auto: 'auto', low: 'low', medium: 'medium', high: 'high', ultra: 'ultra' }, sound: 'Sound', full: 'Full screen', keys: 'Keys', taking: 'You have the walk — press C for the tour',
+    help: [['W A S D / ↑ ↓', 'walk'], ['← → / Q E', 'turn'], ['mouse', 'look (click to capture, Esc to release)'], ['Shift', 'run'], ['Space', 'hop'], ['gamepad', 'left stick walks · right stick looks · trigger runs · A hops'], ['1 2 3 4', 'dawn · day · dusk · night'], ['5 6 7', 'clear · rain · winter'], ['T', 'automatic round'], ['C', 'tour walk'], ['L', 'the lens while you walk: depth of field (the tour always has it)'], ['G', 'quality'], ['M', 'sound'], ['P', 'numbers'], ['H', 'hide the panels'], ['F', 'full screen']],
+    quality: 'Quality', tiers: { auto: 'auto', low: 'low', medium: 'medium', high: 'high', ultra: 'ultra' }, sound: 'Sound', full: 'Full screen', keys: 'Keys', taking: 'You have the walk — press C for the tour', lensOn: 'Lens on: what you are not looking at goes soft — L again to switch it off', lensOff: 'Lens off', lensNone: 'This quality has no lens — raise it with G',
   };
   const ICON = {
     dawn: '<path d="M3 17h18M6 13a6 6 0 0 1 12 0M12 3v3M4.5 7.5l2 2M19.5 7.5l-2 2"/>', day: '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
@@ -78,13 +78,14 @@
       else if (k === 'walk') { if (LR.player.touring) LR.player.stopTour(); else LR.player.startTour(); }
       else if (k === 'gear') { const order = ['auto', 'low', 'medium', 'high', 'ultra'], cur = LR.gpu.auto ? 'auto' : LR.gpu.tierName, nx = order[(order.indexOf(cur) + 1) % order.length]; H.reload(nx === 'auto' ? null : nx); }
       else if (k === 'sound') { if (LR.audio) { if (!LR.audio.ready) { LR.audio.init(); LR.audio.mute(false); } else LR.audio.mute(!LR.audio.muted); } sync(); }
+      else if (k === 'lens') { const z = LR.render.lens; if (!z.on) H.hint(t.lensNone, 4); else { z.walk = z.walk ? 0 : 1; H.hint(z.walk ? t.lensOn : t.lensOff, 4); } }
       else if (k === 'keys') E.help.classList.toggle('on');
       else if (k === 'full') { const d = document; if (d.fullscreenElement) d.exitFullscreen(); else if (d.documentElement.requestFullscreen) d.documentElement.requestFullscreen().catch(() => {}); }
       sync();
     };
     H.act = act;
     root.addEventListener('click', (e) => { const b = e.target.closest('button[data-k]'); if (b) { act(b.dataset.k); b.blur(); document.getElementById('view').focus(); } });
-    const KEY = { Digit1: 'dawn', Digit2: 'day', Digit3: 'dusk', Digit4: 'night', Digit5: 'clear', Digit6: 'rain', Digit7: 'snow', KeyT: 'auto', KeyC: 'walk', KeyG: 'gear', KeyM: 'sound', KeyF: 'full' };
+    const KEY = { Digit1: 'dawn', Digit2: 'day', Digit3: 'dusk', Digit4: 'night', Digit5: 'clear', Digit6: 'rain', Digit7: 'snow', KeyT: 'auto', KeyC: 'walk', KeyL: 'lens', KeyG: 'gear', KeyM: 'sound', KeyF: 'full' };
     LR.on('key', (code) => { if (KEY[code]) act(KEY[code]); else if (code === 'KeyH') { H.show = !H.show; root.classList.toggle('off', !H.show); } else if (code === 'KeyP') E.num.style.display = E.num.style.display === 'none' ? '' : 'none'; else if (code === 'Slash' || code === 'F1') E.help.classList.toggle('on'); else if (code === 'Escape') E.help.classList.remove('on'); });
     const sync = () => { const q = (k) => E.bar.querySelector(`[data-k="${k}"]`), w = wx.want.weather;
       q('clear').setAttribute('aria-pressed', w === 'clear' || w === 'winter' || w === 'autumn'); q('rain').setAttribute('aria-pressed', w === 'rain'); q('snow').setAttribute('aria-pressed', w === 'snow');
@@ -102,7 +103,7 @@
   let hintT = 0; H.hint = (text, sec = 5) => { const e = H.els.hint; if (!e) return; if (text) e.textContent = text; e.classList.add('on'); clearTimeout(hintT); hintT = setTimeout(() => e.classList.remove('on'), sec * 1000); };
   let cardT = 0; H.card = (title, sub) => { const e = H.els.card; if (!e) return; e.firstChild.textContent = title; e.lastChild.textContent = sub || ''; e.classList.add('on'); clearTimeout(cardT); cardT = setTimeout(() => e.classList.remove('on'), 4200); };
   // reload keeping where we stand, the hour and the weather
-  H.reload = (tier) => { const p = LR.player, u = new URL(location.href); if (tier) u.searchParams.set('q', tier); else u.searchParams.delete('q'); u.searchParams.delete('safe');      /* choosing a quality by hand leaves safe mode */ u.searchParams.set('at', [p.x.toFixed(1), p.z.toFixed(1), ((p.yaw * 180) / Math.PI).toFixed(0)].join(',')); u.searchParams.set('tod', LR.wx.tod.toFixed(2)); u.searchParams.set('wx', LR.wx.want.weather); if (!p.touring) u.searchParams.set('tour', '0'); location.href = u.toString(); };
+  H.reload = (tier) => { const p = LR.player, u = new URL(location.href); if (tier) u.searchParams.set('q', tier); else u.searchParams.delete('q'); u.searchParams.delete('safe');      /* choosing a quality by hand leaves safe mode */ if (LR.ASSETS && LR.q('scan') !== '0') u.searchParams.set('go', '1');      /* the start was pressed once: a reload — another quality, or the step down a slow device is given — does not ask again (in a frame or on a phone it came back to the start button, mid-walk) */ u.searchParams.set('at', [p.x.toFixed(1), p.z.toFixed(1), ((p.yaw * 180) / Math.PI).toFixed(0)].join(',')); u.searchParams.set('tod', LR.wx.tod.toFixed(2)); u.searchParams.set('wx', LR.wx.want.weather); if (!p.touring) u.searchParams.set('tour', '0'); location.href = u.toString(); };
 
   // ── every frame: the clock line, place cards, numbers, and the resolution governor ───────────────────────────────
   let acc = 0, n = 0, lastPlace = null, slowFor = 0, okFor = 0, wait = 3, capScale = 1, sec = 0;
@@ -114,12 +115,15 @@
       if (E.num && E.num.style.display !== 'none') E.num.textContent = `${fps.toFixed(0)} fps\n${R.w}×${R.h} (${R.scale.toFixed(2)}×)\n${G.tierName}${G.auto ? ' · auto' : ''}\n${R.info.allCalls} calls · ${(R.info.tris / 1e6).toFixed(2)} M tris\n${R.info.lights || 0} lights${R.info.scans && R.info.scans.inst ? `\nscans ${R.info.scans.inst} × ${(R.info.scans.tris / 1e6).toFixed(2)} M` : ''}${R.prof && R.prof.on ? R.prof.text() : ''}`;
       // governor: hold the display's rate by trading internal resolution; probe upward when there is room
       if (LR.q('scale') === null || LR.q('scale') === undefined) {
-        const target = Math.min(H.refresh || 60, 60), lo = G.tier.scaleMin, hi = Math.min(G.tier.scaleMax, capScale);
+        const target = Math.min(H.refresh || 60, LR.qn('fps', G.mobile ? 30 : 60)), lo = G.tier.scaleMin, hi = Math.min(G.tier.scaleMax, capScale);      // a phone holds thirty and spends the rest on pixels: a soft picture at sixty reads as out of focus (?fps=60 asks for sixty)
         if (sec > 2.5) {
           if (fps < target * 0.86) { slowFor += 0.5; okFor = 0; } else if (fps > target * 0.95) { okFor += 0.5; slowFor = 0; } else { slowFor = 0; okFor = 0; }
           if (slowFor >= 1 && R.scale > lo + 0.01) { if (H.probing) { capScale = Math.max(lo, R.scale - 0.1); wait = Math.min(60, wait * 2); H.probing = false; } R.setScale(Math.max(lo, R.scale - (fps < target * 0.6 ? 0.2 : 0.1))); slowFor = 0; }
           else if (okFor >= wait && R.scale < hi - 0.01) { R.setScale(Math.min(hi, R.scale + 0.1)); okFor = 0; H.probing = true; }
           else if (okFor >= 2 && H.probing) { H.probing = false; }
+          // a phone that holds full scale with frames to spare has pixels left on its screen: its canvas goes from two a CSS
+          // pixel to two and a half, once.  The scale steps down so the same pixels are drawn at first; the governor goes on from there
+          if (G.mobile && !G.dprUp && LR.fit && (window.devicePixelRatio || 1) > 2.2 && !LR.q('dpr') && R.scale >= G.tier.scaleMax - 0.01 && fps > target * 1.5) { H.spare = (H.spare || 0) + 0.5; if (H.spare >= 6) { G.dprUp = 1.25; R.scale = R.scale / 1.25; LR.fit(); okFor = 0; } } else H.spare = 0;
           // a device far below the tier it was given: step the whole tier down once
           if (G.auto && R.scale <= lo + 0.01 && fps < 22) { H.slowTier = (H.slowTier || 0) + 0.5; if (H.slowTier > 5 && G.tierName !== 'low' && !LR.q('stepped')) { const order = ['low', 'medium', 'high', 'ultra'], nx = order[Math.max(0, order.indexOf(G.tierName) - 1)]; const u = new URL(location.href); u.searchParams.set('stepped', '1'); history.replaceState(null, '', u); H.reload(nx); } } else H.slowTier = 0;
         }

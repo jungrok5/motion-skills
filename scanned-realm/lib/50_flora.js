@@ -414,7 +414,7 @@ void main(){
   mat3 tbn = cotFrame(Ng, vWorld, vUv);
   vec3 albedo, N; float rough, ao, trans = 0.0, snow = 0.0, leafy = 0.0;
   if (vMeta.x < 0.5) {
-    float layer = floor(vMeta.y + 0.5); vec4 a = textureGrad(uMatA, vec3(vUv, layer), dx, dy), b = textureGrad(uMatB, vec3(vUv, layer), dx, dy);
+    float layer = floor(vMeta.y + 0.5); vec4 a = textureGrad(uMatA, vec3(vUv, layer), dx * LODK, dy * LODK), b = textureGrad(uMatB, vec3(vUv, layer), dx * LODK, dy * LODK);
     albedo = a.rgb * a.rgb; N = normalize(tbn * nrmDec(b.xy)); rough = b.z; ao = b.w * vAux.x;
 #ifndef BAKE
     vec4 P = uMatP[int(layer)]; snow = applyWeather(albedo, N, rough, ao, a.a, vWorld, Ng, P.x, 0.0, P.z);

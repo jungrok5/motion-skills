@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Ferry Bell · street-run-montage</title>
+<script type="importmap">{ "imports": { "three": "../../lib/three.module.min.js", "srm/": "../../lib/" } }</script>
+</head><body>
+<script type="module">
+// 「The Ferry Bell」 — the worked example (BRIEF.md): the last ferry bell rings down at the harbour; Hana and her corgi
+// Mochi race from the top of the hill, through the shopping street and along the seawall, and make it. 16 shots cut on
+// the beat (124 bpm), two in slow motion; spring afternoon, cherry trees, petals.
+import { Run } from 'srm/film.js';
+import { CAST } from './cast.js';
+import { SCORE } from './score.js';
+
+const F = new Run({ title: 'The Ferry Bell', bpm: 124, light: 'afternoon', season: 'spring', town: { paving: '#d8cbb4', block: '#d3cec4' } });
+
+// the route: a short flat at the top, the hill down (−4.5 m), a bend right into the shopping street, the harbour front, the terminal plaza
+F.route([{ len: 6 }, { len: 52, rise: -4.5 }, { len: 22, turn: 32 }, { len: 34 }, { len: 18, turn: -14 }, { len: 90 }]);
+F.cast(CAST);
+
+// ── the ride, in story time (seconds) ──
+F.ride({
+  speed: [{ t: 0, v: .6 }, { t: .5, v: .9 }, { t: 3.2, v: 3.3 }, { t: 4.2, v: 3.6 }, { t: 6, v: 4.8 }, { t: 9, v: 5.7 }, { t: 14, v: 5.6 },
+          { t: 20, v: 5.3 }, { t: 26.3, v: 4.8 }, { t: 28.2, v: 5.5 }, { t: 29.6, v: 5.2 }, { t: 31.1, v: 0, e: 'out' }],
+  lane: [{ t: 0, v: 0 }, { t: 12, v: 0 }, { t: 13.5, v: .6 }, { t: 15.5, v: .5 }, { t: 21, v: .4 }, { t: 23, v: -.3 }, { t: 30, v: -.6 }],
+  moves: [
+    { at: .5, do: 'push', n: 3, every: .85 },
+    { at: 4.0, do: 'push', n: 2, every: .85 },          // the feet shot
+    { at: 8.0, do: 'look', target: 'buddy', side: 1, dur: 1.4 },
+    { at: 10.0, do: 'ollie', h: .5 },                    // over the planter (worm shot, slow motion)
+    { at: 12.8, do: 'carve', dur: 1.5, dir: -1 },
+    { at: 14.7, do: 'kickflip', h: .46 },                // slow motion
+    { at: 17.6, do: 'grind', h: .45, x: 1.9, off: 19.6, rail: 'ledge', color: '#d9d2c4' },   // the seawall ledge
+    { at: 20.6, do: 'manual', dur: 1.3 },
+    { at: 22.4, do: 'tuck', dur: 1.6 },
+    { at: 24.9, do: 'shuvit', h: .36 },
+    { at: 26.4, do: 'push', n: 2, every: .85 },
+    { at: 28.4, do: 'point', dur: 1.4 },                 // there — the ferry
+    { at: 31.3, do: 'dismount', face: -.35 },
+    { at: 32.5, do: 'cheer', dur: 2.1 },
+  ],
+});
+
+// ── Mochi: on Hana's right, then the sea side; leaps the planter with her, barks, sits at the end ──
+F.buddy({
+  lead: [{ t: 0, v: .9 }, { t: 4, v: 1.4 }, { t: 9.5, v: .5 }, { t: 11, v: 1.2 }, { t: 16, v: .2 }, { t: 22, v: 1.6 }, { t: 27, v: .6 }, { t: 31.1, v: .9 }, { t: 32, v: 1.0 }],
+  side: [{ t: 0, v: 1.25 }, { t: 15.6, v: 1.25 }, { t: 17.0, v: -.9 }, { t: 30, v: -.9 }, { t: 31.4, v: -.2 }],
+  moves: [{ at: 9.9, do: 'leap', h: .45 }, { at: 11.4, do: 'call', dur: .5 }, { at: 31.9, do: 'sit', dur: 4, face: -.8 }, { at: 32.8, do: 'call', dur: .5 }, { at: 33.6, do: 'look', yaw: .7, pitch: -.4, dur: 1.4 }],
+});
+
+// ── the town, laid out around the ride ──
+F.town(K => {
+  const s = t => K.sAt(t);
+  K.zone('lane', -30, s(14) - 2, { poleSide: -1, mirror: true });
+  K.zone('shops', s(14) - 2, s(17) + 2, { side: 1, shops: [
+    { text: 'SHIOKAZE BAKERY', signStyle: { fg: '#7a3a1c', stripe: '#f2b52e', stripe2: '#e8432e' }, awningColor: '#e8432e' },
+    { text: 'UMINEKO BOOKS', signStyle: { fg: '#22305a', stripe: '#7fd0b6', stripe2: '#22305a' }, awningColor: '#22305a' },
+    { text: 'MINATO MART', signStyle: { fg: '#2f6fd0', stripe: '#f08a24', stripe2: '#e8432e' } }] });
+  K.zone('harbor', s(17) + 2, s(29), { side: -1, w: 9 });
+  K.zone('plaza', s(29), s(29) + 70, { side: 1, text: 'FERRY TERMINAL', w: 14, far: false });
+  for (let t = 29.4; t < 31; t += .5) K.bollard({ tau: t }, -6.6);
+  K.river(s(29) - 2, s(29) + 80, -7, -220, { y: -1.6 });
+  K.boat(s(31.3) + 2, -17, { color: '#f4f2ec', cabin: '#22305a', y: -1.2 });
+  // the planter Hana ollies and Mochi leaps (across the lane at τ 10.3)
+  K.planter({ tau: 10.32 }, .55, { w: .9, d: 2.7, h: .36, color: '#cfc4b4', flowers: ['#f6b8c8', '#ffffff', '#f2b52e'] });
+  K.tree({ tau: 9.0 }, -3.6, { h: 6 }); K.tree({ tau: 11.6 }, 3.9, { h: 5.5 });
+  for (let t = 18; t < 29; t += 2.3) K.tree({ tau: t }, 6.2, { h: 5 + (t % 3) });
+});
+
+// ── the shots, in film time (beats at 124 bpm) — every cut on the beat; story time runs on, slowed in two shots ──
+F.shots([
+  { beats: 8, cam: 'wide', side: 1, lead: 22, d: 1.6, h: 2.6 },                         // the top of the hill, the sea far below
+  { beats: 4, cam: 'feet', side: 1 },                                                     // pushing off
+  { beats: 4, cam: 'low-front', side: 1, x: .5, lines: .6 },                              // downhill toward us, Mochi beside
+  { beats: 4, cam: 'face', d: 1.2 },                                                      // she looks down at Mochi
+  { beats: 4, cam: 'worm', side: 1, atTau: 10.3, lead: .9, x: .25, rate: .5, in: 'flash' },   // over the planter, slow motion
+  { beats: 4, cam: 'buddy', side: 1, d: 1.3 },                                            // Mochi runs, barks
+  { beats: 4, cam: 'side', side: -1, d: 3.0 },                                            // the shopping street
+  { beats: 4, cam: 'low-side', side: 1, rate: .5 },                                        // kickflip, slow motion
+  { beats: 4, cam: 'pass', side: 1, d: 2.6, anchor: .55, lead: 1 },                        // past the camera onto the harbour
+  { beats: 6, cam: 'feet', side: 1, d: 1.0, h: .62, lead: .15, lines: .4 },                  // the seawall grind, sparks off the trucks
+  { beats: 4, cam: 'rear', side: 1, x: .4 },                                              // manual, away from us
+  { beats: 4, cam: 'overhead', h: 4.2, d: 2.2 },                                           // tucked, from above
+  { beats: 4, cam: 'orbit', a0: -50, a1: 40, d: 2.6 },                                    // shuvit
+  { beats: 4, cam: 'front', side: -1, x: .7 },                                            // pushing for the last stretch
+  { beats: 4, cam: 'side', side: 1, d: 3.2 },                                             // she points: the ferry
+  { beats: 10, cam: 'hero', side: 1, d: 3.0, h: .5, lead: .4, anchor: .45, fade: .6 },    // made it — the cheer, the horn, the ferry behind
+]);
+F.score(SCORE);
+F.start();
+</script>
+</body></html>
