@@ -59,7 +59,7 @@ of the tenant who records her neighbourhood, at 02:14 and at 16:40: a topic that
 | `scripts/check.py` | files, inventory, research, model, audit, life, camera, picture |
 | `scripts/finish.py` · `encode.py` · `flipbook.py` | EXR → PNG · MP4 per version · a page that plays the frames |
 | `templates/` | `BRIEF.md` and `RESEARCH.md` forms, the frame-sequence player |
-| `starter/` | the smallest room (a desk under a window, 73 things, two hours): runs as it is |
+| `starter/` | the smallest room (a desk under a window, 63 things, two hours): runs as it is |
 | `examples/rooftop-tapes/` | the worked example: `BRIEF.md`, `RESEARCH.md`, `REVIEW.md`, and the six project files |
 | `references/` | **SOURCE** (the article, summarised in Korean, and the 65 mapped) · **BRIEF** (topic → brief, the questions, the rubric) · **METHOD** (skeleton first, nothing guessed, how things are made, how they are held, lived-in) · **FILM** (outside, motions, light, the walk, versions, render) · **REVIEW** (rounds, the reviewer's brief, the retro) · **KIT** (library reference) · **LESSONS** (what broke and the fix) |
 

@@ -2,6 +2,7 @@
 """Join the developed frames into a film per version and one of all versions back to back.
 
   encode.py [--width 1920]        out/frames/<version>/*.png → out/<version>.mp4, out/film.mp4
+                                  (default width: the width the frames were rendered at — nothing is enlarged)
 
 When only every Nth frame was rendered (render.py --step N) the film is encoded at fps / N and says so.
 """
@@ -40,8 +41,10 @@ def main():
         os.makedirs(tmp)
         for i, f in enumerate(have, 1):
             os.symlink(P.png(v, f), os.path.join(tmp, f'{i:05d}.png'))
-        w = a.width or P.size[0]
-        h = round(w * P.size[1] / P.size[0] / 2) * 2
+        from PIL import Image
+        fw, fh = Image.open(P.png(v, have[0])).size
+        w = (a.width or fw) // 2 * 2
+        h = round(w * fh / fw / 2) * 2
         out = P.out(f'{v}.mp4')
         subprocess.run(['ffmpeg', '-y', '-v', 'error', '-framerate', f'{P.fps / step:g}', '-i', os.path.join(tmp, '%05d.png'), '-vf',
                         f'scale={w}:{h}:flags=lanczos,format=yuv420p', '-c:v', 'libx264', '-crf', str(a.crf), '-preset', 'slow', '-movflags', '+faststart', out], check=True)

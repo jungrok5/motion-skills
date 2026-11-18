@@ -25,7 +25,7 @@ Questions asked: none (the starter is invented). assumed: all of the above.
 | finishes | sheet flooring, skirting 60 × 9, no cornice | finish |
 | services | switch at 1,200 by the door, one socket at 300 behind the desk, a 500 mm LED panel | power, ceiling-light |
 
-## 3. Inventory — 73 things of 29 kinds
+## 3. Inventory — 63 things and the building's 10 parts, 29 kinds in all
 `inventory.py`. A desk, a stool, a shelf unit with 22 books (six lettered: the row the camera reads), a lamp, a laptop,
 a mug a third full, a cup of pens, three sheets of paper, two sticky notes, a plant, 17 beads of water on the pane, a
 clock with its second hand, a framed print, a bin, a cushion, a cable from lamp to socket — and the building.
