@@ -6,7 +6,7 @@
   // strings: a realm overrides any of these with LR.start({ strings: { … } })
   H.t = {
     dawn: 'Dawn', day: 'Day', dusk: 'Dusk', night: 'Night', clear: 'Clear', rain: 'Rain', snow: 'Winter', auto: 'Auto', walk: 'Tour',
-    wx: { clear: 'clear', rain: 'rain', snow: 'snow', winter: 'winter', overcast: 'overcast' },
+    wx: { clear: 'clear', rain: 'rain', snow: 'snow', winter: 'winter', overcast: 'overcast', mist: 'mist' }, mist: 'Mist',
     hint: 'W A S D or arrow keys to walk · Q E or ← → to turn · drag or click to look · Shift to run',
     hintTouch: 'left thumb walks · right thumb looks',
     scans: 'Scanned surfaces and objects: Poly Haven · CC0',
@@ -14,6 +14,7 @@
     quality: 'Quality', tiers: { auto: 'auto', low: 'low', medium: 'medium', high: 'high', ultra: 'ultra' }, sound: 'Sound', full: 'Full screen', keys: 'Keys', taking: 'You have the walk — press C for the tour', lensOn: 'Lens on: what you are not looking at goes soft — L again to switch it off', lensOff: 'Lens off', lensNone: 'This quality has no lens — raise it with G',
   };
   const ICON = {
+    mist: '<path d="M4 8h13M7 12h13M4 16h11M9 20h9"/>',
     dawn: '<path d="M3 17h18M6 13a6 6 0 0 1 12 0M12 3v3M4.5 7.5l2 2M19.5 7.5l-2 2"/>', day: '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
     dusk: '<path d="M3 18h18M7 14a5 5 0 0 1 10 0M12 4v4M9 6l3 3 3-3"/>', night: '<path d="M20 14.5A8 8 0 0 1 9.5 4 7 7 0 1 0 20 14.5z"/>',
     clear: '<circle cx="9" cy="9" r="3.2"/><path d="M9 2.5v1.8M2.5 9h1.8M4.4 4.4l1.3 1.3M13.6 4.4l-1.3 1.3"/><path d="M8 19h9a3.5 3.5 0 0 0 0-7 5 5 0 0 0-9.3 1.5A2.8 2.8 0 0 0 8 19z"/>', rain: '<path d="M7 14h10a3.5 3.5 0 0 0 0-7 5 5 0 0 0-9.4 1.4A2.9 2.9 0 0 0 7 14z"/><path d="M8 17l-1 3M12 17l-1 3M16 17l-1 3"/>',
@@ -63,7 +64,7 @@
       if (LR.ASSETS && (LR.mat.scanned > 0 || due() > 0)) { E.credit = root.appendChild(el('a', { id: 'lr-credit', href: 'https://polyhaven.com', target: '_blank', rel: 'noopener' }, t.scans));
         const say = () => { E.credit.textContent = t.scans + (got() < due() ? ` · ${got()} / ${due()}` : ''); }; say(); LR.on('scan', say); } }
     const btn = (id, icon, label, title) => `<button type="button" data-k="${id}" title="${title || label}" aria-label="${title || label}" aria-pressed="false" class="${label ? '' : 'ic'}">${svg(icon)}${label ? `<span class="lb">${label}</span>` : ''}</button>`;
-    E.bar = root.appendChild(el('div', { id: 'lr-bar', class: 'pane', role: 'toolbar' }, btn('dawn', 'dawn', t.dawn) + btn('day', 'day', t.day) + btn('dusk', 'dusk', t.dusk) + btn('night', 'night', t.night) + '<span class="sep"></span>' + btn('clear', 'clear', t.clear) + btn('rain', 'rain', t.rain) + btn('snow', 'snow', t.snow) + '<span class="sep"></span>' + btn('auto', 'auto', t.auto) + btn('walk', 'walk', t.walk)));
+    E.bar = root.appendChild(el('div', { id: 'lr-bar', class: 'pane', role: 'toolbar' }, btn('dawn', 'dawn', t.dawn) + btn('day', 'day', t.day) + btn('dusk', 'dusk', t.dusk) + btn('night', 'night', t.night) + '<span class="sep"></span>' + btn('clear', 'clear', t.clear) + btn('mist', 'mist', t.mist) + btn('rain', 'rain', t.rain) + btn('snow', 'snow', t.snow) + '<span class="sep"></span>' + btn('auto', 'auto', t.auto) + btn('walk', 'walk', t.walk)));
     E.top = root.appendChild(el('div', { id: 'lr-top', class: 'pane', role: 'toolbar' }, btn('gear', 'gear', '', t.quality) + btn('sound', 'mute', '', t.sound) + `<span class="wide" style="display:flex">${btn('keys', 'keys', '', t.keys)}${btn('full', 'full', '', t.full)}</span>`));
     E.num = root.appendChild(el('div', { id: 'lr-num' })); E.num.style.display = LR.q('stats') || LR.q('prof') ? '' : 'none';
     E.hint = root.appendChild(el('div', { id: 'lr-hint' }, LR.gpu.mobile ? t.hintTouch : t.hint));
@@ -73,7 +74,7 @@
     const TOD = { dawn: 6.2, day: 13.0, dusk: 19.7, night: 23.2 };
     const act = (k) => {
       if (TOD[k] !== undefined) wx.set({ tod: TOD[k], manual: true });
-      else if (k === 'clear' || k === 'rain' || k === 'snow') wx.set({ weather: k, manual: true });
+      else if (k === 'clear' || k === 'rain' || k === 'snow' || k === 'mist') wx.set({ weather: k, manual: true });
       else if (k === 'auto') wx.set({ auto: !wx.auto });
       else if (k === 'walk') { if (LR.player.touring) LR.player.stopTour(); else LR.player.startTour(); }
       else if (k === 'gear') { const order = ['auto', 'low', 'medium', 'high', 'ultra'], cur = LR.gpu.auto ? 'auto' : LR.gpu.tierName, nx = order[(order.indexOf(cur) + 1) % order.length]; H.reload(nx === 'auto' ? null : nx); }
@@ -85,10 +86,10 @@
     };
     H.act = act;
     root.addEventListener('click', (e) => { const b = e.target.closest('button[data-k]'); if (b) { act(b.dataset.k); b.blur(); document.getElementById('view').focus(); } });
-    const KEY = { Digit1: 'dawn', Digit2: 'day', Digit3: 'dusk', Digit4: 'night', Digit5: 'clear', Digit6: 'rain', Digit7: 'snow', KeyT: 'auto', KeyC: 'walk', KeyL: 'lens', KeyG: 'gear', KeyM: 'sound', KeyF: 'full' };
+    const KEY = { Digit1: 'dawn', Digit2: 'day', Digit3: 'dusk', Digit4: 'night', Digit5: 'clear', Digit6: 'rain', Digit7: 'snow', Digit8: 'mist', KeyT: 'auto', KeyC: 'walk', KeyL: 'lens', KeyG: 'gear', KeyM: 'sound', KeyF: 'full' };
     LR.on('key', (code) => { if (KEY[code]) act(KEY[code]); else if (code === 'KeyH') { H.show = !H.show; root.classList.toggle('off', !H.show); } else if (code === 'KeyP') E.num.style.display = E.num.style.display === 'none' ? '' : 'none'; else if (code === 'Slash' || code === 'F1') E.help.classList.toggle('on'); else if (code === 'Escape') E.help.classList.remove('on'); });
     const sync = () => { const q = (k) => E.bar.querySelector(`[data-k="${k}"]`), w = wx.want.weather;
-      q('clear').setAttribute('aria-pressed', w === 'clear' || w === 'winter' || w === 'autumn'); q('rain').setAttribute('aria-pressed', w === 'rain'); q('snow').setAttribute('aria-pressed', w === 'snow');
+      q('clear').setAttribute('aria-pressed', w === 'clear' || w === 'winter' || w === 'autumn'); q('rain').setAttribute('aria-pressed', w === 'rain'); q('snow').setAttribute('aria-pressed', w === 'snow'); q('mist').setAttribute('aria-pressed', w === 'mist');
       q('auto').setAttribute('aria-pressed', !!wx.auto); q('walk').setAttribute('aria-pressed', !!LR.player.touring);
       const sb = E.top.querySelector('[data-k="sound"]'), on = LR.audio && LR.audio.ready && !LR.audio.muted; sb.innerHTML = svg(on ? 'sound' : 'mute'); sb.setAttribute('aria-pressed', !!on);
       E.top.querySelector('[data-k="gear"]').title = t.quality + ': ' + (LR.gpu.auto ? t.tiers.auto + ' (' + t.tiers[LR.gpu.tierName] + ')' : t.tiers[LR.gpu.tierName]); };

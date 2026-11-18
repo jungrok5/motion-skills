@@ -70,12 +70,13 @@
     // joint positions for the ball of the foot at `target`
     solve(B, target, gamma) {
       const P = this.plane(B, target), p = sub(target, P.O), tx = dot(p, P.u), tz = dot(p, P.w); let pts, clamp;
-      if (this.n === 3) { let g = (gamma === undefined ? this.gamma : gamma) * D2R, r, ax, az; const minB = (this.s.ankleMin === undefined ? 20 : this.s.ankleMin) * D2R;
-        // the ankle never straightens: where the shin would come round to the tarsus's own line (a long reach forward, a
-        // deep fold) the tarsus leans further instead, as a heron's does
-        for (let it = 0; it < 4; it++) { ax = tx - this.knee * Math.sin(g) * this.segs[2]; az = tz + Math.cos(g) * this.segs[2]; r = twoBone(ax, az, this.segs[0], this.segs[1], this.knee);
-          const shin = Math.atan2(r[1][1] - r[0][1], r[1][0] - r[0][0]), bend = this.knee * LR.wrapPi(-Math.PI / 2 + this.knee * g - shin); if (bend >= minB - 1e-4) break; g = Math.min(g + (minB - bend) * 1.05, 80 * D2R); }
-        clamp = r[2]; pts = [[0, 0], r[0], r[1], [r[1][0] + (tx - ax), r[1][1] + (tz - az)]]; P.gamma = g / D2R; }
+      if (this.n === 3) { const g0 = (gamma === undefined ? this.gamma : gamma) * D2R, minB = (this.s.ankleMin === undefined ? 20 : this.s.ankleMin) * D2R, K = this.knee, L3 = this.segs[2]; let g = g0, r, ax, az;
+        const at = (q) => { ax = tx - K * Math.sin(q) * L3; az = tz + Math.cos(q) * L3; r = twoBone(ax, az, this.segs[0], this.segs[1], K); return K * LR.wrapPi(-Math.PI / 2 + K * q - Math.atan2(r[1][1] - r[0][1], r[1][0] - r[0][0])); };
+        // the tarsus leans with the fold, as a heron's does: as the leg shortens the shin swings back and the tarsus goes part of
+        // the way with it (so the ankle's own hinge works over a range a cylinder can follow) — and the ankle never straightens
+        let b = at(g); if (this.bendRest !== undefined) { const k = this.s.ankleFollow === undefined ? 0.6 : this.s.ankleFollow; g = LR.clamp(g0 - k * (b - this.bendRest), -12 * D2R, 55 * D2R); b = at(g); }
+        for (let it = 0; it < 3 && b < minB - 1e-4; it++) { g = Math.min(g + (minB - b) * 1.05, 80 * D2R); b = at(g); }
+        clamp = r[2]; pts = [[0, 0], r[0], r[1], [r[1][0] + (tx - ax), r[1][1] + (tz - az)]]; P.gamma = g / D2R; P.ankle = b; }
       else { const r = twoBone(tx, tz, this.segs[0], this.segs[1], this.knee); clamp = r[2]; pts = [[0, 0], r[0], r[1]]; }
       P.J = pts.map((q) => [P.O[0] + P.u[0] * q[0] + P.w[0] * q[1], P.O[1] + P.u[1] * q[0] + P.w[1] * q[1], P.O[2] + P.u[2] * q[0] + P.w[2] * q[1]]);
       P.p2 = pts; P.th = []; for (let i = 0; i < this.n; i++) P.th.push(Math.atan2(pts[i + 1][1] - pts[i][1], pts[i + 1][0] - pts[i][0]));
@@ -114,6 +115,8 @@
       let par = 'body'; this.neck.forEach((_, i) => { const nm = `neck_${String(i + 1).padStart(2, '0')}`; B.push([nm, par]); par = nm; }); if (this.head) B.push(['head', par]);
       for (const e of this.extras) B.push([e.name, e.parent || 'body']);
       this.index = {}; B.forEach((b, i) => (this.index[b[0]] = i)); this.nb = B.length;
+      // each three-segment leg remembers how its ankle is bent at rest: the bend it leans back toward as the leg folds
+      { const rc = this.restCmd(); for (const l of this.limbs) if (l.n === 3) l.bendRest = l.solve(rc.body, rc.limbs[l.name].p, l.gamma).ankle; }
     }
     // every bone's frame for a command: { body: frame, limbs: { name: { p:[x,y,z] ball of the foot, n: ground normal, yaw: the foot's heading, pitch, toes:[droop°…], gamma } },
     //   neck: { pitch, yaw }, head: { pitch, yaw, roll, level }, extras: { name: angle° } }; cmdAt(t) and t let trailing parts look back in time
@@ -175,8 +178,9 @@
   // never comes closer to the pin than the drum plus the barrel (it cannot cut the joint, and it always has leverage).
   const lenLever = (au, hu, al, hl, d) => { const ux = -au, uy = hu, c = Math.cos(d), s = Math.sin(d), lx = al * c - hl * s, ly = al * s + hl * c, dx = lx - ux, dy = ly - uy, L = Math.hypot(dx, dy); return [L, Math.abs(dx * -uy - dy * -ux) / Math.max(L, 1e-9)]; };
   M.actSearch = (limb, j, lo, hi, width, rDrum) => {
-    const upLen = limb.upLen(j), loLen = limb.segs[j], rBar = Math.max(0.06, 0.32 * width), samples = []; let best = null; for (let i = 0; i <= 24; i++) samples.push(lo + ((hi - lo) * i) / 24);
-    for (const fu of [0.25, 0.32, 0.4, 0.5, 0.6, 0.7]) for (const fl of [0.14, 0.2, 0.27, 0.34, 0.42, 0.5]) for (const sg of [1, -1]) for (const hu of [0.9, 1.25, 1.6, 2.0]) for (const hl of [0.9, 1.25, 1.6]) {
+    const upLen = limb.upLen(j), loLen = limb.segs[j], rBar = limb.s.bar || Math.max(0.06, 0.32 * width), samples = []; let best = null; for (let i = 0; i <= 24; i++) samples.push(lo + ((hi - lo) * i) / 24);
+    // a wide swing asks for one eye near the pin and the other far along its part (the length then changes little with the angle)
+    for (const fu of [0.1, 0.16, 0.25, 0.32, 0.4, 0.5, 0.6, 0.7, 0.85]) for (const fl of [0.08, 0.14, 0.2, 0.27, 0.34, 0.42, 0.5, 0.62]) for (const sg of [1, -1]) for (const hu of [0.5, 0.9, 1.25, 1.6, 2.0, 2.6]) for (const hl of [0.5, 0.9, 1.25, 1.6, 2.2]) {
       const a_up = fu * upLen, a_lo = fl * loLen, h_up = sg * hu * width, h_lo = sg * hl * width; let Lmin = 1e9, Lmax = 0, lev = 1e9;
       for (const d of samples) { const r = lenLever(a_up, h_up, a_lo, h_lo, d); Lmin = Math.min(Lmin, r[0]); Lmax = Math.max(Lmax, r[0]); lev = Math.min(lev, r[1]); }
       const eyes = 2.2 * rBar, Bl = Lmin - eyes - 1.4 * rBar - 0.03 * Lmin; if (Bl < 3 * rBar) continue;

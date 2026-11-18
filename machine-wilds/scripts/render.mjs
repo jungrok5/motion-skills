@@ -8,6 +8,8 @@
 //   node <skill>/scripts/render.mjs <realm-dir> --phone [--seconds 2.5]    → out/phone.jpg: what a phone shows — the tour at a phone's canvas, tier and
 //                                                                            starting scale, as its 1170-pixel screen stretches it (judge sharpness here)
 //   node <skill>/scripts/render.mjs <realm-dir> --mats                     → out/mats.jpg: every material layer, scan or recipe, under a raking light
+//   node <skill>/scripts/render.mjs <realm-dir> --cast [kind,…] [--size 640x480]   → out/cast-<kind>.jpg: each machine alone in a studio beside a 1.75 m figure —
+//                                                                            front, back, both sides, the four three-quarters, then the walk from both sides, standing, its move (gather, peak, recover)
 // A shot is `key=value;…`: cam=x,z,yaw°,pitch°[,y]  tod=hours  wx=clear|rain|snow|winter|autumn  season=0..1  snow=0..1  wet=0..1  frames=n  t=seconds
 //   up=metres (the eye that far above the ground: a look from above)  dof=amount (the lens: 1 is the tour's, 0 none)  focus=metres (else the middle of the picture)
 // Options: --state "tod=17;wx=rain" (for --tour)  --size 1280x720  --q "q=high&mat=1024" (page options)  --frames 12  --out out  --name <file stem>  --no-build  --png
@@ -60,6 +62,26 @@ if (process.argv[1] && resolve(process.argv[1]) === new URL(import.meta.url).pat
   if (has('mats')) {   // the material sheet: every layer — scan or recipe — under a raking light, six to a row, in the order printed
     const { browser, page } = await open('view=mats'), names = await page.evaluate(() => { const v = document.getElementById('veil'); if (v) v.remove(); return window.realm.info().names; }), out = join(outDir, opt('name', 'mats') + '.jpg');
     await page.screenshot({ path: out, type: 'jpeg', quality: 92, timeout: 240000 }); await browser.close(); console.log(out + '\n' + names.map((n, i) => `${i + 1} ${n}`).join(' · ')); process.exit(0);
+  }
+  if (has('cast')) {   // the cast sheet: each kind alone in a studio — turned every way (front, back, both sides, the four three-quarters), then its motion
+    const { load } = await import('./gym.mjs'), GL = load(dir); GL.gym({ studio: true }); const kinds = (opt('cast', '') || Object.keys(GL.mech.kinds).join(',')).split(',').filter(Boolean);
+    for (const kind of kinds) { const t0 = Date.now(), { browser, page } = await open('cast=' + kind + '&hud=0');
+      try {
+        const I = await page.evaluate(() => { const LR = window.realm.LR, M = LR.mech, u = M.units[0], K = u.K, G = M.geometry(u.kind, 0); let tw = 0, best = 1e9; for (let t = 0; t < u.lap; t += 0.25) { const c = M.cmd(u, t), b = c.body.p, d = Math.hypot(b[0], b[2] - u.R.at(0)[1]); if (c.rate > 0.99 && d < best) { best = d; tw = t; } }
+          const h = u.haltList[0], mv = h && h.move, keys = mv ? mv.keys[mv.main] : null; let tg = 0, tp = 0, tr = 0; if (keys) { const base = keys[0][1]; let pk = 0; keys.forEach((k) => { if (Math.abs(k[1] - base) > Math.abs(pk)) { pk = k[1] - base; tp = k[0]; } }); let g = 0, r = 0; keys.forEach((k) => { const v = (k[1] - base) / pk; if (k[0] < tp && v < g) { g = v; tg = k[0]; } if (k[0] > tp && v < r) { r = v; tr = k[0]; } }); const last = keys.filter((k) => Math.abs((k[1] - base) / pk - 1) < 0.02).pop(); if (last) tp = (tp + last[0]) / 2; }
+          return { T: u.T, lap: u.lap, tw, size: [G.max[0] - G.min[0], G.max[1] - G.min[1], G.max[2] - G.min[2]], top: G.max[1], title: K.spec.title || u.kind, tonnes: K.spec.tonnes, halt: h ? { t0: h.t0, hold: h.hold, move: h.name, tg, tp, tr } : null, tris: K.tris, bones: u.kin.nb, lamps: u.lampDefs.length }; });
+        const at = (t) => page.evaluate((t) => { const M = window.realm.LR.mech, r = M.poseAt(M.units[0], t); return { p: r.W.body.p, h: r.cmd.h, g: window.realm.LR.land.h(r.W.body.p[0], r.W.body.p[2]) }; }, t);
+        const tiles = [], snap = async (label, t, az, o = {}) => { const b = await at(t), H = I.size[1], Lx = I.size[0], Lz = I.size[2], wide = Math.abs(Math.cos(az)) * Lz + Math.abs(Math.sin(az)) * Lx, D = (Math.max((H / 2) / Math.tan((29 * Math.PI) / 180), (wide / 2) / Math.tan((29 * Math.PI) / 180) / (w / h)) * 1.2 + Math.max(Lx, Lz) * 0.35) * (o.k || 1), ty = b.g + H * 0.47, a = b.h + az, cx = b.p[0] + Math.cos(a) * D, cz = b.p[2] + Math.sin(a) * D, cy = ty + H * (o.up === undefined ? 0.06 : o.up);
+          const yaw = (Math.atan2(b.p[0] - cx, -(b.p[2] - cz)) * 180) / Math.PI, pitch = (Math.atan2(ty - cy, D) * 180) / Math.PI, r = await shoot(page, { cam: [cx, cz, yaw, pitch, cy], t, frames, tod: 12.6, weather: 'clear' }, 'image/jpeg'); tiles.push([label, r.url]); console.log(`  ${kind} · ${label}  ${((Date.now() - t0) / 1000).toFixed(0)} s`); };
+        const PI = Math.PI, tw = I.tw;
+        for (const [l, az] of [['front', 0], ['three-quarter, front right', PI / 4], ['right side', PI / 2], ['three-quarter, back right', (3 * PI) / 4], ['back', PI], ['three-quarter, back left', (-3 * PI) / 4], ['left side', -PI / 2], ['three-quarter, front left', -PI / 4]]) await snap(l, tw, az);
+        for (let i = 0; i < 4; i++) await snap(`walk ${i + 1}/4 · left side`, tw + (i * I.T) / 4, -PI / 2); for (let i = 0; i < 2; i++) await snap(`walk ${i * 2 + 2}/4 · right side`, tw + ((i * 2 + 1) * I.T) / 4, PI / 2);
+        if (I.halt) { const h = I.halt, m0 = h.t0 + 2.5; await snap('standing (idle): breath out', h.t0 + 1.2, -PI / 3); await snap(`${h.move}: gather`, m0 + h.tg, -PI / 3); await snap(`${h.move}: peak`, m0 + h.tp, -PI / 3); await snap(`${h.move}: recover`, m0 + h.tr, -PI / 3); await snap('leaving: gathered to step off', h.t0 + h.hold - 0.8, -PI / 2); await snap('turn: stepping round the bend', tw + I.lap * 0.25, -PI / 2, { up: 0.5, k: 1.15 }); }
+        const pg = await browser.newPage({ viewport: { width: 1640, height: 400 } }), cols = 4, out = join(outDir, 'cast-' + kind + '.jpg');
+        await pg.setContent(`<body style="margin:0;background:#16181a;color:#e8e6e0;font:15px/1.3 sans-serif"><div style="padding:14px 18px 6px;font-size:22px">${I.title} <span style="opacity:.6;font-size:15px">· ${kind} · ${I.size.map((v) => v.toFixed(1)).join(' × ')} m (long × high × wide) · ${I.tonnes || '?'} t · ${I.bones} bones · ${I.tris.map((v) => (v / 1000).toFixed(0) + 'k').join(' / ')} triangles · the figure is 1.75 m</span></div><div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:4px;padding:8px">${tiles.map((t) => `<figure style="margin:0"><img src="${t[1]}" style="width:100%;display:block"><figcaption style="padding:3px 4px 8px;opacity:.85">${t[0]}</figcaption></figure>`).join('')}</div></body>`);
+        await pg.screenshot({ path: out, type: 'jpeg', quality: 88, fullPage: true }); console.log(out, `${((Date.now() - t0) / 1000).toFixed(0)} s`);
+      } finally { await browser.close(); } }
+    process.exit(0);
   }
   const t00 = Date.now(), { browser, page } = await open();
   const base = await page.evaluate(() => ({ gpu: window.realm.info().gpu, views: (window.realm.LR.cfg.views || []).map((v) => ({ name: v.name, cam: v.cam, tod: v.tod, weather: v.weather })) }));

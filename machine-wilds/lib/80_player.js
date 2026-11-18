@@ -100,7 +100,12 @@
       let nx = P.x + P.vx * dt, nz = P.z + P.vz * dt;
       [nx, nz] = collide(nx, nz, P.radius);
       // stay out of deep water and inside the world
-      const g1 = P.groundAt(nx, nz, P.y); if (g1.depth > 1.0 && g1.depth > g0.depth) { nx = P.x; nz = P.z; P.vx *= 0.3; P.vz *= 0.3; }
+      let g1 = P.groundAt(nx, nz, P.y); if (g1.depth > 1.0 && g1.depth > g0.depth) { nx = P.x; nz = P.z; P.vx *= 0.3; P.vz *= 0.3; }
+      // the land is not level: a climb slows the walker (a third slower at 20°, half at 30°), and a face steeper than about
+      // 43° cannot be walked up — the step slides along it instead.  Going down is free.  Decks and stairs are not slopes.
+      { const st = Math.hypot(nx - P.x, nz - P.z); if (st > 1e-5 && !g1.surf && !g0.surf && !P.air) { const grade = (g1.y - g0.y) / st;
+          if (grade > 0.94) { const n = LR.land.normal(P.x, P.z, 0.7), hl = Math.hypot(n[0], n[2]) || 1, ux = -n[0] / hl, uz = -n[2] / hl, up = (nx - P.x) * ux + (nz - P.z) * uz; nx -= ux * up; nz -= uz * up; P.vx *= 0.6; P.vz *= 0.6; [nx, nz] = collide(nx, nz, P.radius); g1 = P.groundAt(nx, nz, P.y); if ((g1.y - g0.y) / Math.max(1e-5, Math.hypot(nx - P.x, nz - P.z)) > 0.94) { nx = P.x; nz = P.z; } P.steep = 1; }
+          else { if (grade > 0.18) { const k = 1 / (1 + 1.9 * (grade - 0.18)); nx = P.x + (nx - P.x) * k; nz = P.z + (nz - P.z) * k; } P.steep = 0; } P.grade = grade; } }
       const rr = Math.hypot(nx, nz), R = W.radius; if (rr > R) { nx *= R / rr; nz *= R / rr; }
       P.x = nx; P.z = nz; const g = P.groundAt(P.x, P.z, P.y);
       if ((K.Space || P.pad.hop) && !P.air) { P.vy = 4.3; P.air = true; }

@@ -87,6 +87,27 @@ void main(){ float f = softDepth(1.2); vec2 q = vQ; float n = texture(uNoise, q 
   float a = smoothstep(1.0, 0.25, length(q) + (n - 0.5) * 0.7) * vA * (0.6 + 0.6 * n2) * f; if (a < 0.003) discard;
   float lit = 0.5 + 0.5 * (q.x * 0.5 + q.y * 0.6) * sign(uSunDir.y);
   vec3 c = envAt(vec3(0.0, 1.0, 0.0), uEnvMips - 1.0) * 1.5 + uSunCol * (0.10 + 0.22 * lit); c *= mix(vec3(0.55, 0.52, 0.5), vec3(0.95), sat(vAge * 2.5)); o = vec4(c * a, a); }`, { order: 2 });
+    // ── what a machine's foot throws up: a ring of dust (spray, where the foot came down in water) for each of the last
+    // sixteen footfalls — their places and ages come from LR.mech each frame, so a still shows the same cloud the walk would ──
+    if (LR.mech && LR.mech.units.length) { const NI = 16, PK = 14, U = (FX.impU = { uImp: { value: Array.from({ length: NI }, () => new T.Vector4(0, 0, 0, -1)) }, uImpS: { value: Array.from({ length: NI }, () => new T.Vector4()) } });
+      mk('dust', seeds(quad(), NI * PK, 'dust', (a, i, r) => { a[i * 4] = Math.floor(i / PK) + 0.5; a[i * 4 + 1] = ((i % PK) + r() * 0.8) / PK; a[i * 4 + 2] = r(); a[i * 4 + 3] = r(); }), P + `in vec3 position; in vec4 seed; out vec2 vQ; out float vA; out float vAge; out float vId; out float vWet;
+uniform vec4 uImp[${NI}]; uniform vec4 uImpS[${NI}];
+void main(){ int k = int(seed.x); vec4 im = uImp[k], is = uImpS[k]; float age = im.w, sz = is.x; vId = seed.y * 31.0 + seed.x * 7.0; vWet = is.y;
+  float a = seed.y * 6.2832 + seed.z, out1 = 1.0 - exp(-age * (1.5 + seed.w)), rise = 1.0 - exp(-age * 0.8);
+  vec3 p = im.xyz + vec3(cos(a), 0.0, sin(a)) * sz * (0.5 + 1.9 * out1 * (0.5 + seed.z)) + vec3(0.0, sz * (0.12 + (0.5 + 0.9 * seed.w) * rise * mix(1.0, 1.7, is.y)) - is.y * sz * 0.9 * age * age * 0.25, 0.0) + vec3(uWind.x, 0.0, uWind.y) * age * (0.4 + 1.6 * uWind.z);
+  float s = sz * (0.35 + 0.9 * out1 + 0.25 * age) * mix(1.0, 0.45, is.y);
+  vec3 r = vec3(viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0]), u = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
+  vec3 wp = p + (r * position.x + u * position.y) * s;
+  vA = age < 0.0 ? 0.0 : smoothstep(0.0, 0.12, age) * exp(-age * mix(0.75, 1.9, is.y)) * is.z; vAge = age; vQ = position.xy;
+  gl_Position = vA > 0.002 ? projectionMatrix * viewMatrix * vec4(wp, 1.0) : vec4(2.0, 2.0, 2.0, 1.0); }`,
+        ENV + `uniform vec3 uSunCol, uSunDir; in vec2 vQ; in float vA; in float vAge; in float vId; in float vWet; out vec4 o;
+void main(){ float f = softDepth(0.8); vec2 q = vQ; float n = texture(uNoise, q * 0.23 + vId * 0.37 + vec2(0.0, -vAge * 0.15)).r, n2 = texture(uNoise, q * 0.55 + vId).g;
+  float a = smoothstep(1.0, 0.2, length(q) + (n - 0.5) * 0.8) * vA * (0.5 + 0.7 * n2) * f; if (a < 0.003) discard;
+  float lit = 0.5 + 0.5 * (q.x * 0.5 + q.y * 0.6) * sign(uSunDir.y);
+  vec3 c = envAt(vec3(0.0, 1.0, 0.0), uEnvMips - 1.0) * 1.3 + uSunCol * (0.08 + 0.2 * lit); c *= mix(vec3(0.46, 0.40, 0.32), vec3(0.9, 0.95, 1.0), vWet); o = vec4(c * a, a); }`, { order: 2, uniforms: U });
+      LR.on('frame', () => { const imp = LR.mech.impacts || [], list = imp.filter((p) => p.age < 4.5).sort((a, b) => a.age - b.age).slice(0, NI);
+        for (let i = 0; i < NI; i++) { const p = list[i]; if (!p) { U.uImp.value[i].w = -1; continue; } const wet = LR.water && LR.water.levelAt(p.x, p.z) > p.y + 0.05 ? 1 : 0, soil = wet ? 1 : 1 - 0.75 * LR.land.coverAt('paved', p.x, p.z);
+          U.uImp.value[i].set(p.x, wet ? LR.water.levelAt(p.x, p.z) : p.y, p.z, p.age); U.uImpS.value[i].set(p.size * (wet ? 0.8 : 1), wet, (0.34 + 0.2 * wet) * soil * (1 - 0.6 * LR.wx.wet), 0); } }, 25); }
     // ── flames ──
     const FK = 5, fr = W.fires;
     if (fr.length) mk('flame', seeds(quad(), fr.length * FK, 'flame', (a, i, r) => { const s = fr[Math.floor(i / FK)]; a[i * 4] = s.x; a[i * 4 + 1] = s.y - s.size * 0.6; a[i * 4 + 2] = s.z; a[i * 4 + 3] = (i % FK) + s.size * 0.5; }), P + `in vec3 position; in vec4 seed; out vec2 vQ; out float vId;

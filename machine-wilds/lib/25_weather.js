@@ -95,5 +95,5 @@
     P.uBloomMix.value = 0.055 + 0.04 * LR.sat(W.rain + W.snowfall) + 0.03 * night + 0.02 * low;
   };
   W.clock = () => { const h = Math.floor(W.tod), m = Math.floor((W.tod - h) * 60); return { h, m, text: String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') }; };
-  W.label = () => (W.snowfall > 0.3 ? 'snow' : W.rain > 0.3 ? 'rain' : W.season > 0.6 ? 'winter' : W.cloud > 0.7 ? 'overcast' : 'clear');
+  W.label = () => (W.snowfall > 0.3 ? 'snow' : W.rain > 0.3 ? 'rain' : W.season > 0.6 ? 'winter' : W.cur.fog > 0.008 ? 'mist' : W.cloud > 0.7 ? 'overcast' : 'clear');
 }

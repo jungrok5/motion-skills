@@ -356,6 +356,29 @@
       (STEP[surface] || STEP.grass)((foot ^= 1) ? stepL : stepR, t, R.range(0.78, 1.08) * (running ? 1.3 : 1), !!running); take('step', t + 0.3);
     };
 
+    // ── machines.  A footfall is a blow on the ground: lower and longer the heavier the machine, softer and duller the
+    // farther off, and late by the time sound takes to cross the distance (a colossus on the rim is seen to step, then
+    // heard).  The frame rings after it and a cylinder lets its air go.  A call is three reeds a fifth and an octave apart
+    // swelling slowly: the low ones carry across the valley.
+    caps.mech = 12; caps.call = 2; const mechBus = bus('world', LV.world * 2.4, sum, 0.4), mechPan = [-0.8, -0.4, 0, 0.4, 0.8].map((v) => { const n = PAN(v); n.connect(mechBus); return n; });
+    const panFor = (side) => mechPan[Math.round((clamp(num(side, 0), -1, 1) + 1) * 2)];
+    E.footfall = (o) => {
+      if (!E.offline && ctx.state !== 'running') return; const d = Math.max(1, num(o.d, 30)), t = E.now() + 0.02 + d / 340, k = Math.sqrt(num(o.tonnes, 50) / 50), v = (k * 5) / (1 + d / (10 * k)); if (v < 0.012 || !room('mech', t)) return;
+      const out = panFor(o.side), far = sat(d / 240);
+      nb(out, t, { buf: 'brown', type: 'lowpass', f: lerp(150, 58, sat(k / 9)) * (1 - 0.4 * far), q: 0.8, dur: 0.5 + 0.3 * k, a: 2.2 * v, att: 0.008 + 0.03 * far });
+      if (far < 0.85) { nb(out, t + 0.012, { buf: 'pink', f: R.range(240, 420) / Math.sqrt(k), q: 3.2, dur: 0.2 + 0.09 * k, a: 0.8 * v * (1 - far), att: 0.004 });
+        nb(out, t + R.range(0.14, 0.3), { f: R.range(2600, 4200), q: 0.8, dur: 0.38, a: 0.14 * v * (1 - far), att: 0.09 });
+        if (o.wet) nb(out, t, { f: R.range(900, 1400), f1: R.range(2300, 3000), q: 0.7, dur: 0.5, a: 0.5 * v, att: 0.02 }); }
+      take('mech', t + 0.5);
+    };
+    E.call = (o) => {
+      if (!E.offline && ctx.state !== 'running') return; const d = Math.max(1, num(o.d, 60)), t = E.now() + 0.05 + d / 340, len = num(o.len, 5), f0 = num(o.f, 58), v = (num(o.gain, 1) * 0.5) / (1 + d / 160); if (v < 0.004 || !room('call', t)) return;
+      const out = panFor(o.side), lp = F('lowpass', f0 * 5, 0.7), g = ctx.createGain(), N = 96, cv = new Float32Array(N); for (let i = 0; i < N; i++) { const u = i / (N - 1); cv[i] = v * Math.min(1, u / 0.16) * Math.min(1, (1 - u) / 0.3) * (0.82 + 0.18 * Math.sin(u * len * 5.3)); } cv[N - 1] = 0;
+      g.gain.setValueCurveAtTime(cv, t, len); chain(lp, g, out); const os = [];
+      for (const [m, a] of [[1, 1], [1.498, 0.55], [2.004, 0.3]]) { const o2 = ctx.createOscillator(), og = ctx.createGain(); o2.type = 'sawtooth'; o2.frequency.setValueAtTime(f0 * m * 0.97, t); o2.frequency.linearRampToValueAtTime(f0 * m, t + len * 0.25); og.gain.value = a; chain(o2, og, lp); o2.start(t); o2.stop(t + len + 0.05); os.push(o2, og); }
+      os[0].onended = () => dis(...os, lp, g); take('call', t + len);
+    };
+
     // ── the control pass, twenty times a second: read the weather and the listener, lean every level toward it ──────
     const e = { tod: 12, season: 0, rain: 0, snowfall: 0, snow: 0, wind: 0.25, wet: 0, sh: 0, gust: 0.5, birds: 0, chorus: 0, dusk: 0, night: 0, warm: 1, cold: 0, work: 1, frogs: 0 };
     let prevTod = null, bellLeft = 0, bellNext = 0, acc = 0, stepPh = 0.55;
@@ -406,6 +429,7 @@
   const guard = (fn) => { if (!live) return; try { fn(live); } catch (err) { if (++A.errors === 1) console.error('[lr] audio', err); if (A.errors > 20) { try { live.ctx.close(); } catch (e2) { /* closing is best effort */ } live = null; A.ready = false; } } };
   A.update = (dt, s) => guard((E) => E.update(dt, s, LR.wx, LR.world && LR.world.sounds));
   A.step = (surface, running) => guard((E) => E.step(surface, running));
+  A.footfall = (o) => guard((E) => E.footfall(o)); A.call = (o) => guard((E) => E.call(o));
   A.setVolume = (v) => { if (OFF) return; A.volume = clamp(num(v, 0.8), 0, 1); guard((E) => E.setVolume(A.volume)); };
   A.mute = (m) => { if (OFF) return A.muted; A.muted = m === undefined ? !A.muted : !!m; guard((E) => E.mute(A.muted)); return A.muted; };
   LR.on('thunder', (delay) => guard((E) => E.thunder(delay)));

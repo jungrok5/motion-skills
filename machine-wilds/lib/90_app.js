@@ -29,7 +29,8 @@
       const cam = (LR.cam = new T.PerspectiveCamera(58, 16 / 9, 0.15, 9000)); cam.rotation.order = 'YXZ';
       const [w0, h0] = size(); LR.render.scale = LR.RENDER ? LR.qn('scale', 1) : LR.qn('scale', G.mobile || G.auto || G.safe ? (G.tier.scaleMin + G.tier.scaleMax) / 2 : G.tier.scaleMax);      /* a guessed tier starts in the middle of its range: the governor raises it if the frames allow */ LR.render.resize(w0, h0);
       LR.progress(0.34, 'land'); await LR.breath();
-      if (cfg.build) await cfg.build(LR);
+      // ?cast=<kind>: not the realm but a studio — that kind alone on a grey floor (the cast sheet)
+      const cast = LR.q('cast'); if (cast) { if (!LR.gym) throw new Error('the realm sets no LR.gym'); LR.gym({ studio: true }); LR.mech.studio(cast); cfg.tour = null; cfg.weather = { tod: 12.6, weather: 'clear' }; } else if (cfg.build) await cfg.build(LR);
       LR.progress(0.8, 'plants'); await LR.breath();
       if (LR.land.H && !LR.land.built) LR.land.build();
       LR.emit('built');
@@ -59,11 +60,11 @@
       window.realm = { canvas, shot, info, place, LR };
       // film: the tour with the automatic round, one frame per call (render.mjs --film)
       let fdt = 1 / 30;
-      window.realm.filmStart = (fps = 30) => { fdt = 1 / fps; time = 0; P.place(sp.x, sp.z, sp.yaw || 0); P.startTour(); LR.wx.snap({ weather: 'clear', tod: (cfg.weather && cfg.weather.tod) || 16.6 }); LR.wx.set({ auto: true }); LR.render.histValid = false; LR.render.film = true; };
+      window.realm.filmStart = (fps = 30) => { fdt = 1 / fps; time = 0; P.place(sp.x, sp.z, sp.yaw || 0); P.startTour(); if (cfg.round) LR.wx.round = cfg.round; LR.wx.snap({ weather: (cfg.weather && cfg.weather.weather) || 'clear', tod: (cfg.weather && cfg.weather.tod) || 16.6 }); LR.wx.set({ auto: true }); LR.render.histValid = false; LR.render.film = true; };
       window.realm.filmFrame = () => { time += fdt; P.update(fdt, cam); LR.wx.update(fdt, time); LR.emit('frame', time, fdt, cam); LR.render.draw(cam, time, fdt); };
       P.setTour(cfg.tour);
       if (LR.RENDER) {
-        place(sp.x, sp.z, sp.yaw || 0);
+        place(sp.x, sp.z, sp.yaw || 0); if (cfg.weather) LR.wx.snap({ weather: cfg.weather.weather, tod: cfg.weather.tod });      // a still starts in the realm's own hour and weather
         const c = (LR.q('cam', '') || '').split(',').map(Number);
         shot({ cam: c.length >= 2 && !isNaN(c[0]) ? c : null, tod: LR.qn('tod', undefined), weather: LR.q('wx', undefined), snow: LR.qn('snow', undefined), wet: LR.qn('wet', undefined), season: LR.qn('season', undefined), flash: LR.qn('flash', undefined), frames: LR.qn('frames', 10), t: LR.qn('t', 20) });
         document.getElementById('veil').classList.add('gone'); window.READY = true; return;
@@ -73,6 +74,7 @@
       if (at.length >= 2 && !isNaN(at[0])) P.place(at[0], at[1], at[2] || 0); else P.place(sp.x, sp.z, sp.yaw || 0);
       const wx0 = cfg.weather || {};
       LR.wx.snap({ weather: LR.q('wx', wx0.weather || 'clear'), tod: LR.qn('tod', wx0.tod !== undefined ? wx0.tod : LR.wx.tod), wet: LR.qn('wet', undefined), puddle: LR.qn('puddle', undefined) });   /* ?wet=1&puddle=1: just after rain (it dries as you watch) */
+      if (cfg.round) LR.wx.round = cfg.round;
       if (LR.q('auto', wx0.auto === false ? '0' : '1') !== '0' && LR.q('wx') === undefined && LR.q('tod') === undefined) LR.wx.set({ auto: true });
       P.bind(canvas); if (P.tour && LR.q('tour', '1') !== '0') P.startTour();
       let last = performance.now();

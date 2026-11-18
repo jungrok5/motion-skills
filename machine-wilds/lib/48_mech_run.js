@@ -48,12 +48,31 @@
     // the ground carries every footfall to the eye: a short ring, weaker with distance
     let sx = 0, sy = 0; for (const p of imp) { if (p.age > 2.6) continue; const d = Math.hypot(p.x - cam.position.x, p.z - cam.position.z), amp = ((0.0042 * Math.sqrt(p.tonnes)) / (1 + d / 14)) * Math.exp(-p.age * 2.6) * LR.sm(0, 0.06, p.age); sy += amp * Math.sin(p.age * 31 + p.k); sx += amp * 0.5 * Math.sin(p.age * 24 + p.k * 2.1); }
     lastShake = LR.off.has('shake') ? [0, 0, 0] : [sx, sy, sx * 0.6]; cam.position.x += lastShake[0]; cam.position.y += lastShake[1]; cam.position.z += lastShake[2]; M.shake = Math.hypot(sx, sy);
+    // a move with a voice: when its time comes round, the machine calls
+    if (!LR.RENDER) for (const u of M.units) { const c = u.pose.cmd, sd = c.move && c.move.sound; if (sd) { if (u._mt !== undefined && u._mt < sd[0] && c.mt >= sd[0]) LR.emit('mechcall', { unit: u, at: (u.pose.W.head || u.pose.W.body).p, f: sd[1], len: sd[2], gain: sd[3] || 1 }); u._mt = c.mt; } else u._mt = undefined; }
     // new footfalls since the last frame: for dust and sound (the live page; a still shows what the ages say)
     if (!LR.RENDER) { M.seen = M.seen || new Map(); for (const p of imp) { const key = p.unit.name + p.leg; if (M.seen.get(key) !== p.k) { const first = !M.seen.has(key); M.seen.set(key, p.k); if (!first && p.age < 0.5) LR.emit('footfall', p); } } }
   };
+  // sound: where a footfall or a call is from the listener (distance, and which ear)
+  const heard = (x, y, z) => { const P = LR.player, d = Math.hypot(x - P.x, y - (P.y + P.eye), z - P.z), rx = Math.cos(P.yaw), rz = Math.sin(P.yaw); return { d, side: LR.clamp(((x - P.x) * rx + (z - P.z) * rz) / Math.max(4, d), -1, 1) }; };
+  LR.on('footfall', (p) => { if (LR.audio && LR.audio.ready) LR.audio.footfall(Object.assign(heard(p.x, p.y, p.z), { tonnes: p.tonnes, wet: LR.water && LR.water.levelAt(p.x, p.z) > p.y + 0.05 })); });
+  LR.on('mechcall', (e) => { if (LR.audio && LR.audio.ready) LR.audio.call(Object.assign(heard(e.at[0], e.at[1], e.at[2]), { f: e.f, len: e.len, gain: e.gain })); });
   // what a unit weighs on the page: triangles a level, bones, lamps (the checks and the HUD's numbers read this)
   M.info = () => M.units.map((u) => ({ name: u.name, kind: u.kind, bones: u.kin.nb, tris: u.K.tris, lamps: u.lampDefs ? u.lampDefs.length : 0, lod: u.lod, dist: u.dist }));
 
+  // ── a studio: one kind alone on a grey floor with a figure for scale, walking an oval — for the cast sheet (render.mjs --cast) ──
+  M.studio = (kind) => {
+    const K = M.kinds[kind]; if (!K) throw new Error('no machine kind ' + kind + ' (have: ' + Object.keys(M.kinds).join(', ') + ')'); const W = LR.world, L = LR.land;
+    M.units.length = 0; for (const k in M.routes) delete M.routes[k]; W.solids.length = 0; W.lights.length = 0; W.sounds.length = 0; W.places.length = 0; M.planned = false;
+    const xs = K.spec.limbs.map((l) => l.home[0]), wb = Math.max(...xs) - Math.min(...xs), R = Math.max(26, wb * 2.6), half = Math.min(320, Math.ceil((R * 2.2 + 40) / 64) * 64);
+    L.create({ height: (x, z) => (LR.fbm(x * 0.07, z * 0.07, 3) - 0.5) * 0.12, half, res: 0.5 }); L.paint('paved', () => 1); L.paint('grass', () => 0); L.paint('tall', () => 0); L.paint('flowers', () => 0); L.paint('fern', () => 0);
+    if (LR.grass) LR.grass.enabled = false;
+    const pts = []; for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; pts.push([Math.sin(a) * R * 1.25, -Math.cos(a) * R]); }      // it passes (0, −R) heading east
+    M.route('studio', pts, { width: 0 }); const mv = Object.keys(K.spec.moves || {})[0], u = M.spawn(kind, { route: 'studio', name: kind, halts: [{ at: 0.5, hold: 12, move: mv }] }); M.plan({ press: false });
+    // a figure 1.75 m tall beside the way, in orange: what the size is measured against
+    { const g = new LR.Geo(), fx = 0, fz = -R + Math.max(...K.spec.limbs.map((l) => Math.abs(l.home[1]))) + 2.2, y = L.h(fx, fz); g.mat('cloth', { tint: '#ff7a1a', flags: LR.FLAG.NOWEATHER }); g.tube([[fx, y, fz], [fx, y + 0.85, fz], [fx, y + 1.45, fz]], [0.16, 0.2, 0.17], { sides: 8, caps: true }); g.blob(fx, y + 1.62, fz, 0.13, { amp: 0, seg: 8, rings: 6 }); W.add(g, { name: 'figure' }); M.figure = [fx, fz]; }
+    M.start(); W.radius = half - 10; W.spawn = { x: 0, z: -R + 40, yaw: 0 }; return u;
+  };
   // ── a wreck: a kind in a pose, built into the world and left there ─────────────────────────────────────────────
   // LR.mech.wreck(kind, { x, z, yaw°, pose(cmd) → edit the rest command (lay it down, fold its legs), sink, moss: tint the parts toward moss })
   M.wreck = (kind, o = {}) => {

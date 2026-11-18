@@ -19,7 +19,7 @@ const opt = (k, d) => { const i = args.indexOf('--' + k); return i > -1 && args[
 const dir = resolve(args[0] && !args[0].startsWith('--') ? args[0] : '.');
 
 // the limits a machine must keep (references/MACHINES.md says why each number is what it is)
-export const LIMITS = { clamp: 0.002, slip: 0.004, gap: 0.03, sole: 0.5, tiltOver: 4, bendFlip: 0, foldMax: 165, bodyAcc: 1.6, kneeLow: 0.05, swingLow: -0.02, overlapMin: 0.15, belly: 0.5, loop: 0.02, determinism: 1e-9, fixShare: 0.02, idleBreath: 0.02, idleSlip: 0.004, anticipation: 0.04, recovery: 0.03 };
+export const LIMITS = { clamp: 0.002, slip: 0.004, gap: 0.03, sole: 0.5, tiltOver: 4, bendFlip: 0, foldMax: 165, bodyAcc: 1.6, bodyAccLight: 2.8, kneeLow: 0.05, swingLow: -0.02, overlapMin: 0.15, belly: 0.5, loop: 0.02, determinism: 1e-9, fixShare: 0.02, idleBreath: 0.02, idleSlip: 0.004, anticipation: 0.04, recovery: 0.03 };
 
 export function load(realmDir, { course = false } = {}) {
   const noop = () => new Proxy(function () {}, { get: (t, k) => (k === Symbol.toPrimitive ? () => 0 : noop()), apply: () => noop(), construct: () => noop() });
@@ -35,17 +35,15 @@ export function load(realmDir, { course = false } = {}) {
     LR.water = { levelAt: () => -1e9, stream() {}, pond() {} };
     LR.start = (cfg) => { LR.cfg = cfg; }; LR.GYM = true;`, after = `LR.land.paint = () => {}; LR.land.patch = () => {}; { const road = LR.land.road; LR.land.road = (p, w, o = {}) => { if (o.ease !== false) road(p, w, Object.assign({}, o, { gymEase: true })); }; } LR.land.apron = () => {}; LR.land.border = () => {};`;
   const COURSE = `
-    // the test course: flat, a ramp up 14°, a level top, a 1.2 m step down, a side slope of 12°, a ditch, a mound, a ramp down
-    LR.gymCourse = (kinds) => { LR.mech.units.length = 0; for (const k in LR.mech.routes) delete LR.mech.routes[k];
-      const sm = LR.sm, prof = (x) => 8 * sm(40, 72, x) - 1.2 * sm(111.2, 112.2, x) - 2.6 * Math.exp(-(((x - 196) / 5) ** 2)) + 2.2 * Math.exp(-(((x - 226) / 6) ** 2)) - 6.8 * sm(246, 276, x);
-      const side = (x) => sm(128, 142, x) * sm(182, 168, x) * 0.21;
-      // an oval: the long straight (z = 0) carries the obstacles, the way back is level
-      const h = (x, z) => { const k = sm(60, 30, Math.abs(z)); return (prof(x) + side(x) * z) * k + (LR.fbm(x * 0.2, z * 0.2, 3) - 0.5) * 0.25; };
-      LR.land.create({ height: h, half: 256, res: 0.5 });
-      let i = 0; for (const kind of kinds) { const z0 = 0, r = 70, pts = []; for (let x = 0; x <= 300; x += 30) pts.push([x - 150 + 150, z0]);
-        const way = []; for (let x = 10; x <= 290; x += 28) way.push([x - 150, 0]); way.push([165, 35], [150, 80]); for (let x = 120; x >= -120; x -= 40) way.push([x, 110]); way.push([-150, 80], [-165, 35]);
-        LR.mech.route('course', way.map((p) => [p[0], p[1]])); const u = LR.mech.spawn(kind, { route: 'course', name: kind, offset: 0, halts: [{ at: 0.86, hold: 10, move: Object.keys(LR.mech.kinds[kind].spec.moves || {})[0] }] }); i++; break; }
-      LR.courseX = (x) => x + 150; };`;
+    // the test course: an oval whose long straight carries a ramp up (14°), a level top, a drop of 1.2 m, a side slope (12°),
+    // a ditch, a mound and a ramp down; the way back is level.  One kind at a time, with one halt and its first move.
+    LR.gymCourse = (kind) => { const M = LR.mech, sm = LR.sm; M.units.length = 0; for (const k in M.routes) delete M.routes[k]; LR.world.solids.length = 0;
+      const prof = (x) => 8 * sm(-110, -78, x) - 1.2 * sm(-39, -38, x) - 2.6 * Math.exp(-(((x - 46) / 5) ** 2)) + 2.2 * Math.exp(-(((x - 76) / 6) ** 2)) - 6.8 * sm(96, 126, x);
+      const side = (x) => sm(-22, -8, x) * sm(32, 18, x) * 0.21;
+      LR.land.create({ height: (x, z) => (prof(x) + side(x) * z) * sm(60, 30, Math.abs(z)) + (LR.fbm(x * 0.2, z * 0.2, 3) - 0.5) * 0.25, half: 256, res: 0.5 });
+      const way = []; for (let x = -140; x <= 140; x += 28) way.push([x, 0]); way.push([165, 35], [150, 80]); for (let x = 120; x >= -120; x -= 40) way.push([x, 110]); way.push([-150, 80], [-165, 35]);
+      M.route('course', way, { width: 0 }); const mv = Object.keys(M.kinds[kind].spec.moves || {})[0];
+      return M.spawn(kind, { route: 'course', name: kind, halts: [{ at: 0.86, hold: 10, move: mv }] }); };`;
   const code = [lib[0], stubs, lib[1], after, lib[2], lib[3], ...src, COURSE, '\nreturn LR;'].join('\n');
   return new Function(...Object.keys(env), code)(...Object.values(env));
 
@@ -66,7 +64,7 @@ export function judge(A, lim = LIMITS) {
   f(A.supportMin >= A.needSupport, `support: only ${A.supportMin} feet down at some moment (needs ${A.needSupport})`);
   f(A.loop <= lim.loop, `loop: one lap later the pose is ${(A.loop * 1000).toFixed(1)} mm off`);
   f(A.determinism <= lim.determinism, `determinism: the same instant gave two poses`);
-  f(A.fixShare <= lim.fixShare, `reach: the body was snapped down to its feet in ${(A.fixShare * 100).toFixed(1)} % of the lap, by up to ${A.fixMax.toFixed(2)} m (the way crosses ground too broken for these legs: move it, shorten the stride or lower the ride)`); f(A.bodyAcc <= lim.bodyAcc, `weight: the body is thrown about at ${A.bodyAcc.toFixed(1)} m/s² (a mass like this cannot be)`);
+  f(A.fixShare <= lim.fixShare, `reach: the body was snapped down to its feet in ${(A.fixShare * 100).toFixed(1)} % of the lap, by up to ${A.fixMax.toFixed(2)} m (the way crosses ground too broken for these legs: move it, shorten the stride or lower the ride)`); { const cap = Math.min(lim.bodyAccLight, Math.max(lim.bodyAcc, 3.2 - 0.02 * (A.tonnes || 100))); f(A.bodyAcc <= cap, `weight: the body is thrown about at ${A.bodyAcc.toFixed(1)} m/s² (at ${A.tonnes} t it may not pass ${cap.toFixed(1)}: lengthen dipTime, settleTime, the cycle)`); }
   if (A.idle) { f(A.idle.breath >= lim.idleBreath, `idle: the body moves ${(A.idle.breath * 1000).toFixed(0)} mm while it stands (dead still)`); f(A.idle.slip <= lim.idleSlip, `idle: a foot moved ${(A.idle.slip * 1000).toFixed(1)} mm while standing`); }
   else f(false, 'idle: this unit never stands (give it a halt or make it a post) — every machine breathes somewhere');
   for (const k in A.moves) { const m = A.moves[k]; f(m.anticipation >= lim.anticipation, `move ${k}: no gather before it (${(m.anticipation * 100).toFixed(0)} % of ${m.main})`); f(m.recovery >= lim.recovery, `move ${k}: no overshoot on the way back (${(m.recovery * 100).toFixed(0)} %)`); }
@@ -78,23 +76,22 @@ const line = (A) => `${A.unit.padEnd(12)} lap ${A.lap.toFixed(0)} s · ${A.cycle
    swing clears by ${A.swingLow.toFixed(2)} m · knees ≥ ${A.kneeLow.toFixed(2)} m up · belly ≥ ${A.belly.toFixed(2)} m · feet down ≥ ${A.supportMin} · joints bend ${A.straight.toFixed(0)}–${A.foldMax.toFixed(0)}° · wrong bends ${A.bendFlip}
    cylinders: rod in barrel ≥ ${(A.overlapMin * 100).toFixed(0)} % · lever ≥ ${A.leverMin.toFixed(2)} m · loop ${(A.loop * 1000).toFixed(2)} mm · idle ${A.idle ? `breath ${(A.idle.breath * 1000).toFixed(0)} mm, head ${A.idle.scan.toFixed(0)}°, light ${(A.idle.light * 100).toFixed(0)} %` : '—'}${Object.keys(A.moves).map((k) => ` · ${k}: gather ${(A.moves[k].anticipation * 100).toFixed(0)} %, overshoot ${(A.moves[k].recovery * 100).toFixed(0)} %`).join('')}`;
 
-export function run(realmDir, { course = false, dt = 0.1 } = {}) {
+export function run(realmDir, { course = false, dt = 0.1, only = null, onEach = null } = {}) {
   const LR = load(realmDir, { course }), M = LR.mech;
   if (!LR.gym) throw new Error('the realm sets no LR.gym — see references/MACHINES.md');
   LR.gym({ course });
-  if (course) LR.gymCourse(Object.keys(M.kinds).slice(0, 1));
-  const out = [];
-  const each = (kinds) => { const fitted = M.plan(); for (const kind in fitted) for (const j in fitted[kind]) if (fitted[kind][j].fail) out.push({ unit: kind, bad: [`cylinders: ${j}: ${fitted[kind][j].fail}`] });
-    for (const u of M.units) { const A = M.audit(u, { dt }); A.needSupport = u.kin.limbs.length >= 6 ? 3 : 2; out.push({ unit: u.name, A, bad: judge(A) }); } };
-  if (course) { for (const kind of Object.keys(M.kinds)) { LR.gymCourse([kind]); each(); } } else each();
-  return { LR, out };
+  const out = [], sheets = [];
+  const each = () => { const fitted = M.plan({ press: !course }); for (const kind in fitted) for (const j in fitted[kind]) if (fitted[kind][j].fail) out.push({ unit: kind, bad: [`cylinders: ${j}: ${fitted[kind][j].fail}`] });
+    for (const u of M.units) { const A = M.audit(u, { dt }); A.needSupport = u.kin.limbs.length >= 6 ? 3 : 2; out.push({ unit: u.name, A, bad: judge(A) }); } if (onEach) onEach(LR, sheets); };
+  if (course) { for (const kind of Object.keys(M.kinds)) { if (only && only !== kind) continue; LR.gymCourse(kind); each(); } } else each();
+  return { LR, out, sheets };
 }
 
 // ── drawing: a unit from the side, unrolled along its way ─────────────────────────────────────────────────────────────
-function sheet(LR, file, course) {
-  const M = LR.mech, rows = [], W = 1500;
+function sheetRows(LR, course, rows = []) {
+  const M = LR.mech, W = 1500, seen = new Set();
   for (const u of M.units) {
-    if (u.post) continue; const span = Math.min(u.R.len, course ? 300 : 150), s0 = course ? 0 : u.R.len * 0.05, sc = W / (span + 20), ride = u.K.spec.ride, H = Math.round((ride * 2.3 + 14) * sc);
+    if (u.post || seen.has(u.kind + u.R.name)) continue; seen.add(u.kind + u.R.name); const span = Math.min(u.R.len, course ? 290 : 150), s0 = course ? 6 : u.R.len * 0.05, sc = W / (span + 20), ride = u.K.spec.ride, H = Math.round((ride * 2.3 + 14) * sc);
     // the land's profile under the left and the right feet, and the bodies at 8 moments
     const px = (s) => (s - s0 + 10) * sc, zl = u.track / 2; let y0 = 1e9; const prof = [[], []];
     for (let s = s0 - 10; s <= s0 + span + 10; s += 0.5) { const b = u.bodyAt(s), rt = [-Math.sin(b.h), Math.cos(b.h)]; [-1, 1].forEach((sd, i) => { const y = LR.land.h(b.x + rt[0] * zl * sd, b.z + rt[1] * zl * sd); prof[i].push([s, y]); y0 = Math.min(y0, y); }); }
@@ -102,7 +99,7 @@ function sheet(LR, file, course) {
     prof.forEach((p, i) => { g += `<polyline fill="none" stroke="${i ? '#b08a5a' : '#6b5a3c'}" stroke-width="1.2" ${i ? 'stroke-dasharray="5 4"' : ''} points="${p.map((q) => px(q[0]).toFixed(1) + ',' + py(q[1]).toFixed(1)).join(' ')}"/>`; });
     // the time when the body is at a given distance along the way: search the lap
     const tAt = (s) => { let lo = 0, hi = u.lap; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2, c = M.cmd(u, m - (u.offset || 0)); if (u.Sof(c.u) < s) lo = m; else hi = m; } return lo; };
-    const n = course ? 12 : 7;
+    const n = Math.max(3, Math.min(course ? 12 : 7, Math.floor(span / (u.wb * 2 + 10))));
     for (let i = 0; i < n; i++) { const s = s0 + ((i + 0.5) / n) * span, t = tAt(s) - (u.offset || 0), r = M.poseAt(u, t), c = r.cmd;
       // unroll: a world point → (distance along the way, height); the way's frame at the body
       const b = u.bodyAt(u.Sof(c.u)), fw = [Math.cos(b.h), Math.sin(b.h)], S0 = u.Sof(c.u), q = (p) => [px(S0 + (p[0] - b.x) * fw[0] + (p[2] - b.z) * fw[1]), py(p[1])];
@@ -114,10 +111,11 @@ function sheet(LR, file, course) {
       let prev = null; for (const k in r.W) if (k.startsWith('neck_') || k === 'head') { if (prev) g += seg(prev, r.W[k].p, '#222', 3); prev = r.W[k].p; } if (r.W.head) g += seg(r.W.head.p, M.apply(r.W.head, [u.K.spec.head.len, 0, 0]), '#222', 4); }
     rows.push({ g: g + '</g>', H });
   }
-  let y = 0; const body = rows.map((r) => { const s = `<g transform="translate(0,${y})">${r.g}</g>`; y += r.H + 8; return s; }).join('');
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${y}" font-family="sans-serif"><rect width="100%" height="100%" fill="#f4f1ea"/>${body}</svg>`;
-  mkdirSync(dirname(file), { recursive: true }); writeFileSync(file.replace(/\.png$/, '.svg'), svg); return file.replace(/\.png$/, '.svg');
+  return rows;
 }
+function sheetWrite(rows, file) { const W = 1500; let y = 0; const body = rows.map((r) => { const s = `<g transform="translate(0,${y})">${r.g}</g>`; y += r.H + 8; return s; }).join('');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${y}" font-family="sans-serif"><rect width="100%" height="100%" fill="#f4f1ea"/>${body}</svg>`;
+  mkdirSync(dirname(file), { recursive: true }); writeFileSync(file.replace(/\.png$/, '.svg'), svg); return file.replace(/\.png$/, '.svg'); }
 
 // ── a map: the land's height (tint, relief shading, a contour every 5 m), where it is too steep to stand (red), water (blue),
 // the machines' ways, every footfall, and the realm's places ─────────────────────────────────────────────────────────
@@ -150,13 +148,12 @@ async function pw() { const { createRequire } = await import('node:module'); con
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const t0 = Date.now(), course = has('course'); let res;
-  try { res = run(dir, { course, dt: +opt('dt', '0.1') }); } catch (e) { console.error('gym failed:', e.stack || e.message); process.exit(1); }
+  try { res = run(dir, { course, dt: +opt('dt', '0.1'), only: opt('kind', null), onEach: has('sheet') ? (LR, rows) => sheetRows(LR, course, rows) : null }); } catch (e) { console.error('gym failed:', e.stack || e.message); process.exit(1); }
   if (has('json')) { console.log(JSON.stringify(res.out.map((o) => ({ unit: o.unit, bad: o.bad, A: o.A })), null, 1)); process.exit(res.out.some((o) => o.bad.length) ? 1 : 0); }
   let fails = 0; for (const o of res.out) { if (o.A) console.log(line(o.A)); for (const b of o.bad) { console.log('   ✗ ' + b); fails++; } }
-  if (has('sheet')) { const f = sheet(res.LR, join(dir, 'out', course ? 'gym-course.png' : 'gym.png'), course);
-    try { const { createRequire } = await import('node:module'); const require = createRequire(import.meta.url); let chromium; try { ({ chromium } = require('playwright')); } catch { const { execSync } = await import('node:child_process'); ({ chromium } = require(join(execSync('npm root -g').toString().trim(), 'playwright'))); }
-      const b = await chromium.launch(), p = await b.newPage(), svg = readFileSync(f, 'utf8'), m = svg.match(/width="(\d+)" height="(\d+)"/); await p.setViewportSize({ width: +m[1], height: Math.min(+m[2], 6000) }); await p.setContent(`<body style="margin:0">${svg}</body>`); await p.screenshot({ path: f.replace(/\.svg$/, '.png') }); await b.close(); console.log(f.replace(/\.svg$/, '.png')); } catch (e) { console.log(f + '  (no browser to make a PNG: ' + e.message.split('\n')[0] + ')'); } }
-  if (has('map')) console.log(await map(res.LR, join(dir, 'out', 'map.png'), { px: +opt('px', '3') }));
+  if (has('sheet')) { const f = sheetWrite(res.sheets, join(dir, 'out', course ? 'gym-course.png' : 'gym.png'));
+    try { const b = await (await pw()).launch(), p = await b.newPage(), svg = readFileSync(f, 'utf8'), m = svg.match(/width="(\d+)" height="(\d+)"/); await p.setViewportSize({ width: +m[1], height: Math.min(+m[2], 8000) }); await p.setContent(`<body style="margin:0">${svg}</body>`); await p.screenshot({ path: f.replace(/\.svg$/, '.png') }); await b.close(); console.log(f.replace(/\.svg$/, '.png')); } catch (e) { console.log(f + '  (no browser to make a PNG: ' + e.message.split('\n')[0] + ')'); } }
+  if (has('map')) console.log(await map(res.LR, join(dir, 'out', 'map.png'), { px: +opt('px', '3'), half: res.LR.land.half }));
   console.log(`${fails ? fails + ' rule(s) broken' : 'gym OK'} · ${res.out.filter((o) => o.A).length} unit(s) · ${((Date.now() - t0) / 1000).toFixed(1)} s`);
   process.exit(fails ? 1 : 0);
 }

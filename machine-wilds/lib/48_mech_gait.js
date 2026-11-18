@@ -152,7 +152,8 @@
     // so low that the highest foot's leg folds (each hip's own height counted: the body is tilted)
     let y = sum / legs.length + u.K.spec.ride - (g.crouch || 0), hi = 1e9, lo = -1e9; const sp = Math.sin(pitch), sr = Math.sin(roll);
     legs.forEach((l, i) => { const oy = l.at[1] + l.at[0] * sp - l.at[2] * sr, H = u.hip[l.name]; hi = Math.min(hi, hs[i] + H.max - oy); lo = Math.max(lo, hs[i] + H.min - oy); });
-    if (lo > hi) lo = hi = (lo + hi) / 2; const yc = Math.min(hi, Math.max(lo, y));
+    // (a soft limit: the body starts to come down before a leg is at its end, and never with a jerk)
+    if (lo > hi) lo = hi = (lo + hi) / 2; const kS = Math.max(0.12, u.K.spec.ride * 0.03), smin = (a, b) => (a - b > 8 * kS ? b : b - a > 8 * kS ? a : -kS * Math.log(Math.exp(-a / kS) + Math.exp(-b / kS))), yc = -smin(-smin(y, hi), -lo);
     return [yc, pitch, roll, yc - y];
   };
   // a mass eases through what its feet tell it: a raised-cosine window, 13 taps wide
@@ -170,7 +171,7 @@
     let dip = 0; const tauD = g.dipTime || 0.4;
     for (const l of legs) { const a = legAt(u, l, uu, {}); cmd.limbs[l.name] = { p: a.c, n: a.n, yaw: a.yaw, pitch: a.pitch, curl: a.curl, toes: a.toes, gamma: a.gamma, sw: a.sw, s: a.s, k: a.k };
       if (u.post) continue;
-      for (const kk of [a.k, a.k - 1, a.k - 2]) { const d = (uu - (kk + u.off[l.name])) * u.T / tauD; if (d >= 0) dip += (((g.dip || 0) / legs.length) * 2 * d * d) * Math.exp(2 - 2 * d) ; } }      // the body sinks into each landing and comes back (heavier: slower) — it starts without a jolt: the leg gives first
+      for (const kk of [a.k, a.k - 1, a.k - 2]) { const d = (uu - (kk + u.off[l.name])) * u.T / tauD; if (d >= 0 && d < 2) dip += ((g.dip || 0) / legs.length) * 2 * (0.5 - 0.5 * Math.cos(Math.PI * d)); } }      // the body sinks into each landing and comes back (heavier: slower) — it starts without a jolt: the leg gives first
     // which side carries, and how much of the front is in the air — eased over a part of the cycle: a mass sways, it does not jump
     let lat = 0, frontAir = 0; if (!u.post) { const win = g.swaySmooth === undefined ? 0.2 : g.swaySmooth; for (const f of FIR) { const q = carry(u, uu + f[0] * win); lat += q[0] * f[1]; frontAir += q[1] * f[1]; } }
     // the ground under the body, eased over part of a cycle (a big mass does not follow every stone)
@@ -226,13 +227,28 @@
   // pressed hollow with a raised rim, bare of grass.  Units of one kind on one way share their footfalls.
   M.press = () => {
     const L = land(), seen = new Set();
-    for (const k in M.routes) { const r = M.routes[k]; if (r.pressed || !r.width) continue; r.pressed = true; const pts = []; for (let s = 0; s <= r.len; s += 3) pts.push(r.at(s)); pts.push(r.at(0)); L.road(pts, r.width * 0.7, { kind: 'dirt', strength: r.worn === undefined ? 0.4 : r.worn, wobble: 2.2, soft: 3 }); L.road(pts, r.width * 0.7, { kind: 'dirt', strength: 0.01 }); }
+    for (const k in M.routes) { const r = M.routes[k]; if (r.pressed || !r.width) continue; r.pressed = true;
+      // What walking the same line for decades does: across the way the ground is brought toward level (far enough out to hold
+      // the feet), along it the rises and falls stay but no stretch is steeper than these legs climb (cut where it was, filled
+      // where it was not), and a skirt on either side, longer where the cut is deeper, leaves no bank standing.  Then the
+      // way gets its own unevenness back: a worn track is never a road.
+      const us = M.units.filter((u) => u.R === r || u.route === r.name), wb = Math.max(4, ...us.map((u) => u.wb || 4)), G = r.grade === undefined ? 0.2 : r.grade, hw = r.width * 0.45, step = 2, ns = Math.ceil(r.len / step), k0 = r.ease === undefined ? 0.8 : r.ease, half = L.half, res = L.res, n = L.n;
+      const raw = [], ys = []; for (let i = 0; i < ns; i++) { const p = r.at(i * step); raw.push(L.h(p[0], p[1])); }
+      const win = Math.max(2, Math.round(wb / 2 / step)); for (let i = 0; i < ns; i++) { let y = 0, c = 0; for (let j = -win; j <= win; j++) { const w = 1 - Math.abs(j) / (win + 1); y += raw[(((i + j) % ns) + ns) % ns] * w; c += w; } ys.push(y / c); }
+      for (let it = 0; it < 4; it++) { for (let i = 1; i <= ns; i++) { const a = ys[i - 1], q = i % ns; ys[q] = LR.clamp(ys[q], a - G * step, a + G * step); } for (let i = ns - 1; i >= 0; i--) { const a = ys[(i + 1) % ns]; ys[i] = LR.clamp(ys[i], a - G * step, a + G * step); } }
+      if (k0 > 0) { const acc = new Float32Array(n * n), wgt = new Float32Array(n * n);
+        for (let i = 0; i < ns; i++) { const p = r.at(i * step), skirt = Math.max(6, hw * 1.2, Math.abs(ys[i] - raw[i]) * 2.6), R = hw + skirt, i0 = Math.max(0, Math.floor((p[0] - R + half) / res)), i1 = Math.min(n - 1, Math.ceil((p[0] + R + half) / res)), j0 = Math.max(0, Math.floor((p[1] - R + half) / res)), j1 = Math.min(n - 1, Math.ceil((p[1] + R + half) / res));
+          for (let j = j0; j <= j1; j++) for (let q = i0; q <= i1; q++) { const d = Math.hypot(-half + q * res - p[0], -half + j * res - p[1]); if (d >= R) continue; const w = LR.sm(R, hw * 0.85, d), e = j * n + q; if (w > wgt[e]) { wgt[e] = w; acc[e] = ys[i]; } } }
+        const amp = r.rough === undefined ? 0.3 * Math.sqrt(r.width / 15) : r.rough, f = 1.4 / Math.max(6, r.width);
+        for (let e = 0; e < n * n; e++) if (wgt[e] > 0) { const x = -half + (e % n) * res, z = -half + Math.floor(e / n) * res, rim = LR.sm(half - 4, half - 28, Math.max(Math.abs(x), Math.abs(z))), w = wgt[e] * k0 * rim;
+          L.H[e] += (acc[e] - L.H[e]) * w + ((LR.fbm(x * f + 31, z * f + 7, 3) - 0.5) * 2 * amp + (LR.fbm(x * f * 3.1, z * f * 3.1 + 5, 2) - 0.5) * amp * 0.5) * w; } }
+      const pts = []; for (let s2 = 0; s2 <= r.len; s2 += 3) pts.push(r.at(s2)); pts.push(r.at(0)); L.road(pts, r.width * 0.62, { kind: 'dirt', strength: r.worn === undefined ? 0.4 : r.worn, wobble: 2.2, soft: 3, ease: false }); }
     for (const u of M.units) M.planUnit(u);                                                   // the eased ground moves the footfalls: plan on it
     const half = L.half, res = L.res, n = L.n;
     for (const u of M.units) { const key = u.kind + '/' + (u.R ? u.R.name : u.name); if (seen.has(key)) continue; seen.add(key); const g = u.K.spec.gait;
-      for (const l of u.kin.limbs) for (const P of u.plants[l.name]) { const R = l.ball * 1.1 + l.toeLen * 0.85, depth = g.print === undefined ? 0.2 * l.ball + 0.06 : g.print; if (Math.abs(P.x) > half - R - 2 || Math.abs(P.z) > half - R - 2) continue;
+      for (const l of u.kin.limbs) for (const P of u.plants[l.name]) { const R = l.ball * 1.1 + l.toeLen * 0.85, depth = g.print === undefined ? 0.06 * R : g.print;      /* shallow and wide: a deep print is a wall the next foot would land on */ if (Math.abs(P.x) > half - R - 2 || Math.abs(P.z) > half - R - 2) continue;
         const i0 = Math.floor((P.x - R * 1.7 + half) / res), i1 = Math.ceil((P.x + R * 1.7 + half) / res), j0 = Math.floor((P.z - R * 1.7 + half) / res), j1 = Math.ceil((P.z + R * 1.7 + half) / res);
-        for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const d = Math.hypot(-half + i * res - P.x, -half + j * res - P.z) / R; L.H[j * n + i] += -depth * LR.sm(1.0, 0.55, d) + depth * 0.3 * LR.sm(0.8, 1.15, d) * LR.sm(1.7, 1.2, d); }
+        for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const d = Math.hypot(-half + i * res - P.x, -half + j * res - P.z) / R; L.H[j * n + i] += -depth * LR.sm(1.05, 0.3, d) + depth * 0.22 * LR.sm(0.8, 1.2, d) * LR.sm(1.7, 1.25, d); }
         if (L.patch) L.patch(P.x, P.z, R * 0.9, { kind: 'dirt', strength: 0.95, soft: R * 0.5, wobble: 0.5 }); } }
     for (const u of M.units) M.reseat(u);
   };
@@ -244,7 +260,7 @@
   // their barrels, does the belly clear the land, does the walk close on itself, is the same instant the same pose.
   M.audit = (u, o = {}) => {
     const kin = u.kin, legs = kin.limbs, L = land(), span = u.post ? u.loop : u.lap, dt = o.dt || 0.05, n = Math.ceil(span / dt), g = u.K.spec.gait;
-    const A = { unit: u.name, kind: u.kind, lap: span, cycles: u.N, stride: u.stride || 0, samples: n, clamp: 0, spanMax: 0, spanMin: 9, slip: 0, gap: 0, sole: 0, bendFlip: 0, foldMax: 0, straight: 180, supportMin: 99, fixMax: 0, fixShare: 0, belly: 1e9, kneeLow: 1e9, swingLow: 1e9, overlapMin: 9, leverMin: 9, speedMax: 0, moved: 0, tiltMax: 0, tiltOver: 0, lowMax: 0, lowMean: 0, jerk: 0, hinge: {}, steepest: 0, bodyAcc: 0 };
+    const A = { unit: u.name, kind: u.kind, tonnes: u.K.spec.tonnes || 100, lap: span, cycles: u.N, stride: u.stride || 0, samples: n, clamp: 0, spanMax: 0, spanMin: 9, slip: 0, gap: 0, sole: 0, bendFlip: 0, foldMax: 0, straight: 180, supportMin: 99, fixMax: 0, fixShare: 0, belly: 1e9, kneeLow: 1e9, swingLow: 1e9, overlapMin: 9, leverMin: 9, speedMax: 0, moved: 0, tiltMax: 0, tiltOver: 0, lowMax: 0, lowMean: 0, jerk: 0, hinge: {}, steepest: 0, bodyAcc: 0 };
     const bsign = {}, planted = {}, hist = []; let fixN = 0;
     for (let i = 0; i <= n; i++) { const t = (span * i) / n - (u.offset || 0), r = M.poseAt(u, t), c = r.cmd; let sup = 0;
       if (Math.abs(c.fix) > 1e-4) { fixN++; A.fixMax = Math.max(A.fixMax, Math.abs(c.fix)); } A.lowMax = Math.max(A.lowMax, -c.low); A.lowMean += -c.low / (n + 1);
