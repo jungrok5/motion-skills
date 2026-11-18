@@ -3153,6 +3153,46 @@
      "url": "https://jungrok5.github.io/motion-skills/lit-room/demo/examples/night-watch/"
     }
    ]
+  },
+  {
+   "id": "lived-in-room",
+   "name": "lived-in-room",
+   "tagline": "사람과 장소를 주면(누구의 방인가, 어떤 건물인가, 어느 두 시각인가) 그 방을 실제 치수의 3D 장면으로 새로 설계해 Blender에서 파이썬으로 짓고, 손에 든 휴대폰으로 문에서 걸어 들어가며 찍은 영상을 두 시간대로 만듭니다. 건물 뼈대(벽 두께 · 창 · 문 · 설비)를 조사한 숫자로 먼저 짓고, 물건 수백 개를 놓기 · 걸기 · 붙이기 · 매달기 · 기대기 · 고정 가운데 하나로 받쳐 쓰임에 맞는 자리에 두며, 방 전체를 mm 단위로 재서 뜨거나 파묻히거나 쓰러질 물건을 찾아냅니다. 비뚤게 놓인 것 · 열린 서랍 · 마시다 만 컵 같은 쓰던 흔적, 초침 · 화면 · 빨래 · 유리의 물방울 · 먼 탑의 점멸등 같은 작은 움직임, 그림 한 장인 창밖, 어두운 방의 몇 군데 빛으로 생활감을 만들고, 다른 에이전트의 검토를 거칩니다. 모델 · 텍스처 · 생성 에셋 없이 모두 코드입니다.",
+   "posterAlt": "lived-in-room으로 만든 「옥탑 녹음실」의 장면 네 개: 밤의 책상과 파형이 뜬 모니터 너머 창밖 탑의 붉은 등, 휴대폰 라이트가 비춘 다섯 줄의 카세트테이프 선반, 늦은 오후 창 옆 벽에 놓인 햇빛, 받침 방식별로 색을 칠한 방 전체",
+   "poster": "lived-in-room/poster.jpg",
+   "tags": [
+    "Blender · 파이썬(bpy)",
+    "조사한 실제 치수",
+    "받침 6종 · mm 단위 물리 검사",
+    "손에 든 휴대폰 워크스루",
+    "같은 방 · 두 시각"
+   ],
+   "stats": [
+    "예제 물건 407개 · 밤 16초 + 오후 12초",
+    "모델 · 텍스처 · 생성 에셋 0개"
+   ],
+   "page": "lived-in-room/",
+   "source": "lived-in-room/",
+   "absorbedFrom": {
+    "repo": "https://github.com/jungrok5/motion-skills",
+    "path": "lived-in-room/examples/rooftop-tapes/"
+   },
+   "sources": [
+    {
+     "title": "KOBATAKA의 note 글 「Vibe Modeling vol.06｜AI×Blender로 3D 장면을 진짜처럼 만드는 65가지 궁리」 (AI에게 Blender를 조작하게 해 약 500개 물체의 서재를 만들고 밤 · 아침 안개 두 판으로 찍은 과정): 방법의 출처",
+     "url": "https://note.com/its_kobataka/n/n67bb2f8c9ce4?utm_source=x&utm_medium=social&utm_campaign=202611_vibe_modeling_vol06&utm_content=reply_discovery_01"
+    }
+   ],
+   "workedExample": [
+    {
+     "title": "「옥탑 녹음실」 · 서울의 옥탑방과 테이프 191개 · 밤 16초 + 오후 12초 · 프레임 시퀀스 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/lived-in-room/demo/rooftop-tapes/"
+    },
+    {
+     "title": "「창가 책상」 시작 프로젝트 · 밤 6초 + 새벽 5초 · 프레임 시퀀스 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/lived-in-room/demo/starter/"
+    }
+   ]
   }
  ]
 }
