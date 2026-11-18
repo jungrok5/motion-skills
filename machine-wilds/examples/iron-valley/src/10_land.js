@@ -1,0 +1,71 @@
+// 쇠울림 골짜기 (Soeullim, "the valley where iron rings") · the land.  A valley running west to east with a brook in it:
+// the north side climbs steeply to a ridge of crags, the south side rises in two shelves — the first holds a tarn in a
+// bog, the second ends at a lookout rock.  Nothing is level: 36 m of height inside the walk.  V is this realm's shared
+// sheet (places, the ways the machines walk, what other sources build on).
+const V = {
+  spawn: { x: -150, z: 118 }, lookout: { x: -96, z: 104, r: 16 }, tarn: { x: 122, z: 84, r: 24 }, hall: { x: 34, z: 118 }, viaduct: { x: -22, z0: -150, z1: 96 },
+  wreck: { x: -72, z: 6 }, ford: { x: 62, z: -1 }, saddle: { x: 150, z: -70 }, yard: { x: 96, z: -104 },
+  // the valley's axis: where the brook runs (z as a function of x)
+  axis: (x) => 18 * Math.sin(x / 95 + 0.4) + 0.05 * x - 20,
+};
+{
+  const sm = LR.sm, knoll = (x, z, cx, cz, R) => { const t = sm(R, 0, Math.hypot(x - cx, z - cz)); return t * t * (3 - 2 * t); };
+  // smooth crags: a noise raised to a power stands up in knobs with room between them
+  const knobs = (x, z, f) => { const n = LR.fbm(x * f + 9, z * f + 2, 3, 0.55); return Math.pow(LR.sat((n - 0.36) * 2.4), 1.6); };
+  V.base = (x, z) => {
+    const r = Math.hypot(x, z), d = z - V.axis(x), wob = (LR.fbm(x * 0.011 + 3, z * 0.011 + 7, 3) - 0.5) * 38, ds = d + wob * sm(6, 60, Math.abs(d));
+    let h = 2.2 - x * 0.012;                                                                  // the floor falls to the east with the brook
+    h += ds > 0 ? 11 * sm(12, 58, ds) + 13 * sm(100, 180, ds) : 20 * sm(9, 66, -ds) + 15 * sm(92, 190, -ds);     // south: two shelves · north: a steep bank, then the ridge
+    const off = sm(8, 40, Math.abs(d));                                                       // the floor itself stays quiet
+    h += (LR.fbm(x * 0.0085 + 5, z * 0.0085 + 9, 4) - 0.5) * 17 * off;                        // long swells
+    h += (LR.fbm(x * 0.024 + 1, z * 0.024 + 4, 4) - 0.5) * 7.5 * (0.25 + 0.75 * off);         // hummocks and hollows, 40 m across
+    h += (LR.fbm(x * 0.075 + 6, z * 0.075 + 1, 3) - 0.5) * 1.5 * (0.4 + 0.6 * off);           // and what a walker feels underfoot
+    h += knobs(x, z, 0.019) * 9 * sm(34, 96, -ds) + knobs(x + 300, z, 0.03) * 3.5 * sm(60, 120, ds);     // the north bank breaks into crags; rock knolls on the high shelf
+    h += knoll(x, z, V.lookout.x, V.lookout.z, 44) * 10 + knoll(x, z, V.saddle.x + 40, V.saddle.z - 30, 80) * 9 - knoll(x, z, V.saddle.x, V.saddle.z, 44) * 7;
+    { const T = V.tarn, q = sm(T.r + 34, T.r + 6, Math.hypot(x - T.x, z - T.z)); h = LR.lerp(h, 9.6, q); }       // the bog round the tarn lies level
+    h += (LR.fbm(x * 0.0045 + 3, z * 0.0045 + 7, 5) - 0.36) * 120 * sm(250, 620, r);          // the country beyond
+    h += LR.ridge(x * 0.0005 + 1, z * 0.0005 + 4, 5) * 820 * sm(760, 2800, r);
+    return h;
+  };
+  // the ways the machines keep (closed; trees, scans and ruins stay off them).  Laid from the land: the long round goes
+  // down the valley floor, through the tarn's shallows and home along the first shelf; the short one works the north bank;
+  // the colossus keeps to the rim
+  V.ways = {
+    round: [[-168, -6], [-118, 8], [-74, 28], [-34, 20], [8, 14], [44, 6], [84, 10], [118, 34], [140, 66], [128, 104], [92, 122], [58, 96], [14, 86], [-30, 96], [-66, 70], [-112, 62], [-158, 50], [-186, 24]],
+    bank: [[-58, -52], [-16, -70], [30, -62], [70, -48], [112, -66], [118, -104], [84, -128], [40, -118], [-6, -124], [-52, -112], [-84, -84]],
+    rim: [[-236, -30], [-214, -150], [-120, -222], [-10, -238], [110, -224], [206, -160], [240, -50], [236, 60], [200, 160], [112, 226], [-10, 238], [-130, 222], [-212, 150], [-240, 50]],
+  };
+  // how wooded a spot is, 0…1: one function for the litter, the planting and the far forest
+  V.woods = (x, z) => {
+    const r = Math.hypot(x, z), d = z - V.axis(x); let f = 0.25 + 0.75 * sm(4, 26, Math.abs(d)) + (LR.fbm(x * 0.017 + 2, z * 0.017 + 6, 3) - 0.5) * 0.7;
+    f *= sm(V.tarn.r + 2, V.tarn.r + 22, Math.hypot(x - V.tarn.x, z - V.tarn.z)); f *= sm(7, 20, Math.hypot(x - V.lookout.x, z - V.lookout.z)); f *= sm(10, 26, Math.hypot(x - V.hall.x, z - V.hall.z)) * sm(8, 22, Math.hypot(x - V.yard.x, z - V.yard.z));
+    return LR.sat(f);
+  };
+}
+V.land = () => {
+  const sm = LR.sm, L = LR.land.create({ height: V.base, half: 256, res: 0.5,
+    biome: (x, z, h, slope) => { const r = Math.hypot(x, z), n = LR.noise(x * 0.004 + 3, z * 0.004 + 1); return [sm(236, 330, r) * sm(0.6, 0.36, slope) * sm(620, 430, h + n * 60) * sm(0.15, 0.45, n + 0.4), sm(0.4, 0.62, slope) * sm(236, 300, r), sm(560, 700, h + n * 50)]; } });
+  // the brook: down the valley's axis, its level just under the land and never rising downstream
+  const pts = []; for (let x = -252; x <= 252; x += 14) pts.push([x, V.axis(x) + (LR.fbm(x * 0.05, 3, 2) - 0.5) * 7]);
+  let prev = 1e9; V.brook = pts.map((p) => { const y = Math.min(V.base(p[0], p[1]) - 1.15, prev - 0.03); prev = y; return [p[0], p[1], y]; });
+  L.carve(V.brook, 6.2, 1.3, { bank: 6 });
+  // the tarn on the first shelf, in a bog; its water leaves north to the brook
+  const T = V.tarn; T.level = V.base(T.x, T.z) - 1.5; L.pond(T.x, T.z, T.r, T.level, 2.0, { wobble: 0.3 });
+  { let y = T.level; V.outflow = [[T.x - 6, T.z - T.r + 2], [T.x - 14, T.z - T.r - 16], [T.x - 20, 30], [T.x - 16, 12], [T.x - 8, V.axis(T.x - 8) + 2]].map((p, i) => { y = Math.min(y - 0.05, i ? V.base(p[0], p[1]) - 1.0 : y); return [p[0], p[1], y]; }); L.carve(V.outflow, 3.6, 0.9, { bank: 4 }); }
+  LR.water.stream(V.brook, 6.2); LR.water.stream(V.outflow, 3.6);
+  LR.water.pond(T.level, [T.x - T.r * 1.5 - 6, T.z - T.r * 1.5 - 6, T.x + T.r * 1.5 + 6, T.z + T.r * 1.5 + 6]);
+  // what is left of the road: it came in from the south-west, passed the hall and went under the viaduct
+  V.road = [[-196, 150], [-150, 122], [-112, 128], [-70, 126], [-30, 112], [10, 116], [34, 110]];
+  L.road(V.road, 5.2, { kind: 'paved', wobble: 1.4, soft: 1.6, strength: 0.8 });
+  V.paths = { lookout: [[-112, 128], [-104, 116], [-96, 104]], down: [[-30, 112], [-34, 84], [-46, 58], [-58, 34], [-70, 14]], tarn: [[34, 110], [62, 108], [88, 96], [100, 88]], ford: [[-58, 34], [-20, 26], [22, 16], [56, 4], [62, -8], [74, -30], [92, -66], [96, -96]] };
+  for (const k in V.paths) L.road(V.paths[k], 1.5, { kind: 'dirt', strength: 0.75, wobble: 1.1, ease: k !== 'ford' });
+  L.patch(V.lookout.x, V.lookout.z, 5, { kind: 'dirt', strength: 0.6, wobble: 1.6 });
+  // what grows where: leaf litter under the trees, grass thin in deep wood, rank growth by the water, ferns in the damp
+  const wet = (x, z) => sm(26, 4, Math.abs(z - V.axis(x))) * 0.6 + sm(T.r + 26, T.r, Math.hypot(x - T.x, z - T.z));
+  L.paint('litter', (x, z) => sm(0.3, 0.75, V.woods(x, z)) * (0.55 + 0.45 * LR.fbm(x * 0.06, z * 0.06, 3)), 'max');
+  L.paint('grass', (x, z) => 1 - 0.5 * sm(0.45, 0.95, V.woods(x, z)), 'min');
+  L.paint('tall', (x, z) => LR.sat(0.42 + 0.5 * wet(x, z) + (LR.fbm(x * 0.03 + 4, z * 0.03, 3) - 0.5) * 0.7));
+  L.paint('flowers', (x, z) => sm(0.62, 0.78, LR.fbm(x * 0.07 + 7, z * 0.07 + 3, 3)) * (1 - V.woods(x, z)) * 0.5);
+  L.paint('fern', (x, z) => sm(0.35, 0.8, V.woods(x, z)) * sm(0.4, 0.6, LR.fbm(x * 0.07 + 11, z * 0.07 + 5, 3)) + 0.5 * wet(x, z));
+  L.roughen(0.13, { radius: 300 });
+};

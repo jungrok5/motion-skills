@@ -1,0 +1,168 @@
+// scanned-realm · 15_materials — every surface is a procedural PBR material baked on the GPU when the page loads:
+// a tileable height + colour + roughness function per material → two texture arrays (albedo+height, normal+rough+ao).
+// No image files.  LR.mat.define(name, { glsl, tile, bump, … }) adds one; LR.mat.bake() fills the arrays.
+{
+  const T = THREE;
+  const M = (LR.mat = { defs: [], id: {}, size: 512 });
+  // def: glsl — `void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal)`, uv in 0..1, MUST tile
+  //      tile — metres one repeat covers · bump — relief depth in metres (drives the normal map) · ao — cavity strength
+  //      por — porosity: how much rain darkens it · pud — can hold puddles · stick — how much snow stays · pom — parallax depth (m) · paint — 1: the vertex tint colours only what stands above height 0.45 (paint over bare wood)
+  M.define = (name, def) => {
+    if (name in M.id) { M.defs[M.id[name]] = Object.assign({ name }, M.defaults, def); return M.id[name]; }
+    M.id[name] = M.defs.length; M.defs.push(Object.assign({ name }, M.defaults, def)); return M.id[name];
+  };
+  M.defaults = { tile: 2, bump: 0.01, ao: 1, por: 0.7, pud: 0, stick: 1, pom: 0 };
+  // A scanned material: its maps are photographs (assets/tex/<id>/diff · nor · arm · disp, fetched from Poly Haven).
+  // It takes the place of the generated material of the same name and keeps that one's weather numbers unless given:
+  //   M.photo('cobble', 'cobblestone_floor_04', { tile, gain, tint: [r, g, b], rough (offset), normal (strength), aoK, por, pud, stick, moss, pom,
+//     like: 'barkpine' (a new name starts from that material's recipe and weather numbers) })
+  // tile defaults to the scan's real size.  Without the files (fetch-assets.mjs not run) the generated one stays.
+  M.photo = (name, id, o = {}) => { const twin = () => (M.id[name] === undefined && o.like !== undefined && M.id[o.like] !== undefined ? M.define(name, Object.assign({}, M.defs[M.id[o.like]])) : M.id[name]);
+    if (LR.q('scan') === '0') return twin();                                                     // ?scan=0: the generated recipes, to compare
+    const a = LR.ASSETS && LR.ASSETS.textures && LR.ASSETS.textures[id];
+    if (!a || !a.files || !a.files.diff) { if (LR.ASSETS) console.warn(`scanned material "${id}" is not in assets/manifest.json (run fetch-assets.mjs): "${name}" keeps its generated surface`); return twin(); }                     // with no manifest at all the realm simply runs on its recipes
+    const from = M.id[name] !== undefined ? name : o.like, prev = from !== undefined && M.id[from] !== undefined ? M.defs[M.id[from]] : {}; return M.define(name, Object.assign({}, prev, { tile: a.tile }, o, { photo: Object.assign({ id }, a.files) })); };
+  M.L = (name) => { const i = M.id[name]; if (i === undefined) throw new Error('unknown material "' + name + '" (have: ' + Object.keys(M.id).join(', ') + ')'); return i; };
+  M.tile = (name) => M.defs[M.L(name)].tile;
+
+  // tileable building blocks for material functions
+  const LIB = `
+vec3 S(float r, float g, float b){ return pow(vec3(r, g, b), vec3(2.2)); }
+vec3 S(vec3 c){ return pow(c, vec3(2.2)); }
+float ph(vec2 i, float per){ return hash12(mod(i, per) + per * 17.0); }
+vec2 ph2(vec2 i, float per){ return hash22(mod(i, per) + per * 29.0); }
+// value noise, period per (in lattice cells): p = uv * per
+float pn(vec2 p, float per){ vec2 i = floor(p), f = fract(p); f = f * f * f * (f * (f * 6. - 15.) + 10.);
+  return mix(mix(ph(i, per), ph(i + vec2(1, 0), per), f.x), mix(ph(i + vec2(0, 1), per), ph(i + vec2(1, 1), per), f.x), f.y); }
+// anisotropic value noise: per.x cells across, per.y cells up
+float pn2(vec2 uv, vec2 per){ vec2 p = uv * per, i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
+  #define PH2(o) hash12(mod(i + o, per) + per * 13.0)
+  return mix(mix(PH2(vec2(0, 0)), PH2(vec2(1, 0)), f.x), mix(PH2(vec2(0, 1)), PH2(vec2(1, 1)), f.x), f.y); }
+// gradient noise 0..1
+float pg(vec2 p, float per){ vec2 i = floor(p), f = fract(p), u = f * f * f * (f * (f * 6. - 15.) + 10.);
+  #define PGR(o) dot(normalize(ph2(i + o, per) - 0.5), f - o)
+  return 0.5 + 0.7 * mix(mix(PGR(vec2(0, 0)), PGR(vec2(1, 0)), u.x), mix(PGR(vec2(0, 1)), PGR(vec2(1, 1)), u.x), u.y); }
+float fbm(vec2 uv, float f, int oct){ float s = 0., a = .5, n = 0.; for (int i = 0; i < 8; i++) { if (i >= oct) break; s += a * pg(uv * f + float(i) * 0.37, f); n += a; a *= .5; f *= 2.; } return s / n; }
+float fbmv(vec2 uv, float f, int oct){ float s = 0., a = .5, n = 0.; for (int i = 0; i < 8; i++) { if (i >= oct) break; s += a * pn(uv * f + float(i) * 0.37, f); n += a; a *= .5; f *= 2.; } return s / n; }
+float ridged(vec2 uv, float f, int oct){ float s = 0., a = .5, n = 0.; for (int i = 0; i < 8; i++) { if (i >= oct) break; float v = 1. - abs(pg(uv * f + float(i) * 0.53, f) * 2. - 1.); s += a * v * v; n += a; a *= .5; f *= 2.; } return s / n; }
+// voronoi with n x n cells: x = distance to the cell border, y = cell id 0..1, z = distance to the cell centre, w = second id
+vec4 vor(vec2 uv, vec2 n, float jit){
+  vec2 p = uv * n, ip = floor(p), fp = fract(p); vec2 mc = vec2(0.), mo = vec2(0.); float md = 9.;
+  for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) { vec2 o = vec2(float(i), float(j)); vec2 r = hash22(mod(ip + o, n) + n * 3.1); vec2 c = o + 0.5 + (r - 0.5) * jit - fp; float d = dot(c, c); if (d < md) { md = d; mc = c; mo = o; } }
+  float ed = 9.;
+  for (int j = -2; j <= 2; j++) for (int i = -2; i <= 2; i++) { vec2 o = mo + vec2(float(i), float(j)); vec2 r = hash22(mod(ip + o, n) + n * 3.1); vec2 c = o + 0.5 + (r - 0.5) * jit - fp; vec2 dd = c - mc; if (dot(dd, dd) > 1e-5) ed = min(ed, dot(0.5 * (mc + c), normalize(dd))); }
+  vec2 cell = mod(ip + mo, n);
+  return vec4(ed, hash12(cell + n * 7.7), sqrt(md), hash12(cell * 1.7 + n * 2.3));
+}
+// running bond: n.x bricks across, n.y courses (n.y even).  returns xy = position inside the brick 0..1, zw = brick id
+vec4 bond(vec2 uv, vec2 n, float shift){ vec2 p = uv * n; float row = floor(p.y); p.x += shift * mod(row, 2.0) + hash11(mod(row, n.y) + 3.0) * 0.0; vec2 id = vec2(mod(floor(p.x), n.x), mod(row, n.y)); return vec4(fract(p), id); }
+float box2(vec2 f, vec2 gap){ vec2 e = min(f, 1.0 - f) / gap; return sat(min(e.x, e.y)); }
+`;
+
+  // pass A: the surface function → colour + height (half float), rough + metal
+  const fragA = (glsl) => `${LR.chunk.head}${LR.chunk.hash}
+in vec2 vUv; layout(location = 0) out vec4 oA; layout(location = 1) out vec4 oB;
+${LIB}
+${glsl}
+void main(){ vec3 col; float h, rough, metal = 0.0; surf(vUv, col, h, rough, metal); oA = vec4(max(col, 0.0), sat(h)); oB = vec4(sat(rough), sat(metal), 0.0, 1.0); }`;
+  // a layer that has neither a recipe nor its photographs (a scanned model whose maps did not arrive): plain weathered grey-brown
+  const FALLBACK = `void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){ float n = fbm(uv, 6.0, 5); col = mix(vec3(0.16, 0.13, 0.10), vec3(0.30, 0.27, 0.23), n); h = n; rough = 0.85; metal = 0.0; }`;
+  const fragB1 = `//#include head
+in vec2 vUv; out vec4 o; uniform sampler2D tA;
+void main(){ vec4 a = texture(tA, vUv); o = vec4(sqrt(sat(a.rgb)), a.a); }`;
+  const fragB2 = `//#include head
+in vec2 vUv; out vec4 o; uniform sampler2D tA, tB; uniform vec4 uP;   // texel, slope scale, ao strength, ao radius (texels)
+float H(vec2 uv){ return textureLod(tA, uv, 0.0).a; }
+void main(){
+  float e = uP.x;
+  float hx = H(vUv + vec2(e, 0.)) - H(vUv - vec2(e, 0.)), hy = H(vUv + vec2(0., e)) - H(vUv - vec2(0., e));
+  hx += 0.5 * (H(vUv + vec2(2. * e, 0.)) - H(vUv - vec2(2. * e, 0.))) * 0.5; hy += 0.5 * (H(vUv + vec2(0., 2. * e)) - H(vUv - vec2(0., 2. * e))) * 0.5;
+  vec3 n = normalize(vec3(-hx * uP.y, -hy * uP.y, 1.0));
+  float h0 = H(vUv), occ = 0.0;
+  for (int i = 0; i < 16; i++) { float a = float(i) * 2.39996, r = (0.25 + 0.75 * sqrt((float(i) + 0.5) / 16.0)) * uP.w * e; float dh = H(vUv + vec2(cos(a), sin(a)) * r) - h0; occ += sat(dh * uP.y * e / r * 1.6); }
+  float ao = sat(1.0 - occ / 16.0 * 2.6 * uP.z);
+  vec2 rm = texture(tB, vUv).rg;
+  o = vec4(n.xy * 0.5 + 0.5, rm.r, ao);
+}`;
+
+  M.bake = async (onStep) => {
+    const G = LR.gpu, r = G.renderer, size = (M.size = G.tier.mat), n = M.defs.length;
+    const mk = () => { const a = new T.WebGLArrayRenderTarget(size, size, n, { format: T.RGBAFormat, type: T.UnsignedByteType, depthBuffer: false, generateMipmaps: true }); const t = a.texture; t.minFilter = T.LinearMipmapLinearFilter; t.magFilter = T.LinearFilter; t.wrapS = t.wrapT = T.RepeatWrapping; t.anisotropy = Math.min(G.tier.aniso, G.maxAniso); t.generateMipmaps = true; return a; };
+    const A = mk(), B = mk();
+    const tmp = LR.rt(size, size, { type: G.halfFloat ? T.HalfFloatType : T.UnsignedByteType, count: 2, wrap: T.RepeatWrapping, filter: T.LinearFilter });
+    const b1 = LR.pass(fragB1, { tA: { value: tmp.textures[0] } });
+    const b2 = LR.pass(fragB2, { tA: { value: tmp.textures[0] }, tB: { value: tmp.textures[1] }, uP: { value: new T.Vector4() } });
+    // three regenerates mipmaps each time a target is left; do it once, after the last layer
+    A.texture.generateMipmaps = B.texture.generateMipmaps = true;
+    // scanned materials: their photographs are fetched a few layers ahead, uploaded for one layer and freed after it —
+    // a map that does not arrive (offline, the far server slow) leaves that layer to its generated recipe
+    const photos = M.defs.filter((d) => d.photo), loader = new T.TextureLoader(), wait = LR.qn('scanwait', 40) * 1000; M.scanned = 0; M.missed = [];
+    const one = (url) => new Promise((res) => { let done = false; const end = (t) => { if (!done) { done = true; res(t); } }; setTimeout(() => end(null), wait);
+      loader.load(url, (t) => { if (done) { t.dispose(); return; } t.wrapS = t.wrapT = T.RepeatWrapping; t.colorSpace = T.NoColorSpace; t.minFilter = T.LinearMipmapLinearFilter; t.magFilter = T.LinearFilter; t.generateMipmaps = true; t.anisotropy = 4; end(t); }, undefined, () => end(null)); });
+    const sets = new Map(), ahead1 = (k) => { const d = M.defs[k], ph = d.photo; if (!ph || sets.has(k)) return;
+      const keys = ['diff', 'nor', 'arm', 'disp'].filter((q) => ph[q]); sets.set(k, Promise.all(keys.map((q) => one(ph[q]))).then((ts) => { const o = {}; keys.forEach((q, j) => (o[q] = ts[j])); return o; })); };
+    const ahead = (i) => { for (let k = i; k < Math.min(n, i + 4); k++) ahead1(k); };
+    const pA = photos.length ? new T.RawShaderMaterial({ glslVersion: T.GLSL3, vertexShader: LR.chunk.fsvs, depthTest: false, depthWrite: false, uniforms: { tDiff: { value: null }, tArm: { value: null }, tDisp: { value: null }, uK: { value: new T.Vector4() }, uTint: { value: new T.Vector3(1, 1, 1) } }, fragmentShader: `${LR.chunk.head}
+in vec2 vUv; layout(location = 0) out vec4 oA; layout(location = 1) out vec4 oB; uniform sampler2D tDiff, tArm, tDisp; uniform vec4 uK; uniform vec3 uTint;   // uK: gain, roughness offset, has disp, has arm
+// the height a scan brings is centred on its own mean (its smallest mip) and laid where the recipes keep theirs — most of a
+// surface high, creases low — so moss, flaking paint, puddles and the relief march read a scan as they read a recipe;
+// a scan with no height map lends its brightness
+void main(){ vec3 d = texture(tDiff, vUv).rgb, arm = uK.w > 0.5 ? texture(tArm, vUv).rgb : vec3(1.0, 0.8, 0.0);
+  float hs = uK.z > 0.5 ? texture(tDisp, vUv).r : dot(d, vec3(0.333)), hm = uK.z > 0.5 ? textureLod(tDisp, vec2(0.5), 12.0).r : dot(textureLod(tDiff, vec2(0.5), 12.0).rgb, vec3(0.333));
+  oA = vec4(pow(d, vec3(2.2)) * uTint * uK.x, clamp(0.62 + (hs - hm) * (uK.z > 0.5 ? 1.7 : 1.1), 0.0, 1.0)); oB = vec4(clamp(arm.g + uK.y, 0.04, 1.0), arm.b, arm.r, 1.0); }` }) : null;
+    const pB = photos.length ? LR.pass(`//#include head
+in vec2 vUv; out vec4 o; uniform sampler2D tNor, tB; uniform vec2 uN;                    // normal strength, how much of the scan's occlusion
+void main(){ vec3 n = texture(tNor, vUv).xyz * 2.0 - 1.0; n.xy *= uN.x; n = normalize(n); vec3 rm = texture(tB, vUv).rgb; o = vec4(n.xy * 0.5 + 0.5, rm.r, mix(1.0, rm.b, uN.y)); }`, { tNor: { value: null }, tB: { value: tmp.textures[1] }, uN: { value: new T.Vector2(1, 1) } }) : null;
+    // one layer: from its photographs when they are here (set), else from its recipe
+    const spent = [];
+    const layer = (i, set) => { const d = M.defs[i];
+      if (set && !set.diff) { M.missed.push(d.name); for (const k in set) if (set[k]) set[k].dispose(); set = null; }
+      const ph = !!set, tx = (k) => (set && set[k]) || null; if (ph) M.scanned++;
+      if (ph) { const u = pA.uniforms; u.tDiff.value = tx('diff'); u.tArm.value = tx('arm') || tx('diff'); u.tDisp.value = tx('disp') || tx('diff'); u.uK.value.set(d.gain === undefined ? 1 : d.gain, d.rough || 0, tx('disp') ? 1 : 0, tx('arm') ? 1 : 0); const tt = d.tint || [1, 1, 1]; u.uTint.value.set(tt[0], tt[1], tt[2]); LR.blit(pA, tmp); }
+      else { const a = new T.RawShaderMaterial({ glslVersion: T.GLSL3, vertexShader: LR.chunk.fsvs, fragmentShader: fragA(d.glsl || FALLBACK), depthTest: false, depthWrite: false });
+      LR.blit(a, tmp); spent.push(a); }
+      LR.blit(b1, A, i);
+      b2.uniforms.uP.value.set(1 / size, (d.bump / d.tile) * size * 0.5, d.ao, Math.max(3, size / 48));
+      if (ph && tx('nor')) { pB.uniforms.tNor.value = tx('nor'); pB.uniforms.uN.value.set(d.normal === undefined ? 1 : d.normal, d.aoK === undefined ? 1 : d.aoK); LR.blit(pB, B, i); } else
+      LR.blit(b2, B, i);
+      const gone = spent.splice(0); LR.settle(() => { for (const m of gone) m.dispose(); if (set) for (const k in set) if (set[k]) set[k].dispose(); }); };
+    // Streaming (the live page; not stills, not ?stream=0): every layer is baked from its recipe at once and the walk
+    // begins; each scan then takes its layer as its maps arrive.  Otherwise each scanned layer waits for its maps here.
+    const stream = (M.stream = photos.length > 0 && !LR.RENDER && LR.q('stream') !== '0'); M.arrived = 0; M.due = stream ? photos.length : 0;
+    for (let i = 0; i < n; i++) {
+      let set = null; if (!stream) { ahead(i); set = M.defs[i].photo ? await sets.get(i) : null; sets.delete(i); }
+      const last = i === n - 1; if (i === 1) A.texture.generateMipmaps = B.texture.generateMipmaps = false; if (last) A.texture.generateMipmaps = B.texture.generateMipmaps = true;
+      layer(i, set);
+      if (onStep) { onStep(i, n, M.defs[i].name); await LR.breath(); }
+    }
+    r.setRenderTarget(null);
+    const done = () => { LR.settle(() => { tmp.dispose(); b1.dispose(); b2.dispose(); if (pA) pA.dispose(); if (pB) pB.dispose(); });
+      if (M.missed.length) console.warn('scanned maps that did not arrive, drawn from their generated recipe: ' + M.missed.join(', ')); };
+    if (!stream) done();
+    else M.arriving = (async () => { const ids = []; M.defs.forEach((d, i) => { if (d.photo) ids.push(i); });
+      for (let k = 0; k < ids.length; k++) { for (let j = k; j < Math.min(ids.length, k + 4); j++) ahead1(ids[j]);
+        const set = await sets.get(ids[k]); sets.delete(ids[k]); await LR.breath();
+        const rt0 = r.getRenderTarget(); layer(ids[k], set); r.setRenderTarget(rt0); M.arrived++; LR.emit('scan', M.defs[ids[k]].name); }
+      done(); })();
+    M.A = A; M.B = B; LR.U.uMatA.value = A.texture; LR.U.uMatB.value = B.texture;
+    // per-layer weather parameters for the world shaders: porosity, puddles, snow, parallax (in uv units)
+    const P = (M.params = []); for (let i = 0; i < 48; i++) { const d = M.defs[i]; P.push(d ? new T.Vector4(d.por, d.pud, d.stick, d.pom / d.tile) : new T.Vector4(0.7, 0, 1, 0)); }
+    return M;
+  };
+
+  // debug: the material sheet (?view=mats) — every layer lit by a raking light
+  M.sheet = (cols = 6) => {
+    const n = M.defs.length, rows = Math.ceil(n / cols);
+    const m = LR.pass(`//#include head
+in vec2 vUv; out vec4 o; uniform mediump sampler2DArray uMatA, uMatB; uniform vec3 uG; uniform float uT;
+void main(){ vec2 g = vec2(vUv.x, 1.0 - vUv.y) * uG.xy; vec2 c = floor(g), f = fract(g); float id = c.y * uG.x + c.x; if (id >= uG.z) { o = vec4(0.03, 0.03, 0.04, 1.); return; }
+  vec2 uv = f * 1.5; vec4 a = texture(uMatA, vec3(uv, id)), b = texture(uMatB, vec3(uv, id));
+  vec3 alb = a.rgb * a.rgb; vec2 nx = b.xy * 2. - 1.; vec3 n = vec3(nx, sqrt(max(1. - dot(nx, nx), 0.)));
+  vec3 L = normalize(vec3(cos(uT) * 0.8, sin(uT) * 0.8, 0.55)), V = vec3(0., 0., 1.), Hh = normalize(L + V);
+  float r = max(b.z, 0.05), a2 = r * r * r * r, nh = max(dot(n, Hh), 0.), dd = nh * nh * (a2 - 1.) + 1.;
+  vec3 col = alb * (max(dot(n, L), 0.) * 2.6 * vec3(1., .95, .85) + vec3(.25, .3, .4) * b.w) + vec3(0.04) * a2 / (PI * dd * dd) * max(dot(n, L), 0.) * 2.6;
+  col = col / (col + 0.6) * 1.35; float edge = step(0.985, max(f.x, f.y)); o = vec4(pow(col, vec3(1. / 2.2)) * (1. - edge), 1.);
+}`, { uMatA: LR.U.uMatA, uMatB: LR.U.uMatB, uG: { value: new T.Vector3(cols, rows, n) }, uT: { value: 0.9 } });
+    return { material: m, cols, rows, names: M.defs.map((d) => d.name) };
+  };
+}
