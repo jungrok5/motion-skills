@@ -63,7 +63,7 @@ and one standing in the water) is a second, unrelated topic.
 |---|---|
 | `scripts/gym.mjs` | the machines walked over the land **in Node** (no browser, seconds): numbers and pass / fail for every unit; `--course` the test course (ramp, drop, side slope, ditch, mound); `--sheet` a side view of each unit on the land's real profile; `--map` the land's relief, slopes, ways and every footfall |
 | `scripts/check.mjs` | the gym on the realm and the course · no two machines in each other's legs · the page loads clean · every scan arrived and baked · spawn, views and tour can be walked (and no climb is past the walker) · the machines audited again in the page · nothing solid on a way · every state reads · the lamps show in the mist · budgets; `--walk` only the walking part |
-| `scripts/render.mjs` | `--cast [kind]` the cast sheet (a kind alone in a studio beside a 1.75 m figure: front, back, both sides, four three-quarters, the walk from both sides, standing, the move's gather / peak / recover, leaving, a turn) · `--shot` · `--views` · `--sheet` (every view × day, dusk, night, rain, snow, mist) · `--tour 12` · `--phone` · `--film` · `--mats` |
+| `scripts/render.mjs` | `--cast [kind] --close` the same kinds from arm's length (body, belly, hip, knee, foot, head) · `--cast [kind]` the cast sheet (a kind alone in a studio beside a 1.75 m figure: front, back, both sides, four three-quarters, the walk from both sides, standing, the move's gather / peak / recover, leaving, a turn) · `--shot` · `--views` · `--sheet` (every view × day, dusk, night, rain, snow, mist) · `--tour 12` · `--phone` · `--film` · `--mats` |
 | `scripts/film.mjs` | a film from the shots a realm declares (`film: [{ name, dur, tod, weather, t, cam(u) }]`): every frame's camera and clock are functions of time, so frames are written one by one and a render that stops goes on where it was; `--still` two frames a shot first; `--sound` the footfalls and calls placed from the same functions → `out/film.mp4` |
 | `scripts/fetch-assets.mjs` · `build.mjs` · `new-realm.mjs` | `assets.json` → `assets/` from Poly Haven · sources + engine → `index.html` (`--cdn`: the page reads the scans from Poly Haven's server) · start a realm folder from the starter or `--from iron-valley` |
 | `lib/48_mech.js` | `LR.mech`: frames, planar limbs (2 / 3 segments, the ankle that leans with the fold), feet and toes, neck, head, extras (`fixed spin lag`), the cylinder anchor search — numbers only |
@@ -118,6 +118,10 @@ fetching. No npm install, no keys. `gym.mjs` needs only Node. The page needs Web
    style, then the body, head, load and lamps of this machine — never the example's. `render.mjs my-realm --cast`
    shows each kind from every side and in motion: grade it with the rubric (front / back / left / right agree, joints
    are mechanisms, the silhouette is its own, the figure makes the size readable).
+   Then the **fittings** (`references/MACHINES.md`): the plant this machine's work needs — mains and a line to every
+   hip, accumulators, a cooler behind louvres, stacks — and a person's way round it (rungs, rails, hatches at a
+   person's size). `render.mjs my-realm --cast --close` stands next to each kind: if a tile shows a smooth shape with
+   nothing bolted to it, it is not finished.
 6. **Ruins, details, plants** — as in scanned-realm (`references/KIT.md`), with `LR.mech.wayDist(x, z)` in every
    `avoid`. Fallen trunks and stumps along the ways, a wreck (`LR.mech.wreck`) where the story wants one.
 7. **The walk and the set piece.** Spawn, tour, 8–12 views; one place where a machine passes close enough to be

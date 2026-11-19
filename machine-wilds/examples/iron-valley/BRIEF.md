@@ -81,6 +81,7 @@ Graded against `references/BRIEF.md` (1–5; under 4 goes back). The first pass 
 | crane, cast sheet | — | — | 5 | 5 | 4 | 5 | — | — | 3 | showroom white; the look asked for is rusted and mossed → `age` on every kind |
 | kite, cast sheet | — | — | 3 | — | 3 | 4 | — | — | 4 | banked all the way round the studio, beat phases a quarter off → straights; blades weathered |
 | sky in mist | 3 | 4 | — | — | — | — | — | — | — | one dark cloud like an ink blot → the sky closes in mist |
+| every kind, from arm's length | — | — | 3 | — | — | 3 | — | 3 | 4 | the owner: "more parts, more like machines" — shapes with joints, but little bolted to them → fittings on legs, cylinders and bodies; panel seams and fasteners in the shells |
 | carrier kneeling, day | — | — | 2 | 3 | — | 3 | 2 | 4 | 4 | camera on a 25° bank, grass in the lens → a level spot in the yard |
 
 **As delivered**
@@ -93,6 +94,7 @@ Graded against `references/BRIEF.md` (1–5; under 4 goes back). The first pass 
 | carrier at the knee (film 5) | 5 | 5 | 5 | 5 | 4 | 3 | 4 | 4 | 5 | amber against the cold; feet on the slope |
 | dawn under the crane (film 6) | 4 | — | 4 | 5 | 4 | 3 | 4 | 4 | 5 | rust run down the pale shells, dust at the footfall; the head is out of frame |
 | noon from the viaduct (film 7) | 3 | — | 5 | 4 | 4 | 5 | 4 | 4 | 4 | clear air is not what this place is for: the weakest of the seven |
+| close-up sheets (four kinds) | — | — | 5 | 5 | — | 5 | — | 4 | 5 | tie rods, valve blocks and hard lines on the cylinders; mains, accumulators, coolers, stacks; ladders, rails and hatches at a person's size; rust kept to streaks |
 | cast sheets (four kinds) | — | — | 5 | 5 | 4 | 5 | — | — | 5 | every side agrees; walk, idle, move; the kite's beat, glide and bank |
 
 What is still under AAA and why: foliage is cards and reads as such inside ten metres; shadows from the machines' lamps are

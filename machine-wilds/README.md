@@ -23,6 +23,7 @@ node machine-wilds/scripts/gym.mjs my-realm --map --sheet        # on its own wa
 node machine-wilds/scripts/fetch-assets.mjs my-realm             # the scans (28 MB, Poly Haven, CC0) → my-realm/assets/
 node machine-wilds/scripts/build.mjs my-realm                    # → my-realm/index.html
 node machine-wilds/scripts/render.mjs my-realm --cast            # each kind alone in a studio, every side and its motion → out/cast-<kind>.jpg
+node machine-wilds/scripts/render.mjs my-realm --cast --close    # the same kinds from arm's length: what is bolted to what → out/close-<kind>.jpg
 node machine-wilds/scripts/render.mjs my-realm --views           # stills of the named views
 node machine-wilds/scripts/check.mjs my-realm                    # must print "check OK"
 node machine-wilds/scripts/film.mjs my-realm --still             # (a realm that declares a film) one frame a shot; without --still the frames, then out/film.mp4
