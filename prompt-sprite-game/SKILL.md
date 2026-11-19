@@ -42,12 +42,15 @@ rules (need, lives, time); the tune; the intro, win and lose lines.
 |---|---|
 | `lib/engine.js` | the runtime: `boot` (page, title screen, input, loop), `Game` (platform / arena worlds, tiles, enemies, items, rules, camera, HUD), `Body` + `timing(mass)` (the carried one-frame body), `drawSprite` (feet-anchored squash, flip, sheared lean in whole pixels), tile looks, backdrop layers, `Sound` (sfx + tune), `reach` / `reachArena`, `yard` (test ground), `autopilot`, `window.GAME` test hooks |
 | `lib/tessera-link.js` | loads Tessera-small from the Hub at a pinned revision, `paint` (four variations, live `onStep`), `spriteFor` (cache first), localStorage cache, `TESSERA_CREDIT` |
+| `lib/painter-link.js` | a themed painter of your own (made with `train/`): loads `<name>.onnx` + `<name>.json` with onnxruntime-web on the CPU and paints in seconds; same unmasking loop as Tessera |
 | `lib/game.css` | the page shell (crisp scaling, title card, touch pad; phone layout) |
 | `templates/` | `index.html` (the page), `starter-platform.json`, `starter-arena.json` (placeholders that fail check until designed) |
 | `scripts/new-game.mjs` | start a project (`--kind`, `--title`), copy an example (`--from`), or `--refresh` its `lib/` |
 | `scripts/paint.mjs` | preview what Tessera paints for each prompt and seed → `ref/tessera/*.png` + `sheet.png` (git-ignored) |
 | `scripts/check.mjs` | the gates (files, data, sprites, reach, run + determinism, motion per member both ways, page errors; `--tessera`) |
 | `scripts/sheet.mjs` | cast sheet turned both ways with the motion, and five stills of the level played by the autopilot (`--tessera` → ref/) |
+| `train/` | train a themed painter on a subset of Pixel Art Atlas 1.4M (CC0): `prepare.py` → `train.py` → `export.py` (int8 ONNX + NOTICE); README with the licence reading (Tessera, the atlas, Krea 2) |
+| `models/cat/` | the cat painter trained here: 5,775 cat sprites, 3.24 M parameters, int8 ONNX 3.56 MB, 352 words |
 | `examples/lighthouse-cat/` | 「등대 고양이」 platform: `game.json`, `BRIEF.md`, `index.html`, `lib/`, `sheets/` |
 | `examples/mushroom-basket/` | 「버섯 숲 바구니」 arena: the same files |
 | `references/` | **BRIEF** (template + review) · **GAME-JSON** (the data format) · **TESSERA** (model, licence, prompts that read, seeds) · **MOTION** (how a one-frame sprite carries weight; what check measures) · **SOURCE** · **LESSONS** |
@@ -90,6 +93,26 @@ Run scripts from the folder that holds the project.
 7. **Play it.** `cd my-game && python3 -m http.server 8000` → http://localhost:8000/. Play both sprite sets to the end
    once (hand: "손그림 스프라이트로 시작"; Tessera: "Tessera로 스프라이트 그리기"), and at a phone width with the touch pad
    (`?touch=1`). Optionally `check.mjs --tessera` and `sheet.mjs --tessera` (CPU, slow) to check the painted cast.
+
+## A themed painter instead of (or beside) Tessera
+
+Tessera paints anything but is 115 MB and non-commercial, its outputs included. A game whose cast all belongs to one
+theme can carry its own painter: `train/` cuts the theme out of Pixel Art Atlas 1.4M, trains a 2–4 M-parameter painter
+with the same recipe in about an hour on a 4-core CPU, and exports a 3–4 MB int8 ONNX that paints four sprites in
+4–5 s on the CPU (16 steps, nucleus sampling, NMS and a despeckle pass, the settings `train/eval.py` chose). `game.json` names it:
+
+```jsonc
+"painter": { "src": "https://cdn.jsdelivr.net/gh/<owner>/<repo>@<commit>/prompt-sprite-game/models/cat/cat",
+             "name": "cat", "label": "고양이 모델로 그리기", "size": "3.6 MB", "for": ["cat"] },
+"cast": { "cat": { "painterPrompt": "front-view ginger cat", "painterSeed": 7, "painterPick": 0, "painterFaces": "front", "…": "…" } }
+```
+
+The title screen then leads with that button (members not in `for` keep their hand grid), and "내 주인공 그리기" paints
+with it. check.mjs fetches the painter's vocabulary and fails a prompt word it does not know. Its prompts may only use
+the theme's words (the cat painter knows 352). Direction is not controllable: training mirrors every sprite, so a
+side view may face either way — use `front-view` for anything that turns, or pick a seed by looking. Licence: read
+`train/README.md` ("Provenance and licence") — the data is CC0 but was made with Krea 2, whose terms allow commercial
+use below US$1M yearly revenue.
 
 ## Rules
 - **Design per topic.** A new topic gets its own verb, cast, prompts, grids, place, level and tune. Do not reuse an
