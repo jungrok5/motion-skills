@@ -89,6 +89,15 @@ was learned putting scans into it (scanned-realm), then the engine's own list (l
   → `check.mjs` names the first solid on a way; hand-placed things are checked like the rest.
 - **The film's sound came back empty.** → Audio is off in a render page; the offline render refused too. → `film.mjs
   --sound` opens the page with `sound=1`.
+- **"Can't I jump off the bridge and go to the machine? It stops me."** → The set piece put the walker 26 m from a
+  machine and behind a three-metre invisible wall: the barriers' solids had been given `y1: Y + 3` so that nobody could
+  leave the deck. The owner's first wish on the live page was the obvious one. → Solids carry their real tops; a hop
+  gets a walker onto anything about a metre high and over it; stepping off a deck is a fall with gravity, a landing and
+  a way on. *Rule:* never fence the walker off from the thing the place is about — if the picture makes them want to
+  go there, the page lets them, and the brief says how they get back.
+- **A trailing `//` swallowed the rest of a one-line handler — for the third time.** → The page loaded to nothing and
+  the test waited ten minutes for it. → `new Function(source)` on every edited file before a build; a test that waits
+  for a page has a timeout and prints the page's errors as they come.
 
 ## Scans in the engine (scanned-realm)
 ## Scans

@@ -8,7 +8,7 @@ V.details = () => {
   car(-128, 129.4, 1.72); car(-88, 124.2, 1.45); car(-51, 132.5, 0.6, { roll: 0.2 }); car(-9, 126.8, 1.65);
   // on the viaduct: two more, a line of barriers before each broken edge (they stop the walker too)
   if (D) { car(D.x - 2.4, 84, 0.1, { y: D.y + 0.03 }); car(D.x + 2.6, 58, 2.9, { y: D.y + 0.03 });
-    for (const [z, k] of [[D.z0 + 2.0, 1], [V.viaduct.gone[0] - 2.0, -1]]) { for (let i = 0; i < 6; i++) { const x = D.x - 4.4 + i * 1.72; if (!MD.place('concrete_road_barrier_02', x, z + (r() - 0.5) * 0.3, { y: D.y + 0.03, yaw: (r() - 0.5) * 0.25, scale: 1.05, solid: false })) { const g = P.g(x, z); g.mat('concrete'); g.box(x, D.y + 0.5, z, 1.5, 1.0, 0.4, { soft: 0.2 }); } } W.solidBox(D.x, z, D.w / 2, 0.35, 0, { y0: D.y - 0.5, y1: D.y + 3 }); }
+    for (const [z, k] of [[D.z0 + 2.0, 1], [V.viaduct.gone[0] - 2.0, -1]]) { for (let i = 0; i < 6; i++) { const x = D.x - 4.4 + i * 1.72; if (!MD.place('concrete_road_barrier_02', x, z + (r() - 0.5) * 0.3, { y: D.y + 0.03, yaw: (r() - 0.5) * 0.25, scale: 1.05, solid: false })) { const g = P.g(x, z); g.mat('concrete'); g.box(x, D.y + 0.5, z, 1.5, 1.0, 0.4, { soft: 0.2 }); } } W.solidBox(D.x, z, D.w / 2, 0.35, 0, { y0: D.y - 0.5, y1: D.y + 1.03 }); }
     // saplings have taken the cracks in the deck
     for (const [dx, z, s] of [[-3.8, 96, 1.9], [3.2, 79, 1.5], [-4.2, 66, 2.2], [4.1, 47, 1.4], [-1.2, 41, 1.7], [3.6, -22, 2.0], [-3.9, -44, 1.6]]) MD.place('fir_sapling#' + ((z & 1) + 1), D.x + dx, z, { y: D.y + 0.02, scale: s, yaw: z, solid: false }); }
   // the camp in the hall: fuel, a generator that still runs the one lamp, boxes to sit on
