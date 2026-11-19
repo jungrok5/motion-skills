@@ -125,7 +125,9 @@ fetching. No npm install, no keys. `gym.mjs` needs only Node. The page needs Web
 6. **Ruins, details, plants** — as in scanned-realm (`references/KIT.md`), with `LR.mech.wayDist(x, z)` in every
    `avoid`. Fallen trunks and stumps along the ways, a wreck (`LR.mech.wreck`) where the story wants one.
 7. **The walk and the set piece.** Spawn, tour, 8–12 views; one place where a machine passes close enough to be
-   frightening and the walker is safe. `check.mjs my-realm --walk` draws the walk map.
+   frightening and the walker is safe — and **a way from there to the machine**: nothing fences the walker off from what
+   the place is about. Barriers and parapets carry their real tops (a hop gets over them), a deck's edge is a drop the
+   walker may take, and there is a way back up. `check.mjs my-realm --walk` draws the walk map.
 8. **Judge it, then verify.** Stills in mist at dusk, at night, at dawn and one clear noon: with a machine walking at
    the eye, one seen from the side, one far (only its lights). Worst first: air and light, then the machines'
    read, then plants and surfaces. `check.mjs my-realm` must print `check OK`; `render.mjs --sheet`, `--phone`.

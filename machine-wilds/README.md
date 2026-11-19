@@ -35,7 +35,9 @@ Without the scans a realm still builds and walks (`?scan=0`): recipes stand in f
 Requirements: Node 18+ with Playwright Chromium, `curl`, ffmpeg. `gym.mjs` needs only Node. The page wants WebGL 2 and
 a real GPU; on a machine without one a 640 × 360 still takes one to two minutes.
 
-Controls: W A S D / arrows to walk, mouse to look, Shift to run, Space to hop; two thumbs on a phone; a gamepad.
+Controls: W A S D / arrows to walk, mouse to look, Shift to run, Space to hop; two thumbs on a phone (a tap of the
+right thumb hops); a gamepad. A hop gets you onto a parapet or a barrier, and whoever steps off a deck falls and lands:
+the way down from the viaduct to the machine under it is over the edge.
 `1`–`4` the hour, `5`–`8` clear / rain / snow / mist, `T` the automatic round, `C` the tour, `M` sound, `P` numbers.
 
 ## What it is made from

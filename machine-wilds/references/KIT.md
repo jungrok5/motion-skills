@@ -10,6 +10,10 @@ weather, the walk). What `machine-wilds` adds:
 - **The walker on slopes** (lib/80_player.js): a climb slows the step from a grade of 0.18, and a face steeper than a
   grade of 0.94 (43°) is slid along, not climbed. Decks (`LR.world.floors`) are not slopes.
 - **Solids with a height**: `LR.world.solidBox(x, z, hx, hz, yaw, { y0, y1 })` stops only who stands between those heights.
+  Give `y1` the thing's real top, not a wall's: a walker who has hopped to within `LR.player.mantle` (0.4 m) of the top is
+  let onto it and stands on it (a hop, `LR.player.hop` 5 m/s, rises 0.96 m — parapets and barriers up to about 1.3 m).
+  Whoever steps off a deck, a parapet or a bank more than 0.6 m high falls under gravity and lands (`'landed'` is emitted
+  with the speed; the eye dips with it). Nothing is lost by a fall: make sure there is a way back up.
 - **A film**: `LR.start({ film: [{ name, dur, tod, weather, t, cam: (u, LR, seconds) => ({ at: [x, z], up | y, look: [x, y, z] | yaw, pitch, fov }) }] })` → `scripts/film.mjs`.
 - **Lamps** that move: `k.lamp(...)` on a machine; `?off=lamps`, `?off=shake`.
 - **Events**: `LR.on('footfall', (p) => …)` (`{ x, y, z, tonnes, size, unit, leg }`), `LR.on('mechcall', …)`;

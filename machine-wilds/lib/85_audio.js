@@ -433,6 +433,7 @@
   A.setVolume = (v) => { if (OFF) return; A.volume = clamp(num(v, 0.8), 0, 1); guard((E) => E.setVolume(A.volume)); };
   A.mute = (m) => { if (OFF) return A.muted; A.muted = m === undefined ? !A.muted : !!m; guard((E) => E.mute(A.muted)); return A.muted; };
   LR.on('thunder', (delay) => guard((E) => E.thunder(delay)));
+  LR.on('landed', (e) => guard((E) => E.step(e.surface, true)));      // both feet, after a drop
 
   // ── a fixed scenario, rendered faster than real time and measured ────────────────────────────────────────────────
   // scenario: { tod, season, rain, snowfall, snow, wind, wet, moving, running, speed, surface, sheltered, x, y, z, yaw,

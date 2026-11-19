@@ -1,16 +1,20 @@
 // machine-wilds · 80_player — walking.  Keyboard (W A S D / arrows, Q E or ← → to turn, Shift to run, Space to hop),
 // mouse (click to look freely, or drag), touch (left thumb moves, right thumb looks), a gamepad (left stick walks,
-// right stick looks, a trigger or a pressed stick runs, A hops).  The walker stands on the land,
-// on bridges and piers, on the frozen pond; cannot pass walls, trunks, fences or deep water.  Until the first input
+// right stick looks, a trigger or a pressed stick runs, A hops; on a phone a tap of the looking thumb hops).  The walker stands
+// on the land, on bridges and piers, on the frozen pond; cannot pass walls, trunks, fences or deep water — but a parapet or a
+// barrier with a top ({ y0, y1 } on its solid) is hopped onto and stepped off, and whoever steps off a deck falls and lands.  Until the first input
 // the eye strolls a tour on its own.
 {
   const T = THREE;
-  const P = (LR.player = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, vx: 0, vz: 0, vy: 0, air: false, eye: 1.68, radius: 0.34, walk: 2.5, run: 5.8, bob: 0, speed: 0, moving: false, running: false, surface: 'grass', touring: false, tourS: 0, idle: 0, keys: {}, look: { dx: 0, dy: 0 }, stick: { x: 0, y: 0, active: false }, pad: { x: 0, y: 0, run: false, hop: false }, locked: false, enabled: true });
+  const P = (LR.player = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, vx: 0, vz: 0, vy: 0, air: false, eye: 1.68, radius: 0.34, walk: 2.5, run: 5.8, hop: 5.0, mantle: 0.4, bob: 0, speed: 0, moving: false, running: false, surface: 'grass', touring: false, tourS: 0, idle: 0, keys: {}, look: { dx: 0, dy: 0 }, stick: { x: 0, y: 0, active: false }, pad: { x: 0, y: 0, run: false, hop: false }, locked: false, enabled: true });
   const W = LR.world;
   // the floor under a point: land, or a deck within a step of where we stand
   P.groundAt = (x, z, yNow) => {
     let y = LR.land.h(x, z), surf = null;
     for (const f of W.floors) { const dx = x - f.x, dz = z - f.z, lx = dx * f.c - dz * f.s, lz = dx * f.s + dz * f.c; if (Math.abs(lx) <= f.hx && Math.abs(lz) <= f.hz) { const fy = f.h(lx, lz); if (fy > y && (yNow === undefined || fy - yNow < 0.75)) { y = fy; surf = f.surface || 'stone'; } } }
+    // a solid that has a top (a parapet, a barrier: { y0, y1 }) can be stood on by whoever has got that high — a hop is enough for
+    // anything up to about a metre: over it, its top is the floor
+    if (yNow !== undefined) for (const s of W.solids) { if (s.y1 === undefined || s.y1 <= y || s.y1 - yNow > P.mantle) continue; const dx = x - s.x, dz = z - s.z; if (s.r !== undefined ? Math.hypot(dx, dz) < s.r : Math.abs(dx * s.c - dz * s.s) < s.hx && Math.abs(dx * s.s + dz * s.c) < s.hz) { y = s.y1; surf = s.surface || 'stone'; } }
     const wl = LR.water ? LR.water.levelAt(x, z) : -1e9, depth = wl - y;
     const ice = LR.wx.season > 0.86 && depth > 0.02;
     if (ice) { y = wl; surf = 'snow'; }
@@ -19,7 +23,7 @@
   const collide = (x, z, r) => {
     for (let it = 0; it < 3; it++) { let hit = false;
       for (const s of W.solids) {
-        if (s.y0 !== undefined && (P.y + 1.2 < s.y0 || P.y > s.y1)) continue;      // a solid with a height (a parapet on a deck) stops only who is at that height
+        if (s.y0 !== undefined && (P.y + 1.2 < s.y0 || P.y + P.mantle > s.y1)) continue;      // a solid with a height (a parapet on a deck) stops only who is at that height — and not who has hopped level with its top
         if (s.r !== undefined) { const dx = x - s.x, dz = z - s.z, d = Math.hypot(dx, dz), m = s.r + r; if (d < m) { if (d < 1e-5) { x += m; } else { x = s.x + (dx / d) * m; z = s.z + (dz / d) * m; } hit = true; } }
         else { const dx = x - s.x, dz = z - s.z, lx = dx * s.c - dz * s.s, lz = dx * s.s + dz * s.c, ex = s.hx + r, ez = s.hz + r; if (Math.abs(lx) < ex && Math.abs(lz) < ez) { const px = ex - Math.abs(lx), pz = ez - Math.abs(lz); let nlx = lx, nlz = lz; if (px < pz) nlx = Math.sign(lx || 1) * ex; else nlz = Math.sign(lz || 1) * ez; x = s.x + nlx * s.c + nlz * s.s; z = s.z - nlx * s.s + nlz * s.c; hit = true; } }
       }
@@ -56,9 +60,10 @@
     window.addEventListener('mousemove', (e) => { if (P.locked) { P.look.dx += e.movementX; P.look.dy += e.movementY; P.stopTourLook(); } else if (drag) { P.look.dx += (e.clientX - lx) * 1.6; P.look.dy += (e.clientY - ly) * 1.6; lx = e.clientX; ly = e.clientY; P.stopTourLook(); } });
     // touch: the left half is a stick, the right half turns the head
     const touches = new Map();
-    const tdown = (e) => { for (const t of e.changedTouches) { const left = t.clientX < window.innerWidth * 0.45; touches.set(t.identifier, { left, x0: t.clientX, y0: t.clientY, x: t.clientX, y: t.clientY }); if (left) { P.stick.active = true; P.stick.ox = t.clientX; P.stick.oy = t.clientY; P.stick.x = P.stick.y = 0; P.stopTour(); LR.emit('stick', P.stick); } } e.preventDefault(); };
+    const tdown = (e) => { for (const t of e.changedTouches) { const left = t.clientX < window.innerWidth * 0.45; touches.set(t.identifier, { left, x0: t.clientX, y0: t.clientY, x: t.clientX, y: t.clientY, t0: performance.now() }); if (left) { P.stick.active = true; P.stick.ox = t.clientX; P.stick.oy = t.clientY; P.stick.x = P.stick.y = 0; P.stopTour(); LR.emit('stick', P.stick); } } e.preventDefault(); };
     const tmove = (e) => { for (const t of e.changedTouches) { const s = touches.get(t.identifier); if (!s) continue; if (s.left) { const R = 56, dx = (t.clientX - s.x0) / R, dy = (t.clientY - s.y0) / R, l = Math.hypot(dx, dy); P.stick.x = l > 1 ? dx / l : dx; P.stick.y = l > 1 ? dy / l : dy; LR.emit('stick', P.stick); } else { P.look.dx += (t.clientX - s.x) * 2.4; P.look.dy += (t.clientY - s.y) * 2.4; P.stopTourLook(); } s.x = t.clientX; s.y = t.clientY; } e.preventDefault(); };
-    const tup = (e) => { for (const t of e.changedTouches) { const s = touches.get(t.identifier); if (s && s.left) { P.stick.active = false; P.stick.x = P.stick.y = 0; LR.emit('stick', P.stick); } touches.delete(t.identifier); } e.preventDefault(); };
+    const tup = (e) => { for (const t of e.changedTouches) { const s = touches.get(t.identifier); if (s && s.left) { P.stick.active = false; P.stick.x = P.stick.y = 0; LR.emit('stick', P.stick); }
+        else if (s && performance.now() - s.t0 < 260 && Math.hypot(t.clientX - s.x0, t.clientY - s.y0) < 14) { P.tapHop = true; P.stopTour(); }      /* a tap of the looking thumb is a hop */ touches.delete(t.identifier); } e.preventDefault(); };
     canvas.addEventListener('touchstart', tdown, { passive: false }); canvas.addEventListener('touchmove', tmove, { passive: false }); canvas.addEventListener('touchend', tup, { passive: false }); canvas.addEventListener('touchcancel', tup, { passive: false });
   };
   // looking about during the tour only pauses its own head movement; walking input ends it
@@ -109,15 +114,20 @@
           else { if (grade > 0.18) { const k = 1 / (1 + 1.9 * (grade - 0.18)); nx = P.x + (nx - P.x) * k; nz = P.z + (nz - P.z) * k; } P.steep = 0; } P.grade = grade; } }
       const rr = Math.hypot(nx, nz), R = W.radius; if (rr > R) { nx *= R / rr; nz *= R / rr; }
       P.x = nx; P.z = nz; const g = P.groundAt(P.x, P.z, P.y);
-      if ((K.Space || P.pad.hop) && !P.air) { P.vy = 4.3; P.air = true; }
-      if (P.air) { P.vy -= 13 * dt; P.y += P.vy * dt; if (P.y <= g.y) { P.y = g.y; P.air = false; P.vy = 0; } } else P.y = g.y > P.y ? LR.damp(P.y, g.y, 18, dt) : LR.damp(P.y, g.y, 12, dt);
+      if ((K.Space || P.pad.hop || P.tapHop) && !P.air) { P.vy = P.hop; P.air = true; } P.tapHop = false;
+      // a step down is a step; more than that is a fall — off a deck, off a parapet, off a bank — with the weight of one: the
+      // knees give on landing by how fast the ground came (nobody is hurt here: there is nothing to lose but the view)
+      if (!P.air && g.y < P.y - 0.6) { P.air = true; P.vy = Math.min(P.vy, 0); }
+      if (P.air) { P.vy = Math.max(-42, P.vy - 13 * dt); P.y += P.vy * dt; if (P.y <= g.y) { const v = -P.vy; P.y = g.y; P.air = false; P.vy = 0; if (v > 4.6) { P.dipV = Math.min(3.2, (v - 3) * 0.28); P.vx *= 0.35; P.vz *= 0.35; LR.emit('landed', { speed: v, surface: g.depth > 0.12 ? 'water' : g.surf || P.surfaceAt(P.x, P.z, g) }); } } }
+      else P.y = g.y > P.y ? LR.damp(P.y, g.y, 18, dt) : LR.damp(P.y, g.y, 12, dt);
       P.speed = Math.hypot(P.vx, P.vz); P.moving = P.speed > 0.25 && !P.air; P.surface = g.depth > 0.12 ? 'water' : g.surf || P.surfaceAt(P.x, P.z, g);
       P.idle = P.moving || turn ? 0 : P.idle + dt;
     }
     // the eye, with a little of the step in it
     P.bob += P.speed * dt * (P.running ? 0.95 : 1.25); const amp = P.moving ? (P.running ? 0.055 : 0.032) : 0;
     P.bobAmp = LR.damp(P.bobAmp || 0, amp, 8, dt);
-    cam.position.set(P.x, P.y + P.eye + Math.sin(P.bob * LR.TAU) * P.bobAmp, P.z); cam.rotation.set(P.pitch, -P.yaw, Math.cos(P.bob * Math.PI) * P.bobAmp * 0.12);
+    P.dip = Math.max(0, Math.min(0.75, (P.dip || 0) + (P.dipV || 0) * dt)); P.dipV = (P.dipV || 0) - (P.dip * 60 + (P.dipV || 0) * 9) * dt; if (P.dip <= 0 && P.dipV < 0) P.dipV = 0;      // the knees giving after a drop: down fast, up slower
+    cam.position.set(P.x, P.y + P.eye - (P.dip || 0) + Math.sin(P.bob * LR.TAU) * P.bobAmp, P.z); cam.rotation.set(P.pitch, -P.yaw, Math.cos(P.bob * Math.PI) * P.bobAmp * 0.12);
   };
   P.surfaceAt = (x, z, g) => { const L = LR.land; if (LR.wx.snow > 0.55) return 'snow'; if (L.coverAt('paved', x, z) > 0.5) return 'stone'; if (L.coverAt('shore', x, z) > 0.5) return 'gravel'; if (L.coverAt('dirt', x, z) > 0.45) return 'dirt'; return 'grass'; };
   LR.on('input', (dt, cam) => { if (P.enabled) P.update(dt, cam); }, 10);

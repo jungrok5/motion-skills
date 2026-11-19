@@ -52,6 +52,8 @@ east) · steep: the north bank (20–30°, crags), the bench edges · level: the
   they are five beams combing the mist, coming round about once a minute, and a cry.
 - **The set piece**: the southern half of the viaduct, walked out to the broken edge, barriers across it. A crane
   comes through the gap 26 m away with its back level with the walker's feet, stops there, and lifts its head to look.
+  The walker may go to it: a hop clears the barriers (and the parapets along the sides), the broken edge is a drop of
+  fifteen metres to the valley floor, taken as a fall and a landing; the way back up is the path by the hall.
 
 ## What it is made of
 surfaces: forest_leaves_03 (floor), mud_forest (earth), river_small_rocks, mossy_rock, pine_bark, asphalt_02 (road and
