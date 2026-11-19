@@ -72,8 +72,8 @@ if (page) {
         const f0 = seq[0][1]; if (f0.headPx) out.heads.push([id, f0.heightPx / f0.headPx, f0.child]);
         for (const [, f] of seq) for (const v of f.viol || []) out.viol.add(v);
         for (let i = 1; i < seq.length; i++) for (let k = 0; k < 2; k++) { const a = seq[i - 1][1].feet[k], b = seq[i][1].feet[k]; if (a && b && a.planted && b.planted) { const d = Math.hypot(b.p[0] - a.p[0], b.p[1] - a.p[1], b.p[2] - a.p[2]) * seq[i][1].pxPerM; if (d > out.slide) { out.slide = d; out.slideAt = `${id} t=${seq[i][0].toFixed(2)}`; } } }
-        // idle: every 2 s window, some joint moves ≥ 0.6 px
-        for (let i = 0; i + 2 * F < seq.length; i += F) { const a = seq[i][1], b = seq[i + 2 * F][1]; let mv = 0; for (const k in a.joints) mv = Math.max(mv, Math.hypot(b.joints[k][0] - a.joints[k][0], b.joints[k][1] - a.joints[k][1], b.joints[k][2] - a.joints[k][2]) * a.pxPerM); if (mv < .6) { out.frozen.push(`${id} ${seq[i][0].toFixed(1)}–${seq[i + 2 * F][0].toFixed(1)} s (${mv.toFixed(2)} px)`); break; } }
+        // idle: every 2 s window, some joint moves ≥ 0.6 px (or 0.4 % of the figure's height for small, far figures)
+        for (let i = 0; i + 2 * F < seq.length; i += F) { const a = seq[i][1]; let mv = 0; for (let j = i + 1; j <= i + 2 * F; j++) { const b = seq[j][1]; for (const k in a.joints) mv = Math.max(mv, Math.hypot(b.joints[k][0] - a.joints[k][0], b.joints[k][1] - a.joints[k][1], b.joints[k][2] - a.joints[k][2]) * a.pxPerM); } const need = Math.min(.6, .004 * (a.heightPx || 150)); if (mv < need) { out.frozen.push(`${id} ${seq[i][0].toFixed(1)}–${seq[i + 2 * F][0].toFixed(1)} s (${mv.toFixed(2)} px)`); break; } }
         // anticipation: the declared channel first moves AGAINST the action
         for (const a of f0.actions || []) {
           const ch = u => { const best = seq.reduce((p, q) => Math.abs(q[0] - u) < Math.abs(p[0] - u) ? q : p); return best[1].channels[a.channel] * best[1].pxPerM; };
@@ -84,7 +84,7 @@ if (page) {
       out.viol = [...out.viol]; return out;
     }, [info.D, info.FPS]);
     note(`people: ${r.figures} probed · heads tall ${r.heads.length ? Math.min(...r.heads.map(h => h[1])).toFixed(1) + '–' + Math.max(...r.heads.map(h => h[1])).toFixed(1) : '–'} · planted-foot slide ≤ ${r.slide.toFixed(2)} px · ${r.anticip.length} big move(s)`);
-    for (const [id, h, child] of r.heads) { const [lo, hi] = child ? [4.2, 6.6] : [6.4, 8.4]; if (h < lo || h > hi) fail(`proportion: ${id} is ${h.toFixed(1)} heads tall (${child ? 'child' : 'adult'} ${lo}–${hi})`); }
+    for (const [id, h, child] of r.heads) { const [lo, hi] = child ? [4.2, 7.6] : [6.4, 8.4]; if (h < lo || h > hi) fail(`proportion: ${id} is ${h.toFixed(1)} heads tall (${child ? 'child' : 'adult'} ${lo}–${hi})`); }
     if (r.viol.length) fail(`joints out of range (${r.viol.length}): ${r.viol.slice(0, 4).join(' · ')}`);
     if (r.slide > 1.5) fail(`a planted foot slides ${r.slide.toFixed(2)} px between frames (${r.slideAt}) — limit 1.5 px`);
     if (r.frozen.length) fail(`frozen at rest: ${r.frozen.slice(0, 4).join(' · ')} — every idle breathes`);

@@ -60,8 +60,8 @@ for (const t of ts) {
     for (const id in byId) {
       const seq = byId[id];
       for (let i = 1; i < seq.length; i++) for (let k = 0; k < 2; k++) { const a = seq[i - 1].feet[k], b = seq[i].feet[k]; if (a && b && a.planted && b.planted) slide = Math.max(slide, Math.hypot(b.p[0] - a.p[0], b.p[1] - a.p[1], b.p[2] - a.p[2]) * seq[i].pxPerM); }
-      let mv = 0; const j0 = seq[0].joints, j1 = seq[seq.length - 1].joints;
-      for (const k in j0) mv = Math.max(mv, Math.hypot(j1[k][0] - j0[k][0], j1[k][1] - j0[k][1], j1[k][2] - j0[k][2]) * seq[0].pxPerM);
+      let mv = 0; const j0 = seq[0].joints;
+      for (const f of seq) for (const k in j0) mv = Math.max(mv, Math.hypot(f.joints[k][0] - j0[k][0], f.joints[k][1] - j0[k][1], f.joints[k][2] - j0[k][2]) * seq[0].pxPerM);
       idleMin = Math.min(idleMin, mv); viol.push(...(seq[0].viol || []));
     }
     const big = figs.slice().sort((a, b) => (b.heightPx || 0) - (a.heightPx || 0))[0];

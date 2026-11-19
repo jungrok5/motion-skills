@@ -34,10 +34,10 @@
     const H = o.height ?? 1.7, b = o.build ?? 1, sh = o.shoulders ?? .5;
     const s = {
       id: o.id ?? 'p' + (o.seed ?? 1), seed: o.seed ?? 1, height: H, build: b, mass: o.mass ?? Math.round(62 * b * b * Math.pow(H / 1.7, 2.6)),
-      hair: o.hair ?? 'short', coat: !!o.coat, padded: !!o.padded, scarf: o.scarf ?? null, bag: o.bag ?? null, hat: o.hat ?? null, skirt: !!o.skirt,
+      hair: o.hair ?? 'short', child: !!o.child, coat: !!o.coat, padded: !!o.padded, scarf: o.scarf ?? null, bag: o.bag ?? null, hat: o.hat ?? null, skirt: !!o.skirt,
       colors: Object.assign({ skin: '#d9a888', hair: '#1d1714', top: '#5a6b7c', bottom: '#2b2f38', shoes: '#1a1a1c', coat: '#4a3b34', bag: '#3a3430', hat: '#2a2a30' }, o.colors || {}),
       // segment lengths (metres) from canonical proportions: 7.5 heads tall
-      L: { head: H / 7.5, neck: .04 * H, spine: .27 * H, upper: .186 * H, fore: .150 * H, thigh: .243 * H, shin: .243 * H, foot: .15 * H, ankle: .042 * H },
+      L: { head: H / (o.child ? 6.2 : 7.5), neck: .04 * H, spine: .27 * H, upper: .186 * H, fore: .150 * H, thigh: .243 * H, shin: .243 * H, foot: .15 * H, ankle: .042 * H },
       W: { shoulder: (.098 + .03 * sh) * H * b, hip: .052 * H * b, waist: (.072 + .012 * (1 - sh)) * H * b, limb: .034 * H * b },
       phase: r(), breathP: 3.4 + 1.6 * r(), swayP: 6 + 4 * r(),
     };
@@ -192,7 +192,7 @@
       const px = cam ? cam.project(bottom).s : 1;
       return {
         id: s.id, mass: s.mass, heightM: s.height, pxPerM: px,
-        heightPx: cam ? Math.abs(cam.project(top).y - cam.project(bottom).y) : null, headPx: cam ? s.L.head * pr.s : null,
+        heightPx: cam ? s.height * cam.project(J.pelvis).s : null, headPx: cam ? s.L.head * cam.project(J.pelvis).s : null, // body length at its depth (seated people too)
         screen: cam ? { x: pf.x, y: cam.project(bottom).y } : null,
         feet: feetW, joints: { head: J.head, handL: J.handL, handR: J.handR, pelvis: J.pelvis, chest: J.chest },
         channels: { pelvisY: J.pelvis[1], head: J.head[1], handL: J.handL[1], handR: J.handR[1] },
