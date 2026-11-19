@@ -133,6 +133,93 @@ V.parts = {
     k.lamp('body', { at: [-0.985, 0.1, 0], dir: [-1, 0, 0], color: [1, 0.12, 0.06], power: 0.06, range: 2, lens: 0.02, glow: 0.6 });
     k.bone('whip', (g) => { k.mat('dark'); g.tube([[0, 0, 0], [0, 0.45, 0], [0, 0.9, 0]], [0.012, 0.008, 0.003], { sides: k.n(5), caps: true }); });
   },
+  // 자라: a shell first.  A dome of plates the width of a house over a flat hull, a skirt of rust round its rim, scutes bolted on in
+  // three rows, forty years of moss on top; four sprawled girder legs come out from under the rim; a blunt head on a short neck
+  jara(k) {
+    k.limbs({ style: 'girder' });
+    k.bone('body', (g) => {
+      // the hull and its belly plates
+      k.mat('dark'); k.loft('x', [[-5.5, 0.5, 2.1, -0.35, 0, 4], [-3.6, 0.95, 3.5, -0.4, 0, 4], [0, 1.05, 3.9, -0.4, 0, 4], [3.6, 0.95, 3.4, -0.4, 0, 4], [5.5, 0.5, 2.0, -0.3, 0, 4]], { sides: 18 });
+      // the carapace: one dome, and the rim that overhangs the legs
+      const DOME = [[-5.9, 0.55, 2.7, 0.1, 0, 2.6], [-3.7, 2.2, 4.4, 0.1, 0, 2.6], [0, 2.9, 4.8, 0.1, 0, 2.6], [3.5, 2.3, 4.3, 0.1, 0, 2.6], [5.7, 0.65, 2.5, 0.1, 0, 2.6]];
+      k.mat('shell'); k.loft('x', DOME, { sides: 24, from: -0.5 * Math.PI, to: 0.5 * Math.PI, caps: false });
+      k.mat('rust'); for (const [f0, f1] of [[0.36 * Math.PI, 0.52 * Math.PI], [-0.52 * Math.PI, -0.36 * Math.PI]]) k.loft('x', DOME.map((q) => [q[0], q[1] * 1.03 + 0.05, q[2] * 1.035 + 0.06, q[3], 0, q[5]]), { sides: 24, from: f0, to: f1, caps: false });
+      // scutes: thick plates bolted to the dome in three rows (where the dome is at a point, and which way it faces there)
+      const dome = (x, z) => { const hx = x < 0 ? 5.9 : 5.7, e = Math.max(0.02, 1 - (x / hx) ** 2), bz = 4.8 * Math.sqrt(e), by = 2.9 * Math.sqrt(e), y = 0.1 + by * Math.pow(Math.max(0.001, 1 - Math.pow(Math.abs(z) / bz, 2.6)), 1 / 2.6), n = [x / (hx * hx) * 2.9, 1 / 2.9, (z / (4.8 * 4.8)) * 2.9 * 1.5]; return [[x, y, z], n]; };
+      for (const [zr, xs, w, h] of [[0, [-3.8, -1.9, 0, 1.9, 3.7], 1.6, 2.0], [2.5, [-3.1, -1.1, 0.9, 2.9], 1.7, 1.6], [-2.5, [-3.1, -1.1, 0.9, 2.9], 1.7, 1.6]]) for (const x of xs) { const [c, n] = dome(x, zr); k.hatch([c[0], c[1] - 0.1, c[2]], n, w, h, { up: [1, 0, 0], role: zr === 0 ? 'shell' : 'rust', t: 0.24 }); }
+      // moss, and what grows in it
+      g.mat('moss', { tint: '#5e6b4e', flags: LR.FLAG.SWAY, weight: 0.25 }); const rr = LR.rng('jara-moss'); for (let i = 0; i < (k.lod === 0 ? 16 : k.lod === 1 ? 9 : 4); i++) { const x = -4.6 + rr() * 9, z = (rr() - 0.5) * 6.4, c = dome(x, z)[0]; g.blob(c[0], c[1] + 0.02, c[2], 0.32 + rr() * 0.4, { squash: [1.7, 0.22 + rr() * 0.16, 1.5], seg: k.n(8), rings: 4, seed: i }); }
+      // the plant: mains under the rim with a line to every hip, tanks slung under the hull, louvres, two stacks through the shell, a ladder and a rail for whoever tended it
+      for (const s of [-1, 1]) { k.pipe([[-4.4, -0.5, s * 3.0], [-1.5, -0.55, s * 3.7], [1.5, -0.55, s * 3.7], [4.2, -0.5, s * 2.9]], 0.11, { joints: [1, 2], role: 'rust' }); for (const x of [3.4, -3.4]) k.hose([[x * 0.9, -0.52, s * 3.25], [x, -0.9, s * 3.0], [x, -0.6, s * 2.75]], 0.07);
+        k.tank([-2.6, -1.25, s * 1.6], [-0.2, -1.25, s * 1.6], 0.42, { role: 'rust', up: [0, -1, 0] }); k.grille([1.6, -0.45, s * 3.82], [0, 0, s], 1.8, 0.5, { up: [0, 1, 0] }); k.grille([-1.6, -0.45, s * 3.84], [0, 0, s], 1.4, 0.5, { up: [0, 1, 0] });
+        k.rivets([-4.6, 0.02, s * 3.5], [4.4, 0.02, s * 3.4], 30, 0.035, [0, 0.4, s]); }
+      k.stack([-3.9, 1.9, -1.2], [-4.2, 3.5, -1.3], 0.2); k.stack([-3.9, 1.9, 1.1], [-4.15, 3.1, 1.2], 0.16);
+      k.ladder([1.0, -1.1, -4.55], [1.0, 1.0, -4.3], 0.5, [0, 0.2, -1], { off: 0.2, role: 'frame' }); k.rail([[-1.6, 2.9, 0.9], [0, 3.0, 1.0], [1.6, 2.9, 0.9]], 0.9, [0, 1, 0], { role: 'frame' }); k.dish([2.6, 2.55, -1.6], [0.4, 1, -0.4], 0.5);
+      k.jbox([5.35, -0.3, 1.0], [1, 0, 0], 0.8, 0.5, 0.2, { up: [0, 1, 0], glands: 3 });
+    });
+    for (const [x, s] of [[3.6, -1], [3.6, 1], [0, -1], [0, 1], [-3.6, -1], [-3.6, 1]]) k.lamp('body', { at: [x, -0.1, s * 4.05], dir: [0, -0.5, s], color: [1, 0.6, 0.2], power: 2.2, range: 14, lens: 0.14, glow: 0.6 });
+    k.lamp('body', { at: [-5.6, -0.2, 0], dir: [-1, 0, 0], color: [1, 0.12, 0.06], power: 2, range: 14, lens: 0.16, glow: 0.8 });
+    k.neckLinks({ width: 1.4, style: 'girder' });
+    k.bone('head', (g) => { k.mat('frame'); k.loft('x', [[-0.6, 0.66, 0.8, 0, 0, 4], [0.6, 0.82, 0.98, 0, 0, 4], [1.9, 0.58, 0.76, -0.1, 0, 4], [2.45, 0.34, 0.52, -0.18, 0, 3]], { sides: 14 });
+      k.mat('shell'); k.loft('x', [[-0.55, 0.74, 0.9, 0.08, 0, 3], [0.6, 0.92, 1.08, 0.1, 0, 3], [1.9, 0.63, 0.82, 0.03, 0, 3]], { sides: 14, from: -0.5 * Math.PI, to: 0.5 * Math.PI, caps: false }); k.mat('dark'); g.box(1.5, -0.55, 0, 1.5, 0.18, 1.15, { soft: 0.3 });
+      for (const s of [-1, 1]) { k.along([1.62, 0.06, s * 0.8], [1.0, -0.12, s * 0.86], (g2) => { k.mat('joint'); g2.lathe(0, 0, [[0.26, -0.06], [0.31, 0.05], [0.26, 0.13]], { sides: k.n(12) }); }); k.hose([[-0.6, -0.26, s * 0.4], [-1.1, -0.6, s * 0.44], [-1.2, -1.0, s * 0.4]], 0.06); } k.grille([0.5, 0.0, 1.0], [0, 0, 1], 0.9, 0.36, { up: [0, 1, 0] }); k.grille([0.5, 0.0, -1.0], [0, 0, -1], 0.9, 0.36, { up: [0, 1, 0] }); });
+    for (const s of [-1, 1]) k.lamp('head', { name: 'eye', at: [1.72, 0.05, s * 0.88], dir: [0.86, -0.28, s * 0.42], color: [1.0, 0.72, 0.3], power: 20, cone: 13, range: 80, lens: 0.24, proud: 0.03 });
+    k.bone('tail', (g) => { k.mat('frame'); g.tube([[0, 0, 0], [0, 1.1, 0], [0, 2.2, 0]], [0.36, 0.22, 0.07], { sides: k.n(8), caps: true }); if (k.mid) { k.mat('rust'); for (const y of [0.3, 0.9, 1.5]) g.box(0, y, 0.2, 0.5 - y * 0.2, 0.3, 0.1, { soft: 0.3 }); } });
+  },
+  // 가재: a shell of overlapping plates the red of old oxide from a spike of a snout to a jointed tail, eight girder legs under
+  // it, two claws carried low in front, feelers, and two eyes on stalks that burn red
+  gajae(k) {
+    k.limbs({ style: 'girder' });
+    k.bone('body', (g) => {
+      k.mat('dark'); k.loft('x', [[-4.6, 0.4, 0.8, -0.2, 0, 4], [-2.5, 0.7, 1.35, -0.3, 0, 4], [1.5, 0.8, 1.5, -0.3, 0, 4], [4.2, 0.55, 1.1, -0.2, 0, 4], [5.0, 0.3, 0.6, -0.1, 0, 3]], { sides: 16 });
+      // the fore shell and its snout
+      const FORE = [[-0.5, 1.15, 1.85, 0.25, 0, 2.6], [1.4, 1.45, 2.05, 0.25, 0, 2.6], [3.4, 1.2, 1.7, 0.22, 0, 2.6], [4.9, 0.55, 0.85, 0.15, 0, 2.6]];
+      k.mat('shell'); k.loft('x', FORE, { sides: 20, from: -0.56 * Math.PI, to: 0.56 * Math.PI, caps: false }); k.loft('x', [[4.8, 0.36, 0.5, 0.36, 0, 3], [5.8, 0.2, 0.22, 0.42, 0, 3], [6.9, 0.03, 0.03, 0.5, 0, 3]], { sides: 10 });
+      k.mat('accent'); k.loft('x', [[1.25, 1.475, 2.085, 0.25, 0, 2.6], [1.6, 1.47, 2.08, 0.25, 0, 2.6]], { sides: 20, from: -0.55 * Math.PI, to: 0.55 * Math.PI, caps: false });
+      k.mat('rust'); for (const x of [0.2, 2.6]) k.loft('x', [[x - 0.07, 1.36, 2.0, 0.25, 0, 2.6], [x + 0.07, 1.36, 2.0, 0.25, 0, 2.6]], { sides: 20, from: -0.55 * Math.PI, to: 0.55 * Math.PI, caps: false });
+      // five plates down the back, each under the one before
+      for (let i = 0; i < 5; i++) { const x0 = -0.35 - i * 0.86, a = 1.18 - i * 0.11, b = 1.78 - i * 0.2, cy = 0.22 - i * 0.02; k.mat(i % 2 ? 'rust' : 'shell'); k.loft('x', [[x0 - 1.0, a * 0.9, b * 0.9, cy, 0, 2.6], [x0 - 0.5, a, b, cy, 0, 2.6], [x0, a * 1.03, b * 1.03, cy, 0, 2.6]], { sides: 18, from: -0.55 * Math.PI, to: 0.55 * Math.PI, caps: false });
+        if (k.fine) for (const s of [-1, 1]) k.rivets([x0 - 0.12, cy + a * 0.6, s * b * 0.78], [x0 - 0.12, cy + a * 0.99, s * b * 0.2], 5, 0.03, [0.2, 0.7, s * 0.6]); }
+      // under the shell: mains and a line to every hip, tanks, louvres, two short stacks behind the fore shell, spines along its ridge
+      for (const s of [-1, 1]) { k.pipe([[-3.6, -0.3, s * 1.2], [-0.5, -0.35, s * 1.5], [2.6, -0.3, s * 1.45], [4.2, -0.2, s * 1.0]], 0.08, { joints: [1, 2], role: 'rust' }); for (const x of [3.3, 1.4, -0.5, -2.4]) k.hose([[x + 0.3, -0.33, s * 1.42], [x + 0.2, -0.7, s * 1.6], [x, -0.42, s * 1.5]], 0.05);
+        k.tank([0.2, -1.0, s * 0.62], [2.4, -1.0, s * 0.62], 0.32, { role: 'rust', up: [0, -1, 0] }); k.grille([2.2, 0.0, s * 1.5], [0, -0.1, s], 1.2, 0.36, { up: [0, 1, 0] }); k.stack([-0.1, 1.2, s * 0.7], [-0.3, 2.1, s * 0.75], 0.13); }
+      if (k.mid) { k.mat('dark'); for (const x of [0.6, 1.5, 2.4, 3.2]) g.tube([[x, 1.62 - Math.abs(x - 1.5) * 0.12, 0], [x - 0.25, 2.1 - Math.abs(x - 1.5) * 0.16, 0]], [0.1, 0.01], { sides: 5 }); }
+      k.hatch([1.5, 1.46, 0.9], [0, 1, 0.35], 0.9, 0.7, { up: [1, 0, 0], role: 'rust', t: 0.08 });
+    });
+    for (const [x, s] of [[2.6, -1], [2.6, 1], [0.2, -1], [0.2, 1], [-2.2, -1], [-2.2, 1]]) k.lamp('body', { at: [x, -0.05, s * (1.56 - Math.max(0, -x) * 0.12)], dir: [0, -0.4, s], color: [1, 0.16, 0.06], power: 1.6, range: 12, lens: 0.1, glow: 0.8 });
+    // the tail: two more plates on their own hinges, and a fan of blades at the end
+    k.bone('tail_1', (g) => { k.mat('joint'); k.xcyl(-0.7, 0.7, 0, 0, 0.26, { sides: 12 }); k.mat('shell'); k.loft('y', [[0.05, 0.62, 0.95, 0.12, 0, 2.6], [0.9, 0.6, 0.9, 0.12, 0, 2.6], [1.75, 0.5, 0.78, 0.1, 0, 2.6]], { sides: 16, from: -0.5 * Math.PI, to: 0.5 * Math.PI, caps: false }); k.mat('dark'); g.tube([[0, 0.1, -0.1], [0, 1.7, -0.1]], 0.3, { sides: k.n(8), caps: true }); });
+    k.bone('tail_2', (g) => { k.mat('joint'); k.xcyl(-0.6, 0.6, 0, 0, 0.22, { sides: 12 }); k.mat('rust'); k.loft('y', [[0.05, 0.5, 0.78, 0.1, 0, 2.6], [1.0, 0.42, 0.66, 0.1, 0, 2.6]], { sides: 14, from: -0.5 * Math.PI, to: 0.5 * Math.PI, caps: false });
+      const N = k.lod === 2 ? 3 : 5; for (let i = 0; i < N; i++) { const a = (i / (N - 1) - 0.5) * 1.5, c = Math.cos(a), sn = Math.sin(a), len = 1.5 - Math.abs(a) * 0.25; k.mat(i % 2 ? 'shell' : 'rust'); g.poly([[sn * 0.3 - c * 0.3, 0.9 + c * 0.2, 0.08 + 0.02 * i], [sn * len - c * 0.36, 0.9 + c * len, 0.02 * i], [sn * (len + 0.3), 0.9 + c * (len + 0.3), 0.02 * i], [sn * len + c * 0.36, 0.9 + c * len, 0.02 * i], [sn * 0.3 + c * 0.3, 0.9 + c * 0.2, 0.08 + 0.02 * i]], { two: true }); } });
+    // the claws: an arm, an elbow, a hand with a fixed blade and one held open over it
+    for (const [n, s] of [['claw_L', -1], ['claw_R', 1]]) k.bone(n, (g) => { k.mat('joint'); k.xcyl(-0.3, 0.3, 0, 0, 0.3, { sides: 12 }); k.mat('dark'); g.tube([[0, 0, 0], [0, 1.5, 0]], [0.26, 0.2], { sides: k.n(10), caps: true }); k.mat('joint'); k.xcyl(-0.26, 0.26, 1.5, 0, 0.26, { sides: 12 }); k.mat('dark'); g.tube([[0, 1.5, 0], [0, 2.5, 0.05]], [0.2, 0.24], { sides: k.n(10), caps: true });
+      k.mat('shell'); k.loft('y', [[2.3, 0.3, 0.42, 0, 0, 3], [2.9, 0.42, 0.56, 0, 0, 3], [3.5, 0.3, 0.44, -0.05, 0, 3], [4.4, 0.03, 0.06, -0.2, 0, 3]], { sides: 12 });      // the hand and its fixed blade
+      k.mat('rust'); k.loft('y', [[2.9, 0.16, 0.34, 0.42, 0, 3], [3.6, 0.13, 0.26, 0.55, 0, 3], [4.3, 0.02, 0.05, 0.42, 0, 3]], { sides: 10 }); k.mat('joint'); k.xcyl(-0.3, 0.3, 2.9, 0.36, 0.14, { sides: 8 });      // the one that closes
+      if (k.fine) { k.mat('steel'); for (let i = 0; i < 5; i++) g.tube([[0, 3.2 + i * 0.22, 0.16 - i * 0.03], [0, 3.24 + i * 0.22, 0.3 - i * 0.03]], [0.05, 0.01], { sides: 4 }); k.hose([[0.2, 0.2, -0.2], [0.26, 0.9, -0.3], [0.2, 1.5, -0.22]], 0.04); k.rivets([-0.3, 2.5, 0.05], [-0.24, 3.4, 0], 6, 0.025, [-1, 0, 0]); } });
+    for (const n of ['feeler_L', 'feeler_R']) k.bone(n, (g) => { k.mat('dark'); g.tube([[0, 0, 0], [0, 1.8, 0], [0, 3.6, 0]], [0.05, 0.03, 0.008], { sides: k.n(5), caps: true }); });
+    k.neckLinks({ width: 0.7, style: 'girder' });
+    k.bone('head', (g) => { k.mat('dark'); k.loft('x', [[-0.3, 0.3, 0.5, 0, 0, 4], [0.5, 0.36, 0.56, 0, 0, 4], [1.2, 0.22, 0.36, -0.06, 0, 3]], { sides: 12 }); k.mat('shell'); k.loft('x', [[-0.25, 0.34, 0.56, 0.05, 0, 3], [0.5, 0.42, 0.62, 0.06, 0, 3], [1.15, 0.24, 0.4, 0.02, 0, 3]], { sides: 12, from: -0.5 * Math.PI, to: 0.5 * Math.PI, caps: false });
+      for (const s of [-1, 1]) { k.mat('joint'); g.tube([[0.3, 0.3, s * 0.4], [0.5, 0.75, s * 0.62], [0.72, 0.95, s * 0.7]], [0.07, 0.06, 0.09], { sides: k.n(7), caps: true }); } });
+    for (const s of [-1, 1]) { k.lamp('head', { name: 'eye', at: [0.8, 0.96, s * 0.7], dir: [0.9, -0.3, s * 0.2], color: [1.0, 0.2, 0.08], power: 26, cone: 12, range: 90, lens: 0.11, proud: 0.03 }); k.lamp('head', { at: [1.22, -0.02, s * 0.2], dir: [1, -0.1, s * 0.2], color: [1, 0.3, 0.1], power: 1.2, range: 8, lens: 0.06, glow: 0.8 }); }
+  },
+  // 공벌레: seven arches of plate from a closed nose to a closed tail, rust with two pale ones that were replaced, over a hull no bigger than a bath; six quick legs;
+  // two feelers and two small lamps
+  gong(k) {
+    k.limbs({ style: 'girder' });
+    k.bone('body', (g) => {
+      k.mat('dark'); k.loft('x', [[-1.35, 0.14, 0.34, -0.02, 0, 4], [-0.6, 0.2, 0.52, -0.02, 0, 4], [0.6, 0.2, 0.52, -0.02, 0, 4], [1.3, 0.16, 0.36, -0.02, 0, 4]], { sides: 12 });
+      for (let i = 0; i < 7; i++) { const x = 1.18 - i * 0.4, f = 1 - 0.42 * ((i - 3) / 3.4) ** 2, hh = 0.62 * f, ww = 0.84 * (0.72 + 0.28 * f); k.mat(i === 1 || i === 4 ? 'shell' : 'rust'); k.loft('x', [[x - 0.3, hh * 0.92, ww * 0.95, 0.04, 0, 2.6], [x - 0.02, hh, ww, 0.04, 0, 2.6], [x + 0.2, hh * 1.03, ww * 1.02, 0.04, 0, 2.6]], { sides: 14, from: -0.56 * Math.PI, to: 0.56 * Math.PI, caps: false });
+        if (k.fine) for (const s of [-1, 1]) k.rivets([x + 0.12, 0.04 + hh * 0.5, s * ww * 0.86], [x + 0.12, 0.04 + hh * 0.98, s * ww * 0.3], 4, 0.012, [0.2, 0.6, s * 0.7]); }
+      k.mat('rust'); k.loft('x', [[1.34, 0.42, 0.76, 0.04, 0, 2.6], [1.54, 0.3, 0.56, 0.03, 0, 2.6], [1.64, 0.03, 0.05, 0.0, 0, 2.6]], { sides: 14, from: -0.56 * Math.PI, to: 0.56 * Math.PI, caps: false }); k.mat('rust'); k.loft('x', [[-1.8, 0.03, 0.05, 0.0, 0, 2.6], [-1.7, 0.27, 0.5, 0.03, 0, 2.6], [-1.5, 0.39, 0.72, 0.04, 0, 2.6]], { sides: 14, from: -0.56 * Math.PI, to: 0.56 * Math.PI, caps: false });
+      k.mat('dark'); k.loft('x', [[-1.45, 0.3, 0.5, 0.06, 0, 3], [-0.5, 0.46, 0.66, 0.08, 0, 3], [0.5, 0.46, 0.66, 0.08, 0, 3], [1.3, 0.3, 0.5, 0.06, 0, 3]], { sides: 12, from: -0.5 * Math.PI, to: 0.5 * Math.PI });
+      if (k.mid) { for (const s of [-1, 1]) for (const x of [0.85, 0, -0.85]) k.hose([[x * 0.8, -0.14, s * 0.2], [x, -0.2, s * 0.36], [x, -0.1, s * 0.42]], 0.016); k.mat('dark'); for (const s of [-1, 1]) g.tube([[-1.3, 0.02, s * 0.14], [-1.62, 0.1, s * 0.2]], [0.04, 0.012], { sides: 5 }); }
+    });
+    k.neckLinks({ width: 0.24, style: 'girder' });
+    k.bone('head', (g) => { k.mat('shell'); k.loft('x', [[-0.12, 0.3, 0.52, 0.02, 0, 2.6], [0.14, 0.24, 0.42, 0.01, 0, 2.6], [0.4, 0.1, 0.2, -0.03, 0, 2.6]], { sides: 12, from: -0.56 * Math.PI, to: 0.56 * Math.PI, caps: false }); k.mat('dark'); k.loft('x', [[-0.1, 0.14, 0.3, -0.04, 0, 4], [0.36, 0.09, 0.2, -0.05, 0, 3]], { sides: 10 }); });
+    for (const s of [-1, 1]) k.lamp('head', { name: 'eye', at: [0.34, -0.03, s * 0.13], dir: [0.9, -0.3, s * 0.25], color: [1.0, 0.75, 0.35], power: 3.5, cone: 20, range: 16, lens: 0.035, proud: 0.01 });
+    k.lamp('body', { at: [-1.36, 0.0, 0], dir: [-1, 0, 0], color: [1, 0.12, 0.06], power: 0.2, range: 3, lens: 0.03, glow: 0.7 });
+    for (const n of ['feeler_L', 'feeler_R']) k.bone(n, (g) => { k.mat('dark'); g.tube([[0, 0, 0], [0, 0.4, 0], [0, 0.8, 0]], [0.014, 0.009, 0.003], { sides: k.n(5), caps: true }); });
+  },
   // 등짐: a bed on six legs, a cab like a visor with two amber lamps, a frame of old girders holding what it carries
   porter(k) {
     k.limbs({ style: 'girder' });

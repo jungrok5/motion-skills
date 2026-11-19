@@ -33,6 +33,12 @@ const V = {
   V.ways = {
     round: [[-168, -6], [-118, 8], [-74, 28], [-34, 20], [8, 14], [44, 6], [84, 10], [118, 34], [142, 66], [134, 106], [100, 134], [58, 148], [14, 151], [-30, 149], [-74, 147], [-118, 146], [-158, 136], [-182, 100], [-190, 56], [-188, 22]],
     bank: [[-62, -78], [-16, -92], [30, -84], [72, -76], [112, -80], [122, -108], [90, -132], [40, -122], [-6, -126], [-52, -114], [-82, -96]],
+    // the crayfish keeps to the brook west of the viaduct: down its north side, across, back along the south side and across again
+    brook: [[-186, -42], [-172, -54], [-140, -57], [-108, -53], [-80, -47], [-58, -41], [-46, -31], [-56, -22], [-84, -23], [-116, -27], [-148, -30], [-174, -31]],
+    // a turtle walks the eastern floor, through the brook twice a lap
+    east: [[168, -15], [179, -11], [184, 1], [182, 15], [170, 22], [157, 19], [150, 7], [154, -8]],
+    // woodlice on the lower shelf, between the cranes' way and the bank under the old road
+    shelf: [[-140, 58], [-128, 49], [-104, 47], [-80, 48], [-64, 54], [-62, 63], [-76, 69], [-100, 68], [-124, 68], [-138, 66]],
     rim: [[-236, -30], [-214, -150], [-120, -222], [-10, -238], [110, -224], [206, -160], [240, -50], [236, 60], [200, 160], [112, 226], [-10, 238], [-130, 222], [-212, 150], [-240, 50]],
   };
   // the line the kites fly, [x, z, height]: a wide ring over the valley that swings in low over the viaduct and the fallen crane
