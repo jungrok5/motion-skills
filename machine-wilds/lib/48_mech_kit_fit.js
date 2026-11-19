@@ -18,11 +18,18 @@
 //   k.fins(c, dir, n, w, h, pitch, { up })        a stack of cooling fins
 //   k.boot(p, dir, r, len, n)                     a rubber gaiter
 //   k.stripes(c, normal, w, h, n, { up })         warning bars, yellow and black, what is left of them
+//   k.digits('07', c, normal, h, { up, role })   a number stencilled on a plate, h tall, read from in front
 //   k.gauge(c, normal, r)                         a dial
 //   k.stack(a, b, r)                              an exhaust stack with a rain cap
 //   k.dish(c, dir, r)                             an antenna dish on a stalk
 {
   const M = LR.mech, T = THREE, V = M.v, TAU = Math.PI * 2, K = M.Kit.prototype;
+  // k.digits('07', c, normal, h, { up, role, t })   stencilled figures h tall on a plate, read from in front of it (seven strokes a figure)
+  K.digits = function (str, c, nrm, h, o = {}) { const k = this, t = o.t || h * 0.035, w = h * 0.5, gap = h * 0.24, s = h * 0.13, n = str.length, SEG = { 0: 'abcdef', 1: 'bc', 2: 'abged', 3: 'abgcd', 4: 'fgbc', 5: 'afgcd', 6: 'afgedc', 7: 'abc', 8: 'abcdefg', 9: 'abfgcd', '-': 'g' };
+    return k.along(c, nrm, (g) => { k.mat(o.role || 'dark'); for (let i = 0; i < n; i++) { const x0 = -(i - (n - 1) / 2) * (w + gap), on = SEG[str[i]] || '';      /* (the frame's +X is the reader's left) */
+        const H = (z) => g.box(x0, t * 0.5, z, w - s * 0.7, t, s, { soft: 0.1 }), U = (x, z) => g.box(x0 - x, t * 0.5, z, s, t, h * 0.5 - s * 0.7, { soft: 0.1 });
+        if (on.includes('a')) H(h * 0.5 - s * 0.5); if (on.includes('g')) H(0); if (on.includes('d')) H(-h * 0.5 + s * 0.5);
+        if (on.includes('f')) U(-w * 0.5 + s * 0.5, h * 0.25); if (on.includes('b')) U(w * 0.5 - s * 0.5, h * 0.25); if (on.includes('e')) U(-w * 0.5 + s * 0.5, -h * 0.25); if (on.includes('c')) U(w * 0.5 - s * 0.5, -h * 0.25); } }, o.up || [0, 1, 0]); };
   K.along = function (p, dir, fn, up) { const y = V.norm(dir); let z = up ? V.sub(up, V.mul(y, V.dot(up, y))) : null; if (!z || V.len(z) < 0.2) { const a = Math.abs(y[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0]; z = V.sub(a, V.mul(y, V.dot(a, y))); } z = V.norm(z); const x = V.cross(y, z);
     this.g.push(new T.Matrix4().set(x[0], y[0], z[0], p[0], x[1], y[1], z[1], p[1], x[2], y[2], z[2], p[2], 0, 0, 0, 1)); fn(this.g, this); this.g.pop(); return this; };
   const dirAt = (pts, i) => V.norm(V.sub(pts[Math.min(i + 1, pts.length - 1)], pts[Math.max(i - 1, 0)]));

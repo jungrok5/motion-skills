@@ -136,7 +136,7 @@ V.parts = {
   // 자라: a shell first.  A dome of plates the width of a house over a flat hull, a skirt of rust round its rim, scutes bolted on in
   // three rows, forty years of moss on top; four sprawled girder legs come out from under the rim; a blunt head on a short neck
   jara(k) {
-    k.limbs({ style: 'girder' });
+    k.limbs({ style: 'casing' });
     k.bone('body', (g) => {
       // the hull and its belly plates
       k.mat('dark'); k.loft('x', [[-5.5, 0.5, 2.1, -0.35, 0, 4], [-3.6, 0.95, 3.5, -0.4, 0, 4], [0, 1.05, 3.9, -0.4, 0, 4], [3.6, 0.95, 3.4, -0.4, 0, 4], [5.5, 0.5, 2.0, -0.3, 0, 4]], { sides: 18 });
@@ -154,6 +154,7 @@ V.parts = {
         k.tank([-2.6, -1.25, s * 1.6], [-0.2, -1.25, s * 1.6], 0.42, { role: 'rust', up: [0, -1, 0] }); k.grille([1.6, -0.45, s * 3.82], [0, 0, s], 1.8, 0.5, { up: [0, 1, 0] }); k.grille([-1.6, -0.45, s * 3.84], [0, 0, s], 1.4, 0.5, { up: [0, 1, 0] });
         k.rivets([-4.6, 0.02, s * 3.5], [4.4, 0.02, s * 3.4], 30, 0.035, [0, 0.4, s]); }
       k.stack([-3.9, 1.9, -1.2], [-4.2, 3.5, -1.3], 0.2); k.stack([-3.9, 1.9, 1.1], [-4.15, 3.1, 1.2], 0.16);
+      for (const s of [-1, 1]) k.digits('12', [-1.2, 0.42, s * 5.06], [0, 0.22, s], 0.62, { up: [0, 1, 0], role: 'shell' });      /* its number, pale on the rust rim */
       k.ladder([1.0, -1.1, -4.55], [1.0, 1.0, -4.3], 0.5, [0, 0.2, -1], { off: 0.2, role: 'frame' }); k.rail([[-1.6, 2.9, 0.9], [0, 3.0, 1.0], [1.6, 2.9, 0.9]], 0.9, [0, 1, 0], { role: 'frame' }); k.dish([2.6, 2.55, -1.6], [0.4, 1, -0.4], 0.5);
       k.jbox([5.35, -0.3, 1.0], [1, 0, 0], 0.8, 0.5, 0.2, { up: [0, 1, 0], glands: 3 });
     });
@@ -169,7 +170,7 @@ V.parts = {
   // 가재: a shell of overlapping plates the red of old oxide from a spike of a snout to a jointed tail, eight girder legs under
   // it, two claws carried low in front, feelers, and two eyes on stalks that burn red
   gajae(k) {
-    k.limbs({ style: 'girder' });
+    k.limbs({ style: 'casing' });
     k.bone('body', (g) => {
       k.mat('dark'); k.loft('x', [[-4.6, 0.4, 0.8, -0.2, 0, 4], [-2.5, 0.7, 1.35, -0.3, 0, 4], [1.5, 0.8, 1.5, -0.3, 0, 4], [4.2, 0.55, 1.1, -0.2, 0, 4], [5.0, 0.3, 0.6, -0.1, 0, 3]], { sides: 16 });
       // the fore shell and its snout
@@ -222,7 +223,7 @@ V.parts = {
   },
   // 등짐: a bed on six legs, a cab like a visor with two amber lamps, a frame of old girders holding what it carries
   porter(k) {
-    k.limbs({ style: 'girder' });
+    k.limbs({ style: 'casing' });
     k.bone('body', (g) => {
       k.mat('frame'); k.loft('x', [[-4.9, 0.36, 1.25, 0, 0, 6], [-4.4, 0.5, 1.5, 0, 0, 6], [4.0, 0.5, 1.5, 0, 0, 6], [4.8, 0.4, 1.2, 0.05, 0, 5]], { sides: 14 });
       k.mat('dark'); for (const x of [3.6, 0, -3.6]) { g.box(x, -0.35, 0, 0.9, 0.6, 3.5, { soft: 0.2 }); for (const s of [-1, 1]) if (k.fine) k.bolts('x', [x + 0.46, -0.35, s * 1.5], 0.2, 6, 0.025); }
@@ -275,7 +276,7 @@ V.parts = {
       if (k.mid) { k.mat('rust'); for (let x = -23; x <= 23; x += 5.8) for (const s of [-1, 1]) { g.beam([x, -3.8, s * 7.2], [x + 2.9, -0.6, s * 7.2], 0.4, 0.4, { caps: false }); g.beam([x + 2.9, -0.6, s * 7.2], [x + 5.8, -3.8, s * 7.2], 0.4, 0.4, { caps: false }); } }
       k.mat('rust'); g.box(0, -0.35, 0, 54, 0.5, 19.6, { soft: 0.03 });
       // the girders' fascia: painted panels bay by bay, yellow and cream by turns, what is left of them
-      for (const s of [-1, 1]) for (let i = 0; i < 8; i++) { const x = -21 + i * 6; k.mat(i % 2 ? 'casing' : 'paint'); g.box(x, -2.2, s * 9.37, 5.2, 2.7, 0.14, { soft: 0.1 }); }
+      for (const s of [-1, 1]) { for (let i = 0; i < 8; i++) { const x = -21 + i * 6; k.mat(i % 2 ? 'casing' : 'paint'); g.box(x, -2.2, s * 9.37, 5.2, 2.7, 0.14, { soft: 0.1 }); } k.digits('07', [9, -2.2, s * 9.45], [0, 0, s], 1.7, { up: [0, 1, 0] }); }      /* its number, on a cream bay of each side */
       // the station: a long house in three steps, panelled in concrete, with rows of windows (some still lit after dark)
       const house = (x, y, z, sx, sy, sz, seed, role = 'shell') => { k.mat(role, { seed }); g.box(x, y + sy / 2, z, sx, sy, sz, { soft: 0.03, ao: [0.6, 1] }); k.mat('dark'); g.box(x, y + sy + 0.2, z, sx + 0.8, 0.4, sz + 0.8, { soft: 0.1 });
         const rows = Math.floor(sy / 3.2), cols = Math.floor(sx / 3.4); for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) for (const s of [-1, 1]) { const wx = x - sx / 2 + (c + 0.5) * (sx / cols), wy = y + 1.9 + r * 3.2; g.mat('glass', { flags: LR.FLAG.WINDOW, seed: (seed * 31 + r * 7 + c * 13 + (s > 0 ? 5 : 0)) & 255 }); g.quad([wx - 1.0, wy - 0.8, z + s * (sz / 2 + 0.04)], [wx + 1.0, wy - 0.8, z + s * (sz / 2 + 0.04)], [wx + 1.0, wy + 0.8, z + s * (sz / 2 + 0.04)], [wx - 1.0, wy + 0.8, z + s * (sz / 2 + 0.04)], { hint: [0, 0, s] }); } };

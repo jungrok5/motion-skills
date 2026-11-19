@@ -25,10 +25,10 @@ V.machines = () => {
         'head.pitch': [[0, 0], [1.2, 8], [3.8, 4], [9.4, 6], [11.6, -3], [13, 0]], 'head.yaw': [[0, 0], [3.4, 0], [4.0, -8], [5.6, 56], [6.0, 54], [8.2, -50], [8.7, -48], [10.4, 4], [11, 0], [13, 0]], 'neck.yaw': [[0, 0], [3.6, 0], [5.6, 14], [8.2, -12], [10.4, 0], [13, 0]],
         light: [[0, 1], [3.2, 1], [3.8, 1.7], [9.2, 1.7], [10.4, 1], [13, 1]] } } } });
   // 등짐: six insect legs under a flat bed; it carries what it was last given and has not been unloaded since
-  const PL = { kind: 'insect', width: 0.42, drum: 0.5, ball: 0.3, toes: 4, toeLen: 0.8, act: [1, 1], coxa: 1.2, style: 'girder' };
+  const PL = { kind: 'insect', width: 0.56, drum: 0.5, ball: 0.3, toes: 4, toeLen: 0.8, act: [1, 1], coxa: 1.2, style: 'casing' };
   const porterLegs = [[3.6, 4.4, 'F'], [0, 0, 'M'], [-3.6, -4.4, 'R']].map(([x, hx, n]) => Object.assign({}, PL, { name: n + 'L', at: [x, -0.3, -1.5], segs: [4.4, 5.6], knee: 1, home: [hx, n === 'M' ? -5.0 : -4.6] }));
   M.define('porter', { title: '등짐', age: 0.8, tonnes: 38, ride: 4.9, belly: [3.6, 0.9, 1.0], aware: 26, lensGain: 18, build: (k) => V.parts.porter(k),
-    palette: { frame: ['paintmetal', '#8f9468'], rust: ['rustplate', '#cfc6b6'], dark: ['paintmetal', '#33362f'] },
+    palette: { frame: ['paintmetal', '#8f9468'], rust: ['rustplate', '#cfc6b6'], dark: ['paintmetal', '#33362f'], casing: ['paintmetal', '#b7ad84'], paint: ['paintmetal', '#c79a2c'] },
     limbs: [...porterLegs, ...porterLegs.map(M.mirror)], head: { len: 1.4 }, neck: { at: [4.3, 0.35, 0], links: [[0.9, 12]] },
     extras: [{ name: 'radar', type: 'spin', parent: 'body', at: [-2.6, 5.3, 0.6], dir: [0, 1, 0], axis: [0, 1, 0], xdir: [1, 0, 0], rate: 34, len: 0.6 },
       { name: 'chain_L', type: 'lag', parent: 'body', at: [-1.2, -0.6, -1.0], dir: [0, -1, 0], len: 1.8, lag: 0.35, gain: 1.6, maxDeg: 30 }, { name: 'chain_R', type: 'lag', parent: 'body', at: [1.6, -0.6, 1.0], dir: [0, -1, 0], len: 1.4, lag: 0.3, gain: 1.6, maxDeg: 30 }],
@@ -61,10 +61,10 @@ V.machines = () => {
   // ── the shelled ones ────────────────────────────────────────────────────────────────────────────────────────────
   // 자라: a soft-shelled turtle of a machine — a dome of plates as wide as a house on four sprawled legs, its belly a man's height
   // off the ground, a head on a short neck that looks about.  150 t: a step every seven seconds, three feet down at any moment.
-  const JL = { kind: 'insect', width: 0.5, drum: 0.56, bar: 0.11, ball: 0.42, toes: 4, toeLen: 0.9, act: [1, 1], coxa: 1.4, style: 'girder' };
+  const JL = { kind: 'insect', width: 0.72, drum: 0.56, bar: 0.11, ball: 0.42, toes: 4, toeLen: 0.9, act: [1, 1], coxa: 1.4, style: 'casing' };
   const jaraLegs = [[3.4, 4.3, 'F'], [-3.4, -4.3, 'R']].map(([x, hx, n]) => Object.assign({}, JL, { name: n + 'L', at: [x, -0.4, -2.7], segs: [3.5, 4.3], knee: 1, home: [hx, -6.5] }));
   M.define('jara', { title: '자라', age: 1, tonnes: 150, ride: 3.0, belly: [4.4, 1.7, 2.4], aware: 34, lensGain: 20, build: (k) => V.parts.jara(k),
-    palette: { shell: ['ceramic', '#b9bfae'], rust: ['rustplate', '#c4b8a2'], frame: ['paintmetal', '#5f6a58'], dark: ['paintmetal', '#2c302b'] },
+    palette: { shell: ['ceramic', '#b9bfae'], rust: ['rustplate', '#c4b8a2'], frame: ['paintmetal', '#5f6a58'], dark: ['paintmetal', '#2c302b'], casing: ['paintmetal', '#a9ae96'], paint: ['paintmetal', '#b58a30'] },
     limbs: [...jaraLegs, ...jaraLegs.map(M.mirror)], neck: { at: [5.3, -0.2, 0], links: [[1.5, 10], [1.3, 3]] }, head: { len: 2.2 },
     extras: [{ name: 'tail', type: 'lag', parent: 'body', at: [-5.5, -0.4, 0], dir: [-1, -0.2, 0], len: 2.2, lag: 0.5, gain: 1.2, maxDeg: 18 }],
     gait: { cycle: 7.0, duty: 0.8, stride: 2.5, lift: 0.65, pattern: 'lateral', crouch: 0.1, dip: 0.14, dipTime: 1.0, sway: 0.3, roll: 1.4, nod: 0.6, yaw: 1.2, footPitch: 8, toeCurl: 14, neckRock: 1.5, neckSway: 5, follow: [0.7, 0.5], smooth: 0.6, footTilt: 26, settle: 0.3, settleTime: 1.6, gather: 3, gatherDip: 0.3, gatherBack: 0.3, wade: 1.8, reachMax: 0.93 },
@@ -74,10 +74,10 @@ V.machines = () => {
       tuck: { dur: 16, main: 'body.dy', sound: [4.6, 72, 5, 0.9], keys: { 'body.dy': [[0, 0], [1.4, 0.16], [5, -0.9], [11, -0.9], [14, 0.13], [16, 0]], 'body.pitch': [[0, 0], [1.4, 0.6], [5, -1.6], [11, -1.6], [14, 0.4], [16, 0]], 'neck.pitch': [[0, 0], [1.4, -6], [5.2, 16], [11, 16], [14, -4], [16, 0]], 'head.pitch': [[0, 0], [1.6, -5], [5.4, 12], [11, 10], [14.2, -3], [16, 0]], light: [[0, 1], [4.4, 1], [5.2, 0.35], [10.6, 0.35], [11.6, 1.3], [16, 1]] } } } });
   // 가재: the one to keep clear of — a crayfish as long as two lorries on eight legs, a shell of overlapping plates the red of old
   // oxide, two claws carried low, feelers, a jointed tail, eyes on stalks that burn red in the mist.  64 t; it walks the brook.
-  const GL = { kind: 'insect', width: 0.36, drum: 0.42, ball: 0.26, toes: 2, toeLen: 0.9, act: [1, 1], coxa: 0.9, style: 'girder' };
+  const GL = { kind: 'insect', width: 0.5, drum: 0.42, ball: 0.26, toes: 2, toeLen: 0.9, act: [1, 1], coxa: 0.9, style: 'casing' };
   const gajaeLegs = [[3.3, 4.6, -4.6, 'A'], [1.4, 1.9, -5.0, 'B'], [-0.5, -0.9, -5.0, 'C'], [-2.4, -3.6, -4.6, 'D']].map(([x, hx, hz, n]) => Object.assign({}, GL, { name: n + 'L', at: [x, -0.35, -1.5], segs: [3.2, 4.0], knee: 1, home: [hx, hz] }));
   M.define('gajae', { title: '가재', age: 0.9, tonnes: 64, ride: 3.4, belly: [3.6, 1.35, 1.2], aware: 46, lensGain: 30, build: (k) => V.parts.gajae(k),
-    palette: { shell: ['paintmetal', '#8a4032'], rust: ['rustplate', '#b59f8c'], frame: ['paintmetal', '#4a4441'], dark: ['paintmetal', '#242223'], accent: ['paintmetal', '#b0452e'] },
+    palette: { shell: ['paintmetal', '#8a4032'], rust: ['rustplate', '#b59f8c'], frame: ['paintmetal', '#4a4441'], dark: ['paintmetal', '#242223'], accent: ['paintmetal', '#b0452e'], casing: ['paintmetal', '#7b3a2e'], paint: ['paintmetal', '#b0452e'] },
     limbs: [...gajaeLegs, ...gajaeLegs.map(M.mirror)], neck: { at: [4.5, 0.5, 0], links: [[0.8, 24]] }, head: { len: 1.2 },
     extras: [{ name: 'claw_L', type: 'lag', parent: 'body', at: [4.0, -0.3, -1.8], dir: [1, -0.14, -0.4], len: 4.4, lag: 0.35, gain: 0.8, maxDeg: 12 }, { name: 'claw_R', type: 'lag', parent: 'body', at: [4.0, -0.3, 1.8], dir: [1, -0.14, 0.4], len: 4.4, lag: 0.4, gain: 0.8, maxDeg: 12 },
       { name: 'feeler_L', type: 'lag', parent: 'head', at: [0.7, 0.2, -0.3], dir: [0.8, 0.45, -0.4], len: 3.6, lag: 0.3, gain: 1.2, maxDeg: 26 }, { name: 'feeler_R', type: 'lag', parent: 'head', at: [0.7, 0.2, 0.3], dir: [0.8, 0.45, 0.4], len: 3.6, lag: 0.34, gain: 1.2, maxDeg: 26 },
