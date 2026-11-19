@@ -92,6 +92,38 @@ Lay the line like a way: turns wide enough for the speed (at 14 m/s a 40 m radiu
 one in four, never lower over the land than the trees and the tallest walker's lifted head. Lamps on a flyer look
 down (`gaze`): from the ground a kite at night is a beam sweeping the mist and a red point crossing the sky.
 
+## The walker's own body — `avatar: { … }` and `spawn(kind, { avatar: true, at, yaw })`
+A realm may give whoever walks it a body: a kind on **two legs** (the kit's own: 2 or 3 segments, left and its mirror),
+spawned once with `avatar: true` where the walk starts. Without one the realm is walked in the first person only.
+```js
+const LEG = { kind: 'mammal', name: 'L', at: [0, -0.06, -0.25], segs: [0.5, 0.48, 0.3], knee: 1, gamma: 12, home: [0.05, -0.23],
+              width: 0.09, drum: 0.09, bar: 0.012, ball: 0.07, toes: 3, toeLen: 0.22, act: [0, 1, 1], hipDrop: 0.06, style: 'shell' };
+M.define('plover', { tonnes: 0.3, ride: 1.3, limbs: [LEG, M.mirror(LEG)], neck: …, head: …, build: (k) => V.parts.plover(k),
+  avatar: { stepWalk: 0.8, stepRun: 1.45, reach: 0.32, lift: [0.09, 0.12], lean: [4, 12], gather: 0.1, tuck: 0.1 } });
+M.spawn('plover', { name: '물떼새', avatar: true, at: [V.spawn.x, V.spawn.z], yaw: 90 });
+```
+It cannot be planned — it follows a hand on the keys — so it steps as it goes (`lib/48_mech_avatar.js`), by the same
+rules: a foot is set down on the ground's real height and tilt and then does not move; the other swings to where the
+hip will be when it lands; a foot leaves when the other can carry the body for as long as the swing takes (from a stand
+that is at once, a short quick first step); above the speed where a swing would be quicker than a leg is, it **runs**,
+both feet in the air between steps. The hip is never higher than its legs reach — on a descent the limit comes down
+through each swing, so it walks down instead of dropping — it leans into its speed, sways over the foot that carries,
+gathers a tenth of a second before a hop and gives at the knees after, by how fast the ground came. It breathes.
+
+| `avatar` key | what |
+|---|---|
+| `stepWalk`, `stepRun` | step length at the walk's and the run's top speed (m) |
+| `reach` | how far ahead of and behind the hip a foot may stand (m): about a quarter of the leg |
+| `swing: [slowest, quickest]`, `lift: [walk, run]` | swing time (s) · how high the foot is carried (m) |
+| `lean: [walk°, run°]`, `sway`, `roll`, `bob`, `crouch: [walk, run]` | the body's attitude and height through a step |
+| `gather`, `dip`, `tuck`, `breath` | how far it sinks before a hop · how much it gives per m/s of landing · how far the legs fold in the air · the rise of a breath |
+
+For the gym, the cylinder fit and the cast sheet it walks an **exercise** from a script of key presses (stand · walk · turn
+· run · stop · turn on the spot · back · side · hop · leap), on the realm's land from where it is spawned — the same
+`step()`, kept as frames. Numbers a small biped needs that a colossus does not: slim joints (`drum` ≈ `width`, a thin
+`bar`) or no cylinder finds room; a hip that swings through a right angle is a rotary drive (`act: [0, 1, 1]`), not a
+cylinder; a knee's whole range — walk, run, hop, a steep descent — must stay under about 80°.
+
 ## Parts — `build(k)`
 `k.limbs({ style })` builds every leg from the numbers: hip bearing and yoke (or turret and arm), a drum, a spar with
 covers or flanges and a hose, a fork with a pin and bolted caps, the cup, the ball, the hub, toes on pins, and across
@@ -148,6 +180,7 @@ k.lamp('head', { at: [1.2, -0.3, 0], dir: [0.97, -0.24, 0], color: [0.72, 0.9, 1
 | flight: bank, load | ≤ 58° and ≤ 1.9 g; banked into ≥ 92 % of its turns | a turn too tight for its speed: widen it, or lower `speed` |
 | flight: pitch | ≤ 24° | the line climbs or falls too steeply: spread the height over more points |
 | wings | every hinge within ±62°; ≥ 20° of stroke at the shoulder; beating ≥ 15 % of the lap and gliding some of it; the body rides the beat ≥ 30 mm | `stroke`, `fold`, `bout`, `bob` |
+| the walker's body | through its exercise: reach, slip ≤ 4 mm, soles on the ground, no wrong bend, cylinders, never both feet off the ground at a walk, a breath ≥ 12 mm, a hop that gathers ≥ 5 cm and gives ≥ 4 cm, the body thrown about ≤ 16 m/s² walking and ≤ 26 running (against the walker's own path), a walk cycle of 0.45–1.4 s | `reach`, `lift`, `gather`, `dip`, `sway`; where it is spawned, if the land there is the trouble |
 | the way (check.mjs) | nothing solid on it | `LR.mech.wayDist(x, z)` in every `avoid`; move the ruin |
 
 `gym.mjs --course` walks each kind alone over an oval whose straight carries a 14° ramp, a level top, a 1.2 m drop,

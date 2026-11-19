@@ -25,6 +25,9 @@ harbour is laid out, how big a pylon is).
      when someone comes near;
    - **lamps**: which, what colour, which throw a beam; how it is told from the other kinds at night;
    - how many, on which way, where they stand still, how far apart.
+   - **the walker's own body** (optional): a kind on two legs, a person's height or a head more, designed for this
+     place like the rest — what it is for, its silhouette from behind (that is how it is seen), its lamp; how fast
+     it walks and runs. Without one the realm is walked in the first person only.
 5. **The ways**: one closed line a kind, drawn on the map (`gym.mjs --map`) where the land lets that size of machine
    go and where the walker will meet it. Where does the walker cross a way? Where is the walker above a machine, and
    where under one?

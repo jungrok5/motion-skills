@@ -41,6 +41,9 @@ and one standing in the water) is a second, unrelated topic.
 - **A body has weight**: heavier → longer cycle, more of it on the ground, slower sink into each step; it gathers
   before it leaves and runs on a little when it stops; it breathes while it stands; moves are key poses with an
   anticipation and an overshoot; trailing parts lag. No downloaded or generated motion.
+- **The walker may have a body**: a two-legged machine of the realm's own design, driven from the keys, seen from inside
+  (first person), from behind (third) or from above (top), nearer or further by the wheel. It keeps every rule the
+  others keep — planted feet do not slide, the hip is no higher than the legs reach, it gathers and gives.
 - **The ways are worn**: across a way the ground is eased toward level, no stretch steeper than its machines climb,
   footprints pressed in, nothing planted on it; the walker may cross and stand under a machine.
 - **Mist and lamps**: a `mist` weather; every lamp is a halo and (with a cone) a beam marched through the air, light
@@ -67,6 +70,7 @@ and one standing in the water) is a second, unrelated topic.
 | `scripts/film.mjs` | a film from the shots a realm declares (`film: [{ name, dur, tod, weather, t, cam(u) }]`): every frame's camera and clock are functions of time, so frames are written one by one and a render that stops goes on where it was; `--still` two frames a shot first; `--sound` the footfalls and calls placed from the same functions → `out/film.mp4` |
 | `scripts/fetch-assets.mjs` · `build.mjs` · `new-realm.mjs` | `assets.json` → `assets/` from Poly Haven · sources + engine → `index.html` (`--cdn`: the page reads the scans from Poly Haven's server) · start a realm folder from the starter or `--from iron-valley` |
 | `lib/48_mech.js` | `LR.mech`: frames, planar limbs (2 / 3 segments, the ankle that leans with the fold), feet and toes, neck, head, extras (`fixed spin lag`), the cylinder anchor search — numbers only |
+| `lib/48_mech_avatar.js` | the walker's own body: a kind on two legs that steps as it goes (walk, run, turn, back, side, hop, fall), its exercise for the gym, the fit and the cast sheet — numbers only |
 | `lib/48_mech_gait.js` | ways, units, footfalls on the land, the timetable of a lap (walk · arrive · stand · leave), the command at time t, pressing the ways and footprints into the land, the audit — numbers only |
 | `lib/48_mech_fly.js` | kinds that fly: a line in the air, speed with the climb, bank before the turn, wing beats in bouts and glides, the body riding the beat, its audit — numbers only |
 | `lib/48_mech_kit_fit.js` | fittings: pipes, hoses, rivets, hatches, louvres, tanks, junction boxes, ladders, rails, fins, gaiters, warning bars, stacks, dishes — and what the stock legs and cylinders carry |
