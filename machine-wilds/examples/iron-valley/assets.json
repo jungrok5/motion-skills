@@ -1,0 +1,41 @@
+{
+  "res": "1k",
+  "textures": [
+    "forest_leaves_03",
+    "mud_forest",
+    "river_small_rocks",
+    "mossy_rock",
+    { "id": "pine_bark", "maps": "dna" },
+    "asphalt_02",
+    "dirty_concrete",
+    "cracked_concrete",
+    { "id": "rusty_metal_02", "maps": "dna" },
+    { "id": "rust_coarse_01", "maps": "dna" },
+    { "id": "corrugated_iron_02", "maps": "dna" }
+  ],
+  "models": [
+    "covered_car",
+    "concrete_road_barrier_02",
+    "old_tyre",
+    "rusted_wheel_rim_01",
+    "barrel_03",
+    "old_military_crate",
+    "metal_jerrycan",
+    "portable_generator",
+    "utility_box_01",
+    "rock_moss_set_01",
+    "rock_moss_set_02",
+    "boulder_01",
+    "rock_face_02",
+    "dead_tree_trunk",
+    "tree_stump_02",
+    { "id": "dry_branches_medium_01", "maps": "d" },
+    { "id": "fern_02", "maps": "d" },
+    { "id": "shrub_02", "maps": "d" },
+    { "id": "fir_sapling", "maps": "d", "heavy": true }
+  ],
+  "atlases": [
+    { "id": "fir_tree_01", "map": "twig" },
+    { "id": "pine_tree_01", "map": "twig" }
+  ]
+}

@@ -1,0 +1,6 @@
+out/
+assets/
+examples/*/index.html
+examples/*/assets/
+starter/index.html
+starter/assets/
