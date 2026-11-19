@@ -52,6 +52,10 @@ and one standing in the water) is a second, unrelated topic.
   footprints pressed in, nothing planted on it; the walker may cross and stand under a machine.
 - **Mist and lamps**: a `mist` weather; every lamp is a halo and (with a cone) a beam marched through the air, light
   on what it falls on, a lens that glows. The realm opens dark and misty; the hour and the weather still go round.
+- **Haze, and a film the page plays**: a `haze` weather (a thin bright mist the sun comes through — far machines are pale
+  shapes); and `cine` (`lib/89_cine.js`): a realm may declare a film of shots — a free camera, the walker's body driven by
+  keys, each shot its own hour, weather and machines' clock — which the page plays itself at `?film=1` (Esc hands the
+  walker the world) and a script steps to draw an MP4 (`examples/iron-valley/trailer.mjs`).
 - **Everything of scanned-realm**: scans through the engine (surfaces re-baked, objects instanced with levels, cut-out
   plants, leaf atlases), CC0 only, listed per realm and never committed, the walk that does not wait for the download,
   four quality tiers, the HUD, the lens on the tour, `?scan=0`.

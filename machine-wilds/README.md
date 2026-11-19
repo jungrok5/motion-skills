@@ -27,6 +27,7 @@ node machine-wilds/scripts/render.mjs my-realm --cast --close    # the same kind
 node machine-wilds/scripts/render.mjs my-realm --views           # stills of the named views
 node machine-wilds/scripts/check.mjs my-realm                    # must print "check OK"
 node machine-wilds/scripts/film.mjs my-realm --still             # (a realm that declares a film) one frame a shot; without --still the frames, then out/film.mp4
+node machine-wilds/examples/iron-valley/trailer.mjs machine-wilds/examples/iron-valley --dry   # (a realm that declares `cine`) the film the page plays at ?film=1, stepped: --keys, a render, --sound, --join → out/cine.mp4
 cd my-realm && python3 -m http.server 8000                       # walk it: http://localhost:8000/
 ```
 The worked example is `examples/iron-valley` 「쇠울림 골짜기」 (101 MB of scans): the same commands with that folder.
