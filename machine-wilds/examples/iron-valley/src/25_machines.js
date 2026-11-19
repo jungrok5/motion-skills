@@ -86,7 +86,7 @@ V.machines = () => {
     idle: { period: 8, breath: 0.08, shift: 0.1, scan: 34 },
     moves: {
       // it rears: sinks at the front first, throws its fore end up with every lamp burning and holds, comes down past level and settles
-      rear: { dur: 11, main: 'body.pitch', sound: [3.0, 58, 3.8, 1.3], keys: { 'body.pitch': [[0, 0], [1.0, -2.6], [3.2, 12], [7.4, 12], [9.5, -2], [11, 0]], 'body.dy': [[0, 0], [1.0, -0.25], [3.2, 0.45], [7.4, 0.45], [9.5, -0.12], [11, 0]], 'head.pitch': [[0, 0], [1.0, 8], [3.4, -14], [7.4, -12], [9.6, 4], [11, 0]], 'head.yaw': [[0, 0], [3.4, 0], [4.8, 22], [6.4, -20], [7.6, 0], [11, 0]], light: [[0, 1], [2.8, 1], [3.4, 2.4], [7.2, 2.4], [8.4, 1], [11, 1]] } } } });
+      rear: { dur: 11, main: 'body.pitch', sound: [3.0, 58, 3.8, 1.3], keys: { 'body.pitch': [[0, 0], [1.0, -2.6], [3.2, 12], [7.4, 12], [9.5, -2], [11, 0]], 'body.dy': [[0, 0], [1.0, -0.25], [3.2, 0.45], [7.4, 0.45], [9.5, -0.12], [11, 0]], 'head.pitch': [[0, 0], [1.0, 8], [3.4, -14], [7.4, -12], [9.6, 4], [11, 0]], 'head.yaw': [[0, 0], [3.4, 0], [4.8, 22], [6.4, -20], [7.6, 0], [11, 0]], light: [[0, 1], [2.8, 1], [3.4, 1.5], [7.2, 1.5], [8.4, 1], [11, 1]] } } } });
   // 공벌레: woodlice the size of a small car, four of them in file — arches of plate from nose to tail over six quick legs.
   // 1.6 t: a step every 0.6 s.  They keep to the lower shelf and duck under their shells when they stop.
   const BL = { kind: 'insect', width: 0.1, drum: 0.11, bar: 0.014, ball: 0.07, toes: 2, toeLen: 0.2, act: [1, 1], coxa: 0.22, style: 'girder' };
