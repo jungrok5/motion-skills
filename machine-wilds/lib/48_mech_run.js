@@ -4,7 +4,7 @@
 // air and light passes, the feet the walker bumps into, the ground shake and the list of fresh footfalls (dust, sound),
 // the head that turns to whoever comes near, and wrecks — a kind built once in a pose and left to the moss.
 {
-  const M = LR.mech, T = THREE, V = M.v, D2R = M.D2R, MAXB = 192, ROWS = 16;
+  const M = LR.mech, T = THREE, V = M.v, D2R = M.D2R, MAXB = 192, ROWS = 24;
   const skin = (data, o, f, g) => {      // rows of the matrix that takes the rest frame g to the frame f
     for (let i = 0; i < 3; i++) { const a = f.x[i], b = f.y[i], c = f.z[i], r0 = a * g.x[0] + b * g.y[0] + c * g.z[0], r1 = a * g.x[1] + b * g.y[1] + c * g.z[1], r2 = a * g.x[2] + b * g.y[2] + c * g.z[2];
       data[o + i * 4] = r0; data[o + i * 4 + 1] = r1; data[o + i * 4 + 2] = r2; data[o + i * 4 + 3] = f.p[i] - (r0 * g.p[0] + r1 * g.p[1] + r2 * g.p[2]); } };
