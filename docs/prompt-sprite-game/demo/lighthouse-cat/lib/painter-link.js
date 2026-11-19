@@ -43,10 +43,11 @@ export class Painter {
     this.rgbaPalette = new Uint8ClampedArray(meta.palette.length * 4);
     meta.palette.forEach((c, i) => this.rgbaPalette.set([c[0], c[1], c[2], i === 0 ? 0 : 255], i * 4));
   }
-  /** caption → word ids (unknown words → <unk>, then padded) and the words it did not know */
+  /** caption → word ids of the words the painter knows (padded) and the words it did not know (dropped) */
   encode(prompt) {
     const ws = prompt.toLowerCase().match(/[a-z]+(?:-[a-z]+)*/g) || [];
-    const ids = ws.map((w) => this.words.get(w) ?? 1).slice(0, this.meta.text_len);
+    // unknown words are dropped, not sent as <unk>: several <unk> tokens are unlike any training caption and garble the sprite
+    const ids = ws.filter((w) => this.words.has(w)).map((w) => this.words.get(w)).slice(0, this.meta.text_len);
     const unknown = ws.filter((w) => !this.words.has(w));
     while (ids.length < this.meta.text_len) ids.push(0);
     return { ids, unknown };
