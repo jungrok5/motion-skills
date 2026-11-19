@@ -18,6 +18,10 @@ ap.add_argument('--lr', type=float, default=1e-3); ap.add_argument('--d', type=i
 ap.add_argument('--d-px', type=int, default=96); ap.add_argument('--core', type=int, default=6)
 ap.add_argument('--heads', type=int, default=6); ap.add_argument('--every', type=int, default=500)
 ap.add_argument('--prompts', default='')
+ap.add_argument('--selfcond', type=int, default=0); ap.add_argument('--blob', type=float, default=0.0)
+ap.add_argument('--psmooth', type=float, default=0.0, help='perceptual label smoothing weight (colour-distance-aware)')
+ap.add_argument('--smooth', type=float, default=0.05); ap.add_argument('--wd', type=float, default=0.05)
+ap.add_argument('--dropout-words', type=float, default=0.1)
 ap.add_argument('--bench', type=int, default=0, help='time this many steps and exit')
 a = ap.parse_args()
 os.makedirs(a.out, exist_ok=True)
@@ -35,11 +39,20 @@ x0 = tokens  # colour ids 0..K (0 = transparent); the model's MASK id is K + 1
 n = len(tokens); perm = torch.randperm(n); nval = max(64, n // 20)
 val, tr = perm[:nval], perm[nval:]
 
-model = SpritePainter(colors=K + 1, vocab=len(vocab), d=a.d, d_px=a.d_px, core=a.core, heads=a.heads)
+model = SpritePainter(colors=K + 1, vocab=len(vocab), d=a.d, d_px=a.d_px, core=a.core, heads=a.heads, selfcond=bool(a.selfcond))
 ema = SpritePainter(**model.cfg); ema.load_state_dict(model.state_dict()); [p.requires_grad_(False) for p in ema.parameters()]
 nparam = sum(p.numel() for p in model.parameters())
 print(f'{n} sprites ({len(tr)} train / {nval} val), {K + 1} colours, {len(vocab)} words, {nparam / 1e6:.2f} M parameters', flush=True)
-opt = torch.optim.AdamW(model.parameters(), lr=a.lr, betas=(0.9, 0.98), weight_decay=0.05)
+opt = torch.optim.AdamW(model.parameters(), lr=a.lr, betas=(0.9, 0.98), weight_decay=a.wd)
+# perceptual label smoothing: part of each target spreads to colours that look alike (OKLab), none to/from transparent
+def _oklab(rgb):
+    c = rgb / 255.0; c = np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
+    l = 0.4122214708*c[:,0] + 0.5363325363*c[:,1] + 0.0514459929*c[:,2]; m_ = 0.2119034982*c[:,0] + 0.6806995451*c[:,1] + 0.1073969566*c[:,2]
+    s_ = 0.0883024619*c[:,0] + 0.2817188376*c[:,1] + 0.6299787005*c[:,2]; l, m_, s_ = np.cbrt(l), np.cbrt(m_), np.cbrt(s_)
+    return np.stack([0.2104542553*l + 0.7936177850*m_ - 0.0040720468*s_, 1.9779984951*l - 2.4285922050*m_ + 0.4505937099*s_, 0.0259040371*l + 0.7827717662*m_ - 0.8086757660*s_], 1)
+_lab = torch.tensor(_oklab(palette.astype(np.float64)), dtype=torch.float32)
+_d2 = ((_lab[:, None] - _lab[None]) ** 2).sum(-1)
+SOFT = torch.softmax(-_d2 / 0.002, 1); SOFT[0] = 0; SOFT[:, 0] = 0; SOFT[0, 0] = 1; SOFT = SOFT / SOFT.sum(1, keepdim=True)
 sched = lambda s: min(1, s / 300) * (0.1 + 0.9 * 0.5 * (1 + math.cos(math.pi * min(1, s / a.steps))))
 prompts = [p.strip() for p in a.prompts.split('|') if p.strip()] or ['orange tabby cat', 'side-view black cat', 'front-view white persian cat', 'three-quarter-view siamese cat', 'kitten', 'cat warrior with a sword', 'ghost cat', 'winged cat']
 
@@ -48,20 +61,27 @@ def batch(ix, aug=True):
     if aug:
         flip = torch.rand(len(ix)) < 0.5
         x[flip] = x[flip].view(-1, 16, 16).flip(-1).reshape(-1, 256)                 # mirror (sprites face both ways)
-        w[torch.rand(len(ix)) < 0.1] = 0                                             # caption dropout for guidance
+        w[torch.rand(len(ix)) < a.dropout_words] = 0                                 # caption dropout for guidance
     return x, w
 
-def loss_on(m, x, w):
-    hid, ratio = mask_batch(x)
+def loss_on(m, x, w, train=True):
+    hid, ratio = mask_batch(x, blob=a.blob if train else 0.0)
     inp = torch.where(hid, torch.full_like(x, m.mask_id), x)
-    logits = m(inp, w, ratio)
-    return F.cross_entropy(logits[hid], x[hid], label_smoothing=0.05)
+    sc = None
+    if m.selfcond and train and torch.rand(()) < 0.5:                                 # half the time: feed a first guess back in
+        with torch.no_grad(): sc = F.softmax(m(inp, w, ratio), -1)
+    logits = m(inp, w, ratio, sc)[hid]; tgt = x[hid]
+    if not train: return F.cross_entropy(logits, tgt)
+    if a.psmooth > 0:
+        q = (1 - a.psmooth) * F.one_hot(tgt, logits.shape[-1]).float() + a.psmooth * SOFT[tgt]
+        return -(q * F.log_softmax(logits, -1)).sum(-1).mean()
+    return F.cross_entropy(logits, tgt, label_smoothing=a.smooth)
 
 def save_samples(step):
     from PIL import Image
     ema.eval(); rows = []
     for i, p in enumerate(prompts):
-        out = paint(ema, torch.tensor(encode(p)), seed=i, count=4).numpy()
+        out = paint(ema, torch.tensor(encode(p)), seed=i, count=4, steps=24, temp=0.7, nms=True).numpy()
         rows.append(out)
     S = 6; img = np.zeros((len(prompts) * 18 * S, 4 * 18 * S, 4), np.uint8); img[..., :3] = 34; img[..., 3] = 255
     for r, out in enumerate(rows):
@@ -90,7 +110,7 @@ for step in range(1, a.steps + 1):
         if step % a.every == 0:
             ema.eval()
             with torch.no_grad():
-                torch.manual_seed(1); vl = np.mean([loss_on(ema, *batch(val[i:i + 128], aug=False)).item() for i in range(0, nval, 128)])
+                torch.manual_seed(1); vl = np.mean([loss_on(ema, *batch(val[i:i + 128], aug=False), train=False).item() for i in range(0, nval, 128)])
             msg += f' val {vl:.4f}'
             save_samples(step)
             ck = {'cfg': ema.cfg, 'state': ema.state_dict(), 'palette': palette, 'vocab': vocab, 'step': step, 'val': float(vl)}
