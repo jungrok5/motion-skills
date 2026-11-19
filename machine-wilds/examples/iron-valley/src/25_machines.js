@@ -65,7 +65,7 @@ V.machines = () => {
   const jaraLegs = [[3.4, 4.3, 'F'], [-3.4, -4.3, 'R']].map(([x, hx, n]) => Object.assign({}, JL, { name: n + 'L', at: [x, -0.4, -2.7], segs: [3.5, 4.3], knee: 1, home: [hx, -6.5] }));
   M.define('jara', { title: '자라', age: 1, tonnes: 150, ride: 3.0, belly: [4.4, 1.7, 2.4], aware: 34, lensGain: 20, build: (k) => V.parts.jara(k),
     palette: { shell: ['ceramic', '#b9bfae'], rust: ['rustplate', '#c4b8a2'], frame: ['paintmetal', '#5f6a58'], dark: ['paintmetal', '#2c302b'] },
-    limbs: [...jaraLegs, ...jaraLegs.map(M.mirror)], neck: { at: [5.3, -0.2, 0], links: [[1.5, 10], [1.3, 3]] }, head: { len: 1.7 },
+    limbs: [...jaraLegs, ...jaraLegs.map(M.mirror)], neck: { at: [5.3, -0.2, 0], links: [[1.5, 10], [1.3, 3]] }, head: { len: 2.2 },
     extras: [{ name: 'tail', type: 'lag', parent: 'body', at: [-5.5, -0.4, 0], dir: [-1, -0.2, 0], len: 2.2, lag: 0.5, gain: 1.2, maxDeg: 18 }],
     gait: { cycle: 7.0, duty: 0.8, stride: 2.5, lift: 0.65, pattern: 'lateral', crouch: 0.1, dip: 0.14, dipTime: 1.0, sway: 0.3, roll: 1.4, nod: 0.6, yaw: 1.2, footPitch: 8, toeCurl: 14, neckRock: 1.5, neckSway: 5, follow: [0.7, 0.5], smooth: 0.6, footTilt: 26, settle: 0.3, settleTime: 1.6, gather: 3, gatherDip: 0.3, gatherBack: 0.3, wade: 1.8, reachMax: 0.93 },
     idle: { period: 20, breath: 0.1, shift: 0.12, scan: 20 },

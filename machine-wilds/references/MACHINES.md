@@ -158,6 +158,22 @@ k.lamp('head', { at: [1.2, -0.3, 0], dir: [0.97, -0.24, 0], color: [0.72, 0.9, 1
 - `LR.mech.wreck(kind, { x, z, yaw, pose(cmd, q), moss })` builds a kind once into the world in a pose you write (the
   body on the ground, legs folded), its lenses dead and its tints gone to lichen.
 
+### Small kinds, sprawled kinds, files and posts — five numbers that are easy to get wrong
+- **A small kind sets its own `clear`.** The swing clears the ground by `0.35 × ball + 0.25` m unless told otherwise: a
+  quarter of a metre is nothing to a crane and a third of a woodlouse's leg, which folds to make it and snaps its body
+  about at every step. A kind under two metres gives `clear` in its own size (the woodlouse: 0.04).
+- **A sprawled leg stands the body up.** A hip is held at least `reachMin` (0.4) of its leg's reach over its foot, so
+  long legs set wide lift the body above `ride` — the gym's line says by how much ("body rides … (mean −1.5)"). Give
+  `ride` and the `belly` box as they really are: every tank and pipe slung under the hull is inside that box.
+- **A file that stops together.** The same halts on one clock, a few seconds apart, walk each machine into the one
+  stopped in front of it (the porters are spaced by more than their longest hold instead). For a close file, put each
+  one's halts its own place further along the way (`at + i × gap / way length`) and its clock that much ahead
+  (`offset: i × gap / speed`, a whole number of cycles): they stop and leave as one. Then run the pair check.
+- **A post's loop is whole breaths.** A post repeats `idle.period × rest + Σ (move + 4 s)`; the idle runs on the
+  world's clock, so that sum must be a whole number of idle periods or "one lap later" is another pose.
+- **The idle is read for eight seconds** at the first halt without a move (with a move, if there is no other): give
+  that halt nine seconds or more.
+
 ## The checks (`gym.mjs`, and again in `check.mjs`) — what each number means
 | rule | limit | when it fails |
 |---|---|---|
@@ -185,5 +201,7 @@ k.lamp('head', { at: [1.2, -0.3, 0], dir: [0.97, -0.24, 0], color: [0.72, 0.9, 1
 
 `gym.mjs --course` walks each kind alone over an oval whose straight carries a 14° ramp, a level top, a 1.2 m drop,
 a 12° side slope, a ditch, a mound and a ramp down: a kind that passes there copes with land in general; the realm's
-own ways are then a matter of where they are laid. `--sheet` draws what the numbers say — left legs solid, right legs
+own ways are then a matter of where they are laid. A kind that rides lower than 3.6 m meets the drop, the ditch, the
+mound and the roughness in its own size (× `ride / 3.6`): a knee-high machine is not asked to step off a wall taller
+than itself — the ramps and the side slope stay as they are. `--sheet` draws what the numbers say — left legs solid, right legs
 dashed, planted blue, swinging red, cylinders orange, on the land's real profile.

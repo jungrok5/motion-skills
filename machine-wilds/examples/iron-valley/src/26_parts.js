@@ -148,7 +148,7 @@ V.parts = {
       const dome = (x, z) => { const hx = x < 0 ? 5.9 : 5.7, e = Math.max(0.02, 1 - (x / hx) ** 2), bz = 4.8 * Math.sqrt(e), by = 2.9 * Math.sqrt(e), y = 0.1 + by * Math.pow(Math.max(0.001, 1 - Math.pow(Math.abs(z) / bz, 2.6)), 1 / 2.6), n = [x / (hx * hx) * 2.9, 1 / 2.9, (z / (4.8 * 4.8)) * 2.9 * 1.5]; return [[x, y, z], n]; };
       for (const [zr, xs, w, h] of [[0, [-3.8, -1.9, 0, 1.9, 3.7], 1.6, 2.0], [2.5, [-3.1, -1.1, 0.9, 2.9], 1.7, 1.6], [-2.5, [-3.1, -1.1, 0.9, 2.9], 1.7, 1.6]]) for (const x of xs) { const [c, n] = dome(x, zr); k.hatch([c[0], c[1] - 0.1, c[2]], n, w, h, { up: [1, 0, 0], role: zr === 0 ? 'shell' : 'rust', t: 0.24 }); }
       // moss, and what grows in it
-      g.mat('moss', { tint: '#5e6b4e', flags: LR.FLAG.SWAY, weight: 0.25 }); const rr = LR.rng('jara-moss'); for (let i = 0; i < (k.lod === 0 ? 26 : k.lod === 1 ? 14 : 6); i++) { const x = -4.6 + rr() * 9, z = (rr() - 0.5) * 6.4, c = dome(x, z)[0]; g.blob(c[0], c[1] + 0.12, c[2], 0.5 + rr() * 0.7, { squash: [1.4, 0.4 + rr() * 0.3, 1.3], seg: k.n(8), rings: 4, seed: i }); }
+      g.mat('moss', { tint: '#5e6b4e', flags: LR.FLAG.SWAY, weight: 0.25 }); const rr = LR.rng('jara-moss'); for (let i = 0; i < (k.lod === 0 ? 16 : k.lod === 1 ? 9 : 4); i++) { const x = -4.6 + rr() * 9, z = (rr() - 0.5) * 6.4, c = dome(x, z)[0]; g.blob(c[0], c[1] + 0.02, c[2], 0.32 + rr() * 0.4, { squash: [1.7, 0.22 + rr() * 0.16, 1.5], seg: k.n(8), rings: 4, seed: i }); }
       // the plant: mains under the rim with a line to every hip, tanks slung under the hull, louvres, two stacks through the shell, a ladder and a rail for whoever tended it
       for (const s of [-1, 1]) { k.pipe([[-4.4, -0.5, s * 3.0], [-1.5, -0.55, s * 3.7], [1.5, -0.55, s * 3.7], [4.2, -0.5, s * 2.9]], 0.11, { joints: [1, 2], role: 'rust' }); for (const x of [3.4, -3.4]) k.hose([[x * 0.9, -0.52, s * 3.25], [x, -0.9, s * 3.0], [x, -0.6, s * 2.75]], 0.07);
         k.tank([-2.6, -1.25, s * 1.6], [-0.2, -1.25, s * 1.6], 0.42, { role: 'rust', up: [0, -1, 0] }); k.grille([1.6, -0.45, s * 3.82], [0, 0, s], 1.8, 0.5, { up: [0, 1, 0] }); k.grille([-1.6, -0.45, s * 3.84], [0, 0, s], 1.4, 0.5, { up: [0, 1, 0] });
@@ -159,11 +159,11 @@ V.parts = {
     });
     for (const [x, s] of [[3.6, -1], [3.6, 1], [0, -1], [0, 1], [-3.6, -1], [-3.6, 1]]) k.lamp('body', { at: [x, -0.1, s * 4.05], dir: [0, -0.5, s], color: [1, 0.6, 0.2], power: 2.2, range: 14, lens: 0.14, glow: 0.6 });
     k.lamp('body', { at: [-5.6, -0.2, 0], dir: [-1, 0, 0], color: [1, 0.12, 0.06], power: 2, range: 14, lens: 0.16, glow: 0.8 });
-    k.neckLinks({ width: 1.1, style: 'girder' });
-    k.bone('head', (g) => { k.mat('frame'); k.loft('x', [[-0.5, 0.5, 0.6, 0, 0, 4], [0.5, 0.62, 0.74, 0, 0, 4], [1.5, 0.44, 0.58, -0.08, 0, 4], [1.9, 0.26, 0.4, -0.14, 0, 3]], { sides: 14 });
-      k.mat('rust'); k.loft('x', [[-0.45, 0.56, 0.68, 0.06, 0, 3], [0.5, 0.7, 0.82, 0.08, 0, 3], [1.5, 0.48, 0.62, 0.02, 0, 3]], { sides: 14, from: -0.5 * Math.PI, to: 0.5 * Math.PI, caps: false }); k.mat('dark'); g.box(1.2, -0.42, 0, 1.2, 0.14, 0.9, { soft: 0.3 });
-      for (const s of [-1, 1]) { k.along([1.25, 0.05, s * 0.6], [0.75, -0.1, s * 0.65], (g2) => { k.mat('joint'); g2.lathe(0, 0, [[0.2, -0.05], [0.24, 0.04], [0.2, 0.1]], { sides: k.n(12) }); }); k.hose([[-0.5, -0.2, s * 0.3], [-0.9, -0.5, s * 0.34], [-1.0, -0.9, s * 0.3]], 0.05); } k.grille([0.4, 0.1, 0.76], [0, 0, 1], 0.7, 0.3, { up: [0, 1, 0] }); k.grille([0.4, 0.1, -0.76], [0, 0, -1], 0.7, 0.3, { up: [0, 1, 0] }); });
-    for (const s of [-1, 1]) k.lamp('head', { name: 'eye', at: [1.32, 0.04, s * 0.67], dir: [0.86, -0.28, s * 0.42], color: [1.0, 0.72, 0.3], power: 20, cone: 13, range: 80, lens: 0.19, proud: 0.03 });
+    k.neckLinks({ width: 1.4, style: 'girder' });
+    k.bone('head', (g) => { k.mat('frame'); k.loft('x', [[-0.6, 0.66, 0.8, 0, 0, 4], [0.6, 0.82, 0.98, 0, 0, 4], [1.9, 0.58, 0.76, -0.1, 0, 4], [2.45, 0.34, 0.52, -0.18, 0, 3]], { sides: 14 });
+      k.mat('shell'); k.loft('x', [[-0.55, 0.74, 0.9, 0.08, 0, 3], [0.6, 0.92, 1.08, 0.1, 0, 3], [1.9, 0.63, 0.82, 0.03, 0, 3]], { sides: 14, from: -0.5 * Math.PI, to: 0.5 * Math.PI, caps: false }); k.mat('dark'); g.box(1.5, -0.55, 0, 1.5, 0.18, 1.15, { soft: 0.3 });
+      for (const s of [-1, 1]) { k.along([1.62, 0.06, s * 0.8], [1.0, -0.12, s * 0.86], (g2) => { k.mat('joint'); g2.lathe(0, 0, [[0.26, -0.06], [0.31, 0.05], [0.26, 0.13]], { sides: k.n(12) }); }); k.hose([[-0.6, -0.26, s * 0.4], [-1.1, -0.6, s * 0.44], [-1.2, -1.0, s * 0.4]], 0.06); } k.grille([0.5, 0.0, 1.0], [0, 0, 1], 0.9, 0.36, { up: [0, 1, 0] }); k.grille([0.5, 0.0, -1.0], [0, 0, -1], 0.9, 0.36, { up: [0, 1, 0] }); });
+    for (const s of [-1, 1]) k.lamp('head', { name: 'eye', at: [1.72, 0.05, s * 0.88], dir: [0.86, -0.28, s * 0.42], color: [1.0, 0.72, 0.3], power: 20, cone: 13, range: 80, lens: 0.24, proud: 0.03 });
     k.bone('tail', (g) => { k.mat('frame'); g.tube([[0, 0, 0], [0, 1.1, 0], [0, 2.2, 0]], [0.36, 0.22, 0.07], { sides: k.n(8), caps: true }); if (k.mid) { k.mat('rust'); for (const y of [0.3, 0.9, 1.5]) g.box(0, y, 0.2, 0.5 - y * 0.2, 0.3, 0.1, { soft: 0.3 }); } });
   },
   // 가재: a shell of overlapping plates the red of old oxide from a spike of a snout to a jointed tail, eight girder legs under
@@ -202,14 +202,16 @@ V.parts = {
       for (const s of [-1, 1]) { k.mat('joint'); g.tube([[0.3, 0.3, s * 0.4], [0.5, 0.75, s * 0.62], [0.72, 0.95, s * 0.7]], [0.07, 0.06, 0.09], { sides: k.n(7), caps: true }); } });
     for (const s of [-1, 1]) { k.lamp('head', { name: 'eye', at: [0.8, 0.96, s * 0.7], dir: [0.9, -0.3, s * 0.2], color: [1.0, 0.2, 0.08], power: 26, cone: 12, range: 90, lens: 0.11, proud: 0.03 }); k.lamp('head', { at: [1.22, -0.02, s * 0.2], dir: [1, -0.1, s * 0.2], color: [1, 0.3, 0.1], power: 1.2, range: 8, lens: 0.06, glow: 0.8 }); }
   },
-  // 공벌레: seven arches of plate from nose to tail, pale and rust by turns, over a hull no bigger than a bath; six quick legs;
+  // 공벌레: seven arches of plate from a closed nose to a closed tail, rust with two pale ones that were replaced, over a hull no bigger than a bath; six quick legs;
   // two feelers and two small lamps
   gong(k) {
     k.limbs({ style: 'girder' });
     k.bone('body', (g) => {
       k.mat('dark'); k.loft('x', [[-1.35, 0.14, 0.34, -0.02, 0, 4], [-0.6, 0.2, 0.52, -0.02, 0, 4], [0.6, 0.2, 0.52, -0.02, 0, 4], [1.3, 0.16, 0.36, -0.02, 0, 4]], { sides: 12 });
-      for (let i = 0; i < 7; i++) { const x = 1.18 - i * 0.4, f = 1 - 0.42 * ((i - 3) / 3.4) ** 2, hh = 0.62 * f, ww = 0.84 * (0.72 + 0.28 * f); k.mat(i % 2 ? 'rust' : 'shell'); k.loft('x', [[x - 0.3, hh * 0.92, ww * 0.95, 0.04, 0, 2.6], [x - 0.02, hh, ww, 0.04, 0, 2.6], [x + 0.2, hh * 1.03, ww * 1.02, 0.04, 0, 2.6]], { sides: 14, from: -0.56 * Math.PI, to: 0.56 * Math.PI, caps: false });
+      for (let i = 0; i < 7; i++) { const x = 1.18 - i * 0.4, f = 1 - 0.42 * ((i - 3) / 3.4) ** 2, hh = 0.62 * f, ww = 0.84 * (0.72 + 0.28 * f); k.mat(i === 1 || i === 4 ? 'shell' : 'rust'); k.loft('x', [[x - 0.3, hh * 0.92, ww * 0.95, 0.04, 0, 2.6], [x - 0.02, hh, ww, 0.04, 0, 2.6], [x + 0.2, hh * 1.03, ww * 1.02, 0.04, 0, 2.6]], { sides: 14, from: -0.56 * Math.PI, to: 0.56 * Math.PI, caps: false });
         if (k.fine) for (const s of [-1, 1]) k.rivets([x + 0.12, 0.04 + hh * 0.5, s * ww * 0.86], [x + 0.12, 0.04 + hh * 0.98, s * ww * 0.3], 4, 0.012, [0.2, 0.6, s * 0.7]); }
+      k.mat('rust'); k.loft('x', [[1.34, 0.42, 0.76, 0.04, 0, 2.6], [1.54, 0.3, 0.56, 0.03, 0, 2.6], [1.64, 0.03, 0.05, 0.0, 0, 2.6]], { sides: 14, from: -0.56 * Math.PI, to: 0.56 * Math.PI, caps: false }); k.mat('rust'); k.loft('x', [[-1.8, 0.03, 0.05, 0.0, 0, 2.6], [-1.7, 0.27, 0.5, 0.03, 0, 2.6], [-1.5, 0.39, 0.72, 0.04, 0, 2.6]], { sides: 14, from: -0.56 * Math.PI, to: 0.56 * Math.PI, caps: false });
+      k.mat('dark'); k.loft('x', [[-1.45, 0.3, 0.5, 0.06, 0, 3], [-0.5, 0.46, 0.66, 0.08, 0, 3], [0.5, 0.46, 0.66, 0.08, 0, 3], [1.3, 0.3, 0.5, 0.06, 0, 3]], { sides: 12, from: -0.5 * Math.PI, to: 0.5 * Math.PI });
       if (k.mid) { for (const s of [-1, 1]) for (const x of [0.85, 0, -0.85]) k.hose([[x * 0.8, -0.14, s * 0.2], [x, -0.2, s * 0.36], [x, -0.1, s * 0.42]], 0.016); k.mat('dark'); for (const s of [-1, 1]) g.tube([[-1.3, 0.02, s * 0.14], [-1.62, 0.1, s * 0.2]], [0.04, 0.012], { sides: 5 }); }
     });
     k.neckLinks({ width: 0.24, style: 'girder' });

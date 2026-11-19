@@ -22,9 +22,10 @@ scans allowed) with machines, relief and mist added; the machines' kinematics, c
 of their designs, names or assets is here** — every machine and place is designed from the topic
 (`references/SOURCE.md`). Scans are from <https://polyhaven.com> (CC0) and are not committed.
 Built and proven on `examples/iron-valley` 「쇠울림 골짜기」 (a valley 640 m across with 36 m of relief: a broken
-viaduct, a maintenance hall with a camp fire, pylons, a container yard; four kinds of machine — a 25 m long-necked
+viaduct, a maintenance hall with a camp fire, pylons, a container yard; seven kinds of machine — a 25 m long-necked
 four-legged watcher, a string of six-legged carriers, a 73 m eight-legged relic on the rim, a skein of five kites
-with nine-metre wings overhead — and one that fell long ago). `starter/` (Lantern Quarry: a flooded quarry cut in benches, two wardens of a fourth kind, one walking the rim
+with nine-metre wings overhead, two turtles under mossed domes of plate, a crayfish in oxide-red plates with claws and
+a jointed tail that keeps to the brook, a file of four woodlice — and one that fell long ago). `starter/` (Lantern Quarry: a flooded quarry cut in benches, two wardens of a fourth kind, one walking the rim
 and one standing in the water) is a second, unrelated topic.
 
 **Fixed by the skill (the style)**
