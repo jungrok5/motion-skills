@@ -116,3 +116,10 @@ Graded against `references/BRIEF.md` (1–5; under 4 goes back). The first pass 
 What is still under AAA and why: foliage is cards and reads as such inside ten metres; shadows from the machines' lamps are
 not cast (their light passes through trunks); a noon picture shows the engine's limits in a way mist does not. Frame rate
 on a real GPU has not been measured from this machine.
+
+## The trailer
+`trailer.mjs` (this folder): 42 s, eight shots — behind a kite over the viaduct with a crane on the floor below (18:36) · the
+camera comes down to the walker's body in the reeds · it walks to the turtle at the tarn and looks up · runs at the
+relic on the rim at sunset, goes in between its legs, looks up as it calls · the whole of it from far off · across the
+brook the crayfish rears in dusk mist · night mist on the viaduct, it looks up and the kites come over · a title card.
+Free camera, the body driven by keys; sound from the machines' footfalls and calls. `--dry`, `--keys`, then the render.

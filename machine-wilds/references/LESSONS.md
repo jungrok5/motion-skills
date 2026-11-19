@@ -132,6 +132,19 @@ was learned putting scans into it (scanned-realm), then the engine's own list (l
   lofts, each a little smaller than the one before, each ending a little wider than it begins. Scutes are `k.hatch`
   along the dome's own normal. Nothing here needed a new part in the kit.
 
+- **"Like a trailer: a free camera that roams, follows a bird down, then goes to the character."** → The reel (`film.mjs`)
+  has cameras but no body in it; the player film had the body but only its own eye. A trailer needs both: the body driven
+  by keys every frame (`P.keys`, `P.update`), the camera placed after it (`cam.position`, `cam.rotation`) and before the
+  frame is emitted, the clock owned by the script. `examples/iron-valley/trailer.mjs` is that: shots as `{ T0, start,
+  act(s, keys), cam(s) }`, a dry pass first (where does the body go), three key frames a shot (is it in the picture), then
+  the long render. Found on the way: the walk ended 18 m short of the rim way, so nobody could go under the relic → the
+  realm's `world.radius` to 262; a low camera in reeds sees reeds → two metres up at the tarn; a body on a bank below the
+  camera falls out of the bottom of the frame → check its feet's height, not just its place on the map.
+- **A red rectangle in the mist.** → With the crayfish's lamps at 2.4 × and the camera 20° off its nose, hard straight
+  edges crossed the picture: the camera was inside a lamp's cone, and a cone seen from inside ends on straight lines. →
+  Camera 60° off the nose (beams read as shafts), the flare lowered to 1.5 ×. The beam's edge in the air pass is still
+  hard from inside; a film keeps its camera out of the beams.
+
 ## Scans in the engine (scanned-realm)
 ## Scans
 
