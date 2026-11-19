@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>등대 고양이 · prompt-sprite-game</title>
+<link rel="stylesheet" href="./lib/game.css">
+</head>
+<body>
+<main id="game"></main>
+<script type="module">
+  import { boot } from './lib/engine.js';
+  boot({ root: document.getElementById('game'), src: './game.json' });
+</script>
+</body>
+</html>

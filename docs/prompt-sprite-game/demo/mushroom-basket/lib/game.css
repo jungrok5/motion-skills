@@ -1,0 +1,41 @@
+/* prompt-sprite-game page shell. The canvas is scaled by whole numbers with crisp pixels. */
+:root { --psg-bg: #0d0c12; --psg-ink: #f2ecdf; --psg-dim: #a39d92; --psg-accent: #ffcf5a; --psg-card: rgba(13, 12, 18, 0.86); }
+html, body { margin: 0; height: 100%; background: var(--psg-bg); color: var(--psg-ink); font: 15px/1.45 system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+.psg { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+.psg-stage { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; }
+.psg-canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; touch-action: none; }
+.psg-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 8px; box-sizing: border-box; }
+.psg-overlay[hidden] { display: none; }
+.psg-card { background: var(--psg-card); border: 2px solid var(--psg-ink); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5); padding: 14px 18px; max-width: min(520px, 100%); max-height: 100%; overflow: auto; box-sizing: border-box; text-align: center; }
+.psg-card h1 { font-size: 20px; margin: 0 0 6px; letter-spacing: 0.02em; }
+.psg-card p { margin: 4px 0; color: var(--psg-dim); font-size: 13px; }
+.psg-cast { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 10px 0; }
+.psg-cast figure { margin: 0; }
+.psg-cast canvas, .psg-paint canvas, .psg-picks canvas { width: 48px; height: 48px; image-rendering: pixelated; display: block; margin: 0 auto; }
+.psg-cast figcaption { font-size: 11px; color: var(--psg-dim); margin-top: 2px; }
+.psg-paint { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px; }
+.psg-paint canvas { width: 64px; height: 64px; outline: 1px dashed rgba(255, 255, 255, 0.2); }
+.psg-buttons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 10px 0 4px; }
+.psg button { font: inherit; font-size: 14px; color: var(--psg-ink); background: transparent; border: 2px solid var(--psg-ink); padding: 6px 12px; cursor: pointer; }
+.psg button:hover, .psg button:focus-visible { background: rgba(255, 255, 255, 0.1); outline: none; }
+.psg button.psg-go { background: var(--psg-accent); color: #1a1408; border-color: var(--psg-accent); font-weight: 700; }
+.psg-own { margin-top: 8px; font-size: 13px; color: var(--psg-dim); }
+.psg-own summary { cursor: pointer; }
+.psg-own form { display: flex; gap: 6px; justify-content: center; margin-top: 6px; }
+.psg-own input { font: inherit; font-size: 14px; background: transparent; color: var(--psg-ink); border: 2px solid var(--psg-dim); padding: 4px 8px; min-width: 0; flex: 1; max-width: 240px; }
+.psg-picks { display: flex; gap: 6px; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
+.psg-picks button { padding: 4px; }
+.psg-keys { font-size: 12px !important; margin-top: 8px !important; }
+.psg-credit { font-size: 11px; color: var(--psg-dim); margin: 0 12px; text-align: center; }
+.psg-touch { position: absolute; left: 0; right: 0; bottom: 6px; display: flex; justify-content: space-between; padding: 0 10px; pointer-events: none; }
+.psg-touch[hidden] { display: none; }
+.psg-touch button { pointer-events: auto; width: 46px; height: 46px; border-radius: 50%; background: rgba(0, 0, 0, 0.35); border: 2px solid rgba(255, 255, 255, 0.6); font-size: 16px; padding: 0; touch-action: none; }
+.psg-pad { display: flex; gap: 6px; }
+.psg-a { width: 56px !important; height: 56px !important; }
+/* narrow or portrait screens: the card covers the whole view, the touch pad sits under the picture */
+@media (max-width: 640px), (orientation: portrait) {
+  .psg-overlay { position: fixed; z-index: 5; background: rgba(0, 0, 0, 0.35); }
+  .psg-touch { position: static; width: 100%; max-width: 440px; box-sizing: border-box; margin-top: 14px; padding: 0 14px; }
+  .psg-touch button { width: 58px; height: 58px; font-size: 20px; }
+  .psg-a { width: 68px !important; height: 68px !important; }
+}
