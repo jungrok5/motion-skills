@@ -1045,7 +1045,7 @@ export async function boot({ root = document.body, src = './game.json', data = n
   let sprites = { ...hand };
   const sound = new Sound(data.tune);
   const seed = Number(qs.get('seed')) || data.seed || 1;
-  let game = new Game(data, sprites, { seed, sound });
+  let game = new Game(data, sprites, { seed, sound: null });
   let mode = 'title';
 
   // custom hero from a prompt the player typed (kept on this device)
@@ -1077,7 +1077,7 @@ export async function boot({ root = document.body, src = './game.json', data = n
   const useTesseraCache = () => { for (const k of keys) { const m = data.cast[k]; sprites[k] = makeSprite(cachedSprite(m.prompt, m.seed ?? 7, m.pick ?? 0), 'tessera'); } };
 
   function title() {
-    mode = 'title'; overlay.hidden = false;
+    mode = 'title'; overlay.hidden = false; game = new Game(data, sprites, { seed, sound: null });
     const cached = keys.every((k) => data.cast[k].prompt) && allCached(keys.map((k) => data.cast[k]));
     const gpu = webgpuLikely();
     overlay.innerHTML = `<div class="psg-card">
@@ -1167,7 +1167,10 @@ export async function boot({ root = document.body, src = './game.json', data = n
         game.step({ ...held, jumpPressed: pressed }); pressed = false;
         if (game.state !== 'play') { const how = game.state; setTimeout(() => mode === 'play' && game.state === how && end(how), 900); mode = 'ending'; }
       } else if (mode === 'ending') game.step({});
-      else if (mode === 'title') game.step(autopilot(game));
+      else if (mode === 'title') {
+        game.step(autopilot(game));
+        if (game.state !== 'play' && (game.endF = (game.endF || 0) + 1) > 120) game = new Game(data, sprites, { seed, sound: null }); // the attract loop starts over
+      }
     }
     game.draw(ctx);
     requestAnimationFrame(frame);
