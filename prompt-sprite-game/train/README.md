@@ -6,9 +6,10 @@ theme out of that data and train a small painter with the same recipe — masked
 confidence-ordered unmasking, classifier-free guidance — but with a word vocabulary of the theme instead of CLIP. One
 theme needs a few thousand sprites, a few million parameters and about an hour on a 4-core CPU.
 
-The first one is **rabbit**: 3,898 sprites of 17 rabbit subjects (moon rabbit, cottontail, hare, angora, lop-eared, dwarf,
-rabbit knight, ghost bunny, winged bunny, jackalope, stuffed bunny, dust bunny, rabbit hutch, rabbit foot charm, bunny ear
-headband, bunny ear cactus, rabbit), 330 words, 255 colours.
+The first one is **cat**: 5,775 sprites of 24 cat subjects (17 breeds and kinds — scottish fold, british shorthair, russian
+blue, bengal, munchkin, norwegian forest, maine coon, tabby, persian, tuxedo, ragdoll, ginger, siamese, calico, black, plain
+cat, kitten — plus lynx, cat warrior, ghost cat, winged cat, stuffed kitten, cat figurine, cat statue), 352 words, 255
+colours. Cat-shaped things (cat mask, cat-eye sunglasses, cat tree, cat ear headband) are left out.
 
 ## Run
 
@@ -18,10 +19,11 @@ pip install numpy pillow onnx onnxscript onnxruntime
 # the atlas: one 259 MB zip (tokens.npy, palette.npy, captions.json, objects.json …)
 curl -LO https://huggingface.co/datasets/Angais/pixel-art-atlas-1.4m/resolve/main/pixel-art-16x16-1.4m.zip && unzip pixel-art-16x16-1.4m.zip -d atlas
 
-python3 prepare.py --atlas atlas --match "rabbit|rabbits|bunny|bunnies|hare|hares|jackalope" \
-  --drop "baby bootie,sleep mask,retro tv set,house slipper,bathrobe" --out rabbit.npz
-python3 train.py --data rabbit.npz --out runs/rabbit --steps 8000        # ~70 min on 4 CPU cores; samples-*.png as it goes
-python3 export.py --ckpt runs/rabbit/ckpt-best.pt --out dist/rabbit --name rabbit
+python3 prepare.py --atlas atlas --match "cat|cats|kitten|kittens|kitty|kitties|tabby|calico|bobcat|lynx|sphynx|maneki-neko" \
+  --drop "cat mask,cat-eye sunglasses,cat tree,cat ear headband,chibi witch,glass marble,bookmark,bag of pet food,coin purse,sleep mask,beanie,headphones,mitten,hoodie" \
+  --out cat.npz
+python3 train.py --data cat.npz --out runs/cat --steps 8000        # ~70 min on 4 CPU cores; samples-*.png as it goes
+python3 export.py --ckpt runs/cat/ckpt-best.pt --out dist/cat --name cat
 ```
 
 | file | what |

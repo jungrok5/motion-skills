@@ -1,7 +1,7 @@
 """prepare.py — cut a themed subset out of Pixel Art Atlas 1.4M (CC0) and turn it into training arrays.
 
     python3 prepare.py --atlas <dir with tokens.npy, palette.npy, captions.json, objects.json> \
-        --match "rabbit|bunny|hare|jackalope" --drop "baby bootie,sleep mask" --colors 255 --out rabbit.npz
+        --match "cat|kitten|tabby|lynx" --drop "cat mask,cat tree" --colors 255 --out cat.npz
 
 Writes <out>: tokens (N,256) uint8 in a new palette (0 = transparent, 1..K), palette (K+1,3) uint8,
 captions, subjects, and the word vocabulary the text side of the model uses.

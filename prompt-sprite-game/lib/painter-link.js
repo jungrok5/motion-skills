@@ -1,4 +1,4 @@
-// painter-link.js — paint sprites with a small themed painter trained by prompt-sprite-game/train (e.g. "rabbit").
+// painter-link.js — paint sprites with a small themed painter trained by prompt-sprite-game/train (e.g. "cat").
 //
 // The painter is the Tessera recipe scaled down to one theme: a masked-diffusion transformer over 16×16 palette tokens,
 // with its own small word vocabulary instead of CLIP. It ships as two files: <name>.onnx (int8, a few MB) and

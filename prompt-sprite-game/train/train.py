@@ -1,6 +1,6 @@
 """train.py — train a SpritePainter on a subset made by prepare.py (CPU is enough for one theme).
 
-    python3 train.py --data rabbit.npz --out runs/rabbit --steps 6000 --batch 64
+    python3 train.py --data cat.npz --out runs/cat --steps 6000 --batch 64
 
 Writes <out>/ckpt.pt (EMA weights + config + palette + vocab), <out>/log.txt and <out>/samples-<step>.png
 (prompts × 4 variations) so progress can be looked at while it trains.
@@ -41,7 +41,7 @@ nparam = sum(p.numel() for p in model.parameters())
 print(f'{n} sprites ({len(tr)} train / {nval} val), {K + 1} colours, {len(vocab)} words, {nparam / 1e6:.2f} M parameters', flush=True)
 opt = torch.optim.AdamW(model.parameters(), lr=a.lr, betas=(0.9, 0.98), weight_decay=0.05)
 sched = lambda s: min(1, s / 300) * (0.1 + 0.9 * 0.5 * (1 + math.cos(math.pi * min(1, s / a.steps))))
-prompts = [p.strip() for p in a.prompts.split('|') if p.strip()] or ['white rabbit', 'front-view moon rabbit', 'side-view hare', 'rabbit knight with a sword', 'ghost bunny', 'winged bunny', 'brown lop-eared rabbit', 'jackalope with huge antlers']
+prompts = [p.strip() for p in a.prompts.split('|') if p.strip()] or ['orange tabby cat', 'side-view black cat', 'front-view white persian cat', 'three-quarter-view siamese cat', 'kitten', 'cat warrior with a sword', 'ghost cat', 'winged cat']
 
 def batch(ix, aug=True):
     x = x0[ix].clone(); w = words[ix].clone()

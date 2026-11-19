@@ -1,6 +1,6 @@
 """export.py — turn a checkpoint into what the browser loads: an int8 ONNX painter + a small JSON of palette and words.
 
-    python3 export.py --ckpt runs/rabbit/ckpt-best.pt --out dist/rabbit
+    python3 export.py --ckpt runs/cat/ckpt-best.pt --out dist/cat
 
 Writes <out>.onnx (weights int8, dynamically quantized; inputs x (B,256) int64, words (B,16) int64, ratio (B,) float32 →
 logits (B,256,colors)) and <out>.json ({ palette, vocab, text_len, mask_id, colors, ... }) for lib/painter-link.js.
