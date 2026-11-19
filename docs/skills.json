@@ -2542,6 +2542,10 @@
     {
      "title": "Poly Haven — 스캔 재질과 모델의 출처 (CC0, 저장소에는 넣지 않고 장소마다 받아 옴). 스킬 자체는 이 레포의 scanned-realm · walking-colossus · machine-build-reel을 바탕으로 만듦",
      "url": "https://polyhaven.com"
+    },
+    {
+     "title": "AnyMachine 레포 (apekshik, MIT) — 참고: 기계를 부품과 유압으로 조립하는 방법은 machine-build-reel을 거쳐 왔고, 예제의 등딱지 · 집게 기계는 이 레포의 기계들을 보고 넣기로 한 것. 코드 · 설계 · 에셋은 가져오지 않고 종류마다 새로 설계",
+     "url": "https://github.com/apekshik/anymachine"
     }
    ],
    "workedExample": [
