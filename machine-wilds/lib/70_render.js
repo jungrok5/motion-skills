@@ -82,8 +82,9 @@ void main(){
   // shells comes through as rust that has run down from seams and fittings — long streaks, laid in the machine's own space
   if (Q.y > 0.0 && (flags & 64) == 0) { float age = smoothstep(0.93, 0.5, vCol.a); if (age > 0.0) {
       vec4 r1 = texture(uNoise, vec2((SP.x + SP.z * 0.8) * 0.23, SP.y * 0.034) + 0.37), r2 = texture(uNoise, SP.xz * 0.41 + SP.y * 0.33);
-      float rust = smoothstep(0.50, 0.70, r1.r * 0.62 + r2.g * 0.38 + age * 0.34 - 0.12) * age;
-      albedo = mix(albedo, vec3(0.20, 0.088, 0.04) * (0.65 + 0.7 * r2.b), rust * 0.86); rough = mix(rough, 0.92, rust); metal *= 1.0 - rust * 0.85; } }
+      float fineR = texture(uNoise, SP.xz * 2.9 + SP.y * 2.3).b;      // the edge of a rust patch is ragged at the width of a finger
+      float rust = smoothstep(0.545, 0.635, r1.r * 0.62 + r2.g * 0.20 + fineR * 0.18 + age * 0.22 - 0.06) * smoothstep(0.0, 0.3, age);      // streaks first, patches only where it is oldest
+      albedo = mix(albedo, vec3(0.15, 0.062, 0.03) * (0.65 + 0.7 * r2.b), rust * 0.9); rough = mix(rough, 0.92, rust); metal *= 1.0 - rust * 0.85; } }
 #endif
   // old plaster lets go: where it is low, creased or simply unlucky a patch has fallen and the brick behind shows
   if (li == PLASTER_LAYER) {

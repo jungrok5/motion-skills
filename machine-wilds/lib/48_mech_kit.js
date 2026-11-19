@@ -62,13 +62,14 @@
     limb(l, o = {}) {
       const k = this, w = l.width, d = l.drum, style = o.style || 'shell', cover = style === 'shell' ? 'shell' : 'rust', spar = style === 'shell' ? 'dark' : 'frame';
       const cheek = (g, y0, y1, depth) => { for (const sx of [-1, 1]) g.box(sx * w * 0.56, (y0 + y1) / 2, 0, w * 0.17, y1 - y0, depth, { soft: 0.25 }); };
-      const pin = (y, z = 0) => { k.mat('steel'); k.xcyl(-w * 0.72, w * 0.72, y, z, d * 0.2); k.mat('joint'); for (const sx of [-1, 1]) { k.xcyl(sx * w * 0.645, sx * w * 0.72, y, z, d * 0.37, { sides: 16 }); k.bolts('x', [sx * w * 0.72, y, z], d * 0.28, 8, d * 0.035, { dir: sx }); } };
+      const pin = (y, z = 0) => { k.mat('steel'); k.xcyl(-w * 0.72, w * 0.72, y, z, d * 0.2); k.mat('joint'); for (const sx of [-1, 1]) { k.xcyl(sx * w * 0.645, sx * w * 0.72, y, z, d * 0.37, { sides: 16 }); k.bolts('x', [sx * w * 0.72, y, z], d * 0.28, 8, d * 0.035, { dir: sx }); } k.fitPin(l, y, z); };
       // the hip: a bearing the whole leg swings out on, and the yoke the thigh hangs in (mammal) — or a turret with an arm (insect)
       k.bone(`hip_${l.name}`, (g) => {
         if (l.kind === 'insect') { k.mat('joint'); k.zcyl(-d * 0.55, d * 0.55, 0, 0, d * 0.62, { sides: 16 }); k.bolts('z', [0, 0, d * 0.55], d * 0.48, 10, d * 0.04);
           k.mat(spar); g.box(0, l.coxa * 0.5, 0, w * 0.8, l.coxa, d * 0.7, { soft: 0.3 }); k.mat('frame'); cheek(g, l.coxa - d * 0.55, l.coxa + d * 0.55, d * 1.05); pin(l.coxa); }
         else { k.mat('joint'); k.zcyl(-w * 0.95, w * 0.95, 0, 0, d * 0.58, { sides: 16 }); k.bolts('z', [0, 0, w * 0.95], d * 0.44, 10, d * 0.04); k.bolts('z', [0, 0, -w * 0.95], d * 0.44, 10, d * 0.04, { dir: -1 });
           k.mat('frame'); if (l.hipDrop > 0.01) { cheek(g, -d * 0.2, l.hipDrop + d * 0.55, d * 1.1); pin(l.hipDrop); } }
+        k.fitHip(l);
       });
       for (let i = 0; i < l.n; i++) { const L = l.segs[i], last = i === l.n - 1, t0 = d * 0.5, t1 = L - (last ? l.ball * 0.9 : d * 0.62);
         k.bone(l.bone(i), (g) => {
@@ -91,16 +92,17 @@
           if (k.fine) { // a hose down the back of the spar, clipped to it
             k.mat('rubber'); const hz = -sd * 0.5 - d * 0.12, hx = w * 0.16, pts = []; for (let q = 0; q <= 8; q++) { const y = t0 + (t1 - t0) * (q / 8); pts.push([hx + Math.sin(q * 1.7) * w * 0.03, y, hz - Math.sin((q / 8) * Math.PI) * d * 0.05]); } g.tube(pts, d * 0.045, { sides: 6 }); g.tube(pts.map((p) => [p[0] - w * 0.3, p[1], p[2] + d * 0.02]), d * 0.035, { sides: 5 });
             k.mat('steel'); for (const q of [1, 4, 7]) g.box(hx - w * 0.15, pts[q][1], hz + d * 0.02, w * 0.5, d * 0.05, d * 0.12); }
+          k.fitSegment(l, i, { L, t0, t1, sd, sw, style, last, taper });
         });
       }
       // the foot: a ball in the cup, a hub under it, toes on pins
       k.bone(`foot_${l.name}`, (g) => { const b = l.ball; k.mat('steel'); k.ball(0, 0, 0, b * 0.64); k.mat('frame'); g.lathe(0, 0, [[b * 0.5, -b * 0.25], [b * 1.02, -b * 0.42], [b * 1.12, -b * 0.8], [b * 0.9, -b], [0.01, -b]], { sides: k.n(16) });
-        if (k.mid) { k.mat('joint'); for (const a of l.toes) { const ca = Math.cos(a * D2R), sa = Math.sin(a * D2R); g.box(ca * b * 0.75, -b * 0.42, sa * b * 0.75, b * 0.5, b * 0.46, b * 0.5, { soft: 0.3 }); } } });
+        if (k.mid) { k.mat('joint'); for (const a of l.toes) { const ca = Math.cos(a * D2R), sa = Math.sin(a * D2R); g.box(ca * b * 0.75, -b * 0.42, sa * b * 0.75, b * 0.5, b * 0.46, b * 0.5, { soft: 0.3 }); } } k.fitFoot(l); });
       l.toes.forEach((a, t) => k.bone(`toe${t}_${l.name}`, (g) => { const b = l.ball, L = l.toeLen, heel = Math.abs(a) > 120, LL = heel ? L * 0.62 : L;
         k.mat('joint'); k.xcyl(-b * 0.36, b * 0.36, 0, 0, b * 0.3, { sides: 12 });
         k.mat(style === 'shell' ? 'dark' : 'frame'); k.loft('y', [[b * 0.1, b * 0.3, b * 0.3, 0, 0, 4], [LL * 0.45, b * 0.26, b * 0.36, -b * 0.03, 0, 4], [LL * 0.86, b * 0.17, b * 0.28, -b * 0.1, 0, 4], [LL, b * 0.05, b * 0.06, -b * 0.2, 0, 3]], { sides: 10 });
         if (style === 'shell' && k.mid) { k.mat('shell'); k.loft('y', [[LL * 0.14, b * 0.2, b * 0.33, b * 0.14, 0, 3], [LL * 0.45, b * 0.2, b * 0.4, b * 0.12, 0, 3], [LL * 0.8, b * 0.12, b * 0.26, b * 0.03, 0, 3]], { sides: 10, from: -0.38 * Math.PI, to: 0.38 * Math.PI, caps: false }); }
-        k.mat('rubber'); g.box(0, LL * 0.6, -b * 0.3, b * 0.5, LL * 0.6, b * 0.14, { soft: 0.3 }); }));
+        k.mat('rubber'); g.box(0, LL * 0.6, -b * 0.3, b * 0.5, LL * 0.6, b * 0.14, { soft: 0.3 }); k.fitToe(l, LL, style); }));
       // cylinders: the barrel on the part above the hinge, the rod on the part below, each on a lug the anchor search placed
       for (let j = 0; j < l.n; j++) { const an = l.anchors[l.jointNames[j]]; if (!l.acts[j] || !an) continue; const r = an.r, jn = l.jointNames[j], upB = j === 0 ? `hip_${l.name}` : l.bone(j - 1), upY = j === 0 ? (l.kind === 'insect' ? l.coxa : l.hipDrop) : l.segs[j - 1];
         const lug = (g, y, h) => { k.mat('frame'); const s = Math.sign(h) || 1; g.box(an.lat * 0.5, y, h * 0.55, Math.abs(an.lat) + r * 2.2, r * 1.5, r * 1.3, { soft: 0.2 }); for (const sx of [-1, 1]) g.box(an.lat + sx * r * 0.95, y, h * 0.6, r * 0.34, r * 2.3, Math.abs(h) * 0.9 + r * 0.6, { soft: 0.2 }); if (Math.abs(h) > d * 0.6) g.box(0, y, h * 0.3, w * 0.5, r * 1.6, Math.abs(h) * 0.62, { soft: 0.2 });
@@ -108,7 +110,7 @@
         k.bone(upB, (g) => lug(g, upY - an.a_up, an.h_up)); k.bone(l.bone(j), (g) => lug(g, an.a_lo, an.h_lo));
         k.bone(`act_${jn}_${l.name}_cyl`, (g) => { k.mat('joint'); k.xcyl(-r * 0.78, r * 0.78, 0, 0, r * 0.98, { sides: 12 }); k.mat(style === 'shell' ? 'dark' : 'frame'); k.ycyl(r * 0.9, r * 1.1 + an.Bl, 0, 0, r, r, { sides: 14 });
           k.mat('joint'); k.ycyl(r * 1.1 + an.Bl - r * 0.5, r * 1.1 + an.Bl + r * 0.12, 0, 0, r * 1.16, r * 1.16, { sides: 14 }); k.ycyl(r * 0.9, r * 1.5, 0, 0, r * 1.12, r * 1.12, { sides: 14 }); k.bolts('y', [0, r * 1.1 + an.Bl + r * 0.12, 0], r * 0.92, 6, r * 0.09);
-          if (k.fine) { k.mat('rubber'); g.tube([[0, r * 1.6, r * 1.0], [0, r * 2.4, r * 1.7], [0, an.Bl * 0.5, r * 1.5], [0, an.Bl - r, r * 1.7], [0, an.Bl + r * 0.2, r * 1.05]], r * 0.16, { sides: 6 }); } });
+          k.fitCylinder(l, an, style); });
         k.bone(`act_${jn}_${l.name}_rod`, (g) => { k.mat('joint'); k.xcyl(-r * 0.7, r * 0.7, 0, 0, r * 0.9, { sides: 12 }); k.ycyl(r * 0.6, r * 1.5, 0, 0, r * 0.62, r * 0.62, { sides: 10 }); k.mat('rod'); k.ycyl(r * 1.3, r * 1.1 + an.Rl, 0, 0, r * 0.5, r * 0.5, { sides: 12 }); });
       }
     }
@@ -120,7 +122,7 @@
         if (k.mid) for (const y of [L * 0.3, L * 0.7]) { g.tube([[-w2 * 0.42, y, w2 * 0.15], [0, y + L * 0.12, -w2 * 0.3], [w2 * 0.42, y, w2 * 0.15]], w2 * 0.04, { sides: 5 }); }
         for (const sx of [-1, 1]) g.box(sx * w2 * 0.52, L - w2 * 0.05, 0, w2 * 0.1, w2 * 0.7, w2 * 0.5, { soft: 0.25 });
         if (style === 'shell') { k.mat('shell'); k.loft('y', [[L * 0.12, w2 * 0.3, w2 * 0.5, w2 * 0.12, 0, 3], [L * 0.5, w2 * 0.36, w2 * 0.54, w2 * 0.12, 0, 3], [L * 0.9, w2 * 0.28, w2 * 0.46, w2 * 0.1, 0, 3]], { sides: 12, from: -0.45 * Math.PI, to: 0.45 * Math.PI, caps: false }); }
-        if (k.fine) { k.mat('rubber'); g.tube([[w2 * 0.2, 0, -w2 * 0.38], [w2 * 0.22, L * 0.5, -w2 * 0.42], [w2 * 0.2, L, -w2 * 0.38]], w2 * 0.035, { sides: 5 }); } })); return this; }
+        if (k.fine) { k.mat('rubber'); g.tube([[w2 * 0.2, 0, -w2 * 0.38], [w2 * 0.22, L * 0.5, -w2 * 0.42], [w2 * 0.2, L, -w2 * 0.38]], w2 * 0.035, { sides: 5 }); } k.fitNeck(L, w2); })); return this; }
     // age: nothing here left a works this decade.  spec.age (0…1; 0.55) lowers the vertex's alpha in patches laid in the
     // machine's own space — more on what faces up, where water stands — and the surface shader turns that into grime, into
     // rust that has run down from seams, and (on tops and north sides) into moss.  Lamps, rods and rubber are left alone.

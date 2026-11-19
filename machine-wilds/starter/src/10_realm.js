@@ -53,7 +53,11 @@ R.wardenParts = (k) => {
   k.limbs({ style: 'girder' });
   k.bone('body', (g) => { k.mat('frame'); k.loft('x', [[-2.9, 0.5, 0.8, 0, 0, 5], [-2.2, 0.8, 1.05, 0, 0, 5], [2.0, 0.8, 1.05, 0, 0, 5], [2.8, 0.55, 0.8, 0.1, 0, 4]], { sides: 14 });
     k.mat('dark'); for (const x of [2.2, -2.2]) g.box(x, -0.5, 0, 0.7, 0.5, 2.5, { soft: 0.2 }); k.mat('rust'); g.tube([[-2.0, 1.15, 0], [0.6, 1.15, 0]], 0.62, { sides: k.n(12), caps: true }); if (k.mid) { k.mat('dark'); for (const x of [-1.6, -0.4]) g.box(x, 1.15, 0, 0.12, 1.4, 1.4, { soft: 0.3 }); }
-    g.mat('moss', { flags: LR.FLAG.SWAY, weight: 0.25 }); g.blob(-0.8, 1.75, 0.1, 0.4, { squash: [1.5, 0.4, 1.1], seg: k.n(8), rings: 4 }); });
+    // a pump is its fittings: a main along each flank with a line to every hip, louvres, a hatch, a stack, a gauge on the tank, a ladder
+    for (const s of [-1, 1]) { k.pipe([[-2.5, -0.1, s * 1.08], [0, -0.14, s * 1.1], [2.4, -0.1, s * 1.06]], 0.06, { joints: [1] }); for (const x of [2.2, -2.2]) k.hose([[x * 1.05, -0.1, s * 1.07], [x * 1.1, -0.45, s * 1.22], [x, -0.52, s * 1.3]], 0.04); k.grille([1.2, 0.2, s * 1.045], [0, 0, s], 0.9, 0.36, { up: [0, 1, 0] }); k.rivets([-2.1, 0.74, s * 0.8], [1.9, 0.74, s * 0.8], 16, 0.018, [0, 1, 0]); }
+    k.hatch([1.35, 0.8, 0], [0, 1, 0], 0.8, 0.6, { up: [1, 0, 0] }); k.stack([2.2, 0.75, -0.55], [2.25, 1.9, -0.6], 0.09); k.gauge([-0.7, 1.15, 0.62], [0, 0, 1], 0.14); k.ladder([-2.45, -0.7, -1.02], [-2.45, 0.8, -1.02], 0.36, [0, 0, -1], { off: 0.12 });
+    k.tank([0.9, 1.0, 0.5], [1.9, 1.0, 0.5], 0.18, { role: 'rust', straps: 1 }); k.jbox([2.86, 0.2, 0], [1, 0.1, 0], 0.5, 0.36, 0.1, { up: [0, 1, 0], glands: 2 }); k.stripes([-2.91, 0, 0], [-1, 0, 0], 1.3, 0.24, 5, { up: [0, 1, 0] });
+    g.mat('moss', { tint: '#5e6b4e', flags: LR.FLAG.SWAY, weight: 0.25 }); g.blob(-0.8, 1.75, 0.1, 0.4, { squash: [1.5, 0.4, 1.1], seg: k.n(8), rings: 4 }); });
   k.bone('hose', (g) => { k.mat('rubber'); g.tube([[0, 0, 0], [0, 1.3, 0], [0, 2.6, 0]], [0.12, 0.1, 0.09], { sides: k.n(7), caps: true }); });
   k.neckLinks({ width: 0.5, style: 'girder' });
   k.bone('head', (g) => { k.mat('dark'); g.box(0.2, 0.42, 0, 1.0, 0.1, 0.9, { soft: 0.2 }); for (const [x, z] of [[-0.2, -0.36], [0.6, -0.36], [0.6, 0.36], [-0.2, 0.36]]) g.tube([[x, 0.4, z], [x, -0.5, z]], 0.03, { sides: 5 }); g.box(0.2, -0.52, 0, 0.9, 0.06, 0.8, { soft: 0.2 }); });

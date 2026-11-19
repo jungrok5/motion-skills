@@ -41,14 +41,19 @@ void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
   col = mix(S(0.33, 0.17, 0.09), S(0.50, 0.27, 0.12), n) * (0.72 + 0.5 * fine); col = mix(col, S(0.17, 0.10, 0.07), flake * 0.6); col = mix(col, S(0.60, 0.62, 0.58) * (0.8 + 0.3 * big), paint * (1.0 - flake));
   col *= 1.0 - seam * 0.45; rough = mix(0.9, 0.55, paint * (1.0 - flake)); metal = 0.0;
 }` });
-  D('ceramic', { metal: 0, tile: 2.2, bump: 0.002, por: 0.1, stick: 0.6, moss: 0.45, glsl: `
+  D('ceramic', { metal: 0, tile: 1.6, bump: 0.002, por: 0.1, stick: 0.6, moss: 0.45, glsl: `
 void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
   float n = fbm(uv, 4., 4), big = fbm(uv + 0.3, 2., 3); vec4 c = vor(uv, vec2(9., 9.), 1.0);
   float craze = (1.0 - smoothstep(0.0, 0.035, c.x)) * smoothstep(0.45, 0.75, fbm(uv + 0.9, 3., 3));          // fine cracks in the glaze, in patches
   float chip = smoothstep(0.74, 0.80, fbm(uv + 0.5, 11., 4) * 0.6 + big * 0.4), streak = smoothstep(0.5, 0.95, fbm(vec2(uv.x * 14.0, uv.y * 1.2) + 0.6, 4., 4)) * smoothstep(0.35, 0.7, big);
-  h = 0.6 - craze * 0.08 - chip * 0.25 + (n - 0.5) * 0.03;
+  // a shell is panels: a groove where two meet (the tile's edges), a fastener every hand's breadth along it, dirt run down from both
+  vec2 e = min(fract(uv), 1.0 - fract(uv)); float seam = 1.0 - smoothstep(0.004, 0.011, min(e.x, e.y));
+  vec2 fa = vec2(fract(uv.x * 12.0) - 0.5, (e.y - 0.035) * 12.0), fb = vec2((e.x - 0.035) * 12.0, fract(uv.y * 12.0) - 0.5); float fast = max(1.0 - smoothstep(0.10, 0.15, length(fa)), 1.0 - smoothstep(0.10, 0.15, length(fb)));
+  float grub = smoothstep(0.10, 0.0, min(e.x, e.y)) * (0.4 + 0.6 * fbm(uv + 0.2, 9., 3));
+  h = 0.6 - craze * 0.08 - chip * 0.25 + (n - 0.5) * 0.03 - seam * 0.4 + fast * 0.12;
   col = S(0.86, 0.85, 0.82) * (0.9 + 0.14 * n); col = mix(col, S(0.42, 0.40, 0.36), craze * 0.7); col = mix(col, S(0.25, 0.25, 0.26) * (0.7 + 0.6 * n), chip); col *= mix(vec3(1.0), S(0.62, 0.58, 0.50), streak * 0.5);
-  rough = 0.24 + 0.16 * n + chip * 0.5 + streak * 0.2 + craze * 0.2; metal = 0.0;
+  col *= 1.0 - grub * 0.28; col = mix(col, S(0.10, 0.10, 0.11), seam * 0.85); col = mix(col, S(0.46, 0.45, 0.44), fast * (1.0 - seam) * 0.85);
+  rough = 0.24 + 0.16 * n + chip * 0.5 + streak * 0.2 + craze * 0.2 + grub * 0.2; rough = mix(rough, 0.42, fast); metal = fast * 0.7;
 }` });
   D('rubber', { metal: 0, tile: 0.9, bump: 0.006, por: 0.1, stick: 0.5, glsl: `
 void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){

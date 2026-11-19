@@ -69,6 +69,7 @@ and one standing in the water) is a second, unrelated topic.
 | `lib/48_mech.js` | `LR.mech`: frames, planar limbs (2 / 3 segments, the ankle that leans with the fold), feet and toes, neck, head, extras (`fixed spin lag`), the cylinder anchor search — numbers only |
 | `lib/48_mech_gait.js` | ways, units, footfalls on the land, the timetable of a lap (walk · arrive · stand · leave), the command at time t, pressing the ways and footprints into the land, the audit — numbers only |
 | `lib/48_mech_fly.js` | kinds that fly: a line in the air, speed with the climb, bank before the turn, wing beats in bouts and glides, the body riding the beat, its audit — numbers only |
+| `lib/48_mech_kit_fit.js` | fittings: pipes, hoses, rivets, hatches, louvres, tanks, junction boxes, ladders, rails, fins, gaiters, warning bars, stacks, dishes — and what the stock legs and cylinders carry |
 | `lib/48_mech_kit.js` | the part kit: `k.bone(name, (g) => …)`, `k.limbs()`, `k.neckLinks()`, `k.loft`, `k.lamp`, palette roles, three levels of detail |
 | `lib/48_mech_run.js` | the machines in the page: one skinned mesh a level a unit, lamps, the feet the walker bumps into, ground shake, footfall events, the head that turns, the studio, wrecks |
 | `lib/17_mechmats.js` | recipes: `steel chrome paintmetal rustplate ceramic rubber concrete asphalt` (a scan may take any of their names) |

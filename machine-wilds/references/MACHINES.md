@@ -95,7 +95,10 @@ down (`gaze`): from the ground a kite at night is a beam sweeping the mist and a
 ## Parts — `build(k)`
 `k.limbs({ style })` builds every leg from the numbers: hip bearing and yoke (or turret and arm), a drum, a spar with
 covers or flanges and a hose, a fork with a pin and bolted caps, the cup, the ball, the hub, toes on pins, and across
-each powered hinge a lug on either part, a barrel with glands and a chrome rod. Then write what makes this machine:
+each powered hinge a lug on either part, a barrel with glands and a chrome rod — and the fittings on all of it: lock
+plates and grease nipples on the pins, a conduit and a junction box down every spar, lacing and rivet rows on a girder
+(a hatch, louvres and fasteners on a shell), tie rods, a valve block, hard lines, hoses and a wiper boot on every
+cylinder, a gaiter round the ball, grousers under the toes. Then write what makes this machine:
 ```js
 k.bone('body', (g) => {                      // g is an LR.Geo in the body's frame: x forward, y up, z right
   k.mat('frame'); k.loft('x', [[-3, 0.5, 0.8, 0, 0, 5], [0, 0.8, 1.0, 0, 0, 5], [3, 0.5, 0.8, 0, 0, 4]], { sides: 14 });
@@ -108,10 +111,18 @@ k.lamp('head', { at: [1.2, -0.3, 0], dir: [0.97, -0.24, 0], color: [0.72, 0.9, 1
   square (2 round … 6 a box); `from` / `to` open it into a shell.
 - Roles for `k.mat`: `shell frame joint steel rod rubber rust dark` (the palette maps them to materials and tints);
   any material name works too. Moss, grime, rain and snow come from the engine, laid in the machine's own space.
+- **Fittings** (`lib/48_mech_kit_fit.js`) — a body is a shape until things are bolted to it. Give every kind the plant
+  its work needs and a person's way round it: `k.pipe(pts, r, { joints })` (flanged hard lines) · `k.hose(pts, r)` ·
+  `k.rivets(a, b, n, size, normal)` · `k.hatch(c, normal, w, h, { up })` · `k.grille(…)` · `k.tank(a, b, r)` ·
+  `k.jbox(c, normal, w, h, d)` · `k.ladder(a, b, width, normal)` · `k.rail(pts, h)` · `k.fins(c, dir, n, w, h, pitch)` ·
+  `k.boot(…)` · `k.stripes(…)` · `k.gauge(…)` · `k.stack(a, b, r)` · `k.dish(c, dir, r)` · `k.along(p, dir, fn, up)` for
+  anything else laid along a direction. They thin out with the level of detail by themselves. Rules of thumb: a
+  cylinder needs a line that reaches it; a tank needs a strap and a valve; anything a person serviced needs a rung, a
+  rail or a hatch at a person's size (0.3 m rungs, 1.1 m rails) — that is also what tells the eye how big it is.
 - `k.n(sides)` thins a count on the far builds; wrap small things in `if (k.fine)` (near only) or `if (k.mid)`.
 - A lamp with a `cone` throws a beam; without one it is a glowing lens with a halo. The passes carry the 12 lamps
   that matter most each frame — keep beams to one or two a machine.
-- Budget: ≤ ~50 k triangles on the near build, ≤ 192 bones (a four-legged kind with cylinders uses about 66).
+- Budget: ≤ ~120 k triangles on the near build (it is drawn only within a few body lengths), ≤ ~25 k on the middle one, ≤ 192 bones (a four-legged kind with cylinders uses about 66).
 - `LR.mech.wreck(kind, { x, z, yaw, pose(cmd, q), moss })` builds a kind once into the world in a pose you write (the
   body on the ground, legs folded), its lenses dead and its tints gone to lichen.
 
