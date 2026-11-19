@@ -28,9 +28,17 @@ export function loadPainter(base) {
   return cache.get(base);
 }
 
+const oklab = ([r, g, b]) => {
+  const f = (v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+  const R = f(r), G = f(g), B = f(b);
+  const l = Math.cbrt(0.4122214708 * R + 0.5363325363 * G + 0.0514459929 * B), m = Math.cbrt(0.2119034982 * R + 0.6806995451 * G + 0.1073969566 * B), s = Math.cbrt(0.0883024619 * R + 0.2817188376 * G + 0.6299787005 * B);
+  return [0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s, 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s, 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s];
+};
+
 export class Painter {
   constructor(ort, session, meta) {
     this.ort = ort; this.session = session; this.meta = meta;
+    this.lab = meta.palette.map(oklab);
     this.words = new Map(meta.vocab.map((w, i) => [w, i]));
     this.rgbaPalette = new Uint8ClampedArray(meta.palette.length * 4);
     meta.palette.forEach((c, i) => this.rgbaPalette.set([c[0], c[1], c[2], i === 0 ? 0 : 255], i * 4));
@@ -43,6 +51,24 @@ export class Painter {
     while (ids.length < this.meta.text_len) ids.push(0);
     return { ids, unknown };
   }
+  /** stray pixels: one floating alone (four transparent neighbours) is removed; one whose colour is used once in the sprite
+   *  and is far (OKLab) from all four neighbours takes its most common neighbour's colour */
+  despeckle(t, far = 0.12) {
+    const out = Int32Array.from(t), count = new Map();
+    for (const v of t) count.set(v, (count.get(v) || 0) + 1);
+    for (let i = 0; i < 256; i++) {
+      const v = t[i]; if (!v) continue;
+      const y = i >> 4, x = i & 15, nb = [y > 0 ? t[i - 16] : 0, y < 15 ? t[i + 16] : 0, x > 0 ? t[i - 1] : 0, x < 15 ? t[i + 1] : 0];
+      if (nb.every((n) => n === 0)) { out[i] = 0; continue; }          // a pixel floating alone outside the body
+      if (count.get(v) !== 1) continue;
+      const L = this.lab[v];
+      if (!nb.every((n) => Math.hypot(L[0] - this.lab[n][0], L[1] - this.lab[n][1], L[2] - this.lab[n][2]) > far)) continue;
+      const c = new Map(); let best = nb[0], bn = 0;
+      for (const n of nb) { const k = (c.get(n) || 0) + 1; c.set(n, k); if (k > bn) { bn = k; best = n; } }
+      out[i] = best;
+    }
+    return out;
+  }
   toRGBA(tokens) {
     const out = new Uint8ClampedArray(256 * 4);
     for (let i = 0; i < 256; i++) out.set(this.rgbaPalette.subarray(tokens[i] * 4, tokens[i] * 4 + 4), i * 4);
@@ -52,10 +78,11 @@ export class Painter {
    * Paint `count` variations. Same MaskGIT-style loop as train/model.py `paint`: start fully hidden, sample every hidden
    * pixel, keep the most confident (cosine schedule, annealed Gumbel noise × `choice`), classifier-free guidance.
    * temp / topP: colour sampling (nucleus keeps detail without stray colours); nms: early commits spread out.
-   * Defaults come from the painter's JSON (`sampler`, chosen with train/eval.py).
+   * despeckle: clean stray off-colour pixels at the end. Defaults come from the painter's JSON (`sampler`), else the
+   * settings train/eval.py found best for the cat painter (temp 1.6, top-p 0.8, NMS, despeckle).
    * Returns RGBA arrays (16×16×4); onStep(step, rgbaList) after each step.
    */
-  async paint(prompt, { seed = 7, count = 4, steps = 16, guidance = 3, temp = this.meta.sampler?.temp ?? 1, topP = this.meta.sampler?.top_p ?? 1, nms = this.meta.sampler?.nms ?? false, choice = this.meta.sampler?.choice ?? 1, onStep } = {}) {
+  async paint(prompt, { seed = 7, count = 4, steps = 16, guidance = 3, temp = this.meta.sampler?.temp ?? 1.6, topP = this.meta.sampler?.top_p ?? 0.8, nms = this.meta.sampler?.nms ?? true, choice = this.meta.sampler?.choice ?? 1, despeckle = this.meta.sampler?.despeckle ?? true, onStep } = {}) {
     const { ort, session, meta } = this, M = meta.mask_id, C = meta.colors, L = meta.text_len;
     const rand = mulberry32(seed);
     const { ids } = this.encode(prompt);
@@ -112,6 +139,6 @@ export class Painter {
       if (onStep) onStep(s, Array.from({ length: count }, (_, b) => this.toRGBA(x.subarray(b * 256, b * 256 + 256))));
     }
     for (let i = 0; i < x.length; i++) if (x[i] === M) x[i] = 0;
-    return Array.from({ length: count }, (_, b) => this.toRGBA(x.subarray(b * 256, b * 256 + 256)));
+    return Array.from({ length: count }, (_, b) => { const t = x.subarray(b * 256, b * 256 + 256); return this.toRGBA(despeckle ? this.despeckle(t) : t); });
   }
 }

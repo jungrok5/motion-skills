@@ -35,6 +35,27 @@ python3 export.py --ckpt runs/cat/ckpt-best.pt --out dist/cat --name cat
 
 The browser side is `lib/painter-link.js` (onnxruntime-web on WebAssembly, the same loop as `model.paint`).
 
+## Measuring, not eyeballing — and what helped the cat painter
+
+`eval.py` paints `--per` sprites for every subject from its name and scores them: **acc** (a small CNN trained on the real
+sprites names the asked-for subject), **fd** (Fréchet distance of that CNN's features to the real sprites), **lone** and
+**speck** (single-pixel detail vs stray off-colour pixels, both against the real sprites' own rates) and plain **nll**.
+FD alone rewards noise (texture counts as "real"), so every choice below was also looked at.
+
+| try | acc | fd | speck (real 2.48) | verdict |
+|---|---|---|---|---|
+| v1 (cat only, 3.24 M, best val step 3,500), 12 steps, temp 1.0 | 75.5 % | 65.1 | — | first shipped settings |
+| temp 0.7, 24 steps | 75.5 % | 69.8 | — | **worse**: looks tidy, loses the detail pixels real sprites have |
+| guidance 1.0 / 1.5 / 2.0 | 30–62 % | 156 / 100 / 84 | — | **worse**: the unconditioned guess is weak; guidance 3 is right |
+| temp 1.6 | 81.2 % | 49.8 | 9.43 | detail back, but off-colour specks |
+| temp 1.6 + top-p 0.8 + NMS | 77.6 % | 44.2 | 8.77 | best FD, specks still |
+| v2: self-conditioning + blob masks + perceptual smoothing | 75.0 % | 64.6 | — | **worse** on 5.8k sprites (overfits first, best step again 3,500) |
+| pre-train on 128k animal sprites → fine-tune on cats | 75.0 % | 56.0 | 11.46 | nll better (1.744 vs 1.872), samples not better at this size |
+| **temp 1.6 + top-p 0.8 + NMS + despeckle** (shipped) | 77.6 % | 57.1 | 0.11 | detail kept, strays removed (floating pixels: real sprites have 0.03) |
+
+So: the data size (5.8k sprites, overfitting from step 3,500) is the limit; sampling was the cheap win. Next steps that
+need a GPU: a larger model pre-trained on the whole atlas, then fine-tuned.
+
 ## Where the weights go
 
 The exported painter (`<name>.onnx` + `<name>.json` + `NOTICE`, a few MB) is committed under `prompt-sprite-game/models/<name>/`

@@ -23,6 +23,7 @@ ap.add_argument('--data', required=True); ap.add_argument('--ckpt', required=Tru
 ap.add_argument('--steps', type=int, default=16); ap.add_argument('--temp', type=float, default=1.0)
 ap.add_argument('--guidance', type=float, default=3.0); ap.add_argument('--nms', type=int, default=0)
 ap.add_argument('--top-p', type=float, default=1.0); ap.add_argument('--choice', type=float, default=1.0)
+ap.add_argument('--despeckle', type=int, default=0)
 ap.add_argument('--per', type=int, default=8); ap.add_argument('--sheet', default='')
 ap.add_argument('--json', default='')
 a = ap.parse_args()
@@ -93,6 +94,18 @@ def speck(t, far=0.12):
     once = torch.stack([(t[b][..., None, None] == t[b]).sum((-1, -2)) == 1 for b in range(B)])
     return ((t > 0) & once & (dist > far).all(0)).float().sum((1, 2)).mean().item()
 
+def despeckle(t, far=0.12):
+    """remove pixels floating alone; replace stray pixels (colour used once, far from all four neighbours) by their most common neighbour colour"""
+    t = t.view(-1, 16, 16).clone().clamp(max=len(palette) - 1); B = t.shape[0]
+    p = F.pad(t, (1, 1, 1, 1), value=0)
+    nb = torch.stack([p[:, :-2, 1:-1], p[:, 2:, 1:-1], p[:, 1:-1, :-2], p[:, 1:-1, 2:]])
+    dist = ((LAB[t][None] - LAB[nb]) ** 2).sum(-1).sqrt()
+    once = torch.stack([(t[b][..., None, None] == t[b]).sum((-1, -2)) == 1 for b in range(B)])
+    bad = (t > 0) & once & (dist > far).all(0)
+    mode = torch.mode(nb.permute(1, 2, 3, 0), -1).values
+    alone = (t > 0) & (nb == 0).all(0)                                                     # floating outside the body
+    return torch.where(alone, torch.zeros_like(t), torch.where(bad, mode, t)).view(-1, 256)
+
 real_tr_f, _ = feats_and_pred(tokens[tr]); real_val_f, real_val_p = feats_and_pred(tokens[val])
 ref = {'acc': (real_val_p == sid[val]).float().mean().item(), 'fd': frechet(real_tr_f, real_val_f), 'lone': lone(tokens[val]), 'speck': speck(tokens[val])}
 
@@ -113,11 +126,13 @@ with torch.no_grad():  # validation NLL, plain
 gen, want = [], []
 for k, name in enumerate(names):
     out = paint(m, torch.tensor(enc(name)), steps=a.steps, guidance=a.guidance, temp=a.temp, seed=k, count=a.per, nms=bool(a.nms), top_p=a.top_p, choice=a.choice)
-    out = torch.where(out == m.mask_id, torch.zeros_like(out), out); gen.append(out); want += [k] * a.per
+    out = torch.where(out == m.mask_id, torch.zeros_like(out), out)
+    if a.despeckle: out = despeckle(out)
+    gen.append(out); want += [k] * a.per
 gen = torch.cat(gen); want = torch.tensor(want)
 gf, gp = feats_and_pred(gen)
 res = {'acc': (gp == want).float().mean().item(), 'fd': frechet(gf, real_val_f), 'lone': lone(gen), 'speck': speck(gen), 'nll': nll}
-print(f"{os.path.basename(os.path.dirname(a.ckpt))} step {ck['step']} · steps {a.steps} temp {a.temp} top-p {a.top_p} choice {a.choice} guidance {a.guidance} nms {a.nms}")
+print(f"{os.path.basename(os.path.dirname(a.ckpt))} step {ck['step']} · steps {a.steps} temp {a.temp} top-p {a.top_p} choice {a.choice} despeckle {a.despeckle} guidance {a.guidance} nms {a.nms}")
 print(f"  acc  {res['acc']*100:5.1f} %   (real {ref['acc']*100:.1f} %)")
 print(f"  fd   {res['fd']:7.2f}   (real {ref['fd']:.2f})")
 print(f"  lone {res['lone']:5.1f}     (real {ref['lone']:.1f})")
