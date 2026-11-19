@@ -118,6 +118,33 @@ was learned putting scans into it (scanned-realm), then the engine's own list (l
 - **Cast-sheet tiles of a walk were blocked by the 1.75 m figure** — it stood beside a way, and the walker's body walks
   past where it stands. It stands behind the start instead.
 
+- **"Put in the ones with shells too — monsters, all sorts."** → Three more kinds for one valley (a turtle under a dome,
+  a crayfish in plates with claws, a file of woodlice) took more from the numbers than from the parts. A woodlouse's
+  body snapped about for a third of its lap: the swing's default clearance is a quarter of a metre, a third of its leg
+  → `clear` in its own size. The course asked it to step off a wall taller than itself → the course's drop, ditch and
+  mound now come in the kind's size. The turtle's hip cylinders found no anchors until its legs were longer — and then
+  it stood a metre and a half above its `ride`, on tanks that hung below its `belly` box → both declared as built.
+  Four in file walked into each other at the first halt → halts placed per machine so the file stops as one. A post
+  with a 14 s breath and a 20 s move was "150 mm off a lap later" → the loop made whole breaths. See MACHINES.md,
+  "Small kinds, sprawled kinds, files and posts".
+- **A shell is a loft with half its ring left out.** → `k.loft(axis, rings, { from, to, caps: false })` over the upper
+  half is a dome; the same rings a few centimetres larger over a narrow band are its rim; plates that overlap are short
+  lofts, each a little smaller than the one before, each ending a little wider than it begins. Scutes are `k.hatch`
+  along the dome's own normal. Nothing here needed a new part in the kit.
+
+- **"Like a trailer: a free camera that roams, follows a bird down, then goes to the character."** → The reel (`film.mjs`)
+  has cameras but no body in it; the player film had the body but only its own eye. A trailer needs both: the body driven
+  by keys every frame (`P.keys`, `P.update`), the camera placed after it (`cam.position`, `cam.rotation`) and before the
+  frame is emitted, the clock owned by the script. `examples/iron-valley/trailer.mjs` is that: shots as `{ T0, start,
+  act(s, keys), cam(s) }`, a dry pass first (where does the body go), three key frames a shot (is it in the picture), then
+  the long render. Found on the way: the walk ended 18 m short of the rim way, so nobody could go under the relic → the
+  realm's `world.radius` to 262; a low camera in reeds sees reeds → two metres up at the tarn; a body on a bank below the
+  camera falls out of the bottom of the frame → check its feet's height, not just its place on the map.
+- **A red rectangle in the mist.** → With the crayfish's lamps at 2.4 × and the camera 20° off its nose, hard straight
+  edges crossed the picture: the camera was inside a lamp's cone, and a cone seen from inside ends on straight lines. →
+  Camera 60° off the nose (beams read as shafts), the flare lowered to 1.5 ×. The beam's edge in the air pass is still
+  hard from inside; a film keeps its camera out of the beams.
+
 ## Scans in the engine (scanned-realm)
 ## Scans
 

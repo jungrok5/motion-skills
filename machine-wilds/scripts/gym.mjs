@@ -38,9 +38,12 @@ export function load(realmDir, { course = false } = {}) {
     // the test course: an oval whose long straight carries a ramp up (14°), a level top, a drop of 1.2 m, a side slope (12°),
     // a ditch, a mound and a ramp down; the way back is level.  One kind at a time, with one halt and its first move.
     LR.gymCourse = (kind) => { const M = LR.mech, sm = LR.sm; M.units.length = 0; for (const k in M.routes) delete M.routes[k]; LR.world.solids.length = 0;
-      const prof = (x) => 8 * sm(-110, -78, x) - 1.2 * sm(-39, -38, x) - 2.6 * Math.exp(-(((x - 46) / 5) ** 2)) + 2.2 * Math.exp(-(((x - 76) / 6) ** 2)) - 6.8 * sm(96, 126, x);
+      // (a kind that rides lower than 3 m meets the drop, the ditch, the mound and the roughness in its own measure — ride / 3.6 of them (a drop a third of its ride): a
+      // woodlouse is not asked down a step taller than its legs.  The ramps and the side slope are angles: they stay.)
+      const kS = Math.min(1, (M.kinds[kind].spec.ride || 3.6) / 3.6), wS = Math.max(kS, 0.4);
+      const prof = (x) => 8 * sm(-110, -78, x) - 1.2 * kS * sm(-39, -38, x) - 2.6 * kS * Math.exp(-(((x - 46) / (5 * wS)) ** 2)) + 2.2 * kS * Math.exp(-(((x - 76) / (6 * wS)) ** 2)) - (8 - 1.2 * kS) * sm(96, 126, x);
       const side = (x) => sm(-22, -8, x) * sm(32, 18, x) * 0.21;
-      LR.land.create({ height: (x, z) => (prof(x) + side(x) * z) * sm(60, 30, Math.abs(z)) + (LR.fbm(x * 0.2, z * 0.2, 3) - 0.5) * 0.25, half: 256, res: 0.5 });
+      LR.land.create({ height: (x, z) => (prof(x) + side(x) * z) * sm(60, 30, Math.abs(z)) + (LR.fbm((x * 0.2) / wS, (z * 0.2) / wS, 3) - 0.5) * 0.25 * kS, half: 256, res: 0.5 });
       const way = []; for (let x = -140; x <= 140; x += 28) way.push([x, 0]); way.push([165, 35], [150, 80]); for (let x = 120; x >= -120; x -= 40) way.push([x, 110]); way.push([-150, 80], [-165, 35]);
       M.route('course', way, { width: 0 }); const mv = Object.keys(M.kinds[kind].spec.moves || {})[0];
       return M.spawn(kind, { route: 'course', name: kind, halts: [{ at: 0.86, hold: 10, move: mv }] }); };`;

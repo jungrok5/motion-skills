@@ -48,4 +48,8 @@ Made in this repository from three of its skills — [`scanned-realm`](../scanne
 from <https://polyhaven.com> (CC0, fetched per realm, never committed). No design, name or asset of any game is used;
 `references/SOURCE.md` says what came from where.
 
+Reference: [AnyMachine](https://github.com/apekshik/anymachine) (apekshik, MIT) — the method `machine-build-reel` follows (a machine as a parts
+list, built and checked by script), and what prompted the example's shelled kinds (the turtle, the crayfish, the
+woodlice). No code, design or asset of it is used here; each kind is designed for its realm.
+
 Samples: https://jungrok5.github.io/motion-skills/machine-wilds/
