@@ -36,6 +36,7 @@
   C.begin = (n, draw) => { ensure(); dt = 1 / C.fps; start(n); settle(); LR.render.histValid = false;
     if (draw) for (let i = 0; i < 6; i++) { if (!cur.view) aim(cur.cam(0)); LR.emit('frame', clock, 1e-4, cam); LR.render.draw(cam, clock, 1e-4); } };
   C.tick = (draw) => { const P = LR.player, s = step(draw); return { s: +s.toFixed(2), x: +P.x.toFixed(1), y: +P.y.toFixed(1), z: +P.z.toFixed(1), pitch: +P.pitch.toFixed(2), cam: [cam.position.x, cam.position.y, cam.position.z].map((v) => +v.toFixed(1)), there: cur.st.there || 0, air: !!P.air }; };
+  C.state = () => ({ on: C.on, shot: name, index: live ? live.i : -1, s: live ? +live.s.toFixed(2) : f / (C.fps || 24), title: !!(live && live.tail >= 0) });
   C.time = () => clock; C.camNow = () => [cam.position.x, cam.position.y, cam.position.z, cam.rotation.y];
   // ── live: the page plays the film itself; Esc (or a click on "walk") hands the walker back ──
   let veil = null, hint = null, card = null;
