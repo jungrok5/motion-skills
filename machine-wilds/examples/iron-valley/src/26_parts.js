@@ -104,6 +104,35 @@ V.parts = {
     k.lamp('head', { name: 'eye', at: [0.3, -0.19, 0], dir: [0.62, -0.78, 0], color: [0.78, 0.92, 1.0], power: 30, cone: 7, range: 120, lens: 0.11, proud: 0.02 });
     k.lamp('wing_L2', { at: [0.04, 2.18, 0], dir: [0, 1, 0], color: [1, 0.08, 0.05], power: 0.9, range: 9, lens: 0.05, glow: 0.9 }); k.lamp('wing_R2', { at: [0.04, 2.18, 0], dir: [0, 1, 0], color: [0.1, 1, 0.3], power: 0.9, range: 9, lens: 0.05, glow: 0.9 });
   },
+  // 물떼새: the walker's own machine.  A pod between two hips, a counterweight boom behind, a short neck and a head that is mostly
+  // lamp; a bedroll, a canister and a whip aerial — somebody lives on it
+  plover(k) {
+    k.limbs({ style: 'shell' });
+    k.bone('body', (g) => {
+      k.mat('dark'); k.loft('x', [[-0.52, 0.1, 0.12, 0.02, 0, 4], [-0.3, 0.19, 0.22, 0, 0, 4], [0.2, 0.2, 0.23, 0, 0, 4], [0.46, 0.13, 0.15, 0.04, 0, 4]], { sides: 14 });
+      k.mat('shell'); k.loft('x', [[-0.44, 0.14, 0.2, 0.05, 0, 3], [-0.2, 0.24, 0.27, 0.06, 0, 3], [0.2, 0.25, 0.28, 0.06, 0, 3], [0.44, 0.15, 0.2, 0.06, 0, 3]], { sides: 14, from: -0.6 * Math.PI, to: 0.6 * Math.PI, caps: false });
+      k.mat('accent'); k.loft('x', [[-0.05, 0.262, 0.292, 0.06, 0, 3], [0.07, 0.262, 0.292, 0.06, 0, 3]], { sides: 14, from: -0.58 * Math.PI, to: 0.58 * Math.PI, caps: false });
+      // the hip girder, its end caps; the counterweight boom
+      k.mat('frame'); g.box(0, -0.1, 0, 0.26, 0.16, 0.62, { soft: 0.2 }); if (k.fine) for (const s of [-1, 1]) k.bolts('z', [0, -0.1, s * 0.31], 0.06, 6, 0.008, { dir: s });
+      k.mat('dark'); g.tube([[-0.46, 0.02, 0], [-0.74, 0.07, 0], [-0.92, 0.1, 0]], [0.07, 0.05, 0.04], { sides: k.n(8), caps: true }); k.mat('rust'); g.box(-0.9, 0.1, 0, 0.16, 0.13, 0.17, { soft: 0.3 });
+      // what it carries and what keeps it going
+      k.tank([-0.34, -0.2, 0.12], [0.1, -0.2, 0.12], 0.055, { role: 'rust', up: [0, -1, 0], straps: 2 }); k.tank([-0.3, -0.2, -0.12], [0.06, -0.2, -0.12], 0.045, { role: 'frame', up: [0, -1, 0], straps: 1, gauge: false });
+      for (const s of [-1, 1]) { k.hose([[0.12, -0.2, s * 0.12], [0.1, -0.24, s * 0.2], [0.02, -0.16, s * 0.27]], 0.012); k.grille([0.16, -0.02, s * 0.228], [0, 0, s], 0.22, 0.07, { up: [0, 1, 0] }); k.rivets([-0.36, 0.2, s * 0.2], [0.36, 0.21, s * 0.2], 9, 0.006, [0, 0.8, s * 0.6]); }
+      k.hatch([-0.2, 0.3, 0], [0, 1, 0], 0.2, 0.16, { up: [1, 0, 0], role: 'joint' }); k.stack([-0.4, 0.2, -0.1], [-0.44, 0.42, -0.11], 0.022);
+      g.mat('cloth', { tint: '#6f6a55' }); g.tube([[-0.34, 0.27, -0.2], [-0.34, 0.27, 0.2]], 0.065, { sides: k.n(8), caps: true }); if (k.mid) { k.mat('rubber'); for (const z of [-0.12, 0.12]) g.tube([[-0.34, 0.2, z], [-0.27, 0.27, z], [-0.34, 0.34, z], [-0.41, 0.27, z], [-0.34, 0.2, z]], 0.008, { sides: 4 }); }
+      if (k.mid) { k.mat('dark'); g.tube([[0.1, 0.3, 0.16], [0.1, 0.38, 0.16], [0.3, 0.36, 0.16], [0.3, 0.28, 0.16]], 0.009, { sides: 5 }); }      // a grab rail
+    });
+    k.neckLinks({ width: 0.16, style: 'shell' });
+    k.bone('head', (g) => {
+      k.mat('dark'); k.loft('x', [[-0.14, 0.07, 0.08, 0, 0, 4], [-0.02, 0.1, 0.11, 0.01, 0, 4], [0.2, 0.1, 0.105, 0.01, 0, 4], [0.3, 0.075, 0.08, 0, 0, 4]], { sides: 12 });
+      k.mat('shell'); k.loft('x', [[-0.13, 0.08, 0.1, 0.02, 0, 3], [0.02, 0.125, 0.135, 0.03, 0, 3], [0.2, 0.12, 0.125, 0.03, 0, 3], [0.32, 0.07, 0.09, 0.03, 0, 3]], { sides: 12, from: -0.55 * Math.PI, to: 0.55 * Math.PI, caps: false });
+      k.mat('joint'); k.along([0.31, -0.01, 0], [1, -0.06, 0], (g2) => { g2.lathe(0, 0, [[0.062, -0.02], [0.074, 0.01], [0.066, 0.035]], { sides: k.n(12) }); }); if (k.fine) { k.mat('dark'); g.tube([[-0.05, 0.15, 0.05], [-0.07, 0.3, 0.055]], [0.005, 0.002], { sides: 4 }); for (const s of [-1, 1]) k.hose([[-0.13, -0.04, s * 0.05], [-0.2, -0.12, s * 0.055], [-0.22, -0.24, s * 0.05]], 0.008); }
+    });
+    k.lamp('head', { name: 'torch', at: [0.325, -0.012, 0], dir: [0.985, -0.17, 0], color: [1.0, 0.9, 0.72], power: 16, cone: 17, range: 60, lens: 0.06, proud: 0.012 });
+    for (const s of [-1, 1]) k.lamp('head', { at: [0.2, 0.06, s * 0.118], dir: [0.5, 0, s], color: [1, 0.5, 0.14], power: 0.3, range: 4, lens: 0.016, glow: 0.7 });
+    k.lamp('body', { at: [-0.985, 0.1, 0], dir: [-1, 0, 0], color: [1, 0.12, 0.06], power: 0.06, range: 2, lens: 0.02, glow: 0.6 });
+    k.bone('whip', (g) => { k.mat('dark'); g.tube([[0, 0, 0], [0, 0.45, 0], [0, 0.9, 0]], [0.012, 0.008, 0.003], { sides: k.n(5), caps: true }); });
+  },
   // 등짐: a bed on six legs, a cab like a visor with two amber lamps, a frame of old girders holding what it carries
   porter(k) {
     k.limbs({ style: 'girder' });

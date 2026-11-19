@@ -70,6 +70,7 @@
 
   M.planUnit = (u) => {
     if (u.fly) return M.planFly(u);                       // a flyer has no footfalls: 48_mech_fly.js
+    if (u.avatar) return M.planAvatar(u);                 // the walker's own body steps as it goes: 48_mech_avatar.js
     const K = u.K, S = K.spec, g = S.gait, kin = u.kin, legs = kin.limbs, L = land();
     u.off = offsets(kin, g); u.T = g.cycle; u.duty = g.duty;
     const xs = legs.map((l) => l.home[0]), zs = legs.map((l) => Math.abs(l.home[1])); u.wb = Math.max(...xs) - Math.min(...xs); u.track = 2 * Math.max(...zs);
@@ -117,7 +118,7 @@
       for (const s of [0.16, 0.3, 0.45, 0.6, 0.75, 0.88]) { const e = smooth5((s - 0.08) / 0.84), x = A.x + (B.x - A.x) * e, z = A.z + (B.z - A.z) * e, base = A.y + (B.y - A.y) * e + g.lift * Math.sin(Math.PI * s ** 0.75) ** 1.4, need = L.h(x, z) + clear - base; if (need > 0) extra = Math.max(extra, need / Math.sin(Math.PI * s)); }
       A.extra = extra; } } };
   // after the land changes under the feet (footprints pressed in): heights, tilts and toes again
-  M.reseat = (u) => { if (u.fly) return; for (const l of u.kin.limbs) for (const P of u.plants[l.name]) setFoot(u, l, P); if (!u.post) M.swings(u); };
+  M.reseat = (u) => { if (u.avatar) return M.planAvatar(u);      /* the land has just been pressed: its exercise is walked again on it */ if (u.fly) return; for (const l of u.kin.limbs) for (const P of u.plants[l.name]) setFoot(u, l, P); if (!u.post) M.swings(u); };
 
   // time → where in the walk: the phase (cycles since the lap began, laps included), how fast it runs (1 walking, 0 standing), the halt it is in or near
   const phase = (u, t) => {
@@ -169,6 +170,7 @@
   // ── the command at time t ──────────────────────────────────────────────────────────────────────────────────────
   M.cmd = (u, t) => {
     if (u.fly) return M.flyCmd(u, t);
+    if (u.avatar) return M.avatarCmd(u, t);
     const K = u.K, S = K.spec, g = S.gait, kin = u.kin, legs = kin.limbs, I = S.idle || {}; t += u.offset || 0;
     const ph = u.post ? { u: 0, rate: 0, halt: null, tau: 0 } : phase(u, t), uu = ph.u, cmd = { limbs: {}, t, rate: ph.rate };
     // the legs
@@ -249,7 +251,7 @@
       const pts = []; for (let s2 = 0; s2 <= r.len; s2 += 3) pts.push(r.at(s2)); pts.push(r.at(0)); L.road(pts, r.width * 0.62, { kind: 'dirt', strength: r.worn === undefined ? 0.4 : r.worn, wobble: 2.2, soft: 3, ease: false }); }
     for (const u of M.units) M.planUnit(u);                                                   // the eased ground moves the footfalls: plan on it
     const half = L.half, res = L.res, n = L.n;
-    for (const u of M.units) { if (u.fly) continue; const key = u.kind + '/' + (u.R ? u.R.name : u.name); if (seen.has(key)) continue; seen.add(key); const g = u.K.spec.gait;
+    for (const u of M.units) { if (u.fly || u.avatar) continue; const key = u.kind + '/' + (u.R ? u.R.name : u.name); if (seen.has(key)) continue; seen.add(key); const g = u.K.spec.gait;
       for (const l of u.kin.limbs) for (const P of u.plants[l.name]) { const R = l.ball * 1.1 + l.toeLen * 0.85, depth = g.print === undefined ? 0.06 * R : g.print;      /* shallow and wide: a deep print is a wall the next foot would land on */ if (Math.abs(P.x) > half - R - 2 || Math.abs(P.z) > half - R - 2) continue;
         const i0 = Math.floor((P.x - R * 1.7 + half) / res), i1 = Math.ceil((P.x + R * 1.7 + half) / res), j0 = Math.floor((P.z - R * 1.7 + half) / res), j1 = Math.ceil((P.z + R * 1.7 + half) / res);
         for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const d = Math.hypot(-half + i * res - P.x, -half + j * res - P.z) / R; L.H[j * n + i] += -depth * LR.sm(1.05, 0.3, d) + depth * 0.22 * LR.sm(0.8, 1.2, d) * LR.sm(1.7, 1.25, d); }
@@ -264,6 +266,7 @@
   // their barrels, does the belly clear the land, does the walk close on itself, is the same instant the same pose.
   M.audit = (u, o = {}) => {
     if (u.fly) return M.auditFly(u, o);
+    if (u.avatar) return M.auditAvatar(u, o);
     const kin = u.kin, legs = kin.limbs, L = land(), span = u.post ? u.loop : u.lap, dt = o.dt || 0.05, n = Math.ceil(span / dt), g = u.K.spec.gait;
     const A = { unit: u.name, kind: u.kind, tonnes: u.K.spec.tonnes || 100, lap: span, cycles: u.N, stride: u.stride || 0, samples: n, clamp: 0, spanMax: 0, spanMin: 9, slip: 0, gap: 0, sole: 0, bendFlip: 0, foldMax: 0, straight: 180, supportMin: 99, fixMax: 0, fixShare: 0, belly: 1e9, kneeLow: 1e9, swingLow: 1e9, overlapMin: 9, leverMin: 9, speedMax: 0, moved: 0, tiltMax: 0, tiltOver: 0, lowMax: 0, lowMean: 0, jerk: 0, hinge: {}, steepest: 0, bodyAcc: 0 };
     const bsign = {}, planted = {}, hist = []; let fixN = 0;

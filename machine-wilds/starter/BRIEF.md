@@ -18,6 +18,7 @@ steep: the bench faces · level: the benches, the rim.
 | kind | for | size · tonnes | legs | cycle · duty · stride · lift | silhouette | idle · move | lamps | how many · where |
 |---|---|---|---|---|---|---|---|---|
 | warden | lighting the working face | about 6 × 12 × 4.6 m · 14 t | 4, two-segment girder legs with the knees behind | 4.4 s · 0.78 · 3.0 m · 0.9 m | a pump housing with a tank on its back, a short two-link mast, a caged lantern at its top | breathes, the lantern sweeps 24° · **dip**: rises a little, pitches forward 11° and lowers the lantern to the water, holds, comes up past rest | a warm lantern (26° cone, 60 m), two cyan marker lights | 2: one walks the rim (359 s a lap), one stands in the water |
+| linkboy | the walker's own body: it tends the wardens' lanterns | 1.2 × 1.9 × 0.7 m · 0.25 t | 2, two-segment girder legs with the knees behind (a rotary hip, a cylinder at the knee) | steps as it goes: a walk at 2.5 m/s, a run at 5.8 | a tool chest between two hips, a short mast, a caged lantern | breathes · gathers before a hop and gives after | a warm lantern (B) | 1, where the walk starts |
 
 ## The ways and the set piece
 The rim way circles the pit 44–50 m out. From the landing the walker looks across the water at the standing warden

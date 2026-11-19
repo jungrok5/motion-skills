@@ -58,6 +58,15 @@ V.machines = () => {
       { name: 'wing_R1', type: 'spin', parent: 'body', at: [0.25, 0.22, 0.42], dir: [0, 0, 1], axis: [-1, 0, 0], xdir: [1, 0, 0], len: 2.1 }, { name: 'wing_R2', type: 'spin', parent: 'wing_R1', at: [0, 2.1, 0], dir: [0, 1, 0], axis: [-1, 0, 0], xdir: [1, 0, 0], len: 2.3 },
       { name: 'tail', type: 'spin', parent: 'body', at: [-1.5, 0.05, 0], dir: [-1, 0, 0], axis: [1, 0, 0], xdir: [0, 0, 1], len: 1.5 }, { name: 'streamer', type: 'lag', parent: 'body', at: [-1.6, -0.1, 0], dir: [-1, -0.15, 0], len: 1.8, lag: 0.18, gain: 0.5, maxDeg: 30 }],
     flight: { speed: 14, beat: 0.87, stroke: [30, 20], fold: 16, dihedral: 7, bout: 9, bob: 0.16, lead: 0.7, bankMax: 52, span: 9.4, gaze: 24, tail: 'tail', wings: [['wing_L1', 'wing_L2'], ['wing_R1', 'wing_R2']] } });
+  // 물떼새: the walker's own body — a scout on two heron legs, as tall as a person and a head more.  A third of a tonne: it steps
+  // five times in two seconds at a walk, leaves the ground between steps at a run, gathers before a hop and gives at the knees after.
+  const PV = { kind: 'mammal', width: 0.09, drum: 0.09, ball: 0.07, toes: 3, toeLen: 0.22, act: [0, 1, 1], hipDrop: 0.06, style: 'shell', bar: 0.012 };      // (the hip turns on a drive inside its drum: it swings through a right angle, more than a cylinder follows)
+  const ploverLeg = Object.assign({}, PV, { name: 'L', at: [0, -0.06, -0.25], segs: [0.5, 0.48, 0.3], knee: 1, gamma: 12, home: [0.05, -0.23] });
+  M.define('plover', { title: '물떼새', age: 0.5, tonnes: 0.3, ride: 1.3, belly: [0.36, 0.16, 0.2], aware: 0, lensGain: 22, lodK: 2.5, build: (k) => V.parts.plover(k),
+    palette: { shell: ['ceramic', '#dfe0dc'], dark: ['paintmetal', '#2a2e31'], frame: ['paintmetal', '#566068'], accent: ['paintmetal', '#b8742a'] },
+    limbs: [ploverLeg, M.mirror(ploverLeg)], neck: { at: [0.34, 0.24, 0], links: [[0.2, 62]] }, head: { len: 0.34 },
+    extras: [{ name: 'whip', type: 'lag', parent: 'body', at: [-0.42, 0.3, 0.1], dir: [-0.3, 1, 0], len: 0.9, lag: 0.22, gain: 1.3, maxDeg: 24 }],
+    avatar: { stepWalk: 0.8, stepRun: 1.45, reach: 0.32, lift: [0.09, 0.12], swingGamma: 12, lean: [4, 12], gather: 0.1, tuck: 0.1 } });
   for (const k in V.ways) M.route(k, V.ways[k], { width: k === 'rim' ? 38 : k === 'round' ? 15 : 13, grade: k === 'rim' ? 0.12 : 0.2 });
   M.spawn('crane', { name: '두루미 1', route: 'round', offset: 0, halts: [{ at: 0.179, hold: 18, move: 'survey' }, { at: 0.62, hold: 12 }] });
   M.spawn('crane', { name: '두루미 2', route: 'round', offset: 330, halts: [{ at: 0.179, hold: 18, move: 'survey' }, { at: 0.62, hold: 12 }] });
@@ -66,6 +75,8 @@ V.machines = () => {
   // (closer, or abreast, and their wings cross in the tight turn over the saddle: check.mjs measures every pair)
   [[0, 0, 0], [2, 5, 2], [4, -5, 3], [6, 5, 4.5], [8, -4, 2.5]].forEach((q, i) => M.spawn('kite', { name: '솔개 ' + (i + 1), fly: V.sky, offset: -q[0], shift: [q[1], q[2]], phase: i * 0.23 }));
   M.spawn('ridge', { name: '마루', route: 'rim', offset: 120, halts: [{ at: 0.3, hold: 34, move: 'call' }] });
+  // the walker's body stands where the walk starts; the page hands it to whoever holds the keys
+  M.spawn('plover', { name: '물떼새', avatar: true, at: [V.spawn.x, V.spawn.z], yaw: 90 });
 };
 // the gym (scripts/gym.mjs): the land and the machines, nothing else
 // (o.studio: the cast sheet wants the kinds only — no land)

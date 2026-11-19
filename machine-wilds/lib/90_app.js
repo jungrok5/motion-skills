@@ -88,7 +88,7 @@
       LR.wx.snap({ weather: LR.q('wx', wx0.weather || 'clear'), tod: LR.qn('tod', wx0.tod !== undefined ? wx0.tod : LR.wx.tod), wet: LR.qn('wet', undefined), puddle: LR.qn('puddle', undefined) });   /* ?wet=1&puddle=1: just after rain (it dries as you watch) */
       if (cfg.round) LR.wx.round = cfg.round;
       if (LR.q('auto', wx0.auto === false ? '0' : '1') !== '0' && LR.q('wx') === undefined && LR.q('tod') === undefined) LR.wx.set({ auto: true });
-      P.bind(canvas); if (P.tour && LR.q('tour', '1') !== '0') P.startTour();
+      P.bind(canvas); if (P.tour && LR.q('tour', '1') !== '0') P.startTour(); if (LR.q('eye', '')) P.setView(LR.q('eye'));      // ?eye=third | top: start in that view
       let last = performance.now();
       const loop = (now) => { requestAnimationFrame(loop); const dt = Math.min(0.1, Math.max(0.0005, (now - last) / 1000)); last = now; if (document.hidden) return; time += dt; LR.emit('input', dt, cam); LR.wx.update(dt, time); LR.emit('frame', time, dt, cam); LR.render.draw(cam, time, dt); LR.emit('after', time, dt); };
       LR.progress(1, ''); document.getElementById('veil').classList.add('gone'); window.READY = true; LR.readyAt = performance.now(); requestAnimationFrame(loop);

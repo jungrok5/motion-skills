@@ -47,6 +47,25 @@ R.machines = () => {
   M.route('rim', pts, { width: 8 });
   M.spawn('warden', { name: 'Warden 1', route: 'rim', halts: [{ at: 0.3, hold: 15, move: 'dip' }, { at: 0.8, hold: 9 }] });
   M.spawn('warden', { name: 'Warden 2', post: [7, -5], yaw: 200, moves: ['dip'], rest: 1.5 });
+  // ④b the walker's own body (optional: without one a realm is walked in the first person only).  A linkboy: two legs with the
+  //     knees behind, like the wardens it was built to tend, a tool chest for a body and a lantern on a short mast.  The numbers
+  //     under `avatar` are how it steps; the page drives it from the keys (V: inside · behind · above; the wheel zooms).
+  const LB = { kind: 'mammal', name: 'L', width: 0.09, drum: 0.1, ball: 0.075, toes: 3, toeLen: 0.2, act: [0, 1], hipDrop: 0.06, style: 'girder', bar: 0.012, at: [0, -0.06, -0.24], segs: [0.62, 0.66], knee: -1, home: [-0.04, -0.22] };
+  M.define('linkboy', { title: 'Linkboy', age: 0.7, tonnes: 0.25, ride: 1.27, belly: [0.3, 0.16, 0.2], aware: 0, lodK: 2.5, build: R.linkboyParts,
+    palette: { frame: ['paintmetal', '#7d8a86'], rust: ['rustplate', '#cdbfae'], dark: ['paintmetal', '#2b2f2e'] },
+    limbs: [LB, M.mirror(LB)], neck: { at: [0.22, 0.26, 0], links: [[0.42, 78]] }, head: { len: 0.3 },
+    avatar: { stepWalk: 0.78, stepRun: 1.4, reach: 0.32, lift: [0.09, 0.12], lean: [3.5, 11], gather: 0.1, tuck: 0.1 } });
+  M.spawn('linkboy', { name: 'Linkboy', avatar: true, at: [4, 92], yaw: 0 });
+};
+R.linkboyParts = (k) => {
+  k.limbs({ style: 'girder' });
+  k.bone('body', (g) => { k.mat('frame'); k.loft('x', [[-0.4, 0.16, 0.22, 0.02, 0, 5], [0.3, 0.18, 0.24, 0.02, 0, 5], [0.42, 0.12, 0.18, 0.04, 0, 4]], { sides: 12 }); k.mat('dark'); g.box(0, -0.1, 0, 0.24, 0.16, 0.6, { soft: 0.2 });
+    k.mat('rust'); g.box(-0.12, 0.27, 0, 0.5, 0.16, 0.36, { soft: 0.12 }); k.hatch([-0.12, 0.35, 0], [0, 1, 0], 0.42, 0.3, { up: [1, 0, 0] }); k.tank([-0.3, -0.18, 0], [0.12, -0.18, 0], 0.06, { role: 'rust', up: [0, -1, 0], straps: 2 });
+    for (const s of [-1, 1]) { k.hose([[0.1, -0.18, s * 0.05], [0.08, -0.22, s * 0.18], [0.02, -0.14, s * 0.26]], 0.012); k.rivets([-0.36, 0.2, s * 0.215], [0.3, 0.21, s * 0.235], 8, 0.007, [0, 0, s]); k.grille([0.1, 0.02, s * 0.242], [0, 0, s], 0.2, 0.08, { up: [0, 1, 0] }); }
+    k.stripes([-0.41, 0.02, 0], [-1, 0, 0], 0.36, 0.08, 5, { up: [0, 1, 0] }); });
+  k.neckLinks({ width: 0.12, style: 'girder' });
+  k.bone('head', (g) => { k.mat('dark'); g.box(0.06, 0.13, 0, 0.26, 0.03, 0.24, { soft: 0.2 }); for (const [x, z] of [[-0.05, -0.1], [0.17, -0.1], [0.17, 0.1], [-0.05, 0.1]]) g.tube([[x, 0.12, z], [x, -0.12, z]], 0.008, { sides: 5 }); g.box(0.06, -0.13, 0, 0.24, 0.02, 0.22, { soft: 0.2 }); });
+  k.lamp('head', { name: 'lantern', at: [0.06, 0, 0], dir: [0.75, -0.66, 0], color: [1.0, 0.8, 0.5], power: 12, cone: 30, range: 40, lens: 0.07, proud: 0 });
 };
 // its parts: stock legs (girders), then what makes it a warden — each part in the frame of the one bone it rides
 R.wardenParts = (k) => {
