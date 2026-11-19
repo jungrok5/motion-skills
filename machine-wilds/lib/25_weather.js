@@ -18,6 +18,9 @@
     autumn:{ cloud: 0.42, dark: 0.0, rain: 0, snowfall: 0, season: 0.45, wind: 0.34, fog: 0.0032, fogH: 0.042, turb: 1.4 },
     // mist: low cloud lying in the valleys — the air itself is what you see; lamps cut cones in it and far things are shapes
     mist:  { cloud: 1.0, dark: 0.3, rain: 0, snowfall: 0, season: 0, wind: 0.1, fog: 0.0125, fogH: 0.034, turb: 1.8, glow: 1 },
+    // haze: a thin bright mist the sun comes through — far things are pale shapes, near things keep their colour, a low sun
+    // stands in shafts.  `cap`: how thick the hour may make it (a dawn does not turn it into a white wall)
+    haze:  { cloud: 0.2, dark: 0.0, rain: 0, snowfall: 0, season: 0, wind: 0.12, fog: 0.0052, fogH: 0.030, turb: 1.4, glow: 0.6, cap: 0.0095 },
   };
   W.cur = Object.assign({}, W.looks.clear);
   W.set = (o) => {
@@ -78,7 +81,7 @@
     // morning mist lies thick and burns off by nine; an evening only goes a little golden
     const low = LR.sm(0.42, 0.02, Math.abs(sunY)) * (1 - LR.sat(W.rain + W.snowfall)), dawn = LR.sm(4.2, 5.4, W.tod) * LR.sm(9.2, 7.4, W.tod);
     // (a look that is already mist does not grow sixfold at dawn: past 0.016 the valley is a white wall and nothing reads)
-    const fog = Math.max(c.fog * (1 + 0.25 * low), Math.min(c.fog * (1 + low * (0.6 + 4.6 * dawn)), 0.016)) + night * 0.0012;
+    const fog = Math.max(c.fog * (1 + 0.25 * low), Math.min(c.fog * (1 + low * (0.6 + 4.6 * dawn)), (W.looks[W.want.weather] || {}).cap || 0.016)) + night * 0.0012;
     U.uFog.value.set(fog, LR.lerp(c.fogH, 0.02, low * 0.5), W.baseY, 0);
     // woods hold damp air: thick at dawn and toward evening, so the sun shows as shafts between the trunks
     if (LR.canopy) { const lowS = LR.sm(0.66, 0.14, sunY) * day; LR.render.U.uCanopy.value.set(LR.canopy.shade, LR.canopy.mist * (0.004 + 0.017 * lowS) * (1 - 0.75 * LR.sat(W.rain + W.snowfall)), 0, 0); }

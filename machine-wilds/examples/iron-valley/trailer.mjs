@@ -15,7 +15,7 @@ const W = 960, H = 540, FPS = 24, out = dir + '/out/cine'; mkdirSync(out, { recu
 // relic has stopped to call and the crayfish rears — kept for `--only`)
 const ORDER = ['K', 'B0', 'G', 'T', 'R1', 'R2', 'R3', 'C2', 'A'], only = opt('only') ? opt('only').split(',') : ORDER;
 // the cut: which frames of each shot are in the film [from, to)
-const RANGE = { K: [0, 144], B0: [0, 72], G: [0, 72], T: [0, 132], R1: [0, 82], R2: [0, 101], R3: [0, 101], C2: [0, 132], A: [60, 221], B: [36, 168], D1: [0, 77], D2: [0, 158], D3: [0, 77], C: [0, 120] };
+const RANGE = { K: [0, 144], B0: [0, 72], G: [0, 72], T: [28, 132], R1: [0, 82], R2: [0, 101], R3: [0, 101], C2: [0, 132], A: [60, 221], B: [36, 168], D1: [0, 77], D2: [0, 158], D3: [0, 77], C: [0, 120] };
 if (has('join')) { const parts = []; let Ts = 0;
   for (const n of ORDER) { const p = `${out}/${n}.mp4`, len = (RANGE[n][1] - RANGE[n][0]) / FPS, vf = n === ORDER[0] ? 'fade=t=in:st=0:d=0.8' : n === ORDER[ORDER.length - 1] ? `fade=t=out:st=${(len - 1.3).toFixed(2)}:d=1.3` : 'null';
     const r = spawnSync('ffmpeg', ['-v', 'error', '-y', '-framerate', String(FPS), '-start_number', String(RANGE[n][0]), '-i', `${out}/${n}/f_%05d.jpg`, '-frames:v', String(RANGE[n][1] - RANGE[n][0]), '-vf', vf, '-c:v', 'libx264', '-crf', '14', '-preset', 'slow', '-pix_fmt', 'yuv420p', p], { stdio: 'inherit' }); if (r.status) process.exit(1); parts.push(p); Ts += len; }

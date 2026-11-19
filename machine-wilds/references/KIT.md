@@ -5,7 +5,7 @@ weather, the walk). What `machine-wilds` adds:
 - **Machines** — `LR.mech` (lib/48_mech*.js): `references/MACHINES.md`. In every `avoid` of a scatter use
   `LR.mech.wayDist(x, z)` (metres outside the nearest way; negative on it).
 - **Materials** (lib/17_mechmats.js): `steel chrome paintmetal rustplate ceramic rubber concrete asphalt`.
-- **Weather**: `LR.wx.looks.mist` and `?wx=mist` (its `glow` is the light the mist holds after dark; `LR.wx.airGlow`, 0.015, scales it); `LR.start({ round: [{ t, tod, weather }, …, { t, end: true }] })` sets
+- **Weather**: `LR.wx.looks.haze` and `?wx=haze` (a thin bright mist the sun comes through: far machines are pale shapes, near ones keep their colour; its `cap` is how thick the hour may make it), `LR.wx.looks.mist` and `?wx=mist` (its `glow` is the light the mist holds after dark; `LR.wx.airGlow`, 0.015, scales it); `LR.start({ round: [{ t, tod, weather }, …, { t, end: true }] })` sets
   the automatic round of the realm.
 - **The walker on slopes** (lib/80_player.js): a climb slows the step from a grade of 0.18, and a face steeper than a
   grade of 0.94 (43°) is slid along, not climbed. Decks (`LR.world.floors`) are not slopes.
