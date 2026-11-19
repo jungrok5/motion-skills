@@ -14,6 +14,7 @@
 // Everything steps at a fixed 60 Hz from a seeded RNG, so a run is a pure function of (data, seed, inputs).
 
 import { spriteFor, allCached, cachedSprite, paint, loadTessera, webgpuLikely, tesseraWasLoaded, TESSERA_CREDIT } from './tessera-link.js';
+import { loadPainter } from './painter-link.js';
 
 export const TILE = 16;
 const DT = 1 / 60;
@@ -1008,7 +1009,7 @@ export function yard(data, sprites, key, { seed = 3, width = 40 } = {}) {
 const DEFAULT_UI = {
   paint: 'Tessera로 스프라이트 그리기', paintNote: '처음 한 번 모델 115 MB를 내려받습니다 · 브라우저 안에서만 그립니다',
   hand: '손그림 스프라이트로 시작', start: '시작', again: '다시', own: '내 주인공 그리기', ownPlaceholder: '예: astronaut cat',
-  ownGo: '4개 그리기', ownPick: '하나를 고르세요', painting: '그리는 중', loading: '모델 받는 중', noGpu: 'WebGPU가 없어 손그림 스프라이트로 시작합니다 (CPU로 그리면 한 벌에 수십 초 걸립니다)',
+  ownGo: '4개 그리기', painter: '내장 모델로 그리기', unknownWords: '모델이 모르는 단어(무시됨)', ownPick: '하나를 고르세요', painting: '그리는 중', loading: '모델 받는 중', noGpu: 'WebGPU가 없어 손그림 스프라이트로 시작합니다 (CPU로 그리면 한 벌에 수십 초 걸립니다)',
   controls: '← → 이동 · Space 점프 · M 소리', controlsArena: '← ↑ ↓ → 이동 · Space 덮치기 · M 소리', cpu: 'CPU로 그리기 (느림)',
 };
 
@@ -1051,11 +1052,35 @@ export async function boot({ root = document.body, src = './game.json', data = n
   // custom hero from a prompt the player typed (kept on this device)
   const OWN = `psg.own.${hashStr(data.title || '')}`;
   const heroKey = keys.find((k) => data.cast[k].role === 'player');
-  const loadOwn = () => { try { const v = JSON.parse(localStorage.getItem(OWN) || 'null'); if (v) { const rgba = cachedSprite(v.prompt, v.seed, v.pick); if (rgba) sprites[heroKey] = makeSprite(rgba, 'tessera'); data.cast[heroKey].faces = 'front'; } } catch {} };
+  const b64 = (u8) => { let t = ''; for (let i = 0; i < u8.length; i++) t += String.fromCharCode(u8[i]); return btoa(t); };
+  const loadOwn = () => { try { const v = JSON.parse(localStorage.getItem(OWN) || 'null'); if (v?.rgba) { sprites[heroKey] = makeSprite(Uint8ClampedArray.from(atob(v.rgba), (c) => c.charCodeAt(0)), v.by); data.cast[heroKey].faces = 'front'; } } catch {} };
+  const saveOwn = (prompt, rgba, by) => { try { localStorage.setItem(OWN, JSON.stringify({ prompt, by, rgba: b64(rgba) })); } catch {} };
 
+  // a themed painter trained with train/ (optional): paints the cast members listed in painter.for, in a few seconds on the CPU
+  const PZ = data.painter;
+  const painterCredit = () => PZ.credit || `Sprites painted by the "${PZ.name || 'theme'}" painter (trained on Pixel Art Atlas 1.4M, CC0)`;
   const setCredit = () => {
-    const used = Object.values(sprites).some((s) => s.source === 'tessera');
-    credit.textContent = used ? TESSERA_CREDIT + ' · non-commercial' : (data.credit || 'Hand-drawn sprites from game.json');
+    const src = new Set(Object.values(sprites).map((s) => s.source));
+    const parts = [];
+    if (src.has('tessera')) parts.push(TESSERA_CREDIT + ' · non-commercial');
+    if (src.has('painter')) parts.push(painterCredit());
+    credit.textContent = parts.join(' · ') || (data.credit || 'Hand-drawn sprites from game.json');
+  };
+  const paintWithPainter = async () => {
+    overlay.hidden = false;
+    overlay.innerHTML = `<div class="psg-card"><h1>${esc(data.title || '')}</h1><p class="psg-status">${esc(ui.loading)} …</p><div class="psg-paint"></div></div>`;
+    const status = overlay.querySelector('.psg-status'), board = overlay.querySelector('.psg-paint');
+    const P = await loadPainter(new URL(PZ.src, location.href).href);
+    for (const k of PZ.for || []) {
+      const m = data.cast[k]; if (!m) continue;
+      const c = mkCanvas(16, 16); board.append(c);
+      const show = (rgba) => c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba), 16, 16), 0, 0);
+      const prompt = m.painterPrompt || m.prompt, pick = m.painterPick ?? 0;
+      status.textContent = `${ui.painting} · ${prompt}`;
+      const all = await P.paint(prompt, { seed: m.painterSeed ?? 7, count: pick + 1, onStep: (_, list) => show(list[pick]) });
+      show(all[pick]); sprites[k] = makeSprite(all[pick], 'painter');
+      if (m.painterFaces) m.faces = m.painterFaces;
+    }
   };
   const paintAll = async (device) => {
     overlay.hidden = false;
@@ -1084,7 +1109,8 @@ export async function boot({ root = document.body, src = './game.json', data = n
       <h1>${esc(data.title || '')}</h1>${data.text?.intro ? `<p>${esc(data.text.intro)}</p>` : ''}
       <div class="psg-cast">${keys.map((k) => `<figure><canvas data-k="${k}" width="16" height="16"></canvas><figcaption>${esc(data.cast[k].name || k)}</figcaption></figure>`).join('')}</div>
       <div class="psg-buttons">
-        <button class="psg-go" data-act="${cached ? 'cached' : 'paint'}">${esc(cached ? ui.start + ' · Tessera' : ui.paint)}</button>
+        ${PZ ? `<button class="psg-go" data-act="painter">${esc(PZ.label || ui.painter)}${PZ.size ? ` · ${esc(PZ.size)}` : ''}</button>` : ''}
+        <button class="${PZ ? '' : 'psg-go'}" data-act="${cached ? 'cached' : 'paint'}" data-tessera>${esc(cached ? ui.start + ' · Tessera' : ui.paint)}</button>
         <button data-act="hand">${esc(ui.hand)}</button>
       </div>
       ${cached ? '' : `<p class="psg-note">${esc(gpu ? ui.paintNote : ui.noGpu)}</p>`}
@@ -1093,7 +1119,12 @@ export async function boot({ root = document.body, src = './game.json', data = n
     const showCast = () => overlay.querySelectorAll('.psg-cast canvas').forEach((c) => c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(sprites[c.dataset.k].rgba), 16, 16), 0, 0));
     showCast();
     overlay.querySelector('[data-act=hand]').onclick = () => { sprites = { ...hand }; loadOwn(); go(); };
-    const goBtn = overlay.querySelector('.psg-go');
+    const pzBtn = overlay.querySelector('[data-act=painter]');
+    if (pzBtn) pzBtn.onclick = async () => {
+      try { sprites = { ...hand }; await paintWithPainter(); loadOwn(); go(); }
+      catch (e) { console.warn(e); sprites = { ...hand }; title(); overlay.querySelector('.psg-keys').textContent = String(e.message || e); }
+    };
+    const goBtn = overlay.querySelector('[data-tessera]');
     goBtn.onclick = async () => {
       if (goBtn.dataset.act === 'cached') { useTesseraCache(); loadOwn(); return go(); }
       if (!gpu && !confirm(ui.cpu + '?')) return;
@@ -1106,10 +1137,19 @@ export async function boot({ root = document.body, src = './game.json', data = n
       const prompt = form.querySelector('input').value.trim(); if (!prompt) return;
       const s = 1 + Math.floor(Math.random() * 99999);
       picks.textContent = `${ui.loading} …`;
+      const live = (_, list) => { picks.replaceChildren(...list.map((rgba) => { const c = mkCanvas(16, 16); c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba), 16, 16), 0, 0); return c; })); };
       try {
-        const all = await paint(prompt, { seed: s, count: 4, device: gpu ? 'auto' : 'wasm', onStep: (_, list) => { picks.replaceChildren(...list.map((rgba) => { const c = mkCanvas(16, 16); c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba), 16, 16), 0, 0); return c; })); } });
-        picks.replaceChildren(...all.map((rgba, i) => { const b = document.createElement('button'); const c = mkCanvas(16, 16); c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba), 16, 16), 0, 0); b.append(c); b.title = ui.ownPick;
-          b.onclick = () => { try { localStorage.setItem(OWN, JSON.stringify({ prompt, seed: s, pick: i })); } catch {} sprites[heroKey] = makeSprite(rgba, 'tessera'); data.cast[heroKey].faces = 'front'; showCast(); }; return b; }));
+        // with a themed painter the hero is painted by it (seconds, on the CPU); otherwise by Tessera
+        let all, by = 'tessera', note = '';
+        if (PZ) {
+          const P = await loadPainter(new URL(PZ.src, location.href).href);
+          const unknown = P.encode(prompt).unknown;
+          if (unknown.length) note = `${ui.unknownWords}: ${unknown.join(', ')}`;
+          all = await P.paint(prompt, { seed: s, count: 4, onStep: live }); by = 'painter';
+        } else all = await paint(prompt, { seed: s, count: 4, device: gpu ? 'auto' : 'wasm', onStep: live });
+        picks.replaceChildren(...all.map((rgba) => { const b = document.createElement('button'); const c = mkCanvas(16, 16); c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba), 16, 16), 0, 0); b.append(c); b.title = ui.ownPick;
+          b.onclick = () => { saveOwn(prompt, rgba, by); sprites[heroKey] = makeSprite(rgba, by); data.cast[heroKey].faces = 'front'; showCast(); setCredit(); }; return b; }));
+        if (note) { const p = document.createElement('p'); p.className = 'psg-note'; p.textContent = note; picks.after(p); }
       } catch (e) { picks.textContent = String(e.message || e); }
     };
     setCredit();
