@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>prompt-sprite-game · motion-skills</title>
+<meta name="description" content="주제를 주면 등장하는 모든 것을 영어 몇 단어로 적고, Tessera-small이 플레이어의 브라우저 안에서 16×16 픽셀 스프라이트로 그려 주는 작은 픽셀 게임을 만듭니다.">
+<meta property="og:title" content="prompt-sprite-game · motion-skills">
+<meta property="og:description" content="주제를 주면 등장하는 모든 것을 영어 몇 단어로 적고, Tessera-small이 플레이어의 브라우저 안에서 16×16 픽셀 스프라이트로 그려 주는 작은 픽셀 게임을 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/prompt-sprite-game/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/prompt-sprite-game">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / prompt-sprite-game</nav>
+  <h1>prompt-sprite-game</h1>
+  <p>주제를 주면 동사 하나짜리 작은 픽셀 게임(옆에서 보는 플랫폼 오르기, 위에서 보는 아레나 모으기)을 설계하고, 주인공 · 모을 것 · 적 · 목표를 영어 몇 단어로 적어 Tessera-small이 플레이어의 브라우저 안에서 16×16 스프라이트로 그리게 합니다. 같은 캐릭터를 손그림 픽셀로도 그려 두어 오프라인에서도, 상업적 용도로도 돌아갑니다. 원본: <a href="https://x.com/calebfahlgren/status/2122745094205763668?a=3EjPTb2Z6tqo35PIW7s&amp;s=19">Caleb의 X 게시물</a>(<a href="https://huggingface.co/spaces/cfahlgren1/slack-moji">Slack Moji</a>, 모델 <a href="https://huggingface.co/thejagstudio/tessera-small">Tessera-small</a>)을 보고 만들었습니다.</p>
+  <ul class="tags"><li>Tessera-small · 브라우저 안에서 16×16</li><li>플랫폼 · 아레나</li><li>손그림 스프라이트 함께</li><li>깡충 걸음 · 예비 동작 · 숨 쉬는 대기</li><li>game.json 하나</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나 (예: 등대 고양이, 버섯 숲 바구니)</dd>
+      <dt>브리프</dt><dd>동사 · 종류 · 캐스트(프롬프트 · 바라보는 쪽 · 질량 · 걸음) · 장소 · 레벨 순서 · 곡 · 문구</dd>
+      <dt>스프라이트</dt><dd>Tessera 미리보기(시드마다 네 장)에서 고르기, 같은 모습의 손그림 16×16 격자</dd>
+      <dt>검사</dt><dd>도달 가능성 · 결정성 · 디딘 몸 미끄러짐 · 숨 쉬는 대기 · 예비 동작 · 착지 · 멈춤 관성, 좌우 양쪽 캐스트 시트</dd>
+      <dt>출력</dt><dd><code>index.html</code> + <code>game.json</code> + <code>lib/</code>, 정적 서버 어디서나</dd>
+    </dl>
+    <pre><code>node prompt-sprite-game/scripts/new-game.mjs my-game --kind=platform --title="My Game"
+node prompt-sprite-game/scripts/paint.mjs my-game    # Tessera 미리보기 → ref/
+node prompt-sprite-game/scripts/check.mjs my-game
+node prompt-sprite-game/scripts/sheet.mjs my-game    # 캐스트 시트 + 스틸
+cd my-game &amp;&amp; python3 -m http.server 8000</code></pre>
+    <p class="mute">요구 사항: Node 18+, Playwright Chromium(스크립트). 게임은 정적 서버와 브라우저만, Tessera는 huggingface.co · cdn.jsdelivr.net 접속과 (빠르게 그리려면) WebGPU가 필요합니다. Tessera-small은 CC BY-NC 4.0이라 모델이 그린 스프라이트로 하는 게임은 비상업용입니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/prompt-sprite-game/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:5/3.4;--demo-bg:#0d0c12">
+    <iframe data-src="demo/lighthouse-cat/" title="prompt-sprite-game 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/lighthouse-cat/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>「등대 고양이」 · 플랫폼 · ← → 이동, Space 점프</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/lighthouse-cat/" data-cap="「등대 고양이」 · 플랫폼 · ← → 이동, Space 점프" aria-pressed="true">등대 고양이</button>
+        <button class="btn" type="button" data-src="demo/mushroom-basket/" data-cap="「버섯 숲 바구니」 · 아레나 · 방향키 이동, Space 덮치기">버섯 숲 바구니</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">이 스킬로 만든 두 게임과 검사 결과입니다. 사진은 모두 손그림 스프라이트로 찍었고, 모델이 그린 스프라이트는 데모에서 「Tessera로 스프라이트 그리기」를 누르면 여러분의 브라우저에서 그려집니다(처음 한 번 115 MB). 카드를 누르면 그 게임이 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"platform":"플랫폼","arena":"아레나","check":"캐스트 시트"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「등대 고양이」 <small>플랫폼 · 72×12 타일 · 생선 5 · 목숨 3</small></h3>
+      <p>폭풍에 꺼진 등대를 다시 켜려고 고양이가 밤바다 절벽을 오릅니다. 게는 밟고, 성게와 바다는 피하고, 틈 위를 오가는 갈매기는 때를 맞춰 넘습니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="platform" href="demo/lighthouse-cat/" target="_blank" rel="noopener">
+          <img src="samples/lighthouse-plank.jpg" alt="달 뜬 밤바다 절벽, 나무 판자 위의 생선을 향해 뛰어오르는 주황 고양이와 그 아래를 걷는 빨간 게" loading="lazy" width="640" height="384">
+          <div class="cap"><span class="no">플랫폼 · 첫 적</span><b>판자 밑의 게</b><span class="how">밟거나 넘고, 판자 위의 생선까지</span></div></a>
+        <a class="tile" data-tags="platform" href="demo/lighthouse-cat/" target="_blank" rel="noopener">
+          <img src="samples/lighthouse-gull.jpg" alt="바다 틈 위를 오가며 나는 하얀 갈매기와 그 위에 떠 있는 생선, 절벽 위의 고양이" loading="lazy" width="640" height="384">
+          <div class="cap"><span class="no">플랫폼 · 겹친 위험</span><b>틈 위의 갈매기</b><span class="how">미끄러지듯 나는 몸은 위아래로 떠 있습니다</span></div></a>
+        <a class="tile" data-tags="platform" href="demo/lighthouse-cat/" target="_blank" rel="noopener">
+          <img src="samples/lighthouse-top.jpg" alt="절벽 꼭대기, 게를 지나 등대 등불로 가는 고양이와 생선 5/5 표시" loading="lazy" width="640" height="384">
+          <div class="cap"><span class="no">플랫폼 · 목표</span><b>꼭대기의 등불</b><span class="how">생선 다섯 마리를 모아야 불이 켜집니다</span></div></a>
+        <a class="tile" data-tags="platform" href="demo/lighthouse-cat/" target="_blank" rel="noopener">
+          <img src="samples/title.jpg" alt="「등대 고양이」 시작 화면: 고양이 · 생선 · 게 · 갈매기 · 등불 스프라이트, Tessera로 그리기와 손그림으로 시작 버튼, 내 주인공 그리기" loading="lazy" width="640" height="384">
+          <div class="cap"><span class="no">시작 화면</span><b>Tessera로 그릴지, 손그림으로 할지</b><span class="how">모델은 누른 사람의 브라우저에서만 그리고, 「내 주인공 그리기」로 직접 적은 말로 네 장을 받아 고릅니다</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>「버섯 숲 바구니」 <small>아레나 · 30×20 타일 · 버섯 10 · 75초</small></h3>
+      <p>해 지기 전에 고슴도치가 숲속 빈터의 빨간 버섯을 바구니에 담습니다. 딱정벌레는 덮쳐서 잠깐 납작하게 만들 수 있지만, 쫓아오는 말벌은 피할 수밖에 없습니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="arena" href="demo/mushroom-basket/" target="_blank" rel="noopener">
+          <img src="samples/mushroom-start.jpg" alt="꽃과 풀이 흩어진 숲속 빈터, 고슴도치와 말벌, 딱정벌레, 빨간 버섯들과 연못" loading="lazy" width="640" height="384">
+          <div class="cap"><span class="no">아레나 · 시작</span><b>빈터의 첫 버섯</b><span class="how">생울타리가 방을 나누고 연못은 돌아가야 합니다</span></div></a>
+        <a class="tile" data-tags="arena" href="demo/mushroom-basket/" target="_blank" rel="noopener">
+          <img src="samples/mushroom-pond.jpg" alt="연못가의 고슴도치 주위로 버섯 세 송이와 두 마리 말벌, 가시덤불" loading="lazy" width="640" height="384">
+          <div class="cap"><span class="no">아레나 · 쫓는 적</span><b>연못가의 말벌</b><span class="how">말벌은 시야 안에 들면 따라옵니다</span></div></a>
+
+      </div>
+    </div>
+    <div class="group">
+      <h3>캐스트 시트 <small>좌우 양쪽 · 손그림 스프라이트</small></h3>
+      <p>움직이는 캐릭터마다 오른쪽 · 왼쪽으로 대기 · 깡충 걸음 · 멈춤 · 제자리 돌기 · 점프(웅크림 → 도약 → 꼭대기 → 착지 → 회복)를 그립니다. 회색 선은 디딘 몸의 땅입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="check" href="https://github.com/jungrok5/motion-skills/tree/main/prompt-sprite-game/examples/lighthouse-cat" target="_blank" rel="noopener">
+          <img src="samples/sheet-cat.jpg" alt="고양이 캐스트 시트: 오른쪽과 왼쪽 줄에 대기, 깡충 걸음, 멈춤, 돌기, 웅크림, 도약, 꼭대기, 착지, 회복" loading="lazy" width="640" height="384">
+          <div class="cap"><span class="no">캐스트 시트 · 질량 1</span><b>고양이</b><span class="how">돌 때는 제자리에서 좁아지며 뒤집히고, 멈추면 윗부분이 앞으로 넘어갔다 돌아옵니다</span></div></a>
+        <a class="tile" data-tags="check" href="https://github.com/jungrok5/motion-skills/tree/main/prompt-sprite-game/examples/mushroom-basket" target="_blank" rel="noopener">
+          <img src="samples/sheet-beetle.jpg" alt="딱정벌레와 말벌 캐스트 시트: 무거운 딱정벌레의 긴 웅크림과 깊은 착지, 말벌의 떠 있는 움직임" loading="lazy" width="640" height="384">
+          <div class="cap"><span class="no">캐스트 시트 · 질량 1.8 · 0.5</span><b>딱정벌레와 말벌</b><span class="how">무거울수록 오래 웅크리고 깊게 내려앉습니다</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 예제 두 편과, 스킬을 만든 출처입니다.</p>
+  <div class="works">
+    <a class="work" href="https://jungrok5.github.io/motion-skills/prompt-sprite-game/demo/lighthouse-cat/" target="_blank" rel="noopener"><b>「등대 고양이」</b><span>플랫폼 · 캐스트 5 · check.mjs 전부 통과</span><span class="url">prompt-sprite-game/examples/lighthouse-cat</span></a>
+    <a class="work" href="https://jungrok5.github.io/motion-skills/prompt-sprite-game/demo/mushroom-basket/" target="_blank" rel="noopener"><b>「버섯 숲 바구니」</b><span>아레나 · 캐스트 4 · check.mjs 전부 통과</span><span class="url">prompt-sprite-game/examples/mushroom-basket</span></a>
+    <a class="work" href="https://x.com/calebfahlgren/status/2122745094205763668?a=3EjPTb2Z6tqo35PIW7s&amp;s=19" target="_blank" rel="noopener"><b>출처 · Caleb의 X 게시물</b><span>47M 파라미터 확산 모델이 브라우저에서 픽셀 이모지를 그리고, 그 위에 만든 Slack 이모지 메이커</span><span class="url">x.com/calebfahlgren</span></a>
+    <a class="work" href="https://huggingface.co/spaces/cfahlgren1/slack-moji" target="_blank" rel="noopener"><b>Slack Moji</b><span>적으면 네 장을 그려 고르게 하는 웹 앱 · CC BY-NC 4.0</span><span class="url">huggingface.co/spaces/cfahlgren1/slack-moji</span></a>
+    <a class="work" href="https://huggingface.co/thejagstudio/tessera-small" target="_blank" rel="noopener"><b>Tessera-small</b><span>Jagrat Patel(TheJagStudio) · 16×16 마스크 확산 모델 · CC BY-NC 4.0</span><span class="url">huggingface.co/thejagstudio/tessera-small</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/prompt-sprite-game/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/prompt-sprite-game">폴더</a> <span>lib · scripts · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/prompt-sprite-game/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/prompt-sprite-game/references/BRIEF.md">references/BRIEF.md</a> <span>브리프 틀과 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/prompt-sprite-game/references/GAME-JSON.md">references/GAME-JSON.md</a> <span>game.json 형식</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/prompt-sprite-game/references/TESSERA.md">references/TESSERA.md</a> <span>모델 · 라이선스 · 잘 읽히는 프롬프트</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/prompt-sprite-game/references/MOTION.md">references/MOTION.md</a> <span>한 장짜리 스프라이트에 무게를 싣는 법</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/prompt-sprite-game/references/SOURCE.md">references/SOURCE.md</a> <span>출처와 가져온 것 · 가져오지 않은 것</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/prompt-sprite-game/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 사진의 스프라이트는 모두 손그림입니다. 데모에서 그리는 스프라이트: Tessera-small (TheJagStudio, CC BY-NC 4.0) via cfahlgren1/tessera-small-onnx, 비상업용.
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
