@@ -11,9 +11,11 @@ import { createRequire } from 'node:module'; import { pathToFileURL } from 'node
 const require = createRequire(import.meta.url); const { chromium } = require('playwright');
 const args = process.argv.slice(2), dir = args[0], has = (k) => args.includes('--' + k), opt = (k) => { const i = args.indexOf('--' + k); return i > -1 ? args[i + 1] : null; };
 const W = 960, H = 540, FPS = 24, out = dir + '/out/cine'; mkdirSync(out, { recursive: true });
-const ORDER = ['K', 'B0', 'B', 'D1', 'D2', 'D3', 'C', 'A'], only = opt('only') ? opt('only').split(',') : ORDER;
+// the cut that is joined: every machine in it is walking (B, D1–D3 and C are an earlier cut's shots, where the turtle stands, the
+// relic has stopped to call and the crayfish rears — kept for `--only`)
+const ORDER = ['K', 'B0', 'G', 'T', 'R1', 'R2', 'R3', 'C2', 'A'], only = opt('only') ? opt('only').split(',') : ORDER;
 // the cut: which frames of each shot are in the film [from, to)
-const RANGE = { K: [0, 144], B0: [0, 72], B: [36, 168], D1: [0, 77], D2: [0, 158], D3: [0, 77], C: [0, 120], A: [60, 221] };
+const RANGE = { K: [0, 144], B0: [0, 72], G: [0, 72], T: [0, 132], R1: [0, 82], R2: [0, 101], R3: [0, 101], C2: [0, 132], A: [60, 221], B: [36, 168], D1: [0, 77], D2: [0, 158], D3: [0, 77], C: [0, 120] };
 if (has('join')) { const parts = []; let Ts = 0;
   for (const n of ORDER) { const p = `${out}/${n}.mp4`, len = (RANGE[n][1] - RANGE[n][0]) / FPS, vf = n === ORDER[0] ? 'fade=t=in:st=0:d=0.8' : n === ORDER[ORDER.length - 1] ? `fade=t=out:st=${(len - 1.3).toFixed(2)}:d=1.3` : 'null';
     const r = spawnSync('ffmpeg', ['-v', 'error', '-y', '-framerate', String(FPS), '-start_number', String(RANGE[n][0]), '-i', `${out}/${n}/f_%05d.jpg`, '-frames:v', String(RANGE[n][1] - RANGE[n][0]), '-vf', vf, '-c:v', 'libx264', '-crf', '14', '-preset', 'slow', '-pix_fmt', 'yuv420p', p], { stdio: 'inherit' }); if (r.status) process.exit(1); parts.push(p); Ts += len; }
@@ -36,7 +38,36 @@ await page.evaluate(([FPS]) => {
   const goTo = (tx, tz, K, run) => { const dx = tx - P.x, dz = tz - P.z, d = Math.hypot(dx, dz); if (d < 0.45) return true; P.yaw += wrap(Math.atan2(dx, -dz) - P.yaw) * Math.min(1, 5 * dt); K.KeyW = true; if (run) K.ShiftLeft = true; return false; };
   const B0 = [100.5, -226], fw = [0.956, 0.292], rt = [-0.292, 0.956], under = [B0[0] + fw[0] * 4, B0[1] + fw[1] * 4], TB = [97, 82];
   const kite = M.units.find((u) => u.name === '솔개 3'), kp = (t) => M.cmd(kite, t).body.p, tarn0 = { x: 99, z: 102.5, yaw: 167 };
+  // a walking machine at a moment: where its body is, which way it goes, which way is its right
+  const U = (n) => M.units.find((u) => u.name === n), pose = (u, t) => { const c = M.cmd(u, t), h = c.h; return { p: c.body.p, h, fw: [Math.cos(h), Math.sin(h)], rt: [-Math.sin(h), Math.cos(h)] }; };
+  const rel = (q, f, r) => [q.p[0] + q.fw[0] * f + q.rt[0] * r, q.p[2] + q.fw[1] * f + q.rt[1] * r], yawOf = (q) => (q.h * 180) / Math.PI + 90;
+  const relic = U('마루'), jara = U('자라 1'), gajae = U('가재'), q1 = pose(relic, 142.0), q2 = pose(relic, 145.4), q3 = pose(relic, 149.6), far = rel(q1, 220, 0), c3 = rel(q3, 78, 7);
+  const qt = pose(jara, 106), sg = qt.rt[1] > 0 ? 1 : -1, tGoal = rel(qt, 30, sg * 9.5);
   const SH = {
+    // the woodlice come down their track in file; it stands aside
+    G: { dur: 3, tod: 18.7, weather: 'clear', T0: 57, start: [-89.5, 51.4, 270], st: {},
+      act() {},
+      cam(s) { return [low([-86.2 - 0.25 * s, 0, 49.9], 0.6), [-100, floor(-100, 47, 30) + 0.9, 47.2], 50]; } },
+    // it walks beside the turtle as the turtle walks into the evening
+    T: { dur: 5.5, tod: 18.75, weather: 'clear', T0: 106, start: [rel(qt, -12, sg * 10.5)[0], rel(qt, -12, sg * 10.5)[1], yawOf(qt)], st: {},
+      act(s, K) { if (s > 0.2) goTo(tGoal[0], tGoal[1], K); P.pitch = LR.damp(P.pitch, 0.22, 1.2, dt); },
+      cam(s) { const q = pose(jara, 106 + s), f = rel(q, 3.5, 0); return [low(at(-5.6, sg * 2.2, 0), 1.9), [lerp(P.x, f[0], 0.62), lerp(P.y + 1.6, q.p[1] - 1.2, 0.62), lerp(P.z, f[1], 0.62)], 56]; } },
+    // sunset on the rim, the relic walking: it runs in under it from behind …
+    R1: { dur: 3.45, tod: 19.4, weather: 'clear', T0: 142.0, start: [rel(q1, -26, 0)[0], rel(q1, -26, 0)[1], yawOf(q1)], st: {},
+      act(s, K) { if (s > 0.1) goTo(far[0], far[1], K, true); },
+      cam(s) { return [low(at(-5.5, 1.8, 0), 1.0), at(16, 0, 9), 62]; } },
+    // … runs between its legs as they come down …
+    R2: { dur: 4.25, tod: 19.4, weather: 'clear', T0: 145.4, start: [rel(q2, -11, 0)[0], rel(q2, -11, 0)[1], yawOf(q2)], st: {},
+      act(s, K) { goTo(far[0], far[1], K, true); },
+      cam(s) { return [low(at(3.5 - 0.3 * s, -5.5, 0), 0.6), at(0.5, 2, 3.4), 75]; } },
+    // … and out ahead of it: the whole of it coming on
+    R3: { dur: 4.25, tod: 19.4, weather: 'clear', T0: 149.6, start: [rel(q3, 7, 0)[0], rel(q3, 7, 0)[1], yawOf(q3)], st: {},
+      act(s, K) { goTo(far[0], far[1], K, true); },
+      cam(s) { const q = pose(relic, 149.6 + s); return [low([c3[0], 0, c3[1]], 1.5), [q.p[0], q.p[1] - 14, q.p[2]], 52]; } },
+    // dusk mist: across the brook the crayfish goes by on its eight legs
+    C2: { dur: 5.5, tod: 19.75, weather: 'mist', T0: 103, start: [-61.6, -24.4, 0], st: {},
+      act(s, K) { P.pitch = LR.damp(P.pitch, 0.2, 1.4, dt); if (s > 3.4 && s < 4.2) K.KeyS = true; },
+      cam(s) { const q = pose(gajae, 103 + s); return [low([-60.4 + 0.15 * s, 0, -19.4], 1.7), [q.p[0] + 2, q.p[1] - 1.8, q.p[2]], 46]; } },
     // the opening: behind a kite as it glides in over the old road and the viaduct, a crane walking the floor below
     K: { dur: 6, tod: 18.6, weather: 'clear', T0: 116.5, start: [-22, 54, 0], st: {},
       act() {},
