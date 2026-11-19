@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>바람의 들판 — ten-second-scene</title>
+<!-- ten-second-scene · WebGL2 strokes · 「바람의 들판」. ONE file: the kit below is inlined by new-scene.mjs. Every mark is a stroke drawn in code. -->
+<script data-kit="kit.js">
+/* ten-second-scene · kit.js — numbers, seeded randomness, noise, colour, a pinhole camera and the page contract.
+   new-scene.mjs inlines this file into every scene, so a scene is ONE html file. Everything here is a pure function
+   of its inputs; the only clock is the live player's, and it only ever calls seek(t). */
+(function (g) {
+  'use strict';
+  const TSS = g.TSS = g.TSS || {};
+  const PI = Math.PI, TAU = PI * 2;
+
+  // ---------- numbers ----------
+  const clamp = (x, a = 0, b = 1) => x < a ? a : x > b ? b : x;
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
+  const remap = (x, a, b, c, d) => c + (d - c) * clamp((x - a) / (b - a));
+  const fract = x => x - Math.floor(x);
+  const ease = {
+    in: (p, k = 2) => Math.pow(clamp(p), k),
+    out: (p, k = 2) => 1 - Math.pow(1 - clamp(p), k),
+    inOut: (p, k = 2) => { p = clamp(p); return p < .5 ? Math.pow(2 * p, k) / 2 : 1 - Math.pow(2 - 2 * p, k) / 2; },
+    sine: p => .5 - .5 * Math.cos(PI * clamp(p)),
+  };
+  // Step response of a damped spring: 0 → overshoot → settles at 1. f in Hz, z = damping ratio (<1 overshoots).
+  function spring(t, f = 2, z = .45) {
+    if (t <= 0) return 0;
+    const w = TAU * f, wd = w * Math.sqrt(1 - z * z);
+    return 1 - Math.exp(-z * w * t) * (Math.cos(wd * t) + z * w / wd * Math.sin(wd * t));
+  }
+  // Anticipation → action → overshoot/settle → (optional) return with a landing bounce. Value: 0 at rest, 1 at the
+  // held pose, dips to -depth during anticipation. Heavier things: longer antic, longer settle (references/CRAFT.md).
+  function act(t, o) {
+    const { t0, antic = .25, dur = .5, depth = .15, over = .1, settle = .45, back = null } = o;
+    let v;
+    if (t < t0 - antic) v = 0;
+    else if (t < t0) v = -depth * ease.sine((t - (t0 - antic)) / antic);
+    else if (t < t0 + dur) v = lerp(-depth, 1, ease.inOut((t - t0) / dur, 2.2));
+    else { const s = t - t0 - dur; v = 1 + over * Math.exp(-s * 4 / settle) * Math.sin(s * TAU / settle); }
+    if (back && t > back.at) {
+      const bd = back.dur || dur, s = t - back.at;
+      const k = s < bd ? ease.inOut(s / bd, 2) : 1;
+      const land = s > bd ? -(back.bounce ?? over * .7) * Math.exp(-(s - bd) * 5 / (back.settle || settle)) * Math.sin((s - bd) * TAU / (back.settle || settle)) : 0;
+      v = lerp(v, 0, k) + land;
+    }
+    return v;
+  }
+
+  // ---------- seeded randomness ----------
+  function rng(seed = 1) {
+    let a = (seed >>> 0) || 0x9e3779b9;
+    const r = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    r.range = (lo, hi) => lo + (hi - lo) * r();
+    r.int = (lo, hi) => Math.floor(lo + (hi - lo + 1) * r());
+    r.pick = arr => arr[Math.floor(r() * arr.length)];
+    r.normal = (m = 0, s = 1) => m + s * Math.sqrt(-2 * Math.log(r() + 1e-12)) * Math.cos(TAU * r());
+    r.chance = p => r() < p;
+    return r;
+  }
+  const hash = (i, j = 0, s = 0) => { let h = (i * 374761393 + j * 668265263 + s * 2147483647) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+
+  // ---------- noise (gradient 2D, value 3D) ----------
+  const perm = new Uint8Array(512); { const r = rng(1337), p = [...Array(256).keys()]; for (let i = 255; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [p[i], p[j]] = [p[j], p[i]]; } for (let i = 0; i < 512; i++) perm[i] = p[i & 255]; }
+  const grad2 = (h, x, y) => { const a = h * TAU / 256; return Math.cos(a) * x + Math.sin(a) * y; };
+  const fade = t => t * t * t * (t * (t * 6 - 15) + 10);
+  function noise2(x, y) {
+    const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi, X = xi & 255, Y = yi & 255;
+    const u = fade(xf), v = fade(yf);
+    const a = grad2(perm[X + perm[Y]], xf, yf), b = grad2(perm[X + 1 + perm[Y]], xf - 1, yf);
+    const c = grad2(perm[X + perm[Y + 1]], xf, yf - 1), d = grad2(perm[X + 1 + perm[Y + 1]], xf - 1, yf - 1);
+    return lerp(lerp(a, b, u), lerp(c, d, u), v) * 1.41;
+  }
+  function noise3(x, y, z) {
+    const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z), xf = x - xi, yf = y - yi, zf = z - zi;
+    const u = fade(xf), v = fade(yf), w = fade(zf);
+    const h = (i, j, k) => perm[(perm[(perm[(xi + i) & 255] + yi + j) & 255] + zi + k) & 255] / 127.5 - 1;
+    return lerp(lerp(lerp(h(0, 0, 0), h(1, 0, 0), u), lerp(h(0, 1, 0), h(1, 1, 0), u), v),
+      lerp(lerp(h(0, 0, 1), h(1, 0, 1), u), lerp(h(0, 1, 1), h(1, 1, 1), u), v), w);
+  }
+  const fbm = (x, y, oct = 4, lac = 2, gain = .5) => { let s = 0, a = .5, f = 1; for (let i = 0; i < oct; i++) { s += a * noise2(x * f + i * 17.3, y * f - i * 9.1); f *= lac; a *= gain; } return s; };
+
+  // ---------- colour (0..1 rgb arrays; mixes in OKLab) ----------
+  const hex = h => { h = h.replace('#', ''); if (h.length === 3) h = h.replace(/./g, c => c + c); const n = parseInt(h, 16); return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]; };
+  const toLin = c => c <= .04045 ? c / 12.92 : Math.pow((c + .055) / 1.055, 2.4);
+  const toSrgb = c => c <= .0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - .055;
+  function toOk([r, g2, b]) {
+    r = toLin(r); g2 = toLin(g2); b = toLin(b);
+    const l = Math.cbrt(.4122214708 * r + .5363325363 * g2 + .0514459929 * b), m = Math.cbrt(.2119034982 * r + .6806995451 * g2 + .1073969566 * b), s = Math.cbrt(.0883024619 * r + .2817188376 * g2 + .6299787005 * b);
+    return [.2104542553 * l + .793617785 * m - .0040720468 * s, 1.9779984951 * l - 2.428592205 * m + .4505937099 * s, .0259040371 * l + .7827717662 * m - .808675766 * s];
+  }
+  function fromOk([L, a, b]) {
+    const l = Math.pow(L + .3963377774 * a + .2158037573 * b, 3), m = Math.pow(L - .1055613458 * a - .0638541728 * b, 3), s = Math.pow(L - .0894841775 * a - 1.291485548 * b, 3);
+    return [4.0767416621 * l - 3.3077115913 * m + .2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - .3413193965 * s, -.0041960863 * l - .7034186147 * m + 1.707614701 * s].map(c => clamp(toSrgb(clamp(c, 0, 1))));
+  }
+  const col = c => typeof c === 'string' ? hex(c) : c;
+  const mix = (c1, c2, t) => { const a = toOk(col(c1)), b = toOk(col(c2)); return fromOk([lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)]); };
+  // ramp([[0,'#123'],[.5,'#456'],[1,'#789']], t)
+  const ramp = (stops, t) => { t = clamp(t); for (let i = 1; i < stops.length; i++) if (t <= stops[i][0]) { const [a, ca] = stops[i - 1], [b, cb] = stops[i]; return mix(ca, cb, (t - a) / (b - a || 1)); } return col(stops[stops.length - 1][1]); };
+  const css = (c, a = 1) => { c = col(c); return `rgba(${Math.round(c[0] * 255)},${Math.round(c[1] * 255)},${Math.round(c[2] * 255)},${a})`; };
+  const shade = (c, k) => col(c).map(v => clamp(v * k));
+  // shift lightness / chroma / hue in OKLab (dl ~ ±0.1, dc multiplies chroma, dh radians)
+  const tweak = (c, dl = 0, dc = 1, dh = 0) => { const [L, a, b] = toOk(col(c)); const C = Math.hypot(a, b) * dc, h = Math.atan2(b, a) + dh; return fromOk([clamp(L + dl), C * Math.cos(h), C * Math.sin(h)]); };
+  const lum = c => { c = col(c); return .2126 * toLin(c[0]) + .7152 * toLin(c[1]) + .0722 * toLin(c[2]); };
+
+  // ---------- vectors + pinhole camera (y up, metres) ----------
+  const v3 = {
+    add: (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], sub: (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]],
+    mul: (a, k) => [a[0] * k, a[1] * k, a[2] * k], dot: (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2],
+    cross: (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]],
+    len: a => Math.hypot(a[0], a[1], a[2]), norm: a => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; },
+    lerp: (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)],
+  };
+  // camera({ pos, target, fov (vertical deg), W, H, roll }) → project([x,y,z]) = { x, y (px), z (depth m), s (px per m) }
+  function camera({ pos, target, fov = 40, W, H, roll = 0 }) {
+    const f = v3.norm(v3.sub(target, pos));
+    let r = v3.norm(v3.cross(f, [0, 1, 0])), u = v3.cross(r, f);
+    if (roll) { const c = Math.cos(roll), s = Math.sin(roll), r2 = v3.add(v3.mul(r, c), v3.mul(u, s)); u = v3.add(v3.mul(u, c), v3.mul(r, -s)); r = r2; }
+    const fy = (H / 2) / Math.tan(fov * PI / 360);
+    const project = p => { const d = v3.sub(p, pos), z = v3.dot(d, f), zz = Math.max(z, 1e-3); return { x: W / 2 + fy * v3.dot(d, r) / zz, y: H / 2 - fy * v3.dot(d, u) / zz, z, s: fy / zz }; };
+    // ray through pixel → hits the plane y = h (ground) ; returns world point or null
+    const unproject = (px, py, h = 0) => { const dx = (px - W / 2) / fy, dy = -(py - H / 2) / fy; const dir = v3.norm(v3.add(f, v3.add(v3.mul(r, dx), v3.mul(u, dy)))); if (Math.abs(dir[1]) < 1e-6) return null; const k = (h - pos[1]) / dir[1]; return k > 0 ? v3.add(pos, v3.mul(dir, k)) : null; };
+    return { pos, target, fov, W, H, f, r, u, fy, project, unproject };
+  }
+
+  // ---------- film grain (deterministic, per frame) ----------
+  let grainTile = null;
+  function grain(ctx, W, H, t, amount = .06, fps = 30) {
+    if (!grainTile) {
+      grainTile = document.createElement('canvas'); grainTile.width = grainTile.height = 256;
+      const gx = grainTile.getContext('2d'), im = gx.createImageData(256, 256), r = rng(99);
+      for (let i = 0; i < im.data.length; i += 4) { const v = 128 + r.normal(0, 38); im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255; }
+      gx.putImageData(im, 0, 0);
+    }
+    const f = Math.round(t * fps), ox = Math.floor(hash(f, 1) * 256), oy = Math.floor(hash(f, 2) * 256);
+    ctx.save(); ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = amount;
+    for (let y = -oy; y < H; y += 256) for (let x = -ox; x < W; x += 256) ctx.drawImage(grainTile, x, y);
+    ctx.restore();
+  }
+
+  // ---------- the opening title card (the source's format: spaced serif capitals, a rule, an italic line, a small credit) ----------
+  // card: { title, sub, credit, hold: 1.3, out: 2.3, y: .42 } — fully up from frame 0, fades out between hold and out; the scene plays under it
+  const SERIF = 'Didot, "Bodoni 72", "Bodoni MT", "Playfair Display", "Libre Caslon Text", Georgia, "Times New Roman", serif';
+  function drawTitle(ctx, W, H, t, card) {
+    const hold = card.hold ?? 1.3, out = card.out ?? 2.3, a = 1 - smooth(hold, out, t);
+    if (a <= 0) return;
+    const k = clamp(t / out), y0 = H * (card.y ?? .42) - 10 * k;
+    ctx.save(); ctx.globalAlpha = a; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = card.color || '#f4efe6';
+    // a soft dark band behind the type so it reads on bright skies too (card.scrim 0..1, default .35)
+    const sc = card.scrim ?? .35; if (sc > 0) { const g2 = ctx.createLinearGradient(0, y0 - H * .09, 0, y0 + H * .07); g2.addColorStop(0, 'rgba(8,10,20,0)'); g2.addColorStop(.5, `rgba(8,10,20,${sc})`); g2.addColorStop(1, 'rgba(8,10,20,0)'); ctx.fillStyle = g2; ctx.fillRect(0, y0 - H * .09, W, H * .16); ctx.fillStyle = card.color || '#f4efe6'; }
+    ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 22;
+    let fs = card.size || 88; const sp = .3 + .04 * k;
+    for (;;) { ctx.font = `400 ${fs}px ${SERIF}`; ctx.letterSpacing = (fs * sp).toFixed(1) + 'px'; if (ctx.measureText(card.title).width < W * .86 || fs < 40) break; fs -= 4; }
+    ctx.fillText(card.title, W / 2 + fs * sp / 2, y0);
+    ctx.shadowBlur = 8; ctx.fillRect(W / 2 - 64, y0 + fs * .42, 128, 1.6);
+    if (card.sub) { ctx.font = `italic 400 ${Math.round(fs * .4)}px ${SERIF}`; ctx.letterSpacing = '0.5px'; ctx.fillText(card.sub, W / 2, y0 + fs * .42 + fs * .62); }
+    if (card.credit) { ctx.font = `500 ${Math.round(W * .0175)}px "Helvetica Neue", Arial, sans-serif`; ctx.letterSpacing = (W * .005).toFixed(1) + 'px'; ctx.globalAlpha = a * .85; ctx.fillText(card.credit.toUpperCase(), W / 2 + W * .0025, H * .935); }
+    ctx.restore();
+  }
+
+  // ---------- the page contract ----------
+  // TSS.scene({ title, W, H, duration, fps, renderer: 'canvas2d'|'webgl'|'three', card: { title, sub, credit }, setup(api), frame(t), probe(t), info(), cast() })
+  function scene(def) {
+    const q = new URLSearchParams(location.search);
+    const W = def.W || 1080, H = def.H || 1920, D = def.duration || 10, FPS = def.fps || 30;
+    const scale = +(q.get('scale') || 1), render = q.has('render'), tFix = q.has('t') ? +q.get('t') : null, sheet = q.get('sheet');
+    document.title = def.title || 'scene';
+    Object.assign(document.body.style, { margin: 0, background: '#0b0b0d', overflow: 'hidden' });
+    const canvas = document.createElement('canvas'); canvas.id = 'scene';
+    canvas.width = Math.round(W * scale); canvas.height = Math.round(H * scale);
+    document.body.appendChild(canvas);
+    const api = { W, H, D, FPS, scale, canvas, query: q };
+    g.DURATION = D; g.FPS = FPS; g.SIZE = { W, H };
+    g.sceneInfo = () => Object.assign({ title: def.title, renderer: def.renderer, W, H, duration: D, fps: FPS }, def.info ? def.info() : {});
+    if (def.renderer === 'canvas2d') api.ctx = canvas.getContext('2d', { alpha: false });
+    if (def.renderer === 'webgl') api.gl = canvas.getContext('webgl2', { preserveDrawingBuffer: true, antialias: true, alpha: false, premultipliedAlpha: true });
+    // a GL scene with a title card is composited into a 2D output canvas, which then takes the id #scene
+    let view = canvas, outCtx = null;
+    if (def.card && def.renderer !== 'canvas2d' && sheet !== 'cast') {
+      const out = document.createElement('canvas'); out.width = canvas.width; out.height = canvas.height;
+      canvas.id = 'scene-gl'; canvas.style.display = 'none'; out.id = 'scene'; document.body.appendChild(out);
+      outCtx = out.getContext('2d', { alpha: false }); view = out; api.out = out;
+    }
+    const fit = () => { if (render) return; const k = Math.min(innerWidth / W, (innerHeight - 28) / H); Object.assign(view.style, { display: 'block', width: W * k + 'px', height: H * k + 'px', margin: '0 auto' }); };
+    if (sheet === 'cast') {
+      // the cast sheet: run setup (it builds the people), then draw them on a fresh 2D canvas that takes the id
+      Promise.resolve(def.setup ? def.setup(api) : null).then(() => {
+        if (!def.cast || !TSS.Body) throw new Error('this scene has no cast() — figures need one (see references/BODY.md)');
+        const specs = def.cast(), size = TSS.Body.castSize(specs), c2 = document.createElement('canvas');
+        canvas.id = 'scene-hidden'; canvas.style.display = 'none'; c2.id = 'scene'; c2.width = size.W; c2.height = size.H;
+        document.body.appendChild(c2); TSS.Body.castSheet(c2.getContext('2d'), specs);
+        g.SIZE = size; g.seek = () => {}; g.__ready = true;
+      });
+      return api;
+    }
+    let last = -1;
+    g.seek = t => {
+      t = clamp(+t, 0, D - 1e-6);
+      if (api.ctx) { api.ctx.setTransform(scale, 0, 0, scale, 0, 0); }
+      def.frame(t, api); last = t;
+      if (def.card) {
+        const c = outCtx || api.ctx;
+        if (outCtx) { outCtx.setTransform(1, 0, 0, 1, 0, 0); outCtx.drawImage(canvas, 0, 0); }
+        c.setTransform(scale, 0, 0, scale, 0, 0); drawTitle(c, W, H, t, def.card);
+      }
+    };
+    g.probe = def.probe ? (t => def.probe(clamp(+t, 0, D - 1e-6), api)) : null;
+    Promise.resolve(def.setup ? def.setup(api) : null).then(() => {
+      if (tFix !== null || render) { g.seek(tFix ?? 0); fit(); g.__ready = true; return; }
+      // live player: loops, click/space pauses, ←/→ jump 1 s, the bar scrubs
+      fit(); addEventListener('resize', fit);
+      const bar = document.createElement('div'), fill = document.createElement('div');
+      Object.assign(bar.style, { position: 'fixed', left: 0, right: 0, bottom: 0, height: '28px', background: '#141418', cursor: 'pointer' });
+      Object.assign(fill.style, { height: '100%', width: '0', background: 'rgba(212,175,96,.55)' });
+      bar.appendChild(fill); document.body.appendChild(bar);
+      let t0 = performance.now(), paused = false, at = 0;
+      const now = () => paused ? at : ((performance.now() - t0) / 1000) % D;
+      const jump = t => { at = (t + D) % D; t0 = performance.now() - at * 1000; };
+      view.onclick = () => { if (paused) { paused = false; jump(at); } else { at = now(); paused = true; } };
+      addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); view.onclick(); } if (e.key === 'ArrowRight') jump(now() + 1); if (e.key === 'ArrowLeft') jump(now() - 1); });
+      bar.onclick = e => { jump(e.clientX / innerWidth * D); if (paused) at = (e.clientX / innerWidth) * D; };
+      const loop = () => { const t = now(); if (t !== last) g.seek(t); fill.style.width = (t / D * 100) + '%'; requestAnimationFrame(loop); };
+      g.__ready = true; loop();
+    }).catch(e => { console.error(e); throw e; });
+    return api;
+  }
+
+  Object.assign(TSS, { PI, TAU, clamp, lerp, smooth, remap, fract, ease, spring, act, rng, hash, noise2, noise3, fbm, hex, col, mix, ramp, css, shade, tweak, lum, toOk, fromOk, v3, camera, grain, drawTitle, scene });
+})(window);
+</script>
+<script data-kit="strokes-gl.js">
+/* ten-second-scene · strokes-gl.js — tens of thousands of painted strokes in WebGL2, one instanced draw.
+   Each stroke is a bent strip with a rounded head and a thinning tail; the fragment shader adds bristle streaks, a dry
+   broken tail and an impasto ridge lit from u_light, so overlaps build up like paint. Motion is your GLSL: a
+   `motion()` function moves / turns / bends each stroke from its own attributes and u_time (pure function of t). */
+(function (g) {
+  'use strict';
+  const T = g.TSS;
+
+  const VS = (motion) => `#version 300 es
+precision highp float;
+layout(location=0) in vec2 a_uv;          // u along 0..1 (head→tail), v across -1..1
+layout(location=1) in vec4 a_geo;         // x, y (px), angle (rad), length (px)
+layout(location=2) in vec4 a_shape;       // width (px), bend (-1..1), taper, seed
+layout(location=3) in vec4 a_col;         // rgb, alpha
+layout(location=4) in vec4 a_anim;        // kind, phase, amp, extra (yours to use in motion())
+uniform vec2 u_res; uniform float u_time; uniform vec3 u_view;   // view: centre x, y and zoom (a slow push)
+out vec2 v_uv; out vec4 v_col; out float v_seed; out vec2 v_dir; out float v_w;
+// motion(pos, angle, length, anim, t) → vec4(dx, dy, dAngle, dBend)
+${motion || 'vec4 motion(vec2 p, float ang, float len, vec4 anim, float t){ return vec4(0.0); }'}
+${/m_alpha\s*\(/.test(motion || '') ? '' : 'float m_alpha(vec4 anim, float t){ return 1.0; }'}
+${/m_color\s*\(/.test(motion || '') ? '' : 'vec3 m_color(vec3 c, vec2 p, vec4 anim, float t){ return c; }'}
+void main(){
+  vec4 m = motion(a_geo.xy, a_geo.z, a_geo.w, a_anim, u_time);
+  float ang = a_geo.z + m.z, len = a_geo.w, w = a_shape.x, bend = (a_shape.y + m.w) * len * 0.35;
+  vec2 d = vec2(cos(ang), sin(ang)), n = vec2(-d.y, d.x);
+  float u = a_uv.x, v = a_uv.y;
+  float hw = 0.5 * w * sqrt(clamp(u / 0.1, 0.0, 1.0)) * (1.0 - a_shape.z * pow(u, 1.4));
+  hw = max(hw, 0.35) + 0.75;                         // AA margin
+  float aOut = a_col.a * m_alpha(a_anim, u_time);
+  vec2 c = a_geo.xy + m.xy + d * (u - 0.5) * len + n * bend * (1.0 - (2.0 * u - 1.0) * (2.0 * u - 1.0));
+  // head cap: push the first ring forward so the head is round
+  c -= d * (1.0 - smoothstep(0.0, 0.1, u)) * w * 0.35;
+  vec2 p = c + n * v * hw;
+  p = (p - u_view.xy) * u_view.z + u_view.xy;
+  gl_Position = vec4(p / u_res * 2.0 - 1.0, 0.0, 1.0); gl_Position.y = -gl_Position.y;
+  v_uv = vec2(u, v * hw / max(0.5 * w, 0.5)); v_col = vec4(m_color(a_col.rgb, a_geo.xy, a_anim, u_time), aOut); v_seed = a_shape.w; v_dir = n; v_w = w;
+}`;
+
+  const FS = `#version 300 es
+precision highp float;
+in vec2 v_uv; in vec4 v_col; in float v_seed; in vec2 v_dir; in float v_w;
+uniform vec3 u_light; uniform float u_impasto; uniform float u_bristle; uniform float u_dry;
+out vec4 o;
+float h1(float x){ return fract(sin(x * 127.1) * 43758.5453); }
+float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
+  float a = h1(i.x + i.y*57.0), b = h1(i.x+1.0 + i.y*57.0), c = h1(i.x + (i.y+1.0)*57.0), d = h1(i.x+1.0 + (i.y+1.0)*57.0);
+  return mix(mix(a,b,f.x), mix(c,d,f.x), f.y); }
+void main(){
+  float u = v_uv.x, v = v_uv.y;
+  float headR = 1.0 - smoothstep(0.0, 0.1, u);
+  float r = length(vec2(v, headR * 1.2));
+  float aa = fwidth(r) * 1.2 + 0.02;
+  float edge = 1.0 - smoothstep(1.0 - aa, 1.0 + aa, r);
+  // bristles: streaks across v, broken towards a dry tail
+  float s = v_seed * 37.0;
+  float streak = vnoise(vec2(v * (6.0 + 5.0 * h1(s)) + s, u * 1.5));
+  float dry = smoothstep(1.0 - u_dry * pow(u, 1.6), 1.0, vnoise(vec2(u * 18.0 + s, v * 7.0)) + 0.25 * pow(u, 3.0));
+  float alpha = v_col.a * edge * (1.0 - dry);
+  if (alpha < 0.004) discard;
+  // impasto ridge: height across the stroke, thicker at the head; lit by u_light (x, y in screen space, z up)
+  float ht = sqrt(max(0.0, 1.0 - v * v)) * (1.0 - 0.6 * u);
+  vec3 nrm = normalize(vec3(v_dir * v * 1.4 * u_impasto, 1.0));
+  float lit = dot(nrm, normalize(u_light));
+  vec3 c = v_col.rgb * (0.9 + 0.3 * (streak - 0.5) * u_bristle);
+  c *= 0.78 + 0.32 * lit;
+  c += vec3(1.0, 0.97, 0.88) * pow(max(0.0, lit), 18.0) * 0.22 * u_impasto * ht;
+  o = vec4(c * alpha, alpha);
+}`;
+
+  function compile(gl, type, src) { const sh = gl.createShader(type); gl.shaderSource(sh, src); gl.compileShader(sh); if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh) + '\n' + src.split('\n').map((l, i) => (i + 1) + ': ' + l).join('\n')); return sh; }
+  function program(gl, vs, fs) { const p = gl.createProgram(); gl.attachShader(p, compile(gl, gl.VERTEX_SHADER, vs)); gl.attachShader(p, compile(gl, gl.FRAGMENT_SHADER, fs)); gl.linkProgram(p); if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p)); return p; }
+
+  // Strokes(gl, { W, H, motion: 'glsl vec4 motion(...)' , segments }) → { set(list), count, draw({ time, light, impasto, bristle, dry, from, to }) }
+  // list item: { x, y, angle, len, width, bend, taper, seed, color:[r,g,b], alpha, anim:[kind, phase, amp, extra] }
+  function Strokes(gl, o) {
+    const prog = program(gl, VS(o.motion), FS), seg = o.segments || 8;
+    const uv = []; for (let i = 0; i <= seg; i++) { const u = i / seg; uv.push(u, -1, u, 1); }
+    const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+    const b0 = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b0); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uv), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    const inst = gl.createBuffer(); let count = 0;
+    gl.bindBuffer(gl.ARRAY_BUFFER, inst);
+    for (let i = 1; i <= 4; i++) { gl.enableVertexAttribArray(i); gl.vertexAttribPointer(i, 4, gl.FLOAT, false, 64, (i - 1) * 16); gl.vertexAttribDivisor(i, 1); }
+    gl.bindVertexArray(null);
+    const U = n => gl.getUniformLocation(prog, n);
+    const loc = { view: U('u_view'), res: U('u_res'), time: U('u_time'), light: U('u_light'), imp: U('u_impasto'), bri: U('u_bristle'), dry: U('u_dry') };
+    function set(list) {
+      const d = new Float32Array(list.length * 16);
+      list.forEach((s, i) => { const k = i * 16, c = s.color; d.set([s.x, s.y, s.angle, s.len, s.width, s.bend || 0, s.taper ?? .7, s.seed ?? i * .618 % 1, c[0], c[1], c[2], s.alpha ?? 1, ...(s.anim || [0, 0, 0, 0])], k); });
+      gl.bindBuffer(gl.ARRAY_BUFFER, inst); gl.bufferData(gl.ARRAY_BUFFER, d, gl.STATIC_DRAW); count = list.length;
+    }
+    function draw(p = {}) {
+      gl.useProgram(prog); gl.bindVertexArray(vao);
+      gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      gl.uniform2f(loc.res, o.W, o.H); gl.uniform1f(loc.time, p.time || 0);
+      gl.uniform3fv(loc.view, p.view || [o.W / 2, o.H / 2, 1]);
+      let unit = 0; for (const [k, tex] of Object.entries(p.textures || {})) { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(U(k), unit++); }
+      for (const [k, v] of Object.entries(p.uniforms || {})) { const l = U(k); if (Array.isArray(v)) gl['uniform' + v.length + 'fv'](l, v); else gl.uniform1f(l, v); }
+      gl.uniform3fv(loc.light, p.light || [-.5, -.6, .8]); gl.uniform1f(loc.imp, p.impasto ?? 1); gl.uniform1f(loc.bri, p.bristle ?? 1); gl.uniform1f(loc.dry, p.dry ?? .35);
+      const from = p.from || 0, to = Math.min(count, p.to ?? count);
+      // instanced draw of a sub-range: rebind the attribute offsets to `from`
+      gl.bindBuffer(gl.ARRAY_BUFFER, inst);
+      for (let i = 1; i <= 4; i++) gl.vertexAttribPointer(i, 4, gl.FLOAT, false, 64, from * 64 + (i - 1) * 16);
+      if (to > from) gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, (seg + 1) * 2, to - from);
+      gl.bindVertexArray(null);
+    }
+    return { set, draw, get count() { return count; } };
+  }
+
+  // A full-screen pass: fullscreen(gl, 'vec4 shade(vec2 px, vec2 res, float t) { ... }') → draw({ time, blend: 'normal'|'multiply'|'add', uniforms })
+  function fullscreen(gl, body, W, H) {
+    const vs = `#version 300 es
+in vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }`;
+    const fs = `#version 300 es
+precision highp float; uniform vec2 u_res; uniform float u_time; uniform vec2 u_scale; out vec4 o;
+${body}
+void main(){ vec2 px = vec2(gl_FragCoord.x, u_res.y * u_scale.y - gl_FragCoord.y) / u_scale; o = shade(px, u_res, u_time); }`;
+    const prog = program(gl, vs, fs), vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+    const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const pl = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(pl); gl.vertexAttribPointer(pl, 2, gl.FLOAT, false, 0, 0); gl.bindVertexArray(null);
+    return function draw(p = {}) {
+      gl.useProgram(prog); gl.bindVertexArray(vao);
+      gl.uniform2f(gl.getUniformLocation(prog, 'u_res'), W, H); gl.uniform1f(gl.getUniformLocation(prog, 'u_time'), p.time || 0);
+      gl.uniform2f(gl.getUniformLocation(prog, 'u_scale'), gl.drawingBufferWidth / W, gl.drawingBufferHeight / H);
+      if (p.blend === 'multiply') { gl.enable(gl.BLEND); gl.blendFunc(gl.DST_COLOR, gl.ZERO); }
+      else if (p.blend === 'add') { gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE); }
+      else if (p.blend === 'over') { gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); }
+      else gl.disable(gl.BLEND);
+      for (const [k, v] of Object.entries(p.uniforms || {})) { const l = gl.getUniformLocation(prog, k); if (Array.isArray(v)) gl['uniform' + v.length + 'fv'](l, v); else gl.uniform1f(l, v); }
+      gl.drawArrays(gl.TRIANGLES, 0, 3); gl.bindVertexArray(null);
+    };
+  }
+
+  // A float RGBA data texture (w × h) for per-object values the vertex shader reads with texelFetch; update(Float32Array).
+  function dataTexture(gl, w, h) {
+    const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, w, h, 0, gl.RGBA, gl.FLOAT, null);
+    for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+    return { tex, w, h, update(data, row = 0, rows = h) { gl.bindTexture(gl.TEXTURE_2D, tex); gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, row, w, rows, gl.RGBA, gl.FLOAT, data); } };
+  }
+  T.dataTexture = dataTexture;
+  T.Strokes = Strokes; T.fullscreen = fullscreen; T.glProgram = program;
+})(window);
+</script>
+</head><body>
+<script id="scene-code">
+'use strict';
+const { scene, rng, ramp, mix, tweak, col, clamp, lerp, smooth, ease, noise2, fbm, Strokes, fullscreen, dataTexture, PI } = TSS;
+const W = 1080, H = 1920, D = 10;
+const YH = 985, FOC = 1700, CAMH = 2.4;                    // horizon (px), focal length (px), eye height above the field (m)
+const SUN = [150, 700];                                     // the low sun, behind the left cloud edge
+const scr = (d, X, h = 0) => [W / 2 + FOC * X / d, YH + FOC * (CAMH - h) / d];
+const depthAt = y => FOC * CAMH / Math.max(2, y - YH);
+
+// ---------- the gust: a front moving left → right across the field (world metres), shared by JS and GLSL ----------
+const GUST = { x0: -14, v: 4.0, t0: 1.6, w: 2.6 };
+const front = t => GUST.x0 + GUST.v * (t - GUST.t0);
+function pulse(X, t) { const f = front(t), u = (X - f) / GUST.w; let p = Math.exp(-u * u); if (X < f) p = Math.max(p, .25 * Math.exp(-(f - X) / 4) * (.65 + .35 * Math.sin(t * 2.3 + X * .7))); return p; }
+const breeze = (X, d, t) => .1 * (Math.sin(t * 1.15 + X * .31 + d * .07) * .6 + noise2(X * .08 + t * .25, d * .05) * .8);
+const GLSL_WIND = `
+float front(float t){ return ${GUST.x0.toFixed(2)} + ${GUST.v.toFixed(2)} * (t - ${GUST.t0.toFixed(2)}); }
+float pulse(float X, float t){ float f = front(t), u = (X - f) / ${GUST.w.toFixed(2)}; float p = exp(-u * u);
+  if (X < f) p = max(p, 0.25 * exp(-(f - X) / 4.0) * (0.65 + 0.35 * sin(t * 2.3 + X * 0.7))); return p; }
+float breeze(float X, float d, float t){ return 0.1 * (sin(t * 1.15 + X * 0.31 + d * 0.07) * 0.6 + sin(X * 0.21 - t * 0.9 + d * 0.13) * 0.5); }
+`;
+const MOTION = `
+uniform highp sampler2D u_fl;
+${GLSL_WIND}
+float h11(float x){ return fract(sin(x * 91.17) * 43758.5453); }
+vec4 motion(vec2 p, float ang, float len, vec4 a, float t){
+  int kind = int(a.x + 0.5);
+  if (kind == 1) { // sky and cloud: drift, a slow wobble of each stroke
+    return vec4(t * a.z, sin(t * 0.3 + a.y * 6.28) * 0.6, sin(t * 0.4 + a.y * 6.28) * 0.03, 0.0);
+  }
+  if (kind == 2) { // foliage: pushed by the gust (scaled by depth), quick flutter on top
+    float d = ${FOC.toFixed(1)} * ${CAMH.toFixed(2)} / max(2.0, p.y - ${YH.toFixed(1)}), X = (p.x - ${(W / 2).toFixed(1)}) * d / ${FOC.toFixed(1)};
+    float g = pulse(X, t) + breeze(X, d, t);
+    float fl = sin(t * (7.0 + 5.0 * h11(a.y)) + a.y * 40.0) * (0.25 + g) * a.z * 0.35;
+    return vec4(${FOC.toFixed(1)} * a.z * g / d + fl * ${FOC.toFixed(1)} / d, -abs(g) * ${FOC.toFixed(1)} * a.z * 0.25 / d, g * 0.45 + fl * 2.0, g * 0.5);
+  }
+  if (kind == 3 || kind == 5) { // a flower head (rigid) or its stem / leaves (bend by height fraction)
+    int i = int(a.y + 0.5);
+    vec4 dyn = texelFetch(u_fl, ivec2(i, 0), 0), st = texelFetch(u_fl, ivec2(i, 1), 0);
+    if (kind == 3) { vec2 r = p - st.xy; float c = cos(dyn.z), s = sin(dyn.z); vec2 rr = vec2(c * r.x - s * r.y, s * r.x + c * r.y); return vec4(rr - r + dyn.xy, dyn.z, 0.0); }
+    float k = pow(a.z, 1.5), fl = a.w * sin(t * (9.0 + 4.0 * h11(p.x)) + p.y) * (0.3 + dyn.w);
+    return vec4(dyn.xy * k + vec2(fl * 3.0, 0.0), dyn.z * a.z + fl * 0.4, dyn.z * 0.4);
+  }
+  if (kind == 4) { // a loose petal: lifts when the gust reaches it, flies right and up, spinning
+    float tt = max(0.0, t - a.y);
+    return vec4(tt * (150.0 + 60.0 * h11(a.z)) + sin(tt * 3.0 + a.z * 9.0) * 25.0, -tt * (55.0 + 50.0 * h11(a.z + 1.0)) + tt * tt * 6.0, tt * (5.0 + 4.0 * h11(a.z + 2.0)), sin(tt * 6.0) * 0.6);
+  }
+  return vec4(0.0);
+}
+float m_alpha(vec4 a, float t){ if (int(a.x + 0.5) == 4) return smoothstep(a.y, a.y + 0.15, t) * (1.0 - smoothstep(a.y + 5.0, a.y + 6.5, t)); return 1.0; }
+vec3 m_color(vec3 c, vec2 p, vec4 a, float t){
+  int kind = int(a.x + 0.5);
+  if (kind == 2 && a.w > 0.5) { // leaves turn their pale undersides to the gust
+    float d = ${FOC.toFixed(1)} * ${CAMH.toFixed(2)} / max(2.0, p.y - ${YH.toFixed(1)}), X = (p.x - ${(W / 2).toFixed(1)}) * d / ${FOC.toFixed(1)};
+    float g = clamp(pulse(X, t) * 1.3 - 0.2, 0.0, 1.0) * (0.55 + 0.45 * sin(p.x * 0.13 + p.y * 0.21));
+    return mix(c, vec3(0.72, 0.78, 0.55), g * 0.45);
+  }
+  if (kind == 5 && a.w > 0.0) { int i = int(a.y + 0.5); float g = texelFetch(u_fl, ivec2(i, 0), 0).w; return mix(c, vec3(0.72, 0.78, 0.55), clamp(g * 0.9 - 0.1, 0.0, 0.5)); }
+  return c;
+}`;
+
+// ---------- the painting: stroke lists ----------
+let strokes, under, weave, glowPass, flTex, flowers = [], simTab, NF = 0, info = {};
+const S = [];                                   // all strokes, painted back to front
+function add(o) { S.push(o); }
+const C = { skyTop: '#3f6fa8', skyLow: '#9cc3d9', horizon: '#f2dcae', cloudLit: '#fff1d6', cloudShade: '#8d9ab8', cloudBase: '#76829f', hills: '#6a7fa8', leafShade: '#2f5a2a', leafLit: '#7f9d3a', petal: '#f2b21d', petalLit: '#ffe27a', disc: '#4a2b16', path: '#c9a273', roof: '#b5432f' };
+
+function cloudDensity(x, y, rough = 1) {   // cumulus towers: blobs with flat bases, roughened with fbm
+  const blobs = [[400, 560, 210, 250], [580, 400, 190, 290], [500, 690, 280, 130], [300, 700, 130, 110], [760, 600, 170, 200], [920, 700, 150, 110], [700, 760, 240, 80], [1010, 560, 110, 140], [640, 250, 120, 130]];
+  let dsum = 0;
+  for (const [cx, cy, rx, ry] of blobs) { const dx = (x - cx) / rx, dy = (y - cy) / ry; dsum += Math.exp(-(dx * dx + dy * dy) * 1.6); }
+  const base = smooth(805, 760, y), n = (fbm(x * .006, y * .006, 4) * .55 + fbm(x * .02, y * .02, 2) * .2) * rough;
+  return dsum * base + n - .55;
+}
+function paint() {
+  const r = rng(820);
+  // 1. sky: big strokes, gradient + warmth around the sun; slight diagonal drift of the brush
+  for (let i = 0; i < 4200; i++) {
+    const x = r.range(-60, W + 60), y = r.range(-40, YH + 10), sd = Math.hypot(x - SUN[0], (y - SUN[1]) * 1.4);
+    let c = ramp([[0, C.skyTop], [.62, C.skyLow], [1, C.horizon]], (y / YH) ** 1.25 + r.normal(0, .03));
+    c = mix(c, '#ffe9b8', clamp(1 - sd / 520) ** 2 * .75);
+    c = tweak(c, r.normal(0, .02), 1 + r.normal(0, .12), r.normal(0, .06));
+    const s = lerp(10, 52, Math.pow(r(), 1.7)) * lerp(1.15, .6, y / YH);
+    const flow = -.22 + .35 * fbm(x * .0018, y * .0025, 3) + .08 * Math.sin(y * .012);
+    add({ x, y, angle: flow + r.normal(0, .07), len: s * r.range(2.2, 4.4), width: s, bend: r.range(-.6, .6), taper: .65, color: c, alpha: .9, anim: [1, r(), 1.2, 0] });
+  }
+  // high thin cirrus on the right, drawn after the sky ground
+  for (let i = 0; i < 420; i++) { const x = r.range(520, W + 80), y = r.range(30, 330) + (x - 520) * -.12, s = r.range(3, 7); add({ x, y, angle: -.32 + r.normal(0, .06), len: s * r.range(8, 16), width: s, taper: .85, color: mix('#dfe6ee', '#f6e9d2', r() * .5), alpha: .45 + .3 * r(), anim: [1, r(), 2.5, 0] }); }
+  // 2. clouds: strokes follow the contour; lit towards the sun (warm), violet away, grey-blue at the base
+  let nc = 0;
+  for (let i = 0; i < 90000 && nc < 22000; i++) {
+    const x = r.range(-20, W + 20), y = r.range(120, 820), dn = cloudDensity(x, y);
+    if (dn < 0) continue;
+    // the light uses the big shape (smooth normal); the stroke direction follows the rough edge
+    const E = 34, Gx = cloudDensity(x + E, y, .25) - cloudDensity(x - E, y, .25), Gy = cloudDensity(x, y + E, .25) - cloudDensity(x, y - E, .25), GL = Math.hypot(Gx, Gy) + 1e-6;
+    const e = 4, gx = cloudDensity(x + e, y) - cloudDensity(x - e, y), gy = cloudDensity(x, y + e) - cloudDensity(x, y - e), gl = Math.hypot(gx, gy) + 1e-6;
+    const Nx = -Gx / GL, Ny = -Gy / GL, nx = -gx / gl, ny = -gy / gl, sx = SUN[0] - x, sy = SUN[1] - y, sl = Math.hypot(sx, sy);
+    const facing = (Nx * sx + Ny * sy) / sl, up = clamp(-Ny), baseK = smooth(690, 805, y), core = clamp(dn / .9);
+    const lit = clamp(smooth(-.55, .35, facing * .9 + up * .45 - core * .35 + (1 - y / 820) * .35) + r.normal(0, .06));
+    let c = mix(mix(C.cloudShade, '#aeb6d2', up * .6), mix(C.cloudLit, '#ffffff', up * .3), lit);
+    c = mix(c, '#ffcf8e', lit * clamp(1 - sl / 700) * .65);
+    c = mix(c, C.cloudBase, baseK * (1 - lit * .6) * .75);
+    const s = lerp(5, 20, clamp(dn * 2.2)) * r.range(.75, 1.2);
+    add({ x, y, angle: Math.atan2(nx, -ny) + r.normal(0, .3), len: s * r.range(1.8, 3), width: s, bend: r.range(-.8, .8), taper: .7, color: tweak(c, r.normal(0, .025), 1 + r.normal(0, .1)), alpha: .8 + .2 * clamp(dn * 3), anim: [1, r(), 2.0 + 1.5 * (1 - y / 800), 0] });
+    nc++;
+  }
+  // 3. the sun's glow: a warm haze of soft horizontal strokes where it breaks under the cloud
+  for (let i = 0; i < 700; i++) { const x = SUN[0] + r.normal(0, 120), y = SUN[1] + r.normal(30, 60), rr = Math.hypot(x - SUN[0], (y - SUN[1]) * 1.6); if (cloudDensity(x, y) > .3) continue; const s = r.range(6, 16); add({ x, y, angle: r.normal(-.1, .15), len: s * 3, width: s, color: mix('#fff7e0', '#ffcf8a', clamp(rr / 200)), alpha: .75 * clamp(1 - rr / 260), taper: .8, anim: [1, r(), .8, 0] }); }
+  // 4. far hills: two bands of blue-violet, lighter with haze
+  for (let i = 0; i < 3200; i++) {
+    const x = r.range(-20, W + 20), band = r() < .55 ? 0 : 1, top = band ? 952 + 14 * Math.sin(x * .007 + 1) + 8 * noise2(x * .02, 4) : 932 + 22 * Math.sin(x * .004) + 10 * noise2(x * .015, 2), y = r.range(top, YH + 6);
+    const c = mix(band ? '#7887ab' : '#8e9cbd', '#e7d6b6', clamp((y - top) / 50) * .45 + r() * .08);
+    const s = r.range(4, 10); add({ x, y, angle: r.normal(0, .08), len: s * r.range(3, 5), width: s * .8, color: tweak(c, r.normal(0, .02)), alpha: .95, anim: [0, 0, 0, 0] });
+  }
+  // 5. the farmhouse on the rise: white wall, red roof, a dark shelter of trees
+  const hx = 792, hy = 958;
+  for (let i = 0; i < 260; i++) { const x = hx + r.normal(0, 30) + (r() < .5 ? -42 : 46), y = hy + r.normal(-6, 9); add({ x, y, angle: -PI / 2 + r.normal(0, .5), len: r.range(5, 10), width: r.range(3, 6), color: mix('#2f4a35', '#4f6a44', r()), alpha: .95, anim: [2, r(), .02, 0] }); }
+  for (let i = 0; i < 60; i++) add({ x: hx + r.range(-14, 14), y: hy + r.range(-1, 8), angle: r.normal(0, .1), len: r.range(5, 8), width: r.range(3, 4), color: mix('#efe2c8', '#c8b9a6', r() * .4 + (r() < .3 ? .5 : 0)), anim: [0, 0, 0, 0] });
+  for (let i = 0; i < 70; i++) { const u = r(); add({ x: hx - 16 + u * 32, y: hy - 3 - (1 - Math.abs(u - .5) * 2) * 7 + r.range(-1, 1), angle: (u < .5 ? -.42 : .42) + r.normal(0, .08), len: r.range(5, 8), width: r.range(2.5, 3.5), color: mix(C.roof, '#e07a4f', r() * .5), anim: [0, 0, 0, 0] }); }
+  // 6. the far field: rows converging, olive with dots of yellow heads, denser yellow nearer
+  for (let i = 0; i < 16000; i++) {
+    const y = YH + 4 + Math.pow(r(), 1.7) * 240, d = depthAt(y), x = r.range(-20, W + 20), X = (x - W / 2) * d / FOC;
+    const rowPhase = Math.sin(X / .75 * PI * 2) * .5 + .5, s = clamp(FOC * .14 / d, 1.6, 9);
+    const yellow = r() < (.25 + .35 * rowPhase) * smooth(15, 40, d) + .1;
+    const c = yellow ? mix(C.petal, C.petalLit, r() * .6 + (x < 450 ? .3 : 0)) : mix(mix(C.leafShade, C.leafLit, r() * .7 + rowPhase * .2), '#8f9cbd', clamp((d - 60) / 260) * .5);
+    const ang = Math.atan2(y - YH + 40, x - W / 2) * .2 + r.normal(0, .3);
+    add({ x, y, angle: yellow ? r() * PI : ang, len: s * (yellow ? 1.2 : r.range(1.8, 3)), width: s * (yellow ? 1 : .8), color: tweak(c, r.normal(0, .03)), alpha: .95, anim: [2, r(), .04, yellow ? 0 : 1] });
+  }
+  // 7. the path: a worn track curving into the field (world → screen), ruts and grass between
+  const pathX = d => 1.3 - .1 * d + .0006 * d * d;
+  for (let i = 0; i < 3800; i++) {
+    const d = 3.4 + Math.pow(r(), 2.4) * 160, off = r.range(-.48, .48), X = pathX(d) + off, [x, y] = scr(d, X);
+    if (y > H + 30) continue;
+    const s = clamp(FOC * .07 / d, 1.5, 16), rut = Math.abs(Math.abs(off) - .26) < .07;
+    const [xa, ya] = scr(d + 1, pathX(d + 1) + off), ang = Math.atan2(ya - y, xa - x);
+    const c = rut ? mix('#9c7650', '#7e5d40', r()) : mix(C.path, '#e3c49a', r() * .6 + (X < pathX(d) ? .15 : 0));
+    add({ x, y, angle: ang + r.normal(0, .15), len: s * r.range(1.8, 3.4), width: s * .7, color: tweak(mix(c, '#b9a3a8', clamp(d / 160) * .35), r.normal(0, .03)), alpha: .95, anim: [0, 0, 0, 0] });
+  }
+  // 9. near foliage floor around the bottom: big leaves without heads (the field's mass between near plants)
+  for (let i = 0; i < 2600; i++) {
+    const y = r.range(1500, H + 40), d = depthAt(y), x = r.range(-30, W + 30), X = (x - W / 2) * d / FOC;
+    if (Math.abs(X - pathX(d)) < .5) continue;
+    const s = r.range(14, 36), lit = clamp(.42 - (x - 300) / 1300 + r.normal(0, .2)), yy = y - r.range(0, 60), ang = r.normal(-PI / 2, .9), ph = r();
+    const base = tweak(mix('#1d3a24', C.leafLit, lit * .6), r.normal(0, .04), 1, r.normal(0, .05));
+    add({ x, y: yy, angle: ang, len: s * r.range(1.4, 2.2), width: s, bend: r.range(-.8, .8), taper: .55, color: base, alpha: .95, anim: [2, ph, .05, 0] });
+    if (s > 20) add({ x, y: yy, angle: ang, len: s * 1.5, width: Math.max(1.5, s * .08), taper: .8, color: mix(base, '#d8e09a', .4), alpha: .7, anim: [2, ph, .05, 0] });
+  }
+  // soil between the rows: dark furrows along the rows, lighter clods on top
+  for (let i = 0; i < 6500; i++) {
+    const d = 3 + Math.pow(r(), 1.6) * 37, X = r.range(-d * .36 - .6, d * .36 + .6), [x, y] = scr(d, X);
+    if (y > H + 20) continue;
+    const rowU = ((X - .2 - d * .015) / .75 % 1 + 1) % 1, furrow = Math.abs(rowU - .5) < .18;
+    const s = clamp(FOC * .05 / d, 1.2, 14), [xa, ya] = scr(d + 1, X);
+    const c = furrow ? mix('#3b2a1a', '#4d3621', r()) : mix('#7a5a3a', '#a07d55', r() * .8);
+    add({ x, y, angle: Math.atan2(ya - y, xa - x) + r.normal(0, .3), len: s * r.range(1.5, 3), width: s * .8, color: tweak(mix(c, '#8b8a9c', clamp(d / 60) * .3), r.normal(0, .03)), alpha: .95, anim: [0, 0, 0, 0] });
+  }
+  // 8. sunflowers in rows (near → many strokes; far → a few) — collected first, painted far → near
+  const R2 = rng(77);
+  for (let row = -40; row <= 40; row++) for (let d = 2.3; d < 42; d += .42 + R2() * .12) {
+    const X = row * .75 + .2 + R2.normal(0, .07) + d * .015, half = d * .33 + .6;
+    if (Math.abs(X) > half) continue;
+    if (Math.abs(X - pathX(d)) < .62) continue;
+    if (R2() < .06) continue;
+    const hh = R2.range(1.35, 1.95), rad = R2.range(.11, .17) * (hh / 1.7);
+    flowers.push({ d, X, hh, rad, seed: R2() * 1000, yaw: -.5 + R2.normal(0, .32), pitch: R2.range(.15, .75), tilt: R2.normal(0, .18), id: 0 });
+  }
+  flowers.sort((a, b) => b.d - a.d); flowers.forEach((f, i) => f.id = i); NF = flowers.length;
+  for (const f of flowers) paintFlower(f, rng(Math.floor(f.seed * 997) + 3));
+  // 10. loose petals that lift when the gust reaches them (left side first)
+  for (let i = 0; i < 34; i++) { const f = flowers[Math.floor(r() * NF)]; if (f.d > 12) { i--; continue; } const [x, y] = scr(f.d, f.X, f.hh); const lift = GUST.t0 + (f.X - GUST.x0) / GUST.v - .15 + r.range(0, .4); add({ x: x + r.range(-10, 10), y: y + r.range(-10, 10), angle: r() * PI, len: FOC * .06 / f.d, width: FOC * .02 / f.d, color: mix(C.petal, C.petalLit, r()), anim: [4, lift, r() * 10, 0] }); }
+}
+function paintFlower(f, r) {
+  const { d, X, hh, rad } = f, [cx, cy] = scr(d, X, hh), [bx, by] = scr(d, X, 0), px = FOC / d, R = rad * px;
+  f.c = [cx, cy];
+  const far = R < 7, mid = R < 22;
+  const lit = clamp(.6 - (cx - SUN[0]) / 1500);                // nearer the sun side → more backlight
+  // stem (bends with the head) and leaves
+  const segs = far ? 2 : mid ? 4 : 7;
+  for (let k = 0; k < segs; k++) {
+    const u0 = k / segs, u1 = (k + 1) / segs, y0 = lerp(by, cy, u0), y1 = lerp(by, cy, u1);
+    if (y0 < 0 && y1 < 0) continue;
+    if (Math.min(y0, y1) > H + 40) continue;
+    const w = Math.max(1.2, .028 * px);
+    add({ x: cx + (bx - cx) * (1 - (u0 + u1) / 2) * 0, y: (y0 + y1) / 2, angle: -PI / 2 + r.normal(0, .04), len: Math.abs(y1 - y0) * 1.15, width: w, taper: .1, color: mix('#3f6b2c', '#86a24a', lit * .6 + r() * .2), anim: [5, f.id, (u0 + u1) / 2, 0] });
+    if (!far && k > 0 && r() < .75) for (const side of [-1, 1]) { if (r() < .3) continue; const L = (mid ? .22 : .26) * px * r.range(.8, 1.2), yy = (y0 + y1) / 2; const ang = (side > 0 ? 0 : PI) + side * r.range(.25, .6); for (let j = 0; j < (mid ? 1 : 3); j++) add({ x: cx + Math.cos(ang) * L * .45 + r.normal(0, L * .05), y: yy + Math.sin(ang) * L * .3 + r.normal(0, L * .05), angle: ang + r.normal(0, .15), len: L * r.range(.85, 1.05), width: L * r.range(.5, .62), bend: side * r.range(.2, .6), taper: .7, color: tweak(mix('#24482a', mix(C.leafLit, '#b9c75a', side < 0 ? lit * .6 : 0), clamp(lit * .95 + (side < 0 ? .3 : -.25) + r.normal(0, .12))), r.normal(0, .03)), anim: [5, f.id, (u0 + u1) / 2, 1] }); }
+  }
+  // the head: a drooping disc in 3/4 view — green back on the far side, two rings of petals, a seeded disc
+  const ex = R * Math.cos(f.yaw) * .95, ey = R * Math.cos(f.pitch);
+  if (far) { for (let j = 0; j < 4; j++) add({ x: cx + r.normal(0, R * .4), y: cy + r.normal(0, R * .3), angle: r() * PI, len: R * 1.6, width: R * 1.1, color: mix(C.petal, C.petalLit, lit * .6 + r() * .3), anim: [3, f.id, 0, 0] }); add({ x: cx + R * .1, y: cy, angle: 0, len: R * .9, width: R * .8, color: mix(C.disc, '#7a4a22', r() * .4), anim: [3, f.id, 0, 0] }); return; }
+  // sepals / back of head peeking on the side away from us
+  for (let j = 0; j < (mid ? 4 : 10); j++) { const a = r.range(-.6, .6), x = cx + R * .85 * Math.cos(a), y = cy + R * .7 * Math.sin(a); add({ x, y, angle: a, len: R * .6, width: R * .26, color: mix('#3c5f2a', '#6f8c3c', r()), anim: [3, f.id, 0, 0] }); }
+  const NP = mid ? 18 : 34;
+  for (const ring of [0, 1]) for (let j = 0; j < NP; j++) {
+    const a = (j + ring * .5 + r.normal(0, .12)) / NP * PI * 2, ca = Math.cos(a), sa = Math.sin(a);
+    const L = R * r.range(.55, .8) * (ring ? .9 : 1), bx0 = cx + ca * ex * .68, by0 = cy + sa * ey * .68;
+    const dirx = ca * ex, diry = sa * ey, dl = Math.hypot(dirx, diry) || 1, back = clamp(-(ca * .8 - .2));      // left side faces the sun
+    const sunSide = clamp(back * .9 + lit * .5 - .2);
+    let c = mix(mix('#c98a1c', C.petal, clamp(.4 + lit * .6)), mix(C.petalLit, '#fff3b8', .5), sunSide);
+    if (ring === 0) c = tweak(c, -.06, 1.05);
+    add({ x: bx0 + dirx / dl * L * .5, y: by0 + diry / dl * L * .5, angle: Math.atan2(diry, dirx) + r.normal(0, .1), len: L, width: R * r.range(.2, .28) * (.6 + .4 * Math.abs(sa) + .4 * Math.abs(ca) * Math.cos(f.yaw)), bend: r.range(-.5, .5), taper: .5, color: tweak(c, r.normal(0, .025)), anim: [3, f.id, 0, 0] });
+  }
+  // disc: dark, seeded in a sunflower spiral, a warm rim where the light grazes it
+  for (let j = 0; j < (mid ? 9 : 22); j++) { const a = (j / (mid ? 9 : 22)) * PI * 2 + r() * .4, rr = j < 4 ? .08 : .3 + r() * .14; add({ x: cx + Math.cos(a) * ex * rr, y: cy + Math.sin(a) * ey * rr, angle: a + PI / 2, len: ex * (j < 4 ? .55 : .42), width: ey * (j < 4 ? .5 : .3), taper: .2, color: j < 4 ? mix(C.disc, '#24140a', .35) : mix('#5a3416', '#8a5524', clamp(.3 + (-Math.cos(a) * .4) + r() * .3)), anim: [3, f.id, 0, 0] }); }
+  const NS = mid ? 26 : 90;
+  for (let j = 0; j < NS; j++) { const rr = Math.sqrt(j / NS) * .5, a = j * 2.39996; const x = cx + Math.cos(a) * ex * rr, y = cy + Math.sin(a) * ey * rr; add({ x, y, angle: a, len: R * .12 + 1, width: R * .09 + .8, taper: .1, color: mix(mix('#3b2210', '#8a5a26', r() * .7), '#d39a3a', clamp((Math.cos(a) * -1) * .4 * rr * 2)), anim: [3, f.id, 0, 0] }); }
+  for (let j = 0; j < (mid ? 4 : 10); j++) { const a = PI * .65 + r.range(0, .7) * PI; add({ x: cx + Math.cos(a) * ex * .48, y: cy + Math.sin(a) * ey * .48, angle: a + PI / 2, len: R * .25, width: R * .05 + .7, color: '#e0a23e', alpha: .8, anim: [3, f.id, 0, 0] }); }
+}
+
+// ---------- each head's swing: a damped spring driven by the gust at its place (heavier heads are slower) ----------
+const TAB_HZ = 60;
+function simulate() {
+  simTab = new Float32Array(NF * (D * TAB_HZ + 2) * 3);
+  const dt = 1 / 240, N = D * TAB_HZ + 2;
+  flowers.forEach((f, i) => {
+    const w = PI * 2 * .62 * Math.sqrt(.14 / f.rad), z = .3, G = .15;
+    let th = 0, v = 0, k = 0;
+    for (let s = 0; s < N * 4; s++) {
+      const t = s * dt, F = pulse(f.X, t) + breeze(f.X, f.d, t);
+      const a = w * w * (G * F - th) - 2 * z * w * v; v += a * dt; th += v * dt;
+      if (s % 4 === 0) { const o = (i * N + k) * 3; simTab[o] = th; simTab[o + 1] = v; simTab[o + 2] = F; k++; }
+    }
+  });
+}
+function headAt(i, t) { const N = D * TAB_HZ + 2, x = t * TAB_HZ, k = Math.min(N - 2, Math.floor(x)), u = x - k, o = (i * N + k) * 3; return [lerp(simTab[o], simTab[o + 3], u), lerp(simTab[o + 2], simTab[o + 5], u)]; }
+
+scene({
+  title: '바람의 들판', W, H, duration: D, fps: 30, card: { title: 'WIND OVER THE FIELD', sub: 'late August, one gust', credit: 'drawn in code · ten seconds · one html file', scrim: .55 }, renderer: 'webgl',
+  setup({ gl }) {
+    // the warm ground (imprimatura) that shows between strokes, cooler in the sky
+    under = fullscreen(gl, `vec4 shade(vec2 px, vec2 res, float t){ float y = px.y / res.y; vec3 sky = mix(vec3(.36,.47,.62), vec3(.83,.74,.58), smoothstep(.1,.51,y)); vec3 fld = mix(vec3(.47,.36,.2), vec3(.36,.27,.15), smoothstep(.51,1.,y)); return vec4(mix(sky, fld, smoothstep(.505,.52,y)), 1.0); }`, W, H);
+    // linen weave + a breath of vignette, multiplied over the paint
+    // the low sun's warmth over the left of the field and around it; the lower right falls away cooler
+    glowPass = fullscreen(gl, `vec4 shade(vec2 px, vec2 res, float t){ vec2 s = vec2(${SUN[0]}.0, ${SUN[1]}.0); float d = length((px - s) * vec2(1.0, 1.25)); float g = exp(-d / 520.0) * 0.32; float lowR = smoothstep(0.55, 1.0, px.y / res.y) * smoothstep(0.35, 1.0, px.x / res.x) * 0.22; vec3 c = vec3(1.0, 0.82, 0.5) * g; return vec4(c * (1.0 - lowR) + vec3(0.06, 0.08, 0.16) * lowR, g * 0.55 + lowR); }`, W, H);
+    weave = fullscreen(gl, `vec4 shade(vec2 px, vec2 res, float t){ float w = 0.965 + 0.025 * sin(px.x * 1.7) * sin(px.y * 1.7) + 0.012 * sin(px.x * 0.37 + px.y * 0.11); vec2 q = px / res - 0.5; float v = 1.0 - 0.22 * dot(q * vec2(1.0, .8), q * vec2(1.0, .8)); return vec4(vec3(w * v), 1.0); }`, W, H);
+    paint(); simulate();
+    strokes = Strokes(gl, { W, H, motion: MOTION, segments: 8 });
+    strokes.set(S.map((s, i) => Object.assign({ seed: (i * .6180339) % 1, bend: 0, taper: .7, alpha: 1 }, s, { color: col(s.color) })));
+    flTex = dataTexture(gl, NF, 2);
+    const st = new Float32Array(NF * 4); flowers.forEach((f, i) => { st[i * 4] = f.c[0]; st[i * 4 + 1] = f.c[1]; });
+    flTex.update(st, 1, 1);
+    info = { strokes: S.length, flowers: NF };
+  },
+  frame(t, { gl }) {
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    const dyn = new Float32Array(NF * 4);
+    flowers.forEach((f, i) => { const [th, F] = headAt(i, t), px = FOC / f.d; dyn[i * 4] = th * px; dyn[i * 4 + 1] = th * th * 3.2 * px + Math.abs(th) * .25 * px; dyn[i * 4 + 2] = th * 2.3; dyn[i * 4 + 3] = clamp(F); });
+    flTex.update(dyn, 0, 1);
+    under({ time: t });
+    const k = ease.inOut(t / D, 1.6), view = [W * .5, H * .62, 1 + .03 * k];
+    strokes.draw({ time: t, light: [-.62, -.55, .55], impasto: 1, bristle: 1, dry: .15, view, textures: { u_fl: flTex.tex } });
+    glowPass({ time: t, blend: 'over' });
+    weave({ time: t, blend: 'multiply' });
+  },
+  info() { return info; },
+});
+</script></body></html>

@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ten-second-scene · motion-skills</title>
+<meta name="description" content="10초짜리 장면 하나를 HTML 파일 하나에 코드로만 그리고, 무작위 다섯 순간을 100%로 보며 밀도 · 빛 · 사람 비례 · 움직임의 무게 · 색 다섯 기준을 모두 통과할 때까지 고칩니다.">
+<meta property="og:title" content="ten-second-scene · motion-skills">
+<meta property="og:description" content="10초짜리 장면 하나를 HTML 파일 하나에 코드로만 그리고, 무작위 다섯 순간을 100%로 보며 다섯 기준을 모두 통과할 때까지 고칩니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/ten-second-scene/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/ten-second-scene">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / ten-second-scene</nav>
+  <h1>ten-second-scene</h1>
+  <p>주제를 주면 10초짜리 장면 하나를 HTML 파일 하나에 코드로만 그립니다. 영상 모델, 이미지 모델, 외부 이미지는 쓰지 않습니다. 렌더한 뒤 무작위 다섯 순간을 100%로 보고 밀도 · 빛 · 사람 비례 · 움직임의 무게 · 색 다섯 기준으로 판정합니다. 걸린 곳을 적고 고치고 다시 렌더하며, 25칸이 한 라운드에 모두 통과할 때까지 반복합니다.
+  보고 만든 원본: <a href="https://www.threads.com/share/BAbvjED_BX" target="_blank" rel="noopener">@yunseul_ai의 Threads 게시물 (영상 AI 없이 클로드 코드로만 만든 10초 영상 세 편과 그 방법)</a>, <a href="https://drive.google.com/file/d/1ns7arhoD70a2yHjp-F3wUkHOR4XRrxq8/view?usp=drivesdk" target="_blank" rel="noopener">그 영상의 화면 녹화</a>.</p>
+  <ul class="tags"><li>HTML 파일 하나 · 코드만</li><li>Canvas 2D · WebGL · three.js</li><li>무작위 5장 100% 감사 루프</li><li>밀도 · 빛 · 비례 · 무게 · 색</li><li>1080×1920 · 10초</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나 (장소 · 시각 · 날씨 · 일어나는 일)</dd>
+      <dt>브리프</dt><dd>한 줄 장면, 도구 선택, 카메라의 한 움직임, 이 장면에서 다섯 기준이 뜻하는 것, 인물의 무게와 대기 동작</dd>
+      <dt>장면</dt><dd>카메라로 투영한 실제 크기의 배치 · 붓질 수만 개 · 사람마다 따로 움직이는 몸 리그</dd>
+      <dt>감사 루프</dt><dd>무작위 다섯 순간의 100% 크롭, 25칸 판정, 찾은 문제와 고친 내용, 한 라운드 모두 통과까지</dd>
+      <dt>출력</dt><dd>시작 타이틀 카드가 있는 HTML 장면 하나 (라이브 재생), 1080×1920 MP4, AUDIT.md</dd>
+    </dl>
+    <pre><code>cd ten-second-scene/examples/first-bus
+node ../../scripts/audit.mjs scene.html --status   # 감사 라운드 현황
+node ../../scripts/check.mjs scene.html            # 파일 하나 · 코드만 · 결정성 · 사람 · 감사
+node ../../scripts/render.mjs scene.html           # out/first-bus.mp4
+node ../../scripts/new-scene.mjs ../../../my-scene --renderer webgl --title "제목"
+node ../../scripts/audit.mjs ../../../my-scene/scene.html   # 루프 한 바퀴</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. 네트워크 · npm 설치 · GPU 없이 돕니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/ten-second-scene/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:9/15.2;--h-phone:680px;--demo-bg:#0b0b0d">
+    <iframe data-src="demo/first-bus/" title="ten-second-scene 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/first-bus/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>「첫차」 · Canvas 2D · 10초</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/first-bus/" data-cap="「첫차」 · Canvas 2D · 10초" aria-pressed="true">첫차</button>
+        <button class="btn" type="button" data-src="demo/sunflower-wind/" data-cap="「바람의 들판」 · WebGL 붓질 160,490획 · 10초 (불러올 때 붓질을 만듭니다)">바람의 들판</button>
+        <button class="btn" type="button" data-src="demo/stadium-wave/" data-cap="「파도 응원」 · three.js · 2,622명 · 10초">파도 응원</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본에 없는 주제로 만든 예제 세 편과, 각 예제의 감사 1라운드(실패) 프레임과 통과한 파일의 같은 순간입니다. 카드를 누르면 라이브 데모가 그 순간에서 열리고, 1라운드 카드는 그 예제의 AUDIT.md를 엽니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"loop":"감사 루프","bus":"첫차","field":"바람의 들판","wave":"파도 응원"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>감사 루프 <small>1라운드 → 통과한 파일, 같은 순간</small></h3>
+      <p>세 예제 모두 1라운드에서 25칸 가운데 15–20칸이 실패했습니다. 「첫차」는 9라운드, 「바람의 들판」은 5라운드, 「파도 응원」은 6라운드 만에 통과했습니다. 왼쪽이 첫 판정을 받은 프레임이고 오른쪽이 통과한 파일의 같은 시각입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="loop bus" href="https://github.com/jungrok5/motion-skills/blob/main/ten-second-scene/examples/first-bus/AUDIT.md" target="_blank" rel="noopener">
+          <img src="samples/bus-r1-7-37.jpg" alt="첫차의 1라운드 프레임: 평평한 연보라 보도, 바퀴 자국에 비친 헤드라이트가 흰 직사각형, 막대 같은 사람들" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">첫차 · 1라운드 · 7.37초</span><b>19칸 실패</b><span class="how">평평한 바닥, 빛이 아무것도 비추지 않음, 종이 인형 같은 사람</span></div></a>
+        <a class="tile" data-tags="loop bus" href="demo/first-bus/?t=7.37" target="_blank" rel="noopener">
+          <img src="samples/bus-7-37.jpg" alt="통과한 첫차의 같은 순간: 눈 질감과 발자국이 있는 보도, 노란 점자블록, 연석을 따라 쌓인 눈더미, 문 앞으로 걸어가는 학생" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">첫차 · 9라운드 · 7.37초</span><b>25칸 통과</b><span class="how">눈 표면 질감, 점자블록, 눈더미, 역광 테두리, 옷의 누빔</span></div></a>
+        <a class="tile" data-tags="loop field" href="https://github.com/jungrok5/motion-skills/blob/main/ten-second-scene/examples/sunflower-wind/AUDIT.md" target="_blank" rel="noopener">
+          <img src="samples/field-r1-5-47.jpg" alt="바람의 들판 1라운드 프레임: 고르게 밝은 들판, 지푸라기처럼 갈라진 꽃잎, 혹 같은 갈색 꽃 중심" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">바람의 들판 · 1라운드 · 5.47초</span><b>15칸 실패</b><span class="how">갈라진 꽃잎, 형태 없는 꽃 중심, 역광 없음, 옆으로 미끄러지는 꽃</span></div></a>
+        <a class="tile" data-tags="loop field" href="demo/sunflower-wind/?t=5.47" target="_blank" rel="noopener">
+          <img src="samples/field-5-47.jpg" alt="통과한 바람의 들판의 같은 순간: 해 쪽 꽃잎이 밝게 빛나는 해바라기, 흙 붓질, 흐름이 있는 하늘" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">바람의 들판 · 5라운드 · 5.47초</span><b>25칸 통과</b><span class="how">해 쪽 꽃잎의 역광, 볼록한 꽃 중심, 흙, 숙이는 꽃 머리</span></div></a>
+        <a class="tile" data-tags="loop wave" href="https://github.com/jungrok5/motion-skills/blob/main/ten-second-scene/examples/stadium-wave/AUDIT.md" target="_blank" rel="noopener">
+          <img src="samples/wave-r1-6-1.jpg" alt="파도 응원 1라운드 프레임: 화면 위를 덮은 갈색 지붕 판, 무지개 줄무늬 광고판, 젤리빈 같은 사람들" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">파도 응원 · 1라운드 · 6.1초</span><b>20칸 실패</b><span class="how">평평한 지붕, 무지개 광고판, 마네킹 같은 안전요원</span></div></a>
+        <a class="tile" data-tags="loop wave" href="demo/stadium-wave/?t=6.1" target="_blank" rel="noopener">
+          <img src="samples/wave-6-1.jpg" alt="통과한 파도 응원의 같은 순간: 트러스와 조명이 있는 지붕, 투광등 빛 속 가랑비, 어두운 광고판의 청록 물결, 조끼 입은 안전요원" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">파도 응원 · 6라운드 · 6.1초</span><b>25칸 통과</b><span class="how">지붕 구조, 가랑비와 안개, 광고판 하나의 강조색, 실제 비율의 사람</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>「첫차」 <small>Canvas 2D · 1080×1920 · 10초 · 사람 4명</small></h3>
+      <p>1월 새벽 5시, 눈 오는 언덕길 정류장에 첫차가 들어옵니다. 2.3초 동안 제동하며 앞이 숙었다가 스프링 위에서 흔들리고, 문이 열리며 따뜻한 빛이 눈 위로 떨어집니다. 기다리던 네 사람은 숨을 쉬고(내쉴 때마다 입김), 할머니는 몇 걸음 딛어 돌아서고, 학생은 무게를 뒤로 실었다가 문으로 걸어갑니다. 아파트 창 2,213개, 나뭇가지 6,313개, 눈송이 8,000개가 모두 코드입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="bus" href="demo/first-bus/?t=0.5" target="_blank" rel="noopener">
+          <img src="samples/bus-0-5.jpg" alt="THE FIRST BUS 타이틀이 떠 있는 눈 오는 새벽 정류장, 빛나는 광고판 앞에 서 있는 네 사람, 멀리 언덕 위 아파트와 다가오는 버스의 작은 헤드라이트" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">0.5초</span><b>멀리 두 개의 불빛</b><span class="how">타이틀 카드 아래, 광고판 역광 속 네 사람</span></div></a>
+        <a class="tile" data-tags="bus" href="demo/first-bus/?t=6.4" target="_blank" rel="noopener">
+          <img src="samples/bus-6-4.jpg" alt="정류장에 막 멈춘 청록 버스, 헤드라이트가 눈과 바닥을 비추고 사람들이 버스 쪽을 봄" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">6.4초</span><b>멈추고 흔들리는 버스</b><span class="how">제동 뒤 앞이 들렸다 가라앉음</span></div></a>
+        <a class="tile" data-tags="bus" href="demo/first-bus/?t=8.6" target="_blank" rel="noopener">
+          <img src="samples/bus-8-6.jpg" alt="열린 버스 문 앞으로 걸어간 롱패딩 학생, 문에서 흘러나온 따뜻한 빛이 눈 위에 떨어짐" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">8.6초</span><b>열린 문의 빛</b><span class="how">학생이 발을 딛어 문 앞으로</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>「바람의 들판」 <small>WebGL · 붓질 160,490획 · 해바라기 1,502송이 · 10초</small></h3>
+      <p>늦은 8월 오후, 낮은 해가 왼쪽 구름 가장자리 뒤에 있습니다. 바람 한 줄기가 왼쪽에서 들어와 들판을 건너갑니다. 잎이 연한 뒷면을 뒤집으며 물결이 지나가고, 무거운 꽃 머리는 꽃마다 따로 계산한 스프링으로 잎보다 늦게 숙였다가 지나쳐 돌아옵니다. 구름은 해 쪽이 크림색, 반대쪽이 청회색인 윤곽 붓질입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="field" href="demo/sunflower-wind/?t=1" target="_blank" rel="noopener">
+          <img src="samples/field-1.jpg" alt="WIND OVER THE FIELD 타이틀이 떠 있는, 두꺼운 유화 붓질로 그린 해바라기 밭과 높이 솟은 적운, 먼 언덕 위 빨간 지붕 농가" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">1초</span><b>바람 전의 들판</b><span class="how">타이틀 카드 아래, 미풍과 흘러가는 구름</span></div></a>
+        <a class="tile" data-tags="field" href="demo/sunflower-wind/?t=4.5" target="_blank" rel="noopener">
+          <img src="samples/field-4-5.jpg" alt="왼쪽 들판의 잎들이 연한 뒷면을 보이며 바람이 지나가는 해바라기 밭" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">4.5초</span><b>건너오는 바람</b><span class="how">잎이 뒷면을 뒤집는 물결</span></div></a>
+        <a class="tile" data-tags="field" href="demo/sunflower-wind/?t=6.3" target="_blank" rel="noopener">
+          <img src="samples/field-6-3.jpg" alt="바람이 지나간 뒤 오른쪽 해바라기 머리들이 숙였다가 돌아오는 장면" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">6.3초</span><b>숙였다 돌아오는 꽃</b><span class="how">무거운 머리의 지연과 되돌림</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>「파도 응원」 <small>three.js · 26열 · 2,622명 + 안전요원 · 10초</small></h3>
+      <p>밤 경기에서 긴 관중석을 따라 파도 응원이 카메라 쪽으로 다가옵니다. 사람마다 반응 시간, 열의, 몸무게가 달라서 일찍 서는 사람, 늦게 서는 사람, 반만 일어나는 사람, 일어나지 않는 사람이 있습니다. 일어설 때는 몸을 숙이고 손으로 밀고(예비동작), 팔이 몸보다 늦게 올라가 지나치고, 털썩 앉아 한 번 튕깁니다. 경기장 가장자리의 안전요원은 고개로 파도를 따라가다 몇 걸음 딛어 돌아섭니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="wave" href="demo/stadium-wave/?t=2" target="_blank" rel="noopener">
+          <img src="samples/wave-2.jpg" alt="투광등 지붕 아래 가득 찬 관중석, 멀리 끝에서 파도 응원이 시작되는 장면, 경기장 가장자리의 안전요원" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">2초</span><b>먼 끝에서 시작</b><span class="how">사라지는 타이틀, 작은 잔물결처럼 보이는 파도</span></div></a>
+        <a class="tile" data-tags="wave" href="demo/stadium-wave/?t=6.6" target="_blank" rel="noopener">
+          <img src="samples/wave-6-6.jpg" alt="가까운 열의 관중들이 팔을 들고 일어서는 순간, 사람마다 높이와 시점이 다름" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">6.6초</span><b>가까운 열에 닿은 파도</b><span class="how">사람마다 다른 시점과 높이</span></div></a>
+        <a class="tile" data-tags="wave" href="demo/stadium-wave/?t=9.5" target="_blank" rel="noopener">
+          <img src="samples/wave-9-5.jpg" alt="파도가 지나간 뒤 다시 자리에 앉는 관중, 투광등 빛 속의 가랑비" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">9.5초</span><b>지나간 뒤</b><span class="how">다시 앉는 관중, 손뼉 · 휴대폰 불빛, 가랑비</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. @yunseul_ai가 Threads에 올린 글이 출발점입니다. 영상 AI 없이 클로드 코드로만 만든 10초 영상 세 편(비 그친 골목은 Canvas 2D, 붓질 6만 개가 넘는 별이 빛나는 밤은 WebGL, 2천 명 넘게 따로 움직이는 횡단보도는 three.js)과 그 방법이 담겨 있습니다. 방법은 HTML 파일 하나, 코드로만 그리기, "코드로 만든 데모처럼 보이면 실패", 무작위 다섯 장면을 100%로 보고 다섯 기준표로 고치기를 반복하는 것입니다. 이 스킬은 그 방법만 가져와 도구로 만들었고, 원본의 세 그림은 다시 만들지 않았습니다. 세 예제는 모두 새 주제입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/first-bus/" target="_blank" rel="noopener"><b>「첫차」 · 10초</b><span>Canvas 2D, 눈 오는 새벽 정류장, 감사 9라운드</span><span class="url">ten-second-scene/demo/first-bus/</span></a>
+    <a class="work" href="demo/sunflower-wind/" target="_blank" rel="noopener"><b>「바람의 들판」 · 10초</b><span>WebGL 붓질 160,490획, 감사 5라운드</span><span class="url">ten-second-scene/demo/sunflower-wind/</span></a>
+    <a class="work" href="demo/stadium-wave/" target="_blank" rel="noopener"><b>「파도 응원」 · 10초</b><span>three.js, 2,622명, 감사 6라운드</span><span class="url">ten-second-scene/demo/stadium-wave/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/ten-second-scene/examples"><b>예제 폴더 · examples/</b><span>장면, 브리프, 라운드마다의 감사 기록</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://www.threads.com/share/BAbvjED_BX" target="_blank" rel="noopener"><b>원본 · Threads 게시물</b><span>@yunseul_ai · 영상 세 편과 프롬프트, 방법, 기준표</span><span class="url">threads.com/share/BAbvjED_BX</span></a>
+    <a class="work" href="https://drive.google.com/file/d/1ns7arhoD70a2yHjp-F3wUkHOR4XRrxq8/view?usp=drivesdk" target="_blank" rel="noopener"><b>원본 영상 · 화면 녹화</b><span>「AFTER THE RAIN」 비 그친 서울 골목 · 「THE CROSSING」 횡단보도의 2천 명 · 21.7초</span><span class="url">drive.google.com/file/d/1ns7arhoD70a2yHjp-F3wUkHOR4XRrxq8</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ten-second-scene/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/ten-second-scene">폴더</a> <span>lib · scripts · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ten-second-scene/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ten-second-scene/references/SOURCE.md">references/SOURCE.md</a> <span>원본 글의 내용, 가져온 것과 가져오지 않은 것</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ten-second-scene/references/BRIEF.md">references/BRIEF.md</a> <span>브리프 틀과 라운드 판정 기준표</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ten-second-scene/references/CRAFT.md">references/CRAFT.md</a> <span>코드 데모처럼 보이지 않게 하는 방법, 렌더러별</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ten-second-scene/references/BODY.md">references/BODY.md</a> <span>사람 리그, 발자국, 대기 동작, 캐스트 시트</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/ten-second-scene/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림과 움직임은 코드로 그렸습니다. three.js (MIT)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
