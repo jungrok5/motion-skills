@@ -3193,6 +3193,50 @@
      "url": "https://jungrok5.github.io/motion-skills/lived-in-room/demo/starter/"
     }
    ]
+  },
+  {
+   "id": "ten-second-scene",
+   "name": "ten-second-scene",
+   "tagline": "주제를 주면 10초짜리 장면 하나를 HTML 파일 하나에 코드로만 그립니다(영상 · 이미지 모델과 외부 이미지 없이). 도구는 장면마다 고릅니다: 그림 같은 장소는 Canvas 2D, 붓질 수만 개의 유화는 WebGL, 수천 명이 따로 움직이는 공간은 three.js. 한 번 렌더하고 끝내지 않고, 무작위 다섯 순간을 100%로 보며 밀도 · 빛 · 사람 비례 · 움직임의 무게 · 색 다섯 기준으로 판정해 걸린 곳을 적고 고치기를 25칸이 한 라운드에 모두 통과할 때까지 반복합니다. 감사 스크립트가 순간을 고르고 100% 크롭과 판정표를 만들며, 검사 스크립트가 파일 하나 · 코드만 · 결정성 · 발 미끄러짐 · 굳은 대기 동작 · 예비동작 없는 큰 동작 · 통과하지 못한 감사를 막습니다.",
+   "posterAlt": "ten-second-scene으로 만든 장면 세 개: 눈 오는 새벽 정류장에 들어와 문을 연 청록 버스와 문 앞의 학생, 두꺼운 유화 붓질의 적운과 해바라기 밭, 투광등 지붕 아래 파도 응원으로 일어서는 관중과 경기장 가장자리의 안전요원",
+   "poster": "ten-second-scene/poster.jpg",
+   "tags": [
+    "HTML 파일 하나 · 코드만",
+    "Canvas 2D · WebGL · three.js",
+    "무작위 5장 100% 감사 루프",
+    "밀도 · 빛 · 비례 · 무게 · 색",
+    "1080×1920 · 10초"
+   ],
+   "stats": [
+    "예제 3편 · 감사 9 · 5 · 6라운드",
+    "붓질 160,490획 · 관중 2,622명"
+   ],
+   "page": "ten-second-scene/",
+   "source": "ten-second-scene/",
+   "absorbedFrom": {
+    "repo": "https://github.com/jungrok5/motion-skills",
+    "path": "ten-second-scene/examples/"
+   },
+   "sources": [
+    {
+     "title": "@yunseul_ai의 Threads 게시물 (영상 AI 없이 클로드 코드로만 만든 10초 영상 세 편 — Canvas 2D 골목, WebGL 별밤 붓질 6만 개, three.js 횡단보도 2천 명 — 과 프롬프트, 무작위 5장 100% 확인과 5가지 기준표로 고치는 방법): 방법의 출처",
+     "url": "https://www.threads.com/share/BAbvjED_BX"
+    }
+   ],
+   "workedExample": [
+    {
+     "title": "「첫차」 · Canvas 2D · 눈 오는 새벽 정류장의 첫 버스 · 10초 · 감사 9라운드",
+     "url": "https://jungrok5.github.io/motion-skills/ten-second-scene/demo/first-bus/"
+    },
+    {
+     "title": "「바람의 들판」 · WebGL 붓질 160,490획 · 해바라기 밭을 건너는 바람 · 10초 · 감사 5라운드",
+     "url": "https://jungrok5.github.io/motion-skills/ten-second-scene/demo/sunflower-wind/"
+    },
+    {
+     "title": "「파도 응원」 · three.js · 관중 2,622명의 파도 응원 · 10초 · 감사 6라운드",
+     "url": "https://jungrok5.github.io/motion-skills/ten-second-scene/demo/stadium-wave/"
+    }
+   ]
   }
  ]
 }
