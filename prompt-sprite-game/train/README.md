@@ -37,15 +37,32 @@ The browser side is `lib/painter-link.js` (onnxruntime-web on WebAssembly, the s
 
 ## Where the weights go
 
-Not into git and not into `docs/`. The dataset, the downloaded zip and `runs/` stay outside the repo; the exported
-`.onnx` + `.json` are published where a page can fetch them (a Hugging Face model repo, a release asset) and the game's
-`game.json` points at that URL.
+The exported painter (`<name>.onnx` + `<name>.json` + `NOTICE`, a few MB) is committed under `prompt-sprite-game/models/<name>/`
+(the owner's choice for the cat painter). The dataset, the downloaded zip and `runs/` never enter the repo. Game demos on
+the samples page load the painter from the repo through jsDelivr, so no model file goes into `docs/`.
 
-## Provenance and licence
+## Provenance and licence (read before selling anything)
 
-- Data: Pixel Art Atlas 1.4M, CC0 1.0 (sprites, captions, collection). Its card notes the sprites were generated with
-  Krea 2 Turbo and a pixel-art LoRA, and that the CC0 dedication does not override Krea's own terms — read them
-  before selling a game built on a painter trained on it.
-- Code here: this repo's. No Tessera weights or code are used; the recipe follows the Tessera-small model card
-  (<https://huggingface.co/thejagstudio/tessera-small>).
-- A painter you train is yours to license; it learned from CC0 data.
+Checked on 2026-11-19 against the texts themselves; this is a reading, not legal advice.
+
+- **Tessera-small** (not used here): its LICENSE says images generated with it may not be used commercially either —
+  "including … using it in paid products, apps, games or services". A game whose sprites Tessera painted is non-commercial.
+- **Pixel Art Atlas 1.4M** (the training data): Angais dedicates the sprites, captions and collection to the public
+  domain (CC0 1.0), "to the extent of the rights Angais can waive". The sprites were generated with **Krea 2 Turbo** and
+  a pixel-art LoRA, and the card says the CC0 dedication does not override Krea's terms.
+- **Krea 2 Community License Agreement** (page dated 2026-06-22, <https://www.krea.ai/krea-2-licensing>):
+  - §5.3 — you own the Outputs you generate.
+  - §2.3 — Commercial Use "of the Krea Model, Derivatives, or Outputs" is permitted only for a company-wide annual
+    revenue under US$1,000,000 (trailing twelve months, affiliates included); at or above it, an enterprise licence
+    from Krea is needed first.
+  - §1 — a "Derivative" includes any "fine-tuned, distilled, or merged version" of the Krea Model. The agreement does
+    not say whether a model trained from scratch on Outputs (like this painter) counts as distilled.
+  - §3.1 — whoever distributes the Krea Model or a Derivative must put "Krea" at the start of its name and keep the
+    notice "Krea 2 is licensed under the Krea 2 Community License Agreement" in a Notice file.
+  - The Acceptable Use Policy (<https://www.krea.ai/krea-2-use-policy>) says nothing about training models on Outputs.
+- **What that means for a painter trained here** — read cautiously, as if the Krea terms reach it: commercial use is
+  fine below US$1M yearly revenue, and an enterprise licence is needed above it. Each exported painter ships a
+  `NOTICE` that names the data, its CC0 dedication and the Krea notice. Whether the painter is a "Derivative" (and so
+  would need the "Krea" name prefix) is open; ask Krea (opensource@krea.ai) before relying on it at scale.
+- The code in this folder is this repo's; no Tessera weights or code are used (the recipe follows the Tessera-small
+  model card, <https://huggingface.co/thejagstudio/tessera-small>).

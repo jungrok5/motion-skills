@@ -3,7 +3,8 @@
 // The painter is the Tessera recipe scaled down to one theme: a masked-diffusion transformer over 16×16 palette tokens,
 // with its own small word vocabulary instead of CLIP. It ships as two files: <name>.onnx (int8, a few MB) and
 // <name>.json (palette, vocabulary, sizes). onnxruntime-web runs it on the CPU (WebAssembly) — no WebGPU needed.
-// Its licence is the training data's (Pixel Art Atlas 1.4M, CC0) — see train/README.md for the provenance note.
+// Trained on Pixel Art Atlas 1.4M (CC0; sprites made with Krea 2 — Krea's terms may apply: commercial use under US$1M
+// yearly revenue). See train/README.md, "Provenance and licence", and the NOTICE beside each painter.
 
 const ORT = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/';
 let ortP = null;

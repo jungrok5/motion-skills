@@ -29,6 +29,15 @@ meta = {'name': a.name or os.path.basename(a.out), 'credit': a.credit, 'step': c
         'colors': ck['cfg']['colors'], 'mask_id': m.mask_id, 'text_len': m.text_len,
         'palette': np.asarray(ck['palette']).tolist(), 'vocab': list(map(str, ck['vocab']))}
 json.dump(meta, open(a.out + '.json', 'w'), separators=(',', ':'))
+open(os.path.join(os.path.dirname(a.out) or '.', 'NOTICE'), 'w').write(f'''{meta["name"]} — a sprite painter trained with prompt-sprite-game/train (https://github.com/jungrok5/motion-skills).
+
+Training data: Pixel Art Atlas 1.4M by Angais (https://huggingface.co/datasets/Angais/pixel-art-atlas-1.4m),
+dedicated to the public domain under CC0 1.0. The sprites in it were generated with Krea 2 Turbo and a pixel-art LoRA.
+Krea 2 is licensed under the Krea 2 Community License Agreement (https://www.krea.ai/krea-2-licensing): commercial use
+of the Krea Model, Derivatives or Outputs is permitted only below US$1,000,000 company-wide annual revenue; above it an
+enterprise licence from Krea is required. Whether a model trained on Outputs is a Derivative is not settled by the text.
+No Tessera-small weights or code were used.
+''')
 
 # check: the int8 graph against PyTorch on random partly-hidden input
 import onnxruntime as ort

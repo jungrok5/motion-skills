@@ -1058,7 +1058,7 @@ export async function boot({ root = document.body, src = './game.json', data = n
 
   // a themed painter trained with train/ (optional): paints the cast members listed in painter.for, in a few seconds on the CPU
   const PZ = data.painter;
-  const painterCredit = () => PZ.credit || `Sprites painted by the "${PZ.name || 'theme'}" painter (trained on Pixel Art Atlas 1.4M, CC0)`;
+  const painterCredit = () => PZ.credit || `Sprites painted by the "${PZ.name || 'theme'}" painter · trained on Pixel Art Atlas 1.4M (CC0, made with Krea 2)`;
   const setCredit = () => {
     const src = new Set(Object.values(sprites).map((s) => s.source));
     const parts = [];
