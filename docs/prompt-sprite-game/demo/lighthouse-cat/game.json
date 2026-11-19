@@ -1,0 +1,341 @@
+{
+ "title": "등대 고양이",
+ "seed": 7,
+ "kind": "platform",
+ "view": {
+  "w": 320,
+  "h": 192
+ },
+ "text": {
+  "intro": "폭풍에 등대 불이 꺼졌습니다. 절벽 아래로 떠밀려 온 생선 다섯 마리를 모아 등불의 기름을 채우세요. 게는 밟고, 성게는 피하고.",
+  "win": "등대에 다시 불이 켜졌습니다",
+  "lose": "파도에 휩쓸렸습니다",
+  "needMore": "FISH 5"
+ },
+ "rules": {
+  "win": "goal",
+  "need": 5,
+  "lives": 3
+ },
+ "palette": {
+  "bg": "#0c1024",
+  "ink": "#f4ecdc",
+  "heart": "#ff6a5a",
+  "dust": "#b8c4d0",
+  "poof": "#ffd0c0",
+  "shadow": "rgba(0,0,10,0.35)",
+  "hudBg": "rgba(6,8,20,0.55)"
+ },
+ "colors": {
+  "k": "#1d1626",
+  "w": "#f4ecdc",
+  "W": "#c9c0b6"
+ },
+ "backdrop": [
+  {
+   "kind": "gradient",
+   "colors": [
+    "#0b0f26",
+    "#1a1d44",
+    "#2c2f5e",
+    "#3d5a78"
+   ]
+  },
+  {
+   "kind": "stars",
+   "count": 70,
+   "bottom": 110,
+   "color": "#8d93c8",
+   "color2": "#ffffff",
+   "scroll": 0.05
+  },
+  {
+   "kind": "moon",
+   "x": 250,
+   "y": 34,
+   "r": 11,
+   "color": "#f6eec8",
+   "rim": "#d8cc9a",
+   "scroll": 0.04
+  },
+  {
+   "kind": "clouds",
+   "count": 5,
+   "bottom": 80,
+   "color": "#262a52",
+   "rim": "#3a4070",
+   "scroll": 0.1,
+   "drift": 3
+  },
+  {
+   "kind": "mountains",
+   "y": 150,
+   "amp": 34,
+   "period": 70,
+   "color": "#161a38",
+   "rim": "#22285a",
+   "scroll": 0.2
+  },
+  {
+   "kind": "waves",
+   "y": 172,
+   "amp": 6,
+   "period": 40,
+   "color": "#1d3a5c",
+   "rim": "#5a86b0",
+   "scroll": 0.45,
+   "speed": 1.4
+  }
+ ],
+ "tiles": {
+  "#": {
+   "look": "rock",
+   "colors": [
+    "#3b3a4e",
+    "#26253a",
+    "#5a5874"
+   ]
+  },
+  "=": {
+   "look": "plank",
+   "colors": [
+    "#8a5a3a",
+    "#5a3624",
+    "#b07a50"
+   ],
+   "oneway": true
+  },
+  "^": {
+   "look": "spikes",
+   "colors": [
+    "#7a4aa0",
+    "#4a2a6a",
+    "#c9a0f0"
+   ],
+   "hazard": true
+  },
+  "~": {
+   "look": "water",
+   "colors": [
+    "#2f6a9a",
+    "#1d4a74",
+    "#9ad0f0"
+   ],
+   "hazard": true,
+   "pit": true
+  }
+ },
+ "legend": {
+  "P": "cat",
+  "f": "fish",
+  "c": "crab",
+  "s": "gull",
+  "L": "lamp"
+ },
+ "cast": {
+  "cat": {
+   "role": "player",
+   "name": "고양이",
+   "prompt": "orange cat walking",
+   "seed": 21,
+   "pick": 1,
+   "faces": "right",
+   "mass": 1.0,
+   "gait": "hop",
+   "idle": "breathes; shifts weight every few seconds",
+   "colors": {
+    "o": "#ee8a3c",
+    "d": "#b85a26",
+    "p": "#f39aa8",
+    "g": "#a8e06a"
+   },
+   "pixels": [
+    "................",
+    "..........k...k.",
+    ".k.......kok.kok",
+    "kok......koooook",
+    "kok......kodookk",
+    "kok......koookgk",
+    ".kok.....koooowp",
+    "..kokkkkkkoowwwk",
+    "...kdoooooodwwk.",
+    "...koododoooook.",
+    "...kooooooooook.",
+    "...kodooooddook.",
+    "...kooko..kookk.",
+    "...kook...koook.",
+    "...kwwk...kwwk..",
+    "....kk.....kk..."
+   ]
+  },
+  "fish": {
+   "role": "item",
+   "name": "생선",
+   "prompt": "silver fish",
+   "seed": 7,
+   "pick": 0,
+   "faces": "left",
+   "mass": 0.5,
+   "gait": "still",
+   "sparkle": "#d8f0ff",
+   "colors": {
+    "b": "#8fb8d8",
+    "B": "#4f7fa8",
+    "s": "#e2f0f8",
+    "y": "#ffd36a"
+   },
+   "pixels": [
+    "................",
+    "................",
+    "................",
+    "................",
+    "......kkkk......",
+    "kk..kkbbbbkk....",
+    "kbkkbbbbsbbbk...",
+    "kbbbbbbbbsbkbk..",
+    "kBbbBbBbbbbbbk..",
+    "kbkkbBbssssssk..",
+    "kk..kBBBssssk...",
+    ".....kkkkkkk....",
+    "................",
+    "................",
+    "................",
+    "................"
+   ]
+  },
+  "crab": {
+   "role": "enemy",
+   "name": "게",
+   "prompt": "red crab",
+   "seed": 7,
+   "pick": 0,
+   "faces": "front",
+   "mass": 1.4,
+   "gait": "hop",
+   "move": "patrol",
+   "speed": 0.55,
+   "colors": {
+    "r": "#e2493a",
+    "R": "#a32a24",
+    "h": "#ff8a6a"
+   },
+   "pixels": [
+    "................",
+    "................",
+    "................",
+    ".kk..........kk.",
+    "krrk..k..k..krrk",
+    "krhk.kwk.kwk.khk",
+    "kRrk.kkk.kkk.krk",
+    ".kRk..k..k...kRk",
+    "..krkkkkkkkkkkrk",
+    "...krhhrrrrrrrk.",
+    "..krrrrrrrrrrrrk",
+    "..kRrrrrrrrrrrRk",
+    "...kRRRRRRRRRRk.",
+    "..k.k.k....k.k.k",
+    ".k..k.k....k.k..",
+    "................"
+   ]
+  },
+  "gull": {
+   "role": "enemy",
+   "name": "갈매기",
+   "prompt": "white seagull flying",
+   "seed": 7,
+   "pick": 0,
+   "faces": "left",
+   "mass": 0.7,
+   "gait": "glide",
+   "move": "patrol",
+   "range": 5,
+   "speed": 0.8,
+   "stompable": true,
+   "colors": {
+    "y": "#f2b33a",
+    "g": "#9aa3ad"
+   },
+   "pixels": [
+    "................",
+    "................",
+    "..kk..........kk",
+    "..kgk........kgk",
+    "...kgk......kgk.",
+    "....kgkk..kkgk..",
+    "..kk.kwwkkwgk...",
+    ".kywkwwwwwwk....",
+    "yykwwwwwwwwk....",
+    "..kwwwwwwwk.....",
+    "...kkWWWWk......",
+    ".....kkkk.......",
+    "................",
+    "................",
+    "................",
+    "................"
+   ]
+  },
+  "lamp": {
+   "role": "goal",
+   "name": "등불",
+   "prompt": "lighthouse lantern",
+   "seed": 7,
+   "pick": 1,
+   "faces": "front",
+   "mass": 2.0,
+   "gait": "still",
+   "colors": {
+    "r": "#c8423a",
+    "R": "#8a2a26",
+    "l": "#fff2a8",
+    "L": "#ffcf5a",
+    "m": "#3a3442"
+   },
+   "pixels": [
+    ".......kk.......",
+    "......kRRk......",
+    ".....kRrrRk.....",
+    "....kkkkkkkk....",
+    "....kmlllLmk....",
+    "....kmllLLmk....",
+    "....kmlLLLmk....",
+    "....kmLLLLmk....",
+    "...kkkkkkkkkk...",
+    "...kmmmmmmmmk...",
+    "....kwwkkwwk....",
+    "....kwwkkwwk....",
+    "....krrrrrrk....",
+    "....kRRRRRRk....",
+    "...kwwwwwwwwk...",
+    "...kkkkkkkkkk..."
+   ]
+  }
+ },
+ "level": [
+  "........................................................................",
+  "........................................................................",
+  "............................................................f...........",
+  "....................................s...................................",
+  "...................................................f............c....L..",
+  "....................................f................###################",
+  ".....................................................###################",
+  "........f..........f.......^......................######################",
+  ".................====...######..#########.........######################",
+  "..P.................c...######..#########..^^c.#########################",
+  "############..################..########################################",
+  "############~~################~~########################################"
+ ],
+ "tune": {
+  "bpm": 96,
+  "lead": "D5 . F5 . A5 . G5 F5 E5 . C5 . D5 . . . A4 . D5 . F5 . E5 D5 C5 . A4 . D5 . . .",
+  "bass": "D3 . . . A2 . . . Bb2 . . . C3 . . . D3 . . . A2 . . . G2 . . . A2 . . .",
+  "waves": {
+   "lead": "triangle",
+   "bass": "triangle"
+  },
+  "vols": {
+   "lead": 0.1,
+   "bass": 0.16
+  }
+ },
+ "credit": "손그림 스프라이트 · 「등대 고양이」 prompt-sprite-game 예제"
+}

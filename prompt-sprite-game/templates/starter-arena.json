@@ -1,0 +1,184 @@
+{
+ "title": "New Game",
+ "seed": 1,
+ "kind": "arena",
+ "view": {
+  "w": 320,
+  "h": 192
+ },
+ "text": {
+  "intro": "REPLACE: one or two sentences — who, what to gather, what to avoid.",
+  "win": "CLEAR",
+  "lose": "TIME UP"
+ },
+ "rules": {
+  "win": "collect",
+  "lives": 3,
+  "time": 60
+ },
+ "palette": {
+  "bg": "#1a2418",
+  "ink": "#f4efe4"
+ },
+ "colors": {
+  "k": "#1a1820",
+  "w": "#ffffff"
+ },
+ "floor": {
+  "look": "grass",
+  "colors": [
+   "#4a7a3a",
+   "#38602c",
+   "#64944a"
+  ]
+ },
+ "backdrop": [
+  {
+   "kind": "fill",
+   "color": "#1a2418"
+  }
+ ],
+ "tiles": {
+  "#": {
+   "look": "hedge",
+   "colors": [
+    "#2a4a24",
+    "#1a321a",
+    "#3e6a30"
+   ]
+  },
+  "^": {
+   "look": "spikes",
+   "colors": [
+    "#c8c8d8",
+    "#7a7a90",
+    "#ffffff"
+   ],
+   "hazard": true
+  }
+ },
+ "legend": {
+  "P": "hero",
+  "g": "gem",
+  "e": "foe"
+ },
+ "cast": {
+  "hero": {
+   "role": "player",
+   "name": "hero",
+   "prompt": "REPLACE: a few English words for the hero",
+   "seed": 7,
+   "pick": 0,
+   "faces": "front",
+   "mass": 1.0,
+   "gait": "hop",
+   "colors": {
+    "b": "#5ab0e8",
+    "B": "#3a7ab8"
+   },
+   "pixels": [
+    "................",
+    "................",
+    "................",
+    "................",
+    "......kkkk......",
+    ".....kbbbbk.....",
+    "....kbwbbbbk....",
+    "...kbbbbbbbbk...",
+    "...kbbkbbkbbk...",
+    "...kbbkbbkbbk...",
+    "...kbbbbbbbbk...",
+    "...kbbbbbbbbk...",
+    "...kbBBBBBBbk...",
+    "....kBBBBBBk....",
+    ".....kkkkkk.....",
+    "................"
+   ]
+  },
+  "gem": {
+   "role": "item",
+   "name": "item",
+   "prompt": "REPLACE: the thing to collect",
+   "seed": 7,
+   "pick": 0,
+   "faces": "front",
+   "mass": 0.5,
+   "gait": "still",
+   "colors": {
+    "y": "#ffd84a",
+    "Y": "#c89a22"
+   },
+   "pixels": [
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "......kkkk......",
+    ".....kywyyk.....",
+    "....kywyyyyk....",
+    "....kyyyyyYk....",
+    ".....kyyyYk.....",
+    "......kyYk......",
+    ".......kk.......",
+    "................",
+    "................",
+    "................",
+    "................"
+   ]
+  },
+  "foe": {
+   "role": "enemy",
+   "name": "enemy",
+   "prompt": "REPLACE: the enemy",
+   "seed": 7,
+   "pick": 0,
+   "faces": "front",
+   "mass": 1.4,
+   "gait": "hop",
+   "move": "wander",
+   "speed": 0.5,
+   "colors": {
+    "r": "#e05a4a",
+    "R": "#a03428"
+   },
+   "pixels": [
+    "................",
+    "................",
+    "................",
+    ".......k........",
+    "...k..krk..k....",
+    "....krrrrrk.....",
+    "...krrrrrrrk....",
+    "..krrwkrwkrrk...",
+    "kkkrrrrrrrrrkkk.",
+    "..krrrrrrrrrk...",
+    "...krrRRRrrk....",
+    "....krrrrrk.....",
+    "...k..krk..k....",
+    "..k...kkk...k...",
+    "................",
+    "................"
+   ]
+  }
+ },
+ "level": [
+  "########################",
+  "#......................#",
+  "#..P.......g...........#",
+  "#.......####......g....#",
+  "#......................#",
+  "#...g.........e........#",
+  "#..........^^..........#",
+  "#.....e.........####...#",
+  "#..####.....g..........#",
+  "#...............g...e..#",
+  "#......g...............#",
+  "########################"
+ ],
+ "tune": {
+  "bpm": 120,
+  "lead": "E5 G5 A5 . G5 E5 D5 . C5 D5 E5 . D5 . . .",
+  "bass": "A2 . E3 . F2 . C3 . G2 . D3 . E3 . . ."
+ }
+}

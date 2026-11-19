@@ -1,0 +1,299 @@
+{
+ "title": "버섯 숲 바구니",
+ "seed": 3,
+ "kind": "arena",
+ "view": {
+  "w": 320,
+  "h": 192
+ },
+ "text": {
+  "intro": "해가 지기 전에 숲속 빈터의 빨간 버섯 열 송이를 바구니에 담으세요. 딱정벌레는 덮쳐서 잠깐 기절시킬 수 있지만, 말벌은 피하는 수밖에 없습니다.",
+  "win": "바구니가 가득 찼습니다",
+  "lose": "해가 졌습니다"
+ },
+ "rules": {
+  "win": "collect",
+  "lives": 3,
+  "time": 75
+ },
+ "palette": {
+  "bg": "#1c2a1a",
+  "ink": "#fbf4e2",
+  "heart": "#ff6a6a",
+  "dust": "#c8b88a",
+  "poof": "#ffffff",
+  "shadow": "rgba(10,20,5,0.35)",
+  "hudBg": "rgba(12,20,10,0.6)"
+ },
+ "colors": {
+  "k": "#1e1a16",
+  "w": "#f6f0e0"
+ },
+ "floor": {
+  "look": "grass",
+  "colors": [
+   "#4f8a3c",
+   "#3c6e2e",
+   "#6aa64c"
+  ],
+  "decor": [
+   {
+    "kind": "patch",
+    "color": "#5f9a46",
+    "density": 0.5
+   },
+   {
+    "kind": "tuft",
+    "color": "#78b858",
+    "density": 0.45
+   },
+   {
+    "kind": "flower",
+    "color": "#f6f0e0",
+    "center": "#f2c22a",
+    "density": 0.12
+   },
+   {
+    "kind": "flower",
+    "color": "#c890e0",
+    "center": "#fff0a0",
+    "density": 0.06
+   },
+   {
+    "kind": "pebble",
+    "color": "#9a9488",
+    "density": 0.06
+   }
+  ]
+ },
+ "backdrop": [
+  {
+   "kind": "fill",
+   "color": "#1c2a1a"
+  }
+ ],
+ "tiles": {
+  "#": {
+   "look": "hedge",
+   "colors": [
+    "#2e5a2a",
+    "#1c3a1c",
+    "#4a7a38"
+   ]
+  },
+  "o": {
+   "look": "stump",
+   "colors": [
+    "#b08454",
+    "#5a3a22",
+    "#d0a46c"
+   ]
+  },
+  "~": {
+   "look": "pond",
+   "colors": [
+    "#3a74a0",
+    "#24507a",
+    "#8ac4e8"
+   ]
+  },
+  "^": {
+   "look": "spikes",
+   "colors": [
+    "#8a6a4a",
+    "#5a402a",
+    "#d8c09a"
+   ],
+   "hazard": true
+  }
+ },
+ "legend": {
+  "H": "hog",
+  "m": "shroom",
+  "b": "beetle",
+  "w": "wasp"
+ },
+ "cast": {
+  "hog": {
+   "role": "player",
+   "name": "고슴도치",
+   "prompt": "hedgehog",
+   "seed": 7,
+   "pick": 0,
+   "faces": "right",
+   "mass": 0.9,
+   "gait": "hop",
+   "colors": {
+    "d": "#6e4a32",
+    "b": "#9a6c48",
+    "f": "#e8c9a0",
+    "n": "#2a1e18",
+    "p": "#e88a8a"
+   },
+   "pixels": [
+    "................",
+    "................",
+    "................",
+    "....k.k.k.......",
+    "...kdkdkdkk.....",
+    "..kddbdbddbk....",
+    ".kdbddbddbdkk...",
+    "kddbdbddbdkffk..",
+    "kdbddbdbdkfffkk.",
+    "kddbddbdkfffkffk",
+    "kdbdbddbkfffffnk",
+    ".kddbdbdkffpffk.",
+    ".kdddddddkffffk.",
+    "..kkfkkkkkfkkk..",
+    "...kfk...kfk....",
+    "...kk.....kk...."
+   ]
+  },
+  "shroom": {
+   "role": "item",
+   "name": "빨간 버섯",
+   "prompt": "red mushroom",
+   "seed": 7,
+   "pick": 1,
+   "faces": "front",
+   "mass": 0.5,
+   "gait": "still",
+   "sparkle": "#ffe0a0",
+   "colors": {
+    "r": "#d8383a",
+    "R": "#9a2028",
+    "s": "#f0e2c8",
+    "S": "#c8b494"
+   },
+   "pixels": [
+    "................",
+    "................",
+    "................",
+    "......kkkk......",
+    "....kkrrrrkk....",
+    "...krrwwrrrrk...",
+    "..krrwwrrrwwrk..",
+    "..krrrrrrrwwrk..",
+    ".krwwrrrrrrrrrk.",
+    ".kRRRRRRRRRRRRk.",
+    "..kkkksssskkkk..",
+    ".....kswssk.....",
+    ".....kssssk.....",
+    ".....kSsssk.....",
+    ".....kSSSSk.....",
+    "......kkkk......"
+   ]
+  },
+  "beetle": {
+   "role": "enemy",
+   "name": "딱정벌레",
+   "prompt": "green beetle",
+   "seed": 7,
+   "pick": 1,
+   "faces": "front",
+   "mass": 1.8,
+   "gait": "hop",
+   "move": "wander",
+   "speed": 0.5,
+   "colors": {
+    "g": "#3a7a5a",
+    "G": "#24503c",
+    "h": "#7ad0a0",
+    "e": "#d8e86a"
+   },
+   "pixels": [
+    "................",
+    "................",
+    "................",
+    "......k..k......",
+    ".......kk.......",
+    "......kkkk......",
+    "..k..kekkek..k..",
+    "...kkkkkkkkkk...",
+    "....kgghkggk....",
+    "..kkghggkgggkk..",
+    "....kgggkgggk...",
+    "..kkgggGkGggkk..",
+    "....kgGGkGGgk...",
+    "...k.kGGkGGk.k..",
+    "......kkkkk.....",
+    "................"
+   ]
+  },
+  "wasp": {
+   "role": "enemy",
+   "name": "말벌",
+   "prompt": "wasp",
+   "seed": 7,
+   "pick": 3,
+   "faces": "left",
+   "mass": 0.5,
+   "gait": "glide",
+   "move": "chase",
+   "sight": 80,
+   "speed": 0.75,
+   "colors": {
+    "y": "#f2c22a",
+    "Y": "#b8861a",
+    "v": "#cfe6f2"
+   },
+   "pixels": [
+    "................",
+    "................",
+    "......kk.kk.....",
+    ".....kvvkvvk....",
+    ".....kvvkvvk....",
+    "......kkkkk.....",
+    "..kkk..kkkkkk...",
+    ".kyyyk.kyykyyk..",
+    "kykyyykkyykyykk.",
+    "kyyyyykkyykyykkk",
+    ".kyyykkkYYkYYk.k",
+    "..kkk..kkkkkk...",
+    "...k...k.k......",
+    "................",
+    "................",
+    "................"
+   ]
+  }
+ },
+ "level": [
+  "##############################",
+  "#............................#",
+  "#............................#",
+  "#..H...m......m......#....o..#",
+  "#.........w..........#..b....#",
+  "#....#######.........#.......#",
+  "#................o...#.....m.#",
+  "#.............b......#.......#",
+  "#...^.............m..#.......#",
+  "#.......#.^^.~~~~............#",
+  "#.......#....~~~~..^^....o...#",
+  "#...m...#....~~~~......m.....#",
+  "#.......#..m.................#",
+  "#.......#......m.............#",
+  "#.......#.........#######....#",
+  "#..o.........................#",
+  "#....b......o......w.........#",
+  "#.........m.............^^.m.#",
+  "#............................#",
+  "##############################"
+ ],
+ "tune": {
+  "bpm": 124,
+  "lead": "E5 G5 A5 . G5 E5 D5 . E5 G5 A5 C6 B5 A5 G5 . A5 . G5 E5 D5 . C5 D5 E5 . D5 C5 A4 . . .",
+  "bass": "A2 . E3 . A2 . E3 . F2 . C3 . G2 . D3 . A2 . E3 . F2 . C3 . G2 . D3 . E3 . . .",
+  "arp": "A4 C5 E5 C5",
+  "waves": {
+   "lead": "square",
+   "bass": "triangle",
+   "arp": "square"
+  },
+  "vols": {
+   "lead": 0.07,
+   "bass": 0.16,
+   "arp": 0.025
+  }
+ },
+ "credit": "손그림 스프라이트 · 「버섯 숲 바구니」 prompt-sprite-game 예제"
+}
