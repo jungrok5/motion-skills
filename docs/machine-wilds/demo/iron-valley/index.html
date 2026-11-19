@@ -3924,6 +3924,157 @@ void main(){
 }
 
 
+// ── lib/48_mech_avatar.js ──
+// machine-wilds · 48_mech_avatar — the walker's own body: a machine on two legs that goes where the walker goes.
+// The machines of a realm walk ways that were planned (48_mech_gait: every pose a function of time).  This one cannot be
+// planned — it follows a hand on the keys — so its walk is made as it goes, from the same rules: a foot is set down on the
+// ground's real height and tilt and then does not move in the world; the other swings to where the body will be when it
+// lands; the body's height comes from its feet, it leans into its speed, sways over the foot that carries, sinks into each
+// landing and into a drop, gathers before a hop and breathes while it stands.  The legs are the kit's own (planar, solved in
+// closed form, a cylinder across every powered hinge), so it is drawn, lit and checked like any other kind.
+//
+//   LR.mech.define('plover', { …, limbs: [left, mirror(left)], avatar: { stepWalk, stepRun, swing: [s, s], lift: [m, m], lean: [°, °], … } })
+//   LR.mech.spawn('plover', { avatar: true, at: [x, z], yaw° })      one a realm; LR.player drives it (80_player), 48_mech_run draws it
+//
+// For the gym, the cylinder fit and the cast sheet it also walks an exercise — stand, walk, turn, run, stop, turn on the
+// spot, back up, hop — made by the very same step() from a script of key presses, deterministic, kept as frames:
+// LR.mech.cmd(unit, t) reads them until the page takes the unit over (unit.live).  Numbers only: it runs in Node.
+{
+  const M = LR.mech, V = M.v, D2R = M.D2R, sat = LR.sat, damp = LR.damp, lerp = LR.lerp, TAU = Math.PI * 2;
+  const DEF = { walk: 2.5, run: 5.8, stepWalk: 0.8, stepRun: 1.45, reach: 0.34, swing: [0.42, 0.2], lift: [0.13, 0.24], toe: 26, swingGamma: 16, lean: [3.5, 11], accLean: 0.9, sway: 0.17, bob: 0.022, crouch: [0.03, 0.05], dip: 0.5, gather: 0.13, breath: 0.012, narrow: 0.35, settle: 0.1, roll: 5, look: 0.6, tuck: 0.09 };
+  // the floor: in the page the walker's own (decks, the tops of parapets), in Node the land
+  const floorY = (x, z, yNow) => (M.avatarFloor ? M.avatarFloor(x, z, yNow) : LR.land.h(x, z));      // (48_mech_run sets M.avatarFloor when the page takes the body over)
+  const floorN = (x, z, y, r) => (Math.abs(LR.land.h(x, z) - y) < 0.05 ? LR.land.normal(x, z, r, [0, 1, 0]) : [0, 1, 0]);
+
+  class Avatar {
+    constructor(u) { this.u = u; this.kin = u.kin; this.S = u.K.spec; this.a = Object.assign({}, DEF, this.S.avatar || {}); this.hist = []; this.events = []; this.count = 0; this.reset({ x: (u.at || [0, 0])[0], z: (u.at || [0, 0])[1], h: ((u.yaw || 0) - 90) * D2R }); }
+    home(l, x, z, h, k = 0) { const f = [Math.cos(h), Math.sin(h)], r = [-Math.sin(h), Math.cos(h)], w = l.home[1] * (1 - this.a.narrow * k); return [x + f[0] * l.home[0] + r[0] * w, z + f[1] * l.home[0] + r[1] * w]; }
+    reset(st) { const y = st.y === undefined ? floorY(st.x, st.z) : st.y; this.x = st.x; this.z = st.z; this.h = st.h || 0; this.y = y; this.t = this.t || 0; this.sp = 0; this.acc = 0; this.yawRate = 0; this.sw = 0; this.pitch = 0; this.roll = 0; this.dip = 0; this.dipV = 0; this.airB = 0; this.wasAir = false; this.vy = 0; this.still = 1; this.last = -1; this.prep = 0; this.look = 0; this.k = 0;
+      this.feet = this.kin.limbs.map((l) => { const p = this.home(l, st.x, st.z, this.h), gy = floorY(p[0], p[1], y); return { on: true, p: [p[0], gy, p[1]], n: floorN(p[0], p[1], gy, l.ball * 1.5), yaw: this.h, pitch: 0, u: 1, since: 1, from: null, T: 0.3, k: 0 }; });
+      this.py = y + this.S.ride; this.pc = this.py; this.hist.length = 0; }
+    // one frame: st = { x, y, z, h (heading, radians: forward is [cos h, sin h]), vx, vz, air, vy, prep (0…1: gathering for a hop), look (°, up +) }
+    step(dt, st) {
+      if (!(dt > 0)) return this; const a = this.a, S = this.S, L = this.kin.limbs, F = this.feet; this.t += dt;
+      if (Math.hypot(st.x - this.x, st.z - this.z) > 2.5 || Math.abs((st.y === undefined ? this.y : st.y) - this.y) > 6 && !st.air && !this.wasAir) this.reset(st);
+      const vx = st.vx || 0, vz = st.vz || 0, sp = Math.hypot(vx, vz), dir = sp > 0.15 ? [vx / sp, vz / sp] : [0, 0], k = sat((sp - a.walk * 1.15) / (a.run - a.walk * 1.15)), h = st.h, f = [Math.cos(h), Math.sin(h)], r = [-Math.sin(h), Math.cos(h)];
+      this.yawRate = damp(this.yawRate, LR.wrapPi(h - this.h) / dt, 10, dt); this.acc = damp(this.acc, (sp - this.sp) / dt, 8, dt); this.sp = sp; this.k = k; this.x = st.x; this.z = st.z; this.h = h; this.y = st.y === undefined ? floorY(st.x, st.z) : st.y;
+      this.still = sp < 0.2 ? this.still + dt : 0; this.prep = st.prep || 0; this.look = damp(this.look, st.look || 0, 10, dt);
+      // (on a grade the steps are shorter, as anything's are: the leading foot lands lower or higher than the hip expects)
+      const down = sp > 0.2 ? (this.y - floorY(st.x + dir[0] * 0.6, st.z + dir[1] * 0.6, this.y + 0.3)) / 0.6 : 0, grade = Math.abs(down), short = 1 - 0.3 * sat((grade - 0.08) / 0.4);
+      const stepLen = (sp < a.walk ? Math.max(0.26, a.stepWalk * (0.4 + 0.6 * (sp / a.walk))) : lerp(a.stepWalk, a.stepRun, k)) * short, half = Math.min(stepLen * 0.5, a.reach * short), tw = (0.92 * 2 * half) / Math.max(sp, 0.3), running = (0.92 * 2 * half) / short / Math.max(sp, 0.3) < a.swing[1] * 1.12;
+      const Tsw = running ? Math.max(a.swing[1], (2 * stepLen - 2 * half) / sp) : LR.clamp(tw, 0.17, a.swing[0]); this.running = running;
+      const air = !!st.air; this.airB = damp(this.airB, air ? 1 : 0, 30, dt);
+      if (air) { for (const q of F) { q.on = false; q.u = 1; q.since = 0; } }
+      else if (this.wasAir) {   // down: both feet take the ground under the hips, the knees take the speed
+        F.forEach((q, i) => { const p = this.home(L[i], st.x + vx * 0.05, st.z + vz * 0.05, h, k), gy = floorY(p[0], p[1], this.y + 0.3); q.on = true; q.p = [p[0], gy, p[1]]; q.n = floorN(p[0], p[1], gy, L[i].ball * 1.5); q.yaw = h; q.pitch = 0; q.since = 0; q.u = 1; q.k = ++this.count; this.events.push({ foot: i, p: q.p.slice(), speed: -this.vy }); });
+        this.dipV += Math.min(2.9, Math.max(0, -this.vy - 1) * a.dip * 0.7); this.last = -1; this.airB = 0; this.pc = Math.min(this.pc, this.y + S.ride); }
+      else {
+        // which foot goes, and when.  Under the hip a foot can stand from `half` ahead to `half` behind (half a step, and no more
+        // than the leg reaches).  Walking, a foot leaves when the other can carry the body for as long as the swing takes — from
+        // a stand that is at once (a first, short, quick step), at a steady walk the instant the other lands, slower than that
+        // both feet stand a while.  Above the speed where a swing would have to be quicker than a leg is, it runs: a foot
+        // leaves when it has reached the back of its stance, whatever the other is doing, and both are in the air between.
+        // A foot the hip has outrun is lifted whatever else is true.
+        const legLen = (L[0].segs[0] + L[0].segs[1]) * 0.97 + (L[0].segs[2] || 0) * 0.9, hipY = this.py + L[0].at[1] - (L[0].hipDrop || 0);
+        const B = F.map((q, i) => { const p = this.home(L[i], st.x, st.z, h, k), dx = p[0] - q.p[0], dz = p[1] - q.p[2], d = Math.hypot(dx, dz); return { d, b: sp > 0.2 ? dx * dir[0] + dz * dir[1] : d, far: d > 0.28 && Math.hypot(d, hipY - q.p[1] - L[i].ball) > legLen }; });
+        const want = F.map((q, i) => { if (!q.on) return -1; const o = F[1 - i], ob = B[1 - i], me = B[i], moving = sp > 0.2, turn = Math.abs(LR.wrapPi(h - q.yaw));
+          const free = running ? q.since > 0.02 : o.on && o.since > 0.03, carry = o.on ? ob.b + sp * Tsw : 1e9;
+          const go = running ? me.b >= half - 0.01 : moving ? (me.b >= half - 0.005 || carry >= half - 0.02) && me.b >= ob.b - 1e-6 && me.b > 0.015 : this.still > 0.3 && (me.d > a.settle || (turn > 0.5 && me.d > 0.04));
+          return me.far || (free && (go || me.d > half * 1.9)) ? me.b + (me.far ? 5 : 0) + (this.last === i ? 0 : 0.2) + 0.01 : -1; });
+        const go = want[0] > want[1] ? 0 : 1; if (want[go] > 0) { const q = F[go], ob = B[1 - go]; q.on = false; q.u = 0; q.from = q.p.slice(); q.fromYaw = q.yaw; this.last = go;
+          q.T = running ? Tsw : Tsw * (sp > 0.2 && F[1 - go].on ? LR.clamp((half - ob.b) / Math.max(0.05, sp * Tsw), 0.5, 1) : 1); }      /* (the other is already part of the way back: a shorter, quicker step) */
+        F.forEach((q, i) => { q.since += dt; if (q.on) return; const l = L[i]; q.u = Math.min(1, q.u + dt / q.T); const rem = (1 - q.u) * q.T, p = this.home(l, st.x + vx * rem, st.z + vz * rem, h, k), tx = p[0] + dir[0] * half, tz = p[1] + dir[1] * half;
+          if (!q.from) q.from = q.p.slice(); const gy = floorY(tx, tz, this.y + 0.3), e = q.u * q.u * (3 - 2 * q.u); q.tgt = [tx, gy, tz]; q.e = e; const x = lerp(q.from[0], tx, e), z = lerp(q.from[2], tz, e), s = Math.sin(Math.PI * q.u), lift = lerp(a.lift[0], a.lift[1], k) * (0.55 + 0.45 * sat(sp / a.walk));
+          q.p = [x, Math.max(lerp(q.from[1], gy, e) + lift * s, floorY(x, z, this.y + 0.3) + 0.04 * s), z]; q.pitch = a.toe * Math.sin(TAU * q.u) * (q.u < 0.5 ? 1 : 0.55) * (0.5 + 0.5 * sat(sp / a.walk)); q.yaw = (q.fromYaw === undefined ? h : q.fromYaw) + LR.wrapPi(h - (q.fromYaw === undefined ? h : q.fromYaw)) * e; q.n = [0, 1, 0];
+          if (q.u >= 1) { q.on = true; q.p = [tx, gy, tz]; q.n = floorN(tx, tz, gy, l.ball * 1.5); q.yaw = h; q.pitch = 0; q.since = 0; q.from = null; q.k = ++this.count; this.dipV += a.dip * (0.25 + 0.75 * k) * sat(sp / a.walk); this.events.push({ foot: i, p: q.p.slice(), speed: sp }); } });
+      }
+      this.wasAir = air; this.vy = st.vy || 0;
+      // the body: over its feet, as high as they allow; down into a landing and back; a breath while it stands
+      this.dipV += (-90 * this.dip - 13 * this.dipV) * dt; this.dip = Math.max(-0.02, this.dip + this.dipV * dt);
+      const on = F.filter((q) => q.on), sw = F.find((q) => !q.on), gy = on.length ? on.reduce((s2, q) => s2 + q.p[1], 0) / on.length : this.y;
+      const bob = air ? 0 : a.bob * ((sw ? Math.sin(Math.PI * sw.u) : 0) - 1) * sat(sp / a.walk), breath = this.still > 0.4 ? a.breath * (Math.sin(this.t * TAU * 0.26) - 1) * sat((this.still - 0.4) / 0.8) : 0;
+      // (going down, the leading foot will land lower than the walker's point: the hip is already that much lower, all the way down)
+      this.sink = damp(this.sink || 0, air ? 0 : LR.clamp(down, 0, 0.9) * half * 0.95, 6, dt);
+      const base = air ? this.y : Math.min(this.y, 0.5 * (this.y + gy) + 0.05) - this.sink, want = base + S.ride - lerp(a.crouch[0], a.crouch[1], k) * sat(sp / a.walk) - this.prep * a.gather;
+      // never higher than its legs reach: over each foot that is down — and over the place the swinging one is going to, more
+      // strictly the nearer it is to landing — the hip can be only so high.  (Downhill the leading foot lands low: the body is
+      // already on its way down when it does.)
+      let cap = 1e9; if (!air) { const legLen = (L[0].segs[0] + L[0].segs[1]) * 0.93 + (L[0].segs[2] || 0) * 0.9, off = (L[0].hipDrop || 0) - L[0].at[1];
+        F.forEach((q, i) => { const c = q.on ? q.p : q.tgt; if (!c) return; const rem = q.on ? 0 : (1 - q.u) * q.T, hx = st.x + vx * rem + r[0] * L[i].at[2], hz = st.z + vz * rem + r[1] * L[i].at[2], d = Math.hypot(c[0] - hx, c[2] - hz);      /* (a swinging foot is measured from where the hip will be when it lands) */ const o = F[1 - i], ramp = q.on ? 0 : (1 - q.u) * Math.max(0.02, (o.on ? o.p[1] : c[1]) - c[1]);      /* through the swing the limit comes down from the foot that stands to the place the other will: a descent is walked down, not dropped down */
+          cap = Math.min(cap, c[1] + L[i].ball + Math.sqrt(Math.max(0.09, legLen * legLen - d * d)) + off - 0.03 + ramp); }); }
+      const wantC = Math.min(want, cap);
+      this.pc = air ? want + ((this.pc === undefined ? want : this.pc) - want) * Math.exp(-40 * dt) : damp(this.pc === undefined ? wantC : this.pc, wantC, wantC > this.pc ? 6 : 22, dt); this.py = this.pc - Math.max(0, this.dip) + bob + breath;      // (everything added here only lowers it: the cap is never passed from below)      // down at once (a leg has run out), up at the pace of a body being lifted
+      // it sways over the foot that carries, leans into its speed and its speeding up, rolls into a turn
+      const st2 = sw && on.length === 1 ? on[0] : null, lat = st2 ? (st2.p[0] - st.x) * r[0] + (st2.p[2] - st.z) * r[1] : 0; this.sw = damp(this.sw, lat * a.sway, 7, dt);
+      const fwd = sp > 0.15 ? dir[0] * f[0] + dir[1] * f[1] : 0, lean = -(lerp(a.lean[0], a.lean[1], k) * sat(sp / a.walk) * fwd + LR.clamp(this.acc * a.accLean, -5, 5) * (fwd >= 0 ? 1 : -1)) * D2R + this.prep * 0.07 - this.dip * 0.35 + this.airB * 0.06;
+      this.pitch = damp(this.pitch, lean, 9, dt); this.roll = damp(this.roll, LR.clamp(this.yawRate * sp * 0.012, -1, 1) * a.roll * D2R + (st2 ? Math.sign(lat) * 0.02 : 0), 8, dt);
+      const c = this.build(air); this.hist.push(c); if (this.hist.length > 120) this.hist.shift(); this.now = c; return this;
+    }
+    build(air) { const S = this.S, a = this.a, L = this.kin.limbs, h = this.h, r = [-Math.sin(h), Math.cos(h)], f = [Math.cos(h), Math.sin(h)]; let py = this.py;
+      const frame = () => M.bodyFrame([this.x + r[0] * this.sw, py, this.z + r[1] * this.sw], h, this.pitch, this.roll), limbs = {};
+      let B = frame();
+      this.feet.forEach((q, i) => { const l = L[i]; let p = q.p, n = q.n, pitch = q.pitch, gamma = l.gamma + (q.on ? 0 : a.swingGamma * Math.sin(Math.PI * q.u));
+        if (air && this.airB > 0.001) { const t = [this.x + f[0] * (l.home[0] + (i ? 0.1 : -0.06)) + r[0] * l.home[1] * 0.85, py - S.ride * (1 - a.tuck) + (i ? 0.05 : 0), this.z + f[1] * (l.home[0] + (i ? 0.1 : -0.06)) + r[1] * l.home[1] * 0.85]; p = V.lerp(p, t, this.airB); n = [0, 1, 0]; pitch = lerp(pitch, 24, this.airB); gamma += 10 * this.airB; q.p = p; }
+        limbs[l.name] = { p: [p[0] + n[0] * l.ball, p[1] + n[1] * l.ball, p[2] + n[2] * l.ball], n, yaw: q.yaw, pitch, gamma, sw: !q.on, s: q.u, k: q.k }; });
+      // never ask a leg for more than it has: the body comes down to the foot that is furthest (planted feet do not move)
+      if (!air) { const floor = this.py - 0.32; for (let it = 0; it < 4; it++) { let over = 0; for (const l of L) { const sol = l.solve(B, limbs[l.name].p, limbs[l.name].gamma); if (isFinite(sol.clamp)) over = Math.max(over, sol.clamp); } if (over < 1e-4 || py <= floor) break; py = Math.max(floor, py - over * 1.08 - 0.002); B = frame(); } if (py < this.py) { this.pc -= this.py - py; this.py = py; } }
+      return { avatar: true, t: this.t, body: B, h, limbs, rate: 1, light: 1, u: 0, fix: 0, low: 0, idle: this.still > 0.4 ? 1 : 0, lat: 0, ground: this.y, speed: this.sp, air, running: !!this.running, neck: { pitch: -this.look * a.look * 0.4, yaw: 0 }, head: { pitch: this.look * a.look + (this.still > 1 ? 3 * Math.sin(this.t * 0.7) : 0), yaw: this.still > 1.5 ? 14 * Math.sin(this.t * 0.45) * sat((this.still - 1.5) / 2) : 0, roll: 0 }, extras: {} }; }
+    at(t) { const H = this.hist; if (!H.length) return this.now || this.build(false); for (let i = H.length - 1; i >= 0; i--) if (H[i].t <= t + 1e-9) return H[i]; return H[0]; }
+  }
+  M.Avatar = Avatar;
+
+  // ── the exercise: the same step(), driven by a script instead of a hand ───────────────────────────────────────────
+  // [seconds, forward (−1…1), side, turn (°/s), run, hop]
+  const SCRIPT = [[2.6, 0, 0, 0, 0, 0, 'stand'], [5.2, 1, 0, 0, 0, 0, 'walk'], [2.4, 1, 0, 50, 0, 0, 'turn'], [1.2, 1, 0, 0, 0, 0, ''], [4.6, 1, 0, 0, 1, 0, 'run'], [2.2, 0, 0, 0, 0, 0, 'stop'], [2.4, 0, 0, -75, 0, 0, 'spin'], [1.2, 0, 0, 0, 0, 0, ''], [2.2, -1, 0, 0, 0, 0, 'back'], [1.6, 0, 1, 0, 0, 0, 'side'], [1.4, 0, 0, 0, 0, 0, ''], [1.8, 0, 0, 0, 0, 1, 'hop'], [1.6, 1, 0, 0, 0, 0, ''], [1.6, 1, 0, 0, 0, 1, 'leap'], [2.0, 0, 0, 0, 0, 0, 'rest']];
+  M.avatarExercise = (u) => {
+    const floor = M.avatarFloor; M.avatarFloor = null;      // (the exercise is walked on the land itself, whoever is driving the body by now)
+    const av = new Avatar(u), a = av.a, dt = 1 / 60, frames = [], marks = {}, lifts = [[], []], L = LR.land; let x = (u.at || [0, 0])[0], z = (u.at || [0, 0])[1], h = ((u.yaw || 0) - 90) * D2R, y = L.h(x, z), vx = 0, vz = 0, vy = 0, air = false, prep = 0, hopT = -1, T0 = 0;
+    av.reset({ x, z, h, y }); av.t = 0;
+    for (const [dur, fw, sd, turn, run, hop, name] of SCRIPT) { if (name) marks[name] = T0; const n = Math.round(dur / dt);
+      for (let i = 0; i < n; i++) { const tt = i * dt, top = (run ? a.run : a.walk) * (fw < 0 ? 0.7 : 1), f = [Math.cos(h), Math.sin(h)], r = [-Math.sin(h), Math.cos(h)], wx = (f[0] * fw + r[0] * sd) * top, wz = (f[1] * fw + r[1] * sd) * top;
+        h += turn * D2R * dt; vx = damp(vx, wx, 10, dt); vz = damp(vz, wz, 10, dt); x += vx * dt; z += vz * dt; const g = L.h(x, z);
+        if (hop && Math.abs(tt - 0.3) < dt * 0.5 && !air && hopT < 0) hopT = 0.1;                                   // the key goes down: it gathers for a tenth of a second, then leaves
+        if (hopT >= 0) { hopT -= dt; prep = 1 - Math.max(0, hopT) / 0.1; if (hopT < 0) { vy = 5; air = true; prep = 0; marks[name + ':off'] = T0 + tt; } }
+        if (!air && g < y - 0.6) { air = true; vy = Math.min(vy, 0); }
+        if (air) { vy = Math.max(-42, vy - 13 * dt); y += vy * dt; if (y <= g) { y = g; air = false; marks[name + ':down'] = T0 + tt; vy = 0; vx *= 0.35; vz *= 0.35; } else if (vy <= 0 && marks[name + ':apex'] === undefined) marks[name + ':apex'] = T0 + tt; } else y = damp(y, g, g > y ? 18 : 12, dt);
+        const was = av.feet.map((q) => q.on); av.step(dt, { x, y, z, h, vx, vz, air, vy, prep, look: name === 'stand' ? 0 : 0 }); av.feet.forEach((q, k2) => { if (was[k2] && !q.on && !air) lifts[k2].push(T0 + tt); });
+        const c = av.now; c.vp = [x, y, z]; frames.push(c); }
+      T0 += n * dt; }
+    // the period of the walk and of the run: the time between two lifts of the same foot
+    const per = (t0, t1) => { const q = lifts[0].filter((t) => t > t0 + 1.2 && t < t1); return q.length > 2 ? (q[q.length - 1] - q[0]) / (q.length - 1) : 0.8; };
+    marks.walkT = per(marks.walk, marks.turn); marks.runT = per(marks.run, marks.stop); marks.walk0 = (lifts[0].find((t) => t > marks.walk + 2) || marks.walk + 2); marks.run0 = (lifts[0].find((t) => t > marks.run + 2) || marks.run + 2);
+    u.ex = { dt, frames, marks, events: av.events.length }; u.lap = frames.length * dt; u.T = marks.walkT; u.N = 1; u.plants = {}; u.haltList = []; u.wb = 1; u.track = Math.abs(u.kin.limbs[0].home[1]) * 2; u.stride = a.stepWalk * 2; M.avatarFloor = floor; return u;
+  };
+  M.planAvatar = (u) => M.avatarExercise(u);
+  M.avatarCmd = (u, t) => { if (u.live && u.av) return u.av.at(t); const E = u.ex || M.avatarExercise(u).ex, n = E.frames.length, i = ((Math.round(t / E.dt) % n) + n) % n; return E.frames[i]; };
+
+  // ── what the body must keep through the whole exercise ────────────────────────────────────────────────────────────
+  M.auditAvatar = (u) => {
+    const E = u.ex || M.avatarExercise(u).ex, kin = u.kin, L = LR.land, F = E.frames, n = F.length, mk = E.marks, A = { avatar: true, unit: u.name, kind: u.kind, tonnes: u.K.spec.tonnes || 0.3, lap: u.lap, samples: n, clamp: 0, slip: 0, gap: 0, bendFlip: 0, foldMax: 0, straight: 180, kneeLow: 1e9, swingLow: 1e9, overlapMin: 9, belly: 1e9, bodyAcc: 0, runAcc: 0, walkT: mk.walkT, runT: mk.runT, steps: E.events, hinge: {} };
+    const bsign = {}, plant = {}, hist = [], hgt = []; let breathLo = 1e9, breathHi = -1e9, idleSlip = 0, walkSup = 1e9, flight = 0, runN = 0, gatherLow = 0, landLow = 0, standY = 0, sup0 = 0;
+    for (let i = 0; i < n; i++) { const c = F[i], t = i * E.dt, r = kin.pose(c, (q) => F[Math.max(0, Math.min(n - 1, Math.round(q / E.dt)))], c.t); let sup = 0;
+      for (const l of kin.limbs) { const sol = r.sols[l.name], q = c.limbs[l.name], end = sol.J[l.n]; A.clamp = Math.max(A.clamp, sol.clamp);
+        l.bends(sol).forEach((b, j) => { const key = l.name + j, want = bsign[key] === undefined ? (bsign[key] = Math.sign(b) || 1) : bsign[key]; if (Math.sign(b) !== want) A.bendFlip++; A.foldMax = Math.max(A.foldMax, Math.abs(b) / D2R); A.straight = Math.min(A.straight, Math.abs(b) / D2R); });
+        if (!c.air) for (let j = 1; j < l.n; j++) A.kneeLow = Math.min(A.kneeLow, sol.J[j][1] - L.h(sol.J[j][0], sol.J[j][2]));
+        if (!q.sw) { sup++; const key = l.name + ':' + q.k, was = plant[key]; if (was) { const d = Math.hypot(end[0] - was[0], end[1] - was[1], end[2] - was[2]); A.slip = Math.max(A.slip, d); if (c.idle) idleSlip = Math.max(idleSlip, d); } else plant[key] = end.slice();
+          A.gap = Math.max(A.gap, Math.abs(end[1] - q.n[1] * l.ball - L.h(end[0] - q.n[0] * l.ball, end[2] - q.n[2] * l.ball))); }
+        else if (!c.air && q.s > 0.2 && q.s < 0.85) A.swingLow = Math.min(A.swingLow, end[1] - l.ball - L.h(end[0], end[2]));
+        for (let j = 0; j < l.n; j++) { const an = l.anchors[l.jointNames[j]]; if (!l.acts[j] || !an) continue; const pts = M.actPoints(l, sol, j, an), len = V.len(V.sub(pts[1], pts[0])), eyes = 2.2 * an.r; A.overlapMin = Math.min(A.overlapMin, (an.Bl + an.Rl + eyes - len) / an.Bl); if (len < an.Bl + eyes + 1.4 * an.r) A.overlapMin = Math.min(A.overlapMin, -(an.Bl + eyes + 1.4 * an.r - len)); } }
+      const B = c.body, S = u.K.spec, bb = S.belly || [0.4, S.ride * 0.15, 0.2]; if (!c.air) for (const sx of [-1, 1]) { const p = M.apply(B, [sx * bb[0], -bb[1], 0]); A.belly = Math.min(A.belly, p[1] - L.h(p[0], p[2])); }
+      if (t > mk.walk + 1.5 && t < mk.turn) walkSup = Math.min(walkSup, sup); if (t > mk.run + 1.5 && t < mk.stop) { runN++; if (sup === 0) flight++; }
+      if (t > mk.stand + 0.8 && t < mk.walk) { breathLo = Math.min(breathLo, B.p[1]); breathHi = Math.max(breathHi, B.p[1]); standY = B.p[1] - c.ground; }
+      hgt.push(B.p[1] - c.ground);
+      // the body's own motion: against the walker's point, so that a hop's free fall is not counted as a jolt
+      const rel = [B.p[0] - c.vp[0], B.p[1] - c.vp[1], B.p[2] - c.vp[2]]; hist.push(rel); const q3 = 6; if (hist.length > 2 * q3 && !c.air && !F[i - 2 * q3].air) { const a0 = hist[hist.length - 1 - 2 * q3], b0 = hist[hist.length - 1 - q3], hh = q3 * E.dt; const acc = V.len([rel[0] - 2 * b0[0] + a0[0], rel[1] - 2 * b0[1] + a0[1], rel[2] - 2 * b0[2] + a0[2]]) / (hh * hh); if (c.running || F[i - q3].running) A.runAcc = Math.max(A.runAcc, acc); else if (acc > A.bodyAcc) { A.bodyAcc = acc; A.accAt = t; } } }
+    { const at = (t) => hgt[Math.max(0, Math.min(n - 1, Math.round(t / E.dt)))], lowest = (t0, t1) => { let m = 1e9; for (let t = t0; t <= t1; t += E.dt) m = Math.min(m, at(t)); return m; };      // the hop: how far it sinks before it leaves, how far it gives after it lands
+      if (mk['hop:off'] !== undefined) gatherLow = at(mk.hop + 0.2) - lowest(mk.hop + 0.25, mk['hop:off']); if (mk['hop:down'] !== undefined) landLow = at(mk['hop:down'] + 0.6) - lowest(mk['hop:down'], mk['hop:down'] + 0.45); }
+    A.breath = breathHi - breathLo; A.idleSlip = idleSlip; A.walkSupport = walkSup; A.flight = runN ? flight / runN : 0; A.gather = gatherLow; A.recover = landLow;
+    // the same script twice is the same walk
+    const again = M.avatarExercise(Object.assign({}, u, { ex: null })).ex.frames; let det = 0; for (let i = 0; i < n; i += 37) det = Math.max(det, V.len(V.sub(again[i].body.p, F[i].body.p))); A.determinism = det; return A;
+  };
+}
+
+
 // ── lib/48_mech_fly.js ──
 // machine-wilds · 48_mech_fly — machines that fly.  A flyer has no legs: its wings, tail and whatever else moves are
 // bones of its own (`extras` of type 'spin', driven by the command), and its flight is, like a walk, a pure function of
@@ -4062,6 +4213,7 @@ void main(){
 
   M.planUnit = (u) => {
     if (u.fly) return M.planFly(u);                       // a flyer has no footfalls: 48_mech_fly.js
+    if (u.avatar) return M.planAvatar(u);                 // the walker's own body steps as it goes: 48_mech_avatar.js
     const K = u.K, S = K.spec, g = S.gait, kin = u.kin, legs = kin.limbs, L = land();
     u.off = offsets(kin, g); u.T = g.cycle; u.duty = g.duty;
     const xs = legs.map((l) => l.home[0]), zs = legs.map((l) => Math.abs(l.home[1])); u.wb = Math.max(...xs) - Math.min(...xs); u.track = 2 * Math.max(...zs);
@@ -4109,7 +4261,7 @@ void main(){
       for (const s of [0.16, 0.3, 0.45, 0.6, 0.75, 0.88]) { const e = smooth5((s - 0.08) / 0.84), x = A.x + (B.x - A.x) * e, z = A.z + (B.z - A.z) * e, base = A.y + (B.y - A.y) * e + g.lift * Math.sin(Math.PI * s ** 0.75) ** 1.4, need = L.h(x, z) + clear - base; if (need > 0) extra = Math.max(extra, need / Math.sin(Math.PI * s)); }
       A.extra = extra; } } };
   // after the land changes under the feet (footprints pressed in): heights, tilts and toes again
-  M.reseat = (u) => { if (u.fly) return; for (const l of u.kin.limbs) for (const P of u.plants[l.name]) setFoot(u, l, P); if (!u.post) M.swings(u); };
+  M.reseat = (u) => { if (u.avatar) return M.planAvatar(u);      /* the land has just been pressed: its exercise is walked again on it */ if (u.fly) return; for (const l of u.kin.limbs) for (const P of u.plants[l.name]) setFoot(u, l, P); if (!u.post) M.swings(u); };
 
   // time → where in the walk: the phase (cycles since the lap began, laps included), how fast it runs (1 walking, 0 standing), the halt it is in or near
   const phase = (u, t) => {
@@ -4161,6 +4313,7 @@ void main(){
   // ── the command at time t ──────────────────────────────────────────────────────────────────────────────────────
   M.cmd = (u, t) => {
     if (u.fly) return M.flyCmd(u, t);
+    if (u.avatar) return M.avatarCmd(u, t);
     const K = u.K, S = K.spec, g = S.gait, kin = u.kin, legs = kin.limbs, I = S.idle || {}; t += u.offset || 0;
     const ph = u.post ? { u: 0, rate: 0, halt: null, tau: 0 } : phase(u, t), uu = ph.u, cmd = { limbs: {}, t, rate: ph.rate };
     // the legs
@@ -4241,7 +4394,7 @@ void main(){
       const pts = []; for (let s2 = 0; s2 <= r.len; s2 += 3) pts.push(r.at(s2)); pts.push(r.at(0)); L.road(pts, r.width * 0.62, { kind: 'dirt', strength: r.worn === undefined ? 0.4 : r.worn, wobble: 2.2, soft: 3, ease: false }); }
     for (const u of M.units) M.planUnit(u);                                                   // the eased ground moves the footfalls: plan on it
     const half = L.half, res = L.res, n = L.n;
-    for (const u of M.units) { if (u.fly) continue; const key = u.kind + '/' + (u.R ? u.R.name : u.name); if (seen.has(key)) continue; seen.add(key); const g = u.K.spec.gait;
+    for (const u of M.units) { if (u.fly || u.avatar) continue; const key = u.kind + '/' + (u.R ? u.R.name : u.name); if (seen.has(key)) continue; seen.add(key); const g = u.K.spec.gait;
       for (const l of u.kin.limbs) for (const P of u.plants[l.name]) { const R = l.ball * 1.1 + l.toeLen * 0.85, depth = g.print === undefined ? 0.06 * R : g.print;      /* shallow and wide: a deep print is a wall the next foot would land on */ if (Math.abs(P.x) > half - R - 2 || Math.abs(P.z) > half - R - 2) continue;
         const i0 = Math.floor((P.x - R * 1.7 + half) / res), i1 = Math.ceil((P.x + R * 1.7 + half) / res), j0 = Math.floor((P.z - R * 1.7 + half) / res), j1 = Math.ceil((P.z + R * 1.7 + half) / res);
         for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const d = Math.hypot(-half + i * res - P.x, -half + j * res - P.z) / R; L.H[j * n + i] += -depth * LR.sm(1.05, 0.3, d) + depth * 0.22 * LR.sm(0.8, 1.2, d) * LR.sm(1.7, 1.25, d); }
@@ -4256,6 +4409,7 @@ void main(){
   // their barrels, does the belly clear the land, does the walk close on itself, is the same instant the same pose.
   M.audit = (u, o = {}) => {
     if (u.fly) return M.auditFly(u, o);
+    if (u.avatar) return M.auditAvatar(u, o);
     const kin = u.kin, legs = kin.limbs, L = land(), span = u.post ? u.loop : u.lap, dt = o.dt || 0.05, n = Math.ceil(span / dt), g = u.K.spec.gait;
     const A = { unit: u.name, kind: u.kind, tonnes: u.K.spec.tonnes || 100, lap: span, cycles: u.N, stride: u.stride || 0, samples: n, clamp: 0, spanMax: 0, spanMin: 9, slip: 0, gap: 0, sole: 0, bendFlip: 0, foldMax: 0, straight: 180, supportMin: 99, fixMax: 0, fixShare: 0, belly: 1e9, kneeLow: 1e9, swingLow: 1e9, overlapMin: 9, leverMin: 9, speedMax: 0, moved: 0, tiltMax: 0, tiltOver: 0, lowMax: 0, lowMean: 0, jerk: 0, hinge: {}, steepest: 0, bodyAcc: 0 };
     const bsign = {}, planted = {}, hist = []; let fixN = 0;
@@ -4586,19 +4740,23 @@ void main(){
     // (the shake of the last frame is taken off only if nobody has placed the eye since: the walker and a film place it every frame)
     if (cam.position.x === shaken[0] && cam.position.y === shaken[1] && cam.position.z === shaken[2]) { cam.position.x -= lastShake[0]; cam.position.y -= lastShake[1]; cam.position.z -= lastShake[2]; }
     for (const u of M.units) {
-      const K = u.K, kin = u.kin, r = M.poseAt(u, time), Wd = r.W, c = r.cmd, B = Wd.body; u.pose = r;
+      // the walker's own body is not on a way: the page hands it the walker's place, heading and speed, frame by frame
+      if (u.avatar && !M.inStudio) M.driveAvatar(u, dt);
+      const K = u.K, kin = u.kin, r = M.poseAt(u, u.avatar && u.live ? u.av.t : time), Wd = r.W, c = r.cmd, B = Wd.body; u.pose = r;
       const o0 = u.row * MAXB * 12; for (let i = 0; i < kin.nb; i++) skin(data, o0 + i * 12, Wd[kin.bones[i][0]], K.rest[i]);
       const d = Math.hypot(B.p[0] - cam.position.x, B.p[1] - cam.position.y, B.p[2] - cam.position.z); sph.center.set(B.p[0], B.p[1] - K.spec.ride * 0.3, B.p[2]); sph.radius = K.radius; u.dist = d;
       const seen = d < 1500 && frustum.intersectsSphere(sph), lk = K.spec.lodK || 1, lod = d < K.radius * 4.5 * q * lk ? 0 : d < K.radius * 13 * q * lk ? 1 : 2; u.lod = seen ? lod : -1; if (seen) tris += K.tris[lod];
-      for (let i = 0; i < 3; i++) { u.meshes[i].visible = seen && i === lod; u.shadows[i].visible = d < LR.gpu.tier.shadowDist + K.radius * 2 && i === Math.min(2, lod + 1); }
+      const hid = u.avatar && u.live && LR.player.view === 'first';      // seen from inside its own head it is not drawn — its shadow is
+      for (let i = 0; i < 3; i++) { u.meshes[i].visible = seen && i === lod && !hid; u.shadows[i].visible = d < LR.gpu.tier.shadowDist + K.radius * 2 && i === Math.min(2, lod + 1) && !(hid && LR.RENDER); }      /* (a still's camera is not the walker: nobody's shadow stands where the walk starts) */
       // someone near: the head finds them and stays on them; it lets go slowly when they leave
       const A = u.aware, range = K.spec.aware === undefined ? K.spec.ride * 4 : K.spec.aware;
       if (live && Wd.head && range > 0) { const H = Wd.head.p, dx = cam.position.x - H[0], dz = cam.position.z - H[2], dh = Math.hypot(dx, dz), near = Math.hypot(dh, cam.position.y - H[1]) < range;
         const yawT = LR.clamp(LR.wrapPi(Math.atan2(dz, dx) - c.h) / D2R, -110, 110), pitchT = LR.clamp(Math.atan2(H[1] - cam.position.y, Math.max(1, dh)) / D2R, -10, 62);
         A.w = LR.damp(A.w, near ? 1 : 0, near ? 0.5 : 0.25, dt); if (near) { A.yaw = LR.damp(A.yaw, yawT, 0.9, dt); A.pitch = LR.damp(A.pitch, pitchT, 0.9, dt); } } else A.w = 0;
       u.uBone.value.y = c.light * (K.spec.lensGain === undefined ? 26 : K.spec.lensGain) * (1 + 0.5 * A.w);
-      for (const L of u.lampDefs) { const f = Wd[kin.bones[L.bone][0]]; lamps.push({ p: M.apply(f, L.at), d: M.dir(f, L.dir), color: L.color, power: L.power * c.light * (1 + (L.beam ? 0.6 : 0.2) * A.w), cone: L.cone, range: L.range, beam: L.beam, unit: u }); }
+      if (!(u.avatar && u.live && !LR.player.torch)) for (const L of u.lampDefs) { const f = Wd[kin.bones[L.bone][0]]; lamps.push({ p: M.apply(f, L.at), d: M.dir(f, L.dir), color: L.color, power: L.power * c.light * (1 + (L.beam ? 0.6 : 0.2) * A.w), cone: L.cone, range: L.range, beam: L.beam, unit: u }); }
       // feet: what the walker bumps into while a foot is down or low, and the footfalls of the last seconds
+      if (u.avatar) continue;      // (it does not bump into its own feet, and its steps are the walker's own)
       kin.limbs.forEach((l, i) => { const F = Wd['foot_' + l.name].p, s = u.solids[i], lq = c.limbs[l.name], low = F[1] - l.ball - LR.land.h(F[0], F[2]) < 2.3; s.x = F[0]; s.z = F[2]; s.r = low ? l.ball * 1.15 + l.toeLen * 0.3 : 0;
         if (!u.post && !lq.sw && c.rate > 0.02) { const age = (c.u - (lq.k + u.off[l.name])) * u.T; if (age >= 0 && age < 5) imp.push({ x: lq.p[0], y: lq.p[1] - l.ball, z: lq.p[2], age, size: l.ball * 1.1 + l.toeLen * 0.6, tonnes: K.spec.tonnes || 50, unit: u, leg: l.name, k: lq.k }); } });
     }
@@ -4617,6 +4775,14 @@ void main(){
   const heard = (x, y, z) => { const P = LR.player, d = Math.hypot(x - P.x, y - (P.y + P.eye), z - P.z), rx = Math.cos(P.yaw), rz = Math.sin(P.yaw); return { d, side: LR.clamp(((x - P.x) * rx + (z - P.z) * rz) / Math.max(4, d), -1, 1) }; };
   LR.on('footfall', (p) => { if (LR.audio && LR.audio.ready) LR.audio.footfall(Object.assign(heard(p.x, p.y, p.z), { tonnes: p.tonnes, wet: LR.water && LR.water.levelAt(p.x, p.z) > p.y + 0.05 })); });
   LR.on('mechcall', (e) => { if (LR.audio && LR.audio.ready) LR.audio.call(Object.assign(heard(e.at[0], e.at[1], e.at[2]), { f: e.f, len: e.len, gain: e.gain })); });
+  // the walker's body follows the walker: where they stand (decks and parapet tops included), which way they face, how fast they
+  // go (taken from where they were a frame ago, so the tour and a placed camera move it too), whether they are in the air
+  M.driveAvatar = (u, dt) => { const P = LR.player; if (!P || typeof P.x !== 'number') return; M.avatarFloor = (x, z, y) => P.groundAt(x, z, y).y;
+    const first = !u.av; if (first) { u.av = new M.Avatar(u); u.live = true; } const av = u.av, h = P.yaw - Math.PI / 2, far = first || Math.hypot(P.x - av.x, P.z - av.z) > 2.5;
+    if (far) { av.reset({ x: P.x, y: P.y, z: P.z, h }); u.pv = [P.x, P.z]; }
+    const n = Math.max(1, Math.min(6, Math.ceil(dt / 0.034))), sdt = Math.min(dt, 0.2) / n, vx = dt > 1e-5 ? (P.x - u.pv[0]) / dt : 0, vz = dt > 1e-5 ? (P.z - u.pv[1]) / dt : 0, x0 = u.pv[0], z0 = u.pv[1];
+    for (let i = 1; i <= n; i++) av.step(sdt, { x: x0 + ((P.x - x0) * i) / n, y: P.y, z: z0 + ((P.z - z0) * i) / n, h, vx, vz, air: !!P.air, vy: P.vy || 0, prep: P.prep || 0, look: (P.pitch || 0) / D2R });
+    u.pv = [P.x, P.z]; while (av.events.length) { const e = av.events.shift(); LR.emit('avatarstep', e); } };
   // what a unit weighs on the page: triangles a level, bones, lamps (the checks and the HUD's numbers read this)
   M.info = () => M.units.map((u) => ({ name: u.name, kind: u.kind, bones: u.kin.nb, tris: u.K.tris, lamps: u.lampDefs ? u.lampDefs.length : 0, lod: u.lod, dist: u.dist }));
 
@@ -4630,9 +4796,9 @@ void main(){
     const pts = []; if (FL) { for (let i = -3; i <= 3; i++) pts.push([(i / 3) * SL, -R]); for (let i = 1; i < 6; i++) { const a = (i / 6) * Math.PI; pts.push([SL + Math.sin(a) * R, -Math.cos(a) * R]); } for (let i = 3; i >= -3; i--) pts.push([(i / 3) * SL, R]); for (let i = 1; i < 6; i++) { const a = (i / 6) * Math.PI; pts.push([-SL - Math.sin(a) * R, Math.cos(a) * R]); } }      // a flyer: two long straights (it is turned about flying level) joined by half circles
     else for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; pts.push([Math.sin(a) * R * 1.25, -Math.cos(a) * R]); }      // it passes (0, −R) heading east
     // (a flyer goes round the same oval a few metres up, climbing along one side and coming down the other: low enough to stand by the figure)
-    M.route('studio', pts, { width: 0 }); const mv = Object.keys(K.spec.moves || {})[0], u = FL ? M.spawn(kind, { name: kind, fly: pts.map((p, i) => [p[0], p[1], 6 + (FL.span || 6) * 0.4 + (p[1] > 0 ? 2.5 : 0) * Math.cos((p[0] / (SL + R)) * Math.PI * 0.5)]) }) : M.spawn(kind, { route: 'studio', name: kind, halts: [{ at: 0.5, hold: 12, move: mv }] }); if (FL) delete M.routes.studio; M.plan({ press: false });
+    M.route('studio', pts, { width: 0 }); M.inStudio = true; const mv = Object.keys(K.spec.moves || {})[0], u = K.spec.avatar ? M.spawn(kind, { name: kind, avatar: true, at: [-6, -R], yaw: 90 }) : FL ? M.spawn(kind, { name: kind, fly: pts.map((p, i) => [p[0], p[1], 6 + (FL.span || 6) * 0.4 + (p[1] > 0 ? 2.5 : 0) * Math.cos((p[0] / (SL + R)) * Math.PI * 0.5)]) }) : M.spawn(kind, { route: 'studio', name: kind, halts: [{ at: 0.5, hold: 12, move: mv }] }); if (FL || K.spec.avatar) delete M.routes.studio; M.plan({ press: false });
     // a figure 1.75 m tall beside the way, in orange: what the size is measured against
-    { const g = new LR.Geo(), fx = 0, fz = -R + (FL ? (FL.span || 6) * 0.6 : Math.max(...K.spec.limbs.map((l) => Math.abs(l.home[1])))) + 2.2, y = L.h(fx, fz); g.mat('cloth', { tint: '#ff7a1a', flags: LR.FLAG.NOWEATHER }); g.tube([[fx, y, fz], [fx, y + 0.85, fz], [fx, y + 1.45, fz]], [0.16, 0.2, 0.17], { sides: 8, caps: true }); g.blob(fx, y + 1.62, fz, 0.13, { amp: 0, seg: 8, rings: 6 }); W.add(g, { name: 'figure' }); M.figure = [fx, fz]; }
+    { const g = new LR.Geo(), fx = K.spec.avatar ? -9.3 : 0, fz = K.spec.avatar ? -R - 0.25 : -R + (FL ? (FL.span || 6) * 0.6 : Math.max(...K.spec.limbs.map((l) => Math.abs(l.home[1])))) + 2.2, y = L.h(fx, fz);      /* (beside a walker's way; three metres behind where the walker's own body starts: behind the camera of its back view, in the picture of its front view) */ g.mat('cloth', { tint: '#ff7a1a', flags: LR.FLAG.NOWEATHER }); g.tube([[fx, y, fz], [fx, y + 0.85, fz], [fx, y + 1.45, fz]], [0.16, 0.2, 0.17], { sides: 8, caps: true }); g.blob(fx, y + 1.62, fz, 0.13, { amp: 0, seg: 8, rings: 6 }); W.add(g, { name: 'figure' }); M.figure = [fx, fz]; }
     M.start(); W.radius = half - 10; W.spawn = { x: 0, z: -R + 40, yaw: 0 }; return u;
   };
   // ── a wreck: a kind in a pose, built into the world and left there ─────────────────────────────────────────────
@@ -7283,7 +7449,7 @@ void main(){
 // the eye strolls a tour on its own.
 {
   const T = THREE;
-  const P = (LR.player = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, vx: 0, vz: 0, vy: 0, air: false, eye: 1.68, radius: 0.34, walk: 2.5, run: 5.8, hop: 5.0, mantle: 0.4, bob: 0, speed: 0, moving: false, running: false, surface: 'grass', touring: false, tourS: 0, idle: 0, keys: {}, look: { dx: 0, dy: 0 }, stick: { x: 0, y: 0, active: false }, pad: { x: 0, y: 0, run: false, hop: false }, locked: false, enabled: true });
+  const P = (LR.player = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, vx: 0, vz: 0, vy: 0, air: false, eye: 1.68, radius: 0.34, walk: 2.5, run: 5.8, hop: 5.0, mantle: 0.4, view: 'first', zoom: { first: 1, third: 4.4, top: 13 }, torch: !LR.RENDER || LR.q('torch') === '1', prep: 0, bob: 0, speed: 0, moving: false, running: false, surface: 'grass', touring: false, tourS: 0, idle: 0, keys: {}, look: { dx: 0, dy: 0 }, stick: { x: 0, y: 0, active: false }, pad: { x: 0, y: 0, run: false, hop: false }, locked: false, enabled: true });
   const W = LR.world;
   // the floor under a point: land, or a deck within a step of where we stand
   P.groundAt = (x, z, yNow) => {
@@ -7324,9 +7490,17 @@ void main(){
   P.stopTour = () => { if (P.touring) { P.touring = false; LR.emit('tour', false); } };
 
   // ── input ───────────────────────────────────────────────────────────────────────────────────────────────────────
+  // ── the eye: inside the head (first), behind and above (third), or high over it looking down (top) — and how near ──
+  // V (the HUD's camera button, a pad's Y) goes round them; the wheel, + and −, a pinch or a pad's ↑ ↓ zoom: in first person the
+  // lens, otherwise the distance.  B puts the body's lamp on and off.
+  const VIEWS = ['first', 'third', 'top'], ZR = { first: [1, 4], third: [1.8, 14], top: [7, 70] };
+  const hasBody = () => !!(LR.mech && LR.mech.units && LR.mech.units.some((u) => u.avatar));      // (a realm without a body for the walker has only the first)
+  P.setView = (v) => { P.view = !hasBody() ? 'first' : VIEWS.includes(v) ? v : VIEWS[(VIEWS.indexOf(P.view) + 1) % 3]; P.boom = undefined; LR.emit('view', P.view); return P.view; };
+  P.zoomBy = (k) => { const r = ZR[P.view], z = P.zoom; z[P.view] = LR.clamp(z[P.view] * (P.view === 'first' ? 1 / k : k), r[0], r[1]); LR.emit('zoom', P.view, z[P.view]); };
   P.bind = (canvas) => {
     const K = P.keys, move = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyQ', 'KeyE', 'Space']);
-    window.addEventListener('keydown', (e) => { if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; K[e.code] = true; if (move.has(e.code)) { e.preventDefault(); P.stopTour(); } LR.emit('key', e.code, e); });
+    window.addEventListener('keydown', (e) => { if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; const was = K[e.code]; K[e.code] = true; if (move.has(e.code)) { e.preventDefault(); P.stopTour(); } if (!was && !e.ctrlKey && !e.metaKey) { if (e.code === 'KeyV') P.setView(); else if (e.code === 'KeyB') { P.torch = !P.torch; LR.emit('torch', P.torch); } else if (e.code === 'Equal' || e.code === 'NumpadAdd') P.zoomBy(0.8); else if (e.code === 'Minus' || e.code === 'NumpadSubtract') P.zoomBy(1.25); } LR.emit('key', e.code, e); });
+    canvas.addEventListener('wheel', (e) => { e.preventDefault(); P.zoomBy(Math.exp(LR.clamp(e.deltaY, -240, 240) * 0.0016)); }, { passive: false });
     window.addEventListener('keyup', (e) => { K[e.code] = false; });
     window.addEventListener('blur', () => { for (const k in K) K[k] = false; });
     // mouse: click captures the pointer where the browser allows it; otherwise drag
@@ -7338,7 +7512,8 @@ void main(){
     // touch: the left half is a stick, the right half turns the head
     const touches = new Map();
     const tdown = (e) => { for (const t of e.changedTouches) { const left = t.clientX < window.innerWidth * 0.45; touches.set(t.identifier, { left, x0: t.clientX, y0: t.clientY, x: t.clientX, y: t.clientY, t0: performance.now() }); if (left) { P.stick.active = true; P.stick.ox = t.clientX; P.stick.oy = t.clientY; P.stick.x = P.stick.y = 0; P.stopTour(); LR.emit('stick', P.stick); } } e.preventDefault(); };
-    const tmove = (e) => { for (const t of e.changedTouches) { const s = touches.get(t.identifier); if (!s) continue; if (s.left) { const R = 56, dx = (t.clientX - s.x0) / R, dy = (t.clientY - s.y0) / R, l = Math.hypot(dx, dy); P.stick.x = l > 1 ? dx / l : dx; P.stick.y = l > 1 ? dy / l : dy; LR.emit('stick', P.stick); } else { P.look.dx += (t.clientX - s.x) * 2.4; P.look.dy += (t.clientY - s.y) * 2.4; P.stopTourLook(); } s.x = t.clientX; s.y = t.clientY; } e.preventDefault(); };
+    const tmove = (e) => { for (const t of e.changedTouches) { const s = touches.get(t.identifier); if (!s) continue; if (s.left) { const R = 56, dx = (t.clientX - s.x0) / R, dy = (t.clientY - s.y0) / R, l = Math.hypot(dx, dy); P.stick.x = l > 1 ? dx / l : dx; P.stick.y = l > 1 ? dy / l : dy; LR.emit('stick', P.stick); } else { const o = [...touches.values()].find((q) => q !== s && !q.left);      /* two fingers on the looking side: a pinch zooms */
+        if (o) { const d0 = Math.hypot(s.x - o.x, s.y - o.y), d1 = Math.hypot(t.clientX - o.x, t.clientY - o.y); if (d0 > 8 && d1 > 8) P.zoomBy(d0 / d1); s.t0 = -1e9; o.t0 = -1e9; } else { P.look.dx += (t.clientX - s.x) * 2.4; P.look.dy += (t.clientY - s.y) * 2.4; P.stopTourLook(); } } s.x = t.clientX; s.y = t.clientY; } e.preventDefault(); };
     const tup = (e) => { for (const t of e.changedTouches) { const s = touches.get(t.identifier); if (s && s.left) { P.stick.active = false; P.stick.x = P.stick.y = 0; LR.emit('stick', P.stick); }
         else if (s && performance.now() - s.t0 < 260 && Math.hypot(t.clientX - s.x0, t.clientY - s.y0) < 14) { P.tapHop = true; P.stopTour(); }      /* a tap of the looking thumb is a hop */ touches.delete(t.identifier); } e.preventDefault(); };
     canvas.addEventListener('touchstart', tdown, { passive: false }); canvas.addEventListener('touchmove', tmove, { passive: false }); canvas.addEventListener('touchend', tup, { passive: false }); canvas.addEventListener('touchcancel', tup, { passive: false });
@@ -7361,7 +7536,8 @@ void main(){
         const ax = dz(gp.axes[0]), ay = dz(gp.axes[1]), rx = dz(gp.axes[2] || 0), ry = dz(gp.axes[3] || 0), b = (i) => !!(gp.buttons[i] && gp.buttons[i].pressed);
         if (ax || ay) { pad.x += ax; pad.y += ay; P.stopTour(); }
         if (rx || ry) { P.yaw += rx * Math.abs(rx) * 2.6 * dt; P.pitch = LR.clamp(P.pitch - ry * Math.abs(ry) * 1.9 * dt, -1.35, 1.35); P.stopTourLook(); }
-        if (b(6) || b(7) || b(10)) pad.run = true; if (b(0)) { pad.hop = true; P.stopTour(); } } }
+        if (b(6) || b(7) || b(10)) pad.run = true; if (b(0)) { pad.hop = true; P.stopTour(); }
+        if (b(3) && !pad.y3) P.setView(); pad.y3 = b(3); if (b(12)) P.zoomBy(Math.exp(-1.2 * dt)); if (b(13)) P.zoomBy(Math.exp(1.2 * dt)); } }
     if (P.lookHold > 0) P.lookHold -= dt;
     if (P.touring && P.tour) {
       P.tourS += 1.55 * dt; const u = tourU(P.tourS), q = P.tour.at(u), a = P.tour.at(tourU(P.tourS + 7)), i = Math.floor(u) % P.tour.pts.length, wp = P.tour.pts[i], wn = P.tour.pts[(i + 1) % P.tour.pts.length], f = u - Math.floor(u);
@@ -7391,7 +7567,9 @@ void main(){
           else { if (grade > 0.18) { const k = 1 / (1 + 1.9 * (grade - 0.18)); nx = P.x + (nx - P.x) * k; nz = P.z + (nz - P.z) * k; } P.steep = 0; } P.grade = grade; } }
       const rr = Math.hypot(nx, nz), R = W.radius; if (rr > R) { nx *= R / rr; nz *= R / rr; }
       P.x = nx; P.z = nz; const g = P.groundAt(P.x, P.z, P.y);
-      if ((K.Space || P.pad.hop || P.tapHop) && !P.air) { P.vy = P.hop; P.air = true; } P.tapHop = false;
+      // a hop: with a body (LR.mech's avatar) it gathers for a tenth of a second and then leaves; without one it is at once
+      if ((K.Space || P.pad.hop || P.tapHop) && !P.air && P.hopT === undefined) { if (P.body) P.hopT = 0.1; else { P.vy = P.hop; P.air = true; } } P.tapHop = false;
+      if (P.hopT !== undefined) { P.hopT -= dt; P.prep = 1 - Math.max(0, P.hopT) / 0.1; if (P.hopT < 0 || P.air) { if (!P.air) { P.vy = P.hop; P.air = true; } P.prep = 0; P.hopT = undefined; } }
       // a step down is a step; more than that is a fall — off a deck, off a parapet, off a bank — with the weight of one: the
       // knees give on landing by how fast the ground came (nobody is hurt here: there is nothing to lose but the view)
       if (!P.air && g.y < P.y - 0.6) { P.air = true; P.vy = Math.min(P.vy, 0); }
@@ -7404,7 +7582,15 @@ void main(){
     P.bob += P.speed * dt * (P.running ? 0.95 : 1.25); const amp = P.moving ? (P.running ? 0.055 : 0.032) : 0;
     P.bobAmp = LR.damp(P.bobAmp || 0, amp, 8, dt);
     P.dip = Math.max(0, Math.min(0.75, (P.dip || 0) + (P.dipV || 0) * dt)); P.dipV = (P.dipV || 0) - (P.dip * 60 + (P.dipV || 0) * 9) * dt; if (P.dip <= 0 && P.dipV < 0) P.dipV = 0;      // the knees giving after a drop: down fast, up slower
-    cam.position.set(P.x, P.y + P.eye - (P.dip || 0) + Math.sin(P.bob * LR.TAU) * P.bobAmp, P.z); cam.rotation.set(P.pitch, -P.yaw, Math.cos(P.bob * Math.PI) * P.bobAmp * 0.12);
+    P.body = LR.mech && LR.mech.units ? LR.mech.units.find((u) => u.avatar && u.live) || null : null; if (P.view !== 'first' && !hasBody()) P.view = 'first';
+    { if (!P.fovSet) P.fovBase = cam.fov; const zf = P.view === 'first' ? P.zoom.first : 1;      // the lens: only the first view zooms it; the others move the eye
+      if (zf !== 1) { const w = (2 * Math.atan(Math.tan((P.fovBase * Math.PI) / 360) / zf) * 180) / Math.PI; if (Math.abs(cam.fov - w) > 0.01) { cam.fov = w; cam.updateProjectionMatrix(); } P.fovSet = true; } else if (P.fovSet) { cam.fov = P.fovBase; cam.updateProjectionMatrix(); P.fovSet = false; } }
+    if (P.view === 'first') { cam.position.set(P.x, P.y + P.eye - (P.dip || 0) + Math.sin(P.bob * LR.TAU) * P.bobAmp, P.z); cam.rotation.set(P.pitch, -P.yaw, Math.cos(P.bob * Math.PI) * P.bobAmp * 0.12); }
+    else { // behind it, or over it: the eye rides a boom from a point above the body; the boom shortens where the ground is in its way
+      const top = P.view === 'top', pitch = top ? -1.36 : LR.clamp(P.pitch - 0.14, -1.25, 0.6), cp = Math.cos(pitch), sp2 = Math.sin(pitch), f = [Math.sin(P.yaw) * cp, sp2, -Math.cos(P.yaw) * cp], ty = P.y + (top ? 1.2 : 1.62), want = P.zoom[P.view];
+      let d = want; if (!top) for (let k = 1; k <= 10; k++) { const q = (want * k) / 10, x = P.x - f[0] * q, z = P.z - f[2] * q, y = ty - f[1] * q; if (y < P.groundAt(x, z, y + 0.5).y + 0.3) { d = Math.max(0.6, (want * (k - 1)) / 10); break; } }
+      P.boom = P.boom === undefined ? d : d < P.boom ? d : LR.damp(P.boom, d, 4, dt); const b = P.boom, side = top ? 0 : 0.34 * LR.sm(1.2, 4, b), rx = Math.cos(P.yaw), rz = Math.sin(P.yaw);
+      cam.position.set(P.x - f[0] * b + rx * side, ty - f[1] * b - (P.dip || 0) * 0.5, P.z - f[2] * b + rz * side); cam.rotation.set(pitch, -P.yaw, 0); }
   };
   P.surfaceAt = (x, z, g) => { const L = LR.land; if (LR.wx.snow > 0.55) return 'snow'; if (L.coverAt('paved', x, z) > 0.5) return 'stone'; if (L.coverAt('shore', x, z) > 0.5) return 'gravel'; if (L.coverAt('dirt', x, z) > 0.45) return 'dirt'; return 'grass'; };
   LR.on('input', (dt, cam) => { if (P.enabled) P.update(dt, cam); }, 10);
@@ -7896,11 +8082,12 @@ void main(){
     hint: 'W A S D or arrow keys to walk · Q E or ← → to turn · drag or click to look · Shift to run',
     hintTouch: 'left thumb walks · right thumb looks',
     scans: 'Scanned surfaces and objects: Poly Haven · CC0',
-    help: [['W A S D / ↑ ↓', 'walk'], ['← → / Q E', 'turn'], ['mouse', 'look (click to capture, Esc to release)'], ['Shift', 'run'], ['Space', 'hop'], ['gamepad', 'left stick walks · right stick looks · trigger runs · A hops'], ['1 2 3 4', 'dawn · day · dusk · night'], ['5 6 7', 'clear · rain · winter'], ['T', 'automatic round'], ['C', 'tour walk'], ['L', 'the lens while you walk: depth of field (the tour always has it)'], ['G', 'quality'], ['M', 'sound'], ['P', 'numbers'], ['H', 'hide the panels'], ['F', 'full screen']],
-    quality: 'Quality', tiers: { auto: 'auto', low: 'low', medium: 'medium', high: 'high', ultra: 'ultra' }, sound: 'Sound', full: 'Full screen', keys: 'Keys', taking: 'You have the walk — press C for the tour', lensOn: 'Lens on: what you are not looking at goes soft — L again to switch it off', lensOff: 'Lens off', lensNone: 'This quality has no lens — raise it with G',
+    help: [['W A S D / ↑ ↓', 'walk'], ['← → / Q E', 'turn'], ['mouse', 'look (click to capture, Esc to release)'], ['Shift', 'run'], ['Space', 'hop'], ['V', 'camera: inside · behind · above'], ['wheel / + −', 'nearer · further'], ['B', 'lamp'], ['gamepad', 'left stick walks · right stick looks · trigger runs · A hops'], ['1 2 3 4', 'dawn · day · dusk · night'], ['5 6 7', 'clear · rain · winter'], ['T', 'automatic round'], ['C', 'tour walk'], ['L', 'the lens while you walk: depth of field (the tour always has it)'], ['G', 'quality'], ['M', 'sound'], ['P', 'numbers'], ['H', 'hide the panels'], ['F', 'full screen']],
+    cam: 'Camera: inside · behind · above (V)', zin: 'Nearer (+ or wheel)', zout: 'Further (− or wheel)', torch: 'Lamp (B)', views: { first: 'inside', third: 'behind', top: 'above' }, quality: 'Quality', tiers: { auto: 'auto', low: 'low', medium: 'medium', high: 'high', ultra: 'ultra' }, sound: 'Sound', full: 'Full screen', keys: 'Keys', taking: 'You have the walk — press C for the tour', lensOn: 'Lens on: what you are not looking at goes soft — L again to switch it off', lensOff: 'Lens off', lensNone: 'This quality has no lens — raise it with G',
   };
   const ICON = {
     mist: '<path d="M4 8h13M7 12h13M4 16h11M9 20h9"/>',
+    cam: '<path d="M3 8h4l2-3h6l2 3h4v11H3z"/><circle cx="12" cy="13" r="3.4"/>', zin: '<circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5.5 5.5M7.8 10.5h5.4M10.5 7.8v5.4"/>', zout: '<circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5.5 5.5M7.8 10.5h5.4"/>', torch: '<path d="M9 3h6l-1 6v9a2 2 0 0 1-4 0V9z"/><path d="M12 12v2"/>',
     dawn: '<path d="M3 17h18M6 13a6 6 0 0 1 12 0M12 3v3M4.5 7.5l2 2M19.5 7.5l-2 2"/>', day: '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
     dusk: '<path d="M3 18h18M7 14a5 5 0 0 1 10 0M12 4v4M9 6l3 3 3-3"/>', night: '<path d="M20 14.5A8 8 0 0 1 9.5 4 7 7 0 1 0 20 14.5z"/>',
     clear: '<circle cx="9" cy="9" r="3.2"/><path d="M9 2.5v1.8M2.5 9h1.8M4.4 4.4l1.3 1.3M13.6 4.4l-1.3 1.3"/><path d="M8 19h9a3.5 3.5 0 0 0 0-7 5 5 0 0 0-9.3 1.5A2.8 2.8 0 0 0 8 19z"/>', rain: '<path d="M7 14h10a3.5 3.5 0 0 0 0-7 5 5 0 0 0-9.4 1.4A2.9 2.9 0 0 0 7 14z"/><path d="M8 17l-1 3M12 17l-1 3M16 17l-1 3"/>',
@@ -7951,7 +8138,7 @@ void main(){
         const say = () => { E.credit.textContent = t.scans + (got() < due() ? ` · ${got()} / ${due()}` : ''); }; say(); LR.on('scan', say); } }
     const btn = (id, icon, label, title) => `<button type="button" data-k="${id}" title="${title || label}" aria-label="${title || label}" aria-pressed="false" class="${label ? '' : 'ic'}">${svg(icon)}${label ? `<span class="lb">${label}</span>` : ''}</button>`;
     E.bar = root.appendChild(el('div', { id: 'lr-bar', class: 'pane', role: 'toolbar' }, btn('dawn', 'dawn', t.dawn) + btn('day', 'day', t.day) + btn('dusk', 'dusk', t.dusk) + btn('night', 'night', t.night) + '<span class="sep"></span>' + btn('clear', 'clear', t.clear) + btn('mist', 'mist', t.mist) + btn('rain', 'rain', t.rain) + btn('snow', 'snow', t.snow) + '<span class="sep"></span>' + btn('auto', 'auto', t.auto) + btn('walk', 'walk', t.walk)));
-    E.top = root.appendChild(el('div', { id: 'lr-top', class: 'pane', role: 'toolbar' }, btn('gear', 'gear', '', t.quality) + btn('sound', 'mute', '', t.sound) + `<span class="wide" style="display:flex">${btn('keys', 'keys', '', t.keys)}${btn('full', 'full', '', t.full)}</span>`));
+    E.top = root.appendChild(el('div', { id: 'lr-top', class: 'pane', role: 'toolbar' }, (LR.mech && LR.mech.units && LR.mech.units.some((u) => u.avatar) ? btn('cam', 'cam', '', t.cam) + btn('zin', 'zin', '', t.zin) + btn('zout', 'zout', '', t.zout) + btn('torch', 'torch', '', t.torch) + '<span class="sep"></span>' : '') + btn('gear', 'gear', '', t.quality) + btn('sound', 'mute', '', t.sound) + `<span class="wide" style="display:flex">${btn('keys', 'keys', '', t.keys)}${btn('full', 'full', '', t.full)}</span>`));
     E.num = root.appendChild(el('div', { id: 'lr-num' })); E.num.style.display = LR.q('stats') || LR.q('prof') ? '' : 'none';
     E.hint = root.appendChild(el('div', { id: 'lr-hint' }, LR.gpu.mobile ? t.hintTouch : t.hint));
     E.card = root.appendChild(el('div', { class: 'card' }, '<b></b><i></i><span></span>'));
@@ -7960,6 +8147,7 @@ void main(){
     const TOD = { dawn: 6.2, day: 13.0, dusk: 19.7, night: 23.2 };
     const act = (k) => {
       if (TOD[k] !== undefined) wx.set({ tod: TOD[k], manual: true });
+      else if (k === 'cam') { LR.player.stopTour(); LR.player.setView(); } else if (k === 'zin') LR.player.zoomBy(0.75); else if (k === 'zout') LR.player.zoomBy(1 / 0.75); else if (k === 'torch') { LR.player.torch = !LR.player.torch; LR.emit('torch', LR.player.torch); }
       else if (k === 'clear' || k === 'rain' || k === 'snow' || k === 'mist') wx.set({ weather: k, manual: true });
       else if (k === 'auto') wx.set({ auto: !wx.auto });
       else if (k === 'walk') { if (LR.player.touring) LR.player.stopTour(); else LR.player.startTour(); }
@@ -8119,7 +8307,7 @@ void main(){
       LR.wx.snap({ weather: LR.q('wx', wx0.weather || 'clear'), tod: LR.qn('tod', wx0.tod !== undefined ? wx0.tod : LR.wx.tod), wet: LR.qn('wet', undefined), puddle: LR.qn('puddle', undefined) });   /* ?wet=1&puddle=1: just after rain (it dries as you watch) */
       if (cfg.round) LR.wx.round = cfg.round;
       if (LR.q('auto', wx0.auto === false ? '0' : '1') !== '0' && LR.q('wx') === undefined && LR.q('tod') === undefined) LR.wx.set({ auto: true });
-      P.bind(canvas); if (P.tour && LR.q('tour', '1') !== '0') P.startTour();
+      P.bind(canvas); if (P.tour && LR.q('tour', '1') !== '0') P.startTour(); if (LR.q('eye', '')) P.setView(LR.q('eye'));      // ?eye=third | top: start in that view
       let last = performance.now();
       const loop = (now) => { requestAnimationFrame(loop); const dt = Math.min(0.1, Math.max(0.0005, (now - last) / 1000)); last = now; if (document.hidden) return; time += dt; LR.emit('input', dt, cam); LR.wx.update(dt, time); LR.emit('frame', time, dt, cam); LR.render.draw(cam, time, dt); LR.emit('after', time, dt); };
       LR.progress(1, ''); document.getElementById('veil').classList.add('gone'); window.READY = true; LR.readyAt = performance.now(); requestAnimationFrame(loop);
@@ -8239,7 +8427,8 @@ V.land = () => {
 // 쇠울림 골짜기 · the words on the glass (Korean): place names are in 30_details.js, the HUD's strings here
 V.strings = {
   title: '쇠울림 골짜기', sub: '거인들이 걷는 숲', dawn: '새벽', day: '낮', dusk: '저녁', night: '밤', clear: '갬', rain: '비', snow: '눈', mist: '안개', auto: '흐름', walk: '걷기', lens: '렌즈', gear: '화질',
-  hint: 'W A S D 걷기 · 마우스로 보기 · Shift 달리기', hintTouch: '왼쪽 엄지로 걷고 오른쪽 엄지로 봅니다', taking: '이제 직접 걷습니다', scans: '스캔: Poly Haven · CC0',
+  cam: '카메라: 1인칭 · 3인칭 · 탑뷰 (V)', zin: '가까이 (+ · 휠)', zout: '멀리 (− · 휠)', torch: '등불 (B)',
+  hint: 'W A S D 걷기 · 마우스로 보기 · Shift 달리기 · Space 뛰기 · V 카메라 · 휠 줌', hintTouch: '왼쪽 엄지로 걷고 오른쪽 엄지로 봅니다', taking: '이제 직접 걷습니다', scans: '스캔: Poly Haven · CC0',
   gate: '시작 — 스캔은 걷는 동안 도착합니다', gateOff: '스캔 없이 열기', gateFrom: 'Poly Haven · CC0',
   noglTitle: '이 브라우저는 3D를 그릴 수 없습니다', nogl: 'WebGL 2가 꺼져 있거나 그래픽 드라이버가 막혀 있습니다. 하드웨어 가속을 켜고 다시 열어 주세요.', lostTitle: '그래픽 연결이 끊어졌습니다', lost: '탭이 그래픽 메모리를 잃었습니다.', again: '다시 열기', safe: '안전 모드로 열기',
 };
@@ -8382,6 +8571,15 @@ V.machines = () => {
       { name: 'wing_R1', type: 'spin', parent: 'body', at: [0.25, 0.22, 0.42], dir: [0, 0, 1], axis: [-1, 0, 0], xdir: [1, 0, 0], len: 2.1 }, { name: 'wing_R2', type: 'spin', parent: 'wing_R1', at: [0, 2.1, 0], dir: [0, 1, 0], axis: [-1, 0, 0], xdir: [1, 0, 0], len: 2.3 },
       { name: 'tail', type: 'spin', parent: 'body', at: [-1.5, 0.05, 0], dir: [-1, 0, 0], axis: [1, 0, 0], xdir: [0, 0, 1], len: 1.5 }, { name: 'streamer', type: 'lag', parent: 'body', at: [-1.6, -0.1, 0], dir: [-1, -0.15, 0], len: 1.8, lag: 0.18, gain: 0.5, maxDeg: 30 }],
     flight: { speed: 14, beat: 0.87, stroke: [30, 20], fold: 16, dihedral: 7, bout: 9, bob: 0.16, lead: 0.7, bankMax: 52, span: 9.4, gaze: 24, tail: 'tail', wings: [['wing_L1', 'wing_L2'], ['wing_R1', 'wing_R2']] } });
+  // 물떼새: the walker's own body — a scout on two heron legs, as tall as a person and a head more.  A third of a tonne: it steps
+  // five times in two seconds at a walk, leaves the ground between steps at a run, gathers before a hop and gives at the knees after.
+  const PV = { kind: 'mammal', width: 0.09, drum: 0.09, ball: 0.07, toes: 3, toeLen: 0.22, act: [0, 1, 1], hipDrop: 0.06, style: 'shell', bar: 0.012 };      // (the hip turns on a drive inside its drum: it swings through a right angle, more than a cylinder follows)
+  const ploverLeg = Object.assign({}, PV, { name: 'L', at: [0, -0.06, -0.25], segs: [0.5, 0.48, 0.3], knee: 1, gamma: 12, home: [0.05, -0.23] });
+  M.define('plover', { title: '물떼새', age: 0.5, tonnes: 0.3, ride: 1.3, belly: [0.36, 0.16, 0.2], aware: 0, lensGain: 22, lodK: 2.5, build: (k) => V.parts.plover(k),
+    palette: { shell: ['ceramic', '#dfe0dc'], dark: ['paintmetal', '#2a2e31'], frame: ['paintmetal', '#566068'], accent: ['paintmetal', '#b8742a'] },
+    limbs: [ploverLeg, M.mirror(ploverLeg)], neck: { at: [0.34, 0.24, 0], links: [[0.2, 62]] }, head: { len: 0.34 },
+    extras: [{ name: 'whip', type: 'lag', parent: 'body', at: [-0.42, 0.3, 0.1], dir: [-0.3, 1, 0], len: 0.9, lag: 0.22, gain: 1.3, maxDeg: 24 }],
+    avatar: { stepWalk: 0.8, stepRun: 1.45, reach: 0.32, lift: [0.09, 0.12], swingGamma: 12, lean: [4, 12], gather: 0.1, tuck: 0.1 } });
   for (const k in V.ways) M.route(k, V.ways[k], { width: k === 'rim' ? 38 : k === 'round' ? 15 : 13, grade: k === 'rim' ? 0.12 : 0.2 });
   M.spawn('crane', { name: '두루미 1', route: 'round', offset: 0, halts: [{ at: 0.179, hold: 18, move: 'survey' }, { at: 0.62, hold: 12 }] });
   M.spawn('crane', { name: '두루미 2', route: 'round', offset: 330, halts: [{ at: 0.179, hold: 18, move: 'survey' }, { at: 0.62, hold: 12 }] });
@@ -8390,6 +8588,8 @@ V.machines = () => {
   // (closer, or abreast, and their wings cross in the tight turn over the saddle: check.mjs measures every pair)
   [[0, 0, 0], [2, 5, 2], [4, -5, 3], [6, 5, 4.5], [8, -4, 2.5]].forEach((q, i) => M.spawn('kite', { name: '솔개 ' + (i + 1), fly: V.sky, offset: -q[0], shift: [q[1], q[2]], phase: i * 0.23 }));
   M.spawn('ridge', { name: '마루', route: 'rim', offset: 120, halts: [{ at: 0.3, hold: 34, move: 'call' }] });
+  // the walker's body stands where the walk starts; the page hands it to whoever holds the keys
+  M.spawn('plover', { name: '물떼새', avatar: true, at: [V.spawn.x, V.spawn.z], yaw: 90 });
 };
 // the gym (scripts/gym.mjs): the land and the machines, nothing else
 // (o.studio: the cast sheet wants the kinds only — no land)
@@ -8502,6 +8702,35 @@ V.parts = {
       k.mat('dark'); g.tube([[0.52, -0.02, 0], [0.84, -0.06, 0], [0.92, -0.2, 0]], [0.06, 0.035, 0.008], { sides: 6 }); });
     k.lamp('head', { name: 'eye', at: [0.3, -0.19, 0], dir: [0.62, -0.78, 0], color: [0.78, 0.92, 1.0], power: 30, cone: 7, range: 120, lens: 0.11, proud: 0.02 });
     k.lamp('wing_L2', { at: [0.04, 2.18, 0], dir: [0, 1, 0], color: [1, 0.08, 0.05], power: 0.9, range: 9, lens: 0.05, glow: 0.9 }); k.lamp('wing_R2', { at: [0.04, 2.18, 0], dir: [0, 1, 0], color: [0.1, 1, 0.3], power: 0.9, range: 9, lens: 0.05, glow: 0.9 });
+  },
+  // 물떼새: the walker's own machine.  A pod between two hips, a counterweight boom behind, a short neck and a head that is mostly
+  // lamp; a bedroll, a canister and a whip aerial — somebody lives on it
+  plover(k) {
+    k.limbs({ style: 'shell' });
+    k.bone('body', (g) => {
+      k.mat('dark'); k.loft('x', [[-0.52, 0.1, 0.12, 0.02, 0, 4], [-0.3, 0.19, 0.22, 0, 0, 4], [0.2, 0.2, 0.23, 0, 0, 4], [0.46, 0.13, 0.15, 0.04, 0, 4]], { sides: 14 });
+      k.mat('shell'); k.loft('x', [[-0.44, 0.14, 0.2, 0.05, 0, 3], [-0.2, 0.24, 0.27, 0.06, 0, 3], [0.2, 0.25, 0.28, 0.06, 0, 3], [0.44, 0.15, 0.2, 0.06, 0, 3]], { sides: 14, from: -0.6 * Math.PI, to: 0.6 * Math.PI, caps: false });
+      k.mat('accent'); k.loft('x', [[-0.05, 0.262, 0.292, 0.06, 0, 3], [0.07, 0.262, 0.292, 0.06, 0, 3]], { sides: 14, from: -0.58 * Math.PI, to: 0.58 * Math.PI, caps: false });
+      // the hip girder, its end caps; the counterweight boom
+      k.mat('frame'); g.box(0, -0.1, 0, 0.26, 0.16, 0.62, { soft: 0.2 }); if (k.fine) for (const s of [-1, 1]) k.bolts('z', [0, -0.1, s * 0.31], 0.06, 6, 0.008, { dir: s });
+      k.mat('dark'); g.tube([[-0.46, 0.02, 0], [-0.74, 0.07, 0], [-0.92, 0.1, 0]], [0.07, 0.05, 0.04], { sides: k.n(8), caps: true }); k.mat('rust'); g.box(-0.9, 0.1, 0, 0.16, 0.13, 0.17, { soft: 0.3 });
+      // what it carries and what keeps it going
+      k.tank([-0.34, -0.2, 0.12], [0.1, -0.2, 0.12], 0.055, { role: 'rust', up: [0, -1, 0], straps: 2 }); k.tank([-0.3, -0.2, -0.12], [0.06, -0.2, -0.12], 0.045, { role: 'frame', up: [0, -1, 0], straps: 1, gauge: false });
+      for (const s of [-1, 1]) { k.hose([[0.12, -0.2, s * 0.12], [0.1, -0.24, s * 0.2], [0.02, -0.16, s * 0.27]], 0.012); k.grille([0.16, -0.02, s * 0.228], [0, 0, s], 0.22, 0.07, { up: [0, 1, 0] }); k.rivets([-0.36, 0.2, s * 0.2], [0.36, 0.21, s * 0.2], 9, 0.006, [0, 0.8, s * 0.6]); }
+      k.hatch([-0.2, 0.3, 0], [0, 1, 0], 0.2, 0.16, { up: [1, 0, 0], role: 'joint' }); k.stack([-0.4, 0.2, -0.1], [-0.44, 0.42, -0.11], 0.022);
+      g.mat('cloth', { tint: '#6f6a55' }); g.tube([[-0.34, 0.27, -0.2], [-0.34, 0.27, 0.2]], 0.065, { sides: k.n(8), caps: true }); if (k.mid) { k.mat('rubber'); for (const z of [-0.12, 0.12]) g.tube([[-0.34, 0.2, z], [-0.27, 0.27, z], [-0.34, 0.34, z], [-0.41, 0.27, z], [-0.34, 0.2, z]], 0.008, { sides: 4 }); }
+      if (k.mid) { k.mat('dark'); g.tube([[0.1, 0.3, 0.16], [0.1, 0.38, 0.16], [0.3, 0.36, 0.16], [0.3, 0.28, 0.16]], 0.009, { sides: 5 }); }      // a grab rail
+    });
+    k.neckLinks({ width: 0.16, style: 'shell' });
+    k.bone('head', (g) => {
+      k.mat('dark'); k.loft('x', [[-0.14, 0.07, 0.08, 0, 0, 4], [-0.02, 0.1, 0.11, 0.01, 0, 4], [0.2, 0.1, 0.105, 0.01, 0, 4], [0.3, 0.075, 0.08, 0, 0, 4]], { sides: 12 });
+      k.mat('shell'); k.loft('x', [[-0.13, 0.08, 0.1, 0.02, 0, 3], [0.02, 0.125, 0.135, 0.03, 0, 3], [0.2, 0.12, 0.125, 0.03, 0, 3], [0.32, 0.07, 0.09, 0.03, 0, 3]], { sides: 12, from: -0.55 * Math.PI, to: 0.55 * Math.PI, caps: false });
+      k.mat('joint'); k.along([0.31, -0.01, 0], [1, -0.06, 0], (g2) => { g2.lathe(0, 0, [[0.062, -0.02], [0.074, 0.01], [0.066, 0.035]], { sides: k.n(12) }); }); if (k.fine) { k.mat('dark'); g.tube([[-0.05, 0.15, 0.05], [-0.07, 0.3, 0.055]], [0.005, 0.002], { sides: 4 }); for (const s of [-1, 1]) k.hose([[-0.13, -0.04, s * 0.05], [-0.2, -0.12, s * 0.055], [-0.22, -0.24, s * 0.05]], 0.008); }
+    });
+    k.lamp('head', { name: 'torch', at: [0.325, -0.012, 0], dir: [0.985, -0.17, 0], color: [1.0, 0.9, 0.72], power: 16, cone: 17, range: 60, lens: 0.06, proud: 0.012 });
+    for (const s of [-1, 1]) k.lamp('head', { at: [0.2, 0.06, s * 0.118], dir: [0.5, 0, s], color: [1, 0.5, 0.14], power: 0.3, range: 4, lens: 0.016, glow: 0.7 });
+    k.lamp('body', { at: [-0.985, 0.1, 0], dir: [-1, 0, 0], color: [1, 0.12, 0.06], power: 0.06, range: 2, lens: 0.02, glow: 0.6 });
+    k.bone('whip', (g) => { k.mat('dark'); g.tube([[0, 0, 0], [0, 0.45, 0], [0, 0.9, 0]], [0.012, 0.008, 0.003], { sides: k.n(5), caps: true }); });
   },
   // 등짐: a bed on six legs, a cab like a visor with two amber lamps, a frame of old girders holding what it carries
   porter(k) {
