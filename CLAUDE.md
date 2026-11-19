@@ -22,7 +22,8 @@ A collection of Claude Code skills for making motion graphics. Each top-level fo
 - `machine-wilds` is the `scanned-realm` engine (forked: its own `lib/`) with walking machines, relief and mist. Its scans follow the
   same rule (per realm in `assets.json`, fetched, never committed, site demos built with `--cdn`). Its machines are built and moved by
   code only; before any render run `node machine-wilds/scripts/gym.mjs <realm> --course` and `<realm>` — a kind or a way that fails
-  there is fixed in its numbers or its line on the land, never by loosening a limit. A new realm designs its own machines.
+  there is fixed in its numbers or its line on the land, never by loosening a limit. A new realm designs its own machines —
+  the walker's own two-legged body included (`avatar: true`; it steps as it goes, `lib/48_mech_avatar.js`, and is judged on its exercise).
 - A skill (or piece) whose bodies move — people, animals, creatures: read `references/MOTION-QUALITY.md` and take the
   "AI slop" look out — weight sets timing, inertia / follow-through, anticipation before and recovery after big moves,
   every idle breathes, planted feet never slide (turns are stepped). Motion comes from a video-model reference →

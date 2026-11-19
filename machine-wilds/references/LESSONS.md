@@ -98,6 +98,25 @@ was learned putting scans into it (scanned-realm), then the engine's own list (l
 - **A trailing `//` swallowed the rest of a one-line handler — for the third time.** → The page loaded to nothing and
   the test waited ten minutes for it. → `new Function(source)` on every edited file before a build; a test that waits
   for a page has a timeout and prints the page's errors as they come.
+- **A body that follows a hand cannot be planned — and the first rule for its feet left one a metre behind.** → "Lift a
+  foot when it is half a step behind" works only in a steady walk: from a stand both feet are under the hip, the first
+  lifts late, and by the time it lands the other is beyond the leg's reach; the reach guard then dropped the body two
+  metres. → A foot leaves when the other can carry the body for as long as the swing takes (from a stand: at once, a
+  short quick step); a foot the hip has outrun is lifted whatever else is true; the hip's height is bounded by what
+  the legs reach, never corrected by more than a hand's breadth in a frame.
+- **Walking down a steep bank, the body dropped a hand's breadth at every step.** → Its height came from the feet that
+  were down; the leading foot lands lower, and the limit arrived with it. → Through each swing the limit comes down
+  from the foot that stands to the place the other will: a descent is walked down.
+- **Everything added to the hip's height after the limit must only lower it** (a breath, the rise of mid-stance, a
+  landing's rebound) — or the leading knee goes straight exactly where the leg is longest.
+- **A 76° knee found no cylinder on a small leg.** → Drum and barrel sized like a colossus's in proportion left no room
+  between pin and lug. → Slim joints on a small machine; a hip that swings through a right angle is a rotary drive.
+- **The avatar's exercise must be walked again after the land is pressed** — its footfalls stood 78 mm off ground that
+  the other machines' footprints had since lowered.
+- **A still's camera is not the walker.** → The body (and its shadow, and its lamp) stood at the spawn point in every
+  still. → Hidden in the first view; no shadow and no lamp in a render unless asked (`torch=1`).
+- **Cast-sheet tiles of a walk were blocked by the 1.75 m figure** — it stood beside a way, and the walker's body walks
+  past where it stands. It stands behind the start instead.
 
 ## Scans in the engine (scanned-realm)
 ## Scans
