@@ -70,7 +70,10 @@ was learned putting scans into it (scanned-realm), then the engine's own list (l
   view: the studio's oval kept it banked 25° the whole way round. → A flyer's studio is two long straights joined by
   half circles; it is turned about on a straight, in the middle of a downstroke, and shown banked on purpose after.
 - **A skein strung out over 180 m is five birds, not a flight.** → Offsets of three seconds at 14 m/s are 45 m apart.
-  → Offsets of about a second, a few metres to the side and above: the gym prints where each is at one instant.
+  → Closed up to about a second — and then, in the one tight turn of the line, two of them came within six metres with
+  nine-metre wings: the gym judges each unit alone, only `check.mjs` measures pairs, and it had not been run after
+  the change. Two seconds apart, a little to one side and above. *Rule:* after moving any unit's offset or shift, run
+  the pair check before anything is rendered — a film was made with the wrong spacing.
 - **The kites' line climbed 27° and pulled 2.6 g.** → A line through points sixty metres apart with twenty metres of
   height between them is a roller coaster. → No turn tighter than forty metres at 14 m/s, no more than one in four up
   or down; `gym` fails on pitch, bank and load.

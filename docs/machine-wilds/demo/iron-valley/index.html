@@ -1732,14 +1732,19 @@ void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
   col = mix(S(0.33, 0.17, 0.09), S(0.50, 0.27, 0.12), n) * (0.72 + 0.5 * fine); col = mix(col, S(0.17, 0.10, 0.07), flake * 0.6); col = mix(col, S(0.60, 0.62, 0.58) * (0.8 + 0.3 * big), paint * (1.0 - flake));
   col *= 1.0 - seam * 0.45; rough = mix(0.9, 0.55, paint * (1.0 - flake)); metal = 0.0;
 }` });
-  D('ceramic', { metal: 0, tile: 2.2, bump: 0.002, por: 0.1, stick: 0.6, moss: 0.45, glsl: `
+  D('ceramic', { metal: 0, tile: 1.6, bump: 0.002, por: 0.1, stick: 0.6, moss: 0.45, glsl: `
 void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
   float n = fbm(uv, 4., 4), big = fbm(uv + 0.3, 2., 3); vec4 c = vor(uv, vec2(9., 9.), 1.0);
   float craze = (1.0 - smoothstep(0.0, 0.035, c.x)) * smoothstep(0.45, 0.75, fbm(uv + 0.9, 3., 3));          // fine cracks in the glaze, in patches
   float chip = smoothstep(0.74, 0.80, fbm(uv + 0.5, 11., 4) * 0.6 + big * 0.4), streak = smoothstep(0.5, 0.95, fbm(vec2(uv.x * 14.0, uv.y * 1.2) + 0.6, 4., 4)) * smoothstep(0.35, 0.7, big);
-  h = 0.6 - craze * 0.08 - chip * 0.25 + (n - 0.5) * 0.03;
+  // a shell is panels: a groove where two meet (the tile's edges), a fastener every hand's breadth along it, dirt run down from both
+  vec2 e = min(fract(uv), 1.0 - fract(uv)); float seam = 1.0 - smoothstep(0.004, 0.011, min(e.x, e.y));
+  vec2 fa = vec2(fract(uv.x * 12.0) - 0.5, (e.y - 0.035) * 12.0), fb = vec2((e.x - 0.035) * 12.0, fract(uv.y * 12.0) - 0.5); float fast = max(1.0 - smoothstep(0.10, 0.15, length(fa)), 1.0 - smoothstep(0.10, 0.15, length(fb)));
+  float grub = smoothstep(0.10, 0.0, min(e.x, e.y)) * (0.4 + 0.6 * fbm(uv + 0.2, 9., 3));
+  h = 0.6 - craze * 0.08 - chip * 0.25 + (n - 0.5) * 0.03 - seam * 0.4 + fast * 0.12;
   col = S(0.86, 0.85, 0.82) * (0.9 + 0.14 * n); col = mix(col, S(0.42, 0.40, 0.36), craze * 0.7); col = mix(col, S(0.25, 0.25, 0.26) * (0.7 + 0.6 * n), chip); col *= mix(vec3(1.0), S(0.62, 0.58, 0.50), streak * 0.5);
-  rough = 0.24 + 0.16 * n + chip * 0.5 + streak * 0.2 + craze * 0.2; metal = 0.0;
+  col *= 1.0 - grub * 0.28; col = mix(col, S(0.10, 0.10, 0.11), seam * 0.85); col = mix(col, S(0.46, 0.45, 0.44), fast * (1.0 - seam) * 0.85);
+  rough = 0.24 + 0.16 * n + chip * 0.5 + streak * 0.2 + craze * 0.2 + grub * 0.2; rough = mix(rough, 0.42, fast); metal = fast * 0.7;
 }` });
   D('rubber', { metal: 0, tile: 0.9, bump: 0.006, por: 0.1, stick: 0.5, glsl: `
 void surf(vec2 uv, out vec3 col, out float h, out float rough, out float metal){
@@ -4355,13 +4360,14 @@ void main(){
     limb(l, o = {}) {
       const k = this, w = l.width, d = l.drum, style = o.style || 'shell', cover = style === 'shell' ? 'shell' : 'rust', spar = style === 'shell' ? 'dark' : 'frame';
       const cheek = (g, y0, y1, depth) => { for (const sx of [-1, 1]) g.box(sx * w * 0.56, (y0 + y1) / 2, 0, w * 0.17, y1 - y0, depth, { soft: 0.25 }); };
-      const pin = (y, z = 0) => { k.mat('steel'); k.xcyl(-w * 0.72, w * 0.72, y, z, d * 0.2); k.mat('joint'); for (const sx of [-1, 1]) { k.xcyl(sx * w * 0.645, sx * w * 0.72, y, z, d * 0.37, { sides: 16 }); k.bolts('x', [sx * w * 0.72, y, z], d * 0.28, 8, d * 0.035, { dir: sx }); } };
+      const pin = (y, z = 0) => { k.mat('steel'); k.xcyl(-w * 0.72, w * 0.72, y, z, d * 0.2); k.mat('joint'); for (const sx of [-1, 1]) { k.xcyl(sx * w * 0.645, sx * w * 0.72, y, z, d * 0.37, { sides: 16 }); k.bolts('x', [sx * w * 0.72, y, z], d * 0.28, 8, d * 0.035, { dir: sx }); } k.fitPin(l, y, z); };
       // the hip: a bearing the whole leg swings out on, and the yoke the thigh hangs in (mammal) — or a turret with an arm (insect)
       k.bone(`hip_${l.name}`, (g) => {
         if (l.kind === 'insect') { k.mat('joint'); k.zcyl(-d * 0.55, d * 0.55, 0, 0, d * 0.62, { sides: 16 }); k.bolts('z', [0, 0, d * 0.55], d * 0.48, 10, d * 0.04);
           k.mat(spar); g.box(0, l.coxa * 0.5, 0, w * 0.8, l.coxa, d * 0.7, { soft: 0.3 }); k.mat('frame'); cheek(g, l.coxa - d * 0.55, l.coxa + d * 0.55, d * 1.05); pin(l.coxa); }
         else { k.mat('joint'); k.zcyl(-w * 0.95, w * 0.95, 0, 0, d * 0.58, { sides: 16 }); k.bolts('z', [0, 0, w * 0.95], d * 0.44, 10, d * 0.04); k.bolts('z', [0, 0, -w * 0.95], d * 0.44, 10, d * 0.04, { dir: -1 });
           k.mat('frame'); if (l.hipDrop > 0.01) { cheek(g, -d * 0.2, l.hipDrop + d * 0.55, d * 1.1); pin(l.hipDrop); } }
+        k.fitHip(l);
       });
       for (let i = 0; i < l.n; i++) { const L = l.segs[i], last = i === l.n - 1, t0 = d * 0.5, t1 = L - (last ? l.ball * 0.9 : d * 0.62);
         k.bone(l.bone(i), (g) => {
@@ -4384,16 +4390,17 @@ void main(){
           if (k.fine) { // a hose down the back of the spar, clipped to it
             k.mat('rubber'); const hz = -sd * 0.5 - d * 0.12, hx = w * 0.16, pts = []; for (let q = 0; q <= 8; q++) { const y = t0 + (t1 - t0) * (q / 8); pts.push([hx + Math.sin(q * 1.7) * w * 0.03, y, hz - Math.sin((q / 8) * Math.PI) * d * 0.05]); } g.tube(pts, d * 0.045, { sides: 6 }); g.tube(pts.map((p) => [p[0] - w * 0.3, p[1], p[2] + d * 0.02]), d * 0.035, { sides: 5 });
             k.mat('steel'); for (const q of [1, 4, 7]) g.box(hx - w * 0.15, pts[q][1], hz + d * 0.02, w * 0.5, d * 0.05, d * 0.12); }
+          k.fitSegment(l, i, { L, t0, t1, sd, sw, style, last, taper });
         });
       }
       // the foot: a ball in the cup, a hub under it, toes on pins
       k.bone(`foot_${l.name}`, (g) => { const b = l.ball; k.mat('steel'); k.ball(0, 0, 0, b * 0.64); k.mat('frame'); g.lathe(0, 0, [[b * 0.5, -b * 0.25], [b * 1.02, -b * 0.42], [b * 1.12, -b * 0.8], [b * 0.9, -b], [0.01, -b]], { sides: k.n(16) });
-        if (k.mid) { k.mat('joint'); for (const a of l.toes) { const ca = Math.cos(a * D2R), sa = Math.sin(a * D2R); g.box(ca * b * 0.75, -b * 0.42, sa * b * 0.75, b * 0.5, b * 0.46, b * 0.5, { soft: 0.3 }); } } });
+        if (k.mid) { k.mat('joint'); for (const a of l.toes) { const ca = Math.cos(a * D2R), sa = Math.sin(a * D2R); g.box(ca * b * 0.75, -b * 0.42, sa * b * 0.75, b * 0.5, b * 0.46, b * 0.5, { soft: 0.3 }); } } k.fitFoot(l); });
       l.toes.forEach((a, t) => k.bone(`toe${t}_${l.name}`, (g) => { const b = l.ball, L = l.toeLen, heel = Math.abs(a) > 120, LL = heel ? L * 0.62 : L;
         k.mat('joint'); k.xcyl(-b * 0.36, b * 0.36, 0, 0, b * 0.3, { sides: 12 });
         k.mat(style === 'shell' ? 'dark' : 'frame'); k.loft('y', [[b * 0.1, b * 0.3, b * 0.3, 0, 0, 4], [LL * 0.45, b * 0.26, b * 0.36, -b * 0.03, 0, 4], [LL * 0.86, b * 0.17, b * 0.28, -b * 0.1, 0, 4], [LL, b * 0.05, b * 0.06, -b * 0.2, 0, 3]], { sides: 10 });
         if (style === 'shell' && k.mid) { k.mat('shell'); k.loft('y', [[LL * 0.14, b * 0.2, b * 0.33, b * 0.14, 0, 3], [LL * 0.45, b * 0.2, b * 0.4, b * 0.12, 0, 3], [LL * 0.8, b * 0.12, b * 0.26, b * 0.03, 0, 3]], { sides: 10, from: -0.38 * Math.PI, to: 0.38 * Math.PI, caps: false }); }
-        k.mat('rubber'); g.box(0, LL * 0.6, -b * 0.3, b * 0.5, LL * 0.6, b * 0.14, { soft: 0.3 }); }));
+        k.mat('rubber'); g.box(0, LL * 0.6, -b * 0.3, b * 0.5, LL * 0.6, b * 0.14, { soft: 0.3 }); k.fitToe(l, LL, style); }));
       // cylinders: the barrel on the part above the hinge, the rod on the part below, each on a lug the anchor search placed
       for (let j = 0; j < l.n; j++) { const an = l.anchors[l.jointNames[j]]; if (!l.acts[j] || !an) continue; const r = an.r, jn = l.jointNames[j], upB = j === 0 ? `hip_${l.name}` : l.bone(j - 1), upY = j === 0 ? (l.kind === 'insect' ? l.coxa : l.hipDrop) : l.segs[j - 1];
         const lug = (g, y, h) => { k.mat('frame'); const s = Math.sign(h) || 1; g.box(an.lat * 0.5, y, h * 0.55, Math.abs(an.lat) + r * 2.2, r * 1.5, r * 1.3, { soft: 0.2 }); for (const sx of [-1, 1]) g.box(an.lat + sx * r * 0.95, y, h * 0.6, r * 0.34, r * 2.3, Math.abs(h) * 0.9 + r * 0.6, { soft: 0.2 }); if (Math.abs(h) > d * 0.6) g.box(0, y, h * 0.3, w * 0.5, r * 1.6, Math.abs(h) * 0.62, { soft: 0.2 });
@@ -4401,7 +4408,7 @@ void main(){
         k.bone(upB, (g) => lug(g, upY - an.a_up, an.h_up)); k.bone(l.bone(j), (g) => lug(g, an.a_lo, an.h_lo));
         k.bone(`act_${jn}_${l.name}_cyl`, (g) => { k.mat('joint'); k.xcyl(-r * 0.78, r * 0.78, 0, 0, r * 0.98, { sides: 12 }); k.mat(style === 'shell' ? 'dark' : 'frame'); k.ycyl(r * 0.9, r * 1.1 + an.Bl, 0, 0, r, r, { sides: 14 });
           k.mat('joint'); k.ycyl(r * 1.1 + an.Bl - r * 0.5, r * 1.1 + an.Bl + r * 0.12, 0, 0, r * 1.16, r * 1.16, { sides: 14 }); k.ycyl(r * 0.9, r * 1.5, 0, 0, r * 1.12, r * 1.12, { sides: 14 }); k.bolts('y', [0, r * 1.1 + an.Bl + r * 0.12, 0], r * 0.92, 6, r * 0.09);
-          if (k.fine) { k.mat('rubber'); g.tube([[0, r * 1.6, r * 1.0], [0, r * 2.4, r * 1.7], [0, an.Bl * 0.5, r * 1.5], [0, an.Bl - r, r * 1.7], [0, an.Bl + r * 0.2, r * 1.05]], r * 0.16, { sides: 6 }); } });
+          k.fitCylinder(l, an, style); });
         k.bone(`act_${jn}_${l.name}_rod`, (g) => { k.mat('joint'); k.xcyl(-r * 0.7, r * 0.7, 0, 0, r * 0.9, { sides: 12 }); k.ycyl(r * 0.6, r * 1.5, 0, 0, r * 0.62, r * 0.62, { sides: 10 }); k.mat('rod'); k.ycyl(r * 1.3, r * 1.1 + an.Rl, 0, 0, r * 0.5, r * 0.5, { sides: 12 }); });
       }
     }
@@ -4413,7 +4420,7 @@ void main(){
         if (k.mid) for (const y of [L * 0.3, L * 0.7]) { g.tube([[-w2 * 0.42, y, w2 * 0.15], [0, y + L * 0.12, -w2 * 0.3], [w2 * 0.42, y, w2 * 0.15]], w2 * 0.04, { sides: 5 }); }
         for (const sx of [-1, 1]) g.box(sx * w2 * 0.52, L - w2 * 0.05, 0, w2 * 0.1, w2 * 0.7, w2 * 0.5, { soft: 0.25 });
         if (style === 'shell') { k.mat('shell'); k.loft('y', [[L * 0.12, w2 * 0.3, w2 * 0.5, w2 * 0.12, 0, 3], [L * 0.5, w2 * 0.36, w2 * 0.54, w2 * 0.12, 0, 3], [L * 0.9, w2 * 0.28, w2 * 0.46, w2 * 0.1, 0, 3]], { sides: 12, from: -0.45 * Math.PI, to: 0.45 * Math.PI, caps: false }); }
-        if (k.fine) { k.mat('rubber'); g.tube([[w2 * 0.2, 0, -w2 * 0.38], [w2 * 0.22, L * 0.5, -w2 * 0.42], [w2 * 0.2, L, -w2 * 0.38]], w2 * 0.035, { sides: 5 }); } })); return this; }
+        if (k.fine) { k.mat('rubber'); g.tube([[w2 * 0.2, 0, -w2 * 0.38], [w2 * 0.22, L * 0.5, -w2 * 0.42], [w2 * 0.2, L, -w2 * 0.38]], w2 * 0.035, { sides: 5 }); } k.fitNeck(L, w2); })); return this; }
     // age: nothing here left a works this decade.  spec.age (0…1; 0.55) lowers the vertex's alpha in patches laid in the
     // machine's own space — more on what faces up, where water stands — and the surface shader turns that into grime, into
     // rust that has run down from seams, and (on tops and north sides) into moss.  Lamps, rods and rubber are left alone.
@@ -4426,6 +4433,124 @@ void main(){
   M.Kit = Kit;
   // the three builds of a kind (near, middle, far), made once
   M.geometry = (kind, lod) => { const K = M.kinds[kind]; K.geo = K.geo || []; if (!K.geo[lod]) { const k = new Kit(K, lod); K.spec.build(k); K.geo[lod] = k.done(); } return K.geo[lod]; };
+}
+
+
+// ── lib/48_mech_kit_fit.js ──
+// machine-wilds · 48_mech_kit_fit — fittings: the small things that make a mechanism of a shape.  A leg is a spar, a drum
+// and a cylinder; what makes it read as a machine that was built, serviced and left out is everything bolted to those —
+// hard lines and hoses with their ferrules, tie rods and valve blocks on the cylinders, rivet rows, inspection hatches,
+// louvres, accumulators, junction boxes with their conduits, ladders and rails a person could use, cooling fins, gaiters.
+// Every fitting is written in the frame of the bone it rides (inside k.bone), like any other part, and thins out with the
+// level of detail: `fine` things are only on the near build, `mid` things on the near and middle ones.
+//
+//   k.along(p, dir, (g) => …, up)        a frame at p whose +Y runs along dir (and whose +Z is as near `up` as it can be)
+//   k.pipe(pts, r, { role, flange, joints })      a hard line: flanges with bolts at its ends (and at `joints`: indices)
+//   k.hose(pts, r, { clips })                     a rubber line with steel ferrules, clipped at the indices given
+//   k.rivets(a, b, n, size, normal)               a row of heads from a to b
+//   k.hatch(c, normal, w, h, { up, role })        a bolted cover with a handle and two hinges
+//   k.grille(c, normal, w, h, { up, slats })      louvres in a frame
+//   k.tank(a, b, r, { role, straps })             a pressure vessel with domed ends, straps and a valve
+//   k.jbox(c, normal, w, h, d, { up, glands })    a junction box, glands along its lower edge
+//   k.ladder(a, b, width, normal, { step })       rails, rungs, stand-offs
+//   k.rail(pts, h, up)                            a handrail on stanchions
+//   k.fins(c, dir, n, w, h, pitch, { up })        a stack of cooling fins
+//   k.boot(p, dir, r, len, n)                     a rubber gaiter
+//   k.stripes(c, normal, w, h, n, { up })         warning bars, yellow and black, what is left of them
+//   k.gauge(c, normal, r)                         a dial
+//   k.stack(a, b, r)                              an exhaust stack with a rain cap
+//   k.dish(c, dir, r)                             an antenna dish on a stalk
+{
+  const M = LR.mech, T = THREE, V = M.v, TAU = Math.PI * 2, K = M.Kit.prototype;
+  K.along = function (p, dir, fn, up) { const y = V.norm(dir); let z = up ? V.sub(up, V.mul(y, V.dot(up, y))) : null; if (!z || V.len(z) < 0.2) { const a = Math.abs(y[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0]; z = V.sub(a, V.mul(y, V.dot(a, y))); } z = V.norm(z); const x = V.cross(y, z);
+    this.g.push(new T.Matrix4().set(x[0], y[0], z[0], p[0], x[1], y[1], z[1], p[1], x[2], y[2], z[2], p[2], 0, 0, 0, 1)); fn(this.g, this); this.g.pop(); return this; };
+  const dirAt = (pts, i) => V.norm(V.sub(pts[Math.min(i + 1, pts.length - 1)], pts[Math.max(i - 1, 0)]));
+  K.pipe = function (pts, r, o = {}) { if (this.lod === 2 && !o.far) return this; const k = this, g = this.g; k.mat(o.role || 'steel'); g.tube(pts, r, { sides: k.n(o.sides || 8), caps: true });
+    if (k.mid && o.flange !== false) { const at = [0, pts.length - 1, ...(o.joints || [])]; for (const i of at) { const d = dirAt(pts, i), e = i === 0 ? 1 : i === pts.length - 1 ? -1 : 0, c = V.mad(pts[i], d, e * r * 0.6); k.mat('joint'); g.tube([V.mad(c, d, -r * 0.3), V.mad(c, d, r * 0.3)], r * 1.75, { sides: k.n(10), caps: true });
+        if (k.fine) k.along(V.mad(c, d, r * 0.3), d, () => k.bolts('y', [0, 0, 0], r * 1.36, 6, r * 0.2, { h: r * 0.3 })); } }
+    return this; };
+  K.hose = function (pts, r, o = {}) { if (!this.mid) return this; const k = this, g = this.g; k.mat('rubber'); g.tube(pts, r, { sides: k.fine ? 7 : 5 });
+    if (k.fine) { k.mat('steel'); for (const i of [0, pts.length - 1]) { const d = dirAt(pts, i), s = i ? -1 : 1; g.tube([pts[i], V.mad(pts[i], d, s * r * 3.2)], r * 1.4, { sides: 6, caps: true }); g.tube([V.mad(pts[i], d, s * r * 3.2), V.mad(pts[i], d, s * r * 4.4)], r * 1.15, { sides: 6 }); }
+      for (const i of o.clips || []) { const d = dirAt(pts, i); g.tube([V.mad(pts[i], d, -r * 0.7), V.mad(pts[i], d, r * 0.7)], r * 1.5, { sides: 6, caps: true }); } }
+    return this; };
+  K.rivets = function (a, b, n, size, nrm, o = {}) { if (!this.fine) return this; const g = this.g; this.mat(o.role || 'steel'); const d = V.norm(nrm); for (let i = 0; i < n; i++) { const p = V.lerp(a, b, (i + 0.5) / n); g.tube([V.mad(p, d, -size * 0.2), V.mad(p, d, size * 0.55)], [size, size * 0.72], { sides: 5, caps: true }); } return this; };
+  K.hatch = function (c, nrm, w, h, o = {}) { if (this.lod === 2) return this; const k = this, t = o.t || Math.min(w, h) * 0.07;
+    return k.along(c, nrm, (g) => { k.mat(o.role || 'frame'); g.box(0, t * 0.5, 0, w, t, h, { soft: 0.2 }); if (!k.fine) return;
+      k.mat('steel'); const nx = Math.max(2, Math.round(w / (t * 5))), nz = Math.max(2, Math.round(h / (t * 5))); for (let i = 0; i <= nx; i++) for (const sz of [-1, 1]) g.tube([[(i / nx - 0.5) * w * 0.88, t, sz * h * 0.44], [(i / nx - 0.5) * w * 0.88, t * 1.5, sz * h * 0.44]], t * 0.36, { sides: 5, caps: true });
+      for (let j = 1; j < nz; j++) for (const sx of [-1, 1]) g.tube([[sx * w * 0.44, t, (j / nz - 0.5) * h * 0.88], [sx * w * 0.44, t * 1.5, (j / nz - 0.5) * h * 0.88]], t * 0.36, { sides: 5, caps: true });
+      g.tube([[-w * 0.16, t, 0], [-w * 0.16, t * 2.6, 0], [w * 0.16, t * 2.6, 0], [w * 0.16, t, 0]], t * 0.3, { sides: 5 });                          // the handle
+      k.mat('joint'); for (const sx of [-1, 1]) g.tube([[sx * w * 0.3 - w * 0.08, t * 0.9, h * 0.52], [sx * w * 0.3 + w * 0.08, t * 0.9, h * 0.52]], t * 0.55, { sides: 6, caps: true }); }, o.up); };
+  K.grille = function (c, nrm, w, h, o = {}) { if (this.lod === 2) return this; const k = this, t = o.t || Math.min(w, h) * 0.12, n = k.fine ? o.slats || Math.max(4, Math.round(h / (t * 0.9))) : 3;
+    return k.along(c, nrm, (g) => { k.mat('dark'); g.box(0, t * 0.2, 0, w, t * 0.4, h, { soft: 0.1 }); k.mat(o.role || 'frame'); for (const s of [-1, 1]) { g.box(s * w * 0.5, t * 0.5, 0, t * 0.5, t, h + t * 0.5, { soft: 0.2 }); g.box(0, t * 0.5, s * h * 0.5, w + t * 0.5, t, t * 0.5, { soft: 0.2 }); }
+      for (let i = 0; i < n; i++) { g.push(new T.Matrix4().makeTranslation(0, t * 0.62, ((i + 0.5) / n - 0.5) * h * 0.94).multiply(new T.Matrix4().makeRotationX(0.6))); g.box(0, 0, 0, w * 0.96, t * 0.12, (h / n) * 0.8, {}); g.pop(); } }, o.up); };
+  K.tank = function (a, b, r, o = {}) { const k = this, L = V.len(V.sub(b, a)), e = Math.min(r * 0.8, L * 0.3);
+    return k.along(a, V.sub(b, a), (g) => { k.mat(o.role || 'frame'); g.lathe(0, 0, [[r * 0.06, 0], [r * 0.6, e * 0.16], [r * 0.92, e * 0.52], [r, e], [r, L - e], [r * 0.92, L - e * 0.52], [r * 0.6, L - e * 0.16], [r * 0.06, L]], { sides: k.n(o.sides || 14) });
+      if (k.mid) { k.mat('joint'); const ns = o.straps === undefined ? 2 : o.straps; for (let i = 0; i < ns; i++) { const y = e + ((L - 2 * e) * (i + 0.5)) / ns; g.lathe(0, 0, [[r * 1.035, y - r * 0.11], [r * 1.06, y], [r * 1.035, y + r * 0.11]], { sides: k.n(14) }); }
+        k.mat('steel'); g.tube([[0, L - e * 0.1, 0], [0, L + r * 0.3, 0]], r * 0.16, { sides: 6, caps: true }); g.tube([[0, L + r * 0.18, 0], [r * 0.5, L + r * 0.18, 0]], r * 0.09, { sides: 5, caps: true }); }
+      if (k.fine && o.gauge !== false) k.gauge([0, L * 0.5, r * 1.0], [0, 0, 1], r * 0.26); }, o.up); };
+  K.gauge = function (c, nrm, r) { if (!this.fine) return this; const k = this; return k.along(c, nrm, (g) => { k.mat('steel'); g.tube([[0, 0, 0], [0, r * 0.5, 0]], r, { sides: 10, caps: true }); g.mat('ceramic', { tint: '#d9d6cc' }); g.tube([[0, r * 0.5, 0], [0, r * 0.56, 0]], r * 0.8, { sides: 10, caps: true }); k.mat('dark'); g.box(r * 0.2, r * 0.58, r * 0.2, r * 0.5, r * 0.03, r * 0.07, {}); }); };
+  K.jbox = function (c, nrm, w, h, d, o = {}) { if (this.lod === 2) return this; const k = this;
+    return k.along(c, nrm, (g) => { k.mat(o.role || 'dark'); g.box(0, d * 0.5, 0, w, d, h, { soft: 0.15 }); k.mat('frame'); g.box(0, d, 0, w * 1.07, d * 0.14, h * 1.07, { soft: 0.2 });
+      if (k.fine) { k.mat('steel'); for (const sx of [-1, 1]) for (const sz of [-1, 1]) g.tube([[sx * w * 0.42, d * 1.05, sz * h * 0.42], [sx * w * 0.42, d * 1.18, sz * h * 0.42]], Math.min(w, h) * 0.05, { sides: 5, caps: true });
+        const n = o.glands === undefined ? 2 : o.glands; for (let i = 0; i < n; i++) { const x = ((i + 0.5) / n - 0.5) * w * 0.7; g.tube([[x, d * 0.5, -h * 0.5], [x, d * 0.5, -h * 0.5 - d * 0.5]], d * 0.2, { sides: 6, caps: true }); } } }, o.up); };
+  K.ladder = function (a, b, w, nrm, o = {}) { if (this.lod === 2) return this; const k = this, g = this.g, d = V.sub(b, a), L = V.len(d), y = V.norm(d), n3 = V.norm(nrm), side = V.norm(V.cross(y, n3)), r = o.r || w * 0.06, off = o.off === undefined ? w * 0.35 : o.off;
+    k.mat(o.role || 'frame'); const P = (t, s) => V.mad(V.mad(V.mad(a, y, t), side, s * w * 0.5), n3, off); for (const s of [-1, 1]) g.tube([P(0, s), P(L, s)], r, { sides: 5, caps: true });
+    const step = (o.step || w * 0.75) * (k.fine ? 1 : 3); for (let t = step * 0.5; t < L; t += step) g.tube([P(t, -1), P(t, 1)], r * 0.8, { sides: 4 });
+    for (let t = L * 0.08; t <= L; t += Math.max(L * 0.42, w * 3)) for (const s of [-1, 1]) g.tube([P(t, s), V.mad(P(t, s), n3, -off)], r * 0.8, { sides: 4 }); return this; };
+  K.rail = function (pts, h, up, o = {}) { if (this.lod === 2) return this; const k = this, g = this.g, u = V.norm(up || [0, 1, 0]), r = o.r || h * 0.035; k.mat(o.role || 'frame'); g.tube(pts.map((p) => V.mad(p, u, h)), r, { sides: 5, caps: true }); if (k.fine) g.tube(pts.map((p) => V.mad(p, u, h * 0.5)), r * 0.75, { sides: 4 });
+    for (const p of pts) g.tube([p, V.mad(p, u, h)], r, { sides: 5 }); return this; };
+  K.fins = function (c, dir, n, w, h, pitch, o = {}) { if (this.lod === 2) return this; const k = this, m = k.fine ? n : Math.ceil(n / 3), pt = (pitch * n) / m;
+    return k.along(c, dir, (g) => { k.mat(o.role || 'steel'); for (let i = 0; i < m; i++) g.box(0, (i + 0.5) * pt, 0, w, pt * (k.fine ? 0.34 : 0.5), h, {}); k.mat('dark'); g.box(0, pitch * n * 0.5, 0, w * 0.6, pitch * n, h * 0.6, {}); }, o.up); };
+  K.boot = function (p, dir, r, len, n = 5) { if (this.lod === 2) return this; const k = this;
+    return k.along(p, dir, (g) => { k.mat('rubber'); if (!k.fine) { g.tube([[0, 0, 0], [0, len, 0]], r * 1.2, { sides: 6 }); return; } const prof = []; for (let i = 0; i <= n; i++) { prof.push([r * 1.02, (i / n) * len]); if (i < n) prof.push([r * 1.38, ((i + 0.5) / n) * len]); } g.lathe(0, 0, prof, { sides: 10 }); }); };
+  K.stripes = function (c, nrm, w, h, n, o = {}) { if (this.lod === 2) return this; const k = this, t = o.t || h * 0.04;
+    return k.along(c, nrm, (g) => { for (let i = 0; i < n; i++) { g.mat('paintmetal', { tint: i % 2 ? '#24262a' : '#b89a2e', seed: 40 + i }); g.box(((i + 0.5) / n - 0.5) * w, t * 0.5, 0, (w / n) * 1.0, t, h, {}); } }, o.up); };
+  K.stack = function (a, b, r, o = {}) { const k = this, g = this.g, d = V.norm(V.sub(b, a)); k.mat(o.role || 'rust'); g.tube([a, b], r, { sides: k.n(10), caps: true }); if (k.mid) { k.mat('joint'); g.tube([V.mad(a, d, r * 0.4), V.mad(a, d, r * 0.9)], r * 1.3, { sides: k.n(10), caps: true }); g.tube([V.mad(b, d, -r * 0.5), b], r * 1.14, { sides: k.n(10) });
+      k.mat('dark'); k.along(V.mad(b, d, r * 0.5), d, () => { g.lathe(0, 0, [[r * 1.5, 0], [r * 0.2, r * 0.7]], { sides: k.n(10) }); for (let i = 0; i < 3; i++) { const an = (i / 3) * TAU; g.tube([[Math.cos(an) * r * 0.9, -r * 0.5, Math.sin(an) * r * 0.9], [Math.cos(an) * r * 1.1, r * 0.1, Math.sin(an) * r * 1.1]], r * 0.07, { sides: 4 }); } }); } return this; };
+  K.dish = function (c, dir, r, o = {}) { if (this.lod === 2) return this; const k = this; return k.along(c, dir, (g) => { k.mat('frame'); g.tube([[0, 0, 0], [0, r * 0.9, 0]], r * 0.09, { sides: 6 }); g.mat('ceramic', { tint: '#cfd0cb' }); g.lathe(0, 0, [[r * 0.1, r * 0.9], [r * 0.6, r * 1.0], [r * 0.9, r * 1.22], [r, r * 1.45]], { sides: k.n(14) }); k.mat('dark'); g.tube([[0, r * 0.95, 0], [0, r * 1.7, 0]], r * 0.05, { sides: 4 }); g.blob(0, r * 1.7, 0, r * 0.12, { amp: 0, seg: 6, rings: 4 }); }, o.up); };
+
+  // ── what the stock legs carry ───────────────────────────────────────────────────────────────────────────────────
+  // a pin's ends: a lock plate bolted across each, a grease nipple in its middle
+  K.fitPin = function (l, y, z) { if (!this.fine) return this; const k = this, g = this.g, w = l.width, d = l.drum; for (const sx of [-1, 1]) { k.mat('frame'); g.box(sx * w * 0.735, y, z, w * 0.025, d * 0.14, d * 0.56, { soft: 0.2 }); k.mat('steel'); g.tube([[sx * w * 0.72, y, z], [sx * w * 0.8, y, z]], d * 0.045, { sides: 6, caps: true }); g.tube([[sx * w * 0.8, y, z], [sx * w * 0.83, y, z]], d * 0.028, { sides: 5, caps: true }); for (const sz of [-1, 1]) g.tube([[sx * w * 0.74, y, z + sz * d * 0.23], [sx * w * 0.775, y, z + sz * d * 0.23]], d * 0.03, { sides: 5, caps: true }); } return this; };
+  // a segment: conduit and a junction box on the spar's side; on a girder, lacing between the flanges, rivet rows and what
+  // is left of its warning bars; on a shell, an inspection hatch and louvres in the front cover, fasteners along it
+  K.fitSegment = function (l, i, q) { const k = this, g = this.g, w = l.width, d = l.drum, { L, t0, t1, sd, sw, style, last, taper } = q; if (k.lod === 2) return this;
+    const sideX = (style === 'shell' ? sw * 0.5 : w * 0.33) + d * 0.02;
+    // a conduit down one side with a box half way, a sensor at the hinge end
+    k.pipe([[sideX + d * 0.05, t0 + L * 0.06, d * 0.12], [sideX + d * 0.05, t1 - L * 0.03, d * 0.1]], d * 0.032, { flange: false, sides: 6 });
+    k.jbox([sideX, L * 0.46, d * 0.08], [1, 0, 0], d * 0.34, d * 0.5, d * 0.16, { up: [0, 1, 0], glands: 2 });
+    if (k.fine) { k.mat('steel'); for (const y of [t0 + L * 0.16, L * 0.3, L * 0.62, t1 - L * 0.12]) g.box(sideX + d * 0.03, y, d * 0.11, d * 0.05, d * 0.05, d * 0.12, {}); k.mat('dark'); g.box(-sideX - d * 0.04, t0 + d * 0.3, 0, d * 0.1, d * 0.3, d * 0.22, { soft: 0.3 }); k.hose([[-sideX - d * 0.06, t0 + d * 0.45, 0], [-sideX - d * 0.14, t0 + d * 0.9, -d * 0.1], [-sideX - d * 0.05, t0 + d * 1.5, -d * 0.2]], d * 0.022); }
+    if (style === 'girder') { const zf = (sd * 0.5 * (1 + taper)) / 2;
+      // lattice lacing on both open sides
+      k.mat('frame'); const nl = Math.max(2, Math.round((t1 - t0) / (d * 1.5))), st = (t1 - t0) / nl; for (const sx of [-1, 1]) for (let j = 0; j < nl; j++) { const y0 = t0 + j * st, f = j % 2 ? 1 : -1; g.beam([sx * w * 0.3, y0 + st * 0.08, -f * zf * 0.9], [sx * w * 0.3, y0 + st * 0.92, f * zf * 0.9], d * 0.05, d * 0.09, { caps: false }); }
+      const nr = Math.max(6, Math.round((t1 - t0) / (d * 0.3))); for (const sz of [-1, 1]) for (const sx of [-1, 1]) k.rivets([sx * w * 0.28, t0 + d * 0.1, sz * (zf + d * 0.036)], [sx * w * 0.28, t1 - d * 0.1, sz * (zf + d * 0.036)], nr, d * 0.02, [0, 0, sz]);
+      if (last) k.stripes([0, t1 - d * 0.75, zf + d * 0.04], [0, 0, 1], w * 0.62, d * 0.55, 5, { up: [0, 1, 0] });
+      else if (k.fine) { k.mat('frame'); g.box(0, L * 0.5, zf + d * 0.05, w * 0.4, d * 0.34, d * 0.025, { soft: 0.2 }); k.rivets([-w * 0.16, L * 0.5 + d * 0.13, zf + d * 0.065], [w * 0.16, L * 0.5 + d * 0.13, zf + d * 0.065], 3, d * 0.014, [0, 0, 1]); k.rivets([-w * 0.16, L * 0.5 - d * 0.13, zf + d * 0.065], [w * 0.16, L * 0.5 - d * 0.13, zf + d * 0.065], 3, d * 0.014, [0, 0, 1]); } }      // a maker's plate
+    else { const bulge = 0.5 + 0.12 * (1 - i / l.n), zc = d * 0.1 + d * bulge * 0.955, a = t0 + L * 0.06, b = t1 - L * 0.05;
+      k.hatch([0, a + (b - a) * 0.3, zc], [0, 0, 1], w * 0.5, Math.min(L * 0.16, w * 0.9), { up: [0, 1, 0], role: 'joint' });
+      k.grille([0, a + (b - a) * 0.62, zc * 0.985], [0, 0, 1], w * 0.42, Math.min(L * 0.1, w * 0.5), { up: [0, 1, 0], role: 'dark' });
+      if (k.fine) { for (const sx of [-1, 1]) k.rivets([sx * w * 0.36, a + L * 0.12, zc * 0.86], [sx * w * 0.36 * (last ? 0.84 : 0.94), b - L * 0.14, zc * 0.86 * (last ? 0.8 : 0.94)], Math.max(5, Math.round(L / (d * 0.5))), d * 0.016, [sx * 0.5, 0, 0.86]);
+        k.mat(k.pal.accent ? 'accent' : 'frame'); g.box(0, b - L * 0.2, -(d * 0.1 + d * bulge * 0.93 * (last ? 0.78 : 0.9)), w * 0.44, L * 0.035, d * 0.02, {}); }
+      if (last) k.stripes([0, t1 - d * 0.4, d * 0.1 + d * 0.3], [0, 0, 1], w * 0.5, d * 0.3, 5, { up: [0, 1, 0] }); }
+    return this; };
+  // a cylinder: tie rods between its end caps, a valve block with a hard line to each port and a hose away, a wiper boot at the gland
+  K.fitCylinder = function (l, an, style) { const k = this, g = this.g, r = an.r, top = r * 1.1 + an.Bl; if (k.lod === 2) return this;
+    k.mat('steel'); for (let i = 0; i < 4; i++) { const a = TAU * (i / 4 + 0.125), x = Math.cos(a) * r * 1.07, z = Math.sin(a) * r * 1.07; g.tube([[x, r * 1.3, z], [x, top + r * 0.2, z]], r * 0.075, { sides: 5 }); if (k.fine) for (const y of [r * 1.25, top + r * 0.22]) g.tube([[x, y - r * 0.07, z], [x, y + r * 0.07, z]], r * 0.13, { sides: 6, caps: true }); }
+    k.mat('joint'); g.box(0, r * 2.3, r * 1.2, r * 0.95, r * 1.2, r * 0.6, { soft: 0.25 });
+    if (k.fine) { k.mat('steel'); g.tube([[0, r * 2.9, r * 1.32], [0, top - r * 0.9, r * 1.3], [0, top - r * 0.25, r * 1.12]], r * 0.085, { sides: 5 }); g.tube([[r * 0.3, r * 1.75, r * 1.3], [r * 0.3, r * 1.45, r * 1.1]], r * 0.085, { sides: 5 });
+      for (const sx of [-1, 1]) g.tube([[sx * r * 0.28, r * 2.3, r * 1.5], [sx * r * 0.28, r * 2.3, r * 1.68]], r * 0.13, { sides: 6, caps: true });
+      k.hose([[-r * 0.28, r * 2.3, r * 1.62], [-r * 0.5, r * 1.6, r * 2.3], [-r * 0.4, r * 0.4, r * 2.0]], r * 0.11); k.hose([[r * 0.28, r * 2.3, r * 1.62], [r * 0.62, r * 1.5, r * 2.2], [r * 0.5, r * 0.3, r * 1.8]], r * 0.095);
+      k.gauge([r * 0.5, r * 2.5, r * 1.2], [1, 0, 0], r * 0.2); }
+    k.boot([0, top + r * 0.12, 0], [0, 1, 0], r * 0.56, r * 0.7, 3); return this; };
+  // a foot: a gaiter round the ball; a toe: grousers under it, a wear plate on top
+  K.fitFoot = function (l) { if (this.lod === 2) return this; const k = this, g = this.g, b = l.ball; k.mat('rubber'); g.lathe(0, 0, [[b * 0.7, b * 0.12], [b * 0.9, -b * 0.02], [b * 0.74, -b * 0.14], [b * 0.92, -b * 0.26]], { sides: k.n(14) }); if (k.fine) { k.mat('steel'); k.bolts('y', [0, -b * 0.42, 0], b * 0.98, 10, b * 0.04, { dir: 1, h: b * 0.06 }); } return this; };
+  K.fitToe = function (l, LL, style) { if (this.lod === 2) return this; const k = this, g = this.g, b = l.ball; k.mat('steel'); for (const f of [0.34, 0.56, 0.78]) g.box(0, LL * f, -b * 0.4, b * (0.56 - f * 0.2), b * 0.07, b * 0.1, {});
+    if (k.fine) { k.mat('joint'); g.box(0, LL * 0.3, b * 0.31, b * 0.4, LL * 0.22, b * 0.04, { soft: 0.2 }); k.rivets([-b * 0.14, LL * 0.22, b * 0.34], [-b * 0.14, LL * 0.38, b * 0.34], 2, b * 0.03, [0, 0, 1]); k.rivets([b * 0.14, LL * 0.22, b * 0.34], [b * 0.14, LL * 0.38, b * 0.34], 2, b * 0.03, [0, 0, 1]); } return this; };
+  // a hip: lifting eyes and a slew sensor on the bearing
+  K.fitHip = function (l) { if (!this.fine) return this; const k = this, g = this.g, w = l.width, d = l.drum; k.mat('dark'); const zz = l.kind === 'insect' ? d * 0.6 : w * 1.0; g.box(d * 0.5, 0, zz * 0.6, d * 0.2, d * 0.24, d * 0.3, { soft: 0.3 }); k.hose([[d * 0.56, 0.02 * d, zz * 0.6], [d * 0.8, d * 0.3, zz * 0.3], [d * 0.62, d * 0.62, 0]], d * 0.025); return this; };
+  // a neck link: bolts on its drum, cable clips, a small box
+  K.fitNeck = function (L, w2) { if (!this.fine) return this; const k = this, g = this.g; k.mat('steel'); for (const sx of [-1, 1]) k.bolts('x', [sx * w2 * 0.5, 0, 0], w2 * 0.22, 8, w2 * 0.022, { dir: sx }); for (const y of [L * 0.2, L * 0.5, L * 0.8]) g.box(w2 * 0.21, y, -w2 * 0.39, w2 * 0.1, w2 * 0.05, w2 * 0.08, {});
+    k.jbox([-w2 * 0.44, L * 0.5, w2 * 0.22], [-1, 0, 0], w2 * 0.2, w2 * 0.32, w2 * 0.09, { up: [0, 1, 0], glands: 1 }); k.hose([[-w2 * 0.22, 0, -w2 * 0.36], [-w2 * 0.25, L * 0.5, -w2 * 0.4], [-w2 * 0.22, L, -w2 * 0.36]], w2 * 0.028, { clips: [1] }); return this; };
 }
 
 
@@ -6165,8 +6290,9 @@ void main(){
   // shells comes through as rust that has run down from seams and fittings — long streaks, laid in the machine's own space
   if (Q.y > 0.0 && (flags & 64) == 0) { float age = smoothstep(0.93, 0.5, vCol.a); if (age > 0.0) {
       vec4 r1 = texture(uNoise, vec2((SP.x + SP.z * 0.8) * 0.23, SP.y * 0.034) + 0.37), r2 = texture(uNoise, SP.xz * 0.41 + SP.y * 0.33);
-      float rust = smoothstep(0.50, 0.70, r1.r * 0.62 + r2.g * 0.38 + age * 0.34 - 0.12) * age;
-      albedo = mix(albedo, vec3(0.20, 0.088, 0.04) * (0.65 + 0.7 * r2.b), rust * 0.86); rough = mix(rough, 0.92, rust); metal *= 1.0 - rust * 0.85; } }
+      float fineR = texture(uNoise, SP.xz * 2.9 + SP.y * 2.3).b;      // the edge of a rust patch is ragged at the width of a finger
+      float rust = smoothstep(0.545, 0.635, r1.r * 0.62 + r2.g * 0.20 + fineR * 0.18 + age * 0.22 - 0.06) * smoothstep(0.0, 0.3, age);      // streaks first, patches only where it is oldest
+      albedo = mix(albedo, vec3(0.15, 0.062, 0.03) * (0.65 + 0.7 * r2.b), rust * 0.9); rough = mix(rough, 0.92, rust); metal *= 1.0 - rust * 0.85; } }
 #endif
   // old plaster lets go: where it is low, creased or simply unlucky a patch has fallen and the brick behind shows
   if (li == PLASTER_LAYER) {
@@ -7293,7 +7419,7 @@ void main(){
 {
   const A = (LR.audio = { ready: false, muted: false, volume: 0.8, reverb: true, ctx: null, errors: 0,
     mix: { wind: 1, birds: 1, insects: 1, rain: 1, world: 1, steps: 1, thunder: 1 } });
-  const OFF = !!LR.RENDER || LR.off.has('audio');
+  const OFF = (!!LR.RENDER && !LR.q('sound', '')) || LR.off.has('audio');      // a render is silent — unless it is the sound that is being rendered (?sound=1: film.mjs --sound)
   const win = typeof window !== 'undefined' ? window : {};
   const AC = win.AudioContext || win.webkitAudioContext, OAC = win.OfflineAudioContext || win.webkitOfflineAudioContext;
   const { clamp, sm, lerp } = LR, sat = (x) => (x < 0 ? 0 : x > 1 ? 1 : x), TAU = Math.PI * 2;
@@ -8249,8 +8375,9 @@ V.machines = () => {
   M.spawn('crane', { name: '두루미 1', route: 'round', offset: 0, halts: [{ at: 0.179, hold: 18, move: 'survey' }, { at: 0.62, hold: 12 }] });
   M.spawn('crane', { name: '두루미 2', route: 'round', offset: 330, halts: [{ at: 0.179, hold: 18, move: 'survey' }, { at: 0.62, hold: 12 }] });
   for (let i = 0; i < 3; i++) M.spawn('porter', { name: '등짐 ' + (i + 1), route: 'bank', offset: i * 42, halts: [{ at: 0.45, hold: 16, move: 'kneel' }, { at: 0.9, hold: 8 }] });
-  // five kites in a loose skein: each a little behind, beside and above the one before, each beating in its own time
-  [[0, 0, 0], [1.2, 8, 1.5], [1.9, -9, 2.5], [3.1, 16, 4], [3.6, -18, 3]].forEach((q, i) => M.spawn('kite', { name: '솔개 ' + (i + 1), fly: V.sky, offset: -q[0], shift: [q[1], q[2]], phase: i * 0.23 }));
+  // five kites in a string: each two seconds behind the one before, a little to one side and above, each beating in its own time
+  // (closer, or abreast, and their wings cross in the tight turn over the saddle: check.mjs measures every pair)
+  [[0, 0, 0], [2, 5, 2], [4, -5, 3], [6, 5, 4.5], [8, -4, 2.5]].forEach((q, i) => M.spawn('kite', { name: '솔개 ' + (i + 1), fly: V.sky, offset: -q[0], shift: [q[1], q[2]], phase: i * 0.23 }));
   M.spawn('ridge', { name: '마루', route: 'rim', offset: 120, halts: [{ at: 0.3, hold: 34, move: 'call' }] });
 };
 // the gym (scripts/gym.mjs): the land and the machines, nothing else
@@ -8283,7 +8410,27 @@ V.parts = {
       k.mat('joint'); k.ycyl(-1.7, -1.15, 0.6, 0, 0.42, 0.5, { sides: 14 }); k.mat('dark'); k.ball(0.6, -1.95, 0, 0.55, { squash: [1, 0.7, 1] });
       // the counterweight boom: it balances the neck
       k.mat('dark'); g.tube([[-5.6, -0.1, 0], [-7.4, 0.25, 0], [-8.6, 0.42, 0]], [0.36, 0.26, 0.2], { sides: k.n(10), caps: true }); k.mat('rust'); g.box(-8.5, 0.42, 0, 1.1, 0.7, 0.9, { soft: 0.3 }); k.mat('joint'); g.box(-7.2, 0.2, 0, 0.3, 0.8, 0.8, { soft: 0.3 });
-      if (k.fine) { k.mat('rubber'); for (const s of [-1, 1]) g.tube([[4.6, -0.5, s * 0.5], [2.0, -0.95, s * 0.72], [-1.0, -1.0, s * 0.75], [-4.0, -0.8, s * 0.6]], 0.06, { sides: 6 }); }
+      // ── what keeps it walking, bolted on wherever there was room ──
+      // the hydraulic pack under the keel: accumulators either side, the pump and its cooler between, a main along each flank, a line down to every hip
+      for (const s of [-1, 1]) for (const x of [-1.95, 0.4]) k.tank([x, -1.3, s * 0.64], [x + 1.75, -1.3, s * 0.64], 0.24, { role: s < 0 ? 'frame' : 'rust', up: [0, -1, 0] });
+      k.mat('joint'); g.box(-2.5, -1.32, 0, 0.7, 0.46, 0.8, { soft: 0.2 }); k.fins([-1.75, -1.44, 0], [1, 0, 0], 14, 0.26, 0.6, 0.07, { up: [0, 0, 1] });
+      for (const s of [-1, 1]) { k.pipe([[-3.4, -1.0, s * 1.0], [-1.0, -1.1, s * 1.03], [1.6, -1.08, s * 1.0], [3.1, -0.98, s * 0.94]], 0.07, { joints: [1, 2] });
+        k.hose([[3.1, -0.98, s * 0.94], [3.4, -1.5, s * 1.2], [3.25, -1.36, s * 1.6]], 0.05); k.hose([[-3.4, -1.0, s * 1.0], [-3.7, -1.52, s * 1.3], [-3.55, -1.38, s * 1.8]], 0.05); k.hose([[-2.3, -1.1, s * 0.42], [-2.1, -1.5, s * 0.8], [-1.6, -1.12, s * 1.0]], 0.04);
+        // louvres in the keel's flank, a junction box on each hip girder
+        k.grille([0.95, -0.62, s * 1.135], [0, 0, s], 1.3, 0.32, { up: [0, 1, 0] }); k.grille([-1.2, -0.62, s * 1.135], [0, 0, s], 0.9, 0.32, { up: [0, 1, 0] });
+        for (const [x, hz] of [[3.2, 1.5], [-3.5, 1.7]]) k.jbox([x + 0.63, -0.86, s * hz * 0.45], [1, 0, 0], 0.42, 0.3, 0.14, { up: [0, 1, 0], glands: 3 }); }
+      // on the back: service hatches in each shell, a rail along the spine, a ladder up the left flank at the seam
+      k.hatch([-3.4, 1.075, -0.42], [0, 1, 0], 0.9, 0.6, { up: [1, 0, 0], role: 'joint' }); k.hatch([1.15, 1.27, 0.45], [0, 1, 0], 0.8, 0.56, { up: [1, 0, 0], role: 'joint' }); k.hatch([3.5, 1.055, -0.4], [0, 1, 0], 0.9, 0.6, { up: [1, 0, 0], role: 'joint' });
+      for (const pts of [[[-4.7, 1.0, 0.56], [-3.4, 1.07, 0.6], [-2.1, 1.02, 0.58]], [[-1.5, 1.2, 0.68], [0, 1.29, 0.72], [1.6, 1.2, 0.68]], [[2.3, 1.0, 0.56], [3.5, 1.05, 0.6], [4.8, 0.96, 0.52]]]) k.rail(pts, 0.55, [0, 1, 0], { role: 'dark' });
+      k.ladder([-1.85, -1.38, -1.56], [-1.85, 0.72, -1.56], 0.42, [0, 0, -1], { off: 0.16, role: 'dark' });
+      // two stacks at the stern, a dish and two whips amidships, a dome forward
+      k.stack([-4.6, 0.92, -0.5], [-4.78, 1.78, -0.52], 0.11); k.stack([-4.55, 0.94, 0.05], [-4.7, 1.5, 0.05], 0.085);
+      k.dish([-0.95, 1.28, -0.55], [0.25, 1, -0.3], 0.34);
+      if (k.mid) { k.mat('dark'); for (const [x, z, h] of [[-1.25, 0.22, 1.5], [-1.5, -0.1, 1.05]]) g.tube([[x, 1.27, z], [x - 0.08, 1.27 + h, z + 0.03]], [0.022, 0.007], { sides: 5 }); g.mat('ceramic', { tint: '#cfd0cb' }); g.blob(2.9, 1.1, 0.0, 0.2, { amp: 0, squash: [1, 0.6, 1], seg: k.n(10), rings: 5 }); }
+      // the counterweight is slabs on four through bolts
+      if (k.mid) { k.mat('dark'); for (const x of [-8.78, -8.5, -8.22]) g.box(x, 0.42, 0, 0.03, 0.73, 0.93, {}); for (const sy of [-1, 1]) for (const sz of [-1, 1]) k.pipe([[-9.12, 0.42 + sy * 0.24, sz * 0.3], [-7.9, 0.42 + sy * 0.24, sz * 0.3]], 0.035, { flange: false, sides: 6 }); }
+      // a towing eye at the stem
+      if (k.fine) { k.mat('steel'); const R = []; for (let i = 0; i <= 10; i++) { const a = (i / 10) * Math.PI * 2; R.push([5.78 + Math.cos(a) * 0.13, -0.15 + Math.sin(a) * 0.13, 0]); } g.tube(R, 0.03, { sides: 5 }); }
     });
     // running lights low on the keel (amber), a beacon on the tail (red)
     for (const x of [3.9, 1.3, -1.3, -3.9]) for (const s of [-1, 1]) k.lamp('body', { at: [x, -0.42, s * 1.04], dir: [0, -0.25, s], color: [1, 0.55, 0.16], power: 0.5, range: 9, lens: 0.09, glow: 0.5 });
@@ -8298,6 +8445,12 @@ V.parts = {
       k.mat('accent'); k.loft('x', [[0.2, 0.615, 0.625, 0.1, 0, 3], [0.5, 0.612, 0.62, 0.1, 0, 3]], { sides: 14, from: -0.55 * Math.PI, to: 0.55 * Math.PI, caps: false });
       // the great lens in a hood under the brow, two small eyes beside it
       k.mat('joint'); g.push(new THREE.Matrix4().makeRotationZ(-Math.PI / 2 - 0.24)); g.lathe(0.36, 0, [[0.44, -1.52], [0.5, -1.2], [0.46, -0.9]], { sides: k.n(14) }); g.pop();
+      // round the lens a ring of studs; pods, louvres and a hatch; cables back to the neck; the hinge of the bill
+      k.along([1.2, -0.355, 0], [0.97, -0.24, 0], () => { k.mat('steel'); k.bolts('y', [0, 0, 0], 0.475, 12, 0.024, { h: 0.05 }); });
+      for (const s of [-1, 1]) { k.mat('dark'); g.tube([[0.25, -0.02, s * 0.6], [0.72, -0.04, s * 0.64]], 0.105, { sides: k.n(8), caps: true }); k.mat('joint'); g.tube([[0.72, -0.04, s * 0.64], [0.78, -0.04, s * 0.645]], 0.12, { sides: k.n(8), caps: true });
+        k.grille([-0.32, 0.22, s * 0.585], [0, 0.15, s], 0.46, 0.2, { up: [0, 1, 0] }); k.hose([[-0.7, -0.12, s * 0.2], [-1.0, -0.36, s * 0.22], [-1.12, -0.72, s * 0.2]], 0.035); }
+      k.hatch([0.36, 0.703, 0], [0, 1, 0], 0.5, 0.4, { up: [1, 0, 0], role: 'joint' });
+      if (k.mid) { k.mat('dark'); g.box(-0.3, 0.83, 0, 0.5, 0.26, 0.03, { soft: 0.3 }); g.tube([[-0.5, 0.68, 0.3], [-0.62, 1.5, 0.32]], [0.016, 0.006], { sides: 4 }); k.mat('joint'); k.zcyl(-0.27, 0.27, 1.16, -0.06, 0.085, { sides: 8 }); }
     });
     k.lamp('head', { name: 'search', at: [1.22, -0.36, 0], dir: [0.97, -0.24, 0], color: [0.72, 0.9, 1.0], power: 90, cone: 8, range: 170, lens: 0.36, proud: 0.08 });
     for (const s of [-1, 1]) k.lamp('head', { at: [0.95, 0.2, s * 0.5], dir: [0.8, 0, s * 0.6], color: [0.25, 0.85, 1.0], power: 0.8, range: 10, lens: 0.1, glow: 0.7 });
@@ -8314,6 +8467,9 @@ V.parts = {
       k.mat('accent'); k.loft('x', [[-0.12, 0.345, 0.45, 0.085, 0, 3], [0.12, 0.345, 0.45, 0.085, 0, 3]], { sides: 12, from: -0.6 * Math.PI, to: 0.6 * Math.PI, caps: false });
       // the shoulders: a drum either side for the wing to turn on, a spar through the keel between them
       k.mat('joint'); for (const s of [-1, 1]) k.xcyl(0.02, 0.48, 0.22, s * 0.42, 0.16, { sides: 10 }); k.mat('steel'); g.tube([[0.25, 0.22, -0.5], [0.25, 0.22, 0.5]], 0.06, { sides: 6 });
+      // an aerial, louvres either side, two nozzles at the stern, a hatch in the back
+      if (k.mid) { k.mat('dark'); g.box(-0.3, 0.5, 0, 0.42, 0.2, 0.02, { soft: 0.3 }); for (const s of [-1, 1]) { k.grille([0.32, 0.0, s * 0.405], [0, -0.1, s], 0.4, 0.12, { up: [0, 1, 0] }); k.along([-1.52, -0.02, s * 0.1], [-1, 0, 0], (g2) => { k.mat('joint'); g2.lathe(0, 0, [[0.06, 0], [0.095, 0.16], [0.075, 0.24]], { sides: k.n(8) }); }); }
+        k.hatch([-0.7, 0.385, 0], [0, 1, 0], 0.36, 0.26, { up: [1, 0, 0], role: 'joint' }); k.rivets([-1.1, 0.3, 0.2], [1.0, 0.33, 0.24], 12, 0.012, [0, 0.8, 0.6]); k.rivets([-1.1, 0.3, -0.2], [1.0, 0.33, -0.24], 12, 0.012, [0, 0.8, -0.6]); }
       // feet it never uses, folded under
       if (k.mid) { k.mat('dark'); for (const s of [-1, 1]) { g.tube([[-0.2, -0.26, s * 0.2], [-0.7, -0.42, s * 0.24], [-1.0, -0.36, s * 0.24]], 0.04, { sides: 5 }); g.box(-1.08, -0.37, s * 0.24, 0.22, 0.05, 0.16, { soft: 0.3 }); } }
     });
@@ -8321,7 +8477,7 @@ V.parts = {
       k.bone(n1, (g) => { k.mat('joint'); k.xcyl(-0.24, 0.24, 0, 0, 0.15, { sides: 10 }); k.mat('dark'); g.tube([[0.12, 0.1, 0], [0.16, 2.1, 0]], [0.075, 0.055], { sides: k.n(8), caps: true });
         // the inner wing: a panel behind the spar, ribs under it
         k.mat('shell'); g.poly([[0.2, 0.16, up * 0.03], [0.24, 2.08, up * 0.03], [-0.95, 2.02, up * 0.0], [-1.1, 0.22, up * -0.02]], { hint: [0, 0, up], two: true }); k.mat('accent'); g.poly([[0.21, 1.5, up * 0.035], [0.235, 1.85, up * 0.035], [-0.96, 1.8, up * 0.005], [-0.99, 1.46, up * 0.004]], { hint: [0, 0, up], two: true });
-        if (k.mid) { k.mat('dark'); for (const y of [0.5, 1.1, 1.7]) g.box(-0.4, y, -up * 0.03, 1.25, 0.035, 0.05, {}); } k.mat('joint'); k.xcyl(-0.2, 0.3, 2.1, 0, 0.11, { sides: 8 }); });
+        if (k.mid) { k.mat('dark'); for (const y of [0.5, 1.1, 1.7]) g.box(-0.4, y, -up * 0.03, 1.25, 0.035, 0.05, {}); } k.mat('joint'); k.xcyl(-0.2, 0.3, 2.1, 0, 0.11, { sides: 8 }); if (k.mid) { k.mat('joint'); g.box(-0.3, 0.26, up * 0.06, 0.3, 0.3, 0.08, { soft: 0.2 }); k.pipe([[-0.3, 0.4, up * 0.085], [-0.52, 1.62, up * 0.06]], 0.018, { flange: false, sides: 5 }); k.rivets([0.12, 0.3, up * 0.045], [0.16, 2.0, up * 0.045], 10, 0.014, [0, 0, up]); k.rivets([-0.9, 0.34, up * 0.02], [-0.86, 1.96, up * 0.025], 10, 0.012, [0, 0, up]); k.hose([[0.0, 0.1, -up * 0.06], [-0.05, 1.0, -up * 0.07], [0.0, 2.0, -up * 0.05]], 0.016); } });
       k.bone(n2, (g) => { k.mat('dark'); g.tube([[0.14, 0, 0], [0.02, 2.2, 0]], [0.05, 0.022], { sides: k.n(7), caps: true });
         // five slats for primaries, fanned from the wrist, each its own blade
         const N = k.lod === 2 ? 3 : 5; for (let i = 0; i < N; i++) { const f = i / (N - 1), a = 0.1 + f * 1.15, len = 2.35 - f * 0.75, y0 = 0.1 + (1 - f) * 0.5, c = Math.cos(a), sn = Math.sin(a), ax = [-sn, c], px = [c, sn], w = 0.2;
@@ -8350,13 +8506,35 @@ V.parts = {
       k.mat('dark'); g.tube([[-3.0, 3.95, -0.4], [0.2, 3.95, -0.4]], 0.6, { sides: k.n(12), caps: true }); g.mat('corrugated', { tint: '#a8584a' }); g.box(1.4, 3.9, 0.3, 1.9, 1.2, 1.6, { soft: 0.05 });
       if (k.mid) { k.mat('rubber'); for (const x of [-2.6, -0.6, 1.5]) g.tube([[x, 0.65, -1.5], [x, 3.4, -1.3], [x, 3.6, 0], [x, 3.4, 1.3], [x, 0.65, 1.5]], 0.035, { sides: 5 }); }
       // moss and what grows in it, on everything that faces up
-      g.mat('moss', { flags: LR.FLAG.SWAY, weight: 0.3 }); for (const [x, y, z, r] of [[-2.2, 3.35, 0.6, 0.5], [0.9, 3.4, -0.7, 0.42], [1.6, 4.55, 0.2, 0.4], [-3.4, 0.75, 0.9, 0.36], [3.2, 0.75, -1.0, 0.4]]) g.blob(x, y, z, r, { squash: [1.3, 0.5, 1.2], seg: k.n(8), rings: 4, seed: x * 9 });
+      g.mat('moss', { tint: '#5e6b4e', flags: LR.FLAG.SWAY, weight: 0.3 }); for (const [x, y, z, r] of [[-2.2, 3.35, 0.6, 0.5], [0.9, 3.4, -0.7, 0.42], [1.6, 4.55, 0.2, 0.4], [-3.4, 0.75, 0.9, 0.36], [3.2, 0.75, -1.0, 0.4]]) g.blob(x, y, z, r, { squash: [1.3, 0.5, 1.2], seg: k.n(8), rings: 4, seed: x * 9 });
       k.mat('dark'); g.box(-2.6, 5.5, 0.6, 0.12, 0.6, 0.12);
+      // ── the power pack behind the cab: an engine block, its radiator behind louvres, an air filter, a stack ──
+      k.mat('dark'); g.box(3.55, 1.2, -0.55, 1.1, 1.05, 1.0, { soft: 0.12 }); k.fins([3.0, 1.2, 0.18], [0, 0, 1], 12, 0.9, 0.9, 0.06, { up: [0, 1, 0] }); k.grille([3.0, 1.2, 0.96], [0, 0, 1], 0.96, 0.96, { up: [0, 1, 0], role: 'rust' });
+      k.stack([3.9, 1.7, -0.95], [3.9, 3.2, -1.0], 0.1); k.tank([3.2, 1.95, -0.95], [3.2, 1.95, -0.15], 0.21, { role: 'rust', straps: 1, gauge: false });
+      k.hose([[3.2, 1.95, -0.1], [3.3, 1.9, 0.1], [3.4, 1.6, 0.2]], 0.06); k.jbox([4.12, 1.3, -0.4], [1, 0, 0], 0.5, 0.6, 0.12, { up: [0, 1, 0], glands: 3 });
+      // under the bed: the oil tank and a smaller one, a main along each side with a line down to every hip
+      k.tank([-2.6, -0.52, 0], [-0.62, -0.52, 0], 0.36, { role: 'rust', up: [0, -1, 0] }); k.tank([0.7, -0.5, 0.5], [2.6, -0.5, 0.5], 0.26, { role: 'frame', up: [0, -1, 0] });
+      for (const s of [-1, 1]) { k.pipe([[-4.2, 0.2, s * 1.42], [-1.8, 0.2, s * 1.45], [1.8, 0.2, s * 1.45], [4.2, 0.2, s * 1.42]], 0.06, { joints: [1, 2] });
+        for (const x of [3.6, 0, -3.6]) k.hose([[x + 0.55, 0.2, s * 1.45], [x + 0.6, -0.12, s * 1.72], [x + 0.32, -0.36, s * 1.78]], 0.045);
+        k.rivets([-4.2, 0.645, s * 1.48], [4.2, 0.645, s * 1.48], 42, 0.022, [0, 1, 0]);
+        // lockers hung under the bed's edge
+        for (const x of [1.8, -1.8]) { k.mat('rust'); g.box(x, 0.02, s * 1.64, 0.95, 0.52, 0.3, { soft: 0.1 }); k.hatch([x, 0.02, s * 1.79], [0, 0, s], 0.82, 0.4, { up: [0, 1, 0] }); } }
+      // at the stern: two drums, a winch, marker bars; a ladder up the load frame; turnbuckles in the lashings; the container's door gear
+      for (const z of [-0.95, -0.35]) k.tank([-4.0, 0.66, z], [-4.0, 1.52, z], 0.27, { role: 'rust', straps: 2, gauge: false });
+      k.mat('joint'); k.zcyl(0.25, 1.05, -4.0, 1.0, 0.2, { sides: 12 }); for (const z of [0.25, 1.05]) k.zcyl(z - 0.03, z + 0.03, -4.0, 1.0, 0.34, { sides: 12 }); k.mat('frame'); for (const z of [0.16, 1.14]) g.box(-4.0, 0.85, z, 0.5, 0.42, 0.06, { soft: 0.2 });
+      g.mat('iron', { tint: '#5a5048' }); k.zcyl(0.3, 1.0, -4.0, 1.0, 0.26, { sides: 10 });
+      k.stripes([-4.92, 0.05, 0], [-1, 0, 0], 2.3, 0.3, 7, { up: [0, 1, 0] }); k.stripes([4.83, 0.02, 0], [1, 0, 0], 2.0, 0.24, 7, { up: [0, 1, 0] });
+      k.ladder([-3.96, 0.7, -1.42], [-3.96, 5.1, -1.42], 0.4, [-1, 0, 0], { off: 0.14, role: 'rust' });
+      if (k.mid) { k.mat('steel'); for (const x of [-2.6, -0.6, 1.5]) for (const s of [-1, 1]) g.box(x, 1.7, s * 1.43, 0.09, 0.32, 0.09, { soft: 0.3 }); for (const z of [-0.85, -0.3, 0.3, 0.85]) { g.tube([[-3.54, 0.8, z], [-3.54, 3.2, z]], 0.03, { sides: 5 }); g.box(-3.56, 1.9, z, 0.05, 0.1, 0.22, {}); } }
+      // gussets where the posts meet the bed
+      k.mat('rust'); for (const x of [-3.7, 2.6]) for (const s of [-1, 1]) { g.beam([x + 0.6, 0.7, s * 1.42], [x, 1.5, s * 1.42], 0.08, 0.12, { caps: false }); g.beam([x - 0.6, 0.7, s * 1.42], [x, 1.5, s * 1.42], 0.08, 0.12, { caps: false }); }
     });
     k.bone('radar', (g) => { k.mat('rust'); g.box(0, 0.5, 0, 1.5, 0.4, 0.12, { soft: 0.2 }); k.mat('dark'); g.box(0, 0.2, 0, 0.14, 0.4, 0.14); });
     for (const n of ['chain_L', 'chain_R']) { const e = k.S.extras.find((q) => q.name === n); k.bone(n, (g) => { g.mat('iron', { tint: '#6a5a4c' }); g.tube([[0, 0, 0], [0, e.len, 0]], 0.04, { sides: 5 }); k.mat('rust'); g.box(0, e.len, 0, 0.26, 0.3, 0.16, { soft: 0.3 }); }); }
     k.bone('neck_01', (g) => { k.mat('dark'); g.tube([[0, 0, 0], [0, 0.9, 0]], 0.3, { sides: k.n(10), caps: true }); });
-    k.bone('head', (g) => { k.mat('frame'); k.loft('x', [[-0.4, 0.5, 0.95, 0, 0, 5], [0.5, 0.6, 1.05, 0, 0, 5], [1.25, 0.42, 0.9, -0.1, 0, 4]], { sides: 12 }); k.mat('dark'); g.box(1.22, -0.05, 0, 0.14, 0.34, 1.5, { soft: 0.3 }); k.mat('rust'); g.box(0.4, 0.62, 0, 1.5, 0.08, 2.0, { soft: 0.2 }); });
+    k.bone('head', (g) => { k.mat('frame'); k.loft('x', [[-0.4, 0.5, 0.95, 0, 0, 5], [0.5, 0.6, 1.05, 0, 0, 5], [1.25, 0.42, 0.9, -0.1, 0, 4]], { sides: 12 }); k.mat('dark'); g.box(1.22, -0.05, 0, 0.14, 0.34, 1.5, { soft: 0.3 }); k.mat('rust'); g.box(0.4, 0.62, 0, 1.5, 0.08, 2.0, { soft: 0.2 });
+      k.grille([1.3, -0.05, 0], [1, 0, 0], 0.5, 0.26, { up: [0, 1, 0] }); for (const s of [-1, 1]) { k.along([1.29, -0.05, s * 0.48], [0.96, -0.26, s * 0.08], (g2) => { k.mat('joint'); g2.lathe(0, 0, [[0.19, 0], [0.225, 0.05], [0.19, 0.1]], { sides: k.n(12) }); if (k.fine) { k.mat('steel'); k.bolts('y', [0, 0.05, 0], 0.235, 8, 0.016, { h: 0.04 }); } }); k.hatch([0.4, 0.05, s * 1.045], [0, 0, s], 0.6, 0.5, { up: [0, 1, 0] }); }
+      if (k.mid) { k.mat('dark'); g.box(0.55, 0.74, 0, 0.2, 0.12, 1.4, { soft: 0.3 }); g.tube([[-0.1, 0.66, 0.8], [-0.22, 1.9, 0.86]], [0.02, 0.007], { sides: 4 }); k.rivets([-0.3, 0.665, -0.9], [1.1, 0.665, -0.9], 8, 0.02, [0, 1, 0]); k.rivets([-0.3, 0.665, 0.9], [1.1, 0.665, 0.9], 8, 0.02, [0, 1, 0]); } });
     for (const s of [-1, 1]) k.lamp('head', { name: 'eye', at: [1.3, -0.05, s * 0.48], dir: [0.96, -0.26, s * 0.08], color: [1.0, 0.62, 0.2], power: 22, cone: 14, range: 70, lens: 0.17, proud: 0.02 });
     k.lamp('body', { at: [-4.95, 0.1, 0], dir: [-1, 0, 0], color: [1, 0.12, 0.06], power: 0.8, range: 9, lens: 0.1, glow: 0.8 });
   },
@@ -8379,16 +8557,41 @@ V.parts = {
       // rails round the deck, what hangs under it
       if (k.mid) { g.mat('iron', { tint: '#6a6660' }); for (const s of [-1, 1]) { g.tube([[-26.8, 1.1, s * 9.6], [26.8, 1.1, s * 9.6]], 0.05, { sides: 4 }); for (let x = -26; x <= 26; x += 4) g.tube([[x, 0, s * 9.6], [x, 1.1, s * 9.6]], 0.05, { sides: 4 }); } }
       k.mat('dark'); for (const [x, z, r, h] of [[2, 0, 2.6, 3.2], [-12, -3, 1.8, 2.4], [12, 3, 1.5, 2]]) g.tube([[x, -4, z], [x, -4 - h, z]], [r, r * 0.8], { sides: k.n(12), caps: true });
+      // ── the plant that keeps five thousand tonnes moving ──
+      for (const s of [-1, 1]) {
+        // mains along both edges of the deck, a drop to every hip, an accumulator on each hip block
+        k.pipe([[-26, 0.5, s * 8.9], [-13, 0.5, s * 8.9], [0, 0.5, s * 8.9], [13, 0.5, s * 8.9], [26, 0.5, s * 8.9]], 0.3, { joints: [1, 2, 3], role: 'rust', far: true }); k.pipe([[-25, 1.05, s * 8.45], [0, 1.05, s * 8.45], [25, 1.05, s * 8.45]], 0.15, { joints: [1], role: 'frame' });
+        for (const x of [18, 6, -6, -18]) { k.pipe([[x + 1.3, 0.5, s * 8.9], [x + 1.3, 0.2, s * 9.9], [x + 1.3, -1.4, s * 10.45]], 0.2, { role: 'frame' }); k.tank([x - 1.7, 1.26, s * 9.75], [x + 0.6, 1.26, s * 9.75], 0.55, { role: 'rust' }); k.jbox([x - 1.2, -1.2, s * 10.42], [0, 0, s], 1.2, 1.4, 0.3, { up: [0, 1, 0], glands: 3 }); }
+        // rivets along the box girders, marker bars on their ends
+        for (const y of [-0.8, -3.6]) k.rivets([-25.6, y, s * 9.32], [25.6, y, s * 9.32], 70, 0.07, [0, 0, s]);
+        for (const e of [-1, 1]) k.stripes([e * 26.02, -2.2, s * 8.2], [e, 0, 0], 2.2, 2.6, 6, { up: [0, 1, 0], t: 0.06 });
+        for (const x of [-21, -9, 3, 15]) k.hose([[x, -3.95, s * 6.2], [x + 3, -5.3, s * 6.5], [x + 6, -3.95, s * 6.2]], 0.12); }
+      k.pipe([[-18, -4.15, 0], [-6, -4.15, 0], [6, -4.15, 0], [18, -4.15, 0]], 0.36, { joints: [1, 2], role: 'frame', far: true });
+      // at the stern: three stacks, a bank of coolers behind louvres
+      for (let i = 0; i < 3; i++) k.stack([-24.6, 0, -4.4 + i * 2.3], [-24.6, 8.5 + i * 1.2, -4.4 + i * 2.3], 0.55);
+      k.fins([-25.8, 1.75, 2.4], [0, 0, 1], 16, 1.2, 3.0, 0.28, { up: [0, 1, 0], role: 'frame' }); k.grille([-26.45, 1.75, 4.65], [-1, 0, 0], 4.6, 3.1, { up: [0, 1, 0], t: 0.24, role: 'rust' });
+      // ways for the people who kept it: ladders up the houses, a gallery along the long wall, doors, hatches in the deck
+      k.ladder([11.3, 0, -3], [11.3, 10.2, -3], 0.7, [1, 0, 0], { off: 0.28, r: 0.05, step: 0.35 }); k.ladder([-0.3, 10.2, 0.5], [-0.3, 16.8, 0.5], 0.7, [1, 0, 0], { off: 0.28, r: 0.05, step: 0.35 }); k.ladder([19, 0, -3.25], [19, 6.4, -3.25], 0.6, [0, 0, 1], { off: 0.2, r: 0.045, step: 0.35 });
+      k.mat('rust'); g.box(-4, 3.3, 5.2, 30, 0.12, 1.4, { soft: 0.05 }); if (k.mid) for (let x = -18; x <= 10; x += 4.67) g.beam([x, 3.25, 5.85], [x, 1.9, 4.55], 0.12, 0.12, { caps: false });
+      k.rail([-19, -12, -5, 2, 9, 11].map((x) => [x, 3.36, 5.85]), 1.1, [0, 1, 0], { r: 0.045 });
+      for (const [x, z, sz] of [[-12, 4.52, 1], [2, 4.52, 1], [-8, -6.52, -1]]) k.hatch([x, 1.25, z], [0, 0, sz], 1.2, 2.3, { up: [0, 1, 0], t: 0.08, role: 'rust' }); k.hatch([-10, 4.55, 4.52], [0, 0, 1], 1.1, 2.1, { up: [0, 1, 0], t: 0.08, role: 'rust' });
+      for (const [x, z] of [[15, -7.4], [24.5, 1], [-22, -6.5], [2, 7.6], [-24, 7]]) k.hatch([x, -0.1, z], [0, 1, 0], 2.4, 1.8, { up: [1, 0, 0], t: 0.12 });
+      // on the roofs: air plant and ducts, three dishes
+      k.mat('frame'); g.box(3, 10.9, -2.2, 3, 1.4, 2.2, { soft: 0.08 }); k.fins([1.3, 10.9, 1.6], [1, 0, 0], 10, 1.3, 2.0, 0.3, { up: [0, 0, 1] }); k.mat('rust'); g.box(6.3, 10.6, 2, 6, 0.8, 0.9, { soft: 0.1 }); g.box(9, 10.6, -0.2, 0.9, 0.8, 4.4, { soft: 0.1 }); k.grille([3, 10.9, -1.08], [0, 0, 1], 2.4, 1.0, { up: [0, 1, 0], t: 0.12 });
+      k.dish([8, 10.2, -4], [0.3, 1, -0.4], 1.3); k.dish([-4, 16.8, -4], [-0.5, 1, 0.2], 1.6); k.dish([-11, 16.8, 1], [0.2, 1, 0.5], 1.1); k.mat('frame'); g.box(-6, 17.3, 0.5, 2.2, 1.0, 1.6, { soft: 0.1 }); k.fins([-9.6, 17.3, -1.5], [1, 0, 0], 8, 1.0, 1.5, 0.26, { up: [0, 0, 1] });
       // forty years of growth: moss banks along every edge, brush on the roofs
-      g.mat('moss', { flags: LR.FLAG.SWAY, weight: 0.25 }); const rr = LR.rng('ridge-moss'); for (let i = 0; i < (k.lod === 0 ? 46 : k.lod === 1 ? 24 : 10); i++) { const top = rr() < 0.4, x = -25 + rr() * 50, z = top ? -6 + rr() * 9 : (rr() < 0.5 ? -1 : 1) * (7 + rr() * 2.4), y = top ? (Math.abs(x + 4) < 15 && z < 4.4 ? (Math.abs(x + 9) < 8.5 && z < 2.7 ? 16.6 : 10) : 0.1) : 0.1; g.blob(x, y + 0.3, z, 0.9 + rr() * 1.5, { squash: [1.4, 0.45 + rr() * 0.5, 1.3], seg: k.n(8), rings: 4, seed: i }); }
+      g.mat('moss', { tint: '#5e6b4e', flags: LR.FLAG.SWAY, weight: 0.25 }); const rr = LR.rng('ridge-moss'); for (let i = 0; i < (k.lod === 0 ? 46 : k.lod === 1 ? 24 : 10); i++) { const top = rr() < 0.4, x = -25 + rr() * 50, z = top ? -6 + rr() * 9 : (rr() < 0.5 ? -1 : 1) * (7 + rr() * 2.4), y = top ? (Math.abs(x + 4) < 15 && z < 4.4 ? (Math.abs(x + 9) < 8.5 && z < 2.7 ? 16.6 : 10) : 0.1) : 0.1; g.blob(x, y + 0.3, z, 0.9 + rr() * 1.5, { squash: [1.4, 0.45 + rr() * 0.5, 1.3], seg: k.n(8), rings: 4, seed: i }); }
     });
     k.bone('neck_01', (g) => { k.mat('frame'); g.tube([[0, 0, 0], [0, 3.2, 0]], [2.2, 1.8], { sides: k.n(12), caps: true }); });
     // the prow: a hooded block that turns, two eyes under the hood
-    k.bone('head', (g) => { k.mat('frame'); k.loft('x', [[-3, 2.2, 5.2, 0, 0, 5], [1.5, 2.6, 5.6, 0, 0, 5], [5.5, 1.9, 4.6, -0.3, 0, 4]], { sides: 14 }); k.mat('rust'); g.box(3.6, 2.5, 0, 6.4, 0.5, 11.6, { soft: 0.1 }); k.mat('dark'); for (const s of [-1, 1]) { g.push(new THREE.Matrix4().makeTranslation(5.2, -0.4, s * 2.5).multiply(new THREE.Matrix4().makeRotationZ(-Math.PI / 2 - 0.2))); g.lathe(0, 0, [[1.25, -0.9], [1.4, 0], [1.3, 0.7]], { sides: k.n(14) }); g.pop(); } });
+    k.bone('head', (g) => { k.mat('frame'); k.loft('x', [[-3, 2.2, 5.2, 0, 0, 5], [1.5, 2.6, 5.6, 0, 0, 5], [5.5, 1.9, 4.6, -0.3, 0, 4]], { sides: 14 }); k.mat('rust'); g.box(3.6, 2.5, 0, 6.4, 0.5, 11.6, { soft: 0.1 }); k.mat('dark'); for (const s of [-1, 1]) { g.push(new THREE.Matrix4().makeTranslation(5.2, -0.4, s * 2.5).multiply(new THREE.Matrix4().makeRotationZ(-Math.PI / 2 - 0.2))); g.lathe(0, 0, [[1.25, -0.9], [1.4, 0], [1.3, 0.7]], { sides: k.n(14) }); g.pop(); }
+      k.grille([5.42, 0.9, 0], [1, 0, 0], 3.0, 0.9, { up: [0, 1, 0], t: 0.2 }); k.hatch([3, 2.75, 0], [0, 1, 0], 2, 1.6, { up: [1, 0, 0], t: 0.1 });
+      for (const s of [-1, 1]) { k.along([5.72, -0.52, s * 2.5], [0.95, -0.3, s * 0.03], (g2) => { k.mat('joint'); g2.lathe(0, 0, [[1.16, 0], [1.34, 0.12], [1.16, 0.28]], { sides: k.n(16) }); if (k.mid) { k.mat('steel'); for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; g2.tube([[Math.cos(a) * 1.25, 0.24, Math.sin(a) * 1.25], [Math.cos(a) * 1.25, 0.36, Math.sin(a) * 1.25]], 0.05, { sides: 5, caps: true }); } } });
+        k.rail([[0.6, 2.75, s * 5.6], [3.6, 2.75, s * 5.6], [6.6, 2.75, s * 5.6]], 1.1, [0, 1, 0], { r: 0.045 }); k.rivets([-2.6, 0, s * 5.42], [4.6, 0, s * 5.3], 14, 0.07, [0, 0, s]); k.ladder([-2.2, -2.0, s * 5.3], [-2.2, 2.6, s * 5.5], 0.7, [0, 0, s], { off: 0.26, r: 0.05, step: 0.35 }); } });
     for (const s of [-1, 1]) k.lamp('head', { name: 'eye', at: [5.75, -0.55, s * 2.5], dir: [0.95, -0.3, s * 0.03], color: [1.0, 0.86, 0.62], power: 150, cone: 10, range: 360, lens: 1.05, proud: 0.05 });
     for (const [x, y, z] of [[26.8, 0.6, -9.4], [26.8, 0.6, 9.4], [-26.8, 0.6, -9.4], [-26.8, 0.6, 9.4]]) k.lamp('body', { at: [x, y, z], dir: [Math.sign(x), 0, 0], color: [1, 0.1, 0.05], power: 6, range: 30, lens: 0.3, glow: 0.9 });
     for (const x of [-18, -6, 6, 18]) for (const s of [-1, 1]) k.lamp('body', { at: [x, -4.1, s * 9.3], dir: [0, -1, 0], color: [1, 0.6, 0.22], power: 5, range: 30, lens: 0.34, glow: 0.6 });
-    k.bone('mast', (g) => { k.mat('frame'); for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) g.beam([sx * 0.9, 0, sz * 0.9], [sx * 0.25, 22, sz * 0.25], 0.22, 0.22, { caps: false }); if (k.mid) for (let y = 0; y < 22; y += 2.75) { const w0 = 0.9 - (0.65 * y) / 22, w1 = 0.9 - (0.65 * (y + 2.75)) / 22; for (const [a, b] of [[[-1, -1], [1, -1]], [[1, -1], [1, 1]], [[1, 1], [-1, 1]], [[-1, 1], [-1, -1]]]) g.beam([a[0] * w0, y, a[1] * w0], [b[0] * w1, y + 2.75, b[1] * w1], 0.1, 0.1, { caps: false }); } k.mat('rust'); g.box(0, 18.5, 0, 4.6, 0.3, 0.5); g.box(0, 14.5, 0, 0.5, 0.3, 3.8); });
+    k.bone('mast', (g) => { k.mat('frame'); for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) g.beam([sx * 0.9, 0, sz * 0.9], [sx * 0.25, 22, sz * 0.25], 0.22, 0.22, { caps: false }); if (k.mid) for (let y = 0; y < 22; y += 2.75) { const w0 = 0.9 - (0.65 * y) / 22, w1 = 0.9 - (0.65 * (y + 2.75)) / 22; for (const [a, b] of [[[-1, -1], [1, -1]], [[1, -1], [1, 1]], [[1, 1], [-1, 1]], [[-1, 1], [-1, -1]]]) g.beam([a[0] * w0, y, a[1] * w0], [b[0] * w1, y + 2.75, b[1] * w1], 0.1, 0.1, { caps: false }); } k.mat('rust'); g.box(0, 18.5, 0, 4.6, 0.3, 0.5); g.box(0, 14.5, 0, 0.5, 0.3, 3.8); k.dish([2.1, 18.65, 0], [0.4, 0.3, 1], 0.8); k.dish([-2.1, 18.65, 0], [-0.3, 0.3, -1], 0.7); k.ladder([0.98, 0, 0], [0.32, 21.5, 0], 0.45, [1, 0.03, 0], { off: 0.14, r: 0.035, step: 0.35 }); k.hose([[0.3, 0, 0.5], [0.22, 10, 0.4], [0.1, 21, 0.2]], 0.05); });
     k.lamp('mast', { at: [0, 22.2, 0], dir: [0, 1, 0], color: [1, 0.1, 0.05], power: 8, range: 40, lens: 0.3, glow: 1 });
     for (const e of k.S.extras) if (e.name.startsWith('cable')) k.bone(e.name, (g) => { g.mat('iron', { tint: '#3e3a36' }); g.tube([[0, 0, 0], [0, e.len * 0.5, 0], [0, e.len, 0]], 0.09, { sides: k.n(5) }); k.mat('rust'); g.box(0, e.len, 0, 0.7, 1.0, 0.5, { soft: 0.3 }); });
   },
