@@ -20,6 +20,7 @@ function camAt(t) {                      // a slow push-in: the camera is a func
 
 scene({
   title: '__TITLE__', W, H, duration: 10, fps: 30, renderer: 'canvas2d',
+  card: { title: '__TITLE__', sub: 'one line under the title', credit: 'your name or handle' },   // the opening title (fades out by 2.3 s); delete for none
   setup() {
     // static layers are painted ONCE here (deterministic) and reused by every frame
     const sky = document.createElement('canvas'); sky.width = W; sky.height = H;

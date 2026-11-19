@@ -22,7 +22,7 @@
   <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / ten-second-scene</nav>
   <h1>ten-second-scene</h1>
   <p>주제를 주면 10초짜리 장면 하나를 HTML 파일 하나에 코드로만 그립니다. 영상 모델, 이미지 모델, 외부 이미지는 쓰지 않습니다. 렌더한 뒤 무작위 다섯 순간을 100%로 보고 밀도 · 빛 · 사람 비례 · 움직임의 무게 · 색 다섯 기준으로 판정합니다. 걸린 곳을 적고 고치고 다시 렌더하며, 25칸이 한 라운드에 모두 통과할 때까지 반복합니다.
-  보고 만든 원본: <a href="https://www.threads.com/share/BAbvjED_BX" target="_blank" rel="noopener">@yunseul_ai의 Threads 게시물 (영상 AI 없이 클로드 코드로만 만든 10초 영상 세 편과 그 방법)</a>.</p>
+  보고 만든 원본: <a href="https://www.threads.com/share/BAbvjED_BX" target="_blank" rel="noopener">@yunseul_ai의 Threads 게시물 (영상 AI 없이 클로드 코드로만 만든 10초 영상 세 편과 그 방법)</a>, <a href="https://drive.google.com/file/d/1ns7arhoD70a2yHjp-F3wUkHOR4XRrxq8/view?usp=drivesdk" target="_blank" rel="noopener">그 영상의 화면 녹화</a>.</p>
   <ul class="tags"><li>HTML 파일 하나 · 코드만</li><li>Canvas 2D · WebGL · three.js</li><li>무작위 5장 100% 감사 루프</li><li>밀도 · 빛 · 비례 · 무게 · 색</li><li>1080×1920 · 10초</li></ul>
 </div></header>
 
@@ -35,7 +35,7 @@
       <dt>브리프</dt><dd>한 줄 장면, 도구 선택, 카메라의 한 움직임, 이 장면에서 다섯 기준이 뜻하는 것, 인물의 무게와 대기 동작</dd>
       <dt>장면</dt><dd>카메라로 투영한 실제 크기의 배치 · 붓질 수만 개 · 사람마다 따로 움직이는 몸 리그</dd>
       <dt>감사 루프</dt><dd>무작위 다섯 순간의 100% 크롭, 25칸 판정, 찾은 문제와 고친 내용, 한 라운드 모두 통과까지</dd>
-      <dt>출력</dt><dd>HTML 장면 하나 (라이브 재생), 1080×1920 MP4, AUDIT.md</dd>
+      <dt>출력</dt><dd>시작 타이틀 카드가 있는 HTML 장면 하나 (라이브 재생), 1080×1920 MP4, AUDIT.md</dd>
     </dl>
     <pre><code>cd ten-second-scene/examples/first-bus
 node ../../scripts/audit.mjs scene.html --status   # 감사 라운드 현황
@@ -91,8 +91,8 @@ node ../../scripts/audit.mjs ../../../my-scene/scene.html   # 루프 한 바퀴<
       <p>1월 새벽 5시, 눈 오는 언덕길 정류장에 첫차가 들어옵니다. 2.3초 동안 제동하며 앞이 숙었다가 스프링 위에서 흔들리고, 문이 열리며 따뜻한 빛이 눈 위로 떨어집니다. 기다리던 네 사람은 숨을 쉬고(내쉴 때마다 입김), 할머니는 몇 걸음 딛어 돌아서고, 학생은 무게를 뒤로 실었다가 문으로 걸어갑니다. 아파트 창 2,213개, 나뭇가지 6,313개, 눈송이 8,000개가 모두 코드입니다.</p>
       <div class="grid">
         <a class="tile" data-tags="bus" href="demo/first-bus/?t=0.5" target="_blank" rel="noopener">
-          <img src="samples/bus-0-5.jpg" alt="눈 오는 새벽 정류장, 빛나는 광고판 앞에 서 있는 네 사람, 멀리 언덕 위 아파트와 다가오는 버스의 작은 헤드라이트" loading="lazy" width="640" height="1138">
-          <div class="cap"><span class="no">0.5초</span><b>멀리 두 개의 불빛</b><span class="how">광고판 역광 속 네 사람, 언덕 위 아파트</span></div></a>
+          <img src="samples/bus-0-5.jpg" alt="THE FIRST BUS 타이틀이 떠 있는 눈 오는 새벽 정류장, 빛나는 광고판 앞에 서 있는 네 사람, 멀리 언덕 위 아파트와 다가오는 버스의 작은 헤드라이트" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">0.5초</span><b>멀리 두 개의 불빛</b><span class="how">타이틀 카드 아래, 광고판 역광 속 네 사람</span></div></a>
         <a class="tile" data-tags="bus" href="demo/first-bus/?t=6.4" target="_blank" rel="noopener">
           <img src="samples/bus-6-4.jpg" alt="정류장에 막 멈춘 청록 버스, 헤드라이트가 눈과 바닥을 비추고 사람들이 버스 쪽을 봄" loading="lazy" width="640" height="1138">
           <div class="cap"><span class="no">6.4초</span><b>멈추고 흔들리는 버스</b><span class="how">제동 뒤 앞이 들렸다 가라앉음</span></div></a>
@@ -106,8 +106,8 @@ node ../../scripts/audit.mjs ../../../my-scene/scene.html   # 루프 한 바퀴<
       <p>늦은 8월 오후, 낮은 해가 왼쪽 구름 가장자리 뒤에 있습니다. 바람 한 줄기가 왼쪽에서 들어와 들판을 건너갑니다. 잎이 연한 뒷면을 뒤집으며 물결이 지나가고, 무거운 꽃 머리는 꽃마다 따로 계산한 스프링으로 잎보다 늦게 숙였다가 지나쳐 돌아옵니다. 구름은 해 쪽이 크림색, 반대쪽이 청회색인 윤곽 붓질입니다.</p>
       <div class="grid">
         <a class="tile" data-tags="field" href="demo/sunflower-wind/?t=1" target="_blank" rel="noopener">
-          <img src="samples/field-1.jpg" alt="두꺼운 유화 붓질로 그린 해바라기 밭과 높이 솟은 적운, 먼 언덕 위 빨간 지붕 농가" loading="lazy" width="640" height="1138">
-          <div class="cap"><span class="no">1초</span><b>바람 전의 들판</b><span class="how">미풍, 흘러가는 구름</span></div></a>
+          <img src="samples/field-1.jpg" alt="WIND OVER THE FIELD 타이틀이 떠 있는, 두꺼운 유화 붓질로 그린 해바라기 밭과 높이 솟은 적운, 먼 언덕 위 빨간 지붕 농가" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">1초</span><b>바람 전의 들판</b><span class="how">타이틀 카드 아래, 미풍과 흘러가는 구름</span></div></a>
         <a class="tile" data-tags="field" href="demo/sunflower-wind/?t=4.5" target="_blank" rel="noopener">
           <img src="samples/field-4-5.jpg" alt="왼쪽 들판의 잎들이 연한 뒷면을 보이며 바람이 지나가는 해바라기 밭" loading="lazy" width="640" height="1138">
           <div class="cap"><span class="no">4.5초</span><b>건너오는 바람</b><span class="how">잎이 뒷면을 뒤집는 물결</span></div></a>
@@ -122,7 +122,7 @@ node ../../scripts/audit.mjs ../../../my-scene/scene.html   # 루프 한 바퀴<
       <div class="grid">
         <a class="tile" data-tags="wave" href="demo/stadium-wave/?t=2" target="_blank" rel="noopener">
           <img src="samples/wave-2.jpg" alt="투광등 지붕 아래 가득 찬 관중석, 멀리 끝에서 파도 응원이 시작되는 장면, 경기장 가장자리의 안전요원" loading="lazy" width="640" height="1138">
-          <div class="cap"><span class="no">2초</span><b>먼 끝에서 시작</b><span class="how">작은 잔물결처럼 보이는 파도</span></div></a>
+          <div class="cap"><span class="no">2초</span><b>먼 끝에서 시작</b><span class="how">사라지는 타이틀, 작은 잔물결처럼 보이는 파도</span></div></a>
         <a class="tile" data-tags="wave" href="demo/stadium-wave/?t=6.6" target="_blank" rel="noopener">
           <img src="samples/wave-6-6.jpg" alt="가까운 열의 관중들이 팔을 들고 일어서는 순간, 사람마다 높이와 시점이 다름" loading="lazy" width="640" height="1138">
           <div class="cap"><span class="no">6.6초</span><b>가까운 열에 닿은 파도</b><span class="how">사람마다 다른 시점과 높이</span></div></a>
@@ -143,6 +143,7 @@ node ../../scripts/audit.mjs ../../../my-scene/scene.html   # 루프 한 바퀴<
     <a class="work" href="demo/stadium-wave/" target="_blank" rel="noopener"><b>「파도 응원」 · 10초</b><span>three.js, 2,622명, 감사 6라운드</span><span class="url">ten-second-scene/demo/stadium-wave/</span></a>
     <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/ten-second-scene/examples"><b>예제 폴더 · examples/</b><span>장면, 브리프, 라운드마다의 감사 기록</span><span class="url">github.com/jungrok5/motion-skills</span></a>
     <a class="work" href="https://www.threads.com/share/BAbvjED_BX" target="_blank" rel="noopener"><b>원본 · Threads 게시물</b><span>@yunseul_ai · 영상 세 편과 프롬프트, 방법, 기준표</span><span class="url">threads.com/share/BAbvjED_BX</span></a>
+    <a class="work" href="https://drive.google.com/file/d/1ns7arhoD70a2yHjp-F3wUkHOR4XRrxq8/view?usp=drivesdk" target="_blank" rel="noopener"><b>원본 영상 · 화면 녹화</b><span>「AFTER THE RAIN」 비 그친 서울 골목 · 「THE CROSSING」 횡단보도의 2천 명 · 21.7초</span><span class="url">drive.google.com/file/d/1ns7arhoD70a2yHjp-F3wUkHOR4XRrxq8</span></a>
   </div>
 </div></section>
 

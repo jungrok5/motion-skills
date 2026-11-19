@@ -144,4 +144,31 @@ Findings:
 - Five new moments of the same file, all 25 pass.
 
 Fixes:
+- After the owner shared the source video: the source opens each film with a title card (spaced serif capitals, a rule, an italic line, a small credit at the foot) over the running scene. The kit now draws one (`card`, fades out by 2.3 s) and this scene has one. The file changed, so the next round audits it.
+
+## Round 6 · seed 20261119 · scene fbca579f899b · 2026-11-19 01:01
+Moments (s): 1.30 · 3.50 · 5.70 · 7.77 · 9.00 — frames and 100% crops in `audit/round-06/`
+
+| t (s) | density | light | proportion | weight | colour |
+|---|---|---|---|---|---|
+| 1.30 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| 3.50 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| 5.70 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| 7.77 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| 9.00 | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+Measured (hints for where to look, not verdicts):
+
+| measured t | flat | p1–p99 | lit place | hue spread | warm/cool | clip | figures | heads | slide px | idle px |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1.30 | 0.0% | 0.15–0.89 | 1.8× | 0.64 | 0.41 | 0.0% | – | – | – | – |
+| 3.50 | 0.0% | 0.15–0.89 | 1.7× | 0.64 | 0.39 | 0.0% | – | – | – | – |
+| 5.70 | 0.0% | 0.15–0.89 | 1.7× | 0.60 | 0.37 | 0.0% | – | – | – | – |
+| 7.77 | 0.0% | 0.15–0.89 | 1.7× | 0.63 | 0.37 | 0.0% | – | – | – | – |
+| 9.00 | 0.0% | 0.15–0.89 | 1.7× | 0.63 | 0.37 | 0.0% | – | – | – | – |
+
+Findings:
+- The title card at 1.30 s reads at 100 % (spaced serif capitals, rule, italic line, credit at the foot; a soft scrim where the background is bright) and leaves the scene's light and motion visible under it; it is gone by 2.3 s. The other four moments are the passed scene unchanged; all 25 pass.
+
+Fixes:
 - none — passed.

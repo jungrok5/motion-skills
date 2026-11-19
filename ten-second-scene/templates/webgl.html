@@ -20,6 +20,7 @@ const MOTION = `vec4 motion(vec2 p, float ang, float len, vec4 a, float t){
 
 scene({
   title: '__TITLE__', W, H, duration: 10, fps: 30, renderer: 'webgl',
+  card: { title: '__TITLE__', sub: 'one line under the title', credit: 'your name or handle' },   // the opening title (fades out by 2.3 s); delete for none
   setup({ gl }) {
     ground = fullscreen(gl, `vec4 shade(vec2 px, vec2 res, float t){ float y = px.y / res.y; return vec4(mix(vec3(.16,.2,.35), vec3(.85,.6,.4), y), 1.0); }`, W, H);
     strokes = Strokes(gl, { W, H, motion: MOTION });

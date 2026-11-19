@@ -16,6 +16,7 @@ let renderer, world, cam3, crowd = [], mesh;
 
 scene({
   title: '__TITLE__', W, H, duration: 10, fps: 30, renderer: 'three',
+  card: { title: '__TITLE__', sub: 'one line under the title', credit: 'your name or handle' },   // the opening title (fades out by 2.3 s); delete for none
   setup({ canvas, scale }) {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
     renderer.setPixelRatio(1); renderer.setSize(W * scale, H * scale, false);

@@ -22,7 +22,7 @@ if (flag('status')) {
   console.log(ok ? 'PASS — the last round passed all 25 cells on the current file' : 'not passed yet');
   process.exit(ok ? 0 : 1);
 }
-if (last && !opt('seed')) {
+if (last) {   // also with --seed: replaying moments never skips judging and fixing
   const why = last.unjudged ? `round ${last.n} has ${last.unjudged} unjudged cell(s) — mark every cell ✓ or ✗ <what is wrong> first`
     : last.failsWithoutNote ? `round ${last.n} has ✗ cells without a note — say what is wrong`
     : last.fails && !last.fixes.length ? `round ${last.n} failed ${last.fails} cell(s) — write what you changed under "Fixes" first`

@@ -14,6 +14,12 @@ The tells, and what replaced them in the examples. Read before the first render;
 - **Floating, sliding, frozen people.** See BODY.md.
 - **A camera that does nothing — or everything.** One slow move, eased, chosen for the beat.
 
+## The opening title
+Every film opens on a title card over the running scene (`card: { title, sub, credit, scrim }`): spaced serif capitals,
+a short rule, an italic line, a small credit at the foot, gone by 2.3 s. The scene is already moving under it, so frame 0
+is still a finished picture. Use `scrim` (.3–.6) where the background is bright; write the title in the scene's own
+words, never the source's.
+
 ## Canvas 2D (「첫차」)
 - Build in **world units through a pinhole camera** (`TSS.camera`), not in screen pixels: scale, perspective and the
   push-in come out right, and people are the right size next to doors and buses.

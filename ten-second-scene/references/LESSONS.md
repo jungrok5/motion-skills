@@ -33,3 +33,5 @@ From building the skill and its three examples (and the source post).
   idle floor relative to size, max displacement inside the window.
 - From the source: a model often misses things a person would fix in one pass and fixes them in a later round, so many
   rounds are partly that — write findings concretely so each round fixes more than one thing.
+- **The screenshots missed the format's opening** → only the video showed every film starts on a title card over the
+  running scene → watch the source video, not just stills of the post; the kit now draws the card.
