@@ -29,19 +29,23 @@
     // (the shake of the last frame is taken off only if nobody has placed the eye since: the walker and a film place it every frame)
     if (cam.position.x === shaken[0] && cam.position.y === shaken[1] && cam.position.z === shaken[2]) { cam.position.x -= lastShake[0]; cam.position.y -= lastShake[1]; cam.position.z -= lastShake[2]; }
     for (const u of M.units) {
-      const K = u.K, kin = u.kin, r = M.poseAt(u, time), Wd = r.W, c = r.cmd, B = Wd.body; u.pose = r;
+      // the walker's own body is not on a way: the page hands it the walker's place, heading and speed, frame by frame
+      if (u.avatar && !M.inStudio) M.driveAvatar(u, dt);
+      const K = u.K, kin = u.kin, r = M.poseAt(u, u.avatar && u.live ? u.av.t : time), Wd = r.W, c = r.cmd, B = Wd.body; u.pose = r;
       const o0 = u.row * MAXB * 12; for (let i = 0; i < kin.nb; i++) skin(data, o0 + i * 12, Wd[kin.bones[i][0]], K.rest[i]);
       const d = Math.hypot(B.p[0] - cam.position.x, B.p[1] - cam.position.y, B.p[2] - cam.position.z); sph.center.set(B.p[0], B.p[1] - K.spec.ride * 0.3, B.p[2]); sph.radius = K.radius; u.dist = d;
       const seen = d < 1500 && frustum.intersectsSphere(sph), lk = K.spec.lodK || 1, lod = d < K.radius * 4.5 * q * lk ? 0 : d < K.radius * 13 * q * lk ? 1 : 2; u.lod = seen ? lod : -1; if (seen) tris += K.tris[lod];
-      for (let i = 0; i < 3; i++) { u.meshes[i].visible = seen && i === lod; u.shadows[i].visible = d < LR.gpu.tier.shadowDist + K.radius * 2 && i === Math.min(2, lod + 1); }
+      const hid = u.avatar && u.live && LR.player.view === 'first';      // seen from inside its own head it is not drawn — its shadow is
+      for (let i = 0; i < 3; i++) { u.meshes[i].visible = seen && i === lod && !hid; u.shadows[i].visible = d < LR.gpu.tier.shadowDist + K.radius * 2 && i === Math.min(2, lod + 1) && !(hid && LR.RENDER); }      /* (a still's camera is not the walker: nobody's shadow stands where the walk starts) */
       // someone near: the head finds them and stays on them; it lets go slowly when they leave
       const A = u.aware, range = K.spec.aware === undefined ? K.spec.ride * 4 : K.spec.aware;
       if (live && Wd.head && range > 0) { const H = Wd.head.p, dx = cam.position.x - H[0], dz = cam.position.z - H[2], dh = Math.hypot(dx, dz), near = Math.hypot(dh, cam.position.y - H[1]) < range;
         const yawT = LR.clamp(LR.wrapPi(Math.atan2(dz, dx) - c.h) / D2R, -110, 110), pitchT = LR.clamp(Math.atan2(H[1] - cam.position.y, Math.max(1, dh)) / D2R, -10, 62);
         A.w = LR.damp(A.w, near ? 1 : 0, near ? 0.5 : 0.25, dt); if (near) { A.yaw = LR.damp(A.yaw, yawT, 0.9, dt); A.pitch = LR.damp(A.pitch, pitchT, 0.9, dt); } } else A.w = 0;
       u.uBone.value.y = c.light * (K.spec.lensGain === undefined ? 26 : K.spec.lensGain) * (1 + 0.5 * A.w);
-      for (const L of u.lampDefs) { const f = Wd[kin.bones[L.bone][0]]; lamps.push({ p: M.apply(f, L.at), d: M.dir(f, L.dir), color: L.color, power: L.power * c.light * (1 + (L.beam ? 0.6 : 0.2) * A.w), cone: L.cone, range: L.range, beam: L.beam, unit: u }); }
+      if (!(u.avatar && u.live && !LR.player.torch)) for (const L of u.lampDefs) { const f = Wd[kin.bones[L.bone][0]]; lamps.push({ p: M.apply(f, L.at), d: M.dir(f, L.dir), color: L.color, power: L.power * c.light * (1 + (L.beam ? 0.6 : 0.2) * A.w), cone: L.cone, range: L.range, beam: L.beam, unit: u }); }
       // feet: what the walker bumps into while a foot is down or low, and the footfalls of the last seconds
+      if (u.avatar) continue;      // (it does not bump into its own feet, and its steps are the walker's own)
       kin.limbs.forEach((l, i) => { const F = Wd['foot_' + l.name].p, s = u.solids[i], lq = c.limbs[l.name], low = F[1] - l.ball - LR.land.h(F[0], F[2]) < 2.3; s.x = F[0]; s.z = F[2]; s.r = low ? l.ball * 1.15 + l.toeLen * 0.3 : 0;
         if (!u.post && !lq.sw && c.rate > 0.02) { const age = (c.u - (lq.k + u.off[l.name])) * u.T; if (age >= 0 && age < 5) imp.push({ x: lq.p[0], y: lq.p[1] - l.ball, z: lq.p[2], age, size: l.ball * 1.1 + l.toeLen * 0.6, tonnes: K.spec.tonnes || 50, unit: u, leg: l.name, k: lq.k }); } });
     }
@@ -60,6 +64,14 @@
   const heard = (x, y, z) => { const P = LR.player, d = Math.hypot(x - P.x, y - (P.y + P.eye), z - P.z), rx = Math.cos(P.yaw), rz = Math.sin(P.yaw); return { d, side: LR.clamp(((x - P.x) * rx + (z - P.z) * rz) / Math.max(4, d), -1, 1) }; };
   LR.on('footfall', (p) => { if (LR.audio && LR.audio.ready) LR.audio.footfall(Object.assign(heard(p.x, p.y, p.z), { tonnes: p.tonnes, wet: LR.water && LR.water.levelAt(p.x, p.z) > p.y + 0.05 })); });
   LR.on('mechcall', (e) => { if (LR.audio && LR.audio.ready) LR.audio.call(Object.assign(heard(e.at[0], e.at[1], e.at[2]), { f: e.f, len: e.len, gain: e.gain })); });
+  // the walker's body follows the walker: where they stand (decks and parapet tops included), which way they face, how fast they
+  // go (taken from where they were a frame ago, so the tour and a placed camera move it too), whether they are in the air
+  M.driveAvatar = (u, dt) => { const P = LR.player; if (!P || typeof P.x !== 'number') return; M.avatarFloor = (x, z, y) => P.groundAt(x, z, y).y;
+    const first = !u.av; if (first) { u.av = new M.Avatar(u); u.live = true; } const av = u.av, h = P.yaw - Math.PI / 2, far = first || Math.hypot(P.x - av.x, P.z - av.z) > 2.5;
+    if (far) { av.reset({ x: P.x, y: P.y, z: P.z, h }); u.pv = [P.x, P.z]; }
+    const n = Math.max(1, Math.min(6, Math.ceil(dt / 0.034))), sdt = Math.min(dt, 0.2) / n, vx = dt > 1e-5 ? (P.x - u.pv[0]) / dt : 0, vz = dt > 1e-5 ? (P.z - u.pv[1]) / dt : 0, x0 = u.pv[0], z0 = u.pv[1];
+    for (let i = 1; i <= n; i++) av.step(sdt, { x: x0 + ((P.x - x0) * i) / n, y: P.y, z: z0 + ((P.z - z0) * i) / n, h, vx, vz, air: !!P.air, vy: P.vy || 0, prep: P.prep || 0, look: (P.pitch || 0) / D2R });
+    u.pv = [P.x, P.z]; while (av.events.length) { const e = av.events.shift(); LR.emit('avatarstep', e); } };
   // what a unit weighs on the page: triangles a level, bones, lamps (the checks and the HUD's numbers read this)
   M.info = () => M.units.map((u) => ({ name: u.name, kind: u.kind, bones: u.kin.nb, tris: u.K.tris, lamps: u.lampDefs ? u.lampDefs.length : 0, lod: u.lod, dist: u.dist }));
 
@@ -73,9 +85,9 @@
     const pts = []; if (FL) { for (let i = -3; i <= 3; i++) pts.push([(i / 3) * SL, -R]); for (let i = 1; i < 6; i++) { const a = (i / 6) * Math.PI; pts.push([SL + Math.sin(a) * R, -Math.cos(a) * R]); } for (let i = 3; i >= -3; i--) pts.push([(i / 3) * SL, R]); for (let i = 1; i < 6; i++) { const a = (i / 6) * Math.PI; pts.push([-SL - Math.sin(a) * R, Math.cos(a) * R]); } }      // a flyer: two long straights (it is turned about flying level) joined by half circles
     else for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; pts.push([Math.sin(a) * R * 1.25, -Math.cos(a) * R]); }      // it passes (0, −R) heading east
     // (a flyer goes round the same oval a few metres up, climbing along one side and coming down the other: low enough to stand by the figure)
-    M.route('studio', pts, { width: 0 }); const mv = Object.keys(K.spec.moves || {})[0], u = FL ? M.spawn(kind, { name: kind, fly: pts.map((p, i) => [p[0], p[1], 6 + (FL.span || 6) * 0.4 + (p[1] > 0 ? 2.5 : 0) * Math.cos((p[0] / (SL + R)) * Math.PI * 0.5)]) }) : M.spawn(kind, { route: 'studio', name: kind, halts: [{ at: 0.5, hold: 12, move: mv }] }); if (FL) delete M.routes.studio; M.plan({ press: false });
+    M.route('studio', pts, { width: 0 }); M.inStudio = true; const mv = Object.keys(K.spec.moves || {})[0], u = K.spec.avatar ? M.spawn(kind, { name: kind, avatar: true, at: [-6, -R], yaw: 90 }) : FL ? M.spawn(kind, { name: kind, fly: pts.map((p, i) => [p[0], p[1], 6 + (FL.span || 6) * 0.4 + (p[1] > 0 ? 2.5 : 0) * Math.cos((p[0] / (SL + R)) * Math.PI * 0.5)]) }) : M.spawn(kind, { route: 'studio', name: kind, halts: [{ at: 0.5, hold: 12, move: mv }] }); if (FL || K.spec.avatar) delete M.routes.studio; M.plan({ press: false });
     // a figure 1.75 m tall beside the way, in orange: what the size is measured against
-    { const g = new LR.Geo(), fx = 0, fz = -R + (FL ? (FL.span || 6) * 0.6 : Math.max(...K.spec.limbs.map((l) => Math.abs(l.home[1])))) + 2.2, y = L.h(fx, fz); g.mat('cloth', { tint: '#ff7a1a', flags: LR.FLAG.NOWEATHER }); g.tube([[fx, y, fz], [fx, y + 0.85, fz], [fx, y + 1.45, fz]], [0.16, 0.2, 0.17], { sides: 8, caps: true }); g.blob(fx, y + 1.62, fz, 0.13, { amp: 0, seg: 8, rings: 6 }); W.add(g, { name: 'figure' }); M.figure = [fx, fz]; }
+    { const g = new LR.Geo(), fx = K.spec.avatar ? -7.4 : 0, fz = K.spec.avatar ? -R + 1.2 : -R + (FL ? (FL.span || 6) * 0.6 : Math.max(...K.spec.limbs.map((l) => Math.abs(l.home[1])))) + 2.2, y = L.h(fx, fz);      /* (beside a walker's way; behind where the walker's own body starts, out of its sheet's side views) */ g.mat('cloth', { tint: '#ff7a1a', flags: LR.FLAG.NOWEATHER }); g.tube([[fx, y, fz], [fx, y + 0.85, fz], [fx, y + 1.45, fz]], [0.16, 0.2, 0.17], { sides: 8, caps: true }); g.blob(fx, y + 1.62, fz, 0.13, { amp: 0, seg: 8, rings: 6 }); W.add(g, { name: 'figure' }); M.figure = [fx, fz]; }
     M.start(); W.radius = half - 10; W.spawn = { x: 0, z: -R + 40, yaw: 0 }; return u;
   };
   // ── a wreck: a kind in a pose, built into the world and left there ─────────────────────────────────────────────

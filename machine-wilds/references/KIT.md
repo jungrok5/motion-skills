@@ -9,6 +9,11 @@ weather, the walk). What `machine-wilds` adds:
   the automatic round of the realm.
 - **The walker on slopes** (lib/80_player.js): a climb slows the step from a grade of 0.18, and a face steeper than a
   grade of 0.94 (43°) is slid along, not climbed. Decks (`LR.world.floors`) are not slopes.
+- **Views** (`lib/80_player.js`): `LR.player.view` is `'first'` (inside the head; the body is not drawn, its shadow is),
+  `'third'` (a boom behind and above, shortened where the ground is in its way) or `'top'` (high over it, looking down);
+  `LR.player.setView()` goes round them (V, the HUD's camera button, a pad's Y), `LR.player.zoomBy(k)` zooms — the lens
+  in the first view, the distance in the others (wheel, + −, a pinch, a pad's ↑ ↓). `?eye=third` (or `top`) starts there. The
+  second and third exist only in a realm that spawns a body (`references/MACHINES.md`). `LR.player.torch` (B) is its lamp.
 - **Solids with a height**: `LR.world.solidBox(x, z, hx, hz, yaw, { y0, y1 })` stops only who stands between those heights.
   Give `y1` the thing's real top, not a wall's: a walker who has hopped to within `LR.player.mantle` (0.4 m) of the top is
   let onto it and stands on it (a hop, `LR.player.hop` 5 m/s, rises 0.96 m — parapets and barriers up to about 1.3 m).

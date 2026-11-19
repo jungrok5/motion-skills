@@ -6,7 +6,7 @@
 // the eye strolls a tour on its own.
 {
   const T = THREE;
-  const P = (LR.player = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, vx: 0, vz: 0, vy: 0, air: false, eye: 1.68, radius: 0.34, walk: 2.5, run: 5.8, hop: 5.0, mantle: 0.4, bob: 0, speed: 0, moving: false, running: false, surface: 'grass', touring: false, tourS: 0, idle: 0, keys: {}, look: { dx: 0, dy: 0 }, stick: { x: 0, y: 0, active: false }, pad: { x: 0, y: 0, run: false, hop: false }, locked: false, enabled: true });
+  const P = (LR.player = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, vx: 0, vz: 0, vy: 0, air: false, eye: 1.68, radius: 0.34, walk: 2.5, run: 5.8, hop: 5.0, mantle: 0.4, view: 'first', zoom: { first: 1, third: 4.4, top: 13 }, torch: !LR.RENDER || LR.q('torch') === '1', prep: 0, bob: 0, speed: 0, moving: false, running: false, surface: 'grass', touring: false, tourS: 0, idle: 0, keys: {}, look: { dx: 0, dy: 0 }, stick: { x: 0, y: 0, active: false }, pad: { x: 0, y: 0, run: false, hop: false }, locked: false, enabled: true });
   const W = LR.world;
   // the floor under a point: land, or a deck within a step of where we stand
   P.groundAt = (x, z, yNow) => {
@@ -47,9 +47,17 @@
   P.stopTour = () => { if (P.touring) { P.touring = false; LR.emit('tour', false); } };
 
   // ── input ───────────────────────────────────────────────────────────────────────────────────────────────────────
+  // ── the eye: inside the head (first), behind and above (third), or high over it looking down (top) — and how near ──
+  // V (the HUD's camera button, a pad's Y) goes round them; the wheel, + and −, a pinch or a pad's ↑ ↓ zoom: in first person the
+  // lens, otherwise the distance.  B puts the body's lamp on and off.
+  const VIEWS = ['first', 'third', 'top'], ZR = { first: [1, 4], third: [1.8, 14], top: [7, 70] };
+  const hasBody = () => !!(LR.mech && LR.mech.units && LR.mech.units.some((u) => u.avatar));      // (a realm without a body for the walker has only the first)
+  P.setView = (v) => { P.view = !hasBody() ? 'first' : VIEWS.includes(v) ? v : VIEWS[(VIEWS.indexOf(P.view) + 1) % 3]; P.boom = undefined; LR.emit('view', P.view); return P.view; };
+  P.zoomBy = (k) => { const r = ZR[P.view], z = P.zoom; z[P.view] = LR.clamp(z[P.view] * (P.view === 'first' ? 1 / k : k), r[0], r[1]); LR.emit('zoom', P.view, z[P.view]); };
   P.bind = (canvas) => {
     const K = P.keys, move = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyQ', 'KeyE', 'Space']);
-    window.addEventListener('keydown', (e) => { if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; K[e.code] = true; if (move.has(e.code)) { e.preventDefault(); P.stopTour(); } LR.emit('key', e.code, e); });
+    window.addEventListener('keydown', (e) => { if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; const was = K[e.code]; K[e.code] = true; if (move.has(e.code)) { e.preventDefault(); P.stopTour(); } if (!was && !e.ctrlKey && !e.metaKey) { if (e.code === 'KeyV') P.setView(); else if (e.code === 'KeyB') { P.torch = !P.torch; LR.emit('torch', P.torch); } else if (e.code === 'Equal' || e.code === 'NumpadAdd') P.zoomBy(0.8); else if (e.code === 'Minus' || e.code === 'NumpadSubtract') P.zoomBy(1.25); } LR.emit('key', e.code, e); });
+    canvas.addEventListener('wheel', (e) => { e.preventDefault(); P.zoomBy(Math.exp(LR.clamp(e.deltaY, -240, 240) * 0.0016)); }, { passive: false });
     window.addEventListener('keyup', (e) => { K[e.code] = false; });
     window.addEventListener('blur', () => { for (const k in K) K[k] = false; });
     // mouse: click captures the pointer where the browser allows it; otherwise drag
@@ -61,7 +69,8 @@
     // touch: the left half is a stick, the right half turns the head
     const touches = new Map();
     const tdown = (e) => { for (const t of e.changedTouches) { const left = t.clientX < window.innerWidth * 0.45; touches.set(t.identifier, { left, x0: t.clientX, y0: t.clientY, x: t.clientX, y: t.clientY, t0: performance.now() }); if (left) { P.stick.active = true; P.stick.ox = t.clientX; P.stick.oy = t.clientY; P.stick.x = P.stick.y = 0; P.stopTour(); LR.emit('stick', P.stick); } } e.preventDefault(); };
-    const tmove = (e) => { for (const t of e.changedTouches) { const s = touches.get(t.identifier); if (!s) continue; if (s.left) { const R = 56, dx = (t.clientX - s.x0) / R, dy = (t.clientY - s.y0) / R, l = Math.hypot(dx, dy); P.stick.x = l > 1 ? dx / l : dx; P.stick.y = l > 1 ? dy / l : dy; LR.emit('stick', P.stick); } else { P.look.dx += (t.clientX - s.x) * 2.4; P.look.dy += (t.clientY - s.y) * 2.4; P.stopTourLook(); } s.x = t.clientX; s.y = t.clientY; } e.preventDefault(); };
+    const tmove = (e) => { for (const t of e.changedTouches) { const s = touches.get(t.identifier); if (!s) continue; if (s.left) { const R = 56, dx = (t.clientX - s.x0) / R, dy = (t.clientY - s.y0) / R, l = Math.hypot(dx, dy); P.stick.x = l > 1 ? dx / l : dx; P.stick.y = l > 1 ? dy / l : dy; LR.emit('stick', P.stick); } else { const o = [...touches.values()].find((q) => q !== s && !q.left);      /* two fingers on the looking side: a pinch zooms */
+        if (o) { const d0 = Math.hypot(s.x - o.x, s.y - o.y), d1 = Math.hypot(t.clientX - o.x, t.clientY - o.y); if (d0 > 8 && d1 > 8) P.zoomBy(d0 / d1); s.t0 = -1e9; o.t0 = -1e9; } else { P.look.dx += (t.clientX - s.x) * 2.4; P.look.dy += (t.clientY - s.y) * 2.4; P.stopTourLook(); } } s.x = t.clientX; s.y = t.clientY; } e.preventDefault(); };
     const tup = (e) => { for (const t of e.changedTouches) { const s = touches.get(t.identifier); if (s && s.left) { P.stick.active = false; P.stick.x = P.stick.y = 0; LR.emit('stick', P.stick); }
         else if (s && performance.now() - s.t0 < 260 && Math.hypot(t.clientX - s.x0, t.clientY - s.y0) < 14) { P.tapHop = true; P.stopTour(); }      /* a tap of the looking thumb is a hop */ touches.delete(t.identifier); } e.preventDefault(); };
     canvas.addEventListener('touchstart', tdown, { passive: false }); canvas.addEventListener('touchmove', tmove, { passive: false }); canvas.addEventListener('touchend', tup, { passive: false }); canvas.addEventListener('touchcancel', tup, { passive: false });
@@ -84,7 +93,8 @@
         const ax = dz(gp.axes[0]), ay = dz(gp.axes[1]), rx = dz(gp.axes[2] || 0), ry = dz(gp.axes[3] || 0), b = (i) => !!(gp.buttons[i] && gp.buttons[i].pressed);
         if (ax || ay) { pad.x += ax; pad.y += ay; P.stopTour(); }
         if (rx || ry) { P.yaw += rx * Math.abs(rx) * 2.6 * dt; P.pitch = LR.clamp(P.pitch - ry * Math.abs(ry) * 1.9 * dt, -1.35, 1.35); P.stopTourLook(); }
-        if (b(6) || b(7) || b(10)) pad.run = true; if (b(0)) { pad.hop = true; P.stopTour(); } } }
+        if (b(6) || b(7) || b(10)) pad.run = true; if (b(0)) { pad.hop = true; P.stopTour(); }
+        if (b(3) && !pad.y3) P.setView(); pad.y3 = b(3); if (b(12)) P.zoomBy(Math.exp(-1.2 * dt)); if (b(13)) P.zoomBy(Math.exp(1.2 * dt)); } }
     if (P.lookHold > 0) P.lookHold -= dt;
     if (P.touring && P.tour) {
       P.tourS += 1.55 * dt; const u = tourU(P.tourS), q = P.tour.at(u), a = P.tour.at(tourU(P.tourS + 7)), i = Math.floor(u) % P.tour.pts.length, wp = P.tour.pts[i], wn = P.tour.pts[(i + 1) % P.tour.pts.length], f = u - Math.floor(u);
@@ -114,7 +124,9 @@
           else { if (grade > 0.18) { const k = 1 / (1 + 1.9 * (grade - 0.18)); nx = P.x + (nx - P.x) * k; nz = P.z + (nz - P.z) * k; } P.steep = 0; } P.grade = grade; } }
       const rr = Math.hypot(nx, nz), R = W.radius; if (rr > R) { nx *= R / rr; nz *= R / rr; }
       P.x = nx; P.z = nz; const g = P.groundAt(P.x, P.z, P.y);
-      if ((K.Space || P.pad.hop || P.tapHop) && !P.air) { P.vy = P.hop; P.air = true; } P.tapHop = false;
+      // a hop: with a body (LR.mech's avatar) it gathers for a tenth of a second and then leaves; without one it is at once
+      if ((K.Space || P.pad.hop || P.tapHop) && !P.air && P.hopT === undefined) { if (P.body) P.hopT = 0.1; else { P.vy = P.hop; P.air = true; } } P.tapHop = false;
+      if (P.hopT !== undefined) { P.hopT -= dt; P.prep = 1 - Math.max(0, P.hopT) / 0.1; if (P.hopT < 0 || P.air) { if (!P.air) { P.vy = P.hop; P.air = true; } P.prep = 0; P.hopT = undefined; } }
       // a step down is a step; more than that is a fall — off a deck, off a parapet, off a bank — with the weight of one: the
       // knees give on landing by how fast the ground came (nobody is hurt here: there is nothing to lose but the view)
       if (!P.air && g.y < P.y - 0.6) { P.air = true; P.vy = Math.min(P.vy, 0); }
@@ -127,7 +139,15 @@
     P.bob += P.speed * dt * (P.running ? 0.95 : 1.25); const amp = P.moving ? (P.running ? 0.055 : 0.032) : 0;
     P.bobAmp = LR.damp(P.bobAmp || 0, amp, 8, dt);
     P.dip = Math.max(0, Math.min(0.75, (P.dip || 0) + (P.dipV || 0) * dt)); P.dipV = (P.dipV || 0) - (P.dip * 60 + (P.dipV || 0) * 9) * dt; if (P.dip <= 0 && P.dipV < 0) P.dipV = 0;      // the knees giving after a drop: down fast, up slower
-    cam.position.set(P.x, P.y + P.eye - (P.dip || 0) + Math.sin(P.bob * LR.TAU) * P.bobAmp, P.z); cam.rotation.set(P.pitch, -P.yaw, Math.cos(P.bob * Math.PI) * P.bobAmp * 0.12);
+    P.body = LR.mech && LR.mech.units ? LR.mech.units.find((u) => u.avatar && u.live) || null : null; if (P.view !== 'first' && !hasBody()) P.view = 'first';
+    { if (!P.fovSet) P.fovBase = cam.fov; const zf = P.view === 'first' ? P.zoom.first : 1;      // the lens: only the first view zooms it; the others move the eye
+      if (zf !== 1) { const w = (2 * Math.atan(Math.tan((P.fovBase * Math.PI) / 360) / zf) * 180) / Math.PI; if (Math.abs(cam.fov - w) > 0.01) { cam.fov = w; cam.updateProjectionMatrix(); } P.fovSet = true; } else if (P.fovSet) { cam.fov = P.fovBase; cam.updateProjectionMatrix(); P.fovSet = false; } }
+    if (P.view === 'first') { cam.position.set(P.x, P.y + P.eye - (P.dip || 0) + Math.sin(P.bob * LR.TAU) * P.bobAmp, P.z); cam.rotation.set(P.pitch, -P.yaw, Math.cos(P.bob * Math.PI) * P.bobAmp * 0.12); }
+    else { // behind it, or over it: the eye rides a boom from a point above the body; the boom shortens where the ground is in its way
+      const top = P.view === 'top', pitch = top ? -1.36 : LR.clamp(P.pitch - 0.14, -1.25, 0.6), cp = Math.cos(pitch), sp2 = Math.sin(pitch), f = [Math.sin(P.yaw) * cp, sp2, -Math.cos(P.yaw) * cp], ty = P.y + (top ? 1.2 : 1.62), want = P.zoom[P.view];
+      let d = want; if (!top) for (let k = 1; k <= 10; k++) { const q = (want * k) / 10, x = P.x - f[0] * q, z = P.z - f[2] * q, y = ty - f[1] * q; if (y < P.groundAt(x, z, y + 0.5).y + 0.3) { d = Math.max(0.6, (want * (k - 1)) / 10); break; } }
+      P.boom = P.boom === undefined ? d : d < P.boom ? d : LR.damp(P.boom, d, 4, dt); const b = P.boom, side = top ? 0 : 0.34 * LR.sm(1.2, 4, b), rx = Math.cos(P.yaw), rz = Math.sin(P.yaw);
+      cam.position.set(P.x - f[0] * b + rx * side, ty - f[1] * b - (P.dip || 0) * 0.5, P.z - f[2] * b + rz * side); cam.rotation.set(pitch, -P.yaw, 0); }
   };
   P.surfaceAt = (x, z, g) => { const L = LR.land; if (LR.wx.snow > 0.55) return 'snow'; if (L.coverAt('paved', x, z) > 0.5) return 'stone'; if (L.coverAt('shore', x, z) > 0.5) return 'gravel'; if (L.coverAt('dirt', x, z) > 0.45) return 'dirt'; return 'grass'; };
   LR.on('input', (dt, cam) => { if (P.enabled) P.update(dt, cam); }, 10);

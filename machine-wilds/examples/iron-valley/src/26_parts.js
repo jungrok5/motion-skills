@@ -130,7 +130,7 @@ V.parts = {
     });
     k.lamp('head', { name: 'torch', at: [0.325, -0.012, 0], dir: [0.985, -0.17, 0], color: [1.0, 0.9, 0.72], power: 16, cone: 17, range: 60, lens: 0.06, proud: 0.012 });
     for (const s of [-1, 1]) k.lamp('head', { at: [0.2, 0.06, s * 0.118], dir: [0.5, 0, s], color: [1, 0.5, 0.14], power: 0.3, range: 4, lens: 0.016, glow: 0.7 });
-    k.lamp('body', { at: [-0.985, 0.1, 0], dir: [-1, 0, 0], color: [1, 0.12, 0.06], power: 0.3, range: 4, lens: 0.02, glow: 0.8 });
+    k.lamp('body', { at: [-0.985, 0.1, 0], dir: [-1, 0, 0], color: [1, 0.12, 0.06], power: 0.06, range: 2, lens: 0.02, glow: 0.6 });
     k.bone('whip', (g) => { k.mat('dark'); g.tube([[0, 0, 0], [0, 0.45, 0], [0, 0.9, 0]], [0.012, 0.008, 0.003], { sides: k.n(5), caps: true }); });
   },
   // 등짐: a bed on six legs, a cab like a visor with two amber lamps, a frame of old girders holding what it carries

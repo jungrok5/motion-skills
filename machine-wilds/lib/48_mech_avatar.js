@@ -14,7 +14,7 @@
 // LR.mech.cmd(unit, t) reads them until the page takes the unit over (unit.live).  Numbers only: it runs in Node.
 {
   const M = LR.mech, V = M.v, D2R = M.D2R, sat = LR.sat, damp = LR.damp, lerp = LR.lerp, TAU = Math.PI * 2;
-  const DEF = { walk: 2.5, run: 5.8, stepWalk: 0.8, stepRun: 1.45, reach: 0.34, swing: [0.42, 0.2], lift: [0.13, 0.24], toe: 26, swingGamma: 16, lean: [3.5, 11], accLean: 0.9, sway: 0.28, bob: 0.022, crouch: [0.03, 0.05], dip: 0.5, gather: 0.13, breath: 0.012, narrow: 0.35, settle: 0.1, roll: 5, look: 0.6, tuck: 0.09 };
+  const DEF = { walk: 2.5, run: 5.8, stepWalk: 0.8, stepRun: 1.45, reach: 0.34, swing: [0.42, 0.2], lift: [0.13, 0.24], toe: 26, swingGamma: 16, lean: [3.5, 11], accLean: 0.9, sway: 0.17, bob: 0.022, crouch: [0.03, 0.05], dip: 0.5, gather: 0.13, breath: 0.012, narrow: 0.35, settle: 0.1, roll: 5, look: 0.6, tuck: 0.09 };
   // the floor: in the page the walker's own (decks, the tops of parapets), in Node the land
   const floorY = (x, z, yNow) => (M.avatarFloor ? M.avatarFloor(x, z, yNow) : LR.land.h(x, z));      // (48_mech_run sets M.avatarFloor when the page takes the body over)
   const floorN = (x, z, y, r) => (Math.abs(LR.land.h(x, z) - y) < 0.05 ? LR.land.normal(x, z, r, [0, 1, 0]) : [0, 1, 0]);
@@ -78,7 +78,7 @@
       const wantC = Math.min(want, cap);
       this.pc = air ? want + ((this.pc === undefined ? want : this.pc) - want) * Math.exp(-40 * dt) : damp(this.pc === undefined ? wantC : this.pc, wantC, wantC > this.pc ? 6 : 22, dt); this.py = this.pc - Math.max(0, this.dip) + bob + breath;      // (everything added here only lowers it: the cap is never passed from below)      // down at once (a leg has run out), up at the pace of a body being lifted
       // it sways over the foot that carries, leans into its speed and its speeding up, rolls into a turn
-      const st2 = sw && on.length === 1 ? on[0] : null, lat = st2 ? (st2.p[0] - st.x) * r[0] + (st2.p[2] - st.z) * r[1] : 0; this.sw = damp(this.sw, lat * a.sway, 9, dt);
+      const st2 = sw && on.length === 1 ? on[0] : null, lat = st2 ? (st2.p[0] - st.x) * r[0] + (st2.p[2] - st.z) * r[1] : 0; this.sw = damp(this.sw, lat * a.sway, 7, dt);
       const fwd = sp > 0.15 ? dir[0] * f[0] + dir[1] * f[1] : 0, lean = -(lerp(a.lean[0], a.lean[1], k) * sat(sp / a.walk) * fwd + LR.clamp(this.acc * a.accLean, -5, 5) * (fwd >= 0 ? 1 : -1)) * D2R + this.prep * 0.07 - this.dip * 0.35 + this.airB * 0.06;
       this.pitch = damp(this.pitch, lean, 9, dt); this.roll = damp(this.roll, LR.clamp(this.yawRate * sp * 0.012, -1, 1) * a.roll * D2R + (st2 ? Math.sign(lat) * 0.02 : 0), 8, dt);
       const c = this.build(air); this.hist.push(c); if (this.hist.length > 120) this.hist.shift(); this.now = c; return this;
@@ -100,6 +100,7 @@
   // [seconds, forward (−1…1), side, turn (°/s), run, hop]
   const SCRIPT = [[2.6, 0, 0, 0, 0, 0, 'stand'], [5.2, 1, 0, 0, 0, 0, 'walk'], [2.4, 1, 0, 50, 0, 0, 'turn'], [1.2, 1, 0, 0, 0, 0, ''], [4.6, 1, 0, 0, 1, 0, 'run'], [2.2, 0, 0, 0, 0, 0, 'stop'], [2.4, 0, 0, -75, 0, 0, 'spin'], [1.2, 0, 0, 0, 0, 0, ''], [2.2, -1, 0, 0, 0, 0, 'back'], [1.6, 0, 1, 0, 0, 0, 'side'], [1.4, 0, 0, 0, 0, 0, ''], [1.8, 0, 0, 0, 0, 1, 'hop'], [1.6, 1, 0, 0, 0, 0, ''], [1.6, 1, 0, 0, 0, 1, 'leap'], [2.0, 0, 0, 0, 0, 0, 'rest']];
   M.avatarExercise = (u) => {
+    const floor = M.avatarFloor; M.avatarFloor = null;      // (the exercise is walked on the land itself, whoever is driving the body by now)
     const av = new Avatar(u), a = av.a, dt = 1 / 60, frames = [], marks = {}, lifts = [[], []], L = LR.land; let x = (u.at || [0, 0])[0], z = (u.at || [0, 0])[1], h = ((u.yaw || 0) - 90) * D2R, y = L.h(x, z), vx = 0, vz = 0, vy = 0, air = false, prep = 0, hopT = -1, T0 = 0;
     av.reset({ x, z, h, y }); av.t = 0;
     for (const [dur, fw, sd, turn, run, hop, name] of SCRIPT) { if (name) marks[name] = T0; const n = Math.round(dur / dt);
@@ -115,7 +116,7 @@
     // the period of the walk and of the run: the time between two lifts of the same foot
     const per = (t0, t1) => { const q = lifts[0].filter((t) => t > t0 + 1.2 && t < t1); return q.length > 2 ? (q[q.length - 1] - q[0]) / (q.length - 1) : 0.8; };
     marks.walkT = per(marks.walk, marks.turn); marks.runT = per(marks.run, marks.stop); marks.walk0 = (lifts[0].find((t) => t > marks.walk + 2) || marks.walk + 2); marks.run0 = (lifts[0].find((t) => t > marks.run + 2) || marks.run + 2);
-    u.ex = { dt, frames, marks, events: av.events.length }; u.lap = frames.length * dt; u.T = marks.walkT; u.N = 1; u.plants = {}; u.haltList = []; u.wb = 1; u.track = Math.abs(u.kin.limbs[0].home[1]) * 2; u.stride = a.stepWalk * 2; return u;
+    u.ex = { dt, frames, marks, events: av.events.length }; u.lap = frames.length * dt; u.T = marks.walkT; u.N = 1; u.plants = {}; u.haltList = []; u.wb = 1; u.track = Math.abs(u.kin.limbs[0].home[1]) * 2; u.stride = a.stepWalk * 2; M.avatarFloor = floor; return u;
   };
   M.planAvatar = (u) => M.avatarExercise(u);
   M.avatarCmd = (u, t) => { if (u.live && u.av) return u.av.at(t); const E = u.ex || M.avatarExercise(u).ex, n = E.frames.length, i = ((Math.round(t / E.dt) % n) + n) % n; return E.frames[i]; };
