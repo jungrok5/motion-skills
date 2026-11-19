@@ -8,7 +8,7 @@ yard of containers, a power line along the north ridge. The road was cut when th
 walked through one span of the viaduct. Spruce and pine closed over everything else.
 
 ## The land
-640 m of editable land (the walk is 222 m in radius) · highest 47 m (the north ridge), lowest −3 m (the brook in the
+640 m of editable land (the walk is 262 m in radius: out past the rim way) · highest 47 m (the north ridge), lowest −3 m (the brook in the
 east) · steep: the north bank (20–30°, crags), the bench edges · level: the valley floor, the bog round the tarn.
 | place | x, z | what |
 |---|---|---|
@@ -49,8 +49,10 @@ east) · steep: the north bank (20–30°, crags), the bench edges · level: the
   down to the fallen crane and on the road, and stands above it on the viaduct.
 - **bank** (porters, 460 m, 13 m wide): a loop on the north shelf past the yard, crossing the old road north of the
   viaduct's abutment.
-- **rim** (the relic, 1500 m, 38 m wide): round the whole valley at 240 m; from the walk it is lit windows and two
-  eyes in the mist, and, where it passes the way in, legs between the trees.
+- **rim** (the relic, 1500 m, 38 m wide): round the whole valley at 240 m; from the valley it is lit windows and two
+  eyes in the mist, and, where it passes the way in, legs between the trees. The walk reaches it (262 m): the walker
+  can stand on the rim way and let it come over — the deck passes 28 m overhead between two rows of legs — or go in
+  under it where it stops to call on the southern rise (100, −226).
 - **brook** (the crayfish, 300 m, 13 m wide): the valley floor west of the viaduct, down one side of the brook and back
   up the other, through the water twice; its east end comes within forty metres of the fallen crane, so the walker
   who goes down the path to the wreck meets two red eyes in the mist beyond it.
