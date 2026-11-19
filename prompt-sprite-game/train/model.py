@@ -86,10 +86,13 @@ def mask_batch(x, gen=None, blob=0.0):
 
 
 @torch.no_grad()
-def paint(model, words, steps=16, guidance=3.0, temp=1.0, seed=0, count=4, nms=False):
+def paint(model, words, steps=16, guidance=3.0, temp=1.0, seed=0, count=4, nms=False, top_p=1.0, choice=1.0):
     """MaskGIT-style painting from a fully hidden canvas. words: (text_len,) LongTensor → (count,256) colour ids.
     nms: a pixel is committed early only if it is the most confident hidden pixel in its 3×3 neighbourhood, so the
-    first strokes spread over the sprite instead of clumping (Tessera's spatial NMS)."""
+    first strokes spread over the sprite instead of clumping (Tessera's spatial NMS).
+    top_p: sample each pixel only among the most likely colours that make up `top_p` of its probability (nucleus), so a
+    high temperature brings back detail without stray off-colour specks from the tail.
+    choice: scale of the annealed Gumbel noise on *which* pixels are committed each step (not which colour)."""
     g = torch.Generator().manual_seed(seed)
     M = model.mask_id
     x = torch.full((count, 256), M, dtype=torch.long)
@@ -103,10 +106,16 @@ def paint(model, words, steps=16, guidance=3.0, temp=1.0, seed=0, count=4, nms=F
         if model.selfcond: sc_c, sc_u = F.softmax(lc, -1), F.softmax(lu, -1)
         logits = lu + guidance * (lc - lu)
         probs = F.softmax(logits / temp, -1)
+        if top_p < 1.0:
+            sp, si = probs.sort(-1, descending=True)
+            drop = (sp.cumsum(-1) - sp) > top_p                                          # keep the smallest set reaching top_p
+            sp = sp.masked_fill(drop, 0.0)
+            probs = torch.zeros_like(probs).scatter(-1, si, sp)
+            probs = probs / probs.sum(-1, keepdim=True)
         pick = torch.multinomial(probs.view(-1, probs.shape[-1]), 1, generator=g).view(count, 256)
         conf = torch.gather(probs, -1, pick[..., None])[..., 0]
         anneal = 1.0 - (s + 1) / steps
-        conf = torch.log(conf.clamp_min(1e-9)) + anneal * -torch.log(-torch.log(torch.rand(conf.shape, generator=g).clamp(1e-9, 1)))
+        conf = torch.log(conf.clamp_min(1e-9)) + choice * anneal * -torch.log(-torch.log(torch.rand(conf.shape, generator=g).clamp(1e-9, 1)))
         if nms and s < steps - 1:
             ch = torch.where(hidden, conf, torch.full_like(conf, -1e9)).view(count, 1, 16, 16)
             peak = (ch == F.max_pool2d(ch, 3, 1, 1)).view(count, 256)

@@ -7,7 +7,9 @@ For every subject of the theme it paints `per` sprites from the subject's name a
          the same CNN on the real validation sprites gives the ceiling)
   fd     Fréchet distance between CNN features of painted and real sprites (lower = closer to the real look;
          real train vs real validation gives the floor)
-  lone   opaque pixels whose four neighbours all have another colour, per sprite (noise; real sprites give the target)
+  lone   opaque pixels whose four neighbours all have another colour, per sprite (detail or noise; real sprites give the target)
+  speck  lone pixels whose colour appears nowhere else in the sprite and is far (OKLab) from every neighbour: stray
+         off-colour pixels (real sprites give the target)
   nll    validation negative log-likelihood per hidden pixel, no label smoothing (the model, not the sampler)
 The CNN is trained once and cached next to the data (<data>.cls.pt). A sample sheet goes to --sheet.
 """
@@ -20,6 +22,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument('--data', required=True); ap.add_argument('--ckpt', required=True)
 ap.add_argument('--steps', type=int, default=16); ap.add_argument('--temp', type=float, default=1.0)
 ap.add_argument('--guidance', type=float, default=3.0); ap.add_argument('--nms', type=int, default=0)
+ap.add_argument('--top-p', type=float, default=1.0); ap.add_argument('--choice', type=float, default=1.0)
 ap.add_argument('--per', type=int, default=8); ap.add_argument('--sheet', default='')
 ap.add_argument('--json', default='')
 a = ap.parse_args()
@@ -75,8 +78,23 @@ def lone(t):
     nb = torch.stack([p[:, :-2, 1:-1], p[:, 2:, 1:-1], p[:, 1:-1, :-2], p[:, 1:-1, 2:]])
     return ((t > 0) & (nb != t).all(0)).float().sum((1, 2)).mean().item()
 
+
+def _oklab(rgb):
+    c = rgb / 255.0; c = np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
+    l = 0.4122214708*c[:,0] + 0.5363325363*c[:,1] + 0.0514459929*c[:,2]; m_ = 0.2119034982*c[:,0] + 0.6806995451*c[:,1] + 0.1073969566*c[:,2]
+    s_ = 0.0883024619*c[:,0] + 0.2817188376*c[:,1] + 0.6299787005*c[:,2]; l, m_, s_ = np.cbrt(l), np.cbrt(m_), np.cbrt(s_)
+    return np.stack([0.2104542553*l + 0.7936177850*m_ - 0.0040720468*s_, 1.9779984951*l - 2.4285922050*m_ + 0.4505937099*s_, 0.0259040371*l + 0.7827717662*m_ - 0.8086757660*s_], 1)
+LAB = torch.tensor(_oklab(palette.astype(np.float64)), dtype=torch.float32)
+def speck(t, far=0.12):
+    t = t.view(-1, 16, 16).clamp(max=len(palette) - 1); B = t.shape[0]
+    p = F.pad(t, (1, 1, 1, 1), value=0)
+    nb = torch.stack([p[:, :-2, 1:-1], p[:, 2:, 1:-1], p[:, 1:-1, :-2], p[:, 1:-1, 2:]])
+    dist = ((LAB[t][None] - LAB[nb]) ** 2).sum(-1).sqrt()                                  # (4,B,16,16)
+    once = torch.stack([(t[b][..., None, None] == t[b]).sum((-1, -2)) == 1 for b in range(B)])
+    return ((t > 0) & once & (dist > far).all(0)).float().sum((1, 2)).mean().item()
+
 real_tr_f, _ = feats_and_pred(tokens[tr]); real_val_f, real_val_p = feats_and_pred(tokens[val])
-ref = {'acc': (real_val_p == sid[val]).float().mean().item(), 'fd': frechet(real_tr_f, real_val_f), 'lone': lone(tokens[val])}
+ref = {'acc': (real_val_p == sid[val]).float().mean().item(), 'fd': frechet(real_tr_f, real_val_f), 'lone': lone(tokens[val]), 'speck': speck(tokens[val])}
 
 ck = torch.load(a.ckpt, weights_only=False); m = SpritePainter(**ck['cfg']); m.load_state_dict(ck['state']); m.eval()
 vocab = list(ck['vocab']); widx = {w: i for i, w in enumerate(vocab)}
@@ -94,15 +112,16 @@ with torch.no_grad():  # validation NLL, plain
 
 gen, want = [], []
 for k, name in enumerate(names):
-    out = paint(m, torch.tensor(enc(name)), steps=a.steps, guidance=a.guidance, temp=a.temp, seed=k, count=a.per, nms=bool(a.nms))
+    out = paint(m, torch.tensor(enc(name)), steps=a.steps, guidance=a.guidance, temp=a.temp, seed=k, count=a.per, nms=bool(a.nms), top_p=a.top_p, choice=a.choice)
     out = torch.where(out == m.mask_id, torch.zeros_like(out), out); gen.append(out); want += [k] * a.per
 gen = torch.cat(gen); want = torch.tensor(want)
 gf, gp = feats_and_pred(gen)
-res = {'acc': (gp == want).float().mean().item(), 'fd': frechet(gf, real_val_f), 'lone': lone(gen), 'nll': nll}
-print(f"{os.path.basename(os.path.dirname(a.ckpt))} step {ck['step']} · steps {a.steps} temp {a.temp} guidance {a.guidance} nms {a.nms}")
+res = {'acc': (gp == want).float().mean().item(), 'fd': frechet(gf, real_val_f), 'lone': lone(gen), 'speck': speck(gen), 'nll': nll}
+print(f"{os.path.basename(os.path.dirname(a.ckpt))} step {ck['step']} · steps {a.steps} temp {a.temp} top-p {a.top_p} choice {a.choice} guidance {a.guidance} nms {a.nms}")
 print(f"  acc  {res['acc']*100:5.1f} %   (real {ref['acc']*100:.1f} %)")
 print(f"  fd   {res['fd']:7.2f}   (real {ref['fd']:.2f})")
 print(f"  lone {res['lone']:5.1f}     (real {ref['lone']:.1f})")
+print(f"  speck {res['speck']:4.2f}     (real {ref['speck']:.2f})")
 print(f"  nll  {res['nll']:.4f}")
 if a.json: json.dump({'res': res, 'ref': ref, 'args': vars(a), 'step': ck['step']}, open(a.json, 'w'))
 if a.sheet:

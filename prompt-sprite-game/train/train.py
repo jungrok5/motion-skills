@@ -22,6 +22,8 @@ ap.add_argument('--selfcond', type=int, default=0); ap.add_argument('--blob', ty
 ap.add_argument('--psmooth', type=float, default=0.0, help='perceptual label smoothing weight (colour-distance-aware)')
 ap.add_argument('--smooth', type=float, default=0.05); ap.add_argument('--wd', type=float, default=0.05)
 ap.add_argument('--dropout-words', type=float, default=0.1)
+ap.add_argument('--init', default='', help='start from this checkpoint (fine-tuning); its palette and vocabulary must match --data')
+ap.add_argument('--warmup', type=int, default=300)
 ap.add_argument('--bench', type=int, default=0, help='time this many steps and exit')
 a = ap.parse_args()
 os.makedirs(a.out, exist_ok=True)
@@ -40,6 +42,8 @@ n = len(tokens); perm = torch.randperm(n); nval = max(64, n // 20)
 val, tr = perm[:nval], perm[nval:]
 
 model = SpritePainter(colors=K + 1, vocab=len(vocab), d=a.d, d_px=a.d_px, core=a.core, heads=a.heads, selfcond=bool(a.selfcond))
+if a.init:
+    ck0 = torch.load(a.init, weights_only=False); model.load_state_dict(ck0['state']); print(f'initialised from {a.init} (step {ck0["step"]})', flush=True)
 ema = SpritePainter(**model.cfg); ema.load_state_dict(model.state_dict()); [p.requires_grad_(False) for p in ema.parameters()]
 nparam = sum(p.numel() for p in model.parameters())
 print(f'{n} sprites ({len(tr)} train / {nval} val), {K + 1} colours, {len(vocab)} words, {nparam / 1e6:.2f} M parameters', flush=True)
@@ -53,7 +57,7 @@ def _oklab(rgb):
 _lab = torch.tensor(_oklab(palette.astype(np.float64)), dtype=torch.float32)
 _d2 = ((_lab[:, None] - _lab[None]) ** 2).sum(-1)
 SOFT = torch.softmax(-_d2 / 0.002, 1); SOFT[0] = 0; SOFT[:, 0] = 0; SOFT[0, 0] = 1; SOFT = SOFT / SOFT.sum(1, keepdim=True)
-sched = lambda s: min(1, s / 300) * (0.1 + 0.9 * 0.5 * (1 + math.cos(math.pi * min(1, s / a.steps))))
+sched = lambda s: min(1, s / a.warmup) * (0.1 + 0.9 * 0.5 * (1 + math.cos(math.pi * min(1, s / a.steps))))
 prompts = [p.strip() for p in a.prompts.split('|') if p.strip()] or ['orange tabby cat', 'side-view black cat', 'front-view white persian cat', 'three-quarter-view siamese cat', 'kitten', 'cat warrior with a sword', 'ghost cat', 'winged cat']
 
 def batch(ix, aug=True):

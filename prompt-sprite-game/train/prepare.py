@@ -18,6 +18,7 @@ ap.add_argument('--drop', default='', help='comma-separated subjects to leave ou
 ap.add_argument('--colors', type=int, default=255)
 ap.add_argument('--min-word', type=int, default=2)
 ap.add_argument('--out', required=True)
+ap.add_argument('--palette-from', default='', help='reuse the palette and vocabulary of an earlier .npz (fine-tuning on a subset of a pre-training set)')
 a = ap.parse_args()
 
 caps = json.load(open(f'{a.atlas}/captions.json')); objs = json.load(open(f'{a.atlas}/objects.json'))
@@ -39,6 +40,15 @@ def oklab(rgb):
                      0.0259040371*l + 0.7827717662*m - 0.8086757660*s], 1)
 used, counts = np.unique(sub[sub > 0], return_counts=True)
 X = oklab(pal[used]); w = counts.astype(np.float64)
+if a.palette_from:                                   # map onto an existing palette: nearest colour in OKLab
+    P0 = np.load(a.palette_from); newpal = P0['palette']; C0 = oklab(newpal[1:].astype(np.float64))
+    lab = ((X[:, None, :] - C0[None]) ** 2).sum(-1).argmin(1)
+    remap = np.zeros(int(pal.shape[0]) + 1, np.int64); remap[used] = lab + 1; newtok = remap[sub].astype(np.uint8)
+    vocab = list(P0['vocab']); words = lambda c: re.findall(r"[a-z]+(?:-[a-z]+)*", c.lower())
+    miss = collections.Counter(wd for i in idx for wd in words(caps[i]) if wd not in set(vocab))
+    print(f'palette and vocabulary from {a.palette_from} ({len(newpal) - 1} colours, {len(vocab)} words; {len(miss)} words of this set are unknown to it)')
+    np.savez_compressed(a.out, tokens=newtok, palette=newpal, captions=np.array([caps[i] for i in idx]), subjects=np.array([objs[i] for i in idx]), vocab=np.array(vocab))
+    print('→', a.out); raise SystemExit
 K = min(a.colors, len(used)); rng = np.random.default_rng(0)
 C = X[rng.choice(len(X), K, replace=False, p=w / w.sum())]
 for it in range(40):
