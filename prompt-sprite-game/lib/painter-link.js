@@ -50,10 +50,12 @@ export class Painter {
   }
   /**
    * Paint `count` variations. Same MaskGIT-style loop as train/model.py `paint`: start fully hidden, sample every hidden
-   * pixel, keep the most confident (cosine schedule, annealed Gumbel noise), classifier-free guidance.
+   * pixel, keep the most confident (cosine schedule, annealed Gumbel noise × `choice`), classifier-free guidance.
+   * temp / topP: colour sampling (nucleus keeps detail without stray colours); nms: early commits spread out.
+   * Defaults come from the painter's JSON (`sampler`, chosen with train/eval.py).
    * Returns RGBA arrays (16×16×4); onStep(step, rgbaList) after each step.
    */
-  async paint(prompt, { seed = 7, count = 4, steps = 12, guidance = 3, temp = 1, onStep } = {}) {
+  async paint(prompt, { seed = 7, count = 4, steps = 16, guidance = 3, temp = this.meta.sampler?.temp ?? 1, topP = this.meta.sampler?.top_p ?? 1, nms = this.meta.sampler?.nms ?? false, choice = this.meta.sampler?.choice ?? 1, onStep } = {}) {
     const { ort, session, meta } = this, M = meta.mask_id, C = meta.colors, L = meta.text_len;
     const rand = mulberry32(seed);
     const { ids } = this.encode(prompt);
@@ -81,9 +83,27 @@ export class Painter {
           let mx = -Infinity;
           for (let c = 0; c < C; c++) { const v = (lg[ou + c] + guidance * (lg[oc + c] - lg[ou + c])) / temp; p[c] = v; if (v > mx) mx = v; }
           let sum = 0; for (let c = 0; c < C; c++) { p[c] = Math.exp(p[c] - mx); sum += p[c]; }
+          if (topP < 1) {                                   // nucleus: zero the tail beyond topP of the mass
+            const order = Array.from({ length: C }, (_, c) => c).sort((u, v) => p[v] - p[u]);
+            let acc = 0, kept = 0;
+            for (const c of order) { if (acc > topP * sum) p[c] = 0; else { acc += p[c]; kept += p[c]; } }
+            sum = kept;
+          }
           let r = rand() * sum, k = 0; while (k < C - 1 && (r -= p[k]) > 0) k++;
           pick[i] = k;
-          conf[i] = Math.log(Math.max(1e-9, p[k] / sum)) + anneal * -Math.log(-Math.log(Math.min(1, Math.max(1e-9, rand()))));
+          conf[i] = Math.log(Math.max(1e-9, p[k] / sum)) + choice * anneal * -Math.log(-Math.log(Math.min(1, Math.max(1e-9, rand()))));
+        }
+        if (nms && s < steps - 1) {                         // a pixel commits early only as the peak of its hidden 3×3
+          const peak = new Float64Array(conf);
+          for (let i = 0; i < 256; i++) {
+            if (x[b * 256 + i] !== M) continue;
+            const yy = i >> 4, xx = i & 15;
+            for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+              const ny = yy + dy, nx = xx + dx; if (ny < 0 || ny > 15 || nx < 0 || nx > 15 || (!dy && !dx)) continue;
+              const j = ny * 16 + nx; if (x[b * 256 + j] === M && conf[j] > conf[i]) { peak[i] = conf[i] - 1e3; dy = 2; break; }
+            }
+          }
+          conf.set(peak);
         }
         let thresh = -Infinity;
         if (keepHidden > 0) thresh = Array.from(conf).sort((u, v) => u - v)[keepHidden - 1];

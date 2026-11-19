@@ -13,6 +13,7 @@ from model import SpritePainter
 ap = argparse.ArgumentParser()
 ap.add_argument('--ckpt', required=True); ap.add_argument('--out', required=True)
 ap.add_argument('--name', default=''); ap.add_argument('--credit', default='')
+ap.add_argument('--sampler', default='{}', help='JSON of default sampling settings for the browser, e.g. {"temp":1.6,"top_p":0.8,"nms":true}')
 a = ap.parse_args()
 ck = torch.load(a.ckpt, weights_only=False)
 m = SpritePainter(**ck['cfg']); m.load_state_dict(ck['state']); m.eval()
@@ -26,6 +27,7 @@ from onnxruntime.quantization import quantize_dynamic, QuantType
 quantize_dynamic(fp32, a.out + '.onnx', weight_type=QuantType.QInt8)
 os.remove(fp32)
 meta = {'name': a.name or os.path.basename(a.out), 'credit': a.credit, 'step': ck['step'], 'val': ck.get('val'),
+        'sampler': json.loads(a.sampler), 'selfcond': bool(ck['cfg'].get('selfcond')),
         'colors': ck['cfg']['colors'], 'mask_id': m.mask_id, 'text_len': m.text_len,
         'palette': np.asarray(ck['palette']).tolist(), 'vocab': list(map(str, ck['vocab']))}
 json.dump(meta, open(a.out + '.json', 'w'), separators=(',', ':'))
