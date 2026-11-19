@@ -99,7 +99,7 @@ Run scripts from the folder that holds the project.
 Tessera paints anything but is 115 MB and non-commercial, its outputs included. A game whose cast all belongs to one
 theme can carry its own painter: `train/` cuts the theme out of Pixel Art Atlas 1.4M, trains a 2–4 M-parameter painter
 with the same recipe in about an hour on a 4-core CPU, and exports a 3–4 MB int8 ONNX that paints four sprites in
-2–3 s on the CPU. `game.json` names it:
+4–5 s on the CPU (16 steps, nucleus sampling, NMS and a despeckle pass, the settings `train/eval.py` chose). `game.json` names it:
 
 ```jsonc
 "painter": { "src": "https://cdn.jsdelivr.net/gh/<owner>/<repo>@<commit>/prompt-sprite-game/models/cat/cat",

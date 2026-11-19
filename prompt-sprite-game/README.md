@@ -27,7 +27,7 @@ node prompt-sprite-game/scripts/sheet.mjs my-game          # cast sheet (both wa
 ```
 
 A themed painter of your own: `train/` trains one on a CC0 subset in about an hour on a CPU (the bundled `models/cat/`
-— 3.56 MB, four cats in ~2.5 s on the CPU — paints the hero of 「등대 고양이」); see [`train/README.md`](train/README.md).
+— 3.56 MB, four cats in ~4–5 s on the CPU — paints the hero of 「등대 고양이」); see [`train/README.md`](train/README.md).
 
 Requirements: Node 18+ and Playwright's Chromium for the scripts; any static server for the game. Tessera needs
 huggingface.co and cdn.jsdelivr.net, and WebGPU for the fast path.
