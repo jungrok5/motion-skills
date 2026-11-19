@@ -145,6 +145,15 @@ was learned putting scans into it (scanned-realm), then the engine's own list (l
   Camera 60° off the nose (beams read as shafts), the flare lowered to 1.5 ×. The beam's edge in the air pass is still
   hard from inside; a film keeps its camera out of the beams.
 
+- **Beside a painting of a walking rig in a drowned city, ours was a rust-red lump on thin legs.** → The owner brought a
+  reference picture and asked what would lift ours. What differed, in order of what it cost the eye: one colour (every
+  role was rust plate) → works paint: grey frames, cream casings, yellow on what moves, all let go to rust by the same
+  weathering; legs like table legs → a `casing` leg style (the spar boxed in plate, a round housing over each joint, a
+  pad under the foot) and a wider leg; a flat silhouette → a landing stage off one quarter, cables slung under the edges,
+  trees on the deck; red, hard evening light → a `haze` look, a thin bright mist the sun comes through, shot against the
+  light. A reference is for what is missing, never for the design: the relic is still this valley's walking relay
+  station. Water lying on the floor with the machines in it, vines on the ruins and lettering are still to do.
+
 ## Scans in the engine (scanned-realm)
 ## Scans
 

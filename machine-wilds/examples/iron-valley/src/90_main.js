@@ -18,7 +18,7 @@ LR.start({
   strings: V.strings, film: V.film,
   weather: { tod: 20.4, weather: 'mist' },
   // the automatic round of this valley: mist at dusk, into the night, a grey dawn with shafts through the trees, a clear noon, rain, and back
-  round: [{ t: 0, weather: 'mist' }, { t: 26, tod: 23.2 }, { t: 60, tod: 5.6 }, { t: 92, tod: 7.4 }, { t: 110, weather: 'clear', tod: 11.5 }, { t: 138, weather: 'rain', tod: 16.5 }, { t: 176, weather: 'mist', tod: 18.8 }, { t: 200, tod: 20.4 }, { t: 226, end: true }],
+  round: [{ t: 0, weather: 'mist' }, { t: 26, tod: 23.2 }, { t: 60, tod: 5.6 }, { t: 92, weather: 'haze', tod: 7.4 }, { t: 110, weather: 'clear', tod: 11.5 }, { t: 138, weather: 'rain', tod: 16.5 }, { t: 176, weather: 'mist', tod: 18.8 }, { t: 200, tod: 20.4 }, { t: 226, end: true }],
   build: async () => {
     V.land(); V.ruins(); V.machines(); LR.mech.plan(); V.details(); V.plants(); LR.mech.start();
     LR.canopy.mist = 1.5; LR.wx.key = 0.2; LR.world.radius = 262;      /* out past the rim way (240 m, 38 m wide): the walker can go in under the relic */ LR.world.spawn = { x: V.spawn.x, z: V.spawn.z, yaw: 70 };

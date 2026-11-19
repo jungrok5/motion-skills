@@ -2015,6 +2015,9 @@ void main(){
     autumn:{ cloud: 0.42, dark: 0.0, rain: 0, snowfall: 0, season: 0.45, wind: 0.34, fog: 0.0032, fogH: 0.042, turb: 1.4 },
     // mist: low cloud lying in the valleys — the air itself is what you see; lamps cut cones in it and far things are shapes
     mist:  { cloud: 1.0, dark: 0.3, rain: 0, snowfall: 0, season: 0, wind: 0.1, fog: 0.0125, fogH: 0.034, turb: 1.8, glow: 1 },
+    // haze: a thin bright mist the sun comes through — far things are pale shapes, near things keep their colour, a low sun
+    // stands in shafts.  `cap`: how thick the hour may make it (a dawn does not turn it into a white wall)
+    haze:  { cloud: 0.2, dark: 0.0, rain: 0, snowfall: 0, season: 0, wind: 0.12, fog: 0.0052, fogH: 0.030, turb: 1.4, glow: 0.6, cap: 0.0095 },
   };
   W.cur = Object.assign({}, W.looks.clear);
   W.set = (o) => {
@@ -2075,7 +2078,7 @@ void main(){
     // morning mist lies thick and burns off by nine; an evening only goes a little golden
     const low = LR.sm(0.42, 0.02, Math.abs(sunY)) * (1 - LR.sat(W.rain + W.snowfall)), dawn = LR.sm(4.2, 5.4, W.tod) * LR.sm(9.2, 7.4, W.tod);
     // (a look that is already mist does not grow sixfold at dawn: past 0.016 the valley is a white wall and nothing reads)
-    const fog = Math.max(c.fog * (1 + 0.25 * low), Math.min(c.fog * (1 + low * (0.6 + 4.6 * dawn)), 0.016)) + night * 0.0012;
+    const fog = Math.max(c.fog * (1 + 0.25 * low), Math.min(c.fog * (1 + low * (0.6 + 4.6 * dawn)), (W.looks[W.want.weather] || {}).cap || 0.016)) + night * 0.0012;
     U.uFog.value.set(fog, LR.lerp(c.fogH, 0.02, low * 0.5), W.baseY, 0);
     // woods hold damp air: thick at dawn and toward evening, so the sun shows as shafts between the trunks
     if (LR.canopy) { const lowS = LR.sm(0.66, 0.14, sunY) * day; LR.render.U.uCanopy.value.set(LR.canopy.shade, LR.canopy.mist * (0.004 + 0.017 * lowS) * (1 - 0.75 * LR.sat(W.rain + W.snowfall)), 0, 0); }
@@ -4512,7 +4515,7 @@ void main(){
     // style 'shell': a dark spar inside pale covers (the newer machines) · 'girder': riveted box girders, bare and rusted
     limbs(o = {}) { for (const l of this.kin.limbs) this.limb(l, Object.assign({}, o, l.s.style ? { style: l.s.style } : {})); return this; }
     limb(l, o = {}) {
-      const k = this, w = l.width, d = l.drum, style = o.style || 'shell', cover = style === 'shell' ? 'shell' : 'rust', spar = style === 'shell' ? 'dark' : 'frame';
+      const k = this, w = l.width, d = l.drum, style = o.style || 'shell', casing = style === 'casing', cover = style === 'shell' ? 'shell' : casing ? (k.pal.casing ? 'casing' : 'shell') : 'rust', spar = style === 'shell' ? 'dark' : 'frame', works = k.pal.paint ? 'paint' : cover;      /* casing: the spar boxed in painted plate, a round housing over every joint, a pad under the foot — a heavy leg (roles: casing, paint) */
       const cheek = (g, y0, y1, depth) => { for (const sx of [-1, 1]) g.box(sx * w * 0.56, (y0 + y1) / 2, 0, w * 0.17, y1 - y0, depth, { soft: 0.25 }); };
       const pin = (y, z = 0) => { k.mat('steel'); k.xcyl(-w * 0.72, w * 0.72, y, z, d * 0.2); k.mat('joint'); for (const sx of [-1, 1]) { k.xcyl(sx * w * 0.645, sx * w * 0.72, y, z, d * 0.37, { sides: 16 }); k.bolts('x', [sx * w * 0.72, y, z], d * 0.28, 8, d * 0.035, { dir: sx }); } k.fitPin(l, y, z); };
       // the hip: a bearing the whole leg swings out on, and the yoke the thigh hangs in (mammal) — or a turret with an arm (insect)
@@ -4530,7 +4533,13 @@ void main(){
           // the spar, and its covers
           const taper = last ? 0.72 : 0.88, sw = w * (style === 'shell' ? 0.36 : 0.56), sd = d * (style === 'shell' ? 0.5 : 0.78);
           k.mat(spar); k.loft('y', [[t0 * 0.6, sd * 0.5, sw * 0.5, 0, 0, 5], [L * 0.5, sd * 0.5 * (1 + taper) / 2, sw * 0.5, 0, 0, 5], [t1 + d * 0.2, sd * 0.5 * taper, sw * 0.5 * 0.94, 0, 0, 5]], { sides: 12 });
-          if (style === 'shell') { k.mat(cover); const a = t0 + L * 0.06, b = t1 - L * 0.05, bulge = 0.5 + 0.12 * (1 - i / l.n);
+          if (casing) { const a = t0 + L * 0.04, b = t1 - L * 0.04, cw = w * 0.76, c0 = sd * 1.18, c1 = sd * 1.18 * taper, at = (y) => c0 + ((c1 - c0) * (y - a)) / (b - a);
+            // plate all round, closed at both ends; seams where the plates meet; a band of the works' colour under the joint; the housing the joint turns in
+            k.mat(cover); k.loft('y', [[a, c0 * 0.43, cw * 0.44, 0, 0, 6], [a + L * 0.04, c0 * 0.5, cw * 0.5, 0, 0, 6], [b - L * 0.04, c1 * 0.5, cw * 0.5, 0, 0, 6], [b, c1 * 0.43, cw * 0.44, 0, 0, 6]], { sides: 16 });
+            if (k.mid) { k.mat('frame'); const nr = Math.max(2, Math.round((b - a) / (d * 1.7))); for (let q = 1; q < nr; q++) { const y = a + ((b - a) * q) / nr; g.box(0, y, 0, cw * 1.03, d * 0.05, at(y) * 1.03, { soft: 0.1 }); } }
+            k.mat(works); { const y0 = a + L * 0.06, y1 = a + L * 0.17; k.loft('y', [[y0, at(y0) * 0.515, cw * 0.515, 0, 0, 6], [y1, at(y1) * 0.515, cw * 0.515, 0, 0, 6]], { sides: 16, caps: false }); }
+            for (const sx of [-1, 1]) { k.mat(works); k.xcyl(sx * w * 0.5, sx * w * 0.67, 0, 0, d * 0.66, { sides: 20 }); k.mat('joint'); k.xcyl(sx * w * 0.67, sx * w * 0.705, 0, 0, d * 0.5, { sides: 16 }); k.bolts('x', [sx * w * 0.67, 0, 0], d * 0.58, 12, d * 0.035, { dir: sx }); } }
+          else if (style === 'shell') { k.mat(cover); const a = t0 + L * 0.06, b = t1 - L * 0.05, bulge = 0.5 + 0.12 * (1 - i / l.n);
             // two covers, front and back, with the spar showing in the gap between them at the sides
             for (const [f0, f1, off] of [[-0.42 * Math.PI, 0.42 * Math.PI, d * 0.1], [0.58 * Math.PI, 1.42 * Math.PI, -d * 0.1]])
               k.loft('y', [[a, d * 0.28, w * 0.3, off, 0, 3], [a + L * 0.08, d * bulge, w * 0.5, off, 0, 3], [L * 0.5, d * bulge * 0.94, w * 0.5, off, 0, 3], [b - L * 0.1, d * bulge * taper, w * 0.46, off, 0, 3], [b, d * 0.26, w * 0.28, off, 0, 3]], { sides: 14, from: f0, to: f1, caps: false });
@@ -4549,7 +4558,9 @@ void main(){
       }
       // the foot: a ball in the cup, a hub under it, toes on pins
       k.bone(`foot_${l.name}`, (g) => { const b = l.ball; k.mat('steel'); k.ball(0, 0, 0, b * 0.64); k.mat('frame'); g.lathe(0, 0, [[b * 0.5, -b * 0.25], [b * 1.02, -b * 0.42], [b * 1.12, -b * 0.8], [b * 0.9, -b], [0.01, -b]], { sides: k.n(16) });
-        if (k.mid) { k.mat('joint'); for (const a of l.toes) { const ca = Math.cos(a * D2R), sa = Math.sin(a * D2R); g.box(ca * b * 0.75, -b * 0.42, sa * b * 0.75, b * 0.5, b * 0.46, b * 0.5, { soft: 0.3 }); } } k.fitFoot(l); });
+        if (k.mid) { k.mat('joint'); for (const a of l.toes) { const ca = Math.cos(a * D2R), sa = Math.sin(a * D2R); g.box(ca * b * 0.75, -b * 0.42, sa * b * 0.75, b * 0.5, b * 0.46, b * 0.5, { soft: 0.3 }); } }
+        if (casing) { k.mat('frame'); g.box(0, -b * 0.86, 0, b * 3.0, b * 0.28, b * 3.0, { soft: 0.12 }); k.mat(works); g.box(0, -b * 0.62, 0, b * 2.3, b * 0.22, b * 2.3, { soft: 0.2 }); }      /* a pad: the weight spread over a square of plate */
+        k.fitFoot(l); });
       l.toes.forEach((a, t) => k.bone(`toe${t}_${l.name}`, (g) => { const b = l.ball, L = l.toeLen, heel = Math.abs(a) > 120, LL = heel ? L * 0.62 : L;
         k.mat('joint'); k.xcyl(-b * 0.36, b * 0.36, 0, 0, b * 0.3, { sides: 12 });
         k.mat(style === 'shell' ? 'dark' : 'frame'); k.loft('y', [[b * 0.1, b * 0.3, b * 0.3, 0, 0, 4], [LL * 0.45, b * 0.26, b * 0.36, -b * 0.03, 0, 4], [LL * 0.86, b * 0.17, b * 0.28, -b * 0.1, 0, 4], [LL, b * 0.05, b * 0.06, -b * 0.2, 0, 3]], { sides: 10 });
@@ -8557,10 +8568,10 @@ V.machines = () => {
       // it sets its load down: rises a little first, folds until the bed is low, waits, then stands past its height and settles
       kneel: { dur: 12, main: 'body.dy', keys: { 'body.dy': [[0, 0], [1.0, 0.2], [4.0, -1.7], [8.2, -1.7], [10.6, 0.22], [12, 0]], 'body.pitch': [[0, 0], [1.0, 0.8], [4.0, -2.2], [8.2, -2.2], [10.6, 0.6], [12, 0]], 'head.pitch': [[0, 0], [1.0, -6], [4.2, 14], [8.2, 12], [10.8, -3], [12, 0]], light: [[0, 1], [3.6, 1], [4.2, 0.45], [8, 0.45], [8.6, 1.2], [12, 1]] } } } });
   // 마루: a relic on eight legs — a relay station that never stopped walking its rounds
-  const TL = { kind: 'mammal', width: 2.6, drum: 3.0, bar: 0.5, ball: 1.6, toes: 4, toeLen: 5.0, act: [1, 1], hipDrop: 1.5, style: 'girder', actLat: 1.5 };
+  const TL = { kind: 'mammal', width: 3.6, drum: 3.0, bar: 0.5, ball: 1.6, toes: 4, toeLen: 5.0, act: [1, 1], hipDrop: 1.5, style: 'casing', actLat: 1.5 };
   const titanLegs = [[18, 2.5, 1, 'A'], [6, 1.5, 1, 'B'], [-6, -1.5, -1, 'C'], [-18, -2.5, -1, 'D']].map(([x, dx, knee, n]) => Object.assign({}, TL, { name: n + 'L', at: [x, -2, -9], segs: [17, 18.5], knee, home: [x + dx, -12.5] }));
   M.define('ridge', { title: '마루', age: 1, tonnes: 5200, ride: 34, belly: [20, 4, 7], aware: 0, lensGain: 22, build: (k) => V.parts.ridge(k),
-    palette: { frame: ['rustplate', '#bdb4a4'], rust: ['rustplate', '#d9cfbf'], dark: ['paintmetal', '#3a3d3b'], shell: ['concrete', '#c9c6be'] },
+    palette: { frame: ['paintmetal', '#8f8c7e'], rust: ['rustplate', '#d9cfbf'], dark: ['paintmetal', '#3a3d3b'], shell: ['concrete', '#c9c6be'], casing: ['paintmetal', '#cbc5b0'], paint: ['paintmetal', '#c99f2e'] },      /* grey works paint gone to rust, cream casings, the yellow of what moves or may be stepped off */
     limbs: [...titanLegs, ...titanLegs.map(M.mirror)], neck: { at: [24, -3.5, 0], links: [[3.2, -62]] }, head: { len: 6 },
     extras: [{ name: 'mast', type: 'lag', parent: 'body', at: [-14, 16, 2], dir: [0, 1, 0], len: 22, lag: 0.9, gain: 1.2, maxDeg: 5 }, { name: 'cable_1', type: 'lag', parent: 'body', at: [10, -4.5, -5], dir: [0, -1, 0], len: 13, lag: 1.1, gain: 1.4, maxDeg: 16 }, { name: 'cable_2', type: 'lag', parent: 'body', at: [-9, -4.5, 4], dir: [0, -1, 0], len: 17, lag: 1.3, gain: 1.4, maxDeg: 16 }, { name: 'cable_3', type: 'lag', parent: 'body', at: [-2, -4.5, -6], dir: [0, -1, 0], len: 9, lag: 0.9, gain: 1.4, maxDeg: 16 }],
     gait: { cycle: 15, duty: 0.68, stride: 15, lift: 3.4, offsets: { AL: 0, BL: 0.535, CL: 0.07, DL: 0.605, AR: 0.5, BR: 0.035, CR: 0.57, DR: 0.105 }, crouch: 0.6, dip: 0.9, dipTime: 1.7, sway: 1.1, roll: 0.9, nod: 0.5, yaw: 0.3, footPitch: 8, toeCurl: 10, neckSway: 2, follow: [0.5, 0.25], smooth: 0.5, footTilt: 30, settle: 0.9, settleTime: 3.2, gather: 6, gatherDip: 0.9, gatherBack: 0.8, ease: 16, clear: 1.6 },
@@ -8922,19 +8933,21 @@ V.parts = {
   },
   // 마루: a deck of girders as long as a street, a station on it gone to ruin and moss, a prow with two great eyes
   ridge(k) {
-    k.limbs({ style: 'girder' });
+    k.limbs({ style: 'casing' });
     k.bone('body', (g) => {
       // the deck truss: two box girders, cross frames at every hip, a plated deck
       k.mat('frame'); for (const s of [-1, 1]) g.box(0, -2.2, s * 8.2, 52, 3.4, 2.2, { soft: 0.05, grain: 'x' }); for (const x of [18, 6, -6, -18]) { g.box(x, -2.2, 0, 3.4, 3.0, 18.4, { soft: 0.05 }); for (const s of [-1, 1]) g.box(x, -1.6, s * 9.6, 4.6, 4.6, 1.6, { soft: 0.1 }); }
       if (k.mid) { k.mat('rust'); for (let x = -23; x <= 23; x += 5.8) for (const s of [-1, 1]) { g.beam([x, -3.8, s * 7.2], [x + 2.9, -0.6, s * 7.2], 0.4, 0.4, { caps: false }); g.beam([x + 2.9, -0.6, s * 7.2], [x + 5.8, -3.8, s * 7.2], 0.4, 0.4, { caps: false }); } }
       k.mat('rust'); g.box(0, -0.35, 0, 54, 0.5, 19.6, { soft: 0.03 });
+      // the girders' fascia: painted panels bay by bay, yellow and cream by turns, what is left of them
+      for (const s of [-1, 1]) for (let i = 0; i < 8; i++) { const x = -21 + i * 6; k.mat(i % 2 ? 'casing' : 'paint'); g.box(x, -2.2, s * 9.37, 5.2, 2.7, 0.14, { soft: 0.1 }); }
       // the station: a long house in three steps, panelled in concrete, with rows of windows (some still lit after dark)
-      const house = (x, y, z, sx, sy, sz, seed) => { k.mat('shell', { seed }); g.box(x, y + sy / 2, z, sx, sy, sz, { soft: 0.03, ao: [0.6, 1] }); k.mat('dark'); g.box(x, y + sy + 0.2, z, sx + 0.8, 0.4, sz + 0.8, { soft: 0.1 });
+      const house = (x, y, z, sx, sy, sz, seed, role = 'shell') => { k.mat(role, { seed }); g.box(x, y + sy / 2, z, sx, sy, sz, { soft: 0.03, ao: [0.6, 1] }); k.mat('dark'); g.box(x, y + sy + 0.2, z, sx + 0.8, 0.4, sz + 0.8, { soft: 0.1 });
         const rows = Math.floor(sy / 3.2), cols = Math.floor(sx / 3.4); for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) for (const s of [-1, 1]) { const wx = x - sx / 2 + (c + 0.5) * (sx / cols), wy = y + 1.9 + r * 3.2; g.mat('glass', { flags: LR.FLAG.WINDOW, seed: (seed * 31 + r * 7 + c * 13 + (s > 0 ? 5 : 0)) & 255 }); g.quad([wx - 1.0, wy - 0.8, z + s * (sz / 2 + 0.04)], [wx + 1.0, wy - 0.8, z + s * (sz / 2 + 0.04)], [wx + 1.0, wy + 0.8, z + s * (sz / 2 + 0.04)], [wx - 1.0, wy + 0.8, z + s * (sz / 2 + 0.04)], { hint: [0, 0, s] }); } };
-      house(-4, 0, -1, 30, 9.8, 11, 3); house(-9, 9.8, -1.5, 17, 6.6, 8.5, 5); house(9, 0, 5.2, 8, 6.4, 6.4, 7); house(-15, 16.4, -1.5, 6, 4, 6, 9);
+      house(-4, 0, -1, 30, 9.8, 11, 3); house(-9, 9.8, -1.5, 17, 6.6, 8.5, 5); house(9, 0, 5.2, 8, 6.4, 6.4, 7, 'paint'); house(-15, 16.4, -1.5, 6, 4, 6, 9, 'casing');
       // tanks, a crane jib long since stuck, the foot of the mast
-      k.mat('rust'); for (const [x, z] of [[19, -5], [19, -1.2], [22.6, -3]]) { g.tube([[x, 0, z], [x, 6.4, z]], 1.7, { sides: k.n(14), caps: true }); } g.tube([[15, 2.2, 6.5], [23.5, 2.2, 6.5]], 1.9, { sides: k.n(14), caps: true });
-      k.mat('frame'); g.beam([-22, 0, 6], [-22, 9, 6], 1.0, 1.0); g.beam([-22, 9, 6], [-33, 12.5, 7.5], 0.7, 0.9); g.mat('iron', { tint: '#5a5550' }); g.tube([[-33, 12.4, 7.5], [-33, 5.5, 7.5]], 0.07, { sides: 4 }); k.mat('rust'); g.box(-33, 5.2, 7.5, 0.9, 0.8, 0.6, { soft: 0.3 });
+      k.mat('casing'); for (const [x, z] of [[19, -5], [19, -1.2], [22.6, -3]]) { g.tube([[x, 0, z], [x, 6.4, z]], 1.7, { sides: k.n(14), caps: true }); } k.mat('rust'); g.tube([[15, 2.2, 6.5], [23.5, 2.2, 6.5]], 1.9, { sides: k.n(14), caps: true });
+      k.mat('paint'); g.beam([-22, 0, 6], [-22, 9, 6], 1.0, 1.0); g.beam([-22, 9, 6], [-33, 12.5, 7.5], 0.7, 0.9); g.mat('iron', { tint: '#5a5550' }); g.tube([[-33, 12.4, 7.5], [-33, 5.5, 7.5]], 0.07, { sides: 4 }); k.mat('rust'); g.box(-33, 5.2, 7.5, 0.9, 0.8, 0.6, { soft: 0.3 });
       k.mat('frame'); for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) g.beam([-14 + sx * 1.6, 0, 2 + sz * 1.6], [-14 + sx * 0.9, 16.2, 2 + sz * 0.9], 0.3, 0.3, { caps: false });
       // rails round the deck, what hangs under it
       if (k.mid) { g.mat('iron', { tint: '#6a6660' }); for (const s of [-1, 1]) { g.tube([[-26.8, 1.1, s * 9.6], [26.8, 1.1, s * 9.6]], 0.05, { sides: 4 }); for (let x = -26; x <= 26; x += 4) g.tube([[x, 0, s * 9.6], [x, 1.1, s * 9.6]], 0.05, { sides: 4 }); } }
@@ -8961,12 +8974,22 @@ V.parts = {
       // on the roofs: air plant and ducts, three dishes
       k.mat('frame'); g.box(3, 10.9, -2.2, 3, 1.4, 2.2, { soft: 0.08 }); k.fins([1.3, 10.9, 1.6], [1, 0, 0], 10, 1.3, 2.0, 0.3, { up: [0, 0, 1] }); k.mat('rust'); g.box(6.3, 10.6, 2, 6, 0.8, 0.9, { soft: 0.1 }); g.box(9, 10.6, -0.2, 0.9, 0.8, 4.4, { soft: 0.1 }); k.grille([3, 10.9, -1.08], [0, 0, 1], 2.4, 1.0, { up: [0, 1, 0], t: 0.12 });
       k.dish([8, 10.2, -4], [0.3, 1, -0.4], 1.3); k.dish([-4, 16.8, -4], [-0.5, 1, 0.2], 1.6); k.dish([-11, 16.8, 1], [0.2, 1, 0.5], 1.1); k.mat('frame'); g.box(-6, 17.3, 0.5, 2.2, 1.0, 1.6, { soft: 0.1 }); k.fins([-9.6, 17.3, -1.5], [1, 0, 0], 8, 1.0, 1.5, 0.26, { up: [0, 0, 1] });
+      // a landing stage cantilevered off the bow quarter on struts, its edge still striped
+      k.mat('frame'); g.box(22, 7.2, -15.6, 12, 0.36, 10.4, { soft: 0.05 }); for (const x of [17.4, 26.6]) { g.beam([x, 0.2, -9.4], [x, 7.0, -11.2], 0.5, 0.5); g.beam([x, 0.8, -9.8], [x, 7.0, -19.8], 0.4, 0.4, { caps: false }); } if (k.mid) for (const z of [-12, -15.6, -19.2]) g.beam([16.2, 6.9, z], [27.8, 6.9, z], 0.3, 0.3, { caps: false });
+      k.rail([[16.2, 7.4, -20.6], [22, 7.4, -20.6], [27.8, 7.4, -20.6]], 1.1, [0, 1, 0], { r: 0.05 }); k.rail([[27.9, 7.4, -20.4], [27.9, 7.4, -15.6], [27.9, 7.4, -10.8]], 1.1, [0, 1, 0], { r: 0.05 }); k.mat('paint'); g.box(22, 7.2, -20.86, 12, 0.5, 0.12, { soft: 0.1 }); g.box(28.06, 7.2, -15.6, 0.12, 0.5, 10.4, { soft: 0.1 });
+      k.ladder([16.6, 0, -10.2], [16.6, 7.3, -11.6], 0.7, [-1, 0, 0], { off: 0.28, r: 0.05, step: 0.35 });
+      // cables slung from hip to hip under each edge
+      for (const s of [-1, 1]) for (const [x0, x1] of [[18, 6], [6, -6], [-6, -18]]) k.hose([[x0 - 1.6, -3.9, s * 10.7], [(x0 + x1) / 2 + 2, -6.0, s * 10.95], [(x0 + x1) / 2 - 2, -6.3, s * 10.95], [x1 + 1.6, -3.9, s * 10.7]], 0.17);
+      // trees have taken on the deck and the roofs: a stem, a few crowns that move in the wind
+      { const tr = LR.rng('ridge-trees'); for (const [x, y, z, h] of [[-20.5, 0, -7.6, 5.2], [24.4, 0, 7.4, 3.8], [5.5, 0, -8.2, 4.4], [-1.5, 9.9, 3.2, 3.2], [12.2, 6.5, 4.6, 2.8], [-17.6, 0, 7.8, 4.6], [-10.5, 16.5, -3.6, 2.4]].slice(0, k.lod === 2 ? 3 : 7)) {
+          g.mat('iron', { tint: '#4b4034' }); g.tube([[x, y, z], [x + (tr() - 0.5) * 0.5, y + h * 0.5, z + (tr() - 0.5) * 0.5], [x + (tr() - 0.5) * 0.9, y + h * 0.82, z + (tr() - 0.5) * 0.9]], [0.2 + h * 0.02, 0.13, 0.05], { sides: k.n(6), caps: true });
+          g.mat('moss', { tint: '#6c8348', flags: LR.FLAG.SWAY, weight: 0.5 }); for (let q = 0; q < (k.lod === 2 ? 2 : 4); q++) g.blob(x + (tr() - 0.5) * h * 0.5, y + h * (0.6 + tr() * 0.4), z + (tr() - 0.5) * h * 0.5, h * (0.2 + tr() * 0.14), { squash: [1.15, 0.8, 1.15], seg: k.n(8), rings: 5, seed: q + 3 }); } }
       // forty years of growth: moss banks along every edge, brush on the roofs
       g.mat('moss', { tint: '#5e6b4e', flags: LR.FLAG.SWAY, weight: 0.25 }); const rr = LR.rng('ridge-moss'); for (let i = 0; i < (k.lod === 0 ? 46 : k.lod === 1 ? 24 : 10); i++) { const top = rr() < 0.4, x = -25 + rr() * 50, z = top ? -6 + rr() * 9 : (rr() < 0.5 ? -1 : 1) * (7 + rr() * 2.4), y = top ? (Math.abs(x + 4) < 15 && z < 4.4 ? (Math.abs(x + 9) < 8.5 && z < 2.7 ? 16.6 : 10) : 0.1) : 0.1; g.blob(x, y + 0.3, z, 0.9 + rr() * 1.5, { squash: [1.4, 0.45 + rr() * 0.5, 1.3], seg: k.n(8), rings: 4, seed: i }); }
     });
     k.bone('neck_01', (g) => { k.mat('frame'); g.tube([[0, 0, 0], [0, 3.2, 0]], [2.2, 1.8], { sides: k.n(12), caps: true }); });
     // the prow: a hooded block that turns, two eyes under the hood
-    k.bone('head', (g) => { k.mat('frame'); k.loft('x', [[-3, 2.2, 5.2, 0, 0, 5], [1.5, 2.6, 5.6, 0, 0, 5], [5.5, 1.9, 4.6, -0.3, 0, 4]], { sides: 14 }); k.mat('rust'); g.box(3.6, 2.5, 0, 6.4, 0.5, 11.6, { soft: 0.1 }); k.mat('dark'); for (const s of [-1, 1]) { g.push(new THREE.Matrix4().makeTranslation(5.2, -0.4, s * 2.5).multiply(new THREE.Matrix4().makeRotationZ(-Math.PI / 2 - 0.2))); g.lathe(0, 0, [[1.25, -0.9], [1.4, 0], [1.3, 0.7]], { sides: k.n(14) }); g.pop(); }
+    k.bone('head', (g) => { k.mat('frame'); k.loft('x', [[-3, 2.2, 5.2, 0, 0, 5], [1.5, 2.6, 5.6, 0, 0, 5], [5.5, 1.9, 4.6, -0.3, 0, 4]], { sides: 14 }); k.mat('paint'); g.box(3.6, 2.5, 0, 6.4, 0.5, 11.6, { soft: 0.1 }); k.mat('dark'); for (const s of [-1, 1]) { g.push(new THREE.Matrix4().makeTranslation(5.2, -0.4, s * 2.5).multiply(new THREE.Matrix4().makeRotationZ(-Math.PI / 2 - 0.2))); g.lathe(0, 0, [[1.25, -0.9], [1.4, 0], [1.3, 0.7]], { sides: k.n(14) }); g.pop(); }
       k.grille([5.42, 0.9, 0], [1, 0, 0], 3.0, 0.9, { up: [0, 1, 0], t: 0.2 }); k.hatch([3, 2.75, 0], [0, 1, 0], 2, 1.6, { up: [1, 0, 0], t: 0.1 });
       for (const s of [-1, 1]) { k.along([5.72, -0.52, s * 2.5], [0.95, -0.3, s * 0.03], (g2) => { k.mat('joint'); g2.lathe(0, 0, [[1.16, 0], [1.34, 0.12], [1.16, 0.28]], { sides: k.n(16) }); if (k.mid) { k.mat('steel'); for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; g2.tube([[Math.cos(a) * 1.25, 0.24, Math.sin(a) * 1.25], [Math.cos(a) * 1.25, 0.36, Math.sin(a) * 1.25]], 0.05, { sides: 5, caps: true }); } } });
         k.rail([[0.6, 2.75, s * 5.6], [3.6, 2.75, s * 5.6], [6.6, 2.75, s * 5.6]], 1.1, [0, 1, 0], { r: 0.045 }); k.rivets([-2.6, 0, s * 5.42], [4.6, 0, s * 5.3], 14, 0.07, [0, 0, s]); k.ladder([-2.2, -2.0, s * 5.3], [-2.2, 2.6, s * 5.5], 0.7, [0, 0, s], { off: 0.26, r: 0.05, step: 0.35 }); } });
@@ -9108,7 +9131,7 @@ LR.start({
   strings: V.strings, film: V.film,
   weather: { tod: 20.4, weather: 'mist' },
   // the automatic round of this valley: mist at dusk, into the night, a grey dawn with shafts through the trees, a clear noon, rain, and back
-  round: [{ t: 0, weather: 'mist' }, { t: 26, tod: 23.2 }, { t: 60, tod: 5.6 }, { t: 92, tod: 7.4 }, { t: 110, weather: 'clear', tod: 11.5 }, { t: 138, weather: 'rain', tod: 16.5 }, { t: 176, weather: 'mist', tod: 18.8 }, { t: 200, tod: 20.4 }, { t: 226, end: true }],
+  round: [{ t: 0, weather: 'mist' }, { t: 26, tod: 23.2 }, { t: 60, tod: 5.6 }, { t: 92, weather: 'haze', tod: 7.4 }, { t: 110, weather: 'clear', tod: 11.5 }, { t: 138, weather: 'rain', tod: 16.5 }, { t: 176, weather: 'mist', tod: 18.8 }, { t: 200, tod: 20.4 }, { t: 226, end: true }],
   build: async () => {
     V.land(); V.ruins(); V.machines(); LR.mech.plan(); V.details(); V.plants(); LR.mech.start();
     LR.canopy.mist = 1.5; LR.wx.key = 0.2; LR.world.radius = 262;      /* out past the rim way (240 m, 38 m wide): the walker can go in under the relic */ LR.world.spawn = { x: V.spawn.x, z: V.spawn.z, yaw: 70 };
