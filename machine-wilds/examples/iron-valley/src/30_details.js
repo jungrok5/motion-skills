@@ -21,7 +21,7 @@ V.details = () => {
     P.lampPost(C.x - 5.5, C.z + 4.8, { yaw: 0.6, h: 3.2 }); }
   // crags: the north bank's rock comes through in faces (a scanned rock face, set large, wearing the engine's rock near the eye)
   { const tor = (x, z, s, yaw, o = {}) => MD.place('rock_face_02', x, z, Object.assign({ scale: s, yaw, sink: 0.6, solid: 0.72 }, o)) || P.rocks(x, z, 3, s * 1.2, { size: s * 0.8 });
-    for (const [x, z, s, yaw] of [[-118, -66, 4.2, 0.3], [-108, -72, 3.0, 1.9], [-64, -54, 3.6, 4.0], [6, -52, 4.6, 2.4], [16, -56, 3.2, 0.9], [54, -34, 4.0, 5.1], [138, -40, 4.4, 1.2], [148, -36, 3.0, 3.3], [-176, -58, 3.8, 2.7], [-96, 108, 3.4, 0.5], [-90, 100, 2.6, 2.2], [-102, 99, 2.8, 4.4], [176, 20, 3.6, 0.2], [-6, 62, 2.8, 1.1], [72, 62, 3.0, 3.9]]) tor(x, z, s, yaw); }
+    for (const [x, z, s, yaw] of [[-118, -66, 4.2, 0.3], [-108, -72, 3.0, 1.9], [-64, -54, 3.6, 4.0], [6, -52, 4.6, 2.4], [16, -56, 3.2, 0.9], [54, -34, 4.0, 5.1], [138, -40, 4.4, 1.2], [148, -36, 3.0, 3.3], [-192, -66, 3.8, 2.7], [-96, 108, 3.4, 0.5], [-90, 100, 2.6, 2.2], [-102, 99, 2.8, 4.4], [200, 34, 3.6, 0.2], [-6, 62, 2.8, 1.1], [72, 62, 3.0, 3.9]]) tor(x, z, s, yaw); }
   // boulders that came down the banks, mossy rocks in the woods
   const way = (x, z) => M.wayDist(x, z), paved = (x, z) => L.coverAt('paved', x, z) > 0.2, wet = (x, z) => LR.water.levelAt(x, z) > L.h(x, z) - 0.3, steep = (x, z) => 1 - L.normal(x, z, 2.5)[1];
   MD.scatter({ ids: ['boulder_01'], seed: 'boulders', spacing: 13, scale: [1.2, 3.4], sink: 0.25, tilt: 0.25, tintVar: 0.08, density: (x, z) => LR.sm(0.05, 0.16, steep(x, z)) * LR.sm(0.45, 0.7, LR.fbm(x * 0.03 + 5, z * 0.03, 2)) * 0.8, avoid: (x, z) => way(x, z) < 2 || paved(x, z) });
