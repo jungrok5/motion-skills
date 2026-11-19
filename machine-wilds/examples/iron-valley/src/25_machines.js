@@ -62,8 +62,9 @@ V.machines = () => {
   M.spawn('crane', { name: '두루미 1', route: 'round', offset: 0, halts: [{ at: 0.179, hold: 18, move: 'survey' }, { at: 0.62, hold: 12 }] });
   M.spawn('crane', { name: '두루미 2', route: 'round', offset: 330, halts: [{ at: 0.179, hold: 18, move: 'survey' }, { at: 0.62, hold: 12 }] });
   for (let i = 0; i < 3; i++) M.spawn('porter', { name: '등짐 ' + (i + 1), route: 'bank', offset: i * 42, halts: [{ at: 0.45, hold: 16, move: 'kneel' }, { at: 0.9, hold: 8 }] });
-  // five kites in a loose skein: each a little behind, beside and above the one before, each beating in its own time
-  [[0, 0, 0], [1.2, 8, 1.5], [1.9, -9, 2.5], [3.1, 16, 4], [3.6, -18, 3]].forEach((q, i) => M.spawn('kite', { name: '솔개 ' + (i + 1), fly: V.sky, offset: -q[0], shift: [q[1], q[2]], phase: i * 0.23 }));
+  // five kites in a string: each two seconds behind the one before, a little to one side and above, each beating in its own time
+  // (closer, or abreast, and their wings cross in the tight turn over the saddle: check.mjs measures every pair)
+  [[0, 0, 0], [2, 5, 2], [4, -5, 3], [6, 5, 4.5], [8, -4, 2.5]].forEach((q, i) => M.spawn('kite', { name: '솔개 ' + (i + 1), fly: V.sky, offset: -q[0], shift: [q[1], q[2]], phase: i * 0.23 }));
   M.spawn('ridge', { name: '마루', route: 'rim', offset: 120, halts: [{ at: 0.3, hold: 34, move: 'call' }] });
 };
 // the gym (scripts/gym.mjs): the land and the machines, nothing else
