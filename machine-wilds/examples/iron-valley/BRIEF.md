@@ -117,9 +117,14 @@ What is still under AAA and why: foliage is cards and reads as such inside ten m
 not cast (their light passes through trunks); a noon picture shows the engine's limits in a way mist does not. Frame rate
 on a real GPU has not been measured from this machine.
 
-## The trailer
-`trailer.mjs` (this folder): 42 s, eight shots — behind a kite over the viaduct with a crane on the floor below (18:36) · the
-camera comes down to the walker's body in the reeds · it walks to the turtle at the tarn and looks up · runs at the
-relic on the rim at sunset, goes in between its legs, looks up as it calls · the whole of it from far off · across the
-brook the crayfish rears in dusk mist · night mist on the viaduct, it looks up and the kites come over · a title card.
-Free camera, the body driven by keys; sound from the machines' footfalls and calls. `--dry`, `--keys`, then the render.
+## The film
+`src/82_trailer.js` (played by `lib/89_cine.js`): a day in the valley in 26 shots, about two and three quarter minutes. It plays in
+the page itself — `index.html?film=1` (Esc hands the walker the world; a title card at the end) — and `trailer.mjs` steps the same
+shots to draw an MP4 (`--dry`, `--keys`, a render, `--sound`, `--join`; `--q "tierx=shadow:1024"` halves a frame without a GPU).
+Dawn: time passes over the forest while the relic walks the far rim · a morning of haze: the walker in the page's three views,
+behind a kite over the viaduct · noon: the lookout, the fallen crane, the turtle, the woodlice, the carriers kneeling and going
+on · rain: a crane comes through the viaduct's gap and lifts its head, the walker leaps the barrier and drops to the floor ·
+snow at the hall's fire · evening haze: the turtle at the tarn, the relic coming on, in under it and between its legs · dusk
+mist: the crayfish goes by, and rears · night: a crane behind the fire, the relic's lit windows passing at the way in, the kites
+over the viaduct · a title card. Every machine in the cut is walking, flying or doing its big move; sound from their footfalls
+and calls, heard from the camera.
