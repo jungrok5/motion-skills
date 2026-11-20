@@ -1,5 +1,8 @@
 # machine-wilds
 
+> **Moved.** This skill now lives in its own repository, with its history: <https://github.com/jungrok5/machine-wilds>. The copy here is frozen as
+> of 2026-11-20 — make changes there, not here.
+
 A walkable place in the browser where **giant walking machines roam a ruined, overgrown land in mist** — their lamps
 cutting cones through the fog. It is this repository's `scanned-realm` engine (photo-scanned surfaces, objects and
 plants from Poly Haven, CC0; a deferred WebGL 2 renderer; the hour and the weather; keyboard, mouse, touch, gamepad)

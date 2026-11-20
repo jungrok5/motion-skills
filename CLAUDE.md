@@ -19,7 +19,8 @@ A collection of Claude Code skills for making motion graphics. Each top-level fo
 - `scanned-realm` draws its surfaces, objects, ground plants, tree leaves, a few whole trees and kits of structures from Poly Haven CC0 scans, listed per realm in
   `assets.json` and fetched with `scripts/fetch-assets.mjs`. Never commit a realm's `assets/` and never put scans in
   `docs/`; its site demos are built with `build.mjs --cdn` (the page reads the scans from Poly Haven's server and shows the credit).
-- `machine-wilds` is the `scanned-realm` engine (forked: its own `lib/`) with walking machines, relief and mist. Its scans follow the
+- `machine-wilds` **moved to its own repository** (https://github.com/jungrok5/machine-wilds, with its history); the folder here is a frozen copy — make
+  changes there, not here. What follows describes it as it was: `machine-wilds` is the `scanned-realm` engine (forked: its own `lib/`) with walking machines, relief and mist. Its scans follow the
   same rule (per realm in `assets.json`, fetched, never committed, site demos built with `--cdn`). Its machines are built and moved by
   code only; before any render run `node machine-wilds/scripts/gym.mjs <realm> --course` and `<realm>` — a kind or a way that fails
   there is fixed in its numbers or its line on the land, never by loosening a limit. A new realm designs its own machines —

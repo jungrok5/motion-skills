@@ -5,6 +5,9 @@ description: Make a place you can walk through in the browser where giant walkin
 
 # machine-wilds
 
+> **Moved** to <https://github.com/jungrok5/machine-wilds> (its own repository, with its history). This copy is frozen as of 2026-11-20; use and change the
+> skill there.
+
 A place you walk through, in the look of a current game engine, **where giant machines walk too**: a ruined land
 that has grown over, mist lying in it, and machines the size of buildings keeping their old rounds — their lamps the
 brightest things in the picture. Each machine is built part by part from code as a mechanism and **walks on the land as
