@@ -8240,7 +8240,7 @@ void main(){
 // machine-wilds · 89_cine — a film played in the page.  Shots with a free camera (not the walker's eye) and the walker's body
 // driven by keys, frame by frame; each shot sets its own hour, weather and machines' clock.  The same shots play live
 // (?film=1, or realm.cine.play()) and are stepped offline to draw a film's frames (a realm's trailer.mjs).
-//   LR.start({ cine: (h) => ({ fps: 24, order: ['A', 'B'], range: { A: [0, 144] }, title: { big, small, line }, shots: {
+//   LR.start({ cine: (h) => ({ fps: 24, order: ['A', 'B'], range: { A: [0, 144] }, title: { big, small, line, repo (shown on the cards and, small, at the foot of the film), skip }, shots: {
 //     A: { dur, tod, weather, T0, start: [x, z, yaw°], pitch, tod1 (the hour at the shot's end: time passes), view: 'first' | 'top' (the
 //          walker's own camera instead of cam), zoom, rate (how fast the machines' clock runs: 3 for time passing), act(s, keys, state),
 //          cam(s) → [[x, y, z], [look x, y, z], fov°] } } }) })
@@ -8278,19 +8278,21 @@ void main(){
   C.state = () => ({ on: C.on, shot: name, index: live ? live.i : -1, s: live ? +live.s.toFixed(2) : f / (C.fps || 24), title: !!(live && live.tail >= 0) });
   C.time = () => clock; C.camNow = () => [cam.position.x, cam.position.y, cam.position.z, cam.rotation.y];
   // ── live: the page plays the film itself; Esc (or a click on "walk") hands the walker back ──
-  let veil = null, hint = null, card = null;
+  let veil = null, hint = null, card = null, mark = null;
   const dom = () => { if (veil) return; const mk = (css, html) => { const e = document.createElement('div'); e.style.cssText = css; if (html) e.innerHTML = html; document.body.appendChild(e); return e; };
     veil = mk('position:fixed;inset:0;background:#07090b;opacity:1;transition:opacity .9s;pointer-events:none;z-index:40');
     const t = C.title || {}; card = mk('position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#e9e4d6;font-family:system-ui,sans-serif;opacity:0;transition:opacity 1s;pointer-events:none;z-index:41;text-align:center',
-      `<div style="font-size:min(9vw,64px);font-weight:700;letter-spacing:.14em">${t.big || ''}</div><div style="width:120px;height:2px;background:#c8532e;margin:22px 0 18px"></div><div style="font-size:min(3.4vw,20px);letter-spacing:.42em;opacity:.78">${t.small || ''}</div><div style="font-size:min(2.8vw,15px);letter-spacing:.2em;opacity:.5;margin-top:14px">${t.line || ''}</div>`);
-    hint = mk('position:fixed;right:14px;bottom:12px;z-index:42;font:12px system-ui,sans-serif;color:#e9e4d6;opacity:.55;cursor:pointer;padding:6px 10px;border:1px solid rgba(233,228,214,.35);border-radius:6px;background:rgba(7,9,11,.35)', t.skip || 'Esc · walk');
+      `<div style="font-size:min(9vw,64px);font-weight:700;letter-spacing:.14em">${t.big || ''}</div><div style="width:120px;height:2px;background:#c8532e;margin:22px 0 18px"></div><div style="font-size:min(3.4vw,20px);letter-spacing:.42em;opacity:.78">${t.small || ''}</div><div style="font-size:min(2.8vw,15px);letter-spacing:.2em;opacity:.5;margin-top:14px">${t.line || ''}</div>${t.repo ? `<div style="font:min(2.4vw,14px) ui-monospace,monospace;letter-spacing:.12em;opacity:.6;margin-top:26px">${t.repo}</div>` : ''}`);
+    mark = mk('position:fixed;right:14px;bottom:10px;z-index:39;font:11px system-ui,sans-serif;letter-spacing:.04em;color:#fff;opacity:.42;text-shadow:0 1px 1px rgba(0,0,0,.4);pointer-events:none', t.repo || '');      /* where the work lives, small, at the foot of the film */
+    hint = mk('position:fixed;left:14px;bottom:12px;z-index:42;font:12px system-ui,sans-serif;color:#e9e4d6;opacity:.55;cursor:pointer;padding:6px 10px;border:1px solid rgba(233,228,214,.35);border-radius:6px;background:rgba(7,9,11,.35)', t.skip || 'Esc · walk');
     hint.addEventListener('click', () => C.stop()); window.addEventListener('keydown', (e) => { if (C.on && e.code === 'Escape') C.stop(); }); };
   const cut = (i) => { live.i = i; const n = C.order[i]; dt = 1 / C.fps; start(n); settle(); for (let k = 0; k < C.range[n][0]; k++) step(false); live.s = f / C.fps; live.end = C.range[n][1] / C.fps; LR.render.histValid = false; };
-  C.play = () => { if (!ensure() || !C.order.length) return false; dom(); const hud = document.getElementById('hud'); if (hud) { C.hudWas = hud.style.display; hud.style.display = 'none'; } hint.style.display = ''; card.style.opacity = 0; C.on = true; live = { i: 0, s: 0, end: 0, tail: -1 }; C.auto = LR.wx.auto; cut(0); requestAnimationFrame(() => { veil.style.opacity = 0; }); return true; };
-  C.stop = () => { if (!C.on) return; C.on = false; const P = LR.player, sp = LR.world.spawn, hud = document.getElementById('hud'); if (hud) hud.style.display = C.hudWas || ''; if (hint) hint.style.display = 'none'; if (card) card.style.opacity = 0; if (veil) veil.style.opacity = 0;
+  C.play = () => { if (!ensure() || !C.order.length) return false; dom(); const hud = document.getElementById('hud'); if (hud) { C.hudWas = hud.style.display; hud.style.display = 'none'; } hint.style.display = ''; mark.style.display = ''; veil.style.opacity = 1; card.style.opacity = 1; C.on = true; live = { i: 0, s: 0, end: 0, tail: -1, head: 2.8 }; C.auto = LR.wx.auto; cut(0); return true; };      /* the card first: the work's name and where it lives */
+  C.stop = () => { if (!C.on) return; C.on = false; const P = LR.player, sp = LR.world.spawn, hud = document.getElementById('hud'); if (hud) hud.style.display = C.hudWas || ''; if (hint) hint.style.display = 'none'; if (mark) mark.style.display = 'none'; if (card) card.style.opacity = 0; if (veil) veil.style.opacity = 0;
     P.keys = {}; P.place(sp.x, sp.z, sp.yaw || 0); P.setView('third'); if (LR.fit) LR.fit(); const w = (LR.cfg && LR.cfg.weather) || {}; LR.wx.snap({ weather: w.weather || 'clear', tod: w.tod === undefined ? 16.6 : w.tod }); if (C.auto) LR.wx.set({ auto: true }); LR.render.histValid = false; LR.emit('cine', false); };
   // called by the page's loop once a frame while the film is on: returns the machines' clock for this frame
   C.live = (rdt, time) => { if (!C.on || !cur) return time; const P = LR.player; dt = Math.min(rdt, 1 / 12);
+    if (live.head > 0) { live.head -= rdt; if (live.head <= 0.6) card.style.opacity = 0; if (live.head <= 0) veil.style.opacity = 0; return clock; }
     if (live.tail >= 0) { live.tail += rdt; if (live.tail > 5.2) C.stop(); return clock; }      /* the title card, then the walker is handed the world */
     live.s += dt; f = Math.round(live.s * C.fps);
     if (live.s >= live.end) { if (live.i + 1 < C.order.length) cut(live.i + 1); else { live.tail = 0; veil.style.opacity = 1; card.style.opacity = 1; return clock; } }
@@ -9321,7 +9323,7 @@ V.plants = () => {
         act(s, K) { if (s > 0.3 && s < 4.5) K.KeyW = true; if (s > 4.9) P.pitch = damp(P.pitch, 0.62, 1.6); },
         cam(s) { const u = ease((s - 5.0) / 2.6), v = ease(s / 4.6); return [at(-5.2 + 0.6 * v, -1.4, 1.0 - 0.55 * v), at(7, 0, 1.5 + 0.4 * v + u * 6.6), 60]; } },
     };
-    return { fps: 24, shots, title: { big: '쇠울림 골짜기', small: 'MACHINE-WILDS', line: '브라우저에서 걷는 기계의 숲', skip: 'Esc · 직접 걷기' },
+    return { fps: 24, shots, title: { big: '쇠울림 골짜기', small: 'MACHINE-WILDS', line: '브라우저에서 걷는 기계의 숲', repo: 'github.com/jungrok5/machine-wilds', skip: 'Esc · 직접 걷기' },
       order: ['DAWN', 'V1', 'V2', 'K', 'V3', 'PAN', 'WRECK', 'B0', 'T', 'TW', 'G', 'Y', 'PW', 'E1', 'E2', 'JUMP', 'RW', 'SNOW', 'B', 'H1', 'R1', 'R2', 'R3', 'CR', 'C2', 'C', 'N1', 'A'],
       // which frames of a shot are in the cut [from, to) — the rest is run-up (a turn at the start, leaves in front of the lens)
       range: { T: [28, 132], B: [36, 168], A: [60, 221], C: [0, 120], PW: [0, 80] } };
