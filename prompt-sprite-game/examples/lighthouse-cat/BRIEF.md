@@ -53,6 +53,11 @@ title 등대 고양이 · intro: 폭풍에 등대 불이 꺼졌습니다. 절벽
 - gull: "white seagull flying" · 7 → wings up, beak left in 0; pick 0. The hand grid was mirrored to face left.
 - lamp: "lighthouse lantern" · 7 → 0 has stray blue shapes in the top corners; pick 1.
 
+## Cat painter
+The hero can also be painted by the cat painter trained in this repo (`models/cat/`, 3.56 MB): `painter.for: ["cat"]`,
+`painterPrompt: "front-view ginger cat"`, seed 7, pick 0, `painterFaces: "front"` — a front view, because the painter cannot
+be told which way a side view faces. The other members keep their hand grids (the painter knows only cats).
+
 ## Review
 - check: the first plank (3 tiles up) was out of reach (apex 46 px) → plank moved to 2 tiles up, its fish with it.
 - sheet: every walker's top rocked ±3 px on each hop → lean now follows the lagged mean velocity (LESSONS).
