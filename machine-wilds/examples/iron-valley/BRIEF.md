@@ -118,13 +118,13 @@ not cast (their light passes through trunks); a noon picture shows the engine's 
 on a real GPU has not been measured from this machine.
 
 ## The film
-`src/82_trailer.js` (played by `lib/89_cine.js`): a day in the valley in 26 shots, about two and three quarter minutes. It plays in
+`src/82_trailer.js` (played by `lib/89_cine.js`): a day in the valley in 28 shots, about two and three quarter minutes. It plays in
 the page itself — `index.html?film=1` (Esc hands the walker the world; a title card at the end) — and `trailer.mjs` steps the same
 shots to draw an MP4 (`--dry`, `--keys`, a render, `--sound`, `--join`; `--q "tierx=shadow:1024"` halves a frame without a GPU).
 Dawn: time passes over the forest while the relic walks the far rim · a morning of haze: the walker in the page's three views,
-behind a kite over the viaduct · noon: the lookout, the fallen crane, the turtle, the woodlice, the carriers kneeling and going
-on · rain: a crane comes through the viaduct's gap and lifts its head, the walker leaps the barrier and drops to the floor ·
-snow at the hall's fire · evening haze: the turtle at the tarn, the relic coming on, in under it and between its legs · dusk
-mist: the crayfish goes by, and rears · night: a crane behind the fire, the relic's lit windows passing at the way in, the kites
-over the viaduct · a title card. Every machine in the cut is walking, flying or doing its big move; sound from their footfalls
+behind a kite over the viaduct · noon: rising over the lookout, the fallen crane, beside the turtle and the turtle wading the
+brook, the woodlice, the carriers kneeling and going on · rain: a crane comes through the viaduct's gap and lifts its head, the
+walker leaps the barrier and drops to the floor, the old road through its eyes · snow at the hall's fire · evening: the turtle
+at the tarn, haze and the relic coming on, in under it and between its legs · dusk mist: a crane on the floor, the crayfish
+going by, and rearing · night: the relic coming over on the rim way, the kites over the viaduct · a title card. Every machine in the cut is walking, flying or doing its big move; sound from their footfalls
 and calls, heard from the camera.
