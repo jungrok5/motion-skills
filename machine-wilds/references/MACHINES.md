@@ -19,7 +19,7 @@ have negative z). A limb's segment, a neck link, a toe, a cylinder: X the hinge 
 | · `gamma`, `ankleMin`, `ankleFollow` | 3 segments: the tarsus's lean at rest (°) · the least bend its ankle keeps (20°) · how much of a fold the tarsus goes with (0.6): the ankle's own hinge then works over a range a cylinder can follow |
 | · `width`, `drum`, `bar` | the segment's width, the joint drum's diameter, a cylinder's barrel radius (default 0.32 × width; give it for big legs) |
 | · `ball`, `toes`, `toeLen` | the foot's ball radius (the ankle's height over the sole), toe count or spread angles, toe length |
-| · `act`, `hipDrop`, `coxa`, `style` | which joints are powered · the yoke under a mammal hip · the insect's arm · `'shell'` (pale covers on a dark spar) or `'girder'` |
+| · `act`, `hipDrop`, `coxa`, `style` | which joints are powered · the yoke under a mammal hip · the insect's arm · `'shell'` (pale covers on a dark spar), `'girder'` (flange plates and ribs) or `'casing'` (the spar boxed in painted plate, a round housing over every joint, a square pad under the foot: a heavy leg — palette roles `casing` and `paint`) |
 | `neck: { at, links: [[length, elevation°]…] }`, `head: { len }` | a chain of links and a head that keeps level like a sensor on a gimbal |
 | `flight`, `lodK`, `cry` | a kind that flies (below) · keep the fine build this many times further · `[period s, Hz, seconds, gain]`: a call from the air |
 | `extras` | bones of your own: `fixed`, `spin` (`rate` °/s about `axis`), `lag` (trails `lag` seconds behind its parent, bends up to `maxDeg`) |

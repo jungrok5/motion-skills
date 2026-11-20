@@ -25,6 +25,14 @@ V.ruins = () => {
     // a lamp standard still up on the south half, another bent over the edge
     g.mat('iron', { tint: '#7c8a86' }); g.tube([[x - 5.1, Y + 0.9, 84], [x - 5.1, Y + 7.5, 84], [x - 3.2, Y + 8.4, 84]], [0.11, 0.08, 0.06], { sides: 6 }); g.tube([[x + 5.1, Y + 0.9, 46], [x + 5.3, Y + 4.5, 45.4], [x + 6.6, Y + 5.4, 42.6], [x + 7.4, Y + 4.2, 40]], [0.11, 0.09, 0.07, 0.06], { sides: 6 });
     W.add(g, { name: 'viaduct', double: true });
+    // forty years of creepers over its edges: stems down the parapets' outer faces and off the torn ends, leaves in clumps along them
+    { const gv = new LR.Geo(), rv = LR.rng('viaduct-creepers'), stem = (px, py, pz, len, ox, oz) => { const n = 5, pts = []; for (let q = 0; q <= n; q++) { const u = q / n; pts.push([px + ox * 0.25 * u + (rv() - 0.5) * 0.25 * u, py - len * u, pz + oz * 0.25 * u + (rv() - 0.5) * 0.3 * u]); }
+        gv.mat('moss', { tint: '#3f5230', flags: LR.FLAG.SWAY, weight: 0.5 }); gv.tube(pts, [0.04, 0.035, 0.03, 0.025, 0.02, 0.012], { sides: 4 });
+        gv.mat('moss', { tint: rv() < 0.3 ? '#6b7f3e' : '#4d6a37', flags: LR.FLAG.SWAY, weight: 0.8 }); for (let q = 1; q <= n; q++) for (let c = 0; c < 2; c++) { const p = pts[q], u = q / n; gv.blob(p[0] + ox * 0.12 + (rv() - 0.5) * 0.3, p[1] + (rv() - 0.5) * len / n * 0.8, p[2] + oz * 0.12 + (rv() - 0.5) * 0.4, 0.2 + rv() * 0.22 * (1.2 - u), { squash: [1, 0.55, 1.2], seg: 6, rings: 3, seed: q * 7 + c }); } };
+      for (let i = 0; i < D.piers.length - 1; i++) { if (D.piers[i] === D.gone[0]) continue; const z0 = D.piers[i] - (i === 0 ? 6 : 0), z1 = D.piers[i + 1] + (i === D.piers.length - 2 ? 6 : 0);
+        for (let z = z0 + 1; z < z1 - 1; z += 1.6 + rv() * 2.4) for (const s of [-1, 1]) if (rv() < 0.62) stem(x + s * (w / 2 + 0.06), Y + 0.86, z, 1.6 + rv() * rv() * 8.5, s, 0); }
+      for (const [z, dir] of [[D.gone[0], 1], [D.gone[1], -1]]) for (let px = x - w / 2 + 0.6; px < x + w / 2 - 0.4; px += 0.9 + rv() * 1.2) stem(px, Y - 0.1, z + dir * 0.35, 2.5 + rv() * 7, 0, dir);
+      W.add(gv, { name: 'creepers', double: true }); }
     V.deck = { x, y: Y, z0: D.gone[1], z1: D.piers[5] + 6, w }; }
   // ── the hall: a concrete frame, its roof half down, a camp under what is left ──
   { const H = V.hall, g = new LR.Geo(), y = H.y, bx = 6, bz = 7, nx = 4, nz = 2, x0 = H.x - (nx * bx) / 2, z0 = H.z - (nz * bz) / 2, fh = 4.4, col = 0.55;

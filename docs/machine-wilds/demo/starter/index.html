@@ -1072,6 +1072,8 @@ float fogDepth(vec3 ro, vec3 rd, float t){
     G.tierName = G.safe ? 'low' : LR.TIERS[want] ? want : guess; G.auto = !LR.TIERS[want] && !G.safe;
     G.tier = Object.assign({}, LR.TIERS[G.tierName]);
     if (LR.qn('mat', 0)) G.tier.mat = LR.qn('mat', 512);
+    // ?tierx=shadow:1024,cascades:2 — single numbers of the tier, overridden (a film on a machine without a GPU: what costs most, cut alone)
+    for (const kv of (LR.q('tierx', '') || '').split(',')) { const [k, v] = kv.split(':'); if (k in G.tier && v !== undefined && !isNaN(+v)) G.tier[k] = +v; }
     G.hdrType = G.halfFloat ? T.HalfFloatType : T.UnsignedByteType;
     return G;
   };
@@ -2015,6 +2017,9 @@ void main(){
     autumn:{ cloud: 0.42, dark: 0.0, rain: 0, snowfall: 0, season: 0.45, wind: 0.34, fog: 0.0032, fogH: 0.042, turb: 1.4 },
     // mist: low cloud lying in the valleys — the air itself is what you see; lamps cut cones in it and far things are shapes
     mist:  { cloud: 1.0, dark: 0.3, rain: 0, snowfall: 0, season: 0, wind: 0.1, fog: 0.0125, fogH: 0.034, turb: 1.8, glow: 1 },
+    // haze: a thin bright mist the sun comes through — far things are pale shapes, near things keep their colour, a low sun
+    // stands in shafts.  `cap`: how thick the hour may make it (a dawn does not turn it into a white wall)
+    haze:  { cloud: 0.2, dark: 0.0, rain: 0, snowfall: 0, season: 0, wind: 0.12, fog: 0.0052, fogH: 0.030, turb: 1.4, glow: 0.6, cap: 0.0095 },
   };
   W.cur = Object.assign({}, W.looks.clear);
   W.set = (o) => {
@@ -2075,7 +2080,7 @@ void main(){
     // morning mist lies thick and burns off by nine; an evening only goes a little golden
     const low = LR.sm(0.42, 0.02, Math.abs(sunY)) * (1 - LR.sat(W.rain + W.snowfall)), dawn = LR.sm(4.2, 5.4, W.tod) * LR.sm(9.2, 7.4, W.tod);
     // (a look that is already mist does not grow sixfold at dawn: past 0.016 the valley is a white wall and nothing reads)
-    const fog = Math.max(c.fog * (1 + 0.25 * low), Math.min(c.fog * (1 + low * (0.6 + 4.6 * dawn)), 0.016)) + night * 0.0012;
+    const fog = Math.max(c.fog * (1 + 0.25 * low), Math.min(c.fog * (1 + low * (0.6 + 4.6 * dawn)), (W.looks[W.want.weather] || {}).cap || 0.016)) + night * 0.0012;
     U.uFog.value.set(fog, LR.lerp(c.fogH, 0.02, low * 0.5), W.baseY, 0);
     // woods hold damp air: thick at dawn and toward evening, so the sun shows as shafts between the trunks
     if (LR.canopy) { const lowS = LR.sm(0.66, 0.14, sunY) * day; LR.render.U.uCanopy.value.set(LR.canopy.shade, LR.canopy.mist * (0.004 + 0.017 * lowS) * (1 - 0.75 * LR.sat(W.rain + W.snowfall)), 0, 0); }
@@ -4512,7 +4517,7 @@ void main(){
     // style 'shell': a dark spar inside pale covers (the newer machines) · 'girder': riveted box girders, bare and rusted
     limbs(o = {}) { for (const l of this.kin.limbs) this.limb(l, Object.assign({}, o, l.s.style ? { style: l.s.style } : {})); return this; }
     limb(l, o = {}) {
-      const k = this, w = l.width, d = l.drum, style = o.style || 'shell', cover = style === 'shell' ? 'shell' : 'rust', spar = style === 'shell' ? 'dark' : 'frame';
+      const k = this, w = l.width, d = l.drum, style = o.style || 'shell', casing = style === 'casing', cover = style === 'shell' ? 'shell' : casing ? (k.pal.casing ? 'casing' : 'shell') : 'rust', spar = style === 'shell' ? 'dark' : 'frame', works = k.pal.paint ? 'paint' : cover;      /* casing: the spar boxed in painted plate, a round housing over every joint, a pad under the foot — a heavy leg (roles: casing, paint) */
       const cheek = (g, y0, y1, depth) => { for (const sx of [-1, 1]) g.box(sx * w * 0.56, (y0 + y1) / 2, 0, w * 0.17, y1 - y0, depth, { soft: 0.25 }); };
       const pin = (y, z = 0) => { k.mat('steel'); k.xcyl(-w * 0.72, w * 0.72, y, z, d * 0.2); k.mat('joint'); for (const sx of [-1, 1]) { k.xcyl(sx * w * 0.645, sx * w * 0.72, y, z, d * 0.37, { sides: 16 }); k.bolts('x', [sx * w * 0.72, y, z], d * 0.28, 8, d * 0.035, { dir: sx }); } k.fitPin(l, y, z); };
       // the hip: a bearing the whole leg swings out on, and the yoke the thigh hangs in (mammal) — or a turret with an arm (insect)
@@ -4530,7 +4535,13 @@ void main(){
           // the spar, and its covers
           const taper = last ? 0.72 : 0.88, sw = w * (style === 'shell' ? 0.36 : 0.56), sd = d * (style === 'shell' ? 0.5 : 0.78);
           k.mat(spar); k.loft('y', [[t0 * 0.6, sd * 0.5, sw * 0.5, 0, 0, 5], [L * 0.5, sd * 0.5 * (1 + taper) / 2, sw * 0.5, 0, 0, 5], [t1 + d * 0.2, sd * 0.5 * taper, sw * 0.5 * 0.94, 0, 0, 5]], { sides: 12 });
-          if (style === 'shell') { k.mat(cover); const a = t0 + L * 0.06, b = t1 - L * 0.05, bulge = 0.5 + 0.12 * (1 - i / l.n);
+          if (casing) { const a = t0 + L * 0.04, b = t1 - L * 0.04, cw = w * 0.76, c0 = sd * 1.18, c1 = sd * 1.18 * taper, at = (y) => c0 + ((c1 - c0) * (y - a)) / (b - a);
+            // plate all round, closed at both ends; seams where the plates meet; a band of the works' colour under the joint; the housing the joint turns in
+            k.mat(cover); k.loft('y', [[a, c0 * 0.43, cw * 0.44, 0, 0, 6], [a + L * 0.04, c0 * 0.5, cw * 0.5, 0, 0, 6], [b - L * 0.04, c1 * 0.5, cw * 0.5, 0, 0, 6], [b, c1 * 0.43, cw * 0.44, 0, 0, 6]], { sides: 16 });
+            if (k.mid) { k.mat('frame'); const nr = Math.max(2, Math.round((b - a) / (d * 1.7))); for (let q = 1; q < nr; q++) { const y = a + ((b - a) * q) / nr; g.box(0, y, 0, cw * 1.03, d * 0.05, at(y) * 1.03, { soft: 0.1 }); } }
+            k.mat(works); { const y0 = a + L * 0.06, y1 = a + L * 0.17; k.loft('y', [[y0, at(y0) * 0.515, cw * 0.515, 0, 0, 6], [y1, at(y1) * 0.515, cw * 0.515, 0, 0, 6]], { sides: 16, caps: false }); }
+            for (const sx of [-1, 1]) { k.mat(works); k.xcyl(sx * w * 0.5, sx * w * 0.67, 0, 0, d * 0.66, { sides: 20 }); k.mat('joint'); k.xcyl(sx * w * 0.67, sx * w * 0.705, 0, 0, d * 0.5, { sides: 16 }); k.bolts('x', [sx * w * 0.67, 0, 0], d * 0.58, 12, d * 0.035, { dir: sx }); } }
+          else if (style === 'shell') { k.mat(cover); const a = t0 + L * 0.06, b = t1 - L * 0.05, bulge = 0.5 + 0.12 * (1 - i / l.n);
             // two covers, front and back, with the spar showing in the gap between them at the sides
             for (const [f0, f1, off] of [[-0.42 * Math.PI, 0.42 * Math.PI, d * 0.1], [0.58 * Math.PI, 1.42 * Math.PI, -d * 0.1]])
               k.loft('y', [[a, d * 0.28, w * 0.3, off, 0, 3], [a + L * 0.08, d * bulge, w * 0.5, off, 0, 3], [L * 0.5, d * bulge * 0.94, w * 0.5, off, 0, 3], [b - L * 0.1, d * bulge * taper, w * 0.46, off, 0, 3], [b, d * 0.26, w * 0.28, off, 0, 3]], { sides: 14, from: f0, to: f1, caps: false });
@@ -4549,7 +4560,9 @@ void main(){
       }
       // the foot: a ball in the cup, a hub under it, toes on pins
       k.bone(`foot_${l.name}`, (g) => { const b = l.ball; k.mat('steel'); k.ball(0, 0, 0, b * 0.64); k.mat('frame'); g.lathe(0, 0, [[b * 0.5, -b * 0.25], [b * 1.02, -b * 0.42], [b * 1.12, -b * 0.8], [b * 0.9, -b], [0.01, -b]], { sides: k.n(16) });
-        if (k.mid) { k.mat('joint'); for (const a of l.toes) { const ca = Math.cos(a * D2R), sa = Math.sin(a * D2R); g.box(ca * b * 0.75, -b * 0.42, sa * b * 0.75, b * 0.5, b * 0.46, b * 0.5, { soft: 0.3 }); } } k.fitFoot(l); });
+        if (k.mid) { k.mat('joint'); for (const a of l.toes) { const ca = Math.cos(a * D2R), sa = Math.sin(a * D2R); g.box(ca * b * 0.75, -b * 0.42, sa * b * 0.75, b * 0.5, b * 0.46, b * 0.5, { soft: 0.3 }); } }
+        if (casing) { k.mat('frame'); g.box(0, -b * 0.86, 0, b * 3.0, b * 0.28, b * 3.0, { soft: 0.12 }); k.mat(works); g.box(0, -b * 0.62, 0, b * 2.3, b * 0.22, b * 2.3, { soft: 0.2 }); }      /* a pad: the weight spread over a square of plate */
+        k.fitFoot(l); });
       l.toes.forEach((a, t) => k.bone(`toe${t}_${l.name}`, (g) => { const b = l.ball, L = l.toeLen, heel = Math.abs(a) > 120, LL = heel ? L * 0.62 : L;
         k.mat('joint'); k.xcyl(-b * 0.36, b * 0.36, 0, 0, b * 0.3, { sides: 12 });
         k.mat(style === 'shell' ? 'dark' : 'frame'); k.loft('y', [[b * 0.1, b * 0.3, b * 0.3, 0, 0, 4], [LL * 0.45, b * 0.26, b * 0.36, -b * 0.03, 0, 4], [LL * 0.86, b * 0.17, b * 0.28, -b * 0.1, 0, 4], [LL, b * 0.05, b * 0.06, -b * 0.2, 0, 3]], { sides: 10 });
@@ -4611,11 +4624,18 @@ void main(){
 //   k.fins(c, dir, n, w, h, pitch, { up })        a stack of cooling fins
 //   k.boot(p, dir, r, len, n)                     a rubber gaiter
 //   k.stripes(c, normal, w, h, n, { up })         warning bars, yellow and black, what is left of them
+//   k.digits('07', c, normal, h, { up, role })   a number stencilled on a plate, h tall, read from in front
 //   k.gauge(c, normal, r)                         a dial
 //   k.stack(a, b, r)                              an exhaust stack with a rain cap
 //   k.dish(c, dir, r)                             an antenna dish on a stalk
 {
   const M = LR.mech, T = THREE, V = M.v, TAU = Math.PI * 2, K = M.Kit.prototype;
+  // k.digits('07', c, normal, h, { up, role, t })   stencilled figures h tall on a plate, read from in front of it (seven strokes a figure)
+  K.digits = function (str, c, nrm, h, o = {}) { const k = this, t = o.t || h * 0.035, w = h * 0.5, gap = h * 0.24, s = h * 0.13, n = str.length, SEG = { 0: 'abcdef', 1: 'bc', 2: 'abged', 3: 'abgcd', 4: 'fgbc', 5: 'afgcd', 6: 'afgedc', 7: 'abc', 8: 'abcdefg', 9: 'abfgcd', '-': 'g' };
+    return k.along(c, nrm, (g) => { k.mat(o.role || 'dark'); for (let i = 0; i < n; i++) { const x0 = -(i - (n - 1) / 2) * (w + gap), on = SEG[str[i]] || '';      /* (the frame's +X is the reader's left) */
+        const H = (z) => g.box(x0, t * 0.5, z, w - s * 0.7, t, s, { soft: 0.1 }), U = (x, z) => g.box(x0 - x, t * 0.5, z, s, t, h * 0.5 - s * 0.7, { soft: 0.1 });
+        if (on.includes('a')) H(h * 0.5 - s * 0.5); if (on.includes('g')) H(0); if (on.includes('d')) H(-h * 0.5 + s * 0.5);
+        if (on.includes('f')) U(-w * 0.5 + s * 0.5, h * 0.25); if (on.includes('b')) U(w * 0.5 - s * 0.5, h * 0.25); if (on.includes('e')) U(-w * 0.5 + s * 0.5, -h * 0.25); if (on.includes('c')) U(w * 0.5 - s * 0.5, -h * 0.25); } }, o.up || [0, 1, 0]); };
   K.along = function (p, dir, fn, up) { const y = V.norm(dir); let z = up ? V.sub(up, V.mul(y, V.dot(up, y))) : null; if (!z || V.len(z) < 0.2) { const a = Math.abs(y[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0]; z = V.sub(a, V.mul(y, V.dot(a, y))); } z = V.norm(z); const x = V.cross(y, z);
     this.g.push(new T.Matrix4().set(x[0], y[0], z[0], p[0], x[1], y[1], z[1], p[1], x[2], y[2], z[2], p[2], 0, 0, 0, 1)); fn(this.g, this); this.g.pop(); return this; };
   const dirAt = (pts, i) => V.norm(V.sub(pts[Math.min(i + 1, pts.length - 1)], pts[Math.max(i - 1, 0)]));
@@ -8216,6 +8236,69 @@ void main(){
 }
 
 
+// ── lib/89_cine.js ──
+// machine-wilds · 89_cine — a film played in the page.  Shots with a free camera (not the walker's eye) and the walker's body
+// driven by keys, frame by frame; each shot sets its own hour, weather and machines' clock.  The same shots play live
+// (?film=1, or realm.cine.play()) and are stepped offline to draw a film's frames (a realm's trailer.mjs).
+//   LR.start({ cine: (h) => ({ fps: 24, order: ['A', 'B'], range: { A: [0, 144] }, title: { big, small, line }, shots: {
+//     A: { dur, tod, weather, T0, start: [x, z, yaw°], pitch, tod1 (the hour at the shot's end: time passes), view: 'first' | 'top' (the
+//          walker's own camera instead of cam), zoom, rate (how fast the machines' clock runs: 3 for time passing), act(s, keys, state),
+//          cam(s) → [[x, y, z], [look x, y, z], fov°] } } }) })
+//   h: { LR, P (the walker), M (the machines), dt(), ease, lerp, damp(a, b, rate), at(ahead, right, up) (a point by the body),
+//        low(point, height over the ground), floor(x, z, y), goTo(x, z, keys, run) (steer the body there; true when there),
+//        U(name) (a machine), pose(unit, t) → { p, h, fw, rt }, rel(pose, ahead, right) → [x, z], yawOf(pose) }
+// A camera inside a lamp's cone sees the cone's edge as a hard line across the picture: keep cameras out of the beams.
+(() => {
+  const C = (LR.cine = { on: false, ready: false });
+  let make = null, cam = null, def = null, cur = null, name = '', dt = 1 / 24, clock = 0, f = 0, live = null;
+  C.init = (fn, camera) => { make = fn || null; cam = camera; C.has = !!fn; };
+  const ensure = () => { if (def || !make) return !!def; const P = LR.player, M = LR.mech;
+    const ease = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); }, lerp = (a, b, k) => a + (b - a) * k, wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+    const F = () => [Math.sin(P.yaw), -Math.cos(P.yaw)], Rt = () => [Math.cos(P.yaw), Math.sin(P.yaw)], floor = (x, z, y) => P.groundAt(x, z, y === undefined ? P.y + 1.2 : y).y;
+    const at = (a, r, up) => { const u = F(), v = Rt(); return [P.x + u[0] * a + v[0] * r, P.y + up, P.z + u[1] * a + v[1] * r]; };
+    const low = (p, h) => { p[1] = floor(p[0], p[2], P.y + 3) + h; return p; };
+    const goTo = (tx, tz, K, run) => { const dx = tx - P.x, dz = tz - P.z, d = Math.hypot(dx, dz); if (d < 0.45) return true; P.yaw += wrap(Math.atan2(dx, -dz) - P.yaw) * Math.min(1, 5 * dt); K.KeyW = true; if (run) K.ShiftLeft = true; return false; };
+    const U = (n) => M.units.find((u) => u.name === n), pose = (u, t) => { const c = M.cmd(u, t), h = c.h; return { p: c.body.p, h, fw: [Math.cos(h), Math.sin(h)], rt: [-Math.sin(h), Math.cos(h)] }; };
+    const rel = (q, a, r) => [q.p[0] + q.fw[0] * a + q.rt[0] * r, q.p[2] + q.fw[1] * a + q.rt[1] * r], yawOf = (q) => (q.h * 180) / Math.PI + 90;
+    def = make({ LR, P, M, dt: () => dt, ease, lerp, damp: (a, b, k) => LR.damp(a, b, k, dt), at, low, floor, goTo, U, pose, rel, yawOf });
+    C.fps = def.fps || 24; C.order = def.order || Object.keys(def.shots); C.range = {}; for (const n in def.shots) C.range[n] = (def.range && def.range[n]) || [0, Math.round(def.shots[n].dur * C.fps)]; C.title = def.title || null; C.ready = true; return true; };
+  const aim = (c, roll) => { const p = c[0], q = c[1], dx = q[0] - p[0], dy = q[1] - p[1], dz = q[2] - p[2]; cam.position.set(p[0], p[1], p[2]); cam.rotation.set(Math.atan2(dy, Math.hypot(dx, dz)), -Math.atan2(dx, -dz), roll || 0); if (Math.abs(cam.fov - c[2]) > 0.01) { cam.fov = c[2]; cam.updateProjectionMatrix(); } };
+  const hour = (s) => { if (cur.tod1 !== undefined) LR.wx.snap({ tod: cur.tod + (cur.tod1 - cur.tod) * Math.max(0, Math.min(1, s / cur.dur)) }); };
+  const start = (n) => { const P = LR.player; cur = def.shots[n]; name = n; cur.st = {}; LR.wx.set({ auto: false }); LR.wx.snap({ tod: cur.tod, weather: cur.weather }); P.stopTour(); P.place(cur.start[0], cur.start[1], cur.start[2]); P.pitch = cur.pitch || 0; P.setView(cur.view || 'third'); if (cur.zoom) P.zoom[P.view] = cur.zoom; if (cur.view && LR.fit) { LR.fit(); P.fovSet = false; } P.keys = {}; clock = cur.T0 - 1.0; f = 0; };
+  // one frame of the shot at the film's own rate: the hand, the body, the camera, the world — drawn or not
+  const step = (draw) => { const P = LR.player, s = f / C.fps, K = {}; cur.act(s, K, cur.st); P.keys = K; P.update(dt, cam); hour(s); if (!cur.view) aim(cur.cam(s), Math.sin(s * 0.9) * 0.003);
+    clock += dt * (cur.rate || 1); LR.wx.update(dt, clock); LR.emit('frame', clock, dt, cam); if (draw) LR.render.draw(cam, clock, dt); f++; return s; };
+  const settle = () => { const P = LR.player; for (let i = 0; i < C.fps; i++) { P.update(dt, cam); clock += dt; LR.wx.update(dt, clock); LR.emit('frame', clock, dt, cam); } };      /* a second of standing before the shot: the body settles, the machines are where the clock says */
+  // ── offline: a script steps the shots and saves what is drawn ──
+  C.names = () => (ensure() ? Object.keys(def.shots) : []); C.frames = (n) => (ensure(), Math.round(def.shots[n].dur * C.fps)); C.dur = (n) => (ensure(), def.shots[n].dur); C.T0 = (n) => (ensure(), def.shots[n].T0);
+  C.info = () => (ensure() ? { fps: C.fps, order: C.order, range: C.range, title: C.title } : null);
+  C.begin = (n, draw) => { ensure(); dt = 1 / C.fps; start(n); settle(); LR.render.histValid = false;
+    if (draw) for (let i = 0; i < 6; i++) { if (!cur.view) aim(cur.cam(0)); LR.emit('frame', clock, 1e-4, cam); LR.render.draw(cam, clock, 1e-4); } };
+  C.tick = (draw) => { const P = LR.player, s = step(draw); return { s: +s.toFixed(2), x: +P.x.toFixed(1), y: +P.y.toFixed(1), z: +P.z.toFixed(1), pitch: +P.pitch.toFixed(2), cam: [cam.position.x, cam.position.y, cam.position.z].map((v) => +v.toFixed(1)), there: cur.st.there || 0, air: !!P.air }; };
+  C.state = () => ({ on: C.on, shot: name, index: live ? live.i : -1, s: live ? +live.s.toFixed(2) : f / (C.fps || 24), title: !!(live && live.tail >= 0) });
+  C.time = () => clock; C.camNow = () => [cam.position.x, cam.position.y, cam.position.z, cam.rotation.y];
+  // ── live: the page plays the film itself; Esc (or a click on "walk") hands the walker back ──
+  let veil = null, hint = null, card = null;
+  const dom = () => { if (veil) return; const mk = (css, html) => { const e = document.createElement('div'); e.style.cssText = css; if (html) e.innerHTML = html; document.body.appendChild(e); return e; };
+    veil = mk('position:fixed;inset:0;background:#07090b;opacity:1;transition:opacity .9s;pointer-events:none;z-index:40');
+    const t = C.title || {}; card = mk('position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#e9e4d6;font-family:system-ui,sans-serif;opacity:0;transition:opacity 1s;pointer-events:none;z-index:41;text-align:center',
+      `<div style="font-size:min(9vw,64px);font-weight:700;letter-spacing:.14em">${t.big || ''}</div><div style="width:120px;height:2px;background:#c8532e;margin:22px 0 18px"></div><div style="font-size:min(3.4vw,20px);letter-spacing:.42em;opacity:.78">${t.small || ''}</div><div style="font-size:min(2.8vw,15px);letter-spacing:.2em;opacity:.5;margin-top:14px">${t.line || ''}</div>`);
+    hint = mk('position:fixed;right:14px;bottom:12px;z-index:42;font:12px system-ui,sans-serif;color:#e9e4d6;opacity:.55;cursor:pointer;padding:6px 10px;border:1px solid rgba(233,228,214,.35);border-radius:6px;background:rgba(7,9,11,.35)', t.skip || 'Esc · walk');
+    hint.addEventListener('click', () => C.stop()); window.addEventListener('keydown', (e) => { if (C.on && e.code === 'Escape') C.stop(); }); };
+  const cut = (i) => { live.i = i; const n = C.order[i]; dt = 1 / C.fps; start(n); settle(); for (let k = 0; k < C.range[n][0]; k++) step(false); live.s = f / C.fps; live.end = C.range[n][1] / C.fps; LR.render.histValid = false; };
+  C.play = () => { if (!ensure() || !C.order.length) return false; dom(); const hud = document.getElementById('hud'); if (hud) { C.hudWas = hud.style.display; hud.style.display = 'none'; } hint.style.display = ''; card.style.opacity = 0; C.on = true; live = { i: 0, s: 0, end: 0, tail: -1 }; C.auto = LR.wx.auto; cut(0); requestAnimationFrame(() => { veil.style.opacity = 0; }); return true; };
+  C.stop = () => { if (!C.on) return; C.on = false; const P = LR.player, sp = LR.world.spawn, hud = document.getElementById('hud'); if (hud) hud.style.display = C.hudWas || ''; if (hint) hint.style.display = 'none'; if (card) card.style.opacity = 0; if (veil) veil.style.opacity = 0;
+    P.keys = {}; P.place(sp.x, sp.z, sp.yaw || 0); P.setView('third'); if (LR.fit) LR.fit(); const w = (LR.cfg && LR.cfg.weather) || {}; LR.wx.snap({ weather: w.weather || 'clear', tod: w.tod === undefined ? 16.6 : w.tod }); if (C.auto) LR.wx.set({ auto: true }); LR.render.histValid = false; LR.emit('cine', false); };
+  // called by the page's loop once a frame while the film is on: returns the machines' clock for this frame
+  C.live = (rdt, time) => { if (!C.on || !cur) return time; const P = LR.player; dt = Math.min(rdt, 1 / 12);
+    if (live.tail >= 0) { live.tail += rdt; if (live.tail > 5.2) C.stop(); return clock; }      /* the title card, then the walker is handed the world */
+    live.s += dt; f = Math.round(live.s * C.fps);
+    if (live.s >= live.end) { if (live.i + 1 < C.order.length) cut(live.i + 1); else { live.tail = 0; veil.style.opacity = 1; card.style.opacity = 1; return clock; } }
+    if (live.i === C.order.length - 1 && live.end - live.s < 1.2) veil.style.opacity = 1;
+    const K = {}; cur.act(live.s, K, cur.st); P.keys = K; hour(live.s); if (!cur.view) aim(cur.cam(live.s), Math.sin(live.s * 0.9) * 0.003); clock += dt * (cur.rate || 1); return clock; };
+})();
+
+
 // ── lib/90_app.js ──
 // machine-wilds · 90_app — boot, the loop, the render API.  A realm's last source calls LR.start({ … }).
 {
@@ -8277,6 +8360,7 @@ void main(){
         return info();
       };
       window.realm = { canvas, shot, info, place, LR };
+      LR.cine.init(cfg.cine, cam); window.realm.cine = LR.cine;      // a film of shots played in the page (?film=1) or stepped by a script (89_cine)
       // film: the tour with the automatic round, one frame per call (render.mjs --film)
       let fdt = 1 / 30;
       window.realm.filmStart = (fps = 30) => { fdt = 1 / fps; time = 0; P.place(sp.x, sp.z, sp.yaw || 0); P.startTour(); if (cfg.round) LR.wx.round = cfg.round; LR.wx.snap({ weather: (cfg.weather && cfg.weather.weather) || 'clear', tod: (cfg.weather && cfg.weather.tod) || 16.6 }); LR.wx.set({ auto: true }); LR.render.histValid = false; LR.render.film = true; };
@@ -8309,8 +8393,8 @@ void main(){
       if (LR.q('auto', wx0.auto === false ? '0' : '1') !== '0' && LR.q('wx') === undefined && LR.q('tod') === undefined) LR.wx.set({ auto: true });
       P.bind(canvas); if (P.tour && LR.q('tour', '1') !== '0') P.startTour(); if (LR.q('eye', '')) P.setView(LR.q('eye'));      // ?eye=third | top: start in that view
       let last = performance.now();
-      const loop = (now) => { requestAnimationFrame(loop); const dt = Math.min(0.1, Math.max(0.0005, (now - last) / 1000)); last = now; if (document.hidden) return; time += dt; LR.emit('input', dt, cam); LR.wx.update(dt, time); LR.emit('frame', time, dt, cam); LR.render.draw(cam, time, dt); LR.emit('after', time, dt); };
-      LR.progress(1, ''); document.getElementById('veil').classList.add('gone'); window.READY = true; LR.readyAt = performance.now(); requestAnimationFrame(loop);
+      const loop = (now) => { requestAnimationFrame(loop); const dt = Math.min(0.1, Math.max(0.0005, (now - last) / 1000)); last = now; if (document.hidden) return; time += dt; LR.emit('input', dt, cam); if (LR.cine.on) time = LR.cine.live(dt, time); LR.wx.update(dt, time); LR.emit('frame', time, dt, cam); LR.render.draw(cam, time, dt); LR.emit('after', time, dt); };
+      LR.progress(1, ''); document.getElementById('veil').classList.add('gone'); window.READY = true; LR.readyAt = performance.now(); if (LR.cine.has && LR.q('film', '0') === '1') LR.cine.play(); requestAnimationFrame(loop);
     } catch (e) { if (e && e.trouble) LR.trouble(e.trouble, cfg); else LR.fail(e.stack || e.message || e); }
   };
   // ── when the graphics will not start, or stop ────────────────────────────────────────────────────────────────────

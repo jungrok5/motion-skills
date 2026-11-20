@@ -58,6 +58,7 @@
         return info();
       };
       window.realm = { canvas, shot, info, place, LR };
+      LR.cine.init(cfg.cine, cam); window.realm.cine = LR.cine;      // a film of shots played in the page (?film=1) or stepped by a script (89_cine)
       // film: the tour with the automatic round, one frame per call (render.mjs --film)
       let fdt = 1 / 30;
       window.realm.filmStart = (fps = 30) => { fdt = 1 / fps; time = 0; P.place(sp.x, sp.z, sp.yaw || 0); P.startTour(); if (cfg.round) LR.wx.round = cfg.round; LR.wx.snap({ weather: (cfg.weather && cfg.weather.weather) || 'clear', tod: (cfg.weather && cfg.weather.tod) || 16.6 }); LR.wx.set({ auto: true }); LR.render.histValid = false; LR.render.film = true; };
@@ -90,8 +91,8 @@
       if (LR.q('auto', wx0.auto === false ? '0' : '1') !== '0' && LR.q('wx') === undefined && LR.q('tod') === undefined) LR.wx.set({ auto: true });
       P.bind(canvas); if (P.tour && LR.q('tour', '1') !== '0') P.startTour(); if (LR.q('eye', '')) P.setView(LR.q('eye'));      // ?eye=third | top: start in that view
       let last = performance.now();
-      const loop = (now) => { requestAnimationFrame(loop); const dt = Math.min(0.1, Math.max(0.0005, (now - last) / 1000)); last = now; if (document.hidden) return; time += dt; LR.emit('input', dt, cam); LR.wx.update(dt, time); LR.emit('frame', time, dt, cam); LR.render.draw(cam, time, dt); LR.emit('after', time, dt); };
-      LR.progress(1, ''); document.getElementById('veil').classList.add('gone'); window.READY = true; LR.readyAt = performance.now(); requestAnimationFrame(loop);
+      const loop = (now) => { requestAnimationFrame(loop); const dt = Math.min(0.1, Math.max(0.0005, (now - last) / 1000)); last = now; if (document.hidden) return; time += dt; LR.emit('input', dt, cam); if (LR.cine.on) time = LR.cine.live(dt, time); LR.wx.update(dt, time); LR.emit('frame', time, dt, cam); LR.render.draw(cam, time, dt); LR.emit('after', time, dt); };
+      LR.progress(1, ''); document.getElementById('veil').classList.add('gone'); window.READY = true; LR.readyAt = performance.now(); if (LR.cine.has && LR.q('film', '0') === '1') LR.cine.play(); requestAnimationFrame(loop);
     } catch (e) { if (e && e.trouble) LR.trouble(e.trouble, cfg); else LR.fail(e.stack || e.message || e); }
   };
   // ── when the graphics will not start, or stop ────────────────────────────────────────────────────────────────────
