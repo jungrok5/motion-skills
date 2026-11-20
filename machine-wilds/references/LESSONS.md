@@ -145,6 +145,29 @@ was learned putting scans into it (scanned-realm), then the engine's own list (l
   Camera 60° off the nose (beams read as shafts), the flare lowered to 1.5 ×. The beam's edge in the air pass is still
   hard from inside; a film keeps its camera out of the beams.
 
+- **Beside a painting of a walking rig in a drowned city, ours was a rust-red lump on thin legs.** → The owner brought a
+  reference picture and asked what would lift ours. What differed, in order of what it cost the eye: one colour (every
+  role was rust plate) → works paint: grey frames, cream casings, yellow on what moves, all let go to rust by the same
+  weathering; legs like table legs → a `casing` leg style (the spar boxed in plate, a round housing over each joint, a
+  pad under the foot) and a wider leg; a flat silhouette → a landing stage off one quarter, cables slung under the edges,
+  trees on the deck; red, hard evening light → a `haze` look, a thin bright mist the sun comes through, shot against the
+  light. A reference is for what is missing, never for the design: the relic is still this valley's walking relay
+  station. Water lying on the floor with the machines in it, vines on the ruins and lettering are still to do.
+
+- **"Make the film something the page plays, and make the video from that."** → A film script outside the page (a
+  browser driven frame by frame) cannot be watched; the same shots as data in the realm can be both played and stepped. →
+  `lib/89_cine.js`: shots `{ dur, tod, weather, T0, start, act, cam }` in the realm's source, `?film=1` plays them at the
+  page's own frame rate, a script steps them at 24 a second and saves what is drawn. One definition, two ways through it —
+  and the live way was only trusted after it was driven through every cut in one page (28 shots, the title, the hand-over).
+- **Half of a frame was the shadow maps.** → Without a GPU a 960 × 540 frame took 8.7 s; a 640 × 360 one, 7.7 s. Not the
+  pixels, then. Timed with one number of the tier changed at a time (`?tierx=`): shadow maps at 1024 instead of 2048 → 4.1 s,
+  and no one could tell the two pictures apart side by side; GI, reflections and AO together → 0.3 s. Measure before
+  cutting what shows. (And `gl.finish()` does not wait in this browser: time a frame by reading one pixel back.)
+- **Three key frames a shot, before three hours of render.** → Of 29 shots laid out blind from the gym's numbers, eight were
+  wrong in ways only a picture shows: a rock in front of the lookout, a camera inside a bush, a crane hidden behind a hall,
+  a body below the frame, a walker facing away from what it had come to see. One was dropped; none cost more than a minute
+  to find.
+
 ## Scans in the engine (scanned-realm)
 ## Scans
 

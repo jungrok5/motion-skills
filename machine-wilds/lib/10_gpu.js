@@ -46,6 +46,8 @@
     G.tierName = G.safe ? 'low' : LR.TIERS[want] ? want : guess; G.auto = !LR.TIERS[want] && !G.safe;
     G.tier = Object.assign({}, LR.TIERS[G.tierName]);
     if (LR.qn('mat', 0)) G.tier.mat = LR.qn('mat', 512);
+    // ?tierx=shadow:1024,cascades:2 — single numbers of the tier, overridden (a film on a machine without a GPU: what costs most, cut alone)
+    for (const kv of (LR.q('tierx', '') || '').split(',')) { const [k, v] = kv.split(':'); if (k in G.tier && v !== undefined && !isNaN(+v)) G.tier[k] = +v; }
     G.hdrType = G.halfFloat ? T.HalfFloatType : T.UnsignedByteType;
     return G;
   };

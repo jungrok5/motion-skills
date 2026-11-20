@@ -34,6 +34,7 @@
       <dt>브리프</dt><dd>동사 · 종류 · 캐스트(프롬프트 · 바라보는 쪽 · 질량 · 걸음) · 장소 · 레벨 순서 · 곡 · 문구</dd>
       <dt>스프라이트</dt><dd>Tessera 미리보기(시드마다 네 장)에서 고르기, 같은 모습의 손그림 16×16 격자</dd>
       <dt>검사</dt><dd>도달 가능성 · 결정성 · 디딘 몸 미끄러짐 · 숨 쉬는 대기 · 예비 동작 · 착지 · 멈춤 관성, 좌우 양쪽 캐스트 시트</dd>
+      <dt>테마 모델</dt><dd>(선택) 같은 데이터(CC0)의 한 테마로 직접 학습한 작은 모델, 예: 고양이 전용 3.6 MB · CPU로 네 장에 4~5초</dd>
       <dt>출력</dt><dd><code>index.html</code> + <code>game.json</code> + <code>lib/</code>, 정적 서버 어디서나</dd>
     </dl>
     <pre><code>node prompt-sprite-game/scripts/new-game.mjs my-game --kind=platform --title="My Game"
@@ -46,9 +47,9 @@ cd my-game &amp;&amp; python3 -m http.server 8000</code></pre>
   <div class="demo" style="--ar:5/3.4;--demo-bg:#0d0c12">
     <iframe data-src="demo/lighthouse-cat/" title="prompt-sprite-game 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
     <noscript><a href="demo/lighthouse-cat/">데모 열기</a></noscript>
-    <div class="bar"><span data-cap-target>「등대 고양이」 · 플랫폼 · ← → 이동, Space 점프</span>
+    <div class="bar"><span data-cap-target>「등대 고양이」 · 플랫폼 · 「고양이 모델로 그리기」 · ← → 이동, Space 점프</span>
       <span class="btns" role="group" aria-label="데모 예제">
-        <button class="btn" type="button" data-src="demo/lighthouse-cat/" data-cap="「등대 고양이」 · 플랫폼 · ← → 이동, Space 점프" aria-pressed="true">등대 고양이</button>
+        <button class="btn" type="button" data-src="demo/lighthouse-cat/" data-cap="「등대 고양이」 · 플랫폼 · 「고양이 모델로 그리기」 · ← → 이동, Space 점프" aria-pressed="true">등대 고양이</button>
         <button class="btn" type="button" data-src="demo/mushroom-basket/" data-cap="「버섯 숲 바구니」 · 아레나 · 방향키 이동, Space 덮치기">버섯 숲 바구니</button>
       </span></div>
   </div>
@@ -56,7 +57,7 @@ cd my-game &amp;&amp; python3 -m http.server 8000</code></pre>
 
 <section id="samples"><div class="wrap">
   <h2>샘플</h2>
-  <p class="lead">이 스킬로 만든 두 게임과 검사 결과입니다. 사진은 모두 손그림 스프라이트로 찍었고, 모델이 그린 스프라이트는 데모에서 「Tessera로 스프라이트 그리기」를 누르면 여러분의 브라우저에서 그려집니다(처음 한 번 115 MB). 카드를 누르면 그 게임이 열립니다.</p>
+  <p class="lead">이 스킬로 만든 두 게임과 검사 결과입니다. 사진은 모두 손그림 스프라이트로 찍었습니다. 모델이 그리는 스프라이트는 데모에서 직접 보실 수 있습니다. 「등대 고양이」의 「고양이 모델로 그리기」는 이 레포에서 학습한 고양이 전용 모델(3.6 MB)이 몇 초 만에 주인공을 그리고, 「Tessera로 스프라이트 그리기」는 Tessera-small이 캐스트 전체를 그립니다(처음 한 번 115 MB). 카드를 누르면 그 게임이 열립니다.</p>
   <div class="chips" data-for="gallery" data-labels='{"platform":"플랫폼","arena":"아레나","check":"캐스트 시트"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
   <div id="gallery">
     <div class="group">
@@ -129,12 +130,14 @@ cd my-game &amp;&amp; python3 -m http.server 8000</code></pre>
     <li><a href="https://github.com/jungrok5/motion-skills/blob/main/prompt-sprite-game/references/MOTION.md">references/MOTION.md</a> <span>한 장짜리 스프라이트에 무게를 싣는 법</span></li>
     <li><a href="https://github.com/jungrok5/motion-skills/blob/main/prompt-sprite-game/references/SOURCE.md">references/SOURCE.md</a> <span>출처와 가져온 것 · 가져오지 않은 것</span></li>
     <li><a href="https://github.com/jungrok5/motion-skills/blob/main/prompt-sprite-game/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/prompt-sprite-game/train/README.md">train/README.md</a> <span>테마 모델 직접 학습하기 · 데이터와 라이선스(Tessera · Pixel Art Atlas · Krea 2)</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/prompt-sprite-game/models/cat">models/cat</a> <span>고양이 모델 · int8 ONNX 3.56 MB · 고양이 스프라이트 5,775장으로 학습 · NOTICE</span></li>
   </ul>
 </div></section>
 </main>
 
 <footer><div class="wrap">
-  <a href="../">← 스킬 목록</a> · 사진의 스프라이트는 모두 손그림입니다. 데모에서 그리는 스프라이트: Tessera-small (TheJagStudio, CC BY-NC 4.0) via cfahlgren1/tessera-small-onnx, 비상업용.
+  <a href="../">← 스킬 목록</a> · 사진의 스프라이트는 모두 손그림입니다. 데모에서 그리는 스프라이트: Tessera-small (TheJagStudio, CC BY-NC 4.0) via cfahlgren1/tessera-small-onnx, 비상업용 · 고양이 모델은 Pixel Art Atlas 1.4M(CC0, Krea 2로 생성)으로 이 레포에서 학습.
 </div></footer>
 <script src="../assets/site.js"></script>
 </body>

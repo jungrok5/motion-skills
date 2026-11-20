@@ -60,7 +60,7 @@
     // style 'shell': a dark spar inside pale covers (the newer machines) · 'girder': riveted box girders, bare and rusted
     limbs(o = {}) { for (const l of this.kin.limbs) this.limb(l, Object.assign({}, o, l.s.style ? { style: l.s.style } : {})); return this; }
     limb(l, o = {}) {
-      const k = this, w = l.width, d = l.drum, style = o.style || 'shell', cover = style === 'shell' ? 'shell' : 'rust', spar = style === 'shell' ? 'dark' : 'frame';
+      const k = this, w = l.width, d = l.drum, style = o.style || 'shell', casing = style === 'casing', cover = style === 'shell' ? 'shell' : casing ? (k.pal.casing ? 'casing' : 'shell') : 'rust', spar = style === 'shell' ? 'dark' : 'frame', works = k.pal.paint ? 'paint' : cover;      /* casing: the spar boxed in painted plate, a round housing over every joint, a pad under the foot — a heavy leg (roles: casing, paint) */
       const cheek = (g, y0, y1, depth) => { for (const sx of [-1, 1]) g.box(sx * w * 0.56, (y0 + y1) / 2, 0, w * 0.17, y1 - y0, depth, { soft: 0.25 }); };
       const pin = (y, z = 0) => { k.mat('steel'); k.xcyl(-w * 0.72, w * 0.72, y, z, d * 0.2); k.mat('joint'); for (const sx of [-1, 1]) { k.xcyl(sx * w * 0.645, sx * w * 0.72, y, z, d * 0.37, { sides: 16 }); k.bolts('x', [sx * w * 0.72, y, z], d * 0.28, 8, d * 0.035, { dir: sx }); } k.fitPin(l, y, z); };
       // the hip: a bearing the whole leg swings out on, and the yoke the thigh hangs in (mammal) — or a turret with an arm (insect)
@@ -78,7 +78,13 @@
           // the spar, and its covers
           const taper = last ? 0.72 : 0.88, sw = w * (style === 'shell' ? 0.36 : 0.56), sd = d * (style === 'shell' ? 0.5 : 0.78);
           k.mat(spar); k.loft('y', [[t0 * 0.6, sd * 0.5, sw * 0.5, 0, 0, 5], [L * 0.5, sd * 0.5 * (1 + taper) / 2, sw * 0.5, 0, 0, 5], [t1 + d * 0.2, sd * 0.5 * taper, sw * 0.5 * 0.94, 0, 0, 5]], { sides: 12 });
-          if (style === 'shell') { k.mat(cover); const a = t0 + L * 0.06, b = t1 - L * 0.05, bulge = 0.5 + 0.12 * (1 - i / l.n);
+          if (casing) { const a = t0 + L * 0.04, b = t1 - L * 0.04, cw = w * 0.76, c0 = sd * 1.18, c1 = sd * 1.18 * taper, at = (y) => c0 + ((c1 - c0) * (y - a)) / (b - a);
+            // plate all round, closed at both ends; seams where the plates meet; a band of the works' colour under the joint; the housing the joint turns in
+            k.mat(cover); k.loft('y', [[a, c0 * 0.43, cw * 0.44, 0, 0, 6], [a + L * 0.04, c0 * 0.5, cw * 0.5, 0, 0, 6], [b - L * 0.04, c1 * 0.5, cw * 0.5, 0, 0, 6], [b, c1 * 0.43, cw * 0.44, 0, 0, 6]], { sides: 16 });
+            if (k.mid) { k.mat('frame'); const nr = Math.max(2, Math.round((b - a) / (d * 1.7))); for (let q = 1; q < nr; q++) { const y = a + ((b - a) * q) / nr; g.box(0, y, 0, cw * 1.03, d * 0.05, at(y) * 1.03, { soft: 0.1 }); } }
+            k.mat(works); { const y0 = a + L * 0.06, y1 = a + L * 0.17; k.loft('y', [[y0, at(y0) * 0.515, cw * 0.515, 0, 0, 6], [y1, at(y1) * 0.515, cw * 0.515, 0, 0, 6]], { sides: 16, caps: false }); }
+            for (const sx of [-1, 1]) { k.mat(works); k.xcyl(sx * w * 0.5, sx * w * 0.67, 0, 0, d * 0.66, { sides: 20 }); k.mat('joint'); k.xcyl(sx * w * 0.67, sx * w * 0.705, 0, 0, d * 0.5, { sides: 16 }); k.bolts('x', [sx * w * 0.67, 0, 0], d * 0.58, 12, d * 0.035, { dir: sx }); } }
+          else if (style === 'shell') { k.mat(cover); const a = t0 + L * 0.06, b = t1 - L * 0.05, bulge = 0.5 + 0.12 * (1 - i / l.n);
             // two covers, front and back, with the spar showing in the gap between them at the sides
             for (const [f0, f1, off] of [[-0.42 * Math.PI, 0.42 * Math.PI, d * 0.1], [0.58 * Math.PI, 1.42 * Math.PI, -d * 0.1]])
               k.loft('y', [[a, d * 0.28, w * 0.3, off, 0, 3], [a + L * 0.08, d * bulge, w * 0.5, off, 0, 3], [L * 0.5, d * bulge * 0.94, w * 0.5, off, 0, 3], [b - L * 0.1, d * bulge * taper, w * 0.46, off, 0, 3], [b, d * 0.26, w * 0.28, off, 0, 3]], { sides: 14, from: f0, to: f1, caps: false });
@@ -97,7 +103,9 @@
       }
       // the foot: a ball in the cup, a hub under it, toes on pins
       k.bone(`foot_${l.name}`, (g) => { const b = l.ball; k.mat('steel'); k.ball(0, 0, 0, b * 0.64); k.mat('frame'); g.lathe(0, 0, [[b * 0.5, -b * 0.25], [b * 1.02, -b * 0.42], [b * 1.12, -b * 0.8], [b * 0.9, -b], [0.01, -b]], { sides: k.n(16) });
-        if (k.mid) { k.mat('joint'); for (const a of l.toes) { const ca = Math.cos(a * D2R), sa = Math.sin(a * D2R); g.box(ca * b * 0.75, -b * 0.42, sa * b * 0.75, b * 0.5, b * 0.46, b * 0.5, { soft: 0.3 }); } } k.fitFoot(l); });
+        if (k.mid) { k.mat('joint'); for (const a of l.toes) { const ca = Math.cos(a * D2R), sa = Math.sin(a * D2R); g.box(ca * b * 0.75, -b * 0.42, sa * b * 0.75, b * 0.5, b * 0.46, b * 0.5, { soft: 0.3 }); } }
+        if (casing) { k.mat('frame'); g.box(0, -b * 0.86, 0, b * 3.0, b * 0.28, b * 3.0, { soft: 0.12 }); k.mat(works); g.box(0, -b * 0.62, 0, b * 2.3, b * 0.22, b * 2.3, { soft: 0.2 }); }      /* a pad: the weight spread over a square of plate */
+        k.fitFoot(l); });
       l.toes.forEach((a, t) => k.bone(`toe${t}_${l.name}`, (g) => { const b = l.ball, L = l.toeLen, heel = Math.abs(a) > 120, LL = heel ? L * 0.62 : L;
         k.mat('joint'); k.xcyl(-b * 0.36, b * 0.36, 0, 0, b * 0.3, { sides: 12 });
         k.mat(style === 'shell' ? 'dark' : 'frame'); k.loft('y', [[b * 0.1, b * 0.3, b * 0.3, 0, 0, 4], [LL * 0.45, b * 0.26, b * 0.36, -b * 0.03, 0, 4], [LL * 0.86, b * 0.17, b * 0.28, -b * 0.1, 0, 4], [LL, b * 0.05, b * 0.06, -b * 0.2, 0, 3]], { sides: 10 });

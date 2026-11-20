@@ -17,6 +17,15 @@
   "need": 5,
   "lives": 3
  },
+ "painter": {
+  "src": "https://cdn.jsdelivr.net/gh/jungrok5/motion-skills@5af7ad2d4894212dd483b8cb4f06077974b77021/prompt-sprite-game/models/cat/cat",
+  "name": "cat",
+  "label": "고양이 모델로 그리기",
+  "size": "3.6 MB",
+  "for": [
+   "cat"
+  ]
+ },
  "palette": {
   "bg": "#0c1024",
   "ink": "#f4ecdc",
@@ -166,7 +175,11 @@
     "...kook...koook.",
     "...kwwk...kwwk..",
     "....kk.....kk..."
-   ]
+   ],
+   "painterPrompt": "front-view ginger cat",
+   "painterSeed": 7,
+   "painterPick": 0,
+   "painterFaces": "front"
   },
   "fish": {
    "role": "item",
@@ -337,5 +350,8 @@
    "bass": 0.16
   }
  },
- "credit": "손그림 스프라이트 · 「등대 고양이」 prompt-sprite-game 예제"
+ "credit": "손그림 스프라이트 · 「등대 고양이」 prompt-sprite-game 예제",
+ "ui": {
+  "ownPlaceholder": "예: calico cat, siamese cat, cat warrior"
+ }
 }

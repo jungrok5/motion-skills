@@ -60,6 +60,19 @@ const used = new Set((data.level || []).join(''));
 for (const ch of used) if (ch !== '.' && ch !== ' ' && !legend[ch] && !tiles[ch]) problems.push(`level character '${ch}' is neither a tile nor in the legend`);
 if (!(data.level || []).length) problems.push('no level');
 if (kind === 'arena' && !data.floor) problems.push('arena needs a floor');
+// a themed painter (train/): its vocabulary must know every word of the prompts it paints
+if (data.painter) {
+  const P = data.painter, pp = [];
+  if (!P.src) pp.push('painter.src missing');
+  for (const k of P.for || []) if (!cast[k]) pp.push(`painter.for "${k}" is not in cast`);
+  if (P.src && /^https?:/.test(P.src)) {
+    try {
+      const meta = await (await fetch(P.src + '.json')).json(); const known = new Set(meta.vocab);
+      for (const k of P.for || []) { const pr = (cast[k]?.painterPrompt || cast[k]?.prompt || '').toLowerCase(); const unk = (pr.match(/[a-z]+(?:-[a-z]+)*/g) || []).filter((w) => !known.has(w)); if (unk.length) pp.push(`${k}: the "${meta.name}" painter does not know ${unk.join(', ')}`); }
+      gate('painter', !pp.length, pp.length ? pp.join('; ') : `"${meta.name}" painter (${meta.vocab.length} words) paints ${(P.for || []).join(', ')}`);
+    } catch (e) { gate('painter', false, `cannot read ${P.src}.json: ${e.message}`); }
+  } else gate('painter', !pp.length, pp.length ? pp.join('; ') : `painter at ${P.src} (vocabulary not checked: not a URL)`);
+}
 gate('data', !problems.length, problems.length ? problems.join('; ') : `${kind}, ${Object.keys(cast).length} cast (${['player', 'item', 'enemy', 'goal'].map((r) => `${byRole(r).length} ${r}`).join(', ')}), level ${data.level.length}×${Math.max(...data.level.map((r) => r.length))}`);
 
 // ---------------------------------------------------------------- in the browser

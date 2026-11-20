@@ -78,3 +78,66 @@ export async function spriteFor({ prompt, seed = 7, pick = 0 }, opts = {}) {
 export function allCached(cast) {
   return cast.every((c) => cachedSprite(c.prompt, c.seed ?? 7, c.pick ?? 0));
 }
+
+/**
+ * Repaint part of a sprite with Tessera and keep the rest: the pixels where keep[i] = 1 stay exactly as in `base`
+ * (palette indices, e.g. sprite.tokens from an earlier paint), the others start hidden and are painted for `prompt`.
+ * Same cat, new hat: keep the cat, free the rows above its head and the background, prompt "orange cat wearing a wizard hat".
+ * Masked diffusion paints around fixed pixels natively, so this needs only the model's own sessions.
+ * Returns { tokens: Int32Array(256), rgba: Uint8ClampedArray(1024) } per variation.
+ */
+export async function repaint(base, keep, prompt, { seed = 7, count = 4, steps = 16, guidance = 3, device, onStep } = {}) {
+  const t = await loadTessera({ device });
+  const { Tensor } = t.ort, N = 256, K = t.palette.length / 4, MASK = K, L = 24, D = 512, B = count * 2;
+  let a = seed >>> 0;
+  const rand = () => { a = (a + 0x6d2b79f5) >>> 0; let z = a; z = Math.imul(z ^ (z >>> 15), z | 1); z ^= z + Math.imul(z ^ (z >>> 7), z | 61); return ((z ^ (z >>> 14)) >>> 0) / 4294967296; };
+  const { states, pooled } = await t.encodeText(prompt);
+  const ts = new Float32Array(B * L * D), tp = new Float32Array(B * D);
+  for (let b = 0; b < B; b++) { ts.set(states, b * L * D); tp.set(pooled, b * D); }
+  const tsT = new Tensor('float32', ts, [B, L, D]), tpT = new Tensor('float32', tp, [B, D]);
+  const drop = new Tensor('bool', Uint8Array.from({ length: B }, (_, b) => (b >= count ? 1 : 0)), [B]);
+  const x = new Int32Array(count * N), hidden = new Uint8Array(count * N);
+  for (let b = 0; b < count; b++) for (let i = 0; i < N; i++) { const h = keep[i] ? 0 : 1; hidden[b * N + i] = h; x[b * N + i] = h ? MASK : base[i]; }
+  const start = hidden.slice(0, N).reduce((s, v) => s + v, 0);
+  const sc = new Float32Array(B * N * K), probs = new Float32Array(N * K), pick = new Int32Array(N), conf = new Float64Array(N), p = new Float64Array(K);
+  const toRGBA = (tok) => { const o = new Uint8ClampedArray(N * 4); for (let i = 0; i < N; i++) o.set(t.palette.subarray(tok[i] * 4, tok[i] * 4 + 4), i * 4); return o; };
+  for (let s = 0; s < steps && start > 0; s++) {
+    const xin = new BigInt64Array(B * N), ratio = new Float32Array(B);
+    for (let b = 0; b < count; b++) {
+      let h = 0;
+      for (let i = 0; i < N; i++) { const v = BigInt(x[b * N + i]); xin[b * N + i] = v; xin[(b + count) * N + i] = v; h += hidden[b * N + i]; }
+      ratio[b] = ratio[b + count] = h / N;
+    }
+    const out = await t.den.run({ x: new Tensor('int64', xin, [B, N]), text_states: tsT, text_pooled: tpT, mask_ratio: new Tensor('float32', ratio, [B]), sc_probs: new Tensor('float32', sc, [B, N, K]), drop_text: drop });
+    const lg = out.logits.data, frac = (s + 1) / steps;
+    for (let b = 0; b < count; b++) {
+      for (let i = 0; i < N; i++) {
+        const oc = (b * N + i) * K, ou = ((b + count) * N + i) * K;
+        let mx = -Infinity;
+        for (let c = 0; c < K; c++) { const v = lg[ou + c] + guidance * (lg[oc + c] - lg[ou + c]); p[c] = v; if (v > mx) mx = v; }
+        let sum = 0; for (let c = 0; c < K; c++) { p[c] = Math.exp(p[c] - mx); sum += p[c]; }
+        let r = rand() * sum, k = 0; while (k < K - 1 && (r -= p[k]) > 0) k++;
+        for (let c = 0; c < K; c++) probs[i * K + c] = p[c] / sum;
+        pick[i] = k;
+        conf[i] = Math.log(Math.max(1e-12, p[k] / sum)) + 2 * (1 - frac) * -Math.log(-Math.log(Math.min(1 - 1e-10, Math.max(1e-10, rand()))));
+      }
+      let h = 0; for (let i = 0; i < N; i++) h += hidden[b * N + i];
+      const left = s === steps - 1 ? 0 : Math.floor(start * Math.cos((Math.PI / 2) * frac));
+      const commit = Math.min(h, Math.max(1, h - left));
+      const order = [];
+      for (let i = 0; i < N; i++) if (hidden[b * N + i]) order.push(i);
+      order.sort((u, v) => conf[v] - conf[u]);
+      for (let q = 0; q < commit; q++) { const i = order[q]; x[b * N + i] = pick[i]; hidden[b * N + i] = 0; }
+      sc.set(probs, b * N * K); sc.set(probs, (b + count) * N * K);            // self-conditioning
+    }
+    if (onStep) onStep(s, Array.from({ length: count }, (_, b) => toRGBA(x.subarray(b * N, b * N + N).map((v) => (v === MASK ? 0 : v)))));
+  }
+  return Array.from({ length: count }, (_, b) => { const tok = x.slice(b * N, b * N + N); return { tokens: tok, rgba: toRGBA(tok) }; });
+}
+
+/** The palette indices of a sprite Tessera painted (for repaint). */
+export async function paintTokens(prompt, { seed = 7, count = 4, device } = {}) {
+  const t = await loadTessera({ device });
+  const sprites = await t.generate(prompt, { count, seed });
+  return sprites.map((s) => ({ tokens: Int32Array.from(s.tokens), rgba: new Uint8ClampedArray(s.rgba) }));
+}

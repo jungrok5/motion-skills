@@ -136,7 +136,7 @@ V.parts = {
   // 자라: a shell first.  A dome of plates the width of a house over a flat hull, a skirt of rust round its rim, scutes bolted on in
   // three rows, forty years of moss on top; four sprawled girder legs come out from under the rim; a blunt head on a short neck
   jara(k) {
-    k.limbs({ style: 'girder' });
+    k.limbs({ style: 'casing' });
     k.bone('body', (g) => {
       // the hull and its belly plates
       k.mat('dark'); k.loft('x', [[-5.5, 0.5, 2.1, -0.35, 0, 4], [-3.6, 0.95, 3.5, -0.4, 0, 4], [0, 1.05, 3.9, -0.4, 0, 4], [3.6, 0.95, 3.4, -0.4, 0, 4], [5.5, 0.5, 2.0, -0.3, 0, 4]], { sides: 18 });
@@ -154,6 +154,7 @@ V.parts = {
         k.tank([-2.6, -1.25, s * 1.6], [-0.2, -1.25, s * 1.6], 0.42, { role: 'rust', up: [0, -1, 0] }); k.grille([1.6, -0.45, s * 3.82], [0, 0, s], 1.8, 0.5, { up: [0, 1, 0] }); k.grille([-1.6, -0.45, s * 3.84], [0, 0, s], 1.4, 0.5, { up: [0, 1, 0] });
         k.rivets([-4.6, 0.02, s * 3.5], [4.4, 0.02, s * 3.4], 30, 0.035, [0, 0.4, s]); }
       k.stack([-3.9, 1.9, -1.2], [-4.2, 3.5, -1.3], 0.2); k.stack([-3.9, 1.9, 1.1], [-4.15, 3.1, 1.2], 0.16);
+      for (const s of [-1, 1]) k.digits('12', [-1.2, 0.42, s * 5.06], [0, 0.22, s], 0.62, { up: [0, 1, 0], role: 'shell' });      /* its number, pale on the rust rim */
       k.ladder([1.0, -1.1, -4.55], [1.0, 1.0, -4.3], 0.5, [0, 0.2, -1], { off: 0.2, role: 'frame' }); k.rail([[-1.6, 2.9, 0.9], [0, 3.0, 1.0], [1.6, 2.9, 0.9]], 0.9, [0, 1, 0], { role: 'frame' }); k.dish([2.6, 2.55, -1.6], [0.4, 1, -0.4], 0.5);
       k.jbox([5.35, -0.3, 1.0], [1, 0, 0], 0.8, 0.5, 0.2, { up: [0, 1, 0], glands: 3 });
     });
@@ -169,7 +170,7 @@ V.parts = {
   // 가재: a shell of overlapping plates the red of old oxide from a spike of a snout to a jointed tail, eight girder legs under
   // it, two claws carried low in front, feelers, and two eyes on stalks that burn red
   gajae(k) {
-    k.limbs({ style: 'girder' });
+    k.limbs({ style: 'casing' });
     k.bone('body', (g) => {
       k.mat('dark'); k.loft('x', [[-4.6, 0.4, 0.8, -0.2, 0, 4], [-2.5, 0.7, 1.35, -0.3, 0, 4], [1.5, 0.8, 1.5, -0.3, 0, 4], [4.2, 0.55, 1.1, -0.2, 0, 4], [5.0, 0.3, 0.6, -0.1, 0, 3]], { sides: 16 });
       // the fore shell and its snout
@@ -222,7 +223,7 @@ V.parts = {
   },
   // 등짐: a bed on six legs, a cab like a visor with two amber lamps, a frame of old girders holding what it carries
   porter(k) {
-    k.limbs({ style: 'girder' });
+    k.limbs({ style: 'casing' });
     k.bone('body', (g) => {
       k.mat('frame'); k.loft('x', [[-4.9, 0.36, 1.25, 0, 0, 6], [-4.4, 0.5, 1.5, 0, 0, 6], [4.0, 0.5, 1.5, 0, 0, 6], [4.8, 0.4, 1.2, 0.05, 0, 5]], { sides: 14 });
       k.mat('dark'); for (const x of [3.6, 0, -3.6]) { g.box(x, -0.35, 0, 0.9, 0.6, 3.5, { soft: 0.2 }); for (const s of [-1, 1]) if (k.fine) k.bolts('x', [x + 0.46, -0.35, s * 1.5], 0.2, 6, 0.025); }
@@ -268,19 +269,21 @@ V.parts = {
   },
   // 마루: a deck of girders as long as a street, a station on it gone to ruin and moss, a prow with two great eyes
   ridge(k) {
-    k.limbs({ style: 'girder' });
+    k.limbs({ style: 'casing' });
     k.bone('body', (g) => {
       // the deck truss: two box girders, cross frames at every hip, a plated deck
       k.mat('frame'); for (const s of [-1, 1]) g.box(0, -2.2, s * 8.2, 52, 3.4, 2.2, { soft: 0.05, grain: 'x' }); for (const x of [18, 6, -6, -18]) { g.box(x, -2.2, 0, 3.4, 3.0, 18.4, { soft: 0.05 }); for (const s of [-1, 1]) g.box(x, -1.6, s * 9.6, 4.6, 4.6, 1.6, { soft: 0.1 }); }
       if (k.mid) { k.mat('rust'); for (let x = -23; x <= 23; x += 5.8) for (const s of [-1, 1]) { g.beam([x, -3.8, s * 7.2], [x + 2.9, -0.6, s * 7.2], 0.4, 0.4, { caps: false }); g.beam([x + 2.9, -0.6, s * 7.2], [x + 5.8, -3.8, s * 7.2], 0.4, 0.4, { caps: false }); } }
       k.mat('rust'); g.box(0, -0.35, 0, 54, 0.5, 19.6, { soft: 0.03 });
+      // the girders' fascia: painted panels bay by bay, yellow and cream by turns, what is left of them
+      for (const s of [-1, 1]) { for (let i = 0; i < 8; i++) { const x = -21 + i * 6; k.mat(i % 2 ? 'casing' : 'paint'); g.box(x, -2.2, s * 9.37, 5.2, 2.7, 0.14, { soft: 0.1 }); } k.digits('07', [9, -2.2, s * 9.45], [0, 0, s], 1.7, { up: [0, 1, 0] }); }      /* its number, on a cream bay of each side */
       // the station: a long house in three steps, panelled in concrete, with rows of windows (some still lit after dark)
-      const house = (x, y, z, sx, sy, sz, seed) => { k.mat('shell', { seed }); g.box(x, y + sy / 2, z, sx, sy, sz, { soft: 0.03, ao: [0.6, 1] }); k.mat('dark'); g.box(x, y + sy + 0.2, z, sx + 0.8, 0.4, sz + 0.8, { soft: 0.1 });
+      const house = (x, y, z, sx, sy, sz, seed, role = 'shell') => { k.mat(role, { seed }); g.box(x, y + sy / 2, z, sx, sy, sz, { soft: 0.03, ao: [0.6, 1] }); k.mat('dark'); g.box(x, y + sy + 0.2, z, sx + 0.8, 0.4, sz + 0.8, { soft: 0.1 });
         const rows = Math.floor(sy / 3.2), cols = Math.floor(sx / 3.4); for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) for (const s of [-1, 1]) { const wx = x - sx / 2 + (c + 0.5) * (sx / cols), wy = y + 1.9 + r * 3.2; g.mat('glass', { flags: LR.FLAG.WINDOW, seed: (seed * 31 + r * 7 + c * 13 + (s > 0 ? 5 : 0)) & 255 }); g.quad([wx - 1.0, wy - 0.8, z + s * (sz / 2 + 0.04)], [wx + 1.0, wy - 0.8, z + s * (sz / 2 + 0.04)], [wx + 1.0, wy + 0.8, z + s * (sz / 2 + 0.04)], [wx - 1.0, wy + 0.8, z + s * (sz / 2 + 0.04)], { hint: [0, 0, s] }); } };
-      house(-4, 0, -1, 30, 9.8, 11, 3); house(-9, 9.8, -1.5, 17, 6.6, 8.5, 5); house(9, 0, 5.2, 8, 6.4, 6.4, 7); house(-15, 16.4, -1.5, 6, 4, 6, 9);
+      house(-4, 0, -1, 30, 9.8, 11, 3); house(-9, 9.8, -1.5, 17, 6.6, 8.5, 5); house(9, 0, 5.2, 8, 6.4, 6.4, 7, 'paint'); house(-15, 16.4, -1.5, 6, 4, 6, 9, 'casing');
       // tanks, a crane jib long since stuck, the foot of the mast
-      k.mat('rust'); for (const [x, z] of [[19, -5], [19, -1.2], [22.6, -3]]) { g.tube([[x, 0, z], [x, 6.4, z]], 1.7, { sides: k.n(14), caps: true }); } g.tube([[15, 2.2, 6.5], [23.5, 2.2, 6.5]], 1.9, { sides: k.n(14), caps: true });
-      k.mat('frame'); g.beam([-22, 0, 6], [-22, 9, 6], 1.0, 1.0); g.beam([-22, 9, 6], [-33, 12.5, 7.5], 0.7, 0.9); g.mat('iron', { tint: '#5a5550' }); g.tube([[-33, 12.4, 7.5], [-33, 5.5, 7.5]], 0.07, { sides: 4 }); k.mat('rust'); g.box(-33, 5.2, 7.5, 0.9, 0.8, 0.6, { soft: 0.3 });
+      k.mat('casing'); for (const [x, z] of [[19, -5], [19, -1.2], [22.6, -3]]) { g.tube([[x, 0, z], [x, 6.4, z]], 1.7, { sides: k.n(14), caps: true }); } k.mat('rust'); g.tube([[15, 2.2, 6.5], [23.5, 2.2, 6.5]], 1.9, { sides: k.n(14), caps: true });
+      k.mat('paint'); g.beam([-22, 0, 6], [-22, 9, 6], 1.0, 1.0); g.beam([-22, 9, 6], [-33, 12.5, 7.5], 0.7, 0.9); g.mat('iron', { tint: '#5a5550' }); g.tube([[-33, 12.4, 7.5], [-33, 5.5, 7.5]], 0.07, { sides: 4 }); k.mat('rust'); g.box(-33, 5.2, 7.5, 0.9, 0.8, 0.6, { soft: 0.3 });
       k.mat('frame'); for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) g.beam([-14 + sx * 1.6, 0, 2 + sz * 1.6], [-14 + sx * 0.9, 16.2, 2 + sz * 0.9], 0.3, 0.3, { caps: false });
       // rails round the deck, what hangs under it
       if (k.mid) { g.mat('iron', { tint: '#6a6660' }); for (const s of [-1, 1]) { g.tube([[-26.8, 1.1, s * 9.6], [26.8, 1.1, s * 9.6]], 0.05, { sides: 4 }); for (let x = -26; x <= 26; x += 4) g.tube([[x, 0, s * 9.6], [x, 1.1, s * 9.6]], 0.05, { sides: 4 }); } }
@@ -307,12 +310,22 @@ V.parts = {
       // on the roofs: air plant and ducts, three dishes
       k.mat('frame'); g.box(3, 10.9, -2.2, 3, 1.4, 2.2, { soft: 0.08 }); k.fins([1.3, 10.9, 1.6], [1, 0, 0], 10, 1.3, 2.0, 0.3, { up: [0, 0, 1] }); k.mat('rust'); g.box(6.3, 10.6, 2, 6, 0.8, 0.9, { soft: 0.1 }); g.box(9, 10.6, -0.2, 0.9, 0.8, 4.4, { soft: 0.1 }); k.grille([3, 10.9, -1.08], [0, 0, 1], 2.4, 1.0, { up: [0, 1, 0], t: 0.12 });
       k.dish([8, 10.2, -4], [0.3, 1, -0.4], 1.3); k.dish([-4, 16.8, -4], [-0.5, 1, 0.2], 1.6); k.dish([-11, 16.8, 1], [0.2, 1, 0.5], 1.1); k.mat('frame'); g.box(-6, 17.3, 0.5, 2.2, 1.0, 1.6, { soft: 0.1 }); k.fins([-9.6, 17.3, -1.5], [1, 0, 0], 8, 1.0, 1.5, 0.26, { up: [0, 0, 1] });
+      // a landing stage cantilevered off the bow quarter on struts, its edge still striped
+      k.mat('frame'); g.box(22, 7.2, -15.6, 12, 0.36, 10.4, { soft: 0.05 }); for (const x of [17.4, 26.6]) { g.beam([x, 0.2, -9.4], [x, 7.0, -11.2], 0.5, 0.5); g.beam([x, 0.8, -9.8], [x, 7.0, -19.8], 0.4, 0.4, { caps: false }); } if (k.mid) for (const z of [-12, -15.6, -19.2]) g.beam([16.2, 6.9, z], [27.8, 6.9, z], 0.3, 0.3, { caps: false });
+      k.rail([[16.2, 7.4, -20.6], [22, 7.4, -20.6], [27.8, 7.4, -20.6]], 1.1, [0, 1, 0], { r: 0.05 }); k.rail([[27.9, 7.4, -20.4], [27.9, 7.4, -15.6], [27.9, 7.4, -10.8]], 1.1, [0, 1, 0], { r: 0.05 }); k.mat('paint'); g.box(22, 7.2, -20.86, 12, 0.5, 0.12, { soft: 0.1 }); g.box(28.06, 7.2, -15.6, 0.12, 0.5, 10.4, { soft: 0.1 });
+      k.ladder([16.6, 0, -10.2], [16.6, 7.3, -11.6], 0.7, [-1, 0, 0], { off: 0.28, r: 0.05, step: 0.35 });
+      // cables slung from hip to hip under each edge
+      for (const s of [-1, 1]) for (const [x0, x1] of [[18, 6], [6, -6], [-6, -18]]) k.hose([[x0 - 1.6, -3.9, s * 10.7], [(x0 + x1) / 2 + 2, -6.0, s * 10.95], [(x0 + x1) / 2 - 2, -6.3, s * 10.95], [x1 + 1.6, -3.9, s * 10.7]], 0.17);
+      // trees have taken on the deck and the roofs: a stem, a few crowns that move in the wind
+      { const tr = LR.rng('ridge-trees'); for (const [x, y, z, h] of [[-20.5, 0, -7.6, 5.2], [24.4, 0, 7.4, 3.8], [5.5, 0, -8.2, 4.4], [-1.5, 9.9, 3.2, 3.2], [12.2, 6.5, 4.6, 2.8], [-17.6, 0, 7.8, 4.6], [-10.5, 16.5, -3.6, 2.4]].slice(0, k.lod === 2 ? 3 : 7)) {
+          g.mat('iron', { tint: '#4b4034' }); g.tube([[x, y, z], [x + (tr() - 0.5) * 0.5, y + h * 0.5, z + (tr() - 0.5) * 0.5], [x + (tr() - 0.5) * 0.9, y + h * 0.82, z + (tr() - 0.5) * 0.9]], [0.2 + h * 0.02, 0.13, 0.05], { sides: k.n(6), caps: true });
+          g.mat('moss', { tint: '#6c8348', flags: LR.FLAG.SWAY, weight: 0.5 }); for (let q = 0; q < (k.lod === 2 ? 2 : 4); q++) g.blob(x + (tr() - 0.5) * h * 0.5, y + h * (0.6 + tr() * 0.4), z + (tr() - 0.5) * h * 0.5, h * (0.2 + tr() * 0.14), { squash: [1.15, 0.8, 1.15], seg: k.n(8), rings: 5, seed: q + 3 }); } }
       // forty years of growth: moss banks along every edge, brush on the roofs
       g.mat('moss', { tint: '#5e6b4e', flags: LR.FLAG.SWAY, weight: 0.25 }); const rr = LR.rng('ridge-moss'); for (let i = 0; i < (k.lod === 0 ? 46 : k.lod === 1 ? 24 : 10); i++) { const top = rr() < 0.4, x = -25 + rr() * 50, z = top ? -6 + rr() * 9 : (rr() < 0.5 ? -1 : 1) * (7 + rr() * 2.4), y = top ? (Math.abs(x + 4) < 15 && z < 4.4 ? (Math.abs(x + 9) < 8.5 && z < 2.7 ? 16.6 : 10) : 0.1) : 0.1; g.blob(x, y + 0.3, z, 0.9 + rr() * 1.5, { squash: [1.4, 0.45 + rr() * 0.5, 1.3], seg: k.n(8), rings: 4, seed: i }); }
     });
     k.bone('neck_01', (g) => { k.mat('frame'); g.tube([[0, 0, 0], [0, 3.2, 0]], [2.2, 1.8], { sides: k.n(12), caps: true }); });
     // the prow: a hooded block that turns, two eyes under the hood
-    k.bone('head', (g) => { k.mat('frame'); k.loft('x', [[-3, 2.2, 5.2, 0, 0, 5], [1.5, 2.6, 5.6, 0, 0, 5], [5.5, 1.9, 4.6, -0.3, 0, 4]], { sides: 14 }); k.mat('rust'); g.box(3.6, 2.5, 0, 6.4, 0.5, 11.6, { soft: 0.1 }); k.mat('dark'); for (const s of [-1, 1]) { g.push(new THREE.Matrix4().makeTranslation(5.2, -0.4, s * 2.5).multiply(new THREE.Matrix4().makeRotationZ(-Math.PI / 2 - 0.2))); g.lathe(0, 0, [[1.25, -0.9], [1.4, 0], [1.3, 0.7]], { sides: k.n(14) }); g.pop(); }
+    k.bone('head', (g) => { k.mat('frame'); k.loft('x', [[-3, 2.2, 5.2, 0, 0, 5], [1.5, 2.6, 5.6, 0, 0, 5], [5.5, 1.9, 4.6, -0.3, 0, 4]], { sides: 14 }); k.mat('paint'); g.box(3.6, 2.5, 0, 6.4, 0.5, 11.6, { soft: 0.1 }); k.mat('dark'); for (const s of [-1, 1]) { g.push(new THREE.Matrix4().makeTranslation(5.2, -0.4, s * 2.5).multiply(new THREE.Matrix4().makeRotationZ(-Math.PI / 2 - 0.2))); g.lathe(0, 0, [[1.25, -0.9], [1.4, 0], [1.3, 0.7]], { sides: k.n(14) }); g.pop(); }
       k.grille([5.42, 0.9, 0], [1, 0, 0], 3.0, 0.9, { up: [0, 1, 0], t: 0.2 }); k.hatch([3, 2.75, 0], [0, 1, 0], 2, 1.6, { up: [1, 0, 0], t: 0.1 });
       for (const s of [-1, 1]) { k.along([5.72, -0.52, s * 2.5], [0.95, -0.3, s * 0.03], (g2) => { k.mat('joint'); g2.lathe(0, 0, [[1.16, 0], [1.34, 0.12], [1.16, 0.28]], { sides: k.n(16) }); if (k.mid) { k.mat('steel'); for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; g2.tube([[Math.cos(a) * 1.25, 0.24, Math.sin(a) * 1.25], [Math.cos(a) * 1.25, 0.36, Math.sin(a) * 1.25]], 0.05, { sides: 5, caps: true }); } } });
         k.rail([[0.6, 2.75, s * 5.6], [3.6, 2.75, s * 5.6], [6.6, 2.75, s * 5.6]], 1.1, [0, 1, 0], { r: 0.045 }); k.rivets([-2.6, 0, s * 5.42], [4.6, 0, s * 5.3], 14, 0.07, [0, 0, s]); k.ladder([-2.2, -2.0, s * 5.3], [-2.2, 2.6, s * 5.5], 0.7, [0, 0, s], { off: 0.26, r: 0.05, step: 0.35 }); } });
