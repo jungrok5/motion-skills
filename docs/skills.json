@@ -3337,6 +3337,50 @@
      "url": "https://jungrok5.github.io/motion-skills/prompt-sprite-game/demo/mushroom-basket/"
     }
    ]
+  },
+  {
+   "id": "pixel-world-compiler",
+   "name": "pixel-world-compiler",
+   "tagline": "주제를 주면 실제 위도 · 계절 · 시각의 태양, 표면마다의 반사율, 실제 크기의 식물 · 건물 · 사람 · 동물을 표로 적고, 결정적인 컴파일러가 모든 픽셀을 유도해 걸어 다닐 수 있는 픽셀아트 세계를 만듭니다. 그림자 방향과 길이, 64색 이하로 잠근 팔레트, 26 px = 1.70 m 크기, 디딘 발이 미끄러지지 않는 걸음(프루드 속도 · 힐데브란드 보행표)이 모두 표에서 나오고, 검사 스크립트가 실제 프레임의 모든 픽셀과 발 · 관절 · 예비 동작을 숫자로 확인합니다.",
+   "posterAlt": "pixel-world-compiler로 만든 두 세계: 눈 덮인 강가의 라부 천막과 파란 각티의 목동, 얼어붙은 강둑에서 풀을 뜯는 순록과 긴 푸른 그림자, 초가지붕 고상가옥과 남색 옷의 노인, 모가 자라는 계단식 논의 삿갓 쓴 농부",
+   "poster": "pixel-world-compiler/poster.jpg",
+   "tags": [
+    "표를 쓰면 픽셀은 유도",
+    "실제 태양 · 잠긴 64색",
+    "26 px = 1.70 m",
+    "디딘 발 고정 · 보행 법칙",
+    "걷는 라이브 페이지 · MP4"
+   ],
+   "stats": [
+    "예제 2편 · 69° N · 25° N",
+    "형태 9종 · 검사 법칙 9가지"
+   ],
+   "page": "pixel-world-compiler/",
+   "source": "pixel-world-compiler/",
+   "absorbedFrom": {
+    "repo": "https://github.com/trinity-works/frostwind",
+    "path": "src/ · AGENTS.md · PIXEL-ART.md · PROJECTION.md (방법, 코드는 새로 씀)"
+   },
+   "sources": [
+    {
+     "title": "trinity-works/frostwind (Trinity Labs, MIT): 자연에 근거한 픽셀아트 월드 컴파일러, 스킬의 출처",
+     "url": "https://github.com/trinity-works/frostwind"
+    }
+   ],
+   "workedExample": [
+    {
+     "title": "「툰드라 야영지」 · 69° N · 3월 · 순록 다섯 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/pixel-world-compiler/demo/tundra-camp/"
+    },
+    {
+     "title": "「계단식 논 마을」 · 25° N · 6월 · 물소 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/pixel-world-compiler/demo/terrace-village/"
+    },
+    {
+     "title": "Frostwind 원본 · 브라우저에서 플레이",
+     "url": "https://project-frostwind.fly.dev/"
+    }
+   ]
   }
  ]
 }

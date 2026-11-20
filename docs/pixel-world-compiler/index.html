@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>pixel-world-compiler · motion-skills</title>
+<meta name="description" content="주제를 주면 실제 위도의 태양, 재질의 반사율, 실제 크기의 식물 · 건물 · 사람 · 동물을 표로 적고, 결정적인 컴파일러가 모든 픽셀을 유도해 걸어 다닐 수 있는 픽셀아트 세계를 만듭니다.">
+<meta property="og:title" content="pixel-world-compiler · motion-skills">
+<meta property="og:description" content="주제를 주면 실제 위도의 태양, 재질의 반사율, 실제 크기의 식물 · 건물 · 사람 · 동물을 표로 적고, 결정적인 컴파일러가 모든 픽셀을 유도해 걸어 다닐 수 있는 픽셀아트 세계를 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/pixel-world-compiler/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/pixel-world-compiler">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / pixel-world-compiler</nav>
+  <h1>pixel-world-compiler</h1>
+  <p>주제를 주면 실제 위도 · 계절 · 시각의 태양, 표면마다의 반사율, 실제 크기의 식물 · 건물 · 사람 · 동물을 표로 적고, 결정적인 컴파일러가 모든 픽셀을 유도해 걸어 다닐 수 있는 픽셀아트 세계를 만듭니다. 그림자 방향과 길이, 64색 이하로 잠근 팔레트, 26 px = 1.70 m 크기, 디딘 발이 미끄러지지 않는 걸음이 모두 표에서 나오고, 검사 스크립트가 숫자로 확인합니다. 원본: <a href="https://github.com/trinity-works/frostwind">Frostwind (trinity-works/frostwind)</a>를 보고 만들었습니다.</p>
+  <ul class="tags"><li>표를 쓰면 픽셀은 유도</li><li>실제 태양 · 잠긴 64색</li><li>26 px = 1.70 m</li><li>디딘 발 고정 · 보행 법칙</li><li>걸어 다니는 라이브 페이지 · MP4</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 한 줄 (장소 · 사람들 · 생명) — 예: 얼어붙은 강가의 순록 유목민 야영지</dd>
+      <dt>브리프</dt><dd>위도 · 계절 · 시각, 재질 반사율, 식물 높이, 건물 치수, 몸의 어깨높이 · 무게 · 걸음 — 줄마다 근거(측정 · 유도 · 취향)</dd>
+      <dt>컴파일</dt><dd>태양 → 램프 → 잠긴 팔레트, 해석적 지형과 단(段), 조건에 맞는 자리에 식생 · 마을, 보행 법칙으로 움직이는 사람 · 동물</dd>
+      <dt>검사</dt><dd>실제 프레임의 모든 픽셀이 팔레트 안인지, 결정성, 디딘 발 이동 · 관절 방향 · 예비 동작 · 대기 동작을 숫자로</dd>
+      <dt>출력</dt><dd>방향키로 걷는 라이브 페이지, 캐스트 시트, 스틸, 1080p 투어 MP4</dd>
+    </dl>
+    <pre><code>node pixel-world-compiler/scripts/new-world.mjs my-world --from tundra-camp
+cd my-world
+node ../pixel-world-compiler/scripts/check.mjs index.html
+node ../pixel-world-compiler/scripts/render.mjs index.html --cast
+node ../pixel-world-compiler/scripts/render.mjs index.html --stills 0,12
+node ../pixel-world-compiler/scripts/render.mjs index.html</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, MP4에는 ffmpeg. npm 설치와 네트워크는 필요 없습니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/pixel-world-compiler/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10">
+    <iframe data-src="demo/tundra-camp/" title="pixel-world-compiler 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/tundra-camp/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/tundra-camp</code> · 69° N · 3월 · 방향키로 걷기</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/tundra-camp/" data-cap="예제 &lt;code&gt;examples/tundra-camp&lt;/code&gt; · 69° N · 3월 · 방향키로 걷기" aria-pressed="true">툰드라 야영지</button>
+        <button class="btn" type="button" data-src="demo/terrace-village/" data-cap="예제 &lt;code&gt;examples/terrace-village&lt;/code&gt; · 25° N · 6월 · 방향키로 걷기">계단식 논</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">같은 컴파일러에 표만 바꿔 넣은 두 세계와 템플릿 세계입니다. 위도와 재질이 바뀌자 팔레트, 그림자 길이, 물이 함께 바뀝니다. 카드를 누르면 그 세계의 라이브 페이지(방향키로 걷기)나 캐스트 시트가 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"world":"세계","cast":"캐스트 시트","law":"법칙 보기"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>툰드라 야영지 <small>69° N · 3월 중순 · 오전 10:30</small></h3>
+      <p>태양 고도 17.4°, 그림자는 높이의 3.2배로 북북서를 향합니다. 같은 레일리 계산에서 볕은 따뜻하고 그늘은 푸릅니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="world" href="demo/tundra-camp/" target="_blank" rel="noopener">
+          <img src="samples/tundra-camp.jpg" alt="눈 덮인 강가의 라부 천막 두 채와 장작더미, 가죽 건조대, 파란 각티를 입은 목동, 북서쪽으로 길게 뻗은 푸른 그림자" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">세계 · 24초 투어</span><b>야영지</b><span class="en">tundra-camp</span>
+          <span class="how">라부 두 채(지름 5.2 · 4.2 m), 강에서 8 m 떨어진 마른 둔덕에 자리 잡음</span></div></a>
+        <a class="tile" data-tags="world" href="demo/tundra-camp/" target="_blank" rel="noopener">
+          <img src="samples/tundra-herd.jpg" alt="얼어붙은 강둑에서 풀을 뜯는 순록 세 마리와 걸어오는 목동, 자작나무의 긴 그림자가 얼음 위로 드리움" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">세계 · 16초</span><b>강둑의 순록 떼</b><span class="en">reindeer on the bank</span>
+          <span class="how">어깨높이 1.0–1.12 m, 힐데브란드 측면 순서 걸음(lag 0.25, duty 0.7)</span></div></a>
+        <a class="tile" data-tags="cast" href="demo/tundra-camp/?sheet=cast" target="_blank" rel="noopener">
+          <img src="samples/tundra-cast.jpg" alt="목동 캐스트 시트: 여덟 방향으로 선 모습과 오른쪽으로 걷는 여덟 프레임, 모든 그림자가 한 방향" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 시트</span><b>목동 · 순록</b><span class="en">?sheet=cast</span>
+          <span class="how">여덟 방향, 양쪽 걷기, 대기, 제자리 돌기(발 딛기), 큰 동작 양쪽</span></div></a>
+        <a class="tile" data-tags="law" href="demo/tundra-camp/?pass=flat" target="_blank" rel="noopener">
+          <img src="samples/tundra-flat.jpg" alt="빛을 끈 같은 장면: 표면마다 램프의 가운데 칸 한 가지 색으로 칠해진 지면과 천막" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">법칙 보기 · ?pass=flat</span><b>빛을 끈 재질</b><span class="en">materials without light</span>
+          <span class="how">스프라이트는 색이 아니라 재질 · 법선 · 차폐를 저장</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>계단식 논 마을 <small>25° N · 6월 하지 · 오전 9:30</small></h3>
+      <p>태양 고도 56°, 그림자는 짧고 서쪽으로 떨어지며 산란광이 0.14뿐이라 그늘이 깊습니다. 카메라를 향한 둑의 단면은 기하로 어둡습니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="world" href="demo/terrace-village/" target="_blank" rel="noopener">
+          <img src="samples/terrace-hamlet.jpg" alt="초가지붕 고상가옥 두 채와 볏단 건조대, 남색 옷의 노인, 아래로 물 댄 논의 첫 단" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">세계 · 24초 투어</span><b>언덕 위 마을</b><span class="en">terrace-village</span>
+          <span class="how">바닥 1.4 m 고상, 42° 초가(장마 빗물), 가장 높은 논보다 위에 자리 잡음</span></div></a>
+        <a class="tile" data-tags="world" href="demo/terrace-village/" target="_blank" rel="noopener">
+          <img src="samples/terrace-paddy.jpg" alt="모가 자라는 논에서 원뿔 삿갓을 쓴 농부와 물에 비친 모습, 풀 덮인 둑과 그늘진 단면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">세계 · 16초</span><b>논의 농부</b><span class="en">farmer in the paddy</span>
+          <span class="how">한 단 위에서만 걷기 — 0.7 m 단은 보폭이 아니라 오르기(검사가 잡음)</span></div></a>
+        <a class="tile" data-tags="cast" href="demo/terrace-village/?sheet=cast" target="_blank" rel="noopener">
+          <img src="samples/terrace-cast.jpg" alt="물소 캐스트 시트: 여덟 방향과 양쪽 걷기, 뒤로 휜 뿔" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 시트</span><b>농부 · 노인 · 물소</b><span class="en">?sheet=cast</span>
+          <span class="how">물소 500 kg: Fr 0.07, 출발 0.6 초, 180° 돌기 16걸음</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>템플릿 세계 <small>45° N · 오전</small></h3>
+      <p><code>new-world.mjs</code>가 주는 최소 세계입니다. 연못, 집, 참나무, 사람과 염소 하나씩이 들어 있고, 검사를 통과하며, 줄마다 근거를 바꿔 쓰는 틀입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="world" href="https://github.com/jungrok5/motion-skills/blob/main/pixel-world-compiler/templates/world.js" target="_blank" rel="noopener">
+          <img src="samples/template-world.jpg" alt="풀밭 위 흰 벽 기와집과 흙길, 햇빛 쪽이 밝은 참나무 수관, 붉은 옷의 사람과 풀 뜯는 염소" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">세계 · 템플릿</span><b>빈 세계</b><span class="en">templates/world.js</span>
+          <span class="how">재질 12종, 장소 1, 식생 1, 몸 2 — 모든 줄에 근거</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬이 방법을 가져온 원본입니다. 북방림 · 초원 · 늪 · 사막 · 동굴 다섯 세계를 WebGL로 컴파일합니다. 이 스킬은 그 방법을 Canvas 2D로 다시 쓰고, 주제 → 브리프 → 표 → 검사의 흐름으로 만들었습니다.</p>
+  <div class="works">
+    <a class="work" href="https://project-frostwind.fly.dev/" target="_blank" rel="noopener"><b>Frostwind · 브라우저에서 플레이</b><span>Frostwood · Sun Meadow · Green Swamp · Amber Waste · Amethyst Hollow</span><span class="url">project-frostwind.fly.dev</span></a>
+    <a class="work" href="https://github.com/trinity-works/frostwind"><b>원본 레포 · trinity-works/frostwind</b><span>스킬의 출처 (MIT)</span><span class="url">github.com/trinity-works/frostwind</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pixel-world-compiler/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/pixel-world-compiler">폴더</a> <span>lib · scripts · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pixel-world-compiler/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pixel-world-compiler/references/BRIEF.md">references/BRIEF.md</a> <span>브리프 틀과 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pixel-world-compiler/references/LAWS.md">references/LAWS.md</a> <span>권위 · 다섯 종류의 규칙 · 줄 조사법</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pixel-world-compiler/references/API.md">references/API.md</a> <span>세계 표의 모든 필드 · 새 형태 등록</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pixel-world-compiler/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 이미지는 이 스킬의 컴파일러가 그린 프레임입니다. 방법의 출처: Frostwind (Trinity Labs, MIT)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
