@@ -120,3 +120,12 @@ like the others (folder layout, provenance, lessons, samples page, registry entr
 [CONTRIBUTING.md](CONTRIBUTING.md) (Korean). The site lives in [`docs/`](docs/): the hub is drawn from
 [`docs/skills.json`](docs/skills.json) (`node tools/build-hub.mjs` prerenders it), each skill page starts from
 [`docs/_template/`](docs/_template/), and GitHub Pages publishes `docs/` from `main`. Every change lands through a pull request that the owner reviews and merges — never a direct push or merge to `main`.
+
+## Licence
+
+- **Code and text written here** — [PolyForm Noncommercial 1.0.0](LICENSE.md): use, change and share it for personal and other
+  noncommercial purposes; commercial use (paid courses, client work, products) needs a licence from the owner.
+- **Films, stills and other pictures** — © 2026 jungrok5, all rights reserved ([MEDIA-LICENSE.md](MEDIA-LICENSE.md)): watch and
+  share the original posts; no re-uploads, edits, or use in lectures, courses or ads without permission.
+- **Parts by others** — code absorbed from other repositories, bundled libraries, fonts, scans and models — keep their own
+  licences ([THIRD-PARTY.md](THIRD-PARTY.md)).
