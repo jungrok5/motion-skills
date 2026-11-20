@@ -1,5 +1,9 @@
 # motion-skills
 
+[![motion-skills: posters of the skills' sample work](docs/og.jpg)](https://jungrok5.github.io/motion-skills/)
+
+[![Samples](https://img.shields.io/badge/Samples-jungrok5.github.io%2Fmotion--skills-2b2f36)](https://jungrok5.github.io/motion-skills/)
+
 A collection of reusable skills for making motion graphics with AI agents (Claude Code skills: each folder has a
 `SKILL.md` an agent can follow, plus the scripts and references it needs).
 
