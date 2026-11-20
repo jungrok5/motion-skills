@@ -168,6 +168,17 @@ was learned putting scans into it (scanned-realm), then the engine's own list (l
   a body below the frame, a walker facing away from what it had come to see. One was dropped; none cost more than a minute
   to find.
 
+- **"The film looks hazy — is that the CPU?"** → Not the pixels the CPU drew: a frame laid beside the same frame at a
+  higher tier was as sharp. What made it soft was around them. The film was 960 × 540 and a player enlarged it three
+  times with a blurring filter → `trailer.mjs --join` enlarges it itself to 1080p with a sharp filter and a touch of
+  unsharp. Without `?q=` a page with no GPU picks the `medium` tier (512 px materials) and nothing said so → the script
+  asks for `q=high`. Eleven of twenty-eight shots are haze, mist, rain or snow by design, and the woods hold damp air.
+  And a 1080p encode of a forest at a quality that keeps the needles is 460 MB: the copy sent was capped at 6 Mb/s. On a
+  machine with a GPU the page itself (`?film=1`) plays at the screen's own size on the `high` tier — that is the sharp one.
+- **The work's name and where it lives.** → The owner asked for the repository's name small at the foot of every frame
+  and on a card at both ends. `title.repo` in the realm's film; the page shows it (a card before the first shot, a mark
+  at the bottom right, the card again at the end) and `--join` draws the same on the MP4. `--mute` for a silent copy.
+
 ## Scans in the engine (scanned-realm)
 ## Scans
 

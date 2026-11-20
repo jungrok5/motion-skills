@@ -120,7 +120,9 @@ on a real GPU has not been measured from this machine.
 ## The film
 `src/82_trailer.js` (played by `lib/89_cine.js`): a day in the valley in 28 shots, about two and three quarter minutes. It plays in
 the page itself — `index.html?film=1` (Esc hands the walker the world; a title card at the end) — and `trailer.mjs` steps the same
-shots to draw an MP4 (`--dry`, `--keys`, a render, `--sound`, `--join`; `--q "tierx=shadow:1024"` halves a frame without a GPU).
+shots to draw an MP4 (`--dry`, `--keys`, a render, `--sound`, `--join [--mute] [--w 1920]`; it asks the page for `q=high` with
+shadow maps at 1024, which halves a frame without a GPU). A card with the work's name and its repository opens and closes it, and the
+repository's name stays small at the foot of the picture.
 Dawn: time passes over the forest while the relic walks the far rim · a morning of haze: the walker in the page's three views,
 behind a kite over the viaduct · noon: rising over the lookout, the fallen crane, beside the turtle and the turtle wading the
 brook, the woodlice, the carriers kneeling and going on · rain: a crane comes through the viaduct's gap and lifts its head, the
