@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Packet Post · a pop-up quest</title>
+<meta name="description" content="Turn the pages of a paper island and help Quill the pigeon carry a request from your click to your window: DNS, the TCP handshake, HTTP, packets and rendering.">
+<link rel="stylesheet" href="../../kit/quest.css">
+<script type="importmap">{ "imports": { "three": "../../kit/vendor/three/build/three.module.min.js" } }</script>
+</head>
+<body>
+<script type="module">
+import { createQuest } from '../../kit/quest.js';
+import book from './book.js';
+createQuest(book);
+</script>
+</body>
+</html>
