@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lighthouse Lullaby — bounce-symphony</title>
+<script type="importmap">{ "imports": { "three": "../../lib/three.module.min.js", "bs/": "../../lib/" } }</script>
+<style id="bs-css"></style>
+</head>
+<body>
+<canvas id="frame"></canvas>
+<script type="module">
+import { Piece, PAGE_CSS } from 'bs/stage.js';
+document.getElementById('bs-css').textContent = PAGE_CSS;
+
+// 「Lighthouse Lullaby」 — the worked example, designed from BRIEF.md (a topic the template does not have):
+// a 3/4 lullaby in F major at 84 bpm. The vibraphone tide circles down a cone of tone bars (the lighthouse), the
+// kalimba sings the tune along the shore, singing bowls hold the harmony and a gong tolls the phrase ends.
+// Night-blue room, one warm lamp overhead, amber and sea-teal light on the struck bars.
+const piece = new Piece({
+  title: 'Lighthouse Lullaby',
+  bpm: 84, meter: '3/4', intro: 3.6, outro: 4.2,
+  look: {
+    bg: '#0a0f17', floor: '#18212d', floorRough: 0.62, exposure: 1.05, env: 0.28,
+    key: { color: '#ffd59a', lux: 1.3, height: 1.4, angle: 34, penumbra: 1, offset: [0.15, -0.1] },
+    fill: { sky: '#33558a', ground: '#06080c', intensity: 0.45 },
+    bloom: { strength: 0.7, radius: 0.55, threshold: 0.78 },
+    glowDecay: 0.7, glowPeak: 2.4,
+    palette: ['#ffb347', '#3fd1c7', '#ffcf6a', '#46b4e6', '#ffa25a', '#ffd88a', '#36c2b4', '#ffc05a', '#5ab8f0', '#ffe09a', '#3fc7d6', '#ff9c4a'],
+  },
+  instruments: {
+    vib:  { kind: 'vibraphone', color: '#aeb6c2' },
+    kal:  { kind: 'kalimba', color: '#c8a45a', L0: 0.11, w: 0.02 },
+    bowl: { kind: 'bowl', color: '#a8742e' },
+    toll: { kind: 'gong', color: '#b8923c' },
+  },
+  lanes: [
+    // the lighthouse: a cone of tone bars the tide circles down, outward a little each turn so no pole meets a bar
+    { id: 'tide', inst: 'vib', color: '#62d2ff', top: 2.05, e: 0.9, speed: 0.3,
+      layout: { kind: 'spiral', center: [0, 0], r0: 0.42, grow: 0.17, angle0: 90, dir: -1 },
+      notes: `f3:8 c4 f4 a4 c5 a4 | f3 a3 d4 f4 a4 f4 | f3 bb3 d4 f4 bb4 f4 | g3 c4 e4 g4 c5 g4 |
+              f3 c4 f4 a4 c5 a4 | a3 c4 e4 a4 c5 a4 | f3 bb3 d4 g3 c4 e4 | f3 c4 f4 a4 c5 a4 |
+              g3 bb3 d4 g4 bb4 g4 | g3 c4 e4 g4 bb4 g4 | f3 c4 f4 a4 c5 f5 | a5:2. |` },
+    // the tune, along the shore: an outer ring of kalimba tines round the whole lighthouse
+    { id: 'lamp', inst: 'kal', color: '#ffcf6a', top: 1.35, e: 0.88, speed: 0.36,
+      layout: { kind: 'spiral', center: [0, 0], r0: 2.25, grow: 0.25, angle0: 120, dir: 1 },
+      notes: `r:2. | r:2. | d5:4 c5:8 bb4 a4:4 | g4:2 c5:4 | a4:4. bb4:8 c5:4 | e5:2 c5:4 |
+              d5:4 c5 bb4 | a4:2. | bb4:4 d5:8 c5 bb4:4 | g4:4 a4:8 bb4 c5:4 | f5:2. | r:2. |` },
+    // the harmony: one singing bowl per two bars, each its own ball
+    { id: 'deep', inst: 'bowl', color: '#d0703a', top: 1.0, drop: 0.25,
+      layout: { kind: 'arc', from: [1.25, -1.35], heading: 60, bend: 32 },
+      notes: `f3:2. | r:2. | bb3:2. | r:2. | f3:2. | r:2. | bb3:2. | r:2. | g3:2. | r:2. | f3:2. | r:2. |` },
+    // the bell: the phrase ends
+    { id: 'toll', inst: 'toll', color: '#e9e6df', top: 1.25, drop: 0.3,
+      layout: { kind: 'arc', from: [-0.85, -1.1], heading: 200, bend: -30 },
+      notes: `r:2. | r:2. | r:2. | c3:2. | r:2. | r:2. | r:2. | f2:2. | r:2. | r:2. | r:2. | f2:2. |` },
+  ],
+  shots: [
+    { at: 0, kind: 'orbit', center: [0, 0.9, 0], dist: 5.4, angle: 70, speed: 4, elev: 20 },
+    { at: 4.4, kind: 'follow', lane: 'tide', dist: 0.7, angle: 200, speed: -4, elev: 20, blend: 1.8 },
+    { at: 9.6, kind: 'follow', lane: 'lamp', dist: 1.35, angle: 20, elev: 18, lag: 0.6, blend: 1.6 },
+    { at: 16.0, kind: 'orbit', center: [0, 1.1, 0], dist: 2.6, angle: 160, speed: -7, elev: 12, blend: 2 },
+    { at: 20.4, kind: 'follow', lane: 'lamp', dist: 1.1, angle: 240, speed: 5, elev: 18, blend: 1.6 },
+    { at: 25.6, kind: 'follow', lane: 'tide', dist: 0.55, angle: 40, elev: 6 },
+    { at: 28.8, kind: 'orbit', center: [0, 0.8, 0], dist: 6.2, angle: 110, speed: 3, elev: 28, blend: 2.6 },
+  ],
+  mix: { gains: { kalimba: 1.3, bowl: 0.75, gong: 0.6 }, reverb: { mix: 0.3, size: 0.88, damp: 0.45 } },
+});
+await piece.mount();
+</script>
+</body>
+</html>

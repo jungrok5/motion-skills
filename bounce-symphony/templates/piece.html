@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marble Canon — bounce-symphony</title>
+<script type="importmap">{ "imports": { "three": "../lib/three.module.min.js", "bs/": "../lib/" } }</script>
+<style id="bs-css"></style>
+</head>
+<body>
+<canvas id="frame"></canvas>
+<script type="module">
+import { Piece, PAGE_CSS } from 'bs/stage.js';
+document.getElementById('bs-css').textContent = PAGE_CSS;
+
+// 「Marble Canon」 — the template: an original 12-bar piece in D major, 96 bpm, for marimba, bass marimba,
+// glockenspiel and singing bowls. Every note below is one pad, struck once, by a ball that fell and bounced there.
+// It is an example of the style, not a menu: write your own BRIEF.md, then your own music, lanes, look and shots.
+const piece = new Piece({
+  title: 'Marble Canon',
+  bpm: 96, meter: '4/4', intro: 3.2, outro: 3.4,
+  look: 'studio',
+  instruments: {
+    mar:   { kind: 'marimba', color: '#8a4a2a' },
+    bass:  { kind: 'marimba', color: '#5e2f1c', L0: 0.24, w: 0.05 },
+    glock: { kind: 'glockenspiel' },
+    bowl:  { kind: 'bowl' },
+  },
+  lanes: [
+    { id: 'arp', inst: 'mar', color: '#d8342c', top: 1.32, speed: 0.34,
+      layout: { kind: 'spiral', center: [0, 0], r0: 0.34, grow: 0.36, angle0: 200, dir: 1 },
+      notes: `d4:8 a4 d5 f#5 a5 f#5 d5 a4 | b3 f#4 b4 d5 f#5 d5 b4 f#4 | g3 d4 g4 b4 d5 b4 g4 d4 | a3 e4 a4 c#5 e5 c#5 a4 e4 |
+              d4 a4 d5 f#5 a5 f#5 d5 a4 | b3 f#4 b4 d5 f#5 d5 b4 f#4 | g3 d4 g4 b4 d5 b4 g4 d4 | a3 e4 a4 c#5 e5 c#5 a4 e4 |
+              e4 b4 e5 g5 b5 g5 e5 b4 | g3 d4 g4 b4 d5 b4 g4 d4 | a3 e4 a4 c#5 e5 c#5 a4 e4 | d4 a4 d5 f#5 a5:2 |` },
+    { id: 'mel', inst: 'glock', color: '#f0c419', top: 1.5, speed: 0.4,
+      layout: { kind: 'spiral', center: [0, 0], r0: 2.0, grow: 0.2, angle0: 150, dir: 1 },
+      notes: `r:1 | r | r | r |
+              f#6:4. e6:8 d6:4 a5 | b5:4 d6:8 e6 f#6:2 | g6:4. f#6:8 e6:4 d6 | c#6:4 e6 a6:2 |
+              g6:4 f#6:8 e6 b5:2 | d6:4 e6:8 f#6 g6:2 | a6:4 g6:8 f#6 e6:4 c#6 | d6:1 |` },
+    { id: 'bass', inst: 'bass', color: '#2f6fd6', top: 1.7, e: 0.92, speed: 0.3,
+      layout: { kind: 'spiral', center: [0, 0], r0: 2.6, grow: 0.2, angle0: 330, dir: 1 },
+      notes: `d3:4 a2 d3 a2 | b2 f#2 b2 f#2 | g2 d3 g2 d3 | a2 e3 a2 e3 | d3 a2 d3 a2 | b2 f#2 b2 f#2 | g2 d3 g2 d3 | a2 e3 a2 e3 |
+              e3 b2 e3 b2 | g2 d3 g2 d3 | a2 e3 a2 c#3 | d3:1 |` },
+    { id: 'bowl', inst: 'bowl', color: '#e8b33a', top: 0.95,
+      layout: { kind: 'spiral', center: [0, 0], r0: 1.55, grow: 0.1, angle0: 60, dir: 1 },
+      notes: `d4:1 | r | r | r | a3:1 | r | r | r | e4:1 | r | r | d4:1 |` },
+  ],
+  shots: [
+    { at: 0, kind: 'orbit', angle: 215, speed: 5, elev: 28 },
+    { at: 4.6, kind: 'follow', lane: 'arp', dist: 0.75, angle: 60, elev: 16, blend: 1.6 },
+    { at: 10.4, kind: 'orbit', center: [0, 0.7, 0], dist: 6.2, angle: 120, speed: -6, elev: 24 },
+    { at: 13.0, kind: 'follow', lane: 'mel', dist: 0.85, angle: 110, elev: 12, blend: 1.4 },
+    { at: 18.0, kind: 'follow', lane: 'arp', dist: 0.6, angle: 250, elev: 8 },
+    { at: 23.0, kind: 'orbit', dist: 5.2, angle: 300, speed: 4, elev: 34, blend: 1.8 },
+    { at: 27.6, kind: 'follow', lane: 'bass', dist: 0.9, angle: 250, elev: 14 },
+    { at: 30.6, kind: 'orbit', dist: 5.6, angle: 20, speed: 3, elev: 30, blend: 2.2 },
+  ],
+  mix: { gains: { glockenspiel: 0.9, bowl: 0.8 }, lanes: { bass: 1.25 } },
+});
+await piece.mount();
+</script>
+</body>
+</html>
