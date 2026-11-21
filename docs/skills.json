@@ -3465,6 +3465,42 @@
      "url": "https://jungrok5.github.io/motion-skills/manga-background-3d/demo/starter/"
     }
    ]
+  },
+  {
+   "id": "bounce-symphony",
+   "name": "bounce-symphony",
+   "tagline": "주제나 곡을 주면 어두운 스튜디오 바닥의 루브 골드버그 음악 기계에서 공이 패드를 튕기며 음 하나하나를 박자에 맞춰 치고, 시작 망치 · 밀대 · 기울어지는 컵과 나선 탑 · 갈라지는 도미노 줄 · 레버와 줄 · 쥐덫 투석기 · 레일이 서로를 깨우며 맞물려 도는 영상을 만듭니다. 패드의 위치와 기울기, 도미노의 개수 · 간격, 나선의 바퀴 수를 그 순간에 끝나도록 거꾸로 계산하고, 공을 실제로 날려 보는 순방향 물리 시뮬레이션으로 증명한 뒤, 같은 타격에서 소리를 합성해 라이브 페이지 · WAV · 1080p MP4를 냅니다.",
+   "posterAlt": "bounce-symphony로 만든 장면 네 개: 기둥 숲 속 은색 나선 탑을 빨간 공이 굴러 내려오고 무지개 도미노 줄이 구불구불 이어지는 「Marble Canon」, 밤의 푸른 방에서 호박빛으로 빛나는 비브라폰 막대 계단과 하늘색 공, 높이서 본 「Marble Canon」 기계 전체에 얽힌 도미노 줄과 나선 탑들, 나선 레일을 감은 탑 사이로 주황 공이 굴러 내려오는 「Lighthouse Lullaby」",
+   "poster": "bounce-symphony/poster.jpg",
+   "tags": [
+    "역설계 물리",
+    "원인 사슬 · 도미노",
+    "순방향 시뮬레이션 검증",
+    "모달 타악기 합성",
+    "MP4 · 라이브 페이지"
+   ],
+   "stats": [
+    "예제 31.7초 · 공 25개 · 도미노 약 1,000개",
+    "템플릿 35.7초 · 나선 탑 10개 · 투석기 9개"
+   ],
+   "page": "bounce-symphony/",
+   "source": "bounce-symphony/",
+   "absorbedFrom": {
+    "repo": "https://github.com/jungrok5/motion-skills",
+    "path": "bounce-symphony/examples/lighthouse-lullaby/"
+   },
+   "sources": [
+    {
+     "title": "Seung Joon Choi의 Facebook 영상 「튕기는 공의 교향곡 (루브골드버그 머신 + 음악)」",
+     "url": "https://www.facebook.com/share/v/1DwMH4wj7u/"
+    }
+   ],
+   "workedExample": [
+    {
+     "title": "「Lighthouse Lullaby」 등대지기를 위한 자장가 · 3/4 · 도미노 줄 25개 · 31.7초 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/bounce-symphony/demo/examples/lighthouse-lullaby/"
+    }
+   ]
   }
  ]
 }

@@ -155,7 +155,7 @@ description: 무엇을 만드는지 한두 문장 + 언제 쓰는지. 트리거 
 - 스틸 검토 한 줄: "뜨거나, 미끄러지거나, 죽은 듯 서 있는 게 있는가? 큰 동작이 모였다가 떨어지는가?"
 - 겪은 문제는 `references/LESSONS.md`에.
 
-코드 전용 스킬(`machine-sim`, `swarm-world`, `aesthetics-film`, `photoreal-film`, `ink-word-world`, `dragon-realm`, `living-realm`, `torn-page-journey`, `walking-colossus`, `logo-construction`, `sprite-stack-flight`, `ten-second-scene`, `pixel-world-compiler`, HTML-in-Canvas 라이브 페이지 스킬, 그리고
+코드 전용 스킬(`machine-sim`, `swarm-world`, `aesthetics-film`, `photoreal-film`, `ink-word-world`, `dragon-realm`, `living-realm`, `torn-page-journey`, `walking-colossus`, `logo-construction`, `sprite-stack-flight`, `ten-second-scene`, `pixel-world-compiler`, `bounce-symphony`, HTML-in-Canvas 라이브 페이지 스킬, 그리고
 `SKILL.md`에 code-only라고 적힌 스킬)은 생성 · 다운로드한 모션 데이터를 쓰지 않고, 같은 원칙을 코드로 직접 키잉합니다.
 
 ### 생성 모델 (영상 · 이미지 · 음성) 쓰기
