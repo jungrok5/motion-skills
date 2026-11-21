@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>manga-background-3d · motion-skills</title>
+<meta name="description" content="이야기나 장소 하나를 주면 그 만화 · 웹툰에 필요한 배경 세트를 코드로 3D로 짓고, 그 세트를 손으로 펜 선을 긋고 톤을 붙인 듯한 만화 배경으로 그립니다. 회색 3D 모델이 세로 와이프로 만화 배경으로 바뀌는 영상, 캐릭터를 얹을 배경 레이어(선 · 톤), 같은 세트로 짠 만화 페이지를 냅니다.">
+<meta property="og:title" content="manga-background-3d · motion-skills">
+<meta property="og:description" content="이야기나 장소 하나를 주면 그 만화 · 웹툰에 필요한 배경 세트를 코드로 3D로 짓고, 그 세트를 손으로 펜 선을 긋고 톤을 붙인 듯한 만화 배경으로 그립니다. 회색 3D 모델이 세로 와이프로 만화 배경으로 바뀌는 영상, 캐릭터를 얹을 배경 레이어(선 · 톤), 같은 세트로 짠 만화 페이지를 냅니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/manga-background-3d/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/manga-background-3d">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / manga-background-3d</nav>
+  <h1>manga-background-3d</h1>
+  <p>이야기나 장소 하나를 주면 그 만화 · 웹툰에 필요한 배경 세트를 코드로 3D로 짓고, 그 세트를 만화 배경으로 그립니다. 선은 이미지 필터가 아니라 3D 모델의 모서리 · 윤곽 · 전선에서 찾고, 깊이로 가려진 부분을 지운 뒤 펜의 버릇(모서리를 지나치는 삐침, 살짝 휜 선, 힘 빠지는 끝, 먹 점, 가끔 두 번 그은 선)으로 긋습니다. 버릇은 모서리마다 고정되어 카메라가 움직여도 선이 떨리지 않습니다. 빛은 몇 단계의 평평한 회색 톤으로, 유리창은 사선 반사가 있는 흰 종이로, 밤에는 불빛이 번지고 빛줄기가 톤을 긁어 냅니다. 영상은 장소마다 회색 3D 모델로 시작해 세로 와이프로 만화 배경이 드러나고, 레터박스에 장소 이름 · 모드 · 손글씨 자막이 붙습니다. 같은 세트에서 캐릭터를 얹을 인쇄용 배경 레이어(선 · 톤)와 만화 페이지도 뽑습니다.
+  보고 만든 원본: <a href="https://x.com/nukosama/status/2123025321620644032?a=LlKRf28dkLpGafIAw10&amp;s=19" target="_blank" rel="noopener">만화가 ぬこー様ちゃん(@nukosama)의 X 게시물 (3D 모델이 만화 배경으로 바뀌는 35초 영상)</a>.</p>
+  <ul class="tags"><li>three.js + 캔버스 · 코드로 지은 세트</li><li>3D 모서리에서 뽑은 펜 선</li><li>모델 → 만화 와이프 · 16:9</li><li>배경 레이어 · 만화 페이지</li><li>합성 사운드</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>이야기나 장소 하나(어떤 만화인지, 장면이 주로 어디서 벌어지는지)</dd>
+      <dt>브리프</dt><dd>장소 3–5곳과 각 장소를 그 장소로 읽히게 하는 물건 4–8개, 이야기에만 필요한 소품의 실제 치수, 장소별 빛과 시간대, 컷 목록(카메라 · 와이프 · 자막), 마지막 카드, 만화 페이지 구성을 적은 <code>BRIEF.md</code></dd>
+      <dt>세트</dt><dd><code>scenes.js</code>의 3D 세트: 방 · 벽 · 창 · 문 · 계단 같은 구조, 이야기만의 소품(옷걸이 레일, 다리미판, 배, 나선계단 …), 바닥 타일 · 천장 줄눈, 전선, 간판 글씨, 해의 방향과 밤의 불빛</dd>
+      <dt>확인</dt><dd>컷마다 모델 · 와이프 · 만화 스틸과 페이지를 검토 기준으로 채점, 영상 구성, 컷별 선의 양 · 종이 흰색 비율 · 획 수, 프레임 사이 선 고정(85 % 이상), 카메라 속도와 벽과의 거리, 결정성, 글리프 · 자막 폭, 투명한 선 레이어</dd>
+      <dt>출력</dt><dd>24fps 1920×1080 MP4(펠트 피아노 · 와이프 펜 소리 합성), 컷별 배경 레이어 PNG(선 · 톤 · 합본, 2400 px), 만화 페이지 PNG, 라이브 페이지</dd>
+    </dl>
+    <pre><code>cd manga-background-3d/examples/lighthouse
+node ../../scripts/render.mjs index.html --shots --scale .5
+node ../../scripts/render.mjs index.html --page --scale .6
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs index.html --plates
+node ../../scripts/render.mjs index.html
+node ../../scripts/new-piece.mjs ../../../my-sets</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. 네트워크와 GPU가 필요 없습니다(27초 영상을 CPU 4코어로 약 3분). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/manga-background-3d/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10.2;--demo-bg:#111">
+    <iframe data-src="demo/lighthouse/" title="manga-background-3d 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/lighthouse/">데모 열기 (examples/lighthouse)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/lighthouse</code> · 23.8초 · 누르면 멈춤, 아래 막대로 이동</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/lighthouse/" data-cap="예제 &lt;code&gt;examples/lighthouse&lt;/code&gt; · 23.8초 · 누르면 멈춤, 아래 막대로 이동" aria-pressed="true">등대지기의 섬</button>
+        <button class="btn" type="button" data-src="demo/starter/" data-cap="시작 작품 &lt;code&gt;templates/&lt;/code&gt; · 27초 · 새 세트의 출발점" aria-pressed="false">세탁소집 딸</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">두 작품의 MP4에서 뽑은 스틸과, 같은 세트로 짠 만화 페이지입니다. 카드를 누르면 라이브 페이지가 그 순간에서 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"lsd":"세탁소집 딸","lh":"등대지기의 섬"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>세탁소집 딸 <small>1920×1080 · 27초 · 시작 작품</small></h3>
+      <p>가족이 하는 동네 세탁소 위에서 자라는 아이의 일상 웹툰을 위한 세트 네 곳입니다. 세탁소(비닐 씌운 옷이 걸린 레일, 계산대, 다리미판, 재봉틀, 타일 바닥), 옥탑방 옥상(빨랫줄, 물탱크, 이웃 지붕들), 비탈 골목 계단, 밤의 버스 정류장을 짓고, 세 곳에서 회색 모델이 만화 배경으로 바뀝니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="lsd" href="demo/starter/?t=0.7" target="_blank" rel="noopener">
+          <img src="samples/lsd-shop-model.jpg" alt="회색 3D 모델로 된 세탁소 안: 계산대와 접힌 옷 더미, 뒤쪽 선반, 재봉틀 책상, 벽의 가격표와 시계, 오른쪽에 걸린 옷들" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">세탁소 · 0.7초</span><b>3D 모델</b><span class="how">레터박스 오른쪽 위에 「3D 모델」</span></div></a>
+        <a class="tile" data-tags="lsd" href="demo/starter/?t=2.3" target="_blank" rel="noopener">
+          <img src="samples/lsd-shop-wipe.jpg" alt="같은 세탁소가 화면 가운데 세로선을 경계로 왼쪽은 펜 선과 회색 톤의 만화 배경, 오른쪽은 회색 3D 모델" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">세탁소 · 2.3초</span><b>와이프</b><span class="how">왼쪽부터 만화 배경이 드러남</span></div></a>
+        <a class="tile" data-tags="lsd" href="demo/starter/?t=4.3" target="_blank" rel="noopener">
+          <img src="samples/lsd-shop.jpg" alt="만화 배경이 된 세탁소: 「세탁 수선」 간판이 붙은 계산대, 타일 바닥과 천장 줄눈의 원근, 바닥에 떨어진 창문 햇빛" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">세탁소 · 4.3초</span><b>만화 배경</b><span class="how">타일 · 천장 줄눈이 원근을 잡음</span></div></a>
+        <a class="tile" data-tags="lsd" href="demo/starter/?t=6.1" target="_blank" rel="noopener">
+          <img src="samples/lsd-shop-reverse.jpg" alt="계산대 뒤에서 가게 앞쪽을 본 장면: 왼쪽 벽을 따라 비닐 씌운 옷이 줄지어 걸려 있고, 큰 유리창과 유리 문" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">세탁소 · 6.1초</span><b>반대 방향</b><span class="how">같은 세트, 카메라만 돌림</span></div></a>
+        <a class="tile" data-tags="lsd" href="demo/starter/?t=8.9" target="_blank" rel="noopener">
+          <img src="samples/lsd-counter.jpg" alt="계산대를 가까이서 비스듬히 본 장면: 금전등록기, 접힌 셔츠 더미, 컵, 뒤쪽 선반과 달력" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">세탁소 · 8.9초</span><b>계산대 클로즈업</b><span class="how">가까운 컷도 같은 세트에서</span></div></a>
+        <a class="tile" data-tags="lsd" href="demo/starter/?t=12.3" target="_blank" rel="noopener">
+          <img src="samples/lsd-roof-wipe.jpg" alt="옥상이 와이프 중인 장면: 왼쪽은 흰 하늘과 펜 선의 옥탑방 · 빨랫줄, 오른쪽은 회색 모델의 물탱크와 아파트" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">옥탑방 옥상 · 12.3초</span><b>와이프</b><span class="how">빨랫줄 · 물탱크 · 이웃 지붕</span></div></a>
+        <a class="tile" data-tags="lsd" href="demo/starter/?t=14.3" target="_blank" rel="noopener">
+          <img src="samples/lsd-roof.jpg" alt="만화 배경이 된 옥상: 빨랫줄에 걸린 셔츠와 수건, 옥탑방과 실외기, 뒤의 고층 아파트, 오른쪽 전봇대와 전선" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">옥탑방 옥상 · 14.3초</span><b>빨랫줄 한 가닥까지</b><span class="how">전선 · 빨랫줄은 처지는 선으로</span></div></a>
+        <a class="tile" data-tags="lsd" href="demo/starter/?t=16.7" target="_blank" rel="noopener">
+          <img src="samples/lsd-stairs.jpg" alt="비탈 골목 계단을 아래에서 올려다본 장면: 가운데 난간, 화분, 양쪽으로 계단을 따라 올라가는 집들의 방범창과 차양, 위쪽 전봇대" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">비탈 골목 계단 · 16.7초</span><b>골목 계단</b><span class="how">계단 디딤판마다 삐친 선</span></div></a>
+        <a class="tile" data-tags="lsd" href="demo/starter/?t=20.9" target="_blank" rel="noopener">
+          <img src="samples/lsd-bus-wipe.jpg" alt="밤의 버스 정류장이 와이프 중인 장면: 왼쪽은 어두운 하늘과 흰 불빛의 만화 배경, 오른쪽은 회색 모델" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">밤의 버스 정류장 · 20.9초</span><b>밤 와이프</b><span class="how">불 켜진 가게와 가로등</span></div></a>
+        <a class="tile" data-tags="lsd" href="demo/starter/?t=23.2" target="_blank" rel="noopener">
+          <img src="samples/lsd-bus.jpg" alt="만화 배경이 된 밤 거리: 길 건너 불 켜진 「분식 김밥」 가게 줄, 횡단보도, 가로등 불빛 웅덩이, 오른쪽 정류장의 빛나는 광고판" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">밤의 버스 정류장 · 23.2초</span><b>불만 켜면 밤</b><span class="how">빛나는 창과 번지는 불빛</span></div></a>
+        <a class="tile" data-tags="lsd" href="demo/starter/?sheet=page" target="_blank" rel="noopener">
+          <img src="samples/page-templates.jpg" alt="세트로 짠 만화 페이지: 위에 세탁소 전경과 「우리 집은 세탁소다.」 상자, 가운데 옥상과 계산대 두 칸, 아래 골목 계단과 「저녁마다 이 계단을 오른다.」 상자" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">만화 페이지</span><b>같은 세트로 짠 페이지</b><span class="how">칸마다 크기 · 비율대로 다시 렌더</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>등대지기의 섬 <small>1920×1080 · 23.8초 · 시작 작품에 없는 주제로 만든 예제</small></h3>
+      <p>작은 섬 등대의 마지막 등대지기 이야기를 위한 세트 세 곳입니다. 둥근 건물을 위에서 내려다보는 나선계단(패널 스무 장으로 지은 탑 벽, 가운데가 뚫린 계단), 널빤지 선착장과 고깃배 두 척(짧은 획으로 그린 바다, 돛대 줄, 밧줄 사리), 밤의 램프실(속이 비치는 유리, 빛나는 렌즈, 하늘 톤을 긁어 내는 빛줄기)을 브리프에서 설계했습니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="lh" href="demo/lighthouse/?t=1" target="_blank" rel="noopener">
+          <img src="samples/lh-tower-model.jpg" alt="회색 3D 모델로 된 나선계단을 위에서 내려다본 장면: 가운데 뚫린 원과 그 둘레로 돌아 내려가는 디딤판" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">나선계단 · 1초</span><b>3D 세트</b><span class="how">꼭대기에서 계단 우물을 내려다봄</span></div></a>
+        <a class="tile" data-tags="lh" href="demo/lighthouse/?t=2.6" target="_blank" rel="noopener">
+          <img src="samples/lh-tower-wipe.jpg" alt="나선계단이 와이프 중인 장면: 왼쪽은 펜 선과 흰 디딤판의 만화 배경, 오른쪽은 회색 모델" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">나선계단 · 2.6초</span><b>와이프</b><span class="how">화면이 천천히 돌며 드러남</span></div></a>
+        <a class="tile" data-tags="lh" href="demo/lighthouse/?t=4.6" target="_blank" rel="noopener">
+          <img src="samples/lh-tower.jpg" alt="만화 배경이 된 나선계단: 가운데 난간 기둥이 고리처럼 이어지고, 위에서 든 빛이 디딤판 윗면을 흰 나선으로 비춤" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">나선계단 · 4.6초</span><b>계단 우물</b><span class="how">위에서 든 빛이 흰 나선을 그림</span></div></a>
+        <a class="tile" data-tags="lh" href="demo/lighthouse/?t=6.4" target="_blank" rel="noopener">
+          <img src="samples/lh-midstair.jpg" alt="계단 중간에서 우물 건너편을 본 장면: 공중에 뜬 듯한 디딤판들이 난간을 따라 돌아 올라감" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">나선계단 · 6.4초</span><b>계단 중간에서</b><span class="how">우물 건너편의 디딤판과 난간</span></div></a>
+        <a class="tile" data-tags="lh" href="demo/lighthouse/?t=9" target="_blank" rel="noopener">
+          <img src="samples/lh-pier-model.jpg" alt="회색 3D 모델로 된 선착장: 길게 뻗은 널빤지 부두, 양옆의 고깃배, 멀리 곶 위의 등대" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">선착장 · 9초</span><b>3D 세트</b><span class="how">부두 · 배 두 척 · 곶의 등대</span></div></a>
+        <a class="tile" data-tags="lh" href="demo/lighthouse/?t=10.4" target="_blank" rel="noopener">
+          <img src="samples/lh-pier-wipe.jpg" alt="선착장이 와이프 중인 장면: 왼쪽은 짧은 가로 획으로 그린 바다와 펜 선의 부두, 오른쪽은 회색 모델" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">선착장 · 10.4초</span><b>와이프</b><span class="how">바다는 짧은 가로 획으로</span></div></a>
+        <a class="tile" data-tags="lh" href="demo/lighthouse/?t=12" target="_blank" rel="noopener">
+          <img src="samples/lh-pier.jpg" alt="만화 배경이 된 선착장: 널빤지 부두 끝까지 이어지는 선, 계류주, 밧줄 사리, 돛대와 줄이 있는 고깃배, 멀리 등대와 언덕" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">선착장 · 12초</span><b>배 두 척과 선착장</b><span class="how">돛대 줄과 계류 줄은 선으로</span></div></a>
+        <a class="tile" data-tags="lh" href="demo/lighthouse/?t=13.9" target="_blank" rel="noopener">
+          <img src="samples/lh-rope.jpg" alt="부두 위를 낮게 가까이 본 장면: 앞쪽 밧줄 사리와 계류주, 상자 더미, 오른쪽에 붙은 배의 조타실" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">선착장 · 13.9초</span><b>밧줄 한 사리</b><span class="how">가까운 소품, 낮은 앵글</span></div></a>
+        <a class="tile" data-tags="lh" href="demo/lighthouse/?t=18" target="_blank" rel="noopener">
+          <img src="samples/lh-lamp-wipe.jpg" alt="밤의 램프실이 와이프 중인 장면: 왼쪽은 어두운 하늘을 가르는 흰 빛줄기와 만화 배경, 오른쪽은 회색 모델" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">램프실 · 18초</span><b>밤 와이프</b><span class="how">빛줄기가 하늘 톤을 긁어 냄</span></div></a>
+        <a class="tile" data-tags="lh" href="demo/lighthouse/?t=19.8" target="_blank" rel="noopener">
+          <img src="samples/lh-lamp.jpg" alt="만화 배경이 된 밤의 램프실: 원형 난간의 회랑, 유리 너머로 보이는 빛나는 렌즈, 양쪽으로 뻗는 빛줄기, 검은 밤하늘" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">램프실 · 19.8초</span><b>등불이 켜지는 밤</b><span class="how">속이 비치는 유리, 빛나는 렌즈</span></div></a>
+        <a class="tile" data-tags="lh" href="demo/lighthouse/?sheet=page" target="_blank" rel="noopener">
+          <img src="samples/page-lighthouse.jpg" alt="세트로 짠 만화 페이지: 위에 밤의 램프실과 「오늘 밤도 불을 켠다.」 상자, 왼쪽 세로로 긴 계단 우물, 오른쪽 선착장 두 칸과 「배는 새벽에 나간다.」 상자" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">만화 페이지</span><b>같은 세트로 짠 페이지</b><span class="how">세로로 긴 칸도 같은 펜으로</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. 만화가 ぬこー様ちゃん(@nukosama)이 X에 올린 35초 영상(방 · 교실 · 편의점 · 전철 · 상점가 · 여름 축제의 밤을 회색 3D 모델로 보여 주고, 와이프로 만화 배경으로 바꾼 뒤 "손으로 그린 선은 한 줄도 없다"로 끝나는 영상)이 출발점입니다. 이 스킬은 그 형식과 배경의 말투(모델 → 와이프 → 만화 배경, 레터박스, 펜 선과 톤)만 가져옵니다. 원본의 장소, 자막, 만화 페이지, AI로 만든 3D 모델은 쓰지 않았고, 두 작품의 세트와 코드는 모두 이 레포의 것입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/lighthouse/" target="_blank" rel="noopener"><b>「등대지기의 섬」 · 23.8초</b><span>나선계단 · 선착장 · 밤의 램프실, 라이브 페이지</span><span class="url">manga-background-3d/demo/lighthouse/</span></a>
+    <a class="work" href="demo/starter/" target="_blank" rel="noopener"><b>「세탁소집 딸」 · 27초</b><span>세탁소 · 옥탑방 옥상 · 골목 계단 · 밤의 버스 정류장, 라이브 페이지</span><span class="url">manga-background-3d/demo/starter/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/manga-background-3d/examples"><b>예제 폴더 · examples/</b><span>lighthouse (브리프와 스틸 검토 기록 포함)</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/nukosama/status/2123025321620644032?a=LlKRf28dkLpGafIAw10&amp;s=19" target="_blank" rel="noopener"><b>레퍼런스 영상 · X 게시물</b><span>ぬこー様ちゃん(@nukosama) · 35초 · 1280×720</span><span class="url">x.com/nukosama/status/2123025321620644032</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/manga-background-3d/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/manga-background-3d">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/manga-background-3d/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/manga-background-3d/references/SOURCE.md">references/SOURCE.md</a> <span>원본 영상의 구성, 가져온 것과 가져오지 않은 것</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/manga-background-3d/references/BRIEF.md">references/BRIEF.md</a> <span>브리프 틀과 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/manga-background-3d/references/KIT.md">references/KIT.md</a> <span>세트 짓기: 기본 도형, 건축, 소품, 카메라</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/manga-background-3d/references/LOOK.md">references/LOOK.md</a> <span>렌더 단계, 펜의 버릇, 상수, 배경 레이어와 페이지</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/manga-background-3d/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 스틸과 페이지는 모두 이 스킬로 렌더한 것입니다. 글꼴 Gaegu (OFL), three.js (MIT).
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

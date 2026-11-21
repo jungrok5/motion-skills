@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>세탁소집 딸 · manga-background-3d</title>
+<script type="importmap">{ "imports": { "three": "../lib/vendor/three.module.min.js", "mb/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+import { Film } from 'mb/film.js';
+import { scenes } from './scenes.js';
+// shots, captions and cameras come from BRIEF.md
+new Film({
+  scenes,
+  shots: [
+    { scene: 'shop', dur: 4.6, mode: 'wipe', wipe: [0.3, 0.72], caption: '세탁소 한 채를 3D로 지었다.',
+      cam: [{ pos: [1.7, 1.45, 2.2], look: [-1.0, 1.0, -1.7], fov: 56 }, { pos: [0.9, 1.45, 2.15], look: [-1.3, 1.0, -1.6], fov: 56 }] },
+    { scene: 'shop', dur: 3.0, mode: 'manga', caption: '앵글은 마음대로.',
+      cam: [{ pos: [-2.0, 1.55, -1.0], look: [1.4, 1.1, 2.4], fov: 58 }, { pos: [-1.7, 1.55, -1.3], look: [1.8, 1.1, 2.2], fov: 58 }] },
+    { scene: 'shop', dur: 2.6, mode: 'manga', caption: '컷이 몇 개든.',
+      cam: [{ pos: [0.5, 1.25, 1.5], look: [-1.6, 0.95, 0.1], fov: 44 }, { pos: [0.35, 1.2, 1.25], look: [-1.6, 0.95, 0.1], fov: 42 }] },
+    { scene: 'roof', dur: 4.4, mode: 'wipe', wipe: [0.26, 0.7], caption: '옥상 빨랫줄 한 가닥까지.',
+      cam: [{ pos: [4.0, 1.6, 4.1], look: [-1.6, 1.5, -2.6], fov: 56 }, { pos: [2.8, 1.65, 4.2], look: [-1.8, 1.5, -2.6], fov: 56 }] },
+    { scene: 'stairs', dur: 4.2, mode: 'manga', caption: '비탈 골목도 그대로.',
+      cam: [{ pos: [0.5, 1.55, 3.0], look: [0, 3.3, -8], fov: 56 }, { pos: [0.35, 2.0, 0.6], look: [0, 4.0, -9], fov: 56 }] },
+    { scene: 'busstop', dur: 4.6, mode: 'wipe', wipe: [0.25, 0.68], caption: '밤 장면은 불만 켜면 된다.',
+      cam: [{ pos: [-7.5, 1.5, 2.4], look: [1, 1.8, -6], fov: 54 }, { pos: [-6.0, 1.5, 2.2], look: [2, 1.8, -6], fov: 54 }] },
+    { card: ['펜은 한 번도', '잡지 않았다.'], sub: '3D 세트에서 뽑은 만화 배경', dur: 3.6 },
+  ],
+  // a page laid out from the same sets: render.mjs --page
+  page: { size: [1500, 2122], panels: [
+    { shot: 0, rect: [0.05, 0.04, 0.9, 0.3], at: 0.9, box: ['우리 집은', '세탁소다.'] },
+    { shot: 3, rect: [0.05, 0.36, 0.43, 0.3], at: 0.5 },
+    { shot: 2, rect: [0.52, 0.36, 0.43, 0.3], at: 0.5 },
+    { shot: 4, rect: [0.05, 0.68, 0.9, 0.28], at: 0.6, box: ['저녁마다 이 계단을 오른다.'], boxAt: [0.55, 0.08] },
+  ] },
+}).start();
+</script>
+</body>
+</html>
