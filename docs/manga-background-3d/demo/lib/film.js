@@ -163,6 +163,18 @@ export class Film {
       viewAt: t => { const s = this.shotAt(t); return s.card ? null : this.viewAt(s, clamp((t - s.start) / s.dur)); },
       wipeAt: t => { const s = this.shotAt(t); return s.card ? null : this.wipeAt(s, clamp((t - s.start) / s.dur)); },
       strokeCount: () => this.lastStrokes ?? 0,
+      // the tone layer alone (no ink) at time t, as 8-bit grey base64 — for the z-fighting check
+      toneAt: (t, w) => {
+        const s = this.shotAt(t); if (s.card) return null;
+        const set = this.sets[s.scene], u = clamp((t - s.start) / s.dur), view = this.viewAt(s, u);
+        const h = Math.round(w * (this.H - 2 * this.bar) / this.W), r = this.engine.render(set, view, w, h, { lines: false });
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const g = cv.getContext('2d');
+        g.drawImage(r.canvas, 0, 0, w, h);
+        const d = g.getImageData(0, 0, w, h).data, m = new Uint8Array(w * h);
+        for (let i = 0; i < m.length; i++) m[i] = d[i * 4];
+        let s2 = ''; for (let i = 0; i < m.length; i += 8192) s2 += String.fromCharCode.apply(null, m.subarray(i, i + 8192));
+        return { w, h, grey: btoa(s2) };
+      },
       // the line layer alone at time t (for the stability check): an ImageData-free summary — ink pixel mask as base64
       linesAt: (t, w) => {
         const s = this.shotAt(t); if (s.card) return null;

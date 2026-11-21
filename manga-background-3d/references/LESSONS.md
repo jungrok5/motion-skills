@@ -25,6 +25,17 @@ Found while building this skill and its two pieces (「세탁소집 딸」, 「�
   compares each character's width under two fallbacks; check.mjs fails a missing glyph. Rephrase, or add a font.
 - **"Almost no ink" at preview scale.** → Ink was counted as near-black pixels of the composite, and half-scale lines
   are antialiased grey. → Ink is measured on the line layer alone (`linesAt`), at a fixed 640 px.
+- **Z-fighting in the films** (reported after the first merge): alley doors, the bus-stop pavement and corners of
+  parapets flickered. → Faces sharing one plane: a door leaf whose front sat exactly on a solid house front, a kerb
+  top and a ground slab top at the same height overlapping, parapet walls overlapping at the corners, windows set
+  into solid blocks so their glass sat behind the wall face; plus a 5 cm near plane that left only ~3 mm of depth
+  precision at 50 m. → Openings in solid blocks stand 2 cm proud of the face; slabs that meet only touch (one ends
+  where the other starts); wall runs fit between their corners; sills sit 5 mm above the opening floor; bands stand
+  4 cm off a tapered tower; near plane 0.15 m. check.mjs now fails a z-fight: over three quarter-frame steps of the
+  tone layer (no ink) it counts pixels that flip up and down inside a patch of such pixels (a moving edge is never a
+  patch). Planting a second counter in the same place makes it fail, as it should.
+- **Rule for building:** two surfaces never share a plane where both can be seen. Let them touch (end to end, or face
+  to face with one hidden), or move one 5 mm or more.
 
 ## Sets and cameras
 
