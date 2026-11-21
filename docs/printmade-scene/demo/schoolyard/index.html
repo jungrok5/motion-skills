@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>폐교 운동장</title>
+<script type="importmap">{ "imports": { "pms/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+import { film, score, ACTORS } from './piece.js';
+import { mount } from 'pms/scene.js';
+mount(film, { score, actors: ACTORS });
+</script>
+</body>
+</html>

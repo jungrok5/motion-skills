@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>printmade-scene · motion-skills</title>
+<meta name="description" content="주제를 주면, 벽은 정면 · 바닥은 위에서 본 동양화식 원근에 거친 판화 질감과 톤 다운 색, 진홍 단서 하나, 길쭉한 인물로 한 장소를 그리고, 잉크 롤러가 그 판을 과거로 다시 찍었다가 바뀐 현재로 돌아오는 살아 있는 컨셉 아트 영상을 코드만으로 만듭니다.">
+<meta property="og:title" content="printmade-scene · motion-skills">
+<meta property="og:description" content="주제 하나 → 판화풍 컨셉 아트 한 장이 현재 → 과거 → 바뀐 현재로 두 번 찍히는 4:3 영상, 코드만으로.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/printmade-scene/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/printmade-scene">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / printmade-scene</nav>
+  <h1>printmade-scene</h1>
+  <p>주제 하나(예: 손녀가 할아버지의 문 닫은 이발소에 다시 들어간다)를 주면 판화풍 컨셉 아트 한 장을 9–18초짜리 4:3 영상으로 코드만으로 만듭니다. 장소는 동양화식으로 접어 그립니다. 벽은 정면, 바닥은 위에서 본 평면이고 타일 줄이 화면과 나란하며, 인물은 어디에 서도 크기가 같습니다. 거친 가장자리의 납작한 잉크, 마른 점 자국, 긁은 빗금, 나뭇결, 분필 같은 조명 원뿔, 톤 다운 색에 진홍 단서 하나, 목이 길고 볼이 발그레한 길쭉한 인물, 오른쪽 위의 세로 장소 이름까지 그립니다. 그 판은 두 번 찍힙니다. 현재가 잠시 살아 움직이고, 잉크 롤러가 지나가며 같은 판을 과거로 다시 찍고, 과거가 움직인 뒤 롤러가 돌아오면 현재에 한 가지가 달라져 있습니다. 인물은 디딘 발이 미끄러지지 않는 리그로 움직이고, 소리는 Web Audio로 합성합니다.
+  보고 만든 원본: <a href="https://brunch.co.kr/@goevel/3" target="_blank" rel="noopener">전혜정(@goevel)의 브런치 글 「인디 게임을 만들자」</a> (김도윤 작가의 판화 스타일 컨셉 아트와 게임의 ‘과거 보기’ 장치).</p>
+  <ul class="tags"><li>판화 질감 + 동양화식 원근</li><li>주제 → 새 장소 · 두 번 찍기</li><li>4:3 · 고정 한 컷</li><li>디딘 발 고정 · 큰 동작</li><li>MP4 · 라이브</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 한 줄(예: 문 닫은 이발소에 돌아온 손녀, 비 오는 날 폐교 운동장에 온 아빠)</dd>
+      <dt>브리프</dt><dd>분위기 · 장소 이름 · 아래 제목 줄, 접은 원근으로 배치한 장소(벽 선에 선 것 · 바닥에 눕힌 것 · 벽과 바닥이 만나는 높이), 두 번의 찍기(지금 · 그때)와 돌아왔을 때 바뀌는 진홍 단서, 인물(키 · 무게 · 옷 · 든 것), 박자표, 소리</dd>
+      <dt>만들기</dt><dd>한 함수로 두 판을 같은 배치로 칠하기(벽 · 평면 바닥 · 키트 · 판화 매체), 캐스트 시트(한 바퀴 · 좌우 걷기 · 발을 옮겨 도는 회전 · 좌우 큰 동작 · 얼굴)를 먼저 채점, 걷기 · 회전 · 키 포즈로 박자 키잉, 롤러 두 번과 바뀌는 층</dd>
+      <dt>확인</dt><dd>결정성, 매 순간 살아 있음, 찍은 질감 · 톤 다운 색 · 작은 진홍 하나 · 두 번째 강한 색 없음 · B가 진짜 다른 찍기, 무릎 · 엉덩이 · 팔꿈치 · 목 · 기울기 · 발 닿음 · 손 닿음 · 디딘 발 고정 · 걷는 방향, 깜빡임 · 모으기와 회복 · 발 딛는 회전 · 걸음 빠르기 · 현재 → 과거 → 바뀐 현재 형식, 소리</dd>
+      <dt>출력</dt><dd>소리가 있는 1440×1080 MP4(24 fps), 포스터 스틸, 클릭하면 소리가 나는 라이브 페이지, 콘택트 시트, 캐스트 시트</dd>
+    </dl>
+    <pre><code>node printmade-scene/scripts/new-scene.mjs my-scene
+node printmade-scene/scripts/render.mjs my-scene/index.html --cast
+node printmade-scene/scripts/check.mjs my-scene/index.html
+node printmade-scene/scripts/render.mjs my-scene/index.html --sheet 12 --scale .5
+node printmade-scene/scripts/render.mjs my-scene/index.html</code></pre>
+    <p class="mute">요구 사항: Node 18+와 Playwright Chromium, ffmpeg. 네트워크 · npm 설치 · GPU가 필요 없습니다(14초 영상 렌더가 약 35초). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/printmade-scene/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:4/3.35;--h-phone:340px;--demo-bg:#1b1918">
+    <iframe data-src="demo/schoolyard/" title="printmade-scene 예제가 재생되는 라이브 페이지" allow="fullscreen; autoplay" allowfullscreen></iframe>
+    <noscript><a href="demo/schoolyard/">데모 열기 (examples/schoolyard)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/schoolyard</code> · 14초 · ▶를 누르면 소리와 함께 처음부터</span>
+      <span class="btns" role="group" aria-label="데모 장면">
+        <button class="btn" type="button" data-src="demo/schoolyard/" data-cap="예제 &lt;code&gt;examples/schoolyard&lt;/code&gt; · 14초 · ▶를 누르면 소리와 함께 처음부터" aria-pressed="true">폐교 운동장</button>
+        <button class="btn" type="button" data-src="demo/barbershop/" data-cap="시작 템플릿 &lt;code&gt;templates/&lt;/code&gt; · 13.4초" aria-pressed="false">문 닫은 이발소</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본 글에 없는 주제 두 개를 브리프부터 새로 만든 장면입니다. 카드를 누르면 새 탭에서 그 순간부터 라이브 페이지가 열립니다. 브라우저가 같은 코드로 그리고 소리를 냅니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"sy":"폐교 운동장","bb":"문 닫은 이발소"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>폐교 운동장 <small>예제 · 14초</small></h3>
+      <p>비 오는 해 질 녘, 창이 판자로 막힌 폐교. 검은 우산을 든 아빠가 오른쪽에서 걸어 들어와 그네 앞에 서고, 발을 옮겨 돌아서 등을 보입니다. 롤러가 지나가면 같은 판이 여름 오후로 다시 찍히고, 단발머리 딸이 빨간 공을 들고 걸어 나와 몸을 젖혔다가 그네 쪽으로 던집니다. 롤러가 돌아오면 비 오는 운동장 그네 밑에 빨간 공이 놓여 있고, 아빠가 천천히 웅크립니다. 학교는 정면, 운동장과 트랙은 위에서 본 평면, 앞쪽 철책은 인물 앞에 그리는 층입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="sy" href="demo/schoolyard/?t=2.2" target="_blank" rel="noopener">
+          <img src="samples/sy-enter.jpg" alt="보랏빛 해 질 녘 하늘 아래 판자로 창을 막은 회색 벽돌 폐교, 위에서 본 흙 운동장의 흰 트랙과 물웅덩이, 검은 우산을 들고 오른쪽에서 걸어 들어오는 코트 차림의 남자, 화면 전체에 흰 빗금 비" loading="lazy" width="640" height="480" style="aspect-ratio:4/3">
+          <div class="cap"><span class="no">지금 · 2.2초</span><b>비 오는 운동장으로</b><span class="how">무거운 몸의 느린 출발, 디딘 발 고정, 우산을 든 팔은 고정</span></div></a>
+        <a class="tile" data-tags="sy" href="demo/schoolyard/?t=4.0" target="_blank" rel="noopener">
+          <img src="samples/sy-turn.jpg" alt="그네 앞에서 등을 돌리고 우산을 쓴 채 서 있는 남자, 판자로 막힌 학교와 비" loading="lazy" width="640" height="480" style="aspect-ratio:4/3">
+          <div class="cap"><span class="no">지금 · 4.0초</span><b>그네 쪽으로 돌아서기</b><span class="how">오른발, 왼발을 차례로 옮겨 딛는 회전</span></div></a>
+        <a class="tile" data-tags="sy" href="demo/schoolyard/?t=8.05" target="_blank" rel="noopener">
+          <img src="samples/sy-throw.jpg" alt="맑은 여름 오후의 크림색 학교와 잎이 무성한 나무, 겨자색 원피스를 입은 단발머리 아이가 그네 쪽으로 빨간 공을 막 던진 순간" loading="lazy" width="640" height="480" style="aspect-ratio:4/3">
+          <div class="cap"><span class="no">그때 · 8.05초</span><b>빨간 공 던지기</b><span class="how">어깨 뒤로 젖히기(모으기) → 던지기 → 따라가며 자리 잡기</span></div></a>
+        <a class="tile" data-tags="sy" href="demo/schoolyard/?t=9.4" target="_blank" rel="noopener">
+          <img src="samples/sy-return.jpg" alt="검은 잉크 롤러가 화면을 가로지르며 왼쪽은 비 오는 해 질 녘, 오른쪽은 아직 여름 오후인 운동장" loading="lazy" width="640" height="480" style="aspect-ratio:4/3">
+          <div class="cap"><span class="no">돌아오기 · 9.4초</span><b>롤러가 다시 찍는 현재</b><span class="how">거친 가장자리의 잉크 롤러, 공이 롤러 뒤에서 찍혀 나옴</span></div></a>
+        <a class="tile" data-tags="sy" href="demo/schoolyard/?t=12.6" target="_blank" rel="noopener">
+          <img src="samples/sy-after.jpg" alt="비 오는 운동장 그네 밑에 놓인 빨간 공, 그 옆에 우산을 쓴 채 낮게 웅크린 남자의 뒷모습" loading="lazy" width="640" height="480" style="aspect-ratio:4/3">
+          <div class="cap"><span class="no">바뀐 지금 · 12.6초</span><b>그네 밑의 빨간 공</b><span class="how">숨 들이쉬기 → 웅크리기 → 조금 올라와 자리 잡기</span></div></a>
+        <a class="tile" data-tags="sy" href="demo/schoolyard/?cast" target="_blank" rel="noopener">
+          <img src="samples/sy-cast.jpg" alt="캐스트 시트 일부: 코트 차림 남자의 정면 · 오른쪽 3/4 · 오른쪽 옆 · 뒤 · 왼쪽 옆 · 왼쪽 3/4, 그 아래 오른쪽과 왼쪽으로 걷는 단계" loading="lazy" width="640" height="480" style="aspect-ratio:4/3">
+          <div class="cap"><span class="no">캐스트 시트</span><b>한 바퀴 · 걷기 · 회전 · 큰 동작 · 얼굴</b><span class="how">장면보다 먼저 좌우 양쪽으로 채점</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>문 닫은 이발소 <small>시작 템플릿 · 13.4초</small></h3>
+      <p><code>new-scene.mjs</code>가 복사하는 시작 템플릿입니다. 비 오는 밤, 몇 년째 문 닫은 이발소에 손녀가 들어와 낡은 이발 의자의 팔걸이를 만집니다. 같은 판이 따뜻한 오후로 다시 찍히면 할아버지가 진홍 이발 보를 뒤로 모았다가 펼칩니다. 현재로 돌아오면 그 보가 의자에 걸쳐져 있고, 손녀는 움찔했다가 발을 옮겨 이쪽을 돌아봅니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="bb" href="demo/barbershop/?t=3.7" target="_blank" rel="noopener">
+          <img src="samples/bb-touch.jpg" alt="회녹색 줄무늬 벽지와 큰 거울, 빛바랜 이발소 기둥, 비 오는 밤 창이 있는 이발소, 위에서 본 체크무늬 타일 바닥, 긴 머리의 손녀가 이발 의자 팔걸이에 손을 뻗음" loading="lazy" width="640" height="480" style="aspect-ratio:4/3">
+          <div class="cap"><span class="no">지금 · 3.7초</span><b>의자에 손 대기</b><span class="how">시선이 먼저 내려가고 손이 따라감, 깜빡이는 조명 원뿔</span></div></a>
+        <a class="tile" data-tags="bb" href="demo/barbershop/?t=4.75" target="_blank" rel="noopener">
+          <img src="samples/bb-roller.jpg" alt="잉크 롤러가 이발소를 가로지르며 왼쪽은 따뜻한 오후의 노란 벽과 진홍 줄무늬 기둥, 오른쪽은 비 오는 밤의 회녹색 이발소" loading="lazy" width="640" height="480" style="aspect-ratio:4/3">
+          <div class="cap"><span class="no">찍기 · 4.75초</span><b>같은 판, 다른 시간</b><span class="how">같은 배치에 색 · 빛 · 상태만 다르게</span></div></a>
+        <a class="tile" data-tags="bb" href="demo/barbershop/?t=6.4" target="_blank" rel="noopener">
+          <img src="samples/bb-then.jpg" alt="따뜻한 오후의 이발소, 흰 가운에 안경을 쓴 할아버지가 의자 옆에서 진홍 이발 보를 앞으로 펼치는 순간, 바닥의 잘린 머리카락" loading="lazy" width="640" height="480" style="aspect-ratio:4/3">
+          <div class="cap"><span class="no">그때 · 6.4초</span><b>이발 보 펼치기</b><span class="how">웅크려 뒤로 모으기 → 펼치기 → 내려놓기, 천이 손을 따라감</span></div></a>
+        <a class="tile" data-tags="bb" href="demo/barbershop/?t=12.6" target="_blank" rel="noopener">
+          <img src="samples/bb-after.jpg" alt="비 오는 밤 이발소, 이발 의자 등받이와 팔걸이에 걸쳐진 진홍 보, 그 옆에서 정면을 보는 손녀" loading="lazy" width="640" height="480" style="aspect-ratio:4/3">
+          <div class="cap"><span class="no">바뀐 지금 · 12.6초</span><b>의자에 걸린 보</b><span class="how">움찔(모으기 · 큰 동작 · 회복) 뒤 발을 옮겨 정면으로</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. 출발점은 1인 회사 대표 전혜정이 브런치에 쓴 「인디 게임을 만들자」입니다. 자신의 영화 시나리오를 가족형 공포 어드벤처 게임 「마마」로 만드는 이야기이고, 김도윤 작가의 컨셉 아트가 실려 있습니다. 그 그림은 판화 스타일에 동양화 특유의 왜곡된 원근을 씁니다. 글은 거실은 원근이 맞는데 러그는 맞지 않는다고 설명하고, 그 그림을 잘라 3D 모델에 손으로 입히려던 시도는 망했다고 적습니다. 이 스킬은 그래서 3D로 가지 않고 접은 원근을 2D로 직접 그리고, 그 안에 사는 것만 움직입니다. 오른쪽 클릭으로 방의 과거를 보는 게임의 장치는 현재 → 과거 → 바뀐 현재로 두 번 찍는 형식이 되었습니다. 원본의 그림 · 인물 · 저택 · 이야기는 쓰지 않았고, 시작 템플릿과 예제는 모두 이 레포에서 새로 설계한 것입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/schoolyard/" target="_blank" rel="noopener"><b>「폐교 운동장」 · 라이브 페이지</b><span>예제: 14초 · 바깥 장면 · 아이 · 던진 공 · 앞 철책 층 · Web Audio 소리</span><span class="url">printmade-scene/demo/schoolyard/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/printmade-scene/examples/schoolyard"><b>예제 폴더 · examples/schoolyard</b><span>BRIEF.md(주제 · 장소 · 두 번의 찍기 · 인물 · 박자표 · 모션 · 소리 · 검토), piece.js, index.html</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://brunch.co.kr/@goevel/3" target="_blank" rel="noopener"><b>원본 · 브런치 글</b><span>전혜정(@goevel) · 「인디 게임을 만들자」 · 컨셉 아트 김도윤</span><span class="url">brunch.co.kr/@goevel/3</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/printmade-scene/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/printmade-scene">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/printmade-scene/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/printmade-scene/references/BRIEF.md">references/BRIEF.md</a> <span>브리프 틀과 채점 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/printmade-scene/references/LOOK.md">references/LOOK.md</a> <span>원본 그림에서 읽은 화풍</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/printmade-scene/references/PLATE.md">references/PLATE.md</a> <span>접은 원근과 장소 키트</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/printmade-scene/references/FIGURE.md">references/FIGURE.md</a> <span>인물 리그 · 관절 범위 · 캐스트 시트</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/printmade-scene/references/MOTION.md">references/MOTION.md</a> <span>무게 · 디딘 발 · 숨</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/printmade-scene/references/SOURCE.md">references/SOURCE.md</a> <span>가져온 것과 가져오지 않은 것</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/printmade-scene/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림과 소리는 코드로 만들었습니다. 글꼴: Pretendard (SIL OFL 1.1).
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
