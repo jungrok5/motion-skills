@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>one-line-drawing · motion-skills</title>
+<meta name="description" content="주제 하나(사람이 있는 장소)를 주면 장면과 선이 지나갈 길을 새로 설계하고, 태블릿 위 흐린 회색 사진을 따라 펜을 한 번도 떼지 않고 선 하나로 그 장면 전체를 그리는 세로 영상을 만듭니다.">
+<meta property="og:title" content="one-line-drawing · motion-skills">
+<meta property="og:description" content="주제 하나(사람이 있는 장소)를 주면 장면과 선이 지나갈 길을 새로 설계하고, 태블릿 위 흐린 회색 사진을 따라 펜을 한 번도 떼지 않고 선 하나로 그 장면 전체를 그리는 세로 영상을 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/one-line-drawing/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/one-line-drawing">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / one-line-drawing</nav>
+  <h1>one-line-drawing</h1>
+  <p>주제 하나(사람이 있는 장소)를 주면 장면과 선이 지나갈 길을 새로 설계하고, 태블릿 위 흐린 회색 사진을 따라 펜을 한 번도 떼지 않고 선 하나로 그 장면 전체를 그리는 세로 영상을 만듭니다. 흰 스타일러스 바로 뒤를 카메라가 가까이 따라갑니다. 선은 모서리마다 작은 고리를 감으며 윤곽을 돌고, 전깃줄과 처마는 직각 계단과 갈고리로, 나무와 김은 이어진 고리로, 물과 젖은 길은 넓은 지그재그로, 반영은 몸의 폭을 따르는 세로 지그재그로 그립니다. 다 그리면 카메라가 물러나고 사진이 사라지며 흰 종이 위 선화와 고리 서명이 남습니다. 회색 사진은 선이 따라가는 바로 그 도형으로 코드가 칠하고, 펜 소리까지 합성한 1080×1920 MP4와 라이브 페이지로 냅니다.
+  보고 만든 원본: <a href="https://x.com/Xin78787/status/2123707571890536673?a=HJt-M-U2a85DG5TpgNk&amp;s=19" target="_blank" rel="noopener">醉清风(@Xin78787)의 X 게시물 (안개 낀 길 사진을 따라 선 하나로 그린 62초 영상)</a>.</p>
+  <ul class="tags"><li>2D 캔버스 · 코드 전용</li><li>한 붓 그리기 · 9:16</li><li>선 하나 · 펜 안 뗌 검사</li><li>코드로 그린 회색 사진</li><li>합성 펜 사운드</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나 — 사람이 있는 장소(누가, 어디서, 무엇을, 어떤 날씨에)</dd>
+      <dt>브리프</dt><dd>배경(지평선 · 땅 · 안개), 주인공(바라보는 방향, 걸음, 손에 든 것, 키), 중경 도형 2–4개와 원경, 구멍 너머로 보이는 것, 그리고 <b>선의 길</b>(시작점, 태그별 순서, 이동마다의 근거, 우회, 반영과 지그재그 땅, 끝)을 적은 <code>BRIEF.md</code></dd>
+      <dt>장면</dt><dd><code>scene(S)</code>: 깊이를 가진 도형들. 키트(전봇대 · 가로등 · 집 · 탑 · 스카이라인 · 소나무 · 숲 · 산등성 · 새 · 부두 · 배 · 우산 · 낚싯대 · 등롱)와 작품 안에서 새로 그린 도형, 관절 한계와 두 뼈 IK가 있는 사람 리그</dd>
+      <dt>선</dt><dd><code>line(L, S)</code>: 한 번의 <code>start</code> 뒤 계속 이어지는 선. 윤곽 따라가기(멈췄다가 우회 후 이어 그리기, 모서리 고리), 직각 계단 · 갈고리, 이어진 고리, 지그재그 채우기 · 반영, 되짚기, 멈춤</dd>
+      <dt>확인</dt><dd>선 시트(시간 순 색, 놓친 윤곽은 빨간 점선), 캐스트 시트(좌우 · 앞뒤), 끊김 없음, 어휘(고리 · 지그재그 · 윤곽), 도형 덮임, 손 같은 속도 변화, 펜촉이 화면 안, 관절 · 발 · 손 닿음, 밝고 흐린 사진, 마무리, 결정성</dd>
+      <dt>출력</dt><dd>30fps 1080×1920 MP4(유리 위 펜촉 소리 · 닿는 소리 · 잔잔한 피아노 합성), 라이브 페이지</dd>
+    </dl>
+    <pre><code>node one-line-drawing/scripts/new-piece.mjs my-piece
+cd my-piece
+node ../one-line-drawing/scripts/render.mjs piece.html --line
+node ../one-line-drawing/scripts/render.mjs piece.html --cast
+node ../one-line-drawing/scripts/check.mjs piece.html
+node ../one-line-drawing/scripts/render.mjs piece.html</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. 네트워크와 GPU가 필요 없습니다(55초 영상을 CPU 4코어로 약 2–3분). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/one-line-drawing/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:9/15.2;--h-phone:680px;--demo-bg:#111">
+    <iframe data-src="demo/noodle-stall/" title="one-line-drawing 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/noodle-stall/">데모 열기 (examples/noodle-stall)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/noodle-stall</code> · 54초 · 누르면 멈춤, 아래 막대로 이동</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/noodle-stall/" data-cap="예제 &lt;code&gt;examples/noodle-stall&lt;/code&gt; · 54초 · 누르면 멈춤, 아래 막대로 이동" aria-pressed="true">Last Bowl</button>
+        <button class="btn" type="button" data-src="demo/starter/" data-cap="시작 작품 &lt;code&gt;templates/&lt;/code&gt; · 52초 · 새 작품의 출발점" aria-pressed="false">Last Cast</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">브리프로 설계한 두 장면, 비 오는 골목 국숫집 「Last Bowl」과 안개 낀 호수의 낚시꾼 「Last Cast」의 순간들입니다. 카드를 누르면 새 탭에서 그 순간부터 영상이 재생되고, 브라우저가 사진과 선을 직접 그립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"nb":"Last Bowl","lc":"Last Cast"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>Last Bowl <small>1080×1920 · 54초 · 원본에도 시작 작품에도 없는 주제로 만든 예제</small></h3>
+      <p>우산을 든 사람이 비 오는 골목 끝 마지막 국숫집으로 걸어갑니다. 국숫집의 차양 · 카운터 · 등롱과 골목 벽은 작품 안에서 새로 그린 도형입니다. 등롱과 냄비는 기둥 사이 구멍 너머에 있어 각자 도형으로 나누고, 차양 윤곽을 따라가다 멈춰 내려갔다 돌아오는 우회로 그립니다. 우산도 손까지 내려와 사람을 한 바퀴 돈 뒤 손잡이를 타고 올라가 나머지를 마저 그립니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="nb" href="demo/noodle-stall/?t=1.2" target="_blank" rel="noopener">
+          <img src="samples/nb-1-2.jpg" alt="어두운 태블릿 화면에 흐린 회색 사진: 왼쪽 높은 벽, 가로등, 우산을 든 사람의 뒷모습, 오른쪽 차양 달린 국숫집, 화면 왼쪽 아래에서 흰 스타일러스가 들어오는 장면" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">시작 · 1.2초</span><b>태블릿 위 회색 사진</b><span class="how">비 오는 골목, 우산 쓴 사람, 국숫집과 스타일러스</span></div></a>
+        <a class="tile" data-tags="nb" href="demo/noodle-stall/?t=7" target="_blank" rel="noopener">
+          <img src="samples/nb-7.jpg" alt="흐린 회색 골목 사진을 가까이 당겨 본 화면, 검은 선 하나가 벽의 계단 난간을 직각으로 꺾으며 고리를 감고 내려가 전깃줄이 되고, 흰 스타일러스 끝이 그 선 끝에 닿아 있음" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">선 · 7초</span><b>벽 위 계단과 전깃줄</b><span class="how">난간을 따라 직각 계단, 모서리마다 작은 고리</span></div></a>
+        <a class="tile" data-tags="nb" href="demo/noodle-stall/?t=14" target="_blank" rel="noopener">
+          <img src="samples/nb-14.jpg" alt="카메라가 조금 물러난 화면: 왼쪽 벽의 계단 난간과 전깃줄을 그린 선이 국숫집 차양 위를 돌고, 흰 스타일러스가 차양 왼쪽 끝에 닿아 있으며 아래에 우산 쓴 사람의 회색 사진이 보임" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">숨 고르기 · 14초</span><b>물러나서 보기</b><span class="how">계단 난간 · 전깃줄 · 차양 윤곽까지 그린 중간 물러남</span></div></a>
+        <a class="tile" data-tags="nb" href="demo/noodle-stall/?t=21" target="_blank" rel="noopener">
+          <img src="samples/nb-21.jpg" alt="국숫집 왼쪽 기둥과 차양 아래 등롱을 가까이 본 화면, 등롱 윤곽을 그린 검은 선과 그 옆 우산 쓴 사람의 회색 사진, 스타일러스가 기둥을 따라 내려가는 중" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">선 · 21초</span><b>차양 아래 등롱</b><span class="how">가리비 차양을 돌다 등롱으로 내려가는 우회</span></div></a>
+        <a class="tile" data-tags="nb" href="demo/noodle-stall/?t=28" target="_blank" rel="noopener">
+          <img src="samples/nb-28.jpg" alt="카운터 위 냄비에서 위로 이어진 작은 고리 세 개의 김, 차양과 등롱의 선, 스타일러스가 카운터 모서리에 있고 왼쪽에 계단 난간 선과 우산 쓴 사람" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">선 · 28초</span><b>냄비 위 김</b><span class="how">카운터 윤곽에서 멈춰 고리 세 개로 올라가는 김</span></div></a>
+        <a class="tile" data-tags="nb" href="demo/noodle-stall/?t=36" target="_blank" rel="noopener">
+          <img src="samples/nb-36.jpg" alt="어두운 벽 아래 젖은 길 위로 내려온 검은 선이 웅덩이 옆에서 넓은 지그재그를 그리는 장면, 위쪽에 우산 쓴 사람의 다리와 코트 자락" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">선 · 36초</span><b>젖은 길</b><span class="how">벽 아래 여백을 타고 내려와 넓은 지그재그</span></div></a>
+        <a class="tile" data-tags="nb" href="demo/noodle-stall/?t=48.3" target="_blank" rel="noopener">
+          <img src="samples/nb-48-3.jpg" alt="태블릿 전체가 보이는 화면, 옅어지는 회색 사진 위에 선 하나로 그린 골목 벽, 우산 쓴 사람, 국숫집, 지그재그 반영과 길" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">마무리 · 48.3초</span><b>사진이 사라지는 중</b><span class="how">태블릿 전체로 물러나 회색 사진이 옅어짐</span></div></a>
+        <a class="tile" data-tags="nb" href="demo/noodle-stall/?t=53.5" target="_blank" rel="noopener">
+          <img src="samples/nb-53-5.jpg" alt="흰 종이 위에 검은 선 하나로 그린 골목: 계단 난간의 벽, 첨탑이 있는 먼 도시, 가로등, 우산 쓴 사람의 뒷모습, 등롱과 김이 있는 국숫집, 의자, 지그재그 반영과 길, 오른쪽 아래 작은 고리 서명" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">완성 · 53.5초</span><b>흰 종이 위 선화</b><span class="how">선 하나로 남은 장면과 오른쪽 아래 고리 서명</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>Last Cast <small>1080×1920 · 52초 · 시작 작품</small></h3>
+      <p>안개 낀 호수, 부두 끝에서 낚싯대를 드리운 사람입니다. 위쪽 테두리는 직각 계단과 고리로 갈매기 두 마리를 지나고, 오른쪽 가장자리를 타고 내려와 먼 소나무 숲과 산등성을 따라갑니다. 부두를 따라가다 사람의 발에서 멈추고, 사람을 돌다 손에서 낚싯대를 타고 올라가 낚싯줄 끝 찌까지 내려갔다 되돌아온 뒤, 사람과 부두를 마저 그립니다. 반영과 물은 지그재그입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="lc" href="demo/starter/?t=1.2" target="_blank" rel="noopener">
+          <img src="samples/lc-1-2.jpg" alt="어두운 태블릿 화면에 흐린 회색 호수 사진: 먼 산등성과 소나무 숲, 작은 돛단배, 부두 끝에 서서 낚싯대를 든 사람, 아래 나룻배와 반영, 위쪽에서 흰 스타일러스가 들어오는 장면" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">시작 · 1.2초</span><b>태블릿 위 회색 사진</b><span class="how">안개 낀 호수, 부두 끝 낚시꾼, 스타일러스</span></div></a>
+        <a class="tile" data-tags="lc" href="demo/starter/?t=7" target="_blank" rel="noopener">
+          <img src="samples/lc-7.jpg" alt="회색 사진 위 검은 선이 위쪽 테두리를 그리고 오른쪽 가장자리를 따라 내려와 소나무 숲의 톱니에 닿은 가까운 장면, 사진 속 낚싯대가 비스듬히 보임" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">선 · 7초</span><b>위쪽 테두리</b><span class="how">직각으로 꺾인 테두리가 오른쪽 가장자리로</span></div></a>
+        <a class="tile" data-tags="lc" href="demo/starter/?t=14" target="_blank" rel="noopener">
+          <img src="samples/lc-14.jpg" alt="먼 산등성의 능선을 따라간 선이 왼쪽 가장자리를 타고 내려와 작은 돛단배의 돛대와 선체를 그리는 장면, 흰 스타일러스가 배 오른쪽에 있음" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">선 · 14초</span><b>먼 산등성과 돛단배</b><span class="how">산등성을 따라 왼쪽으로, 가장자리를 타고 돛단배로</span></div></a>
+        <a class="tile" data-tags="lc" href="demo/starter/?t=21" target="_blank" rel="noopener">
+          <img src="samples/lc-21.jpg" alt="부두 끝에 선 낚시꾼을 가까이 본 화면, 검은 선이 배낭과 모자를 돌아 낚싯대를 쥔 손으로 내려오는 중이고 스타일러스가 손 근처에 있음" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">선 · 21초</span><b>낚시꾼의 윤곽</b><span class="how">등에서 머리, 모자 챙을 지나 손까지</span></div></a>
+        <a class="tile" data-tags="lc" href="demo/starter/?t=28" target="_blank" rel="noopener">
+          <img src="samples/lc-28.jpg" alt="카메라가 물러나 위쪽 테두리와 갈매기, 소나무 숲, 낚싯대와 낚싯줄, 낚시꾼의 윤곽이 그려진 장면, 스타일러스가 부두 끝 가까이에 있음" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">숨 고르기 · 28초</span><b>물러나서 보기</b><span class="how">낚싯대와 찌까지 다녀온 우회가 보이는 중간 물러남</span></div></a>
+        <a class="tile" data-tags="lc" href="demo/starter/?t=36" target="_blank" rel="noopener">
+          <img src="samples/lc-36.jpg" alt="부두 기둥 아래 끝마다 작은 고리가 감긴 선과, 위쪽 돛단배 아래로 내려오는 지그재그 반영, 스타일러스가 부두 왼쪽 끝에서 물 쪽으로 내려가는 장면" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">선 · 36초</span><b>부두와 반영</b><span class="how">기둥마다 고리, 돛단배 아래 지그재그 반영</span></div></a>
+        <a class="tile" data-tags="lc" href="demo/starter/?t=46.5" target="_blank" rel="noopener">
+          <img src="samples/lc-46-5.jpg" alt="태블릿 전체가 보이는 화면, 거의 흰색으로 옅어진 사진 위에 선 하나로 그린 호수 풍경과 부두 끝 낚시꾼" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">마무리 · 46.5초</span><b>사진이 사라지는 중</b><span class="how">태블릿 전체로 물러나 회색 사진이 옅어짐</span></div></a>
+        <a class="tile" data-tags="lc" href="demo/starter/?t=51.5" target="_blank" rel="noopener">
+          <img src="samples/lc-51-5.jpg" alt="흰 종이 위에 검은 선 하나로 그린 호수: 계단처럼 꺾인 위쪽 테두리와 갈매기, 산등성과 톱니 같은 소나무 숲, 돛단배, 낚싯대와 낚싯줄을 든 낚시꾼, 고리가 달린 부두 기둥, 나룻배, 지그재그 물과 반영, 오른쪽 아래 작은 고리 서명" loading="lazy" width="640" height="1138">
+          <div class="cap"><span class="no">완성 · 51.5초</span><b>흰 종이 위 선화</b><span class="how">선 하나로 남은 장면과 오른쪽 아래 고리 서명</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. 醉清风(@Xin78787)이 X에 올린 62초 세로 영상(태블릿 위 안개 낀 길 사진을 따라 콘트라베이스를 멘 사람, 전봇대와 전깃줄, 젖은 길의 반영, 먼 마을과 첨탑을 펜을 떼지 않고 선 하나로 그린 영상)이 출발점입니다. 이 스킬은 그 형식(선 하나, 그 선의 어휘, 아래의 흐린 사진, 펜촉을 따라가는 카메라, 마무리)만 가져옵니다. 원본의 사진과 인물, 작가의 손과 서명, 음악은 쓰지 않았고, 두 장면은 모두 이 레포의 것입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/noodle-stall/" target="_blank" rel="noopener"><b>「Last Bowl」 · 54초</b><span>비 오는 골목 국숫집과 우산 쓴 사람, 라이브 페이지</span><span class="url">one-line-drawing/demo/noodle-stall/</span></a>
+    <a class="work" href="demo/starter/" target="_blank" rel="noopener"><b>「Last Cast」 · 52초</b><span>안개 낀 호수 부두 끝의 낚시꾼, 라이브 페이지</span><span class="url">one-line-drawing/demo/starter/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/one-line-drawing/examples"><b>예제 폴더 · examples/</b><span>noodle-stall (브리프와 검토 기록 포함)</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/Xin78787/status/2123707571890536673?a=HJt-M-U2a85DG5TpgNk&amp;s=19" target="_blank" rel="noopener"><b>레퍼런스 영상 · X 게시물</b><span>醉清风(@Xin78787) · 62초 · 세로 영상</span><span class="url">x.com/Xin78787/status/2123707571890536673</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/one-line-drawing/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/one-line-drawing">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/one-line-drawing/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/one-line-drawing/references/SOURCE.md">references/SOURCE.md</a> <span>원본 영상의 구성, 가져온 것과 가져오지 않은 것</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/one-line-drawing/references/BRIEF.md">references/BRIEF.md</a> <span>브리프 틀과 스틸 채점 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/one-line-drawing/references/LINE.md">references/LINE.md</a> <span>장면 · 사람 리그 · 선의 API와 선의 길을 짜는 법</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/one-line-drawing/references/LOOK.md">references/LOOK.md</a> <span>단계, 고정 값, 소리</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/one-line-drawing/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 사진 · 선 · 스타일러스 모두 코드로 그렸습니다 · 폰트 Caveat (SIL OFL)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
