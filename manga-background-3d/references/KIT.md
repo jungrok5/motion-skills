@@ -65,6 +65,13 @@ vertical `sign`) `pole` (returns wire attach points) `wires` `streetlamp` `vendi
 
 Each is `S.prop(pos, ry, options)`; read its few lines in `props.js` before using it — they are short on purpose.
 
+## Never two faces in one plane
+
+Where two visible surfaces share a plane the depth buffer cannot choose and they flicker as the camera moves
+(z-fighting; check.mjs fails it). Let parts touch end to end or face to face with one hidden, or move one ≥ 5 mm.
+On a solid block (a house, a building) a door, window or sign goes 2 cm proud of the face — `building()` does this;
+slabs at one height meet edge to edge, never overlap; wall runs fit between their corners.
+
 ## Designing a new prop
 
 A prop is a function in your `scenes.js` that takes `S` and a position and builds 3–30 primitives in `S.at(…)`.
