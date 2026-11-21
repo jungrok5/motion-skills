@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Last Cast · one-line-drawing</title>
+<script type="importmap">{ "imports": { "old/": "../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+import { Film } from 'old/film.js';
+import * as piece from './scene.js';
+// everything below comes from BRIEF.md: the pace, the camera, the signature, the timings
+new Film(piece, {
+  title: 'Last Cast',
+  signature: null,          // the user's own handle (Latin), or null for loops only
+  seed: 3,
+  zoom: 2.4,                // how close the camera rides behind the nib
+  timing: { intro: 1.8, draw: 42, pull: 1.9, fade: 1.5, clean: .9, sign: 1.5, hold: 2.6 },
+}).start();
+</script>
+</body>
+</html>
