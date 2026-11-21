@@ -75,7 +75,7 @@ console.log(`  pads (balls) per lane: ${Object.entries(i.hitsPerLane).map(([k, v
 const bad = i.sim.filter((s) => !s.ok).length;
 if (i.mech) console.log(`  machine: ${i.mech.droppers} droppers · ${i.mech.catapults} catapults · ${i.mech.rails} rails · ${i.mech.helices} helix towers · ${i.mech.rods} push rods · ${i.mech.lines} domino lines (${i.mech.dominoes} dominoes)${i.mech.starter ? ' · a starter hammer' : ''} — causes: ${Object.entries(i.mech.causes).map(([k, v]) => `${k} ${v}`).join(', ')}`);
 console.log(`  physics: ${i.sim.length - bad}/${i.sim.length} balls fly their score exactly (worst timing error ${Math.max(0, ...i.sim.map((s) => s.worstMs)).toFixed(3)} ms)`);
-for (const s of i.shots) console.log(`  shot @${s.at}s ${s.kind.padEnd(6)} balls on screen ${(s.seen * 100).toFixed(0)}%${s.ballPx !== null ? `  smallest ball ${s.ballPx}px` : ''}`);
+for (const s of i.shots) console.log(`  shot @${s.at}s ${s.kind.padEnd(6)} balls on screen ${(s.seen * 100).toFixed(0)}%${s.ballPx !== null ? `  smallest ball ${s.ballPx}px` : ''}  wobble ${s.wobble}° ${s.jitterMm} mm`);
 console.log(`  frames: ${stats.map((s) => `${s.t}s lum ${s.lum.toFixed(2)} glow ${(s.glow * 100).toFixed(2)}%`).join(' · ')}`);
 console.log(`  strikes that visibly light: ${lit}/${tried}`);
 console.log(`  audio: ${db.toFixed(1)} dB RMS, peak ${peak.toFixed(2)}, first strike sounds at ${on.toFixed(3)} s (written ${first.toFixed(3)} s)`);

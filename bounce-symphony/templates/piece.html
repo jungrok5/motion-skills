@@ -48,14 +48,14 @@ const piece = new Piece({
   shots: [
     { at: 0, kind: 'follow', cause: 'starter', dist: 0.55, angle: 200, speed: 6, elev: 24 },  // the hammer swings, the first lines run
     { at: 2.2, kind: 'orbit', angle: 215, speed: 5, elev: 28 },
-    { at: 4.6, kind: 'follow', lane: 'arp', dist: 0.75, angle: 60, elev: 16, blend: 1.6 },
+    { at: 4.6, kind: 'follow', lane: 'arp', dist: 1.1, angle: 90, elev: 28, fov: 36, lag: 0.3, blend: 1.6 },
     { at: 9.7, kind: 'follow', cause: 'mel', dist: 0.7, angle: 120, speed: 6, elev: 24 },     // an arp cup tips its ball into a helix: dominoes run to the tune's first dropper
-    { at: 11.6, kind: 'orbit', center: [0, 0.7, 0], dist: 6.2, angle: 120, speed: -6, elev: 24 },
+    { at: 11.6, kind: 'orbit', center: [0, 0.7, 0], dist: 7.8, angle: 120, speed: -6, elev: 30 },
     { at: 13.0, kind: 'follow', lane: 'mel', dist: 0.9, angle: 140, elev: 16, blend: 1.4 },
     { at: 18.0, kind: 'follow', lane: 'arp', dist: 0.6, angle: 250, elev: 8 },
     { at: 21.0, kind: 'follow', cause: 'bass', dist: 0.65, angle: 300, speed: 6, elev: 24 },  // the bass ball's relay: a helix, a line to a catapult
     { at: 23.0, kind: 'orbit', dist: 5.2, angle: 300, speed: 4, elev: 34, blend: 1.8 },
-    { at: 27.6, kind: 'follow', lane: 'bass', dist: 0.9, angle: 250, elev: 14 },
+    { at: 27.6, kind: 'follow', lane: 'bass', dist: 1.5, angle: 250, elev: 18, fov: 36 },
     { at: 30.6, kind: 'orbit', dist: 5.6, angle: 20, speed: 3, elev: 30, blend: 2.2 },
   ],
   mix: { gains: { glockenspiel: 0.9, bowl: 0.8 }, lanes: { bass: 1.25 } },

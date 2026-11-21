@@ -54,7 +54,7 @@ every shot and the musical event it lands on, the mix (gains, reverb). The templ
 | `templates/` | `piece.html` (「Marble Canon」, 35.7 s, 4 lanes, 171 pads, 23 balls, 23 domino lines, 10 helix towers, 9 catapults), `BRIEF.md` |
 | `examples/lighthouse-lullaby/` | the worked example: `BRIEF.md`, `index.html` (31.7 s, 3/4, 4 lanes, 100 pads, 25 balls, 25 domino lines, 12 helix towers, 13 catapults) |
 | `scripts/new-piece.mjs` | start a project from the template or `--from lighthouse-lullaby` |
-| `scripts/check.mjs` | proves the piece: bar checks, every note has a pad, every release has a cause that arrives within 2 ms, the forward simulation (each strike within 2 ms on its own pad, nothing else touched), nothing built through anything, pad tilt, the camera (balls in play on screen, never through a pad), frames not black / blown, strikes visibly light, deterministic, audio not silent / NaN / late |
+| `scripts/check.mjs` | proves the piece: bar checks, every note has a pad, every release has a cause that arrives within 2 ms, the forward simulation (each strike within 2 ms on its own pad, nothing else touched), nothing built through anything, pad tilt, the camera (balls in play on screen, never through a pad, steady), frames not black / blown, strikes visibly light, deterministic, audio not silent / NaN / late |
 | `scripts/render.mjs` | stills, the contact sheet, the preview, the MP4 with sound (workers) |
 | `scripts/audio.mjs` | the sound → WAV |
 | `scripts/browser.mjs` | opens a page in headless Chromium (shared by the scripts) |
@@ -131,7 +131,8 @@ renders in ~6 min at 1080p with 4 workers. check.mjs takes ~20 s.
   foot, tower and line already on the floor); pads tilt ≤ 42°; every ball starts on a dropper or catapult and ends in a
   cup (or rolls on as a relay); poles stand on the floor.
 - **What plays is seen.** Shots follow the music and frame the ball that is playing; check.mjs fails a shot when the
-  balls in play leave the frame or the lens passes through a pad. Shots change on musical events, not on a timer.
+  balls in play leave the frame, the lens passes through a pad, or the camera shakes (more than 0.35° / 20 mm off its
+  own smooth path). Shots change on musical events, not on a timer.
 - **What you see is what you hear.** The sound is rendered from the same strikes (time, pitch, instrument, loudness from
   the impact speed, pan from position); the latch and catch sounds are the machine's own.
 - **The notes are right.** Bar checks pass; lanes stay in their instruments' ranges; music is written for the film, the

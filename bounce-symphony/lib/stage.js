@@ -275,31 +275,54 @@ export class Piece {
     return prev || next;
   }
   ballPos(b, t) { return V(ballAt(b, t, this.m.cups).p); }
-  laneFocus(lanes, t, lag = 0.35) { // smoothed centroid of the lanes' active balls around t
+  // a Gaussian-weighted average of fn(t + τ) over ±3σ (σ in seconds), skipping moments where fn has nothing to say:
+  // the camera's subject is smoothed this way, so bounces, ball hand-overs and wave steps never shake the frame
+  // The samples sit on a fixed time grid (not around t) and only their weights move with t, so the result is smooth in t
+  // even where fn jumps (a ball hand-over); values are cached per key.
+  smooth(key, fn, t, sigma) {
+    const h = Math.max(1 / 120, sigma / 6), k0 = Math.floor((t - 3 * sigma) / h), k1 = Math.ceil((t + 3 * sigma) / h);
+    this._sc ??= new Map(); let c = this._sc.get(key); if (!c) this._sc.set(key, (c = new Map()));
+    const out = new THREE.Vector3(); let w = 0;
+    for (let k = k0; k <= k1; k++) {
+      let p = c.get(k); if (p === undefined) { p = fn(k * h) || null; c.set(k, p); }
+      if (p) { const u = (t - k * h) / sigma, g = Math.exp(-0.5 * u * u); out.addScaledVector(p, g); w += g; }
+    }
+    return w ? out.multiplyScalar(1 / w) : null;
+  }
+  ballsAt(lanes, t) { // the newest ball in flight of each lane, else the one nearest in time (in its cup, or waiting) —
+    // always defined, so the smoothing window never renormalises onto a far ball and jumps
     const out = new THREE.Vector3(); let n = 0;
-    // only balls in flight count (a ball waiting on a dropper far along the path would drag the frame away)
-    for (let k = -4; k <= 4; k++) { const tt = t + (k / 4) * lag, w = 1 - Math.abs(k) / 5; for (const l of lanes) { const b = this.activeBall(l, tt); if (b && tt >= b.release && tt <= b.last + 0.3) { out.addScaledVector(this.ballPos(b, tt), w); n += w; } } }
-    if (n) return out.multiplyScalar(1 / n);
     for (const l of lanes) { const b = this.activeBall(l, t); if (b) { out.add(this.ballPos(b, t)); n++; } }
-    return n ? out.multiplyScalar(1 / n) : this.center.clone();
+    return n ? out.multiplyScalar(1 / n) : null;
+  }
+  laneFocus(lanes, t, lag = 0.45) {
+    return this.smooth(`lanes:${lanes.join(',')}:${lag}`, (tt) => this.ballsAt(lanes, tt), t, lag) || (() => { const b = this.activeBall(lanes[0], t); return b ? this.ballPos(b, t) : this.center.clone(); })();
   }
 
   // ---- what a cause chain is doing at t: the domino wave's front, or the relay ball on its helix
-  causeAt(sel, t) {
-    const mech = this.m.mech; if (!mech) return null;
-    const chains = mech.causes.filter((c) => (sel === 'starter' ? c.kind === 'starter' : c.lane === sel));
-    let best = null;
-    for (const c of chains) {
-      const L = mech.lines[c.line], hx = mech.helices.find((h) => h.line === c.line);
-      if (hx && t >= hx.tTop - 0.2 && t <= L.t0) { const b = this.m.balls[hx.ball]; best = this.ballPos(b, t); break; }
-      if (t >= L.t0 - 0.15 && t <= L.tEnd + 0.15) { const k = Math.max(0, Math.min(L.n - 1, (t - L.t0) / L.tau)), i = Math.floor(k), q = L.pts[i], r = L.pts[Math.min(L.n - 1, i + 1)], f = k - i; best = new THREE.Vector3(q.x + (r.x - q.x) * f, L.h * 0.5, q.z + (r.z - q.z) * f); break; }
+  // the one chain a shot rides: the chain of `sel` (a lane, or 'starter') busiest during the shot
+  chainFor(s, sel) {
+    s._chain ??= new Map(); if (s._chain.has(sel)) return s._chain.get(sel);
+    const mech = this.m.mech, i = this.shots.indexOf(s), end = i + 1 < this.shots.length ? this.shots[i + 1].at : this.duration;
+    let best = null, bestO = -1;
+    for (const c of mech ? mech.causes.filter((c) => (sel === 'starter' ? c.kind === 'starter' : c.lane === sel)) : []) {
+      const L = mech.lines[c.line], hx = mech.helices.find((h) => h.line === c.line), t0 = hx ? hx.tTop - 0.2 : L.t0, o = Math.min(end, L.tEnd) - Math.max(s.at, t0);
+      if (o > bestO) { bestO = o; best = c; }
     }
-    return best;
+    s._chain.set(sel, best); return best;
   }
-  causeFocus(sel, t, lag) {
-    const out = new THREE.Vector3(); let n = 0;
-    for (let k = -4; k <= 4; k++) { const p = this.causeAt(sel, t + (k / 4) * lag); if (p) { const w = 1 - Math.abs(k) / 5; out.addScaledVector(p, w); n += w; } }
-    return n ? out.multiplyScalar(1 / n) : null;
+  // where that chain's action is at t: the relay ball's height on its helix's axis, then the domino wave's front (held at
+  // its ends before and after, so the subject never jumps)
+  chainAt(c, t) {
+    const mech = this.m.mech, L = mech.lines[c.line], hx = mech.helices.find((h) => h.line === c.line);
+    const wave = (tt) => { const k = Math.max(0, Math.min(L.n - 1, (tt - L.t0) / L.tau)), i = Math.floor(k), q = L.pts[i], r = L.pts[Math.min(L.n - 1, i + 1)], f = k - i; return new THREE.Vector3(q.x + (r.x - q.x) * f, L.h * 0.6, q.z + (r.z - q.z) * f); };
+    if (hx && t < L.t0) { const b = this.m.balls[hx.ball], y = this.ballPos(b, Math.max(hx.tTop - 0.2, t)).y; return new THREE.Vector3(hx.pole.x, y, hx.pole.z); }
+    return wave(t);
+  }
+  causeAt(sel, t, s) { // is the chain doing something at t? (for checks)
+    const c = s ? this.chainFor(s, sel) : null; if (!c) return null;
+    const mech = this.m.mech, L = mech.lines[c.line], hx = mech.helices.find((h) => h.line === c.line);
+    return t >= (hx ? hx.tTop - 0.2 : L.t0 - 0.15) && t <= L.tEnd + 0.15 ? this.chainAt(c, t) : null;
   }
 
   // ---- the camera: a shot is a function of t → { pos, target, fov, focus }
@@ -309,14 +332,15 @@ export class Piece {
     let pos, target, fov = s.fov ?? 32, focus = null;
     if (s.kind === 'orbit') { target = c.clone(); if (s.lift) target.y += s.lift * u; pos = sph(target, s.dist ?? this.span * 1.6, (s.angle ?? 35) + (s.speed ?? 4) * u, s.elev ?? 24); }
     else if (s.kind === 'follow' && s.cause) { // the chain of causes that will set off this lane's next ball (or the starter's)
-      target = this.causeFocus(s.cause, t, s.lag ?? 0.25) || this.laneFocus(s.cause === 'starter' ? [this.o.lanes[0].id] : [s.cause], t, 0.35);
+      const c = this.chainFor(s, s.cause);
+      target = c ? this.smooth(`chain:${c.line}:${s.lag ?? 0.4}`, (tt) => this.chainAt(c, tt), t, s.lag ?? 0.4) : this.laneFocus([this.o.lanes[0].id], t);
       pos = sph(target, s.dist ?? 0.6, (s.angle ?? 30) + (s.speed ?? 3) * u, s.elev ?? 22);
-      focus = this.causeFocus(s.cause, t, 0.05) || target;
+      focus = c ? this.smooth(`chain:${c.line}:f`, (tt) => this.chainAt(c, tt), t, 0.15) : target;
     } else if (s.kind === 'follow') {
-      const lanes = s.lanes || [s.lane]; target = this.laneFocus(lanes, t, s.lag ?? 0.35);
+      const lanes = s.lanes || [s.lane]; target = this.laneFocus(lanes, t, s.lag ?? 0.45);
       if (s.offset) target.add(A(s.offset));
       pos = sph(target, s.dist ?? 0.9, (s.angle ?? 30) + (s.speed ?? 3) * u, s.elev ?? 14);
-      focus = this.laneFocus(lanes, t, 0.08);
+      focus = this.smooth(`lanes:${lanes.join(',')}:f`, (tt) => this.ballsAt(lanes, tt), t, 0.12) || target;
     } else if (s.kind === 'fixed') { pos = A(s.pos); target = A(s.target); }
     else if (s.kind === 'move') { const k = ease(u / (s.dur ?? 6)); pos = A(s.from.pos).lerp(A(s.to.pos), k); target = A(s.from.target).lerp(A(s.to.target), k); fov = lerp(s.from.fov ?? fov, s.to.fov ?? fov, k); }
     else throw new Error(`unknown shot kind "${s.kind}" (orbit, follow, fixed, move)`);
@@ -328,8 +352,11 @@ export class Piece {
     const cur = this.shotAt(S[i], t);
     if (i > 0 && t < S[i].at + S[i].blend) {
       const prev = this.shotAt(S[i - 1], t), k = ease((t - S[i].at) / S[i].blend);
-      // a glide between far-apart subjects would sweep over empty floor: cut instead (blend only between neighbours)
-      if (prev.target.distanceTo(cur.target) > (S[i].maxGlide ?? 1.4)) return cur;
+      // a glide between far-apart subjects would sweep over empty floor: cut instead (blend only between neighbours).
+      // Decided once, at the shot's start, so it can't flicker between gliding and cutting frame by frame
+      // (also cut when the camera would rush in or out by metres in one blend — a swoop that fast reads as a lurch)
+      if (S[i]._cut === undefined) { const a0 = this.shotAt(S[i - 1], S[i].at), b0 = this.shotAt(S[i], S[i].at); S[i]._cut = a0.target.distanceTo(b0.target) > (S[i].maxGlide ?? 1.4) || Math.abs(a0.pos.distanceTo(a0.target) - b0.pos.distanceTo(b0.target)) / S[i].blend > 1.6; }
+      if (S[i]._cut) return cur;
       // glide: the subject moves in a line, the camera swings round it (its offset turns and stretches), never through it
       const a = prev.pos.clone().sub(prev.target), b = cur.pos.clone().sub(cur.target), la = a.length(), lb = b.length();
       const q = new THREE.Quaternion().setFromUnitVectors(a.normalize(), b.normalize()), qk = new THREE.Quaternion().slerp(q, k);
@@ -419,7 +446,7 @@ export class Piece {
           if (d < rr + 0.04 || (hd < 0.03 && c.pos.y < pd.center.y)) { clip.add(`shot ${i} (${s.kind} @ ${s.at} s): the camera passes through pad ${pd.id} or its pole at ${t.toFixed(2)} s — move it`); break; }
         }
         if (k % 2) continue; // during a glide the old subject is still the subject
-        if (s.cause) { n++; if (this.causeAt(s.cause, t)) seen++; continue; }
+        if (s.cause) { n++; if (this.causeAt(s.cause, t, s)) seen++; continue; }
         const ballsNow = (s.kind === 'follow' ? (s.lanes || [s.lane]) : this.o.lanes.map((l) => l.id)).map((l) => this.activeBall(l, t)).filter((b) => b && t >= b.release && t <= b.last);
         for (const b of ballsNow) {
           const p = this.ballPos(b, t), q = p.clone().project(cam); n++;
@@ -433,6 +460,19 @@ export class Piece {
       if (s.kind === 'follow' && minPx < 1.6) warnings.push(`shot ${i} (follow @ ${s.at} s): the ball is only ${minPx.toFixed(1)} px across at this size — move closer`);
     });
     errors.push(...[...clip].slice(0, 6));
+    // a steady camera: the look direction and position must not wobble from frame to frame — measured against a local
+    // quadratic fit over ±0.23 s (Savitzky–Golay, so a smooth swoop or an easing glide is not counted), cuts excluded
+    const fps = this.fps, N = Math.floor(this.duration * fps), C = [];
+    for (let f = 0; f < N; f++) { const c = this.cameraAt(f / fps); C.push({ p: c.pos, d: c.target.clone().sub(c.pos).normalize() }); }
+    const W = 7, steady = this.shots.map(() => ({ ang: 0, mm: 0 }));
+    for (let f = W; f < N - W; f++) {
+      const t = f / fps; let si = 0; while (si + 1 < this.shots.length && this.shots[si + 1].at <= t) si++;
+      const near = (x) => Math.abs(t - x) < 0.3; if (near(this.shots[si].at) || (this.shots[si + 1] && near(this.shots[si + 1].at))) continue;
+      const pa = new THREE.Vector3(), da = new THREE.Vector3(); for (let j = -W; j <= W; j++) { const c = (501 - 15 * j * j) / 3315; pa.addScaledVector(C[f + j].p, c); da.addScaledVector(C[f + j].d, c); }
+      da.normalize();
+      steady[si].ang = Math.max(steady[si].ang, (C[f].d.angleTo(da) * 180) / Math.PI); steady[si].mm = Math.max(steady[si].mm, C[f].p.distanceTo(pa) * 1000);
+    }
+    steady.forEach((st, i) => { shotInfo[i].wobble = +st.ang.toFixed(2); shotInfo[i].jitterMm = Math.round(st.mm); if (st.ang > 0.35 || st.mm > 20) errors.push(`shot ${i} (${this.shots[i].kind} @ ${this.shots[i].at} s): the camera shakes (${st.ang.toFixed(2)}° / ${st.mm.toFixed(0)} mm off its own smooth path) — raise lag, or follow something steadier`); });
     const hitsPerLane = Object.fromEntries(this.o.lanes.map((l) => [l.id, m.pads.filter((p) => p.lane === l.id).length])), ballsPerLane = Object.fromEntries(this.o.lanes.map((l) => [l.id, m.balls.filter((b) => b.lane === l.id).length]));
     return { errors, warnings, info: { duration: this.duration, music: +(m.end - m.intro).toFixed(2), pads: m.pads.length, balls: m.balls.length, lanes: this.o.lanes.length, hitsPerLane, ballsPerLane, sim: sim.report, maxTilt: Math.max(...m.pads.map((p) => p.tilt)).toFixed(1), height: this.bb.y1.toFixed(2), footprint: [(this.bb.x1 - this.bb.x0).toFixed(2), (this.bb.z1 - this.bb.z0).toFixed(2)], shots: shotInfo, mech: mech ? { lines: mech.lines.length, dominoes: mech.lines.reduce((a, L) => a + L.n, 0), helices: mech.helices.length, rods: mech.rods.length, catapults: m.droppers.filter((d) => d.kind === 'catapult').length, droppers: m.droppers.filter((d) => d.kind !== 'catapult').length, rails: (m.rails || []).length, starter: !!mech.starter, causes: mech.causes.reduce((o, c) => ((o[c.kind] = (o[c.kind] || 0) + 1), o), {}) } : null } };
   }
