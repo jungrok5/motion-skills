@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cast sheet · engraving-collage-film</title>
+<script type="importmap">{ "imports": { "three": "../lib/vendor/three.module.min.js", "ec/": "../lib/" } }</script>
+<style>body{margin:0;background:#e9e6df}canvas{display:block;max-width:100%;height:auto}</style>
+</head>
+<body>
+<script type="module">
+// The cast sheet: every view facing right and left, the walk / run keys, the jump, the wave, a stepped turn, idle.
+// Review it before any shot (references/BRIEF.md → cast rubric). window.castReport = { audit, motion }.
+import { castSheet } from 'ec/sheet.js';
+import { cast } from './cast.js';
+const c = document.createElement('canvas'); document.body.append(c);
+window.castReport = castSheet(c, cast);
+window.__ready = true;
+</script>
+</body>
+</html>

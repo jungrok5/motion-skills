@@ -155,7 +155,7 @@ description: 무엇을 만드는지 한두 문장 + 언제 쓰는지. 트리거 
 - 스틸 검토 한 줄: "뜨거나, 미끄러지거나, 죽은 듯 서 있는 게 있는가? 큰 동작이 모였다가 떨어지는가?"
 - 겪은 문제는 `references/LESSONS.md`에.
 
-코드 전용 스킬(`machine-sim`, `swarm-world`, `aesthetics-film`, `photoreal-film`, `ink-word-world`, `dragon-realm`, `living-realm`, `torn-page-journey`, `walking-colossus`, `logo-construction`, `sprite-stack-flight`, `ten-second-scene`, `pixel-world-compiler`, HTML-in-Canvas 라이브 페이지 스킬, 그리고
+코드 전용 스킬(`machine-sim`, `swarm-world`, `aesthetics-film`, `photoreal-film`, `ink-word-world`, `dragon-realm`, `living-realm`, `torn-page-journey`, `walking-colossus`, `logo-construction`, `sprite-stack-flight`, `ten-second-scene`, `pixel-world-compiler`, `engraving-collage-film`, HTML-in-Canvas 라이브 페이지 스킬, 그리고
 `SKILL.md`에 code-only라고 적힌 스킬)은 생성 · 다운로드한 모션 데이터를 쓰지 않고, 같은 원칙을 코드로 직접 키잉합니다.
 
 ### 생성 모델 (영상 · 이미지 · 음성) 쓰기
@@ -186,13 +186,34 @@ description: 무엇을 만드는지 한두 문장 + 언제 쓰는지. 트리거 
 - 특정 프로젝트의 절대 경로(`/home/…`, `C:\…`)와 원본 사이트의 하드코딩 URL. 실제 작품 레포 · 라이브 주소를 **출처로 언급**하는 것만 예외입니다.
 - 원본 레포의 비밀값, 개인 정보, 배포 설정.
 
+### X · Threads 게시물에서 출처 읽기
+
+출처가 X 게시물이면 **본문과 영상을 직접 읽은 뒤에** 설계합니다. 게시물을 못 읽은 채 짐작으로 스킬을 만들지 않습니다.
+
+- **`x.com` 주소를 그대로 가져오면 402(Payment Required)가 납니다.** X는 자동화된 요청에 게시물을 주지 않습니다. 이것은 막힌 것이
+  아니라 원래 그렇게 동작하는 것이고, 이 레포는 처음부터 아래 공개 읽기 API로 읽어 왔습니다(painted-cloak-hero, machine-build-reel,
+  crayon-statechart … 의 `references/LESSONS.md`).
+  - 스레드 전체: `curl -s https://api.fxtwitter.com/2/thread/<id>` — 본문, 작성자의 이어진 답글(프롬프트 · 레포 링크가 첫 답글에 있는
+    경우가 많음), 인용 게시물, 미디어 URL. 게시물 하나만: `https://api.fxtwitter.com/<user>/status/<id>`, 또는
+    `https://cdn.syndication.twimg.com/tweet-result?id=<id>&token=a`.
+  - 영상: 응답의 `media.videos[].formats`에서 1080p 안팎 MP4(`video.twimg.com/…`)를 받고, 접촉 시트로 봅니다
+    (`ffmpeg -i clip.mp4 -vf "fps=1/2,scale=640:-1" f/%02d.jpg` → `tile=3x3`). 이미지는 `pbs.twimg.com`.
+  - 받은 JSON · MP4 · 프레임은 스크래치 폴더에만 둡니다. 레포와 `docs/`에는 넣지 않습니다.
+- **402를 보고 멈추지 않습니다.** 402는 실패가 아니라 "API로 읽으라"는 신호입니다. `x.com` 주소를 미러 · 다른 도구로 몇 번씩
+  바꿔 가며 재시도하지 말고, 바로 위의 API로 갑니다.
+- **에이전트의 권한 검사(auto mode 등)가 `api.fxtwitter.com` · `video.twimg.com` 요청을 막으면**, 다른 우회로를 찾지 말고 소유자에게
+  한 번 묻습니다: "출처 게시물을 공개 API(api.fxtwitter.com)와 영상 CDN(video.twimg.com)으로 읽어도 될까요?" 허락을 받으면 같은 명령을
+  다시 실행합니다. (2026-11 engraving-collage-film을 만들 때 이 단계에서 한 번 멈췄습니다. 소유자가 허락하자 같은 요청이 통과했습니다.)
+- Threads · Instagram · YouTube도 같은 원칙입니다. 공개 페이지나 공개 API로 본문과 미디어를 읽고, 못 읽으면 소유자에게 본문이나
+  미디어 링크를 달라고 합니다.
+
 ---
 
 ## 2. 다른 레포에서 흡수하기
 
 원본 레포(예: `github.com/jungrok5/<project>`)에서 스킬이나 파이프라인을 가져올 때:
 
-1. **읽기부터.** 원본의 스킬 폴더(있다면), 스크립트, README/DEVELOPMENT 노트, 최근 커밋 메시지를 읽고 무엇이 일반적인 방법이고
+1. **읽기부터.** (출처가 X 게시물이면 [X · Threads 게시물에서 출처 읽기](#x--threads-게시물에서-출처-읽기)대로 본문과 영상부터.) 원본의 스킬 폴더(있다면), 스크립트, README/DEVELOPMENT 노트, 최근 커밋 메시지를 읽고 무엇이 일반적인 방법이고
    무엇이 그 작품만의 내용인지 나눕니다.
 2. **남길 것 / 일반화할 것**
 
