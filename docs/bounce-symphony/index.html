@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>bounce-symphony · motion-skills</title>
+<meta name="description" content="주제나 곡을 주면 어두운 스튜디오 바닥의 루브 골드버그 음악 기계에서 공이 떨어져 마림바 막대 · 글로켄슈필 건반 · 볼 · 공(gong) 위를 튕기며 음 하나하나를 박자에 맞춰 치는 영상을 만듭니다. 악보에서 거꾸로 기계를 설계하고 물리 시뮬레이션으로 증명합니다.">
+<meta property="og:title" content="bounce-symphony · motion-skills">
+<meta property="og:description" content="공이 튕길 때마다 음 하나를 정확히 치는 루브 골드버그 음악 기계 영상을 악보에서 거꾸로 설계하고 물리로 증명합니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/bounce-symphony/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/bounce-symphony">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / bounce-symphony</nav>
+  <h1>bounce-symphony</h1>
+  <p>주제나 곡을 주면 어두운 스튜디오 바닥에 선 루브 골드버그 음악 기계를 만듭니다. 가는 기둥마다 마림바 막대 · 글로켄슈필 건반 · 볼 · 공(gong) 같은 패드가 하나씩 달려 있고, 작은 뚜껑이 열리면 공이 떨어져 패드에서 패드로 튕기며 음 하나하나를 정확히 박자에 맞춰 칩니다. 맞은 패드는 음높이의 색으로 빛나며 흔들리고, 악구가 끝난 공은 컵에 떨어져 멈춥니다. 기계는 악보에서 거꾸로 설계하고(실제 포물선과 반발 계수로 다음 음 시각에 다음 패드에 닿도록 패드마다 위치와 기울기를 계산) 독립된 순방향 물리 시뮬레이션으로 증명하며, 소리도 같은 타격에서 합성합니다.
+  보고 만든 원본: <a href="https://www.facebook.com/share/v/1DwMH4wj7u/" target="_blank" rel="noopener">Seung Joon Choi의 Facebook 영상 「튕기는 공의 교향곡 (루브골드버그 머신 + 음악)」</a>.</p>
+  <ul class="tags"><li>역설계 물리</li><li>순방향 시뮬레이션 검증</li><li>three.js 스튜디오</li><li>모달 타악기 합성</li><li>MP4 · 라이브 페이지</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나(“등대지기를 위한 자장가”, “로봇 공장 행진곡”), 또는 영상용으로 새로 쓸 곡 · 사용자의 곡 · 퍼블릭 도메인 곡</dd>
+      <dt>브리프</dt><dd>한 줄 느낌, 곡의 출처와 권리, 조 · 박자 · 템포와 음악 사건, 레인(한 줄 선율)마다의 악기와 움직임과 공의 색, 위에서 본 기계의 평면도, 악기 몸체와 방, 음악 사건마다의 샷, 믹스를 적은 <code>BRIEF.md</code></dd>
+      <dt>기계</dt><dd>레인의 음표를 레이아웃(나선 · 호 · 지그재그 · 그린 경로) 위에 놓고, 음마다 다음 패드의 높이와 기울기를 역탄도 계산으로 찾음. 이어 칠 수 없는 긴 음은 새 공(드로퍼 → 패드 → 컵)</dd>
+      <dt>확인</dt><dd>마디 검사, 모든 음에 패드가 있는지, 공마다 드로퍼에서 놓아 실제로 날려 보는 순방향 시뮬레이션(타격 2 ms 이내, 다른 패드 · 기둥 · 바닥에 안 닿음), 무엇도 무엇을 관통하지 않는지, 카메라가 치는 공을 담는지 · 패드를 뚫지 않는지, 결정성, 소리</dd>
+      <dt>출력</dt><dd>30fps 1920×1080 MP4와 WAV, ▶ 버튼으로 소리를 합성해 화면과 함께 재생하는 라이브 페이지</dd>
+    </dl>
+    <pre><code>cd bounce-symphony/examples/lighthouse-lullaby
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs index.html --sheet --scale .5
+node ../../scripts/render.mjs index.html --preview
+node ../../scripts/render.mjs index.html
+node ../../scripts/new-piece.mjs ~/my-piece</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. GPU · npm 설치 · API 키가 필요 없습니다(CPU WebGL에서 1920×1080 한 프레임 약 1초, 31.7초 예제 미리보기를 워커 4개로 약 1분 반). 생성 모델을 쓰지 않는 코드 전용 스킬입니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/bounce-symphony/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:calc((100vw - 34px)*.5625);--demo-bg:#0a0f17">
+    <iframe data-src="demo/examples/lighthouse-lullaby/" title="bounce-symphony 예제 실시간 재생" allow="fullscreen; autoplay" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/lighthouse-lullaby/">데모 열기 (examples/lighthouse-lullaby)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/lighthouse-lullaby</code> · 3/4 자장가 · 공 28개 · 패드 100개 · 31.7초 · ▶ 버튼으로 소리</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/lighthouse-lullaby/" data-cap="예제 &lt;code&gt;examples/lighthouse-lullaby&lt;/code&gt; · 3/4 자장가 · 공 28개 · 패드 100개 · 31.7초 · ▶ 버튼으로 소리" aria-pressed="true">등대 자장가</button>
+        <button class="btn" type="button" data-src="demo/templates/" data-cap="템플릿 &lt;code&gt;templates/piece.html&lt;/code&gt; · 「Marble Canon」 12마디 · 공 26개 · 패드 171개 · 35.7초 · 새 작품의 출발점" aria-pressed="false">Marble Canon</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본 영상에 없는 주제로 브리프부터 새로 설계한 예제, 시작 템플릿, 검토용 이미지입니다. 카드를 누르면 그 순간이 라이브 페이지에서 멈춘 채 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"lullaby":"등대 자장가","canon":"Marble Canon","tool":"검토"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「Lighthouse Lullaby」 등대지기를 위한 자장가 <small>3/4 · ♩=84 · F장조 · 31.7초</small></h3>
+      <p>비브라폰 막대로 쌓은 원뿔 등대를 파도(하늘색 공)가 돌며 내려오고, 바깥 고리의 칼림바가 노래하고, 볼이 화음을, 공(gong)이 악구 끝을 알립니다. 밤의 푸른 방, 머리 위 따뜻한 등 하나, 호박색과 바다 청록으로 빛나는 막대</p>
+      <div class="grid">
+        <a class="tile" data-tags="lullaby" href="demo/examples/lighthouse-lullaby/?t=1.5" target="_blank" rel="noopener">
+          <img src="samples/lullaby-plan.jpg" alt="어두운 푸른 바닥 위, 가는 기둥에 달린 은색 막대들이 나선을 그리며 솟은 원뿔 탑과 그 둘레를 고리처럼 둘러싼 기둥들, 기둥 끝마다 작은 드로퍼와 컵" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">시작 · 1.5초</span><b>고리 안의 등대</b><span class="how">첫 공이 떨어지기 전, 기계 전체를 도는 샷</span></div></a>
+        <a class="tile" data-tags="lullaby" href="demo/examples/lighthouse-lullaby/?t=7.6" target="_blank" rel="noopener">
+          <img src="samples/lullaby-tower.jpg" alt="가까이서 본 비브라폰 막대 계단, 하늘색 공이 내려오고 방금 맞은 막대가 따뜻한 흰빛으로 빛나며 뒤로 드로퍼와 컵이 흐리게 보임" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">3마디</span><b>등대 안쪽</b><span class="how">파도 레인을 따라가는 샷, 공 위로 막대가 빛남</span></div></a>
+        <a class="tile" data-tags="lullaby" href="demo/examples/lighthouse-lullaby/?t=12.2" target="_blank" rel="noopener">
+          <img src="samples/lullaby-shore.jpg" alt="어둠 속 기둥들 사이에서 금색 공이 칼림바 살 위로 튕기고, 맞은 살 하나가 호박색으로 빛나며 주변에 빈 컵들" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">5마디</span><b>바닷가의 노래</b><span class="how">칼림바 선율, 짧은 사슬마다 새 공</span></div></a>
+        <a class="tile" data-tags="lullaby" href="demo/examples/lighthouse-lullaby/?t=23" target="_blank" rel="noopener">
+          <img src="samples/lullaby-cone.jpg" alt="낮은 각도에서 본 원뿔 등대의 막대 곡선이 차례로 빛나 흰 빛의 띠를 이루고 앞쪽에 금색 칼림바 살이 빛나는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">9마디</span><b>빛의 띠</b><span class="how">지나간 타격이 천천히 식으며 나선을 그림</span></div></a>
+        <a class="tile" data-tags="lullaby" href="demo/examples/lighthouse-lullaby/?t=27.4" target="_blank" rel="noopener">
+          <img src="samples/lullaby-stairs.jpg" alt="공중에 계단처럼 늘어선 막대들, 아래쪽 막대들이 호박빛으로 밝게 빛나고 하늘색 공이 그 위를 날며 옆에 컵 하나" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">12마디</span><b>마지막 하강</b><span class="how">높은 A로 끝나는 파도, 막대마다 남은 빛</span></div></a>
+        <a class="tile" data-tags="lullaby" href="demo/examples/lighthouse-lullaby/?t=31.2" target="_blank" rel="noopener">
+          <img src="samples/lullaby-end.jpg" alt="높이서 내려다본 원뿔 탑과 둘레의 기둥 고리, 모든 공이 컵에 들어가 멈춘 기계" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">끝 · 31.2초</span><b>모두 컵 안에</b><span class="how">마지막 공(gong)의 여음 속에 멀어지는 샷</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>「Marble Canon」 시작 템플릿 <small>4/4 · ♩=96 · D장조 · 12마디 · 35.7초</small></h3>
+      <p>가운데 마림바 나선이 화음을 8분음표 아르페지오로 굴리고, 둘레의 고리에서 글로켄슈필 선율 · 베이스 마림바 · 싱잉볼이 연주합니다. 회색 스튜디오와 무지개 음높이 색. 새 작품은 여기서 시작해 주제에 맞게 바꿉니다</p>
+      <div class="grid">
+        <a class="tile" data-tags="canon" href="demo/templates/?t=1.5" target="_blank" rel="noopener">
+          <img src="samples/canon-plan.jpg" alt="회색 바닥 위 주황색 마림바 막대가 소용돌이를 그리고 그 둘레에 기둥들이 두세 겹 고리를 이룬 기계 전체" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">시작 · 1.5초</span><b>소용돌이와 고리</b><span class="how">드로퍼마다 공이 대기 중인 첫 장면</span></div></a>
+        <a class="tile" data-tags="canon" href="demo/templates/?t=7.9" target="_blank" rel="noopener">
+          <img src="samples/canon-spiral.jpg" alt="가까이서 본 마림바 나선, 빨간 공 아래 막대가 청록으로 빛나고 그 앞의 막대들이 분홍 · 노랑 · 회청색으로 식어 가는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">2마디</span><b>음높이의 빛</b><span class="how">맞은 막대가 그 음의 색으로 빛났다가 식음</span></div></a>
+        <a class="tile" data-tags="canon" href="demo/templates/?t=11.9" target="_blank" rel="noopener">
+          <img src="samples/canon-rings.jpg" alt="비스듬히 위에서 본 마림바 소용돌이, 막대들이 긴 그림자를 드리우고 바깥 고리에서 막대 몇 개가 연두 · 보라로 빛남" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">4마디</span><b>첫 악구의 끝</b><span class="how">기계 둘레를 도는 샷</span></div></a>
+        <a class="tile" data-tags="canon" href="demo/templates/?t=20.8" target="_blank" rel="noopener">
+          <img src="samples/canon-low.jpg" alt="낮은 각도에서 기둥 위 막대들 사이로 빨간 공이 날고, 앞쪽 막대들이 회청 · 노랑 · 분홍빛을 띠는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">8마디</span><b>막대 사이로 낮게</b><span class="how">아르페지오를 바닥 높이에서 따라감</span></div></a>
+        <a class="tile" data-tags="canon" href="demo/templates/?t=24.5" target="_blank" rel="noopener">
+          <img src="samples/canon-lift.jpg" alt="높이서 본 소용돌이 기계 전체, 곳곳에서 패드와 드로퍼가 하얗고 초록으로 빛나는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">9마디</span><b>모두 연주</b><span class="how">선율이 올라가는 마디, 넓은 샷</span></div></a>
+        <a class="tile" data-tags="canon" href="demo/templates/?t=28.4" target="_blank" rel="noopener">
+          <img src="samples/canon-bass.jpg" alt="공중에 뜬 듯한 긴 막대들, 파란 공이 노란 베이스 막대에서 튀어 오르는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">11마디</span><b>베이스 걸음</b><span class="how">단단한 막대(e 0.92)에서 공 하나가 열 음쯤</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>검토 <small>평면도 · 시트</small></h3>
+      <p>브리프의 평면도가 화면에 그대로 나왔는지 위에서 확인하고, 샷마다 시작 · 정착 순간을 한 장에 모아 검토 기준으로 채점합니다</p>
+      <div class="grid">
+        <a class="tile" data-tags="tool" href="https://github.com/jungrok5/motion-skills/blob/main/bounce-symphony/references/ENGINE.md" target="_blank" rel="noopener">
+          <img src="samples/machine-top.jpg" alt="위에서 내려다본 「Marble Canon」 기계, 가운데 주황 막대의 소용돌이와 둘레의 볼 · 글로켄슈필 · 베이스 고리, 기둥 그림자" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">위에서</span><b>기계의 평면도</b><span class="how">레인마다 나선 · 고리, 공 26개 · 패드 171개</span></div></a>
+        <a class="tile" data-tags="tool" href="https://github.com/jungrok5/motion-skills/blob/main/bounce-symphony/references/BRIEF.md" target="_blank" rel="noopener">
+          <img src="samples/sheet.jpg" alt="「Marble Canon」의 샷 시트, 번호 붙은 열여섯 칸에 넓은 샷과 가까운 샷이 번갈아" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">render.mjs --sheet</span><b>샷 시트</b><span class="how">샷마다 시작과 정착 순간을 스틸 검토 기준으로 채점</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬을 만든 출처와, 이 레포에서 새 주제로 만든 예제입니다.</p>
+  <div class="works">
+    <a class="work" href="https://www.facebook.com/share/v/1DwMH4wj7u/" target="_blank" rel="noopener"><b>원본 · Seung Joon Choi의 Facebook 영상</b><span>「튕기는 공의 교향곡 (루브골드버그 머신 + 음악)」 61초 · 작곡 · MuJoCo 시뮬레이션 · three.js · 직접 만든 Metal 경로 추적 렌더</span><span class="url">facebook.com/share/v/1DwMH4wj7u</span></a>
+    <a class="work" href="demo/examples/lighthouse-lullaby/" target="_blank" rel="noopener"><b>「Lighthouse Lullaby」</b><span>3/4 자장가 · 비브라폰 등대 · 31.7초 · 라이브 페이지</span><span class="url">bounce-symphony/examples/lighthouse-lullaby</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/bounce-symphony/examples/lighthouse-lullaby"><b>원본 레포 · motion-skills</b><span>이 레포에서 만듦</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/bounce-symphony/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/bounce-symphony">폴더</a> <span>lib · scripts · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/bounce-symphony/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/bounce-symphony/references/BRIEF.md">references/BRIEF.md</a> <span>주제 → 브리프, 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/bounce-symphony/references/LOOK.md">references/LOOK.md</a> <span>원본에서 관찰한 화면 문법</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/bounce-symphony/references/ENGINE.md">references/ENGINE.md</a> <span>역설계와 순방향 검증의 수식 · 옵션 · 샷 · 페이지 계약</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/bounce-symphony/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 장면과 소리는 코드로 만들었습니다. 「Marble Canon」과 「Lighthouse Lullaby」는 이 레포의 창작곡. three.js (MIT)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
