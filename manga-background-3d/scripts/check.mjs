@@ -3,7 +3,7 @@
 // Fails (exit 1) on: page errors · a missing contract · a film that does not open on the clay model, has no wipe or
 // does not end on a card · a shot shorter than 1.8 s or longer than 7 s · a wipe faster than 0.8 s · a scene that is
 // not a built set (< 40 primitives) · a manga frame with almost no ink (< 0.8 %) or drowned in it (> 30 %) · fewer
-// than 60 strokes · lines that boil between frames (< 85 % of ink stays put) · a camera that whips (> 0.06 m or
+// than 60 strokes · lines that boil between frames (< 85 % of ink stays put) · z-fighting (faces sharing a plane flicker) · a camera that whips (> 0.06 m or
 // > 0.5° per frame) or sits inside geometry · a frame that changes when seeked twice · glyphs the font lacks ·
 // captions that do not fit · a line plate that is not transparent.
 // Warns on: a day frame with little paper white (< 12 %), a night frame without a dark sky or a glow, a shot with no caption.
@@ -39,7 +39,7 @@ async function open(extra = '') {
   return page;
 }
 const page = await open();
-for (const k of ['seek', 'DURATION', 'FPS', 'SIZE', 'filmInfo', 'viewAt', 'wipeAt', 'linesAt', 'depthStats', 'textCheck', 'glyphCheck', 'soundEvents', 'strokeCount'])
+for (const k of ['seek', 'DURATION', 'FPS', 'SIZE', 'filmInfo', 'viewAt', 'wipeAt', 'linesAt', 'toneAt', 'depthStats', 'textCheck', 'glyphCheck', 'soundEvents', 'strokeCount'])
   if (!(await page.evaluate(k => k in window, k))) F(`contract: window.${k} missing`);
 const info = await page.evaluate(() => window.filmInfo());
 const FPS = info.fps;
@@ -91,6 +91,24 @@ for (const s of sets) {
   }
   const stay = inkB ? kept / inkB : 1;
   if (stay < 0.85) F(`${tag}: only ${(stay * 100).toFixed(0)} % of the ink stays put frame to frame — the lines boil`); else O(`${tag}: ${(stay * 100).toFixed(0)} % of the ink stays put frame to frame`);
+  // z-fighting: two faces in one plane flicker as the camera moves. Over three frames of the tone layer (no ink), count
+  // pixels that jump up then down (or down then up) and sit inside a patch of such pixels — a moving edge is 1–2 px wide
+  // and never a patch; a z-fight is. (Check this test catches one: put two boxes in one plane and run it.)
+  {
+    const dt = 0.25 / FPS;   // quarter frames: a moving thin bar shifts < 1 px, a z-fight still flips
+    const fr = []; for (let k = 0; k < 3; k++) fr.push(await page.evaluate(([t, w]) => window.toneAt(t, w), [+(t - dt + k * dt).toFixed(4), 640]));
+    const g = fr.map(f => Buffer.from(f.grey, 'base64')), W = fr[0].w, H = fr[0].h, fl = new Uint8Array(W * H);
+    for (let i = 0; i < W * H; i++) { const a = g[1][i] - g[0][i], c = g[2][i] - g[1][i]; fl[i] = (a > 20 && c < -20) || (a < -20 && c > 20) ? 1 : 0; }
+    let patch = 0;
+    for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+      if (!fl[y * W + x]) continue; let n = 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) n += fl[(y + dy) * W + x + dx];
+      if (n >= 8) patch++;
+    }
+    const zf = patch / (W * H);
+    if (zf > 0.0004) F(`${tag}: ${(zf * 100).toFixed(2)} % of the frame flickers in patches — z-fighting (two faces in one plane: move one 5 mm, or shorten it so they only touch)`);
+    else O(`${tag}: no z-fighting (${(zf * 100).toFixed(3)} % flicker patches)`);
+  }
   // the camera: a slow dolly, never inside geometry
   let maxMove = 0, maxTurn = 0;
   const n = Math.round(s.dur * FPS);
