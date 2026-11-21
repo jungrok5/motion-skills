@@ -56,6 +56,7 @@ unevenness show as blotches. Move the sun or the tone instead of the thresholds.
 
 ## The film (lib/film.js)
 
+- Camera near plane 0.15 m, far 400 m (depth precision for 5 mm offsets at 50 m).
 - 1920 × 1080 at 24 fps; letterbox bars 10 % of the height each; the 3-D view fills the band between them.
 - Text in Gaegu Bold (OFL, bundled): location top-left at 40 % of the bar height, mode label top-right ("3D 모델" /
   "만화 배경", flips at mid-wipe), caption bottom-centre at 46 %. Cards: black, 74 px lines, a 26 px sub line, fade in.

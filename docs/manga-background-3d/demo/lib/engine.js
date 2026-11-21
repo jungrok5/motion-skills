@@ -234,7 +234,7 @@ export class Engine {
   // set the camera: {pos, look, fov} (fov = vertical degrees)
   aim(view, w, h) {
     const c = this.cam;
-    c.fov = view.fov ?? 50; c.aspect = w / h; c.near = view.near ?? 0.05; c.far = view.far ?? 400;
+    c.fov = view.fov ?? 50; c.aspect = w / h; c.near = view.near ?? 0.15; c.far = view.far ?? 400;   // near 0.15: depth precision for 2–5 mm offsets at 50 m
     c.position.set(...view.pos); c.up.set(0, 1, 0); c.lookAt(...view.look);
     if (view.roll) c.rotateZ(view.roll * Math.PI / 180);
     c.updateProjectionMatrix(); c.updateMatrixWorld(true);

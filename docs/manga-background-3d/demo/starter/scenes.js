@@ -108,7 +108,7 @@ export const scenes = {
     build(S) {
       S.sun({ dir: [-0.6, 0.75, 0.45], area: { center: [0, 1, -1], radius: 9 } });
       S.box([0, -0.3, 0], [10, 0.3, 9], { tone: 0.88, crease: 20 });                         // the roof slab
-      for (const [x, z, w, d] of [[0, -4.5, 10, 0.2], [-5, 0, 0.2, 9], [5, 0, 0.2, 9], [0, 4.5, 10, 0.2]]) S.box([x, 0, z], [w, 1.0, d], { tone: 0.94 });
+      for (const [x, z, w, d] of [[0, -4.5, 10, 0.2], [-5, 0, 0.2, 8.8], [5, 0, 0.2, 8.8], [0, 4.5, 10, 0.2]]) S.box([x, 0, z], [w, 1.0, d], { tone: 0.94 });
       // the rooftop room with its door, window, outdoor unit and gas bottle
       S.at([-2.2, 0, -2.6], 0, () => {
         S.box([0, 0, 0], [4.2, 2.4, 3.0], { tone: 0.97 });
@@ -174,12 +174,12 @@ export const scenes = {
         S.at([side * (1.5 + dpt / 2), g, z - 1.8], side > 0 ? -90 : 90, () => {
           S.box([0, -3, 0], [3.5, h + 3, dpt], { tone: [0.98, 0.9, 0.95, 0.86][(i + (side > 0 ? 1 : 0)) % 4], crease: 20 });
           S.box([0, h, 0.1], [3.8, 0.12, dpt + 0.3], { tone: 0.7 });
-          S.window([-0.6, 1.2, dpt / 2 - 0.02], 1.1, 0.9, { t: 0.06, panes: [2, 1], sill: true });
+          S.window([-0.6, 1.2, dpt / 2 + 0.02], 1.1, 0.9, { t: 0.06, panes: [2, 1], sill: true });
           for (let k = 0; k < 5; k++) S.box([-1.05 + k * 0.22, 1.15, dpt / 2 + 0.08], [0.02, 1.0, 0.02], { tone: 0.5, detail: true });
           S.box([-0.6, 1.15, dpt / 2 + 0.08], [1.15, 0.02, 0.02], { tone: 0.5, detail: true }); S.box([-0.6, 2.13, dpt / 2 + 0.08], [1.15, 0.02, 0.02], { tone: 0.5, detail: true });
-          if (i % 2 === 0) { S.door([1.0, 0, dpt / 2 - 0.02], 0.9, 2.0, { t: 0.06, tone: 0.6 }); S.box([1.0, 2.05, dpt / 2 + 0.25], [1.2, 0.06, 0.55], { tone: 0.75 }); }
+          if (i % 2 === 0) { S.door([1.0, 0, dpt / 2 + 0.02], 0.9, 2.0, { t: 0.06, tone: 0.6 }); S.box([1.0, 2.05, dpt / 2 + 0.25], [1.2, 0.06, 0.55], { tone: 0.75 }); }
           else { S.box([1.1, 1.3, dpt / 2 + 0.1], [0.32, 0.4, 0.2], { tone: 0.82 }); S.line([[1.1, 1.3, dpt / 2 + 0.1], [1.1, 0.2, dpt / 2 + 0.06], [1.6, 0.2, dpt / 2 + 0.06]], { weight: 1 }); }  // gas meter + pipe
-          S.window([0.3, 3.3, dpt / 2 - 0.02], 1.4, 1.0, { t: 0.06, panes: [2, 1], sill: true });
+          S.window([0.3, 3.3, dpt / 2 + 0.02], 1.4, 1.0, { t: 0.06, panes: [2, 1], sill: true });
           if (r() < 0.6) S.box([0.3, 3.0, dpt / 2 + 0.35], [1.6, 0.05, 0.6], { tone: 0.8 });
           S.line([[1.7, h, dpt / 2 + 0.06], [1.7, 0.1, dpt / 2 + 0.06]], { weight: 1.1 });   // the downpipe
         });
@@ -206,7 +206,7 @@ export const scenes = {
     build(S) {
       S.sun({ dir: [0.3, 1, 0.6], shadow: false });
       S.road([30, 0, -4.5], 90, { w: 7, len: 60, kerb: 3, cross: 33, tone: 0.55 });
-      S.box([0, -0.05, 5], [60, 0.2, 8], { tone: 0.7, lines: 'none' });
+      S.box([0, -0.05, 6], [60, 0.2, 8], { tone: 0.7, lines: 'none' });   // starts where the kerb ends (z 2): no shared top face
       // the shelter
       S.at([0, 0.15, 0.6], 0, () => {
         for (const x of [-1.9, 0, 1.9]) S.box([x, 0, 0.6], [0.08, 2.5, 0.08], { tone: 0.6 });

@@ -231,7 +231,7 @@ export class Stage {
       for (let c = 1; c < cols; c++) this.box([-w / 2 + (w * c) / cols, 0, 0], [f * 0.8, h, 0.05], { tone: ft, detail: true });
       for (let r = 1; r < rows; r++) this.box([0, (h * r) / rows - f * 0.4, 0], [w, f * 0.8, 0.05], { tone: ft, detail: true });
       if (o.glass !== false) this.box([0, f, 0], [w - 2 * f, h - 2 * f, 0.012], { flag: 'glass', lines: 'none', cast: false });
-      if (o.sill) this.box([0, -0.04, 0.04], [w + 0.12, 0.04, t + 0.12], { tone: 0.9 });
+      if (o.sill) this.box([0, -0.035, 0.04], [w + 0.12, 0.04, t + 0.12], { tone: 0.9 });   // its top 5 mm above the opening's floor, never on it
     });
   }
   door(pos, w, h, o = {}) {

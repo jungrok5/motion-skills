@@ -111,7 +111,7 @@ export const scenes = {
       S.at([-26, -1.5, -60], 0, () => {
         for (const [x, z, r] of [[0, 0, 9], [8, 3, 6], [-7, 2, 7]]) S.sphere([x, -r * 0.4, z], r, { tone: 0.8, seg: 8, seg2: 6, crease: 30 });
         S.cyl([0, 4.2, 0], 1.6, 13, { r2: 1.15, tone: 0.98, seg: 18 });
-        for (let i = 0; i < 3; i++) S.cyl([0, 6 + i * 3.4, 0], 1.47 - i * 0.12, 1.1, { r2: 1.42 - i * 0.12, tone: 0.55, seg: 18 });
+        for (let i = 0; i < 3; i++) { const y = 6 + i * 3.4, rt = y0 => 1.6 - 0.45 * (y0 - 4.2) / 13 + 0.04; S.cyl([0, y, 0], rt(y), 1.1, { r2: rt(y + 1.1), tone: 0.55, seg: 18 }); }   // bands 4 cm proud of the taper
         S.cyl([0, 17.2, 0], 1.6, 0.25, { tone: 0.6, seg: 18 });
         S.cyl([0, 17.45, 0], 0.95, 1.4, { tone: 0.95, seg: 12, flag: 'glass', lines: 'all' });
         S.cone([0, 18.85, 0], 1.15, 1.0, { tone: 0.6, seg: 12 });
