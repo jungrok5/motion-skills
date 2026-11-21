@@ -214,7 +214,7 @@ function upper(keys, p) {
  * stride / lift / bob are in leg lengths (thigh + shin); phase 0 = the near heel strikes.
  */
 export const GAITS = {
-  walk: { stride: 1.0, stance: 0.6, lift: 0.09, bob: 0.014, height: 0.995, toeUp: -14, heelRise: 24, upper: [
+  walk: { stride: 1.2, stance: 0.6, lift: 0.09, bob: 0.016, height: 0.995, toeUp: -14, heelRise: 24, upper: [
     [0.00, { arm: [20, -12], torso: 3, head: -1 }], [0.25, { arm: [2, -14], torso: 3.5, head: 1 }],
     [0.50, { arm: [-18, -26], torso: 3, head: -1 }], [0.75, { arm: [0, -16], torso: 3.5, head: 1 }]] },
   run: { stride: 2.1, stance: 0.36, lift: 0.32, bob: 0.04, height: 0.95, toeUp: -8, heelRise: 34, upper: [

@@ -102,7 +102,9 @@ renders in about 6 min with 4 workers.
    have one (below).
 6. **Shots** in `piece.html`: per shot `set`, `dur`, `cam` keys (`pos`, `look`, `fov`, `focus`), `ease`, `acts`
    (`{ at, face, view }` then `{ t, walk | run: [x, z] }`, `{ t, turn: 'front' }`, `{ t, do: 'wave' }`, `expr`, `look`,
-   `hold`). Walks and runs go **across** the camera (≥ 60 % sideways on screen).
+   `hold`). Walks and runs go **across** the camera (≥ 60 % sideways on screen). Moves never overlap: a child walks
+   about 0.8 m a second and runs about 2.4 (natural duration ≈ distance × 1.4 walking, × 0.5 running), so give a walk
+   its time before the next turn or action; a jump clears about 2 m.
 7. **Review stills**: `render.mjs piece.html --shots --scale .5` (each shot at 15 / 50 / 85 %, comp and breakdown) and
    `--sheet 12`; score the still rubric in references/BRIEF.md. Log failures in BRIEF.md, fix, render again.
 8. **Check**: `node <skill>/scripts/check.mjs piece.html` must end with `all checks passed`. Read the warnings too.
@@ -130,7 +132,10 @@ renders in about 6 min with 4 workers.
   irregularly; big moves wind up the opposite way (≥ 3 frames) and recover with follow-through; hair, braids, scarves and
   hems trail the body's speed of a moment ago; legs on the ground never slide (walks and runs advance by the distance
   travelled, legs solved by IK onto a keyed foot path); turns are stepped; moves run across the camera; the character
-  faces the way they move. check.mjs measures all of it.
+  faces the way they move. Moves (walk / run / turn / do) happen one after another: block each to end before the next
+  starts — the film shortens a walk that would run into the next move and queues any other overlap, and check.mjs fails a
+  walk hurried past 1.5× its natural speed, a queued act, and any root that jumps more than 0.35 m in a frame
+  (a teleport). check.mjs measures all of it.
 - **Motion from key poses.** Every motion is a key table interpolated by the rig, never limbs tweened one by one. A new
   move: get a reference (a video-model clip of the character's still, or filmed / found footage), pick its key poses,
   write them as an `ACTIONS` entry with `antic`, note the reference in BRIEF.md. Generated video stays out of the repo

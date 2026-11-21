@@ -19,15 +19,15 @@ new Film({
     // 1 · from the masthead down to the ice: Nell walks out across the floe and points at the bergs
     { set: 'floe', dur: 6.0,
       cam: [{ pos: [-6, 9, 8], look: [-1, 1, -10], fov: 44, focus: 16 }, { pos: [-3.2, 2.8, 5.0], look: [-0.6, 1, -5], fov: 42, focus: 8 }, { pos: [-1.2, 1.15, 3.0], look: [0.8, 1.0, -3.4], fov: 40, focus: 5 }],
-      acts: { nell: [{ at: [-4.2, 0, -1.6], face: 1, view: 'side', expr: 'neutral' }, { t: 0.6, walk: [0.6, -2.6] }, { t: 4.0, do: 'point' }, { t: 4.1, expr: 'smile' }] } },
+      acts: { nell: [{ at: [-2.0, 0, -1.9], face: 1, view: 'side', expr: 'neutral' }, { t: 0.4, walk: [0.6, -2.6] }, { t: 4.35, do: 'point' }, { t: 4.45, expr: 'smile' }] } },
     // 2 · she runs along the lead and jumps it; the camera trucks beside her, low on the ice
     { set: 'lead', dur: 5.2, focus: 6,
-      cam: [{ pos: [-5.8, 0.85, 3.4], look: [-3.8, 0.9, -3], fov: 42 }, { pos: [-0.8, 0.95, 3.6], look: [0.6, 1.0, -3.4], fov: 42 }, { pos: [3.4, 1.1, 2.8], look: [4.4, 1.2, -5], fov: 40 }],
-      acts: { nell: [{ at: [-7.6, 0, -1.2], face: 1, view: 'side', expr: 'smile' }, { t: 0.2, run: [-1.2, -1.4] }, { t: 2.0, do: 'jump', to: [1.9, -4.8] }, { t: 3.4, walk: [4.6, -5.2] }] } },
+      cam: [{ pos: [-5.8, 0.85, 3.4], look: [-3.8, 0.9, -3], fov: 42 }, { pos: [-0.8, 0.95, 3.6], look: [0.6, 1.0, -3.4], fov: 42 }, { pos: [1.6, 1.1, 2.6], look: [1.6, 1.2, -5], fov: 40 }],
+      acts: { nell: [{ at: [-5.0, 0, -1.2], face: 1, view: 'side', expr: 'smile' }, { t: 0.2, run: [-1.2, -1.8] }, { t: 2.2, do: 'jump', to: [-0.3, -4.1] }, { t: 3.4, walk: [1.6, -4.5] }] } },
     // 3 · night: she turns to us under the aurora, looks up and waves at it
     { set: 'night', dur: 5.6,
       cam: [{ pos: [0.6, 1.0, 5.4], look: [0, 1.3, -2], fov: 40, focus: 5.4 }, { pos: [0.2, 0.9, 3.9], look: [0, 1.6, -3], fov: 42, focus: 4.0 }, { pos: [-0.3, 0.8, 3.4], look: [0, 2.0, -8], fov: 44, focus: 3.6 }],
-      acts: { nell: [{ at: [-1.4, 0, 0.2], face: 1, view: 'threeq', expr: 'neutral' }, { t: 0.3, walk: [0.1, 0.0], view: 'threeq' }, { t: 1.6, turn: 'front' }, { t: 2.3, do: 'lookUp' }, { t: 2.5, expr: 'surprise' }, { t: 3.7, do: 'wave' }, { t: 3.8, expr: 'smile' }] } },
+      acts: { nell: [{ at: [-0.9, 0, 0.2], face: 1, view: 'threeq', expr: 'neutral' }, { t: 0.3, walk: [0.1, 0.0], view: 'threeq' }, { t: 1.8, turn: 'front' }, { t: 2.4, do: 'lookUp' }, { t: 2.6, expr: 'surprise' }, { t: 3.8, do: 'wave' }, { t: 3.9, expr: 'smile' }] } },
   ],
 }).start();
 </script>
