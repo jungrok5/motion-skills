@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>pop-up-quest · motion-skills</title>
+<meta name="description" content="주제를 주면 식탁보 위에 펼친 하드커버 팝업 동화책으로 여정을 설계합니다. 펼침면마다 판지 팝업 세트가 일어서고 넘어가는 책장에 납작하게 접히며, 종이 인형 주인공이 걸어 들어오고 읽는 사람은 소품을 눌러 작은 과제를 풉니다.">
+<meta property="og:title" content="pop-up-quest · motion-skills">
+<meta property="og:description" content="주제를 주면 식탁보 위에 펼친 하드커버 팝업 동화책으로 여정을 설계합니다. 펼침면마다 판지 팝업 세트가 일어서고 넘어가는 책장에 납작하게 접히며, 종이 인형 주인공이 걸어 들어오고 읽는 사람은 소품을 눌러 작은 과제를 풉니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/pop-up-quest/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/pop-up-quest">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / pop-up-quest</nav>
+  <h1>pop-up-quest</h1>
+  <p>주제를 주면 식탁보 위에 펼친 하드커버 팝업 동화책으로 여정을 three.js로 설계합니다. 펼침면마다 판지 팝업 세트가 일어서고 넘어가는 책장에 납작하게 접히며, 종이 인형 주인공이 걸어 들어오고, 읽는 사람은 장마다 소품 하나를 눌러 작은 과제를 풀어 지도에 도장을 모읍니다. 커서 투어는 16:9 MP4로 굽습니다.
+  보고 만든 원본: <a href="https://x.com/johnlindquist/status/2123569842204897753?a=m59DB6YHNHs76FeIjyQ&s=19" target="_blank" rel="noopener">John Lindquist의 X 게시물 (The Folded Atlas)</a> · <a href="https://rosy-wisdom-dw86.here.now/" target="_blank" rel="noopener">라이브 페이지</a>.</p>
+  <ul class="tags"><li>3D</li><li>인터랙티브 페이지</li><li>팝업북</li><li>종이 인형</li><li>16:9 MP4</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나 (과정 · 순서 · 수업 · 온보딩 · 동화)</dd>
+      <dt>브리프</dt><dd>여정의 심부름, 장마다 장소 · 생각 · 하늘 · 소품 · 과제, 주제에 맞춘 캐스트와 무게</dd>
+      <dt>설계</dt><dd>장마다 판지 세트와 소품의 움직임, 종이 인형 캐스트 시트, 인쇄된 땅</dd>
+      <dt>검사</dt><dd>접힘 · 거터 · 소품 가시성 · 관절 한계 · 발 미끄러짐 · 대기 동작 · 예비 동작 · 글 맞춤 · 결정성</dd>
+      <dt>출력</dt><dd>책 한 권짜리 웹 페이지 (<code>index.html</code> + <code>book.js</code>), 스틸, 1920×1080 MP4</dd>
+    </dl>
+    <pre><code>cp -r pop-up-quest /tmp/try &amp;&amp; cd /tmp/try
+python3 -m http.server 8000      # http://localhost:8000/examples/packet-post/  (?tour 로 필름 재생)
+node scripts/check.mjs examples/packet-post/index.html
+node scripts/new-book.mjs my-book --title "The Seed Post" --chapters "Frost Gate,Root Cellar,Sun Ledge" --hero rabbit</code></pre>
+    <p class="mute">요구 사항: WebGL 브라우저, 검사와 렌더에는 Node 18+ · Playwright + Chromium · ffmpeg. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/pop-up-quest/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/10.6">
+    <iframe data-src="demo/examples/packet-post/" title="pop-up-quest 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/packet-post/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/packet-post/</code> · 5장 · 직접 넘기기</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/packet-post/" data-cap="예제 &lt;code&gt;examples/packet-post/&lt;/code&gt; · 5장 · 직접 넘기기" aria-pressed="true">Packet Post</button>
+        <button class="btn" type="button" data-src="demo/examples/packet-post/?tour" data-cap="예제 &lt;code&gt;examples/packet-post/&lt;/code&gt; · 46초 투어">투어</button>
+        <button class="btn" type="button" data-src="demo/examples/water-cycle/" data-cap="예제 &lt;code&gt;examples/water-cycle/&lt;/code&gt; · 4장 · 직접 넘기기">Long Way Down</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제 책 두 권의 투어에서 뽑은 장면과 캐스트 시트입니다. 둘 다 원본에 없던 주제로, 브리프부터 새로 설계했습니다. 카드를 누르면 그 책의 라이브 페이지가 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"web":"The Packet Post","water":"The Long Way Down","cast":"캐스트 시트"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>The Packet Post <small>5장 · 46초 투어</small></h3>
+      <p>웹 페이지가 클릭에서 창까지 오는 길: 비둘기 집배원 Quill이 요청 하나를 들고 섬을 건넙니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="web" href="demo/examples/packet-post/" target="_blank" rel="noopener">
+          <img src="samples/tower-rise.jpg" alt="펼친 책 위로 탑 · 산 · 해 · 나무 판지 조각들이 반쯤 일어서는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">1장 · 펼침</span><b>세트가 일어선다</b><span class="how">책이 열리며 납작했던 판지 조각이 경첩을 축으로 섬</span></div></a>
+        <a class="tile" data-tags="web" href="demo/examples/packet-post/#tower" target="_blank" rel="noopener">
+          <img src="samples/tower-banner.jpg" alt="돌탑 앞면에 93.184.216.34가 적힌 현수막이 풀려 내려온 주소 탑 펼침면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">1장 · DNS · 선택</span><b>The Address Tower</b><span class="how">주소록을 눌러 풀면 탑에 IP 현수막이 풀림</span></div></a>
+        <a class="tile" data-tags="web" href="demo/examples/packet-post/" target="_blank" rel="noopener">
+          <img src="samples/page-turn.jpg" alt="휘어 넘어가는 책장 뒷면에 다음 장의 강 그림과 납작하게 접힌 조각들이 보이는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">넘김</span><b>책장이 넘어간다</b><span class="how">떠나는 조각은 책장에 접히고, 다음 세트는 아래 페이지에서 일어섬</span></div></a>
+        <a class="tile" data-tags="web" href="demo/examples/packet-post/#ferry" target="_blank" rel="noopener">
+          <img src="samples/ferry-lanterns.jpg" alt="강 건너편 등불 세 개가 켜지고 뗏목이 건너오는 나루터 펼침면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">2장 · TCP · 순서</span><b>The Knocking Ferry</b><span class="how">노크 세 번을 순서대로 놓으면 등불이 켜지고 뗏목이 건넘</span></div></a>
+        <a class="tile" data-tags="web" href="demo/examples/packet-post/#post" target="_blank" rel="noopener">
+          <img src="samples/post-reply.jpg" alt="기둥과 박공이 있는 우체국 지붕 관에서 200 OK 봉투가 날아 나오는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">3장 · HTTP · 선택</span><b>The Request Post Office</b><span class="how">GET 편지를 넣으면 200 OK 답장이 날아옴</span></div></a>
+        <a class="tile" data-tags="web" href="demo/examples/packet-post/#loom" target="_blank" rel="noopener">
+          <img src="samples/loom-count.jpg" alt="해 질 녘 밀밭 옆 분류 베틀과 소포 개수를 고르는 과제 카드" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">4장 · 패킷 · 개수</span><b>The Sorting Loom</b><span class="how">6 KB ÷ 1.5 KB, 소포 개수를 세는 과제</span></div></a>
+        <a class="tile" data-tags="web" href="demo/examples/packet-post/#loom" target="_blank" rel="noopener">
+          <img src="samples/loom-stack.jpg" alt="번호 붙은 소포 네 개가 베틀 끝에 1부터 4까지 쌓인 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">4장 · 풀림</span><b>소포가 순서대로 쌓인다</b><span class="how">벨트를 타던 소포가 번호 순으로 쌓임</span></div></a>
+        <a class="tile" data-tags="web" href="demo/examples/packet-post/#window" target="_blank" rel="noopener">
+          <img src="samples/window-lit.jpg" alt="밤의 섬, 큰 창 네 칸에 불이 켜진 창문 집과 점등원 고양이" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">5장 · 렌더링 · 순서</span><b>The Window House</b><span class="how">파싱 · 스타일 · 레이아웃 · 페인트 순으로 창이 켜짐</span></div></a>
+        <a class="tile" data-tags="web" href="demo/examples/packet-post/?tour" target="_blank" rel="noopener">
+          <img src="samples/map-stamps.jpg" alt="섬 지도 위 다섯 장소를 잇는 점선과 모두 찍힌 도장" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">끝 · 지도</span><b>도장 다섯 개</b><span class="how">투어는 접이식 지도로 끝남</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>The Long Way Down <small>4장 · 38초 투어</small></h3>
+      <p>물의 순환: 노란 비옷의 빗방울 Drizzle이 바다에서 구름, 눈, 강을 거쳐 돌아옵니다. 빗방울과 왜가리는 이 책을 위해 새로 만든 종입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="water" href="demo/examples/water-cycle/#sea" target="_blank" rel="noopener">
+          <img src="samples/sea-vapour.jpg" alt="소금밭과 만, 물에 선 왜가리 위로 수증기 줄기가 피어오르는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">1장 · 증발 · 선택</span><b>The Sun Pans</b><span class="how">거울을 기울이면 만에서 수증기가 피어오름</span></div></a>
+        <a class="tile" data-tags="water" href="demo/examples/water-cycle/#loft" target="_blank" rel="noopener">
+          <img src="samples/loft-clouds.jpg" alt="산 아래 기둥 위 오두막과 부풀어 오른 종이 구름들, 순서 과제 카드" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">2장 · 응결 · 순서</span><b>The Cloud Loft</b><span class="how">네 단계를 순서대로 놓으면 구름이 부풂</span></div></a>
+        <a class="tile" data-tags="water" href="demo/examples/water-cycle/#ridge" target="_blank" rel="noopener">
+          <img src="samples/ridge-snow.jpg" alt="눈 덮인 능선과 기상 관측소, 무거운 구름에서 실에 매달린 눈송이가 내려오는 장면" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">3장 · 강수 · 선택</span><b>The Snow Ridge</b><span class="how">영하 5도, 눈송이가 실을 타고 내려옴</span></div></a>
+        <a class="tile" data-tags="water" href="demo/examples/water-cycle/#river" target="_blank" rel="noopener">
+          <img src="samples/river-mouth.jpg" alt="해 질 녘 물레방아 방앗간과 바다로 넓어지는 강, 떠나는 돛배" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">4장 · 모임 · 선택</span><b>The River Mouth</b><span class="how">수문을 열면 물레가 빨라지고 배가 바다로 나감</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>캐스트 시트 <small>오른쪽 · 왼쪽 · 뒤 · 걸음 · 회전 · 모음 · 뜀 · 가리킴</small></h3>
+      <p>장면을 쓰기 전에 몸을 채점하는 한 장. 먼 눈이 더 좁고, 가까운 팔 · 신발 · 가방은 등 쪽에, 뒷면은 판지 뒷면입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="cast" href="https://github.com/jungrok5/motion-skills/blob/main/pop-up-quest/references/CAST.md" target="_blank" rel="noopener">
+          <img src="samples/cast-packet-post.jpg" alt="비둘기 · 부엉이 · 개구리 · 생쥐 종이 인형을 여덟 자세로 그린 캐스트 시트" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 · 6명</span><b>The Packet Post</b><span class="how">Quill, Ledger, Pike, Tally, Bramble, Wick</span></div></a>
+        <a class="tile" data-tags="cast" href="https://github.com/jungrok5/motion-skills/blob/main/pop-up-quest/references/CAST.md" target="_blank" rel="noopener">
+          <img src="samples/cast-water-cycle.jpg" alt="빗방울 · 왜가리 · 토끼 · 펭귄 · 개구리 종이 인형을 여덟 자세로 그린 캐스트 시트" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">캐스트 · 5명</span><b>The Long Way Down</b><span class="how">새로 만든 빗방울과 왜가리 종 포함</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 스킬은 <a href="https://x.com/johnlindquist/status/2123569842204897753?a=m59DB6YHNHs76FeIjyQ&s=19">John Lindquist의 X 게시물</a>(Astra와 pvncher의 "svg + 3d design" 스킬로 만든 팝업북 「The Folded Atlas」, 35초 화면 녹화)과 그 <a href="https://rosy-wisdom-dw86.here.now/">라이브 페이지</a>를 보고 스타일만 가져와 이 레포에서 새로 지었습니다. 엔진 · 종이 인형 · 세트 · 책은 모두 새 코드이고, 예제 두 권은 원본에 없던 주제입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/examples/packet-post/" target="_blank" rel="noopener"><b>The Packet Post 라이브 페이지</b><span>5장 · 46초 투어 · 직접 넘기기</span><span class="url">pop-up-quest/demo/examples/packet-post/</span></a>
+    <a class="work" href="demo/examples/water-cycle/" target="_blank" rel="noopener"><b>The Long Way Down 라이브 페이지</b><span>4장 · 38초 투어 · 물의 순환</span><span class="url">pop-up-quest/demo/examples/water-cycle/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/pop-up-quest/examples/packet-post"><b>원본 · motion-skills → pop-up-quest/examples/packet-post/</b><span>브리프, 캐스트, 세트, 과제 전체. 스킬의 출처</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pop-up-quest/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/pop-up-quest">폴더</a> <span>kit · scripts · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pop-up-quest/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pop-up-quest/references/BRIEF.md">references/BRIEF.md</a> <span>브리프 틀과 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pop-up-quest/references/BOOK.md">references/BOOK.md</a> <span>책 데이터 · 세트 빌더 · 좌표</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pop-up-quest/references/CAST.md">references/CAST.md</a> <span>종이 인형 · 몸 규칙 · 움직임 타이밍</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/pop-up-quest/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림은 코드로 그렸습니다 (three.js r170 MIT, Source Serif 4 · Inter SIL OFL)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

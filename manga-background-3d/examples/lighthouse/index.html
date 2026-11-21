@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>등대지기의 섬 · manga-background-3d</title>
+<script type="importmap">{ "imports": { "three": "../../lib/vendor/three.module.min.js", "mb/": "../../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+import { Film } from 'mb/film.js';
+import { scenes } from './scenes.js';
+// shots, captions and cameras come from BRIEF.md
+new Film({
+  scenes,
+  labels: { model: '3D 세트', manga: '만화 배경' },
+  shots: [
+    { scene: 'tower', dur: 4.8, mode: 'wipe', wipe: [0.3, 0.74], caption: '나선계단을 3D로 쌓았다.',
+      cam: [{ pos: [0.25, 8.75, 0.35], look: [-0.05, 0, -0.1], fov: 66, roll: 0 }, { pos: [0.25, 8.75, 0.35], look: [-0.05, 0, -0.1], fov: 66, roll: -20 }] },
+    { scene: 'tower', dur: 3.2, mode: 'manga', caption: '계단 중간에 서 봐도.',
+      cam: [{ pos: [1.5, 4.75, 0.05], look: [-1.6, 4.2, -0.6], fov: 64 }, { pos: [1.5, 4.75, -0.12], look: [-1.6, 4.4, -0.2], fov: 64 }] },
+    { scene: 'pier', dur: 4.4, mode: 'wipe', wipe: [0.26, 0.7], caption: '배 두 척과 선착장까지.',
+      cam: [{ pos: [0.6, 1.6, 6.2], look: [-1.5, 0.6, -10], fov: 52 }, { pos: [-0.2, 1.6, 5.6], look: [-1.8, 0.6, -10], fov: 52 }] },
+    { scene: 'pier', dur: 3.0, mode: 'manga', caption: '밧줄 한 사리도.',
+      cam: [{ pos: [1.9, 1.15, 0.9], look: [0.4, 0.1, -2.0], fov: 46 }, { pos: [1.85, 1.1, 0.6], look: [0.3, 0.1, -2.2], fov: 44 }] },
+    { scene: 'lamp', dur: 4.8, mode: 'wipe', wipe: [0.25, 0.68], caption: '등불이 켜지는 밤도.',
+      cam: [{ pos: [-7.6, 2.6, -3.4], look: [0.5, 1.6, 1.2], fov: 52 }, { pos: [-7.9, 2.6, -2.0], look: [0.5, 1.6, 1.4], fov: 52 }] },
+    { card: ['이 섬의 선은', '전부 3D에서 나왔다.'], sub: '등대지기의 섬, 배경 세트 세 곳', dur: 3.6 },
+  ],
+  page: { size: [1500, 2122], panels: [
+    { shot: 4, rect: [0.05, 0.04, 0.9, 0.34], at: 0.95, box: ['오늘 밤도', '불을 켠다.'] },
+    { shot: 0, rect: [0.05, 0.4, 0.34, 0.56], at: 0.9 },
+    { shot: 2, rect: [0.42, 0.4, 0.53, 0.27], at: 0.9 },
+    { shot: 3, rect: [0.42, 0.69, 0.53, 0.27], at: 0.5, box: ['배는 새벽에 나간다.'], boxAt: [0.05, 0.75] },
+  ] },
+}).start();
+</script>
+</body>
+</html>
