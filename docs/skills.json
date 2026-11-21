@@ -3465,6 +3465,46 @@
      "url": "https://jungrok5.github.io/motion-skills/manga-background-3d/demo/starter/"
     }
    ]
+  },
+  {
+   "id": "one-line-drawing",
+   "name": "one-line-drawing",
+   "tagline": "주제 하나(사람이 있는 장소)를 주면 장면과 선이 지나갈 길을 새로 설계하고, 태블릿 위 흐린 회색 사진을 따라 펜을 한 번도 떼지 않고 선 하나로 그 장면 전체를 그리는 세로 영상을 만듭니다. 흰 스타일러스 바로 뒤를 카메라가 가까이 따라가고, 선은 모서리마다 작은 고리를 감으며 윤곽을 따라가고, 전깃줄과 처마는 직각 계단과 갈고리로, 나무와 김은 이어진 고리로, 물과 젖은 길은 넓은 지그재그로, 반영은 몸의 폭을 따르는 세로 지그재그로 그립니다. 다 그리면 카메라가 물러나고 사진이 사라지며 흰 종이 위 선화와 고리 서명이 남습니다. 사진도 코드로 그리고, 펜 소리까지 합성한 1080×1920 MP4와 라이브 페이지를 냅니다.",
+   "posterAlt": "one-line-drawing의 장면 네 개: 안개 낀 회색 호수 사진 위에서 흰 스타일러스가 부두 끝 낚시꾼의 등 윤곽을 검은 선 하나로 따라 그리는 가까운 장면, 같은 사진 위로 계단처럼 꺾인 테두리와 갈매기, 소나무 숲의 톱니, 낚싯대와 낚싯줄이 그려진 장면, 비 오는 골목에서 우산 쓴 사람 옆 국숫집 차양 끝을 따라 그리는 스타일러스, 흰 종이 위에 선 하나로 남은 우산 쓴 사람과 등롱 달린 국숫집 선화",
+   "poster": "one-line-drawing/poster.jpg",
+   "tags": [
+    "2D 캔버스 · 코드 전용",
+    "한 붓 그리기 · 9:16",
+    "선 하나 · 펜 안 뗌 검사",
+    "코드로 그린 회색 사진",
+    "합성 펜 사운드"
+   ],
+   "stats": [
+    "예제 2개 · 52초 · 54초",
+    "선 18,257 · 20,793 px · 고리 27 · 38개"
+   ],
+   "page": "one-line-drawing/",
+   "source": "one-line-drawing/",
+   "absorbedFrom": {
+    "repo": "https://github.com/jungrok5/motion-skills",
+    "path": "one-line-drawing/examples/noodle-stall/"
+   },
+   "sources": [
+    {
+     "title": "醉清风(@Xin78787)의 X 게시물 (62초 세로 영상 — 태블릿 위 안개 낀 길 사진을 따라 콘트라베이스를 멘 사람과 전봇대, 반영, 먼 마을을 펜을 떼지 않고 선 하나로 그림)",
+     "url": "https://x.com/Xin78787/status/2123707571890536673?a=HJt-M-U2a85DG5TpgNk&s=19"
+    }
+   ],
+   "workedExample": [
+    {
+     "title": "「Last Bowl」 · 54초 · 비 오는 골목 국숫집 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/one-line-drawing/demo/noodle-stall/"
+    },
+    {
+     "title": "「Last Cast」 · 52초 · 안개 낀 호수의 낚시꾼 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/one-line-drawing/demo/starter/"
+    }
+   ]
   }
  ]
 }
