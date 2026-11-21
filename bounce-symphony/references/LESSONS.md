@@ -41,3 +41,9 @@
   spots: 2–4 s.
 - **Dominoes stood on the catapult's base board** → the line ended at the trigger, which sat on the board. → The board is a
   floor obstacle; the trigger plate sits behind it.
+- **"The camera shakes like crazy"** → three causes: the glide-or-cut rule was re-decided every frame and flickered
+  between gliding and cutting near its threshold (metre jumps); a cause shot hopped between simultaneous chains and
+  circled with the ball in its helix; the subject's smoothing sampled around t, so each sample crossing a ball hand-over
+  stepped the result (a jagged 0.1 s pattern). → Decide cut/glide once per shot (and cut a rush faster than 1.6 m/s), one
+  chain per shot on the helix's axis, Gaussian smoothing on a fixed time grid with the nearest ball standing in between
+  balls, and a steadiness check (local quadratic fit, ≤ 0.35° / 20 mm).

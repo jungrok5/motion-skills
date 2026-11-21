@@ -108,7 +108,14 @@ horizon) and does not mirror the room at grazing angles.
 
 ## Shots
 Each `{ at, blend = 1.2, kind, … }`; a new shot glides from the last over `blend` s — the subject moves in a line and the
-camera swings round it — unless the two subjects are more than `maxGlide` (1.4 m) apart, then it cuts.
+camera swings round it — unless the two subjects are more than `maxGlide` (1.4 m) apart or the camera would rush in or
+out faster than 1.6 m/s, then it cuts (decided once per shot, never frame by frame).
+
+**Steadiness.** A follow shot's subject is a Gaussian-weighted average (σ = `lag`, default 0.45 s; 0.4 s for causes)
+over samples on a fixed time grid — only the weights move with t — so a bounce, a ball hand-over or a wave step can't
+shake the frame; between balls the subject is the nearest ball in time (in its cup or waiting), never nothing. A cause
+shot rides one chain chosen for the whole shot, and the helix's axis rather than the circling ball. check.mjs measures
+every shot against a local quadratic fit (Savitzky–Golay, ±0.23 s) and fails one that wobbles more than 0.35° or 20 mm.
 - `orbit { center?, dist, angle, speed (deg/s), elev, lift, fov }` — round the machine (default centre: the machine's).
 - `follow { lane | lanes, dist, angle, speed, elev, lag (smoothing, s), offset, fov }` — the newest ball in flight of the
   lane(s), smoothed over ±`lag`; focus on the ball.
