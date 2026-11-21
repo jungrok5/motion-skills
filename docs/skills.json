@@ -3381,6 +3381,50 @@
      "url": "https://project-frostwind.fly.dev/"
     }
    ]
+  },
+  {
+   "id": "pop-up-quest",
+   "name": "pop-up-quest",
+   "tagline": "주제를 주면 식탁보 위에 펼친 하드커버 팝업 동화책으로 여정을 three.js로 설계합니다. 펼침면마다 판지 팝업 세트가 일어서고 넘어가는 책장에 납작하게 접히며, 종이 인형 주인공이 걸어 들어오고, 읽는 사람은 장마다 소품 하나를 눌러 작은 과제를 풀어 지도에 도장을 모읍니다. 커서 투어는 16:9 MP4로 굽습니다.",
+   "posterAlt": "pop-up-quest로 만든 장면 네 개: 돌탑 앞면에 IP 주소 현수막이 풀린 주소 탑 펼침면, 휘어 넘어가는 책장 뒷면에 다음 장의 강이 보이는 장면, 밤의 섬에서 창 네 칸에 불이 켜진 창문 집, 눈 덮인 능선 위 구름에서 실에 매달린 눈송이가 내려오는 장면",
+   "poster": "pop-up-quest/poster.jpg",
+   "tags": [
+    "3D",
+    "인터랙티브 페이지",
+    "팝업북",
+    "종이 인형",
+    "16:9 MP4"
+   ],
+   "stats": [
+    "예제 2권 · 9장",
+    "판지 세트 접힘 · 소품 과제 · 도장 지도"
+   ],
+   "page": "pop-up-quest/",
+   "source": "pop-up-quest/",
+   "absorbedFrom": {
+    "repo": "https://github.com/jungrok5/motion-skills",
+    "path": "pop-up-quest/examples/packet-post/"
+   },
+   "sources": [
+    {
+     "title": "John Lindquist의 X 게시물 (The Folded Atlas, Astra + svg + 3d design 스킬)",
+     "url": "https://x.com/johnlindquist/status/2123569842204897753?a=m59DB6YHNHs76FeIjyQ&s=19"
+    },
+    {
+     "title": "The Folded Atlas 라이브 페이지",
+     "url": "https://rosy-wisdom-dw86.here.now/"
+    }
+   ],
+   "workedExample": [
+    {
+     "title": "The Packet Post · 웹 페이지가 오는 길 · 5장 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/pop-up-quest/demo/examples/packet-post/"
+    },
+    {
+     "title": "The Long Way Down · 물의 순환 · 4장 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/pop-up-quest/demo/examples/water-cycle/"
+    }
+   ]
   }
  ]
 }

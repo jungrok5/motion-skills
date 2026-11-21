@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Long Way Down · a pop-up quest</title>
+<meta name="description" content="Turn the pages of a paper island and follow Drizzle the raindrop round the water cycle: evaporation, condensation, snow and the river home.">
+<link rel="stylesheet" href="../../kit/quest.css">
+<script type="importmap">{ "imports": { "three": "../../kit/vendor/three/build/three.module.min.js" } }</script>
+</head>
+<body>
+<script type="module">
+import { createQuest } from '../../kit/quest.js';
+import book from './book.js';
+createQuest(book);
+</script>
+</body>
+</html>
