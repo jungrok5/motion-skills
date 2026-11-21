@@ -3467,6 +3467,82 @@
    ]
   },
   {
+   "id": "bounce-symphony",
+   "name": "bounce-symphony",
+   "tagline": "주제나 곡을 주면 어두운 스튜디오 바닥의 루브 골드버그 음악 기계에서 공이 패드를 튕기며 음 하나하나를 박자에 맞춰 치고, 시작 망치 · 밀대 · 기울어지는 컵과 나선 탑 · 갈라지는 도미노 줄 · 레버와 줄 · 쥐덫 투석기 · 레일이 서로를 깨우며 맞물려 도는 영상을 만듭니다. 패드의 위치와 기울기, 도미노의 개수 · 간격, 나선의 바퀴 수를 그 순간에 끝나도록 거꾸로 계산하고, 공을 실제로 날려 보는 순방향 물리 시뮬레이션으로 증명한 뒤, 같은 타격에서 소리를 합성해 라이브 페이지 · WAV · 1080p MP4를 냅니다.",
+   "posterAlt": "bounce-symphony로 만든 장면 네 개: 기둥 숲 속 은색 나선 탑을 빨간 공이 굴러 내려오고 무지개 도미노 줄이 구불구불 이어지는 「Marble Canon」, 밤의 푸른 방에서 호박빛으로 빛나는 비브라폰 막대 계단과 하늘색 공, 높이서 본 「Marble Canon」 기계 전체에 얽힌 도미노 줄과 나선 탑들, 나선 레일을 감은 탑 사이로 주황 공이 굴러 내려오는 「Lighthouse Lullaby」",
+   "poster": "bounce-symphony/poster.jpg",
+   "tags": [
+    "역설계 물리",
+    "원인 사슬 · 도미노",
+    "순방향 시뮬레이션 검증",
+    "모달 타악기 합성",
+    "MP4 · 라이브 페이지"
+   ],
+   "stats": [
+    "예제 31.7초 · 공 25개 · 도미노 약 1,000개",
+    "템플릿 35.7초 · 나선 탑 10개 · 투석기 9개"
+   ],
+   "page": "bounce-symphony/",
+   "source": "bounce-symphony/",
+   "absorbedFrom": {
+    "repo": "https://github.com/jungrok5/motion-skills",
+    "path": "bounce-symphony/examples/lighthouse-lullaby/"
+   },
+   "sources": [
+    {
+     "title": "Seung Joon Choi의 Facebook 영상 「튕기는 공의 교향곡 (루브골드버그 머신 + 음악)」",
+     "url": "https://www.facebook.com/share/v/1DwMH4wj7u/"
+    }
+   ],
+   "workedExample": [
+    {
+     "title": "「Lighthouse Lullaby」 등대지기를 위한 자장가 · 3/4 · 도미노 줄 25개 · 31.7초 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/bounce-symphony/demo/examples/lighthouse-lullaby/"
+    }
+   ]
+  },
+  {
+   "id": "printmade-scene",
+   "name": "printmade-scene",
+   "tagline": "주제 하나를 주면, 벽은 정면 · 바닥은 위에서 본 동양화식 원근에 거친 판화 질감, 톤 다운 색과 진홍 단서 하나, 목이 길고 볼이 발그레한 길쭉한 인물로 한 장소를 그리고, 잉크 롤러가 그 판을 과거로 다시 찍었다가 한 가지가 바뀐 현재로 돌아오는 9–18초 4:3 컨셉 아트 영상을 코드만으로 만듭니다. 판화 매체와 접은 원근 키트, 디딘 발이 미끄러지지 않는 인물 리그, Web Audio 소리로 소리가 있는 1440×1080 MP4와 포스터 스틸, 라이브 페이지를 냅니다.",
+   "posterAlt": "printmade-scene의 네 장면: 따뜻한 오후의 이발소에서 흰 가운의 할아버지가 진홍 이발 보를 펼치는 모습, 비 오는 밤 같은 이발소에서 의자에 걸린 진홍 보 옆에 선 손녀, 여름 오후 학교 운동장에서 빨간 공을 던지는 아이, 비 오는 해 질 녘 같은 운동장 그네 밑 빨간 공 옆에 우산을 쓰고 웅크린 남자",
+   "poster": "printmade-scene/poster.jpg",
+   "tags": [
+    "판화 질감 + 동양화식 원근",
+    "주제 → 새 장소 · 두 번 찍기",
+    "4:3 · 고정 한 컷",
+    "디딘 발 고정 · 큰 동작",
+    "MP4 · 라이브"
+   ],
+   "stats": [
+    "장면 2편 · 판 4장",
+    "에셋 0개"
+   ],
+   "page": "printmade-scene/",
+   "source": "printmade-scene/",
+   "absorbedFrom": {
+    "repo": "https://github.com/jungrok5/motion-skills",
+    "path": "printmade-scene/examples/schoolyard/"
+   },
+   "sources": [
+    {
+     "title": "전혜정(@goevel)의 브런치 글 「인디 게임을 만들자」 (김도윤 작가의 판화 스타일 · 동양화식 원근 컨셉 아트와 ‘과거 보기’ 게임 장치)",
+     "url": "https://brunch.co.kr/@goevel/3"
+    }
+   ],
+   "workedExample": [
+    {
+     "title": "「폐교 운동장」 · 예제, 14초 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/printmade-scene/demo/schoolyard/"
+    },
+    {
+     "title": "「문 닫은 이발소」 · 시작 템플릿, 13.4초 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/printmade-scene/demo/barbershop/"
+    }
+   ]
+  },
+  {
    "id": "engraving-collage-film",
    "name": "engraving-collage-film",
    "tagline": "주제 하나를 주면 그 세계를 19세기 동판화로만 짓습니다. 건물 · 시계탑 · 나무 · 구름 · 배 · 빙산을 코드 속 조각가가 새겨(어두울수록 굵어지는 평행선, 그림자의 겹친 선, 밝은 곳의 끊긴 선, 선망 하늘) 오려 내고, 그 판화 카드를 3D 공간에 콜라주 각도로 세워 종이에서 뜬 그림자와 거리의 옅어짐, 렌즈 앞의 흐림을 줍니다. 카메라가 그 사이를 날고, 화면의 유일한 색인 셀 캐릭터가 키 포즈로 발을 딛고 걷고 · 뛰고 · 뛰어오르고 · 손을 흔듭니다. 위에 2.39:1 합성 화면, 아래에 같은 순간의 3D 브레이크다운(체커보드, 레이어 색 윤곽, 카메라 절두체와 경로)을 놓은 메이킹 MP4 또는 합성만의 MP4를 냅니다.",

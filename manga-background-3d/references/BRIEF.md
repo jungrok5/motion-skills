@@ -65,6 +65,7 @@ Render `render.mjs piece.html --shots --scale .5` (and `--page`) and score:
    pace (≥ 0.8 s); the label flips at the middle.
 9. **Text is clean.** Location name top-left, mode label top-right, caption bottom-centre, all inside the bars; signs
    in the set are legible where the camera is close.
-10. **The camera breathes.** A slow dolly, push or roll per shot; no whips; never inside or against geometry.
+10. **Nothing flickers.** Play the shot (or check.mjs): no surface shimmers between two tones as the camera moves.
+11. **The camera breathes.** A slow dolly, push or roll per shot; no whips; never inside or against geometry.
 
 Log failures in the project's BRIEF.md under Review log, fix, render again. Then `check.mjs` must pass.

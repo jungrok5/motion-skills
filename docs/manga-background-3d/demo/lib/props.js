@@ -188,7 +188,7 @@ P.building = function (pos, ry = 0, o = {}) {
   const H = floors * fh;
   return this.at(pos, ry, () => {
     this.box([0, 0, 0], [w, H, d], { tone, crease: 20 });
-    if (parapet) { this.box([0, H, d / 2 - 0.08], [w, 0.5, 0.16], { tone }); this.box([-w / 2 + 0.08, H, 0], [0.16, 0.5, d], { tone }); this.box([w / 2 - 0.08, H, 0], [0.16, 0.5, d], { tone }); this.box([0, H, -d / 2 + 0.08], [w, 0.5, 0.16], { tone }); }
+    if (parapet) { this.box([0, H, d / 2 - 0.08], [w, 0.5, 0.16], { tone }); this.box([-w / 2 + 0.08, H, 0], [0.16, 0.5, d - 0.32], { tone }); this.box([w / 2 - 0.08, H, 0], [0.16, 0.5, d - 0.32], { tone }); this.box([0, H, -d / 2 + 0.08], [w, 0.5, 0.16], { tone }); }   // sides fit between, no overlapping faces
     const f0 = shop ? 1 : 0;
     for (let f = f0; f < floors; f++) {
       const y = f * fh + 0.9;
@@ -197,7 +197,7 @@ P.building = function (pos, ry = 0, o = {}) {
         const ww = Math.min(1.6, (w / cols) * 0.62), x = -w / 2 + (w / cols) * (c + 0.5);
         if (o.lit && r() < o.lit) this.glow([x, y, d / 2 + 0.005], [ww, 1.2, 0.01], { lines: 'outline' });
         else if (o.simple) this.box([x, y, d / 2 + 0.005], [ww, 1.2, 0.012], { flag: 'glass', lines: 'outline', detail: true, cast: false });
-        else this.window([x, y, d / 2 - 0.02], ww, 1.2, { t: 0.06, panes: [2, 1], frame: 0.7, sill: true });
+        else this.window([x, y, d / 2 + 0.02], ww, 1.2, { t: 0.06, panes: [2, 1], frame: 0.7, sill: true });   // proud of the wall: glass in front of it
         if (balcony && f > 0 && c % 2 === 0) { this.box([x, f * fh - 0.05, d / 2 + 0.5], [ww + 0.5, 0.1, 1.0], { tone: 0.9 }); this.box([x, f * fh + 0.05, d / 2 + 0.98], [ww + 0.5, 0.95, 0.05], { tone: 0.84 }); }
         if (r() < (o.ac ?? 0.25)) this.box([x + ww / 2 + 0.45, f * fh + 0.3, d / 2 + 0.2], [0.7, 0.5, 0.3], { tone: 0.95, detail: true });
       }

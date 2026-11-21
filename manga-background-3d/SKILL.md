@@ -50,7 +50,7 @@ the card; the page layout and its narration boxes; the location names; the signs
 | `scripts/new-piece.mjs` | start a piece (starter, or `--from lighthouse`) |
 | `scripts/render.mjs` | `--shots`, `--stills`, `--sheet`, `--plates`, `--page`, the MP4 (workers × ffmpeg) with the sound |
 | `scripts/sound.mjs` | felt-piano arpeggio, pen scratch on wipes, taps on cuts, bell on the card |
-| `scripts/check.mjs` | film shape, ink and tone per shot, stroke count, line stability, camera speed and clearance, determinism, glyphs, text fit, transparent plates |
+| `scripts/check.mjs` | film shape, ink and tone per shot, stroke count, line stability, z-fighting, camera speed and clearance, determinism, glyphs, text fit, transparent plates |
 | `references/` | **SOURCE** (the post beat by beat; what is / is not taken) · **BRIEF** (template + still rubric) · **KIT** (building sets, the API, cameras) · **LOOK** (passes, the pen, constants, film, plates) · **LESSONS** |
 
 ## Project layout (what you create)
@@ -104,6 +104,9 @@ on 4 cores.
   looks; seams on floors and ceilings for perspective.
 - **Manga backgrounds breathe.** Day frames keep paper white (warned under 12 %); greys are bands, not gradients;
   ink is line (≤ 30 % of the frame), and a frame is drawn (≥ 60 strokes).
+- **No two faces in one plane.** Surfaces that meet only touch (end to end, or face to face with one hidden);
+  anything set on or into a face (a door, a window, a sign, a band) stands ≥ 5 mm proud (2 cm on solid blocks).
+  check.mjs fails a z-fight (patches of tone that flicker as the camera moves).
 - **The lines hold still.** Stroke habits are seeded by edges, never by frame or screen position: ≥ 85 % of the
   ink stays put between frames (check.mjs). Do not add per-frame jitter.
 - **The camera is a person on a slider.** Eye height unless the beat says otherwise; ≤ 0.06 m and ≤ 0.5° per
@@ -120,7 +123,7 @@ on 4 cores.
 ## Contract every film page fulfils
 `window.seek(t)`, `window.DURATION`, `window.FPS` (24), `window.SIZE = {W: 1920, H: 1080, bar}`, `window.filmInfo()`
 (shots, scenes with prim / edge / wire counts, signs), `window.viewAt(t)`, `window.wipeAt(t)`, `window.linesAt(t, w)`
-(the line layer as a mask), `window.depthStats(t)`, `window.textCheck()`, `window.glyphCheck()`,
+(the line layer as a mask), `window.toneAt(t, w)` (the tone layer alone), `window.depthStats(t)`, `window.textCheck()`, `window.glyphCheck()`,
 `window.soundEvents()`, `window.strokeCount()`, `window.film`, `window.__ready = true` — all set by `Film.start()`
 after the fonts load and the sets are built. `?render=1` = fixed canvas, no live loop; `?t=12` = one frozen frame;
 `?scale=.5` = preview size; `?plate=<shot>&layer=lines|tone|full&w=2400` = a background plate; `?sheet=page` = the page.
