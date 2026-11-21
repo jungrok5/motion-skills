@@ -3501,6 +3501,46 @@
      "url": "https://jungrok5.github.io/motion-skills/bounce-symphony/demo/examples/lighthouse-lullaby/"
     }
    ]
+  },
+  {
+   "id": "printmade-scene",
+   "name": "printmade-scene",
+   "tagline": "주제 하나를 주면, 벽은 정면 · 바닥은 위에서 본 동양화식 원근에 거친 판화 질감, 톤 다운 색과 진홍 단서 하나, 목이 길고 볼이 발그레한 길쭉한 인물로 한 장소를 그리고, 잉크 롤러가 그 판을 과거로 다시 찍었다가 한 가지가 바뀐 현재로 돌아오는 9–18초 4:3 컨셉 아트 영상을 코드만으로 만듭니다. 판화 매체와 접은 원근 키트, 디딘 발이 미끄러지지 않는 인물 리그, Web Audio 소리로 소리가 있는 1440×1080 MP4와 포스터 스틸, 라이브 페이지를 냅니다.",
+   "posterAlt": "printmade-scene의 네 장면: 따뜻한 오후의 이발소에서 흰 가운의 할아버지가 진홍 이발 보를 펼치는 모습, 비 오는 밤 같은 이발소에서 의자에 걸린 진홍 보 옆에 선 손녀, 여름 오후 학교 운동장에서 빨간 공을 던지는 아이, 비 오는 해 질 녘 같은 운동장 그네 밑 빨간 공 옆에 우산을 쓰고 웅크린 남자",
+   "poster": "printmade-scene/poster.jpg",
+   "tags": [
+    "판화 질감 + 동양화식 원근",
+    "주제 → 새 장소 · 두 번 찍기",
+    "4:3 · 고정 한 컷",
+    "디딘 발 고정 · 큰 동작",
+    "MP4 · 라이브"
+   ],
+   "stats": [
+    "장면 2편 · 판 4장",
+    "에셋 0개"
+   ],
+   "page": "printmade-scene/",
+   "source": "printmade-scene/",
+   "absorbedFrom": {
+    "repo": "https://github.com/jungrok5/motion-skills",
+    "path": "printmade-scene/examples/schoolyard/"
+   },
+   "sources": [
+    {
+     "title": "전혜정(@goevel)의 브런치 글 「인디 게임을 만들자」 (김도윤 작가의 판화 스타일 · 동양화식 원근 컨셉 아트와 ‘과거 보기’ 게임 장치)",
+     "url": "https://brunch.co.kr/@goevel/3"
+    }
+   ],
+   "workedExample": [
+    {
+     "title": "「폐교 운동장」 · 예제, 14초 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/printmade-scene/demo/schoolyard/"
+    },
+    {
+     "title": "「문 닫은 이발소」 · 시작 템플릿, 13.4초 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/printmade-scene/demo/barbershop/"
+    }
+   ]
   }
  ]
 }
