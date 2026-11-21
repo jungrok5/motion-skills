@@ -29,6 +29,13 @@ The lighthouse at the centre: a cone of vibraphone bars, top 2.05 m, r 0.42 → 
 The bowls on an arc to the south-east (r ~1.6), the bell on an arc to the south-west, the kalimba on a ring at r 2.25
 round everything — the shore. From above: a tower inside a ring of little lights. Footprint ~3.8 × 4.3 m, 2.2 m tall.
 
+## 4b. Chain of causes
+The starter hammer stands inside the lighthouse (`starter.at [0, 0]`) — the keeper's lamp winding the night up. The bowls
+are flung by catapults from the floor; the kalimba alternates catapults and droppers (harbour lights blinking on); the
+tide and the bell drop. Solved: 2 starter lines, 12 relays (each bowl's ball tips out of its cup, rolls down its helix
+and sets off the next bowl's catapult — a slow relay round the tower), 9 strikes, 2 branches; 25 lines, ~1,000 dominoes.
+Shown: the starter (0–2.5 s), a bowl relay (13.7 s).
+
 ## 5. Instruments and room
 Brushed aluminium vibraphone bars, brass kalimba tines (longer than default: `L0` 0.11), bronze bowls, a brass gong.
 Room: night blue (`bg` #0a0f17, floor #18212d, rough), one warm lamp overhead (#ffd59a, narrower 34°), blue sky fill.
@@ -38,9 +45,11 @@ stronger bloom. Mix: kalimba forward, bowls and bell back, a larger reverb (0.3)
 ## 6. Shots
 | at | event | kind | notes |
 |---|---|---|---|
-| 0 | before the tide | orbit 5.4 m round the tower | the plan: tower in a ring |
+| 0 | the hammer | follow cause starter, 0.55 m | the first lines run out of the tower |
+| 2.5 | before the tide | orbit 5.4 m round the tower | the plan: tower in a ring |
 | 4.4 | the tide is running | follow tide, 0.7 m, turning | inside the lighthouse |
 | 9.6 | the tune enters | follow lamp, 1.35 m, lag 0.6 | the shore lights |
+| 13.7 | a bowl relay | follow cause deep, 0.6 m | cup tips, helix, six dominoes, catapult |
 | 16.0 | middle of the song | orbit 2.6 m round the tower, low | the cone against the dark |
 | 20.4 | the half cadence | follow lamp, 1.1 m | |
 | 25.6 | the last phrase | follow tide, 0.55 m, low | bars lighting amber and teal |

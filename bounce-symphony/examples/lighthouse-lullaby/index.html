@@ -42,12 +42,12 @@ const piece = new Piece({
               f3 c4 f4 a4 c5 a4 | a3 c4 e4 a4 c5 a4 | f3 bb3 d4 g3 c4 e4 | f3 c4 f4 a4 c5 a4 |
               g3 bb3 d4 g4 bb4 g4 | g3 c4 e4 g4 bb4 g4 | f3 c4 f4 a4 c5 f5 | a5:2. |` },
     // the tune, along the shore: an outer ring of kalimba tines round the whole lighthouse
-    { id: 'lamp', inst: 'kal', color: '#ffcf6a', top: 1.35, e: 0.88, speed: 0.36,
+    { id: 'lamp', inst: 'kal', color: '#ffcf6a', top: 1.35, e: 0.88, speed: 0.36, start: 'alternate',
       layout: { kind: 'spiral', center: [0, 0], r0: 2.25, grow: 0.25, angle0: 120, dir: 1 },
       notes: `r:2. | r:2. | d5:4 c5:8 bb4 a4:4 | g4:2 c5:4 | a4:4. bb4:8 c5:4 | e5:2 c5:4 |
               d5:4 c5 bb4 | a4:2. | bb4:4 d5:8 c5 bb4:4 | g4:4 a4:8 bb4 c5:4 | f5:2. | r:2. |` },
     // the harmony: one singing bowl per two bars, each its own ball
-    { id: 'deep', inst: 'bowl', color: '#d0703a', top: 1.0, drop: 0.25,
+    { id: 'deep', inst: 'bowl', color: '#d0703a', top: 1.0, drop: 0.25, start: 'catapult',
       layout: { kind: 'arc', from: [1.25, -1.35], heading: 60, bend: 32 },
       notes: `f3:2. | r:2. | bb3:2. | r:2. | f3:2. | r:2. | bb3:2. | r:2. | g3:2. | r:2. | f3:2. | r:2. |` },
     // the bell: the phrase ends
@@ -56,14 +56,17 @@ const piece = new Piece({
       notes: `r:2. | r:2. | r:2. | c3:2. | r:2. | r:2. | r:2. | f2:2. | r:2. | r:2. | r:2. | f2:2. |` },
   ],
   shots: [
-    { at: 0, kind: 'orbit', center: [0, 0.9, 0], dist: 5.4, angle: 70, speed: 4, elev: 20 },
+    { at: 0, kind: 'follow', cause: 'starter', dist: 0.55, angle: 60, speed: 6, elev: 24 },   // the hammer, the first dominoes
+    { at: 2.5, kind: 'orbit', center: [0, 0.9, 0], dist: 5.4, angle: 70, speed: 4, elev: 20 },
     { at: 4.4, kind: 'follow', lane: 'tide', dist: 0.7, angle: 200, speed: -4, elev: 20, blend: 1.8 },
     { at: 9.6, kind: 'follow', lane: 'lamp', dist: 1.35, angle: 20, elev: 18, lag: 0.6, blend: 1.6 },
+    { at: 13.7, kind: 'follow', cause: 'deep', dist: 0.6, angle: 120, speed: 8, elev: 26 },   // a bowl's ball tips into its helix, dominoes, a catapult
     { at: 16.0, kind: 'orbit', center: [0, 1.1, 0], dist: 2.6, angle: 160, speed: -7, elev: 12, blend: 2 },
     { at: 20.4, kind: 'follow', lane: 'lamp', dist: 1.1, angle: 240, speed: 5, elev: 18, blend: 1.6 },
     { at: 25.6, kind: 'follow', lane: 'tide', dist: 0.55, angle: 40, elev: 6 },
     { at: 28.8, kind: 'orbit', center: [0, 0.8, 0], dist: 6.2, angle: 110, speed: 3, elev: 28, blend: 2.6 },
   ],
+  starter: { at: [0, 0] },   // the little hammer that starts it all stands inside the lighthouse
   mix: { gains: { kalimba: 1.3, bowl: 0.75, gong: 0.6 }, reverb: { mix: 0.3, size: 0.88, damp: 0.45 } },
 });
 await piece.mount();

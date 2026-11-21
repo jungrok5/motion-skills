@@ -131,7 +131,7 @@ export function padSize(kind, midi, inst = {}) {
 //         floor, runGap, catchT, catchStep, color }], instruments: { id: { kind, … } } }
 export function solveMachine(spec) {
   const bpm = spec.bpm ?? 100, spb = 60 / bpm, intro = spec.intro ?? 3, R = spec.ballR ?? 0.014;
-  const errors = [], warnings = [], pads = [], balls = [], cups = [], droppers = [], hits = [], notesPerLane = {};
+  const errors = [], warnings = [], pads = [], balls = [], cups = [], droppers = [], hits = [], notesPerLane = {}, rails_ = [];
   for (const lane of spec.lanes) {
     const inst = spec.instruments?.[lane.inst] || { kind: lane.inst };
     if (!KINDS[inst.kind]) { errors.push(`lane ${lane.id}: unknown instrument kind "${inst.kind}" (have ${Object.keys(KINDS).join(', ')})`); continue; }
@@ -144,19 +144,38 @@ export function solveMachine(spec) {
     if (!(e > 0.3 && e <= 0.95)) errors.push(`lane ${lane.id}: restitution e = ${e} — keep it physical (0.3 < e ≤ 0.95); split the phrase into more balls instead`);
     const maxGap = lane.maxGap ?? 0.95, floor = lane.floor ?? 0.3, runGap = lane.runGap ?? 0.28;
     const catchT = lane.catchT ?? 0.34, catchStep = lane.catchStep ?? 0.13, maxTilt = lane.maxTilt ?? 42;
+    // rails: a long gap inside a phrase is bridged by a funnel and a gentle rail the ball rolls down (rolling sphere:
+    // a = 5/7 g sin α), leaving the rail end exactly in time to fly to the next pad — so one ball can carry long notes
+    const rails = lane.rails !== false, maxRoll = lane.maxRoll ?? 2.6, outT = lane.railOutT ?? 0.26;
+    // starts: 'drop' (a trap-door dropper above the first pad) | 'catapult' (a seesaw on the floor flings the ball up to
+    // the first pad) | 'alternate' (run by run)
+    const startKind = (k) => { const st = lane.start ?? 'drop'; return st === 'alternate' ? (k % 2 ? 'catapult' : 'drop') : st; };
     const notes = parsed.notes.map((n) => ({ ...n, t: intro + n.beat * spb }));
     notesPerLane[lane.id] = notes.length;
     let s = -runGap, i = 0, runNo = 0;
     while (i < notes.length) {
       // ---- one run = one ball, from a dropper above its first pad to a cup after its last
       s += runGap;
+      const kind = startKind(runNo);
+      if (kind === 'catapult' && runNo > 0) s += 0.42; // room for the seesaw behind the first pad, past the last cup
       const first = at(s, i), p0 = v3(first.x, top, first.z);
-      const vin0 = v3(0, -Math.sqrt(2 * G * drop), 0), tFall = Math.sqrt((2 * drop) / G);
+      let vin0 = v3(0, -Math.sqrt(2 * G * drop), 0), tFall = Math.sqrt((2 * drop) / G), rest = add(p0, v3(0, drop, 0)), launch = v3();
+      if (kind === 'catapult') {
+        // the ball rests in the cup of a seesaw on the floor, behind the first pad; the flight peaks `drop` above the pad
+        const back = 0.34, sx = first.x - first.tx * back, sz = first.z - first.tz * back;
+        rest = v3(sx, 0.135, sz);
+        const vy = Math.sqrt(2 * G * (top + drop - rest.y)), T0 = vy / G + Math.sqrt((2 * drop) / G);
+        launch = v3((p0.x - sx) / T0, vy, (p0.z - sz) / T0); tFall = T0; vin0 = velAt(launch, T0);
+      }
       const run = [{ note: notes[i], p: p0, vin: vin0, s, dirx: first.tx, dirz: first.tz }];
+      run.rails = [];
       let j = i + 1;
       // place the following pads one by one; split the run when the next note can't be reached
       for (; j <= notes.length; j++) {
         const last = run[run.length - 1];
+        if (j < notes.length && rails && notes[j].t - last.note.t > maxGap && notes[j].t - last.note.t <= maxRoll + catchT + 0.12 + outT) {
+          const r = tryRail(last, notes[j]); if (r) { run.push(r); continue; }
+        }
         if (j === notes.length || notes[j].t - last.note.t > maxGap) { run.splitReason = j < notes.length ? `gap ${(notes[j].t - last.note.t).toFixed(2)} s` : 'end'; closeRun(); break; }
         const T = notes[j].t - last.note.t, step = Math.min(maxStep, Math.max(minStep, speed * T));
         const fl = at(last.s + step, j), dir = v3(fl.x - last.p.x, 0, fl.z - last.p.z);
@@ -192,6 +211,27 @@ export function solveMachine(spec) {
         last.tilt = (Math.acos(Math.min(1, sol.n.y)) * 180) / Math.PI;
         if (last.tilt > maxTilt) errors.push(`lane ${lane.id}: pad for ${midiName(last.note.midi)} (bar ${last.note.bar}) tilts ${last.tilt.toFixed(0)}° (> ${maxTilt}°) — raise speed / step or shorten the gap`);
       }
+      // last pad → (catchT) a funnel → (0.12 s) the rail's top, at rest → roll T_r → leave the rail end → (outT) the next pad
+      function tryRail(last, next) {
+        const gap = next.t - last.note.t, Tr = gap - catchT - 0.12 - outT;
+        if (Tr < 0.35) return null;
+        const fl = at(last.s + catchStep, j), sol = solveBounce(last, fl, catchT);
+        if (!sol || sol.q.y < floor + 0.12) return null;
+        const q = sol.q, top = sub(q, v3(0, 0.075, 0));
+        const a6 = (5 / 7) * G * Math.sin((5 * Math.PI) / 180); // aim for a 5° rail, between 15 cm and 80 cm long
+        let L = Math.min(0.8, Math.max(0.15, 0.5 * a6 * Tr * Tr)), a = (2 * L) / (Tr * Tr), sinA = (7 * a) / (5 * G);
+        if (sinA < Math.sin((0.8 * Math.PI) / 180)) { sinA = Math.sin((0.8 * Math.PI) / 180); a = (5 / 7) * G * sinA; L = 0.5 * a * Tr * Tr; }
+        if (sinA > Math.sin((20 * Math.PI) / 180) || L > 1.1) return null;
+        const cosA = Math.sqrt(1 - sinA * sinA), d = norm(v3(fl.tx, 0, fl.tz)), u = v3(d.x * cosA, -sinA, d.z * cosA);
+        const end = add(top, mul(u, L)), vex = mul(u, a * Tr);
+        const pnext = fly(end, vex, outT), vin = velAt(vex, outT);
+        if (pnext.y < floor) return null;
+        accept(last, sol, v3(fl.x - last.p.x, 0, fl.z - last.p.z));
+        last.rail = { q, top, end, u, L, a, Tr, sinA, tIn: last.note.t + catchT, tTop: last.note.t + catchT + 0.12, tEnd: last.note.t + catchT + 0.12 + Tr, vex, catchT };
+        run.rails.push(last.rail);
+        const sNext = last.s + catchStep + L * cosA + Math.hypot(vex.x, vex.z) * outT;
+        return { note: next, p: pnext, vin, s: sNext, dirx: d.x, dirz: d.z, afterRail: true };
+      }
       function closeRun() {
         // the run ends at its last pad: aim it at a cup a catchStep further along, catchT (or a little less) later
         // (a fast ball may need a longer or shorter flight to land in a cup above the floor)
@@ -212,8 +252,8 @@ export function solveMachine(spec) {
       // the dropper's post stands behind the first pad (against the direction of travel), clear of it
       const side = norm(v3(-run[0].dir.x, 0, -run[0].dir.z)), sz0 = padSize(K.kind, run[0].note.midi, inst);
       const off = (sz0.shape === 'bar' ? sz0.w / 2 : sz0.R) + 0.035;
-      droppers.push({ id: droppers.length, lane: lane.id, ball: ballId, p: add(p0, v3(0, drop, 0)), side, off, t: release });
-      const segs = [{ t0: release, p: add(p0, v3(0, drop, 0)), v: v3(), t1: run[0].note.t }];
+      droppers.push({ id: droppers.length, lane: lane.id, ball: ballId, kind, p: rest, side, off, t: release, launch, pad0: run[0].p });
+      const segs = [{ t0: release, p: rest, v: launch, t1: run[0].note.t }];
       run.forEach((r, k) => {
         const size = padSize(K.kind, r.note.midi, inst);
         const n = r.n, perp = v3(-r.dir.z, 0, r.dir.x);
@@ -223,6 +263,15 @@ export function solveMachine(spec) {
         const pad = { id: pads.length, lane: lane.id, inst: lane.inst, kind: K.kind, ball: ballId, run: runNo, k, midi: r.note.midi, bar: r.note.bar, t: r.note.t, beat: r.note.beat, center, n, long, across, e: r.e, tilt: r.tilt, vn, ...size, contact: r.p };
         pads.push(pad);
         hits.push({ t: r.note.t, pad: pad.id, lane: lane.id, inst: lane.inst, kind: K.kind, midi: r.note.midi, vn, x: r.p.x, z: r.p.z, ball: ballId });
+        if (r.rail) { // fly into the funnel, drop through it, roll down the rail, fly off its end
+          const R_ = r.rail;
+          segs.push({ t0: r.note.t, p: r.p, v: r.vout, t1: R_.tIn, pad: pad.id });
+          segs.push({ kind: 'lerp', t0: R_.tIn, t1: R_.tTop, a: R_.q, b: R_.top });
+          segs.push({ kind: 'roll', t0: R_.tTop, t1: R_.tEnd, p: R_.top, u: R_.u, acc: R_.a });
+          segs.push({ t0: R_.tEnd, p: R_.end, v: R_.vex, t1: run[k + 1].note.t, rail: rails_.length });
+          rails_.push({ id: rails_.length, lane: lane.id, ball: ballId, ...R_ });
+          return;
+        }
         const T1 = k + 1 < run.length ? run[k + 1].note.t - r.note.t : run.cup.T;
         segs.push({ t0: r.note.t, p: r.p, v: r.vout, t1: r.note.t + T1, pad: pad.id });
       });
@@ -236,14 +285,20 @@ export function solveMachine(spec) {
   }
   hits.sort((a, b) => a.t - b.t);
   const end = Math.max(0, ...balls.map((b) => b.last));
-  return { pads, balls, cups, droppers, hits, errors, warnings, notesPerLane, ballR: R, intro, spb, end };
+  return { pads, balls, cups, droppers, rails: rails_, hits, errors, warnings, notesPerLane, ballR: R, intro, spb, end };
 }
 
 // where a ball is at time t (analytic: on its dropper before release, parabolas between pads, settled in its cup after)
 export function ballAt(ball, t, cups) {
   const S = ball.segs;
   if (t <= S[0].t0) return { p: S[0].p, state: 'loaded' };
-  for (const s of S) if (t <= s.t1) return { p: fly(s.p, s.v, t - s.t0), v: velAt(s.v, t - s.t0), state: 'flying' };
+  for (const s of S) if (t <= s.t1) {
+    const u = t - s.t0;
+    if (s.kind === 'lerp') { const k = u / (s.t1 - s.t0), e = k * k; return { p: add(mul(s.a, 1 - e), mul(s.b, e)), state: 'funnel' }; }
+    if (s.kind === 'roll') return { p: add(s.p, mul(s.u, 0.5 * s.acc * u * u)), v: mul(s.u, s.acc * u), state: 'rolling', roll: 0.5 * s.acc * u * u };
+    return { p: fly(s.p, s.v, u), v: velAt(s.v, u), state: 'flying' };
+  }
+  if (ball.tailAt && t > cups[ball.cup].t + 0.05) { const r = ball.tailAt(t); if (r) return r; } // a relay: the ball leaves its cup
   const c = cups[ball.cup], dt = t - c.t, bottom = c.rim.y - c.depth + ball.r + 0.004;
   // drop into the cup and settle with two small, decaying bounces
   const fall = Math.sqrt((2 * (c.rim.y - bottom)) / G);
@@ -286,23 +341,46 @@ export function simulate(m, { margin = 0.004, poleR = 0.0045 } = {}) {
   };
   const poles = m.pads.map((pd) => ({ id: `pole of pad ${pd.id}`, pad: pd.id, x: pd.center.x - pd.n.x * pd.th, z: pd.center.z - pd.n.z * pd.th, y1: pd.center.y - pd.th }));
   for (const c of m.cups) poles.push({ id: `cup ${c.id}`, cup: c.id, x: c.rim.x, z: c.rim.z, y1: c.rim.y, r: c.r + 0.004 });
-  for (const d of m.droppers) poles.push({ id: `dropper post ${d.id}`, dropper: d.id, x: d.p.x + d.side.x * d.off, z: d.p.z + d.side.z * d.off, y1: d.p.y + 0.06, r: 0.006 });
+  for (const d of m.droppers) {
+    if (d.kind === 'catapult') poles.push({ id: `seesaw ${d.id}`, dropper: d.id, x: d.p.x, z: d.p.z, y1: d.p.y - 0.02, r: 0.03 });
+    else poles.push({ id: `dropper post ${d.id}`, dropper: d.id, x: d.p.x + d.side.x * d.off, z: d.p.z + d.side.z * d.off, y1: d.p.y + 0.06, r: 0.006 });
+  }
+  for (const r of m.rails || []) {
+    poles.push({ id: `funnel post of rail ${r.id}`, rail: r.id, own: 'in', x: r.q.x, z: r.q.z, y1: r.q.y - 0.09, r: 0.005 });
+    const e2 = sub(r.end, mul(r.u, 0.04)); poles.push({ id: `rail post ${r.id}`, rail: r.id, x: e2.x, z: e2.z, y1: e2.y - 0.012, r: 0.005 });
+  }
+  for (const o of m.obstacles || []) poles.push(o); // mechanisms: helix towers, push rods, posts …
+  // rails and funnels of other balls are tested by sampling the flight every 3 ms
+  const nearRail = (ballId, q) => {
+    for (const r of m.rails || []) {
+      if (r.ball === ballId) continue;
+      const d = sub(q, r.top), u = Math.max(0, Math.min(r.L, dot(d, r.u))), c = add(r.top, mul(r.u, u));
+      if (len(sub(q, c)) < R + 0.014) return `rail ${r.id} (${r.lane})`;
+      const f = sub(q, r.q); if (Math.hypot(f.x, f.z) < 0.04 + R && f.y < 0.012 && f.y > -0.09) return `funnel of rail ${r.id} (${r.lane})`;
+    }
+    for (const sgm of m.obstacleSegs || []) { // strings overhead
+      const ab = sub(sgm.b, sgm.a), l2 = dot(ab, ab) || 1, u = Math.max(0, Math.min(1, dot(sub(q, sgm.a), ab) / l2));
+      if (len(sub(q, add(sgm.a, mul(ab, u)))) < R + sgm.r + 0.004) return sgm.id;
+    }
+    return null;
+  };
   for (const ball of m.balls) {
-    const plan = ball.segs.slice(1).map((s) => m.pads[s.pad]);
-    let p = ball.segs[0].p, v = v3(), t = ball.release, worst = 0, ok = true;
-    const cup = m.cups[ball.cup];
-    for (let k = 0; k <= plan.length; k++) {
-      const target = plan[k], prev = plan[k - 1];
-      const horizon = (target ? target.t - t : cup.t - t) + 0.25;
-      // the planned contact
+    let p = ball.segs[0].p, v = ball.segs[0].v, t = ball.release, worst = 0, ok = true, notes = 0, prev = null;
+    const cup = m.cups[ball.cup], S = ball.segs;
+    for (let i = 0; i < S.length; ) {
+      const next = S[i + 1];
+      // what this flight must reach: a pad, a funnel (rail) or the cup
+      const target = next && next.pad !== undefined ? m.pads[next.pad] : null, funnel = next && next.kind === 'lerp' ? next : null;
+      const want = target ? target.t : funnel ? funnel.t0 : cup.t;
+      const horizon = want - t + 0.25;
       let tHit = Infinity;
       if (target) { // coming down onto its top face, inside its outline
         for (const th of planeHits(p, v, target.center, target.n, R, 1e-7, horizon))
           if (dot(velAt(v, th), target.n) < 0 && inPad(target, sub(fly(p, v, th), mul(target.n, R)), -0.002)) { tHit = th; break; }
-      }
-      else { // the cup: ball centre crosses the rim plane inside the rim
-        for (const th of planeHits(p, v, cup.rim, v3(0, 1, 0), 0, 1e-7, horizon)) {
-          const q = fly(p, v, th); if (velAt(v, th).y < 0 && Math.hypot(q.x - cup.rim.x, q.z - cup.rim.z) <= cup.r - R) { tHit = th; break; }
+      } else { // a funnel or the cup: the ball centre comes down through the rim plane inside the rim
+        const rim = funnel ? funnel.a : cup.rim, rr = funnel ? 0.034 : cup.r;
+        for (const th of planeHits(p, v, rim, v3(0, 1, 0), 0, 1e-7, horizon)) {
+          const q = fly(p, v, th); if (velAt(v, th).y < 0 && Math.hypot(q.x - rim.x, q.z - rim.z) <= rr - R) { tHit = th; break; }
         }
       }
       // anything struck before it?
@@ -314,24 +392,31 @@ export function simulate(m, { margin = 0.004, poleR = 0.0045 } = {}) {
             if (inPad(pd, sub(fly(p, v, th), mul(pd.n, off)), R + margin)) { tc = th; clash = `pad ${pd.id} (${pd.lane} ${midiName(pd.midi)})`; break; }
         }
       }
+      const myRail = S[i].rail !== undefined ? S[i].rail : funnel ? m.rails.findIndex((r) => r.ball === ball.id && Math.abs(r.tIn - funnel.t0) < 1e-6) : -1;
       for (const po of poles) {
-        if ((target && po.pad === target.id) || (prev && po.pad === prev.id) || po.cup === ball.cup || (po.dropper !== undefined && m.droppers[po.dropper].ball === ball.id && k === 0)) continue;
-        const th = cylHit(p, v, po.x, po.z, (po.r ?? poleR) + R + margin, 0, po.y1, 1e-7, Math.min(tc, horizon));
+        if ((target && po.pad === target.id) || (prev && po.pad === prev.id) || po.cup === ball.cup || (po.dropper !== undefined && m.droppers[po.dropper].ball === ball.id && i === 0)) continue;
+        if (po.rail !== undefined && po.rail === myRail) continue;
+        if (po.ball === ball.id) continue;
+        const th = cylHit(p, v, po.x, po.z, (po.r ?? poleR) + R + margin, po.y0 ?? 0, po.y1, 1e-7, Math.min(tc, horizon));
         if (th < tc) { tc = th; clash = po.id; }
       }
       const tf = planeHits(p, v, v3(), v3(0, 1, 0), R, 1e-7, Math.min(tc, horizon))[0];
       if (tf !== undefined) { tc = tf; clash = 'the floor'; }
-      const want = target ? target.t : cup.t;
-      if (clash) { errors.push(`ball ${ball.id} (${ball.lane}) hits ${clash} at ${(t + tc).toFixed(3)} s before ${target ? `pad ${target.id} (${midiName(target.midi)} @ ${want.toFixed(3)} s)` : `its cup @ ${want.toFixed(3)} s`}`); ok = false; break; }
-      if (tHit === Infinity) { errors.push(`ball ${ball.id} (${ball.lane}) misses ${target ? `pad ${target.id} (${midiName(target.midi)} @ ${want.toFixed(3)} s)` : `its cup`}`); ok = false; break; }
+      if (!clash && Number.isFinite(tc)) for (let u = 0.003; u < tc; u += 0.003) { const w = nearRail(ball.id, fly(p, v, u)); if (w) { tc = u; clash = w; break; } }
+      const what = target ? `pad ${target.id} (${midiName(target.midi)} @ ${want.toFixed(3)} s)` : funnel ? `its funnel @ ${want.toFixed(3)} s` : `its cup @ ${want.toFixed(3)} s`;
+      if (clash) { errors.push(`ball ${ball.id} (${ball.lane}) hits ${clash} at ${(t + tc).toFixed(3)} s before ${what}`); ok = false; break; }
+      if (tHit === Infinity) { errors.push(`ball ${ball.id} (${ball.lane}) misses ${what}`); ok = false; break; }
       const err = Math.abs(t + tHit - want); worst = Math.max(worst, err);
-      if (err > 0.002) { errors.push(`ball ${ball.id} (${ball.lane}) strikes ${target ? `pad ${target.id} ${midiName(target.midi)}` : 'its cup'} at ${(t + tHit).toFixed(4)} s, the score says ${want.toFixed(4)} s`); ok = false; break; }
-      if (!target) break;
+      if (err > 0.002) { errors.push(`ball ${ball.id} (${ball.lane}) reaches ${what} at ${(t + tHit).toFixed(4)} s`); ok = false; break; }
+      if (!next) break;
+      if (funnel) { // the rail guides it: rolling (a = 5/7 g sin α) is exact, so the ball leaves the rail end as solved
+        const out = S[i + 3]; p = out.p; v = out.v; t = out.t0; prev = null; i += 3; continue;
+      }
       // bounce: only the pad's normal and restitution
       const vi = velAt(v, tHit), vn = dot(vi, target.n);
-      p = fly(p, v, tHit); v = sub(vi, mul(target.n, (1 + target.e) * vn)); t += tHit;
+      p = fly(p, v, tHit); v = sub(vi, mul(target.n, (1 + target.e) * vn)); t += tHit; prev = target; notes++; i += 1;
     }
-    report.push({ ball: ball.id, lane: ball.lane, notes: plan.length, ok, worstMs: worst * 1000 });
+    report.push({ ball: ball.id, lane: ball.lane, notes, ok, worstMs: worst * 1000 });
   }
   return { errors, report };
 }

@@ -3,7 +3,7 @@
 // A hit: { t, kind, midi, vel (0–1, from the ball's impact speed), pan (−1…1) }. Kinds are struck, ringing things:
 // modal synthesis (a sum of decaying partials at each instrument's own ratios) plus a short contact noise.
 // Extra kinds for the machine itself: 'latch' (a dropper opening) and 'catch' (a ball landing in its cup).
-export const KINDS = ['marimba', 'xylophone', 'vibraphone', 'glockenspiel', 'steelpan', 'bowl', 'gong', 'cymbal', 'drum', 'woodblock', 'kalimba', 'latch', 'catch'];
+export const KINDS = ['marimba', 'xylophone', 'vibraphone', 'glockenspiel', 'steelpan', 'bowl', 'gong', 'cymbal', 'drum', 'woodblock', 'kalimba', 'latch', 'catch', 'tick'];
 
 function rng(seed) { let a = seed >>> 0 || 1; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 const mtof = (m) => 440 * 2 ** ((m - 69) / 12);
@@ -41,11 +41,12 @@ const INST = {
   },
   woodblock(o, sr, rand, f, v) { modes(o, sr, rand, f, [[1, 1, 0.07], [2.31, 0.45, 0.045], [3.72, 0.2, 0.025]]); noise(o, sr, rand, 0.25 * v, 0.002, 0.7); },
   kalimba(o, sr, rand, f, v) { modes(o, sr, rand, f, [[1, 1, 1.6], [5.4, 0.25 * v, 0.14], [13.2, 0.08 * v, 0.05]]); noise(o, sr, rand, 0.05 * v, 0.002, 0.5); },
+  tick(o, sr, rand, f, v) { noise(o, sr, rand, 0.4, 0.0025, 0.7, 1); partial(o, sr, 1900 + rand() * 700, 0.3, 0.008, 0); partial(o, sr, 3700, 0.12, 0.004, 0); },
   latch(o, sr, rand) { noise(o, sr, rand, 0.5, 0.004, 0.8, 1); partial(o, sr, 2400, 0.25, 0.012, 0); },
   catch(o, sr, rand) { partial(o, sr, 190, 0.8, 0.05, 0); partial(o, sr, 610, 0.3, 0.03, 0); noise(o, sr, rand, 0.3, 0.008, 0.3); for (const [d, a] of [[0.07, 0.25], [0.12, 0.1]]) partial(o, sr, 640, a, 0.02, 0, Math.round(d * sr)); },
 };
-const TAIL = { marimba: 3, xylophone: 2, vibraphone: 9, glockenspiel: 7, steelpan: 4, bowl: 14, gong: 12, cymbal: 6, drum: 2, woodblock: 0.6, kalimba: 5, latch: 0.2, catch: 0.5 };
-const LEVEL = { marimba: 1, xylophone: 0.8, vibraphone: 0.8, glockenspiel: 0.55, steelpan: 0.8, bowl: 0.7, gong: 0.9, cymbal: 0.5, drum: 1.1, woodblock: 0.7, kalimba: 0.8, latch: 0.08, catch: 0.15 };
+const TAIL = { marimba: 3, xylophone: 2, vibraphone: 9, glockenspiel: 7, steelpan: 4, bowl: 14, gong: 12, cymbal: 6, drum: 2, woodblock: 0.6, kalimba: 5, latch: 0.2, catch: 0.5, tick: 0.1 };
+const LEVEL = { marimba: 1, xylophone: 0.8, vibraphone: 0.8, glockenspiel: 0.55, steelpan: 0.8, bowl: 0.7, gong: 0.9, cymbal: 0.5, drum: 1.1, woodblock: 0.7, kalimba: 0.8, latch: 0.08, catch: 0.15, tick: 0.05 };
 
 function freeverb(L, R, sr, { mix = 0.22, size = 0.84, damp = 0.4 } = {}) {
   const sc = sr / 44100, combs = [1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617], aps = [556, 441, 341, 225];

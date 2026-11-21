@@ -14,6 +14,7 @@ import { BokehPass } from './jsm/postprocessing/BokehPass.js';
 import { OutputPass } from './jsm/postprocessing/OutputPass.js';
 import { RoomEnvironment } from './jsm/environments/RoomEnvironment.js';
 import { solveMachine, simulate, clearance, ballAt, midiName, KINDS } from './machine.js';
+import { planCauses, dominoAngle } from './mechanisms.js';
 import { renderAudio } from './synth.js';
 
 // ---------------------------------------------------------------- looks (the room): examples of the style, not menus
@@ -49,6 +50,7 @@ export class Piece {
     this.look = { ...LOOKS.studio, ...(typeof o.look === 'string' ? LOOKS[o.look] : o.look || {}) };
     for (const k of ['key', 'fill', 'bloom', 'dof']) this.look[k] = { ...LOOKS.studio[k], ...(o.look?.[k] || {}) };
     this.m = solveMachine({ bpm: o.bpm, meter: o.meter, intro: o.intro ?? 3, ballR: o.ballR, lanes: o.lanes, instruments: o.instruments });
+    if (o.causes !== false) planCauses(this.m, { starter: o.starter }); // nothing starts by itself
     this.outro = o.outro ?? 3;
     this.duration = +(this.m.end + this.outro).toFixed(3);
     this.fps = o.fps ?? 30;
@@ -129,7 +131,23 @@ export class Piece {
     // droppers: a post, an arm, a ring round the waiting ball and a trap door under it that swings open at release
     const dMat = new THREE.MeshStandardMaterial({ color: '#c9ccd2', roughness: 0.3, metalness: 0.9 });
     const R = m.ballR;
-    this.flaps = m.droppers.map((d) => {
+    this.flaps = []; this.traps = [];
+    m.droppers.forEach((d) => {
+      if (d.kind === 'catapult') { // a mousetrap catapult on the floor: base board, spring arm with a spoon, trigger plate
+        const dirH = new THREE.Vector3(d.launch.x, 0, d.launch.z).normalize(), yaw = -Math.atan2(dirH.z, dirH.x);
+        const hingeP = V(d.p).addScaledVector(dirH, -0.1); hingeP.y = 0.035;
+        const base = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.014, 0.075), new THREE.MeshStandardMaterial({ color: '#7a5636', roughness: 0.7 }));
+        base.position.copy(hingeP).addScaledVector(dirH, -0.02); base.position.y = 0.007; base.rotation.y = yaw; base.castShadow = base.receiveShadow = true; scene.add(base);
+        const plate = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.008, 0.07), dMat); plate.position.copy(V(d.p)).addScaledVector(dirH, -0.31); plate.position.y = 0.004; plate.rotation.y = yaw; scene.add(plate);
+        const link = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.004, 0.006), dMat); link.position.copy(V(d.p)).addScaledVector(dirH, -0.24); link.position.y = 0.01; link.rotation.y = yaw; scene.add(link); // the trigger's link to the latch
+        const arm = new THREE.Group(); arm.position.copy(hingeP); arm.rotation.order = 'YZX'; arm.rotation.y = yaw; scene.add(arm);
+        const la = Math.hypot(0.1, d.p.y - 0.035 - R - 0.004);
+        const rod = new THREE.Mesh(new THREE.BoxGeometry(la, 0.007, 0.012), dMat); rod.position.x = la / 2; arm.add(rod);
+        const spoon = new THREE.Mesh(new THREE.SphereGeometry(R + 0.006, 20, 10, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), dMat); spoon.material = dMat.clone(); spoon.material.side = THREE.DoubleSide; spoon.position.set(la, R * 0.6, 0); arm.add(spoon);
+        [rod, spoon].forEach((o) => (o.castShadow = true));
+        this.traps.push({ arm, t: d.t, phi0: Math.atan2(d.p.y - 0.035 - R - 0.004, 0.1) });
+        return;
+      }
       const post = new THREE.Vector3(d.p.x + d.side.x * d.off, 0, d.p.z + d.side.z * d.off);
       addPole(post.x, post.z, d.p.y + 0.06, 0.006);
       const arm = new THREE.Mesh(new THREE.BoxGeometry(d.off, 0.006, 0.01), dMat);
@@ -140,18 +158,27 @@ export class Piece {
       hinge.rotation.y = -Math.atan2(d.side.z, d.side.x) + Math.PI;
       const flap = new THREE.Mesh(new THREE.BoxGeometry(2 * R + 0.012, 0.003, 2 * R + 0.006), dMat); flap.position.x = R + 0.006; hinge.add(flap);
       [arm, ring, flap, hang].forEach((o) => (o.castShadow = true)); scene.add(hinge);
-      return { hinge, t: d.t };
+      this.flaps.push({ hinge, t: d.t });
     });
     // cups
     const cupMat = new THREE.MeshStandardMaterial({ color: '#9fa4ab', roughness: 0.35, metalness: 0.9, side: THREE.DoubleSide });
+    const mech = m.mech || { lines: [], helices: [], rods: [], levers: [], causes: [] };
+    this.tippers = [];
     for (const cp of m.cups) {
       const pts = [new THREE.Vector2(0, -cp.depth), new THREE.Vector2(cp.r * 0.8, -cp.depth), new THREE.Vector2(cp.r, -cp.depth * 0.6), new THREE.Vector2(cp.r + 0.002, 0), new THREE.Vector2(cp.r + 0.006, 0.002)];
-      const cup = new THREE.Mesh(new THREE.LatheGeometry(pts, 40), cupMat); cup.position.copy(V(cp.rim)); cup.castShadow = true; cup.receiveShadow = true; scene.add(cup);
+      const cup = new THREE.Mesh(new THREE.LatheGeometry(pts, 40), cupMat); cup.castShadow = true; cup.receiveShadow = true;
+      const hx = mech.helices.find((h) => h.cup === cp.id);
+      if (hx) { // a tipping cup on a hinge, turned towards its helix
+        const g = new THREE.Group(); g.position.set(cp.rim.x, cp.rim.y - cp.depth, cp.rim.z); cup.position.y = cp.depth; g.add(cup);
+        const to = new THREE.Vector3(hx.pole.x - cp.rim.x, 0, hx.pole.z - cp.rim.z).normalize(); g.rotation.order = 'YZX'; g.rotation.y = -Math.atan2(to.z, to.x);
+        scene.add(g); this.tippers.push({ g, t: cp.t });
+      } else { cup.position.copy(V(cp.rim)); scene.add(cup); }
       addPole(cp.rim.x, cp.rim.z, cp.rim.y - cp.depth);
     }
+    this.buildMechanisms(mech, addPole, dMat);
     // instanced poles + feet
     const pg = new THREE.CylinderGeometry(1, 1, 1, 8), pi = new THREE.InstancedMesh(pg, poleMat, poles.length);
-    const fg = new THREE.CylinderGeometry(0.028, 0.032, 0.006, 24), fi = new THREE.InstancedMesh(fg, footMat, feet.length);
+    const fg = new THREE.CylinderGeometry(0.02, 0.024, 0.006, 20), fi = new THREE.InstancedMesh(fg, footMat, feet.length);
     const M = new THREE.Matrix4();
     poles.forEach(([x, z, y1, rad], i) => { M.compose(new THREE.Vector3(x, y1 / 2, z), new THREE.Quaternion(), new THREE.Vector3(rad, y1, rad)); pi.setMatrixAt(i, M); });
     feet.forEach(([x, z], i) => { M.makeTranslation(x, 0.003, z); fi.setMatrixAt(i, M); });
@@ -172,6 +199,73 @@ export class Piece {
     this.W = W; this.H = H;
   }
 
+  // ---- rails, helices, domino lines, push rods, levers and strings, the starter
+  buildMechanisms(mech, addPole, dMat) {
+    const scene = this.scene, m = this.m, R = m.ballR, railMat = new THREE.MeshStandardMaterial({ color: '#c3c7ce', roughness: 0.28, metalness: 0.95 });
+    const tube = (pts, r, mat) => { const c = new THREE.CatmullRomCurve3(pts.map((p) => V(p))); const me = new THREE.Mesh(new THREE.TubeGeometry(c, Math.max(8, pts.length * 3), r, 6, false), mat); me.castShadow = true; scene.add(me); return me; };
+    const seg = (a, b, r, mat) => { const A_ = V(a), B_ = V(b), d = B_.clone().sub(A_), me = new THREE.Mesh(new THREE.CylinderGeometry(r, r, d.length(), 6), mat); me.position.copy(A_).add(B_).multiplyScalar(0.5); me.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); me.castShadow = true; scene.add(me); return me; };
+    // rails inside phrases: a funnel, two rods the ball rolls on, posts
+    for (const rl of m.rails || []) {
+      const side = new THREE.Vector3(-rl.u.z, 0, rl.u.x).normalize().multiplyScalar(0.009), below = new THREE.Vector3(0, -R * 0.75, 0);
+      for (const sg of [1, -1]) seg(V(rl.top).add(below).addScaledVector(side, sg), V(rl.end).add(below).addScaledVector(side, sg), 0.0028, railMat);
+      const fpts = [new THREE.Vector2(0.008, -0.07), new THREE.Vector2(0.01, -0.04), new THREE.Vector2(0.036, 0), new THREE.Vector2(0.039, 0.003)];
+      const fun = new THREE.Mesh(new THREE.LatheGeometry(fpts, 32), new THREE.MeshStandardMaterial({ color: '#b98a4a', roughness: 0.3, metalness: 0.9, side: THREE.DoubleSide }));
+      fun.position.copy(V(rl.q)); fun.castShadow = true; scene.add(fun);
+      addPole(rl.q.x, rl.q.z, rl.q.y - 0.07, 0.005);
+      const e2 = V(rl.end).addScaledVector(V(rl.u), -0.04); addPole(e2.x, e2.z, e2.y - R - 0.004, 0.005);
+    }
+    // helix towers: a pole and a spiral rail from the tipping cup down to the floor
+    for (const hx of mech.helices) {
+      const cup = m.cups[hx.cup], yTop = cup.rim.y - 0.075, pts = [], N = Math.ceil(hx.turns * 24) + 2;
+      for (let i = 0; i <= N; i++) { const u = i / N, a = hx.a0 + hx.sgn * 2 * Math.PI * hx.turns * u; pts.push({ x: hx.pole.x + Math.cos(a) * hx.rh, y: yTop - hx.H * u - 0.004, z: hx.pole.z + Math.sin(a) * hx.rh }); }
+      tube(pts, 0.0035, railMat);
+      tube(pts.map((p) => ({ x: hx.pole.x + (p.x - hx.pole.x) * 1.42, y: p.y + 0.012, z: hx.pole.z + (p.z - hx.pole.z) * 1.42 })), 0.0025, railMat); // the outer guard rail
+      addPole(hx.pole.x, hx.pole.z, yTop + 0.03, 0.007);
+    }
+    // domino lines: one instanced mesh each, every domino a box that pivots on its front edge
+    const palette = this.look.dominoes || ['#e8463c', '#f2a03a', '#f5d33f', '#5cc46a', '#3aa6e0', '#6b6fe0', '#c95ad8', '#f2f0ea'];
+    this.lines = mech.lines.map((L, li) => {
+      const geo = new THREE.BoxGeometry(L.h * 0.16, L.h, L.h * 0.5); geo.translate(-L.h * 0.08, L.h / 2, 0); // origin on the front-bottom edge
+      const mesh = new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial({ roughness: 0.45, metalness: 0.05 }), L.n);
+      const col = new THREE.Color();
+      L.pts.forEach((p, k) => { col.set(palette[(li * 3 + k) % palette.length]); mesh.setColorAt(k, col); });
+      mesh.castShadow = true; mesh.receiveShadow = true; scene.add(mesh);
+      return { L, mesh, base: L.pts.map((p) => ({ pos: new THREE.Vector3(p.x + p.hx * L.h * 0.08, 0, p.z + p.hz * L.h * 0.08), yaw: -Math.atan2(p.hz, p.hx) })), last: -1 };
+    });
+    // push rods hang from the struck pad's end (they rock with it); levers flip and pull a string up the dropper's post
+    for (const rd of mech.rods) {
+      const pm = this.padMeshes[rd.pad], pd = pm.pd, ext = (pd.shape === 'bar' ? pd.L / 2 : pd.R) + 0.006, len = Math.max(0.05, pd.center.y - pd.th - 0.012);
+      const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.0022, 0.0022, len, 6), railMat); rod.position.set(ext, -pd.th - len / 2, 0); rod.castShadow = true; pm.mesh.add(rod);
+      const knob = new THREE.Mesh(new THREE.SphereGeometry(0.006, 10, 8), railMat); knob.position.set(ext, -pd.th - len, 0); pm.mesh.add(knob);
+    }
+    const strMat = new THREE.MeshStandardMaterial({ color: '#e9e4d8', roughness: 0.8 });
+    this.levers = mech.levers.map((lv) => {
+      const aim = lv.post || lv.cord;
+      const g = new THREE.Group(); g.position.set(lv.x, 0.012, lv.z); const to = new THREE.Vector3(aim.x - lv.x, 0, aim.z - lv.z).normalize(); g.rotation.order = 'YZX'; g.rotation.y = -Math.atan2(to.z, to.x);
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.006, 0.02), dMat); bar.position.x = 0.02; g.add(bar); scene.add(g);
+      if (lv.cord) seg({ x: lv.x, y: 0.004, z: lv.z }, { x: lv.cord.x, y: 0.006, z: lv.cord.z }, 0.0015, strMat); // a cord along the floor to the catapult's latch
+      else if (lv.strung) { // up to a pulley, across to the post, down to the trap door
+        const a = { x: lv.x, y: 0.02, z: lv.z }, b = { x: lv.x, y: lv.yTop, z: lv.z }, c = { x: lv.post.x, y: lv.yTop, z: lv.post.z }, d = { x: lv.post.x, y: lv.top.y + 0.05, z: lv.post.z };
+        seg(a, b, 0.0012, strMat); seg(b, c, 0.0012, strMat); seg(c, d, 0.0012, strMat);
+        for (const q of [b, c]) { const pul = new THREE.Mesh(new THREE.TorusGeometry(0.012, 0.004, 8, 20), dMat); pul.position.set(q.x, q.y + 0.01, q.z); scene.add(pul); }
+        addPole(lv.x + 0.02, lv.z, lv.yTop + 0.02, 0.004); // the pulley's stand
+      } else seg({ x: lv.x + to.x * 0.045, y: 0.02, z: lv.z + to.z * 0.045 }, { x: lv.post.x, y: lv.top.y + 0.05, z: lv.post.z }, 0.0012, strMat);
+      return { g, t: lv.t };
+    });
+    // the starter: a gantry, a pendulum held at 50° by a pin, a plate it swings into
+    const st = mech.starter; this.starter = null;
+    if (st) {
+      const c = new THREE.Vector3(st.at.x, 0, st.at.z), top = st.l + 0.06;
+      for (const sg of [-1, 1]) seg({ x: c.x + 0.07 * sg, y: 0, z: c.z - 0.06 }, { x: c.x + 0.07 * sg, y: top, z: c.z - 0.06 }, 0.005, dMat);
+      seg({ x: c.x - 0.075, y: top, z: c.z - 0.06 }, { x: c.x + 0.075, y: top, z: c.z - 0.06 }, 0.005, dMat);
+      const piv = new THREE.Group(); piv.position.set(c.x, top, c.z - 0.06); piv.rotation.order = 'YXZ'; scene.add(piv);
+      const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, st.l), railMat); rod.position.y = -st.l / 2; piv.add(rod);
+      const bob = new THREE.Mesh(new THREE.SphereGeometry(0.025, 28, 18), new THREE.MeshPhysicalMaterial({ color: '#b8862e', metalness: 1, roughness: 0.25, clearcoat: 0.5 })); bob.position.y = -st.l; bob.castShadow = true; piv.add(bob);
+      const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.08, 0.03, 32), new THREE.MeshStandardMaterial({ color: '#7a5636', roughness: 0.7 })); plate.position.set(c.x, 0.015, c.z); plate.castShadow = true; scene.add(plate);
+      this.starter = { piv, st };
+    }
+  }
+
   // ---- the active ball of a lane at t (in flight, else the next one waiting, else the last one caught)
   activeBall(lane, t) {
     const bs = this.m.balls.filter((b) => b.lane === lane); if (!bs.length) return null;
@@ -190,13 +284,35 @@ export class Piece {
     return n ? out.multiplyScalar(1 / n) : this.center.clone();
   }
 
+  // ---- what a cause chain is doing at t: the domino wave's front, or the relay ball on its helix
+  causeAt(sel, t) {
+    const mech = this.m.mech; if (!mech) return null;
+    const chains = mech.causes.filter((c) => (sel === 'starter' ? c.kind === 'starter' : c.lane === sel));
+    let best = null;
+    for (const c of chains) {
+      const L = mech.lines[c.line], hx = mech.helices.find((h) => h.line === c.line);
+      if (hx && t >= hx.tTop - 0.2 && t <= L.t0) { const b = this.m.balls[hx.ball]; best = this.ballPos(b, t); break; }
+      if (t >= L.t0 - 0.15 && t <= L.tEnd + 0.15) { const k = Math.max(0, Math.min(L.n - 1, (t - L.t0) / L.tau)), i = Math.floor(k), q = L.pts[i], r = L.pts[Math.min(L.n - 1, i + 1)], f = k - i; best = new THREE.Vector3(q.x + (r.x - q.x) * f, L.h * 0.5, q.z + (r.z - q.z) * f); break; }
+    }
+    return best;
+  }
+  causeFocus(sel, t, lag) {
+    const out = new THREE.Vector3(); let n = 0;
+    for (let k = -4; k <= 4; k++) { const p = this.causeAt(sel, t + (k / 4) * lag); if (p) { const w = 1 - Math.abs(k) / 5; out.addScaledVector(p, w); n += w; } }
+    return n ? out.multiplyScalar(1 / n) : null;
+  }
+
   // ---- the camera: a shot is a function of t → { pos, target, fov, focus }
   shotAt(s, t) {
     const c = s.center ? A(s.center) : this.center, u = (t - s.at);
     const sph = (tg, dist, azDeg, elDeg) => { const az = (azDeg * Math.PI) / 180, el = (elDeg * Math.PI) / 180; return tg.clone().add(new THREE.Vector3(Math.cos(az) * Math.cos(el), Math.sin(el), Math.sin(az) * Math.cos(el)).multiplyScalar(dist)); };
     let pos, target, fov = s.fov ?? 32, focus = null;
     if (s.kind === 'orbit') { target = c.clone(); if (s.lift) target.y += s.lift * u; pos = sph(target, s.dist ?? this.span * 1.6, (s.angle ?? 35) + (s.speed ?? 4) * u, s.elev ?? 24); }
-    else if (s.kind === 'follow') {
+    else if (s.kind === 'follow' && s.cause) { // the chain of causes that will set off this lane's next ball (or the starter's)
+      target = this.causeFocus(s.cause, t, s.lag ?? 0.25) || this.laneFocus(s.cause === 'starter' ? [this.o.lanes[0].id] : [s.cause], t, 0.35);
+      pos = sph(target, s.dist ?? 0.6, (s.angle ?? 30) + (s.speed ?? 3) * u, s.elev ?? 22);
+      focus = this.causeFocus(s.cause, t, 0.05) || target;
+    } else if (s.kind === 'follow') {
       const lanes = s.lanes || [s.lane]; target = this.laneFocus(lanes, t, s.lag ?? 0.35);
       if (s.offset) target.add(A(s.offset));
       pos = sph(target, s.dist ?? 0.9, (s.angle ?? 30) + (s.speed ?? 3) * u, s.elev ?? 14);
@@ -236,6 +352,21 @@ export class Piece {
       pm.mesh.position.y = -0.005 * hit * Math.exp(-dt / 0.06) * Math.sin(Math.PI * Math.min(1, dt / 0.06));
     }
     for (const f of this.flaps) { const u = (t - f.t) / 0.14; f.hinge.rotation.z = u <= 0 ? 0 : -1.75 * (u >= 1 ? 1 - 0.08 * Math.exp(-(t - f.t - 0.14) / 0.1) * Math.cos(30 * (t - f.t - 0.14)) : Math.sin((u * Math.PI) / 2)); }
+    for (const tr of this.traps) { const u = (t - tr.t) / 0.05; tr.arm.rotation.z = tr.phi0 + (u <= 0 ? 0 : u >= 1 ? 1.9 - 0.12 * Math.exp(-(t - tr.t - 0.05) / 0.15) * Math.cos(25 * (t - tr.t - 0.05)) : 1.9 * Math.sin((u * Math.PI) / 2)); }
+    for (const tp of this.tippers) { const u = (t - tp.t - 0.06) / 0.12; tp.g.rotation.z = -1.0 * (u <= 0 ? 0 : u >= 1 ? 1 : Math.sin((u * Math.PI) / 2)); }
+    for (const lv of this.levers) { const u = (t - lv.t) / 0.05; lv.g.rotation.z = u <= 0 ? 0 : 0.5 * Math.min(1, u); }
+    const Mx = new THREE.Matrix4(), Q = new THREE.Quaternion(), Qy = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), S1 = new THREE.Vector3(1, 1, 1), ax = new THREE.Vector3(0, 0, 1);
+    for (const ln of this.lines) {
+      const L = ln.L, kNow = Math.floor((t - L.t0) / L.tau);
+      if (kNow === ln.last && kNow > L.n + 3) continue;
+      for (let k = 0; k < L.n; k++) {
+        const th = dominoAngle(L, k, t), b = ln.base[k];
+        Qy.setFromAxisAngle(up, b.yaw); Q.setFromAxisAngle(ax, -th); Qy.multiply(Q); // tip forward about the front edge
+        Mx.compose(b.pos, Qy, S1); ln.mesh.setMatrixAt(k, Mx);
+      }
+      ln.mesh.instanceMatrix.needsUpdate = true; ln.last = kNow;
+    }
+    if (this.starter) { const { piv, st } = this.starter, th0 = (st.theta0 * Math.PI) / 180, u = (t - st.tRelease) / st.quarter; piv.rotation.x = u <= 0 ? -th0 : u < 1 ? -th0 * Math.cos((u * Math.PI) / 2) : 0.05 * Math.exp(-(t - st.tPlate) / 0.2) * Math.sin(18 * (t - st.tPlate)); }
     m.balls.forEach((b, i) => this.ballMeshes[i].position.copy(this.ballPos(b, t)));
     const c = this.cameraAt(t), cam = this.camera;
     cam.position.copy(c.pos); cam.lookAt(c.target); cam.fov = c.fov; cam.updateProjectionMatrix();
@@ -250,6 +381,7 @@ export class Piece {
   audioSpec() {
     const m = this.m, halfW = Math.max(0.5, (this.bb.x1 - this.bb.x0) / 2), mix = this.o.mix || {};
     const hits = m.hits.map((h) => ({ t: h.t, kind: h.kind, midi: h.midi, vel: Math.min(1, 0.35 + h.vn / 4), pan: Math.max(-0.8, Math.min(0.8, ((h.x - this.center.x) / halfW) * 0.7)), gain: mix.lanes?.[h.lane] ?? 1 }));
+    if (mix.sfx !== false && m.mech) for (const sd of m.mech.sounds) hits.push({ t: sd.t, kind: sd.kind, midi: 84, vel: sd.vel, pan: 0, gain: mix.mechanism ?? 1 });
     if (mix.sfx !== false) {
       for (const d of m.droppers) hits.push({ t: d.t, kind: 'latch', midi: 60, vel: 0.6, pan: 0 });
       for (const cp of m.cups) hits.push({ t: cp.t + 0.03, kind: 'catch', midi: 60, vel: 0.6, pan: 0 });
@@ -262,6 +394,11 @@ export class Piece {
     const m = this.m, errors = [...m.errors], warnings = [...m.warnings];
     const sim = simulate(m); errors.push(...sim.errors);
     const build = clearance(m); errors.push(...build.errors);
+    const mech = m.mech;
+    if (mech) { // every start has a cause that arrives on time
+      for (const d of m.droppers) { const c = mech.causes.find((x) => x.start === d.id); if (!c) errors.push(`the ${d.kind === 'catapult' ? 'catapult' : 'dropper'} of ball ${d.ball} (${d.lane}) has no cause`); else if (Math.abs(c.arrives - c.t) > 0.002) errors.push(`the cause of ball ${d.ball} arrives at ${c.arrives.toFixed(3)} s, the ball leaves at ${c.t.toFixed(3)} s`); }
+      for (const L of mech.lines) if (L.r < 0.25 || L.r > 0.85) errors.push(`domino line ${L.id}: spacing ${L.r.toFixed(2)} h is outside 0.25–0.85 h`);
+    }
     for (const pd of m.pads) { const [lo, hi] = RANGES[pd.kind] || [0, 127]; if (pd.midi < lo || pd.midi > hi) { warnings.push(`${pd.lane}: ${midiName(pd.midi)} is outside the usual ${pd.kind} range ${midiName(lo)}–${midiName(hi)}`); break; } }
     for (const l of this.o.lanes) { // every written note is played by some ball
       const want = (m.notesPerLane[l.id] ?? 0), got = m.pads.filter((p) => p.lane === l.id).length;
@@ -282,6 +419,7 @@ export class Piece {
           if (d < rr + 0.04 || (hd < 0.03 && c.pos.y < pd.center.y)) { clip.add(`shot ${i} (${s.kind} @ ${s.at} s): the camera passes through pad ${pd.id} or its pole at ${t.toFixed(2)} s — move it`); break; }
         }
         if (k % 2) continue; // during a glide the old subject is still the subject
+        if (s.cause) { n++; if (this.causeAt(s.cause, t)) seen++; continue; }
         const ballsNow = (s.kind === 'follow' ? (s.lanes || [s.lane]) : this.o.lanes.map((l) => l.id)).map((l) => this.activeBall(l, t)).filter((b) => b && t >= b.release && t <= b.last);
         for (const b of ballsNow) {
           const p = this.ballPos(b, t), q = p.clone().project(cam); n++;
@@ -290,12 +428,13 @@ export class Piece {
         }
       }
       shotInfo.push({ at: s.at, kind: s.kind, seen: n ? seen / n : 1, ballPx: Number.isFinite(minPx) ? +minPx.toFixed(1) : null });
-      if (n && seen / n < (s.kind === 'follow' ? 0.85 : 0.6)) errors.push(`shot ${i} (${s.kind} @ ${s.at} s): the balls in play are on screen only ${((seen / n) * 100).toFixed(0)}% of the time`);
+      if (s.cause && n && seen / n < 0.5) errors.push(`shot ${i} (follow the causes of ${s.cause} @ ${s.at} s): nothing in that chain is moving for ${(100 - (seen / n) * 100).toFixed(0)}% of the shot — move or shorten it`);
+      else if (!s.cause && n && seen / n < (s.kind === 'follow' ? 0.85 : 0.6)) errors.push(`shot ${i} (${s.kind} @ ${s.at} s): the balls in play are on screen only ${((seen / n) * 100).toFixed(0)}% of the time`);
       if (s.kind === 'follow' && minPx < 1.6) warnings.push(`shot ${i} (follow @ ${s.at} s): the ball is only ${minPx.toFixed(1)} px across at this size — move closer`);
     });
     errors.push(...[...clip].slice(0, 6));
     const hitsPerLane = Object.fromEntries(this.o.lanes.map((l) => [l.id, m.pads.filter((p) => p.lane === l.id).length])), ballsPerLane = Object.fromEntries(this.o.lanes.map((l) => [l.id, m.balls.filter((b) => b.lane === l.id).length]));
-    return { errors, warnings, info: { duration: this.duration, music: +(m.end - m.intro).toFixed(2), pads: m.pads.length, balls: m.balls.length, lanes: this.o.lanes.length, hitsPerLane, ballsPerLane, sim: sim.report, maxTilt: Math.max(...m.pads.map((p) => p.tilt)).toFixed(1), height: this.bb.y1.toFixed(2), footprint: [(this.bb.x1 - this.bb.x0).toFixed(2), (this.bb.z1 - this.bb.z0).toFixed(2)], shots: shotInfo } };
+    return { errors, warnings, info: { duration: this.duration, music: +(m.end - m.intro).toFixed(2), pads: m.pads.length, balls: m.balls.length, lanes: this.o.lanes.length, hitsPerLane, ballsPerLane, sim: sim.report, maxTilt: Math.max(...m.pads.map((p) => p.tilt)).toFixed(1), height: this.bb.y1.toFixed(2), footprint: [(this.bb.x1 - this.bb.x0).toFixed(2), (this.bb.z1 - this.bb.z0).toFixed(2)], shots: shotInfo, mech: mech ? { lines: mech.lines.length, dominoes: mech.lines.reduce((a, L) => a + L.n, 0), helices: mech.helices.length, rods: mech.rods.length, catapults: m.droppers.filter((d) => d.kind === 'catapult').length, droppers: m.droppers.filter((d) => d.kind !== 'catapult').length, rails: (m.rails || []).length, starter: !!mech.starter, causes: mech.causes.reduce((o, c) => ((o[c.kind] = (o[c.kind] || 0) + 1), o), {}) } : null } };
   }
 
   // ---- mount: the contract + the live player

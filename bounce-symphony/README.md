@@ -1,10 +1,12 @@
 # bounce-symphony
 
 A Claude Code skill for **bouncing-ball symphonies**: a Rube Goldberg music machine on a dark studio floor, where balls drop
-from trap-door droppers and bounce from pad to pad — marimba bars, glockenspiel keys, bowls, gongs, cymbals, drums on thin
-poles — every bounce striking one note exactly on its beat, the struck pad glowing and rocking, each ball ending in a cup.
+from trap-door droppers or fly from mousetrap catapults and bounce from pad to pad — marimba bars, glockenspiel keys, bowls,
+gongs, cymbals, drums on thin poles — every bounce striking one note exactly on its beat, the struck pad glowing and
+rocking. Nothing starts by itself: a starter hammer, push rods, tipping cups rolling balls down helix towers and branching
+floor domino lines carry every cause to the lever or trigger that releases the next ball, and long notes roll down rails.
 The machine is designed backwards from the score (each pad placed and tilted for a real ballistic flight) and proved by an
-independent forward physics simulation; the sound is synthesised from the same strikes. Give it a topic or a piece and it
+independent forward physics simulation; every cause chain is solved to end exactly on time; the sound is synthesised from the same strikes. Give it a topic or a piece and it
 writes a brief, composes the music in lanes, designs the machine, the room and the shots, and renders a live page, a WAV
 and a 1080p MP4. Code-only.
 

@@ -34,6 +34,12 @@ lanes sit together — rings round a centre, a cone, two facing rows, towers in 
 - Lanes that cross in plan must be far apart in height, or they will hit each other's poles — check.mjs will say which.
 - Keep the footprint under ~6 m across so a wide shot still shows balls; tall lanes (top 1.5–2.2 m) make dramatic falls.
 
+## 4b. The chain of causes
+Which lanes start with droppers, which with catapults (`start`), where the starter hammer stands, and the two or three
+chains worth showing (a cup tipping into a helix that sets off the tune; a bass strike whose domino line runs across the
+whole floor to a catapult). The engine solves every chain; the brief chooses what the camera rides. Leave floor room:
+lanes packed tight leave domino lines nowhere to run.
+
 ## 5. The instruments' bodies and the room
 - Each instrument: kind, body colour and finish (rosewood, aluminium, brass, painted), size tweaks (`L0`, `w`, `R0`).
 - The room: floor and background (they meet seamlessly), the key light (colour, lux, angle), the fill (sky / ground),
@@ -55,10 +61,12 @@ Each question is pass / fail; a fail is fixed before rendering.
 2. In every follow shot, is the ball that is playing in frame, in focus, and big enough to read (≥ 20 px at 1080p)?
 3. Does a struck pad visibly flash in the moment after its strike — and fade by the next few notes?
 4. Is there anything impossible: a pole through a bar, a ball inside a pad, a ball in the air with no pad in sight on the
-   way down, a pad floating without a pole? (check.mjs catches most; the eye catches the rest.)
+   way down, a pad floating without a pole, a domino line running through a foot or a catapult, a dropper opening with
+   nothing touching its lever? (check.mjs catches most; the eye catches the rest.)
 5. Does the frame have a subject — not empty floor, not a wall of poles, not the lens inside a pad?
 6. Do the wide shots show the machine's plan (the rings, the cone, the towers) as the brief describes it?
 7. Is the floor seamless into the background (no horizon line, no bright grazing sheen)?
 8. Does the colour of the light belong to the topic (the brief's palette, not the template's)?
-9. In the preview, does every bounce land on its note — and does a new ball always drop from a dropper, never appear?
+9. In the preview, does every bounce land on its note — and does every new ball leave because something visibly reached
+   its lever or trigger (a domino falling, a cord pulled), never on its own?
 10. Is anything on screen text? (It should not be.)

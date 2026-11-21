@@ -28,5 +28,7 @@ Every piece designs its own music, instruments, plan and shots.
 
 **Differences by design**: the source simulated forward in MuJoCo (and tumbling dominoes), so its machine was tuned by
 trial; this engine solves the machine backwards from the score (every pad placed and tilted for the exact flight) and
-proves it forwards with an exact event-driven simulation, which makes a new score a new machine in seconds. It renders
+proves it forwards with an exact event-driven simulation, which makes a new score a new machine in seconds. Where the source machine was one long chain, this engine adds the Goldberg machinery the source only hinted at (a
+dispenser, rows of dominoes): every release is caused — a starter hammer, push rods, tipping cups and helix towers,
+branching floor domino lines, levers and strings, mousetrap catapults, rails — all solved to the millisecond. It renders
 with three.js (rasterised, soft shadows, bloom, bokeh) instead of a path tracer, so any page is also a live web page.

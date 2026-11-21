@@ -26,3 +26,18 @@
   swinging round the subject, cut when subjects are > 1.4 m apart.
 - **A frame was a blur of white** → the lens passed through a bar during a glide. → check.mjs samples the blends too and
   fails when the camera comes within a pad's reach.
+- **"Make it a real Goldberg machine"** → the first version only bounced balls; droppers opened on a timer. → Every start
+  now has a solved chain of causes (relay helix, push rod, branch, starter), and check.mjs fails any start without one.
+- **A domino "ODE" stalled or crawled** → modelling each domino with a fixed momentum transfer left some spacings below
+  the energy barrier. → An empirical wave speed inside the measured range; the per-domino tilt is only for the picture.
+- **Domino lines could not reach the middle of a spiral** → arcs ran into the forest of pole feet; feet were 3.2 cm wide.
+  → Narrower feet (2.4 cm), A* paths round every foot, the domino height capped by the path's room.
+- **Short distance, long wait = no line** → dominoes cannot be slower than ~0.7 m/s. → Helices soak up long waits
+  (relays are tried early), lines wind out round a waypoint, the starter's moment is chosen inside every first line's window.
+- **Greedy planning walled targets in** → long lines laid early fenced off later starts. → Prefer quick strikes (< 1.7 s)
+  and relays, branch off existing lines, levers further off with strings over pulleys, a harder search last.
+- **Planning took 10 s** → A* exploring whole grids for walled-in targets, a linear open list, per-cell obstacle scans.
+  → A binary heap, rasterised obstacle discs, a weighted heuristic, a per-start search budget and a cache of walled-in
+  spots: 2–4 s.
+- **Dominoes stood on the catapult's base board** → the line ended at the trigger, which sat on the board. → The board is a
+  floor obstacle; the trigger plate sits behind it.

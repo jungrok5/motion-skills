@@ -65,14 +65,15 @@ for (const ch of [au.L, au.R]) for (let i = 0; i < ch.length; i++) { const v = c
 const rms = Math.sqrt(sum / (au.L.length * 2)), db = 20 * Math.log10(rms || 1e-9);
 if (nan) errors.push(`audio: ${nan} NaN samples`);
 if (db < -40) errors.push(`audio: nearly silent (${db.toFixed(1)} dB RMS)`);
-const notes = spec.hits.filter((x) => x.kind !== 'latch' && x.kind !== 'catch'), first = Math.min(...notes.map((n) => n.t)), firstAny = Math.min(...spec.hits.map((n) => n.t));
-let on = -1; for (let i = Math.floor(firstAny * sr) - 10; i < au.L.length; i++) if (i >= 0 && Math.abs(au.L[i]) + Math.abs(au.R[i]) > peak * 0.05) { on = i / sr; break; }
-if (on < 0 || on < firstAny - 0.02 || on > first + 0.03) errors.push(`audio: the first sound is at ${on.toFixed(3)} s, the first strike is written at ${first.toFixed(3)} s`);
+const notes = spec.hits.filter((x) => !['latch', 'catch', 'tick'].includes(x.kind)), first = Math.min(...notes.map((n) => n.t)); // the machine's own clicks are not notes
+let on = -1; for (let i = Math.floor((first - 0.05) * sr); i < au.L.length; i++) if (i >= 0 && Math.abs(au.L[i]) + Math.abs(au.R[i]) > peak * 0.05) { on = i / sr; break; }
+if (on < 0 || on < first - 0.02 || on > first + 0.03) errors.push(`audio: the first sound is at ${on.toFixed(3)} s, the first strike is written at ${first.toFixed(3)} s`);
 
 const i = r.info;
 console.log(`${file}\n  ${i.duration} s (${i.music} s of music) · ${i.lanes} lanes · ${i.pads} pads · ${i.balls} balls · machine ${i.footprint.join(' × ')} m, ${i.height} m tall · steepest pad ${i.maxTilt}°`);
 console.log(`  pads (balls) per lane: ${Object.entries(i.hitsPerLane).map(([k, v]) => `${k} ${v} (${i.ballsPerLane[k]})`).join(' · ')}`);
 const bad = i.sim.filter((s) => !s.ok).length;
+if (i.mech) console.log(`  machine: ${i.mech.droppers} droppers · ${i.mech.catapults} catapults · ${i.mech.rails} rails · ${i.mech.helices} helix towers · ${i.mech.rods} push rods · ${i.mech.lines} domino lines (${i.mech.dominoes} dominoes)${i.mech.starter ? ' · a starter hammer' : ''} — causes: ${Object.entries(i.mech.causes).map(([k, v]) => `${k} ${v}`).join(', ')}`);
 console.log(`  physics: ${i.sim.length - bad}/${i.sim.length} balls fly their score exactly (worst timing error ${Math.max(0, ...i.sim.map((s) => s.worstMs)).toFixed(3)} ms)`);
 for (const s of i.shots) console.log(`  shot @${s.at}s ${s.kind.padEnd(6)} balls on screen ${(s.seen * 100).toFixed(0)}%${s.ballPx !== null ? `  smallest ball ${s.ballPx}px` : ''}`);
 console.log(`  frames: ${stats.map((s) => `${s.t}s lum ${s.lum.toFixed(2)} glow ${(s.glow * 100).toFixed(2)}%`).join(' · ')}`);

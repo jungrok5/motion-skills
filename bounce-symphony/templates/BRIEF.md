@@ -24,6 +24,13 @@ singing bowls play on rings round it.
 Concentric: the arpeggio spiral at the centre (r 0.34 → ~1.2 m, top 1.32 m), the bowls' short arc at r 1.55, the tune's
 ring at r 2.0, the bass ring at r 2.6 (top 1.7 m). From above: a canon of rings round a whirl. Footprint ~5.3 × 4.7 m.
 
+## 4b. Chain of causes
+Glockenspiel runs alternate droppers and catapults, the bass is all catapults (flung 1.7 m up to its ring), arp and bowls
+drop. The starter hammer stands among the first three starts; from then on the engine finds every cause — in the
+solved machine: 3 starter lines, 10 relays (a bowl's cup sets off the second arp ball; an arp cup sets off the tune), 9
+strikes (bass pads push rods that release bowls and arp balls), 1 branch; 23 lines, ~1,100 dominoes. Shown: the starter
+(0–2.2 s), the relay that wakes the tune (9.7 s), the bass relay to a catapult (21 s).
+
 ## 5. Instruments and room
 Rosewood marimba bars (#8a4a2a), darker bass bars (#5e2f1c, longer), silver glockenspiel keys, brass bowls.
 Room: `studio` — grey floor fading into near-black, one warm-white key overhead, cool fill, the 12-colour rainbow pitch
@@ -32,11 +39,14 @@ palette (C red … B pink), bloom 0.55, depth of field on the ball.
 ## 6. Shots
 | at | event | kind | notes |
 |---|---|---|---|
-| 0 | before the first drop | orbit, wide, high | the whole plan |
+| 0 | the starter | follow cause starter, 0.55 m | the hammer swings, the first lines run |
+| 2.2 | before the first drop | orbit, wide, high | the whole plan |
 | 4.6 | the spiral is running | follow arp, 0.75 m | among the bars |
-| 10.4 | end of the first phrase | orbit 6.2 m round the centre | the rings |
+| 9.7 | the tune's cause | follow cause mel, 0.7 m | arp cup tips, helix, dominoes, dropper |
+| 11.6 | end of the first phrase | orbit 6.2 m round the centre | the rings |
 | 13.0 | the tune enters | follow mel, 0.85 m | gold ball on silver keys |
 | 18.0 | second half of the tune | follow arp, low (elev 8) | bars against the dark |
+| 21.0 | the bass relay | follow cause bass, 0.65 m | a helix, a line to a catapult |
 | 23.0 | bar 9, the lift | orbit 5.2 m, high | everything playing |
 | 27.6 | the bass walk | follow bass | |
 | 30.6 | the cadence | orbit 5.6 m, slow | balls coming to rest in their cups |
