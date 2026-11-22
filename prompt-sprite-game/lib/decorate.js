@@ -54,16 +54,16 @@ export function toTokens(rgba, palette /* Uint8ClampedArray K×4, index 0 transp
 
 /**
  * Make room for props: scale a sprite's tokens down to `size` px (nearest neighbour on its opaque bounds) and place it
- * on the ground, at the left, centre or right. Returns new tokens (0 = transparent) — repaint the background (and,
+ * on the ground (or `lift` rows above it, room for a board), at the left, centre or right. Returns new tokens (0 = transparent) — repaint the background (and,
  * if you like, a one-pixel ring round the body to tidy the scaled outline) to add things beside it.
  */
-export function shrink(tokens, size = 12, anchor = 'left') {
+export function shrink(tokens, size = 12, anchor = 'left', lift = 0) {
   let y0 = 16, y1 = -1, x0 = 16, x1 = -1;
   for (let i = 0; i < 256; i++) if (tokens[i] > 0) { const r = i >> 4, c = i & 15; y0 = Math.min(y0, r); y1 = Math.max(y1, r); x0 = Math.min(x0, c); x1 = Math.max(x1, c); }
   if (y1 < 0) return Int32Array.from(tokens);
   const h = y1 - y0 + 1, w = x1 - x0 + 1, k = Math.min(1, size / Math.max(h, w));
   const nh = Math.max(1, Math.round(h * k)), nw = Math.max(1, Math.round(w * k));
-  const ox = anchor === 'right' ? 16 - nw : anchor === 'center' ? Math.floor((16 - nw) / 2) : 0, oy = 16 - nh;
+  const ox = anchor === 'right' ? 16 - nw : anchor === 'center' ? Math.floor((16 - nw) / 2) : 0, oy = Math.max(0, 16 - nh - lift);
   const out = new Int32Array(256);
   for (let r = 0; r < nh; r++) for (let c = 0; c < nw; c++) out[(oy + r) * 16 + ox + c] = tokens[(y0 + Math.min(h - 1, Math.floor((r + 0.5) / k))) * 16 + x0 + Math.min(w - 1, Math.floor((c + 0.5) / k))];
   return out;
