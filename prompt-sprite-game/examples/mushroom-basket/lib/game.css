@@ -25,6 +25,12 @@ html, body { margin: 0; height: 100%; background: var(--psg-bg); color: var(--ps
 .psg-own input { font: inherit; font-size: 14px; background: transparent; color: var(--psg-ink); border: 2px solid var(--psg-dim); padding: 4px 8px; min-width: 0; flex: 1; max-width: 240px; }
 .psg-picks { display: flex; gap: 6px; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
 .psg-picks button { padding: 4px; }
+.psg-deco { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; margin-top: 10px; }
+.psg-deco span { font-size: 12px; color: var(--psg-dim); margin-right: 2px; }
+.psg-deco button { font-size: 12px; padding: 3px 8px; }
+.psg-deco-picks { display: flex; gap: 6px; justify-content: center; margin-top: 6px; flex-wrap: wrap; }
+.psg-deco-picks canvas { width: 48px; height: 48px; image-rendering: pixelated; display: block; }
+.psg-deco-picks button { padding: 4px; }
 .psg-keys { font-size: 12px !important; margin-top: 8px !important; }
 .psg-credit { font-size: 11px; color: var(--psg-dim); margin: 0 12px; text-align: center; }
 .psg-touch { position: absolute; left: 0; right: 0; bottom: 6px; display: flex; justify-content: space-between; padding: 0 10px; pointer-events: none; }
