@@ -19,6 +19,8 @@ export const REGIONS = {
   neck: (r, c, o, b) => o && r >= b.y0 + Math.round(b.h * 0.4) && r <= b.y0 + Math.round(b.h * 0.58),
   feet: (r, c, o, b) => !o || r > b.y1 - 2,                                           // under the feet and around
   background: (r, c, o) => !o,
+  side: (r, c, o, b) => !o && (c > b.x1 || c < b.x0),                                // the empty columns beside the body
+  above: (r, c, o, b) => !o && r < b.y0,                                              // the empty rows above the body
   all: () => true,
 };
 
