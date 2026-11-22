@@ -73,6 +73,9 @@ export const sets = {
 
 - Camera keys are Catmull-Rom with one ease over the shot (`dolly` default). Keep ≤ 0.3 m and ≤ 1.4° per frame.
   `focus` (m) sets the depth of field; default = distance to `look`.
+- Moves (walk / run / turn / do) run one after another. A walk / run without `dur` takes its natural time (≈ distance ×
+  1.4 s walking, × 0.5 s running for a 1.3 m child) and is cut short to end when the next move starts — hurried past 1.5×
+  fails check.mjs; any other overlap is queued (and fails). Air travel in a jump is at constant speed; keep leaps ≈ 2 m.
 - Characters are billboard cards that turn to the shot camera; their stride is drawn across the card, so walks and runs
   must travel **across** the screen (check.mjs: ≥ 60 %). Facing is set from the screen direction of each move.
 - Props: `cast.oto.props = { key: { on: 'foreN', draw: (ctx, v) => … } }`, then `hold: 'key'`.

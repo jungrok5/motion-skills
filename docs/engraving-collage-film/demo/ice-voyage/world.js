@@ -91,7 +91,7 @@ export const sets = {
     haze: [22, 150, 0.5],
     build(S) {
       floe(S, false);
-      S.floor(lead({ w: 40, d: 2.4, seed: 5 }), { at: [0, 0.01, -3] });
+      S.floor(lead({ w: 40, d: 1.3, seed: 5 }), { at: [0, 0.01, -3] });   // a lead a child can clear (~1.3 m)
       const b = S.card(iceberg({ w: 9, h: 6, seed: 19, ppm: 50 }), { at: [7, -0.3, -12], rot: -25, layer: 'bergs', name: 'riser' });
       S.rise(b, 6.6, 1.0);
     },

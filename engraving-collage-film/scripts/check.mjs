@@ -106,6 +106,10 @@ for (const d of body.drift) {
   note(d.px <= 2, `shot ${d.shot + 1}: ${d.name}'s planted feet hold — ${d.px} px drift (at 400 px tall; ≤ 2)`);
   if (d.across < 1) note(d.across >= 0.6, `shot ${d.shot + 1}: ${d.name} walks across the camera — ${Math.round(d.across * 100)} % of the travel is sideways on screen (≥ 60; a billboard walking at the lens moonwalks)`);
 }
+for (const m of body.moves) {
+  note(m.maxStep <= 0.35, `shot ${m.shot + 1}: ${m.name} never teleports — the root moves ${m.maxStep} m in a frame at most${m.maxStep > 0.35 ? ` (at ${m.at} s)` : ''} (≤ 0.35)`);
+  for (const q of m.issues) note(false, q.kind === 'queued' ? `shot ${m.shot + 1}: ${m.name}'s ${q.what} at ${q.asked} s starts before the previous move ends — queued to ${q.at} s; re-block the acts` : `shot ${m.shot + 1}: ${m.name}'s ${q.what} at ${q.at} s is hurried to ${q.x}× its natural speed to end before the next move (≤ 1.5; shorten it, start it earlier or move the next act)`);
+}
 for (const f of body.facing) note(f.wrong === 0, `shot ${f.shot + 1}: ${f.name} faces the way they move${f.wrong ? ` — ${f.wrong} frames backwards` : ''}`);
 for (const i of body.idle) if (i.frames > 12) note(i.maxStepDeg > 0.02, `shot ${i.shot + 1}: ${i.name}'s idle is alive — up to ${i.maxStepDeg}° a frame over ${i.frames} frames`);
 // sound

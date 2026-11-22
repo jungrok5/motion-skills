@@ -27,13 +27,24 @@ class Track {
     this.stride = { walk: strideOf(ch, 'walk') * this.mpp, run: strideOf(ch, 'run') * this.mpp };
     // build segments with absolute times and endpoints
     let pos = [...this.start.pos], face = this.start.face, view = this.start.view;
-    this.segs = []; this.events = [];
+    this.segs = []; this.events = []; this.issues = [];
+    // moves (walk / run / turn / do) happen one after another, never on top of each other — an overlap would make the
+    // root jump to the end of the unfinished move (a teleport). A walk / run without its own dur ends when the next move
+    // starts (it hurries; check.mjs fails one hurried past 1.5× its natural speed); any other overlap queues the next move.
+    const moves = acts.slice(1).filter(a => a.walk || a.run || a.turn || a.do).map(a => a.t ?? 0);
+    let busyUntil = -1e9;
     for (const a of acts.slice(1)) {
-      const t = a.t ?? 0;
+      let t = a.t ?? 0;
+      const isMove = a.walk || a.run || a.turn || a.do;
+      if (isMove && t < busyUntil - 1e-6) { this.issues.push({ kind: 'queued', what: a.walk ? 'walk' : a.run ? 'run' : a.turn ? 'turn' : a.do, asked: t, at: +busyUntil.toFixed(2) }); t = busyUntil; }
+      const nextMove = moves.find(m => m > (a.t ?? 0) + 1e-6);
       if (a.walk || a.run) {
         const gait = a.walk ? 'walk' : 'run', to = a.walk || a.run, p1 = [to[0], to.length > 2 ? to[1] : pos[1], to.length > 2 ? to[2] : to[1]];
         const dist = Math.hypot(p1[0] - pos[0], p1[2] - pos[2]), speed = this.stride[gait] / (GAIT_PERIOD[gait] * ch.mass);
-        const dur = a.dur ?? dist / speed * 1.18;
+        const natural = dist / speed * 1.18;
+        let dur = a.dur ?? natural;
+        if (a.dur == null && nextMove != null && t + dur > nextMove) dur = Math.max(0.3, nextMove - t);
+        if (dur < natural / 1.5) this.issues.push({ kind: 'hurried', what: gait, at: t, x: +(natural / dur).toFixed(2) });
         const f = a.face ?? film.screenFacing(shot, pos, p1, t + dur / 2) ?? face;
         const seg = { kind: gait, t0: t, t1: t + dur, p0: [...pos], p1, face: f, view: a.view || (view === 'front' || view === 'back' ? 'side' : view), dist };
         // 2.5-D: the legs stride across the card, so the cycle advances by the travel ACROSS the screen (the depth part of a
@@ -44,15 +55,15 @@ class Track {
           acc += Math.abs(v3.dot(v3.sub(P, prevP), r)); seg.lat.push(acc); prevP = P;
         }
         seg.latFrac = dist > 1e-6 ? acc / dist : 1;
-        this.segs.push(seg);
+        this.segs.push(seg); busyUntil = t + dur;
         pos = p1; face = f; view = a.view || (view === 'front' || view === 'back' ? 'side' : view);
       } else if (a.turn) {
         const dur = actionDur('turnStep', ch.mass);
-        this.segs.push({ kind: 'turn', t0: t, t1: t + dur, from: view, to: a.turn, face0: face, face1: a.face ?? face, at: [...pos] });
+        this.segs.push({ kind: 'turn', t0: t, t1: t + dur, from: view, to: a.turn, face0: face, face1: a.face ?? face, at: [...pos] }); busyUntil = t + dur;
         view = a.turn; face = a.face ?? face;
       } else if (a.do) {
         const dur = actionDur(a.do, ch.mass);
-        this.segs.push({ kind: 'do', name: a.do, t0: t, t1: t + dur, at: [...pos], to: a.to ? [a.to[0], pos[1], a.to[1]] : null, face, view });
+        this.segs.push({ kind: 'do', name: a.do, t0: t, t1: t + dur, at: [...pos], to: a.to ? [a.to[0], pos[1], a.to[1]] : null, face, view }); busyUntil = t + dur;
         if (a.to) pos = [a.to[0], pos[1], a.to[1]];
       }
       if (a.expr) this.events.push({ t, expr: a.expr });
@@ -68,7 +79,7 @@ class Track {
     for (const g of this.segs) {
       if (s < g.t0) break;
       if (g.kind === 'walk' || g.kind === 'run') { const u = clamp((s - g.t0) / (g.t1 - g.t0)); pos = v3.lerp(g.p0, g.p1, ease.dolly(u)); }
-      else if (g.kind === 'do' && g.to) { const A = ACTIONS[g.name], u = clamp(((s - g.t0) / this.ch.mass - 0.42) / 0.44); pos = v3.lerp(g.at, g.to, ease.sine(u)); }
+      else if (g.kind === 'do' && g.to) { const u = clamp(((s - g.t0) / this.ch.mass - 0.42) / 0.44); pos = v3.lerp(g.at, g.to, u); }   // in the air the horizontal speed is constant (ballistic)
       else pos = g.at || pos;
     }
     return pos;
@@ -289,7 +300,7 @@ export class Film {
     });
     /** bodies over the whole film: joint ranges, planted feet (world drift in comp px), facing vs screen motion, idle life */
     window.bodyAudit = () => {
-      audit.length = 0; const out = { audit: [], drift: [], facing: [], idle: [] };
+      audit.length = 0; const out = { audit: [], drift: [], facing: [], idle: [], moves: [] };
       for (const sh of this.shots) for (const [name, tr] of Object.entries(this.tracks[sh.i])) {
         const n = Math.round(sh.dur * this.FPS); let prev = null, maxDrift = 0, faceBad = 0, lastA = null, idleMove = 0, idleFrames = 0;
         for (let i = 0; i < n; i++) {
@@ -309,6 +320,8 @@ export class Film {
           lastA = st.angles;
           auditPose(ch, { angles: st.angles, view: st.view });
         }
+        let jump = 0, jumpAt = 0; for (let i = 1; i <= n; i++) { const a = tr.posAt((i - 1) / this.FPS), b = tr.posAt(i / this.FPS), d = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]); if (d > jump) { jump = d; jumpAt = i / this.FPS; } }
+        out.moves.push({ shot: sh.i, name, maxStep: +jump.toFixed(3), at: +jumpAt.toFixed(2), issues: tr.issues });
         out.drift.push({ shot: sh.i, name, px: +maxDrift.toFixed(2), across: Math.min(1, ...tr.segs.filter(g => g.lat).map(g => +g.latFrac.toFixed(2))) }); out.facing.push({ shot: sh.i, name, wrong: faceBad }); out.idle.push({ shot: sh.i, name, frames: idleFrames, maxStepDeg: +idleMove.toFixed(3) });
       }
       out.audit = [...new Set(audit)]; return out;

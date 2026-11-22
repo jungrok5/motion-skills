@@ -42,7 +42,14 @@ Found while building this skill and its two pieces (「시계탑 심부름」, �
   check.mjs fails a move that is less than 60 % sideways.
 - **The ankle bent 41° up in the run's swing.** → The foot's world angle was held level while the shin folded. → In the
   swing, blend the foot's angle to the shin from toe-off to the next heel strike.
-- **The walk crouched.** → Hip too low for the stride (knee ~43° at mid-stance). → Hip height 0.995 leg, stride 1.0 leg.
+- **The walk crouched.** → Hip too low for the stride (knee ~43° at mid-stance). → Hip height 0.995 leg, stride 1.0 leg (later 1.2: 1.0 made a child walk 0.7 m/s).
 - **A knee bent backwards for a frame after the jump.** → The landing settled with an overshooting ease. → Legs settle
   with `out`; only arms overshoot (`back`).
+- **The characters teleported mid-shot (up to 3 m in one frame).** → A walk's natural duration ran past the next act's
+  start; the root position took the next move's start point (the walk's END) while the walk was still under way. The
+  walk was also slow (stride 1.0 leg: 0.7 m/s for a child), so the briefs' walks were all too long for their shots. →
+  Moves are sequential: a walk without `dur` is cut short at the next move, any other overlap is queued; check.mjs fails a
+  root that moves more than 0.35 m in a frame, a walk hurried past 1.5×, a queued act. Walk stride 1.2 leg (0.83 m/s), jump
+  air travel at constant speed, leaps ≈ 2 m (the open lead narrowed to 1.3 m). The film had passed every check because
+  nothing measured where the root went between frames — check the path, not just the poses.
 - **The near arm covered the face in the 3/4 wave.** → The near arm is on the camera side. → Wave with the far arm.

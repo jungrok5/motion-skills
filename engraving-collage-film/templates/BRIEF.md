@@ -42,3 +42,5 @@ waves a passing balloon by from the belfry.
 ## Review log
 - stills: cobbles became moiré → flagstones; the sky was empty → engraved sky ring; the ledge floated → parapet.
 - check: run drift 44 px (the run went toward the camera) → re-blocked across the street; idle and jump settle fixed.
+- after review ("the character teleports"): the shot-2 walk (4.1 m) ran past the look-up and the shot-3 walk past the turn →
+  shot 2 starts 1.9 m from its mark, the shot-3 turn and wave moved later; check.mjs now fails teleports and overlaps.

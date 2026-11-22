@@ -39,3 +39,5 @@ night waves at the aurora.
 - stills: the ship filled the frame → moved back to 30 m and sunk into the ice; Nell was tiny in shot 1 → the crane ends
   closer; the night tilt showed the top of the sky → less tilt, a taller aurora plate.
 - check: a knee straightened past 0° after the jump (overshoot ease) → legs settle with ease-out.
+- after review ("the character teleports"): every walk / run ran past the next act → walks shortened (2.7 m, 1.0 m), the
+  run 3.8 m; the 4.6 m leap was impossible for a child → the lead narrowed to 1.3 m, a 2.3 m leap at constant air speed.
