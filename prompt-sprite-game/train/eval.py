@@ -10,6 +10,7 @@ For every subject of the theme it paints `per` sprites from the subject's name a
   lone   opaque pixels whose four neighbours all have another colour, per sprite (detail or noise; real sprites give the target)
   speck  lone pixels whose colour appears nowhere else in the sprite and is far (OKLab) from every neighbour: stray
          off-colour pixels (real sprites give the target)
+  eyes   share of sprites with an eye-like point in the top 45 % of the body (a pixel far from every neighbour)
   nll    validation negative log-likelihood per hidden pixel, no label smoothing (the model, not the sampler)
 The CNN is trained once and cached next to the data (<data>.cls.pt). A sample sheet goes to --sheet.
 """
@@ -23,7 +24,7 @@ ap.add_argument('--data', required=True); ap.add_argument('--ckpt', required=Tru
 ap.add_argument('--steps', type=int, default=16); ap.add_argument('--temp', type=float, default=1.0)
 ap.add_argument('--guidance', type=float, default=3.0); ap.add_argument('--nms', type=int, default=0)
 ap.add_argument('--top-p', type=float, default=1.0); ap.add_argument('--choice', type=float, default=1.0)
-ap.add_argument('--despeckle', type=int, default=0)
+ap.add_argument('--despeckle', type=int, default=0, help='0 off · 1 everywhere · 2 floating pixels only · 3 not in the head band (shipped)')
 ap.add_argument('--per', type=int, default=8); ap.add_argument('--sheet', default='')
 ap.add_argument('--json', default='')
 a = ap.parse_args()
@@ -94,20 +95,39 @@ def speck(t, far=0.12):
     once = torch.stack([(t[b][..., None, None] == t[b]).sum((-1, -2)) == 1 for b in range(B)])
     return ((t > 0) & once & (dist > far).all(0)).float().sum((1, 2)).mean().item()
 
-def despeckle(t, far=0.12):
-    """remove pixels floating alone; replace stray pixels (colour used once, far from all four neighbours) by their most common neighbour colour"""
+def head_band(t, share=0.45):
+    """(B,16,16) bool: rows in the top `share` of each sprite's opaque bounds (where eyes are)"""
+    op = t > 0; rows = op.any(2); B = t.shape[0]
+    y0 = torch.where(rows.any(1), rows.float().argmax(1), torch.zeros(B, dtype=torch.long))
+    y1 = 15 - rows.flip(1).float().argmax(1)
+    r = torch.arange(16)[None, :, None]
+    return (r >= y0[:, None, None]) & (r <= (y0 + ((y1 - y0 + 1) * share).round().long())[:, None, None]) & op
+
+def eyes(t, far=0.15):
+    """share of sprites with an eye-like point: a pixel in the head band far (OKLab) from every neighbour"""
+    t = t.view(-1, 16, 16).clamp(max=len(palette) - 1)
+    p = F.pad(t, (1, 1, 1, 1), value=0)
+    nb = torch.stack([p[:, :-2, 1:-1], p[:, 2:, 1:-1], p[:, 1:-1, :-2], p[:, 1:-1, 2:]])
+    pt = (((LAB[t][None] - LAB[nb]) ** 2).sum(-1).sqrt() > far).all(0) & head_band(t)
+    return pt.flatten(1).any(1).float().mean().item()
+
+def despeckle(t, far=0.12, mode=1):
+    """mode 1: remove pixels floating alone; replace stray pixels (colour used once, far from all four neighbours) by
+    their most common neighbour colour. mode 2: floating pixels only. mode 3: as 1, but never inside the head band (eyes)."""
     t = t.view(-1, 16, 16).clone().clamp(max=len(palette) - 1); B = t.shape[0]
     p = F.pad(t, (1, 1, 1, 1), value=0)
     nb = torch.stack([p[:, :-2, 1:-1], p[:, 2:, 1:-1], p[:, 1:-1, :-2], p[:, 1:-1, 2:]])
     dist = ((LAB[t][None] - LAB[nb]) ** 2).sum(-1).sqrt()
     once = torch.stack([(t[b][..., None, None] == t[b]).sum((-1, -2)) == 1 for b in range(B)])
     bad = (t > 0) & once & (dist > far).all(0)
-    mode = torch.mode(nb.permute(1, 2, 3, 0), -1).values
+    if mode == 2: bad = torch.zeros_like(bad)
+    if mode == 3: bad = bad & ~head_band(t)
+    mode_c = torch.mode(nb.permute(1, 2, 3, 0), -1).values
     alone = (t > 0) & (nb == 0).all(0)                                                     # floating outside the body
-    return torch.where(alone, torch.zeros_like(t), torch.where(bad, mode, t)).view(-1, 256)
+    return torch.where(alone, torch.zeros_like(t), torch.where(bad, mode_c, t)).view(-1, 256)
 
 real_tr_f, _ = feats_and_pred(tokens[tr]); real_val_f, real_val_p = feats_and_pred(tokens[val])
-ref = {'acc': (real_val_p == sid[val]).float().mean().item(), 'fd': frechet(real_tr_f, real_val_f), 'lone': lone(tokens[val]), 'speck': speck(tokens[val])}
+ref = {'acc': (real_val_p == sid[val]).float().mean().item(), 'fd': frechet(real_tr_f, real_val_f), 'lone': lone(tokens[val]), 'speck': speck(tokens[val]), 'eyes': eyes(tokens[val])}
 
 ck = torch.load(a.ckpt, weights_only=False); m = SpritePainter(**ck['cfg']); m.load_state_dict(ck['state']); m.eval()
 vocab = list(ck['vocab']); widx = {w: i for i, w in enumerate(vocab)}
@@ -127,16 +147,17 @@ gen, want = [], []
 for k, name in enumerate(names):
     out = paint(m, torch.tensor(enc(name)), steps=a.steps, guidance=a.guidance, temp=a.temp, seed=k, count=a.per, nms=bool(a.nms), top_p=a.top_p, choice=a.choice)
     out = torch.where(out == m.mask_id, torch.zeros_like(out), out)
-    if a.despeckle: out = despeckle(out)
+    if a.despeckle: out = despeckle(out, mode=a.despeckle)
     gen.append(out); want += [k] * a.per
 gen = torch.cat(gen); want = torch.tensor(want)
 gf, gp = feats_and_pred(gen)
-res = {'acc': (gp == want).float().mean().item(), 'fd': frechet(gf, real_val_f), 'lone': lone(gen), 'speck': speck(gen), 'nll': nll}
+res = {'acc': (gp == want).float().mean().item(), 'fd': frechet(gf, real_val_f), 'lone': lone(gen), 'speck': speck(gen), 'eyes': eyes(gen), 'nll': nll}
 print(f"{os.path.basename(os.path.dirname(a.ckpt))} step {ck['step']} · steps {a.steps} temp {a.temp} top-p {a.top_p} choice {a.choice} despeckle {a.despeckle} guidance {a.guidance} nms {a.nms}")
 print(f"  acc  {res['acc']*100:5.1f} %   (real {ref['acc']*100:.1f} %)")
 print(f"  fd   {res['fd']:7.2f}   (real {ref['fd']:.2f})")
 print(f"  lone {res['lone']:5.1f}     (real {ref['lone']:.1f})")
 print(f"  speck {res['speck']:4.2f}     (real {ref['speck']:.2f})")
+print(f"  eyes {res['eyes']*100:5.1f} %   (real {ref['eyes']*100:.1f} %)")
 print(f"  nll  {res['nll']:.4f}")
 if a.json: json.dump({'res': res, 'ref': ref, 'args': vars(a), 'step': ck['step']}, open(a.json, 'w'))
 if a.sheet:

@@ -53,7 +53,8 @@ FD alone rewards noise (texture counts as "real"), so every choice below was als
 | temp 1.6 + top-p 0.8 + NMS | 77.6 % | 44.2 | 8.77 | best FD, specks still |
 | v2: self-conditioning + blob masks + perceptual smoothing | 75.0 % | 64.6 | — | **worse** on 5.8k sprites (overfits first, best step again 3,500) |
 | pre-train on 128k animal sprites → fine-tune on cats | 75.0 % | 56.0 | 11.46 | nll better (1.744 vs 1.872), samples not better at this size |
-| **temp 1.6 + top-p 0.8 + NMS + despeckle** (shipped) | 77.6 % | 57.1 | 0.11 | detail kept, strays removed (floating pixels: real sprites have 0.03) |
+| temp 1.6 + top-p 0.8 + NMS + despeckle everywhere | 77.6 % | 57.1 | 0.11 | strays gone — and a side view's single eye with them (black cats lost their eyes) |
+| **… + despeckle except the head band** (shipped) | 77.6 % | 46.1 | 4.35 | eyes kept; lone 45.7 vs real 46.2 — closest to the real sprites on every measure |
 
 So: the data size (5.8k sprites, overfitting from step 3,500) is the limit; sampling was the cheap win. Next steps that
 need a GPU: a larger model pre-trained on the whole atlas, then fine-tuned.

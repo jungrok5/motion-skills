@@ -39,3 +39,7 @@ Problem → cause → fix, one or two lines each. Add to it whenever a game teac
 - **Tessera's tricks and pre-training did not help a 3 M model on one CPU** → self-conditioning, blob masks, perceptual
   smoothing (v2) and animal pre-training each scored worse or equal on samples, though pre-training improved NLL. →
   Keep v1; these are worth retrying with a larger model on a GPU.
+- **The despeckle pass took black cats' eyes** → a side view's single eye is a colour used once and far from all its
+  neighbours — exactly a "speck". The metrics improved while the sprites got worse. → No colour-speck removal in the
+  top 45 % of the body (floating pixels are still removed everywhere); compare-painters.mjs on black / tuxedo / russian
+  blue cats is the check.
