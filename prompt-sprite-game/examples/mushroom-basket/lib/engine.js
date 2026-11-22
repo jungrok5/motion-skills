@@ -1054,8 +1054,9 @@ export async function boot({ root = document.body, src = './game.json', data = n
   const OWN = `psg.own.${hashStr(data.title || '')}`;
   const heroKey = keys.find((k) => data.cast[k].role === 'player');
   const b64 = (u8) => { let t = ''; for (let i = 0; i < u8.length; i++) t += String.fromCharCode(u8[i]); return btoa(t); };
-  const loadOwn = () => { try { const v = JSON.parse(localStorage.getItem(OWN) || 'null'); if (v?.rgba) { sprites[heroKey] = makeSprite(Uint8ClampedArray.from(atob(v.rgba), (c) => c.charCodeAt(0)), v.by); data.cast[heroKey].faces = 'front'; } } catch {} };
-  const saveOwn = (prompt, rgba, by) => { try { localStorage.setItem(OWN, JSON.stringify({ prompt, by, rgba: b64(rgba) })); } catch {} };
+  // a typed hero faces front (we cannot know); a decorated one keeps the facing of the sprite it was made from
+  const loadOwn = () => { try { const v = JSON.parse(localStorage.getItem(OWN) || 'null'); if (v?.rgba) { sprites[heroKey] = makeSprite(Uint8ClampedArray.from(atob(v.rgba), (c) => c.charCodeAt(0)), v.by); data.cast[heroKey].faces = v.faces || 'front'; } } catch {} };
+  const saveOwn = (prompt, rgba, by, faces = 'front') => { try { localStorage.setItem(OWN, JSON.stringify({ prompt, by, faces, rgba: b64(rgba) })); } catch {} };
 
   // a themed painter trained with train/ (optional): paints the cast members listed in painter.for, in a few seconds on the CPU
   const PZ = data.painter;
@@ -1171,10 +1172,10 @@ export async function boot({ root = document.body, src = './game.json', data = n
         const live = (_, list) => decoPicks.replaceChildren(...list.map((rgba) => { const c = mkCanvas(16, 16); c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba), 16, 16), 0, 0); return c; }));
         const outs = await repaint(base, keepMask(base, acc.region), prompt, { seed: 1 + Math.floor(Math.random() * 99999), count: 4, device: gpu ? 'auto' : 'wasm', onStep: live });
         decoPicks.replaceChildren(...outs.map(({ rgba }) => { const b = document.createElement('button'); const c = mkCanvas(16, 16); c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba), 16, 16), 0, 0); b.append(c); b.title = ui.ownPick;
-          b.onclick = () => { history.push(sprites[heroKey]); undoBtn.hidden = false; saveOwn(prompt, rgba, 'tessera'); sprites[heroKey] = makeSprite(rgba, 'tessera'); showCast(); setCredit(); }; return b; }));
+          b.onclick = () => { history.push({ sprite: sprites[heroKey], faces: data.cast[heroKey].faces }); undoBtn.hidden = false; saveOwn(prompt, rgba, 'tessera', data.cast[heroKey].faces); sprites[heroKey] = makeSprite(rgba, 'tessera'); showCast(); setCredit(); }; return b; }));
       } catch (e) { decoPicks.textContent = String(e.message || e); }
     });
-    undoBtn.onclick = () => { const prev = history.pop(); if (!prev) return; sprites[heroKey] = prev; saveOwn(heroPrompt() || '', prev.rgba, prev.source); if (!history.length) undoBtn.hidden = true; showCast(); setCredit(); };
+    undoBtn.onclick = () => { const prev = history.pop(); if (!prev) return; sprites[heroKey] = prev.sprite; data.cast[heroKey].faces = prev.faces; saveOwn(heroPrompt() || '', prev.sprite.rgba, prev.sprite.source, prev.faces); if (!history.length) undoBtn.hidden = true; showCast(); setCredit(); };
     setCredit();
   }
   function go() {

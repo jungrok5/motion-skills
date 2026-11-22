@@ -70,3 +70,23 @@ node <skill>/scripts/paint.mjs <project> [--roles=hero,crab] [--seeds=7,21] [--p
 Headless Chromium on the CPU: ~25 s per sprite, four per prompt and seed. It needs network access to huggingface.co
 and cdn.jsdelivr.net. Do not run the Python sampler from the model repo (`tessera_onnx.py`) in this workflow: the
 browser path is what players run, and it is the one to see.
+
+## Same character, new look (repaint)
+
+Tessera paints every sprite from scratch, so changing the prompt ("orange cat sleeping") gives a *different* cat.
+To keep a character, repaint only part of it: `repaint(tokens, keepMask(tokens, region), prompt)` in
+`lib/tessera-link.js` + `lib/decorate.js` keeps the other pixels exactly. `scripts/repaint-sheet.mjs` tries edits side by
+side. What was found on an orange cat (CPU, 4 variations each, `ref/` sheets):
+
+| want | how | result |
+|---|---|---|
+| hat, crown, glasses, scarf (on the body) | region `hat` / `crown` / `eyes` / `neck`, prompt = the character + "wearing a wizard hat" … | works: same cat, new hat / scarf in 4 of 4 |
+| a small prop beside it (apple) | `shrink` to 11 px at the left, region `side`, prompt = the prop only ("a red apple") | works: a small apple next to the cat |
+| weather (rain) | `shrink`, region `above`, "blue raindrops" | works; "rain" alone paints a blob |
+| a large prop (fish, ball of yarn) | `shrink`, region `background`, prompt = the prop only | the prop comes out big, behind the cat (in `side` it is squeezed into a strip) |
+| standing on something (skateboard) | `shrink --lift 3`, region `feet`, prompt = character + "on a skateboard" | works: board with wheels under the cat; the prop alone falls apart |
+| a pose (sleeping) | — | not possible: a pose repaints the whole body, so it is no longer the same cat |
+
+Two rules came out of it: (1) without `shrink` a 16×16 character fills the canvas and props only get its corners;
+(2) when the background is freed, do **not** name the character in the prompt — the empty space gets a second cat.
+The game's 꾸미기 buttons use only the on-body accessories (they work without changing the hero's size).

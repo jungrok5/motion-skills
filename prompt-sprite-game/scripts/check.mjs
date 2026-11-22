@@ -22,9 +22,9 @@ const rows = []; let failed = 0;
 const gate = (name, ok, detail) => { rows.push([ok ? 'ok  ' : 'FAIL', name, detail]); if (!ok) failed++; };
 
 // ---------------------------------------------------------------- files
-for (const f of ['index.html', 'game.json', 'lib/engine.js', 'lib/tessera-link.js', 'lib/game.css']) gate(`files: ${f}`, fs.existsSync(path.join(project, f)), fs.existsSync(path.join(project, f)) ? 'present' : 'missing');
+for (const f of ['index.html', 'game.json', 'lib/engine.js', 'lib/tessera-link.js', 'lib/painter-link.js', 'lib/decorate.js', 'lib/game.css']) gate(`files: ${f}`, fs.existsSync(path.join(project, f)), fs.existsSync(path.join(project, f)) ? 'present' : 'missing');
 if (path.resolve(project, 'lib') !== path.join(skill, 'lib')) {
-  const stale = ['engine.js', 'tessera-link.js', 'game.css'].filter((f) => fs.existsSync(path.join(project, 'lib', f)) && fs.readFileSync(path.join(project, 'lib', f), 'utf8') !== fs.readFileSync(path.join(skill, 'lib', f), 'utf8'));
+  const stale = ['engine.js', 'tessera-link.js', 'painter-link.js', 'decorate.js', 'game.css'].filter((f) => fs.existsSync(path.join(project, 'lib', f)) && fs.readFileSync(path.join(project, 'lib', f), 'utf8') !== fs.readFileSync(path.join(skill, 'lib', f), 'utf8'));
   gate('files: lib/ is current', !stale.length, stale.length ? `differs from the skill: ${stale.join(', ')} (node ${path.relative(process.cwd(), skill)}/scripts/new-game.mjs ${path.relative(process.cwd(), project)} --refresh)` : 'same as the skill');
 }
 if (fs.existsSync(path.join(project, 'ref'))) {

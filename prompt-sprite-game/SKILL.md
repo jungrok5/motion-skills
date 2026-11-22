@@ -117,6 +117,15 @@ side view may face either way — use `front-view` for anything that turns, or p
 `train/README.md` ("Provenance and licence") — the data is CC0 but was made with Krea 2, whose terms allow commercial
 use below US$1M yearly revenue.
 
+## Same character, new look — 꾸미기
+
+The title screen's **꾸미기** buttons (마법사 모자 · 왕관 · 선글라스 · 빨간 목도리, or `game.json` `accessories`) repaint one
+region of the hero as it is now — hand-drawn, painter or Tessera — and keep every other pixel: `lib/decorate.js` maps the
+sprite to Tessera's palette (`toTokens`), frees the region (`keepMask`), and `repaint` in `lib/tessera-link.js` paints
+it for "<hero prompt> wearing a wizard hat". Four to pick from, undo, and the result is the hero in play (credited as
+Tessera, non-commercial). Only on-body accessories are offered: props beside the body need the sprite shrunk first —
+`scripts/repaint-sheet.mjs --shrink` and the recipe table in references/TESSERA.md ("Same character, new look").
+
 ## Rules
 - **Design per topic.** A new topic gets its own verb, cast, prompts, grids, place, level and tune. Do not reuse an
   example's cast or level because it is close; the starters fail check until every placeholder is replaced.

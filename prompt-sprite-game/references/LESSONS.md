@@ -43,3 +43,11 @@ Problem → cause → fix, one or two lines each. Add to it whenever a game teac
   neighbours — exactly a "speck". The metrics improved while the sprites got worse. → No colour-speck removal in the
   top 45 % of the body (floating pixels are still removed everywhere); compare-painters.mjs on black / tuxedo / russian
   blue cats is the check.
+- **"Orange cat sleeping" is a different cat** → Tessera paints each sprite from scratch. → Keep the character and
+  repaint one region (`repaint` + `decorate.js`): hats, crowns, glasses and scarves work 4 of 4.
+- **Props beside a 16×16 character only got its corners; "small orange cat" was still full size** → the prompt cannot
+  shrink the character. → `shrink` it in code (11 px), then repaint the free space.
+- **Freeing the background with the character in the prompt painted a second cat** → the model fills empty space with
+  what the prompt names. → Name only the prop when the body is kept ("a red apple", "blue raindrops").
+- **A decorated side-view hero stopped mirroring after a reload** → the saved hero was always loaded as front-facing.
+  → Save the facing with it (a typed hero is still front-facing).
