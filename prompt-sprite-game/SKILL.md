@@ -48,6 +48,9 @@ rules (need, lives, time); the tune; the intro, win and lose lines.
 | `scripts/new-game.mjs` | start a project (`--kind`, `--title`), copy an example (`--from`), or `--refresh` its `lib/` |
 | `scripts/paint.mjs` | preview what Tessera paints for each prompt and seed → `ref/tessera/*.png` + `sheet.png` (git-ignored) |
 | `scripts/check.mjs` | the gates (files, data, sprites, reach, run + determinism, motion per member both ways, page errors; `--tessera`) |
+| `scripts/compare-painters.mjs` | the same prompts side by side: Tessera and/or a themed painter under several settings → `ref/compare.png` |
+| `scripts/repaint-sheet.mjs` | same character, new look: a base sprite, then one region repainted per edit (hat, scarf, glasses …) → `ref/repaint.png` |
+| `lib/decorate.js` | accessory regions measured from a sprite's bounds, `keepMask`, `ACCESSORIES`, RGBA → Tessera palette ids |
 | `scripts/sheet.mjs` | cast sheet turned both ways with the motion, and five stills of the level played by the autopilot (`--tessera` → ref/) |
 | `train/` | train a themed painter on a subset of Pixel Art Atlas 1.4M (CC0): `prepare.py` → `train.py` → `export.py` (int8 ONNX + NOTICE); README with the licence reading (Tessera, the atlas, Krea 2) |
 | `models/cat/` | the cat painter trained here: 5,775 cat sprites, 3.24 M parameters, int8 ONNX 3.56 MB, 352 words |
@@ -113,6 +116,15 @@ the theme's words (the cat painter knows 352). Direction is not controllable: tr
 side view may face either way — use `front-view` for anything that turns, or pick a seed by looking. Licence: read
 `train/README.md` ("Provenance and licence") — the data is CC0 but was made with Krea 2, whose terms allow commercial
 use below US$1M yearly revenue.
+
+## Same character, new look — 꾸미기
+
+The title screen's **꾸미기** buttons (마법사 모자 · 왕관 · 선글라스 · 빨간 목도리, or `game.json` `accessories`) repaint one
+region of the hero as it is now — hand-drawn, painter or Tessera — and keep every other pixel: `lib/decorate.js` maps the
+sprite to Tessera's palette (`toTokens`), frees the region (`keepMask`), and `repaint` in `lib/tessera-link.js` paints
+it for "<hero prompt> wearing a wizard hat". Four to pick from, undo, and the result is the hero in play (credited as
+Tessera, non-commercial). Only on-body accessories are offered: props beside the body need the sprite shrunk first —
+`scripts/repaint-sheet.mjs --shrink` and the recipe table in references/TESSERA.md ("Same character, new look").
 
 ## Rules
 - **Design per topic.** A new topic gets its own verb, cast, prompts, grids, place, level and tune. Do not reuse an

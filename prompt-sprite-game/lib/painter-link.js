@@ -52,16 +52,20 @@ export class Painter {
     while (ids.length < this.meta.text_len) ids.push(0);
     return { ids, unknown };
   }
-  /** stray pixels: one floating alone (four transparent neighbours) is removed; one whose colour is used once in the sprite
-   *  and is far (OKLab) from all four neighbours takes its most common neighbour's colour */
+  /** stray pixels: one floating alone (four transparent neighbours) is removed; below the head, one whose colour is used
+   *  once in the sprite and is far (OKLab) from all four neighbours takes its most common neighbour's colour */
   despeckle(t, far = 0.12) {
     const out = Int32Array.from(t), count = new Map();
     for (const v of t) count.set(v, (count.get(v) || 0) + 1);
+    // the head band (top 45 % of the opaque rows) keeps its single pixels: a side view's one eye is used once and far
+    // from its neighbours too, and a lost eye is worse than a kept speck (train/eval.py despeckle mode 3)
+    let y0 = 16, y1 = -1; for (let i = 0; i < 256; i++) if (t[i]) { y0 = Math.min(y0, i >> 4); y1 = Math.max(y1, i >> 4); }
+    const headEnd = y0 + Math.round((y1 - y0 + 1) * 0.45);
     for (let i = 0; i < 256; i++) {
       const v = t[i]; if (!v) continue;
       const y = i >> 4, x = i & 15, nb = [y > 0 ? t[i - 16] : 0, y < 15 ? t[i + 16] : 0, x > 0 ? t[i - 1] : 0, x < 15 ? t[i + 1] : 0];
       if (nb.every((n) => n === 0)) { out[i] = 0; continue; }          // a pixel floating alone outside the body
-      if (count.get(v) !== 1) continue;
+      if (count.get(v) !== 1 || y <= headEnd) continue;
       const L = this.lab[v];
       if (!nb.every((n) => Math.hypot(L[0] - this.lab[n][0], L[1] - this.lab[n][1], L[2] - this.lab[n][2]) > far)) continue;
       const c = new Map(); let best = nb[0], bn = 0;

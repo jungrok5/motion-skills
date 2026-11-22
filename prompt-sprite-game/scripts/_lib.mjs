@@ -11,6 +11,7 @@ export function serve(root) {
   return new Promise((resolve) => {
     const srv = http.createServer((req, res) => {
       let p = decodeURIComponent(req.url.split('?')[0]);
+      if (p === '/__blank.html') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end('<!doctype html><meta charset=utf-8><body></body>'); } // an origin for module imports
       if (p.endsWith('/')) p += 'index.html';
       const f = path.join(root, p);
       if (!f.startsWith(path.resolve(root)) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end('not found'); }
@@ -47,3 +48,17 @@ export function projectArg() {
   return dir;
 }
 export const flag = (name, dflt = null) => { const a = process.argv.find((x) => x.startsWith(`--${name}`)); if (!a) return dflt; const v = a.split('=')[1]; return v === undefined ? true : v; };
+
+/** A blank page served from `root` (so `import('/lib/…')` works) — for scripts that only run library code. */
+export async function openBlank(root) {
+  const { chromium } = playwright();
+  const srv = await serve(root);
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+  page.setDefaultTimeout(0);
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await page.goto(srv.url + '__blank.html');
+  return { page, errors, close: async () => { await browser.close(); srv.close(); } };
+}
+export const savePNG = (file, dataUrl) => { fs.mkdirSync(path.dirname(path.resolve(file)), { recursive: true }); fs.writeFileSync(file, Buffer.from(dataUrl.split(',')[1], 'base64')); };

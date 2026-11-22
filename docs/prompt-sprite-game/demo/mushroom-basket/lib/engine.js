@@ -13,7 +13,8 @@
 //   - every idle breathes (1 px height on an irregular period) and shifts its weight now and then.
 // Everything steps at a fixed 60 Hz from a seeded RNG, so a run is a pure function of (data, seed, inputs).
 
-import { spriteFor, allCached, cachedSprite, paint, loadTessera, webgpuLikely, tesseraWasLoaded, TESSERA_CREDIT } from './tessera-link.js';
+import { spriteFor, allCached, cachedSprite, paint, loadTessera, webgpuLikely, tesseraWasLoaded, TESSERA_CREDIT, repaint } from './tessera-link.js';
+import { ACCESSORIES, keepMask, toTokens } from './decorate.js';
 import { loadPainter } from './painter-link.js';
 
 export const TILE = 16;
@@ -1009,7 +1010,7 @@ export function yard(data, sprites, key, { seed = 3, width = 40 } = {}) {
 const DEFAULT_UI = {
   paint: 'Tessera로 스프라이트 그리기', paintNote: '처음 한 번 모델 115 MB를 내려받습니다 · 브라우저 안에서만 그립니다',
   hand: '손그림 스프라이트로 시작', start: '시작', again: '다시', own: '내 주인공 그리기', ownPlaceholder: '예: astronaut cat',
-  ownGo: '4개 그리기', painter: '내장 모델로 그리기', unknownWords: '모델이 모르는 단어(무시됨)', ownPick: '하나를 고르세요', painting: '그리는 중', loading: '모델 받는 중', noGpu: 'WebGPU가 없어 손그림 스프라이트로 시작합니다 (CPU로 그리면 한 벌에 수십 초 걸립니다)',
+  ownGo: '4개 그리기', decorate: '꾸미기', decorateNote: 'Tessera가 지금 주인공의 그 부분만 다시 그립니다 · 나머지는 그대로', undo: '되돌리기', painter: '내장 모델로 그리기', unknownWords: '모델이 모르는 단어(무시됨)', ownPick: '하나를 고르세요', painting: '그리는 중', loading: '모델 받는 중', noGpu: 'WebGPU가 없어 손그림 스프라이트로 시작합니다 (CPU로 그리면 한 벌에 수십 초 걸립니다)',
   controls: '← → 이동 · Space 점프 · M 소리', controlsArena: '← ↑ ↓ → 이동 · Space 덮치기 · M 소리', cpu: 'CPU로 그리기 (느림)',
 };
 
@@ -1053,8 +1054,9 @@ export async function boot({ root = document.body, src = './game.json', data = n
   const OWN = `psg.own.${hashStr(data.title || '')}`;
   const heroKey = keys.find((k) => data.cast[k].role === 'player');
   const b64 = (u8) => { let t = ''; for (let i = 0; i < u8.length; i++) t += String.fromCharCode(u8[i]); return btoa(t); };
-  const loadOwn = () => { try { const v = JSON.parse(localStorage.getItem(OWN) || 'null'); if (v?.rgba) { sprites[heroKey] = makeSprite(Uint8ClampedArray.from(atob(v.rgba), (c) => c.charCodeAt(0)), v.by); data.cast[heroKey].faces = 'front'; } } catch {} };
-  const saveOwn = (prompt, rgba, by) => { try { localStorage.setItem(OWN, JSON.stringify({ prompt, by, rgba: b64(rgba) })); } catch {} };
+  // a typed hero faces front (we cannot know); a decorated one keeps the facing of the sprite it was made from
+  const loadOwn = () => { try { const v = JSON.parse(localStorage.getItem(OWN) || 'null'); if (v?.rgba) { sprites[heroKey] = makeSprite(Uint8ClampedArray.from(atob(v.rgba), (c) => c.charCodeAt(0)), v.by); data.cast[heroKey].faces = v.faces || 'front'; } } catch {} };
+  const saveOwn = (prompt, rgba, by, faces = 'front') => { try { localStorage.setItem(OWN, JSON.stringify({ prompt, by, faces, rgba: b64(rgba) })); } catch {} };
 
   // a themed painter trained with train/ (optional): paints the cast members listed in painter.for, in a few seconds on the CPU
   const PZ = data.painter;
@@ -1114,7 +1116,9 @@ export async function boot({ root = document.body, src = './game.json', data = n
         <button data-act="hand">${esc(ui.hand)}</button>
       </div>
       ${cached ? '' : `<p class="psg-note">${esc(gpu ? ui.paintNote : ui.noGpu)}</p>`}
-      <details class="psg-own"><summary>${esc(ui.own)}</summary><form><input maxlength="60" placeholder="${esc(ui.ownPlaceholder)}" aria-label="${esc(ui.own)}"><button>${esc(ui.ownGo)}</button></form><div class="psg-picks"></div></details>
+      <details class="psg-own"><summary>${esc(ui.own)}</summary><form><input maxlength="60" placeholder="${esc(ui.ownPlaceholder)}" aria-label="${esc(ui.own)}"><button>${esc(ui.ownGo)}</button></form><div class="psg-picks"></div>
+        <div class="psg-deco"><span>${esc(ui.decorate)}</span>${(data.accessories || ACCESSORIES).map((a, i) => `<button type="button" data-acc="${i}">${esc(a.label)}</button>`).join('')}<button type="button" data-undo hidden>${esc(ui.undo)}</button></div>
+        <p class="psg-note">${esc(ui.decorateNote)}</p><div class="psg-deco-picks"></div></details>
       <p class="psg-keys">${esc(data.kind === 'arena' ? ui.controlsArena : ui.controls)}</p></div>`;
     const showCast = () => overlay.querySelectorAll('.psg-cast canvas').forEach((c) => c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(sprites[c.dataset.k].rgba), 16, 16), 0, 0));
     showCast();
@@ -1152,6 +1156,26 @@ export async function boot({ root = document.body, src = './game.json', data = n
         if (note) { const p = document.createElement('p'); p.className = 'psg-note'; p.textContent = note; picks.after(p); }
       } catch (e) { picks.textContent = String(e.message || e); }
     };
+    // 꾸미기: Tessera repaints one region of the hero as it is now (hand-drawn, painter or Tessera) and keeps the rest
+    const decoPicks = overlay.querySelector('.psg-deco-picks'), undoBtn = overlay.querySelector('[data-undo]');
+    const history = [];
+    const heroPrompt = () => { try { return JSON.parse(localStorage.getItem(OWN) || 'null')?.prompt; } catch { return null; } };
+    overlay.querySelectorAll('[data-acc]').forEach((btn) => btn.onclick = async () => {
+      const acc = (data.accessories || ACCESSORIES)[Number(btn.dataset.acc)];
+      if (!gpu && !confirm(ui.cpu + '?')) return;
+      decoPicks.textContent = `${ui.loading} …`;
+      try {
+        const t = await loadTessera({ device: gpu ? 'auto' : 'wasm' });
+        const before = sprites[heroKey];
+        const base = toTokens(before.rgba, t.palette);
+        const prompt = `${(heroPrompt() || data.cast[heroKey].prompt).replace(/\s+(wearing|with)\s.*$/i, '')} ${acc.words}`;
+        const live = (_, list) => decoPicks.replaceChildren(...list.map((rgba) => { const c = mkCanvas(16, 16); c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba), 16, 16), 0, 0); return c; }));
+        const outs = await repaint(base, keepMask(base, acc.region), prompt, { seed: 1 + Math.floor(Math.random() * 99999), count: 4, device: gpu ? 'auto' : 'wasm', onStep: live });
+        decoPicks.replaceChildren(...outs.map(({ rgba }) => { const b = document.createElement('button'); const c = mkCanvas(16, 16); c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba), 16, 16), 0, 0); b.append(c); b.title = ui.ownPick;
+          b.onclick = () => { history.push({ sprite: sprites[heroKey], faces: data.cast[heroKey].faces }); undoBtn.hidden = false; saveOwn(prompt, rgba, 'tessera', data.cast[heroKey].faces); sprites[heroKey] = makeSprite(rgba, 'tessera'); showCast(); setCredit(); }; return b; }));
+      } catch (e) { decoPicks.textContent = String(e.message || e); }
+    });
+    undoBtn.onclick = () => { const prev = history.pop(); if (!prev) return; sprites[heroKey] = prev.sprite; data.cast[heroKey].faces = prev.faces; saveOwn(heroPrompt() || '', prev.sprite.rgba, prev.sprite.source, prev.faces); if (!history.length) undoBtn.hidden = true; showCast(); setCredit(); };
     setCredit();
   }
   function go() {
