@@ -31,6 +31,8 @@ python3 export.py --ckpt runs/cat/ckpt-best.pt --out dist/cat --name cat
 | `prepare.py` | subset by subject regex → tokens re-paletted to K colours (k-means in OKLab, weighted by use), captions, vocabulary |
 | `model.py` | `SpritePainter` (hourglass transformer: 16×16 → 8×8 core with caption words + registers → 16×16), `mask_batch`, `paint` |
 | `train.py` | AdamW, warm-up + cosine, EMA, mirror augmentation, 10 % caption dropout; sample sheets and `ckpt-best.pt` by validation loss |
+| `eval.py` | scores a checkpoint under one sampler setting (acc, fd, lone, speck, nll); `--sheet` for a picture |
+| `sweep.sh` | `eval.py` over several settings, one line each |
 | `export.py` | int8 ONNX (dynamic quantization) + `<name>.json` (palette, vocabulary); checks the int8 graph against PyTorch |
 
 The browser side is `lib/painter-link.js` (onnxruntime-web on WebAssembly, the same loop as `model.paint`).

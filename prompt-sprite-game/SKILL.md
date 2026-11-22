@@ -48,6 +48,9 @@ rules (need, lives, time); the tune; the intro, win and lose lines.
 | `scripts/new-game.mjs` | start a project (`--kind`, `--title`), copy an example (`--from`), or `--refresh` its `lib/` |
 | `scripts/paint.mjs` | preview what Tessera paints for each prompt and seed → `ref/tessera/*.png` + `sheet.png` (git-ignored) |
 | `scripts/check.mjs` | the gates (files, data, sprites, reach, run + determinism, motion per member both ways, page errors; `--tessera`) |
+| `scripts/compare-painters.mjs` | the same prompts side by side: Tessera and/or a themed painter under several settings → `ref/compare.png` |
+| `scripts/repaint-sheet.mjs` | same character, new look: a base sprite, then one region repainted per edit (hat, scarf, glasses …) → `ref/repaint.png` |
+| `lib/decorate.js` | accessory regions measured from a sprite's bounds, `keepMask`, `ACCESSORIES`, RGBA → Tessera palette ids |
 | `scripts/sheet.mjs` | cast sheet turned both ways with the motion, and five stills of the level played by the autopilot (`--tessera` → ref/) |
 | `train/` | train a themed painter on a subset of Pixel Art Atlas 1.4M (CC0): `prepare.py` → `train.py` → `export.py` (int8 ONNX + NOTICE); README with the licence reading (Tessera, the atlas, Krea 2) |
 | `models/cat/` | the cat painter trained here: 5,775 cat sprites, 3.24 M parameters, int8 ONNX 3.56 MB, 352 words |

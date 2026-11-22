@@ -55,7 +55,8 @@ A collection of Claude Code skills for making motion graphics. Each top-level fo
 - Never put MP4s (or other large media) in `docs/`. Thumbnails are 640 px JPEGs; posters ~1200×675, ≤ 200 KB.
 - Shared look lives in `docs/assets/site.css` / `site.js`; skill pages keep the template's sections and classes.
 - Before finishing any site change, serve `docs/` (`python3 -m http.server`) and check the hub and touched pages at
-  1280 px and 390 px, dark and light: no horizontal scroll, no console errors or 404s, demos load.
+  1280 px and 390 px, dark and light: no horizontal scroll, no console errors or 404s, demos load. `node tools/site-check.mjs "" <page>/`
+  does those checks (add `--shots=<dir>` to look at them).
 - Work on a branch and **always finish with a PR to `main`** — every change, a new skill included. Never push to
   `main`, never merge a PR (or enable auto-merge), never merge a branch into `main` locally: the owner reviews and
   merges. Bring `main` into your branch, not the other way round. Only an explicit "merge it" from the owner for that
