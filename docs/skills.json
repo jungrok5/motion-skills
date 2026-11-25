@@ -3621,6 +3621,41 @@
      "url": "https://jungrok5.github.io/motion-skills/engraving-collage-film/demo/starter/"
     }
    ]
+  },
+  {
+   "id": "light-pass",
+   "name": "light-pass",
+   "tagline": "다른 작품 위에 햇빛 연출을 얹는 효과 스킬입니다. 장면마다 브리프로 해의 위치와 빛이 지나는 틈을 정하고, 나무나 창틀 사이로 들어오는 빛줄기(손으로 놓는 쐐기와 실제 틈을 따라가는 자동 빛줄기), 바닥에 고이는 빛, 후광 · 그늘 · 색보정을 숫자로 된 플랜으로 설계합니다. 마스크 보기에서 배치하고 check.mjs로 해 방향 · 날아간 흰색 · 그림자 · 변화량 · 결정성을 검사한 뒤, 작품 페이지에서 매 프레임 lp.draw()로 실시간으로 얹거나 MP4 · 스틸에 오프라인으로 얹습니다.",
+   "posterAlt": "light-pass로 빛을 얹은 장면 네 개: 굵은 나무줄기 양옆으로 따뜻한 아침 빛줄기가 내려오는 소나무 숲길, 왼쪽 위 숲 틈에서 금빛 햇살이 비스듬히 내려오는 빈터의 두 다리 기계, 뼈대 틈으로 푸르스름한 겨울 햇살이 들어오는 눈 속 나무 오두막, 둥근 잎 덩어리 사이로 해에서 빛줄기가 부채꼴로 쏟아지는 코드로 그린 숲",
+   "poster": "light-pass/poster.jpg",
+   "tags": [
+    "WebGL 2 합성 · 효과 스킬",
+    "빛줄기 · 빛 고임 · 색보정",
+    "마스크 보기",
+    "실시간 · 영상 · 스틸"
+   ],
+   "stats": [
+    "예제 4개 · 스틸 3 · 실시간 1",
+    "플랜 검사 5종"
+   ],
+   "page": "light-pass/",
+   "source": "light-pass/",
+   "absorbedFrom": {
+    "repo": "https://github.com/jungrok5/motion-skills",
+    "path": "light-pass/examples/forest-path/"
+   },
+   "sources": [
+    {
+     "title": "@manwon_man의 X 게시물 (15초 비포 · 애프터 — 애프터이펙트에서 나무 사이로 들어오는 빛줄기마다 마스크 패스를 그리고 곡선과 범위를 다듬어 흐린 숲을 햇살 든 숲으로 바꾸는 과정)",
+     "url": "https://x.com/manwon_man/status/2124697362719453604?a=qHwbQc4rVBlcbntyv64&s=19"
+    }
+   ],
+   "workedExample": [
+    {
+     "title": "라이브 데모 · 코드로 그린 숲에 실시간으로 · 숲길 · 빈터 · 눈 오두막 · 마스크 보기",
+     "url": "https://jungrok5.github.io/motion-skills/light-pass/demo/examples/live/"
+    }
+   ]
   }
  ]
 }
