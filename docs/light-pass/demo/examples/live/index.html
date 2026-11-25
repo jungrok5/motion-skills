@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>light-pass · live</title>
+<style>
+  html,body{margin:0;height:100%;background:#0b0d10;color:#e9e4d8;font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+  #wrap{position:relative;width:100%;height:100%;display:grid;place-items:center;overflow:hidden}
+  canvas#out{max-width:100%;max-height:100%;aspect-ratio:16/9;display:block;cursor:crosshair;touch-action:none}
+  canvas#host{display:none}
+  #bar{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);display:flex;flex-wrap:wrap;justify-content:center;gap:6px;max-width:calc(100% - 24px)}
+  #bar button{appearance:none;border:1px solid rgba(233,228,216,.25);background:rgba(11,13,16,.72);color:inherit;font:inherit;font-size:12px;padding:6px 11px;border-radius:99px;cursor:pointer}
+  #bar button[aria-pressed="true"]{background:#d8c38a;color:#14120c;border-color:#d8c38a}
+  @media (max-width:560px){#bar button{font-size:11px;padding:5px 9px}#hint{display:none}}
+  #hint{position:absolute;left:12px;top:10px;font-size:11px;opacity:.65}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="host" width="1280" height="720"></canvas>
+  <canvas id="out" width="1280" height="720" aria-label="빛을 얹은 장면"></canvas>
+  <div id="hint">드래그해서 해 위치 옮기기</div>
+  <div id="bar" role="toolbar">
+    <button data-scene="live" aria-pressed="true">코드로 그린 숲 (실시간)</button>
+    <button data-scene="forest-path" aria-pressed="false">숲길</button>
+    <button data-scene="walker-clearing" aria-pressed="false">빈터</button>
+    <button data-scene="snow-cabin" aria-pressed="false">눈 오두막</button>
+    <button data-view="off" aria-pressed="false">효과 끄기</button>
+    <button data-view="mask" aria-pressed="false">마스크 보기</button>
+  </div>
+</div>
+<script src="../../lib/lightpass.js"></script>
+<script>
+// A host piece: a forest drawn in code on its own canvas, the camera drifting sideways. light-pass knows nothing about it:
+// each frame the host draws, then hands its canvas to lp.draw(). Any canvas piece (2D, three.js, a video) plugs in the same way.
+const host = document.getElementById('host'), hx = host.getContext('2d'), out = document.getElementById('out');
+const W = host.width, H = host.height;
+const rnd = (s) => () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+const layers = [0.25, 0.45, 0.7, 1.0].map((depth, li) => { const r = rnd(97 + li * 13), trees = [];
+  for (let i = 0; i < 9 + li * 2; i++) trees.push({ x: r() * 2.4, w: (8 + r() * 14) * depth * 2, lean: (r() - 0.5) * 0.05, crown: 60 + r() * 90, seed: Math.floor(r() * 1e6) });
+  return { depth, trees }; });
+function drawHost(t) {
+  const pan = (t * 0.018) % 2.4, sun = livePlan.sun;
+  const g = hx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#dfe6ea'); g.addColorStop(0.45, '#c9d3cf'); g.addColorStop(0.62, '#7d8b6e'); g.addColorStop(1, '#3a4030');
+  hx.fillStyle = g; hx.fillRect(0, 0, W, H);
+  const sg = hx.createRadialGradient(sun[0] * W, sun[1] * H, 0, sun[0] * W, sun[1] * H, W * 0.35); sg.addColorStop(0, 'rgba(255,252,236,0.95)'); sg.addColorStop(1, 'rgba(255,252,236,0)'); hx.fillStyle = sg; hx.fillRect(0, 0, W, H);
+  for (const L of layers) { const k = L.depth, shade = Math.round(150 - 115 * k), haze = 1 - k * 0.85;
+    for (const tr of L.trees) { let x = ((tr.x - pan * k) % 2.4 + 2.4) % 2.4 - 0.2; x *= W; const sway = Math.sin(t * 0.7 + tr.seed) * 4 * k;
+      hx.fillStyle = `rgb(${shade + 40 * haze},${shade + 45 * haze},${shade + 30 * haze})`;
+      hx.beginPath(); hx.moveTo(x - tr.w / 2, H); hx.lineTo(x - tr.w * 0.3 + tr.lean * H + sway, -10); hx.lineTo(x + tr.w * 0.3 + tr.lean * H + sway, -10); hx.lineTo(x + tr.w / 2, H); hx.fill();
+      const r = rnd(tr.seed); hx.fillStyle = `rgba(${40 + 50 * haze},${70 + 50 * haze},${40 + 40 * haze},${0.55 + 0.4 * k})`;
+      for (let b = 0; b < 26; b++) { const by = r() * H * 0.55, bx = x + (r() - 0.5) * tr.crown * 2.2 * k + sway * (1 - by / H), rad = (10 + r() * 34) * k; hx.beginPath(); hx.ellipse(bx, by, rad * 1.6, rad, (r() - 0.5), 0, 6.283); hx.fill(); } } }
+  hx.fillStyle = 'rgba(40,46,30,0.85)'; hx.fillRect(0, H * 0.86, W, H * 0.14);
+}
+const livePlan = { sun: [0.58, 0.04], color: [1.0, 0.86, 0.62], auto: { amount: 0.85, threshold: [0.62, 0.9], high: 0.7, decay: 0.97, length: 0.95 },
+  beams: [ { from: [0.55, 0.08], to: [0.36, 0.9], width: [0.02, 0.11], gain: 0.4 }, { from: [0.61, 0.08], to: [0.8, 0.92], width: [0.015, 0.09], gain: 0.36 }, { from: [0.58, 0.1], to: [0.58, 0.95], width: [0.006, 0.04], gain: 0.35, shimmer: 0.35 } ],
+  pools: [ { at: [0.37, 0.9], radius: [0.12, 0.025], gain: 0.3 }, { at: [0.79, 0.92], radius: [0.1, 0.02], gain: 0.26 } ],
+  halo: { size: 0.12, gain: 0.25 }, haze: 0.07, shade: 0.2, grade: { warm: 0.5, contrast: 1.08, saturation: 1.1, vignette: 0.3 } };
+const scenes = { live: { plan: livePlan } };
+for (const n of ['forest-path', 'walker-clearing', 'snow-cabin']) scenes[n] = { img: '../' + n + '/input.jpg', planUrl: '../' + n + '/plan.json' };
+const lp = LightPass.create(out); let cur = 'live', t0 = performance.now(), view = 'lit', dragSun = null;
+async function pick(n) { cur = n; const s = scenes[n]; dragSun = null;
+  if (s.img && !s.image) { s.image = new Image(); s.image.src = s.img; await s.image.decode(); s.plan = await (await fetch(s.planUrl)).json(); }
+  document.querySelectorAll('[data-scene]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.scene === n))); }
+// dragging the sun: the beams' sources move with it and their feet stay where they land, so each beam turns about its foot
+function follow(p, sun) { const s0 = Array.isArray(p.sun) && !Array.isArray(p.sun[0]) ? p.sun : [0.5, 0], dx = sun[0] - s0[0], dy = sun[1] - s0[1];
+  return Object.assign({}, p, { sun, beams: (p.beams || []).map((b) => Object.assign({}, b, { from: [b.from[0] + dx, b.from[1] + dy] })) }); }
+function frame(now) { const t = (now - t0) / 1000, s = scenes[cur]; if (!s.plan) return requestAnimationFrame(frame);
+  const plan = dragSun ? follow(s.plan, dragSun) : s.plan; lp.view = view;
+  if (cur === 'live') { drawHost(t); lp.draw(host, plan, t); } else if (s.image) lp.draw(s.image, plan, t);
+  requestAnimationFrame(frame); }
+document.getElementById('bar').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.scene) pick(b.dataset.scene);
+  if (b.dataset.view) { view = view === b.dataset.view ? 'lit' : b.dataset.view; document.querySelectorAll('[data-view]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.view === view))); } });
+const toSun = (e) => { const r = out.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; };
+out.addEventListener('pointerdown', (e) => { out.setPointerCapture(e.pointerId); dragSun = toSun(e); });
+out.addEventListener('pointermove', (e) => { if (e.buttons) dragSun = toSun(e); });
+const q = new URLSearchParams(location.search); if (q.get('scene') && scenes[q.get('scene')]) pick(q.get('scene')); if (q.get('view')) view = q.get('view'); if (window.self !== window.top) document.querySelectorAll('[data-scene]').forEach((b) => (b.style.display = 'none'));      /* inside a samples page its own buttons pick the scene */
+if (q.get('ui') === '0') { document.getElementById('bar').style.display = 'none'; document.getElementById('hint').style.display = 'none'; }
+requestAnimationFrame(frame);
+window.lightpassDemo = { scenes, lp, pick };
+</script>
+</body>
+</html>
