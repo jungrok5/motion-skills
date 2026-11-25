@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>trail-texture-world · motion-skills</title>
+<meta name="description" content="주제 하나를 주면, 하나의 트레일 텍스처가 걸어간 자리를 기억하고 지형마다 그 기억을 제 방식대로 읽는 탑다운 픽셀아트 걷기 장면을 코드만으로 만듭니다.">
+<meta property="og:title" content="trail-texture-world · motion-skills">
+<meta property="og:description" content="주제 하나를 주면, 하나의 트레일 텍스처가 걸어간 자리를 기억하고 지형마다 그 기억을 제 방식대로 읽는 탑다운 픽셀아트 걷기 장면을 코드만으로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/trail-texture-world/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/trail-texture-world">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / trail-texture-world</nav>
+  <h1>trail-texture-world</h1>
+  <p>주제 하나를 주면, 하나의 트레일 텍스처가 걸어간 자리를 기억하고 지형마다 그 기억을 제 방식대로 읽는 탑다운 픽셀아트 걷기 장면을 코드만으로 만듭니다. 모래와 진흙은 발자국을 남기고, 갈대는 휘었다 돌아오고, 물은 고리로 퍼지고, 낙엽은 밀려난 채 남고, 이끼는 빛났다 꺼지며, 길은 아무것도 남기지 않습니다. 텍스처와 세계를 나란히 보여 주는 1080p MP4(지형별 발소리 합성)와 직접 걸어 볼 수 있는 라이브 페이지를 냅니다.
+  원본: <a href="https://x.com/asynkimo/status/2125001098087776442?a=44aj8xink6AcTDapx-c&amp;s=19" target="_blank" rel="noopener">Kimo의 X 게시물</a>(“텍스처 하나가 플레이어가 걸은 곳을 기억하고, 지형마다 그걸 제 방식대로 쓴다”)을 보고 만들었습니다.</p>
+  <ul class="tags"><li>트레일 텍스처 · 코드 전용</li><li>320×180 → 1080p</li><li>지형마다 다른 기억</li><li>텍스처 | 세계 분할 화면</li><li>직접 걷는 라이브 페이지</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 한 줄(누가 · 무엇을 건너 · 낮인지 밤인지), 참고 영상이나 이미지</dd>
+      <dt>브리프</dt><dd>지형 표(무엇을 읽는지 · 기억으로 무엇을 하는지 · 얼마나 오래 · 발소리 · 느려지거나 잠기는지), 지도, 걷는 이(무게 · 그림 · 따라오는 것 · 빛), 경로 표</dd>
+      <dt>설계</dt><dd>지형별 <code>base</code> · <code>px</code>, <code>map(x, y)</code>와 소품, 걷는 이의 픽셀 그림과 숫자, 경로. 경로 지도(<code>?map=1</code>)와 캐스트 시트(<code>?sheet=cast</code>)로 확인</dd>
+      <dt>확인</dt><dd>스틸 채점과 자동 검사: 지형마다 트레일 때문에 바뀐 픽셀 수(+0.5 · 2 · 6초), 지형끼리 다른 반응, 텍스처 노출, 디딘 발 고정, 발자국 위치, 다리 길이, 좌우, 방향, 순간이동, 예비 동작과 회복, 숨 쉬는 대기, 늦게 따라오는 소품, 결정성, 속도</dd>
+      <dt>출력</dt><dd>최근접 확대로 선명한 1920×1080 MP4(지형별 발소리 · 바람 · 물 · 밤 벌레 소리 합성), 영화를 반복하다 키를 누르면 걷는 이를 넘겨받는 라이브 페이지</dd>
+    </dl>
+    <pre><code>cd trail-texture-world/examples/oasis-courier
+node ../../scripts/check.mjs index.html
+node ../../scripts/render.mjs index.html --q map=1 --stills 0
+node ../../scripts/render.mjs index.html --q sheet=cast --stills 0
+node ../../scripts/render.mjs index.html
+node ../../scripts/new-world.mjs ../../../my-walk   # 새 주제</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium, ffmpeg. GPU와 네트워크가 필요 없고, 40초 영상을 CPU로 1–2분에 렌더합니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/trail-texture-world/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9.6;--h-phone:240px;--demo-bg:#000">
+    <iframe data-src="demo/oasis-courier.html" title="trail-texture-world 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/oasis-courier.html">데모 열기 (examples/oasis-courier)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/oasis-courier</code> · 39.5초 · 화면을 누르면 직접 걷기</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/oasis-courier.html" data-cap="예제 &lt;code&gt;examples/oasis-courier&lt;/code&gt; · 39.5초 · 화면을 누르면 직접 걷기" aria-pressed="true">The Last Well</button>
+        <button class="btn" type="button" data-src="demo/lantern-hollow.html" data-cap="예제 &lt;code&gt;examples/lantern-hollow&lt;/code&gt; · 37초 · 밤, 랜턴의 빛" aria-pressed="false">Lantern Hollow</button>
+        <button class="btn" type="button" data-src="demo/template.html" data-cap="템플릿 &lt;code&gt;templates/world.html&lt;/code&gt; · 30초 · 새 주제의 출발점" aria-pressed="false">템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">같은 엔진과 키트로 주제만 바꿔 새로 설계한 예제 두 편과 시작 템플릿, 그리고 설계를 확인하는 화면입니다. 카드를 누르면 새 탭에서 그 장면이 그 순간에 멈춘 채 열리고, 브라우저가 직접 그립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"well":"The Last Well","hollow":"Lantern Hollow","tool":"확인 화면"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>The Last Well <small>39.5초 · 한낮의 사막</small></h3>
+      <p>소금 배달꾼이 모래 언덕과 대상로를 지나 마지막 우물에 닿습니다. 다섯 지형이 하나의 텍스처를 저마다 다르게 읽습니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="well" href="demo/oasis-courier.html?t=6.8" target="_blank" rel="noopener">
+          <img src="samples/well-sand.jpg" alt="물결무늬 모래 언덕 위로 걸어온 자리에 얕은 발자국이 점선처럼 남았고, 오른쪽에 회갈색 대상로가 지나감" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">6.8초</span><b>모래의 발자국</b><span class="en">sand</span>
+          <span class="how">어두운 윗벽과 밝은 아랫입술, 바람에 디더로 메워지는 50초</span></div></a>
+        <a class="tile" data-tags="well" href="demo/oasis-courier.html?t=15" target="_blank" rel="noopener">
+          <img src="samples/well-reeds.jpg" alt="분할 화면: 왼쪽 검은 트레일 텍스처에 흰 발자국 점과 몸이 지나간 보라 띠, 오른쪽 세계에서 배달꾼이 마른 갈대밭 가장자리를 지나감" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">분할 · 15초</span><b>갈대가 비켜선다</b><span class="en">reeds</span>
+          <span class="how">몸이 밀어낸 방향으로 휘고, 넘쳤다가 1.6초에 걸쳐 돌아오는 갈대</span></div></a>
+        <a class="tile" data-tags="well" href="demo/oasis-courier.html?t=19.6" target="_blank" rel="noopener">
+          <img src="samples/well-pool.jpg" alt="분할 화면: 왼쪽 텍스처에 푸른 동심원이 겹겹이 퍼지고, 오른쪽 청록 우물 연못에서 배달꾼이 허리까지 잠긴 채 걸으며 흰 물결이 퍼짐" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">분할 · 19.6초</span><b>우물 연못의 고리</b><span class="en">wave</span>
+          <span class="how">발 디딜 때마다 두 겹의 고리, 몸 둘레의 거품, 다리를 가리는 물높이, 느려지는 걸음</span></div></a>
+        <a class="tile" data-tags="well" href="demo/oasis-courier.html?t=27.8" target="_blank" rel="noopener">
+          <img src="samples/well-shore.jpg" alt="연못에서 동쪽으로 흐르는 좁은 수로와 젖은 기슭, 갈대 사이에 선 배달꾼 뒤로 깊은 발자국이 남음" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">27.8초</span><b>젖은 기슭</b><span class="en">mud</span>
+          <span class="how">물이 고이는 깊은 발자국, 거의 메워지지 않는 80초의 기억</span></div></a>
+        <a class="tile" data-tags="well" href="demo/oasis-courier.html?t=30.9" target="_blank" rel="noopener">
+          <img src="samples/well-memory.jpg" alt="텍스처만 보이는 화면: 검은 바탕에 꺾인 보라 띠와 발자국 점들, 수로를 뛰어넘은 자리만 비어 있고 그 위에 배달꾼의 실루엣" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">텍스처 · 30.9초</span><b>기억 그 자체</b><span class="en">trail</span>
+          <span class="how">뛰어오른 동안은 땅에 닿지 않아 비어 있는 자리, 착지는 더 깊게</span></div></a>
+        <a class="tile" data-tags="well" href="demo/oasis-courier.html?t=1.2" target="_blank" rel="noopener">
+          <img src="samples/well-title.jpg" alt="모래 언덕에 선 배달꾼과 THE LAST WELL 제목 띠, 오른쪽에 대상로" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">1.2초</span><b>제목</b><span class="en">title</span>
+          <span class="how">숨 쉬고 눈 깜빡이며 서 있는 첫 장면</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>Lantern Hollow <small>37초 · 밤의 숲</small></h3>
+      <p>랜턴을 든 아이가 밤의 숲 골짜기를 건너 집으로 갑니다. 빛은 랜턴과 버섯, 그리고 발밑의 이끼에서만 나옵니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="hollow" href="demo/lantern-hollow.html?t=9.6" target="_blank" rel="noopener">
+          <img src="samples/hollow-moss.jpg" alt="어두운 이끼 빈터에 빛나는 버섯들이 흩어져 있고, 노란 우비의 아이 뒤로 걸어온 발자국이 청록색으로 빛나며 멀어질수록 흐려짐" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">9.6초</span><b>빛나는 이끼</b><span class="en">glow</span>
+          <span class="how">밟은 자리가 빛나 주변을 밝히고 6초에 걸쳐 꺼짐</span></div></a>
+        <a class="tile" data-tags="hollow" href="demo/lantern-hollow.html?t=15.6" target="_blank" rel="noopener">
+          <img src="samples/hollow-fades.jpg" alt="이끼 빈터 끝에서 아이가 몸을 돌려 서 있고, 뒤의 빛나는 발자국은 반쯤 꺼져 있음" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">15.6초</span><b>그리고 꺼진다</b><span class="en">fade</span>
+          <span class="how">두 걸음으로 도는 제자리 회전, 숨 쉬는 대기, 흔들리다 멈추는 랜턴</span></div></a>
+        <a class="tile" data-tags="hollow" href="demo/lantern-hollow.html?t=20.6" target="_blank" rel="noopener">
+          <img src="samples/hollow-creek.jpg" alt="분할 화면: 왼쪽 텍스처의 발자국 띠, 오른쪽 세계에서 아이가 랜턴 빛 속에 개울로 들어섬" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">분할 · 20.6초</span><b>개울을 건너며</b><span class="en">wave</span>
+          <span class="how">랜턴 빛을 받는 물결 고리, 무릎까지 잠기는 다리</span></div></a>
+        <a class="tile" data-tags="hollow" href="demo/lantern-hollow.html?t=28.4" target="_blank" rel="noopener">
+          <img src="samples/hollow-mud.jpg" alt="좁은 도랑 옆 진흙 기슭에 선 아이, 랜턴 빛 둘레로 낙엽과 진흙이 보이고 나머지는 푸른 어둠" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">28.4초</span><b>진흙과 도랑</b><span class="en">mud · hop</span>
+          <span class="how">물이 차오르는 깊은 발자국, 웅크렸다가 뛰어 두 발로 착지</span></div></a>
+        <a class="tile" data-tags="hollow" href="demo/lantern-hollow.html?t=29.6" target="_blank" rel="noopener">
+          <img src="samples/hollow-memory.jpg" alt="텍스처만 보이는 화면: 검은 바탕에 남색 띠와 발자국 점, 끝에 아이의 실루엣" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">텍스처 · 29.6초</span><b>기억 그 자체</b><span class="en">trail</span>
+          <span class="how">밤이어도 텍스처는 같은 기억, 빛은 지형이 읽을 때 생김</span></div></a>
+        <a class="tile" data-tags="hollow" href="demo/lantern-hollow.html?t=1.5" target="_blank" rel="noopener">
+          <img src="samples/hollow-title.jpg" alt="어두운 낙엽 숲에 랜턴의 주황 빛 원 안에 선 아이와 LANTERN HOLLOW 제목, 오른쪽에 버섯이 빛나는 이끼 빈터" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">1.5초</span><b>제목</b><span class="en">title</span>
+          <span class="how">5단계로 끊고 디더한 밤빛, 깜빡이는 랜턴</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>확인 화면 <small>설계 단계</small></h3>
+      <p>장면을 쓰기 전에 보는 화면입니다. 시작 템플릿도 같은 흐름으로 바꿔 씁니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="tool" href="demo/oasis-courier.html?sheet=cast" target="_blank" rel="noopener">
+          <img src="samples/cast-courier.jpg" alt="배달꾼 캐스트 시트: 네 방향으로 선 모습, 숨 들이쉼과 내쉼, 깜빡임, 좌우 걷기 한 보폭, 위아래 걷기, 출발과 정지, 제자리 회전, 좌우 점프, 디딘 발은 빨간 점" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">?sheet=cast</span><b>배달꾼 캐스트 시트</b>
+          <span class="how">네 방향, 좌우 걷기, 출발 · 정지 · 회전 · 점프. 빨간 점은 움직이면 안 되는 디딘 발</span></div></a>
+        <a class="tile" data-tags="tool" href="demo/lantern-hollow.html?sheet=cast" target="_blank" rel="noopener">
+          <img src="samples/cast-child.jpg" alt="아이 캐스트 시트: 노란 우비의 아이가 네 방향과 걷기, 점프 동작으로 늘어섬, 오른손의 랜턴이 왼쪽을 볼 때는 몸 뒤로 감" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">?sheet=cast</span><b>아이 캐스트 시트</b>
+          <span class="how">오른손의 랜턴은 왼쪽을 볼 때 몸 뒤로. 비대칭은 거울 반전이 아닌 따라오는 소품으로</span></div></a>
+        <a class="tile" data-tags="tool" href="demo/oasis-courier.html?map=1" target="_blank" rel="noopener">
+          <img src="samples/route-map.jpg" alt="경로 지도: 사막 세계 전체에 보기별 색으로 그린 경로, 단계 번호, 발자국 점, 빨간 고체 소품, 지형별 발자국 수" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">?map=1</span><b>경로 지도</b>
+          <span class="how">세계 전체, 보기별 경로, 소품과의 최소 거리, 지형별 발자국 수</span></div></a>
+        <a class="tile" data-tags="tool" href="demo/template.html?t=12" target="_blank" rel="noopener">
+          <img src="samples/template.jpg" alt="템플릿 분할 화면: 왼쪽 트레일 텍스처, 오른쪽 새벽 해변의 마른 모래에 발자국을 남기며 바다 쪽으로 걷는 사람" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">템플릿 · 30초</span><b>Low Tide</b><span class="en">templates/world.html</span>
+          <span class="how"><code>new-world.mjs</code>가 복사하는 출발점. 모든 부분을 주제에 맞게 바꿈</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. X에서 본 기법(텍스처 하나가 걸은 곳을 기억하고 지형마다 다르게 쓰는 것, 텍스처와 게임을 나란히 보여 주는 화면)만 가져왔고, 엔진과 지형 키트, 두 예제의 걷는 이 · 지도 · 경로는 모두 이 레포의 코드입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/oasis-courier.html" target="_blank" rel="noopener"><b>「The Last Well」 · 39.5초</b><span>한낮의 사막, 라이브 페이지</span><span class="url">trail-texture-world/demo/oasis-courier.html</span></a>
+    <a class="work" href="demo/lantern-hollow.html" target="_blank" rel="noopener"><b>「Lantern Hollow」 · 37초</b><span>밤의 숲, 라이브 페이지</span><span class="url">trail-texture-world/demo/lantern-hollow.html</span></a>
+    <a class="work" href="https://x.com/asynkimo/status/2125001098087776442?a=44aj8xink6AcTDapx-c&amp;s=19" target="_blank" rel="noopener"><b>원본 · Kimo의 X 게시물</b><span>Texture trails · 2026년 11월</span><span class="url">x.com/asynkimo</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/trail-texture-world/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/trail-texture-world">폴더</a> <span>lib · scripts · templates · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/trail-texture-world/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/trail-texture-world/templates/BRIEF.md">templates/BRIEF.md</a> <span>브리프 틀과 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/trail-texture-world/references/TRAIL.md">references/TRAIL.md</a> <span>텍스처, 지형 쓰는 법, 걷는 이, API</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/trail-texture-world/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림과 소리는 코드로 만들었습니다 (이미지 · 오디오 · 모델 파일 없음)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

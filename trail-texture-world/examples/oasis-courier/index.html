@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Last Well — trail-texture-world</title>
+<script src="../../lib/trail.js"></script>
+<script src="../../lib/kit.js"></script>
+</head>
+<body>
+<script>
+// "The Last Well" — a salt courier crosses the dunes at noon to the last well before the flats.
+// Five terrains read one trail texture: dune sand keeps shallow prints, the caravan road keeps nothing,
+// dry reeds bend away and spring back, the well pool rings out, the wet shore keeps deep prints that hold water.
+const F = TT.create({ seed: 41, title: 'THE LAST WELL', sub: 'ONE TEXTURE REMEMBERS THE WALK · EACH GROUND READS IT ITS OWN WAY' });
+
+F.look({ band: '#2a1a12', text: '#fff3d6', shadow: '#2a1a12', wind: 1.2,
+  trail: { bg: '#07060a', foot: '#fff6e0', body: '#3b2f4e', wave: '#6fd8ff', you: '#4a3a66', grid: '#100d16' } });
+
+const POOL = [560, 300], CHAN_Y = x => F.n.wander(x, 312, 6, 70);
+F.world({
+  w: 1000, h: 560,
+  materials: {
+    sand:  TK.sand({ tones: ['#f2d397', '#e8c381', '#d9ae6c'], dent: '#c4935a', deep: '#a8783f', lip: '#fde8b8', life: 50 }),
+    road:  TK.ground({ tones: ['#b8a17a', '#a8916b', '#97815e'], edge: '#8a7454', cracks: true, cell: 18, sound: 'tap' }),
+    reeds: TK.reeds({ blades: { density: .42, h: [10, 16] } }),
+    pool:  TK.water({ tones: ['#3fa7a8', '#35979b', '#2b858c'], shallow: '#62c2b8', light: '#9fe3d8', bank: '#3c6b3f', line: '#d8fbf2' }),
+    shore: TK.mud({ tones: ['#a8885e', '#9a7a52', '#8a6c47'], dent: '#5e4428', wet: '#9ecfc6', lip: '#c2a275', life: 80, puff: '#6e5538' }),
+  },
+  map(x, y, n) {
+    const pd = Math.hypot((x - POOL[0]) / 92, (y - POOL[1]) / 58) + (n.fbm(x, y, 40, 3) - .5) * .32;
+    const cy = CHAN_Y(x), inChan = x > 640 && x < 1000 + (n.fbm(x, y, 20) - .5) * 30;
+    if (pd < 1 || (inChan && Math.abs(y - cy) < 5)) return 'pool';
+    if (pd < 1.2 || (inChan && Math.abs(y - cy) < 14)) return 'shore';
+    const rr = 1.95 + (n.fbm(x, y, 34, 3, .5, 2) - .5) * .9;
+    const gap = Math.abs(y - n.wander(x, 372, 14, 60)) < 13 + (n.fbm(x, y, 16) - .5) * 10 && x > 590 && x < 720;
+    if (pd < rr && !gap) return 'reeds';   // a gap in the reeds: the path from the well
+    const rx = n.wander(y, 270, 16, 150);
+    if (Math.abs(x - rx) < 13) return 'road';
+    return 'sand';
+  },
+  deco(D, n) {
+    const path = [[90, 300], [250, 330], [420, 380], [520, 352], [600, 330], [700, 350], [760, 330], [760, 296], [900, 270]];
+    TK.palm(D, 470, 236, { h: 30, lean: -6 }); TK.palm(D, 655, 226, { h: 26, lean: 5 }); TK.palm(D, 640, 392, { h: 24, lean: 6 }); TK.palm(D, 455, 360, { h: 28, lean: -4 });
+    TK.lily(D, 540, 288, { flower: '#f6a6c0' }); TK.lily(D, 588, 312); TK.lily(D, 520, 318, { r: 2 }); TK.lily(D, 610, 284, { r: 2 });
+    TK.scatter(D, { on: 'sand', count: 26, gap: 50, seed: 3, avoid: TK.nearPath(path, 22) }, (x, y, r) => r() > .4 ? TK.rock(D, x, y, { r: 3 + Math.round(r() * 3), tones: ['#8c6a4a', '#a8805a', '#c49a6c', '#dcb486'], outline: '#5a3e28' }) : TK.bush(D, x, y, { r: 5, tones: ['#6b6a2e', '#868437', '#a3a046', '#c2bd5c'], outline: '#3f3d1a' }));
+    TK.scatter(D, { on: 'sand', count: 60, gap: 14, seed: 9 }, (x, y) => TK.pebble(D, x, y, { tones: ['#a8805a', '#c49a6c', '#ead0a0'] }));
+    TK.scatter(D, { on: 'road', count: 20, gap: 30, seed: 5 }, (x, y) => TK.pebble(D, x, y, { tones: ['#7d6a4c', '#a08a66', '#c9b48e'] }));
+    TK.scatter(D, { on: 'shore', count: 14, gap: 26, seed: 11, inset: 2, avoid: TK.nearPath(path, 10) }, (x, y) => TK.tuft(D, x, y, { tones: ['#4e6b2a', '#6d8f35', '#94b84a'], big: true }));
+  },
+});
+
+F.walker({
+  mass: 1.1, speed: 33, step: 8, footW: 2, hipW: 2, hipH: 7, reach: 10, bodyR: 6,
+  palette: { o: '#2b1d18', h: '#c8642f', H: '#99461f', s: '#e3a77c', e: '#2b1d18', r: '#efe0bb', R: '#c9b386', b: '#6d4a2a', B: '#e2b04a', p: '#7a5a3c', k: '#3a2618', g: '#2f8f8a', G: '#226b67' },
+  legs: { c: 'p', boot: 'k', w: 2, bootW: 3 },
+  arms: { len: 4, c: 'R', out: 'o', hand: 's', down: [[10, 8], [0, 8]], up: [[0, 8], [10, 8]], right: [[5, 8], [5, 8]] },
+  blink: ['e', 's'],
+  origin: { down: [5, 13], up: [5, 13], right: [5, 13] },
+  art: {
+    down: ['...ooooo...', '..ohhhhho..', '.ohhhhhhho.', '.ohHsssHho.', '.ohsesesho.', '.ohsssssho.', '..ogggggo..', '.oGgggggGo.',
+           'orrrrrrrrro', 'orRrrrrrRro', 'obbbbBbbbbo', 'orrrrrrrrro', '.oRrrrrrRo.', '.orrrrrrro.', '..ooooooo..'],
+    up:   ['...ooooo...', '..ohhhhho..', '.ohhhhhhho.', '.ohhhhhhho.', '.ohHhhhHho.', '.ohhHHHhho.', '..ogggggo..', '.oGgggggGo.',
+           'orrrrrrrrro', 'orRrrrrrRro', 'obbbbbbbbbo', 'orrrrrrrrro', '.oRrrrrrRo.', '.orrrrrrro.', '..ooooooo..'],
+    right:['...ooooo...', '..ohhhhho..', '.ohhhhhhho.', '.ohhhHssso.', '.ohhhHseso.', '.ohhhHssso.', '..ohgggggo.', '..oGggggo..',
+           '..orrrrro..', '..orRrrro..', '..obbbBbo..', '..orrrrro..', '..oRrrrRo..', '..orrrrro..', '...ooooo...'],
+  },
+  // the scarf's loose end: hidden at rest, it trails behind when walking and swings after stops (inertia)
+  follow: [{ art: { down: ['gg', 'Gg', '.g'], up: ['gg', 'gG', 'g.', 'G.'], right: ['gg', 'gG', 'g.', 'G.'] }, anchor: { down: [4, 7], up: [4, 7], right: [2, 7] },
+             behind: { down: true, up: false, right: true }, lag: .45, damp: .22, flare: .07, max: 3 }],
+});
+
+F.route([
+  { at: [96, 300], face: 'right', wait: 2.2 },
+  { to: [250, 330], caption: 'DUNE SAND KEEPS SHALLOW PRINTS' },
+  { to: [300, 350], caption: 'THE CARAVAN ROAD KEEPS NOTHING' },
+  { to: [420, 380], view: 'split', caption: 'ONE TEXTURE: FEET, BODY, RIPPLES' },
+  { to: [520, 352], caption: 'DRY REEDS BEND AWAY AND SPRING BACK' },
+  { to: [560, 340] },
+  { to: [600, 334], caption: 'THE WELL POOL RINGS OUT' },
+  { to: [660, 360], view: 'world' },
+  { to: [712, CHAN_Y(712) + 10] },
+  { to: [756, CHAN_Y(756) + 10], caption: 'THE WET SHORE HOLDS DEEP PRINTS' },
+  { wait: 1.4, face: 'down' },
+  { wait: .2, face: 'up' },
+  { hop: [756, CHAN_Y(756) - 10], caption: 'A LANDING PRESSES HARDER' },
+  { wait: .8, view: 'trail', caption: 'THE MEMORY ITSELF' },
+  { to: [820, 280], view: 'world' },
+  { to: [930, 262] },
+]);
+F.start();
+</script>
+</body>
+</html>
