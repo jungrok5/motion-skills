@@ -163,7 +163,7 @@ description: 무엇을 만드는지 한두 문장 + 언제 쓰는지. 트리거 
 과장 순으로 더합니다. 도구는 `principle-pass/lib/principles.js`를 스킬의 `lib/`로 복사해 쓰고, 페이지가 `window.__principles`로 트랙을
 내보내면 `node principle-pass/scripts/audit.mjs --page <page>`가 원칙마다 숫자를 냅니다 (새 스킬은 `check.mjs`에 넣기를 권합니다).
 
-코드 전용 스킬(`machine-sim`, `swarm-world`, `aesthetics-film`, `photoreal-film`, `ink-word-world`, `dragon-realm`, `living-realm`, `torn-page-journey`, `walking-colossus`, `logo-construction`, `sprite-stack-flight`, `ten-second-scene`, `pixel-world-compiler`, `bounce-symphony`, `one-line-drawing`, `engraving-collage-film`, `principle-pass`, HTML-in-Canvas 라이브 페이지 스킬, 그리고
+코드 전용 스킬(`machine-sim`, `swarm-world`, `aesthetics-film`, `photoreal-film`, `ink-word-world`, `dragon-realm`, `living-realm`, `torn-page-journey`, `walking-colossus`, `logo-construction`, `sprite-stack-flight`, `ten-second-scene`, `pixel-world-compiler`, `bounce-symphony`, `one-line-drawing`, `engraving-collage-film`, `trail-texture-world`, `fold-out-map`, `principle-pass`, HTML-in-Canvas 라이브 페이지 스킬, 그리고
 `SKILL.md`에 code-only라고 적힌 스킬)은 생성 · 다운로드한 모션 데이터를 쓰지 않고, 같은 원칙을 코드로 직접 키잉합니다.
 
 ### 생성 모델 (영상 · 이미지 · 음성) 쓰기

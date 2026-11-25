@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>부산 · fold-out-map</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>html, body { margin: 0; background: #120d0a; }</style>
+<script type="importmap">{ "imports": { "three": "../../lib/three.module.min.js", "fold/": "../../lib/" } }</script>
+</head>
+<body>
+<script type="module">
+// 「부산」 — a fold-out travel map of Busan, 38 s, 1080×1920. Brief: BRIEF.md.
+// The leaflet lies folded on a desk → the cover opens over the cross fold → the accordion fans out → the camera comes down
+// low over the map and follows the red line: Gamcheon → Taejongdae → Haeundae → Yonggungsa (golden hour) → Gwangan Bridge
+// (night, its cables lit) → rises to the whole map at night on the desk.
+import { Film, projector, spline, inside, distToLine } from 'fold/foldmap.js';
+import { paint, paintBack, maskOf, INK } from 'fold/mapart.js';
+import { card } from 'fold/cardart.js';
+
+const F = await Film.create({ duration: 38, W: 1080, H: 1920, seed: 51 });
+const P = projector({ center: [129.112, 35.122], km: 6.6 });          // 1 unit = 6.6 km; sheet 3.4 × 4.0 units
+const S = F.sheet({ cols: 4, panel: [.85, 2], color: '#f1e9d6', residual: 2.2, crossResidual: 1.2 });
+
+// ---------------------------------------------------------------- geography (lon, lat), traced loosely from a map
+const coast = P.all([[128.975, 35.062], [128.985, 35.047], [128.993, 35.053], [128.991, 35.041], [129.001, 35.047], [129.010, 35.062],
+  [129.015, 35.071], [129.020, 35.067], [129.022, 35.078], [129.028, 35.086], [129.034, 35.093], [129.042, 35.100], [129.045, 35.110],
+  [129.052, 35.115], [129.060, 35.118], [129.068, 35.120], [129.075, 35.112], [129.080, 35.105], [129.090, 35.108], [129.103, 35.105],
+  [129.115, 35.110], [129.120, 35.120], [129.117, 35.132], [129.112, 35.143], [129.118, 35.152], [129.128, 35.158], [129.133, 35.162],
+  [129.140, 35.157], [129.147, 35.152], [129.153, 35.150], [129.158, 35.157], [129.170, 35.158], [129.180, 35.155], [129.192, 35.162],
+  [129.200, 35.175], [129.210, 35.180], [129.222, 35.186], [129.232, 35.198], [129.242, 35.212], [129.252, 35.228], [129.262, 35.245]]);
+const sea = [...coast, ...P.all([[129.30, 35.245], [129.30, 34.98], [128.94, 34.98], [128.94, 35.062]])];
+const yeongdo = P.all([[129.040, 35.090], [129.055, 35.093], [129.068, 35.088], [129.080, 35.078], [129.090, 35.065], [129.093, 35.055],
+  [129.085, 35.048], [129.072, 35.050], [129.058, 35.060], [129.048, 35.070], [129.042, 35.080]]);
+const land = [P.all([[128.94, 35.062], ...[...coast].map(p => P.inv(p)), [129.30, 35.245], [129.30, 35.30], [128.94, 35.30]]), yeongdo];
+const suyeong = P.all([[129.118, 35.245], [129.112, 35.215], [129.118, 35.195], [129.124, 35.180], [129.130, 35.170], [129.133, 35.162]]);
+const oncheon = P.all([[129.060, 35.215], [129.075, 35.200], [129.090, 35.185], [129.105, 35.178], [129.120, 35.176]]);
+const km = 6.6, R = k => k / km;   // km → map units
+const peaks = [[129.050, 35.245, 1, 3.6], [129.040, 35.180, .8, 2.6], [129.085, 35.153, .75, 2.1], [129.000, 35.130, .7, 2.8],
+  [129.012, 35.090, .5, 1.3], [129.066, 35.068, .55, 1.3], [129.180, 35.192, .8, 2.3], [129.121, 35.118, .35, .8], [129.215, 35.225, .6, 2]]
+  .map(([lo, la, h, r]) => [...P(lo, la), h, R(r)]);
+const bridge = P.all([[129.110, 35.131], [129.122, 35.139], [129.135, 35.146], [129.145, 35.155]]);
+const harborBridge = P.all([[129.037, 35.097], [129.045, 35.090]]);
+
+// ---------------------------------------------------------------- the pop-ups (painted in code, one design per place)
+const sky = '#cfe3e6';
+const gamcheon = card({ aspect: 1.15, seed: 3, draw: p => {
+  p.ground(0, 100, 74, { color: '#93b06c', h: 12, bump: 14, seed: 2 });
+  p.houses(6, 94, 80, { rows: 6, size: 8.2, slope: .9, seed: 4, lit: .55 });
+  p.tree(10, 82, 12, 'round'); p.tree(90, 80, 11, 'round', { color: '#5f8f4a' }); p.tree(78, 46, 8, 'cone');
+  p.line([[46, 86], [48, 74], [51, 62], [53, 50]], '#e9e1d2', 1.6, { dash: [1.1, .7] });
+}});
+const taejongdae = card({ aspect: .78, seed: 5, draw: p => {
+  const H = p.H;
+  p.waves(0, H - 22, 100, 22, { color: '#4f8f9c', light: '#8cc5c6' });
+  p.rock(4, H - 8, 70, 66, { color: '#8a8173', seed: 3, jag: .18 });
+  p.rock(48, H - 6, 50, 40, { color: '#7d766a', seed: 5 });
+  p.ground(10, 60, H - 70, { color: '#6f9658', h: 6, bump: 4, seed: 4, depth: 7 });
+  p.tree(16, H - 70, 13, 'pine'); p.tree(56, H - 66, 11, 'pine', { seed: 8 });
+  p.lighthouse(36, H - 72, 44, { band: '#c0392b' });
+  for (let i = 0; i < 6; i++) p.line([[6 + i * 16, H - 7], [12 + i * 16, H - 9], [18 + i * 16, H - 7]], '#ffffff', .6);
+}});
+const haeundaeBack = card({ aspect: 1.05, seed: 7, draw: p => {
+  const H = p.H;
+  // the three tall towers and a crowd of others, windows lit at night
+  p.block(6, H, 16, 46, { wall: '#c9d3d8', windows: { rows: 10, cols: 3, color: '#6f8796', lit: .5, seed: 1 } });
+  p.block(24, H, 12, 62, { wall: '#dfe3e2', windows: { rows: 14, cols: 2, color: '#6f8796', lit: .6, seed: 2 } });
+  for (const [x, h, s] of [[40, 92, 3], [56, 84, 4], [70, 96, 5]]) {
+    p.block(x, H, 12, h, { wall: ['#d9cdb8', '#bfcbd2', '#e3d6c2'][s % 3], side: 3, windows: { rows: 22, cols: 3, color: '#5d7586', lit: .55, seed: s } });
+    p.poly([[x, H - h], [x + 12, H - h], [x + 6, H - h - 7]], '#8fa3ad'); p.rect(x + 5.4, H - h - 11, 1.2, 5, '#8fa3ad');
+  }
+  p.block(84, H, 12, 52, { wall: '#e7d8c4', windows: { rows: 11, cols: 3, color: '#6f8796', lit: .5, seed: 6 } });
+}});
+const haeundaeFront = card({ aspect: 2.6, seed: 8, draw: p => {
+  const H = p.H;
+  p.waves(0, H - 9, 100, 9, { color: '#4f8f9c', light: '#93cccb' });
+  p.sand(0, H - 21, 100, 13);
+  for (let i = 0; i < 9; i++) p.umbrella(8 + i * 10.5, H - 12 - (i % 3), 6, ['#e8574a', '#f3c64b', '#3f8fc4', '#ffffff', '#5aa96b'][i % 5]);
+  p.people(6, 94, H - 10, { n: 8, s: 4.2 });
+  p.tree(3, H - 18, 12, 'pine'); p.tree(96, H - 18, 11, 'pine', { seed: 4 });
+}});
+const yonggungsa = card({ aspect: 1.2, seed: 9, draw: p => {
+  const H = p.H;
+  p.waves(0, H - 16, 100, 16, { color: '#4c8b99', light: '#8fc6c7' });
+  p.rock(0, H - 4, 62, 34, { color: '#857c70', seed: 2 }); p.rock(46, H - 3, 54, 26, { color: '#7a7368', seed: 6 });
+  p.hall(14, H - 30, 34, 14, { wall: '#d2b088', column: '#9a3a2a', roof: '#3f4a50', bays: 3 });
+  p.hall(58, H - 24, 24, 10, { wall: '#d2b088', column: '#9a3a2a', roof: '#3f4a50', bays: 2 });
+  p.pagoda(52, H - 25, 22, { storeys: 3 });
+  p.tree(5, H - 32, 14, 'pine'); p.tree(90, H - 26, 12, 'pine', { seed: 5 });
+  p.lanterns(8, H - 50, 92, H - 44, { n: 14, sag: 4 });
+}});
+const gwanganBeach = card({ aspect: 3.4, seed: 12, res: 1200, border: 1, draw: p => {
+  const H = p.H;
+  // Gwangalli beach in front of the bridge: sand, a row of street lamps (lit at night), people on the promenade
+  p.sand(0, H - 12, 100, 12, '#e6cf9c');
+  p.rect(0, H - 13.5, 100, 1.6, '#cbbfa8');
+  for (let x = 6; x < 100; x += 12) { p.line([[x, H - 13], [x, H - 22]], '#5d5a55', .5); p.g.fillStyle = p.lit('#f2ead2', '#ffe2a0'); p.g.beginPath(); p.g.arc(x, H - 22.6, 1.2, 0, Math.PI * 2); p.g.fill(); }
+  p.people(4, 96, H - 13.5, { n: 11, s: 5 });
+  p.tree(2, H - 13, 13, 'pine'); p.tree(98, H - 13, 12, 'pine', { seed: 3 });
+}});
+const gwangan = card({ aspect: 3.2, seed: 13, res: 1400, draw: p => {
+  const H = p.H, deck = H - 8;
+  p.waves(0, deck + 2, 100, H - deck - 2, { color: '#3f7f8f', light: '#7fb8bd' });
+  // approach piers, the two-level deck, two towers and the main cables (lights along them at night)
+  for (let x = 4; x < 100; x += 7) if (x < 30 || x > 70) p.rect(x, deck, 1.2, H - deck, '#cfcac0');
+  p.rect(0, deck - 1.6, 100, 1.6, '#e8e4dc'); p.rect(0, deck, 100, 1, '#9a958b'); p.rect(0, deck - 3.4, 100, .9, '#e8e4dc');
+  p.line([[0, deck - 1.6], [100, deck - 1.6]], 'lit:#ffe2a0', .5);
+  for (const x of [33, 67]) { p.rect(x - 1.2, deck - 22, 2.4, 24 + H - deck, '#ece8e0'); p.rect(x + .3, deck - 22, .9, 24, '#c9c4ba'); p.rect(x - 1.6, deck - 22, 3.2, 1, '#bdb8ae'); }
+  p.cable(0, deck - 4, 33, deck - 22, { sag: -3, lights: 8 }); p.cable(33, deck - 22, 67, deck - 22, { sag: 8, lights: 14 }); p.cable(67, deck - 22, 100, deck - 4, { sag: -3, lights: 8 });
+  for (let x = 36; x < 65; x += 2.4) { const y = deck - 22 + 4 * 8 * ((x - 33) / 34) * (1 - (x - 33) / 34); p.line([[x, y], [x, deck - 3.4]], '#d9d5cc', .2); }
+}});
+
+// ---------------------------------------------------------------- the stops (the trip): route order, art, cameras
+const STOPS = [
+  { name: '감천문화마을', latin: 'Gamcheon Culture Village', note: '산비탈을 덮은 파스텔 계단 마을', at: P(129.012, 35.098), art: gamcheon, w: .5, yaw: 28, elev: 25, dist: 2.6 },
+  { name: '태종대', latin: 'Taejongdae', note: '파도 위 절벽과 하얀 등대', at: P(129.084, 35.056), art: taejongdae, w: .38, yaw: 10, elev: 23 },
+  { name: '해운대', latin: 'Haeundae Beach', note: '1.5 km 백사장과 고층 스카이라인', at: P(129.163, 35.163), art: [{ card: haeundaeBack, dz: -.16, k: .82 }, { card: haeundaeFront, k: 1.1 }], w: .5, yaw: 16, elev: 24, dist: 2.7 },
+  { name: '해동용궁사', latin: 'Haedong Yonggungsa', note: '바다 바위 위의 절 · 1376년', at: P(129.219, 35.193), art: yonggungsa, w: .48, yaw: -18, elev: 24, label: { side: -.5 } },
+  { name: '광안대교', latin: 'Gwangan Bridge', note: '7.4 km 해상 다리, 밤의 불빛', at: P(129.125, 35.140), art: [{ card: gwangan, k: 1 }, { card: gwanganBeach, dz: .2, k: .72 }], w: .8, yaw: -38, elev: 22, dist: 2.7, label: { side: .4, ahead: .34 } },
+];
+// the red line: the stops in order with a few streets between (map units)
+const route = [STOPS[0].at, P(129.030, 35.092), P(129.042, 35.090), P(129.060, 35.074), STOPS[1].at, P(129.070, 35.080), P(129.048, 35.096),
+  P(129.075, 35.115), P(129.110, 35.128), P(129.140, 35.162), STOPS[2].at, P(129.185, 35.168), P(129.205, 35.183), STOPS[3].at,
+  P(129.190, 35.172), P(129.150, 35.168), P(129.128, 35.152), STOPS[4].at];
+
+// ---------------------------------------------------------------- the printed map (front)
+S.front(paint(m => {
+  m.paper({ seed: 4 });
+  m.sea(sea, { coast, islands: [yeongdo], bands: 6, spacing: .02 });
+  const hillH = [];
+  m.hills(peaks, { clip: land[0], levels: 13, seed: 12 });
+  m.hills(peaks.filter(p => inside([p[0], p[1]], yeongdo)), { clip: yeongdo, levels: 9, seed: 13 });
+  const H = m.height, maxH = 1;
+  m.river(suyeong, { w0: .01, w1: .034 }); m.river(oncheon, { w0: .006, w1: .012 });
+  const notWater = (x, z) => distToLine([x, z], suyeong) < .03 || distToLine([x, z], oncheon) < .016;
+  const steep = (x, z) => peaks.some(([px, pz, h, r]) => Math.hypot(x - px, z - pz) < r * .55 * h + .02);
+  const mask = maskOf({ land, not: [notWater, steep] });
+  m.streets({
+    mask, seed: 21, districts: [
+      { at: P(129.035, 35.105), r: R(2.6), angle: 24, spacing: .042 }, { at: P(129.060, 35.157), r: R(3.4), angle: -8, spacing: .046 },
+      { at: P(129.083, 35.205), r: R(2.8), angle: 12, spacing: .05 }, { at: P(129.112, 35.165), r: R(2.3), angle: 32, spacing: .044 },
+      { at: P(129.163, 35.168), r: R(2.4), angle: -4, spacing: .04 }, { at: P(128.995, 35.162), r: R(3.6), angle: 4, spacing: .052 },
+      { at: P(128.998, 35.100), r: R(2.4), angle: 40, spacing: .048 }, { at: P(129.062, 35.082), r: R(1.6), angle: 30, spacing: .04 },
+      { at: P(129.208, 35.218), r: R(2), angle: 20, spacing: .05 }, { at: P(129.132, 35.180), r: R(1.6), angle: -20, spacing: .042 },
+      { at: P(129.098, 35.128), r: R(1.8), angle: 15, spacing: .044 },
+    ],
+  });
+  for (const r of [[[129.035, 35.100], [129.048, 35.130], [129.060, 35.157], [129.072, 35.185], [129.085, 35.215], [129.090, 35.245]],
+    [[129.060, 35.157], [129.090, 35.158], [129.112, 35.158], [129.135, 35.168], [129.163, 35.170], [129.195, 35.195], [129.215, 35.225], [129.235, 35.245]],
+    [[128.990, 35.095], [129.015, 35.105], [129.035, 35.100]], [[128.995, 35.130], [129.020, 35.150], [129.060, 35.157]],
+    [[129.075, 35.112], [129.090, 35.130], [129.112, 35.158]]]) m.road(P.all(r), { w: .008 });
+  m.road(bridge, { w: .012, color: '#fbf6ea', casing: '#8f8a80' });
+  m.road(harborBridge, { w: .009, color: '#fbf6ea', casing: '#8f8a80' });
+  m.rail(P.all([[129.040, 35.115], [129.055, 35.140], [129.060, 35.160], [129.078, 35.195], [129.088, 35.240]]));
+  // names: districts in spaced capitals with their Hangul above, mountains in italics, the sea in wide spaced letters
+  const name = (ko, en, lo, la, o = {}) => { const [x, z] = P(lo, la); m.text(ko, x, z - .03, { size: .036, weight: 700, ...o }); m.text(en, x, z + .026, { size: .019, weight: 600, spacing: .25, upper: true, color: INK.soft, ...o }); };
+  name('중구', 'Jung-gu', 129.030, 35.110); name('서면', 'Seomyeon', 129.058, 35.165); name('동래', 'Dongnae', 129.090, 35.208);
+  name('수영', 'Suyeong', 129.110, 35.172); name('해운대', 'Haeundae', 129.172, 35.178); name('사상', 'Sasang', 128.995, 35.170);
+  name('사하', 'Saha', 128.985, 35.090); name('영도', 'Yeongdo', 129.060, 35.078); name('기장', 'Gijang', 129.215, 35.232); name('남구', 'Nam-gu', 129.093, 35.125);
+  const mt = (ko, lo, la) => { const [x, z] = P(lo, la); m.text(ko, x, z, { size: .024, italic: false, weight: 500, color: '#6e6a52' }); };
+  mt('황령산 ▲', 129.085, 35.150); mt('천마산 ▲', 129.012, 35.087); mt('장산 ▲', 129.180, 35.188); mt('봉래산 ▲', 129.066, 35.066); mt('구덕산 ▲', 129.000, 35.128);
+  m.text('수영강', ...P(129.123, 35.200), { size: .022, weight: 500, color: '#4f8a84', rotate: -62 });
+  m.text('광안대교', ...P(129.134, 35.139), { size: .024, weight: 700, color: '#5b6a70', rotate: -30 });
+  m.text('대한해협', ...P(129.140, 35.060), { size: .05, weight: 500, color: '#4f8a84', spacing: .6, halo: null });
+  m.text('Korea Strait', ...P(129.140, 35.045), { size: .03, italic: true, color: '#4f8a84', spacing: .12, halo: null });
+  // title, framed like the leaflet's own header
+  m.text('BUSAN', -1.62, -1.63, { size: .2, weight: 500, align: 'left', color: '#23463c', spacing: .08, haloW: .12 });
+  m.text('부산 여행 지도  ·  A FOLD-OUT TRAVEL MAP', -1.6, -1.44, { size: .034, weight: 600, align: 'left', color: INK.soft, spacing: .12 });
+  m.border(.06);
+  // legend box in the open sea, bottom left: the five stops
+  m.rect(-1.6, 1.38, 1.18, .5, '#fbf7ec', .94); m.stroke([[-1.6, 1.38], [-.42, 1.38], [-.42, 1.88], [-1.6, 1.88]], INK.ink, .002, { closed: true, cap: 'butt' });
+  m.text('하루 코스 · ONE-DAY ROUTE', -1.55, 1.44, { size: .024, weight: 700, align: 'left', spacing: .1 });
+  STOPS.forEach((s, i) => { const z = 1.51 + i * .072; m.dot(-1.52, z, .019, INK.red); m.text(String(i + 1), -1.52, z, { size: .02, weight: 700, color: '#fff', halo: null }); m.text(`${s.name}  ${s.latin}`, -1.48, z, { size: .024, weight: 600, align: 'left' }); });
+  m.compass(1.42, 1.5, .08); m.scalebar(.75, 1.72, 5, km, { label: '5 km' });
+}));
+
+// ---------------------------------------------------------------- the back: cover, guide, plain panels
+S.backs(paintBack((m, { c, r, cover, guide, pw, ph }) => {
+  m.paper({ color: '#ece4cf', seed: 7 + c * 3 + r, rim: .03 });
+  if (cover) {
+    m.border(.05, { color: '#23463c' });
+    m.text('BUSAN', pw / 2, .42, { size: .13, weight: 500, color: '#23463c', spacing: .1, halo: null });
+    m.text('부산', pw / 2, .58, { size: .05, weight: 700, color: '#23463c', halo: null });
+    m.dot(pw / 2, .98, .16, '#c0412f');
+    // the emblem: the bridge's towers and cables over waves, under the sun
+    const ink = '#23463c', y0 = 1.12;
+    m.fill([[.12, y0 + .04], [pw - .12, y0 + .04], [pw - .12, y0 + .12], [.12, y0 + .12]], '#8fb7ae');
+    for (let i = 0; i < 4; i++) m.stroke(spline([...Array(9)].map((_, k) => [.12 + k * (pw - .24) / 8, y0 + .06 + i * .018 + Math.sin(k * 1.4 + i) * .006]), .01), '#ece4cf', .004);
+    for (const x of [.3, .55]) m.fill([[x - .012, y0 + .04], [x + .012, y0 + .04], [x + .008, y0 - .2], [x - .008, y0 - .2]], ink);
+    m.stroke(spline([[.12, y0 - .02], [.3, y0 - .2], [.425, y0 - .07], [.55, y0 - .2], [pw - .12, y0 - .02]], .01), ink, .004);
+    m.fill([[.12, y0 - .02], [pw - .12, y0 - .02], [pw - .12, y0 + .005], [.12, y0 + .005]], ink);
+    m.text('TRAVEL MAP', pw / 2, 1.48, { size: .045, weight: 600, color: '#23463c', spacing: .22, halo: null });
+    m.text('바다와 다리, 언덕 마을의 하루', pw / 2, 1.58, { size: .03, weight: 600, color: '#c0412f', halo: null });
+    m.text('FOLD-OUT EDITION · 2026', pw / 2, 1.86, { size: .02, weight: 600, color: INK.soft, spacing: .2, halo: null });
+  } else if (guide && r === 1) {
+    m.border(.05);
+    m.text('도시 산책', .1, .2, { size: .05, weight: 700, align: 'left', halo: null });
+    m.text('CITY WALK', .1, .29, { size: .024, weight: 600, align: 'left', spacing: .25, color: INK.soft, halo: null });
+    STOPS.forEach((s, i) => {
+      const z = .5 + i * .26; m.dot(.14, z, .028, INK.red); m.text(String(i + 1).padStart(2, '0'), .14, z, { size: .022, weight: 700, color: '#fff', halo: null });
+      m.text(s.name, .2, z - .02, { size: .03, weight: 700, align: 'left', halo: null }); m.text(s.latin, .2, z + .04, { size: .02, italic: true, align: 'left', color: INK.soft, halo: null });
+      m.text(s.note, .2, z + .095, { size: .017, weight: 500, align: 'left', color: INK.soft, halo: null });
+    });
+  } else if (guide) {
+    m.border(.05);
+    m.text('이 지도 읽기', .1, .2, { size: .045, weight: 700, align: 'left', halo: null });
+    m.text('HOW TO READ', .1, .29, { size: .024, weight: 600, align: 'left', spacing: .25, color: INK.soft, halo: null });
+    const row = (z, draw, t) => { draw(z); m.text(t, .3, z, { size: .024, weight: 600, align: 'left', halo: null }); };
+    row(.5, z => m.stroke([[.1, z], [.24, z]], INK.red, .011), '추천 경로');
+    row(.62, z => m.stroke([[.1, z], [.24, z]], '#c29a63', .012), '큰길');
+    row(.74, z => m.fill([[.1, z - .03], [.24, z - .03], [.24, z + .03], [.1, z + .03]], INK.water), '바다 · 강');
+    row(.86, z => { for (let i = 0; i < 4; i++) m.stroke(spline([[.1, z - .03 + i * .02], [.17, z - .04 + i * .02], [.24, z - .03 + i * .02]], .01), '#8d8a6c', .002); }, '산 · 언덕');
+    row(.98, z => { m.dot(.17, z, .028, INK.red); m.text('1', .17, z, { size: .022, weight: 700, color: '#fff', halo: null }); }, '팝업 명소');
+    m.text('펼치면 길이 그려지고', .1, 1.3, { size: .026, weight: 600, align: 'left', color: INK.soft, halo: null });
+    m.text('명소가 일어섭니다.', .1, 1.37, { size: .026, weight: 600, align: 'left', color: INK.soft, halo: null });
+  } else {
+    m.text('BUSAN  ·  부산', pw / 2, ph - .1, { size: .022, weight: 600, color: 'rgba(36,48,43,.45)', spacing: .3, halo: null });
+  }
+}));
+
+F.desk({ wood: '#6a3d25', props: [{ kind: 'cup', at: [2.55, -1.5] }, { kind: 'pencil', at: [-2.35, 1.2], rot: 68 }, { kind: 'glasses', at: [2.45, 1.75], rot: -20 }, { kind: 'coin', at: [-2.2, -1.9] }, { kind: 'coin', at: [-2.05, -1.82] }] });
+
+F.unfold({ at: 1.5, half: 1.3, fan: 1.7, stagger: .3 });
+const T = F.trip({ stops: STOPS, route, start: 8.4, hold: 2.6, travel: 2.2 });
+F.light([[0, 'day'], [18.5, 'day'], [22.5, 'golden'], [26.2, 'dusk'], [28.4, 'night']]);
+
+// opening and closing camera (world units; the open sheet is centred on 0,0 — the folded leaflet sits at x −1.7…−0.85, z 0…2)
+F.track([
+  { t: 0, at: [-1.27, 0, 1.02], dist: 3.1, yaw: 6, elev: 66, fov: 34 },
+  { t: 1.4, at: [-1.27, 0, .95], dist: 2.9, yaw: 4, elev: 66 },
+  { t: 3.1, at: [-1.2, .1, .1], dist: 5.4, yaw: 2, elev: 64 },
+  { t: 5.6, at: [0, 0, .05], dist: 10.2, yaw: 0, elev: 68 },
+  { t: 6.6, at: [-.3, 0, .1], dist: 9, yaw: 4, elev: 62 },
+  { t: T.end + 1.8, at: [.25, .05, -.3], dist: 4, yaw: -14, elev: 42 },
+  { t: T.end + 5, at: [0, 0, 0], dist: 8.6, yaw: 6, elev: 64 },
+  { t: 38, at: [0, 0, 0], dist: 9, yaw: 0, elev: 70 },
+]);
+F.title('부산 · Busan', { from: 34.2, to: 38, pos: 'bottom', size: 46, sub: 'a fold-out travel map · fold-out-map' });
+F.check('every stop stands on land or its own shore', () => STOPS.slice(0, 4).every(s => inside(s.at, land[0]) || inside(s.at, yeongdo)));
+F.start();
+</script>
+</body>
+</html>
