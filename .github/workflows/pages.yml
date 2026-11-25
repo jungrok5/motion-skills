@@ -1,4 +1,6 @@
 # Publishes docs/ (the samples page) to GitHub Pages on every push to main.
+# Upload and deploy are separate jobs: deploy-pages run in the same job a fraction of a second after the upload
+# sometimes finds no "github-pages" artifact yet ("Found 0 artifact(s)") and fails the deploy.
 name: Pages
 on:
   push:
@@ -12,16 +14,20 @@ concurrency:
   group: pages
   cancel-in-progress: true
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v4
