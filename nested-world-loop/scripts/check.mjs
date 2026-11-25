@@ -64,8 +64,11 @@ for (let i = 0; i < W.length; i++) {
   const inA = await measure(tIn), inB = await measure(tIn, -1);
   const outA = await measure(tOut), outB = await measure(tOut, +1);
   const dIn = diff(inA.thumb, inB.thumb), dOut = diff(outA.thumb, outB.thumb);
-  ok(dIn < 2.5 && dOut < 2.5, `hand-off ${name} is invisible`, `same moment drawn from either world: Δ ${dOut.toFixed(2)} before, ${dIn.toFixed(2)} after (< 2.5)`);
-  const step = diff(outA.thumb, inA.thumb) * (1 / F) / (1 / F);
+  // the same moment, drawn with either world as the root: what is left is float precision on fine highlights. It must
+  // stay well under what one frame of the move changes (a third of the median step), and never above 4.
+  const lim = Math.min(4, Math.max(1.5, stepMed / 3));
+  ok(dIn < lim && dOut < lim, `hand-off ${name} is invisible`, `same moment drawn from either world: Δ ${dOut.toFixed(2)} before, ${dIn.toFixed(2)} after (< ${lim.toFixed(2)})`);
+  const step = diff(outA.thumb, inA.thumb);
   ok(step <= allowStep, `hand-off ${name} is an ordinary step`, `Δ ${step.toFixed(2)} across the seam (allowed ${allowStep.toFixed(2)})`);
 }
 

@@ -272,12 +272,13 @@ export function film(def) {
   const dofMat = mk(`uniform sampler2D tColor; uniform vec2 uPx; ${DEPTH}
     void main(){
       float z0 = viewZ(vUv), c0 = coc(z0); vec3 col = texture(tColor, vUv).rgb; float tot = 1.; float r = .7;
-      for (int i = 0; i < 160; i++) {
-        if (r >= uMax) break; float a = float(i) * 2.39996323;
+      float jit = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) * 6.2831853;   // per-pixel turn of the spiral: no grid pattern in big blur
+      for (int i = 0; i < 400; i++) {
+        if (r >= uMax) break; float a = float(i) * 2.39996323 + jit;
         vec2 tc = vUv + vec2(cos(a), sin(a)) * uPx * r; float z = viewZ(tc), c = coc(z);
         if (z > z0) c = min(c, c0 * 2.);
         vec3 s = texture(tColor, tc).rgb; float m = smoothstep(r - .5, r + .5, c);
-        col += mix(col / tot, s, m); tot += 1.; r += 1.0 / r;
+        col += mix(col / tot, s, m); tot += 1.; r += .55 / r;
       }
       outColor = vec4(col / tot, 1.);
     }`, { tColor: { value: null }, tDepth: { value: depthTex }, uPx: { value: new THREE.Vector2() }, uFar: { value: 1 }, uFocus: { value: 1 }, uBokeh: { value: 0 }, uMax: { value: 8 } });
@@ -444,10 +445,12 @@ export function film(def) {
         renderer.render(Wd.scene, camera); stats.passes++;
         if (list[i].active) {
           const ap = Wd.aperture, c0 = new THREE.Vector3(...ap.center).applyMatrix4(G[n]), nn = new THREE.Vector3(...ap.normal).transformDirection(G[n]);
-          renderer.clippingPlanes = [new THREE.Plane(nn, -nn.dot(c0))];
+          // (per-material clipping: renderer.clippingPlanes does not reach these passes reliably)
+          const front = [new THREE.Plane(nn, -nn.dot(c0))];
+          for (const m of Wd.mats) { m.clippingPlanes = front; m.clipIntersection = false; }
           renderer.shadowMap.autoUpdate = false; setStencil(THREE.LessEqualStencilFunc, lv + 1);
           renderer.render(Wd.scene, camera); stats.passes++;
-          renderer.clippingPlanes = []; renderer.shadowMap.autoUpdate = true;
+          renderer.shadowMap.autoUpdate = true;
         }
       }
     }

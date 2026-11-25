@@ -112,7 +112,7 @@ function cabin(ctx) {
   const sglass = add(new THREE.Mesh(M.lathe([[2.5, 0], [4, 4], [3.6, 11], [2.4, 13]], 24), M.mat.emissive('#ffb060', 3, { transparent: true, opacity: .85 }))); sglass.position.set(203, 194, -10);
   M.lamp(root, { pos: [202, 200, -10], color: '#ffa850', intensity: 6000, bulb: false });
   // light: the oil lamp (key), the lantern's glow down the hatch (warm top light), moonlight through the window (cool), a little fill
-  M.spot(root, { pos: [60, 330, 40], target: [40, 0, -30], color: '#ffd59a', intensity: 2.6e5, angle: .42, penumbra: .8, shadow: 1024, near: 20, far: 800, bias: -.003, normalBias: .5 });
+  M.spot(root, { pos: [60, 288, 40], target: [5, 80, -135], color: '#ffd59a', intensity: 9e4, angle: 1.05, penumbra: 1, shadow: 1024, near: 5, far: 800, bias: -.003, normalBias: .5 });
   M.spot(root, { pos: [140, 520, -900], target: [0, 60, -120], color: '#8ea6e0', intensity: 1.1e6, angle: .16, penumbra: .9, shadow: 1024, near: 400, far: 1600, bias: -.002, normalBias: .5 });
   add(new THREE.HemisphereLight('#4a5070', '#3a2414', .3));
   M.lamp(root, { pos: [-20, 170, -40], color: '#ff9e58', intensity: 22000, bulb: false });   // the lamp's light thrown back by the desk and walls (no shadow)
@@ -168,7 +168,7 @@ function bottleSea(ctx) {
   const rail = add(new THREE.Mesh(new THREE.TorusGeometry(2.58, .035, 6, 64), iron)); rail.rotation.x = Math.PI / 2; rail.position.set(IS[0], 18.03, IS[1]);
   const lantern = new THREE.Group(); add(lantern); lantern.position.set(IS[0], 17, IS[1]); lantern.rotation.y = LANTERN_YAW;
   const parapet = new THREE.Mesh(new THREE.CylinderGeometry(1.76, 1.76, .4, 36, 1, false, .24, Math.PI * 2 - .48), M.mat.paint('#e6e0d2', { side: THREE.DoubleSide })); parapet.position.y = .2; lantern.add(parapet);
-  const mist = M.mat.emissive('#ffc887', 1.6, { transparent: true, opacity: .82, side: THREE.DoubleSide });
+  const mist = M.mat.emissive('#ffc887', .7, { transparent: true, opacity: .62, side: THREE.DoubleSide, map: M.noiseMap({ scale: 5, lo: 120, hi: 255, color: ['#806a50', '#ffffff'] }) });   // salt-misted panes
   for (let i = 1; i < 12; i++) { const a = i * 30 * D2R, p = new THREE.Mesh(new THREE.PlaneGeometry(.9, 2.2), mist); p.position.set(Math.sin(a) * 1.68, 1.5, Math.cos(a) * 1.68); p.rotation.y = a; lantern.add(p); }
   for (let i = 0; i < 12; i++) { const a = (i * 30 + 15) * D2R, m = new THREE.Mesh(new THREE.BoxGeometry(.06, 2.3, .06), iron); m.position.set(Math.sin(a) * 1.74, 1.5, Math.cos(a) * 1.74); lantern.add(m); }
   const doorLeaf = new THREE.Mesh(new THREE.BoxGeometry(.7, 1.9, .04), M.mat.paint('#2c3b34')); doorLeaf.geometry.translate(.35, 0, 0); doorLeaf.position.set(-.35, .95, 1.72); doorLeaf.rotation.y = -1.9; lantern.add(doorLeaf);
@@ -205,18 +205,18 @@ function bottleSea(ctx) {
 // Floor at y 0, glazing radius 170 from 40 to 260, door at +z, the hatch (r 42) at (60, 0, -60).
 function lanternRoom(ctx) {
   const { root, renderer } = ctx, add = o => { root.add(o); return o; };
-  ctx.scene.environment = M.envMap(renderer, { base: '#0b0706', panels: [{ color: '#ffd9a0', intensity: 9, pos: [0, 0, 0], size: [.8, .8] }, { color: '#ffb070', intensity: 2, pos: [-4.9, 0, 0], size: [3, 3] }] });
+  ctx.scene.environment = M.envMap(renderer, { base: '#0b0706', panels: [{ color: '#ffd9a0', intensity: 3, pos: [0, -1, 0], size: [.8, .8] }, { color: '#ffb070', intensity: .6, pos: [-4.9, 0, 0], size: [3, 3] }] });   // the lamp is a small bright thing, not a wall of light
   const iron = M.mat.metal('#2b2826', { rough: .5 }), brass = M.mat.metal('#c7a058', { rough: .24 }), paint = M.mat.paint('#e3dccb', { rough: .6 });
   // floor plate with the hatch, the hatch lid standing open
-  const fs = new THREE.Shape(); fs.absarc(0, 0, 178, 0, Math.PI * 2, false); const hole = new THREE.Path(); hole.absarc(60, -60, 42, 0, Math.PI * 2, true); fs.holes.push(hole);
-  const fg = new THREE.ExtrudeGeometry(fs, { depth: 15, bevelEnabled: false, curveSegments: 64 }); fg.rotateX(-Math.PI / 2); fg.translate(0, -15, 0);   // shape y → -z: the hole lands at (60, 0, -60); plate y -15 … 0
+  const fs = new THREE.Shape(); fs.absarc(0, 0, 178, 0, Math.PI * 2, false); const hole = new THREE.Path(); hole.absarc(60, 60, 42, 0, Math.PI * 2, true); fs.holes.push(hole);
+  const fg = new THREE.ExtrudeGeometry(fs, { depth: 15, bevelEnabled: false, curveSegments: 64 }); fg.rotateX(-Math.PI / 2); fg.translate(0, -15, 0);   // rotating by -90° sends shape y to -z: the hole (60, 60) lands at (60, 0, -60); plate y -15 … 0
   const floor = add(new THREE.Mesh(fg, new THREE.MeshStandardMaterial({ color: '#5a524a', roughness: .55, metalness: .6, map: M.noiseMap({ color: ['#2e2a26', '#6e665c'], scale: 22, lo: 0, hi: 1 }) })));
   const lidRing = add(new THREE.Mesh(M.ring(42, 47, 4), brass)); lidRing.rotation.x = Math.PI / 2; lidRing.position.set(60, .5, -60);
   const lid = new THREE.Group(); add(lid); lid.position.set(60, 0, -102); lid.rotation.x = -1.75;
   const lidD = new THREE.Mesh(new THREE.CylinderGeometry(42, 42, 3, 48), iron); lidD.position.set(0, 1.5, 42); lid.add(lidD);
   // parapet, glazing (11 panes + the open door at +z), mullions and rings, dome ceiling
   const parapet = add(new THREE.Mesh(new THREE.CylinderGeometry(174, 174, 40, 64, 1, true, .24, Math.PI * 2 - .48), M.mat.paint('#e3dccb', { rough: .6, side: THREE.DoubleSide }))); parapet.position.y = 20;
-  const glass = M.mat.glass({ tint: '#e8f0ee', opacity: .07, env: 1.2 });
+  const glass = M.mat.glass({ tint: '#e8f0ee', opacity: .06, env: .35 });
   for (let i = 1; i < 12; i++) { const a = i * 30 * D2R, p = add(new THREE.Mesh(new THREE.PlaneGeometry(90, 220), glass)); p.position.set(Math.sin(a) * 170, 150, Math.cos(a) * 170); p.rotation.y = a; p.castShadow = false; }
   for (let i = 0; i < 12; i++) { const a = (i * 30 + 15) * D2R, m = add(new THREE.Mesh(M.rbox(6, 224, 6, 1), iron)); m.position.set(Math.sin(a) * 174, 150, Math.cos(a) * 174); m.rotation.y = a; }
   for (const y of [40, 150, 262]) { const gap = y < 200 ? .48 : 0, g = new THREE.TorusGeometry(173, 3, 8, 96, Math.PI * 2 - gap); g.rotateZ(Math.PI / 2 + gap / 2); g.rotateX(Math.PI / 2); const r = add(new THREE.Mesh(g, iron)); r.position.y = y; }
