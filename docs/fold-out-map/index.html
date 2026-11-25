@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>fold-out-map · motion-skills</title>
+<meta name="description" content="장소와 여행 코스를 주면, 책상 위에 접혀 있던 종이 여행 지도가 펼쳐지고 빨간 길이 그려지며 명소 팝업이 하나씩 일어서고 낮에서 밤으로 바뀌는 세로 영상을 three.js로 만듭니다.">
+<meta property="og:title" content="fold-out-map · motion-skills">
+<meta property="og:description" content="접힌 종이 여행 지도가 펼쳐지고, 빨간 길을 따라 명소 팝업이 일어서고, 밤이 내리는 세로 영상을 코드만으로 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/fold-out-map/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/fold-out-map">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / fold-out-map</nav>
+  <h1>fold-out-map</h1>
+  <p>장소와 여행 코스를 주면, 나무 책상 위에 접혀 있던 종이 여행 지도가 가로 접힘부터 열리고 병풍 접힘이 차례로 펼쳐진 뒤, 낮게 깔린 카메라가 저절로 그려지는 빨간 길을 따라가며 명소마다 코드로 그린 팝업 카드와 이름표가 일어서고, 낮에서 노을과 밤으로 바뀌어 창문과 다리 불빛이 켜지는 세로 영상을 three.js로 만듭니다. 1080×1920 MP4와 브라우저에서 도는 페이지를 냅니다.
+  보고 만든 원본: <a href="https://x.com/yyyole/status/2125234904992776492?a=NGnIQg0wBl6JEjDN2Fw&s=19" target="_blank" rel="noopener">沐阳(@yyyole)의 X 게시물 (Three.js로 만든 펼쳐지는 청두 여행 지도)</a>.</p>
+  <ul class="tags"><li>three.js</li><li>9:16</li><li>MP4</li><li>라이브 페이지</li><li>코드만으로</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>장소 하나와 여행 코스(도시, 동네 산책, 캠퍼스, 축제장, 가상의 마을)</dd>
+      <dt>브리프</dt><dd>투영 중심과 축척, 해안 · 섬 · 강 · 산 · 동네 격자 · 큰길 · 지명, 표지와 안내 면, 코스 순서대로 3–6곳의 이름 · 한 줄 설명 · 팝업에 그릴 모습 · 보는 방향, 시간표, 빛이 바뀌는 때</dd>
+      <dt>장면</dt><dd>인쇄된 지도 면과 뒷면(표지, 안내), 명소마다 새로 그린 다이컷 팝업 카드(밤에 켜질 불빛 포함), 빨간 길, 펼침과 여행 카메라, 낮 → 노을 → 밤의 빛</dd>
+      <dt>확인</dt><dd>펼침 구간과 명소마다 스틸 · 콘택트 시트, 글꼴 · 결정성 · 빈 프레임 · 카메라 높이 · 명소와 이름표가 화면 안에 읽히는 크기로 있는지 · 겹침 · 책상 소품 위치 검사, 검토 기준 채점</dd>
+      <dt>출력</dt><dd>30fps 1080×1920 MP4(종이 소리와 장면 신호로 만든 음악 포함), 끌어서 시간을 감아 보는 라이브 페이지</dd>
+    </dl>
+    <pre><code>cd fold-out-map/examples/busan
+node ../../scripts/render.mjs index.html --stills 1,10,24.5,29.5 --scale .5
+node ../../scripts/check.mjs index.html
+node ../../scripts/score.mjs index.html
+node ../../scripts/render.mjs index.html --workers 4 --audio out/score.wav
+node ../../scripts/new-film.mjs ../../../my-trip</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium(WebGL2), ffmpeg, 글꼴을 받을 때 한 번의 네트워크. 이미지 · 영상 생성 모델은 쓰지 않습니다. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/fold-out-map/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:4/5;--h-phone:640px;--demo-bg:#120d0a">
+    <iframe data-src="demo/busan/" title="fold-out-map 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/busan/">데모 열기 (examples/busan)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/busan</code> · 38초 · 옆으로 끌면 시간이 감김</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/busan/" data-cap="예제 &lt;code&gt;examples/busan&lt;/code&gt; · 38초 · 옆으로 끌면 시간이 감김" aria-pressed="true">부산</button>
+        <button class="btn" type="button" data-src="demo/template/" data-cap="템플릿 &lt;code&gt;templates/film.html&lt;/code&gt; · 24초 · 가상의 항구 마을" aria-pressed="false">시작 템플릿</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본 영상(청두)에 없던 주제인 부산으로 만든 예제 「부산」의 장면들과 시작 템플릿입니다. 카드를 누르면 새 탭에서 그 장면이 그 순간에 멈춘 채 열리고, 브라우저가 직접 그립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"paper":"종이와 펼침","stop":"명소","night":"노을과 밤"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>부산 <small>9:16 · 38초</small></h3>
+      <p>접힌 리플릿이 펼쳐지고, 감천문화마을 → 태종대 → 해운대 → 노을의 해동용궁사 → 밤의 광안대교로 빨간 길이 이어진 뒤 밤의 지도 전체로 올라갑니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="paper" href="demo/busan/?t=0.6" target="_blank" rel="noopener">
+          <img src="samples/cover.jpg" alt="나무 책상 위에 접힌 여행 리플릿 표지: 진녹색 BUSAN과 부산, 붉은 해 앞의 다리 탑과 케이블과 물결 문양, TRAVEL MAP, 바다와 다리 언덕 마을의 하루" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">종이 · 0.6초</span><b>접힌 리플릿</b>
+          <span class="how">한 패널의 뒷면에 인쇄된 표지. 책상 위 컵 · 연필 · 안경 · 동전</span></div></a>
+        <a class="tile" data-tags="paper" href="demo/busan/?t=4.3" target="_blank" rel="noopener">
+          <img src="samples/unfold.jpg" alt="가로 접힘이 열린 뒤 병풍처럼 접힌 패널들이 차례로 넘어가며 지도 면이 드러나는 순간" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">종이 · 4.3초</span><b>펼침</b>
+          <span class="how">가로 접힘 먼저, 다음은 위에 쌓인 병풍 접힘부터 차례로. 종이는 책상을 뚫거나 뜨지 않음</span></div></a>
+        <a class="tile" data-tags="paper" href="demo/busan/?t=6.6" target="_blank" rel="noopener">
+          <img src="samples/open.jpg" alt="펼쳐진 부산 지도: 크림색 종이에 갈색 거리 격자, 등고선 산, 청록색 바다와 해안 띠, 영도, 수영강, 왼쪽 위 BUSAN 제목, 왼쪽 아래 하루 코스 범례" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">지도 · 6.6초</span><b>펼친 지도</b>
+          <span class="how">접힌 자국이 남은 인쇄 지도. 해안 띠, 등고선, 동네마다 각도가 다른 거리 격자, 명조체 지명</span></div></a>
+        <a class="tile" data-tags="stop" href="demo/busan/?t=10" target="_blank" rel="noopener">
+          <img src="samples/gamcheon.jpg" alt="산비탈에 층층이 쌓인 파스텔색 집들을 그린 감천문화마을 팝업 카드와 01 감천문화마을 이름표" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">명소 01 · 10초</span><b>감천문화마을</b>
+          <span class="how">길이 닿으면 종이에서 자라나 튀어 오르는 다이컷 카드와 기울어 서는 이름표</span></div></a>
+        <a class="tile" data-tags="stop" href="demo/busan/?t=14.6" target="_blank" rel="noopener">
+          <img src="samples/taejongdae.jpg" alt="파도 위 회색 절벽과 소나무, 빨간 띠의 흰 등대를 그린 태종대 팝업과 02 태종대 이름표, 영도 위로 이어진 빨간 길" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">명소 02 · 14.6초</span><b>태종대</b>
+          <span class="how">영도 끝의 절벽과 등대. 빨간 길이 다리를 건너 섬으로</span></div></a>
+        <a class="tile" data-tags="stop" href="demo/busan/?t=19.5" target="_blank" rel="noopener">
+          <img src="samples/haeundae.jpg" alt="뒤 카드에 고층 타워들, 앞 카드에 모래사장과 파라솔과 사람들을 그린 두 겹의 해운대 팝업과 03 해운대 이름표" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">명소 03 · 19.5초</span><b>해운대</b>
+          <span class="how">두 겹 팝업: 뒤에 타워, 앞에 백사장. 뒤 카드가 먼저 일어섬</span></div></a>
+        <a class="tile" data-tags="stop night" href="demo/busan/?t=24.5" target="_blank" rel="noopener">
+          <img src="samples/yonggungsa.jpg" alt="노을빛 속 바다 바위 위 기와지붕 법당 두 채와 석탑, 연등 줄을 그린 해동용궁사 팝업과 04 이름표" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">명소 04 · 24.5초</span><b>해동용궁사</b>
+          <span class="how">노을: 낮게 기운 따뜻한 빛, 문살에 불이 들어오기 시작</span></div></a>
+        <a class="tile" data-tags="stop night" href="demo/busan/?t=29.5" target="_blank" rel="noopener">
+          <img src="samples/gwangan.jpg" alt="밤의 광안대교 팝업: 주탑과 케이블을 따라 켜진 불빛, 앞 카드의 광안리 해변 가로등, 뒤로 불 켜진 해운대와 용궁사 팝업, 종이 위 따뜻한 불빛 웅덩이" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">명소 05 · 29.5초</span><b>밤의 광안대교</b>
+          <span class="how">밤에는 그려 둔 불빛만 켜짐: 창문, 케이블 조명, 가로등. 팝업 아래 불빛 웅덩이</span></div></a>
+        <a class="tile" data-tags="night" href="demo/busan/?t=37.2" target="_blank" rel="noopener">
+          <img src="samples/night.jpg" alt="밤의 책상 위에 펼친 부산 지도 전체, 다섯 팝업이 불을 켜고 서 있고 빨간 길이 이어져 있음, 아래쪽 부산 · Busan 글자" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">밤 · 37.2초</span><b>밤의 지도</b>
+          <span class="how">높이 올라가 본 전체 코스. 모든 팝업이 선 채 빛남</span></div></a>
+        <a class="tile" data-tags="stop" href="demo/template/?t=8.6" target="_blank" rel="noopener">
+          <img src="samples/template.jpg" alt="가상의 항구 마을 Saltmere 지도 위에 선 시계탑 광장 팝업과 Clock Square 이름표" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">템플릿 · 24초</span><b>시작 템플릿</b><span class="en">templates/film.html</span>
+          <span class="how">가상의 항구 마을, 명소 셋(시계탑 · 부두 · 풍차 언덕). 부분마다 주석</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. 沐阳(@yyyole)이 X에 올린 청두 여행 지도 영상에서 형식(책상 위에 접힌 리플릿이 펼쳐짐, 빨간 길, 서 있는 명소 그림, 낮은 카메라, 낮에서 밤으로)만 빌렸습니다. 원본은 명소 그림을 이미지 모델로 만들었지만 여기서는 모두 코드로 그리고, 코드와 지도, 부산 예제의 장소와 구성은 모두 이 레포의 것입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/busan/" target="_blank" rel="noopener"><b>「부산」 · 38초</b><span>접힌 리플릿, 펼침, 다섯 명소, 노을과 밤, 라이브 페이지</span><span class="url">fold-out-map/demo/busan/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/fold-out-map/examples/busan"><b>예제 폴더 · examples/busan</b><span>BRIEF.md와 페이지</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/yyyole/status/2125234904992776492?a=NGnIQg0wBl6JEjDN2Fw&s=19" target="_blank" rel="noopener"><b>원본 · 沐阳(@yyyole)의 X 게시물</b><span>Three.js로 만든 펼쳐지는 청두 여행 지도, 55초 · 2026년 11월</span><span class="url">x.com/yyyole</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/fold-out-map/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/fold-out-map">폴더</a> <span>lib · scripts · templates · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/fold-out-map/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/fold-out-map/references/BRIEF.md">references/BRIEF.md</a> <span>장소와 코스에서 브리프로, 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/fold-out-map/references/LOOK.md">references/LOOK.md</a> <span>종이 지도와 팝업으로 보이게 하는 수치, 빛, 카메라</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/fold-out-map/references/KIT.md">references/KIT.md</a> <span>엔진 · 지도 · 팝업 카드 API, 새 팝업 그리기</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/fold-out-map/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림은 코드로 그림 (지도 타일 · 사진 · 생성 이미지 없음) · 글꼴 Noto Serif KR · Noto Serif 부분 집합 (SIL OFL 1.1) · three.js r170 (MIT)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

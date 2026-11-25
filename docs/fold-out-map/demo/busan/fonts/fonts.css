@@ -1,0 +1,133 @@
+/* subset fonts for this film (fold-out-map/scripts/fonts.mjs): Noto Serif KR as "Map Serif", Noto Serif italic as "Map Italic". SIL Open Font License 1.1, via Google Fonts. */
+@font-face {
+  font-family: 'Map Serif';
+  font-style: normal;
+  font-weight: 500;
+  
+  src: url(MapSerif-500-0.woff2) format('woff2');
+  unicode-range: U+20, U+2c, U+2e, U+30-37, U+42-43, U+47-48, U+54, U+56, U+59, U+61, U+63-65, U+67-6f, U+72-75, U+77, U+b7, U+ac10, U+acc4, U+ace0, U+acfc, U+ad11, U+ad50, U+ad81, U+b144, U+b2e4, U+b2e8, U+b300, U+b36e, U+b3c4, U+b3d9, U+b4f1, U+b77c, U+b9ac, U+b9c8, U+bb38, U+bc14, U+bc24, U+bc31, U+bcbd, U+bd88, U+be44, U+be5b, U+c0ac, U+c0b0, U+c0c1, U+c2a4, U+c548, U+c580, U+c6a9, U+c6b4, U+c704, U+c740, U+c744, U+c758, U+c774, U+c778, U+c7a5, U+c808, U+c885, U+cc9c, U+ce35, U+ce74, U+d0c8, U+d0dc, U+d154, U+d30c, U+d558, U+d574, U+d654;
+}
+@font-face {
+  font-family: 'Map Serif';
+  font-style: normal;
+  font-weight: 600;
+  
+  src: url(MapSerif-600-1.woff2) format('woff2');
+  unicode-range: U+20, U+2c, U+2e, U+30-37, U+42-43, U+47-48, U+54, U+56, U+59, U+61, U+63-65, U+67-6f, U+72-75, U+77, U+b7, U+ac10, U+acc4, U+ace0, U+acfc, U+ad11, U+ad50, U+ad81, U+b144, U+b2e4, U+b2e8, U+b300, U+b36e, U+b3c4, U+b3d9, U+b4f1, U+b77c, U+b9ac, U+b9c8, U+bb38, U+bc14, U+bc24, U+bc31, U+bcbd, U+bd88, U+be44, U+be5b, U+c0ac, U+c0b0, U+c0c1, U+c2a4, U+c548, U+c580, U+c6a9, U+c6b4, U+c704, U+c740, U+c744, U+c758, U+c774, U+c778, U+c7a5, U+c808, U+c885, U+cc9c, U+ce35, U+ce74, U+d0c8, U+d0dc, U+d154, U+d30c, U+d558, U+d574, U+d654;
+}
+@font-face {
+  font-family: 'Map Serif';
+  font-style: normal;
+  font-weight: 700;
+  
+  src: url(MapSerif-700-2.woff2) format('woff2');
+  unicode-range: U+20, U+2c, U+2e, U+30-37, U+42-43, U+47-48, U+54, U+56, U+59, U+61, U+63-65, U+67-6f, U+72-75, U+77, U+b7, U+ac10, U+acc4, U+ace0, U+acfc, U+ad11, U+ad50, U+ad81, U+b144, U+b2e4, U+b2e8, U+b300, U+b36e, U+b3c4, U+b3d9, U+b4f1, U+b77c, U+b9ac, U+b9c8, U+bb38, U+bc14, U+bc24, U+bc31, U+bcbd, U+bd88, U+be44, U+be5b, U+c0ac, U+c0b0, U+c0c1, U+c2a4, U+c548, U+c580, U+c6a9, U+c6b4, U+c704, U+c740, U+c744, U+c758, U+c774, U+c778, U+c7a5, U+c808, U+c885, U+cc9c, U+ce35, U+ce74, U+d0c8, U+d0dc, U+d154, U+d30c, U+d558, U+d574, U+d654;
+}
+@font-face {
+  font-family: 'Map Serif';
+  font-style: normal;
+  font-weight: 900;
+  
+  src: url(MapSerif-900-3.woff2) format('woff2');
+  unicode-range: U+20, U+2c, U+2e, U+30-37, U+42-43, U+47-48, U+54, U+56, U+59, U+61, U+63-65, U+67-6f, U+72-75, U+77, U+b7, U+ac10, U+acc4, U+ace0, U+acfc, U+ad11, U+ad50, U+ad81, U+b144, U+b2e4, U+b2e8, U+b300, U+b36e, U+b3c4, U+b3d9, U+b4f1, U+b77c, U+b9ac, U+b9c8, U+bb38, U+bc14, U+bc24, U+bc31, U+bcbd, U+bd88, U+be44, U+be5b, U+c0ac, U+c0b0, U+c0c1, U+c2a4, U+c548, U+c580, U+c6a9, U+c6b4, U+c704, U+c740, U+c744, U+c758, U+c774, U+c778, U+c7a5, U+c808, U+c885, U+cc9c, U+ce35, U+ce74, U+d0c8, U+d0dc, U+d154, U+d30c, U+d558, U+d574, U+d654;
+}
+@font-face {
+  font-family: 'Map Serif';
+  font-style: normal;
+  font-weight: 500;
+  
+  src: url(MapSerif-500-4.woff2) format('woff2');
+  unicode-range: U+21-2b, U+2d, U+2f, U+38-41, U+44-46, U+49-53, U+55, U+57-58, U+5a, U+66, U+70, U+76, U+25b2, U+ac00, U+ac15, U+acbd, U+ad6c, U+adf8, U+ae30, U+ae38, U+b0a8, U+b2c8, U+b355, U+b798, U+b824, U+b839, U+b85c, U+b8e8, U+ba74, U+ba85, U+bd09, U+bd80, U+c11c, U+c12d, U+c18c, U+c218, U+c2dc, U+c5b4, U+c5b8, U+c5c5, U+c5ec, U+c601, U+c640, U+c77c-c77d, U+c911, U+c9c0, U+cc45, U+cd94, U+ce58, U+cf54, U+d070, U+d31d, U+d3bc, U+d55c, U+d589, U+d611, U+d669;
+}
+@font-face {
+  font-family: 'Map Serif';
+  font-style: normal;
+  font-weight: 600;
+  
+  src: url(MapSerif-600-5.woff2) format('woff2');
+  unicode-range: U+21-2b, U+2d, U+2f, U+38-41, U+44-46, U+49-53, U+55, U+57-58, U+5a, U+66, U+70, U+76, U+25b2, U+ac00, U+ac15, U+acbd, U+ad6c, U+adf8, U+ae30, U+ae38, U+b0a8, U+b2c8, U+b355, U+b798, U+b824, U+b839, U+b85c, U+b8e8, U+ba74, U+ba85, U+bd09, U+bd80, U+c11c, U+c12d, U+c18c, U+c218, U+c2dc, U+c5b4, U+c5b8, U+c5c5, U+c5ec, U+c601, U+c640, U+c77c-c77d, U+c911, U+c9c0, U+cc45, U+cd94, U+ce58, U+cf54, U+d070, U+d31d, U+d3bc, U+d55c, U+d589, U+d611, U+d669;
+}
+@font-face {
+  font-family: 'Map Serif';
+  font-style: normal;
+  font-weight: 700;
+  
+  src: url(MapSerif-700-6.woff2) format('woff2');
+  unicode-range: U+21-2b, U+2d, U+2f, U+38-41, U+44-46, U+49-53, U+55, U+57-58, U+5a, U+66, U+70, U+76, U+25b2, U+ac00, U+ac15, U+acbd, U+ad6c, U+adf8, U+ae30, U+ae38, U+b0a8, U+b2c8, U+b355, U+b798, U+b824, U+b839, U+b85c, U+b8e8, U+ba74, U+ba85, U+bd09, U+bd80, U+c11c, U+c12d, U+c18c, U+c218, U+c2dc, U+c5b4, U+c5b8, U+c5c5, U+c5ec, U+c601, U+c640, U+c77c-c77d, U+c911, U+c9c0, U+cc45, U+cd94, U+ce58, U+cf54, U+d070, U+d31d, U+d3bc, U+d55c, U+d589, U+d611, U+d669;
+}
+@font-face {
+  font-family: 'Map Serif';
+  font-style: normal;
+  font-weight: 900;
+  
+  src: url(MapSerif-900-7.woff2) format('woff2');
+  unicode-range: U+21-2b, U+2d, U+2f, U+38-41, U+44-46, U+49-53, U+55, U+57-58, U+5a, U+66, U+70, U+76, U+25b2, U+ac00, U+ac15, U+acbd, U+ad6c, U+adf8, U+ae30, U+ae38, U+b0a8, U+b2c8, U+b355, U+b798, U+b824, U+b839, U+b85c, U+b8e8, U+ba74, U+ba85, U+bd09, U+bd80, U+c11c, U+c12d, U+c18c, U+c218, U+c2dc, U+c5b4, U+c5b8, U+c5c5, U+c5ec, U+c601, U+c640, U+c77c-c77d, U+c911, U+c9c0, U+cc45, U+cd94, U+ce58, U+cf54, U+d070, U+d31d, U+d3bc, U+d55c, U+d589, U+d611, U+d669;
+}
+@font-face {
+  font-family: 'Map Serif';
+  font-style: normal;
+  font-weight: 500;
+  
+  src: url(MapSerif-500-8.woff2) format('woff2');
+  unicode-range: U+5b-60, U+62, U+71, U+78-7e, U+b0, U+2013-2014, U+2018-2019, U+201c-201d, U+2026;
+}
+@font-face {
+  font-family: 'Map Serif';
+  font-style: normal;
+  font-weight: 600;
+  
+  src: url(MapSerif-600-9.woff2) format('woff2');
+  unicode-range: U+5b-60, U+62, U+71, U+78-7e, U+b0, U+2013-2014, U+2018-2019, U+201c-201d, U+2026;
+}
+@font-face {
+  font-family: 'Map Serif';
+  font-style: normal;
+  font-weight: 700;
+  
+  src: url(MapSerif-700-10.woff2) format('woff2');
+  unicode-range: U+5b-60, U+62, U+71, U+78-7e, U+b0, U+2013-2014, U+2018-2019, U+201c-201d, U+2026;
+}
+@font-face {
+  font-family: 'Map Serif';
+  font-style: normal;
+  font-weight: 900;
+  
+  src: url(MapSerif-900-11.woff2) format('woff2');
+  unicode-range: U+5b-60, U+62, U+71, U+78-7e, U+b0, U+2013-2014, U+2018-2019, U+201c-201d, U+2026;
+}
+@font-face {
+  font-family: 'Map Italic';
+  font-style: italic;
+  font-weight: 400;
+  font-stretch: 100%;
+  
+  src: url(MapItalic-400-12.woff2) format('woff2');
+  unicode-range: U+20-78, U+b7;
+}
+@font-face {
+  font-family: 'Map Italic';
+  font-style: italic;
+  font-weight: 500;
+  font-stretch: 100%;
+  
+  src: url(MapItalic-500-13.woff2) format('woff2');
+  unicode-range: U+20-78, U+b7;
+}
+@font-face {
+  font-family: 'Map Italic';
+  font-style: italic;
+  font-weight: 400;
+  font-stretch: 100%;
+  
+  src: url(MapItalic-400-14.woff2) format('woff2');
+  unicode-range: U+79-7e, U+b0, U+2013-2014, U+2018-2019, U+201c-201d, U+2026;
+}
+@font-face {
+  font-family: 'Map Italic';
+  font-style: italic;
+  font-weight: 500;
+  font-stretch: 100%;
+  
+  src: url(MapItalic-500-15.woff2) format('woff2');
+  unicode-range: U+79-7e, U+b0, U+2013-2014, U+2018-2019, U+201c-201d, U+2026;
+}

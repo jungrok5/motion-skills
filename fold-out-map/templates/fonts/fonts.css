@@ -1,0 +1,101 @@
+/* subset fonts for this film (fold-out-map/scripts/fonts.mjs): Noto Serif KR as "Map Serif", Noto Serif italic as "Map Italic". SIL Open Font License 1.1, via Google Fonts. */
+@font-face {
+  font-family: 'Map Serif';
+  font-style: normal;
+  font-weight: 500;
+  
+  src: url(MapSerif-500-0.woff2) format('woff2');
+  unicode-range: U+20-77, U+79, U+b7;
+}
+@font-face {
+  font-family: 'Map Serif';
+  font-style: normal;
+  font-weight: 600;
+  
+  src: url(MapSerif-600-1.woff2) format('woff2');
+  unicode-range: U+20-77, U+79, U+b7;
+}
+@font-face {
+  font-family: 'Map Serif';
+  font-style: normal;
+  font-weight: 700;
+  
+  src: url(MapSerif-700-2.woff2) format('woff2');
+  unicode-range: U+20-77, U+79, U+b7;
+}
+@font-face {
+  font-family: 'Map Serif';
+  font-style: normal;
+  font-weight: 900;
+  
+  src: url(MapSerif-900-3.woff2) format('woff2');
+  unicode-range: U+20-77, U+79, U+b7;
+}
+@font-face {
+  font-family: 'Map Serif';
+  font-style: normal;
+  font-weight: 500;
+  
+  src: url(MapSerif-500-4.woff2) format('woff2');
+  unicode-range: U+78, U+7a-7e, U+b0, U+2013-2014, U+2018-2019, U+201c-201d, U+2026, U+25b2;
+}
+@font-face {
+  font-family: 'Map Serif';
+  font-style: normal;
+  font-weight: 600;
+  
+  src: url(MapSerif-600-5.woff2) format('woff2');
+  unicode-range: U+78, U+7a-7e, U+b0, U+2013-2014, U+2018-2019, U+201c-201d, U+2026, U+25b2;
+}
+@font-face {
+  font-family: 'Map Serif';
+  font-style: normal;
+  font-weight: 700;
+  
+  src: url(MapSerif-700-6.woff2) format('woff2');
+  unicode-range: U+78, U+7a-7e, U+b0, U+2013-2014, U+2018-2019, U+201c-201d, U+2026, U+25b2;
+}
+@font-face {
+  font-family: 'Map Serif';
+  font-style: normal;
+  font-weight: 900;
+  
+  src: url(MapSerif-900-7.woff2) format('woff2');
+  unicode-range: U+78, U+7a-7e, U+b0, U+2013-2014, U+2018-2019, U+201c-201d, U+2026, U+25b2;
+}
+@font-face {
+  font-family: 'Map Italic';
+  font-style: italic;
+  font-weight: 400;
+  font-stretch: 100%;
+  
+  src: url(MapItalic-400-8.woff2) format('woff2');
+  unicode-range: U+20-77, U+79, U+b7;
+}
+@font-face {
+  font-family: 'Map Italic';
+  font-style: italic;
+  font-weight: 500;
+  font-stretch: 100%;
+  
+  src: url(MapItalic-500-9.woff2) format('woff2');
+  unicode-range: U+20-77, U+79, U+b7;
+}
+@font-face {
+  font-family: 'Map Italic';
+  font-style: italic;
+  font-weight: 400;
+  font-stretch: 100%;
+  
+  src: url(MapItalic-400-10.woff2) format('woff2');
+  unicode-range: U+78, U+7a-7e, U+b0, U+2013-2014, U+2018-2019, U+201c-201d, U+2026;
+}
+@font-face {
+  font-family: 'Map Italic';
+  font-style: italic;
+  font-weight: 500;
+  font-stretch: 100%;
+  
+  src: url(MapItalic-500-11.woff2) format('woff2');
+  unicode-range: U+78, U+7a-7e, U+b0, U+2013-2014, U+2018-2019, U+201c-201d, U+2026;
+}
