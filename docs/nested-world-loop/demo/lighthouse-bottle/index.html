@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>병 속의 등대 · nested-world-loop</title>
+<!-- nested-world-loop page: the importmap points at the engine (nwl/) and three.js. new-loop.mjs writes "./lib/" here;
+     inside the skill folder the starter and examples read the skill's own lib/ and vendor/. Open through a local server
+     (python3 -m http.server) or let the scripts open it. -->
+<script type="importmap">{ "imports": { "three": "../lib/three.module.min.js", "nwl/": "../lib/" } }</script>
+</head><body>
+<script type="module" src="./loop.js"></script>
+</body></html>

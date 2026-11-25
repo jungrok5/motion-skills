@@ -497,9 +497,10 @@ export function film(def) {
   render(FREEZE ?? 0);
   window.__ready = true;
 
-  if (!RENDER && FREEZE === null) {
+  if (!RENDER) {   // live player; with ?t= it opens paused on that moment (click / space plays on from there)
     const bar = document.createElement('div'); bar.id = 'nwl-bar'; bar.innerHTML = '<i></i>'; document.body.appendChild(bar);
-    let playing = true, base = performance.now() / 1000;
+    current = FREEZE ?? 0;
+    let playing = FREEZE === null, base = performance.now() / 1000 - current;
     const toggle = () => { playing = !playing; base = performance.now() / 1000 - current; };
     canvas.addEventListener('click', toggle);
     addEventListener('keydown', e => {

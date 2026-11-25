@@ -57,7 +57,7 @@ my-loop/
 ```
 Run scripts from the project's parent: `node <skill>/scripts/check.mjs my-loop`. To watch it live:
 `(cd my-loop && python3 -m http.server)` → http://localhost:8000/ (click / space pauses, ← → jump, `?debug=1` shows the
-world, τ, perceived speed and stencil levels; `?t=7.5` freezes a moment; `?only=0,1` draws only some passes).
+world, τ, perceived speed and stencil levels; `?t=7.5` opens paused on a moment; `?only=0,1` draws only some passes).
 
 Requirements: Node + Playwright Chromium (SwiftShader WebGL, no GPU needed), ffmpeg, Python 3 only to serve the page.
 
