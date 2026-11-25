@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>principle-pass · motion-skills</title>
+<meta name="description" content="동물과 동작 하나를 주면, 같은 이야기 키를 위에는 처음 그대로(선형 · 발 미끄러짐 · 굳은 꼬리), 아래에는 디즈니 12원칙 패스를 더해(예비 동작 · 호 · 팔로스루 · 찌그러짐 · 디딘 발 · 숨) 동시에 보여 주는 전후 비교 영상을 코드만으로 만들고, 원칙마다 숫자로 잽니다. 다른 스킬이 움직임을 만들 때 쓰는 공용 도구와 측정기도 함께 있습니다.">
+<meta property="og:title" content="principle-pass · motion-skills">
+<meta property="og:description" content="같은 동작을 처음 그대로 / 12원칙 패스 후로 나란히 — 원칙마다 숫자로 재는 전후 비교 영상, 코드만으로.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/principle-pass/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/principle-pass">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / principle-pass</nav>
+  <h1>principle-pass</h1>
+  <p>동물 하나와 짧은 동작 하나(예: 고양이가 낙엽에 덤벼든다, 펭귄이 배로 미끄러진다)를 주면, 같은 장면을 위아래 두 칸에 동시에 보여 주는 9–12초 세로 영상을 코드만으로 만듭니다. 위 칸은 이야기 키만 선형으로 이은 처음 그대로의 움직임(모든 부위가 한 곡선, 발이 미끄러지고 꼬리는 굳고 쉬는 동안 멈춰 있음)이고, 아래 칸은 같은 키에 디즈니 12원칙 패스를 더한 움직임(천천히 들어가고 나오기, 예비 동작, 호, 꼬리 · 귀의 팔로스루와 겹침, 면적을 지키는 찌그러짐과 늘어남, 디딘 발, 숨과 깜빡임)입니다. 비트마다 이름과 그 비트가 보여 주는 원칙을 붙이고, 끝에는 코 · 엉덩이 · 꼬리 끝이 지나간 길을 1/12초마다 점으로 그려 간격과 호를 보여 줍니다. 원칙 열 가지는 측정기가 두 칸 모두 숫자로 잽니다.
+  이 스킬은 레포의 <b>움직임 기준</b>이기도 합니다. <code>lib/principles.js</code>(원칙을 코드로 옮긴 도구와 측정기)와 <code>scripts/audit.mjs</code>는 다른 스킬이 복사해 자기 움직임을 재는 데 쓰고, 순서와 시작 숫자는 <a href="https://github.com/jungrok5/motion-skills/blob/main/references/ANIMATION-PRINCIPLES.md">references/ANIMATION-PRINCIPLES.md</a>에 있습니다.
+  보고 만든 원본: <a href="https://x.com/endel/status/2125224240488354066?a=X8s7fGWOhQz93WbUoz8&amp;s=19" target="_blank" rel="noopener">Endel(@endel)의 X 게시물 “when you ask AI to follow Disney’s animation principles” (2.8초 전후 비교 영상)</a>.</p>
+  <ul class="tags"><li>전후 비교 · 위아래 두 칸</li><li>디즈니 12원칙 패스</li><li>원칙마다 숫자로 측정</li><li>과슈 붓질 동물 리그</li><li>다른 스킬의 움직임 기준</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>동물과 동작 한 줄(예: 회색 고양이가 낙엽을 보고 엉덩이를 흔들다 덤벼든다, 펭귄이 뒤뚱 걷다 배로 엎어져 생선까지 미끄러진다)</dd>
+      <dt>브리프</dt><dd>그 동작이 어떤 원칙을 보여 주는지, 동물(몸 구조 · 크기와 무게 · 비율 · 색 · 따라오는 부위 · 쉬는 동작), 비트마다 이야기 키, 비트마다 더할 패스(타이밍 · 예비 동작 · 호 · 팔로스루와 겹침 · 찌그러짐 · 2차 동작 · 과장), 발 딛는 표, 스터디할 점</dd>
+      <dt>만들기</dt><dd>캐스트 시트(키 포즈 좌우 · 숨 쉬는 대기 · 발을 모아 도는 회전)를 먼저 채점하고, 이야기 키만 잡아 위 칸을 만든 뒤, 패스 키 · 디딘 발 · 꼬리와 귀의 스프링 · 찌그러짐 · 숨을 더해 아래 칸을 만듦</dd>
+      <dt>확인</dt><dd>결정성, 두 칸에 동물이 그려지는지, 원칙 열 가지를 두 칸 모두 숫자로(아래 칸은 모두 통과, 위 칸은 넷 이상 실패, 비트에 붙인 원칙 태그는 모두 숫자로 뒷받침), 무릎 · 발목이 제 방향으로만 굽고 디딘 발이 닿는지, 비트 · 쉬는 구간 · 스터디 · 라벨</dd>
+      <dt>출력</dt><dd>1080×1350 MP4(30 fps, 소리 없음), 라이브 페이지, 스틸, 콘택트 시트, 캐스트 시트, 원칙 측정표(<code>out/&lt;name&gt;-audit.json</code>)</dd>
+    </dl>
+    <pre><code>node principle-pass/scripts/new-piece.mjs my-piece
+node principle-pass/scripts/render.mjs my-piece/index.html --cast
+node principle-pass/scripts/check.mjs my-piece/index.html
+node principle-pass/scripts/render.mjs my-piece/index.html --sheet 12 --scale .5
+node principle-pass/scripts/render.mjs my-piece/index.html
+node principle-pass/scripts/audit.mjs --page 다른-스킬/examples/x/index.html</code></pre>
+    <p class="mute">요구 사항: Node 18+와 Playwright Chromium, ffmpeg. 네트워크 · npm 설치가 필요 없습니다(10초 영상 렌더가 약 1분). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/principle-pass/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:4/5.4;--h-phone:600px;--demo-bg:#1c1b19">
+    <iframe data-src="demo/penguin-slide/" title="principle-pass 예제가 재생되는 라이브 페이지" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/penguin-slide/">데모 열기 (examples/penguin-slide)</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/penguin-slide</code> · 10.4초 · 화면을 누르면 멈춤</span>
+      <span class="btns" role="group" aria-label="데모 영상">
+        <button class="btn" type="button" data-src="demo/penguin-slide/" data-cap="예제 &lt;code&gt;examples/penguin-slide&lt;/code&gt; · 10.4초 · 화면을 누르면 멈춤" aria-pressed="true">배 미끄럼</button>
+        <button class="btn" type="button" data-src="demo/pounce/" data-cap="시작 템플릿 &lt;code&gt;templates/&lt;/code&gt; · 9초 · 화면을 누르면 멈춤" aria-pressed="false">덤벼들기</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">원본 영상에 없는 동물과 동작 두 개를 브리프부터 새로 만든 영상의 장면입니다. 위 칸이 처음 그대로, 아래 칸이 원칙 패스 후입니다. 카드를 누르면 새 탭에서 그 순간부터 라이브 페이지가 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"pg":"배 미끄럼","po":"덤벼들기","cs":"캐스트 시트"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>배 미끄럼 <small>예제 · 10.4초</small></h3>
+      <p>얼음 위의 펭귄이 네 걸음 뒤뚱 걷고, 몸을 뒤로 젖히며 날개를 들었다가 배로 엎어져 생선 앞까지 미끄러집니다. 시작 템플릿과 다른 몸(곧게 선 두 발, 날개, 납작한 발, 짧은 꼬리)을 자기 브리프로 키잉했습니다. 위 칸의 펭귄은 발이 얼음 위를 스케이트처럼 미끄러지고, 그대로 쓰러지고, 멈출 때 뚝 섭니다.</p>
+      <div class="grid tall">
+        <a class="tile" data-tags="pg" href="demo/penguin-slide/?t=1.7" target="_blank" rel="noopener">
+          <img src="samples/penguin-slide-1.7.jpg" alt="위아래 두 칸의 얼음판. 위 칸 펭귄은 두 발을 붙인 채 미끄러지듯 옮겨 가고, 아래 칸 펭귄은 한 발을 들고 몸을 살짝 기울여 걷고 있음. 아래 칸에 Waddle 라벨" loading="lazy" width="640" height="800" style="aspect-ratio:4/5">
+          <div class="cap"><span class="no">뒤뚱 · 1.7초</span><b>발이 미끄러지느냐, 딛느냐</b><span class="how">위: 다리 각도만 보간해 발이 얼음을 쓸고 감 · 아래: 디딘 발 고정, 들 때 호를 그림, 엉덩이가 딛는 순간마다 내려앉음</span></div></a>
+        <a class="tile" data-tags="pg" href="demo/penguin-slide/?t=2.88" target="_blank" rel="noopener">
+          <img src="samples/penguin-slide-2.88.jpg" alt="위 칸 펭귄은 이미 앞으로 기울기 시작했고, 아래 칸 펭귄은 몸을 뒤로 젖히고 날개를 뒤로 든 채 웅크리고 있음. Belly flop 라벨과 anticipation 태그" loading="lazy" width="640" height="800" style="aspect-ratio:4/5">
+          <div class="cap"><span class="no">모으기 · 2.88초</span><b>예비 동작</b><span class="how">아래 칸만: 뒤로 젖힘 .2, 웅크림, 날개를 위로 · 0.28초 버팀</span></div></a>
+        <a class="tile" data-tags="pg" href="demo/penguin-slide/?t=3.2" target="_blank" rel="noopener">
+          <img src="samples/penguin-slide-3.2.jpg" alt="위 칸 펭귄은 통나무처럼 비스듬히 넘어가고, 아래 칸 펭귄은 살짝 떠오른 채 앞으로 몸을 던지며 발이 얼음에서 떨어지고 있음" loading="lazy" width="640" height="800" style="aspect-ratio:4/5">
+          <div class="cap"><span class="no">엎어지기 · 3.2초</span><b>호와 늘어남</b><span class="how">엉덩이가 살짝 떠올라 한 곡선으로 떨어짐, 몸이 늘어났다 닿는 순간 납작</span></div></a>
+        <a class="tile" data-tags="pg" href="demo/penguin-slide/?t=5.6" target="_blank" rel="noopener">
+          <img src="samples/penguin-slide-5.6.jpg" alt="두 칸 모두 펭귄이 배를 대고 생선 앞에 멈춤. 아래 칸 펭귄은 몸이 앞으로 살짝 쏠리고 날개가 튕겨 나가 있음. Slide, stop 라벨" loading="lazy" width="640" height="800" style="aspect-ratio:4/5">
+          <div class="cap"><span class="no">멈춤 · 5.6초</span><b>팔로스루와 자리 잡기</b><span class="how">위: 뚝 멈춤 · 아래: 앞으로 쏠렸다 돌아옴, 날개 · 머리 · 꼬리가 늦게 멈춤</span></div></a>
+        <a class="tile" data-tags="pg" href="demo/penguin-slide/?t=9.8" target="_blank" rel="noopener">
+          <img src="samples/penguin-slide-9.8.jpg" alt="스터디 화면. 두 칸에 펭귄의 흐린 잔상 위로 부리 · 엉덩이 · 발이 지나간 길이 점선으로 그려져 있음. 위 칸은 고른 간격의 직선, 아래 칸은 끝에서 촘촘해지는 곡선" loading="lazy" width="640" height="800" style="aspect-ratio:4/5">
+          <div class="cap"><span class="no">스터디 · 9.8초</span><b>간격과 호</b><span class="how">점 하나 = 1/12초 · 위: 고른 간격, 꺾이는 직선 · 아래: 키 앞뒤로 촘촘, 이어지는 곡선</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>덤벼들기 <small>시작 템플릿 · 9초</small></h3>
+      <p><code>new-piece.mjs</code>가 복사하는 시작 템플릿입니다. 회색 고양이가 바닥의 마른 잎을 보고, 머리와 귀가 먼저 돌아가고, 웅크리고, 엉덩이를 세 번 흔들어 힘을 모은 뒤 덤벼들어 앞발로 누릅니다. 위 칸의 고양이는 웅크린 자세에서 그대로 떠올라 둥실 날아갑니다.</p>
+      <div class="grid tall">
+        <a class="tile" data-tags="po" href="demo/pounce/?t=1.6" target="_blank" rel="noopener">
+          <img src="samples/pounce-1.6.jpg" alt="두 칸의 종이 바닥에 선 회색 고양이와 앞의 마른 잎. 아래 칸 고양이는 머리와 귀가 먼저 잎 쪽으로 내려가 있음. Spot it 라벨" loading="lazy" width="640" height="800" style="aspect-ratio:4/5">
+          <div class="cap"><span class="no">발견 · 1.6초</span><b>눈이 먼저</b><span class="how">머리와 귀가 0.15초 먼저, 몸이 뒤따라 웅크림 · 겹침</span></div></a>
+        <a class="tile" data-tags="po" href="demo/pounce/?t=2.9" target="_blank" rel="noopener">
+          <img src="samples/pounce-2.9.jpg" alt="위 칸 고양이는 이미 공중에 떠 있고, 아래 칸 고양이는 몸을 낮게 웅크려 힘을 모으고 있음. Wiggle, pounce 라벨과 anticipation · arcs · squash & stretch 태그" loading="lazy" width="640" height="800" style="aspect-ratio:4/5">
+          <div class="cap"><span class="no">흔들고 모으기 · 2.9초</span><b>예비 동작</b><span class="how">아래 칸만: 엉덩이 세 번 흔들기, 뒷발 한 번씩 고쳐 딛기, 깊게 낮추기</span></div></a>
+        <a class="tile" data-tags="po" href="demo/pounce/?t=3.62" target="_blank" rel="noopener">
+          <img src="samples/pounce-3.62.jpg" alt="두 칸 모두 고양이가 잎 위에 내려앉음. 아래 칸 고양이는 몸이 낮게 눌리고 꼬리가 뒤로 휘어 있음" loading="lazy" width="640" height="800" style="aspect-ratio:4/5">
+          <div class="cap"><span class="no">착지 · 3.62초</span><b>찌그러짐과 넘어섬</b><span class="how">닿는 순간 .86으로 납작, 7 px 더 밀렸다 자리 잡기, 꼬리가 휘었다 섬</span></div></a>
+        <a class="tile" data-tags="po" href="demo/pounce/?t=8.6" target="_blank" rel="noopener">
+          <img src="samples/pounce-8.6.jpg" alt="스터디 화면. 고양이 잔상 위로 코 · 엉덩이 · 꼬리 끝의 경로가 점선으로. 위 칸은 직선과 꺾임, 아래 칸은 웅크림에서 뭉친 점과 큰 포물선" loading="lazy" width="640" height="800" style="aspect-ratio:4/5">
+          <div class="cap"><span class="no">스터디 · 8.6초</span><b>간격과 호</b><span class="how">아래: 웅크림 구간에 점이 뭉치고, 점프는 한 곡선, 꼬리 끝이 늦게 따라옴</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>캐스트 시트 <small>키 포즈 좌우 · 대기 · 회전</small></h3>
+      <p>장면보다 먼저 채점하는 시트입니다. 이야기 키와 패스 키를 오른쪽과 왼쪽으로, 숨 쉬는 대기 동작, 발을 모았다가 한 프레임에 뒤집고 다시 딛는 회전을 그립니다. 관절이 거꾸로 굽으면 칸에 ✗가 붙습니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="cs" href="demo/penguin-slide/?cast" target="_blank" rel="noopener">
+          <img src="samples/penguin-slide-cast.jpg" alt="펭귄 캐스트 시트: 위 두 줄은 오른쪽과 왼쪽을 보는 키 포즈(서기 · 뒤뚱 · 젖히기 · 엎드려 미끄러지기), 셋째 줄은 숨 쉬는 대기, 넷째 줄은 회전" loading="lazy" width="640" height="269" style="aspect-ratio:640/269">
+          <div class="cap"><span class="no">캐스트 시트</span><b>펭귄</b><span class="how">곧게 선 두 발 · 납작한 발은 발끝으로 딛기</span></div></a>
+        <a class="tile" data-tags="cs" href="demo/pounce/?cast" target="_blank" rel="noopener">
+          <img src="samples/pounce-cast.jpg" alt="고양이 캐스트 시트: 오른쪽과 왼쪽을 보는 키 포즈(서기 · 웅크림 · 모으기 · 공중 · 착지), 숨 쉬는 대기, 회전" loading="lazy" width="640" height="269" style="aspect-ratio:640/269">
+          <div class="cap"><span class="no">캐스트 시트</span><b>고양이</b><span class="how">팔꿈치는 뒤로, 뒷다리 발목은 뒤로 · 좌우 양쪽</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. Endel(@endel)이 X에 올린 2.8초짜리 영상이 출발점입니다. 붓 자국으로 그린 3D 여우가 눈밭에 머리를 박았다가 빼내고 털어 내는 한 동작을, 위에는 before, 아래에는 디즈니 애니메이션 원칙을 따르라고 한 뒤의 after로 겹쳐 보여 주고, 아래 칸에 동작 이름(“Pull out, shake off”)을 붙였습니다. 이 스킬은 그 형식(같은 동작을 위아래로, 라벨과 함께)과 생각(원칙은 이야기 포즈를 바꾸지 않고 그 위에 더하는 패스)을 가져와, 그 패스를 코드로 드러내고 숫자로 잴 수 있게 했습니다. 원본의 여우 · 눈밭 · 동작 · 붓 자국 렌더러 · 프레임은 쓰지 않았고, 시작 템플릿과 예제는 모두 이 레포의 것입니다. 생성 영상은 쓰지 않았습니다(코드 전용).</p>
+  <div class="works">
+    <a class="work" href="demo/penguin-slide/" target="_blank" rel="noopener"><b>「배 미끄럼」 · 라이브 페이지</b><span>예제: 10.4초 · 비트 3개 · 이야기 키 6 + 패스 키 15 · 원칙 10/10</span><span class="url">principle-pass/demo/penguin-slide/</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/blob/main/references/ANIMATION-PRINCIPLES.md"><b>공용 노트 · references/ANIMATION-PRINCIPLES.md</b><span>다른 스킬이 움직임을 만들 때 읽는 순서 · 시작 숫자 · 도구 복사 · 측정기 사용법</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://github.com/jungrok5/motion-skills/tree/main/principle-pass/examples/penguin-slide"><b>예제 폴더 · examples/penguin-slide</b><span>BRIEF.md(주제 · 동물 · 이야기 키 · 패스 표 · 발 · 검토 기록), piece.js, index.html</span><span class="url">github.com/jungrok5/motion-skills</span></a>
+    <a class="work" href="https://x.com/endel/status/2125224240488354066?a=X8s7fGWOhQz93WbUoz8&amp;s=19" target="_blank" rel="noopener"><b>원본 · X 게시물</b><span>Endel(@endel) · “when you ask AI to follow Disney’s animation principles”</span><span class="url">x.com/endel/status/2125224240488354066</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/principle-pass/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/principle-pass">폴더</a> <span>lib · scripts · references · templates · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/principle-pass/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/references/ANIMATION-PRINCIPLES.md">references/ANIMATION-PRINCIPLES.md</a> <span>레포 공용: 12원칙 패스의 순서와 숫자, 측정기</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/principle-pass/lib/principles.js">lib/principles.js</a> <span>복사해 쓰는 도구: 이징 · 키 · 호 · 스프링 · 찌그러짐 · 숨 · 측정기</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/principle-pass/references/BRIEF.md">references/BRIEF.md</a> <span>브리프 틀과 채점 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/principle-pass/references/RIG.md">references/RIG.md</a> <span>동물 리그, 포즈 채널, 이야기 키와 패스 키, 디딘 발, 스프링</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/principle-pass/references/LOOK.md">references/LOOK.md</a> <span>두 칸 화면 · 과슈 붓질 · 라벨 · 스터디</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/principle-pass/references/SOURCE.md">references/SOURCE.md</a> <span>원본 게시물, 가져온 것과 가져오지 않은 것</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/principle-pass/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림과 움직임은 코드로 만들었습니다 · 이미지 파일 없음 · 원본 영상 @endel
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

@@ -3621,6 +3621,46 @@
      "url": "https://jungrok5.github.io/motion-skills/engraving-collage-film/demo/starter/"
     }
    ]
+  },
+  {
+   "id": "principle-pass",
+   "name": "principle-pass",
+   "tagline": "동물 하나와 짧은 동작 하나를 주면 같은 장면을 위아래 두 칸에 동시에 보여 줍니다. 위는 이야기 키만 선형으로 이은 처음 그대로(발이 미끄러지고 꼬리가 굳고 쉬는 동안 멈춤), 아래는 같은 키에 디즈니 12원칙 패스를 더한 움직임(천천히 들어가고 나오기 · 예비 동작 · 호 · 꼬리와 귀의 팔로스루 · 면적을 지키는 찌그러짐 · 디딘 발 · 숨과 깜빡임)입니다. 비트마다 원칙 태그를 붙이고, 끝에 경로와 1/12초 간격 점을 그리며, 원칙 열 가지를 두 칸 모두 숫자로 잽니다. 원칙을 코드로 옮긴 도구와 측정기는 다른 스킬이 움직임을 만들 때 복사해 씁니다.",
+   "posterAlt": "principle-pass의 장면 네 개: 위 두 칸은 종이 바닥의 회색 고양이 — before 칸은 이미 공중에 떠 있고 after 칸은 낮게 웅크려 힘을 모으며 Wiggle, pounce 라벨과 anticipation · arcs · squash & stretch 태그, 아래 두 칸은 얼음 위에 배를 대고 생선 앞에 멈춘 펭귄과 흐린 잔상 위로 부리 · 엉덩이 · 발의 경로가 점선으로 그려진 스터디 화면",
+   "poster": "principle-pass/poster.jpg",
+   "tags": [
+    "캔버스 · 코드로 그린 과슈 붓질",
+    "before / after 두 칸",
+    "디즈니 12원칙 패스",
+    "원칙마다 숫자로 측정",
+    "다른 스킬의 움직임 기준"
+   ],
+   "stats": [
+    "예제 2개 · 9초 · 10.4초",
+    "원칙 10개 측정 · after 10/10"
+   ],
+   "page": "principle-pass/",
+   "source": "principle-pass/",
+   "absorbedFrom": {
+    "repo": "https://github.com/jungrok5/motion-skills",
+    "path": "principle-pass/examples/penguin-slide/"
+   },
+   "sources": [
+    {
+     "title": "Endel(@endel)의 X 게시물 (2.8초 — “when you ask AI to follow Disney’s animation principles”: 붓 자국 3D 여우가 눈밭에서 머리를 빼내고 털어 내는 한 동작, 위 before · 아래 after)",
+     "url": "https://x.com/endel/status/2125224240488354066?a=X8s7fGWOhQz93WbUoz8&s=19"
+    }
+   ],
+   "workedExample": [
+    {
+     "title": "「배 미끄럼」 · 10.4초 · 뒤뚱 걷기 · 배로 엎어지기 · 생선까지 미끄럼 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/principle-pass/demo/penguin-slide/"
+    },
+    {
+     "title": "「덤벼들기」 · 9초 · 발견 · 엉덩이 흔들고 덤벼들기 · 착지 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/principle-pass/demo/pounce/"
+    }
+   ]
   }
  ]
 }
