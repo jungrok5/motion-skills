@@ -3623,6 +3623,157 @@
    ]
   },
   {
+   "id": "trail-texture-world",
+   "name": "trail-texture-world",
+   "tagline": "주제 하나를 주면, 하나의 트레일 텍스처가 걸어간 자리를 기억하고 지형마다 그 기억을 제 방식대로 읽는 탑다운 픽셀아트 걷기 장면을 코드만으로 만듭니다. 모래와 진흙은 발자국을 남기고, 갈대는 휘었다 돌아오고, 물은 고리로 퍼지고, 낙엽은 밀려난 채 남고, 이끼는 빛났다 꺼지며, 길은 아무것도 남기지 않습니다. 텍스처와 세계를 나란히 보여 주는 1080p MP4(지형별 발소리 합성)와 직접 걸어 볼 수 있는 라이브 페이지를 냅니다.",
+   "posterAlt": "trail-texture-world로 만든 장면 네 개: 검은 트레일 텍스처와 나란히 마른 갈대밭을 지나는 배달꾼, 텍스처의 푸른 동심원과 청록 연못에서 물결을 일으키며 걷는 배달꾼, 밤의 이끼 빈터에서 청록색으로 빛나는 발자국을 남기는 노란 우비의 아이, 텍스처와 나란히 랜턴 빛 속에 개울로 들어서는 아이",
+   "poster": "trail-texture-world/poster.jpg",
+   "tags": [
+    "트레일 텍스처 · 코드 전용",
+    "320×180 → 1080p",
+    "지형마다 다른 기억",
+    "텍스처 | 세계 분할 화면",
+    "직접 걷기"
+   ],
+   "stats": [
+    "예제 2편 · 39.5초 · 37초",
+    "디딘 발 · 발자국 위치 · 지형별 반응 검사"
+   ],
+   "page": "trail-texture-world/",
+   "source": "trail-texture-world/",
+   "absorbedFrom": {
+    "repo": "https://github.com/jungrok5/motion-skills",
+    "path": "trail-texture-world/examples/oasis-courier/"
+   },
+   "sources": [
+    {
+     "title": "Kimo의 X 게시물 (텍스처 하나가 걸은 곳을 기억하고 지형마다 다르게 쓰는 2D 게임 기법)",
+     "url": "https://x.com/asynkimo/status/2125001098087776442?a=44aj8xink6AcTDapx-c&s=19"
+    }
+   ],
+   "workedExample": [
+    {
+     "title": "「The Last Well」 · 39.5초 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/trail-texture-world/demo/oasis-courier.html"
+    },
+    {
+     "title": "「Lantern Hollow」 · 37초 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/trail-texture-world/demo/lantern-hollow.html"
+    }
+   ]
+  },
+  {
+   "id": "light-pass",
+   "name": "light-pass",
+   "tagline": "다른 작품 위에 햇빛 연출을 얹는 효과 스킬입니다. 장면마다 브리프로 해의 위치와 빛이 지나는 틈을 정하고, 나무나 창틀 사이로 들어오는 빛줄기(손으로 놓는 쐐기와 실제 틈을 따라가는 자동 빛줄기), 바닥에 고이는 빛, 후광 · 그늘 · 색보정을 숫자로 된 플랜으로 설계합니다. 마스크 보기에서 배치하고 check.mjs로 해 방향 · 날아간 흰색 · 그림자 · 변화량 · 결정성을 검사한 뒤, 작품 페이지에서 매 프레임 lp.draw()로 실시간으로 얹거나 MP4 · 스틸에 오프라인으로 얹습니다.",
+   "posterAlt": "light-pass로 빛을 얹은 장면 네 개: 굵은 나무줄기 양옆으로 따뜻한 아침 빛줄기가 내려오는 소나무 숲길, 왼쪽 위 숲 틈에서 금빛 햇살이 비스듬히 내려오는 빈터의 두 다리 기계, 뼈대 틈으로 푸르스름한 겨울 햇살이 들어오는 눈 속 나무 오두막, 둥근 잎 덩어리 사이로 해에서 빛줄기가 부채꼴로 쏟아지는 코드로 그린 숲",
+   "poster": "light-pass/poster.jpg",
+   "tags": [
+    "WebGL 2 합성 · 효과 스킬",
+    "빛줄기 · 빛 고임 · 색보정",
+    "마스크 보기",
+    "실시간 · 영상 · 스틸"
+   ],
+   "stats": [
+    "예제 4개 · 스틸 3 · 실시간 1",
+    "플랜 검사 5종"
+   ],
+   "page": "light-pass/",
+   "source": "light-pass/",
+   "absorbedFrom": {
+    "repo": "https://github.com/jungrok5/motion-skills",
+    "path": "light-pass/examples/forest-path/"
+   },
+   "sources": [
+    {
+     "title": "@manwon_man의 X 게시물 (15초 비포 · 애프터 — 애프터이펙트에서 나무 사이로 들어오는 빛줄기마다 마스크 패스를 그리고 곡선과 범위를 다듬어 흐린 숲을 햇살 든 숲으로 바꾸는 과정)",
+     "url": "https://x.com/manwon_man/status/2124697362719453604?a=qHwbQc4rVBlcbntyv64&s=19"
+    }
+   ],
+   "workedExample": [
+    {
+     "title": "라이브 데모 · 코드로 그린 숲에 실시간으로 · 숲길 · 빈터 · 눈 오두막 · 마스크 보기",
+     "url": "https://jungrok5.github.io/motion-skills/light-pass/demo/examples/live/"
+    }
+   ]
+  },
+  {
+   "id": "fold-out-map",
+   "name": "fold-out-map",
+   "tagline": "장소와 여행 코스를 주면, 책상 위에 접혀 있던 종이 여행 지도가 펼쳐지고 낮은 카메라가 저절로 그려지는 빨간 길을 따라가며 명소마다 코드로 그린 팝업 카드와 이름표가 일어서고, 낮에서 노을과 밤으로 바뀌어 불빛이 켜지는 세로 영상을 three.js로 만듭니다. 1080×1920 MP4와 브라우저에서 도는 페이지를 냅니다.",
+   "posterAlt": "fold-out-map으로 만든 「부산」의 장면 네 개: 책상 위에 접힌 BUSAN 여행 리플릿 표지, 펼친 부산 지도, 영도 위에 선 태종대 등대 팝업과 이름표, 불빛이 켜진 밤의 광안대교 팝업",
+   "poster": "fold-out-map/poster.jpg",
+   "tags": [
+    "three.js",
+    "9:16",
+    "MP4",
+    "라이브 페이지",
+    "코드만으로"
+   ],
+   "stats": [
+    "예제 38초 · 명소 5곳",
+    "팝업 그리기 부품 20종"
+   ],
+   "page": "fold-out-map/",
+   "source": "fold-out-map/",
+   "absorbedFrom": {
+    "repo": "https://github.com/jungrok5/motion-skills",
+    "path": "fold-out-map/examples/busan/"
+   },
+   "sources": [
+    {
+     "title": "沐阳(@yyyole)의 X 게시물 (Three.js로 만든 펼쳐지는 청두 여행 지도)",
+     "url": "https://x.com/yyyole/status/2125234904992776492?a=NGnIQg0wBl6JEjDN2Fw&s=19"
+    }
+   ],
+   "workedExample": [
+    {
+     "title": "「부산」 · 38초 · 명소 5곳 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/fold-out-map/demo/busan/"
+    }
+   ]
+  },
+  {
+   "id": "principle-pass",
+   "name": "principle-pass",
+   "tagline": "동물 하나와 짧은 동작 하나를 주면 같은 장면을 위아래 두 칸에 동시에 보여 줍니다. 위는 이야기 키만 선형으로 이은 처음 그대로(발이 미끄러지고 꼬리가 굳고 쉬는 동안 멈춤), 아래는 같은 키에 디즈니 12원칙 패스를 더한 움직임(천천히 들어가고 나오기 · 예비 동작 · 호 · 꼬리와 귀의 팔로스루 · 면적을 지키는 찌그러짐 · 디딘 발 · 숨과 깜빡임)입니다. 비트마다 원칙 태그를 붙이고, 끝에 경로와 1/12초 간격 점을 그리며, 원칙 열 가지를 두 칸 모두 숫자로 잽니다. 원칙을 코드로 옮긴 도구와 측정기는 다른 스킬이 움직임을 만들 때 복사해 씁니다.",
+   "posterAlt": "principle-pass의 장면 네 개: 위 두 칸은 종이 바닥의 회색 고양이 — before 칸은 이미 공중에 떠 있고 after 칸은 낮게 웅크려 힘을 모으며 Wiggle, pounce 라벨과 anticipation · arcs · squash & stretch 태그, 아래 두 칸은 얼음 위에 배를 대고 생선 앞에 멈춘 펭귄과 흐린 잔상 위로 부리 · 엉덩이 · 발의 경로가 점선으로 그려진 스터디 화면",
+   "poster": "principle-pass/poster.jpg",
+   "tags": [
+    "캔버스 · 코드로 그린 과슈 붓질",
+    "before / after 두 칸",
+    "디즈니 12원칙 패스",
+    "원칙마다 숫자로 측정",
+    "다른 스킬의 움직임 기준"
+   ],
+   "stats": [
+    "예제 2개 · 9초 · 10.4초",
+    "원칙 10개 측정 · after 10/10"
+   ],
+   "page": "principle-pass/",
+   "source": "principle-pass/",
+   "absorbedFrom": {
+    "repo": "https://github.com/jungrok5/motion-skills",
+    "path": "principle-pass/examples/penguin-slide/"
+   },
+   "sources": [
+    {
+     "title": "Endel(@endel)의 X 게시물 (2.8초 — “when you ask AI to follow Disney’s animation principles”: 붓 자국 3D 여우가 눈밭에서 머리를 빼내고 털어 내는 한 동작, 위 before · 아래 after)",
+     "url": "https://x.com/endel/status/2125224240488354066?a=X8s7fGWOhQz93WbUoz8&s=19"
+    }
+   ],
+   "workedExample": [
+    {
+     "title": "「배 미끄럼」 · 10.4초 · 뒤뚱 걷기 · 배로 엎어지기 · 생선까지 미끄럼 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/principle-pass/demo/penguin-slide/"
+    },
+    {
+     "title": "「덤벼들기」 · 9초 · 발견 · 엉덩이 흔들고 덤벼들기 · 착지 · 라이브 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/principle-pass/demo/pounce/"
+    }
+   ]
+  },
+  {
    "id": "plan-build-film",
    "name": "plan-build-film",
    "tagline": "건물 하나를 주제나 스케치 · 평면도로 주면, 그 도면이 놓인 책상 위에서 건물이 부재 하나하나 지어지는 영상을 만듭니다. 입력을 미터 단위 숫자로 읽고 수채 번짐과 등고선이 있는 도면을 그린 뒤(또는 사람이 준 도면을 두 점으로 맞춘 뒤), 주춧돌 · 현무암 한 덩이 · 기둥 · 널 · 문살 · 서까래 · 줄까지 모두 따로인 물체로 Blender 코드에 짓습니다. 200 mm로 내려다본 도면에서 나선으로 내려가면 부재가 단계마다 제 색으로 번쩍이며 박자 격자에 맞춰 아래에서부터 흰 점토로 내려앉고, 부재 목록 카드가 단계별로 올라갑니다. 초점에서 퍼지는 물결이 종이를 땅으로 · 점토를 돌 · 나무 · 종이 · 짚으로 · 작업실을 하늘로 바꾸고 불이 켜지면, 카메라가 열린 문 가운데로 들어가 돌아섭니다. 내려앉는 순간마다 재료의 소리를 합성하고 박자에 맞춘 곡의 부풂을 물결에 맞춰 -14 LUFS로 맞추며, 떠 있는 부재 · 받침보다 먼저 내려앉는 부재 · 박자 · 카메라 거리 · 프레임 튐 · 라우드니스를 숫자로 검사합니다.",

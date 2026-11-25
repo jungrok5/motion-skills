@@ -1032,6 +1032,50 @@
     <div class="btns"><a class="btn p" href="engraving-collage-film/">샘플 페이지</a><a class="btn" href="https://github.com/jungrok5/motion-skills/blob/main/engraving-collage-film/SKILL.md">SKILL.md</a><a class="btn" href="https://github.com/jungrok5/motion-skills/tree/main/engraving-collage-film">폴더</a></div>
   </div>
 </article>
+<article class="card" id="trail-texture-world" data-id="trail-texture-world">
+  <a class="img" href="trail-texture-world/" tabindex="-1"><img src="trail-texture-world/poster.jpg" alt="trail-texture-world로 만든 장면 네 개: 검은 트레일 텍스처와 나란히 마른 갈대밭을 지나는 배달꾼, 텍스처의 푸른 동심원과 청록 연못에서 물결을 일으키며 걷는 배달꾼, 밤의 이끼 빈터에서 청록색으로 빛나는 발자국을 남기는 노란 우비의 아이, 텍스처와 나란히 랜턴 빛 속에 개울로 들어서는 아이" width="1200" height="675"></a>
+  <div class="body">
+    <h3><a href="trail-texture-world/">trail-texture-world</a></h3>
+    <p class="tagline">주제 하나를 주면, 하나의 트레일 텍스처가 걸어간 자리를 기억하고 지형마다 그 기억을 제 방식대로 읽는 탑다운 픽셀아트 걷기 장면을 코드만으로 만듭니다. 모래와 진흙은 발자국을 남기고, 갈대는 휘었다 돌아오고, 물은 고리로 퍼지고, 낙엽은 밀려난 채 남고, 이끼는 빛났다 꺼지며, 길은 아무것도 남기지 않습니다. 텍스처와 세계를 나란히 보여 주는 1080p MP4(지형별 발소리 합성)와 직접 걸어 볼 수 있는 라이브 페이지를 냅니다.</p>
+    <p class="stats">예제 2편 · 39.5초 · 37초 · 디딘 발 · 발자국 위치 · 지형별 반응 검사</p>
+    <ul class="tags"><li>트레일 텍스처 · 코드 전용</li><li>320×180 → 1080p</li><li>지형마다 다른 기억</li><li>텍스처 | 세계 분할 화면</li><li>직접 걷기</li></ul>
+    <p class="from">만든 출처: <a href="https://x.com/asynkimo/status/2125001098087776442?a=44aj8xink6AcTDapx-c&amp;s=19" target="_blank" rel="noopener">Kimo의 X 게시물 (텍스처 하나가 걸은 곳을 기억하고 지형마다 다르게 쓰는 2D 게임 기법)</a></p>
+    <div class="btns"><a class="btn p" href="trail-texture-world/">샘플 페이지</a><a class="btn" href="https://github.com/jungrok5/motion-skills/blob/main/trail-texture-world/SKILL.md">SKILL.md</a><a class="btn" href="https://github.com/jungrok5/motion-skills/tree/main/trail-texture-world">폴더</a></div>
+  </div>
+</article>
+<article class="card" id="light-pass" data-id="light-pass">
+  <a class="img" href="light-pass/" tabindex="-1"><img src="light-pass/poster.jpg" alt="light-pass로 빛을 얹은 장면 네 개: 굵은 나무줄기 양옆으로 따뜻한 아침 빛줄기가 내려오는 소나무 숲길, 왼쪽 위 숲 틈에서 금빛 햇살이 비스듬히 내려오는 빈터의 두 다리 기계, 뼈대 틈으로 푸르스름한 겨울 햇살이 들어오는 눈 속 나무 오두막, 둥근 잎 덩어리 사이로 해에서 빛줄기가 부채꼴로 쏟아지는 코드로 그린 숲" width="1200" height="675"></a>
+  <div class="body">
+    <h3><a href="light-pass/">light-pass</a></h3>
+    <p class="tagline">다른 작품 위에 햇빛 연출을 얹는 효과 스킬입니다. 장면마다 브리프로 해의 위치와 빛이 지나는 틈을 정하고, 나무나 창틀 사이로 들어오는 빛줄기(손으로 놓는 쐐기와 실제 틈을 따라가는 자동 빛줄기), 바닥에 고이는 빛, 후광 · 그늘 · 색보정을 숫자로 된 플랜으로 설계합니다. 마스크 보기에서 배치하고 check.mjs로 해 방향 · 날아간 흰색 · 그림자 · 변화량 · 결정성을 검사한 뒤, 작품 페이지에서 매 프레임 lp.draw()로 실시간으로 얹거나 MP4 · 스틸에 오프라인으로 얹습니다.</p>
+    <p class="stats">예제 4개 · 스틸 3 · 실시간 1 · 플랜 검사 5종</p>
+    <ul class="tags"><li>WebGL 2 합성 · 효과 스킬</li><li>빛줄기 · 빛 고임 · 색보정</li><li>마스크 보기</li><li>실시간 · 영상 · 스틸</li></ul>
+    <p class="from">만든 출처: <a href="https://x.com/manwon_man/status/2124697362719453604?a=qHwbQc4rVBlcbntyv64&amp;s=19" target="_blank" rel="noopener">@manwon_man의 X 게시물 (15초 비포 · 애프터 — 애프터이펙트에서 나무 사이로 들어오는 빛줄기마다 마스크 패스를 그리고 곡선과 범위를 다듬어 흐린 숲을 햇살 든 숲으로 바꾸는 과정)</a></p>
+    <div class="btns"><a class="btn p" href="light-pass/">샘플 페이지</a><a class="btn" href="https://github.com/jungrok5/motion-skills/blob/main/light-pass/SKILL.md">SKILL.md</a><a class="btn" href="https://github.com/jungrok5/motion-skills/tree/main/light-pass">폴더</a></div>
+  </div>
+</article>
+<article class="card" id="fold-out-map" data-id="fold-out-map">
+  <a class="img" href="fold-out-map/" tabindex="-1"><img src="fold-out-map/poster.jpg" alt="fold-out-map으로 만든 「부산」의 장면 네 개: 책상 위에 접힌 BUSAN 여행 리플릿 표지, 펼친 부산 지도, 영도 위에 선 태종대 등대 팝업과 이름표, 불빛이 켜진 밤의 광안대교 팝업" width="1200" height="675"></a>
+  <div class="body">
+    <h3><a href="fold-out-map/">fold-out-map</a></h3>
+    <p class="tagline">장소와 여행 코스를 주면, 책상 위에 접혀 있던 종이 여행 지도가 펼쳐지고 낮은 카메라가 저절로 그려지는 빨간 길을 따라가며 명소마다 코드로 그린 팝업 카드와 이름표가 일어서고, 낮에서 노을과 밤으로 바뀌어 불빛이 켜지는 세로 영상을 three.js로 만듭니다. 1080×1920 MP4와 브라우저에서 도는 페이지를 냅니다.</p>
+    <p class="stats">예제 38초 · 명소 5곳 · 팝업 그리기 부품 20종</p>
+    <ul class="tags"><li>three.js</li><li>9:16</li><li>MP4</li><li>라이브 페이지</li><li>코드만으로</li></ul>
+    <p class="from">만든 출처: <a href="https://x.com/yyyole/status/2125234904992776492?a=NGnIQg0wBl6JEjDN2Fw&amp;s=19" target="_blank" rel="noopener">沐阳(@yyyole)의 X 게시물 (Three.js로 만든 펼쳐지는 청두 여행 지도)</a></p>
+    <div class="btns"><a class="btn p" href="fold-out-map/">샘플 페이지</a><a class="btn" href="https://github.com/jungrok5/motion-skills/blob/main/fold-out-map/SKILL.md">SKILL.md</a><a class="btn" href="https://github.com/jungrok5/motion-skills/tree/main/fold-out-map">폴더</a></div>
+  </div>
+</article>
+<article class="card" id="principle-pass" data-id="principle-pass">
+  <a class="img" href="principle-pass/" tabindex="-1"><img src="principle-pass/poster.jpg" alt="principle-pass의 장면 네 개: 위 두 칸은 종이 바닥의 회색 고양이 — before 칸은 이미 공중에 떠 있고 after 칸은 낮게 웅크려 힘을 모으며 Wiggle, pounce 라벨과 anticipation · arcs · squash &amp; stretch 태그, 아래 두 칸은 얼음 위에 배를 대고 생선 앞에 멈춘 펭귄과 흐린 잔상 위로 부리 · 엉덩이 · 발의 경로가 점선으로 그려진 스터디 화면" width="1200" height="675"></a>
+  <div class="body">
+    <h3><a href="principle-pass/">principle-pass</a></h3>
+    <p class="tagline">동물 하나와 짧은 동작 하나를 주면 같은 장면을 위아래 두 칸에 동시에 보여 줍니다. 위는 이야기 키만 선형으로 이은 처음 그대로(발이 미끄러지고 꼬리가 굳고 쉬는 동안 멈춤), 아래는 같은 키에 디즈니 12원칙 패스를 더한 움직임(천천히 들어가고 나오기 · 예비 동작 · 호 · 꼬리와 귀의 팔로스루 · 면적을 지키는 찌그러짐 · 디딘 발 · 숨과 깜빡임)입니다. 비트마다 원칙 태그를 붙이고, 끝에 경로와 1/12초 간격 점을 그리며, 원칙 열 가지를 두 칸 모두 숫자로 잽니다. 원칙을 코드로 옮긴 도구와 측정기는 다른 스킬이 움직임을 만들 때 복사해 씁니다.</p>
+    <p class="stats">예제 2개 · 9초 · 10.4초 · 원칙 10개 측정 · after 10/10</p>
+    <ul class="tags"><li>캔버스 · 코드로 그린 과슈 붓질</li><li>before / after 두 칸</li><li>디즈니 12원칙 패스</li><li>원칙마다 숫자로 측정</li><li>다른 스킬의 움직임 기준</li></ul>
+    <p class="from">만든 출처: <a href="https://x.com/endel/status/2125224240488354066?a=X8s7fGWOhQz93WbUoz8&amp;s=19" target="_blank" rel="noopener">Endel(@endel)의 X 게시물 (2.8초 — “when you ask AI to follow Disney’s animation principles”: 붓 자국 3D 여우가 눈밭에서 머리를 빼내고 털어 내는 한 동작, 위 before · 아래 after)</a></p>
+    <div class="btns"><a class="btn p" href="principle-pass/">샘플 페이지</a><a class="btn" href="https://github.com/jungrok5/motion-skills/blob/main/principle-pass/SKILL.md">SKILL.md</a><a class="btn" href="https://github.com/jungrok5/motion-skills/tree/main/principle-pass">폴더</a></div>
+  </div>
+</article>
 <article class="card" id="plan-build-film" data-id="plan-build-film">
   <a class="img" href="plan-build-film/" tabindex="-1"><img src="plan-build-film/poster.jpg" alt="plan-build-film으로 만든 「제주 돌집 스테이」의 장면 네 개: 나무 책상 위 커피잔 옆에 놓인 수채 배치평면도, 도면 위에 흰 점토로 쌓이는 현무암 벽과 왼쪽 위 부재 목록 카드, 늦은 오후 햇빛 아래 줄로 묶인 두 채의 초가와 돌담, 상방 안에서 열린 띠살문 너머 마당을 내다본 장면" width="1200" height="675"></a>
   <div class="body">

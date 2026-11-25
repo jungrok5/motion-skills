@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Low Tide — trail-texture-world</title>
+<script src="lib/trail.js"></script>
+<script src="lib/kit.js"></script>
+</head>
+<body>
+<script>
+// TEMPLATE — "Low Tide": someone walks a beach at dawn, from the dunes to the sea and back up the wet sand.
+// Every part below is an example of the style, meant to be replaced from your BRIEF.md: the title, the look, the grounds
+// and how each reads the trail, the map, the decorations, the walker (art, weight, followers) and the route.
+const F = TT.create({ seed: 5, title: 'LOW TIDE', sub: 'ONE TEXTURE · FOUR GROUNDS' });
+
+// 1 the look: band / text colours, night (0 = day; 1 = dark with lights), the colours of the memory view
+F.look({ band: '#1f2a3a', text: '#fff8ea', shadow: '#1f2a3a',
+  trail: { bg: '#05060a', foot: '#ffffff', body: '#2b3352', wave: '#57d0ff', you: '#3a4470', grid: '#0d0f18' } });
+
+// 2 the world: name each ground, give it a terrain (kit or your own object), say where each is with map(x, y, n)
+const SHORE = y => F.n.wander(y, 470, 30, 160);            // where the sea starts, wandering down the frame
+F.world({
+  w: 760, h: 420,
+  materials: {
+    dunes: TK.grass({ tones: ['#d9c48a', '#cfb87c', '#c4ab6f'], edge: '#a08a52', trod: '#b49c60',
+      blades: { density: .3, h: [7, 12], colors: ['#5d6b2e', '#7a8a3a', '#9cab4c', '#c3cf72', '#e1e6a2'], spring: 1.4, wind: .9 } }),
+    sand:  TK.sand({ tones: ['#f3e2b8', '#ead6a6', '#dfc893'], life: 40 }),
+    wet:   TK.mud({ tones: ['#c9b08a', '#bea47e', '#b29872'], dent: '#8a6f4e', wet: '#cfe8ec', lip: '#d9c39e', life: 25, puff: '#9c8460' }),
+    sea:   TK.water({ tones: ['#5fb8c8', '#53a8bc', '#4798ae'], shallow: '#86d0d4', bank: '#e9f6f2', line: '#ffffff' }),
+  },
+  map(x, y, n) {
+    const s = SHORE(y);
+    if (x > s) return 'sea';
+    if (x > s - 30 + (n.fbm(x, y, 30) - .5) * 14) return 'wet';
+    if (x < 230 + (n.fbm(x, y, 60) - .5) * 90 && n.fbm(x, y, 40, 3, .5, 2) > .42) return 'dunes';
+    return 'sand';
+  },
+  // 3 decorations: flat ones (painted once) and tall ones (y-sorted with the walker; `solid` keeps the route off them)
+  deco(D, n) {
+    const path = [[120, 200], [300, 220], [430, 236], [520, 250], [420, 300], [300, 330]];
+    TK.scatter(D, { on: ['sand', 'wet'], count: 30, gap: 24, seed: 2, avoid: TK.nearPath(path, 12) }, (x, y) => TK.pebble(D, x, y, { tones: ['#b8a07a', '#e4d3b0', '#fff8ea'] }));
+    TK.scatter(D, { on: 'sand', count: 8, gap: 60, seed: 3, avoid: TK.nearPath(path, 22) }, (x, y, r) => TK.rock(D, x, y, { r: 4 + Math.round(r() * 3), tones: ['#5a5f68', '#767c86', '#9aa0aa', '#c0c5cc'], outline: '#30343a' }));
+  },
+});
+
+// 4 the walker: weight sets timing (mass, speed, accel); art for down / up / right (left mirrors right unless given);
+//   arms and legs are drawn from numbers; followers hang and lag (a scarf end, a lantern, a tail …)
+F.walker({
+  mass: 1, speed: 32, step: 7.5, footW: 2, hipW: 2, hipH: 7, reach: 10,
+  palette: { o: '#22252e', h: '#3b2a22', s: '#e8b48c', e: '#22252e', w: '#f4f1ea', b: '#2f5d9a', p: '#d9c9a6', k: '#6b4630', r: '#d8483b' },
+  legs: { c: 's', boot: 's', w: 2, bootW: 2 },                     // bare legs and feet on a beach
+  arms: { len: 4, c: 's', out: 'o', hand: 's', down: [[10, 7], [0, 7]], up: [[0, 7], [10, 7]], right: [[5, 7], [5, 7]] },
+  blink: ['e', 's'],
+  origin: { down: [5, 13], up: [5, 13], right: [5, 13] },
+  art: {
+    down: ['...ooooo...', '..ohhhhho..', '.ohhhhhhho.', '.ohsssssho.', '.ohsesesho.', '..ossssso..', '...osssso..', '.oowwwwwoo.',
+           'owwbbbbbwwo', 'owwwwwwwwwo', 'owwbbbbbwwo', 'owwwwwwwwwo', '.oppppppppo', '.opppoppppo', '.ooo...ooo.'],
+    up:   ['...ooooo...', '..ohhhhho..', '.ohhhhhhho.', '.ohhhhhhho.', '.ohhhhhhho.', '..ohhhhho..', '...osssso..', '.oowwwwwoo.',
+           'owwbbbbbwwo', 'owwwwwwwwwo', 'owwbbbbbwwo', 'owwwwwwwwwo', '.oppppppppo', '.opppoppppo', '.ooo...ooo.'],
+    right:['...ooooo...', '..ohhhhho..', '.ohhhhhssso', '.ohhhhssso.', '.ohhhhseso.', '..ohhsssso.', '...osssso..', '..owwwwwo..',
+           '..owbbbbo..', '..owwwwwo..', '..owbbbbo..', '..owwwwwo..', '..oppppppo.', '..oppppppo.', '..oooooooo.'],
+  },
+  follow: [],
+});
+
+// 5 the route: where it walks, where it waits (idles breathe), turns (stepped), hops (gather → fly → land → recover);
+//   view: 'world' | 'split' (memory | world) | 'trail' (memory only); caption: one short line
+F.route([
+  { at: [120, 200], face: 'right', wait: 2 },
+  { to: [300, 220], caption: 'DUNE GRASS BENDS AND SPRINGS BACK' },
+  { to: [430, 236], view: 'split', caption: 'DRY SAND KEEPS SOFT PRINTS' },
+  { to: [520, 250], caption: 'THE SEA RINGS OUT' },
+  { wait: 1.2, face: 'down' },
+  { to: [440, 300], view: 'world', caption: 'WET SAND KEEPS THEM DEEP' },
+  { hop: [412, 316] },
+  { to: [300, 330] },
+]);
+F.start();
+</script>
+</body>
+</html>

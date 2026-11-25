@@ -157,7 +157,13 @@ description: 무엇을 만드는지 한두 문장 + 언제 쓰는지. 트리거 
 - 스틸 검토 한 줄: "뜨거나, 미끄러지거나, 죽은 듯 서 있는 게 있는가? 큰 동작이 모였다가 떨어지는가?"
 - 겪은 문제는 `references/LESSONS.md`에.
 
-코드 전용 스킬(`machine-sim`, `swarm-world`, `aesthetics-film`, `photoreal-film`, `ink-word-world`, `dragon-realm`, `living-realm`, `torn-page-journey`, `walking-colossus`, `logo-construction`, `sprite-stack-flight`, `ten-second-scene`, `pixel-world-compiler`, `bounce-symphony`, `one-line-drawing`, `engraving-collage-film`, HTML-in-Canvas 라이브 페이지 스킬, 그리고
+**키를 잡는 법 — 디즈니 12원칙을 패스로** ([`references/ANIMATION-PRINCIPLES.md`](references/ANIMATION-PRINCIPLES.md)). 위가 "무엇을 넣을지"라면
+이 문서는 "어떤 순서로, 어떤 숫자로"입니다. 이야기 키(포즈 투 포즈)를 먼저 잡고, 그 포즈는 그대로 둔 채 타이밍 · 이징 → 예비 동작 키 →
+루트의 호(키를 지나는 한 곡선) → 디딘 발 → 꼬리 · 귀 · 천의 스프링(팔로스루 · 겹침) → 찌그러짐 · 늘어남(면적 유지) → 숨 · 깜빡임 →
+과장 순으로 더합니다. 도구는 `principle-pass/lib/principles.js`를 스킬의 `lib/`로 복사해 쓰고, 페이지가 `window.__principles`로 트랙을
+내보내면 `node principle-pass/scripts/audit.mjs --page <page>`가 원칙마다 숫자를 냅니다 (새 스킬은 `check.mjs`에 넣기를 권합니다).
+
+코드 전용 스킬(`machine-sim`, `swarm-world`, `aesthetics-film`, `photoreal-film`, `ink-word-world`, `dragon-realm`, `living-realm`, `torn-page-journey`, `walking-colossus`, `logo-construction`, `sprite-stack-flight`, `ten-second-scene`, `pixel-world-compiler`, `bounce-symphony`, `one-line-drawing`, `engraving-collage-film`, `trail-texture-world`, `fold-out-map`, `principle-pass`, HTML-in-Canvas 라이브 페이지 스킬, 그리고
 `SKILL.md`에 code-only라고 적힌 스킬)은 생성 · 다운로드한 모션 데이터를 쓰지 않고, 같은 원칙을 코드로 직접 키잉합니다.
 
 ### 생성 모델 (영상 · 이미지 · 음성) 쓰기
