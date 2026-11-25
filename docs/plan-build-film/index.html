@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>plan-build-film · motion-skills</title>
+<meta name="description" content="건물 하나를 주제나 스케치로 주면 그 도면 위에서 건물이 부재 하나하나 지어지는 영상을 만듭니다. 돌 · 기둥 · 널 · 살 · 서까래 · 줄이 모두 따로인 물체로 박자에 맞춰 흰 점토로 내려앉고, 초점에서 퍼지는 물결이 종이를 땅으로, 점토를 재료로 바꾼 뒤 열린 문으로 들어갑니다.">
+<meta property="og:title" content="plan-build-film · motion-skills">
+<meta property="og:description" content="도면 위에서 건물이 부재 하나하나 박자에 맞춰 지어지고, 물결이 종이를 땅으로 바꾼 뒤 안으로 들어가는 영상. Blender 코드 · 부재 카운터 · -14 LUFS.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/plan-build-film/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/plan-build-film">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / plan-build-film</nav>
+  <h1>plan-build-film</h1>
+  <p>건물 하나를 주제나 스케치 · 평면도로 주면, 그 도면이 놓인 책상 위에서 건물이 부재 하나하나 지어지는 영상을 만듭니다. 입력을 숫자로 읽고 도면을 그린 뒤(또는 사람이 준 도면을 맞춘 뒤), 주춧돌 · 돌 한 덩이 · 기둥 · 널 · 문살 · 서까래 · 줄까지 모두 따로인 물체로 Blender 코드에 짓고, 단계마다 제 색으로 번쩍이며 박자에 맞춰 흰 점토로 내려앉게 합니다. 부재 카운터가 단계별로 올라가고, 초점에서 퍼지는 물결이 종이를 땅으로 · 점토를 돌 · 나무 · 종이 · 짚으로 바꾸면 불이 켜지고, 카메라가 열린 문으로 들어갑니다. 소리는 내려앉는 순간마다 재료의 소리로 합성하고 -14 LUFS로 맞춥니다.
+    원본: 虎小象(@hx831126)의 <a href="https://x.com/hx831126/status/2125460963541577784?a=vuKgapXTAHdMxNOQYkM&amp;s=19" target="_blank" rel="noopener">X 게시물</a>(그 게시물이 인용한 Nyxera0x의 <a href="https://x.com/Nyxera0x/status/2125210356238762233" target="_blank" rel="noopener">글</a>과 스킬 <a href="https://github.com/Nyxera0x/blueprint" target="_blank" rel="noopener">blueprint</a>)을 보고 만들었습니다.</p>
+  <ul class="tags"><li>Blender · 파이썬(bpy)</li><li>부재마다 따로인 물체</li><li>박자에 맞춘 조립 · 부재 카운터</li><li>점토 → 재료 물결</li><li>합성 사운드 · -14 LUFS</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제(건물 종류 · 장소 · 시각) 또는 스케치 · 평면도 · 분양 도면 사진</dd>
+      <dt>숫자와 도면</dt><dd>대지 · 칸 · 벽 두께 · 처마 · 용마루 · 개구부 · 가구를 미터로 적은 plan.json, 수채 번짐과 등고선이 있는 도면(sheet.png) 또는 두 점으로 맞춘 사용자의 도면</dd>
+      <dt>짓기</dt><dd>단계(기초 · 벽 · 골조 · 바닥 · 문 · 지붕 · 살림 · 마당)마다 따로인 부재로 짓는 build.py, 떠 있는 부재 · 받침보다 먼저 내려앉는 부재 0개</dd>
+      <dt>영상</dt><dd>200 mm로 내려다본 도면 → 나선 하강 → 박자 격자에 내려앉는 점토 부재와 카운터 → 초점에서 퍼지는 물결 → 문으로 들어가 돌아보기 → 제목</dd>
+      <dt>출력</dt><dd>final.mp4(합성 사운드 · -14 LUFS · -1 dBTP), timeline.json, 검사 숫자(check.json), 접촉 시트</dd>
+    </dl>
+    <pre><code>python3 plan-build-film/scripts/new-project.py my-house --title "숲속 다실"
+python3 plan-build-film/scripts/draw-sheet.py my-house
+blender -b --factory-startup -P plan-build-film/kit/film.py -- --project my-house --plan
+blender -b --factory-startup -P plan-build-film/kit/film.py -- --project my-house --res 1280x720
+python3 plan-build-film/scripts/score.py pbf-out/my-house
+python3 plan-build-film/scripts/hud.py pbf-out/my-house
+python3 plan-build-film/scripts/check.py pbf-out/my-house</code></pre>
+    <p class="mute">요구 사항: Blender 4.2 이상(5.2.5에서 확인, CPU · GPU), Python 3(numpy · Pillow), ffmpeg. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/plan-build-film/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:calc((100vw - 34px)*.5625);--demo-bg:#000">
+    <iframe data-src="demo/jeju-stone-house/" title="plan-build-film 예제 제주 돌집 스테이 프레임 시퀀스 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/jeju-stone-house/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 <code>examples/jeju-stone-house</code> · 「제주 돌집 스테이」 22.9초 · 부재 2,029개 · 88 BPM · 프레임 시퀀스 + 소리(♪)</span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제 「제주 돌집 스테이」의 장면과, 짓는 동안 대 본 스틸과 도면, 새 주제로 시작한 뼈대입니다. 카드를 누르면 그 순간에서 멈춘 라이브 데모가 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"film":"영상 장면","still":"스틸 · 도면","new":"새 주제 뼈대"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>「제주 돌집 스테이」 <small>22.9초 · 88 BPM · 부재 2,029개</small></h3>
+      <p>안거리 · 밖거리 두 채, 현무암 벽을 한 덩이씩, 띠살문을 살 하나씩, 초가를 다발과 줄로 짓고, 귤나무에서 물결이 퍼집니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="film" href="demo/jeju-stone-house/?t=0" target="_blank" rel="noopener">
+          <img src="samples/t00-sheet.jpg" alt="나무 책상 위에 놓인 수채 도면을 바로 위에서 본 첫 장면, 오른쪽 위에 커피잔" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">도면 · 0초</span><b>첫 장면은 도면</b><span class="how">200 mm로 내려다본 배치평면도 · 정면도 · 재료 범례 · 커피잔</span></div></a>
+        <a class="tile" data-tags="film" href="demo/jeju-stone-house/?t=1.9" target="_blank" rel="noopener">
+          <img src="samples/t01-foundation.jpg" alt="나선으로 내려가는 카메라 아래 도면 위에 파랗게 번쩍이는 기단과 주춧돌" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">기단 · 1.9초</span><b>나선 하강과 기단</b><span class="how">렌즈가 짧아지며 원근이 열리고 기단이 아래에서 올라옴</span></div></a>
+        <a class="tile" data-tags="film" href="demo/jeju-stone-house/?t=5.6" target="_blank" rel="noopener">
+          <img src="samples/t05-walls.jpg" alt="현무암 돌이 한 줄씩 쌓이는 두 채의 벽과 주황으로 번쩍이는 기둥, 왼쪽 위 부재 목록 카드" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">벽 · 골조 · 5.6초</span><b>돌 한 덩이씩, 박자에</b><span class="how">아래 줄부터 · 16분음표 격자에 내려앉음 · 카운터</span></div></a>
+        <a class="tile" data-tags="film" href="demo/jeju-stone-house/?t=8.4" target="_blank" rel="noopener">
+          <img src="samples/t08-doors.jpg" alt="분홍으로 번쩍이며 미끄러져 들어오는 띠살문과 판벽, 파란 서까래" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">문 · 지붕 · 8.4초</span><b>띠살문은 살 하나씩</b><span class="how">문짝마다 18개 · 서까래 · 초가 다발</span></div></a>
+        <a class="tile" data-tags="film" href="demo/jeju-stone-house/?t=12.8" target="_blank" rel="noopener">
+          <img src="samples/t12-yard.jpg" alt="초록으로 번쩍이며 쌓이는 돌담과 정낭, 흰 점토로 다 지어진 두 채의 초가" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">마당 · 12.8초</span><b>돌담 · 정낭 · 귤나무</b><span class="how">돌담 돌 수백 개 · 물결 직전의 정적</span></div></a>
+        <a class="tile" data-tags="film" href="demo/jeju-stone-house/?t=14.6" target="_blank" rel="noopener">
+          <img src="samples/t14-wave.jpg" alt="귤나무에서 퍼지는 물결의 따뜻한 띠가 지나가며 점토가 현무암과 초가로 바뀌는 순간" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">물결 · 14.6초</span><b>점토가 재료로</b><span class="how">마디의 첫 박에 · 종이는 땅으로 · 작업실은 하늘로</span></div></a>
+        <a class="tile" data-tags="film" href="demo/jeju-stone-house/?t=16.4" target="_blank" rel="noopener">
+          <img src="samples/t16-alive.jpg" alt="늦은 오후 햇빛 아래 줄로 묶인 두 채의 초가와 현무암 돌담, 뒤의 귤밭과 삼나무 방풍림" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">살아난 땅 · 16.4초</span><b>늦은 오후의 돌집</b><span class="how">Khronos PBR Neutral · 귤밭 · 방풍림이 물결 따라 자람</span></div></a>
+        <a class="tile" data-tags="film" href="demo/jeju-stone-house/?t=18.4" target="_blank" rel="noopener">
+          <img src="samples/t18-gate.jpg" alt="돌담 안 마당으로 낮게 내려가며 본 안거리의 초가지붕과 열린 문" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">들어가기 · 18.4초</span><b>정낭 위로, 마당으로</b><span class="how">밖거리를 비켜 내려앉음 · 디딤돌을 따라 상방의 열린 문으로</span></div></a>
+        <a class="tile" data-tags="film" href="demo/jeju-stone-house/?t=22.6" target="_blank" rel="noopener">
+          <img src="samples/t22-hall.jpg" alt="상방 안에서 열린 문 너머 마당과 밖거리를 내다본 마지막 장면과 제목 제주 돌집 스테이" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">상방 · 22.6초</span><b>돌아서서 밖을 봄</b><span class="how">찻상 · 다기 · 열린 띠살문 · 제목</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>스틸 · 도면 <small>영상 전에 확인하는 것</small></h3>
+      <p>도면을 숫자로 그리고, 샷마다 스틸을 대 보며 다른 점을 고친 결과입니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="still" href="samples/sheet.jpg" target="_blank" rel="noopener">
+          <img src="samples/sheet.jpg" alt="수채 번짐과 등고선, 돌 하나하나 그린 현무암 벽, 문 열림 호, 치수, 정면도, 재료 범례, 표제란이 있는 1:100 배치평면도" loading="lazy" width="640" height="453">
+          <div class="cap"><span class="no">draw-sheet.py</span><b>plan.json으로 그린 도면</b><span class="how">1:100 · 75 px/m · 영상에서 실제 크기로 놓임</span></div></a>
+        <a class="tile" data-tags="still" href="samples/still-hero.jpg" target="_blank" rel="noopener">
+          <img src="samples/still-hero.jpg" alt="남동쪽 위에서 본 두 채의 초가와 돌담, 늦은 해의 긴 그림자" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">스틸 · hero</span><b>물결 순간의 구도</b><span class="how">영상의 hero 키와 같은 카메라</span></div></a>
+        <a class="tile" data-tags="still" href="samples/still-yard.jpg" target="_blank" rel="noopener">
+          <img src="samples/still-yard.jpg" alt="마당 눈높이에서 본 안거리의 띠살문과 귤나무, 밖거리의 처마" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">스틸 · yard</span><b>마당 눈높이</b><span class="how">면을 깎은 현무암 · 곧은 나뭇결 · 줄 그물</span></div></a>
+        <a class="tile" data-tags="still" href="samples/still-hall.jpg" target="_blank" rel="noopener">
+          <img src="samples/still-hall.jpg" alt="상방 안에서 열린 띠살문 너머 마당을 내다본 스틸, 찻상과 청자 다기" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">스틸 · hall</span><b>마지막 장면의 기준</b><span class="how">마루 · 찻상 · 종이 등 · 문 너머 밖거리</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>새 주제 뼈대 <small>new-project.py</small></h3>
+      <p>「숲속 다실」로 시작한 프로젝트가 그대로 도는 모습입니다. 브리프를 채운 뒤 build.py를 부재 단위로 바꿉니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="new" href="samples/new-pavilion.jpg" target="_blank" rel="noopener">
+          <img src="samples/new-pavilion.jpg" alt="새 프로젝트 뼈대: 돌 기단 위 목조 정자, 널 지붕, 앞의 나무" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">뼈대 · 부재 189개</span><b>「숲속 다실」 시작점</b><span class="how">기단 · 기둥 · 마루 · 벽널 · 서까래 · 지붕널 · 나무</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 원본 게시물을 보고 만든 예제와, 스킬을 만든 출처입니다.</p>
+  <div class="works">
+    <a class="work" href="demo/jeju-stone-house/" target="_blank" rel="noopener"><b>「제주 돌집 스테이」</b><span>22.9초 · 안거리 · 밖거리 · 현무암 · 초가 · 부재 2,029개 · 프레임 시퀀스 페이지</span><span class="url">plan-build-film/examples/jeju-stone-house</span></a>
+    <a class="work" href="https://x.com/hx831126/status/2125460963541577784?a=vuKgapXTAHdMxNOQYkM&amp;s=19" target="_blank" rel="noopener"><b>출처 · 虎小象의 X 게시물</b><span>산마루 카페 「松间咖啡」 24.6초 · 부재 2,829개 · 构件清单 카운터 · 92.5 BPM · -14 LUFS</span><span class="url">x.com/hx831126/status/2125460963541577784</span></a>
+    <a class="work" href="https://x.com/Nyxera0x/status/2125210356238762233" target="_blank" rel="noopener"><b>출처 · Nyxera0x의 글</b><span>How I Turn Any Sketch Into a 3D House You Can Walk Through · 세 채의 집과 모든 프롬프트</span><span class="url">x.com/Nyxera0x/status/2125210356238762233</span></a>
+    <a class="work" href="https://github.com/Nyxera0x/blueprint" target="_blank" rel="noopener"><b>원본 레포 · Nyxera0x/blueprint</b><span>스케치 · 평면도 · 레퍼런스에서 집을 짓는 Claude Code 스킬 (MIT)</span><span class="url">github.com/Nyxera0x/blueprint</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/plan-build-film/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/plan-build-film">폴더</a> <span>kit · scripts · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/plan-build-film/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/plan-build-film/references/BRIEF.md">references/BRIEF.md</a> <span>브리프 틀 · 스틸 검토 기준</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/plan-build-film/references/READING.md">references/READING.md</a> <span>입력을 숫자로 읽기</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/plan-build-film/references/BUILD.md">references/BUILD.md</a> <span>목수처럼 짓기 · 키트 API</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/plan-build-film/references/FILM.md">references/FILM.md</a> <span>film.json · 박자 · 물결 · 카메라</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/plan-build-film/references/SOUND.md">references/SOUND.md</a> <span>소리 · 작곡 · 라우드니스</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/plan-build-film/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/plan-build-film/references/SOURCE.md">references/SOURCE.md</a> <span>원본 게시물 · 글 · 레포에서 가져온 것과 안 가져온 것</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 이미지와 소리는 이 스킬의 코드로 만들었습니다 (모델 · 텍스처 · 생성 에셋 없음)
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

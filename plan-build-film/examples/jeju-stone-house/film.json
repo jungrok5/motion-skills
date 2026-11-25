@@ -1,0 +1,336 @@
+{
+ "title": "제주 돌집 스테이",
+ "subtitle": "현무암 · 띠 · 삼나무",
+ "credit": "{parts} PARTS · FROM ONE SHEET",
+ "fps": 24,
+ "duration": 22.9,
+ "bpm": 88,
+ "downbeat": 0.0,
+ "grid": 4,
+ "look": "golden",
+ "props": {
+  "cup": [
+   35.5,
+   23.5,
+   3.0
+  ],
+  "pencil": [
+   [
+    2.0,
+    -10.5
+   ],
+   [
+    24.0,
+    -12.5
+   ]
+  ]
+ },
+ "hud": {
+  "heading": "부재 목록",
+  "sub": "PARTS",
+  "in": 0.9
+ },
+ "stages": [
+  {
+   "id": "foundation",
+   "label": "기단 · 주춧돌",
+   "color": [
+    0.55,
+    0.64,
+    0.82
+   ],
+   "beats": [
+    1.0,
+    3.0
+   ],
+   "fly": "rise",
+   "order": "height",
+   "sound": "stone_heavy"
+  },
+  {
+   "id": "walls",
+   "label": "현무암 벽",
+   "color": [
+    0.72,
+    0.74,
+    0.8
+   ],
+   "beats": [
+    3.25,
+    9.5
+   ],
+   "fly": "drop",
+   "order": "height",
+   "sound": "stone"
+  },
+  {
+   "id": "frame",
+   "label": "기둥 · 보 · 도리",
+   "color": [
+    1.0,
+    0.56,
+    0.14
+   ],
+   "beats": [
+    6.5,
+    10.0
+   ],
+   "fly": "drop",
+   "order": "height",
+   "sound": "wood"
+  },
+  {
+   "id": "floor",
+   "label": "마루 · 장판",
+   "color": [
+    1.0,
+    0.82,
+    0.2
+   ],
+   "beats": [
+    7.5,
+    10.5
+   ],
+   "fly": "drop",
+   "order": "height",
+   "sound": "wood_light"
+  },
+  {
+   "id": "doors",
+   "label": "띠살문 · 판벽",
+   "color": [
+    1.0,
+    0.38,
+    0.56
+   ],
+   "beats": [
+    10.5,
+    14.0
+   ],
+   "fly": "slide",
+   "order": "height",
+   "sound": "paper"
+  },
+  {
+   "id": "roof",
+   "label": "서까래 · 새 · 줄",
+   "color": [
+    0.3,
+    0.56,
+    1.0
+   ],
+   "beats": [
+    12.0,
+    16.5
+   ],
+   "fly": "drop",
+   "order": "height",
+   "sound": "straw"
+  },
+  {
+   "id": "interior",
+   "label": "살림",
+   "color": [
+    0.68,
+    0.46,
+    1.0
+   ],
+   "beats": [
+    14.0,
+    16.5
+   ],
+   "fly": "drop",
+   "order": "height",
+   "sound": "soft"
+  },
+  {
+   "id": "yard",
+   "label": "돌담 · 정낭 · 귤나무",
+   "color": [
+    0.4,
+    0.88,
+    0.4
+   ],
+   "beats": [
+    15.0,
+    19.5
+   ],
+   "fly": "drop",
+   "order": "height",
+   "sound": "stone_light",
+   "pop": [
+    "tree_",
+    "tangerine"
+   ]
+  }
+ ],
+ "site_stages": [
+  "site"
+ ],
+ "wave": {
+  "beat": 20,
+  "origin": "focus",
+  "keys": [
+   [
+    0.0,
+    -2.0
+   ],
+   [
+    0.6,
+    4.0
+   ],
+   [
+    1.6,
+    16.0
+   ],
+   [
+    2.6,
+    60.0
+   ],
+   [
+    4.2,
+    1400.0
+   ]
+  ]
+ },
+ "lights_beat": 21,
+ "camera": {
+  "open": {
+   "hold": 0.8,
+   "end": 3.6,
+   "lens": 200,
+   "az": -90
+  },
+  "keys": [
+   {
+    "t": 3.6,
+    "loc": [
+     50.5,
+     -6.1,
+     33.9
+    ],
+    "target": [
+     10.5,
+     8.5,
+     0.6
+    ],
+    "lens": 45
+   },
+   {
+    "t": 8.6,
+    "loc": [
+     42.0,
+     -11.5,
+     23.7
+    ],
+    "target": [
+     10.0,
+     8.5,
+     1.0
+    ],
+    "lens": 40
+   },
+   {
+    "t": 13.6,
+    "shot": "hero"
+   },
+   {
+    "t": 15.9,
+    "loc": [
+     29.5,
+     -11.0,
+     13.0
+    ],
+    "target": [
+     9.2,
+     8.6,
+     1.4
+    ],
+    "lens": 32
+   },
+   {
+    "t": 17.7,
+    "loc": [
+     25.5,
+     6.5,
+     5.2
+    ],
+    "target": [
+     9.0,
+     11.0,
+     1.5
+    ],
+    "lens": 28
+   },
+   {
+    "t": 19.1,
+    "loc": [
+     15.0,
+     8.1,
+     2.0
+    ],
+    "target": [
+     9.8,
+     12.5,
+     1.4
+    ],
+    "lens": 26
+   },
+   {
+    "t": 20.3,
+    "loc": [
+     10.3,
+     9.0,
+     1.45
+    ],
+    "target": [
+     10.1,
+     13.5,
+     1.3
+    ],
+    "lens": 24
+   },
+   {
+    "t": 21.2,
+    "loc": [
+     10.2,
+     10.7,
+     1.4
+    ],
+    "target": [
+     7.4,
+     13.6,
+     0.9
+    ],
+    "lens": 22
+   },
+   {
+    "t": 22.3,
+    "shot": "hall"
+   }
+  ],
+  "ev": [
+   [
+    0.0,
+    -0.4
+   ],
+   [
+    13.4,
+    -0.4
+   ],
+   [
+    15.4,
+    0.3
+   ],
+   [
+    19.4,
+    0.3
+   ],
+   [
+    21.0,
+    1.0
+   ]
+  ]
+ },
+ "title_in": 20.6
+}

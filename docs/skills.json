@@ -3774,6 +3774,50 @@
    ]
   },
   {
+   "id": "plan-build-film",
+   "name": "plan-build-film",
+   "tagline": "건물 하나를 주제나 스케치 · 평면도로 주면, 그 도면이 놓인 책상 위에서 건물이 부재 하나하나 지어지는 영상을 만듭니다. 입력을 미터 단위 숫자로 읽고 수채 번짐과 등고선이 있는 도면을 그린 뒤(또는 사람이 준 도면을 두 점으로 맞춘 뒤), 주춧돌 · 현무암 한 덩이 · 기둥 · 널 · 문살 · 서까래 · 줄까지 모두 따로인 물체로 Blender 코드에 짓습니다. 200 mm로 내려다본 도면에서 나선으로 내려가면 부재가 단계마다 제 색으로 번쩍이며 박자 격자에 맞춰 아래에서부터 흰 점토로 내려앉고, 부재 목록 카드가 단계별로 올라갑니다. 초점에서 퍼지는 물결이 종이를 땅으로 · 점토를 돌 · 나무 · 종이 · 짚으로 · 작업실을 하늘로 바꾸고 불이 켜지면, 카메라가 열린 문 가운데로 들어가 돌아섭니다. 내려앉는 순간마다 재료의 소리를 합성하고 박자에 맞춘 곡의 부풂을 물결에 맞춰 -14 LUFS로 맞추며, 떠 있는 부재 · 받침보다 먼저 내려앉는 부재 · 박자 · 카메라 거리 · 프레임 튐 · 라우드니스를 숫자로 검사합니다.",
+   "posterAlt": "plan-build-film으로 만든 「제주 돌집 스테이」의 장면 네 개: 나무 책상 위 커피잔 옆에 놓인 수채 배치평면도, 도면 위에 흰 점토로 쌓이는 현무암 벽과 왼쪽 위 부재 목록 카드, 늦은 오후 햇빛 아래 줄로 묶인 두 채의 초가와 돌담, 상방 안에서 열린 띠살문 너머 마당을 내다본 장면",
+   "poster": "plan-build-film/poster.jpg",
+   "tags": [
+    "Blender · 파이썬(bpy)",
+    "부재마다 따로인 물체",
+    "박자에 맞춘 조립 · 부재 카운터",
+    "점토 → 재료 물결",
+    "합성 사운드 · -14 LUFS"
+   ],
+   "stats": [
+    "예제 부재 2,029개 · 22.9초 · 88 BPM",
+    "모델 · 텍스처 · 생성 에셋 0개"
+   ],
+   "page": "plan-build-film/",
+   "source": "plan-build-film/",
+   "absorbedFrom": {
+    "repo": "https://github.com/jungrok5/motion-skills",
+    "path": "plan-build-film/examples/jeju-stone-house/"
+   },
+   "sources": [
+    {
+     "title": "虎小象(@hx831126)의 X 게시물 (24.6초 · 산마루 카페 「松间咖啡」가 도면 위에서 부재 2,829개로 지어지는 영상: 构件清单 카운터, 92.5 BPM 박자, 내려앉는 소리, -14 LUFS, 프레임 차이 검사): 스킬을 만든 출처",
+     "url": "https://x.com/hx831126/status/2125460963541577784?a=vuKgapXTAHdMxNOQYkM&s=19"
+    },
+    {
+     "title": "Nyxera0x의 X 글 「How I Turn Any Sketch Into a 3D House You Can Walk Through」 (게시물이 인용한 방법: 숫자 먼저, 목수처럼 짓기, 레퍼런스와 대 보기, 도면 위 조립 영상)",
+     "url": "https://x.com/Nyxera0x/status/2125210356238762233"
+    },
+    {
+     "title": "Nyxera0x/blueprint (MIT): 스케치 · 평면도 · 레퍼런스에서 집을 짓고 찍는 Claude Code 스킬",
+     "url": "https://github.com/Nyxera0x/blueprint"
+    }
+   ],
+   "workedExample": [
+    {
+     "title": "「제주 돌집 스테이」 · 22.9초 · 부재 2,029개 · 프레임 시퀀스 페이지",
+     "url": "https://jungrok5.github.io/motion-skills/plan-build-film/demo/jeju-stone-house/"
+    }
+   ]
+  },
+  {
    "id": "nested-world-loop",
    "name": "nested-world-loop",
    "tagline": "주제를 주면 세계 속의 세계로 끝없이 들어가는 원테이크 루프 영상을 three.js 코드만으로 만듭니다. 방 안의 물건 속 세계로 들어가 그 세계의 창이나 해치를 지나면 처음의 방으로 돌아오고, 이음매 없이 반복됩니다. 세계마다 자기 축척 · 빛 · 움직임을 코드로 만들고(모델 · 텍스처 · HDRI 없음), 포털로 이어 붙이며, 카메라는 체감 거리로 타이밍을 맞춰 1/400로 줄어드는 밀기도 한 번의 달리처럼 보입니다. 검사 스크립트가 루프가 닫히는지, 세계가 바뀌는 순간이 양쪽 세계에서 같은 그림인지 증명합니다.",

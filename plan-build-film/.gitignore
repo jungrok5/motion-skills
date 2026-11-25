@@ -1,0 +1,7 @@
+pbf-out/
+ref/
+__pycache__/
+*.blend1
+# drawn by scripts/draw-sheet.py from plan.json (deterministic, ~5 MB): regenerate, do not commit
+examples/*/sheet.png
+examples/*/grid.png
