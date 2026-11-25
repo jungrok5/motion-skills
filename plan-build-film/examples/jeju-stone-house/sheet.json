@@ -1,0 +1,13 @@
+{
+ "image": "sheet.png",
+ "size_px": [
+  3200,
+  2263
+ ],
+ "px_per_m": 75.0,
+ "origin_px": [
+  300.0,
+  1903.0
+ ],
+ "note": "pixel (x right, y down) = origin_px + (x_m, -y_m) * px_per_m"
+}
