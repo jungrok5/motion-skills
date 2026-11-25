@@ -35,3 +35,6 @@ Problems met while building the skill and the Busan example — problem → caus
 - **A card's ground strip covered the rocks below it.** → `ground()` filled to the card's bottom. → `ground(..., { depth })`.
 - **Golden hour turned the paper muddy.** → A low sun grazes a flat sheet. → Golden keeps a higher sun (0.68) and a
   strong hemisphere fill (0.88).
+- **The MP4 join failed after every frame had rendered.** → This ffmpeg rejects `.6` as a duration in the audio fade
+  (`afade=…:d=.6`), so the step that joins the chunks with the score stopped. → `d=0.6`. If a render dies at the end,
+  the chunks in `out/.chunks-<name>/` are complete: join them with the same ffmpeg line rather than rendering again.

@@ -90,7 +90,7 @@ await browser.close();
 const list = join(tmp, 'list.txt');
 writeFileSync(list, Array.from({ length: workers }, (_, w) => join(tmp, `${String(w).padStart(2, '0')}.mp4`)).filter(existsSync).map(f => `file '${f}'`).join('\n'));
 const out = join(outDir, `${name}.mp4`), audio = opt('audio');
-if (audio) execSync(`ffmpeg -y -loglevel error -f concat -safe 0 -i "${list}" -i "${resolve(audio)}" -map 0:v -map 1:a -c:v copy -c:a aac -b:a 192k -af "afade=t=out:st=${(to - from - .6).toFixed(2)}:d=.6" -t ${to - from} -movflags +faststart "${out}"`);
+if (audio) execSync(`ffmpeg -y -loglevel error -f concat -safe 0 -i "${list}" -i "${resolve(audio)}" -map 0:v -map 1:a -c:v copy -c:a aac -b:a 192k -af "afade=t=out:st=${(to - from - .6).toFixed(2)}:d=0.6" -t ${to - from} -movflags +faststart "${out}"`);
 else execSync(`ffmpeg -y -loglevel error -f concat -safe 0 -i "${list}" -c copy -movflags +faststart "${out}"`);
 rmSync(tmp, { recursive: true, force: true });
 console.log(`${out}  (${((Date.now() - t0) / 1000).toFixed(0)} s)`);
