@@ -32,8 +32,8 @@ held chords and a fade over the last 1.4 s.
 
 ## A track of your own
 
-`python3 score.py pbf-out/<name> --analyse track.wav` prints its tempo, first downbeat and swell (the biggest 2 s rise
-in loudness). Put that tempo in `film.json` (`bpm`, `downbeat`) so the landings hit its beats, re-run `film.py --plan`,
+`python3 score.py pbf-out/<name> --analyse track.wav` prints its tempo, first downbeat and swell (the biggest quarter-second
+jump in level: where it arrives). Put that tempo in `film.json` (`bpm`, `downbeat`) so the landings hit its beats, re-run `film.py --plan`,
 then `score.py pbf-out/<name> --music track.wav [--swell 14.0]`: the track starts so that its swell lands on the wave
 (the post measured 92.5 BPM and cut on the downbeats; blueprint's track swelled at 14.0 s against a wave at 13.4 s and
 started 0.65 s in). The person licenses their track. Music from a generator (ElevenLabs, Suno …) is used only after

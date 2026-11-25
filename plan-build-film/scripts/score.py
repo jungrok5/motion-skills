@@ -300,7 +300,7 @@ def read_wav(path):
 
 
 def analyse(x):
-    """tempo (onset autocorrelation), the first strong downbeat, and the swell (the biggest 2 s rise in loudness)"""
+    """tempo (onset autocorrelation), the first strong downbeat, and the swell (the biggest quarter-second jump in level)"""
     m = x.mean(1)
     hop = 512
     frames = len(m) // hop
@@ -314,7 +314,7 @@ def analyse(x):
     lag = lags[ok][np.argmax(ac[ok])]
     bpm = 60 / lag
     down = float(np.argmax(on[: int(fps * 4)]) / fps)
-    w = int(2 * fps)
+    w = max(2, int(0.25 * fps))  # the biggest quarter-second jump in level: the moment the swell arrives
     sm = np.convolve(e, np.ones(w) / w, "same")
     rise = sm[w:] - sm[:-w]
     swell = float((np.argmax(rise) + w) / fps)
