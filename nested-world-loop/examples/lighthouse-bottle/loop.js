@@ -19,7 +19,7 @@ function cabin(ctx) {
   // shell: plank walls, plank floor, a beamed ceiling with a round hatch, a window in the back wall
   const pine = M.wood({ base: '#8a5a34', dark: '#3b2412', planks: 8, seed: 11, ring: 12 }); pine.map.repeat.set(1, 2); pine.rough.repeat.set(1, 2);
   const wallM = new THREE.MeshStandardMaterial({ map: pine.map, roughnessMap: pine.rough, roughness: .8, color: '#f0e2cc', envMapIntensity: .3 });
-  const floorW = M.wood({ base: '#6e4527', dark: '#2a170b', planks: 6, seed: 12 }); floorW.map.repeat.set(3, 3); floorW.rough.repeat.set(3, 3);
+  const floorW = M.wood({ base: '#94633c', dark: '#45291a', planks: 6, seed: 12 }); floorW.map.repeat.set(3, 3); floorW.rough.repeat.set(3, 3);
   const plank = (w, h, d, m, x, y, z) => { const b = add(new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m)); b.position.set(x, y, z); return b; };
   plank(424, 4, 384, M.mat.wood(floorW, { rough: .6 }), 0, -2, 0);
   // back wall (z = -190) with the window opening x -60..60, y 110..220
@@ -112,9 +112,9 @@ function cabin(ctx) {
   const sglass = add(new THREE.Mesh(M.lathe([[2.5, 0], [4, 4], [3.6, 11], [2.4, 13]], 24), M.mat.emissive('#ffb060', 3, { transparent: true, opacity: .85 }))); sglass.position.set(203, 194, -10);
   M.lamp(root, { pos: [202, 200, -10], color: '#ffa850', intensity: 6000, bulb: false });
   // light: the oil lamp (key), the lantern's glow down the hatch (warm top light), moonlight through the window (cool), a little fill
-  M.spot(root, { pos: [60, 288, 40], target: [5, 80, -135], color: '#ffd59a', intensity: 9e4, angle: 1.05, penumbra: 1, shadow: 1024, near: 5, far: 800, bias: -.003, normalBias: .5 });
+  M.spot(root, { pos: [60, 288, 40], target: [5, 80, -135], color: '#ffd59a', intensity: 1.5e5, angle: 1.05, penumbra: 1, shadow: 1024, near: 5, far: 800, bias: -.003, normalBias: .5 });
   M.spot(root, { pos: [140, 520, -900], target: [0, 60, -120], color: '#8ea6e0', intensity: 1.1e6, angle: .16, penumbra: .9, shadow: 1024, near: 400, far: 1600, bias: -.002, normalBias: .5 });
-  add(new THREE.HemisphereLight('#4a5070', '#3a2414', .3));
+  add(new THREE.HemisphereLight('#4a5070', '#3a2414', .55));
   M.lamp(root, { pos: [-20, 170, -40], color: '#ff9e58', intensity: 22000, bulb: false });   // the lamp's light thrown back by the desk and walls (no shadow)
   M.shadows(root); for (const o of [sky, seaO, moon, pane, bottle, chim, font, oil, bglass, flame, flameCore, burner]) { o.castShadow = false; }   // nothing round the flame blocks its own light
   const motes = M.dust({ count: 50, box: [-90, 95, -170, -25, 135, -120], size: .07, color: '#ffe3b8', seed: 5, glow: 0 }); add(motes.mesh);
@@ -205,7 +205,7 @@ function bottleSea(ctx) {
 // Floor at y 0, glazing radius 170 from 40 to 260, door at +z, the hatch (r 42) at (60, 0, -60).
 function lanternRoom(ctx) {
   const { root, renderer } = ctx, add = o => { root.add(o); return o; };
-  ctx.scene.environment = M.envMap(renderer, { base: '#0b0706', panels: [{ color: '#ffd9a0', intensity: 3, pos: [0, -1, 0], size: [.8, .8] }, { color: '#ffb070', intensity: .6, pos: [-4.9, 0, 0], size: [3, 3] }] });   // the lamp is a small bright thing, not a wall of light
+  ctx.scene.environment = M.envMap(renderer, { base: '#0b0706', panels: [{ color: '#ffd9a0', intensity: 3, pos: [0, -1, 0], size: [.8, .8] }, { color: '#ffb070', intensity: .5, pos: [0, 4.9, 0], size: [5, 5] }] });   // symmetric about the vertical: this world is turned by its portal   // the lamp is a small bright thing, not a wall of light
   const iron = M.mat.metal('#2b2826', { rough: .5 }), brass = M.mat.metal('#c7a058', { rough: .24 }), paint = M.mat.paint('#e3dccb', { rough: .6 });
   // floor plate with the hatch, the hatch lid standing open
   const fs = new THREE.Shape(); fs.absarc(0, 0, 178, 0, Math.PI * 2, false); const hole = new THREE.Path(); hole.absarc(60, 60, 42, 0, Math.PI * 2, true); fs.holes.push(hole);

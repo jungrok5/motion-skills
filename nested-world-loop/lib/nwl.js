@@ -358,6 +358,8 @@ export function film(def) {
   function prepare(Wd, G, t, fogOff = 0) {
     Wd.root.matrix.copy(G); Wd.root.matrixWorldNeedsUpdate = true;
     const c = scaleOf(G);
+    // a portal may turn the world: its reflections (scene.environment) must turn with it
+    { const q = new THREE.Quaternion(); G.decompose(new THREE.Vector3(), q, new THREE.Vector3()); Wd.scene.environmentRotation.setFromQuaternion(q); }
     for (const L of Wd.lights) {
       const b = L.userData.base;
       if (L.isPointLight || L.isSpotLight) { L.intensity = b.intensity * c * c; L.distance = b.distance * c; }
