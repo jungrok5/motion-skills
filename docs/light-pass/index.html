@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>light-pass · motion-skills</title>
+<meta name="description" content="다른 작품 위에 햇빛 연출을 얹는 효과 스킬입니다. 나무나 창틀 사이로 들어오는 빛줄기, 바닥에 고이는 빛, 후광과 색보정을 숫자로 된 플랜으로 설계해 캔버스 · 영상 · 스틸 위에 WebGL 2로 그립니다.">
+<meta property="og:title" content="light-pass · motion-skills">
+<meta property="og:description" content="다른 작품 위에 햇빛 연출을 얹는 효과 스킬입니다. 빛줄기 · 빛 고임 · 색보정을 플랜으로 설계해 캔버스 · 영상 · 스틸 위에 그립니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/light-pass/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/light-pass">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / light-pass</nav>
+  <h1>light-pass</h1>
+  <p>다른 작품 위에 햇빛 연출을 얹는 효과 스킬입니다. 나무나 창틀 사이로 들어오는 빛줄기, 바닥에 고이는 빛, 후광과 색보정을 숫자로 된 플랜으로 설계해 캔버스 · 영상 · 스틸 위에 WebGL 2로 그립니다. 원본: <a href="https://x.com/manwon_man/status/2124697362719453604?a=qHwbQc4rVBlcbntyv64&s=19">@manwon_man의 X 게시물</a>(애프터이펙트에서 빛줄기마다 마스크를 그려 숲에 햇빛을 넣는 과정)을 보고 만들었습니다.</p>
+  <ul class="tags"><li>WebGL 2 합성</li><li>빛줄기 · 빛 고임</li><li>마스크 보기</li><li>실시간 · 영상 · 스틸</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>빛이 필요한 작품의 장면(캔버스 · MP4 · 스틸)과 원하는 빛(시간대, 들어오는 곳, 장면에서 할 일)</dd>
+      <dt>브리프</dt><dd>장면마다 해의 위치, 빛이 지나는 틈, 빛줄기 · 빛 고임 수와 자리, 색과 세기, 카메라 움직임</dd>
+      <dt>플랜</dt><dd>마스크 보기에서 해 · 빛줄기 · 빛 고임 배치, 자동 빛줄기 · 후광 · 그늘 · 색보정, 움직이는 장면은 키프레임</dd>
+      <dt>검사</dt><dd>빛줄기가 해에서 뻗는지, 날아간 흰색 ≤ 2 %, 그림자 유지, 변화량 1.5–18 %, 같은 시각 같은 그림</dd>
+      <dt>출력</dt><dd>작품 페이지에 겹친 캔버스(매 프레임 <code>lp.draw()</code>), 빛을 얹은 MP4 · 스틸</dd>
+    </dl>
+    <pre><code>cd light-pass
+node scripts/check.mjs examples/forest-path examples/walker-clearing examples/snow-cabin --sheet out/sheet.jpg
+node scripts/apply.mjs examples/forest-path/input.jpg examples/forest-path/plan.json out/forest-lit.jpg
+node scripts/apply.mjs shot.mp4 plan.json out/shot-lit.mp4 --from 2 --to 6
+python3 -m http.server 8000      # /examples/live/</code></pre>
+    <p class="mute">요구 사항: WebGL 2 브라우저, 오프라인 적용은 Node 18+ · Playwright Chromium · ffmpeg (GPU 없이 동작). 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/light-pass/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:250px;--demo-bg:#0b0d10">
+    <iframe data-src="demo/examples/live/" title="light-pass 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/examples/live/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>코드로 그린 숲에 매 프레임 빛을 얹는 라이브 데모 · 드래그로 해 이동</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/examples/live/" data-cap="코드로 그린 숲에 매 프레임 빛을 얹는 라이브 데모 · 드래그로 해 이동" aria-pressed="true">실시간 숲</button>
+        <button class="btn" type="button" data-src="demo/examples/live/?scene=forest-path" data-cap="예제 &lt;code&gt;examples/forest-path&lt;/code&gt; · 아침 숲길" aria-pressed="false">숲길</button>
+        <button class="btn" type="button" data-src="demo/examples/live/?scene=snow-cabin" data-cap="예제 &lt;code&gt;examples/snow-cabin&lt;/code&gt; · 겨울 오두막" aria-pressed="false">눈 오두막</button>
+        <button class="btn" type="button" data-src="demo/examples/live/?scene=forest-path&amp;view=mask" data-cap="숲길의 마스크 보기 · 해(십자), 빛줄기, 빛 고임 윤곽" aria-pressed="false">마스크 보기</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">세 장면은 machine-wilds 영화의 프레임에 장면마다 따로 설계한 빛을 얹은 결과와 마스크 보기입니다. 카드를 누르면 라이브 데모가 그 장면으로 열립니다.</p>
+  <div class="chips" data-for="gallery" data-labels='{"lit":"빛을 얹은 결과","mask":"마스크 보기"}' aria-label="샘플 종류로 나눠 보기" hidden></div>
+  <div id="gallery">
+    <div class="group">
+      <h3>장면마다 설계한 빛 <small>examples/</small></h3>
+      <p>같은 효과라도 해의 위치, 빛이 지나는 틈, 색과 세기는 장면의 브리프에서 정합니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="lit" href="demo/examples/live/?scene=forest-path" target="_blank" rel="noopener">
+          <img src="samples/forest-path-lit.jpg" alt="소나무 숲길, 굵은 나무줄기 양옆으로 따뜻한 아침 빛줄기가 내려와 길과 둔덕에 빛이 고인다" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">결과 · 아침</span><b>숲길</b><span class="en">forest-path</span>
+          <span class="how">나무줄기 양옆 틈으로 빛줄기 4개와 가는 빛 2개, 길 위 빛 고임 3곳</span></div></a>
+        <a class="tile" data-tags="mask" href="demo/examples/live/?scene=forest-path&amp;view=mask" target="_blank" rel="noopener">
+          <img src="samples/forest-path-mask.jpg" alt="같은 숲길을 어둡게 하고 빛줄기 여섯 개의 쐐기 윤곽과 바닥의 타원 세 개를 노란 선으로 그린 마스크 보기" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">마스크 보기</span><b>숲길의 빛 배치</b><span class="en">--view mask</span>
+          <span class="how">빛줄기 쐐기와 빛 고임 타원, 자동 빛줄기는 희미하게</span></div></a>
+        <a class="tile" data-tags="lit" href="demo/examples/live/?scene=walker-clearing" target="_blank" rel="noopener">
+          <img src="samples/walker-clearing-lit.jpg" alt="숲속 빈터, 왼쪽 위 숲 틈에서 금빛 오후 햇살이 비스듬히 내려와 두 다리 기계가 선 땅을 데운다" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">결과 · 오후</span><b>빈터의 물떼새</b><span class="en">walker-clearing</span>
+          <span class="how">화면 밖 왼쪽 위의 해, 어두운 숲 띠를 지나는 빛줄기, 발치의 빛 고임</span></div></a>
+        <a class="tile" data-tags="mask" href="demo/examples/live/?scene=walker-clearing&amp;view=mask" target="_blank" rel="noopener">
+          <img src="samples/walker-clearing-mask.jpg" alt="빈터 장면 위에 숲 띠를 지나 땅으로 내려오는 빛줄기 다섯 개와 타원 세 개의 윤곽" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">마스크 보기</span><b>빈터의 빛 배치</b><span class="en">--view mask</span>
+          <span class="how">해가 화면 밖이라 십자 없이, 빛줄기는 한 방향으로</span></div></a>
+        <a class="tile" data-tags="lit" href="demo/examples/live/?scene=snow-cabin" target="_blank" rel="noopener">
+          <img src="samples/snow-cabin-lit.jpg" alt="눈 내리는 숲의 짓다 만 나무 오두막, 뼈대 틈으로 푸르스름한 겨울 햇살이 비스듬히 들어와 눈밭에 닿는다" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">결과 · 겨울</span><b>눈 오두막</b><span class="en">snow-cabin</span>
+          <span class="how">차가운 낮은 해, 오두막 뼈대 틈만 빛 통로로 제한, 차가운 색보정</span></div></a>
+        <a class="tile" data-tags="mask" href="demo/examples/live/?scene=snow-cabin&amp;view=mask" target="_blank" rel="noopener">
+          <img src="samples/snow-cabin-mask.jpg" alt="오두막 장면 위에 왼쪽 위 모서리의 해 십자와 뼈대 틈에서 눈밭으로 뻗는 빛줄기 윤곽" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">마스크 보기</span><b>오두막의 빛 배치</b><span class="en">--view mask</span>
+          <span class="how">해는 왼쪽 위 모서리, 빛줄기는 뼈대 틈에서 출발</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>다른 작품에 실시간으로 <small>examples/live/</small></h3>
+      <p>캔버스로 그리는 작품이 매 프레임 그린 뒤 <code>lp.draw()</code>를 부르면, 줄기가 지나갈 때마다 자동 빛줄기가 틈을 따라 바뀝니다.</p>
+      <div class="grid">
+        <a class="tile" data-tags="lit" href="demo/examples/live/" target="_blank" rel="noopener">
+          <img src="samples/live-lit.jpg" alt="코드로 그린 숲, 둥근 잎 덩어리와 줄기 사이로 위쪽 가운데의 해에서 빛줄기가 부채꼴로 쏟아진다" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">결과 · 실시간</span><b>코드로 그린 숲</b><span class="en">live</span>
+          <span class="how">옆으로 흐르는 숲, 틈을 따라 바뀌는 자동 빛줄기, 손으로 놓은 빛줄기 3개</span></div></a>
+        <a class="tile" data-tags="mask" href="demo/examples/live/?view=mask" target="_blank" rel="noopener">
+          <img src="samples/live-mask.jpg" alt="코드로 그린 숲 위에 해 십자, 빛줄기 세 개의 쐐기 윤곽, 바닥 타원 두 개" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">마스크 보기</span><b>실시간 숲의 빛 배치</b><span class="en">--view mask</span>
+          <span class="how">드래그로 해를 옮기면 빛줄기가 바닥 끝을 축으로 돎</span></div></a>
+        <a class="tile" data-tags="lit" href="demo/examples/live/?scene=forest-path&amp;view=off" target="_blank" rel="noopener">
+          <img src="samples/forest-path-input.jpg" alt="빛을 얹기 전의 숲길 원본, 뿌연 하늘과 평평한 빛" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">원본</span><b>숲길, 빛 얹기 전</b><span class="en">--view off</span>
+          <span class="how">machine-wilds 영화의 한 프레임</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">예제 장면은 machine-wilds 영화의 프레임이고, 방법은 아래 X 게시물에서 왔습니다.</p>
+  <div class="works">
+    <a class="work" href="https://jungrok5.github.io/machine-wilds/" target="_blank" rel="noopener"><b>machine-wilds · 쇠울림 골짜기</b><span>예제 프레임을 그린 엔진 · 브라우저에서 걷는 3D 세계</span><span class="url">jungrok5.github.io/machine-wilds</span></a>
+    <a class="work" href="https://x.com/manwon_man/status/2124697362719453604?a=qHwbQc4rVBlcbntyv64&s=19" target="_blank" rel="noopener"><b>원본 · @manwon_man의 X 게시물</b><span>애프터이펙트에서 빛줄기마다 마스크를 그리는 숲 햇빛 연출</span><span class="url">x.com/manwon_man</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/light-pass/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/light-pass">폴더</a> <span>lib · scripts · references · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/light-pass/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/light-pass/references/PLAN.md">references/PLAN.md</a> <span>플랜의 모든 필드와 배치 순서</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/light-pass/references/BRIEF.md">references/BRIEF.md</a> <span>장면별 브리프와 검토 질문</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/light-pass/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/light-pass/references/SOURCE.md">references/SOURCE.md</a> <span>출처</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 예제 프레임: machine-wilds 영화(엔진 렌더) · 방법: @manwon_man
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

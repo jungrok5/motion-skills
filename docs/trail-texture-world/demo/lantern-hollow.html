@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lantern Hollow — trail-texture-world</title>
+<script src="lib/trail.js"></script>
+<script src="lib/kit.js"></script>
+</head>
+<body>
+<script>
+// "Lantern Hollow" — a child with a lantern crosses a forest hollow at night, to the far bank and home.
+// Four grounds read one trail texture: leaf litter is pushed aside and stays pushed, glowing moss lights up under each
+// step and fades, the creek rings out in the lantern light, the mud bank keeps deep prints that fill with water.
+const F = TT.create({ seed: 77, title: 'LANTERN HOLLOW', sub: 'THE GROUND REMEMBERS EVERY STEP · EACH IN ITS OWN WAY' });
+
+F.look({ night: 1, ambient: '#3a4a86', levels: 5, band: '#0c0f1c', text: '#ffe9b0', shadow: '#05060c', wind: .6, sheetGround: '#b9b4c4',
+  trail: { bg: '#04050a', foot: '#ffe9b0', body: '#2c3561', wave: '#7fd8ff', you: '#47548f', grid: '#0b0d18' } });
+
+const CREEK = y => F.n.wander(y, 520, 26, 130), RILL = y => F.n.wander(y, 716, 8, 60, 3);
+F.world({
+  w: 900, h: 560,
+  materials: {
+    leaves: TK.leaves({ tones: ['#4b3a2a', '#423223', '#392a1d'], bare: '#2a1f15', litter: { density: .065, colors: ['#b8592c', '#cf8531', '#933f22', '#dcb04a', '#74391f'], push: 5 }, life: 45 }),
+    moss:   TK.moss({ tones: ['#2a5245', '#24483d', '#1d3d34'], spore: '#4f9a80', glow: '#8dffd9', glow2: '#3fd1a6', life: 6 }),
+    mud:    TK.mud({ tones: ['#6a5d50', '#5e5246', '#52473d'], dent: '#2a221c', wet: '#b4d2e6', lip: '#857565', life: 90, puff: '#3d332b' }),
+    creek:  TK.water({ tones: ['#2f6b8a', '#295f7c', '#22536e'], shallow: '#3f84a0', light: '#7cc2da', bank: '#1b3a2c', ring: '#e8f8ff', ring2: '#a6dcef', foam: '#c8ecf6', line: '#d9f2ff' }),
+  },
+  map(x, y, n) {
+    const cd = Math.abs(x - CREEK(y)), rd = Math.abs(x - RILL(y));
+    if (cd < 9 + (n.fbm(x, y, 30) - .5) * 6 || rd < 3.5) return 'creek';
+    if (cd < 24 + (n.fbm(x, y, 24, 3, .5, 2) - .5) * 10 || rd < 14 + (n.fbm(x, y, 16) - .5) * 5) return 'mud';
+    const md = Math.hypot((x - 320) / 130, (y - 300) / 95) + (n.fbm(x, y, 46, 3, .5, 5) - .5) * .5;
+    if (md < 1) return 'moss';
+    return 'leaves';
+  },
+  deco(D, n) {
+    const path = [[80, 262], [200, 282], [330, 300], [420, 322], [486, 330], [556, 334], [600, 330], [694, 318], [740, 318], [850, 300]];
+    TK.scatter(D, { on: 'leaves', count: 34, gap: 46, seed: 4, avoid: TK.nearPath(path, 40) }, (x, y, r) => TK.tree(D, x, y, { r: 13 + Math.round(r() * 6), tones: ['#13261c', '#1c3527', '#284a33', '#386344'], outline: '#081009', trunk: ['#2a1d14', '#3f2c1d'] }));
+    TK.scatter(D, { on: 'leaves', count: 14, gap: 30, seed: 6, avoid: TK.nearPath(path, 18) }, (x, y, r) => r() > .5 ? TK.bush(D, x, y, { r: 6, tones: ['#1b3322', '#25452c', '#335c3a', '#467548'], outline: '#0b150d' }) : TK.rock(D, x, y, { r: 4, tones: ['#3c3f4c', '#525666', '#6c7182', '#8b90a2'], outline: '#1c1d25', cap: '#3f8a6a' }));
+    TK.scatter(D, { on: 'moss', count: 11, gap: 26, seed: 8, avoid: TK.nearPath(path, 12) }, (x, y) => TK.shroom(D, x, y, { cap: '#a8f7ff', c: '#7fe8ff', r: 20, k: .35 }));
+    TK.scatter(D, { on: 'mud', count: 10, gap: 22, seed: 12, inset: 2, avoid: TK.nearPath(path, 10) }, (x, y) => TK.tuft(D, x, y, { tones: ['#1f3a22', '#2f5531', '#467a45'], big: true }));
+    TK.log(D, 420, 250, { len: 26, moss: '#3f8a6a', tones: ['#2e2016', '#45311f', '#5e452d'], end: '#8a7050' });
+  },
+});
+
+F.walker({
+  mass: .7, speed: 30, step: 6.5, footW: 2, hipW: 2, hipH: 6, reach: 9, bodyR: 5,
+  palette: { o: '#1d1a24', y: '#f2c230', Y: '#c8941e', s: '#f0c09a', e: '#1d1a24', h: '#5a3a2a', p: '#3b4a6b', k: '#c0392b', f: '#2a2018', l: '#fff6cf', L: '#ffc85a' },
+  legs: { c: 'p', boot: 'k', w: 2, bootW: 3 },
+  arms: { len: 4, c: 'Y', out: 'o', hand: 's', down: [[10, 8], [0, 8]], up: [[0, 8], [10, 8]], right: [[5, 8], [5, 8]] },
+  blink: ['e', 's'], glow: 'lL',
+  origin: { down: [5, 13], up: [5, 13], right: [5, 13] },
+  art: {
+    down: ['...ooooo...', '..oyyyyyo..', '.oyyyyyyyo.', '.oyhhhhhyo.', '.oyhssshyo.', '.oysesesyo.', '.oYsssssYo.', '..oyyyyyo..',
+           'oyyyyYyyyyo', 'oyYyyYyyYyo', 'oyyyyYyyyyo', 'oYyyyYyyyYo', '.oyyyYyyyo.', '.oYYYYYYYo.', '..ooooooo..'],
+    up:   ['...ooooo...', '..oyyyyyo..', '.oyyyyyyyo.', '.oyyyyyyyo.', '.oyyyyyyyo.', '.oYyyyyyYo.', '.oYYyyyYYo.', '..oyyyyyo..',
+           'oyyyyyyyyyo', 'oyYyyyyyYyo', 'oyyyyyyyyyo', 'oYyyyyyyyYo', '.oyyyyyyyo.', '.oYYYYYYYo.', '..ooooooo..'],
+    right:['...ooooo...', '..oyyyyyo..', '.oyyyyyyyo.', '.oyyyhhhyo.', '.oyyyhssso.', '.oyyyhseso.', '.oYyyYssso.', '..oyyyyyo..',
+           '..oyyyyyo..', '..oyYyyyo..', '..oyyyyyo..', '..oYyyyyo..', '..oyyyyyo..', '..oYYYYYo..', '...ooooo...'],
+  },
+  // the lantern hangs from the right hand: a pendulum that lags every start, stop and turn, and lights the ground round it
+  follow: [{ at: 'handR', art: { down: ['.f.', 'fff', 'flf', 'fLf', 'fff'], up: ['.f.', 'fff', 'flf', 'fLf', 'fff'], right: ['.f.', 'fff', 'flf', 'fLf', 'fff'] },
+             lag: .6, damp: .14, flare: .03, inertia: .025, max: 2.5, light: { at: [1, 2], r: 74, c: '#ffcf7a', k: 1.05, flicker: .05 } }],
+});
+
+F.route([
+  { at: [80, 262], face: 'right', wait: 2.4 },
+  { to: [200, 282], caption: 'LEAVES ARE PUSHED ASIDE AND STAY' },
+  { to: [330, 300], caption: 'MOSS LIGHTS UP UNDER EACH STEP' },
+  { to: [420, 322] },
+  { wait: 1.8, face: 'down', caption: 'AND FADES' },
+  { to: [486, 330], view: 'split', caption: 'ONE TEXTURE UNDER EVERYTHING' },
+  { to: [CREEK(334) - 2, 334], caption: 'THE CREEK RINGS OUT' },
+  { to: [CREEK(334) + 32, 332], caption: 'THE CREEK RINGS OUT' },
+  { to: [RILL(320) - 26, 321], view: 'world' },
+  { to: [RILL(320) - 9, 320], caption: 'MUD KEEPS DEEP PRINTS' },
+  { wait: 1.4, caption: 'MUD KEEPS DEEP PRINTS' },
+  { hop: [RILL(320) + 9, 320], caption: 'A LANDING PRESSES HARDER' },
+  { wait: 1, view: 'trail', caption: 'THE MEMORY ITSELF' },
+  { to: [790, 312], view: 'world' },
+  { to: [860, 300] },
+]);
+F.start();
+</script>
+</body>
+</html>
