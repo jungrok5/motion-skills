@@ -1,0 +1,2 @@
+Noto Serif KR and Noto Serif (italic): SIL Open Font License 1.1 (https://openfontlicense.org).
+Subsets fetched from Google Fonts by fold-out-map/scripts/fonts.mjs for the characters in chars.txt.
