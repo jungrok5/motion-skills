@@ -66,6 +66,14 @@ For this repo, method 6 is the default because the result stays **code**: key po
 (angles, positions, timings) and the skill's own easing does the in-betweens. The generated video is a **reference**,
 not an asset.
 
+## The pass, in order and in numbers
+
+This note says *what* to put in; [`ANIMATION-PRINCIPLES.md`](ANIMATION-PRINCIPLES.md) says *how*: the twelve principles
+as a pass over unchanged story keys (timing → anticipation → arcs → planted contacts → follow-through / overlap → squash
+→ secondary → exaggeration), starting numbers for each, a toolkit to copy (`principle-pass/lib/principles.js`) and a
+meter (`principle-pass/scripts/audit.mjs`) that measures slow in / out, arcs, anticipation, follow-through, overlap,
+squash, timing, alive-at-rest, planted feet and teleports from any page's motion track.
+
 ## Rules for this repo
 
 - **Video / image / voice generation is a reference tool, not a deliverable.** Generated clips live outside the repo
