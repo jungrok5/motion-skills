@@ -69,3 +69,9 @@ A collection of Claude Code skills for making motion graphics. Each top-level fo
   `main`, never merge a PR (or enable auto-merge), never merge a branch into `main` locally: the owner reviews and
   merges. Bring `main` into your branch, not the other way round. Only an explicit "merge it" from the owner for that
   PR changes this.
+- **A new skill is the standing exception (the owner's rule, 2026-11):** render the worked example's MP4 with the skill's
+  own render script (scratch or a git-ignored `out/`, never committed, never in `docs/`), watch it (a contact sheet at
+  least), send it to the owner (`SendUserFile`; a ~720 px preview if the full file is large), then — once every check in
+  CONTRIBUTING.md §4 passes and the PR is open with the branch up to date with `main` — merge that PR into `main` yourself
+  (a merge commit through the GitHub tools, not a local merge or a push to `main`). If a check fails or the PR is not
+  `clean`, fix it or stop and report; never merge red. Every other change still waits for the owner's merge.
