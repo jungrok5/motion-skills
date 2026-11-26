@@ -3816,6 +3816,50 @@
      "url": "https://jungrok5.github.io/motion-skills/plan-build-film/demo/jeju-stone-house/"
     }
    ]
+  },
+  {
+   "id": "nested-world-loop",
+   "name": "nested-world-loop",
+   "tagline": "주제를 주면 세계 속의 세계로 끝없이 들어가는 원테이크 루프 영상을 three.js 코드만으로 만듭니다. 방 안의 물건 속 세계로 들어가 그 세계의 창이나 해치를 지나면 처음의 방으로 돌아오고, 이음매 없이 반복됩니다. 세계마다 자기 축척 · 빛 · 움직임을 코드로 만들고(모델 · 텍스처 · HDRI 없음), 포털로 이어 붙이며, 카메라는 체감 거리로 타이밍을 맞춰 1/400로 줄어드는 밀기도 한 번의 달리처럼 보입니다. 검사 스크립트가 루프가 닫히는지, 세계가 바뀌는 순간이 양쪽 세계에서 같은 그림인지 증명합니다.",
+   "poster": "nested-world-loop/poster.jpg",
+   "posterAlt": "nested-world-loop 예제 「병 속의 등대」의 네 순간: 천장 해치에서 내려다본 관리인 방의 책상과 기름 램프, 병 속 어두운 바다 위의 빨간 띠 등대와 오두막, 가까이서 본 프레넬 렌즈의 유리 고리와 램프, 등명실 바닥 해치로 내려다본 관리인 방의 러그와 사다리",
+   "tags": [
+    "세계 속의 세계 · 원테이크 무한 루프",
+    "three.js 코드만 · 외부 에셋 없음",
+    "포털 · 보이지 않는 이음매",
+    "체감 속도로 맞춘 카메라",
+    "1080p MP4 · 라이브 페이지"
+   ],
+   "stats": [
+    "예제 「병 속의 등대」 · 세계 3개 · 한 바퀴에 1/400",
+    "스타터 「액자 속 오두막」 · 세계 2개"
+   ],
+   "page": "nested-world-loop/",
+   "source": "nested-world-loop/",
+   "absorbedFrom": {
+    "repo": "https://github.com/jungrok5/motion-skills",
+    "path": "nested-world-loop/examples/lighthouse-bottle/"
+   },
+   "workedExample": [
+    {
+     "title": "「병 속의 등대」 · 관리인 방 → 병 속 바다 → 등명실 → 관리인 방 · 24초 루프 · 한 바퀴에 1/400",
+     "url": "https://jungrok5.github.io/motion-skills/nested-world-loop/demo/lighthouse-bottle/"
+    },
+    {
+     "title": "「액자 속 오두막」 · 스타터 · 서재 → 그림 속 언덕 → 서재 · 14초 루프",
+     "url": "https://jungrok5.github.io/motion-skills/nested-world-loop/demo/starter/"
+    }
+   ],
+   "sources": [
+    {
+     "title": "CF长风(@cfenghub)의 X 게시물: Rez의 영상을 소개하며 「시계 문자판 속 미시 세계」를 순수 three.js 코드, 외부 3D 에셋 없이 만든 무한 루프라고 설명 — 작업대의 영화 같은 조명, 재질 구분, 피사계 심도",
+     "url": "https://x.com/cfenghub/status/2125403596757905720?a=_ZUllhPlhe0rXEGbREU&s=19"
+    },
+    {
+     "title": "원본 영상 · Rez(@RezAIT00) 「a world within a watch」 (20초): 시계공의 작업대 → 무브먼트 → 톱니 아래 도시 → 시계방 창 → 작업대, three.js만으로",
+     "url": "https://x.com/RezAIT00/status/2125285225769164985/video/1"
+    }
+   ]
   }
  ]
 }
