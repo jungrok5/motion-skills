@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>embroidery-reel · motion-skills</title>
+<meta name="description" content="주제를 주면 목록의 항목마다 바늘이 리넨 천에 새틴 자수 패치를 놓고 이름을 한 글자씩 수놓고, 종이 태그가 떨어지고, 낮게 미끄러지는 카메라가 다음 항목으로 넘어가는 세로 영상을 three.js 코드만으로 만듭니다. 패치는 항목마다 도형으로 새로 그리고, 도형은 실제 땀(채움 · 새틴 · 홈질 · 도톰한 테두리)이 되어 바느질 순서대로 나타납니다.">
+<meta property="og:title" content="embroidery-reel · motion-skills">
+<meta property="og:description" content="주제를 주면 목록의 항목마다 바늘이 리넨 천에 새틴 자수 패치를 놓고 이름을 한 글자씩 수놓고, 종이 태그가 떨어지고, 낮게 미끄러지는 카메라가 다음 항목으로 넘어가는 세로 영상을 three.js 코드만으로 만듭니다. 패치는 항목마다 도형으로 새로 그리고, 도형은 실제 땀(채움 · 새틴 · 홈질 · 도톰한 테두리)이 되어 바느질 순서대로 나타납니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/embroidery-reel/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/embroidery-reel">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / embroidery-reel</nav>
+  <h1>embroidery-reel</h1>
+  <p>주제를 주면 목록의 항목마다 바늘이 리넨 천에 새틴 자수 패치를 놓고 이름을 한 글자씩 수놓고, 종이 태그가 떨어지고, 낮게 미끄러지는 카메라가 다음 항목으로 넘어가는 세로 영상을 three.js 코드만으로 만듭니다. 패치는 항목마다 도형으로 새로 그리고, 도형은 실제 땀(채움 · 새틴 · 홈질 · 도톰한 테두리)이 되어 바느질 순서대로 나타납니다. 원본: <a href="https://x.com/flxrnc/status/2125681086722097551?a=cv8JTTCnpK--OKdJuUQ&s=19">@flxrnc의 X 게시물</a>(애니메이션 레포 15개를 재봉 테이블 위에 수놓은 세로 영상)을 보고 만들었습니다.</p>
+  <ul class="tags"><li>자수 패치 · 한 땀씩 나타남</li><li>바늘과 실 · 종이 태그</li><li>나뭇잎 그림자 · 피사계 심도</li><li>three.js 코드만</li><li>세로 MP4 · 라이브 페이지</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>주제 하나와 그 목록 (도구, 레시피 재료, 코스, 라인업, 단계, 메뉴 …)</dd>
+      <dt>브리프</dt><dd>항목마다 제목 · 태그 문구 · 패치 아이디어, 바탕 모양과 색, 바느질 순서, 팔레트, 아웃트로 문구</dd>
+      <dt>패치 설계</dt><dd>사각 · 원 · 다각형 · SVG 경로 · 글자 · 새틴 줄 · 홈질로 항목마다 새로 그린 패치, 땀 방향과 테두리</dd>
+      <dt>검사</dt><dd>check.mjs: 바느질 완료 · 화면 안 구도 · 글자 크기 · 바늘의 디딤과 예비 동작 · 카메라 매끄러움 · 밝기, 스틸 검토</dd>
+      <dt>출력</dt><dd>라이브 HTML 페이지와 1080×1350 MP4</dd>
+    </dl>
+    <pre><code>node embroidery-reel/scripts/new-reel.mjs my-reel --title "제목"
+node embroidery-reel/scripts/check.mjs my-reel
+node embroidery-reel/scripts/render.mjs my-reel --items
+node embroidery-reel/scripts/render.mjs my-reel   # → out/my-reel.mp4</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium (GPU 없이 SwiftShader), ffmpeg. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/embroidery-reel/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:4/5;--h-phone:min(calc((100vw - 32px) * 1.25),86vh);--demo-bg:#140d08">
+    <iframe data-src="demo/bibimbap/?scale=.6" title="embroidery-reel 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/bibimbap/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 「비빔밥 한 그릇」 · 재료 6가지 · 21초</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/bibimbap/?scale=.6" data-cap="예제 「비빔밥 한 그릇」 · 재료 6가지 · 21초" aria-pressed="true">비빔밥 한 그릇</button>
+        <button class="btn" type="button" data-src="demo/starter/?scale=.6" data-cap="스타터 「A small morning」 · 항목 3개 · 14초">A small morning</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제와 스타터에서 항목마다 태그가 내려앉은 순간입니다. 카드를 누르면 라이브 페이지가 그 순간에 멈춘 채 열립니다(클릭 · 스페이스로 재생).</p>
+  <div id="gallery">
+    <div class="group">
+      <h3>비빔밥 한 그릇 <small>새 주제로 만든 예제 · 재료 6가지 · 21초</small></h3>
+      <p>원본에 없는 주제입니다. 그릇에 들어가는 순서대로 밥 · 나물 · 당근 · 달걀 · 고추장 · 참기름을 한 장씩 수놓고, 금실로 이어 목록 카드로 끝납니다.</p>
+      <div class="grid">
+        <a class="tile" href="demo/bibimbap/?t=2.17" target="_blank" rel="noopener">
+          <img src="samples/bibimbap-2-17.jpg" alt="남색 둥근 사각 바탕 위 놋그릇에 담긴 흰쌀밥과 피어오르는 김 자수, 아래에 남색 실로 수놓은 「밥」" loading="lazy" width="640" height="438">
+          <div class="cap"><span class="no">밥 · 2초</span><b>밥</b><span class="how">놋그릇의 흰쌀밥과 김, 남색 바탕에 크림색 테두리</span></div></a>
+        <a class="tile" href="demo/bibimbap/?t=4.37" target="_blank" rel="noopener">
+          <img src="samples/bibimbap-4-37.jpg" alt="크림색 바탕에 초록 테두리, 잎맥이 있는 시금치 잎 세 장 자수와 「시금치 나물」 글자" loading="lazy" width="640" height="438">
+          <div class="cap"><span class="no">시금치 나물 · 4초</span><b>시금치 나물</b><span class="how">한 뿌리에서 올라온 잎 세 장, 연한 잎맥</span></div></a>
+        <a class="tile" href="demo/bibimbap/?t=6.57" target="_blank" rel="noopener">
+          <img src="samples/bibimbap-6-57.jpg" alt="남색 타원 바탕 위 대각선으로 놓인 주황 당근과 초록 잎 자수, 아래 「당근」" loading="lazy" width="640" height="438">
+          <div class="cap"><span class="no">당근 · 7초</span><b>당근</b><span class="how">결을 따라 놓은 땀, 잎이 달린 당근</span></div></a>
+        <a class="tile" href="demo/bibimbap/?t=8.77" target="_blank" rel="noopener">
+          <img src="samples/bibimbap-8-77.jpg" alt="청록 바탕 위 흰자와 노른자의 달걀 프라이 자수, 아래 「달걀 프라이」" loading="lazy" width="640" height="438">
+          <div class="cap"><span class="no">달걀 프라이 · 9초</span><b>달걀 프라이</b><span class="how">청록 바탕, 반숙 노른자와 홈질 테</span></div></a>
+        <a class="tile" href="demo/bibimbap/?t=10.97" target="_blank" rel="noopener">
+          <img src="samples/bibimbap-10-97.jpg" alt="크림색 바탕에 빨간 테두리, 「고추장」 라벨이 붙은 갈색 옹기와 빨간 고추 자수" loading="lazy" width="640" height="438">
+          <div class="cap"><span class="no">고추장 · 11초</span><b>고추장</b><span class="how">옹기와 「고추장」 라벨까지 수놓음</span></div></a>
+        <a class="tile" href="demo/bibimbap/?t=13.17" target="_blank" rel="noopener">
+          <img src="samples/bibimbap-13-17.jpg" alt="남색 바탕에 금색 테두리, 빨간 뚜껑의 호박색 참기름 병과 참깨 라벨 자수" loading="lazy" width="640" height="438">
+          <div class="cap"><span class="no">참기름 · 13초</span><b>참기름</b><span class="how">호박색 병, 참깨 라벨, 기름 한 방울</span></div></a>
+        <a class="tile" href="demo/bibimbap/?t=16.66" target="_blank" rel="noopener">
+          <img src="samples/bibimbap-16-66.jpg" alt="위에서 내려다본 천 위의 여섯 패치와 실패 · 골무, 패치 줄 사이를 따라 놓인 금색 끈과 끝 카드" loading="lazy" width="640" height="438">
+          <div class="cap"><span class="no">아웃트로 · 17초</span><b>금실로 잇기</b><span class="how">줄 사이 틈을 따라 누빈 금실</span></div></a>
+        <a class="tile" href="demo/bibimbap/?t=20.8" target="_blank" rel="noopener">
+          <img src="samples/bibimbap-20-8.jpg" alt="종이 카드에 「비빔밥 한 그릇.」 「한 땀 한 땀.」과 노란 실 물결 밑줄, 번호가 붙은 재료 목록" loading="lazy" width="640" height="438">
+          <div class="cap"><span class="no">끝 카드 · 21초</span><b>비빔밥 한 그릇.</b><span class="how">목록과 수놓은 밑줄</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>A small morning <small>스타터 · 항목 3개 · 14초</small></h3>
+      <p>가장 작은 릴입니다. 바탕 모양과 색을 항목마다 바꾸고, 두 번째 항목은 태그를 위에 둡니다.</p>
+      <div class="grid">
+        <a class="tile" href="demo/starter/?t=2.17" target="_blank" rel="noopener">
+          <img src="samples/starter-2-17.jpg" alt="남색 바탕 위 김이 나는 크림색 컵 자수와 남색 실 「Coffee」" loading="lazy" width="640" height="438">
+          <div class="cap"><span class="no">Coffee · 2초</span><b>Coffee</b><span class="how">김이 나는 크림색 컵</span></div></a>
+        <a class="tile" href="demo/starter/?t=4.37" target="_blank" rel="noopener">
+          <img src="samples/starter-4-37.jpg" alt="하늘색 바탕 위 노란 해와 초록 언덕, 홈질 구름 자수와 「Sunrise」" loading="lazy" width="640" height="438">
+          <div class="cap"><span class="no">Sunrise · 4초</span><b>Sunrise</b><span class="how">언덕 위 해, 홈질 구름 · 태그는 위</span></div></a>
+        <a class="tile" href="demo/starter/?t=6.57" target="_blank" rel="noopener">
+          <img src="samples/starter-6-57.jpg" alt="크림색 알약 모양 바탕 위 남색 바퀴와 빨간 프레임의 자전거 자수와 「Bicycle」" loading="lazy" width="640" height="438">
+          <div class="cap"><span class="no">Bicycle · 7초</span><b>Bicycle</b><span class="how">새틴 줄로 수놓은 바퀴와 빨간 프레임</span></div></a>
+        <a class="tile" href="demo/starter/?t=13.83" target="_blank" rel="noopener">
+          <img src="samples/starter-13-83.jpg" alt="종이 카드에 「A small morning.」 「Stitch by stitch.」와 노란 실 밑줄, 세 항목 목록" loading="lazy" width="640" height="438">
+          <div class="cap"><span class="no">끝 카드 · 14초</span><b>A small morning.</b><span class="how">세 이름의 목록</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. 원본 게시물의 영상을 보고 스타일을 가져와, 원본에 없는 주제로 처음부터 끝까지 만들었습니다.</p>
+  <div class="works">
+    <a class="work" href="demo/bibimbap/" target="_blank" rel="noopener"><b>「비빔밥 한 그릇」</b><span>재료 6가지 · 한글 제목과 태그 · 21초</span><span class="url">embroidery-reel/examples/bibimbap</span></a>
+    <a class="work" href="demo/starter/" target="_blank" rel="noopener"><b>「A small morning」</b><span>스타터 · 항목 3개 · 14초</span><span class="url">embroidery-reel/starter</span></a>
+    <a class="work" href="https://x.com/flxrnc/status/2125681086722097551?a=cv8JTTCnpK--OKdJuUQ&s=19"><b>원본 · @flxrnc의 X 게시물</b><span>애니메이션 레포 15개를 수놓은 36초 세로 영상</span><span class="url">x.com/flxrnc/status/2125681086722097551</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/embroidery-reel/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/embroidery-reel">폴더</a> <span>lib · scripts · references · starter · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/embroidery-reel/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/embroidery-reel/references/BRIEF.md">references/BRIEF.md</a> <span>브리프 틀과 스틸 검토</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/embroidery-reel/references/KIT.md">references/KIT.md</a> <span>도형 · 항목 · 영상 옵션</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/embroidery-reel/references/LOOK.md">references/LOOK.md</a> <span>땀 · 테이블 · 빛 · 렌즈 · 카메라 · 바늘</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/embroidery-reel/references/SOURCE.md">references/SOURCE.md</a> <span>원본에서 가져온 것과 가져오지 않은 것</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/embroidery-reel/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림은 이 스킬의 코드로 렌더링 · 글꼴 SIL OFL 1.1 · three.js MIT
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
