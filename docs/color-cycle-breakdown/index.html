@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>color-cycle-breakdown · motion-skills</title>
+<meta name="description" content="주제를 주면 픽셀은 그대로 두고 팔레트의 색만 돌려 물 · 불 · 빛 · 별이 살아 움직이는 픽셀아트 장면을 코드로 그리고, 그 장면을 레이어 판으로 분해해 원리를 패널로 설명한 뒤 다시 합치는 영상을 만듭니다.">
+<meta property="og:title" content="color-cycle-breakdown · motion-skills">
+<meta property="og:description" content="주제를 주면 픽셀은 그대로 두고 팔레트의 색만 돌려 물 · 불 · 빛 · 별이 살아 움직이는 픽셀아트 장면을 코드로 그리고, 그 장면을 레이어 판으로 분해해 원리를 패널로 설명한 뒤 다시 합치는 영상을 만듭니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/color-cycle-breakdown/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/color-cycle-breakdown">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / color-cycle-breakdown</nav>
+  <h1>color-cycle-breakdown</h1>
+  <p>주제를 주면 픽셀은 그대로 두고 팔레트의 색만 돌려(컬러 사이클링) 물 · 불 · 빛 · 별이 살아 움직이는 픽셀아트 장면을 코드로 그리고, 그 장면을 이름 붙은 레이어 판으로 공중에 분해해 원리를 패널로 하나씩 보여 준 뒤 다시 합치는 영상을 만듭니다. 원본: <a href="https://x.com/JungleSilicon/status/2126107723460907414?a=yo9l1g21bGwO0nwzfCw&s=19">@JungleSilicon의 X 게시물</a>(픽셀 폭포 장면을 네 장의 판으로 분해해 컬러 사이클링을 설명한 16초 영상)을 보고 만들었습니다.</p>
+  <ul class="tags"><li>컬러 사이클링 · 픽셀은 그대로</li><li>레이어 판 분해</li><li>고정 인덱스 · 흐름장 · 바람 리그 패널</li><li>코드만 · 외부 에셋 없음</li><li>1920×1080 MP4 · 라이브 페이지</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>움직이는 것이 있는 장소 하나 (포구, 대장간, 비 오는 골목, 화산, 폭포, 네온 간판, 오로라 …)</dd>
+      <dt>브리프</dt><dd>그림(주인공 · 빛 · 깊이 · 팔레트), 레이어와 화면 이름, 움직이는 것마다 기법(순환 · 흐름 · 그리기 · 리그)과 램프 · 속도, 패널 문구</dd>
+      <dt>그림 설계</dt><dd>320×180 인덱스 픽셀아트: 램프와 순환, 디더링 그러데이션, 방향을 준 흐름장, 바람에 휘는 식물, 프레임마다 그리는 불티</dd>
+      <dt>검사</dt><dd>check.mjs: 픽셀은 그대로 · 색만 바뀜 · 흐름 방향 · 리그(뼈 길이 · 뿌리 · 관절 한계 · 따라 휨) · 카메라 · 구도 · 글자 크기, 스틸 검토</dd>
+      <dt>출력</dt><dd>라이브 HTML 페이지와 1920×1080 MP4</dd>
+    </dl>
+    <pre><code>node color-cycle-breakdown/scripts/new-film.mjs my-film --title "제목"
+node color-cycle-breakdown/scripts/check.mjs my-film
+node color-cycle-breakdown/scripts/render.mjs my-film --shots
+node color-cycle-breakdown/scripts/render.mjs my-film   # → out/my-film.mp4</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium (Canvas 2D, GPU 필요 없음), ffmpeg. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/color-cycle-breakdown/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:16/9;--h-phone:calc((100vw - 32px) * .5625);--demo-bg:#0d131a">
+    <iframe data-src="demo/lighthouse-cove/?scale=.5" title="color-cycle-breakdown 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/lighthouse-cove/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 「등대 포구의 밤」 · 레이어 4장 · 패널 3개 · 24초</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/lighthouse-cove/?scale=.5" data-cap="예제 「등대 포구의 밤」 · 레이어 4장 · 패널 3개 · 24초" aria-pressed="true">등대 포구의 밤</button>
+        <button class="btn" type="button" data-src="demo/starter/?scale=.5" data-cap="스타터 「Campfire」 · 레이어 4장 · 패널 2개 · 20초">Campfire</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제와 스타터의 장면 · 분해 · 패널입니다. 카드를 누르면 라이브 페이지가 그 순간에 멈춘 채 열립니다(클릭 · 스페이스로 재생).</p>
+  <div id="gallery">
+    <div class="group">
+      <h3>등대 포구의 밤 <small>새 주제로 만든 예제 · 패널 3개 · 24초</small></h3>
+      <p>원본에 없는 주제입니다. 등대 불빛은 24칸 순환(그중 16칸은 투명)으로 돌고, 파도 · 물거품 · 달빛 물결은 흐름장으로 해안에 밀려오고, 모래언덕의 갈대는 한 번의 돌풍에 휩니다.</p>
+      <div class="grid">
+        <a class="tile" href="demo/lighthouse-cove/?t=1.5" target="_blank" rel="noopener">
+          <img src="samples/lighthouse-cove-1-5.jpg" alt="달이 뜬 밤 포구, 오른쪽 절벽 위 빨간 줄무늬 등대가 왼쪽 하늘로 디더링된 불빛을 뿜고, 파도가 모래언덕으로 밀려오며 갈대가 서 있는 픽셀아트" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">장면 · 1.5초</span><b>살아 있는 그림</b><span class="how">불빛 · 파도 · 물거품 · 달빛 · 별이 색 순환으로 움직임</span></div></a>
+        <a class="tile" href="demo/lighthouse-cove/?t=5.4" target="_blank" rel="noopener">
+          <img src="samples/lighthouse-cove-5-4.jpg" alt="장면이 네 장의 유리판으로 공중에 펼쳐진 모습: 하늘 · 절벽 · 등대, 바다, 등대 불빛, 바람에 흔들리는 갈대, 아래에 판마다 색 이름" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">분해 · 5초</span><b>레이어 판 네 장</b><span class="how">불투명한 그림이 가장 뒤, 앞쪽 판일수록 오른쪽</span></div></a>
+        <a class="tile" href="demo/lighthouse-cove/?t=8.8" target="_blank" rel="noopener">
+          <img src="samples/lighthouse-cove-8-8.jpg" alt="01 팔레트 순환 패널: 왼쪽은 불빛의 순환 슬롯만 보라색인 고정 인덱스, 오른쪽은 같은 픽셀의 실제 색, 아래에 24칸 색 견본" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">패널 1 · 9초</span><b>불빛은 그려 둔 부채꼴</b><span class="how">고정 인덱스 · 도는 색 · 슬롯 24칸 견본(투명 칸 점선)</span></div></a>
+        <a class="tile" href="demo/lighthouse-cove/?t=12.8" target="_blank" rel="noopener">
+          <img src="samples/lighthouse-cove-12-8.jpg" alt="02 흐름장 패널: 왼쪽은 어둡게 누른 바다 위 아래쪽을 향한 화살표 격자, 오른쪽은 흐름장과 팔레트 순환으로 움직이는 바다" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">패널 2 · 13초</span><b>파도에 방향을 준다</b><span class="how">along 함수의 기울기를 잰 화살표</span></div></a>
+        <a class="tile" href="demo/lighthouse-cove/?t=16.8" target="_blank" rel="noopener">
+          <img src="samples/lighthouse-cove-16-8.jpg" alt="03 바람 리그 패널: 왼쪽은 갈대 컷아웃, 오른쪽은 줄기마다 색이 다른 관절 선과 점" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">패널 3 · 17초</span><b>줄기 끝마다 다르게</b><span class="how">갈대 컷아웃 · 줄기마다 관절</span></div></a>
+        <a class="tile" href="demo/lighthouse-cove/?t=20.3" target="_blank" rel="noopener">
+          <img src="samples/lighthouse-cove-20-3.jpg" alt="네 장의 판이 다시 한 장으로 겹쳐지는 중간 순간" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">합치기 · 20초</span><b>다시 한 장으로</b><span class="how">분해와 같은 길로 돌아와 끝까지 재생</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>Campfire <small>스타터 · 패널 2개 · 20초</small></h3>
+      <p>가장 작은 영상입니다. 불꽃은 투명 칸 두 개가 섞인 9칸 순환으로 위로 오르고, 땅의 불빛은 고리로 퍼지고, 불티는 프레임마다 그리고, 풀은 바람에 휩니다.</p>
+      <div class="grid">
+        <a class="tile" href="demo/starter/?t=1.5" target="_blank" rel="noopener">
+          <img src="samples/starter-1-5.jpg" alt="별이 뜬 밤 숲속 공터, 돌로 두른 모닥불과 위로 오르는 불티, 양쪽의 풀 무더기를 그린 픽셀아트" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">장면 · 1.5초</span><b>모닥불</b><span class="how">불꽃 · 땅의 불빛 · 별은 순환, 불티는 그리기</span></div></a>
+        <a class="tile" href="demo/starter/?t=5.4" target="_blank" rel="noopener">
+          <img src="samples/starter-5-4.jpg" alt="모닥불 장면이 네 장의 판(하늘과 공터, 불꽃, 불티, 바람에 휘는 풀)으로 펼쳐진 모습" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">분해 · 5초</span><b>레이어 판 네 장</b><span class="how">Sky & clearing · Flames · Sparks · Wind-rigged grass</span></div></a>
+        <a class="tile" href="demo/starter/?t=8.8" target="_blank" rel="noopener">
+          <img src="samples/starter-8-8.jpg" alt="Palette cycling 패널: 불꽃의 아홉 슬롯이 보라색인 고정 인덱스와 실제 불꽃, 아래 9칸 견본" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">패널 1 · 9초</span><b>Nine colors climb</b><span class="how">불꽃 9칸, 그중 투명 2칸</span></div></a>
+        <a class="tile" href="demo/starter/?t=12.6" target="_blank" rel="noopener">
+          <img src="samples/starter-12-6.jpg" alt="Wind rig 패널: 풀 컷아웃과 잎마다 색이 다른 관절 선" loading="lazy" width="640" height="360">
+          <div class="cap"><span class="no">패널 2 · 13초</span><b>One gust</b><span class="how">풀 컷아웃 · 잎마다 관절</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. 원본 게시물의 영상을 보고 형식을 가져와, 원본에 없는 주제로 처음부터 끝까지 만들었습니다.</p>
+  <div class="works">
+    <a class="work" href="demo/lighthouse-cove/" target="_blank" rel="noopener"><b>「등대 포구의 밤」</b><span>레이어 4장 · 패널 3개 · 한글 문구 · 24초</span><span class="url">color-cycle-breakdown/examples/lighthouse-cove</span></a>
+    <a class="work" href="demo/starter/" target="_blank" rel="noopener"><b>「Campfire」</b><span>스타터 · 레이어 4장 · 패널 2개 · 20초</span><span class="url">color-cycle-breakdown/starter</span></a>
+    <a class="work" href="https://x.com/JungleSilicon/status/2126107723460907414?a=yo9l1g21bGwO0nwzfCw&s=19"><b>원본 · @JungleSilicon의 X 게시물</b><span>픽셀 폭포를 분해해 컬러 사이클링을 설명한 16초 영상</span><span class="url">x.com/JungleSilicon/status/2126107723460907414</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/color-cycle-breakdown/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/color-cycle-breakdown">폴더</a> <span>lib · scripts · references · starter · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/color-cycle-breakdown/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/color-cycle-breakdown/references/BRIEF.md">references/BRIEF.md</a> <span>브리프 틀과 스틸 검토</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/color-cycle-breakdown/references/KIT.md">references/KIT.md</a> <span>팔레트 · 레이어 · 그리기 · 흐름 · 식물 · 패널</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/color-cycle-breakdown/references/LOOK.md">references/LOOK.md</a> <span>그림 · 색으로 만드는 움직임 · 분해 · 문구</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/color-cycle-breakdown/references/SOURCE.md">references/SOURCE.md</a> <span>원본에서 가져온 것과 가져오지 않은 것</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/color-cycle-breakdown/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림은 이 스킬의 코드로 렌더링 · 글꼴 SIL OFL 1.1
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
