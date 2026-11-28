@@ -107,3 +107,6 @@ When you add a skill, these go in alongside the body checks in `CONTRIBUTING.md`
 5. **Stills review line**: "Does anything float, skate, or stand dead still? Does the big move gather and land?"
    A yes on the first or a no on the second fails the still.
 6. **`references/LESSONS.md`**: what looked like slop, why, and what fixed it — one or two lines each.
+7. **Per frame, at the film's rate**: a value that jumps between two frames — a foot's angle, its speed at lift-off or
+   touchdown, an effect that blinks out — reads as a snap whatever the curve means. Measure at the film's frame rate
+   (machine-wilds' `gym.mjs` fails a foot turning more than 15° in one frame at 24 fps); a foot leaves and lands at rest.
