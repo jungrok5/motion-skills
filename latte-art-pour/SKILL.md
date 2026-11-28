@@ -15,7 +15,7 @@ the pour is heard. One HTML page plays it (`seek(t)`), `render.mjs` writes the M
 Made from the Threads post by @ujae_ — https://www.threads.com/share/BAJMYuMY94 — sharing a latte-art pour simulator
 by a New Zealand motion designer (two clips: a rosetta and a tulip poured from above; `references/SOURCE.md` says what
 is taken and what is not: the idea and the physics seen in the clips, none of its code, UI or look). Built and proven
-in this repo on `examples/matcha-tulip` 「벚꽃 찻집의 말차 튤립」 — a four-stack tulip on matcha, poured upward in a
+in this repo on `examples/matcha-tulip` 「Matcha Tulip」 — a four-stack tulip on matcha, poured upward in a
 slate stoneware cup — and the starter 「Rosetta」.
 
 **Fixed by the skill (the style)**
@@ -29,7 +29,8 @@ slate stoneware cup — and the starter 「Rosetta」.
 **Designed for every topic (never reused from an example)**
 - The drink (crema and foam colours), the cup (glaze, rim, inner, handle, saucer), the table and the accent.
 - The figure and its whole pour score: moves, positions, durations, rocking, stacks, direction, cuts, etches.
-- Every word: kicker, title, step labels, caption — in the topic's language; the timing.
+- Every word: kicker, title, step labels, caption — English on screen unless the brief says otherwise (`lang: 'ko'` for
+  Korean labels; `references/OWNER-FEEDBACK.md`); the timing.
 
 ## What's in this folder
 | path | what |
@@ -41,7 +42,7 @@ slate stoneware cup — and the starter 「Rosetta」.
 | `lib/fonts/` | Source Serif 4, Nanum Myeongjo, Inter, Noto Sans KR — OFL |
 | `templates/` | the skeleton `film.js` (a placeholder heart, the contract not a look) and the `BRIEF.md` form |
 | `starter/` | 「Rosetta」 espresso, white porcelain, oak, English, 15.8 s — runs as it is |
-| `examples/matcha-tulip/` | 「벚꽃 찻집의 말차 튤립」 matcha, slate stoneware, terrazzo, poured upward, Korean, 17.1 s; `BRIEF.md` with its stills review |
+| `examples/matcha-tulip/` | 「Matcha Tulip」 matcha, slate stoneware, terrazzo, poured upward, 17.1 s; `BRIEF.md` with its stills review |
 | `scripts/new-film.mjs` | start a project (`--title`, `--from <film>` to study one, `--refresh` re-copies the engine) |
 | `scripts/render.mjs` | MP4 with the synthesised sound (workers × ffmpeg), `--stills`, `--sheet`, `--shots` (before, the end of every step, end) |
 | `scripts/audio.mjs` | the pour sound from the score (stream, glug, splash, pin, saucer tick, room) → WAV |
@@ -66,7 +67,7 @@ Requirements: Node + Playwright Chromium (Canvas 2D, no GPU needed), ffmpeg; Pyt
 ## Workflow
 1. **Topic → brief.** Write `BRIEF.md` from `references/BRIEF.md`: who pours this cup and why; the figure and why it
    fits; the direction; drink, cup, table, ink and accent; the score as a table (one row per move, `say` rows are the
-   3–7 steps); kicker, title, caption, language; timing.
+   3–7 steps); kicker, title, caption (English unless the brief says otherwise); timing.
 2. **Start**: `node <skill>/scripts/new-film.mjs my-cup --title "…"` (or `--from matcha-tulip` to study one — then
    replace everything; a bundled film is not a template).
 3. **Pour the figure** (`references/SCORE.md`): write the score, look at `render.mjs my-cup --shots` (the end of every

@@ -30,7 +30,9 @@ from it, the inner wall is in shadow on that side, the window glare sits on that
 - Kicker (small caps, accent colour), title (serif: Source Serif 4 / Nanum Myeongjo for Hangul, ≤ 2 lines), step label
   (serif, one per `say`), labels (Inter / Noto Sans KR), caption (one sentence, sans).
 - Sizes at 1080 short side: title 74, step 52, kicker 30, label 28, caption 34 — never below the minimums in check.
-- Steps say what the hand does, in the topic's language and voice ("Rock it, then pull back", "끊고, 뒤에서 밀어 넣는다").
+- Steps say what the hand does, in the topic's voice ("Rock it, then pull back", "Cut, then push in from behind").
+- On-screen words are English unless the brief says otherwise (`references/OWNER-FEEDBACK.md`); `lang: 'ko'` gives
+  Korean meter labels (높이 / 흐름) and Hangul falls back to the bundled Korean fonts.
 
 ## Sound
 `render.mjs` synthesises the pour from the score (`scripts/audio.mjs`): band-passed noise for the stream (brighter when
