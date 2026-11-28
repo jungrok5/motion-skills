@@ -21,7 +21,10 @@ follows is the part of it that is not about that one game.
   effects or motion change, give the owner a short MP4 to look at.
 - Spend what a job needs to get it right; a specialist agent for a specialist pass, judged by you.
 - X posts are read through the mirror (CONTRIBUTING.md "X · Threads 게시물에서 출처 읽기"); never give up on an X link.
-- ElevenLabs only after the owner says yes for that request (CLAUDE.md).
+- ElevenLabs only after the owner says yes for that request (CLAUDE.md). Varco 3D has 100,000 points a month, refilled
+  monthly: use it freely where a skill allows outside models (2026-11-28); it has no sound tool.
+- A file too big to send (a film) goes to a GitHub release of its repository, never into a commit; give the owner the
+  link (2026-11-28).
 
 ## Effects and motion
 
