@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>latte-art-pour · motion-skills</title>
+<meta name="description" content="주제를 주면 위에서 내려다본 잔에 스팀 우유를 부어 라떼아트가 그려지는 짧은 영상을 만듭니다. 그림은 칠하지 않고, 우유가 흐르는 표면 시뮬레이션이 그립니다: 낮게 흔들면 로제타 잎이, 높게 끊어 밀어 넣으면 튤립 단이, 가늘게 그으면 줄기가 생깁니다.">
+<meta property="og:title" content="latte-art-pour · motion-skills">
+<meta property="og:description" content="주제를 주면 위에서 내려다본 잔에 스팀 우유를 부어 라떼아트가 그려지는 짧은 영상을 만듭니다. 그림은 칠하지 않고, 우유가 흐르는 표면 시뮬레이션이 그립니다: 낮게 흔들면 로제타 잎이, 높게 끊어 밀어 넣으면 튤립 단이, 가늘게 그으면 줄기가 생깁니다.">
+<meta property="og:image" content="https://jungrok5.github.io/motion-skills/latte-art-pour/poster.jpg">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="../">motion-skills</a>
+  <nav><a href="../">스킬 목록</a><a href="https://github.com/jungrok5/motion-skills/tree/main/latte-art-pour">GitHub</a></nav>
+</div></header>
+
+<header class="hero"><div class="wrap">
+  <nav class="crumb" aria-label="위치"><a href="../">motion-skills</a> / latte-art-pour</nav>
+  <h1>latte-art-pour</h1>
+  <p>주제를 주면 위에서 내려다본 잔에 스팀 우유를 부어 라떼아트가 그려지는 짧은 영상을 만듭니다. 그림은 칠하지 않고, 우유가 흐르는 표면 시뮬레이션이 그립니다: 낮게 흔들면 로제타 잎이, 높게 끊어 밀어 넣으면 튤립 단이, 가늘게 그으면 줄기가 생깁니다. 원본: <a href="https://www.threads.com/share/BAJMYuMY94">@ujae_의 Threads 게시물</a>(뉴질랜드의 모션 그래픽 디자이너가 만든 라떼아트 시뮬레이터를 소개한 글과 두 영상)을 보고 만들었습니다.</p>
+  <ul class="tags"><li>붓는 대로 그려지는 표면 시뮬레이션</li><li>하트 · 로제타 · 튤립 · 에칭</li><li>음료 · 잔 · 테이블 · 그림을 주제마다 설계</li><li>코드만 · 붓는 소리 합성</li><li>1080×1920 MP4 · 직접 부어 보는 페이지</li></ul>
+</div></header>
+
+<main>
+<section id="how"><div class="wrap split">
+  <div class="how">
+    <h2>작업 흐름</h2>
+    <dl>
+      <dt>입력</dt><dd>잔 하나의 주제 (카페의 계절 메뉴, 결혼식, 아침 바, 브랜드, 한 사람 …)</dd>
+      <dt>브리프</dt><dd>그림과 고른 이유, 붓는 방향, 음료 · 잔 · 테이블 색, 동작 표(채우기 · 내리기 · 흔들기 · 밀어 넣기 · 긋기 · 에칭)와 단계 문구</dd>
+      <dt>붓기</dt><dd>동작 표가 피처의 높이 · 흐름 · 위치를 움직이고, 표면 시뮬레이션이 거품을 밀어 그림을 만듦 (칠하는 그림 없음)</dd>
+      <dt>검사</dt><dd>check.mjs: 결정성 · 잔 안쪽 붓기 · 피처의 이징과 예비 동작 · 그림의 넓이와 윤곽 · 끝난 뒤 정지 · 대비 · 글자 크기와 겹침 · 소리, 스틸 검토</dd>
+      <dt>출력</dt><dd>라이브 HTML 페이지(<code>?play=1</code>로 직접 붓기)와 붓는 소리가 든 1080×1920 MP4</dd>
+    </dl>
+    <pre><code>node latte-art-pour/scripts/new-film.mjs my-cup --title "제목"
+node latte-art-pour/scripts/check.mjs my-cup
+node latte-art-pour/scripts/render.mjs my-cup --shots
+node latte-art-pour/scripts/render.mjs my-cup   # → out/my-cup.mp4</code></pre>
+    <p class="mute">요구 사항: Node + Playwright Chromium (Canvas 2D, GPU 필요 없음), ffmpeg. 단계별 순서는 <a href="https://github.com/jungrok5/motion-skills/blob/main/latte-art-pour/SKILL.md">SKILL.md</a>에 있습니다.</p>
+  </div>
+  <div class="demo" style="--ar:9/12;--h-phone:min(86vh,720px);--demo-bg:#e9e1d8">
+    <iframe data-src="demo/matcha-tulip/?scale=.5" title="latte-art-pour 예제 실시간 재생" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="demo/matcha-tulip/">데모 열기</a></noscript>
+    <div class="bar"><span data-cap-target>예제 「Matcha Tulip」 · 네 단 튤립 · 17초</span>
+      <span class="btns" role="group" aria-label="데모 예제">
+        <button class="btn" type="button" data-src="demo/matcha-tulip/?scale=.5" data-cap="예제 「Matcha Tulip」 · 네 단 튤립 · 17초" aria-pressed="true">말차 튤립</button>
+        <button class="btn" type="button" data-src="demo/starter/?scale=.5" data-cap="스타터 「Rosetta」 · 에스프레소 · 16초">Rosetta</button>
+        <button class="btn" type="button" data-src="demo/starter/?play=1&amp;scale=.5" data-cap="직접 붓기 · 누르고 있으면 붓기, 끌어서 움직이기, 높이 버튼 · Shift">직접 붓기</button>
+      </span></div>
+  </div>
+</div></section>
+
+<section id="samples"><div class="wrap">
+  <h2>샘플</h2>
+  <p class="lead">예제와 스타터의 단계별 순간입니다. 카드를 누르면 라이브 페이지가 그 순간에 멈춘 채 열립니다(클릭 · 스페이스로 재생).</p>
+  <div id="gallery">
+    <div class="group">
+      <h3>Matcha Tulip <small>새 주제로 만든 예제 · 위로 붓기 · 17초</small></h3>
+      <p>원본에 없는 주제입니다. 봄 한정 말차 라떼를 슬레이트색 도자기 잔에, 피처를 잔 아래에 두고 위로 부어 꽃이 위를 향하게 했습니다. 높게 끊어 갈색 틈을 내고 뒤에서 한 단씩 밀어 넣어 네 단을 쌓은 뒤 줄기를 긋습니다.</p>
+      <div class="grid tall">
+        <a class="tile" href="demo/matcha-tulip/?t=1" target="_blank" rel="noopener">
+          <img src="samples/matcha-tulip-1.jpg" alt="슬레이트색 도자기 잔에 담긴 말차 위로 「봄 한정 · 세 번째 잔」「Matcha Tulip」 제목, 분홍 조각 테라초 테이블" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">장면 · 1초</span><b>빈 잔과 제목</b><span class="how">높이 부어 바탕을 채우기 전, 슬레이트 도자기 잔의 말차</span></div></a>
+        <a class="tile" href="demo/matcha-tulip/?t=6" target="_blank" rel="noopener">
+          <img src="samples/matcha-tulip-6.jpg" alt="잔 아래쪽에서 들어온 스테인리스 피처가 말차 위에 하얀 첫 송이를 붓는 모습, 위에 「Drop low for the first bloom」" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">단계 2 · 6초</span><b>첫 송이</b><span class="how">낮게 내린 물줄기 앞에서 거품이 솟아 첫 송이가 핌</span></div></a>
+        <a class="tile" href="demo/matcha-tulip/?t=9" target="_blank" rel="noopener">
+          <img src="samples/matcha-tulip-9.jpg" alt="하얀 단 두 개가 겹쳐 쌓이고 피처가 그 뒤에 다음 단을 붓는 모습, 위에 「Cut, then push in from behind」" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">단계 3 · 9초</span><b>뒤에서 밀어 넣기</b><span class="how">높게 끊어 갈색 틈을 낸 뒤 다음 단을 밀어 넣음</span></div></a>
+        <a class="tile" href="demo/matcha-tulip/?t=12" target="_blank" rel="noopener">
+          <img src="samples/matcha-tulip-12.jpg" alt="네 단으로 쌓인 튤립 위를 피처가 지나가며 가는 줄기를 긋는 모습, 아래에 단계 띠와 높이 · 흐름 막대" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">단계 4 · 12초</span><b>줄기 긋기</b><span class="how">들어 올린 가는 물줄기를 단 사이로 끌어 줄기를 세움</span></div></a>
+        <a class="tile" href="demo/matcha-tulip/?t=16.8" target="_blank" rel="noopener">
+          <img src="samples/matcha-tulip-16-8.jpg" alt="네 단 튤립과 줄기가 완성된 말차 라떼, 위에 제목, 아래에 붓는 법을 한 문장으로 적은 설명" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">끝 · 17초</span><b>완성된 잔</b><span class="how">피처가 빠지고 제목과 설명이 뜨며 천천히 다가감</span></div></a>
+      </div>
+    </div>
+    <div class="group">
+      <h3>Rosetta <small>스타터 · 에스프레소 · 16초</small></h3>
+      <p>가장 기본이 되는 잔입니다. 제자리에서 흔들어 잎을 부채꼴로 쌓고, 흔들며 뒤로 물린 뒤, 한 번에 그어 잎을 줄기로 묶습니다.</p>
+      <div class="grid tall">
+        <a class="tile" href="demo/starter/?t=8" target="_blank" rel="noopener">
+          <img src="samples/starter-8.jpg" alt="흰 도자기 잔의 에스프레소 위에 부채꼴로 쌓인 로제타 잎과 오른쪽의 피처, 위에 「Rock it, then pull back」" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">단계 3 · 8초</span><b>흔들며 쌓기</b><span class="how">제자리에서 흔들어 잎을 부채꼴로 쌓음</span></div></a>
+        <a class="tile" href="demo/starter/?t=10.8" target="_blank" rel="noopener">
+          <img src="samples/starter-10-8.jpg" alt="피처가 로제타 앞쪽 끝까지 가는 물줄기를 그어 잎을 V자로 끌어당기는 모습" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">단계 4 · 11초</span><b>가르기</b><span class="how">가는 물줄기로 잎 사이를 갈라 줄기를 냄</span></div></a>
+        <a class="tile" href="demo/starter/?t=15.5" target="_blank" rel="noopener">
+          <img src="samples/starter-15-5.jpg" alt="오크 테이블 위 흰 잔에 완성된 로제타, 위에 「Rosetta」, 아래에 설명" loading="lazy" width="360" height="640">
+          <div class="cap"><span class="no">끝 · 16초</span><b>Rosetta</b><span class="how">줄기로 묶인 잎, 제목과 설명</span></div></a>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="works"><div class="wrap">
+  <h2>실제 작품</h2>
+  <p class="lead">이 레포에서 만든 스킬입니다. 원본 게시물의 영상에서 붓는 원리(높이 · 흔들기 · 밀어 넣기 · 긋기)를 읽고, 시뮬레이터의 코드 · 화면 · 이름은 가져오지 않고 표면 모델과 영상을 처음부터 만들었습니다.</p>
+  <div class="works">
+    <a class="work" href="demo/matcha-tulip/" target="_blank" rel="noopener"><b>「Matcha Tulip」</b><span>네 단 튤립 · 위로 붓기 · 17초</span><span class="url">latte-art-pour/examples/matcha-tulip</span></a>
+    <a class="work" href="demo/starter/" target="_blank" rel="noopener"><b>「Rosetta」</b><span>스타터 · 에스프레소 · 16초</span><span class="url">latte-art-pour/starter</span></a>
+    <a class="work" href="https://www.threads.com/share/BAJMYuMY94"><b>원본 · @ujae_의 Threads 게시물</b><span>뉴질랜드 모션 그래픽 디자이너의 라떼아트 시뮬레이터 소개와 두 영상</span><span class="url">threads.com/share/BAJMYuMY94</span></a>
+  </div>
+</div></section>
+
+<section id="links"><div class="wrap">
+  <h2>링크</h2>
+  <ul class="links">
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/latte-art-pour/SKILL.md">SKILL.md</a> <span>워크플로</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/tree/main/latte-art-pour">폴더</a> <span>lib · scripts · references · starter · examples</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/latte-art-pour/README.md">README.md</a> <span>빠른 시작</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/latte-art-pour/references/BRIEF.md">references/BRIEF.md</a> <span>브리프 틀과 스틸 검토</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/latte-art-pour/references/SCORE.md">references/SCORE.md</a> <span>붓는 동작 · 검증된 그림 · 새 그림 만들기</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/latte-art-pour/references/LOOK.md">references/LOOK.md</a> <span>화면 · 음료 · 잔 · 테이블 · 문구 · 소리</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/latte-art-pour/references/PHYSICS.md">references/PHYSICS.md</a> <span>표면 모델과 상수</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/latte-art-pour/references/SOURCE.md">references/SOURCE.md</a> <span>원본에서 가져온 것과 가져오지 않은 것</span></li>
+    <li><a href="https://github.com/jungrok5/motion-skills/blob/main/latte-art-pour/references/LESSONS.md">references/LESSONS.md</a> <span>겪은 문제와 해결</span></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <a href="../">← 스킬 목록</a> · 모든 그림은 이 스킬의 코드로 렌더링 · 글꼴 SIL OFL 1.1
+</div></footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>
