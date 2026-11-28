@@ -17,6 +17,8 @@ follows is the part of it that is not about that one game.
   says otherwise; a Korean subtitle is not "corrected" into Korean or back without being asked.
 - Merge only on the owner's word for that PR; when it comes, merge everything it covers. Always finish with a PR.
 - Do not wait idle on a long render: run it in the background and do the rest meanwhile.
+- Before a full film render, show the owner the cut (shot list, key frames or low-resolution previews, how long it will
+  take) and wait for a yes (2026-11-28); tests and previews need none.
 - Make, judge, improve on your own: key frames beside the previous version, fix what is weak, then show it. When
   effects or motion change, give the owner a short MP4 to look at.
 - Spend what a job needs to get it right; a specialist agent for a specialist pass, judged by you.
